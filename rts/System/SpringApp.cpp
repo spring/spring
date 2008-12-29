@@ -990,7 +990,6 @@ void SpringApp::UpdateSDLKeys ()
  */
 int SpringApp::Run (int argc, char *argv[])
 {
-	INIT_SYNCIFY;
 	CheckCmdLineFile (argc, argv);
 	cmdline = BaseCmd::initialize(argc,argv);
 /*
@@ -1161,7 +1160,6 @@ int SpringApp::Run (int argc, char *argv[])
 			handleerror(NULL, e.what(), "Content error", MBF_OK | MBF_EXCL);
 		}
 	}
-	ENTER_MIXED;
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	gmlKeepRunning=0; // wait for sim to finish

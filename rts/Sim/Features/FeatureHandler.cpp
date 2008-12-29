@@ -396,8 +396,6 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(feat); // AddFeature
 
-	ASSERT_SYNCED_MODE;
-
 	// FIXME -- randomize me, pretty please
 	//          (could be done in blocks, if (empty) { add 5000 freeIDs } ?)
 	if (freeIDs.empty()) {
@@ -427,7 +425,6 @@ void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(feat); // DeleteFeature, maybe superfluous
 
-	ASSERT_SYNCED_MODE;
 	toBeRemoved.push_back(feature->id);
 
 	eventHandler.FeatureDestroyed(feature);
@@ -438,7 +435,6 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 	float rot, int facing, int iter, int team, int allyteam, bool emitSmoke, std::string fromUnit,
 	const float3& speed)
 {
-	ASSERT_SYNCED_MODE;
 	const FeatureDef* fd;
 	const std::string* defname = &name;
 
@@ -474,7 +470,6 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 
 void CFeatureHandler::Update()
 {
-	ASSERT_SYNCED_MODE;
 	SCOPED_TIMER("Feature::Update");
 
 	if ((gs->frameNum & 31) == 0) {
@@ -563,7 +558,6 @@ void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 
 void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 {
-	ASSERT_SYNCED_MODE;
 	std::vector<int> quads = qf->GetQuadsRectangle(float3(x1 * SQUARE_SIZE, 0, y1 * SQUARE_SIZE),
 		float3(x2 * SQUARE_SIZE, 0, y2 * SQUARE_SIZE));
 
@@ -592,7 +586,6 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 
 void CFeatureHandler::Draw()
 {
-	ASSERT_UNSYNCED_MODE;
 	drawFar.clear();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
@@ -623,7 +616,6 @@ void CFeatureHandler::Draw()
 
 void CFeatureHandler::DrawShadowPass()
 {
-	ASSERT_UNSYNCED_MODE;
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, unitDrawer->unitShadowGenVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glPolygonOffset(1,1);

@@ -302,7 +302,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	oldStatus  = 255;
 #endif
 
-	ENTER_UNSYNCED;
 	sound = CSound::GetSoundSystem();
 	gameSoundVolume = configHandler.Get("SoundVolume", 60) * 0.01f;
 	unitReplyVolume = configHandler.Get("UnitReplyVolume", configHandler.Get("UnitReplySoundVolume", 80) ) * 0.01f;
@@ -322,11 +321,8 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	selectedUnits.Init();
 
-	ENTER_MIXED;
-
 	helper = new CGameHelper(this);
 
-	ENTER_SYNCED;
 	modInfo.Init(modName.c_str());
 
 	if (!sideParser.Load()) {
@@ -367,10 +363,8 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	explGenHandler = new CExplosionGeneratorHandler();
 
-	ENTER_UNSYNCED;
 	shadowHandler = new CShadowHandler();
 
-	ENTER_SYNCED;
 	ground = new CGround();
 	mapInfo = new CMapInfo(mapname); // must go before readmap
 	readmap = CReadMap::LoadMap (mapname);
@@ -380,19 +374,15 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	groundDecals = new CGroundDecalHandler();
 	ReColorTeams();
 
-	ENTER_UNSYNCED;
 
 	guihandler = new CGuiHandler();
 	minimap = new CMiniMap();
 
-	ENTER_MIXED;
 	ph = new CProjectileHandler();
 
-	ENTER_SYNCED;
 	damageArrayHandler = new CDamageArrayHandler();
 	unitDefHandler = new CUnitDefHandler();
 
-	ENTER_UNSYNCED;
 	inMapDrawer = new CInMapDraw();
 	cmdColors.LoadConfig("cmdcolors.txt");
 
@@ -404,24 +394,19 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	geometricObjects = new CGeometricObjects();
 
-	ENTER_SYNCED;
 	qf = new CQuadField();
 
-	ENTER_MIXED;
 	featureHandler = new CFeatureHandler();
 
-	ENTER_SYNCED;
 	mapDamage = IMapDamage::GetMapDamage();
 	loshandler = new CLosHandler();
 	radarhandler = new CRadarHandler(false);
 
-	ENTER_MIXED;
 	uh = new CUnitHandler();
 	unitDrawer = new CUnitDrawer();
 	fartextureHandler = new CFartextureHandler();
 	modelParser = new C3DModelParser();
 
- 	ENTER_SYNCED;
  	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
  	pathManager = new CPathManager();
 #ifdef SYNCCHECK
@@ -433,7 +418,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
  	delete defsParser;
 	defsParser = NULL;
 
-	ENTER_UNSYNCED;
 	sky = CBaseSky::GetSky();
 
 	resourceBar = new CResourceBar();
@@ -464,7 +448,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	}
 	PrintLoadMsg("Finalizing...");
 
-	ENTER_MIXED;
 	if (true || !shadowHandler->drawShadows) { // FIXME ?
 		glLightfv(GL_LIGHT1, GL_AMBIENT, mapInfo->light.unitAmbientColor);
 		glLightfv(GL_LIGHT1, GL_DIFFUSE, mapInfo->light.unitSunColor);
@@ -535,8 +518,6 @@ CGame::~CGame()
 		configHandler.Set("TreeRadius",
 		                     (unsigned int)(treeDrawer->baseTreeDistance * 256));
 	}
-
-	ENTER_MIXED;
 
 	SafeDelete(guihandler);
 
@@ -2701,8 +2682,6 @@ bool CGame::Draw() {
 
 	thisFps++;
 
-	ASSERT_UNSYNCED_MODE;
-
 	SetDrawMode(normalDraw);
 
 	const unsigned currentTime = SDL_GetTicks();
@@ -3082,13 +3061,11 @@ void CGame::StartPlaying()
 	lastTick = clock();
 	lastframe = SDL_GetTicks();
 
-	ENTER_MIXED;
 	gu->myTeam = playerHandler->Player(gu->myPlayerNum)->team;
 	gu->myAllyTeam = teamHandler->AllyTeam(gu->myTeam);
 //	grouphandler->team = gu->myTeam;
 	CLuaUI::UpdateTeams();
 
-	ENTER_SYNCED;
 	script->GameStart();
 	eventHandler.GameStart();
 }
@@ -3099,7 +3076,6 @@ void CGame::SimFrame() {
 
 	good_fpu_control_registers("CGame::SimFrame");
 	lastFrameTime = SDL_GetTicks();
-	ASSERT_SYNCED_MODE;
 
 #ifdef TRACE_SYNC
 	//uh->CreateChecksum();
@@ -3118,8 +3094,6 @@ void CGame::SimFrame() {
 	if (luaRules) { luaRules->GameFrame(gs->frameNum); }
 
 	gs->frameNum++;
-
-	ENTER_UNSYNCED;
 
 	if (!skipping) {
 		infoConsole->Update();
@@ -3158,7 +3132,6 @@ void CGame::SimFrame() {
 #endif
 	}
 
-	ENTER_SYNCED;
 	//everything from here is simulation
 	ScopedTimer forced("Sim time"); // don't use SCOPED_TIMER here because this is the only timer needed always
 
@@ -3269,9 +3242,6 @@ void CGame::ClientReadNet()
 		net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
 	}
 
-	PUSH_CODE_MODE;
-	ENTER_SYNCED;
-
 	boost::shared_ptr<const netcode::RawPacket> packet;
 
 	// compute new timeLeft to "smooth" out SimFrame() calls
@@ -3321,7 +3291,6 @@ void CGame::ClientReadNet()
 					eventHandler.GameOver();
 					GameEnd();
 				}
-				POP_CODE_MODE;
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
@@ -3357,7 +3326,6 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_GAMEOVER: {
-				ENTER_MIXED;
 				gameOver=true;
 				eventHandler.GameOver();
 				if (gu->autoQuit) {
@@ -3366,18 +3334,15 @@ void CGame::ClientReadNet()
 				} else {
 					GameEnd();
 				}
-				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
 
 			case NETMSG_SENDPLAYERSTAT: {
-				ENTER_MIXED;
 				logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
 				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, *playerHandler->Player(gu->myPlayerNum)->currentStats));
-				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
@@ -3552,7 +3517,6 @@ void CGame::ClientReadNet()
 				AddTraffic(-1, packetCode, dataLength);
 
 				if (creatingVideo) {
-					POP_CODE_MODE;
 					return;
 				}
 				break;
@@ -3728,13 +3692,11 @@ void CGame::ClientReadNet()
 
 			case NETMSG_SYNCREQUEST: {
 				// TODO rename this net message, change error msg, etc.
-				ENTER_MIXED;
 				int frame = *((int*)&inbuf[1]);
 				if (frame != gs->frameNum) {
 					logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
 				}
 				net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
-				ENTER_SYNCED;
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
@@ -3931,7 +3893,6 @@ void CGame::ClientReadNet()
 						else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
 							unit->directControl=&playerHandler->Player(player)->myControl;
 							playerHandler->Player(player)->playerControlledUnit=unit;
-							ENTER_UNSYNCED;
 							if (player == gu->myPlayerNum) {
 								gu->directControl = unit;
 								mouse->wasLocked = mouse->locked;
@@ -3944,7 +3905,6 @@ void CGame::ClientReadNet()
 								dynamic_cast<CFPSController&>(camHandler->GetCurrentController()).SetPos(unit->midPos);
 								selectedUnits.ClearSelected();
 							}
-							ENTER_SYNCED;
 						}
 					}
 				}
@@ -4000,7 +3960,6 @@ void CGame::ClientReadNet()
 		}
 	}
 
-	POP_CODE_MODE;
 	return;
 }
 
@@ -4011,7 +3970,6 @@ float3 *plastDCpos=NULL;
 
 void CGame::UpdateUI(bool cam)
 {
-	ASSERT_UNSYNCED_MODE;
 	//move camera if arrow keys pressed
 #ifdef DIRECT_CONTROL_ALLOWED
 	if (gu->directControl && !cam) {

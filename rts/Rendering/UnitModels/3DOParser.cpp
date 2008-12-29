@@ -121,13 +121,10 @@ C3DOParser::C3DOParser()
 
 S3DModel* C3DOParser::Load(string name)
 {
-	PUSH_CODE_MODE;
-	ENTER_SYNCED;
 //	ifstream ifs(name, ios::in|ios::binary);
 	//int size=vfsHandler->GetFileSize(name);
 	CFileHandler file(name);
 	if(!file.FileExists()){
-		POP_CODE_MODE;
 		throw content_error("File not found: "+name);
 	}
 	fileBuf=new unsigned char[file.FileSize()];
@@ -189,7 +186,6 @@ S3DModel* C3DOParser::Load(string name)
 	model->relMidPos=object->relMidPos;
 
 	delete[] fileBuf;
-	POP_CODE_MODE;
 	return model;
 }
 

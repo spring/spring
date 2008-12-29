@@ -724,12 +724,10 @@ void CUnit::SlowUpdate()
 			selfDCountdown = 0;
 			return;
 		}
-		ENTER_MIXED;
 		if ((selfDCountdown & 1) && (team == gu->myTeam)) {
 			logOutput.Print("%s: Self destruct in %i s",
 			                unitDef->humanName.c_str(), selfDCountdown / 2);
 		}
-		ENTER_SYNCED;
 	}
 
 	if (beingBuilt) {
@@ -1059,7 +1057,6 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			attacker->AddExperience(0.1f * experienceMod
 			                             * (power / attacker->power)
 			                             * (damage + std::min(0.0f, health)) / maxHealth);
-			ENTER_UNSYNCED;
 			const int warnFrame = (gs->frameNum - 100);
 			if ((team == gu->myTeam)
 			    && ((!unitDef->isCommander && (uh->lastDamageWarning < warnFrame)) ||
@@ -1085,7 +1082,6 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 					uh->lastCmdDamageWarning = gs->frameNum;
 				}
 			}
-			ENTER_SYNCED;
 		}
 	}
 

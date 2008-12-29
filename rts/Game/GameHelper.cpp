@@ -257,9 +257,7 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 
 	groundDecals->AddExplosion(expPos, damages[0], expRad);
 
-	ENTER_UNSYNCED;
 	water->AddExplosion(expPos, damages[0], expRad);
-	ENTER_SYNCED;
 }
 
 

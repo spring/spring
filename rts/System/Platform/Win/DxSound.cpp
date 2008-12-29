@@ -188,8 +188,6 @@ unsigned int CDxSound::GetWaveId(const string &name, bool _hardFail)
 {
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
 
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 	std::map<string, int>::iterator si = waveid.find(name);
 
 	if (si == waveid.end()) {
@@ -199,7 +197,6 @@ unsigned int CDxSound::GetWaveId(const string &name, bool _hardFail)
 	}
 
 	int ret = (si != waveid.end())? si->second: 0;
-	POP_CODE_MODE;
 	return ret;
 }
 
@@ -252,10 +249,7 @@ void CDxSound::PlaySample(int id, float volume)
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 	if (id <= 0 || id >= loadedSounds.size() || playingSounds.size() >= maxSounds) {
-		POP_CODE_MODE;
 		return;
 	}
 
@@ -271,7 +265,6 @@ void CDxSound::PlaySample(int id, float volume)
 	// Restore the buffers if they are lost
 	HRESULT hr;
 	if (FAILED( hr = RestoreBuffers(num))) {
-		POP_CODE_MODE;
 		return;
 	}
 
@@ -282,19 +275,13 @@ void CDxSound::PlaySample(int id, float volume)
 	// DWORD dwLooped = loop? DSBPLAY_LOOPING: 0L;
 	if (FAILED(hr = buffers[num]->Play(0, 0, 0/*dwLooped*/))) {
 	}
-
-	POP_CODE_MODE;
 }
 
 void CDxSound::PlaySample(int id, const float3& p, float volume)
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
-
 	if (id <= 0 || id >= loadedSounds.size()) {
-		POP_CODE_MODE;
 		return;
 	}
 
@@ -310,14 +297,12 @@ void CDxSound::PlaySample(int id, const float3& p, float volume)
 	}
 
 	if (v > 0.6f) {
-		POP_CODE_MODE;
 		return; // too quiet
 	} else {
 		v = max(v, (1.0f - globalVolume)); // clamp so that it isn't too loud
 	}
 
 	if (v > curThreshhold + (wantedSounds - playingSounds.size()) / wantedSounds) {
-		POP_CODE_MODE;
 		return;
 	}
 
@@ -336,8 +321,6 @@ void CDxSound::PlaySample(int id, const float3& p, float volume)
 
 	if (FAILED(hr = buffers[num]->Play(0, 0, 0/*dwLooped*/))) {
 	}
-
-	POP_CODE_MODE;
 }
 
 

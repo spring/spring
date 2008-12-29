@@ -170,8 +170,6 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
                                        float radius, CUnit *owner,float gfxMod,
                                        CUnit *hit, const float3 &dir)
 {
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 	float h2=ground->GetHeight2(pos.x,pos.z);
 
 	float height=pos.y-h2;
@@ -293,7 +291,6 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 	if (radius > 40 && damage > 12) {
 		CSpherePartProjectile::CreateSphere(pos,min(0.7f,damage*0.02f),5+(int)(sqrt(damage)*0.7f),(8+damage*2.5f)/(9+sqrt(damage)*0.7f)*0.5f,owner);
 	}
-	POP_CODE_MODE;
 }
 
 // -------------------------------------------------------------------------------
