@@ -472,6 +472,9 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
                             int playerID)
 {
+	if ((playerID < 0) || (playerID >= MAX_PLAYERS))
+		return;
+
 	GML_STDMUTEX_LOCK(inmap);
 
 	// GotNetMsg() alreadys checks validity of playerID
