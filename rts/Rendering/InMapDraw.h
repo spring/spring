@@ -5,6 +5,7 @@
 #include <list>
 #include "GL/myGL.h"
 
+class CPlayer;
 
 class CInMapDraw
 {
@@ -23,6 +24,7 @@ public:
 	void MousePress(int x, int y, int button);
 	void MouseRelease(int x,int y,int button);
 	void MouseMove(int x, int y, int dx, int dy, int button);
+	bool AllowedMsg(const CPlayer*) const;
 	void GotNetMsg(const unsigned char* msg);
 	void ToggleAllVisible() { drawAll = !drawAll; }
 	void SetAllVisible(bool b) { drawAll = b; }
@@ -42,6 +44,8 @@ public:
 	struct MapPoint {
 		CR_DECLARE_STRUCT(MapPoint);
 		void Serialize(creg::ISerializer &s);
+		bool MaySee(CInMapDraw*) const;
+
 		float3 pos;
 		unsigned char* color;
 		std::string label;
@@ -53,6 +57,8 @@ public:
 	struct MapLine {
 		CR_DECLARE_STRUCT(MapLine);
 		void Serialize(creg::ISerializer &s);
+		bool MaySee(CInMapDraw*) const;
+
 		float3 pos;
 		float3 pos2;
 		unsigned char* color;
