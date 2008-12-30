@@ -32,7 +32,7 @@ CSound* CSound::GetSoundSystem()
 #ifdef _WIN32
 		sound = new CDxSound();
 #else
-		sound = new COpenALSound();  
+		sound = new COpenALSound();
 #endif
 	}
 	catch (content_error& e) {

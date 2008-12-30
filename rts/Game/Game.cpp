@@ -407,15 +407,15 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	fartextureHandler = new CFartextureHandler();
 	modelParser = new C3DModelParser();
 
- 	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
- 	pathManager = new CPathManager();
+	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
+	pathManager = new CPathManager();
 #ifdef SYNCCHECK
 	// update the checksum with path data
 	{ SyncedUint tmp(pathManager->GetPathChecksum()); }
 #endif
 	logOutput.Print("Pathing data checksum: %08x\n", pathManager->GetPathChecksum());
 
- 	delete defsParser;
+	delete defsParser;
 	defsParser = NULL;
 
 	sky = CBaseSky::GetSky();
