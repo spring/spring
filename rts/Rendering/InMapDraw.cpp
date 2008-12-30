@@ -461,7 +461,9 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 	pos.CheckInBounds();
 	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
 
-	if (eventHandler.MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
+	// event clients may process the point
+	// iif their owner is allowed to see it
+	if (allowed && eventHandler.MapDrawCmd(playerID, NET_POINT, &pos, NULL, &label)) {
 		return;
 	}
 
