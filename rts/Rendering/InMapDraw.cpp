@@ -220,6 +220,29 @@ void CInMapDraw::MapLine::Serialize(creg::ISerializer &s)
 }
 
 
+bool CInMapDraw::MapPoint::MaySee(CInMapDraw* imd) const
+{
+	const int allyteam = senderAllyTeam;
+	const bool spec = senderSpectator;
+	const bool allied =
+		(teamHandler->Ally(gu->myAllyTeam, allyteam) &&
+		teamHandler->Ally(allyteam, gu->myAllyTeam));
+	const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
+	return maySee;
+}
+
+bool CInMapDraw::MapLine::MaySee(CInMapDraw* imd) const
+{
+	const int allyteam = senderAllyTeam;
+	const bool spec = senderSpectator;
+	const bool allied =
+		(teamHandler->Ally(gu->myAllyTeam, allyteam) &&
+		teamHandler->Ally(allyteam, gu->myAllyTeam));
+	const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
+	return maySee;
+}
+
+
 
 struct InMapDraw_QuadDrawer: public CReadMap::IQuadDrawer
 {
@@ -238,12 +261,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	va->EnlargeArrays(dq->points.size()*12,0,VA_SIZE_TC);
 	// draw point markers
 	for (std::list<CInMapDraw::MapPoint>::iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
-		const int allyteam = pi->senderAllyTeam;
-		const bool spec = pi->senderSpectator;
-		const bool allied = (teamHandler->Ally(gu->myAllyTeam, allyteam) && teamHandler->Ally(allyteam, gu->myAllyTeam));
-		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
-
-		if (maySee) {
+		if (pi->MaySee(imd)) {
 			float3 pos = pi->pos;
 			float3 dif(pos - camera->pos);
 			dif.ANormalize();
@@ -291,12 +309,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	va->EnlargeArrays(dq->lines.size()*2,0,VA_SIZE_C);
 	// draw line markers
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
-		const int allyteam = li->senderAllyTeam;
-		const bool spec = li->senderSpectator;
-		const bool allied = (teamHandler->Ally(gu->myAllyTeam, allyteam) && teamHandler->Ally(allyteam, gu->myAllyTeam));
-		const bool maySee = (gu->spectating || (!spec && allied) || imd->drawAll);
-
-		if (maySee) {
+		if (li->MaySee(imd)) {
 			lineva->AddVertexQC(li->pos - (li->pos - camera->pos).ANormalize() * 26, li->color);
 			lineva->AddVertexQC(li->pos2 - (li->pos2 - camera->pos).ANormalize() * 26, li->color);
 		}
@@ -405,9 +418,35 @@ float3 CInMapDraw::GetMouseMapPos(void)
 }
 
 
+
+bool CInMapDraw::AllowedMsg(const CPlayer* sender) const {
+	const int  team      = sender->team;
+	const int  allyteam  = teamHandler->AllyTeam(team);
+	const bool alliedMsg = (teamHandler->Ally(gu->myAllyTeam, allyteam) &&
+	                        teamHandler->Ally(allyteam, gu->myAllyTeam));
+
+	if (!gu->spectating && (sender->spectator || !alliedMsg)) {
+		// we are playing and the guy sending the
+		// net-msg is a spectator or not an ally;
+		// cannot just ignore the message due to
+		// drawAll mode considerations
+		return false;
+	}
+
+	return true;
+}
+
 void CInMapDraw::GotNetMsg(const unsigned char* msg)
 {
 	const int playerID = msg[2];
+
+	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+		return;
+	}
+	const CPlayer* sender = playerHandler->Player(playerID);
+	if (sender == NULL) {
+		return;
+	}
 
 	switch (msg[3]) {
 		case NET_POINT: {
@@ -430,32 +469,14 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 	}
 }
 
-
 void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
                             int playerID)
 {
-	GML_STDMUTEX_LOCK(inmap); // LocalPoint
+	GML_STDMUTEX_LOCK(inmap);
 
-	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
-		return;
-	}
+	// GotNetMsg() alreadys checks validity of playerID
 	const CPlayer* sender = playerHandler->Player(playerID);
-	if (sender == NULL) {
-		return;
-	}
-	const int  team      = sender->team;
-	const int  allyteam  = teamHandler->AllyTeam(team);
-	const bool alliedMsg = (teamHandler->Ally(gu->myAllyTeam, allyteam) &&
-	                        teamHandler->Ally(allyteam, gu->myAllyTeam));
-	bool allowed = true;
-
-	if (!gu->spectating && (sender->spectator || !alliedMsg)) {
-		// we are playing and the guy sending the
-		// net-msg is a spectator or not an ally;
-		// cannot just ignore the message due to
-		// drawAll mode considerations
-		allowed = false;
-	}
+	const bool allowed = AllowedMsg(sender);
 
 	float3 pos = constPos;
 	pos.CheckInBounds();
@@ -467,16 +488,20 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 		return;
 	}
 
+	// let the engine handle it (disallowed
+	// points added here are filtered while
+	// rendering the quads)
 	MapPoint point;
 	point.pos = pos;
-	point.color = teamHandler->Team(team)->color;
+	point.color = teamHandler->Team(sender->team)->color;
 	point.label = label;
-	point.senderAllyTeam = allyteam;
+	point.senderAllyTeam = teamHandler->AllyTeam(sender->team);
 	point.senderSpectator = sender->spectator;
 
 	const int quad = int(pos.z * quadScale) * drawQuadsX +
 	                 int(pos.x * quadScale);
 	drawQuads[quad].points.push_back(point);
+
 
 	if (allowed || drawAll) {
 		// if we happen to be in drawAll mode, notify us now
@@ -493,19 +518,9 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
                            int playerID)
 {
-	GML_STDMUTEX_LOCK(inmap); // LocalLine
+	GML_STDMUTEX_LOCK(inmap);
 
-	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
-		return;
-	}
 	const CPlayer* sender = playerHandler->Player(playerID);
-	if (sender == NULL) {
-		return;
-	}
-	const int  team      = sender->team;
-	const int  allyteam  = teamHandler->AllyTeam(team);
-	const bool alliedMsg = (teamHandler->Ally(gu->myAllyTeam, allyteam) &&
-	                        teamHandler->Ally(allyteam, gu->myAllyTeam));
 
 	float3 pos1 = constPos1;
 	float3 pos2 = constPos2;
@@ -514,15 +529,15 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 	pos1.y = ground->GetHeight(pos1.x, pos1.z) + 2.0f;
 	pos2.y = ground->GetHeight(pos2.x, pos2.z) + 2.0f;
 
-	if (eventHandler.MapDrawCmd(playerID, NET_LINE, &pos1, &pos2, NULL)) {
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, NET_LINE, &pos1, &pos2, NULL)) {
 		return;
 	}
 
 	MapLine line;
 	line.pos  = pos1;
 	line.pos2 = pos2;
-	line.color = teamHandler->Team(team)->color;
-	line.senderAllyTeam = allyteam;
+	line.color = teamHandler->Team(sender->team)->color;
+	line.senderAllyTeam = teamHandler->AllyTeam(sender->team);
 	line.senderSpectator = sender->spectator;
 
 	const int quad = int(pos1.z * quadScale) * drawQuadsX +
@@ -533,24 +548,15 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 
 void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 {
-	GML_STDMUTEX_LOCK(inmap); // LocalErase
+	GML_STDMUTEX_LOCK(inmap);
 
-	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
-		return;
-	}
 	const CPlayer* sender = playerHandler->Player(playerID);
-	if (sender == NULL) {
-		return;
-	}
-	const int  team      = sender->team;
-	const int  allyteam  = teamHandler->AllyTeam(team);
-	const bool alliedMsg = (teamHandler->Ally(gu->myAllyTeam, allyteam) &&
-	                        teamHandler->Ally(allyteam, gu->myAllyTeam));
 
 	float3 pos = constPos;
 	pos.CheckInBounds();
 	pos.y = ground->GetHeight(pos.x, pos.z) + 2.0f;
-	if (eventHandler.MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
+
+	if (AllowedMsg(sender) && eventHandler.MapDrawCmd(playerID, NET_ERASE, &pos, NULL, NULL)) {
 		return;
 	}
 
