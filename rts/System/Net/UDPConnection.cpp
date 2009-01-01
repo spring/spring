@@ -292,7 +292,7 @@ void UDPConnection::Flush(const bool forced)
 				unackedPackets.push_back(new RawPacket(buffer, pos));
 				pos = 0;
 			}
-		} while (!outgoingData.empty())
+		} while (!outgoingData.empty());
 	}
 }
 
