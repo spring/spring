@@ -272,7 +272,7 @@ void UDPConnection::Flush(const bool forced)
 		// This is an attempt to fix the bug where players drop out of the game if
 		// someone in the game gives a large order.
 
-		while (!outgoingData.empty())
+		do
 		{
 			{
 				packetList::iterator it = outgoingData.begin();
@@ -292,7 +292,7 @@ void UDPConnection::Flush(const bool forced)
 				unackedPackets.push_back(new RawPacket(buffer, pos));
 				pos = 0;
 			}
-		}
+		} while (!outgoingData.empty())
 	}
 }
 
