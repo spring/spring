@@ -44,7 +44,7 @@ public:
 	bool selectionChanged;
 	bool possibleCommandsChanged;
 
-	vector<int> netSelected[MAX_PLAYERS];
+	std::vector< vector<int> > netSelected;
 
 	bool buildIconsFirst;
 	int selectedGroup;
