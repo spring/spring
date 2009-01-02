@@ -827,7 +827,7 @@ void SpringApp::Startup()
 			startsetup->isHost = true;
 
 #ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(startsetup->isHost);
+		CSyncDebugger::GetInstance()->Initialize(startsetup->isHost, 64); //FIXME: add actual number of player
 #endif
 		pregame = new CPreGame(startsetup);
 		if (startsetup->isHost)
@@ -838,7 +838,7 @@ void SpringApp::Startup()
 		startsetup->isHost = true; // local demo play
 		startsetup->myPlayerName = configHandler.GetString("name", "unnamed")+ " (spec)";
 #ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true);
+		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
 #endif
 		pregame = new CPreGame(startsetup);
 		pregame->LoadDemo(demofile);
@@ -847,7 +847,7 @@ void SpringApp::Startup()
 	{
 		startsetup->isHost = true;
 #ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true);
+		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
 #endif
 		pregame = new CPreGame(startsetup);
 		pregame->LoadSavefile(savefile);
