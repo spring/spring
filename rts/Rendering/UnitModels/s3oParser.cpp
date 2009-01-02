@@ -180,8 +180,9 @@ void CS3OParser::FindMinMax(SS3OPiece* object)
 
 void CS3OParser::Draw(S3DModelPiece *o)
 {
-	if (o->isEmpty)
+	if (o->isEmpty) {
 		return;
+	}
 
 	SS3OPiece* so = static_cast<SS3OPiece*>(o);
 	SS3OVertex* s3ov = static_cast<SS3OVertex*>(&so->vertices[0]);
@@ -224,7 +225,12 @@ void CS3OParser::Draw(S3DModelPiece *o)
 
 
 
-void CS3OParser::SetVertexTangents(SS3OPiece* p) {
+void CS3OParser::SetVertexTangents(SS3OPiece* p)
+{
+	if (p->isEmpty) {
+		return;
+	}
+
 	std::vector<SS3OTriangle> triangles;
 	std::vector<std::vector<unsigned int> > verts2tris(p->vertexCount);
 
