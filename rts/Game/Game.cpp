@@ -319,7 +319,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	tooltip = new CTooltipConsole();
 	iconHandler = new CIconHandler();
 
-	selectedUnits.Init();
+	selectedUnits.Init(playerHandler->TotalPlayers());
 
 	helper = new CGameHelper(this);
 

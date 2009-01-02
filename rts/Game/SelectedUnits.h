@@ -14,7 +14,7 @@ class CFeature;
 class CSelectedUnits : public CObject
 {
 public:
-	void Init();
+	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
 	void AiOrder(int unitid, const Command& c, int playerID);
 	int GetDefaultCmd(CUnit* unit,CFeature* feature);
