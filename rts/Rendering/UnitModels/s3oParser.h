@@ -15,23 +15,39 @@ struct SS3OVertex {
 	float textureY;
 };
 
-struct SS3OPiece : public S3DModelPiece {
+struct SS3OPiece: public S3DModelPiece {
 	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
 
 	std::vector<SS3OVertex> vertices;
 	std::vector<unsigned int> vertexDrawOrder;
 	int primitiveType;
+
+	// cannot store these in SS3OVertex
+	std::vector<float3> sTangents; // == T(angent) dirs
+	std::vector<float3> tTangents; // == B(itangent) dirs
 };
 
-class CS3OParser : public IModelParser
+struct SS3OTriangle {
+	unsigned int v0idx;
+	unsigned int v1idx;
+	unsigned int v2idx;
+	float3 sTangent;
+	float3 tTangent;
+};
+
+
+enum {S3O_PRIMTYPE_TRIANGLES, S3O_PRIMTYPE_TRIANGLE_STRIP, S3O_PRIMTYPE_QUADS};
+
+class CS3OParser: public IModelParser
 {
 public:
 	S3DModel* Load(std::string name);
-	void Draw(S3DModelPiece *o);
+	void Draw(S3DModelPiece* o);
 
 private:
-	SS3OPiece* LoadPiece(unsigned char* buf, int offset,S3DModel* model);
-	void FindMinMax(SS3OPiece *object);
+	SS3OPiece* LoadPiece(unsigned char* buf, int offset, S3DModel* model);
+	void FindMinMax(SS3OPiece* object);
+	void SetVertexTangents(SS3OPiece*);
 };
 
 #endif /* S3OPARSER_H */

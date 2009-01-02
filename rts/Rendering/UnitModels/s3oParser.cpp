@@ -41,7 +41,7 @@ S3DModel* CS3OParser::Load(std::string name)
 	model->tex1=(char*)&fileBuf[header.texture1];
 	model->tex2=(char*)&fileBuf[header.texture2];
 	texturehandlerS3O->LoadS3OTexture(model);
-	SS3OPiece* object=LoadPiece(fileBuf,header.rootPiece,model);
+	SS3OPiece* object = LoadPiece(fileBuf, header.rootPiece, model);
 	object->type=MODELTYPE_S3O;
 
 	FindMinMax(object);
@@ -68,7 +68,7 @@ S3DModel* CS3OParser::Load(std::string name)
 	return model;
 }
 
-SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DModel* model)
+SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model)
 {
 	model->numobjects++;
 
@@ -82,78 +82,100 @@ SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset,S3DModel* model)
 	piece->offset.y = fp->yoffset;
 	piece->offset.z = fp->zoffset;
 	piece->primitiveType = fp->primitiveType;
-	piece->name = (char*)&buf[fp->name];
+	piece->name = (char*) &buf[fp->name];
 
-	int vertexPointer=fp->vertices;
-	for(int a=0;a<fp->numVertices;++a){
-		((Vertex*)&buf[vertexPointer])->swap();  // Does it matter we mess with the original buffer here?
-		piece->vertices.push_back(*(SS3OVertex*)&buf[vertexPointer]);
-/*		piece->vertices.back().normal.x=piece->vertices.back().pos.x;
-		piece->vertices.back().normal.y=piece->vertices.back().pos.y;
-		piece->vertices.back().normal.z=piece->vertices.back().pos.z;
-		piece->vertices.back().normal.Normalize();*/
-		vertexPointer+=sizeof(Vertex);
+
+	// retrieve each vertex
+	int vertexOffset = fp->vertices;
+
+	for (int a = 0; a < fp->numVertices; ++a) {
+		((Vertex*) &buf[vertexOffset])->swap();
+
+		SS3OVertex* v = (SS3OVertex*) &buf[vertexOffset];
+		piece->vertices.push_back(*v);
+
+		vertexOffset += sizeof(Vertex);
 	}
-	int vertexTablePointer=fp->vertexTable;
-	for(int a=0;a<fp->vertexTableSize;++a){
-		int num = swabdword(*(int*)&buf[vertexTablePointer]);
-		piece->vertexDrawOrder.push_back(num);
-		vertexTablePointer += sizeof(int);
 
-		if(num==-1 && a!=fp->vertexTableSize-1){		//for triangle strips
-			piece->vertexDrawOrder.push_back(num);
 
-			num = swabdword(*(int*)&buf[vertexTablePointer]);
-			piece->vertexDrawOrder.push_back(num);
+	// retrieve the draw order for the vertices
+	int vertexTableOffset = fp->vertexTable;
+
+	for (int a = 0; a < fp->vertexTableSize; ++a) {
+		int vertexDrawIdx = swabdword(*(int*) &buf[vertexTableOffset]);
+
+		piece->vertexDrawOrder.push_back(vertexDrawIdx);
+		vertexTableOffset += sizeof(int);
+
+		// -1 == 0xFFFFFFFF (U)
+		if (vertexDrawIdx == -1 && a != fp->vertexTableSize - 1) {
+			// for triangle strips
+			piece->vertexDrawOrder.push_back(vertexDrawIdx);
+
+			vertexDrawIdx = swabdword(*(int*) &buf[vertexTableOffset]);
+			piece->vertexDrawOrder.push_back(vertexDrawIdx);
 		}
 	}
 
-	piece->isEmpty = false;//piece->vertexDrawOrder.empty(); 
+	piece->isEmpty = piece->vertexDrawOrder.empty(); 
 	piece->vertexCount = piece->vertices.size();
-	int childPointer = fp->childs;
-	for(int a=0;a<fp->numChilds;++a){
-		piece->childs.push_back(LoadPiece(buf,swabdword(*(int*)&buf[childPointer]),model));
-		childPointer += sizeof(int);
+
+	SetVertexTangents(piece);
+
+	int childTableOffset = fp->childs;
+
+	for (int a = 0; a < fp->numChilds; ++a) {
+		int childOffset = swabdword(*(int*) &buf[childTableOffset]);
+
+		SS3OPiece* childPiece = LoadPiece(buf, childOffset, model);
+		piece->childs.push_back(childPiece);
+
+		childTableOffset += sizeof(int);
 	}
+
 	return piece;
 }
 
-void CS3OParser::FindMinMax(SS3OPiece *object)
+void CS3OParser::FindMinMax(SS3OPiece* object)
 {
 	std::vector<S3DModelPiece*>::iterator si;
-	for(si=object->childs.begin(); si!=object->childs.end(); ++si){
+
+	for (si = object->childs.begin(); si != object->childs.end(); ++si) {
 		FindMinMax(static_cast<SS3OPiece*>(*si));
 	}
 
-	float maxx=-1000,maxy=-1000,maxz=-1000;
-	float minx=10000,miny=10000,minz=10000;
+	float maxx = -1000.0f, maxy = -1000.0f, maxz = -1000.0f;
+	float minx = 10000.0f, miny = 10000.0f, minz = 10000.0f;
 
 	std::vector<SS3OVertex>::iterator vi;
-	for(vi=object->vertices.begin();vi!=object->vertices.end();++vi){
-		maxx=std::max(maxx,vi->pos.x);
-		maxy=std::max(maxy,vi->pos.y);
-		maxz=std::max(maxz,vi->pos.z);
 
-		minx=std::min(minx,vi->pos.x);
-		miny=std::min(miny,vi->pos.y);
-		minz=std::min(minz,vi->pos.z);
+	for (vi = object->vertices.begin(); vi != object->vertices.end(); ++vi) {
+		maxx = std::max(maxx, vi->pos.x);
+		maxy = std::max(maxy, vi->pos.y);
+		maxz = std::max(maxz, vi->pos.z);
+
+		minx = std::min(minx, vi->pos.x);
+		miny = std::min(miny, vi->pos.y);
+		minz = std::min(minz, vi->pos.z);
 	}
-	for(si=object->childs.begin();si!=object->childs.end();++si){
-		maxx=std::max(maxx,(*si)->offset.x+(*si)->maxx);
-		maxy=std::max(maxy,(*si)->offset.y+(*si)->maxy);
-		maxz=std::max(maxz,(*si)->offset.z+(*si)->maxz);
 
-		minx=std::min(minx,(*si)->offset.x+(*si)->minx);
-		miny=std::min(miny,(*si)->offset.y+(*si)->miny);
-		minz=std::min(minz,(*si)->offset.z+(*si)->minz);
+	for (si = object->childs.begin(); si != object->childs.end(); ++si) {
+		maxx = std::max(maxx, (*si)->offset.x + (*si)->maxx);
+		maxy = std::max(maxy, (*si)->offset.y + (*si)->maxy);
+		maxz = std::max(maxz, (*si)->offset.z + (*si)->maxz);
+
+		minx = std::min(minx, (*si)->offset.x + (*si)->minx);
+		miny = std::min(miny, (*si)->offset.y + (*si)->miny);
+		minz = std::min(minz, (*si)->offset.z + (*si)->minz);
 	}
-	object->maxx=maxx;
-	object->maxy=maxy;
-	object->maxz=maxz;
 
-	object->minx=minx;
-	object->miny=miny;
-	object->minz=minz;
+	object->maxx = maxx;
+	object->maxy = maxy;
+	object->maxz = maxz;
+
+	object->minx = minx;
+	object->miny = miny;
+	object->minz = minz;
 }
 
 void CS3OParser::Draw(S3DModelPiece *o)
@@ -164,26 +186,125 @@ void CS3OParser::Draw(S3DModelPiece *o)
 	SS3OPiece* so = static_cast<SS3OPiece*>(o);
 	SS3OVertex* s3ov = static_cast<SS3OVertex*>(&so->vertices[0]);
 
-	glVertexPointer(3,GL_FLOAT,sizeof(SS3OVertex),&s3ov->pos.x);
-	glTexCoordPointer(2,GL_FLOAT,sizeof(SS3OVertex),&s3ov->textureX);
-	glNormalPointer(GL_FLOAT,sizeof(SS3OVertex),&s3ov->normal.x);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	// TODO (#1 -- Kloot)
+	// glEnableVertexAttribArray(sTangentsIdx);
+	// glEnableVertexAttribArray(tTangentsIdx);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	switch(so->primitiveType){
-	case 0:
-		glDrawElements(GL_TRIANGLES,so->vertexDrawOrder.size(),GL_UNSIGNED_INT,&so->vertexDrawOrder[0]);
-		break;
-	case 1:
-		glDrawElements(GL_TRIANGLE_STRIP,so->vertexDrawOrder.size(),GL_UNSIGNED_INT,&so->vertexDrawOrder[0]);
-		break;
-	case 2:
-		glDrawElements(GL_QUADS,so->vertexDrawOrder.size(),GL_UNSIGNED_INT,&so->vertexDrawOrder[0]);
-		break;
+	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), &s3ov->pos.x);
+	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
+
+	// TODO (#2 -- Kloot)
+	// glVertexAttribPointer(sTangentsIdx, 3, GL_FLOAT, GL_FALSE, 0, &so->sTangents[0]);
+	// glVertexAttribPointer(tTangentsIdx, 3, GL_FLOAT, GL_FALSE, 0, &so->tTangents[0]);
+
+	switch (so->primitiveType) {
+		case S3O_PRIMTYPE_TRIANGLES:
+			glDrawElements(GL_TRIANGLES, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			break;
+		case S3O_PRIMTYPE_TRIANGLE_STRIP:
+			glDrawElements(GL_TRIANGLE_STRIP, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			break;
+		case S3O_PRIMTYPE_QUADS:
+			glDrawElements(GL_QUADS, so->vertexDrawOrder.size(), GL_UNSIGNED_INT, &so->vertexDrawOrder[0]);
+			break;
 	}
 
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	// TODO (#3 -- Kloot)
+	// glDisableVertexAttribArray(sTangentsIdx);
+	// glDisableVertexAttribArray(tTangentsIdx);
+
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
+
+
+
+void CS3OParser::SetVertexTangents(SS3OPiece* p) {
+	std::vector<SS3OTriangle> triangles;
+	std::vector<std::vector<unsigned int> > verts2tris(p->vertexCount);
+
+	p->sTangents.resize(p->vertexCount, ZeroVector);
+	p->tTangents.resize(p->vertexCount, ZeroVector);
+
+	uint stride = 0;
+
+	switch (p->primitiveType) {
+		case S3O_PRIMTYPE_TRIANGLES: {
+			stride = 3;
+		} break;
+		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
+			stride = 1;
+		} break;
+		case S3O_PRIMTYPE_QUADS: {
+			stride = 4;
+		} break;
+	}
+
+	// for triangle strips, the piece vertex _indices_ are defined
+	// by the draw order of the vertices numbered <v, v + 1, v + 2>
+	// for v in [0, n - 2]
+	uint vrtMaxNr = (stride == 1)?
+		p->vertexDrawOrder.size() - 2:
+		p->vertexDrawOrder.size();
+
+	// set the triangle-level S- and T-tangents
+	for (uint vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
+		const int v0idx = p->vertexDrawOrder[vrtNr    ];
+		const int v1idx = p->vertexDrawOrder[vrtNr + 1];
+		const int v2idx = p->vertexDrawOrder[vrtNr + 2];
+
+		const SS3OVertex* v0 = &p->vertices[v0idx];
+		const SS3OVertex* v1 = &p->vertices[v1idx];
+		const SS3OVertex* v2 = &p->vertices[v2idx];
+
+		const float3 v2v0 = v2->pos - v0->pos;
+		const float3 v1v0 = v1->pos - v0->pos;
+
+		const float sd1 = v1->textureX - v0->textureX;
+		const float sd2 = v2->textureX - v0->textureX;
+		const float td1 = v1->textureY - v0->textureY;
+		const float td2 = v2->textureY - v0->textureY;
+
+		// if d is 0, texcoors are degenerate
+		const float d = (sd1 * td2) - (sd2 * td1);
+		const float r = 1.0f / d;
+
+		const float3 sDir((sd1 * v2v0.x - sd2 * v1v0.x) * r,  (sd1 * v2v0.y - sd2 * v1v0.y) * r,  (sd1 * v2v0.z - sd2 * v1v0.z) * r);
+		const float3 tDir((td2 * v1v0.x - td1 * v2v0.x) * r,  (td2 * v1v0.y - td1 * v2v0.y) * r,  (td2 * v1v0.z - td1 * v2v0.z) * r);
+
+		SS3OTriangle tri;
+			tri.v0idx = v0idx;
+			tri.v1idx = v1idx;
+			tri.v2idx = v2idx;
+			tri.sTangent = sDir;
+			tri.tTangent = tDir;
+		triangles.push_back(tri);
+
+		verts2tris[v0idx].push_back(triangles.size() - 1);
+		verts2tris[v1idx].push_back(triangles.size() - 1);
+		verts2tris[v2idx].push_back(triangles.size() - 1);
+	}
+
+	// set the per-vertex tangents (for each vertex, this
+	// is the average of the tangents of all the triangles
+	// used by it)
+	for (uint vrtNr = 0; vrtNr < p->vertexCount; vrtNr++) {
+		for (uint triNr = 0; triNr < verts2tris[vrtNr].size(); triNr++) {
+			const uint triIdx = verts2tris[vrtNr][triNr];
+			const SS3OTriangle& tri = triangles[triIdx];
+
+			p->sTangents[vrtNr] += tri.sTangent;
+			p->tTangents[vrtNr] += tri.tTangent;
+		}
+
+		p->sTangents[vrtNr] /= verts2tris[vrtNr].size();
+		p->tTangents[vrtNr] /= verts2tris[vrtNr].size();
+		p->sTangents[vrtNr].ANormalize();
+		p->tTangents[vrtNr].ANormalize();
+	}
 }
