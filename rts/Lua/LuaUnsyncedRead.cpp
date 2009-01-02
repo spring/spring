@@ -1162,7 +1162,7 @@ int LuaUnsyncedRead::GetPlayerRoster(lua_State* L)
 	}
 
 	int count;
-	const int* players = playerRoster.GetIndices(&count);
+	const std::vector<int>& players = playerRoster.GetIndices(&count);
 
 	playerRoster.SetSortTypeByCode(oldSort); // revert
 

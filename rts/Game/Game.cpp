@@ -292,7 +292,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	consoleHistory = new CConsoleHistory;
 	wordCompletion = new CWordCompletion;
-	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
+	for (int pp = 0; pp < playerHandler->TotalPlayers(); pp++) {
 	  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 	}
 
@@ -1503,7 +1503,7 @@ bool CGame::ActionPressed(const Action& action,
 		else {
 			// Check if there are more active players on his team.
 			bool onlyActive = true;
-			for (int a = 0;a < MAX_PLAYERS; ++a) {
+			for (int a = 0; a < playerHandler->TotalPlayers(); ++a) {
 				if (a != gu->myPlayerNum) {
 					if (playerHandler->Player(a)->active) {
 						onlyActive = false;
@@ -2905,7 +2905,7 @@ bool CGame::Draw() {
 		char buf[128];
 		const float fontScale = 1.0f;
 		int count;
-		const int* indices = playerRoster.GetIndices(&count);
+		const std::vector<int>& indices = playerRoster.GetIndices(&count);
 
 		for (int a = 0; a < count; ++a) {
 			const CPlayer* p = playerHandler->Player(indices[a]);
@@ -3283,7 +3283,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERLEFT: {
 				int player = inbuf[1];
-				if (player >= MAX_PLAYERS || player < 0)
+				if (player >= playerHandler->TotalPlayers() || player < 0)
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				else
 					playerHandler->PlayerLeft(player, inbuf[2]);
@@ -3335,7 +3335,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERSTAT: {
 				int player=inbuf[1];
-				if(player>=MAX_PLAYERS || player<0){
+				if(player >= playerHandler->TotalPlayers() || player<0){
 					logOutput.Print("Got invalid player num %i in playerstat msg",player);
 					break;
 				}
@@ -3352,7 +3352,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PAUSE: {
 				int player=inbuf[1];
-				if(player>=MAX_PLAYERS || player<0){
+				if(player>=playerHandler->TotalPlayers() || player<0){
 					logOutput.Print("Got invalid player num %i in pause msg",player);
 				}
 				else if (!skipping) {
@@ -3394,7 +3394,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERINFO: {
 				int player = inbuf[1];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 				} else {
 					playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
@@ -3508,7 +3508,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_COMMAND: {
 				int player = inbuf[3];
-				if ((player >= MAX_PLAYERS) || (player < 0)) {
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)) {
 					logOutput.Print("Got invalid player num %i in command msg",player);
 				} else {
 					Command c;
@@ -3525,7 +3525,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_SELECT: {
 				int player=inbuf[3];
-				if ((player >= MAX_PLAYERS) || (player < 0)) {
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)) {
 					logOutput.Print("Got invalid player num %i in netselect msg",player);
 				} else {
 					vector<int> selected;
@@ -3549,7 +3549,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_AICOMMAND: {
 				const int player = inbuf[3];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player number (%i) in NETMSG_AICOMMAND", player);
 					break;
 				}
@@ -3576,7 +3576,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_AICOMMANDS: {
 				const int player = inbuf[3];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player number (%i) in NETMSG_AICOMMANDS", player);
 					break;
 				}
@@ -3620,7 +3620,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_AISHARE: {
 				const int player = inbuf[3];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player number (%i) in NETMSG_AISHARE", player);
 					break;
 				}
@@ -3662,7 +3662,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_LUAMSG: {
 				const int player = inbuf[3];
-				if ((player < 0) || (player >= MAX_PLAYERS)) {
+				if ((player < 0) || (player >= playerHandler->TotalPlayers())) {
 					logOutput.Print("Got invalid player num %i in LuaMsg", player);
 				}
 				const int script = *reinterpret_cast<const unsigned short*>(inbuf+4);
@@ -3687,7 +3687,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_SHARE: {
 				int player = inbuf[1];
-				if ((player >= MAX_PLAYERS) || (player < 0)){
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)){
 					logOutput.Print("Got invalid player num %i in share msg",player);
 					break;
 				}
@@ -3758,7 +3758,7 @@ void CGame::ClientReadNet()
 				const int fromTeam = playerHandler->Player(player)->team;
 
 				unsigned numPlayersInTeam = 0;
-				for (int a = 0; a < MAX_PLAYERS; ++a) {
+				for (int a = 0; a < playerHandler->TotalPlayers(); ++a) {
 					if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == fromTeam)) {
 						++numPlayersInTeam;
 					}
@@ -3860,7 +3860,7 @@ void CGame::ClientReadNet()
 			case NETMSG_DIRECT_CONTROL: {
 				int player = inbuf[1];
 
-				if ((player >= MAX_PLAYERS) || (player < 0)) {
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)) {
 					logOutput.Print("Got invalid player num %i in direct control msg",player);
 					break;
 				}
@@ -3907,7 +3907,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_DC_UPDATE: {
 				int player = inbuf[1];
-				if ((player >= MAX_PLAYERS) || (player < 0)){
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)){
 					logOutput.Print("Got invalid player num %i in dc update msg",player);
 					break;
 				}
@@ -4417,7 +4417,7 @@ void CGame::SendNetChat(std::string message, int destination)
 void CGame::HandleChatMsg(const ChatMessage& msg)
 {
 	if ((msg.fromPlayer < 0) ||
-		((msg.fromPlayer >= MAX_PLAYERS) && (msg.fromPlayer != SERVER_PLAYER))) {
+		((msg.fromPlayer >= playerHandler->TotalPlayers()) && (msg.fromPlayer != SERVER_PLAYER))) {
 		return;
 	}
 

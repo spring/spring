@@ -44,7 +44,7 @@ public:
 	void PlayerLeft(int playernum, unsigned char reason);
 
 	int ActivePlayers() const { return activePlayers; }
-	unsigned TotalPlayers() const { return players.size(); };
+	int TotalPlayers() const { return players.size(); };
 
 private:
 
@@ -59,8 +59,7 @@ private:
 	/**
 	 * @brief players
 	 *
-	 * Array of CPlayer instances, for all the
-	 * players in the game (size MAX_PLAYERS)
+	 * for all the players in the game
 	 */
 	playerVec players;
 };

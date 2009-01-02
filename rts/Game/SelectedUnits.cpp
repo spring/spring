@@ -533,12 +533,14 @@ void CSelectedUnits::DependentDied(CObject *o)
 
 void CSelectedUnits::NetSelect(vector<int>& s,int player)
 {
+	assert(unsigned(player) < netSelected.size());
 	netSelected[player] = s;
 }
 
 
 void CSelectedUnits::NetOrder(Command &c, int playerID)
 {
+	assert(unsigned(playerID) < netSelected.size());
 	selectedUnitsAI.GiveCommandNet(c, playerID);
 
 	if (netSelected[playerID].size() > 0) {

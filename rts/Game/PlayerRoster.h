@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <string>
+#include <vector>
 
 class PlayerRoster {
 	public:
@@ -19,7 +20,7 @@ class PlayerRoster {
 
 		PlayerRoster();
 
-		const int* GetIndices(int* count);
+		const std::vector<int>& GetIndices(int* count) const;
 
 		bool SetSortTypeByName(const std::string& type);
 		bool SetSortTypeByCode(SortType type);
