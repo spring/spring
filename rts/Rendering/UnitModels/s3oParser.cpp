@@ -227,7 +227,7 @@ void CS3OParser::Draw(S3DModelPiece *o)
 
 void CS3OParser::SetVertexTangents(SS3OPiece* p)
 {
-	if (p->isEmpty) {
+	if (p->isEmpty || p->primitiveType == S3O_PRIMTYPE_QUADS) {
 		return;
 	}
 
@@ -245,9 +245,6 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		} break;
 		case S3O_PRIMTYPE_TRIANGLE_STRIP: {
 			stride = 1;
-		} break;
-		case S3O_PRIMTYPE_QUADS: {
-			stride = 4;
 		} break;
 	}
 
@@ -291,6 +288,7 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 			tri.tTangent = tDir;
 		triangles.push_back(tri);
 
+		// save the triangle index
 		verts2tris[v0idx].push_back(triangles.size() - 1);
 		verts2tris[v1idx].push_back(triangles.size() - 1);
 		verts2tris[v2idx].push_back(triangles.size() - 1);
