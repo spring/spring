@@ -120,37 +120,15 @@ Function .onInit
     !insertmacro SetSectionFlag 0 16 ; make the core section read only
   ${EndIf}
   !insertmacro UnselectSection 3 ; unselect springlobby section (3) by default
-  ;!insertmacro SetSectionFlag 4 32 ; expand (32) maps section (4)
   ${If} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro UnselectSection 6 ; unselect default section (6) by default
   ${EndIf}
-  !insertmacro UnselectSection 7 ; unselect 1v1maps section (7) by default
-  !insertmacro UnselectSection 8 ; unselect teammaps section by (8) default
   ;!insertmacro SetSectionFlag 10 32 ; expand (32) mods section (10)
-  !insertmacro UnselectSection 11 ; unselect BA section (11) by default
-  ${If} ${FileExists} "$INSTDIR\mods\BA631.sd7"
-    !insertmacro SelectSection 11 ; Select BA section (11) if BA is already installed
-  ${OrIf} ${FileExists} "$INSTDIR\mods\BA_Installer_Version.sd7"
-    !insertmacro SelectSection 11 ; Select BA section (11) if BA is already installed
-  ${EndIf}
-  !insertmacro UnselectSection 12 ; unselect XTA section (12) by default
-  ${If} ${FileExists} "$INSTDIR\mods\XTAPE.sdz"
-    !insertmacro SelectSection 12 ; Select XTA section (12) if XTA is already installed
-  ${OrIf} ${FileExists} "$INSTDIR\mods\XTA_Installer_Version.sdz"
-    !insertmacro SelectSection 12 ; Select XTA section (12) if XTA is already installed
-  ${EndIf}
-  !insertmacro UnselectSection 13 ; unselect Gundam section (13) by default
-  !insertmacro UnselectSection 14 ; unselect Kernel Panic section (14) by default
-  !insertmacro UnselectSection 15 ; unselect EvolutionRTS section (15) by default
-  !insertmacro UnselectSection 16 ; unselect Spring:1944 section (16) by default
-  !insertmacro UnselectSection 17 ; unselect Simbase section (17) by default
-  !insertmacro UnselectSection 18 ; unselect CA section (18) by default
 FunctionEnd
 
 ; For CA and Evolution: BEGIN
 
 ;Var CA
-Var EVO
 
 Function  .onGUIEnd
 ;${If} $CA == 'true'
