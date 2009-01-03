@@ -62,7 +62,6 @@ void util_setMyInfo(
 		const char** infoKeys, const char** infoValues);
 const char* util_getMyInfo(const char* key);
 
-//void util_setDataDirs(const char* unversioned, const char* versioned);
 const char* util_getDataDirVersioned();
 const char* util_getDataDirUnversioned();
 

@@ -31,6 +31,7 @@
 #include "Sim/Misc/ResourceHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Map/ReadMap.h"
 #include "Map/MetalMap.h"
 #include "Game/SelectedUnits.h"
@@ -851,7 +852,7 @@ EXPORT(float) _Clb_Map_getGravity(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetGravity();
 }
 
-EXPORT(bool) _Clb_Map_canBuildAt(int teamId, int unitDefId, SAIFloat3 pos, int facing) {
+EXPORT(bool) _Clb_Map_isPossibleToBuildAt(int teamId, int unitDefId, SAIFloat3 pos, int facing) {
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
 	return clb->CanBuildAt(unitDef, pos, facing);
@@ -1215,12 +1216,12 @@ EXPORT(const char*) _Clb_UnitDef_getDeathExplosion(int teamId, int unitDefId) {r
 EXPORT(const char*) _Clb_UnitDef_getSelfDExplosion(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->selfDExplosion.c_str();}
 EXPORT(const char*) _Clb_UnitDef_getTedClassString(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->TEDClassString.c_str();}
 EXPORT(const char*) _Clb_UnitDef_getCategoryString(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->categoryString.c_str();}
-EXPORT(bool) _Clb_UnitDef_isCanSelfD(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSelfD;}
+EXPORT(bool) _Clb_UnitDef_isAbleToSelfD(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSelfD;}
 EXPORT(int) _Clb_UnitDef_getSelfDCountdown(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->selfDCountdown;}
-EXPORT(bool) _Clb_UnitDef_isCanSubmerge(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSubmerge;}
-EXPORT(bool) _Clb_UnitDef_isCanFly(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canfly;}
-EXPORT(bool) _Clb_UnitDef_isCanMove(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canmove;}
-EXPORT(bool) _Clb_UnitDef_isCanHover(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canhover;}
+EXPORT(bool) _Clb_UnitDef_isAbleToSubmerge(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSubmerge;}
+EXPORT(bool) _Clb_UnitDef_isAbleToFly(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canfly;}
+EXPORT(bool) _Clb_UnitDef_isAbleToMove(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canmove;}
+EXPORT(bool) _Clb_UnitDef_isAbleToHover(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canhover;}
 EXPORT(bool) _Clb_UnitDef_isFloater(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->floater;}
 EXPORT(bool) _Clb_UnitDef_isBuilder(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->builder;}
 EXPORT(bool) _Clb_UnitDef_isActivateWhenBuilt(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->activateWhenBuilt;}
@@ -1229,19 +1230,19 @@ EXPORT(bool) _Clb_UnitDef_isFullHealthFactory(int teamId, int unitDefId) {return
 EXPORT(bool) _Clb_UnitDef_isFactoryHeadingTakeoff(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->factoryHeadingTakeoff;}
 EXPORT(bool) _Clb_UnitDef_isReclaimable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->reclaimable;}
 EXPORT(bool) _Clb_UnitDef_isCapturable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->capturable;}
-EXPORT(bool) _Clb_UnitDef_isCanRestore(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRestore;}
-EXPORT(bool) _Clb_UnitDef_isCanRepair(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepair;}
-EXPORT(bool) _Clb_UnitDef_isCanSelfRepair(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSelfRepair;}
-EXPORT(bool) _Clb_UnitDef_isCanReclaim(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canReclaim;}
-EXPORT(bool) _Clb_UnitDef_isCanAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAttack;}
-EXPORT(bool) _Clb_UnitDef_isCanPatrol(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canPatrol;}
-EXPORT(bool) _Clb_UnitDef_isCanFight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFight;}
-EXPORT(bool) _Clb_UnitDef_isCanGuard(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canGuard;}
-EXPORT(bool) _Clb_UnitDef_isCanBuild(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBuild;}
-EXPORT(bool) _Clb_UnitDef_isCanAssist(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAssist;}
-EXPORT(bool) _Clb_UnitDef_isCanBeAssisted(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBeAssisted;}
-EXPORT(bool) _Clb_UnitDef_isCanRepeat(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepeat;}
-EXPORT(bool) _Clb_UnitDef_isCanFireControl(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFireControl;}
+EXPORT(bool) _Clb_UnitDef_isAbleToRestore(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRestore;}
+EXPORT(bool) _Clb_UnitDef_isAbleToRepair(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepair;}
+EXPORT(bool) _Clb_UnitDef_isAbleToSelfRepair(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canSelfRepair;}
+EXPORT(bool) _Clb_UnitDef_isAbleToReclaim(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canReclaim;}
+EXPORT(bool) _Clb_UnitDef_isAbleToAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAttack;}
+EXPORT(bool) _Clb_UnitDef_isAbleToPatrol(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canPatrol;}
+EXPORT(bool) _Clb_UnitDef_isAbleToFight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFight;}
+EXPORT(bool) _Clb_UnitDef_isAbleToGuard(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canGuard;}
+EXPORT(bool) _Clb_UnitDef_isAbleToBuild(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBuild;}
+EXPORT(bool) _Clb_UnitDef_isAbleToAssist(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAssist;}
+EXPORT(bool) _Clb_UnitDef_isAssistable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBeAssisted;}
+EXPORT(bool) _Clb_UnitDef_isAbleToRepeat(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepeat;}
+EXPORT(bool) _Clb_UnitDef_isAbleToFireControl(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFireControl;}
 EXPORT(int) _Clb_UnitDef_getFireState(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->fireState;}
 EXPORT(int) _Clb_UnitDef_getMoveState(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->moveState;}
 EXPORT(float) _Clb_UnitDef_getWingDrag(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wingDrag;}
@@ -1255,7 +1256,7 @@ EXPORT(float) _Clb_UnitDef_getMaxPitch(int teamId, int unitDefId) {return getUni
 EXPORT(float) _Clb_UnitDef_getTurnRadius(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->turnRadius;}
 EXPORT(float) _Clb_UnitDef_getWantedHeight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->wantedHeight;}
 EXPORT(float) _Clb_UnitDef_getVerticalSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->verticalSpeed;}
-EXPORT(bool) _Clb_UnitDef_isCanCrash(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCrash;}
+EXPORT(bool) _Clb_UnitDef_isAbleToCrash(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCrash;}
 EXPORT(bool) _Clb_UnitDef_isHoverAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->hoverAttack;}
 EXPORT(bool) _Clb_UnitDef_isAirStrafe(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->airStrafe;}
 EXPORT(float) _Clb_UnitDef_getDlHoverFactor(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->dlHoverFactor;}
@@ -1278,29 +1279,29 @@ EXPORT(float) _Clb_UnitDef_getTransportMass(int teamId, int unitDefId) {return g
 EXPORT(float) _Clb_UnitDef_getMinTransportMass(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->minTransportMass;}
 EXPORT(bool) _Clb_UnitDef_isHoldSteady(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->holdSteady;}
 EXPORT(bool) _Clb_UnitDef_isReleaseHeld(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->releaseHeld;}
-EXPORT(bool) _Clb_UnitDef_isCantBeTransported(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cantBeTransported;}
+EXPORT(bool) _Clb_UnitDef_isNotTransportable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cantBeTransported;}
 EXPORT(bool) _Clb_UnitDef_isTransportByEnemy(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportByEnemy;}
 EXPORT(int) _Clb_UnitDef_getTransportUnloadMethod(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->transportUnloadMethod;}
 EXPORT(float) _Clb_UnitDef_getFallSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->fallSpeed;}
 EXPORT(float) _Clb_UnitDef_getUnitFallSpeed(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->unitFallSpeed;}
-EXPORT(bool) _Clb_UnitDef_isCanCloak(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCloak;}
+EXPORT(bool) _Clb_UnitDef_isAbleToCloak(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCloak;}
 EXPORT(bool) _Clb_UnitDef_isStartCloaked(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->startCloaked;}
 EXPORT(float) _Clb_UnitDef_getCloakCost(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cloakCost;}
 EXPORT(float) _Clb_UnitDef_getCloakCostMoving(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->cloakCostMoving;}
 EXPORT(float) _Clb_UnitDef_getDecloakDistance(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakDistance;}
 EXPORT(bool) _Clb_UnitDef_isDecloakSpherical(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakSpherical;}
 EXPORT(bool) _Clb_UnitDef_isDecloakOnFire(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->decloakOnFire;}
-EXPORT(bool) _Clb_UnitDef_isCanKamikaze(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canKamikaze;}
+EXPORT(bool) _Clb_UnitDef_isAbleToKamikaze(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canKamikaze;}
 EXPORT(float) _Clb_UnitDef_getKamikazeDist(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->kamikazeDist;}
 EXPORT(bool) _Clb_UnitDef_isTargetingFacility(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->targfac;}
-EXPORT(bool) _Clb_UnitDef_isCanDGun(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canDGun;}
+EXPORT(bool) _Clb_UnitDef_isAbleToDGun(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canDGun;}
 EXPORT(bool) _Clb_UnitDef_isNeedGeo(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->needGeo;}
 EXPORT(bool) _Clb_UnitDef_isFeature(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isFeature;}
 EXPORT(bool) _Clb_UnitDef_isHideDamage(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->hideDamage;}
 EXPORT(bool) _Clb_UnitDef_isCommander(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->isCommander;}
 EXPORT(bool) _Clb_UnitDef_isShowPlayerName(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->showPlayerName;}
-EXPORT(bool) _Clb_UnitDef_isCanResurrect(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canResurrect;}
-EXPORT(bool) _Clb_UnitDef_isCanCapture(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCapture;}
+EXPORT(bool) _Clb_UnitDef_isAbleToResurrect(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canResurrect;}
+EXPORT(bool) _Clb_UnitDef_isAbleToCapture(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canCapture;}
 EXPORT(int) _Clb_UnitDef_getHighTrajectoryType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->highTrajectoryType;}
 EXPORT(unsigned int) _Clb_UnitDef_getNoChaseCategory(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->noChaseCategory;}
 EXPORT(bool) _Clb_UnitDef_isLeaveTracks(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->leaveTracks;}
@@ -1309,7 +1310,7 @@ EXPORT(float) _Clb_UnitDef_getTrackOffset(int teamId, int unitDefId) {return get
 EXPORT(float) _Clb_UnitDef_getTrackStrength(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackStrength;}
 EXPORT(float) _Clb_UnitDef_getTrackStretch(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackStretch;}
 EXPORT(int) _Clb_UnitDef_getTrackType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->trackType;}
-EXPORT(bool) _Clb_UnitDef_isCanDropFlare(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canDropFlare;}
+EXPORT(bool) _Clb_UnitDef_isAbleToDropFlare(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canDropFlare;}
 EXPORT(float) _Clb_UnitDef_getFlareReloadTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareReloadTime;}
 EXPORT(float) _Clb_UnitDef_getFlareEfficiency(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareEfficiency;}
 EXPORT(float) _Clb_UnitDef_getFlareDelay(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareDelay;}
@@ -1327,7 +1328,7 @@ EXPORT(bool) _Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker(int teamId, i
 		return false;
 	}
 }
-EXPORT(bool) _Clb_UnitDef_isCanLoopbackAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canLoopbackAttack;}
+EXPORT(bool) _Clb_UnitDef_isAbleToLoopbackAttack(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canLoopbackAttack;}
 EXPORT(bool) _Clb_UnitDef_isLevelGround(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->levelGround;}
 EXPORT(bool) _Clb_UnitDef_isUseBuildingGroundDecal(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->useBuildingGroundDecal;}
 EXPORT(int) _Clb_UnitDef_getBuildingDecalType(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildingDecalType;}
@@ -1355,8 +1356,8 @@ EXPORT(int) _Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getStockpileDef(int teamId, int
 	else
 		return wd->id;
 }
-EXPORT(int) _Clb_UnitDef_0ARRAY1SIZE0getBuildOptions(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildOptions.size();}
-EXPORT(int) _Clb_UnitDef_0ARRAY1VALS0getBuildOptions(int teamId, int unitDefId, int* unitDefIds, int unitDefIds_max) {
+EXPORT(int) _Clb_UnitDef_0ARRAY1SIZE1UnitDef0getBuildOptions(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildOptions.size();}
+EXPORT(int) _Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions(int teamId, int unitDefId, int* unitDefIds, int unitDefIds_max) {
 	const std::map<int,std::string>& bo = getUnitDefById(teamId, unitDefId)->buildOptions;
 	std::map<int,std::string>::const_iterator bb;
 	int b;
@@ -1856,6 +1857,41 @@ EXPORT(int) _Clb_0MULTI1VALS3SelectedUnits0Unit(int teamId, int* unitIds, int un
 	IAICallback* clb = team_callback[teamId]; return clb->GetSelectedUnits(unitIds, unitIds_max);
 }
 
+EXPORT(int) _Clb_0MULTI1SIZE3TeamUnits0Unit(int teamId) {
+
+	int a = 0;
+
+	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
+			ui != uh->activeUnits.end(); ++ui) {
+		CUnit* u = *ui;
+
+		if (u->team == teamId) {
+			a++;
+		}
+	}
+
+	return a;
+}
+EXPORT(int) _Clb_0MULTI1VALS3TeamUnits0Unit(int teamId, int* unitIds, int unitIds_max) {
+
+	int a = 0;
+
+	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
+			ui != uh->activeUnits.end(); ++ui) {
+		CUnit* u = *ui;
+
+		if (u->team == teamId) {
+			if (a < unitIds_max) {
+				unitIds[a++] = u->id;
+			} else {
+				break;
+			}
+		}
+	}
+
+	return a;
+}
+
 //EXPORT(void) _Clb_Unit_0STATIC0updateSelectedUnitsIcons(int teamId) {
 //
 //	if (!isControlledByLocalPlayer(teamId)) return;
@@ -2169,7 +2205,7 @@ EXPORT(float) _Clb_WeaponDef_getHeightBoostFactor(int teamId, int weaponDefId) {
 EXPORT(float) _Clb_WeaponDef_getProximityPriority(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->proximityPriority;}
 EXPORT(unsigned int) _Clb_WeaponDef_getCollisionFlags(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->collisionFlags;}
 EXPORT(bool) _Clb_WeaponDef_isSweepFire(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->sweepFire;}
-EXPORT(bool) _Clb_WeaponDef_isCanAttackGround(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->canAttackGround;}
+EXPORT(bool) _Clb_WeaponDef_isAbleToAttackGround(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->canAttackGround;}
 EXPORT(float) _Clb_WeaponDef_getCameraShake(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cameraShake;}
 EXPORT(float) _Clb_WeaponDef_getDynDamageExp(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageExp;}
 EXPORT(float) _Clb_WeaponDef_getDynDamageMin(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->dynDamageMin;}
@@ -2315,6 +2351,7 @@ EXPORT(bool) _Clb_Group_isSelected(int teamId, int groupId) {
 SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 
 	SAICallback* sAICallback = new SAICallback();
+	// INSERT AUTO GENERATED PART FROM HERE ...
 	sAICallback->Clb_handleCommand = _Clb_handleCommand;
 	sAICallback->Clb_Game_getCurrentFrame = _Clb_Game_getCurrentFrame;
 	sAICallback->Clb_Game_getAiInterfaceVersion = _Clb_Game_getAiInterfaceVersion;
@@ -2434,12 +2471,12 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_getSelfDExplosion = _Clb_UnitDef_getSelfDExplosion;
 	sAICallback->Clb_UnitDef_getTedClassString = _Clb_UnitDef_getTedClassString;
 	sAICallback->Clb_UnitDef_getCategoryString = _Clb_UnitDef_getCategoryString;
-	sAICallback->Clb_UnitDef_isCanSelfD = _Clb_UnitDef_isCanSelfD;
+	sAICallback->Clb_UnitDef_isAbleToSelfD = _Clb_UnitDef_isAbleToSelfD;
 	sAICallback->Clb_UnitDef_getSelfDCountdown = _Clb_UnitDef_getSelfDCountdown;
-	sAICallback->Clb_UnitDef_isCanSubmerge = _Clb_UnitDef_isCanSubmerge;
-	sAICallback->Clb_UnitDef_isCanFly = _Clb_UnitDef_isCanFly;
-	sAICallback->Clb_UnitDef_isCanMove = _Clb_UnitDef_isCanMove;
-	sAICallback->Clb_UnitDef_isCanHover = _Clb_UnitDef_isCanHover;
+	sAICallback->Clb_UnitDef_isAbleToSubmerge = _Clb_UnitDef_isAbleToSubmerge;
+	sAICallback->Clb_UnitDef_isAbleToFly = _Clb_UnitDef_isAbleToFly;
+	sAICallback->Clb_UnitDef_isAbleToMove = _Clb_UnitDef_isAbleToMove;
+	sAICallback->Clb_UnitDef_isAbleToHover = _Clb_UnitDef_isAbleToHover;
 	sAICallback->Clb_UnitDef_isFloater = _Clb_UnitDef_isFloater;
 	sAICallback->Clb_UnitDef_isBuilder = _Clb_UnitDef_isBuilder;
 	sAICallback->Clb_UnitDef_isActivateWhenBuilt = _Clb_UnitDef_isActivateWhenBuilt;
@@ -2448,19 +2485,19 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_isFactoryHeadingTakeoff = _Clb_UnitDef_isFactoryHeadingTakeoff;
 	sAICallback->Clb_UnitDef_isReclaimable = _Clb_UnitDef_isReclaimable;
 	sAICallback->Clb_UnitDef_isCapturable = _Clb_UnitDef_isCapturable;
-	sAICallback->Clb_UnitDef_isCanRestore = _Clb_UnitDef_isCanRestore;
-	sAICallback->Clb_UnitDef_isCanRepair = _Clb_UnitDef_isCanRepair;
-	sAICallback->Clb_UnitDef_isCanSelfRepair = _Clb_UnitDef_isCanSelfRepair;
-	sAICallback->Clb_UnitDef_isCanReclaim = _Clb_UnitDef_isCanReclaim;
-	sAICallback->Clb_UnitDef_isCanAttack = _Clb_UnitDef_isCanAttack;
-	sAICallback->Clb_UnitDef_isCanPatrol = _Clb_UnitDef_isCanPatrol;
-	sAICallback->Clb_UnitDef_isCanFight = _Clb_UnitDef_isCanFight;
-	sAICallback->Clb_UnitDef_isCanGuard = _Clb_UnitDef_isCanGuard;
-	sAICallback->Clb_UnitDef_isCanBuild = _Clb_UnitDef_isCanBuild;
-	sAICallback->Clb_UnitDef_isCanAssist = _Clb_UnitDef_isCanAssist;
-	sAICallback->Clb_UnitDef_isCanBeAssisted = _Clb_UnitDef_isCanBeAssisted;
-	sAICallback->Clb_UnitDef_isCanRepeat = _Clb_UnitDef_isCanRepeat;
-	sAICallback->Clb_UnitDef_isCanFireControl = _Clb_UnitDef_isCanFireControl;
+	sAICallback->Clb_UnitDef_isAbleToRestore = _Clb_UnitDef_isAbleToRestore;
+	sAICallback->Clb_UnitDef_isAbleToRepair = _Clb_UnitDef_isAbleToRepair;
+	sAICallback->Clb_UnitDef_isAbleToSelfRepair = _Clb_UnitDef_isAbleToSelfRepair;
+	sAICallback->Clb_UnitDef_isAbleToReclaim = _Clb_UnitDef_isAbleToReclaim;
+	sAICallback->Clb_UnitDef_isAbleToAttack = _Clb_UnitDef_isAbleToAttack;
+	sAICallback->Clb_UnitDef_isAbleToPatrol = _Clb_UnitDef_isAbleToPatrol;
+	sAICallback->Clb_UnitDef_isAbleToFight = _Clb_UnitDef_isAbleToFight;
+	sAICallback->Clb_UnitDef_isAbleToGuard = _Clb_UnitDef_isAbleToGuard;
+	sAICallback->Clb_UnitDef_isAbleToBuild = _Clb_UnitDef_isAbleToBuild;
+	sAICallback->Clb_UnitDef_isAbleToAssist = _Clb_UnitDef_isAbleToAssist;
+	sAICallback->Clb_UnitDef_isAssistable = _Clb_UnitDef_isAssistable;
+	sAICallback->Clb_UnitDef_isAbleToRepeat = _Clb_UnitDef_isAbleToRepeat;
+	sAICallback->Clb_UnitDef_isAbleToFireControl = _Clb_UnitDef_isAbleToFireControl;
 	sAICallback->Clb_UnitDef_getFireState = _Clb_UnitDef_getFireState;
 	sAICallback->Clb_UnitDef_getMoveState = _Clb_UnitDef_getMoveState;
 	sAICallback->Clb_UnitDef_getWingDrag = _Clb_UnitDef_getWingDrag;
@@ -2474,7 +2511,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_getTurnRadius = _Clb_UnitDef_getTurnRadius;
 	sAICallback->Clb_UnitDef_getWantedHeight = _Clb_UnitDef_getWantedHeight;
 	sAICallback->Clb_UnitDef_getVerticalSpeed = _Clb_UnitDef_getVerticalSpeed;
-	sAICallback->Clb_UnitDef_isCanCrash = _Clb_UnitDef_isCanCrash;
+	sAICallback->Clb_UnitDef_isAbleToCrash = _Clb_UnitDef_isAbleToCrash;
 	sAICallback->Clb_UnitDef_isHoverAttack = _Clb_UnitDef_isHoverAttack;
 	sAICallback->Clb_UnitDef_isAirStrafe = _Clb_UnitDef_isAirStrafe;
 	sAICallback->Clb_UnitDef_getDlHoverFactor = _Clb_UnitDef_getDlHoverFactor;
@@ -2496,29 +2533,29 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_getMinTransportMass = _Clb_UnitDef_getMinTransportMass;
 	sAICallback->Clb_UnitDef_isHoldSteady = _Clb_UnitDef_isHoldSteady;
 	sAICallback->Clb_UnitDef_isReleaseHeld = _Clb_UnitDef_isReleaseHeld;
-	sAICallback->Clb_UnitDef_isCantBeTransported = _Clb_UnitDef_isCantBeTransported;
+	sAICallback->Clb_UnitDef_isNotTransportable = _Clb_UnitDef_isNotTransportable;
 	sAICallback->Clb_UnitDef_isTransportByEnemy = _Clb_UnitDef_isTransportByEnemy;
 	sAICallback->Clb_UnitDef_getTransportUnloadMethod = _Clb_UnitDef_getTransportUnloadMethod;
 	sAICallback->Clb_UnitDef_getFallSpeed = _Clb_UnitDef_getFallSpeed;
 	sAICallback->Clb_UnitDef_getUnitFallSpeed = _Clb_UnitDef_getUnitFallSpeed;
-	sAICallback->Clb_UnitDef_isCanCloak = _Clb_UnitDef_isCanCloak;
+	sAICallback->Clb_UnitDef_isAbleToCloak = _Clb_UnitDef_isAbleToCloak;
 	sAICallback->Clb_UnitDef_isStartCloaked = _Clb_UnitDef_isStartCloaked;
 	sAICallback->Clb_UnitDef_getCloakCost = _Clb_UnitDef_getCloakCost;
 	sAICallback->Clb_UnitDef_getCloakCostMoving = _Clb_UnitDef_getCloakCostMoving;
 	sAICallback->Clb_UnitDef_getDecloakDistance = _Clb_UnitDef_getDecloakDistance;
 	sAICallback->Clb_UnitDef_isDecloakSpherical = _Clb_UnitDef_isDecloakSpherical;
 	sAICallback->Clb_UnitDef_isDecloakOnFire = _Clb_UnitDef_isDecloakOnFire;
-	sAICallback->Clb_UnitDef_isCanKamikaze = _Clb_UnitDef_isCanKamikaze;
+	sAICallback->Clb_UnitDef_isAbleToKamikaze = _Clb_UnitDef_isAbleToKamikaze;
 	sAICallback->Clb_UnitDef_getKamikazeDist = _Clb_UnitDef_getKamikazeDist;
 	sAICallback->Clb_UnitDef_isTargetingFacility = _Clb_UnitDef_isTargetingFacility;
-	sAICallback->Clb_UnitDef_isCanDGun = _Clb_UnitDef_isCanDGun;
+	sAICallback->Clb_UnitDef_isAbleToDGun = _Clb_UnitDef_isAbleToDGun;
 	sAICallback->Clb_UnitDef_isNeedGeo = _Clb_UnitDef_isNeedGeo;
 	sAICallback->Clb_UnitDef_isFeature = _Clb_UnitDef_isFeature;
 	sAICallback->Clb_UnitDef_isHideDamage = _Clb_UnitDef_isHideDamage;
 	sAICallback->Clb_UnitDef_isCommander = _Clb_UnitDef_isCommander;
 	sAICallback->Clb_UnitDef_isShowPlayerName = _Clb_UnitDef_isShowPlayerName;
-	sAICallback->Clb_UnitDef_isCanResurrect = _Clb_UnitDef_isCanResurrect;
-	sAICallback->Clb_UnitDef_isCanCapture = _Clb_UnitDef_isCanCapture;
+	sAICallback->Clb_UnitDef_isAbleToResurrect = _Clb_UnitDef_isAbleToResurrect;
+	sAICallback->Clb_UnitDef_isAbleToCapture = _Clb_UnitDef_isAbleToCapture;
 	sAICallback->Clb_UnitDef_getHighTrajectoryType = _Clb_UnitDef_getHighTrajectoryType;
 	sAICallback->Clb_UnitDef_getNoChaseCategory = _Clb_UnitDef_getNoChaseCategory;
 	sAICallback->Clb_UnitDef_isLeaveTracks = _Clb_UnitDef_isLeaveTracks;
@@ -2527,7 +2564,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_getTrackStrength = _Clb_UnitDef_getTrackStrength;
 	sAICallback->Clb_UnitDef_getTrackStretch = _Clb_UnitDef_getTrackStretch;
 	sAICallback->Clb_UnitDef_getTrackType = _Clb_UnitDef_getTrackType;
-	sAICallback->Clb_UnitDef_isCanDropFlare = _Clb_UnitDef_isCanDropFlare;
+	sAICallback->Clb_UnitDef_isAbleToDropFlare = _Clb_UnitDef_isAbleToDropFlare;
 	sAICallback->Clb_UnitDef_getFlareReloadTime = _Clb_UnitDef_getFlareReloadTime;
 	sAICallback->Clb_UnitDef_getFlareEfficiency = _Clb_UnitDef_getFlareEfficiency;
 	sAICallback->Clb_UnitDef_getFlareDelay = _Clb_UnitDef_getFlareDelay;
@@ -2537,7 +2574,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_getFlareSalvoDelay = _Clb_UnitDef_getFlareSalvoDelay;
 	sAICallback->Clb_UnitDef_isSmoothAnim = _Clb_UnitDef_isSmoothAnim;
 	sAICallback->Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker = _Clb_UnitDef_0REF1Resource2resourceId0isResourceMaker;
-	sAICallback->Clb_UnitDef_isCanLoopbackAttack = _Clb_UnitDef_isCanLoopbackAttack;
+	sAICallback->Clb_UnitDef_isAbleToLoopbackAttack = _Clb_UnitDef_isAbleToLoopbackAttack;
 	sAICallback->Clb_UnitDef_isLevelGround = _Clb_UnitDef_isLevelGround;
 	sAICallback->Clb_UnitDef_isUseBuildingGroundDecal = _Clb_UnitDef_isUseBuildingGroundDecal;
 	sAICallback->Clb_UnitDef_getBuildingDecalType = _Clb_UnitDef_getBuildingDecalType;
@@ -2553,8 +2590,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_isDontLand = _Clb_UnitDef_isDontLand;
 	sAICallback->Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getShieldDef = _Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getShieldDef;
 	sAICallback->Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getStockpileDef = _Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getStockpileDef;
-	sAICallback->Clb_UnitDef_0ARRAY1SIZE0getBuildOptions = _Clb_UnitDef_0ARRAY1SIZE0getBuildOptions;
-	sAICallback->Clb_UnitDef_0ARRAY1VALS0getBuildOptions = _Clb_UnitDef_0ARRAY1VALS0getBuildOptions;
+	sAICallback->Clb_UnitDef_0ARRAY1SIZE1UnitDef0getBuildOptions = _Clb_UnitDef_0ARRAY1SIZE1UnitDef0getBuildOptions;
+	sAICallback->Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions = _Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions;
 	sAICallback->Clb_UnitDef_0MAP1SIZE0getCustomParams = _Clb_UnitDef_0MAP1SIZE0getCustomParams;
 	sAICallback->Clb_UnitDef_0MAP1KEYS0getCustomParams = _Clb_UnitDef_0MAP1KEYS0getCustomParams;
 	sAICallback->Clb_UnitDef_0MAP1VALS0getCustomParams = _Clb_UnitDef_0MAP1VALS0getCustomParams;
@@ -2597,6 +2634,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_0MULTI1VALS3NeutralUnits0Unit = _Clb_0MULTI1VALS3NeutralUnits0Unit;
 	sAICallback->Clb_0MULTI1SIZE3NeutralUnitsIn0Unit = _Clb_0MULTI1SIZE3NeutralUnitsIn0Unit;
 	sAICallback->Clb_0MULTI1VALS3NeutralUnitsIn0Unit = _Clb_0MULTI1VALS3NeutralUnitsIn0Unit;
+	sAICallback->Clb_0MULTI1SIZE3TeamUnits0Unit = _Clb_0MULTI1SIZE3TeamUnits0Unit;
+	sAICallback->Clb_0MULTI1VALS3TeamUnits0Unit = _Clb_0MULTI1VALS3TeamUnits0Unit;
 	sAICallback->Clb_0MULTI1SIZE3SelectedUnits0Unit = _Clb_0MULTI1SIZE3SelectedUnits0Unit;
 	sAICallback->Clb_0MULTI1VALS3SelectedUnits0Unit = _Clb_0MULTI1VALS3SelectedUnits0Unit;
 	sAICallback->Clb_Unit_0SINGLE1FETCH2UnitDef0getDef = _Clb_Unit_0SINGLE1FETCH2UnitDef0getDef;
@@ -2695,7 +2734,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_Map_Line_getFirstPosition = _Clb_Map_Line_getFirstPosition;
 	sAICallback->Clb_Map_Line_getSecondPosition = _Clb_Map_Line_getSecondPosition;
 	sAICallback->Clb_Map_Line_getColor = _Clb_Map_Line_getColor;
-	sAICallback->Clb_Map_canBuildAt = _Clb_Map_canBuildAt;
+	sAICallback->Clb_Map_isPossibleToBuildAt = _Clb_Map_isPossibleToBuildAt;
 	sAICallback->Clb_Map_findClosestBuildSite = _Clb_Map_findClosestBuildSite;
 	sAICallback->Clb_0MULTI1SIZE0FeatureDef = _Clb_0MULTI1SIZE0FeatureDef;
 	sAICallback->Clb_0MULTI1VALS0FeatureDef = _Clb_0MULTI1VALS0FeatureDef;
@@ -2861,7 +2900,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_WeaponDef_getProximityPriority = _Clb_WeaponDef_getProximityPriority;
 	sAICallback->Clb_WeaponDef_getCollisionFlags = _Clb_WeaponDef_getCollisionFlags;
 	sAICallback->Clb_WeaponDef_isSweepFire = _Clb_WeaponDef_isSweepFire;
-	sAICallback->Clb_WeaponDef_isCanAttackGround = _Clb_WeaponDef_isCanAttackGround;
+	sAICallback->Clb_WeaponDef_isAbleToAttackGround = _Clb_WeaponDef_isAbleToAttackGround;
 	sAICallback->Clb_WeaponDef_getCameraShake = _Clb_WeaponDef_getCameraShake;
 	sAICallback->Clb_WeaponDef_getDynDamageExp = _Clb_WeaponDef_getDynDamageExp;
 	sAICallback->Clb_WeaponDef_getDynDamageMin = _Clb_WeaponDef_getDynDamageMin;
@@ -2870,6 +2909,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_WeaponDef_0MAP1SIZE0getCustomParams = _Clb_WeaponDef_0MAP1SIZE0getCustomParams;
 	sAICallback->Clb_WeaponDef_0MAP1KEYS0getCustomParams = _Clb_WeaponDef_0MAP1KEYS0getCustomParams;
 	sAICallback->Clb_WeaponDef_0MAP1VALS0getCustomParams = _Clb_WeaponDef_0MAP1VALS0getCustomParams;
+	// ... TILL HERE
 
 	team_globalCallback[teamId] = aiGlobalCallback;
 //	team_callback[teamId] = aiCallback;
