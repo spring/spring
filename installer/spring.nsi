@@ -97,7 +97,6 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ;ShowUnInstDetails show ;fix graphical glitch
 
 !include "include\fileassoc.nsh"
-!include "include\otacontent.nsh"
 !include "include\checkrunning.nsh"
 
 
