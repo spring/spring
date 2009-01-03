@@ -126,18 +126,6 @@ Function .onInit
   ;!insertmacro SetSectionFlag 10 32 ; expand (32) mods section (10)
 FunctionEnd
 
-; For CA and Evolution: BEGIN
-
-;Var CA
-
-Function  .onGUIEnd
-;${If} $CA == 'true'
-  ;Call LaunchUpdater
-;${EndIf}
-${If} $EVO == 'true'
-  Call LaunchEvoUpdater
-${EndIf}
-FunctionEnd
 
 Function GetDotNETVersion
   Push $0 ; Create variable 0 (version number).
