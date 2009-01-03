@@ -257,73 +257,6 @@ SectionGroup "Multiplayer battlerooms"
 SectionGroupEnd
 
 
-SectionGroup "Mods"
-	Section "BA" SEC_BA
-	!define INSTALL
-        Call CheckTATextures
-        Call CheckOTAContent
-        Call CheckTAContent
-        AddSize 9100
-	!include "sections\ba.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "XTA" SEC_XTA
-	!define INSTALL
-        Call CheckTATextures
-        Call CheckOTAContent
-        Call CheckTAContent
-        AddSize 12600
-	!include "sections\xta.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Gundam" SEC_GUNDAM
-	!define INSTALL
-	AddSize 51000
-	!include "sections\gundam.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Kernel Panic" SEC_KP
-	!define INSTALL
-	AddSize 6400
-	!include "sections\kp.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Evolution RTS" SEC_EVOLUTION
-	!define INSTALL
-	AddSize 38700
-	!include "sections\evolution.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Spring:1944" SEC_S44
-	!define INSTALL
-	AddSize 33700
-	!include "sections\s44.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Simbase" SEC_SIMBASE
-	!define INSTALL
-	AddSize 3500
-	!include "sections\simbase.nsh"
-	!undef INSTALL
-	SectionEnd
-
-  	Section "CA" SEC_CA
-	!define INSTALL
-        Call CheckTATextures
-        Call CheckOTAContent
-        Call CheckTAContent
-        AddSize 54400
-	!include "sections\ca.nsh"
-	!undef INSTALL
-	SectionEnd
-SectionGroupEnd
-
 Section "Start menu shortcuts" SEC_START
   !define INSTALL
   !include "sections\shortcuts.nsh"
@@ -404,15 +337,6 @@ Section Uninstall
   !include "sections\tasclient.nsh"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"
-
-  !include "sections\BA.nsh"
-  !include "sections\XTA.nsh"
-  !include "sections\gundam.nsh"
-  !include "sections\kp.nsh"
-  !include "sections\evolution.nsh"
-  !include "sections\s44.nsh"
-  !include "sections\simbase.nsh"
-  !include "sections\CA.nsh"
 
   Delete "$DESKTOP\${PRODUCT_NAME} battleroom.lnk"
   Delete "$DESKTOP\${PRODUCT_NAME} Play Kernel Panic Singleplayer.lnk"
