@@ -168,31 +168,6 @@ false:
 next:
 FunctionEnd
 
-;Function LaunchUpdater
-  ;MessageBox MB_YESNO \
-  ;"Before you can play Complete Annihilation, the CA Downloader will need to fetch the mod. Do you wish to do so now?" \
-  ;IDYES true IDNO false
-;true:
-  ;Exec '"$INSTDIR\CaDownloader.exe"'
-  ;Goto next
-;false:
-  ;next:
-;FunctionEnd
-
-Function LaunchEvoUpdater
-  MessageBox MB_YESNO \
-  "Before you can play Evolution, the Evolution Updater will need to fetch the mod. Do you wish to do so now?" \
-  IDYES true IDNO false
-true:
-  Exec '"$INSTDIR\mods\Evolution_Updater.bat"'
-  Goto next
-false:
-  next:
-FunctionEnd
-
-; For CA and Evolution: END
-
-
 
 Section "Main application (req)" SEC_MAIN
 !ifdef SP_UPDATE
