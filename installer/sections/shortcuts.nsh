@@ -32,7 +32,6 @@
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
-  Delete "$SMPROGRAMS\${PRODUCT_NAME}\Play Kernel Panic Singleplayer.lnk"
   
   ; delete the old shortcuts if they're present from a prior installation
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
