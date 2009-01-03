@@ -1193,6 +1193,8 @@ void CDynWater::AddShipWakes()
 
 void CDynWater::AddExplosions()
 {
+	GML_STDMUTEX_LOCK(water); // AddExplosions
+
 	if(explosions.empty())
 		return;
 
@@ -1273,6 +1275,9 @@ void CDynWater::AddExplosion(const float3& pos, float strength, float size)
 {
 	if(pos.y>size || size < 8)
 		return;
+
+	GML_STDMUTEX_LOCK(water); // AddExplosion
+
 	explosions.push_back(Explosion(pos,std::min(size*20,strength),size));
 }
 

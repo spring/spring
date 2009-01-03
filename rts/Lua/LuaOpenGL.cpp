@@ -232,7 +232,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 		REGISTER_LUA_CFUNC(DeleteTextureFBO);
 		REGISTER_LUA_CFUNC(RenderToTexture);
 	}
-	if (glGenerateMipmapEXT) {
+	if (glGenerateMipmapEXT_NONGML) {
 		REGISTER_LUA_CFUNC(GenerateMipmap);
 	}
 	REGISTER_LUA_CFUNC(ActiveTexture);
@@ -379,7 +379,7 @@ void LuaOpenGL::ResetGLState()
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	glEnable(GL_BLEND);
-	if (glBlendEquation != NULL) {
+	if (glBlendEquation_NONGML != NULL) {
 		glBlendEquation(GL_FUNC_ADD);
 	}
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -451,7 +451,7 @@ void LuaOpenGL::ResetGLState()
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
 
-	if (glUseProgram) {
+	if (glUseProgram_NONGML) {
 		glUseProgram(0);
 	}
 }
@@ -499,7 +499,7 @@ inline void LuaOpenGL::DisableCommon(DrawMode mode)
 	if (safeMode) {
 		glPopAttrib();
 	}
-	if (glUseProgram) {
+	if (glUseProgram_NONGML) {
 		glUseProgram(0);
 	}
 }

@@ -6018,14 +6018,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Sync\Syncify.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sync\Syncify.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Sync\SyncTracer.cpp"
 					>
 				</File>
