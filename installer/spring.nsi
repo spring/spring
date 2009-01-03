@@ -394,10 +394,6 @@ FunctionEnd
 
 Section Uninstall
 
-  !include "sections\maps.nsh"
-  !include "sections\1v1maps.nsh"
-  !include "sections\teammaps.nsh"
-
   !include "sections\main.nsh"
 
   !include "sections\docs.nsh"
