@@ -19,6 +19,8 @@ package com.clan_sy.spring.ai;
 
 
 import com.sun.jna.Structure;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Serves as Interface for a Java Skirmish AIs for the Spring engine.
@@ -28,6 +30,43 @@ import com.sun.jna.Structure;
  */
 //public interface AICommand {}
 public abstract class AICommand extends Structure/* implements Structure.ByReference*/ {
+
+	public static enum Option {
+		DONT_REPEAT     (1 << 3), //   8
+		RIGHT_MOUSE_KEY (1 << 4), //  16
+		SHIFT_KEY       (1 << 5), //  32
+		CONTROL_KEY     (1 << 6), //  64
+		ALT_KEY         (1 << 7); // 128
+
+		private int bitValue;
+
+		private Option(int bitValue) {
+			this.bitValue = bitValue;
+		}
+
+		public static int getBitField(List<Option> options) {
+
+			int bitField = 0;
+
+			for (Option option : options) {
+				bitField += option.bitValue;
+			}
+
+			return bitField;
+		}
+		public static List<Option> getOptions(int bitField) {
+
+			List<Option> options = new ArrayList<Option>();
+
+			for (Option option : Option.values()) {
+				if ((bitField & option.bitValue) == option.bitValue) {
+					options.add(option);
+				}
+			}
+
+			return options;
+		}
+	}
 
 	public abstract int getTopic();
 

@@ -68,6 +68,12 @@ function noSpaces(s)  { gsub(/[ \t]/, "", s); return s; }
 
 function capFirst(s)  { return toupper(substr(s, 1, 1)) substr(s, 2); }
 
+function capitalize(s)  { return toupper(substr(s, 1, 1)) substr(s, 2); }
+function lowerize(s)  { return tolower(substr(s, 1, 1)) substr(s, 2); }
+
+function startsWithCapital(s) { return match(s, /^[ABCDEFGHIJKLMNOPQRDTUVWXYZ]/); }
+function startsWithLower(s) { return match(s, /^[abcdefghijklmnopqrdtuvwxyz]/); }
+
 
 # Awaits this format:	com.clan_sy.spring.ai
 # Returns this format:	com/clan_sy/spring/ai
@@ -140,6 +146,7 @@ function printJavaCommandHeader(javaFile) {
 	print("") >> javaFile;
 	print("") >> javaFile;
 	print("import " myPkgA ".*;") >> javaFile;
+	print("import " myPkgA ".oo.*;") >> javaFile;
 	print("import com.sun.jna.*;") >> javaFile;
 	print("") >> javaFile;
 }
@@ -193,13 +200,64 @@ function printCommandJava(cmdIndex) {
 			typedMemberList = typedMemberList ", " type_jna " " name;
 		}
 		sub(/\, /, "", typedMemberList);
-		print("	public " className "(" typedMemberList ") {") >> javaFile;
-		print("") >> javaFile;
-		for (m=firstMethod; m < cmdsNumMembers[cmdIndex]; m++) {
-			name = cmdsMembers_name[cmdIndex, m];
-			print("		this." name " = " name ";") >> javaFile;
+		{ # the non-OO constructor
+			print("	public " className "(" typedMemberList ") {") >> javaFile;
+			print("") >> javaFile;
+			for (m=firstMethod; m < cmdsNumMembers[cmdIndex]; m++) {
+				name = cmdsMembers_name[cmdIndex, m];
+				print("		this." name " = " name ";") >> javaFile;
+			}
+			print("	}") >> javaFile;
 		}
-		print("	}") >> javaFile;
+		{ # the OO constructor
+			typedMemberList = "";
+			num_ooParams = 0;
+			for (m=firstMethod; m < cmdsNumMembers[cmdIndex]; m++) {
+				name = cmdsMembers_name[cmdIndex, m];
+				type_c = cmdsMembers_type_c[cmdIndex, m];
+				type_jna = convertCToJNAType(type_c);
+				type_oo = type_jna;
+				name_oo = name;
+				func_oo = "";
+				if (match(name, /[uU]nitId$/)) {
+					sub(/Id$/, "", name_oo);
+					type_oo = "Unit";
+					func_oo = name_oo ".get" type_oo "Id()";
+					num_ooParams++;
+				} else if (match(name, /[uU]nitDefId$/)) {
+					sub(/Id$/, "", name_oo);
+					type_oo = "UnitDef";
+					func_oo = name_oo ".get" type_oo "Id()";
+					num_ooParams++;
+				} else if (name == "options") {
+					name_oo = "optionsList";
+					type_oo = "java.util.List<AICommand.Option>";
+					func_oo = "AICommand.Option.getBitField(" name_oo ")";
+					num_ooParams++;
+				}
+				cmdsMembers_name_oo[cmdIndex, m] = name_oo;
+				cmdsMembers_type_oo[cmdIndex, m] = type_oo;
+				cmdsMembers_func_oo[cmdIndex, m] = func_oo;
+				typedMemberList = typedMemberList ", " type_oo " " name_oo;
+			}
+			sub(/\, /, "", typedMemberList);
+			if (num_ooParams > 0) {
+				print("	public " className "(" typedMemberList ") {") >> javaFile;
+				print("") >> javaFile;
+				for (m=firstMethod; m < cmdsNumMembers[cmdIndex]; m++) {
+					name = cmdsMembers_name[cmdIndex, m];
+					name_oo = cmdsMembers_name_oo[cmdIndex, m];
+					type_oo = cmdsMembers_type_oo[cmdIndex, m];
+					func_oo = cmdsMembers_func_oo[cmdIndex, m];
+					if (name != name_oo) {
+						print("		this." name " = " func_oo ";") >> javaFile;
+					} else {
+						print("		this." name " = " name ";") >> javaFile;
+					}
+				}
+				print("	}") >> javaFile;
+			}
+		}
 	}
 
 	print("") >> javaFile;
