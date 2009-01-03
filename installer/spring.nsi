@@ -257,30 +257,6 @@ SectionGroup "Multiplayer battlerooms"
 SectionGroupEnd
 
 
-SectionGroup "Map Packs"
-	Section "Default Maps" SEC_MAPS
-	!define INSTALL
-        AddSize 9000
-	!include "sections\maps.nsh"
-	!undef INSTALL
-	SectionEnd
-
-        Section "1 vs 1 Maps" SEC_1V1MAPS
-	!define INSTALL
-        AddSize 90000
-	!include "sections\1v1maps.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Teamplay Maps" SEC_TEAMMAPS
-	!define INSTALL
-        AddSize 201000
-	!include "sections\teammaps.nsh"
-	!undef INSTALL
-	SectionEnd
-SectionGroupEnd
-
-
 SectionGroup "Mods"
 	Section "BA" SEC_BA
 	!define INSTALL
