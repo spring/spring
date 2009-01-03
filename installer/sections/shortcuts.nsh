@@ -10,9 +10,6 @@
   ${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
   ${EndIf}
-  ${If} ${SectionIsSelected} ${SEC_KP}
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Play Kernel Panic Singleplayer.lnk" "$INSTDIR\Kernel_Panic_Launcher.exe"
-  ${EndIf}  
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk" "$INSTDIR\SelectionEditor.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
