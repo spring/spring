@@ -237,7 +237,7 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 	p->sTangents.resize(p->vertexCount, ZeroVector);
 	p->tTangents.resize(p->vertexCount, ZeroVector);
 
-	uint stride = 0;
+	unsigned stride = 0;
 
 	switch (p->primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES: {
@@ -251,12 +251,12 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 	// for triangle strips, the piece vertex _indices_ are defined
 	// by the draw order of the vertices numbered <v, v + 1, v + 2>
 	// for v in [0, n - 2]
-	uint vrtMaxNr = (stride == 1)?
+	unsigned vrtMaxNr = (stride == 1)?
 		p->vertexDrawOrder.size() - 2:
 		p->vertexDrawOrder.size();
 
 	// set the triangle-level S- and T-tangents
-	for (uint vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
+	for (unsigned vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
 		const int v0idx = p->vertexDrawOrder[vrtNr    ];
 		const int v1idx = p->vertexDrawOrder[vrtNr + 1];
 		const int v2idx = p->vertexDrawOrder[vrtNr + 2];
@@ -298,9 +298,9 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 	// set the per-vertex tangents (for each vertex, this
 	// is the average of the tangents of all the triangles
 	// used by it)
-	for (uint vrtNr = 0; vrtNr < p->vertexCount; vrtNr++) {
-		for (uint triNr = 0; triNr < verts2tris[vrtNr].size(); triNr++) {
-			const uint triIdx = verts2tris[vrtNr][triNr];
+	for (unsigned vrtNr = 0; vrtNr < p->vertexCount; vrtNr++) {
+		for (unsigned triNr = 0; triNr < verts2tris[vrtNr].size(); triNr++) {
+			const unsigned triIdx = verts2tris[vrtNr][triNr];
 			const SS3OTriangle& tri = triangles[triIdx];
 
 			p->sTangents[vrtNr] += tri.sTangent;
