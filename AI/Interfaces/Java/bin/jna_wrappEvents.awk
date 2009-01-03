@@ -288,7 +288,7 @@ function printEventOO(evtIndex) {
 		paramsTypes = "int teamId, OOAICallback callback, Properties info, Properties options";
 		paramsEvt = "evt.team, ooClb, evt.info, evt.options";
 	} else if (eNameLowerized == "playerCommand") {
-		paramsTypes = "java.util.ArrayList<Unit> units, AICommand command, int playerId";
+		paramsTypes = "java.util.List<Unit> units, AICommand command, int playerId";
 		paramsEvt = "units, command, evt.playerId";
 	}
 

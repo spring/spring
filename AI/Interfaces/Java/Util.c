@@ -60,13 +60,6 @@ const char* util_getMyInfo(const char* key) {
 	return util_map_getValueByKey(myInfoSize, myInfoKeys, myInfoValues, key);
 }
 
-/*
-void util_setDataDirs(const char* unversioned, const char* versioned) {
-
-	myDataDir = unversioned;
-	myDataDirVers = versioned;
-}
-*/
 const char* util_getDataDirVersioned() {
 	return myDataDirVersioned;
 }
@@ -510,4 +503,3 @@ const char* util_map_getValueByKey(
 
 	return value;
 }
-

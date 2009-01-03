@@ -230,10 +230,10 @@ function part_isStatic(namePart_p) {
 	return match(namePart_p, /0STATIC0/);
 }
 function part_isArraySize(namePart_p) {
-	return match(namePart_p, /0ARRAY1SIZE0/);
+	return match(namePart_p, /0ARRAY1SIZE[01]/);
 }
 function part_isArrayValues(namePart_p) {
-	return match(namePart_p, /0ARRAY1VALS0/);
+	return match(namePart_p, /0ARRAY1VALS[01]/);
 }
 function part_isMapSize(namePart_p) {
 	return match(namePart_p, /0MAP1SIZE0/);
@@ -376,6 +376,11 @@ function storeClassesAndInterfaces() {
 		clsId = ancestorsP "-" clsName;
 
 		isClass = part_isClass(normalP);
+
+#TODO: remove this
+#if (match(fullName, /BuildOption/)) {
+#	print isClass;
+#}
 #print("normalP: " normalP);
 #print("startsWithCapital X: " match("X", /^[ABCDEFGHIJKLMNOPQRDTUVWXYZ]/));
 #print("startsWithCapital X: " tolower("ABCDEFGHIJKLMNOPQRDTUVWXYZ"));
@@ -770,8 +775,10 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 				sub(/^.*0MULTI1[^3]*3/, "", fn); # remove pre MULTI 3
 				sub(/[0-9].*$/, "", fn); # remove post MULTI 3
 			} else {
-				fn = "get" memberClsName_mf "s";
+				fn = memberClsName_mf "s";
 			}
+			fn = "get" fn;
+
 			params = funcParams[fullNameMultiSize_mf];
 			innerParams = funcInnerParams[fullNameMultiSize_mf];
 
@@ -790,7 +797,10 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 
 		retType = memberClsName_mf;
 		if (isMulti_mf) {
+			retTypeInterface = "java.util.List<" retType ">";
 			retType = "java.util.ArrayList<" retType ">";
+		} else {
+			retTypeInterface = retType;
 		}
 		condInnerParamsComma = (innerParams == "") ? "" : ", ";
 
@@ -811,7 +821,7 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 			print(indent_mf "private boolean buffer_isInitialized_" fn " = false;") >> outFile_mf;
 		}
 
-		print(indent_mf "public " retType " " fn "(" params ") {") >> outFile_mf;
+		print(indent_mf "public " retTypeInterface " " fn "(" params ") {") >> outFile_mf;
 		print("") >> outFile_mf;
 		indent_mf = indent_mf "\t";
 		if (isBuffered_mf) {
@@ -865,6 +875,7 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 
 	indent_m = "\t";
 	retType = funcRetType[fullName_m];
+	retTypeInterface = "";
 	params = funcParams[fullName_m];
 	innerParams = funcInnerParams[fullName_m];
 	memName = extractNormalPart(fullName_m);
@@ -885,14 +896,23 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		fullNameArraySize = fullName_m;
 
 		fullNameArrayVals = fullNameArraySize;
-		sub(/0ARRAY1SIZE0/, "0ARRAY1VALS0", fullNameArrayVals);
+		sub(/0ARRAY1SIZE/, "0ARRAY1VALS", fullNameArrayVals);
 		params = funcParams[fullNameArrayVals];
 
 		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
 		arrayType = params; # getArrayType
 		sub(/^.*\, /, "", arrayType); # remove pre array type
 		sub(/\[\] .*$/, "", arrayType); # remove post array type
-		retType = "java.util.ArrayList<" convertJavaBuiltinTypeToClass(arrayType) ">";
+		referenceType = arrayType;
+		if (match(fullNameArraySize, /0ARRAY1SIZE1/)) {
+			# we want to reference objects, of a certain class as arrayType
+			referenceType = fullNameArraySize;
+			sub(/^.*0ARRAY1SIZE1/, "", referenceType); # remove pre ref array type
+			sub(/[0123].*$/, "", referenceType); # remove post ref array type
+		}
+		arrType_java = convertJavaBuiltinTypeToClass(referenceType);
+		retTypeInterface = "java.util.List<" arrType_java ">";
+		retType = "java.util.ArrayList<" arrType_java ">";
 		sub(/(\, )?[^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
 	}
 
@@ -972,12 +992,17 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		mod_m = "public ";
 	}
 
+	retType = trim(retType);
+	if (retTypeInterface == "") {
+		retTypeInterface = retType;
+	}
+
 	if (!isInterface_m && isBuffered_m) {
 		print(indent_m retType " buffer_" memName ";") >> outFile_m;
 		print(indent_m "boolean buffer_isInitialized_" memName " = false;") >> outFile_m;
 	}
 
-	print(indent_m mod_m retType " " memName "(" params ")" firstLineEnd) >> outFile_m;
+	print(indent_m mod_m retTypeInterface " " memName "(" params ")" firstLineEnd) >> outFile_m;
 	if (!isInterface_m) {
 		condRet = isVoid_m ? "" : "_ret = ";
 		condInnerParamsComma = (innerParams == "") ? "" : ", ";
@@ -999,7 +1024,11 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			print(indent_m myWrapper "." fullNameArrayVals "(" myTeamId condInnerParamsComma innerParams ", tmpArr, size);") >> outFile_m;
 			print(indent_m retType " arrList = new " retType "(size);") >> outFile_m;
 			print(indent_m "for (int i=0; i < size; i++) {") >> outFile_m;
-			print(indent_m "\t" "arrList.add(tmpArr[i]);") >> outFile_m;
+			if (arrayType == referenceType) {
+				print(indent_m "\t" "arrList.add(tmpArr[i]);") >> outFile_m;
+			} else {
+				print(indent_m "\t" "arrList.add(" referenceType ".getInstance(" myClassVarLocal ", tmpArr[i]));") >> outFile_m;
+			}
 			print(indent_m "}") >> outFile_m;
 			print(indent_m "_ret = arrList;") >> outFile_m;
 		} else if (isMapSize) {

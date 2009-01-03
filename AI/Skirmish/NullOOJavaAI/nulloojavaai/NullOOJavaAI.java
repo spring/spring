@@ -27,7 +27,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.*;
 
 /**
@@ -154,7 +154,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	public int update(int frame) {
 
 		if (frame % 300 == 0) {
-			ArrayList<Resource> resources = clb.getResources();
+			List<Resource> resources = clb.getResources();
 			for (Resource resource : resources) {
 				sendTextMsg("Resource " + resource.getName() + " optimum: "
 						+ resource.getOptimum());
@@ -256,7 +256,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	}
 
 	@Override
-	public int playerCommand(ArrayList<Unit> units, AICommand command, int playerId) {
+	public int playerCommand(List<Unit> units, AICommand command, int playerId) {
 		return 0; // signaling: OK
 	}
 
