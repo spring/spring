@@ -677,7 +677,11 @@ function printClass(ancestors_c, clsName_c) {
 	print("") >> outFile_c;
 	for (ai=0; ai < size_addInds; ai++) {
 		addIndName = additionalClsIndices[clsId_c "#" ai];
-		print("\t" "int get" capitalize(addIndName) "() {") >> outFile_c;
+		#if (ai < (size_addInds-1)) {
+			print("\t" "public int get" capitalize(addIndName) "() {") >> outFile_c;
+		#} else { # do this for the last additional indices
+		#	print("\t" "public int getId() {") >> outFile_c;
+		#}
 		print("\t\t" "return " addIndName ";") >> outFile_c;
 		print("\t" "}") >> outFile_c;
 		print("") >> outFile_c;
