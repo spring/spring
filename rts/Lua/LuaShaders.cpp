@@ -413,7 +413,7 @@ static bool ParseSources(lua_State* L, int table,
 
 static bool ApplyGeometryParameters(lua_State* L, int table, GLuint prog)
 {
-	if (!glProgramParameteriEXT) {
+	if (!glProgramParameteriEXT_NONGML) {
 		return true;
 	}
 
@@ -859,7 +859,7 @@ int LuaShaders::SetShaderParameter(lua_State* L)
 	const GLenum param = (GLenum)luaL_checkint(L, 2);
 	const GLint  value =  (GLint)luaL_checkint(L, 3);
 
-	if (glProgramParameteriEXT) {
+	if (glProgramParameteriEXT_NONGML) {
 		glProgramParameteriEXT(progName, param, value);
 	}
 

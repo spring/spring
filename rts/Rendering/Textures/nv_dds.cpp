@@ -877,6 +877,7 @@ bool CDDSImage::upload_texture3D()
     else
     {
         // retrieve function pointer if needed
+#ifndef USE_GML
         if (glTexImage3D == NULL)
         {
             GET_EXT_POINTER(glTexImage3D, PFNGLTEXIMAGE3DEXTPROC);
@@ -884,6 +885,7 @@ bool CDDSImage::upload_texture3D()
     
         if (glTexImage3D == NULL)
             return false;
+#endif
     
         GLint alignment = -1;
         if (!is_dword_aligned())
@@ -892,6 +894,9 @@ bool CDDSImage::upload_texture3D()
             glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         }
 
+#ifdef USE_GML
+		::
+#endif
         glTexImage3D(GL_TEXTURE_3D, 0, m_components, baseImage.get_width(), 
             baseImage.get_height(), baseImage.get_depth(), 0, m_format, 
             GL_UNSIGNED_BYTE, baseImage);
@@ -901,6 +906,9 @@ bool CDDSImage::upload_texture3D()
         {
             const CSurface &mipmap = baseImage.get_mipmap(i);
 
+#ifdef USE_GML
+		::
+#endif
             glTexImage3D(GL_TEXTURE_3D, i+1, m_components, 
                 mipmap.get_width(), mipmap.get_height(), mipmap.get_depth(), 0, 
                 m_format, GL_UNSIGNED_BYTE,  mipmap);
