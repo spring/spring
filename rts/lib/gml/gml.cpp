@@ -206,6 +206,7 @@ boost::mutex netmutex;
 boost::mutex histmutex;
 boost::mutex logmutex;
 boost::mutex timemutex;
+boost::mutex watermutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
