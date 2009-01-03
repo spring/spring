@@ -28,8 +28,8 @@ SetCompressor lzma
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "graphics\SideBanner.bmp"
 ;!define MUI_COMPONENTSPAGE_SMALLDESC ;puts description on the bottom, but much shorter.
-!define MUI_COMPONENTSPAGE_TEXT_TOP "Some of these components (e.g. mods or maps) must be downloaded during the install process."
-!define MUI_COMPONENTSPAGE_TEXT_COMPLIST "New users should select at least one mod and one map pack.  Selecting Total Annihilation mods will result in an automatic 9.0MB extra content download (if needed). Currently installed mods will be updated."
+!define MUI_COMPONENTSPAGE_TEXT_TOP "Some of these components must be downloaded during the install process."
+
 
 
 ; Welcome page
