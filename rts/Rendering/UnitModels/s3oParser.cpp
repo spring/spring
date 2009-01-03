@@ -25,7 +25,7 @@
 S3DModel* CS3OParser::Load(std::string name)
 {
 	CFileHandler file(name);
-	if(!file.FileExists()){
+	if (!file.FileExists()) {
 		throw content_error("File not found: "+name);
 	}
 	unsigned char* fileBuf=new unsigned char[file.FileSize()];
@@ -265,20 +265,21 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		const SS3OVertex* v1 = &p->vertices[v1idx];
 		const SS3OVertex* v2 = &p->vertices[v2idx];
 
-		const float3 v2v0 = v2->pos - v0->pos;
 		const float3 v1v0 = v1->pos - v0->pos;
+		const float3 v2v0 = v2->pos - v0->pos;
 
-		const float sd1 = v1->textureX - v0->textureX;
-		const float sd2 = v2->textureX - v0->textureX;
-		const float td1 = v1->textureY - v0->textureY;
-		const float td2 = v2->textureY - v0->textureY;
+		const float sd1 = v1->textureX - v0->textureX; // u1u0
+		const float sd2 = v2->textureX - v0->textureX; // u2u0
+		const float td1 = v1->textureY - v0->textureY; // v1v0
+		const float td2 = v2->textureY - v0->textureY; // v2v0
 
 		// if d is 0, texcoors are degenerate
 		const float d = (sd1 * td2) - (sd2 * td1);
-		const float r = 1.0f / d;
+		const bool b = (d > -0.001f && d < 0.001f);
+		const float r = b? 1.0f: 1.0f / d;
 
-		const float3 sDir((sd1 * v2v0.x - sd2 * v1v0.x) * r,  (sd1 * v2v0.y - sd2 * v1v0.y) * r,  (sd1 * v2v0.z - sd2 * v1v0.z) * r);
-		const float3 tDir((td2 * v1v0.x - td1 * v2v0.x) * r,  (td2 * v1v0.y - td1 * v2v0.y) * r,  (td2 * v1v0.z - td1 * v2v0.z) * r);
+		const float3 sDir = (v1v0 * -td2 + v2v0 * td1) * r;
+		const float3 tDir = (v1v0 * -sd2 + v2v0 * sd1) * r;
 
 		SS3OTriangle tri;
 			tri.v0idx = v0idx;
@@ -306,9 +307,20 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 			p->tTangents[vrtNr] += tri.tTangent;
 		}
 
-		p->sTangents[vrtNr] /= verts2tris[vrtNr].size();
-		p->tTangents[vrtNr] /= verts2tris[vrtNr].size();
-		p->sTangents[vrtNr].ANormalize();
-		p->tTangents[vrtNr].ANormalize();
+		float3& s = p->sTangents[vrtNr]; // T
+		float3& t = p->tTangents[vrtNr]; // B
+		float3& n = p->vertices[vrtNr].normal;
+		int h = 1; // handedness
+
+		if (isnan(n.x) || isnan(n.y) || isnan(n.z)) {
+			n = float3(0.0f, 1.0f, 0.0f);
+		}
+
+		// apply Gram-Schmidt since the smoothed
+		// tangents likely do not form orthogonal
+		// basis
+		s = (s - (n * s.dot(n))).ANormalize();
+		h = ((s.cross(t)).dot(n) >= 0.0f)? 1: -1;
+		t = (n.cross(s)).ANormalize() * h;
 	}
 }
