@@ -268,10 +268,6 @@ ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
   SetOutPath "$INSTDIR"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
 ${EndIf}
-${If} ${SectionIsSelected} ${SEC_KP}
-  SetOutPath "$INSTDIR"
-  CreateShortCut "$DESKTOP\${PRODUCT_NAME} Play Kernel Panic Singleplayer.lnk" "$INSTDIR\Kernel_Panic_Launcher.exe"
-${EndIf}
 SectionEnd
 
 Section "Easy content installation" SEC_ARCHIVEMOVER
@@ -339,7 +335,6 @@ Section Uninstall
   !include "sections\luaui.nsh"
 
   Delete "$DESKTOP\${PRODUCT_NAME} battleroom.lnk"
-  Delete "$DESKTOP\${PRODUCT_NAME} Play Kernel Panic Singleplayer.lnk"
 
   ; All done
   RMDir "$INSTDIR"
