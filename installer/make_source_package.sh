@@ -22,20 +22,31 @@ while [ ! -d installer ]; do
         cd ..
 done
 
-if [ $1 ]; then
-  branch="$1"
+set +e # turn of quit on error
+git describe --candidates 0 &> /dev/null
+set -e # turn it on again
+if [ $? -ne "0" ]; then
+	RELEASE_SOURCE= false
 else
-  branch="master"
+	RELEASE_SOURCE= true
+fi
+
+if [ $RELEASE_SOURCE ]; then
+	version_string=`git describe`
+	branch=${branch}
+else
+	version_string=`git describe | sed s/\-[^\-]*$//`
+	branch="master"
 fi
 echo "Using $branch as source"
 
 # Each one of these that is set is build when running this script.
 # .tar.bz2 and .tar.gz are built with linux (LF) line endings.
 # .zip and .7z are built with windows (CRLF) line endings.
-dir="spring_$branch"
-tbz="spring_${branch}_src.tar.bz2"
+dir="spring_${version_string}"
+tbz="spring_${version_string}_src.tar.bz2"
 #tgz="spring_${branch}_src.tar.gz"
-zip="spring_${branch}_src.zip"
+zip="spring_${version_string}_src.zip"
 #seven_zip="spring_${branch}_src.7z"
 
 # This is the list of files/directories that go in the source package.
