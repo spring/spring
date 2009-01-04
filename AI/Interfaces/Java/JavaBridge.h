@@ -85,7 +85,8 @@ bool java_preloadJNIEnv();
 bool java_unloadJNIEnv();
 bool java_initStatic(const struct SStaticGlobalData* staticGlobalData);
 bool java_releaseStatic();
-bool java_initSkirmishAIClass(const char* className);
+bool java_initSkirmishAIClass(unsigned int infoSize,
+		const char** infoKeys, const char** infoValues);
 bool java_releaseSkirmishAIClass(const char* className);
 bool java_releaseAllSkirmishAIClasses();
 int java_skirmishAI_init(int teamId,
