@@ -165,7 +165,7 @@ int CALLING_CONV proxy_skirmishAI_init(int teamId,
 
 	if (className != NULL) {
 //simpleLog_fine("proxy_skirmishAI_init %u", 2);
-		ret = java_initSkirmishAIClass(className) ? 0 : 1;
+		ret = java_initSkirmishAIClass(infoSize, infoKeys, infoValues) ? 0 : 1;
 //simpleLog_fine("proxy_skirmishAI_init %u", 3);
 	}
 //simpleLog_fine("proxy_skirmishAI_init %u", 4);
