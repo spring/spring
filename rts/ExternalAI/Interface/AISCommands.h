@@ -149,6 +149,9 @@ struct SGiveMeNewUnitCheatCommand {
 	int ret_newUnitId;
 }; // COMMAND_CHEATS_GIVE_ME_NEW_UNIT
 
+/**
+ * Sends a chat/text message to other players.
+ */
 struct SSendTextMessageCommand {
 	const char* text;
 	int zone;

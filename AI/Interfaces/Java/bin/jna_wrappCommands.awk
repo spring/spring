@@ -136,6 +136,21 @@ function isFieldUsable(f) {
 }
 
 
+
+function printJavaCommandComment(jc_outFile, jc_cmdIndex, jc_indent) {
+
+	# print the documentation comment
+	if (cmdsDocComment[jc_cmdIndex, "*"] > 0) {
+		print(jc_indent "/**") >> jc_outFile;
+		numLines = cmdsDocComment[jc_cmdIndex, "*"];
+		for (l=0; l < numLines; l++) {
+			docLine = cmdsDocComment[jc_cmdIndex, l];
+			print(jc_indent " * " docLine) >> jc_outFile;
+		}
+		print(jc_indent " */") >> jc_outFile;
+	}
+}
+
 function printJavaCommandHeader(javaFile) {
 
 	printGeneratedWarningHeader(javaFile);
@@ -175,6 +190,7 @@ function printCommandJava(cmdIndex) {
 	#print("### topic value: " topicValue);
 	#print("########################################################");
 	printJavaCommandHeader(javaFile);
+	printJavaCommandComment(javaFile, cmdIndex, "");
 	print("public final class " className " extends " cmdInterface " {") >> javaFile;
 	print("") >> javaFile;
 	print("	public final static int TOPIC = " topicValue ";") >> javaFile;
@@ -328,65 +344,6 @@ function doWrapp(ind_cmdStructs_dw) {
 	return !match(cmdsName[ind_cmdStructs_dw], /.*SharedMemArea.*/);
 }
 
-# aggare te los command defines in order
-/^[ \t]*COMMAND_.*$/ {
-
-	sub(",", "", $4);
-	cmdsTopicNameValue[$2] = $4;
-}
-
-
-# end of struct S*Command 
-/^}; \/\/ COMMAND_.*$/ {
-
-	cmdsNumMembers[ind_cmdStructs] = ind_cmdMember;
-	cmdsTopicName[ind_cmdStructs] = $3;
-
-	if (doWrapp(ind_cmdStructs)) {
-		printCommandJava(ind_cmdStructs);
-	}
-
-	ind_cmdStructs++;
-	insideCmdStruct = 0;
-}
-
-
-# inside of struct S*Command 
-{
-	if (insideCmdStruct == 1) {
-		size_tmpMembers = split($0, tmpMembers, ";");
-		for (i=1; i<=size_tmpMembers; i++) {
-			tmpMembers[i] = trim(tmpMembers[i]);
-			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
-				break;
-			}
-			saveMember(ind_cmdMember++, tmpMembers[i]);
-		}
-	}
-}
-
-# beginn of struct S*Command
-/^\struct S.*Command( \{)?/ {
-
-	insideCmdStruct = 1;
-	ind_cmdMember = 0;
-	commandName = $2;
-	sub(/^S/, "", commandName);
-	sub(/Command$/, "", commandName);
-	
-	isUnitCommand = match(commandName, /.*Unit$/);
-
-	cmdsIsUnitCmd[ind_cmdStructs] = isUnitCommand;
-	cmdsName[ind_cmdStructs] = commandName;
-}
-
-# find COMMAND_TO_ID_ENGINE id
-/COMMAND_TO_ID_ENGINE/ {
-
-	cmdToIdEngine = $3;
-}
-
-
 
 function printPointerAICommandWrapperHeader(outFile_wh) {
 
@@ -457,6 +414,133 @@ function printPointerAICommandWrapperEnd(outFile_wh) {
 	print("}") >> outFile_wh;
 	print("") >> outFile_wh;
 }
+
+
+# aggare te los command defines in order
+/^[ \t]*COMMAND_.*$/ {
+
+	sub(",", "", $4);
+	cmdsTopicNameValue[$2] = $4;
+}
+
+################################################################################
+### BEGINN: parsing and saving the command struct documentation comments
+
+# end of doc comment
+/\*\// {
+
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/\*\/.*/, "", usefullLinePart);
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		if (usefullLinePart != "") {
+			docComLines[docComLines_num++] = usefullLinePart;
+		}
+	}
+	isInsideDocComment = 0;
+}
+
+
+# inside of doc comment
+{
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		docComLines[docComLines_num++] = usefullLinePart;
+	} else {
+		if (trim($0) != "") {
+			linesWithNoDocComment++;
+		}
+		# delete the last stored doc comment if it is not applicable to anything
+		if (linesWithNoDocComment > 2 && isInsideCmdStruct != 1) {
+			docComLines_num = 0;
+		}
+	}
+}
+
+# beginn of doc comment
+/^[ \t]*\/\*\*/ {
+
+	isInsideDocComment = 1;
+	docComLines_num = 0;
+	linesWithNoDocComment = 0;
+
+	usefullLinePart = $0;
+	sub(/^[ \t]*\/\*\*/, "", usefullLinePart);
+	if (sub(/\*\/.*/, "", usefullLinePart)) {
+		isInsideDocComment = 0;
+	}
+	usefullLinePart = trim(usefullLinePart);
+	if (usefullLinePart != "") {
+		docComLines[docComLines_num++] = usefullLinePart;
+	}
+}
+
+### END: parsing and saving the command struct documentation comments
+################################################################################
+
+
+################################################################################
+### BEGINN: parsing and saving the command structs
+
+# end of struct S*Command 
+/^}; \/\/ COMMAND_.*$/ {
+
+	cmdsNumMembers[ind_cmdStructs] = ind_cmdMember;
+	cmdsTopicName[ind_cmdStructs] = $3;
+	cmdsDocComment[ind_cmdStructs, "*"] = docComLines_num;
+	for (l=0; l < docComLines_num; l++) {
+		cmdsDocComment[ind_cmdStructs, l] = docComLines[l];
+	}
+
+	if (doWrapp(ind_cmdStructs)) {
+		printCommandJava(ind_cmdStructs);
+	}
+
+	ind_cmdStructs++;
+	isInsideCmdStruct = 0;
+}
+
+
+# inside of struct S*Command 
+{
+	if (isInsideCmdStruct == 1) {
+		size_tmpMembers = split($0, tmpMembers, ";");
+		for (i=1; i<=size_tmpMembers; i++) {
+			tmpMembers[i] = trim(tmpMembers[i]);
+			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
+				break;
+			}
+			saveMember(ind_cmdMember++, tmpMembers[i]);
+		}
+	}
+}
+
+# beginn of struct S*Command
+/^\struct S.*Command( \{)?/ {
+
+	isInsideCmdStruct = 1;
+	ind_cmdMember = 0;
+	commandName = $2;
+	sub(/^S/, "", commandName);
+	sub(/Command$/, "", commandName);
+	
+	isUnitCommand = match(commandName, /.*Unit$/);
+
+	cmdsIsUnitCmd[ind_cmdStructs] = isUnitCommand;
+	cmdsName[ind_cmdStructs] = commandName;
+}
+
+# find COMMAND_TO_ID_ENGINE id
+/COMMAND_TO_ID_ENGINE/ {
+
+	cmdToIdEngine = $3;
+}
+
+### END: parsing and saving the command structs
+################################################################################
 
 
 

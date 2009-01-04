@@ -292,6 +292,9 @@ function printEventOO(evtIndex) {
 		paramsEvt = "units, command, evt.playerId";
 	}
 
+	print("") >> myOOAIFile;
+	printEventJavaComment(myOOAIFile, evtIndex, "	");
+
 	print("	int " eNameLowerized "(" paramsTypes ");") >> myOOAIFile;
 
 	print("") >> myOOAIAbstractFile;
@@ -326,6 +329,19 @@ function printEventOOAIFactory(evtIndex) {
 
 
 
+function printEventJavaComment(jc_outFile, jc_evtIndex, jc_indent) {
+
+	# print the documentation comment
+	if (evtsDocComment[jc_evtIndex, "*"] > 0) {
+		print(jc_indent "/**") >> jc_outFile;
+		numLines = evtsDocComment[jc_evtIndex, "*"];
+		for (l=0; l < numLines; l++) {
+			docLine = evtsDocComment[jc_evtIndex, l];
+			print(jc_indent " * " docLine) >> jc_outFile;
+		}
+		print(jc_indent " */") >> jc_outFile;
+	}
+}
 
 function printJavaEventHeader(javaFile) {
 
@@ -374,6 +390,8 @@ function printEventJava(evtIndex) {
 }
 
 function printEventJavaCls(evtIndex) {
+
+	printEventJavaComment(javaFile, evtIndex, "");
 
 	print(clsMods "class " className " extends " evtInterface " {") >> javaFile;
 	print("") >> javaFile;
@@ -536,24 +554,90 @@ function saveMember(ind_mem_s, member_s) {
 	}
 }
 
+################################################################################
+### BEGINN: parsing and saving the event struct documentation comments
 
-# end of struct S*Event 
+# end of doc comment
+/\*\// {
+
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/\*\/.*/, "", usefullLinePart);
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		if (usefullLinePart != "") {
+			docComLines[docComLines_num++] = usefullLinePart;
+		}
+	}
+	isInsideDocComment = 0;
+}
+
+
+# inside of doc comment
+{
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		docComLines[docComLines_num++] = usefullLinePart;
+	} else {
+		if (trim($0) != "") {
+			linesWithNoDocComment++;
+		}
+		# delete the last stored doc comment if it is not applicable to anything
+		if (linesWithNoDocComment > 2 && isInsideEvtStruct != 1) {
+			docComLines_num = 0;
+		}
+	}
+}
+
+# beginn of doc comment
+/^[ \t]*\/\*\*/ {
+
+	isInsideDocComment = 1;
+	docComLines_num = 0;
+	linesWithNoDocComment = 0;
+
+	usefullLinePart = $0;
+	sub(/^[ \t]*\/\*\*/, "", usefullLinePart);
+	if (sub(/\*\/.*/, "", usefullLinePart)) {
+		isInsideDocComment = 0;
+	}
+	usefullLinePart = trim(usefullLinePart);
+	if (usefullLinePart != "") {
+		docComLines[docComLines_num++] = usefullLinePart;
+	}
+}
+
+### END: parsing and saving the event struct documentation comments
+################################################################################
+
+
+
+################################################################################
+### BEGINN: parsing and saving the event structs
+
+# end of struct S*Event
 /^}; \/\/ EVENT_.*$/ {
 
 	evtsNumMembers[ind_evtStructs] = ind_evtMember;
 	evtsTopicName[ind_evtStructs] = $3;
+	evtsDocComment[ind_evtStructs, "*"] = docComLines_num;
+	for (l=0; l < docComLines_num; l++) {
+		evtsDocComment[ind_evtStructs, l] = docComLines[l];
+	}
 
 	printEventJava(ind_evtStructs);
 	printEventOO(ind_evtStructs);
 
 	ind_evtStructs++;
-	insideEvtStruct = 0;
+	isInsideEvtStruct = 0;
 }
 
 
-# inside of struct S*Event 
+# inside of struct S*Event
 {
-	if (insideEvtStruct == 1) {
+	if (isInsideEvtStruct == 1) {
 		size_tmpMembers = split($0, tmpMembers, ";");
 		for (i=1; i<=size_tmpMembers; i++) {
 			tmpMembers[i] = trim(tmpMembers[i]);
@@ -570,10 +654,10 @@ function saveMember(ind_mem_s, member_s) {
 	}
 }
 
-# beginn of struct S*Event 
+# beginn of struct S*Event
 /^\struct S.*Event( \{)?/ {
 
-	insideEvtStruct = 1;
+	isInsideEvtStruct = 1;
 	ind_evtMember = 0;
 	eventName = $2;
 	sub(/^S/, "", eventName);
@@ -582,6 +666,8 @@ function saveMember(ind_mem_s, member_s) {
 	evtsName[ind_evtStructs] = eventName;
 }
 
+### END: parsing and saving the event structs
+################################################################################
 
 
 

@@ -108,6 +108,11 @@ bool (CALLING_CONV *Clb_File_locateForWriting)(int teamId, char* fileName);
 
 
 // BEGINN OBJECT UnitDef
+/**
+ * A UnitDef contains all properties of a unit that are specific to its type,
+ * for example the number and type of weapons or max-speed.
+ * These properties are usually fixed, and not meant to change during a game.
+ */
 int (CALLING_CONV *Clb_0MULTI1SIZE0UnitDef)(int teamId);
 int (CALLING_CONV *Clb_0MULTI1VALS0UnitDef)(int teamId, int unitDefIds[], int unitDefIds_max);
 int (CALLING_CONV *Clb_0MULTI1FETCH3UnitDefByName0UnitDef)(int teamId, const char* unitName);
