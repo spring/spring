@@ -212,6 +212,7 @@ function printInterface() {
 		retType = funcRetType[i];
 		paramList = funcParamList[i];
 
+		printJavaFunctionComment(outFile_i, i, "\t");
 		print("\t" retType " " fullName "(" paramList ");") >> outFile_i;
 	}
 
@@ -243,6 +244,7 @@ function printClass(clsName_c) {
 		print("\t" "\t" retType " invoke(" paramList ");") >> outFile_c;
 		print("\t" "}") >> outFile_c;
 		print("\t" "public _" fullName " _M_" fullName ";") >> outFile_c;
+		printJavaFunctionComment(outFile_c, i, "\t");
 		print("\t" "public " retType " " fullName "(" paramList ") {") >> outFile_c;
 		print("\t" "\t" condRet_c "_M_" fullName ".invoke(" paramListNoTypes ");") >> outFile_c;
 		print("\t" "}") >> outFile_c;
@@ -252,6 +254,79 @@ function printClass(clsName_c) {
 	print("}") >> outFile_c;
 	print("") >> outFile_c;
 }
+
+
+function printJavaFunctionComment(jc_outFile, jc_funcIndex, jc_indent) {
+
+	# print the documentation comment
+	if (funcDocComment[jc_funcIndex, "*"] > 0) {
+		print(jc_indent "/**") >> jc_outFile;
+		numLines = funcDocComment[jc_funcIndex, "*"];
+		for (l=0; l < numLines; l++) {
+			docLine = funcDocComment[jc_funcIndex, l];
+			print(jc_indent " * " docLine) >> jc_outFile;
+		}
+		print(jc_indent " */") >> jc_outFile;
+	}
+}
+
+################################################################################
+### BEGINN: parsing and saving the callback function struct doc comments
+
+# end of doc comment
+/\*\// {
+
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/\*\/.*/, "", usefullLinePart);
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		if (usefullLinePart != "") {
+			docComLines[docComLines_num++] = usefullLinePart;
+		}
+	}
+	isInsideDocComment = 0;
+}
+
+
+# inside of doc comment
+{
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		docComLines[docComLines_num++] = usefullLinePart;
+	} else {
+		if (trim($0) != "") {
+			linesWithNoDocComment++;
+		}
+		# delete the last stored doc comment if it is not applicable to anything
+		if (linesWithNoDocComment > 2) {
+			docComLines_num = 0;
+		}
+	}
+}
+
+# beginn of doc comment
+/^[ \t]*\/\*\*/ {
+
+	isInsideDocComment = 1;
+	docComLines_num = 0;
+	linesWithNoDocComment = 0;
+
+	usefullLinePart = $0;
+	sub(/^[ \t]*\/\*\*/, "", usefullLinePart);
+	if (sub(/\*\/.*/, "", usefullLinePart)) {
+		isInsideDocComment = 0;
+	}
+	usefullLinePart = trim(usefullLinePart);
+	if (usefullLinePart != "") {
+		docComLines[docComLines_num++] = usefullLinePart;
+	}
+}
+
+### END: parsing and saving the callback function struct doc comments
+################################################################################
 
 
 
@@ -287,6 +362,10 @@ function printClass(clsName_c) {
 		funcFullName[fi] = fullName;
 		funcRetType[fi] = retType_jna;
 		funcParamList[fi] = paramList;
+		funcDocComment[fi, "*"] = docComLines_num;
+		for (l=0; l < docComLines_num; l++) {
+			funcDocComment[fi, l] = docComLines[l];
+		}
 		fi++;
 	}
 }

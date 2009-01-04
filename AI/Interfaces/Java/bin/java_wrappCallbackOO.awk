@@ -377,10 +377,6 @@ function storeClassesAndInterfaces() {
 
 		isClass = part_isClass(normalP);
 
-#TODO: remove this
-#if (match(fullName, /BuildOption/)) {
-#	print isClass;
-#}
 #print("normalP: " normalP);
 #print("startsWithCapital X: " match("X", /^[ABCDEFGHIJKLMNOPQRDTUVWXYZ]/));
 #print("startsWithCapital X: " tolower("ABCDEFGHIJKLMNOPQRDTUVWXYZ"));
@@ -825,6 +821,8 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 			print(indent_mf "private boolean buffer_isInitialized_" fn " = false;") >> outFile_mf;
 		}
 
+		printJavaFunctionComment(outFile_mf, fullNameMultiSize_mf, indent_mf);
+
 		print(indent_mf "public " retTypeInterface " " fn "(" params ") {") >> outFile_mf;
 		print("") >> outFile_mf;
 		indent_mf = indent_mf "\t";
@@ -1006,6 +1004,8 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		print(indent_m "boolean buffer_isInitialized_" memName " = false;") >> outFile_m;
 	}
 
+	printJavaFunctionComment(outFile_m, fullName_m, indent_m);
+
 	print(indent_m mod_m retTypeInterface " " memName "(" params ")" firstLineEnd) >> outFile_m;
 	if (!isInterface_m) {
 		condRet = isVoid_m ? "" : "_ret = ";
@@ -1076,6 +1076,78 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 
 
 
+function printJavaFunctionComment(jc_outFile, jc_funcFullName, jc_indent) {
+
+	# print the documentation comment
+	if (funcDocComment[jc_funcFullName, "*"] > 0) {
+		print(jc_indent "/**") >> jc_outFile;
+		numLines = funcDocComment[jc_funcFullName, "*"];
+		for (l=0; l < numLines; l++) {
+			docLine = funcDocComment[jc_funcFullName, l];
+			print(jc_indent " * " docLine) >> jc_outFile;
+		}
+		print(jc_indent " */") >> jc_outFile;
+	}
+}
+
+################################################################################
+### BEGINN: parsing and saving the callback method struct doc comments
+
+# end of doc comment
+/\*\// {
+
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/\*\/.*/, "", usefullLinePart);
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		if (usefullLinePart != "") {
+			docComLines[docComLines_num++] = usefullLinePart;
+		}
+	}
+	isInsideDocComment = 0;
+}
+
+
+# inside of doc comment
+{
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		docComLines[docComLines_num++] = usefullLinePart;
+	} else {
+		if (trim($0) != "") {
+			linesWithNoDocComment++;
+		}
+		# delete the last stored doc comment if it is not applicable to anything
+		if (linesWithNoDocComment > 2) {
+			docComLines_num = 0;
+		}
+	}
+}
+
+# beginn of doc comment
+/^[ \t]*\/\*\*/ {
+
+	isInsideDocComment = 1;
+	docComLines_num = 0;
+	linesWithNoDocComment = 0;
+
+	usefullLinePart = $0;
+	sub(/^[ \t]*\/\*\*/, "", usefullLinePart);
+	if (sub(/\*\/.*/, "", usefullLinePart)) {
+		isInsideDocComment = 0;
+	}
+	usefullLinePart = trim(usefullLinePart);
+	if (usefullLinePart != "") {
+		docComLines[docComLines_num++] = usefullLinePart;
+	}
+}
+
+### END: parsing and saving the callback method struct doc comments
+################################################################################
+
 
 # grab callback functions
 #/^\t[^ ]+ Clb_[^ ]+\(int teamId.*\)\;$/ {
@@ -1108,6 +1180,10 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		funcRetType[fullName] = retType;
 		funcParams[fullName] = params;
 		funcInnerParams[fullName] = innerParams;
+		funcDocComment[fullName, "*"] = docComLines_num;
+		for (l=0; l < docComLines_num; l++) {
+			funcDocComment[fullName, l] = docComLines[l];
+		}
 
 		if (!(simpleFullName in funcSimpleFullName)) {
 			funcSimpleFullName[simpleFullName] = fullName;
