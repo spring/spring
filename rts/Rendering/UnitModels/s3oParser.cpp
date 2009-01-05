@@ -203,7 +203,6 @@ void CS3OParser::Draw(S3DModelPiece* o)
 		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->tTangents[0].x);
 	}
 
-
 	glClientActiveTexture(GL_TEXTURE0);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
@@ -213,7 +212,6 @@ void CS3OParser::Draw(S3DModelPiece* o)
 
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
-
 
 	switch (so->primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES:
@@ -227,18 +225,16 @@ void CS3OParser::Draw(S3DModelPiece* o)
 			break;
 	}
 
-
 	if (!so->sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE6);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 		glClientActiveTexture(GL_TEXTURE5);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-
-		glClientActiveTexture(GL_TEXTURE0);
-		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
 
+	glClientActiveTexture(GL_TEXTURE0);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
