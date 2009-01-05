@@ -178,7 +178,7 @@ void CS3OParser::FindMinMax(SS3OPiece* object)
 	object->minz = minz;
 }
 
-void CS3OParser::Draw(S3DModelPiece *o)
+void CS3OParser::Draw(S3DModelPiece* o)
 {
 	if (o->isEmpty) {
 		return;
@@ -187,20 +187,33 @@ void CS3OParser::Draw(S3DModelPiece *o)
 	SS3OPiece* so = static_cast<SS3OPiece*>(o);
 	SS3OVertex* s3ov = static_cast<SS3OVertex*>(&so->vertices[0]);
 
-	// TODO (#1 -- Kloot)
-	// glEnableVertexAttribArray(sTangentsIdx);
-	// glEnableVertexAttribArray(tTangentsIdx);
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
-	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), &s3ov->pos.x);
-	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
+	// pass the tangents as 3D texture coordinates
+	// (array elements are float3's, which are 12
+	// bytes in size and each represent a single
+	// xyz triple)
+	// TODO: test if we have this many texunits?
+	if (!so->sTangents.empty()) {
+		glClientActiveTexture(GL_TEXTURE5);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->sTangents[0].x);
+
+		glClientActiveTexture(GL_TEXTURE6);
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->tTangents[0].x);
+	}
+
+
+	glClientActiveTexture(GL_TEXTURE0);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
 
-	// TODO (#2 -- Kloot)
-	// glVertexAttribPointer(sTangentsIdx, 3, GL_FLOAT, GL_FALSE, 0, &so->sTangents[0]);
-	// glVertexAttribPointer(tTangentsIdx, 3, GL_FLOAT, GL_FALSE, 0, &so->tTangents[0]);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glVertexPointer(3, GL_FLOAT, sizeof(SS3OVertex), &s3ov->pos.x);
+
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glNormalPointer(GL_FLOAT, sizeof(SS3OVertex), &s3ov->normal.x);
+
 
 	switch (so->primitiveType) {
 		case S3O_PRIMTYPE_TRIANGLES:
@@ -214,13 +227,21 @@ void CS3OParser::Draw(S3DModelPiece *o)
 			break;
 	}
 
-	// TODO (#3 -- Kloot)
-	// glDisableVertexAttribArray(sTangentsIdx);
-	// glDisableVertexAttribArray(tTangentsIdx);
+
+	if (!so->sTangents.empty()) {
+		glClientActiveTexture(GL_TEXTURE6);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+		glClientActiveTexture(GL_TEXTURE5);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+		glClientActiveTexture(GL_TEXTURE0);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	}
+
 
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 
 
@@ -231,11 +252,11 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		return;
 	}
 
-	std::vector<SS3OTriangle> triangles;
-	std::vector<std::vector<unsigned int> > verts2tris(p->vertexCount);
-
 	p->sTangents.resize(p->vertexCount, ZeroVector);
 	p->tTangents.resize(p->vertexCount, ZeroVector);
+
+	std::vector<SS3OTriangle> triangles;
+	std::vector<std::vector<unsigned int> > verts2tris(p->vertexCount);
 
 	unsigned stride = 0;
 
@@ -278,6 +299,8 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		const bool b = (d > -0.001f && d < 0.001f);
 		const float r = b? 1.0f: 1.0f / d;
 
+		// note: not necessarily orthogonal to each other
+		// or to vertex normal (only to the triangle plane)
 		const float3 sDir = (v1v0 * -td2 + v2v0 * td1) * r;
 		const float3 tDir = (v1v0 * -sd2 + v2v0 * sd1) * r;
 
