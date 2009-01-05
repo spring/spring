@@ -255,6 +255,101 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 }
 
 /**
+ * @brief Load LUA and Skirmish AIs.
+ */
+void CGameSetup::LoadSkirmishAIs(const TdfParser& file)
+{
+	// i = AI index in game (no gaps), a = AI index in script
+//	int i = 0;
+	for (int a = 0; a < MAX_PLAYERS; ++a) {
+		char section[50];
+		sprintf(section, "GAME\\AI%i", a);
+		string s(section);
+
+		if (!file.SectionExist(s)) {
+			continue;
+		}
+//		PlayerBase data;
+//
+//		// expects lines of form team=x rather than team=TEAMx
+//		// team field is relocated in RemapTeams
+//		std::map<std::string, std::string> setup = file.GetAllValues(s);
+//		std::map<std::string, std::string>::iterator it;
+//		if ((it = setup.find("team")) != setup.end())
+//			data.team = atoi(it->second.c_str());
+//		if ((it = setup.find("rank")) != setup.end())
+//			data.rank = atoi(it->second.c_str());
+//		if ((it = setup.find("name")) != setup.end())
+//			data.name = it->second;
+//		if ((it = setup.find("countryCode")) != setup.end())
+//			data.countryCode = it->second;
+//		if ((it = setup.find("spectator")) != setup.end())
+//			data.spectator = static_cast<bool>(atoi(it->second.c_str()));
+//		if ((it = setup.find("isfromdemo")) != setup.end())
+//			data.isFromDemo = static_cast<bool>(atoi(it->second.c_str()));
+//
+//		playerStartingData.push_back(data);
+//		playerRemap[a] = i;
+//		++i;
+
+		SkirmishAIData data;
+
+		data.team = atoi(file.SGetValueDef("-1", s + "Team").c_str());
+		if (data.team == -1) {
+			throw content_error("missing AI.Team in GameSetup script");
+		}
+		data.host = atoi(file.SGetValueDef("-1", s + "Host").c_str());
+		if (data.host == -1) {
+			throw content_error("missing AI.Host in GameSetup script");
+		}
+
+		// Is this team (Lua) AI controlled?
+		data.isLuaAI = (file.SGetValueDef("0", s + "IsLuaAI") == "1");
+		// If this is a demo replay, non-Lua AIs aren't loaded.
+
+//		if (data.luaAI.empty()) {
+//			data.luaAI = file.SGetValueDef("", s + "LuaAI");
+//		// this else if is only here fo rbackwards compatibility
+//		} else if (data.luaAI.size() > 6 && data.luaAI.substr(0, 6) == "LuaAI:") {
+//			data.luaAI = data.luaAI.substr(6);
+//		}
+
+		data.shortName = file.SGetValueDef("", s + "Name");
+		if (data.shortName == "") {
+			throw content_error("missing AI.Name in GameSetup script");
+		}
+		data.version = file.SGetValueDef("", s + "Version");
+		if (file.SectionExist(s + "Options")) {
+			data.options = file.GetAllValues(s + "Options");
+		}
+
+		skirmishAIStartingData.push_back(data);
+
+//		skirmishAIRemap[a] = i;
+//		++i;
+	}
+
+	unsigned aiCount = 0;
+	if (!file.GetValue(aiCount, "GAME\\NumSkirmishAIs")
+			|| skirmishAIStartingData.size() == aiCount) {
+		aiCount = skirmishAIStartingData.size();
+	} else {
+		throw content_error(
+				"incorrect number of skirmish AIs in GameSetup script");
+	}
+}
+const SkirmishAIData* CGameSetup::GetSkirmishAIDataForTeam(int teamId) const {
+
+	std::map<int, const SkirmishAIData*>::const_iterator sad;
+	sad = team_skirmishAI.find(teamId);
+	if (sad == team_skirmishAI.end()) {
+		return NULL;
+	} else {
+		return sad->second;
+	}
+}
+
+/**
 @brief Load teams and remove gaps in the team numbering.
 @pre numTeams, hostDemo initialized
 @post teams loaded
@@ -290,23 +385,23 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		data.leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
 		data.side = StringToLower(file.SGetValueDef("arm", s + "side").c_str());
 		data.teamAllyteam = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
-
-		// Is this team (Lua) AI controlled?
-		// If this is a demo replay, non-Lua AIs aren't loaded.
-		data.luaAI = file.SGetValueDef("", s + "aispecifier");
-		if (data.luaAI.empty()) {
-			data.luaAI = file.SGetValueDef("", s + "LuaAI");
-		// this else if is only here fo rbackwards compatibility
-		} else if (data.luaAI.size() > 6 && data.luaAI.substr(0, 6) == "LuaAI:") {
-			data.luaAI = data.luaAI.substr(6);
-		}
-		
-		string aiS(s + "AI\\");
-		data.skirmishAIShortName = file.SGetValueDef("", aiS + "Name");
-		data.skirmishAIVersion = file.SGetValueDef("", aiS + "Version");
-		if (file.SectionExist(aiS + "Options")) {
-			data.skirmishAIOptions = file.GetAllValues(aiS + "Options");
-		}
+//
+//		// Is this team (Lua) AI controlled?
+//		// If this is a demo replay, non-Lua AIs aren't loaded.
+//		data.luaAI = file.SGetValueDef("", s + "aispecifier");
+//		if (data.luaAI.empty()) {
+//			data.luaAI = file.SGetValueDef("", s + "LuaAI");
+//		// this else if is only here fo rbackwards compatibility
+//		} else if (data.luaAI.size() > 6 && data.luaAI.substr(0, 6) == "LuaAI:") {
+//			data.luaAI = data.luaAI.substr(6);
+//		}
+//
+//		string aiS(s + "AI\\");
+//		data.skirmishAIShortName = file.SGetValueDef("", aiS + "Name");
+//		data.skirmishAIVersion = file.SGetValueDef("", aiS + "Version");
+//		if (file.SectionExist(aiS + "Options")) {
+//			data.skirmishAIOptions = file.GetAllValues(aiS + "Options");
+//		}
 		
 		teamStartingData.push_back(data);
 
@@ -375,20 +470,33 @@ void CGameSetup::RemapPlayers()
 	// relocate Team.TeamLeader field
 	for (int a = 0; a < numTeams; ++a) {
 		if (playerRemap.find(teamStartingData[a].leader) == playerRemap.end()) {
-			throw content_error("invalid Team.TeamLeader in GameSetup script");
-		};
+			throw content_error("invalid Team.leader in GameSetup script");
+		}
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
+	}
+	// relocate AI.host field
+	for (unsigned int a = 0; a < skirmishAIStartingData.size(); ++a) {
+		if (playerRemap.find(skirmishAIStartingData[a].host) == playerRemap.end())
+			throw content_error("invalid AI.host in GameSetup script");
+		skirmishAIStartingData[a].host = playerRemap[skirmishAIStartingData[a].host];
 	}
 }
 
 /** @brief Update all team indices to refer to the right team. */
 void CGameSetup::RemapTeams()
 {
-	// relocate Player.Team field
+	// relocate Player.team field
 	for (int a = 0; a < numPlayers; ++a) {
 		if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
-			throw content_error("invalid Player.Team in GameSetup script");
+			throw content_error("invalid Player.team in GameSetup script");
 		playerStartingData[a].team = teamRemap[playerStartingData[a].team];
+	}
+	// relocate AI.team field
+	for (unsigned int a = 0; a < skirmishAIStartingData.size(); ++a) {
+		if (teamRemap.find(skirmishAIStartingData[a].team) == teamRemap.end())
+			throw content_error("invalid AI.team in GameSetup script");
+		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
+		team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
 	}
 }
 
@@ -479,6 +587,7 @@ bool CGameSetup::Init(const std::string& buf)
 
 	// Read subsections
 	LoadPlayers(file);
+	LoadSkirmishAIs(file);
 	LoadTeams(file);
 	LoadAllyTeams(file);
 
