@@ -8,6 +8,7 @@
 #include "SFloat3.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "PlayerBase.h"
+#include "ExternalAI/SkirmishAIData.h"
 
 class TdfParser;
 
@@ -64,6 +65,9 @@ public:
 	StartPosType startPosType;
 	
 	std::vector<PlayerBase> playerStartingData;
+	std::vector<SkirmishAIData> skirmishAIStartingData;
+	std::map<int, const SkirmishAIData*> team_skirmishAI;
+	const SkirmishAIData* GetSkirmishAIDataForTeam(int teamId) const;
 	
 	struct TeamData
 	{
@@ -74,10 +78,10 @@ public:
 		SFloat3 startPos;
 		int teamStartNum;
 		int teamAllyteam;
-		std::string luaAI;
-		std::string skirmishAIShortName;
-		std::string skirmishAIVersion;
-		std::map<std::string, std::string> skirmishAIOptions;
+//		std::string luaAI;
+//		std::string skirmishAIShortName;
+//		std::string skirmishAIVersion;
+//		std::map<std::string, std::string> skirmishAIOptions;
 	};
 	std::vector<TeamData> teamStartingData;
 	
@@ -122,6 +126,7 @@ private:
 	void LoadStartPositionsFromMap();
 	void LoadUnitRestrictions(const TdfParser& file);
 	void LoadPlayers(const TdfParser& file);
+	void LoadSkirmishAIs(const TdfParser& file);
 	void LoadTeams(const TdfParser& file);
 	void LoadAllyTeams(const TdfParser& file);
 
@@ -130,6 +135,7 @@ private:
 	void RemapAllyteams();
 
 	std::map<int, int> playerRemap;
+//	std::map<int, int> skirmishAIRemap;
 	std::map<int, int> teamRemap;
 	std::map<int, int> allyteamRemap;
 };

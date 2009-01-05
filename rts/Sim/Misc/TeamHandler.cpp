@@ -12,6 +12,7 @@
 #include "mmgr.h"
 #include "Util.h"
 #include "Platform/errorhandler.h"
+#include "ExternalAI/SkirmishAIData.h"
 #include "ExternalAI/IAILibraryManager.h"
 
 CR_BIND(CTeamHandler,);
@@ -87,30 +88,35 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		team->side = teamStartingData.side;
 		SetAllyTeam(i, teamStartingData.teamAllyteam);
 
-		if (!teamStartingData.luaAI.empty()) {
-			team->luaAI = teamStartingData.luaAI;
-			team->isAI = true;
-		} else if (!(teamStartingData.skirmishAIShortName.empty())) {
-			if (setup->hostDemo) {
-				team->skirmishAIKey = SkirmishAIKey(); // unspecifyed AI Key
+		const SkirmishAIData* skirmishAIData =
+				setup->GetSkirmishAIDataForTeam(i);
+
+		if (skirmishAIData != NULL) {
+			if (skirmishAIData->isLuaAI) {
+				team->luaAI = skirmishAIData->shortName;
+				team->isAI = true;
 			} else {
-				const char* sn = teamStartingData.skirmishAIShortName.c_str();
-				const char* v = teamStartingData.skirmishAIVersion.empty()
-						? NULL : teamStartingData.skirmishAIVersion.c_str();
-				SkirmishAIKey spec = SkirmishAIKey(sn, v);
-				SkirmishAIKey fittingKey =
-						IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
-				if (!fittingKey.IsUnspecified()) {
-					team->skirmishAIKey = fittingKey;
-					team->skirmishAIOptions = teamStartingData.skirmishAIOptions;
-					team->isAI = true;
+				if (setup->hostDemo) {
+					team->skirmishAIKey = SkirmishAIKey(); // unspecifyed AI Key
 				} else {
-					const int MAX_MSG_LENGTH = 511;
-					char s_msg[MAX_MSG_LENGTH + 1];
-					SNPRINTF(s_msg, MAX_MSG_LENGTH,
-							"Specifyed Skirmish AI could not be found: %s (version: %s)",
-							spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specifyed>");
-					handleerror(NULL, s_msg, "Team Handler Error", MBF_OK | MBF_EXCL);
+					const char* sn = skirmishAIData->shortName.c_str();
+					const char* v = skirmishAIData->version.empty()
+							? NULL : skirmishAIData->version.c_str();
+					SkirmishAIKey spec = SkirmishAIKey(sn, v);
+					SkirmishAIKey fittingKey =
+							IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
+					if (!fittingKey.IsUnspecified()) {
+						team->skirmishAIKey = fittingKey;
+						team->skirmishAIOptions = skirmishAIData->options;
+						team->isAI = true;
+					} else {
+						const int MAX_MSG_LENGTH = 511;
+						char s_msg[MAX_MSG_LENGTH + 1];
+						SNPRINTF(s_msg, MAX_MSG_LENGTH,
+								"Specifyed Skirmish AI could not be found: %s (version: %s)",
+								spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specifyed>");
+						handleerror(NULL, s_msg, "Team Handler Error", MBF_OK | MBF_EXCL);
+					}
 				}
 			}
 		}
