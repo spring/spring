@@ -226,32 +226,248 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 ################################################################################
 ### Build streflop (which has it's own Makefile-based build system)
 ################################################################################
-if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
-	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
-	if env.has_key('streflop_extra'):
-		cmd += " " + env['streflop_extra']
-	if env['fpmath'] == 'sse':
-		cmd = "STREFLOP_SSE=1 " + cmd
-	else:
-		cmd = "STREFLOP_X87=1 " + cmd
-	if env['platform'] == 'windows':
-		cmd += " WIN32=1"
-	if env.GetOption('clean'):
-		cmd += " clean"
-	print 'streflop options:', cmd
-	if env['platform'] == 'freebsd':
-		status = os.system("gmake " + cmd)
-	else:
-		status = os.system("make " + cmd)
-	if status != 0:
-		# try with mingw32-make
-		status = os.system("mingw32-make " + cmd)
-	if status != 0:
-		print "Failed building streflop!"
-		env.Exit(1)
-	else:
-		print "Success building streflop!"
+#if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
+#	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
+#	if env.has_key('streflop_extra'):
+#		cmd += " " + env['streflop_extra']
+#	if env['fpmath'] == 'sse':
+#		cmd = "STREFLOP_SSE=1 " + cmd
+#	else:
+#		cmd = "STREFLOP_X87=1 " + cmd
+#	if env['platform'] == 'windows':
+#		cmd += " WIN32=1"
+#	if env.GetOption('clean'):
+#		cmd += " clean"
+#	print 'streflop options:', cmd
+#	if env['platform'] == 'freebsd':
+#		status = os.system("gmake " + cmd)
+#	else:
+#		status = os.system("make " + cmd)
+#	if status != 0:
+#		# try with mingw32-make
+#		status = os.system("mingw32-make " + cmd)
+#	if status != 0:
+#		print "Failed building streflop!"
+#		env.Exit(1)
+#	else:
+#		print "Success building streflop!"
+#
 
+################################################################################
+################################################################################
+################################################################################
+
+senv = env.Clone(builddir=os.path.join(env['builddir'], 'streflop'))
+
+if senv['fpmath'] == 'sse':
+	senv.AppendUnique(CPPDEFINES=['STREFLOP_SSE'])
+else:
+	senv.AppendUnique(CPPDEFINES=['STREFLOP_X87'])
+
+	
+for d in filelist.list_directories(senv, 'rts/lib/streflop', exclude_list=[]):
+	senv.BuildDir(os.path.join(senv['builddir'], d), d, duplicate = False)
+
+filelist.get_source(uenv, 'rts/lib/streflop');
+senv.BuildDir(os.path.join(senv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
+unitsync_files          = filelist.get_source(uenv, 'tools/unitsync');
+unitsync_fs_files       = filelist.get_source(uenv, 'rts/System/FileSystem/', exclude_list=('rts/System/FileSystem/DataDirLocater.cpp'));
+unitsync_lua_files      = filelist.get_source(uenv, 'rts/lib/lua/src');
+unitsync_7zip_files     = filelist.get_source(uenv, 'rts/lib/7zip');
+unitsync_minizip_files  = filelist.get_source(uenv, 'rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
+unitsync_hpiutil2_files = filelist.get_source(uenv, 'rts/lib/hpiutil2');
+unitsync_extra_files = [
+	'rts/Game/GameVersion.cpp',
+	'rts/Lua/LuaUtils.cpp',
+	'rts/Lua/LuaIO.cpp',
+	'rts/Lua/LuaParser.cpp',
+	'rts/Map/MapParser.cpp',
+	'rts/Map/SMF/SmfMapFile.cpp',
+	'rts/Rendering/Textures/Bitmap.cpp',
+	'rts/Rendering/Textures/nv_dds.cpp',
+	'rts/Sim/Misc/SideParser.cpp',
+	'rts/System/Info.cpp',
+	'rts/System/Option.cpp',
+	'rts/System/ConfigHandler.cpp',
+	'rts/System/LogOutput.cpp',
+]
+for f in unitsync_fs_files:       unitsync_files += f
+for f in unitsync_lua_files:      unitsync_files += f
+for f in unitsync_7zip_files:     unitsync_files += f
+for f in unitsync_minizip_files:  unitsync_files += f
+for f in unitsync_hpiutil2_files: unitsync_files += f
+for f in unitsync_extra_files:   unitsync_files += [os.path.join(uenv['builddir'], f)]
+
+if env['platform'] == 'windows':
+	# crosscompiles on buildbot need this, but native mingw builds fail
+	# during linking
+	if os.name != 'nt':
+		unitsync_files.append('rts/lib/minizip/iowin32.c')
+	for f in ['rts/System/FileSystem/DataDirLocater.cpp']:
+		unitsync_files += [os.path.join(uenv['builddir'], f)]
+	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
+	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
+else:
+	ddlcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
+	unitsync_files += [ ddlcpp ]
+	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files)
+
+Alias('unitsync', unitsync)
+inst = env.Install(os.path.join(env['installprefix'], env['libdir']), unitsync)
+Alias('install', inst)
+Alias('install-unitsync', inst)
+
+# Strip the DLL if rts.py said so.
+if env['strip']:
+	env.AddPostAction(unitsync, Action([['strip','$TARGET']]))
+
+# Somehow unitsync fails to build with mingw:
+#  "build\tools\unitsync\pybind.o(.text+0x129d): In function `initunitsync':
+#   pybind.cpp:663: undefined reference to `_imp__Py_InitModule4TraceRefs'"
+# Figured this out: this means we're attempting to build unitsync with debugging
+# enabled against a python version with debugging disabled.
+if env['platform'] != 'windows':
+	Default(unitsync)
+
+
+
+
+
+
+
+
+
+
+
+
+### Usr-definable build options
+SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
+if (SYNCCHECK)
+	ADD_DEFINITIONS(-DSYNCCHECK)
+endif (SYNCCHECK)
+
+
+### Compiler flags and defines based on build type
+INCLUDE(TestCXXAcceptsVisibilityFlag)
+set (MARCH_FLAG native CACHE STRING "CPU optimization (use i686 for generic optimization)")
+if (MARCH_FLAG)
+	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -msse -mfpmath=sse")
+endif (MARCH_FLAG)
+
+# intel C compiler fix (does not support these flags: -march -mfpmath -ggdb)
+IF ($ENV{CXX} MATCHES "icpc")
+	SET(CMAKE_CXX_FLAGS " -axK")
+	SET(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
+ELSE ($ENV{CXX} MATCHES "icpc")
+	SET(CXX_FLAGS_DEBUG_ADDITIONAL "")
+ENDIF ($ENV{CXX} MATCHES "icpc")
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
+ADD_DEFINITIONS(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
+IF (UNIX)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+ENDIF (UNIX)
+
+SET(CMAKE_CXX_FLAGS_DEBUG          "${CXX_FLAGS_DEBUG_ADDITIONAL} -ggdb1 -O1 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+SET(CMAKE_CXX_FLAGS_DEBUG2         "${CXX_FLAGS_DEBUG_ADDITIONAL} -ggdb2 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+SET(CMAKE_CXX_FLAGS_DEBUG3         "${CXX_FLAGS_DEBUG_ADDITIONAL} -ggdb3 -O0 -Wall -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
+SET(CMAKE_CXX_FLAGS_RELEASE        "-O2 -DNDEBUG -fomit-frame-pointer")
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -DNDEBUG")
+SET(CMAKE_CXX_FLAGS_PROFILE        "-O2 -pg -Wall -DNDEBUG")
+
+if (NOT MINGW)
+	set (PIC_FLAG "-fpic")
+endif (NOT MINGW)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
+
+SET(TRACE_SYNC FALSE CACHE BOOL "Enable sync tracker")
+if (TRACE_SYNC)
+	ADD_DEFINITIONS(-DTRACE_SYNC)
+endif (TRACE_SYNC)
+
+SET(SYNCDEBUG FALSE CACHE BOOL "Enable sync debugger (needs SYNCCHECK=true)")
+if (SYNCDEBUG)
+	ADD_DEFINITIONS(-DSYNCDEBUG)
+endif (SYNCDEBUG)
+
+TARGET_LINK_LIBRARIES(spring ${spring_libraries})
+install (TARGETS spring DESTINATION ${BINDIR})
+
+
+
+
+
+
+
+
+INCLUDE_DIRECTORIES(BEFORE streflop ${CMAKE_SOURCE_DIR}/rts/System)
+
+ADD_DEFINITIONS(${PIC_FLAG}) # all libraries need to be position independent (gives compiler warnings on 64bit-linux)
+
+TARGET_LINK_LIBRARIES(lua streflop)
+
+
+ADD_SUBDIRECTORY(streflop)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+AUX_SOURCE_DIRECTORY(libm/flt-32 libm_flt32_source)
+AUX_SOURCE_DIRECTORY(libm/dbl-64 libm_dbl64_source)
+AUX_SOURCE_DIRECTORY(libm/ldbl-96 libm_ldbl96_source)
+
+# FIXME: Random.cpp fails if it libm/headers is in include directory
+# thats why it is set in cxxflags as a workaround
+#INCLUDE_DIRECTORIES(libm/headers)
+
+SET(cxxflags "-w -O3 -I${CMAKE_CURRENT_SOURCE_DIR}/libm/headers")
+#SET(cxxflags "-w -O3 -DSTREFLOP_SSE -fsingle-precision-constant -fno-strict-aliasing -fsignaling-nans -frounding-math -mieee-fp -I${CMAKE_CURRENT_SOURCE_DIR}/libm/headers")
+if (NOT $ENV{CXX} MATCHES "icpc")
+	SET(cxxflags "${cxxflags} -mfpmath=sse -msse")
+endif (NOT $ENV{CXX} MATCHES "icpc")
+SET_SOURCE_FILES_PROPERTIES(${libm_flt32_source} PROPERTIES COMPILE_FLAGS "-DLIBM_COMPILING_FLT32 ${cxxflags}")
+SET_SOURCE_FILES_PROPERTIES(${libm_dbl64_source} PROPERTIES COMPILE_FLAGS "-DLIBM_COMPILING_DBL64 ${cxxflags}")
+SET_SOURCE_FILES_PROPERTIES(${libm_ldbl96_source} PROPERTIES COMPILE_FLAGS "-DLIBM_COMPILING_LDBL96 ${cxxflags}")
+
+ADD_LIBRARY(streflop STATIC EXCLUDE_FROM_ALL
+	SMath.cpp
+	Random.cpp
+	${libm_flt32_source}
+# not needed => safer (and faster) to not compile them at all
+#	${libm_dbl64_source}
+#	${libm_ldbl96_source}
+)
+
+
+################################################################################
+################################################################################
+################################################################################
+################################################################################
 
 ################################################################################
 ### Run Tests
