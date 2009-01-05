@@ -44,11 +44,11 @@ public:
 	int ***blendMatrix;
 
 	int ydif[CLOUD_SIZE];
+	int updatecounter;
 
 	unsigned char alphaTransform[1024];
 	unsigned char thicknessTransform[1024];
 
-	int lastCloudUpdate;
 	bool cloudDown[10];
 
 	unsigned char *cloudThickness;
