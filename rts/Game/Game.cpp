@@ -4370,7 +4370,7 @@ void CGame::GameEnd()
 
 		// TODO: move this to a method in CTeamHandler
 		// Figure out who won the game.
-		int numTeams = teamHandler->ActiveAllyTeams();
+		int numTeams = teamHandler->ActiveTeams();
 		if (gs->useLuaGaia) {
 			--numTeams;
 		}
