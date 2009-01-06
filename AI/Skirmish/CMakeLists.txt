@@ -190,7 +190,7 @@ endif (EXISTS ${NullAI_SRC})
 ## Null Java AI
 if (NOT JAVA_FOUND)
 	set(JAVA_FIND_QUIETLY ${SKIRMISHAI_FIND_QUIETLY})
-	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
+	FIND_PACKAGE(JavaExtended) # Note: this is not the CMake builtin FindJava
 endif (NOT JAVA_FOUND)
 set(NullJavaAI_SRC "${SKIRMISH_SRC}/NullJavaAI")
 if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
@@ -236,7 +236,7 @@ endif (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 ## Null Object Oriented Java AI
 if (NOT JAVA_FOUND)
 	set(JAVA_FIND_QUIETLY ${SKIRMISHAI_FIND_QUIETLY})
-	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
+	FIND_PACKAGE(JavaExtended) # Note: this is not the CMake builtin FindJava
 endif (NOT JAVA_FOUND)
 set(NullOOJavaAI_SRC "${SKIRMISH_SRC}/NullOOJavaAI")
 if (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
