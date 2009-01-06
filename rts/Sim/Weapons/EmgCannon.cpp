@@ -102,7 +102,7 @@ void CEmgCannon::Fire(void)
 	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.5f);
 	dir.Normalize();
 
-	SAFE_NEW CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
+	new CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef->visuals.color, weaponDef->intensity, (int) (range / projectileSpeed),
 		weaponDef);
 

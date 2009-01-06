@@ -5,8 +5,8 @@
 set -e
 
 # Sanity check.
-if [ ! -x /usr/bin/svn ]; then
-	echo "Error: Couldn't find /usr/bin/svn"
+if [ ! -x /usr/bin/git ]; then
+	echo "Error: Couldn't find /usr/bin/git"
 	exit 1
 fi
 
@@ -22,17 +22,32 @@ while [ ! -d installer ]; do
         cd ..
 done
 
-# This regex matches regexes in buildbot etc.
-version=`grep -E 'VERSION_STRING ' rts/Game/GameVersion.cpp | grep -o -E '0\.[0-9]{2,2}[b.][0-9]\+?(svn[0-9]+)?'`
+set +e # turn of quit on error
+git describe --candidates 0 &> /dev/null
+set -e # turn it on again
+if [ $? -ne "0" ]; then
+	RELEASE_SOURCE= false
+else
+	RELEASE_SOURCE= true
+fi
+
+if [ $RELEASE_SOURCE ]; then
+	version_string=`git describe`
+	branch=${branch}
+else
+	version_string=`git describe | sed s/\-[^\-]*$//`
+	branch="master"
+fi
+echo "Using $branch as source"
 
 # Each one of these that is set is build when running this script.
 # .tar.bz2 and .tar.gz are built with linux (LF) line endings.
 # .zip and .7z are built with windows (CRLF) line endings.
-dir="spring_$version"
-tbz="spring_${version}_src.tar.bz2"
-#tgz="spring_${version}_src.tar.gz"
-zip="spring_${version}_src.zip"
-#seven_zip="spring_${version}_src.7z"
+dir="spring_${version_string}"
+tbz="spring_${version_string}_src.tar.bz2"
+#tgz="spring_${branch}_src.tar.gz"
+zip="spring_${version_string}_src.zip"
+#seven_zip="spring_${branch}_src.7z"
 
 # This is the list of files/directories that go in the source package.
 # (directories are included recursively)
@@ -72,9 +87,10 @@ windows_include=""
 
 # Linux line endings, .tar.{bz2,gz} package.
 echo 'Exporting checkout dir with LF line endings'
-mkdir lf || exit 1
-cd lf
-/usr/bin/svn export .. "$dir" --native-eol LF
+git clone -n . lf/$dir
+cd lf/$dir
+git checkout $branch
+cd ..
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
 [ -n "$tbz" ] && echo "Creating .tar.bz2 archive ($tbz)" && \
 	tar cfj "../$tbz" $include $linux_include
@@ -84,11 +100,15 @@ cd ..
 echo 'Cleaning'
 rm -rf lf
 
+### TODO: needs fixing
 # Windows line endings, .zip/.7z package
-echo 'Exporting checkout dir with CRLF line endings'
-mkdir crlf || exit 1
-cd crlf
-/usr/bin/svn export .. "$dir" --native-eol CRLF
+#echo 'Exporting checkout dir with CRLF line endings'
+git clone -n . crlf/$dir
+cd crlf/$dir
+git config core.autocrlf true
+git checkout $branch
+cd ..
+
 [ -n "$windows_exclude" ] && rm -rf $windows_exclude
 [ -n "$zip" ] && [ -x /usr/bin/zip ] && echo "Creating .zip archive ($zip)" && \
 	/usr/bin/zip -q -r -u -9 "../$zip" $include $windows_include
@@ -97,3 +117,4 @@ cd crlf
 cd ..
 echo 'Cleaning'
 rm -rf crlf
+cd ..

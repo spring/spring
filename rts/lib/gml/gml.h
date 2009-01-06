@@ -169,6 +169,7 @@ extern boost::mutex netmutex;
 extern boost::mutex histmutex;
 extern boost::mutex logmutex;
 extern boost::mutex timemutex;
+extern boost::mutex watermutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -239,5 +240,10 @@ inline unsigned gmlGetTicks() {
 #define GML_PARG_P
 
 #endif // USE_GML
+
+#define glGenerateMipmapEXT_NONGML GLEW_GET_FUN(__glewGenerateMipmapEXT)
+#define glUseProgram_NONGML GLEW_GET_FUN(__glewUseProgram)
+#define glProgramParameteriEXT_NONGML GLEW_GET_FUN(__glewProgramParameteriEXT)
+#define glBlendEquation_NONGML GLEW_GET_FUN(__glewBlendEquation)
 
 #endif

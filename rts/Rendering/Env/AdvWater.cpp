@@ -28,7 +28,7 @@
 CAdvWater::CAdvWater(bool loadShader)
 {
 	glGenTextures(1, &reflectTexture);
-	unsigned char* scrap=SAFE_NEW unsigned char[512*512*4];
+	unsigned char* scrap=new unsigned char[512*512*4];
 
 	glBindTexture(GL_TEXTURE_2D, reflectTexture);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);

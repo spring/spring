@@ -82,7 +82,7 @@ CGuiHandler::CGuiHandler()
   gatherMode(false),
   drawSelectionInfo(true)
 {
-	icons = SAFE_NEW IconInfo[16];
+	icons = new IconInfo[16];
 	iconsSize = 16;
 	iconsCount = 0;
 
@@ -424,7 +424,7 @@ void CGuiHandler::ResizeIconArray(unsigned int size)
 	if (iconsSize < minIconsSize) {
 		iconsSize = minIconsSize;
 		delete[] icons;
-		icons = SAFE_NEW IconInfo[iconsSize];
+		icons = new IconInfo[iconsSize];
 	}
 }
 
@@ -1216,7 +1216,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			    dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
 				inCommand = cmdIndex;
 				SetShowingMetal(false);
-				list = SAFE_NEW CglList(cd.name.c_str(), MenuSelection);
+				list = new CglList(cd.name.c_str(), MenuSelection);
 				list->cancelPlace = 0;
 				list->tooltip =
 					"Choose the AI you want to assign to this group.\n"
@@ -1984,7 +1984,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					}
 				}
 				inCommand = a;
-				list = SAFE_NEW CglList(cd.name.c_str(), MenuSelection);
+				list = new CglList(cd.name.c_str(), MenuSelection);
 				list->cancelPlace = 0;
 				list->tooltip = "Choose the AI you want to assign to this group.\n"
 						"Select \"None\" to cancel or \"default\" to create a group without an AI\n"

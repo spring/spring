@@ -35,7 +35,7 @@ void CPathCache::AddPath(IPath::Path* path, IPath::SearchResult result, int2 sta
 		return;		
 	}
 
-	CacheItem* ci=SAFE_NEW CacheItem;
+	CacheItem* ci=new CacheItem;
 	ci->path=*path;
 	ci->result=result;
 	ci->startBlock=startBlock;

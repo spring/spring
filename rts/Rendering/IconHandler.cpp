@@ -42,7 +42,7 @@ CIconHandler::CIconHandler()
 		defIconData = it->second.data;
 	}
 	else {
-		defIconData = SAFE_NEW CIconData("default", GetDefaultTexture(),
+		defIconData = new CIconData("default", GetDefaultTexture(),
 																		 1.0f, 1.0f, false, false, 128, 128);
 		iconMap["default"] = CIcon(defIconData);
 	}
@@ -120,7 +120,7 @@ bool CIconHandler::AddIcon(const string& iconName, const string& textureName,
 		FreeIcon(iconName);
 	}
 
-	CIconData* iconData = SAFE_NEW CIconData(iconName, texID,  size, distance,
+	CIconData* iconData = new CIconData(iconName, texID,  size, distance,
 	                                         radAdj, ownTexture, xsize, ysize);
 
 	iconMap[iconName] = CIcon(iconData);

@@ -104,7 +104,7 @@ void CSpherePartProjectile::CreateSphere(float3 pos, float alpha, int ttl, float
 {
 	for(int y=0;y<16;y+=4){
 		for(int x=0;x<32;x+=4){
-			SAFE_NEW CSpherePartProjectile(pos,x,y,expansionSpeed,alpha,ttl,owner,color);
+			new CSpherePartProjectile(pos,x,y,expansionSpeed,alpha,ttl,owner,color);
 		}
 	}
 }

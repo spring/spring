@@ -105,7 +105,7 @@ void CLuaUI::LoadHandler()
 		return;
 	}
 
-	SAFE_NEW CLuaUI();
+	new CLuaUI();
 
 	if (luaUI->L == NULL) {
 		delete luaUI;

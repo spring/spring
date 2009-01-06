@@ -1569,7 +1569,8 @@ int CAICallback::GetSelectedUnits(int *unitIds, int unitIds_max)
 	// check if the allyteam of the player running
 	// the AI lib matches the AI's actual allyteam
 	if (gu->myAllyTeam == teamHandler->AllyTeam(team)) {
-		for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin(); ui != selectedUnits.selectedUnits.end(); ++ui) {
+		for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
+				ui != selectedUnits.selectedUnits.end(); ++ui) {
 			unitIds[a++] = (*ui)->id;
 			if (a >= unitIds_max) {
 				break;

@@ -201,7 +201,7 @@ CCobFile& CCobEngine::GetCobFile(const string& name)
 		handleerror(0,"No cob-file",name.c_str(),0);		
 		//Need to return something maybe.. this is pretty fatal though
 	}
-	CCobFile *cf = SAFE_NEW CCobFile(f, name);
+	CCobFile *cf = new CCobFile(f, name);
 
 	cobFiles[name] = cf;
 	return *cf;

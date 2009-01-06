@@ -28,8 +28,8 @@ SetCompressor lzma
 !define MUI_UNICON "${NSISDIR}\Contrib\Graphics\Icons\modern-uninstall.ico"
 !define MUI_WELCOMEFINISHPAGE_BITMAP "graphics\SideBanner.bmp"
 ;!define MUI_COMPONENTSPAGE_SMALLDESC ;puts description on the bottom, but much shorter.
-!define MUI_COMPONENTSPAGE_TEXT_TOP "Some of these components (e.g. mods or maps) must be downloaded during the install process."
-!define MUI_COMPONENTSPAGE_TEXT_COMPLIST "New users should select at least one mod and one map pack.  Selecting Total Annihilation mods will result in an automatic 9.0MB extra content download (if needed). Currently installed mods will be updated."
+!define MUI_COMPONENTSPAGE_TEXT_TOP "Some of these components must be downloaded during the install process."
+
 
 
 ; Welcome page
@@ -99,7 +99,6 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 ;ShowUnInstDetails show ;fix graphical glitch
 
 !include "include\fileassoc.nsh"
-!include "include\otacontent.nsh"
 !include "include\checkrunning.nsh"
 
 
@@ -123,46 +122,12 @@ Function .onInit
     !insertmacro SetSectionFlag 0 16 ; make the core section read only
   ${EndIf}
   !insertmacro UnselectSection 3 ; unselect springlobby section (3) by default
-  ;!insertmacro SetSectionFlag 4 32 ; expand (32) maps section (4)
   ${If} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro UnselectSection 6 ; unselect default section (6) by default
   ${EndIf}
-  !insertmacro UnselectSection 7 ; unselect 1v1maps section (7) by default
-  !insertmacro UnselectSection 8 ; unselect teammaps section by (8) default
   ;!insertmacro SetSectionFlag 10 32 ; expand (32) mods section (10)
-  !insertmacro UnselectSection 11 ; unselect BA section (11) by default
-  ${If} ${FileExists} "$INSTDIR\mods\BA631.sd7"
-    !insertmacro SelectSection 11 ; Select BA section (11) if BA is already installed
-  ${OrIf} ${FileExists} "$INSTDIR\mods\BA_Installer_Version.sd7"
-    !insertmacro SelectSection 11 ; Select BA section (11) if BA is already installed
-  ${EndIf}
-  !insertmacro UnselectSection 12 ; unselect XTA section (12) by default
-  ${If} ${FileExists} "$INSTDIR\mods\XTAPE.sdz"
-    !insertmacro SelectSection 12 ; Select XTA section (12) if XTA is already installed
-  ${OrIf} ${FileExists} "$INSTDIR\mods\XTA_Installer_Version.sdz"
-    !insertmacro SelectSection 12 ; Select XTA section (12) if XTA is already installed
-  ${EndIf}
-  !insertmacro UnselectSection 13 ; unselect Gundam section (13) by default
-  !insertmacro UnselectSection 14 ; unselect Kernel Panic section (14) by default
-  !insertmacro UnselectSection 15 ; unselect EvolutionRTS section (15) by default
-  !insertmacro UnselectSection 16 ; unselect Spring:1944 section (16) by default
-  !insertmacro UnselectSection 17 ; unselect Simbase section (17) by default
-  !insertmacro UnselectSection 18 ; unselect CA section (18) by default
 FunctionEnd
 
-; For CA and Evolution: BEGIN
-
-;Var CA
-Var EVO
-
-Function  .onGUIEnd
-;${If} $CA == 'true'
-  ;Call LaunchUpdater
-;${EndIf}
-${If} $EVO == 'true'
-  Call LaunchEvoUpdater
-${EndIf}
-FunctionEnd
 
 Function GetDotNETVersion
   Push $0 ; Create variable 0 (version number).
@@ -205,31 +170,6 @@ false:
 next:
 FunctionEnd
 
-;Function LaunchUpdater
-  ;MessageBox MB_YESNO \
-  ;"Before you can play Complete Annihilation, the CA Downloader will need to fetch the mod. Do you wish to do so now?" \
-  ;IDYES true IDNO false
-;true:
-  ;Exec '"$INSTDIR\CaDownloader.exe"'
-  ;Goto next
-;false:
-  ;next:
-;FunctionEnd
-
-Function LaunchEvoUpdater
-  MessageBox MB_YESNO \
-  "Before you can play Evolution, the Evolution Updater will need to fetch the mod. Do you wish to do so now?" \
-  IDYES true IDNO false
-true:
-  Exec '"$INSTDIR\mods\Evolution_Updater.bat"'
-  Goto next
-false:
-  next:
-FunctionEnd
-
-; For CA and Evolution: END
-
-
 
 Section "Main application (req)" SEC_MAIN
 !ifdef SP_UPDATE
@@ -259,97 +199,6 @@ SectionGroup "Multiplayer battlerooms"
 SectionGroupEnd
 
 
-SectionGroup "Map Packs"
-	Section "Default Maps" SEC_MAPS
-	!define INSTALL
-        AddSize 9000
-	!include "sections\maps.nsh"
-	!undef INSTALL
-	SectionEnd
-
-        Section "1 vs 1 Maps" SEC_1V1MAPS
-	!define INSTALL
-        AddSize 90000
-	!include "sections\1v1maps.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Teamplay Maps" SEC_TEAMMAPS
-	!define INSTALL
-        AddSize 201000
-	!include "sections\teammaps.nsh"
-	!undef INSTALL
-	SectionEnd
-SectionGroupEnd
-
-
-SectionGroup "Mods"
-	Section "BA" SEC_BA
-	!define INSTALL
-        Call CheckTATextures
-        Call CheckOTAContent
-        Call CheckTAContent
-        AddSize 9100
-	!include "sections\ba.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "XTA" SEC_XTA
-	!define INSTALL
-        Call CheckTATextures
-        Call CheckOTAContent
-        Call CheckTAContent
-        AddSize 12600
-	!include "sections\xta.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Gundam" SEC_GUNDAM
-	!define INSTALL
-	AddSize 51000
-	!include "sections\gundam.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Kernel Panic" SEC_KP
-	!define INSTALL
-	AddSize 6400
-	!include "sections\kp.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Evolution RTS" SEC_EVOLUTION
-	!define INSTALL
-	AddSize 38700
-	!include "sections\evolution.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Spring:1944" SEC_S44
-	!define INSTALL
-	AddSize 33700
-	!include "sections\s44.nsh"
-	!undef INSTALL
-	SectionEnd
-
-	Section "Simbase" SEC_SIMBASE
-	!define INSTALL
-	AddSize 3500
-	!include "sections\simbase.nsh"
-	!undef INSTALL
-	SectionEnd
-
-  	Section "CA" SEC_CA
-	!define INSTALL
-        Call CheckTATextures
-        Call CheckOTAContent
-        Call CheckTAContent
-        AddSize 54400
-	!include "sections\ca.nsh"
-	!undef INSTALL
-	SectionEnd
-SectionGroupEnd
-
 Section "Start menu shortcuts" SEC_START
   !define INSTALL
   !include "sections\shortcuts.nsh"
@@ -360,10 +209,6 @@ Section "Desktop shortcut" SEC_DESKTOP
 ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
   SetOutPath "$INSTDIR"
   CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
-${EndIf}
-${If} ${SectionIsSelected} ${SEC_KP}
-  SetOutPath "$INSTDIR"
-  CreateShortCut "$DESKTOP\${PRODUCT_NAME} Play Kernel Panic Singleplayer.lnk" "$INSTDIR\Kernel_Panic_Launcher.exe"
 ${EndIf}
 SectionEnd
 
@@ -426,10 +271,6 @@ FunctionEnd
 
 Section Uninstall
 
-  !include "sections\maps.nsh"
-  !include "sections\1v1maps.nsh"
-  !include "sections\teammaps.nsh"
-
   !include "sections\main.nsh"
 
   !include "sections\docs.nsh"
@@ -442,22 +283,4 @@ Section Uninstall
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"
 
-  !include "sections\BA.nsh"
-  !include "sections\XTA.nsh"
-  !include "sections\gundam.nsh"
-  !include "sections\kp.nsh"
-  !include "sections\evolution.nsh"
-  !include "sections\s44.nsh"
-  !include "sections\simbase.nsh"
-  !include "sections\CA.nsh"
-
   Delete "$DESKTOP\${PRODUCT_NAME} battleroom.lnk"
-  Delete "$DESKTOP\${PRODUCT_NAME} Play Kernel Panic Singleplayer.lnk"
-
-  ; All done
-  RMDir "$INSTDIR"
-
-  DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
-  DeleteRegKey HKLM "${PRODUCT_DIR_REGKEY}"
-  SetAutoClose true
-SectionEnd

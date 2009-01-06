@@ -83,9 +83,9 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	nbrOfBlocksX = gs->mapx / BLOCK_SIZE;
 	nbrOfBlocksZ = gs->mapy / BLOCK_SIZE;
 	nbrOfBlocks = nbrOfBlocksX * nbrOfBlocksZ;
-	blockState = SAFE_NEW BlockInfo[nbrOfBlocks];
+	blockState = new BlockInfo[nbrOfBlocks];
 	nbrOfVertices = moveinfo->moveData.size() * nbrOfBlocks * PATH_DIRECTION_VERTICES;
-	vertex = SAFE_NEW float[nbrOfVertices];
+	vertex = new float[nbrOfVertices];
 	openBlockBufferPointer = openBlockBuffer;
 
 	InitEstimator(name);
@@ -103,7 +103,7 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	directionVertex[PATHDIR_DOWN      ] = int(PATHDIR_UP) - (nbrOfBlocksX * PATH_DIRECTION_VERTICES);
 	directionVertex[PATHDIR_LEFT_DOWN ] = int(PATHDIR_RIGHT_UP) - (nbrOfBlocksX * PATH_DIRECTION_VERTICES) + PATH_DIRECTION_VERTICES;
 
-	pathCache = SAFE_NEW CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
+	pathCache = new CPathCache(nbrOfBlocksX, nbrOfBlocksZ);
 }
 
 
@@ -145,18 +145,18 @@ void CPathEstimator::SpawnThreads(int numThreads, int stage) {
 		const int maxBlock = minBlock + blocksPerThread + blocksRem;
 
 		if (stage == 0) {
-			threads[threadIdx] = SAFE_NEW
+			threads[threadIdx] = new
 				boost::thread(boost::bind(&CPathEstimator::InitVerticesAndBlocks, this, minVertex, maxVertex, minBlock, maxBlock));
 		}
 		if (stage == 1) {
-			threads[threadIdx] = SAFE_NEW
+			threads[threadIdx] = new
 				boost::thread(boost::bind(&CPathEstimator::CalculateBlockOffsets, this, minBlock, maxBlock, threadIdx));
 		}
 		if (stage == 2) {
 			// allocate one private CPathFinder object per thread
-			pathFinders[threadIdx] = SAFE_NEW CPathFinder();
+			pathFinders[threadIdx] = new CPathFinder();
 
-			threads[threadIdx] = SAFE_NEW
+			threads[threadIdx] = new
 				boost::thread(boost::bind(&CPathEstimator::EstimatePathCosts, this, minBlock, maxBlock, threadIdx));
 		}
 	}
@@ -260,7 +260,7 @@ void CPathEstimator::InitBlocks(int minBlock, int maxBlock) {
 		blockState[blockNr].options = 0;
 		blockState[blockNr].parentBlock.x = -1;
 		blockState[blockNr].parentBlock.y = -1;
-		blockState[blockNr].sqrCenter = SAFE_NEW int2[moveinfo->moveData.size()];
+		blockState[blockNr].sqrCenter = new int2[moveinfo->moveData.size()];
 	}
 }
 
@@ -807,7 +807,7 @@ bool CPathEstimator::ReadFile(std::string name)
 	std::string filename = std::string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 
 	// open file for reading from a suitable location (where the file exists)
-	CArchiveZip* pfile = SAFE_NEW CArchiveZip(filesystem.LocateFile(filename));
+	CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
 
 	if (!pfile || !pfile->IsOpen()) {
 		delete pfile;
@@ -882,7 +882,7 @@ void CPathEstimator::WriteFile(std::string name) {
 
 
 		// get the CRC over the written path data
-		CArchiveZip* pfile = SAFE_NEW CArchiveZip(filesystem.LocateFile(filename));
+		CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
 
 		if (!pfile || !pfile->IsOpen()) {
 			delete pfile;

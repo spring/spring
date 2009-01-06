@@ -44,7 +44,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 	if(water==NULL && configValue==2 && GLEW_ARB_fragment_program && GLEW_ARB_texture_float &&
 	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"waterDyn.fp")) {
 		try {
-			water = SAFE_NEW CDynWater;
+			water = new CDynWater;
 		} catch (content_error& e) {
 			delete water;
 			water = NULL;
@@ -55,7 +55,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 
 	if(water==NULL && configValue==4 && GLEW_ARB_shading_language_100 && GL_ARB_fragment_shader && GL_ARB_vertex_shader) {
 		try {
-			water = SAFE_NEW CBumpWater;
+			water = new CBumpWater;
 		} catch (content_error& e) {
 			delete water;
 			water = NULL;
@@ -66,7 +66,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 	
 	if(water==NULL && configValue==3 && GLEW_ARB_fragment_program && GLEW_ARB_texture_rectangle){
 		try {
-			water = SAFE_NEW CRefractWater;
+			water = new CRefractWater;
 		} catch (content_error& e) {
 			delete water;
 			water = NULL;
@@ -78,7 +78,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 	if(water==NULL && configValue!=0 && GLEW_ARB_fragment_program &&
 	   ProgramStringIsNative(GL_FRAGMENT_PROGRAM_ARB,"water.fp")){
 		try {
-			water = SAFE_NEW CAdvWater;
+			water = new CAdvWater;
 		} catch (content_error& e) {
 			delete water;
 			water = NULL;
@@ -87,7 +87,7 @@ CBaseWater* CBaseWater::GetWater(CBaseWater* old)
 		}
 	}
 	if(water==NULL)
-		water = SAFE_NEW CBasicWater;
+		water = new CBasicWater;
 	water->oldwater=old;
 	return water;
 }

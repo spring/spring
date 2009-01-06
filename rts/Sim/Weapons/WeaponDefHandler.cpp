@@ -45,7 +45,7 @@ CWeaponDefHandler::CWeaponDefHandler()
 	rootTable.GetKeys(weaponNames);
 
 	numWeaponDefs = weaponNames.size(); // FIXME: starting at 0, don't need the +1 ?
-	weaponDefs = SAFE_NEW WeaponDef[numWeaponDefs + 1];
+	weaponDefs = new WeaponDef[numWeaponDefs + 1];
 
 	for (int wid = 0; wid < (int)weaponNames.size(); wid++) {
 		WeaponDef& wd = weaponDefs[wid];
@@ -574,10 +574,7 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 			GuiSoundSet::Data soundData(name, 0, volume);
 			gsound.sounds.push_back(soundData);
 
-			PUSH_CODE_MODE;
-			ENTER_UNSYNCED;
 			int id = sound->GetWaveId(soundPath);
-			POP_CODE_MODE;
 
 			gsound.setID(0, id);
 		}

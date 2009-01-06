@@ -30,12 +30,16 @@ local TDF = VFS.Include('maphelper/parse_tdf.lua')
 
 local function ConvertMoveSpeeds(terrain)
   local moveSpeeds = {}
+  local remove = {}
   for k, v in pairs(terrain) do
     local s, e, type = k:find('^(.*)movespeed$')
     if (type) then
       moveSpeeds[type] = v
-      terrain[k] = nil
+      remove[#remove+1] = k
     end
+  end
+  for i=1,#remove do
+    terrain[remove[i]] = nil
   end
   terrain.movespeeds = moveSpeeds
 end
@@ -43,6 +47,7 @@ end
 
 local function ConvertTerrainTypes(map)
   local typeArray = {}
+  local remove = {}
   for k, v in pairs(map) do
     if (type(v) == 'table') then
       local s, e, num = k:find('^terraintype(.*)$')
@@ -50,9 +55,12 @@ local function ConvertTerrainTypes(map)
       if (num) then
         ConvertMoveSpeeds(v)
         typeArray[num] = v
-        map[k] = nil
+        remove[#remove+1] = k
       end
     end
+  end
+  for i=1,#remove do
+    map[remove[i]] = nil
   end
   map.terraintypes = typeArray
 end
@@ -60,6 +68,7 @@ end
 
 local function ConvertTeams(map)
   local teamArray = {}
+  local remove = {}
   for k, v in pairs(map) do
     local s, e, num = k:find('^team(.*)$')
     local num = tonumber(num)
@@ -70,8 +79,11 @@ local function ConvertTeams(map)
           z = v.startposz,
         },
       }
-      map[k] = nil
+      remove[#remove+1] = k
     end
+  end
+  for i=1,#remove do
+    map[remove[i]] = nil
   end
   map.teams = teamArray
 end
@@ -101,11 +113,16 @@ local function ConvertWater(map)
   if (type(water) ~= 'table') then
     return
   end
+
+  local new = {}
+  map.water = new
+
   for k, v in pairs(water) do
     local s, e, suffix = k:find('^water(.*)$')
     if (suffix) then
-      water[suffix] = v
-      water[k] = nil
+      new[suffix] = v
+    else
+      new[k] = v
     end
   end
   -- FIXME -- handle caustics?
@@ -114,7 +131,7 @@ end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
-
+local print = Spring.Echo
 local function PrintTable(t, indent)
   indent = indent or ''
   for k,v in pairs(t) do
@@ -157,7 +174,7 @@ return function(sourceText)
 
   ConvertTeams(map)
 
---  PrintTable(map)  -- FIXME -- debugging
+  --PrintTable(map)  -- FIXME -- debugging
 
   return map
 end

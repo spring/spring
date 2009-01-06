@@ -36,7 +36,7 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 {
 	const string mapConfig = GetMapConfigName(mapName);
 
-	parser = SAFE_NEW LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
+	parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	parser->GetTable("Map");
 	parser->AddString("fileName", mapName);
 	parser->AddString("fullName", "maps/" + mapName);
@@ -49,7 +49,7 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->GetTable("Spring");
 	parser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	parser->EndTable();
-#endif	/* !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE */
+#endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
 	if (!parser->Execute()) {
 		// do nothing
 	}

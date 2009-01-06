@@ -24,7 +24,7 @@ IAICheats* CGlobalAICallback::GetCheatInterface()
 		return cheatCallback;
 
 	logOutput.Print("SkirmishAI (with team ID = %i): Cheating enabled!", ai->GetTeamId());
-	cheatCallback = SAFE_NEW CAICheats(ai);
+	cheatCallback = new CAICheats(ai);
 	return cheatCallback;
 }
 

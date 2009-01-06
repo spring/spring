@@ -94,7 +94,7 @@ CEngineOutHandler* CEngineOutHandler::singleton = NULL;
 void CEngineOutHandler::Initialize() {
 
 	if (singleton == NULL) {
-		singleton = SAFE_NEW CEngineOutHandler();
+		singleton = new CEngineOutHandler();
 	}
 }
 CEngineOutHandler* CEngineOutHandler::GetInstance() {
@@ -568,7 +568,7 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key) {
 			skirmishAIs[teamId] = NULL;
 		}
 
-		skirmishAIs[teamId] = SAFE_NEW CSkirmishAIWrapper(teamId, key);
+		skirmishAIs[teamId] = new CSkirmishAIWrapper(teamId, key);
 		hasSkirmishAIs = true;
 		
 		return true;
@@ -609,7 +609,7 @@ bool CreateGroupAI(const CGroup& group, const SGAIKey& key,
 			groupAIs[teamId][groupId] = NULL;
 		}
 
-		groupAIs[teamId][groupId] = SAFE_NEW CGroupAIWrapper(teamId, groupId, key, options);
+		groupAIs[teamId][groupId] = new CGroupAIWrapper(teamId, groupId, key, options);
 		hasGroupAIs = true;
 		hasTeamGroupAIs[teamId] = true;
 

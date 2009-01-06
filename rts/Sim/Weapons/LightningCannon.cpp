@@ -112,7 +112,7 @@ void CLightningCannon::Fire(void)
 
 	helper->Explosion(weaponMuzzlePos+dir*r,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,false,weaponDef->explosionGenerator, u,dir, weaponDef->id);
 
-	SAFE_NEW CLightningProjectile(weaponMuzzlePos,
+	new CLightningProjectile(weaponMuzzlePos,
 		weaponMuzzlePos + dir * (r + 10), owner, color, weaponDef, 10, this);
 
 	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))

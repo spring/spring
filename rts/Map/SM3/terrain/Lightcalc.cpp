@@ -47,7 +47,7 @@ using std::min;
 
 void BlurGrayscaleImage(int w, int h, uchar *data)
 {
-	uchar *nd = SAFE_NEW uchar [w*h];
+	uchar *nd = new uchar [w*h];
 
 	for (int y=0;y<h;y++) {
 		for (int x=0;x<w;x++) {
@@ -106,15 +106,15 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	//float org2c = w/float(orghm->w-1);
 	//float c2org = (float)(orghm->w-1)/w;
 
-	float *centerhm = SAFE_NEW float[w*w];
-	Vector3 *shading = SAFE_NEW Vector3[w*w];
+	float *centerhm = new float[w*w];
+	Vector3 *shading = new Vector3[w*w];
 	for (int y=0;y<w;y++)
 		for (int x=0;x<w;x++) {
 			centerhm[y*w+x] =/* hm->scale * */ 0.25f * ( (int)hm->at(x,y)+ (int)hm->at(x+1,y)+ (int)hm->at(x,y+1) + (int)hm->at(x+1,y+1) ); //+ hm->offset;
 			shading[y*w+x] = li->ambient;
 		}
 
-	uchar *lightMap = SAFE_NEW uchar[shadowW*shadowW];
+	uchar *lightMap = new uchar[shadowW*shadowW];
 	for (std::vector<StaticLight>::const_iterator l=li->staticLights.begin();l!=li->staticLights.end();++l)
 	{
 		float lightx;
@@ -163,7 +163,7 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	uchar *shadingTexData=SAFE_NEW uchar[w*w*4];
+	uchar *shadingTexData=new uchar[w*w*4];
 	for(int y=0;y<w;y++) {
 		for (int x=0;x<w;x++) {
 			shadingTexData[(y*w+x)*4+0] = (uchar)(min(1.0f, shading[y*w+x].x) * 255);

@@ -89,7 +89,7 @@ namespace terrain {
 	void QuadMap::Alloc (int W)
 	{
 		w=W;
-		map = SAFE_NEW TQuad*[w*w];
+		map = new TQuad*[w*w];
 		memset (map, 0, sizeof(TQuad*) * w*w);
 	}
 
@@ -142,7 +142,7 @@ namespace terrain {
 		// create child nodes if necessary
 		if (hm->highDetail) {
 			for (int a=0;a<4;a++) {
-				childs[a] = SAFE_NEW TQuad;
+				childs[a] = new TQuad;
 				childs[a]->parent = this;
 
 				int2 sqPos (sqStart.x + (a&1)*w/2, sqStart.y + (a&2)*w/4); // square pos
@@ -917,7 +917,7 @@ namespace terrain {
 
 		// build a quadtree and a vertex buffer for each quad tree
 		// prev is now the lowest detail heightmap, and will be used for the root quad tree node
-		quadtree = SAFE_NEW TQuad;
+		quadtree = new TQuad;
 		quadtree->Build (lowdetailhm, int2(), int2(), int2(), heightmap->w-1, 0);
 
 		// create a quad map for each LOD level
@@ -925,11 +925,11 @@ namespace terrain {
 		QuadMap *qm = 0;
 		while (cur) {
 			if (qm) {
-				qm->highDetail = SAFE_NEW QuadMap;
+				qm->highDetail = new QuadMap;
 				qm->highDetail->lowDetail = qm;
 				qm = qm->highDetail;
 			} else {
-				qm = SAFE_NEW QuadMap;
+				qm = new QuadMap;
 			}
 			qm->Alloc ((cur->w-1)/QUAD_W);
 			qmaps.push_back(qm);
@@ -947,13 +947,13 @@ namespace terrain {
 		if (cb) cb->PrintMsg ("initializing texturing system...");
 
 		// load textures
-		texturing = SAFE_NEW TerrainTexture;
+		texturing = new TerrainTexture;
 		texturing->Load (&tdf, heightmap, quadtree, qmaps, &config, cb, li);
 
-		renderDataManager = SAFE_NEW RenderDataManager (lowdetailhm, qmaps.front());
+		renderDataManager = new RenderDataManager (lowdetailhm, qmaps.front());
 
 		// calculate index table
-		indexTable=SAFE_NEW IndexTable;
+		indexTable=new IndexTable;
 		d_trace ("Index buffer data size: %d\n", VertexBuffer::TotalSize ());
 	}
 
@@ -993,11 +993,11 @@ namespace terrain {
 		bits*=8;
 		if (w<0) return 0;
 
-		Heightmap *hm = SAFE_NEW Heightmap;
+		Heightmap *hm = new Heightmap;
 		hm->Alloc (w,w);
 
 		if (bits==16) {
-			ushort *tmp=SAFE_NEW ushort[w*w];
+			ushort *tmp=new ushort[w*w];
 			fh.Read (tmp, len);
 			for (int y=0;y<w*w;y++) hm->data[y]=float(tmp[y]) / float((1<<16)-1);
 #ifdef SWAP_SHORT
@@ -1006,7 +1006,7 @@ namespace terrain {
 				std::swap (p[0],p[1]);
 #endif
 		} else {
-			uchar *buf=SAFE_NEW uchar[len], *p=buf;
+			uchar *buf=new uchar[len], *p=buf;
 			fh.Read(buf,len);
 			for (w=w*w-1;w>=0;w--)
 				hm->data[w]=*(p++)/255.0f;
@@ -1030,7 +1030,7 @@ namespace terrain {
 		int len=fh.FileSize();
 		assert(len >= 0);
 
-		char *buffer=SAFE_NEW char[len];
+		char *buffer=new char[len];
 		fh.Read(buffer, len);
         bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, len);
 		delete [] buffer;
@@ -1065,7 +1065,7 @@ namespace terrain {
 		}
 
 		// copy the data into the highest detail heightmap
-		Heightmap *hm = SAFE_NEW Heightmap;
+		Heightmap *hm = new Heightmap;
 		hm->Alloc (hmWidth,hmHeight);
 		ushort* data=(ushort*)ilGetData ();
 
@@ -1147,7 +1147,7 @@ namespace terrain {
 
 	RenderContext* Terrain::AddRenderContext (Camera* cam, bool needsTexturing)
 	{
-		RenderContext *rc = SAFE_NEW RenderContext;
+		RenderContext *rc = new RenderContext;
 
 		rc->cam = cam;
 		rc->needsTexturing = needsTexturing;

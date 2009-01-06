@@ -53,7 +53,7 @@ void CStarburstLauncher::Fire(void)
 	float3 aimError((gs->randVector()*sprayAngle + salvoError)*(1-owner->limExperience*0.7f));
 
 	CStarburstProjectile* p =
-		SAFE_NEW CStarburstProjectile(weaponMuzzlePos + float3(0, 2, 0), speed, owner,
+		new CStarburstProjectile(weaponMuzzlePos + float3(0, 2, 0), speed, owner,
 		targetPos, areaOfEffect, projectileSpeed, tracking, (int) uptime, targetUnit,
 		weaponDef, interceptTarget, maxrange, aimError);
 

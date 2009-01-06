@@ -87,7 +87,7 @@ ABOpenFile_t* CArchiveZip::GetEntireFile(const std::string& fName)
 	unz_file_info fi;
 	unzGetCurrentFileInfo(zip, &fi, NULL, 0, NULL, 0, NULL, 0);
 
-	ABOpenFile_t* of = SAFE_NEW ABOpenFile_t;
+	ABOpenFile_t* of = new ABOpenFile_t;
 	of->pos = 0;
 	of->size = fi.uncompressed_size;
 	of->data = (char*)malloc(of->size);

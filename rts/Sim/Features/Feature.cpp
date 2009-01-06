@@ -171,7 +171,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		midPos = pos + model->relMidPos;
 
 		// copy the FeatureDef volume archetype data
-		collisionVolume = SAFE_NEW CollisionVolume(def->collisionVolume);
+		collisionVolume = new CollisionVolume(def->collisionVolume);
 
 		// CFeatureHandler left this volume's axis-scales uninitialized
 		// (ie. no "collisionVolumeScales" tag was defined in FeatureDef)
@@ -187,7 +187,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		height = 2 * TREE_RADIUS;
 
 		// copy the FeatureDef volume archetype data
-		collisionVolume = SAFE_NEW CollisionVolume(def->collisionVolume);
+		collisionVolume = new CollisionVolume(def->collisionVolume);
 		collisionVolume->SetDefaultScale(TREE_RADIUS);
 	}
 	else {
@@ -581,13 +581,10 @@ bool CFeature::Update(void)
 
 	if (emitSmokeTime != 0) {
 		--emitSmokeTime;
-		PUSH_CODE_MODE;
-		ENTER_MIXED;
 		if (!(gs->frameNum + id & 3) && ph->particleSaturation < 0.7f) {
-			SAFE_NEW CSmokeProjectile(midPos + gu->usRandVector() * radius * 0.3f,
+			new CSmokeProjectile(midPos + gu->usRandVector() * radius * 0.3f,
 				gu->usRandVector() * 0.3f + UpVector, emitSmokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
 		}
-		POP_CODE_MODE;
 		retValue = true;
 	}
 
@@ -599,9 +596,6 @@ bool CFeature::Update(void)
 	}
 
 	if (def->geoThermal) {
-		PUSH_CODE_MODE;
-		ENTER_MIXED;
-
 		if ((gs->frameNum + id % 5) % 5 == 0) {
 			// Find the unit closest to the geothermal
 			vector<CSolidObject*> objs = qf->GetSolidsExact(pos, 0.0f);
@@ -632,12 +626,11 @@ bool CFeature::Update(void)
 				float3 speed = gu->usRandVector() * 0.5f;
 				speed.y += 2.0f;
 
-				SAFE_NEW CGeoThermSmokeProjectile(gu->usRandVector() * 10 +
+				new CGeoThermSmokeProjectile(gu->usRandVector() * 10 +
 					float3(pos.x, pos.y-10, pos.z), speed, int(50 + gu->usRandFloat() * 7), this);
 			}
 		}
 
-		POP_CODE_MODE;
 		retValue = true;
 	}
 
@@ -653,7 +646,7 @@ void CFeature::StartFire(void)
 	fireTime = 200 + (int)(gs->randFloat() * 30);
 	featureHandler->SetFeatureUpdateable(this);
 
-	myFire = SAFE_NEW CFireProjectile(midPos, UpVector, 0, 300, radius * 0.8f, 70, 20);
+	myFire = new CFireProjectile(midPos, UpVector, 0, 300, radius * 0.8f, 70, 20);
 }
 
 int CFeature::ChunkNumber(float f)

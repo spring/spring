@@ -243,10 +243,10 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		float endAlpha=(1-(curLength+length)/(range*1.3f))*baseAlpha;
 
 		if (weaponDef->largeBeamLaser)
-			SAFE_NEW CLargeBeamLaserProjectile(curPos, hitPos, color,
+			new CLargeBeamLaserProjectile(curPos, hitPos, color,
 			weaponDef->visuals.color2, owner, weaponDef);
 		else
-			SAFE_NEW CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha,
+			new CBeamLaserProjectile(curPos, hitPos, startAlpha, endAlpha,
 				color, weaponDef->visuals.color2, owner, weaponDef->thickness,
 				weaponDef->corethickness, weaponDef->laserflaresize, weaponDef,
 				weaponDef->visuals.beamttl, weaponDef->visuals.beamdecay);
