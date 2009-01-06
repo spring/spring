@@ -46,7 +46,7 @@ endif (EXISTS ${C_AIINTERFACE_SRC})
 # Java AI Interface
 if (NOT JAVA_FOUND)
 	set(JAVA_FIND_QUIETLY ${AIINTERFACE_FIND_QUIETLY})
-	FIND_PACKAGE(JAVA) # Note: this is not the CMake builtin FindJava
+	FIND_PACKAGE(JavaExtended) # Note: this is not the CMake builtin FindJava
 endif (NOT JAVA_FOUND)
 #message(STATUS "Interface JAVA_FOUND: ${JAVA_FOUND}")
 #message(STATUS "Interface JAVA_NOT_FOUND: ${JAVA_NOT_FOUND}")

@@ -1,5 +1,8 @@
 ################################################################################
-# cmake module for finding JAVA
+# cmake module for finding Java
+# The name JavaExtended is used instead of JAVA, as this cause an infinite loop
+# on windows, because on windows, there is no difference between the built-in
+# FindJava.cmake and FindJAVA.cmake.
 #
 # sets following variables:
 #
@@ -19,7 +22,7 @@
 #
 # JAVA_VERSION - ${JAVA_MAJOR_VERSION}.${JAVA_MINOR_VERSION}.${JAVA_PATCH_LEVEL}
 #
-# @author Jan Engels, DESY
+# @author Jan Engels, DESY, hoijui
 ################################################################################
 
 SET( JAVA_FOUND FALSE )
