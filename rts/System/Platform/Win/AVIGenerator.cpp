@@ -343,7 +343,7 @@ bool CAVIGenerator::InitEngine(){
 	}
 
 	for(int i=0; i<10; i++){
-		unsigned char* tmpBuf = SAFE_NEW unsigned char[bitmapInfo.biSizeImage];
+		unsigned char* tmpBuf = new unsigned char[bitmapInfo.biSizeImage];
 		freeImageBuffers.push_back(tmpBuf);
 	}
 
@@ -352,7 +352,7 @@ bool CAVIGenerator::InitEngine(){
 		ShowWindow(mainWindow, SW_SHOWMINNOACTIVE);
 	}
 	boost::mutex::scoped_lock lock(AVIMutex);
-	AVIThread = SAFE_NEW boost::thread(boost::bind(&CAVIGenerator::AVIGeneratorThreadProc, this));
+	AVIThread = new boost::thread(boost::bind(&CAVIGenerator::AVIGeneratorThreadProc, this));
 	AVICondition.wait(lock);  //Wait until InitAVICompressionEngine() completes.
 	if(fullscreen){
 		ShowWindow(mainWindow, SW_RESTORE);

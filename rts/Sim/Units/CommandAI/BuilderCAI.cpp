@@ -278,12 +278,10 @@ float CBuilderCAI::GetUnitDefRadius(const UnitDef* ud, int cmdId)
 
 void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
 {
-	ENTER_MIXED;
 	if (owner->team == gu->myTeam) {
 		logOutput.Print("%s: Build failed, unit type limit reached", owner->unitDef->humanName.c_str());
 		logOutput.SetLastMsgPos(owner->pos);
 	}
-	ENTER_SYNCED;
 	FinishCommand();
 }
 
@@ -424,12 +422,10 @@ void CBuilderCAI::SlowUpdate()
 							if (fac->StartBuild(build) || (buildRetries > 20)) {
 								building = true;
 							} else {
-								ENTER_MIXED;
 								if ((owner->team == gu->myTeam) && !(buildRetries & 7)) {
 									logOutput.Print("%s: Build pos blocked", owner->unitDef->humanName.c_str());
 									logOutput.SetLastMsgPos(owner->pos);
 								}
-								ENTER_SYNCED;
 								helper->BuggerOff(build.pos, radius);
 								NonMoving();
 							}

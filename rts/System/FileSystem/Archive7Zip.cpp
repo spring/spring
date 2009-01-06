@@ -117,7 +117,7 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 
 	ABOpenFile_t* of = NULL;
 	if (res == SZ_OK) {
-		of = SAFE_NEW ABOpenFile_t;
+		of = new ABOpenFile_t;
 		of->pos = 0;
 		of->size = outSizeProcessed;
 		of->data = (char*)malloc(of->size);

@@ -59,7 +59,7 @@ CGrassDrawer::CGrassDrawer()
 		}
 
 		int grassMapSize = gs->mapx*gs->mapy/(grassSquareSize*grassSquareSize);
-		grassMap=SAFE_NEW unsigned char[grassMapSize];
+		grassMap=new unsigned char[grassMapSize];
 
 		memcpy(grassMap, grassdata, grassMapSize);
 		readmap->FreeInfoMap ("grass", grassdata);
@@ -257,7 +257,7 @@ void CGrassBlockDrawer::DrawQuad (int x,int y)
 			}
 		}
 		if(!grass->va){
-			grass->va=SAFE_NEW CVertexArray;;
+			grass->va=new CVertexArray;;
 			grass->pos=float3((x+0.5f)*bMSsq,ground->GetHeight2((x+0.5f)*bMSsq,(y+0.5f)*bMSsq),(y+0.5f)*bMSsq);
 			va=grass->va;
 			va->Initialize();
@@ -694,8 +694,8 @@ void CGrassDrawer::CreateGrassBladeTex(unsigned char* buf)
 void CGrassDrawer::CreateFarTex(void)
 {
 	int sizeMod=2;
-	unsigned char* buf=SAFE_NEW unsigned char[64*sizeMod*1024*sizeMod*4];
-	unsigned char* buf2=SAFE_NEW unsigned char[256*sizeMod*256*sizeMod*4];
+	unsigned char* buf=new unsigned char[64*sizeMod*1024*sizeMod*4];
+	unsigned char* buf2=new unsigned char[256*sizeMod*256*sizeMod*4];
 	memset(buf,0,64*sizeMod*1024*sizeMod*4);
 	memset(buf2,0,256*sizeMod*256*sizeMod*4);
 

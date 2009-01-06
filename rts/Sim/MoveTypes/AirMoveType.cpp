@@ -298,7 +298,7 @@ void CAirMoveType::Update(void)
 		case AIRCRAFT_CRASHING:
 			owner->crashing = true;
 			UpdateAirPhysics(crashRudder, crashAileron, crashElevator, 0, owner->frontdir);
-			SAFE_NEW CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
+			new CSmokeProjectile(owner->midPos, gs->randVector() * 0.08f, 100 + gs->randFloat() * 50, 5, 0.2f, owner, 0.4f);
 			if (!(gs->frameNum & 3) && std::max(0.f, ground->GetApproximateHeight(pos.x, pos.z)) + 5 + owner->radius > pos.y)
 				owner->KillUnit(true, false, 0);
 			break;

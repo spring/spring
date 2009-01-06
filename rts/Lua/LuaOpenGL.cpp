@@ -232,7 +232,7 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 		REGISTER_LUA_CFUNC(DeleteTextureFBO);
 		REGISTER_LUA_CFUNC(RenderToTexture);
 	}
-	if (glGenerateMipmapEXT) {
+	if (glGenerateMipmapEXT_NONGML) {
 		REGISTER_LUA_CFUNC(GenerateMipmap);
 	}
 	REGISTER_LUA_CFUNC(ActiveTexture);
@@ -379,7 +379,7 @@ void LuaOpenGL::ResetGLState()
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	glEnable(GL_BLEND);
-	if (glBlendEquation != NULL) {
+	if (glBlendEquation_NONGML != NULL) {
 		glBlendEquation(GL_FUNC_ADD);
 	}
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -451,7 +451,7 @@ void LuaOpenGL::ResetGLState()
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 0.0f);
 
-	if (glUseProgram) {
+	if (glUseProgram_NONGML) {
 		glUseProgram(0);
 	}
 }
@@ -499,7 +499,7 @@ inline void LuaOpenGL::DisableCommon(DrawMode mode)
 	if (safeMode) {
 		glPopAttrib();
 	}
-	if (glUseProgram) {
+	if (glUseProgram_NONGML) {
 		glUseProgram(0);
 	}
 }
@@ -1406,7 +1406,7 @@ int LuaOpenGL::Map1(lua_State* L)
 		return 0;
 	}
 	const int fullSize = (order * dataSize);
-	float* points = SAFE_NEW float[fullSize];
+	float* points = new float[fullSize];
 	if (ParseFloatArray(L, points, fullSize) == fullSize) {
 		glMap1f(target, u1, u2, stride, order, points);
 	}
@@ -1441,7 +1441,7 @@ int LuaOpenGL::Map2(lua_State* L)
 		return 0;
 	}
 	const int fullSize = (uorder * vorder * dataSize);
-	float* points = SAFE_NEW float[fullSize];
+	float* points = new float[fullSize];
 	if (ParseFloatArray(L, points, fullSize) == fullSize) {
 		glMap2f(target, u1, u2, ustride, uorder,
 										v1, v2, vstride, vorder, points);
@@ -4066,7 +4066,7 @@ int LuaOpenGL::Screenshot(lua_State* L)
 	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
 	const string fileName = luaL_checkstring(L, 5);
 
-	unsigned char* buf = SAFE_NEW unsigned char[width * height * 4];
+	unsigned char* buf = new unsigned char[width * height * 4];
 	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 
 	CBitmap b(buf, width, height);
@@ -5013,7 +5013,7 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 		fSize = 4; // good enough?
 	}
 
-	float* data = SAFE_NEW float[(h * w) * fSize * sizeof(float)];
+	float* data = new float[(h * w) * fSize * sizeof(float)];
 	glReadPixels(x, y, w, h, format, GL_FLOAT, data);
 
 	int retCount = 0;
@@ -5097,7 +5097,7 @@ int LuaOpenGL::SaveImage(lua_State* L)
 	}
 	const int memsize = xsize * ysize * 4;
 
-	unsigned char* img = SAFE_NEW unsigned char[memsize];
+	unsigned char* img = new unsigned char[memsize];
 	memset(img, 0, memsize);
 	glReadPixels(x0, y0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, img);
 
@@ -5341,7 +5341,7 @@ class SelectBuffer {
 			c = (c < maxSize) ? c : maxSize;
 			if (c != size) {
 				delete[] buffer;
-				buffer = SAFE_NEW GLuint[c];
+				buffer = new GLuint[c];
 			}
 			size = c;
 			return size;

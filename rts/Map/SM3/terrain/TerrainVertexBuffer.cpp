@@ -51,7 +51,7 @@ void VertexBuffer::Init (int bytesize)
 		data=0;
 		glGenBuffersARB(1,&id);
 	} else {
-		data=SAFE_NEW char[bytesize];
+		data=new char[bytesize];
 	}
 	size=bytesize;
 	totalBufferSize+=size;
@@ -80,7 +80,7 @@ void* VertexBuffer::LockData ()
 		/*glBindBufferARB(type, id);
 		glBufferDataARB(type, size, 0, GL_STATIC_DRAW_ARB);
 		return glMapBufferARB(type, GL_WRITE_ONLY);*/
-		data = SAFE_NEW char [size];
+		data = new char [size];
 		return data;
 	} else
 		return data;

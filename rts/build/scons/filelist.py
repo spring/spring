@@ -97,7 +97,6 @@ def get_spring_source(env):
 		'rts/System/Platform/BackgroundReader.cpp',
 		'rts/System/Platform/Mac', # Mac build uses XCode
 		'rts/System/FileSystem/DataDirLocater.cpp', # see SConstruct
-		#'rts/ExternalAI/Interface/LegacyCppWrapper', # only needed by AI libraries using the legacy C++ interface to connect with spring
 	]
 	# we may be called before we were configured (e.g. when cleaning)
 	if env.has_key('platform'):
@@ -237,5 +236,7 @@ def list_skirmishAIs(env, exclude_list = (), exclude_regexp = '^\.'):
 	return list_AIs(env, 'Skirmish', exclude_list, exclude_regexp)
 
 # lists source directories for Group AIs
+def list_groupAIs(env, exclude_list = (), exclude_regexp = '^\.'):
+	return list_AIs(env, 'Group', exclude_list, exclude_regexp)
 def list_groupAIs(env, exclude_list = (), exclude_regexp = '^\.'):
 	return list_AIs(env, 'Group', exclude_list, exclude_regexp)

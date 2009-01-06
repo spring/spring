@@ -70,7 +70,7 @@ void CMissileLauncher::Fire(void)
 	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType))
 		startSpeed += owner->speed;
 
-	SAFE_NEW CMissileProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect,
+	new CMissileProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect,
 			projectileSpeed,
 			weaponDef->flighttime == 0
                 ? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode)

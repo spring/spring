@@ -105,7 +105,7 @@ void CSkirmishAIWrapper::PostLoad() {
 
 void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
-	ai = SAFE_NEW CSkirmishAI(teamId, key);
+	ai = new CSkirmishAI(teamId, key);
 
 	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
 	libManager->FetchSkirmishAILibrary(key);
@@ -154,7 +154,7 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 void CSkirmishAIWrapper::Init() {
 
-	callback = SAFE_NEW CGlobalAICallback(this);
+	callback = new CGlobalAICallback(this);
 	c_callback = initSAICallback(teamId, callback);
 
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();

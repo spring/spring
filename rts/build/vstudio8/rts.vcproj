@@ -4085,6 +4085,14 @@
 							UsePrecompiledHeader="0"
 						/>
 					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="0"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\ArchiveBase.h"
@@ -6015,14 +6023,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Sync\SyncedPrimitiveIO.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sync\Syncify.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Sync\Syncify.h"
 					>
 				</File>
 				<File

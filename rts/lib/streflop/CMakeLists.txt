@@ -7,7 +7,6 @@ AUX_SOURCE_DIRECTORY(libm/ldbl-96 libm_ldbl96_source)
 #INCLUDE_DIRECTORIES(libm/headers)
 
 SET(cxxflags "-w -O3 -I${CMAKE_CURRENT_SOURCE_DIR}/libm/headers")
-#SET(cxxflags "-w -O3 -DSTREFLOP_SSE -fsingle-precision-constant -fno-strict-aliasing -fsignaling-nans -frounding-math -mieee-fp -I${CMAKE_CURRENT_SOURCE_DIR}/libm/headers")
 if (NOT $ENV{CXX} MATCHES "icpc")
 	SET(cxxflags "${cxxflags} -mfpmath=sse -msse")
 endif (NOT $ENV{CXX} MATCHES "icpc")

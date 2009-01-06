@@ -64,7 +64,7 @@ void CLuaRules::LoadHandler()
 		return;
 	}
 
-	SAFE_NEW CLuaRules();
+	new CLuaRules();
 
 	if (luaRules->L == NULL) {
 		delete luaRules;

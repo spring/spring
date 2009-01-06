@@ -63,7 +63,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	float3::maxxpos=gs->mapx*SQUARE_SIZE-1;
 	float3::maxzpos=gs->mapy*SQUARE_SIZE-1;
 
-	heightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
+	heightmap=new float[(gs->mapx+1)*(gs->mapy+1)];
 
 	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
 
@@ -102,7 +102,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	PrintLoadMsg("Creating overhead texture");
 
-	unsigned char* buf=SAFE_NEW unsigned char[MINIMAP_SIZE];
+	unsigned char* buf=new unsigned char[MINIMAP_SIZE];
 	file.ReadMinimap(buf);
 
 	glGenTextures(1, &minimapTex);
@@ -140,7 +140,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	HeightmapUpdated(0, gs->mapx, 0, gs->mapy);
 
-	groundDrawer=SAFE_NEW CBFGroundDrawer(this);
+	groundDrawer=new CBFGroundDrawer(this);
 
 	file.ReadFeatureInfo ();
 }
@@ -168,7 +168,7 @@ void CSmfReadMap::HeightmapUpdatedNow(int x1, int x2, int y1, int y2)
 	int ysize=y2-y1;
 
 	//logOutput.Print("%i %i %i %i",x1,x2,y1,y2);
-	unsigned char* tempMem=SAFE_NEW unsigned char[xsize*ysize*4];
+	unsigned char* tempMem=new unsigned char[xsize*ysize*4];
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
 			float height = centerheightmap[(x+x1)+(y+y1)*gs->mapx];
@@ -382,7 +382,7 @@ unsigned char *CSmfReadMap::GetInfoMap (const std::string& name, MapBitmapInfo* 
 	if (bmInfo->width <= 0) return NULL;
 
 	// get data
-	unsigned char* data = SAFE_NEW unsigned char[bmInfo->width * bmInfo->height];
+	unsigned char* data = new unsigned char[bmInfo->width * bmInfo->height];
 	file.ReadInfoMap(name, data);
 	return data;
 }

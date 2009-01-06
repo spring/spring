@@ -44,6 +44,7 @@ static CLogSubsystem LOG_UNITSYNC("unitsync", true);
 //This means that the DLL can only support one instance. Don't think this should be a problem.
 static CSyncer* syncer;
 
+static bool logOutputInitialised=false;
 // I'd rather not include globalstuff
 #define SQUARE_SIZE 8
 
@@ -281,8 +282,12 @@ EXPORT(void) UnInit()
 EXPORT(int) Init(bool isServer, int id)
 {
 	try {
-		logOutput.SetFilename("unitsync.log");
-		logOutput.Initialize();
+		if (!logOutputInitialised)
+		{
+			logOutput.SetFilename("unitsync.log");
+			logOutput.Initialize();
+			logOutputInitialised = true;
+		}
 		logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
 		
 		_UnInit();

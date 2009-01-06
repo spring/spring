@@ -73,7 +73,7 @@ void LuaUnitUniforms::SetCustomCount(int count)
 	customCount = count;
 	delete[] customData;
 	if (count > 0) {
-		customData = SAFE_NEW float[count];
+		customData = new float[count];
 		memset(customData, 0, customCount * sizeof(GLfloat));
 	} else {
 		customData = NULL;
@@ -95,7 +95,7 @@ LuaUnitUniforms& LuaUnitUniforms::operator=(const LuaUnitUniforms& u)
 	customCount  = u.customCount;
 
 	if (customCount > 0) {
-		customData = SAFE_NEW GLfloat[customCount];
+		customData = new GLfloat[customCount];
 		memcpy(customData, u.customData, customCount * sizeof(GLfloat));
 	}
 
@@ -631,7 +631,7 @@ LuaMatRef LuaMatHandler::GetRef(const LuaMaterial& mat)
 		return LuaMatRef(*it);
 	}
 
-	LuaMatBin* bin = SAFE_NEW LuaMatBin(mat);
+	LuaMatBin* bin = new LuaMatBin(mat);
 	binSet.insert(bin);
 	return LuaMatRef(bin);
 }

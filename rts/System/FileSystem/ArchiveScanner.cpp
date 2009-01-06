@@ -178,7 +178,7 @@ static bool LoadSourceFile(const string& archive,
 	}
 
 	const int fsize = ar->FileSize(fh);
-	char* buf = SAFE_NEW char[fsize];
+	char* buf = new char[fsize];
 	ar->ReadFile(fh, buf, fsize);
 	ar->CloseFile(fh);
 	source.assign(buf, fsize);
@@ -430,7 +430,7 @@ bool CArchiveScanner::ScanModLua(CArchiveBase* ar, const string& fileName,
 	}
 	const int fsize = ar->FileSize(fh);
 
-	char* buf = SAFE_NEW char[fsize];
+	char* buf = new char[fsize];
 	ar->ReadFile(fh, buf, fsize);
 	ar->CloseFile(fh);
 
@@ -457,7 +457,7 @@ bool CArchiveScanner::ScanModTdf(CArchiveBase* ar, const string& fileName,
 	}
 	const int fsize = ar->FileSize(fh);
 
-	char* buf = SAFE_NEW char[fsize];
+	char* buf = new char[fsize];
 	ar->ReadFile(fh, buf, fsize);
 	ar->CloseFile(fh);
 	const string cleanbuf(buf, fsize);
@@ -492,7 +492,7 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 
 	if (fh) {
 		int fsize = ar->FileSize(fh);
-		char* buf = SAFE_NEW char[fsize];
+		char* buf = new char[fsize];
 
 		ar->ReadFile(fh, buf, fsize);
 		ar->CloseFile(fh);

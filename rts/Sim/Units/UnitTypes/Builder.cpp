@@ -357,12 +357,10 @@ void CBuilder::Update()
 					if(curCapture->captureProgress >= 1.0f){
 						if (!curCapture->ChangeTeam(team, CUnit::ChangeCaptured)) {
 							// capture failed
-							ENTER_MIXED;
 							if (team == gu->myTeam) {
 								logOutput.Print("%s: Capture failed, unit type limit reached", unitDef->humanName.c_str());
 								logOutput.SetLastMsgPos(pos);
 							}
-							ENTER_SYNCED;
 						} else {
 							// capture succesful
 							int oldLineage = curCapture->lineage;
@@ -709,7 +707,6 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 	std::vector<int> args;
 	args.push_back(0);
 	cob->Call("QueryNanoPiece", args);
-	ENTER_UNSYNCED;
 
 	if (ph->currentParticles < ph->maxParticles) {
 		if (!unitDef->showNanoSpray)
@@ -730,11 +727,9 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		}
 
 		if (inverse) {
-			SAFE_NEW CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
+			new CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
 		} else {
-			SAFE_NEW CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
+			new CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
 		}
 	}
-
-	ENTER_SYNCED;
 }

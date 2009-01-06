@@ -49,10 +49,10 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 
 	CReadMap *rm = 0;
 	if (extension=="sm3") {
-		rm = SAFE_NEW CSm3ReadMap;
+		rm = new CSm3ReadMap;
 		((CSm3ReadMap*)rm)->Initialize (mapname.c_str());
 	} else
-		rm = SAFE_NEW CSmfReadMap(mapname);
+		rm = new CSmfReadMap(mapname);
 
 	if (!rm)
 		return 0;
@@ -63,16 +63,16 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	if (metalmap && mbi.width == rm->width/2 && mbi.height == rm->height/2)
 	{
 		int size = mbi.width*mbi.height;
-		unsigned char *map = SAFE_NEW unsigned char[size];
+		unsigned char *map = new unsigned char[size];
 		memcpy(map, metalmap, size);
-		rm->metalMap = SAFE_NEW CMetalMap(map, mbi.width, mbi.height, mapInfo->map.maxMetal);
+		rm->metalMap = new CMetalMap(map, mbi.width, mbi.height, mapInfo->map.maxMetal);
 	}
 	if (metalmap) rm->FreeInfoMap ("metal", metalmap);
 
 	if (!rm->metalMap) {
-		unsigned char *zd = SAFE_NEW unsigned char[rm->width*rm->height/4];
+		unsigned char *zd = new unsigned char[rm->width*rm->height/4];
 		memset(zd,0,rm->width*rm->height/4);
-		rm->metalMap = SAFE_NEW CMetalMap(zd, rm->width/2,rm->height/2, 1.0f);
+		rm->metalMap = new CMetalMap(zd, rm->width/2,rm->height/2, 1.0f);
 	}
 
 	/* Read type map */
@@ -81,7 +81,7 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	if (typemap && tbi.width == rm->width/2 && tbi.height == rm->height/2)
 	{
 		assert (gs->hmapx == tbi.width && gs->hmapy == tbi.height);
-		rm->typemap = SAFE_NEW unsigned char[tbi.width*tbi.height];
+		rm->typemap = new unsigned char[tbi.width*tbi.height];
 		memcpy(rm->typemap, typemap, tbi.width*tbi.height);
 	} else
 		throw content_error("Bad/no terrain type map.");
@@ -129,17 +129,17 @@ void CReadMap::Initialize()
 {
 	PrintLoadMsg("Loading Map");
 
-	orgheightmap=SAFE_NEW float[(gs->mapx+1)*(gs->mapy+1)];
+	orgheightmap=new float[(gs->mapx+1)*(gs->mapy+1)];
 
-	//	normals=SAFE_NEW float3[(gs->mapx+1)*(gs->mapy+1)];
-	facenormals=SAFE_NEW float3[gs->mapx*gs->mapy*2];
-	centerheightmap=SAFE_NEW float[gs->mapx*gs->mapy];
-	//halfHeightmap=SAFE_NEW float[gs->hmapx*gs->hmapy];
+	//	normals=new float3[(gs->mapx+1)*(gs->mapy+1)];
+	facenormals=new float3[gs->mapx*gs->mapy*2];
+	centerheightmap=new float[gs->mapx*gs->mapy];
+	//halfHeightmap=new float[gs->hmapx*gs->hmapy];
 	mipHeightmap[0] = centerheightmap;
 	for(int i=1; i<numHeightMipMaps; i++)
-		mipHeightmap[i] = SAFE_NEW float[(gs->mapx>>i)*(gs->mapy>>i)];
+		mipHeightmap[i] = new float[(gs->mapx>>i)*(gs->mapy>>i)];
 
-	slopemap=SAFE_NEW float[gs->hmapx*gs->hmapy];
+	slopemap=new float[gs->hmapx*gs->hmapy];
 
 	CalcHeightfieldData();
 }

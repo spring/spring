@@ -177,7 +177,7 @@ void CCannon::Fire(void)
 		ttl=predict*2;
 	}
 
-	SAFE_NEW CExplosiveProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
+	new CExplosiveProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef, ttl, areaOfEffect, gravity);
 
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))

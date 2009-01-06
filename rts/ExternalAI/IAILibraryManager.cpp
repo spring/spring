@@ -17,8 +17,6 @@
 
 #include "IAILibraryManager.h"
 
-
-#include "Sync/Syncify.h"
 #include "AILibraryManager.h"
 #include "AIInterfaceKey.h"
 #include "SkirmishAIKey.h"
@@ -30,7 +28,7 @@ IAILibraryManager* IAILibraryManager::myAILibraryManager = NULL;
 IAILibraryManager* IAILibraryManager::GetInstance() {
 
 	if (myAILibraryManager == NULL) {
-		myAILibraryManager = SAFE_NEW CAILibraryManager();
+		myAILibraryManager = new CAILibraryManager();
 	}
 
 	return myAILibraryManager;

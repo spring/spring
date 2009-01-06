@@ -55,10 +55,9 @@ void CAirScript::GameStart()
 {
 	doRoll=!configHandler.Get("ReflectiveWater",1);
 
-	ENTER_MIXED;
 	tcp=camera->pos;
 	tcf=camera->forward;
-	ENTER_SYNCED;
+
 	for(int a=0;a<10;++a){
 		CUnit* u;
 		if(gs->randFloat()<0.5f)

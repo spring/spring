@@ -1,4 +1,5 @@
 ADD_DEFINITIONS(-DDEDICATED ${PIC_FLAG} -DNO_AVI)
+remove_definitions(-DSTREFLOP_SSE)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)

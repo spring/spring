@@ -12,7 +12,7 @@ namespace creg
 	struct DeduceType < std::deque <T> > {
 		boost::shared_ptr<IType> Get () {
 			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(SAFE_NEW DynamicArrayType < std::deque<T> > (elemtype.Get()));
+			return boost::shared_ptr<IType>(new DynamicArrayType < std::deque<T> > (elemtype.Get()));
 		}
 	};
 };

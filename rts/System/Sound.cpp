@@ -24,15 +24,15 @@ CSound* CSound::GetSoundSystem()
 	const int maxSounds = configHandler.Get("MaxSounds", 16);
 	if (maxSounds <= 0) {
 		logOutput.Print("Sound disabled with \"MaxSounds=%i\"", maxSounds);
-		return SAFE_NEW CNullSound;
+		return new CNullSound;
 	}
 
 	// try to get a real sound driver
 	try {
 #ifdef _WIN32
-		sound = SAFE_NEW CDxSound();
+		sound = new CDxSound();
 #else
-		sound = SAFE_NEW COpenALSound();  
+		sound = new COpenALSound();
 #endif
 	}
 	catch (content_error& e) {
@@ -40,7 +40,7 @@ CSound* CSound::GetSoundSystem()
 		logOutput.Print("Error: %s", e.what());
       	
 		delete sound;
-		sound = SAFE_NEW CNullSound;
+		sound = new CNullSound;
 	}
 
 #ifdef STREFLOP_H

@@ -465,7 +465,7 @@ void CUnit::EnableScriptMoveType()
 		return;
 	}
 	prevMoveType = moveType;
-	moveType = SAFE_NEW CScriptMoveType(this);
+	moveType = new CScriptMoveType(this);
 	usingScriptMoveType = true;
 }
 
@@ -724,12 +724,10 @@ void CUnit::SlowUpdate()
 			selfDCountdown = 0;
 			return;
 		}
-		ENTER_MIXED;
 		if ((selfDCountdown & 1) && (team == gu->myTeam)) {
 			logOutput.Print("%s: Self destruct in %i s",
 			                unitDef->humanName.c_str(), selfDCountdown / 2);
 		}
-		ENTER_SYNCED;
 	}
 
 	if (beingBuilt) {
@@ -1059,7 +1057,6 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			attacker->AddExperience(0.1f * experienceMod
 			                             * (power / attacker->power)
 			                             * (damage + std::min(0.0f, health)) / maxHealth);
-			ENTER_UNSYNCED;
 			const int warnFrame = (gs->frameNum - 100);
 			if ((team == gu->myTeam)
 			    && ((!unitDef->isCommander && (uh->lastDamageWarning < warnFrame)) ||
@@ -1085,7 +1082,6 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 					uh->lastCmdDamageWarning = gs->frameNum;
 				}
 			}
-			ENTER_SYNCED;
 		}
 	}
 
@@ -1252,7 +1248,7 @@ void CUnit::DoSeismicPing(float pingSize)
 		const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,
 		                 errorScale[gu->myAllyTeam] * (0.5f - rz));
 
-		SAFE_NEW CSeismicGroundFlash(pos + err,
+		new CSeismicGroundFlash(pos + err,
 		                             ph->seismictex, 30, 15, 0, pingSize, 1,
 		                             float3(0.8f,0.0f,0.0f));
 	}
@@ -2106,7 +2102,7 @@ void CUnit::IncomingMissile(CMissileProjectile* missile)
 		AddDeathDependence(missile);
 
 		if (lastFlareDrop < (gs->frameNum - unitDef->flareReloadTime * 30)) {
-			SAFE_NEW CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gs->randFloat()) * 15));
+			new CFlareProjectile(pos, speed, this, (int) (gs->frameNum + unitDef->flareDelay * (1 + gs->randFloat()) * 15));
 			lastFlareDrop = gs->frameNum;
 		}
 	}
@@ -2216,7 +2212,7 @@ void CUnit::PostLoad()
 	SetRadius(model->radius);
 
 	modelParser->CreateLocalModel(this);
-	cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile("scripts/" + unitDef->cobFilename), this);
+	cob = new CCobInstance(GCobEngine.GetCobFile(unitDef->scriptPath), this);
 
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;

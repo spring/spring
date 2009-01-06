@@ -78,10 +78,6 @@ public:
 		SFloat3 startPos;
 		int teamStartNum;
 		int teamAllyteam;
-//		std::string luaAI;
-//		std::string skirmishAIShortName;
-//		std::string skirmishAIVersion;
-//		std::map<std::string, std::string> skirmishAIOptions;
 	};
 	std::vector<TeamData> teamStartingData;
 	
@@ -135,7 +131,6 @@ private:
 	void RemapAllyteams();
 
 	std::map<int, int> playerRemap;
-//	std::map<int, int> skirmishAIRemap;
 	std::map<int, int> teamRemap;
 	std::map<int, int> allyteamRemap;
 };

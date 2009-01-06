@@ -128,7 +128,7 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler(bool serializing)
 :
-	maxUnits(5000),
+	maxUnits(MAX_UNITS),
 	maxUnitRadius(0.0f),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
@@ -164,7 +164,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	}
 
 	if (!serializing) {
-		airBaseHandler = SAFE_NEW CAirBaseHandler;
+		airBaseHandler = new CAirBaseHandler;
 
 		for (int i = 0; i < MAX_TEAMS; i++) {
 			unitsByDefs[i].resize(unitDefHandler->numUnitDefs + 1);
@@ -188,7 +188,6 @@ int CUnitHandler::AddUnit(CUnit *unit)
 {
 //	GML_RECMUTEX_LOCK(unit); // AddUnit. Not needed, protected via LoadUnit.
 
-	ASSERT_SYNCED_MODE;
 	int num = (int)(gs->randFloat()) * ((int)activeUnits.size() - 1);
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
 	for (int a = 0; a < num;++a) {
@@ -224,7 +223,6 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 void CUnitHandler::DeleteUnit(CUnit* unit)
 {
-	ASSERT_SYNCED_MODE;
 	toBeRemoved.push_back(unit);
 }
 
@@ -288,7 +286,6 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 
 void CUnitHandler::Update()
 {
-	ASSERT_SYNCED_MODE;
 	SCOPED_TIMER("Unit handler");
 
 	if(!toBeRemoved.empty()) {
@@ -610,7 +607,6 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 
 void CUnitHandler::UpdateWind(float x, float z, float strength)
 {
-	ASSERT_SYNCED_MODE;
 	//todo: save windgens in list (would be a little faster)
 	std::list<CUnit*>::iterator usi;
 	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)

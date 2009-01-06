@@ -39,28 +39,26 @@ CScriptHandler::CScriptHandler() : chosenScript(0)
 /** Load all scripts. */
 void CScriptHandler::LoadScripts() {
 
-	ENTER_SYNCED;
-	loaded_scripts.push_back( SAFE_NEW CCommanderScript() );
-	loaded_scripts.push_back( SAFE_NEW CCommanderScript2() );
-	loaded_scripts.push_back( SAFE_NEW CAirScript() );
-	loaded_scripts.push_back( SAFE_NEW CEmptyScript() );
-	loaded_scripts.push_back( SAFE_NEW CSpawnScript(false) );
-	loaded_scripts.push_back( SAFE_NEW CSpawnScript(true) );
-	loaded_scripts.push_back( SAFE_NEW CTestScript() );
+	loaded_scripts.push_back( new CCommanderScript() );
+	loaded_scripts.push_back( new CCommanderScript2() );
+	loaded_scripts.push_back( new CAirScript() );
+	loaded_scripts.push_back( new CEmptyScript() );
+	loaded_scripts.push_back( new CSpawnScript(false) );
+	loaded_scripts.push_back( new CSpawnScript(true) );
+	loaded_scripts.push_back( new CTestScript() );
 
 	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys =
 			IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
 	
 	IAILibraryManager::T_skirmishAIKeys::const_iterator ai, e;
 	for(ai=skirmishAIKeys.begin(), e=skirmishAIKeys.end(); ai != e; ++ai) {
-		loaded_scripts.push_back(SAFE_NEW CSkirmishAITestScript(*ai));
+		loaded_scripts.push_back(new CSkirmishAITestScript(*ai));
 	}
 
 	std::vector<std::string> f = CFileHandler::FindFiles("Saves/", "*.ssf");
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {
-		loaded_scripts.push_back(SAFE_NEW CLoadScript(*fi));
+		loaded_scripts.push_back(new CLoadScript(*fi));
 	}
-	ENTER_UNSYNCED;
 }
 
 void CScriptHandler::StartLua()
@@ -70,7 +68,7 @@ void CScriptHandler::StartLua()
 	for (std::vector<std::string>::iterator i = files.begin(); i != files.end(); ++i) {
 		char buffer[16000];
 		const int returned = vfsHandler->LoadFile(std::string("startscripts/"+*i), buffer);
-		CLuaBinder* lua = SAFE_NEW CLuaBinder();
+		CLuaBinder* lua = new CLuaBinder();
 		if (!lua->LoadScript(*i, buffer, returned))
 			handleerror(NULL, lua->lastError.c_str(), "Lua", MBF_OK|MBF_EXCL);
 		lua_binders.push_back(lua);
@@ -118,7 +116,7 @@ void CScriptHandler::LoadScriptFile(const std::string& file)
 	const int returned = vfsHandler->LoadFile(std::string("startscripts/"+file), buffer);
 	if (returned > 0)
 	{
-		CLuaBinder* lua = SAFE_NEW CLuaBinder();
+		CLuaBinder* lua = new CLuaBinder();
 		if (!lua->LoadScript(file, buffer, returned))
 			handleerror(NULL, lua->lastError.c_str(), "Lua", MBF_OK|MBF_EXCL);
 		lua_binders.push_back(lua);
@@ -144,7 +142,7 @@ void CScriptHandler::SelectScript(std::string s)
 /** Generate a CglList with all available scripts. */
 CglList* CScriptHandler::GenList(ListSelectCallback callb)
 {
-	CglList* list = SAFE_NEW CglList("Select script", SelectScript, 1);
+	CglList* list = new CglList("Select script", SelectScript, 1);
 	for (std::map<std::string,CScript*>::const_iterator it = scripts.begin(); it != scripts.end(); ++it)
 		list->AddItem(it->first.c_str(), it->first.c_str());
 	callback = callb;

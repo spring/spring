@@ -73,10 +73,10 @@ CUnitDrawer::CUnitDrawer(void)
 	updateFace(0)
 {
 	if (texturehandler3DO == 0) {
-		texturehandler3DO = SAFE_NEW C3DOTextureHandler;
+		texturehandler3DO = new C3DOTextureHandler;
 	}
 	if (texturehandlerS3O == 0) {
-		texturehandlerS3O = SAFE_NEW CS3OTextureHandler;
+		texturehandlerS3O = new CS3OTextureHandler;
 	}
 
 	SetUnitDrawDist((float)configHandler.Get("UnitLodDist",  200));
@@ -386,8 +386,6 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 
 void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 {
-	ASSERT_UNSYNCED_MODE;
-
 	drawFar.clear();
 	drawStat.clear();
 
@@ -687,7 +685,6 @@ inline void CUnitDrawer::DoDrawUnitShadow(CUnit *unit) {
 
 void CUnitDrawer::DrawShadowPass(void)
 {
-	ASSERT_UNSYNCED_MODE;
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glDisable(GL_TEXTURE_2D);
 //	glEnable(GL_TEXTURE_2D);
@@ -1314,7 +1311,7 @@ void CUnitDrawer::UnitDrawingTexturesOn(S3DModel *model)
 
 void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor)
 {
-	unsigned char* buf = SAFE_NEW unsigned char[size * size * 4];
+	unsigned char* buf = new unsigned char[size * size * 4];
 
 	for (int y = 0; y < size; ++y) {
 		for (int x = 0; x < size; ++x) {

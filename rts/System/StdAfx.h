@@ -37,9 +37,6 @@
 #include "lib/streflop/streflop_cond.h"
 #endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
 
-// maybe we should remove syncify altogether?
-#include "Sync/Syncify.h"
-
 #if defined(_WIN32) && defined(USE_GML)
 # ifndef GML_COMPATIBLE_ATOMIC_COUNT
 #	ifdef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
