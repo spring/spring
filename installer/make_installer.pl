@@ -17,7 +17,7 @@ if($?) {
   $testBuildString=" -DTEST_BUILD";
   $tag=`git describe`;
   die "Unable to run \"git describe\"." if($?);
-  $tag=~s/\-[^\-]*$//;
+  chomp($tag);
   print "Creating test installer for revision $tag\n";
 }else{
   chomp($tag);
