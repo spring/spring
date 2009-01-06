@@ -19,6 +19,10 @@ REM ### do not change anything below this line ###
 
 REM ECHO "	generating source files ..."
 
+IF NOT EXIST %MY_SOURCE_JAVA%%JAVA_PKG%/event   mkdir %MY_SOURCE_JAVA%%JAVA_PKG%/event
+IF NOT EXIST %MY_SOURCE_JAVA%%JAVA_PKG%/command mkdir %MY_SOURCE_JAVA%%JAVA_PKG%/command
+IF NOT EXIST %MY_SOURCE_JAVA%%JAVA_PKG%/oo      mkdir %MY_SOURCE_JAVA%%JAVA_PKG%/oo
+
 %AWK% -f jna_wrappEvents.awk %C_EVENTS%
 
 %AWK% -f jna_wrappCommands.awk %C_COMMANDS%

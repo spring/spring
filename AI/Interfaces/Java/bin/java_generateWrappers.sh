@@ -19,6 +19,10 @@ AWK=awk
 
 #echo "	generating source files ..."
 
+mkdir -p ${MY_SOURCE_JAVA}${JAVA_PKG}/event
+mkdir -p ${MY_SOURCE_JAVA}${JAVA_PKG}/command
+mkdir -p ${MY_SOURCE_JAVA}${JAVA_PKG}/oo
+
 $AWK -f jna_wrappEvents.awk ${C_EVENTS}
 
 $AWK -f jna_wrappCommands.awk ${C_COMMANDS}
