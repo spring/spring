@@ -3,6 +3,10 @@
 # Compiles and packages the Java sources
 #
 
+CWD_BACKUP=`pwd`
+THIS_DIR=`dirname ${0}`
+cd ${THIS_DIR}
+
 JAVA_PKG_FIRST_PART=com
 JAVA_PKG=${JAVA_PKG_FIRST_PART}/clan_sy/spring/ai
 JAVA_SRC_FILES="${JAVA_PKG}/*.java ${JAVA_PKG}/command/*.java ${JAVA_PKG}/event/*.java ${JAVA_PKG}/oo/*.java"
@@ -25,3 +29,6 @@ jar cf interface-src.jar -C "../java/src" ${JAVA_PKG_FIRST_PART}
 echo "	done."
 
 cd ../bin
+
+cd ${CWD_BACKUP}
+
