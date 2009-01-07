@@ -17,8 +17,6 @@
 
 #include "ResourceHandler.h"
 
-#include "Sync/Syncify.h"
-
 CR_BIND(CResourceHandler,);
 
 CR_REG_METADATA(CResourceHandler, (
@@ -30,7 +28,7 @@ CResourceHandler* CResourceHandler::instance;
 CResourceHandler* CResourceHandler::GetInstance()
 {
 	if (instance == NULL) {
-		instance = SAFE_NEW CResourceHandler();
+		instance = new CResourceHandler();
 	}
 	return instance;
 }
