@@ -49,7 +49,7 @@ extern "C" {
 #define GROUP_AI_DATA_DIR "AI/Group"
 
 #ifdef	__cplusplus
-}	// extern "C"
-#endif	// __cplusplus
+} // extern "C"
+#endif // __cplusplus
 
-#endif	// _AIDEFINES_H
+#endif // _AIDEFINES_H

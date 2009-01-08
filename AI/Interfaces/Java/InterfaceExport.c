@@ -24,6 +24,7 @@
 
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SStaticGlobalData.h"
+#include "ExternalAI/Interface/SSAILibrary.h"
 
 #include <stdbool.h>	// bool, true, false
 #include <string.h>	// strlen(), strcat(), strcpy()

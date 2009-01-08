@@ -23,7 +23,7 @@
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SStaticGlobalData.h"
 
-CInterface* myInterface = NULL;
+static CInterface* myInterface = NULL;
 
 static void local_copyToInfoMap(std::map<std::string, std::string>& map,
 		unsigned int infoSize,
@@ -43,13 +43,13 @@ EXPORT(int) initStatic(
 
 	std::map<std::string, std::string> infoMap;
 	local_copyToInfoMap(infoMap, infoSize, infoKeys, infoValues);
-	
+
 	myInterface = new CInterface(infoMap, staticGlobalData);
 	return 0;
 }
 
 EXPORT(int) releaseStatic() {
-	
+
 	delete myInterface;
 	myInterface = NULL;
 	return 0;

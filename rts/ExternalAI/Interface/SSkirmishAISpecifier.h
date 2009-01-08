@@ -21,6 +21,7 @@
  * as key type for C++ maps or C hash maps (eg. to cache loaded Skirmish AIs).
  * Engine side, we are using the C++ class SkirmishAIKey for the same purposes.
  */
+#if defined BUILDING_AI_INTERFACE
 
 #ifndef _SSKIRMISHAISPECIFIER_H
 #define _SSKIRMISHAISPECIFIER_H
@@ -29,13 +30,12 @@
 extern "C" {
 #endif
 
-#if defined BUILDING_AI_INTERFACE
 /**
- * @brief struct Skirmish Artificial Intelligence Specifier
+ * @brief struct Skirmish Artificial Intelligence specifier
  */
 struct SSkirmishAISpecifier {
 	const char* shortName; // [may not contain: spaces, '_', '#']
-	const char* version; // [may not contain: spaces, '_', '#']
+	const char* version;   // [may not contain: spaces, '_', '#']
 };
 
 struct SSkirmishAISpecifier SSkirmishAISpecifier_copy(
@@ -63,10 +63,10 @@ struct SSkirmishAISpecifier_Comparator {
 };
 #endif // defined __cplusplus
 
-#endif // defined BUILDING_AI_INTERFACE
-
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // _SSKIRMISHAISPECIFIER_H
+
+#endif // defined BUILDING_AI_INTERFACE
