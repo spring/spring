@@ -68,7 +68,7 @@ EXPORT(int) unloadAllSkirmishAILibraries();
 
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // _INTERFACEEXPORT_H

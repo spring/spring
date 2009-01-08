@@ -18,17 +18,11 @@
 #ifndef _SSAILIBRARY_H
 #define _SSAILIBRARY_H
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-//#include "SInfo.h"
-//#include "SOption.h"
-#include "ELevelOfSupport.h"
-#include "exportdefines.h"
-
 #define SKIRMISH_AI_PROPERTY_DATA_DIR                "dataDir"               // [string] absolute data dir containing the AIs AIInfo.lua file. this property is by the engine, not read from any file.
-//#define SKIRMISH_AI_PROPERTY_FILE_NAME               "fileName"              // [string] when the library file is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
 #define SKIRMISH_AI_PROPERTY_SHORT_NAME              "shortName"             // [string: [a-zA-Z0-9_.]*]
 #define SKIRMISH_AI_PROPERTY_VERSION                 "version"               // [string: [a-zA-Z0-9_.]*]
 #define SKIRMISH_AI_PROPERTY_NAME                    "name"                  // [string]
@@ -39,38 +33,28 @@ extern "C" {
 #define SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME    "interfaceShortName"    // [string: [a-zA-Z0-9_.]*] this interface has to be used to load the AI
 #define SKIRMISH_AI_PROPERTY_INTERFACE_VERSION       "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
 
-#if !defined BUILDING_AI
-///**
-// * @brief struct Skirmish Artificial Intelligence Specifier
-// */
-//struct SSAISpecifier {
-//	const char* shortName; // [may not contain: spaces, '_', '#']
-//	const char* version; // [may not contain: spaces, '_', '#']
-//};
-//
-//struct SSAISpecifier copySSAISpecifier(const struct SSAISpecifier* const orig);
-//void deleteSSAISpecifier(const struct SSAISpecifier* const spec);
-//
-//#if defined __cplusplus
-//struct SSAISpecifier_Comparator {
-//	/**
-//	 * The key comparison function, a Strict Weak Ordering;
-//	 * it returns true if its first argument is less
-//	 * than its second argument, and false otherwise.
-//	 * This is also defined as map::key_compare.
-//	 */
-//	bool operator()(const struct SSAISpecifier& a,
-//			const struct SSAISpecifier& b) const;
-//	static bool IsEmpty(const struct SSAISpecifier& spec);
-//};
-//#endif	// defined __cplusplus
-#endif	// !defined BUILDING_AI
+
+#include "ELevelOfSupport.h"
+#include "exportdefines.h"
 
 /**
+ * @brief Skirmish Artificial Intelligence library interface
+ *
  * This is the interface between the engine and an implementation of a
  * Skirmish AI.
+ * The engine will address AIs through this interface, but AIs will
+ * not actually implement it. It is the job of the AI Interface library,
+ * to make sure the engine can address AI implementations through
+ * instances of this struct.
  *
- * @brief struct Skirmish Artificial Intelligence
+ * An example of loading a C AI through the C AI Interface:
+ * The C AI exports functions fitting the function pointers in this
+ * struct. When the engine requests C-AI-X on the C AI Interface,
+ * the interface loads the shared library, eg C-AI-X.dll, creates
+ * a new instance of this struct, and sets the member function
+ * pointers to the addresses of the fitting functions exported
+ * by the shared AI library. This struct then goes to the engine
+ * which calls the functions appropriately.
  */
 struct SSAILibrary {
 
@@ -88,32 +72,6 @@ struct SSAILibrary {
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(int teamId,
 			const char* engineVersionString, int engineVersionNumber,
 			const char* aiInterfaceShortName, const char* aiInterfaceVersion);
-
-	/**
-	 * Returns info about this AI library.
-	 *
-	 * NOTE: this method is optional. An AI not exporting this function is still
-	 * valid.
-	 *
-	 * @param	info	where the info about this AI library shall be stored to
-	 * @param	max	the maximum number of elements to store into param info
-	 * @return	number of elements stored into parameter info
-	 */
-//	unsigned int (CALLING_CONV *getInfo)(int teamId, struct InfoItem info[],
-//			unsigned int maxInfoItems);
-
-	/**
-	 * Returns options that can be set on this AI.
-	 *
-	 * NOTE: this method is optional. An AI not exporting this function is still
-	 * valid.
-	 *
-	 * @param	infos	where the options of this AI library shall be stored to
-	 * @param	max	the maximum number of elements to store into param options
-	 * @return	number of elements stored into parameter options
-	 */
-//	unsigned int (CALLING_CONV *getOptions)(int teamId, struct Option options[],
-//			unsigned int maxOptions);
 
 
 	// team instance functions
@@ -138,7 +96,7 @@ struct SSAILibrary {
 	 * This method exists only for performance reasons, which come into play on
 	 * OO languages. For non-OO language AIs, this method can be ignored,
 	 * because using only EVENT_INIT will cause no performance decrease.
-	 * 
+	 *
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
 	 *
@@ -176,7 +134,7 @@ struct SSAILibrary {
 	 * This method exists only for performance reasons, which come into play on
 	 * OO languages. For non-OO language AIs, this method can be ignored,
 	 * because using only EVENT_RELEASE will cause no performance decrease.
-	 * 
+	 *
 	 * NOTE: this method is optional. An AI not exporting this function is still
 	 * valid.
 	 *
@@ -205,8 +163,8 @@ struct SSAILibrary {
 	int (CALLING_CONV *handleEvent)(int teamId, int topic, const void* data);
 };
 
-#ifdef	__cplusplus
-}	// extern "C"
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif // _SSAILIBRARY_H

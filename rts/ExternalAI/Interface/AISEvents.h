@@ -278,7 +278,7 @@ struct SSeismicPingEvent {
 }; // EVENT_SEISMIC_PING
 
 #ifdef	__cplusplus
-}	// extern "C"
+} // extern "C"
 #endif
 
 #endif	// _AISEVENTS_H

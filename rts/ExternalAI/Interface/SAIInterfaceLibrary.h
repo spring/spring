@@ -17,6 +17,12 @@
 
 #ifndef _SAIINTERFACELIBRARY_H
 #define	_SAIINTERFACELIBRARY_H
+
+/*
+ * All this is not needed when building an AI,
+ * as it is strictly AI Interface related,
+ * and therefore only matters to the engine and AI Interfaces.
+ */
 #if !defined BUILDING_AI
 
 #include "creg/creg_cond.h"
@@ -25,15 +31,7 @@
 extern "C" {
 #endif
 
-#include "ELevelOfSupport.h"
-#include "SSAILibrary.h"
-//#include "SGAILibrary.h"
-#include "System/exportdefines.h"
-
-struct SStaticGlobalData;
-
 #define AI_INTERFACE_PROPERTY_DATA_DIR               "dataDir"               // [string] absolute data dir containing the AIs AIInfo.lua file. this property is by the engine, not read from any file.
-//#define AI_INTERFACE_PROPERTY_FILE_NAME              "fileName"              // [string] when the library file is "libC-0.1.so" or "C-0.1.dll", this value should be "C-0.1"
 #define AI_INTERFACE_PROPERTY_SHORT_NAME             "shortName"             // [string: [a-zA-Z0-9_.]*]
 #define AI_INTERFACE_PROPERTY_VERSION                "version"               // [string: [a-zA-Z0-9_.]*]
 #define AI_INTERFACE_PROPERTY_NAME                   "name"                  // [string]
@@ -42,42 +40,36 @@ struct SStaticGlobalData;
 #define AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES    "supportedLanguages"    // [string]
 #define AI_INTERFACE_PROPERTY_ENGINE_VERSION         "engineVersion"         // [int] the engine version number the AI was compiled, but may work with newer or older ones too
 
-///**
-// * @brief struct Artificial Intelligence Interface Specifier
-// */
-//struct SAIInterfaceSpecifier {
-//	const char* shortName; // [may not contain: spaces, '_', '#']
-//	const char* version; // [may not contain: spaces, '_', '#']
-//};
-
-//struct SAIInterfaceSpecifier copySAIInterfaceSpecifier(
-//		const struct SAIInterfaceSpecifier* const orig);
-//void deleteSAIInterfaceSpecifier(
-//		const struct SAIInterfaceSpecifier* const spec);
-
-
-///**
-// * @brief struct Skirmish Artificial Intelligence Key
-// * Compleetly specifies a skirmish AI together with an interface.
-// */
-//struct SSAIKey {
-//	CR_DECLARE_STRUCT(SSAIKey);
-//	struct SAIInterfaceSpecifier interface;
-//	struct SSAISpecifier ai;
-//};
-
-/**
- * @brief struct Group Artificial Intelligence Key
- * Compleetly specifies a group AI together with an interface.
+/*
+ * Everythign following is only interesting for the engine,
+ * not for AI Interfaces.
  */
-//struct SGAIKey {
-//	CR_DECLARE_STRUCT(SGAIKey);
-//	struct SAIInterfaceSpecifier interface;
-//	struct SGAISpecifier ai;
-//};
+#if !defined BUILDING_AI_INTERFACE
+
+#include "ELevelOfSupport.h"
+#include "SSAILibrary.h"
+#include "System/exportdefines.h"
+
+struct SStaticGlobalData;
 
 /**
- * @brief struct Artificial Intelligence Interface
+ * @brief Artificial Intelligence Interface library interface
+ *
+ * This is the interface between the engine and an implementation of
+ * an AI Interface.
+ * The engine will address AI Interfaces through this interface,
+ * but AI Interfaces will not actually implement it. It is the job
+ * of the engine, to make sure it can address AI Interface
+ * implementations through instances of this struct.
+ *
+ * An example of loading the C AI Interface:
+ * The C AI Interface library exports functions fitting the
+ * function pointers in this struct. When the engine needs therefore
+ * C AI Interface, it loads the shared library, eg C-AI-Interface.dll,
+ * creates a new instance of this struct, and sets the member function
+ * pointers to the addresses of the fitting functions exported
+ * by the shared library. The functions of the AI Interface are then
+ * allways called through this struct.
  */
 struct SAIInterfaceLibrary {
 
@@ -126,16 +118,6 @@ struct SAIInterfaceLibrary {
 	 */
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
 			const char* engineVersionString, int engineVersionNumber);
-	/**
-	 * Returns static properties with info about this AI Interface library.
-	 *
-	 * NOTE: this method is optional. An AI Interface not exporting this
-	 * function is still valid.
-	 *
-	 * @return number of elements stored into parameter info
-	 */
-//	unsigned int (CALLING_CONV *getInfo)(struct InfoItem info[],
-//			unsigned int maxInfoItems);
 
 
 	// skirmish AI methods
@@ -145,8 +127,6 @@ struct SAIInterfaceLibrary {
 	 *
 	 * @return	ok: 0, error: != 0
 	 */
-	//int (CALLING_CONV *getSkirmishAISpecifiers)(struct SSAISpecifier* sAISpecifiers, int max);
-	//const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(const struct SSAISpecifier* const sAISpecifier);
 	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
 			unsigned int infoSize,
 			const char** infoKeys, const char** infoValues);
@@ -166,76 +146,13 @@ struct SAIInterfaceLibrary {
 	 * @return	ok: 0, error: != 0
 	 */
 	int (CALLING_CONV *unloadAllSkirmishAILibraries)();
-
-
-	// group AI methods
-
-	/**
-	 * Loads the specified Group AI.
-	 *
-	 * @return	ok: 0, error: != 0
-	 */
-	//int (CALLING_CONV *getGroupAISpecifiers)(struct SGAISpecifier* gAISpecifiers, int max);
-	//const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(const struct SGAISpecifier* const gAISpecifier);
-//	const struct SGAILibrary* (CALLING_CONV *loadGroupAILibrary)(
-//			const struct InfoItem info[], unsigned int numInfoItems);
-
-	/**
-	 * Unloads the specified Group AI.
-	 *
-	 * @return	ok: 0, error: != 0
-	 */
-//	int (CALLING_CONV *unloadGroupAILibrary)(
-//			const struct SGAISpecifier* const gAISpecifier);
-
-	/**
-	 * Unloads all Group AI libraries currently loaded by this interface.
-	 *
-	 * @return	ok: 0, error: != 0
-	 */
-//	int (CALLING_CONV *unloadAllGroupAILibraries)();
 };
 
+#endif // !defined BUILDING_AI_INTERFACE
+
 #ifdef	__cplusplus
-}	// extern "C"
+} // extern "C"
 #endif
-
-
-#ifdef	__cplusplus
-//struct SAIInterfaceSpecifier_Comparator {
-//	/**
-//	 * The key comparison function, a Strict Weak Ordering;
-//	 * it returns true if its first argument is less
-//	 * than its second argument, and false otherwise.
-//	 * This is also defined as map::key_compare.
-//	 */
-//	bool operator()(const struct SAIInterfaceSpecifier& a,
-//			const struct SAIInterfaceSpecifier& b) const;
-//	static bool IsEmpty(const struct SAIInterfaceSpecifier& spec);
-//};
-//
-//struct SSAIKey_Comparator {
-//	/**
-//	 * The key comparison function, a Strict Weak Ordering;
-//	 * it returns true if its first argument is less
-//	 * than its second argument, and false otherwise.
-//	 * This is also defined as map::key_compare.
-//	 */
-//	bool operator()(const struct SSAIKey& a, const struct SSAIKey& b) const;
-//	static bool IsEmpty(const struct SSAIKey& key);
-//};
-
-//struct SGAIKey_Comparator {
-//	/**
-//	 * The key comparison function, a Strict Weak Ordering;
-//	 * it returns true if its first argument is less
-//	 * than its second argument, and false otherwise.
-//	 * This is also defined as map::key_compare.
-//	 */
-//	bool operator()(const struct SGAIKey& a, const struct SGAIKey& b) const;
-//	static bool IsEmpty(const struct SGAIKey& key);
-//};
-#endif // __cplusplus
 
 #endif // !defined BUILDING_AI
 #endif // _SAIINTERFACELIBRARY_H

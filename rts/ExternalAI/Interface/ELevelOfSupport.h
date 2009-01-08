@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -22,6 +22,18 @@
 extern "C" {
 #endif
 
+/**
+ * @brief level of support
+ *
+ * This is used by Skirmish AIs for example.
+ * The engine can pass some info to the AI,
+ * eg. a mod name plus version and the engine version,
+ * and the AI will report with a value from this enum,
+ * to indicate the level of support it can serve for a
+ * game using all of the supplied info.
+ * If the AI is unable to determine its level of support,
+ * it should return LOS_Unknown.
+ */
 enum LevelOfSupport {
 	LOS_None,		// 0: will (possibly) result in a crash
 	LOS_Bad,		// 1: does not work correctly, eg.: does nothing, just stand around, but neither does crash
@@ -34,8 +46,7 @@ enum LevelOfSupport {
 };
 
 #ifdef	__cplusplus
-}	// extern "C"
+} // extern "C"
 #endif
 
-#endif	// _ELEVELOFSUPPORT_H
-
+#endif // _ELEVELOFSUPPORT_H

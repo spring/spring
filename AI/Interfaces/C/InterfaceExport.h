@@ -57,8 +57,6 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 
 // skirmish AI related methods
 
-//EXPORT(int) getSkirmishAISpecifiers(struct SSAISpecifier* sAISpecifiers, int max);
-//EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(const struct SSAISpecifier* const sAISpecifier);
 EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
 		unsigned int infoSize,
 		const char** infoKeys, const char** infoValues);
@@ -68,7 +66,7 @@ EXPORT(int) unloadSkirmishAILibrary(
 EXPORT(int) unloadAllSkirmishAILibraries();
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif // _INTERFACEEXPORT_H
