@@ -155,14 +155,29 @@ public:
 	CollisionVolume* collisionVolume;
 	std::string unitDefName;
 
+	/**
+	 * This is a set of parameters that is initialized
+	 * in CreateUnitRulesParams() and may change during the game.
+	 * Each parameter is uniquely identified only by its id
+	 * (which is the index in the vector).
+	 * Parameters may or may not have a name.
+	 */
 	std::vector<float>         modParams;    // mod controlled parameters
 	std::map<std::string, int> modParamsMap; // name map for mod parameters
 
 	int team;
 	int allyteam;
-	int lineage;    // the unit's origin lies in this team
-	// (e.g. it was created by a factory that was created by a builder from a factory built by a com of this team,
-	//  it doesn't matter at all to which team the com/builder/factories were shared. Only capturing can break the chain.)
+	/**
+	 * The unit's origin lies in this team.
+	 *
+	 * example:
+	 * It was created by a factory that was created by a builder
+	 * from a factory built by a commander of this team.
+	 * It does not matter at all, to which team
+	 * the commander/builder/factories were shared.
+	 * Only capturing can break the chain.
+	 */
+	int lineage;
 	int aihint;							//tells the unit main function to the ai
 
 	SyncedFloat3 frontdir;				// the forward direction of the unit
@@ -202,7 +217,7 @@ public:
 
 	unsigned short losStatus[MAX_TEAMS];	//indicate the los/radar status the allyteam has on this unit
 
-	bool inBuildStance;				//used by constructing unigs
+	bool inBuildStance;				//used by constructing units
 	bool stunned;							//if we are stunned by a weapon or for other reason
 	bool useHighTrajectory;		//tells weapons that support it to try to use a high trajectory
 	bool dontUseWeapons;			//used by landed aircrafts for now

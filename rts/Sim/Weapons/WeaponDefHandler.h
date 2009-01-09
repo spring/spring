@@ -203,11 +203,28 @@ struct WeaponDef
 	bool avoidFriendly;     // if true, try to avoid friendly units while aiming
 	bool avoidFeature;      // if true, try to avoid features while aiming
 	bool avoidNeutral;      // if true, try to avoid neutral units while aiming
-
-	float targetBorder;          // if nonzero, targetting units will TryTarget at the edge of collision sphere (radius*tag value, [-1;1]) instead of its centre
-	float cylinderTargetting;    // if greater than 0, range will be checked in a cylinder (height=range*cylinderTargetting) instead of a sphere
-	float minIntensity;          // for beamlasers - always hit with some minimum intensity (a damage coeffcient normally dependent on distance). do not confuse with intensity tag, it's completely unrelated.
-	float heightBoostFactor;     // controls cannon range height boost. default: -1 -- automatically calculate a more or less sane value
+	/**
+	 * If nonzero, targetting units will TryTarget at the edge of collision sphere
+	 * (radius*tag value, [-1;1]) instead of its centre.
+	 */
+	float targetBorder;
+	/**
+	 * If greater than 0, the range will be checked in a cylinder
+	 * (height=range*cylinderTargetting) instead of a sphere.
+	 */
+	float cylinderTargetting;
+	/**
+	 * For beam-lasers only - always hit with some minimum intensity
+	 * (a damage coeffcient normally dependent on distance).
+	 * Do not confuse this with the intensity tag, it i completely unrelated.
+	 */
+	float minIntensity;
+	/**
+	 * Controls cannon range height boost.
+	 *
+	 * default: -1: automatically calculate a more or less sane value
+	 */
+	float heightBoostFactor;
 	float proximityPriority;     // multiplier for the distance to the target for priority calculations
 
 	unsigned int collisionFlags;
