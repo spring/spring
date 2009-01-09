@@ -27,8 +27,8 @@ ${EndIf}
 
   File "..\external\TASClient\tips.txt"
 
-  SetOutPath "$INSTDIR\lobby\python"
-  File /r /x .svn "..\external\TASClient\python\*.*"
+  SetOutPath "$INSTDIR\lobby"
+  File /r "..\external\Lobby\*.*"
 
   Call GetDotNETVersion
   Pop $0
