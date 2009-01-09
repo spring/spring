@@ -10,7 +10,7 @@ BEGIN {
 
 	# define the field splitter(-regex)
 	#FS=/,|\(|\)\;/
-	FS="(,)|(\\()|(\\)\\;)"
+	FS="(,)|(\\()|(\\)\\;)";
 
 	javaSrcRoot = "../java/src";
 
@@ -256,6 +256,47 @@ function printClass(clsName_c) {
 }
 
 
+function wrappFunction(funcDef) {
+
+	doWrapp = !match(funcDef, /.*CALLING_CONV \*File_.*/);
+
+	if (doWrapp) {
+		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\)\\;)");
+		# because the empty part after ");" would count as part aswell
+		size_funcParts--;
+		retType_c = trim(funcParts[1]);
+		retType_jna = convertCToJNAType(retType_c);
+		#condRet = match(retType_c, "void") ? "" : "return ";
+		fullName = funcParts[2];
+		sub(/CALLING_CONV \*/, "", fullName);
+		sub(/\)/, "", fullName);
+
+		# function parameters
+		paramList = "";
+
+		for (i=3; i<=size_funcParts && !match(funcParts[i], /.*\/\/.*/); i++) {
+			name = extractName(funcParts[i]);
+			type_c = extractType(funcParts[i]);
+			type_jna = convertCToJNAType(type_c);
+			if (i == 3) {
+				cond_comma = "";
+			} else {
+				cond_comma = ", ";
+			}
+			paramList = paramList cond_comma type_jna " " name;
+		}
+
+		funcFullName[fi] = fullName;
+		funcRetType[fi] = retType_jna;
+		funcParamList[fi] = paramList;
+		funcDocComment[fi, "*"] = docComLines_num;
+		for (l=0; l < docComLines_num; l++) {
+			funcDocComment[fi, l] = docComLines[l];
+		}
+		fi++;
+	}
+}
+
 function printJavaFunctionComment(jc_outFile, jc_funcIndex, jc_indent) {
 
 	# print the documentation comment
@@ -330,43 +371,36 @@ function printJavaFunctionComment(jc_outFile, jc_funcIndex, jc_indent) {
 
 
 
+
 # save function pointer info into arrays
+# ... 2nd, 3rd, ... line of a function pointer definition
+{
+	if (isMultiLineFunc) { # function is defined on one single line
+		funcIntermLine = $0;
+		# remove possible comment at end of line: // fu bar
+		sub(/[ \t]*\/\/.*/, "", funcIntermLine);
+		funcIntermLine = trim(funcIntermLine);
+		funcSoFar = funcSoFar " " funcIntermLine;
+		if (match(funcSoFar, /\;$/)) {
+			# function ends in this line
+			wrappFunction(funcSoFar);
+			isMultiLineFunc = 0;
+		}
+	}
+}
+# 1st line of a function pointer definition
 /^[^\/]*CALLING_CONV.*$/ {
 
-	doWrapp = !match(($0), /.*CALLING_CONV \*File_.*/);
-
-	if (doWrapp) {
-		retType_c = trim($1);
-		retType_jna = convertCToJNAType(retType_c);
-		#condRet = match(retType_c, "void") ? "" : "return ";
-		fullName=$2;
-		sub(/CALLING_CONV \*/, "", fullName);
-		sub(/\)/, "", fullName);
-
-		# function parameters
-		paramList=""
-	
-		if (($3) && !match(($3), /.*\/\/.*/)) {
-			name = extractName(($3));
-			type_c = extractType(($3));
-			type_jna = convertCToJNAType(type_c);
-			paramList = paramList type_jna " " name;
-		}
-		for (i=4; i<=NF && ($i) && !match(($i), /.*\/\/.*/); i++) {
-			name = extractName(($i));
-			type_c = extractType(($i));
-			type_jna = convertCToJNAType(type_c);
-			paramList = paramList ", " type_jna " " name;
-		}
-
-		funcFullName[fi] = fullName;
-		funcRetType[fi] = retType_jna;
-		funcParamList[fi] = paramList;
-		funcDocComment[fi, "*"] = docComLines_num;
-		for (l=0; l < docComLines_num; l++) {
-			funcDocComment[fi, l] = docComLines[l];
-		}
-		fi++;
+	funcStartLine = $0;
+	# remove possible comment at end of line: // fu bar
+	sub(/\/\/.*$/, "", funcStartLine);
+	funcStartLine = trim(funcStartLine);
+	if (match(funcStartLine, /\;$/)) {
+		# function ends in this line
+		wrappFunction(funcStartLine);
+	} else {
+		funcSoFar = funcStartLine;
+		isMultiLineFunc = 1;
 	}
 }
 
