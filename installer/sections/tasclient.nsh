@@ -28,7 +28,7 @@ ${EndIf}
   File "..\external\TASClient\tips.txt"
 
   SetOutPath "$INSTDIR\lobby"
-  File /r "..\external\Lobby\*.*"
+  File /r "..\external\TASClient\*.*"
 
   Call GetDotNETVersion
   Pop $0
