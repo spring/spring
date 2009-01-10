@@ -16,6 +16,7 @@
 #include "UnsyncedRNG.h"
 #include "Exceptions.h"
 #include "Util.h"
+#include "LogOutput.h"
 
 
 using namespace std;
@@ -251,7 +252,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 	if (!file.GetValue(playerCount, "GAME\\NumPlayers") || playerStartingData.size() == playerCount)
 		numPlayers = playerStartingData.size();
 	else
-		throw content_error("incorrect number of players in GameSetup script");
+		logOutput.Print("Warning: incorrect number of players in GameSetup script");
 }
 
 /**
@@ -305,7 +306,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 	if (!file.GetValue(teamCount, "Game\\NumTeams") || teamStartingData.size() == teamCount)
 		numTeams = teamStartingData.size();
 	else
-		throw content_error("incorrect number of teams in GameSetup script");
+		logOutput.Print("Warning: incorrect number of teams in GameSetup script");
 }
 
 /**
@@ -353,7 +354,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || allyStartingData.size() == allyCount)
 		numAllyTeams = allyStartingData.size();
 	else
-		throw content_error("incorrect number of teams in GameSetup script");
+		logOutput.Print("Warning: incorrect number of allyteams in GameSetup script");
 }
 
 /** @brief Update all player indices to refer to the right player. */
