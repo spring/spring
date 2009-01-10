@@ -24,4 +24,5 @@ if($?) {
   print "Creating installer for release $tag\n";
 }
 system("sh", "installer/tasclient_download.sh");
+system("sh", "installer/springlobby_download.sh");
 system("makensis -V3$testBuildString -DREVISION=$tag installer/spring.nsi");
