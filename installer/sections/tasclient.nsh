@@ -1,34 +1,25 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
 
-  ; The battleroom
-  File "..\external\TASClient.exe"
-  File "..\external\7za.dll"
+  CreateDirectory "$INSTDIR\Lobby\cache"
+  CreateDirectory "$INSTDIR\Lobby\cache\online"
+  CreateDirectory "$INSTDIR\Lobby\cache\maps"
+  CreateDirectory "$INSTDIR\Lobby\cache\mods"
+  CreateDirectory "$INSTDIR\Lobby\var"
+  CreateDirectory "$INSTDIR\Lobby\var\replayFilters"
+  CreateDirectory "$INSTDIR\Lobby\logs"
+  CreateDirectory "$INSTDIR\Lobby\python"
+
+  ; The battleroom with all files (script needs to remove groups.ini)
+  File /r "..\installer\TASClient\SaveFiles\*.*"
 
   inetc::get \
              "http://installer.clan-sy.com/SpringDownloader.exe" "$INSTDIR\SpringDownloader.exe"          
-  
-  
-  CreateDirectory "$INSTDIR\lobby\cache"
-  CreateDirectory "$INSTDIR\lobby\cache\online"
-  CreateDirectory "$INSTDIR\lobby\cache\maps"
-  CreateDirectory "$INSTDIR\lobby\cache\mods"
-  CreateDirectory "$INSTDIR\lobby\var"
-  CreateDirectory "$INSTDIR\lobby\var\replayFilters"
-  CreateDirectory "$INSTDIR\lobby\logs"
-  CreateDirectory "$INSTDIR\lobby\python"
 
   SetOutPath "$INSTDIR\lobby\var"
-
-${IfNot} ${FileExists} "$INSTDIR\lobby\var\groups.ini"
-  File "..\external\TASClient\groups.ini"
-${EndIf}
-  
-
-  File "..\external\TASClient\tips.txt"
-
-  SetOutPath "$INSTDIR\lobby"
-  File /r "..\external\TASClient\*.*"
+  ${IfNot} ${FileExists} "$INSTDIR\lobby\var\groups.ini"
+    File "..\installer\TASClient\groups.ini"
+  ${EndIf}
 
   Call GetDotNETVersion
   Pop $0
@@ -46,20 +37,20 @@ ${EndIf}
   ExecWait "$INSTDIR\SpringDownloader.exe -uninstall"
   Delete "$INSTDIR\TASClient.exe"
   Delete "$INSTDIR\7za.dll"
-  Delete "$INSTDIR\lobby\sidepics\arm.bmp"
-  Delete "$INSTDIR\lobby\sidepics\core.bmp"
-  Delete "$INSTDIR\lobby\sidepics\tll.bmp"
-  Delete "$INSTDIR\lobby\var\groups.ini"
-  Delete "$INSTDIR\lobby\var\tips.txt"
-  RmDir "$INSTDIR\lobby\cache\maps"
-  RmDir "$INSTDIR\lobby\cache\mods"
-  RmDir "$INSTDIR\lobby\cache\online"
-  RmDir "$INSTDIR\lobby\cache"
-  RmDir "$INSTDIR\lobby\logs"
-  RmDir "$INSTDIR\lobby\python"
-  RmDir "$INSTDIR\lobby\var\replayFilters"
-  RmDir "$INSTDIR\lobby\var"
-  RmDir "$INSTDIR\lobby"
+  Delete "$INSTDIR\Lobby\sidepics\arm.bmp"
+  Delete "$INSTDIR\Lobby\sidepics\core.bmp"
+  Delete "$INSTDIR\Lobby\sidepics\tll.bmp"
+  Delete "$INSTDIR\Lobby\var\groups.ini"
+  Delete "$INSTDIR\Lobby\var\tips.txt"
+  RmDir "$INSTDIR\Lobby\cache\maps"
+  RmDir "$INSTDIR\Lobby\cache\mods"
+  RmDir "$INSTDIR\Lobby\cache\online"
+  RmDir "$INSTDIR\Lobby\cache"
+  RmDir "$INSTDIR\Lobby\logs"
+  RmDir "$INSTDIR\Lobby\python"
+  RmDir "$INSTDIR\Lobby\var\replayFilters"
+  RmDir "$INSTDIR\Lobby\var"
+  RmDir "$INSTDIR\Lobby"
   Delete "$INSTDIR\SpringDownloader.exe"
 
 !endif ; !INSTALL
