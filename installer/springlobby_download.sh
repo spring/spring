@@ -12,11 +12,16 @@ cd installer
 rm -rf Springlobby
 
 mkdir -p Springlobby
+
+### Download archive (if not already done)
+mkdir -p downloads
+cd downloads
+wget -N http://www.springlobby.info/installer/sl-installer-files.zip
+cd ..
+
 cd Springlobby
 
-wget http://www.springlobby.info/installer/sl-installer-files.zip
-unzip sl-installer-files.zip -d SLArchive
-rm sl-installer-files.zip
+unzip ../downloads/sl-installer-files.zip -d SLArchive
 
 mkdir SettingsDlls
 mv SLArchive/mingwm10.dll SettingsDlls

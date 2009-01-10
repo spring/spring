@@ -9,13 +9,18 @@ if [ ! -e installer ]; then
 fi
 
 cd installer
+
+### Download archive (if not already done)
+mkdir -p downloads
+cd downloads
+wget -N http://tasclient.it-l.eu/Installer_Archive.7z
+cd ..
+
 rm -rf TASClient
 
 mkdir -p TASClient/SaveFiles
 cd TASClient
 
-wget http://tasclient.it-l.eu/Installer_Archive.7z
-7z x Installer_Archive.7z -oSaveFiles
-rm Installer_Archive.7z
+7z x ../downloads/Installer_Archive.7z -oSaveFiles
 
 mv SaveFiles/Lobby/var/groups.ini .
