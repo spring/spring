@@ -212,6 +212,7 @@ void CAirCAI::SlowUpdate()
 
 	AAirMoveType* myPlane=(AAirMoveType*) owner->moveType;
 
+	LandRepairIfNeeded();
 	if(owner->unitDef->maxFuel > 0){
 		RefuelIfNeeded();
 	}
