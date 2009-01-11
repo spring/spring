@@ -833,7 +833,7 @@ void SpringApp::Startup()
 	else if (!demofile.empty())
 	{
 		startsetup->isHost = true; // local demo play
-		startsetup->myPlayerName = configHandler.GetString("name", "unnamed");
+		startsetup->myPlayerName = configHandler.GetString("name", "unnamed")+ " (spec)";
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true);
 #endif
