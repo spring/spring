@@ -1435,7 +1435,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 
 	if (!demoReader || setup->demoName.empty()) // gamesetup from demo?
 	{
-		unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
+		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!teams[hisTeam]) // create new team
 		{
 			teams[hisTeam].reset(new GameTeam());
