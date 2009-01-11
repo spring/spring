@@ -3,12 +3,15 @@
 # This awk script creates the JNA wrapper classes for the C event structs in:
 # rts/ExternalAI/Interface/AISEvents.h
 #
+# this script uses functions from common.awk, use like this:
+# 	awk -f thisScript.awk -f common.awk [additional-params]
+#
 
 BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	FS="[ \t]+"
+	FS = "[ \t]+";
 
 	javaSrcRoot = "../java/src";
 
@@ -37,95 +40,7 @@ BEGIN {
 	insideEvtStruct = 0;
 }
 
-function printGeneratedWarningHeader(outFile) {
 
-	print("// WARNING: This file is machine generated,") > outFile;
-	print("// please do not edit directly!") >> outFile;
-}
-
-function printGPLHeader(outFile) {
-
-	print("/*") >> outFile;
-	print("	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>") >> outFile;
-	print("") >> outFile;
-	print("	This program is free software; you can redistribute it and/or modify") >> outFile;
-	print("	it under the terms of the GNU General Public License as published by") >> outFile;
-	print("	the Free Software Foundation; either version 2 of the License, or") >> outFile;
-	print("	(at your option) any later version.") >> outFile;
-	print("") >> outFile;
-	print("	This program is distributed in the hope that it will be useful,") >> outFile;
-	print("	but WITHOUT ANY WARRANTY; without even the implied warranty of") >> outFile;
-	print("	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the") >> outFile;
-	print("	GNU General Public License for more details.") >> outFile;
-	print("") >> outFile;
-	print("	You should have received a copy of the GNU General Public License") >> outFile;
-	print("	along with this program.  If not, see <http://www.gnu.org/licenses/>.") >> outFile;
-	print("*/") >> outFile;
-}
-
-
-# Some utility functions
-function ltrim(s) { sub(/^[ \t]+/, "", s); return s; }
-function rtrim(s) { sub(/[ \t]+$/, "", s); return s; }
-function trim(s)  { return rtrim(ltrim(s)); }
-
-function noSpaces(s)  { gsub(/[ \t]/, "", s); return s; }
-
-function capFirst(s)  { return toupper(substr(s, 1, 1)) substr(s, 2); }
-function capitalize(s)  { return toupper(substr(s, 1, 1)) substr(s, 2); }
-function lowerize(s)  { return tolower(substr(s, 1, 1)) substr(s, 2); }
-
-function startsWithCapital(s)  { return match(s, /^[A-Z]/); }
-function startsWithLower(s)  { return match(s, /^[a-z]/); }
-
-
-
-# Awaits this format:	com.clan_sy.spring.ai
-# Returns this format:	com/clan_sy/spring/ai
-function convertJavaNameFormAToD(javaNameFormA) {
-
-	javaNameFormD = javaNameFormA;
-
-	gsub(/\./, "/", javaNameFormD);
-
-	return javaNameFormD;
-}
-
-
-# Awaits this format:	unsinged const char* varName[]
-# Returns this format:	varName
-function extractParamName(typeAndName) {
-
-	name = trim(typeAndName);
-	gsub(/ \*/, "* ", name);
-
-	# Remove the type
-	sub(/(const )?(unsigned )?(void|int|float|char|byte|bool|struct [_a-zA-Z0-9]+)(\*)* /, "", name);
-
-	# Remove possible array length specifiers ("[]" or "[2]")
-	gsub(/\[.*\]/, "", name);
-
-	name = trim(name);
-
-	return name;
-}
-
-
-# Awaits this format:	const char* varName[]
-# Returns this format:	const char* []
-function extractCType(cTypeAndName) {
-
-	cType = trim(cTypeAndName);
-
-	gsub(/ \*/, "* ", cType);
-
-	# Remove the name
-	gsub(" " extractParamName(cTypeAndName), "", cType);
-
-	gsub(/\[[^\]]*\]/, "*", cType);
-
-	return cType;
-}
 
 
 # Checks if a field is available and is no comment
@@ -293,7 +208,7 @@ function printEventOO(evtIndex) {
 	}
 
 	print("") >> myOOAIFile;
-	printEventJavaComment(myOOAIFile, evtIndex, "	");
+	printFunctionComment_Common(myOOAIFile, evtsDocComment, evtIndex, "\t");
 
 	print("	int " eNameLowerized "(" paramsTypes ");") >> myOOAIFile;
 
@@ -327,21 +242,6 @@ function printEventOOAIFactory(evtIndex) {
 	eName = evtsName[evtIndex];
 }
 
-
-
-function printEventJavaComment(jc_outFile, jc_evtIndex, jc_indent) {
-
-	# print the documentation comment
-	if (evtsDocComment[jc_evtIndex, "*"] > 0) {
-		print(jc_indent "/**") >> jc_outFile;
-		numLines = evtsDocComment[jc_evtIndex, "*"];
-		for (l=0; l < numLines; l++) {
-			docLine = evtsDocComment[jc_evtIndex, l];
-			print(jc_indent " * " docLine) >> jc_outFile;
-		}
-		print(jc_indent " */") >> jc_outFile;
-	}
-}
 
 function printJavaEventHeader(javaFile) {
 
@@ -391,7 +291,7 @@ function printEventJava(evtIndex) {
 
 function printEventJavaCls(evtIndex) {
 
-	printEventJavaComment(javaFile, evtIndex, "");
+	printFunctionComment_Common(javaFile, evtsDocComment, evtIndex, "");
 
 	print(clsMods "class " className " extends " evtInterface " {") >> javaFile;
 	print("") >> javaFile;
@@ -494,46 +394,6 @@ function printEventJavaCls(evtIndex) {
 	print("") >> javaFile;
 }
 
-# Awaits this format:	const char*[]
-# Returns this format:	String[]
-function convertCToJNAType(cType) {
-
-	jnaType = trim(cType);
-
-	sub(/const/, "", jnaType);
-	sub(/unsigned/, "", jnaType);
-	gsub(/ \*/, "* ", jnaType);
-
-	isComplex = 0;
-	isComplex += sub(/char\*\*/, "Pointer", jnaType);
-	isComplex += sub(/char\*/, "String", jnaType);
-	isComplex += sub(/struct SAIFloat3(\*)?/, "AIFloat3", jnaType);
-	isComplex += sub(/struct SAICallback(\*)?/, "AICallback", jnaType);
-	isComplex += sub(/struct [0-9a-zA-Z_]*/, "Structure", jnaType);
-
-	isPrimitive = 0;
-	isPrimitive += sub(/bool/, "boolean", jnaType);
-	isPrimitive += sub(/char/, "byte", jnaType);
-	#isPrimitive += sub(/wchar_t/, "char", jnaType);
-	isPrimitive += sub(/short/, "short", jnaType);
-	isPrimitive += sub(/int/, "int", jnaType);
-	isPrimitive += sub(/float/, "float", jnaType);
-	isPrimitive += sub(/double/, "double", jnaType);
-
-	isPointer = 0;
-	if (isComplex <= 0 && isPrimitive <= 0) {
-		isPointer += sub(/.*\*/, "Pointer", jnaType);
-	}
-
-	# convert possible array length specifiers ("[]" or "[2]")
-	gsub(/\*/, "[]", jnaType);
-	arrDims = gsub(/\[[^\]]*\]/, "[]", jnaType);
-
-	jnaType = noSpaces(jnaType);
-
-	return jnaType;
-}
-
 function saveMember(ind_mem_s, member_s) {
 
 	name_s = extractParamName(member_s);
@@ -554,65 +414,16 @@ function saveMember(ind_mem_s, member_s) {
 	}
 }
 
-################################################################################
-### BEGINN: parsing and saving the event struct documentation comments
 
-# end of doc comment
-/\*\// {
-
-	if (isInsideDocComment == 1) {
-		usefullLinePart = $0;
-		sub(/\*\/.*/, "", usefullLinePart);
-		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
-		usefullLinePart = trim(usefullLinePart);
-		if (usefullLinePart != "") {
-			docComLines[docComLines_num++] = usefullLinePart;
-		}
-	}
-	isInsideDocComment = 0;
+# This function has to return true (1) if a doc comment (eg: /** foo bar */)
+# can be deleted.
+# If there is no special condition you want to apply,
+# it should always return true (1),
+# cause there are additional mechanism to prevent accidential deleting.
+# see: commonDoc.awk
+function canDeleteDocumentation() {
+	return isInsideEvtStruct != 1;
 }
-
-
-# inside of doc comment
-{
-	if (isInsideDocComment == 1) {
-		usefullLinePart = $0;
-		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
-		usefullLinePart = trim(usefullLinePart);
-		docComLines[docComLines_num++] = usefullLinePart;
-	} else {
-		if (trim($0) != "") {
-			linesWithNoDocComment++;
-		}
-		# delete the last stored doc comment if it is not applicable to anything
-		if (linesWithNoDocComment > 2 && isInsideEvtStruct != 1) {
-			docComLines_num = 0;
-		}
-	}
-}
-
-# beginn of doc comment
-/^[ \t]*\/\*\*/ {
-
-	isInsideDocComment = 1;
-	docComLines_num = 0;
-	linesWithNoDocComment = 0;
-
-	usefullLinePart = $0;
-	sub(/^[ \t]*\/\*\*/, "", usefullLinePart);
-	if (sub(/\*\/.*/, "", usefullLinePart)) {
-		isInsideDocComment = 0;
-	}
-	usefullLinePart = trim(usefullLinePart);
-	if (usefullLinePart != "") {
-		docComLines[docComLines_num++] = usefullLinePart;
-	}
-}
-
-### END: parsing and saving the event struct documentation comments
-################################################################################
-
-
 
 ################################################################################
 ### BEGINN: parsing and saving the event structs
@@ -622,10 +433,7 @@ function saveMember(ind_mem_s, member_s) {
 
 	evtsNumMembers[ind_evtStructs] = ind_evtMember;
 	evtsTopicName[ind_evtStructs] = $3;
-	evtsDocComment[ind_evtStructs, "*"] = docComLines_num;
-	for (l=0; l < docComLines_num; l++) {
-		evtsDocComment[ind_evtStructs, l] = docComLines[l];
-	}
+	storeDocLines(evtsDocComment, ind_evtStructs);
 
 	printEventJava(ind_evtStructs);
 	printEventOO(ind_evtStructs);
@@ -644,11 +452,6 @@ function saveMember(ind_mem_s, member_s) {
 			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
 				break;
 			}
-#print("eventName: " eventName);
-#print("ind_evtStructs: " ind_evtStructs);
-#print("ind_evtMember: " ind_evtMember);
-#print("tmpMembers[i]: " tmpMembers[i]);
-#print("");
 			saveMember(ind_evtMember++, tmpMembers[i]);
 		}
 	}
