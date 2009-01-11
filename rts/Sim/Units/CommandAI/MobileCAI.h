@@ -32,6 +32,7 @@ public:
 	void ExecuteStop(Command &c);
 
 	void RefuelIfNeeded();
+	void LandRepairIfNeeded();
 
 	virtual void Execute();
 	virtual void ExecuteGuard(Command &c);
