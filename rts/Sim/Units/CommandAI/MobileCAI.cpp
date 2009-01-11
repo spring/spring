@@ -324,23 +324,33 @@ void CMobileCAI::RefuelIfNeeded()
 				inCommand = false;
 				owner->moveType->ReservePad(lp);
 			}
-		} else if (owner->health < owner->maxHealth * owner->moveType->repairBelowHealth) {
-			// we're damaged, just seek a pad for repairs
-			CAirBaseHandler::LandingPad* lp =
-				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+		}
+	}
+}
 
-			if (lp) {
-				owner->moveType->ReservePad(lp);
-			}
+void CMobileCAI::LandRepairIfNeeded()
+{
+	if (!owner->moveType->reservedPad
+		&& owner->health < owner->maxHealth * owner->moveType->repairBelowHealth) {
+		// we're damaged, just seek a pad for repairs
+		CAirBaseHandler::LandingPad* lp =
+			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+
+		if (lp) {
+			owner->moveType->ReservePad(lp);
 		}
 	}
 }
 
 void CMobileCAI::SlowUpdate()
 {
-	if (owner->unitDef->maxFuel > 0 && dynamic_cast<AAirMoveType*>(owner->moveType)) {
-		RefuelIfNeeded();
+	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
+		LandRepairIfNeeded();
+		if (owner->unitDef->maxFuel > 0) {
+			RefuelIfNeeded();
+		}
 	}
+
 
 	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
 		StopMove();
