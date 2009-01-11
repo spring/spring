@@ -54,7 +54,7 @@ struct SAICallback {
  * @param commandData  a commandTopic specific struct, which contains
  *                     the data associated with the command
  *                     (see *Command structs)
- * @return	   0:   if command handling ok
+ * @return     0: if command handling ok
  *          != 0: something else otherwise
  */
 int (CALLING_CONV *Clb_handleCommand)(int teamId, int toId, int commandId,

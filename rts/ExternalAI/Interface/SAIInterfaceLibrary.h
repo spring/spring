@@ -31,17 +31,52 @@
 extern "C" {
 #endif
 
-#define AI_INTERFACE_PROPERTY_DATA_DIR               "dataDir"               // [string] absolute data dir containing the AIs AIInfo.lua file. this property is by the engine, not read from any file.
-#define AI_INTERFACE_PROPERTY_SHORT_NAME             "shortName"             // [string: [a-zA-Z0-9_.]*]
-#define AI_INTERFACE_PROPERTY_VERSION                "version"               // [string: [a-zA-Z0-9_.]*]
-#define AI_INTERFACE_PROPERTY_NAME                   "name"                  // [string]
-#define AI_INTERFACE_PROPERTY_DESCRIPTION            "description"           // [string]
-#define AI_INTERFACE_PROPERTY_URL                    "url"                   // [string]
-#define AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES    "supportedLanguages"    // [string]
-#define AI_INTERFACE_PROPERTY_ENGINE_VERSION         "engineVersion"         // [int] the engine version number the AI was compiled, but may work with newer or older ones too
+/**
+ * [string]
+ * Absolute data dir containing the AIs AIInfo.lua file.
+ * This property is set by the engine, not read from any file.
+ * example: "/home/john/spring/AI/Interfaces/C/0.1"
+ */
+#define AI_INTERFACE_PROPERTY_DATA_DIR               "dataDir"
+/**
+ * [string: [a-zA-Z0-9_.]*]
+ * example: "C"
+ */
+#define AI_INTERFACE_PROPERTY_SHORT_NAME             "shortName"
+/**
+ * [string: [a-zA-Z0-9_.]*]
+ * example: "0.1"
+ */
+#define AI_INTERFACE_PROPERTY_VERSION                "version"
+/**
+ * [string]
+ * example: "C/C++"
+ */
+#define AI_INTERFACE_PROPERTY_NAME                   "name"
+/**
+ * [string]
+ * example: "supports loading native AIs written in C and/or C++"
+ */
+#define AI_INTERFACE_PROPERTY_DESCRIPTION            "description"
+/**
+ * [string]
+ * example: "http://spring.clan-sy.com/wiki/AIInterface:C"
+ */
+#define AI_INTERFACE_PROPERTY_URL                    "url"
+/**
+ * [string]
+ * example: "C, C++"
+ */
+#define AI_INTERFACE_PROPERTY_SUPPORTED_LANGUAGES    "supportedLanguages"
+/**
+ * [int]
+ * The engine version number the AI Interface was compiled for,
+ * though it may work with newer or older engine versions too.
+ */
+#define AI_INTERFACE_PROPERTY_ENGINE_VERSION         "engineVersion"
 
 /*
- * Everythign following is only interesting for the engine,
+ * Everything following is (code wise) only interesting for the engine,
  * not for AI Interfaces.
  */
 #if !defined BUILDING_AI_INTERFACE
@@ -79,17 +114,16 @@ struct SAIInterfaceLibrary {
 	 * This function is called right after the library is dynamically loaded.
 	 * It can be used to initialize variables and to check or prepare
 	 * the environment (os, engine, filesystem, ...).
-	 * See also releaseStatic().
+	 * @see releaseStatic()
 	 *
-	 * NOTE: param staticGlobalData is guaranteed to be valid till
-	 * releaseStatic() is called.
+	 * [optional]
+	 * An AI Interface not exporting this function is still valid.
 	 *
-	 * NOTE: this method is optional. An AI Interface not exporting this
-	 * function is still valid.
-	 *
-	 * @param	staticGlobalData	contains global data about hte engine
-	 *								and the environment
-	 * @return	ok: 0, error: != 0
+	 * @param	staticGlobalData contains global data about the engine and the
+	 *                           environment; is guaranteed to be valid till
+	 *                           releaseStatic() is called.
+	 * @return     0: ok
+	 *          != 0: error
 	 */
 	int (CALLING_CONV *initStatic)(
 			unsigned int infoSize,
@@ -103,18 +137,19 @@ struct SAIInterfaceLibrary {
 	 *
 	 * See also initStatic().
 	 *
-	 * NOTE: this method is optional. An AI Interface not exporting this
-	 * function is still valid.
+	 * [optional]
+	 * An AI Interface not exporting this function is still valid.
 	 *
-	 * @return	ok: 0, error: != 0
+	 * @return     0: ok
+	 *          != 0: error
 	 */
 	int (CALLING_CONV *releaseStatic)();
 
 	/**
 	 * Level of Support for a specific engine version.
 	 *
-	 * NOTE: this method is optional. An AI Interface not exporting this
-	 * function is still valid.
+	 * [optional]
+	 * An AI Interface not exporting this function is still valid.
 	 */
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
 			const char* engineVersionString, int engineVersionNumber);
@@ -125,7 +160,8 @@ struct SAIInterfaceLibrary {
 	/**
 	 * Loads the specified Skirmish AI.
 	 *
-	 * @return	ok: 0, error: != 0
+	 * @return     0: ok
+	 *          != 0: error
 	 */
 	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
 			unsigned int infoSize,
@@ -134,7 +170,8 @@ struct SAIInterfaceLibrary {
 	/**
 	 * Unloads the specified Skirmish AI.
 	 *
-	 * @return	ok: 0, error: != 0
+	 * @return     0: ok
+	 *          != 0: error
 	 */
 	int (CALLING_CONV *unloadSkirmishAILibrary)(
 			unsigned int infoSize,
@@ -143,7 +180,8 @@ struct SAIInterfaceLibrary {
 	/**
 	 * Unloads all Skirmish AI libraries currently loaded by this interface.
 	 *
-	 * @return	ok: 0, error: != 0
+	 * @return     0: ok
+	 *          != 0: error
 	 */
 	int (CALLING_CONV *unloadAllSkirmishAILibraries)();
 };

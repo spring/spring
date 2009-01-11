@@ -22,16 +22,61 @@
 extern "C" {
 #endif
 
-#define SKIRMISH_AI_PROPERTY_DATA_DIR                "dataDir"               // [string] absolute data dir containing the AIs AIInfo.lua file. this property is by the engine, not read from any file.
-#define SKIRMISH_AI_PROPERTY_SHORT_NAME              "shortName"             // [string: [a-zA-Z0-9_.]*]
-#define SKIRMISH_AI_PROPERTY_VERSION                 "version"               // [string: [a-zA-Z0-9_.]*]
-#define SKIRMISH_AI_PROPERTY_NAME                    "name"                  // [string]
-#define SKIRMISH_AI_PROPERTY_DESCRIPTION             "description"           // [string]
-#define SKIRMISH_AI_PROPERTY_URL                     "url"                   // [string]
-#define SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED          "loadSupported"         // [bool: "yes" | "no"]
-#define SKIRMISH_AI_PROPERTY_ENGINE_VERSION          "engineVersion"         // [int] the engine version number the AI was compiled, but may work with newer or older ones too
-#define SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME    "interfaceShortName"    // [string: [a-zA-Z0-9_.]*] this interface has to be used to load the AI
-#define SKIRMISH_AI_PROPERTY_INTERFACE_VERSION       "interfaceVersion"      // [string: [a-zA-Z0-9_.]*] the interface version number the AI was compiled, but may work with newer or older ones too
+/**
+ * [string]
+ * Absolute data dir containing the AIs AIInfo.lua file.
+ * This property is set by the engine, not read from any file.
+ * example: "/home/john/spring/AI/Skirmish/RAI/0.601"
+ */
+#define SKIRMISH_AI_PROPERTY_DATA_DIR                "dataDir"
+/**
+ * [string: [a-zA-Z0-9_.]*]
+ * example: "RAI"
+ */
+#define SKIRMISH_AI_PROPERTY_SHORT_NAME              "shortName"
+/**
+ * [string: [a-zA-Z0-9_.]*]
+ * example: "0.601"
+ */
+#define SKIRMISH_AI_PROPERTY_VERSION                 "version"
+/**
+ * [string]
+ * example: "Reth's Skirmish AI"
+ */
+#define SKIRMISH_AI_PROPERTY_NAME                    "name"
+/**
+ * [string]
+ * example: "no config files required, works well with TA based mods and more"
+ */
+#define SKIRMISH_AI_PROPERTY_DESCRIPTION             "description"
+/**
+ * [string]
+ * example: "http://spring.clan-sy.com/wiki/AI:RAI"
+ */
+#define SKIRMISH_AI_PROPERTY_URL                     "url"
+/** [bool: "yes" | "no"] */
+#define SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED          "loadSupported"
+/**
+ * [int]
+ * The engine version number the AI was compiled for,
+ * though it may work with newer or older engine versions too.
+ */
+#define SKIRMISH_AI_PROPERTY_ENGINE_VERSION          "engineVersion"
+/**
+ * [string: [a-zA-Z0-9_.]*]
+ * This AI Interface has to be used to load the AI.
+ * example: "C"
+ */
+#define SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME    "interfaceShortName"
+/**
+ * [string: [a-zA-Z0-9_.]*]
+ * The AI Interface version number the AI was written for.
+ * This value is seen as a minimum requirement,
+ * so loading the AI with an older version of
+ * the AI Interface will not be attempted.
+ * example: "0.1"
+ */
+#define SKIRMISH_AI_PROPERTY_INTERFACE_VERSION       "interfaceVersion"
 
 
 #include "ELevelOfSupport.h"
@@ -63,8 +108,8 @@ struct SSAILibrary {
 	/**
 	 * Level of Support for a specific engine version and AI interface version.
 	 *
-	 * NOTE: this method is optional. An AI not exporting this function is still
-	 * valid.
+	 * [optional]
+	 * An AI not exporting this function is still valid.
 	 *
 	 * @return	the level of support for the supplied engine and AI interface
 	 *			versions
@@ -97,8 +142,8 @@ struct SSAILibrary {
 	 * OO languages. For non-OO language AIs, this method can be ignored,
 	 * because using only EVENT_INIT will cause no performance decrease.
 	 *
-	 * NOTE: this method is optional. An AI not exporting this function is still
-	 * valid.
+	 * [optional]
+	 * An AI not exporting this function is still valid.
 	 *
 	 * @param	teamId        the teamId this library shall create an instance for
 	 * @param	info          info about this AI (nessesary for non C/C++ AIs)
@@ -106,7 +151,8 @@ struct SSAILibrary {
 	 * @param	optionKeys    user specified option values (keys)
 	 * @param	optionValues  user specified option values (values)
 	 * @param	numOptions    user specified option values (size)
-	 * @return	ok: 0, error: != 0
+	 * @return     0: ok
+	 *          != 0: error
 	 */
 	int (CALLING_CONV *init)(int teamId,
 			unsigned int infoSize,
@@ -135,11 +181,12 @@ struct SSAILibrary {
 	 * OO languages. For non-OO language AIs, this method can be ignored,
 	 * because using only EVENT_RELEASE will cause no performance decrease.
 	 *
-	 * NOTE: this method is optional. An AI not exporting this function is still
-	 * valid.
+	 * [optional]
+	 * An AI not exporting this function is still valid.
 	 *
 	 * @param	teamId	the teamId the library shall release the instance of
-	 * @return	ok: 0, error: != 0
+	 * @return     0: ok
+	 *          != 0: error
 	 */
 	int (CALLING_CONV *release)(int teamId);
 
@@ -158,7 +205,8 @@ struct SSAILibrary {
 	 * @param	data	an topic specific struct, which contains the data
 	 *					associatedwith the event
 	 *					(see S*Event structs in AISEvents.h)
-	 * @return	ok: 0, error: != 0
+	 * @return     0: ok
+	 *          != 0: error
 	 */
 	int (CALLING_CONV *handleEvent)(int teamId, int topic, const void* data);
 };
