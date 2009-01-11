@@ -5,6 +5,7 @@
 #include <SDL_timer.h>
 #include <cctype>
 #include <cstring>
+#include <boost/format.hpp>
 
 #include "mmgr.h"
 
@@ -213,6 +214,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 	numDemoPlayers = 0;
 	// i = player index in game (no gaps), a = player index in script
 	int i = 0;
+	std::set<std::string> nameList;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		char section[50];
 		sprintf(section, "GAME\\PLAYER%i", a);
@@ -232,7 +234,16 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		if ((it = setup.find("rank")) != setup.end())
 			data.rank = atoi(it->second.c_str());
 		if ((it = setup.find("name")) != setup.end())
+		{
+			if (nameList.find(it->second) != nameList.end())
+				throw content_error(str( boost::format("GameSetup: Player %i has name %s which is already taken") %a %it->second.c_str() ));
 			data.name = it->second;
+			nameList.insert(data.name);
+		}
+		else
+		{
+			throw content_error(str( boost::format("GameSetup: No name given for Player %i") %a ));
+		}
 		if ((it = setup.find("countryCode")) != setup.end())
 			data.countryCode = it->second;
 		if ((it = setup.find("spectator")) != setup.end())
