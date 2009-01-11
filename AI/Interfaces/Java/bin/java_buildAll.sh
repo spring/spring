@@ -4,8 +4,8 @@
 # @param_1	interface version (eg: "0.1")
 #
 
-CWD_BACKUP=`pwd`
-THIS_DIR=`dirname ${0}`
+CWD_BACKUP=$(pwd)
+THIS_DIR=$(dirname ${0})
 cd ${THIS_DIR}
 
 if [ $# != 1 ]
