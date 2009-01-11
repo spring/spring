@@ -6,18 +6,21 @@
 
 CWD_BACKUP=$(pwd)
 THIS_DIR=$(dirname ${0})
-cd ${THIS_DIR}
 
-if [ $# != 1 ]
+if [ $# != 2 ]
 then
-	echo "Usage: ${0} [java-interface-version]" 1>&2
+	echo "Usage: ${0} [java-interface-version] [spring-data-dir]" 1>&2
 	exit 1
 fi
 INTERFACE_VERSION=${1}
+SPRING_DATA_DIR=${2}
 
-sh ./java_generateWrappers.sh
-sh ./java_compile.sh
-sh ./java_install.sh ${INTERFACE_VERSION}
+##############################################
+### do not change anything below this line ###
+
+sh ${THIS_DIR}/java_generateWrappers.sh
+sh ${THIS_DIR}/java_compile.sh
+sh ${THIS_DIR}/java_install.sh ${INTERFACE_VERSION} ${SPRING_DATA_DIR}
 
 cd ${CWD_BACKUP}
 

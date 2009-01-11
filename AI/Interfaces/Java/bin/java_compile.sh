@@ -5,30 +5,30 @@
 
 CWD_BACKUP=$(pwd)
 THIS_DIR=$(dirname ${0})
-cd ${THIS_DIR}
+HOME_DIR=$(cd ${THIS_DIR}; cd ..; pwd)
 
 JAVA_PKG_FIRST_PART=com
 JAVA_PKG=${JAVA_PKG_FIRST_PART}/clan_sy/spring/ai
+
+##############################################
+### do not change anything below this line ###
+
+JLIB_DIR="${HOME_DIR}/data/jlib"
 JAVA_SRC_FILES="${JAVA_PKG}/*.java ${JAVA_PKG}/command/*.java ${JAVA_PKG}/event/*.java ${JAVA_PKG}/oo/*.java"
-JLIB_DIR="../../data/jlib"
-
-# !! Do not change from here on !!
-
-cd ..
+SOURCE_DIR=${HOME_DIR}/java/src
+BUILD_DIR=${HOME_DIR}/build
 
 echo "	compiling ..."
-mkdir -p build
-cd ./java/src
-javac -cp ".:${JLIB_DIR}/jna/jna.jar:${JLIB_DIR}/vecmath.jar" -d "../../build" ${JAVA_SRC_FILES}
+mkdir -p ${BUILD_DIR}
+cd ${SOURCE_DIR}
+javac -cp ".:${JLIB_DIR}/jna/jna.jar:${JLIB_DIR}/vecmath.jar" -d "${BUILD_DIR}" ${JAVA_SRC_FILES}
 
 echo "	packaging ..."
-cd ../../build
-jar cmf ../java/src/manifest.mf interface.jar ${JAVA_PKG_FIRST_PART}
-#rm -R ./${JAVA_PKG_FIRST_PART}
-jar cf interface-src.jar -C "../java/src" ${JAVA_PKG_FIRST_PART}
+cd ${BUILD_DIR}
+jar cmf ${SOURCE_DIR}/manifest.mf ${HOME_DIR}/interface.jar ${JAVA_PKG_FIRST_PART}
+jar cf ${HOME_DIR}/interface-src.jar -C "${SOURCE_DIR}" ${JAVA_PKG_FIRST_PART}
+rm -Rf ${BUILD_DIR}
 echo "	done."
-
-cd ../bin
 
 cd ${CWD_BACKUP}
 
