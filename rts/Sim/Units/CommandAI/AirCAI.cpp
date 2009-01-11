@@ -266,7 +266,8 @@ void CAirCAI::SlowUpdate()
 		return;
 	}
 
-	if (c.id != CMD_STOP) {
+	if (c.id != CMD_STOP && c.id != CMD_AUTOREPAIRLEVEL
+			&& c.id != CMD_IDLEMODE && c.id != CMD_SET_WANTED_MAX_SPEED) {
 		myPlane->Takeoff();
 	}
 
