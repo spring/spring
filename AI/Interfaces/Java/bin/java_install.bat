@@ -5,15 +5,21 @@ REM @param	interface version (eg: "0.1")
 REM
 
 SET INTERFACE_VERSION=%1
-IF "%INTERFACE_VERSION%"=="" (
-	ECHO "Usage %0 [java-interface-version]"
+SET SPRING_DATA_DIR=%2
+IF "%INTERFACE_VERSION%"=="" IF "%SPRING_DATA_DIR%"=="" (
+	ECHO "Usage %0 [java-interface-version] [spring-data-dir]"
 	EXIT 1
 )
 
-SET MY_HOME=..
-SET SPRING_HOME=%MY_HOME%/../../..
+SET HOME_DIR=..
+REM SET SPRING_HOME=%HOME_DIR%/../../..
+REM SET SPRING_DATA_DIR=%SPRING_HOME%/game
+
+##############################################
+### do not change anything below this line ###
 
 ECHO "	installing ..."
-mkdir -p %SPRING_HOME%/game/AI/Interfaces/Java/%INTERFACE_VERSION%/jlib
-cp %MY_HOME%/interface.jar %SPRING_HOME%/game/AI/Interfaces/Java/%INTERFACE_VERSION%
+mkdir -p %SPRING_DATA_DIR%/AI/Interfaces/Java/%INTERFACE_VERSION%/jlib
+cp %HOME_DIR%/interface.jar %SPRING_DATA_DIR%/AI/Interfaces/Java/%INTERFACE_VERSION%
+cp %HOME_DIR%/interface-src.jar %SPRING_DATA_DIR%/AI/Interfaces/Java/%INTERFACE_VERSION%
 
