@@ -3,19 +3,13 @@ ADD_DEFINITIONS(-DDEDICATED)
 INCLUDE_DIRECTORIES(/usr/include/SDL/)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/lib/lua/include ../../rts/System)
 
-IF (UNIX)
-	SET(platformfiles ${CMAKE_SOURCE_DIR}/rts/System/Platform/Linux/UnixFileSystemHandler ${CMAKE_SOURCE_DIR}/rts/System/Platform/Linux/DotfileHandler ${CMAKE_SOURCE_DIR}/rts/System/Platform/Linux/DataDirLocater)
-ELSE (UNIX)
-	SET(platformfiles ${CMAKE_SOURCE_DIR}/rts/System/Platform/Win/WinFileSystemHandler ${CMAKE_SOURCE_DIR}/rts/System/Platform/Win/DataDirLocater ${CMAKE_SOURCE_DIR}/rts/System/Platform/Win/RegHandler)
-ENDIF (UNIX)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(build_files ${fsfiles} ${platformfiles}
 ../../rts/Game/GameSetup
 ../../rts/Game/PlayerBase
 ../../rts/System/TdfParser
-../../rts/System/Platform/FileSystem
-../../rts/System/Platform/ConfigHandler
+../../rts/System/ConfigHandler
 ../../rts/System/Net/RawPacket
 ../../rts/System/LogOutput
 ../../rts/System/DemoReader
