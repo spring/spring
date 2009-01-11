@@ -225,7 +225,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 			pieces.push_back(lmodel->pieces[cur]);
 		} else {
 			pieces.push_back(NULL);
-			logOutput.Print("CobError: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");
+			logOutput.Print("CobWarning: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");
 		}
 	}
 }
@@ -566,7 +566,7 @@ void CCobInstance::RemoveAnim(AnimType type, int piece, int axis)
 void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -684,7 +684,7 @@ void CCobInstance::Move(int piece, int axis, int speed, int destination, bool in
 void CCobInstance::MoveNow(int piece, int axis, int destination)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -701,7 +701,7 @@ void CCobInstance::MoveNow(int piece, int axis, int destination)
 void CCobInstance::TurnNow(int piece, int axis, int destination)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -714,7 +714,7 @@ void CCobInstance::TurnNow(int piece, int axis, int destination)
 void CCobInstance::SetVisibility(int piece, bool visible)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -728,7 +728,7 @@ void CCobInstance::SetVisibility(int piece, bool visible)
 void CCobInstance::EmitSfx(int type, int piece)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber for emit-sfx");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
@@ -851,6 +851,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 			}
 			break;
 	}
+
 
 #endif
 }
@@ -1807,7 +1808,7 @@ bool CCobInstance::HasScriptFunction(int id)
 void CCobInstance::MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -1837,7 +1838,7 @@ void CCobInstance::MoveSmooth(int piece, int axis, int destination, int delta, i
 void CCobInstance::TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 

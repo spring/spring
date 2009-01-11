@@ -180,6 +180,14 @@ void CCobEngine::SetCurThread(CCobThread *cur)
 	curThread = cur;
 }
 
+void CCobEngine::ShowScriptWarning(const string& msg)
+{
+	if (curThread)
+		curThread->ShowError(msg,true);
+	else
+		logOutput.Print("ScriptWarning: %s outside script execution", msg.c_str());
+}
+
 void CCobEngine::ShowScriptError(const string& msg)
 {
 	if (curThread)
