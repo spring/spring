@@ -449,6 +449,9 @@ private:
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
+
+public:
+	void LogMessage(const char*, ...);
 };
 
 #endif /* UNIT_H */
