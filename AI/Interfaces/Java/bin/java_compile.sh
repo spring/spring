@@ -3,8 +3,8 @@
 # Compiles and packages the Java sources
 #
 
-CWD_BACKUP=`pwd`
-THIS_DIR=`dirname ${0}`
+CWD_BACKUP=$(pwd)
+THIS_DIR=$(dirname ${0})
 cd ${THIS_DIR}
 
 JAVA_PKG_FIRST_PART=com
