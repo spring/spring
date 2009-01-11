@@ -23,19 +23,21 @@ while [ ! -d installer ]; do
 done
 
 set +e # turn of quit on error
-git describe --candidates 0 &> /dev/null
+git describe --candidates 0 --tags &> /dev/null
 set -e # turn it on again
 if [ $? -ne "0" ]; then
-	RELEASE_SOURCE= false
+	RELEASE_SOURCE=false
+	echo "Making test-packages"
 else
-	RELEASE_SOURCE= true
+	RELEASE_SOURCE=true
+	echo "Making release-packages"
 fi
 
 if [ $RELEASE_SOURCE ]; then
-	version_string=`git describe`
-	branch=${branch}
+	version_string=`git describe --tags`
+	branch=${version_string}
 else
-	version_string=`git describe | sed s/\-[^\-]*$//`
+	version_string=`git describe --tags | sed s/\-[^\-]*$//`
 	branch="master"
 fi
 echo "Using $branch as source"
