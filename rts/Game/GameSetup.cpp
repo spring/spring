@@ -386,7 +386,7 @@ void CGameSetup::RemapTeams()
 	// relocate Player.Team field
 	for (int a = 0; a < numPlayers; ++a) {
 		if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
-			throw content_error("invalid Player.Team in GameSetup script");
+			throw content_error( str(boost::format("GameSetup: Player %i belong to wrong team: %i") %a %playerStartingData[a].team) );
 		playerStartingData[a].team = teamRemap[playerStartingData[a].team];
 	}
 }
