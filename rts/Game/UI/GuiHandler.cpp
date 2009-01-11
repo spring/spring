@@ -1028,8 +1028,8 @@ void CGuiHandler::SetCursorIcon() const
 	}
 
 	if (gatherMode &&
-	    (mouse->cursorText == "Move") ||
-	    (mouse->cursorText == "Fight")) {
+	    ((mouse->cursorText == "Move") ||
+	    (mouse->cursorText == "Fight"))) {
 		newCursor = "GatherWait";
 	}
 
