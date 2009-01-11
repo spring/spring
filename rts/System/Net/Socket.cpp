@@ -173,6 +173,8 @@ bool Socket::IsFakeError() const
 	int err=WSAGetLastError();
 	return err==WSAEWOULDBLOCK || err==WSAECONNRESET || err==WSAEINTR;
 #else
+	if (errno == ENETUNREACH) // should give warning or something
+		return true;
 	return errno==EWOULDBLOCK || errno==ECONNRESET || errno==EINTR;
 #endif
 }

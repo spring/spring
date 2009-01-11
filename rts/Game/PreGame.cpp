@@ -52,7 +52,7 @@ CPreGame::CPreGame(const LocalSetup* setup) :
 		settings(setup),
 		savefile(NULL)
 {
-	net = SAFE_NEW CNetProtocol();
+	net = new CNetProtocol();
 	activeController=this;
 
 	if(!settings->isHost)
@@ -252,7 +252,7 @@ void CPreGame::UpdateClientNet()
 				assert(team);
 				LoadStartPicture(team->side);
 
-				game = SAFE_NEW CGame(gameData->GetMap(), modArchive, savefile);
+				game = new CGame(gameData->GetMap(), modArchive, savefile);
 
 				if (savefile) {
 					savefile->LoadGame();
@@ -301,6 +301,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 					++numPlayers;
 				}
 			}
+			tgame->AddPair("NumPlayers", numPlayers+1);
 
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			char section[50];
@@ -319,10 +320,12 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			{
 				throw content_error("Demo contains incorrect script");
 			}
+			logOutput.Print("Starting GameServer");
 			good_fpu_control_registers("before CGameServer creation");
 			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 			good_fpu_control_registers("after CGameServer creation");
+			logOutput.Print("GameServer started");
 			break;
 		}
 
@@ -342,7 +345,7 @@ void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 
 	if (!alreadyLoaded || forceReload)
 	{
-		CFileHandler* f = SAFE_NEW CFileHandler("maps/" + mapName);
+		CFileHandler* f = new CFileHandler("maps/" + mapName);
 		if (!f->FileExists()) {
 			vector<string> ars = archiveScanner->GetArchivesForMap(mapName);
 			if (ars.empty()) {

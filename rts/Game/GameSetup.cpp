@@ -5,6 +5,7 @@
 #include <SDL_timer.h>
 #include <cctype>
 #include <cstring>
+#include <boost/format.hpp>
 
 #include "mmgr.h"
 
@@ -16,6 +17,7 @@
 #include "UnsyncedRNG.h"
 #include "Exceptions.h"
 #include "Util.h"
+#include "LogOutput.h"
 
 
 using namespace std;
@@ -212,6 +214,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 	numDemoPlayers = 0;
 	// i = player index in game (no gaps), a = player index in script
 	int i = 0;
+	std::set<std::string> nameList;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		char section[50];
 		sprintf(section, "GAME\\PLAYER%i", a);
@@ -231,7 +234,16 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		if ((it = setup.find("rank")) != setup.end())
 			data.rank = atoi(it->second.c_str());
 		if ((it = setup.find("name")) != setup.end())
+		{
+			if (nameList.find(it->second) != nameList.end())
+				throw content_error(str( boost::format("GameSetup: Player %i has name %s which is already taken") %a %it->second.c_str() ));
 			data.name = it->second;
+			nameList.insert(data.name);
+		}
+		else
+		{
+			throw content_error(str( boost::format("GameSetup: No name given for Player %i") %a ));
+		}
 		if ((it = setup.find("countryCode")) != setup.end())
 			data.countryCode = it->second;
 		if ((it = setup.find("spectator")) != setup.end())
@@ -251,7 +263,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 	if (!file.GetValue(playerCount, "GAME\\NumPlayers") || playerStartingData.size() == playerCount)
 		numPlayers = playerStartingData.size();
 	else
-		throw content_error("incorrect number of players in GameSetup script");
+		logOutput.Print("Warning: incorrect number of players in GameSetup script");
 }
 
 /**
@@ -305,7 +317,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 	if (!file.GetValue(teamCount, "Game\\NumTeams") || teamStartingData.size() == teamCount)
 		numTeams = teamStartingData.size();
 	else
-		throw content_error("incorrect number of teams in GameSetup script");
+		logOutput.Print("Warning: incorrect number of teams in GameSetup script");
 }
 
 /**
@@ -353,7 +365,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || allyStartingData.size() == allyCount)
 		numAllyTeams = allyStartingData.size();
 	else
-		throw content_error("incorrect number of teams in GameSetup script");
+		logOutput.Print("Warning: incorrect number of allyteams in GameSetup script");
 }
 
 /** @brief Update all player indices to refer to the right player. */
@@ -374,7 +386,7 @@ void CGameSetup::RemapTeams()
 	// relocate Player.Team field
 	for (int a = 0; a < numPlayers; ++a) {
 		if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
-			throw content_error("invalid Player.Team in GameSetup script");
+			throw content_error( str(boost::format("GameSetup: Player %i belong to wrong team: %i") %a %playerStartingData[a].team) );
 		playerStartingData[a].team = teamRemap[playerStartingData[a].team];
 	}
 }

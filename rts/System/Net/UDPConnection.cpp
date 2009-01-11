@@ -272,8 +272,9 @@ void UDPConnection::Flush(const bool forced)
 		// This is an attempt to fix the bug where players drop out of the game if
 		// someone in the game gives a large order.
 
-		while (!outgoingData.empty())
+		do
 		{
+			if (!outgoingData.empty())
 			{
 				packetList::iterator it = outgoingData.begin();
 				unsigned numBytes = std::min(mtu-pos, (*it)->length);
@@ -284,7 +285,7 @@ void UDPConnection::Flush(const bool forced)
 				else // partially transfered
 					(*it).reset(new RawPacket((*it)->data + numBytes, (*it)->length - numBytes));
 			} // iterator "it" is now invalid
-			if (pos > 0 && (pos == mtu || outgoingData.empty()))
+			if ((forced || pos > 0) && (pos == mtu || outgoingData.empty()))
 			{
 				if (pos == mtu)
 					++fragmentedFlushes;
@@ -292,7 +293,7 @@ void UDPConnection::Flush(const bool forced)
 				unackedPackets.push_back(new RawPacket(buffer, pos));
 				pos = 0;
 			}
-		}
+		} while (!outgoingData.empty());
 	}
 }
 

@@ -9,7 +9,6 @@
  * GNU GPL, v2 or later.
  */
 
-#include "Sync/Syncify.h"
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 #include "Util.h"
 #else // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
@@ -38,7 +37,7 @@ SharedLib* SharedLib::Instantiate(const char* fileName)
 {
 	SharedLib* lib = NULL;
 
-	lib = SAFE_NEW SL_IMPL_CLS(fileName);
+	lib = new SL_IMPL_CLS(fileName);
 
 	if (lib == NULL || lib->LoadFailed()) {
 		// loading failed

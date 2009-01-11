@@ -64,7 +64,7 @@ static void PrintShaderLog(GLuint obj, const string& type)
 	else
 		glGetProgramiv(obj,GL_INFO_LOG_LENGTH,&maxLength);
 
-	char* infoLog = SAFE_NEW char[maxLength];
+	char* infoLog = new char[maxLength];
 
 	if (glIsShader(obj))
 		glGetShaderInfoLog(obj, maxLength, &infologLength, infoLog);
@@ -353,7 +353,7 @@ CBumpWater::CBumpWater()
 
 	if (dynWaves) {
 		//! SETUP DYNAMIC WAVES
-		tileOffsets = SAFE_NEW unsigned char[mapInfo->water.numTiles * mapInfo->water.numTiles];
+		tileOffsets = new unsigned char[mapInfo->water.numTiles * mapInfo->water.numTiles];
 
 		normalTexture2 = normalTexture;
 		glBindTexture(GL_TEXTURE_2D, normalTexture2);
@@ -649,7 +649,7 @@ void CBumpWater::UploadCoastline(const int x1, const int y1, const int x2, const
 	}
 
 	if(coastmap == NULL) {
-		coastmap = SAFE_NEW GLfloat[gs->mapx*gs->mapy*4];
+		coastmap = new GLfloat[gs->mapx*gs->mapy*4];
 		usedPBO = false;
 	}
 

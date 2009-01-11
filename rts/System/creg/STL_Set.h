@@ -62,7 +62,7 @@ namespace creg
 	struct DeduceType < std::set<T> > {
 		boost::shared_ptr<IType> Get () {
 			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(SAFE_NEW SetType < std::set <T> > (elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType < std::set <T> > (elemtype.Get()));
 		}
 	};
 	// Multiset
@@ -70,7 +70,7 @@ namespace creg
 	struct DeduceType < std::multiset<T> > {
 		boost::shared_ptr<IType> Get () {
 			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(SAFE_NEW SetType < std::multiset<T> > (elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType < std::multiset<T> > (elemtype.Get()));
 		}
 	};
 	// Hash set
@@ -78,7 +78,7 @@ namespace creg
 	struct DeduceType < SPRING_HASH_SET<T> > {
 		boost::shared_ptr<IType> Get () {
 			DeduceType<T> elemtype;
-			return boost::shared_ptr<IType>(SAFE_NEW SetType < SPRING_HASH_SET<T> > (elemtype.Get()));
+			return boost::shared_ptr<IType>(new SetType < SPRING_HASH_SET<T> > (elemtype.Get()));
 		}
 	};
 };

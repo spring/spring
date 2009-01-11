@@ -45,13 +45,13 @@ CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName,
 	CArchiveBase* ret = NULL;
 
 	if (ext == "7z") {
-		ret = SAFE_NEW CArchive7Zip(fn);
+		ret = new CArchive7Zip(fn);
 	} else if (ext == "zip") {
-		ret = SAFE_NEW CArchiveZip(fn);
+		ret = new CArchiveZip(fn);
 	} else if (ext == "dir") {
-		ret = SAFE_NEW CArchiveDir(fn);
+		ret = new CArchiveDir(fn);
 	} else if (ext == "hpi") {
-		ret = SAFE_NEW CArchiveHPI(fn);
+		ret = new CArchiveHPI(fn);
 	}
 
 	if (ret && ret->IsOpen()) {

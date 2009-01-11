@@ -36,7 +36,7 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 {
 	const string mapConfig = GetMapConfigName(mapName);
 
-	parser = SAFE_NEW LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
+	parser = new LuaParser("maphelper/mapinfo.lua", SPRING_VFS_MAP_BASE, SPRING_VFS_MAP_BASE);
 	parser->GetTable("Map");
 	parser->AddString("fileName", mapName);
 	parser->AddString("fullName", "maps/" + mapName);

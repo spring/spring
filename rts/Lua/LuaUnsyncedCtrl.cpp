@@ -990,13 +990,10 @@ int LuaUnsyncedCtrl::SetUnitNoSelect(lua_State* L)
 
 	// deselect the unit if it's selected and shouldn't be
 	if (unit->noSelect) {
-		PUSH_CODE_MODE;
-		ENTER_MIXED;
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
 		if (selUnits.find(unit) != selUnits.end()) {
 			selectedUnits.RemoveUnit(unit);
 		}
-		POP_CODE_MODE;
 	}
 	return 0;
 }
@@ -1063,7 +1060,7 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	}
 
 	const int numBytes = fh.FileSize();
-	char* buffer = SAFE_NEW char[numBytes];
+	char* buffer = new char[numBytes];
 
 	fh.Read(buffer, numBytes);
 

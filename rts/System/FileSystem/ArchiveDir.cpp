@@ -66,7 +66,7 @@ bool CArchiveDir::IsOpen()
 
 int CArchiveDir::OpenFile(const std::string& fileName)
 {
-	CFileHandler* f = SAFE_NEW CFileHandler(archiveName + lcNameToOrigName[StringToLower(fileName)]);
+	CFileHandler* f = new CFileHandler(archiveName + lcNameToOrigName[StringToLower(fileName)]);
 
 	if (!f || !f->FileExists())
 		return 0;

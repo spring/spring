@@ -82,7 +82,7 @@ TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection(const std::st
 	if( it != sections.end() )
 		return it->second;
 	else {
-		TdfSection* ret = SAFE_NEW TdfSection;
+		TdfSection* ret = new TdfSection;
 		sections[lowerd_name] = ret;
 		return ret;
 	}
@@ -194,7 +194,7 @@ void TdfParser::LoadFile(std::string const& filename){
     throw content_error( ("file " + filename + " not found").c_str() );
 
   int size = file.FileSize();
-  boost::scoped_array<char> filebuf( SAFE_NEW char[size] );
+  boost::scoped_array<char> filebuf( new char[size] );
 
   file.Read( filebuf.get(), file.FileSize());
 

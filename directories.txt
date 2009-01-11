@@ -59,14 +59,4 @@ game/base                         Output directory for springcontent.sdz & bitma
 game/maps                         Map archives (sd7,sdz,sdd)
 game/mods                         Mod archives (sd7,sdz,sdd)
 game                              Output directory for binaries / data directory
-game/shaders                      OpenGL vertex / fragment shaders
 game/startscripts                 LUA startscripts
-
-omni                              The linux spring client written by Ace07
-UnityLobby                        The linux spring client written by hollowsoul
-
-backup                            Holds older files no longer needed by the spring project
-backup/Lobby                      Temp directory with little use
-backup/server                     The old server for the old lobby built by Jouninkomiko
-backup/SpringClient               Contains the old spring client built by Jouninkomiko
-backup/unitsync                   The old code used to sync units between clients

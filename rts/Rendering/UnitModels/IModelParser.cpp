@@ -24,8 +24,8 @@ C3DModelParser* modelParser = NULL;
 
 C3DModelParser::C3DModelParser(void)
 {
-	C3DOParser* unit3doparser=SAFE_NEW C3DOParser();
-	CS3OParser* units3oparser=SAFE_NEW CS3OParser();
+	C3DOParser* unit3doparser=new C3DOParser();
+	CS3OParser* units3oparser=new CS3OParser();
 
 	AddParser("3do",unit3doparser);
 	AddParser("s3o",units3oparser);
@@ -147,12 +147,12 @@ void C3DModelParser::CreateLocalModel(CUnit* unit)
 
 LocalModel* C3DModelParser::CreateLocalModel(S3DModel* model)
 {
-	LocalModel *lmodel = SAFE_NEW LocalModel;
+	LocalModel *lmodel = new LocalModel;
 	lmodel->type = model->type;
 	lmodel->pieces.reserve(model->numobjects);
 
 	for (unsigned int i=0; i < model->numobjects; i++) {
-		lmodel->pieces.push_back(SAFE_NEW LocalModelPiece);
+		lmodel->pieces.push_back(new LocalModelPiece);
 	}
 	lmodel->pieces[0]->parent = NULL;
 
@@ -164,8 +164,6 @@ LocalModel* C3DModelParser::CreateLocalModel(S3DModel* model)
 
 void C3DModelParser::CreateLocalModelPieces(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
 {
-	PUSH_CODE_MODE;
-	ENTER_SYNCED;
 	LocalModelPiece& lmp = *lmodel->pieces[*piecenum];
 	lmp.original  =  model;
 	lmp.name      =  model->name;
@@ -183,7 +181,6 @@ void C3DModelParser::CreateLocalModelPieces(S3DModelPiece* model, LocalModel* lm
 		lmodel->pieces[*piecenum]->parent = &lmp;
 		CreateLocalModelPieces(model->childs[i], lmodel, piecenum);
 	}
-	POP_CODE_MODE;
 }
 
 
@@ -208,12 +205,9 @@ void C3DModelParser::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int
 void C3DModelParser::CreateListsNow(IModelParser* parser, S3DModelPiece* o)
 {
 	o->displist = glGenLists(1);
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 	glNewList(o->displist,GL_COMPILE);
 	parser->Draw(o);
 	glEndList();
-	POP_CODE_MODE;
 
 	for(std::vector<S3DModelPiece*>::iterator bs=o->childs.begin(); bs!=o->childs.end(); bs++){
 		CreateListsNow(parser,*bs);

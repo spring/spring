@@ -51,7 +51,7 @@ CGroup::CGroup(AIKey aiKey,int id,CGroupHandler* grouphandler)
 	handler(grouphandler),
 	lib(0)
 {
-	if (grouphandler) callback=SAFE_NEW CGroupAICallback(this); else callback=0;
+	if (grouphandler) callback=new CGroupAICallback(this); else callback=0;
 	SetNewAI(aiKey);
 
 	int a=0;
@@ -77,7 +77,7 @@ void CGroup::Serialize(creg::ISerializer *s)
 
 void CGroup::PostLoad()
 {
-	callback=SAFE_NEW CGroupAICallback(this);
+	callback=new CGroupAICallback(this);
 	int a=0;
 	for(map<AIKey,string>::iterator aai=handler->lastSuitedAis.begin();aai!=handler->lastSuitedAis.end() && currentAiKey!=aai->first;++aai){
 		a++;

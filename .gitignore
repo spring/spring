@@ -1,0 +1,8 @@
+game/base
+doc
+build/
+.pyc
+.o
+.log
+*~
+.*.swp

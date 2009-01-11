@@ -104,7 +104,7 @@ void CLaserCannon::Fire(void)
 		fpsSub=6;
 #endif
 
-	SAFE_NEW CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
+	new CLaserProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef->duration * weaponDef->maxvelocity,
 		weaponDef->visuals.color, weaponDef->visuals.color2,
 		weaponDef->intensity, weaponDef,

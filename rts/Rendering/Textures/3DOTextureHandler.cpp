@@ -92,7 +92,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 		char t[50];
 		sprintf(t,"%i",a);
 		name+=t;
-		TexFile* tex=SAFE_NEW TexFile;
+		TexFile* tex=new TexFile;
 		tex->name=name;
 		tex->tex.Alloc(1,1);
 		tex->tex.mem[0]=palette[a][0];
@@ -130,8 +130,8 @@ C3DOTextureHandler::C3DOTextureHandler()
 
 	qsort(texfiles,numfiles,sizeof(TexFile*),CompareTatex2);
 
-	unsigned char* bigtex1 = SAFE_NEW unsigned char[bigTexX*bigTexY*4];
-	unsigned char* bigtex2 = SAFE_NEW unsigned char[bigTexX*bigTexY*4];
+	unsigned char* bigtex1 = new unsigned char[bigTexX*bigTexY*4];
+	unsigned char* bigtex2 = new unsigned char[bigTexX*bigTexY*4];
 	for(int a=0;a<bigTexX*bigTexY;++a) {
 		bigtex1[a*4+0] = 128;
 		bigtex1[a*4+1] = 128;
@@ -208,7 +208,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 			}
 		}
 
-		UnitTexture* unittex=SAFE_NEW UnitTexture;
+		UnitTexture* unittex=new UnitTexture;
 
 		unittex->xstart=(foundx+0.5f)/(float)bigTexX;
 		unittex->ystart=(foundy+0.5f)/(float)bigTexY;
@@ -238,7 +238,7 @@ C3DOTextureHandler::C3DOTextureHandler()
 //	CBitmap save(tex,bigTexX,bigTexY);
 //	save.Save("unittex-1x.jpg");
 
-	UnitTexture* t=SAFE_NEW UnitTexture;
+	UnitTexture* t=new UnitTexture;
 	t->xstart=0;
 	t->ystart=0;
 	t->xend=1;
@@ -282,7 +282,7 @@ void C3DOTextureHandler::Set3doAtlases() const
 
 TexFile* C3DOTextureHandler::CreateTex(const std::string& name, const std::string& name2, bool teamcolor)
 {
-	TexFile* tex=SAFE_NEW TexFile;
+	TexFile* tex=new TexFile;
 	tex->tex.Load(name,30);
 	char tmp[256];
 	tex->name = name2;

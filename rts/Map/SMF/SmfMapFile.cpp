@@ -52,7 +52,7 @@ void CSmfMapFile::ReadHeightmap(float* heightmap, float base, float mod)
 {
 	const int hmx = header.mapx + 1;
 	const int hmy = header.mapy + 1;
-	unsigned short* temphm = SAFE_NEW unsigned short[hmx * hmy];
+	unsigned short* temphm = new unsigned short[hmx * hmy];
 
 	ifs.Seek(header.heightmapPtr);
 	ifs.Read(temphm, hmx * hmy * 2);

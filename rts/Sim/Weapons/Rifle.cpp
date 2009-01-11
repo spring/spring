@@ -99,10 +99,10 @@ void CRifle::Fire(void)
 	float length=helper->TraceRay(weaponMuzzlePos, dir, range, weaponDef->damages[0], owner, hit, collisionFlags);
 	if(hit) {
 		hit->DoDamage(weaponDef->damages, owner, ZeroVector, weaponDef->id);
-		SAFE_NEW CHeatCloudProjectile(weaponMuzzlePos + dir * length, hit->speed*0.9f, 30, 1, owner);
+		new CHeatCloudProjectile(weaponMuzzlePos + dir * length, hit->speed*0.9f, 30, 1, owner);
 	}
-	SAFE_NEW CTracerProjectile(weaponMuzzlePos,dir*projectileSpeed,length,owner);
-	SAFE_NEW CSmokeProjectile(weaponMuzzlePos,float3(0,0.0f,0),70,0.1f,0.02f,owner,0.6f);
+	new CTracerProjectile(weaponMuzzlePos,dir*projectileSpeed,length,owner);
+	new CSmokeProjectile(weaponMuzzlePos,float3(0,0.0f,0),70,0.1f,0.02f,owner,0.6f);
 	if(fireSoundId)
 		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }

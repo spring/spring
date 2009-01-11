@@ -385,10 +385,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 	if (!(unit->group) || unit->group->id != selectedGroup)
 		selectedGroup = -1;
 
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 	unit->commandAI->selected = true;
-	POP_CODE_MODE;
 }
 
 
@@ -401,10 +398,7 @@ void CSelectedUnits::RemoveUnit(CUnit* unit)
 	selectionChanged=true;
 	possibleCommandsChanged=true;
 	selectedGroup=-1;
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 	unit->commandAI->selected=false;
-	POP_CODE_MODE;
 }
 
 
@@ -413,12 +407,10 @@ void CSelectedUnits::ClearSelected()
 	GML_RECMUTEX_LOCK(sel); // ClearSelected
 
 	CUnitSet::iterator ui;
-	ENTER_MIXED;
 	for(ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 		(*ui)->commandAI->selected=false;
 		DeleteDeathDependence(*ui);
 	}
-	ENTER_UNSYNCED;
 
 	selectedUnits.clear();
 	selectionChanged=true;
@@ -437,13 +429,11 @@ void CSelectedUnits::SelectGroup(int num)
 	CGroup* group=grouphandlers[gu->myTeam]->groups[num];
 
 	CUnitSet::iterator ui;
-	ENTER_MIXED;
 	for(ui=group->units.begin();ui!=group->units.end();++ui){
 		(*ui)->commandAI->selected=true;
 		selectedUnits.insert(*ui);
 		AddDeathDependence(*ui);
 	}
-	ENTER_UNSYNCED;
 
 	selectionChanged=true;
 	possibleCommandsChanged=true;

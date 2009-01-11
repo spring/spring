@@ -172,7 +172,7 @@ void CLoadSaveHandler::LoadGameStartInfo(std::string file)
 
 	ReadString(*ifs, scriptText);
 	if (!scriptText.empty() && !gameSetup) {
-		CGameSetup* temp = SAFE_NEW CGameSetup();
+		CGameSetup* temp = new CGameSetup();
 		if (!temp->Init(scriptText)) {
 			delete temp;
 			temp = 0;

@@ -91,7 +91,7 @@ namespace creg
 		boost::shared_ptr<IType> Get () {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
-			return boost::shared_ptr<IType>(SAFE_NEW MapType < std::map <TKey, TValue> > (keytype.Get(), valuetype.Get()));
+			return boost::shared_ptr<IType>(new MapType < std::map <TKey, TValue> > (keytype.Get(), valuetype.Get()));
 		}
 	};
 	// Multimap
@@ -100,7 +100,7 @@ namespace creg
 		boost::shared_ptr<IType> Get () {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
-			return boost::shared_ptr<IType>(SAFE_NEW MapType < std::multimap<TKey, TValue> > (keytype.Get(), valuetype.Get()));
+			return boost::shared_ptr<IType>(new MapType < std::multimap<TKey, TValue> > (keytype.Get(), valuetype.Get()));
 		}
 	};
 	// Hash map
@@ -109,7 +109,7 @@ namespace creg
 		boost::shared_ptr<IType> Get () {
 			DeduceType<TValue> valuetype;
 			DeduceType<TKey> keytype;
-			return boost::shared_ptr<IType>(SAFE_NEW MapType < SPRING_HASH_MAP<TKey, TValue> > (keytype.Get(), valuetype.Get()));
+			return boost::shared_ptr<IType>(new MapType < SPRING_HASH_MAP<TKey, TValue> > (keytype.Get(), valuetype.Get()));
 		}
 	};
 
@@ -138,7 +138,7 @@ namespace creg
 		boost::shared_ptr<IType> Get () {
 			DeduceType<TFirst> first;
 			DeduceType<TSecond> second;
-			return boost::shared_ptr<IType>(SAFE_NEW PairType <std::pair<TFirst, TSecond> > (first.Get(), second.Get()));
+			return boost::shared_ptr<IType>(new PairType <std::pair<TFirst, TSecond> > (first.Get(), second.Get()));
 		}
 	};
 };

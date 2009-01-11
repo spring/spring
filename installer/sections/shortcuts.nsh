@@ -5,14 +5,15 @@
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"
   ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
+    !ifdef TEST_BUILD
+      CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe" "-server taspringmaster.servegame.com:8300"
+    !else
+      CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
+    !endif
   ${EndIf}
   ${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
   ${EndIf}
-  ${If} ${SectionIsSelected} ${SEC_KP}
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Play Kernel Panic Singleplayer.lnk" "$INSTDIR\Kernel_Panic_Launcher.exe"
-  ${EndIf}  
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Selectionkeys editor.lnk" "$INSTDIR\SelectionEditor.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Settings.lnk" "$INSTDIR\springsettings.exe"
   CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Test Spring.lnk" "$INSTDIR\spring.exe"
@@ -32,7 +33,6 @@
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall Spring.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Spring Website.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Download Content.lnk"
-  Delete "$SMPROGRAMS\${PRODUCT_NAME}\Play Kernel Panic Singleplayer.lnk"
   
   ; delete the old shortcuts if they're present from a prior installation
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"

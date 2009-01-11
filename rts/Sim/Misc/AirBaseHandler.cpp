@@ -55,7 +55,7 @@ CAirBaseHandler::~CAirBaseHandler(void)
 
 void CAirBaseHandler::RegisterAirBase(CUnit* base)
 {
-	AirBase* ab = SAFE_NEW AirBase(base);
+	AirBase* ab = new AirBase(base);
 	std::vector<int> args;
 
 	int maxPadCount = 16; // default max pad count
@@ -79,7 +79,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 		if (!base->cob->PieceExists(piece)) {
 			continue;
 		}
-		LandingPad* pad = SAFE_NEW LandingPad(base, piece, ab);
+		LandingPad* pad = new LandingPad(base, piece, ab);
 
 		ab->pads.push_back(pad);
 		ab->freePads.push_back(pad);

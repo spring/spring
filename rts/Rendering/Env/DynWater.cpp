@@ -66,7 +66,7 @@ CDynWater::CDynWater(void)
 	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA16F_ARB ,256, 256, 0,GL_RGBA, GL_FLOAT, 0);
 	glGenerateMipmapEXT(GL_TEXTURE_2D);
 
-	float* temp=SAFE_NEW float[1024*1024*4];
+	float* temp=new float[1024*1024*4];
 
 	for(int y=0;y<64;++y){
 		for(int x=0;x<64;++x){
@@ -87,7 +87,7 @@ CDynWater::CDynWater(void)
 		throw content_error("Could not load foam from file " + mapInfo->water.foamTexture);
 	if (count_bits_set(foam.xsize)!=1 || count_bits_set(foam.ysize)!=1)
 		throw content_error("Foam texture not power of two!");
-	unsigned char* scrap=SAFE_NEW unsigned char[foam.xsize*foam.ysize*4];
+	unsigned char* scrap=new unsigned char[foam.xsize*foam.ysize*4];
 	for(int a=0;a<foam.xsize*foam.ysize;++a)
 		scrap[a]=foam.mem[a*4];
 
@@ -1193,6 +1193,8 @@ void CDynWater::AddShipWakes()
 
 void CDynWater::AddExplosions()
 {
+	GML_STDMUTEX_LOCK(water); // AddExplosions
+
 	if(explosions.empty())
 		return;
 
@@ -1273,6 +1275,9 @@ void CDynWater::AddExplosion(const float3& pos, float strength, float size)
 {
 	if(pos.y>size || size < 8)
 		return;
+
+	GML_STDMUTEX_LOCK(water); // AddExplosion
+
 	explosions.push_back(Explosion(pos,std::min(size*20,strength),size));
 }
 

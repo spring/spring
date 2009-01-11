@@ -53,11 +53,8 @@ CR_REG_METADATA_SUB(CPlayer, Statistics, (
 
 CPlayer::CPlayer()
 {
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
-	currentStats = SAFE_NEW Statistics;
+	currentStats = new Statistics;
 	memset(currentStats, 0, sizeof(Statistics));
-	POP_CODE_MODE;
 
 	active = false;
 	readyToStart = false;
@@ -144,7 +141,6 @@ void CPlayer::StartSpectating()
 #ifdef DIRECT_CONTROL_ALLOWED
 void CPlayer::StopControllingUnit()
 {
-	ENTER_UNSYNCED;
 	if (gu->directControl == playerControlledUnit) {
 		assert(playerHandler->Player(gu->myPlayerNum) == this);
 		gu->directControl = 0;
@@ -157,7 +153,6 @@ void CPlayer::StopControllingUnit()
 			mouse->ShowMouse();
 		}
 	}
-	ENTER_SYNCED;
 
 	playerControlledUnit = 0;
 }

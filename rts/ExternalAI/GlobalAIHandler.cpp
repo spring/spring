@@ -238,7 +238,7 @@ bool CGlobalAIHandler::CreateGlobalAI(int teamID, const char* dll)
 			ais[teamID] = 0;
 		}
 
-		ais[teamID] = SAFE_NEW CGlobalAI(teamID, dll);
+		ais[teamID] = new CGlobalAI(teamID, dll);
 
 		if (!ais[teamID]->ai) {
 			delete ais[teamID];
@@ -260,7 +260,7 @@ void* CGlobalAIHandler::GetAIBuffer(int team, std::string name, int length)
 	}
 	AIMemBuffer mb;
 	mb.usage=1;
-	mb.mem=SAFE_NEW char[length];
+	mb.mem=new char[length];
 	memset(mb.mem,0,length);
 
 	memBuffers[team][name]=mb;

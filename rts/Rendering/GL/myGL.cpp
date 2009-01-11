@@ -104,8 +104,8 @@ void LoadExtensions()
 		exit(0);
 	}
 
-	vertexArray1=SAFE_NEW CVertexArray;
-	vertexArray2=SAFE_NEW CVertexArray;
+	vertexArray1=new CVertexArray;
+	vertexArray2=new CVertexArray;
 
 	std::string s= (char*)glGetString(GL_EXTENSIONS);
 	for (unsigned int i=0; i<s.length(); i++)
@@ -145,7 +145,7 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 
 	// create mipmapped texture
 
-/*	if (!gu->atiHacks && glGenerateMipmapEXT) { // broken on ATIs and NVs (wait for their OpenGL3.0 drivers :/)
+/*	if (!gu->atiHacks && glGenerateMipmapEXT_NONGML) { // broken on ATIs and NVs (wait for their OpenGL3.0 drivers :/)
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		glGenerateMipmapEXT(target);
@@ -253,11 +253,8 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 {
 	static char prevText[100];
 
-	PUSH_CODE_MODE;
-
 	// Stuff that needs to be done regularly while loading.
 	// Totally unrelated to the task the name of this function implies.
-	ENTER_MIXED;
 
 	// Check to prevent infolog spam by CPreGame which uses this function
 	// to render the screen background each frame.
@@ -270,7 +267,6 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	good_fpu_control_registers(text);
 
 	// Draw loading screen & print load msg.
-	ENTER_UNSYNCED;
 	ClearScreen();
 	if (startupTexture) {
 		glBindTexture(GL_TEXTURE_2D,startupTexture);
@@ -291,7 +287,6 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 	if (swapbuffers) {
 		SDL_GL_SwapBuffers();
 	}
-	POP_CODE_MODE;
 }
 
 
@@ -320,7 +315,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 		logOutput << "Warning: ProgramStringIsNative couldn't find " << filename << ".\n";
 		return false;
 	}
-	char *VPbuf = SAFE_NEW char[VPFile.FileSize()];
+	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
 	// clear any current GL errors so that the following check is valid
@@ -391,7 +386,7 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char 
 		SNPRINTF(c,512,"Cannot find %s program file '%s'", program_type, filename);
 		throw content_error(c);
 	}
-	char *VPbuf = SAFE_NEW char[VPFile.FileSize()];
+	char *VPbuf = new char[VPFile.FileSize()];
 	VPFile.Read(VPbuf, VPFile.FileSize());
 
 	glGenProgramsARB( 1, &ret );
