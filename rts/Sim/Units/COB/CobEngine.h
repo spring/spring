@@ -42,6 +42,7 @@ public:
 	void RemoveInstance(CCobInstance *instance);
 	void Tick(int deltaTime);
 	void SetCurThread(CCobThread *cur);
+	void ShowScriptWarning(const std::string& msg);
 	void ShowScriptError(const std::string& msg);
 	CCobFile& GetCobFile(const std::string& name);
 	CCobFile& ReloadCobFile(const std::string& name);
