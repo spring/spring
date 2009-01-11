@@ -7,6 +7,9 @@
 # which wrapps:
 # rts/ExternalAI/Interface/SAICallback.h
 #
+# this script uses functions from common.awk, use like this:
+# 	awk -f thisScript.awk -f common.awk [additional-params]
+#
 
 BEGIN {
 	# initialize things
@@ -45,100 +48,7 @@ BEGIN {
 }
 
 
-# Some utility functions
 
-function ltrim(s) { sub(/^[ \t]+/, "", s); return s; }
-function rtrim(s) { sub(/[ \t]+$/, "", s); return s; }
-function trim(s)  { return rtrim(ltrim(s)); }
-
-function noSpaces(s)  { gsub(/[ \t]/, "", s); return s; }
-
-function capitalize(s)  { return toupper(substr(s, 1, 1)) substr(s, 2); }
-function lowerize(s)  { return tolower(substr(s, 1, 1)) substr(s, 2); }
-
-function startsWithCapital(s) { return match(s, /^[ABCDEFGHIJKLMNOPQRDTUVWXYZ]/); }
-function startsWithLower(s) { return match(s, /^[abcdefghijklmnopqrdtuvwxyz]/); }
-
-# sort function -- sorts an array based on values (wether numbers or strings)
-# in ascending order; first array element at index [1]
-function mySort(array, size, temp, i, j) {
-
-	for (i = 2; i <= size; ++i) {
-		for (j = i; array[j-1] > array[j]; --j) {
-			temp = array[j];
-			array[j] = array[j-1];
-			array[j-1] = temp;
-		}
-	}
-}
-
-# Awaits this format:	com.clan_sy.spring.ai
-# Returns this format:	com/clan_sy/spring/ai
-function convertJavaNameFormAToD(javaNameFormA) {
-
-	javaNameFormD = javaNameFormA;
-
-	gsub(/\./, "/", javaNameFormD);
-
-	return javaNameFormD;
-}
-
-# Awaits this format:	int / float / String
-# Returns this format:	Integer / Float / String
-function convertJavaBuiltinTypeToClass(javaBuiltinType_bt) {
-
-	javaClassType_bt = javaBuiltinType_bt;
-
-	sub(/int/, "Integer", javaClassType_bt);
-	sub(/float/, "Float", javaClassType_bt);
-
-	sub(/boolean/, "Boolean", javaClassType_bt);
-	sub(/byte/, "Byte", javaClassType_bt);
-	sub(/char/, "Character", javaClassType_bt);
-	sub(/double/, "Double", javaClassType_bt);
-	sub(/float/, "Float", javaClassType_bt);
-	sub(/int/, "Integer", javaClassType_bt);
-	sub(/long/, "Long", javaClassType_bt);
-	sub(/short/, "Short", javaClassType_bt);
-
-	return javaClassType_bt;
-}
-
-
-
-function printGeneratedWarningHeader(outFile) {
-
-	print("// WARNING: This file is machine generated,") > outFile;
-	print("// please do not edit directly!") >> outFile;
-}
-
-function printGPLHeader(outFile) {
-
-	print("/*") >> outFile;
-	print("	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>") >> outFile;
-	print("") >> outFile;
-	print("	This program is free software; you can redistribute it and/or modify") >> outFile;
-	print("	it under the terms of the GNU General Public License as published by") >> outFile;
-	print("	the Free Software Foundation; either version 2 of the License, or") >> outFile;
-	print("	(at your option) any later version.") >> outFile;
-	print("") >> outFile;
-	print("	This program is distributed in the hope that it will be useful,") >> outFile;
-	print("	but WITHOUT ANY WARRANTY; without even the implied warranty of") >> outFile;
-	print("	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the") >> outFile;
-	print("	GNU General Public License for more details.") >> outFile;
-	print("") >> outFile;
-	print("	You should have received a copy of the GNU General Public License") >> outFile;
-	print("	along with this program.  If not, see <http://www.gnu.org/licenses/>.") >> outFile;
-	print("*/") >> outFile;
-}
-
-
-function printCommentsHeader(outFile) {
-
-	printGeneratedWarningHeader(outFile);
-	print("") >> outFile;
-	printGPLHeader(outFile);
-}
 
 function printHeader(outFile_h, javaPkg_h, javaClassName_h, isOrHasInterface_h) {
 
@@ -167,345 +77,9 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h, isOrHasInterface_h) 
 	print("") >> outFile_h;
 }
 
-
-
-function removeParamTypes(params) {
-
-	innerParams = params;
-
-	sub(/^[^ ]* /, "", innerParams);
-	gsub(/, [^ ]*/, ",", innerParams);
-
-	return innerParams;
-}
-
-function matchesAnyKey(toSearch, matchArray) {
-
-	for (pattern in matchArray) {
-		if (match(toSearch, pattern)) {
-			return 1;
-		}
-	}
-
-	return 0;
-}
-
-function isBufferedFunc(funcFullName_b) {
-
-	np_b = extractNormalPart(funcFullName_b);
-
-	return matchesAnyKey(np_b, myBufferedClasses);
-}
-
-function isBufferedClass(clsName_bc) {
-
-	np_bc = extractNormalPart(clsName_bc);
-
-	return matchesAnyKey(np_bc, myBufferedClasses);
-}
-
-function extractNormalPart(namePart_a) {
-
-	normalPart_a = namePart_a;
-
-	do {
-		replaced_a = sub(/0[^0]*0/, "0", normalPart_a);
-	} while (replaced_a);
-
-	sub(/0/, "", normalPart_a);
-
-	return normalPart_a;
-}
-
-
 function createJavaFileName(clsName_c) {
 	return javaSrcRoot "/" myPkgD "/" clsName_c ".java";
 }
-
-function part_isClass(namePart_p) {
-	sub(/0.*0/, "", namePart_p);
-	return startsWithCapital(namePart_p);
-}
-function part_isStatic(namePart_p) {
-	return match(namePart_p, /0STATIC0/);
-}
-function part_isArraySize(namePart_p) {
-	return match(namePart_p, /0ARRAY1SIZE[01]/);
-}
-function part_isArrayValues(namePart_p) {
-	return match(namePart_p, /0ARRAY1VALS[01]/);
-}
-function part_isMapSize(namePart_p) {
-	return match(namePart_p, /0MAP1SIZE0/);
-}
-function part_isMapKeys(namePart_p) {
-	return match(namePart_p, /0MAP1KEYS0/);
-}
-function part_isMapValues(namePart_p) {
-	return match(namePart_p, /0MAP1VALS0/);
-}
-function part_isMultiSize(namePart_p) {
-	return match(namePart_p, /0MULTI1SIZE[0123]/);
-}
-function part_isMultiValues(namePart_p) {
-	return match(namePart_p, /0MULTI1SIZE[0123]/);
-}
-function part_isMultiFetch(namePart_p) {
-	return match(namePart_p, /0MULTI1FETCH[0123]/);
-}
-function part_isSingleFetch(namePart_p) {
-	return match(namePart_p, /0SINGLE1FETCH[0123]/);
-}
-function part_isAvailable(namePart_p) {
-	return match(namePart_p, /0AVAILABLE0/);
-}
-function part_hasReferenceObject(namePart_p) {
-	return match(namePart_p, /0REF[^0]*0/);
-}
-function part_getClsName(ancestorsPlusName_p) {
-
-	normalAPN_p = extractNormalPart(ancestorsPlusName_p);
-
-	if (ancestorsPlusName_clsName[normalAPN_p] != "") {
-		return ancestorsPlusName_clsName[normalAPN_p];
-	}
-
-	clsName_a = ancestorsPlusName_p;
-
-	isClsMemberNameDifferent = match(ancestorsPlusName_p, /0MULTI1SIZE[^0]*2[_a-zA-Z]+[^0]*0/);
-#if (match(normalAPN_p, /Clb/)) { print("normalAPN_p: " normalAPN_p); }
-	if (isClsMemberNameDifferent) {
-		sub(/^.*0MULTI1SIZE[^2]2*/, "", clsName_a);
-		sub(/[0123].*$/, "", clsName_a);
-	} else {
-		sub(/^.*_/, "", clsName_a);
-		clsName_a = extractNormalPart(clsName_a);
-	}
-
-	ancestorsPlusName_clsName[normalAPN_p] = clsName_a;
-
-	return clsName_a;
-}
-
-function store_class(ancestors_s, clsName_s) {
-
-#if (match(clsName_s, /Clb$/)) { print("clsName_s: " clsName_s); }
-#if (match(ancestors_s, /Clb$/)) { print("ancestors_s: " ancestors_s); }
-	if (!(clsName_s in class_ancestors)) {
-		class_ancestors[clsName_s] = ancestors_s;
-	} else if (!match(class_ancestors[clsName_s], "((^)|(,))" ancestors_s "(($)|(,))")) {
-	#} else if (!match(class_ancestors[clsName_s], ancestors_s)) {
-		class_ancestors[clsName_s] = class_ancestors[clsName_s] "," ancestors_s;
-	}
-
-	if (!(ancestors_s in ancestors_class)) {
-		ancestors_class[ancestors_s] = clsName_s;
-	} else if (!match(ancestors_class[ancestors_s], "((^)|(,))" clsName_s "(($)|(,))")) {
-	#} else if (!match(ancestors_class[ancestors_s], clsName_s)) {
-		ancestors_class[ancestors_s] = ancestors_class[ancestors_s] "," clsName_s;
-	}
-}
-
-
-
-
-function storeClassesAndInterfaces() {
-
-	mySort(funcFullNames);
-
-	additionalClsIndices["*"] = 0;
-	additionalClsIndices["-" myClass "*"] = 0;
-
-	# store classes and assign functions
-	for (f=0; f < size_funcs; f++) {
-		fullName = funcFullName[f];
-		retType = funcRetType[fullName];
-		params = funcParams[fullName];
-		innerParams = funcInnerParams[fullName];
-
-		size_nameParts = split(fullName, nameParts, "_");
-
-		# go through the classes
-		ancestorsP = "";
-		last_ancestorsP = "";
-		clsName = myClass;
-		clsId = ancestorsP "-" clsName;
-		last_clsId = "";
-		for (np=0; np < size_nameParts-1; np++) {
-			last_clsName = clsName;
-			last_clsId = clsId;
-
-			nameP = nameParts[np+1];
-#if (match(nameP, /Clb/)) { print("nameP: " nameP); }
-			normalP = extractNormalPart(nameP);
-
-			# register class
-			clsName = part_getClsName(ancestorsP "_" nameP);
-			#if (clsName == myClass) { normalP = clsName; }
-			clsId = ancestorsP "-" clsName;
-			store_class(ancestorsP, clsName);
-#if (match(ancestorsP, /Clb$/)) { print("ancestorsP/clsName: " ancestorsP " / " clsName); }
-
-			if (additionalClsIndices[clsId "*"] == "") {
-				additionalClsIndices[clsId "*"] = additionalClsIndices[last_clsId "*"];
-#print("additionalClsIndices I init : " clsId " / "  last_clsId " / " additionalClsIndices[last_clsId "*"]);
-			}
-			if (part_isMultiSize(nameP)) {
-				parentNumInd = additionalClsIndices[last_clsId "*"];
-				#size_paramNames = split(innerParams, paramNames, ", ");
-				#indName = paramNames[1 + parentNumInd];
-				#additionalClsIndices[clsId "#" parentNumInd] = indName;
-				additionalClsIndices[clsId "*"] = parentNumInd + 1;
-#print("additionalClsIndices I ++ : " clsId " / "  last_clsId " / " additionalClsIndices[clsId "*"]);
-			}
-			
-			secondLast_clsName = last_clsName;
-			last_ancestorsP = ancestorsP;
-			ancestorsP = ancestorsP "_" normalP;
-#print("clsName: " clsName);
-#print("ancestorsP: " ancestorsP);
-#print("last_ancestorsP: " last_ancestorsP);
-		}
-
-		nameP = nameParts[size_nameParts];
-		normalP = extractNormalPart(nameP);
-		secondLast_clsName = last_clsName;
-		last_clsName = clsName;
-		clsName = part_getClsName(ancestorsP "_" nameP);
-		last_clsId = clsId;
-		clsId = ancestorsP "-" clsName;
-
-		isClass = part_isClass(normalP);
-
-#print("normalP: " normalP);
-#print("startsWithCapital X: " match("X", /^[ABCDEFGHIJKLMNOPQRDTUVWXYZ]/));
-#print("startsWithCapital X: " tolower("ABCDEFGHIJKLMNOPQRDTUVWXYZ"));
-#print("startsWithCapital x: " match("x", /^[ABCX]/));
-#print("startsWithLower X: " match("X", /^[a-z]/));
-#print("startsWithLower x: " match("x", /^[a-z]/));
-#print("startsWithCapital 3: " match("3", /^[A-Z]/));
-#print("startsWithLower 3: " match("3", /^[a-z]/));
-		if (isClass) {
-#print("isClass == true");
-			if (additionalClsIndices[clsId "*"] == "") {
-				additionalClsIndices[clsId "*"] = additionalClsIndices[last_clsId "*"];
-#print("additionalClsIndices init : " clsId " / "  last_clsId " / " additionalClsIndices[last_clsId "*"]);
-			}
-			if (part_isMultiSize(nameP)) {
-#print("part_isMultiSize clsId fullName : " clsId " / " fullName);
-				if (ancestorsClass_multiSizes[clsId "*"] == "") {
-					#ancestorsClass_isMulti[clsId] = 1;
-					ancestorsClass_multiSizes[clsId "*"] = 0;
-					size_parentInd = additionalClsIndices[last_clsId "*"];
-					#size_paramNames = split(innerParams, paramNames, ", ");
-					#indName = paramNames[1 + size_parentInd];
-					#additionalClsIndices[clsId "#" size_parentInd] = indName;
-					additionalClsIndices[clsId "#" size_parentInd] = "";
-					additionalClsIndices[clsId "*"] = size_parentInd + 1;
-#print("additionalClsIndices ++ : " clsId " / "  last_clsId " / " additionalClsIndices[clsId "*"] " / " indName " / " innerParams);
-				}
-
-				ancestorsClass_multiSizes[clsId "#" ancestorsClass_multiSizes[clsId "*"]] = fullName;
-#print("part_isMultiSize clsId/i/fullName: " clsId " / " ancestorsClass_multiSizes[clsId "*"] " / " fullName);
-				#additionalClsIndices[clsId "*"] = additionalClsIndices[last_clsId "*"] + 1;
-
-				ancestorsClass_multiSizes[clsId "*"]++;
-			} else if (part_isAvailable(nameP)) {
-				ancestorsClass_available[clsId] = fullName;
-			}
-		} else {
-#print("isClass == false");
-			# store names of additional parameters
-			size_parentInd = additionalClsIndices[last_clsId "*"];
-#print("a_additionalClsIndices[last_clsId # (size_parentInd-1)]: " additionalClsIndices[last_clsId "#" (size_parentInd-1)]);
-			if (additionalClsIndices[last_clsId "#" (size_parentInd-1)] == "") {
-				size_paramNames = split(innerParams, paramNames, ", ");
-				for (pci=0; pci < size_parentInd; pci++) {
-					if (additionalClsIndices[last_clsId "#" pci] == "") {
-						indName = paramNames[1 + pci];
-#print("a_indName: " indName);
-						additionalClsIndices[last_clsId "#" pci] = indName;
-					}
-				}
-			}
-
-			# assign the function to a class
-			#isStatic = part_isStatic(fullName);
-			isStatic = part_isStatic(nameP);
-			if (isStatic) {
-				belongsTo = secondLast_clsName;
-				ancest = last_ancestorsP;
-			} else {
-				belongsTo = last_clsName;
-				ancest = last_ancestorsP;
-			}
-			# store one way ...
-			funcBelongsTo[fullName] = ancest "-" belongsTo;
-
-			# ... and the other
-			sizeI_belongsTo = ancest "-" belongsTo "*";
-			if (ownerOfFunc[sizeI_belongsTo] == "") {
-				ownerOfFunc[sizeI_belongsTo] = 0;
-			}
-			ownerOfFunc[ancest "-" belongsTo "#" ownerOfFunc[sizeI_belongsTo]] = fullName;
-	#print("ancest - belongsTo # ownerOfFunc[sizeI_belongsTo]: " ancest "-" belongsTo "#" ownerOfFunc[sizeI_belongsTo] " / " fullName);
-	#print("clsName: " clsName);
-	#print("last_clsName: " last_clsName);
-	#print("secondLast_clsName: " secondLast_clsName);
-			ownerOfFunc[sizeI_belongsTo]++;
-		}
-	}
-
-	# store interfaces
-	for (clsName in class_ancestors) {
-#print("clsName: " clsName);
-		size_ancestorParts = split(class_ancestors[clsName], ancestorParts, ",");
-#print("size_ancestorParts: " size_ancestorParts);
-#print("ancestorParts[1]: " ancestorParts[1]);
-
-		# check if an interface is needed
-		if (size_ancestorParts > 1) {
-#print("interface: " clsName);
-			interfaces[clsName] = 1;
-
-			# assign functions of the first implementation to the interface as reference
-			ancCls = ancestorParts[1] "-" clsName;
-			anc = ancestorParts[1] "_" clsName;
-			size_funcs = ownerOfFunc[ancCls "*"];
-			interfaceOwnerOfFunc[clsName "*"] = 0;
-			for (f=0; f < size_funcs; f++) {
-				fullName = ownerOfFunc[ancCls "#" f];
-				interfaceOwnerOfFunc[clsName "#" interfaceOwnerOfFunc[clsName "*"]] = fullName;
-				interfaceOwnerOfFunc[clsName "*"]++;
-				
-				funcBelongsToInterface[fullName] = clsName;
-			}
-			# assign member classes of the first implementation to the interface as reference
-			interface_class[clsName] = ancestors_class[anc];
-			size_memCls = split(interface_class[clsName], memCls, ",");
-			for (mc=0; mc < size_memCl; mc++) {
-				ancestorsInterface_multiSizes[clsName "-" memCls[mc+1] "*"] = ancestorsClass_multiSizes[anc "-" memCls[mc+1] "*"];
-			}
-			additionalIntIndices[clsName "*"] = additionalClsIndices[ancCls "*"];
-
-			# generate class names for the implementations of the interface
-			for (a=0; a < size_ancestorParts; a++) {
-				implClsName = ancestorParts[a+1];
-				implClsName = extractNormalPart(implClsName);
-				#sub(/^_$/, "ROOT", implClsName);
-				gsub(/_/, "", implClsName);
-				implClsName = implClsName clsName "Impl";
-#print("implClsName: " implClsName);
-
-				implClsNames[ancestorParts[a+1] "-" clsName] = implClsName;
-			}
-		}
-	}
-}
-
-
-
-
 
 function printInterfaces() {
 
@@ -564,8 +138,6 @@ function printInterface(clsName_i) {
 	print("") >> outFile_i;
 
 }
-
-
 
 
 
@@ -821,7 +393,7 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 			print(indent_mf "private boolean buffer_isInitialized_" fn " = false;") >> outFile_mf;
 		}
 
-		printJavaFunctionComment(outFile_mf, fullNameMultiSize_mf, indent_mf);
+		printFunctionComment_Common(outFile_mf, funcDocComment, fullNameMultiSize_mf, indent_mf);
 
 		print(indent_mf "public " retTypeInterface " " fn "(" params ") {") >> outFile_mf;
 		print("") >> outFile_mf;
@@ -1004,7 +576,7 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		print(indent_m "boolean buffer_isInitialized_" memName " = false;") >> outFile_m;
 	}
 
-	printJavaFunctionComment(outFile_m, fullName_m, indent_m);
+	printFunctionComment_Common(outFile_m, funcDocComment, fullName_m, indent_m);
 
 	print(indent_m mod_m retTypeInterface " " memName "(" params ")" firstLineEnd) >> outFile_m;
 	if (!isInterface_m) {
@@ -1074,147 +646,73 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 
 
 
-
-
-function printJavaFunctionComment(jc_outFile, jc_funcFullName, jc_indent) {
-
-	# print the documentation comment
-	if (funcDocComment[jc_funcFullName, "*"] > 0) {
-		print(jc_indent "/**") >> jc_outFile;
-		numLines = funcDocComment[jc_funcFullName, "*"];
-		for (l=0; l < numLines; l++) {
-			docLine = funcDocComment[jc_funcFullName, l];
-			print(jc_indent " * " docLine) >> jc_outFile;
-		}
-		print(jc_indent " */") >> jc_outFile;
-	}
-}
-
-################################################################################
-### BEGINN: parsing and saving the callback method struct doc comments
-
-# end of doc comment
-/\*\// {
-
-	if (isInsideDocComment == 1) {
-		usefullLinePart = $0;
-		sub(/\*\/.*/, "", usefullLinePart);
-		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
-		usefullLinePart = trim(usefullLinePart);
-		if (usefullLinePart != "") {
-			docComLines[docComLines_num++] = usefullLinePart;
-		}
-	}
-	isInsideDocComment = 0;
+# This function has to return true (1) if a doc comment (eg: /** foo bar */)
+# can be deleted.
+# If there is no special condition you want to apply,
+# it should always return true (1),
+# cause there are additional mechanism to prevent accidential deleting.
+# see: commonDoc.awk
+function canDeleteDocumentation() {
+	return isMultiLineFunc != 1;
 }
 
 
-# inside of doc comment
+# grab callback functions info
+# 2nd, 3rd, ... line of a function definition
 {
-	if (isInsideDocComment == 1) {
-		usefullLinePart = $0;
-		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
-		usefullLinePart = trim(usefullLinePart);
-		docComLines[docComLines_num++] = usefullLinePart;
-	} else {
-		if (trim($0) != "") {
-			linesWithNoDocComment++;
-		}
-		# delete the last stored doc comment if it is not applicable to anything
-		if (linesWithNoDocComment > 2) {
-			docComLines_num = 0;
+	if (isMultiLineFunc) { # function is defined on one single line
+		funcIntermLine = $0;
+		# remove possible comment at end of line: // fu bar
+		sub(/[ \t]*\/\/.*/, "", funcIntermLine);
+		funcIntermLine = trim(funcIntermLine);
+		funcSoFar = funcSoFar " " funcIntermLine;
+		if (match(funcSoFar, /\;$/)) {
+			# function ends in this line
+			wrappFunctionDef(funcSoFar);
+			isMultiLineFunc = 0;
 		}
 	}
 }
-
-# beginn of doc comment
-/^[ \t]*\/\*\*/ {
-
-	isInsideDocComment = 1;
-	docComLines_num = 0;
-	linesWithNoDocComment = 0;
-
-	usefullLinePart = $0;
-	sub(/^[ \t]*\/\*\*/, "", usefullLinePart);
-	if (sub(/\*\/.*/, "", usefullLinePart)) {
-		isInsideDocComment = 0;
-	}
-	usefullLinePart = trim(usefullLinePart);
-	if (usefullLinePart != "") {
-		docComLines[docComLines_num++] = usefullLinePart;
-	}
-}
-
-### END: parsing and saving the callback method struct doc comments
-################################################################################
-
-
-# grab callback functions
+# 1st line of a function definition
 #/^\t[^ ]+ Clb_[^ ]+\(int teamId.*\)\;$/ {
 /Clb_/ {
 
-	fullName = $1;
-	sub(/.* /, "", fullName);
-
-	simpleFullName = extractNormalPart(fullName);
-
-	retType = trim($1);
-	sub(fullName, "", retType);
-
-	params = $2;
-
-	doWrapp = !match(simpleFullName, /^Clb_File/);
-
-	if (doWrapp) {
-		#size_tmpParts = split($0, tmpParts, / invoke\(/);
-
-		#retType = trim(tmpParts[1]);
-
-		#params = trim(tmpParts[2]);
-		#sub(/\)\;/, "", params);
-		sub(/^int teamId(\, )?/, "", params);
-
-		innerParams = removeParamTypes(params);
-
-		funcFullName[size_funcs] = fullName;
-		funcRetType[fullName] = retType;
-		funcParams[fullName] = params;
-		funcInnerParams[fullName] = innerParams;
-		funcDocComment[fullName, "*"] = docComLines_num;
-		for (l=0; l < docComLines_num; l++) {
-			funcDocComment[fullName, l] = docComLines[l];
-		}
-
-		if (!(simpleFullName in funcSimpleFullName)) {
-			funcSimpleFullName[simpleFullName] = fullName;
-		} else if (!match(funcSimpleFullName[simpleFullName], fullName)) {
-			funcSimpleFullName[simpleFullName] = funcSimpleFullName[simpleFullName] "," fullName;
-		}
-
-		size_funcs++;
+	funcStartLine = $0;
+	# remove possible comment at end of line: // fu bar
+	sub(/\/\/.*$/, "", funcStartLine);
+	funcStartLine = trim(funcStartLine);
+	if (match(funcStartLine, /\;$/)) {
+		# function ends in this line
+		wrappFunctionDef(funcStartLine);
+	} else {
+		funcSoFar = funcStartLine;
+		isMultiLineFunc = 1;
 	}
+}
+
+function wrappFunctionDef(funcDef) {
+
+	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)\\;)");
+	# because the empty part after ");" would count as part aswell
+	size_funcParts--;
+
+	fullName = funcParts[1];
+	fullName = trim(fullName);
+	sub(/.*[ \t]+/, "", fullName);
+
+	retType = funcParts[1];
+	sub(fullName, "", retType);
+	retType = trim(retType);
+
+	params = funcParts[2];
+
+	wrappFunction(retType, fullName, params);
 }
 
 
 END {
 	# finalize things
 	storeClassesAndInterfaces();
-
-#for (abc in funcFullName) {
-#print("funcFullName[i]: " abc " / " funcFullName[abc]);
-#print("funcRetType[i]: " abc " / " funcRetType[funcFullName[abc]]);
-#print("funcParams[i]: " abc " / " funcParams[funcFullName[abc]]);
-#}
-#for (abc in ownerOfFunc) {
-#print("ownerOfFunc: " abc " / " ownerOfFunc[abc]);
-#}
-#print("");
-#print("###############################################");
-#print("");
-#for (abc in interfaceOwnerOfFunc) {
-#print("interfaceOwnerOfFunc: " abc " / " interfaceOwnerOfFunc[abc]);
-#}
-
 	printInterfaces();
 	printClasses();
 }

@@ -4,13 +4,16 @@
 # to call to C function pointers in:
 # rts/ExternalAI/Interface/SAICallback.h
 #
+# this script uses functions from common.awk, use like this:
+# 	awk -f thisScript.awk -f common.awk [additional-params]
+#
 
 BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	#FS=/,|\(|\)\;/
-	FS="(,)|(\\()|(\\)\\;)";
+	#FS = /,|\(|\)\;/
+	FS = "(,)|(\\()|(\\)\\;)";
 
 	javaSrcRoot = "../java/src";
 
@@ -27,41 +30,6 @@ BEGIN {
 	fi = 0;
 }
 
-
-
-function printGeneratedWarningHeader(outFile) {
-
-	print("// WARNING: This file is machine generated,") > outFile;
-	print("// please do not edit directly!") >> outFile;
-}
-
-function printGPLHeader(outFile) {
-
-	print("/*") >> outFile;
-	print("	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>") >> outFile;
-	print("") >> outFile;
-	print("	This program is free software; you can redistribute it and/or modify") >> outFile;
-	print("	it under the terms of the GNU General Public License as published by") >> outFile;
-	print("	the Free Software Foundation; either version 2 of the License, or") >> outFile;
-	print("	(at your option) any later version.") >> outFile;
-	print("") >> outFile;
-	print("	This program is distributed in the hope that it will be useful,") >> outFile;
-	print("	but WITHOUT ANY WARRANTY; without even the implied warranty of") >> outFile;
-	print("	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the") >> outFile;
-	print("	GNU General Public License for more details.") >> outFile;
-	print("") >> outFile;
-	print("	You should have received a copy of the GNU General Public License") >> outFile;
-	print("	along with this program.  If not, see <http://www.gnu.org/licenses/>.") >> outFile;
-	print("*/") >> outFile;
-}
-
-
-function printCommentsHeader(outFile) {
-
-	printGeneratedWarningHeader(outFile);
-	print("") >> outFile;
-	printGPLHeader(outFile);
-}
 
 function printHeader(outFile_h, javaPkg_h, javaClassName_h) {
 
@@ -91,115 +59,9 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h) {
 	print("") >> outFile_h;
 }
 
-
-# Some utility functions
-
-function ltrim(s) { sub(/^[ \t]+/, "", s); return s; }
-function rtrim(s) { sub(/[ \t]+$/, "", s); return s; }
-function trim(s)  { return rtrim(ltrim(s)); }
-
-function noSpaces(s)  { gsub(/[ \t]/, "", s); return s; }
-
-function capitalize(s)  { return toupper(substr(s, 1, 1)) substr(s, 2); }
-function lowerize(s)  { return tolower(substr(s, 1, 1)) substr(s, 2); }
-
-function startsWithCapital(s)  { return match(s, /^[A-Z]/); }
-function startsWithLower(s)  { return match(s, /^[a-z]/); }
-
-
-# Awaits this format:	com.clan_sy.spring.ai
-# Returns this format:	com/clan_sy/spring/ai
-function convertJavaNameFormAToD(javaNameFormA) {
-
-	javaNameFormD = javaNameFormA;
-
-	gsub(/\./, "/", javaNameFormD);
-
-	return javaNameFormD;
-}
-
-function removeParamTypes(params) {
-
-	innerParams = params;
-
-	sub(/^[^ ]* /, "", innerParams);
-	gsub(/, [^ ]*/, ",", innerParams);
-
-	return innerParams;
-}
-
-# Awaits this format:	const char*[]
-# Returns this format:	String[]
-function convertCToJNAType(cType) {
-
-	jnaType = trim(cType);
-
-	sub(/const/, "", jnaType);
-	sub(/unsigned/, "", jnaType);
-	gsub(/ \*/, "* ", jnaType);
-
-	isComplex = 0;
-	isComplex += sub(/char\*\*/, "Pointer", jnaType);
-	isComplex += sub(/char\*/, "String", jnaType);
-	isComplex += sub(/struct SAIFloat3(\*)?/, "AIFloat3", jnaType);
-	isComplex += sub(/struct SAICallback(\*)?/, "AICallback", jnaType);
-	isComplex += sub(/struct [0-9a-zA-Z_]*/, "Structure", jnaType);
-
-	isPrimitive = 0;
-	isPrimitive += sub(/bool/, "boolean", jnaType);
-	isPrimitive += sub(/char/, "byte", jnaType);
-	#isPrimitive += sub(/wchar_t/, "char", jnaType);
-	isPrimitive += sub(/short/, "short", jnaType);
-	isPrimitive += sub(/int/, "int", jnaType);
-	isPrimitive += sub(/float/, "float", jnaType);
-	isPrimitive += sub(/double/, "double", jnaType);
-
-	isPointer = 0;
-	if (isComplex <= 0 && isPrimitive <= 0) {
-		isPointer += sub(/.*\*/, "Pointer", jnaType);
-	}
-
-	# convert possible array length specifiers ("[]" or "[2]")
-	gsub(/\*/, "[]", jnaType);
-	arrDims = gsub(/\[[^\]]*\]/, "[]", jnaType);
-
-	jnaType = noSpaces(jnaType);
-
-	return jnaType;
-}
-
 function createJavaFileName(clsName_f) {
 	return javaSrcRoot "/" myPkgD "/" clsName_f ".java";
 }
-
-# Awaits this format:	unsinged const char* paramName[]
-# Returns this format:	paramName
-function extractName(typeAndName) {
-
-	name = trim(typeAndName);
-
-	# Remove possible array length specifiers ("[]" or "[2]")
-	gsub(/\[.*\]/, "", name);
-
-	# Remove all type specific parts before the name
-	gsub(/.*[ \t]/, "", name);
-
-	return name;
-}
-
-# Awaits this format:	unsinged const char* paramName[]
-# Returns this format:	unsinged const char**
-function extractType(typeAndName) {
-
-	name = extractName(typeAndName);
-	type = typeAndName;
-	sub(name, "", type);
-	type = trim(type);
-
-	return type;
-}
-
-
 
 function printInterface() {
 
@@ -212,7 +74,7 @@ function printInterface() {
 		retType = funcRetType[i];
 		paramList = funcParamList[i];
 
-		printJavaFunctionComment(outFile_i, i, "\t");
+		printFunctionComment_Common(outFile_i, funcDocComment, i, "\t");
 		print("\t" retType " " fullName "(" paramList ");") >> outFile_i;
 	}
 
@@ -244,7 +106,7 @@ function printClass(clsName_c) {
 		print("\t" "\t" retType " invoke(" paramList ");") >> outFile_c;
 		print("\t" "}") >> outFile_c;
 		print("\t" "public _" fullName " _M_" fullName ";") >> outFile_c;
-		printJavaFunctionComment(outFile_c, i, "\t");
+		printFunctionComment_Common(outFile_c, funcDocComment, i, "\t");
 		print("\t" "public " retType " " fullName "(" paramList ") {") >> outFile_c;
 		print("\t" "\t" condRet_c "_M_" fullName ".invoke(" paramListNoTypes ");") >> outFile_c;
 		print("\t" "}") >> outFile_c;
@@ -258,7 +120,7 @@ function printClass(clsName_c) {
 
 function wrappFunction(funcDef) {
 
-	doWrapp = !match(funcDef, /.*CALLING_CONV \*File_.*/);
+	doWrapp = !match(funcDef, /.*CALLING_CONV \*Clb_File_.*/);
 
 	if (doWrapp) {
 		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\)\\;)");
@@ -275,8 +137,8 @@ function wrappFunction(funcDef) {
 		paramList = "";
 
 		for (i=3; i<=size_funcParts && !match(funcParts[i], /.*\/\/.*/); i++) {
-			name = extractName(funcParts[i]);
-			type_c = extractType(funcParts[i]);
+			name = extractParamName(funcParts[i]);
+			type_c = extractParamType(funcParts[i]);
 			type_jna = convertCToJNAType(type_c);
 			if (i == 3) {
 				cond_comma = "";
@@ -289,86 +151,22 @@ function wrappFunction(funcDef) {
 		funcFullName[fi] = fullName;
 		funcRetType[fi] = retType_jna;
 		funcParamList[fi] = paramList;
-		funcDocComment[fi, "*"] = docComLines_num;
-		for (l=0; l < docComLines_num; l++) {
-			funcDocComment[fi, l] = docComLines[l];
-		}
+		storeDocLines(funcDocComment, fi);
 		fi++;
 	}
 }
 
-function printJavaFunctionComment(jc_outFile, jc_funcIndex, jc_indent) {
 
-	# print the documentation comment
-	if (funcDocComment[jc_funcIndex, "*"] > 0) {
-		print(jc_indent "/**") >> jc_outFile;
-		numLines = funcDocComment[jc_funcIndex, "*"];
-		for (l=0; l < numLines; l++) {
-			docLine = funcDocComment[jc_funcIndex, l];
-			print(jc_indent " * " docLine) >> jc_outFile;
-		}
-		print(jc_indent " */") >> jc_outFile;
-	}
+
+# This function has to return true (1) if a doc comment (eg: /** foo bar */)
+# can be deleted.
+# If there is no special condition you want to apply,
+# it should always return true (1),
+# cause there are additional mechanism to prevent accidential deleting.
+# see: commonDoc.awk
+function canDeleteDocumentation() {
+	return isMultiLineFunc != 1;
 }
-
-################################################################################
-### BEGINN: parsing and saving the callback function struct doc comments
-
-# end of doc comment
-/\*\// {
-
-	if (isInsideDocComment == 1) {
-		usefullLinePart = $0;
-		sub(/\*\/.*/, "", usefullLinePart);
-		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
-		usefullLinePart = trim(usefullLinePart);
-		if (usefullLinePart != "") {
-			docComLines[docComLines_num++] = usefullLinePart;
-		}
-	}
-	isInsideDocComment = 0;
-}
-
-
-# inside of doc comment
-{
-	if (isInsideDocComment == 1) {
-		usefullLinePart = $0;
-		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
-		usefullLinePart = trim(usefullLinePart);
-		docComLines[docComLines_num++] = usefullLinePart;
-	} else {
-		if (trim($0) != "") {
-			linesWithNoDocComment++;
-		}
-		# delete the last stored doc comment if it is not applicable to anything
-		if (linesWithNoDocComment > 2) {
-			docComLines_num = 0;
-		}
-	}
-}
-
-# beginn of doc comment
-/^[ \t]*\/\*\*/ {
-
-	isInsideDocComment = 1;
-	docComLines_num = 0;
-	linesWithNoDocComment = 0;
-
-	usefullLinePart = $0;
-	sub(/^[ \t]*\/\*\*/, "", usefullLinePart);
-	if (sub(/\*\/.*/, "", usefullLinePart)) {
-		isInsideDocComment = 0;
-	}
-	usefullLinePart = trim(usefullLinePart);
-	if (usefullLinePart != "") {
-		docComLines[docComLines_num++] = usefullLinePart;
-	}
-}
-
-### END: parsing and saving the callback function struct doc comments
-################################################################################
-
 
 
 
