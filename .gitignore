@@ -9,6 +9,8 @@ AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/Win32AICallback.java
 AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/oo
 AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/event
 AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/command
+AI/Wrappers/Cpp/*.h
 AI/Skirmish/*/ai.jar
 AI/Skirmish/*/ai-src.jar
 *.class
+*~
