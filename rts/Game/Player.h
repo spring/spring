@@ -7,6 +7,7 @@
 #include <string>
 #include <set>
 
+#include "creg/creg.h"
 #include "Platform/byteorder.h"
 
 #include "PlayerBase.h"

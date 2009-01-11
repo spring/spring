@@ -50,12 +50,7 @@ endif (EXISTS ${CMAKE_SOURCE_DIR}/AI/Global/NTai)
 aux_source_directory(Global/TestGlobalAI testai)
 add_library(TestGlobalAI MODULE ${testai})
 
-
-if (UNIX)
-	install (TARGETS KAIK-0.13 KAI-0.2 AAI TestGlobalAI DESTINATION ${DATADIR}/AI/Bot-libs)
-else (UNIX)
-	install (TARGETS KAIK-0.13 KAI-0.2 AAI TestGlobalAI DESTINATION ${DATADIR}/AI/Bot-libs)
-endif (UNIX)
+install (TARGETS KAIK-0.13 KAI-0.2 AAI TestGlobalAI DESTINATION ${DATADIR}/AI/Bot-libs)
 
 ### Group AIs
 aux_source_directory(Group/CentralBuildAI central)

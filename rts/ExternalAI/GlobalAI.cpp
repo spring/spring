@@ -236,7 +236,7 @@ void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool 
 
 	// note: verify that this is really exported too?
 	_ReleaseAIFunc = (RELEASEAI) lib->FindAddress("ReleaseAI");
-	callback = SAFE_NEW CGlobalAICallback(this);
+	callback = new CGlobalAICallback(this);
 
 	if (!postLoad || (postLoad && !loadSupported)) {
 		try {

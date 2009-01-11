@@ -96,7 +96,7 @@ private:
 CFontTextureRenderer::CFontTextureRenderer(int width, int height)
 : width(width), height(height), buffer(NULL), cur(NULL), curX(0), curY(0), curHeight(0)
 {
-	buffer = SAFE_NEW unsigned char[2*width*height];		// luminance and alpha per pixel
+	buffer = new unsigned char[2*width*height];		// luminance and alpha per pixel
 	memset(buffer, 0xFF00, width*height);
 	cur = buffer;
 }
@@ -206,7 +206,7 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 	charend = end;
 	charstart = start;
 
-	glyphs = SAFE_NEW GlyphInfo[chars];
+	glyphs = new GlyphInfo[chars];
 
 	const float toX = gu->pixelX;
 	const float toY = gu->pixelY;
@@ -296,7 +296,7 @@ CglFont* CglFont::TryConstructFont(std::string fontFile, int start, int end, flo
 	while (true) {
 		try {
 			// warning: this resets color* and outlineColor* to 0
-			newFont = SAFE_NEW CglFont(start, end, fontFile.c_str(), size, texWidth, texHeight);
+			newFont = new CglFont(start, end, fontFile.c_str(), size, texWidth, texHeight);
 			return newFont;
 		} catch (texture_size_exception&) {
 			// texture size too small; make higher or wider

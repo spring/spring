@@ -38,13 +38,13 @@ CTextureAtlas::~CTextureAtlas(void)
 int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void  *data)
 {
 	int gpp = GetBPP(texType);
-	MemTex *memtex = SAFE_NEW MemTex;
+	MemTex *memtex = new MemTex;
 	memtex->xsize = xsize;
 	memtex->ysize = ysize;
 	memtex->xpos = 0;
 	memtex->ypos = 0;
 	memtex->texType = texType;
-	memtex->data = SAFE_NEW char[xsize*ysize*gpp/8];
+	memtex->data = new char[xsize*ysize*gpp/8];
 	StringToLowerInPlace(name);
 	memtex->names.push_back(name);
 	memcpy(memtex->data, data, xsize*ysize*gpp/8);
@@ -187,7 +187,7 @@ void CTextureAtlas::CreateTexture()
 {
 
 	unsigned char *data;
-	data = SAFE_NEW unsigned char[xsize*ysize*4];
+	data = new unsigned char[xsize*ysize*4];
 	memset(data,0,xsize*ysize*4); // make spacing between textures black transparent to avoid ugly lines with linear filtering
 
 	for(int i=0; i<memtextures.size(); i++)

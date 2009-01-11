@@ -339,8 +339,6 @@ void CFactory::CreateNanoParticle(void)
 	args.push_back(0);
 	cob->Call("QueryNanoPiece", args);
 
-	ENTER_UNSYNCED;
-
 	if (ph->currentParticles < ph->maxParticles) {
 		if (unitDef->showNanoSpray) {
 			const float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
@@ -358,9 +356,7 @@ void CFactory::CreateNanoParticle(void)
 				color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
 			}
 
-			SAFE_NEW CGfxProjectile(weaponPos, dif, (int) l, color);
+			new CGfxProjectile(weaponPos, dif, (int) l, color);
 		}
 	}
-
-	ENTER_SYNCED;
 }

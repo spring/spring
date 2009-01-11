@@ -47,7 +47,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 		}
 	}
 
-	textures = SAFE_NEW CBFGroundTextures(map);
+	textures = new CBFGroundTextures(map);
 
 	viewRadius = configHandler.Get("GroundDetail", 40);
 	viewRadius += (viewRadius & 1);

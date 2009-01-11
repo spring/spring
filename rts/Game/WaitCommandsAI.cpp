@@ -253,12 +253,9 @@ void CWaitCommandsAI::AddLocalUnit(CUnit* unit, const CUnit* builder)
 					delete tw;
 				} else {
 					waitMap[tw->GetKey()] = tw;
-					PUSH_CODE_MODE;
-					ENTER_MIXED;
 					// should not affect the sync state
 					const_cast<Command&>(cmd).params[1] =
 						Wait::GetFloatFromKey(tw->GetKey());
-					POP_CODE_MODE;
 				}
 			}
 		}

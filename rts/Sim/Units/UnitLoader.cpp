@@ -102,19 +102,19 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	}
 
 	if (type == "GroundUnit") {
-		unit = SAFE_NEW CUnit;
+		unit = new CUnit;
 	} else if (type == "Transport") {
-		unit = SAFE_NEW CTransportUnit;
+		unit = new CTransportUnit;
 	} else if (type == "Building") {
-		unit = SAFE_NEW CBuilding;
+		unit = new CBuilding;
 	} else if (type == "Factory") {
-		unit = SAFE_NEW CFactory;
+		unit = new CFactory;
 	} else if (type == "Builder") {
-		unit = SAFE_NEW CBuilder;
+		unit = new CBuilder;
 	} else if (type == "Bomber" || type == "Fighter") {
-		unit = SAFE_NEW CUnit;
+		unit = new CUnit;
 	} else if (type == "MetalExtractor") {
-		unit = SAFE_NEW CExtractorBuilding;
+		unit = new CExtractorBuilding;
 	} else {
 		logOutput << "Unknown unit type " << type.c_str() << "\n";
 		return NULL;
@@ -186,37 +186,37 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	}
 
 	if (type == "GroundUnit") {
-		SAFE_NEW CMobileCAI(unit);
+		new CMobileCAI(unit);
 	}
 	else if (type == "Transport") {
-		SAFE_NEW CTransportCAI(unit);
+		new CTransportCAI(unit);
 	}
 	else if (type == "Factory") {
-		SAFE_NEW CFactoryCAI(unit);
+		new CFactoryCAI(unit);
 	}
 	else if (type == "Builder") {
-		SAFE_NEW CBuilderCAI(unit);
+		new CBuilderCAI(unit);
 	}
 	else if (type == "Bomber") {
 		if (ud->hoverAttack) {
-			SAFE_NEW CMobileCAI(unit);
+			new CMobileCAI(unit);
 		} else {
-			SAFE_NEW CAirCAI(unit);
+			new CAirCAI(unit);
 		}
 	}
 	else if(type == "Fighter"){
 		if (ud->hoverAttack) {
-			SAFE_NEW CMobileCAI(unit);
+			new CMobileCAI(unit);
 		} else {
-			SAFE_NEW CAirCAI(unit);
+			new CAirCAI(unit);
 		}
 	}
 	else {
-		SAFE_NEW CCommandAI(unit);
+		new CCommandAI(unit);
 	}
 
 	if (ud->canmove && !ud->canfly && (type != "Factory")) {
-		CGroundMoveType* mt = SAFE_NEW CGroundMoveType(unit);
+		CGroundMoveType* mt = new CGroundMoveType(unit);
 		mt->maxSpeed = ud->speed / GAME_SPEED;
 		mt->maxWantedSpeed = ud->speed / GAME_SPEED;
 		mt->turnRate = ud->turnRate;
@@ -239,11 +239,11 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->moveType = mt;
 
 		// Ground-mobility
-		unit->mobility = SAFE_NEW MoveData(ud->movedata, GAME_SPEED);
+		unit->mobility = new MoveData(ud->movedata, GAME_SPEED);
 
 	} else if (ud->canfly) {
 		// Air-mobility
-		unit->mobility = SAFE_NEW MoveData(ud->movedata, GAME_SPEED);
+		unit->mobility = new MoveData(ud->movedata, GAME_SPEED);
 
 		if (!unit->beingBuilt) {
 			// otherwise set this when finished building instead
@@ -251,7 +251,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		}
 
 		if ((type == "Builder") || ud->hoverAttack || ud->transportCapacity) {
-			CTAAirMoveType* mt = SAFE_NEW CTAAirMoveType(unit);
+			CTAAirMoveType* mt = new CTAAirMoveType(unit);
 
 			mt->turnRate = ud->turnRate;
 			mt->maxSpeed = ud->speed / GAME_SPEED;
@@ -267,7 +267,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			unit->moveType = mt;
 		}
 		else {
-			CAirMoveType *mt = SAFE_NEW CAirMoveType(unit);
+			CAirMoveType *mt = new CAirMoveType(unit);
 
 			if(type=="Fighter")
 				mt->isFighter=true;
@@ -295,7 +295,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			unit->moveType = mt;
 		}
 	} else {
-		unit->moveType = SAFE_NEW CMoveType(unit);
+		unit->moveType = new CMoveType(unit);
 		unit->upright = true;
 	}
 
@@ -309,7 +309,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	unit->SetRadius(unit->model->radius);
 
 	// copy the UnitDef volume archetype data
-	unit->collisionVolume = SAFE_NEW CollisionVolume(ud->collisionVolume);
+	unit->collisionVolume = new CollisionVolume(ud->collisionVolume);
 
 	// if no "collisionVolumeScales" tag was defined in UnitDef,
 	// the default scale for this volume will be a ZeroVector
@@ -337,7 +337,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	}
 
 	modelParser->CreateLocalModel(unit);
-	unit->cob = SAFE_NEW CCobInstance(GCobEngine.GetCobFile(ud->scriptPath), unit);
+	unit->cob = new CCobInstance(GCobEngine.GetCobFile(ud->scriptPath), unit);
 
 	unit->weapons.reserve(ud->weapons.size());
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
@@ -389,48 +389,48 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 	}
 
 	if (udw->name == "NOWEAPON") {
-		weapon = SAFE_NEW CNoWeapon(owner);
+		weapon = new CNoWeapon(owner);
 	} else if (weapondef->type == "Cannon") {
-		weapon = SAFE_NEW CCannon(owner);
+		weapon = new CCannon(owner);
 		((CCannon*)weapon)->selfExplode = weapondef->selfExplode;
 	} else if (weapondef->type == "Rifle") {
-		weapon = SAFE_NEW CRifle(owner);
+		weapon = new CRifle(owner);
 	} else if (weapondef->type == "Melee") {
-		weapon = SAFE_NEW CMeleeWeapon(owner);
+		weapon = new CMeleeWeapon(owner);
 	} else if (weapondef->type == "AircraftBomb") {
-		weapon = SAFE_NEW CBombDropper(owner, false);
+		weapon = new CBombDropper(owner, false);
 	} else if (weapondef->type == "Shield") {
-		weapon = SAFE_NEW CPlasmaRepulser(owner);
+		weapon = new CPlasmaRepulser(owner);
 	} else if (weapondef->type == "Flame") {
-		weapon = SAFE_NEW CFlameThrower(owner);
+		weapon = new CFlameThrower(owner);
 	} else if (weapondef->type == "MissileLauncher") {
-		weapon = SAFE_NEW CMissileLauncher(owner);
+		weapon = new CMissileLauncher(owner);
 	} else if (weapondef->type == "TorpedoLauncher") {
 		if (owner->unitDef->canfly && !weapondef->submissile) {
-			weapon = SAFE_NEW CBombDropper(owner, true);
+			weapon = new CBombDropper(owner, true);
 			if (weapondef->tracks)
 				((CBombDropper*) weapon)->tracking = weapondef->turnrate;
 			((CBombDropper*) weapon)->bombMoveRange = weapondef->range;
 		} else {
-			weapon = SAFE_NEW CTorpedoLauncher(owner);
+			weapon = new CTorpedoLauncher(owner);
 			if (weapondef->tracks)
 				((CTorpedoLauncher*) weapon)->tracking = weapondef->turnrate;
 		}
 	} else if (weapondef->type == "LaserCannon") {
-		weapon = SAFE_NEW CLaserCannon(owner);
+		weapon = new CLaserCannon(owner);
 		((CLaserCannon*) weapon)->color = weapondef->visuals.color;
 	} else if (weapondef->type == "BeamLaser") {
-		weapon = SAFE_NEW CBeamLaser(owner);
+		weapon = new CBeamLaser(owner);
 		((CBeamLaser*) weapon)->color = weapondef->visuals.color;
 	} else if (weapondef->type == "LightningCannon") {
-		weapon = SAFE_NEW CLightningCannon(owner);
+		weapon = new CLightningCannon(owner);
 		((CLightningCannon*) weapon)->color = weapondef->visuals.color;
 	} else if (weapondef->type == "EmgCannon") {
-		weapon = SAFE_NEW CEmgCannon(owner);
+		weapon = new CEmgCannon(owner);
 	} else if (weapondef->type == "DGun") {
-		weapon = SAFE_NEW CDGunWeapon(owner);
+		weapon = new CDGunWeapon(owner);
 	} else if (weapondef->type == "StarburstLauncher"){
-		weapon = SAFE_NEW CStarburstLauncher(owner);
+		weapon = new CStarburstLauncher(owner);
 		if (weapondef->tracks)
 			((CStarburstLauncher*) weapon)->tracking = weapondef->turnrate;
 		else

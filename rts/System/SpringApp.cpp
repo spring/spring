@@ -39,7 +39,6 @@
 #include "LogOutput.h"
 #include "MouseInput.h"
 #include "bitops.h"
-#include "Sync/Syncify.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
 #include "Exceptions.h"
@@ -243,10 +242,8 @@ bool SpringApp::Initialize()
 	mouseInput = IMouseInput::Get ();
 
 	// Global structures
-	ENTER_SYNCED;
-	gs = SAFE_NEW CGlobalSyncedStuff();
-	ENTER_UNSYNCED;
-	gu = SAFE_NEW CGlobalUnsyncedStuff();
+	gs = new CGlobalSyncedStuff();
+	gu = new CGlobalUnsyncedStuff();
 
 	gu->depthBufferBits = depthBufferBits;
 
@@ -270,7 +267,7 @@ bool SpringApp::Initialize()
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_SetModState (KMOD_NONE);
 
-	keys = SAFE_NEW Uint8[SDLK_LAST];
+	keys = new Uint8[SDLK_LAST];
 	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
 
 	LoadFonts();
@@ -807,8 +804,6 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
  */
 void SpringApp::Startup()
 {
-	ENTER_SYNCED;
-
 	LocalSetup* startsetup = 0;
 	startsetup = new LocalSetup();
 	if (!startscript.empty())
@@ -831,18 +826,18 @@ void SpringApp::Startup()
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(startsetup->isHost);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup);
+		pregame = new CPreGame(startsetup);
 		if (startsetup->isHost)
 			pregame->LoadSetupscript(buf);
 	}
 	else if (!demofile.empty())
 	{
 		startsetup->isHost = true; // local demo play
-		startsetup->myPlayerName = configHandler.GetString("name", "unnamed");
+		startsetup->myPlayerName = configHandler.GetString("name", "unnamed")+ " (spec)";
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup);
+		pregame = new CPreGame(startsetup);
 		pregame->LoadDemo(demofile);
 	}
 	else if (!savefile.empty())
@@ -851,7 +846,7 @@ void SpringApp::Startup()
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true);
 #endif
-		pregame = SAFE_NEW CPreGame(startsetup);
+		pregame = new CPreGame(startsetup);
 		pregame->LoadSavefile(savefile);
 	}
 	else
@@ -994,7 +989,6 @@ void SpringApp::UpdateSDLKeys ()
  */
 int SpringApp::Run (int argc, char *argv[])
 {
-	INIT_SYNCIFY;
 	CheckCmdLineFile (argc, argv);
 	cmdline = BaseCmd::initialize(argc,argv);
 /*
@@ -1026,7 +1020,6 @@ int SpringApp::Run (int argc, char *argv[])
 	bool done = false;
 
 	while (!done) {
-		ENTER_UNSYNCED;
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE: {
@@ -1166,7 +1159,6 @@ int SpringApp::Run (int argc, char *argv[])
 			handleerror(NULL, e.what(), "Content error", MBF_OK | MBF_EXCL);
 		}
 	}
-	ENTER_MIXED;
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	gmlKeepRunning=0; // wait for sim to finish
@@ -1199,7 +1191,6 @@ void SpringApp::Shutdown()
 	SDL_Quit();
 	delete gs;
 	delete gu;
-	END_SYNCIFY;
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif

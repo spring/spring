@@ -99,7 +99,7 @@ void CPlasmaRepulser::Update(void)
 			for (int y = 0; y < 16; y += 4) {
 				for (int x = 0; x < 32; x += 4) {
 					visibleShieldParts.push_back(
-						SAFE_NEW CShieldPartProjectile(owner->pos, x, y, radius,
+						new CShieldPartProjectile(owner->pos, x, y, radius,
 						                               weaponDef->shieldBadColor,
 						                               weaponDef->shieldAlpha,
 						                               weaponDef->visuals.texture1, owner)
@@ -187,7 +187,7 @@ void CPlasmaRepulser::Update(void)
 								const float colorMix = std::min(1.0f, curPower / std::max(1.0f, weaponDef->shieldPower));
 								const float3 color = (weaponDef->shieldGoodColor * colorMix) +
 								                     (weaponDef->shieldBadColor * (1.0f - colorMix));
-								SAFE_NEW CRepulseGfx(owner, *pi, radius, color);
+								new CRepulseGfx(owner, *pi, radius, color);
 							}
 						}
 

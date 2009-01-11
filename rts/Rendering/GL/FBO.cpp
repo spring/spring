@@ -73,7 +73,7 @@ void FBO::DownloadAttachment(const GLenum attachment)
 			return;
 	}
 
-	struct FBO::TexData* tex = SAFE_NEW FBO::TexData;
+	struct FBO::TexData* tex = new FBO::TexData;
 	tex->id = id;
 	tex->target = target;
 
@@ -111,20 +111,20 @@ void FBO::DownloadAttachment(const GLenum attachment)
 
 	switch (target) {
 		case GL_TEXTURE_3D:
-			tex->pixels = SAFE_NEW unsigned char[tex->xsize*tex->ysize*tex->zsize*(bits/8)];
+			tex->pixels = new unsigned char[tex->xsize*tex->ysize*tex->zsize*(bits/8)];
 			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
 			break;
 		case GL_TEXTURE_1D:
-			tex->pixels = SAFE_NEW unsigned char[tex->xsize*(bits/8)];
+			tex->pixels = new unsigned char[tex->xsize*(bits/8)];
 			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
 			break;
 		case GL_RENDERBUFFER_EXT:
-			tex->pixels = SAFE_NEW unsigned char[tex->xsize*tex->ysize*(bits/8)];
+			tex->pixels = new unsigned char[tex->xsize*tex->ysize*(bits/8)];
 			glReadBuffer(attachment);
 			glReadPixels(0, 0, tex->xsize, tex->ysize, /*FIXME*/GL_RGBA, /*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
 			break;
 		default: //GL_TEXTURE_2D & GL_TEXTURE_RECTANGLE
-			tex->pixels = SAFE_NEW unsigned char[tex->xsize*tex->ysize*(bits/8)];
+			tex->pixels = new unsigned char[tex->xsize*tex->ysize*(bits/8)];
 			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
 	}
 	texBuf[id] = tex;

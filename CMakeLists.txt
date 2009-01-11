@@ -53,6 +53,9 @@ if (MINGW)
 	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
 	include_directories(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
+	
+	SET(CMAKE_SHARED_LIBRARY_PREFIX "")
+	SET(CMAKE_SHARED_MODULE_PREFIX "")
 	set (SDL_LIBRARY SDL)
 	set (Boost_REGEX_LIBRARY boost_regex-mt)
 	set (Boost_THREAD_LIBRARY boost_thread-mt)
@@ -115,7 +118,7 @@ else (UNIX OR CMAKE_CROSSCOMPILING)
 endif(UNIX OR CMAKE_CROSSCOMPILING)
 
 ### install base data files
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".svn" EXCLUDE)
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR})
 
 ### Install freedesktop-files, mime-types etc.
 if (UNIX AND NOT MINGW)

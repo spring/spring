@@ -148,8 +148,6 @@ void CInfoConsole::NotifyLogMsg(CLogSubsystem& subsystem, const char* text)
 {
 	if (!font) return;
 
-	PUSH_CODE_MODE;
-	ENTER_MIXED;
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
 	RawLine rl(text, &subsystem, rawId);
@@ -200,8 +198,6 @@ void CInfoConsole::NotifyLogMsg(CLogSubsystem& subsystem, const char* text)
 		data.back().time=lifetime-lastTime;
 		lastTime=lifetime;
 	}
-
-	POP_CODE_MODE;
 }
 
 

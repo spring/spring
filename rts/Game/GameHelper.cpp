@@ -52,7 +52,7 @@ CGameHelper::CGameHelper(CGame* game)
 {
 	this->game=game;
 
-	stdExplosionGenerator = SAFE_NEW CStdExplosionGenerator;
+	stdExplosionGenerator = new CStdExplosionGenerator;
 }
 
 CGameHelper::~CGameHelper()
@@ -86,10 +86,8 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	// the volume's minimally-bounding sphere
 	//
 	float3 dif = (unit->midPos + unit->collisionVolume->GetOffsets()) - expPos;
-	float expDist = dif.Length();
 	const float volRad = unit->collisionVolume->GetBoundingRadius();
-
-	expDist = std::max(expDist, volRad + 0.1f);
+	const float expDist = std::max(dif.Length(), volRad + 0.1f);
 
 	// expDist2 is the distance from the boundary of the
 	// _volume's_ minimally-bounding sphere (!) to the
@@ -107,7 +105,18 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	// (because CQuadField is again based exclusively on
 	// unit->radius, so the iteration will include units
 	// that should not be touched)
+
+	// Clamp expDist to radius to prevent division by zero
+	// (expDist2 can never be > radius). We still need the
+	// original expDist later to normalize dif.
+	// expDist2 _can_ exceed radius when explosion is eg.
+	// on shield surface: in that case don't do any damage
 	float expDist2 = expDist - volRad;
+	float expDist1 = std::min(expDist, expRad);
+
+	if (expDist2 > expRad) {
+		return;
+	}
 
 	if (unit->isUnderWater && (expPos.y > -1.0f)) {
 		// should make it harder to damage subs with above-water weapons
@@ -115,12 +124,9 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 		expDist2 = std::min(expDist2, expRad);
 	}
 
-	// Clamp expDist to radius to prevent division by zero
-	// (expDist2 can never be > radius). We still need the
-	// original expDist later to normalize dif.
-	float expDist1 = std::min(expDist, expRad);
 	float mod  = (expRad - expDist1) / (expRad - expDist1 * edgeEffectiveness);
 	float mod2 = (expRad - expDist2) / (expRad - expDist2 * edgeEffectiveness);
+
 	dif /= expDist;
 	dif.y += 0.12f;
 
@@ -130,7 +136,7 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	if (expDist2 < (expSpeed * 4.0f)) { //damage directly
 		unit->DoDamage(damageDone, owner, addedImpulse, weaponId);
 	} else { //damage later
-		WaitingDamage* wd = SAFE_NEW WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
+		WaitingDamage* wd = new WaitingDamage((owner? owner->id: -1), unit->id, damageDone, addedImpulse, weaponId);
 		waitingDamages[(gs->frameNum + int(expDist2 / expSpeed) - 3) & 127].push_front(wd);
 	}
 }
@@ -191,8 +197,9 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 	expRad = std::max(expRad, 1.0f);
 
 	if (impactOnly) {
-		if (hit)
+		if (hit) {
 			DoExplosionDamage(hit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
+		}
 	} else {
 		float height = std::max(expPos.y - h2, 0.0f);
 
@@ -250,9 +257,7 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 
 	groundDecals->AddExplosion(expPos, damages[0], expRad);
 
-	ENTER_UNSYNCED;
 	water->AddExplosion(expPos, damages[0], expRad);
-	ENTER_SYNCED;
 }
 
 

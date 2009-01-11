@@ -1,15 +1,11 @@
 #include "StdAfx.h"
+#include "DemoReader.h"
 
 #include <limits.h>
 #include <stdexcept>
 #include <assert.h>
 #include "mmgr.h"
 
-#include "DemoReader.h"
-
-#ifndef DEDICATED
-#include "Sync/Syncify.h"
-#endif
 #include "Game/GameSetup.h"
 #include "Net/RawPacket.h"
 #include "Game/GameVersion.h"

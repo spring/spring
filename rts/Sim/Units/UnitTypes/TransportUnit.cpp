@@ -113,8 +113,10 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		} else {
 			const float gh = ground->GetHeight2(u->pos.x, u->pos.z);
 
-			if (gh < -u->unitDef->maxWaterDepth || gh > -u->unitDef->minWaterDepth) {
-				// note: should also check movedef restraints?
+			if (gh < -u->unitDef->movedata->depth) {
+				// treat depth as maxWaterDepth (fails if
+				// the transportee is a ship, but so does
+				// using UnitDef::{min, max}WaterDepth)
 				u->KillUnit(false, false, 0x0, false);
 				continue;
 			}

@@ -326,7 +326,6 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 {
 	if(!repeatOrders || c.options & DONT_REPEAT) {
 		buildOption.numQued--;
-		ENTER_MIXED;
 		if (owner->team == gu->myTeam) {
 			if(lastRestrictedWarning+100<gs->frameNum) {
 				logOutput.Print("%s: Build failed, unit type limit reached",owner->unitDef->humanName.c_str());
@@ -334,7 +333,6 @@ void CFactoryCAI::CancelRestrictedUnit(const Command& c, BuildOption& buildOptio
 				lastRestrictedWarning = gs->frameNum;
 			}
 		}
-		ENTER_SYNCED;
 	}
 	UpdateIconName(c.id, buildOption);
 	FinishCommand();

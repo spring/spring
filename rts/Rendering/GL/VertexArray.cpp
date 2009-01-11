@@ -14,8 +14,8 @@
 //////////////////////////////////////////////////////////////////////
 
 CVertexArray::CVertexArray() {
-	drawArray=SAFE_NEW float[VA_INIT_VERTEXES]; // please don't change this, some files rely on specific initial sizes
-	stripArray=SAFE_NEW int[VA_INIT_STRIPS];
+	drawArray=new float[VA_INIT_VERTEXES]; // please don't change this, some files rely on specific initial sizes
+	stripArray=new int[VA_INIT_STRIPS];
 	Initialize();
 	drawArraySize=drawArray+VA_INIT_VERTEXES;
 	stripArraySize=stripArray+VA_INIT_STRIPS;
@@ -124,7 +124,7 @@ void CVertexArray::EnlargeDrawArray() {
 	int pos=drawArrayPos-drawArray;
 	int oldsize=drawArraySize-drawArray;
 	int newsize=oldsize*2;
-	float* tempArray=SAFE_NEW float[newsize];
+	float* tempArray=new float[newsize];
 	memcpy(tempArray,drawArray,oldsize*sizeof(float));
 
 	delete [] drawArray;
@@ -138,7 +138,7 @@ void CVertexArray::EnlargeStripArray() {
 	int oldsize=stripArraySize-stripArray;
 	int newsize=oldsize*2;
 
-	int* tempArray=SAFE_NEW int[newsize];
+	int* tempArray=new int[newsize];
 	memcpy(tempArray,stripArray,oldsize*sizeof(int));
 
 	delete [] stripArray;
