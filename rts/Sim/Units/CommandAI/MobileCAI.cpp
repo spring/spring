@@ -14,6 +14,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -190,6 +191,24 @@ CMobileCAI::~CMobileCAI()
 
 }
 
+/** helper function for CMobileCAI::GiveCommandReal */
+template <typename T>
+static T* getAirMoveType(CUnit *owner)
+{
+	T* airMT;
+	if (owner->usingScriptMoveType) {
+		if (!dynamic_cast<T*>(owner->prevMoveType))
+			return 0;
+		airMT = (T*)owner->prevMoveType;
+	} else {
+		if (!dynamic_cast<T*>(owner->moveType))
+			return 0;
+		airMT = (T*) owner->moveType;
+	}
+
+	return airMT;
+}
+
 void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 {
 	if (!AllowedCommand(c))
@@ -199,23 +218,17 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 		if (c.params.empty()) {
 			return;
 		}
-		CTAAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			if (!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
-				return;
-			airMT = (CTAAirMoveType*)owner->prevMoveType;
-		} else {
-			if (!dynamic_cast<CTAAirMoveType*>(owner->moveType))
-				return;
-			airMT = (CTAAirMoveType*) owner->moveType;
-		}
+
+		AAirMoveType* airMT = getAirMoveType<AAirMoveType>(owner);
+		if (!airMT)
+			return;
+
 		switch ((int) c.params[0]) {
 			case 0: { airMT->repairBelowHealth = 0.0f; break; }
 			case 1: { airMT->repairBelowHealth = 0.3f; break; }
 			case 2: { airMT->repairBelowHealth = 0.5f; break; }
 			case 3: { airMT->repairBelowHealth = 0.8f; break; }
 		}
-
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi) {
 			if (cdi->id == CMD_AUTOREPAIRLEVEL) {
@@ -234,16 +247,10 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 		if (c.params.empty()) {
 			return;
 		}
-		CTAAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			if (!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
-				return;
-			airMT = (CTAAirMoveType*) owner->prevMoveType;
-		} else {
-			if (!dynamic_cast<CTAAirMoveType*>(owner->moveType))
-				return;
-			airMT = (CTAAirMoveType*) owner->moveType;
-		}
+		AAirMoveType* airMT = getAirMoveType<AAirMoveType>(owner);
+		if (!airMT)
+			return;
+
 		switch ((int) c.params[0]) {
 			case 0: { airMT->autoLand = false; break; }
 			case 1: { airMT->autoLand = true; break; }
