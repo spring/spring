@@ -1,5 +1,8 @@
 Spring change log
 
+0.78.1.1:
+ - fix Features (wrecks, rocks) not beeing drawn with reflective units
+
 0.78.1:
 (notice the new version number scheme, its MAJOR (0.78) - MINOR (1))
 Crashes:
