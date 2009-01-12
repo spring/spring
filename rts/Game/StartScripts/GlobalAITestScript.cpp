@@ -13,6 +13,7 @@
 #include "LogOutput.h"
 #include "FileSystem/FileSystem.h"
 #include "Game/GameSetup.h"
+#include "Game/PlayerHandler.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 
@@ -40,6 +41,7 @@ void CGlobalAITestScript::GameStart(void)
 	teamHandler->Team(1)->isAI = true;
 	teamHandler->Team(1)->dllAI = dllName;
 	teamHandler->Team(1)->leader = 0;
+	playerHandler->Player(0)->SetControlledTeams();
 
 	globalAI->CreateGlobalAI(1, dllName.c_str());
 
