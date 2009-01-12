@@ -168,14 +168,14 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	//process all in order packets that we have waiting
 	while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end())
 	{
-		unsigned char buf[4096];
+		unsigned char buf[32768];
 		unsigned bufLength = 0;
 
 		if (fragmentBuffer)
 		{
 			// combine with fragment buffer
 			bufLength += fragmentBuffer->length;
-			assert(fragmentBuffer->length < 4096);
+			assert(fragmentBuffer->length < 32768);
 			memcpy(buf, fragmentBuffer->data, bufLength);
 			delete fragmentBuffer;
 			fragmentBuffer = NULL;
@@ -183,7 +183,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 		lastInOrder++;
 #if (BOOST_VERSION >= 103400)
-		assert((wpi->second->length + bufLength) < 4096);
+		assert((wpi->second->length + bufLength) < 32768);
 		memcpy(buf + bufLength, wpi->second->data, wpi->second->length);
 		bufLength += (wpi->second)->length;
 #else
