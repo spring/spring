@@ -15,10 +15,9 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Log.h"
+#include "SimpleLog.h"
 
 #include "Util.h"
-#include "InterfaceDefines.h"
 
 #include <stdio.h>	// for file IO
 #include <stdlib.h>	// calloc(), exit()
@@ -35,11 +34,23 @@ bool isFineLog;
 void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 		bool _isFineLog) {
 
-	// NOTE: causeing a memory leack, as it is never freed.
+	// NOTE: this cuases a memory leack, as it is never freed.
 	// but it is used till the end of the applications runtime anyway
 	// -> no problem
-	char* logFileName = (char*) calloc(strlen(_logFileName) + 1, sizeof (char));
-	STRCPY(logFileName, _logFileName);
+	char* logFileName = util_allocStrCpy(_logFileName);
+
+	// make sure the dir of the log file exists
+	char logFileDir[strlen(logFileName) + 1];
+	util_getParentDir(logFileName, logFileDir);
+	if (!util_fileExists(logFileDir)) {
+		bool created = util_makeDir(logFileDir);
+		if (!created) {
+			simpleLog_error(-1,
+					"Failed to create the parent dir of the config file: %s",
+					logFileDir);
+		}
+	}
+
 	myLogFileName = logFileName;
 
 	useTimeStamps = _useTimeStamps;
@@ -79,7 +90,7 @@ void simpleLog_out(const char* msg) {
 }
 
 void simpleLog_logv(const char* fmt, va_list argp) {
-	
+
 	char text[bufferSize];
 
 	VSNPRINTF(text, sizeof(text), fmt, argp);

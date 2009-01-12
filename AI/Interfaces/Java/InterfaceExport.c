@@ -18,9 +18,9 @@
 #include "InterfaceExport.h"
 
 #include "InterfaceDefines.h"
-#include "Util.h"
 #include "JavaBridge.h"
-#include "Log.h"
+#include "CUtils/Util.h"
+#include "CUtils/SimpleLog.h"
 
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SStaticGlobalData.h"

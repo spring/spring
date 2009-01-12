@@ -18,26 +18,34 @@
 #include "Util.h"
 
 #include "ExternalAI/Interface/SStaticGlobalData.h" // for sPS
-#include "ExternalAI/Interface/SAIInterfaceLibrary.h" // for AI_INTERFACE_PROPERTY_DATA_DIR
+#ifdef BUILDING_AI
+// for SKIRMISH_AI_PROPERTY_DATA_DIR
+#include "ExternalAI/Interface/SSAILibrary.h"
+#elif BUILDING_AI_INTERFACE
+// for AI_INTERFACE_PROPERTY_DATA_DIR
+#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
+#endif
 
-#include <string.h>	// strcpy(), str...()
-#include <stdlib.h>	// malloc(), calloc(), free()
-#include <sys/stat.h>	// used for check if a file exists
-#ifdef	WIN32
-#include <io.h>		// needed for dir listing
-#include <direct.h>	// mkdir()
-#else	// WIN32
-#include <sys/stat.h>	// mkdir()
-#include <sys/types.h>	// mkdir()
-#include <dirent.h>		// needed for dir listing
-#endif	// WIN32
+#include <string.h>      // strcpy(), str...()
+#include <stdlib.h>      // malloc(), calloc(), free()
+#include <sys/stat.h>    // used for check if a file exists
+#ifdef WIN32
+#include <io.h>          // needed for dir listing
+#include <direct.h>      // mkdir()
+#else // WIN32
+#include <sys/stat.h>    // mkdir()
+#include <sys/types.h>   // mkdir()
+#include <dirent.h>      // needed for dir listing
+#endif // WIN32
 
 static unsigned int myInfoSize;
 static const char** myInfoKeys;
 static const char** myInfoValues;
 
+#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 static const char* myDataDirVersioned = NULL;
 static const char* myDataDirUnversioned = NULL;
+#endif
 
 void util_setMyInfo(
 		unsigned int infoSize,
@@ -47,25 +55,33 @@ void util_setMyInfo(
 	myInfoKeys = infoKeys;
 	myInfoValues = infoValues;
 
+#ifdef BUILDING_AI
+	myDataDirVersioned = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
+#elif BUILDING_AI_INTERFACE
 	myDataDirVersioned = util_getMyInfo(AI_INTERFACE_PROPERTY_DATA_DIR);
+#endif
 
+#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 	const char* lastSlash = strrchr(myDataDirVersioned, '/');
 	if (lastSlash == NULL) {
 		lastSlash = strrchr(myDataDirVersioned, '\\');
 	}
 	myDataDirUnversioned = util_allocStrSubCpyByPointers(
 			myDataDirVersioned, myDataDirVersioned, lastSlash);
+#endif
 }
 const char* util_getMyInfo(const char* key) {
 	return util_map_getValueByKey(myInfoSize, myInfoKeys, myInfoValues, key);
 }
 
+#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 const char* util_getDataDirVersioned() {
 	return myDataDirVersioned;
 }
 const char* util_getDataDirUnversioned() {
 	return myDataDirUnversioned;
 }
+#endif
 
 char* util_allocStr(unsigned int length) {
 	return (char*) calloc(length+1, sizeof(char));

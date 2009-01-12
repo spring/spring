@@ -157,11 +157,13 @@ install_aiinterfaces_dir = os.path.join(aiinterfaceenv['installprefix'], aiinter
 # *** Two environments with different actions were specified for the same target
 aiinterfaceobjs_main = create_shared_objects(aiinterfaceenv, filelist.get_shared_AIInterface_source(aiinterfaceenv), '-aiinterface')
 aiinterfaceobjs_SharedLib = create_shared_objects(aiinterfaceenv, filelist.get_shared_AIInterface_source_SharedLib(aiinterfaceenv), '-aiinterface')
+aiinterfaceobjs_CUtils = create_shared_objects(aiinterfaceenv, filelist.get_shared_Wrapper_source(aiinterfaceenv, 'CUtils'), '-aiinterface')
 
 # Build
 aiinterfaces_exclude_list=['build']
 aiinterfaces_needSharedLib_list=['C']
 aiinterfaces_needStreflop_list=['Java']
+aiinterfaces_needCUtils_list=['C', 'Java']
 javaInterfaceCP = ''
 javaInterfaceJar = ''
 for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterfaces_exclude_list):
@@ -170,9 +172,13 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 	myEnv = aiinterfaceenv.Clone()
 	install_data_interface_dir = os.path.join(install_aiinterfaces_dir, baseName, aiInterfaceVersion)
 	instList = []
-	objs = aiinterfaceobjs_main
+	objs = []
+	objs += aiinterfaceobjs_main
 	if baseName in aiinterfaces_needSharedLib_list:
 		objs += aiinterfaceobjs_SharedLib
+	if baseName in aiinterfaces_needCUtils_list:
+		myEnv.AppendUnique(CPPPATH = ['Wrappers'])
+		objs += aiinterfaceobjs_CUtils
 	if baseName in aiinterfaces_needStreflop_list:
 		if env['fpmath'] == 'sse':
 			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_SSE'])
@@ -320,7 +326,6 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 			objs += skirmishaiobjs_main
 		if isLegacyCpp:
 			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
-			#myEnv.AppendUnique(CXXFLAGS = ['-IWrappers'])
 			if useCreg:
 				objs += skirmishaiobjs_LegacyCppCregged
 			else:

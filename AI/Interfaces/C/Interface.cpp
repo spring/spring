@@ -17,7 +17,8 @@
 
 #include "Interface.h"
 
-#include "Log.h"
+#include "CUtils/Util.h"
+#include "CUtils/SimpleLog.h"
 
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
@@ -26,7 +27,6 @@
 
 #include "System/Platform/SharedLib.h"
 #include "System/Util.h"
-#include "Util.h"
 
 #include <sys/stat.h>	// used for check if a file exists
 #ifdef	WIN32

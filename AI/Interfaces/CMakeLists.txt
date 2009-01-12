@@ -38,7 +38,7 @@ if (EXISTS ${C_AIINTERFACE_SRC})
 	else (UNIX)
 		list (APPEND cAIInterface ${CMAKE_SOURCE_DIR}/rts/System/Platform/Win/DllLib)
 	endif (UNIX)
-	add_library(${C_AIINTERFACE_TARGET} MODULE ${cAIInterface} ${aienv}) # ${errorhandler})
+	add_library(${C_AIINTERFACE_TARGET} MODULE ${cAIInterface} ${aienv} ${cutilsenv}) # ${errorhandler})
 	install(TARGETS ${C_AIINTERFACE_TARGET} DESTINATION ${C_AIINTERFACE_DATA_DIR})
 endif (EXISTS ${C_AIINTERFACE_SRC})
 
@@ -94,7 +94,7 @@ if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Jav
 
 	# handle native part
 	aux_source_directory(${Java_AIINTERFACE_SRC} javaAIInterface)
-	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${aienv})
+	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${aienv} ${cutilsenv})
 	target_link_libraries(${Java_AIINTERFACE_TARGET} ${JAVA_JVM_LIBRARY})
 	install(TARGETS ${Java_AIINTERFACE_TARGET} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
 	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
