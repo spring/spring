@@ -61,13 +61,27 @@ def generate(env):
 	if os.environ.has_key('TEMP'):
 		env['ENV']['TEMP'] = os.environ['TEMP']
 
-	# We break unitsync if the filename of the shared object has a 'lib' prefix.
-	# It is also nicer for the AI shared objects.
-	env['LIBPREFIX'] = ''
+	#parse cmdline
+	def makeHashTable(args):
+		table = { }
+		for arg in args:
+			if len(arg) > 1:
+				lst = arg.split('=')
+				if len(lst) < 2: continue
+				key = lst[0]
+				value = lst[1]
+				if len(key) > 0 and len(value) > 0: table[key] = value
+		return table
+
+	args = makeHashTable(sys.argv)
 
 	# I don't see any reason to make this configurable --tvo.
 	# Note that commenting out / setting this to `None' will break the buildsystem.
-	env['builddir'] = 'build'
+	#env['builddir'] = 'build'
+	if args.has_key('builddir'):
+		env['builddir'] = args['builddir']
+	else:
+		env['builddir'] = 'build'
 
 	# SCons chokes in env.SConsignFile() if path doesn't exist.
 	if not os.path.exists(env['builddir']):
@@ -82,6 +96,10 @@ def generate(env):
 	intcachefile = os.path.join(env['builddir'], 'intopts.py')
 	usropts = Options(usrcachefile)
 	intopts = Options(intcachefile)
+
+	# We break unitsync if the filename of the shared object has a 'lib' prefix.
+	# It is also nicer for the AI shared objects.
+	env['LIBPREFIX'] = ''
 
 	#user visible options
 	usropts.AddOptions(
@@ -104,6 +122,8 @@ def generate(env):
 		('fpmath',            'Set to 387 or SSE on i386 and AMD64 architectures', 'sse'),
 		('prefix',            'Install prefix used at runtime', '/usr/local'),
 		('installprefix',     'Install prefix used for installion', '$prefix'),
+		('builddir',          'Build directory, used at build-time', 'build'),
+		('mingwlibsdir',      'MinGW libraries dir', 'mingwlibs'),
 		('datadir',           'Data directory (relative to prefix)', 'share/games/spring'),
 		('bindir',            'Directory for executables (rel. to prefix)', 'games'),
 		('libdir',            'Directory for AI plugin modules (rel. to prefix)', 'lib/spring'),
@@ -154,26 +174,12 @@ def generate(env):
 
 		# be paranoid, unset existing variables
 		for key in ['platform', 'gml', 'gmlsim', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
-			'libpath', 'prefix', 'installprefix', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip',
+			'libpath', 'prefix', 'installprefix', 'builddir', 'mingwlibsdir', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip',
 			'disable_avi', 'use_tcmalloc', 'use_mmgr', 'use_gch', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
 			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines', 'arch']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
-
-		#parse cmdline
-		def makeHashTable(args):
-			table = { }
-			for arg in args:
-				if len(arg) > 1:
-					lst = arg.split('=')
-					if len(lst) < 2: continue
-					key = lst[0]
-					value = lst[1]
-					if len(key) > 0 and len(value) > 0: table[key] = value
-			return table
-
-		args = makeHashTable(sys.argv)
 
 		env['is_configured'] = 8
 
@@ -382,6 +388,8 @@ def generate(env):
 		bool_opt('dc_allowed', True)
 		string_opt('prefix', '/usr/local')
 		string_opt('installprefix', '$prefix')
+		string_opt('builddir', 'build'),
+		string_opt('mingwlibsdir', 'mingwlibs'),
 		string_opt('datadir', 'share/games/spring')
 		string_opt('bindir', 'games')
 		string_opt('libdir', 'lib/spring')
@@ -455,8 +463,8 @@ def generate(env):
 			env['SHLINKFLAGS'] = '$LINKFLAGS -dynamic'
 			env['SHLIBSUFFIX'] = '.dylib'
 		elif env['platform'] == 'windows':
-			include_path += [os.path.join('mingwlibs', 'include')]
-			lib_path += [os.path.join('mingwlibs', 'lib')]
+			include_path += [os.path.join(env['mingwlibsdir'], 'include')]
+			lib_path += [os.path.join(env['mingwlibsdir'], 'lib')]
 			if os.environ.has_key('MINGDIR'):
 				include_path += [os.path.join(os.environ['MINGDIR'], 'include')]
 				lib_path += [os.path.join(os.environ['MINGDIR'], 'lib')]
