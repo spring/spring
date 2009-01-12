@@ -159,7 +159,7 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 /** @brief Try to find the closest airbase even if its reserved */
 float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
-	float closest = 1e6f;
+	float closest = 1e30f;
 	airBaseLstIt foundBase = freeBases[unit->allyteam].end();
 
 	for (airBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
