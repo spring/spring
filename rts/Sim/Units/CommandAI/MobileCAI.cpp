@@ -11,6 +11,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/AirBaseHandler.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
@@ -778,8 +779,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				// FIXME kill magic frame number
 				if (gs->frameNum > lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS) {
 					owner->moveType->KeepPointingTo(orderTarget->midPos,
-							std::min((float) (owner->losRadius * SQUARE_SIZE * 2),
-									owner->maxRange * 0.9f), true);
+							std::min((float) owner->losRadius * loshandler->losDiv,
+								owner->maxRange * 0.9f), true);
 				}
 			}
 			owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
@@ -793,8 +794,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			{
 				StopMove();
 				owner->moveType->KeepPointingTo(orderTarget->midPos,
-						std::min((float) (owner->losRadius * SQUARE_SIZE * 2),
-								owner->maxRange * 0.9f), true);
+						std::min((float) owner->losRadius * loshandler->losDiv,
+							owner->maxRange * 0.9f), true);
 			} else if(tempOrder && owner->moveState == 0){
 				SetGoal(lastUserGoal, owner->pos);
 			}
