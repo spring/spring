@@ -12,10 +12,10 @@ chdir("$installerDir/..");
 die "Unable to find \"installer\" directory." unless(-d "installer");
 
 my $testBuildString="";
-my $tag=`git describe --candidate=0 2>/dev/null`;
+my $tag=`git describe --candidate=0 --tags 2>/dev/null`;
 if($?) {
   $testBuildString=" -DTEST_BUILD";
-  $tag=`git describe`;
+  $tag=`git describe  --tags`;
   die "Unable to run \"git describe\"." if($?);
   chomp($tag);
   print "Creating test installer for revision $tag\n";
