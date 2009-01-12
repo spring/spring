@@ -26,13 +26,15 @@
 /game/maps
 /game/mods
 /game/demos
+/game/AI/Bot-libs
+/game/AI/Helper-libs
 /game/ext.txt
 /game/spring
 /game/spring-dedicated
 /game/*.def
 /game/*.exe
 /game/*.dll
-/game/AI/Bot-libs/*
+/game/*.so
 
 # DoxyGen output
 /doc
@@ -53,11 +55,9 @@
 # Windows libraries used by spring when compiling with Visual Studio
 /vclibs
 
-# Misc files
+# Misc file endings (eg. build or temp files)
 *.pyc
 *.o
-*.so
-*.dll
 *.log
 *~
 .*.swp
@@ -65,6 +65,8 @@
 *.gch
 *.cmake
 *.dir
+
+# ???
 progress.make
 flt-target
 
