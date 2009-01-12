@@ -324,7 +324,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	if (wd.type == "Cannon") {
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.8f);
-	} else if (wd.type == "BeamLaser") {
+	} else if (wd.type == "BeamLaser" || wd.type == "LightingCannon") {
 		wd.heightmod = wdTable.GetFloat("heightMod", 1.0f);
 	} else {
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.2f);
