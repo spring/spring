@@ -336,7 +336,7 @@ void CWeapon::Update()
 	    && (reloadStatus <= gs->frameNum)
 	    && (!weaponDef->stockpile || numStockpiled)
 	    && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0))
-	    && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0))
+	    && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0))
 	   )
 	{
 		if ((weaponDef->stockpile ||
