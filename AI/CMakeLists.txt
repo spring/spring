@@ -31,6 +31,8 @@ list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/Sim/Misc/DamageArray)
 #list (APPEND legacycppaienv ${errorhandler})
 #list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/System/LogOutput)
 
+aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils cutilsenv)
+
 
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)

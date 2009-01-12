@@ -36,9 +36,10 @@ def list_directories(env, path, exclude_list = (), exclude_regexp = '^\.', recur
 	return dirs
 
 
-def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.', exclude_dirs = False, path_relative = False):
+def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.', exclude_dirs = False, path_relative = False, include_regexp = ''):
 	rel_path_stack = ['']
 	exclude = re.compile(exclude_regexp)
+	include = re.compile(include_regexp)
 	ffiles = []
 	while len(rel_path_stack) > 0:
 		rpath = rel_path_stack.pop()
@@ -51,7 +52,7 @@ def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.', e
 				wf = rf
 			else:
 				wf = af
-			if os.path.exists(af) and not f in exclude_list and not exclude.search(f):
+			if os.path.exists(af) and not f in exclude_list and not exclude.search(f) and include.search(f):
 				if not os.path.isdir(af) or not exclude_dirs:
 					ffiles += [wf]
 				if os.path.isdir(af):
@@ -151,7 +152,6 @@ def get_groupAI_source(env, which):
 def get_shared_AI_source(env):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
-		result += [os.path.join(env['builddir'], 'rts/ExternalAI/Interface/SSkirmishAISpecifier.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Game/GameVersion.cpp')]
 #		result += [os.path.join(env['builddir'], 'rts/System/Platform/errorhandler.cpp')]
 	return result
@@ -181,12 +181,23 @@ def get_shared_skirmishAI_source_LegacyCpp(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AISCommands.cpp')]
-		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIAICallback.cpp')]
-		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIAICheats.cpp')]
-		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIGlobalAICallback.cpp')]
-		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIGlobalAI.cpp')]
-		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AI.cpp')]
+		result += get_shared_Wrapper_source(env, 'LegacyCpp')
+		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AISCommands.cpp')]
+		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIAICallback.cpp')]
+		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIAICheats.cpp')]
+		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIGlobalAICallback.cpp')]
+		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIGlobalAI.cpp')]
+		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AI.cpp')]
+	return result
+# list C and C++ course files of a Wrapper
+def get_shared_Wrapper_source(env, wrapperDir):
+	result = []
+	if env.has_key('builddir') and env['builddir']:
+		fullWrapperDir = os.path.join('Wrappers', wrapperDir)
+		files = list_files_recursive(env, fullWrapperDir, exclude_dirs = True, path_relative = True, include_regexp="\.(c|cpp)$")
+		for f in files:
+			result += [os.path.join(env['builddir'], fullWrapperDir, f)]
+			#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AI.cpp')]
 	return result
 # list Creg source files (used by some Skirmish AI libraries)
 def get_shared_skirmishAI_source_Creg(env):

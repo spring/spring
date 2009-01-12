@@ -18,7 +18,7 @@
 #include "InterfaceExport.h"
 
 #include "Interface.h"
-#include "Util.h"
+#include "CUtils/Util.h"
 
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SStaticGlobalData.h"

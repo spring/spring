@@ -18,9 +18,9 @@
 #include "JavaBridge.h"
 
 #include "InterfaceDefines.h"
-#include "Util.h"
 #include "StreflopBridge.h"
-#include "Log.h"
+#include "CUtils/Util.h"
+#include "CUtils/SimpleLog.h"
 
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SAICallback.h"

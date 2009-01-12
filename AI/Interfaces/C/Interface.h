@@ -19,7 +19,7 @@
 #define _INTERFACE_H
 
 #include "ExternalAI/Interface/SSAILibrary.h"
-#include "ExternalAI/Interface/SSkirmishAISpecifier.h"
+#include "CUtils/SSkirmishAISpecifier.h"
 
 #include <map>
 #include <set>

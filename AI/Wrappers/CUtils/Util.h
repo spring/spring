@@ -28,6 +28,7 @@ extern "C" {
 	// Microsoft Visual C++ 7.1: MSC_VER = 1310
 	// Microsoft Visual C++ 7.0: MSC_VER = 1300
 	#if _MSC_VER > 1310 // >= Visual Studio 2005
+		#define PRINT print_s
 		#define PRINTF printf_s
 		#define FPRINTF fprintf_s
 		#define SNPRINTF sprintf_s
@@ -36,6 +37,7 @@ extern "C" {
 		#define STRCAT strcat_s
 		#define FOPEN fopen_s
 	#else              // Visual Studio 2003
+		#define PRINT _print
 		#define PRINTF _printf
 		#define FPRINTF _fprintf
 		#define SNPRINTF _snprintf
@@ -47,6 +49,7 @@ extern "C" {
 	#define STRCASECMP stricmp
 #else	// _MSC_VER
 	// assuming GCC
+	#define PRINT print
 	#define PRINTF printf
 	#define FPRINTF fprintf
 	#define SNPRINTF snprintf
@@ -62,8 +65,10 @@ void util_setMyInfo(
 		const char** infoKeys, const char** infoValues);
 const char* util_getMyInfo(const char* key);
 
+#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 const char* util_getDataDirVersioned();
 const char* util_getDataDirUnversioned();
+#endif
 
 char* util_allocStr(unsigned int length);
 
