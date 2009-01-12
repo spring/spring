@@ -116,7 +116,7 @@ Caller must call LeaveLandingPad if it gets one and is finished with it or dies
 it's the callers responsibility to detect if the base dies while its reserved. */
 CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower)
 {
-	float closest = 1e6f;
+	float closest = 1e30f;
 	padLstIt foundPad;
 	airBaseLstIt foundBase = freeBases[unit->allyteam].end();
 
