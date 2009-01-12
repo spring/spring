@@ -125,7 +125,7 @@ else (UNIX OR CMAKE_CROSSCOMPILING)
 endif(UNIX OR CMAKE_CROSSCOMPILING)
 
 ### install base data files
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR})
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE)
 
 ### Install freedesktop-files, mime-types etc.
 if (UNIX AND NOT MINGW)
