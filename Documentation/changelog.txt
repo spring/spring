@@ -1,7 +1,7 @@
 Spring change log
 
-0.78.0:
-(notice the new version number scheme, its MAJOR (0.78) - MINOR (0))
+0.78.1:
+(notice the new version number scheme, its MAJOR (0.78) - MINOR (1))
 Crashes:
  - fix crash on window resizing
  - more groundDecal fixes
