@@ -30,6 +30,9 @@
 /game/spring
 /game/spring-dedicated
 /game/*.def
+/game/*.exe
+/game/*.dll
+/game/AI/Bot-libs/*
 
 # DoxyGen output
 /doc
