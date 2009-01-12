@@ -635,7 +635,6 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 
 	const int tempNum = gs->tempNum++;
 	CUnit* closeUnit = NULL;
-	float losFactor = (SQUARE_SIZE * (1 << modInfo.losMipLevel));
 
 	if (sphere) { // includes target radius
 		float closeDist = radius;
@@ -660,7 +659,7 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 						unit->radius;
 
 					if (dist <= closeDist &&
-						(canBeBlind || unit->losRadius * losFactor > dist)) {
+						(canBeBlind || unit->losRadius * loshandler->losDiv > dist)) {
 						closeDist = dist;
 						closeUnit = unit;
 					}
@@ -685,7 +684,7 @@ CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius
 					const float sqDist = (pos - unit->midPos).SqLength2D();
 
 					if (sqDist <= closeDistSq &&
-						(canBeBlind || unit->losRadius * losFactor > sqDist)) {
+						(canBeBlind || unit->losRadius * loshandler->losDiv > sqDist)) {
 						closeDistSq = sqDist;
 						closeUnit = unit;
 					}
