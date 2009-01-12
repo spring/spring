@@ -49,7 +49,7 @@ dir="spring_${version_string}"
 lzma="spring_${version_string}_src.tar.lzma"
 tbz="spring_${version_string}_src.tar.bz2"
 #tgz="spring_${branch}_src.tar.gz"
-zip="spring_${version_string}_src.zip"
+#zip="spring_${version_string}_src.zip"
 #seven_zip="spring_${branch}_src.7z"
 
 # This is the list of files/directories that go in the source package.
