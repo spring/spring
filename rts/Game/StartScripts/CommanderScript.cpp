@@ -8,7 +8,6 @@
 #include "CommanderScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Game.h"
-#include "Game/GameSetup.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/InfoConsole.h"
 #include "Lua/LuaParser.h"
@@ -61,17 +60,21 @@ void CCommanderScript::GameStart()
 			globalAI->CreateGlobalAI(a, team->dllAI.c_str());
 		}
 
+		if (team->side.empty()) {
+			// not a GameSetup-type game, or the script
+			// didn't specify a side for this team (bad)
+			// NOTE: the gameSetup ptr now always exists
+			// even for local games, so we can't rely on
+			// its being NULL to identify ones without a
+			// script (which have only two teams)
+			team->side = sideParser.GetSideName((a % 2), "arm");
+		}
+
 		// get the team startup info
-		// NOTE: team->side isn't set when playing GameSetup-type demos
-		// (CGlobalStuff::LoadFromSetup() doesn't get called for them),
-		// this needs to be sorted out properly
-		const std::string& tside = team->side;
-		const std::string& gside = gameSetup->teamStartingData[a].side;
-		const std::string& rside = (tside == gside)? tside: gside;
-		const std::string& startUnit = sideParser.GetStartUnit(rside);
+		const std::string& startUnit = sideParser.GetStartUnit(team->side);
 
 		if (startUnit.empty()) {
-			throw content_error( "Unable to load a commander for side: " + rside);
+			throw content_error( "Unable to load a commander for side: " + team->side);
 		}
 
 		CUnit* unit =

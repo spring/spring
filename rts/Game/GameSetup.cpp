@@ -300,7 +300,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 
 		data.handicap = atof(file.SGetValueDef("0", s + "handicap").c_str()) / 100 + 1;
 		data.leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
-		data.side = StringToLower(file.SGetValueDef("arm", s + "side").c_str());
+		data.side = StringToLower(file.SGetValueDef("", s + "side").c_str());
 		data.teamAllyteam = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
 
 		// Is this team (Lua) AI controlled?
