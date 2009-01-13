@@ -24,7 +24,6 @@ done
 
 set +e # turn of quit on error
 git describe --candidates 0 --tags &> /dev/null
-set -e # turn it on again
 if [ $? -ne "0" ]; then
 	RELEASE_SOURCE=false
 	echo "Making test-packages"
@@ -32,6 +31,7 @@ else
 	RELEASE_SOURCE=true
 	echo "Making release-packages"
 fi
+set -e # turn it on again
 
 if [ $RELEASE_SOURCE ]; then
 	version_string=`git describe --tags`
@@ -57,6 +57,7 @@ tbz="spring_${version_string}_src.tar.bz2"
 include=" \
  $dir/AI/Group/ \
  $dir/AI/Global/AAI/ \
+ $dir/AI/Global/RAI/ \
  $dir/AI/Global/KAIK-0.13/ \
  $dir/AI/Global/TestGlobalAI/ \
  $dir/Documentation/ \
@@ -75,9 +76,10 @@ include=" \
 
 # On linux, win32 executables are useless.
 # TASClient is windows only.
-linux_exclude="$dir/installer/pkzip.exe"
+exclude_from_all="$dir/game/.gitignore"
+linux_exclude="${exclude_from_all} $dir/installer/pkzip.exe"
 linux_include=""
-windows_exclude=""
+windows_exclude="${exclude_from_all}"
 windows_include=""
 
 # Linux line endings, .tar.{bz2,gz} package.
