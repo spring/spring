@@ -40,6 +40,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "GlobalUnsynced.h"
+#include "Util.h"
 #include "Sound.h"
 #include "myMath.h"
 #include "Sync/SyncTracer.h"
