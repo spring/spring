@@ -77,12 +77,12 @@ CDemoRecorder::~CDemoRecorder()
 
 void CDemoRecorder::WriteSetupText(const std::string& text)
 {
-	int length = gameSetup->gameSetupText.length();
-	while (gameSetup->gameSetupText.c_str()[length - 1] == '\0')
+	int length = text.length();
+	while (text.c_str()[length - 1] == '\0')
 		--length;
 
 	fileHeader.scriptSize = length;
-	recordDemo.write(gameSetup->gameSetupText.c_str(), length);
+	recordDemo.write(text.c_str(), length);
 }
 
 void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length)

@@ -389,6 +389,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	gameData.reset(new GameData(packet));
 
 	CGameSetup* temp = new CGameSetup();
+	net->GetDemoRecorder()->WriteSetupText(gameData->GetSetup());
 	if (temp->Init(gameData->GetSetup()))
 	{
 		temp->scriptName = gameData->GetScript();
