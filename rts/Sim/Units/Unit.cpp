@@ -563,6 +563,12 @@ void CUnit::Update()
 	flankingBonusMobility += flankingBonusMobilityAdd;
 
 	if (stunned) {
+		// leave the pad if reserved
+		if (moveType->reservedPad) {
+			airBaseHandler->LeaveLandingPad(moveType->reservedPad);
+			moveType->reservedPad = 0;
+			moveType->padStatus = 0;
+		}
 		return;
 	}
 
