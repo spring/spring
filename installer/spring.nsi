@@ -232,6 +232,12 @@ SectionGroup "AI opponent plugins (Bots)"
 	!include "sections\kai.nsh"
 	!undef INSTALL
 	SectionEnd
+	
+	Section "RAI" SEC_RAI
+	!define INSTALL
+	!include "sections\RAI.nsh"
+	!undef INSTALL
+	SectionEnd
 SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
@@ -274,6 +280,7 @@ Section Uninstall
   !include "sections\archivemover.nsh"
   !include "sections\aai.nsh"
   !include "sections\kai.nsh"
+  !include "sections\RAI.nsh"
   !include "sections\tasclient.nsh"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"
