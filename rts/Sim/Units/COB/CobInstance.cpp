@@ -737,7 +737,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 		return;
 	}
 
-	float3 relPos;
+	float3 relPos(0,0,0);
 	float3 relDir(0,1,0);
 	if (!GetEmitDirPos(piece, relPos, relDir)) {
 		GCobEngine.ShowScriptError("emit-sfx: GetEmitDirPos failed\n");
