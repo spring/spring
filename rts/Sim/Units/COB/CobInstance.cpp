@@ -331,7 +331,7 @@ int CCobInstance::RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void 
  * @param args vector<int> function arguments
  * @param cb CBCobThreadFinish Callback function
  * @param p1 void* callback argument #1
- * @param p2 void* callback argument #2 
+ * @param p2 void* callback argument #2
  * @return 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
  *  it will continue to run. Otherwise it will be killed. Returns 1 in this case.
  */
@@ -739,7 +739,9 @@ void CCobInstance::EmitSfx(int type, int piece)
 
 	float3 relPos;
 	float3 relDir(0,1,0);
-	GetEmitDirPos(piece, relPos, relDir);
+	if (!GetEmitDirPos(piece, relPos, relDir)) {
+		GCobEngine.ShowScriptError("emit-sfx: GetEmitDirPos failed\n");
+	}
 
 	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 
