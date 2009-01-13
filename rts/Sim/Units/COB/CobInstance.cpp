@@ -610,15 +610,6 @@ void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int de
 
 	ai = FindAnim(type, piece, axis);
 	if (!ai) {
-		//check if the animation is needed
-		if (type == AMove) {
-			if (pieces[piece]->pos[axis] == destf)
-				return; // no animation needed, the piece is already at the wanted pos
-		} else if (type == ATurn) {
-			if (RadsAreEqual(pieces[piece]->rot[axis],destf))
-				return; // no animation needed, the piece already points in the wanted angle
-		}
-
 		ai = new struct AnimInfo;
 		ai->type = type;
 		ai->piece = piece;
