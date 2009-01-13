@@ -208,25 +208,8 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 		//Not found? Try lowercase
 		if (cur == lp.size()) {
 			for (cur=0; cur<lp.size(); cur++) {
+				logOutput.Print("foo %s %s",scriptname.c_str(),lp[cur]->name.c_str());
 				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
-					break;
-				}
-			}
-		}
-
-		//Not found? Try again with partial matching
-		if (cur == lp.size()) {
-			for (cur = 0; cur < lp.size(); ++cur) {
-				std::string &s2 = lp[cur]->name;
-				int maxcompare = std::min(scriptname.size(), s2.size());
-				int j;
-				for (j = 0; j < maxcompare; ++j) {
-					if (scriptname[j] != s2[j]) {
-						break;
-					}
-				}
-				//Match now?
-				if (j == maxcompare) {
 					break;
 				}
 			}
