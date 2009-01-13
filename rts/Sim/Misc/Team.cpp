@@ -132,7 +132,7 @@ CTeam::CTeam()
   metalReceived(0),
   energySent(0),
   energyReceived(0),
-  side("arm"),
+  side(""),
   isAI(false),
   luaAI(""),
   dllAI(""),
