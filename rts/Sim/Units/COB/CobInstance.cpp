@@ -730,12 +730,12 @@ void CCobInstance::SetVisibility(int piece, bool visible)
 
 void CCobInstance::EmitSfx(int type, int piece)
 {
+#ifndef _CONSOLE
 	if (!PieceExists(piece)) {
 		GCobEngine.ShowScriptWarning("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
-#ifndef _CONSOLE
 	if(ph->particleSaturation>1 && type<1024){		//skip adding particles when we have to many (make sure below can be unsynced)
 		return;
 	}
