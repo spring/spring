@@ -121,14 +121,11 @@ C3DOParser::C3DOParser()
 
 S3DModel* C3DOParser::Load(string name)
 {
-//	ifstream ifs(name, ios::in|ios::binary);
-	//int size=vfsHandler->GetFileSize(name);
 	CFileHandler file(name);
 	if(!file.FileExists()){
 		throw content_error("File not found: "+name);
 	}
 	fileBuf=new unsigned char[file.FileSize()];
-	//vfsHandler->LoadFile(name,fileBuf);
 	file.Read(fileBuf, file.FileSize());
 	if (fileBuf == NULL) {
 		delete [] fileBuf;
@@ -136,54 +133,35 @@ S3DModel* C3DOParser::Load(string name)
 	}
 
 	S3DModel *model = new S3DModel;
-	S3DOPiece* object=new S3DOPiece;
-	object->type=MODELTYPE_3DO;
-	model->type=MODELTYPE_3DO;
-	model->rootobject=object;
-	model->textureType=0;
-	object->isEmpty=true;
-	model->name=name;
-	model->numobjects=1;
+	model->name = name;
+	model->type = MODELTYPE_3DO;
+	model->textureType = 0;
+	model->numobjects  = 0;
 
-	_3DObject root;
-//	ifs.seekg(0);
-//	ifs.read((char*)&root,sizeof(_3DObject));
-	curOffset=0;
-	READ_3DOBJECT(root);
-	object->name = StringToLower(GetText(root.OffsetToObjectName));
+	// Load the Model
+	S3DOPiece* rootobj = ReadChild(0,NULL,&model->numobjects);
+	model->rootobject = rootobj;
 
-	std::vector<float3> vertexes;
+	// PreProcessing
+	FindCenter(rootobj);
+	rootobj->radius = FindRadius(rootobj,-rootobj->relMidPos);
+	rootobj->relMidPos.x = 0;
+	rootobj->relMidPos.z = 0;
+	if(rootobj->relMidPos.y<1)
+		rootobj->relMidPos.y=1;
 
-	GetVertexes(&root,object);
-	GetPrimitives(object,root.OffsetToPrimitiveArray,root.NumberOfPrimitives,&vertexes,root.SelectionPrimitive);
-	CalcNormals(object);
-	if(root.OffsetToChildObject>0)
-		if(!ReadChild(root.OffsetToChildObject,object,&model->numobjects))
-			object->isEmpty=false;
+	model->radius = rootobj->radius;
+	model->height = FindHeight(rootobj,ZeroVector);
 
-	object->offset.x= root.XFromParent*scaleFactor;
-	object->offset.y= root.YFromParent*scaleFactor;
-	object->offset.z=-root.ZFromParent*scaleFactor;
+	model->maxx=rootobj->maxx;
+	model->maxy=rootobj->maxy;
+	model->maxz=rootobj->maxz;
 
-	FindCenter(object);
-	object->radius=FindRadius(object,-object->relMidPos);
-	object->relMidPos.x=0;
-	object->relMidPos.z=0;		//stupid but seems to work better
-	if(object->relMidPos.y<1)
-		object->relMidPos.y=1;
+	model->minx=rootobj->minx;
+	model->miny=rootobj->miny;
+	model->minz=rootobj->minz;
 
-	model->radius = object->radius;
-	model->height = FindHeight(object,ZeroVector);
-
-	model->maxx=object->maxx;
-	model->maxy=object->maxy;
-	model->maxz=object->maxz;
-
-	model->minx=object->minx;
-	model->miny=object->miny;
-	model->minz=object->minz;
-
-	model->relMidPos=object->relMidPos;
+	model->relMidPos=rootobj->relMidPos;
 
 	delete[] fileBuf;
 	return model;
@@ -350,7 +328,7 @@ std::string C3DOParser::GetText(int pos)
 }
 
 
-bool C3DOParser::ReadChild(int pos, S3DOPiece *root,int *numobj)
+S3DOPiece* C3DOParser::ReadChild(int pos, S3DOPiece *root,int *numobj)
 {
 	(*numobj)++;
 
@@ -360,7 +338,8 @@ bool C3DOParser::ReadChild(int pos, S3DOPiece *root,int *numobj)
 	curOffset=pos;
 	READ_3DOBJECT(me);
 
-	string s = StringToLower(GetText(me.OffsetToObjectName));
+	std::string s = GetText(me.OffsetToObjectName);
+	StringToLowerInPlace(s);
 	object->name = s;
 	object->displist = 0;
 	object->type = MODELTYPE_3DO;
@@ -369,29 +348,23 @@ bool C3DOParser::ReadChild(int pos, S3DOPiece *root,int *numobj)
 	object->offset.y= me.YFromParent*scaleFactor;
 	object->offset.z=-me.ZFromParent*scaleFactor;
 	std::vector<float3> vertexes;
-	object->isEmpty=true;
 
 	GetVertexes(&me,object);
 	GetPrimitives(object,me.OffsetToPrimitiveArray,me.NumberOfPrimitives,&vertexes,-1/*me.SelectionPrimitive*/);
 	CalcNormals(object);
 
-
-	if(me.OffsetToChildObject>0){
-		if(!ReadChild(me.OffsetToChildObject,object,numobj)){
-			object->isEmpty=false;
-		}
+	if(me.OffsetToChildObject>0) {
+		object->childs.push_back( ReadChild(me.OffsetToChildObject,object,numobj) );
 	}
-	bool ret=object->isEmpty;
 
 	object->vertexCount = object->vertices.size();
+	object->isEmpty = object->vertices.size() < 3;
 
-	root->childs.push_back(object);
+	if(me.OffsetToSiblingObject>0) {
+		root->childs.push_back( ReadChild(me.OffsetToSiblingObject,root,numobj) );
+	}
 
-	if(me.OffsetToSiblingObject>0)
-		if(!ReadChild(me.OffsetToSiblingObject,root,numobj))
-			ret=false;
-
-	return ret;
+	return object;
 }
 
 
