@@ -259,7 +259,7 @@ bool LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
 		pos = mat.GetPos()*invAxis;
 		dir = mat.Mul(piece->GetVertexPos(0)*invVertAxis)*invAxis - pos;
 	}
-	else if(piece->vertexCount == 2) {
+	else if(piece->vertexCount >= 2) {
 		float3 p1 = mat.Mul(piece->GetVertexPos(0) * invVertAxis) * invAxis;
 		float3 p2 = mat.Mul(piece->GetVertexPos(1) * invVertAxis) * invAxis;
 
@@ -268,6 +268,7 @@ bool LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
 	} else {
 		return false;
 	}
+	return true;
 }
 
 /******************************************************************************/
