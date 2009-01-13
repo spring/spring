@@ -190,22 +190,33 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 	pieces.clear();
 	pieces.reserve(script.pieceNames.size());
 
+	std::vector<LocalModelPiece*>& lp = lmodel->pieces;
+
 	for (int piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
-		std::string& scriptname = script.pieceNames[piecenum];
+		std::string& scriptname = script.pieceNames[piecenum]; // is already in lowercase!
 
 		unsigned int cur;
 
 		//Map this piecename to an index in the script's pieceinfo
-		for (cur=0; cur<lmodel->pieces.size(); cur++) {
-			if (lmodel->pieces[cur]->name.compare(scriptname) == 0) {
+		for (cur=0; cur<lp.size(); cur++) {
+			if (lp[cur]->name.compare(scriptname) == 0) {
 				break;
 			}
 		}
 
+		//Not found? Try lowercase
+		if (cur == lp.size()) {
+			for (cur=0; cur<lp.size(); cur++) {
+				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
+					break;
+				}
+			}
+		}
+
 		//Not found? Try again with partial matching
-		if (cur == lmodel->pieces.size()) {
-			for (cur = 0; cur < lmodel->pieces.size(); ++cur) {
-				std::string &s2 = lmodel->pieces[cur]->name;
+		if (cur == lp.size()) {
+			for (cur = 0; cur < lp.size(); ++cur) {
+				std::string &s2 = lp[cur]->name;
 				int maxcompare = std::min(scriptname.size(), s2.size());
 				int j;
 				for (j = 0; j < maxcompare; ++j) {
@@ -220,9 +231,9 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 			}
 		}
 
-		//Did we find it now?
-		if (cur < lmodel->pieces.size()) {
-			pieces.push_back(lmodel->pieces[cur]);
+		//Did we find it?
+		if (cur < lp.size()) {
+			pieces.push_back(lp[cur]);
 		} else {
 			pieces.push_back(NULL);
 			logOutput.Print("CobWarning: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");

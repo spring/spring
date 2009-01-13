@@ -135,6 +135,8 @@ void FBO::DownloadAttachment(const GLenum attachment)
  */
 void FBO::GLContextLost()
 {
+	if (!IsSupported()) return;
+
 	//GML_STDMUTEX_LOCK(draw);
 
 	GLint oldReadBuffer;
@@ -162,6 +164,8 @@ void FBO::GLContextLost()
  */
 void FBO::GLContextReinit()
 {
+	if (!IsSupported()) return;
+
 	//GML_STDMUTEX_LOCK(draw);
 	for (std::map<GLuint,FBO::TexData*>::iterator ti=texBuf.begin(); ti!=texBuf.end(); ++ti) {
 		FBO::TexData* tex = ti->second;
