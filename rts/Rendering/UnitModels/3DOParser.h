@@ -58,13 +58,6 @@ class C3DOParser : public IModelParser
 		int OffsetToChildObject;
 	} _3DObject;
 
-	typedef struct _Vertex
-	{
-		int x;
-		int y;
-		int z;
-	} _Vertex;
-
 	typedef struct _Primitive
 	{
 		int PaletteEntry;

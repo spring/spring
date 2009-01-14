@@ -32,7 +32,8 @@
 
 using namespace std;
 
-static const float scaleFactor = 1/(65536.0f);
+static const float  scaleFactor = 1/(65536.0f);
+static const float3 DownVector  = float3(0,-1,0);
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -173,15 +174,13 @@ void C3DOParser::GetVertexes(_3DObject* o,S3DOPiece* object)
 	curOffset=o->OffsetToVertexArray;
 	object->vertices.reserve(o->NumberOfVertices);
 	for(int a=0;a<o->NumberOfVertices;a++){
-		_Vertex v;
+		float3 v;
 		READ_VERTEX(v);
 
 		S3DOVertex vertex;
-		float3 f;
-		f.x=(v.x)*scaleFactor;
-		f.y=(v.y)*scaleFactor;
-		f.z=-(v.z)*scaleFactor;
-		vertex.pos=f;
+		v  *= scaleFactor;
+		v.z = -v.z;
+		vertex.pos = v;
 		object->vertices.push_back(vertex);
 	}
 }
@@ -248,7 +247,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,
 		sp.normals.insert(sp.normals.begin(), sp.numVertex, n);
 
 		//sometimes there are more than one selection primitive (??)
-		if(n.dot(float3(0,-1,0))>0.99f){
+		if(n.dot(DownVector)>0.99f){
 			int ignore=true;
 
 			if(sp.numVertex!=4) {
@@ -313,15 +312,12 @@ void C3DOParser::CalcNormals(S3DOPiece *o)
 
 std::string C3DOParser::GetText(int pos)
 {
-//	ifs->seekg(pos);
 	curOffset=pos;
 	char c;
 	std::string s;
-//	ifs->read(&c,1);
 	SimStreamRead(&c,1);
 	while(c!=0){
 		s+=c;
-//		ifs->read(&c,1);
 		SimStreamRead(&c,1);
 	}
 	return s;
@@ -350,7 +346,7 @@ S3DOPiece* C3DOParser::ReadChild(int pos, S3DOPiece *root,int *numobj)
 	std::vector<float3> vertexes;
 
 	GetVertexes(&me,object);
-	GetPrimitives(object,me.OffsetToPrimitiveArray,me.NumberOfPrimitives,&vertexes,-1/*me.SelectionPrimitive*/);
+	GetPrimitives(object,me.OffsetToPrimitiveArray,me.NumberOfPrimitives,&vertexes, pos==0 ? me.SelectionPrimitive : -1);
 	CalcNormals(object);
 
 	if(me.OffsetToChildObject>0) {
@@ -358,7 +354,7 @@ S3DOPiece* C3DOParser::ReadChild(int pos, S3DOPiece *root,int *numobj)
 	}
 
 	object->vertexCount = object->vertices.size();
-	object->isEmpty = object->vertices.size() < 3;
+	object->isEmpty = object->prims.size() < 1;
 
 	if(me.OffsetToSiblingObject>0) {
 		root->childs.push_back( ReadChild(me.OffsetToSiblingObject,root,numobj) );
