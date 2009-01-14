@@ -1394,6 +1394,10 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 	{
 		if (name == players[i].name)
 		{
+			if (players[i].isFromDemo)
+			{
+				Message(str(format("Player %s (%i) is from demo") %name %i));
+			}
 			if (players[i].myState == GameParticipant::UNCONNECTED || players[i].myState == GameParticipant::DISCONNECTED)
 			{
 				hisNewNumber = i;
@@ -1439,7 +1443,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 
 	if (!demoReader || setup->demoName.empty()) // gamesetup from demo?
 	{
-		unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
+		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!teams[hisTeam]) // create new team
 		{
 			teams[hisTeam].reset(new GameTeam());

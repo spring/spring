@@ -391,6 +391,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	glEnable(GL_FOG);
 
 	drawIcon.clear();
 	drawRadarIcon.clear();
@@ -463,19 +464,20 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	DrawOpaqueShaderUnits();
 
-	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
-	glAlphaFunc(GL_GREATER, 0.8f);
-	glEnable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 	camNorm = camera->forward;
 	camNorm.y = -0.1f;
 	camNorm.ANormalize();
-	glColor3f(1, 1, 1);
-	glEnable(GL_FOG);
-	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
+	glAlphaFunc(GL_GREATER, 0.8f);
+	glEnable(GL_ALPHA_TEST);
+	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
+	glColor3f(1, 1, 1);
+	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	glEnable(GL_FOG);
+
+	va = GetVertexArray();
+	va->Initialize();
+	va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
 	for (GML_VECTOR<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
 		DrawFar(*usi);
 	}
@@ -497,6 +499,8 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 			DrawUnitStats(*ui);
 		}
 	}
+	glDisable(GL_FOG);
+	glDisable(GL_ALPHA_TEST);
 	glDisable(GL_TEXTURE_2D);
 }
 
@@ -1049,7 +1053,7 @@ void CUnitDrawer::SetupForUnitDrawing(void) const
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glAlphaFunc(GL_GREATER,0.5f);
 		glEnable(GL_ALPHA_TEST);
 
@@ -1079,8 +1083,8 @@ void CUnitDrawer::SetupForUnitDrawing(void) const
 
 void CUnitDrawer::CleanUpUnitDrawing(void) const
 {
+	//glDisable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
-	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 
 	if (shadowHandler->inShadowPass) {
@@ -1107,9 +1111,6 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-
-		glDisable(GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
 
 		glMatrixMode(GL_PROJECTION);
 		glPopMatrix();

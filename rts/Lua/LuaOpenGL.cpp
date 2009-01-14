@@ -226,7 +226,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteTexture);
 	REGISTER_LUA_CFUNC(TextureInfo);
 	REGISTER_LUA_CFUNC(CopyToTexture);
-	REGISTER_LUA_CFUNC(Screenshot);
 	if (GLEW_EXT_framebuffer_object) {
 		// FIXME: obsolete
 		REGISTER_LUA_CFUNC(DeleteTextureFBO);
@@ -4055,30 +4054,6 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 }
 
 
-int LuaOpenGL::Screenshot(lua_State* L)
-{
-	if (!CheckModUICtrl()) {
-		return 0;
-	}
-	const GLint x = (GLint)luaL_checknumber(L, 1);
-	const GLint y = (GLint)luaL_checknumber(L, 2);
-	const GLsizei width  = (GLsizei)luaL_checknumber(L, 3);
-	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
-	const string fileName = luaL_checkstring(L, 5);
-
-	unsigned char* buf = new unsigned char[width * height * 4];
-	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-
-	CBitmap b(buf, width, height);
-	b.ReverseYAxis();
-
-	b.Save(fileName,false);
-	delete[] buf;
-
-	return 0;
-}
-
-
 // FIXME: obsolete
 int LuaOpenGL::RenderToTexture(lua_State* L)
 {
@@ -5067,12 +5042,14 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 
 int LuaOpenGL::SaveImage(lua_State* L)
 {
-	const string filename = luaL_checkstring(L, 1);
-
-	const int x0 = luaL_checkint(L, 2) + gu->viewPosX;
-	const int y0 = luaL_checkint(L, 3) + gu->viewPosY;
-	const int x1 = luaL_checkint(L, 4) + gu->viewPosX;
-	const int y1 = luaL_checkint(L, 5) + gu->viewPosY;
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+	const GLint x = (GLint)luaL_checknumber(L, 1);
+	const GLint y = (GLint)luaL_checknumber(L, 2);
+	const GLsizei width  = (GLsizei)luaL_checknumber(L, 3);
+	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
+	const string filename = luaL_checkstring(L, 5);
 
 	bool alpha = false;
 	bool yflip = false;
@@ -5090,18 +5067,16 @@ int LuaOpenGL::SaveImage(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	const int xsize = (x1 - x0) + 1;
-	const int ysize = (y1 - y0) + 1;
-	if ((xsize <= 0) || (ysize <= 0)) {
+	if ((width <= 0) || (height <= 0)) {
 		return 0;
 	}
-	const int memsize = xsize * ysize * 4;
+	const int memsize = width * height * 4;
 
 	unsigned char* img = new unsigned char[memsize];
 	memset(img, 0, memsize);
-	glReadPixels(x0, y0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, img);
+	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, img);
 
-	CBitmap bitmap(img, xsize, ysize);
+	CBitmap bitmap(img, width, height);
 	if (!yflip) {
 		bitmap.ReverseYAxis();
 	}

@@ -301,6 +301,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 					++numPlayers;
 				}
 			}
+			tgame->AddPair("NumPlayers", numPlayers+1);
 
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			char section[50];
@@ -319,10 +320,12 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			{
 				throw content_error("Demo contains incorrect script");
 			}
+			logOutput.Print("Starting GameServer");
 			good_fpu_control_registers("before CGameServer creation");
 			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 			good_fpu_control_registers("after CGameServer creation");
+			logOutput.Print("GameServer started");
 			break;
 		}
 

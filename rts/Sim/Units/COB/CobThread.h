@@ -69,7 +69,7 @@ public:
 	void ForceCommitAnim(int type, int piece, int axis);
 	void ForceCommitAllAnims();
 	void CommitAnims(int deltaTime);
-	void ShowError(const string& msg);
+	void ShowError(const string& msg, bool warning = false);
 };
 
 #endif // __COB_THREAD_H__

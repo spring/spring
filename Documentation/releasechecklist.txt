@@ -13,9 +13,8 @@ Then proceed:
 - test source package windows (ditto)
 - test installer (NEVER EVER SKIP THIS NO MATTER HOW SMALL THE CHANGES)
 
-- bump version number in installer/springsettings.nsh to e.g. "0.76b1"
 - bump version number in rts/Game/GameVersion.cpp
-- tag the released revision in SVN as e.g. "tags/spring_0.76b1"
+- tag the released revision in GIT as e.g. "0.78.0"
 - have buildbot compile installer and make source packages
 - upload installer to fnord.clan-sy.com
 - upload installer to the big Spring file sites (watch out for notification bots,

@@ -76,9 +76,16 @@ endif (MINGW)
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXAcceptsVisibilityFlag)
-set (MARCH_FLAG native CACHE STRING "CPU optimization (use i686 for generic optimization)")
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	message (STATUS "Building Spring for 64bit environment")
+	set (MARCH_FLAG CACHE STRING "CPU optimization (use i686 for generic optimization)")
+else (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	message (STATUS "Building Spring for 32bit environment")
+	set (MARCH_FLAG "i686" CACHE STRING "CPU optimization (use i686 for generic optimization)")
+endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
+
 if (MARCH_FLAG)
-	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -msse -mfpmath=sse")
+	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG}")
 endif (MARCH_FLAG)
 
 # intel C compiler fix (does not support these flags: -march -mfpmath -ggdb)
@@ -89,7 +96,7 @@ ELSE ($ENV{CXX} MATCHES "icpc")
 	SET(CXX_FLAGS_DEBUG_ADDITIONAL "")
 ENDIF ($ENV{CXX} MATCHES "icpc")
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -pipe -fno-strict-aliasing -msse -mfpmath=sse ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 ADD_DEFINITIONS(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 IF (UNIX)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -122,7 +129,7 @@ else (UNIX OR CMAKE_CROSSCOMPILING OR CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
 endif(UNIX OR CMAKE_CROSSCOMPILING OR CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
 
 ### install base data files
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR})
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE)
 
 ### Install freedesktop-files, mime-types etc.
 if (UNIX AND NOT MINGW)
