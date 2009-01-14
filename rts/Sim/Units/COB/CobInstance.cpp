@@ -208,7 +208,6 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 		//Not found? Try lowercase
 		if (cur == lp.size()) {
 			for (cur=0; cur<lp.size(); cur++) {
-				logOutput.Print("foo %s %s",scriptname.c_str(),lp[cur]->name.c_str());
 				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
 					break;
 				}
