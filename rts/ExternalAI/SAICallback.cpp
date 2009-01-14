@@ -35,7 +35,7 @@
 #include "Map/ReadMap.h"
 #include "Map/MetalMap.h"
 #include "Game/SelectedUnits.h"
-#include "Game/UI/GuiHandler.h"		//TODO: fix some switch for new gui
+#include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Interface/AISCommands.h"

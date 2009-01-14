@@ -343,7 +343,7 @@ function wrappFunction(retType, fullName, params) {
 
 		size_funcs++;
 	} else {
-		print("function intentionally NOT wrapped: " fullName);
+		print("warning: function intentionally NOT wrapped: " fullName);
 	}
 }
 
