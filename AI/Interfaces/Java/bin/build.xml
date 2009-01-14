@@ -10,8 +10,8 @@
 	<property name="dist"
 				location="${distHome}/AI/Interfaces/${ant.project.name}/${myVersion}"/>
 	<path id="myClassPath">
-		<fileset dir="./data/jlib">
-			<include name="**/*.jar"/>
+		<fileset dir="./data">
+			<include name="jlib/**/*.jar"/>
 		</fileset>
 	</path>
 

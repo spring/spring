@@ -16,17 +16,16 @@
 */
 
 #ifndef _AIDEFINES_H
-#define	_AIDEFINES_H
+#define _AIDEFINES_H
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
-#endif	// __cplusplus
+#endif // __cplusplus
 
 #include "System/exportdefines.h"
+//#include "Game/GameVersion.h"
 
 #include "SAIFloat3.h"
-
-//#include "Game/GameVersion.h"
 
 #define ENGINE_VERSION_STRING VERSION_STRING
 #define ENGINE_VERSION_NUMBER 1000

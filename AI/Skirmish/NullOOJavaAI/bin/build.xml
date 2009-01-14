@@ -14,8 +14,8 @@
 		<fileset dir="${aiInterfaceHome}/data/jlib">
 			<include name="**/*.jar"/>
 		</fileset>
-		<fileset dir="./data/jlib">
-			<include name="**/*.jar"/>
+		<fileset dir="./data">
+			<include name="jlib/**/*.jar"/>
 		</fileset>
 	</path>
 

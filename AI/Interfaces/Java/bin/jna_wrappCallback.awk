@@ -120,7 +120,9 @@ function printClass(clsName_c) {
 
 function wrappFunction(funcDef) {
 
-	doWrapp = !match(funcDef, /.*CALLING_CONV \*Clb_File_.*/);
+	# All function pointers of the struct have to be mirrored,
+	# otherwise, JNA will call the wrong function pointers.
+	doWrapp = 1;
 
 	if (doWrapp) {
 		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\)\\;)");
@@ -153,6 +155,8 @@ function wrappFunction(funcDef) {
 		funcParamList[fi] = paramList;
 		storeDocLines(funcDocComment, fi);
 		fi++;
+	} else {
+		print("warninig: function intentionally NOT wrapped: " funcDef);
 	}
 }
 
