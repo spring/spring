@@ -5,13 +5,19 @@ project(Spring)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
-set (BINDIR "bin" CACHE STRING "Where to install binaries")
-set (LIBDIR "lib" CACHE STRING "Where to install libraries")
-set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
 if (UNIX AND NOT MINGW)
+	set (BINDIR "bin" CACHE STRING "Where to install binaries")
+	set (LIBDIR "lib" CACHE STRING "Where to install libraries")
+	set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
+
 	set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
 	set (PIXMAPS_DIR "share/pixmaps" CACHE STRING "Where to install icons")
 	set (MIME_DIR "share/mime"CACHE STRING "Where MIME definitions are located")
+else (UNIX AND NOT MINGW)
+	set (BINDIR "." CACHE STRING "Where to install binaries")
+	set (LIBDIR "." CACHE STRING "Where to install libraries")
+	set (DATADIR "." CACHE STRING "Where to install game content")
+	set (CMAKE_INSTALL_PREFIX "/")
 endif (UNIX AND NOT MINGW)
 
 ### Usr-definable build options
