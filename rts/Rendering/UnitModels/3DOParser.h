@@ -58,13 +58,6 @@ class C3DOParser : public IModelParser
 		int OffsetToChildObject;
 	} _3DObject;
 
-	typedef struct _Vertex
-	{
-		int x;
-		int y;
-		int z;
-	} _Vertex;
-
 	typedef struct _Primitive
 	{
 		int PaletteEntry;
@@ -94,7 +87,7 @@ private:
 	void GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,int excludePrim);
 	void GetVertexes(_3DObject* o,S3DOPiece* object);
 	std::string GetText(int pos);
-	bool ReadChild(int pos,S3DOPiece* root, int *numobj);
+	S3DOPiece* ReadChild(int pos,S3DOPiece* root, int *numobj);
 
 	std::set<std::string> teamtex;
 

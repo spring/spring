@@ -3,7 +3,7 @@
 add_definitions(-DBUILDING_AI_INTERFACE)
 
 set(AI_INTERFACES_SRC "${CMAKE_SOURCE_DIR}/AI/Interfaces")
-set(AI_INTERFACES_DATA "${DATADIR}/AI/Interfaces")
+set(AI_INTERFACES_DATA "${AIDIR}/AI/Interfaces")
 IF (UNIX)
 	set(SHELL_EXEC_POSTFIX "sh")
 ELSE (UNIX)

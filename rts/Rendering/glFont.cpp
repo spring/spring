@@ -97,14 +97,18 @@ CFontTextureRenderer::CFontTextureRenderer(int width, int height)
 : width(width), height(height), buffer(NULL), cur(NULL), curX(0), curY(0), curHeight(0)
 {
 	buffer = new unsigned char[2*width*height];		// luminance and alpha per pixel
-	memset(buffer, 0xFF00, width*height);
+	for (int i=0; i<width*height; i++) {
+		buffer[i*2]   = 0xFF;
+		buffer[i*2+1] = 0x00;
+	}
 	cur = buffer;
 }
 
 
 CFontTextureRenderer::~CFontTextureRenderer()
 {
-	delete [] buffer;
+	if (buffer)
+		delete [] buffer;
 }
 
 
@@ -250,6 +254,7 @@ CglFont::CglFont(int start, int end, const char* fontfile, float size, int texWi
 			FT_Done_Face(face);			// destructor does not run when throwing from constructor
 			FT_Done_FreeType(library);
 			delete [] glyphs;
+			glyphs = NULL;
 			throw;
 		}
 
@@ -312,7 +317,8 @@ CglFont* CglFont::TryConstructFont(std::string fontFile, int start, int end, flo
 CglFont::~CglFont()
 {
 	glDeleteTextures(1, &fontTexture);
-	delete[] glyphs;
+	if (glyphs)
+		delete[] glyphs;
 }
 
 

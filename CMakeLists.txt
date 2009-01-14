@@ -5,13 +5,19 @@ project(Spring)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
-set (BINDIR "bin" CACHE STRING "Where to install binaries")
-set (LIBDIR "lib" CACHE STRING "Where to install libraries")
-set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
 if (UNIX AND NOT MINGW)
+	set (BINDIR "bin" CACHE STRING "Where to install binaries")
+	set (LIBDIR "lib" CACHE STRING "Where to install libraries")
+	set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
+
 	set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
 	set (PIXMAPS_DIR "share/pixmaps" CACHE STRING "Where to install icons")
 	set (MIME_DIR "share/mime"CACHE STRING "Where MIME definitions are located")
+else (UNIX AND NOT MINGW)
+	set (BINDIR "." CACHE STRING "Where to install binaries")
+	set (LIBDIR "." CACHE STRING "Where to install libraries")
+	set (DATADIR "." CACHE STRING "Where to install game content")
+	set (CMAKE_INSTALL_PREFIX "/")
 endif (UNIX AND NOT MINGW)
 
 ### Usr-definable build options
@@ -84,19 +90,21 @@ else (CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set (MARCH_FLAG "i686" CACHE STRING "CPU optimization (use i686 for generic optimization)")
 endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
-if (MARCH_FLAG)
-	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG}")
-endif (MARCH_FLAG)
-
-# intel C compiler fix (does not support these flags: -march -mfpmath -ggdb)
 IF ($ENV{CXX} MATCHES "icpc")
-	SET(CMAKE_CXX_FLAGS " -axK")
+	# intel C/C++ compiler fix; it does not support these flags:
+	# "-march -mfpmath -msse -ggdb"
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axK") # SSE1
 	SET(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 ELSE ($ENV{CXX} MATCHES "icpc")
+	IF (MARCH_FLAG)
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
+	ENDIF (MARCH_FLAG)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -mfpmath=sse") # SSE1
 	SET(CXX_FLAGS_DEBUG_ADDITIONAL "")
 ENDIF ($ENV{CXX} MATCHES "icpc")
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -pipe -fno-strict-aliasing -msse -mfpmath=sse ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 ADD_DEFINITIONS(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 IF (UNIX)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")

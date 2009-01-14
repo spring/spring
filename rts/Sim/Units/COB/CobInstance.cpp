@@ -40,6 +40,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "GlobalUnsynced.h"
+#include "Util.h"
 #include "Sound.h"
 #include "myMath.h"
 #include "Sync/SyncTracer.h"
@@ -190,39 +191,32 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 	pieces.clear();
 	pieces.reserve(script.pieceNames.size());
 
+	std::vector<LocalModelPiece*>& lp = lmodel->pieces;
+
 	for (int piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
-		std::string& scriptname = script.pieceNames[piecenum];
+		std::string& scriptname = script.pieceNames[piecenum]; // is already in lowercase!
 
 		unsigned int cur;
 
 		//Map this piecename to an index in the script's pieceinfo
-		for (cur=0; cur<lmodel->pieces.size(); cur++) {
-			if (lmodel->pieces[cur]->name.compare(scriptname) == 0) {
+		for (cur=0; cur<lp.size(); cur++) {
+			if (lp[cur]->name.compare(scriptname) == 0) {
 				break;
 			}
 		}
 
-		//Not found? Try again with partial matching
-		if (cur == lmodel->pieces.size()) {
-			for (cur = 0; cur < lmodel->pieces.size(); ++cur) {
-				std::string &s2 = lmodel->pieces[cur]->name;
-				int maxcompare = std::min(scriptname.size(), s2.size());
-				int j;
-				for (j = 0; j < maxcompare; ++j) {
-					if (scriptname[j] != s2[j]) {
-						break;
-					}
-				}
-				//Match now?
-				if (j == maxcompare) {
+		//Not found? Try lowercase
+		if (cur == lp.size()) {
+			for (cur=0; cur<lp.size(); cur++) {
+				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
 					break;
 				}
 			}
 		}
 
-		//Did we find it now?
-		if (cur < lmodel->pieces.size()) {
-			pieces.push_back(lmodel->pieces[cur]);
+		//Did we find it?
+		if (cur < lp.size()) {
+			pieces.push_back(lp[cur]);
 		} else {
 			pieces.push_back(NULL);
 			logOutput.Print("CobWarning: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");
@@ -331,7 +325,7 @@ int CCobInstance::RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void 
  * @param args vector<int> function arguments
  * @param cb CBCobThreadFinish Callback function
  * @param p1 void* callback argument #1
- * @param p2 void* callback argument #2 
+ * @param p2 void* callback argument #2
  * @return 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
  *  it will continue to run. Otherwise it will be killed. Returns 1 in this case.
  */
@@ -599,15 +593,6 @@ void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int de
 
 	ai = FindAnim(type, piece, axis);
 	if (!ai) {
-		//check if the animation is needed
-		if (type == AMove) {
-			if (pieces[piece]->pos[axis] == destf)
-				return; // no animation needed, the piece is already at the wanted pos
-		} else if (type == ATurn) {
-			if (RadsAreEqual(pieces[piece]->rot[axis],destf))
-				return; // no animation needed, the piece already points in the wanted angle
-		}
-
 		ai = new struct AnimInfo;
 		ai->type = type;
 		ai->piece = piece;
@@ -727,19 +712,21 @@ void CCobInstance::SetVisibility(int piece, bool visible)
 
 void CCobInstance::EmitSfx(int type, int piece)
 {
+#ifndef _CONSOLE
 	if (!PieceExists(piece)) {
 		GCobEngine.ShowScriptWarning("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
-#ifndef _CONSOLE
 	if(ph->particleSaturation>1 && type<1024){		//skip adding particles when we have to many (make sure below can be unsynced)
 		return;
 	}
 
-	float3 relPos;
+	float3 relPos(0,0,0);
 	float3 relDir(0,1,0);
-	GetEmitDirPos(piece, relPos, relDir);
+	if (!GetEmitDirPos(piece, relPos, relDir)) {
+		GCobEngine.ShowScriptError("emit-sfx: GetEmitDirPos failed\n");
+	}
 
 	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 

@@ -47,7 +47,7 @@ local spGiveOrderToUnit = Spring.GiveOrderToUnit
 -- builders that have been idling for the number of game frames
 -- (in case a player accidentally STOPs them)
 
-local idleFrames = 30
+local idleFrames = 0
 
 
 --------------------------------------------------------------------------------
