@@ -1597,7 +1597,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L);
-	if ((args < 1) || !lua_isnumber(L, 2)) {
+	if ((args < 2) || !lua_isnumber(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitGroup()");
 	}
 	const int groupID = lua_toint(L, 2);

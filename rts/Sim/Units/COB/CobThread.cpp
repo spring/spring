@@ -757,15 +757,15 @@ int CCobThread::Tick(int deltaTime)
 }
 
 // Shows an errormessage which includes the current state of the script interpreter
-void CCobThread::ShowError(const string& msg)
+void CCobThread::ShowError(const string& msg, bool warning)
 {
 	static int spamPrevention = 100;
 	if (spamPrevention < 0) return;
 	--spamPrevention;
 	if (callStack.size() == 0)
-		logOutput.Print("CobError: %s outside script execution (?)", msg.c_str());
+		logOutput.Print("%s: %s outside script execution (?)", warning?"CobWarning":"CobError", msg.c_str());
 	else
-		logOutput.Print("CobError: %s (in %s:%s at %x)", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
+		logOutput.Print("%s: %s (in %s:%s at %x)", warning?"CobWarning":"CobError", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
 }
 
 string CCobThread::GetOpcodeName(int opcode)

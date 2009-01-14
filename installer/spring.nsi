@@ -206,10 +206,14 @@ Section "Start menu shortcuts" SEC_START
 SectionEnd
 
 Section "Desktop shortcut" SEC_DESKTOP
-${If} ${SectionIsSelected} ${SEC_TASCLIENT}
+  ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
   SetOutPath "$INSTDIR"
-  CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
-${EndIf}
+    !ifdef TEST_BUILD
+      CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe" "-server taspringmaster.servegame.com:8300"
+    !else
+      CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
+    !endif
+  ${EndIf}
 SectionEnd
 
 Section "Easy content installation" SEC_ARCHIVEMOVER

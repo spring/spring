@@ -5,7 +5,11 @@
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}"
   CreateDirectory "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"
   ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
-    CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
+    !ifdef TEST_BUILD
+      CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe" "-server taspringmaster.servegame.com:8300"
+    !else
+      CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\TASClient.lnk" "$INSTDIR\TASClient.exe"
+    !endif
   ${EndIf}
   ${If} ${SectionIsSelected} ${SEC_SPRINGLOBBY}
     CreateShortCut "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer\SpringLobby.lnk" "$INSTDIR\springlobby.exe"
