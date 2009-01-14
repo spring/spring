@@ -238,7 +238,7 @@ float3 LocalModelPiece::GetDirection() const
 }
 
 
-void LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
+bool LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
 {
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
@@ -248,6 +248,8 @@ void LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
 	static const float3 invVertAxis(1, 1, -1);
 
 	const S3DModelPiece* piece = original;
+	if (!piece)
+		return false;
 
 	if (piece->vertexCount == 0) {
 		pos = mat.GetPos()*invAxis;
@@ -257,13 +259,16 @@ void LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
 		pos = mat.GetPos()*invAxis;
 		dir = mat.Mul(piece->GetVertexPos(0)*invVertAxis)*invAxis - pos;
 	}
-	else {
+	else if(piece->vertexCount >= 2) {
 		float3 p1 = mat.Mul(piece->GetVertexPos(0) * invVertAxis) * invAxis;
 		float3 p2 = mat.Mul(piece->GetVertexPos(1) * invVertAxis) * invAxis;
 
 		pos = p1;
 		dir = p2 - p1;
+	} else {
+		return false;
 	}
+	return true;
 }
 
 /******************************************************************************/

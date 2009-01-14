@@ -135,6 +135,8 @@ void FBO::DownloadAttachment(const GLenum attachment)
  */
 void FBO::GLContextLost()
 {
+	if (!IsSupported()) return;
+
 	//GML_STDMUTEX_LOCK(draw);
 
 	GLint oldReadBuffer;
@@ -162,6 +164,8 @@ void FBO::GLContextLost()
  */
 void FBO::GLContextReinit()
 {
+	if (!IsSupported()) return;
+
 	//GML_STDMUTEX_LOCK(draw);
 	for (std::map<GLuint,FBO::TexData*>::iterator ti=texBuf.begin(); ti!=texBuf.end(); ++ti) {
 		FBO::TexData* tex = ti->second;
@@ -199,15 +203,15 @@ void FBO::GLContextReinit()
  */
 FBO::FBO() : fboId(0), reloadOnAltTab(false)
 {
-	if (IsSupported()) {
-		glGenFramebuffersEXT(1,&fboId);
+	if (!IsSupported()) return;
 
-		// we need to bind it once, else it isn't valid
-		glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
+	glGenFramebuffersEXT(1,&fboId);
 
-		//GML_STDMUTEX_LOCK(fbo);
-		fboList.push_back(this);
-	}
+	// we need to bind it once, else it isn't valid
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
+
+	//GML_STDMUTEX_LOCK(fbo);
+	fboList.push_back(this);
 }
 
 
@@ -216,6 +220,8 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
  */
 FBO::~FBO()
 {
+	if (!IsSupported()) return;
+
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 	if (fboId)
 		glDeleteFramebuffersEXT(1, &fboId);

@@ -27,13 +27,13 @@ including `command' and `messageSize'.
 */
 
 enum NETMSG {
-	NETMSG_KEYFRAME			= 1,  // int framenum
+	NETMSG_KEYFRAME         = 1,  // int framenum
 	NETMSG_NEWFRAME         = 2,  //
 	NETMSG_QUIT             = 3,  //
-	NETMSG_STARTPLAYING     = 4,  // unsigned countdown
+	NETMSG_STARTPLAYING     = 4,  // uint countdown
 	NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
 	NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
-	NETMSG_CHAT             = 7,  // custom
+	NETMSG_CHAT             = 7,  // uchar from, dest; std::string message;
 	NETMSG_RANDSEED         = 8,  // uint randSeed;
 	NETMSG_GAMEID           = 9,  // uchar gameID[16];
 	NETMSG_COMMAND          = 11, // uchar myPlayerNum; int id; uchar options; std::vector<float> params;
@@ -76,20 +76,21 @@ enum NETMSG {
 	NETMSG_SD_RESET         = 45,
 #endif // SYNCDEBUG
 
-	NETMSG_LUAMSG           = 50, // uchar myPlayerNum, std::string msg
+	NETMSG_LUAMSG           = 50, // /* short! messageSize */, uchar myPlayerNum, unsigned short script, uchar mode, std::string msg
 	NETMSG_TEAM             = 51, // uchar myPlayerNum, uchar action, uchar parameter1
-	NETMSG_GAMEDATA			= 52, // custom
-	NETMSG_ALLIANCE			= 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
- 	NETMSG_CCOMMAND			= 54, // custom
+	NETMSG_GAMEDATA         = 52, // /* uchar messageSize */, std::string setupText, std::string script, std::string map, int mapChecksum,
+	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
+	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
+	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
 };
 
 // action to do with NETMSG_TEAM 
 enum TEAMMSG {
-//	TEAMMSG_NAME			= number	   parameter1
-	TEAMMSG_GIVEAWAY        = 1,		// team to give stuff to
-	TEAMMSG_RESIGN			= 2,		// not used
-	TEAMMSG_JOIN_TEAM		= 3,		// team to join
-	TEAMMSG_TEAM_DIED		= 4,		// team which had died special note: this is sent by all players to prevent cheating
+//	TEAMMSG_NAME            = number    parameter1
+	TEAMMSG_GIVEAWAY        = 1,     // team to give stuff to
+	TEAMMSG_RESIGN          = 2,     // not used
+	TEAMMSG_JOIN_TEAM       = 3,     // team to join
+	TEAMMSG_TEAM_DIED       = 4,     // team which had died special note: this is sent by all players to prevent cheating
 //TODO: changing teams (to spectator, from spectator to specific team)
 //TODO: in-game allyteams
 };
