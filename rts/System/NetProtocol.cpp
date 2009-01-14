@@ -13,6 +13,7 @@
 #include "NetProtocol.h"
 
 #include "Game/GameSetup.h"
+#include "Game/GameData.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
 #include "ConfigHandler.h"
@@ -40,11 +41,6 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 	server.reset(conn);
 	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
 	server->Flush(true);
-
-	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
-	{
-		record.reset(new CDemoRecorder());
-	}
 	
 	logOutput.Print("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
 }
@@ -53,7 +49,6 @@ void CNetProtocol::InitLocalClient()
 {
 	server.reset(new netcode::CLocalConnection);
 	server->Flush();
-	record.reset(new CDemoRecorder()); //TODO don't record a new demo when already watching one
 	
 	logOutput.Print("Connecting to local server");
 }
@@ -79,6 +74,14 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 	
 	if (record && ret)
 		record->SaveToDemo(ret->data, ret->length);
+	else if (ret && ret->data[0] == NETMSG_GAMEDATA)
+	{
+		logOutput.Print("Starting demo recording");
+		GameData gd(ret);
+		record.reset(new CDemoRecorder());
+		record->WriteSetupText(gd.GetSetup());
+		record->SaveToDemo(ret->data, ret->length);
+	}
 	
 	return ret;
 }
