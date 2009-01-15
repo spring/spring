@@ -21,8 +21,17 @@
 #define _SKIRMISHAIDATA_H
 
 struct SkirmishAIData {
-	int team; // id of the team this Skirmish AI is controlling
-	int host; // the player whichs computer this AI runs on
+	/**
+	 * This name is purely inforamtive.
+	 * It will be shown in statistics eg.,
+	 * and everywhere else where normal players
+	 * have their name displayed.
+	 */
+	std::string name;
+	/** Id of the team this Skirmish AI is controlling. */
+	int team;
+	/** The player whichs computer this AI runs on. */
+	int host;
 	std::string shortName;
 	std::string version;
 	bool isLuaAI;

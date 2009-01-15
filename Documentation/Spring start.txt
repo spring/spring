@@ -31,15 +31,16 @@
 	MyPlayerNum=x;      // deprecated, better use myPlayerName
 	MyPlayerName=somename; //can be used instead of MyPlayerNum (will overwrite it in fact)
 
-	IsHost=x;           // 0 - no server will be started in this instance, 1 - start a server (if not set, you need myPlayerNum)
+	IsHost=x;           // 0: no server will be started in this instance
+	                    // 1: start a server (if not set, you need myPlayerNum)
 	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
 	NumTeams=y;         // same here, set this to check if the script is right
 	NumAllyTeams=z;     // see above
 
-	// a player (controlls a team, player 0 is the host only if IsHost is not set)
+	// A player (controlls a team, player 0 is the host only if IsHost is not set)
 	[PLAYER0]
 	{
-		Name=name;
+		Name=name;      // pure info, eg. the account name from the lobby server
 		Spectator=0;
 		Team=number;    // the team this player controlls
 		IsFromDemo=0;   // use only in combination with Demofile (see above)
@@ -48,23 +49,26 @@
 	}
 	// more players
 
-	// a skirmish AI (controlls a team)
+	// A skirmish AI (controlls a team)
 	[AI0]
 	{
-		Name=RAI;     // name of the Skirmish AI that controlls this team
-		Team=number;  // the team this AI controlls
-		Host=number;  // the player whichs computer this AI runs on
-		              // (see spring.exe --list-skirmish-ais for possible values))
-		Version=0.1;  // [optional] version of the Skirmish AI that controlls this team
-		IsLuaAI=1;    // [optional, default: 0] whether this is a Lua AI or a normal Skirmish AI
-		[OPTIONS]     // [optional] contains AI implementaition specific option values
+		Name=name;     // [optional] pure info, eg. the name set in the lobby
+		               // the name actually used in game will be: "${Name} (owner: ${player.Name})"
+		ShortName=RAI; // shortName of the Skirmish AI library or LUA AI that controlls this team
+		               // see spring.exe --list-skirmish-ais for possible values
+		Team=number;   // the team this AI controlls
+		Host=number;   // the player whichs computer this AI runs on
+		               // eg. for [PLAYER0] above, this would be 0
+		Version=0.1;   // [optional] version of the Skirmish AI that controlls this team
+		IsLuaAI=1;     // [optional, default: 0] whether this is a Lua AI or a normal Skirmish AI
+		[OPTIONS]      // [optional] contains AI implementaition specific option values
 		{
 			difficultyLevel=1;
 		}
 	}
 	// more skirmish AIs
 
-	// players in this will share the same units (start with one commander etc)
+	// players in this will share the same units (start with one commander etc.)
 	[TEAM0]
 	{
 		TeamLeader=x;   // player number that is the "leader"
