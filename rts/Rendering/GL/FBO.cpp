@@ -13,6 +13,7 @@
 
 #include "FBO.h"
 #include "LogOutput.h"
+#include "GlobalUnsynced.h"
 #include "Rendering/Textures/Bitmap.h"
 
 std::vector<FBO*> FBO::fboList;
@@ -52,6 +53,7 @@ GLenum FBO::GetTextureTargetByID(const GLuint id, const unsigned int i)
 void FBO::DownloadAttachment(const GLenum attachment)
 {
 	GLuint target;
+	GLenum format = GL_RGBA;
 	glGetFramebufferAttachmentParameterivEXT(GL_FRAMEBUFFER_EXT, attachment,
 		GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT,
 		(GLint*)&target);
@@ -108,24 +110,27 @@ void FBO::DownloadAttachment(const GLenum attachment)
 		glGetTexLevelParameteriv(target, 0, GL_TEXTURE_DEPTH_SIZE, &_cbits); bits += _cbits;
 	}
 
+	if (gu->atiHacks) { //FIXME use a seperate configvar? duno if linux's opensource drivers still have this bug
+		format = GL_BGRA; //ATI bug: it swizzles the channels in glReadPixels & glGetTexImage
+	}
 
 	switch (target) {
 		case GL_TEXTURE_3D:
 			tex->pixels = new unsigned char[tex->xsize*tex->ysize*tex->zsize*(bits/8)];
-			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
+			glGetTexImage(tex->target,0,format,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
 			break;
 		case GL_TEXTURE_1D:
 			tex->pixels = new unsigned char[tex->xsize*(bits/8)];
-			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
+			glGetTexImage(tex->target,0,format,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
 			break;
 		case GL_RENDERBUFFER_EXT:
 			tex->pixels = new unsigned char[tex->xsize*tex->ysize*(bits/8)];
 			glReadBuffer(attachment);
-			glReadPixels(0, 0, tex->xsize, tex->ysize, /*FIXME*/GL_RGBA, /*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
+			glReadPixels(0, 0, tex->xsize, tex->ysize, format, /*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
 			break;
 		default: //GL_TEXTURE_2D & GL_TEXTURE_RECTANGLE
 			tex->pixels = new unsigned char[tex->xsize*tex->ysize*(bits/8)];
-			glGetTexImage(tex->target,0,/*FIXME*/GL_RGBA,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
+			glGetTexImage(tex->target,0,format,/*FIXME*/GL_UNSIGNED_BYTE, tex->pixels);
 	}
 	texBuf[id] = tex;
 }
