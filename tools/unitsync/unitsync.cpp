@@ -1765,24 +1765,6 @@ EXPORT(const char*) GetInfoDescription(int index) {
 	return NULL;
 }
 
-//EXPORT(struct SSkirmishAISpecifier) GetSkirmishAISpecifier(int index) {
-//
-//	SSkirmishAISpecifier spec = {NULL, NULL};
-//
-//	int num = GetSkirmishAIInfoCount(index);
-//
-//	for (int i=0; i < num; ++i) {
-//		string info_key = string(GetInfoKey(i));
-//		if (info_key == SKIRMISH_AI_PROPERTY_SHORT_NAME) {
-//			spec.shortName = GetInfoValue(i);
-//		} else if (info_key == SKIRMISH_AI_PROPERTY_VERSION) {
-//			spec.version = GetInfoValue(i);
-//		}
-//	}
-//
-//	return spec;
-//}
-
 EXPORT(int) GetSkirmishAIOptionCount(int index) {
 
 	try {
