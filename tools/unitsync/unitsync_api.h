@@ -41,11 +41,11 @@ EXPORT(int         ) GetInfoMapSize(const char* filename, const char* name, int*
 EXPORT(int         ) GetInfoMap(const char* filename, const char* name, void* data, int typeHint);
 
 EXPORT(int         ) GetSkirmishAICount();
-//EXPORT(struct SSkirmishAISpecifier) GetSkirmishAISpecifier(int index);
 EXPORT(int         ) GetSkirmishAIInfoCount(int index);
 EXPORT(const char* ) GetInfoKey(int index);
 EXPORT(const char* ) GetInfoValue(int index);
 EXPORT(const char* ) GetInfoDescription(int index);
+EXPORT(int         ) GetSkirmishAIOptionCount(int index);
 
 EXPORT(int         ) GetPrimaryModCount();
 EXPORT(const char* ) GetPrimaryModName(int index);
