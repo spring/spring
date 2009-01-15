@@ -28,7 +28,10 @@
 /game/demos
 /game/AI/Bot-libs
 /game/AI/Helper-libs
+/game/ArchiveCacheV7.lua
 /game/ext.txt
+/game/LuaUI/Config/widget_data.lua
+/game/LuaUI/Config/widget_order.lua
 /game/spring
 /game/spring-dedicated
 /game/*.def
@@ -46,6 +49,17 @@
 # though it is cleaner to not build directly in the repository root
 /CMakeFiles
 /CMakeCache.txt
+
+# Visual Studio related
+/rts/build/vstudio8/rts.ncb
+/rts/build/vstudio8/rts.suo
+/rts/build/vstudio8/Release
+/rts/build/vstudio8/Debug
+/rts/build/vstudio8/Debug+MT
+/rts/build/vstudio8/Release with error catching
+/rts/build/vstudio8/Release+MT with error catching
+/rts/build/vstudio8/Syncdebug
+
 
 # Windows libraries used by spring when compiling with MinGW
 # recommended: place the dir somewhere else, and specify with
