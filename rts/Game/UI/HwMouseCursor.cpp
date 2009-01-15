@@ -1,5 +1,5 @@
-#include "Rendering/Textures/Bitmap.h"
 #include "StdAfx.h"
+#include "Rendering/Textures/Bitmap.h"
 
 #ifdef WIN32
 #  include "windows.h"

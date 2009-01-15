@@ -3,6 +3,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+#include "ExternalAI/Group.h"
 #include <set>
 #include <list>
 #include <cctype>
@@ -22,7 +23,6 @@ using namespace std;
 #include "LuaHandle.h"
 #include "LuaHashString.h"
 #include "ExternalAI/GlobalAIHandler.h"
-#include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Game/Camera.h"
 #include "Game/Camera/CameraController.h"

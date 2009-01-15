@@ -1279,5 +1279,6 @@ GML_MAKEFUN5(GetTexImage,GLenum,GLint,GLenum,GLenum,GLvoid *,GML_SYNC())
 GML_MAKEFUN1R(IsTexture,GLuint,GLboolean,)
 GML_MAKEFUN5(FramebufferTexture1DEXT,GLenum,GLenum,GLenum,GLuint,GLint)
 GML_MAKEFUN6(FramebufferTexture3DEXT,GLenum,GLenum,GLenum,GLuint,GLint,GLint)
+GML_MAKEFUN1(ClientActiveTexture,GLenum)
 
 #endif

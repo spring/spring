@@ -14256,6 +14256,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\lib\gml\gmlcnt.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\lib\gml\gmldef.h"
 					>
 				</File>
