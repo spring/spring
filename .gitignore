@@ -55,6 +55,11 @@
 # Windows libraries used by spring when compiling with Visual Studio
 /vclibs
 
+# Installer files
+/external
+/installer/SpringLobby
+/installer/TASClient
+
 # Misc file endings (eg. build or temp files)
 *.pyc
 *.o
