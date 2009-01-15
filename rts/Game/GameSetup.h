@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <set>
 
 #include "SFloat3.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -21,12 +22,12 @@ public:
 
 	int myPlayerNum;
 	std::string myPlayerName;
-	
+
 	std::string hostip;
 	int hostport;
 	int sourceport; //the port clients will try to connect from
 	int autohostport;
-	
+
 	bool isHost;
 };
 
@@ -37,7 +38,7 @@ public:
 	~CGameSetup();
 	bool Init(const std::string& script);
 	void LoadStartPositions();
-	
+
 	enum StartPosType
 	{
 		StartPos_Fixed = 0,
@@ -59,16 +60,16 @@ public:
 	bool useLuaGaia;
 	std::string luaGaiaStr;
 	std::string luaRulesStr;
-	
+
 	std::string gameSetupText;
-	
+
 	StartPosType startPosType;
-	
+
 	std::vector<PlayerBase> playerStartingData;
 	std::vector<SkirmishAIData> skirmishAIStartingData;
 	std::map<int, const SkirmishAIData*> team_skirmishAI;
 	const SkirmishAIData* GetSkirmishAIDataForTeam(int teamId) const;
-	
+
 	struct TeamData
 	{
 		unsigned leader;
@@ -80,7 +81,7 @@ public:
 		int teamAllyteam;
 	};
 	std::vector<TeamData> teamStartingData;
-	
+
 	struct AllyTeamData
 	{
 		float startRectTop;
@@ -90,39 +91,39 @@ public:
 		bool allies[MAX_TEAMS];
 	};
 	std::vector<AllyTeamData> allyStartingData;
-	
+
 	std::map<std::string, int> restrictedUnits;
 
 	std::map<std::string, std::string> mapOptions;
 	std::map<std::string, std::string> modOptions;
-	
+
 	int maxUnits;
-	
+
 	bool ghostedBuildings;
 	bool limitDgun;
 	bool diminishingMMs;
 	bool disableMapDamage;
-	
+
 	float maxSpeed;
 	float minSpeed;
-	
+
 	bool hostDemo;
 	std::string demoName;
 	int numDemoPlayers;
-	
+
 	std::string saveName;
-	
+
 	int startMetal;
 	int startEnergy;
-	
+
 	int gameMode;
 	int noHelperAIs;
 
 private:
 	void LoadStartPositionsFromMap();
 	void LoadUnitRestrictions(const TdfParser& file);
-	void LoadPlayers(const TdfParser& file);
-	void LoadSkirmishAIs(const TdfParser& file);
+	void LoadPlayers(const TdfParser& file, std::set<std::string>& nameList);
+	void LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList);
 	void LoadTeams(const TdfParser& file);
 	void LoadAllyTeams(const TdfParser& file);
 

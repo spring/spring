@@ -37,7 +37,7 @@ LocalSetup::LocalSetup() :
 void LocalSetup::Init(const std::string& setup)
 {
 	TdfParser file(setup.c_str(), setup.length());
-	
+
 	if(!file.SectionExist("GAME"))
 		throw content_error("GAME-section didn't exist in setupscript");
 
@@ -46,7 +46,7 @@ void LocalSetup::Init(const std::string& setup)
 	file.GetDef(hostport,   "8452", "GAME\\HostPort");
 	file.GetDef(sourceport, "0", "GAME\\SourcePort");
 	file.GetDef(autohostport, "0", "GAME\\AutohostPort");
-	
+
 	file.GetDef(myPlayerName,  "", "GAME\\MyPlayerName");
 	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
 	if (myPlayerName.empty())
@@ -88,7 +88,7 @@ void LocalSetup::Init(const std::string& setup)
 				name = it->second;
 			if ((it = setup.find("isfromdemo")) != setup.end())
 				fromdemo = static_cast<bool>(atoi(it->second.c_str()));
-			
+
 			if (!fromdemo)
 			{
 				isHost = (myPlayerName == name);
@@ -209,12 +209,11 @@ void CGameSetup::LoadStartPositions()
 @pre numPlayers initialized
 @post players loaded, numDemoPlayers initialized
  */
-void CGameSetup::LoadPlayers(const TdfParser& file)
+void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameList)
 {
 	numDemoPlayers = 0;
 	// i = player index in game (no gaps), a = player index in script
 	int i = 0;
-	std::set<std::string> nameList;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		char section[50];
 		sprintf(section, "GAME\\PLAYER%i", a);
@@ -236,7 +235,9 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 		if ((it = setup.find("name")) != setup.end())
 		{
 			if (nameList.find(it->second) != nameList.end())
-				throw content_error(str( boost::format("GameSetup: Player %i has name %s which is already taken") %a %it->second.c_str() ));
+				throw content_error(str(
+						boost::format("GameSetup: Player %i has name %s which is already taken")
+						%a %it->second.c_str() ));
 			data.name = it->second;
 			nameList.insert(data.name);
 		}
@@ -269,7 +270,7 @@ void CGameSetup::LoadPlayers(const TdfParser& file)
 /**
  * @brief Load LUA and Skirmish AIs.
  */
-void CGameSetup::LoadSkirmishAIs(const TdfParser& file)
+void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList)
 {
 	// i = AI index in game (no gaps), a = AI index in script
 //	int i = 0;
@@ -326,14 +327,27 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file)
 //			data.luaAI = data.luaAI.substr(6);
 //		}
 
-		data.shortName = file.SGetValueDef("", s + "Name");
+		data.shortName = file.SGetValueDef("", s + "ShortName");
 		if (data.shortName == "") {
-			throw content_error("missing AI.Name in GameSetup script");
+			throw content_error("missing AI.ShortName in GameSetup script");
 		}
 		data.version = file.SGetValueDef("", s + "Version");
 		if (file.SectionExist(s + "Options")) {
 			data.options = file.GetAllValues(s + "Options");
 		}
+
+		std::string name = file.SGetValueDef(data.shortName, s + "Name");
+		int instanceIndex = 0;
+		std::string name_unique = name;
+		while (nameList.find(name_unique) != nameList.end()) {
+			//throw content_error(str(
+			//		boost::format("GameSetup: Skirmish AI %i has name %s, which is already taken")
+			//		%a %tmpName.c_str()));
+			name_unique = name + "_" + IntToString(instanceIndex++);
+			// so we possibly end up with something like myBot_0, or RAI_2
+		}
+		data.name = name_unique;
+		nameList.insert(data.name);
 
 		skirmishAIStartingData.push_back(data);
 
@@ -414,7 +428,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 //		if (file.SectionExist(aiS + "Options")) {
 //			data.skirmishAIOptions = file.GetAllValues(aiS + "Options");
 //		}
-		
+
 		teamStartingData.push_back(data);
 
 		teamRemap[a] = i;
@@ -598,8 +612,9 @@ bool CGameSetup::Init(const std::string& buf)
 	startPosType = (StartPosType)startPosTypeInt;
 
 	// Read subsections
-	LoadPlayers(file);
-	LoadSkirmishAIs(file);
+	std::set<std::string> playersNameList;
+	LoadPlayers(file, playersNameList);
+	LoadSkirmishAIs(file, playersNameList);
 	LoadTeams(file);
 	LoadAllyTeams(file);
 
