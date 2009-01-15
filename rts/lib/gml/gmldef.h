@@ -282,6 +282,7 @@
 #undef glIsTexture
 #undef glFramebufferTexture1DEXT
 #undef glFramebufferTexture3DEXT
+#undef glClientActiveTexture
 
 
 
@@ -561,3 +562,4 @@
 #define glIsTexture gmlIsTexture
 #define glFramebufferTexture1DEXT gmlFramebufferTexture1DEXT
 #define glFramebufferTexture3DEXT gmlFramebufferTexture3DEXT
+#define glClientActiveTexture gmlClientActiveTexture

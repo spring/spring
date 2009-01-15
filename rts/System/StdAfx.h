@@ -37,7 +37,7 @@
 #include "lib/streflop/streflop_cond.h"
 #endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
 
-#if defined(_WIN32) && defined(USE_GML)
+//#if defined(_WIN32) && defined(USE_GML)
 # ifndef GML_COMPATIBLE_ATOMIC_COUNT
 #	ifdef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
 #		error "Please make sure myGL.h is included before anything that includes boost"
@@ -47,7 +47,7 @@
 #	include <boost/detail/atomic_count.hpp>
 #	undef private
 # endif
-#endif
+//#endif
 
 
 #if !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
