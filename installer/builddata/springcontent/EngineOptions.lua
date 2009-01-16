@@ -50,6 +50,11 @@ local options =
         name = 'Commander lineage ends',
         desc = 'This is a stricter form of commander ends\nevery unit will inherit the lineage from the player whom built it\neven if shared, when the commander dies the unit will still die',
       },
+      {
+        key  = '3',
+        name = 'Infinite',
+        desc = 'Game will never end',
+      },
     },
   },
 
