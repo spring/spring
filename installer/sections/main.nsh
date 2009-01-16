@@ -69,9 +69,6 @@ ${EndIf}
 
 ;!endif ; SP_UPDATE
 
-  SetOutPath "$INSTDIR\startscripts"
-  File "..\game\startscripts\*.lua"
-
   ; Remove shaders, they are now in springcontent.sdz
   Delete "$INSTDIR\shaders\*.fp"
   Delete "$INSTDIR\shaders\*.vp"
