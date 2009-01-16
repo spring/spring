@@ -1197,7 +1197,7 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
-	if (gs->gameMode == 3)
+	if (setup->gameMode == GameMode::OpenEnd)
 		return;
 
 	int numActiveAllyTeams = 0;
