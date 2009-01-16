@@ -48,53 +48,13 @@ void LocalSetup::Init(const std::string& setup)
 	file.GetDef(autohostport, "0", "GAME\\AutohostPort");
 	
 	file.GetDef(myPlayerName,  "", "GAME\\MyPlayerName");
-	file.GetDef(myPlayerNum,  "0", "GAME\\MyPlayerNum");
-	if (myPlayerName.empty())
-	{
-		char section[50];
-		sprintf(section, "GAME\\PLAYER%i", myPlayerNum);
-		string s(section);
-
-		if (!file.SectionExist(s))
-			throw content_error("myPlayer not found");
-
-		std::map<std::string, std::string> setup = file.GetAllValues(s);
-		std::map<std::string, std::string>::iterator it = setup.find("name");
-		if (it != setup.end())
-			myPlayerName = it->second;
-		else
-			throw content_error("Player doesn't have a name");
-	}
-
 	int tmp_isHost = 0;
 	if (file.GetValue(tmp_isHost, "GAME\\IsHost"))
 		isHost = static_cast<bool>(tmp_isHost);
 	else
 	{
-		for (int a = 0; a < MAX_PLAYERS; ++a) {
-			// search for the first player not from the demo, if it is ourself, we are the host
-			char section[50];
-			sprintf(section, "GAME\\PLAYER%i", a);
-			string s(section);
-
-			if (!file.SectionExist(s)) {
-				continue;
-			}
-			bool fromdemo = false;
-			std::string name;
-			std::map<std::string, std::string> setup = file.GetAllValues(s);
-			std::map<std::string, std::string>::iterator it;
-			if ((it = setup.find("name")) != setup.end())
-				name = it->second;
-			if ((it = setup.find("isfromdemo")) != setup.end())
-				fromdemo = static_cast<bool>(atoi(it->second.c_str()));
-			
-			if (!fromdemo)
-			{
-				isHost = (myPlayerName == name);
-				break;
-			}
-		}
+		isHost = false;
+		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");
 	}
 }
 
