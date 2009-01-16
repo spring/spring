@@ -781,3 +781,4 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 
 	*pos = ZeroVector;
 }
+
