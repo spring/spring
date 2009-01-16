@@ -179,9 +179,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 		LuaTable mapRoot = mp.GetRoot();
 		const std::string mapWantedScript = mapRoot.GetString("script",     "");
 		const std::string scriptFile      = mapRoot.GetString("scriptFile", "");
-		if (!scriptFile.empty()) {
-			CScriptHandler::Instance().LoadScriptFile(scriptFile);
-		}
+
 		if (!mapWantedScript.empty()) {
 			script = mapWantedScript;
 			mapHasStartscript = true;
