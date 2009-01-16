@@ -126,8 +126,13 @@ CPathEstimator::~CPathEstimator() {
 void CPathEstimator::InitEstimator(const std::string& name) {
 	int numThreads = configHandler.Get("HardwareThreadCount", 0);
 
-	if (numThreads == 0)
-		numThreads = (BOOST_VERSION >= 103500) ? boost::thread::hardware_concurrency() : 1;
+	if (numThreads == 0) {
+		#if (BOOST_VERSION >= 103500)
+		numThreads = boost::thread::hardware_concurrency();
+		#else
+		numThreads = 1;
+		#endif
+	}
 
 	if (threads.size() != numThreads) {
 		threads.resize(numThreads);
