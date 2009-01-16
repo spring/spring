@@ -34,7 +34,6 @@ cd builddata
 
 echo Creating maphelper.sdz
 del /Q ..\..\game\base\maphelper.sdz
-pause
 cd maphelper
 ..\..\pkzip -add -dir=current ..\..\_temp.zip maphelper\*
 cd ..\..
