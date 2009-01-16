@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES(BEFORE streflop lua/include luabind ${CMAKE_SOURCE_DIR}/rts/System)
+INCLUDE_DIRECTORIES(BEFORE streflop lua/include ${CMAKE_SOURCE_DIR}/rts/System)
 
 ADD_DEFINITIONS(${PIC_FLAG}) # all libraries need to be position independent (gives compiler warnings on 64bit-linux
 
