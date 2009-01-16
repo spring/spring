@@ -36,6 +36,11 @@ CStartPosSelecter::~CStartPosSelecter(void)
 
 bool CStartPosSelecter::Ready()
 {
+	if (gs->frameNum > 0) {
+		delete this;
+		return true;
+	}
+
 	if (!startPosSet) // Player doesn't set startpos yet, so don't let him ready up
 		return false;
 
@@ -50,7 +55,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 {
 	float mx = MouseX(x);
 	float my = MouseY(y);
-	if (showReady && InBox(mx, my, readyBox)) {
+	if (showReady && InBox(mx, my, readyBox) || gs->frameNum > 0) {
 		return !Ready();
 	}
 
