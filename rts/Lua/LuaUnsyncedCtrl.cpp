@@ -1047,7 +1047,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 				}
 			}
 			else if (lua_isboolean(L, -1)) {
-				const boolean value = lua_toboolean(L, -1);
+				const bool value = lua_toboolean(L, -1);
 				if (key == "shoreWaves") {
 					w.shoreWaves = value;
 				} else if (key == "forceRendering") {
