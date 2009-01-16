@@ -562,6 +562,25 @@ int LuaUnsyncedRead::GetUnitNoSelect(lua_State* L)
 }
 
 
+int LuaUnsyncedRead::GetUnitTransformMatrix(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	CMatrix44f m = unit->GetTransformMatrix(false, false);
+
+	for (int i = 0; i < 16; i += 4) {
+		lua_pushnumber(L, m[i    ]);
+		lua_pushnumber(L, m[i + 1]);
+		lua_pushnumber(L, m[i + 2]);
+		lua_pushnumber(L, m[i + 3]);
+	}
+
+	return 16;
+}
+
 int LuaUnsyncedRead::GetUnitViewPosition(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
