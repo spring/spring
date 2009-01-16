@@ -1197,6 +1197,9 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
+	if (gs->gameMode == 3)
+		return;
+
 	int numActiveAllyTeams = 0;
 	int numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
