@@ -309,12 +309,6 @@ for font in os.listdir('game/fonts'):
 		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'fonts'), os.path.join('game/fonts', font))
 		Alias('install', inst)
 
-# install startscripts
-for f in os.listdir('game/startscripts'):
-	if not os.path.isdir(f):
-		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], 'startscripts'), os.path.join('game/startscripts', f))
-		Alias('install', inst)
-
 # install some files from root of datadir
 for f in ['cmdcolors.txt', 'ctrlpanel.txt', 'selectkeys.txt', 'uikeys.txt', 'teamcolors.lua']:
 	inst = env.Install(os.path.join(env['installprefix'], env['datadir']), os.path.join('game', f))
