@@ -57,7 +57,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 	waterPlaneCamInDispList  = 0;
 	waterPlaneCamOutDispList = 0;
 
-	if (mapInfo->hasWaterPlane) {
+	if (mapInfo->water.hasWaterPlane) {
 		waterPlaneCamInDispList = glGenLists(1);
 		glNewList(waterPlaneCamInDispList,GL_COMPILE);
 		CreateWaterPlanes(false);
@@ -747,7 +747,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	}
 
 	if (!(drawWaterReflection || drawUnitReflection)) {
-		if (mapInfo->hasWaterPlane) {
+		if (mapInfo->water.hasWaterPlane) {
 			DrawWaterPlane(drawWaterReflection);
 		}
 

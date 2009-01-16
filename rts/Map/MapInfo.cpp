@@ -179,8 +179,8 @@ void CMapInfo::ReadWater()
 	water.specularFactor= wt.GetFloat("specularFactor",1.0f);
 	water.specularPower = wt.GetFloat("specularPower", 20.0f);
 
-	water.planeColor = wt.GetFloat3("planeColor", float3(0.0f, 0.4f, 0.0f));
-	hasWaterPlane    = wt.KeyExists("planeColor");
+	water.planeColor    = wt.GetFloat3("planeColor", float3(0.0f, 0.4f, 0.0f));
+	water.hasWaterPlane = wt.KeyExists("planeColor");
 
 	water.surfaceColor  = wt.GetFloat3("surfaceColor", float3(0.75f, 0.8f, 0.85f));
 	water.surfaceAlpha  = wt.GetFloat("surfaceAlpha",  0.55f);
