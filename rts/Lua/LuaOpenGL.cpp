@@ -3548,31 +3548,50 @@ int LuaOpenGL::PointParameter(lua_State* L)
 
 static bool ParseUnitTexture(const string& texture)
 {
-	if (texture[1] == 0) {
-		glEnable(GL_TEXTURE_2D);
-		if (texture.length() == 4) {
-			if (texture[3] == 0) {
-				glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
-			} else {
-				glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID() );
-			}
-		} else {
-			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
-		}
-		return true;
+	if (texture.length()<4) {
+		return false;
 	}
 
 	char* endPtr;
 	const char* startPtr = texture.c_str() + 1; // skip the '%'
-	const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+	const int id = (int)strtol(startPtr, &endPtr, 10);
 	if ((endPtr == startPtr) || (*endPtr != ':')) {
 		return false;
 	}
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
-	if (ud == NULL) {
-		return false;
+
+	endPtr++; // skip the ':'
+	if ( (startPtr-1)+texture.length() <= endPtr ) {
+		return false; // ':' is end of string, but we expect '%num:0'
 	}
-	const S3DModel* model = LoadModel(ud);
+
+
+	if (id == 0) {
+		glEnable(GL_TEXTURE_2D);
+		if (*endPtr == '0') {
+			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
+		}
+		else if (*endPtr == '1') {
+			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID() );
+		}
+		return true;
+	}
+
+	S3DModel* model;
+
+	if (id>=MAX_UNITS) {
+		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id-MAX_UNITS);
+		if (fd == NULL) {
+			return false;
+		}
+		model = LoadModel(fd);
+	} else {
+		const UnitDef* ud = unitDefHandler->GetUnitByID(id);
+		if (ud == NULL) {
+			return false;
+		}
+		model = LoadModel(ud);
+	}
+
 	const unsigned int texType = model->textureType;
 	if (texType == 0) {
 		return false;
@@ -3583,7 +3602,6 @@ static bool ParseUnitTexture(const string& texture)
 		return false;
 	}
 
-	endPtr++; // skip the ':'
 	if (*endPtr == '0') {
 		glBindTexture(GL_TEXTURE_2D, stex->tex1);
 		glEnable(GL_TEXTURE_2D);
@@ -3604,7 +3622,8 @@ int LuaOpenGL::Texture(lua_State* L)
 	// NOTE: current formats:
 	//
 	// #12          --  unitDef 12 buildpic
-	// %34%2        --  unitDef 34 s3o tex2
+	// %34:1        --  unitDef 34 s3o tex2
+	// %5034:1      --  featureDef 34+MAX_UNITS s3o tex2
 	// !56          --  lua generated texture 56
 	// $shadow      --  shadowmap
 	// $specular    --  specular cube map
