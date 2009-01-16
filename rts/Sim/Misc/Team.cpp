@@ -12,6 +12,7 @@
 #include "GlobalSynced.h"
 #include "LogOutput.h"
 #include "Game/PlayerHandler.h"
+#include "Game/GameSetup.h"
 #include "GlobalUnsynced.h"
 #include "Game/UI/LuaUI.h"
 #include "Lua/LuaRules.h"
@@ -396,7 +397,7 @@ void CTeam::SlowUpdate()
 	CUnit::ChangeTeam(), hence it'd cause a random amount of the shared units
 	to be killed if the commander is among them. Also, ".take" would kill all
 	units once it transfered the commander. */
-	if (gs->gameMode==1 && numCommanders<=0 && !gaia){
+	if (gameSetup->gameMode == GameMode::ComEnd && numCommanders<=0 && !gaia){
 		for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
 			if ((*ui)->team==teamNum && !(*ui)->unitDef->isCommander)
 				(*ui)->KillUnit(true,false,0);
@@ -463,7 +464,7 @@ void CTeam::CommanderDied(CUnit* commander)
 
 void CTeam::LeftLineage(CUnit* unit)
 {
-	if (gs->gameMode == 2 && unit->id == this->lineageRoot) {
+	if (gameSetup->gameMode == GameMode::Lineage && unit->id == this->lineageRoot) {
 		for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 			if ((*ui)->lineage == this->teamNum)
 				(*ui)->KillUnit(true, false, 0);
