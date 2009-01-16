@@ -1442,9 +1442,18 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 		if (!teams[hisTeam]) // create new team
 		{
 			teams[hisTeam].reset(new GameTeam());
-			teams[hisTeam]->startpos = setup->teamStartingData[hisTeam].startPos;
 			teams[hisTeam]->readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
 			teams[hisTeam]->allyTeam = setup->teamStartingData[hisTeam].teamAllyteam;
+			if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
+				// if the player didn't choose a start position, choose one for him
+				// it should be near the center of his startbox
+				// we let the startscript handle it
+				teams[hisTeam]->startpos.x = 0;
+				teams[hisTeam]->startpos.y = -500;
+				teams[hisTeam]->startpos.z = 0;
+			} else {
+				teams[hisTeam]->startpos = setup->teamStartingData[hisTeam].startPos;
+			}
 		}
 		players[hisNewNumber].team = hisTeam;
 		if (!setup->playerStartingData[hisNewNumber].spectator)

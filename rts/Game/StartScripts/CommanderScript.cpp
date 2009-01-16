@@ -8,6 +8,7 @@
 #include "CommanderScript.h"
 #include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Game.h"
+#include "Game/GameSetup.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/InfoConsole.h"
 #include "Lua/LuaParser.h"
@@ -75,6 +76,24 @@ void CCommanderScript::GameStart()
 
 		if (startUnit.empty()) {
 			throw content_error( "Unable to load a commander for side: " + team->side);
+		}
+
+		if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame
+			 && (team->startPos.x < 0 || team->startPos.z < 0
+				|| (team->startPos.x <= 0 && team->startPos.z <= 0))) {
+			// if the player didn't choose a start position, choose one for him
+			// it should be near the center of his startbox
+			const int allyTeam = teamHandler->AllyTeam(a);
+			const float xmin = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectLeft;
+			const float zmin = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectTop;
+			const float xmax = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectRight;
+			const float zmax = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectBottom;
+			const float xcenter = (xmin+xmax)/2;
+			const float zcenter = (zmin+zmax)/2;
+			assert(xcenter >= 0 && xcenter < gs->mapx*SQUARE_SIZE);
+			assert(zcenter >= 0 && zcenter < gs->mapy*SQUARE_SIZE);
+			team->startPos.x = (a - teamHandler->ActiveTeams())*4*SQUARE_SIZE + xcenter;
+			team->startPos.z = (a - teamHandler->ActiveTeams())*4*SQUARE_SIZE + zcenter;
 		}
 
 		CUnit* unit =
