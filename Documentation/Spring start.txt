@@ -93,7 +93,7 @@
 		StartMetal=1000;
 		StartEnergy=1000;
 		MaxUnits=500;       // per team
-		GameMode=x;         // 0 cmdr dead->game continues, 1 cmdr dead->game ends, 2 lineage
+		GameMode=x;         // 0 cmdr dead->game continues, 1 cmdr dead->game ends, 2 lineage, 3 openend
 		LimitDgun=0;        // limit dgun to fixed radius around startpos?
 		DiminishingMMs=0;   // diminish metal maker's metal production for every new one of them?
 		DisableMapDamage=0; // disable map craters?
