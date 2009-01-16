@@ -254,6 +254,9 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 
 void CTeam::Died()
 {
+	if (isDead)
+		return;
+
 	// TODO: event based
 	if (leader >= 0) {
 		logOutput.Print(CMessages::Tr("Team%i(%s) is no more").c_str(),
