@@ -39,9 +39,6 @@
 
 #if !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) // Also non-GML builds use this atomic count
 # ifndef GML_COMPATIBLE_ATOMIC_COUNT
-#	ifdef BOOST_DETAIL_ATOMIC_COUNT_HPP_INCLUDED
-#		error "Please make sure StdAfx.h is included before anything that includes boost"
-#	endif
 #	define GML_COMPATIBLE_ATOMIC_COUNT
 #	define private public
 #	include <boost/detail/atomic_count.hpp>
