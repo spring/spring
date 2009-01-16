@@ -287,7 +287,7 @@ void AAIMap::ReadMapCacheFile()
 
 	FILE *file;
 
-	if(file = fopen(map_filename, "r"))
+	if((file = fopen(map_filename, "r")) != NULL)
 	{
 		// check if correct version
 		fscanf(file, "%s ", buffer);
@@ -413,7 +413,7 @@ void AAIMap::ReadMapCacheFile()
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
-	if(file = fopen(filename, "r"))
+	if((file = fopen(filename, "r")) != NULL)
 	{
 		// read map type
 		fscanf(file, "%s ", buffer);
@@ -475,7 +475,7 @@ void AAIMap::ReadMapCacheFile()
 		sprintf(buffer, "%s detected", GetMapTypeTextString(this->map_type));
 		ai->cb->SendTextMsg(buffer, 0);
 		fprintf(ai->file, "\nAutodetecting map type:\n");
-		fprintf(ai->file, buffer);
+		fprintf(ai->file, "%s", buffer);
 		fprintf(ai->file, "\n\n");
 
 		// save results to cfg file
@@ -2014,7 +2014,11 @@ void AAIMap::SearchMetalSpots()
 	unsigned char* MexArrayB = new unsigned char [TotalCells];
 	int* TempAverage = new int [TotalCells];
 
-	TotalMetal = MaxMetal = Stopme =  SpotsFound = 0; //clear variables just in case!
+	// clear variables, just in case!
+	TotalMetal = 0;
+	MaxMetal = 0;
+	Stopme = 0;
+	SpotsFound = 0;
 
 	//Load up the metal Values in each pixel
 	for (int i = 0; i != TotalCells - 1; i++)
@@ -2152,7 +2156,7 @@ void AAIMap::SearchMetalSpots()
 	{
 		metalMap = true;
 		metal_spots.clear();
-		fprintf(ai->file, "Map is considered to be a metal map\n",0);
+		fprintf(ai->file, "Map is considered to be a metal map\n");
 	}
 	else
 		metalMap = false;

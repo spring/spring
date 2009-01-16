@@ -229,8 +229,10 @@ void AAIExecute::AddUnitToGroup(int unit_id, int def_id, UnitCategory category)
 	// determine continent if necessary
 	int continent_id = -1;
 
-	if(bt->units_static[def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND) 
-		continent_id = map->GetContinentID(&cb->GetUnitPos(unit_id));
+	if(bt->units_static[def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND) {
+		float3 unitPos = cb->GetUnitPos(unit_id);
+		continent_id = map->GetContinentID(&unitPos);
+	}
 
 	// try to add unit to an existing group 
 	for(list<AAIGroup*>::iterator group = ai->group_list[category].begin(); group != ai->group_list[category].end(); ++group)
@@ -246,8 +248,10 @@ void AAIExecute::AddUnitToGroup(int unit_id, int def_id, UnitCategory category)
 	// -> create new one
 
 	// get continent for ground assault units, even if they are amphibious (otherwise non amphib ground units will be added no matter which continent they are on)
-	if(category == GROUND_ASSAULT  && continent_id == -1)
-		continent_id = map->GetContinentID(&cb->GetUnitPos(unit_id));
+	if(category == GROUND_ASSAULT  && continent_id == -1) {
+		float3 unitPos = cb->GetUnitPos(unit_id);
+		continent_id = map->GetContinentID(&unitPos);
+	}
 
 	AAIGroup *new_group = new AAIGroup(ai, bt->unitList[def_id-1], unit_type, continent_id);
 
@@ -3509,3 +3513,4 @@ void AAIExecute::GiveOrder(Command *c, int unit, const char *owner)
 
 	cb->GiveOrder(unit, c);
 }
+
