@@ -89,6 +89,16 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	string type = ud->type;
 
+	// clamp to map
+	if (pos.x < 0)
+		pos.x = 0;
+	if (pos.x >= gs->mapx * SQUARE_SIZE)
+		pos.x = gs->mapx-1;
+	if (pos.z < 0)
+		pos.z = 0;
+	if (pos.z >= gs->mapy * SQUARE_SIZE)
+		pos.z = gs->mapy-1;
+
 	if (!build) {
 		pos.y = ground->GetHeight2(pos.x, pos.z);
 		if (ud->floater && pos.y < 0.0f) {
