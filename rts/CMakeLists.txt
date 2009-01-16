@@ -58,7 +58,7 @@ if (USE_GML)
 endif (USE_GML)
 
 ### include directories needed for compiling spring
-INCLUDE_DIRECTORIES(BEFORE lib/lua/include lib/luabind)
+INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
 
 ### all spring source directories
 ### each directorie which contains source has to be here
