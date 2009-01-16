@@ -25,6 +25,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "LogOutput.h"
 #include "Util.h"
 
@@ -255,17 +257,48 @@ static void ParseShader(lua_State* L, const char* caller, int index,
 
 static GLuint ParseUnitTexture(const string& texture)
 {
+	if (texture.length()<4) {
+		return 0;
+	}
+
 	char* endPtr;
 	const char* startPtr = texture.c_str() + 1; // skip the '%'
-	const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+	const int id = (int)strtol(startPtr, &endPtr, 10);
 	if ((endPtr == startPtr) || (*endPtr != ':')) {
 		return 0;
 	}
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
-	if (ud == NULL) {
+
+	endPtr++; // skip the ':'
+	if ( (startPtr-1)+texture.length() <= endPtr ) {
+		return 0; // ':' is end of string, but we expect '%num:0'
+	}
+
+	if (id == 0) {
+		if (*endPtr == '0') {
+			return texturehandler3DO->GetAtlasTex1ID();
+		}
+		else if (*endPtr == '1') {
+			return texturehandler3DO->GetAtlasTex2ID();
+		}
 		return 0;
 	}
-	const S3DModel* model = LoadModel(ud);
+
+	S3DModel* model;
+
+	if (id>=MAX_UNITS) {
+		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - MAX_UNITS);
+		if (fd == NULL) {
+			return 0;
+		}
+		model = LoadModel(fd);
+	} else {
+		const UnitDef* ud = unitDefHandler->GetUnitByID(id);
+		if (ud == NULL) {
+			return 0;
+		}
+		model = LoadModel(ud);
+	}
+
 	const unsigned int texType = model->textureType;
 	if (texType == 0) {
 		return 0;
@@ -276,7 +309,6 @@ static GLuint ParseUnitTexture(const string& texture)
 		return 0;
 	}
 
-	endPtr++; // skip the ':'
 	if (*endPtr == '0') {
 		return stex->tex1;
 	}
