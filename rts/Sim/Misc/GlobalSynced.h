@@ -176,16 +176,6 @@ public:
 	*/
 	bool useLuaGaia;
 
-	/**
-	* @brief game mode
-	*
-	* Determines the commander mode of this game
-	*   0: game continues after commander dies
-	*   1: game ends when commander dies
-	*   2: lineage mode (all descendants die when a commander dies)
-	*/
-	int gameMode;
-
 	// do not use, backward compatibility
 	int activeTeamsBackwardCompatForLuaBinder;
 
