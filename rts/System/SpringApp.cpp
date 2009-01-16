@@ -753,7 +753,10 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 	string cmdLineStr = win_lpCmdLine;
 	string::size_type offset = 0;
 	//Simply assumes that any argument coming after a argument starting with /q is a variable to /q.
-	for(int i=1; i < argc && (argv[i][0] == '/' || (argv[i-1][0] == '/' && (argv[i-1][1] == 'q' || argv[i-1][1] == 'a'))); i++){
+	for(int i=1; i < argc && (argv[i][0] == '/' || (argv[i-1][0] == '/'
+			&& (argv[i-1][1] == 'q' || argv[i-1][1] == 'a'
+				|| argv[i-1][1] == 'C' || argv[i-1][1] == 'x'
+				|| argv[i-1][1] == 'y' || argv[i-1][1] == 'n'))); i++){
 		offset += strlen(argv[i]);
 		offset = cmdLineStr.find_first_not_of(' ', offset);
 		if(offset == string::npos)
