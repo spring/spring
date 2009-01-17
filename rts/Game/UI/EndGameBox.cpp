@@ -229,6 +229,9 @@ void CEndGameBox::Draw()
 		font->glPrintAt(box.x1+0.25f,box.y1+0.65f,1,"You won the game");
 	}
 
+	if(gs->frameNum <= 0)
+		return;
+
 	if(dispMode==0){
 		float xpos=0.01f;
 
