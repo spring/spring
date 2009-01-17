@@ -241,7 +241,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.params.push_back("0");
 		c.params.push_back("Repeat off");
 		c.params.push_back("Repeat on");
-		c.tooltip = "Repeat: If on the unit will continously\n push finished orders to the end of its\n order que";
+		c.tooltip = "Repeat: If on the unit will continously\n push finished orders to the end of its\n order queue";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_REPEAT);
 	}
