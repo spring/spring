@@ -257,7 +257,7 @@ void UDPConnection::Flush(const bool forced)
 	{
 		lastSendTime=SDL_GetTicks();
 
-		boost::uint8_t buffer[1500];
+		boost::uint8_t buffer[UDPMaxPacketSize];
 		unsigned pos = 0;
 		// Manually fragment packets to respect configured UDP_MTU.
 		// This is an attempt to fix the bug where players drop out of the game if
@@ -336,7 +336,7 @@ bool UDPConnection::CheckAddress(const sockaddr_in& from) const
 
 void UDPConnection::SetMTU(unsigned mtu2)
 {
-	if (mtu2 > 20 && mtu2 < 4096)
+	if (mtu2 > 20 && mtu2 < UDPMaxPacketSize)
 		mtu = mtu2;
 }
 
