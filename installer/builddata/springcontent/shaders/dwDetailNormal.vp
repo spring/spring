@@ -1,5 +1,4 @@
 !!ARBvp1.0
-OPTION NV_vertex_program3;
 
 PARAM mat[4] = { state.matrix.mvp };
 ATTRIB pos = vertex.position;
