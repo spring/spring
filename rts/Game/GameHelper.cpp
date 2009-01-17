@@ -130,6 +130,9 @@ void CGameHelper::DoExplosionDamage(CUnit* unit,
 	dif /= expDist;
 	dif.y += 0.12f;
 
+	if (mod < 0.01f)
+		mod = 0.01f;
+
 	DamageArray damageDone = damages * mod2;
 	float3 addedImpulse = dif * (damages.impulseFactor * mod * (damages[0] + damages.impulseBoost) * 3.2f);
 
