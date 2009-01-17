@@ -277,7 +277,9 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 	CCommandAI::GiveAllowedCommand(c);
 }
 
-void CMobileCAI::RefuelIfNeeded()
+
+/// returns true if the unit has to land
+bool CMobileCAI::RefuelIfNeeded()
 {
 	if (!owner->moveType->reservedPad) {
 		// we don't have a pad yet
@@ -304,11 +306,13 @@ void CMobileCAI::RefuelIfNeeded()
 				if (landingPos != ZeroVector) {
 					// NOTE: owner->userAttackGround is wrongly reset to
 					// true in CUnit::AttackGround() via ExecuteAttack()
+					// so don't call it
 					SetGoal(landingPos, owner->pos);
 				} else {
 					owner->moveType->StopMoving();
 				}
 			}
+			return true;
 		} else if (owner->currentFuel < (owner->moveType->repairBelowHealth * owner->unitDef->maxFuel) && true
 			/* (commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT) */) {
 			// current fuel level is below our bingo threshold
@@ -324,12 +328,15 @@ void CMobileCAI::RefuelIfNeeded()
 				owner->userTarget = 0;
 				inCommand = false;
 				owner->moveType->ReservePad(lp);
+				return true;
 			}
 		}
 	}
+	return false;
 }
 
-void CMobileCAI::LandRepairIfNeeded()
+/// returns true if the unit has to land
+bool CMobileCAI::LandRepairIfNeeded()
 {
 	if (!owner->moveType->reservedPad
 		&& owner->health < owner->maxHealth * owner->moveType->repairBelowHealth) {
@@ -339,16 +346,25 @@ void CMobileCAI::LandRepairIfNeeded()
 
 		if (lp) {
 			owner->moveType->ReservePad(lp);
+			return true;
+		}
+
+		float3 newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+		if (newGoal != ZeroVector) {
+			SetGoal(newGoal, owner->pos);
+			return true;
 		}
 	}
+	return false;
 }
 
 void CMobileCAI::SlowUpdate()
 {
+	bool wantToLand = false;
 	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
-		LandRepairIfNeeded();
-		if (owner->unitDef->maxFuel > 0) {
-			RefuelIfNeeded();
+		wantToLand = LandRepairIfNeeded();
+		if (!wantToLand && owner->unitDef->maxFuel > 0) {
+			wantToLand = RefuelIfNeeded();
 		}
 	}
 

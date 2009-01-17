@@ -225,7 +225,7 @@ void CAirMoveType::Update(void)
 			}
 
 			owner->pos = pos;
-			owner->AddBuildPower(unit->unitDef->buildSpeed / 30, unit);
+			owner->AddBuildPower(unit->unitDef->buildSpeed / GAME_SPEED, unit);
 			owner->currentFuel = std::min(owner->unitDef->maxFuel, owner->currentFuel + (owner->unitDef->maxFuel / (GAME_SPEED * owner->unitDef->refuelTime)));
 
 			if (owner->health >= owner->maxHealth - 1 && owner->currentFuel >= owner->unitDef->maxFuel) {
