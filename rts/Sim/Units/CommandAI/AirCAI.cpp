@@ -212,9 +212,9 @@ void CAirCAI::SlowUpdate()
 
 	AAirMoveType* myPlane=(AAirMoveType*) owner->moveType;
 
-	LandRepairIfNeeded();
-	if(owner->unitDef->maxFuel > 0){
-		RefuelIfNeeded();
+	bool wantToRefuel = LandRepairIfNeeded();
+	if(!wantToRefuel && owner->unitDef->maxFuel > 0){
+		wantToRefuel = RefuelIfNeeded();
 	}
 
 	if(commandQue.empty()){
@@ -272,7 +272,14 @@ void CAirCAI::SlowUpdate()
 		myPlane->Takeoff();
 	}
 
-	float3 curPos=owner->pos;
+	if (wantToRefuel) {
+		switch (c.id) {
+			case CMD_AREA_ATTACK:
+			case CMD_ATTACK:
+			case CMD_FIGHT:
+				return;
+		}
+	}
 
 	switch(c.id){
 		case CMD_AREA_ATTACK:{
