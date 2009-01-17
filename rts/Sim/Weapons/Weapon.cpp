@@ -238,6 +238,13 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 }
 
 
+
+static inline bool isBeingServicedOnPad(CUnit* u)
+{
+	AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
+	return a && a->padStatus != 0;
+}
+
 void CWeapon::Update()
 {
 	if(hasCloseTarget){
@@ -336,7 +343,8 @@ void CWeapon::Update()
 	    && (reloadStatus <= gs->frameNum)
 	    && (!weaponDef->stockpile || numStockpiled)
 	    && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0))
-	    && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0))
+	    && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0)
+	    && !isBeingServicedOnPad(owner))
 	   )
 	{
 		if ((weaponDef->stockpile ||
