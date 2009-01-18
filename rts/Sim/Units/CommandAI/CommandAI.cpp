@@ -1540,7 +1540,6 @@ bool CCommandAI::CanChangeFireState(){
 /// remove attack commands targeted at our new ally
 void CCommandAI::ChangeAllyTeam(int ally)
 {
-	int myAllyTeam = owner->allyteam;
 	std::vector<int> todel;
 
 	// erasing in the middle invalidates all iterators
