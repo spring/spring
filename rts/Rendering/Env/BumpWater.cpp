@@ -346,8 +346,8 @@ CBumpWater::CBumpWater()
 		GLuint depthFormat = GL_DEPTH_COMPONENT; 
 		switch (gu->depthBufferBits) { /// use same depth as screen framebuffer
 			case 16: depthFormat = GL_DEPTH_COMPONENT16; break;
-			case 24: depthFormat = GL_DEPTH_COMPONENT24; break;
-			case 32: depthFormat = GL_DEPTH_COMPONENT32; break;
+			case 24: if (!gu->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; break; } //ATIs fall through and use 32bit!
+			default: depthFormat = GL_DEPTH_COMPONENT32; break;
 		}
 		glTexImage2D(target, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
