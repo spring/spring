@@ -48,10 +48,8 @@
 CGameHelper* helper;
 
 
-CGameHelper::CGameHelper(CGame* game)
+CGameHelper::CGameHelper()
 {
-	this->game=game;
-
 	stdExplosionGenerator = new CStdExplosionGenerator;
 }
 
