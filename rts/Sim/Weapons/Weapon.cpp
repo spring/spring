@@ -906,7 +906,7 @@ float CWeapon::GetRange2D(float yDiff) const
 }
 
 
-void CWeapon::ChangeAllyTeam(int ally)
+void CWeapon::StopAttackingAllyTeam(int ally)
 {
 	if (targetUnit && targetUnit->allyteam == ally) {
 		HoldFire();

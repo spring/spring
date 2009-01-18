@@ -1538,7 +1538,7 @@ bool CCommandAI::CanChangeFireState(){
 }
 
 /// remove attack commands targeted at our new ally
-void CCommandAI::ChangeAllyTeam(int ally)
+void CCommandAI::StopAttackingAllyTeam(int ally)
 {
 	std::vector<int> todel;
 

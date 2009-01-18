@@ -3851,7 +3851,7 @@ void CGame::ClientReadNet()
 								it != uh->activeUnits.end();
 								++it) {
 							if (teamHandler->Ally((*it)->allyteam, whichAllyTeam)) {
-								(*it)->ChangeAllyTeam(whichAllyTeam);
+								(*it)->StopAttackingAllyTeam(whichAllyTeam);
 							}
 						}
 					}

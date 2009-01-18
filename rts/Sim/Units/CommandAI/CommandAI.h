@@ -40,7 +40,7 @@ public:
 	virtual bool CanSetMaxSpeed() const { return false; }
 	virtual void StopMove() { return; }
 	virtual bool HasMoreMoveCommands();
-	virtual void ChangeAllyTeam(int ally);
+	virtual void StopAttackingAllyTeam(int ally);
 
 	int CancelCommands(const Command &c, CCommandQueue& queue,
 	                   bool& first);
