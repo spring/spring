@@ -1379,7 +1379,7 @@ void CGameServer::KickPlayer(const int playerNum)
 		Message(str( format("Attempt to kick player $d who is not connected") %playerNum ));
 }
 
-unsigned CGameServer::BindConnection(const std::string& name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
+unsigned CGameServer::BindConnection(std::string name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
 	unsigned hisNewNumber = 0;
 	bool found = false;
@@ -1397,6 +1397,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 			if (players[i].isFromDemo)
 			{
 				Message(str(format("Player %s (%i) is from demo") %name %i));
+				name += "_";
 			}
 			if (players[i].myState == GameParticipant::UNCONNECTED || players[i].myState == GameParticipant::DISCONNECTED)
 			{
@@ -1407,6 +1408,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 			else
 			{
 				Message(str(format("Player %s is already ingame") %name));
+				name += "_";
 			}
 		}
 	}
