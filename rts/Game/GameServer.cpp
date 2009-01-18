@@ -476,7 +476,7 @@ void CGameServer::Update()
 	else if (serverframenum > 0 || demoReader)
 	{
 		CreateNewFrame(true, false);
-		if (!sentGameOverMsg && !demoReader)
+		if (serverframenum > GAME_SPEED && !sentGameOverMsg && !demoReader)
 			CheckForGameEnd();
 	}
 
