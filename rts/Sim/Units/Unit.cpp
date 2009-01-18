@@ -2282,11 +2282,11 @@ void CUnit::LogMessage(const char *fmt, ...)
 }
 
 
-void CUnit::ChangeAllyTeam(int ally)
+void CUnit::StopAttackingAllyTeam(int ally)
 {
-	commandAI->ChangeAllyTeam(ally);
+	commandAI->StopAttackingAllyTeam(ally);
 	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
-		(*it)->ChangeAllyTeam(ally);
+		(*it)->StopAttackingAllyTeam(ally);
 	}
 }
 
