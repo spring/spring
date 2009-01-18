@@ -97,6 +97,7 @@ public:
 
 	virtual void PushAction(const Action& action);
 
+	bool HasDemo() const { return (demoReader != NULL); }
 	/// Is the server still running?
 	bool HasFinished() const;
 
@@ -205,8 +206,9 @@ private:
 
 	void RestrictedAction(const std::string& action);
 
-	/// If the server recieves a command, it will forward it to clients if it is not in this set
+	/// If the server receives a command, it will forward it to clients if it is not in this set
 	std::set<std::string> commandBlacklist;
+
 	boost::scoped_ptr<netcode::UDPListener> UDPNet;
 	boost::scoped_ptr<CDemoReader> demoReader;
 	boost::scoped_ptr<AutohostInterface> hostif;

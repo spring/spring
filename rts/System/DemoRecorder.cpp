@@ -30,7 +30,7 @@ CDemoRecorder::CDemoRecorder()
 		return;
 
 	SetName("unnamed");
-	demoName = wantedName;
+	demoName = GetName();
 
 	std::string filename = filesystem.LocateFile(demoName, FileSystem::WRITE);
 	recordDemo.open(filename.c_str(), std::ios::out | std::ios::binary);
@@ -100,7 +100,7 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length)
 
 void CDemoRecorder::SetName(const std::string& mapname)
 {
-	struct tm *newtime;
+	struct tm* newtime;
 	__time64_t long_time;
 	_time64(&long_time);                /* Get time as long integer. */
 	newtime = _localtime64(&long_time); /* Convert to local time. */
@@ -112,12 +112,21 @@ void CDemoRecorder::SetName(const std::string& mapname)
 		throw content_error("error: _localtime64 returned NULL");
 
 	char buf[1000];
-	SNPRINTF(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i", newtime->tm_year+1900, newtime->tm_mon + 1, newtime->tm_mday,
+	SNPRINTF(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i",
+		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
         newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
-	std::string name = std::string(buf) + "_" + mapname.substr(0, mapname.find_first_of("."));
-	name += std::string("_") + SpringVersion::Get();
+
+	std::string name =
+		std::string(buf) +
+		"_" +
+		mapname.substr(0, mapname.find_first_of(".")) +
+		"_" +
+		SpringVersion::Get();
+
 	// games without gameSetup should have different names
-	if (!gameSetup) {
+	// note: the gameSetup pointer is non-0 when CPreGame
+	// wants to rename us even in non-scripted games now
+	if (!gameSetup || wantedName.find("local_") != std::string::npos) {
 	    name = "local_" + name;
 	}
 
@@ -131,6 +140,7 @@ void CDemoRecorder::SetName(const std::string& mapname)
 				break;
 		}
 	}
+
 	wantedName = buf;
 }
 
