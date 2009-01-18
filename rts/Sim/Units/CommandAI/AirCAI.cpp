@@ -446,8 +446,12 @@ void CAirCAI::ExecuteFight(Command &c)
 	}
 	myPlane->goalPos = goalPos;
 
-	if((owner->pos - goalPos).SqLength2D() < (127 * 127)
-			|| (owner->pos + owner->speed*8 - goalPos).SqLength2D() < (127 * 127)) {
+	CAirMoveType* airmt = dynamic_cast<CAirMoveType*>(myPlane);
+	const float radius = airmt ? std::max(airmt->turnRadius + 2*SQUARE_SIZE, 128.f) : 127.f;
+
+	// we're either circling or will get to the target in 8 frames
+	if((owner->pos - goalPos).SqLength2D() < (radius * radius)
+			|| (owner->pos + owner->speed*8 - goalPos).SqLength2D() < 127*127) {
 		FinishCommand();
 	}
 	return;
