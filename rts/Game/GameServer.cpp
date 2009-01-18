@@ -423,13 +423,15 @@ void CGameServer::Update()
 			float cpu[MAX_PLAYERS];
 			float refCpu=0.0f;
 			for (unsigned a = 0; a < players.size(); ++a) {
-				if (players[a].myState >= GameParticipant::INGAME) {
+				if (players[a].myState == GameParticipant::INGAME) {
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, players[a].ping));
-					if (players[a].cpuUsage > refCpu)
-						refCpu = players[a].cpuUsage;
-					cpu[curpos]=players[a].cpuUsage;
-					ping[curpos]=players[a].ping;
-					++curpos;
+					if(!enforceSpeed || !players[a].spectator) {
+						if (players[a].cpuUsage > refCpu)
+							refCpu = players[a].cpuUsage;
+						cpu[curpos]=players[a].cpuUsage;
+						ping[curpos]=players[a].ping;
+						++curpos;
+					}
 				}
 			}
 
