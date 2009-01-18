@@ -1,5 +1,13 @@
 Spring change log
 
+0.78.2.1:
+Bugfixes:
+ - fix for game refusing to speed up after a slowdown
+ - set MaxSpeed to 20 on (test)singleplayer
+ - fix insta-gameover vs. AIs
+ - fixed the server to run away from the local player on high gamespeeds
+
+
 0.78.2:
 General bugfixes:
  - fix crash on gamestart with lots of players
