@@ -184,7 +184,11 @@ extern int gmlThreadNumber;
 extern int gmlThreadCount;
 extern int gmlThreadCountOverride;
 extern unsigned gmlCPUCount();
-#define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : ((BOOST_VERSION >= 103500) ? boost::thread::hardware_concurrency() : gmlCPUCount() ) )
+#if (BOOST_VERSION >= 103500)
+#	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : boost::thread::hardware_concurrency() )
+#else
+#	define GML_CPU_COUNT (gmlThreadCountOverride ? gmlThreadCountOverride : gmlCPUCount() )
+#endif
 #define GML_MAX_NUM_THREADS (32+1) // one extra for the aux (Sim) thread
 #define GML_IF_SERVER_THREAD() if(GML_SERVER_GLCALL && (!GML_ENABLE || gmlThreadNumber==0))
 extern int gmlItemsConsumed;
