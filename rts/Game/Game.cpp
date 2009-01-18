@@ -3493,9 +3493,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
-#ifndef SYNCCHECK
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum-1));
-#endif
 				if (gs->frameNum == (serverframenum - 1)) {
 					// everything ok, fall through
 				} else {
