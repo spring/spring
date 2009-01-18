@@ -15,6 +15,7 @@
 #include "Util.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Game/GameVersion.h"
 #include "ConfigHandler.h"
 #include "mmgr.h"
 
