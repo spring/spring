@@ -3258,7 +3258,7 @@ void CGame::ClientReadNet()
 	{
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
-		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES;
+		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor;
 	}
 
 	// really process the messages
