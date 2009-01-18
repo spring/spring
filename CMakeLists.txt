@@ -148,4 +148,8 @@ else (UNIX AND NOT MINGW)
 	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR})
 endif (UNIX AND NOT MINGW)
 
+# additional tools
 
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoAnalyser)
+	add_subdirectory(tools/DemoAnalyser)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoAnalyser)

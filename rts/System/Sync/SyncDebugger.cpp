@@ -86,7 +86,7 @@ CSyncDebugger::~CSyncDebugger()
  * false for a client (requires only 16 megabytes extra).
  * FIXME update this comment to reflect new values
  */
-void CSyncDebugger::Initialize(bool useBacktrace)
+void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 {
 	delete[] history;
 	history = 0;
@@ -109,10 +109,10 @@ void CSyncDebugger::Initialize(bool useBacktrace)
 	disable_history = false;
 	may_enable_history = false;
 	flop = 0;
-	for (int j = 0; j < MAX_PLAYERS; ++j) {
-		checksumResponses[j].clear();
-		remoteHistory[j].clear();
-		remoteFlop[j] = 0;
+	for (int j = 0; j < numPlayers; ++j) {
+		players[j].checksumResponses.clear();
+		players[j].remoteHistory.clear();
+		players[j].remoteFlop = 0;
 	}
 	pendingBlocksToRequest.clear();
 	waitingForBlockResponse = false;
@@ -248,10 +248,10 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					const unsigned* end = begin + HISTORY_SIZE;
 					checksumResponses[player].resize(HISTORY_SIZE);
 					std::copy(begin, end, checksumResponses[player].begin());
-					remoteFlop[player] = *(Uint64*)&inbuf[4];
+					players[player].remoteFlop = *(Uint64*)&inbuf[4];
 					assert(!checksumResponses[player].empty());
 					int i = 0;
-					while (i < playerHandler->ActivePlayers() && !checksumResponses[i].empty()) ++i;
+					while (i < playerHandler->ActivePlayers() && !players[i].checksumResponses.empty()) ++i;
 					if (i == playerHandler->ActivePlayers()) {
 						ServerQueueBlockRequests();
 						logger.AddLine("Server: checksum responses received; %d block requests queued", pendingBlocksToRequest.size());
@@ -270,12 +270,12 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 				} else {
 					const unsigned* begin = (unsigned*)&inbuf[4];
 					const unsigned* end = begin + BLOCK_SIZE;
-					unsigned size = remoteHistory[player].size();
-					remoteHistory[player].resize(size + BLOCK_SIZE);
-					std::copy(begin, end, remoteHistory[player].begin() + size);
+					unsigned size = players[player].remoteHistory.size();
+					players[player].remoteHistory.resize(size + BLOCK_SIZE);
+					std::copy(begin, end, players[player].remoteHistory.begin() + size);
 					int i = 0;
 					size += BLOCK_SIZE;
-					while (i < playerHandler->ActivePlayers() && size == remoteHistory[i].size()) ++i;
+					while (i < playerHandler->ActivePlayers() && size == players[i].remoteHistory.size()) ++i;
 					if (i == playerHandler->ActivePlayers()) {
 						logger.AddLine("Server: block responses received");
 						ServerReceivedBlockResponses();
@@ -401,9 +401,9 @@ void CSyncDebugger::ServerQueueBlockRequests()
 	for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 		if (correctFlop) {
 			if (remoteFlop[j] != correctFlop)
-				logger.AddLine("Server: bad flop# %llu instead of %llu for player %d", remoteFlop[j], correctFlop, j);
+				logger.AddLine("Server: bad flop# %llu instead of %llu for player %d", players[j].remoteFlop, correctFlop, j);
 		} else {
-			correctFlop = remoteFlop[j];
+			correctFlop = players[j].remoteFlop;
 		}
 	}
 	unsigned i = ((unsigned)(correctFlop % (HISTORY_SIZE * BLOCK_SIZE)) / BLOCK_SIZE) + 1;
@@ -411,11 +411,11 @@ void CSyncDebugger::ServerQueueBlockRequests()
 		unsigned correctChecksum = 0;
 		if (i == HISTORY_SIZE) i = 0;
 		for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
-			if (correctChecksum && checksumResponses[j][i] != correctChecksum) {
+			if (correctChecksum && players[j].checksumResponses[i] != correctChecksum) {
 				pendingBlocksToRequest.push_back(i);
 				break;
 			}
-			correctChecksum = checksumResponses[j][i];
+			correctChecksum = players[j].checksumResponses[i];
 		}
 	}
 	if (!pendingBlocksToRequest.empty()) {
@@ -428,8 +428,8 @@ void CSyncDebugger::ServerQueueBlockRequests()
 		net->Send(CBaseNetProtocol::Get().SendSdReset());
 	}
 	//cleanup
-	for (int j = 0; j < MAX_PLAYERS; ++j)
-		checksumResponses[j].clear();
+	for (playerVec::iterator it = players.begin(); it != players.end(); ++it)
+		it->checksumResponses.clear();
 }
 
 
@@ -563,8 +563,8 @@ void CSyncDebugger::ServerDumpStack()
 		logger.AddLine("Server: huh, all checksums equal?!? (INTERNAL ERROR)");
 
 	//cleanup
-	for (int j = 0; j < MAX_PLAYERS; ++j)
-		remoteHistory[j].clear();
+	for (playerVec::iterator it = players.begin(); it != players.end(); ++it)
+		it->remoteHistory.clear();
 
 	if (historybt) {
 		// output backtraces we collected earlier this function

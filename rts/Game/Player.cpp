@@ -53,8 +53,7 @@ CR_REG_METADATA_SUB(CPlayer, Statistics, (
 
 CPlayer::CPlayer()
 {
-	currentStats = new Statistics;
-	memset(currentStats, 0, sizeof(Statistics));
+	memset(&currentStats, 0, sizeof(Statistics));
 
 	active = false;
 	readyToStart = false;
@@ -82,7 +81,6 @@ CPlayer::CPlayer()
 
 CPlayer::~CPlayer()
 {
-	delete currentStats;
 }
 
 

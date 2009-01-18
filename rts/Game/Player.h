@@ -81,7 +81,7 @@ public:
 		}
 	};
 
-	Statistics* currentStats;
+	Statistics currentStats;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	DirectControlStruct myControl;
