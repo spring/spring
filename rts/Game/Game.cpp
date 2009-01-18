@@ -963,21 +963,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "echo") {
 		logOutput.Print(action.extra);
 	}
-	else if (cmd == "setf") {
-		const std::string::size_type pos = action.extra.find_first_of(" ");
-		if (pos != std::string::npos) {
-			const std::string varName = action.extra.substr(0, pos);
-			configHandler.Set(varName, atof(action.extra.substr(pos+1).c_str()));
-		}
-	}
-	else if (cmd == "seti") {
-		const std::string::size_type pos = action.extra.find_first_of(" ");
-		if (pos != std::string::npos) {
-			const std::string varName = action.extra.substr(0, pos);
-			configHandler.Set(varName, atoi(action.extra.substr(pos+1).c_str()));
-		}
-	}
-	else if (cmd == "sets") {
+	else if (cmd == "set" || cmd == "sets" || cmd == "seti" || cmd == "setf") { // the set[s|i|f] should be removed sometimes
 		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.extra.substr(0, pos);
