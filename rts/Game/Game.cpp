@@ -626,7 +626,7 @@ void CGame::ResizeEvent()
 int CGame::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (!gameOver && !isRepeat) {
-		playerHandler->Player(gu->myPlayerNum)->currentStats->keyPresses++;
+		playerHandler->Player(gu->myPlayerNum)->currentStats.keyPresses++;
 	}
 
 	if (!hotBinding.empty()) {
@@ -3328,7 +3328,7 @@ void CGame::ClientReadNet()
 				logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
-				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, *playerHandler->Player(gu->myPlayerNum)->currentStats));
+				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
@@ -3339,11 +3339,11 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in playerstat msg",player);
 					break;
 				}
-				*playerHandler->Player(player)->currentStats = *(CPlayer::Statistics*)&inbuf[2];
+				playerHandler->Player(player)->currentStats = *(CPlayer::Statistics*)&inbuf[2];
 				if (gameOver) {
 					CDemoRecorder* record = net->GetDemoRecorder();
 					if (record != NULL) {
-						record->SetPlayerStats(player, *playerHandler->Player(player)->currentStats);
+						record->SetPlayerStats(player, playerHandler->Player(player)->currentStats);
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
@@ -4378,7 +4378,7 @@ void CGame::GameEnd()
 		record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
 		record->InitializeStats(numPlayers, numTeams, winner);
 		for (int i = 0; i < numPlayers; ++i) {
-			record->SetPlayerStats(i, *playerHandler->Player(i)->currentStats);
+			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 		}
 		for (int i = 0; i < numTeams; ++i) {
 			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
