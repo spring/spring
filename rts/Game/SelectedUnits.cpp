@@ -261,11 +261,11 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	}
 
 	if (fromUser) {		//add some statistics
-		playerHandler->Player(gu->myPlayerNum)->currentStats->numCommands++;
+		playerHandler->Player(gu->myPlayerNum)->currentStats.numCommands++;
 		if (selectedGroup!=-1) {
-			playerHandler->Player(gu->myPlayerNum)->currentStats->unitCommands+=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
+			playerHandler->Player(gu->myPlayerNum)->currentStats.unitCommands+=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
 		} else {
-			playerHandler->Player(gu->myPlayerNum)->currentStats->unitCommands+=selectedUnits.size();
+			playerHandler->Player(gu->myPlayerNum)->currentStats.unitCommands+=selectedUnits.size();
 		}
 	}
 
