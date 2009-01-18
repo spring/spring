@@ -2282,6 +2282,12 @@ void CUnit::LogMessage(const char *fmt, ...)
 }
 
 
+void CUnit::ChangeAllyTeam(int ally)
+{
+	commandAI->ChangeAllyTeam(ally);
+}
+
+
 // Member bindings
 CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),
