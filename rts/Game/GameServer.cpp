@@ -76,6 +76,7 @@ GameParticipant::GameParticipant()
 : myState(UNCONNECTED)
 , cpuUsage (0.0f)
 , ping (0)
+, lastKeyframeResponse(0)
 , isLocal(false)
 {
 }
@@ -530,6 +531,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 	switch (inbuf[0]){
 		case NETMSG_KEYFRAME:
 			players[a].ping = serverframenum-*(int*)&inbuf[1];
+			players[a].lastKeyframeResponse = *(int*)&inbuf[1];
 			break;
 
 		case NETMSG_PAUSE:
@@ -1277,16 +1279,17 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 				timeElapsed=200;
 			}
 
-#ifdef DEBUG
-			if(gameClientUpdated){
-				gameClientUpdated=false;
-			}
-#endif
-
 			timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed) / 1000.0f;
 			lastTick=currentTick;
 			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
+			
+			if (hasLocalClient)
+			{
+				// needs to set lastTick and stuff, otherwise we will get all the left out NEWFRAME's at once when client has catched up
+				if (players[localClientNumber].lastKeyframeResponse + GAME_SPEED*2 <= serverframenum)
+					return;
+			}
 		}
 
 		bool rec = false;

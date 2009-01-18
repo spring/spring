@@ -50,6 +50,7 @@ public:
 	
 	float cpuUsage;
 	int ping;
+	int lastKeyframeResponse;
 
 	bool isLocal;
 	boost::shared_ptr<netcode::CConnection> link;
