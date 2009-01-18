@@ -3875,6 +3875,11 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 	glLineWidth(1.0f);
 
+	if (!onMinimap) {
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+	}
+
 /*	if (minimapCoords) {
 		camera->pos = tmpCamPos;
 		mouse->dir = tmpMouseDir;
