@@ -321,7 +321,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	selectedUnits.Init(playerHandler->TotalPlayers());
 
-	helper = new CGameHelper(this);
+	helper = new CGameHelper();
 
 	modInfo.Init(modName.c_str());
 
