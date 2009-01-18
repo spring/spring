@@ -128,6 +128,7 @@ void CLogOutput::Initialize()
 
 	initialized = true;
 	(*this) << "LogOutput initialized.\n";
+	(*this) << "Spring " << SpringVersion::GetFull() << "\n";
 
 	InitializeSubsystems();
 
