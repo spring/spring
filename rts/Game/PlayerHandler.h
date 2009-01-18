@@ -5,8 +5,9 @@
 #ifndef PLAYERHANDLER_H
 #define PLAYERHANDLER_H
 
+#include <assert.h>
+
 #include "creg/creg.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "Player.h"
 
 class CGameSetup;
@@ -29,7 +30,7 @@ public:
 	 *
 	 * Accesses a CPlayer instance at a given index
 	 */
-	CPlayer* Player(int i) { return &players[i]; }
+	CPlayer* Player(int i) { assert(unsigned(i) < players.size()); return &players[i]; }
 
 	/**
 	 * @brief Player
@@ -38,11 +39,12 @@ public:
 	 *
 	 * Search a player by name.
 	 */
-	int Player(const std::string& name);
+	int Player(const std::string& name) const;
 
 	void PlayerLeft(int playernum, unsigned char reason);
 
 	int ActivePlayers() const { return activePlayers; }
+	int TotalPlayers() const { return players.size(); };
 
 private:
 
@@ -53,13 +55,13 @@ private:
 	 */
 	int activePlayers;
 
+	typedef std::vector<CPlayer> playerVec;
 	/**
 	 * @brief players
 	 *
-	 * Array of CPlayer instances, for all the
-	 * players in the game (size MAX_PLAYERS)
+	 * for all the players in the game
 	 */
-	CPlayer players[MAX_PLAYERS];
+	playerVec players;
 };
 
 extern CPlayerHandler* playerHandler;

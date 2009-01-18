@@ -1,7 +1,7 @@
 include_directories(${CMAKE_SOURCE_DIR}/rts ${CMAKE_SOURCE_DIR}/rts/ExternalAI ${CMAKE_SOURCE_DIR}/rts/System)
 
 remove_definitions(-DSTREFLOP_SSE) # would break AI compiling
-add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1 -DUSING_CREG)
+add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1) # -DUSING_CREG)
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
 list (APPEND creg ${CMAKE_SOURCE_DIR}/rts/System/float3)
 

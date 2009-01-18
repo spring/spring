@@ -3,7 +3,8 @@
 #include <limits>
 
 #include "../../rts/System/DemoReader.h"
-#include "System/Platform/FileSystem.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/ConfigHandler.h"
 #include "Game/GameSetup.h"
 #include "BaseNetProtocol.h"
 #include "../../rts/System/Net/RawPacket.h"
@@ -20,6 +21,7 @@ Please note that not all NETMSG's are implemented, expand if needed.
 
 int main (int argc, char* argv[])
 {
+	ConfigHandler::Instantiate("");
 	FileSystemHandler::Cleanup();
 	FileSystemHandler::Initialize(false);
 
@@ -35,9 +37,6 @@ int main (int argc, char* argv[])
 		const unsigned char* buffer = packet->data;
 		switch ((unsigned char)buffer[0])
 		{
-			case NETMSG_ATTEMPTCONNECT:
-				cout << "ATTEMPTCONNECT: Playernum: " << (unsigned)buffer[1] << " Version: " << (unsigned)buffer[2] << endl;
-				break;
 			case NETMSG_PLAYERNAME:
 				cout << "PLAYERNAME: Playernum: " << (unsigned)buffer[2] << " Name: " << buffer+3 << endl;
 				break;

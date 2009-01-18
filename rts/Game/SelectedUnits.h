@@ -14,7 +14,7 @@ class CFeature;
 class CSelectedUnits : public CObject
 {
 public:
-	void Init();
+	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
 	void AiOrder(int unitid, const Command& c, int playerID);
 	int GetDefaultCmd(CUnit* unit,CFeature* feature);
@@ -44,7 +44,7 @@ public:
 	bool selectionChanged;
 	bool possibleCommandsChanged;
 
-	vector<int> netSelected[MAX_PLAYERS];
+	std::vector< vector<int> > netSelected;
 
 	bool buildIconsFirst;
 	int selectedGroup;
