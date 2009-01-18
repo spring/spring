@@ -1546,7 +1546,7 @@ void CCommandAI::ChangeAllyTeam(int ally)
 	// erasing in the middle invalidates all iterators
 	for (CCommandQueue::iterator it = commandQue.begin(); it != commandQue.end(); ++it) {
 		const Command &c = *it;
-		if (c.id == CMD_ATTACK && c.params.size() == 1 &&
+		if ((c.id == CMD_FIGHT || c.id == CMD_ATTACK) && c.params.size() == 1 &&
 				uh->units[(int)c.params[0]]->allyteam == ally)
 			todel.push_back(it - commandQue.begin());
 	}
