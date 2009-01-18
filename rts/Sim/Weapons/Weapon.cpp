@@ -624,7 +624,8 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		HoldFire();
 
 	//happens if the target or the unit has switched teams
-	if (targetType==Target_Unit && !haveUserTarget && targetUnit->allyteam == owner->allyteam)
+	//should be handled by /ally processing now
+	if (targetType==Target_Unit && !haveUserTarget && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
 		HoldFire();
 
 	if(slavedTo){	//use targets from the thing we are slaved to
@@ -907,9 +908,7 @@ float CWeapon::GetRange2D(float yDiff) const
 
 void CWeapon::ChangeAllyTeam(int ally)
 {
-	if (targetType == Target_Unit && targetUnit && targetUnit->allyteam == ally) {
-		DeleteDeathDependence(targetUnit);
-		targetType = Target_None;
-		targetUnit = 0;
+	if (targetUnit && targetUnit->allyteam == ally) {
+		HoldFire();
 	}
 }

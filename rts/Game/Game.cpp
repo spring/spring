@@ -3829,24 +3829,35 @@ void CGame::ClientReadNet()
 					//       - need to reset unit texture for 3do
 					//       - need a call-in for AIs
 					teamHandler->SetAlly(fromAllyTeam, whichAllyTeam, allied);
-					if (fromAllyTeam == gu->myAllyTeam)
-					{
-						std::ostringstream msg;
-						msg << "You have " << (allied ? " allied " : " unallied ") << " allyteam " << whichAllyTeam;
-						logOutput.Print(msg.str());
+
+					// inform the players
+					std::ostringstream msg;
+					if (fromAllyTeam == gu->myAllyTeam) {
+						msg << "Alliance: you have " << (allied ? "allied" : "unallied")
+							<< " allyteam " << whichAllyTeam << ".";
+					} else if (whichAllyTeam == gu->myAllyTeam) {
+						msg << "Alliance: allyteam " << whichAllyTeam << " has "
+							<< (allied ? "allied" : "unallied") <<  " with you.";
+					} else {
+						msg << "Alliance: allyteam " << whichAllyTeam << " has "
+							<< (allied ? "allied" : "unallied")
+							<<  " with allyteam " << fromAllyTeam << ".";
 					}
+					logOutput.Print(msg.str());
+
+					// stop attacks against former foe
 					if (allied) {
 						for (std::list<CUnit*>::iterator it = uh->activeUnits.begin();
 								it != uh->activeUnits.end();
 								++it) {
-							if (teamHandler->AlliedTeams((*it)->team, whichAllyTeam)) {
+							if (teamHandler->Ally((*it)->allyteam, whichAllyTeam)) {
 								(*it)->ChangeAllyTeam(whichAllyTeam);
 							}
 						}
 					}
 					eventHandler.TeamChanged(playerHandler->Player(player)->team);
 				} else {
-					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
+					logOutput.Print("Alliance: Player %i sent out wrong allyTeam index in alliance message", player);
 				}
 				break;
 			}
