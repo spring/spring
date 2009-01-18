@@ -1376,7 +1376,7 @@ void CGameServer::KickPlayer(const int playerNum)
 		}
 	}
 	else
-		Message(str( format("Attempt to kick player $d who is not connected") %playerNum ));
+		Message(str( format("Attempt to kick player %d who is not connected") %playerNum ));
 }
 
 unsigned CGameServer::BindConnection(std::string name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
