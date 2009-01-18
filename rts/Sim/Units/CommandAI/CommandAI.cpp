@@ -1536,3 +1536,21 @@ bool CCommandAI::CanChangeFireState(){
 		(!owner->unitDef->weapons.empty() || owner->unitDef->type=="Factory" ||
 				owner->unitDef->canKamikaze);
 }
+
+/// remove attack commands targeted at our new ally
+void CCommandAI::ChangeAllyTeam(int ally)
+{
+	int myAllyTeam = owner->allyteam;
+	std::vector<int> todel;
+
+	// erasing in the middle invalidates all iterators
+	for (CCommandQueue::iterator it = commandQue.begin(); it != commandQue.end(); ++it) {
+		const Command &c = *it;
+		if (c.id == CMD_ATTACK && c.params.size() == 1 &&
+				uh->units[(int)c.params[0]]->allyteam == ally)
+			todel.push_back(it - commandQue.begin());
+	}
+	for (std::vector<int>::reverse_iterator it = todel.rbegin(); it != todel.rend(); ++it) {
+		commandQue.erase(commandQue.begin() + *it);
+	}
+}

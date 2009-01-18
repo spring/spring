@@ -3854,6 +3854,13 @@ void CGame::ClientReadNet()
 				} else {
 					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
 				}
+				if (allied) {
+					for (std::list<CUnit*>::iterator it = uh->activeUnits.begin();
+							it != uh->activeUnits.end();
+							++it) {
+						(*it)->ChangeAllyTeam(whichAllyTeam);
+					}
+				}
 				eventHandler.TeamChanged(playerHandler->Player(player)->team);
 				break;
 			}
