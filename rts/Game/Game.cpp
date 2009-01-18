@@ -3839,8 +3839,8 @@ void CGame::ClientReadNet()
 				const int player = inbuf[1];
 				const int whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
+				const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
 				if (whichAllyTeam < MAX_TEAMS && whichAllyTeam >= 0) {
-					const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
 					// FIXME - need to reset unit allyTeams
 					//       - need to reset unit texture for 3do
 					//       - need a call-in for AIs
@@ -3851,17 +3851,19 @@ void CGame::ClientReadNet()
 						msg << "You have " << (allied ? " allied " : " unallied ") << " allyteam " << whichAllyTeam;
 						logOutput.Print(msg.str());
 					}
+					if (allied) {
+						for (std::list<CUnit*>::iterator it = uh->activeUnits.begin();
+								it != uh->activeUnits.end();
+								++it) {
+							if (teamHandler->AlliedTeams((*it)->team, whichAllyTeam)) {
+								(*it)->ChangeAllyTeam(whichAllyTeam);
+							}
+						}
+					}
+					eventHandler.TeamChanged(playerHandler->Player(player)->team);
 				} else {
 					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
 				}
-				if (allied) {
-					for (std::list<CUnit*>::iterator it = uh->activeUnits.begin();
-							it != uh->activeUnits.end();
-							++it) {
-						(*it)->ChangeAllyTeam(whichAllyTeam);
-					}
-				}
-				eventHandler.TeamChanged(playerHandler->Player(player)->team);
 				break;
 			}
 			case NETMSG_CCOMMAND: {
