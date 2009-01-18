@@ -903,3 +903,13 @@ float CWeapon::GetRange2D(float yDiff) const
 		return sqrt(root1);
 	}
 }
+
+
+void CWeapon::ChangeAllyTeam(int ally)
+{
+	if (targetType == Target_Unit && targetUnit && targetUnit->allyteam == ally) {
+		DeleteDeathDependence(targetUnit);
+		targetType = Target_None;
+		targetUnit = 0;
+	}
+}
