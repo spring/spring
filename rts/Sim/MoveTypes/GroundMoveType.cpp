@@ -564,13 +564,20 @@ void CGroundMoveType::SetDeltaSpeed(void)
 				// GetNextWaypoint() often is sufficient prevention
 				// If current waypoint is the last one and it's near,
 				// hit the brakes a bit more.
-				if (owner->unitDef->turnInPlace || currentSpeed < 1.5f) {
+				float finalGoalSqDist = owner->pos.SqDistance2D(goalPos);
+				float tipSqDist = owner->unitDef->turnInPlaceDistance*owner->unitDef->turnInPlaceDistance;
+				bool unitdefInPlace = (owner->unitDef->turnInPlace
+						&& (tipSqDist > finalGoalSqDist
+						|| owner->unitDef->turnInPlaceDistance <= 0));
+				if (unitdefInPlace || currentSpeed < owner->unitDef->turnInPlaceSpeedLimit/GAME_SPEED) {
 					// keep the turn mostly in-place
 					wSpeed = turnSpeed;
 				} else {
 					if (haveFinalWaypoint && goalLength < maxSpeed*GAME_SPEED) {
-						wSpeed = (turnSpeed + wSpeed) * 0.2f;
+						// hit the brakes if this is the last waypoint of the path
+						wSpeed = std::max(turnSpeed, (turnSpeed + wSpeed) * 0.2f);
 					} else {
+						// just skip, assume close enough
 						GetNextWaypoint();
 						wSpeed = (turnSpeed + wSpeed) * 0.625f;
 					}

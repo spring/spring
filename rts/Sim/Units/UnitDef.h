@@ -138,6 +138,10 @@ struct UnitDef
 	float speed;
 	float turnRate;
 	bool turnInPlace;
+	float turnInPlaceDistance; //!< units above this distance to goal will try to turn while keeping
+				   //!< some of their speed. 0 to disable
+	float turnInPlaceSpeedLimit; //!< units below this speed will turn in place regardless of their
+				   //!< turnInPlace setting
 	int moveType;
 	bool upright;
 	bool collide;
