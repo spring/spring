@@ -50,7 +50,7 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 	textures = new CBFGroundTextures(map);
 
 	viewRadius = configHandler.Get("GroundDetail", 40);
-	viewRadius += (viewRadius & 1);
+	viewRadius += (viewRadius & 1); // we need a multiple of 2
 
 	waterDrawn = false;
 
@@ -667,8 +667,10 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 					}
 					EndStripQ(ma);
 				}
-			}
-		}
+			} //for (y = ystart; y < yend; y += lod)
+
+		} //for (int lod = 1; lod < neededLod; lod <<= 1)
+
 		DrawGroundVertexArrayQ(ma);
 	}
 }
@@ -696,13 +698,12 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	//	viewRadius = ((int)(viewRadius * LODScaleRefraction)) & 0xfffffe;
 	//}
 
-	viewRadius = max(4, viewRadius);
+	viewRadius = max(max(numBigTexY,numBigTexX), viewRadius);
 
-	float zoom = 45.0f / camera->GetFov();
-	viewRadius = (int) (viewRadius * fastmath::sqrt(zoom));
-	viewRadius += (viewRadius & 1);
-
-	neededLod = int((gu->viewRange * 0.125f) / viewRadius) << 1;
+	float zoom  = 45.0f / camera->GetFov();
+	viewRadius  = (int) (viewRadius * fastmath::sqrt(zoom));
+	viewRadius += (viewRadius & 1); // we need a multiple of 2
+	neededLod   = int((gu->viewRange * 0.125f) / viewRadius) << 1;
 
 	UpdateCamRestraints();
 
