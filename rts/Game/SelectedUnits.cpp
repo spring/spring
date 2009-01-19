@@ -562,8 +562,8 @@ void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerID)
 		return;
 	}
 	if (!player->CanControlTeam(unit->team)) {
-		logOutput.Print("Invalid order from player %i for (unit %i, team %i)",
-		                playerID, unitid, unit->team);
+		logOutput.Print("Invalid order from player %i for (unit %i %s, team %i)",
+		                playerID, unitid, unit->unitDefName.c_str(), unit->team);
 		return;
 	}
 
