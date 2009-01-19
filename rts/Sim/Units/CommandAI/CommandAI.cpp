@@ -129,13 +129,13 @@ CCommandAI::CCommandAI(CUnit* owner)
 		possibleCommands.push_back(c);
 	}
 
- 	c.id = CMD_WAIT;
+	c.id = CMD_WAIT;
 	c.action = "wait";
- 	c.type = CMDTYPE_ICON;
- 	c.name = "Wait";
- 	c.mouseicon = c.name;
- 	c.tooltip = "Wait: Tells the unit to wait until another units handles him";
- 	possibleCommands.push_back(c);
+	c.type = CMDTYPE_ICON;
+	c.name = "Wait";
+	c.mouseicon = c.name;
+	c.tooltip = "Wait: Tells the unit to wait until another units handles it";
+	possibleCommands.push_back(c);
 //	nonQueingCommands.insert(CMD_WAIT);
 
 	c.id = CMD_TIMEWAIT;
@@ -148,7 +148,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.params.push_back("60"); // max
 	c.hidden = true;
 	possibleCommands.push_back(c);
- 	c.hidden = false;
+	c.hidden = false;
 	c.params.clear();
 
 	// only for games with 2 ally teams  --  checked later
@@ -160,7 +160,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip = "DeathWait: Wait until units die before continuing";
 	c.hidden = true;
 	possibleCommands.push_back(c);
- 	c.hidden = false;
+	c.hidden = false;
 
 	c.id = CMD_SQUADWAIT;
 	c.action = "squadwait";
@@ -172,7 +172,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.params.push_back("100"); // max
 	c.hidden = true;
 	possibleCommands.push_back(c);
- 	c.hidden = false;
+	c.hidden = false;
 	c.params.clear();
 
 	c.id = CMD_GATHERWAIT;
@@ -183,7 +183,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 	c.tooltip = "GatherWait: Wait until all units arrive before continuing";
 	c.hidden = true;
 	possibleCommands.push_back(c);
- 	c.hidden = false;
+	c.hidden = false;
 
 	if (owner->unitDef->canSelfD) {
 		c.id = CMD_SELFD;
@@ -194,7 +194,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.tooltip = "SelfD: Tells the unit to self destruct";
 		c.hidden = true;
 		possibleCommands.push_back(c);
-	 	c.hidden = false;
+		c.hidden = false;
 	}
 //	nonQueingCommands.insert(CMD_SELFD);
 
@@ -300,7 +300,7 @@ CCommandAI::CCommandAI(CUnit* owner)
 		c.params.push_back("UnCloaked");
 		c.params.push_back("Cloaked");
 
-		c.tooltip = "Cloak State: Sets wheter the unit is cloaked or not";
+		c.tooltip = "Cloak State: Sets whether the unit is cloaked or not";
 		possibleCommands.push_back(c);
 		nonQueingCommands.insert(CMD_CLOAK);
 	}
