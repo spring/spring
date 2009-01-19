@@ -1021,7 +1021,7 @@ bool CBuilderCAI::IsUnitBeingReclaimedByFriend(CUnit* unit)
 	std::list<CUnit*> rm;
 
 	for (CUnitSet::iterator it = reclaimers.begin(); it != reclaimers.end(); ++it) {
-		// check wheter reclaimers are valid
+		// check whether reclaimers are valid
 		assert(*it);
 		assert((*it)->commandAI);
 		if ((*it)->commandAI->commandQue.empty()) {
@@ -1052,7 +1052,7 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId)
 	std::list<CUnit*> rm;
 
 	for (CUnitSet::iterator it = featureReclaimers.begin(); it != featureReclaimers.end(); ++it) {
-		// check wheter reclaimers are valid
+		// check whether reclaimers are valid
 		assert(*it);
 		assert((*it)->commandAI);
 		if ((*it)->commandAI->commandQue.empty()) {
