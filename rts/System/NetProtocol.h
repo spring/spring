@@ -73,7 +73,7 @@ public:
 	volatile bool loading;
 
 private:
-	boost::scoped_ptr<netcode::CConnection> server;
+	boost::scoped_ptr<netcode::CConnection> serverConn;
 	boost::scoped_ptr<CDemoRecorder> record;
 };
 
