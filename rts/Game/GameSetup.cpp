@@ -305,7 +305,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 		int numAllies = atoi(file.SGetValueDef("0", s + "NumAllies").c_str());
 
 		for (int otherAllyTeam = 0; otherAllyTeam < MAX_TEAMS; ++otherAllyTeam) {
-			data.allies[otherAllyTeam] = (i == otherAllyTeam);
+			data.allies[otherAllyTeam] = (a == otherAllyTeam);
 		}
 		for (int b = 0; b < numAllies; ++b) {
 			char key[100];
@@ -313,7 +313,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 			int other = atoi(file.SGetValueDef("0",key).c_str());
 			data.allies[other] = true;
 		}
-		data.allies[i] = true; // team i is ally from team i
+		data.allies[a] = true; // team i is ally from team i
 		allyStartingData.push_back(data);
 
 		allyteamRemap[a] = i;
