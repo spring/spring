@@ -906,6 +906,7 @@ void CCobInstance::Signal(int signal)
 		}
 	}
 }
+
 //Flags as defined by the cob standard
 void CCobInstance::Explode(int piece, int flags)
 {
@@ -926,31 +927,23 @@ void CCobInstance::Explode(int piece, int flags)
 	new CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
 
 	// If this is true, no stuff should fly off
-	if (flags & 32) return;
+	if (flags & PF_NONE) return;
 
 	// This means that we are going to do a full fledged piece explosion!
-	// TODO: equalize the bitflags with those in PieceProjectile.h
 	int newflags = 0;
-	if (flags & 2) { newflags |= PP_Explode; } newflags |= PP_Fall;
-//	if (flags & 4) { newflags |= PP_Fall; }
-	if ((flags & 8) && ph->particleSaturation < 1) { newflags |= PP_Smoke; }
-	if ((flags & 16) && ph->particleSaturation < 0.95f) { newflags |= PP_Fire; }
-	if (flags & PP_NoCEGTrail) { newflags |= PP_NoCEGTrail; }
-
-/*
-	int newflags = 0;
-	if (flags & PP_Explode) newflags |= PP_Explode;
-	if (flags & PP_Fall) newflags |= PP_Fall;
-	if ((flags & PP_Smoke) && ph->particleSaturation < 1) newflags |= PP_Smoke;
-	if ((flags & PP_Fire) && ph->particleSaturation < 0.95f) newflags |= PP_Fire;
-	if (flags & PP_NoCEGTrail) newflags |= PP_NoCEGTrail;
-*/
+	newflags |= PF_Fall; // if they don't fall they could live forever
+	if (flags & PF_Explode) { newflags |= PF_Explode; }
+//	if (flags & PF_Fall) { newflags |=  PF_Fall; }
+	if ((flags & PF_Smoke) && ph->particleSaturation < 1) { newflags |= PF_Smoke; }
+	if ((flags & PF_Fire) && ph->particleSaturation < 0.95f) { newflags |= PF_Fire; }
+	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
 	float3 baseSpeed = unit->speed + unit->residualImpulse * 0.5f;
-	float l = baseSpeed.Length();
+	float sql = baseSpeed.SqLength();
 
-	if (l > 3) {
-		float l2 = 3 + sqrt(l - 3);
+	if (sql > 9) {
+		const float l  = sqrt(sql);
+		const float l2 = 3 + sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
 	float3 speed((0.5f-gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
@@ -958,16 +951,17 @@ void CCobInstance::Explode(int piece, int flags)
 		speed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
 	speed += baseSpeed;
-	if (speed.Length() > 12)
+	if (speed.SqLength() > 12*12) {
 		speed = speed.Normalize() * 12;
+	}
 
 	/* TODO Push this back. Don't forget to pass the team (color).  */
 
-	LocalModelPiece* pieceData = pieces[piece]; //&( unit->localmodel->pieces[unit->localmodel->scritoa[piece]] );
-	if (flags & 1) {		//Shatter
+	LocalModelPiece* pieceData = pieces[piece];
+	if (flags & PF_Shatter) {
+		//Shatter
 
 		float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
-//		logOutput.Print("Shattering %i %f",dl->prims.size(),pieceChance);
 
 		if(pieceData->type == MODELTYPE_3DO){
 			/* 3DO */
@@ -992,8 +986,6 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
-                    // FIXME: this is a memory leak
-                    // a comment in FlyingPiece says it deletes, but mmgr says otherwise
 					SS3OVertex * verts = new SS3OVertex[4];
 
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
