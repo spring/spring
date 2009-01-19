@@ -3140,58 +3140,9 @@ void CGame::SimFrame() {
 	loshandler->Update();
 
 	teamHandler->GameFrame(gs->frameNum);
+	playerHandler->GameFrame(gs->frameNum);
 
 	lastUpdate = SDL_GetTicks();
-
-#ifdef DIRECT_CONTROL_ALLOWED
-	for(int a=0;a<playerHandler->ActivePlayers();++a){
-		if(!playerHandler->Player(a)->active || !playerHandler->Player(a)->playerControlledUnit)
-			continue;
-
-		CUnit* unit=playerHandler->Player(a)->playerControlledUnit;
-		DirectControlStruct* dc=&playerHandler->Player(a)->myControl;
-
-		std::vector<int> args;
-		args.push_back(0);
-		unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-		float3 relPos=unit->cob->GetPiecePos(args[0]);
-		float3 pos=unit->pos+unit->frontdir*relPos.z+unit->updir*relPos.y+unit->rightdir*relPos.x;
-		pos+=UpVector*7;
-
-		CUnit* hit;
-		float dist=helper->TraceRayTeam(pos,dc->viewDir,unit->maxRange,hit,1,unit,teamHandler->AllyTeam(playerHandler->Player(a)->team));
-		dc->target=hit;
-
-		if(hit){
-			dc->targetDist=dist;
-			dc->targetPos=hit->pos;
-			if(!dc->mouse2){
-				unit->AttackUnit(hit,true);
-				/*					for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
-				if((*wi)->targetType!=Target_Unit || (*wi)->targetUnit!=hit)
-				(*wi)->AttackUnit(hit,true);
-				*/
-			}
-		} else {
-			if(dist>unit->maxRange*0.95f)
-				dist=unit->maxRange*0.95f;
-
-			dc->targetDist=dist;
-			dc->targetPos=pos+dc->viewDir*dc->targetDist;
-
-			if(!dc->mouse2){
-				unit->AttackGround(dc->targetPos,true);
-				for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi){
-					float d=dc->targetDist;
-					if(d>(*wi)->range*0.95f)
-						d=(*wi)->range*0.95f;
-					float3 p=pos+dc->viewDir*d;
-					(*wi)->AttackGround(p,true);
-				}
-			}
-		}
-	}
-#endif
 }
 
 
