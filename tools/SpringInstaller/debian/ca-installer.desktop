@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=CA Installer
-Comment=Installs Complete Annihilation
-Exec=ca-installer
-Icon=/usr/share/icons/hicolor/128x128/apps/ca-installer.png
-Terminal=false
-Type=Application
-Categories=Game;
