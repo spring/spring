@@ -76,3 +76,11 @@ void CPlayerHandler::PlayerLeft(int player, unsigned char reason)
 	}
 	Player(player)->active = false;
 }
+
+void CPlayerHandler::GameFrame(int frameNum)
+{
+	for(playerVec::iterator it = players.begin(); it != players.end(); ++it)
+	{
+		it->GameFrame(frameNum);
+	}
+}

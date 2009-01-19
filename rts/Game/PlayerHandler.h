@@ -46,6 +46,8 @@ public:
 	int ActivePlayers() const { return activePlayers; }
 	int TotalPlayers() const { return players.size(); };
 
+	void GameFrame(int frameNum);
+
 private:
 
 	/**
