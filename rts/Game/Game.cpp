@@ -3139,15 +3139,7 @@ void CGame::SimFrame() {
 	wind.Update();
 	loshandler->Update();
 
-	if (!(gs->frameNum & 31)) {
-		// TODO: move to CTeamHandler
-		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-			teamHandler->Team(a)->ResetFrameVariables();
-		}
-		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-			teamHandler->Team(a)->SlowUpdate();
-		}
-	}
+	teamHandler->GameFrame(gs->frameNum);
 
 	lastUpdate = SDL_GetTicks();
 
