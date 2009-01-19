@@ -61,6 +61,7 @@ public:
 	float3 commandPos1;			//used to avoid stuff in maneuvre mode moving to far away from patrol path
 	float3 commandPos2;
 
+	int GetCancelDistance() { return cancelDistance; }
 
 protected:
 	int cancelDistance;
@@ -73,6 +74,8 @@ protected:
 	}
 
 	virtual bool IsValidTarget(const CUnit* enemy) const;
+
+	void CalculateCancelDistance();
 };
 
 #define MAX_CLOSE_IN_RETRY_TICKS 30

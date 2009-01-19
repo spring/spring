@@ -28,6 +28,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sync/SyncTracer.h"
@@ -561,12 +562,18 @@ void CGroundMoveType::SetDeltaSpeed(void)
 				// NOTE: can cause units with large turning circles to
 				// circle around close waypoints indefinitely, but one
 				// GetNextWaypoint() often is sufficient prevention
+				// If current waypoint is the last one and it's near,
+				// hit the brakes a bit more.
 				if (owner->unitDef->turnInPlace || currentSpeed < 1.5f) {
 					// keep the turn mostly in-place
 					wSpeed = turnSpeed;
 				} else {
-					GetNextWaypoint();
-					wSpeed = (turnSpeed + wSpeed) * 0.625f;
+					if (haveFinalWaypoint && goalLength < maxSpeed*GAME_SPEED) {
+						wSpeed = (turnSpeed + wSpeed) * 0.2f;
+					} else {
+						GetNextWaypoint();
+						wSpeed = (turnSpeed + wSpeed) * 0.625f;
+					}
 				}
 			}
 		}
