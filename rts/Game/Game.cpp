@@ -4311,9 +4311,7 @@ void CGame::GameEnd()
 	CDemoRecorder* record = net->GetDemoRecorder();
 	if (record != NULL) {
 		// Write CPlayer::Statistics and CTeam::Statistics to demo
-		int numPlayers;
-		// FIXME: ugh, there should be a better way to figure out number of players ...
-		numPlayers = gameSetup->numPlayers;
+		const int numPlayers = gameSetup->numPlayers;
 
 		// TODO: move this to a method in CTeamHandler
 		// Figure out who won the game.
