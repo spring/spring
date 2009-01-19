@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Spring Installer
-Comment=Installs Spring Archives
-Exec=spring-installer %f
-Terminal=false
-Type=Application
-MimeType=application/x-spring-sdz;application/x-spring-sd7;
-NoDisplay=true
