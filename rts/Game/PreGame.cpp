@@ -309,6 +309,9 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			me->AddPair("name", settings->myPlayerName);
 			me->AddPair("spectator", 1);
 
+			TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
+			modopts->AddPair("MaxSpeed", 20);
+
 			std::ostringstream buf;
 			script.print(buf);
 			data->SetSetup(buf.str());
@@ -331,7 +334,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		{
 			throw content_error("End of demo reached and no game data found");
 		}
-		buf.reset(scanner.GetData(static_cast<float>(FLT_MAX )));
+		buf.reset(scanner.GetData(FLT_MAX));
 	}
 
 	assert(gameServer);
