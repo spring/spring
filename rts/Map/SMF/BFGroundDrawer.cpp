@@ -725,7 +725,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	}
 #endif
 
-	ResetTextureUnits(drawWaterReflection, overrideVP);
+	ResetTextureUnits(drawWaterReflection);
 	glDisable(GL_CULL_FACE);
 
 	if (wireframe) {
