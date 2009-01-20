@@ -25,41 +25,13 @@
 #include <time.h>	// for fetching current time
 #include <stdarg.h>	// var-arg support
 
-static const unsigned int bufferSize = 2048;
+#define SIMPLELOG_OUTPUTBUFFER_SIZE 2048
 
-const char* myLogFileName = NULL;
-bool useTimeStamps;
-bool isFineLog;
+static const char* myLogFileName = NULL;
+static bool useTimeStamps;
+static int logLevel;
 
-void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
-		bool _isFineLog) {
-
-	// NOTE: this cuases a memory leack, as it is never freed.
-	// but it is used till the end of the applications runtime anyway
-	// -> no problem
-	char* logFileName = util_allocStrCpy(_logFileName);
-
-	// make sure the dir of the log file exists
-	char logFileDir[strlen(logFileName) + 1];
-	util_getParentDir(logFileName, logFileDir);
-	if (!util_fileExists(logFileDir)) {
-		bool created = util_makeDir(logFileDir);
-		if (!created) {
-			simpleLog_error(-1,
-					"Failed to create the parent dir of the config file: %s",
-					logFileDir);
-		}
-	}
-
-	myLogFileName = logFileName;
-
-	useTimeStamps = _useTimeStamps;
-	isFineLog = _isFineLog;
-
-	simpleLog_log("\n\n[logging started]");
-}
-
-char* simpleLog_createTimeStamp() {
+static char* simpleLog_createTimeStamp() {
 
 	time_t now;
 	now = time(&now);
@@ -71,16 +43,20 @@ char* simpleLog_createTimeStamp() {
 	return timeStamp;
 }
 
-void simpleLog_out(const char* msg) {
+static void simpleLog_out(int level, const char* msg) {
+
+	if (level > logLevel) {
+		return;
+	}
 
 	if (myLogFileName != NULL) {
 		FILE* file = FOPEN(myLogFileName, "a");
 		if (useTimeStamps) {
 			char* timeStamp = simpleLog_createTimeStamp();
-			FPRINTF(file, "%s: %s\n", timeStamp, msg);
+			FPRINTF(file, "%s / %s(%i): %s\n", timeStamp, simpleLog_levelToStr(level), level, msg);
 			free(timeStamp);
 		} else {
-			FPRINTF(file, "%s\n", msg);
+			FPRINTF(file, "%s(%i): %s\n", simpleLog_levelToStr(level), level, msg);
 		}
 		fclose(file);
 	} else {
@@ -89,41 +65,94 @@ void simpleLog_out(const char* msg) {
 	}
 }
 
-void simpleLog_logv(const char* fmt, va_list argp) {
+static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 
-	char text[bufferSize];
+	if (level > logLevel) {
+		return;
+	}
+
+	static char text[SIMPLELOG_OUTPUTBUFFER_SIZE];
 
 	VSNPRINTF(text, sizeof(text), fmt, argp);
-	simpleLog_out(text);
+	simpleLog_out(level, text);
+}
+
+void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
+		int _logLevel) {
+
+	// NOTE: this cuases a memory leack, as it is never freed.
+	// but it is used till the end of the applications runtime anyway
+	// -> no problem
+	char* logFileName = util_allocStrCpy(_logFileName);
+
+	// make sure the dir of the log file exists
+	char logFileDir[strlen(logFileName) + 1];
+	if (!util_getParentDir(logFileName, logFileDir)) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Failed to evauate the parent dir of the config file: %s",
+				logFileName);
+	} else if (!util_fileExists(logFileDir)) {
+		bool created = util_makeDir(logFileDir);
+		if (!created) {
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Failed to create the parent dir of the config file: %s",
+					logFileDir);
+		}
+	}
+
+	myLogFileName = logFileName;
+
+	useTimeStamps = _useTimeStamps;
+	logLevel = _logLevel;
+
+	simpleLog_logL(-1, "\n\n[logging started (time-stamps: %s / logLevel: %i)]",
+			useTimeStamps ? "yes" : "no", logLevel);
+}
+
+void simpleLog_logL(int level, const char* fmt, ...) {
+
+	if (level > logLevel) {
+		return;
+	}
+
+	va_list argp;
+
+	va_start(argp, fmt);
+	simpleLog_logv(level, fmt, argp);
+	va_end(argp);
 }
 
 void simpleLog_log(const char* fmt, ...) {
 
-	va_list argp;
+	static const int level = SIMPLELOG_LEVEL_NORMAL;
 
-	va_start(argp, fmt);
-	simpleLog_logv(fmt, argp);
-	va_end(argp);
-}
-
-void simpleLog_fine(const char* fmt, ...) {
-
-	if (isFineLog) {
-		va_list argp;
-
-		va_start(argp, fmt);
-		simpleLog_logv(fmt, argp);
-		va_end(argp);
+	if (level > logLevel) {
+		return;
 	}
-}
-
-void simpleLog_error(int error, const char* fmt, ...) {
 
 	va_list argp;
 
 	va_start(argp, fmt);
-	simpleLog_logv(fmt, argp);
+	simpleLog_logv(level, fmt, argp);
 	va_end(argp);
+}
 
-	exit(error);
+const char* simpleLog_levelToStr(int logLevel) {
+
+	switch (logLevel) {
+		case SIMPLELOG_LEVEL_ERROR:
+			return "ERROR";
+		case SIMPLELOG_LEVEL_WARNING:
+			return "WARNING";
+		case SIMPLELOG_LEVEL_NORMAL:
+			return "NORMAL";
+		case SIMPLELOG_LEVEL_FINE:
+			return "FINE";
+		case SIMPLELOG_LEVEL_FINER:
+			return "FINER";
+		case SIMPLELOG_LEVEL_FINEST:
+			return "FINEST";
+		default:
+			return "CUSTOM";
+	}
 }

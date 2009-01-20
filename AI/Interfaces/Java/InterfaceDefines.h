@@ -27,10 +27,10 @@ extern "C" {
 //#define MY_SHORT_NAME "Java"
 //#define MY_VERSION "0.1"
 //#define MY_NAME "Java AI Interface"
-#define MY_LOG_FILE "log.txt"
+#define MY_LOG_FILE "interface-log.txt"
 #define JAVA_AI_INTERFACE_LIBRARY_FILE_NAME "interface.jar"
-#define JAVA_AI_INTERFACE_JAVA_LIBS_DIR "llib"
-#define JAVA_AI_INTERFACE_NATIVE_LIBS_DIR "lib"
+#define JAVA_LIBS_DIR "jlib"
+#define NATIVE_LIBS_DIR "lib"
 
 #ifndef NULL
 #define NULL 0

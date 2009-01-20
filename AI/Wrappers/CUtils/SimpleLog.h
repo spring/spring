@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -16,43 +16,54 @@
 */
 
 #ifndef _LOG_H
-#define	_LOG_H
+#define _LOG_H
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdbool.h>	// bool, true, false
+enum SimpleLog_Level {
+	SIMPLELOG_LEVEL_ERROR       = 1,
+	SIMPLELOG_LEVEL_WARNING     = 3,
+	SIMPLELOG_LEVEL_NORMAL      = 5,
+	SIMPLELOG_LEVEL_FINE        = 8,
+	SIMPLELOG_LEVEL_FINER       = 9,
+	SIMPLELOG_LEVEL_FINEST      = 10
+};
 
-#define EXTERNAL_LOGGER(msg)	log(msg);
+#include <stdbool.h> // bool, true, false
+
+#define EXTERNAL_LOGGER(msg)   log(msg);
 
 /**
  * Initializes the log.
+ * @param  logLevel   see enum SimpleLog_Level
  */
 void simpleLog_init(const char* logFileName, bool useTimeStamps,
-		bool isFineLog);
+		int logLevel);
 
 /**
- * Logs a text message.
+ * Logs a text message,
+ * but only if level <= logLevel (see simpleLog_init()).
+ * Works like printf(fmt, ...).
+ * @param  level   see enum SimpleLog_Level
+ */
+void simpleLog_logL(int level, const char* fmt, ...);
+
+/**
+ * Logs a text message with SIMPLELOG_LEVEL_NORMAL.
  * Works like printf(fmt, ...).
  */
 void simpleLog_log(const char* fmt, ...);
 
 /**
- * Logs a text message only if log is initialized to fine.
- * Works like printf(fmt, ...).
+ * Returns a string representation of a log level.
+ * @param  logLevel   see enum SimpleLog_Level
  */
-void simpleLog_fine(const char* fmt, ...);
+const char* simpleLog_levelToStr(int logLevel);
 
-/**
- * Logs a text message and exits.
- * Works like printf(fmt, ...).
- */
-void simpleLog_error(int error, const char* msg, ...);
-
-#ifdef	__cplusplus
-}
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
-#endif	// _LOG_H
-
+#endif // _LOG_H
