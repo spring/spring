@@ -117,9 +117,11 @@ SET(CMAKE_CXX_FLAGS_DEBUG3  "${CXX_FLAGS_DEBUG_ADDITIONAL} -ggdb3 -O0 -Wall -DDE
 SET(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG -fomit-frame-pointer")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -DNDEBUG")
 SET(CMAKE_CXX_FLAGS_PROFILE   "-O2 -pg -Wall -DNDEBUG")
-if (NOT MINGW)
+if (NOT MINGW AND NOT APPLE)
 	set (PIC_FLAG "-fpic")
-endif (NOT MINGW)
+elseif (APPLE)
+	set (PIC_FLAG "-fPIC")
+endif (NOT MINGW AND NOT APPLE)
 
 ### Where the other CMakeLists.txt are
 Add_Subdirectory(rts)
