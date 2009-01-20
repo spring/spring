@@ -21,7 +21,7 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "Sim/Misc/SideParser.h"
 #include "ExternalAI/Interface/aidefines.h"
-//#include "ExternalAI/Interface/SSkirmishAISpecifier.h"
+#include "ExternalAI/Interface/SSAILibrary.h"
 #include "System/Exceptions.h"
 #include "System/LogOutput.h"
 #include "System/Util.h"
@@ -289,7 +289,7 @@ EXPORT(int) Init(bool isServer, int id)
 			logOutputInitialised = true;
 		}
 		logOutput.Print(LOG_UNITSYNC, "loaded, %s\n", SpringVersion::GetFull().c_str());
-		
+
 		_UnInit();
 
 		if (!_configHandler)
@@ -1463,116 +1463,6 @@ EXPORT(const char*) GetSideStartUnit(int side)
 //////////////////////////
 //////////////////////////
 
-struct LuaAIData {
-	string name;
-	string desc;
-};
-
-
-vector<LuaAIData> luaAIOptions;
-
-
-static void GetLuaAIOptions()
-{
-	luaAIOptions.clear();
-
-	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-	if (!luaParser.Execute()) {
-		throw content_error("luaParser.Execute() failed: " + luaParser.GetErrorLog());
-	}
-
-	const LuaTable root = luaParser.GetRoot();
-	if (!root.IsValid()) {
-		throw content_error("root table invalid");
-	}
-
-	for (int i = 1; root.KeyExists(i); i++) {
-		LuaAIData aiData;
-
-		// string format
-		aiData.name = root.GetString(i, "");
-		if (!aiData.name.empty()) {
-			aiData.desc = aiData.name;
-			luaAIOptions.push_back(aiData);
-			continue;
-		}
-
-		// table format  (name & desc)
-		const LuaTable& optTbl = root.SubTable(i);
-		if (!optTbl.IsValid()) {
-			continue;
-		}
-		aiData.name = optTbl.GetString("name", "");
-		if (aiData.name.empty()) {
-			continue;
-		}
-		aiData.desc = optTbl.GetString("desc", aiData.name);
-		luaAIOptions.push_back(aiData);
-	}
-}
-
-
-/**
- * @brief Retrieve the number of LUA AIs available
- * @return Zero on error; the number of LUA AIs otherwise
- *
- * Usually LUA AIs are shipped inside a mod, so be sure to map the mod into
- * the VFS using AddArchive() or AddAllArchives() prior to using this function.
- */
-EXPORT(int) GetLuaAICount()
-{
-	try {
-		CheckInit();
-
-		GetLuaAIOptions();
-		return luaAIOptions.size();
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return 0;
-}
-
-
-/**
- * @brief Retrieve the name of a LUA AI
- * @return NULL on error; the name of the LUA AI on success
- *
- * Be sure you've made a call to GetLuaAICount() prior to using this.
- */
-EXPORT(const char*) GetLuaAIName(int aiIndex)
-{
-	try {
-		CheckInit();
-		CheckBounds(aiIndex, luaAIOptions.size());
-
-		return GetStr(luaAIOptions[aiIndex].name);
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
-}
-
-
-/**
- * @brief Retrieve the description of a LUA AI
- * @return NULL on error; the description of the LUA AI on success
- *
- * Be sure you've made a call to GetLuaAICount() prior to using this.
- */
-EXPORT(const char*) GetLuaAIDesc(int aiIndex)
-{
-	try {
-		CheckInit();
-		CheckBounds(aiIndex, luaAIOptions.size());
-
-		return GetStr(luaAIOptions[aiIndex].desc);
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
-}
-
-
-//////////////////////////
-//////////////////////////
-
 
 static std::vector<Option> options;
 static std::set<std::string> optionsSet;
@@ -1666,6 +1556,124 @@ EXPORT(int) GetModOptionCount()
 }
 
 
+
+//////////////////////////
+//////////////////////////
+
+
+struct LuaAIInfo {
+	string name;
+	string desc;
+};
+
+
+static vector<LuaAIInfo> luaAIInfo;
+
+
+static void GetLuaAIInfo()
+{
+	luaAIInfo.clear();
+
+	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+	if (!luaParser.Execute()) {
+		throw content_error("luaParser.Execute() failed: "
+				+ luaParser.GetErrorLog());
+	}
+
+	const LuaTable root = luaParser.GetRoot();
+	if (!root.IsValid()) {
+		throw content_error("root table invalid");
+	}
+
+	for (int i = 1; root.KeyExists(i); i++) {
+		struct LuaAIInfo aiData;
+
+		// string format
+		aiData.name = root.GetString(i, "");
+		if (!aiData.name.empty()) {
+			aiData.desc = aiData.name;
+			luaAIInfo.push_back(aiData);
+			continue;
+		}
+
+		// table format  (name & desc)
+		const LuaTable& optTbl = root.SubTable(i);
+		if (!optTbl.IsValid()) {
+			continue;
+		}
+		aiData.name = optTbl.GetString("name", "");
+		if (aiData.name.empty()) {
+			continue;
+		}
+		aiData.desc = optTbl.GetString("desc", aiData.name);
+		luaAIInfo.push_back(aiData);
+	}
+}
+
+
+/**
+ * @brief Retrieve the number of LUA AIs available
+ * @return Zero on error; the number of LUA AIs otherwise
+ *
+ * Usually LUA AIs are shipped inside a mod, so be sure to map the mod into
+ * the VFS using AddArchive() or AddAllArchives() prior to using this function.
+ */
+static int GetLuaAICount()
+{
+	try {
+		CheckInit();
+
+		GetLuaAIInfo();
+		return luaAIInfo.size();
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return 0;
+}
+
+
+/**
+ * @brief Retrieve the name of a LUA AI
+ * @return NULL on error; the name of the LUA AI on success
+ *
+ * Be sure you've made a call to GetLuaAICount() prior to using this.
+ */
+/*static const char* GetLuaAIName(int aiIndex)
+{
+	try {
+		CheckInit();
+		CheckBounds(aiIndex, luaAIInfo.size());
+
+		return GetStr(luaAIInfo[aiIndex].name);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
+}*/
+
+
+/**
+ * @brief Retrieve the description of a LUA AI
+ * @return NULL on error; the description of the LUA AI on success
+ *
+ * Be sure you've made a call to GetLuaAICount() prior to using this.
+ */
+/*static const char* GetLuaAIDesc(int aiIndex)
+{
+	try {
+		CheckInit();
+		CheckBounds(aiIndex, luaAIInfo.size());
+
+		return GetStr(luaAIInfo[aiIndex].desc);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
+}*/
+
+
+//////////////////////////
+//////////////////////////
+
+
+
 // Updated on every call to GetSkirmishAICount
 static vector<std::string> skirmishAIDataDirs;
 
@@ -1677,7 +1685,7 @@ EXPORT(int) GetSkirmishAICount() {
 		skirmishAIDataDirs = CFileHandler::SubDirs(SKIRMISH_AI_DATA_DIR, "*",
 				SPRING_VFS_RAW);
 
-		// filter out dirs not containing an AIInfo.lua file 
+		// filter out dirs not containing an AIInfo.lua file
 		for (vector<std::string>::iterator i = skirmishAIDataDirs.begin();
 				i != skirmishAIDataDirs.end(); ++i) {
 			const std::string& possibleDataDir = *i;
@@ -1690,7 +1698,9 @@ EXPORT(int) GetSkirmishAICount() {
 
 		sort(skirmishAIDataDirs.begin(), skirmishAIDataDirs.end());
 
-		return skirmishAIDataDirs.size();
+		int luaAIs = GetLuaAICount();
+
+		return skirmishAIDataDirs.size() + luaAIs;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1710,26 +1720,44 @@ static void ParseInfo(const std::string& fileName,
 	parseInfo(info, fileName, fileModes, accessModes, &infoSet, &LOG_UNITSYNC);
 }
 
-static void CheckInfoIndex(int infIndex)
+static void CheckSkirmishAIIndex(int aiIndex)
 {
 	CheckInit();
-	CheckBounds(infIndex, info.size());
+	int numSkirmishAIs = skirmishAIDataDirs.size() + luaAIInfo.size();
+	CheckBounds(aiIndex, numSkirmishAIs);
 }
 
-EXPORT(int) GetSkirmishAIInfoCount(int index) {
+static bool IsLuaAIIndex(int aiIndex) {
+	return (((unsigned int) aiIndex) >= skirmishAIDataDirs.size());
+}
+
+static int ToPureLuaAIIndex(int aiIndex) {
+	return (aiIndex - skirmishAIDataDirs.size());
+}
+
+static int loadedLuaAIIndex = -1;
+
+EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 
 	try {
-		CheckInit();
+		CheckSkirmishAIIndex(aiIndex);
 
-		info.clear();
-		infoSet.clear();
+		if (IsLuaAIIndex(aiIndex)) {
+			loadedLuaAIIndex = aiIndex;
+			return 2;
+		} else {
+			loadedLuaAIIndex = -1;
 
-		ParseInfo(skirmishAIDataDirs[index] + "/AIInfo.lua", SPRING_VFS_RAW,
-				SPRING_VFS_RAW);
+			info.clear();
+			infoSet.clear();
 
-		infoSet.clear();
+			ParseInfo(skirmishAIDataDirs[aiIndex] + "/AIInfo.lua",
+					SPRING_VFS_RAW, SPRING_VFS_RAW);
 
-		return (int)info.size();
+			infoSet.clear();
+
+			return (int)info.size();
+		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
@@ -1737,48 +1765,90 @@ EXPORT(int) GetSkirmishAIInfoCount(int index) {
 
 	return 0;
 }
-EXPORT(const char*) GetInfoKey(int index) {
+
+static void CheckSkirmishAIInfoIndex(int infoIndex)
+{
+	CheckInit();
+	if (loadedLuaAIIndex >= 0) {
+		CheckBounds(infoIndex, 2);
+	} else {
+		CheckBounds(infoIndex, info.size());
+	}
+}
+
+EXPORT(const char*) GetInfoKey(int infoIndex) {
 
 	try {
-		CheckInfoIndex(index);
-		return GetStr(info[index].key);
+		CheckSkirmishAIInfoIndex(infoIndex);
+		if (loadedLuaAIIndex >= 0) {
+			if (infoIndex == 0) {
+				return SKIRMISH_AI_PROPERTY_SHORT_NAME;
+			} else if (infoIndex == 1) {
+				return SKIRMISH_AI_PROPERTY_DESCRIPTION;
+			}
+		} else {
+			return GetStr(info[infoIndex].key);
+		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
 }
-EXPORT(const char*) GetInfoValue(int index) {
+EXPORT(const char*) GetInfoValue(int infoIndex) {
 
 	try {
-		CheckInfoIndex(index);
-		return GetStr(info[index].value);
+		CheckSkirmishAIInfoIndex(infoIndex);
+		if (loadedLuaAIIndex >= 0) {
+			if (infoIndex == 0) {
+				return luaAIInfo[ToPureLuaAIIndex(loadedLuaAIIndex)].name.c_str();
+			} else if (infoIndex == 1) {
+				return luaAIInfo[ToPureLuaAIIndex(loadedLuaAIIndex)].desc.c_str();
+			}
+		} else {
+			return GetStr(info[infoIndex].value);
+		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
 }
-EXPORT(const char*) GetInfoDescription(int index) {
+EXPORT(const char*) GetInfoDescription(int infoIndex) {
 
 	try {
-		CheckInfoIndex(index);
-		return GetStr(info[index].desc);
+		CheckSkirmishAIInfoIndex(infoIndex);
+		if (loadedLuaAIIndex >= 0) {
+			if (infoIndex == 0) {
+				return "The short name of this LUA AI";
+			} else if (infoIndex == 1) {
+				return "A human readable description of this LUA AI";
+			}
+		} else {
+			return GetStr(info[infoIndex].desc);
+		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
 }
 
-EXPORT(int) GetSkirmishAIOptionCount(int index) {
+EXPORT(int) GetSkirmishAIOptionCount(int aiIndex) {
 
 	try {
-		CheckInit();
+		CheckSkirmishAIIndex(aiIndex);
 
-		options.clear();
-		optionsSet.clear();
+		if (IsLuaAIIndex(aiIndex)) {
+			// lua AIs do not have options
+			return 0;
+		} else {
+			options.clear();
+			optionsSet.clear();
 
-		ParseOptions(skirmishAIDataDirs[index] + "/AIOptions.lua",
-				SPRING_VFS_RAW, SPRING_VFS_RAW);
+			ParseOptions(skirmishAIDataDirs[aiIndex] + "/AIOptions.lua",
+					SPRING_VFS_RAW, SPRING_VFS_RAW);
 
-		optionsSet.clear();
+			optionsSet.clear();
 
-		return options.size();
+			GetLuaAIInfo();
+
+			return options.size();
+		}
 	}
 	UNITSYNC_CATCH_BLOCKS;
 

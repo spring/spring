@@ -53,15 +53,16 @@
 	[AI0]
 	{
 		Name=name;     // [optional] pure info, eg. the name set in the lobby
-		               // the name actually used in game will be: "${Name} (owner: ${player.Name})"
-		ShortName=RAI; // shortName of the Skirmish AI library or LUA AI that controlls this team
+		               // the name actually used in game will be:
+		               // "${Name} (owner: ${player.Name})"
+		ShortName=RAI; // shortName of the Skirmish AI library or name of the
+		               // LUA AI that controlls this team.
 		               // see spring.exe --list-skirmish-ais for possible values
 		Team=number;   // the team this AI controlls
 		Host=number;   // the player whichs computer this AI runs on
 		               // eg. for [PLAYER0] above, this would be 0
-		Version=0.1;   // [optional] version of the Skirmish AI that controlls this team
-		IsLuaAI=1;     // [optional, default: 0] whether this is a Lua AI or a normal Skirmish AI
-		[OPTIONS]      // [optional] contains AI implementaition specific option values
+		Version=0.1;   // [optional] version of this Skirmish AI
+		[OPTIONS]      // [optional] contains AI specific options
 		{
 			difficultyLevel=1;
 		}

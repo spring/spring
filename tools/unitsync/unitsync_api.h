@@ -66,10 +66,6 @@ EXPORT(int         ) GetSideCount();
 EXPORT(const char* ) GetSideName(int side);
 EXPORT(const char* ) GetSideStartUnit(int side);
 
-EXPORT(int         ) GetLuaAICount();
-EXPORT(const char* ) GetLuaAIName(int aiIndex);
-EXPORT(const char* ) GetLuaAIDesc(int aiIndex);
-
 EXPORT(int         ) GetMapOptionCount(const char* name);
 EXPORT(int         ) GetModOptionCount();
 EXPORT(const char* ) GetOptionKey(int optIndex);

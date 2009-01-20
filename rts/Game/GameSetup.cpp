@@ -227,6 +227,45 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 		logOutput.Print("Warning: incorrect number of players in GameSetup script");
 }
 
+
+static std::set<std::string> LoadLuaAINames()
+{
+	std::set<std::string> names;
+
+	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+	if (!luaParser.Execute()) {
+		throw content_error("luaParser.Execute() failed: "
+				+ luaParser.GetErrorLog());
+	}
+
+	const LuaTable root = luaParser.GetRoot();
+	if (!root.IsValid()) {
+		throw content_error("root table invalid");
+	}
+
+	for (int i=1; root.KeyExists(i); i++) {
+		// string format
+		std::string name = root.GetString(i, "");
+		if (!name.empty()) {
+			names.insert(name);
+			continue;
+		}
+
+		// table format  (name & desc)
+		const LuaTable& optTbl = root.SubTable(i);
+		if (!optTbl.IsValid()) {
+			continue;
+		}
+		name = optTbl.GetString("name", "");
+		if (name.empty()) {
+			continue;
+		}
+		names.insert(name);
+	}
+
+	return names;
+}
+
 /**
  * @brief Load LUA and Skirmish AIs.
  */
@@ -276,9 +315,16 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 			throw content_error("missing AI.Host in GameSetup script");
 		}
 
+		data.shortName = file.SGetValueDef("", s + "ShortName");
+		if (data.shortName == "") {
+			throw content_error("missing AI.ShortName in GameSetup script");
+		}
+
 		// Is this team (Lua) AI controlled?
-		data.isLuaAI = (file.SGetValueDef("0", s + "IsLuaAI") == "1");
+		//data.isLuaAI = (file.SGetValueDef("0", s + "IsLuaAI") == "1");
 		// If this is a demo replay, non-Lua AIs aren't loaded.
+		static std::set<std::string> luaAINames = LoadLuaAINames();
+		data.isLuaAI = (luaAINames.find(data.shortName) != luaAINames.end());
 
 //		if (data.luaAI.empty()) {
 //			data.luaAI = file.SGetValueDef("", s + "LuaAI");
@@ -287,15 +333,12 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 //			data.luaAI = data.luaAI.substr(6);
 //		}
 
-		data.shortName = file.SGetValueDef("", s + "ShortName");
-		if (data.shortName == "") {
-			throw content_error("missing AI.ShortName in GameSetup script");
-		}
 		data.version = file.SGetValueDef("", s + "Version");
 		if (file.SectionExist(s + "Options")) {
 			data.options = file.GetAllValues(s + "Options");
 		}
 
+		// get the visible name (comparable to player-name)
 		std::string name = file.SGetValueDef(data.shortName, s + "Name");
 		int instanceIndex = 0;
 		std::string name_unique = name;
