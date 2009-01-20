@@ -87,222 +87,6 @@ static bool checkException(JNIEnv* env, const char* errorMsg) {
 	return false;
 }
 
-
-///**
-// * Creates the Java classpath.
-// * It will consist of the following:
-// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/interface.jar
-// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/
-// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/[*].jar
-// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/interface.jar
-// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/jlib/
-// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/jlib/[*].jar
-// * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/ai.jar
-// * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/
-// * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/[*].jar
-// * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/ai.jar
-// * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/
-// * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/[*].jar
-// */
-//static bool java_createClassPath(char* classPath) {
-//
-//	classPath[0] = '\0';
-//
-//	// Check which of the skirmish AIs to be used in the current game will
-//	// possibly be using this interface
-//	unsigned int i;
-//	unsigned int j;
-//	unsigned int applSkirmishAIs[staticGlobalData->maxTeams];
-//	unsigned int sizeApplSkimrishAIs = 0;
-//	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
-//	for (i = 0; i < staticGlobalData->numSkirmishAIs; ++i) {
-//		// find the interface shortName
-//		const char* ai_intShortName = util_map_getValueByKey(
-//				staticGlobalData->skirmishAIInfosSizes[i],
-//				staticGlobalData->skirmishAIInfosKeys[i],
-//				staticGlobalData->skirmishAIInfosValues[i],
-//				SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME);
-///*
-//		const char* shortName_ai = util_map_getValueByKey(
-//				staticGlobalData->skirmishAIInfosSizes[i],
-//				staticGlobalData->skirmishAIInfosKeys[i],
-//				staticGlobalData->skirmishAIInfosValues[i],
-//				SKIRMISH_AI_PROPERTY_SHORT_NAME);
-//*/
-////simpleLog_log("shortName_ai: %s", shortName_ai);
-////simpleLog_log("intShortName_ai: %s", intShortName);
-//
-//		// if the interface shortName was found, check for appliance
-//		if (ai_intShortName != NULL && strcmp(ai_intShortName, myShortName) == 0) {
-////simpleLog_log("applSkirmishAIs: %i", i);
-//			applSkirmishAIs[sizeApplSkimrishAIs++] = i;
-//		}
-//	}
-//
-//
-//	// the .jar files in the following list will be added to the classpath
-//	static const unsigned int MAX_ENTRIES = 128;
-//	static const unsigned int MAX_TEXT_LEN = 256;
-//	char* jarFiles[MAX_ENTRIES];
-//	int unsigned sizeJarFiles = 0;
-//	// the Java AI Interfaces file name
-//	{
-//		//jarFiles[sizeJarFiles++] = AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME""sPS""MY_VERSION""sPS"interface.jar";
-//		//jarFiles[sizeJarFiles++] = AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME""sPS"interface.jar";
-//
-//		jarFiles[sizeJarFiles] =
-//				util_allocStr(strlen(util_getDataDirVersioned()) + strlen(sPS)
-//						+ strlen(JAVA_AI_INTERFACE_LIBRARY_FILE_NAME));
-//		STRCPY(jarFiles[sizeJarFiles], util_getDataDirVersioned());
-//		STRCAT(jarFiles[sizeJarFiles], sPS);
-//		STRCAT(jarFiles[sizeJarFiles], JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
-////simpleLog_log("jarFiles[%i]: %s", sizeJarFiles, jarFiles[sizeJarFiles]);
-//		sizeJarFiles++;
-//
-//		jarFiles[sizeJarFiles] =
-//				util_allocStr(strlen(util_getDataDirUnversioned()) + strlen(sPS)
-//						+ strlen(JAVA_AI_INTERFACE_LIBRARY_FILE_NAME));
-//		STRCPY(jarFiles[sizeJarFiles], util_getDataDirUnversioned());
-//		STRCAT(jarFiles[sizeJarFiles], sPS);
-//		STRCAT(jarFiles[sizeJarFiles], JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
-////simpleLog_log("jarFiles[%i]: %s", sizeJarFiles, jarFiles[sizeJarFiles]);
-//		sizeJarFiles++;
-//	}
-//	// the file names of the Java AIs used during the current game
-////simpleLog_log("sizeApplSkimrishAIs: %u", sizeApplSkimrishAIs);
-//	for (i = 0; i < sizeApplSkimrishAIs; ++i) {
-//		const char* shortName_ai = util_map_getValueByKey(
-//				staticGlobalData->skirmishAIInfosSizes[applSkirmishAIs[i]],
-//				staticGlobalData->skirmishAIInfosKeys[applSkirmishAIs[i]],
-//				staticGlobalData->skirmishAIInfosValues[applSkirmishAIs[i]],
-//				SKIRMISH_AI_PROPERTY_SHORT_NAME);
-//		const char* version_ai = util_map_getValueByKey(
-//				staticGlobalData->skirmishAIInfosSizes[applSkirmishAIs[i]],
-//				staticGlobalData->skirmishAIInfosKeys[applSkirmishAIs[i]],
-//				staticGlobalData->skirmishAIInfosValues[applSkirmishAIs[i]],
-//				SKIRMISH_AI_PROPERTY_VERSION);
-//
-//		if (shortName_ai != NULL) {
-////simpleLog_log("shortName_ai: %s", shortName_ai);
-//			char* jarPath = util_allocStr(MAX_TEXT_LEN);
-//			SNPRINTF(jarPath, MAX_TEXT_LEN, "%s"sPS"%s"sPS"ai.jar",
-//					SKIRMISH_AI_DATA_DIR, shortName_ai);
-//			jarFiles[sizeJarFiles++] = jarPath;
-//
-//			if (version_ai != NULL) {
-////simpleLog_log("version_ai: %s", version_ai);
-//				jarPath = util_allocStr(MAX_TEXT_LEN);
-//				SNPRINTF(jarPath, MAX_TEXT_LEN, "%s"sPS"%s"sPS"%s"sPS"ai.jar",
-//						SKIRMISH_AI_DATA_DIR, shortName_ai, version_ai);
-//				jarFiles[sizeJarFiles++] = jarPath;
-//			}
-//		}
-//	}
-//
-//
-//	// the directories in the following list will be searched for .jar files
-//	// which then will be added to the classpath, plus they will be added
-//	// to the classpath directly, so you can keep .class files in there
-//	char* jarDirs[MAX_ENTRIES];
-//	int unsigned sizeJarDirs = 0;
-//	jarDirs[sizeJarDirs++] = util_allocStrCpyCat(util_getDataDirVersioned(),
-//			sPS"jlib");
-//	jarDirs[sizeJarDirs++] = util_allocStrCpyCat(util_getDataDirUnversioned(),
-//			sPS"jlib");
-//	// the jlib dirs of the Java AIs used during the current game
-//	for (i = 0; i < sizeApplSkimrishAIs; ++i) {
-//		const char* shortName_ai = util_map_getValueByKey(
-//				staticGlobalData->skirmishAIInfosSizes[applSkirmishAIs[i]],
-//				staticGlobalData->skirmishAIInfosKeys[applSkirmishAIs[i]],
-//				staticGlobalData->skirmishAIInfosValues[applSkirmishAIs[i]],
-//				SKIRMISH_AI_PROPERTY_SHORT_NAME);
-//		const char* version_ai = util_map_getValueByKey(
-//				staticGlobalData->skirmishAIInfosSizes[applSkirmishAIs[i]],
-//				staticGlobalData->skirmishAIInfosKeys[applSkirmishAIs[i]],
-//				staticGlobalData->skirmishAIInfosValues[applSkirmishAIs[i]],
-//				SKIRMISH_AI_PROPERTY_VERSION);
-//
-//		if (shortName_ai != NULL) {
-//			char* jarDir = util_allocStr(MAX_TEXT_LEN);
-//			SNPRINTF(jarDir, MAX_TEXT_LEN, "%s"sPS"%s"sPS"jlib",
-//					SKIRMISH_AI_DATA_DIR, shortName_ai);
-//			jarDirs[sizeJarDirs++] = jarDir;
-//
-//			if (version_ai != NULL) {
-//				jarDir = util_allocStr(MAX_TEXT_LEN);
-//				SNPRINTF(jarDir, MAX_TEXT_LEN, "%s"sPS"%s"sPS"%s"sPS"jlib",
-//						SKIRMISH_AI_DATA_DIR, shortName_ai, version_ai);
-//				jarDirs[sizeJarDirs++] = jarDir;
-//			}
-//		}
-//	}
-//
-//
-//	// searching the individual jar files and adding everything to the classpath
-//	STRCAT(classPath, "-Djava.class.path=");
-///*
-//	// add the first jar file
-//	if (sizeJarFiles > 0) {
-//		if (util_fileExists(jarFiles[0])) {
-//			char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
-//			bool found = util_findFile(
-//					staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-//					jarFiles[0], absoluteFilePath);
-//			if (found) {
-//				STRCAT(classPath, absoluteFilePath);
-//			}
-//		}
-//	}
-//*/
-//	// add the rest of the jar files
-//	for (i = 0; i < sizeJarFiles; ++i) {
-////simpleLog_log("jarFiles[%i]: %s", i, jarFiles[i]);
-//		//if (util_fileExists(jarFiles[i])) {
-//			char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
-//			bool found = util_findFile(
-//					staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-//					jarFiles[i], absoluteFilePath);
-////simpleLog_log("jarFiles[%i]: %i", i, found);
-//			if (found) {
-//				if (i > 0) {
-//					STRCAT(classPath, ENTRY_DELIM);
-//				}
-//				STRCAT(classPath, absoluteFilePath);
-//			}
-//		//}
-//	}
-//	// add the jar dirs (for .class files)
-//	for (i = 0; i < sizeJarDirs; ++i) {
-//		char* absoluteDirPath = util_allocStr(MAX_TEXT_LEN);
-//		bool found = util_findDir(
-//				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-//				jarDirs[i], absoluteDirPath, false, false);
-//		free(jarDirs[i]);
-//		if (found) {
-//			STRCAT(classPath, ENTRY_DELIM);
-//			STRCAT(classPath, absoluteDirPath);
-//			jarDirs[i] = absoluteDirPath;
-//		} else {
-//			jarDirs[i] = NULL;
-//		}
-//	}
-//	// add the jars in the dirs
-//	for (i = 0; i < sizeJarDirs; ++i) {
-//		if (jarDirs[i] != NULL) {
-//			char* jarFileNames[MAX_ENTRIES];
-//			unsigned int sizeJarFileNames = util_listFiles(jarDirs[i], ".jar",
-//					jarFileNames, true, MAX_ENTRIES);
-//			for (j = 0; j < sizeJarFileNames; ++j) {
-//				STRCAT(classPath, ENTRY_DELIM);
-//				STRCAT(classPath, jarDirs[i]);
-//				STRCAT(classPath, sPS);
-//				STRCAT(classPath, jarFileNames[j]);
-//			}
-//		}
-//	}
-//
-//	return true;
-//}
 /**
  * Creates the Java classpath.
  * It will consist of the following:
@@ -327,28 +111,6 @@ static bool java_createClassPath(char* classPath) {
 	// possibly be using this interface
 	unsigned int i;
 	unsigned int j;
-/*
-	unsigned int applSkirmishAIs[staticGlobalData->maxTeams];
-	unsigned int sizeApplSkimrishAIs = 0;
-	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
-	for (i = 0; i < staticGlobalData->numSkirmishAIs; ++i) {
-		// find the interface shortName
-		const char* ai_intShortName = util_map_getValueByKey(
-				staticGlobalData->skirmishAIInfosSizes[i],
-				staticGlobalData->skirmishAIInfosKeys[i],
-				staticGlobalData->skirmishAIInfosValues[i],
-				SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME);
-//simpleLog_log("shortName_ai: %s", shortName_ai);
-//simpleLog_log("intShortName_ai: %s", intShortName);
-
-		// if the interface shortName was found, check for appliance
-		if (ai_intShortName != NULL && strcmp(ai_intShortName, myShortName) == 0) {
-//simpleLog_log("applSkirmishAIs: %i", i);
-			applSkirmishAIs[sizeApplSkimrishAIs++] = i;
-		}
-	}
-*/
-
 
 	// the .jar files in the following list will be added to the classpath
 	static const unsigned int MAX_ENTRIES = 128;
@@ -357,59 +119,12 @@ static bool java_createClassPath(char* classPath) {
 	int unsigned sizeJarFiles = 0;
 	// the Java AI Interfaces file name
 	{
-		//jarFiles[sizeJarFiles++] = AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME""sPS""MY_VERSION""sPS"interface.jar";
-		//jarFiles[sizeJarFiles++] = AI_INTERFACES_DATA_DIR""sPS""MY_SHORT_NAME""sPS"interface.jar";
+		jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(2,
+			util_getDataDirVersioned(), JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
 
-		jarFiles[sizeJarFiles] =
-				util_allocStr(strlen(util_getDataDirVersioned()) + strlen(sPS)
-						+ strlen(JAVA_AI_INTERFACE_LIBRARY_FILE_NAME));
-		STRCPY(jarFiles[sizeJarFiles], util_getDataDirVersioned());
-		STRCAT(jarFiles[sizeJarFiles], sPS);
-		STRCAT(jarFiles[sizeJarFiles], JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
-//simpleLog_log("jarFiles[%i]: %s", sizeJarFiles, jarFiles[sizeJarFiles]);
-		sizeJarFiles++;
-
-		jarFiles[sizeJarFiles] =
-				util_allocStr(strlen(util_getDataDirUnversioned()) + strlen(sPS)
-						+ strlen(JAVA_AI_INTERFACE_LIBRARY_FILE_NAME));
-		STRCPY(jarFiles[sizeJarFiles], util_getDataDirUnversioned());
-		STRCAT(jarFiles[sizeJarFiles], sPS);
-		STRCAT(jarFiles[sizeJarFiles], JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
-//simpleLog_log("jarFiles[%i]: %s", sizeJarFiles, jarFiles[sizeJarFiles]);
-		sizeJarFiles++;
+		jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(2,
+			util_getDataDirUnversioned(), JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
 	}
-	// the file names of the Java AIs used during the current game
-//simpleLog_log("sizeApplSkimrishAIs: %u", sizeApplSkimrishAIs);
-/*
-	for (i = 0; i < sizeApplSkimrishAIs; ++i) {
-		const char* shortName_ai = util_map_getValueByKey(
-				staticGlobalData->skirmishAIInfosSizes[applSkirmishAIs[i]],
-				staticGlobalData->skirmishAIInfosKeys[applSkirmishAIs[i]],
-				staticGlobalData->skirmishAIInfosValues[applSkirmishAIs[i]],
-				SKIRMISH_AI_PROPERTY_SHORT_NAME);
-		const char* version_ai = util_map_getValueByKey(
-				staticGlobalData->skirmishAIInfosSizes[applSkirmishAIs[i]],
-				staticGlobalData->skirmishAIInfosKeys[applSkirmishAIs[i]],
-				staticGlobalData->skirmishAIInfosValues[applSkirmishAIs[i]],
-				SKIRMISH_AI_PROPERTY_VERSION);
-
-		if (shortName_ai != NULL) {
-//simpleLog_log("shortName_ai: %s", shortName_ai);
-			char* jarPath = util_allocStr(MAX_TEXT_LEN);
-			SNPRINTF(jarPath, MAX_TEXT_LEN, "%s"sPS"%s"sPS"ai.jar",
-					SKIRMISH_AI_DATA_DIR, shortName_ai);
-			jarFiles[sizeJarFiles++] = jarPath;
-
-			if (version_ai != NULL) {
-//simpleLog_log("version_ai: %s", version_ai);
-				jarPath = util_allocStr(MAX_TEXT_LEN);
-				SNPRINTF(jarPath, MAX_TEXT_LEN, "%s"sPS"%s"sPS"%s"sPS"ai.jar",
-						SKIRMISH_AI_DATA_DIR, shortName_ai, version_ai);
-				jarFiles[sizeJarFiles++] = jarPath;
-			}
-		}
-	}
-*/
 
 
 	// the directories in the following list will be searched for .jar files
@@ -417,73 +132,24 @@ static bool java_createClassPath(char* classPath) {
 	// to the classpath directly, so you can keep .class files in there
 	char* jarDirs[MAX_ENTRIES];
 	int unsigned sizeJarDirs = 0;
-	jarDirs[sizeJarDirs++] = util_allocStrCpyCat(util_getDataDirVersioned(),
-			sPS"jlib");
-	jarDirs[sizeJarDirs++] = util_allocStrCpyCat(util_getDataDirUnversioned(),
-			sPS"jlib");
-	// the jlib dirs of the Java AIs used during the current game
-/*
-	for (i = 0; i < sizeApplSkimrishAIs; ++i) {
-		const char* shortName_ai = util_map_getValueByKey(
-				staticGlobalData->skirmishAIInfosSizes[applSkirmishAIs[i]],
-				staticGlobalData->skirmishAIInfosKeys[applSkirmishAIs[i]],
-				staticGlobalData->skirmishAIInfosValues[applSkirmishAIs[i]],
-				SKIRMISH_AI_PROPERTY_SHORT_NAME);
-		const char* version_ai = util_map_getValueByKey(
-				staticGlobalData->skirmishAIInfosSizes[applSkirmishAIs[i]],
-				staticGlobalData->skirmishAIInfosKeys[applSkirmishAIs[i]],
-				staticGlobalData->skirmishAIInfosValues[applSkirmishAIs[i]],
-				SKIRMISH_AI_PROPERTY_VERSION);
-
-		if (shortName_ai != NULL) {
-			char* jarDir = util_allocStr(MAX_TEXT_LEN);
-			SNPRINTF(jarDir, MAX_TEXT_LEN, "%s"sPS"%s"sPS"jlib",
-					SKIRMISH_AI_DATA_DIR, shortName_ai);
-			jarDirs[sizeJarDirs++] = jarDir;
-
-			if (version_ai != NULL) {
-				jarDir = util_allocStr(MAX_TEXT_LEN);
-				SNPRINTF(jarDir, MAX_TEXT_LEN, "%s"sPS"%s"sPS"%s"sPS"jlib",
-						SKIRMISH_AI_DATA_DIR, shortName_ai, version_ai);
-				jarDirs[sizeJarDirs++] = jarDir;
-			}
-		}
-	}
-*/
+	jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(2,
+			util_getDataDirVersioned(), JAVA_LIBS_DIR);
+	jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(2,
+			util_getDataDirUnversioned(), JAVA_LIBS_DIR);
 
 
-	// searching the individual jar files and adding everything to the classpath
-	STRCAT(classPath, "-Djava.class.path=");
-/*
-	// add the first jar file
-	if (sizeJarFiles > 0) {
-		if (util_fileExists(jarFiles[0])) {
-			char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
-			bool found = util_findFile(
-					staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-					jarFiles[0], absoluteFilePath);
-			if (found) {
-				STRCAT(classPath, absoluteFilePath);
-			}
-		}
-	}
-*/
-	// add the rest of the jar files
+	// search the individual jar files and add everything to the classpath
 	for (i = 0; i < sizeJarFiles; ++i) {
-//simpleLog_log("jarFiles[%i]: %s", i, jarFiles[i]);
-		//if (util_fileExists(jarFiles[i])) {
-			char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
-			bool found = util_findFile(
-					staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-					jarFiles[i], absoluteFilePath);
-//simpleLog_log("jarFiles[%i]: %i", i, found);
-			if (found) {
-				if (i > 0) {
-					STRCAT(classPath, ENTRY_DELIM);
-				}
-				STRCAT(classPath, absoluteFilePath);
+		char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
+		bool found = util_findFile(
+				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
+				jarFiles[i], absoluteFilePath);
+		if (found) {
+			if (i > 0) {
+				STRCAT(classPath, ENTRY_DELIM);
 			}
-		//}
+			STRCAT(classPath, absoluteFilePath);
+		}
 	}
 	// add the jar dirs (for .class files)
 	for (i = 0; i < sizeJarDirs; ++i) {
@@ -508,9 +174,10 @@ static bool java_createClassPath(char* classPath) {
 					jarFileNames, true, MAX_ENTRIES);
 			for (j = 0; j < sizeJarFileNames; ++j) {
 				STRCAT(classPath, ENTRY_DELIM);
-				STRCAT(classPath, jarDirs[i]);
-				STRCAT(classPath, sPS);
-				STRCAT(classPath, jarFileNames[j]);
+				char* jarFileAbs_tmp = util_allocStrCatFSPath(2,
+						jarDirs[i], jarFileNames[j]);
+				STRCAT(classPath, jarFileAbs_tmp);
+				free(jarFileAbs_tmp);
 			}
 		}
 	}
@@ -538,18 +205,12 @@ static bool java_createAIClassPath(const char* shortName, const char* version,
 	char* jarFiles[classPathParts_max];
 	int unsigned sizeJarFiles = 0;
 
-	char* jarPath;
 	if (version != NULL) {
-		jarPath = util_allocStr(MAX_TEXT_LEN);
-		SNPRINTF(jarPath, MAX_TEXT_LEN, "%s"sPS"%s"sPS"%s"sPS"ai.jar",
-				SKIRMISH_AI_DATA_DIR, shortName, version);
-		jarFiles[sizeJarFiles++] = jarPath;
+		jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(4,
+				SKIRMISH_AI_DATA_DIR, shortName, version, "ai.jar");
 	}
-
-	jarPath = util_allocStr(MAX_TEXT_LEN);
-	SNPRINTF(jarPath, MAX_TEXT_LEN, "%s"sPS"%s"sPS"ai.jar",
-			SKIRMISH_AI_DATA_DIR, shortName);
-	jarFiles[sizeJarFiles++] = jarPath;
+	jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(3,
+			SKIRMISH_AI_DATA_DIR, shortName, "ai.jar");
 
 
 	// the directories in the following list will be searched for .jar files
@@ -558,18 +219,12 @@ static bool java_createAIClassPath(const char* shortName, const char* version,
 	char* jarDirs[classPathParts_max];
 	int unsigned sizeJarDirs = 0;
 
-	char* jarDir;
 	if (version != NULL) {
-		jarDir = util_allocStr(MAX_TEXT_LEN);
-		SNPRINTF(jarDir, MAX_TEXT_LEN, "%s"sPS"%s"sPS"%s"sPS"jlib",
-				SKIRMISH_AI_DATA_DIR, shortName, version);
-		jarDirs[sizeJarDirs++] = jarDir;
+		jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(4,
+			SKIRMISH_AI_DATA_DIR, shortName, version, JAVA_LIBS_DIR);
 	}
-
-	jarDir = util_allocStr(MAX_TEXT_LEN);
-	SNPRINTF(jarDir, MAX_TEXT_LEN, "%s"sPS"%s"sPS"jlib",
-			SKIRMISH_AI_DATA_DIR, shortName);
-	jarDirs[sizeJarDirs++] = jarDir;
+	jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(3,
+			SKIRMISH_AI_DATA_DIR, shortName, JAVA_LIBS_DIR);
 
 
 	// get the absolute paths of the jar files
@@ -608,11 +263,8 @@ static bool java_createAIClassPath(const char* shortName, const char* version,
 			unsigned int sizeJarFileNames = util_listFiles(jarDirs[i], ".jar",
 					jarFileNames, true, classPathParts_max-classPathParts_num);
 			for (j = 0; j < sizeJarFileNames; ++j) {
-				classPathParts[classPathParts_num] = util_allocStr(
-						strlen(jarDirs[i]) + 1 + strlen(jarFileNames[j]));
-				STRCAT(classPathParts[classPathParts_num], jarDirs[i]);
-				STRCAT(classPathParts[classPathParts_num], sPS);
-				STRCAT(classPathParts[classPathParts_num], jarFileNames[j]);
+				classPathParts[classPathParts_num++] =
+						util_allocStrCatFSPath(2, jarDirs[i], jarFileNames[j]);
 			}
 		}
 		free(jarDirs[i]);
@@ -636,7 +288,7 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 
 	jobjectArray o_cppURLs = (*env)->NewObjectArray(env, cpp_num, g_cls_url,
 			NULL);
-	if (checkException(env, "!Failed creating URL[].")) { return NULL; }
+	if (checkException(env, "Failed creating URL[].")) { return NULL; }
 	int u;
 	for (u = 0; u < cpp_num; ++u) {
 		char* str_fileUrl = util_allocStr(strlen(FILE_URL_PREFIX)
@@ -644,99 +296,231 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 		STRCPY(str_fileUrl, FILE_URL_PREFIX);
 		STRCAT(str_fileUrl, classPathParts[u]);
 		jstring jstr_fileUrl = (*env)->NewStringUTF(env, str_fileUrl);
-		if (checkException(env, "!Failed creating Java String.")) { return NULL; }
-		jobject jurl_fileUrl = (*env)->NewObject(env, g_cls_url, g_m_url_ctor, jstr_fileUrl);
-		if (checkException(env, "!Failed creating Java URL.")) { return NULL; }
+		if (checkException(env, "Failed creating Java String.")) { return NULL; }
+		jobject jurl_fileUrl =
+				(*env)->NewObject(env, g_cls_url, g_m_url_ctor, jstr_fileUrl);
+		if (checkException(env, "Failed creating Java URL.")) { return NULL; }
 		(*env)->SetObjectArrayElement(env, o_cppURLs, u, jurl_fileUrl);
-		if (checkException(env, "!Failed setting Java URL in array.")) { return NULL; }
+		if (checkException(env, "Failed setting Java URL in array.")) { return NULL; }
 	}
 
-	o_jClsLoader = (*env)->NewObject(env, g_cls_urlClassLoader, g_m_urlClassLoader_ctor, o_cppURLs);
-	if (checkException(env, "!Failed creating class-loader.")) { return NULL; }
+	o_jClsLoader = (*env)->NewObject(env, g_cls_urlClassLoader,
+			g_m_urlClassLoader_ctor, o_cppURLs);
+	if (checkException(env, "Failed creating class-loader.")) { return NULL; }
 	o_jClsLoader = (*env)->NewGlobalRef(env, o_jClsLoader);
-	if (checkException(env, "!Failed to make class-loader a global reference.")) { return NULL; }
+	if (checkException(env, "Failed to make class-loader a global reference.")) { return NULL; }
 
 	return o_jClsLoader;
 }
 
-static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
-
-	char classPath[16 * 1024];
-	if (!java_createClassPath(classPath)) {
-		simpleLog_error(-1, "!Failed creating Java classpath.");
-		return false;
-	}
+static bool java_createNativeLibsPath(char* libraryPath) {
 
 	// create the Java library path (where native libs are searched)
 	// consists of:
+
+	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/
+	STRCPY(libraryPath, util_getDataDirVersioned());
+
 	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/lib/
-	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/lib/
-	char libraryPathPart1[strlen(util_getDataDirVersioned()) + strlen(sPS)
-						+ strlen(JAVA_AI_INTERFACE_NATIVE_LIBS_DIR) + 1];
-	STRCPY(libraryPathPart1, util_getDataDirVersioned());
-	STRCAT(libraryPathPart1, sPS);
-	STRCAT(libraryPathPart1, JAVA_AI_INTERFACE_NATIVE_LIBS_DIR);
-	bool libraryPathPart1_exists = util_fileExists(libraryPathPart1);
+	char* nativeLibDirVers = util_allocStrCatFSPath(2,
+			util_getDataDirVersioned(), NATIVE_LIBS_DIR);
+	if (util_fileExists(nativeLibDirVers)) {
+		STRCAT(libraryPath, ENTRY_DELIM);
+		STRCAT(libraryPath, nativeLibDirVers);
+	}
+	free(nativeLibDirVers);
 
-	char libraryPathPart2[strlen(util_getDataDirUnversioned()) + strlen(sPS)
-						+ strlen(JAVA_AI_INTERFACE_NATIVE_LIBS_DIR) + 1];
-	STRCPY(libraryPathPart2, util_getDataDirUnversioned());
-	STRCAT(libraryPathPart2, sPS);
-	STRCAT(libraryPathPart2, JAVA_AI_INTERFACE_NATIVE_LIBS_DIR);
-	bool libraryPathPart2_exists = util_fileExists(libraryPathPart2);
-
-	char libraryPath[1024];
-	STRCPY(libraryPath, "-Djava.library.path=");
-	STRCAT(libraryPath, util_getDataDirVersioned());
+	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/
 	STRCAT(libraryPath, ENTRY_DELIM);
 	STRCAT(libraryPath, util_getDataDirUnversioned());
-	STRCAT(libraryPath, ENTRY_DELIM);
-	if (libraryPathPart1_exists) {
-		STRCAT(libraryPath, libraryPathPart1);
-	}
-	if (libraryPathPart1_exists && libraryPathPart2_exists) {
+
+	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/lib/
+	char* nativeLibDirUnvers =
+			util_allocStrCatFSPath(2, util_getDataDirUnversioned(),
+			NATIVE_LIBS_DIR);
+	if (util_fileExists(nativeLibDirUnvers)) {
 		STRCAT(libraryPath, ENTRY_DELIM);
+		STRCAT(libraryPath, nativeLibDirUnvers);
 	}
-	if (libraryPathPart2_exists) {
-		STRCAT(libraryPath, libraryPathPart2);
+	free(nativeLibDirUnvers);
+
+	return true;
+}
+static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
+
+	static const int maxProps = 64;
+	const char* propKeys[maxProps];
+	const char* propValues[maxProps];
+
+	// ### evaluate JVM options config file ###
+	char* jvmPropFile_rel = util_allocStrCatFSPath(2,
+			util_getDataDirVersioned(), JVM_PROPERTIES_FILE);
+	char jvmPropFile_abs[2048];
+	bool jvmPropFile_found = util_findFile(
+			staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
+			jvmPropFile_rel, jvmPropFile_abs);
+	free(jvmPropFile_rel);
+
+	// ### read JVM options config file ###
+	int numProps = 0;
+	if (jvmPropFile_found) {
+		numProps = util_parsePropertiesFile(jvmPropFile_abs,
+				propKeys, propValues, maxProps);
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"JVM: arguments loaded from: %s", jvmPropFile_abs);
+	} else {
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"JVM: arguments NOT loaded from: %s", jvmPropFile_abs);
 	}
 
+	// ### evaluate JNI version to use ###
+	//unsigned long int jniVersion = JNI_VERSION_1_1;
+	//unsigned long int jniVersion = JNI_VERSION_1_2;
+	unsigned long int jniVersion = JNI_VERSION_1_4;
+	//unsigned long int jniVersion = JNI_VERSION_1_6;
+	if (jvmPropFile_found) {
+		const char* jniVersionFromCfg =
+				util_map_getValueByKey(numProps, propKeys, propValues,
+				"jvm.jni.version");
+		if (jniVersionFromCfg != NULL) {
+			unsigned long int jniVersion_tmp =
+					strtoul(jniVersionFromCfg, NULL, 16);
+			if (jniVersion_tmp != 0) {
+				jniVersion = jniVersion_tmp;
+			}
+		}
+	}
+	//else {
+	//	//vm_args->version = JNI_VERSION_1_1;
+	//	//vm_args->version = JNI_VERSION_1_2;
+	//	vm_args->version = JNI_VERSION_1_4;
+	//	//vm_args->version = JNI_VERSION_1_6;
+	//}
+	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: JNI version: %#x", jniVersion);
+	vm_args->version = jniVersion;
+
+	// ### check if unrecognized JVM options should be ignored ###
+	// set ignore unrecognized
+	// if false, the JVM creation will fail if an
+	// unknown or invalid option was specified
+	bool ignoreUnrecognized = true;
+	if (jvmPropFile_found) {
+		const char* ignoreUnrecognizedFromCfg =
+				util_map_getValueByKey(numProps, propKeys, propValues,
+				"jvm.arguments.ignoreUnrecognized");
+		if (ignoreUnrecognizedFromCfg != NULL
+				&& !util_strToBool(ignoreUnrecognizedFromCfg)) {
+			ignoreUnrecognized = false;
+		}
+	}
+	if (ignoreUnrecognized) {
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"JVM: ignoring unrecognized options");
+		vm_args->ignoreUnrecognized = JNI_TRUE;
+	} else {
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"JVM: NOT ignoring unrecognized options");
+		vm_args->ignoreUnrecognized = JNI_FALSE;
+	}
+
+	// ### create the Java class-path option ###
+	// create the java.class.path option ...
+	// autogenerate it, and append the part from the jvm options file,
+	// if it is specified there
+	static const int classPath_max = 8 * 1024;
+	char classPath[classPath_max];
+	STRCPY(classPath, "-Djava.class.path=");
+	char clsPath[classPath_max];
+	// ..., autogenerate it ...
+	if (!java_createClassPath(clsPath)) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Failed creating Java class-path.");
+		return false;
+	}
+	STRCAT(classPath, clsPath);
+	if (jvmPropFile_found) {
+		// ..., and append the part from the jvm options properties file,
+		// if it is specified there
+		// TODO: this will not work, as the key is "jvm.option.x",
+		// and the value would be "-Djava.class.path=/patha:/pathb:..."
+		// Adjust!!
+		const char* clsPathFromCfg =
+				util_map_getValueByKey(numProps, propKeys, propValues,
+				"-Djava.class.path");
+		if (clsPathFromCfg != NULL) {
+			STRCAT(classPath, ENTRY_DELIM);
+			STRCAT(classPath, clsPathFromCfg);
+		}
+	}
+
+	// ### create the Java library-path option ###
+	// create the java.library.path option ...
+	// autogenerate it, and append the part from the jvm options file,
+	// if it is specified there
+	static const int libraryPath_max = 4 * 1024;
+	char libraryPath[libraryPath_max];
+	STRCPY(libraryPath, "-Djava.library.path=");
+	char libPath[libraryPath_max];
+	// ..., autogenerate it ...
+	if (!java_createNativeLibsPath(libPath)) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Failed creating Java library-path.");
+		return false;
+	}
+	STRCAT(libraryPath, libPath);
+	if (jvmPropFile_found) {
+		// ..., and append the part from the jvm options properties file,
+		// if it is specified there
+		// TODO: this will not work, as the key is "jvm.option.x",
+		// and the value would be "-Djava.class.path=/patha:/pathb:..."
+		// Adjust!!
+		const char* libPathFromCfg =
+				util_map_getValueByKey(numProps, propKeys, propValues,
+				"-Djava.library.path");
+		if (libPathFromCfg != NULL) {
+			STRCAT(libraryPath, ENTRY_DELIM);
+			STRCAT(libraryPath, libPathFromCfg);
+		}
+	}
+
+	// ### create and set all JVM options ###
 	const char* strOptions[32];
 	unsigned int op = 0;
 
 	strOptions[op++] = classPath;
 	strOptions[op++] = libraryPath;
 
-	//if (GetOptionsFromConfigFile(&strOptions, CONFIG_FILE) < 0) {
-		//simpleLog_fine("No JVM arguments loaded from config file: ___");
-		simpleLog_fine(" -> using default options.");
+	if (jvmPropFile_found) {
+		int i;
+		for (i=0; i < numProps; ++i) {
+			if (strcmp(propKeys[i], "jvm.option.x") == 0) {
+				strOptions[op++] = propValues[i];
+			}
+		}
+	} else {
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: using default options.");
 
 		strOptions[op++] = "-Xms4M";
 		strOptions[op++] = "-Xmx64M";
 		strOptions[op++] = "-Xss512K";
 		strOptions[op++] = "-Xoss400K";
-		//strOptions[op++] = "-XX:+AlwaysRestoreFPU";
-		//strOptions[op++] = "-Djava.util.logging.config.file="JAI_DIR"/logging.properties";
 
 #if defined JVM_LOGGING
-		simpleLog_fine("JVM logging enabled.");
 		strOptions[op++] = "-Xcheck:jni";
 		strOptions[op++] = "-verbose:jni";
 		strOptions[op++] = "-XX:+UnlockDiagnosticVMOptions";
 		strOptions[op++] = "-XX:+LogVMOutput";
-		//strOptions[op++] = "-XX:LogFile=C:/javaLog.txt";
-		//strOptions[op++] = "-XX:LogFile="JAI_DIR"/log/jvm-log.txt";
 #endif // defined JVM_LOGGING
 
 #if defined JVM_DEBUGGING
-		simpleLog_fine("JVM debugging enabled.");
 		strOptions[op++] = "-Xdebug";
 		strOptions[op++] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address="JVM_DEBUG_PORT;
 		// disable JIT (required for debugging under the classical VM)
 		strOptions[op++] = "-Djava.compiler=NONE";
-		strOptions[op++] = "-Xnoagent"; // disables old JDB
+		// disable old JDB
+		strOptions[op++] = "-Xnoagent";
 #endif // defined JVM_DEBUGGING
-	//}
+	}
 
 	const unsigned int numOptions = op;
 
@@ -744,20 +528,18 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 			calloc(numOptions, sizeof(struct JavaVMOption));
 
 	// fill strOptions into the JVM options
-	simpleLog_fine("JVM init options (size: %i):", numOptions);
+	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: options (%i):", numOptions);
 	unsigned int i;
 	for (i = 0; i < numOptions; ++i) {
-		options[i].optionString = util_allocStrCpy(strOptions[i]);
-		simpleLog_fine(strOptions[i]);
+		options[i].optionString = util_allocStrReplaceStr(strOptions[i],
+				"${home-dir}", util_getDataDirVersioned());
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, options[i].optionString);
 	}
-	simpleLog_fine("");
+	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "");
 
-	vm_args->version = JNI_VERSION_1_4;
-	//vm_args->version = JNI_VERSION_1_1;
-	//vm_args->version = JNI_VERSION_1_6;
 	vm_args->options = options;
 	vm_args->nOptions = numOptions;
-	vm_args->ignoreUnrecognized = JNI_FALSE;
+
 
 	return true;
 }
@@ -765,7 +547,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 static JNIEnv* java_getJNIEnv() {
 
 	if (g_jniEnv == NULL) {
-		simpleLog_fine("Creating the JVM.");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "Creating the JVM.");
 
 		JNIEnv* env = NULL;
 		JavaVM* jvm = NULL;
@@ -773,7 +555,8 @@ static JNIEnv* java_getJNIEnv() {
 		jint res;
 
 		if (!java_createJavaVMInitArgs(&vm_args)) {
-			simpleLog_error(-1, "!Failed initializing JVM init-arguments.");
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Failed initializing JVM init-arguments.");
 			goto end;
 		}
 
@@ -799,7 +582,7 @@ static JNIEnv* java_getJNIEnv() {
 				simpleLog_log("number of existing JVMs: %i", numJVMsFound);
 		 */
 
-		simpleLog_fine("creating JVM...");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "creating JVM...");
 		res = JNI_CreateJavaVM(&jvm, (void**) &env, &vm_args);
 		unsigned int i;
 		for (i = 0; i < vm_args.nOptions; ++i) {
@@ -808,17 +591,18 @@ static JNIEnv* java_getJNIEnv() {
 		free(vm_args.options);
 		ESTABLISH_SPRING_ENV
 		if (res < 0) {
-			simpleLog_error(res, "!Can't create Java VM, error code: %i", res);
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Can't create Java VM, error code: %i", res);
 			goto end;
 		}
 
 		res = (*jvm)->AttachCurrentThreadAsDaemon(jvm, (void**) &env, NULL);
-		//res = AttachCurrentThread(jvm, (void**) &env, NULL);
 		if (res < 0 || (*env)->ExceptionCheck(env)) {
 			if ((*env)->ExceptionCheck(env)) {
 				(*env)->ExceptionDescribe(env);
 			}
-			simpleLog_error(res, "!Can't Attach jvm to current thread,"
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Can't Attach jvm to current thread,"
 					" error code: %i", res);
 			goto end;
 		}
@@ -826,7 +610,7 @@ static JNIEnv* java_getJNIEnv() {
 end:
 		if (env == NULL || jvm == NULL || (*env)->ExceptionCheck(env)
 				|| res != 0) {
-			simpleLog_fine("!Failed creating JVM.");
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "!Failed creating JVM.");
 			if (env != NULL && (*env)->ExceptionCheck(env)) {
 				(*env)->ExceptionDescribe(env);
 			}
@@ -841,15 +625,15 @@ end:
 		}
 	}
 
-	//simpleLog_fine("Reattaching current thread...");
+	simpleLog_logL(SIMPLELOG_LEVEL_FINER, "Reattaching current thread...");
 	jint res = (*g_jvm)->AttachCurrentThreadAsDaemon(g_jvm,
 			(void**) &g_jniEnv, NULL);
-	//res = jvm->AttachCurrentThread((void**) & jniEnv, NULL);
 	if (res < 0 || (*g_jniEnv)->ExceptionCheck(g_jniEnv)) {
 		if ((*g_jniEnv)->ExceptionCheck(g_jniEnv)) {
 			(*g_jniEnv)->ExceptionDescribe(g_jniEnv);
 		}
-		simpleLog_error(res, "!Can't Attach jvm to current thread,"
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Can't Attach jvm to current thread,"
 				" error code(2): %i", res);
 	}
 
@@ -860,7 +644,7 @@ end:
 bool java_unloadJNIEnv() {
 
 	if (g_jniEnv != NULL) {
-		simpleLog_fine("Unloading the JVM...");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "Unloading the JVM...");
 
 		// We have to be the ONLY running thread (native and Java)
 		// this may not help, but cant be bad
@@ -878,7 +662,8 @@ bool java_unloadJNIEnv() {
 
 		res = (*g_jvm)->DestroyJavaVM(g_jvm);
 		if (res != 0) {
-			simpleLog_log("!Failed destroying the JVM, error code: %i", res);
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Failed destroying the JVM, error code: %i", res);
 			return false;
 		} else {
 			g_jniEnv = NULL;
@@ -935,14 +720,6 @@ bool java_initStatic(const struct SStaticGlobalData* _staticGlobalData) {
 		aiImplId_classLoader[impl] = NULL;
 	}
 
-/*
-	ESTABLISH_JAVA_ENV;
-	JNIEnv* env = java_getJNIEnv();
-	callback_init(env);
-	wrappSAICallback_init(env);
-	ESTABLISH_SPRING_ENV;
-*/
-
 	return true;
 }
 
@@ -971,7 +748,8 @@ static bool java_initURLClass(JNIEnv* env) {
 	}
 
 	// get (String)	constructor
-	g_m_url_ctor = (*env)->GetMethodID(env, g_cls_url, "<init>", "(Ljava/lang/String;)V");
+	g_m_url_ctor = (*env)->GetMethodID(env,
+			g_cls_url, "<init>", "(Ljava/lang/String;)V");
 	if (g_m_url_ctor == NULL || (*env)->ExceptionCheck(env)) {
 		simpleLog_log("!(String) constructor not found for class: %s", fcCls);
 		if ((*env)->ExceptionCheck(env)) {
@@ -1007,8 +785,8 @@ static bool java_initURLClassLoaderClass(JNIEnv* env) {
 	}
 
 	// get (URL[])	constructor
-	g_m_urlClassLoader_ctor = (*env)->GetMethodID(env, g_cls_urlClassLoader, "<init>",
-			"([Ljava/net/URL;)V");
+	g_m_urlClassLoader_ctor = (*env)->GetMethodID(env,
+			g_cls_urlClassLoader, "<init>", "([Ljava/net/URL;)V");
 	if (g_m_urlClassLoader_ctor == NULL || (*env)->ExceptionCheck(env)) {
 		simpleLog_log("!(URL[]) constructor not found for class: %s", fcCls);
 		if ((*env)->ExceptionCheck(env)) {
@@ -1228,7 +1006,7 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	// convert className from "com.myai.AI" to "com/myai/AI"
 	char classNameP[strlen(className)+1];
 	STRCPY(classNameP, className);
-	util_strReplace(classNameP, '.', '/');
+	util_strReplaceChar(classNameP, '.', '/');
 
 	// get the AIs private class-loader
 	jobject o_global_aiClassLoader =
@@ -1242,7 +1020,8 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	jclass cls_ai = (*env)->CallObjectMethod(env, o_global_aiClassLoader,
 			g_m_urlClassLoader_findClass, jstr_className);
 	if (cls_ai == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_log("!Class not found \"%s\"", className);
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Class not found \"%s\"", className);
 		if ((*env)->ExceptionCheck(env)) {
 			(*env)->ExceptionDescribe(env);
 		}
@@ -1252,7 +1031,8 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	// get AI constructor
 	jmethodID m_ai_ctor = (*env)->GetMethodID(env, cls_ai, "<init>", "()V");
 	if (m_ai_ctor == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_log("!No-arg constructor not found for class: %s", className);
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"No-arg constructor not found for class: %s", className);
 		if ((*env)->ExceptionCheck(env)) {
 			(*env)->ExceptionDescribe(env);
 		}
@@ -1260,10 +1040,10 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	}
 
 	// instantiate AI
-	//jobject o_local_ai = (*env)->CallStaticObjectMethod(env, cls_ai, m_ai_ctor);
 	jobject o_local_ai = (*env)->NewObject(env, cls_ai, m_ai_ctor);
 	if (!o_local_ai || (*env)->ExceptionCheck(env)) {
-		simpleLog_log("!No-arg constructor not found for class: %s", className);
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"No-arg constructor not found for class: %s", className);
 		if ((*env)->ExceptionCheck(env)) {
 			(*env)->ExceptionDescribe(env);
 		}
@@ -1275,7 +1055,8 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	// even after this method returned
 	jobject o_global_ai = (*env)->NewGlobalRef(env, o_local_ai);
 	if ((*env)->ExceptionCheck(env)) {
-		simpleLog_log("!Failed to make AI a global reference.");
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Failed to make AI a global reference.");
 		(*env)->ExceptionDescribe(env);
 	} else {
 		*o_ai = o_global_ai;
@@ -1288,7 +1069,8 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	methods[MTH_INDEX_SKIRMISH_AI_INIT] = (*env)->GetMethodID(env, cls_ai,
 			MTH_SKIRMISH_AI_INIT, SIG_SKIRMISH_AI_INIT);
 	if (methods[MTH_INDEX_SKIRMISH_AI_INIT] == NULL) {
-		simpleLog_log("!Method not found: %s.%s%s", className,
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Method not found: %s.%s%s", className,
 				MTH_SKIRMISH_AI_INIT, SIG_SKIRMISH_AI_INIT);
 		return false;
 	}
@@ -1297,7 +1079,8 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	methods[MTH_INDEX_SKIRMISH_AI_RELEASE] = (*env)->GetMethodID(env, cls_ai,
 			MTH_SKIRMISH_AI_RELEASE, SIG_SKIRMISH_AI_RELEASE);
 	if (methods[MTH_INDEX_SKIRMISH_AI_RELEASE] == NULL) {
-		simpleLog_log("!Method not found: %s.%s%s", className,
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Method not found: %s.%s%s", className,
 				MTH_SKIRMISH_AI_RELEASE, SIG_SKIRMISH_AI_RELEASE);
 		return false;
 	}
@@ -1306,7 +1089,8 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	methods[MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT] = (*env)->GetMethodID(env,
 			cls_ai, MTH_SKIRMISH_AI_HANDLE_EVENT, SIG_SKIRMISH_AI_HANDLE_EVENT);
 	if (methods[MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT] == NULL) {
-		simpleLog_log("!Method not found: %s.%s%s", className,
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Method not found: %s.%s%s", className,
 				MTH_SKIRMISH_AI_HANDLE_EVENT, SIG_SKIRMISH_AI_HANDLE_EVENT);
 		return false;
 	}
@@ -1315,15 +1099,6 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 }
 
 
-/**
- * Instantiates an instance of the specified className.
- *
- * @param	className	fully qualified name of a Java clas that implements
- *						interface com.clan_sy.spring.ai.AI, eg:
- *						"com.myai.AI"
- * @param	aiInstance	where the AI instance will be stored
- * @param	methods		where the method IDs of the AI will be stored
- */
 bool java_initSkirmishAIClass(unsigned int infoSize,
 		const char** infoKeys, const char** infoValues) {
 
@@ -1371,22 +1146,14 @@ bool java_initSkirmishAIClass(unsigned int infoSize,
 		if (success) {
 			aiImplId_className[implId] = util_allocStrCpy(className);
 		} else {
-			simpleLog_error(-1, "!Class loading failed for class: %s",
-					className);
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"!Class loading failed for class: %s", className);
 		}
 	}
 
 	return success;
 }
-/**
- * Release an instance of the specified className.
- *
- * @param	className	fully qualified name of a Java clas that implements
- *						interface com.clan_sy.spring.ai.AI, eg:
- *						"com.myai.AI"
- * @param	aiInstance	where the AI instance will be stored
- * @param	methods		where the method IDs of the AI will be stored
- */
+
 bool java_releaseSkirmishAIClass(const char* className) {
 
 	bool success = false;
@@ -1462,33 +1229,7 @@ const struct SAICallback* java_getSkirmishAICCallback(int teamId) {
 	return teamId_cCallback[teamId];
 }
 
-/*
-static jobject java_toJavaAICallback(JNIEnv* env, int teamId,
-		const struct SAICallback* cCallback) {
 
-	jobject jCallback = NULL;
-
-	jclass cls_jClb = (*env)->FindClass(env, CLS_AI_CALLBACK);
-	jCallback = (*env)->AllocObject(env, cls_jClb);
-	jCallback = (*env)->NewGlobalRef(env, jCallback);
-
-	teamId_cCallback[teamId] = cCallback;
-	teamId_jCallback[teamId] = jCallback;
-
-	return jCallback;
-}
-*/
-
-
-/**
- * Instantiates an instance of the class specified className.
- *
- * @param	className	fully qualified name of a Java clas that implements
- *						interface com.clan_sy.spring.ai.AI, eg:
- *						"com.myai.AI"
- * @param	aiInstance	where the AI instance will be stored
- * @param	methods		where the method IDs of the AI will be stored
- */
 int java_skirmishAI_init(int teamId,
 		unsigned int infoSize,
 		const char** infoKeys, const char** infoValues,
@@ -1500,37 +1241,42 @@ int java_skirmishAI_init(int teamId,
 	jmethodID mth = NULL;
 	jobject o_ai = NULL;
 	ESTABLISH_JAVA_ENV;
-	bool success = java_getSkirmishAIAndMethod(teamId, &o_ai, MTH_INDEX_SKIRMISH_AI_INIT, &mth);
+	bool success = java_getSkirmishAIAndMethod(teamId, &o_ai,
+			MTH_INDEX_SKIRMISH_AI_INIT, &mth);
 
 	JNIEnv* env = NULL;
 	if (success) {
 		env = java_getJNIEnv();
 	}
 
-//simpleLog_fine("java_skirmishAI_init 1");
 	// create Java info Properties
 	jobject o_infoProps = NULL;
 	if (success) {
-		simpleLog_fine("creating Java info Properties for init() ...");
-		o_infoProps = java_createPropertiesFromCMap(env, infoSize, infoKeys, infoValues);
-		simpleLog_fine("done.");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"creating Java info Properties for init() ...");
+		o_infoProps = java_createPropertiesFromCMap(env,
+				infoSize, infoKeys, infoValues);
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "done.");
 		success = (o_infoProps != NULL);
 	}
 
 	// create Java options Properties
 	jobject o_optionsProps = NULL;
 	if (success) {
-		simpleLog_fine("creating Java options Properties for init() ...");
-		o_optionsProps = java_createPropertiesFromCMap(env, optionsSize, optionsKeys, optionsValues);
-		simpleLog_fine("done.");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"creating Java options Properties for init() ...");
+		o_optionsProps = java_createPropertiesFromCMap(env,
+				optionsSize, optionsKeys, optionsValues);
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "done.");
 		success = (o_optionsProps != NULL);
 	}
 
 	if (success) {
-		simpleLog_fine("calling Java AI method init(teamId)...");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"calling Java AI method init(teamId)...");
 		res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId,
 				o_infoProps, o_optionsProps);
-		simpleLog_fine("done.");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "done.");
 	}
 	ESTABLISH_SPRING_ENV;
 
@@ -1543,14 +1289,16 @@ int java_skirmishAI_release(int teamId) {
 
 	jmethodID mth = NULL;
 	jobject o_ai = NULL;
-	bool success = java_getSkirmishAIAndMethod(teamId, &o_ai, MTH_INDEX_SKIRMISH_AI_RELEASE, &mth);
+	bool success = java_getSkirmishAIAndMethod(teamId, &o_ai,
+			MTH_INDEX_SKIRMISH_AI_RELEASE, &mth);
 
 	if (success) {
 		ESTABLISH_JAVA_ENV
 		JNIEnv* env = java_getJNIEnv();
-		simpleLog_fine("calling Java AI method release(teamId)...");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"calling Java AI method release(teamId)...");
 		res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId);
-		simpleLog_fine("done.");
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "done.");
 		ESTABLISH_SPRING_ENV
 	}
 
@@ -1569,41 +1317,23 @@ int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
 	if (success) {
 		ESTABLISH_JAVA_ENV;
 		JNIEnv* env = java_getJNIEnv();
-		//simpleLog_fine("calling Java AI method handleEvent(teamId, evt)...");
-/*
-if (topic == EVENT_INIT) {
-	simpleLog_fine("EVENT_INIT...");
-	const struct SInitEvent* initEvt = (const struct SInitEvent*) data;
-	simpleLog_fine("check: is Clb_Game_getCurrentFrame initialized...");
-	if (initEvt->callback->Clb_Game_getCurrentFrame == NULL) {
-		simpleLog_fine("Game_getCurrentFrame is NULL");
-	} else {
-		simpleLog_fine("Game_getCurrentFrame is NOT NULL");
-	}
-}
-*/
-		//jobject evt = java_toJavaAIEvent(env, teamId, topic, data);
-		//res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId, evt);
-		//res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId, topic, data);
-		//jlong jniPointerToData = (jlong) data;
-		//jlong jniPointerToData = (jlong) ((uintptr_t)data & PAGEOFFSET);
 		jlong jniPointerToData = (jlong) ((intptr_t)data);
 		// instantiate a JNA Pointer
 		jobject jnaPointerToData = (*env)->NewObject(env, g_cls_jnaPointer,
 				g_m_jnaPointer_ctor_long, jniPointerToData);
 		if ((*env)->ExceptionCheck(env)) {
-			simpleLog_log("!handleEvent: creating JNA pointer to data failed");
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"handleEvent: creating JNA pointer to data failed");
 			(*env)->ExceptionDescribe(env);
 			res = -3;
 		}
 		res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId, topic,
 				jnaPointerToData);
 		if ((*env)->ExceptionCheck(env)) {
-			simpleLog_log("!handleEvent() call failed");
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "handleEvent: call failed");
 			(*env)->ExceptionDescribe(env);
 			res = -2;
 		}
-		//simpleLog_fine("done.");
 		ESTABLISH_SPRING_ENV;
 	}
 

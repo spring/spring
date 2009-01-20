@@ -28,6 +28,8 @@
 
 #include <string.h>      // strcpy(), str...()
 #include <stdlib.h>      // malloc(), calloc(), free()
+#include <stdio.h>       // fgets()
+#include <stdarg.h>      // var-args
 #include <sys/stat.h>    // used for check if a file exists
 #ifdef WIN32
 #include <io.h>          // needed for dir listing
@@ -89,6 +91,10 @@ char* util_allocStr(unsigned int length) {
 
 char* util_allocStrCpy(const char* toCopy) {
 
+	if (toCopy == NULL) {
+		return NULL;
+	}
+
 	char* copy = (char*) calloc(strlen(toCopy)+1, sizeof(char));
 	STRCPY(copy, toCopy);
 	return copy;
@@ -127,15 +133,213 @@ char* util_allocStrSubCpyByPointers(const char* toCopy,
 	return copy;
 }
 
-char* util_allocStrCpyCat(const char* toPart1, const char* toPart2) {
+// ANSI C requires at least one named parameter.
+char* util_allocStrCat(int numParts, const char* first, ...) {
 
-	char* copy = (char*) calloc(strlen(toPart1)+strlen(toPart2)+1, sizeof(char));
-	STRCPY(copy, toPart1);
-	STRCAT(copy, toPart2);
-	return copy;
+	va_list args;
+	char *result, *p;
+	const char* str;
+	size_t length = 0;
+	int si;
+
+	// Find the total memory required.
+	va_start(args, first);
+	for (str = first, si = 0; si < numParts; ++si,
+			((str) = (const char *) va_arg(args, const char*))) {
+		length += strlen(str);
+	}
+	va_end(args);
+
+	// Create the string.  Doing the copy ourselves avoids useless string
+	// traversals of result, if using strcat(), or string, if using strlen()
+	// to increment a pointer into result, at the cost of losing the
+	// native optimization of strcat() if any.
+	result = util_allocStr(length);
+	p = result;
+	va_start(args, first);
+	for (str = first, si = 0; si < numParts; ++si,
+			((str) = (const char *) va_arg(args, const char*))) {
+		while (*str != '\0') {
+			*p++ = *str++;
+		}
+	}
+	va_end(args);
+	*p = '\0';
+
+	return result;
+}
+// ANSI C requires at least one named parameter.
+char* util_allocStrCat_nt(const char* first, ...)
+{
+	va_list args;
+	char *result, *p;
+	const char* str;
+	size_t length = 0;
+
+	// Find the total memory required.
+	va_start(args, first);
+	for (str = first; str != NULL;
+			((str) = (const char *) va_arg(args, const char*))) {
+		length += strlen(str);
+	}
+	va_end(args);
+
+	// Create the string.  Doing the copy ourselves avoids useless string
+	// traversals of result, if using strcat(), or string, if using strlen()
+	// to increment a pointer into result, at the cost of losing the
+	//native optimization of strcat() if any.
+	result = util_allocStr(length);
+	p = result;
+	va_start(args, first);
+	for (str = first; str != NULL;
+			((str) = (const char *) va_arg(args, const char*))) {
+		while (*str != '\0') {
+			*p++ = *str++;
+		}
+	}
+	va_end(args);
+	*p = '\0';
+
+	return result;
+}
+char* util_allocStrCatFSPath(int numParts, const char* first, ...) {
+
+	va_list args;
+	char *result, *p;
+	const char* str;
+	size_t length = 0;
+	int si;
+
+	// Find the maximum of the total memory required.
+	va_start(args, first);
+	for (str = first, si = 0; si < numParts; ++si,
+			((str) = (const char *) va_arg(args, const char*))) {
+		length += strlen(str);
+	}
+	va_end(args);
+	length += numParts;
+
+	// Create the string.  Doing the copy ourselves avoids useless string
+	// traversals of result, if using strcat(), or string, if using strlen()
+	// to increment a pointer into result, at the cost of losing the
+	// native optimization of strcat() if any.
+	result = util_allocStr(length);
+	p = result;
+	char thisChar;
+	char lastChar = '\0';
+	va_start(args, first);
+	for (str = first, si = 0; si < numParts; ++si,
+			((str) = (const char *) va_arg(args, const char*))) {
+		if (si > 0 && lastChar != '/') {
+			*p++ = '/';
+			lastChar = '/';
+		}
+		while (*str != '\0') {
+			thisChar = *str;
+			if (thisChar == '\\') {
+				thisChar = '/';
+			}
+			if ((thisChar != '/') || (thisChar != lastChar)) {
+				*p = thisChar;
+				lastChar = thisChar;
+				p++;
+			}
+			str++;
+		}
+	}
+	va_end(args);
+	*p = '\0';
+	if (PS != '/') {
+		util_strReplaceChar(result, '/', PS);
+	}
+
+	return result;
 }
 
-void util_strReplace(char* toChange, char toFind, char replacer) {
+// 0x20 - space
+// 0x09 - horizontal tab
+// 0x0a - linefeed
+// 0x0b - vertical tab
+// 0x0c - form feed
+// 0x0d - carriage return
+static const char whiteSpaces[] = {0x20, 0x09, 0x0a, 0x0b, 0x0c, 0x0d};
+static const int whiteSpaces_size = 6;
+
+bool util_isWhiteSpace(char c) {
+
+	int i;
+	for (i=0; i < whiteSpaces_size; ++i) {
+		if (c == whiteSpaces[i]) {
+			return true;
+		}
+	}
+	return false;
+}
+
+void util_strLeftTrim(char* toTrim) {
+
+	if (toTrim == NULL) {
+		return;
+	}
+
+	int len = strlen(toTrim);
+	char* first = toTrim;
+	int num = 0;
+
+	// find leading white spaces
+	while (*first != '\0') {
+		if (util_isWhiteSpace(*first)) {
+			first++;
+			num++;
+			continue;
+		}
+		break;
+	}
+
+	// trim
+	if (num > 0) {
+		int i;
+		// back stack string chars; '\0' inclusive
+		for (i=0; i+num <= len; ++i) {
+			toTrim[i] = toTrim[i+num];
+		}
+	}
+}
+void util_strRightTrim(char* toTrim) {
+
+	if (toTrim == NULL) {
+		return;
+	}
+
+	int len = strlen(toTrim);
+	char* last = toTrim - 1 + len;
+
+	// find trailing white spaces
+	while (last > toTrim) {
+		if (util_isWhiteSpace(*last)) {
+			last--;
+			continue;
+		}
+		break;
+	}
+
+	// trim
+	*(last+1) = '\0';
+}
+void util_strTrim(char* toTrim) {
+
+	util_strLeftTrim(toTrim);
+	util_strRightTrim(toTrim);
+}
+char* util_allocStrTrimed(const char* toTrim) {
+
+	char* strCpy = util_allocStrCpy(toTrim);
+	util_strTrim(strCpy);
+	return strCpy;
+
+}
+
+void util_strReplaceChar(char* toChange, char toFind, char replacer) {
 
 	const unsigned int len = strlen(toChange);
 	unsigned int i;
@@ -144,6 +348,37 @@ void util_strReplace(char* toChange, char toFind, char replacer) {
 			toChange[i] = replacer;
 		}
 	}
+}
+char* util_allocStrReplaceStr(const char* toChange, const char* toFind,
+		const char* replacer) {
+
+	// evaluate number of occurences of toFind in toChange
+	unsigned int numFinds = 0;
+	const char* found = NULL;
+	for (found = strstr(toChange, toFind); found != NULL; numFinds++) {
+		found = strstr(found+1, toFind);
+	}
+
+	int toChange_len = strlen(toChange);
+	int toFind_len = strlen(toFind);
+	int replacer_len = strlen(replacer);
+
+	// evaluate the result strings length
+	unsigned int result_len =
+			toChange_len + (numFinds * (replacer_len - toFind_len));
+	char* result = util_allocStr(result_len);
+	result[0] = '\0';
+
+	const char* endLastFound = toChange;
+	for (found = strstr(endLastFound, toFind); found != NULL; ) {
+		STRNCAT(result, endLastFound, (found - toChange));
+		STRCAT(result, replacer);
+		endLastFound = found + toFind_len;
+		found = strstr(found+1, toFind);
+	}
+	STRNCAT(result, endLastFound, (toChange + toChange_len - endLastFound));
+
+	return result;
 }
 
 bool util_endsWith(const char* str, const char* suffix) {
@@ -166,6 +401,34 @@ bool util_endsWith(const char* str, const char* suffix) {
 	}
 
 	return endsWith;
+}
+
+bool util_strToBool(const char* str) {
+
+	if (str == NULL) {
+		return false;
+	}
+
+	bool res = true;
+
+	char* strT = util_allocStrTrimed(str);
+	if (strcmp(strT, "0") == 0
+			|| strcmp(strT, "NO") == 0
+			|| strcmp(strT, "No") == 0
+			|| strcmp(strT, "no") == 0
+			|| strcmp(strT, "n") == 0
+			|| strcmp(strT, "N") == 0
+			|| strcmp(strT, "FALSE") == 0
+			|| strcmp(strT, "False") == 0
+			|| strcmp(strT, "false") == 0
+			|| strcmp(strT, "f") == 0
+			|| strcmp(strT, "F") == 0)
+	{
+		res = false;
+	}
+
+	free(strT);
+	return res;
 }
 
 
@@ -417,7 +680,7 @@ bool util_getParentDir(const char* path, char* parentPath) {
 
 	// copy the parent substring to parentPath
 	unsigned int i;
-	for (i = 0; &(path[i+1]) != ptr; i++) {
+	for (i=0; &(path[i]) != ptr; i++) {
 		parentPath[i] = path[i];
 	}
 	parentPath[i] = '\0';
@@ -502,17 +765,163 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 	return found;
 }
 
+static inline bool util_isEndOfLine(char c) {
+	return (c == '\r') || (c == '\n');
+}
+/**
+ * Saves thethe property found in propLine into the arrays at the given index.
+ * @return  false if no property was found at this line
+ */
+static bool util_parseProperty(const char* propLine,
+		const char* keys[], const char* values[], int propStoreIndex) {
+
+	const unsigned int len = strlen(propLine);
+	unsigned int pos = 0; // current pos
+	char c; // current char
+
+	// skip white spaces
+	while (pos < len) {
+		c = propLine[pos];
+		if (util_isWhiteSpace(c)) {
+			pos++;
+		} else {
+			break;
+		}
+	}
+
+	// return, if the line was empty (contained only white spaces)
+	if (pos >= len) {
+		return false;
+	}
+
+	// check if it is a comment line
+	if (pos < len) {
+		c = propLine[pos];
+		if ((c == '#') || (c == ';')) {
+			return false;
+		}
+	}
+
+	// now it has to be a property line
+	// if not: bad properties file format
+
+	// read the key
+	int keyStartPos = pos;
+	char* key = NULL;
+	while (pos < len) {
+		c = propLine[pos];
+		bool wb = util_isWhiteSpace(c);
+		bool es = (c == '=');
+		if (!wb && !es) {
+			pos++;
+		} else {
+			break;
+		}
+	}
+	key = util_allocStrSubCpy(propLine, keyStartPos, pos);
+
+	// skip white spaces
+	while (pos < len) {
+		c = propLine[pos];
+		if (util_isWhiteSpace(c)) {
+			pos++;
+		} else {
+			break;
+		}
+	}
+
+	// check if it is an equals sign: '='
+	if (pos < len) {
+		c = propLine[pos];
+		if (c != '=') {
+			free(key);
+			key = NULL;
+			return false;
+		}
+		pos++;
+	} else {
+		free(key);
+		return false;
+	}
+
+	// skip white spaces
+	while (pos < len) {
+		c = propLine[pos];
+		if (util_isWhiteSpace(c)) {
+			pos++;
+		} else {
+			break;
+		}
+	}
+
+	// read the value
+	int valueStartPos = pos;
+	char* value = NULL;
+	while (pos < len) {
+		c = propLine[pos];
+		bool eol = util_isEndOfLine(c);
+		if (!eol) {
+			pos++;
+		} else {
+			break;
+		}
+	}
+	value = util_allocStrSubCpy(propLine, valueStartPos, pos);
+
+	keys[propStoreIndex] = key;
+	values[propStoreIndex] = value;
+
+	return true;
+}
+int util_parsePropertiesFile(const char* propertiesFile,
+		const char* keys[], const char* values[], int maxProperties) {
+
+	int numProperties = 0;
+
+	static const int maxLineLength = 2048;
+	FILE* file;
+	char line[maxLineLength + 1];
+
+	file = fopen(propertiesFile , "r");
+	if (file == NULL) {
+		return numProperties;
+	}
+
+	char* error = NULL;
+	bool propertyFound = false;
+	while (numProperties < maxProperties) {
+		// returns NULL on error or EOF
+		error = fgets(line, maxLineLength + 1, file);
+		if (error == NULL) {
+			break;
+		}
+		// remove EOL chars
+		int lci = strlen(line)-1;
+		while (lci >= 0 && util_isEndOfLine(line[lci])) {
+			line[lci] = '\0';
+			lci--;
+		}
+		propertyFound = util_parseProperty(line, keys, values, numProperties);
+		if (propertyFound) {
+			numProperties++;
+		}
+	}
+	fclose(file);
+
+	return numProperties;
+}
+
 const char* util_map_getValueByKey(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
+		unsigned int mapSize,
+		const char** mapKeys, const char** mapValues,
 		const char* key) {
 
 	const char* value = NULL;
 
 	unsigned int i;
-	for (i = 0; i < infoSize; i++) {
-		if (strcmp(infoKeys[i], key) == 0) {
-			value = infoValues[i];
+	for (i = 0; i < mapSize; i++) {
+		if (strcmp(mapKeys[i], key) == 0) {
+			value = mapValues[i];
 			break;
 		}
 	}

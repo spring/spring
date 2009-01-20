@@ -27,6 +27,8 @@ extern "C" {
 struct SStaticGlobalData;
 struct SAICallback;
 
+#define JVM_PROPERTIES_FILE "jvm.properties"
+
 #if defined DEBUG
 	#define JVM_LOGGING
 	#define JVM_DEBUGGING
@@ -85,10 +87,37 @@ bool java_preloadJNIEnv();
 bool java_unloadJNIEnv();
 bool java_initStatic(const struct SStaticGlobalData* staticGlobalData);
 bool java_releaseStatic();
+/**
+ * Instantiates an instance of the specified className.
+ *
+ * @param	className	fully qualified name of a Java clas that implements
+ *						interface com.clan_sy.spring.ai.AI, eg:
+ *						"com.myai.AI"
+ * @param	aiInstance	where the AI instance will be stored
+ * @param	methods		where the method IDs of the AI will be stored
+ */
 bool java_initSkirmishAIClass(unsigned int infoSize,
 		const char** infoKeys, const char** infoValues);
+/**
+ * Release an instance of the specified className.
+ *
+ * @param	className	fully qualified name of a Java clas that implements
+ *						interface com.clan_sy.spring.ai.AI, eg:
+ *						"com.myai.AI"
+ * @param	aiInstance	where the AI instance will be stored
+ * @param	methods		where the method IDs of the AI will be stored
+ */
 bool java_releaseSkirmishAIClass(const char* className);
 bool java_releaseAllSkirmishAIClasses();
+/**
+ * Instantiates an instance of the class specified className.
+ *
+ * @param	className	fully qualified name of a Java clas that implements
+ *						interface com.clan_sy.spring.ai.AI, eg:
+ *						"com.myai.AI"
+ * @param	aiInstance	where the AI instance will be stored
+ * @param	methods		where the method IDs of the AI will be stored
+ */
 int java_skirmishAI_init(int teamId,
 		unsigned int infoSize,
 		const char** infoKeys, const char** infoValues,

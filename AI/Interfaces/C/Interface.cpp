@@ -28,19 +28,13 @@
 #include "System/Platform/SharedLib.h"
 #include "System/Util.h"
 
-#include <sys/stat.h>	// used for check if a file exists
-#ifdef	WIN32
-#include <direct.h>	// mkdir()
-#else	// WIN32
-#include <sys/stat.h>	// mkdir()
-#include <sys/types.h>	// mkdir()
-#endif	// WIN32
-
-//#define MY_SHORT_NAME "C"
-//#define MY_VERSION "0.1"
-//#define MY_NAME "C & C++ AI Interface"
-//
-//#define MAX_INFOS 128
+#include <sys/stat.h>   // used for check if a file exists
+#ifdef WIN32
+#include <direct.h>     // mkdir()
+#else // WIN32
+#include <sys/stat.h>   // mkdir()
+#include <sys/types.h>  // mkdir()
+#endif // WIN32
 
 static std::string local_getValueByKey(
 		const std::map<std::string, std::string>& map, std::string key) {
@@ -236,8 +230,7 @@ void CInterface::reportInterfaceFunctionError(const std::string& libFilePath,
 }
 
 void CInterface::reportError(const std::string& msg) {
-	///handleerror(NULL, msg.c_str(), "C AI Interface Error", MBF_OK | MBF_EXCL);
-	simpleLog_error(-1, msg.c_str());
+	simpleLog_logL(SIMPLELOG_LEVEL_ERROR, msg.c_str());
 }
 
 
@@ -260,12 +253,6 @@ std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 	}
 	const std::string& dataDir(prop->second);
 
-//	prop = info->second.find(SKIRMISH_AI_PROPERTY_FILE_NAME);
-//	if (prop == info->second.end()) {
-//		reportError(std::string("Missing Skirmish-AI file name for ")
-//				+ spec.shortName + " " + spec.version);
-//	}
-//	const std::string& fileName(prop->second);
 	const std::string& fileName(spec.shortName);
 
 	std::string libFileName(fileName); // eg. RAI
@@ -276,7 +263,6 @@ std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 	// eg. libRAI-0.600.so
 	libFileName = libFileName + "." + SharedLib::GetLibExtension();
 
-	//return FindFile(dataDir + PS + libFileName);
 	return dataDir + PS + libFileName;
 }
 

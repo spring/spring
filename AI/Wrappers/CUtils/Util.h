@@ -35,6 +35,7 @@ extern "C" {
 		#define VSNPRINTF vsprintf_s
 		#define STRCPY strcpy_s
 		#define STRCAT strcat_s
+		#define STRNCAT strncat_s
 		#define FOPEN fopen_s
 	#else              // Visual Studio 2003
 		#define PRINT _print
@@ -44,6 +45,7 @@ extern "C" {
 		#define VSNPRINTF _vsnprintf
 		#define STRCPY strcpy
 		#define STRCAT strcat
+		#define STRNCAT strncat
 		#define FOPEN fopen
 	#endif
 	#define STRCASECMP stricmp
@@ -56,6 +58,7 @@ extern "C" {
 	#define VSNPRINTF vsnprintf
 	#define STRCPY strcpy
 	#define STRCAT strcat
+	#define STRNCAT strncat
 	#define FOPEN fopen
 	#define STRCASECMP strcasecmp
 #endif	// _MSC_VER
@@ -78,11 +81,40 @@ char* util_allocStrSubCpy(const char* toCopy, int fromPos, int toPos);
 char* util_allocStrSubCpyByPointers(const char* toCopy,
 		const char* fromPos, const char* toPos);
 
-char* util_allocStrCpyCat(const char* toPart1, const char* toPart2);
+/**
+ * Concatenates a variable number of C strings into newly allocated memory.
+ * The number of strings to concatenate has to be supplied as first argument.
+ */
+char* util_allocStrCat(int numParts, const char* first, ...);
+/**
+ * Concatenates a variable number of C strings into newly allocated memory.
+ * The last argument has to be NULL, as there would be no way to determine
+ * the number of arguments otherwise.
+ */
+char* util_allocStrCat_nt(const char* first, ...);
 
-void util_strReplace(char* toChange, char toFind, char replacer);
+/**
+ * Concatenates a variable number of C strings,
+ * which represent file system parts (eg. dirs or files)
+ * into newly allocated memory.
+ * The number of parts to concatenate has to be supplied as first argument.
+ */
+char* util_allocStrCatFSPath(int numParts, const char* first, ...);
+
+bool util_isWhiteSpace(char c);
+
+void util_strLeftTrim(char* toTrim);
+void util_strRightTrim(char* toTrim);
+void util_strTrim(char* toTrim);
+char* util_allocStrTrimed(const char* toTrim);
+
+void util_strReplaceChar(char* toChange, char toFind, char replacer);
+char* util_allocStrReplaceStr(const char* toChange, const char* toFind,
+		const char* replacer);
 
 bool util_endsWith(const char* str, const char* suffix);
+
+bool util_strToBool(const char* str);
 
 // suffix example: ".jar"
 unsigned int util_listFiles(const char* dir, const char* suffix,
@@ -103,12 +135,15 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 		const char* relativeDirPath, char* absoluteDirPath,
 		bool searchOnlyWriteable, bool create);
 
+int util_parsePropertiesFile(const char* propertiesFile,
+		const char* keys[], const char* values[], int maxProperties);
+
 /**
  * Return NULL if the key was not found.
  */
 const char* util_map_getValueByKey(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
+		unsigned int mapSize,
+		const char** mapKeys, const char** mapValues,
 		const char* key);
 
 #ifdef	__cplusplus
