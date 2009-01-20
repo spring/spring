@@ -40,9 +40,9 @@ const int MAX_TEAMS = 17;
 /**
  * @brief max players
  *
- * Defines the maximum number of players as 32
+ * This is the hard limit, which is currently limited by the size of the playerID field in the network, which is 1 byte (=> 255)
  */
-const int MAX_PLAYERS = 32;
+const int MAX_PLAYERS = 251;
 
 /**
  * @brief max units

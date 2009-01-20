@@ -30,24 +30,24 @@ public:
 	@throw network_error When an eror occurs
 	*/
 	Socket(const SocketType);
-	
+
 	/**
 	@brief Close Socket, uninitialise winsock
 	*/
 	~Socket();
-	
+
 	/// Set the blocking state of the socket
 	void SetBlocking(const bool block) const;
-	
+
 	/**
 	@brief wait for incoming data
 	@param timeout if there is no data to read, this call blocks for x miliseconds
 	@return Wheter there is any data to read
 	**/
 	bool HasIncomingData(int timeout) const;
-	
+
 	void Bind(unsigned short port /** in host byte order */) const;
-	
+
 	/**
 	@brief Resolves a host
 	@param address The host's address, can be an IP-Address or an Hostname
@@ -55,20 +55,20 @@ public:
 	@return the address-struct
 	*/
 	sockaddr_in ResolveHost(const std::string& address, const unsigned port) const;
-	
+
 protected:
 	/// return the last errormessage from the OS
 	std::string GetErrorMsg() const;
 	/// Check if last error is a real error (not EWOULDBLOCK etc.)
 	bool IsFakeError() const;
-	
+
 #ifdef _WIN32
 	SOCKET mySocket;
 
 	/**
 	@brief Counts the amount of active sockets on the system
-	
-	The only use is to know wheter winsock needs to be initialised (when its the first socket) or uninitialised (when its the last).
+
+	The only use is to know whether winsock needs to be initialised (when its the first socket) or uninitialised (when its the last).
 	*/
 	static unsigned numSockets;
 #else

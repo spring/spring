@@ -1,5 +1,58 @@
 Spring change log
 
+0.78.2.1:
+Bugfixes:
+ - fix for game refusing to speed up after a slowdown
+ - set MaxSpeed to 20 on (test)singleplayer
+ - fix insta-gameover vs. AIs
+ - fixed the server to run away from the local player on high gamespeeds
+
+
+0.78.2:
+General bugfixes:
+ - fix crash on gamestart with lots of players
+ - should fix most of the desyncs
+
+Engine:
+ - fix startscript not written in demo header
+ - units trying to stay in LOS of a target account for mip levels
+ - fix the no-commander-for-side-Arm problem for local games not based on TA content
+ - cob: made modelpiece mapping case-insensitive
+ - initialize relPos in EmitSfx
+ - fix for a fix in GetEmitDirPos
+ - fix aircraft not flying back to repair pads when all are reserved
+ - planes that are being refuelled aren't able to fire anymore
+ - clamp map position in unitLoader.
+ - players who didn't choose a start position start in their ally box
+ - fixed short command line params on windows (mantis #1271)
+ - don't try to kill dead teams
+ - add gamemode 3 (no game over) and make it the default in non-AI non-script.txt games
+ - removed luabind + lua-startscripts
+ - fixed multithreaded pathing
+ - removed partial match test for piece mapping
+ - fixed emitsfx crash (Mantis: #1252,#1238 & #1242)
+ - stunned planes shouldn't keep repair pads reserved
+ - always apply a miniscule amount of impulse when a unit is damaged
+
+User Interface:
+ - fixed AltTab bug on gpus w/o FBO support
+ - EndGameBox shouldn't render stats if the game hasn't started
+ - changed minimap_startbox.lua to not show cones in top left (#1272)
+ - StartPosSelector now unloads itself when game is started without sending start positions.
+ - fixed refraction=2, disabled endless ocean for maps that don't show any water at the start of the game
+ - fix #1258 (FBO crash on exit with non-FBO gpus)
+
+Lua:
+ - gl.Texture() can now load the textures of s3o features, syntax is gl.Texture('%'..(Game.maxUnits+featureDefID)..(':0' or ':1'))
+ - added a new (unsynced) callout Spring.SetWaterParams, it needs cheating enabled and allows you to edit the mapwater settings ingame
+ - fix Luamsg if null-characters where inside
+ - add an GetUnitTransformMatrix unsynced callout (handy for shadow algs)
+
+Installer:
+ - add RAI to installer
+ - allow the user to close TASClient / downloader during install
+
+
 0.78.1.1:
  - fix Features (wrecks, rocks) not beeing drawn with reflective units
 

@@ -1342,7 +1342,7 @@ bool CAICallback::GetValue(int id, void *data)
 			*(bool*)data = gu->drawdebug;
 			return true;
 		}case AIVAL_GAME_MODE:{
-			*(int*)data = gs->gameMode;
+			*(int*)data = gameSetup->gameMode;
 			return true;
 		}case AIVAL_GAME_PAUSED:{
 			*(bool*)data = gs->paused;

@@ -148,3 +148,14 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	}
 }
 
+void CTeamHandler::GameFrame(int frameNum)
+{
+	if (!(frameNum & 31)) {
+		for (int a = 0; a < ActiveTeams(); ++a) {
+			Team(a)->ResetFrameVariables();
+		}
+		for (int a = 0; a < ActiveTeams(); ++a) {
+			Team(a)->SlowUpdate();
+		}
+	}
+}

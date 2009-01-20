@@ -71,7 +71,7 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 			char c[120];
 			sprintf(c, "Error: starting unit %s not found\n", cfg->START_UNITS[i]);
 			cb->SendTextMsg(c,0);
-			fprintf(ai->file, c);
+			fprintf(ai->file, "%s", c);
 		}
 
 		sideNames[i+1].assign(cfg->SIDE_NAMES[i]);

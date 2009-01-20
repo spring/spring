@@ -52,13 +52,13 @@ LIST(APPEND spring_libraries  ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THRE
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
-LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop luabind)
+LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop)
 if (USE_GML)
 	list (APPEND spring_libraries gml)
 endif (USE_GML)
 
 ### include directories needed for compiling spring
-INCLUDE_DIRECTORIES(BEFORE lib/lua/include lib/luabind)
+INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
 
 ### all spring source directories
 ### each directorie which contains source has to be here

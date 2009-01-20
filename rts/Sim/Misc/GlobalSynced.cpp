@@ -39,7 +39,6 @@ CR_REG_METADATA(CGlobalSyncedStuff, (
 	CR_MEMBER(editDefsEnabled),
 	CR_MEMBER(useLuaRules),
 	CR_MEMBER(useLuaGaia),
-	CR_MEMBER(gameMode),
 	CR_MEMBER(activeTeamsBackwardCompatForLuaBinder),
 	CR_RESERVED(64)
 ));
@@ -64,7 +63,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	noHelperAIs = false;
 	editDefsEnabled = false;
 	tempNum = 2;
-	gameMode = 0;
 	useLuaGaia = true;
 	useLuaRules = true;
 
@@ -84,7 +82,6 @@ CGlobalSyncedStuff::~CGlobalSyncedStuff()
 
 void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 {
-	gameMode = setup->gameMode;
 	noHelperAIs = !!setup->noHelperAIs;
 
 	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);

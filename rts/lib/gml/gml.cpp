@@ -947,6 +947,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER1R(IsTexture)
 		GML_MAKEHANDLER5(FramebufferTexture1DEXT)
 		GML_MAKEHANDLER6(FramebufferTexture3DEXT)
+		GML_MAKEHANDLER1(ClientActiveTexture)
 	}
 }
 

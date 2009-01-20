@@ -1110,7 +1110,7 @@ int CLuaHandleSynced::AddSyncedActionFallback(lua_State* L)
 		luaL_error(L, "Incorrect arguments to AddActionFallback()");
 	}
 	string cmdRaw  = lua_tostring(L, 1);
-	cmdRaw = "." + cmdRaw;
+	cmdRaw = "/" + cmdRaw;
 
 	string cmd = cmdRaw;
 	const string::size_type pos = cmdRaw.find_first_of(" \t");
@@ -1138,7 +1138,7 @@ int CLuaHandleSynced::RemoveSyncedActionFallback(lua_State* L)
 		luaL_error(L, "Incorrect arguments to RemoveActionFallback()");
 	}
 	string cmdRaw  = lua_tostring(L, 1);
-	cmdRaw = "." + cmdRaw;
+	cmdRaw = "/" + cmdRaw;
 
 	string cmd = cmdRaw;
 	const string::size_type pos = cmdRaw.find_first_of(" \t");

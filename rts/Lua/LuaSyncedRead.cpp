@@ -460,7 +460,7 @@ static inline CPlayer* ParsePlayer(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Bad playerID type in %s()\n", caller);
 	}
 	const int playerID = lua_toint(L, index);
-	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+	if ((playerID < 0) || (playerID >= playerHandler->TotalPlayers())) {
 		luaL_error(L, "Bad playerID in %s\n", caller);
 	}
 	CPlayer* player = playerHandler->Player(playerID);
@@ -1219,7 +1219,7 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 {
 	const int playerID = luaL_checkint(L, 1);
-	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+	if ((playerID < 0) || (playerID >= playerHandler->TotalPlayers())) {
 		return 0;
 	}
 
@@ -1255,7 +1255,7 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 	return 0;
 #else
 	const int playerID = luaL_checkint(L, 1);
-	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+	if ((playerID < 0) || (playerID >= playerHandler->TotalPlayers())) {
 		return 0;
 	}
 
@@ -1297,8 +1297,8 @@ int LuaSyncedRead::ArePlayersAllied(lua_State* L)
 {
 	const int player1 = luaL_checkint(L, -1);
 	const int player2 = luaL_checkint(L, -2);
-	if ((player1 < 0) || (player1 >= MAX_PLAYERS) ||
-	    (player2 < 0) || (player2 >= MAX_PLAYERS)) {
+	if ((player1 < 0) || (player1 >= playerHandler->TotalPlayers()) ||
+	    (player2 < 0) || (player2 >= playerHandler->TotalPlayers())) {
 		return 0;
 	}
 	const CPlayer* p1 = playerHandler->Player(player1);

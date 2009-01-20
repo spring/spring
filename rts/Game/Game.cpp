@@ -292,7 +292,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	consoleHistory = new CConsoleHistory;
 	wordCompletion = new CWordCompletion;
-	for (int pp = 0; pp < MAX_PLAYERS; pp++) {
+	for (int pp = 0; pp < playerHandler->TotalPlayers(); pp++) {
 	  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 	}
 
@@ -319,9 +319,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	tooltip = new CTooltipConsole();
 	iconHandler = new CIconHandler();
 
-	selectedUnits.Init();
+	selectedUnits.Init(playerHandler->TotalPlayers());
 
-	helper = new CGameHelper(this);
+	helper = new CGameHelper();
 
 	modInfo.Init(modName.c_str());
 
@@ -626,7 +626,7 @@ void CGame::ResizeEvent()
 int CGame::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (!gameOver && !isRepeat) {
-		playerHandler->Player(gu->myPlayerNum)->currentStats->keyPresses++;
+		playerHandler->Player(gu->myPlayerNum)->currentStats.keyPresses++;
 	}
 
 	if (!hotBinding.empty()) {
@@ -963,21 +963,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "echo") {
 		logOutput.Print(action.extra);
 	}
-	else if (cmd == "setf") {
-		const std::string::size_type pos = action.extra.find_first_of(" ");
-		if (pos != std::string::npos) {
-			const std::string varName = action.extra.substr(0, pos);
-			configHandler.Set(varName, atof(action.extra.substr(pos+1).c_str()));
-		}
-	}
-	else if (cmd == "seti") {
-		const std::string::size_type pos = action.extra.find_first_of(" ");
-		if (pos != std::string::npos) {
-			const std::string varName = action.extra.substr(0, pos);
-			configHandler.Set(varName, atoi(action.extra.substr(pos+1).c_str()));
-		}
-	}
-	else if (cmd == "sets") {
+	else if (cmd == "set" || cmd == "sets" || cmd == "seti" || cmd == "setf") { // the set[s|i|f] should be removed sometimes
 		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.extra.substr(0, pos);
@@ -1517,7 +1503,7 @@ bool CGame::ActionPressed(const Action& action,
 		else {
 			// Check if there are more active players on his team.
 			bool onlyActive = true;
-			for (int a = 0;a < MAX_PLAYERS; ++a) {
+			for (int a = 0; a < playerHandler->TotalPlayers(); ++a) {
 				if (a != gu->myPlayerNum) {
 					if (playerHandler->Player(a)->active) {
 						onlyActive = false;
@@ -2919,7 +2905,7 @@ bool CGame::Draw() {
 		char buf[128];
 		const float fontScale = 1.0f;
 		int count;
-		const int* indices = playerRoster.GetIndices(&count);
+		const std::vector<int>& indices = playerRoster.GetIndices(&count);
 
 		for (int a = 0; a < count; ++a) {
 			const CPlayer* p = playerHandler->Player(indices[a]);
@@ -3153,67 +3139,10 @@ void CGame::SimFrame() {
 	wind.Update();
 	loshandler->Update();
 
-	if (!(gs->frameNum & 31)) {
-		// TODO: move to CTeamHandler
-		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-			teamHandler->Team(a)->ResetFrameVariables();
-		}
-		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
-			teamHandler->Team(a)->SlowUpdate();
-		}
-	}
+	teamHandler->GameFrame(gs->frameNum);
+	playerHandler->GameFrame(gs->frameNum);
 
 	lastUpdate = SDL_GetTicks();
-
-#ifdef DIRECT_CONTROL_ALLOWED
-	for(int a=0;a<playerHandler->ActivePlayers();++a){
-		if(!playerHandler->Player(a)->active || !playerHandler->Player(a)->playerControlledUnit)
-			continue;
-
-		CUnit* unit=playerHandler->Player(a)->playerControlledUnit;
-		DirectControlStruct* dc=&playerHandler->Player(a)->myControl;
-
-		std::vector<int> args;
-		args.push_back(0);
-		unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-		float3 relPos=unit->cob->GetPiecePos(args[0]);
-		float3 pos=unit->pos+unit->frontdir*relPos.z+unit->updir*relPos.y+unit->rightdir*relPos.x;
-		pos+=UpVector*7;
-
-		CUnit* hit;
-		float dist=helper->TraceRayTeam(pos,dc->viewDir,unit->maxRange,hit,1,unit,teamHandler->AllyTeam(playerHandler->Player(a)->team));
-		dc->target=hit;
-
-		if(hit){
-			dc->targetDist=dist;
-			dc->targetPos=hit->pos;
-			if(!dc->mouse2){
-				unit->AttackUnit(hit,true);
-				/*					for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
-				if((*wi)->targetType!=Target_Unit || (*wi)->targetUnit!=hit)
-				(*wi)->AttackUnit(hit,true);
-				*/
-			}
-		} else {
-			if(dist>unit->maxRange*0.95f)
-				dist=unit->maxRange*0.95f;
-
-			dc->targetDist=dist;
-			dc->targetPos=pos+dc->viewDir*dc->targetDist;
-
-			if(!dc->mouse2){
-				unit->AttackGround(dc->targetPos,true);
-				for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi){
-					float d=dc->targetDist;
-					if(d>(*wi)->range*0.95f)
-						d=(*wi)->range*0.95f;
-					float3 p=pos+dc->viewDir*d;
-					(*wi)->AttackGround(p,true);
-				}
-			}
-		}
-	}
-#endif
 }
 
 
@@ -3272,7 +3201,7 @@ void CGame::ClientReadNet()
 	{
 		// make sure ClientReadNet returns at least every 15 game frames
 		// so CGame can process keyboard input, and render etc.
-		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES;
+		timeLeft = (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor;
 	}
 
 	// really process the messages
@@ -3297,7 +3226,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERLEFT: {
 				int player = inbuf[1];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player num (%i) in NETMSG_PLAYERLEFT", player);
 				} else {
 					playerHandler->PlayerLeft(player, inbuf[2]);
@@ -3343,22 +3272,22 @@ void CGame::ClientReadNet()
 				logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
-				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, *playerHandler->Player(gu->myPlayerNum)->currentStats));
+				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
 
 			case NETMSG_PLAYERSTAT: {
 				int player=inbuf[1];
-				if(player>=MAX_PLAYERS || player<0){
+				if(player >= playerHandler->TotalPlayers() || player<0){
 					logOutput.Print("Got invalid player num %i in playerstat msg",player);
 					break;
 				}
-				*playerHandler->Player(player)->currentStats = *(CPlayer::Statistics*)&inbuf[2];
+				playerHandler->Player(player)->currentStats = *(CPlayer::Statistics*)&inbuf[2];
 				if (gameOver) {
 					CDemoRecorder* record = net->GetDemoRecorder();
 					if (record != NULL) {
-						record->SetPlayerStats(player, *playerHandler->Player(player)->currentStats);
+						record->SetPlayerStats(player, playerHandler->Player(player)->currentStats);
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
@@ -3367,7 +3296,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PAUSE: {
 				int player=inbuf[1];
-				if(player>=MAX_PLAYERS || player<0){
+				if(player>=playerHandler->TotalPlayers() || player<0){
 					logOutput.Print("Got invalid player num %i in pause msg",player);
 				}
 				else if (!skipping) {
@@ -3409,7 +3338,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_PLAYERINFO: {
 				int player = inbuf[1];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 				} else {
 					playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
@@ -3494,9 +3423,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
-#ifndef SYNCCHECK
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum-1));
-#endif
 				if (gs->frameNum == (serverframenum - 1)) {
 					// everything ok, fall through
 				} else {
@@ -3525,7 +3452,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_COMMAND: {
 				int player = inbuf[3];
-				if ((player >= MAX_PLAYERS) || (player < 0)) {
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)) {
 					logOutput.Print("Got invalid player num %i in command msg",player);
 				} else {
 					Command c;
@@ -3542,7 +3469,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_SELECT: {
 				int player=inbuf[3];
-				if ((player >= MAX_PLAYERS) || (player < 0)) {
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)) {
 					logOutput.Print("Got invalid player num %i in netselect msg",player);
 				} else {
 					vector<int> selected;
@@ -3566,7 +3493,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_AICOMMAND: {
 				const int player = inbuf[3];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player number (%i) in NETMSG_AICOMMAND", player);
 					break;
 				}
@@ -3593,7 +3520,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_AICOMMANDS: {
 				const int player = inbuf[3];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player number (%i) in NETMSG_AICOMMANDS", player);
 					break;
 				}
@@ -3637,7 +3564,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_AISHARE: {
 				const int player = inbuf[3];
-				if (player >= MAX_PLAYERS || player < 0) {
+				if (player >= playerHandler->TotalPlayers() || player < 0) {
 					logOutput.Print("Got invalid player number (%i) in NETMSG_AISHARE", player);
 					break;
 				}
@@ -3679,7 +3606,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_LUAMSG: {
 				const int player = inbuf[3];
-				if ((player < 0) || (player >= MAX_PLAYERS)) {
+				if ((player < 0) || (player >= playerHandler->TotalPlayers())) {
 					logOutput.Print("Got invalid player num %i in LuaMsg", player);
 				}
 				const int script = *reinterpret_cast<const unsigned short*>(inbuf+4);
@@ -3704,7 +3631,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_SHARE: {
 				int player = inbuf[1];
-				if ((player >= MAX_PLAYERS) || (player < 0)){
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)){
 					logOutput.Print("Got invalid player num %i in share msg",player);
 					break;
 				}
@@ -3775,7 +3702,7 @@ void CGame::ClientReadNet()
 				const int fromTeam = playerHandler->Player(player)->team;
 
 				unsigned numPlayersInTeam = 0;
-				for (int a = 0; a < MAX_PLAYERS; ++a) {
+				for (int a = 0; a < playerHandler->TotalPlayers(); ++a) {
 					if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == fromTeam)) {
 						++numPlayersInTeam;
 					}
@@ -3840,22 +3767,42 @@ void CGame::ClientReadNet()
 				const int player = inbuf[1];
 				const int whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
+				const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
 				if (whichAllyTeam < MAX_TEAMS && whichAllyTeam >= 0) {
-					const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
 					// FIXME - need to reset unit allyTeams
 					//       - need to reset unit texture for 3do
 					//       - need a call-in for AIs
 					teamHandler->SetAlly(fromAllyTeam, whichAllyTeam, allied);
-					if (fromAllyTeam == gu->myAllyTeam)
-					{
-						std::ostringstream msg;
-						msg << "You have " << (allied ? " allied " : " unallied ") << " allyteam " << whichAllyTeam;
-						logOutput.Print(msg.str());
+
+					// inform the players
+					std::ostringstream msg;
+					if (fromAllyTeam == gu->myAllyTeam) {
+						msg << "Alliance: you have " << (allied ? "allied" : "unallied")
+							<< " allyteam " << whichAllyTeam << ".";
+					} else if (whichAllyTeam == gu->myAllyTeam) {
+						msg << "Alliance: allyteam " << whichAllyTeam << " has "
+							<< (allied ? "allied" : "unallied") <<  " with you.";
+					} else {
+						msg << "Alliance: allyteam " << whichAllyTeam << " has "
+							<< (allied ? "allied" : "unallied")
+							<<  " with allyteam " << fromAllyTeam << ".";
 					}
+					logOutput.Print(msg.str());
+
+					// stop attacks against former foe
+					if (allied) {
+						for (std::list<CUnit*>::iterator it = uh->activeUnits.begin();
+								it != uh->activeUnits.end();
+								++it) {
+							if (teamHandler->Ally((*it)->allyteam, whichAllyTeam)) {
+								(*it)->StopAttackingAllyTeam(whichAllyTeam);
+							}
+						}
+					}
+					eventHandler.TeamChanged(playerHandler->Player(player)->team);
 				} else {
-					logOutput.Print("Player %i sent out wrong allyTeam index in alliance message", player);
+					logOutput.Print("Alliance: Player %i sent out wrong allyTeam index in alliance message", player);
 				}
-				eventHandler.TeamChanged(playerHandler->Player(player)->team);
 				break;
 			}
 			case NETMSG_CCOMMAND: {
@@ -3868,7 +3815,7 @@ void CGame::ClientReadNet()
 			case NETMSG_DIRECT_CONTROL: {
 				int player = inbuf[1];
 
-				if ((player >= MAX_PLAYERS) || (player < 0)) {
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)) {
 					logOutput.Print("Got invalid player num %i in direct control msg",player);
 					break;
 				}
@@ -3915,7 +3862,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_DC_UPDATE: {
 				int player = inbuf[1];
-				if ((player >= MAX_PLAYERS) || (player < 0)){
+				if ((player >= playerHandler->TotalPlayers()) || (player < 0)){
 					logOutput.Print("Got invalid player num %i in dc update msg",player);
 					break;
 				}
@@ -4365,9 +4312,7 @@ void CGame::GameEnd()
 	CDemoRecorder* record = net->GetDemoRecorder();
 	if (record != NULL) {
 		// Write CPlayer::Statistics and CTeam::Statistics to demo
-		int numPlayers;
-		// FIXME: ugh, there should be a better way to figure out number of players ...
-		numPlayers = gameSetup->numPlayers;
+		const int numPlayers = gameSetup->numPlayers;
 
 		// TODO: move this to a method in CTeamHandler
 		// Figure out who won the game.
@@ -4386,7 +4331,7 @@ void CGame::GameEnd()
 		record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
 		record->InitializeStats(numPlayers, numTeams, winner);
 		for (int i = 0; i < numPlayers; ++i) {
-			record->SetPlayerStats(i, *playerHandler->Player(i)->currentStats);
+			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
 		}
 		for (int i = 0; i < numTeams; ++i) {
 			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
@@ -4425,7 +4370,7 @@ void CGame::SendNetChat(std::string message, int destination)
 void CGame::HandleChatMsg(const ChatMessage& msg)
 {
 	if ((msg.fromPlayer < 0) ||
-		((msg.fromPlayer >= MAX_PLAYERS) && (msg.fromPlayer != SERVER_PLAYER))) {
+		((msg.fromPlayer >= playerHandler->TotalPlayers()) && (msg.fromPlayer != SERVER_PLAYER))) {
 		return;
 	}
 
@@ -4750,7 +4695,7 @@ void CGame::ReColorTeams()
 	luaParser.AddString("mapName",      mapInfo->map.name);
 	luaParser.AddString("mapHumanName", mapInfo->map.humanName);
 
-	luaParser.AddInt("gameMode", gs->gameMode);
+	luaParser.AddInt("gameMode", gameSetup->gameMode);
 
 	luaParser.GetTable("teams");
 	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {

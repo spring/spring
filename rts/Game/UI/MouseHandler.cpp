@@ -181,7 +181,7 @@ void CMouseHandler::MouseMove(int x, int y)
 	buttons[SDL_BUTTON_RIGHT].movement += abs(dx) + abs(dy);
 
 	if (!game->gameOver) {
-		playerHandler->Player(gu->myPlayerNum)->currentStats->mousePixels+=abs(dx)+abs(dy);
+		playerHandler->Player(gu->myPlayerNum)->currentStats.mousePixels+=abs(dx)+abs(dy);
 	}
 
 	if(activeReceiver){
@@ -210,7 +210,7 @@ void CMouseHandler::MousePress(int x, int y, int button)
 	dir = hide? camera->forward: camera->CalcPixelDir(x, y);
 
 	if (!game->gameOver)
-		playerHandler->Player(gu->myPlayerNum)->currentStats->mouseClicks++;
+		playerHandler->Player(gu->myPlayerNum)->currentStats.mouseClicks++;
 
 	if (button == 4) {
 		if (guihandler->buildSpacing > 0)

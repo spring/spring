@@ -9,6 +9,7 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
+#include "Lua/LuaUnsyncedCtrl.h"
 
 #include "mmgr.h"
 
@@ -27,7 +28,6 @@ using namespace std;
 #include "Lua/LuaConstGame.h"
 #include "Lua/LuaSyncedRead.h"
 #include "Lua/LuaUnsyncedCall.h"
-#include "Lua/LuaUnsyncedCtrl.h"
 #include "Lua/LuaUnsyncedRead.h"
 #include "Lua/LuaFeatureDefs.h"
 #include "Lua/LuaUnitDefs.h"
@@ -477,6 +477,9 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 
 bool CLuaUI::HasLayoutButtons()
 {
+	GML_RECMUTEX_LOCK(lua); // HasLayoutButtons
+	lua_checkstack(L, 2);
+
 	static const LuaHashString cmdStr("LayoutButtons");
 	if (!cmdStr.GetGlobalFunc(L)) {
 		return false; // the call is not defined

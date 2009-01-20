@@ -1,4 +1,4 @@
-INCLUDE_DIRECTORIES(BEFORE streflop lua/include luabind ${CMAKE_SOURCE_DIR}/rts/System)
+INCLUDE_DIRECTORIES(BEFORE streflop lua/include ${CMAKE_SOURCE_DIR}/rts/System)
 
 ADD_DEFINITIONS(${PIC_FLAG}) # all libraries need to be position independent (gives compiler warnings on 64bit-linux)
 
@@ -8,10 +8,6 @@ TARGET_LINK_LIBRARIES(lua streflop)
 if (UNIX)
 	SET_TARGET_PROPERTIES(lua PROPERTIES COMPILE_FLAGS -DLUA_USE_MKSTEMP)
 endif (UNIX)
-
-AUX_SOURCE_DIRECTORY(luabind/src luabindfiles)
-ADD_LIBRARY(luabind STATIC EXCLUDE_FROM_ALL ${luabindfiles})
-TARGET_LINK_LIBRARIES(luabind lua)
 
 ADD_DEFINITIONS(-D_SZ_ONE_DIRECTORY)
 AUX_SOURCE_DIRECTORY(7zip 7zipfiles)

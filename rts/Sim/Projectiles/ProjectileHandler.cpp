@@ -447,15 +447,19 @@ void CProjectileHandler::Update()
 
 	for (list<FlyingPiece_List*>::iterator pti = flyingPieces.begin(); pti != flyingPieces.end(); ++pti) {
 		FlyingPiece_List* fpl = *pti;
-		/* Note: nothing in the third clause of this loop. TODO Rewrite it as a while */
-		for (list<FlyingPiece*>::iterator pi = fpl->begin(); pi != fpl->end(); ) {
-			(*pi)->pos += (*pi)->speed;
-			(*pi)->speed *= 0.996f;
-			(*pi)->speed.y += mapInfo->map.gravity;
-			(*pi)->rot += (*pi)->rotSpeed;
+		FlyingPiece_List::iterator pi = fpl->begin();
+		while ( pi != fpl->end() ) {
+			FlyingPiece* p = *pi;
+			p->pos     += p->speed;
+			p->speed   *= 0.996f;
+			p->speed.y += mapInfo->map.gravity;
+			p->rot     += p->rotSpeed;
 
-			if ((*pi)->pos.y<ground->GetApproximateHeight((*pi)->pos.x, (*pi)->pos.z) - 10) {
-				delete *pi;
+			if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10)) {
+				if (p->verts != NULL){
+					delete[] p->verts;
+				}
+				delete p;
 				pi = fpl->erase(pi);
 			} else {
 				++pi;

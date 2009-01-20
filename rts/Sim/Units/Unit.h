@@ -147,6 +147,7 @@ public:
 		ChangeCaptured
 	};
 	virtual bool ChangeTeam(int team, ChangeType type);
+	virtual void StopAttackingAllyTeam(int ally);
 
 	// should not be here
 	void DrawS3O();
