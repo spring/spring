@@ -251,6 +251,21 @@ def generate(env):
 			print "profiling NOT enabled,",
 
 		# debug?
+		gcc_warnings = [
+				'-Wchar-subscripts',
+				'-Wformat=2',
+				'-Winit-self',
+				'-Wimplicit',
+				'-Wmissing-braces',
+				'-Wparentheses',
+				'-Wsequence-point',
+				'-Wreturn-type',
+				'-Wswitch',
+				'-Wtrigraphs',
+				'-Wunused',
+				'-Wuninitialized',
+				'-Wunknown-pragmas'
+			]
 		if args.has_key('debug'):
 			level = args['debug']
 			if level == 'no' or level == 'false': level = '0'
@@ -274,21 +289,7 @@ def generate(env):
 			# We can't enable -Wall because that silently enables an order of
 			# initialization warning for initializers in constructors that
 			# can not be disabled. (and it takes days to fix them all in code)
-			env.AppendUnique(CCFLAGS=[
-				'-Wchar-subscripts',
-				'-Wformat=2',
-				'-Winit-self',
-				'-Wimplicit',
-				'-Wmissing-braces',
-				'-Wparentheses',
-				'-Wsequence-point',
-				'-Wreturn-type',
-				'-Wswitch',
-				'-Wtrigraphs',
-				'-Wunused',
-				'-Wuninitialized',
-				'-Wunknown-pragmas'
-			])
+			env.AppendUnique(CFLAGS=gcc_warnings, CCFLAGS=gcc_warnings)
 			if not args.has_key('debugdefines') or not args['debugdefines']:
 				env.AppendUnique(CPPDEFINES=['DEBUG', '_DEBUG', 'NO_CATCH_EXCEPTIONS'])
 			else:
@@ -296,6 +297,12 @@ def generate(env):
 		else:
 			print "\ninvalid debug option, must be one of: yes, true, no, false, 0, 1, 2, 3."
 			env.Exit(1)
+
+		if args.has_key('debugdefines') and args['debugdefines']:
+			env.AppendUnique(CPPDEFINES=
+					['DEBUG', '_DEBUG',
+						'NO_CATCH_EXCEPTIONS'],
+					CFLAGS=gcc_warnings, CCFLAGS=gcc_warnings)
 
 		# optimize?
 		if args.has_key('optimize'):

@@ -2282,6 +2282,15 @@ void CUnit::LogMessage(const char *fmt, ...)
 }
 
 
+void CUnit::StopAttackingAllyTeam(int ally)
+{
+	commandAI->StopAttackingAllyTeam(ally);
+	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
+		(*it)->StopAttackingAllyTeam(ally);
+	}
+}
+
+
 // Member bindings
 CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),

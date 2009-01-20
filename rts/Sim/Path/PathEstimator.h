@@ -1,6 +1,7 @@
 #ifndef PATHESTIMATOR_H
 #define PATHESTIMATOR_H
 
+#include "lib/gml/gmlcnt.h"
 #include "IPath.h"
 #include "PathFinder.h"
 #include "float3.h"
@@ -12,6 +13,7 @@
 #include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/barrier.hpp>
 using boost::uint32_t;
 
 class CPathEstimatorDef;
@@ -99,15 +101,11 @@ class CPathEstimator: public IPath {
 
 	private:
 		void InitEstimator(const std::string&);
-		void InitVerticesAndBlocks(int, int, int, int);
-		void InitVertices(int, int);
-		void InitBlocks(int, int);
-		void CalcOffsetsAndPathCosts(int, int, int threadID = -1);
-		void CalculateBlockOffsets(int, int, int);
-		void EstimatePathCosts(int, int, int);
-
-		void SpawnThreads(int, int);
-		void JoinThreads(int, int);
+		void InitVertices();
+		void InitBlocks();
+		void CalcOffsetsAndPathCosts(int thread);
+		void CalculateBlockOffsets(int, int);
+		void EstimatePathCosts(int, int);
 
 		boost::mutex loadMsgMutex;
 		std::vector<CPathFinder*> pathFinders;
@@ -152,8 +150,8 @@ class CPathEstimator: public IPath {
 
 
 		void FindOffset(const MoveData&, int, int);
-		void CalculateVertices(const MoveData&, int, int, int threadID = -1);
-		void CalculateVertex(const MoveData&, int, int, unsigned int, int threadID = -1);
+		void CalculateVertices(const MoveData&, int, int, int thread = 0);
+		void CalculateVertex(const MoveData&, int, int, unsigned int, int thread = 0);
 
 		SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& peDef);
 		SearchResult StartSearch(const MoveData& moveData, const CPathFinderDef& peDef);
@@ -197,6 +195,12 @@ class CPathEstimator: public IPath {
 		CPathCache* pathCache;
 
 		uint32_t pathChecksum; ///< currently crc from the zip
+
+		boost::barrier *pathBarrier;
+
+		gmlCount offsetBlockNum, costBlockNum;
+
+		int lastOffsetMessage, lastCostMessage;
 };
 
 #endif

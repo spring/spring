@@ -14,14 +14,13 @@ class CBFGroundTextures;
 /**
 Map drawer implementation for the CSmfReadMap map system.
 */
-class CBFGroundDrawer :
-	public CBaseGroundDrawer
+class CBFGroundDrawer : public CBaseGroundDrawer
 {
 public:
 	CBFGroundDrawer(CSmfReadMap* rm);
 	~CBFGroundDrawer(void);
 
-	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false, unsigned int overrideVP = 0);
+	void Draw(bool drawWaterReflection = false, bool drawUnitReflection = false, unsigned int VP = 0);
 	void DrawShadowPass();
 	void Update();
 
@@ -57,11 +56,11 @@ protected:
 	unsigned int groundVP;
 	unsigned int groundShadowVP;
 	unsigned int groundFPShadow;
+	unsigned int overrideVP;
 	bool waterDrawn;
 
 #ifdef USE_GML
-	volatile unsigned int mt_overrideVP;
-	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty,((CBFGroundDrawer *)c)->mt_overrideVP);}
+	static void DoDrawGroundRowMT(void *c,int bty) {((CBFGroundDrawer *)c)->DoDrawGroundRow(bty);}
 	static void DoDrawGroundShadowLODMT(void *c,int nlod) {((CBFGroundDrawer *)c)->DoDrawGroundShadowLOD(nlod);}
 #endif
 
@@ -70,10 +69,10 @@ protected:
 
 protected:
 	void CreateWaterPlanes(const bool &camOufOfMap);
-	inline void DrawWaterPlane(bool);
+	inline void DrawWaterPlane(bool drawWaterReflection);
 
 	void FindRange(int &xs, int &xe, std::vector<fline> &left, std::vector<fline> &right, int y, int lod);
-	void DoDrawGroundRow(int bty, unsigned int overrideVP);
+	void DoDrawGroundRow(int bty);
 	void DrawVertexAQ(CVertexArray *ma, int x, int y);
 	void DrawVertexAQ(CVertexArray *ma, int x, int y, float height);
 	void EndStripQ(CVertexArray *ma);
@@ -81,8 +80,9 @@ protected:
 	void DoDrawGroundShadowLOD(int nlod);
 
 	inline bool BigTexSquareRowVisible(int);
-	void SetupTextureUnits(bool drawReflection, unsigned int overrideVP);
-	void ResetTextureUnits(bool drawReflection, unsigned int overrideVP);
+	inline void SetupBigSquare(const int bigSquareX, const int bigSquareY);
+	void SetupTextureUnits(bool drawReflection);
+	void ResetTextureUnits(bool drawReflection);
 
 	void AddFrustumRestraint(const float3& side);
 	void UpdateCamRestraints();

@@ -89,6 +89,8 @@ public:
 	int ActiveTeams() const { return activeTeams; }
 	int ActiveAllyTeams() const { return activeAllyTeams; }
 
+	void GameFrame(int frameNum);
+
 private:
 
 	/**

@@ -103,12 +103,14 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 
 
 Function .onInit
+!ifndef TEST_BUILD
   ; check if we need to exit some processes which may be using unitsync
   call CheckTASClientRunning
   call CheckSpringDownloaderRunning
   call CheckCADownloaderRunning
   call CheckSpringLobbyRunning
   call CheckSpringSettingsRunning
+!endif
 
   ;Push $0 ; Create variable $0
 

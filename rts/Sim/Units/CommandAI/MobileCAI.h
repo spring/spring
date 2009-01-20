@@ -31,8 +31,8 @@ public:
 	void ExecuteDGun(Command &c);
 	void ExecuteStop(Command &c);
 
-	void RefuelIfNeeded();
-	void LandRepairIfNeeded();
+	bool RefuelIfNeeded();
+	bool LandRepairIfNeeded();
 
 	virtual void Execute();
 	virtual void ExecuteGuard(Command &c);

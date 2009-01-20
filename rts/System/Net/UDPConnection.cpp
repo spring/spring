@@ -25,6 +25,7 @@ namespace netcode {
 
 
 const unsigned UDPConnection::hsize = 9;
+const unsigned UDPMaxPacketSize = 4096;
 
 UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr) : mySocket(NetSocket)
 {
@@ -88,9 +89,9 @@ void UDPConnection::Update()
 	if (!sharedSocket)
 	{
 		unsigned recv = 0;
-		unsigned char buffer[4096];
+		unsigned char buffer[UDPMaxPacketSize];
 		sockaddr_in fromAddr;
-		while ((recv = mySocket->RecvFrom(buffer, 4096, &fromAddr)) >= hsize)
+		while ((recv = mySocket->RecvFrom(buffer, UDPMaxPacketSize, &fromAddr)) >= hsize)
 		{
 			RawPacket* data = new RawPacket(buffer, recv);
 			if (CheckAddress(fromAddr))
@@ -168,31 +169,21 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	//process all in order packets that we have waiting
 	while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end())
 	{
-		unsigned char buf[32768];
-		unsigned bufLength = 0;
-
+		std::vector<uint8_t> buf;
 		if (fragmentBuffer)
 		{
+			buf.resize(fragmentBuffer->length);
 			// combine with fragment buffer
-			bufLength += fragmentBuffer->length;
-			assert(fragmentBuffer->length < 32768);
-			memcpy(buf, fragmentBuffer->data, bufLength);
+			std::copy(fragmentBuffer->data, fragmentBuffer->data+fragmentBuffer->length, buf.begin());
 			delete fragmentBuffer;
 			fragmentBuffer = NULL;
 		}
 
 		lastInOrder++;
-#if (BOOST_VERSION >= 103400)
-		assert((wpi->second->length + bufLength) < 32768);
-		memcpy(buf + bufLength, wpi->second->data, wpi->second->length);
-		bufLength += (wpi->second)->length;
-#else
-		memcpy(buf + bufLength, (*wpi).data, (*wpi).length);
-		bufLength += (*wpi).length;
-#endif
+		std::copy(wpi->second->data, wpi->second->data+wpi->second->length, std::back_inserter(buf));
 		waitingPackets.erase(wpi);
 
-		for (unsigned pos = 0; pos < bufLength;)
+		for (unsigned pos = 0; pos < buf.size();)
 		{
 			char msgid = buf[pos];
 			ProtocolDef* proto = ProtocolDef::instance();
@@ -208,7 +199,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 					int length_t = proto->GetLength(msgid);
 
 					// got enough data in the buffer to read the length of the message?
-					if (bufLength > pos - length_t)
+					if (buf.size() > pos - length_t)
 					{
 						// yes => read the length (as byte or word)
 						if (length_t == -1)
@@ -217,13 +208,13 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 						}
 						else if (length_t == -2)
 						{
-							msglength = *(short*)(buf+pos+1);
+							msglength = *(short*)(&buf[pos+1]);
 						}
 					}
 					else
 					{
 						// no => store the fragment and break
-						fragmentBuffer = new RawPacket(buf + pos, bufLength - pos);
+						fragmentBuffer = new RawPacket(&buf[pos], buf.size() - pos);
 						break;
 					}
 				}
@@ -232,16 +223,16 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 				assert(msglength != 0);
 
 				// got the complete message in the buffer?
-				if (bufLength >= pos + msglength)
+				if (buf.size() >= pos + msglength)
 				{
 					// yes => add to msgQueue and keep going
-					msgQueue.push_back(boost::shared_ptr<const RawPacket>(new RawPacket(buf + pos, msglength)));
+					msgQueue.push_back(boost::shared_ptr<const RawPacket>(new RawPacket(&buf[pos], msglength)));
 					pos += msglength;
 				}
 				else
 				{
 					// no => store the fragment and break
-					fragmentBuffer = new RawPacket(buf + pos, bufLength - pos);
+					fragmentBuffer = new RawPacket(&buf[pos], buf.size() - pos);
 					break;
 				}
 			}
@@ -266,7 +257,7 @@ void UDPConnection::Flush(const bool forced)
 	{
 		lastSendTime=SDL_GetTicks();
 
-		boost::uint8_t buffer[1500];
+		boost::uint8_t buffer[UDPMaxPacketSize];
 		unsigned pos = 0;
 		// Manually fragment packets to respect configured UDP_MTU.
 		// This is an attempt to fix the bug where players drop out of the game if
@@ -345,7 +336,7 @@ bool UDPConnection::CheckAddress(const sockaddr_in& from) const
 
 void UDPConnection::SetMTU(unsigned mtu2)
 {
-	if (mtu2 > 20 && mtu2 < 4096)
+	if (mtu2 > 20 && mtu2 < UDPMaxPacketSize)
 		mtu = mtu2;
 }
 
@@ -383,11 +374,7 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 	*(int*)tempbuf = packetNum;
 	*(int*)(tempbuf+4) = lastInOrder;
 	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
-#if (BOOST_VERSION >= 103400)
 		int nak = (waitingPackets.begin()->first - 1) - lastInOrder;
-#else
-		int nak = (waitingPackets.begin().key() - 1) - lastInOrder;
-#endif
 		assert(nak >= 0);
 		if (nak <= 255)
 			*(unsigned char*)(tempbuf+8) = (unsigned char)nak;

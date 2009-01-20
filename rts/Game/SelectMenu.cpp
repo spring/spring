@@ -27,43 +27,48 @@ using std::string;
 extern Uint8* keys;
 extern bool globalQuit;
 
-std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script, const std::string& playername)
+std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
+			const std::string& playername, int gameMode)
 {
 	TdfParser::TdfSection setup;
 	TdfParser::TdfSection* game = setup.construct_subsection("GAME");
 	game->add_name_value("Mapname", map);
 	game->add_name_value("Gametype", mod);
 	game->add_name_value("Scriptname", script);
-	
+
+	TdfParser::TdfSection* modopts = game->construct_subsection("MODOPTIONS");
+	modopts->AddPair("GameMode", gameMode);
+	modopts->AddPair("MaxSpeed", 20);
+
 	game->AddPair("IsHost", 1);
 	game->add_name_value("MyPlayerName", playername);
-	
+
 	game->AddPair("NoHelperAIs", configHandler.Get("NoHelperAIs", 0));
-	
+
 	TdfParser::TdfSection* player0 = game->construct_subsection("PLAYER0");
 	player0->add_name_value("Name", playername);
 	player0->AddPair("Team", 0);
-	
+
 	TdfParser::TdfSection* player1 = game->construct_subsection("PLAYER1");
 	player1->add_name_value("Name", "Enemy");
 	player1->AddPair("Team", 1);
-	
+
 	TdfParser::TdfSection* team0 = game->construct_subsection("TEAM0");
 	team0->AddPair("Leader", 0);
 	team0->AddPair("AllyTeam", 0);
-	
+
 	TdfParser::TdfSection* team1 = game->construct_subsection("TEAM1");
 	team1->AddPair("AllyTeam", 1);
-	
+
 	TdfParser::TdfSection* ally0 = game->construct_subsection("ALLYTEAM0");
 	ally0->AddPair("NumAllies", 0);
-	
+
 	TdfParser::TdfSection* ally1 = game->construct_subsection("ALLYTEAM1");
 	ally1->AddPair("NumAllies", 0);
-	
+
 	std::ostringstream str;
 	setup.print(str);
-	
+
 	return str.str();
 }
 
@@ -173,7 +178,7 @@ bool SelectMenu::Draw()
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 		font->glPrintAt(xStart, yStart, fontScale, tempstring.c_str());
 	}
-	
+
 	if (showList) {
 		showList->Draw();
 	}
@@ -268,9 +273,15 @@ void SelectMenu::SelectMap(const std::string& s)
 
 	delete showList;
 	showList = NULL;
-	
+
+	int gamemode = 3;
+	if (userScript.find("GlobalAI test") != std::string::npos)
+		gamemode = 0;
+	else
+		logOutput.Print("Testing mode enabled; game over disabled.\n");
+
 	pregame = new CPreGame(mySettings);
-	pregame->LoadSetupscript(CreateDefaultSetup(userMap, userMod, userScript, mySettings->myPlayerName));
+	pregame->LoadSetupscript(CreateDefaultSetup(userMap, userMod, userScript, mySettings->myPlayerName, gamemode));
 	delete this;
 }
 

@@ -229,6 +229,9 @@ void CEndGameBox::Draw()
 		font->glPrintAt(box.x1+0.25f,box.y1+0.65f,1,"You won the game");
 	}
 
+	if(gs->frameNum <= 0)
+		return;
+
 	if(dispMode==0){
 		float xpos=0.01f;
 
@@ -241,18 +244,18 @@ void CEndGameBox::Draw()
 
 		float ypos=0.5f;
 		for(int a=0;a<playerHandler->ActivePlayers();++a){
-			if(playerHandler->Player(a)->currentStats->mousePixels==0)
+			if(playerHandler->Player(a)->currentStats.mousePixels==0)
 				continue;
 			char values[6][100];
 
 			sprintf(values[0],"%s",	playerHandler->Player(a)->name.c_str());
-			sprintf(values[1],"%i",(int)(playerHandler->Player(a)->currentStats->mouseClicks*60/game->totalGameTime));
-			sprintf(values[2],"%i",(int)(playerHandler->Player(a)->currentStats->mousePixels*60/game->totalGameTime));
-			sprintf(values[3],"%i",(int)(playerHandler->Player(a)->currentStats->keyPresses*60/game->totalGameTime));
-			sprintf(values[4],"%i",(int)(playerHandler->Player(a)->currentStats->numCommands*60/game->totalGameTime));
+			sprintf(values[1],"%i",(int)(playerHandler->Player(a)->currentStats.mouseClicks*60/game->totalGameTime));
+			sprintf(values[2],"%i",(int)(playerHandler->Player(a)->currentStats.mousePixels*60/game->totalGameTime));
+			sprintf(values[3],"%i",(int)(playerHandler->Player(a)->currentStats.keyPresses*60/game->totalGameTime));
+			sprintf(values[4],"%i",(int)(playerHandler->Player(a)->currentStats.numCommands*60/game->totalGameTime));
 			sprintf(values[5],"%i",(int)
-				( playerHandler->Player(a)->currentStats->numCommands != 0 ) ?
-				( playerHandler->Player(a)->currentStats->unitCommands/playerHandler->Player(a)->currentStats->numCommands) :
+				( playerHandler->Player(a)->currentStats.numCommands != 0 ) ?
+				( playerHandler->Player(a)->currentStats.unitCommands/playerHandler->Player(a)->currentStats.numCommands) :
 				( 0 ));
 
 			float xpos=0.01f;

@@ -65,10 +65,10 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);
 	LuaPushNamedNumber(L, "squareSize",    SQUARE_SIZE);
 
-	LuaPushNamedNumber(L, "gameMode",      gs->gameMode);
+	LuaPushNamedNumber(L, "gameMode",      gameSetup->gameMode);
 	LuaPushNamedNumber(L, "startPosType",  startPosType);
 
-	LuaPushNamedBool(L,   "commEnds",         (gs->gameMode >= 1));
+	LuaPushNamedBool(L,   "commEnds",         (gameSetup->gameMode >= 1));
 	LuaPushNamedBool(L,   "limitDGun",        limitDGun);
 	LuaPushNamedBool(L,   "diminishingMetal", diminishingMMs);
 	LuaPushNamedBool(L,   "ghostedBuildings", ghostedBuildings);
@@ -94,7 +94,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedString(L, "waterFoamTexture",    mi->water.foamTexture);
 	LuaPushNamedString(L, "waterNormalTexture",  mi->water.normalTexture);
 	LuaPushNamedBool(L,   "waterVoid",           mi->map.voidWater);
-	LuaPushNamedBool(L,   "waterPlane",          mi->hasWaterPlane);
+	LuaPushNamedBool(L,   "waterPlane",          mi->water.hasWaterPlane);
 	LuaPushNamedColor(L,  "waterAbsorb",         mi->water.absorb);
 	LuaPushNamedColor(L,  "waterBaseColor",      mi->water.baseColor);
 	LuaPushNamedColor(L,  "waterMinColor",       mi->water.minColor);
