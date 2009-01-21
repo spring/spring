@@ -234,8 +234,8 @@ static std::set<std::string> LoadLuaAINames()
 
 	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
 	if (!luaParser.Execute()) {
-		throw content_error("luaParser.Execute() failed: "
-				+ luaParser.GetErrorLog());
+		// it is no error if the mod does not come with LUA AIs.
+		return names;
 	}
 
 	const LuaTable root = luaParser.GetRoot();
@@ -275,10 +275,10 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 //	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
 		char section[50];
-		sprintf(section, "GAME\\AI%i", a);
+		sprintf(section, "GAME\\AI%i\\", a);
 		string s(section);
 
-		if (!file.SectionExist(s)) {
+		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
 			continue;
 		}
 //		PlayerBase data;

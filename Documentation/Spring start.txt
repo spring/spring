@@ -73,6 +73,9 @@
 	[TEAM0]
 	{
 		TeamLeader=x;   // player number that is the "leader"
+		                // if this is an AI controlled team, TeamLeader is the
+		                // player number of the AI controlling team
+		                // see AI.Host
 		AllyTeam=number;
 		RgbColor=red green blue;  // red green blue in range [0-1]
 		Side=Arm/Core;  // other sides possible with user mods i suppose

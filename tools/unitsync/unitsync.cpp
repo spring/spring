@@ -1576,8 +1576,8 @@ static void GetLuaAIInfo()
 
 	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
 	if (!luaParser.Execute()) {
-		throw content_error("luaParser.Execute() failed: "
-				+ luaParser.GetErrorLog());
+		// it is no error if the mod does not come with LUA AIs.
+		return;
 	}
 
 	const LuaTable root = luaParser.GetRoot();
@@ -1682,17 +1682,31 @@ EXPORT(int) GetSkirmishAICount() {
 	try {
 		CheckInit();
 
-		skirmishAIDataDirs = CFileHandler::SubDirs(SKIRMISH_AI_DATA_DIR, "*",
+		skirmishAIDataDirs.clear();
+
+		std::vector<std::string> dataDirs_tmp =
+				CFileHandler::SubDirs(SKIRMISH_AI_DATA_DIR, "*",
 				SPRING_VFS_RAW);
+		std::vector<std::string> dataDirsSubs_tmp;
+
+
+		std::vector<std::string>::const_iterator i;
+		for (i = dataDirs_tmp.begin(); i != dataDirs_tmp.end(); ++i) {
+			std::vector<std::string> sub_tmp =
+					CFileHandler::SubDirs(*i, "*", SPRING_VFS_RAW);
+			dataDirsSubs_tmp.insert(dataDirsSubs_tmp.end(),
+					sub_tmp.begin(), sub_tmp.end());
+		}
+		dataDirs_tmp.insert(dataDirs_tmp.end(),
+				dataDirsSubs_tmp.begin(), dataDirsSubs_tmp.end());
 
 		// filter out dirs not containing an AIInfo.lua file
-		for (vector<std::string>::iterator i = skirmishAIDataDirs.begin();
-				i != skirmishAIDataDirs.end(); ++i) {
+		for (i = dataDirs_tmp.begin(); i != dataDirs_tmp.end(); ++i) {
 			const std::string& possibleDataDir = *i;
 			vector<std::string> infoFile = CFileHandler::FindFiles(
 					possibleDataDir, "AIInfo.lua");
-			if (infoFile.size() == 0) {
-				skirmishAIDataDirs.erase(i);
+			if (infoFile.size() > 0) {
+				skirmishAIDataDirs.push_back(possibleDataDir);
 			}
 		}
 
@@ -1700,11 +1714,10 @@ EXPORT(int) GetSkirmishAICount() {
 
 		int luaAIs = GetLuaAICount();
 
+//logOutput.Print(LOG_UNITSYNC, "GetSkirmishAICount: luaAIs: %i / skirmishAIs: %u", luaAIs, skirmishAIDataDirs.size());
 		return skirmishAIDataDirs.size() + luaAIs;
 	}
 	UNITSYNC_CATCH_BLOCKS;
-
-	skirmishAIDataDirs.clear();
 
 	return 0;
 }
