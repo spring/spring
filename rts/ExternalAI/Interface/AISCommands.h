@@ -31,6 +31,19 @@ extern "C" {
 
 #define COMMAND_TO_ID_ENGINE -1
 
+/**
+ * Each command type can be identified through a unique ID,
+ * which we call command topic.
+ * Commands are usually sent from AIs to the engine,
+ * but there are plans for the future to allow AI -> AI command scheduling.
+ *
+ * Note: Do NOT change the values assigned to these topics,
+ * as this would be bad for inter-version compatibility.
+ * You should always append new command topics at the end of this list,
+ * and adjust NUM_CMD_TOPICS.
+ *
+ * @see SAICallback.handleCommand()
+ */
 enum CommandTopic {
 	COMMAND_NULL                                  =  0,
 	COMMAND_DRAWER_POINT_ADD                      =  1,
@@ -112,24 +125,34 @@ enum CommandTopic {
 	COMMAND_UNIT_SET_IDLE_MODE                    = 77,
 	COMMAND_UNIT_CUSTOM                           = 78,
 	COMMAND_CHEATS_GIVE_ME_NEW_UNIT               = 79,
-//const int COMMAND_UNIT_ATTACK_POS                     
-//const int COMMAND_UNIT_INSERT                         
-//const int COMMAND_UNIT_REMOVE                         
-//const int COMMAND_UNIT_ATTACK_AREA                    
-//const int COMMAND_UNIT_ATTACK_LOOPBACK                
-//const int COMMAND_UNIT_GROUP_SELECT                   
-//const int COMMAND_UNIT_INTERNAL                       
-}; // 
+//const int COMMAND_UNIT_ATTACK_POS
+//const int COMMAND_UNIT_INSERT
+//const int COMMAND_UNIT_REMOVE
+//const int COMMAND_UNIT_ATTACK_AREA
+//const int COMMAND_UNIT_ATTACK_LOOPBACK
+//const int COMMAND_UNIT_GROUP_SELECT
+//const int COMMAND_UNIT_INTERNAL
+};
 const unsigned int NUM_CMD_TOPICS                 = 80;
 
 
+/**
+ * These are used in all S*UnitCommand's,
+ * in their options field, which is used as a bitfield.
+ * This allows to enable special modes of commands,
+ * which may be command specific.
+ * For example (one you all know):
+ * if (SBuildUnitCommand.options & UNIT_COMMAND_OPTION_SHIFT_KEY != 0)
+ * then: add to unit command queue, instead of replacing it
+ *
+ */
 enum UnitCommandOptions {
 	UNIT_COMMAND_OPTION_DONT_REPEAT       = (1 << 3), //   8
 	UNIT_COMMAND_OPTION_RIGHT_MOUSE_KEY   = (1 << 4), //  16
 	UNIT_COMMAND_OPTION_SHIFT_KEY         = (1 << 5), //  32
 	UNIT_COMMAND_OPTION_CONTROL_KEY       = (1 << 6), //  64
 	UNIT_COMMAND_OPTION_ALT_KEY           = (1 << 7), // 128
-}; // 
+};
 
 
 #define UNIT_COMMAND_BUILD_NO_FACING -1
@@ -336,46 +359,46 @@ struct SDrawUnitDrawerCommand {
 struct SBuildUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toBuildUnitDefId;
 	struct SAIFloat3 buildPos;
-	int facing; // set to UNIT_COMMAND_BUILD_NO_FACING if you want to specify no facing
+	int facing; // set it to UNIT_COMMAND_BUILD_NO_FACING, if you do not want to specify a certain facing
 }; // COMMAND_UNIT_BUILD
 
 struct SStopUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 }; // COMMAND_UNIT_STOP
 
 //	struct SInsertUnitCommand {
 //		int unitId;
 //		int groupId;
-//		unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+//		unsigned int options; // see enum UnitCommandOptions
 //		int timeOut; // command execution-time in ?seconds?
 //	};
 //
 //	struct SRemoveUnitCommand {
 //		int unitId;
 //		int groupId;
-//		unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+//		unsigned int options; // see enum UnitCommandOptions
 //		int timeOut; // command execution-time in ?seconds?
 //	};
 
 struct SWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 }; // COMMAND_UNIT_WAIT
 
 struct STimeWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	// the time in seconds to wait
@@ -385,7 +408,7 @@ struct STimeWaitUnitCommand {
 struct SDeathWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	// wait until this unit is dead
@@ -395,7 +418,7 @@ struct SDeathWaitUnitCommand {
 struct SSquadWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int numUnits;
@@ -404,14 +427,14 @@ struct SSquadWaitUnitCommand {
 struct SGatherWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 }; // COMMAND_UNIT_WAIT_GATHER
 
 struct SMoveUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 toPos;
@@ -420,7 +443,7 @@ struct SMoveUnitCommand {
 struct SPatrolUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 toPos;
@@ -429,7 +452,7 @@ struct SPatrolUnitCommand {
 struct SFightUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 toPos;
@@ -438,7 +461,7 @@ struct SFightUnitCommand {
 struct SAttackUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toAttackUnitId;
@@ -448,7 +471,7 @@ struct SAttackUnitCommand {
 struct SAttackAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 toAttackPos;
@@ -458,14 +481,14 @@ struct SAttackAreaUnitCommand {
 //	struct SAttackAreaUnitCommand {
 //		int unitId;
 //		int groupId;
-//		unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+//		unsigned int options; // see enum UnitCommandOptions
 //		int timeOut; // command execution-time in ?seconds?
 //	};
 
 struct SGuardUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toGuardUnitId;
@@ -474,21 +497,21 @@ struct SGuardUnitCommand {
 struct SAiSelectUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 }; // COMMAND_UNIT_AI_SELECT
 
 //	struct SGroupSelectUnitCommand {
 //		int unitId;
 //		int groupId;
-//		unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+//		unsigned int options; // see enum UnitCommandOptions
 //		int timeOut; // command execution-time in ?seconds?
 //	};
 
 struct SGroupAddUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toGroupId;
@@ -497,14 +520,14 @@ struct SGroupAddUnitCommand {
 struct SGroupClearUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 }; // COMMAND_UNIT_GROUP_CLEAR
 
 struct SRepairUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toRepairUnitId;
@@ -513,7 +536,7 @@ struct SRepairUnitCommand {
 struct SSetFireStateUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	// can be: 0=hold fire, 1=return fire, 2=fire at will
@@ -523,7 +546,7 @@ struct SSetFireStateUnitCommand {
 struct SSetMoveStateUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int moveState;
@@ -532,7 +555,7 @@ struct SSetMoveStateUnitCommand {
 struct SSetBaseUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 basePos;
@@ -541,21 +564,21 @@ struct SSetBaseUnitCommand {
 //	struct SInternalUnitCommand {
 //		int unitId;
 //		int groupId;
-//		unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+//		unsigned int options; // see enum UnitCommandOptions
 //		int timeOut; // command execution-time in ?seconds?
 //	};
 
 struct SSelfDestroyUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 }; // COMMAND_UNIT_SELF_DESTROY
 
 struct SSetWantedMaxSpeedUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	float wantedMaxSpeed;
@@ -564,7 +587,7 @@ struct SSetWantedMaxSpeedUnitCommand {
 struct SLoadUnitsUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?milli-seconds?
 
 	int* toLoadUnitIds;
@@ -574,7 +597,7 @@ struct SLoadUnitsUnitCommand {
 struct SLoadUnitsAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 pos;
@@ -584,7 +607,7 @@ struct SLoadUnitsAreaUnitCommand {
 struct SLoadOntoUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int transporterUnitId;
@@ -593,7 +616,7 @@ struct SLoadOntoUnitCommand {
 struct SUnloadUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 toPos;
@@ -603,7 +626,7 @@ struct SUnloadUnitCommand {
 struct SUnloadUnitsAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 toPos;
@@ -613,7 +636,7 @@ struct SUnloadUnitsAreaUnitCommand {
 struct SSetOnOffUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	bool on;
@@ -622,7 +645,7 @@ struct SSetOnOffUnitCommand {
 struct SReclaimUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toReclaimUnitIdOrFeatureId;
@@ -631,7 +654,7 @@ struct SReclaimUnitCommand {
 struct SReclaimAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 pos;
@@ -641,7 +664,7 @@ struct SReclaimAreaUnitCommand {
 struct SCloakUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	bool cloak;
@@ -650,14 +673,14 @@ struct SCloakUnitCommand {
 struct SStockpileUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 }; // COMMAND_UNIT_STOCKPILE
 
 struct SDGunUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toAttackUnitId;
@@ -666,7 +689,7 @@ struct SDGunUnitCommand {
 struct SDGunPosUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 pos;
@@ -675,7 +698,7 @@ struct SDGunPosUnitCommand {
 struct SRestoreAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 pos;
@@ -685,7 +708,7 @@ struct SRestoreAreaUnitCommand {
 struct SSetRepeatUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	bool repeat;
@@ -694,7 +717,7 @@ struct SSetRepeatUnitCommand {
 struct SSetTrajectoryUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int trajectory;
@@ -703,7 +726,7 @@ struct SSetTrajectoryUnitCommand {
 struct SResurrectUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toResurrectFeatureId;
@@ -712,7 +735,7 @@ struct SResurrectUnitCommand {
 struct SResurrectAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 pos;
@@ -722,7 +745,7 @@ struct SResurrectAreaUnitCommand {
 struct SCaptureUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int toCaptureUnitId;
@@ -731,7 +754,7 @@ struct SCaptureUnitCommand {
 struct SCaptureAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	struct SAIFloat3 pos;
@@ -741,7 +764,7 @@ struct SCaptureAreaUnitCommand {
 struct SSetAutoRepairLevelUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int autoRepairLevel;
@@ -750,14 +773,14 @@ struct SSetAutoRepairLevelUnitCommand {
 //	struct SAttackLoopbackUnitCommand {
 //		int unitId;
 //		int groupId;
-//		unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+//		unsigned int options; // see enum UnitCommandOptions
 //		int timeOut; // command execution-time in ?seconds?
 //	};
 
 struct SSetIdleModeUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int idleMode;
@@ -766,7 +789,7 @@ struct SSetIdleModeUnitCommand {
 struct SCustomUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see UNIT_COMMAND_OPTION_* defines
+	unsigned int options; // see enum UnitCommandOptions
 	int timeOut; // command execution-time in ?seconds?
 
 	int cmdId;
