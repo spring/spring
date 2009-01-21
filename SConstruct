@@ -487,7 +487,7 @@ if env['platform'] != 'windows':
 #
 #
 
-SConscript(['AI/SConscript'], exports=['env'], variant_dir='build')
+SConscript(['AI/SConscript'], exports=['env'], variant_dir=env['builddir'])
 
 ################################################################################
 ### Build streflop (which has it's own Makefile-based build system)
