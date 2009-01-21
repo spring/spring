@@ -32,6 +32,18 @@ extern "C" {
 #include "SAIFloat3.h"
 #include "SAICallback.h"
 
+/**
+ * Each event type can be identified through a unique ID,
+ * which we call event topic.
+ * Events are sent from the engine to AIs.
+ *
+ * Note: Do NOT change the values assigned to these topics,
+ * as this would be bad for inter-version compatibility.
+ * You should always append new event topics at the end of this list,
+ * and adjust NUM_EVENTS.
+ *
+ * @see SSAILibrary.handleEvent()
+ */
 enum EventTopic {
 	EVENT_NULL                         =  0,
 	EVENT_INIT                         =  1,
