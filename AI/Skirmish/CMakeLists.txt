@@ -8,7 +8,7 @@ set(SKIRMISH_DATA "${AIDIR}/AI/Skirmish")
 
 ## KAI
 set(KAI_SRC "${SKIRMISH_SRC}/KAI")
-if (EXISTS ${KAI_SRC})
+if (BUILD_C_AIINTERFACE AND EXISTS ${KAI_SRC})
 	set(KAI_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${KAI_SRC}/VERSION)
 		file(STRINGS "${KAI_SRC}/VERSION" KAI_VERS LIMIT_COUNT 1)
@@ -28,12 +28,12 @@ if (EXISTS ${KAI_SRC})
 	#add_library(${KAI_TARGET} MODULE ${kai} ${legacycppaienv} ${creg})
 	#set_target_properties(${KAI_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 	#install (TARGETS ${KAI_TARGET} DESTINATION ${KAI_DATA_DIR})
-endif (EXISTS ${KAI_SRC})
+endif (BUILD_C_AIINTERFACE AND EXISTS ${KAI_SRC})
 
 
 ## KAIK
 set(KAIK_SRC "${SKIRMISH_SRC}/KAIK")
-if (EXISTS ${KAIK_SRC})
+if (BUILD_C_AIINTERFACE AND EXISTS ${KAIK_SRC})
 	set(KAIK_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${KAIK_SRC}/VERSION)
 		file(STRINGS "${KAIK_SRC}/VERSION" KAIK_VERS LIMIT_COUNT 1)
@@ -53,12 +53,12 @@ if (EXISTS ${KAIK_SRC})
 	add_library(${KAIK_TARGET} MODULE ${kaik} ${legacycppaienv} ${creg})
 	set_target_properties(${KAIK_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 	install (TARGETS ${KAIK_TARGET} DESTINATION ${KAIK_DATA_DIR})
-endif (EXISTS ${KAIK_SRC})
+endif (BUILD_C_AIINTERFACE AND EXISTS ${KAIK_SRC})
 
 
 ## RAI
 set(RAI_SRC "${SKIRMISH_SRC}/RAI")
-if (EXISTS ${RAI_SRC})
+if (BUILD_C_AIINTERFACE AND EXISTS ${RAI_SRC})
 	set(RAI_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${RAI_SRC}/VERSION)
 		file(STRINGS "${RAI_SRC}/VERSION" RAI_VERS LIMIT_COUNT 1)
@@ -77,12 +77,12 @@ if (EXISTS ${RAI_SRC})
 	aux_source_directory(${RAI_SRC} rai)
 	add_library(${RAI_TARGET} MODULE ${rai} ${legacycppaienv})
 	install (TARGETS ${RAI_TARGET} DESTINATION ${RAI_DATA_DIR})
-endif (EXISTS ${RAI_SRC})
+endif (BUILD_C_AIINTERFACE AND EXISTS ${RAI_SRC})
 
 
 ## AAI
 set(AAI_SRC "${SKIRMISH_SRC}/AAI")
-if (EXISTS ${AAI_SRC})
+if (BUILD_C_AIINTERFACE AND EXISTS ${AAI_SRC})
 	set(AAI_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${AAI_SRC}/VERSION)
 		file(STRINGS "${AAI_SRC}/VERSION" AAI_VERS LIMIT_COUNT 1)
@@ -101,12 +101,12 @@ if (EXISTS ${AAI_SRC})
 	aux_source_directory(${AAI_SRC} aai)
 	add_library(${AAI_TARGET} MODULE ${aai} ${legacycppaienv})
 	install (TARGETS ${AAI_TARGET} DESTINATION ${AAI_DATA_DIR})
-endif (EXISTS ${AAI_SRC})
+endif (BUILD_C_AIINTERFACE AND EXISTS ${AAI_SRC})
 
 
 ## NTai
 set(NTai_SRC "${SKIRMISH_SRC}/NTai")
-if (EXISTS ${NTai_SRC})
+if (BUILD_C_AIINTERFACE AND EXISTS ${NTai_SRC})
 	set(NTai_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${NTai_SRC}/VERSION)
 		file(STRINGS "${NTai_SRC}/VERSION" NTai_VERS LIMIT_COUNT 1)
@@ -136,12 +136,12 @@ if (EXISTS ${NTai_SRC})
 	add_library(${NTai_TARGET} MODULE ${ntai} ${legacycppaienv})
 	target_link_libraries(${NTai_TARGET} boost_thread-mt)
 	install (TARGETS ${NTai_TARGET} DESTINATION ${NTai_DATA_DIR})
-endif (EXISTS ${NTai_SRC})
+endif (BUILD_C_AIINTERFACE AND EXISTS ${NTai_SRC})
 
 
 ## Null Legacy C++ AI
 set(NullLegacyCppAI_SRC "${SKIRMISH_SRC}/NullLegacyCppAI")
-if (EXISTS ${NullLegacyCppAI_SRC})
+if (BUILD_C_AIINTERFACE AND EXISTS ${NullLegacyCppAI_SRC})
 	set(NullLegacyCppAI_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${NullLegacyCppAI_SRC}/VERSION)
 		file(STRINGS "${NullLegacyCppAI_SRC}/VERSION" NullLegacyCppAI_VERS LIMIT_COUNT 1)
@@ -160,12 +160,12 @@ if (EXISTS ${NullLegacyCppAI_SRC})
 	aux_source_directory(${NullLegacyCppAI_SRC} nulllegacycppai)
 	add_library(${NullLegacyCppAI_TARGET} MODULE ${nulllegacycppai} ${legacycppaienv})
 	install (TARGETS ${NullLegacyCppAI_TARGET} DESTINATION ${NullLegacyCppAI_DATA_DIR})
-endif (EXISTS ${NullLegacyCppAI_SRC})
+endif (BUILD_C_AIINTERFACE AND EXISTS ${NullLegacyCppAI_SRC})
 
 
 ## Null C AI
 set(NullAI_SRC "${SKIRMISH_SRC}/NullAI")
-if (EXISTS ${NullAI_SRC})
+if (BUILD_C_AIINTERFACE AND EXISTS ${NullAI_SRC})
 	set(NullAI_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${NullAI_SRC}/VERSION)
 		file(STRINGS "${NullAI_SRC}/VERSION" NullAI_VERS LIMIT_COUNT 1)
@@ -184,16 +184,12 @@ if (EXISTS ${NullAI_SRC})
 	aux_source_directory(${NullAI_SRC} nullai)
 	add_library(${NullAI_TARGET} MODULE ${mySrc} ${nullai})
 	install (TARGETS ${NullAI_TARGET} DESTINATION ${NullAI_DATA_DIR})
-endif (EXISTS ${NullAI_SRC})
+endif (BUILD_C_AIINTERFACE AND EXISTS ${NullAI_SRC})
 
 
 ## Null Java AI
-if (NOT JAVA_FOUND)
-	set(JAVA_FIND_QUIETLY ${SKIRMISHAI_FIND_QUIETLY})
-	FIND_PACKAGE(JavaExtended) # Note: this is not the CMake builtin FindJava
-endif (NOT JAVA_FOUND)
 set(NullJavaAI_SRC "${SKIRMISH_SRC}/NullJavaAI")
-if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
+if (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 	set(NullJavaAI_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${NullJavaAI_SRC}/VERSION)
 		file(STRINGS "${NullJavaAI_SRC}/VERSION" NullJavaAI_VERS LIMIT_COUNT 1)
@@ -230,16 +226,12 @@ if (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
 
 	install (FILES ${NullJavaAI_SRC}/ai.jar DESTINATION ${NullJavaAI_DATA_DIR})
 	install (FILES ${NullJavaAI_SRC}/ai-src.jar DESTINATION ${NullJavaAI_DATA_DIR}/jlib)
-endif (JAVA_FOUND AND EXISTS ${NullJavaAI_SRC})
+endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 
 
 ## Null Object Oriented Java AI
-if (NOT JAVA_FOUND)
-	set(JAVA_FIND_QUIETLY ${SKIRMISHAI_FIND_QUIETLY})
-	FIND_PACKAGE(JavaExtended) # Note: this is not the CMake builtin FindJava
-endif (NOT JAVA_FOUND)
 set(NullOOJavaAI_SRC "${SKIRMISH_SRC}/NullOOJavaAI")
-if (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
+if (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 	set(NullOOJavaAI_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${NullOOJavaAI_SRC}/VERSION)
 		file(STRINGS "${NullOOJavaAI_SRC}/VERSION" NullOOJavaAI_VERS LIMIT_COUNT 1)
@@ -274,14 +266,14 @@ if (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
 
 	install (FILES ${NullOOJavaAI_SRC}/ai.jar DESTINATION ${NullOOJavaAI_DATA_DIR})
 	install (FILES ${NullOOJavaAI_SRC}/ai-src.jar DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
-endif (JAVA_FOUND AND EXISTS ${NullOOJavaAI_SRC})
+endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 
 
 ## JCAI
 # does currently not build in win32
 if (UNIX)
 	set(JCAI_SRC "${SKIRMISH_SRC}/JCAI")
-	if (EXISTS ${JCAI_SRC})
+	if (BUILD_C_AIINTERFACE AND EXISTS ${JCAI_SRC})
 		set(JCAI_VERS "UNKNOWN_VERSION")
 		if (EXISTS ${JCAI_SRC}/VERSION)
 			file(STRINGS "${JCAI_SRC}/VERSION" JCAI_VERS LIMIT_COUNT 1)
@@ -300,6 +292,6 @@ if (UNIX)
 		aux_source_directory(${JCAI_SRC} jcai)
 		#add_library(${JCAI_TARGET} MODULE ${jcai} ${legacycppaienv})
 		#install (TARGETS ${JCAI_TARGET} DESTINATION ${JCAI_DATA_DIR})
-	endif (EXISTS ${JCAI_SRC})
+	endif (BUILD_C_AIINTERFACE AND EXISTS ${JCAI_SRC})
 endif (UNIX)
 
