@@ -938,7 +938,7 @@ int SpringApp::Update ()
 #if defined(USE_GML) && GML_ENABLE_SIM
 				!gmlMultiThreadSim &&
 #endif
-				gs->frameNum-lastRequiredDraw >= MAX_CONSECUTIVE_SIMFRAMES) {
+				gs->frameNum-lastRequiredDraw >= (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor) {
 
 				ScopedTimer cputimer("CPU load"); // Update
 
