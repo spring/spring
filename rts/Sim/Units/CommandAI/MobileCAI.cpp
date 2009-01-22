@@ -97,6 +97,8 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	moveDir(gs->randFloat() > 0.5),
 	lastUserGoal(owner->pos)
 {
+	CalculateCancelDistance();
+
 	CommandDescription c;
 
 	c.id=CMD_LOAD_ONTO;
@@ -1164,4 +1166,18 @@ void CMobileCAI::StartSlowGuard(float speed){
 			}
 		}
 	}
+}
+
+
+void CMobileCAI::CalculateCancelDistance()
+{
+	// calculate a rough turn radius
+	// heading is a short, so has 65536 values
+	// t = 65536/turnRate gives number of frames required for a full circle
+	// speed * t / (2*pi) gives turn radius
+	float tmp = (owner->unitDef->speed / GAME_SPEED)
+		* SHORTINT_MAXVALUE / (owner->unitDef->turnRate > 0 ? owner->unitDef->turnRate : 1)
+		/ (2 * PI) + 2*SQUARE_SIZE;
+	// clamp it a bit because the units don't have to turn at max speed
+	cancelDistance = std::min(std::max(tmp*tmp, 1024.f), 2048.f);
 }
