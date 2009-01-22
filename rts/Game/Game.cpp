@@ -1923,7 +1923,7 @@ bool CGame::ActionPressed(const Action& action,
 			else {
 				const float3& pos = camera->pos;
 				const float3& dir = mouse->dir;
-				const float dist = ground->LineGroundCol(pos, pos + (dir * 9000.0f));
+				const float dist = ground->LineGroundCol(pos, pos + (dir * 30000.0f));
 				p = pos + (dir * dist);
 			}
 			char buf[128];
