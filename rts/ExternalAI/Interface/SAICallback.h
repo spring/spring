@@ -195,6 +195,17 @@ unsigned int (CALLING_CONV *Clb_UnitDef_getCategory)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getSpeed)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getTurnRate)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isTurnInPlace)(int teamId, int unitDefId);
+/**
+ * Units above this distance to goal will try to turn while keeping
+ * some of their speed.
+ * 0 to disable
+ */
+float (CALLING_CONV *Clb_UnitDef_getTurnInPlaceDistance)(int teamId, int unitDefId);
+/**
+ * Units below this speed will turn in place regardless of their
+ * turnInPlace setting.
+ */
+float (CALLING_CONV *Clb_UnitDef_getTurnInPlaceSpeedLimit)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getMoveType)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isUpright)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isCollide)(int teamId, int unitDefId);
