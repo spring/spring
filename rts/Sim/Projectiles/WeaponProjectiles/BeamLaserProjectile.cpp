@@ -165,3 +165,10 @@ void CBeamLaserProjectile::Draw(void)
 	va->AddVertexQTC(pos1+camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xend,weaponDef->visuals.texture3->yend,corecolstart);
 	va->AddVertexQTC(pos1-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture3->xstart,weaponDef->visuals.texture3->yend,corecolstart);
 }
+
+void CBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	unsigned char color[4] = {kocolstart[0], kocolstart[1], kocolstart[2], 255};
+	lines.AddVertexQC(startPos, color);
+	lines.AddVertexQC(endPos, color);
+}

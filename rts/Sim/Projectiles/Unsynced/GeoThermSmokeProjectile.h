@@ -11,6 +11,8 @@ class CGeoThermSmokeProjectile : public CSmokeProjectile
 public:
 	CGeoThermSmokeProjectile(const float3& pos,const float3& speed,int ttl,CFeature *geo GML_PARG_H);
 	void Update();
+
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points) {};
 	CFeature *geo;
 
 public:

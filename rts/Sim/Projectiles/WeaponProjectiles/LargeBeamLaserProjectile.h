@@ -35,6 +35,7 @@ public:
 
 	void Update(void);
 	void Draw(void);
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 };
 
 #endif

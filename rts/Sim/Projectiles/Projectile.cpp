@@ -12,6 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Colors.h"
 #include "Map/MapInfo.h"
 #include "GlobalUnsynced.h"
 
@@ -125,6 +126,11 @@ void CProjectile::Draw()
 	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->projectiletex.xend,ph->projectiletex.ystart,col);
 	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xend,ph->projectiletex.yend,col);
 	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xstart,ph->projectiletex.yend,col);
+}
+
+void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::white);
 }
 
 void CProjectile::DrawArray()

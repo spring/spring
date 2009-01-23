@@ -15,6 +15,7 @@ public:
 	virtual ~CWreckProjectile();
 
 	void Draw(void);
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 };
 
 #endif /* WRECKPROJECTILE_H */

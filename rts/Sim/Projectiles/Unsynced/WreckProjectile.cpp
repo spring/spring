@@ -10,6 +10,7 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Colors.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "SmokeProjectile.h"
 #include "WreckProjectile.h"
@@ -67,4 +68,9 @@ void CWreckProjectile::Draw(void)
 	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.ystart,col);
 	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.yend,col);
 	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xstart,ph->wrecktex.yend,col);
+}
+
+void CWreckProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::redA);
 }
