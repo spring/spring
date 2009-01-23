@@ -291,19 +291,9 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 			tgame->AddPair("Demofile", demoName);
 
-			unsigned numPlayers = 0;
-			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
-				if (it->first.substr(0, 6) == "player")
-				{
-					it->second->AddPair("isfromdemo", 1);
-					++numPlayers;
-				}
-			}
-			tgame->AddPair("NumPlayers", numPlayers+1);
-
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			char section[50];
-			sprintf(section, "PLAYER%i", numPlayers);
+			sprintf(section, "PLAYER%i", MAX_PLAYERS);
 			string s(section);
 			TdfParser::TdfSection* me = tgame->construct_subsection(s);
 			me->AddPair("name", settings->myPlayerName);
