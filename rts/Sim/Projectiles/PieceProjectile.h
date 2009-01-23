@@ -53,6 +53,7 @@ public:
 	virtual ~CPieceProjectile(void);
 	void Update();
 	void Draw();
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	void Collision();
 	void Collision(CUnit* unit);
 

@@ -1112,46 +1112,13 @@ void CMiniMap::DrawForReal()
 			points->Initialize();
 			points->EnlargeArrays(ph->ps.size(),0,VA_SIZE_C);
 
-			static unsigned char red[4]    = {255,0,0,255};
-			static unsigned char redA[4]   = {255,0,0,128};
-			static unsigned char yellow[4] = {255,255,0,255};
-			static unsigned char green[4]  = {0,255,0,25};
-			static unsigned char white[4]  = {255,255,255,25};
-
 			Projectile_List::iterator psi;
 			for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
 				CProjectile* p = *psi;
 
 				if ((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
 					gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
-
-						if (dynamic_cast<CGeoThermSmokeProjectile*>(p)) {
-						} else if (dynamic_cast<CGfxProjectile*>(p)) {//Nano-piece
-							points->AddVertexQC(p->pos,green);
-						} else if (dynamic_cast<CBeamLaserProjectile*>(p)) {
-							CBeamLaserProjectile& beam = *(CBeamLaserProjectile*)p;
-							unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
-							lines->AddVertexQC(beam.startPos,color);
-							lines->AddVertexQC(beam.endPos,color);
-						} else if (dynamic_cast<CLargeBeamLaserProjectile*>(p)) {
-							CLargeBeamLaserProjectile& beam = *(CLargeBeamLaserProjectile*)p;
-							unsigned char color[4] = {beam.kocolstart[0],beam.kocolstart[1],beam.kocolstart[2],255};
-							lines->AddVertexQC(beam.startPos,color);
-							lines->AddVertexQC(beam.endPos,color);
-						} else if (dynamic_cast<CLightningProjectile*>(p)) {
-							CLightningProjectile& beam = *(CLightningProjectile*)p;
-							unsigned char color[4] = {(unsigned char)beam.color[0]*255,(unsigned char)beam.color[1]*255,(unsigned char)beam.color[2]*255,255};
-							lines->AddVertexQC(beam.pos,color);
-							lines->AddVertexQC(beam.endPos,color);
-						} else if (dynamic_cast<CPieceProjectile*>(p)) {
-							points->AddVertexQC(p->pos,red);
-						} else if (dynamic_cast<CWreckProjectile*>(p)) {
-							points->AddVertexQC(p->pos,redA);
-						} else if (dynamic_cast<CWeaponProjectile*>(p)) {
-							points->AddVertexQC(p->pos,yellow);
-						} else {
-							points->AddVertexQC(p->pos,white);
-						}
+					p->DrawOnMinimap(*lines, *points);
 				}
 			}
 			lines->DrawArrayC(GL_LINES);

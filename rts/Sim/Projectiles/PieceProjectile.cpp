@@ -14,6 +14,7 @@
 #include "ProjectileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Colors.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
@@ -405,6 +406,11 @@ void CPieceProjectile::Draw()
 	if (curCallback == 0) {
 		DrawCallback();
 	}
+}
+
+void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::red);
 }
 
 void CPieceProjectile::DrawCallback(void)

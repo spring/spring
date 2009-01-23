@@ -8,6 +8,7 @@
 #include "Game/Camera.h"
 #include "GfxProjectile.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Colors.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "GlobalUnsynced.h"
 
@@ -69,4 +70,9 @@ void CGfxProjectile::Draw()
 	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.ystart,color);
 	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xend,ph->gfxtex.yend,color);
 	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->gfxtex.xstart,ph->gfxtex.yend,color);
+}
+
+void CGfxProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::green);
 }
