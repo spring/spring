@@ -130,7 +130,7 @@ void CWeaponProjectile::Collision()
 		helper->Explosion(pos,
 			(weaponDef->dynDamageExp > 0) ? dynDamages : weaponDef->damages,
 			weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed, owner, true,
+			weaponDef->explosionSpeed, owner(), true,
 			weaponDef->noExplode ? 0.3f : 1,
 			weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->impactOnly,
 			weaponDef->explosionGenerator, 0, impactDir, weaponDef->id);
@@ -183,7 +183,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 
 		helper->Explosion(pos, damages,
 			weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed, owner, true,
+			weaponDef->explosionSpeed, owner(), true,
 			weaponDef->noExplode ? 0.3f : 1,
 			weaponDef->noExplode, weaponDef->impactOnly,
 			weaponDef->explosionGenerator, unit,
@@ -240,7 +240,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 				pos += speed;
 				if(weaponDef->bounceExplosionGenerator) {
 					weaponDef->bounceExplosionGenerator->Explosion(pos,
-							speed.Length(), 1, owner, 1, NULL, normal);
+							speed.Length(), 1, owner(), 1, NULL, normal);
 				}
 			}
 		}
@@ -296,8 +296,6 @@ void CWeaponProjectile::DependentDied(CObject* o)
 
 	if(o==target)
 		target=0;
-
-	CProjectile::DependentDied(o);
 }
 
 void CWeaponProjectile::PostLoad()

@@ -26,8 +26,6 @@ CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3
 	sqMaxDist(maxDist*maxDist+100),
 	color(color)
 {
-	if (owner)
-		AddDeathDependence(owner);
 	if (repulsed)
 		AddDeathDependence(repulsed);
 
@@ -51,19 +49,15 @@ CRepulseGfx::~CRepulseGfx(void)
 
 void CRepulseGfx::DependentDied(CObject* o)
 {
-	if(o==owner){
-		owner=0;
-		deleteMe=true;
-	}
 	if(o==repulsed){
 		repulsed=0;
 		deleteMe=true;
 	}
-	CProjectile::DependentDied(o);
 }
 
 void CRepulseGfx::Draw(void)
 {
+	CUnit* owner = CProjectile::owner();
 	if(!owner || !repulsed)
 		return;
 
@@ -146,6 +140,6 @@ void CRepulseGfx::Update(void)
 {
 	age++;
 
-	if(repulsed && owner && (repulsed->pos-owner->pos).SqLength()>sqMaxDist)
+	if(repulsed && owner() && (repulsed->pos-owner()->pos).SqLength()>sqMaxDist)
 		deleteMe=true;
 }

@@ -945,10 +945,10 @@ void CLuaHandle::ProjectileCreated(const CProjectile* projectile)
 		return; // the call is not defined
 	}
 
-	const bool b = (projectile->owner != 0x0);
+	const bool b = (projectile->owner() != NULL);
 
 	lua_pushnumber(L, projectile->id);
-	lua_pushnumber(L, b ? projectile->owner->id : -1);
+	lua_pushnumber(L, b ? projectile->owner()->id : -1);
 
 	// call the routine
 	RunCallIn(cmdStr, 2, 0);
