@@ -122,41 +122,6 @@ SpringApp::~SpringApp()
 #endif
 }
 
-#ifdef _CRASHRPT_H_
-/**
- * @brief crash callback
- * @return whether callback was successful
- * @param crState current state
- *
- * Callback function executed when
- * game crashes (win32 only)
- */
-bool crashCallback(void* crState)
-{
-	logOutput.RemoveAllSubscribers();
-	logOutput.Print("Spring has crashed");
-
-	// Stop writing to infolog.txt
-	logOutput.End();
-
-	// FIXME needs to be updated for new netcode
-	//bool wasRecording = false;
-	//if (net->recordDemo) {
-	//	delete net->recordDemo;
-	//	wasRecording = true;
-	//}
-
-	AddFile("infolog.txt", "Spring information log");
-
-	//if (wasRecording)
-	//	AddFile(net->demoName.c_str(), "Spring game demo");
-
-	SDL_Quit();
-
-	return true;
-}
-#endif
-
 #ifdef WIN32
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 
@@ -196,16 +161,7 @@ bool SpringApp::Initialize()
 
 	// Initialize crash reporting
 #ifdef _WIN32
-#if defined(_CRASHRPT_H_)
-	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "Spring Crashreport");
-	if (!GetInstance())
-	{
-		ErrorMessageBox("Error installing crash reporter", "CrashReport error:", MBF_OK);
-		return false;
-	}
-#elif defined(CRASHHANDLER_H)
 	CrashHandler::Install();
-#endif
 	InitializeSEH();
 #endif
 
