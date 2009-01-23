@@ -356,12 +356,7 @@ bool SpringApp::SetSDLVideoMode ()
            bitsPerPixel = 0; // it should be either 0, 16, or 32
 	}
 
-#ifdef __APPLE__
-	const int defaultDepthSize = 32;
-#else
-	const int defaultDepthSize = 16;
-#endif
-	depthBufferBits = configHandler.Get("DepthBufferBits", defaultDepthSize);
+	depthBufferBits = configHandler.Get("DepthBufferBits", 32);
 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.Get("StencilBufferBits", 1));
