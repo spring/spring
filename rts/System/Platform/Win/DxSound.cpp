@@ -170,8 +170,7 @@ int CDxSound::InitFile(const string& name)
 
 	// Create the sound buffer object from the wave file data
 	if (!CreateStaticBuffer(name.c_str())) {
-		logOutput << "no such sound: " << name.c_str() << "\n";
-		return -1;
+		handleerror(0, "Couldn't open wav file", name.c_str(),0);
 	}
 
 	waveid[name] = loadedSounds.size();
