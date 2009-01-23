@@ -158,10 +158,9 @@ void CMissileProjectile::Collision()
 	}
 
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner, false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
 
-	// helper->Explosion(pos, damages, areaOfEffect, owner);
 	CWeaponProjectile::Collision();
 	oldSmoke = pos;
 }
@@ -169,11 +168,8 @@ void CMissileProjectile::Collision()
 void CMissileProjectile::Collision(CUnit *unit)
 {
 	if (weaponDef->visuals.smokeTrail) {
-		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner, false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
+		new CSmokeTrailProjectile(pos, oldSmoke, dir, oldDir, owner(), false, true, 7, Smoke_Time, 0.6f, drawTrail, 0, weaponDef->visuals.texture2);
 	}
-
-	// unit->DoDamage(damages,owner);
-	// helper->Explosion(pos, damages, areaOfEffect, owner);
 
 	CWeaponProjectile::Collision(unit);
 	oldSmoke = pos;
@@ -195,10 +191,10 @@ void CMissileProjectile::Update(void)
 				targSpeed = decoyTarget->speed;
 			} else {
 				targSpeed = target->speed;
-				if ((target->physicalState == CSolidObject::Flying && (target->midPos-pos).SqLength() < 150 * 150) || !owner)
+				if ((target->physicalState == CSolidObject::Flying && (target->midPos-pos).SqLength() < 150 * 150) || !owner())
 					targPos = target->midPos;
 				else
-					targPos = helper->GetUnitErrorPos(target, owner->allyteam);
+					targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
 			}
 		}
 
@@ -211,7 +207,7 @@ void CMissileProjectile::Update(void)
 				wobbleTime = 16;
 			}
 			wobbleDir += wobbleDif;
-			dir += wobbleDir * weaponDef->wobble * (owner? (1 - owner->limExperience * 0.5f): 1);
+			dir += wobbleDir * weaponDef->wobble * (owner()? (1 - owner()->limExperience * 0.5f): 1);
 			dir.Normalize();
 		}
 
@@ -296,7 +292,7 @@ void CMissileProjectile::Update(void)
 
 	if (weaponDef->visuals.smokeTrail && !(age & 7)) {
 		CSmokeTrailProjectile* tp = new CSmokeTrailProjectile(pos, oldSmoke,
-			dir, oldDir, owner, age == 8, false, 7, Smoke_Time, 0.6f, drawTrail, 0,
+			dir, oldDir, owner(), age == 8, false, 7, Smoke_Time, 0.6f, drawTrail, 0,
 			weaponDef->visuals.texture2);
 		oldSmoke = pos;
 		oldDir = dir;

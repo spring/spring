@@ -1116,7 +1116,7 @@ void CMiniMap::DrawForReal()
 			for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
 				CProjectile* p = *psi;
 
-				if ((p->owner && (p->owner->allyteam == gu->myAllyTeam)) ||
+				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
 					gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
 					p->DrawOnMinimap(*lines, *points);
 				}

@@ -5,6 +5,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+
 #ifdef _MSC_VER
 #pragma warning(disable:4291)
 #endif
@@ -13,6 +14,8 @@ class CProjectileHandler;
 class CBuilding;
 
 #include "ExplosionGenerator.h"
+#include "Sim/Units/UnitHandler.h"
+
 class CUnit;
 class CFeature;
 class CVertexArray;
@@ -40,7 +43,6 @@ public:
 	virtual void Collision(CFeature* feature);
 	virtual ~CProjectile();
 	virtual void Update();
-	void DependentDied(CObject* o);
 	virtual void Init(const float3& pos, CUnit* owner GML_PARG_H);
 
 	bool synced;
@@ -56,13 +58,20 @@ public:
 	unsigned lastProjUpdate;
 #endif
 
-	CUnit* owner;
+	inline CUnit* owner() const
+	{
+		return uh->units[ownerId];
+	}
+
 	float3 speed;
 	virtual void DrawCallback(void);
 	virtual void DrawUnitPart(void);
 	virtual void DrawS3O() { DrawUnitPart(); }
 
 	S3DModel* s3domodel;
+	
+private:
+	int ownerId;
 };
 
 #endif /* PROJECTILE_H */
