@@ -1,11 +1,12 @@
 #include "StdAfx.h"
+#include "PathEstimator.h"
 #include <fstream>
 #include <boost/bind.hpp>
 #include <boost/version.hpp>
 #include "lib/minizip/zip.h"
 #include "mmgr.h"
 
-#include "PathEstimator.h"
+#include <boost/version.hpp>
 
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
@@ -39,7 +40,7 @@ const unsigned int PATHOPT_BLOCKED = 64;
 const unsigned int PATHOPT_SEARCHRELATED = (PATHOPT_OPEN | PATHOPT_CLOSED | PATHOPT_FORBIDDEN | PATHOPT_BLOCKED);
 const unsigned int PATHOPT_OBSOLETE = 128;
 
-const unsigned int PATHESTIMATOR_VERSION = 39;
+const unsigned int PATHESTIMATOR_VERSION = 40;
 const float PATHCOST_INFINITY = 10000000;
 const int SQUARES_TO_UPDATE = 600;
 
@@ -55,7 +56,9 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
 	moveMathOptions(mmOpt),
-	pathChecksum(0)
+	pathChecksum(0),
+	offsetBlockNum(-1),costBlockNum(-1),
+	lastOffsetMessage(-1),lastCostMessage(-1)
 {
 	// these give the changes in (x, z) coors
 	// when moving one step in given direction
@@ -111,9 +114,8 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
  * free all used memory
  */
 CPathEstimator::~CPathEstimator() {
-	for (int i = 0; i < nbrOfBlocks; i++) {
+	for (int i = 0; i < nbrOfBlocks; i++)
 		delete[] blockState[i].sqrCenter;
-	}
 
 	delete[] blockState;
 	delete[] vertex;
@@ -121,137 +123,66 @@ CPathEstimator::~CPathEstimator() {
 }
 
 
+void CPathEstimator::InitEstimator(const std::string& name) {
+	int numThreads = configHandler.Get("HardwareThreadCount", 0);
 
-void CPathEstimator::SpawnThreads(int numThreads, int stage) {
+	if (numThreads == 0) {
+		#if (BOOST_VERSION >= 103500)
+		numThreads = boost::thread::hardware_concurrency();
+		#else
+		numThreads = 1;
+		#endif
+	}
+
 	if (threads.size() != numThreads) {
 		threads.resize(numThreads);
 		pathFinders.resize(numThreads);
 	}
+	pathFinders[0] = pathFinder;
 
-	const int vertsPerThread = nbrOfVertices / numThreads;
-	const int blocksPerThread = nbrOfBlocks / numThreads;
+	// Not much point in multithreading these...
+	InitVertices();
+	InitBlocks();
 
-	for (int threadIdx = 0; threadIdx < numThreads; threadIdx++) {
-		// if this is the last thread, we might have to do extra
-		// work if numThreads did not evenly divide nbrOfVertices
-		// or nbrOfBlocks, so calculate the remainder for both
-		const bool isLastThread = (threadIdx == numThreads - 1);
-		const int verticesRem = isLastThread? (nbrOfVertices - vertsPerThread * numThreads): 0;
-		const int blocksRem = isLastThread? (nbrOfBlocks - blocksPerThread * numThreads): 0;
+	PrintLoadMsg("Reading estimate path costs");
 
-		const int minVertex = threadIdx * vertsPerThread;
-		const int maxVertex = minVertex + vertsPerThread + verticesRem;
-		const int minBlock = threadIdx * blocksPerThread;
-		const int maxBlock = minBlock + blocksPerThread + blocksRem;
+	if (!ReadFile(name)) {
+		char calcMsg[512];
+		sprintf(calcMsg, "Analyzing map accessibility [%d]", BLOCK_SIZE);
+		PrintLoadMsg(calcMsg);
 
-		if (stage == 0) {
-			threads[threadIdx] = new
-				boost::thread(boost::bind(&CPathEstimator::InitVerticesAndBlocks, this, minVertex, maxVertex, minBlock, maxBlock));
+		pathBarrier=new boost::barrier(numThreads);
+
+		// Start threads if applicable
+		for(int i=1; i<numThreads; ++i) {
+			pathFinders[i] = new CPathFinder();
+			threads[i] = new boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, i));
 		}
-		if (stage == 1) {
-			threads[threadIdx] = new
-				boost::thread(boost::bind(&CPathEstimator::CalculateBlockOffsets, this, minBlock, maxBlock, threadIdx));
+
+		// Use the current thread as thread zero
+		CalcOffsetsAndPathCosts(0);
+
+		for(int i=1; i<numThreads; ++i) {
+			threads[i]->join();
+			delete threads[i];
+			delete pathFinders[i];
 		}
-		if (stage == 2) {
-			// allocate one private CPathFinder object per thread
-			pathFinders[threadIdx] = new CPathFinder();
 
-			threads[threadIdx] = new
-				boost::thread(boost::bind(&CPathEstimator::EstimatePathCosts, this, minBlock, maxBlock, threadIdx));
-		}
-	}
-}
+		delete pathBarrier;
 
-void CPathEstimator::JoinThreads(int numThreads, int stage) {
-	for (int threadIdx = 0; threadIdx < numThreads; threadIdx++) {
-		threads[threadIdx]->join();
-		delete threads[threadIdx];
-		threads[threadIdx] = 0x0;
-
-		if (stage == 2) {
-			delete pathFinders[threadIdx];
-			pathFinders[threadIdx] = 0x0;
-		}
-	}
-}
-
-void CPathEstimator::InitEstimator(const std::string& name) {
-	int numThreads = configHandler.Get("HardwareThreadCount", 0);
-
-#if 0	// FIXME mantis #1033
-#if (BOOST_VERSION >= 103500)
-	if (numThreads == 0)
-		numThreads = boost::thread::hardware_concurrency();
-#else
-#  ifdef USE_GML
-	if (numThreads == 0)
-		numThreads = GML_CPU_COUNT;
-#  endif
-#endif
-#else //if 0
-	numThreads = 1;
-#endif
-
-	if (numThreads > 1) {
-		// spawn the threads for InitVerticesAndBlocks()
-		SpawnThreads(numThreads, 0);
-		JoinThreads(numThreads, 0);
-
-		char loadMsg[512];
-		sprintf(loadMsg, "Reading estimate path costs (%d threads)", numThreads);
-		PrintLoadMsg(loadMsg);
-
-		if (!ReadFile(name)) {
-			char calcMsg[512];
-			sprintf(calcMsg, "Analyzing map accessibility [%d] (%d threads)", BLOCK_SIZE, numThreads);
-			PrintLoadMsg(calcMsg);
-
-			// re-spawn the threads for CalculateBlockOffsets()
-			SpawnThreads(numThreads, 1);
-			JoinThreads(numThreads, 1);
-			// re-spawn the threads for EstimatePathCosts()
-			SpawnThreads(numThreads, 2);
-			JoinThreads(numThreads, 2);
-
-			WriteFile(name);
-		}
-	} else {
-		// no threading
-		InitVerticesAndBlocks(0, nbrOfVertices,   0, nbrOfBlocks);
-
-		PrintLoadMsg("Reading estimate path costs (1 thread)");
-
-		if (!ReadFile(name)) {
-			char calcMsg[512];
-			sprintf(calcMsg, "Analyzing map accessibility [%d] (1 thread)", BLOCK_SIZE);
-			PrintLoadMsg(calcMsg);
-
-			CalcOffsetsAndPathCosts(0, nbrOfBlocks);
-
-			WriteFile(name);
-		}
+		PrintLoadMsg("Writing path data file...");
+		WriteFile(name);
 	}
 }
 
 
-
-// wrapper
-void CPathEstimator::InitVerticesAndBlocks(int minVertex, int maxVertex, int minBlock, int maxBlock) {
-	InitVertices(minVertex, maxVertex);
-	InitBlocks(minBlock, maxBlock);
-}
-
-void CPathEstimator::InitVertices(int minVertex, int maxVertex) {
-	assert(maxVertex <= nbrOfVertices);
-
-	for (int i = minVertex; i < maxVertex; i++)
+void CPathEstimator::InitVertices() {
+	for (int i = 0; i < nbrOfVertices; i++)
 		vertex[i] = PATHCOST_INFINITY;
 }
 
-void CPathEstimator::InitBlocks(int minBlock, int maxBlock) {
-	assert(maxBlock <= nbrOfBlocks);
-
-	for (int idx = minBlock; idx < maxBlock; idx++) {
+void CPathEstimator::InitBlocks() {
+	for (int idx = 0; idx < nbrOfBlocks; idx++) {
 		int x = idx % nbrOfBlocksX;
 		int z = idx / nbrOfBlocksX;
 		int blockNr = z * nbrOfBlocksX + x;
@@ -265,57 +196,51 @@ void CPathEstimator::InitBlocks(int minBlock, int maxBlock) {
 }
 
 
-
-// wrapper
-void CPathEstimator::CalcOffsetsAndPathCosts(int minBlock, int maxBlock, int threadID) {
+void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
+	streflop_init<streflop::Simple>();
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
 	// A must be completely finished before B_i can be safely called. This means we cannot
 	// let thread i execute (A_i, B_i), but instead have to split the work such that every
-	// thread finishes its part of A before any starts B_i. Hence this wrapper function is
-	// no longer called when more than one thread is spawned in InitEstimator().
-	CalculateBlockOffsets(minBlock, maxBlock, threadID);
-	EstimatePathCosts(minBlock, maxBlock, threadID);
+	// thread finishes its part of A before any starts B_i.
+	int i;
+	while((i=++offsetBlockNum) < nbrOfBlocks)
+		CalculateBlockOffsets(i,thread);
+
+	pathBarrier->wait();
+
+	while((i=++costBlockNum) < nbrOfBlocks)
+		EstimatePathCosts(i,thread);
 }
 
-void CPathEstimator::CalculateBlockOffsets(int minBlock, int maxBlock, int) {
-	assert(maxBlock <= nbrOfBlocks);
 
-	for (int idx = minBlock; idx < maxBlock; idx++) {
-		int x = idx % nbrOfBlocksX;
-		int z = idx / nbrOfBlocksX;
+void CPathEstimator::CalculateBlockOffsets(int idx, int thread) {
+	int x = idx % nbrOfBlocksX;
+	int z = idx / nbrOfBlocksX;
 
-		vector<MoveData*>::iterator mi;
-		for (mi = moveinfo->moveData.begin(); mi < moveinfo->moveData.end(); mi++) {
-			FindOffset(**mi, x, z);
-		}
+	if (thread == 0 && (idx/1000)!=lastOffsetMessage) {
+		lastOffsetMessage=idx/1000;
+		char calcMsg[128];
+		sprintf(calcMsg, "Block offset %d of %d (block-size %d)", lastOffsetMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		PrintLoadMsg(calcMsg);
 	}
+
+	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)
+		FindOffset(**mi, x, z);
 }
 
-void CPathEstimator::EstimatePathCosts(int minBlock, int maxBlock, int threadID) {
-	assert(maxBlock <= nbrOfBlocks);
+void CPathEstimator::EstimatePathCosts(int idx, int thread) {
+	int x = idx % nbrOfBlocksX;
+	int z = idx / nbrOfBlocksX;
 
-	for (int move = 0; move < moveinfo->moveData.size(); move++) {
-		MoveData* mdi = moveinfo->moveData[move];
-
-		if (threadID == -1) {
-			char calcMsg[512];
-			sprintf(calcMsg, "Blocks %d to %d (block-size %d, path-type %d of %d)",
-				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size());
-			PrintLoadMsg(calcMsg);
-		} else {
-			boost::mutex::scoped_lock lock(loadMsgMutex);
-
-			// NOTE: locking PrintLoadMsg() is not enough, can't call it here
-			logOutput.Print("Estimating path costs for blocks %d to %d (block-size %d, path-type %d of %d, thread-ID %d)",
-				minBlock, maxBlock, BLOCK_SIZE, mdi->pathType, moveinfo->moveData.size(), threadID);
-		}
-
-		for (int idx = minBlock; idx < maxBlock; idx++) {
-			int x = idx % nbrOfBlocksX;
-			int z = idx / nbrOfBlocksX;
-			CalculateVertices(*mdi, x, z, threadID);
-		}
+	if (thread == 0 && (idx/1000)!=lastCostMessage) {
+		lastCostMessage=idx/1000;
+		char calcMsg[128];
+		sprintf(calcMsg, "Path cost %d of %d (block-size %d)", lastCostMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		PrintLoadMsg(calcMsg);
 	}
+
+	for (vector<MoveData*>::iterator mi = moveinfo->moveData.begin(); mi != moveinfo->moveData.end(); mi++)
+		CalculateVertices(**mi, x, z, thread);
 }
 
 
@@ -365,17 +290,16 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
  * calculate all vertices connected from given block
  * (always 4 out of 8 vertices connected to the block)
  */
-void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int blockZ, int threadID) {
-	for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++) {
-		CalculateVertex(moveData, blockX, blockZ, dir, threadID);
-	}
+void CPathEstimator::CalculateVertices(const MoveData& moveData, int blockX, int blockZ, int thread) {
+	for (int dir = 0; dir < PATH_DIRECTION_VERTICES; dir++)
+		CalculateVertex(moveData, blockX, blockZ, dir, thread);
 }
 
 
 /*
  * calculate requested vertex
  */
-void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction, int threadID) {
+void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX, int parentBlockZ, unsigned int direction, int thread) {
 	// initial calculations
 	int parentBlocknr = parentBlockZ * nbrOfBlocksX + parentBlockX;
 	int childBlockX = parentBlockX + directionVector[direction].x;
@@ -407,24 +331,17 @@ void CPathEstimator::CalculateVertex(const MoveData& moveData, int parentBlockX,
 	Path path;
 	SearchResult result;
 
-	if (threadID >= 0) {
-		// since CPathFinder::GetPath() is not thread-safe,
-		// use this thread's "private" CPathFinder instance
-		// (rather than locking pathFinder->GetPath()) if we
-		// are in one
-		result = pathFinders[threadID]->GetPath(moveData, startPos, pfDef, path, false, true, 10000, false);
-	} else {
-		// otherwise use the pathFinder instance passed to
-		// the constructor of this CPathEstimator object
-		result = pathFinder->GetPath(moveData, startPos, pfDef, path, false, true, 10000, false);
-	}
+	// since CPathFinder::GetPath() is not thread-safe,
+	// use this thread's "private" CPathFinder instance
+	// (rather than locking pathFinder->GetPath()) if we
+	// are in one
+	result = pathFinders[thread]->GetPath(moveData, startPos, pfDef, path, false, true, 10000, false);
 
 	// store the result
-	if (result == Ok) {
+	if (result == Ok)
 		vertex[vertexNbr] = path.pathCost;
-	} else {
+	else
 		vertex[vertexNbr] = PATHCOST_INFINITY;
-	}
 }
 
 
@@ -829,9 +746,8 @@ bool CPathEstimator::ReadFile(std::string name)
 			return false;
 
 		// Read block-center-offset data.
-		for (int blocknr = 0; blocknr < nbrOfBlocks; blocknr++) {
+		for (int blocknr = 0; blocknr < nbrOfBlocks; blocknr++)
 			file.ReadFile(fh, blockState[blocknr].sqrCenter, moveinfo->moveData.size() * sizeof(int2));
-		}
 
 		// Read vertices data.
 		file.ReadFile(fh, vertex, nbrOfVertices * sizeof(float));
@@ -870,9 +786,8 @@ void CPathEstimator::WriteFile(std::string name) {
 		zipWriteInFileInZip(file, (void*) &hash, 4);
 
 		// Write block-center-offsets.
-		for (int blocknr = 0; blocknr < nbrOfBlocks; blocknr++) {
+		for (int blocknr = 0; blocknr < nbrOfBlocks; blocknr++)
 			zipWriteInFileInZip(file, (void*) blockState[blocknr].sqrCenter, moveinfo->moveData.size() * sizeof(int2));
-		}
 
 		// Write vertices.
 		zipWriteInFileInZip(file, (void*) vertex, nbrOfVertices * sizeof(float));

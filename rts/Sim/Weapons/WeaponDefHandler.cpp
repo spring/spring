@@ -324,7 +324,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 
 	if (wd.type == "Cannon") {
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.8f);
-	} else if (wd.type == "BeamLaser") {
+	} else if (wd.type == "BeamLaser" || wd.type == "LightingCannon") {
 		wd.heightmod = wdTable.GetFloat("heightMod", 1.0f);
 	} else {
 		wd.heightmod = wdTable.GetFloat("heightMod", 0.2f);
@@ -342,7 +342,7 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.visuals.color2 = wdTable.GetFloat3("rgbColor2", float3(1.0f, 1.0f, 1.0f));
 
 	wd.uptime = wdTable.GetFloat("weaponTimer", 0.0f);
-	wd.flighttime = wdTable.GetInt("flightTime", 0) * 32;
+	wd.flighttime = wdTable.GetFloat("flightTime", 0) * 32;
 
 	wd.turnrate = wdTable.GetFloat("turnRate", 0.0f) * PI / 0x7fff / 30.0f;
 

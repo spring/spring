@@ -16,9 +16,9 @@ public:
 
 	const netcode::RawPacket* Pack() const;
 
-	static const int TO_ALLIES = 127;
-	static const int TO_SPECTATORS = 126;
-	static const int TO_EVERYONE = 125;
+	static const int TO_ALLIES = 252;
+	static const int TO_SPECTATORS = 253;
+	static const int TO_EVERYONE = 254;
 
 	int fromPlayer;
 	

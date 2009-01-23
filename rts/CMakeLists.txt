@@ -52,13 +52,13 @@ LIST(APPEND spring_libraries  ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THRE
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
-LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop luabind)
+LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop)
 if (USE_GML)
 	list (APPEND spring_libraries gml)
 endif (USE_GML)
 
 ### include directories needed for compiling spring
-INCLUDE_DIRECTORIES(BEFORE lib/lua/include lib/luabind)
+INCLUDE_DIRECTORIES(BEFORE lib/lua/include)
 
 ### all spring source directories
 ### each directorie which contains source has to be here
@@ -120,7 +120,12 @@ IF (MINGW)
 	LIST(APPEND sysfiles icon.o)
 ENDIF (MINGW)
 
-ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles})
+### Add headers for generated project files (e.g. Code::Blocks)
+IF (NOT WIN32)
+	EXECUTE_PROCESS(COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} \( -name *.h -o -name *.hpp \) -printf %p\; OUTPUT_VARIABLE headers)
+ENDIF (NOT WIN32)
+
+ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${headers})
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
 
 IF (MINGW)

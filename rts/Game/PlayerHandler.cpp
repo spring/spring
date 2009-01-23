@@ -23,11 +23,7 @@ CPlayerHandler* playerHandler;
 
 CPlayerHandler::CPlayerHandler()
 {
-	for(int i = 0; i < MAX_PLAYERS; ++i) {
-		players[i].playerNum = i;
-	}
-
-	activePlayers = MAX_PLAYERS;
+	activePlayers = 0;
 }
 
 
@@ -39,20 +35,21 @@ CPlayerHandler::~CPlayerHandler()
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
 	activePlayers = setup->numPlayers;
+	players.resize(setup->numPlayers);
 
 	for (int i = 0; i < activePlayers; ++i)
 	{
-		*Player(i) = setup->playerStartingData[i];
+		players[i] = setup->playerStartingData[i];
+		players[i].playerNum = i;
 	}
 }
 
 
-int CPlayerHandler::Player(const std::string& name)
+int CPlayerHandler::Player(const std::string& name) const
 {
-	for (int i = 0; i < MAX_PLAYERS; ++i) {
-		if (Player(i)->name == name) {
-			return i;
-		}
+	for (playerVec::const_iterator it = players.begin(); it != players.end(); ++it) {
+		if (it->name == name)
+			return it->playerNum;
 	}
 	return -1;
 }
@@ -78,4 +75,12 @@ void CPlayerHandler::PlayerLeft(int player, unsigned char reason)
 			logOutput.Print("Player %s left the game (reason unknown: %i)", Player(player)->name.c_str(), reason);
 	}
 	Player(player)->active = false;
+}
+
+void CPlayerHandler::GameFrame(int frameNum)
+{
+	for(playerVec::iterator it = players.begin(); it != players.end(); ++it)
+	{
+		it->GameFrame(frameNum);
+	}
 }

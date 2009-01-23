@@ -5,13 +5,21 @@ project(Spring)
 LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
-set (BINDIR "bin" CACHE STRING "Where to install binaries")
-set (LIBDIR "lib" CACHE STRING "Where to install libraries")
-set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
 if (UNIX AND NOT MINGW)
+	set (BINDIR "bin" CACHE STRING "Where to install binaries")
+	set (LIBDIR "lib" CACHE STRING "Where to install libraries")
+	set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
+	set (AIDIR "${LIBDIR}/spring" CACHE STRING "Where AIs are installed")
+
 	set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
 	set (PIXMAPS_DIR "share/pixmaps" CACHE STRING "Where to install icons")
 	set (MIME_DIR "share/mime"CACHE STRING "Where MIME definitions are located")
+else (UNIX AND NOT MINGW)
+	set (BINDIR "." CACHE STRING "Where to install binaries")
+	set (LIBDIR "." CACHE STRING "Where to install libraries")
+	set (DATADIR "." CACHE STRING "Where to install game content")
+	set (AIDIR "." CACHE STRING "Where AIs are installed")
+	set (CMAKE_INSTALL_PREFIX "/")
 endif (UNIX AND NOT MINGW)
 
 ### Usr-definable build options
@@ -38,9 +46,11 @@ ELSE (WIN32)
 	ADD_DEFINITIONS(-DNO_AVI)
 ENDIF(WIN32)
 
-SET(SPRING_DATADIR ${CMAKE_INSTALL_PREFIX}/${DATADIR} CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
 if (SPRING_DATADIR)
-	ADD_DEFINITIONS(-DSPRING_DATADIR="${SPRING_DATADIR}")
+	ADD_DEFINITIONS(-DSPRING_DATADIR="${SPRING_DATADIR}:${CMAKE_INSTALL_PREFIX}/${DATADIR}:${CMAKE_INSTALL_PREFIX}/${AIDIR}")
+else (SPRING_DATADIR)
+	ADD_DEFINITIONS(-DSPRING_DATADIR="${CMAKE_INSTALL_PREFIX}/${DATADIR}:${CMAKE_INSTALL_PREFIX}/${AIDIR}")
 endif (SPRING_DATADIR)
 
 set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
@@ -74,20 +84,29 @@ endif (MINGW)
 
 ### Compiler flags and defines based on build type
 INCLUDE(TestCXXAcceptsVisibilityFlag)
-set (MARCH_FLAG native CACHE STRING "CPU optimization (use i686 for generic optimization)")
-if (MARCH_FLAG)
-	set (CMAKE_CXX_FLAGS "-march=${MARCH_FLAG} -msse -mfpmath=sse")
-endif (MARCH_FLAG)
+if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	message (STATUS "Building Spring for 64bit environment")
+	set (MARCH_FLAG CACHE STRING "CPU optimization (use i686 for generic optimization)")
+else (CMAKE_SIZEOF_VOID_P EQUAL 8)
+	message (STATUS "Building Spring for 32bit environment")
+	set (MARCH_FLAG "i686" CACHE STRING "CPU optimization (use i686 for generic optimization)")
+endif (CMAKE_SIZEOF_VOID_P EQUAL 8)
 
-# intel C compiler fix (does not support these flags: -march -mfpmath -ggdb)
 IF ($ENV{CXX} MATCHES "icpc")
-	SET(CMAKE_CXX_FLAGS " -axK")
+	# intel C/C++ compiler fix; it does not support these flags:
+	# "-march -mfpmath -msse -ggdb"
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -axK") # SSE1
 	SET(CXX_FLAGS_DEBUG_ADDITIONAL "-g -debug full")
 ELSE ($ENV{CXX} MATCHES "icpc")
+	IF (MARCH_FLAG)
+		set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=${MARCH_FLAG}")
+	ENDIF (MARCH_FLAG)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -mfpmath=sse") # SSE1
 	SET(CXX_FLAGS_DEBUG_ADDITIONAL "")
 ENDIF ($ENV{CXX} MATCHES "icpc")
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 ADD_DEFINITIONS(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
 IF (UNIX)
 	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
@@ -118,7 +137,7 @@ else (UNIX OR CMAKE_CROSSCOMPILING)
 endif(UNIX OR CMAKE_CROSSCOMPILING)
 
 ### install base data files
-install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR})
+install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE)
 
 ### Install freedesktop-files, mime-types etc.
 if (UNIX AND NOT MINGW)
@@ -129,4 +148,8 @@ else (UNIX AND NOT MINGW)
 	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR})
 endif (UNIX AND NOT MINGW)
 
+# additional tools
 
+if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoAnalyser)
+	add_subdirectory(tools/DemoAnalyser)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tools/DemoAnalyser)

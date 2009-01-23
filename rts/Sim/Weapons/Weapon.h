@@ -57,6 +57,8 @@ public:
 	virtual void Fire() {};					// should be implemented by subclasses
 	void ScriptReady(void);
 
+	void StopAttackingAllyTeam(int ally);
+
 	CUnit* owner;
 
 	const WeaponDef *weaponDef;

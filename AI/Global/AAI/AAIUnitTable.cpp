@@ -529,3 +529,4 @@ void AAIUnitTable::FutureUnitKilled(UnitCategory category)
 {
 	--futureUnits[category];
 }
+

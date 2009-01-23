@@ -11,6 +11,7 @@
 
 #ifdef USE_GML
 
+#include <boost/thread/thread.hpp>
 #include <boost/thread/barrier.hpp>
 #include <boost/bind.hpp>
 #include "System/Platform/errorhandler.h"

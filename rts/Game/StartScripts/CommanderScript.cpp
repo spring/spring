@@ -61,17 +61,39 @@ void CCommanderScript::GameStart()
 			globalAI->CreateGlobalAI(a, team->dllAI.c_str());
 		}
 
+		if (team->side.empty()) {
+			// not a GameSetup-type game, or the script
+			// didn't specify a side for this team (bad)
+			// NOTE: the gameSetup ptr now always exists
+			// even for local games, so we can't rely on
+			// its being NULL to identify ones without a
+			// script (which have only two teams)
+			team->side = sideParser.GetSideName((a % 2), "arm");
+		}
+
 		// get the team startup info
-		// NOTE: team->side isn't set when playing GameSetup-type demos
-		// (CGlobalStuff::LoadFromSetup() doesn't get called for them),
-		// this needs to be sorted out properly
-		const std::string& tside = team->side;
-		const std::string& gside = gameSetup->teamStartingData[a].side;
-		const std::string& rside = (tside == gside)? tside: gside;
-		const std::string& startUnit = sideParser.GetStartUnit(rside);
+		const std::string& startUnit = sideParser.GetStartUnit(team->side);
 
 		if (startUnit.empty()) {
-			throw content_error( "Unable to load a commander for side: " + rside);
+			throw content_error( "Unable to load a commander for side: " + team->side);
+		}
+
+		if (gameSetup->startPosType == CGameSetup::StartPos_ChooseInGame
+			 && (team->startPos.x < 0 || team->startPos.z < 0
+				|| (team->startPos.x <= 0 && team->startPos.z <= 0))) {
+			// if the player didn't choose a start position, choose one for him
+			// it should be near the center of his startbox
+			const int allyTeam = teamHandler->AllyTeam(a);
+			const float xmin = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectLeft;
+			const float zmin = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectTop;
+			const float xmax = (gs->mapx * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectRight;
+			const float zmax = (gs->mapy * SQUARE_SIZE) * gameSetup->allyStartingData[allyTeam].startRectBottom;
+			const float xcenter = (xmin+xmax)/2;
+			const float zcenter = (zmin+zmax)/2;
+			assert(xcenter >= 0 && xcenter < gs->mapx*SQUARE_SIZE);
+			assert(zcenter >= 0 && zcenter < gs->mapy*SQUARE_SIZE);
+			team->startPos.x = (a - teamHandler->ActiveTeams())*4*SQUARE_SIZE + xcenter;
+			team->startPos.z = (a - teamHandler->ActiveTeams())*4*SQUARE_SIZE + zcenter;
 		}
 
 		CUnit* unit =

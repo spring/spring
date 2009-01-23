@@ -40,6 +40,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "GlobalUnsynced.h"
+#include "Util.h"
 #include "Sound.h"
 #include "myMath.h"
 #include "Sync/SyncTracer.h"
@@ -190,42 +191,35 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 	pieces.clear();
 	pieces.reserve(script.pieceNames.size());
 
+	std::vector<LocalModelPiece*>& lp = lmodel->pieces;
+
 	for (int piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
-		std::string& scriptname = script.pieceNames[piecenum];
+		std::string& scriptname = script.pieceNames[piecenum]; // is already in lowercase!
 
 		unsigned int cur;
 
 		//Map this piecename to an index in the script's pieceinfo
-		for (cur=0; cur<lmodel->pieces.size(); cur++) {
-			if (lmodel->pieces[cur]->name.compare(scriptname) == 0) {
+		for (cur=0; cur<lp.size(); cur++) {
+			if (lp[cur]->name.compare(scriptname) == 0) {
 				break;
 			}
 		}
 
-		//Not found? Try again with partial matching
-		if (cur == lmodel->pieces.size()) {
-			for (cur = 0; cur < lmodel->pieces.size(); ++cur) {
-				std::string &s2 = lmodel->pieces[cur]->name;
-				int maxcompare = std::min(scriptname.size(), s2.size());
-				int j;
-				for (j = 0; j < maxcompare; ++j) {
-					if (scriptname[j] != s2[j]) {
-						break;
-					}
-				}
-				//Match now?
-				if (j == maxcompare) {
+		//Not found? Try lowercase
+		if (cur == lp.size()) {
+			for (cur=0; cur<lp.size(); cur++) {
+				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
 					break;
 				}
 			}
 		}
 
-		//Did we find it now?
-		if (cur < lmodel->pieces.size()) {
-			pieces.push_back(lmodel->pieces[cur]);
+		//Did we find it?
+		if (cur < lp.size()) {
+			pieces.push_back(lp[cur]);
 		} else {
 			pieces.push_back(NULL);
-			logOutput.Print("CobError: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");
+			logOutput.Print("CobWarning: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");
 		}
 	}
 }
@@ -331,7 +325,7 @@ int CCobInstance::RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void 
  * @param args vector<int> function arguments
  * @param cb CBCobThreadFinish Callback function
  * @param p1 void* callback argument #1
- * @param p2 void* callback argument #2 
+ * @param p2 void* callback argument #2
  * @return 0 if the call terminated. If the caller provides a callback and the thread does not terminate,
  *  it will continue to run. Otherwise it will be killed. Returns 1 in this case.
  */
@@ -566,7 +560,7 @@ void CCobInstance::RemoveAnim(AnimType type, int piece, int axis)
 void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -599,15 +593,6 @@ void CCobInstance::AddAnim(AnimType type, int piece, int axis, int speed, int de
 
 	ai = FindAnim(type, piece, axis);
 	if (!ai) {
-		//check if the animation is needed
-		if (type == AMove) {
-			if (pieces[piece]->pos[axis] == destf)
-				return; // no animation needed, the piece is already at the wanted pos
-		} else if (type == ATurn) {
-			if (RadsAreEqual(pieces[piece]->rot[axis],destf))
-				return; // no animation needed, the piece already points in the wanted angle
-		}
-
 		ai = new struct AnimInfo;
 		ai->type = type;
 		ai->piece = piece;
@@ -684,7 +669,7 @@ void CCobInstance::Move(int piece, int axis, int speed, int destination, bool in
 void CCobInstance::MoveNow(int piece, int axis, int destination)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -701,7 +686,7 @@ void CCobInstance::MoveNow(int piece, int axis, int destination)
 void CCobInstance::TurnNow(int piece, int axis, int destination)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -714,7 +699,7 @@ void CCobInstance::TurnNow(int piece, int axis, int destination)
 void CCobInstance::SetVisibility(int piece, bool visible)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -727,19 +712,21 @@ void CCobInstance::SetVisibility(int piece, bool visible)
 
 void CCobInstance::EmitSfx(int type, int piece)
 {
+#ifndef _CONSOLE
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber for emit-sfx");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
-#ifndef _CONSOLE
 	if(ph->particleSaturation>1 && type<1024){		//skip adding particles when we have to many (make sure below can be unsynced)
 		return;
 	}
 
-	float3 relPos;
+	float3 relPos(0,0,0);
 	float3 relDir(0,1,0);
-	GetEmitDirPos(piece, relPos, relDir);
+	if (!GetEmitDirPos(piece, relPos, relDir)) {
+		GCobEngine.ShowScriptError("emit-sfx: GetEmitDirPos failed\n");
+	}
 
 	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 
@@ -852,6 +839,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 			break;
 	}
 
+
 #endif
 }
 
@@ -918,6 +906,7 @@ void CCobInstance::Signal(int signal)
 		}
 	}
 }
+
 //Flags as defined by the cob standard
 void CCobInstance::Explode(int piece, int flags)
 {
@@ -938,31 +927,23 @@ void CCobInstance::Explode(int piece, int flags)
 	new CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
 
 	// If this is true, no stuff should fly off
-	if (flags & 32) return;
+	if (flags & PF_NONE) return;
 
 	// This means that we are going to do a full fledged piece explosion!
-	// TODO: equalize the bitflags with those in PieceProjectile.h
 	int newflags = 0;
-	if (flags & 2) { newflags |= PP_Explode; } newflags |= PP_Fall;
-//	if (flags & 4) { newflags |= PP_Fall; }
-	if ((flags & 8) && ph->particleSaturation < 1) { newflags |= PP_Smoke; }
-	if ((flags & 16) && ph->particleSaturation < 0.95f) { newflags |= PP_Fire; }
-	if (flags & PP_NoCEGTrail) { newflags |= PP_NoCEGTrail; }
-
-/*
-	int newflags = 0;
-	if (flags & PP_Explode) newflags |= PP_Explode;
-	if (flags & PP_Fall) newflags |= PP_Fall;
-	if ((flags & PP_Smoke) && ph->particleSaturation < 1) newflags |= PP_Smoke;
-	if ((flags & PP_Fire) && ph->particleSaturation < 0.95f) newflags |= PP_Fire;
-	if (flags & PP_NoCEGTrail) newflags |= PP_NoCEGTrail;
-*/
+	newflags |= PF_Fall; // if they don't fall they could live forever
+	if (flags & PF_Explode) { newflags |= PF_Explode; }
+//	if (flags & PF_Fall) { newflags |=  PF_Fall; }
+	if ((flags & PF_Smoke) && ph->particleSaturation < 1) { newflags |= PF_Smoke; }
+	if ((flags & PF_Fire) && ph->particleSaturation < 0.95f) { newflags |= PF_Fire; }
+	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
 
 	float3 baseSpeed = unit->speed + unit->residualImpulse * 0.5f;
-	float l = baseSpeed.Length();
+	float sql = baseSpeed.SqLength();
 
-	if (l > 3) {
-		float l2 = 3 + sqrt(l - 3);
+	if (sql > 9) {
+		const float l  = sqrt(sql);
+		const float l2 = 3 + sqrt(l - 3);
 		baseSpeed *= (l2 / l);
 	}
 	float3 speed((0.5f-gs->randFloat()) * 6.0f, 1.2f + gs->randFloat() * 5.0f, (0.5f - gs->randFloat()) * 6.0f);
@@ -970,16 +951,17 @@ void CCobInstance::Explode(int piece, int flags)
 		speed.y = (0.5f - gs->randFloat()) * 6.0f;
 	}
 	speed += baseSpeed;
-	if (speed.Length() > 12)
+	if (speed.SqLength() > 12*12) {
 		speed = speed.Normalize() * 12;
+	}
 
 	/* TODO Push this back. Don't forget to pass the team (color).  */
 
-	LocalModelPiece* pieceData = pieces[piece]; //&( unit->localmodel->pieces[unit->localmodel->scritoa[piece]] );
-	if (flags & 1) {		//Shatter
+	LocalModelPiece* pieceData = pieces[piece];
+	if (flags & PF_Shatter) {
+		//Shatter
 
 		float pieceChance=1-(ph->currentParticles-(ph->maxParticles-2000))/2000;
-//		logOutput.Print("Shattering %i %f",dl->prims.size(),pieceChance);
 
 		if(pieceData->type == MODELTYPE_3DO){
 			/* 3DO */
@@ -1004,8 +986,6 @@ void CCobInstance::Explode(int piece, int flags)
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
-                    // FIXME: this is a memory leak
-                    // a comment in FlyingPiece says it deletes, but mmgr says otherwise
 					SS3OVertex * verts = new SS3OVertex[4];
 
 					verts[0] = cookedPiece->vertices[cookedPiece->vertexDrawOrder[i + 0]];
@@ -1807,7 +1787,7 @@ bool CCobInstance::HasScriptFunction(int id)
 void CCobInstance::MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -1837,7 +1817,7 @@ void CCobInstance::MoveSmooth(int piece, int axis, int destination, int delta, i
 void CCobInstance::TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber");
+		GCobEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 

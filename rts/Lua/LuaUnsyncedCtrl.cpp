@@ -42,6 +42,7 @@
 #include "Game/UI/KeyBindings.h"
 #include "Game/UI/MiniMap.h"
 #include "Game/UI/MouseHandler.h"
+#include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
 #include "Rendering/GL/myGL.h"
@@ -125,6 +126,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDrawSky);
 	REGISTER_LUA_CFUNC(SetDrawWater);
 	REGISTER_LUA_CFUNC(SetDrawGround);
+
+	REGISTER_LUA_CFUNC(SetWaterParams);
 
 	REGISTER_LUA_CFUNC(SetUnitNoDraw);
 	REGISTER_LUA_CFUNC(SetUnitNoMinimap);
@@ -307,6 +310,26 @@ static inline CUnit* ParseSelectUnit(lua_State* L,
 }
 
 
+static int ParseFloatArray(lua_State* L, int index, float* array, int size)
+{
+	if (!lua_istable(L, index)) {
+		return -1;
+	}
+	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
+	for (int i = 0; i < size; i++) {
+		lua_rawgeti(L, table, (i + 1));
+		if (lua_isnumber(L, -1)) {
+			array[i] = lua_tofloat(L, -1);
+			lua_pop(L, 1);
+		} else {
+			lua_pop(L, 1);
+			return i;
+		}
+	}
+	return size;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -380,7 +403,7 @@ static string ParseMessage(lua_State* L, const string& msg)
 		luaL_error(L, "Bad message format: %s", msg.c_str());
 	}
 
-	if ((playerID < 0) || (playerID >= MAX_PLAYERS)) {
+	if ((playerID < 0) || (playerID >= playerHandler->TotalPlayers())) {
 		luaL_error(L, "Invalid message playerID: %i", playerID);
 	}
 	const CPlayer* player = playerHandler->Player(playerID);
@@ -935,6 +958,113 @@ int LuaUnsyncedCtrl::SetDrawGround(lua_State* L)
 
 /******************************************************************************/
 
+int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
+{
+	if (game == NULL) {
+		return 0;
+	}
+	if (!gs->cheatEnabled) {
+		logOutput.Print("SetWaterParams() needs cheating enabled");
+		return 0;
+	}
+	if (!lua_istable(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetWaterParams()");
+	}
+
+	CMapInfo::water_t& w = const_cast<CMapInfo*>(mapInfo)->water;
+	for (lua_pushnil(L); lua_next(L, 1) != 0; lua_pop(L, 1)) {
+		if (lua_israwstring(L, -2)) {
+			const string key = lua_tostring(L, -2);
+			if (lua_istable(L, -1)) {
+				float color[3];
+				const int size = ParseFloatArray(L, -1, color, 3);
+				if (size>=3) {
+					if (key == "absorb") {
+						w.absorb = color;
+					} else if (key == "baseColor") {
+						w.baseColor = color;
+					} else if (key == "minColor") {
+						w.minColor = color;
+					} else if (key == "surfaceColor") {
+						w.surfaceColor = color;
+					} else if (key == "diffuseColor") {
+						w.diffuseColor = color;
+					} else if (key == "specularColor") {
+						w.specularColor = color;
+ 					} else if (key == "planeColor") {
+						w.planeColor = color;
+					}
+				}
+			}
+			else if (lua_israwstring(L, -1)) {
+				const std::string value = lua_tostring(L, -1);
+				if (key == "texture") {
+					w.texture = value;
+				} else if (key == "foamTexture") {
+					w.foamTexture = value;
+				} else if (key == "normalTexture") {
+					w.normalTexture = value;
+				}
+			}
+			else if (lua_isnumber(L, -1)) {
+				const unsigned int value = (unsigned int)lua_tonumber(L, -1);
+				if (key == "damage") {
+					w.damage = value;
+				} else if (key == "repeatX") {
+					w.repeatX = value;
+				} else if (key == "repeatY") {
+					w.repeatY = value;
+				} else if (key == "surfaceAlpha") {
+					w.surfaceAlpha = value;
+				} else if (key == "ambientFactor") {
+					w.ambientFactor = value;
+				} else if (key == "diffuseFactor") {
+					w.diffuseFactor = value;
+				} else if (key == "specularFactor") {
+					w.specularFactor = value;
+				} else if (key == "specularPower") {
+					w.specularPower = value;
+				} else if (key == "fresnelMin") {
+					w.fresnelMin = value;
+				} else if (key == "fresnelMax") {
+					w.fresnelMax = value;
+				} else if (key == "fresnelPower") {
+					w.fresnelPower = value;
+				} else if (key == "reflectionDistortion") {
+					w.reflDistortion = value;
+				} else if (key == "blurBase") {
+					w.blurBase = value;
+				} else if (key == "blurExponent") {
+					w.blurExponent = value;
+				} else if (key == "perlinStartFreq") {
+					w.perlinStartFreq = value;
+				} else if (key == "perlinLacunarity") {
+					w.perlinLacunarity = value;
+				} else if (key == "perlinAmplitude") {
+					w.perlinAmplitude = value;
+				} else if (key == "numTiles") {
+					w.numTiles = (unsigned char)value;
+				}
+			}
+			else if (lua_isboolean(L, -1)) {
+				const bool value = lua_toboolean(L, -1);
+				if (key == "shoreWaves") {
+					w.shoreWaves = value;
+				} else if (key == "forceRendering") {
+					w.forceRendering = value;
+				} else if (key == "hasWaterPlane") {
+					w.hasWaterPlane = value;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+
+/******************************************************************************/
+
 int LuaUnsyncedCtrl::SetUnitNoDraw(lua_State* L)
 {
 	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
@@ -1308,26 +1438,6 @@ int LuaUnsyncedCtrl::SetCameraOffset(lua_State* L)
 
 /******************************************************************************/
 
-static int ParseFloatArray(lua_State* L, int index, float* array, int size)
-{
-	if (!lua_istable(L, index)) {
-		return -1;
-	}
-	const int table = (index > 0) ? index : (lua_gettop(L) + index + 1);
-	for (int i = 0; i < size; i++) {
-		lua_rawgeti(L, table, (i + 1));
-		if (lua_isnumber(L, -1)) {
-			array[i] = lua_tofloat(L, -1);
-			lua_pop(L, 1);
-		} else {
-			lua_pop(L, 1);
-			return i;
-		}
-	}
-	return size;
-}
-
-
 int LuaUnsyncedCtrl::SetLosViewColors(lua_State* L)
 {
 	float red[4];
@@ -1597,7 +1707,7 @@ int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 		return 0;
 	}
 	const int args = lua_gettop(L);
-	if ((args < 1) || !lua_isnumber(L, 2)) {
+	if ((args < 2) || !lua_isnumber(L, 2)) {
 		luaL_error(L, "Incorrect arguments to SetUnitGroup()");
 	}
 	const int groupID = lua_toint(L, 2);

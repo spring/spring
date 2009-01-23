@@ -238,6 +238,13 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 }
 
 
+
+static inline bool isBeingServicedOnPad(CUnit* u)
+{
+	AAirMoveType *a = dynamic_cast<AAirMoveType*>(u->moveType);
+	return a && a->padStatus != 0;
+}
+
 void CWeapon::Update()
 {
 	if(hasCloseTarget){
@@ -336,7 +343,8 @@ void CWeapon::Update()
 	    && (reloadStatus <= gs->frameNum)
 	    && (!weaponDef->stockpile || numStockpiled)
 	    && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0))
-	    && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0))
+	    && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0)
+	    && !isBeingServicedOnPad(owner))
 	   )
 	{
 		if ((weaponDef->stockpile ||
@@ -616,7 +624,8 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 		HoldFire();
 
 	//happens if the target or the unit has switched teams
-	if (targetType==Target_Unit && !haveUserTarget && targetUnit->allyteam == owner->allyteam)
+	//should be handled by /ally processing now
+	if (targetType==Target_Unit && !haveUserTarget && teamHandler->Ally(owner->allyteam, targetUnit->allyteam))
 		HoldFire();
 
 	if(slavedTo){	//use targets from the thing we are slaved to
@@ -823,7 +832,7 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 	owner->rightdir = owner->frontdir.cross(owner->updir);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
-	bool val = TryTarget(pos, userTarget, 0);
+	bool val = TryTarget(pos, userTarget, unit);
 	owner->frontdir = tempfrontdir;
 	owner->rightdir = temprightdir;
 	owner->heading = tempHeadding;
@@ -893,5 +902,13 @@ float CWeapon::GetRange2D(float yDiff) const
 		return 0;
 	} else {
 		return sqrt(root1);
+	}
+}
+
+
+void CWeapon::StopAttackingAllyTeam(int ally)
+{
+	if (targetUnit && targetUnit->allyteam == ally) {
+		HoldFire();
 	}
 }

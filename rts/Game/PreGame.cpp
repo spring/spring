@@ -179,9 +179,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 		LuaTable mapRoot = mp.GetRoot();
 		const std::string mapWantedScript = mapRoot.GetString("script",     "");
 		const std::string scriptFile      = mapRoot.GetString("scriptFile", "");
-		if (!scriptFile.empty()) {
-			CScriptHandler::Instance().LoadScriptFile(scriptFile);
-		}
+
 		if (!mapWantedScript.empty()) {
 			script = mapWantedScript;
 			mapHasStartscript = true;
@@ -301,6 +299,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 					++numPlayers;
 				}
 			}
+			tgame->AddPair("NumPlayers", numPlayers+1);
 
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			char section[50];
@@ -309,6 +308,9 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			TdfParser::TdfSection* me = tgame->construct_subsection(s);
 			me->AddPair("name", settings->myPlayerName);
 			me->AddPair("spectator", 1);
+
+			TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
+			modopts->AddPair("MaxSpeed", 20);
 
 			std::ostringstream buf;
 			script.print(buf);
@@ -319,10 +321,12 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			{
 				throw content_error("Demo contains incorrect script");
 			}
+			logOutput.Print("Starting GameServer");
 			good_fpu_control_registers("before CGameServer creation");
 			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 			good_fpu_control_registers("after CGameServer creation");
+			logOutput.Print("GameServer started");
 			break;
 		}
 
@@ -330,7 +334,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		{
 			throw content_error("End of demo reached and no game data found");
 		}
-		buf.reset(scanner.GetData(static_cast<float>(FLT_MAX )));
+		buf.reset(scanner.GetData(FLT_MAX));
 	}
 
 	assert(gameServer);

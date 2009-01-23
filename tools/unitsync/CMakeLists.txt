@@ -29,6 +29,7 @@ ELSE (MINGW)
 	else (JAVA_INCLUDE_PATH)
 		message ("No Java includes found, java bindings disabled")
 	endif (JAVA_INCLUDE_PATH)
+	
 ENDIF (MINGW)
 
 ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG})
@@ -63,10 +64,6 @@ if (JAVA_FOUND)
 endif (JAVA_FOUND)
 ADD_LIBRARY(unitsync SHARED ${platformfiles} ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
-if (MINGW)
-	SET_TARGET_PROPERTIES(unitsync PROPERTIES LINK_FLAGS "-Wl,--kill-at --add-stdcall-alias" )
-ENDIF (MINGW)
-
 if (PYTHONLIBS_FOUND)
 	TARGET_LINK_LIBRARIES(unitsync ${PYTHON_LIBRARIES})
 endif (PYTHONLIBS_FOUND)

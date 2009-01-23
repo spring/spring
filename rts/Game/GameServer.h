@@ -50,6 +50,7 @@ public:
 	
 	float cpuUsage;
 	int ping;
+	int lastKeyframeResponse;
 
 	bool isLocal;
 	boost::shared_ptr<netcode::CConnection> link;
@@ -96,6 +97,7 @@ public:
 
 	virtual void PushAction(const Action& action);
 
+	bool HasDemo() const { return (demoReader != NULL); }
 	/// Is the server still running?
 	bool HasFinished() const;
 
@@ -117,7 +119,7 @@ private:
 	*/
 	void KickPlayer(const int playerNum);
 
-	unsigned BindConnection(const std::string& name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link);
+	unsigned BindConnection(std::string name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link);
 
 	void CheckForGameStart(bool forced=false);
 	void StartGame();
@@ -204,8 +206,9 @@ private:
 
 	void RestrictedAction(const std::string& action);
 
-	/// If the server recieves a command, it will forward it to clients if it is not in this set
+	/// If the server receives a command, it will forward it to clients if it is not in this set
 	std::set<std::string> commandBlacklist;
+
 	boost::scoped_ptr<netcode::UDPListener> UDPNet;
 	boost::scoped_ptr<CDemoReader> demoReader;
 	boost::scoped_ptr<AutohostInterface> hostif;

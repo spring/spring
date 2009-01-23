@@ -48,6 +48,7 @@ public:
 	static void UpdateControlledTeams(); // SetControlledTeams() for all players
 
 	void StartSpectating();
+	void GameFrame(int frameNum);
 
 	void operator=(const PlayerBase& base) { PlayerBase::operator=(base); };
 
@@ -81,7 +82,7 @@ public:
 		}
 	};
 
-	Statistics* currentStats;
+	Statistics currentStats;
 
 #ifdef DIRECT_CONTROL_ALLOWED
 	DirectControlStruct myControl;

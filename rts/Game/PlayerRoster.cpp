@@ -105,10 +105,11 @@ const char* PlayerRoster::GetSortName()
 
 /******************************************************************************/
 
-const int* PlayerRoster::GetIndices(int* count)
+const std::vector<int>& PlayerRoster::GetIndices(int* count) const
 {
-	static int players[MAX_PLAYERS];
+	static std::vector<int> players;
 	static int knownPlayers = 0;
+	players.resize(playerHandler->ActivePlayers());
 
 	if (playerHandler->ActivePlayers() > knownPlayers) {
 		for (int i = 0; i < playerHandler->ActivePlayers(); i++) {
@@ -118,7 +119,7 @@ const int* PlayerRoster::GetIndices(int* count)
 	}
 
 	// TODO: use std::sort
-	qsort(players, playerHandler->ActivePlayers(), sizeof(int), compareFunc);
+	qsort(&players[0], players.size(), sizeof(int), compareFunc);
 
 	if (count != NULL) {
 		// set the count

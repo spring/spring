@@ -13,6 +13,8 @@
 #include "NetProtocol.h"
 
 #include "Game/GameSetup.h"
+#include "Game/GameData.h"
+#include "Game/GameServer.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
 #include "ConfigHandler.h"
@@ -28,7 +30,7 @@ CNetProtocol::CNetProtocol()
 CNetProtocol::~CNetProtocol()
 {
 	Send(CBaseNetProtocol::Get().SendQuit());
-	logOutput.Print(server->Statistics());
+	logOutput.Print(serverConn->Statistics());
 }
 
 void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myVersion)
@@ -37,55 +39,59 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 	sock->SetBlocking(false);
 	netcode::UDPConnection* conn = new netcode::UDPConnection(sock, server_addr, portnum);
 	conn->SetMTU(configHandler.Get("MaximumTransmissionUnit", 0));
-	server.reset(conn);
-	server->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
-	server->Flush(true);
-
-	if (!gameSetup || !gameSetup->hostDemo)	//TODO do we really want this?
-	{
-		record.reset(new CDemoRecorder());
-	}
+	serverConn.reset(conn);
+	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
+	serverConn->Flush(true);
 	
 	logOutput.Print("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());
 }
 
 void CNetProtocol::InitLocalClient()
 {
-	server.reset(new netcode::CLocalConnection);
-	server->Flush();
-	record.reset(new CDemoRecorder()); //TODO don't record a new demo when already watching one
+	serverConn.reset(new netcode::CLocalConnection);
+	serverConn->Flush();
 	
 	logOutput.Print("Connecting to local server");
 }
 
 bool CNetProtocol::Active() const
 {
-	return !server->CheckTimeout();
+	return !serverConn->CheckTimeout();
 }
 
 bool CNetProtocol::Connected() const
 {
-	return (server->GetDataReceived() > 0);
+	return (serverConn->GetDataReceived() > 0);
 }
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
 {
-	return server->Peek(ahead);
+	return serverConn->Peek(ahead);
 }
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 {
-	boost::shared_ptr<const netcode::RawPacket> ret = server->GetData();
-	
-	if (record && ret)
-		record->SaveToDemo(ret->data, ret->length);
-	
+	boost::shared_ptr<const netcode::RawPacket> ret = serverConn->GetData();
+
+	if (ret) {
+		if (record) {
+			record->SaveToDemo(ret->data, ret->length);
+		}
+		else if (ret->data[0] == NETMSG_GAMEDATA && !gameServer->HasDemo()) {
+			logOutput.Print("Starting demo recording");
+			GameData gd(ret);
+			record.reset(new CDemoRecorder());
+			record->WriteSetupText(gd.GetSetup());
+			record->SaveToDemo(ret->data, ret->length);
+		}
+	}
+
 	return ret;
 }
 
 void CNetProtocol::Send(boost::shared_ptr<const netcode::RawPacket> pkt)
 {
-	server->SendData(pkt);
+	serverConn->SendData(pkt);
 }
 
 void CNetProtocol::Send(const netcode::RawPacket* pkt)
@@ -106,7 +112,7 @@ void CNetProtocol::UpdateLoop()
 
 void CNetProtocol::Update()
 {
-	server->Update();
+	serverConn->Update();
 }
 
 CNetProtocol* net=0;

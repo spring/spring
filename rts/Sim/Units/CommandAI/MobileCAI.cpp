@@ -11,9 +11,11 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/AirBaseHandler.h"
+#include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
+#include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -95,6 +97,8 @@ CMobileCAI::CMobileCAI(CUnit* owner)
 	moveDir(gs->randFloat() > 0.5),
 	lastUserGoal(owner->pos)
 {
+	CalculateCancelDistance();
+
 	CommandDescription c;
 
 	c.id=CMD_LOAD_ONTO;
@@ -190,6 +194,24 @@ CMobileCAI::~CMobileCAI()
 
 }
 
+/** helper function for CMobileCAI::GiveCommandReal */
+template <typename T>
+static T* getAirMoveType(CUnit *owner)
+{
+	T* airMT;
+	if (owner->usingScriptMoveType) {
+		if (!dynamic_cast<T*>(owner->prevMoveType))
+			return 0;
+		airMT = (T*)owner->prevMoveType;
+	} else {
+		if (!dynamic_cast<T*>(owner->moveType))
+			return 0;
+		airMT = (T*) owner->moveType;
+	}
+
+	return airMT;
+}
+
 void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 {
 	if (!AllowedCommand(c))
@@ -199,23 +221,17 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 		if (c.params.empty()) {
 			return;
 		}
-		CTAAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			if (!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
-				return;
-			airMT = (CTAAirMoveType*)owner->prevMoveType;
-		} else {
-			if (!dynamic_cast<CTAAirMoveType*>(owner->moveType))
-				return;
-			airMT = (CTAAirMoveType*) owner->moveType;
-		}
+
+		AAirMoveType* airMT = getAirMoveType<AAirMoveType>(owner);
+		if (!airMT)
+			return;
+
 		switch ((int) c.params[0]) {
 			case 0: { airMT->repairBelowHealth = 0.0f; break; }
 			case 1: { airMT->repairBelowHealth = 0.3f; break; }
 			case 2: { airMT->repairBelowHealth = 0.5f; break; }
 			case 3: { airMT->repairBelowHealth = 0.8f; break; }
 		}
-
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
 				cdi != possibleCommands.end(); ++cdi) {
 			if (cdi->id == CMD_AUTOREPAIRLEVEL) {
@@ -234,18 +250,12 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 		if (c.params.empty()) {
 			return;
 		}
-		CTAAirMoveType* airMT;
-		if (owner->usingScriptMoveType) {
-			if (!dynamic_cast<CTAAirMoveType*>(owner->prevMoveType))
-				return;
-			airMT = (CTAAirMoveType*) owner->prevMoveType;
-		} else {
-			if (!dynamic_cast<CTAAirMoveType*>(owner->moveType))
-				return;
-			airMT = (CTAAirMoveType*) owner->moveType;
-		}
+		AAirMoveType* airMT = getAirMoveType<AAirMoveType>(owner);
+		if (!airMT)
+			return;
+
 		switch ((int) c.params[0]) {
-			case 0: { airMT->autoLand = false; break; }
+			case 0: { airMT->autoLand = false; airMT->Takeoff(); break; }
 			case 1: { airMT->autoLand = true; break; }
 		}
 		for (vector<CommandDescription>::iterator cdi = possibleCommands.begin();
@@ -269,7 +279,9 @@ void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 	CCommandAI::GiveAllowedCommand(c);
 }
 
-void CMobileCAI::RefuelIfNeeded()
+
+/// returns true if the unit has to land
+bool CMobileCAI::RefuelIfNeeded()
 {
 	if (!owner->moveType->reservedPad) {
 		// we don't have a pad yet
@@ -296,11 +308,13 @@ void CMobileCAI::RefuelIfNeeded()
 				if (landingPos != ZeroVector) {
 					// NOTE: owner->userAttackGround is wrongly reset to
 					// true in CUnit::AttackGround() via ExecuteAttack()
+					// so don't call it
 					SetGoal(landingPos, owner->pos);
 				} else {
 					owner->moveType->StopMoving();
 				}
 			}
+			return true;
 		} else if (owner->currentFuel < (owner->moveType->repairBelowHealth * owner->unitDef->maxFuel) && true
 			/* (commandQue.empty() || commandQue.front().id == CMD_PATROL || commandQue.front().id == CMD_FIGHT) */) {
 			// current fuel level is below our bingo threshold
@@ -316,24 +330,46 @@ void CMobileCAI::RefuelIfNeeded()
 				owner->userTarget = 0;
 				inCommand = false;
 				owner->moveType->ReservePad(lp);
-			}
-		} else if (owner->health < owner->maxHealth * owner->moveType->repairBelowHealth) {
-			// we're damaged, just seek a pad for repairs
-			CAirBaseHandler::LandingPad* lp =
-				airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
-
-			if (lp) {
-				owner->moveType->ReservePad(lp);
+				return true;
 			}
 		}
 	}
+	return false;
+}
+
+/// returns true if the unit has to land
+bool CMobileCAI::LandRepairIfNeeded()
+{
+	if (!owner->moveType->reservedPad
+		&& owner->health < owner->maxHealth * owner->moveType->repairBelowHealth) {
+		// we're damaged, just seek a pad for repairs
+		CAirBaseHandler::LandingPad* lp =
+			airBaseHandler->FindAirBase(owner, owner->unitDef->minAirBasePower);
+
+		if (lp) {
+			owner->moveType->ReservePad(lp);
+			return true;
+		}
+
+		float3 newGoal = airBaseHandler->FindClosestAirBasePos(owner, owner->unitDef->minAirBasePower);
+		if (newGoal != ZeroVector) {
+			SetGoal(newGoal, owner->pos);
+			return true;
+		}
+	}
+	return false;
 }
 
 void CMobileCAI::SlowUpdate()
 {
-	if (owner->unitDef->maxFuel > 0 && dynamic_cast<AAirMoveType*>(owner->moveType)) {
-		RefuelIfNeeded();
+	bool wantToLand = false;
+	if (dynamic_cast<AAirMoveType*>(owner->moveType)) {
+		wantToLand = LandRepairIfNeeded();
+		if (!wantToLand && owner->unitDef->maxFuel > 0) {
+			wantToLand = RefuelIfNeeded();
+		}
 	}
+
 
 	if (!commandQue.empty() && commandQue.front().timeOut < gs->frameNum) {
 		StopMove();
@@ -737,7 +773,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			b3 = Square(w->range - (w->relWeaponPos).Length())
 					> (orderTarget->pos.SqDistance(owner->pos));
 			b4 = w->TryTargetHeading(GetHeadingFromVector(-diff.x, -diff.z),
-					orderTarget->pos, orderTarget != NULL);
+					orderTarget->pos, orderTarget != NULL, orderTarget);
 			edgeFactor = fabs(w->targetBorder);
 		}
 
@@ -761,8 +797,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				// FIXME kill magic frame number
 				if (gs->frameNum > lastCloseInTry + MAX_CLOSE_IN_RETRY_TICKS) {
 					owner->moveType->KeepPointingTo(orderTarget->midPos,
-							std::min((float) (owner->losRadius * SQUARE_SIZE * 2),
-									owner->maxRange * 0.9f), true);
+							std::min((float) owner->losRadius * loshandler->losDiv,
+								owner->maxRange * 0.9f), true);
 				}
 			}
 			owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
@@ -776,8 +812,8 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			{
 				StopMove();
 				owner->moveType->KeepPointingTo(orderTarget->midPos,
-						std::min((float) (owner->losRadius * SQUARE_SIZE * 2),
-								owner->maxRange * 0.9f), true);
+						std::min((float) owner->losRadius * loshandler->losDiv,
+							owner->maxRange * 0.9f), true);
 			} else if(tempOrder && owner->moveState == 0){
 				SetGoal(lastUserGoal, owner->pos);
 			}
@@ -1130,4 +1166,18 @@ void CMobileCAI::StartSlowGuard(float speed){
 			}
 		}
 	}
+}
+
+
+void CMobileCAI::CalculateCancelDistance()
+{
+	// calculate a rough turn radius
+	// heading is a short, so has 65536 values
+	// t = 65536/turnRate gives number of frames required for a full circle
+	// speed * t / (2*pi) gives turn radius
+	float tmp = (owner->unitDef->speed / GAME_SPEED)
+		* SHORTINT_MAXVALUE / (owner->unitDef->turnRate > 0 ? owner->unitDef->turnRate : 1)
+		/ (2 * PI) + 2*SQUARE_SIZE;
+	// clamp it a bit because the units don't have to turn at max speed
+	cancelDistance = std::min(std::max(tmp*tmp, 1024.f), 2048.f);
 }

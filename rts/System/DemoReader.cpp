@@ -50,6 +50,13 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 		throw std::runtime_error(std::string("Demofile corrupt or created by a different version of Spring: ")+filename);
 	}
 
+	if (fileHeader.scriptSize != 0) {
+		char* buf = new char[fileHeader.scriptSize];
+		playbackDemo->Read(buf, fileHeader.scriptSize);
+		setupScript = std::string(buf);
+		delete[] buf;
+	}
+
 	playbackDemo->Read((void*)&chunkHeader, sizeof(chunkHeader));
 	chunkHeader.swab();
 

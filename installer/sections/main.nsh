@@ -34,11 +34,8 @@
   inetc::get \
   "http://www.springlobby.info/installer/springsettings.exe" "$INSTDIR\springsettings.exe"
 
-  File "..\external\mingwm10.dll"
-  File "..\external\wxbase28u_gcc_custom.dll"
-  File "..\external\wxbase28u_net_gcc_custom.dll"
-  File "..\external\wxmsw28u_adv_gcc_custom.dll"
-  File "..\external\wxmsw28u_core_gcc_custom.dll"
+; Dlls neede for it
+  File /r "..\installer\Springlobby\SettingsDlls\*.dll"
 
   ; DLLs
   File "..\external\MSVCR71.dll"
@@ -71,9 +68,6 @@ ${IfNot} ${FileExists} "$INSTDIR\teamcolors.lua"
 ${EndIf}
 
 ;!endif ; SP_UPDATE
-
-  SetOutPath "$INSTDIR\startscripts"
-  File "..\game\startscripts\*.lua"
 
   ; Remove shaders, they are now in springcontent.sdz
   Delete "$INSTDIR\shaders\*.fp"

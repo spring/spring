@@ -31,6 +31,10 @@ public:
 	bool ReachedEnd() const;
 
 	float GetNextReadTime() const;
+	const std::string& GetSetupScript() const
+	{
+		return setupScript;
+	};
 
 private:
 	CFileHandler* playbackDemo;
@@ -38,6 +42,7 @@ private:
 	float nextDemoRead;
 	int bytesRemaining;
 	DemoStreamChunkHeader chunkHeader;
+	std::string setupScript;	// the original, unaltered version from script
 };
 
 #endif

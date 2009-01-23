@@ -76,6 +76,7 @@ GameParticipant::GameParticipant()
 : myState(UNCONNECTED)
 , cpuUsage (0.0f)
 , ping (0)
+, lastKeyframeResponse(0)
 , isLocal(false)
 {
 }
@@ -423,13 +424,15 @@ void CGameServer::Update()
 			float cpu[MAX_PLAYERS];
 			float refCpu=0.0f;
 			for (unsigned a = 0; a < players.size(); ++a) {
-				if (players[a].myState >= GameParticipant::INGAME) {
+				if (players[a].myState == GameParticipant::INGAME) {
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, players[a].ping));
-					if (players[a].cpuUsage > refCpu)
-						refCpu = players[a].cpuUsage;
-					cpu[curpos]=players[a].cpuUsage;
-					ping[curpos]=players[a].ping;
-					++curpos;
+					if(!enforceSpeed || !players[a].spectator) {
+						if (players[a].cpuUsage > refCpu)
+							refCpu = players[a].cpuUsage;
+						cpu[curpos]=players[a].cpuUsage;
+						ping[curpos]=players[a].ping;
+						++curpos;
+					}
 				}
 			}
 
@@ -474,7 +477,7 @@ void CGameServer::Update()
 	else if (serverframenum > 0 || demoReader)
 	{
 		CreateNewFrame(true, false);
-		if (!sentGameOverMsg && !demoReader)
+		if (serverframenum > GAME_SPEED && !sentGameOverMsg && !demoReader)
 			CheckForGameEnd();
 	}
 
@@ -528,6 +531,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 	switch (inbuf[0]){
 		case NETMSG_KEYFRAME:
 			players[a].ping = serverframenum-*(int*)&inbuf[1];
+			players[a].lastKeyframeResponse = *(int*)&inbuf[1];
 			break;
 
 		case NETMSG_PAUSE:
@@ -1197,6 +1201,9 @@ void CGameServer::CheckForGameEnd()
 		return;
 	}
 
+	if (setup->gameMode == GameMode::OpenEnd)
+		return;
+
 	int numActiveAllyTeams = 0;
 	int numActiveTeams[MAX_TEAMS]; // active teams per ally team
 	memset(numActiveTeams, 0, sizeof(numActiveTeams));
@@ -1272,16 +1279,17 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 				timeElapsed=200;
 			}
 
-#ifdef DEBUG
-			if(gameClientUpdated){
-				gameClientUpdated=false;
-			}
-#endif
-
 			timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed) / 1000.0f;
 			lastTick=currentTick;
 			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
+			
+			if (hasLocalClient)
+			{
+				// needs to set lastTick and stuff, otherwise we will get all the left out NEWFRAME's at once when client has catched up
+				if (players[localClientNumber].lastKeyframeResponse + GAME_SPEED*2 <= serverframenum)
+					return;
+			}
 		}
 
 		bool rec = false;
@@ -1368,10 +1376,10 @@ void CGameServer::KickPlayer(const int playerNum)
 		}
 	}
 	else
-		Message(str( format("Attempt to kick player $d who is not connected") %playerNum ));
+		Message(str( format("Attempt to kick player %d who is not connected") %playerNum ));
 }
 
-unsigned CGameServer::BindConnection(const std::string& name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
+unsigned CGameServer::BindConnection(std::string name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
 	unsigned hisNewNumber = 0;
 	bool found = false;
@@ -1386,6 +1394,11 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 	{
 		if (name == players[i].name)
 		{
+			if (players[i].isFromDemo)
+			{
+				Message(str(format("Player %s (%i) is from demo") %name %i));
+				name += "_";
+			}
 			if (players[i].myState == GameParticipant::UNCONNECTED || players[i].myState == GameParticipant::DISCONNECTED)
 			{
 				hisNewNumber = i;
@@ -1395,6 +1408,7 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 			else
 			{
 				Message(str(format("Player %s is already ingame") %name));
+				name += "_";
 			}
 		}
 	}
@@ -1431,13 +1445,22 @@ unsigned CGameServer::BindConnection(const std::string& name, const std::string&
 
 	if (!demoReader || setup->demoName.empty()) // gamesetup from demo?
 	{
-		unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
+		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!teams[hisTeam]) // create new team
 		{
 			teams[hisTeam].reset(new GameTeam());
-			teams[hisTeam]->startpos = setup->teamStartingData[hisTeam].startPos;
 			teams[hisTeam]->readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
 			teams[hisTeam]->allyTeam = setup->teamStartingData[hisTeam].teamAllyteam;
+			if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
+				// if the player didn't choose a start position, choose one for him
+				// it should be near the center of his startbox
+				// we let the startscript handle it
+				teams[hisTeam]->startpos.x = 0;
+				teams[hisTeam]->startpos.y = -500;
+				teams[hisTeam]->startpos.z = 0;
+			} else {
+				teams[hisTeam]->startpos = setup->teamStartingData[hisTeam].startPos;
+			}
 		}
 		players[hisNewNumber].team = hisTeam;
 		if (!setup->playerStartingData[hisNewNumber].spectator)

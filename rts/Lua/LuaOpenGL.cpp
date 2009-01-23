@@ -226,7 +226,6 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(DeleteTexture);
 	REGISTER_LUA_CFUNC(TextureInfo);
 	REGISTER_LUA_CFUNC(CopyToTexture);
-	REGISTER_LUA_CFUNC(Screenshot);
 	if (GLEW_EXT_framebuffer_object) {
 		// FIXME: obsolete
 		REGISTER_LUA_CFUNC(DeleteTextureFBO);
@@ -3549,31 +3548,50 @@ int LuaOpenGL::PointParameter(lua_State* L)
 
 static bool ParseUnitTexture(const string& texture)
 {
-	if (texture[1] == 0) {
-		glEnable(GL_TEXTURE_2D);
-		if (texture.length() == 4) {
-			if (texture[3] == 0) {
-				glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
-			} else {
-				glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID() );
-			}
-		} else {
-			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
-		}
-		return true;
+	if (texture.length()<4) {
+		return false;
 	}
 
 	char* endPtr;
 	const char* startPtr = texture.c_str() + 1; // skip the '%'
-	const int unitDefID = (int)strtol(startPtr, &endPtr, 10);
+	const int id = (int)strtol(startPtr, &endPtr, 10);
 	if ((endPtr == startPtr) || (*endPtr != ':')) {
 		return false;
 	}
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
-	if (ud == NULL) {
-		return false;
+
+	endPtr++; // skip the ':'
+	if ( (startPtr-1)+texture.length() <= endPtr ) {
+		return false; // ':' is end of string, but we expect '%num:0'
 	}
-	const S3DModel* model = LoadModel(ud);
+
+
+	if (id == 0) {
+		glEnable(GL_TEXTURE_2D);
+		if (*endPtr == '0') {
+			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex1ID() );
+		}
+		else if (*endPtr == '1') {
+			glBindTexture(GL_TEXTURE_2D, texturehandler3DO->GetAtlasTex2ID() );
+		}
+		return true;
+	}
+
+	S3DModel* model;
+
+	if (id>=MAX_UNITS) {
+		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id-MAX_UNITS);
+		if (fd == NULL) {
+			return false;
+		}
+		model = LoadModel(fd);
+	} else {
+		const UnitDef* ud = unitDefHandler->GetUnitByID(id);
+		if (ud == NULL) {
+			return false;
+		}
+		model = LoadModel(ud);
+	}
+
 	const unsigned int texType = model->textureType;
 	if (texType == 0) {
 		return false;
@@ -3584,7 +3602,6 @@ static bool ParseUnitTexture(const string& texture)
 		return false;
 	}
 
-	endPtr++; // skip the ':'
 	if (*endPtr == '0') {
 		glBindTexture(GL_TEXTURE_2D, stex->tex1);
 		glEnable(GL_TEXTURE_2D);
@@ -3605,7 +3622,8 @@ int LuaOpenGL::Texture(lua_State* L)
 	// NOTE: current formats:
 	//
 	// #12          --  unitDef 12 buildpic
-	// %34%2        --  unitDef 34 s3o tex2
+	// %34:1        --  unitDef 34 s3o tex2
+	// %5034:1      --  featureDef 34+MAX_UNITS s3o tex2
 	// !56          --  lua generated texture 56
 	// $shadow      --  shadowmap
 	// $specular    --  specular cube map
@@ -4050,30 +4068,6 @@ int LuaOpenGL::CopyToTexture(lua_State* L)
 	glCopyTexSubImage2D(target, level, xoff, yoff, x, y, w, h);
 
 	if (tex->target != GL_TEXTURE_2D) {glDisable(tex->target);}
-
-	return 0;
-}
-
-
-int LuaOpenGL::Screenshot(lua_State* L)
-{
-	if (!CheckModUICtrl()) {
-		return 0;
-	}
-	const GLint x = (GLint)luaL_checknumber(L, 1);
-	const GLint y = (GLint)luaL_checknumber(L, 2);
-	const GLsizei width  = (GLsizei)luaL_checknumber(L, 3);
-	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
-	const string fileName = luaL_checkstring(L, 5);
-
-	unsigned char* buf = new unsigned char[width * height * 4];
-	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-
-	CBitmap b(buf, width, height);
-	b.ReverseYAxis();
-
-	b.Save(fileName,false);
-	delete[] buf;
 
 	return 0;
 }
@@ -5067,12 +5061,14 @@ int LuaOpenGL::ReadPixels(lua_State* L)
 
 int LuaOpenGL::SaveImage(lua_State* L)
 {
-	const string filename = luaL_checkstring(L, 1);
-
-	const int x0 = luaL_checkint(L, 2) + gu->viewPosX;
-	const int y0 = luaL_checkint(L, 3) + gu->viewPosY;
-	const int x1 = luaL_checkint(L, 4) + gu->viewPosX;
-	const int y1 = luaL_checkint(L, 5) + gu->viewPosY;
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+	const GLint x = (GLint)luaL_checknumber(L, 1);
+	const GLint y = (GLint)luaL_checknumber(L, 2);
+	const GLsizei width  = (GLsizei)luaL_checknumber(L, 3);
+	const GLsizei height = (GLsizei)luaL_checknumber(L, 4);
+	const string filename = luaL_checkstring(L, 5);
 
 	bool alpha = false;
 	bool yflip = false;
@@ -5090,18 +5086,16 @@ int LuaOpenGL::SaveImage(lua_State* L)
 		lua_pop(L, 1);
 	}
 
-	const int xsize = (x1 - x0) + 1;
-	const int ysize = (y1 - y0) + 1;
-	if ((xsize <= 0) || (ysize <= 0)) {
+	if ((width <= 0) || (height <= 0)) {
 		return 0;
 	}
-	const int memsize = xsize * ysize * 4;
+	const int memsize = width * height * 4;
 
 	unsigned char* img = new unsigned char[memsize];
 	memset(img, 0, memsize);
-	glReadPixels(x0, y0, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, img);
+	glReadPixels(x, y, width, height, GL_RGBA, GL_UNSIGNED_BYTE, img);
 
-	CBitmap bitmap(img, xsize, ysize);
+	CBitmap bitmap(img, width, height);
 	if (!yflip) {
 		bitmap.ReverseYAxis();
 	}
