@@ -18,6 +18,12 @@ struct float4 : public float3
 	float4();
 	float4(const float3& f, float w = 0.0f) : float3(f), w(w) {}
 
+	inline void operator= (const float f[3]){
+		x=f[0];
+		y=f[1];
+		z=f[2];
+	}
+
 	/// Allows implicit conversion to const float* (for passing to gl functions)
 	operator const float* () const { return &x; }
 };
@@ -134,13 +140,13 @@ public:
 		float  perlinAmplitude;
 		bool   shoreWaves;
 		bool   forceRendering; ///< if false the renderers will render it only if currentMinMapHeight<0
+		bool   hasWaterPlane;  ///< true if "MAP\WATER\WaterPlaneColor" is set
 		unsigned char numTiles;
 		std::string texture;
 		std::string foamTexture;
 		std::string normalTexture;
 		std::vector<std::string> causticTextures;
 	} water;
-	bool hasWaterPlane; ///< true if "MAP\WATER\WaterPlaneColor" is set
 
 	/** SMF specific settings */
 	struct smf_t {

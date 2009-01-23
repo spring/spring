@@ -101,12 +101,14 @@ InstallDirRegKey HKLM "${PRODUCT_DIR_REGKEY}" ""
 
 
 Function .onInit
+!ifndef TEST_BUILD
   ; check if we need to exit some processes which may be using unitsync
   call CheckTASClientRunning
   call CheckSpringDownloaderRunning
   call CheckCADownloaderRunning
   call CheckSpringLobbyRunning
   call CheckSpringSettingsRunning
+!endif
 
   ;Push $0 ; Create variable $0
 
@@ -204,10 +206,14 @@ Section "Start menu shortcuts" SEC_START
 SectionEnd
 
 Section "Desktop shortcut" SEC_DESKTOP
-${If} ${SectionIsSelected} ${SEC_TASCLIENT}
+  ${If} ${SectionIsSelected} ${SEC_TASCLIENT}
   SetOutPath "$INSTDIR"
-  CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
-${EndIf}
+    !ifdef TEST_BUILD
+      CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe" "-server taspringmaster.servegame.com:8300"
+    !else
+      CreateShortCut "$DESKTOP\${PRODUCT_NAME} battleroom.lnk" "$INSTDIR\TASClient.exe"
+    !endif
+  ${EndIf}
 SectionEnd
 
 Section "Easy content installation" SEC_ARCHIVEMOVER
@@ -226,6 +232,12 @@ SectionGroup "AI opponent plugins (Bots)"
 	Section "KAI" SEC_KAI
 	!define INSTALL
 	!include "sections\kai.nsh"
+	!undef INSTALL
+	SectionEnd
+	
+	Section "RAI" SEC_RAI
+	!define INSTALL
+	!include "sections\RAI.nsh"
 	!undef INSTALL
 	SectionEnd
 SectionGroupEnd
@@ -270,6 +282,7 @@ Section Uninstall
   !include "sections\archivemover.nsh"
   !include "sections\aai.nsh"
   !include "sections\kai.nsh"
+  !include "sections\RAI.nsh"
   !include "sections\tasclient.nsh"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"

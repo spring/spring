@@ -86,7 +86,7 @@ struct LocalModelPiece
 	float3 GetPos() const;
 	CMatrix44f GetMatrix() const;
 	float3 GetDirection() const;
-	void GetEmitDirPos(float3 &pos, float3 &dir) const;
+	bool GetEmitDirPos(float3 &pos, float3 &dir) const;
 };
 
 //FIXME redundant struct!?

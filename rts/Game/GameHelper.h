@@ -25,7 +25,7 @@ class CExplosionGenerator;
 class CGameHelper
 {
 public:
-	CGameHelper(CGame* game);
+	CGameHelper();
 	~CGameHelper();
 	bool TestAllyCone(const float3& from, const float3& dir, float length, float spread, int allyteam, CUnit* owner);
 	bool TestNeutralCone(const float3& from, const float3& dir, float length, float spread, CUnit* owner);
@@ -57,8 +57,6 @@ public:
 
 	//get the position of a unit + eventuall error due to lack of los
 	float3 GetUnitErrorPos(const CUnit* unit, int allyteam);
-
-	CGame *game;
 
 protected:
 	CExplosionGenerator *stdExplosionGenerator;

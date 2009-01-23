@@ -42,7 +42,7 @@ AMoveType::AMoveType(CUnit* owner)
 	goalPos(owner->pos),
 	reservedPad(0),
 	padStatus(0),
-	repairBelowHealth(0),
+	repairBelowHealth(0.3f),
 	progressState(Done)
 {
 }

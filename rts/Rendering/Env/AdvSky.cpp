@@ -38,6 +38,8 @@ CAdvSky::CAdvSky()
 	rawClouds=newmat2<int>(CLOUD_SIZE,CLOUD_SIZE);
 	blendMatrix=newmat3<int>(CLOUD_DETAIL,32,32);
 
+	updatecounter=0;
+
 	domeheight=cos(PI/16)*1.01f;
 	domeWidth=sin(2*PI/32)*400*1.7f;
 
@@ -67,7 +69,6 @@ CAdvSky::CAdvSky()
 	fogStart = mapInfo->atmosphere.fogStart;
 	if (fogStart>0.99f) gu->drawFog = false;
 
-	lastCloudUpdate=-30;
 	dynamicSky=true;
 	CreateClouds();
 	dynamicSky=!!configHandler.Get("DynamicSky",0);
@@ -336,22 +337,21 @@ void CAdvSky::CreateClouds()
   delete [] scrap;
 
 	CreateTransformVectors();
-	Update();
+	for(int i=0; i<CLOUD_DETAIL+7; ++i)
+		Update();
 }
 
 inline void CAdvSky::UpdatePart(int ast, int aed, int a3cstart, int a4cstart) {
 	int* rc = *rawClouds + ast;
 	unsigned char* ct = cloudTexMem + 4 * ast;
 
-	int
-		yam2 = ydif[(ast - 2) & CLOUD_MASK],
-		yam1 = ydif[(ast - 1) & CLOUD_MASK],
-		yaa  = ydif[(ast) & CLOUD_MASK],
-		ap1 = (ast + 1) & CLOUD_MASK;
+	int	yam2 = ydif[(ast - 2) & CLOUD_MASK];
+	int	yam1 = ydif[(ast - 1) & CLOUD_MASK];
+	int	yaa  = ydif[(ast) & CLOUD_MASK];
+	int	ap1 = (ast + 1) & CLOUD_MASK;
 
-	int
-		a3c = ast + a3cstart,
-		a4c = ast + a4cstart;
+	int	a3c = ast + a3cstart;
+	int	a4c = ast + a4cstart;
 
 	for (int a = ast; a < aed; ++rc, ++ct) {
 		int yap1 = ydif[ap1] += (int) cloudThickness[++a3c] - cloudThickness[++a] * 2 + cloudThickness[++a4c];
@@ -378,40 +378,42 @@ void CAdvSky::Update()
 
 	CreateDetailTex();
 
-	if(lastCloudUpdate>gs->frameNum-10)
-		return;
-
-	lastCloudUpdate=gs->frameNum;
-
-	for(int a=0; a<CLOUD_DETAIL; a++) {
-		float fade=(gs->frameNum/(70.0f*(2<<(CLOUD_DETAIL-1-a))));
-		fade-=floor(fade/2)*2;
-		if(fade>1) {
-			fade=2-fade;
-			if(!cloudDown[a]) {
-				cloudDown[a]=true;
-				CreateRandMatrix(randMatrix[a+8],1-a*0.03f);
-			}
-		} else {
-			if(cloudDown[a]) {
-				cloudDown[a]=false;
-				CreateRandMatrix(randMatrix[a],1-a*0.03f);
-			}
-		}
-		int ifade=(int)(fade*fade*(3-2*fade)*256);
-		int ifade2=256-ifade;
-
-		for(int y=0;y<32;y++){
-			for(int x=0;x<32;x++)
-				blendMatrix[a][y][x]=(randMatrix[a][y][x]*ifade+randMatrix[a+8][y][x]*ifade2)>>8;
-		}
-	}
-
-	for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++)
-		rawClouds[0][a]=0;
-
 	static int kernel[CLOUD_SIZE/4*CLOUD_SIZE/4];
-	for(int a=0; a<CLOUD_DETAIL; ++a) {
+
+	int updatepart = updatecounter++ % (CLOUD_DETAIL + 7);
+
+	switch(updatepart) { // smoothen out the workload across draw frames
+	case 0: {
+		for(int a=0; a<CLOUD_DETAIL; a++) {
+			float fade=(gs->frameNum/(70.0f*(2<<(CLOUD_DETAIL-1-a))));
+			fade-=floor(fade/2)*2;
+			if(fade>1) {
+				fade=2-fade;
+				if(!cloudDown[a]) {
+					cloudDown[a]=true;
+					CreateRandMatrix(randMatrix[a+8],1-a*0.03f);
+				}
+			} else {
+				if(cloudDown[a]) {
+					cloudDown[a]=false;
+					CreateRandMatrix(randMatrix[a],1-a*0.03f);
+				}
+			}
+			int ifade=(int)(fade*fade*(3-2*fade)*256);
+			int ifade2=256-ifade;
+
+			for(int y=0;y<32;y++){
+				for(int x=0;x<32;x++)
+					blendMatrix[a][y][x]=(randMatrix[a][y][x]*ifade+randMatrix[a+8][y][x]*ifade2)>>8;
+			}
+		}
+
+		for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++)
+			rawClouds[0][a]=0;
+		break;
+	}
+	default: { // 0<updatepart<=CLOUD_DETAIL
+		int a=updatepart-1;
 		int cs4a=(CLOUD_SIZE/4)>>a;
 		int cs8a=(CLOUD_SIZE/8)>>a;
 		int cmcs8a=CLOUD_SIZE-cs8a;
@@ -446,10 +448,10 @@ void CAdvSky::Update()
 			for(int y2=0; y2<cs4a; ++y2, ++prcy, pkernel+=CLOUD_SIZE/4) {
 				int *prcx=(*prcy)+cmcs8a, *pkrn=pkernel;
 				for(int x2=cmcs8a; x2<std::min(CLOUD_SIZE, cs4a+cmcs8a); ++x2)
-						(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2+cmcs8a], x2<CLOUD_SIZE
+					(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2+cmcs8a], x2<CLOUD_SIZE
 				prcx-=CLOUD_SIZE;
 				for(int x2=std::max(CLOUD_SIZE,cmcs8a); x2<cs4a+cmcs8a; ++x2)
-						(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2-cs8a], x2>=CLOUD_SIZE
+					(*prcx++)+=blend*(*pkrn++); // prcx = rawClouds[y2+y][x2-cs8a], x2>=CLOUD_SIZE
 			}
 		}
 		for(int x=0, bx=0, **prc=rawClouds+cmcs8a; x<cmcs8a; x+=cs8a, ++bx) {
@@ -460,34 +462,50 @@ void CAdvSky::Update()
 					(*prcx++)+=blend*(*pkrn++); // prcx =  rawClouds[y2-cs8a][x2+x], y2>=CLOUD_SIZE
 			}
 		}
+		break;
 	}
+	case CLOUD_DETAIL+1: {
+		for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++)
+			cloudThickness[a]=alphaTransform[rawClouds[0][a]>>7];
 
-	for(int a=0;a<CLOUD_SIZE*CLOUD_SIZE;a++)
-		cloudThickness[a]=alphaTransform[rawClouds[0][a]>>7];
+		cloudThickness[CLOUD_SIZE*CLOUD_SIZE]=cloudThickness[CLOUD_SIZE*CLOUD_SIZE-1];	//this one is read in one place, so to avoid reading uninitialized mem ...
 
-	cloudThickness[CLOUD_SIZE*CLOUD_SIZE]=cloudThickness[CLOUD_SIZE*CLOUD_SIZE-1];	//this one is read in one place, so to avoid reading uninitialized mem ...
+		//create the cloud shading
+		for(int a=0;a<CLOUD_SIZE;++a){
+			ydif[a]=(int)cloudThickness[(a+3*CLOUD_SIZE)] + cloudThickness[(a+2*CLOUD_SIZE)] + cloudThickness[(a+1*CLOUD_SIZE)] + 
+				cloudThickness[(a+0*CLOUD_SIZE)] - cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-1))] - 
+				cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-2))] - cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-3))];
+		}
 
-	//create the cloud shading
-	for(int a=0;a<CLOUD_SIZE;++a){
-		ydif[a]=(int)cloudThickness[(a+3*CLOUD_SIZE)] + cloudThickness[(a+2*CLOUD_SIZE)] + cloudThickness[(a+1*CLOUD_SIZE)] + 
-			cloudThickness[(a+0*CLOUD_SIZE)] - cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-1))] - 
-			cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-2))] - cloudThickness[(a+CLOUD_SIZE*(CLOUD_SIZE-3))];
+		ydif[0] += cloudThickness[0+CLOUD_SIZE*(CLOUD_SIZE-3)] - cloudThickness[0]*2 + cloudThickness[0+4*CLOUD_SIZE];
+		break;
 	}
-
-	ydif[0] += cloudThickness[0+CLOUD_SIZE*(CLOUD_SIZE-3)] - cloudThickness[0]*2 + cloudThickness[0+4*CLOUD_SIZE];
-
-	UpdatePart(0, CLOUD_SIZE*3-1, CLOUD_SIZE*(CLOUD_SIZE-3), 4*CLOUD_SIZE);
-	UpdatePart(CLOUD_SIZE*3-1, CLOUD_SIZE*(CLOUD_SIZE-4)-1, -3*CLOUD_SIZE, 4*CLOUD_SIZE);
-	UpdatePart(CLOUD_SIZE*(CLOUD_SIZE-4)-1, CLOUD_SIZE*CLOUD_SIZE, -3*CLOUD_SIZE, CLOUD_SIZE*(4-CLOUD_SIZE));
-
-	int modDensity=(int) ((1-cloudDensity)*256);
-	for(int a=0; a<CLOUD_SIZE*CLOUD_SIZE; ++a){
-		int f=(rawClouds[0][a]>>8)-modDensity;
-		cloudTexMem[a*4+3]=std::max(0, std::min(255, f));
+	case CLOUD_DETAIL+2: {
+		UpdatePart(0, CLOUD_SIZE*3-1, CLOUD_SIZE*(CLOUD_SIZE-3), 4*CLOUD_SIZE);
+		break;
 	}
-
-	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
-	glTexSubImage2D(GL_TEXTURE_2D,0, 0,0,CLOUD_SIZE, CLOUD_SIZE,GL_RGBA, GL_UNSIGNED_BYTE, cloudTexMem);
+	case CLOUD_DETAIL+3: {
+		UpdatePart(CLOUD_SIZE*3-1, CLOUD_SIZE*(CLOUD_SIZE-4)-1, -3*CLOUD_SIZE, 4*CLOUD_SIZE);
+		break;
+	}
+	case CLOUD_DETAIL+4: {
+		UpdatePart(CLOUD_SIZE*(CLOUD_SIZE-4)-1, CLOUD_SIZE*CLOUD_SIZE, -3*CLOUD_SIZE, CLOUD_SIZE*(4-CLOUD_SIZE));
+		break;
+	}
+	case CLOUD_DETAIL+5: {
+		int modDensity=(int) ((1-cloudDensity)*256);
+		for(int a=0; a<CLOUD_SIZE*CLOUD_SIZE; ++a){
+			int f=(rawClouds[0][a]>>8)-modDensity;
+			cloudTexMem[a*4+3]=std::max(0, std::min(255, f));
+		}
+		break;
+	}
+	case CLOUD_DETAIL+6: {
+		glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
+		glTexSubImage2D(GL_TEXTURE_2D,0, 0,0,CLOUD_SIZE, CLOUD_SIZE,GL_RGBA, GL_UNSIGNED_BYTE, cloudTexMem);
+		break;
+	}
+	}
 }
 
 void CAdvSky::CreateRandMatrix(int **matrix,float mod)

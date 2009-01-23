@@ -13,6 +13,7 @@
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
+#include "Map/MapInfo.h"
 #include "myMath.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/Env/BaseWater.h"
@@ -590,6 +591,9 @@ void CFeatureHandler::Draw()
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
+	glEnable(GL_FOG);
+	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+
 	unitDrawer->SetupForUnitDrawing();
 	unitDrawer->SetupFor3DO();
 	DrawRaw(0, &drawFar);
@@ -598,19 +602,23 @@ void CFeatureHandler::Draw()
 	unitDrawer->CleanUpUnitDrawing();
 
 	if (drawFar.size()>0) {
-		CVertexArray* va = GetVertexArray();
-		va->Initialize();
-		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
 		glAlphaFunc(GL_GREATER, 0.8f);
 		glEnable(GL_ALPHA_TEST);
 		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 		glColor3f(1.0f, 1.0f, 1.0f);
-		glEnable(GL_FOG);
+
+		CVertexArray* va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
 		for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
 			DrawFar(*usi, va);
 		}
 		va->DrawArrayTN(GL_QUADS);
+
+		glDisable(GL_ALPHA_TEST);
 	}
+
+	glDisable(GL_FOG);
 }
 
 
@@ -627,7 +635,7 @@ void CFeatureHandler::DrawShadowPass()
 	unitDrawer->DrawQuedS3O();
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
-	glDisable( GL_VERTEX_PROGRAM_ARB );
+	glDisable(GL_VERTEX_PROGRAM_ARB);
 }
 
 class CFeatureDrawer : public CReadMap::IQuadDrawer

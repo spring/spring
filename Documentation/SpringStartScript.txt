@@ -1,0 +1,108 @@
+// A clients example using the new syntax
+// If spring is started as client, it needs the following information to work properly
+
+[GAME]
+{
+	HostIP=xxx.xxx.xxx.xxx;
+	HostPort=xxx;       // standard is 8452
+	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select
+
+	MyPlayerName=somename;
+	IsHost=x;			// 0 - no server will be started in this instance, 1 - start a server
+}
+
+// A host example (or client using the old syntax)
+// note that the same values for clients also need to set here
+[GAME]
+{
+	Mapname=;           //with .smf extension
+	Gametype=xtape.sd7; //the primary mod archive
+	Scriptname=Commanders;
+	StartPosType=x;     // 0 fixed, 1 random, 2 choose in game, 3 choose before game (see StartPosX)
+
+	Demofile=demo.sdf;  // if set this game is a multiplayer demo replay
+	Savefile=save.ssf;  // if set this game is a continuation of a saved game
+
+	HostIP=xxx.xxx.xxx.xxx; // you normally won't set this as host
+	HostPort=xxx;       // usually 8452
+	SourcePort=0;       // set this if you want a different source port (as client)
+	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
+
+	MyPlayerNum=x;      // deprecated, better use myPlayerName
+	MyPlayerName=somename; //can be used instead of MyPlayerNum (will overwrite it in fact)
+
+	IsHost=x;			// 0 - no server will be started in this instance, 1 - start a server (if not set, you need myPlayerNum)
+	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
+	NumTeams=y;         // same here, set this to check if the script is right
+	NumAllyTeams=z;     // see above
+
+	// a player (player 0 is the host only if IsHost is not set)
+	[PLAYER0]
+	{
+		Name=name;
+		Spectator=0;
+		Team=number;
+		IsFromDemo=0;   // use only in combination with Demofile (see above)
+		CountryCode=;   // country of the player, if known (nl/de/it etc.)
+		Rank=-1;
+	}
+	//more players
+
+	// players in this will share the same units (start with one commander etc)
+	[TEAM0]
+	{
+		TeamLeader=x;   // player number that is the "leader"
+		AllyTeam=number;
+		RgbColor=red green blue;  // red green blue in range [0-1]
+		Side=Arm/Core;  // other sides possible with user mods i suppose
+		Handicap=0-100; // Percent bonus on all resources collected ?
+		StartPosX=0;    // Use these in combination with StartPosType=3
+		StartPosZ=0;    // range is in map coordinates as returned by unitsync (NOT like StartRectTop et al)
+		AiDLL=file;     // If this line exists the team will have a global ai loaded from
+		// the file, the teamleader field indicates which computer the ai will run on.
+	}
+	//more teams
+
+	// teams in ally team share los etc and cant break alliance, every team must be in exactly one ally team
+	[ALLYTEAM0]
+	{
+		NumAllies=0;
+		Ally0=(AllyTeam number); //means that this team is allied with the other, not necesarily the reverse
+
+		StartRectTop=0;    // Use these in combination with StartPosType=2
+		StartRectLeft=0;   //   (ie. select in map)
+		StartRectBottom=1; // range is 0-1: 0 is left or top edge,
+		StartRectRight=1;  //   1 is right or bottom edge
+	}
+	//more ally teams
+
+	//something for selecting which unit files to disable or restrict
+
+	NumRestrictions=xx;
+
+	[RESTRICT]
+	{
+		Unit0=armah;
+		Limit0=0;       // use 0 for all units that should be completely disabled
+		Unit1=corvp;
+		Limit1=50;      // >0 can be used for limiting, like build restrictions in TA
+		//...
+	}
+	[MODOPTIONS]
+	{
+		StartMetal=1000;
+		StartEnergy=1000;
+		MaxUnits=500;       // per team
+		GameMode=x;         // 0 cmdr dead->game continues, 1 cmdr dead->game ends, 2 lineage, 3 openend
+		LimitDgun=0;        // limit dgun to fixed radius around startpos?
+		DiminishingMMs=0;   // diminish metal maker's metal production for every new one of them?
+		DisableMapDamage=0; // disable map craters?
+		GhostedBuildings=1; // ghost enemy buildings after losing los on them
+		NoHelperAIs=0;      // are GroupAIs and other helper AIs allowed?
+		LuaGaia=1;          // Use LuaGaia?
+		LuaRules=1;         // Use LuaRules?
+		FixedAllies=1;      // Are ingame alliances allowed?
+		MaxSpeed=3;         // speed limits at game start
+		MinSpeed=0.3;
+	}
+}

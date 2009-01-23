@@ -63,9 +63,10 @@ CSelectedUnits::~CSelectedUnits()
 }
 
 
-void CSelectedUnits::Init()
+void CSelectedUnits::Init(unsigned numPlayers)
 {
 	buildIconsFirst = !!configHandler.Get("BuildIconsFirst", 0);
+	netSelected.resize(numPlayers);
 }
 
 
@@ -260,11 +261,11 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	}
 
 	if (fromUser) {		//add some statistics
-		playerHandler->Player(gu->myPlayerNum)->currentStats->numCommands++;
+		playerHandler->Player(gu->myPlayerNum)->currentStats.numCommands++;
 		if (selectedGroup!=-1) {
-			playerHandler->Player(gu->myPlayerNum)->currentStats->unitCommands+=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
+			playerHandler->Player(gu->myPlayerNum)->currentStats.unitCommands+=grouphandlers[gu->myTeam]->groups[selectedGroup]->units.size();
 		} else {
-			playerHandler->Player(gu->myPlayerNum)->currentStats->unitCommands+=selectedUnits.size();
+			playerHandler->Player(gu->myPlayerNum)->currentStats.unitCommands+=selectedUnits.size();
 		}
 	}
 
@@ -533,12 +534,14 @@ void CSelectedUnits::DependentDied(CObject *o)
 
 void CSelectedUnits::NetSelect(vector<int>& s,int player)
 {
+	assert(unsigned(player) < netSelected.size());
 	netSelected[player] = s;
 }
 
 
 void CSelectedUnits::NetOrder(Command &c, int playerID)
 {
+	assert(unsigned(playerID) < netSelected.size());
 	selectedUnitsAI.GiveCommandNet(c, playerID);
 
 	if (netSelected[playerID].size() > 0) {
@@ -559,8 +562,8 @@ void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerID)
 		return;
 	}
 	if (!player->CanControlTeam(unit->team)) {
-		logOutput.Print("Invalid order from player %i for (unit %i, team %i)",
-		                playerID, unitid, unit->team);
+		logOutput.Print("Invalid order from player %i for (unit %i %s, team %i)",
+		                playerID, unitid, unit->unitDefName.c_str(), unit->team);
 		return;
 	}
 

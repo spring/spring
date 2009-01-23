@@ -465,9 +465,8 @@ int PackType(lua_State* L)
 		for (int i = 1;
 		     lua_rawgeti(L, 1, i), lua_isnumber(L, -1);
 		     lua_pop(L, 1), i++) {
-			vals.push_back((T)lua_tonumber(L, i));
+			vals.push_back((T)lua_tonumber(L, -1));
 		}
-		return 1;
 	}
 	else {
 		const int args = lua_gettop(L);

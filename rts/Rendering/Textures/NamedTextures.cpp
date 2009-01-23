@@ -105,78 +105,83 @@ bool CNamedTextures::Bind(const string& texName)
 	//! get the image
 	CBitmap bitmap;
 	TexInfo texInfo;
+	GLuint texID = 0;
+
 	if (!bitmap.Load(filename)) {
 		texMap[texName] = texInfo;
 		glBindTexture(GL_TEXTURE_2D, 0);
 		return false;
 	}
 
-	if (invert) {
-		bitmap.InvertColors();
-	}
-	if (greyed) {
-		bitmap.GrayScale();
-	}
-	if (tint) {
-		bitmap.Tint(tintColor);
-	}
-
-	//! make the texture
-	GLuint texID;
-	glGenTextures(1, &texID);
-	glBindTexture(GL_TEXTURE_2D, texID);
-
-	if (clamped) {
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-	}
-
-	if (nearest || linear) {
-		if (border) {
-			GLfloat white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, white);
-		}
-
-		if (nearest) {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		} else {
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		}
-
-		//! Note: NPOTs + nearest filtering seems broken on ATIs
-		if ( !(count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) &&
-		     (!GLEW_ARB_texture_non_power_of_two || (gu->atiHacks && nearest)) )
-		{
-			bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
-		}
-
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-		             bitmap.xsize, bitmap.ysize, border ? 1 : 0,
-		             GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+	if (bitmap.type == CBitmap::BitmapTypeDDS) {
+		texID = bitmap.CreateDDSTexture();
 	} else {
-		//! MIPMAPPING (default)
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		if (invert) {
+			bitmap.InvertColors();
+		}
+		if (greyed) {
+			bitmap.GrayScale();
+		}
+		if (tint) {
+			bitmap.Tint(tintColor);
+		}
 
-		if ((count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) ||
-		    GLEW_ARB_texture_non_power_of_two)
-		{
-			glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-			               GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+		//! make the texture
+		glGenTextures(1, &texID);
+		glBindTexture(GL_TEXTURE_2D, texID);
+
+		if (clamped) {
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+		}
+
+		if (nearest || linear) {
+			if (border) {
+				GLfloat white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+				glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, white);
+			}
+
+			if (nearest) {
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			} else {
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			}
+
+			//! Note: NPOTs + nearest filtering seems broken on ATIs
+			if ( !(count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) &&
+				(!GLEW_ARB_texture_non_power_of_two || (gu->atiHacks && nearest)) )
+			{
+				bitmap = bitmap.CreateRescaled(next_power_of_2(bitmap.xsize),next_power_of_2(bitmap.ysize));
+			}
+
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+						bitmap.xsize, bitmap.ysize, border ? 1 : 0,
+						GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 		} else {
-			gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
-		      	            GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
-		}
-	}
+			//! MIPMAPPING (default)
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
-	if (aniso && GLEW_EXT_texture_filter_anisotropic) {
-		static GLfloat maxAniso = -1.0f;
-		if (maxAniso == -1.0f) {
-			glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+			if ((count_bits_set(bitmap.xsize)==1 && count_bits_set(bitmap.ysize)==1) ||
+				GLEW_ARB_texture_non_power_of_two)
+			{
+				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
+							GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+			} else {
+				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
+								GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
+			}
 		}
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
+
+		if (aniso && GLEW_EXT_texture_filter_anisotropic) {
+			static GLfloat maxAniso = -1.0f;
+			if (maxAniso == -1.0f) {
+				glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &maxAniso);
+			}
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, maxAniso);
+		}
 	}
 
 	texInfo.id    = texID;

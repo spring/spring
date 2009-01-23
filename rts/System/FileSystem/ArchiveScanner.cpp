@@ -25,8 +25,7 @@ using std::string;
 using std::vector;
 
 
-static const int debugChecksums = false;
-
+CLogSubsystem LOG_ARCHIVESCANNER("ArchiveScanner");
 
 // fix for windows
 #ifndef S_ISDIR
@@ -773,6 +772,7 @@ vector<CArchiveScanner::ModData> CArchiveScanner::GetAllMods() const
 
 vector<string> CArchiveScanner::GetArchives(const string& root, int depth)
 {
+	logOutput.Print(LOG_ARCHIVESCANNER, "GetArchives: %s (depth %u)\n", root.c_str(), depth);
 	// Protect against circular dependencies
 	// (worst case depth is if all archives form one huge dependency chain)
 	if ((unsigned)depth > archiveInfo.size()) {
@@ -872,9 +872,11 @@ unsigned int CArchiveScanner::GetArchiveChecksum(const string& name)
 
 	std::map<string, ArchiveInfo>::iterator aii = archiveInfo.find(lcname);
 	if (aii == archiveInfo.end()) {
+		logOutput.Print(LOG_ARCHIVESCANNER, "%s checksum: not found (0)\n", name.c_str());
 		return 0;
 	}
 
+	logOutput.Print(LOG_ARCHIVESCANNER, "%s checksum: %d/%u\n", name.c_str(), aii->second.checksum, aii->second.checksum);
 	return aii->second.checksum;
 }
 
@@ -909,12 +911,9 @@ unsigned int CArchiveScanner::GetModChecksum(const string& root)
 	unsigned int checksum = 0;
 
 	for (unsigned int a = 0; a < ars.size(); a++) {
-		const unsigned int tmp = GetArchiveChecksum(ars[a]);
-		if (debugChecksums) {
-			logOutput.Print("mod checksum %s: %u/%d", ars[a].c_str(), tmp, (int)tmp);
-		}
-		checksum ^= tmp;
+		checksum ^= GetArchiveChecksum(ars[a]);
 	}
+	logOutput.Print(LOG_ARCHIVESCANNER, "mod checksum %s: %d/%u\n", root.c_str(), checksum, checksum);
 	return checksum;
 }
 
@@ -925,12 +924,9 @@ unsigned int CArchiveScanner::GetMapChecksum(const string& mapName)
 	const vector<string> ars = GetArchivesForMap(mapName);
 	unsigned int checksum = 0;
 	for (unsigned int a = 0; a < ars.size(); a++) {
-		const unsigned int tmp = GetArchiveChecksum(ars[a]);
-		if (debugChecksums) {
-			logOutput.Print("map checksum %s: %u/%d", ars[a].c_str(), tmp, (int)tmp);
-		}
-		checksum ^= tmp;
+		checksum ^= GetArchiveChecksum(ars[a]);
 	}
+	logOutput.Print(LOG_ARCHIVESCANNER, "map checksum %s: %d/%u\n", mapName.c_str(), checksum, checksum);
 	return checksum;
 }
 

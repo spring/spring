@@ -147,6 +147,7 @@ public:
 		ChangeCaptured
 	};
 	virtual bool ChangeTeam(int team, ChangeType type);
+	virtual void StopAttackingAllyTeam(int ally);
 
 	// should not be here
 	void DrawS3O();
@@ -449,6 +450,9 @@ private:
 	static float expHealthScale;
 	static float expReloadScale;
 	static float expGrade;
+
+public:
+	void LogMessage(const char*, ...);
 };
 
 #endif /* UNIT_H */

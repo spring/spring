@@ -1,7 +1,63 @@
 Spring change log
 
-0.78.0:
-(notice the new version number scheme, its MAJOR (0.78) - MINOR (0))
+0.78.2.1:
+Bugfixes:
+ - fix for game refusing to speed up after a slowdown
+ - set MaxSpeed to 20 on (test)singleplayer
+ - fix insta-gameover vs. AIs
+ - fixed the server to run away from the local player on high gamespeeds
+
+
+0.78.2:
+General bugfixes:
+ - fix crash on gamestart with lots of players
+ - should fix most of the desyncs
+
+Engine:
+ - fix startscript not written in demo header
+ - units trying to stay in LOS of a target account for mip levels
+ - fix the no-commander-for-side-Arm problem for local games not based on TA content
+ - cob: made modelpiece mapping case-insensitive
+ - initialize relPos in EmitSfx
+ - fix for a fix in GetEmitDirPos
+ - fix aircraft not flying back to repair pads when all are reserved
+ - planes that are being refuelled aren't able to fire anymore
+ - clamp map position in unitLoader.
+ - players who didn't choose a start position start in their ally box
+ - fixed short command line params on windows (mantis #1271)
+ - don't try to kill dead teams
+ - add gamemode 3 (no game over) and make it the default in non-AI non-script.txt games
+ - removed luabind + lua-startscripts
+ - fixed multithreaded pathing
+ - removed partial match test for piece mapping
+ - fixed emitsfx crash (Mantis: #1252,#1238 & #1242)
+ - stunned planes shouldn't keep repair pads reserved
+ - always apply a miniscule amount of impulse when a unit is damaged
+
+User Interface:
+ - fixed AltTab bug on gpus w/o FBO support
+ - EndGameBox shouldn't render stats if the game hasn't started
+ - changed minimap_startbox.lua to not show cones in top left (#1272)
+ - StartPosSelector now unloads itself when game is started without sending start positions.
+ - fixed refraction=2, disabled endless ocean for maps that don't show any water at the start of the game
+ - fix #1258 (FBO crash on exit with non-FBO gpus)
+
+Lua:
+ - gl.Texture() can now load the textures of s3o features, syntax is gl.Texture('%'..(Game.maxUnits+featureDefID)..(':0' or ':1'))
+ - added a new (unsynced) callout Spring.SetWaterParams, it needs cheating enabled and allows you to edit the mapwater settings ingame
+ - fix Luamsg if null-characters where inside
+ - add an GetUnitTransformMatrix unsynced callout (handy for shadow algs)
+
+Installer:
+ - add RAI to installer
+ - allow the user to close TASClient / downloader during install
+
+
+0.78.1.1:
+ - fix Features (wrecks, rocks) not beeing drawn with reflective units
+
+0.78.1:
+(notice the new version number scheme, its MAJOR (0.78) - MINOR (1))
 Crashes:
  - fix crash on window resizing
  - more groundDecal fixes
@@ -24,7 +80,9 @@ Engine:
  - Don't let static beamlasers overshoot
  - Added new collision volume types: sphere, footprint.
  - Units/features with no collision volume defined get 'footprint' type by default now, this restores the 0.76b1 behaviour as default
-
+ - Gave COB function BlockShotX a third parameter, userTarget, uses the engine's hasUserTarget value, that seems to reflect when unit has an attack order
+ - fix teamstats in demofile
+ - don't fail with "network unreachable" instantly, but wait until timeout or connection fix
 
 Spring start / script.txt changes:
  - added Game/MyPlayerName (MyPlayerNum is now deprecated and will be removed sometimes)
@@ -32,6 +90,7 @@ Spring start / script.txt changes:
  - Player / Team / Mod - options are not needed anymore for clients, they are transfered from the server once ingame
 
 User Interface:
+ - Argh's ground-decal shader shadow tweak
  - enable startboxes by default
  - decreased CPU load and increase drawing speed lines
  - fix small memleak when resizing the window
@@ -44,6 +103,7 @@ User Interface:
  - made forcestart a real shortcut, so you can unbind it
  - don't draw the terrain if curMaxHeight<0 and voidwater
  - fix long commandline options for linux build
+ - dynamic sky rednerspeed improvements
 
 Lua:
  - added Spring.GetLastMessagePositions() (returns the 10 last message positions)
@@ -78,8 +138,7 @@ Unitsync:
 
 Installer:
  - Fix groups.ini being overwritten by installer
- - Update to Kernel Panic 3.0
- - Remove old CA shortcuts
+ - removed all maps and mods from the installer
 
 AAI v0.875	
 - Current amount of land/water within the base is taken into account when selecting factories (e.g. don't order water factories on a land map anymore)

@@ -13,6 +13,7 @@
 #include "LogOutput.h"
 #include "FileSystem/FileSystem.h"
 #include "Game/GameSetup.h"
+#include "Game/PlayerHandler.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 
@@ -24,11 +25,6 @@ CGlobalAITestScript::CGlobalAITestScript(std::string dll):
 	CScript(std::string("GlobalAI test (") + filesystem.GetFilename(dll) + std::string(")")),
 	dllName(dll)
 {
-	// make sure CSelectedUnits::AiOrder()
-	// still works without a setup script
-	teamHandler->Team(1)->isAI = true;
-	teamHandler->Team(1)->dllAI = dllName;
-	teamHandler->Team(1)->leader = 0;
 }
 
 
@@ -39,6 +35,14 @@ CGlobalAITestScript::~CGlobalAITestScript(void)
 
 void CGlobalAITestScript::GameStart(void)
 {
+	// make sure CSelectedUnits::AiOrder()
+	// still works without a setup script
+	// do not put in costructor, it will run in non-testglobalai-games too
+	teamHandler->Team(1)->isAI = true;
+	teamHandler->Team(1)->dllAI = dllName;
+	teamHandler->Team(1)->leader = 0;
+	playerHandler->Player(0)->SetControlledTeams();
+
 	globalAI->CreateGlobalAI(1, dllName.c_str());
 
 	teamHandler->Team(0)->energy        = 1000;

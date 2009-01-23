@@ -113,10 +113,12 @@ public:
 	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection, float3(1.0f,1.0f,1.0f))
 	//SCRIPT_TO_LOCALPIECE_FUNC(int,        GetPieceVertCount, GetVertCount, 0)
 
-	inline void GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const {
+	inline bool GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const {
 		LocalModelPiece* p = GetLocalModelPiece(scriptnum);
 		if (p != NULL) {
 			return p->GetEmitDirPos(pos, dir);
+		} else {
+			return true;
 		}
 	};
 

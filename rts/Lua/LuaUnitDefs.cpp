@@ -712,6 +712,10 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_INT("moveType",   ud.moveType);
 	ADD_FLOAT("speed",    ud.speed);
 	ADD_FLOAT("turnRate", ud.turnRate);
+	ADD_BOOL("turnInPlace", ud.turnInPlace);
+	ADD_FLOAT("turnInPlaceDistance", ud.turnInPlaceDistance);
+	ADD_FLOAT("turnInPlaceSpeedLimit", ud.turnInPlaceSpeedLimit);
+
 	ADD_BOOL("upright",   ud.upright);
 	ADD_BOOL("collide", ud.collide);
 

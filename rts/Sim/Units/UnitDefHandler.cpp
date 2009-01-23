@@ -375,6 +375,8 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.turnRate    = udTable.GetFloat("turnRate",     0.0f);
 	ud.turnInPlace = udTable.GetBool( "turnInPlace",  true);
+	ud.turnInPlaceDistance = udTable.GetFloat("turnInPlaceDistance", 350.f);
+	ud.turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", 15.f);
 
 	bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	ud.canFireControl = udTable.GetBool("canFireControl", !noAutoFire);

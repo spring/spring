@@ -1028,8 +1028,8 @@ void CGuiHandler::SetCursorIcon() const
 	}
 
 	if (gatherMode &&
-	    (mouse->cursorText == "Move") ||
-	    (mouse->cursorText == "Fight")) {
+	    ((mouse->cursorText == "Move") ||
+	    (mouse->cursorText == "Fight"))) {
 		newCursor = "GatherWait";
 	}
 
@@ -3874,6 +3874,11 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	}
 
 	glLineWidth(1.0f);
+
+	if (!onMinimap) {
+		glDepthMask(GL_TRUE);
+		glDisable(GL_BLEND);
+	}
 
 /*	if (minimapCoords) {
 		camera->pos = tmpCamPos;

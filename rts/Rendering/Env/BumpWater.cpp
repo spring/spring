@@ -199,7 +199,8 @@ CBumpWater::CBumpWater()
 	depthBits    = configHandler.Get("BumpWaterDepthBits", (gu->atiHacks)?16:24);
 	blurRefl     = !!configHandler.Get("BumpWaterBlurReflection", 0);
 	shoreWaves   = (!!configHandler.Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
-	endlessOcean = (!!configHandler.Get("BumpWaterEndlessOcean", 1)) && mapInfo->hasWaterPlane;
+	endlessOcean = (!!configHandler.Get("BumpWaterEndlessOcean", 1)) && mapInfo->water.hasWaterPlane
+	               && ((readmap->minheight <= 0.0f) || (mapInfo->water.forceRendering));
 	dynWaves     = (!!configHandler.Get("BumpWaterDynamicWaves", 1)) && (mapInfo->water.numTiles>1);
 
 	if (refraction>1)
@@ -293,7 +294,7 @@ CBumpWater::CBumpWater()
 	/** CREATE TEXTURES **/
 	if ((refraction>0) || depthCopy) {
 		//! ati's don't have glsl support for texrects
-		if (GLEW_ARB_texture_rectangle && !GLEW_ATI_envmap_bumpmap) {
+		if (GLEW_ARB_texture_rectangle && !gu->atiHacks) {
 			target = GL_TEXTURE_RECTANGLE_ARB;
 			screenTextureX = gu->viewSizeX;
 			screenTextureY = gu->viewSizeY;
@@ -345,8 +346,8 @@ CBumpWater::CBumpWater()
 		GLuint depthFormat = GL_DEPTH_COMPONENT; 
 		switch (gu->depthBufferBits) { /// use same depth as screen framebuffer
 			case 16: depthFormat = GL_DEPTH_COMPONENT16; break;
-			case 24: depthFormat = GL_DEPTH_COMPONENT24; break;
-			case 32: depthFormat = GL_DEPTH_COMPONENT32; break;
+			case 24: if (!gu->atiHacks) { depthFormat = GL_DEPTH_COMPONENT24; break; } //ATIs fall through and use 32bit!
+			default: depthFormat = GL_DEPTH_COMPONENT32; break;
 		}
 		glTexImage2D(target, 0, depthFormat, screenTextureX, screenTextureY, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 	}
@@ -442,7 +443,7 @@ CBumpWater::CBumpWater()
 		const float shadingZ = (float)gs->mapy / gs->pwr2mapy;
 
 		GLSLDefineConst4f(definitions, "TexGenPlane", 1.0f/mapX, 1.0f/mapZ, shadingX/mapX, shadingZ/mapZ);
-		GLSLDefineConstf2(definitions, "ShadingPlane", shadingX-0.2/gs->pwr2mapx,shadingZ-0.2/gs->pwr2mapy);
+		GLSLDefineConstf2(definitions, "ShadingPlane", shadingX,shadingZ);
 	}
 
 	/** LOAD SHADERS **/
@@ -566,7 +567,7 @@ CBumpWater::~CBumpWater()
 
 void CBumpWater::Update()
 {
-	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
+	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
 		return;
 
 	float3 w = wind.GetCurrentWind();
@@ -610,7 +611,7 @@ void CBumpWater::UpdateWater(CGame* game)
 {
 	DeleteOldWater(this);
 
-	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f) || mapInfo->map.voidWater)
+	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
 		return;
 
 	if (refraction>1) DrawRefraction(game);
@@ -868,7 +869,7 @@ void CBumpWater::UpdateDynWaves(const bool initialize)
 
 void CBumpWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 1.0f)
+	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f)
 		return;
 
 	if (refraction == 1) {
@@ -922,7 +923,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 		refractFBO.Bind();
 
 	camera->Update(false);
-	glViewport(0,0,screenTextureX,screenTextureY);
+	glViewport(0,0,gu->viewSizeX,gu->viewSizeY);
 
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_FOG);
@@ -955,7 +956,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 		refractFBO.Unbind();
 	}else{
 		glBindTexture(target, refractTexture);
-		glCopyTexSubImage2D(target,0,0,0,0,0,screenTextureX,screenTextureY);
+		glCopyTexSubImage2D(target,0,0,0,0,0,gu->viewSizeX,gu->viewSizeY);
 	}
 
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);

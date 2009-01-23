@@ -50,14 +50,14 @@ CBFGroundDrawer::CBFGroundDrawer(CSmfReadMap* rm) :
 	textures = new CBFGroundTextures(map);
 
 	viewRadius = configHandler.Get("GroundDetail", 40);
-	viewRadius += (viewRadius & 1);
+	viewRadius += (viewRadius & 1); //! we need a multiple of 2
 
 	waterDrawn = false;
 
 	waterPlaneCamInDispList  = 0;
 	waterPlaneCamOutDispList = 0;
 
-	if (mapInfo->hasWaterPlane) {
+	if (mapInfo->water.hasWaterPlane) {
 		waterPlaneCamInDispList = glGenLists(1);
 		glNewList(waterPlaneCamInDispList,GL_COMPILE);
 		CreateWaterPlanes(false);
@@ -238,7 +238,7 @@ inline void CBFGroundDrawer::FindRange(int &xs, int &xe, std::vector<fline> &lef
 
 #define CLAMP(i) std::max(0, std::min((i), maxIdx))
 
-inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
+inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 	if (!BigTexSquareRowVisible(bty)) {
 		//! skip this entire row of squares if we can't see it
 		return;
@@ -284,18 +284,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 	float cy2 = cam2->pos.z / SQUARE_SIZE;
 
 	for (int btx = sx; btx < ex; ++btx) {
-		//! must be in drawLos mode or shadows must be off
-		if (DrawExtraTex() || !shadowHandler->drawShadows) {
-			textures->SetTexture(btx, bty);
-			SetTexGen(1.0f / 1024, 1.0f / 1024, -btx, -bty);
-
-			if (overrideVP) {
-				glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -btx, -bty, 0, 0);
-			}
-		} else {
-			textures->SetTexture(btx, bty);
-			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -btx, -bty, 0, 0);
-		}
+		SetupBigSquare(btx,bty);
 
 		ma->Initialize();
 
@@ -667,13 +656,15 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty, unsigned int overrideVP) {
 					}
 					EndStripQ(ma);
 				}
-			}
-		}
+			} //for (y = ystart; y < yend; y += lod)
+
+		} //for (int lod = 1; lod < neededLod; lod <<= 1)
+
 		DrawGroundVertexArrayQ(ma);
 	}
 }
 
-void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int overrideVP)
+void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int VP)
 {
 	if (mapInfo->map.voidWater && map->currMaxHeight<0) {
 		return;
@@ -683,6 +674,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
+	overrideVP = VP;
 	waterDrawn = drawWaterReflection;
 	int baseViewRadius = max(4, viewRadius);
 
@@ -696,13 +688,12 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	//	viewRadius = ((int)(viewRadius * LODScaleRefraction)) & 0xfffffe;
 	//}
 
-	viewRadius = max(4, viewRadius);
+	viewRadius = max(max(numBigTexY,numBigTexX), viewRadius);
 
-	float zoom = 45.0f / camera->GetFov();
-	viewRadius = (int) (viewRadius * fastmath::sqrt(zoom));
-	viewRadius += (viewRadius & 1);
-
-	neededLod = int((gu->viewRange * 0.125f) / viewRadius) << 1;
+	float zoom  = 45.0f / camera->GetFov();
+	viewRadius  = (int) (viewRadius * fastmath::sqrt(zoom));
+	viewRadius += (viewRadius & 1); //! we need a multiple of 2
+	neededLod   = int((gu->viewRange * 0.125f) / viewRadius) << 1;
 
 	UpdateCamRestraints();
 
@@ -714,7 +705,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-	SetupTextureUnits(drawWaterReflection, overrideVP);
+	SetupTextureUnits(drawWaterReflection);
 
 	if (mapInfo->map.voidWater && !waterDrawn) {
 		glEnable(GL_ALPHA_TEST);
@@ -723,19 +714,18 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 
 #ifdef USE_GML
 	if(multiThreadDrawGround) {
-		mt_overrideVP=overrideVP;
 		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
 	}
 	else {
 #endif
 		for (int bty = 0; bty < numBigTexY; ++bty) {
-			DoDrawGroundRow(bty,overrideVP);
+			DoDrawGroundRow(bty);
 		}
 #ifdef USE_GML
 	}
 #endif
 
-	ResetTextureUnits(drawWaterReflection, overrideVP);
+	ResetTextureUnits(drawWaterReflection);
 	glDisable(GL_CULL_FACE);
 
 	if (wireframe) {
@@ -747,7 +737,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	}
 
 	if (!(drawWaterReflection || drawUnitReflection)) {
-		if (mapInfo->hasWaterPlane) {
+		if (mapInfo->water.hasWaterPlane) {
 			DrawWaterPlane(drawWaterReflection);
 		}
 
@@ -763,6 +753,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 //		treeDistance *= 0.5f;
 
 	viewRadius = baseViewRadius;
+	overrideVP = NULL;
 }
 
 
@@ -1131,7 +1122,24 @@ void CBFGroundDrawer::DrawShadowPass(void)
 }
 
 
-void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overrideVP)
+inline void CBFGroundDrawer::SetupBigSquare(const int bigSquareX, const int bigSquareY)
+{
+		//! must be in drawLos mode or shadows must be off
+		if (DrawExtraTex() || !shadowHandler->drawShadows) {
+			textures->SetTexture(bigSquareX, bigSquareY);
+			SetTexGen(1.0f / 1024, 1.0f / 1024, -bigSquareX, -bigSquareY);
+
+			if (overrideVP) {
+				glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -bigSquareX, -bigSquareY, 0, 0);
+			}
+		} else {
+			textures->SetTexture(bigSquareX, bigSquareY);
+			glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 11, -bigSquareX, -bigSquareY, 0, 0);
+		}
+}
+
+
+void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 {
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -1280,7 +1288,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection, unsigned int overri
 }
 
 
-void CBFGroundDrawer::ResetTextureUnits(bool drawReflection, unsigned int overrideVP)
+void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 {
 	if (DrawExtraTex() || !shadowHandler->drawShadows) {
 		glDisable(GL_TEXTURE_GEN_S);
@@ -1326,7 +1334,7 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection, unsigned int overri
 void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
 {
 	fline temp;
-	float3 up(0, 1, 0);
+	static const float3 up(0, 1, 0);
 
 	// get vector for collision between frustum and horizontal plane
 	float3 b = up.cross(side);
@@ -1368,7 +1376,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 	// add restraint for maximum view distance
 	fline temp;
-	float3 up(0, 1, 0);
+	static const float3 up(0, 1, 0);
 	float3 side = cam2->forward;
 	float3 camHorizontal = cam2->forward;
 	camHorizontal.y = 0;

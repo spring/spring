@@ -76,7 +76,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		// range given in UnitDef and stick it onto pieceTrailCEGTag
 		// (assumes all possible "tag + k" CEG identifiers are valid)
 		// if this piece does not override the FBI and wants a trail
-		if ((flags & PP_NoCEGTrail) == 0) {
+		if ((flags & PF_NoCEGTrail) == 0) {
 			const int size = owner->unitDef->pieceTrailCEGTag.size();
 			const int range = owner->unitDef->pieceTrailCEGRange;
 			const int num = gs->randInt() % range;
@@ -88,7 +88,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 				cegTag[1023] = 0;
 				ceg.Load(explGenHandler, cegTag);
 			} else {
-				flags |= PP_NoCEGTrail;
+				flags |= PF_NoCEGTrail;
 			}
 		}
 
@@ -185,11 +185,11 @@ void CPieceProjectile::Collision()
 		speed -= norm * ns * 1.6f;
 		pos += norm * 0.1f;
 	} else {
-		if (flags & PP_Explode) {
+		if (flags & PF_Explode) {
 			helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner, false, 1.0f, false, false, 0, 0, ZeroVector, -1);
 		}
-		if (flags & PP_Smoke) {
-			if (flags & PP_NoCEGTrail) {
+		if (flags & PF_Smoke) {
+			if (flags & PF_NoCEGTrail) {
 				float3 dir = speed;
 				dir.Normalize();
 
@@ -209,11 +209,11 @@ void CPieceProjectile::Collision(CUnit* unit)
 {
 	if (unit == owner)
 		return;
-	if (flags & PP_Explode) {
+	if (flags & PF_Explode) {
 		helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner, false, 1.0f, false, false, 0, unit, ZeroVector, -1);
 	}
-	if (flags & PP_Smoke) {
-		if (flags & PP_NoCEGTrail) {
+	if (flags & PF_Smoke) {
+		if (flags & PF_NoCEGTrail) {
 			float3 dir = speed;
 			dir.Normalize();
 
@@ -264,7 +264,7 @@ float3 CPieceProjectile::RandomVertexPos(void)
 
 void CPieceProjectile::Update()
 {
-	if (flags & PP_Fall) {
+	if (flags & PF_Fall) {
 		speed.y += mapInfo->map.gravity;
 	}
 
@@ -273,13 +273,12 @@ void CPieceProjectile::Update()
 	spinPos += spinSpeed;
 	*numCallback = 0;
 
-	if (flags & PP_Fire && HasVertices()) {
+	if (flags & PF_Fire && HasVertices()) {
 		OldInfo* tempOldInfo = oldInfos[7];
 		for (int a = 6; a >= 0; --a) {
 			oldInfos[a + 1] = oldInfos[a];
 		}
-		CMatrix44f m;
-		m.Translate(pos.x, pos.y, pos.z);
+		CMatrix44f m(pos);
 		m.Rotate(spinPos * PI / 180.0f, spinVec);
 		float3 pos = RandomVertexPos();
 		m.Translate(pos.x, pos.y, pos.z);
@@ -291,8 +290,8 @@ void CPieceProjectile::Update()
 
 	age++;
 
-	if (flags & PP_NoCEGTrail) {
-		if (!(age & 7) && (flags & PP_Smoke)) {
+	if (flags & PF_NoCEGTrail) {
+		if (!(age & 7) && (flags & PF_Smoke)) {
 			float3 dir = speed;
 			dir.Normalize();
 
@@ -327,8 +326,8 @@ void CPieceProjectile::Update()
 
 void CPieceProjectile::Draw()
 {
-	if (flags & PP_NoCEGTrail) {
-		if (flags & PP_Smoke) {
+	if (flags & PF_NoCEGTrail) {
+		if (flags & PF_Smoke) {
 			// this piece leaves a default (non-CEG) smoketrail
 			inArray = true;
 			float age2 = (age & 7) + gu->timeOffset;
@@ -420,7 +419,7 @@ void CPieceProjectile::DrawCallback(void)
 	inArray = true;
 	unsigned char col[4];
 
-	if (flags & PP_Fire) {
+	if (flags & PF_Fire) {
 		va->EnlargeArrays(8*4,0,VA_SIZE_TC);
 		for (int age = 0; age < 8; ++age) {
 			float modage = age;

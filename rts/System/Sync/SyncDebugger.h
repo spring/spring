@@ -102,12 +102,17 @@ class CSyncDebugger {
 
 		// server thread
 
-		std::vector<unsigned> checksumResponses[MAX_PLAYERS];    ///< Received checksums after a checkum request.
-		Uint64 remoteFlop[MAX_PLAYERS];                          ///< Received operation number.
+		struct PlayerStruct
+		{
+			std::vector<unsigned> checksumResponses;
+			Uint64 remoteFlop;
+			std::vector<unsigned> remoteHistory;
+		};
+		typedef std::vector<PlayerStruct> playerVec;
+		playerVec players;
 		std::deque<unsigned> requestedBlocks;        ///< We are processing these blocks.
 		std::deque<unsigned> pendingBlocksToRequest; ///< We still need to receive these blocks (slowly emptied).
 		bool waitingForBlockResponse;                ///< Are we still waiting for a block response?
-		std::vector<unsigned> remoteHistory[MAX_PLAYERS];        ///< Chk field of history of clients (only of differing blocks).
 
 	private:
 
@@ -128,7 +133,7 @@ class CSyncDebugger {
 
 	public:
 
-		void Initialize(bool useBacktrace);
+		void Initialize(bool useBacktrace, unsigned numPlayers);
 		void ServerTriggerSyncErrorHandling(int serverframenum);
 		bool ServerReceived(const unsigned char* inbuf);
 		void ServerHandlePendingBlockRequests();

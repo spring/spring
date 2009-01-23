@@ -72,6 +72,8 @@
 #include "CommandAI/TransportCAI.h"
 #include "UnitDefHandler.h"
 
+CLogSubsystem LOG_UNIT("unit");
+
 CR_BIND_DERIVED(CUnit, CSolidObject, );
 
 // See end of source for member bindings
@@ -561,6 +563,12 @@ void CUnit::Update()
 	flankingBonusMobility += flankingBonusMobilityAdd;
 
 	if (stunned) {
+		// leave the pad if reserved
+		if (moveType->reservedPad) {
+			airBaseHandler->LeaveLandingPad(moveType->reservedPad);
+			moveType->reservedPad = 0;
+			moveType->padStatus = 0;
+		}
 		return;
 	}
 
@@ -2258,6 +2266,29 @@ void CUnit::DrawS3O()
 	unitDrawer->DrawUnitS3O(this);
 }
 
+
+void CUnit::LogMessage(const char *fmt, ...)
+{
+#ifdef DEBUG
+	va_list argp;
+	int l = strlen(fmt) + unitDefName.size() + 15;
+	char tmp[l], *tmpi = tmp;
+	SNPRINTF(tmp, l, "%s(%d): %s", unitDefName.c_str(), id, fmt);
+
+	va_start(argp, fmt);
+	logOutput.Printv(LOG_UNIT, tmp, argp);
+	va_end(argp);
+#endif
+}
+
+
+void CUnit::StopAttackingAllyTeam(int ally)
+{
+	commandAI->StopAttackingAllyTeam(ally);
+	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
+		(*it)->StopAttackingAllyTeam(ally);
+	}
+}
 
 
 // Member bindings

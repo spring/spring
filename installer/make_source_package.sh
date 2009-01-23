@@ -23,19 +23,21 @@ while [ ! -d installer ]; do
 done
 
 set +e # turn of quit on error
-git describe --candidates 0 &> /dev/null
-set -e # turn it on again
+git describe --candidates 0 --tags &> /dev/null
 if [ $? -ne "0" ]; then
-	RELEASE_SOURCE= false
+	RELEASE_SOURCE=false
+	echo "Making test-packages"
 else
-	RELEASE_SOURCE= true
+	RELEASE_SOURCE=true
+	echo "Making release-packages"
 fi
+set -e # turn it on again
 
 if [ $RELEASE_SOURCE ]; then
-	version_string=`git describe`
-	branch=${branch}
+	version_string=`git describe --tags`
+	branch=${version_string}
 else
-	version_string=`git describe | sed s/\-[^\-]*$//`
+	version_string=`git describe --tags | sed s/\-[^\-]*$//`
 	branch="master"
 fi
 echo "Using $branch as source"
@@ -44,9 +46,10 @@ echo "Using $branch as source"
 # .tar.bz2 and .tar.gz are built with linux (LF) line endings.
 # .zip and .7z are built with windows (CRLF) line endings.
 dir="spring_${version_string}"
-tbz="spring_${version_string}_src.tar.bz2"
-#tgz="spring_${branch}_src.tar.gz"
-zip="spring_${version_string}_src.zip"
+lzma="spring_${version_string}_src.tar.lzma"
+#tbz="spring_${version_string}_src.tar.bz2"
+tgz="spring_${branch}_src.tar.gz"
+#zip="spring_${version_string}_src.zip"
 #seven_zip="spring_${branch}_src.7z"
 
 # This is the list of files/directories that go in the source package.
@@ -54,6 +57,7 @@ zip="spring_${version_string}_src.zip"
 include=" \
  $dir/AI/Group/ \
  $dir/AI/Global/AAI/ \
+ $dir/AI/Global/RAI/ \
  $dir/AI/Global/KAIK-0.13/ \
  $dir/AI/Global/TestGlobalAI/ \
  $dir/Documentation/ \
@@ -72,9 +76,10 @@ include=" \
 
 # On linux, win32 executables are useless.
 # TASClient is windows only.
-linux_exclude="$dir/installer/pkzip.exe"
+exclude_from_all="$dir/game/.gitignore"
+linux_exclude="${exclude_from_all} $dir/installer/pkzip.exe"
 linux_include=""
-windows_exclude=""
+windows_exclude="${exclude_from_all}"
 windows_include=""
 
 # Linux line endings, .tar.{bz2,gz} package.
@@ -84,6 +89,8 @@ cd lf/$dir
 git checkout $branch
 cd ..
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
+[ -n "$lzma" ] && echo "Creating .tar.lzma archive ($lzma)" && \
+	tar cfJ "../$lzma" $include $linux_include
 [ -n "$tbz" ] && echo "Creating .tar.bz2 archive ($tbz)" && \
 	tar cfj "../$tbz" $include $linux_include
 [ -n "$tgz" ] && echo "Creating .tar.gz archive ($tgz)" && \
