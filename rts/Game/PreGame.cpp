@@ -161,7 +161,6 @@ void CPreGame::StartServer(const std::string& setupscript)
 	std::string script = setup->scriptName;
 
 	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
-	bool mapHasStartscript = false;
 	if (!map.empty())
 	{
 		// would be better to use MapInfo here, but this doesn't work
@@ -182,37 +181,30 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 		if (!mapWantedScript.empty()) {
 			script = mapWantedScript;
-			mapHasStartscript = true;
 		}
 	}
 	startupData->SetScript(script);
 	// here we now the name of the script to use
 
-	try { // to load the script
-		CScriptHandler::SelectScript(script);
-		std::string scriptWantedMod;
-		scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
-		if (!scriptWantedMod.empty()) {
-			mod = scriptWantedMod;
-		}
-		LoadMod(mod);
+	CScriptHandler::SelectScript(script);
+	std::string scriptWantedMod;
+	scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
+	if (!scriptWantedMod.empty()) {
+		mod = scriptWantedMod;
 	}
-	catch (const std::runtime_error& err) { // script not found, so it may be in the modarchive?
-		LoadMod(mod); // new map into VFS
-		CScriptHandler::SelectScript(script);
-	}
+	LoadMod(mod);
+
 	// make sure s is a modname (because the same mod can be in different archives on different computers)
 	mod = archiveScanner->ModArchiveToModName(mod);
 	std::string modArchive = archiveScanner->ModNameToModArchive(mod);
 	startupData->SetMod(mod, archiveScanner->GetModChecksum(modArchive));
 
-	if (!mapHasStartscript) {
-		std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
-		if (!mapFromScript.empty() && map != mapFromScript) {
-			//TODO unload old map
-			LoadMap(mapFromScript, true);
-		}
+	std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
+	if (!mapFromScript.empty() && map != mapFromScript) {
+		//TODO unload old map
+		LoadMap(mapFromScript, true);
 	}
+
 	startupData->SetMap(map, archiveScanner->GetMapChecksum(map));
 	setup->LoadStartPositions();
 
