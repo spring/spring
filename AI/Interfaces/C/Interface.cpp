@@ -69,11 +69,11 @@ CInterface::CInterface(const std::map<std::string, std::string>& myInfo,
 
 	std::string logFileName = myDataDirVersioned + PS + "log.txt";
 	bool timeStamps = true;
-	bool fineLogging = false;
+	int logLevel = SIMPLELOG_LEVEL_ERROR;
 #if defined DEBUG
-	fineLogging = true;
+	logLevel = SIMPLELOG_LEVEL_FINE;
 #endif // defined DEBUG
-	simpleLog_init(logFileName.c_str(), timeStamps, fineLogging);
+	simpleLog_init(logFileName.c_str(), timeStamps, logLevel);
 
 	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
 	const char* myVersion = util_getMyInfo(AI_INTERFACE_PROPERTY_VERSION);
@@ -253,14 +253,14 @@ std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 	}
 	const std::string& dataDir(prop->second);
 
-	const std::string& fileName(spec.shortName);
+	const std::string& fileName("SkirmishAI");
 
-	std::string libFileName(fileName); // eg. RAI
+	std::string libFileName(fileName); // "SkirmishAI"
 	#ifndef _WIN32
-		libFileName = "lib" + libFileName; // eg. libRAI
+		libFileName = "lib" + libFileName; // "libSkirmishAI"
 	#endif
 
-	// eg. libRAI-0.600.so
+	// eg. "libSkirmishAI.so"
 	libFileName = libFileName + "." + SharedLib::GetLibExtension();
 
 	return dataDir + PS + libFileName;

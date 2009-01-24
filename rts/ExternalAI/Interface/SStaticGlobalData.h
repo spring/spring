@@ -30,7 +30,6 @@ extern "C" {
  */
 struct SStaticGlobalData {
 	unsigned int maxTeams;
-	unsigned int maxGroups; // maximum number of groups per team
 	const char* springVersion;
 	/** The first entry is the writeable data-dir */
 	unsigned int numDataDirs;

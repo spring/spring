@@ -1,4 +1,9 @@
 ### Skirmish AIs
+#
+# BUILD_C_AIINTERFACE and BUILD_Java_AIINTERFACE
+# are set in ../Interfaces/CMakeLists.txt
+#
+
 add_definitions(-DBUILDING_AI)
 
 set(SKIRMISH_SRC "${CMAKE_SOURCE_DIR}/AI/Skirmish")
@@ -22,11 +27,13 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${KAI_SRC})
 
 	# install data files
 	#install(DIRECTORY "${KAI_SRC}/data/"
-	#		DESTINATION "${KAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+	#		DESTINATION "${KAI_DATA_DIR}")
 
 	aux_source_directory(${KAI_SRC} kai)
 	#add_library(${KAI_TARGET} MODULE ${kai} ${legacycppaienv} ${creg})
 	#set_target_properties(${KAI_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
+	#set_target_properties(${KAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
+	#set_target_properties(${KAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "KAI")
 	#install (TARGETS ${KAI_TARGET} DESTINATION ${KAI_DATA_DIR})
 endif (BUILD_C_AIINTERFACE AND EXISTS ${KAI_SRC})
 
@@ -47,11 +54,13 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${KAIK_SRC})
 
 	# install data files
 	install(DIRECTORY "${KAIK_SRC}/data/"
-			DESTINATION "${KAIK_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+			DESTINATION "${KAIK_DATA_DIR}")
 
 	aux_source_directory(${KAIK_SRC} kaik)
 	add_library(${KAIK_TARGET} MODULE ${kaik} ${legacycppaienv} ${creg})
 	set_target_properties(${KAIK_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
+	set_target_properties(${KAIK_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
+	set_target_properties(${KAIK_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "KAIK")
 	install (TARGETS ${KAIK_TARGET} DESTINATION ${KAIK_DATA_DIR})
 endif (BUILD_C_AIINTERFACE AND EXISTS ${KAIK_SRC})
 
@@ -72,10 +81,11 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${RAI_SRC})
 
 	# install data files
 	install(DIRECTORY "${RAI_SRC}/data/"
-			DESTINATION "${RAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+			DESTINATION "${RAI_DATA_DIR}")
 
 	aux_source_directory(${RAI_SRC} rai)
 	add_library(${RAI_TARGET} MODULE ${rai} ${legacycppaienv})
+	set_target_properties(${RAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
 	install (TARGETS ${RAI_TARGET} DESTINATION ${RAI_DATA_DIR})
 endif (BUILD_C_AIINTERFACE AND EXISTS ${RAI_SRC})
 
@@ -96,10 +106,12 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${AAI_SRC})
 
 	# install data files
 	install(DIRECTORY "${AAI_SRC}/data/"
-			DESTINATION "${AAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+			DESTINATION "${AAI_DATA_DIR}")
 
 	aux_source_directory(${AAI_SRC} aai)
 	add_library(${AAI_TARGET} MODULE ${aai} ${legacycppaienv})
+	set_target_properties(${AAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
+	set_target_properties(${AAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "AAI")
 	install (TARGETS ${AAI_TARGET} DESTINATION ${AAI_DATA_DIR})
 endif (BUILD_C_AIINTERFACE AND EXISTS ${AAI_SRC})
 
@@ -120,7 +132,7 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${NTai_SRC})
 
 	# install data files
 	install(DIRECTORY "${NTai_SRC}/data/"
-			DESTINATION "${NTai_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+			DESTINATION "${NTai_DATA_DIR}")
 
 	aux_source_directory(${NTai_SRC} ntai)
 	aux_source_directory(${NTai_SRC}/AI/NTai/Units ntai)
@@ -134,6 +146,8 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${NTai_SRC})
 	aux_source_directory(${NTai_SRC}/AI/NTai/Core ntai)
 	aux_source_directory(${NTai_SRC}/AI/NTai/Agents ntai)
 	add_library(${NTai_TARGET} MODULE ${ntai} ${legacycppaienv})
+	set_target_properties(${NTai_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
+	set_target_properties(${NTai_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "NTai")
 	target_link_libraries(${NTai_TARGET} boost_thread-mt)
 	install (TARGETS ${NTai_TARGET} DESTINATION ${NTai_DATA_DIR})
 endif (BUILD_C_AIINTERFACE AND EXISTS ${NTai_SRC})
@@ -155,10 +169,12 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${NullLegacyCppAI_SRC})
 
 	# install data files
 	install(DIRECTORY "${NullLegacyCppAI_SRC}/data/"
-			DESTINATION "${NullLegacyCppAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+			DESTINATION "${NullLegacyCppAI_DATA_DIR}")
 
 	aux_source_directory(${NullLegacyCppAI_SRC} nulllegacycppai)
 	add_library(${NullLegacyCppAI_TARGET} MODULE ${nulllegacycppai} ${legacycppaienv})
+	set_target_properties(${NullLegacyCppAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
+	set_target_properties(${NullLegacyCppAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "NullLegacyCppAI")
 	install (TARGETS ${NullLegacyCppAI_TARGET} DESTINATION ${NullLegacyCppAI_DATA_DIR})
 endif (BUILD_C_AIINTERFACE AND EXISTS ${NullLegacyCppAI_SRC})
 
@@ -179,10 +195,12 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${NullAI_SRC})
 
 	# install data files
 	install(DIRECTORY "${NullAI_SRC}/data/"
-			DESTINATION "${NullAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+			DESTINATION "${NullAI_DATA_DIR}")
 
 	aux_source_directory(${NullAI_SRC} nullai)
 	add_library(${NullAI_TARGET} MODULE ${mySrc} ${nullai})
+	set_target_properties(${NullAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
+	set_target_properties(${NullAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "NullAI")
 	install (TARGETS ${NullAI_TARGET} DESTINATION ${NullAI_DATA_DIR})
 endif (BUILD_C_AIINTERFACE AND EXISTS ${NullAI_SRC})
 
@@ -207,25 +225,25 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 
 	# install data files
 	install(DIRECTORY "${NullJavaAI_SRC}/data/"
-			DESTINATION "${NullJavaAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+			DESTINATION "${NullJavaAI_DATA_DIR}")
 
 	file(REMOVE_RECURSE "${NullJavaAI_SRC}/build")
 	file(MAKE_DIRECTORY "${NullJavaAI_SRC}/build")
 	file(GLOB_RECURSE NullJavaAI_JAVA_SOURCES RELATIVE "${NullJavaAI_SRC}" FOLLOW_SYMLINKS "${NullJavaAI_SRC}/*.java")
-	#add_custom_command(OUTPUT "${NullJavaAI_DATA_DIR}/ai.jar"
+	#add_custom_command(OUTPUT "${NullJavaAI_DATA_DIR}/SkirmishAI.jar"
 	#add_custom_command(TARGET ${NullJavaAI_TARGET}
 	add_custom_target(${NullJavaAI_TARGET} ALL
 		COMMAND "${JAVA_COMPILE}" "-cp" "\"${NullJavaAI_CLASSPATH}\"" "-d" "${NullJavaAI_SRC}/build" ${NullJavaAI_JAVA_SOURCES}
-		COMMAND "${JAVA_ARCHIVE}" "cmf" "${NullJavaAI_SRC}/manifest.mf" "${NullJavaAI_SRC}/ai.jar" "-C" "${NullJavaAI_SRC}/build" "${NullJavaAI_PKG_FIRST_PART}"
+		COMMAND "${JAVA_ARCHIVE}" "cmf" "${NullJavaAI_SRC}/manifest.mf" "${NullJavaAI_SRC}/SkirmishAI.jar" "-C" "${NullJavaAI_SRC}/build" "${NullJavaAI_PKG_FIRST_PART}"
 		WORKING_DIRECTORY "${NullJavaAI_SRC}"
-		COMMENT "  Creating Java AI library ai.jar" VERBATIM)
+		COMMENT "  Creating Java AI library SkirmishAI.jar" VERBATIM)
 	add_custom_target(${NullJavaAI_TARGET}-SRC ALL
-		COMMAND "${JAVA_ARCHIVE}" "cf" "${NullJavaAI_SRC}/ai-src.jar" "-C" "${NullJavaAI_SRC}" "${NullJavaAI_PKG_FIRST_PART}"
+		COMMAND "${JAVA_ARCHIVE}" "cf" "${NullJavaAI_SRC}/SkirmishAI-src.jar" "-C" "${NullJavaAI_SRC}" "${NullJavaAI_PKG_FIRST_PART}"
 		WORKING_DIRECTORY "${NullJavaAI_SRC}"
-		COMMENT "  Creating Java AI library ai-src.jar" VERBATIM)
+		COMMENT "  Creating Java AI library SkirmishAI-src.jar" VERBATIM)
 
-	install (FILES ${NullJavaAI_SRC}/ai.jar DESTINATION ${NullJavaAI_DATA_DIR})
-	install (FILES ${NullJavaAI_SRC}/ai-src.jar DESTINATION ${NullJavaAI_DATA_DIR}/jlib)
+	install (FILES ${NullJavaAI_SRC}/SkirmishAI.jar DESTINATION ${NullJavaAI_DATA_DIR})
+	install (FILES ${NullJavaAI_SRC}/SkirmishAI-src.jar DESTINATION ${NullJavaAI_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 
 
@@ -249,23 +267,23 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 
 	# install data files
 	install(DIRECTORY "${NullOOJavaAI_SRC}/data/"
-			DESTINATION "${NullOOJavaAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+			DESTINATION "${NullOOJavaAI_DATA_DIR}")
 
 	file(REMOVE_RECURSE "${NullOOJavaAI_SRC}/build")
 	file(MAKE_DIRECTORY "${NullOOJavaAI_SRC}/build")
 	file(GLOB_RECURSE NullOOJavaAI_JAVA_SOURCES RELATIVE "${NullOOJavaAI_SRC}" FOLLOW_SYMLINKS "${NullOOJavaAI_SRC}/*.java")
 	add_custom_target(${NullOOJavaAI_TARGET} ALL
 		COMMAND "${JAVA_COMPILE}" "-cp" "\"${NullOOJavaAI_CLASSPATH}\"" "-d" "${NullOOJavaAI_SRC}/build" ${NullOOJavaAI_JAVA_SOURCES}
-		COMMAND "${JAVA_ARCHIVE}" "cmf" "${NullOOJavaAI_SRC}/manifest.mf" "${NullOOJavaAI_SRC}/ai.jar" "-C" "${NullOOJavaAI_SRC}/build" "${NullOOJavaAI_PKG_FIRST_PART}"
+		COMMAND "${JAVA_ARCHIVE}" "cmf" "${NullOOJavaAI_SRC}/manifest.mf" "${NullOOJavaAI_SRC}/SkirmishAI.jar" "-C" "${NullOOJavaAI_SRC}/build" "${NullOOJavaAI_PKG_FIRST_PART}"
 		WORKING_DIRECTORY "${NullOOJavaAI_SRC}"
-		COMMENT "  Creating Java OO AI library ai.jar" VERBATIM)
+		COMMENT "  Creating Java OO AI library SkirmishAI.jar" VERBATIM)
 	add_custom_target(${NullOOJavaAI_TARGET}-SRC ALL
-		COMMAND "${JAVA_ARCHIVE}" "cf" "${NullOOJavaAI_SRC}/ai-src.jar" "-C" "${NullOOJavaAI_SRC}" "${NullOOJavaAI_PKG_FIRST_PART}"
+		COMMAND "${JAVA_ARCHIVE}" "cf" "${NullOOJavaAI_SRC}/SkirmishAI-src.jar" "-C" "${NullOOJavaAI_SRC}" "${NullOOJavaAI_PKG_FIRST_PART}"
 		WORKING_DIRECTORY "${NullOOJavaAI_SRC}"
-		COMMENT "  Creating Java OO AI library ai-src.jar" VERBATIM)
+		COMMENT "  Creating Java OO AI library SkirmishAI-src.jar" VERBATIM)
 
-	install (FILES ${NullOOJavaAI_SRC}/ai.jar DESTINATION ${NullOOJavaAI_DATA_DIR})
-	install (FILES ${NullOOJavaAI_SRC}/ai-src.jar DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
+	install (FILES ${NullOOJavaAI_SRC}/SkirmishAI.jar DESTINATION ${NullOOJavaAI_DATA_DIR})
+	install (FILES ${NullOOJavaAI_SRC}/SkirmishAI-src.jar DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 
 
@@ -287,10 +305,12 @@ if (UNIX)
 
 		# install data files
 		#install(DIRECTORY "${JCAI_SRC}/data/"
-		#		DESTINATION "${JCAI_DATA_DIR}" PATTERN ".svn" EXCLUDE)
+		#		DESTINATION "${JCAI_DATA_DIR}")
 
 		aux_source_directory(${JCAI_SRC} jcai)
 		#add_library(${JCAI_TARGET} MODULE ${jcai} ${legacycppaienv})
+		#set_target_properties(${JCAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
+		#set_target_properties(${JCAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "JCAI")
 		#install (TARGETS ${JCAI_TARGET} DESTINATION ${JCAI_DATA_DIR})
 	endif (BUILD_C_AIINTERFACE AND EXISTS ${JCAI_SRC})
 endif (UNIX)

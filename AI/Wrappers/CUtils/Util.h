@@ -69,7 +69,17 @@ void util_setMyInfo(
 const char* util_getMyInfo(const char* key);
 
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+/**
+ * You have to initialize before using this function,
+ * through calling the function util_setMyInfo() wiht your
+ * AI or Interface Info.
+ */
 const char* util_getDataDirVersioned();
+/**
+ * You have to initialize before using this function,
+ * through calling the function util_setMyInfo() wiht your
+ * AI or Interface Info.
+ */
 const char* util_getDataDirUnversioned();
 #endif
 
@@ -98,6 +108,10 @@ char* util_allocStrCat_nt(const char* first, ...);
  * which represent file system parts (eg. dirs or files)
  * into newly allocated memory.
  * The number of parts to concatenate has to be supplied as first argument.
+ * sample call:
+ * (3, "/home/user/tmp", "appName/", "/i/am/fine")
+ * output:
+ * "/home/user/tmp/appName/i/am/fine"
  */
 char* util_allocStrCatFSPath(int numParts, const char* first, ...);
 

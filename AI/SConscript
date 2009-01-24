@@ -49,7 +49,9 @@ SCons.Tool.jar.generate(env)
 aienv = env.Clone(builddir=os.path.join(env['builddir'], 'AI'))
 #aienv['LIBS'] = []
 aienv.AppendUnique(CPPPATH = ['#rts/ExternalAI'])
-aienv.AppendUnique(LINKFLAGS = ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin', '-lstdc++'])
+aienv.AppendUnique(LINKFLAGS = ['-lstdc++'])
+if aienv['platform'] == 'windows':
+	aienv.AppendUnique(LINKFLAGS = ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin'])
 #print aienv['CPPDEFINES']
 
 for d in filelist.list_directories(aienv, '../rts', exclude_list=["crashrpt"]):
@@ -128,7 +130,7 @@ def createJavaClasspath(path, pathPrefix = ''):
 # installs files plus empty directories recursively, preserving directory structure
 def installDataDir(env, dstPath, srcPath, instList):
 	if os.path.exists(srcPath):
-		files = filelist.list_files_recursive(env, srcPath, exclude_regexp = '\.svn', exclude_dirs = False, path_relative = True)
+		files = filelist.list_files_recursive(env, srcPath, exclude_dirs = False, path_relative = True)
 		for f in files:
 			f_src_file = os.path.join(srcPath, f)
 			f_dst_path = os.path.join(dstPath, os.path.split(f)[0])
@@ -164,8 +166,11 @@ aiinterfaces_exclude_list=['build']
 aiinterfaces_needSharedLib_list=['C']
 aiinterfaces_needStreflop_list=['Java']
 aiinterfaces_needCUtils_list=['C', 'Java']
+
+# These two will be filled here and used by Java Skirmish AIs further down
 javaInterfaceCP = ''
 javaInterfaceJar = ''
+
 for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterfaces_exclude_list):
 	aiInterfaceVersion = fetch_ai_version(baseName, 'Interfaces')
 	print "Found AI Interface: " + baseName + " " + aiInterfaceVersion
@@ -188,7 +193,8 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		myEnv.AppendUnique(LIBS = ['streflop'])
 	mySource = objs + filelist.get_AIInterface_source(myEnv, baseName)
 	if baseName == 'Java':
-		myEnv.AppendUnique(LIBS = ['jvm'])
+		if env['platform'] == 'windows':
+			myEnv.AppendUnique(LIBS = ['jvm'])
 		# generate class files
 		#print "CWD %s" % os.getcwd()
 		javaWrapperScript = 'java_generateWrappers.' + getLocalShellExecPostfix()
@@ -208,9 +214,10 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		javaClasses = os.path.join(myEnv['builddir'], 'Interfaces', baseName, aiInterfaceVersion, 'classes')
 		#javaJar = os.path.join(myEnv['builddir'], 'Interfaces', baseName, aiInterfaceVersion, 'interface.jar')
 		#javaInterfaceJar = javaJar
-		javaInterfaceJar = os.path.join('Interfaces', baseName, aiInterfaceVersion, 'interface.jar')
+		javaInterfaceJar = os.path.join('Interfaces', baseName, aiInterfaceVersion, 'AIInterface.jar')
 		javaJar = os.path.join(myEnv['builddir'], javaInterfaceJar)
 		javaInterfaceJar = os.path.join('build', 'AI', javaInterfaceJar)
+		javaInterfaceSrcJar = os.path.join('Interfaces', baseName, aiInterfaceVersion, 'AIInterface-src.jar')
 		jlibDir = os.path.join('Interfaces', baseName, 'data', 'jlib')
 		javaInterfaceCP = createJavaClasspath(jlibDir, 'AI')
 		myEnv['JAVACLASSPATH'] = javaInterfaceCP
@@ -225,7 +232,7 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		#installDataDir(myEnv, install_data_interface_dir, jlibDir, instList)
 
 	#targetName = baseName + '-' + aiInterfaceVersion
-	targetName = baseName
+	targetName = 'AIInterface'
 	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'Interfaces', baseName, aiInterfaceVersion, targetName), mySource)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
@@ -288,7 +295,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 	if isJava:
 		javaSrc = os.path.join('Skirmish', baseName)
 		javaClasses = os.path.join(myEnv['builddir'], 'Skirmish', baseName, aiVersion, 'classes')
-		javaJar = os.path.join(myEnv['builddir'], 'Skirmish', baseName, aiVersion, 'ai.jar')
+		javaJar = os.path.join(myEnv['builddir'], 'Skirmish', baseName, aiVersion, 'SkirmishAI.jar')
 		jlibDir = os.path.join('Skirmish', baseName, 'data', 'jlib')
 		aiCP = createJavaClasspath(jlibDir, 'AI')
 		aiFullCP = aiCP + os.pathsep + javaInterfaceJar + os.pathsep + javaInterfaceCP
@@ -332,7 +339,7 @@ for baseName in filelist.list_skirmishAIs(skirmishaienv, exclude_list=skirmishai
 				objs += skirmishaiobjs_LegacyCpp
 		mySource = objs + filelist.get_skirmishAI_source(myEnv, baseName)
 		#targetName = baseName + '-' + aiVersion
-		targetName = baseName
+		targetName = 'SkirmishAI'
 		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], 'AI/Skirmish', baseName, aiVersion, targetName), mySource)
 		Alias(baseName, lib)     # Allow e.g. `scons JCAI' to compile just a skirmish AI.
 		Alias('SkirmishAI', lib) # Allow `scons SkirmishAI' to compile all skirmishAIs.
