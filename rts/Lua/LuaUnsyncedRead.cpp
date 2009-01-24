@@ -22,7 +22,6 @@ using namespace std;
 
 #include "LuaHandle.h"
 #include "LuaHashString.h"
-#include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Game/Camera.h"
 #include "Game/Camera/CameraController.h"

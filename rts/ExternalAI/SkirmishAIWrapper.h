@@ -32,6 +32,11 @@ class CAICallback;
 struct Command;
 struct float3;
 
+/**
+ * Acts as an OO wrapper for a Skirmish AI instance.
+ * Basically converts function calls to AIEvents,
+ * which are then sent ot the AI.
+ */
 class CSkirmishAIWrapper : public CObject, public ISkirmishAI {
 public:
 	CR_DECLARE(CSkirmishAIWrapper);
@@ -67,8 +72,8 @@ public:
 	virtual void CommandFinished(int unitId, int commandTopicId);
 	virtual void SeismicPing(int allyTeam, int unitId, const float3& pos, float strength);
 
-
-	virtual void PreDestroy(); // called just before all the units are destroyed
+	/** Called just before all the units are destroyed. */
+	virtual void PreDestroy();
 
 	virtual int GetTeamId() const;
 

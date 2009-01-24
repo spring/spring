@@ -27,7 +27,6 @@ class AIInterfaceKey;
 
 class CAIInterfaceLibraryInfo {
 public:
-//	CAIInterfaceLibraryInfo(const IAIInterfaceLibrary& interface);
 	CAIInterfaceLibraryInfo(const CAIInterfaceLibraryInfo& interfaceInfo);
 	CAIInterfaceLibraryInfo(const std::string& interfaceInfoFile);
 	~CAIInterfaceLibraryInfo();
@@ -42,9 +41,10 @@ public:
 	virtual AIInterfaceKey GetKey() const;
 
 	virtual std::string GetDataDir() const;
-//	virtual std::string GetFileName() const; // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
-	virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'
-	virtual std::string GetVersion() const; // restrictions: none of the following: spaces, '_', '#'
+	/** Restrictions: none of the following: spaces, '_', '#' */
+	virtual std::string GetShortName() const;
+	/** Restrictions: none of the following: spaces, '_', '#' */
+	virtual std::string GetVersion() const;
 	virtual std::string GetName() const;
 	virtual std::string GetDescription() const;
 	virtual std::string GetURL() const;
@@ -54,16 +54,16 @@ public:
 	virtual const char** GetCInfoValues() const;
 
 	virtual void SetDataDir(const std::string& dataDir);
-//	virtual void SetFileName(const std::string& fileName); // when the AI is "libRAI-0.600.so" or "RAI-0.600.dll", this value should be "RAI-0.600"
-	virtual void SetShortName(const std::string& shortName); // restrictions: none of the following: spaces, '_', '#'
-	virtual void SetVersion(const std::string& version); // restrictions: none of the following: spaces, '_', '#'
+	/** Restrictions: none of the following: spaces, '_', '#' */
+	virtual void SetShortName(const std::string& shortName);
+	/** Restrictions: none of the following: spaces, '_', '#' */
+	virtual void SetVersion(const std::string& version);
 	virtual void SetName(const std::string& name);
 	virtual void SetDescription(const std::string& description);
 	virtual void SetURL(const std::string& url);
 	virtual bool SetInfo(const std::string& key, const std::string& value);
 
 private:
-	static const unsigned int MAX_INFOS = 128;
 	std::map<std::string, InfoItem> info;
 	const char** infoKeys_c;
 	const char** infoValues_c;

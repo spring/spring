@@ -1,6 +1,6 @@
 /*
 	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 void initSUnitCommand(void* sUnitCommand) {
-	
+
 	struct SStopUnitCommand* scmd = (struct SStopUnitCommand*) sUnitCommand;
 
 	scmd->unitId = -1;
@@ -31,7 +31,7 @@ void initSUnitCommand(void* sUnitCommand) {
 }
 
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 #include "Sim/Units/CommandAI/Command.h"
 
 void freeSUnitCommand(void* sCommandData, int sCommandId) {
@@ -58,7 +58,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int sCommand
 
 	int sCmdId = COMMAND_NULL;
 	void* sCommandData;
-	
+
 	switch (c->id) {
 		case CMD_STOP:
 		{
@@ -339,13 +339,13 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int sCommand
 			if (c->params.size() < 3) {
 				//int numToLoadUnits = 1;
 				int numToLoadUnits = c->params.size();
-				
+
 				SLoadUnitsUnitCommand* cmd = (SLoadUnitsUnitCommand*) malloc(sizeof (SLoadUnitsUnitCommand));
 				cmd->unitId = unitId;
 				cmd->groupId = groupId;
 				cmd->options = c->options;
 				cmd->timeOut = c->timeOut;
-				
+
 				cmd->numToLoadUnits = numToLoadUnits;
 				cmd->toLoadUnitIds = (int*) calloc(numToLoadUnits, sizeof(int));
 				int i;
@@ -1176,5 +1176,4 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 	return c;
 }
 
-#endif /* __cplusplus */
-
+#endif // __cplusplus

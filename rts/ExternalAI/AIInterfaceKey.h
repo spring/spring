@@ -21,6 +21,9 @@
 #include <string>
 #include "creg/creg.h"
 
+/**
+ * Used to uniquely identify an AI Interface within the engine.
+ */
 class AIInterfaceKey {
 	CR_DECLARE_STRUCT(AIInterfaceKey);
 

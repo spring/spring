@@ -20,6 +20,10 @@
 #ifndef _SKIRMISHAIDATA_H
 #define _SKIRMISHAIDATA_H
 
+/**
+ * Contains everything needed to initialize a Skirmish AI instance.
+ * @see Game/GameSetup
+ */
 struct SkirmishAIData {
 	/**
 	 * This name is purely inforamtive.

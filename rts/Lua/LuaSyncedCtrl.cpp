@@ -18,7 +18,6 @@
 #include "LuaHashString.h"
 #include "LuaSyncedMoveCtrl.h"
 #include "LuaUtils.h"
-#include "ExternalAI/GlobalAIHandler.h"
 #include "Game/Game.h"
 #include "Game/GameServer.h"
 #include "Game/Camera.h"

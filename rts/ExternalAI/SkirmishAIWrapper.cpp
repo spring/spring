@@ -44,9 +44,6 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 //	CR_MEMBER(options),
 //	CR_MEMBER(optionKeys),
 //	CR_MEMBER(optionValues),
-//	CR_MEMBER(libName),
-//	CR_MEMBER(IsCInterface),
-//	CR_MEMBER(IsLoadSupported),
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -160,8 +157,6 @@ void CSkirmishAIWrapper::Init() {
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 	const CSkirmishAILibraryInfo* skiInf = libMan->GetSkirmishAIInfos().find(key)->second;
 
-//	unsigned int sizeInfo = skiInf->GetInfo().size();
-//	const struct InfoItem* info = skiInf->GetInfoCReference();
 	unsigned int infSize = skiInf->GetInfo().size();
 	const char** infKeys = skiInf->GetCInfoKeys();
 	const char** infValues = skiInf->GetCInfoValues();

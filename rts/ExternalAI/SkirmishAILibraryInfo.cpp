@@ -84,13 +84,10 @@ SkirmishAIKey CSkirmishAILibraryInfo::GetKey() const {
 std::string CSkirmishAILibraryInfo::GetDataDir() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
 }
-//std::string CSkirmishAILibraryInfo::GetFileName() const {
-//	return GetInfo(SKIRMISH_AI_PROPERTY_FILE_NAME);
-//}
-std::string CSkirmishAILibraryInfo::GetShortName() const { // restrictions: none of the following: spaces, '_', '#'
+std::string CSkirmishAILibraryInfo::GetShortName() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 }
-std::string CSkirmishAILibraryInfo::GetVersion() const { // restrictions: none of the following: spaces, '_', '#'
+std::string CSkirmishAILibraryInfo::GetVersion() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_VERSION);
 }
 std::string CSkirmishAILibraryInfo::GetName() const {
@@ -162,13 +159,10 @@ const char** CSkirmishAILibraryInfo::GetCInfoValues() const {
 void CSkirmishAILibraryInfo::SetDataDir(const std::string& dataDir) {
 	SetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR, dataDir);
 }
-//void CSkirmishAILibraryInfo::SetFileName(const std::string& fileName) {
-//	SetInfo(SKIRMISH_AI_PROPERTY_FILE_NAME, fileName);
-//}
-void CSkirmishAILibraryInfo::SetShortName(const std::string& shortName) { // restrictions: none of the following: spaces, '_', '#'
+void CSkirmishAILibraryInfo::SetShortName(const std::string& shortName) {
 	SetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME, shortName);
 }
-void CSkirmishAILibraryInfo::SetVersion(const std::string& version) { // restrictions: none of the following: spaces, '_', '#'
+void CSkirmishAILibraryInfo::SetVersion(const std::string& version) {
 	SetInfo(SKIRMISH_AI_PROPERTY_VERSION, version);
 }
 void CSkirmishAILibraryInfo::SetName(const std::string& name) {

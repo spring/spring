@@ -78,9 +78,6 @@ AIInterfaceKey CAIInterfaceLibraryInfo::GetKey() const {
 std::string CAIInterfaceLibraryInfo::GetDataDir() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_DATA_DIR);
 }
-//std::string CAIInterfaceLibraryInfo::GetFileName() const {
-//	return GetInfo(AI_INTERFACE_PROPERTY_FILE_NAME);
-//}
 std::string CAIInterfaceLibraryInfo::GetShortName() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
 }
@@ -145,9 +142,6 @@ const char** CAIInterfaceLibraryInfo::GetCInfoValues() const {
 void CAIInterfaceLibraryInfo::SetDataDir(const std::string& dataDir) {
 	SetInfo(AI_INTERFACE_PROPERTY_DATA_DIR, dataDir);
 }
-//void CAIInterfaceLibraryInfo::SetFileName(const std::string& fileName) {
-//	SetInfo(AI_INTERFACE_PROPERTY_FILE_NAME, fileName);
-//}
 void CAIInterfaceLibraryInfo::SetShortName(const std::string& shortName) {
 	SetInfo(AI_INTERFACE_PROPERTY_SHORT_NAME, shortName);
 }

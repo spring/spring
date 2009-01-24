@@ -36,7 +36,6 @@ using namespace std;
 #include "Lua/LuaOpenGL.h"
 #include "Lua/LuaVFS.h"
 #include "Lua/LuaIO.h"
-#include "ExternalAI/GlobalAIHandler.h"
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
