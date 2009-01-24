@@ -17,10 +17,10 @@
   Delete "$INSTDIR\docs\LICENSE.html"
   Delete "$INSTDIR\docs\changelog.txt"
   Delete "$INSTDIR\docs\cmds.txt"
-  Delete "$INSTDIR\docs\Q&A.html"
-  Delete "$INSTDIR\docs\Getting Started.html"
+  Delete "$INSTDIR\docs\FAQ.html"
+  Delete "$INSTDIR\docs\GettingStarted.html"
   Delete "$INSTDIR\docs\Legal.html"
   Delete "$INSTDIR\docs\main.html"
-  Delete "$INSTDIR\docs\More Info.html"
+  Delete "$INSTDIR\docs\MoreInfo.html"
   RMDir "$INSTDIR\docs"
 !endif
