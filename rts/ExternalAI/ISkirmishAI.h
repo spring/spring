@@ -15,9 +15,15 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef	_ISKIRMISHAI_H
-#define	_ISKIRMISHAI_H
+#ifndef _ISKIRMISHAI_H
+#define _ISKIRMISHAI_H
 
+/**
+ * The interface for a Skirmish AI instance.
+ * A Skirmish AI instance can be seen as an instance of the AI,
+ * that is dedicated to control a specific team (eg team 1)).
+ * @see ISkirmishAILibrary
+ */
 class ISkirmishAI {
 public:
 	/**
@@ -27,4 +33,4 @@ public:
 	virtual int HandleEvent(int topic, const void* data) const = 0;
 };
 
-#endif	// _ISKIRMISHAI_H
+#endif // _ISKIRMISHAI_H

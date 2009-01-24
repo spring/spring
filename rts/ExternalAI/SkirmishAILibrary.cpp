@@ -17,7 +17,6 @@
 
 #include "SkirmishAILibrary.h"
 
-//#include "Interface/SAIInterfaceLibrary.h"
 #include "LogOutput.h"
 #include "IAILibraryManager.h"
 #include "AIInterfaceKey.h"
@@ -50,7 +49,8 @@ void CSkirmishAILibrary::Init(int teamId) const {
 
 	if (sSAI.init != NULL) {
 		const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-		const CSkirmishAILibraryInfo* skiInf = libMan->GetSkirmishAIInfos().find(key)->second;
+		const CSkirmishAILibraryInfo* skiInf =
+				libMan->GetSkirmishAIInfos().find(key)->second;
 
 		unsigned int infSize = skiInf->GetInfo().size();
 		const char** infKeys = skiInf->GetCInfoKeys();
@@ -65,7 +65,8 @@ void CSkirmishAILibrary::Init(int teamId) const {
 				optSize, optKeys, optValues);
 		if (error != 0) {
 			// init failed
-			logOutput.Print("Failed to initialize an AI for team %d, error: %d", teamId, error);
+			logOutput.Print("Failed to initialize an AI for team %d, error: %d",
+					teamId, error);
 		}
 	}
 }
@@ -76,11 +77,13 @@ void CSkirmishAILibrary::Release(int teamId) const {
 		int error = sSAI.release(teamId);
 		if (error != 0) {
 			// release failed
-			logOutput.Print("Failed to release the AI for team %d, error: %d", teamId, error);
+			logOutput.Print("Failed to release the AI for team %d, error: %d",
+					teamId, error);
 		}
 	}
 }
 
-int CSkirmishAILibrary::HandleEvent(int teamId, int topic, const void* data) const {
+int CSkirmishAILibrary::HandleEvent(int teamId, int topic, const void* data)
+		const {
 	return sSAI.handleEvent(teamId, topic, data);
 }

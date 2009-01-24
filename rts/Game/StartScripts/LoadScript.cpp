@@ -5,7 +5,6 @@
 #include "mmgr.h"
 
 #include "LoadScript.h"
-#include "ExternalAI/GlobalAIHandler.h"
 #include "Game/GameSetup.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Units/UnitDefHandler.h"

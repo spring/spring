@@ -44,29 +44,28 @@ public:
 	virtual SkirmishAIKey GetKey() const;
 
 	virtual std::string GetDataDir() const;
-//	virtual std::string GetFileName() const;
-	virtual std::string GetShortName() const; // restrictions: none of the following: spaces, '_', '#'
+	/** Restrictions: none of the following: spaces, '_', '#' */
+	virtual std::string GetShortName() const;
+	/** Restrictions: none of the following: spaces, '_', '#' */
+	virtual std::string GetVersion() const;
 	virtual std::string GetName() const;
-	virtual std::string GetVersion() const; // restrictions: none of the following: spaces, '_', '#'
 	virtual std::string GetDescription() const;
 	virtual std::string GetURL() const;
 	virtual std::string GetInterfaceShortName() const;
 	virtual std::string GetInterfaceVersion() const;
 	virtual std::string GetInfo(const std::string& key) const;
 	virtual const std::map<std::string, InfoItem>& GetInfo() const;
-//	virtual unsigned int GetInfoCReference(InfoItem cInfo[],
-//			unsigned int maxInfoItems) const;
-//	virtual const struct InfoItem* GetInfoCReference() const;
 	virtual const char** GetCInfoKeys() const;
 	virtual const char** GetCInfoValues() const;
 
 	virtual const std::vector<Option>& GetOptions() const;
 
 	virtual void SetDataDir(const std::string& dataDir);
-//	virtual void SetFileName(const std::string& fileName);
-	virtual void SetShortName(const std::string& shortName); // restrictions: none of the following: spaces, '_', '#'
+	/** Restrictions: none of the following: spaces, '_', '#' */
+	virtual void SetShortName(const std::string& shortName);
+	/** Restrictions: none of the following: spaces, '_', '#' */
+	virtual void SetVersion(const std::string& version);
 	virtual void SetName(const std::string& name);
-	virtual void SetVersion(const std::string& version); // restrictions: none of the following: spaces, '_', '#'
 	virtual void SetDescription(const std::string& description);
 	virtual void SetURL(const std::string& url);
 	virtual void SetInterfaceShortName(const std::string& interfaceShortName);
@@ -76,13 +75,10 @@ public:
 	virtual void SetOptions(const std::vector<Option>& options);
 
 private:
-	static const unsigned int MAX_INFOS = 128;
-	static const unsigned int MAX_OPTIONS = 128;
 	std::map<std::string, InfoItem> info;
-//	struct InfoItem* info_c;
 	const char** infoKeys_c;
 	const char** infoValues_c;
 	std::vector<Option> options;
 };
 
-#endif	// _SKIRMISHAILIBRARYINFO_H
+#endif // _SKIRMISHAILIBRARYINFO_H

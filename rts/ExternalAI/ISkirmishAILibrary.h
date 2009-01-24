@@ -26,6 +26,10 @@
 class SkirmishAIKey;
 class AIInterfaceKey;
 
+/**
+ * The interface for a Skirmish AI library.
+ * @see ISkirmishAI
+ */
 class ISkirmishAILibrary {
 public:
 	virtual ~ISkirmishAILibrary() {}
@@ -38,9 +42,6 @@ public:
 	virtual LevelOfSupport GetLevelOfSupportFor(int teamId,
 			const std::string& engineVersionString, int engineVersionNumber,
 			const AIInterfaceKey& interfaceKey) const = 0;
-
-//    virtual std::map<std::string, InfoItem> GetInfo(int teamId) const = 0;
-//	virtual std::vector<Option> GetOptions(int teamId) const = 0;
 
     virtual void Init(int teamId) const = 0;
     virtual void Release(int teamId) const = 0;

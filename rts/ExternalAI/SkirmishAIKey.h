@@ -18,15 +18,20 @@
 #ifndef _SKIRMISHAIKEY_H
 #define _SKIRMISHAIKEY_H
 
-// this is needed, cause somewhere in MinGW, interface is defined (???)
-// it is not needed on GCC
+// this is needed when compiling with MinGW,
+// cause it has interface defined somewhere in its base files
+// it is not needed on GCC eg.
 #ifdef interface
 #undef interface
 #endif
+
 #include <string>
 #include "creg/creg.h"
 #include "AIInterfaceKey.h"
 
+/**
+ * Used to uniquely identify a Skirmish AI within the engine.
+ */
 class SkirmishAIKey {
 	CR_DECLARE_STRUCT(SkirmishAIKey);
 

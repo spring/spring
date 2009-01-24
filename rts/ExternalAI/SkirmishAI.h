@@ -19,11 +19,13 @@
 #define _SKIRMISHAI_H
 
 #include "ISkirmishAI.h"
-//#include "ISkirmishAILibrary.h"
 #include "SkirmishAIKey.h"
 
 class ISkirmishAILibrary;
 
+/**
+ * The default implementation of ISkirmishAI.
+ */
 class CSkirmishAI : public ISkirmishAI {
 public:
 	CSkirmishAI(int teamId, const SkirmishAIKey& skirmishAIKey);
@@ -37,4 +39,4 @@ private:
 	const ISkirmishAILibrary* library;
 };
 
-#endif	// _SKIRMISHAI_H
+#endif // _SKIRMISHAI_H

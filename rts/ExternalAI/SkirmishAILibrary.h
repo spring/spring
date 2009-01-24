@@ -26,6 +26,9 @@
 
 class AIInterfaceKey;
 
+/**
+ * Default implementation of ISkirmishAILibrary.
+ */
 class CSkirmishAILibrary : public ISkirmishAILibrary {
 public:
 	CSkirmishAILibrary(const SSAILibrary& ai, const SkirmishAIKey& key);
@@ -48,10 +51,6 @@ public:
 private:
 	SSAILibrary sSAI;
 	SkirmishAIKey key;
-
-private:
-	static const int MAX_INFOS = 128;
-	static const int MAX_OPTIONS = 128;
 };
 
 #endif // _SKIRMISHAILIBRARY_H

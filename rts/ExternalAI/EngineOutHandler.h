@@ -31,7 +31,6 @@ class CGroup;
 class WeaponDef;
 class SkirmishAIKey;
 class CSkirmishAIWrapper;
-//struct SGAIKey;
 class CGroupAIWrapper;
 
 void handleAIException(const char* description);
@@ -53,12 +52,15 @@ public:
 	static void Destroy();
 
 	void PostLoad();
-	void PreDestroy(); // called just before all the units are destroyed
+	/** Called just before all the units are destroyed. */
+	void PreDestroy();
 
 	void Update();
 
-	bool UnitAddedToGroup(const CUnit& unit, const CGroup& group);		//group should return false if it doenst want the unit for some reason
-	void UnitRemovedFromGroup(const CUnit& unit, const CGroup& group);		//no way to refuse giving up a unit
+	/** Group should return false if it doenst want the unit for some reason. */
+	bool UnitAddedToGroup(const CUnit& unit, const CGroup& group);
+	/** No way to refuse giving up a unit. */
+	void UnitRemovedFromGroup(const CUnit& unit, const CGroup& group);
 	void UnitEnteredLos(const CUnit& unit, int allyTeamId);
 	void UnitLeftLos(const CUnit& unit, int allyTeamId);
 	void UnitEnteredRadar(const CUnit& unit, int allyTeamId);
@@ -75,7 +77,11 @@ public:
 	void SeismicPing(int allyTeamId, const CUnit& unit, const float3& pos, float strength);
 	void WeaponFired(const CUnit& unit, const WeaponDef& def);
 	void PlayerCommandGiven(const std::vector<int>& selectedUnitIds, const Command& c, int playerId);
-	void CommandFinished(const CUnit& unit, int commandTopicId);	//a specific unit has finished a specific command, might be a good idea to give new orders to it
+	/**
+	 * A specific unit has finished a specific command,
+	 * might be a good idea to give new orders to it.
+	*/
+	void CommandFinished(const CUnit& unit, int commandTopicId);
 	void GotChatMsg(const char* msg, int playerId);
 
 
@@ -83,14 +89,6 @@ public:
 	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key);
 	bool IsSkirmishAI(int teamId) const;
 	void DestroySkirmishAI(int teamId);
-	//const CSkirmishAIWrapper* GetSkirmishAI(int teamId);
-
-
-	// Group AI stuff
-//	bool CreateGroupAI(const CGroup& group, const SGAIKey& key,
-//			const std::map<std::string, std::string>& options);
-//	bool IsGroupAI(const CGroup& group) const;
-//	void DestroyGroupAI(const CGroup& group);
 
 
 	void SetCheating(bool enable);
@@ -109,10 +107,6 @@ private:
 
 	CSkirmishAIWrapper* skirmishAIs[MAX_TEAMS];
 	bool hasSkirmishAIs;
-	//CGroupAIWrapper* groupAIs[MAX_TEAMS][MAX_GROUPS];
-//	CGroupAIWrapper* groupAIs[MAX_TEAMS][16];
-//	bool hasGroupAIs;
-//	bool hasTeamGroupAIs[MAX_TEAMS];
 };
 
 #define eoh CEngineOutHandler::GetInstance()
