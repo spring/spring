@@ -41,7 +41,6 @@
 
 static const struct SStaticGlobalData* staticGlobalData = NULL;
 static unsigned int maxTeams = 0;
-static unsigned int maxGroups = 0;
 static unsigned int maxSkirmishImpls = 0;
 static unsigned int sizeImpls = 0;
 
@@ -90,16 +89,16 @@ static bool checkException(JNIEnv* env, const char* errorMsg) {
 /**
  * Creates the Java classpath.
  * It will consist of the following:
- * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/interface.jar
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/AIInterface.jar
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/[*].jar
- * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/interface.jar
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/AIInterface.jar
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/jlib/
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/jlib/[*].jar
- * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/ai.jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/SkirmishAI.jar
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/[*].jar
- * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/ai.jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/SkirmishAI.jar
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/[*].jar
  */
@@ -187,10 +186,10 @@ static bool java_createClassPath(char* classPath) {
 /**
  * Creates the private Java classpath for a single AI.
  * It will consist of the following:
- * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/ai.jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/SkirmishAI.jar
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/[*].jar
- * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/ai.jar
+ * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/SkirmishAI.jar
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/[*].jar
  */
@@ -207,10 +206,10 @@ static bool java_createAIClassPath(const char* shortName, const char* version,
 
 	if (version != NULL) {
 		jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(4,
-				SKIRMISH_AI_DATA_DIR, shortName, version, "ai.jar");
+				SKIRMISH_AI_DATA_DIR, shortName, version, "SkirmishAI.jar");
 	}
 	jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(3,
-			SKIRMISH_AI_DATA_DIR, shortName, "ai.jar");
+			SKIRMISH_AI_DATA_DIR, shortName, "SkirmishAI.jar");
 
 
 	// the directories in the following list will be searched for .jar files
@@ -692,7 +691,6 @@ bool java_initStatic(const struct SStaticGlobalData* _staticGlobalData) {
 
 	maxTeams = staticGlobalData->maxTeams;
 	maxTeams = staticGlobalData->maxTeams;
-	maxGroups = staticGlobalData->maxGroups;
 	maxSkirmishImpls = maxTeams;
 	sizeImpls = 0;
 

@@ -28,7 +28,7 @@ extern "C" {
 //#define MY_VERSION "0.1"
 //#define MY_NAME "Java AI Interface"
 #define MY_LOG_FILE "interface-log.txt"
-#define JAVA_AI_INTERFACE_LIBRARY_FILE_NAME "interface.jar"
+#define JAVA_AI_INTERFACE_LIBRARY_FILE_NAME "AIInterface.jar"
 #define JAVA_LIBS_DIR "jlib"
 #define NATIVE_LIBS_DIR "lib"
 

@@ -86,7 +86,6 @@ struct SStaticGlobalData* createStaticGlobalData() {
 
 	const SStaticGlobalData sgd = {
 		MAX_TEAMS,
-		MAX_GROUPS,
 		SpringVersion::GetFull().c_str(),	// spring version string
 		numDataDirs,
 		(const char**) dataDirs,
