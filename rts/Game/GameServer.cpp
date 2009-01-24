@@ -130,7 +130,7 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 
 	medianCpu=0.0f;
 	medianPing=0;
-	enforceSpeed=configHandler.Get("EnforceGameSpeed", false);
+	enforceSpeed=!setup->hostDemo && configHandler.Get("EnforceGameSpeed", false);
 
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(settings->hostport));
@@ -542,8 +542,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
-					if(enforceSpeed && (players[a].cpuUsage - medianCpu > 0.25f || players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
-						GotChatMessage(ChatMessage(a, a, "Pausing rejected (cpu load or ping is too high)"));
+					if(enforceSpeed && 
+						(players[a].spectator || 
+						players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) || 
+						players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
+						GotChatMessage(ChatMessage(a, a, players[a].spectator ? "Pausing rejected (spectators)" : "Pausing rejected (cpu load or ping is too high)"));
 						break; // disallow pausing by players who cannot keep up gamespeed
 					}
 					timeLeft=0;
@@ -1497,8 +1500,11 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	if(enforceSpeed && player!=SERVER_PLAYER && (players[player].cpuUsage - medianCpu > 0.25f || players[player].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
-		GotChatMessage(ChatMessage(player, player, "Speed change rejected (cpu load or ping is too high)"));
+	if(enforceSpeed && player!=SERVER_PLAYER && 
+		(players[player].spectator || 
+		players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) || 
+		players[player].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
+		GotChatMessage(ChatMessage(player, player, players[player].spectator ? "Speed change rejected (spectators)" : "Speed change rejected (cpu load or ping is too high)"));
 		return; // disallow speed change by players who cannot keep up gamespeed
 	}
 
