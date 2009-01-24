@@ -6,11 +6,11 @@
   File "..\Documentation\cmds.txt"
   Delete "$INSTDIR\docs\xtachanges.txt"
 
-  File "..\Documentation\userdocs\Q&A.html"
-  File "..\Documentation\userdocs\Getting Started.html"
+  File "..\Documentation\userdocs\FAQ.html"
+  File "..\Documentation\userdocs\GettingStarted.html"
   File "..\Documentation\userdocs\Legal.html"
   File "..\Documentation\userdocs\main.html"
-  File "..\Documentation\userdocs\More Info.html"
+  File "..\Documentation\userdocs\MoreInfo.html"
 !else
   ; Documentation
   Delete "$INSTDIR\docs\readme.html"
