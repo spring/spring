@@ -230,20 +230,20 @@ def generate(env):
 			arch = args['arch']
 			if not arch or arch == 'none':
 				print 'Configuring for default architecture'
-				env['streflop_extra'] = ''
+				marchFlag = ''
 			else:
 				print 'Configuring for', arch
-				env['CCFLAGS'] += ['-march=' + arch]
-				env['streflop_extra'] = 'ARCH=' + arch
+				marchFlag = '-march=' + arch
 		else:
 			bits, archname = platform.architecture()
 			if bits == '32bit' or env['platform'] == 'windows':
 				print 'Configuring for i686'
-				env['CCFLAGS'] += ['-march=i686']
-				env['streflop_extra'] = 'ARCH=i686'
+				marchFlag = '-march=i686'
 			else:
 				print 'Configuring for default architecture'
-				env['streflop_extra'] = ''
+				marchFlag = ''
+		env['CCFLAGS'] += [marchFlag]
+		env['streflop_extra'] = [marchFlag]
 
 		# profile?
 		bool_opt('profile', False)
@@ -362,11 +362,13 @@ def generate(env):
 		# Allow easy switching between 387 and SSE fpmath.
 		if env['fpmath']:
 			env['CCFLAGS'] += ['-mfpmath='+env['fpmath']]
+			env['streflop_extra'] += ['-mfpmath='+env['fpmath']]
 			if env['fpmath'] == '387':
 				print "WARNING: SSE math vs X87 math is unsynced!"
 				print "WARNING: Do not go online with the binary you are currently building!"
 			else:
 				env['CCFLAGS'] += ['-msse']
+				env['streflop_extra'] += ['-msse']
 
 		env['CXXFLAGS'] = env['CCFLAGS']
 
@@ -455,7 +457,7 @@ def generate(env):
 
 		include_path = env['cpppath'] + ['rts', 'rts/System']
 		include_path += ['rts/lib/luabind', 'rts/lib/lua/include', 'rts/lib/streflop']
-		lib_path = env['libpath'] + ['rts/lib/streflop']
+		lib_path = env['libpath']
 
 		if env['platform'] == 'freebsd':
 			include_path += ['/usr/local/include', '/usr/X11R6/include', '/usr/X11R6/include/GL']
@@ -485,8 +487,6 @@ def generate(env):
 		env.AppendUnique(CPPPATH=include_path, LIBPATH=lib_path)
 
 		config.configure(env, conf_dir=os.path.join(env['builddir'], 'sconf_temp'))
-
-		env.AppendUnique(LIBS=['streflop'])
 
 		usropts.Save(usrcachefile, env)
 		intopts.Save(intcachefile, env)
