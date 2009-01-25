@@ -14,7 +14,7 @@
 namespace SpringVersion
 {
 	
-const char* const Major = "0.78";
+const char* const Major = "0.78+";
 const char* const Minor = "2";
 const char* const Patchset = "1";
 const char* const Additional = "";
