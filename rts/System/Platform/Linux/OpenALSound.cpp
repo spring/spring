@@ -19,6 +19,7 @@
 #include "OggStream.h"
 #include "mmgr.h"
 #include "Exceptions.h"
+#include "GlobalUnsynced.h"
 
 // Ogg-Vorbis audio stream object
 COggStream oggStream;
@@ -61,7 +62,7 @@ COpenALSound::COpenALSound()
 
 	// Set distance model (sound attenuation)
 	alDistanceModel (AL_INVERSE_DISTANCE);
-	alDopplerFactor(5);
+	alDopplerFactor(0.1);
 
 
 	posScale.x = 0.02f;
@@ -248,7 +249,8 @@ void COpenALSound::UpdateListener()
 		return;
 	}
 	float3 pos = camera->pos * posScale;
-	const float3 velocity = (pos - prevPos);
+	//TODO: move somewhere camera related and make accessible for everyone
+	const float3 velocity = (pos - prevPos)/gu->lastFrameTime;
 	prevPos = pos;
 	alListener3f(AL_POSITION, pos.x, pos.y, pos.z);
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
