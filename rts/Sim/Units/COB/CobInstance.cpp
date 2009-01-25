@@ -1048,7 +1048,7 @@ void CCobInstance::PlayUnitSound(int snr, int attr)
 {
 	int sid = script.sounds[snr];
 	//logOutput.Print("Playing %d %d %d", snr, attr, sid);
-	sound->PlaySample(sid, unit->pos, attr);
+	sound->PlaySample(sid, unit->pos, unit->speed, attr);
 }
 
 void CCobInstance::ShowFlare(int piece)
@@ -1318,7 +1318,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				break;
 		}
 		if (p4 == 0) {
-			sound->PlaySample(script.sounds[p1], unit->pos, float(p2) / COBSCALE);
+			sound->PlaySample(script.sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
 			sound->PlaySample(script.sounds[p1], float(p2) / COBSCALE);
 		}
