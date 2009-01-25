@@ -82,7 +82,6 @@ void CObject::PostLoad()
 
 void CObject::DependentDied(CObject* o)
 {
-//	MessageBox(0,"wrong","ag",0);
 }
 
 void CObject::AddDeathDependence(CObject *o)

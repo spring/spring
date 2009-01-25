@@ -169,7 +169,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 	//process all in order packets that we have waiting
 	while ((wpi = waitingPackets.find(lastInOrder+1)) != waitingPackets.end())
 	{
-		std::vector<uint8_t> buf;
+		std::vector<boost::uint8_t> buf;
 		if (fragmentBuffer)
 		{
 			buf.resize(fragmentBuffer->length);

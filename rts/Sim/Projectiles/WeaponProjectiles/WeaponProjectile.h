@@ -26,6 +26,7 @@ public:
 	virtual int ShieldRepulse(CPlasmaRepulser* shield, float3 shieldPos, float shieldForce, float shieldMaxSpeed) { return 0; };	//return 0=unaffected,1=instant repulse,2=gradual repulse
 
 	virtual void DrawUnitPart();
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	// should not be here
 	void DrawS3O(void);
 

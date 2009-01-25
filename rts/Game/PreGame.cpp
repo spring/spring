@@ -161,7 +161,6 @@ void CPreGame::StartServer(const std::string& setupscript)
 	std::string script = setup->scriptName;
 
 	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
-	bool mapHasStartscript = false;
 	if (!map.empty())
 	{
 		// would be better to use MapInfo here, but this doesn't work
@@ -182,37 +181,30 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 		if (!mapWantedScript.empty()) {
 			script = mapWantedScript;
-			mapHasStartscript = true;
 		}
 	}
 	startupData->SetScript(script);
 	// here we now the name of the script to use
 
-	try { // to load the script
-		CScriptHandler::SelectScript(script);
-		std::string scriptWantedMod;
-		scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
-		if (!scriptWantedMod.empty()) {
-			mod = scriptWantedMod;
-		}
-		LoadMod(mod);
+	CScriptHandler::SelectScript(script);
+	std::string scriptWantedMod;
+	scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
+	if (!scriptWantedMod.empty()) {
+		mod = scriptWantedMod;
 	}
-	catch (const std::runtime_error& err) { // script not found, so it may be in the modarchive?
-		LoadMod(mod); // new map into VFS
-		CScriptHandler::SelectScript(script);
-	}
+	LoadMod(mod);
+
 	// make sure s is a modname (because the same mod can be in different archives on different computers)
 	mod = archiveScanner->ModArchiveToModName(mod);
 	std::string modArchive = archiveScanner->ModNameToModArchive(mod);
 	startupData->SetMod(mod, archiveScanner->GetModChecksum(modArchive));
 
-	if (!mapHasStartscript) {
-		std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
-		if (!mapFromScript.empty() && map != mapFromScript) {
-			//TODO unload old map
-			LoadMap(mapFromScript, true);
-		}
+	std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
+	if (!mapFromScript.empty() && map != mapFromScript) {
+		//TODO unload old map
+		LoadMap(mapFromScript, true);
 	}
+
 	startupData->SetMap(map, archiveScanner->GetMapChecksum(map));
 	setup->LoadStartPositions();
 
@@ -291,19 +283,9 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 			tgame->AddPair("Demofile", demoName);
 
-			unsigned numPlayers = 0;
-			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it) {
-				if (it->first.substr(0, 6) == "player")
-				{
-					it->second->AddPair("isfromdemo", 1);
-					++numPlayers;
-				}
-			}
-			tgame->AddPair("NumPlayers", numPlayers+1);
-
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			char section[50];
-			sprintf(section, "PLAYER%i", numPlayers);
+			sprintf(section, "PLAYER%i", MAX_PLAYERS);
 			string s(section);
 			TdfParser::TdfSection* me = tgame->construct_subsection(s);
 			me->AddPair("name", settings->myPlayerName);

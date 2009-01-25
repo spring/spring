@@ -13,6 +13,7 @@ public:
 
 	void Update();
 	void Draw();
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	CGfxProjectile();
 	CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color GML_PARG_H);
 	virtual ~CGfxProjectile();

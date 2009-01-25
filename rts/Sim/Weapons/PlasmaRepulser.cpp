@@ -247,7 +247,8 @@ void CPlasmaRepulser::SlowUpdate(void)
 
 void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 {
-	if (weaponDef->smartShield && teamHandler->AlliedTeams(p->owner->team, owner->team)) {
+	CUnit* owner = owner;
+	if (weaponDef->smartShield && teamHandler->AlliedTeams(p->owner()->team, owner->team)) {
 		return;
 	}
 

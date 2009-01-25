@@ -47,6 +47,59 @@ else:
 	if os.path.exists('rts/System/StdAfx.h.gch'):
 		os.unlink('rts/System/StdAfx.h.gch')
 
+################################################################################
+### Build streflop (which has it's own Makefile-based build system)
+################################################################################
+
+# stores shared objects so newer scons versions don't choke with
+def create_static_objects(env, fileList, suffix, additionalCPPDEFINES = []):
+	objsList = []
+	myEnv = env.Clone()
+	myEnv.AppendUnique(CPPDEFINES = additionalCPPDEFINES)
+	for f in fileList:
+		while isinstance(f, list):
+			f = f[0]
+		fpath, fbase = os.path.split(f)
+		fname, fext = fbase.rsplit('.', 1)
+		objsList.append(myEnv.StaticObject(os.path.join(fpath, fname + suffix), f))
+	return objsList
+
+# setup build environment
+senv = env.Clone(builddir=os.path.join(env['builddir'], 'streflop'))
+senv['CPPPATH'] = []
+senv.BuildDir(os.path.join(senv['builddir'], 'rts/lib/streflop'), 'rts/lib/streflop', duplicate = False)
+for d in filelist.list_directories(senv, 'rts/lib/streflop', exclude_list=[]):
+	senv.BuildDir(os.path.join(senv['builddir'], d), d, duplicate = False)
+
+# setup flags and defines
+if senv['fpmath'] == 'sse':
+	senv['CPPDEFINES'] = ['STREFLOP_SSE=1']
+else:
+	senv['CPPDEFINES'] = ['STREFLOP_X87=1']
+senv['CXXFLAGS'] = ['-Wall', '-O3', '-pipe', '-g', '-mno-tls-direct-seg-refs', '-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-fno-strict-aliasing', '-mieee-fp']
+senv.AppendUnique(CXXFLAGS = senv['streflop_extra'])
+
+# create the libm sub-part build environment
+slibmenv = senv.Clone()
+slibmenv.AppendUnique(CPPPATH = ['rts/lib/streflop/libm/headers'])
+
+# gather the sources
+sobjs_flt32 = create_static_objects(slibmenv, filelist.get_source(slibmenv, 'rts/lib/streflop/libm/flt-32'), '-streflop-flt32', ['LIBM_COMPILING_FLT32'])
+#sobjs_dbl64 = create_static_objects(slibmenv, filelist.get_source(slibmenv, 'rts/lib/streflop/libm/dbl-64'), '-streflop-dbl64', ['LIBM_COMPILING_DBL64'])
+#sobjs_ldbl96 = create_static_objects(slibmenv, filelist.get_source(slibmenv, 'rts/lib/streflop/libm/ldbl-96'), '-streflop-ldbl96', ['LIBM_COMPILING_LDBL96'])
+streflopSource_tmp = [
+		'rts/lib/streflop/SMath.cpp',
+		'rts/lib/streflop/Random.cpp'
+		]
+streflopSource = []
+for f in streflopSource_tmp:   streflopSource += [os.path.join(senv['builddir'], f)]
+streflopSource += sobjs_flt32
+# not needed => safer (and faster) to not compile them at all
+#streflopSource += sobjs_flt32 + sobjs_dbl64 + sobjs_ldbl96
+
+# compile
+streflop_lib = senv.StaticLibrary(senv['builddir'], streflopSource)
+Alias('streflop', streflop_lib) # Allow `scons streflop' to compile just streflop
 
 ################################################################################
 ### Build spring(.exe)
@@ -76,6 +129,7 @@ else:
 
 ddlcpp = env.Object(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+datadir)
 spring_files += [ddlcpp]
+spring_files += [streflop_lib]
 if env['platform'] != 'windows':
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 else: # create import library and .def file on Windows
@@ -100,10 +154,6 @@ if env['strip']:
 # Need a new env otherwise scons chokes on equal targets built with different flags.
 uenv = env.Clone(builddir=os.path.join(env['builddir'], 'unitsync'))
 uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
-
-for d in filelist.list_directories(uenv, 'rts', exclude_list=["crashrpt"]):
-	uenv.BuildDir(os.path.join(uenv['builddir'], d), d, duplicate = False)
-
 
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 unitsync_files          = filelist.get_source(uenv, 'tools/unitsync');
@@ -488,36 +538,6 @@ if env['platform'] != 'windows':
 #
 
 SConscript(['AI/SConscript'], exports=['env'], variant_dir=env['builddir'])
-
-################################################################################
-### Build streflop (which has it's own Makefile-based build system)
-################################################################################
-if not 'configure' in sys.argv and not 'test' in sys.argv and not 'install' in sys.argv:
-	cmd = "CC=" + env['CC'] + " CXX=" + env['CXX'] + " --no-print-directory -C rts/lib/streflop"
-	if env.has_key('streflop_extra'):
-		cmd += " " + env['streflop_extra']
-	if env['fpmath'] == 'sse':
-		cmd = "STREFLOP_SSE=1 " + cmd
-	else:
-		cmd = "STREFLOP_X87=1 " + cmd
-	if env['platform'] == 'windows':
-		cmd += " WIN32=1"
-	if env.GetOption('clean'):
-		cmd += " clean"
-	print 'streflop options:', cmd
-	if env['platform'] == 'freebsd':
-		status = os.system("gmake " + cmd)
-	else:
-		status = os.system("make " + cmd)
-	if status != 0:
-		# try with mingw32-make
-		status = os.system("mingw32-make " + cmd)
-	if status != 0:
-		print "Failed building streflop!"
-		env.Exit(1)
-	else:
-		print "Success building streflop!"
-
 
 ################################################################################
 ### Run Tests

@@ -50,8 +50,8 @@ void CInterceptHandler::RemoveInterceptorWeapon(CWeapon* weapon)
 void CInterceptHandler::AddInterceptTarget(CWeaponProjectile* target,float3 destination)
 {
 	int targTeam=-1;
-	if(target->owner)
-		targTeam=target->owner->allyteam;
+	if(target->owner())
+		targTeam=target->owner()->allyteam;
 
 	for(std::list<CWeapon*>::iterator wi=interceptors.begin();wi!=interceptors.end();++wi){
 		CWeapon* w=*wi;

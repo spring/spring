@@ -12,6 +12,7 @@
 #include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/IModelParser.h"
+#include "Rendering/Colors.h"
 #include "Map/MapInfo.h"
 #include "GlobalUnsynced.h"
 
@@ -21,7 +22,7 @@ CR_REG_METADATA(CProjectile,
 (
 	CR_MEMBER(checkCol),
 	CR_MEMBER(castShadow),
-	CR_MEMBER(owner),
+	CR_MEMBER(ownerId),
 	CR_MEMBER(synced),
 //	CR_MEMBER(drawPos),
 //	CR_RESERVED(4),
@@ -38,7 +39,7 @@ bool CProjectile::inArray = false;
 CVertexArray* CProjectile::va = 0;
 
 CProjectile::CProjectile():
-	owner(0),
+	ownerId(0),
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
@@ -55,15 +56,14 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 	SetRadius(1.7f);
 	ph->AddProjectile(this);
 
-	if (owner) {
-		AddDeathDependence(owner);
-	}
+	if (owner)
+		ownerId = owner->id;
 }
 
 
 CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon GML_PARG_C)
 :	CExpGenSpawnable(pos),
-	owner(owner),
+	ownerId(0),
 	speed(speed),
 	checkCol(true),
 	deleteMe(false),
@@ -77,15 +77,13 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	ph->AddProjectile(this);
 
 	if (owner)
-		AddDeathDependence(owner);
+		ownerId = owner->id;
 
 	GML_GET_TICKS(lastProjUpdate);
 }
 
 CProjectile::~CProjectile()
 {
-//	if (owner)
-//		DeleteDeathDependence(owner);
 }
 
 void CProjectile::Update()
@@ -127,6 +125,11 @@ void CProjectile::Draw()
 	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xstart,ph->projectiletex.yend,col);
 }
 
+void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::white);
+}
+
 void CProjectile::DrawArray()
 {
 	va->DrawArrayTC(GL_QUADS);
@@ -134,13 +137,6 @@ void CProjectile::DrawArray()
 	va=GetVertexArray();
 	va->Initialize();
 	inArray=false;
-}
-
-
-void CProjectile::DependentDied(CObject* o)
-{
-	if (o == owner)
-		owner = 0;
 }
 
 void CProjectile::DrawCallback(void)

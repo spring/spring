@@ -516,9 +516,14 @@ void CGameSetup::RemapTeams()
 {
 	// relocate Player.team field
 	for (int a = 0; a < numPlayers; ++a) {
-		if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
-			throw content_error( str(boost::format("GameSetup: Player %i belong to wrong team: %i") %a %playerStartingData[a].team) );
-		playerStartingData[a].team = teamRemap[playerStartingData[a].team];
+		if (playerStartingData[a].spectator)
+			playerStartingData[a].team = 0; // start speccing on team 0
+		else
+		{
+			if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
+				throw content_error( str(boost::format("GameSetup: Player %i belong to wrong team: %i") %a %playerStartingData[a].team) );
+			playerStartingData[a].team = teamRemap[playerStartingData[a].team];
+		}
 	}
 	// relocate AI.team field
 	for (unsigned int a = 0; a < skirmishAIStartingData.size(); ++a) {

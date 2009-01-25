@@ -8,6 +8,8 @@
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Colors.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
@@ -128,7 +130,7 @@ void CWeaponProjectile::Collision()
 		helper->Explosion(pos,
 			(weaponDef->dynDamageExp > 0) ? dynDamages : weaponDef->damages,
 			weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed, owner, true,
+			weaponDef->explosionSpeed, owner(), true,
 			weaponDef->noExplode ? 0.3f : 1,
 			weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->impactOnly,
 			weaponDef->explosionGenerator, 0, impactDir, weaponDef->id);
@@ -181,7 +183,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 
 		helper->Explosion(pos, damages,
 			weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed, owner, true,
+			weaponDef->explosionSpeed, owner(), true,
 			weaponDef->noExplode ? 0.3f : 1,
 			weaponDef->noExplode, weaponDef->impactOnly,
 			weaponDef->explosionGenerator, unit,
@@ -203,21 +205,6 @@ void CWeaponProjectile::Collision(CUnit* unit)
 
 void CWeaponProjectile::Update()
 {
-	//pos+=speed;
-
-	//if(weaponDef->gravityAffected)
-	//	speed.y+=mapInfo->map.gravity;
-
-
-	//if(weaponDef->noExplode)
-	//{
- //       if(TraveledRange())
-	//		CProjectile::Collision();
-	//}
-
-	//if(speed.Length()<weaponDef->maxvelocity)
-	//	speed += dir*weaponDef->weaponacceleration
-
 	CProjectile::Update();
 	UpdateGroundBounce();
 }
@@ -253,7 +240,7 @@ void CWeaponProjectile::UpdateGroundBounce()
 				pos += speed;
 				if(weaponDef->bounceExplosionGenerator) {
 					weaponDef->bounceExplosionGenerator->Explosion(pos,
-							speed.Length(), 1, owner, 1, NULL, normal);
+							speed.Length(), 1, owner(), 1, NULL, normal);
 				}
 			}
 		}
@@ -297,7 +284,10 @@ void CWeaponProjectile::DrawS3O(void)
 	DrawUnitPart();
 }
 
-
+void CWeaponProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::yellow);
+}
 
 void CWeaponProjectile::DependentDied(CObject* o)
 {
@@ -306,8 +296,6 @@ void CWeaponProjectile::DependentDied(CObject* o)
 
 	if(o==target)
 		target=0;
-
-	CProjectile::DependentDied(o);
 }
 
 void CWeaponProjectile::PostLoad()
