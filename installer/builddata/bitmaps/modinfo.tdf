@@ -1,8 +1,0 @@
-// modinfo for bitmaps.sdz
-
-[MOD]
-{
-	Name=Spring Standard data;
-	Description=Various bitmaps used by spring;
-	ModType=0;
-}
