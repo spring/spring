@@ -78,7 +78,7 @@ void CMissileLauncher::Fire(void)
 			targetUnit, weaponDef, targetPos);
 
 	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
-		sound->PlaySample(fireSoundId, owner->pos, dir*100, fireSoundVolume);
+		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
