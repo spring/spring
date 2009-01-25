@@ -47,6 +47,7 @@ private:
 	
 	std::map<std::string, ALuint> soundMap; // filename, index into Buffers
 	float3 posScale;
+	float3 prevPos;
 	ALuint* Sources;
 };
 
