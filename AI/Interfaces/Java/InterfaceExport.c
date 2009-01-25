@@ -26,9 +26,9 @@
 #include "ExternalAI/Interface/SStaticGlobalData.h"
 #include "ExternalAI/Interface/SSAILibrary.h"
 
-#include <stdbool.h>	// bool, true, false
-#include <string.h>	// strlen(), strcat(), strcpy()
-#include <stdlib.h>	// malloc(), calloc(), free()
+#include <stdbool.h>  // bool, true, false
+#include <string.h>   // strlen(), strcat(), strcpy()
+#include <stdlib.h>   // malloc(), calloc(), free()
 
 #define INTERFACE_PROPERTIES_FILE "interface.properties"
 
@@ -45,7 +45,8 @@ EXPORT(int) initStatic(
 	// initialize C part of the interface
 	staticGlobalData = _staticGlobalData;
 
-	util_setMyInfo(infoSize, infoKeys, infoValues);
+	util_setMyInfo(infoSize, infoKeys, infoValues,
+			staticGlobalData->numDataDirs, staticGlobalData->dataDirs);
 
 	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
 	const char* myVersion = util_getMyInfo(AI_INTERFACE_PROPERTY_VERSION);
@@ -55,23 +56,29 @@ EXPORT(int) initStatic(
 	const char* propValues[maxProps];
 	int numProps = 0;
 
-	// ### read the interface config file (optional) ###
-	char* interfacePropFile_rel = util_allocStrCatFSPath(2,
-				util_getDataDirVersioned(), INTERFACE_PROPERTIES_FILE);
-	char interfacePropFile_abs[2048];
-	bool interfacePropFile_found = util_findFile(
-			staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-			interfacePropFile_rel, interfacePropFile_abs);
-	free(interfacePropFile_rel);
+	char dd_r[2048];
+	bool dd_r_found = util_dataDirs_findFile("", dd_r, false, false, false);
+	if (!dd_r_found) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Unable to find read-only data-dir: %s", dd_r);
+	}
+	char dd_rw[2048];
+	bool dd_rw_found = util_dataDirs_findFile("", dd_rw, true, false, true);
+	if (!dd_rw_found) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Unable to find writeable data-dir: %s", dd_rw);
+	}
 
-	// ### read JVM options config file ###
-	if (interfacePropFile_found) {
-		numProps = util_parsePropertiesFile(interfacePropFile_abs,
+	// ### read the interface config file (optional) ###
+	char* interfacePropFile =
+			util_dataDirs_allocFilePath(INTERFACE_PROPERTIES_FILE, false);
+	if (interfacePropFile != NULL) {
+		numProps = util_parsePropertiesFile(interfacePropFile,
 				propKeys, propValues, maxProps);
 		int p;
 		for (p=0; p < numProps; ++p) {
 			char* propValue_tmp = util_allocStrReplaceStr(propValues[p],
-					"${home-dir}", util_getDataDirVersioned());
+					"${home-dir}", dd_rw);
 			free(propValues[p]);
 			propValues[p] = propValue_tmp;
 		}
@@ -100,16 +107,16 @@ EXPORT(int) initStatic(
 	}
 
 	// ### init the log file ###
-	char* logFile = util_allocStrCpy(
+	char* logFile_tmp = util_allocStrCpy(
 			util_map_getValueByKey(numProps, propKeys, propValues,
 			"log.file"));
-	if (logFile == NULL) {
-		logFile = util_allocStrCatFSPath(3,
-				util_getDataDirVersioned(), "log", MY_LOG_FILE);
+	if (logFile_tmp == NULL) {
+		logFile_tmp = util_allocStrCatFSPath(2, "log", MY_LOG_FILE);
 	}
-	char logDir[strlen(logFile) + 1];
-	if (util_getParentDir(logFile, logDir)
-			&& (util_fileExists(logDir) || util_makeDirRecursive(logDir))) {
+
+	char* logFile = util_dataDirs_allocFilePath(logFile_tmp, true);
+
+	if (logFile != NULL) {
 		simpleLog_init(logFile, useTimeStamps, logLevel);
 	} else {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
@@ -117,9 +124,9 @@ EXPORT(int) initStatic(
 	}
 
 	// log settings loaded from interface config file
-	if (interfacePropFile_found) {
+	if (interfacePropFile != NULL) {
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "settings loaded from: %s",
-				interfacePropFile_abs);
+				interfacePropFile);
 		int p;
 		for (p=0; p < numProps; ++p) {
 			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "\t%i: %s = %s",
@@ -127,15 +134,17 @@ EXPORT(int) initStatic(
 		}
 	} else {
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "settings NOT loaded from: %s",
-				interfacePropFile_abs);
+				interfacePropFile);
 	}
 
-	simpleLog_log("This is the log-file of the %s v%s AI Interface", myShortName, myVersion);
-	simpleLog_log("Using data-directory (version specific): %s",
-			util_getDataDirVersioned());
-	simpleLog_log("Using data-directory (version-less): %s",
-			util_getDataDirUnversioned());
+	simpleLog_log("This is the log-file of the %s v%s AI Interface",
+			myShortName, myVersion);
+	simpleLog_log("Using read/write data-directory (version specific): %s",
+			dd_rw);
+	simpleLog_log("Using read/write data-directory (version-less): %s", dd_r);
 	simpleLog_log("Using log file: %s", logFile);
+
+	free(interfacePropFile);
 	free(logFile);
 
 	// initialize Java part of the interface
@@ -156,8 +165,7 @@ EXPORT(int) releaseStatic() {
 	success = success && java_unloadJNIEnv();
 
 	// release C part of the interface
-	free(util_getDataDirVersioned());
-	free(util_getDataDirUnversioned());
+	util_finalize();
 
 	return success ? 0 : -1;
 }

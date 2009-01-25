@@ -102,82 +102,67 @@ static bool checkException(JNIEnv* env, const char* errorMsg) {
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/
  * {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/jlib/[*].jar
  */
-static bool java_createClassPath(char* classPath) {
+static bool java_createClassPath(char* classPathStr) {
 
-	classPath[0] = '\0';
+	classPathStr[0] = '\0';
 
-	// Check which of the skirmish AIs to be used in the current game will
-	// possibly be using this interface
-	unsigned int i;
-	unsigned int j;
+	unsigned int i, j;
 
 	// the .jar files in the following list will be added to the classpath
 	static const unsigned int MAX_ENTRIES = 128;
-	static const unsigned int MAX_TEXT_LEN = 256;
-	char* jarFiles[MAX_ENTRIES];
-	int unsigned sizeJarFiles = 0;
+	char* classPath[MAX_ENTRIES];
+	int unsigned classPath_size = 0;
 	// the Java AI Interfaces file name
-	{
-		jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(2,
-			util_getDataDirVersioned(), JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
-
-		jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(2,
-			util_getDataDirUnversioned(), JAVA_AI_INTERFACE_LIBRARY_FILE_NAME);
-	}
+	classPath[classPath_size++] = util_dataDirs_allocFilePath(
+			JAVA_AI_INTERFACE_LIBRARY_FILE_NAME, false);
 
 
 	// the directories in the following list will be searched for .jar files
 	// which then will be added to the classpath, plus they will be added
 	// to the classpath directly, so you can keep .class files in there
 	char* jarDirs[MAX_ENTRIES];
-	int unsigned sizeJarDirs = 0;
-	jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(2,
-			util_getDataDirVersioned(), JAVA_LIBS_DIR);
-	jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(2,
-			util_getDataDirUnversioned(), JAVA_LIBS_DIR);
+	int unsigned jarDirs_size = 0;
+	jarDirs[jarDirs_size++] = util_dataDirs_allocDir(JAVA_LIBS_DIR, false);
 
+// 	// search the individual jar files and add everything to the classpath
+// 	for (i = 0; i < sizeJarFiles; ++i) {
+// 		char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
+// 		bool found = util_findFile(
+// 				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
+// 				jarFiles[i], absoluteFilePath);
+// 		if (found) {
+// 			if (i > 0) {
+// 				STRCAT(classPath, ENTRY_DELIM);
+// 			}
+// 			STRCAT(classPath, absoluteFilePath);
+// 		}
+// 	}
+	// add the jar dirs (for .class files) and all contained .jars recursively
+	for (i=0; i < jarDirs_size; ++i) {
+		if (util_fileExists(jarDirs[i])) {
+			// add the dir directly
+			classPath[classPath_size++] = util_allocStrCpy(jarDirs[i]);
 
-	// search the individual jar files and add everything to the classpath
-	for (i = 0; i < sizeJarFiles; ++i) {
-		char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
-		bool found = util_findFile(
-				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-				jarFiles[i], absoluteFilePath);
-		if (found) {
-			if (i > 0) {
-				STRCAT(classPath, ENTRY_DELIM);
+			// add the contained jars recursively
+			char* jarFiles[MAX_ENTRIES];
+			unsigned int jarFiles_size = util_listFiles(jarDirs[i], ".jar",
+					jarFiles, true, MAX_ENTRIES);
+			for (j=0; j < jarFiles_size; ++j) {
+				classPath[classPath_size++] = util_allocStrCatFSPath(2,
+						jarDirs[i], jarFiles[j]);
 			}
-			STRCAT(classPath, absoluteFilePath);
 		}
-	}
-	// add the jar dirs (for .class files)
-	for (i = 0; i < sizeJarDirs; ++i) {
-		char* absoluteDirPath = util_allocStr(MAX_TEXT_LEN);
-		bool found = util_findDir(
-				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-				jarDirs[i], absoluteDirPath, false, false);
 		free(jarDirs[i]);
-		if (found) {
-			STRCAT(classPath, ENTRY_DELIM);
-			STRCAT(classPath, absoluteDirPath);
-			jarDirs[i] = absoluteDirPath;
-		} else {
-			jarDirs[i] = NULL;
-		}
 	}
-	// add the jars in the dirs
-	for (i = 0; i < sizeJarDirs; ++i) {
-		if (jarDirs[i] != NULL) {
-			char* jarFileNames[MAX_ENTRIES];
-			unsigned int sizeJarFileNames = util_listFiles(jarDirs[i], ".jar",
-					jarFileNames, true, MAX_ENTRIES);
-			for (j = 0; j < sizeJarFileNames; ++j) {
-				STRCAT(classPath, ENTRY_DELIM);
-				char* jarFileAbs_tmp = util_allocStrCatFSPath(2,
-						jarDirs[i], jarFileNames[j]);
-				STRCAT(classPath, jarFileAbs_tmp);
-				free(jarFileAbs_tmp);
-			}
+
+	// concat the classpath entries
+	STRCAT(classPathStr, classPath[0]);
+	free(classPath[0]);
+	for (i=1; i < classPath_size; ++i) {
+		if (classPath[i] != NULL) {
+			STRCAT(classPathStr, ENTRY_DELIM);
+			STRCAT(classPathStr, classPath[i]);
+			free(classPath[i]);
 		}
 	}
 
@@ -233,7 +218,7 @@ static bool java_createAIClassPath(const char* shortName, const char* version,
 		char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
 		bool found = util_findFile(
 				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-				jarFiles[i], absoluteFilePath);
+				jarFiles[i], absoluteFilePath, false);
 //simpleLog_log("jarFiles[%i]: %i", i, found);
 		if (found) {
 			classPathParts[classPathParts_num++] = absoluteFilePath;
@@ -318,30 +303,26 @@ static bool java_createNativeLibsPath(char* libraryPath) {
 	// consists of:
 
 	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/
-	STRCPY(libraryPath, util_getDataDirVersioned());
+	char* dd_r = util_dataDirs_allocDir("", false);
+	if (dd_r == NULL) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Unable to find read-only data-dir: %s", dd_r);
+	} else {
+		STRCPY(libraryPath, dd_r);
+		free(dd_r);
+	}
 
 	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/lib/
-	char* nativeLibDirVers = util_allocStrCatFSPath(2,
-			util_getDataDirVersioned(), NATIVE_LIBS_DIR);
-	if (util_fileExists(nativeLibDirVers)) {
+	char* dd_lib_r = util_dataDirs_allocDir(NATIVE_LIBS_DIR, false);
+	if (dd_lib_r == NULL) {
+		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
+				"Unable to find read-only libraries (optional) data-dir: %s",
+				NATIVE_LIBS_DIR);
+	} else {
 		STRCAT(libraryPath, ENTRY_DELIM);
-		STRCAT(libraryPath, nativeLibDirVers);
+		STRCPY(libraryPath, dd_lib_r);
+		free(dd_lib_r);
 	}
-	free(nativeLibDirVers);
-
-	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/
-	STRCAT(libraryPath, ENTRY_DELIM);
-	STRCAT(libraryPath, util_getDataDirUnversioned());
-
-	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/lib/
-	char* nativeLibDirUnvers =
-			util_allocStrCatFSPath(2, util_getDataDirUnversioned(),
-			NATIVE_LIBS_DIR);
-	if (util_fileExists(nativeLibDirUnvers)) {
-		STRCAT(libraryPath, ENTRY_DELIM);
-		STRCAT(libraryPath, nativeLibDirUnvers);
-	}
-	free(nativeLibDirUnvers);
 
 	return true;
 }
@@ -351,25 +332,17 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	const char* propKeys[maxProps];
 	const char* propValues[maxProps];
 
-	// ### evaluate JVM options config file ###
-	char* jvmPropFile_rel = util_allocStrCatFSPath(2,
-			util_getDataDirVersioned(), JVM_PROPERTIES_FILE);
-	char jvmPropFile_abs[2048];
-	bool jvmPropFile_found = util_findFile(
-			staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-			jvmPropFile_rel, jvmPropFile_abs);
-	free(jvmPropFile_rel);
-
 	// ### read JVM options config file ###
 	int numProps = 0;
-	if (jvmPropFile_found) {
-		numProps = util_parsePropertiesFile(jvmPropFile_abs,
+	char* jvmPropFile = util_dataDirs_allocFilePath(JVM_PROPERTIES_FILE, false);
+	if (jvmPropFile != NULL) {
+		numProps = util_parsePropertiesFile(jvmPropFile,
 				propKeys, propValues, maxProps);
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
-				"JVM: arguments loaded from: %s", jvmPropFile_abs);
+				"JVM: arguments loaded from: %s", jvmPropFile);
 	} else {
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
-				"JVM: arguments NOT loaded from: %s", jvmPropFile_abs);
+				"JVM: arguments NOT loaded from: %s", jvmPropFile);
 	}
 
 	// ### evaluate JNI version to use ###
@@ -377,7 +350,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	//unsigned long int jniVersion = JNI_VERSION_1_2;
 	unsigned long int jniVersion = JNI_VERSION_1_4;
 	//unsigned long int jniVersion = JNI_VERSION_1_6;
-	if (jvmPropFile_found) {
+	if (jvmPropFile != NULL) {
 		const char* jniVersionFromCfg =
 				util_map_getValueByKey(numProps, propKeys, propValues,
 				"jvm.jni.version");
@@ -403,7 +376,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	// if false, the JVM creation will fail if an
 	// unknown or invalid option was specified
 	bool ignoreUnrecognized = true;
-	if (jvmPropFile_found) {
+	if (jvmPropFile != NULL) {
 		const char* ignoreUnrecognizedFromCfg =
 				util_map_getValueByKey(numProps, propKeys, propValues,
 				"jvm.arguments.ignoreUnrecognized");
@@ -437,7 +410,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 		return false;
 	}
 	STRCAT(classPath, clsPath);
-	if (jvmPropFile_found) {
+	if (jvmPropFile != NULL) {
 		// ..., and append the part from the jvm options properties file,
 		// if it is specified there
 		// TODO: this will not work, as the key is "jvm.option.x",
@@ -467,7 +440,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 		return false;
 	}
 	STRCAT(libraryPath, libPath);
-	if (jvmPropFile_found) {
+	if (jvmPropFile != NULL) {
 		// ..., and append the part from the jvm options properties file,
 		// if it is specified there
 		// TODO: this will not work, as the key is "jvm.option.x",
@@ -489,7 +462,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	strOptions[op++] = classPath;
 	strOptions[op++] = libraryPath;
 
-	if (jvmPropFile_found) {
+	if (jvmPropFile != NULL) {
 		int i;
 		for (i=0; i < numProps; ++i) {
 			if (strcmp(propKeys[i], "jvm.option.x") == 0) {
@@ -529,16 +502,19 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	// fill strOptions into the JVM options
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: options (%i):", numOptions);
 	unsigned int i;
+	char* dd_rw = util_dataDirs_allocDir("", true);
 	for (i = 0; i < numOptions; ++i) {
 		options[i].optionString = util_allocStrReplaceStr(strOptions[i],
-				"${home-dir}", util_getDataDirVersioned());
+				"${home-dir}", dd_rw);
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE, options[i].optionString);
 	}
+	free(dd_rw);
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "");
 
 	vm_args->options = options;
 	vm_args->nOptions = numOptions;
 
+	free(jvmPropFile);
 
 	return true;
 }

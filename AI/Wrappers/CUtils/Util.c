@@ -17,7 +17,8 @@
 
 #include "Util.h"
 
-#include "ExternalAI/Interface/SStaticGlobalData.h" // for sPS
+#include "ExternalAI/Interface/SStaticGlobalData.h" // for SStaticGlobalData, sPS
+#include "ExternalAI/Interface/aidefines.h" // for SKIRMISH_AI_PROPERTY_DATA_DIR, AI_INTERFACES_DATA_DIR
 #ifdef BUILDING_AI
 // for SKIRMISH_AI_PROPERTY_DATA_DIR
 #include "ExternalAI/Interface/SSAILibrary.h"
@@ -40,36 +41,93 @@
 #include <dirent.h>      // needed for dir listing
 #endif // WIN32
 
+// These will always contain either NULL or non-exclusive memory,
+// which is NOT to be freed when setting a new value.
 static unsigned int myInfoSize;
 static const char** myInfoKeys;
 static const char** myInfoValues;
 
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
-static const char* myDataDirVersioned = NULL;
-static const char* myDataDirUnversioned = NULL;
-#endif
+// These will always contain either NULL or exclusively allocated memory,
+// which has to be freed, before setting a new value.
+static const char* myDataDir_versioned_r = NULL;
+static const char* myDataDir_versioned_rw = NULL;
+static const char* myDataDir_unversioned_r = NULL;
+static const char* myDataDir_unversioned_rw = NULL;
+#endif // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 
 void util_setMyInfo(
 		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues) {
+		const char** infoKeys, const char** infoValues,
+		unsigned int dataDirsSize,
+		const char** dataDirs) {
 
 	myInfoSize = infoSize;
 	myInfoKeys = infoKeys;
 	myInfoValues = infoValues;
 
 #ifdef BUILDING_AI
-	myDataDirVersioned = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
+	myDataDir_versioned_r =
+			util_allocStrCpy(util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR));
+	if (myDataDir_versioned_r == NULL) {
+		myDataDir_versioned_rw = NULL;
+	} else if (dataDirsSize > 0) {
+		if (util_startsWith(myDataDir_versioned_r, dataDirs[0])) {
+			// the read data dir is already a writeable dir
+			myDataDir_versioned_rw = util_allocStrCpy(myDataDir_versioned_r);
+		} else {
+			char* myShortName = util_getMyInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
+			if (myShortName == NULL) {
+				// shortName has to be available!!
+				exit(666);
+			}
+			char* myVersion = util_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);
+			if (myVersion == NULL) {
+				myVersion = "UNKOWN_VERSION";
+			}
+			myDataDir_versioned_rw = util_allocStrCatFSPath(4,
+					dataDirs[0], SKIRMISH_AI_DATA_DIR, myShortName, myVersion);
+		}
+	}
 #elif BUILDING_AI_INTERFACE
-	myDataDirVersioned = util_getMyInfo(AI_INTERFACE_PROPERTY_DATA_DIR);
+	myDataDir_versioned_r =
+			util_allocStrCpy(util_getMyInfo(AI_INTERFACE_PROPERTY_DATA_DIR));
+	if (myDataDir_versioned_r == NULL) {
+		myDataDir_versioned_rw = NULL;
+	} else if (dataDirsSize > 0) {
+		if (util_startsWith(myDataDir_versioned_r, dataDirs[0])) {
+			// the read data dir is already a writeable dir
+			myDataDir_versioned_rw = util_allocStrCpy(myDataDir_versioned_r);
+		} else {
+			const char* myShortName =
+					util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
+			if (myShortName == NULL) {
+				// shortName has to be available!!
+				exit(666);
+			}
+			const char* myVersion =
+					util_getMyInfo(AI_INTERFACE_PROPERTY_VERSION);
+			if (myVersion == NULL) {
+				myVersion = "UNKOWN_VERSION";
+			}
+			myDataDir_versioned_rw = util_allocStrCatFSPath(4,
+					dataDirs[0], AI_INTERFACES_DATA_DIR, myShortName,
+					myVersion);
+		}
+	}
 #endif
 
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
-	const char* lastSlash = strrchr(myDataDirVersioned, '/');
-	if (lastSlash == NULL) {
-		lastSlash = strrchr(myDataDirVersioned, '\\');
+	if (myDataDir_versioned_r != NULL) {
+		char* tmp_dir = util_allocStrCpy(myDataDir_versioned_r);
+		util_getParentDir(tmp_dir);
+		myDataDir_unversioned_r = tmp_dir;
 	}
-	myDataDirUnversioned = util_allocStrSubCpyByPointers(
-			myDataDirVersioned, myDataDirVersioned, lastSlash);
+	if (myDataDir_versioned_rw != NULL) {
+		char* tmp_dir = util_allocStrCpy(myDataDir_versioned_rw);
+		util_getParentDir(tmp_dir);
+		myDataDir_unversioned_rw = tmp_dir;
+	}
 #endif
 }
 const char* util_getMyInfo(const char* key) {
@@ -77,12 +135,134 @@ const char* util_getMyInfo(const char* key) {
 }
 
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
-const char* util_getDataDirVersioned() {
-	return myDataDirVersioned;
+// static const char* util_getDataDir(bool versioned, bool writeable) {
+//
+// 	if (versioned) {
+// 		if (writeable) {
+// 			return myDataDir_versioned_rw;
+// 		} else {
+// 			return myDataDir_versioned_r;
+// 		}
+// 	} else {
+// 		if (writeable) {
+// 			return myDataDir_unversioned_rw;
+// 		} else {
+// 			return myDataDir_unversioned_r;
+// 		}
+// 	}
+// }
+
+bool util_dataDirs_findFile(const char* relativePath, char* absolutePath,
+		bool searchOnlyWriteable, bool createParent, bool createAsDir) {
+
+	bool found = false;
+
+	// check if it is an absolute path
+	found = util_fileExists(relativePath);
+	STRCPY(absolutePath, relativePath);
+
+	if (!found && !searchOnlyWriteable) {
+		char* str_tmp = util_allocStrCatFSPath(2,
+				myDataDir_versioned_r, relativePath);
+		STRCPY(absolutePath, str_tmp);
+		free(str_tmp);
+		str_tmp = NULL;
+		found = util_fileExists(absolutePath);
+	}
+	if (!found) {
+		char* str_tmp = util_allocStrCatFSPath(2,
+				myDataDir_versioned_rw, relativePath);
+		STRCPY(absolutePath, str_tmp);
+		free(str_tmp);
+		str_tmp = NULL;
+		found = util_fileExists(absolutePath);
+	}
+	if (!found && !searchOnlyWriteable) {
+		char* str_tmp = util_allocStrCatFSPath(2,
+				myDataDir_unversioned_r, relativePath);
+		STRCPY(absolutePath, str_tmp);
+		free(str_tmp);
+		str_tmp = NULL;
+		found = util_fileExists(absolutePath);
+	}
+	if (!found) {
+		char* str_tmp = util_allocStrCatFSPath(2,
+				myDataDir_unversioned_rw, relativePath);
+		STRCPY(absolutePath, str_tmp);
+		free(str_tmp);
+		str_tmp = NULL;
+		found = util_fileExists(absolutePath);
+	}
+
+	// if not found at all, we set the path to the writable, versioned data-dir
+	if (!found) {
+		char* str_tmp = util_allocStrCatFSPath(2,
+				myDataDir_versioned_rw, relativePath);
+		STRCPY(absolutePath, str_tmp);
+		free(str_tmp);
+		str_tmp = NULL;
+		if (createAsDir) {
+			found = util_makeDir(absolutePath, true);
+		} else if (createParent) {
+			char parentDir[strlen(absolutePath) + 1];
+			STRCPY(parentDir, absolutePath);
+			if (util_getParentDir(parentDir)) {
+				found = util_makeDir(parentDir, true);
+			}
+		}
+	}
+
+	return found;
 }
-const char* util_getDataDirUnversioned() {
-	return myDataDirUnversioned;
+static char* util_dataDirs_allocPath(const char* relativePath, bool forWrite,
+		bool createAsDir) {
+
+	char* absolutePath = util_allocStr(2048);
+	bool ok = false;
+	if (forWrite) {
+		bool found = util_dataDirs_findFile(relativePath, absolutePath,
+			true, true, createAsDir);
+		if (found) {
+			ok = true;
+		} else if (!createAsDir) {
+			char parentDir[strlen(absolutePath) + 1];
+			STRCPY(parentDir, absolutePath);
+			if (util_getParentDir(parentDir)) {
+				ok = util_fileExists(parentDir);
+			}
+		}
+	} else {
+		ok = util_dataDirs_findFile(relativePath, absolutePath,
+			false, false, false);
+	}
+
+	if (ok) {
+		return absolutePath;
+	} else {
+		return NULL;
+	}
 }
+char* util_dataDirs_allocFilePath(const char* relativePath, bool forWrite) {
+	return util_dataDirs_allocPath(relativePath, forWrite, false);
+}
+char* util_dataDirs_allocDir(const char* relativePath, bool forWrite) {
+
+	bool createAsDir = forWrite;
+	return util_dataDirs_allocPath(relativePath, forWrite, createAsDir);
+}
+
+/**
+ * Finds a directory under dirs with the relativeDirPath
+ * and saves the resulting path in absoluteDirPath.
+ * If searchOnlyWriteable is set, only the first entry in dirs
+ * is used for the search, as it is assumed to contain
+ * the writeable directory.
+ *
+ * @return  true if the file existed or was created
+ */
+bool util_dataDirs_findDir(const char* dirs[], unsigned int numDirs,
+		const char* relativeDirPath, char* absoluteDirPath,
+		bool searchOnlyWriteable, bool create);
 #endif
 
 char* util_allocStr(unsigned int length) {
@@ -381,6 +561,27 @@ char* util_allocStrReplaceStr(const char* toChange, const char* toFind,
 	return result;
 }
 
+bool util_startsWith(const char* str, const char* prefix) {
+
+	bool startsWith = false;
+
+	const unsigned int l_str = strlen(str);
+	const unsigned int l_prefix = strlen(prefix);
+
+	if (l_str >= l_prefix) {
+		startsWith = true;
+
+		unsigned int i;
+		for (i=0; i < l_prefix; ++i) {
+			if (str[i] != prefix[i]) {
+				startsWith = false;
+				break;
+			}
+		}
+	}
+
+	return startsWith;
+}
 bool util_endsWith(const char* str, const char* suffix) {
 
 	bool endsWith = false;
@@ -388,7 +589,7 @@ bool util_endsWith(const char* str, const char* suffix) {
 	const unsigned int l_str = strlen(str);
 	const unsigned int l_suffix = strlen(suffix);
 
-	if (l_str > l_suffix) {
+	if (l_str >= l_suffix) {
 		endsWith = true;
 
 		unsigned int i;
@@ -629,7 +830,7 @@ bool util_fileExists(const char* filePath) {
 	return exists;
 }
 
-bool util_makeDir(const char* dirPath) {
+static bool util_makeDirS(const char* dirPath) {
 
 	#ifdef	WIN32
 		int mkStat = _mkdir(dirPath);
@@ -650,26 +851,35 @@ bool util_makeDir(const char* dirPath) {
 	#endif	// WIN32
 }
 
-bool util_makeDirRecursive(const char* dirPath) {
+bool util_makeDir(const char* dirPath, bool recursive) {
 
-	if (!util_fileExists(dirPath)) {
-		char parentDir[strlen(dirPath)+1];
-		bool hasParent = util_getParentDir(dirPath, parentDir);
-		if (hasParent) {
-			bool parentExists = util_makeDirRecursive(parentDir);
-			if (parentExists) {
-				return util_makeDir(dirPath);
-			}
+	bool exists = false;
+
+	char* parentDir = util_allocStrCpy(dirPath);
+	bool evaluatedParent = util_getParentDir(parentDir);
+	if (evaluatedParent) {
+		bool parentExists = util_fileExists(parentDir);
+
+		if (!parentExists && recursive) {
+			parentExists = util_makeDir(parentDir, recursive);
 		}
-		return false;
-	}
 
-	return true;
+		if (parentExists) {
+			exists = util_makeDirS(dirPath);
+		}
+	}
+	free(parentDir);
+
+	return exists;
 }
 
-bool util_getParentDir(const char* path, char* parentPath) {
+bool util_getParentDir(char* path) {
 
-	//size_t pos = strcspn(dirPath, "/\\");
+	char* lastChar = &(path[strlen(path)-1]);
+	if (*lastChar == '/' || *lastChar == '\\') {
+		*lastChar = '\0';
+	}
+
 	char* ptr = strrchr(path, '/'); // search char from end reverse
 	if (ptr == NULL) {
 		ptr = strrchr(path, '\\'); // search char from end reverse
@@ -678,18 +888,15 @@ bool util_getParentDir(const char* path, char* parentPath) {
 		}
 	}
 
-	// copy the parent substring to parentPath
-	unsigned int i;
-	for (i=0; &(path[i]) != ptr; i++) {
-		parentPath[i] = path[i];
-	}
-	parentPath[i] = '\0';
+	// replace the last '/' or '\\' with an string terminationg char
+	*ptr = '\0';
 
 	return true;
 }
 
 bool util_findFile(const char* dirs[], unsigned int numDirs,
-		const char* relativeFilePath, char* absoluteFilePath) {
+		const char* relativeFilePath, char* absoluteFilePath,
+		bool searchOnlyWriteable) {
 
 	bool found = false;
 
@@ -699,15 +906,13 @@ bool util_findFile(const char* dirs[], unsigned int numDirs,
 		found = true;
 	}
 
+	if (searchOnlyWriteable && numDirs > 1) {
+		numDirs = 1;
+	}
+
 	unsigned int d;
 	for (d=0; d < numDirs && !found; ++d) {
-		// do the following: tmpPath = dirs[d] + sPS + relativeFilePath
-		char* tmpPath = util_allocStr(strlen(dirs[d]) + 1 + strlen(relativeFilePath));
-		//char tmpPath[strlen(dirs[d]) + 1 + strlen(relativeFilePath) + 1];
-		tmpPath[0]= '\0';
-		tmpPath = STRCAT(tmpPath, dirs[d]);
-		tmpPath = STRCAT(tmpPath, sPS);
-		tmpPath = STRCAT(tmpPath, relativeFilePath);
+		char* tmpPath = util_allocStrCatFSPath(2, dirs[d], relativeFilePath);
 
 		if (util_fileExists(tmpPath)) {
 			STRCPY(absoluteFilePath, tmpPath);
@@ -738,13 +943,7 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 
 	unsigned int d;
 	for (d=0; d < numDirs && !found; ++d) {
-		// do the following: tmpPath = dirs[d] + sPS + relativeFilePath
-		char* tmpPath = util_allocStr(strlen(dirs[d]) + 1 + strlen(relativeDirPath));
-		//char tmpPath[strlen(dirs[d]) + 1 + strlen(relativeDirPath) + 1];
-		tmpPath[0]= '\0';
-		tmpPath = STRCAT(tmpPath, dirs[d]);
-		tmpPath = STRCAT(tmpPath, sPS);
-		tmpPath = STRCAT(tmpPath, relativeDirPath);
+		char* tmpPath = util_allocStrCatFSPath(2, dirs[d], relativeDirPath);
 
 		if (util_fileExists(tmpPath)) {
 			STRCPY(absoluteDirPath, tmpPath);
@@ -756,10 +955,11 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 
 	// not found -> create it
 	if (!found && create && numDirs >= 1) {
-		STRCAT(absoluteDirPath, dirs[0]);
-		STRCAT(absoluteDirPath, sPS);
-		STRCAT(absoluteDirPath, relativeDirPath);
-		found = util_makeDir(absoluteDirPath);
+		// use dirs[0], as it is assumed this is the writeable dir
+		char* tmpPath = util_allocStrCatFSPath(2, dirs[0], relativeDirPath);
+		STRCPY(absoluteDirPath, tmpPath);
+		free(tmpPath);
+		found = util_makeDir(absoluteDirPath, true);
 	}
 
 	return found;
@@ -769,7 +969,7 @@ static inline bool util_isEndOfLine(char c) {
 	return (c == '\r') || (c == '\n');
 }
 /**
- * Saves thethe property found in propLine into the arrays at the given index.
+ * Saves the property found in propLine into the arrays at the given index.
  * @return  false if no property was found at this line
  */
 static bool util_parseProperty(const char* propLine,
@@ -927,4 +1127,19 @@ const char* util_map_getValueByKey(
 	}
 
 	return value;
+}
+
+void util_finalize() {
+
+#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+	free(myDataDir_versioned_r);
+	free(myDataDir_versioned_rw);
+	free(myDataDir_unversioned_r);
+	free(myDataDir_unversioned_rw);
+
+	myDataDir_versioned_r = NULL;
+	myDataDir_versioned_rw = NULL;
+	myDataDir_unversioned_r = NULL;
+	myDataDir_unversioned_rw = NULL;
+#endif // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
 }

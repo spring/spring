@@ -25,8 +25,6 @@
  */
 #if !defined BUILDING_AI
 
-#include "creg/creg_cond.h"
-
 #ifdef	__cplusplus
 extern "C" {
 #endif

@@ -39,7 +39,8 @@ EXPORT(int) initStatic(
 		const char** infoKeys, const char** infoValues,
 		const SStaticGlobalData* staticGlobalData) {
 
-	util_setMyInfo(infoSize, infoKeys, infoValues);
+	util_setMyInfo(infoSize, infoKeys, infoValues,
+			staticGlobalData->numDataDirs, staticGlobalData->dataDirs);
 
 	std::map<std::string, std::string> infoMap;
 	local_copyToInfoMap(infoMap, infoSize, infoKeys, infoValues);
