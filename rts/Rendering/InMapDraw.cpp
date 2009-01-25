@@ -13,6 +13,7 @@
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/ModSound.h"
 #include "glFont.h"
 #include "GL/myGL.h"
 #include "GL/VertexArray.h"
@@ -159,7 +160,7 @@ CInMapDraw::CInMapDraw(void)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, 128, 64, GL_RGBA, GL_UNSIGNED_BYTE, tex[0]);
 
-	blippSound=sound->GetWaveId("sounds/beep6.wav");
+	blippSound = ModSound::Get().GetSoundId("MapPoint");
 }
 
 

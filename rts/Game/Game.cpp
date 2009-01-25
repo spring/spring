@@ -100,6 +100,7 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/ModSound.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
@@ -308,6 +309,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	soundEnabled = true;
 	sound->SetVolume(gameSoundVolume);
 	sound->SetUnitReplyVolume(unitReplyVolume);
+	chatSound = ModSound::Get().GetSoundId("IncomingChat");
 
 	moveWarnings = !!configHandler.Get("MoveWarnings", 1);
 
@@ -485,8 +487,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 #endif
 
 	activeController = this;
-
-	chatSound = sound->GetWaveId("sounds/beep4.wav");
 
 	if (!saveFile) {
 		UnloadStartPicture();

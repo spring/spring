@@ -225,7 +225,7 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume, bool relati
 
 	assert(volume >= 0.0f);
 
-	if (volume == 0.0f || globalVolume == 0.0f) return;
+	if (volume == 0.0f || globalVolume == 0.0f || id == 0) return;
 
 	ALuint source;
 	alGenSources(1, &source);
@@ -455,6 +455,7 @@ ALuint COpenALSound::GetWaveId(const std::string& path, bool _hardFail)
 
 	hardFail = _hardFail;
 	const ALuint buffer = LoadALBuffer(path);
+	assert(buffer > 0);
 	soundMap[path] = buffer;
 	return buffer;
 }
