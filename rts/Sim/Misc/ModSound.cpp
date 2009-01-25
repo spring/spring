@@ -41,5 +41,4 @@ ModSound::ModSound()
 	const LuaTable root = parser.GetRoot();
 	const LuaTable Sounds = root.SubTable("engineEvents");
 	Sounds.GetMap(sounds);
-	assert(!sounds.empty());
 }
