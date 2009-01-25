@@ -135,23 +135,6 @@ const char* util_getMyInfo(const char* key) {
 }
 
 #if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
-// static const char* util_getDataDir(bool versioned, bool writeable) {
-//
-// 	if (versioned) {
-// 		if (writeable) {
-// 			return myDataDir_versioned_rw;
-// 		} else {
-// 			return myDataDir_versioned_r;
-// 		}
-// 	} else {
-// 		if (writeable) {
-// 			return myDataDir_unversioned_rw;
-// 		} else {
-// 			return myDataDir_unversioned_r;
-// 		}
-// 	}
-// }
-
 bool util_dataDirs_findFile(const char* relativePath, char* absolutePath,
 		bool searchOnlyWriteable, bool createParent, bool createAsDir) {
 
@@ -250,19 +233,6 @@ char* util_dataDirs_allocDir(const char* relativePath, bool forWrite) {
 	bool createAsDir = forWrite;
 	return util_dataDirs_allocPath(relativePath, forWrite, createAsDir);
 }
-
-/**
- * Finds a directory under dirs with the relativeDirPath
- * and saves the resulting path in absoluteDirPath.
- * If searchOnlyWriteable is set, only the first entry in dirs
- * is used for the search, as it is assumed to contain
- * the writeable directory.
- *
- * @return  true if the file existed or was created
- */
-bool util_dataDirs_findDir(const char* dirs[], unsigned int numDirs,
-		const char* relativeDirPath, char* absoluteDirPath,
-		bool searchOnlyWriteable, bool create);
 #endif
 
 char* util_allocStr(unsigned int length) {

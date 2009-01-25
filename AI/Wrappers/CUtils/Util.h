@@ -105,13 +105,12 @@ const char* util_getMyInfo(const char* key);
 //const char* util_getDataDir(bool versioned, bool writeable);
 
 /**
- * Finds a file or directory under dirs with the relativeFilePath
- * and saves the resulting path in absoluteFilePath.
- * If searchOnlyWriteable is set, only the writable data-dirs are searched.
+ * Finds a file or directory in the data-dir(s), located at the relativePath,
+ * and saves the resulting path in absolutePath.
  *
- * @param  relativePath  what to look for, eg. "AI/Interfaces/C"
- * @param  absolutePath  will contian the result,
- *                       eg. "/home/user/.spring/AI/Interfaces/C"
+ * @param  relativePath  what to look for, eg. "log/interface-log.txt"
+ * @param  absolutePath  will contain the result, eg.:
+ *                       "/home/user/.spring/AI/Interfaces/C/log/interface-log.txt"
  * @param  searchOnlyWriteable  will only search in writable data-dirs
  * @param  createParent  will try to create the parent dir recursively
  * @param  createAsDir  will try to create the path as a dir recursively
@@ -119,21 +118,37 @@ const char* util_getMyInfo(const char* key);
  */
 bool util_dataDirs_findFile(const char* relativePath, char* absolutePath,
 		bool searchOnlyWriteable, bool createParent, bool createAsDir);
-char* util_dataDirs_allocFilePath(const char* relativePath, bool forWrite);
-char* util_dataDirs_allocDir(const char* relativePath, bool forWrite);
 
 /**
- * Finds a directory under dirs with the relativeDirPath
- * and saves the resulting path in absoluteDirPath.
- * If searchOnlyWriteable is set, only the first entry in dirs
- * is used for the search, as it is assumed to contain
- * the writeable directory.
+ * Finds a file in the data-dir(s), located at the relativePath,
+ * and saves the resulting path in absolutePath.
  *
- * @return  true if the file existed or was created
+ * @param  relativePath  what to look for, eg. "log/interface-log.txt"
+ * @param  forWrite  whether we need a writable file
+ * @return  the result, eg.
+ *          "/home/user/.spring/AI/Interfaces/C/log/interface-log.txt",
+ *          or NULL, if:
+ *             (forWrite == false, and the file could not be found)
+ *             or
+ *             (forWrite == true, and the parent-dir does not exist
+ *             and could not be created)
  */
-// bool util_dataDirs_findDir(const char* dirs[], unsigned int numDirs,
-// 		const char* relativeDirPath, char* absoluteDirPath,
-// 		bool searchOnlyWriteable, bool create);
+char* util_dataDirs_allocFilePath(const char* relativePath, bool forWrite);
+/**
+ * Finds a dir in the data-dir(s), located at the relativePath,
+ * and saves the resulting path in absolutePath.
+ *
+ * @param  relativePath  what to look for, eg. "jlib"
+ * @param  forWrite  whether we need a writable dir
+ * @return  the result, eg.
+ *          "/home/user/.spring/AI/Interfaces/Java/jlib",
+ *          or NULL, if:
+ *             (forWrite == false, and the dir could not be found)
+ *             or
+ *             (forWrite == true, and the dir does not exist
+ *             and could not be created)
+ */
+char* util_dataDirs_allocDir(const char* relativePath, bool forWrite);
 #endif
 
 /**
