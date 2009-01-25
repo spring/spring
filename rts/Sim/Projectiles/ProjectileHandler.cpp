@@ -499,9 +499,9 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		pro->UpdateDrawPos();
 
 		if (camera->InView(pro->pos, pro->drawRadius) && (gu->spectatingFullView || loshandler->InLos(pro, gu->myAllyTeam) ||
-			(pro->owner && teamHandler->Ally(pro->owner->allyteam, gu->myAllyTeam)))) {
+			(pro->owner() && teamHandler->Ally(pro->owner()->allyteam, gu->myAllyTeam)))) {
 
-			CUnit* owner = pro->owner;
+			CUnit* owner = pro->owner();
 			CUnit* trans = owner? (CUnit*) owner->GetTransporter(): 0;
 			bool stunned = owner? owner->stunned: false;
 
@@ -674,7 +674,7 @@ void CProjectileHandler::DrawShadowPass(void)
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		if ((gu->spectatingFullView || loshandler->InLos(*psi, gu->myAllyTeam) ||
-			((*psi)->owner && teamHandler->Ally((*psi)->owner->allyteam, gu->myAllyTeam)))) {
+			((*psi)->owner() && teamHandler->Ally((*psi)->owner()->allyteam, gu->myAllyTeam)))) {
 
 			if ((*psi)->s3domodel)
 				(*psi)->DrawUnitPart();
@@ -734,7 +734,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		p->id = newID;
 		// projectile owner can die before projectile itself
 		// does, so copy the allyteam at projectile creation
-		ProjectileMapPair pp(p, p->owner ? p->owner->allyteam : -1);
+		ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);
 		weaponProjectileIDs[p->id] = pp;
 		eventHandler.ProjectileCreated(pp.first, pp.second);
 	}
@@ -764,7 +764,7 @@ void CProjectileHandler::CheckUnitCol()
 
 			for (CUnit** ui = tempUnits; ui != endUnit; ++ui) {
 				CUnit* unit = *ui;
-				const bool friendlyShot = (p->owner && (unit->allyteam == p->owner->allyteam));
+				const bool friendlyShot = (p->owner() && (unit->allyteam == p->owner()->allyteam));
 				const bool raytraced =
 					(unit->collisionVolume &&
 					unit->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
@@ -772,7 +772,7 @@ void CProjectileHandler::CheckUnitCol()
 				// if this unit fired this projectile or (this unit is in the
 				// same allyteam as the unit that shot this projectile and we
 				// are ignoring friendly collisions)
-				if (p->owner == unit || !unit->collisionVolume ||
+				if (p->owner() == unit || !unit->collisionVolume ||
 					((p->collisionFlags & COLLISION_NOFRIENDLY) && friendlyShot)) {
 					continue;
 				}

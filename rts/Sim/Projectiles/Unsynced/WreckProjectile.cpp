@@ -10,6 +10,7 @@
 #include "Map/MapInfo.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Colors.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "SmokeProjectile.h"
 #include "WreckProjectile.h"
@@ -47,7 +48,7 @@ void CWreckProjectile::Update()
 	pos+=speed;
 
 	if(!(gs->frameNum&(ph->particleSaturation<0.5f?1:3))){
-		CSmokeProjectile* hp=new CSmokeProjectile(pos,ZeroVector,50,4,0.3f,owner,0.5f);
+		CSmokeProjectile* hp=new CSmokeProjectile(pos,ZeroVector,50,4,0.3f,owner(),0.5f);
 		hp->size+=0.1f;
 	}
 	if(pos.y+0.3f<ground->GetApproximateHeight(pos.x,pos.z))
@@ -67,4 +68,9 @@ void CWreckProjectile::Draw(void)
 	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.ystart,col);
 	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xend,ph->wrecktex.yend,col);
 	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->wrecktex.xstart,ph->wrecktex.yend,col);
+}
+
+void CWreckProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::redA);
 }

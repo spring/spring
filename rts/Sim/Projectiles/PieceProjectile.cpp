@@ -14,6 +14,7 @@
 #include "ProjectileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/Colors.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
@@ -186,7 +187,7 @@ void CPieceProjectile::Collision()
 		pos += norm * 0.1f;
 	} else {
 		if (flags & PF_Explode) {
-			helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner, false, 1.0f, false, false, 0, 0, ZeroVector, -1);
+			helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner(), false, 1.0f, false, false, 0, 0, ZeroVector, -1);
 		}
 		if (flags & PF_Smoke) {
 			if (flags & PF_NoCEGTrail) {
@@ -194,7 +195,7 @@ void CPieceProjectile::Collision()
 				dir.Normalize();
 
 				CSmokeTrailProjectile* tp =
-					new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+					new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(),
 					false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
 				tp->creationTime += (8 - ((age) & 7));
 			}
@@ -207,10 +208,10 @@ void CPieceProjectile::Collision()
 
 void CPieceProjectile::Collision(CUnit* unit)
 {
-	if (unit == owner)
+	if (unit == owner())
 		return;
 	if (flags & PF_Explode) {
-		helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner, false, 1.0f, false, false, 0, unit, ZeroVector, -1);
+		helper->Explosion(pos, DamageArray() * 50, 5, 0, 10, owner(), false, 1.0f, false, false, 0, unit, ZeroVector, -1);
 	}
 	if (flags & PF_Smoke) {
 		if (flags & PF_NoCEGTrail) {
@@ -218,7 +219,7 @@ void CPieceProjectile::Collision(CUnit* unit)
 			dir.Normalize();
 
 			CSmokeTrailProjectile* tp =
-				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(),
 				false, true, 7, Smoke_Time, 0.5f, drawTrail, 0, &ph->smoketrailtex);
 			tp->creationTime += (8 - ((age) & 7));
 		}
@@ -299,7 +300,7 @@ void CPieceProjectile::Update()
 				curCallback->drawCallbacker = 0;
 
 			curCallback =
-				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner,
+				new CSmokeTrailProjectile(pos, oldSmoke, dir, oldSmokeDir, owner(),
 				age == 8, false, 14, Smoke_Time, 0.5f, drawTrail, this, &ph->smoketrailtex);
 			useAirLos = curCallback->useAirLos;
 
@@ -405,6 +406,11 @@ void CPieceProjectile::Draw()
 	if (curCallback == 0) {
 		DrawCallback();
 	}
+}
+
+void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	points.AddVertexQC(pos, color4::red);
 }
 
 void CPieceProjectile::DrawCallback(void)

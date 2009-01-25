@@ -285,3 +285,10 @@ void CLargeBeamLaserProjectile::Draw(void)
 	va->AddVertexQTC(pos1-camera->right*fsize+camera->up*fsize,weaponDef->visuals.texture4->xstart,weaponDef->visuals.texture4->yend,corecolstart);
 
 }
+
+void CLargeBeamLaserProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
+{
+	unsigned char color[4] = {kocolstart[0], kocolstart[1], kocolstart[2],255};
+	lines.AddVertexQC(startPos,color);
+	lines.AddVertexQC(endPos,color);
+}

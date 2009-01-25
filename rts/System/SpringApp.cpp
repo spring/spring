@@ -123,41 +123,6 @@ SpringApp::~SpringApp()
 #endif
 }
 
-#ifdef _CRASHRPT_H_
-/**
- * @brief crash callback
- * @return whether callback was successful
- * @param crState current state
- *
- * Callback function executed when
- * game crashes (win32 only)
- */
-bool crashCallback(void* crState)
-{
-	logOutput.RemoveAllSubscribers();
-	logOutput.Print("Spring has crashed");
-
-	// Stop writing to infolog.txt
-	logOutput.End();
-
-	// FIXME needs to be updated for new netcode
-	//bool wasRecording = false;
-	//if (net->recordDemo) {
-	//	delete net->recordDemo;
-	//	wasRecording = true;
-	//}
-
-	AddFile("infolog.txt", "Spring information log");
-
-	//if (wasRecording)
-	//	AddFile(net->demoName.c_str(), "Spring game demo");
-
-	SDL_Quit();
-
-	return true;
-}
-#endif
-
 #ifdef WIN32
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
 
@@ -197,16 +162,7 @@ bool SpringApp::Initialize()
 
 	// Initialize crash reporting
 #ifdef _WIN32
-#if defined(_CRASHRPT_H_)
-	Install( (LPGETLOGFILE) crashCallback, "taspringcrash@clan-sy.com", "Spring Crashreport");
-	if (!GetInstance())
-	{
-		ErrorMessageBox("Error installing crash reporter", "CrashReport error:", MBF_OK);
-		return false;
-	}
-#elif defined(CRASHHANDLER_H)
 	CrashHandler::Install();
-#endif
 	InitializeSEH();
 #endif
 
@@ -401,12 +357,7 @@ bool SpringApp::SetSDLVideoMode ()
            bitsPerPixel = 0; // it should be either 0, 16, or 32
 	}
 
-#ifdef __APPLE__
-	const int defaultDepthSize = 32;
-#else
-	const int defaultDepthSize = 16;
-#endif
-	depthBufferBits = configHandler.Get("DepthBufferBits", defaultDepthSize);
+	depthBufferBits = configHandler.Get("DepthBufferBits", 32);
 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
 	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.Get("StencilBufferBits", 1));
@@ -951,7 +902,7 @@ int SpringApp::Update ()
 #if defined(USE_GML) && GML_ENABLE_SIM
 				!gmlMultiThreadSim &&
 #endif
-				gs->frameNum-lastRequiredDraw >= MAX_CONSECUTIVE_SIMFRAMES) {
+				gs->frameNum-lastRequiredDraw >= (float)MAX_CONSECUTIVE_SIMFRAMES * gs->userSpeedFactor) {
 
 				ScopedTimer cputimer("CPU load"); // Update
 

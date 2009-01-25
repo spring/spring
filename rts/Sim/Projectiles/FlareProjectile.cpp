@@ -47,6 +47,7 @@ CFlareProjectile::~CFlareProjectile(void)
 
 void CFlareProjectile::Update(void)
 {
+	CUnit* owner = CProjectile::owner();
 	if(gs->frameNum==activateFrame){
 		if(owner){
 			pos=owner->pos;

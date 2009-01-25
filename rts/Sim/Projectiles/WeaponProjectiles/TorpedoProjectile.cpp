@@ -80,15 +80,11 @@ void CTorpedoProjectile::Collision()
 {
 	if(ground->GetHeight2(pos.x,pos.z)<pos.y+4)
 		return;
-//	helper->Explosion(pos,damages,areaOfEffect,owner);
 	CWeaponProjectile::Collision();
 }
 
 void CTorpedoProjectile::Collision(CUnit *unit)
 {
-//	unit->DoDamage(damages,owner);
-//	helper->Explosion(pos,damages,areaOfEffect,owner);
-
 	CWeaponProjectile::Collision(unit);
 }
 
@@ -115,10 +111,10 @@ void CTorpedoProjectile::Update(void)
 				curSpeed += std::max(0.2f, tracking);
 			if (target) {
 				float3 targPos;
-				if ((target->midPos - pos).SqLength() < 150 * 150 || !owner)
+				if ((target->midPos - pos).SqLength() < 150 * 150 || !owner())
 					targPos = target->midPos;
 				else
-					targPos = helper->GetUnitErrorPos(target, owner->allyteam);
+					targPos = helper->GetUnitErrorPos(target, owner()->allyteam);
 				if (!(weaponDef->submissile) && targPos.y > 0)
 					targPos.y = 0;
 
@@ -161,7 +157,7 @@ void CTorpedoProjectile::Update(void)
 			float3 pspeed = gs->randVector() * 0.1f;
 			pspeed.y += 0.2f;
 			new CBubbleProjectile(pos + gs->randVector(), pspeed, 40 + gs->randFloat() * 30,
-				1 + gs->randFloat() * 2, 0.01f, owner, 0.3f + gs->randFloat() * 0.3f);
+				1 + gs->randFloat() * 2, 0.01f, owner(), 0.3f + gs->randFloat() * 0.3f);
 		}
 	}
 

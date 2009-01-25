@@ -23,6 +23,7 @@ public:
 
 	void Update(void);
 	void Draw(void);
+	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	void DependentDied(CObject* o);
 };
 
