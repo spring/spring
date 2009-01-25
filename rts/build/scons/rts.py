@@ -148,6 +148,8 @@ def generate(env):
 		('CPPPATH',       'c preprocessor include path'),
 		('CC',            'c compiler'),
 		('CXX',           'c++ compiler'),
+		('RANLIB',        'ranlib'),
+		('AR',            'ar'),
 		('spring_defines','extra c preprocessor defines for spring'),
 		('streflop_extra','extra options for streflop Makefile'),
 		('is_configured', 'configuration version stamp'))
@@ -173,10 +175,15 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'gml', 'gmlsim', 'debug', 'optimize', 'profile', 'profile_use', 'profile_generate', 'cpppath',
-			'libpath', 'prefix', 'installprefix', 'builddir', 'mingwlibsdir', 'datadir', 'bindir', 'libdir', 'cachedir', 'strip',
-			'disable_avi', 'use_tcmalloc', 'use_mmgr', 'use_gch', 'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
-			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX', 'is_configured', 'spring_defines', 'arch']:
+		for key in ['platform', 'gml', 'gmlsim', 'debug', 'optimize',
+			'profile', 'profile_use', 'profile_generate', 'cpppath',
+			'libpath', 'prefix', 'installprefix', 'builddir',
+			'mingwlibsdir', 'datadir', 'bindir', 'libdir',
+			'cachedir', 'strip', 'disable_avi', 'use_tcmalloc',
+			'use_mmgr', 'use_gch',
+			'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
+			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX',
+			'is_configured', 'spring_defines', 'arch']:
 			if env.has_key(key): env.__delitem__(key)
 
 		print "\nNow configuring.  If something fails, consult `config.log' for details.\n"
@@ -196,7 +203,26 @@ def generate(env):
 		else:
 			env['CXX'] = 'g++'
 
+		# select proper tools for win crosscompilation by default
+		is_crosscompiling = env['platform'] == 'windows' and os.name != 'nt'
+		if os.environ.has_key('AR'):
+			env['AR'] = os.environ['AR']
+		elif is_crosscompiling:
+			env['AR'] = 'i586-mingw32msvc-ar'
+
+		if os.environ.has_key('RANLIB'):
+			env['RANLIB'] = os.environ['RANLIB']
+		elif is_crosscompiling:
+			env['RANLIB'] = 'i586-mingw32msvc-ranlib'
+
 		gcc_version = config.check_gcc_version(env)
+
+		print 'Toolchain options:'
+		print 'CC=%s' % env['CC']
+		print 'CXX=%s' % env['CXX']
+		print 'AR=%s' % env['AR']
+		print 'RANLIB=%s' % env['RANLIB']
+		print
 
 		# Declare some helper functions for boolean and string options.
 		def bool_opt(key, default):
