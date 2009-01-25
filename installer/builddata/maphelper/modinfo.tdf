@@ -1,8 +1,0 @@
-[MOD]
-{
-	Name=Map Helper v1;
-	Description=Maps can use this archive for its lua tdf parser;
-	ModType=0;
-
-	NumDependencies=0;
-}
