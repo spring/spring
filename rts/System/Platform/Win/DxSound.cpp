@@ -170,7 +170,10 @@ int CDxSound::InitFile(const string& name)
 
 	// Create the sound buffer object from the wave file data
 	if (!CreateStaticBuffer(name.c_str())) {
-		handleerror(0, "Couldn't open wav file", name.c_str(),0);
+		if (hardFail)
+			handleerror(0, "Couldn't open wav file", name.c_str(),0);
+		else
+			logOutput.Print("Couldn't open wav file %s", name.c_str());
 	}
 
 	waveid[name] = loadedSounds.size();
