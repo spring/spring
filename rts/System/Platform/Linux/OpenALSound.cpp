@@ -61,6 +61,8 @@ COpenALSound::COpenALSound()
 
 	// Set distance model (sound attenuation)
 	alDistanceModel (AL_INVERSE_DISTANCE);
+	alDopplerFactor(5);
+
 
 	posScale.x = 0.02f;
 	posScale.y = 0.0005f;
@@ -246,8 +248,10 @@ void COpenALSound::UpdateListener()
 		return;
 	}
 	float3 pos = camera->pos * posScale;
+	const float3 velocity = (pos - prevPos);
+	prevPos = pos;
 	alListener3f(AL_POSITION, pos.x, pos.y, pos.z);
-	alListener3f(AL_VELOCITY, 0.0f, 0.0f, 0.0f);
+	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	ALfloat ListenerOri[] = {camera->forward.x, camera->forward.y, camera->forward.z, camera->up.x, camera->up.y, camera->up.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
 	alListenerf(AL_GAIN, globalVolume);
