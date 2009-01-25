@@ -204,7 +204,7 @@ static bool is_map(const std::string& filename){
 }
 
 static bool is_mod(const std::string& filename){
-	if(filename == "modinfo.tdf"){
+	if ((filename == "modinfo.tdf") || (filename == "modinfo.lua")) {
 		return true;
 	}
 	return false;
