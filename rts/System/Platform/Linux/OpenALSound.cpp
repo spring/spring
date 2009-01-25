@@ -170,6 +170,10 @@ void COpenALSound::PlaySample(int id, const float3& p, float volume)
 	PlaySample(id, p, ZeroVector, volume, false);
 }
 
+void COpenALSound::PlaySample(int id, const float3& p, const float3& velocity, float volume)
+{
+	PlaySample(id, p, velocity, volume, false);
+}
 
 void COpenALSound::PlaySample(int id, const float3& p, const float3& velocity, float volume, bool relative)
 {
@@ -407,7 +411,6 @@ ALuint COpenALSound::GetWaveId(const std::string& path, bool _hardFail)
 
 	hardFail = _hardFail;
 	const ALuint buffer = LoadALBuffer(path);
-	assert(buffer > 0);
 	soundMap[path] = buffer;
 	return buffer;
 }
