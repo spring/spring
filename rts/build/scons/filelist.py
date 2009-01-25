@@ -51,7 +51,7 @@ def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	return ffiles
 
 
-def get_source(env, path, exclude_list = (), exclude_regexp = '^\.'):
+def get_source(env, path, exclude_list = (), exclude_regexp = '^\.', ignore_builddir = False):
 	basepath = path
 	path_stack = [path]
 	#what does a source file look like?
@@ -71,7 +71,7 @@ def get_source(env, path, exclude_list = (), exclude_regexp = '^\.'):
 				# (Couldn't really use regexp for it since it'd exclude files like TestScript.cpp too)
 				elif os.path.isdir(g) and f.lower() != 'test':
 					path_stack += [g]
-	if env.has_key('builddir') and env['builddir']:
+	if not ignore_builddir and env.has_key('builddir') and env['builddir']:
 		source_files_2 = []
 		for f in source_files:
 			source_files_2.append([os.path.join(env['builddir'], f)])

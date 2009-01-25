@@ -435,8 +435,7 @@ def generate(env):
 		spring_defines = []
 
 		if env['use_gch']:
-			env.AppendUnique(CCFLAGS = ['-DUSE_PRECOMPILED_HEADER'],
-				CXXFLAGS = ['-DUSE_PRECOMPILED_HEADER'])
+			env.AppendUnique(CXXFLAGS = ['-DUSE_PRECOMPILED_HEADER'])
 			print 'Precompiled header enabled'
 		else:
 			print 'Precompiled header disabled'
