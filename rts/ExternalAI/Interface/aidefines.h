@@ -45,8 +45,6 @@ extern "C" {
 
 #define SKIRMISH_AI_DATA_DIR "AI/Skirmish"
 
-#define GROUP_AI_DATA_DIR "AI/Group"
-
 #ifdef	__cplusplus
 } // extern "C"
 #endif // __cplusplus

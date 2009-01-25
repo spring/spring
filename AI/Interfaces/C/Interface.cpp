@@ -51,40 +51,39 @@ CInterface::CInterface(const std::map<std::string, std::string>& myInfo,
 		const SStaticGlobalData* staticGlobalData)
 		: myInfo(myInfo), staticGlobalData(staticGlobalData) {
 
-	for (unsigned int i=0; i < staticGlobalData->numDataDirs; ++i) {
-		springDataDirs.push_back(staticGlobalData->dataDirs[i]);
-	}
-
 	// "C:/Games/spring/AI/Interfaces/C/0.1"
-	myDataDirVersioned = util_getDataDirVersioned();
-	if (!FileExists(myDataDirVersioned)) {
-		MakeDirRecursive(myDataDirVersioned);
+	const char* dd_versioned_rw = util_dataDirs_allocDir("", true);
+	if (dd_versioned_rw != NULL) {
+		util_makeDir(dd_versioned_rw, true);
 	}
 
-	// "C:/Games/spring/AI/Interfaces/C"
-	myDataDirUnversioned = util_getDataDirUnversioned();
-	if (!FileExists(myDataDirUnversioned)) {
-		MakeDirRecursive(myDataDirUnversioned);
-	}
+// 	// "C:/Games/spring/AI/Interfaces/C"
+// 	const char* dd_unversioned_rw = util_getDataDir(false, true);
+// 	if (dd_unversioned_rw != NULL) {
+// 		util_makeDir(dd_unversioned_rw, true);
+// 	}
 
-	std::string logFileName = myDataDirVersioned + PS + "log.txt";
+	char* logFileName = util_allocStrCatFSPath(3,
+			dd_versioned_rw, "log", "interface-log.txt");
 	bool timeStamps = true;
 	int logLevel = SIMPLELOG_LEVEL_ERROR;
 #if defined DEBUG
 	logLevel = SIMPLELOG_LEVEL_FINE;
 #endif // defined DEBUG
-	simpleLog_init(logFileName.c_str(), timeStamps, logLevel);
+	simpleLog_init(logFileName, timeStamps, logLevel);
 
 	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
 	const char* myVersion = util_getMyInfo(AI_INTERFACE_PROPERTY_VERSION);
 
 	simpleLog_log("This is the log-file of the %s version %s", myShortName,
 			myVersion);
-	simpleLog_log("Using data-directory (version specific): %s",
-			myDataDirVersioned.c_str());
-	simpleLog_log("Using data-directory (version-less): %s",
-			myDataDirUnversioned.c_str());
-	simpleLog_log("Using log file: %s", logFileName.c_str());
+	simpleLog_log("Using read-write data-directory (version specific): %s",
+			dd_versioned_rw);
+// 	simpleLog_log("Using read-write data-directory (version-less): %s",
+// 			dd_unversioned_rw);
+	simpleLog_log("Using log file: %s", logFileName);
+
+	free(logFileName);
 }
 
 LevelOfSupport CInterface::GetLevelOfSupportFor(
@@ -241,14 +240,14 @@ std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 	T_skirmishAIInfos::const_iterator info =
 			mySkirmishAIInfos.find(spec);
 	if (info == mySkirmishAIInfos.end()) {
-		reportError(std::string("Missing Skirmish-AI info for ")
+		reportError(std::string("Missing Skirmish AI info for ")
 				+ spec.shortName + " " + spec.version);
 	}
 
 	std::map<std::string, std::string>::const_iterator prop =
 			info->second.find(SKIRMISH_AI_PROPERTY_DATA_DIR);
 	if (prop == info->second.end()) {
-		reportError(std::string("Missing Skirmish-AI data dir for ")
+		reportError(std::string("Missing Skirmish AI data-dir for ")
 				+ spec.shortName + " " + spec.version);
 	}
 	const std::string& dataDir(prop->second);
@@ -263,112 +262,7 @@ std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 	// eg. "libSkirmishAI.so"
 	libFileName = libFileName + "." + SharedLib::GetLibExtension();
 
-	return dataDir + PS + libFileName;
-}
-
-bool CInterface::FileExists(const std::string& filePath) {
-
-	struct stat fileInfo;
-	bool exists;
-	int intStat;
-
-	// Attempt to get the file attributes
-	intStat = stat(filePath.c_str(), &fileInfo);
-	if (intStat == 0) {
-		// We were able to get the file attributes
-		// so the file obviously exists.
-		exists = true;
-	} else {
-		// We were not able to get the file attributes.
-		// This may mean that we don't have permission to
-		// access the folder which contains this file. If you
-		// need to do that level of checking, lookup the
-		// return values of stat which will give you
-		// more details on why stat failed.
-		exists = false;
-	}
-
-	return exists;
-}
-
-bool CInterface::MakeDir(const std::string& dirPath) {
-
-	#ifdef	WIN32
-	int mkStat = _mkdir(dirPath.c_str());
-	if (mkStat == 0) {
-		return true;
-	} else {
-		return false;
-	}
-	#else	// WIN32
-	// with read/write/search permissions for owner and group,
-	// and with read/search permissions for others
-	int mkStat = mkdir(dirPath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-	if (mkStat == 0) {
-		return true;
-	} else {
-		return false;
-	}
-	#endif	// WIN32
-}
-
-bool CInterface::MakeDirRecursive(const std::string& dirPath) {
-
-	if (!FileExists(dirPath)) {
-		std::string::size_type pos = dirPath.find_last_of("/\\");
-		if (pos != std::string::npos) {
-			std::string parentDir = dirPath.substr(0, pos);
-			bool parentExists = MakeDirRecursive(parentDir);
-			if (parentExists) {
-				return MakeDir(dirPath);
-			}
-		}
-		return false;
-	}
-
-	return true;
-}
-
-std::string CInterface::FindFile(const std::string& relativeFilePath) {
-
-	std::string path = relativeFilePath;
-
-	for (unsigned int i=0; i < springDataDirs.size(); ++i) {
-		std::string tmpPath = springDataDirs.at(i);
-		tmpPath += PS + relativeFilePath;
-		if (FileExists(tmpPath)) {
-			path = tmpPath;
-			break;
-		}
-	}
-
-	return path;
-}
-std::string CInterface::FindDir(const std::string& relativeDirPath,
-		bool searchOnlyWriteable, bool pretendAvailable) {
-
-	std::string path = relativeDirPath;
-
-	unsigned int numDds = springDataDirs.size();
-	if (searchOnlyWriteable && numDds > 1) {
-		numDds = 1;
-	}
-
-	bool found = false;
-	for (unsigned int i=0; i < numDds; ++i) {
-		std::string tmpPath = springDataDirs.at(i) + PS + relativeDirPath;
-		if (FileExists(tmpPath)) {
-			path = tmpPath;
-			found = true;
-			break;
-		}
-	}
-
-	if (!found && pretendAvailable && numDds >= 1) {
-		path = springDataDirs.at(0) + PS + relativeDirPath;
-	}
-
-	return path;
+	return util_allocStrCatFSPath(2, dataDir.c_str(), libFileName.c_str());
 }
 
 bool CInterface::FitsThisInterface(const std::string& requestedShortName,

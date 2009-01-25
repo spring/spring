@@ -31,8 +31,26 @@ extern "C" {
 struct SStaticGlobalData {
 	unsigned int maxTeams;
 	const char* springVersion;
-	/** The first entry is the writeable data-dir */
 	unsigned int numDataDirs;
+	/**
+	 * Contains al the data directory to use.
+	 * A data directory contains spring source-files,
+	 * and it may have a structure like this:
+	 * maps/
+	 * mods/
+	 * AI/Interfaces/
+	 * AI/Skirmish/
+	 *
+	 * The first entry is the writeable data-dir,
+	 * while all the others are read only.
+	 *
+	 * Example content:
+	 * dataDirs[0] (rw): /home/user/.spring/
+	 * dataDirs[1] (r):  /usr/share/games/spring/
+	 * dataDirs[2] (r):  ./
+	 *
+	 * @see numDataDirs
+	*/
 	const char** dataDirs;
 	/**
 	 * The following four members define the Skirmish AI libraries

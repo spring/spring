@@ -27,7 +27,7 @@
 
 #define SIMPLELOG_OUTPUTBUFFER_SIZE 2048
 
-static const char* myLogFileName = NULL;
+static const char* logFileName = NULL;
 static bool useTimeStamps;
 static int logLevel;
 
@@ -37,7 +37,7 @@ static char* simpleLog_createTimeStamp() {
 	now = time(&now);
 	struct tm* myTime = localtime(&now);
 	unsigned int maxTimeStampSize = 32;
-	char* timeStamp = (char*) calloc(maxTimeStampSize + 1, sizeof (char));
+	char* timeStamp = (char*) calloc(maxTimeStampSize + 1, sizeof(char));
 	strftime(timeStamp, maxTimeStampSize, "%c", myTime);
 
 	return timeStamp;
@@ -49,16 +49,29 @@ static void simpleLog_out(int level, const char* msg) {
 		return;
 	}
 
-	if (myLogFileName != NULL) {
-		FILE* file = FOPEN(myLogFileName, "a");
-		if (useTimeStamps) {
-			char* timeStamp = simpleLog_createTimeStamp();
-			FPRINTF(file, "%s / %s(%i): %s\n", timeStamp, simpleLog_levelToStr(level), level, msg);
-			free(timeStamp);
-		} else {
-			FPRINTF(file, "%s(%i): %s\n", simpleLog_levelToStr(level), level, msg);
-		}
+	static char outBuffer[SIMPLELOG_OUTPUTBUFFER_SIZE];
+
+	// format the message
+	const char* logLevel_str = simpleLog_levelToStr(level);
+	if (useTimeStamps) {
+		char* timeStamp = simpleLog_createTimeStamp();
+		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s / %s(%i): %s\n", timeStamp, logLevel_str, level, msg);
+		free(timeStamp);
+	} else {
+		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s(%i): %s\n", logLevel_str, level, msg);
+	}
+
+	// try to open the log file
+	FILE* file = NULL;
+	if (logFileName != NULL) {
+		file = FOPEN(logFileName, "a");
+	}
+
+	// print the message
+	if (file != NULL) {
+		FPRINTF(file, outBuffer);
 		fclose(file);
+		file = NULL;
 	} else {
 		// fallback method: write to stdout
 		PRINTF(msg);
@@ -71,36 +84,32 @@ static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 		return;
 	}
 
-	static char text[SIMPLELOG_OUTPUTBUFFER_SIZE];
+	static char outBuffer[SIMPLELOG_OUTPUTBUFFER_SIZE];
 
-	VSNPRINTF(text, sizeof(text), fmt, argp);
-	simpleLog_out(level, text);
+	VSNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, fmt, argp);
+	simpleLog_out(level, outBuffer);
 }
 
 void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 		int _logLevel) {
 
-	// NOTE: this cuases a memory leack, as it is never freed.
+	// NOTE: this causes a memory leack, as it is never freed.
 	// but it is used till the end of the applications runtime anyway
 	// -> no problem
-	char* logFileName = util_allocStrCpy(_logFileName);
+	logFileName = util_allocStrCpy(_logFileName);
 
 	// make sure the dir of the log file exists
 	char logFileDir[strlen(logFileName) + 1];
-	if (!util_getParentDir(logFileName, logFileDir)) {
+	STRCPY(logFileDir, logFileName);
+	if (!util_getParentDir(logFileDir)) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed to evauate the parent dir of the config file: %s",
+				"Failed to evaluate the parent dir of the config file: %s",
 				logFileName);
-	} else if (!util_fileExists(logFileDir)) {
-		bool created = util_makeDir(logFileDir);
-		if (!created) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"Failed to create the parent dir of the config file: %s",
-					logFileDir);
-		}
+	} else if (!util_makeDir(logFileDir, true)) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Failed to create the parent dir of the config file: %s",
+				logFileDir);
 	}
-
-	myLogFileName = logFileName;
 
 	useTimeStamps = _useTimeStamps;
 	logLevel = _logLevel;
