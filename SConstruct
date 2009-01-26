@@ -233,8 +233,10 @@ if env['platform'] == 'windows':
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
 else:
 	ddlcpp = uenv.SharedObject(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
-	unitsync_files += [ ddlcpp ]
-	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files)
+        # some scons stupidity
+        unitsync_objects = [uenv.SharedObject(source=f, target=os.path.join(uenv['builddir'], f)+'.os') for f in unitsync_files]
+	unitsync_objects += [ ddlcpp ]
+	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects)
 
 Alias('unitsync', unitsync)
 inst = env.Install(os.path.join(env['installprefix'], env['libdir']), unitsync)
