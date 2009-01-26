@@ -177,16 +177,15 @@ if env['strip']:
 # Need a new env otherwise scons chokes on equal targets built with different flags.
 usync_builddir = os.path.join(env['builddir'], 'unitsync')
 uenv = env.Clone(builddir=usync_builddir)
-print uenv['builddir']
 uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
 
 def remove_precompiled_header(env):
-        while 'USE_PRECOMPILED_HEADER' in env['CPPDEFINES']:
-                env['CPPDEFINES'].remove('USE_PRECOMPILED_HEADER')
-        while '-DUSE_PRECOMPILED_HEADER' in env['CFLAGS']:
-                env['CFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
-        while '-DUSE_PRECOMPILED_HEADER' in env['CXXFLAGS']:
-                env['CXXFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
+	while 'USE_PRECOMPILED_HEADER' in env['CPPDEFINES']:
+		env['CPPDEFINES'].remove('USE_PRECOMPILED_HEADER')
+	while '-DUSE_PRECOMPILED_HEADER' in env['CFLAGS']:
+		env['CFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
+	while '-DUSE_PRECOMPILED_HEADER' in env['CXXFLAGS']:
+		env['CXXFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
 
 remove_precompiled_header(uenv)
 
@@ -233,7 +232,7 @@ if env['platform'] == 'windows':
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
 else:
-	ddlcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
+	ddlcpp = uenv.SharedObject(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
 	unitsync_files += [ ddlcpp ]
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files)
 
@@ -306,19 +305,6 @@ for f in filelist.list_globalAIs(aienv, exclude_list=['build', 'CSAI', 'TestABIC
 	Alias('install-'+f, inst)
 	if aienv['strip']:
 		aienv.AddPostAction(lib, Action([['strip','$TARGET']]))
-
-# build TestABICAI
-# lib = aienv.SharedLibrary(os.path.join('game/AI/Bot-libs','TestABICAI'), ['game/spring.a'], CPPDEFINES = env# ['CPPDEFINES'] + ['BUILDING_AI'] )
-# Alias('TestABICAI', lib)
-# Alias('install-TestABICAI', inst)
-# if sys.platform == 'win32':
-# 	Alias('GlobalAI', lib)
-# 	Default(lib)
-# 	inst = env.Install(install_dir, lib)
-# 	Alias('install', inst)
-# 	Alias('install-GlobalAI', inst)
-# 	if env['strip']:
-# 		env.AddPostAction(lib, Action([['strip','$TARGET']]))
 
 ################################################################################
 ### Run Tests
