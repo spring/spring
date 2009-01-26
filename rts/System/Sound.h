@@ -3,6 +3,8 @@
 
 #include <set>
 #include <string>
+#include <map>
+#include <AL/al.h>
 
 #include "float3.h" // for zerovector
 
@@ -14,38 +16,52 @@ class float3;
 class CSound
 {
 public:
-	CSound() { unitReplyVolume = 1.0f; }
-	virtual ~CSound();
+	CSound();
+	~CSound();
 
-	static CSound* GetSoundSystem();
+	ALuint GetWaveId(const std::string& path, bool hardFail = true);
 
-	virtual unsigned int GetWaveId(const std::string& path, bool hardFail = true) = 0;
-	virtual void Update() = 0;
-	virtual void PlaySample(int id, float volume = 1.0f) = 0;
-	virtual void PlaySample(int id, const float3& p, float volume = 1.0f) = 0;
-	virtual void PlaySample(int id, const float3& p, const float3& velocity, float volume = 1.0f)
-	{
-		PlaySample(id, p, volume);
-	};
+	void Update();
+	void NewFrame();
 
-	virtual void PlayStream(const std::string& path, float volume = 1.0f,
-							const float3& pos = ZeroVector, bool loop = false) = 0;
-	virtual void StopStream() = 0;
-	virtual void PauseStream() = 0;
-	virtual unsigned int GetStreamTime() = 0;
-	virtual unsigned int GetStreamPlayTime() = 0;
-	virtual void SetStreamVolume(float) = 0;
-
-	virtual void SetVolume(float vol) = 0; // 1 = full volume
+	void PlaySample(int id, float volume = 1.0f);
+	void PlaySample(int id, const float3& p, float volume = 1.0f);
+	void PlaySample(int id, const float3& p, const float3& velocity, float volume = 1.0f);
 
 	void PlaySample(int id, CWorldObject* p, float volume = 1.0f);
 	void PlayUnitReply(int id, CUnit* p, float volume = 1.0f, bool squashDupes = false);
 	void PlayUnitActivate(int id, CUnit* p, float volume = 1.0f);
-	void NewFrame();
 
+	void PlayStream(const std::string& path, float volume = 1.0f, const float3& pos = ZeroVector, bool loop = false);
+	void StopStream();
+	void PauseStream();
+	unsigned int GetStreamTime();
+	unsigned int GetStreamPlayTime();
+	void SetStreamVolume(float);
+
+	int MaxSounds(int maxSounds = -1);
+	void SetVolume(float vol); // 1 = full volume
 	void SetUnitReplyVolume(float vol); // also affected by global volume (SetVolume())
 
 private:
+	void InitAL(int maxSounds);
+	void DeinitAL();
+
+	bool ReadWAV(const char* name, Uint8* buf, int size, ALuint albuffer);
+	ALuint LoadALBuffer(const std::string& path);
+	void PlaySample(int id, const float3 &p, const float3& velocity, float volume, bool relative);
+
+	void UpdateListener();
+	void Enqueue(ALuint src);
+	
+	int cur;
+	float globalVolume;
+	bool hardFail;
+	
+	std::map<std::string, ALuint> soundMap; // filename, index into Buffers
+	float3 posScale;
+	float3 prevPos;
+	std::vector<ALuint> sources;
 	std::set<unsigned int> repliesPlayed;
 	float unitReplyVolume;
 };

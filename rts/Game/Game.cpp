@@ -126,7 +126,6 @@
 #include "EventHandler.h"
 #include "Sound.h"
 #include "FileSystem/SimpleParser.h"
-#include "Platform/NullSound.h"
 #include "Net/RawPacket.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
@@ -303,7 +302,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	oldStatus  = 255;
 #endif
 
-	sound = CSound::GetSoundSystem();
+	sound = new CSound();
 	gameSoundVolume = configHandler.Get("SoundVolume", 60) * 0.01f;
 	unitReplyVolume = configHandler.Get("UnitReplyVolume", configHandler.Get("UnitReplySoundVolume", 80) ) * 0.01f;
 	soundEnabled = true;
@@ -4452,8 +4451,8 @@ void CGame::Skip(int toFrame)
 	const int totalFrames = endFrame - startFrame;
 	const float seconds = (float)(totalFrames) / (float)GAME_SPEED;
 
-	CSound* tmpSound = sound;
-	sound = new CNullSound;
+	int oldMaxSounds = sound->MaxSounds();
+	sound->MaxSounds(0);
 
 	skipping = true;
 	{
@@ -4505,8 +4504,7 @@ void CGame::Skip(int toFrame)
 		gs->userSpeedFactor = oldUserSpeed;
 	}
 
-	delete sound;
-	sound = tmpSound;
+	sound->MaxSounds(oldMaxSounds);
 
 	logOutput.Print("Skipped %.1f seconds\n", seconds);
 }
