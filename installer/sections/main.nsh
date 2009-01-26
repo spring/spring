@@ -15,6 +15,7 @@
   File "..\mingwlibs\dll\python25.dll"
   File "..\mingwlibs\dll\zlib1.dll"
   File "..\mingwlibs\dll\OpenAL32.dll"
+  File "..\mingwlibs\dll\wrap_oal.dll"
 
   ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
   File "..\external\SDL.dll"
