@@ -157,12 +157,12 @@ uenv = env.Clone(builddir=usync_builddir)
 uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
 
 def remove_precompiled_header(env):
-        while 'USE_PRECOMPILED_HEADER' in env['CPPDEFINES']:
-                env['CPPDEFINES'].remove('USE_PRECOMPILED_HEADER')
-        while '-DUSE_PRECOMPILED_HEADER' in env['CFLAGS']:
-                env['CFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
-        while '-DUSE_PRECOMPILED_HEADER' in env['CXXFLAGS']:
-                env['CXXFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
+	while 'USE_PRECOMPILED_HEADER' in env['CPPDEFINES']:
+		env['CPPDEFINES'].remove('USE_PRECOMPILED_HEADER')
+	while '-DUSE_PRECOMPILED_HEADER' in env['CFLAGS']:
+		env['CFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
+	while '-DUSE_PRECOMPILED_HEADER' in env['CXXFLAGS']:
+		env['CXXFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
 
 remove_precompiled_header(uenv)
 
@@ -209,9 +209,11 @@ if env['platform'] == 'windows':
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
 	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
 else:
-	ddlcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
-	unitsync_files += [ ddlcpp ]
-	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files)
+	ddlcpp = uenv.SharedObject(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
+        # some scons stupidity
+        unitsync_objects = [uenv.SharedObject(source=f, target=os.path.join(uenv['builddir'], f)+'.os') for f in unitsync_files]
+	unitsync_objects += [ ddlcpp ]
+	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects)
 
 Alias('unitsync', unitsync)
 inst = env.Install(os.path.join(env['installprefix'], env['libdir']), unitsync)
