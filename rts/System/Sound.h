@@ -23,6 +23,10 @@ public:
 	virtual void Update() = 0;
 	virtual void PlaySample(int id, float volume = 1.0f) = 0;
 	virtual void PlaySample(int id, const float3& p, float volume = 1.0f) = 0;
+	virtual void PlaySample(int id, const float3& p, const float3& velocity, float volume = 1.0f)
+	{
+		PlaySample(id, p, volume);
+	};
 
 	virtual void PlayStream(const std::string& path, float volume = 1.0f,
 							const float3& pos = ZeroVector, bool loop = false) = 0;

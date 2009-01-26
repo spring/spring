@@ -115,10 +115,7 @@ float CGround::LineGroundCol(float3 from, float3 to)
 
 	const float dx=to.x-from.x;
 	const float dz=to.z-from.z;
-	float xp=from.x;
-	float zp=from.z;
 	float ret;
-	float xn,zn;
 
 	bool keepgoing=true;
 
@@ -128,8 +125,9 @@ float CGround::LineGroundCol(float3 from, float3 to)
 			return ret;
 		}
 	} else if(floor(from.x/SQUARE_SIZE)==floor(to.x/SQUARE_SIZE)){
+		float zp=from.z;
 		while(keepgoing){
-			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));
+			ret = LineGroundSquareCol(from,to,(int)floor(from.x/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));
 			if(ret>=0){
 				return ret+savedLength;
 			}
@@ -142,8 +140,9 @@ float CGround::LineGroundCol(float3 from, float3 to)
 		// if you hit this the collision detection hit an infinite loop
 		assert(!keepgoing);
 	} else if(floor(from.z/SQUARE_SIZE)==floor(to.z/SQUARE_SIZE)){
+		float xp=from.x;
 		while(keepgoing){
-			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));
+			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(from.z/SQUARE_SIZE));
 			if(ret>=0){
 				return ret+savedLength;
 			}
@@ -156,7 +155,10 @@ float CGround::LineGroundCol(float3 from, float3 to)
 		// if you hit this the collision detection hit an infinite loop
 		assert(!keepgoing);
 	} else {
+		float xp=from.x;
+		float zp=from.z;
 		while(keepgoing){
+			float xn,zn;
 			float xs, zs;
 
 			// Push value just over the edge of the square

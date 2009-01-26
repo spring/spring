@@ -192,7 +192,8 @@ void CS3OParser::Draw(S3DModelPiece* o)
 	// (array elements are float3's, which are 12
 	// bytes in size and each represent a single
 	// xyz triple)
-	// TODO: test if we have this many texunits?
+	// TODO: test if we have this many texunits
+	// (if not, could only send the s-tangents)?
 	if (!so->sTangents.empty()) {
 		glClientActiveTexture(GL_TEXTURE5);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -268,15 +269,27 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 	// for triangle strips, the piece vertex _indices_ are defined
 	// by the draw order of the vertices numbered <v, v + 1, v + 2>
 	// for v in [0, n - 2]
-	unsigned vrtMaxNr = (stride == 1)?
+	const unsigned vrtMaxNr = (stride == 1)?
 		p->vertexDrawOrder.size() - 2:
 		p->vertexDrawOrder.size();
 
 	// set the triangle-level S- and T-tangents
 	for (unsigned vrtNr = 0; vrtNr < vrtMaxNr; vrtNr += stride) {
-		const int v0idx = p->vertexDrawOrder[vrtNr    ];
-		const int v1idx = p->vertexDrawOrder[vrtNr + 1];
-		const int v2idx = p->vertexDrawOrder[vrtNr + 2];
+		bool flipWinding = false;
+
+		if (p->primitiveType == S3O_PRIMTYPE_TRIANGLE_STRIP) {
+			flipWinding = ((vrtNr & 1) == 1); 
+		}
+
+		const int v0idx = p->vertexDrawOrder[vrtNr                      ];
+		const int v1idx = p->vertexDrawOrder[vrtNr + (flipWinding? 2: 1)];
+		const int v2idx = p->vertexDrawOrder[vrtNr + (flipWinding? 1: 2)];
+
+		if (v1idx == -1 || v2idx == -1) {
+			// not a valid triangle, skip
+			// to start of next tri-strip
+			vrtNr += 3; continue;
+		}
 
 		const SS3OVertex* v0 = &p->vertices[v0idx];
 		const SS3OVertex* v1 = &p->vertices[v1idx];
