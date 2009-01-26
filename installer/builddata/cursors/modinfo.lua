@@ -1,5 +1,5 @@
 local modinfo = {
-		name						=	"cursors.sdz",
+		name						=	"Spring Cursors",
 		description			=	"Cursor pack by Erom",
 		modtype					=	"0",
 }

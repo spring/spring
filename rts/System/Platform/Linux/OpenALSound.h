@@ -14,7 +14,8 @@ public:
 	ALuint GetWaveId(const std::string& path, bool hardFail);
 	void Update();
 	void PlaySample(int id, float volume);
-	void PlaySample(int id, const float3& p, float volume);
+	void PlaySample(int id, const float3& p,float volume);
+	void PlaySample(int id, const float3& p, const float3& velocity, float volume);
 
 	void PlayStream(const std::string& path, float volume = 1.0f,
 					const float3& pos = ZeroVector, bool loop = false);
@@ -34,7 +35,7 @@ private:
 
 private:
 	ALuint LoadALBuffer(const std::string& path);
-	void PlaySample(int id, const float3 &p, float volume, bool relative);
+	void PlaySample(int id, const float3 &p, const float3& velocity, float volume, bool relative);
 
 	int maxSounds;
 	int cur;
@@ -46,6 +47,7 @@ private:
 	
 	std::map<std::string, ALuint> soundMap; // filename, index into Buffers
 	float3 posScale;
+	float3 prevPos;
 	ALuint* Sources;
 };
 

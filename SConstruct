@@ -152,16 +152,30 @@ if env['strip']:
 # HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
-uenv = env.Clone(builddir=os.path.join(env['builddir'], 'unitsync'))
+usync_builddir = os.path.join(env['builddir'], 'unitsync')
+uenv = env.Clone(builddir=usync_builddir)
 uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
 
+def remove_precompiled_header(env):
+        while 'USE_PRECOMPILED_HEADER' in env['CPPDEFINES']:
+                env['CPPDEFINES'].remove('USE_PRECOMPILED_HEADER')
+        while '-DUSE_PRECOMPILED_HEADER' in env['CFLAGS']:
+                env['CFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
+        while '-DUSE_PRECOMPILED_HEADER' in env['CXXFLAGS']:
+                env['CXXFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
+
+remove_precompiled_header(uenv)
+
+def usync_get_source(*args, **kwargs):
+        return filelist.get_source(uenv, ignore_builddir=True, *args, **kwargs)
+
 uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
-unitsync_files          = filelist.get_source(uenv, 'tools/unitsync');
-unitsync_fs_files       = filelist.get_source(uenv, 'rts/System/FileSystem/', exclude_list=('rts/System/FileSystem/DataDirLocater.cpp'));
-unitsync_lua_files      = filelist.get_source(uenv, 'rts/lib/lua/src');
-unitsync_7zip_files     = filelist.get_source(uenv, 'rts/lib/7zip');
-unitsync_minizip_files  = filelist.get_source(uenv, 'rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
-unitsync_hpiutil2_files = filelist.get_source(uenv, 'rts/lib/hpiutil2');
+unitsync_files          = usync_get_source('tools/unitsync')
+unitsync_fs_files       = usync_get_source('rts/System/FileSystem/', exclude_list=('rts/System/FileSystem/DataDirLocater.cpp'));
+unitsync_lua_files      = usync_get_source('rts/lib/lua/src');
+unitsync_7zip_files     = usync_get_source('rts/lib/7zip');
+unitsync_minizip_files  = usync_get_source('rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
+unitsync_hpiutil2_files = usync_get_source('rts/lib/hpiutil2');
 unitsync_extra_files = [
 	'rts/Game/GameVersion.cpp',
 	'rts/Lua/LuaUtils.cpp',
@@ -177,22 +191,23 @@ unitsync_extra_files = [
 	'rts/System/ConfigHandler.cpp',
 	'rts/System/LogOutput.cpp',
 ]
-for f in unitsync_fs_files:       unitsync_files += f
-for f in unitsync_lua_files:      unitsync_files += f
-for f in unitsync_7zip_files:     unitsync_files += f
-for f in unitsync_minizip_files:  unitsync_files += f
-for f in unitsync_hpiutil2_files: unitsync_files += f
-for f in unitsync_extra_files:   unitsync_files += [os.path.join(uenv['builddir'], f)]
+unitsync_files.extend(unitsync_fs_files)
+unitsync_files.extend(unitsync_lua_files)
+unitsync_files.extend(unitsync_7zip_files)
+unitsync_files.extend(unitsync_minizip_files)
+unitsync_files.extend(unitsync_hpiutil2_files)
+unitsync_files.extend(unitsync_extra_files)
 
 if env['platform'] == 'windows':
 	# crosscompiles on buildbot need this, but native mingw builds fail
 	# during linking
 	if os.name != 'nt':
 		unitsync_files.append('rts/lib/minizip/iowin32.c')
-	for f in ['rts/System/FileSystem/DataDirLocater.cpp']:
-		unitsync_files += [os.path.join(uenv['builddir'], f)]
+	unitsync_files.append('rts/System/FileSystem/DataDirLocater.cpp')
+        # some scons stupidity
+        unitsync_objects = [uenv.SharedObject(source=f, target=os.path.join(uenv['builddir'], f)+'.o') for f in unitsync_files]
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
-	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_files, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
+	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
 else:
 	ddlcpp = uenv.SharedObject(os.path.join(uenv['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
 	unitsync_files += [ ddlcpp ]
@@ -537,7 +552,9 @@ if env['platform'] != 'windows':
 #
 #
 
-SConscript(['AI/SConscript'], exports=['env'], variant_dir=env['builddir'])
+aienv = env.Clone(builddir=os.path.join(env['builddir'], 'AI'))
+remove_precompiled_header(aienv)
+env.SConscript(['AI/SConscript'], exports=['aienv'], variant_dir=env['builddir'])
 
 ################################################################################
 ### Run Tests
@@ -615,3 +632,4 @@ for f in luaui_files:
 	if not os.path.isdir(f):
 		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], os.path.dirname(f)[5:]), f)
 		Alias('install', inst)
+

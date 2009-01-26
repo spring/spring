@@ -34,6 +34,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/ModSound.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -89,7 +90,7 @@ CMouseHandler::CMouseHandler()
 	hardwareCursor = false;
 #endif
 
-	soundMultiselID = sound->GetWaveId("sounds/button9.wav");
+	soundMultiselID = ModSound::Get().GetSoundId("MultiSelect");
 
 	invertMouse = !!configHandler.Get("InvertMouse",1);
 	doubleClickTime = (float)configHandler.Get("DoubleClickTime", 200) / 1000.0f;

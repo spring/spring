@@ -26,7 +26,7 @@ SkirmishAI
 """
 
 
-Import(['env'])
+Import(['aienv'])
 
 import os, sys
 sys.path.append('rts/build/scons')
@@ -36,8 +36,8 @@ import filelist
 # (seems to be a SCons bug)
 import SCons.Tool.javac
 import SCons.Tool.jar
-SCons.Tool.javac.generate(env)
-SCons.Tool.jar.generate(env)
+SCons.Tool.javac.generate(aienv)
+SCons.Tool.jar.generate(aienv)
 
 
 ################################################################################
@@ -46,7 +46,7 @@ SCons.Tool.jar.generate(env)
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
 #aienv = env.Clone()
-aienv = env.Clone(builddir=os.path.join(env['builddir'], 'AI'))
+#aienv = env.Clone(builddir=os.path.join(env['builddir'], 'AI'))
 #aienv['LIBS'] = []
 aienv.AppendUnique(CPPPATH = ['#rts/ExternalAI'])
 aienv.AppendUnique(LINKFLAGS = ['-lstdc++'])
@@ -185,7 +185,7 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		myEnv.AppendUnique(CPPPATH = ['Wrappers'])
 		objs += aiinterfaceobjs_CUtils
 	if baseName in aiinterfaces_needStreflop_list:
-		if env['fpmath'] == 'sse':
+		if myEnv['fpmath'] == 'sse':
 			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_SSE'])
 		else:
 			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_X87'])
@@ -193,7 +193,7 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		myEnv.AppendUnique(LIBS = ['streflop'])
 	mySource = objs + filelist.get_AIInterface_source(myEnv, baseName)
 	if baseName == 'Java':
-		if env['platform'] == 'windows':
+		if myEnv['platform'] == 'windows':
 			myEnv.AppendUnique(LIBS = ['jvm'])
 		# generate class files
 		#print "CWD %s" % os.getcwd()
