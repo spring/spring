@@ -807,7 +807,7 @@ void SpringApp::Startup()
 	{
 		bool server = !cmdline->result("client") || cmdline->result("server");
 #ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(server);
+		CSyncDebugger::GetInstance()->Initialize(server, 64);
 #endif
 		activeController = new SelectMenu(server);
 	}
