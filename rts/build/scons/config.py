@@ -296,12 +296,10 @@ def CheckHeadersAndLibraries(env, conf):
 	d += [Dependency(['freetype'],       ['ft2build.h'])]
 	d += [Dependency(['IL', 'devil'],    ['IL/il.h'])]
 	d += [Dependency(['ILU', 'ilu'],     ['IL/ilu.h'])]	
-	
+	d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
+
 	if env['platform'] == 'windows':
 		d += [Dependency(['imagehlp'], [])]
-		# Somehow adding dsound.h always fails even if the file's there.
-		# Possibly it needs other files included before it (windows.h?)
-		d += [Dependency(['dsound'],   [])]
 		d += [Dependency(['gdi32'],    [])]
 		d += [Dependency(['winmm'],    [])]
 		d += [Dependency(['wsock32'],  [])]
@@ -309,7 +307,6 @@ def CheckHeadersAndLibraries(env, conf):
 		d += [Dependency(['mingw32'],  [])]
 		d += [Dependency(['SDLmain'],  [])]
 	else:
-		d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
 		d += [Dependency(['Xcursor'], ['X11/Xcursor/Xcursor.h'])]
 		d += [Dependency(['X11'], ['X11/X.h'])]
 
