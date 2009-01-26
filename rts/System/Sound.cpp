@@ -247,7 +247,7 @@ void CSound::UpdateListener()
 	assert(camera);
 	float3 pos = camera->pos * posScale;
 	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (pos - prevPos)/gu->lastFrameTime;
+	const float3 velocity = (pos - prevPos)/gu->lastFrameTime/7.0;
 	prevPos = pos;
 	alListener3f(AL_POSITION, pos.x, pos.y, pos.z);
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
@@ -282,7 +282,10 @@ void CSound::InitAL(int maxSounds)
 	ALCdevice *device = alcOpenDevice(NULL);
 	if (device == NULL)
 	{
-		throw content_error("Could not create OpenAL audio device");
+		logOutput.Print("Could not open a sounddevice, disabling sounds");
+		CheckError("CSound::InitAL");
+		sources.resize(0);
+		return;
 	} else
 	{
 		ALCcontext *context = alcCreateContext(device, NULL);
