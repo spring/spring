@@ -152,7 +152,8 @@ void nedsetvalue(void *v) THROWSPEC					{ nedpsetvalue(0, v); }
 void * nedmalloc(size_t size) THROWSPEC				{ return nedpmalloc(0, size); }
 void * nedcalloc(size_t no, size_t size) THROWSPEC	{ return nedpcalloc(0, no, size); }
 void * nedrealloc(void *mem, size_t size) THROWSPEC	{ return nedprealloc(0, mem, size); }
-void   nedfree(void *mem) THROWSPEC					{ nedpfree(0, mem); }
+// free(NULL) is not a bug
+void   nedfree(void *mem) THROWSPEC					{ if(mem) nedpfree(0, mem); }
 void * nedmemalign(size_t alignment, size_t bytes) THROWSPEC { return nedpmemalign(0, alignment, bytes); }
 #if !NO_MALLINFO
 struct mallinfo nedmallinfo(void) THROWSPEC			{ return nedpmallinfo(0); }
