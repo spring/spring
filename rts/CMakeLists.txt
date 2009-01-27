@@ -10,6 +10,12 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Spring defines
+SET(USE_NEDMALLOC TRUE CACHE BOOL "Use nedmalloc memory allocator")
+if (USE_NEDMALLOC)
+	ADD_DEFINITIONS(-DREPLACE_SYSTEM_ALLOCATOR)
+	SET (nedmalloc_obj "../tools/nedmalloc/nedmalloc.c")
+endif (USE_NEDMALLOC)
+
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)
@@ -135,7 +141,7 @@ IF (NOT WIN32)
 	EXECUTE_PROCESS(COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} \( -name *.h -o -name *.hpp \) -printf %p\; OUTPUT_VARIABLE headers)
 ENDIF (NOT WIN32)
 
-ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${headers})
+ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj} ${headers})
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
 
 IF (MINGW)
