@@ -1,5 +1,14 @@
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 
+# Place executables and shared libs under "build-dir/",
+# instead of under "build-dir/rts/"
+# This way, we have the build-dir structure more like the install-dir one,
+# which makes testing spring in the builddir easier, eg. like this:
+# cd build-dir
+# SPRING_DATADIR=$(pwd) ./spring
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "..")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+
 ### Spring defines
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
