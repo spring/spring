@@ -75,19 +75,14 @@
 /installer/TASClient
 
 # Java AI related
-/AI/Interfaces/Java/interface.jar
-/AI/Interfaces/Java/interface-src.jar
-/AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/AICallback.java
-/AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/AICommandWrapper.java
-/AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/DefaultAICallback.java
-/AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/Win32AICallback.java
-/AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/oo
-/AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/event
-/AI/Interfaces/Java/java/src/com/clan_sy/spring/ai/command
+/AI/Interfaces/Java/AIInterface.jar
+/AI/Interfaces/Java/AIInterface-src.jar
+/AI/Interfaces/Java/java/generated
+/AI/Interfaces/Java/build
+/AI/Skirmish/*/SkirmishAI.jar
+/AI/Skirmish/*/SkirmishAI-src.jar
+/AI/Skirmish/*/build
 /AI/Wrappers/Cpp/*.h
-/AI/Skirmish/*/ai.jar
-/AI/Skirmish/*/ai-src.jar
-*.class
 
 # Misc file endings (eg. build or temp files)
 *.pyc

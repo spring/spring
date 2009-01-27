@@ -10,6 +10,7 @@
 
 SPRING_SOURCE=../../../../rts
 MY_SOURCE_JAVA=../java/src
+GENERATED_SOURCE_DIR=../java/generated
 JAVA_PKG=com/clan_sy/spring/ai
 
 # using the default awk flavor of the system
@@ -23,7 +24,9 @@ AWK=awk
 C_CALLBACK=${SPRING_SOURCE}/ExternalAI/Interface/SAICallback.h
 C_EVENTS=${SPRING_SOURCE}/ExternalAI/Interface/AISEvents.h
 C_COMMANDS=${SPRING_SOURCE}/ExternalAI/Interface/AISCommands.h
-JNA_CALLBACK=${MY_SOURCE_JAVA}/${JAVA_PKG}/AICallback.java
+JNA_CALLBACK=${GENERATED_SOURCE_DIR}/${JAVA_PKG}/AICallback.java
+
+VARS="-v OUTPUT_DIR=${GENERATED_SOURCE_DIR}"
 
 #echo "	generating source files ..."
 
@@ -31,17 +34,17 @@ CWD_BACKUP=$(pwd)
 THIS_DIR=$(dirname ${0})
 cd ${THIS_DIR}
 
-mkdir -p ${MY_SOURCE_JAVA}/${JAVA_PKG}/event
-mkdir -p ${MY_SOURCE_JAVA}/${JAVA_PKG}/command
-mkdir -p ${MY_SOURCE_JAVA}/${JAVA_PKG}/oo
+mkdir -p ${GENERATED_SOURCE_DIR}/${JAVA_PKG}/event
+mkdir -p ${GENERATED_SOURCE_DIR}/${JAVA_PKG}/command
+mkdir -p ${GENERATED_SOURCE_DIR}/${JAVA_PKG}/oo
 
-${AWK} -f jna_wrappEvents.awk -f common.awk -f commonDoc.awk ${C_EVENTS}
+${AWK} ${VARS} -f jna_wrappEvents.awk -f common.awk -f commonDoc.awk ${C_EVENTS}
 
-${AWK} -f jna_wrappCommands.awk -f common.awk -f commonDoc.awk ${C_COMMANDS}
+${AWK} ${VARS} -f jna_wrappCommands.awk -f common.awk -f commonDoc.awk ${C_COMMANDS}
 
-${AWK} -f jna_wrappCallback.awk -f common.awk -f commonDoc.awk ${C_CALLBACK}
+${AWK} ${VARS} -f jna_wrappCallback.awk -f common.awk -f commonDoc.awk ${C_CALLBACK}
 
-${AWK} -f java_wrappCallbackOO.awk -f common.awk -f commonDoc.awk -f commonOOCallback.awk ${JNA_CALLBACK}
+${AWK} ${VARS} -f java_wrappCallbackOO.awk -f common.awk -f commonDoc.awk -f commonOOCallback.awk ${JNA_CALLBACK}
 
 cd ${CWD_BACKUP}
 

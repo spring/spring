@@ -1,63 +1,98 @@
 <?xml version="1.0"?>
 
-<project name="NullOOJavaAI" basedir="../" default="jar">
+<project name="NullOOJavaAI" basedir="../" default="pack">
+	<!--
+		This file does:
+			* compile java sources
+			* pack java classes and sources into jar files
+			* install these two jar files
+	-->
 
-	<property file="./bin/ant.properties"/>
+	<loadfile property="skirmish.ai.version" srcFile="VERSION"/>
+	<property name="skirmish.ai.name" value="${ant.project.name}"/>
 
-	<loadfile property="myVersion" srcFile="./VERSION"/>
-	<property name="src" location="./"/>
-	<property name="build" location="./build"/>
-	<property name="dist"
-				location="${distHome}/AI/Skirmish/${ant.project.name}/${myVersion}"/>
-	<path id="myClassPath">
-		<pathelement location="${aiInterfaceHome}/build/interface.jar"/>
-		<fileset dir="${aiInterfaceHome}/data/jlib">
-			<include name="**/*.jar"/>
-		</fileset>
-		<fileset dir="./data">
+	<!-- The following values may be overriden in a properties file
+	     which may be specified to ant on the command line like this:
+	     ant -propertyfile ant.properties -->
+	<property name="spring.home" location="../../.."/>
+	<property name="build.home" location="${spring.home}/build"/>
+	<property name="build.dir"
+			location="${build.home}/AI/Skirmish/${skirmish.ai.name}"/>
+	<property name="dist.home" location="${spring.home}/game"/>
+	<property name="dist.dir"
+				location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}"/>
+	<property name="ai.interface.src.home" location="${spring.home}/AI/Interfaces/Java"/>
+	<property name="ai.interface.build.home" location="${build.home}/AI/Interfaces/Java"/>
+
+	<property name="build.dir.classes"
+			location="${build.dir}/classes"/>
+	<property name="jar.file.name" value="SkirmishAI"/>
+	<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
+	<property name="jar.file.name.src" value="${jar.file.name}-src.jar"/>
+
+	<property name="spring.ai.interface.home"
+			location="${spring.home}/rts/ExternalAI/Interface"/>
+	<property name="src" location="src"/>
+	<property name="bin.dir" location="bin"/>
+	<path id="class_path">
+		<fileset dir="data">
 			<include name="jlib/**/*.jar"/>
+		</fileset>
+		<fileset dir="${ai.interface.src.home}/data">
+			<include name="jlib/**/*.jar"/>
+		</fileset>
+		<fileset dir="${ai.interface.build.home}">
+			<include name="AIInterface.jar"/>
 		</fileset>
 	</path>
 
+
 	<target name="init">
-		<mkdir dir="${build}"/>
+		<mkdir dir="${build.dir}"/>
+		<mkdir dir="${build.dir.classes}"/>
 	</target>
 
 	<target name="compile" depends="init">
-		<javac destdir="${build}">
+		<javac destdir="${build.dir.classes}">
 			<src path="${src}"/>
-			<classpath refid="myClassPath"/>
+			<classpath refid="class_path"/>
 		</javac>
 	</target>
 
-	<target name="jar" depends="compile">
-		<jar destfile="${build}/ai.jar">
-			<fileset dir="${build}">
+
+	<target name="pack-bin" depends="compile">
+		<jar destfile="${build.dir}/${jar.file.name.bin}">
+			<fileset dir="${build.dir}">
 				<include name="**/*.class"/>
 			</fileset>
 		</jar>
 	</target>
 
-	<target name="src-jar" depends="init">
-		<jar destfile="${build}/ai-src.jar">
+	<target name="pack-src" depends="init">
+		<jar destfile="${build.dir}/${jar.file.name.src}">
 			<fileset dir="${src}">
 				<include name="**/*.java"/>
 			</fileset>
 		</jar>
 	</target>
 
-	<target name="dist" depends="jar, src-jar"
-				description="generate the distribution" >
-		<mkdir dir="${dist}/jlib"/>
-		<copy file="${build}/ai.jar" todir="${dist}" overwrite="true"/>
-		<copy file="${build}/ai-src.jar" todir="${dist}/jlib" overwrite="true"/>
-		<copy todir="${dist}" overwrite="true">
-			<fileset dir="./data"/>
+	<target name="pack" depends="pack-bin, pack-src"/>
+
+
+	<target name="dist" depends="pack"
+				description="install the built jars and the data files" >
+		<mkdir dir="${dist.dir}/jlib"/>
+		<copy file="${build.dir}/${jar.file.name.bin}"
+				todir="${dist.dir}" overwrite="true"/>
+		<copy file="${build.dir}/${jar.file.name.src}"
+				todir="${dist.dir}/jlib" overwrite="true"/>
+		<copy todir="${dist.dir}" overwrite="true">
+			<fileset dir="data"/>
 		</copy>
 	</target>
 
 	<target name="clean">
-		<delete dir="${build}"/>
+		<!--<delete dir="${build.dir}"/>-->
 	</target>
 
 </project>
