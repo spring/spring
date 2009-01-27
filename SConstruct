@@ -153,6 +153,11 @@ else:
 ddlcpp = env.Object(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+datadir)
 spring_files += [ddlcpp]
 spring_files += [streflop_lib]
+
+if env['use_nedmalloc']:
+	nedmalloc = SConscript('tools/nedmalloc/SConscript', exports='env')
+	spring_files += [nedmalloc]
+
 if env['platform'] != 'windows':
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 else: # create import library and .def file on Windows
