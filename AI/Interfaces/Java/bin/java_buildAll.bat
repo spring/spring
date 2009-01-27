@@ -4,12 +4,12 @@ REM Go through the whole Java build process
 REM @param_1	interface version (eg: "0.1")
 REM
 
-SET INTERFACE_VERSION=%1
-SET SPRING_DATA_DIR=%2
-IF "%INTERFACE_VERSION%"=="" IF "%SPRING_DATA_DIR%"=="" (
+IF {%1}=={} IF {%2}=={} (
 	ECHO "Usage %0 [java-interface-version] [spring-data-dir]"
 	EXIT 1
 )
+SET INTERFACE_VERSION=%1
+SET SPRING_DATA_DIR=%2
 
 ##############################################
 ### do not change anything below this line ###

@@ -227,23 +227,44 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 	install(DIRECTORY "${NullJavaAI_SRC}/data/"
 			DESTINATION "${NullJavaAI_DATA_DIR}")
 
-	file(REMOVE_RECURSE "${NullJavaAI_SRC}/build")
-	file(MAKE_DIRECTORY "${NullJavaAI_SRC}/build")
-	file(GLOB_RECURSE NullJavaAI_JAVA_SOURCES RELATIVE "${NullJavaAI_SRC}" FOLLOW_SYMLINKS "${NullJavaAI_SRC}/*.java")
+	# build the Java part
+	# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Skirmish
+	set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/NullJavaAI")
+	set(JAVA_BUILD_DIR "${BUILD_DIR}/classes")
+	set(JAR_FILE "SkirmishAI")
+	set(JAR_FILE_BIN "${JAR_FILE}.jar")
+	set(JAR_FILE_SRC "${JAR_FILE}-src.jar")
+	set(JAVA_SRC_DIR "${NullJavaAI_SRC}/src")
+	set(JLIB_DIR "${NullJavaAI_SRC}/data/jlib")
+	set(NullJavaAI_CLASSPATH "${CLASSPATH_AIINTERFACE}")
+	#set(NullJavaAI_CLASSPATH ".${PATH_DELIM}${CLASSPATH_AIINTERFACE}${PATH_DELIM}${JLIB_DIR}/myOwnLib.jar")
+
+	# needed by javac
+	file(MAKE_DIRECTORY "${JAVA_BUILD_DIR}")
+
+	file(GLOB_RECURSE NullJavaAI_JAVA_SOURCES RELATIVE "${JAVA_SRC_DIR}" FOLLOW_SYMLINKS "${JAVA_SRC_DIR}/*.java")
 	#add_custom_command(OUTPUT "${NullJavaAI_DATA_DIR}/SkirmishAI.jar"
 	#add_custom_command(TARGET ${NullJavaAI_TARGET}
 	add_custom_target(${NullJavaAI_TARGET} ALL
-		COMMAND "${JAVA_COMPILE}" "-cp" "\"${NullJavaAI_CLASSPATH}\"" "-d" "${NullJavaAI_SRC}/build" ${NullJavaAI_JAVA_SOURCES}
-		COMMAND "${JAVA_ARCHIVE}" "cmf" "${NullJavaAI_SRC}/manifest.mf" "${NullJavaAI_SRC}/SkirmishAI.jar" "-C" "${NullJavaAI_SRC}/build" "${NullJavaAI_PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${NullJavaAI_SRC}"
-		COMMENT "  Creating Java AI library SkirmishAI.jar" VERBATIM)
+		DEPENDS ${Java_AIINTERFACE_TARGET}
+		COMMAND "${JAVA_COMPILE}"
+			"-cp" "${NullJavaAI_CLASSPATH}"
+			"-d" "${JAVA_BUILD_DIR}"
+			${NullJavaAI_JAVA_SOURCES}
+		COMMAND "${JAVA_ARCHIVE}"
+			"cmf" "${NullJavaAI_SRC}/manifest.mf" "${BUILD_DIR}/${JAR_FILE_BIN}"
+			"-C" "${JAVA_BUILD_DIR}" "${NullJavaAI_PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${JAVA_SRC_DIR}"
+		COMMENT "  Creating Java AI library ${JAR_FILE_BIN}" VERBATIM)
 	add_custom_target(${NullJavaAI_TARGET}-SRC ALL
-		COMMAND "${JAVA_ARCHIVE}" "cf" "${NullJavaAI_SRC}/SkirmishAI-src.jar" "-C" "${NullJavaAI_SRC}" "${NullJavaAI_PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${NullJavaAI_SRC}"
-		COMMENT "  Creating Java AI library SkirmishAI-src.jar" VERBATIM)
+		COMMAND "${JAVA_ARCHIVE}"
+			"cf" "${BUILD_DIR}/${JAR_FILE_SRC}"
+			"-C" "${JAVA_SRC_DIR}" "${NullJavaAI_PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${JAVA_SRC_DIR}"
+		COMMENT "  Creating Java AI library ${JAR_FILE_SRC}" VERBATIM)
 
-	install (FILES ${NullJavaAI_SRC}/SkirmishAI.jar DESTINATION ${NullJavaAI_DATA_DIR})
-	install (FILES ${NullJavaAI_SRC}/SkirmishAI-src.jar DESTINATION ${NullJavaAI_DATA_DIR}/jlib)
+	install (FILES ${NullJavaAI_SRC}/${JAR_FILE_BIN} DESTINATION ${NullJavaAI_DATA_DIR})
+	install (FILES ${NullJavaAI_SRC}/${JAR_FILE_SRC} DESTINATION ${NullJavaAI_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 
 
@@ -269,21 +290,44 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 	install(DIRECTORY "${NullOOJavaAI_SRC}/data/"
 			DESTINATION "${NullOOJavaAI_DATA_DIR}")
 
-	file(REMOVE_RECURSE "${NullOOJavaAI_SRC}/build")
-	file(MAKE_DIRECTORY "${NullOOJavaAI_SRC}/build")
-	file(GLOB_RECURSE NullOOJavaAI_JAVA_SOURCES RELATIVE "${NullOOJavaAI_SRC}" FOLLOW_SYMLINKS "${NullOOJavaAI_SRC}/*.java")
-	add_custom_target(${NullOOJavaAI_TARGET} ALL
-		COMMAND "${JAVA_COMPILE}" "-cp" "\"${NullOOJavaAI_CLASSPATH}\"" "-d" "${NullOOJavaAI_SRC}/build" ${NullOOJavaAI_JAVA_SOURCES}
-		COMMAND "${JAVA_ARCHIVE}" "cmf" "${NullOOJavaAI_SRC}/manifest.mf" "${NullOOJavaAI_SRC}/SkirmishAI.jar" "-C" "${NullOOJavaAI_SRC}/build" "${NullOOJavaAI_PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${NullOOJavaAI_SRC}"
-		COMMENT "  Creating Java OO AI library SkirmishAI.jar" VERBATIM)
-	add_custom_target(${NullOOJavaAI_TARGET}-SRC ALL
-		COMMAND "${JAVA_ARCHIVE}" "cf" "${NullOOJavaAI_SRC}/SkirmishAI-src.jar" "-C" "${NullOOJavaAI_SRC}" "${NullOOJavaAI_PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${NullOOJavaAI_SRC}"
-		COMMENT "  Creating Java OO AI library SkirmishAI-src.jar" VERBATIM)
+	# build the Java part
+	# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Skirmish
+	set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/NullOOJavaAI")
+	set(JAVA_BUILD_DIR "${BUILD_DIR}/classes")
+	set(JAR_FILE "SkirmishAI")
+	set(JAR_FILE_BIN "${JAR_FILE}.jar")
+	set(JAR_FILE_SRC "${JAR_FILE}-src.jar")
+	set(JAVA_SRC_DIR "${NullOOJavaAI_SRC}/src")
+	set(JLIB_DIR "${NullOOJavaAI_SRC}/data/jlib")
+	set(NullOOJavaAI_CLASSPATH "${CLASSPATH_AIINTERFACE}")
+	#set(NullOOJavaAI_CLASSPATH ".${PATH_DELIM}${CLASSPATH_AIINTERFACE}${PATH_DELIM}${JLIB_DIR}/myOwnLib.jar")
 
-	install (FILES ${NullOOJavaAI_SRC}/SkirmishAI.jar DESTINATION ${NullOOJavaAI_DATA_DIR})
-	install (FILES ${NullOOJavaAI_SRC}/SkirmishAI-src.jar DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
+	# needed by javac
+	file(MAKE_DIRECTORY "${JAVA_BUILD_DIR}")
+
+	file(GLOB_RECURSE NullOOJavaAI_JAVA_SOURCES RELATIVE "${JAVA_SRC_DIR}" FOLLOW_SYMLINKS "${JAVA_SRC_DIR}/*.java")
+	#add_custom_command(OUTPUT "${NullOOJavaAI_DATA_DIR}/SkirmishAI.jar"
+	#add_custom_command(TARGET ${NullOOJavaAI_TARGET}
+	add_custom_target(${NullOOJavaAI_TARGET} ALL
+		DEPENDS ${Java_AIINTERFACE_TARGET}
+		COMMAND "${JAVA_COMPILE}"
+			"-cp" "${NullOOJavaAI_CLASSPATH}"
+			"-d" "${JAVA_BUILD_DIR}"
+			${NullOOJavaAI_JAVA_SOURCES}
+		COMMAND "${JAVA_ARCHIVE}"
+			"cmf" "${NullOOJavaAI_SRC}/manifest.mf" "${BUILD_DIR}/${JAR_FILE_BIN}"
+			"-C" "${JAVA_BUILD_DIR}" "${NullOOJavaAI_PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${JAVA_SRC_DIR}"
+		COMMENT "  Creating Java AI library ${JAR_FILE_BIN}" VERBATIM)
+	add_custom_target(${NullOOJavaAI_TARGET}-SRC ALL
+		COMMAND "${JAVA_ARCHIVE}"
+			"cf" "${BUILD_DIR}/${JAR_FILE_SRC}"
+			"-C" "${JAVA_SRC_DIR}" "${NullOOJavaAI_PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${JAVA_SRC_DIR}"
+		COMMENT "  Creating Java AI library ${JAR_FILE_SRC}" VERBATIM)
+
+	install (FILES ${NullOOJavaAI_SRC}/${JAR_FILE_BIN} DESTINATION ${NullOOJavaAI_DATA_DIR})
+	install (FILES ${NullOOJavaAI_SRC}/${JAR_FILE_SRC} DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 
 

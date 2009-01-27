@@ -3,8 +3,15 @@
 # This awk script creates the JNA wrapper classes for the C event structs in:
 # rts/ExternalAI/Interface/AISEvents.h
 #
-# this script uses functions from common.awk, use like this:
-# 	awk -f thisScript.awk -f common.awk [additional-params]
+# This script uses functions from the following files:
+# * common.awk
+# * commonDoc.awk
+# Variables that can be set on th ecommand-line (with -v):
+# * GENERATED_SOURCE_DIR: will contain the generated sources
+#
+# usage:
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/generated-java-src'
 #
 
 BEGIN {
@@ -13,7 +20,14 @@ BEGIN {
 	# define the field splitter(-regex)
 	FS = "[ \t]+";
 
+	# These vars can be assigned externally, see file header.
+	# Set the default values if they were not supplied on the command line.
+	if (!GENERATED_SOURCE_DIR) {
+		GENERATED_SOURCE_DIR = "../java/generated";
+	}
+
 	javaSrcRoot = "../java/src";
+	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
 	myPkgA = "com.clan_sy.spring.ai";
 	aiFloat3Class = "AIFloat3";
@@ -27,9 +41,9 @@ BEGIN {
 	myOOAIClass = "OOAI";
 	myOOAIAbstractClass = "AbstractOOAI";
 	myOOAIFactoryClass = "OOAIFactory";
-	myOOAIFile = javaSrcRoot "/" myPkgOOD "/" myOOAIClass ".java";
-	myOOAIAbstractFile = javaSrcRoot "/" myPkgOOD "/" myOOAIAbstractClass ".java";
-	myOOAIFactoryFile = javaSrcRoot "/" myPkgOOD "/" myOOAIFactoryClass ".java";
+	myOOAIFile = javaGeneratedSrcRoot "/" myPkgOOD "/" myOOAIClass ".java";
+	myOOAIAbstractFile = javaGeneratedSrcRoot "/" myPkgOOD "/" myOOAIAbstractClass ".java";
+	myOOAIFactoryFile = javaGeneratedSrcRoot "/" myPkgOOD "/" myOOAIFactoryClass ".java";
 
 	printOOAIHeader(myOOAIFile, myOOAIClass);
 	printOOAIHeader(myOOAIAbstractFile, myOOAIAbstractClass);
@@ -264,7 +278,7 @@ function printEventJava(evtIndex) {
 	eName = evtsName[evtIndex];
 
 	className = eName "AIEvent";
-	javaFile = javaSrcRoot "/" myPkgEvtD "/" className ".java";
+	javaFile = javaGeneratedSrcRoot "/" myPkgEvtD "/" className ".java";
 	evtInterface = "AIEvent";
 	clsMods = "public final ";
 	printJavaEventHeader(javaFile);
@@ -274,14 +288,14 @@ function printEventJava(evtIndex) {
 		printEventJavaCls(evtIndex);
 
 		className = "Win32" eName "AIEvent";
-		javaFile = javaSrcRoot "/" myPkgEvtD "/" className ".java";
+		javaFile = javaGeneratedSrcRoot "/" myPkgEvtD "/" className ".java";
 		#evtInterface = "InitAIEvent";
 		#clsMods = "public final ";
 		printJavaEventHeader(javaFile);
 		printEventJavaCls(evtIndex);
 
 		className = "Default" eName "AIEvent";
-		javaFile = javaSrcRoot "/" myPkgEvtD "/" className ".java";
+		javaFile = javaGeneratedSrcRoot "/" myPkgEvtD "/" className ".java";
 		printJavaEventHeader(javaFile);
 		printEventJavaCls(evtIndex);
 	} else {

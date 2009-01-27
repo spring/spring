@@ -26,7 +26,7 @@ SkirmishAI
 """
 
 
-Import(['aienv'])
+Import(['env', 'aienv'])
 
 import os, sys
 sys.path.append('rts/build/scons')
@@ -190,7 +190,9 @@ for baseName in filelist.list_AIInterfaces(aiinterfaceenv, exclude_list=aiinterf
 		else:
 			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_X87'])
 		myEnv.AppendUnique(CPPPATH = ['#rts/lib/streflop'])
-		myEnv.AppendUnique(LIBS = ['streflop'])
+		#myEnv.AppendUnique(LIBS = ['streflop'])
+		#objs += [myEnv['streflop_lib']]
+		myEnv.AppendUnique(LIBS = [myEnv['streflop_lib']])
 	mySource = objs + filelist.get_AIInterface_source(myEnv, baseName)
 	if baseName == 'Java':
 		if myEnv['platform'] == 'windows':

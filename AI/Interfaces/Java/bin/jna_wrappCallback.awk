@@ -4,8 +4,15 @@
 # to call to C function pointers in:
 # rts/ExternalAI/Interface/SAICallback.h
 #
-# this script uses functions from common.awk, use like this:
-# 	awk -f thisScript.awk -f common.awk [additional-params]
+# This script uses functions from the following files:
+# * common.awk
+# * commonDoc.awk
+# Variables that can be set on th ecommand-line (with -v):
+# * GENERATED_SOURCE_DIR: will contain the generated sources
+#
+# usage:
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/generated-java-src'
 #
 
 BEGIN {
@@ -15,7 +22,14 @@ BEGIN {
 	#FS = /,|\(|\)\;/
 	FS = "(,)|(\\()|(\\)\\;)";
 
+	# These vars can be assigned externally, see file header.
+	# Set the default values if they were not supplied on the command line.
+	if (!GENERATED_SOURCE_DIR) {
+		GENERATED_SOURCE_DIR = "../java/generated";
+	}
+
 	javaSrcRoot = "../java/src";
+	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
 	myPkgA = "com.clan_sy.spring.ai";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
@@ -60,7 +74,7 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h) {
 }
 
 function createJavaFileName(clsName_f) {
-	return javaSrcRoot "/" myPkgD "/" clsName_f ".java";
+	return javaGeneratedSrcRoot "/" myPkgD "/" clsName_f ".java";
 }
 
 function printInterface() {

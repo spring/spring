@@ -1,59 +1,161 @@
 <?xml version="1.0"?>
 
-<project name="Java" basedir="../" default="jar">
+<project name="Java" basedir="../" default="pack">
+	<!--
+		This file does:
+			* generate java sources
+			* compile java sources
+			* pack java classes and sources into jar files
+			* install these two jar files
+	-->
 
-	<property file="./bin/ant.properties"/>
+	<loadfile property="interface.version" srcFile="VERSION"/>
+	<property name="interface.name" value="${ant.project.name}"/>
 
-	<loadfile property="myVersion" srcFile="./VERSION"/>
-	<property name="src" location="./java/src"/>
-	<property name="build" location="./build"/>
-	<property name="dist"
-				location="${distHome}/AI/Interfaces/${ant.project.name}/${myVersion}"/>
-	<path id="myClassPath">
-		<fileset dir="./data">
+	<!-- The following values may be overriden in a properties file
+	     which may be specified to ant on the command line like this:
+	     ant -propertyfile ant.properties -->
+	<property name="spring.home" location="../../.."/>
+	<property name="build.home" location="${spring.home}/build"/>
+	<property name="build.dir"
+			location="${build.home}/AI/Interfaces/${interface.name}"/>
+	<property name="dist.home" location="${spring.home}/game"/>
+	<property name="dist.dir"
+				location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}"/>
+	<property name="src.generated" location="java/generated"/>
+
+	<property name="jar.file.name" value="AIInterface"/>
+	<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
+	<property name="jar.file.name.src" value="${jar.file.name}-src.jar"/>
+	<property name="java.pkg.dir" value="com/clan_sy/spring/ai"/>
+
+	<property name="spring.ai.interface.home"
+			location="${spring.home}/rts/ExternalAI/Interface"/>
+	<property name="src" location="java/src"/>
+	<property name="bin.dir" location="bin"/>
+	<path id="class_path">
+		<fileset dir="data">
 			<include name="jlib/**/*.jar"/>
 		</fileset>
 	</path>
 
+
+
 	<target name="init">
-		<mkdir dir="${build}"/>
+		<mkdir dir="${build.dir}"/>
+		
+ 		<condition property="awk.bin" value="gawk.exe" else="awk">
+ 			<os family="windows" />
+ 		</condition>
 	</target>
 
-	<target name="compile" depends="init">
-		<javac destdir="${build}">
+
+	<target name="generate-init" depends="init">
+		<mkdir dir="${src.generated}/${java.pkg.dir}"/>
+		<mkdir dir="${src.generated}/${java.pkg.dir}/event"/>
+		<mkdir dir="${src.generated}/${java.pkg.dir}/command"/>
+		<mkdir dir="${src.generated}/${java.pkg.dir}/oo"/>
+	</target>
+
+	<target name="generate-src-events" depends="generate-init">
+		<exec dir="${bin.dir}" executable="${awk.bin}"
+				failonerror="true" resolveexecutable="true" searchpath="true">
+			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-f"/><arg value="jna_wrappEvents.awk"/>
+			<arg value="-f"/><arg value="common.awk"/>
+			<arg value="-f"/><arg value="commonDoc.awk"/>
+			<arg value="${spring.ai.interface.home}/AISEvents.h"/>
+		</exec>
+	</target>
+
+	<target name="generate-src-commands" depends="generate-init">
+		<exec dir="${bin.dir}" executable="${awk.bin}"
+				failonerror="true" resolveexecutable="true" searchpath="true">
+			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-f"/><arg value="jna_wrappCommands.awk"/>
+			<arg value="-f"/><arg value="common.awk"/>
+			<arg value="-f"/><arg value="commonDoc.awk"/>
+			<arg value="${spring.ai.interface.home}/AISCommands.h"/>
+		</exec>
+	</target>
+
+	<target name="generate-src-callback" depends="generate-init">
+		<exec dir="${bin.dir}" executable="${awk.bin}"
+				failonerror="true" resolveexecutable="true" searchpath="true">
+			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-f"/><arg value="jna_wrappCallback.awk"/>
+			<arg value="-f"/><arg value="common.awk"/>
+			<arg value="-f"/><arg value="commonDoc.awk"/>
+			<arg value="${spring.ai.interface.home}/SAICallback.h"/>
+		</exec>
+	</target>
+
+	<target name="generate-src-callback-oo" depends="generate-src-callback">
+		<exec dir="${bin.dir}" executable="${awk.bin}"
+				failonerror="true" resolveexecutable="true" searchpath="true">
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-f"/><arg value="java_wrappCallbackOO.awk"/>
+			<arg value="-f"/><arg value="common.awk"/>
+			<arg value="-f"/><arg value="commonDoc.awk"/>
+			<arg value="-f"/><arg value="commonOOCallback.awk"/>
+			<arg value="${src.generated}/${java.pkg.dir}/AICallback.java"/>
+		</exec>
+	</target>
+
+	<target name="generate-src"
+			depends="generate-src-events, generate-src-commands, generate-src-callback, generate-src-callback-oo"/>
+
+
+	<target name="compile" depends="generate-src">
+		<javac destdir="${build.dir}">
 			<src path="${src}"/>
-			<classpath refid="myClassPath"/>
+			<src path="${src.generated}"/>
+			<classpath refid="class_path"/>
 		</javac>
 	</target>
 
-	<target name="jar" depends="compile">
-		<jar destfile="${build}/interface.jar">
-			<fileset dir="${build}">
+
+	<target name="pack-bin" depends="compile">
+		<jar destfile="${build.dir}/${jar.file.name.bin}">
+			<fileset dir="${build.dir}">
 				<include name="**/*.class"/>
 			</fileset>
 		</jar>
 	</target>
 
-	<target name="src-jar" depends="init">
-		<jar destfile="${build}/interface-src.jar">
+	<target name="pack-src" depends="init">
+		<jar destfile="${build.dir}/${jar.file.name.src}">
 			<fileset dir="${src}">
+				<include name="**/*.java"/>
+			</fileset>
+			<fileset dir="${src.generated}">
 				<include name="**/*.java"/>
 			</fileset>
 		</jar>
 	</target>
 
-	<target name="dist" depends="jar, src-jar"
+	<target name="pack" depends="pack-bin, pack-src"/>
+
+
+	<target name="dist" depends="pack"
 				description="generate the distribution (Java part only)" >
-		<mkdir dir="${dist}/jlib"/>
-		<copy file="${build}/interface.jar" todir="${dist}" overwrite="true"/>
-		<copy file="${build}/interface-src.jar" todir="${dist}/jlib" overwrite="true"/>
-		<copy todir="${dist}" overwrite="true">
-			<fileset dir="./data"/>
+		<mkdir dir="${dist.dir}/jlib"/>
+		<copy file="${build.dir}/${jar.file.name.bin}" todir="${dist.dir}" overwrite="true"/>
+		<copy file="${build.dir}/${jar.file.name.src}" todir="${dist.dir}/jlib" overwrite="true"/>
+		<copy todir="${dist.dir}" overwrite="true">
+			<fileset dir="data"/>
 		</copy>
 	</target>
 
 	<target name="clean">
-		<delete dir="${build}"/>
+		<!--<delete dir="${build.dir}"/>-->
 	</target>
 
 </project>

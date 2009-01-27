@@ -7,7 +7,7 @@
 
 add_definitions(-DBUILDING_AI_INTERFACE)
 
-set(AI_INTERFACES_SRC "${CMAKE_SOURCE_DIR}/AI/Interfaces")
+set(AI_INTERFACES_SRC "${CMAKE_CURRENT_SOURCE_DIR}")
 set(AI_INTERFACES_DATA "${AIDIR}/AI/Interfaces")
 IF (UNIX)
 	set(SHELL_EXEC_POSTFIX "sh")
@@ -80,6 +80,8 @@ set(Java_AIINTERFACE_SRC "${AI_INTERFACES_SRC}/Java")
 if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 	set(BUILD_Java_AIINTERFACE TRUE)
 	
+	# Make the following vars globally available for the parent dir
+	# which should be AI/
 	set(JAVA_FOUND ${JAVA_FOUND} PARENT_SCOPE)
 	set(JAVA_HOME ${JAVA_HOME} PARENT_SCOPE)
 	set(JAVA_BIN_PATH ${JAVA_BIN_PATH} PARENT_SCOPE)
@@ -106,8 +108,7 @@ if (BUILD_Java_AIINTERFACE)
 	set(Java_AIINTERFACE_TARGET "Java")
 	set(Java_AIINTERFACE_DATA_DIR ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS})
 	set(Java_AIINTERFACE_PKG "com/clan_sy/spring/ai")
-	set(Java_AIINTERFACE_PKG_FIRST_PART "com")
-	set(Java_AIINTERFACE_CLASSPATH ".:${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/jna/jna.jar${PATH_DELIM}${Java_AIINTERFACE_SRC}/data/jlib/vecmath.jar")
+	set(PKG_FIRST_PART "com")
 	if (NOT AIINTERFACE_FIND_QUIETLY)
 		message(STATUS "Found AI Interface: Java ${Java_AIINTERFACE_VERS}")
 	endif (NOT AIINTERFACE_FIND_QUIETLY)
@@ -116,7 +117,7 @@ if (BUILD_Java_AIINTERFACE)
 	install(DIRECTORY "${Java_AIINTERFACE_SRC}/data/"
 			DESTINATION "${Java_AIINTERFACE_DATA_DIR}")
 
-	# handle native part
+	# build the native part
 	aux_source_directory(${Java_AIINTERFACE_SRC} javaAIInterface)
 	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${aienv} ${cutilsenv})
 	target_link_libraries(${Java_AIINTERFACE_TARGET} ${JAVA_JVM_LIBRARY})
@@ -127,46 +128,141 @@ if (BUILD_Java_AIINTERFACE)
 	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES OUTPUT_NAME "AIInterface")
 	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "Java")
 
-	# handle Java part
-	file(REMOVE_RECURSE "${Java_AIINTERFACE_SRC}/build")
-	file(MAKE_DIRECTORY "${Java_AIINTERFACE_SRC}/build")
-	#set(JAVA_BUILD_DIR "./")
-	#file(MAKE_DIRECTORY "abcdefgh")
-	
-	
-	message("PROJECT_BINARY_DIR: ${PROJECT_BINARY_DIR}")
-	message("CMAKE_PROJECT_BINARY_DIR: ${CMAKE_PROJECT_BINARY_DIR}")
-	message("LIBRARY_OUTPUT_DIRECTORY: ${LIBRARY_OUTPUT_DIRECTORY}")
-	message("CMAKE_LIBRARY_OUTPUT_DIRECTORY: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-	message("LIBRARY_OUTPUT_PATH: ${LIBRARY_OUTPUT_PATH}")
-	message("CMAKE_LIBRARY_OUTPUT_PATH: ${CMAKE_LIBRARY_OUTPUT_PATH}")
-	message("ARCHIVE_OUTPUT_DIRECTORY: ${ARCHIVE_OUTPUT_DIRECTORY}")
-	message("LIBRARY_OUTPUT_DIRECTORY: ${LIBRARY_OUTPUT_DIRECTORY}")
-	message("RUNTIME_OUTPUT_DIRECTORY: ${RUNTIME_OUTPUT_DIRECTORY}")
-	message("CMAKE_ARCHIVE_OUTPUT_DIRECTORY: ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
-	message("CMAKE_LIBRARY_OUTPUT_DIRECTORY: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
-	message("CMAKE_RUNTIME_OUTPUT_DIRECTORY: ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
-	
-	
-	file(GLOB_RECURSE Java_AIINTERFACE_JAVA_SOURCES RELATIVE "${Java_AIINTERFACE_SRC}/java/src" FOLLOW_SYMLINKS "${Java_AIINTERFACE_SRC}/java/src/*.java")
+	# build the Java part
+	#file(REMOVE_RECURSE "${Java_AIINTERFACE_SRC}/build")
+	#file(MAKE_DIRECTORY "${Java_AIINTERFACE_SRC}/build")
+	IF (WIN32)
+		set(AWK_COMMAND "gawk.exe")
+	ELSE (WIN32)
+		set(AWK_COMMAND "awk")
+	ENDIF(WIN32)
+	set(AWK_SCRIPTS_DIR "${Java_AIINTERFACE_SRC}/bin")
+	# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Interfaces
+	set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/Java")
+	set(SPRING_SOURCE_DIR "${PROJECT_SOURCE_DIR}")
+	set(SPRING_AIINTERFACE_SOURCE_DIR "${SPRING_SOURCE_DIR}/rts/ExternalAI/Interface")
+	set(JAVA_BUILD_DIR "${BUILD_DIR}/classes")
+	set(JAR_FILE "AIInterface")
+	set(JAR_FILE_BIN "${JAR_FILE}.jar")
+	set(JAR_FILE_SRC "${JAR_FILE}-src.jar")
+	set(JAVA_SRC_DIR "${Java_AIINTERFACE_SRC}/java/src")
+	set(JAVA_GENERATED_SRC_DIR "${BUILD_DIR}/generated-java-src")
+	set(JLIB_DIR "${Java_AIINTERFACE_SRC}/data/jlib")
+	set(CLASSPATH_LIBS "${JLIB_DIR}/jna/jna.jar${PATH_DELIM}${JLIB_DIR}/vecmath.jar")
+	set(CLASSPATH_INTERNAL ".${PATH_DELIM}${CLASSPATH_LIBS}${PATH_DELIM}${JAVA_SRC_DIR}")
+
+	# Used by Java Skirmish AIs
+	set(CLASSPATH_AIINTERFACE "${CLASSPATH_LIBS}${PATH_DELIM}${BUILD_DIR}/${JAR_FILE_BIN}" PARENT_SCOPE)
+	#set(JAR_FILE_BIN_AIINTERFACE "${BUILD_DIR}/${JAR_FILE_BIN}" PARENT_SCOPE)
+
+	# We have to create these directories, cause otherwise the AWK scripts
+	# for generating the source code will not work
+	file(MAKE_DIRECTORY "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event")
+	file(MAKE_DIRECTORY "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command")
+	file(MAKE_DIRECTORY "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo")
+	# needed by javac
+	file(MAKE_DIRECTORY "${JAVA_BUILD_DIR}")
+
 	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		COMMAND "${Java_AIINTERFACE_SRC}/bin/java_generateWrappers.${SHELL_EXEC_POSTFIX}" ARGS "${Java_AIINTERFACE_VERS}"
-		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/bin"
-		COMMENT "  Generating Java source files ..." VERBATIM)
+		#OUTPUT "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event/*.java"
+		COMMAND "${AWK_COMMAND}" ARGS
+		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
+		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
+		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
+		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappEvents.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
+		"${SPRING_AIINTERFACE_SOURCE_DIR}/AISEvents.h"
+		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
+		COMMENT "  Generating Java AI Event source files ..." VERBATIM)
+
 	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		COMMAND "${JAVA_COMPILE}" "-cp" "${Java_AIINTERFACE_CLASSPATH}" "-d" "${Java_AIINTERFACE_SRC}/build" ${Java_AIINTERFACE_JAVA_SOURCES}
-		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/java/src"
+		#OUTPUT "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command/*.java"
+		COMMAND "${AWK_COMMAND}" ARGS
+		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
+		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
+		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
+		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappCommands.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
+		"${SPRING_AIINTERFACE_SOURCE_DIR}/AISCommands.h"
+		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
+		COMMENT "  Generating Java AI Command source files ..." VERBATIM)
+
+	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
+		#OUTPUT "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/AICallback.java"
+		COMMAND "${AWK_COMMAND}" ARGS
+		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
+		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
+		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
+		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappCallback.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
+		"${SPRING_AIINTERFACE_SOURCE_DIR}/SAICallback.h"
+		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
+		COMMENT "  Generating Java AI Callback source files ..." VERBATIM)
+
+	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
+		#DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/AICallback.java"
+		#OUTPUT "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/*.java"
+		COMMAND "${AWK_COMMAND}" ARGS
+		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
+		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
+		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
+		"-f" "${AWK_SCRIPTS_DIR}/java_wrappCallbackOO.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
+		"-f" "${AWK_SCRIPTS_DIR}/commonOOCallback.awk"
+		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/AICallback.java"
+		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
+		COMMENT "  Generating Java AI OO Callback source files ..." VERBATIM)
+
+	# We can not auto generate this list,
+	# as these files do not yet exist during configure stage
+	# The files in this list have to depend on all other hand-written
+	# and generated source files of the Java interface
+	set(JAVA_GENERATED_SOURCES
+		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/OOAICallback.java"
+		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/OOAIFactory.java"
+		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/AbstractOOAI.java")
+
+	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
+		#OUTPUT "${JAVA_BUILD_DIR}/*.class"
+		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event/*.java"
+		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command/*.java"
+		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/*.java"
+		COMMAND "${JAVA_COMPILE}" ARGS
+		"-cp" "${CLASSPATH_INTERNAL}"
+		"-d" "${JAVA_BUILD_DIR}"
+		${JAVA_GENERATED_SOURCES}
+		WORKING_DIRECTORY "${JAVA_GENERATED_SRC_DIR}"
 		COMMENT "  Compiling Java sources ..." VERBATIM)
+
 	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		COMMAND "${JAVA_ARCHIVE}" "cmf" "${Java_AIINTERFACE_SRC}/java/src/manifest.mf" "${Java_AIINTERFACE_SRC}/AIInterface.jar" "-C" "${Java_AIINTERFACE_SRC}/build" "${Java_AIINTERFACE_PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/bin"
-		COMMENT "  Creating Java library AIInterface.jar ..." VERBATIM)
+		#DEPENDS "${JAVA_BUILD_DIR}/*.class"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+		"cmf" "${JAVA_SRC_DIR}/manifest.mf" "${BUILD_DIR}/${JAR_FILE_BIN}"
+		"-C" "${JAVA_BUILD_DIR}" "${PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${BUILD_DIR}"
+		COMMENT "  Creating Java interface library ${JAR_FILE_BIN} ..." VERBATIM)
+
 	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		COMMAND "${JAVA_ARCHIVE}" "cf" "${Java_AIINTERFACE_SRC}/AIInterface-src.jar" "-C" "${Java_AIINTERFACE_SRC}/java/src" "${Java_AIINTERFACE_PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${Java_AIINTERFACE_SRC}/bin"
-		COMMENT "  Creating Java library AIInterface-src.jar ..." VERBATIM)
-	install(FILES ${Java_AIINTERFACE_SRC}/AIInterface.jar DESTINATION ${Java_AIINTERFACE_DATA_DIR})
-	install(FILES ${Java_AIINTERFACE_SRC}/AIInterface-src.jar DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib)
-	#install(DIRECTORY ${Java_AIINTERFACE_SRC}/jlib/ DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib FILES_MATCHING PATTERN "*.jar")
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+		"cf" "${BUILD_DIR}/${JAR_FILE_SRC}"
+		"-C" "${JAVA_SRC_DIR}" "${PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${BUILD_DIR}"
+		COMMENT "  Creating Java interface source archive ${JAR_FILE_SRC} ..." VERBATIM)
+	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
+		#DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event/*.java"
+		#DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command/*.java"
+		#DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/*.java"
+		COMMAND "${JAVA_ARCHIVE}" ARGS
+		"uf" "${BUILD_DIR}/${JAR_FILE_SRC}"
+		"-C" "${JAVA_GENERATED_SRC_DIR}" "${PKG_FIRST_PART}"
+		WORKING_DIRECTORY "${BUILD_DIR}"
+		COMMENT "  Updating Java interface source archive ${JAR_FILE_SRC} with generated sources ..." VERBATIM)
+
+	install(FILES ${BUILD_DIR}/${JAR_FILE_BIN} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
+	install(FILES ${BUILD_DIR}/${JAR_FILE_SRC} DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE)
 

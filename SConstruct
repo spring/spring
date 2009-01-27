@@ -99,6 +99,7 @@ streflopSource += sobjs_flt32
 
 # compile
 streflop_lib = senv.StaticLibrary(senv['builddir'], streflopSource)
+env['streflop_lib'] = streflop_lib
 Alias('streflop', streflop_lib) # Allow `scons streflop' to compile just streflop
 
 ################################################################################
@@ -556,7 +557,7 @@ if env['platform'] != 'windows':
 
 aienv = env.Clone(builddir=os.path.join(env['builddir'], 'AI'))
 remove_precompiled_header(aienv)
-env.SConscript(['AI/SConscript'], exports=['aienv'], variant_dir=env['builddir'])
+env.SConscript(['AI/SConscript'], exports=['env', 'aienv'], variant_dir=env['builddir'])
 
 ################################################################################
 ### Run Tests

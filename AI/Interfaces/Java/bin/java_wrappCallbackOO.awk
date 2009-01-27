@@ -7,8 +7,16 @@
 # which wrapps:
 # rts/ExternalAI/Interface/SAICallback.h
 #
-# this script uses functions from common.awk, use like this:
-# 	awk -f thisScript.awk -f common.awk [additional-params]
+# This script uses functions from the following files:
+# * common.awk
+# * commonDoc.awk
+# * commonOOCallback.awk
+# Variables that can be set on th ecommand-line (with -v):
+# * GENERATED_SOURCE_DIR: will contain the generated sources
+#
+# usage:
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -f commonOOCallback.awk
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -f commonOOCallback.awk -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/generated-java-src'
 #
 
 BEGIN {
@@ -19,7 +27,14 @@ BEGIN {
 	FS="(\\()|(\\)\\;)";
 	IGNORECASE = 0;
 
+	# These vars can be assigned externally, see file header.
+	# Set the default values if they were not supplied on the command line.
+	if (!GENERATED_SOURCE_DIR) {
+		GENERATED_SOURCE_DIR = "../java/generated";
+	}
+
 	javaSrcRoot = "../java/src";
+	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
 	myParentPkgA = "com.clan_sy.spring.ai";
 	myPkgA = myParentPkgA ".oo";
@@ -28,7 +43,7 @@ BEGIN {
 	myClassVar = "ooClb";
 	myWrapClass = "AICallback";
 	myWrapVar = "innerCallback";
-	mySourceFile = javaSrcRoot "/" myPkgD "/" myClass ".java";
+	mySourceFile = javaGeneratedSrcRoot "/" myPkgD "/" myClass ".java";
 	MAX_IDS = 1024;
 	defMapJavaImpl = "HashMap";
 
@@ -78,7 +93,7 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h, isOrHasInterface_h) 
 }
 
 function createJavaFileName(clsName_c) {
-	return javaSrcRoot "/" myPkgD "/" clsName_c ".java";
+	return javaGeneratedSrcRoot "/" myPkgD "/" clsName_c ".java";
 }
 
 function printInterfaces() {
