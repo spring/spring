@@ -132,6 +132,7 @@ def generate(env):
 		('disable_avi',       'Set to no to turn on avi support', 'False on windows, True otherwise'),
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
+		('use_nedmalloc',     'Use nedmalloc for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
 		('use_gch',           'Use gcc precompiled header', True),
 		('dc_allowed',        'Specifies whether FPS mode (Direct Control) is allowed in game', True),
@@ -180,7 +181,7 @@ def generate(env):
 			'libpath', 'prefix', 'installprefix', 'builddir',
 			'mingwlibsdir', 'datadir', 'bindir', 'libdir',
 			'cachedir', 'strip', 'disable_avi', 'use_tcmalloc',
-			'use_mmgr', 'use_gch',
+			'use_nedmalloc', 'use_mmgr', 'use_gch',
 			'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
 			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX',
 			'is_configured', 'spring_defines', 'arch']:
@@ -321,6 +322,9 @@ def generate(env):
 				env.AppendUnique(CPPDEFINES=['DEBUG', '_DEBUG', 'NO_CATCH_EXCEPTIONS'])
 			else:
 				env.AppendUnique(CPPDEFINES=['NDEBUG'])
+			# Warn about custom allocators when debugging
+			if env['use_nedmalloc']:
+				print 'warning: nedmalloc is active while debugging'
 		else:
 			print "\ninvalid debug option, must be one of: yes, true, no, false, 0, 1, 2, 3."
 			env.Exit(1)
@@ -418,6 +422,7 @@ def generate(env):
 		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
+		bool_opt('use_nedmalloc', False)
 		bool_opt('use_mmgr', False)
 		bool_opt('use_gch', True)
 		bool_opt('dc_allowed', True)
