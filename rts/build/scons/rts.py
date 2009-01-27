@@ -322,9 +322,6 @@ def generate(env):
 				env.AppendUnique(CPPDEFINES=['DEBUG', '_DEBUG', 'NO_CATCH_EXCEPTIONS'])
 			else:
 				env.AppendUnique(CPPDEFINES=['NDEBUG'])
-			# Warn about custom allocators when debugging
-			if env['use_nedmalloc']:
-				print 'warning: nedmalloc is active while debugging'
 		else:
 			print "\ninvalid debug option, must be one of: yes, true, no, false, 0, 1, 2, 3."
 			env.Exit(1)
