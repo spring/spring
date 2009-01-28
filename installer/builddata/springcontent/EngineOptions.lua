@@ -226,28 +226,8 @@ local options =
       },
       {
         key  = 'EmptyScript',
-        name = 'Empty',
-        desc = 'Don\'t do anything on game start.',
-      },
-      {
-        key  = 'GlobalAI test (AAI.dll)',
-        name = 'GlobalAI test (AAI)',
-        desc = 'AAI AI test',
-      },
-      {
-        key  = 'GlobalAI test (RAI.dll)',
-        name = 'GlobalAI test (RAI)',
-        desc = 'RAI AI test',
-      },
-      {
-        key  = 'GlobalAI test (KAIK-0.13.dll)',
-        name = 'GlobalAI test (KAIK)',
-        desc = 'KAIK AI test',
-      },
-      {
-        key  = 'GlobalAI test (TestGlobalAI.dll)',
-        name = 'GlobalAI test (TestGlobalAI)',
-        desc = 'TestGlobalAI AI test',
+        name = 'Empty Script',
+        desc = 'Do nothing special on game start.',
       },
       {
         key  = 'Random enemies',
