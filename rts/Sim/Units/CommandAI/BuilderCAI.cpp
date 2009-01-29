@@ -523,7 +523,10 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 				return;
 			}
 		}
-		if (unit && (unit->health < unit->maxHealth) &&
+		// don't consider units under construction irreperable
+		// even if they can be repaired
+		if (unit && (unit->beingBuilt || unit->unitDef->repairable)
+		    && (unit->health < unit->maxHealth) &&
 		    ((unit != owner) || owner->unitDef->canSelfRepair) &&
 		    (!unit->soloBuilder || (unit->soloBuilder == owner)) &&
 		    UpdateTargetLostTimer((int)c.params[0])) {
@@ -674,6 +677,7 @@ void CBuilderCAI::ExecuteGuard(Command& c)
 			owner->moveType->KeepPointingTo(guarded->pos,
 				fac->buildDistance*0.9f+guarded->radius, false);
 			if ((guarded->health < guarded->maxHealth) &&
+			    (guarded->unitDef->repairable) &&
 			    (!guarded->soloBuilder || (guarded->soloBuilder == owner)) &&
 			    (( guarded->beingBuilt && owner->unitDef->canAssist) ||
 			     (!guarded->beingBuilt && owner->unitDef->canRepair))) {
@@ -961,6 +965,7 @@ int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 		} else {
 			CTransportCAI* tran = dynamic_cast<CTransportCAI*>(pointed->commandAI);
 			if ((pointed->health < pointed->maxHealth) &&
+			    (pointed->unitDef->repairable) &&
 			    (!pointed->soloBuilder || (pointed->soloBuilder == owner)) &&
 			    (( pointed->beingBuilt && owner->unitDef->canAssist) ||
 			     (!pointed->beingBuilt && owner->unitDef->canRepair))) {
@@ -1252,6 +1257,11 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				if (unit->beingBuilt && unit->mobility && (owner->moveState < 2)) {
 					continue;
 				}
+				// don't repair stuff that can't be repaired
+				if (!unit->beingBuilt && unit->unitDef->repairable) {
+					continue;
+				}
+				// don't assist or repair if can't assist or repair
 				if (!( unit->beingBuilt && owner->unitDef->canAssist) &&
 						!(!unit->beingBuilt && owner->unitDef->canRepair)) {
 					continue;
