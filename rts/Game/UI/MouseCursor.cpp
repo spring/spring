@@ -177,7 +177,7 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 	}
 
 	while (int(frames.size()) < lastFrame) {
-		SNPRINTF(namebuf, sizeof(namebuf), "anims/%s_%d.%s",
+		SNPRINTF(namebuf, sizeof(namebuf), "anims/%s_%zu.%s",
 		         name.c_str(), frames.size(), ext);
 		ImageData image;
 		if (!LoadCursorImage(namebuf, image))
