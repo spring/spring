@@ -732,7 +732,7 @@ namespace terrain {
 	void ShaderDef::Output()
 	{
 		const char *opstr[] = { "add", "mul", "alpha" ,"blend" };
-		d_trace ("Shader: %d stages.\n", stages.size());
+		d_trace ("Shader: %zu stages.\n", stages.size());
 		for (int a=0;a<stages.size();a++){
 			d_trace ("%d\toperation=%s\n",a, opstr[(int)stages[a].operation]);
 			d_trace ("\tsource=%s\n", stages[a].sourceName.c_str());
