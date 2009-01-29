@@ -414,12 +414,19 @@ def generate(env):
 			#else:
 			#	env['CXXFLAGS'] = env['CCFLAGS']
 
+		# nedmalloc crashes horribly when crosscompiled
+		# on mingw gcc 4.2.1
+		nedmalloc_default = True
+		if env['platform'] == 'windows' and os.name != 'nt' \
+				and gcc_version < [4, 3, 2]:
+			nedmalloc_default = False
+
 		bool_opt('gml', False)
 		bool_opt('gmlsim', False)
 		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
-		bool_opt('use_nedmalloc', True)
+		bool_opt('use_nedmalloc', nedmalloc_default)
 		bool_opt('use_mmgr', False)
 		bool_opt('use_gch', True)
 		bool_opt('dc_allowed', True)
