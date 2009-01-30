@@ -5412,62 +5412,6 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\OggStream.cpp"
-						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="No debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release with error catching|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Syncdebug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release+MT with error catching|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Debug+MT|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\OggStream.h"
-						>
-					</File>
-					<File
 						RelativePath="..\..\System\Platform\Win\seh.cpp"
 						>
 					</File>
@@ -5777,14 +5721,6 @@
 			<Filter
 				Name="Sound"
 				>
-				<File
-					RelativePath="..\..\System\Platform\Win\DxSound.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Platform\Win\DxSound.h"
-					>
-				</File>
 				<File
 					RelativePath="..\..\System\Sound.cpp"
 					>
