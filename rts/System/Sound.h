@@ -39,7 +39,9 @@ public:
 	unsigned int GetStreamPlayTime();
 	void SetStreamVolume(float);
 
-	int MaxSounds(int maxSounds = -1);
+	bool Mute();
+	bool IsMuted() const;
+
 	void SetVolume(float vol); // 1 = full volume
 	void SetUnitReplyVolume(float vol); // also affected by global volume (SetVolume())
 
@@ -52,7 +54,6 @@ private:
 	void PlaySample(int id, const float3 &p, const float3& velocity, float volume, bool relative);
 
 	void UpdateListener();
-	void Enqueue(ALuint src);
 	
 	int cur;
 	float globalVolume;
@@ -64,6 +65,7 @@ private:
 	std::vector<ALuint> sources;
 	std::set<unsigned int> repliesPlayed;
 	float unitReplyVolume;
+	bool mute;
 };
 
 extern CSound* sound;

@@ -200,10 +200,6 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawFpsHUD),
 
-	CR_MEMBER(soundEnabled),
-	CR_MEMBER(gameSoundVolume),
-	CR_MEMBER(unitReplyVolume),
-
 	CR_MEMBER(moveWarnings),
 
 	CR_MEMBER(lastSimFrame),
@@ -303,11 +299,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 #endif
 
 	sound = new CSound();
-	gameSoundVolume = configHandler.Get("SoundVolume", 60) * 0.01f;
-	unitReplyVolume = configHandler.Get("UnitReplyVolume", configHandler.Get("UnitReplySoundVolume", 80) ) * 0.01f;
-	soundEnabled = true;
-	sound->SetVolume(gameSoundVolume);
-	sound->SetUnitReplyVolume(unitReplyVolume);
 	chatSound = ModSound::Get().GetSoundId("IncomingChat");
 
 	moveWarnings = !!configHandler.Get("MoveWarnings", 1);
@@ -1194,32 +1185,28 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "nosound") {
-		soundEnabled = !soundEnabled;
-		sound->SetVolume (soundEnabled ? gameSoundVolume : 0.0f);
-		if (soundEnabled) {
-			logOutput.Print("Sound enabled");
-		} else {
+		if (sound->Mute()) {
 			logOutput.Print("Sound disabled");
+		} else {
+			logOutput.Print("Sound enabled");
 		}
 	}
 	else if (cmd == "volume") {
 		char* endPtr;
 		const char* startPtr = action.extra.c_str();
-		float volume = (float)strtod(startPtr, &endPtr);
+		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
 		if (endPtr != startPtr) {
-			gameSoundVolume = std::max(0.0f, std::min(1.0f, volume));
-			sound->SetVolume(gameSoundVolume);
-			configHandler.Set("SoundVolume", (int)(gameSoundVolume * 100.0f));
+			sound->SetVolume(volume);
+			configHandler.Set("SoundVolume", (int)(volume * 100.0f));
 		}
 	}
 	else if (cmd == "unitreplyvolume") {
 		char* endPtr;
 		const char* startPtr = action.extra.c_str();
-		float volume = (float)strtod(startPtr, &endPtr);
+		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
 		if (endPtr != startPtr) {
-			unitReplyVolume = std::max(0.0f, std::min(1.0f, volume));
-			sound->SetUnitReplyVolume(unitReplyVolume);
-			configHandler.Set("UnitReplyVolume",(int)(unitReplyVolume * 100.0f));
+			sound->SetUnitReplyVolume(volume);
+			configHandler.Set("UnitReplyVolume",(int)(volume * 100.0f));
 		}
 	}
 	else if (cmd == "savegame"){
@@ -4459,8 +4446,9 @@ void CGame::Skip(int toFrame)
 	const int totalFrames = endFrame - startFrame;
 	const float seconds = (float)(totalFrames) / (float)GAME_SPEED;
 
-	int oldMaxSounds = sound->MaxSounds();
-	sound->MaxSounds(0);
+	bool soundmute = sound->IsMuted();
+	if (!soundmute)
+		sound->Mute(); // no sounds
 
 	skipping = true;
 	{
@@ -4512,7 +4500,8 @@ void CGame::Skip(int toFrame)
 		gs->userSpeedFactor = oldUserSpeed;
 	}
 
-	sound->MaxSounds(oldMaxSounds);
+	if (!soundmute)
+		sound->Mute(); // sounds back on
 
 	logOutput.Print("Skipped %.1f seconds\n", seconds);
 }

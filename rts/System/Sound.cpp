@@ -33,10 +33,11 @@ bool CheckError(const char* msg)
 
 CSound::CSound()
 {
-	globalVolume = 1.0f;
-	unitReplyVolume = 1.0f;
-
+	mute = false;
 	int maxSounds = configHandler.Get("MaxSounds", 16);
+	globalVolume = configHandler.Get("SoundVolume", 60) * 0.01f;
+	unitReplyVolume = configHandler.Get("UnitReplyVolume", 80 ) * 0.01f;
+
 	if (maxSounds <= 0)
 	{
 		logOutput.Print("MaxSounds set to 0, sound is disabled");
@@ -62,7 +63,8 @@ CSound::~CSound()
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
 {
 	GML_RECMUTEX_LOCK(sound);
-	oggStream.Play(path, pos * posScale, volume);
+	if (!mute)
+		oggStream.Play(path, pos * posScale, volume);
 }
 
 void CSound::StopStream()
@@ -95,24 +97,15 @@ void CSound::SetStreamVolume(float v)
 	oggStream.SetVolume(v);
 }
 
-int CSound::MaxSounds(int nmaxSounds)
+bool CSound::Mute()
 {
-	if (sources.size() == nmaxSounds)
-		return nmaxSounds;
+	mute = !mute;
+	return mute;
+}
 
-	if (nmaxSounds > 0)
-	{
-		if (!sources.empty())
-			DeinitAL();
-		InitAL(nmaxSounds);
-	}
-	else if (nmaxSounds == 0)
-	{
-		if (!sources.empty())
-			DeinitAL();
-	}
-
-	return sources.size();
+bool CSound::IsMuted() const
+{
+	return mute;
 }
 
 void CSound::SetVolume(float v)
@@ -172,7 +165,7 @@ void CSound::PlaySample(int id, const float3& p, const float3& velocity, float v
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	if (sources.empty())
+	if (sources.empty() || mute)
 		return;
 	assert(volume >= 0.0f);
 
