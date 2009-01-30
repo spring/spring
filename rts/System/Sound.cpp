@@ -37,11 +37,7 @@ CSound::CSound()
 	unitReplyVolume = 1.0f;
 
 	int maxSounds = configHandler.Get("MaxSounds", 16);
-	if (maxSounds < 0)
-	{
-		throw content_error("Internal error, (maxSounds < 0) in CSound");
-	}
-	else if (maxSounds == 0)
+	if (maxSounds <= 0)
 	{
 		logOutput.Print("MaxSounds set to 0, sound is disabled");
 	}
@@ -280,6 +276,7 @@ struct WAVHeader
 void CSound::InitAL(int maxSounds)
 {
 	ALCdevice *device = alcOpenDevice(NULL);
+	logOutput.Print("OpenAL: using device: %s\n", (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER));
 	if (device == NULL)
 	{
 		logOutput.Print("Could not open a sounddevice, disabling sounds");
@@ -297,7 +294,9 @@ void CSound::InitAL(int maxSounds)
 		else
 		{
 			alcCloseDevice(device);
-			throw content_error("Could not create OpenAL audio context");
+			logOutput.Print("Could not create OpenAL audio context");
+			sources.resize(0);
+			return;
 		}
 	}
 
@@ -467,6 +466,7 @@ ALuint CSound::GetWaveId(const std::string& path, bool _hardFail)
 	soundMap[path] = buffer;
 	return buffer;
 }
+
 void CSound::NewFrame()
 {
 	GML_RECMUTEX_LOCK(sound); // NewFrame
