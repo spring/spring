@@ -102,10 +102,6 @@ public:
 	bool drawWater;
 	bool drawGround;
 
-	bool soundEnabled;
-	float gameSoundVolume;
-	float unitReplyVolume;
-
 	bool moveWarnings;
 
 	unsigned char gameID[16];
