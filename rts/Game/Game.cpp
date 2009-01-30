@@ -2516,6 +2516,10 @@ bool CGame::DrawWorld()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
+	for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+		(*usi)->UpdateDrawPos();
+	}
+
 	if (drawSky) {
 		sky->Draw();
 	}
@@ -2642,11 +2646,15 @@ bool CGame::DrawWorld()
 #if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
 	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
-#else
-bool CGame::DrawMT() {
-#endif
 	return true;
 }
+#else
+bool CGame::DrawMT() {
+	return true;
+}
+#endif
+
+
 #if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::DrawMT() {
 #else
