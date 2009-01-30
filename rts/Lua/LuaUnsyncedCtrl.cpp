@@ -1011,7 +1011,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 				}
 			}
 			else if (lua_isnumber(L, -1)) {
-				const unsigned int value = (unsigned int)lua_tonumber(L, -1);
+				const float value = lua_tonumber(L, -1);
 				if (key == "damage") {
 					w.damage = value;
 				} else if (key == "repeatX") {
