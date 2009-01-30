@@ -442,7 +442,7 @@ void CUnit::SetRight(const SyncedFloat3& newDir)
 }
 
 
-inline void CUnit::UpdateMidPos()
+void CUnit::UpdateMidPos()
 {
 	midPos = pos + (frontdir * relMidPos.z) + (updir * relMidPos.y)
 		+ (rightdir * relMidPos.x);
@@ -1119,7 +1119,7 @@ void CUnit::Kill(float3& impulse) {
 }
 
 
-inline void CUnit::UpdateDrawPos() {
+void CUnit::UpdateDrawPos() {
 	CTransportUnit *trans=GetTransporter();
 #if defined(USE_GML) && GML_ENABLE_SIM
 	if (trans) {
