@@ -47,7 +47,7 @@
 #include "mmgr.h"
 
 #ifdef WIN32
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(_MSC_VER)
 	#include "Platform/Win/CrashHandler.h"
 #endif
 	#include "Platform/Win/win32.h"
