@@ -295,7 +295,6 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 
 
 inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit) {
-	unit->UpdateDrawPos();
 #ifdef DIRECT_CONTROL_ALLOWED
 	if (unit == excludeUnit) {
 		return;
