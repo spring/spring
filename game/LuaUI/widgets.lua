@@ -27,8 +27,7 @@ include("savetable.lua")
 
 local gl = gl
 
-local ORDER_FILENAME     = LUAUI_DIRNAME .. 'Config/widget_order.lua'
-local CONFIG_FILENAME    = LUAUI_DIRNAME .. 'Config/widget_data.lua'
+local CONFIG_FILENAME    = LUAUI_DIRNAME .. 'Config/' .. Game.modShortName .. '.lua'
 local WIDGET_DIRNAME     = LUAUI_DIRNAME .. 'Widgets/'
 
 local SELECTOR_BASENAME = 'selector.lua'
@@ -225,33 +224,6 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
-function widgetHandler:LoadOrderList()
-  local chunk, err = loadfile(ORDER_FILENAME)
-  if (chunk == nil) then
-    return {}
-  else
-    local tmp = {}
-    setfenv(chunk, tmp)
-    self.orderList = chunk()
-    if (not self.orderList) then
-      self.orderList = {} -- safety
-    end
-  end
-end
-
-
-function widgetHandler:SaveOrderList()
-  -- update the current order
-  for i,w in ipairs(self.widgets) do
-    self.orderList[w.whInfo.name] = i
-  end
-  table.save(self.orderList, ORDER_FILENAME,
-             '-- Widget Order List  (0 disables a widget)')
-end
-
-
---------------------------------------------------------------------------------
-
 function widgetHandler:LoadConfigData()
   local chunk, err = loadfile(CONFIG_FILENAME)
   if (chunk == nil) then
@@ -259,7 +231,11 @@ function widgetHandler:LoadConfigData()
   else
     local tmp = {}
     setfenv(chunk, tmp)
-    self.configData = chunk()
+    self.orderList = chunk().order
+    self.configData = chunk().data
+    if (not self.orderList) then
+      self.orderList = {} -- safety
+    end
     if (not self.configData) then
       self.configData = {} -- safety
     end
@@ -268,19 +244,23 @@ end
 
 
 function widgetHandler:SaveConfigData()
-  self:LoadConfigData()
-  for _,w in ipairs(self.widgets) do
+--  self:LoadConfigData()
+  local filetable = {}
+  for i,w in ipairs(self.widgets) do
     if (w.GetConfigData) then
       self.configData[w.whInfo.name] = w:GetConfigData()
     end
+    self.orderList[w.whInfo.name] = i
   end
-  table.save(self.configData, CONFIG_FILENAME, '-- Widget Custom Data')
+  filetable.order = self.orderList
+  filetable.data = self.configData
+  table.save( filetable, CONFIG_FILENAME, '-- Widget Custom data and order, order = 0 disabled widget')
 end
 
 
 function widgetHandler:SendConfigData()
   self:LoadConfigData()
-  for _,w in ipairs(self.widgets) do
+  for i,w in ipairs(self.widgets) do
     local data = self.configData[w.whInfo.name]
     if (w.SetConfigData and data) then
       w:SetConfigData(data)
@@ -331,7 +311,6 @@ end
 
 
 function widgetHandler:Initialize()
-  self:LoadOrderList()
   self:LoadConfigData()
 
   local autoModWidgets = Spring.GetConfigInt('LuaAutoModWidgets', 1)
@@ -390,7 +369,6 @@ function widgetHandler:Initialize()
   end
 
   -- save the active widgets, and their ordering
-  self:SaveOrderList()
   self:SaveConfigData()
 end
 
@@ -844,7 +822,7 @@ function widgetHandler:EnableWidget(name)
     local w = self:LoadWidget(ki.filename)
     if (not w) then return false end
     self:InsertWidget(w)
-    self:SaveOrderList()
+    self:SaveConfigData()
   end
   return true
 end
@@ -862,7 +840,7 @@ function widgetHandler:DisableWidget(name)
     Spring.Echo('Removed:  '..ki.filename)
     self:RemoveWidget(w)     -- deactivate
     self.orderList[name] = 0 -- disable
-    self:SaveOrderList()
+    self:SaveConfigData()
   end
   return true
 end
@@ -881,7 +859,7 @@ function widgetHandler:ToggleWidget(name)
   else
     -- the widget is not active, but enabled; disable it
     self.orderList[name] = 0
-    self:SaveOrderList()
+    self:SaveConfigData()
   end
   return true
 end
