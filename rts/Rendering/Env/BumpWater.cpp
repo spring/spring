@@ -46,7 +46,7 @@ using std::max;
 
 static void PrintShaderLog(GLuint obj, const string& type)
 {
-	/** WAS COMPILATION SUCCESSFUL ? **/
+	/**  WAS COMPILATION SUCCESSFUL ?  **/
 	GLint compiled;
 	if(glIsShader(obj))
 		glGetShaderiv(obj,GL_COMPILE_STATUS,&compiled);
