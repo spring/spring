@@ -34,7 +34,7 @@ bool CheckError(const char* msg)
 CSound::CSound()
 {
 	mute = false;
-	int maxSounds = configHandler.Get("MaxSounds", 16);
+	int maxSounds = configHandler.Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
 	globalVolume = configHandler.Get("SoundVolume", 60) * 0.01f;
 	unitReplyVolume = configHandler.Get("UnitReplyVolume", 80 ) * 0.01f;
 
@@ -44,7 +44,44 @@ CSound::CSound()
 	}
 	else
 	{
-		InitAL(maxSounds);
+		ALCdevice *device = alcOpenDevice(NULL);
+		logOutput.Print("OpenAL: using device: %s\n", (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER));
+		if (device == NULL)
+		{
+			logOutput.Print("Could not open a sounddevice, disabling sounds");
+			CheckError("CSound::InitAL");
+			return;
+		} else
+		{
+			ALCcontext *context = alcCreateContext(device, NULL);
+			if (context != NULL)
+			{
+				alcMakeContextCurrent(context);
+				alGetError(); // clear error code
+			}
+			else
+			{
+				alcCloseDevice(device);
+				logOutput.Print("Could not create OpenAL audio context");
+				return;
+			}
+		}
+
+		logOutput.Print("OpenAL: %s\n", (const char*)alGetString(AL_VERSION));
+		logOutput.Print("OpenAL: %s",   (const char*)alGetString(AL_EXTENSIONS));
+
+		// Generate sound sources
+		sources.resize(maxSounds);
+		alGenSources(maxSounds, &sources[0]);
+
+		for (sourceVec::const_iterator it = sources.begin(); it != sources.end(); ++it)
+		{
+			alSourcef(*it, AL_PITCH, 1.0f);
+		}
+
+		// Set distance model (sound attenuation)
+		alDistanceModel (AL_INVERSE_DISTANCE);
+		alDopplerFactor(0.1);
 	}
 
 	cur = 0;
@@ -57,7 +94,18 @@ CSound::CSound()
 CSound::~CSound()
 {
 	if (!sources.empty())
-		DeinitAL();
+	{
+		alDeleteSources(sources.size(), &sources[0]);
+		std::map<std::string, ALuint>::iterator it;
+		for (it = soundMap.begin(); it != soundMap.end(); ++it) {
+			alDeleteBuffers(1, &it->second);
+		}
+		ALCcontext *curcontext = alcGetCurrentContext();
+		ALCdevice *curdevice = alcGetContextsDevice(curcontext);
+		alcMakeContextCurrent(NULL);
+		alcDestroyContext(curcontext);
+		alcCloseDevice(curdevice);
+	}
 }
 
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
@@ -157,10 +205,7 @@ void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
 		
 		repliesPlayed.insert(id);
 	}
-	
-	/* Play the sound at 'full volume'. 
-	   TODO Lower the volume if it's off-screen.
-	   TODO Give it a location if it's off-screen, but don't lower the volume too much. */
+
 	PlaySample(id, volume * unitReplyVolume);
 }
 
@@ -170,30 +215,22 @@ void CSound::PlaySample(int id, const float3& p, const float3& velocity, float v
 
 	if (sources.empty() || mute)
 		return;
-	assert(volume >= 0.0f);
 
 	if (volume == 0.0f || globalVolume == 0.0f || id == 0) return;
 
-	ALuint source;
-	alGenSources(1, &source);
-
-	/* it seems OpenAL running on Windows is giving problems when too many sources are allocated at a time,
-	in which case it still generates errors. */
-	if (alGetError() != AL_NO_ERROR)
-		return;
-
-	if (sources[cur]) {
-		/* The Linux port of OpenAL generates an "Illegal call" error if we
-		delete a playing source, so we must stop it first. -- tvo */
-		alSourceStop(sources[cur]);
-		alDeleteSources(1, &sources[cur]);
-	}
-	sources[cur++] = source;
+	ALuint source = sources[cur++];
 	if (cur == sources.size())
 		cur = 0;
+	ALint state;
+	alGetSourcei(source, AL_SOURCE_STATE, &state);
+
+	if (state == AL_PLAYING)
+	{
+		//TODO search for free sources, add some prioritizing
+		alSourceStop(source);
+	}
 
 	alSourcei(source, AL_BUFFER, id);
-	alSourcef(source, AL_PITCH, 1.0f);
 	alSourcef(source, AL_GAIN, volume);
 
 	float3 pos = p * posScale;
@@ -205,8 +242,6 @@ void CSound::PlaySample(int id, const float3& p, const float3& velocity, float v
 	CheckError("CSound::PlaySample");
 }
 
-
-
 void CSound::Update()
 {
 	GML_RECMUTEX_LOCK(sound); // Update
@@ -214,17 +249,6 @@ void CSound::Update()
 	oggStream.Update();
 	if (sources.empty())
 		return;
-	for (int a = 0; a < sources.size(); a++) {
-		if (sources[a]) {
-			ALint state;
-			alGetSourcei(sources[a], AL_SOURCE_STATE, &state);
-
-			if (state == AL_STOPPED) {
-				alDeleteSources(1, &sources[a]);
-				sources[a] = 0;
-			}
-		}
-	}
 
 	CheckError("CSound::Update");
 	UpdateListener();
@@ -268,61 +292,6 @@ struct WAVHeader
 	Sint32 datalen;        // Raw data length 4 bytes
 };
 #pragma pack(pop)
-
-void CSound::InitAL(int maxSounds)
-{
-	ALCdevice *device = alcOpenDevice(NULL);
-	logOutput.Print("OpenAL: using device: %s\n", (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER));
-	if (device == NULL)
-	{
-		logOutput.Print("Could not open a sounddevice, disabling sounds");
-		CheckError("CSound::InitAL");
-		sources.resize(0);
-		return;
-	} else
-	{
-		ALCcontext *context = alcCreateContext(device, NULL);
-		if (context != NULL)
-		{
-			alcMakeContextCurrent(context);
-			alGetError(); // clear error code
-		}
-		else
-		{
-			alcCloseDevice(device);
-			logOutput.Print("Could not create OpenAL audio context");
-			sources.resize(0);
-			return;
-		}
-	}
-
-	logOutput.Print("OpenAL: %s\n", (const char*)alGetString(AL_VERSION));
-	logOutput.Print("OpenAL: %s",   (const char*)alGetString(AL_EXTENSIONS));
-
-	// Generate sound sources
-	sources.resize(maxSounds, 0);
-	
-	// Set distance model (sound attenuation)
-	alDistanceModel (AL_INVERSE_DISTANCE);
-	alDopplerFactor(0.1);
-}
-
-void CSound::DeinitAL()
-{
-	for (int i = 0; i < sources.size(); i++) {
-		alSourceStop(sources[i]);
-		alDeleteSources(1,&sources[i]);
-	}
-	std::map<std::string, ALuint>::iterator it;
-	for (it = soundMap.begin(); it != soundMap.end(); ++it) {
-		alDeleteBuffers(1, &it->second);
-	}
-	ALCcontext *curcontext = alcGetCurrentContext();
-	ALCdevice *curdevice = alcGetContextsDevice(curcontext);
-	alcMakeContextCurrent(NULL);
-	alcDestroyContext(curcontext);
-	alcCloseDevice(curdevice);
-}
 
 bool CSound::ReadWAV(const char* name, Uint8* buf, int size, ALuint albuffer)
 {

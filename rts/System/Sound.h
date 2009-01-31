@@ -46,22 +46,20 @@ public:
 	void SetUnitReplyVolume(float vol); // also affected by global volume (SetVolume())
 
 private:
-	void InitAL(int maxSounds);
-	void DeinitAL();
-
 	bool ReadWAV(const char* name, Uint8* buf, int size, ALuint albuffer);
 	ALuint LoadALBuffer(const std::string& path);
 	void PlaySample(int id, const float3 &p, const float3& velocity, float volume, bool relative);
 
 	void UpdateListener();
 	
-	int cur;
+	size_t cur;
 	float globalVolume;
 	bool hardFail;
 	
 	std::map<std::string, ALuint> soundMap; // filename, index into Buffers
 	float3 posScale;
 	float3 prevPos;
+	typedef std::vector<ALuint> sourceVec;
 	std::vector<ALuint> sources;
 	std::set<unsigned int> repliesPlayed;
 	float unitReplyVolume;
