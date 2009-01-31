@@ -34,7 +34,6 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	TdfParser::TdfSection* game = setup.construct_subsection("GAME");
 	game->add_name_value("Mapname", map);
 	game->add_name_value("Gametype", mod);
-	game->add_name_value("Scriptname", script);
 
 	TdfParser::TdfSection* modopts = game->construct_subsection("MODOPTIONS");
 	modopts->AddPair("GameMode", gameMode);
