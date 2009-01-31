@@ -63,8 +63,7 @@ CSound::~CSound()
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
 {
 	GML_RECMUTEX_LOCK(sound);
-	if (!mute)
-		oggStream.Play(path, pos * posScale, volume);
+	oggStream.Play(path, pos * posScale, volume);
 }
 
 void CSound::StopStream()
@@ -100,6 +99,10 @@ void CSound::SetStreamVolume(float v)
 bool CSound::Mute()
 {
 	mute = !mute;
+	if (mute)
+		alListenerf(AL_GAIN, 0.0);
+	else
+		alListenerf(AL_GAIN, globalVolume);
 	return mute;
 }
 
