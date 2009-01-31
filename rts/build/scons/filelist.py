@@ -52,8 +52,8 @@ def list_files_recursive(env, path, exclude_list = (), exclude_regexp = '^\.', e
 				wf = rf
 			else:
 				wf = af
-			if os.path.exists(af) and not f in exclude_list and not exclude.search(f) and include.search(f):
-				if not os.path.isdir(af) or not exclude_dirs:
+			if os.path.exists(af) and not f in exclude_list and not exclude.search(f):
+				if not (os.path.isdir(af) and exclude_dirs) and include.search(f):
 					ffiles += [wf]
 				if os.path.isdir(af):
 					rel_path_stack += [rf]
@@ -127,28 +127,23 @@ def get_spring_source(env):
 ### AI
 ################################################################################
 
-# lists source files for each individual AI Interface, Skirmish and Group AI
-def get_AI_source(env, path, which):
-	result = get_source(env, os.path.join(path, which))
-	return result
-
-# lists source files for each individual AI Interface
-def get_AIInterface_source(env, which):
-	result = get_AI_source(env, 'Interfaces', which)
-	return result
-
-# lists source files for each individual Skirmish AI
-def get_skirmishAI_source(env, which):
-	result = get_AI_source(env, 'Skirmish', which)
-	return result
-
-# lists source files for each individual Group AI
-def get_groupAI_source(env, which):
-	result = get_AI_source(env, 'Group', which)
-	return result
+## lists source files for each individual AI Interface and Skirmish AI
+#def get_AI_source(env, path, which):
+#	result = get_source(env, os.path.join(path, which))
+#	return result
+#
+## lists source files for each individual AI Interface
+#def get_AIInterface_source(env, which):
+#	result = get_AI_source(env, 'Interfaces', which)
+#	return result
+#
+## lists source files for each individual Skirmish AI
+#def get_skirmishAI_source(env, which):
+#	result = get_AI_source(env, 'Skirmish', which)
+#	return result
 
 
-# lists source files common for all AI Interfaces, Skirmish and Group AIs
+# lists source files common for all AI Interfaces and Skirmish AIs
 def get_shared_AI_source(env):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
@@ -181,52 +176,27 @@ def get_shared_skirmishAI_source_LegacyCpp(env):
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += get_shared_Wrapper_source(env, 'LegacyCpp')
-		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AISCommands.cpp')]
-		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIAICallback.cpp')]
-		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIAICheats.cpp')]
-		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIGlobalAICallback.cpp')]
-		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AIGlobalAI.cpp')]
-		#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AI.cpp')]
+		result += get_shared_Wrapper_source(env, 'LegacyCpp', prefix = 'AI')
 	return result
 # list C and C++ course files of a Wrapper
-def get_shared_Wrapper_source(env, wrapperDir):
+def get_shared_Wrapper_source(env, wrapperDir, prefix = ''):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
 		fullWrapperDir = os.path.join('Wrappers', wrapperDir)
 		files = list_files_recursive(env, fullWrapperDir, exclude_dirs = True, path_relative = True, include_regexp="\.(c|cpp)$")
 		for f in files:
-			result += [os.path.join(env['builddir'], fullWrapperDir, f)]
+			result += [os.path.join(env['builddir'], prefix, fullWrapperDir, f)]
 			#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AI.cpp')]
 	return result
 # list Creg source files (used by some Skirmish AI libraries)
 def get_shared_skirmishAI_source_Creg(env):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
-		result += get_source(env, '../rts/System/creg')
-	return result
-
-# lists source files common for all Group AIs
-def get_shared_groupAI_source(env):
-	result = get_shared_AI_source(env)
-	return result
-# list LegacyCpp source files (used by some Group AI libraries)
-def get_shared_groupAI_source_LegacyCpp(env):
-	result = []
-	if env.has_key('builddir') and env['builddir']:
-		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
-		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AISCommands.cpp')]
-	return result
-# list Creg source files (used by some Group AI libraries)
-def get_shared_groupAI_source_Creg(env):
-	result = []
-	if env.has_key('builddir') and env['builddir']:
-		result += get_source(env, '../rts/System/creg')
+		result += get_source(env, '../rts/System/creg', ignore_builddir=True)
 	return result
 
 
-# lists source directories for AI Interfaces, Skirmish or Group AIs
+# lists source directories for AI Interfaces or Skirmish AIs
 def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):
 	exclude = re.compile(exclude_regexp)
 	files = os.listdir(path)
@@ -246,8 +216,3 @@ def list_AIInterfaces(env, exclude_list = (), exclude_regexp = '^\.'):
 def list_skirmishAIs(env, exclude_list = (), exclude_regexp = '^\.'):
 	return list_AIs(env, 'Skirmish', exclude_list, exclude_regexp)
 
-# lists source directories for Group AIs
-def list_groupAIs(env, exclude_list = (), exclude_regexp = '^\.'):
-	return list_AIs(env, 'Group', exclude_list, exclude_regexp)
-def list_groupAIs(env, exclude_list = (), exclude_regexp = '^\.'):
-	return list_AIs(env, 'Group', exclude_list, exclude_regexp)
