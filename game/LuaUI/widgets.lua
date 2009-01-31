@@ -1040,7 +1040,6 @@ end
 --
 
 function widgetHandler:Shutdown()
-  self:SaveOrderList()
   self:SaveConfigData()
   for _,w in ipairs(self.ShutdownList) do
     w:Shutdown()
