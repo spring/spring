@@ -1627,7 +1627,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		logOutput.Print("activePage      = %i\n", activePage);
 		logOutput.Print("iconsSize       = %i\n", iconsSize);
 		logOutput.Print("iconsCount      = %i\n", iconsCount);
-		logOutput.Print("commands.size() = %zu\n", commands.size());
+		logOutput.Print("commands.size() = %lu\n", commands.size());
 		return true;
 	}
 	else if (action.command == "luaui") {
@@ -3208,11 +3208,11 @@ void CGuiHandler::DrawSelectionInfo()
 		char buf[64];
 
 		if(selectedUnits.selectedGroup!=-1){
-			SNPRINTF(buf, 64, "Selected units %zu  [Group %i]",
+			SNPRINTF(buf, 64, "Selected units %lu  [Group %i]",
 			         selectedUnits.selectedUnits.size(),
 			         selectedUnits.selectedGroup);
 		} else {
-			SNPRINTF(buf, 64, "Selected units %zu",
+			SNPRINTF(buf, 64, "Selected units %lu",
 			         selectedUnits.selectedUnits.size());
 		}
 
