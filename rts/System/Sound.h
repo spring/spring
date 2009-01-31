@@ -39,6 +39,8 @@ public:
 	unsigned int GetStreamPlayTime();
 	void SetStreamVolume(float);
 
+	void PitchAdjust(const float newPitch);
+
 	bool Mute();
 	bool IsMuted() const;
 
