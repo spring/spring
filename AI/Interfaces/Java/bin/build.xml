@@ -155,7 +155,8 @@
 	</target>
 
 	<target name="clean">
-		<!--<delete dir="${build.dir}"/>-->
+		<delete dir="${src.generated}"/>
+		<delete dir="${build.dir}"/>
 	</target>
 
 </project>
