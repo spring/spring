@@ -28,43 +28,44 @@ S3DModel* CS3OParser::Load(std::string name)
 	if (!file.FileExists()) {
 		throw content_error("File not found: "+name);
 	}
-	unsigned char* fileBuf=new unsigned char[file.FileSize()];
+
+	unsigned char* fileBuf = new unsigned char[file.FileSize()];
 	file.Read(fileBuf, file.FileSize());
 	S3OHeader header;
 	memcpy(&header,fileBuf,sizeof(header));
 	header.swap();
 
 	S3DModel *model = new S3DModel;
-	model->type=MODELTYPE_S3O;
-	model->numobjects=0;
-	model->name=name;
-	model->tex1=(char*)&fileBuf[header.texture1];
-	model->tex2=(char*)&fileBuf[header.texture2];
+	model->type = MODELTYPE_S3O;
+	model->numobjects = 0;
+	model->name = name;
+	model->tex1 = (char*) &fileBuf[header.texture1];
+	model->tex2 = (char*) &fileBuf[header.texture2];
 	texturehandlerS3O->LoadS3OTexture(model);
-	SS3OPiece* object = LoadPiece(fileBuf, header.rootPiece, model);
-	object->type=MODELTYPE_S3O;
 
-	FindMinMax(object);
+	SS3OPiece* rootPiece = LoadPiece(fileBuf, header.rootPiece, model);
+	rootPiece->type = MODELTYPE_S3O;
 
-	model->rootobject=object;
+	FindMinMax(rootPiece);
+
+	model->rootobject = rootPiece;
 	model->radius = header.radius;
 	model->height = header.height;
-	model->relMidPos.x=header.midx;
-	model->relMidPos.y=header.midy;
-	model->relMidPos.z=header.midz;
-	if(model->relMidPos.y<1)
-		model->relMidPos.y=1;
+	model->relMidPos.x = header.midx;
+	model->relMidPos.y = header.midy;
+	model->relMidPos.z = header.midz;
 
-	model->maxx=object->maxx;
-	model->maxy=object->maxy;
-	model->maxz=object->maxz;
+	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f);
 
-	model->minx=object->minx;
-	model->miny=object->miny;
-	model->minz=object->minz;
+	model->maxx = rootPiece->maxx;
+	model->maxy = rootPiece->maxy;
+	model->maxz = rootPiece->maxz;
+
+	model->minx = rootPiece->minx;
+	model->miny = rootPiece->miny;
+	model->minz = rootPiece->minz;
 
 	delete[] fileBuf;
-
 	return model;
 }
 
@@ -353,6 +354,6 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		// basis
 		s = (s - (n * s.dot(n))).ANormalize();
 		h = ((s.cross(t)).dot(n) >= 0.0f)? 1: -1;
-		t = (n.cross(s)).ANormalize() * h;
+		t = (s.cross(n)).ANormalize() * h;
 	}
 }
