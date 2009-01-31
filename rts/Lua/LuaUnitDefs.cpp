@@ -860,6 +860,7 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL( "isFirePlatform",        ud.isFirePlatform);
 	ADD_BOOL( "holdSteady",            ud.holdSteady);
 	ADD_BOOL( "releaseHeld",           ud.releaseHeld);
+	ADD_BOOL( "cantBeTransported",     ud.cantBeTransported);
 	ADD_BOOL( "transportByEnemy",      ud.transportByEnemy);
 	ADD_INT(  "transportUnloadMethod", ud.transportUnloadMethod);
 	ADD_FLOAT("fallSpeed",			       ud.fallSpeed);
