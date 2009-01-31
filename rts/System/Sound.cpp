@@ -73,11 +73,7 @@ CSound::CSound()
 		// Generate sound sources
 		sources.resize(maxSounds);
 		alGenSources(maxSounds, &sources[0]);
-
-		for (sourceVec::const_iterator it = sources.begin(); it != sources.end(); ++it)
-		{
-			alSourcef(*it, AL_PITCH, 1.0f);
-		}
+		PitchAdjust(1.0);
 
 		// Set distance model (sound attenuation)
 		alDistanceModel (AL_INVERSE_DISTANCE);
@@ -142,6 +138,14 @@ void CSound::SetStreamVolume(float v)
 {
 	GML_RECMUTEX_LOCK(sound); // SetStreamVolume
 	oggStream.SetVolume(v);
+}
+
+void CSound::PitchAdjust(const float newPitch)
+{
+	for (sourceVec::const_iterator it = sources.begin(); it != sources.end(); ++it)
+	{
+		alSourcef(*it, AL_PITCH, newPitch);
+	}
 }
 
 bool CSound::Mute()
