@@ -120,12 +120,13 @@ void CGameSetup::LoadStartPositions()
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
+		size_t numTeams = teamStartingData.size();
 		rng.Seed(gameSetupText.length()^ SDL_GetTicks());
-		int teamStartNum[MAX_TEAMS];
-		for (int i = 0; i < MAX_TEAMS; ++i)
+		std::vector<int> teamStartNum(numTeams);
+		for (size_t i = 0; i < numTeams; ++i)
 			teamStartNum[i] = i;
-		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
-		for (unsigned i = 0; i < teamStartingData.size(); ++i)
+		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
+		for (size_t i = 0; i < numTeams; ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
 	}
 	else
