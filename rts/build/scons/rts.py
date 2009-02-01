@@ -132,7 +132,7 @@ def generate(env):
 		('disable_avi',       'Set to no to turn on avi support', 'False on windows, True otherwise'),
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
-		('use_nedmalloc',     'Use nedmalloc for memory allocation', True),
+		('use_nedmalloc',     'Use nedmalloc for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
 		('use_gch',           'Use gcc precompiled header', True),
 		('dc_allowed',        'Specifies whether FPS mode (Direct Control) is allowed in game', True),
@@ -416,10 +416,7 @@ def generate(env):
 
 		# nedmalloc crashes horribly when crosscompiled
 		# on mingw gcc 4.2.1
-		nedmalloc_default = True
-		if env['platform'] == 'windows' and os.name != 'nt' \
-				and gcc_version < [4, 3, 2]:
-			nedmalloc_default = False
+		nedmalloc_default = False
 
 		bool_opt('gml', False)
 		bool_opt('gmlsim', False)
