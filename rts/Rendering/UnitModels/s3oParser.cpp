@@ -253,9 +253,6 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 	p->sTangents.resize(p->vertexCount, ZeroVector);
 	p->tTangents.resize(p->vertexCount, ZeroVector);
 
-	std::vector<SS3OTriangle> triangles;
-	std::vector<std::vector<unsigned int> > verts2tris(p->vertexCount);
-
 	unsigned stride = 0;
 
 	switch (p->primitiveType) {
@@ -292,68 +289,61 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 			vrtNr += 3; continue;
 		}
 
-		const SS3OVertex* v0 = &p->vertices[v0idx];
-		const SS3OVertex* v1 = &p->vertices[v1idx];
-		const SS3OVertex* v2 = &p->vertices[v2idx];
+		const SS3OVertex* vrt0 = &p->vertices[v0idx];
+		const SS3OVertex* vrt1 = &p->vertices[v1idx];
+		const SS3OVertex* vrt2 = &p->vertices[v2idx];
 
-		const float3 v1v0 = v1->pos - v0->pos;
-		const float3 v2v0 = v2->pos - v0->pos;
+		const float3& p0 = vrt0->pos;
+		const float3& p1 = vrt1->pos;
+		const float3& p2 = vrt2->pos;
 
-		const float sd1 = v1->textureX - v0->textureX; // u1u0
-		const float sd2 = v2->textureX - v0->textureX; // u2u0
-		const float td1 = v1->textureY - v0->textureY; // v1v0
-		const float td2 = v2->textureY - v0->textureY; // v2v0
+		const float2 tc0(vrt0->textureX, vrt0->textureY);
+		const float2 tc1(vrt1->textureX, vrt1->textureY);
+		const float2 tc2(vrt2->textureX, vrt2->textureY);
+
+		const float x1x0 = p1.x - p0.x, x2x0 = p2.x - p0.x;
+		const float y1y0 = p1.y - p0.y, y2y0 = p2.y - p0.y;
+		const float z1z0 = p1.z - p0.z, z2z0 = p2.z - p0.z;
+
+		const float s1 = tc1.x - tc0.x, s2 = tc2.x - tc0.x;
+		const float t1 = tc1.y - tc0.y, t2 = tc2.y - tc0.y;
 
 		// if d is 0, texcoors are degenerate
-		const float d = (sd1 * td2) - (sd2 * td1);
-		const bool b = (d > -0.001f && d < 0.001f);
+		const float d = (s1 * t2 - s2 * t1);
+		const bool  b = (d > -0.0001f && d < 0.0001f);
 		const float r = b? 1.0f: 1.0f / d;
 
 		// note: not necessarily orthogonal to each other
 		// or to vertex normal (only to the triangle plane)
-		const float3 sDir = (v1v0 * -td2 + v2v0 * td1) * r;
-		const float3 tDir = (v1v0 * -sd2 + v2v0 * sd1) * r;
+		const float3 sdir((t2 * x1x0 - t1 * x2x0) * r, (t2 * y1y0 - t1 * y2y0) * r, (t2 * z1z0 - t1 * z2z0) * r);
+		const float3 tdir((s1 * x2x0 - s2 * x1x0) * r, (s1 * y2y0 - s2 * y1y0) * r, (s1 * z2z0 - s2 * z1z0) * r);
 
-		SS3OTriangle tri;
-			tri.v0idx = v0idx;
-			tri.v1idx = v1idx;
-			tri.v2idx = v2idx;
-			tri.sTangent = sDir;
-			tri.tTangent = tDir;
-		triangles.push_back(tri);
+		p->sTangents[v0idx] += sdir;
+		p->sTangents[v1idx] += sdir;
+		p->sTangents[v2idx] += sdir;
 
-		// save the triangle index
-		verts2tris[v0idx].push_back(triangles.size() - 1);
-		verts2tris[v1idx].push_back(triangles.size() - 1);
-		verts2tris[v2idx].push_back(triangles.size() - 1);
+		p->tTangents[v0idx] += tdir;
+		p->tTangents[v1idx] += tdir;
+		p->tTangents[v2idx] += tdir;
 	}
 
-	// set the per-vertex tangents (for each vertex, this
-	// is the average of the tangents of all the triangles
-	// used by it)
-	for (unsigned vrtNr = 0; vrtNr < p->vertexCount; vrtNr++) {
-		for (unsigned triNr = 0; triNr < verts2tris[vrtNr].size(); triNr++) {
-			const unsigned triIdx = verts2tris[vrtNr][triNr];
-			const SS3OTriangle& tri = triangles[triIdx];
-
-			p->sTangents[vrtNr] += tri.sTangent;
-			p->tTangents[vrtNr] += tri.tTangent;
-		}
-
-		float3& s = p->sTangents[vrtNr]; // T
-		float3& t = p->tTangents[vrtNr]; // B
-		float3& n = p->vertices[vrtNr].normal;
-		int h = 1; // handedness
+	// set the smoothed per-vertex tangents
+	for (unsigned vrtIdx = 0; vrtIdx < p->vertices.size(); vrtIdx++) {
+		float3& n = p->vertices[vrtIdx].normal;
+		float3& s = p->sTangents[vrtIdx];
+		float3& t = p->tTangents[vrtIdx];
+		int h = 1;
 
 		if (isnan(n.x) || isnan(n.y) || isnan(n.z)) {
 			n = float3(0.0f, 1.0f, 0.0f);
 		}
 
-		// apply Gram-Schmidt since the smoothed
-		// tangents likely do not form orthogonal
-		// basis
-		s = (s - (n * s.dot(n))).ANormalize();
-		h = ((s.cross(t)).dot(n) >= 0.0f)? 1: -1;
-		t = (s.cross(n)).ANormalize() * h;
+		h = ((n.cross(s)).dot(t) < 0.0f)? -1: 1;
+		s = (s - n * n.dot(s)).ANormalize();
+		t = (s.cross(n)) * h;
+
+		// t = (s.cross(n));
+		// h = ((s.cross(t)).dot(n) >= 0.0f)? 1: -1;
+		// t = t * h;
 	}
 }
