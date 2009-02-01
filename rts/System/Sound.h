@@ -28,6 +28,7 @@ public:
 	void PlaySample(int id, const float3& p, float volume = 1.0f);
 	void PlaySample(int id, const float3& p, const float3& velocity, float volume = 1.0f);
 
+	void PlaySample(int id, CUnit* u, float volume = 1.0f);
 	void PlaySample(int id, CWorldObject* p, float volume = 1.0f);
 	void PlayUnitReply(int id, CUnit* p, float volume = 1.0f, bool squashDupes = false);
 	void PlayUnitActivate(int id, CUnit* p, float volume = 1.0f);

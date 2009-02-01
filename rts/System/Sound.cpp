@@ -183,7 +183,13 @@ void CSound::PlaySample(int id, const float3& p, const float3& velocity, float v
 {
 	PlaySample(id, p, velocity, volume, false);
 }
-void CSound::PlaySample(int id,CWorldObject* p,float volume)
+
+void CSound::PlaySample(int id, CUnit* u,float volume)
+{
+	PlaySample(id, u->pos, u->speed, volume);
+}
+
+void CSound::PlaySample(int id, CWorldObject* p,float volume)
 {
 	PlaySample(id,p->pos,volume);
 }
