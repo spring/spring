@@ -10,7 +10,7 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
 ### Spring defines
-SET(USE_NEDMALLOC TRUE CACHE BOOL "Use nedmalloc memory allocator")
+SET(USE_NEDMALLOC FALSE CACHE BOOL "Use nedmalloc memory allocator")
 if (USE_NEDMALLOC)
 	ADD_DEFINITIONS(-DREPLACE_SYSTEM_ALLOCATOR)
 	SET (nedmalloc_obj "../tools/nedmalloc/nedmalloc.c")
