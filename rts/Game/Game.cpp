@@ -2818,7 +2818,7 @@ bool CGame::Draw() {
 		SCOPED_TIMER("Interface draw");
 		if (hideInterface) {
 			guihandler->Update();
-			luaInputReceiver->Draw();
+			//luaInputReceiver->Draw();
 		}
 		else {
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
@@ -2859,7 +2859,7 @@ bool CGame::Draw() {
 		font->glPrintCentered(0.5f, 0.4f, 3.0f, "(or Escape)");
 	}
 
-	if (showClock) {
+	if (showClock && !hideInterface) {
 		char buf[32];
 		const int seconds = (gs->frameNum / 30);
 		if (seconds < 3600) {
@@ -2880,7 +2880,7 @@ bool CGame::Draw() {
 		}
 	}
 
-	if (showFPS) {
+	if (showFPS && !hideInterface) {
 		char buf[32];
 		SNPRINTF(buf, sizeof(buf), "%i", fps);
 
