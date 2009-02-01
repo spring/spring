@@ -57,7 +57,7 @@ CSound::CSound()
 			if (context != NULL)
 			{
 				alcMakeContextCurrent(context);
-				alGetError(); // clear error code
+				CheckError("CSound::CreateContext");
 			}
 			else
 			{
@@ -217,21 +217,39 @@ void CSound::PlaySample(int id, const float3& p, const float3& velocity, float v
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	if (sources.empty() || mute)
+	if (sources.empty() || mute || volume == 0.0f || globalVolume == 0.0f || id == 0)
 		return;
 
-	if (volume == 0.0f || globalVolume == 0.0f || id == 0) return;
-
-	ALuint source = sources[cur++];
-	if (cur == sources.size())
-		cur = 0;
+	ALuint source=0;
 	ALint state;
-	alGetSourcei(source, AL_SOURCE_STATE, &state);
+	alGetSourcei(sources[cur], AL_SOURCE_STATE, &state);
 
 	if (state == AL_PLAYING)
 	{
-		//TODO search for free sources, add some prioritizing
-		alSourceStop(source);
+		for (size_t pos = 0; pos != sources.size(); ++pos)
+		{
+			alGetSourcei(sources[pos], AL_SOURCE_STATE, &state);
+			if (state != AL_PLAYING)
+			{
+				source = sources[pos];
+				cur = pos;
+				break;
+			}
+		}
+
+		if (source == 0)
+		{
+			source = sources[cur++];
+			alSourceStop(source);
+			if (cur == sources.size())
+				cur = 0;
+		}
+	}
+	else
+	{
+		source = sources[cur++];
+		if (cur == sources.size())
+			cur = 0;
 	}
 
 	alSourcei(source, AL_BUFFER, id);
