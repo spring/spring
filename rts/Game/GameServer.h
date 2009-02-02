@@ -65,6 +65,7 @@ public:
 	SFloat3 startpos;
 	bool readyToStart;
 	int allyTeam;
+	bool active;
 };
 
 /**
@@ -163,7 +164,7 @@ private:
 	bool cheating;
 
 	std::vector<GameParticipant> players;
-	boost::scoped_ptr<GameTeam> teams[MAX_TEAMS];
+	std::vector<GameTeam> teams;
 
 	float medianCpu;
 	int medianPing;
