@@ -1734,6 +1734,7 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 	// first make sure we don't go into any terrain we cant get out of
 	int newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
 	int newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
+	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 		float cmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
@@ -1742,26 +1743,26 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareX > moveSquareX) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
+					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
+					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
 				}
 			}
@@ -1769,13 +1770,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareY > moveSquareY) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod>0.01f && nmod <= 0.01f) {
-					owner->pos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
+					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
 				}
 			}
@@ -1783,16 +1784,24 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareX > moveSquareX) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
+					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
+		}
+		// do not teleport units. if the unit is too far away from old position,
+		// reset the pathfinder instead of teleporting it.
+		if (newpos.SqDistance2D(owner->pos) > 4*SQUARE_SIZE*SQUARE_SIZE) {
+			newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
+			newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
+		} else {
+			owner->pos = newpos;
 		}
 
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
