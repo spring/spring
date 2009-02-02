@@ -54,26 +54,28 @@ void CTransportUnit::Update()
 	CUnit::Update();
 	std::list<TransportedUnit>::iterator ti;
 
-	for (ti = transported.begin(); ti != transported.end(); ++ti) {
-		float3 relPos;
-		if (ti->piece >= 0) {
-			relPos = this->cob->GetPiecePos(ti->piece);
-		} else {
-			relPos = float3(0.0f, -1000.0f, 0.0f);
-		}
-		float3 upos = this->pos + (frontdir * relPos.z) +
-		                         (updir    * relPos.y) +
-		                         (rightdir * relPos.x);
+	if (!isDead) {
+		for (ti = transported.begin(); ti != transported.end(); ++ti) {
+			float3 relPos;
+			if (ti->piece >= 0) {
+				relPos = this->cob->GetPiecePos(ti->piece);
+			} else {
+				relPos = float3(0.0f, -1000.0f, 0.0f);
+			}
+			float3 upos = this->pos + (frontdir * relPos.z) +
+						 (updir    * relPos.y) +
+						 (rightdir * relPos.x);
 
-		ti->unit->pos = upos;
-		ti->unit->UpdateMidPos();
-		ti->unit->mapSquare = mapSquare;
+			ti->unit->pos = upos;
+			ti->unit->UpdateMidPos();
+			ti->unit->mapSquare = mapSquare;
 
-		if (unitDef->holdSteady) {
-			ti->unit->heading  = heading;
-			ti->unit->updir    = updir;
-			ti->unit->frontdir = frontdir;
-			ti->unit->rightdir = rightdir;
+			if (unitDef->holdSteady) {
+				ti->unit->heading  = heading;
+				ti->unit->updir    = updir;
+				ti->unit->frontdir = frontdir;
+				ti->unit->rightdir = rightdir;
+			}
 		}
 	}
 }
