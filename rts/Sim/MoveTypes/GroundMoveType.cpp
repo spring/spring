@@ -1559,7 +1559,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 				posDelta.z += streflop::fabs(owner->pos.x - xmove) * 0.5f;
 			}
 
-			if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
+			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
 				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
 			}
@@ -1644,7 +1644,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 				posDelta.x += streflop::fabs(owner->pos.z - zmove) * 0.5f;
 			}
 
-			if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
+			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
 				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
 			}
