@@ -877,7 +877,8 @@ void CGroundMoveType::CheckCollisionSkid(void)
 		if(sqDist<totRad*totRad && sqDist!=0){
 			float dist=sqrt(sqDist);
 			float3 dif=midPos-u->midPos;
-			dif/=dist;
+			// stop units from reaching escape velocity
+			dif/=std::max(dist, 1.f);
 			if(u->mass==100000 || !u->mobility){
 				float impactSpeed=-owner->speed.dot(dif);
 				if(impactSpeed > 0) {
@@ -947,7 +948,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 		if(sqDist<totRad*totRad && sqDist!=0){
 			float dist=sqrt(sqDist);
 			float3 dif=midPos-u->midPos;
-			dif/=dist;
+			dif/=std::max(dist, 1.f);
 			float impactSpeed=-owner->speed.dot(dif);
 			if(impactSpeed > 0){
 				midPos+=dif*(impactSpeed);
