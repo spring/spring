@@ -301,21 +301,27 @@ enum
     /** Generic C99 "macros" for unordered comparison
         Defined as inlined for each type, thanks to C++ overloading
     */
+#undef isunordered
     inline bool isunordered(Simple x, Simple y) {
         return (fpclassify(x) == STREFLOP_FP_NAN) || (fpclassify (y) == STREFLOP_FP_NAN);
     }
+#undef isgreater
     inline bool isgreater(Simple x, Simple y) {
         return (!isunordered(x,y)) && (x > y);
     }
+#undef isgreaterequal
     inline bool isgreaterequal(Simple x, Simple y) {
         return (!isunordered(x,y)) && (x >= y);
     }
+#undef isless
     inline bool isless(Simple x, Simple y) {
         return (!isunordered(x,y)) && (x < y);
     }
+#undef islessequal
     inline bool islessequal(Simple x, Simple y) {
         return (!isunordered(x,y)) && (x <= y);
     }
+#undef islessgreater
     inline bool islessgreater(Simple x, Simple y) {
         return (!isunordered(x,y)) && ((x < y) || (x > y));
     }
