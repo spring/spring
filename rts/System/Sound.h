@@ -4,13 +4,14 @@
 #include <set>
 #include <string>
 #include <map>
+#include <boost/ptr_container/ptr_vector.hpp>
 #include <AL/al.h>
 
-#include "float3.h" // for zerovector
+#include "float3.h"
 
 class CWorldObject;
 class CUnit;
-class float3;
+class SoundSource;
 
 // Sound system interface
 class CSound
@@ -62,8 +63,8 @@ private:
 	std::map<std::string, ALuint> soundMap; // filename, index into Buffers
 	float3 posScale;
 	float3 prevPos;
-	typedef std::vector<ALuint> sourceVec;
-	std::vector<ALuint> sources;
+	typedef boost::ptr_vector<SoundSource> sourceVec;
+	sourceVec sources;
 	std::set<unsigned int> repliesPlayed;
 	float unitReplyVolume;
 	bool mute;
