@@ -4,7 +4,6 @@
 #include "Map/Ground.h"
 #include "Sim/Projectiles/WeaponProjectiles/FlameProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
@@ -25,7 +24,7 @@ CFlameThrower::~CFlameThrower(void)
 {
 }
 
-void CFlameThrower::Fire(void)
+void CFlameThrower::FireImpl(void)
 {
 	float3 dir=targetPos-weaponMuzzlePos;
 	dir.Normalize();
@@ -34,9 +33,6 @@ void CFlameThrower::Fire(void)
 
 	new CFlameProjectile(weaponMuzzlePos, dir * projectileSpeed,
 		spread, owner, weaponDef, (int) (range / projectileSpeed * weaponDef->duration));
-
-	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
-		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 bool CFlameThrower::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)

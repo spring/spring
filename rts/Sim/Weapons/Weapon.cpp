@@ -24,6 +24,7 @@
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
 #include "Sync/SyncTracer.h"
+#include "Sound.h"
 #include "EventHandler.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
@@ -873,6 +874,18 @@ void CWeapon::Init(void)
 			owner->shieldWeapon = this;
 		}
 	}
+}
+
+void CWeapon::Fire()
+{
+#ifdef TRACE_SYNC
+	tracefile << weaponDef->name << " fire: ";
+	tracefile << owner->pos.x << " " << owner->dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
+	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
+#endif
+	FireImpl();
+	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
+		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 void CWeapon::ScriptReady(void)

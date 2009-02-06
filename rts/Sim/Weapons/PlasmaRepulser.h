@@ -38,6 +38,9 @@ public:
 	bool isEnabled;
 	bool wasDrawn;
 	bool startShowingShield;
+
+private:	
+	virtual void FireImpl() {};
 };
 
 #endif

@@ -4,7 +4,6 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/StarburstProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "StarburstLauncher.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
@@ -38,7 +37,7 @@ void CStarburstLauncher::Update(void)
 	CWeapon::Update();
 }
 
-void CStarburstLauncher::Fire(void)
+void CStarburstLauncher::FireImpl()
 {
 	float3 speed(0,weaponDef->startvelocity,0);
 	float maxrange;
@@ -59,9 +58,6 @@ void CStarburstLauncher::Fire(void)
 
 	if(weaponDef->targetable)
 		interceptHandler.AddInterceptTarget(p,targetPos);
-
-	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
 
 bool CStarburstLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)

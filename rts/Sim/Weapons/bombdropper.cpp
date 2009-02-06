@@ -14,7 +14,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/TorpedoProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "WeaponDefHandler.h"
 #include "myMath.h"
 #include "mmgr.h"
@@ -86,7 +85,7 @@ bool CBombDropper::TryTarget(const float3& pos,bool userTarget,CUnit* unit)
 	return true;
 }
 
-void CBombDropper::Fire(void)
+void CBombDropper::FireImpl(void)
 {
 	if(targetType==Target_Unit) {
 		targetPos=targetUnit->pos;		//aim at base of unit instead of middle and ignore uncertainity
@@ -130,9 +129,6 @@ void CBombDropper::Fire(void)
 				weaponDef, 1000, areaOfEffect,
 				weaponDef->myGravity==0 ? mapInfo->map.gravity : -(weaponDef->myGravity));
 	}
-
-	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
 
 void CBombDropper::Init(void)
