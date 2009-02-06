@@ -4,6 +4,7 @@
 
 #include <AL/alc.h>
 
+#include "SoundSource.h"
 #include "Sim/Units/Unit.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
@@ -72,8 +73,6 @@ CSound::CSound()
 
 		// Generate sound sources
 		sources.resize(maxSounds);
-		alGenSources(maxSounds, &sources[0]);
-		PitchAdjust(1.0);
 
 		// Set distance model (sound attenuation)
 		alDistanceModel (AL_INVERSE_DISTANCE);
@@ -91,7 +90,7 @@ CSound::~CSound()
 {
 	if (!sources.empty())
 	{
-		alDeleteSources(sources.size(), &sources[0]);
+		sources.resize(0); // delete all sources
 		std::map<std::string, ALuint>::iterator it;
 		for (it = soundMap.begin(); it != soundMap.end(); ++it) {
 			alDeleteBuffers(1, &it->second);
@@ -144,7 +143,7 @@ void CSound::PitchAdjust(const float newPitch)
 {
 	for (sourceVec::const_iterator it = sources.begin(); it != sources.end(); ++it)
 	{
-		alSourcef(*it, AL_PITCH, newPitch);
+		it->SetPitch(newPitch);
 	}
 }
 
@@ -226,47 +225,21 @@ void CSound::PlaySample(int id, const float3& p, const float3& velocity, float v
 	if (sources.empty() || mute || volume == 0.0f || globalVolume == 0.0f || id == 0)
 		return;
 
-	ALuint source=0;
-	ALint state;
-	alGetSourcei(sources[cur], AL_SOURCE_STATE, &state);
-
-	if (state == AL_PLAYING)
+	if (sources[cur].IsPlaying())
 	{
 		for (size_t pos = 0; pos != sources.size(); ++pos)
 		{
-			alGetSourcei(sources[pos], AL_SOURCE_STATE, &state);
-			if (state != AL_PLAYING)
+			if (!sources[pos].IsPlaying())
 			{
-				source = sources[pos];
 				cur = pos;
 				break;
 			}
 		}
-
-		if (source == 0)
-		{
-			source = sources[cur++];
-			alSourceStop(source);
-			if (cur == sources.size())
-				cur = 0;
-		}
 	}
-	else
-	{
-		source = sources[cur++];
-		if (cur == sources.size())
-			cur = 0;
-	}
-
-	alSourcei(source, AL_BUFFER, id);
-	alSourcef(source, AL_GAIN, volume);
-
-	float3 pos = p * posScale;
-	alSource3f(source, AL_POSITION, pos.x, pos.y, pos.z);
-	alSource3f(source, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
-	alSourcei(source, AL_LOOPING, false);
-	alSourcei(source, AL_SOURCE_RELATIVE, relative);
-	alSourcePlay(source);
+	
+	sources[cur++].Play(id, p * posScale, velocity, volume, relative);
+	if (cur == sources.size())
+		cur = 0;
 	CheckError("CSound::PlaySample");
 }
 
