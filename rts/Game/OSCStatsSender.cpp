@@ -29,31 +29,37 @@
 
 #include <arpa/inet.h>
 
-#define OSC_IN_PORT 10101
+
+COSCStatsSender* COSCStatsSender::singleton = NULL;
+
 
 COSCStatsSender::COSCStatsSender(const std::string& dstAddress,
-		unsigned int dstPort) {
+		unsigned int dstPort)
+		: sendingEnabled(configHandler.Get("OscStatsSenderEnabled", false)),
+		dstAddress(dstAddress), dstPort(dstPort),
+		oscOutputBuffer(NULL), oscPacker(NULL), outSocket(NULL)
+{
+	if (IsEnabled()) {
+		oscOutputBuffer = new char[OSC_OUTPUT_BUFFER_SIZE];
+		oscPacker = new osc::OutboundPacketStream(oscOutputBuffer,
+				OSC_OUTPUT_BUFFER_SIZE);
+		outSocket = new netcode::UDPSocket(OSC_IN_PORT);
+		UpdateDestination();
 
-	this->dstAddress = dstAddress;
-	this->dstPort = dstPort;
-	oscPacker = new osc::OutboundPacketStream(oscOutputBuffer,
-			OSC_OUTPUT_BUFFER_SIZE);
-	// We do not want ot receive data on this socket,
-	// only send, but we still have to define an in-port,
-	// as a socket can not be constructed otherwise (?)
-	outSocket = new netcode::UDPSocket(OSC_IN_PORT);
-	UpdateDestination();
-
-	SendInit();
+		SendInit();
+	}
 }
 COSCStatsSender::~COSCStatsSender() {
 
+	delete [] oscOutputBuffer;
 	delete outSocket;
 	delete oscPacker;
 }
 
 
-COSCStatsSender* COSCStatsSender::singleton = NULL;
+bool COSCStatsSender::IsEnabled() const {
+	return sendingEnabled;
+}
 
 COSCStatsSender* COSCStatsSender::GetInstance() {
 
@@ -70,20 +76,25 @@ COSCStatsSender* COSCStatsSender::GetInstance() {
 
 
 bool COSCStatsSender::SendInit() {
-	return SendInitialInfo()
-			&& SendTeamStatsTitles()
-			&& SendPlayerStatsTitles();
+
+	if (IsEnabled()) {
+		return SendInitialInfo()
+				&& SendTeamStatsTitles()
+				&& SendPlayerStatsTitles();
+	} else {
+		return false;
+	}
 }
 
 bool COSCStatsSender::Update(int frameNum) {
 
-	if (!IsTimeToSend(frameNum)) {
+	if (IsEnabled() && IsTimeToSend(frameNum)) {
+		// Try to send team stats first, as they are more important,
+		// more interesting.
+		return SendTeamStats() && SendPlayerStats();
+	} else {
 		return false;
 	}
-
-	// Try to send team stats first, as they are more important,
-	// more interesting.
-	return SendTeamStats() && SendPlayerStats();
 }
 
 
@@ -105,10 +116,7 @@ void COSCStatsSender::UpdateDestination() {
 
 bool COSCStatsSender::IsTimeToSend(int frameNum) {
 
-	static bool sendingEnabled = configHandler.Get(
-			"OscStatsSenderEnabled", false);
-
-	if (sendingEnabled && !((frameNum+5) & 31)) {
+	if (IsEnabled() && !((frameNum+5) & 31)) {
 		return true;
 	}
 
@@ -131,40 +139,48 @@ bool COSCStatsSender::SendOscBuffer() {
 
 bool COSCStatsSender::SendInitialInfo() {
 
-	logOutput.Print("sending initial info, to: osc:%s:%u ...",
-			dstAddress.c_str(), dstPort);
+	if (IsEnabled()) {
+		logOutput.Print("sending initial info, to: osc:%s:%u ...",
+				dstAddress.c_str(), dstPort);
 
-	(*oscPacker)
-			<< osc::BeginBundleImmediate
-				<< osc::BeginMessage("/spring/info/initial/titles")
-					<< "Engine name"
-					<< "Engine version"
-					<< "Number of teams"
-				<< osc::EndMessage
-				<< osc::BeginMessage("/spring/info/initial/values")
-					<< "spring"
-					<< SpringVersion::GetFull().c_str()
-					<< teamHandler->ActiveTeams()
-				<< osc::EndMessage
-			<< osc::EndBundle;
+		(*oscPacker)
+				<< osc::BeginBundleImmediate
+					<< osc::BeginMessage("/spring/info/initial/titles")
+						<< "Engine name"
+						<< "Engine version"
+						<< "Number of teams"
+					<< osc::EndMessage
+					<< osc::BeginMessage("/spring/info/initial/values")
+						<< "spring"
+						<< SpringVersion::GetFull().c_str()
+						<< teamHandler->ActiveTeams()
+					<< osc::EndMessage
+				<< osc::EndBundle;
 
-	return SendOscBuffer();
+		return SendOscBuffer();
+	} else {
+		return false;
+	}
 }
 bool COSCStatsSender::SendPlayerStatsTitles() {
 
-	(*oscPacker)
-			<< osc::BeginBundleImmediate
-				<< osc::BeginMessage("/spring/stats/player/titles")
-					<< "Player Name"
-					<< "Mouse clicks per minute"
-					<< "Mouse movement in pixels per minute"
-					<< "Keyboard presses per minute"
-					<< "Unit commands per minute"
-					<< "Average command size (units affected per command)"
-				<< osc::EndMessage
-			<< osc::EndBundle;
+	if (IsEnabled()) {
+		(*oscPacker)
+				<< osc::BeginBundleImmediate
+					<< osc::BeginMessage("/spring/stats/player/titles")
+						<< "Player Name"
+						<< "Mouse clicks per minute"
+						<< "Mouse movement in pixels per minute"
+						<< "Keyboard presses per minute"
+						<< "Unit commands per minute"
+						<< "Average command size (units affected per command)"
+					<< osc::EndMessage
+				<< osc::EndBundle;
 
-	return SendOscBuffer();
+		return SendOscBuffer();
+	} else {
+		return false;
+	}
 }
 
 bool COSCStatsSender::SendPlayerStats() {
@@ -172,66 +188,74 @@ bool COSCStatsSender::SendPlayerStats() {
 	static const CPlayer* localPlayer = playerHandler->Player(gu->myPlayerNum);
 	static const char* localPlayerName = localPlayer->name.c_str();
 
-	// get the latest player stats
-	const CPlayer::Statistics& playerStats = localPlayer->currentStats;
+	if (IsEnabled()) {
+		// get the latest player stats
+		const CPlayer::Statistics& playerStats = localPlayer->currentStats;
 
-	(*oscPacker)
-			<< osc::BeginBundleImmediate
-				<< osc::BeginMessage("/spring/stats/team/values")
-					<< localPlayerName
-					<< playerStats.mouseClicks*60/game->totalGameTime
-					<< playerStats.mousePixels*60/game->totalGameTime
-					<< playerStats.keyPresses*60/game->totalGameTime
-					<< playerStats.numCommands*60/game->totalGameTime
-					<< ((playerStats.numCommands != 0) ?
-						(playerStats.unitCommands / playerStats.numCommands) : 0)
-				<< osc::EndMessage
-			<< osc::EndBundle;
+		(*oscPacker)
+				<< osc::BeginBundleImmediate
+					<< osc::BeginMessage("/spring/stats/team/values")
+						<< localPlayerName
+						<< playerStats.mouseClicks*60/game->totalGameTime
+						<< playerStats.mousePixels*60/game->totalGameTime
+						<< playerStats.keyPresses*60/game->totalGameTime
+						<< playerStats.numCommands*60/game->totalGameTime
+						<< ((playerStats.numCommands != 0) ?
+							(playerStats.unitCommands / playerStats.numCommands) : 0)
+					<< osc::EndMessage
+				<< osc::EndBundle;
 
-	return SendOscBuffer();
+		return SendOscBuffer();
+	} else {
+		return false;
+	}
 }
 
 bool COSCStatsSender::SendTeamStatsTitles() {
 
-	(*oscPacker)
-			<< osc::BeginBundleImmediate
-				<< osc::BeginMessage("/spring/stats/team/titles")
-					<< "Team number"
+	if (IsEnabled()) {
+		(*oscPacker)
+				<< osc::BeginBundleImmediate
+					<< osc::BeginMessage("/spring/stats/team/titles")
+						<< "Team number"
 
-					<< "Metal used"
-					<< "Energy used"
-					<< "Metal produced"
-					<< "Energy produced"
+						<< "Metal used"
+						<< "Energy used"
+						<< "Metal produced"
+						<< "Energy produced"
 
-					<< "Metal excess"
-					<< "Energy excess"
+						<< "Metal excess"
+						<< "Energy excess"
 
-					<< "Metal received"
-					<< "Energy received"
+						<< "Metal received"
+						<< "Energy received"
 
-					<< "Metal sent"
-					<< "Energy sent"
+						<< "Metal sent"
+						<< "Energy sent"
 
-					<< "Metal stored"
-					<< "Energy stored"
+						<< "Metal stored"
+						<< "Energy stored"
 
-					<< "Active Units"
-					<< "Units killed"
+						<< "Active Units"
+						<< "Units killed"
 
-					<< "Units produced"
-					<< "Units died"
+						<< "Units produced"
+						<< "Units died"
 
-					<< "Units received"
-					<< "Units sent"
-					<< "Units captured"
-					<< "Units stolen"
+						<< "Units received"
+						<< "Units sent"
+						<< "Units captured"
+						<< "Units stolen"
 
-					<< "Damage Dealt"
-					<< "Damage Received"
-				<< osc::EndMessage
-			<< osc::EndBundle;
+						<< "Damage Dealt"
+						<< "Damage Received"
+					<< osc::EndMessage
+				<< osc::EndBundle;
 
-	return SendOscBuffer();
+		return SendOscBuffer();
+	} else {
+		return false;
+	}
 }
 
 bool COSCStatsSender::SendTeamStats() {
@@ -239,61 +263,65 @@ bool COSCStatsSender::SendTeamStats() {
 	static const int teamId = gu->myTeam;
 	static unsigned int prevHistSize = 0;
 
-	std::list<CTeam::Statistics> statHistory =
-			teamHandler->Team(teamId)->statHistory;
-	unsigned int currHistSize = statHistory.size();
-	// only send if we did not yet send the latest history stats
-	if (currHistSize <= prevHistSize) {
+	if (IsEnabled()) {
+		std::list<CTeam::Statistics> statHistory =
+				teamHandler->Team(teamId)->statHistory;
+		unsigned int currHistSize = statHistory.size();
+		// only send if we did not yet send the latest history stats
+		if (currHistSize <= prevHistSize) {
+			return false;
+		}
+
+		// get the latest history stats
+		std::list<CTeam::Statistics>::const_iterator latestStats_p =
+				--(statHistory.end());
+		const CTeam::Statistics& teamStats = *latestStats_p;
+
+		(*oscPacker)
+				<< osc::BeginBundleImmediate
+					<< osc::BeginMessage("/spring/stats/team/values")
+						<< teamId
+
+						<< teamStats.metalUsed
+						<< teamStats.energyUsed
+						<< teamStats.metalProduced
+						<< teamStats.energyProduced
+
+						<< teamStats.metalExcess
+						<< teamStats.energyExcess
+
+						<< teamStats.metalReceived
+						<< teamStats.energyReceived
+
+						<< teamStats.metalSent
+						<< teamStats.energySent
+
+						<< (teamStats.metalProduced+teamStats.metalReceived
+							- (teamStats.metalUsed+teamStats.metalSent+teamStats.metalExcess))
+						<< (teamStats.energyProduced+teamStats.energyReceived
+							- (teamStats.energyUsed+teamStats.energySent+teamStats.energyExcess))
+
+						<< (teamStats.unitsProduced+teamStats.unitsReceived+teamStats.unitsCaptured
+							- (teamStats.unitsDied+teamStats.unitsSent+teamStats.unitsOutCaptured))
+						<< teamStats.unitsKilled
+
+						<< teamStats.unitsProduced
+						<< teamStats.unitsDied
+
+						<< teamStats.unitsReceived
+						<< teamStats.unitsSent
+						<< teamStats.unitsCaptured
+						<< teamStats.unitsOutCaptured
+
+						<< teamStats.damageDealt
+						<< teamStats.damageReceived
+					<< osc::EndMessage
+				<< osc::EndBundle;
+
+		prevHistSize = currHistSize;
+
+		return SendOscBuffer();
+	} else {
 		return false;
 	}
-
-	// get the latest history stats
-	std::list<CTeam::Statistics>::const_iterator latestStats_p =
-			--(statHistory.end());
-	const CTeam::Statistics& teamStats = *latestStats_p;
-
-	(*oscPacker)
-			<< osc::BeginBundleImmediate
-				<< osc::BeginMessage("/spring/stats/team/values")
-					<< teamId
-
-					<< teamStats.metalUsed
-					<< teamStats.energyUsed
-					<< teamStats.metalProduced
-					<< teamStats.energyProduced
-
-					<< teamStats.metalExcess
-					<< teamStats.energyExcess
-
-					<< teamStats.metalReceived
-					<< teamStats.energyReceived
-
-					<< teamStats.metalSent
-					<< teamStats.energySent
-
-					<< (teamStats.metalProduced+teamStats.metalReceived
-						- (teamStats.metalUsed+teamStats.metalSent+teamStats.metalExcess))
-					<< (teamStats.energyProduced+teamStats.energyReceived
-						- (teamStats.energyUsed+teamStats.energySent+teamStats.energyExcess))
-
-					<< (teamStats.unitsProduced+teamStats.unitsReceived+teamStats.unitsCaptured
-						- (teamStats.unitsDied+teamStats.unitsSent+teamStats.unitsOutCaptured))
-					<< teamStats.unitsKilled
-
-					<< teamStats.unitsProduced
-					<< teamStats.unitsDied
-
-					<< teamStats.unitsReceived
-					<< teamStats.unitsSent
-					<< teamStats.unitsCaptured
-					<< teamStats.unitsOutCaptured
-
-					<< teamStats.damageDealt
-					<< teamStats.damageReceived
-				<< osc::EndMessage
-			<< osc::EndBundle;
-
-	prevHistSize = currHistSize;
-
-	return SendOscBuffer();
 }
