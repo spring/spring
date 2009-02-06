@@ -18,11 +18,16 @@
 #ifndef __OSCSTATSSENDER_H__
 #define __OSCSTATSSENDER_H__
 
-#include <string>
 
-#include <sys/socket.h>
+const char* const OSC_MSG_TOPIC_INIT_TITLES  = "/spring/info/initial/titles";
+const char* const OSC_MSG_TOPIC_INIT_VALUES  = "/spring/info/initial/values";
+const char* const OSC_MSG_TOPIC_PLAYER_TITLES  = "/spring/stats/player/titles";
+const char* const OSC_MSG_TOPIC_PLAYER_VALUES  = "/spring/stats/player/values";
+const char* const OSC_MSG_TOPIC_TEAM_TITLES  = "/spring/stats/team/titles";
+const char* const OSC_MSG_TOPIC_TEAM_VALUES  = "/spring/stats/team/values";
+
+#include <string>
 #include <netinet/in.h>
-#include <unistd.h>
 
 namespace netcode { class UDPSocket; }
 namespace osc { class OutboundPacketStream; }
