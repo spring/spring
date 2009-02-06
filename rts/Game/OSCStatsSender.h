@@ -36,6 +36,8 @@ private:
 public:
 	static COSCStatsSender* GetInstance();
 
+	bool IsEnabled() const;
+
 	bool SendInit();
 	bool Update(int frameNum);
 
@@ -55,15 +57,21 @@ private:
 	bool SendTeamStats();
 
 private:
+	static const unsigned int OSC_OUTPUT_BUFFER_SIZE = 16318; // 16KB
+	// We do not want to receive data on our socket,
+	// only send, but we still have to define an in-port,
+	// as a socket can not be constructed without one. (?)
+	static const unsigned int OSC_IN_PORT = 10101;
+	static COSCStatsSender* singleton;
+
+private:
+	bool sendingEnabled;
 	std::string dstAddress;
 	unsigned int dstPort;
 	struct sockaddr_in destination;
-	static const unsigned int OSC_OUTPUT_BUFFER_SIZE = 16318; // 16KB
-	char oscOutputBuffer[OSC_OUTPUT_BUFFER_SIZE];
+	char* oscOutputBuffer;
 	osc::OutboundPacketStream* oscPacker;
 	netcode::UDPSocket* outSocket;
-
-	static COSCStatsSender* singleton;
 };
 
 #define oscStatsSender COSCStatsSender::GetInstance()
