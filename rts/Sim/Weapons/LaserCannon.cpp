@@ -5,7 +5,6 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/LaserProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
@@ -86,7 +85,7 @@ void CLaserCannon::Init(void)
 	CWeapon::Init();
 }
 
-void CLaserCannon::Fire(void)
+void CLaserCannon::FireImpl()
 {
 	float3 dir;
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed
@@ -109,9 +108,6 @@ void CLaserCannon::Fire(void)
 		weaponDef->visuals.color, weaponDef->visuals.color2,
 		weaponDef->intensity, weaponDef,
 		(int) ((weaponDef->range - fpsSub * 4) / weaponDef->projectilespeed) - fpsSub);
-
-	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }
 
 

@@ -14,7 +14,8 @@ public:
 	CMeleeWeapon(CUnit* owner);
 	virtual ~CMeleeWeapon();
 
-	void Fire(void);
+private:
+	virtual void FireImpl();
 };
 
 #endif /* MELEEWEAPON_H */

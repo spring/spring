@@ -15,7 +15,8 @@ public:
 	CRifle(CUnit* owner);
 	virtual ~CRifle();
 
-	void Fire(void);
+private:
+	virtual void FireImpl();
 };
 
 #endif /* RIFLE_H */

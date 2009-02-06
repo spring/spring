@@ -5,7 +5,6 @@
 
 #include "MeleeWeapon.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
@@ -43,14 +42,12 @@ void CMeleeWeapon::Update()
 	CWeapon::Update();
 }
 
-void CMeleeWeapon::Fire(void)
+void CMeleeWeapon::FireImpl()
 {
 	if(targetType==Target_Unit){
 		float3 impulseDir = targetUnit->pos-weaponMuzzlePos;
 		impulseDir.Normalize();
 		// the heavier the unit, the more impulse it does
 		targetUnit->DoDamage(weaponDef->damages, owner, impulseDir * owner->mass * weaponDef->damages.impulseFactor, weaponDef->id);
-		if(fireSoundId)
-			sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 	}
 }

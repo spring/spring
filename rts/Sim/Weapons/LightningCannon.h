@@ -15,10 +15,12 @@ public:
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
 	void Init(void);
-	void Fire(void);
 
 	float3 color;
 	void SlowUpdate(void);
+
+private:
+	virtual void FireImpl();
 };
 
 
