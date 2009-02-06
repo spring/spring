@@ -908,8 +908,8 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if (moveType->progressState == AMoveType::Active) {
-		if (seismicSignature) {
+	if (moveType->progressState == AMoveType::Active ) {
+		if (seismicSignature && !GetTransporter()) {
 			DoSeismicPing((int)seismicSignature);
 		}
 	}
