@@ -25,7 +25,6 @@
 #include "Game/PlayerHandler.h"
 #include "GlobalUnsynced.h"
 #include "ConfigHandler.h"
-#include "LogOutput.h"
 
 #include <arpa/inet.h>
 
@@ -131,6 +130,7 @@ bool COSCStatsSender::SendOscBuffer() {
 		outSocket->SendTo((const unsigned char*) oscPacker->Data(),
 				oscPacker->Size(), &destination);
 		oscPacker->Clear();
+
 		success = true;
 	}
 
@@ -140,17 +140,14 @@ bool COSCStatsSender::SendOscBuffer() {
 bool COSCStatsSender::SendInitialInfo() {
 
 	if (IsEnabled()) {
-		logOutput.Print("sending initial info, to: osc:%s:%u ...",
-				dstAddress.c_str(), dstPort);
-
 		(*oscPacker)
 				<< osc::BeginBundleImmediate
-					<< osc::BeginMessage("/spring/info/initial/titles")
+					<< osc::BeginMessage(OSC_MSG_TOPIC_INIT_TITLES)
 						<< "Engine name"
 						<< "Engine version"
 						<< "Number of teams"
 					<< osc::EndMessage
-					<< osc::BeginMessage("/spring/info/initial/values")
+					<< osc::BeginMessage(OSC_MSG_TOPIC_INIT_VALUES)
 						<< "spring"
 						<< SpringVersion::GetFull().c_str()
 						<< teamHandler->ActiveTeams()
@@ -167,7 +164,7 @@ bool COSCStatsSender::SendPlayerStatsTitles() {
 	if (IsEnabled()) {
 		(*oscPacker)
 				<< osc::BeginBundleImmediate
-					<< osc::BeginMessage("/spring/stats/player/titles")
+					<< osc::BeginMessage(OSC_MSG_TOPIC_PLAYER_TITLES)
 						<< "Player Name"
 						<< "Mouse clicks per minute"
 						<< "Mouse movement in pixels per minute"
@@ -194,14 +191,14 @@ bool COSCStatsSender::SendPlayerStats() {
 
 		(*oscPacker)
 				<< osc::BeginBundleImmediate
-					<< osc::BeginMessage("/spring/stats/team/values")
-						<< localPlayerName
-						<< playerStats.mouseClicks*60/game->totalGameTime
-						<< playerStats.mousePixels*60/game->totalGameTime
-						<< playerStats.keyPresses*60/game->totalGameTime
-						<< playerStats.numCommands*60/game->totalGameTime
-						<< ((playerStats.numCommands != 0) ?
-							(playerStats.unitCommands / playerStats.numCommands) : 0)
+					<< osc::BeginMessage(OSC_MSG_TOPIC_PLAYER_VALUES)
+						<< (const char*) localPlayerName
+						<< (float) (playerStats.mouseClicks*60/game->totalGameTime)
+						<< (float) (playerStats.mousePixels*60/game->totalGameTime)
+						<< (float) (playerStats.keyPresses*60/game->totalGameTime)
+						<< (float) (playerStats.numCommands*60/game->totalGameTime)
+						<< (float) ((playerStats.numCommands != 0) ?
+							((float) playerStats.unitCommands / playerStats.numCommands) : 0.0)
 					<< osc::EndMessage
 				<< osc::EndBundle;
 
@@ -216,7 +213,7 @@ bool COSCStatsSender::SendTeamStatsTitles() {
 	if (IsEnabled()) {
 		(*oscPacker)
 				<< osc::BeginBundleImmediate
-					<< osc::BeginMessage("/spring/stats/team/titles")
+					<< osc::BeginMessage(OSC_MSG_TOPIC_TEAM_TITLES)
 						<< "Team number"
 
 						<< "Metal used"
@@ -279,42 +276,42 @@ bool COSCStatsSender::SendTeamStats() {
 
 		(*oscPacker)
 				<< osc::BeginBundleImmediate
-					<< osc::BeginMessage("/spring/stats/team/values")
-						<< teamId
+					<< osc::BeginMessage(OSC_MSG_TOPIC_TEAM_VALUES)
+						<< (int) teamId
 
-						<< teamStats.metalUsed
-						<< teamStats.energyUsed
-						<< teamStats.metalProduced
-						<< teamStats.energyProduced
+						<< (float) teamStats.metalUsed
+						<< (float) teamStats.energyUsed
+						<< (float) teamStats.metalProduced
+						<< (float) teamStats.energyProduced
 
-						<< teamStats.metalExcess
-						<< teamStats.energyExcess
+						<< (float) teamStats.metalExcess
+						<< (float) teamStats.energyExcess
 
-						<< teamStats.metalReceived
-						<< teamStats.energyReceived
+						<< (float) teamStats.metalReceived
+						<< (float) teamStats.energyReceived
 
-						<< teamStats.metalSent
-						<< teamStats.energySent
+						<< (float) teamStats.metalSent
+						<< (float) teamStats.energySent
 
-						<< (teamStats.metalProduced+teamStats.metalReceived
+						<< (float) (teamStats.metalProduced+teamStats.metalReceived
 							- (teamStats.metalUsed+teamStats.metalSent+teamStats.metalExcess))
-						<< (teamStats.energyProduced+teamStats.energyReceived
+						<< (float) (teamStats.energyProduced+teamStats.energyReceived
 							- (teamStats.energyUsed+teamStats.energySent+teamStats.energyExcess))
 
-						<< (teamStats.unitsProduced+teamStats.unitsReceived+teamStats.unitsCaptured
+						<< (int) (teamStats.unitsProduced+teamStats.unitsReceived+teamStats.unitsCaptured
 							- (teamStats.unitsDied+teamStats.unitsSent+teamStats.unitsOutCaptured))
-						<< teamStats.unitsKilled
+						<< (int) teamStats.unitsKilled
 
-						<< teamStats.unitsProduced
-						<< teamStats.unitsDied
+						<< (int) teamStats.unitsProduced
+						<< (int) teamStats.unitsDied
 
-						<< teamStats.unitsReceived
-						<< teamStats.unitsSent
-						<< teamStats.unitsCaptured
-						<< teamStats.unitsOutCaptured
+						<< (int) teamStats.unitsReceived
+						<< (int) teamStats.unitsSent
+						<< (int) teamStats.unitsCaptured
+						<< (int) teamStats.unitsOutCaptured
 
-						<< teamStats.damageDealt
-						<< teamStats.damageReceived
+						<< (float) teamStats.damageDealt
+						<< (float) teamStats.damageReceived
 					<< osc::EndMessage
 				<< osc::EndBundle;
 
