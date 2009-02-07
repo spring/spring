@@ -25,7 +25,7 @@ size_t ModSound::GetSoundId(const std::string& name)
 {
 	SoundMap::const_iterator it = sounds.find(StringToLower(name));
 	if (it != sounds.end())
-		return sound->GetWaveId(it->second);
+		return sound->GetSoundId(it->second);
 	else
 		return 0;
 }

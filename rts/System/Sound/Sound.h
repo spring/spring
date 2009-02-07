@@ -5,6 +5,7 @@
 #include <string>
 #include <map>
 #include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "float3.h"
 
@@ -12,6 +13,7 @@ class CWorldObject;
 class CUnit;
 class SoundSource;
 class SoundBuffer;
+class SoundItem;
 
 // Sound system interface
 class CSound
@@ -20,7 +22,7 @@ public:
 	CSound();
 	~CSound();
 
-	size_t GetWaveId(const std::string& path, bool hardFail = true);
+	size_t GetSoundId(const std::string& name, bool hardFail = true);
 
 	void Update();
 	void NewFrame();
@@ -50,27 +52,39 @@ public:
 	void SetUnitReplyVolume(float vol); // also affected by global volume (SetVolume())
 
 private:
-	size_t LoadALBuffer(const std::string& path);
+	size_t LoadALBuffer(const std::string& path, bool strict);
 	void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
 
+	size_t GetWaveId(const std::string& path, bool hardFail);
+	boost::shared_ptr<SoundBuffer> GetWaveBuffer(const std::string& path, bool hardFail = true);
+
 	void UpdateListener();
-	
+
 	size_t cur;
 	float globalVolume;
-	bool hardFail;
-	
-	typedef std::map<std::string, size_t> bufferMap;
-	typedef boost::ptr_vector<SoundBuffer> bufferVec;
-	bufferMap soundMap; // filename, index into Buffers
-	bufferVec buffers;
+
+	typedef std::map<std::string, size_t> bufferMapT;
+	typedef std::vector< boost::shared_ptr<SoundBuffer> > bufferVecT;
+	bufferMapT bufferMap; // filename, index into Buffers
+	bufferVecT buffers;
+
+	typedef std::map<std::string, size_t> soundMapT;
+	typedef boost::ptr_vector<SoundItem> soundVecT;
+	soundMapT soundMap;
+	soundVecT sounds;
 
 	float3 posScale;
 	float3 prevPos;
-	typedef boost::ptr_vector<SoundSource> sourceVec;
-	sourceVec sources;
+	typedef boost::ptr_vector<SoundSource> sourceVecT;
+	sourceVecT sources;
 	std::set<unsigned int> repliesPlayed;
 	float unitReplyVolume;
 	bool mute;
+
+	typedef std::map<std::string, std::string> soundItemDef;
+	typedef std::map< std::string, soundItemDef > soundItemMap;
+	soundItemMap soundItemDefs;
+	soundItemDef defaultItem;
 };
 
 extern CSound* sound;

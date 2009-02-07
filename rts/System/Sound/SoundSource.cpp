@@ -2,7 +2,9 @@
 
 #include <AL/alc.h>
 
+#include "Sound.h"
 #include "SoundBuffer.h"
+#include "SoundItem.h"
 #include "float3.h"
 #include "LogOutput.h"
 
@@ -49,17 +51,17 @@ void SoundSource::Stop()
 	CheckError("SoundSource::Stop");
 }
 
-void SoundSource::Play(const SoundBuffer& buffer, const float3& pos, const float3& velocity, float volume, bool relative)
+void SoundSource::Play(const SoundItem& item, const float3& pos, const float3& velocity, float volume)
 {
 	if (IsPlaying())
 		Stop();
-	alSourcei(id, AL_BUFFER, buffer.GetId());
-	alSourcef(id, AL_GAIN, volume);
-
+	alSourcei(id, AL_BUFFER, item.buffer->GetId());
+	alSourcef(id, AL_GAIN, item.gain * volume);
+	SetPitch(item.pitch);
 	alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	alSourcei(id, AL_LOOPING, false);
-	alSourcei(id, AL_SOURCE_RELATIVE, relative);
+	alSourcei(id, AL_SOURCE_RELATIVE, item.in3D);
 	alSourcePlay(id);
 	CheckError("SoundSource::Play");
 }
