@@ -23,6 +23,7 @@ public:
 	CSound();
 	~CSound();
 
+	bool HasSoundItem(const std::string& name);
 	size_t GetSoundId(const std::string& name, bool hardFail = true);
 
 	void Update();
