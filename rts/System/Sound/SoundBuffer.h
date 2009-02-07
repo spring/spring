@@ -6,9 +6,18 @@
 #include <string>
 #include <vector>
 
+/**
+ * @brief A buffer holding a sound
+ * 
+ * One of this will be created for each wav-file used.
+ * They are loaded on demand and unloaded when game ends.
+ * They can be shared among multiple SoundItem
+ */
 class SoundBuffer : boost::noncopyable
 {
 public:
+	/// Construct an "empty" buffer
+	/// can be played, but you won't hear anything
 	SoundBuffer();
 	~SoundBuffer();
 

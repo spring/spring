@@ -225,10 +225,7 @@ void CSound::SetStreamVolume(float v)
 
 void CSound::PitchAdjust(const float newPitch)
 {
-	for (sourceVecT::const_iterator it = sources.begin(); it != sources.end(); ++it)
-	{
-		it->SetPitch(newPitch);
-	}
+	SoundSource::SetPitch(newPitch);
 }
 
 bool CSound::Mute()
