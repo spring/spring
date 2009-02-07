@@ -52,6 +52,8 @@ public:
 	void SetVolume(float vol); // 1 = full volume
 	void SetUnitReplyVolume(float vol); // also affected by global volume (SetVolume())
 
+	void PrintDebugInfo();
+
 private:
 	size_t LoadALBuffer(const std::string& path, bool strict);
 	void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
@@ -82,8 +84,10 @@ private:
 	std::set<unsigned int> repliesPlayed;
 	float unitReplyVolume;
 	bool mute;
+	unsigned numEmptyPlayRequests;
 
-	LuaTable soundItemTable;
+	LuaTable soundRoot, soundItemTable;
+	LuaParser parser;
 	typedef std::map<std::string, std::string> soundItemDef;
 	soundItemDef defaultItem;
 };

@@ -34,7 +34,7 @@ bool CheckError(const char* msg)
 	return true;
 }
 
-CSound::CSound()
+CSound::CSound() : numEmptyPlayRequests(0), parser("gamedata/sounds.lua", SPRING_VFS_MOD, SPRING_VFS_ZIP)
 {
 	mute = false;
 	int maxSounds = configHandler.Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
@@ -91,14 +91,16 @@ CSound::CSound()
 	posScale.y = 0.0005f;
 	posScale.z = 0.02f;
 
-	LuaParser parser("gamedata/sounds.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	parser.Execute();
 	if (!parser.IsValid()) {
-		logOutput.Print("Sounds.lua error:");
+		logOutput.Print("Could not load gamedata/sounds.lua:");
 		logOutput.Print(parser.GetErrorLog());
 	}
-	parser.Execute();
-	const LuaTable root = parser.GetRoot();
-	soundItemTable = root.SubTable("SoundItems");
+	else
+	{
+		soundRoot = parser.GetRoot();
+		soundItemTable = soundRoot.SubTable("SoundItems");
+	}
 }
 
 CSound::~CSound()
@@ -151,17 +153,20 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 			}
 			else
 			{
+				//logOutput.Print("CSound::GetSoundId: %s points to %s", name.c_str(), it->second.c_str());
 				sounds.push_back(new SoundItem(GetWaveBuffer(it->second, hardFail), temp));
+				soundMap[name] = newid;
 				return newid;
 			}
 		}
 		else
 		{
-			if (LoadALBuffer(name, hardFail) > 0) // maybe raw filename?
+			if (GetWaveId(name, hardFail) > 0) // maybe raw filename?
 			{
 				soundItemDef temp = defaultItem;
 				temp["name"] = name;
 				sounds.push_back(new SoundItem(GetWaveBuffer(name, hardFail), temp)); // use raw file with default values
+				soundMap[name] = newid;
 				return newid;
 			}
 			else
@@ -175,11 +180,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 				}
 			}
 		}
-		
 	}
-
-	const size_t buffer = LoadALBuffer(name, hardFail);
-	return buffer;
 }
 
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
@@ -298,9 +299,15 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	if (sources.empty() || mute || volume == 0.0f || globalVolume == 0.0f || id == 0)
+	if (sources.empty() || mute || volume == 0.0f || globalVolume == 0.0f)
 		return;
 
+	if (id == 0)
+	{
+		numEmptyPlayRequests++;
+		return;
+	}
+	
 	if (p.distance(myPos) > sounds[id].MaxDistance())
 		return;
 
@@ -363,6 +370,16 @@ void CSound::UpdateListener()
 	CheckError("CSound::UpdateListener");
 }
 
+void CSound::PrintDebugInfo()
+{
+	logOutput.Print("OpenAL Sound System:");
+	logOutput.Print("# SoundSources: %lu", sources.size());
+	logOutput.Print("# SoundBuffers: %lu", buffers.size());
+	logOutput.Print("# SoundItems: %lu", sounds.size());
+	logOutput.Print("# PlayRequests for empty sound: %u", numEmptyPlayRequests);
+	/*for (soundMapT::const_iterator it = soundMap.begin(); it != soundMap.end(); ++it)
+		logOutput.Print("Name: %s Id: %zu", it->first.c_str(), it->second);*/
+}
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 {
@@ -402,8 +419,8 @@ size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
 	if (sources.empty())
 		return 0;
-	bufferMapT::const_iterator it = soundMap.find(path);
-	if (it != soundMap.end()) {
+	bufferMapT::const_iterator it = bufferMap.find(path);
+	if (it != bufferMap.end()) {
 		return it->second;
 	}
 
