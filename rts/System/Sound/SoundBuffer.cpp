@@ -121,3 +121,9 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 	return true;
 }
 
+int SoundBuffer::BufferSize() const
+{
+	ALint size;
+	alGetBufferi(id, AL_SIZE, &size);
+	return static_cast<int>(size);
+}

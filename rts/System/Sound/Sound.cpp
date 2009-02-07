@@ -392,10 +392,12 @@ void CSound::PrintDebugInfo()
 	logOutput.Print("OpenAL Sound System:");
 	logOutput.Print("# SoundSources: %lu", sources.size());
 	logOutput.Print("# SoundBuffers: %lu", buffers.size());
-	logOutput.Print("# SoundItems: %lu", sounds.size());
+	int numBytes = 0;
+	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
+		numBytes += (*it)->BufferSize();
+	logOutput.Print("# reserved for buffers: %d kB", (numBytes/1024));
 	logOutput.Print("# PlayRequests for empty sound: %u", numEmptyPlayRequests);
-	/*for (soundMapT::const_iterator it = soundMap.begin(); it != soundMap.end(); ++it)
-		logOutput.Print("Name: %s Id: %zu", it->first.c_str(), it->second);*/
+	logOutput.Print("# SoundItems: %lu", sounds.size());
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
