@@ -137,6 +137,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 		{
 			soundItemDef temp;
 			soundItem.GetMap(temp);
+			temp["name"] = name;
 			soundItemDef::const_iterator it = temp.find("file");
 			if (it == temp.end())
 			{
