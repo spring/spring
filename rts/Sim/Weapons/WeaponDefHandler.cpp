@@ -574,7 +574,7 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 			GuiSoundSet::Data soundData(name, 0, volume);
 			gsound.sounds.push_back(soundData);
 
-			int id = sound->GetWaveId(soundPath);
+			int id = sound->GetSoundId(soundPath);
 
 			gsound.setID(0, id);
 		}

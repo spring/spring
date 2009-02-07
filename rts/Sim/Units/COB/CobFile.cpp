@@ -165,7 +165,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 			// Load the wave file and store the ID for future use
 			s = "sounds/" + s + ".wav";
-			sounds.push_back(sound->GetWaveId(s));
+			sounds.push_back(sound->GetSoundId(s));
 		}
 	}
 

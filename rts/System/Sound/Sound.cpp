@@ -6,6 +6,7 @@
 
 #include "SoundSource.h"
 #include "SoundBuffer.h"
+#include "SoundItem.h"
 #include "Sim/Units/Unit.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
@@ -15,6 +16,7 @@
 #include "OggStream.h"
 #include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
+#include "Lua/LuaParser.h"
 
 // Ogg-Vorbis audio stream object
 COggStream oggStream;
@@ -81,9 +83,47 @@ CSound::CSound()
 
 	cur = 0;
 	buffers.resize(1); // empty ("zero") buffer
+	
+	soundItemDef temp;
+	temp["name"] = "EmptySource";
+	SoundItem* empty = new SoundItem(buffers[0], temp);
+	sounds.push_back(empty);
 	posScale.x = 0.02f;
 	posScale.y = 0.0005f;
 	posScale.z = 0.02f;
+
+	LuaParser parser("gamedata/sounds.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+	if (!parser.IsValid()) {
+		logOutput.Print("Sounds.lua error:");
+		logOutput.Print(parser.GetErrorLog());
+	}
+	parser.Execute();
+	const LuaTable root = parser.GetRoot();
+	const LuaTable Sounds = root.SubTable("SoundItems");
+
+	for (int key = 0; key < 65000; ++key)
+	{
+		const LuaTable soundItem = Sounds.SubTable(key);
+		if (!soundItem.IsValid())
+			break;
+		else
+		{
+			soundItemDef temp;
+			soundItem.GetMap(temp);
+			soundItemDef::const_iterator it = temp.find("name"); // get name-tag
+			if (it == temp.end()) // no name, so set file as name
+				it = temp.find("file");
+			
+			if (it == temp.end()) // neither name nor file
+			{
+				logOutput.Print("Sounds.lua error: SoundItems has subtable without name and file");
+			}
+			else
+			{
+				soundItemDefs[it->second] = temp;
+			}
+		}
+	}
 }
 
 CSound::~CSound()
@@ -91,7 +131,7 @@ CSound::~CSound()
 	if (!sources.empty())
 	{
 		sources.clear(); // delete all sources
-		soundMap.clear();
+		sounds.clear();
 		buffers.clear(); // delete all buffers
 		ALCcontext *curcontext = alcGetCurrentContext();
 		ALCdevice *curdevice = alcGetContextsDevice(curcontext);
@@ -99,6 +139,49 @@ CSound::~CSound()
 		alcDestroyContext(curcontext);
 		alcCloseDevice(curdevice);
 	}
+}
+
+size_t CSound::GetSoundId(const std::string& name, bool hardFail)
+{
+	GML_RECMUTEX_LOCK(sound);
+	if (sources.empty())
+		return 0;
+	soundMapT::const_iterator it = soundMap.find(name);
+	if (it != soundMap.end())
+	{
+		// sounditem found
+		return it->second;
+	}
+	else
+	{
+		size_t newid = soundItemDefs.size();
+		soundItemMap::const_iterator it = soundItemDefs.find(name);
+		if (it != soundItemDefs.end())
+		{
+			sounds.push_back(new SoundItem(GetWaveBuffer(name, hardFail), it->second)); // itemDef found, create a new item
+			return newid;
+		}
+		else
+		{
+			if (LoadALBuffer(name, hardFail) > 0) // maybe raw filename?
+			{
+				soundItemDef temp = defaultItem;
+				sounds.push_back(new SoundItem(GetWaveBuffer(name, hardFail), it->second)); // use raw file with default values
+				return newid;
+			}
+			else
+			{
+				if (hardFail)
+					ErrorMessageBox("Couldn't open wav file", name, 0);
+				else
+					return 0;
+			}
+		}
+		
+	}
+
+	const size_t buffer = LoadALBuffer(name, hardFail);
+	return buffer;
 }
 
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
@@ -139,7 +222,7 @@ void CSound::SetStreamVolume(float v)
 
 void CSound::PitchAdjust(const float newPitch)
 {
-	for (sourceVec::const_iterator it = sources.begin(); it != sources.end(); ++it)
+	for (sourceVecT::const_iterator it = sources.begin(); it != sources.end(); ++it)
 	{
 		it->SetPitch(newPitch);
 	}
@@ -235,7 +318,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 		}
 	}
 	
-	sources[cur++].Play(buffers[id], p * posScale, velocity, volume, relative);
+	sources[cur++].Play(sounds[id], p * posScale, velocity, volume);
 	if (cur == sources.size())
 		cur = 0;
 	CheckError("CSound::PlaySample");
@@ -271,7 +354,7 @@ void CSound::UpdateListener()
 }
 
 
-size_t CSound::LoadALBuffer(const std::string& path)
+size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 {
 	CFileHandler file(path);
 
@@ -280,44 +363,47 @@ size_t CSound::LoadALBuffer(const std::string& path)
 		buf.resize(file.FileSize());
 		file.Read(&buf[0], file.FileSize());
 	} else {
-		if (hardFail) {
+		if (strict) {
 			handleerror(0, "Couldn't open wav file", path.c_str(),0);
 		}
 		return 0;
 	}
 
-	SoundBuffer* buffer = new SoundBuffer();
-	const bool success = buffer->LoadWAV(path, buf, hardFail);
+	boost::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
+	const bool success = buffer->LoadWAV(path, buf, strict);
 
 	CheckError("CSound::LoadALBuffer");
 	if (!success)
 	{
-		delete buffer;
 		return 0;
 	}
 	else
 	{
 		size_t bufId = buffers.size();
 		buffers.push_back(buffer);
-		soundMap[path] = bufId;
+		bufferMap[path] = bufId;
 		return bufId;
 	}
 }
 
 
-size_t CSound::GetWaveId(const std::string& path, bool _hardFail)
+size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 {
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
 	if (sources.empty())
 		return 0;
-	bufferMap::const_iterator it = soundMap.find(path);
+	bufferMapT::const_iterator it = soundMap.find(path);
 	if (it != soundMap.end()) {
 		return it->second;
 	}
 
-	hardFail = _hardFail;
-	const size_t buffer = LoadALBuffer(path);
+	const size_t buffer = LoadALBuffer(path, hardFail);
 	return buffer;
+}
+
+boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bool hardFail)
+{
+	return buffers[GetWaveId(path, hardFail)];
 }
 
 void CSound::NewFrame()

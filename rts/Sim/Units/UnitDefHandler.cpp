@@ -876,7 +876,7 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
 
 	if (fh.FileExists()) {
 		// we have a valid soundfile: store name, ID, and default volume
-		const int id = sound->GetWaveId(soundFile);
+		const int id = sound->GetSoundId(soundFile);
 
 		GuiSoundSet::Data soundData(fileName, id, volume);
 		gsound.sounds.push_back(soundData);
