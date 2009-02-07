@@ -17,4 +17,5 @@ private:
 	SoundMap sounds;
 };
 
-#endif
+#endif // MODSOUNDS_H
+
