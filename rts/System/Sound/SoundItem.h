@@ -8,7 +8,7 @@
 class SoundBuffer;
 
 /**
- * @brief A class representing a soudn which can be played
+ * @brief A class representing a sound which can be played
  * 
  * This can be played by SoundSource.
  * Each soundsource has exactly one SoundBuffer it wraps around, while one buffer can be shared among multiple Items.
@@ -21,6 +21,9 @@ class SoundItem
 public:
 	SoundItem(boost::shared_ptr<SoundBuffer> buffer, const std::map<std::string, std::string>& items);
 
+	bool PlayNow();
+	void StopPlay();
+
 private:
 	boost::shared_ptr<SoundBuffer> buffer;
 	/// unique identifier (if no name is specified, this will be the filename
@@ -29,11 +32,15 @@ private:
 	/// volume gain, applied to this sound
 	float gain;
 	//float gainFWHM;
-	/// sound pitch (multiplied with globalPitch fro mSoudnSource when played)
+	/// sound pitch (multiplied with globalPitch from SoundSource when played)
 	float pitch;
 	//float pitchFWHM;
+
 	int priority;
+
 	unsigned maxConcurrent;
+	unsigned currentlyPlaying;
+
 	bool in3D;
 };
 

@@ -318,7 +318,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 		}
 	}
 	
-	sources[cur++].Play(sounds[id], p * posScale, velocity, volume);
+	sources[cur++].Play(&sounds[id], p * posScale, velocity, volume);
 	if (cur == sources.size())
 		cur = 0;
 	CheckError("CSound::PlaySample");
