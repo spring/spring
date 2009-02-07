@@ -40,7 +40,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
 #include "EventHandler.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>

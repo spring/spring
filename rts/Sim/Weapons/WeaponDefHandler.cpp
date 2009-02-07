@@ -18,7 +18,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "LogOutput.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "mmgr.h"
 #include "Util.h"
 #include "Exceptions.h"

@@ -37,7 +37,7 @@
 #include "ConfigHandler.h"
 #include "PlayerHandler.h"
 #include "Camera.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "Util.h"
 
 extern Uint8 *keys;

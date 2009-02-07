@@ -8,7 +8,7 @@
 #include "CobFile.h"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "Platform/byteorder.h"
 #include "Util.h"
 
