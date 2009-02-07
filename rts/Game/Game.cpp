@@ -100,7 +100,6 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/Misc/ModSound.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
@@ -124,7 +123,7 @@
 #include "Util.h"
 #include "Exceptions.h"
 #include "EventHandler.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "FileSystem/SimpleParser.h"
 #include "Net/RawPacket.h"
 #include "UI/CommandColors.h"
@@ -299,7 +298,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 #endif
 
 	sound = new CSound();
-	chatSound = ModSound::Get().GetSoundId("IncomingChat");
+	chatSound = sound->GetSoundId("IncomingChat", false);
 
 	moveWarnings = !!configHandler.Get("MoveWarnings", 1);
 
@@ -1942,6 +1941,10 @@ bool CGame::ActionPressed(const Action& action,
 				logOutput.Print("File %s already exists(use /save -y to override)\n",savename.c_str());
 			}
 		}
+	}
+	else if (cmd == "debuginfo") {
+		if (action.extra == "sound")
+			sound->PrintDebugInfo();
 	}
 	else if (cmd == "atm" ||
 #ifdef DEBUG

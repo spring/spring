@@ -31,7 +31,7 @@
 #include "COB/CobFile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "Exceptions.h"
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
@@ -876,7 +876,7 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
 
 	if (fh.FileExists()) {
 		// we have a valid soundfile: store name, ID, and default volume
-		const int id = sound->GetWaveId(soundFile);
+		const int id = sound->GetSoundId(soundFile);
 
 		GuiSoundSet::Data soundData(fileName, id, volume);
 		gsound.sounds.push_back(soundData);

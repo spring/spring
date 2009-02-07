@@ -19,7 +19,6 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sound.h"
 
 CR_BIND_DERIVED(CAirMoveType, AAirMoveType, (NULL));
 CR_BIND(CAirMoveType::DrawLine, );

@@ -54,7 +54,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "EventHandler.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "FileSystem/SimpleParser.h"
 #include "Util.h"
 #include "TimeProfiler.h"

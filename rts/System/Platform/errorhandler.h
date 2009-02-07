@@ -12,6 +12,8 @@
 #ifndef ERRORHANDLER_H
 #define ERRORHANDLER_H
 
+#include <string>
+
 #define MBF_OK		1
 #define MBF_INFO	2
 #define MBF_EXCL	4
@@ -24,5 +26,9 @@
 
 #define handleerror(o, m, c, f) ErrorMessageBox(m, c, f)
 void ErrorMessageBox(const char *msg, const char *caption, unsigned int flags) NO_RETURN;
+inline void ErrorMessageBox(const std::string& msg, const std::string& caption, unsigned int flags)
+{
+	ErrorMessageBox(msg.c_str(), caption.c_str(), flags);
+};
 
 #endif
