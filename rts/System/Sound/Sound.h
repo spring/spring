@@ -5,13 +5,13 @@
 #include <string>
 #include <map>
 #include <boost/ptr_container/ptr_vector.hpp>
-#include <AL/al.h>
 
 #include "float3.h"
 
 class CWorldObject;
 class CUnit;
 class SoundSource;
+class SoundBuffer;
 
 // Sound system interface
 class CSound
@@ -20,19 +20,19 @@ public:
 	CSound();
 	~CSound();
 
-	ALuint GetWaveId(const std::string& path, bool hardFail = true);
+	size_t GetWaveId(const std::string& path, bool hardFail = true);
 
 	void Update();
 	void NewFrame();
 
-	void PlaySample(int id, float volume = 1.0f);
-	void PlaySample(int id, const float3& p, float volume = 1.0f);
-	void PlaySample(int id, const float3& p, const float3& velocity, float volume = 1.0f);
+	void PlaySample(size_t id, float volume = 1.0f);
+	void PlaySample(size_t id, const float3& p, float volume = 1.0f);
+	void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f);
 
-	void PlaySample(int id, CUnit* u, float volume = 1.0f);
-	void PlaySample(int id, CWorldObject* p, float volume = 1.0f);
-	void PlayUnitReply(int id, CUnit* p, float volume = 1.0f, bool squashDupes = false);
-	void PlayUnitActivate(int id, CUnit* p, float volume = 1.0f);
+	void PlaySample(size_t id, CUnit* u, float volume = 1.0f);
+	void PlaySample(size_t id, CWorldObject* p, float volume = 1.0f);
+	void PlayUnitReply(size_t id, CUnit* p, float volume = 1.0f, bool squashDupes = false);
+	void PlayUnitActivate(size_t id, CUnit* p, float volume = 1.0f);
 
 	void PlayStream(const std::string& path, float volume = 1.0f, const float3& pos = ZeroVector, bool loop = false);
 	void StopStream();
@@ -50,9 +50,8 @@ public:
 	void SetUnitReplyVolume(float vol); // also affected by global volume (SetVolume())
 
 private:
-	bool ReadWAV(const char* name, Uint8* buf, int size, ALuint albuffer);
-	ALuint LoadALBuffer(const std::string& path);
-	void PlaySample(int id, const float3 &p, const float3& velocity, float volume, bool relative);
+	size_t LoadALBuffer(const std::string& path);
+	void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
 
 	void UpdateListener();
 	
@@ -60,7 +59,11 @@ private:
 	float globalVolume;
 	bool hardFail;
 	
-	std::map<std::string, ALuint> soundMap; // filename, index into Buffers
+	typedef std::map<std::string, size_t> bufferMap;
+	typedef boost::ptr_vector<SoundBuffer> bufferVec;
+	bufferMap soundMap; // filename, index into Buffers
+	bufferVec buffers;
+
 	float3 posScale;
 	float3 prevPos;
 	typedef boost::ptr_vector<SoundSource> sourceVec;

@@ -2,7 +2,7 @@
 
 
 #include "Lua/LuaParser.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "LogOutput.h"
 #include "Util.h"
 
@@ -21,7 +21,7 @@ std::string ModSound::GetSoundFile(const std::string& name)
 		return std::string("");
 }
 
-unsigned ModSound::GetSoundId(const std::string& name)
+size_t ModSound::GetSoundId(const std::string& name)
 {
 	SoundMap::const_iterator it = sounds.find(StringToLower(name));
 	if (it != sounds.end())

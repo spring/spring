@@ -127,6 +127,7 @@ AUX_SOURCE_DIRECTORY(System/FileSystem sysfiles)
 AUX_SOURCE_DIRECTORY(System/Net sysfiles)
 AUX_SOURCE_DIRECTORY(System/Script sysfiles)
 AUX_SOURCE_DIRECTORY(System/Sync sysfiles)
+AUX_SOURCE_DIRECTORY(System/Sound sysfiles)
 AUX_SOURCE_DIRECTORY(System/creg sysfiles)
 
 ### Add icon and manifest to exe using windres

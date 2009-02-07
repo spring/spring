@@ -2,6 +2,7 @@
 
 #include <AL/alc.h>
 
+#include "SoundBuffer.h"
 #include "float3.h"
 #include "LogOutput.h"
 
@@ -48,11 +49,11 @@ void SoundSource::Stop()
 	CheckError("SoundSource::Stop");
 }
 
-void SoundSource::Play(ALuint buffer, const float3& pos, const float3& velocity, float volume, bool relative)
+void SoundSource::Play(const SoundBuffer& buffer, const float3& pos, const float3& velocity, float volume, bool relative)
 {
 	if (IsPlaying())
 		Stop();
-	alSourcei(id, AL_BUFFER, buffer);
+	alSourcei(id, AL_BUFFER, buffer.GetId());
 	alSourcef(id, AL_GAIN, volume);
 
 	alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
