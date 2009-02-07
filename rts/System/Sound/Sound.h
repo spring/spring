@@ -75,6 +75,8 @@ private:
 
 	float3 posScale;
 	float3 prevPos;
+	float3 myPos;
+
 	typedef boost::ptr_vector<SoundSource> sourceVecT;
 	sourceVecT sources;
 	std::set<unsigned int> repliesPlayed;

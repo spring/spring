@@ -23,6 +23,10 @@ public:
 
 	bool PlayNow();
 	void StopPlay();
+	float MaxDistance() const
+	{
+		return maxDist;
+	};
 
 private:
 	boost::shared_ptr<SoundBuffer> buffer;
@@ -36,6 +40,7 @@ private:
 	float pitch;
 	//float pitchFWHM;
 
+	float maxDist;
 	int priority;
 
 	unsigned maxConcurrent;

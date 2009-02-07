@@ -40,6 +40,8 @@ in3D(true)
 		StringConvert(it->second, priority);
 	if ((it = items.find("maxconcurrent")) != items.end())
 		StringConvert(it->second, maxConcurrent);
+	if ((it = items.find("maxdist")) != items.end())
+		StringConvert(it->second, maxDist);
 	if ((it = items.find("in3d")) != items.end())
 		StringConvert(it->second, in3D);
 }

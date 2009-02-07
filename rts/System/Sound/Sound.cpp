@@ -306,6 +306,9 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	if (sources.empty() || mute || volume == 0.0f || globalVolume == 0.0f || id == 0)
 		return;
 
+	if (p.distance(myPos) > sounds[id].MaxDistance())
+		return;
+
 	if (sources[cur].IsPlaying())
 	{
 		for (size_t pos = 0; pos != sources.size(); ++pos)
@@ -317,7 +320,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 			}
 		}
 	}
-	
+
 	sources[cur++].Play(&sounds[id], p * posScale, velocity, volume);
 	if (cur == sources.size())
 		cur = 0;
@@ -341,11 +344,11 @@ void CSound::UpdateListener()
 	if (sources.empty())
 		return;
 	assert(camera);
-	float3 pos = camera->pos * posScale;
+	myPos = camera->pos * posScale;
 	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (pos - prevPos)/gu->lastFrameTime/7.0;
-	prevPos = pos;
-	alListener3f(AL_POSITION, pos.x, pos.y, pos.z);
+	const float3 velocity = (myPos - prevPos)/gu->lastFrameTime/7.0;
+	prevPos = myPos;
+	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	ALfloat ListenerOri[] = {camera->forward.x, camera->forward.y, camera->forward.z, camera->up.x, camera->up.y, camera->up.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
