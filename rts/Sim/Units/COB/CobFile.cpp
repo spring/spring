@@ -8,7 +8,7 @@
 #include "CobFile.h"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "Platform/byteorder.h"
 #include "Util.h"
 
@@ -165,7 +165,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 			// Load the wave file and store the ID for future use
 			s = "sounds/" + s + ".wav";
-			sounds.push_back(sound->GetWaveId(s));
+			sounds.push_back(sound->GetSoundId(s));
 		}
 	}
 

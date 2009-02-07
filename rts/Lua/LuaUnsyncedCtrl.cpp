@@ -57,7 +57,7 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -502,7 +502,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 	}
 	bool success = false;
 	const string soundFile = lua_tostring(L, 1);
-	const unsigned int soundID = sound->GetWaveId(soundFile, false);
+	const unsigned int soundID = sound->GetSoundId(soundFile, false);
 	if (soundID > 0) {
 		float volume = 1.0f;
 		if (args >= 2) {
