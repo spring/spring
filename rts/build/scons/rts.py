@@ -505,9 +505,11 @@ def generate(env):
 		elif env['platform'] == 'windows':
 			include_path += [os.path.join(env['mingwlibsdir'], 'include')]
 			lib_path += [os.path.join(env['mingwlibsdir'], 'lib')]
+			lib_path += [os.path.join(env['mingwlibsdir'], 'dll')]
 			if os.environ.has_key('MINGDIR'):
 				include_path += [os.path.join(os.environ['MINGDIR'], 'include')]
 				lib_path += [os.path.join(os.environ['MINGDIR'], 'lib')]
+				lib_path += [os.path.join(os.environ['MINGDIR'], 'dll')]
 			else:
 				print 'ERROR: MINGDIR environment variable not set and MSVC build unsupported.'
 				print 'Set it to your Dev-Cpp or MinGW install directory (e.g. C:\\Dev-Cpp) and try again.'
