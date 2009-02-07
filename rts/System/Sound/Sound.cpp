@@ -154,7 +154,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	}
 	else
 	{
-		size_t newid = soundItemDefs.size();
+		size_t newid = sounds.size();
 		soundItemMap::const_iterator it = soundItemDefs.find(name);
 		if (it != soundItemDefs.end())
 		{
@@ -174,7 +174,10 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 				if (hardFail)
 					ErrorMessageBox("Couldn't open wav file", name, 0);
 				else
+				{
+					logOutput.Print("CSound::GetSoundId: could not find sound %s", name.c_str());
 					return 0;
+				}
 			}
 		}
 		
