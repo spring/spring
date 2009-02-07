@@ -89,6 +89,17 @@ void Socket::SetBlocking(const bool block) const
 	}
 }
 
+void Socket::SetBroadcasting(const bool broadcast) const
+{
+	int enabled = broadcast ? 1 : 0;
+	int ret = setsockopt(mySocket, SOL_SOCKET, SO_BROADCAST, &enabled,
+			sizeof(enabled));
+	if (ret < 0) {
+		throw network_error(std::string(
+				"Setting broadcast 'enabled' state failed: ") + GetErrorMsg());
+	}
+}
+
 bool Socket::HasIncomingData(int timeout) const
 {
 #ifndef _WIN32
