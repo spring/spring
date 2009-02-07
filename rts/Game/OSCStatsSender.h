@@ -41,13 +41,35 @@ private:
 public:
 	static COSCStatsSender* GetInstance();
 
+	void SetEnabled(bool enabled);
 	bool IsEnabled() const;
 
 	bool SendInit();
 	bool Update(int frameNum);
 
+	void SetDestinationAddress(const std::string& address);
 	const std::string& GetDestinationAddress() const;
+
+	void SetDestinationPort(unsigned int port);
 	unsigned int GetDestinationPort() const;
+
+	/**
+	 * Generic method to send OSC messages to the configured receiver(s).
+	 * @param  oscAdress  the messages title/address,
+	 *                    eg: "/spring/stats/team/values"
+	 * @param  fmt        describes the parrameter types of the message to send,
+	 *                    eg: "fifs" means {float, int, float, const char*}
+	 *                    allowed types (OSC base types):
+	 *                    'i' 32bit integer [int]
+	 *                    'f' 32bit floating point number [float]
+	 *                    's' string [const char*]
+	 *                    'b' blob; byte array [const unsigned char*]
+	 * @param  params     pointers to the parameters described in fmt, eg:
+	 *                    {&someFloat, &someInt, &otherFloat, &cStr}
+	 * @return whether the sending was successfully done.
+	 */
+	bool SendPropertiesInfo(const char* oscAdress, const char* fmt,
+			void* params[]);
 
 private:
 	void UpdateDestination();
