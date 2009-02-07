@@ -20,7 +20,8 @@ buffer(_buffer),
 gain(1.0),
 pitch(1.0),
 priority(0),
-maxConcurrent(256),
+maxConcurrent(16),
+currentlyPlaying(0),
 in3D(true)
 {
 	std::map<std::string, std::string>::const_iterator it = items.find("name");
@@ -42,3 +43,23 @@ in3D(true)
 	if ((it = items.find("in3d")) != items.end())
 		StringConvert(it->second, in3D);
 }
+
+bool SoundItem::PlayNow()
+{
+	if (maxConcurrent >= currentlyPlaying)
+	{
+		currentlyPlaying++;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void SoundItem::StopPlay()
+{
+	assert(currentlyPlaying > 0);
+	--currentlyPlaying;
+}
+

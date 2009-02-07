@@ -20,16 +20,19 @@ public:
 	/// will stop during deletion
 	~SoundSource();
 
+	void Update();
+
 	bool IsPlaying() const;
 	void Stop();
 	/// will stop a currently playing sound, if any
-	void Play(const SoundItem& buffer, const float3& pos, const float3& velocity, float volume);
+	void Play(SoundItem* buffer, const float3& pos, const float3& velocity, float volume);
 	static void SetPitch(float newPitch);
 
 private:
 	/// pitch shared by all sources
 	static float globalPitch;
 	ALuint id;
+	SoundItem* curPlaying;
 };
 
 #endif
