@@ -9,7 +9,7 @@ class ModSound
 public:
 	static ModSound& Get();
 	std::string GetSoundFile(const std::string& name);
-	unsigned GetSoundId(const std::string& name);
+	size_t GetSoundId(const std::string& name);
 
 private:
 	ModSound();

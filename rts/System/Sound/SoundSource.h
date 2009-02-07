@@ -5,6 +5,7 @@
 #include <boost/noncopyable.hpp>
 
 class float3;
+class SoundBuffer;
 
 class SoundSource : boost::noncopyable
 {
@@ -14,7 +15,7 @@ public:
 
 	bool IsPlaying() const;
 	void Stop();
-	void Play(ALuint buffer, const float3& pos, const float3& velocity, float volume, bool relative);
+	void Play(const SoundBuffer& buffer, const float3& pos, const float3& velocity, float volume, bool relative);
 	void SetPitch(float newPitch) const;
 
 private:

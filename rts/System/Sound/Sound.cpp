@@ -5,6 +5,7 @@
 #include <AL/alc.h>
 
 #include "SoundSource.h"
+#include "SoundBuffer.h"
 #include "Sim/Units/Unit.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
@@ -14,7 +15,6 @@
 #include "OggStream.h"
 #include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
-#include "Platform/byteorder.h"
 
 // Ogg-Vorbis audio stream object
 COggStream oggStream;
@@ -80,7 +80,7 @@ CSound::CSound()
 	}
 
 	cur = 0;
-
+	buffers.resize(1); // empty ("zero") buffer
 	posScale.x = 0.02f;
 	posScale.y = 0.0005f;
 	posScale.z = 0.02f;
@@ -90,11 +90,9 @@ CSound::~CSound()
 {
 	if (!sources.empty())
 	{
-		sources.resize(0); // delete all sources
-		std::map<std::string, ALuint>::iterator it;
-		for (it = soundMap.begin(); it != soundMap.end(); ++it) {
-			alDeleteBuffers(1, &it->second);
-		}
+		sources.clear(); // delete all sources
+		soundMap.clear();
+		buffers.clear(); // delete all buffers
 		ALCcontext *curcontext = alcGetCurrentContext();
 		ALCdevice *curdevice = alcGetContextsDevice(curcontext);
 		alcMakeContextCurrent(NULL);
@@ -167,38 +165,38 @@ void CSound::SetVolume(float v)
 	globalVolume = v;
 }
 
-void CSound::PlaySample(int id, float volume)
+void CSound::PlaySample(size_t id, float volume)
 {
 	PlaySample(id, ZeroVector, ZeroVector, volume, true);
 }
 
 
-void CSound::PlaySample(int id, const float3& p, float volume)
+void CSound::PlaySample(size_t id, const float3& p, float volume)
 {
 	PlaySample(id, p, ZeroVector, volume, false);
 }
 
-void CSound::PlaySample(int id, const float3& p, const float3& velocity, float volume)
+void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume)
 {
 	PlaySample(id, p, velocity, volume, false);
 }
 
-void CSound::PlaySample(int id, CUnit* u,float volume)
+void CSound::PlaySample(size_t id, CUnit* u,float volume)
 {
 	PlaySample(id, u->pos, u->speed, volume);
 }
 
-void CSound::PlaySample(int id, CWorldObject* p,float volume)
+void CSound::PlaySample(size_t id, CWorldObject* p,float volume)
 {
 	PlaySample(id,p->pos,volume);
 }
 
-void CSound::PlayUnitActivate(int id, CUnit* p, float volume)
+void CSound::PlayUnitActivate(size_t id, CUnit* p, float volume)
 {
 	PlaySample (id, p, volume);
 }
 
-void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
+void CSound::PlayUnitReply(size_t id, CUnit * p, float volume, bool squashDupes)
 {
 	GML_RECMUTEX_LOCK(sound); // PlayUnitReply
 
@@ -218,7 +216,7 @@ void CSound::PlayUnitReply(int id, CUnit * p, float volume, bool squashDupes)
 	PlaySample(id, volume * unitReplyVolume);
 }
 
-void CSound::PlaySample(int id, const float3& p, const float3& velocity, float volume, bool relative)
+void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
@@ -237,7 +235,7 @@ void CSound::PlaySample(int id, const float3& p, const float3& velocity, float v
 		}
 	}
 	
-	sources[cur++].Play(id, p * posScale, velocity, volume, relative);
+	sources[cur++].Play(buffers[id], p * posScale, velocity, volume, relative);
 	if (cur == sources.size())
 		cur = 0;
 	CheckError("CSound::PlaySample");
@@ -254,8 +252,6 @@ void CSound::Update()
 	CheckError("CSound::Update");
 	UpdateListener();
 }
-
-
 
 void CSound::UpdateListener()
 {
@@ -275,161 +271,52 @@ void CSound::UpdateListener()
 }
 
 
-#pragma pack(push, 1)
-// Header copied from WavLib by Michael McTernan
-struct WAVHeader
+size_t CSound::LoadALBuffer(const std::string& path)
 {
-	Uint8 riff[4];         // "RIFF"
-	Sint32 totalLength;
-	Uint8 wavefmt[8];      // WAVEfmt "
-	Sint32 length;         // Remaining length 4 bytes
-	Sint16 format_tag;
-	Sint16 channels;       // Mono=1 Stereo=2
-	Sint32 SamplesPerSec;
-	Sint32 AvgBytesPerSec;
-	Sint16 BlockAlign;
-	Sint16 BitsPerSample;
-	Uint8 data[4];         // "data"
-	Sint32 datalen;        // Raw data length 4 bytes
-};
-#pragma pack(pop)
-
-bool CSound::ReadWAV(const char* name, Uint8* buf, int size, ALuint albuffer)
-{
-	WAVHeader* header = (WAVHeader*) buf;
-
-	if (memcmp(header->riff, "RIFF", 4) || memcmp(header->wavefmt, "WAVEfmt", 7)) {
-		if (hardFail) {
-			handleerror(0, "ReadWAV: invalid header.", name, 0);
-		}
-		return false;
-	}
-
-#define hswabword(c) header->c = swabword(header->c)
-#define hswabdword(c) header->c = swabdword(header->c)
-	hswabword(format_tag);
-	hswabword(channels);
-	hswabword(BlockAlign);
-	hswabword(BitsPerSample);
-
-	hswabdword(totalLength);
-	hswabdword(length);
-	hswabdword(SamplesPerSec);
-	hswabdword(AvgBytesPerSec);
-	hswabdword(datalen);
-#undef hswabword
-#undef hswabdword
-
-	if (header->format_tag != 1) { // Microsoft PCM format?
-		if (hardFail) {
-			handleerror(0,"ReadWAV: invalid format tag.", name, 0);
-		}
-		return false;
-	}
-
-	ALenum format;
-	if (header->channels == 1) {
-		if (header->BitsPerSample == 8) format = AL_FORMAT_MONO8;
-		else if (header->BitsPerSample == 16) format = AL_FORMAT_MONO16;
-		else {
-			if (hardFail) {
-				handleerror(0,"ReadWAV: invalid number of bits per sample (mono).", name, 0);
-			}
-			return false;
-		}
-	}
-	else if (header->channels == 2) {
-		if (header->BitsPerSample == 8) format = AL_FORMAT_STEREO8;
-		else if (header->BitsPerSample == 16) format = AL_FORMAT_STEREO16;
-		else {
-			if (hardFail) {
-				handleerror(0,"ReadWAV: invalid number of bits per sample (stereo).", name, 0);
-			}
-			return false;
-		}
-	}
-	else {
-		if (hardFail) {
-			handleerror(0, "ReadWAV (%s): invalid number of channels.", name, 0);
-		}
-		return false;
-	}
-
-	if (header->datalen > size - sizeof(WAVHeader)) {
-//		logOutput.Print("\n");
-		logOutput.Print("OpenAL: %s has data length %d greater than actual data length %ld\n",
-						name, header->datalen, size - sizeof(WAVHeader));
-//		logOutput.Print("OpenAL: size %d\n", size);
-//		logOutput.Print("OpenAL: sizeof(WAVHeader) %d\n", sizeof(WAVHeader));
-//		logOutput.Print("OpenAL: format_tag %d\n", header->format_tag);
-//		logOutput.Print("OpenAL: channels %d\n", header->channels);
-//		logOutput.Print("OpenAL: BlockAlign %d\n", header->BlockAlign);
-//		logOutput.Print("OpenAL: BitsPerSample %d\n", header->BitsPerSample);
-//		logOutput.Print("OpenAL: totalLength %d\n", header->totalLength);
-//		logOutput.Print("OpenAL: length %d\n", header->length);
-//		logOutput.Print("OpenAL: SamplesPerSec %d\n", header->SamplesPerSec);
-//		logOutput.Print("OpenAL: AvgBytesPerSec %d\n", header->AvgBytesPerSec);
-
-		// FIXME: setting datalen to size - sizeof(WAVHeader) only
-		// works for some files that have a garbage datalen field
-		// in their header, others cause SEGV's inside alBufferData()
-		// (eg. ionbeam.wav in XTA 9.2) -- Kloot
-		// header->datalen = size - sizeof(WAVHeader);
-		header->datalen = 1;
-	}
-
-	alBufferData(albuffer, format, buf + sizeof(WAVHeader), header->datalen, header->SamplesPerSec);
-	return CheckError("ReadWAV");
-}
-
-
-ALuint CSound::LoadALBuffer(const std::string& path)
-{
-	Uint8* buf = 0;
-	ALuint buffer;
-	alGenBuffers(1, &buffer);
-
-	if (!CheckError("error generating OpenAL sound buffer"))
-		return 0;
-
 	CFileHandler file(path);
 
+	std::vector<uint8_t> buf;
 	if (file.FileExists()) {
-		buf = new Uint8[file.FileSize()];
-		file.Read(buf, file.FileSize());
+		buf.resize(file.FileSize());
+		file.Read(&buf[0], file.FileSize());
 	} else {
 		if (hardFail) {
 			handleerror(0, "Couldn't open wav file", path.c_str(),0);
 		}
-		alDeleteBuffers(1, &buffer);
 		return 0;
 	}
 
-	const bool success = ReadWAV(path.c_str(), buf, file.FileSize(), buffer);
-	delete[] buf;
+	SoundBuffer* buffer = new SoundBuffer();
+	const bool success = buffer->LoadWAV(path, buf, hardFail);
 
-	if (!success) {
-		alDeleteBuffers(1, &buffer);
+	CheckError("CSound::LoadALBuffer");
+	if (!success)
+	{
+		delete buffer;
 		return 0;
 	}
-
-	return buffer;
+	else
+	{
+		size_t bufId = buffers.size();
+		buffers.push_back(buffer);
+		soundMap[path] = bufId;
+		return bufId;
+	}
 }
 
 
-ALuint CSound::GetWaveId(const std::string& path, bool _hardFail)
+size_t CSound::GetWaveId(const std::string& path, bool _hardFail)
 {
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
 	if (sources.empty())
 		return 0;
-	std::map<std::string, ALuint>::const_iterator it = soundMap.find(path);
+	bufferMap::const_iterator it = soundMap.find(path);
 	if (it != soundMap.end()) {
 		return it->second;
 	}
 
 	hardFail = _hardFail;
-	const ALuint buffer = LoadALBuffer(path);
-	soundMap[path] = buffer;
+	const size_t buffer = LoadALBuffer(path);
 	return buffer;
 }
 
