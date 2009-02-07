@@ -91,9 +91,16 @@ void Socket::SetBlocking(const bool block) const
 
 void Socket::SetBroadcasting(const bool broadcast) const
 {
-	int enabled = broadcast ? 1 : 0;
-	int ret = setsockopt(mySocket, SOL_SOCKET, SO_BROADCAST, &enabled,
-			sizeof(enabled));
+	const int enabled = broadcast ? 1 : 0;
+#ifndef _WIN32
+	const int enabled_size = sizeof(enabled);
+	const void* enabled_p = (const void*) &enabled;
+#else
+	const int enabled_size = sizeof(enabled);
+	const char* enabled_p = (const char*) &enabled;
+#endif
+	int ret = setsockopt(mySocket, SOL_SOCKET, SO_BROADCAST, enabled_p,
+			enabled_size);
 	if (ret < 0) {
 		throw network_error(std::string(
 				"Setting broadcast 'enabled' state failed: ") + GetErrorMsg());

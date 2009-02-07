@@ -27,8 +27,9 @@
 #include "ConfigHandler.h"
 #include "LogOutput.h"
 
+#ifndef _WIN32
 #include <arpa/inet.h>
-
+#endif
 
 COSCStatsSender* COSCStatsSender::singleton = NULL;
 
@@ -36,7 +37,8 @@ COSCStatsSender* COSCStatsSender::singleton = NULL;
 COSCStatsSender::COSCStatsSender(const std::string& dstAddress,
 		unsigned int dstPort)
 		: sendingEnabled(false), dstAddress(dstAddress), dstPort(dstPort),
-		oscOutputBuffer(NULL), oscPacker(NULL), outSocket(NULL)
+		destination(NULL), outSocket(NULL),
+		oscOutputBuffer(NULL), oscPacker(NULL)
 {
 	SetEnabled(configHandler.Get("OscStatsSenderEnabled", false));
 }
@@ -66,6 +68,8 @@ void COSCStatsSender::SetEnabled(bool enabled) {
 			oscPacker = NULL;
 			delete outSocket;
 			outSocket = NULL;
+			delete destination;
+			destination = NULL;
 			delete [] oscOutputBuffer;
 			oscOutputBuffer = NULL;
 		}
@@ -160,9 +164,12 @@ bool COSCStatsSender::SendPropertiesInfo(const char* oscAdress, const char* fmt,
 
 void COSCStatsSender::UpdateDestination() {
 
-	destination.sin_family = AF_INET;
-	destination.sin_addr.s_addr = inet_addr(dstAddress.c_str());
-	destination.sin_port = htons(dstPort);
+	if (destination == NULL) {
+		destination = new sockaddr_in();
+	}
+	destination->sin_family = AF_INET;
+	destination->sin_addr.s_addr = inet_addr(dstAddress.c_str());
+	destination->sin_port = htons(dstPort);
 }
 
 bool COSCStatsSender::IsTimeToSend(int frameNum) {
@@ -180,7 +187,7 @@ bool COSCStatsSender::SendOscBuffer() {
 
 	if (oscPacker->IsReady()) {
 		outSocket->SendTo((const unsigned char*) oscPacker->Data(),
-				oscPacker->Size(), &destination);
+				oscPacker->Size(), destination);
 		oscPacker->Clear();
 
 		success = true;

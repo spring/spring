@@ -27,8 +27,8 @@ const char* const OSC_MSG_TOPIC_TEAM_TITLES  = "/spring/stats/team/titles";
 const char* const OSC_MSG_TOPIC_TEAM_VALUES  = "/spring/stats/team/values";
 
 #include <string>
-#include <netinet/in.h>
 
+struct sockaddr_in;
 namespace netcode { class UDPSocket; }
 namespace osc { class OutboundPacketStream; }
 
@@ -95,10 +95,10 @@ private:
 	bool sendingEnabled;
 	std::string dstAddress;
 	unsigned int dstPort;
-	struct sockaddr_in destination;
+	struct sockaddr_in* destination;
+	netcode::UDPSocket* outSocket;
 	char* oscOutputBuffer;
 	osc::OutboundPacketStream* oscPacker;
-	netcode::UDPSocket* outSocket;
 };
 
 #define oscStatsSender COSCStatsSender::GetInstance()
