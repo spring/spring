@@ -22,6 +22,7 @@ public:
 
 	void Update();
 
+	int GetCurrentPriority() const;
 	bool IsPlaying() const;
 	void Stop();
 	/// will stop a currently playing sound, if any
