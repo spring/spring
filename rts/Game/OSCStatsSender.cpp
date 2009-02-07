@@ -25,6 +25,7 @@
 #include "Game/PlayerHandler.h"
 #include "GlobalUnsynced.h"
 #include "ConfigHandler.h"
+#include "LogOutput.h"
 
 #include <arpa/inet.h>
 
@@ -34,28 +35,42 @@ COSCStatsSender* COSCStatsSender::singleton = NULL;
 
 COSCStatsSender::COSCStatsSender(const std::string& dstAddress,
 		unsigned int dstPort)
-		: sendingEnabled(configHandler.Get("OscStatsSenderEnabled", false)),
-		dstAddress(dstAddress), dstPort(dstPort),
+		: sendingEnabled(false), dstAddress(dstAddress), dstPort(dstPort),
 		oscOutputBuffer(NULL), oscPacker(NULL), outSocket(NULL)
 {
-	if (IsEnabled()) {
-		oscOutputBuffer = new char[OSC_OUTPUT_BUFFER_SIZE];
-		oscPacker = new osc::OutboundPacketStream(oscOutputBuffer,
-				OSC_OUTPUT_BUFFER_SIZE);
-		outSocket = new netcode::UDPSocket(OSC_IN_PORT);
-		UpdateDestination();
-
-		SendInit();
-	}
+	SetEnabled(configHandler.Get("OscStatsSenderEnabled", false));
 }
 COSCStatsSender::~COSCStatsSender() {
-
-	delete [] oscOutputBuffer;
-	delete outSocket;
-	delete oscPacker;
+	SetEnabled(false);
 }
 
 
+void COSCStatsSender::SetEnabled(bool enabled) {
+
+	bool statusChanged = (enabled != sendingEnabled);
+	this->sendingEnabled = enabled;
+
+	if (statusChanged) {
+		if (enabled) {
+			oscOutputBuffer = new char[OSC_OUTPUT_BUFFER_SIZE];
+			oscPacker = new osc::OutboundPacketStream(oscOutputBuffer,
+					OSC_OUTPUT_BUFFER_SIZE);
+			outSocket = new netcode::UDPSocket(OSC_IN_PORT);
+			outSocket->SetBroadcasting(true);
+			UpdateDestination();
+			logOutput.Print("Sending spring Statistics over OSC to: %s:%u", dstAddress.c_str(), dstPort);
+
+			SendInit();
+		} else {
+			delete oscPacker;
+			oscPacker = NULL;
+			delete outSocket;
+			outSocket = NULL;
+			delete [] oscOutputBuffer;
+			oscOutputBuffer = NULL;
+		}
+	}
+}
 bool COSCStatsSender::IsEnabled() const {
 	return sendingEnabled;
 }
@@ -97,12 +112,49 @@ bool COSCStatsSender::Update(int frameNum) {
 }
 
 
+void COSCStatsSender::SetDestinationAddress(const std::string& address) {
+	this->dstAddress = address;
+	UpdateDestination();
+}
 const std::string& COSCStatsSender::GetDestinationAddress() const {
 	return dstAddress;
 }
 
+void COSCStatsSender::SetDestinationPort(unsigned int port) {
+	this->dstPort = port;
+	UpdateDestination();
+}
 unsigned int COSCStatsSender::GetDestinationPort() const {
 	return dstPort;
+}
+
+
+bool COSCStatsSender::SendPropertiesInfo(const char* oscAdress, const char* fmt,
+		void* params[]) {
+
+	if (IsEnabled() && (oscAdress != NULL) && (fmt != NULL)) {
+		(*oscPacker) << osc::BeginBundleImmediate
+				<< osc::BeginMessage(oscAdress);
+		int param_size = strlen(fmt);
+		for (int i=0; i < param_size; ++i) {
+			const char type = fmt[i];
+			const void* param_p = params[i];
+			switch (type) {
+				case 'i': { (*oscPacker) << *((const int*) param_p); }
+				case 'f': { (*oscPacker) << *((const float*) param_p); }
+				case 's': { (*oscPacker) << *((const char**) param_p); }
+				case 'b': { (*oscPacker) << *((const unsigned char**) param_p); }
+				default: {
+					throw "Illegal OSC type used, has to be one of: i, f, s, b";
+				}
+			}
+		}
+		(*oscPacker) << osc::EndMessage << osc::EndBundle;
+
+		return SendOscBuffer();
+	} else {
+		return false;
+	}
 }
 
 
