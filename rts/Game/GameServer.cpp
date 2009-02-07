@@ -1150,7 +1150,7 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "skip")
 	{
-		if (demoReader && serverframenum > 1)
+		if (demoReader)
 		{
 			const std::string timeStr = action.extra;
 			int endFrame;

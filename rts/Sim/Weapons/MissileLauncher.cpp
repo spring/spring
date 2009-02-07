@@ -6,7 +6,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/MissileProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
@@ -46,7 +45,7 @@ void CMissileLauncher::Update(void)
 	CWeapon::Update();
 }
 
-void CMissileLauncher::Fire(void)
+void CMissileLauncher::FireImpl()
 {
 	float3 dir;
 	if (onlyForward) {
@@ -76,9 +75,6 @@ void CMissileLauncher::Fire(void)
                 ? (int) (range / projectileSpeed + 25 * weaponDef->selfExplode)
                 : weaponDef->flighttime,
 			targetUnit, weaponDef, targetPos);
-
-	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
-		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 bool CMissileLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)

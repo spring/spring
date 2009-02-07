@@ -6,7 +6,6 @@
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/EmgProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
@@ -86,12 +85,8 @@ void CEmgCannon::Init(void)
 	CWeapon::Init();
 }
 
-void CEmgCannon::Fire(void)
+void CEmgCannon::FireImpl()
 {
-#ifdef TRACE_SYNC
-	tracefile << "Emg fire: ";
-	tracefile << sprayAngle << " " << gs->GetRandSeed() << " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
-#endif
 	float3 dir;
 	if(onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)){		//the taairmovetype cant align itself properly, change back when that is fixed
 		dir=owner->frontdir;
@@ -105,9 +100,6 @@ void CEmgCannon::Fire(void)
 	new CEmgProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef->visuals.color, weaponDef->intensity, (int) (range / projectileSpeed),
 		weaponDef);
-
-	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
-		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 

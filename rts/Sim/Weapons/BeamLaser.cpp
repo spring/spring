@@ -16,7 +16,6 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "PlasmaRepulser.h"
-#include "Sound.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
@@ -147,7 +146,7 @@ void CBeamLaser::Init(void)
 	muzzleFlareSize = 0;
 }
 
-void CBeamLaser::Fire(void)
+void CBeamLaser::FireImpl(void)
 {
 	float3 dir;
 	if (onlyForward && dynamic_cast<CAirMoveType*>(owner->moveType)) {
@@ -155,16 +154,10 @@ void CBeamLaser::Fire(void)
 		dir = owner->frontdir;
 	} else {
 		if (salvoLeft == salvoSize - 1) {
-			if (fireSoundId)
-				sound->PlaySample(fireSoundId, owner, fireSoundVolume);
-
 			dir = targetPos - weaponMuzzlePos;
 			dir.Normalize();
 			oldDir = dir;
 		} else if (weaponDef->beamburst) {
-			if (fireSoundId && !weaponDef->soundTrigger)
-				sound->PlaySample(fireSoundId, owner, fireSoundVolume);
-
 			dir = targetPos-weaponMuzzlePos;
 			dir.Normalize();
 		} else {

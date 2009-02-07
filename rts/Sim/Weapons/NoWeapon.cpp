@@ -27,13 +27,11 @@ void CNoWeapon::Init(void)
 {
 }
 
-void CNoWeapon::Fire(void)
+void CNoWeapon::FireImpl()
 {
-
 }
 
-void CNoWeapon::SlowUpdate(void)
+void CNoWeapon::SlowUpdate()
 {
-
 }
 

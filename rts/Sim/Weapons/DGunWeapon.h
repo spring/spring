@@ -13,6 +13,9 @@ public:
 	void Fire(void);
 	void Update(void);
 	void Init(void);
+
+private:
+	virtual void FireImpl();
 };
 
 #endif // __DGUN_WEAPON_H__

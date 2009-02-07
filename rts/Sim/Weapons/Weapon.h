@@ -54,7 +54,7 @@ public:
 
 	bool ShouldCheckForNewTarget() const;
 
-	virtual void Fire() {};					// should be implemented by subclasses
+	void Fire();
 	void ScriptReady(void);
 
 	void StopAttackingAllyTeam(int ally);
@@ -156,6 +156,9 @@ public:
 	unsigned int collisionFlags;
 
 	float fuelUsage;
+
+private:
+	virtual void FireImpl() {};
 };
 
 #endif /* WEAPON_H */

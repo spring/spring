@@ -22,7 +22,6 @@ public:
 	CCannon(CUnit* owner);
 	virtual ~CCannon();
 	void Init(void);
-	void Fire(void);
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 	void Update();
 	virtual bool AttackGround(float3 pos,bool userTarget);
@@ -42,6 +41,9 @@ public:
 	void SlowUpdate(void);
 	/// tells where to point the gun to hit the point at pos+diff
 	float3 GetWantedDir(const float3& diff);
+
+private:
+	virtual void FireImpl();
 };
 
 #endif // __CANNON_H__
