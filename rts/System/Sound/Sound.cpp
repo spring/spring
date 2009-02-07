@@ -98,31 +98,7 @@ CSound::CSound()
 	}
 	parser.Execute();
 	const LuaTable root = parser.GetRoot();
-	const LuaTable Sounds = root.SubTable("SoundItems");
-
-	for (int key = 0; key < 65000; ++key)
-	{
-		const LuaTable soundItem = Sounds.SubTable(key);
-		if (!soundItem.IsValid())
-			break;
-		else
-		{
-			soundItemDef temp;
-			soundItem.GetMap(temp);
-			soundItemDef::const_iterator it = temp.find("name"); // get name-tag
-			if (it == temp.end()) // no name, so set file as name
-				it = temp.find("file");
-			
-			if (it == temp.end()) // neither name nor file
-			{
-				logOutput.Print("Sounds.lua error: SoundItems has subtable without name and file");
-			}
-			else
-			{
-				soundItemDefs[it->second] = temp;
-			}
-		}
-	}
+	soundItemTable = root.SubTable("SoundItems");
 }
 
 CSound::~CSound()
@@ -145,6 +121,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	GML_RECMUTEX_LOCK(sound);
 	if (sources.empty())
 		return 0;
+
 	soundMapT::const_iterator it = soundMap.find(name);
 	if (it != soundMap.end())
 	{
@@ -154,18 +131,36 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	else
 	{
 		size_t newid = sounds.size();
-		soundItemMap::const_iterator it = soundItemDefs.find(name);
-		if (it != soundItemDefs.end())
+
+		const LuaTable soundItem = soundItemTable.SubTable(name);
+		if (soundItem.IsValid())
 		{
-			sounds.push_back(new SoundItem(GetWaveBuffer(name, hardFail), it->second)); // itemDef found, create a new item
-			return newid;
+			soundItemDef temp;
+			soundItem.GetMap(temp);
+			soundItemDef::const_iterator it = temp.find("file");
+			if (it == temp.end())
+			{
+				if (hardFail)
+					ErrorMessageBox("SoundItem does not have file specified ", name, 0);
+				else
+				{
+					logOutput.Print("SoundItem %s has no file tag", name.c_str());
+					return 0;
+				}
+			}
+			else
+			{
+				sounds.push_back(new SoundItem(GetWaveBuffer(it->second, hardFail), temp));
+				return newid;
+			}
 		}
 		else
 		{
 			if (LoadALBuffer(name, hardFail) > 0) // maybe raw filename?
 			{
 				soundItemDef temp = defaultItem;
-				sounds.push_back(new SoundItem(GetWaveBuffer(name, hardFail), it->second)); // use raw file with default values
+				temp["name"] = name;
+				sounds.push_back(new SoundItem(GetWaveBuffer(name, hardFail), temp)); // use raw file with default values
 				return newid;
 			}
 			else
