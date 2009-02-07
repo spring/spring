@@ -94,7 +94,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 
 	if (header->datalen > buffer.size() - sizeof(WAVHeader)) {
 //		logOutput.Print("\n");
-		logOutput.Print("OpenAL: %s has data length %d greater than actual data length %ld\n",
+		logOutput.Print("OpenAL: file %s has data length %d greater than actual data length %ld\n",
 						file.c_str(), header->datalen, buffer.size() - sizeof(WAVHeader));
 //		logOutput.Print("OpenAL: size %d\n", size);
 //		logOutput.Print("OpenAL: sizeof(WAVHeader) %d\n", sizeof(WAVHeader));

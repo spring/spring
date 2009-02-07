@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <stdexcept>
+#include <cfloat>
 
 #include "SoundBuffer.h"
 
@@ -19,6 +20,7 @@ SoundItem::SoundItem(boost::shared_ptr<SoundBuffer> _buffer, const std::map<std:
 buffer(_buffer),
 gain(1.0),
 pitch(1.0),
+maxDist(FLT_MAX),
 priority(0),
 maxConcurrent(16),
 currentlyPlaying(0),

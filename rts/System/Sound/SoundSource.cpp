@@ -85,6 +85,8 @@ void SoundSource::Play(SoundItem* item, const float3& pos, const float3& velocit
 	alSourcei(id, AL_LOOPING, false);
 	alSourcei(id, AL_SOURCE_RELATIVE, item->in3D);
 	alSourcePlay(id);
+	if (item->buffer->GetId() == 0)
+		logOutput.Print("SoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
 	CheckError("SoundSource::Play");
 }
 
