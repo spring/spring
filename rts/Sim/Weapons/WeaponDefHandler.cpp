@@ -561,21 +561,27 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 	}
 
 	if (name != "") {
-		if (name.find(".wav") == -1) {
-	 		// .wav extension missing, add it
-			name += ".wav";
+		if (!sound->HasSoundItem(name))
+		{
+			if (name.find(".wav") == -1) {
+				// .wav extension missing, add it
+				name += ".wav";
+			}
+			const string soundPath = "sounds/" + name;
+			CFileHandler sfile(soundPath);
+			if (sfile.FileExists()) {
+				// only push data if we extracted a valid name
+				GuiSoundSet::Data soundData(name, 0, volume);
+				gsound.sounds.push_back(soundData);
+				int id = sound->GetSoundId(soundPath);
+				gsound.setID(0, id);
+			}
 		}
-
-		const string soundPath = "sounds/" + name;
-		CFileHandler sfile(soundPath);
-
-		if (sfile.FileExists()) {
-			// only push data if we extracted a valid name
+		else
+		{
 			GuiSoundSet::Data soundData(name, 0, volume);
 			gsound.sounds.push_back(soundData);
-
-			int id = sound->GetSoundId(soundPath);
-
+			int id = sound->GetSoundId(name);
 			gsound.setID(0, id);
 		}
 	}

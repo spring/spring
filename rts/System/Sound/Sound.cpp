@@ -118,6 +118,23 @@ CSound::~CSound()
 	}
 }
 
+bool CSound::HasSoundItem(const std::string& name)
+{
+	soundMapT::const_iterator it = soundMap.find(name);
+	if (it != soundMap.end())
+	{
+		return true;
+	}
+	else
+	{
+		const LuaTable soundItem = soundItemTable.SubTable(name);
+		if (soundItem.IsValid())
+			return true;
+		else
+			return false;
+	}
+}
+
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
 	GML_RECMUTEX_LOCK(sound);

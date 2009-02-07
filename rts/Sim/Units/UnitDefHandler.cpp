@@ -865,19 +865,25 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
                                 const string& fileName, const float volume)
 {
-	string soundFile = "sounds/" + fileName;
-
-	if (soundFile.find(".wav") == -1) {
-	 	// .wav extension missing, add it
-		soundFile += ".wav";
+	if (!sound->HasSoundItem(fileName))
+	{
+		string soundFile = "sounds/" + fileName;
+	
+		if (soundFile.find(".wav") == -1) {
+			// .wav extension missing, add it
+			soundFile += ".wav";
+		}
+		CFileHandler fh(soundFile);
+		if (fh.FileExists()) {
+			// we have a valid soundfile: store name, ID, and default volume
+			const int id = sound->GetSoundId(soundFile);
+			GuiSoundSet::Data soundData(fileName, id, volume);
+			gsound.sounds.push_back(soundData);
+		}
 	}
-
-	CFileHandler fh(soundFile);
-
-	if (fh.FileExists()) {
-		// we have a valid soundfile: store name, ID, and default volume
-		const int id = sound->GetSoundId(soundFile);
-
+	else
+	{
+		const int id = sound->GetSoundId(fileName);
 		GuiSoundSet::Data soundData(fileName, id, volume);
 		gsound.sounds.push_back(soundData);
 	}
