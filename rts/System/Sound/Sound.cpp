@@ -81,7 +81,6 @@ CSound::CSound()
 		alDopplerFactor(0.1);
 	}
 
-	cur = 0;
 	buffers.resize(1); // empty ("zero") buffer
 	
 	soundItemDef temp;
@@ -309,21 +308,31 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	if (p.distance(myPos) > sounds[id].MaxDistance())
 		return;
 
-	if (sources[cur].IsPlaying())
+	bool found1Free = false;
+	int minPriority = 1;
+	size_t minPos = 0;
+
+	for (size_t pos = 0; pos != sources.size(); ++pos)
 	{
-		for (size_t pos = 0; pos != sources.size(); ++pos)
+		if (!sources[pos].IsPlaying())
 		{
-			if (!sources[pos].IsPlaying())
+			minPos = pos;
+			found1Free = true;
+			break;
+		}
+		else
+		{
+			if (sources[pos].GetCurrentPriority() < minPriority)
 			{
-				cur = pos;
-				break;
+				found1Free = true;
+				minPriority = sources[pos].GetCurrentPriority();
+				minPos = pos;
 			}
 		}
 	}
 
-	sources[cur++].Play(&sounds[id], p * posScale, velocity, volume);
-	if (cur == sources.size())
-		cur = 0;
+	if (found1Free)
+		sources[minPos].Play(&sounds[id], p * posScale, velocity, volume);
 	CheckError("CSound::PlaySample");
 }
 
@@ -337,6 +346,8 @@ void CSound::Update()
 
 	CheckError("CSound::Update");
 	UpdateListener();
+	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+		it->Update();
 }
 
 void CSound::UpdateListener()

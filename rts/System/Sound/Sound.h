@@ -60,7 +60,6 @@ private:
 
 	void UpdateListener();
 
-	size_t cur;
 	float globalVolume;
 
 	typedef std::map<std::string, size_t> bufferMapT;

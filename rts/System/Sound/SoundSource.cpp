@@ -37,8 +37,14 @@ SoundSource::~SoundSource()
 
 void SoundSource::Update()
 {
-	if (!IsPlaying())
+	if (!IsPlaying() && curPlaying)
 		Stop();
+}
+
+int SoundSource::GetCurrentPriority() const
+{
+	assert(curPlaying);
+	return curPlaying->priority;
 }
 
 bool SoundSource::IsPlaying() const
