@@ -32,6 +32,8 @@ public:
 	{
 		return id;
 	};
+	
+	int BufferSize() const;
 
 private:
 	std::string filename;
