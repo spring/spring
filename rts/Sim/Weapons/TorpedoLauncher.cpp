@@ -4,7 +4,6 @@
 #include "Sim/Projectiles/WeaponProjectiles/TorpedoProjectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "TorpedoLauncher.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
@@ -43,19 +42,16 @@ void CTorpedoLauncher::Update(void)
 	CWeapon::Update();
 }
 
-void CTorpedoLauncher::Fire(void)
+void CTorpedoLauncher::FireImpl()
 {
 	float3 dir;
-//	if(onlyForward){
-//		dir=owner->frontdir;
-//	} else {
-		dir=targetPos-weaponMuzzlePos;
+	dir=targetPos-weaponMuzzlePos;
+	dir.Normalize();
+	if(weaponDef->trajectoryHeight>0){
+		dir.y+=weaponDef->trajectoryHeight;
 		dir.Normalize();
-		if(weaponDef->trajectoryHeight>0){
-			dir.y+=weaponDef->trajectoryHeight;
-			dir.Normalize();
-		}
-//	}
+	}
+
 	float3 startSpeed;
 	if (!weaponDef->fixedLauncher) {
 		startSpeed = dir * weaponDef->startvelocity;
@@ -67,9 +63,6 @@ void CTorpedoLauncher::Fire(void)
 	new CTorpedoProjectile(weaponMuzzlePos, startSpeed, owner, areaOfEffect, projectileSpeed,
 		tracking, weaponDef->flighttime == 0? (int) (range / projectileSpeed + 25): weaponDef->flighttime,
 		targetUnit, weaponDef);
-
-	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
-		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 bool CTorpedoLauncher::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
