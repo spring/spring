@@ -296,7 +296,7 @@ def CheckHeadersAndLibraries(env, conf):
 	d += [Dependency(['freetype'],       ['ft2build.h'])]
 	d += [Dependency(['IL', 'devil'],    ['IL/il.h'])]
 	d += [Dependency(['ILU', 'ilu'],     ['IL/ilu.h'])]	
-	d += [Dependency(['openal', 'openal32'], ['AL/al.h'])]
+	d += [Dependency(['openal', 'openal32', 'OpenAL32'], ['AL/al.h'])]
 
 	if env['platform'] == 'windows':
 		d += [Dependency(['imagehlp'], [])]
