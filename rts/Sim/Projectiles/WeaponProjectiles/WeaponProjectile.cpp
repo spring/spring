@@ -3,7 +3,7 @@
 
 #include "WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"

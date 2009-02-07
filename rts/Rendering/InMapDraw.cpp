@@ -20,7 +20,7 @@
 #include "EventHandler.h"
 #include "NetProtocol.h"
 #include "LogOutput.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "creg/STL_List.h"
 
 
