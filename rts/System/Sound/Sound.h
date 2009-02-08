@@ -8,7 +8,6 @@
 #include <boost/shared_ptr.hpp>
 
 #include "float3.h"
-#include "Lua/LuaParser.h"
 
 class CWorldObject;
 class CUnit;
@@ -87,10 +86,10 @@ private:
 	bool mute;
 	unsigned numEmptyPlayRequests;
 
-	LuaTable soundRoot, soundItemTable;
-	LuaParser parser;
 	typedef std::map<std::string, std::string> soundItemDef;
+	typedef std::map<std::string, soundItemDef> soundItemDefMap;
 	soundItemDef defaultItem;
+	soundItemDefMap soundItemDefs;
 };
 
 extern CSound* sound;

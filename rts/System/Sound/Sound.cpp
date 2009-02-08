@@ -34,7 +34,7 @@ bool CheckError(const char* msg)
 	return true;
 }
 
-CSound::CSound() : numEmptyPlayRequests(0), parser("gamedata/sounds.lua", SPRING_VFS_MOD, SPRING_VFS_ZIP)
+CSound::CSound() : numEmptyPlayRequests(0)
 {
 	mute = false;
 	int maxSounds = configHandler.Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
@@ -91,6 +91,9 @@ CSound::CSound() : numEmptyPlayRequests(0), parser("gamedata/sounds.lua", SPRING
 	posScale.y = 0.0005f;
 	posScale.z = 0.02f;
 
+	LuaParser parser("gamedata/sounds.lua", SPRING_VFS_MOD, SPRING_VFS_ZIP);
+	parser.SetLowerKeys(false);
+	parser.SetLowerCppKeys(false);
 	parser.Execute();
 	if (!parser.IsValid()) {
 		logOutput.Print("Could not load gamedata/sounds.lua:");
@@ -98,8 +101,33 @@ CSound::CSound() : numEmptyPlayRequests(0), parser("gamedata/sounds.lua", SPRING
 	}
 	else
 	{
-		soundRoot = parser.GetRoot();
-		soundItemTable = soundRoot.SubTable("SoundItems");
+		const LuaTable soundRoot = parser.GetRoot();
+		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
+		if (!soundItemTable.IsValid())
+			logOutput.Print("CSound(): could not parse SoundItems table");
+		else
+		{
+			std::vector<std::string> keys;
+			soundItemTable.GetKeys(keys);
+			for (std::vector<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
+			{
+				const std::string name(*it);
+				soundItemDef bufmap;
+				const LuaTable buf(soundItemTable.SubTable(*it));
+				buf.GetMap(bufmap);
+				bufmap["name"] = name;
+				soundItemDefMap::const_iterator it = soundItemDefs.find(name);
+				if (it != soundItemDefs.end())
+					logOutput.Print("CSound(): two SoundItems have the same name %s", name.c_str());
+
+				soundItemDef::const_iterator inspec = bufmap.find("file");
+				if (inspec == bufmap.end())	// no file, drop
+					logOutput.Print("CSound(): SoundItem %s has no file tag", name.c_str());
+				else
+					soundItemDefs[name] = bufmap;
+			}
+			logOutput.Print("CSound(): Sucessfully parsed %lu SoundItems", keys.size());
+		}
 	}
 }
 
@@ -127,8 +155,8 @@ bool CSound::HasSoundItem(const std::string& name)
 	}
 	else
 	{
-		const LuaTable soundItem = soundItemTable.SubTable(name);
-		if (soundItem.IsValid())
+		soundItemDefMap::const_iterator it = soundItemDefs.find(name);
+		if (it != soundItemDefs.end())
 			return true;
 		else
 			return false;
@@ -151,30 +179,13 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	{
 		size_t newid = sounds.size();
 
-		const LuaTable soundItem = soundItemTable.SubTable(name);
-		if (soundItem.IsValid())
+		soundItemDefMap::iterator itemDefIt = soundItemDefs.find(name);
+		if (itemDefIt != soundItemDefs.end())
 		{
-			soundItemDef temp;
-			soundItem.GetMap(temp);
-			temp["name"] = name;
-			soundItemDef::const_iterator it = temp.find("file");
-			if (it == temp.end())
-			{
-				if (hardFail)
-					ErrorMessageBox("SoundItem does not have file specified ", name, 0);
-				else
-				{
-					logOutput.Print("SoundItem %s has no file tag", name.c_str());
-					return 0;
-				}
-			}
-			else
-			{
-				//logOutput.Print("CSound::GetSoundId: %s points to %s", name.c_str(), it->second.c_str());
-				sounds.push_back(new SoundItem(GetWaveBuffer(it->second, hardFail), temp));
-				soundMap[name] = newid;
-				return newid;
-			}
+			//logOutput.Print("CSound::GetSoundId: %s points to %s", name.c_str(), it->second.c_str());
+			sounds.push_back(new SoundItem(GetWaveBuffer(itemDefIt->second["file"], hardFail), itemDefIt->second));
+			soundMap[name] = newid;
+			return newid;
 		}
 		else
 		{
