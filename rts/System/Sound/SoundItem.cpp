@@ -24,6 +24,7 @@ maxDist(FLT_MAX),
 priority(0),
 maxConcurrent(16),
 currentlyPlaying(0),
+loopTime(0),
 in3D(true)
 {
 	std::map<std::string, std::string>::const_iterator it = items.find("name");
