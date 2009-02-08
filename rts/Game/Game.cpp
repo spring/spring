@@ -2467,12 +2467,6 @@ bool CGame::Update()
 
 	net->Update();
 
-#ifdef DEBUG
-	if (gameServer) {
-		gameServer->gameClientUpdated = true;
-	}
-#endif
-
 	if(creatingVideo && playing && gameServer){
 		gameServer->CreateNewFrame(false, true);
 	}
