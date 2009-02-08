@@ -98,6 +98,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendMessageToAllyTeam);
 	REGISTER_LUA_CFUNC(SendMessageToSpectators);
 
+	REGISTER_LUA_CFUNC(GenerateSoundItem);
 	REGISTER_LUA_CFUNC(PlaySoundFile);
 	REGISTER_LUA_CFUNC(PlaySoundStream);
 	REGISTER_LUA_CFUNC(StopSoundStream);
@@ -493,6 +494,10 @@ int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 
 
 /******************************************************************************/
+
+int LuaUnsyncedCtrl::GenerateSoundItem(lua_State* L)
+{
+}
 
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {

@@ -9,7 +9,7 @@
 #include "float3.h"
 #include "LogOutput.h"
 
-float SoundSource::globalPitch = 0.0;
+float SoundSource::globalPitch = 1.0;
 namespace
 {
 bool CheckError(const char* msg)
@@ -80,7 +80,7 @@ void SoundSource::Play(SoundItem* item, const float3& pos, const float3& velocit
 	curPlaying = item;
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
 	alSourcef(id, AL_GAIN, item->gain * volume);
-	SetPitch(item->pitch * globalPitch);
+	alSourcef(id, AL_PITCH, item->pitch * globalPitch);
 	alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	alSourcei(id, AL_LOOPING, (item->loopTime > 0));
