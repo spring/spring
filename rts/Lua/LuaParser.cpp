@@ -36,8 +36,6 @@
 #endif
 
 
-static const bool lowerCppKeys = true;
-
 LuaParser* LuaParser::currentParser = NULL;
 
 
@@ -58,7 +56,8 @@ LuaParser::LuaParser(const string& _fileName,
   initDepth(0),
   rootRef(LUA_NOREF),
   currentRef(LUA_NOREF),
-  lowerKeys(true)
+  lowerKeys(true),
+  lowerCppKeys(true)
 {
 	L = lua_open();
 
@@ -78,7 +77,8 @@ LuaParser::LuaParser(const string& _textChunk,
   initDepth(0),
   rootRef(LUA_NOREF),
   currentRef(LUA_NOREF),
-  lowerKeys(true)
+  lowerKeys(true),
+  lowerCppKeys(true)
 {
 	L = lua_open();
 
@@ -736,8 +736,8 @@ LuaTable LuaTable::SubTable(int key) const
 
 LuaTable LuaTable::SubTable(const string& mixedKey) const
 {
-
-	const string key = !lowerCppKeys ? mixedKey : StringToLower(mixedKey);
+	
+	const string key = !(parser ? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
 
 	LuaTable subTable;
 	subTable.path = path + "." + key;
@@ -872,7 +872,7 @@ bool LuaTable::PushValue(int key) const
 
 bool LuaTable::PushValue(const string& mixedKey) const
 {
-	const string key = !lowerCppKeys ? mixedKey : StringToLower(mixedKey);
+	const string key = !(parser ? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
 	if (!PushTable()) {
 		return false;
 	}
