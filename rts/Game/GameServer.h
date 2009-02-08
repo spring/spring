@@ -101,10 +101,6 @@ public:
 	/// Is the server still running?
 	bool HasFinished() const;
 
-#ifdef DEBUG
-	bool gameClientUpdated;			//used to prevent the server part to update to fast when the client is mega slow (running some sort of debug mode)
-#endif
-
 private:
 	/**
 	@brief catch commands from chat messages and handle them

@@ -115,9 +115,6 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 	lastUpdate = SDL_GetTicks();
 	modGameTime = 0.0f;
 	quitServer=false;
-#ifdef DEBUG
-	gameClientUpdated=false;
-#endif
 	hasLocalClient = false;
 	localClientNumber = 0;
 	isPaused = false;
