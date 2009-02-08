@@ -125,6 +125,14 @@ CSound::CSound() : numEmptyPlayRequests(0)
 					logOutput.Print("CSound(): SoundItem %s has no file tag", name.c_str());
 				else
 					soundItemDefs[name] = bufmap;
+
+				if (buf.KeyExists("preload"))
+				{
+					logOutput.Print("CSound(): preloading %s", name.c_str());
+					const size_t newid = sounds.size();
+					sounds.push_back(new SoundItem(GetWaveBuffer(bufmap["file"], true), bufmap));
+					soundMap[name] = newid;
+				}
 			}
 			logOutput.Print("CSound(): Sucessfully parsed %lu SoundItems", keys.size());
 		}
