@@ -34,6 +34,7 @@ private:
 	static float globalPitch;
 	ALuint id;
 	SoundItem* curPlaying;
+	unsigned loopStop;
 };
 
 #endif

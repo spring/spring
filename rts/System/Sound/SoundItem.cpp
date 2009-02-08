@@ -46,6 +46,8 @@ in3D(true)
 		StringConvert(it->second, maxDist);
 	if ((it = items.find("in3d")) != items.end())
 		StringConvert(it->second, in3D);
+	if ((it = items.find("looptime")) != items.end())
+		StringConvert(it->second, loopTime);
 }
 
 bool SoundItem::PlayNow()

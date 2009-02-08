@@ -46,6 +46,8 @@ private:
 	unsigned maxConcurrent;
 	unsigned currentlyPlaying;
 
+	unsigned loopTime;
+
 	bool in3D;
 };
 
