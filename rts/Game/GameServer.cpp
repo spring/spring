@@ -1348,8 +1348,7 @@ void CGameServer::UpdateLoop()
 			UDPNet->Update();
 
 		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
-		if (hasData)
-			ServerReadNet(); // new data arrived, we may have new packets
+		ServerReadNet();
 		Update();
 	}
 	if (hostif)
