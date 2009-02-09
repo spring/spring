@@ -49,6 +49,7 @@
 #include "TimeProfiler.h"
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
+#include "OSCStatsSender.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -2488,6 +2489,10 @@ bool CGame::Update()
 			const CInfoConsole::RawLine& rawLine = lines[i];
 			eventHandler.AddConsoleLine(rawLine.text, *rawLine.subsystem);
 		}
+	}
+
+	if (!(gs->frameNum & 31)) {
+		oscStatsSender->Update(gs->frameNum);
 	}
 
 	return true;

@@ -60,7 +60,8 @@ void COSCStatsSender::SetEnabled(bool enabled) {
 			outSocket = new netcode::UDPSocket(OSC_IN_PORT);
 			outSocket->SetBroadcasting(true);
 			UpdateDestination();
-			logOutput.Print("Sending spring Statistics over OSC to: %s:%u", dstAddress.c_str(), dstPort);
+			logOutput.Print("Sending spring Statistics over OSC to: %s:%u",
+					dstAddress.c_str(), dstPort);
 
 			SendInit();
 		} else {

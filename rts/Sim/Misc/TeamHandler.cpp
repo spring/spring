@@ -8,7 +8,6 @@
 #include <cstring>
 
 #include "Game/GameSetup.h"
-#include "Game/OSCStatsSender.h"
 #include "Lua/LuaGaia.h"
 #include "mmgr.h"
 
@@ -137,5 +136,4 @@ void CTeamHandler::GameFrame(int frameNum)
 			Team(a)->SlowUpdate();
 		}
 	}
-	oscStatsSender->Update(frameNum);
 }
