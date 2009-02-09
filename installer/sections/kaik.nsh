@@ -2,7 +2,7 @@
 	; Installing:
 	; Delete the old KAIK.
 	RmDir /r "$INSTDIR\AI\KAIK013"
-	#RmDir /r "$INSTDIR\AI\Skirmish\KAIK"
+;	RmDir /r "$INSTDIR\AI\Skirmish\KAIK"
 
 	!insertmacro InstallSkirmishAI "KAIK"
 !else
