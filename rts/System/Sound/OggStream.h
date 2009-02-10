@@ -14,7 +14,7 @@ class COggStream {
 	public:
 		COggStream();
 
-		void Play(const std::string& path, const float3& pos, float volume);
+		void Play(const std::string& path, float volume);
 		void Stop();
 		void TogglePause();
 		void Update();

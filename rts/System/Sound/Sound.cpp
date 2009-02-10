@@ -222,7 +222,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
 {
 	GML_RECMUTEX_LOCK(sound);
-	oggStream.Play(path, pos * posScale, volume);
+	oggStream.Play(path, volume);
 }
 
 void CSound::StopStream()
