@@ -3,6 +3,9 @@
 #include "LogOutput.h"
 #include "OggStream.h"
 
+// 512KB buffer
+const int BUFFER_SIZE = (4096 * 128);
+
 COggStream::COggStream() {
 	source = 0;
 	oggFile = 0x0;

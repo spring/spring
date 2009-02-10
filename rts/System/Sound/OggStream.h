@@ -7,9 +7,6 @@
 
 #include <string>
 
-// 512KB buffer
-#define BUFFER_SIZE (4096 * 128)
-
 class COggStream {
 	public:
 		COggStream();
