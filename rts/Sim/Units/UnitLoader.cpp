@@ -126,7 +126,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	} else if (type == "MetalExtractor") {
 		unit = new CExtractorBuilding;
 	} else {
-		logOutput << "Unknown unit type " << type.c_str() << "\n";
+		LogObject() << "Unknown unit type " << type.c_str() << "\n";
 		return NULL;
 	}
 
@@ -233,7 +233,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		mt->baseTurnRate = ud->turnRate;
 
 		if (!mt->accRate) {
-			logOutput << "acceleration of " << ud->name.c_str() << " is zero!!\n";
+			LogObject() << "acceleration of " << ud->name.c_str() << " is zero!!\n";
 		}
 
 		mt->moveType = ud->moveType;
@@ -447,7 +447,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 			((CStarburstLauncher*) weapon)->tracking = 0;
 		((CStarburstLauncher*) weapon)->uptime = weapondef->uptime * GAME_SPEED;
 	} else {
-		logOutput << "Unknown weapon type " << weapondef->type.c_str() << "\n";
+		LogObject() << "Unknown weapon type " << weapondef->type.c_str() << "\n";
 		return 0;
 	}
 	weapon->weaponDef = weapondef;

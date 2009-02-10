@@ -1484,7 +1484,6 @@ void CGuiHandler::CreateOptions(Command& c, bool rmb)
 	if (keys[SDLK_LALT] || keys[SDLK_LMETA]) {
 		c.options |= ALT_KEY;
 	}
-	//logOutput << (int)c.options << "\n";
 }
 
 
@@ -1627,7 +1626,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		logOutput.Print("activePage      = %i\n", activePage);
 		logOutput.Print("iconsSize       = %i\n", iconsSize);
 		logOutput.Print("iconsCount      = %i\n", iconsCount);
-		logOutput.Print("commands.size() = %lu\n", commands.size());
+		LogObject() << "commands.size() = " << commands.size();
 		return true;
 	}
 	else if (action.command == "luaui") {

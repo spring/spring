@@ -1376,19 +1376,19 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "moretrees") {
 		treeDrawer->baseTreeDistance+=0.2f;
-		logOutput << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		LogObject() << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 	else if (cmd == "lesstrees") {
 		treeDrawer->baseTreeDistance-=0.2f;
-		logOutput << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		LogObject() << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 	else if (cmd == "moreclouds") {
 		sky->cloudDensity*=0.95f;
-		logOutput << "Cloud density " << 1/sky->cloudDensity << "\n";
+		LogObject() << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
 	else if (cmd == "lessclouds") {
 		sky->cloudDensity*=1.05f;
-		logOutput << "Cloud density " << 1/sky->cloudDensity << "\n";
+		LogObject() << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
 
 	// Break up the if/else chain to workaround MSVC compiler limit
@@ -2689,11 +2689,11 @@ bool CGame::Draw() {
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
 		for (int annoy = 0; annoy < 8; annoy++) {
-			logOutput << "5 errors deep in LuaUI, disabling...\n";
+			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
 		guihandler->RunLayoutCommand("disable");
-		logOutput << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
-		logOutput << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
+		LogObject() << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
+		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
 	if (!gu->active) {
@@ -2704,7 +2704,6 @@ bool CGame::Draw() {
 
 	lineDrawer.UpdateLineStipple();
 
-//	logOutput << mouse->lastx << "\n";
 	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
 		gu->lastFrameStart = SDL_GetTicks();
 		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;

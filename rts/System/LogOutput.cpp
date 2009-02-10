@@ -44,10 +44,10 @@ namespace
 {
 	struct PreInitLogEntry
 	{
-		PreInitLogEntry(CLogSubsystem* subsystem, string text)
+		PreInitLogEntry(const CLogSubsystem* subsystem, string text)
 			: subsystem(subsystem), text(text) {}
 
-		CLogSubsystem* subsystem;
+		const CLogSubsystem* subsystem;
 		string text;
 	};
 }
@@ -70,6 +70,20 @@ static string tempstr;
 
 static const int BUFFER_SIZE = 2048;
 
+
+LogObject::LogObject(const CLogSubsystem& _subsys) : subsys(_subsys)
+{
+}
+
+LogObject::LogObject() : subsys(LOG_DEFAULT)
+{
+}
+
+LogObject::~LogObject()
+{
+	// LogOutput adds a newline if necessary
+	logOutput.Prints(subsys, str());
+}
 
 CLogOutput::CLogOutput()
 {
@@ -128,8 +142,8 @@ void CLogOutput::Initialize()
 		SafeDelete(filelog);
 
 	initialized = true;
-	(*this) << "LogOutput initialized.\n";
-	(*this) << "Spring " << SpringVersion::GetFull() << "\n";
+	Print("LogOutput initialized.\n");
+	Print("Spring %s", SpringVersion::GetFull().c_str());
 
 	InitializeSubsystems();
 
@@ -154,16 +168,17 @@ void CLogOutput::Initialize()
  */
 void CLogOutput::InitializeSubsystems()
 {
-	(*this) << "Available log subsystems: ";
-	for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {
-		if (sys->name && *sys->name) {
-			(*this) << sys->name;
-			if (sys->next)
-				(*this) << ", ";
+	{
+		LogObject lo;
+		lo << "Available log subsystems: ";
+		for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {
+			if (sys->name && *sys->name) {
+				lo << sys->name;
+				if (sys->next)
+					lo << ", ";
+			}
 		}
 	}
-	(*this) << "\n";
-
 	// enabled subsystems is superset of the ones specified in environment
 	// and the ones specified in the configuration file.
 	// configHandler cannot be accessed here in unitsync since it may not exist.
@@ -183,28 +198,30 @@ void CLogOutput::InitializeSubsystems()
 		subsystems += StringToLower(env) + ",";
 
 
-	(*this) << "Enabled log subsystems: ";
-	for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {
-		if (sys->name && *sys->name) {
-			const string name = StringToLower(sys->name);
-			const string::size_type index = subsystems.find("," + name + ",");
-
-			// log subsystems which are enabled by default can not be disabled
-			// ("enabled by default" wouldn't make sense otherwise...)
-			if (!sys->enabled && index != string::npos)
-				sys->enabled = true;
-
-			if (sys->enabled) {
-				(*this) << sys->name;
-				if (sys->next)
-					(*this) << ", ";
+	{
+		LogObject lo;
+		lo << "Enabled log subsystems: ";
+		for (CLogSubsystem* sys = CLogSubsystem::GetList(); sys; sys = sys->next) {
+			if (sys->name && *sys->name) {
+				const string name = StringToLower(sys->name);
+				const string::size_type index = subsystems.find("," + name + ",");
+	
+				// log subsystems which are enabled by default can not be disabled
+				// ("enabled by default" wouldn't make sense otherwise...)
+				if (!sys->enabled && index != string::npos)
+					sys->enabled = true;
+	
+				if (sys->enabled) {
+					lo << sys->name;
+					if (sys->next)
+						lo << ", ";
+				}
 			}
 		}
 	}
-	(*this) << "\n";
 
-	(*this) << "Enable or disable log subsystems using the LogSubsystems configuration key\n";
-	(*this) << "  or the SPRING_LOG_SUBSYSTEMS environment variable (both comma separated).\n";
+	Print("Enable or disable log subsystems using the LogSubsystems configuration key\n");
+	Print("  or the SPRING_LOG_SUBSYSTEMS environment variable (both comma separated).\n");
 }
 
 
@@ -218,7 +235,7 @@ void CLogOutput::InitializeSubsystems()
  * This method notifies all registered ILogSubscribers, calls OutputDebugString
  * (for MSVC builds) and prints the message to stdout and the file log.
  */
-void CLogOutput::Output(CLogSubsystem& subsystem, const char* str)
+void CLogOutput::Output(const CLogSubsystem& subsystem, const char* str)
 {
 	GML_STDMUTEX_LOCK(log);
 
@@ -348,7 +365,7 @@ void CLogOutput::Print(const std::string& text)
 }
 
 
-void CLogOutput::Print(CLogSubsystem& subsystem, const std::string& text)
+void CLogOutput::Prints(const CLogSubsystem& subsystem, const std::string& text)
 {
 	Output(subsystem, text.c_str());
 }
@@ -359,48 +376,3 @@ CLogSubsystem& CLogOutput::GetDefaultLogSubsystem()
 	return LOG_DEFAULT;
 }
 
-
-CLogOutput& CLogOutput::operator<< (const int i)
-{
-	char t[50];
-	sprintf(t, "%d ", i);
-	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
-	tempstr += t;
-	return *this;
-}
-
-
-CLogOutput& CLogOutput::operator<< (const float f)
-{
-	char t[50];
-	sprintf(t, "%f ", f);
-	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
-	tempstr += t;
-	return *this;
-}
-
-CLogOutput& CLogOutput::operator<< (const float3& f)
-{
-	return *this << f.x << " " << f.y << " " << f.z;
-}
-
-CLogOutput& CLogOutput::operator<< (const char* c)
-{
-	boost::recursive_mutex::scoped_lock scoped_lock(tempstrMutex);
-
-	for(int a = 0; c[a]; ++a) {
-		if (c[a] == '\n') {
-			Output(LOG_DEFAULT, tempstr.c_str());
-			tempstr.clear();
-			break;
-		} else {
-			tempstr += c[a];
-		}
-	}
-	return *this;
-}
-
-CLogOutput& CLogOutput::operator<< (const std::string& s)
-{
-	return this->operator<< (s.c_str());
-}
