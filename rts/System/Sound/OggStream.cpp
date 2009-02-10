@@ -1,7 +1,5 @@
 #include <SDL.h>
 
-// LogOutput.h needs this
-#include "float3.h"
 #include "LogOutput.h"
 #include "OggStream.h"
 
@@ -19,7 +17,7 @@ COggStream::COggStream() {
 }
 
 // open an Ogg stream from a given file and start playing it
-void COggStream::Play(const std::string& path, const float3& pos, float volume) {
+void COggStream::Play(const std::string& path, float volume) {
 	if (!stopped) {
 		// we're already playing another stream
 		return;
@@ -53,7 +51,7 @@ void COggStream::Play(const std::string& path, const float3& pos, float volume) 
 
 	SetVolume(volume, true);
 
-	alSource3f(source, AL_POSITION,        pos.x, pos.y, pos.z);
+	alSource3f(source, AL_POSITION,        0.0, 0.0, 0.0);
 	alSource3f(source, AL_VELOCITY,        0.0f,  0.0f,  0.0f );
 	alSource3f(source, AL_DIRECTION,       0.0f,  0.0f,  0.0f );
 	alSourcef( source, AL_ROLLOFF_FACTOR,  0.0f               );
