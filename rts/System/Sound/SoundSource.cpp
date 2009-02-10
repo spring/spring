@@ -6,23 +6,12 @@
 #include "Sound.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
+#include "ALShared.h"
 #include "float3.h"
 #include "LogOutput.h"
 
 float SoundSource::globalPitch = 1.0;
-namespace
-{
-bool CheckError(const char* msg)
-{
-	ALenum e = alGetError();
-	if (e != AL_NO_ERROR)
-	{
-		LogObject() << msg << ": " << (char*)alGetString(e) << "\n";
-		return false;
-	}
-	return true;
-}
-}
+
 
 SoundSource::SoundSource() : curPlaying(0)
 {

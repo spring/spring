@@ -26,6 +26,7 @@ public:
 	size_t GetSoundId(const std::string& name, bool hardFail = true);
 
 	void Update();
+	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, unsigned lastFrameTime);
 	void NewFrame();
 
 	void PlaySample(size_t id, float volume = 1.0f);
@@ -61,8 +62,6 @@ private:
 	size_t GetWaveId(const std::string& path, bool hardFail);
 	boost::shared_ptr<SoundBuffer> GetWaveBuffer(const std::string& path, bool hardFail = true);
 
-	void UpdateListener();
-
 	float globalVolume;
 
 	typedef std::map<std::string, size_t> bufferMapT;
@@ -85,6 +84,7 @@ private:
 	float unitReplyVolume;
 	bool mute;
 	unsigned numEmptyPlayRequests;
+	unsigned updateCounter;
 
 	typedef std::map<std::string, std::string> soundItemDef;
 	typedef std::map<std::string, soundItemDef> soundItemDefMap;

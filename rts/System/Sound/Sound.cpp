@@ -7,14 +7,14 @@
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
+#include "ALShared.h"
+
 #include "Sim/Units/Unit.h"
-#include "Game/Camera.h"
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 #include "Exceptions.h"
 #include "FileSystem/FileHandler.h"
 #include "OggStream.h"
-#include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
 
@@ -23,18 +23,7 @@ COggStream oggStream;
 
 CSound* sound = NULL;
 
-bool CheckError(const char* msg)
-{
-	ALenum e = alGetError();
-	if (e != AL_NO_ERROR)
-	{
-		LogObject() << msg << ": " << (char*)alGetString(e);
-		return false;
-	}
-	return true;
-}
-
-CSound::CSound() : numEmptyPlayRequests(0)
+CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 {
 	mute = false;
 	int maxSounds = configHandler.Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
@@ -377,30 +366,34 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 void CSound::Update()
 {
+	updateCounter++;
 	GML_RECMUTEX_LOCK(sound); // Update
 
-	oggStream.Update();
+	// every 4th frame
+	if (updateCounter % 4) oggStream.Update();
+
 	if (sources.empty())
 		return;
 
+	if (updateCounter % 2)
+	{
+		for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+			it->Update();
+	}
 	CheckError("CSound::Update");
-	UpdateListener();
-	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-		it->Update();
 }
 
-void CSound::UpdateListener()
+void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, unsigned lastFrameTime)
 {
 	if (sources.empty())
 		return;
-	assert(camera);
-	myPos = camera->pos * posScale;
+	myPos = campos * posScale;
 	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (myPos - prevPos)/gu->lastFrameTime/7.0;
+	const float3 velocity = (myPos - prevPos)/lastFrameTime/7.0;
 	prevPos = myPos;
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
-	ALfloat ListenerOri[] = {camera->forward.x, camera->forward.y, camera->forward.z, camera->up.x, camera->up.y, camera->up.z};
+	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
 	alListenerf(AL_GAIN, globalVolume);
 	CheckError("CSound::UpdateListener");

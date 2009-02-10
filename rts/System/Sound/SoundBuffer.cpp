@@ -1,6 +1,7 @@
 #include "SoundBuffer.h"
 
 #include "LogOutput.h"
+#include "ALShared.h"
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 
@@ -118,6 +119,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 	alGenBuffers(1, &id);
 	filename = file;
 	alBufferData(id, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec);
+	CheckError("SoundBuffer::LoadWAV");
 	return true;
 }
 
