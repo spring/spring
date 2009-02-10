@@ -82,7 +82,7 @@ LogObject::LogObject() : subsys(LOG_DEFAULT)
 LogObject::~LogObject()
 {
 	// LogOutput adds a newline if necessary
-	logOutput.Prints(subsys, str());
+	logOutput.Prints(subsys, str.str());
 }
 
 CLogOutput::CLogOutput()

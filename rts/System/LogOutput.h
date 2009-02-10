@@ -58,21 +58,29 @@ private:
 
 /**
  * @brief ostringstream-derivate for simple logging
- * 
+ *
  * usage:
  * LogObject() << "Important message with value: " << myint;
  * LogObject(mySubsys) << "Message";
  */
-class LogObject : public std::ostringstream
+class LogObject
 {
 public:
 	LogObject(const CLogSubsystem& subsys);
 	LogObject();
-	
+
 	~LogObject();
-	
+
+	template <typename T>
+	LogObject& operator<<(const T& t)
+	{
+		str << t;
+		return *this;
+	};
+
 private:
 	const CLogSubsystem& subsys;
+	std::ostringstream str;
 };
 
 /** @brief implement this interface to be able to observe CLogOutput */
