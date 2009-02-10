@@ -2464,7 +2464,11 @@ bool CGame::Update()
 	}
 
 	if (!skipping)
+	{
 		UpdateUI(false);
+		sound->Update();
+		sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+	}
 
 	net->Update();
 
@@ -3080,8 +3084,6 @@ void CGame::SimFrame() {
 		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
-		if(!(gs->frameNum & 7))
-			sound->Update();
 		sound->NewFrame();
 		treeDrawer->Update();
 		globalAI->Update();
