@@ -398,7 +398,7 @@ void CPathManager::TerrainChange(float3 upperCorner, float3 lowerCorner) {
 Tells estimators about changes in or on the map.
 */
 void CPathManager::TerrainChange(unsigned int x1, unsigned int z1, unsigned int x2, unsigned int z2) {
-//	logOutput << "Terrain changed: (" << int(x1) << int(z1) << int(x2) << int(z2) << "\n";	//Debug
+//	LogObject() << "Terrain changed: (" << int(x1) << int(z1) << int(x2) << int(z2) << "\n";	//Debug
 	pe->MapChanged(x1, z1, x2, z2);
 	pe2->MapChanged(x1, z1, x2, z2);
 }

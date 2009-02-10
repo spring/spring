@@ -28,7 +28,7 @@ bool CheckError(const char* msg)
 	ALenum e = alGetError();
 	if (e != AL_NO_ERROR)
 	{
-		logOutput << msg << ": " << (char*)alGetString(e) << "\n";
+		LogObject() << msg << ": " << (char*)alGetString(e);
 		return false;
 	}
 	return true;
@@ -43,7 +43,7 @@ CSound::CSound() : numEmptyPlayRequests(0)
 
 	if (maxSounds <= 0)
 	{
-		logOutput.Print("MaxSounds set to 0, sound is disabled");
+		LogObject() << "MaxSounds set to 0, sound is disabled";
 	}
 	else
 	{
@@ -134,7 +134,7 @@ CSound::CSound() : numEmptyPlayRequests(0)
 					soundMap[name] = newid;
 				}
 			}
-			logOutput.Print("CSound(): Sucessfully parsed %lu SoundItems", keys.size());
+			LogObject() << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems";
 		}
 	}
 }
@@ -409,14 +409,14 @@ void CSound::UpdateListener()
 void CSound::PrintDebugInfo()
 {
 	logOutput.Print("OpenAL Sound System:");
-	logOutput.Print("# SoundSources: %lu", sources.size());
-	logOutput.Print("# SoundBuffers: %lu", buffers.size());
+	LogObject() << "# SoundSources: " << sources.size();
+	LogObject() << "# SoundBuffers: " << buffers.size();
 	int numBytes = 0;
 	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
 		numBytes += (*it)->BufferSize();
-	logOutput.Print("# reserved for buffers: %d kB", (numBytes/1024));
-	logOutput.Print("# PlayRequests for empty sound: %u", numEmptyPlayRequests);
-	logOutput.Print("# SoundItems: %lu", sounds.size());
+	LogObject() << "# reserved for buffers: " << (numBytes/1024) << " kB";
+	LogObject() << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
+	LogObject() << "# SoundItems: " << sounds.size();
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)

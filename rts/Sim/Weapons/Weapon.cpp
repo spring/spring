@@ -745,10 +745,10 @@ bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
 		// weapon inside target sphere
 		if (dif.SqLength() < unit->sqRadius*targetBorder*targetBorder) {
 			dif -= diff*(dif.Length() - 10); // a hack
-			//logOutput << "inside\n";
+			//LogObject() << "inside\n";
 		} else {
 			dif -= diff*(unit->radius*targetBorder);
-			//logOutput << "outside\n";
+			//LogObject() << "outside\n";
 		}
 		//geometricObjects->AddLine(weaponMuzzlePos, weaponMuzzlePos+dif, 3, 0, 16);
 		heightDiff = (weaponPos.y + dif.y) - owner->pos.y;

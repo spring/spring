@@ -128,7 +128,7 @@ class CEventClient
 
 		virtual bool CommandNotify(const Command& cmd);
 
-		virtual bool AddConsoleLine(const std::string& msg, CLogSubsystem& subsystem);
+		virtual bool AddConsoleLine(const std::string& msg, const CLogSubsystem& subsystem);
 
 		virtual bool GroupChanged(int groupID);
 

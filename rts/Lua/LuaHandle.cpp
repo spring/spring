@@ -1732,7 +1732,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 }
 
 
-bool CLuaHandle::AddConsoleLine(const string& msg, CLogSubsystem& /**/)
+bool CLuaHandle::AddConsoleLine(const string& msg, const CLogSubsystem& /**/)
 {
 	if (!CheckModUICtrl()) {
 		return true; // FIXME?

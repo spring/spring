@@ -266,7 +266,7 @@ C3DOTextureHandler::UnitTexture* C3DOTextureHandler::Get3DOTexture(std::string n
 	if((tti=textures.find(name))!=textures.end()){
 		return tti->second;
 	}
-	logOutput << "Unknown texture " << name.c_str() << "\n";
+	LogObject() << "Unknown texture " << name.c_str() << "\n";
 	return textures[" "];
 }
 

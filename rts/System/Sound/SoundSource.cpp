@@ -17,7 +17,7 @@ bool CheckError(const char* msg)
 	ALenum e = alGetError();
 	if (e != AL_NO_ERROR)
 	{
-		logOutput << msg << ": " << (char*)alGetString(e) << "\n";
+		LogObject() << msg << ": " << (char*)alGetString(e) << "\n";
 		return false;
 	}
 	return true;
