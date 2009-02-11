@@ -500,7 +500,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	progressState = Active;
 
 	if (DEBUG_CONTROLLER) {
-		logOutput << int(owner->id) << ": StartMoving() starting engine.\n";
+		LogObject() << int(owner->id) << ": StartMoving() starting engine.\n";
 	}
 
 	StartEngine();
@@ -522,7 +522,7 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 	if(DEBUG_CONTROLLER)
-		logOutput << "SMove: Action stopped." << " " << int(owner->id) << "\n";
+		LogObject() << "SMove: Action stopped." << " " << int(owner->id) << "\n";
 
 	StopEngine();
 
@@ -1273,7 +1273,6 @@ starting from given speed.
 float CGroundMoveType::BreakingDistance(float speed)
 {
 	if (!owner->mobility->maxBreaking) {
-		// logOutput << "maxBreaking is zero for unit " << owner->unitDef->name.c_str();
 		return 0.0f;
 	}
 	return fabs(speed * speed / owner->mobility->maxBreaking);
@@ -1330,11 +1329,11 @@ void CGroundMoveType::StartEngine() {
 			owner->cob->Call(COBFN_StartMoving);
 
 			if (DEBUG_CONTROLLER) {
-				logOutput << "Engine started" << " " << int(owner->id) << "\n";
+				LogObject() << "Engine started" << " " << int(owner->id) << "\n";
 			}
 		} else {
 			if (DEBUG_CONTROLLER) {
-				logOutput << "Engine start failed: " << int(owner->id) << "\n";
+				LogObject() << "Engine start failed: " << int(owner->id) << "\n";
 			}
 
 			Fail();
@@ -1359,7 +1358,7 @@ void CGroundMoveType::StopEngine() {
 		owner->cob->Call(COBFN_StopMoving);
 
 		if (DEBUG_CONTROLLER) {
-			logOutput << "Engine stopped. " << int(owner->id) << "\n";
+			LogObject() << "Engine stopped. " << int(owner->id) << "\n";
 		}
 	}
 
@@ -1392,7 +1391,7 @@ void CGroundMoveType::Arrived()
 		owner->commandAI->SlowUpdate();
 
 		if (DEBUG_CONTROLLER)
-			logOutput << "Unit arrived!\n";
+			LogObject() << "Unit arrived!\n";
 	}
 }
 

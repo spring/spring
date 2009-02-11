@@ -462,17 +462,17 @@ IPath::SearchResult CPathEstimator::GetPath(const MoveData& moveData, float3 sta
 		pathCache->AddPath(&path, result, startBlock, goalBlock, peDef.sqGoalRadius, moveData.pathType);
 
 		if (PATHDEBUG) {
-			logOutput << "PE: Search completed.\n";
-			logOutput << "Tested blocks: " << testedBlocks << "\n";
-			logOutput << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
-			logOutput << "Path length: " << (int)(path.path.size()) << "\n";
-			logOutput << "Path cost: " << path.pathCost << "\n";
+			LogObject() << "PE: Search completed.\n";
+			LogObject() << "Tested blocks: " << testedBlocks << "\n";
+			LogObject() << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
+			LogObject() << "Path length: " << (int)(path.path.size()) << "\n";
+			LogObject() << "Path cost: " << path.pathCost << "\n";
 		}
 	} else {
 		if (PATHDEBUG) {
-			logOutput << "PE: Search failed!\n";
-			logOutput << "Tested blocks: " << testedBlocks << "\n";
-			logOutput << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
+			LogObject() << "PE: Search failed!\n";
+			LogObject() << "Tested blocks: " << testedBlocks << "\n";
+			LogObject() << "Open blocks: " << (float)(openBlockBufferPointer - openBlockBuffer) << "\n";
 		}
 	}
 
@@ -578,7 +578,7 @@ IPath::SearchResult CPathEstimator::DoSearch(const MoveData& moveData, const CPa
 		return GoalOutOfRange;
 
 	// should never happen
-	logOutput << "ERROR: CPathEstimator::DoSearch() - Unhandled end of search!\n";
+	LogObject() << "ERROR: CPathEstimator::DoSearch() - Unhandled end of search!\n";
 	return Error;
 }
 

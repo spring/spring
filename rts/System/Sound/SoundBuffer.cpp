@@ -1,6 +1,10 @@
 #include "SoundBuffer.h"
 
+#include <ogg/ogg.h>
+#include <vorbis/vorbisfile.h>
+
 #include "LogOutput.h"
+#include "ALShared.h"
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 
@@ -115,9 +119,121 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 		header->datalen = 1;
 	}
 
-	alGenBuffers(1, &id);
-	filename = file;
-	alBufferData(id, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec);
+	AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec);
+	return true;
+}
+
+struct VorbisInputBuffer
+{
+	uint8_t* data;
+	size_t pos;
+	size_t size;
+};
+
+size_t VorbisRead(void* ptr, size_t size, size_t nmemb, void* datasource)
+{
+	VorbisInputBuffer* buffer = (VorbisInputBuffer*)datasource;
+	const size_t maxRead = std::max(size * nmemb, buffer->size - buffer->pos);
+	memcpy(ptr, buffer->data + buffer->pos, maxRead);
+	return maxRead;
+}
+
+int	VorbisSeek(void* datasource, ogg_int64_t offset, int whence)
+{
+	return -1; // not seekable
+}
+
+int	VorbisClose(void* datasource)
+{
+	return 0; // nothing to be done here
+}
+
+long VorbisTell(void* datasource)
+{
+	return ((reinterpret_cast<VorbisInputBuffer*>(datasource))->pos);
+}
+
+std::string ErrorString(int code)
+{
+	switch (code) {
+		case OV_EREAD:
+			return std::string("Read from media.");
+		case OV_ENOTVORBIS:
+			return std::string("Not Vorbis data.");
+		case OV_EVERSION:
+			return std::string("Vorbis version mismatch.");
+		case OV_EBADHEADER:
+			return std::string("Invalid Vorbis header.");
+		case OV_EFAULT:
+			return std::string("Internal logic fault (bug or heap/stack corruption.");
+		default:
+			return std::string("Unknown Ogg error.");
+	}
+}
+
+bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<uint8_t> buffer, bool strict)
+{
+	VorbisInputBuffer buf;
+	buf.data = &buffer[0];
+	buf.pos = 0;
+	buf.size = buffer.size();
+	
+	ov_callbacks vorbisCallbacks;
+	vorbisCallbacks.read_func  = VorbisRead;
+	vorbisCallbacks.close_func = VorbisClose;
+	vorbisCallbacks.seek_func  = VorbisSeek;
+	vorbisCallbacks.tell_func  = VorbisTell;
+
+	OggVorbis_File oggStream;
+	int result = 0;
+	if ((result = ov_open_callbacks(&buf, &oggStream, NULL, 0, vorbisCallbacks)) < 0)
+	{
+		logOutput.Print("Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
+		return false;
+	}
+	
+	vorbis_info* vorbisInfo = ov_info(&oggStream, -1);
+	// vorbis_comment* vorbisComment = ov_comment(&oggStream, -1);
+
+	ALenum format;
+	if (vorbisInfo->channels == 1) {
+		if (vorbisInfo->rate == 8)
+			format = AL_FORMAT_MONO8;
+		else if (vorbisInfo->rate == 16)
+			format = AL_FORMAT_MONO16;
+		else
+		{
+			if (strict)
+				ErrorMessageBox("SoundBuffer::LoadVorbis: invalid number of bits per sample (mono).", file, 0);
+			return false;
+		}
+	}
+	else if (vorbisInfo->channels == 2)
+	{
+		if (vorbisInfo->rate == 8)
+			format = AL_FORMAT_STEREO8;
+		else if (vorbisInfo->rate == 16)
+			format = AL_FORMAT_STEREO16;
+		else
+		{
+			if (strict)
+				ErrorMessageBox("SoundBuffer::LoadVorbis: invalid number of bits per sample (stereo).", file, 0);
+			return false;
+		}
+	}
+	else
+	{
+		if (strict)
+			ErrorMessageBox("SoundBuffer::LoadVorbis (%s): invalid number of channels.", file, 0);
+		return false;
+	}
+
+	std::vector<uint8_t> decodeBuffer(ov_pcm_total(&oggStream, -1));
+	int section = 0;
+	long read = ov_read(&oggStream, (char*)&decodeBuffer[0], decodeBuffer.size(), 0, 2, 1, &section);
+	LogObject() << "Read " << read << " bytes from vorbis sample";
+
+	AlGenBuffer(file, format, &decodeBuffer[0], decodeBuffer.size(), vorbisInfo->rate);
 	return true;
 }
 
@@ -126,4 +242,12 @@ int SoundBuffer::BufferSize() const
 	ALint size;
 	alGetBufferi(id, AL_SIZE, &size);
 	return static_cast<int>(size);
+}
+
+void SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const uint8_t* data, size_t datalength, int rate)
+{
+	alGenBuffers(1, &id);
+	filename = file;
+	alBufferData(id, format, data, datalength, rate);
+	CheckError("SoundBuffer::AlGenBuffer");
 }

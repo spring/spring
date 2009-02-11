@@ -387,23 +387,22 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	}
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);
-	logOutput << "Using map " << gameData->GetMap() << "\n";
+	LogObject() << "Using map " << gameData->GetMap() << "\n";
 	stupidGlobalMapname = gameData->GetMap();
 
 	if (net && net->GetDemoRecorder()) {
 		net->GetDemoRecorder()->SetName(gameData->GetMap());
-		logOutput << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
+		LogObject() << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
 	LoadMap(gameData->GetMap());
 	archiveScanner->CheckMap(gameData->GetMap(), gameData->GetMapChecksum());
 
-	logOutput << "Using script " << gameData->GetScript() << "\n";
+	LogObject() << "Using script " << gameData->GetScript() << "\n";
 	CScriptHandler::SelectScript(gameData->GetScript());
 
-	logOutput << "Using mod " << gameData->GetMod() << "\n";
+	LogObject() << "Using mod " << gameData->GetMod() << "\n";
 	LoadMod(gameData->GetMod());
 	modArchive = archiveScanner->ModNameToModArchive(gameData->GetMod());
-	logOutput << "Using mod archive " << modArchive << "\n";
+	LogObject() << "Using mod archive " << modArchive << "\n";
 	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
-
 }

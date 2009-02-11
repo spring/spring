@@ -174,17 +174,17 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::ve
 	if(result == Ok) {
 		FinishSearch(moveData, path);
 		if(PATHDEBUG) {
-			logOutput << "Path found.\n";
-			logOutput << "Nodes tested: " << (int)testedNodes << "\n";
-			logOutput << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
-			logOutput << "Path steps: " << (int)(path.path.size()) << "\n";
-			logOutput << "Path cost: " << path.pathCost << "\n";
+			LogObject() << "Path found.\n";
+			LogObject() << "Nodes tested: " << (int)testedNodes << "\n";
+			LogObject() << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
+			LogObject() << "Path steps: " << (int)(path.path.size()) << "\n";
+			LogObject() << "Path cost: " << path.pathCost << "\n";
 		}
 	} else {
 		if(PATHDEBUG) {
-			logOutput << "Path not found!\n";
-			logOutput << "Nodes tested: " << (int)testedNodes << "\n";
-			logOutput << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
+			LogObject() << "Path not found!\n";
+			LogObject() << "Nodes tested: " << (int)testedNodes << "\n";
+			LogObject() << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
 		}
 	}
 	return result;
@@ -222,17 +222,17 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 	if(result == Ok || result == GoalOutOfRange) {
 		FinishSearch(moveData, path);
 		if(PATHDEBUG) {
-			logOutput << "Path found.\n";
-			logOutput << "Nodes tested: " << (int)testedNodes << "\n";
-			logOutput << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
-			logOutput << "Path steps: " << (int)(path.path.size()) << "\n";
-			logOutput << "Path cost: " << path.pathCost << "\n";
+			LogObject() << "Path found.\n";
+			LogObject() << "Nodes tested: " << (int)testedNodes << "\n";
+			LogObject() << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
+			LogObject() << "Path steps: " << (int)(path.path.size()) << "\n";
+			LogObject() << "Path cost: " << path.pathCost << "\n";
 		}
 	} else {
 		if(PATHDEBUG) {
-			logOutput << "Path not found!\n";
-			logOutput << "Nodes tested: " << (int)testedNodes << "\n";
-			logOutput << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
+			LogObject() << "Path not found!\n";
+			LogObject() << "Nodes tested: " << (int)testedNodes << "\n";
+			LogObject() << "Open squares: " << (float)(openSquareBufferPointer - openSquareBuffer) << "\n";
 		}
 	}
 	return result;
@@ -350,7 +350,7 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
 		return GoalOutOfRange;
 
 	//Below shall never be runned.
-	logOutput << "ERROR: CPathFinder::DoSearch() - Unhandled end of search!\n";
+	LogObject() << "ERROR: CPathFinder::DoSearch() - Unhandled end of search!\n";
 	return Error;
 }
 

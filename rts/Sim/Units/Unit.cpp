@@ -1314,7 +1314,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	SetGroup(0);
 
 	eventHandler.UnitTaken(this, newteam);
-	globalAI->UnitTaken(this, oldteam);
+	globalAI->UnitTaken(this, newteam);
 
 	// reset states and clear the queues
 	if (!teamHandler->AlliedTeams(oldteam, newteam)) {

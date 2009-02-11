@@ -182,9 +182,9 @@ void CGlobalAI::LoadAILib(int team, const char* botLibName, bool postLoad)
 void CGlobalAI::LoadCPPAI(int team, const char* botLibName, bool postLoad, bool loadSupported, bool isJavaAI)
 {
 	if (isJavaAI) {
-		logOutput << botLibName << " is a Java archive\n";
+		LogObject() << botLibName << " is a Java archive\n";
 	} else {
-		logOutput << botLibName << " has a C++ interface\n";
+		LogObject() << botLibName << " has a C++ interface\n";
 	}
 
 	_GetGlobalAiVersionFunc = (GETGLOBALAIVERSION) lib->FindAddress("GetGlobalAiVersion");
