@@ -414,6 +414,7 @@ void CSound::PrintDebugInfo()
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 {
+	assert(path.length() > 3);
 	CFileHandler file(path);
 
 	std::vector<uint8_t> buf;
@@ -422,13 +423,23 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 		file.Read(&buf[0], file.FileSize());
 	} else {
 		if (strict) {
-			handleerror(0, "Couldn't open wav file", path.c_str(),0);
+			handleerror(0, "Couldn't open sound file", path.c_str(),0);
 		}
 		return 0;
 	}
 
 	boost::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
-	const bool success = buffer->LoadWAV(path, buf, strict);
+	bool success = false;
+	std::string ending = path.substr(path.length()-3);
+	std::transform(ending.begin(), ending.end(), ending.begin(), (int (*)(int))tolower);
+	if (ending == "wav")
+		success = buffer->LoadWAV(path, buf, strict);
+	else if (ending == "ogg")
+		success = buffer->LoadVorbis(path, buf, strict);
+	else
+	{
+		LogObject() << "CSound::LoadALBuffer: unknown audio format: " << ending;
+	}
 
 	CheckError("CSound::LoadALBuffer");
 	if (!success)
