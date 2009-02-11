@@ -8,6 +8,7 @@ LogOutput - global object to write log info to.
 
 #include <stdarg.h>
 #include <string>
+#include <sstream>
 
 // format string error checking
 #ifdef __GNUC__
@@ -55,13 +56,39 @@ private:
 	static CLogSubsystem* linkedList;
 };
 
+/**
+ * @brief ostringstream-derivate for simple logging
+ *
+ * usage:
+ * LogObject() << "Important message with value: " << myint;
+ * LogObject(mySubsys) << "Message";
+ */
+class LogObject
+{
+public:
+	LogObject(const CLogSubsystem& subsys);
+	LogObject();
+
+	~LogObject();
+
+	template <typename T>
+	LogObject& operator<<(const T& t)
+	{
+		str << t;
+		return *this;
+	};
+
+private:
+	const CLogSubsystem& subsys;
+	std::ostringstream str;
+};
 
 /** @brief implement this interface to be able to observe CLogOutput */
 class ILogSubscriber
 {
 public:
 	// Notification of log messages to subscriber
-	virtual void NotifyLogMsg(CLogSubsystem& subsystem, const char* str) = 0;
+	virtual void NotifyLogMsg(const CLogSubsystem& subsystem, const char* str) = 0;
 	virtual void SetLastMsgPos(const float3& pos) {}
 };
 
@@ -76,15 +103,9 @@ public:
 	void Print(CLogSubsystem& subsystem, const char* fmt, ...) FORMATSTRING(3);
 	void Print(const char* fmt, ...) FORMATSTRING(2);
 	void Print(const std::string& text);
-	void Print(CLogSubsystem& subsystem, const std::string& text);
+	void Prints(const CLogSubsystem& subsystem, const std::string& text); // canno be named Print, would be  not unique
 	void Printv(CLogSubsystem& subsystem, const char* fmt, va_list argp);
 	static CLogSubsystem& GetDefaultLogSubsystem();
-
-	CLogOutput& operator<<(const int i);
-	CLogOutput& operator<<(const float f);
-	CLogOutput& operator<<(const char* c);
-	CLogOutput& operator<<(const float3& f);
-	CLogOutput& operator<<(const std::string &f);
 
 	void SetLastMsgPos(const float3& pos);
 
@@ -104,7 +125,7 @@ public:
 
 protected:
 	void InitializeSubsystems();
-	void Output(CLogSubsystem& subsystem, const char* str);
+	void Output(const CLogSubsystem& subsystem, const char* str);
 };
 
 

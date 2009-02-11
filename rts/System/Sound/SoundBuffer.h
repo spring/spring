@@ -22,6 +22,7 @@ public:
 	~SoundBuffer();
 
 	bool LoadWAV(const std::string& file, std::vector<uint8_t> buffer, bool strict);
+	bool LoadVorbis(const std::string& file, std::vector<uint8_t> buffer, bool strict);
 
 	const std::string& GetFilename() const
 	{
@@ -36,6 +37,8 @@ public:
 	int BufferSize() const;
 
 private:
+	void AlGenBuffer(const std::string& file, ALenum format, const uint8_t* data, size_t datalength, int rate);
+
 	std::string filename;
 	ALuint id;
 };

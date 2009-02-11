@@ -105,7 +105,7 @@ static string lastError;
 
 static void _SetLastError(string err)
 {
-	logOutput.Print(LOG_UNITSYNC, "error: " + err);
+	logOutput.Prints(LOG_UNITSYNC, "error: " + err);
 	lastError = err;
 }
 

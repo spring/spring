@@ -7,14 +7,14 @@
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
+#include "ALShared.h"
+
 #include "Sim/Units/Unit.h"
-#include "Game/Camera.h"
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 #include "Exceptions.h"
 #include "FileSystem/FileHandler.h"
 #include "OggStream.h"
-#include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
 
@@ -23,18 +23,7 @@ COggStream oggStream;
 
 CSound* sound = NULL;
 
-bool CheckError(const char* msg)
-{
-	ALenum e = alGetError();
-	if (e != AL_NO_ERROR)
-	{
-		logOutput << msg << ": " << (char*)alGetString(e) << "\n";
-		return false;
-	}
-	return true;
-}
-
-CSound::CSound() : numEmptyPlayRequests(0)
+CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 {
 	mute = false;
 	int maxSounds = configHandler.Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
@@ -43,7 +32,7 @@ CSound::CSound() : numEmptyPlayRequests(0)
 
 	if (maxSounds <= 0)
 	{
-		logOutput.Print("MaxSounds set to 0, sound is disabled");
+		LogObject() << "MaxSounds set to 0, sound is disabled";
 	}
 	else
 	{
@@ -134,7 +123,7 @@ CSound::CSound() : numEmptyPlayRequests(0)
 					soundMap[name] = newid;
 				}
 			}
-			logOutput.Print("CSound(): Sucessfully parsed %lu SoundItems", keys.size());
+			LogObject() << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems";
 		}
 	}
 }
@@ -222,7 +211,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
 {
 	GML_RECMUTEX_LOCK(sound);
-	oggStream.Play(path, pos * posScale, volume);
+	oggStream.Play(path, volume);
 }
 
 void CSound::StopStream()
@@ -377,30 +366,34 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 void CSound::Update()
 {
+	updateCounter++;
 	GML_RECMUTEX_LOCK(sound); // Update
 
-	oggStream.Update();
+	// every 4th frame
+	if (updateCounter % 4) oggStream.Update();
+
 	if (sources.empty())
 		return;
 
+	if (updateCounter % 2)
+	{
+		for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+			it->Update();
+	}
 	CheckError("CSound::Update");
-	UpdateListener();
-	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-		it->Update();
 }
 
-void CSound::UpdateListener()
+void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, unsigned lastFrameTime)
 {
 	if (sources.empty())
 		return;
-	assert(camera);
-	myPos = camera->pos * posScale;
+	myPos = campos * posScale;
 	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (myPos - prevPos)/gu->lastFrameTime/7.0;
+	const float3 velocity = (myPos - prevPos)/lastFrameTime/7.0;
 	prevPos = myPos;
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
-	ALfloat ListenerOri[] = {camera->forward.x, camera->forward.y, camera->forward.z, camera->up.x, camera->up.y, camera->up.z};
+	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
 	alListenerf(AL_GAIN, globalVolume);
 	CheckError("CSound::UpdateListener");
@@ -409,18 +402,19 @@ void CSound::UpdateListener()
 void CSound::PrintDebugInfo()
 {
 	logOutput.Print("OpenAL Sound System:");
-	logOutput.Print("# SoundSources: %lu", sources.size());
-	logOutput.Print("# SoundBuffers: %lu", buffers.size());
+	LogObject() << "# SoundSources: " << sources.size();
+	LogObject() << "# SoundBuffers: " << buffers.size();
 	int numBytes = 0;
 	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
 		numBytes += (*it)->BufferSize();
-	logOutput.Print("# reserved for buffers: %d kB", (numBytes/1024));
-	logOutput.Print("# PlayRequests for empty sound: %u", numEmptyPlayRequests);
-	logOutput.Print("# SoundItems: %lu", sounds.size());
+	LogObject() << "# reserved for buffers: " << (numBytes/1024) << " kB";
+	LogObject() << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
+	LogObject() << "# SoundItems: " << sounds.size();
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 {
+	assert(path.length() > 3);
 	CFileHandler file(path);
 
 	std::vector<uint8_t> buf;
@@ -429,13 +423,23 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 		file.Read(&buf[0], file.FileSize());
 	} else {
 		if (strict) {
-			handleerror(0, "Couldn't open wav file", path.c_str(),0);
+			handleerror(0, "Couldn't open sound file", path.c_str(),0);
 		}
 		return 0;
 	}
 
 	boost::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
-	const bool success = buffer->LoadWAV(path, buf, strict);
+	bool success = false;
+	std::string ending = path.substr(path.length()-3);
+	std::transform(ending.begin(), ending.end(), ending.begin(), (int (*)(int))tolower);
+	if (ending == "wav")
+		success = buffer->LoadWAV(path, buf, strict);
+	else if (ending == "ogg")
+		success = buffer->LoadVorbis(path, buf, strict);
+	else
+	{
+		LogObject() << "CSound::LoadALBuffer: unknown audio format: " << ending;
+	}
 
 	CheckError("CSound::LoadALBuffer");
 	if (!success)

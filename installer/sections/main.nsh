@@ -151,6 +151,8 @@ ${EndIf}
   Delete "$INSTDIR\zlibwapi.dll"
   Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\MSVCP71.dll"
+  Delete "$INSTDIR\OpenAL32.dll"
+  Delete "$INSTDIR\wrap_oal.dll"
 
 
   Delete "$INSTDIR\PALETTE.PAL"

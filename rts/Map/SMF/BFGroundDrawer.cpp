@@ -1418,11 +1418,11 @@ void CBFGroundDrawer::Update()
 void CBFGroundDrawer::IncreaseDetail()
 {
 	viewRadius += 2;
-	logOutput << "ViewRadius is now " << viewRadius << "\n";
+	LogObject() << "ViewRadius is now " << viewRadius << "\n";
 }
 
 void CBFGroundDrawer::DecreaseDetail()
 {
 	viewRadius -= 2;
-	logOutput << "ViewRadius is now " << viewRadius << "\n";
+	LogObject() << "ViewRadius is now " << viewRadius << "\n";
 }
