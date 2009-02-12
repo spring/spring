@@ -139,9 +139,8 @@ EXPORT(int) initStatic(
 
 	simpleLog_log("This is the log-file of the %s v%s AI Interface",
 			myShortName, myVersion);
-	simpleLog_log("Using read/write data-directory (version specific): %s",
-			dd_rw);
-	simpleLog_log("Using read/write data-directory (version-less): %s", dd_r);
+	simpleLog_log("Using read/write data-directory: %s", dd_rw);
+	simpleLog_log("Using read-only data-directory: %s", dd_r);
 	simpleLog_log("Using log file: %s", logFile);
 
 	free(interfacePropFile);

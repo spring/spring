@@ -47,7 +47,7 @@ struct SStaticGlobalData;
 
 // static AI interface library functions
 
-int CALLING_CONV initStatic(
+EXPORT(int) initStatic(
 		unsigned int infoSize,
 		const char** infoKeys, const char** infoValues,
 		const struct SStaticGlobalData* staticGlobalData);
