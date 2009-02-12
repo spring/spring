@@ -242,7 +242,7 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 	file(MAKE_DIRECTORY "${JAVA_BUILD_DIR}")
 
 	file(GLOB_RECURSE NullJavaAI_JAVA_SOURCES RELATIVE "${JAVA_SRC_DIR}" FOLLOW_SYMLINKS "${JAVA_SRC_DIR}/*.java")
-	#add_custom_command(OUTPUT "${NullJavaAI_DATA_DIR}/SkirmishAI.jar"
+	#add_custom_command(OUTPUT "${NullJavaAI_DATA_DIR}/${JAR_FILE_BIN}"
 	#add_custom_command(TARGET ${NullJavaAI_TARGET}
 	add_custom_target(${NullJavaAI_TARGET} ALL
 		DEPENDS ${Java_AIINTERFACE_TARGET}
@@ -262,8 +262,8 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 		WORKING_DIRECTORY "${JAVA_SRC_DIR}"
 		COMMENT "  Creating Java AI library ${JAR_FILE_SRC}" VERBATIM)
 
-	install (FILES ${NullJavaAI_SRC}/${JAR_FILE_BIN} DESTINATION ${NullJavaAI_DATA_DIR})
-	install (FILES ${NullJavaAI_SRC}/${JAR_FILE_SRC} DESTINATION ${NullJavaAI_DATA_DIR}/jlib)
+	install (FILES ${BUILD_DIR}/${JAR_FILE_BIN} DESTINATION ${NullJavaAI_DATA_DIR})
+	install (FILES ${BUILD_DIR}/${JAR_FILE_SRC} DESTINATION ${NullJavaAI_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 
 
@@ -304,7 +304,7 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 	file(MAKE_DIRECTORY "${JAVA_BUILD_DIR}")
 
 	file(GLOB_RECURSE NullOOJavaAI_JAVA_SOURCES RELATIVE "${JAVA_SRC_DIR}" FOLLOW_SYMLINKS "${JAVA_SRC_DIR}/*.java")
-	#add_custom_command(OUTPUT "${NullOOJavaAI_DATA_DIR}/SkirmishAI.jar"
+	#add_custom_command(OUTPUT "${NullOOJavaAI_DATA_DIR}/${JAR_FILE_BIN}"
 	#add_custom_command(TARGET ${NullOOJavaAI_TARGET}
 	add_custom_target(${NullOOJavaAI_TARGET} ALL
 		DEPENDS ${Java_AIINTERFACE_TARGET}
@@ -324,8 +324,8 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 		WORKING_DIRECTORY "${JAVA_SRC_DIR}"
 		COMMENT "  Creating Java AI library ${JAR_FILE_SRC}" VERBATIM)
 
-	install (FILES ${NullOOJavaAI_SRC}/${JAR_FILE_BIN} DESTINATION ${NullOOJavaAI_DATA_DIR})
-	install (FILES ${NullOOJavaAI_SRC}/${JAR_FILE_SRC} DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
+	install (FILES ${BUILD_DIR}/${JAR_FILE_BIN} DESTINATION ${NullOOJavaAI_DATA_DIR})
+	install (FILES ${BUILD_DIR}/${JAR_FILE_SRC} DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 
 
