@@ -61,7 +61,7 @@ void SoundSource::Stop()
 	CheckError("SoundSource::Stop");
 }
 
-void SoundSource::Play(SoundItem* item, const float3& pos, const float3& velocity, float volume)
+void SoundSource::Play(SoundItem* item, const float3& pos, const float3& velocity, float volume, bool relative)
 {
 	if (!item->PlayNow())
 		return;
@@ -72,9 +72,15 @@ void SoundSource::Play(SoundItem* item, const float3& pos, const float3& velocit
 	alSourcef(id, AL_PITCH, item->pitch * globalPitch);
 	alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
-	alSourcei(id, AL_LOOPING, (item->loopTime > 0));
+	if (item->loopTime > 0)
+		alSourcei(id, AL_LOOPING, AL_TRUE);
+	else
+		alSourcei(id, AL_LOOPING, AL_FALSE);
 	loopStop = SDL_GetTicks() + item->loopTime;
-	alSourcei(id, AL_SOURCE_RELATIVE, item->in3D);
+	if (relative || !item->in3D)
+		alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
+	else
+		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 	alSourcePlay(id);
 	if (item->buffer->GetId() == 0)
 		logOutput.Print("SoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());

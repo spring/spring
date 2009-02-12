@@ -360,7 +360,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	}
 
 	if (found1Free)
-		sources[minPos].Play(&sounds[id], p * posScale, velocity, volume);
+		sources[minPos].Play(&sounds[id], p * posScale, velocity, volume, relative);
 	CheckError("CSound::PlaySample");
 }
 
