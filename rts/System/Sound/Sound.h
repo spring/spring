@@ -29,6 +29,7 @@ public:
 	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, unsigned lastFrameTime);
 	void NewFrame();
 
+	/// no positioning in 3d-space
 	void PlaySample(size_t id, float volume = 1.0f);
 	void PlaySample(size_t id, const float3& p, float volume = 1.0f);
 	void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f);
