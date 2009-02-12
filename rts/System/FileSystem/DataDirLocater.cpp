@@ -351,7 +351,9 @@ void DataDirLocater::LocateDataDirs()
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writedir == current working directory
 #ifndef _WIN32
-	chdir(GetWriteDir()->path.c_str());
+	int err = chdir(GetWriteDir()->path.c_str());
+	if (err)
+		throw content_error("Could not chdir into SPRING_DATADIR");
 #else
 	_chdir(GetWriteDir()->path.c_str());
 #endif

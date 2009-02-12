@@ -15,7 +15,6 @@ public:
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
 	void Init(void);
-	void Fire(void);
 	void FireInternal(float3 dir, bool sweepFire);
 
 	float3 color;
@@ -23,6 +22,9 @@ public:
 	float damageMul;
 
 	unsigned int lastFireFrame;
+
+private:
+	virtual void FireImpl(void);
 };
 
 #endif

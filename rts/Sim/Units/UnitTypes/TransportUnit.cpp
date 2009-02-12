@@ -10,11 +10,11 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/QuadField.h"
 #include "EventHandler.h"
 #include "LogOutput.h"
 #include "creg/STL_List.h"
 #include "mmgr.h"
-
 
 CR_BIND_DERIVED(CTransportUnit, CUnit, );
 
@@ -54,26 +54,28 @@ void CTransportUnit::Update()
 	CUnit::Update();
 	std::list<TransportedUnit>::iterator ti;
 
-	for (ti = transported.begin(); ti != transported.end(); ++ti) {
-		float3 relPos;
-		if (ti->piece >= 0) {
-			relPos = this->cob->GetPiecePos(ti->piece);
-		} else {
-			relPos = float3(0.0f, -1000.0f, 0.0f);
-		}
-		float3 upos = this->pos + (frontdir * relPos.z) +
-		                         (updir    * relPos.y) +
-		                         (rightdir * relPos.x);
+	if (!isDead) {
+		for (ti = transported.begin(); ti != transported.end(); ++ti) {
+			float3 relPos;
+			if (ti->piece >= 0) {
+				relPos = this->cob->GetPiecePos(ti->piece);
+			} else {
+				relPos = float3(0.0f, -1000.0f, 0.0f);
+			}
+			float3 upos = this->pos + (frontdir * relPos.z) +
+						 (updir    * relPos.y) +
+						 (rightdir * relPos.x);
 
-		ti->unit->pos = upos;
-		ti->unit->UpdateMidPos();
-		ti->unit->mapSquare = mapSquare;
+			ti->unit->pos = upos;
+			ti->unit->UpdateMidPos();
+			ti->unit->mapSquare = mapSquare;
 
-		if (unitDef->holdSteady) {
-			ti->unit->heading  = heading;
-			ti->unit->updir    = updir;
-			ti->unit->frontdir = frontdir;
-			ti->unit->rightdir = rightdir;
+			if (unitDef->holdSteady) {
+				ti->unit->heading  = heading;
+				ti->unit->updir    = updir;
+				ti->unit->frontdir = frontdir;
+				ti->unit->rightdir = rightdir;
+			}
 		}
 	}
 }
@@ -100,6 +102,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 	std::list<TransportedUnit>::iterator ti;
 	for (ti = transported.begin(); ti != transported.end(); ++ti) {
 		CUnit* u = ti->unit;
+		const float gh = ground->GetHeight2(u->pos.x, u->pos.z);
 
 		u->transporter = 0;
 		u->DeleteDeathDependence(this);
@@ -111,8 +114,6 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			u->KillUnit(false, false, 0x0, false);
 			continue;
 		} else {
-			const float gh = ground->GetHeight2(u->pos.x, u->pos.z);
-
 			if (gh < -u->unitDef->movedata->depth) {
 				// treat depth as maxWaterDepth (fails if
 				// the transportee is a ship, but so does
@@ -130,11 +131,31 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			}
 			u->KillUnit(selfDestruct, reclaimed, attacker);
 		} else {
-			u->stunned = (u->paralyzeDamage > u->health);
-			if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
+			// place unit near the place of death of the transport
+			// if it's a ground transport and uses a piece-in-ground method
+			// to hide units
+			if (u->pos.y < gh) {
+				const float k = (u->radius + radius)*std::max(unitDef->unloadSpread, 1.f);
+				// try to unload in a presently unoccupied spot
+				// unload on a wreck if suitable position not found
+				for (int i = 0; i<10; ++i) {
+					float3 pos = u->pos;
+					pos.x += gs->randFloat()*2*k - k;
+					pos.z += gs->randFloat()*2*k - k;
+					pos.y = ground->GetHeight2(u->pos.x, u->pos.z);
+					if (qf->GetUnitsExact(pos, u->radius + 2).empty()) {
+						u->pos = pos;
+						break;
+					}
+				}
+				u->UpdateMidPos();
+			} else if (CGroundMoveType* mt = dynamic_cast<CGroundMoveType*>(u->moveType)) {
 				mt->StartFlying();
 			}
-			u->speed = speed;
+
+			u->stunned = (u->paralyzeDamage > u->health);
+			u->moveType->LeaveTransport();
+			u->speed = speed*(0.5f + 0.5f*gs->randFloat());
 
 			eventHandler.UnitUnloaded(u, this);
 		}

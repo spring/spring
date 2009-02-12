@@ -13,12 +13,14 @@
 #ifdef DIRECT_CONTROL_ALLOWED
 	#include "Game/GameHelper.h"
 	#include "Sim/Units/Unit.h"
+	#include "Sim/Units/UnitHandler.h"
 	#include "Sim/Weapons/Weapon.h"
 	#include "Sim/Units/COB/CobInstance.h"
 	#include "Sim/Units/COB/CobFile.h"
 	#include "UI/MouseHandler.h"
 	#include "CameraHandler.h"
 	#include "Camera.h"
+	#include "myMath.h"
 #endif
 #include "EventHandler.h"
 #include "GlobalUnsynced.h"
@@ -159,6 +161,10 @@ void CPlayer::GameFrame(int frameNum)
 	CUnit* hit;
 	float dist=helper->TraceRayTeam(pos,dc->viewDir,unit->maxRange,hit,1,unit,teamHandler->AllyTeam(team));
 	dc->target=hit;
+
+	if(uh->limitDgun && unit->unitDef->isCommander && unit->pos.SqDistance(teamHandler->Team(unit->team)->startPos)>Square(uh->dgunRadius)){
+		return; //prevents dgunning using fps view if outside dgunlimit
+	}
 
 	if(hit){
 		dc->targetDist=dist;

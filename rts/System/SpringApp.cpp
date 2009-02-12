@@ -48,7 +48,7 @@
 #include "mmgr.h"
 
 #ifdef WIN32
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(_MSC_VER)
 	#include "Platform/Win/CrashHandler.h"
 #endif
 	#include "Platform/Win/win32.h"
@@ -737,13 +737,13 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 			command = command.substr(1, command.length()-2);
 		if (command.rfind("sdf") == command.size()-3) {
 			demofile = command;
-			logOutput << "Using demofile " << demofile.c_str() << "\n";
+			LogObject() << "Using demofile " << demofile.c_str() << "\n";
 		} else if (command.rfind("ssf") == command.size()-3) {
 			savefile = command;
-			logOutput << "Using savefile " << savefile.c_str() << "\n";
+			LogObject() << "Using savefile " << savefile.c_str() << "\n";
 		} else {
 			startscript = command;
-			logOutput << "Using script " << startscript.c_str() << "\n";
+			LogObject() << "Using script " << startscript.c_str() << "\n";
 		}
 	}
 #else
@@ -754,13 +754,13 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 			string command(argv[i]);
 			if (command.rfind("sdf") == command.size() - 3) {
 				demofile = command;
-				logOutput << "Using demofile " << demofile.c_str() << "\n";
+				LogObject() << "Using demofile " << demofile.c_str() << "\n";
 			} else if (command.rfind("ssf") == command.size() - 3) {
 				savefile = command;
-				logOutput << "Using savefile " << savefile.c_str() << "\n";
+				LogObject() << "Using savefile " << savefile.c_str() << "\n";
 			} else {
 				startscript = command;
-				logOutput << "Using script " << startscript.c_str() << "\n";
+				LogObject() << "Using script " << startscript.c_str() << "\n";
 			}
 		}
 #endif
@@ -820,7 +820,7 @@ void SpringApp::Startup()
 	{
 		bool server = !cmdline->result("client") || cmdline->result("server");
 #ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(server);
+		CSyncDebugger::GetInstance()->Initialize(server, 64);
 #endif
 		activeController = new SelectMenu(server);
 	}
@@ -1122,7 +1122,7 @@ int SpringApp::Run (int argc, char *argv[])
 			if (!Update())
 				break;
 		} catch (content_error &e) {
-			logOutput << "Caught content exception: " << e.what() << "\n";
+			LogObject() << "Caught content exception: " << e.what() << "\n";
 			handleerror(NULL, e.what(), "Content error", MBF_OK | MBF_EXCL);
 		}
 	}

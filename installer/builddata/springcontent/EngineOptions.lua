@@ -200,6 +200,47 @@ local options =
     def    = true,
   },
 
+-- If you add this to your mods EngineOptions.lua then hosts can set the startscript
+-- Remove any scripts that don't work with your mod
+  {
+    key    = 'ScriptName',
+    name   = 'Start Script',
+    desc   = 'Changes game behaviour and/or starting conditions',
+    type   = 'list',
+    def    = 'Commanders',
+    items  = {
+      {
+        key  = 'Air combat test',
+        name = 'Air Combat Test',
+        desc = 'Loads some planes on start.',
+      },
+      {
+        key  = 'Commanders',
+        name = 'Commanders',
+        desc = 'Each player gets a command unit.',
+      },
+      {
+        key  = 'Cmds 1000 res',
+        name = 'Commanders + 1000 res',
+        desc = 'Each player gets a commander and 1000 units of metal and energy.',
+      },
+      {
+        key  = 'EmptyScript',
+        name = 'Empty Script',
+        desc = 'Do nothing special on game start.',
+      },
+      {
+        key  = 'Random enemies',
+        name = 'Random Enemies',
+        desc = 'Spawns random enemies',
+      },
+      {
+        key  = 'Random enemies 2',
+        name = 'Random Enemies (Autonomous)',
+        desc = 'Spawns random enemies',
+      },
+    },
+  },
 --]]
 
 }

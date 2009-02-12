@@ -44,7 +44,7 @@
 
   ; delete the .url files
   Delete "$INSTDIR\Spring.url"
-  Delete "$INSTDIR\unknown-files.url"
+  Delete "$INSTDIR\jobjol.url"
 
   ; delete the folders
   RMDir "$SMPROGRAMS\${PRODUCT_NAME}\Multiplayer"

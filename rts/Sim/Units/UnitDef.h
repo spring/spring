@@ -265,6 +265,7 @@ struct UnitDef
 
 	bool reclaimable;
 	bool capturable;
+	bool repairable;
 
 	bool canRestore;
 	bool canRepair;

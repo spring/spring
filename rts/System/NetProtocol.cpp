@@ -14,7 +14,6 @@
 
 #include "Game/GameSetup.h"
 #include "Game/GameData.h"
-#include "Game/GameServer.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
 #include "ConfigHandler.h"
@@ -81,7 +80,7 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 		if (record) {
 			record->SaveToDemo(ret->data, ret->length);
 		}
-		else if (ret->data[0] == NETMSG_GAMEDATA && !gameServer->HasDemo()) {
+		else if (ret->data[0] == NETMSG_GAMEDATA) {
 			logOutput.Print("Starting demo recording");
 			GameData gd(ret);
 			record.reset(new CDemoRecorder());

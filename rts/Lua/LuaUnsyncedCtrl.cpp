@@ -56,7 +56,7 @@
 #include "Sim/Units/CommandAI/LineDrawer.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -98,6 +98,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendMessageToAllyTeam);
 	REGISTER_LUA_CFUNC(SendMessageToSpectators);
 
+	REGISTER_LUA_CFUNC(GenerateSoundItem);
 	REGISTER_LUA_CFUNC(PlaySoundFile);
 	REGISTER_LUA_CFUNC(PlaySoundStream);
 	REGISTER_LUA_CFUNC(StopSoundStream);
@@ -373,6 +374,8 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 void LuaUnsyncedCtrl::ClearUnitCommandQueues()
 {
+	GML_STDMUTEX_LOCK(cai); // ClearUnitCommandQueues
+
 	drawCmdQueueUnits.clear();
 }
 
@@ -492,6 +495,10 @@ int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 
 /******************************************************************************/
 
+int LuaUnsyncedCtrl::GenerateSoundItem(lua_State* L)
+{
+}
+
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {
 	const int args = lua_gettop(L); // number of arguments
@@ -500,7 +507,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 	}
 	bool success = false;
 	const string soundFile = lua_tostring(L, 1);
-	const unsigned int soundID = sound->GetWaveId(soundFile, false);
+	const unsigned int soundID = sound->GetSoundId(soundFile, false);
 	if (soundID > 0) {
 		float volume = 1.0f;
 		if (args >= 2) {
@@ -513,7 +520,13 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 			const float3 pos(lua_tofloat(L, 3),
 			                 lua_tofloat(L, 4),
 			                 lua_tofloat(L, 5));
-			sound->PlaySample(soundID, pos, volume);
+			if (args >= 8)
+			{
+				const float3 speed(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
+				sound->PlaySample(soundID, pos, volume);
+			}
+			else
+				sound->PlaySample(soundID, pos, volume);
 		}
 		success = true;
 	}
@@ -642,6 +655,8 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 {
+	GML_STDMUTEX_LOCK(cai); // DrawUnitCommands
+
 	if (lua_istable(L, 1)) {
 		const bool isMap = lua_isboolean(L, 2) && lua_toboolean(L, 2);
 		const int unitArg = isMap ? -2 : -1;
@@ -1007,7 +1022,7 @@ int LuaUnsyncedCtrl::SetWaterParams(lua_State* L)
 				}
 			}
 			else if (lua_isnumber(L, -1)) {
-				const unsigned int value = (unsigned int)lua_tonumber(L, -1);
+				const float value = lua_tonumber(L, -1);
 				if (key == "damage") {
 					w.damage = value;
 				} else if (key == "repeatX") {

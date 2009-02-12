@@ -10,11 +10,13 @@ class CFlameThrower :
 public:
 	CFlameThrower(CUnit* owner);
 	~CFlameThrower(void);
-	void Fire(void);
 	bool TryTarget(const float3 &pos,bool userTarget,CUnit* unit);
 	void Update(void);
 	float3 color;
 	float3 color2;
+
+private:
+	virtual void FireImpl();
 };
 
 #endif // __FLAME_THROWER_H__

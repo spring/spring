@@ -149,6 +149,7 @@ class LuaParser {
 		void AddString(const string& key, const string& value);
 
 		void SetLowerKeys(bool state) { lowerKeys = state; }
+		void SetLowerCppKeys(bool state) { lowerCppKeys = state; }
 
 	public:
 		const string fileName;
@@ -174,6 +175,7 @@ class LuaParser {
 		int currentRef;
 
 		bool lowerKeys; // convert all returned keys to lower case
+		bool lowerCppKeys; // convert strings in arguments keys to lower case
 
 		string errorLog;	
 		set<string> accessedFiles;

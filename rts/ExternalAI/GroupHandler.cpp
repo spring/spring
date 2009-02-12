@@ -147,7 +147,6 @@ void CGroupHandler::TestDll(std::string name)
 		key.aiNumber=i;
 		availableAI[key] = std::string(aiNameList[i]);
 	}
-//	logOutput << name.c_str() << " " << c << "\n";
 	delete lib;
 }
 

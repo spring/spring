@@ -1,13 +1,9 @@
 #include "StdAfx.h"
 #include "DGunWeapon.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Sound.h"
 #include "WeaponDefHandler.h"
-#include "myMath.h"
 #include "mmgr.h"
 
 CR_BIND_DERIVED(CDGunWeapon, CWeapon, (NULL));
@@ -39,12 +35,8 @@ void CDGunWeapon::Update(void)
 	CWeapon::Update();
 }
 
-void CDGunWeapon::Fire(void)
+void CDGunWeapon::FireImpl()
 {
-	if(uh->limitDgun && owner->unitDef->isCommander && owner->pos.SqDistance(teamHandler->Team(owner->team)->startPos)>Square(uh->dgunRadius)){
-		return;		//prevents dgunning using fps view if outside dgunlimit
-	}
-
 	float3 dir;
 	if(onlyForward){
 		dir=owner->frontdir;
@@ -56,9 +48,6 @@ void CDGunWeapon::Fire(void)
 	dir.Normalize();
 
 	new CFireBallProjectile(weaponMuzzlePos, dir * projectileSpeed, owner, 0, targetPos, weaponDef);
-
-	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
-		sound->PlaySample(fireSoundId, owner, fireSoundVolume * 0.2f);
 }
 
 

@@ -114,7 +114,7 @@ class CEventHandler
 
 		bool CommandNotify(const Command& cmd);
 
-		bool AddConsoleLine(const std::string& msg, CLogSubsystem& zone);
+		bool AddConsoleLine(const std::string& msg, const CLogSubsystem& zone);
 
 		bool GroupChanged(int groupID);
 

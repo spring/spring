@@ -36,7 +36,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sound.h"
 #include "Sync/SyncTracer.h"
 #include "EventHandler.h"
 #include "myMath.h"

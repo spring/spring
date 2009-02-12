@@ -55,7 +55,7 @@ using namespace std;
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 
 
 extern Uint8 *keys;

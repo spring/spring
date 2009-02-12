@@ -144,7 +144,7 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 }
 
 
-void CInfoConsole::NotifyLogMsg(CLogSubsystem& subsystem, const char* text)
+void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const char* text)
 {
 	if (!font) return;
 

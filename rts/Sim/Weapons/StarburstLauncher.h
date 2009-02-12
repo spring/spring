@@ -11,13 +11,15 @@ public:
 	CStarburstLauncher(CUnit* owner);
 	~CStarburstLauncher(void);
 
-	void Fire(void);
 	void Update(void);
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 	float GetRange2D(float yDiff) const;
 
 	float tracking;
 	float uptime;
+
+private:
+	virtual void FireImpl();
 };
 
 

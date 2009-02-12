@@ -14,7 +14,6 @@
 #include "Sim/Projectiles/Unsynced/SmokeProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/ExplosiveProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "Sync/SyncTracer.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
@@ -152,16 +151,13 @@ bool CCannon::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 }
 
 
-void CCannon::Fire(void)
+void CCannon::FireImpl(void)
 {
 	float3 diff = targetPos-weaponMuzzlePos;
 	float3 dir=(diff.SqLength() > 4.0) ? GetWantedDir(diff) : diff; //prevent vertical aim when emit-sfx firing the weapon
 	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.9f);
 	dir.Normalize();
-#ifdef TRACE_SYNC
-	tracefile << "Cannon fire: ";
-	tracefile << owner->pos.x << " " << dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
-#endif
+
 	int ttl = 0;
 	float sqSpeed2D = dir.SqLength2D() * projectileSpeed * projectileSpeed;
 	int predict = (int)ceil((sqSpeed2D == 0) ? (-2 * projectileSpeed * dir.y / gravity)
@@ -179,11 +175,6 @@ void CCannon::Fire(void)
 
 	new CExplosiveProjectile(weaponMuzzlePos, dir * projectileSpeed, owner,
 		weaponDef, ttl, areaOfEffect, gravity);
-
-	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
-//	if(weaponMuzzlePos.y < 30)
-//		water->AddExplosion(weaponMuzzlePos, weaponDef->damages[0] * 0.1f, sqrt(weaponDef->damages[0]) + 80);
 }
 
 void CCannon::SlowUpdate(void)

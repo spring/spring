@@ -312,7 +312,7 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
 	CFileHandler VPFile(std::string("shaders/")+filename);
 	if (!VPFile.FileExists ())
 	{
-		logOutput << "Warning: ProgramStringIsNative couldn't find " << filename << ".\n";
+		LogObject() << "Warning: ProgramStringIsNative couldn't find " << filename << ".\n";
 		return false;
 	}
 	char *VPbuf = new char[VPFile.FileSize()];

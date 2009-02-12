@@ -171,7 +171,7 @@ class CLuaHandle : public CEventClient
 
 		bool CommandNotify(const Command& cmd);
 
-		bool AddConsoleLine(const string& msg, CLogSubsystem&);
+		bool AddConsoleLine(const string& msg, const CLogSubsystem&);
 
 		bool GroupChanged(int groupID);
 

@@ -1,0 +1,12 @@
+import os.path
+
+Import('env')
+
+nedenv = env.Clone()
+nedenv.AppendUnique(CFLAGS=['-DREPLACE_SYSTEM_ALLOCATOR'])
+nedmalloc = 'nedmalloc.c'
+target = os.path.join('../..', env['builddir'], 'tools/nedmalloc', nedmalloc) + '.o'
+obj = nedenv.Object(source=nedmalloc, target=target)
+
+Return('obj')
+

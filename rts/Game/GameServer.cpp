@@ -122,9 +122,6 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 	lastUpdate = SDL_GetTicks();
 	modGameTime = 0.0f;
 	quitServer=false;
-#ifdef DEBUG
-	gameClientUpdated=false;
-#endif
 	hasLocalClient = false;
 	localClientNumber = 0;
 	isPaused = false;
@@ -1025,7 +1022,13 @@ void CGameServer::CheckForGameStart(bool forced)
 	for (int a = setup->numDemoPlayers; a < players.size(); a++)
 #endif
 	{
-		if (players[a].myState < GameParticipant::INGAME) {
+		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + 45000 < SDL_GetTicks())
+		{
+			// autostart the game when 45 seconds have passed and everyone who managed to connect is ready
+			continue;
+		}
+		else if (players[a].myState < GameParticipant::INGAME)
+		{
 			allReady = false;
 			break;
 		} else if (teams[players[a].team] && !teams[players[a].team]->readyToStart && !demoReader)
@@ -1151,7 +1154,7 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "skip")
 	{
-		if (demoReader && serverframenum > 1)
+		if (demoReader)
 		{
 			const std::string timeStr = action.extra;
 			int endFrame;
@@ -1353,8 +1356,7 @@ void CGameServer::UpdateLoop()
 			UDPNet->Update();
 
 		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
-		if (hasData)
-			ServerReadNet(); // new data arrived, we may have new packets
+		ServerReadNet();
 		Update();
 	}
 	if (hostif)

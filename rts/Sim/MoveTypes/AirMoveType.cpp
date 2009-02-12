@@ -19,7 +19,6 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Weapons/Weapon.h"
-#include "Sound.h"
 
 CR_BIND_DERIVED(CAirMoveType, AAirMoveType, (NULL));
 CR_BIND(CAirMoveType::DrawLine, );
@@ -733,7 +732,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float goalDotRight = rightdir.dot(adjustedGoalDir);
 	float goalDotFront = adjustedGoalDir.dot(frontdir) * 0.5f + 0.501f;
 
-	if (goalDotFront != 0.0f) {
+	if (goalDotFront > 0.01f) {
 		goalDotRight /= goalDotFront;
 	}
 

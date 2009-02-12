@@ -235,7 +235,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,
 				sp.texture=texturehandler3DO->Get3DOTexture(texture + "00");
 
 			if(sp.texture==0)
-				logOutput << "Parser couldnt get texture " << GetText(p.OffsetToTextureName).c_str() << "\n";
+				LogObject() << "Parser couldnt get texture " << GetText(p.OffsetToTextureName).c_str() << "\n";
 		} else {
 			char t[50];
 			sprintf(t,"ta_color%i",p.PaletteEntry);

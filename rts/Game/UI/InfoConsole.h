@@ -24,7 +24,7 @@ public:
 	void Draw();
 
 	// ILogSubscriber interface implementation
-	void NotifyLogMsg(CLogSubsystem& subsystem, const char* txt);
+	void NotifyLogMsg(const CLogSubsystem& subsystem, const char* txt);
 
 
 	void SetLastMsgPos(const float3& pos);
@@ -61,10 +61,10 @@ public:
 
 	static const int maxRawLines;
 	struct RawLine {
-		RawLine(const std::string& text, CLogSubsystem* subsystem, int id)
+		RawLine(const std::string& text, const CLogSubsystem* subsystem, int id)
 		: text(text), subsystem(subsystem), id(id), time(0) {}
 		std::string text;
-		CLogSubsystem* subsystem;
+		const CLogSubsystem* subsystem;
 		int id;
 		Uint32 time;
 	};

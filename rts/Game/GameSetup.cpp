@@ -568,7 +568,7 @@ bool CGameSetup::Init(const std::string& buf)
 		return false;
 
 	// Game parameters
-	scriptName  = file.SGetValueDef("Commanders", "GAME\\ScriptName");
+	scriptName  = file.SGetValueDef("Commanders", "GAME\\ModOptions\\ScriptName");
 
 	// Used by dedicated server only
 	int tempMapHash, tempModHash;

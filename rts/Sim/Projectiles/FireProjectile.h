@@ -37,6 +37,9 @@ public:
 
 	std::list<SubParticle> subParticles;
 	std::list<SubParticle> subParticles2;
+
+private:
+	virtual void FireImpl() {};
 };
 
 #endif // __FIRE_PROJECTILE_H__

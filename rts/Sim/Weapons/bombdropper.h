@@ -14,7 +14,6 @@ public:
 	CBombDropper(CUnit* owner, bool useTorps);
 	virtual ~CBombDropper();
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
-	void Fire(void);
 	void Init(void);
 	bool AttackUnit(CUnit* unit, bool userTarget);
 	bool AttackGround(float3 pos, bool userTarget);
@@ -23,6 +22,9 @@ public:
 	bool dropTorpedoes;			//if we should drop torpedoes
 	float bombMoveRange;		//range of bombs (torpedoes) after they hit ground/water
 	float tracking;
+
+private:
+	virtual void FireImpl(void);
 };
 
 #endif /* BOMBDROPPER_H */
