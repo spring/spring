@@ -28,14 +28,14 @@ cd installer/builddata/
 
 echo Updating bitmaps.sdz
 cd bitmaps/
-zip -qu ../../../game/base/spring/bitmaps.sdz modinfo.tdf
+zip -qu ../../../game/base/spring/bitmaps.sdz modinfo.lua
 zip -qu ../../../game/base/spring/bitmaps.sdz bitmaps/*
 zip -qu ../../../game/base/spring/bitmaps.sdz bitmaps/*/*
 cd ..
 
 echo Updating springcontent.sdz
 cd springcontent/
-zip -qu ../../../game/base/springcontent.sdz modinfo.tdf
+zip -qu ../../../game/base/springcontent.sdz modinfo.lua
 zip -qu ../../../game/base/springcontent.sdz EngineOptions.lua
 zip -qu ../../../game/base/springcontent.sdz gamedata/*
 zip -qu ../../../game/base/springcontent.sdz gamedata/*/*
@@ -48,7 +48,7 @@ cd ..
 
 echo Updating maphelper.sdz
 cd maphelper/
-zip -qu ../../../game/base/maphelper.sdz modinfo.tdf
+zip -qu ../../../game/base/maphelper.sdz modinfo.lua
 zip -qu ../../../game/base/maphelper.sdz MapOptions.lua
 zip -qu ../../../game/base/maphelper.sdz maphelper/*
 cd ..
