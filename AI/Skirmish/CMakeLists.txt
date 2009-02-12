@@ -9,6 +9,11 @@ add_definitions(-DBUILDING_AI)
 set(SKIRMISH_SRC "${CMAKE_SOURCE_DIR}/AI/Skirmish")
 set(SKIRMISH_DATA "${AIDIR}/AI/Skirmish")
 
+# These seem to be needed when compiling with multiple threads.
+# They are really set in ../Interfaces/CMakeLists.txt.
+set(C_AIINTERFACE_TARGET    "C-AI-Interface")
+set(Java_AIINTERFACE_TARGET "Java-AI-Interface")
+
 #set(SKIRMISHAI_FIND_QUIETLY True)
 
 ## KAI
