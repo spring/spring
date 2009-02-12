@@ -652,7 +652,7 @@ skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
 # when compiling with MinGW on windows, because of
 # a class in the Legacy C++ wrapper, which is used
 # by all other legacy C++ AIs aswell
-if sys.platform == 'win32':
+if env['platform'] == 'windows':
 	skirmishai_exclude_list += ['NTai']
 skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
 skirmishai_needCreg_list=['KAIK', 'KAI']
