@@ -908,8 +908,8 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if (moveType->progressState == AMoveType::Active) {
-		if (seismicSignature) {
+	if (moveType->progressState == AMoveType::Active ) {
+		if (seismicSignature && !GetTransporter()) {
 			DoSeismicPing((int)seismicSignature);
 		}
 	}
@@ -1314,7 +1314,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	SetGroup(0);
 
 	eventHandler.UnitTaken(this, newteam);
-	eoh->UnitCaptured(*this, oldteam);
+	eoh->UnitCaptured(*this, newteam);
 
 	// reset states and clear the queues
 	if (!teamHandler->AlliedTeams(oldteam, newteam)) {
