@@ -287,7 +287,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 void CSound::PlaySample(size_t id, CUnit* u,float volume)
 {
-	PlaySample(id, u->pos, u->speed, volume);
+	PlaySample(id, u->pos, u->speed, volume, false);
 }
 
 void CSound::PlaySample(size_t id, CWorldObject* p,float volume)
@@ -383,13 +383,13 @@ void CSound::Update()
 	CheckError("CSound::Update");
 }
 
-void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, unsigned lastFrameTime)
+void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
 	if (sources.empty())
 		return;
 	myPos = campos * posScale;
 	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (myPos - prevPos)/lastFrameTime/7.0;
+	const float3 velocity = (myPos - prevPos)/(lastFrameTime);
 	prevPos = myPos;
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
