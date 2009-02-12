@@ -112,7 +112,8 @@ def get_spring_source(env):
 		'rts/build',
 		'rts/lib/crashrpt', # unused
 		'rts/lib/libhpi',
-		'rts/lib/streflop', # streflop is compiled with it's own Makefiles
+		'rts/lib/streflop', # compiled separately, as a static lib
+		'rts/lib/oscpack',  # compiled separately, as a static lib
 		'rts/System/Platform/BackgroundReader.cpp',
 		'rts/System/Platform/Mac', # Mac build uses XCode
 		'rts/System/FileSystem/DataDirLocater.cpp', # see SConstruct

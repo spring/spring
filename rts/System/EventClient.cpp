@@ -123,7 +123,7 @@ string CEventClient::GetTooltip(int x, int y) { return ""; }
 
 bool CEventClient::CommandNotify(const Command& cmd) { return false; }
 
-bool CEventClient::AddConsoleLine(const string& msg, CLogSubsystem& subsystem) { return false; }
+bool CEventClient::AddConsoleLine(const string& msg, const CLogSubsystem& subsystem) { return false; }
 
 bool CEventClient::GroupChanged(int groupID) { return false; }
 

@@ -1,6 +1,21 @@
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/ System)
 
+# Place executables and shared libs under "build-dir/",
+# instead of under "build-dir/rts/"
+# This way, we have the build-dir structure more like the install-dir one,
+# which makes testing spring in the builddir easier, eg. like this:
+# cd build-dir
+# SPRING_DATADIR=$(pwd) ./spring
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "..")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+
 ### Spring defines
+SET(USE_NEDMALLOC FALSE CACHE BOOL "Use nedmalloc memory allocator")
+if (USE_NEDMALLOC)
+	ADD_DEFINITIONS(-DREPLACE_SYSTEM_ALLOCATOR)
+	SET (nedmalloc_obj "../tools/nedmalloc/nedmalloc.c")
+endif (USE_NEDMALLOC)
+
 SET(USE_MMGR FALSE CACHE BOOL "Use memory manager?")
 if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)
@@ -26,6 +41,7 @@ IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
 	LIST(APPEND spring_libraries glu32 opengl32 ${WIN32_LIBRARIES} glew32 mingw32)
 	#TODO make FindLibraryX work with mingwlibs
+	set (OPENAL_LIBRARY OpenAL32)
 	set (VORBISFILE_LIBRARY vorbisfile)
 	set(VORBIS_LIBRARY vorbis)
 	set (OGG_LIBRARY ogg)
@@ -44,15 +60,15 @@ ELSE (MINGW)
 
 	FIND_PACKAGE(Freetype REQUIRED)
 	INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-	LIST(APPEND spring_libraries ${OPENAL_LIBRARY} ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${X11_X11_LIB} ${X11_Xcursor_LIB} ${GLEW_LIBRARIES})
+	LIST(APPEND spring_libraries ${OPENGL_gl_LIBRARY} ${OPENGL_glu_LIBRARY} ${X11_X11_LIB} ${X11_Xcursor_LIB} ${GLEW_LIBRARIES})
 ENDIF (MINGW)
 
 ### libraries needed on all platforms
-LIST(APPEND spring_libraries  ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${FREETYPE_LIBRARIES} ${DEVIL_LIBRARIES} )
+LIST(APPEND spring_libraries  ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${OPENAL_LIBRARY} ${VORBISFILE_LIBRARY} ${VORBIS_LIBRARY} ${OGG_LIBRARY} ${FREETYPE_LIBRARIES} ${DEVIL_LIBRARIES} )
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
-LIST(APPEND spring_libraries lua 7zip hpiutil2 minizip streflop)
+LIST(APPEND spring_libraries lua 7zip hpiutil2 oscpack minizip streflop)
 if (USE_GML)
 	list (APPEND spring_libraries gml)
 endif (USE_GML)
@@ -112,6 +128,7 @@ AUX_SOURCE_DIRECTORY(System/FileSystem sysfiles)
 AUX_SOURCE_DIRECTORY(System/Net sysfiles)
 AUX_SOURCE_DIRECTORY(System/Script sysfiles)
 AUX_SOURCE_DIRECTORY(System/Sync sysfiles)
+AUX_SOURCE_DIRECTORY(System/Sound sysfiles)
 AUX_SOURCE_DIRECTORY(System/creg sysfiles)
 
 ### Add icon and manifest to exe using windres
@@ -126,7 +143,7 @@ IF (NOT WIN32)
 	EXECUTE_PROCESS(COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} \( -name *.h -o -name *.hpp \) -printf %p\; OUTPUT_VARIABLE headers)
 ENDIF (NOT WIN32)
 
-ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${headers})
+ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj} ${headers})
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
 
 IF (MINGW)

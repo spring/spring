@@ -15,9 +15,11 @@ public:
 	bool TryTarget(const float3& pos,bool userTarget,CUnit* unit);
 
 	void Init(void);
-	void Fire(void);
 
 	float3 color;
+
+private:
+	virtual void FireImpl();
 };
 
 

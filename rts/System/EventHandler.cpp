@@ -519,7 +519,7 @@ string CEventHandler::GetTooltip(int x, int y)
 }
 
 
-bool CEventHandler::AddConsoleLine(const string& msg, CLogSubsystem& subsystem)
+bool CEventHandler::AddConsoleLine(const string& msg, const CLogSubsystem& subsystem)
 {
 	const int count = listAddConsoleLine.size();
 	for (int i = 0; i < count; i++) {

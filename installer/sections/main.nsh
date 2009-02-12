@@ -14,6 +14,8 @@
   File "..\mingwlibs\dll\glew32.dll"
   File "..\mingwlibs\dll\python25.dll"
   File "..\mingwlibs\dll\zlib1.dll"
+  File "..\mingwlibs\dll\OpenAL32.dll"
+  File "..\mingwlibs\dll\wrap_oal.dll"
 
   ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
   File "..\external\SDL.dll"
@@ -169,6 +171,8 @@ ${EndIf}
   Delete "$INSTDIR\zlibwapi.dll"
   Delete "$INSTDIR\MSVCR71.dll"
   Delete "$INSTDIR\MSVCP71.dll"
+  Delete "$INSTDIR\OpenAL32.dll"
+  Delete "$INSTDIR\wrap_oal.dll"
 
 
   Delete "$INSTDIR\PALETTE.PAL"

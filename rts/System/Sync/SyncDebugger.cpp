@@ -110,9 +110,11 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 	may_enable_history = false;
 	flop = 0;
 	for (int j = 0; j < numPlayers; ++j) {
-		players[j].checksumResponses.clear();
-		players[j].remoteHistory.clear();
-		players[j].remoteFlop = 0;
+		PlayerStruct buf;
+		buf.checksumResponses.clear();
+		buf.remoteHistory.clear();
+		buf.remoteFlop = 0;
+		players.push_back(buf);
 	}
 	pendingBlocksToRequest.clear();
 	waitingForBlockResponse = false;
@@ -246,10 +248,10 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					logger.AddLine("Server: got checksum response from %d", player);
 					const unsigned* begin = (unsigned*)&inbuf[12];
 					const unsigned* end = begin + HISTORY_SIZE;
-					checksumResponses[player].resize(HISTORY_SIZE);
-					std::copy(begin, end, checksumResponses[player].begin());
+					players[player].checksumResponses.resize(HISTORY_SIZE);
+					std::copy(begin, end, players[player].checksumResponses.begin());
 					players[player].remoteFlop = *(Uint64*)&inbuf[4];
-					assert(!checksumResponses[player].empty());
+					assert(!players[player].checksumResponses.empty());
 					int i = 0;
 					while (i < playerHandler->ActivePlayers() && !players[i].checksumResponses.empty()) ++i;
 					if (i == playerHandler->ActivePlayers()) {
@@ -400,7 +402,7 @@ void CSyncDebugger::ServerQueueBlockRequests()
 	Uint64 correctFlop = 0;
 	for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 		if (correctFlop) {
-			if (remoteFlop[j] != correctFlop)
+			if (players[j].remoteFlop != correctFlop)
 				logger.AddLine("Server: bad flop# %llu instead of %llu for player %d", players[j].remoteFlop, correctFlop, j);
 		} else {
 			correctFlop = players[j].remoteFlop;
@@ -506,13 +508,13 @@ void CSyncDebugger::ServerReceivedBlockResponses()
 void CSyncDebugger::ServerDumpStack()
 {
 	// first calculate start iterator...
-	unsigned posInHistory = (unsigned)(remoteFlop[0] % (HISTORY_SIZE * BLOCK_SIZE));
+	unsigned posInHistory = (unsigned)(players[0].remoteFlop % (HISTORY_SIZE * BLOCK_SIZE));
 	logger.AddLine("Server: position in history: %u", posInHistory);
 	unsigned blockNr = posInHistory / BLOCK_SIZE;
 	unsigned virtualBlockNr = 0; // block nr in remoteHistory (which skips unchanged blocks)
 	for (; virtualBlockNr < requestedBlocks.size() && requestedBlocks[virtualBlockNr] != blockNr; ++virtualBlockNr) {}
 	unsigned virtualPosInHistory = (virtualBlockNr * BLOCK_SIZE) + (posInHistory % BLOCK_SIZE) + 1;
-	unsigned virtualHistorySize = remoteHistory[0].size();
+	unsigned virtualHistorySize = players[0].remoteHistory.size();
 	if (virtualBlockNr >= requestedBlocks.size())
 		virtualPosInHistory = virtualHistorySize;
 	unsigned ndif = 0; // number of differences
@@ -529,7 +531,7 @@ void CSyncDebugger::ServerDumpStack()
 		if (i == virtualHistorySize) i = 0;
 		bool err = false;
 		for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
-			if (correctChecksum && remoteHistory[j][i] != correctChecksum) {
+			if (correctChecksum && players[j].remoteHistory[i] != correctChecksum) {
 				if (historybt) {
 					virtualBlockNr = i / BLOCK_SIZE;
 					blockNr = requestedBlocks[virtualBlockNr];
@@ -541,13 +543,13 @@ void CSyncDebugger::ServerDumpStack()
 						checksumToIndex[checksum] = curBacktrace;
 						indexToHistPos[curBacktrace] = histPos;
 					}
-					logger.AddLine("Server: chk %08X instead of %08X frame %06u, (value=%08x %15.8e) backtrace %u in \"%s\"", remoteHistory[j][i], correctChecksum, historybt[histPos].frameNum, historybt[histPos].data, *(float*)&historybt[histPos].data, checksumToIndex[checksum], historybt[histPos].op);
+					logger.AddLine("Server: chk %08X instead of %08X frame %06u, (value=%08x %15.8e) backtrace %u in \"%s\"", players[j].remoteHistory[i], correctChecksum, historybt[histPos].frameNum, historybt[histPos].data, *(float*)&historybt[histPos].data, checksumToIndex[checksum], historybt[histPos].op);
 				} else {
-					logger.AddLine("Server: chk %08X instead of %08X", remoteHistory[j][i], correctChecksum);
+					logger.AddLine("Server: chk %08X instead of %08X", players[j].remoteHistory[i], correctChecksum);
 				}
 				err = true;
 			} else {
-				correctChecksum = remoteHistory[j][i];
+				correctChecksum = players[j].remoteHistory[i];
 			}
 		}
 		if (err) {

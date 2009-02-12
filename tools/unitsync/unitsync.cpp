@@ -107,7 +107,7 @@ static string lastError;
 
 static void _SetLastError(string err)
 {
-	logOutput.Print(LOG_UNITSYNC, "error: " + err);
+	logOutput.Prints(LOG_UNITSYNC, "error: " + err);
 	lastError = err;
 }
 
@@ -1540,15 +1540,23 @@ EXPORT(int) GetModOptionCount()
 
 		// EngineOptions must be read first, so accidentally "overloading" engine
 		// options with mod options with identical names is not possible.
-		ParseOptions("EngineOptions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-		ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
-
+		// Both files are now optional
+		try {
+			ParseOptions("EngineOptions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
+		}
+		UNITSYNC_CATCH_BLOCKS;	
+		try {
+			ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
+		}
+		UNITSYNC_CATCH_BLOCKS;
+		
 		optionsSet.clear();
 
 		return options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
+	// Failed to load engineoptions 
 	options.clear();
 	optionsSet.clear();
 

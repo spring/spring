@@ -59,9 +59,32 @@ else:
 	if os.path.exists('rts/System/StdAfx.h.gch'):
 		os.unlink('rts/System/StdAfx.h.gch')
 
-################################################################################
-### Build streflop (which has it's own Makefile-based build system)
-################################################################################
+def createStaticExtLibraryBuilder(env):
+    """This is a utility function that creates the StaticExtLibrary
+	Builder in an Environment if it is not there already.
+
+    If it is already there, we return the existing one."""
+    import SCons.Action
+
+    try:
+        static_extlib = env['BUILDERS']['StaticExtLibrary']
+    except KeyError:
+        action_list = [ SCons.Action.Action("$ARCOM", "$ARCOMSTR") ]
+        if env.Detect('ranlib'):
+            ranlib_action = SCons.Action.Action("$RANLIBCOM",
+"$RANLIBCOMSTR")
+            action_list.append(ranlib_action)
+
+    static_extlib = SCons.Builder.Builder(action = action_list,
+                                          emitter = '$LIBEMITTER',
+                                          prefix = '$LIBPREFIX',
+                                          suffix = '$LIBSUFFIX',
+                                          src_suffix = '$OBJSUFFIX',
+                                          src_builder = 'SharedObject')
+
+    env['BUILDERS']['StaticExtLibrary'] = static_extlib
+    return static_extlib 
+
 
 # stores shared objects so newer scons versions don't choke with
 def create_static_objects(env, fileList, suffix, additionalCPPDEFINES = []):
@@ -75,6 +98,10 @@ def create_static_objects(env, fileList, suffix, additionalCPPDEFINES = []):
 		fname, fext = fbase.rsplit('.', 1)
 		objsList.append(myEnv.StaticObject(os.path.join(fpath, fname + suffix), f))
 	return objsList
+	
+################################################################################
+### Build streflop
+################################################################################
 
 # setup build environment
 senv = env.Clone(builddir=os.path.join(env['builddir'], 'streflop'))
@@ -110,9 +137,42 @@ streflopSource += sobjs_flt32
 #streflopSource += sobjs_flt32 + sobjs_dbl64 + sobjs_ldbl96
 
 # compile
-streflop_lib = senv.StaticLibrary(senv['builddir'], streflopSource)
-env['streflop_lib'] = streflop_lib
+createStaticExtLibraryBuilder(senv)
+streflop_lib = senv.StaticExtLibrary(senv['builddir'], streflopSource)
+#streflop_lib = senv.StaticLibrary(senv['builddir'], streflopSource)
 Alias('streflop', streflop_lib) # Allow `scons streflop' to compile just streflop
+
+################################################################################
+### Build oscpack
+################################################################################
+
+# setup build environment
+oscenv = env.Clone(builddir=os.path.join(env['builddir'], 'oscpack'))
+oscenv['CPPPATH'] = []
+oscenv.BuildDir(os.path.join(oscenv['builddir'], 'rts/lib/oscpack'),
+		'rts/lib/oscpack', duplicate = False)
+
+oscenv['CXXFLAGS'] = senv['CXXFLAGS']
+
+# setup flags and defines
+if oscenv['platform'] == 'darwin':
+	oscenv.AppendUnique(CPPDEFINES=['OSC_HOST_BIG_ENDIAN'])
+else:
+	oscenv.AppendUnique(CPPDEFINES=['OSC_HOST_LITTLE_ENDIAN'])
+
+# gather the sources
+oscpackSource_tmp = [
+		'rts/lib/oscpack/OscOutboundPacketStream.cpp',
+		'rts/lib/oscpack/OscTypes.cpp'
+		]
+oscpackSource = []
+for f in oscpackSource_tmp:
+	oscpackSource += [os.path.join(oscenv['builddir'], f)]
+
+# compile
+createStaticExtLibraryBuilder(oscenv)
+oscpack_lib = oscenv.StaticExtLibrary(oscenv['builddir'], oscpackSource)
+Alias('oscpack', oscpack_lib) # Allow `scons oscpack' to compile just oscpack
 
 ################################################################################
 ### Build spring(.exe)
@@ -142,7 +202,12 @@ else:
 
 ddlcpp = env.Object(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = env['CPPDEFINES']+env['spring_defines']+datadir)
 spring_files += [ddlcpp]
-spring_files += [streflop_lib]
+spring_files += [streflop_lib, oscpack_lib]
+
+if env['use_nedmalloc']:
+	nedmalloc = SConscript('tools/nedmalloc/SConscript', exports='env')
+	spring_files += [nedmalloc]
+
 if env['platform'] != 'windows':
 	spring = env.Program('game/spring', spring_files, CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 else: # create import library and .def file on Windows

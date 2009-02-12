@@ -1,3 +1,13 @@
+
+# Place executables and shared libs under "build-dir/",
+# instead of under "build-dir/rts/"
+# This way, we have the build-dir structure more like the install-dir one,
+# which makes testing spring in the builddir easier, eg. like this:
+# cd build-dir
+# SPRING_DATADIR=$(pwd) ./spring
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../..")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+
 IF (MINGW)
 	set (unitsync_libs glew32 opengl32 glu32 devil ilu python25)
 	set (PYTHONLIBS_FOUND TRUE) # Python libs are part of the mingwlibs package

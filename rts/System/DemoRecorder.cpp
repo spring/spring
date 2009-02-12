@@ -65,8 +65,8 @@ CDemoRecorder::~CDemoRecorder()
 
 	if (demoName != wantedName) {
 		if (rename(demoName.c_str(), wantedName.c_str()) != 0) {
-            logOutput << "Renaming demo " << demoName << " to " << wantedName << "\n";
-            logOutput << "failed: " << strerror(errno) << "\n";
+            LogObject() << "Renaming demo " << demoName << " to " << wantedName << "\n";
+            LogObject() << "failed: " << strerror(errno) << "\n";
 		}
 	} else {
 	    // pointless?

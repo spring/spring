@@ -1282,7 +1282,7 @@ int LuaOpenGL::GetTextWidth(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.GetTextWidth(\"text\")");
 	}
 	const string text = lua_tostring(L, 1);
-	const float width = font->CalcTextWidth(text.c_str()) / fontHeight;
+	const float width = font->CalcTextWidth(text.c_str()) / font->GetHeight();
 	lua_pushnumber(L, width);
 	return 1;
 }

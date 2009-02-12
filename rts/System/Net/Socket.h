@@ -39,6 +39,9 @@ public:
 	/// Set the blocking state of the socket
 	void SetBlocking(const bool block) const;
 
+	/// Set whether this socket allows sending broadcasts; default: off
+	void SetBroadcasting(const bool broadcast) const;
+
 	/**
 	@brief wait for incoming data
 	@param timeout if there is no data to read, this call blocks for x miliseconds

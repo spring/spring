@@ -49,6 +49,7 @@
 #include "TimeProfiler.h"
 #include "WaitCommandsAI.h"
 #include "WordCompletion.h"
+#include "OSCStatsSender.h"
 #ifdef _WIN32
 #  include "winerror.h"
 #endif
@@ -100,7 +101,6 @@
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/ModInfo.h"
-#include "Sim/Misc/ModSound.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/SideParser.h"
@@ -124,9 +124,8 @@
 #include "Util.h"
 #include "Exceptions.h"
 #include "EventHandler.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "FileSystem/SimpleParser.h"
-#include "Platform/NullSound.h"
 #include "Net/RawPacket.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
@@ -200,10 +199,6 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(crossSize),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawFpsHUD),
-
-	CR_MEMBER(soundEnabled),
-	CR_MEMBER(gameSoundVolume),
-	CR_MEMBER(unitReplyVolume),
 
 	CR_MEMBER(moveWarnings),
 
@@ -303,13 +298,8 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	oldStatus  = 255;
 #endif
 
-	sound = CSound::GetSoundSystem();
-	gameSoundVolume = configHandler.Get("SoundVolume", 60) * 0.01f;
-	unitReplyVolume = configHandler.Get("UnitReplyVolume", configHandler.Get("UnitReplySoundVolume", 80) ) * 0.01f;
-	soundEnabled = true;
-	sound->SetVolume(gameSoundVolume);
-	sound->SetUnitReplyVolume(unitReplyVolume);
-	chatSound = ModSound::Get().GetSoundId("IncomingChat");
+	sound = new CSound();
+	chatSound = sound->GetSoundId("IncomingChat", false);
 
 	moveWarnings = !!configHandler.Get("MoveWarnings", 1);
 
@@ -1195,32 +1185,28 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "nosound") {
-		soundEnabled = !soundEnabled;
-		sound->SetVolume (soundEnabled ? gameSoundVolume : 0.0f);
-		if (soundEnabled) {
-			logOutput.Print("Sound enabled");
-		} else {
+		if (sound->Mute()) {
 			logOutput.Print("Sound disabled");
+		} else {
+			logOutput.Print("Sound enabled");
 		}
 	}
 	else if (cmd == "volume") {
 		char* endPtr;
 		const char* startPtr = action.extra.c_str();
-		float volume = (float)strtod(startPtr, &endPtr);
+		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
 		if (endPtr != startPtr) {
-			gameSoundVolume = std::max(0.0f, std::min(1.0f, volume));
-			sound->SetVolume(gameSoundVolume);
-			configHandler.Set("SoundVolume", (int)(gameSoundVolume * 100.0f));
+			sound->SetVolume(volume);
+			configHandler.Set("SoundVolume", (int)(volume * 100.0f));
 		}
 	}
 	else if (cmd == "unitreplyvolume") {
 		char* endPtr;
 		const char* startPtr = action.extra.c_str();
-		float volume = (float)strtod(startPtr, &endPtr);
+		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
 		if (endPtr != startPtr) {
-			unitReplyVolume = std::max(0.0f, std::min(1.0f, volume));
-			sound->SetUnitReplyVolume(unitReplyVolume);
-			configHandler.Set("UnitReplyVolume",(int)(unitReplyVolume * 100.0f));
+			sound->SetUnitReplyVolume(volume);
+			configHandler.Set("UnitReplyVolume",(int)(volume * 100.0f));
 		}
 	}
 	else if (cmd == "savegame"){
@@ -1390,19 +1376,19 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "moretrees") {
 		treeDrawer->baseTreeDistance+=0.2f;
-		logOutput << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		LogObject() << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 	else if (cmd == "lesstrees") {
 		treeDrawer->baseTreeDistance-=0.2f;
-		logOutput << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
+		LogObject() << "Base tree distance " << treeDrawer->baseTreeDistance*2*SQUARE_SIZE*TREE_SQUARE_SIZE << "\n";
 	}
 	else if (cmd == "moreclouds") {
 		sky->cloudDensity*=0.95f;
-		logOutput << "Cloud density " << 1/sky->cloudDensity << "\n";
+		LogObject() << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
 	else if (cmd == "lessclouds") {
 		sky->cloudDensity*=1.05f;
-		logOutput << "Cloud density " << 1/sky->cloudDensity << "\n";
+		LogObject() << "Cloud density " << 1/sky->cloudDensity << "\n";
 	}
 
 	// Break up the if/else chain to workaround MSVC compiler limit
@@ -1957,6 +1943,10 @@ bool CGame::ActionPressed(const Action& action,
 			}
 		}
 	}
+	else if (cmd == "debuginfo") {
+		if (action.extra == "sound")
+			sound->PrintDebugInfo();
+	}
 	else if (cmd == "atm" ||
 #ifdef DEBUG
 			cmd == "desync" ||
@@ -2474,15 +2464,13 @@ bool CGame::Update()
 	}
 
 	if (!skipping)
+	{
 		UpdateUI(false);
+		sound->Update();
+		sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+	}
 
 	net->Update();
-
-#ifdef DEBUG
-	if (gameServer) {
-		gameServer->gameClientUpdated = true;
-	}
-#endif
 
 	if(creatingVideo && playing && gameServer){
 		gameServer->CreateNewFrame(false, true);
@@ -2507,6 +2495,10 @@ bool CGame::Update()
 		}
 	}
 
+	if (!(gs->frameNum & 31)) {
+		oscStatsSender->Update(gs->frameNum);
+	}
+
 	return true;
 }
 
@@ -2516,6 +2508,10 @@ bool CGame::DrawWorld()
 	SCOPED_TIMER("Draw world");
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
+
+	for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+		(*usi)->UpdateDrawPos();
+	}
 
 	if (drawSky) {
 		sky->Draw();
@@ -2643,11 +2639,15 @@ bool CGame::DrawWorld()
 #if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::Draw() {
 	gmlProcessor->Work(&CGame::DrawMTcb,NULL,NULL,this,gmlThreadCount,TRUE,NULL,1,2,2,FALSE);
-#else
-bool CGame::DrawMT() {
-#endif
 	return true;
 }
+#else
+bool CGame::DrawMT() {
+	return true;
+}
+#endif
+
+
 #if defined(USE_GML) && GML_ENABLE_DRAW
 bool CGame::DrawMT() {
 #else
@@ -2693,11 +2693,11 @@ bool CGame::Draw() {
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
 		for (int annoy = 0; annoy < 8; annoy++) {
-			logOutput << "5 errors deep in LuaUI, disabling...\n";
+			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
 		guihandler->RunLayoutCommand("disable");
-		logOutput << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
-		logOutput << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
+		LogObject() << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
+		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
 	if (!gu->active) {
@@ -2708,7 +2708,6 @@ bool CGame::Draw() {
 
 	lineDrawer.UpdateLineStipple();
 
-//	logOutput << mouse->lastx << "\n";
 	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
 		gu->lastFrameStart = SDL_GetTicks();
 		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
@@ -2824,7 +2823,7 @@ bool CGame::Draw() {
 		SCOPED_TIMER("Interface draw");
 		if (hideInterface) {
 			guihandler->Update();
-			luaInputReceiver->Draw();
+			//luaInputReceiver->Draw();
 		}
 		else {
 			std::deque<CInputReceiver*>& inputReceivers = GetInputReceivers();
@@ -2865,7 +2864,7 @@ bool CGame::Draw() {
 		font->glPrintCentered(0.5f, 0.4f, 3.0f, "(or Escape)");
 	}
 
-	if (showClock) {
+	if (showClock && !hideInterface) {
 		char buf[32];
 		const int seconds = (gs->frameNum / 30);
 		if (seconds < 3600) {
@@ -2886,7 +2885,7 @@ bool CGame::Draw() {
 		}
 	}
 
-	if (showFPS) {
+	if (showFPS && !hideInterface) {
 		char buf[32];
 		SNPRINTF(buf, sizeof(buf), "%i", fps);
 
@@ -3085,8 +3084,6 @@ void CGame::SimFrame() {
 		infoConsole->Update();
 		waitCommandsAI.Update();
 		geometricObjects->Update();
-		if(!(gs->frameNum & 7))
-			sound->Update();
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
@@ -3314,6 +3311,8 @@ void CGame::ClientReadNet()
 
 			case NETMSG_INTERNAL_SPEED: {
 				gs->speedFactor = *((float*) &inbuf[1]);
+				if (configHandler.Get("PitchAdjust", true))
+					sound->PitchAdjust(sqrt(gs->speedFactor));
 				//	logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -4453,8 +4452,9 @@ void CGame::Skip(int toFrame)
 	const int totalFrames = endFrame - startFrame;
 	const float seconds = (float)(totalFrames) / (float)GAME_SPEED;
 
-	CSound* tmpSound = sound;
-	sound = new CNullSound;
+	bool soundmute = sound->IsMuted();
+	if (!soundmute)
+		sound->Mute(); // no sounds
 
 	skipping = true;
 	{
@@ -4506,8 +4506,8 @@ void CGame::Skip(int toFrame)
 		gs->userSpeedFactor = oldUserSpeed;
 	}
 
-	delete sound;
-	sound = tmpSound;
+	if (!soundmute)
+		sound->Mute(); // sounds back on
 
 	logOutput.Print("Skipped %.1f seconds\n", seconds);
 }

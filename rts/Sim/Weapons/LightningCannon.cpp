@@ -6,7 +6,6 @@
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sound.h"
 #include "WeaponDefHandler.h"
 #include "mmgr.h"
 
@@ -83,7 +82,7 @@ void CLightningCannon::Init(void)
 	CWeapon::Init();
 }
 
-void CLightningCannon::Fire(void)
+void CLightningCannon::FireImpl()
 {
 	float3 dir=targetPos-weaponMuzzlePos;
 	dir.Normalize();
@@ -114,10 +113,6 @@ void CLightningCannon::Fire(void)
 
 	new CLightningProjectile(weaponMuzzlePos,
 		weaponMuzzlePos + dir * (r + 10), owner, color, weaponDef, 10, this);
-
-	if (fireSoundId && (!weaponDef->soundTrigger || salvoLeft == salvoSize - 1))
-		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
-
 }
 
 

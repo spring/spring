@@ -646,7 +646,7 @@ void CArchiveScanner::WriteCacheData(const string& filename)
 
 	fprintf(out, "local archiveCache = {\n\n");
 	fprintf(out, "\tinternalver = %i,\n\n", INTERNAL_VER);
-	fprintf(out, "\tarchives = {  -- count = %i\n", archiveInfo.size());
+	fprintf(out, "\tarchives = {  -- count = %lu\n", archiveInfo.size());
 
 	std::map<string, ArchiveInfo>::const_iterator arcIt;
 	for (arcIt = archiveInfo.begin(); arcIt != archiveInfo.end(); ++arcIt) {

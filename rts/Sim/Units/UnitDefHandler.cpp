@@ -31,7 +31,7 @@
 #include "COB/CobFile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "Exceptions.h"
 
 const char YARDMAP_CHAR = 'c';		//Need to be low case.
@@ -327,6 +327,7 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canmove     = udTable.GetBool("canMove",     false);
 	ud.reclaimable = udTable.GetBool("reclaimable", true);
 	ud.capturable  = udTable.GetBool("capturable",  true);
+	ud.repairable  = udTable.GetBool("repairable",  true);
 	ud.canAttack   = udTable.GetBool("canAttack",   true);
 	ud.canFight    = udTable.GetBool("canFight",    true);
 	ud.canPatrol   = udTable.GetBool("canPatrol",   true);
@@ -864,19 +865,25 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
                                 const string& fileName, const float volume)
 {
-	string soundFile = "sounds/" + fileName;
-
-	if (soundFile.find(".wav") == -1) {
-	 	// .wav extension missing, add it
-		soundFile += ".wav";
+	if (!sound->HasSoundItem(fileName))
+	{
+		string soundFile = "sounds/" + fileName;
+	
+		if (soundFile.find(".wav") == -1) {
+			// .wav extension missing, add it
+			soundFile += ".wav";
+		}
+		CFileHandler fh(soundFile);
+		if (fh.FileExists()) {
+			// we have a valid soundfile: store name, ID, and default volume
+			const int id = sound->GetSoundId(soundFile);
+			GuiSoundSet::Data soundData(fileName, id, volume);
+			gsound.sounds.push_back(soundData);
+		}
 	}
-
-	CFileHandler fh(soundFile);
-
-	if (fh.FileExists()) {
-		// we have a valid soundfile: store name, ID, and default volume
-		const int id = sound->GetWaveId(soundFile);
-
+	else
+	{
+		const int id = sound->GetSoundId(fileName);
 		GuiSoundSet::Data soundData(fileName, id, volume);
 		gsound.sounds.push_back(soundData);
 	}

@@ -129,6 +129,7 @@ def generate(env):
 		('disable_avi',       'Set to no to turn on avi support', 'False on windows, True otherwise'),
 		#other ported parts
 		('use_tcmalloc',      'Use tcmalloc from goog-perftools for memory allocation', False),
+		('use_nedmalloc',     'Use nedmalloc for memory allocation', False),
 		('use_mmgr',          'Use memory manager', False),
 		('use_gch',           'Use gcc precompiled header', True),
 		('dc_allowed',        'Specifies whether FPS mode (Direct Control) is allowed in game', True),
@@ -177,7 +178,7 @@ def generate(env):
 			'libpath', 'prefix', 'installprefix', 'builddir',
 			'mingwlibsdir', 'datadir', 'bindir', 'libdir',
 			'cachedir', 'strip', 'disable_avi', 'use_tcmalloc',
-			'use_mmgr', 'use_gch',
+			'use_nedmalloc', 'use_mmgr', 'use_gch',
 			'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
 			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX',
 			'is_configured', 'spring_defines', 'arch']:
@@ -412,11 +413,16 @@ def generate(env):
 			#else:
 			#	env['CXXFLAGS'] = env['CCFLAGS']
 
+		# nedmalloc crashes horribly when crosscompiled
+		# on mingw gcc 4.2.1
+		nedmalloc_default = False
+
 		bool_opt('gml', False)
 		bool_opt('gmlsim', False)
 		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
+		bool_opt('use_nedmalloc', nedmalloc_default)
 		bool_opt('use_mmgr', False)
 		bool_opt('use_gch', True)
 		bool_opt('dc_allowed', True)

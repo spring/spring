@@ -83,8 +83,6 @@ public:
 	int lastTick;
 	int chatSound;
 
-	bool playing;
-	bool chatting;
 	bool camMove[8];
 	bool camRot[4];
 	bool hideInterface;
@@ -101,10 +99,6 @@ public:
 	bool drawSky;
 	bool drawWater;
 	bool drawGround;
-
-	bool soundEnabled;
-	float gameSoundVolume;
-	float unitReplyVolume;
 
 	bool moveWarnings;
 
@@ -123,14 +117,10 @@ public:
 	CAVIGenerator* aviGenerator;
 
 	void DrawDirectControlHud(void);
-#ifdef DIRECT_CONTROL_ALLOWED
-	short oldHeading,oldPitch;
-	unsigned char oldStatus;
-#endif
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
-protected:
+private:
 	/// show GameEnd-window, calculate mouse movement etc.
 	void GameEnd();
 	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
@@ -159,6 +149,8 @@ protected:
 	float inputTextSizeY;
 	float lastCpuUsageTime;
 	bool skipping;
+	bool playing;
+	bool chatting;
 	
 	unsigned lastFrameTime;
 
@@ -171,12 +163,12 @@ public:
 	const std::map<int, PlayerTrafficInfo>& GetPlayerTraffic() const {
 		return playerTraffic;
 	}
-protected:
+
+private:
 	void AddTraffic(int playerID, int packetCode, int length);
 	// <playerID, <packetCode, total bytes> >
 	std::map<int, PlayerTrafficInfo> playerTraffic;
 
-private:
 	void ClientReadNet();
 	void UpdateUI(bool cam);
 	bool DrawWorld();
@@ -190,6 +182,10 @@ private:
 	float consumeSpeed; ///< How fast we should eat NETMSG_NEWFRAMEs.
 	unsigned lastframe; ///< SDL_GetTicks() in previous ClientReadNet() call.
 
+#ifdef DIRECT_CONTROL_ALLOWED
+	short oldHeading,oldPitch;
+	unsigned char oldStatus;
+#endif
 };
 
 

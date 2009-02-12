@@ -35,7 +35,7 @@
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
 #include "LogOutput.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "FastMath.h"
 #include "myMath.h"
 
@@ -500,7 +500,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	progressState = Active;
 
 	if (DEBUG_CONTROLLER) {
-		logOutput << int(owner->id) << ": StartMoving() starting engine.\n";
+		LogObject() << int(owner->id) << ": StartMoving() starting engine.\n";
 	}
 
 	StartEngine();
@@ -522,7 +522,7 @@ void CGroundMoveType::StopMoving() {
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
 	if(DEBUG_CONTROLLER)
-		logOutput << "SMove: Action stopped." << " " << int(owner->id) << "\n";
+		LogObject() << "SMove: Action stopped." << " " << int(owner->id) << "\n";
 
 	StopEngine();
 
@@ -877,7 +877,8 @@ void CGroundMoveType::CheckCollisionSkid(void)
 		if(sqDist<totRad*totRad && sqDist!=0){
 			float dist=sqrt(sqDist);
 			float3 dif=midPos-u->midPos;
-			dif/=dist;
+			// stop units from reaching escape velocity
+			dif/=std::max(dist, 1.f);
 			if(u->mass==100000 || !u->mobility){
 				float impactSpeed=-owner->speed.dot(dif);
 				if(impactSpeed > 0) {
@@ -947,7 +948,7 @@ void CGroundMoveType::CheckCollisionSkid(void)
 		if(sqDist<totRad*totRad && sqDist!=0){
 			float dist=sqrt(sqDist);
 			float3 dif=midPos-u->midPos;
-			dif/=dist;
+			dif/=std::max(dist, 1.f);
 			float impactSpeed=-owner->speed.dot(dif);
 			if(impactSpeed > 0){
 				midPos+=dif*(impactSpeed);
@@ -1272,7 +1273,6 @@ starting from given speed.
 float CGroundMoveType::BreakingDistance(float speed)
 {
 	if (!owner->mobility->maxBreaking) {
-		// logOutput << "maxBreaking is zero for unit " << owner->unitDef->name.c_str();
 		return 0.0f;
 	}
 	return fabs(speed * speed / owner->mobility->maxBreaking);
@@ -1329,11 +1329,11 @@ void CGroundMoveType::StartEngine() {
 			owner->cob->Call(COBFN_StartMoving);
 
 			if (DEBUG_CONTROLLER) {
-				logOutput << "Engine started" << " " << int(owner->id) << "\n";
+				LogObject() << "Engine started" << " " << int(owner->id) << "\n";
 			}
 		} else {
 			if (DEBUG_CONTROLLER) {
-				logOutput << "Engine start failed: " << int(owner->id) << "\n";
+				LogObject() << "Engine start failed: " << int(owner->id) << "\n";
 			}
 
 			Fail();
@@ -1358,7 +1358,7 @@ void CGroundMoveType::StopEngine() {
 		owner->cob->Call(COBFN_StopMoving);
 
 		if (DEBUG_CONTROLLER) {
-			logOutput << "Engine stopped. " << int(owner->id) << "\n";
+			LogObject() << "Engine stopped. " << int(owner->id) << "\n";
 		}
 	}
 
@@ -1391,7 +1391,7 @@ void CGroundMoveType::Arrived()
 		owner->commandAI->SlowUpdate();
 
 		if (DEBUG_CONTROLLER)
-			logOutput << "Unit arrived!\n";
+			LogObject() << "Unit arrived!\n";
 	}
 }
 
@@ -1558,7 +1558,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 				posDelta.z += streflop::fabs(owner->pos.x - xmove) * 0.5f;
 			}
 
-			if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
+			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
 				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
 			}
@@ -1643,7 +1643,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 				posDelta.x += streflop::fabs(owner->pos.z - zmove) * 0.5f;
 			}
 
-			if (!(gs->frameNum + owner->id & 31) && !owner->commandAI->unimportantMove) {
+			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
 				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
 			}
@@ -1733,6 +1733,7 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 	// first make sure we don't go into any terrain we cant get out of
 	int newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
 	int newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
+	float3 newpos = owner->pos;
 
 	if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {
 		float cmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, moveSquareX * 2, moveSquareY * 2);
@@ -1741,26 +1742,26 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareX > moveSquareX) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
+					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
 			if (newMoveSquareY > moveSquareY) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
+					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
 				}
 			}
@@ -1768,13 +1769,13 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareY > moveSquareY) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod>0.01f && nmod <= 0.01f) {
-					owner->pos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.z = moveSquareY * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareY = moveSquareY;
 				}
 			} else if (newMoveSquareY < moveSquareY) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
+					newpos.z = moveSquareY * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareY = moveSquareY;
 				}
 			}
@@ -1782,16 +1783,24 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 			if (newMoveSquareX > moveSquareX) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
+					newpos.x = moveSquareX * SQUARE_SIZE * 2 + (SQUARE_SIZE * 2 - 0.01f);
 					newMoveSquareX = moveSquareX;
 				}
 			} else if (newMoveSquareX < moveSquareX) {
 				float nmod = owner->unitDef->movedata->moveMath->SpeedMod(*owner->unitDef->movedata, newMoveSquareX*2,newMoveSquareY*2);
 				if (cmod > 0.01f && nmod <= 0.01f) {
-					owner->pos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
+					newpos.x = moveSquareX * SQUARE_SIZE * 2 + 0.01f;
 					newMoveSquareX = moveSquareX;
 				}
 			}
+		}
+		// do not teleport units. if the unit is too far away from old position,
+		// reset the pathfinder instead of teleporting it.
+		if (newpos.SqDistance2D(owner->pos) > 4*SQUARE_SIZE*SQUARE_SIZE) {
+			newMoveSquareX = (int) owner->pos.x / (SQUARE_SIZE * 2);
+			newMoveSquareY = (int) owner->pos.z / (SQUARE_SIZE * 2);
+		} else {
+			owner->pos = newpos;
 		}
 
 		if (newMoveSquareX != moveSquareX || newMoveSquareY != moveSquareY) {

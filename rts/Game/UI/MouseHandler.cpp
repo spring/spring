@@ -34,13 +34,12 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Misc/ModSound.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTracker.h"
 #include "EventHandler.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
@@ -90,7 +89,7 @@ CMouseHandler::CMouseHandler()
 	hardwareCursor = false;
 #endif
 
-	soundMultiselID = ModSound::Get().GetSoundId("MultiSelect");
+	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
 	invertMouse = !!configHandler.Get("InvertMouse",1);
 	doubleClickTime = (float)configHandler.Get("DoubleClickTime", 200) / 1000.0f;

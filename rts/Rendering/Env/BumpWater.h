@@ -27,6 +27,10 @@ private:
 	void UpdateCoastmap(const int x1, const int y1, const int x2, const int y2);
 	void UpdateDynWaves(const bool initialize = false);
 
+	void SetUniforms(); //! see useUniforms
+	void SetupUniforms( std::string& definitions );
+	void GetUniformLocations( GLuint& program );
+
 	//! user options
 	bool  reflection;
 	char  refraction;   //! 0:=off, 1:=screencopy, 2:=own rendering cycle
@@ -38,6 +42,7 @@ private:
 	bool  shoreWaves;
 	bool  endlessOcean; //! render the water around the whole map
 	bool  dynWaves;     //! only usable if bumpmap/normal texture is a TileSet
+	bool  useUniforms;  //! use Uniforms instead of #define'd const. Warning: this is much slower, but has the advantage that you can change the params on runtime.
 
 	unsigned char* tileOffsets; //! used to randomize the wave/bumpmap/normal texture
 	int  normalTextureX; //! needed for dynamic waves
@@ -83,6 +88,8 @@ private:
 	GLuint frameLoc;
 	GLuint midPosLoc;
 	GLuint eyePosLoc;
+
+	GLuint uniforms[20]; //! see useUniforms
 
 	float3 texcoord1;
 };

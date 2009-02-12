@@ -7,14 +7,11 @@
 
 #include <string>
 
-// 512KB buffer
-#define BUFFER_SIZE (4096 * 128)
-
 class COggStream {
 	public:
 		COggStream();
 
-		void Play(const std::string& path, const float3& pos, float volume);
+		void Play(const std::string& path, float volume);
 		void Stop();
 		void TogglePause();
 		void Update();

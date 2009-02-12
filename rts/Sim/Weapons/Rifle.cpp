@@ -13,7 +13,6 @@
 #include "Sim/Projectiles/Unsynced/TracerProjectile.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
-#include "Sound.h"
 #include "Sync/SyncTracer.h"
 #include "mmgr.h"
 
@@ -85,16 +84,12 @@ bool CRifle::TryTarget(const float3 &pos, bool userTarget, CUnit* unit)
 	return true;
 }
 
-void CRifle::Fire(void)
+void CRifle::FireImpl()
 {
 	float3 dir=targetPos-weaponMuzzlePos;
 	dir.Normalize();
 	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.9f);
 	dir.Normalize();
-#ifdef TRACE_SYNC
-	tracefile << "Rifle fire: ";
-	tracefile << owner->pos.x << " " << dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z << "\n";
-#endif
 	CUnit* hit;
 	float length=helper->TraceRay(weaponMuzzlePos, dir, range, weaponDef->damages[0], owner, hit, collisionFlags);
 	if(hit) {
@@ -103,6 +98,4 @@ void CRifle::Fire(void)
 	}
 	new CTracerProjectile(weaponMuzzlePos,dir*projectileSpeed,length,owner);
 	new CSmokeProjectile(weaponMuzzlePos,float3(0,0.0f,0),70,0.1f,0.02f,owner,0.6f);
-	if(fireSoundId)
-		sound->PlaySample(fireSoundId,owner,fireSoundVolume);
 }

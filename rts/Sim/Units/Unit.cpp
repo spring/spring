@@ -55,7 +55,7 @@
 #include "LogOutput.h"
 #include "Matrix44f.h"
 #include "myMath.h"
-#include "Sound.h"
+#include "Sound/Sound.h"
 #include "UnitDef.h"
 #include "Unit.h"
 #include "UnitHandler.h"
@@ -1136,6 +1136,7 @@ void CUnit::UpdateDrawPos() {
 #endif
 	drawMidPos = drawPos + (midPos - pos);
 }
+
 /******************************************************************************/
 /******************************************************************************/
 
