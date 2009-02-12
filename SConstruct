@@ -139,6 +139,7 @@ streflopSource += sobjs_flt32
 # compile
 createStaticExtLibraryBuilder(senv)
 streflop_lib = senv.StaticExtLibrary(senv['builddir'], streflopSource)
+env['streflop_lib'] = streflop_lib
 #streflop_lib = senv.StaticLibrary(senv['builddir'], streflopSource)
 Alias('streflop', streflop_lib) # Allow `scons streflop' to compile just streflop
 
