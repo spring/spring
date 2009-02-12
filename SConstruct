@@ -51,6 +51,10 @@ myTools += ['rts', 'gch']
 
 env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'])
 #env = Environment(tools = myTools, toolpath = ['.', 'rts/build/scons'], ENV = {'PATH' : os.environ['PATH']})
+if env['platform'] == 'windows':
+        env['SHARED_OBJ_EXT'] = '.o'
+else:
+        env['SHARED_OBJ_EXT'] = '.os'
 
 if env['use_gch']:
 	env['Gch'] = env.Gch('rts/System/StdAfx.h', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
@@ -277,22 +281,22 @@ unitsync_files.extend(unitsync_minizip_files)
 unitsync_files.extend(unitsync_hpiutil2_files)
 unitsync_files.extend(unitsync_extra_files)
 
+# some scons stupidity
+unitsync_objects = []
 if env['platform'] == 'windows':
 	# crosscompiles on buildbot need this, but native mingw builds fail
 	# during linking
 	if os.name != 'nt':
 		unitsync_files.append('rts/lib/minizip/iowin32.c')
 	unitsync_files.append('rts/System/FileSystem/DataDirLocater.cpp')
-        # some scons stupidity
-        unitsync_objects = [uenv.SharedObject(source=f, target=os.path.join(uenv['builddir'], f)+'.o') for f in unitsync_files]
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
-	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects, LINKFLAGS=env['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias'])
+	uenv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias']
 else:
 	ddlcpp = uenv.SharedObject(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
-        # some scons stupidity
-        unitsync_objects = [uenv.SharedObject(source=f, target=os.path.join(uenv['builddir'], f)+'.os') for f in unitsync_files]
 	unitsync_objects += [ ddlcpp ]
-	unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects)
+# some scons stupidity
+unitsync_objects += [uenv.SharedObject(source=f, target=os.path.join(uenv['builddir'], f)+uenv['SHARED_OBJ_EXT']) for f in unitsync_files]
+unitsync = uenv.SharedLibrary('game/unitsync', unitsync_objects)
 
 Alias('unitsync', unitsync)
 inst = env.Install(os.path.join(env['installprefix'], env['libdir']), unitsync)

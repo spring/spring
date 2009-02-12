@@ -467,7 +467,9 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		myEnv.AppendUnique(LIBS = [myEnv['streflop_lib']])
 	cwdPrev = os.getcwd()
 	os.chdir(myEnv['sourcedir'])
-	mySource = objs + filelist.get_source(myEnv, '.', ignore_builddir=False)
+	mySourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
+	mySourceObjs = [myEnv.SharedObject(source=f, target=os.path.join(env['builddir'], f[0]+myEnv['SHARED_OBJ_EXT'])) for f in mySourceFiles]
+	myObjs = objs + mySourceObjs
 	os.chdir(cwdPrev)
 	if baseName == 'Java':
 		if myEnv['platform'] == 'windows':
@@ -617,7 +619,7 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 	targetName = 'AIInterface'
 	if env['platform'] != 'windows':
 		targetName = 'lib' + targetName
-	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), mySource)
+	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), myObjs)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
 	Default(lib)
@@ -727,12 +729,14 @@ for baseName in filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmisha
 				objs += skirmishaiobjs_LegacyCpp
 		cwdPrev = os.getcwd()
 		os.chdir(myEnv['sourcedir'])
-		mySource = objs + filelist.get_source(myEnv, '.', ignore_builddir=False)
+		mySourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
+		mySourceObjs = [myEnv.SharedObject(source=f, target=os.path.join(env['builddir'], f[0]+myEnv['SHARED_OBJ_EXT'])) for f in mySourceFiles]
+		myObjs = objs + mySourceObjs
 		os.chdir(cwdPrev)
 		targetName = 'SkirmishAI'
 		if env['platform'] != 'windows':
 			targetName = 'lib' + targetName
-		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), mySource)
+		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), myObjs)
 		Alias(baseName, lib)     # Allow e.g. `scons JCAI' to compile just a skirmish AI.
 		Alias('SkirmishAI', lib) # Allow `scons SkirmishAI' to compile all skirmishAIs.
 		Default(lib)
