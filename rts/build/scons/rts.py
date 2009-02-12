@@ -84,7 +84,7 @@ def generate(env):
 	env['builddir'] = '#build'
 	if args.has_key('builddir'):
 		env['builddir'] = args['builddir']
-	bd = SCons.Script.Dir(env['builddir']).abspath
+	bd = filelist.getAbsDir(env, env['builddir'])
 
 	# SCons chokes in env.SConsignFile() if path doesn't exist.
 	if not os.path.exists(bd):
@@ -516,10 +516,10 @@ def generate(env):
 		intopts.Save(intcachefile, env)
 
 	# make the prefix absolute
-	env['prefix'] = SCons.Script.Dir(env['prefix']).abspath
+	env['prefix'] = filelist.getAbsDir(env, env['prefix'])
 
 	# Substitute prefix in installprefix, and make installprefix absolute
-	env['installprefix'] = SCons.Script.Dir(env.subst(env['installprefix'])).abspath
+	env['installprefix'] = filelist.getAbsDir(env, env.subst(env['installprefix']))
 
 	# Fix up some suffices for mingw crosscompile.
 	if env['platform'] == 'windows':

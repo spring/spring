@@ -5,7 +5,25 @@ import os, re
 ###############################################
 ### functions to make lists of source files ###
 ###############################################
-
+import sys
+sourceRootDir = ''
+def setSourceRootDir(absPath):
+	global sourceRootDir
+	sys.stderr.write("\tsetSourceRootDir: " + absPath)
+	sourceRootDir = absPath
+def getAbsDir(env, relPath):
+	# This worked up to SCons 0.98
+	#return SCons.Script.Dir(interfaceGeneratedJavaSrcDir).abspath
+	path = relPath
+	#if (relPath.startswith('#')):
+	if (len(relPath) > 0 and relPath[0:1] == '#'):
+		sys.stderr.write("\tstarts with #!: " + relPath)
+		# replace '#' with source root
+		#path = os.path.join(sourceRootDir, relPath.replace('#', ''))
+		path = os.path.join(sourceRootDir, relPath[1:])
+		#sys.stderr.write("\tsourceRootDir: " + sourceRootDir + "\n")
+		#sys.stderr.write("\tafter replace: " + path + "\n")
+	return os.path.abspath(path)
 
 def fix_path(path):
 	pieces = path.split('/')
@@ -126,22 +144,6 @@ def get_spring_source(env):
 ################################################################################
 ### AI
 ################################################################################
-
-## lists source files for each individual AI Interface and Skirmish AI
-#def get_AI_source(env, path, which):
-#	result = get_source(env, os.path.join(path, which))
-#	return result
-#
-## lists source files for each individual AI Interface
-#def get_AIInterface_source(env, which):
-#	result = get_AI_source(env, 'Interfaces', which)
-#	return result
-#
-## lists source files for each individual Skirmish AI
-#def get_skirmishAI_source(env, which):
-#	result = get_AI_source(env, 'Skirmish', which)
-#	return result
-
 
 # lists source files common for all AI Interfaces and Skirmish AIs
 def get_shared_AI_source(env):

@@ -31,6 +31,7 @@ Import(['env', 'ai_env'])
 import os, sys
 sys.path.append('rts/build/scons')
 import filelist
+#import SCons.Script.Dir
 
 # the next four lines are needed when compiling on windows
 # (seems to be a SCons bug)
@@ -225,7 +226,7 @@ class JavaProject:
 	def createClassPathPart(self, path, prefixPath = '', absolute = False):
 		jarList = filelist.list_files_recursive(self.env, path, exclude_dirs = True, path_relative = True, include_regexp = '\.jar$')
 		if absolute:
-			prePath = SCons.Script.Dir(path).abspath
+			prePath = filelist.getAbsDir(env, path)
 		else:
 			prePath = os.path.join(prefixPath, path)
 		clsPath = prePath
@@ -248,11 +249,11 @@ class JavaProject:
 		for sd in self.sourceDirs:
 			if (sourcePath != ''):
 				sourcePath += os.pathsep
-			sourcePath += SCons.Script.Dir(sd).abspath
+			sourcePath += filelist.getAbsDir(env, sd)
 		for sd in self.sourceDirs_gen:
 			if (sourcePath != ''):
 				sourcePath += os.pathsep
-			sourcePath += SCons.Script.Dir(sd).abspath
+			sourcePath += filelist.getAbsDir(env, sd)
 		return sourcePath
 
 	def doPrepareEnv(self):
@@ -261,7 +262,16 @@ class JavaProject:
 		return
 
 	def createCompileCommand(self):
+		cwdBak = os.getcwd()
+		if (not os.path.exists(self.sourceDirs_gen[0])):
+			os.makedirs(self.sourceDirs_gen[0])
+		os.chdir(self.sourceDirs_gen[0])
+		#print('')
+		#print('self.outDir: ' + self.outDir)
+		#print('self.sourceDirs_gen[0]: ' + self.sourceDirs_gen[0])
+		#print('')
 		compile_cmd = self.env.Java(target = self.outDir, source = self.sourceDirs_gen[0], chdir = self.sourceDirs_gen[0])
+		os.chdir(cwdBak)
 		return compile_cmd
 
 	def createDynamicCompileCommand(self):
@@ -274,7 +284,9 @@ class JavaProject:
 		for sd in self.sourceDirs_gen:
 			sourceFiles += self.doSourceGlob(sd)
 		#compile_cmd = self.env.Java(target = self.outDir, source = sourceFiles, chdir = self.sourceDirs_gen[0])
-		compile_cmd = self.env.Java(target = self.outDir, source = self.sourceDirs + self.sourceDirs_gen, chdir = self.sourceDirs_gen[0])
+		#compile_cmd = self.env.Java(target = self.outDir, source = sourceFiles)
+		compile_cmd = self.env.Java(target = self.outDir, source = self.sourceDirs_gen)
+		#compile_cmd = self.env.Java(target = self.outDir, source = self.sourceDirs + self.sourceDirs_gen, chdir = self.sourceDirs_gen[0])
 		self.env.Depends(self.name, compile_cmd)
 		return
 
@@ -303,7 +315,7 @@ class JavaProject:
 		jarSource = [self.outDir]
 		#jarSource[0].attributes.java_classdir = self.outDir
 		#sot = SCons.Subst.Target_or_Source(self.outDir)
-		#sot.attributes.java_classdir = Dir(self.outDir)
+		#sot.attributes.java_classdir = filelist.getAbsDir(env, self.outDir)
 		if (manifestFile != None):
 			jarSource += [manifestFile]
 		packBinJar_cmd = myBinJarEnv.Jar(target = jarFile, source = jarSource)
@@ -326,9 +338,9 @@ class JavaProject:
 		#tmpSrcDir = os.path.join(os.path.dirname(self.outDir), 'tmp-all-sources')
 		#shutil.rmtree(tmpSrcDir, ignore_errors=True)
 		#for sd in self.sourceDirs:
-		#	myCopyTree(SCons.Script.Dir(sd).abspath, tmpSrcDir)
+		#	myCopyTree(filelist.getAbsDir(env, sd), tmpSrcDir)
 		#for sd in self.sourceDirs_gen:
-		#	myCopyTree(SCons.Script.Dir(sd).abspath, tmpSrcDir)
+		#	myCopyTree(filelist.getAbsDir(env, sd), tmpSrcDir)
                 #
 		#print ''
 		#print 'tmpSrcDir: ' + tmpSrcDir
@@ -369,7 +381,7 @@ class JavaProject:
 			cmdLine += ' ' + self.srcJarFile
 			if ((createOrUpdate == 'c') and (self.srcManifestFile != None)):
 				cmdLine += ' ' + self.srcManifestFile
-			cmdLine += ' -C ' + SCons.Script.Dir(sd).abspath + ' .'
+			cmdLine += ' -C ' + filelist.getAbsDir(env, sd) + ' .'
 			print cmdLine
 			os.system(cmdLine)
 		#packSrcJar_cmd = self.srcJarEnv.Command(self.srcJarFile, self.sourceDirs + self.sourceDirs_gen, cmdLine)
@@ -433,9 +445,9 @@ JavaProjCallback_packSrc = SCons.Action.ActionFactory(javaProjCallback_packSrc, 
 #def JavaCompile(env, sourceDir, destDir, classPath, sourceFiles = []):
 #	#sourcesList = ListJavaSources(env, sourceDir, pathPrefix = sourceDir)
 #	cmdLine = 'javac'
-#	cmdLine += ' -cp ' + classPath + os.pathsep + SCons.Script.Dir(sourceDir).abspath
+#	cmdLine += ' -cp ' + classPath + os.pathsep + filelist.getAbsDir(env, sourceDir)
 #	cmdLine += ' -d ' + destDir
-#	cmdLine += ' -sourcepath ' + SCons.Script.Dir(sourceDir).abspath
+#	cmdLine += ' -sourcepath ' + filelist.getAbsDir(env, sourceDir)
 #	if sourceFiles == []:
 #		sourceFiles = ListJavaSources(env, sourceDir)
 #	sourceFiles_abs = []
@@ -491,7 +503,7 @@ JavaProjCallback_packSrc = SCons.Action.ActionFactory(javaProjCallback_packSrc, 
 #	#for j in jarList:
 #	#	clsPath = clsPath + os.pathsep + os.path.join(prefixPath, path, j)
 #	if absolute:
-#		prePath = SCons.Script.Dir(path).abspath
+#		prePath = filelist.getAbsDir(env, path)
 #	else:
 #		prePath = os.path.join(prefixPath, path)
 #	clsPath = prePath
@@ -547,11 +559,12 @@ ai_env.AppendUnique(CPPPATH = ['#rts/ExternalAI'])
 ai_env.AppendUnique(LINKFLAGS = ['-lstdc++'])
 # set sourcedir to '', which equals CWD
 ai_env['sourcedir'] = ''
+ai_env['builddir'] = filelist.getAbsDir(env, ai_env['builddir'])
 if ai_env['platform'] == 'windows':
 	ai_env.AppendUnique(LINKFLAGS = ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin'])
 #print ai_env['CPPDEFINES']
 
-#for d in filelist.list_directories(ai_env, SCons.Script.Dir('#rts').abspath, exclude_list=["crashrpt"]):
+#for d in filelist.list_directories(ai_env, filelist.getAbsDir(env, '#rts'), exclude_list=["crashrpt"]):
 #	ai_env.BuildDir(os.path.join(ai_env['builddir'], 'Interfaces', d), d)
 #	#print "d pj: %s" % os.path.join(ai_env['builddir'], 'Interfaces', d)
 #	#print "d: %s" % d
@@ -619,7 +632,7 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 			myEnv.AppendUnique(LIBS = ['jvm'])
 
 		# generate class files
-		springSrcDir = SCons.Script.Dir('..').abspath
+		springSrcDir = filelist.getAbsDir(env, '..')
 		springInterfaceSrcDir = os.path.join(springSrcDir, 'rts', 'ExternalAI', 'Interface')
 		#print("springInterfaceSrcDir: " + springInterfaceSrcDir)
 		#springInterfaceSrcDir = os.path.join( '#rts', 'ExternalAI', 'Interface')
@@ -628,9 +641,9 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		interfaceManifestFile = os.path.join(interfaceJavaSrcDir, 'manifest.mf')
 		interfaceBinDir = os.path.join('AI', myEnv['sourcedir'], 'bin')
 		awkScriptsDir = interfaceBinDir
-		interfaceGeneratedJavaSrcDir = os.path.join(myEnv['builddir'], 'generated-java-src')
-		interfaceTmpAllSrcDir = os.path.join(myEnv['builddir'], 'tmp-all-src')
-		interfaceJavaClassesDir = os.path.join(myEnv['builddir'], 'classes')
+		interfaceGeneratedJavaSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'generated-java-src'))
+		interfaceTmpAllSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'tmp-all-src'))
+		interfaceJavaClassesDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'classes'))
 		javaPkg = 'com/clan_sy/spring/ai'
 		jarFileBase = 'AIInterface'
 		jarFileBin = jarFileBase + '.jar'
@@ -638,21 +651,78 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		jarFileBin_build = os.path.join(myEnv['builddir'], jarFileBin)
 		jarFileSrc_build = os.path.join(myEnv['builddir'], jarFileSrc)
 		genSrcPkgDir = os.path.join(interfaceGeneratedJavaSrcDir, javaPkg)
+		genSrcPkgDir = filelist.getAbsDir(env, genSrcPkgDir)
 		#interfaceJLibs = createJavaClasspath(myEnv, interfaceJLibDir, absolute = True)
 		## For compiling the interface
-		#interfaceJavaClassPath = interfaceJLibs # + os.pathsep + SCons.Script.Dir(interfaceJavaSrcDir).abspath
+		#interfaceJavaClassPath = interfaceJLibs # + os.pathsep + filelist.getAbsDir(env, interfaceJavaSrcDir)
 		## For Java AIs
 		#javaInterfaceCP = interfaceJLibs + os.pathsep + jarFileBin_build
 
-		if not os.path.exists(os.path.join(genSrcPkgDir, 'event')):
-			os.makedirs(os.path.join(genSrcPkgDir, 'event'))
-			os.makedirs(os.path.join(genSrcPkgDir, 'command'))
-			os.makedirs(os.path.join(genSrcPkgDir, 'oo'))
-
 		awkVars = []
-		awkVars += ['SPRING_SOURCE_DIR=' + springSrcDir]
-		awkVars += ['INTERFACE_SOURCE_DIR=' + interfaceJavaSrcDir]
-		awkVars += ['GENERATED_SOURCE_DIR=' + interfaceGeneratedJavaSrcDir]
+		awkVars += ['SPRING_SOURCE_DIR=' + filelist.getAbsDir(env, springSrcDir)]
+		awkVars += ['INTERFACE_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceJavaSrcDir)]
+		awkVars += ['GENERATED_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)]
+
+		def debugFunc1_buildTime(name):
+
+			sys.stderr.write("\n\ncreating dirs .?.?. \n")
+			
+			genDirEvent = os.path.join(genSrcPkgDir, 'event')
+			sys.stderr.write('dir event: ' + genDirEvent + "\n")
+			if not os.path.exists(genDirEvent):
+				sys.stderr.write('creating dir: ' + genDirEvent + "...\n")
+				try:
+					os.makedirs(genDirEvent)
+				except os.error:
+					sys.stderr.write('failed creating dir ' + genDirEvent + "\n")
+				sys.stderr.write("created dir: " + genDirEvent + "\n")
+			
+			genDirCommand = os.path.join(genSrcPkgDir, 'command')
+			sys.stderr.write('dir command: ' + genDirCommand + "\n")
+			if not os.path.exists(genDirCommand):
+				sys.stderr.write('creating dir: ' + genDirCommand + "...\n")
+				try:
+					os.makedirs(genDirCommand)
+				except os.error:
+					sys.stderr.write('failed creating dir ' + genDirCommand + "\n")
+				sys.stderr.write("created dir: " + genDirCommand + "\n")
+			
+			genDirOo = os.path.join(genSrcPkgDir, 'oo')
+			sys.stderr.write('dir oo: ' + genDirOo + "\n")
+			if not os.path.exists(genDirOo):
+				sys.stderr.write('creating dir: ' + genDirOo + "...\n")
+				try:
+					os.makedirs(genDirOo)
+				except os.error:
+					sys.stderr.write('failed creating dir ' + genDirOo + "\n")
+				sys.stderr.write("created dir: " + genDirOo + "\n")
+			
+			sys.stderr.write("\n")
+
+			sys.stderr.write("" + '\n')
+			sys.stderr.write("os.getcwd(): " + os.getcwd() + '\n')
+			sys.stderr.write("os.path.abspath(os.getcwd()): " + os.path.abspath(os.getcwd()) + '\n')
+			#cwdTmp = os.getcwd()
+			#os.chdir('../..')
+			#sys.stderr.write("getAbsDir(#build): " + filelist.getAbsDir(env, "#build") + '\n')
+			#sys.stderr.write("getAbsDir(build): " + filelist.getAbsDir(env, "build") + '\n')
+			#sys.stderr.write("getAbsDir(/home/user/x): " + filelist.getAbsDir(env, "/home/user/x") + '\n')
+			#sys.stderr.write("getAbsDir(/home/../usr/x): " + filelist.getAbsDir(env, "/home/../usr/x") + '\n')
+			#os.chdir(cwdTmp)
+			sys.stderr.write("" + '\n')
+
+			#sys.stderr.write('GENERATED_SOURCE_DIR, raw: ' + interfaceGeneratedJavaSrcDir + '\n')
+			#sys.stderr.write('GENERATED_SOURCE_DIR, Dir(raw).abspath: ' + Dir(interfaceGeneratedJavaSrcDir).abspath + '\n')
+			#sys.stderr.write('GENERATED_SOURCE_DIR, SCons.Script.Dir(raw).abspath: ' + SCons.Script.Dir(interfaceGeneratedJavaSrcDir).abspath + '\n')
+			sys.stderr.write('GENERATED_SOURCE_DIR, filelist.getAbsDir(env, raw): ' + filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir) + '\n')
+			#sys.stderr.write('The builddir is, SCons.Node.FS.Dir(raw).abspath: ' + SCons.Node.FS.Dir(interfaceGeneratedJavaSrcDir).abspath + '\n')
+			#exit(666)
+		debugFunc1_action = SCons.Action.ActionFactory(debugFunc1_buildTime, lambda name: 'Debugging "%s"' % name)
+		debugFunc1_cmd = myEnv.Command('#dummyTarget_debugFunc1', os.path.join(springInterfaceSrcDir, 'AISEvents.h'), debugFunc1_action('#dummyTarget_debugFunc1'))
+		Alias(baseName, debugFunc1_cmd)
+		Alias('AIInterfaces', debugFunc1_cmd)
+		Default(debugFunc1_cmd)
+		
 
 		# wrapp the AI Events
 		awkScripts = []
@@ -700,7 +770,7 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		awkScripts += ['common.awk']
 		awkScripts += ['commonDoc.awk']
 		awkScripts += ['commonOOCallback.awk']
-		awkInputFile = os.path.join(interfaceGeneratedJavaSrcDir, javaPkg, 'AICallback.java')
+		awkInputFile = os.path.join(genSrcPkgDir, 'AICallback.java')
 		awkOutput = [
 				os.path.join(genSrcPkgDir, 'oo', 'OOAICallback.java'),
 				# if you add these, scons will delete them (WHYYYYYYYYYY!?!?!?!)
@@ -714,11 +784,11 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 
 
 		# compile the Java part
-		aiInterfaceProj = JavaProject(myEnv, 'aiInterfaceProj', [interfaceJLibDir], [SCons.Script.Dir(interfaceJavaSrcDir).abspath], [interfaceGeneratedJavaSrcDir], interfaceJavaClassesDir)
+		aiInterfaceProj = JavaProject(myEnv, 'aiInterfaceProj', [interfaceJLibDir], [filelist.getAbsDir(env, interfaceJavaSrcDir)], [filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)], interfaceJavaClassesDir)
 		javaAiInterfaceProj = aiInterfaceProj
 		# Dynamic compilation takes way too long!
-		aiInterfaceProj_compile_cmd = aiInterfaceProj.createCompileCommand()
-		#aiInterfaceProj_compile_cmd = aiInterfaceProj.createDynamicCompileCommand()
+		#aiInterfaceProj_compile_cmd = aiInterfaceProj.createCompileCommand()
+		aiInterfaceProj_compile_cmd = aiInterfaceProj.createDynamicCompileCommand()
 		myClasses = aiInterfaceProj_compile_cmd
 
 		#generatedSourceFiles = myEnv.ListJavaSources(interfaceGeneratedJavaSrcDir, pathPrefix = interfaceGeneratedJavaSrcDir)
@@ -755,7 +825,7 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		#myJarSrc = mySrcJarEnv.Command(jarFileSrc_build, interfaceTmpAllSrcDir, [
 		#		Delete(interfaceTmpAllSrcDir),
 		#		Mkdir(interfaceTmpAllSrcDir),
-		#		Copy(Dir(interfaceTmpAllSrcDir), Dir(interfaceJavaSrcDir).abspath),
+		#		Copy(Dir(interfaceTmpAllSrcDir), filelist.getAbsDir(env, interfaceJavaSrcDir)),
 		#		Copy(Dir(interfaceTmpAllSrcDir), os.path.join(interfaceGeneratedJavaSrcDir, '')),
 		#		mySrcJarEnv.Jar(target = jarFileSrc_build, source = interfaceTmpAllSrcDir, suffix = '.java'),
 		#		Delete(interfaceTmpAllSrcDir)
@@ -763,7 +833,7 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		aiInterfaceProj_packSrc_cmd = aiInterfaceProj.packSrcJar(jarFileSrc_build)
 		myJarSrc = aiInterfaceProj_packSrc_cmd
 
-		#myJarSrc = mySrcJarEnv.Command(interfaceTmpAllSrcDir, [SCons.Script.Dir(interfaceJavaSrcDir), interfaceGeneratedJavaSrcDir], [
+		#myJarSrc = mySrcJarEnv.Command(interfaceTmpAllSrcDir, [filelist.getAbsDir(env, interfaceJavaSrcDir), interfaceGeneratedJavaSrcDir], [
 		#		Delete(interfaceTmpAllSrcDir),
 		#		#Mkdir(interfaceTmpAllSrcDir),
 		#		Copy("$TARGET", "$SOURCE"),
@@ -827,7 +897,7 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 #print "datadir: %s" % skirmishai_env['datadir']
 #print "prefix: %s" % skirmishai_env['prefix']
 install_skirmishai_dir = os.path.join(skirmishai_env['installprefix'], skirmishai_env['datadir'], 'AI', 'Skirmish')
-#print "install_skirmishai_dir.abspath: %s" % SCons.Script.Dir(install_skirmishai_dir).abspath
+#print "install_skirmishai_dir.abspath: %s" % filelist.getAbsDir(env, install_skirmishai_dir)
 #install_skirmishai_dir = os.path.join('Skirmish')
 
 # store shared ai objects so newer scons versions don't choke with
@@ -886,7 +956,7 @@ for baseName in filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmisha
 		jarFileBin_build = os.path.join(myEnv['builddir'], jarFileBin)
 		jarFileSrc_build = os.path.join(myEnv['builddir'], jarFileSrc)
 
-		skirmishAiProj = JavaProject(myEnv, 'skirmishAiProj-' + baseName, [myJLibDir], [SCons.Script.Dir(javaSrc).abspath], [], javaClasses, additionalClassPath = javaAiInterfaceProj.getExternalClassPath())
+		skirmishAiProj = JavaProject(myEnv, 'skirmishAiProj-' + baseName, [myJLibDir], [filelist.getAbsDir(env, javaSrc)], [], javaClasses, additionalClassPath = javaAiInterfaceProj.getExternalClassPath())
 
 		myCompile_cmd = skirmishAiProj.createCompileCommand()
 		myBinJar_cmd = skirmishAiProj.packBinJar(jarFileBin_build, manifestFile)
