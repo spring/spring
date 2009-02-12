@@ -215,7 +215,7 @@ class JavaProject:
 	binJarFile = None
 	additionalClassPath = None
 
-	def __init__(self, env, name, classPathDirs, sourceDirs, sourceDirs_gen, outDir, additionalClassPath = None):
+	def __init__(self, env, name, classPathDirs, sourceDirs, sourceDirs_gen, outDir, binJarFile, srcJarFile, additionalClassPath = None, dependsOnProject = None):
 		""" The first entry in sourceDirs will be the main one, which all others will have to depend on.
 		Does source file globbing at build time, so source files generated during build time can be used. """
 		JavaProject.instances[name] = self
@@ -225,7 +225,16 @@ class JavaProject:
 		self.sourceDirs = sourceDirs
 		self.sourceDirs_gen = sourceDirs_gen
 		self.outDir = outDir
+		self.binJarFile = binJarFile
+		self.srcJarFile = srcJarFile
 		self.additionalClassPath = additionalClassPath
+		self.dependsOnProject = dependsOnProject
+		if (len(self.sourceDirs_gen) > 0):
+			self.mainSrcDirs = self.sourceDirs_gen
+			self.mainSrcDir = self.sourceDirs_gen[0]
+		else:
+			self.mainSrcDirs = self.sourceDirs
+			self.mainSrcDir = self.sourceDirs[0]
 		self.doPrepareEnv()
 		return
 
@@ -244,11 +253,21 @@ class JavaProject:
 		classPath = ''
 		if (self.additionalClassPath != None):
 			classPath += self.additionalClassPath
+		if (self.dependsOnProject != None):
+			if (classPath != ''):
+				classPath += os.pathsep
+			classPath += self.dependsOnProject.getExternalClassPath()
 		for cpd in self.classPathDirs:
 			if (classPath != ''):
 				classPath += os.pathsep
 			classPath += self.createClassPathPart(cpd, absolute = True)
 		return classPath
+
+	def getExternalClassPath(self):
+		extCP = self.createClassPath()
+		if (self.binJarFile != None):
+			extCP += os.pathsep + self.binJarFile
+		return extCP
 
 	def createSourcePath(self):
 		sourcePath = ''
@@ -269,10 +288,10 @@ class JavaProject:
 
 	def createCompileCommand(self):
 		cwdBak = os.getcwd()
-		if (not os.path.exists(self.sourceDirs_gen[0])):
-			os.makedirs(self.sourceDirs_gen[0])
-		os.chdir(self.sourceDirs_gen[0])
-		compile_cmd = self.env.Java(target = self.outDir, source = self.sourceDirs_gen[0], chdir = self.sourceDirs_gen[0])
+		if (not os.path.exists(self.mainSrcDir)):
+			os.makedirs(self.mainSrcDir)
+		os.chdir(self.mainSrcDir)
+		compile_cmd = self.env.Java(target = self.outDir, source = self.mainSrcDir, chdir = self.mainSrcDir)
 		os.chdir(cwdBak)
 		return compile_cmd
 
@@ -283,11 +302,11 @@ class JavaProject:
 
 	def dynamicCompile_buildTime(self):
 		sourceFiles = []
-		for sd in self.sourceDirs_gen:
+		for sd in self.mainSrcDirs:
 			sourceFiles += self.doSourceGlob(sd)
 		#compile_cmd = self.env.Java(target = self.outDir, source = sourceFiles, chdir = self.sourceDirs_gen[0])
 		#compile_cmd = self.env.Java(target = self.outDir, source = sourceFiles)
-		compile_cmd = self.env.Java(target = self.outDir, source = self.sourceDirs_gen)
+		compile_cmd = self.env.Java(target = self.outDir, source = self.mainSrcDirs)
 		#compile_cmd = self.env.Java(target = self.outDir, source = self.sourceDirs + self.sourceDirs_gen, chdir = self.sourceDirs_gen[0])
 		self.env.Depends(self.name, compile_cmd)
 		return
@@ -300,23 +319,25 @@ class JavaProject:
 			sourceFiles += [os.path.join(path, sfr)]
 		return sourceFiles
 
-	def getExternalClassPath(self):
-		extCP = createClassPath()
-		if (self.binJarFile != None):
-			extCP + os.pathsep + self.binJarFile
-		return extCP
+	def packBinJar(self, manifestFile = None):
+		#myBinJarEnv = self.env.Clone(JARCHDIR = self.outDir)
+		#jarSource = [self.outDir]
+		#if (manifestFile != None):
+		#	jarSource += [manifestFile]
+		#packBinJar_cmd = myBinJarEnv.Jar(target = self.binJarFile, source = jarSource)
+		#return packBinJar_cmd
+		self.binManifestFile = manifestFile
+		self.namePackBin = self.name + '_pack_bin'
+		self.binJarEnv = self.env.Clone()
+		self.myPackBinDummy = self.binJarEnv.Command(self.name + '_packBin_dummy', [self.outDir], JavaProjCallback_packBin(self.name))
+		self.env.Alias(self.namePackBin, self.myPackBinDummy)
+		return self.myPackBinDummy
 
-	def packBinJar(self, jarFile, manifestFile = None):
-		myBinJarEnv = self.env.Clone(JARCHDIR = self.outDir)
-		jarSource = [self.outDir]
-		if (manifestFile != None):
-			jarSource += [manifestFile]
-		packBinJar_cmd = myBinJarEnv.Jar(target = jarFile, source = jarSource)
-		self.binJarFile = jarFile
-		return packBinJar_cmd
+	def packBinJar_buildTime(self):
+		self.packJar_buildTime(True)
+		return
 
-	def packSrcJar(self, jarFile, manifestFile = None):
-		self.srcJarFile = jarFile
+	def packSrcJar(self, manifestFile = None):
 		self.srcManifestFile = manifestFile
 		self.namePackSrc = self.name + '_pack_src'
 		self.srcJarEnv = self.env.Clone()
@@ -325,18 +346,30 @@ class JavaProject:
 		return self.myPackSrcDummy
 
 	def packSrcJar_buildTime(self):
+		self.packJar_buildTime(False)
+		return
+
+	def packJar_buildTime(self, binOrSrc):
+		if (binOrSrc):
+			allSourceDirs = [self.outDir]
+			manifestFile = self.binManifestFile
+			jarFile = self.binJarFile
+		else:
+			allSourceDirs = self.sourceDirs + self.sourceDirs_gen
+			manifestFile = self.srcManifestFile
+			jarFile = self.srcJarFile
 		createOrUpdate = 'c'
-		allSourceDirs = self.sourceDirs + self.sourceDirs_gen
 		for sd in allSourceDirs:
 			cmdLine = 'jar ' + createOrUpdate + 'f'
 			if (createOrUpdate == 'c'):
-				if (self.srcManifestFile != None):
+				if (manifestFile != None):
 					cmdLine += 'm'
-				createOrUpdate = 'u'
-			cmdLine += ' ' + self.srcJarFile
-			if ((createOrUpdate == 'c') and (self.srcManifestFile != None)):
-				cmdLine += ' ' + self.srcManifestFile
+			cmdLine += ' ' + jarFile
+			if ((createOrUpdate == 'c') and (manifestFile != None)):
+				cmdLine += ' ' + manifestFile
 			cmdLine += ' -C ' + filelist.getAbsDir(env, sd) + ' .'
+			if (createOrUpdate == 'c'):
+				createOrUpdate = 'u'
 			print cmdLine
 			os.system(cmdLine)
 		return
@@ -350,6 +383,13 @@ def javaProjCallback_dynamicCompile(libName):
 JavaProjCallback_dynamicCompile = SCons.Action.ActionFactory(javaProjCallback_dynamicCompile, lambda name: 'Compiling "%s"' % name)
 
 # These are "callbacks" that we set up as actions that Scons can call at build time.
+def javaProjCallback_packBin(libName):
+	if (not (libName in JavaProject.instances)):
+		raise Exception("The library %s is not defined" % libName)
+	JavaProject.instances[libName].packBinJar_buildTime()
+	return
+JavaProjCallback_packBin = SCons.Action.ActionFactory(javaProjCallback_packBin, lambda name: 'Packing classes for "%s"' % name)
+
 def javaProjCallback_packSrc(libName):
 	if (not (libName in JavaProject.instances)):
 		raise Exception("The library %s is not defined" % libName)
@@ -425,7 +465,10 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_X87'])
 		myEnv.AppendUnique(CPPPATH = ['#rts/lib/streflop'])
 		myEnv.AppendUnique(LIBS = [myEnv['streflop_lib']])
-	mySource = objs + filelist.get_source(myEnv, myEnv['sourcedir'], ignore_builddir=True)
+	cwdPrev = os.getcwd()
+	os.chdir(myEnv['sourcedir'])
+	mySource = objs + filelist.get_source(myEnv, '.', ignore_builddir=False)
+	os.chdir(cwdPrev)
 	if baseName == 'Java':
 		if myEnv['platform'] == 'windows':
 			myEnv.AppendUnique(LIBS = ['jvm'])
@@ -435,7 +478,7 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		springInterfaceSrcDir = os.path.join(springSrcDir, 'rts', 'ExternalAI', 'Interface')
 		interfaceJLibDir = os.path.join(myEnv['sourcedir'], 'data', 'jlib')
 		interfaceJavaSrcDir = os.path.join(myEnv['sourcedir'], 'java', 'src')
-		interfaceManifestFile = os.path.join(interfaceJavaSrcDir, 'manifest.mf')
+		interfaceManifestFile = filelist.getAbsDir(env, os.path.join(interfaceJavaSrcDir, 'manifest.mf'))
 		interfaceBinDir = os.path.join('AI', myEnv['sourcedir'], 'bin')
 		awkScriptsDir = interfaceBinDir
 		interfaceGeneratedJavaSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'generated-java-src'))
@@ -553,17 +596,17 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 
 
 		# compile the Java part
-		aiInterfaceProj = JavaProject(myEnv, 'aiInterfaceProj', [interfaceJLibDir], [filelist.getAbsDir(env, interfaceJavaSrcDir)], [filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)], interfaceJavaClassesDir)
+		aiInterfaceProj = JavaProject(myEnv, 'aiInterfaceProj', [interfaceJLibDir], [filelist.getAbsDir(env, interfaceJavaSrcDir)], [filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)], interfaceJavaClassesDir, jarFileBin_build, jarFileSrc_build)
 		javaAiInterfaceProj = aiInterfaceProj
 		aiInterfaceProj_compile_cmd = aiInterfaceProj.createDynamicCompileCommand()
 		myClasses = aiInterfaceProj_compile_cmd
 
 		# pack the java binaries
-		aiInterfaceProj_packBin_cmd = aiInterfaceProj.packBinJar(jarFileBin_build, interfaceManifestFile)
+		aiInterfaceProj_packBin_cmd = aiInterfaceProj.packBinJar(interfaceManifestFile)
 		myJarBin = aiInterfaceProj_packBin_cmd
 
 		# pack the java sources
-		aiInterfaceProj_packSrc_cmd = aiInterfaceProj.packSrcJar(jarFileSrc_build)
+		aiInterfaceProj_packSrc_cmd = aiInterfaceProj.packSrcJar()
 		myJarSrc = aiInterfaceProj_packSrc_cmd
 
 		allBuilds = [wrapp_all, myClasses, myJarBin, myJarSrc]
@@ -572,6 +615,8 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		Default(allBuilds)
 
 	targetName = 'AIInterface'
+	if env['platform'] != 'windows':
+		targetName = 'lib' + targetName
 	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), mySource)
 	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
@@ -602,7 +647,7 @@ skirmishaiobjs_LegacyCpp = create_shared_objects(skirmishai_env, filelist.get_sh
 skirmishaiobjs_LegacyCppCregged = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_LegacyCpp(env), '-skirmishai_creg', ['USING_CREG'])
 
 # Build
-skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI', 'NullJavaAI', 'NullOOJavaAI']
+skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
 # for some strange reason, NTai has a compile error
 # when compiling with MinGW on windows, because of
 # a class in the Legacy C++ wrapper, which is used
@@ -628,18 +673,24 @@ for baseName in filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmisha
 	if isJava:
 		javaSrc = os.path.join(myEnv['sourcedir'], 'src')
 		javaClasses = os.path.join(myEnv['builddir'], 'classes')
-		manifestFile = os.path.join(javaSrc, 'manifest.mf')
+		myJLibDir = os.path.join(myEnv['sourcedir'], 'data', 'jlib')
+		myClassPathDirs = []
+		if (os.path.exists(myJLibDir)):
+			myClassPathDirs += [myJLibDir]
+		manifestFile = filelist.getAbsDir(env, os.path.join(myEnv['sourcedir'], 'manifest.mf'))
+		if (not os.path.exists(manifestFile)):
+			manifestFile = None
 		jarFileBase = 'SkirmishAI'
 		jarFileBin = jarFileBase + '.jar'
 		jarFileSrc = jarFileBase + '-src.jar'
 		jarFileBin_build = os.path.join(myEnv['builddir'], jarFileBin)
 		jarFileSrc_build = os.path.join(myEnv['builddir'], jarFileSrc)
 
-		skirmishAiProj = JavaProject(myEnv, 'skirmishAiProj-' + baseName, [myJLibDir], [filelist.getAbsDir(env, javaSrc)], [], javaClasses, additionalClassPath = javaAiInterfaceProj.getExternalClassPath())
+		skirmishAiProj = JavaProject(myEnv, 'skirmishAiProj-' + baseName, myClassPathDirs, [filelist.getAbsDir(env, javaSrc)], [], javaClasses, jarFileBin_build, jarFileSrc_build, dependsOnProject = javaAiInterfaceProj)
 
-		myCompile_cmd = skirmishAiProj.createCompileCommand()
-		myBinJar_cmd = skirmishAiProj.packBinJar(jarFileBin_build, manifestFile)
-		mySrcJar_cmd = skirmishAiProj.packSrcJar(jarFileSrc_build)
+		myCompile_cmd = skirmishAiProj.createDynamicCompileCommand()
+		myBinJar_cmd = skirmishAiProj.packBinJar(manifestFile)
+		mySrcJar_cmd = skirmishAiProj.packSrcJar()
 		doAllJava = [myCompile_cmd, myBinJar_cmd, mySrcJar_cmd]
 
 		Alias(baseName, doAllJava)
@@ -674,8 +725,13 @@ for baseName in filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmisha
 				objs += skirmishaiobjs_LegacyCppCregged
 			else:
 				objs += skirmishaiobjs_LegacyCpp
-		mySource = objs + filelist.get_source(myEnv, myEnv['sourcedir'], ignore_builddir=True)
+		cwdPrev = os.getcwd()
+		os.chdir(myEnv['sourcedir'])
+		mySource = objs + filelist.get_source(myEnv, '.', ignore_builddir=False)
+		os.chdir(cwdPrev)
 		targetName = 'SkirmishAI'
+		if env['platform'] != 'windows':
+			targetName = 'lib' + targetName
 		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), mySource)
 		Alias(baseName, lib)     # Allow e.g. `scons JCAI' to compile just a skirmish AI.
 		Alias('SkirmishAI', lib) # Allow `scons SkirmishAI' to compile all skirmishAIs.

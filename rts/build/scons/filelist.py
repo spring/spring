@@ -9,7 +9,7 @@ import sys
 sourceRootDir = ''
 def setSourceRootDir(absPath):
 	global sourceRootDir
-	sys.stderr.write("\tsetSourceRootDir: " + absPath)
+	print("source root-dir: " + absPath)
 	sourceRootDir = absPath
 def getAbsDir(env, relPath):
 	# This worked up to SCons 0.98
@@ -195,7 +195,10 @@ def get_shared_Wrapper_source(env, wrapperDir, prefix = ''):
 def get_shared_skirmishAI_source_Creg(env):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
-		result += get_source(env, '../rts/System/creg', ignore_builddir=True)
+		cwdPrev = os.getcwd()
+		os.chdir('..')
+		result += get_source(env, 'rts/System/creg', ignore_builddir=False)
+		os.chdir(cwdPrev)
 	return result
 
 
