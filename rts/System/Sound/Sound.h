@@ -26,7 +26,7 @@ public:
 	size_t GetSoundId(const std::string& name, bool hardFail = true);
 
 	void Update();
-	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, unsigned lastFrameTime);
+	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
 	void NewFrame();
 
 	/// no positioning in 3d-space
