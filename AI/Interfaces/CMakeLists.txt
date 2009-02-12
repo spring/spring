@@ -119,10 +119,16 @@ if (BUILD_Java_AIINTERFACE)
 
 	# build the native part
 	aux_source_directory(${Java_AIINTERFACE_SRC} javaAIInterface)
+	IF (MINGW)
+		# It is important that this is used instead of the one
+		# from the installed JDK, as the jni_md.h is in here too,
+		# and this file contians OS (win32) specific information.
+		INCLUDE_DIRECTORIES(BEFORE ${MINGWLIBS}/include/java)
+	ENDIF(MINGW)
+	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
 	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${aienv} ${cutilsenv})
 	target_link_libraries(${Java_AIINTERFACE_TARGET} ${JAVA_JVM_LIBRARY})
 	install(TARGETS ${Java_AIINTERFACE_TARGET} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
-	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
 	TARGET_LINK_LIBRARIES(${Java_AIINTERFACE_TARGET} streflop)
 	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES COMPILE_FLAGS "-DSTREFLOP_SSE")
 	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES OUTPUT_NAME "AIInterface")
@@ -131,11 +137,11 @@ if (BUILD_Java_AIINTERFACE)
 	# build the Java part
 	#file(REMOVE_RECURSE "${Java_AIINTERFACE_SRC}/build")
 	#file(MAKE_DIRECTORY "${Java_AIINTERFACE_SRC}/build")
-	IF (WIN32)
-		set(AWK_COMMAND "gawk.exe")
-	ELSE (WIN32)
+	IF (CMAKE_HOST_WIN32)
+		set(AWK_COMMAND "${MINGWLIBS}/bin/awk.exe")
+	ELSE (CMAKE_HOST_WIN32)
 		set(AWK_COMMAND "awk")
-	ENDIF(WIN32)
+	ENDIF(CMAKE_HOST_WIN32)
 	set(AWK_SCRIPTS_DIR "${Java_AIINTERFACE_SRC}/bin")
 	# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Interfaces
 	set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/Java")
@@ -228,6 +234,7 @@ if (BUILD_Java_AIINTERFACE)
 
 	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
 		#OUTPUT "${JAVA_BUILD_DIR}/*.class"
+		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/*.java"
 		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event/*.java"
 		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command/*.java"
 		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/*.java"
