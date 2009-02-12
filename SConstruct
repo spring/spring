@@ -316,9 +316,10 @@ if env['platform'] != 'windows':
 #### AIs
 #################################################################################
 
+print('AI installprefix: ' + os.path.join(env['installprefix'], env['libdir'], 'AI'))
 ai_env = env.Clone(
 		builddir = os.path.join(env['builddir'], 'AI'),
-		installprefix = os.path.join(env['libdir'], 'AI')
+		installprefix = os.path.join(env['installprefix'], env['libdir'], 'AI')
 		)
 remove_precompiled_header(ai_env)
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=env['builddir'])
