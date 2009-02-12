@@ -85,9 +85,9 @@ ${EndIf}
 
   ; AI Interfaces
 !macro InstallAIInterface aiIntName
-!ifdef INSTALL_AIS
+!ifdef INSTALL
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
-  File /x *.a /x *.def /x *.dbg "${BUILDDIR}\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}\*.*"
+  File /x *.a /x *.def /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}\*.*"
   File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
 !endif
 !macroend
@@ -107,9 +107,9 @@ ${EndIf}
 
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro InstallSkirmishAI skirAiName
-!ifdef INSTALL_AIS
+!ifdef INSTALL
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
-  File /x *.a /x *.def /x *.dbg "${BUILDDIR}\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}\*.*"
+  File /x *.a /x *.def /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}\*.*"
   File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
 !endif
 !macroend
@@ -183,7 +183,7 @@ ${EndIf}
 
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro DeleteSkirmishAI skirAiName
-!ifdef INSTALL_AIS
+!ifndef INSTALL
   RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
 !endif
 !macroend
@@ -206,7 +206,7 @@ ${EndIf}
 
   ; AI Interfaces
 !macro DeleteAIInterface aiIntName
-!ifdef INSTALL_AIS
+!ifndef INSTALL
   RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}"
 !endif
 !macroend
