@@ -86,7 +86,10 @@ ${EndIf}
   ; AI Interfaces
 !macro InstallAIInterface aiIntName
 !ifdef INSTALL
-  !define /file AI_INT_VERS ..\AI\Interfaces\${aiIntName}\VERSION
+  ;This is only supported in NSIS 2.39+
+  ;!define /file AI_INT_VERS ..\AI\Interfaces\${aiIntName}\VERSION
+  ;So we have to use this, which has to be supplied to us on the cmd-line
+  !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
   File /x *.a /x *.def /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
   ;File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
@@ -110,7 +113,10 @@ ${EndIf}
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL
-  !define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
+  ;This is only supported in NSIS 2.39+
+  ;!define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
+  ;So we have to use this, which has to be supplied to us on the cmd-line
+  !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
   File /x *.a /x *.def /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
   ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
@@ -188,7 +194,10 @@ ${EndIf}
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro DeleteSkirmishAI skirAiName
 !ifndef INSTALL
-  !define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
+  ;This is only supported in NSIS 2.39+
+  ;!define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
+  ;So we have to use this, which has to be supplied to us on the cmd-line
+  !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
   !undef SKIRM_AI_VERS
 !endif
@@ -213,7 +222,10 @@ ${EndIf}
   ; AI Interfaces
 !macro DeleteAIInterface aiIntName
 !ifndef INSTALL
-  !define /file AI_INT_VERS ..\AI\Interfaces\${aiIntName}\VERSION
+  ;This is only supported in NSIS 2.39+
+  ;!define /file AI_INT_VERS ..\AI\Interfaces\${aiIntName}\VERSION
+  ;So we have to use this, which has to be supplied to us on the cmd-line
+  !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
   !undef AI_INT_VERS
 !endif
