@@ -18,7 +18,7 @@
 #ifndef _INTERFACEUTIL_H
 #define _INTERFACEUTIL_H
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
 
@@ -51,7 +51,7 @@ extern "C" {
 		#define FOPEN fopen
 	#endif
 	#define STRCASECMP stricmp
-#else	// _MSC_VER
+#else // _MSC_VER
 	// assuming GCC
 	#define PRINT print
 	#define PRINTF printf
@@ -64,7 +64,7 @@ extern "C" {
 	#define STRNCAT strncat
 	#define FOPEN fopen
 	#define STRCASECMP strcasecmp
-#endif	// _MSC_VER
+#endif // _MSC_VER
 
 /**
  * Stores a C [string, string] properties map,
@@ -83,7 +83,7 @@ void util_setMyInfo(
 		const char** dataDirs);
 const char* util_getMyInfo(const char* key);
 
-#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#if defined BUILDING_AI
 /**
  * Returns the data-dir from the stored infos.
  * Example (versioned):
@@ -149,7 +149,7 @@ char* util_dataDirs_allocFilePath(const char* relativePath, bool forWrite);
  *             and could not be created)
  */
 char* util_dataDirs_allocDir(const char* relativePath, bool forWrite);
-#endif
+#endif // defined BUILDING_AI
 
 /**
  * Allocates fresh memory for storing a C string of the specified length.
@@ -306,8 +306,8 @@ const char* util_map_getValueByKey(
  */
 void util_finalize();
 
-#ifdef	__cplusplus
-}
+#ifdef __cplusplus
+} // extern "C"
 #endif
 
 #endif // _INTERFACEUTIL_H

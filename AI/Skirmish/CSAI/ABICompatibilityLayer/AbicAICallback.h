@@ -3,7 +3,7 @@
 
 #include "dllbuild.h"
 
-#ifdef BUILDING_AI
+#ifdef BUILDING_SKIRMISH_AI
 	// declare these as opaque pointers
 	struct UnitDef;
 	struct MoveData;

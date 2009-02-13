@@ -42,14 +42,14 @@ MapParser::MapParser(const string& mapName) : parser(NULL)
 	parser->AddString("fullName", "maps/" + mapName);
 	parser->AddString("configFile", mapConfig);
 	parser->EndTable();
-#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	// this should not be included with unitsync:
 	// 1. avoids linkage with LuaSyncedRead
 	// 2. MapOptions are not valid during unitsync map parsing
 	parser->GetTable("Spring");
 	parser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	parser->EndTable();
-#endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	if (!parser->Execute()) {
 		// do nothing
 	}

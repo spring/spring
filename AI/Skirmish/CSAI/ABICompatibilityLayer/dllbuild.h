@@ -22,8 +22,8 @@
                                                    // no outgoing imports: we link dynamically with ai.dll
 #endif
 
-// define BUILDING_AI when building ai dll:
-#ifdef BUILDING_AI
+// define BUILDING_SKIRMISH_AI when building ai dll:
+#ifdef BUILDING_SKIRMISH_AI
    #define AICALLBACK_API DLL_IMPORT     // import, to call into abic.dll
 #endif
 

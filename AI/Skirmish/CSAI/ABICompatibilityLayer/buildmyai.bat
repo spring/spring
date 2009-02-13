@@ -15,7 +15,7 @@ set CL=/EHsc /GR /D_WIN32_WINNT=0x0500 /D "WIN32" /D "_WINDOWS" /I"%PLATFORMSDK%
 
 set LINK=/LIBPATH:"%VISUALCPPDIRECTORY%\lib" /LIBPATH:"%PLATFORMSDK%\lib"
 
-cl /MD /D BUILDING_AI /c myai.cpp
+cl /MD /D BUILDING_SKIRMISH_AI /c myai.cpp
 
 link /dll myai.obj myailoader.lib
 

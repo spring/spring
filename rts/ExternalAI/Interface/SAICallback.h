@@ -1302,9 +1302,9 @@ void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId,
 } // extern "C"
 #endif
 
-#if defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if defined __cplusplus && !defined BUILDING_AI
 class IGlobalAICallback;
 SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback);
-#endif // defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#endif // defined __cplusplus && !defined BUILDING_AI
 
 #endif // _SAICALLBACK_H

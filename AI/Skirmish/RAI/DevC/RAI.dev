@@ -10,8 +10,8 @@ Libs=
 PrivateResource=
 ResourceIncludes=
 MakeIncludes=
-Compiler=-DBUILDING_DLL=1_@@_
-CppCompiler=-DBUILDING_DLL=1_@@_
+Compiler=-DBUILDING_AI=1_@@_ -DBUILDING_SKIRMISH_AI=1_@@_
+CppCompiler=-DBUILDING_AI=1_@@_ -DBUILDING_SKIRMISH_AI=1_@@_
 Linker=--no-export-all-symbols --add-stdcall-alias_@@_C:/Dev-Cpp/lib/libgdi32.a_@@_
 IsCpp=1
 Icon=

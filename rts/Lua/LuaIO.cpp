@@ -17,9 +17,9 @@ using std::string;
 
 #include "LuaIO.h"
 
-#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 #include "LuaHandle.h"
-#endif
+#endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 #include "LuaInclude.h"
 #include "FileSystem/FileSystem.h"
 #include "Util.h"
@@ -74,12 +74,12 @@ bool LuaIO::SafeReadPath(const string& path)
 bool LuaIO::SafeWritePath(const string& path)
 {
 	string prefix = ""; // FIXME
-#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
 	if (lh != NULL) {
 		prefix = lh->GetName() + "/" + "Write";
 	}
-#endif
+#endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	return filesystem.InWriteDir(path, prefix);
 }
 

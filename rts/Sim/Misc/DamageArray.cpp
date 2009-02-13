@@ -1,8 +1,8 @@
 #include "DamageArray.h"
 
-#if defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if defined __cplusplus && !defined BUILDING_AI
 #include "DamageArrayHandler.h"
-#endif // __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#endif // __cplusplus && !defined BUILDING_AI
 
 
 #ifdef USING_CREG
@@ -31,11 +31,11 @@ DamageArray::DamageArray() : paralyzeDamageTime(0),
 			craterMult(1.0f), craterBoost(0.0f),
 			numTypes(1)
 {
-#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if !defined BUILDING_AI
 	if (damageArrayHandler) {
 		numTypes = damageArrayHandler->GetNumTypes();
 	}
-#endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#endif // !defined BUILDING_AI
 	damages = new float[numTypes];
 	for(int a = 0; a < numTypes; ++a) {
 		damages[a] = 1.0f;

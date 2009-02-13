@@ -4,7 +4,7 @@
 # are set in ../Interfaces/CMakeLists.txt
 #
 
-add_definitions(-DBUILDING_AI)
+add_definitions(-DBUILDING_SKIRMISH_AI)
 
 set(SKIRMISH_SRC "${CMAKE_SOURCE_DIR}/AI/Skirmish")
 set(SKIRMISH_DATA "${AIDIR}/AI/Skirmish")
