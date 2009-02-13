@@ -34,8 +34,8 @@ rem AbicWrapperGenerator.exe
 csc /debug CSAIProxyGenerator.cs /reference:CSAIInterfaces.dll
 CSAIProxyGenerator.exe
 
-cl /clr:oldSyntax /MD /c CSAILoader.cpp /DBUILDING_AI /FUCSAIInterfaces.dll
-cl /clr:oldSyntax /MD /c CSAIProxy.cpp /DBUILDING_AI /FUCSAIInterfaces.dll
+cl /clr:oldSyntax /MD /c CSAILoader.cpp /DBUILDING_SKIRMISH_AI /FUCSAIInterfaces.dll
+cl /clr:oldSyntax /MD /c CSAIProxy.cpp /DBUILDING_SKIRMISH_AI /FUCSAIInterfaces.dll
 
 rem link /lib /machine:i386 /def:%SPRINGAPPLICATION%\Spring.def /OUT:spring.lib /NAME:spring.exe
 rem link /dll /NOENTRY msvcrt.lib /NODEFAULTLIB:nochkclr.obj csailoader.obj CSAIProxy.obj spring.lib /INCLUDE:__DllMainCRTStartup@12

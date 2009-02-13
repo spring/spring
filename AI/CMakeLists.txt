@@ -2,6 +2,8 @@ set (AIDIR ${DATADIR} CACHE STRING "Where AIs are installed")
 
 include_directories(${CMAKE_SOURCE_DIR}/rts ${CMAKE_SOURCE_DIR}/rts/ExternalAI ${CMAKE_SOURCE_DIR}/AI/Wrappers ${CMAKE_SOURCE_DIR}/rts/System ${SDL_INCLUDE_DIR})
 
+add_definitions(-DBUILDING_AI)
+
 # set these for C Interfaces and AIs
 SET(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
 SET(CMAKE_C_FLAGS_DEBUG2         "${CMAKE_CXX_FLAGS_DEBUG2}")

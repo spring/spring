@@ -20,7 +20,7 @@
 #include <stdlib.h>	// malloc, calloc, free
 #include <string.h>	// strcpy
 
-#if defined	__cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if defined	__cplusplus && !defined BUILDING_AI
 
 #include "Sim/Misc/GlobalConstants.h"        // for MAX_TEAMS
 #include "Game/GameVersion.h"                // for VERSION_STRING
@@ -119,4 +119,4 @@ void freeStaticGlobalData(struct SStaticGlobalData* staticGlobalData) {
 	staticGlobalData = NULL;
 }
 
-#endif // defined __cplusplus && !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#endif // defined __cplusplus && !defined BUILDING_AI

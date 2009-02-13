@@ -15,7 +15,7 @@ rem set LINKOPTIONS=-L%MINGWDIR%/lib -L%MINGWDIR%/lib -lsupc++ -lc -lm -lgcc
 rem set LINKOPTIONS=-L%MINGWDIR%/lib -lsupc++ -lm -lgcc
 set LINKOPTIONS=--driver-name g++
 
-gcc -DBUILDING_AI %GCCOPTIONS% -c myaimingw.cpp
+gcc -DBUILDING_SKIRMISH_AI %GCCOPTIONS% -c myaimingw.cpp
 dllwrap %LINKOPTIONS% -o myaimingw.dll myaimingw.o myaimingwloader.lib
 
 copy /y myaimingw.dll "%SPRINGAPPLICATION%"

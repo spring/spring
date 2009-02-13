@@ -23,7 +23,7 @@
  * as it is strictly AI Interface related,
  * and therefore only matters to the engine and AI Interfaces.
  */
-#if !defined BUILDING_AI
+#if !defined BUILDING_SKIRMISH_AI
 
 #ifdef	__cplusplus
 extern "C" {
@@ -190,5 +190,5 @@ struct SAIInterfaceLibrary {
 } // extern "C"
 #endif
 
-#endif // !defined BUILDING_AI
+#endif // !defined BUILDING_SKIRMISH_AI
 #endif // _SAIINTERFACELIBRARY_H

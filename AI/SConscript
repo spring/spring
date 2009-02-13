@@ -408,6 +408,7 @@ JavaProjCallback_packSrc = SCons.Action.ActionFactory(javaProjCallback_packSrc, 
 
 ai_env.AppendUnique(CPPPATH = ['#rts/ExternalAI'])
 ai_env.AppendUnique(LINKFLAGS = ['-lstdc++'])
+ai_env.AppendUnique(CPPDEFINES = ['BUILDING_AI'])
 # set sourcedir to '', which equals CWD
 ai_env['sourcedir'] = ''
 ai_env['builddir'] = filelist.getAbsDir(env, ai_env['builddir'])
@@ -423,7 +424,7 @@ aiinterface_env = create_sub_interface(ai_env, 'Interfaces')
 aiinterface_env.AppendUnique(CPPDEFINES = ['BUILDING_AI_INTERFACE'])
 
 skirmishai_env = create_sub_interface(ai_env, 'Skirmish')
-skirmishai_env.AppendUnique(CPPDEFINES = ['BUILDING_AI'])
+skirmishai_env.AppendUnique(CPPDEFINES = ['BUILDING_SKIRMISH_AI'])
 
 
 ################################################################################

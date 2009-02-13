@@ -37,32 +37,32 @@
 #include "lib/streflop/streflop_cond.h"
 #endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
 
-#if !defined(BUILDING_AI) && !defined(BUILDING_AI_INTERFACE) // Also non-GML builds use this atomic count
+#if !defined BUILDING_AI // Also non-GML builds use this atomic count
 # ifndef GML_COMPATIBLE_ATOMIC_COUNT
 #	define GML_COMPATIBLE_ATOMIC_COUNT
 #	define private public
 #	include <boost/detail/atomic_count.hpp>
 #	undef private
 # endif
-#endif
+#endif // !defined BUILDING_AI
 
 
 #if !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
 // top included files without lots of dependencies
 // also, they shouldn't get in the way of mmgr
-#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if !defined BUILDING_AI
 #include "Rendering/GL/myGL.h"
-#endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#endif // !defined BUILDING_AI
 #include "float3.h"
 #include "Util.h"
 #include "GlobalUnsynced.h"
-#if !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#if !defined BUILDING_AI
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Game/Camera.h"
-#endif // !defined BUILDING_AI && !defined BUILDING_AI_INTERFACE
+#endif // !defined BUILDING_AI
 #endif // !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
 
 #endif // __cplusplus

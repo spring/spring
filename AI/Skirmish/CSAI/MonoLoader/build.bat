@@ -40,7 +40,7 @@ set CCOPTIONS=%CCOPTIONS% -I"%MONODIR%\include" -I"%MONODIR%\include\mono-1.0" -
 
 set LINKOPTIONS= -L "%MONODIR%/lib"  -lglib-2.0.dll -lgmodule-2.0.dll -lgthread-2.0.dll -lgobject-2.0.dll -lmono.dll
 
-g++ -DBUILDING_AI -DSTREFLOP_X87=1 %CCOPTIONS% -c CSAILoaderMono.cpp
+g++ -DBUILDING_SKIRMISH_AI -DSTREFLOP_X87=1 %CCOPTIONS% -c CSAILoaderMono.cpp
 dllwrap --driver-name g++ -o csailoadermono.dll CSAILoaderMono.o %LINKOPTIONS%
 
 copy /y CSAILoaderMono.dll "%SPRINGAPPLICATION%\AI\Skirmish\impls"

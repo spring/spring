@@ -9,11 +9,11 @@
  * GNU GPL, v2 or later.
  */
 
-#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#if defined BUILDING_AI
 #include "Util.h"
-#else // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#else // defined BUILDING_AI
 #include "LogOutput.h"
-#endif // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#endif // defined BUILDING_AI
 
 // OS dependent stuff
 #ifdef _WIN32
@@ -63,7 +63,7 @@ const char* SharedLib::GetLibExtension()
 
 void SharedLib::reportError(const char* errorMsg, const char* fileName, int lineNumber, const char* function) {
 
-#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#if defined BUILDING_AI
 	// when used by an AI Interface eg, we define a macro, eg. this:
 	// EXTERNAL_LOGGER(msg) printf(msg);
 	// so we can log SharedLib errors/failures in our AI if we want so.
@@ -77,9 +77,9 @@ void SharedLib::reportError(const char* errorMsg, const char* fileName, int line
 	#else // defined EXTERNAL_LOGGER
 		// DO NOTHING
 	#endif // defined EXTERNAL_LOGGER
-#else // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#else // defined BUILDING_AI
 	logOutput.Print("%s:%d: %s: %s", fileName, lineNumber, function, errorMsg);
-#endif // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#endif // defined BUILDING_AI
 }
 
 SharedLib::~SharedLib() {

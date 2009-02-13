@@ -7,15 +7,16 @@
 #ifndef jc_CREG_COND_H
 #define jc_CREG_COND_H
 
-// AIs which want to use creg have to specify this when compiling: '-DUSING_CREG'
-#if (defined BUILDING_AI || defined BUILDING_AI_INTERFACE) && !defined USING_CREG
+// AIs which want to use creg have to specify this when compiling:
+// '-DUSING_CREG'
+#if defined BUILDING_AI && !defined USING_CREG
 	#define NOT_USING_CREG
-#else // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
-	#ifndef USING_CREG
+#else // defined BUILDING_AI && !defined USING_CREG
+	#if !defined USING_CREG
 		#define USING_CREG
-	#endif // USING_CREG
+	#endif // !defined USING_CREG
 	#include "creg/creg.h"
-#endif // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#endif // defined BUILDING_AI && !defined USING_CREG
 
 #ifdef NOT_USING_CREG
 // define all creg preprocessor macros from creg.h to nothing

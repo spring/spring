@@ -19,7 +19,7 @@
 
 #include "ExternalAI/Interface/SStaticGlobalData.h" // for SStaticGlobalData, sPS
 #include "ExternalAI/Interface/aidefines.h" // for SKIRMISH_AI_PROPERTY_DATA_DIR, AI_INTERFACES_DATA_DIR
-#ifdef BUILDING_AI
+#ifdef BUILDING_SKIRMISH_AI
 // for SKIRMISH_AI_PROPERTY_DATA_DIR
 #include "ExternalAI/Interface/SSAILibrary.h"
 #elif BUILDING_AI_INTERFACE
@@ -47,14 +47,14 @@ static unsigned int myInfoSize;
 static const char** myInfoKeys;
 static const char** myInfoValues;
 
-#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#if defined BUILDING_AI
 // These will always contain either NULL or exclusively allocated memory,
 // which has to be freed, before setting a new value.
 static const char* myDataDir_versioned_r = NULL;
 static const char* myDataDir_versioned_rw = NULL;
 static const char* myDataDir_unversioned_r = NULL;
 static const char* myDataDir_unversioned_rw = NULL;
-#endif // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#endif // defined BUILDING_AI
 
 void util_setMyInfo(
 		unsigned int infoSize,
@@ -66,7 +66,7 @@ void util_setMyInfo(
 	myInfoKeys = infoKeys;
 	myInfoValues = infoValues;
 
-#ifdef BUILDING_AI
+#if defined BUILDING_SKIRMISH_AI
 	myDataDir_versioned_r =
 			util_allocStrCpy(util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR));
 	if (myDataDir_versioned_r == NULL) {
@@ -89,7 +89,7 @@ void util_setMyInfo(
 					dataDirs[0], SKIRMISH_AI_DATA_DIR, myShortName, myVersion);
 		}
 	}
-#elif BUILDING_AI_INTERFACE
+#elif defined BUILDING_AI_INTERFACE
 	myDataDir_versioned_r =
 			util_allocStrCpy(util_getMyInfo(AI_INTERFACE_PROPERTY_DATA_DIR));
 	if (myDataDir_versioned_r == NULL) {
@@ -115,9 +115,9 @@ void util_setMyInfo(
 					myVersion);
 		}
 	}
-#endif
+#endif // defined BUILDING_SKIRMISH_AI
 
-#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#if defined BUILDING_AI
 	if (myDataDir_versioned_r != NULL) {
 		char* tmp_dir = util_allocStrCpy(myDataDir_versioned_r);
 		util_getParentDir(tmp_dir);
@@ -128,13 +128,13 @@ void util_setMyInfo(
 		util_getParentDir(tmp_dir);
 		myDataDir_unversioned_rw = tmp_dir;
 	}
-#endif
+#endif // defined BUILDING_AI
 }
 const char* util_getMyInfo(const char* key) {
 	return util_map_getValueByKey(myInfoSize, myInfoKeys, myInfoValues, key);
 }
 
-#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#if defined BUILDING_AI
 bool util_dataDirs_findFile(const char* relativePath, char* absolutePath,
 		bool searchOnlyWriteable, bool createParent, bool createAsDir) {
 
@@ -233,7 +233,7 @@ char* util_dataDirs_allocDir(const char* relativePath, bool forWrite) {
 	bool createAsDir = forWrite;
 	return util_dataDirs_allocPath(relativePath, forWrite, createAsDir);
 }
-#endif
+#endif // defined BUILDING_AI
 
 char* util_allocStr(unsigned int length) {
 	return (char*) calloc(length+1, sizeof(char));
@@ -603,7 +603,7 @@ bool util_strToBool(const char* str) {
 }
 
 
-#ifdef WIN32
+#if defined WIN32
 static bool util_isFile(const struct _finddata_t* fileInfo) {
 	return !(fileInfo->attrib & _A_SUBDIR)
 			&& fileInfo->attrib & (_A_NORMAL | _A_HIDDEN | _A_ARCH);
@@ -696,7 +696,7 @@ unsigned int util_listFiles(const char* dir, const char* suffix,
 	return util_listFilesRec(
 			dir, suffix, fileNames, recursive, maxFileNames, 0, "");
 }
-#else
+#else // defined WIN32
 
 static const char* fileSelectorSuffix = NULL;
 
@@ -773,7 +773,7 @@ unsigned int util_listFiles(const char* dir, const char* suffix,
 	return util_listFilesRec(
 			dir, suffix, fileNames, recursive, maxFileNames, 0, "");
 }
-#endif
+#endif // defined WIN32
 
 bool util_fileExists(const char* filePath) {
 
@@ -802,14 +802,14 @@ bool util_fileExists(const char* filePath) {
 
 static bool util_makeDirS(const char* dirPath) {
 
-	#ifdef	WIN32
+	#if defined WIN32
 		int mkStat = _mkdir(dirPath);
 		if (mkStat == 0) {
 			return true;
 		} else {
 			return false;
 		}
-	#else	// WIN32
+	#else // defined WIN32
 		// with read/write/search permissions for owner and group,
 		// and with read/search permissions for others
 		int mkStat = mkdir(dirPath, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -818,7 +818,7 @@ static bool util_makeDirS(const char* dirPath) {
 		} else {
 			return false;
 		}
-	#endif	// WIN32
+	#endif // defined WIN32
 }
 
 bool util_makeDir(const char* dirPath, bool recursive) {
@@ -1101,7 +1101,7 @@ const char* util_map_getValueByKey(
 
 void util_finalize() {
 
-#if defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#if defined BUILDING_AI
 	free(myDataDir_versioned_r);
 	free(myDataDir_versioned_rw);
 	free(myDataDir_unversioned_r);
@@ -1111,5 +1111,5 @@ void util_finalize() {
 	myDataDir_versioned_rw = NULL;
 	myDataDir_unversioned_r = NULL;
 	myDataDir_unversioned_rw = NULL;
-#endif // defined BUILDING_AI || defined BUILDING_AI_INTERFACE
+#endif // defined BUILDING_AI
 }
