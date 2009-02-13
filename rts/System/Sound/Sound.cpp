@@ -63,7 +63,13 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 		logOutput.Print("OpenAL: %s",   (const char*)alGetString(AL_EXTENSIONS));
 
 		// Generate sound sources
+		#if (BOOST_VERSION >= 103500)
 		sources.resize(maxSounds);
+		#else
+		for (int i = 0; i < maxSounds; i++) {
+			sources.push_back(new SoundSource());
+		}
+		#endif
 
 		// Set distance model (sound attenuation)
 		alDistanceModel (AL_INVERSE_DISTANCE);
@@ -206,6 +212,8 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 			}
 		}
 	}
+
+	return 0;
 }
 
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
