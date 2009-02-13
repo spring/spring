@@ -39,6 +39,7 @@
 #include "ExternalAI/Group.h"
 #include "ExternalAI/GroupHandler.h"
 #include "Interface/AISCommands.h"
+#include "GlobalUnsynced.h" // for myTeam
 
 static IGlobalAICallback* team_globalCallback[MAX_SKIRMISH_AIS];
 static IAICallback* team_callback[MAX_SKIRMISH_AIS];
@@ -125,13 +126,7 @@ static void fillVector(std::vector<int>* vector_unitIds, int* unitIds,
 }
 
 static bool isControlledByLocalPlayer(int teamId) {
-	//TODO
-	//???
-	//bool gs->players[i]->CanControlTeam(int teamID);
-	//bool gs->Team(teamId)->gaia;
-	//bool gs->Team(teamId)->isAI;
-	//bool gs->players[0]->;
-	return true;
+	return gu->myTeam == teamId;
 }
 
 
