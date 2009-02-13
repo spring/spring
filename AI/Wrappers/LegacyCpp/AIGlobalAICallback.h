@@ -15,14 +15,10 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef	_AIGLOBALAICALLBACK_H
-#define	_AIGLOBALAICALLBACK_H
+#ifndef _AIGLOBALAICALLBACK_H
+#define _AIGLOBALAICALLBACK_H
 
-//#include "ExternalAI/Interface/SAICallback.h"
 #include "ExternalAI/IGlobalAICallback.h"
-
-//#include "AIAICallback.h"
-//#include "AIAICheats.h"
 
 struct SAICallback;
 class CAIAICallback;
@@ -47,4 +43,4 @@ private:
 	CAIAICheats* wrappedAICheats;
 };
 
-#endif	// _AIGLOBALAICALLBACK_H
+#endif // _AIGLOBALAICALLBACK_H

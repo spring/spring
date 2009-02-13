@@ -24,7 +24,6 @@
 
 // AI interface stuff
 #include "ExternalAI/Interface/SSAILibrary.h"
-#include "LegacyCpp/AI.h"
 #include "LegacyCpp/AIGlobalAI.h"
 #include "Game/GameVersion.h"
 

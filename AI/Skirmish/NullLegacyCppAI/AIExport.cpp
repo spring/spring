@@ -20,18 +20,18 @@
 
 #include "AIExport.h"
 
-#include <map>
-
 // AI interface stuff
 #include "ExternalAI/Interface/SSAILibrary.h"
-#include "LegacyCpp/AI.h"
 #include "LegacyCpp/AIGlobalAI.h"
 
 // NullLegacyCppAI stuff
 #include "TestGlobalAI.h"
 
+#include <map>
 
-std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
+
+// teamId -> AI map
+std::map<int, CAIGlobalAI*> myAIs;
 
 
 EXPORT(int) init(int teamId,

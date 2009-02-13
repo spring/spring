@@ -42,8 +42,10 @@ IAICallback* CAIGlobalAICallback::GetAICallback() {
 IAICheats* CAIGlobalAICallback::GetCheatInterface() {
 
 	if (wrappedAICheats == NULL) {
-		this->GetAICallback(); // to initialize
-		wrappedAICheats = new CAIAICheats(teamId, sAICallback, wrappedAICallback);
+		// to initialize
+		this->GetAICallback();
+		wrappedAICheats =
+				new CAIAICheats(teamId, sAICallback, wrappedAICallback);
 	}
 
 	return wrappedAICheats;

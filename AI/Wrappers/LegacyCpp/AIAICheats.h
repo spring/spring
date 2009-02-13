@@ -15,8 +15,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef	_AIAICHEATS_H
-#define	_AIAICHEATS_H
+#ifndef _AIAICHEATS_H
+#define _AIAICHEATS_H
 
 #include "ExternalAI/IAICheats.h"
 
@@ -29,7 +29,8 @@ class CAIAICallback;
 class CAIAICheats : public IAICheats {
 public:
 	CAIAICheats();
-	CAIAICheats(int teamId, SAICallback* sAICallback/*, IAICheats* aiCheatCallback*/, CAIAICallback* aiCallback);
+	CAIAICheats(int teamId, SAICallback* sAICallback,
+			CAIAICallback* aiCallback);
 
 
 	virtual void SetMyHandicap(float handicap);
@@ -42,9 +43,11 @@ public:
 	virtual const UnitDef* GetUnitDef(int unitid);
 	virtual float3 GetUnitPos(int unitid);
 	virtual int GetEnemyUnits(int* unitIds, int unitIds_max);
-	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius,
+			int unitIds_max);
 	virtual int GetNeutralUnits(int* unitIds, int unitIds_max);
-	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
+	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius,
+			int unitIds_max);
 
 	virtual int GetUnitTeam(int unitid);
 	virtual int GetUnitAllyTeam(int unitid);
@@ -55,7 +58,8 @@ public:
 	virtual bool IsUnitActivated(int unitid);
 	virtual bool UnitBeingBuilt(int unitid);
 	virtual bool IsUnitNeutral(int unitid);
-	virtual bool GetUnitResourceInfo(int unitid, UnitResourceInfo* resourceInfo);
+	virtual bool GetUnitResourceInfo(int unitid,
+			UnitResourceInfo* resourceInfo);
 	virtual const CCommandQueue* GetCurrentUnitCommands(int unitid);
 
 	virtual int GetBuildingFacing(int unitid);
@@ -72,10 +76,8 @@ public:
 private:
 	int teamId;
 	SAICallback* sAICallback;
-//	IAICheats* aiCheatCallback;
-//	IAICallback* aiCallback;
 	CAIAICallback* aiCallback;
 	void setCheatsEnabled(bool enable);
 };
 
-#endif	// _AIAICHEATS_H
+#endif // _AIAICHEATS_H
