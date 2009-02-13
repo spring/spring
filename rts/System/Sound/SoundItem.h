@@ -27,6 +27,10 @@ public:
 	{
 		return maxDist;
 	};
+	const std::string& Name()
+	{
+		return name;
+	};
 
 private:
 	boost::shared_ptr<SoundBuffer> buffer;
