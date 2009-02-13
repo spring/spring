@@ -3,6 +3,7 @@
 #include "LogOutput.h"
 #include "OggStream.h"
 #include "ALShared.h"
+#include "VorbisShared.h"
 
 // 512KB buffer
 const int BUFFER_SIZE = (4096 * 128);

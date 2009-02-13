@@ -63,7 +63,13 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 		logOutput.Print("OpenAL: %s",   (const char*)alGetString(AL_EXTENSIONS));
 
 		// Generate sound sources
+		#if (BOOST_VERSION >= 103500)
 		sources.resize(maxSounds);
+		#else
+		for (int i = 0; i < maxSounds; i++) {
+			sources.push_back(new SoundSource());
+		}
+		#endif
 
 		// Set distance model (sound attenuation)
 		alDistanceModel (AL_INVERSE_DISTANCE);
@@ -206,6 +212,8 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 			}
 		}
 	}
+
+	return 0;
 }
 
 void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
@@ -287,7 +295,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 void CSound::PlaySample(size_t id, CUnit* u,float volume)
 {
-	PlaySample(id, u->pos, u->speed, volume);
+	PlaySample(id, u->pos, u->speed, volume, false);
 }
 
 void CSound::PlaySample(size_t id, CWorldObject* p,float volume)
@@ -334,7 +342,12 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	}
 	
 	if (p.distance(myPos) > sounds[id].MaxDistance())
-		return;
+	{
+		if (!relative)
+			return;
+		else
+			LogObject() << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
+	}
 
 	bool found1Free = false;
 	int minPriority = 1;
@@ -360,7 +373,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	}
 
 	if (found1Free)
-		sources[minPos].Play(&sounds[id], p * posScale, velocity, volume);
+		sources[minPos].Play(&sounds[id], p * posScale, velocity, volume, relative);
 	CheckError("CSound::PlaySample");
 }
 
@@ -383,13 +396,13 @@ void CSound::Update()
 	CheckError("CSound::Update");
 }
 
-void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, unsigned lastFrameTime)
+void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
 	if (sources.empty())
 		return;
 	myPos = campos * posScale;
 	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (myPos - prevPos)/lastFrameTime/7.0;
+	const float3 velocity = (myPos - prevPos)/(lastFrameTime);
 	prevPos = myPos;
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
