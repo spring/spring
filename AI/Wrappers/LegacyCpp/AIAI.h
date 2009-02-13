@@ -18,15 +18,15 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef	AI_H
-#define	AI_H
+#ifndef _AIAI_H
+#define _AIAI_H
 
 class IGlobalAI;
 
-class CAI { 
+class CAIAI {
 public:
-	CAI();
-	CAI(int team, IGlobalAI* ai);
+	CAIAI();
+	CAIAI(int team, IGlobalAI* ai);
 
 	/**
 	 * Through this function, the AI receives events from the engine.
@@ -45,4 +45,4 @@ public:
 	IGlobalAI* ai;
 };
 
-#endif	// _AI_H
+#endif // _AIAI_H

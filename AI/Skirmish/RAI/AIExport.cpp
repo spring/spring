@@ -20,21 +20,18 @@
 
 #include "AIExport.h"
 
-#include <map>
-
 // AI interface stuff
 #include "ExternalAI/Interface/SSAILibrary.h"
-#include "LegacyCpp/AI.h"
 #include "LegacyCpp/AIGlobalAI.h"
 #include "Game/GameVersion.h"
 
 // RAI stuff
 #include "RAI.h"
 
-//#define MY_SHORT_NAME "RAI"
-//#define MY_VERSION "0.601"
+#include <map>
 
-static std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
+// teamId -> AI map
+static std::map<int, CAIGlobalAI*> myAIs;
 
 static unsigned int myInfoSize;
 static const char** myInfoKeys;

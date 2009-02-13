@@ -18,15 +18,15 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef	AIGLOBALAI_H
-#define	AIGLOBALAI_H
+#ifndef _AIGLOBALAI_H
+#define _AIGLOBALAI_H
 
-#include "AI.h"
+#include "AIAI.h"
 
 class IGlobalAI;
 class IGlobalAICallback;
 
-class CAIGlobalAI : public CAI {
+class CAIGlobalAI : public CAIAI {
 public:
 	CAIGlobalAI();
 	CAIGlobalAI(int teamId, IGlobalAI* gai);
@@ -37,4 +37,4 @@ public:
 	IGlobalAI* gai;
 };
 
-#endif	// _AIGLOBALAI_H
+#endif // _AIGLOBALAI_H

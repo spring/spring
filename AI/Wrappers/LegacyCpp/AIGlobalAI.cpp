@@ -1,6 +1,6 @@
 /*
 	Copyright 2008  Nicolas Wu
-	
+
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
 	the Free Software Foundation; either version 2 of the License, or
@@ -23,11 +23,13 @@
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
 
-CAIGlobalAI::CAIGlobalAI() : CAI(), gai(NULL) {}
+CAIGlobalAI::CAIGlobalAI() : CAIAI(), gai(NULL) {}
 
-CAIGlobalAI::CAIGlobalAI(int teamId, IGlobalAI* gai) : CAI(teamId, gai), gai(gai) {}
+CAIGlobalAI::CAIGlobalAI(int teamId, IGlobalAI* gai)
+		: CAIAI(teamId, gai), gai(gai) {}
 
 CAIGlobalAI::~CAIGlobalAI() {
+	// TODO: check: should this really be done here?
 	delete gai;
 }
 

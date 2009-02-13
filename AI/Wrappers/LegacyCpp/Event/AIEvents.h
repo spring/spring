@@ -21,7 +21,7 @@
 #ifndef _AIEVENTS_H
 #define _AIEVENTS_H
 
-#include "../AI.h"
+#include "../AIAI.h"
 #include "../AIGlobalAI.h"
 
 #include "ExternalAI/Interface/AISEvents.h"

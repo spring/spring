@@ -26,27 +26,28 @@ static int resIndEnergy = -1;
 static inline int getResourceIndex_Metal(SAICallback* sAICallback, int teamId) {
 
 	if (resIndMetal == -1) {
-		resIndMetal = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(teamId, "Metal");
+		resIndMetal = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(
+				teamId, "Metal");
 	}
 
 	return resIndMetal;
 }
-static inline int getResourceIndex_Energy(SAICallback* sAICallback, int teamId) {
-
+static inline int getResourceIndex_Energy(SAICallback* sAICallback, int teamId)
+{
 	if (resIndEnergy == -1) {
-		resIndEnergy = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(teamId, "Energy");
+		resIndEnergy = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(
+				teamId, "Energy");
 	}
 
 	return resIndEnergy;
 }
 
 CAIAICheats::CAIAICheats()
-	: IAICheats(), teamId(-1), sAICallback(NULL)/*, aiCheatCallback(NULL)*/,
-		aiCallback(NULL) {}
+	: IAICheats(), teamId(-1), sAICallback(NULL), aiCallback(NULL) {}
 
-CAIAICheats::CAIAICheats(int teamId, SAICallback* sAICallback/*, IAICheats* aiCheatCallback*/,
+CAIAICheats::CAIAICheats(int teamId, SAICallback* sAICallback,
 		CAIAICallback* aiCallback)
-	: IAICheats(), teamId(teamId), sAICallback(sAICallback)/*, aiCheatCallback(aiCheatCallback)*/,
+		: IAICheats(), teamId(teamId), sAICallback(sAICallback),
 		aiCallback(aiCallback) {}
 
 void CAIAICheats::setCheatsEnabled(bool enabled) {
@@ -66,7 +67,8 @@ void CAIAICheats::GiveMeMetal(float amount) {
 	static int m = getResourceIndex_Metal(sAICallback, teamId);
 	setCheatsEnabled(true);
 	SGiveMeResourceCheatCommand cmd = {m, amount};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CHEATS_GIVE_ME_RESOURCE, &cmd);
+	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
+			COMMAND_CHEATS_GIVE_ME_RESOURCE, &cmd);
 	setCheatsEnabled(false);
 }
 void CAIAICheats::GiveMeEnergy(float amount) {
@@ -74,15 +76,18 @@ void CAIAICheats::GiveMeEnergy(float amount) {
 	static int e = getResourceIndex_Energy(sAICallback, teamId);
 	setCheatsEnabled(true);
 	SGiveMeResourceCheatCommand cmd = {e, amount};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CHEATS_GIVE_ME_RESOURCE, &cmd);
+	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
+			COMMAND_CHEATS_GIVE_ME_RESOURCE, &cmd);
 	setCheatsEnabled(false);
 }
 
 int CAIAICheats::CreateUnit(const char* unitDefName, float3 pos) {
 	setCheatsEnabled(true);
-	int unitDefId = sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, unitDefName);
+	int unitDefId = sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(
+			teamId, unitDefName);
 	SGiveMeNewUnitCheatCommand cmd = {unitDefId, pos.toSAIFloat3()};
-	int unitId = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CHEATS_GIVE_ME_NEW_UNIT, &cmd);
+	int unitId = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE,
+			-1, COMMAND_CHEATS_GIVE_ME_NEW_UNIT, &cmd);
 	setCheatsEnabled(false);
 	return unitId;
 }
@@ -105,7 +110,8 @@ int CAIAICheats::GetEnemyUnits(int* unitIds, int unitIds_max) {
 	setCheatsEnabled(false);
 	return numUnits;
 }
-int CAIAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
+int CAIAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
+		int unitIds_max) {
 	setCheatsEnabled(true);
 	int numUnits = aiCallback->GetEnemyUnits(unitIds, pos, radius, unitIds_max);
 	setCheatsEnabled(false);
@@ -117,9 +123,11 @@ int CAIAICheats::GetNeutralUnits(int* unitIds, int unitIds_max) {
 	setCheatsEnabled(false);
 	return numUnits;
 }
-int CAIAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
+int CAIAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius,
+		int unitIds_max) {
 	setCheatsEnabled(true);
-	int numUnits = aiCallback->GetNeutralUnits(unitIds, pos, radius, unitIds_max);
+	int numUnits = aiCallback->GetNeutralUnits(unitIds, pos, radius,
+			unitIds_max);
 	setCheatsEnabled(false);
 	return numUnits;
 }
@@ -178,7 +186,8 @@ bool CAIAICheats::IsUnitNeutral(int unitId) {
 	setCheatsEnabled(false);
 	return neutral;
 }
-bool CAIAICheats::GetUnitResourceInfo(int unitId, UnitResourceInfo* resourceInfo) {
+bool CAIAICheats::GetUnitResourceInfo(int unitId,
+		UnitResourceInfo* resourceInfo) {
 	setCheatsEnabled(true);
 	bool fetchOk = aiCallback->GetUnitResourceInfo(unitId, resourceInfo);
 	setCheatsEnabled(false);
@@ -235,6 +244,7 @@ bool CAIAICheats::GetValue(int id, void* dst) {
 	// individual callback functions -> this method is deprecated
 	return false;
 }
+
 int CAIAICheats::HandleCommand(int commandId, void* data) {
 	setCheatsEnabled(true);
 	int ret = aiCallback->HandleCommand(commandId, data);

@@ -15,17 +15,17 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "AI.h"
+#include "AIAI.h"
 #include "Event/AIEvents.h"
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAI::CAI() : team(0), ai(NULL) {}
+CAIAI::CAIAI() : team(0), ai(NULL) {}
 
-CAI::CAI(int team, IGlobalAI* ai) : team(team), ai(ai) {}
+CAIAI::CAIAI(int team, IGlobalAI* ai) : team(team), ai(ai) {}
 
 
-int CAI::handleEvent(int topic, const void* data) {
+int CAIAI::handleEvent(int topic, const void* data) {
 
 	static IGlobalAICallback* wrappedGlobalAICallback = NULL;
 
@@ -38,7 +38,8 @@ int CAI::handleEvent(int topic, const void* data) {
 				break;
 			}
 			case EVENT_INIT: {
-				CAIInitEvent* initE = new CAIInitEvent(*((const SInitEvent*) data));
+				CAIInitEvent* initE =
+						new CAIInitEvent(*((const SInitEvent*) data));
 				// The following two lines should not ever be needed,
 				// but they do not hurt either.
 				delete wrappedGlobalAICallback;
@@ -66,7 +67,8 @@ int CAI::handleEvent(int topic, const void* data) {
 				break;
 			}
 			case EVENT_UNIT_FINISHED: {
-				e = new CAIUnitFinishedEvent(*((const SUnitFinishedEvent*) data));
+				e = new CAIUnitFinishedEvent(
+						*((const SUnitFinishedEvent*) data));
 				break;
 			}
 			case EVENT_UNIT_IDLE: {
@@ -74,7 +76,8 @@ int CAI::handleEvent(int topic, const void* data) {
 				break;
 			}
 			case EVENT_UNIT_MOVE_FAILED: {
-				e = new CAIUnitMoveFailedEvent(*((const SUnitMoveFailedEvent*) data));
+				e = new CAIUnitMoveFailedEvent(
+						*((const SUnitMoveFailedEvent*) data));
 				break;
 			}
 			case EVENT_UNIT_DAMAGED: {
@@ -82,7 +85,8 @@ int CAI::handleEvent(int topic, const void* data) {
 				break;
 			}
 			case EVENT_UNIT_DESTROYED: {
-				e = new CAIUnitDestroyedEvent(*((const SUnitDestroyedEvent*) data));
+				e = new CAIUnitDestroyedEvent(
+						*((const SUnitDestroyedEvent*) data));
 				break;
 			}
 			case EVENT_UNIT_GIVEN: {
@@ -90,31 +94,38 @@ int CAI::handleEvent(int topic, const void* data) {
 				break;
 			}
 			case EVENT_UNIT_CAPTURED: {
-				e = new CAIUnitCapturedEvent(*((const SUnitCapturedEvent*) data));
+				e = new CAIUnitCapturedEvent(
+						*((const SUnitCapturedEvent*) data));
 				break;
 			}
 			case EVENT_ENEMY_ENTER_LOS: {
-				e = new CAIEnemyEnterLOSEvent(*((const SEnemyEnterLOSEvent*) data));
+				e = new CAIEnemyEnterLOSEvent(
+						*((const SEnemyEnterLOSEvent*) data));
 				break;
 			}
 			case EVENT_ENEMY_LEAVE_LOS: {
-				e = new CAIEnemyLeaveLOSEvent(*((const SEnemyLeaveLOSEvent*) data));
+				e = new CAIEnemyLeaveLOSEvent(
+						*((const SEnemyLeaveLOSEvent*) data));
 				break;
 			}
 			case EVENT_ENEMY_ENTER_RADAR: {
-				e = new CAIEnemyEnterRadarEvent(*((const SEnemyEnterRadarEvent*) data));
+				e = new CAIEnemyEnterRadarEvent(
+						*((const SEnemyEnterRadarEvent*) data));
 				break;
 			}
 			case EVENT_ENEMY_LEAVE_RADAR: {
-				e = new CAIEnemyLeaveRadarEvent(*((const SEnemyLeaveRadarEvent*) data));
+				e = new CAIEnemyLeaveRadarEvent(
+						*((const SEnemyLeaveRadarEvent*) data));
 				break;
 			}
 			case EVENT_ENEMY_DAMAGED: {
-				e = new CAIEnemyDamagedEvent(*((const SEnemyDamagedEvent*) data));
+				e = new CAIEnemyDamagedEvent(
+						*((const SEnemyDamagedEvent*) data));
 				break;
 			}
 			case EVENT_ENEMY_DESTROYED: {
-				e = new CAIEnemyDestroyedEvent(*((const SEnemyDestroyedEvent*) data));
+				e = new CAIEnemyDestroyedEvent(
+						*((const SEnemyDestroyedEvent*) data));
 				break;
 			}
 			case EVENT_WEAPON_FIRED:{
@@ -122,7 +133,8 @@ int CAI::handleEvent(int topic, const void* data) {
 				break;
 			}
 			case EVENT_PLAYER_COMMAND:  {
-				e = new CAIPlayerCommandEvent(*((const SPlayerCommandEvent*) data));
+				e = new CAIPlayerCommandEvent(
+						*((const SPlayerCommandEvent*) data));
 				break;
 			}
 			case EVENT_SEISMIC_PING:{

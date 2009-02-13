@@ -20,19 +20,19 @@
 
 #include "AIExport.h"
 
-#include <map>
-
 // AI interface stuff
 #include "ExternalAI/Interface/SSAILibrary.h"
-#include "LegacyCpp/AI.h"
 #include "LegacyCpp/AIGlobalAI.h"
 #include "Game/GameVersion.h"
 
 // KAIK stuff
 #include "GlobalAI.h"
 
+#include <map>
 
-static std::map<int, CAIGlobalAI*> myAIs; // teamId -> AI map
+
+// teamId -> AI map
+static std::map<int, CAIGlobalAI*> myAIs;
 
 static unsigned int myInfoSize;
 static const char** myInfoKeys;
