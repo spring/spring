@@ -153,7 +153,7 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${NTai_SRC})
 	add_library(${NTai_TARGET} MODULE ${ntai} ${legacycppaienv})
 	set_target_properties(${NTai_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
 	set_target_properties(${NTai_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "NTai")
-	target_link_libraries(${NTai_TARGET} boost_thread-mt)
+	target_link_libraries(${NTai_TARGET} ${Boost_THREAD_LIBRARY})
 	install (TARGETS ${NTai_TARGET} DESTINATION ${NTai_DATA_DIR})
 endif (BUILD_C_AIINTERFACE AND EXISTS ${NTai_SRC})
 
