@@ -26,7 +26,7 @@ public:
 	bool IsPlaying() const;
 	void Stop();
 	/// will stop a currently playing sound, if any
-	void Play(SoundItem* buffer, const float3& pos, const float3& velocity, float volume);
+	void Play(SoundItem* buffer, const float3& pos, const float3& velocity, float volume, bool relative = false);
 	static void SetPitch(float newPitch);
 
 private:
