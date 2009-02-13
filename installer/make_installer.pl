@@ -43,7 +43,7 @@ sub getVersionVarsString {
 }
 
 my $allVersStr= getVersionVarsString("AI/Interfaces/", "AI_INT_VERS_");
-$allVersStr= $allVersStr.getVersionVarsString("AI/Skirmish/", "SKIRM_AI_VERS_");
+$allVersStr= $allVersStr." ".getVersionVarsString("AI/Skirmish/", "SKIRM_AI_VERS_");
 
 my $testBuildString="";
 my $tag=`git describe --candidate=0 --tags 2>/dev/null`;
