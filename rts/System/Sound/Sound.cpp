@@ -334,7 +334,12 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	}
 	
 	if (p.distance(myPos) > sounds[id].MaxDistance())
-		return;
+	{
+		if (!relative)
+			return;
+		else
+			LogObject() << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
+	}
 
 	bool found1Free = false;
 	int minPriority = 1;
