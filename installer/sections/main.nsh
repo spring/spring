@@ -86,9 +86,11 @@ ${EndIf}
   ; AI Interfaces
 !macro InstallAIInterface aiIntName
 !ifdef INSTALL
-  SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}"
-  File /x *.a /x *.def /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}}\*.*"
-  File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
+  !define /file AI_INT_VERS ..\AI\Interfaces\${aiIntName}\VERSION
+  SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
+  File /x *.a /x *.def /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  ;File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
+  !undef AI_INT_VERS
 !endif
 !macroend
   !insertmacro InstallAIInterface "C"
@@ -108,9 +110,11 @@ ${EndIf}
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL
-  SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
-  File /x *.a /x *.def /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}\*.*"
-  File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
+  !define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
+  SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
+  File /x *.a /x *.def /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+  ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
+  !undef SKIRM_AI_VERS
 !endif
 !macroend
   ;TODO: Fix the vc projects to use the same names.
@@ -184,7 +188,9 @@ ${EndIf}
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro DeleteSkirmishAI skirAiName
 !ifndef INSTALL
-  RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIR_AI_VERS_${skirAiName}}"
+  !define /file SKIRM_AI_VERS ..\AI\Skirmish\${skirAiName}\VERSION
+  RmDir /r "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
+  !undef SKIRM_AI_VERS
 !endif
 !macroend
   !insertmacro DeleteSkirmishAI "NullAI"
@@ -207,7 +213,9 @@ ${EndIf}
   ; AI Interfaces
 !macro DeleteAIInterface aiIntName
 !ifndef INSTALL
-  RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS_${aiIntName}"
+  !define /file AI_INT_VERS ..\AI\Interfaces\${aiIntName}\VERSION
+  RmDir /r "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
+  !undef AI_INT_VERS
 !endif
 !macroend
   !insertmacro DeleteAIInterface "C"
