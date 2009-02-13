@@ -55,12 +55,15 @@ tgz="spring_${branch}_src.tar.gz"
 # This is the list of files/directories that go in the source package.
 # (directories are included recursively)
 include=" \
- $dir/AI/Group/ \
+ $dir/AI/CMakeLists.txt \
+ $dir/AI/Interfaces/CMakeLists.txt \
  $dir/AI/Interfaces/C/ \
  $dir/AI/Interfaces/Java/ \
+ $dir/AI/Skirmish/CMakeLists.txt \
  $dir/AI/Skirmish/AAI/ \
  $dir/AI/Skirmish/KAIK/ \
  $dir/AI/Skirmish/RAI/ \
+ $dir/AI/Skirmish/NTai/ \
  $dir/AI/Skirmish/NullAI/ \
  $dir/AI/Skirmish/NullLegacyCppAI/ \
  $dir/AI/Skirmish/NullJavaAI/ \
@@ -75,9 +78,6 @@ include=" \
  $dir/SConstruct \
  $dir/tools/SelectionEditor/ \
  $dir/CMakeLists.txt \
- $dir/AI/CMakeLists.txt \
- $dir/AI/Interfaces/CMakeLists.txt \
- $dir/AI/Skirmish/CMakeLists.txt \
  $dir/tools/unitsync/ \
  $dir/tools/DedicatedServer/"
 
