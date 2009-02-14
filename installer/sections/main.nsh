@@ -91,7 +91,7 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  File /x *.a /x *.def /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  File /r /x *.a /x *.def /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
   ;File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
   !undef AI_INT_VERS
 !endif
@@ -118,7 +118,7 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  File /x *.a /x *.def /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+  File /r /x *.a /x *.def /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
   ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
   !undef SKIRM_AI_VERS
 !endif
