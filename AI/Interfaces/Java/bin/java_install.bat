@@ -19,7 +19,7 @@ REM SET SPRING_DATA_DIR=%SPRING_HOME%/game
 ### do not change anything below this line ###
 
 ECHO "	installing ..."
-mkdir -p %SPRING_DATA_DIR%/AI/Interfaces/Java/%INTERFACE_VERSION%/jlib
+mkdir %SPRING_DATA_DIR%/AI/Interfaces/Java/%INTERFACE_VERSION%/jlib
 cp %HOME_DIR%/interface.jar %SPRING_DATA_DIR%/AI/Interfaces/Java/%INTERFACE_VERSION%
 cp %HOME_DIR%/interface-src.jar %SPRING_DATA_DIR%/AI/Interfaces/Java/%INTERFACE_VERSION%
 
