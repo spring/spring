@@ -130,14 +130,15 @@ Add_Subdirectory(tools/unitsync)
 #Add_Subdirectory(tools/DemoDumper)
 
 ### make the basefiles (aka sdz's)
-if (UNIX OR CMAKE_CROSSCOMPILING)
-	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
-else (UNIX OR CMAKE_CROSSCOMPILING)
-	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
-endif(UNIX OR CMAKE_CROSSCOMPILING)
+if (CMAKE_HOST_WIN32)
+	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat ${CMAKE_BINARY_DIR}/base WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
+else (CMAKE_HOST_WIN32)
+	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh ${CMAKE_BINARY_DIR}/base WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
+endif(CMAKE_HOST_WIN32)
 
 ### install base data files
 install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE)
+install (DIRECTORY ${CMAKE_BINARY_DIR}/base DESTINATION ${DATADIR}/base)
 
 ### Install freedesktop-files, mime-types etc.
 if (UNIX AND NOT MINGW)
