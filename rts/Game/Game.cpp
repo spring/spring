@@ -4424,9 +4424,16 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 				sound->PlaySample(chatSound, 5);
 			}
 		}
-		else if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
-			logOutput.Print(label + "Private: " + s);
-			sound->PlaySample(chatSound, 5);
+		else if (msg.destination < playerHandler->ActivePlayers())
+		{
+			if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
+				logOutput.Print(label + "Private: " + s);
+				sound->PlaySample(chatSound, 5);
+			}
+			else if (player->playerNum == gu->myPlayerNum)
+			{
+				LogObject() << "You whispered " << player->name << ": " << s;
+			}
 		}
 	}
 
