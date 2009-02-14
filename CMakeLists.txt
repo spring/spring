@@ -82,7 +82,7 @@ else (MINGW)
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
 
-	FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex REQUIRED)
+	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 	
 	FIND_PACKAGE(Devil REQUIRED)
@@ -138,14 +138,15 @@ Add_Subdirectory(tools/unitsync)
 #Add_Subdirectory(tools/DemoDumper)
 
 ### make the basefiles (aka sdz's)
-if (UNIX OR CMAKE_CROSSCOMPILING OR CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
-else (UNIX OR CMAKE_CROSSCOMPILING OR CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
-	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
-endif(UNIX OR CMAKE_CROSSCOMPILING OR CMAKE_GENERATOR STREQUAL "MSYS Makefiles")
+if (CMAKE_HOST_WIN32)
+	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat ${CMAKE_BINARY_DIR}/base WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
+else (CMAKE_HOST_WIN32)
+	add_custom_target(gamedata ALL COMMAND sh make_gamedata_arch.sh ${CMAKE_BINARY_DIR}/base WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
+endif(CMAKE_HOST_WIN32)
 
 ### install base data files
 install (DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/game/ DESTINATION ${DATADIR} PATTERN ".gitignore" EXCLUDE)
+install (DIRECTORY ${CMAKE_BINARY_DIR}/base DESTINATION ${DATADIR}/base)
 
 ### Install freedesktop-files, mime-types etc.
 if (UNIX AND NOT MINGW)

@@ -26,20 +26,20 @@ extern "C" {
 // different platforms and compilers
 #ifndef SHARED_EXPORT
 	#ifdef __cplusplus
-		#ifdef _WIN32
+		#if defined _WIN32 || defined __CYGWIN__
 			#define SHARED_EXPORT extern "C" __declspec(dllexport)
 			#define SPRING_API
 		#elif __GNUC__ >= 4
-		 // Support for '-fvisibility=hidden'.
+			// Support for '-fvisibility=hidden'.
 			#define SHARED_EXPORT extern "C" __attribute__ ((visibility("default")))
 			#define SPRING_API __attribute__ ((visibility("default")))
-		#else
-		 // Older versions of gcc have everything visible; no need for fancy stuff.
+		#else // _WIN32 || defined __CYGWIN__
+			// Older versions of gcc have everything visible; no need for fancy stuff.
 			#define SHARED_EXPORT extern "C"
 			#define SPRING_API
-		#endif
+		#endif // _WIN32 || defined __CYGWIN__
 	#else // __cplusplus
-	 // we dont have t oexport if we are in C already
+		// we dont have to export if we are in C already
 		#define SHARED_EXPORT
 	#endif // __cplusplus
 #endif // SHARED_EXPORT
@@ -70,9 +70,9 @@ extern "C" {
 		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
 	#elif __INTEL_COMPILER
 		#define CALLING_CONV __attribute__ ((SPRING_CALLING_CONVENTION))
-	#else
+	#else // defined _WIN64 ...
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
-	#endif // _WIN32
+	#endif // defined _WIN64 ...
 #endif // CALLING_CONV
 
 // Intel Compiler compatibility fix

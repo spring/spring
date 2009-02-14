@@ -79,7 +79,6 @@
 /AI/Skirmish/*/build
 
 # Misc file endings (eg. build or temp files)
-*.pyc
 *.o
 *.log
 *~
@@ -91,5 +90,4 @@
 
 # ???
 progress.make
-flt-target
 
