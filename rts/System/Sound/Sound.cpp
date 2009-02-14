@@ -363,7 +363,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 		}
 		else
 		{
-			if (sources[pos].GetCurrentPriority() < minPriority)
+			if (sources[pos].GetCurrentPriority() < minPriority && sources[pos].GetCurrentPriority() <=  sounds[id].GetPriority())
 			{
 				found1Free = true;
 				minPriority = sources[pos].GetCurrentPriority();
