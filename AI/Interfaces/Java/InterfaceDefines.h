@@ -24,9 +24,6 @@ extern "C" {
 
 #define JAVA_SKIRMISH_AI_PROPERTY_CLASS_NAME "className"
 
-//#define MY_SHORT_NAME "Java"
-//#define MY_VERSION "0.1"
-//#define MY_NAME "Java AI Interface"
 #define MY_LOG_FILE "interface-log.txt"
 #define JAVA_AI_INTERFACE_LIBRARY_FILE_NAME "AIInterface.jar"
 #define JAVA_LIBS_DIR "jlib"
