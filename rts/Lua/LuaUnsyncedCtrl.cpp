@@ -523,7 +523,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 			if (args >= 8)
 			{
 				const float3 speed(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
-				sound->PlaySample(soundID, pos, volume);
+				sound->PlaySample(soundID, pos, speed, volume);
 			}
 			else
 				sound->PlaySample(soundID, pos, volume);
