@@ -32,15 +32,15 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 
 	if (maxSounds <= 0)
 	{
-		LogObject() << "MaxSounds set to 0, sound is disabled";
+		LogObject(LOG_SOUND) << "MaxSounds set to 0, sound is disabled";
 	}
 	else
 	{
 		ALCdevice *device = alcOpenDevice(NULL);
-		logOutput.Print("OpenAL: using device: %s\n", (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER));
+		LogObject(LOG_SOUND) <<  "OpenAL: using device: " << (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER);
 		if (device == NULL)
 		{
-			logOutput.Print("Could not open a sounddevice, disabling sounds");
+			LogObject(LOG_SOUND) <<  "Could not open a sounddevice, disabling sounds";
 			CheckError("CSound::InitAL");
 			return;
 		} else
@@ -54,13 +54,13 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 			else
 			{
 				alcCloseDevice(device);
-				logOutput.Print("Could not create OpenAL audio context");
+				LogObject(LOG_SOUND) << "Could not create OpenAL audio context";
 				return;
 			}
 		}
 
-		logOutput.Print("OpenAL: %s\n", (const char*)alGetString(AL_VERSION));
-		logOutput.Print("OpenAL: %s",   (const char*)alGetString(AL_EXTENSIONS));
+		LogObject(LOG_SOUND) <<  "OpenAL: " << (const char*)alGetString(AL_VERSION);
+		LogObject(LOG_SOUND) <<  "OpenAL: " << (const char*)alGetString(AL_EXTENSIONS);
 
 		// Generate sound sources
 		#if (BOOST_VERSION >= 103500)
@@ -91,15 +91,15 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 	parser.SetLowerCppKeys(false);
 	parser.Execute();
 	if (!parser.IsValid()) {
-		logOutput.Print("Could not load gamedata/sounds.lua:");
-		logOutput.Print(parser.GetErrorLog());
+		LogObject(LOG_SOUND) << "Could not load gamedata/sounds.lua:";
+		LogObject(LOG_SOUND) << parser.GetErrorLog();
 	}
 	else
 	{
 		const LuaTable soundRoot = parser.GetRoot();
 		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
 		if (!soundItemTable.IsValid())
-			logOutput.Print("CSound(): could not parse SoundItems table");
+			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table";
 		else
 		{
 			std::vector<std::string> keys;
@@ -113,23 +113,23 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 				bufmap["name"] = name;
 				soundItemDefMap::const_iterator it = soundItemDefs.find(name);
 				if (it != soundItemDefs.end())
-					logOutput.Print("CSound(): two SoundItems have the same name %s", name.c_str());
+					LogObject(LOG_SOUND) << "CSound(): two SoundItems have the same name: " << name;
 
 				soundItemDef::const_iterator inspec = bufmap.find("file");
 				if (inspec == bufmap.end())	// no file, drop
-					logOutput.Print("CSound(): SoundItem %s has no file tag", name.c_str());
+					LogObject(LOG_SOUND) << "CSound(): SoundItem has no file tag: " << name;
 				else
 					soundItemDefs[name] = bufmap;
 
 				if (buf.KeyExists("preload"))
 				{
-					logOutput.Print("CSound(): preloading %s", name.c_str());
+					LogObject(LOG_SOUND) << "CSound(): preloading " << name;
 					const size_t newid = sounds.size();
 					sounds.push_back(new SoundItem(GetWaveBuffer(bufmap["file"], true), bufmap));
 					soundMap[name] = newid;
 				}
 			}
-			LogObject() << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems";
+			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems";
 		}
 	}
 }
@@ -206,7 +206,7 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 					ErrorMessageBox("Couldn't open wav file", name, 0);
 				else
 				{
-					logOutput.Print("CSound::GetSoundId: could not find sound %s", name.c_str());
+					LogObject(LOG_SOUND) << "CSound::GetSoundId: could not find sound: " << name;
 					return 0;
 				}
 			}
@@ -346,7 +346,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 		if (!relative)
 			return;
 		else
-			LogObject() << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
+			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
 	}
 
 	bool found1Free = false;
@@ -414,15 +414,15 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 
 void CSound::PrintDebugInfo()
 {
-	logOutput.Print("OpenAL Sound System:");
-	LogObject() << "# SoundSources: " << sources.size();
-	LogObject() << "# SoundBuffers: " << buffers.size();
+	LogObject(LOG_SOUND) << "OpenAL Sound System:";
+	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
+	LogObject(LOG_SOUND) << "# SoundBuffers: " << buffers.size();
 	int numBytes = 0;
 	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
 		numBytes += (*it)->BufferSize();
-	LogObject() << "# reserved for buffers: " << (numBytes/1024) << " kB";
-	LogObject() << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
-	LogObject() << "# SoundItems: " << sounds.size();
+	LogObject(LOG_SOUND) << "# reserved for buffers: " << (numBytes/1024) << " kB";
+	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
+	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
@@ -451,7 +451,7 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 		success = buffer->LoadVorbis(path, buf, strict);
 	else
 	{
-		LogObject() << "CSound::LoadALBuffer: unknown audio format: " << ending;
+		LogObject(LOG_SOUND) << "CSound::LoadALBuffer: unknown audio format: " << ending;
 	}
 
 	CheckError("CSound::LoadALBuffer");
