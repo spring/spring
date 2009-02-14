@@ -616,6 +616,8 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		Alias(baseName, allBuilds)
 		Alias('AIInterfaces', allBuilds)
 		Default(allBuilds)
+		instList += [myEnv.Install(myEnv['installprefix'], jarFileBin_build)]
+		instList += [myEnv.Install(os.path.join(myEnv['installprefix'], 'jlib'), jarFileSrc_build)]
 
 	targetName = 'AIInterface'
 	if env['platform'] != 'windows':

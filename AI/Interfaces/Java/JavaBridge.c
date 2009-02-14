@@ -156,8 +156,10 @@ static bool java_createClassPath(char* classPathStr) {
 	}
 
 	// concat the classpath entries
-	STRCAT(classPathStr, classPath[0]);
-	free(classPath[0]);
+	if (classPath[0] != NULL) {
+		STRCAT(classPathStr, classPath[0]);
+		free(classPath[0]);
+	}
 	for (i=1; i < classPath_size; ++i) {
 		if (classPath[i] != NULL) {
 			STRCAT(classPathStr, ENTRY_DELIM);
