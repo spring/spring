@@ -27,9 +27,13 @@ public:
 	{
 		return maxDist;
 	};
-	const std::string& Name()
+	const std::string& Name() const
 	{
 		return name;
+	};
+	const int GetPriority() const
+	{
+		return priority;
 	};
 
 private:
