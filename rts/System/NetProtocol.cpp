@@ -17,6 +17,7 @@
 #include "LogOutput.h"
 #include "DemoRecorder.h"
 #include "ConfigHandler.h"
+#include "GlobalUnsynced.h"
 #include "Net/UDPConnection.h"
 #include "Net/LocalConnection.h"
 #include "Net/UDPSocket.h"
@@ -78,14 +79,14 @@ boost::shared_ptr<const netcode::RawPacket> CNetProtocol::GetData()
 
 	if (ret) {
 		if (record) {
-			record->SaveToDemo(ret->data, ret->length);
+			record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
 		}
 		else if (ret->data[0] == NETMSG_GAMEDATA) {
 			logOutput.Print("Starting demo recording");
 			GameData gd(ret);
 			record.reset(new CDemoRecorder());
 			record->WriteSetupText(gd.GetSetup());
-			record->SaveToDemo(ret->data, ret->length);
+			record->SaveToDemo(ret->data, ret->length, gu->modGameTime);
 		}
 	}
 
