@@ -119,6 +119,8 @@ SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -O2 -DNDEBUG")
 SET(CMAKE_CXX_FLAGS_PROFILE   "-O2 -pg -Wall -DNDEBUG")
 if (NOT MINGW)
 	set (PIC_FLAG "-fpic")
+else (NOT MINGW)
+	set (CMAKE_EXE_LINKER_FLAGS "-Wl,--enable-auto-import")
 endif (NOT MINGW)
 
 ### Where the other CMakeLists.txt are
