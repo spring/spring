@@ -141,7 +141,8 @@ sobjs_flt32 = create_static_objects(slibmenv, filelist.get_source(slibmenv, 'rts
 #sobjs_ldbl96 = create_static_objects(slibmenv, filelist.get_source(slibmenv, 'rts/lib/streflop/libm/ldbl-96'), '-streflop-ldbl96', ['LIBM_COMPILING_LDBL96'])
 streflopSource_tmp = [
 		'rts/lib/streflop/SMath.cpp',
-		'rts/lib/streflop/Random.cpp'
+		'rts/lib/streflop/Random.cpp',
+		'rts/lib/streflop/streflopC.cpp'
 		]
 streflopSource = []
 for f in streflopSource_tmp:   streflopSource += [os.path.join(senv['builddir'], f)]
