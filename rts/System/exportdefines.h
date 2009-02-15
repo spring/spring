@@ -22,26 +22,30 @@
 extern "C" {
 #endif // __cplusplus
 
+#ifndef EXTERNALIZER
+	#ifdef __cplusplus
+		#define EXTERNALIZER extern "C"
+	#else // __cplusplus
+		// we dont have to export if we are in C already
+		#define EXTERNALIZER
+	#endif // __cplusplus
+#endif // EXTERNALIZER
+
 // extern declaration that will work across
 // different platforms and compilers
 #ifndef SHARED_EXPORT
-	#ifdef __cplusplus
-		#if defined _WIN32 || defined __CYGWIN__
-			#define SHARED_EXPORT extern "C" __declspec(dllexport)
-			#define SPRING_API
-		#elif __GNUC__ >= 4
-			// Support for '-fvisibility=hidden'.
-			#define SHARED_EXPORT extern "C" __attribute__ ((visibility("default")))
-			#define SPRING_API __attribute__ ((visibility("default")))
-		#else // _WIN32 || defined __CYGWIN__
-			// Older versions of gcc have everything visible; no need for fancy stuff.
-			#define SHARED_EXPORT extern "C"
-			#define SPRING_API
-		#endif // _WIN32 || defined __CYGWIN__
-	#else // __cplusplus
-		// we dont have to export if we are in C already
-		#define SHARED_EXPORT
-	#endif // __cplusplus
+	#if defined _WIN32 || defined __CYGWIN__
+		#define SHARED_EXPORT EXTERNALIZER __declspec(dllexport)
+		#define SPRING_API
+	#elif __GNUC__ >= 4
+		// Support for '-fvisibility=hidden'.
+		#define SHARED_EXPORT EXTERNALIZER __attribute__ ((visibility("default")))
+		#define SPRING_API __attribute__ ((visibility("default")))
+	#else // _WIN32 || defined __CYGWIN__
+		// Older versions of gcc have everything visible; no need for fancy stuff.
+		#define SHARED_EXPORT EXTERNALIZER
+		#define SPRING_API
+	#endif // _WIN32 || defined __CYGWIN__
 #endif // SHARED_EXPORT
 
 // calling convention declaration that will work across

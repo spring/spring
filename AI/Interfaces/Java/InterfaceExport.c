@@ -41,7 +41,6 @@ EXPORT(int) initStatic(
 
 	bool success = false;
 
-
 	// initialize C part of the interface
 	staticGlobalData = _staticGlobalData;
 
@@ -53,7 +52,7 @@ EXPORT(int) initStatic(
 
 	static const int maxProps = 64;
 	const char* propKeys[maxProps];
-	const char* propValues[maxProps];
+	char* propValues[maxProps];
 	int numProps = 0;
 
 	char dd_r[2048];
@@ -74,7 +73,7 @@ EXPORT(int) initStatic(
 			util_dataDirs_allocFilePath(INTERFACE_PROPERTIES_FILE, false);
 	if (interfacePropFile != NULL) {
 		numProps = util_parsePropertiesFile(interfacePropFile,
-				propKeys, propValues, maxProps);
+				propKeys, (const char**)propValues, maxProps);
 		int p;
 		for (p=0; p < numProps; ++p) {
 			char* propValue_tmp = util_allocStrReplaceStr(propValues[p],
@@ -87,7 +86,7 @@ EXPORT(int) initStatic(
 	// ### try to fetch the log-level from the properties ###
 	int logLevel = SIMPLELOG_LEVEL_NORMAL;
 	const char* logLevel_str =
-			util_map_getValueByKey(numProps, propKeys, propValues,
+			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
 			"log.level");
 	if (logLevel_str != NULL) {
 		int logLevel_tmp = atoi(logLevel_str);
@@ -100,7 +99,7 @@ EXPORT(int) initStatic(
 	// ### try to fetch whether to use time-stamps from the properties ###
 	bool useTimeStamps = true;
 	const char* useTimeStamps_str =
-			util_map_getValueByKey(numProps, propKeys, propValues,
+			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
 			"log.useTimeStamps");
 	if (useTimeStamps_str != NULL) {
 		useTimeStamps = util_strToBool(useTimeStamps_str);
@@ -108,7 +107,7 @@ EXPORT(int) initStatic(
 
 	// ### init the log file ###
 	char* logFile_tmp = util_allocStrCpy(
-			util_map_getValueByKey(numProps, propKeys, propValues,
+			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
 			"log.file"));
 	if (logFile_tmp == NULL) {
 		logFile_tmp = util_allocStrCatFSPath(2, "log", MY_LOG_FILE);
@@ -236,7 +235,6 @@ int CALLING_CONV proxy_skirmishAI_handleEvent(
 		int teamId, int topic, const void* data) {
 	return java_skirmishAI_handleEvent(teamId, topic, data);
 }
-
 
 
 EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
