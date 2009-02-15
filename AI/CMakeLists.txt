@@ -12,8 +12,14 @@ SET(CMAKE_C_FLAGS_RELEASE        "${CMAKE_CXX_FLAGS_RELEASE}")
 SET(CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 SET(CMAKE_C_FLAGS_PROFILE        "${CMAKE_CXX_FLAGS_PROFILE}")
 
-remove_definitions(-DSTREFLOP_SSE) # would break AI compiling
+remove_definitions(-DSTREFLOP_SSE)
 add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1)
+
+if (WIN32)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans")
+	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--kill-at --add-stdcall-alias)
+endif (WIN32)
+
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
 #list (APPEND creg ${CMAKE_SOURCE_DIR}/rts/System/float3)
 
