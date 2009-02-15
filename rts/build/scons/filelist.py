@@ -15,14 +15,10 @@ def getAbsDir(env, relPath):
 	# This worked up to SCons 0.98
 	#return SCons.Script.Dir(interfaceGeneratedJavaSrcDir).abspath
 	path = relPath
-	#if (relPath.startswith('#')):
 	if (len(relPath) > 0 and relPath[0:1] == '#'):
-		sys.stderr.write("\tstarts with #!: " + relPath)
 		# replace '#' with source root
 		#path = os.path.join(sourceRootDir, relPath.replace('#', ''))
 		path = os.path.join(sourceRootDir, relPath[1:])
-		#sys.stderr.write("\tsourceRootDir: " + sourceRootDir + "\n")
-		#sys.stderr.write("\tafter replace: " + path + "\n")
 	return os.path.abspath(path)
 
 def fix_path(path):

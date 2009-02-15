@@ -98,9 +98,6 @@ def generate(env):
 	usropts = Options(usrcachefile)
 	intopts = Options(intcachefile)
 
-	# make the build dir globally absolute
-	env['builddir'] = bd
-
 	#user visible options
 	usropts.AddOptions(
 		#permanent options
@@ -159,6 +156,9 @@ def generate(env):
 	intopts.Update(env)
 
 	env.Help(usropts.GenerateHelpText(env))
+
+	# make the build dir globally absolute
+	env['builddir'] = bd
 
 	# Use this to avoid an error message 'how to make target configure ?'
 	env.Alias('configure', None)

@@ -19,11 +19,15 @@
 
 #include "ExternalAI/Interface/SStaticGlobalData.h" // for SStaticGlobalData, sPS
 #include "ExternalAI/Interface/aidefines.h" // for SKIRMISH_AI_PROPERTY_DATA_DIR, AI_INTERFACES_DATA_DIR
+#if defined USING_STREFLOP
 #include "lib/streflop/streflopC.h" // for streflop_init_Simple()
-#ifdef BUILDING_SKIRMISH_AI
+#else
+#include <assert.h>
+#endif
+#if defined BUILDING_SKIRMISH_AI
 // for SKIRMISH_AI_PROPERTY_DATA_DIR
 #include "ExternalAI/Interface/SSAILibrary.h"
-#elif BUILDING_AI_INTERFACE
+#elif defined BUILDING_AI_INTERFACE
 // for AI_INTERFACE_PROPERTY_DATA_DIR
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #endif
@@ -1101,7 +1105,13 @@ const char* util_map_getValueByKey(
 }
 
 void util_resetEngineEnv() {
+#if defined USING_STREFLOP
 	streflop_init_Simple();
+#else
+	// Error: streflop should be imported if this function has to be called;
+	// create a SIGSEGV
+	assert(0);
+#endif
 }
 
 void util_finalize() {
