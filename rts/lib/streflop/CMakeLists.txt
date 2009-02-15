@@ -17,6 +17,7 @@ SET_SOURCE_FILES_PROPERTIES(${libm_ldbl96_source} PROPERTIES COMPILE_FLAGS "-DLI
 ADD_LIBRARY(streflop STATIC EXCLUDE_FROM_ALL
 	SMath.cpp
 	Random.cpp
+	streflopC.cpp
 	${libm_flt32_source}
 # not needed => safer (and faster) to not compile them at all
 #	${libm_dbl64_source}

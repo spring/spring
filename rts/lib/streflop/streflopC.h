@@ -17,8 +17,10 @@ void streflop_init_Simple();
 /// Initializes the FPU to double precision
 void streflop_init_Double();
 
+#if defined(Extended)
 /// Initializes the FPU to extended precision
 void streflop_init_Extended();
+#endif // defined(Extended)
 
 #ifdef __cplusplus
 } // extern "C"
