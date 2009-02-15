@@ -18,7 +18,6 @@
 #include "JavaBridge.h"
 
 #include "InterfaceDefines.h"
-#include "StreflopBridge.h"
 #include "CUtils/Util.h"
 #include "CUtils/SimpleLog.h"
 
@@ -36,7 +35,9 @@
 #include <inttypes.h> // intptr_t -> a signed int with the same size
                       // as a pointer (whether 32bit or 64bit)
 
-
+#define ESTABLISH_SPRING_ENV util_resetEngineEnv();
+// The JVM sets the environment it wants automatically
+#define ESTABLISH_JAVA_ENV
 
 
 static const struct SStaticGlobalData* staticGlobalData = NULL;
@@ -655,9 +656,9 @@ bool java_unloadJNIEnv() {
 
 bool java_preloadJNIEnv() {
 
-	ESTABLISH_JAVA_ENV;
+	ESTABLISH_JAVA_ENV
 	JNIEnv* env = java_getJNIEnv();
-	ESTABLISH_SPRING_ENV;
+	ESTABLISH_SPRING_ENV
 
 	return env != NULL;
 }
@@ -1100,7 +1101,7 @@ bool java_initSkirmishAIClass(unsigned int infoSize,
 
 	// instantiate AI (if needed)
 	if (aiImplId_className[implId] == NULL) {
-		ESTABLISH_JAVA_ENV;
+		ESTABLISH_JAVA_ENV
 		JNIEnv* env = java_getJNIEnv();
 
 		if (g_cls_url == NULL) {
@@ -1118,7 +1119,7 @@ bool java_initSkirmishAIClass(unsigned int infoSize,
 		success = java_loadSkirmishAI(env, shortName, version, className,
 				&(aiImplId_instance[implId]), aiImplId_methods[implId],
 				&(aiImplId_classLoader[implId]));
-		ESTABLISH_SPRING_ENV;
+		ESTABLISH_SPRING_ENV
 		if (success) {
 			aiImplId_className[implId] = util_allocStrCpy(className);
 		} else {
@@ -1144,7 +1145,7 @@ bool java_releaseSkirmishAIClass(const char* className) {
 
 	// release AI (if needed)
 	if (aiImplId_className[implId] != NULL) {
-		ESTABLISH_JAVA_ENV;
+		ESTABLISH_JAVA_ENV
 		JNIEnv* env = java_getJNIEnv();
 
 		// delete the AI class-loader global reference,
@@ -1165,7 +1166,7 @@ bool java_releaseSkirmishAIClass(const char* className) {
 			simpleLog_log("!Failed to delete AI global reference.");
 			(*env)->ExceptionDescribe(env);
 		}
-		ESTABLISH_SPRING_ENV;
+		ESTABLISH_SPRING_ENV
 
 		if (success) {
 			free(aiImplId_classLoader[implId]);
@@ -1216,7 +1217,7 @@ int java_skirmishAI_init(int teamId,
 
 	jmethodID mth = NULL;
 	jobject o_ai = NULL;
-	ESTABLISH_JAVA_ENV;
+	ESTABLISH_JAVA_ENV
 	bool success = java_getSkirmishAIAndMethod(teamId, &o_ai,
 			MTH_INDEX_SKIRMISH_AI_INIT, &mth);
 
@@ -1254,7 +1255,7 @@ int java_skirmishAI_init(int teamId,
 				o_infoProps, o_optionsProps);
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "done.");
 	}
-	ESTABLISH_SPRING_ENV;
+	ESTABLISH_SPRING_ENV
 
 	return res;
 }
@@ -1291,7 +1292,7 @@ int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
 			MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT, &mth);
 
 	if (success) {
-		ESTABLISH_JAVA_ENV;
+		ESTABLISH_JAVA_ENV
 		JNIEnv* env = java_getJNIEnv();
 		jlong jniPointerToData = (jlong) ((intptr_t)data);
 		// instantiate a JNA Pointer
@@ -1310,7 +1311,7 @@ int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
 			(*env)->ExceptionDescribe(env);
 			res = -2;
 		}
-		ESTABLISH_SPRING_ENV;
+		ESTABLISH_SPRING_ENV
 	}
 
 	return res;

@@ -71,7 +71,7 @@ namespace streflop {
 #undef FE_TONEAREST
 #undef FE_TOWARDZERO
 #undef FE_UPWARD
-#endif
+#endif // defined(FE_INVALID) || ...
 
 
 // Flags for FPU exceptions
@@ -131,17 +131,17 @@ enum FPU_RoundMode {
 */
 
 // plan for portability
-#ifdef _MSC_VER
+#if defined(_MSC_VER)
 #define STREFLOP_FSTCW(cw) do { short tmp; __asm { fstcw tmp }; (cw) = tmp; } while (0)
 #define STREFLOP_FLDCW(cw) do { short tmp = (cw); __asm { fclex }; __asm { fldcw tmp }; } while (0)
 #define STREFLOP_STMXCSR(cw) do { int tmp; __asm { stmxcsr tmp }; (cw) = tmp; } while (0)
 #define STREFLOP_LDMXCSR(cw) do { int tmp = (cw); __asm { ldmxcsr tmp }; } while (0)
-#else
+#else // defined(_MSC_VER)
 #define STREFLOP_FSTCW(cw) do { asm volatile ("fstcw %0" : "=m" (cw) : ); } while (0)
 #define STREFLOP_FLDCW(cw) do { asm volatile ("fclex \n fldcw %0" : : "m" (cw)); } while (0)
 #define STREFLOP_STMXCSR(cw) do { asm volatile ("stmxcsr %0" : "=m" (cw) : ); } while (0)
 #define STREFLOP_LDMXCSR(cw) do { asm volatile ("ldmxcsr %0" : : "m" (cw) ); } while (0)
-#endif
+#endif // defined(_MSC_VER)
 
 // Subset of all C99 functions
 
@@ -238,7 +238,7 @@ template<> inline void streflop_init<Double>() {
     STREFLOP_FLDCW(fpu_mode);
 }
 
-#ifdef Extended
+#if defined(Extended)
 template<> inline void streflop_init<Extended>() {
     unsigned short fpu_mode;
     STREFLOP_FSTCW(fpu_mode);
@@ -246,7 +246,7 @@ template<> inline void streflop_init<Extended>() {
     fpu_mode |= 0x0300; // 80 bits internal operations
     STREFLOP_FLDCW(fpu_mode);
 }
-#endif
+#endif // defined(Extended)
 
 #elif defined(STREFLOP_SSE)
 
@@ -386,7 +386,7 @@ template<> inline void streflop_init<Double>() {
     STREFLOP_LDMXCSR(sse_mode);
 }
 
-#ifdef Extended
+#if defined(Extended)
 template<> inline void streflop_init<Extended>() {
     // Just in case the compiler would store a value on the st(x) registers
     unsigned short x87_mode;
@@ -404,7 +404,7 @@ template<> inline void streflop_init<Extended>() {
 #endif
     STREFLOP_LDMXCSR(sse_mode);
 }
-#endif
+#endif // defined(Extended)
 
 
 #elif defined(STREFLOP_SOFT)
@@ -511,10 +511,10 @@ template<> inline void streflop_init<Double>() {
 template<> inline void streflop_init<Extended>() {
 }
 
-#else
+#else // defined(STREFLOP_X87)
 #error STREFLOP: Invalid combination or unknown FPU type.
-#endif
+#endif // defined(STREFLOP_X87)
 
 }
 
-#endif
+#endif // STREFLOP_FPU_H

@@ -19,6 +19,7 @@
 
 #include "ExternalAI/Interface/SStaticGlobalData.h" // for SStaticGlobalData, sPS
 #include "ExternalAI/Interface/aidefines.h" // for SKIRMISH_AI_PROPERTY_DATA_DIR, AI_INTERFACES_DATA_DIR
+#include "lib/streflop/streflopC.h" // for streflop_init_Simple()
 #ifdef BUILDING_SKIRMISH_AI
 // for SKIRMISH_AI_PROPERTY_DATA_DIR
 #include "ExternalAI/Interface/SSAILibrary.h"
@@ -1097,6 +1098,10 @@ const char* util_map_getValueByKey(
 	}
 
 	return value;
+}
+
+void util_resetEngineEnv() {
+	streflop_init_Simple();
 }
 
 void util_finalize() {
