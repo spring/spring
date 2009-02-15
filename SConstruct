@@ -153,7 +153,6 @@ streflopSource += sobjs_flt32
 # compile
 createStaticExtLibraryBuilder(senv)
 streflop_lib = senv.StaticExtLibrary(senv['builddir'], streflopSource)
-env['streflop_lib'] = streflop_lib
 #streflop_lib = senv.StaticLibrary(senv['builddir'], streflopSource)
 Alias('streflop', streflop_lib) # Allow `scons streflop' to compile just streflop
 
@@ -345,7 +344,7 @@ ai_env = env.Clone(
 		)
 remove_precompiled_header(ai_env)
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=env['builddir'])
-SConscript(['AI/SConscript'], exports=['env', 'ai_env'])
+SConscript(['AI/SConscript'], exports=['env', 'ai_env', 'streflop_lib'])
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=ai_env['builddir'])
 
 ################################################################################

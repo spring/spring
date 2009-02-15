@@ -26,7 +26,7 @@ SkirmishAI
 """
 
 
-Import(['env', 'ai_env'])
+Import(['env', 'ai_env', 'streflop_lib'])
 
 import os, sys
 sys.path.append('rts/build/scons')
@@ -460,12 +460,9 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		myEnv.AppendUnique(CPPPATH = ['Wrappers'])
 		objs += aiinterfaceobjs_CUtils
 	if baseName in aiinterfaces_needStreflop_list:
-		if myEnv['fpmath'] == 'sse':
-			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_SSE'])
-		else:
-			myEnv.AppendUnique(CPPDEFINES=['STREFLOP_X87'])
+		myEnv.AppendUnique(CPPDEFINES=['USING_STREFLOP'])
 		myEnv.AppendUnique(CPPPATH = ['#rts/lib/streflop'])
-		myEnv.AppendUnique(LIBS = [myEnv['streflop_lib']])
+		myEnv.AppendUnique(LIBS = [streflop_lib])
 	cwdPrev = os.getcwd()
 	os.chdir(myEnv['sourcedir'])
 	mySourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
@@ -476,8 +473,6 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		if myEnv['platform'] != 'windows':
 			# for windows we use libjvm.dll.a from mingwlibs
 			myEnv['JAVA_HOME'] = myEnv.get('JAVA_HOME', os.environ['JAVA_HOME'])
-			#if not os.path.exists(myEnv['JAVA_HOME']):
-			#	myEnv['JAVA_HOME'] = os.environ['JAVA_HOME']
 			myEnv.AppendUnique(LIBPATH = [
 				os.path.join(myEnv['JAVA_HOME'], 'jre/lib/i386/server'),
 				os.path.join(myEnv['JAVA_HOME'], 'jre/lib/amd64/server'),
