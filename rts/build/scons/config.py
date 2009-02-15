@@ -297,7 +297,6 @@ def CheckHeadersAndLibraries(env, conf):
 	d += [Dependency(['IL', 'devil'],    ['IL/il.h'])]
 	d += [Dependency(['ILU', 'ilu'],     ['IL/ilu.h'])]	
 	d += [Dependency(['openal', 'openal32', 'OpenAL32'], ['AL/al.h'])]
-#	d += [Dependency(['jvm'],     ['jni.h'])]
 
 	if env['platform'] == 'windows':
 		d += [Dependency(['imagehlp'], [])]
@@ -310,6 +309,7 @@ def CheckHeadersAndLibraries(env, conf):
 	else:
 		d += [Dependency(['Xcursor'], ['X11/Xcursor/Xcursor.h'])]
 		d += [Dependency(['X11'], ['X11/X.h'])]
+		#d += [Dependency(['jvm'],     ['jni.h'])]
 
 	d += [Dependency(['vorbisfile'], ['vorbis/vorbisfile.h'])]
 	d += [Dependency(['vorbis'], [])]
