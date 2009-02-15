@@ -98,6 +98,9 @@ def generate(env):
 	usropts = Options(usrcachefile)
 	intopts = Options(intcachefile)
 
+	# make the build dir globally absolute
+	env['builddir'] = bd
+
 	#user visible options
 	usropts.AddOptions(
 		#permanent options
