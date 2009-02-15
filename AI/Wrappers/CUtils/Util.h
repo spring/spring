@@ -300,6 +300,21 @@ const char* util_map_getValueByKey(
 		const char* key);
 
 /**
+ * Reestablishes the environment that is needed by the engine.
+ * Whenever an AI Iterface, or a VM running in it,
+ * changes the programm environment, this function should be called
+ * before CPU controll goes back to the engine.
+ * Currently handled changes:
+ * - changing the state of the FPU
+ *
+ * For an exampe of when to call this function,
+ * look for it in the Java AI Interface native code.
+ * If you use this function, you will need to link against
+ * the streflop static library.
+ */
+void util_resetEngineEnv();
+
+/**
  * Free memory.
  * Some of the other functions will not work anymore,
  * after calling this function.
