@@ -13,7 +13,6 @@
 #include "Game/GameSetup.h"
 #include "Exceptions.h"
 #include "Util.h"
-#include "GlobalUnsynced.h"
 
 #include "LogOutput.h"
 
@@ -85,11 +84,11 @@ void CDemoRecorder::WriteSetupText(const std::string& text)
 	recordDemo.write(text.c_str(), length);
 }
 
-void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length)
+void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime)
 {
 	DemoStreamChunkHeader chunkHeader;
 
-	chunkHeader.modGameTime = gu->modGameTime;
+	chunkHeader.modGameTime = modGameTime;
 	chunkHeader.length = length;
 	chunkHeader.swab();
 	recordDemo.write((char*)&chunkHeader, sizeof(chunkHeader));

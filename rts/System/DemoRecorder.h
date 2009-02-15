@@ -18,7 +18,7 @@ public:
 	~CDemoRecorder();
 
 	void WriteSetupText(const std::string& text);
-	void SaveToDemo(const unsigned char* buf,const unsigned length);
+	void SaveToDemo(const unsigned char* buf,const unsigned length, const float modGameTime);
 	
 	/**
 	@brief assign a map name for the demo file
