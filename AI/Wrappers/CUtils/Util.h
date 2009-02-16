@@ -230,6 +230,11 @@ unsigned int util_listFiles(const char* dir, const char* suffix,
 		char** fileNames, bool recursive, const unsigned int maxFileNames);
 
 /**
+ * Removes a slash ('/' or '\') from the end of a string, if there is one.
+ */
+void util_removeTrailingSlash(char* fsPath);
+
+/**
  * Returns true if the file specified in filePath exists.
  */
 bool util_fileExists(const char* filePath);
