@@ -16,8 +16,7 @@ remove_definitions(-DSTREFLOP_SSE)
 add_definitions(${PIC_FLAG} -D_REENTRANT -D_GNU_SOURCE=1)
 
 if (WIN32)
-	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans")
-	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--kill-at --add-stdcall-alias)
+	SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--kill-at -Wl,--add-stdcall-alias")
 endif (WIN32)
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
