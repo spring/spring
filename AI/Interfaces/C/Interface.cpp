@@ -55,6 +55,9 @@ CInterface::CInterface(const std::map<std::string, std::string>& myInfo,
 	const char* dd_versioned_rw = util_dataDirs_allocDir("", true);
 	if (dd_versioned_rw != NULL) {
 		util_makeDir(dd_versioned_rw, true);
+	} else {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			"Failed retrieving read-write data-dir path");
 	}
 
 // 	// "C:/Games/spring/AI/Interfaces/C"

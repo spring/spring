@@ -225,6 +225,7 @@ static char* util_dataDirs_allocPath(const char* relativePath, bool forWrite,
 	}
 
 	if (ok) {
+		util_removeTrailingSlash(absolutePath);
 		return absolutePath;
 	} else {
 		return NULL;
@@ -780,14 +781,31 @@ unsigned int util_listFiles(const char* dir, const char* suffix,
 }
 #endif // defined WIN32
 
+void util_removeTrailingSlash(char* fsPath) {
+
+	if (fsPath != NULL && strlen(fsPath)) {
+		int len = strlen(fsPath);
+		if (len > 0) {
+			char lastChar = fsPath[len-1];
+			if ((lastChar == '/') || (lastChar == '\\')) {
+				fsPath[len-1] = '\0';
+			}
+		}
+	}
+}
+
 bool util_fileExists(const char* filePath) {
 
 	struct stat fileInfo;
 	bool exists;
 	int intStat;
 
+	char filePath_cpy[strlen(filePath) + 1];
+	STRCPY(filePath_cpy, filePath);
+	util_removeTrailingSlash(filePath_cpy);
+
 	// Attempt to get the file attributes
-	intStat = stat(filePath, &fileInfo);
+	intStat = stat(filePath_cpy, &fileInfo);
 	if (intStat == 0) {
 		// We were able to get the file attributes
 		// so the file obviously exists.
@@ -830,30 +848,35 @@ bool util_makeDir(const char* dirPath, bool recursive) {
 
 	bool exists = false;
 
-	char* parentDir = util_allocStrCpy(dirPath);
-	bool evaluatedParent = util_getParentDir(parentDir);
-	if (evaluatedParent) {
-		bool parentExists = util_fileExists(parentDir);
+	char dirPath_cpy[strlen(dirPath) + 1];
+	STRCPY(dirPath_cpy, dirPath);
+	util_removeTrailingSlash(dirPath_cpy);
 
-		if (!parentExists && recursive) {
-			parentExists = util_makeDir(parentDir, recursive);
-		}
+	exists = util_fileExists(dirPath_cpy);
 
-		if (parentExists) {
-			exists = util_makeDirS(dirPath);
+	if (!exists) {
+		char* parentDir = util_allocStrCpy(dirPath_cpy);
+		bool evaluatedParent = util_getParentDir(parentDir);
+		if (evaluatedParent) {
+			bool parentExists = util_fileExists(parentDir);
+
+			if (!parentExists && recursive) {
+				parentExists = util_makeDir(parentDir, recursive);
+			}
+
+			if (parentExists) {
+				exists = util_makeDirS(dirPath_cpy);
+			}
 		}
+		free(parentDir);
 	}
-	free(parentDir);
 
 	return exists;
 }
 
 bool util_getParentDir(char* path) {
 
-	char* lastChar = &(path[strlen(path)-1]);
-	if (*lastChar == '/' || *lastChar == '\\') {
-		*lastChar = '\0';
-	}
+	util_removeTrailingSlash(path);
 
 	char* ptr = strrchr(path, '/'); // search char from end reverse
 	if (ptr == NULL) {
