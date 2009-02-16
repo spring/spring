@@ -71,7 +71,7 @@ if (MINGW)
 	set (Boost_THREAD_LIBRARY boost_thread-mt)
 	set (DEVIL_ILU_LIBRARY ilu)
 	set (DEVIL_LIBRARIES devil ${DEVIL_ILU_LIBRARY})
-else (MINGW)
+elseif (UNIX)
 	# AIs need it
 	FIND_PACKAGE(SDL REQUIRED)
 	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
@@ -80,6 +80,9 @@ else (MINGW)
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 	
 	FIND_PACKAGE(Devil REQUIRED)
+else (UNIX)
+	FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
+	INCLUDE_DIRECTORIES("${COREFOUNDATION_LIBRARY}/Headers")
 endif (MINGW)
 
 ### Compiler flags and defines based on build type
