@@ -1744,54 +1744,25 @@ weaponDef->dynDamageExp = sAICallback->Clb_WeaponDef_getDynDamageExp(teamId, wea
 weaponDef->dynDamageMin = sAICallback->Clb_WeaponDef_getDynDamageMin(teamId, weaponDefId);
 weaponDef->dynDamageRange = sAICallback->Clb_WeaponDef_getDynDamageRange(teamId, weaponDefId);
 weaponDef->dynDamageInverted = sAICallback->Clb_WeaponDef_isDynDamageInverted(teamId, weaponDefId);
-//	logT("GetWeaponDefById 6");
-//{
-//	SProperties* sProperties = sAICallback->Clb_WeaponDef_getCustomParams(teamId, weaponDefId);
-//	weaponDef->customParams = std::map<std::string,std::string>();
-//	int i;
-//	for (i=0; i < sProperties->size; ++i) {
-//		weaponDef->customParams.insert(sProperties->map[i][0], sProperties->map[i][1]);
-//	}
-//	free(sProperties->map);
-//}
 {
 	int size = sAICallback->Clb_WeaponDef_0MAP1SIZE0getCustomParams(teamId, weaponDefId);
 	weaponDef->customParams = std::map<std::string,std::string>();
-//	logT("GetWeaponDefById 7");
-//	logI("GetWeaponDefById 7 size: %d", size);
-//	int i;
-//	for (i=0; i < size; ++i) {
-//		const char** entry = sAICallback->Clb_WeaponDef_getCustomParam(teamId, weaponDefId, i);
-////		weaponDef->customParams.insert(entry[0], entry[1]);
-//		weaponDef->customParams[entry[0]] = entry[1];
-////		free(entry);
-//	}
-//	const char*** cMap = (const char***) malloc(size*2*sizeof(char*));
 	const char* cKeys[size];
 	const char* cValues[size];
 	sAICallback->Clb_WeaponDef_0MAP1KEYS0getCustomParams(teamId, weaponDefId, cKeys);
 	sAICallback->Clb_WeaponDef_0MAP1VALS0getCustomParams(teamId, weaponDefId, cValues);
-//	logT("GetWeaponDefById 8");
-//	logI("GetWeaponDefById 8 size: %d", size);
 	int i;
 	for (i=0; i < size; ++i) {
-//	logI("GetWeaponDefById 8 i: %d", i);
 		weaponDef->customParams[cKeys[i]] = cValues[i];
 	}
-//	free(cMap);
 }
-//	logT("GetWeaponDefById 9");
 	if (weaponDefs[weaponDefId] != NULL) {
 		delete weaponDefs[weaponDefId];
 	}
-//	logT("GetWeaponDefById 10");
 		weaponDefs[weaponDefId] = weaponDef;
-//	logT("GetWeaponDefById 11");
 		weaponDefFrames[weaponDefId] = currentFrame;
-//	logT("GetWeaponDefById 12");
 	}
 
-//	logT("leaving: GetWeaponDefById sAICallback");
 	return weaponDefs[weaponDefId];
 }
 

@@ -28,9 +28,7 @@ extern "C" {
 	// Microsoft Visual C++ 7.1: MSC_VER = 1310
 	// Microsoft Visual C++ 7.0: MSC_VER = 1300
 	#if _MSC_VER > 1310 // >= Visual Studio 2005
-		#define PRINT print_s
 		#define PRINTF printf_s
-		#define FPRINT fprint_s
 		#define FPRINTF fprintf_s
 		#define SNPRINTF sprintf_s
 		#define VSNPRINTF vsprintf_s
@@ -39,9 +37,7 @@ extern "C" {
 		#define STRNCAT strncat_s
 		#define FOPEN fopen_s
 	#else              // Visual Studio 2003
-		#define PRINT _print
 		#define PRINTF _printf
-		#define FPRINT _fprint
 		#define FPRINTF _fprintf
 		#define SNPRINTF _snprintf
 		#define VSNPRINTF _vsnprintf
@@ -53,9 +49,7 @@ extern "C" {
 	#define STRCASECMP stricmp
 #else // _MSC_VER
 	// assuming GCC
-	#define PRINT print
 	#define PRINTF printf
-	#define FPRINT fprint
 	#define FPRINTF fprintf
 	#define SNPRINTF snprintf
 	#define VSNPRINTF vsnprintf

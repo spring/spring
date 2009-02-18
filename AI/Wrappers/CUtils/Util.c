@@ -55,10 +55,10 @@ static const char** myInfoValues;
 #if defined BUILDING_AI
 // These will always contain either NULL or exclusively allocated memory,
 // which has to be freed, before setting a new value.
-static const char* myDataDir_versioned_r = NULL;
-static const char* myDataDir_versioned_rw = NULL;
-static const char* myDataDir_unversioned_r = NULL;
-static const char* myDataDir_unversioned_rw = NULL;
+static char* myDataDir_versioned_r = NULL;
+static char* myDataDir_versioned_rw = NULL;
+static char* myDataDir_unversioned_r = NULL;
+static char* myDataDir_unversioned_rw = NULL;
 #endif // defined BUILDING_AI
 
 void util_setMyInfo(
@@ -869,6 +869,7 @@ bool util_makeDir(const char* dirPath, bool recursive) {
 			}
 		}
 		free(parentDir);
+		parentDir = NULL;
 	}
 
 	return exists;
@@ -918,6 +919,7 @@ bool util_findFile(const char* dirs[], unsigned int numDirs,
 		}
 
 		free(tmpPath);
+		tmpPath = NULL;
 	}
 
 	return found;
@@ -949,6 +951,7 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 		}
 
 		free(tmpPath);
+		tmpPath = NULL;
 	}
 
 	// not found -> create it
@@ -957,6 +960,7 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 		char* tmpPath = util_allocStrCatFSPath(2, dirs[0], relativeDirPath);
 		STRCPY(absoluteDirPath, tmpPath);
 		free(tmpPath);
+		tmpPath = NULL;
 		found = util_makeDir(absoluteDirPath, true);
 	}
 
@@ -1039,6 +1043,7 @@ static bool util_parseProperty(const char* propLine,
 		pos++;
 	} else {
 		free(key);
+		key = NULL;
 		return false;
 	}
 

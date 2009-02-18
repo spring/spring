@@ -107,13 +107,18 @@ void freeStaticGlobalData(struct SStaticGlobalData* staticGlobalData) {
 	// free the data dirs
 	for(unsigned int i=0; i < staticGlobalData->numDataDirs; ++i) {
 		free(const_cast<char*>(staticGlobalData->dataDirs[i]));
+		staticGlobalData->dataDirs[i] = NULL;
 	}
 	free(const_cast<char**>(staticGlobalData->dataDirs));
+	staticGlobalData->dataDirs = NULL;
 
 	// free the skirmish AI infos
 	free(const_cast<unsigned int*>(staticGlobalData->skirmishAIInfosSizes));
+	staticGlobalData->skirmishAIInfosSizes = NULL;
 	free(const_cast<char***>(staticGlobalData->skirmishAIInfosKeys));
+	staticGlobalData->skirmishAIInfosKeys = NULL;
 	free(const_cast<char***>(staticGlobalData->skirmishAIInfosValues));
+	staticGlobalData->skirmishAIInfosValues = NULL;
 
 	free(staticGlobalData);
 	staticGlobalData = NULL;

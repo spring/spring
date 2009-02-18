@@ -40,15 +40,21 @@ struct SSkirmishAISpecifier {
 
 struct SSkirmishAISpecifier SSkirmishAISpecifier_copy(
 		const struct SSkirmishAISpecifier* const orig);
-void SSkirmishAISpecifier_delete(const struct SSkirmishAISpecifier* const spec);
+		
+void SSkirmishAISpecifier_delete(struct SSkirmishAISpecifier* spec);
+
 int SSkirmishAISpecifier_hash(
 		const struct SSkirmishAISpecifier* const spec);
+		
 int SSkirmishAISpecifier_compare(
 		const struct SSkirmishAISpecifier* const specThis,
 		const struct SSkirmishAISpecifier* const specThat);
+		
 bool SSkirmishAISpecifier_isUnspecified(
 		const struct SSkirmishAISpecifier* const spec);
+		
 struct SSkirmishAISpecifier SSkirmishAISpecifier_getUnspecified();
+
 
 #if defined __cplusplus
 struct SSkirmishAISpecifier_Comparator {

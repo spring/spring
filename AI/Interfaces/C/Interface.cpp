@@ -87,6 +87,7 @@ CInterface::CInterface(const std::map<std::string, std::string>& myInfo,
 	simpleLog_log("Using log file: %s", logFileName);
 
 	free(logFileName);
+	logFileName = NULL;
 }
 
 LevelOfSupport CInterface::GetLevelOfSupportFor(
