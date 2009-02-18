@@ -290,7 +290,7 @@ void MicroPather::GoalReached(PathNode* node, unsigned start, unsigned end, vect
 		it = node -> parent;
 
 		while (it -> parent) {
-			path[count] = (((unsigned long) it) - ((unsigned long) pathNodeMem)) / sizeof(PathNode);
+			path[count] = (((size_t) it) - ((size_t) pathNodeMem)) / sizeof(PathNode);
 			it = it -> parent;
 			--count;
 		}
@@ -467,7 +467,7 @@ int MicroPather::FindBestPathToAnyGivenPoint(unsigned startNode, vector<unsigned
 
 	if (foundNode != NULL) {
 		// make the path now
-		GoalReached(foundNode, startNode, (((unsigned long) foundNode) - ((unsigned long) pathNodeMem)) / sizeof(PathNode), path);
+		GoalReached(foundNode, startNode, (((size_t) foundNode) - ((size_t) pathNodeMem)) / sizeof(PathNode), path);
 		cost = foundNode -> costFromStart;
 		hasStartedARun = false;
 		return SOLVED;
@@ -520,7 +520,7 @@ PathNode* MicroPather::FindBestPathStandard() {
 
 	while (!open.Empty()) {
 		PathNode* node = open.Pop();
-		unsigned long indexStart = (((unsigned long) node) - ((unsigned long) pathNodeMem)) / sizeof(PathNode);
+		size_t indexStart = (((size_t) node) - ((size_t) pathNodeMem)) / sizeof(PathNode);
 
 		if (node -> isEndNode) {
 			return node;
@@ -604,7 +604,7 @@ PathNode* MicroPather::FindBestPathUndirected() {
 	while (!open.Empty()) {
 		PathNode* node = open.Pop();
 
-		unsigned long indexStart = (((unsigned long) node) - ((unsigned long) pathNodeMem)) / sizeof(PathNode);
+		size_t indexStart = (((size_t) node) - ((size_t) pathNodeMem)) / sizeof(PathNode);
 		if (node -> isEndNode) {
 			return node;
 		}
@@ -685,7 +685,7 @@ PathNode* MicroPather::FindBestPathUndirectedCutoff(float cutoff) {
 
 	while (!open.Empty()) {
 		PathNode* node = open.Pop();
-		unsigned long indexStart = (((unsigned long) node) - ((unsigned long) pathNodeMem)) / sizeof(PathNode);
+		size_t indexStart = (((size_t) node) - ((size_t) pathNodeMem)) / sizeof(PathNode);
 
 		if (node -> isEndNode) {
 			return node;
