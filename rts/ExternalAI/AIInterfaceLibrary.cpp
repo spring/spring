@@ -55,6 +55,7 @@ CAIInterfaceLibrary::~CAIInterfaceLibrary() {
 
 	ReleaseStatic();
 	delete sharedLib;
+	sharedLib = NULL;
 }
 
 void CAIInterfaceLibrary::InitStatic() {

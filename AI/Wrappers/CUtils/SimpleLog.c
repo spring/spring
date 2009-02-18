@@ -55,10 +55,13 @@ static void simpleLog_out(int level, const char* msg) {
 	const char* logLevel_str = simpleLog_levelToStr(level);
 	if (useTimeStamps) {
 		char* timeStamp = simpleLog_createTimeStamp();
-		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s / %s(%i): %s\n", timeStamp, logLevel_str, level, msg);
+		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s / %s(%i): %s\n",
+				timeStamp, logLevel_str, level, msg);
 		free(timeStamp);
+		timeStamp = NULL;
 	} else {
-		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s(%i): %s\n", logLevel_str, level, msg);
+		SNPRINTF(outBuffer, SIMPLELOG_OUTPUTBUFFER_SIZE, "%s(%i): %s\n",
+				logLevel_str, level, msg);
 	}
 
 	// try to open the log file
@@ -69,12 +72,12 @@ static void simpleLog_out(int level, const char* msg) {
 
 	// print the message
 	if (file != NULL) {
-		FPRINTF(file, outBuffer);
+		FPRINTF(file, "%s", outBuffer);
 		fclose(file);
 		file = NULL;
 	} else {
 		// fallback method: write to stdout
-		PRINTF(msg);
+		PRINTF("%s", outBuffer);
 	}
 }
 
@@ -98,6 +101,22 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 	// -> no problem
 	logFileName = util_allocStrCpy(_logFileName);
 
+	// delete the logFile, and try writing to it
+	FILE* file = NULL;
+	if (logFileName != NULL) {
+		file = FOPEN(logFileName, "w");
+	}
+	if (file != NULL) {
+		// make the file empty
+		FPRINTF(file, "%s", "");
+		fclose(file);
+		file = NULL;
+	} else {
+		// report the error to stderr
+		FPRINTF(stderr, "Failed writing to the log file \"%s\".\n%s",
+				logFileName, "We will continue logging to stdout.");
+	}
+
 	// make sure the dir of the log file exists
 	char logFileDir[strlen(logFileName) + 1];
 	STRCPY(logFileDir, logFileName);
@@ -114,7 +133,7 @@ void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 	useTimeStamps = _useTimeStamps;
 	logLevel = _logLevel;
 
-	simpleLog_logL(-1, "\n\n[logging started (time-stamps: %s / logLevel: %i)]",
+	simpleLog_logL(-1, "[logging started (time-stamps: %s / logLevel: %i)]",
 			useTimeStamps ? "yes" : "no", logLevel);
 }
 

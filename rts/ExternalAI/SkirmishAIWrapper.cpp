@@ -88,6 +88,9 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 		delete c_callback;
 		delete callback;
 		delete ai;
+		c_callback = NULL;
+		callback = NULL;
+		ai = NULL;
 	}
 }
 

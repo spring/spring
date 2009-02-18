@@ -20,6 +20,8 @@
 
 #include "SSkirmishAISpecifier.h"
 
+#include "Util.h"
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -29,21 +31,20 @@ struct SSkirmishAISpecifier SSkirmishAISpecifier_copy(
 
 	struct SSkirmishAISpecifier copy;
 
-	char* tmpStr = (char *) malloc(sizeof(char) * (strlen(orig->shortName) + 1));
-	strcpy(tmpStr, orig->shortName);
-	copy.shortName = tmpStr;
-
-	tmpStr = (char *) malloc(sizeof(char) * (strlen(orig->version) + 1));
-	strcpy(tmpStr, orig->version);
-	copy.version = tmpStr;
+	copy.shortName = util_allocStrCpy(orig->shortName);
+	copy.version = util_allocStrCpy(orig->version);
 
 	return copy;
 }
 
 void SSkirmishAISpecifier_delete(
-		const struct SSkirmishAISpecifier* const spec) {
+		struct SSkirmishAISpecifier* spec) {
 	free(const_cast<char*>(spec->shortName));
+	spec->shortName = NULL;
 	free(const_cast<char*>(spec->version));
+	spec->version = NULL;
+	free(spec);
+	spec = NULL;
 }
 
 
@@ -85,11 +86,11 @@ int SSkirmishAISpecifier_hash(
 	hashString[0] = '\0';
 
 	if (useShortName) {
-		strcat(hashString, spec->shortName);
+		STRCAT(hashString, spec->shortName);
 	}
-	strcat(hashString, "#");
+	STRCAT(hashString, "#");
 	if (useVersion) {
-		strcat(hashString, spec->version);
+		STRCAT(hashString, spec->version);
 	}
 
 	int keyHash = string_simpleHash(hashString);

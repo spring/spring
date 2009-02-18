@@ -110,6 +110,7 @@ void CEngineOutHandler::Destroy() {
 		CEngineOutHandler* tmp = singleton;
 		singleton = NULL;
 		delete tmp;
+		tmp = NULL;
 	}
 }
 
@@ -126,6 +127,7 @@ CEngineOutHandler::~CEngineOutHandler() {
 
 	for (int t=0; t < MAX_TEAMS; ++t) {
 		delete skirmishAIs[t];
+		skirmishAIs[t] = NULL;
 	}
 }
 

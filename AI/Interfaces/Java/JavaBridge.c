@@ -49,7 +49,7 @@ static const struct SAICallback** teamId_cCallback;
 static jobject* teamId_jCallback;
 static unsigned int* teamId_aiImplId;
 
-static const char** aiImplId_className;
+static char** aiImplId_className;
 static jobject* aiImplId_instance;
 static jmethodID** aiImplId_methods;
 static jobject* aiImplId_classLoader;
@@ -154,18 +154,21 @@ static bool java_createClassPath(char* classPathStr) {
 			}
 		}
 		free(jarDirs[i]);
+		jarDirs[i] = NULL;
 	}
 
 	// concat the classpath entries
 	if (classPath[0] != NULL) {
 		STRCAT(classPathStr, classPath[0]);
 		free(classPath[0]);
+		classPath[0] = NULL;
 	}
 	for (i=1; i < classPath_size; ++i) {
 		if (classPath[i] != NULL) {
 			STRCAT(classPathStr, ENTRY_DELIM);
 			STRCAT(classPathStr, classPath[i]);
 			free(classPath[i]);
+			classPath[i] = NULL;
 		}
 	}
 
@@ -282,6 +285,9 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 				+ strlen(classPathParts[u]));
 		STRCPY(str_fileUrl, FILE_URL_PREFIX);
 		STRCAT(str_fileUrl, classPathParts[u]);
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"Skirmish AI %s %s class-path part %i: %s",
+				shortName, version, u, str_fileUrl);
 		jstring jstr_fileUrl = (*env)->NewStringUTF(env, str_fileUrl);
 		if (checkException(env, "Failed creating Java String.")) { return NULL; }
 		jobject jurl_fileUrl =
@@ -309,22 +315,25 @@ static bool java_createNativeLibsPath(char* libraryPath) {
 	char* dd_r = util_dataDirs_allocDir("", false);
 	if (dd_r == NULL) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Unable to find read-only data-dir: %s", dd_r);
+				"Unable to find read-only data-dir.");
+		return false;
 	} else {
 		STRCPY(libraryPath, dd_r);
 		free(dd_r);
+		dd_r = NULL;
 	}
 
 	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/lib/
 	char* dd_lib_r = util_dataDirs_allocDir(NATIVE_LIBS_DIR, false);
 	if (dd_lib_r == NULL) {
 		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
-				"Unable to find read-only libraries (optional) data-dir: %s",
+				"Unable to find read-only native libs data-dir (optional): %s",
 				NATIVE_LIBS_DIR);
 	} else {
 		STRCAT(libraryPath, ENTRY_DELIM);
 		STRCPY(libraryPath, dd_lib_r);
 		free(dd_lib_r);
+		dd_lib_r = NULL;
 	}
 
 	return true;
@@ -512,12 +521,14 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE, options[i].optionString);
 	}
 	free(dd_rw);
+	dd_rw = NULL;
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "");
 
 	vm_args->options = options;
 	vm_args->nOptions = numOptions;
 
 	free(jvmPropFile);
+	jvmPropFile = NULL;
 
 	return true;
 }
@@ -565,8 +576,10 @@ static JNIEnv* java_getJNIEnv() {
 		unsigned int i;
 		for (i = 0; i < vm_args.nOptions; ++i) {
 			free(vm_args.options[i].optionString);
+			vm_args.options[i].optionString = NULL;
 		}
 		free(vm_args.options);
+		vm_args.options = NULL;
 		ESTABLISH_SPRING_ENV
 		if (res < 0) {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
@@ -597,6 +610,7 @@ end:
 			}
 			g_jniEnv = NULL;
 			g_jvm = NULL;
+			return g_jniEnv;
 		} else {
 			g_jniEnv = env;
 			g_jvm = jvm;
@@ -684,7 +698,7 @@ bool java_initStatic(const struct SStaticGlobalData* _staticGlobalData) {
 		teamId_jCallback[t] = NULL;
 	}
 
-	aiImplId_className = (const char**) calloc(maxSkirmishImpls, sizeof(char*));
+	aiImplId_className = (char**) calloc(maxSkirmishImpls, sizeof(char*));
 	aiImplId_instance = (jobject*) calloc(maxSkirmishImpls, sizeof(jobject));
 	aiImplId_methods = (jmethodID**)
 			calloc(maxSkirmishImpls, sizeof(jmethodID*));
@@ -943,11 +957,16 @@ bool java_releaseStatic() {
 	}
 
 	free(teamId_aiImplId);
+	teamId_aiImplId = NULL;
 
 	free(aiImplId_className);
 	free(aiImplId_instance);
 	free(aiImplId_methods);
 	free(aiImplId_classLoader);
+	aiImplId_className = NULL;
+	aiImplId_instance = NULL;
+	aiImplId_methods = NULL;
+	aiImplId_classLoader = NULL;
 
 	return true;
 }

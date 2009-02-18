@@ -16,6 +16,7 @@ CGlobalAICallback::CGlobalAICallback(CSkirmishAIWrapper* ai):
 CGlobalAICallback::~CGlobalAICallback()
 {
 	delete cheatCallback;
+	cheatCallback = NULL;
 }
 
 IAICheats* CGlobalAICallback::GetCheatInterface()

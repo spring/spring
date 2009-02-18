@@ -519,6 +519,7 @@ EXPORT(int) _Clb_handleCommand(int teamId, int toId, int commandId,
 					ret = clb->GiveGroupOrder(cmd->groupId, c);
 				}
 				delete c;
+				c = NULL;
 			} else { // it is no known command
 				ret = -1;
 			}
@@ -1128,6 +1129,7 @@ EXPORT(int) _Clb_0MULTI1VALS0UnitDef(int teamId, int unitDefIds[],
 		unitDefIds[i] = defList[i]->id;
 	}
 	delete [] defList;
+	defList = NULL;
 
 	return size;
 }

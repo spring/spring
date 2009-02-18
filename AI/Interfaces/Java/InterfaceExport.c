@@ -144,6 +144,8 @@ EXPORT(int) initStatic(
 
 	free(interfacePropFile);
 	free(logFile);
+	interfacePropFile = NULL;
+	logFile = NULL;
 
 	// initialize Java part of the interface
 	success = java_initStatic(staticGlobalData);

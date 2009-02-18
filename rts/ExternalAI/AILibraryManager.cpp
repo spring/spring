@@ -100,6 +100,8 @@ static void freeCPropertiesMap(unsigned int mapSize, const char** cKeys,
 	for (i=0; i < mapSize; ++i) {
 		free(const_cast<char*>(cKeys[i]));
 		free(const_cast<char*>(cValues[i]));
+		cKeys[i] = NULL;
+		cValues[i] = NULL;
 	}
 	free(const_cast<char**>(cKeys));
 	free(const_cast<char**>(cValues));

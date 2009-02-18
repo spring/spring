@@ -41,17 +41,20 @@ void freeSUnitCommand(void* sCommandData, int sCommandId) {
 		{
 			struct SLoadUnitsUnitCommand* cmd = (struct SLoadUnitsUnitCommand*) sCommandData;
 			free(cmd->toLoadUnitIds);
+			cmd->toLoadUnitIds = NULL;
 			break;
 		}
 		case COMMAND_UNIT_CUSTOM:
 		{
 			struct SCustomUnitCommand* cmd = (struct SCustomUnitCommand*) sCommandData;
 			free(cmd->params);
+			cmd->params = NULL;
 			break;
 		}
 	}
 
 	free(sCommandData);
+	sCommandData = NULL;
 }
 
 void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int sCommandId[0]) {
