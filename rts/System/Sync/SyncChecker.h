@@ -14,9 +14,11 @@
 #include "SyncTracer.h"
 #endif
 
+#ifdef _MSC_VER // failcompiler does not support
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
 using boost::uint32_t;
 using boost::uint16_t;
+#endif
 
 #undef get16bits
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \

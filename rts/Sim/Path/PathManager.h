@@ -3,8 +3,10 @@
 
 #include <map>
 #include "IPath.h"
+#ifdef _MSC_VER // failcompiler does not support
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
 using boost::uint32_t;
+#endif
 
 class CSolidObject;
 class CPathFinder;

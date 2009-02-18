@@ -10,11 +10,13 @@
 #include <list>
 #include "PathCache.h"
 
-#include <boost/cstdint.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/barrier.hpp>
+#ifdef _MSC_VER // failcompiler does not support
+#include <boost/cstdint.hpp>
 using boost::uint32_t;
+#endif
 
 class CPathEstimatorDef;
 class CPathFinderDef;
