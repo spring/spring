@@ -338,7 +338,7 @@ void MicroPather::FixStartEndNode(void** startNode, void** endNode) {
 		y = mapSizeY - 1;
 
 	*startNode = (void*) (y * mapSizeX + x);
-	index = (long) *endNode;
+	index = (size_t) *endNode;
 	y = index / mapSizeX;
 	x = index - y * mapSizeX;
 
