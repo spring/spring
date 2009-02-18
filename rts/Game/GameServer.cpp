@@ -1527,10 +1527,13 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 
 void CGameServer::GotChatMessage(const ChatMessage& msg)
 {
-	Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
-	if (hostif && msg.fromPlayer != SERVER_PLAYER) {
-		// don't echo packets to autohost
-		hostif->SendPlayerChat(msg.fromPlayer, msg.destination,  msg.msg);
+	if (!msg.msg.empty()) // silently drop empty chat messages
+	{
+		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+		if (hostif && msg.fromPlayer != SERVER_PLAYER) {
+			// don't echo packets to autohost
+			hostif->SendPlayerChat(msg.fromPlayer, msg.destination,  msg.msg);
+		}
 	}
 }
 
