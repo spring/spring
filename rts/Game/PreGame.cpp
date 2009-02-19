@@ -196,6 +196,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 
 	// make sure s is a modname (because the same mod can be in different archives on different computers)
 	mod = archiveScanner->ModArchiveToModName(mod);
+	setup->baseMod = mod;
 	std::string modArchive = archiveScanner->ModNameToModArchive(mod);
 	startupData->SetMod(mod, archiveScanner->GetModChecksum(modArchive));
 

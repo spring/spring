@@ -260,42 +260,43 @@ void DataDirLocater::LocateDataDirs()
 	cfg = strPath;
 	cfg += "\\Spring"; // e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
 	AddDirs(cfg);
-#elif defined(__APPLE__)
-	// copied from old MacFileSystemHandler, won't compile here, but would not compile in its old location either
-	// needs fixing for new DataDirLocater-structure
-	// Get the path to the application bundle we are running:
-	char cPath[1024];
-	CFBundleRef mainBundle = CFBundleGetMainBundle();
-	if(!mainBundle)
-		throw content_error("Could not determine bundle path");
+// TODO: enable Mac OS X specific bundle code again
+// #elif defined(__APPLE__)
+	// // copied from old MacFileSystemHandler, won't compile here, but would not compile in its old location either
+	// // needs fixing for new DataDirLocater-structure
+	// // Get the path to the application bundle we are running:
+	// char cPath[1024];
+	// CFBundleRef mainBundle = CFBundleGetMainBundle();
+	// if(!mainBundle)
+		// throw content_error("Could not determine bundle path");
 
-	CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-	if(!mainBundleURL)
-		throw content_error("Could not determine bundle path");
+	// CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
+	// if(!mainBundleURL)
+		// throw content_error("Could not determine bundle path");
 
-	CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
-	if(!cfStringRef)
-		throw content_error("Could not determine bundle path");
+	// CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
+	// if(!cfStringRef)
+		// throw content_error("Could not determine bundle path");
 
-	CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
+	// CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
 
-	CFRelease(mainBundleURL);
-	CFRelease(cfStringRef);
-	std::string path(cPath);
+	// CFRelease(mainBundleURL);
+	// CFRelease(cfStringRef);
+	// std::string path(cPath);
 	
-	datadirs.clear();
-	writedir = NULL;
+	// datadirs.clear();
+	// writedir = NULL;
 	
-	// Add bundle resources:
-	datadirs.push_back(path + "/Contents/Resources/");
-	datadirs.rbegin()->readable = true;
-	// Add the directory surrounding the bundle, for users to add mods and maps in:
-	datadirs.push_back(filesystem.GetDirectory(path));
-	// Use surrounding directory as writedir for now, should propably
-	// change this to something inside the home directory:
-	datadirs.rbegin()->writable = true;
-	datadirs.rbegin()->readable = true;
-	writedir = &*datadirs.rbegin();
+	// // Add bundle resources:
+	// datadirs.push_back(path + "/Contents/Resources/");
+	// datadirs.rbegin()->readable = true;
+	// // Add the directory surrounding the bundle, for users to add mods and maps in:
+	// datadirs.push_back(filesystem.GetDirectory(path));
+	// // Use surrounding directory as writedir for now, should propably
+	// // change this to something inside the home directory:
+	// datadirs.rbegin()->writable = true;
+	// datadirs.rbegin()->readable = true;
+	// writedir = &*datadirs.rbegin();
 #else
 	// home
 	AddDirs(SubstEnvVars("$HOME/.spring"));
