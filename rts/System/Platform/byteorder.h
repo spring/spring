@@ -75,18 +75,6 @@ static inline float swabfloat(float w) {
 	return *(float*)&l;
 }
 
-#elif defined(__APPLE__)
-// Should work for both x86 and ppc
-
-#include "CFByteOrder.h"
-
-#define swabword(w) (CFSwapInt16LittleToHost((uint32_t)w))
-#define swabdword(w) (CFSwapInt32LittleToHost((uint32_t)w))
-static inline float swabfloat(float w) {
-	int i = swabdword(*(int*)&w);
-	return *(float*)&i;
-}
-
 #else
 
 // empty versions for win32
@@ -95,6 +83,5 @@ static inline float swabfloat(float w) {
 #define swabfloat(w)	(w)
 
 #endif
-
 
 #endif

@@ -18,6 +18,10 @@
 #include <unistd.h>
 #endif
 
+#ifdef __APPLE__
+#include <sys/stat.h>
+#endif
+
 #ifdef WIN32
 	#include <io.h>
 	#include <direct.h>

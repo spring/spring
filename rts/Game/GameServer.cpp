@@ -39,6 +39,9 @@
 #include "Net/LocalConnection.h"
 #include "Net/UnpackPacket.h"
 #include "DemoReader.h"
+#ifdef DEDICATED
+#include "DemoRecorder.h"
+#endif
 #include "AutohostInterface.h"
 #include "Util.h"
 #include "GlobalUnsynced.h" // for syncdebug
@@ -180,6 +183,13 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 	RestrictedAction("luagaia");
 	RestrictedAction("singlestep");
 
+#ifdef DEDICATED
+	demoRecorder.reset(new CDemoRecorder());
+	demoRecorder->SetName(gameData->GetMap());
+	demoRecorder->WriteSetupText(gameData->GetSetup());
+	const netcode::RawPacket* ret = gameData->Pack();
+	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
+#endif
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H
@@ -195,6 +205,32 @@ CGameServer::~CGameServer()
 	quitServer=true;
 	thread->join();
 	delete thread;
+#ifdef DEDICATED
+	demoRecorder->SetMaxPlayerNum(players.size());
+	
+	// TODO: move this to a method in CTeamHandler
+	// Figure out who won the game.
+	int numTeams = setup->numTeams;
+	if (setup->useLuaGaia) {
+		--numTeams;
+	}
+	int winner = -1;
+	/*for (int i = 0; i < numTeams; ++i) {
+		if (teams[i] && !teamHandler->Team(i)->isDead) {
+			winner = teamHandler->AllyTeam(i);
+			break;
+		}
+	}*/ //TODO figure out who won
+	// Finally pass it on to the CDemoRecorder.
+	demoRecorder->SetTime(serverframenum / 30, (SDL_GetTicks()-serverStartTime)/1000);
+	demoRecorder->InitializeStats(players.size(), numTeams, winner);
+	/*for (int i = 0; i < numPlayers; ++i) {
+		record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
+	}
+	for (int i = 0; i < numTeams; ++i) {
+		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+	}*/ //TODO add
+#endif
 }
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
@@ -306,6 +342,9 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 		if (players[p].link)
 			players[p].link->SendData(packet);
 	}
+#ifdef DEDICATED
+	demoRecorder->SaveToDemo(packet->data, packet->length, modGameTime);
+#endif
 }
 
 void CGameServer::Message(const std::string& message)
@@ -1006,6 +1045,9 @@ void CGameServer::GenerateAndSendGameID()
 	gameID.intArray[3] = entropy.GetDigest();
 
 	Broadcast(CBaseNetProtocol::Get().SendGameID(gameID.charArray));
+#ifdef DEDICATED
+	demoRecorder->SetGameID(gameID.charArray);
+#endif
 }
 
 void CGameServer::CheckForGameStart(bool forced)
@@ -1493,10 +1535,13 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 
 void CGameServer::GotChatMessage(const ChatMessage& msg)
 {
-	Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
-	if (hostif && msg.fromPlayer != SERVER_PLAYER) {
-		// don't echo packets to autohost
-		hostif->SendPlayerChat(msg.fromPlayer, msg.destination,  msg.msg);
+	if (!msg.msg.empty()) // silently drop empty chat messages
+	{
+		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+		if (hostif && msg.fromPlayer != SERVER_PLAYER) {
+			// don't echo packets to autohost
+			hostif->SendPlayerChat(msg.fromPlayer, msg.destination,  msg.msg);
+		}
 	}
 }
 

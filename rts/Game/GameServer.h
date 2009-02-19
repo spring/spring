@@ -25,6 +25,7 @@ namespace netcode
 	class UDPListener;
 }
 class CDemoReader;
+class CDemoRecorder;
 class AutohostInterface;
 class CGameSetup;
 class LocalSetup;
@@ -207,6 +208,9 @@ private:
 
 	boost::scoped_ptr<netcode::UDPListener> UDPNet;
 	boost::scoped_ptr<CDemoReader> demoReader;
+#ifdef DEDICATED
+	boost::scoped_ptr<CDemoRecorder> demoRecorder;
+#endif
 	boost::scoped_ptr<AutohostInterface> hostif;
 	UnsyncedRNG rng;
 	boost::thread* thread;

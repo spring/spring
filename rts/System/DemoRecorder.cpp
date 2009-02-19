@@ -13,7 +13,6 @@
 #include "Game/GameSetup.h"
 #include "Exceptions.h"
 #include "Util.h"
-#include "GlobalUnsynced.h"
 
 #include "LogOutput.h"
 
@@ -65,8 +64,10 @@ CDemoRecorder::~CDemoRecorder()
 
 	if (demoName != wantedName) {
 		if (rename(demoName.c_str(), wantedName.c_str()) != 0) {
+#ifndef DEDICATED
             LogObject() << "Renaming demo " << demoName << " to " << wantedName << "\n";
             LogObject() << "failed: " << strerror(errno) << "\n";
+#endif
 		}
 	} else {
 	    // pointless?
@@ -85,11 +86,11 @@ void CDemoRecorder::WriteSetupText(const std::string& text)
 	recordDemo.write(text.c_str(), length);
 }
 
-void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length)
+void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, const float modGameTime)
 {
 	DemoStreamChunkHeader chunkHeader;
 
-	chunkHeader.modGameTime = gu->modGameTime;
+	chunkHeader.modGameTime = modGameTime;
 	chunkHeader.length = length;
 	chunkHeader.swab();
 	recordDemo.write((char*)&chunkHeader, sizeof(chunkHeader));

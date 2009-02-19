@@ -201,6 +201,6 @@ void SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const uint
 {
 	alGenBuffers(1, &id);
 	filename = file;
-	alBufferData(id, format, data, datalength, rate);
+	alBufferData(id, format, (ALvoid*) data, datalength, rate);
 	CheckError("SoundBuffer::AlGenBuffer");
 }

@@ -16,6 +16,7 @@ SET(system_files
 	../../rts/System/BaseNetProtocol
 	../../rts/System/Demo
 	../../rts/System/DemoReader
+	../../rts/System/DemoRecorder
 	../../rts/System/AutohostInterface
 	../../rts/System/UnsyncedRNG )
 
