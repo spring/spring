@@ -893,19 +893,31 @@ bool util_getParentDir(char* path) {
 	return true;
 }
 
+bool util_isPathAbsolute(const char* path) {
+
+	if (path == NULL) {
+		return false;
+	}
+
+#ifdef _WIN32
+	return strlen(path) > 2 && path[1] == ':' && (path[2] == '\\' || path[2] == '/');
+#else // _WIN32
+	return strlen(path) > 0 && path[0] == '/';
+#endif // _WIN32
+}
+
 bool util_findFile(const char* dirs[], unsigned int numDirs,
 		const char* relativeFilePath, char* absoluteFilePath,
 		bool searchOnlyWriteable) {
 
 	bool found = false;
 
-	// check if it is an absolute file path
-	if (util_fileExists(relativeFilePath)) {
+	if (util_isPathAbsolute(relativeFilePath)) {
 		STRCPY(absoluteFilePath, relativeFilePath);
 		found = true;
 	}
 
-	if (searchOnlyWriteable && numDirs > 1) {
+	if (!found && searchOnlyWriteable && numDirs > 1) {
 		numDirs = 1;
 	}
 

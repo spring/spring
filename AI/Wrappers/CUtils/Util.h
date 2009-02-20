@@ -63,6 +63,17 @@ const char* util_getMyInfo(const char* key);
 //const char* util_getDataDir(bool versioned, bool writeable);
 
 /**
+ * Checks whether a string contians an absolute path.
+ * The corresponding matcher-regexes are:
+ * on Windows: "^.:(\\|/).*"
+ * otherwise:  "^/.*"
+ *
+ * @param  path  the dir or file path to be checked for absoluteness
+ * @return  true if the path is absolute; it does not have to exist
+ */
+bool util_isPathAbsolute(const char* path);
+
+/**
  * Finds a file or directory in the data-dir(s), located at the relativePath,
  * and saves the resulting path in absolutePath.
  *

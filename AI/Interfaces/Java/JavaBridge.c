@@ -267,7 +267,11 @@ static bool java_createAIClassPath(const char* shortName, const char* version,
 static jobject java_createAIClassLoader(JNIEnv* env,
 		const char* shortName, const char* version) {
 
+#ifdef _WIN32
+	static const char* FILE_URL_PREFIX = "file:///";
+#else // _WIN32
 	static const char* FILE_URL_PREFIX = "file://";
+#endif // _WIN32
 
 	jobject o_jClsLoader = NULL;
 
