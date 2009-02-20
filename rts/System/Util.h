@@ -5,29 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef _MSC_VER
-	// Microsoft Visual C++ 7.1: MSC_VER = 1310
-	// Microsoft Visual C++ 7.0: MSC_VER = 1300
-	#if _MSC_VER > 1310 // >= Visual Studio 2005
-		#define SNPRINTF sprintf_s
-		#define VSNPRINTF vsprintf_s
-		#define STRCPY strcpy_s
-		#define FOPEN fopen_s
-	#else               // Visual Studio 2003
-		#define SNPRINTF _snprintf
-		#define VSNPRINTF _vsnprintf
-		#define STRCPY strcpy
-		#define FOPEN fopen
-	#endif
-	#define STRCASECMP stricmp
-#else // defined _MSC_
-	// assuming GCC
-	#define SNPRINTF snprintf
-	#define VSNPRINTF vsnprintf
-	#define STRCPY strcpy
-	#define FOPEN fopen
-	#define STRCASECMP strcasecmp
-#endif // defined _MSC_VER
+#include "maindefines.h"
 
 static inline char* mallocCopyString(const char* const orig) {
 
@@ -90,4 +68,4 @@ template<class T> void SafeDelete(T &a)
 
 #endif // __cplusplus
 
-#endif
+#endif // UTIL_H
