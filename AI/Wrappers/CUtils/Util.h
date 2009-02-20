@@ -60,6 +60,15 @@ extern "C" {
 	#define STRCASECMP strcasecmp
 #endif // _MSC_VER
 
+// define a platform independent path separator C-string
+#ifndef sPS
+#ifdef _WIN32
+#define sPS "\\"
+#else // _WIN32
+#define sPS "/"
+#endif // _WIN32
+#endif
+
 /**
  * Stores a C [string, string] properties map,
  * for later retreival of values.
