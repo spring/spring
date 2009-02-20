@@ -191,14 +191,20 @@ float CAttackGroup::Power() {
 
 
 int CAttackGroup::PopStuckUnit() {
+	static const unsigned int logMsg_maxSize = 512;
+	char logMsg[logMsg_maxSize];
 	// removes a stuck unit from the group if there is one, and puts a marker on the map
 	for (vector<int>::iterator it = units.begin(); it != units.end(); it++) {
 		if (ai->MyUnits[*it]->stuckCounter > UNIT_STUCK_COUNTER_LIMIT) {
 			int id = *it;
 			// mark it
-			char text[512];
-			sprintf(text, "stuck %i: %i, dropping from group: %i. isMoving = %i", id, ai->MyUnits[*it]->stuckCounter, groupID, isMoving);
-			sprintf(text, "humanName: %s", ai->MyUnits[*it]->def()->humanName.c_str());
+			SNPRINTF(logMsg, logMsg_maxSize,
+					"stuck %i: %i, dropping from group: %i. isMoving = %i",
+					id, ai->MyUnits[*it]->stuckCounter, groupID, isMoving);
+			PRINTF("%s", logMsg);
+			SNPRINTF(logMsg, logMsg_maxSize, "humanName: %s",
+					ai->MyUnits[*it]->def()->humanName.c_str());
+			PRINTF("%s", logMsg);
 
 			ai->MyUnits[*it]->stuckCounter = 0;
 			units.erase(it);
@@ -295,9 +301,12 @@ void CAttackGroup::AssignTarget(vector<float3> path, float3 position, float radi
 
 // attack routine (the "find new enemy" part)
 void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
-	char tx[512];
-	sprintf(tx, "AG: FindDefenseTarget(), group %i, frame %i, numUnits %i",
-		this->groupID, frameNr, this->units.size());
+	static const unsigned int logMsg_maxSize = 512;
+	char logMsg[logMsg_maxSize];
+	SNPRINTF(logMsg, logMsg_maxSize,
+			"AG: FindDefenseTarget(), group %i, frame %i, numUnits %i",
+			this->groupID, frameNr, this->units.size());
+	PRINTF("%s", logMsg);
 
 	// KLOOTNOTE: numEnemies will be zero if no enemies in LOS or radar when
 	// non-cheat callback used, rely on AttackHandler to pick "global" targets
@@ -483,7 +492,8 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 	assert(CloakedFix(unitArray[enemySelected]));
 	isShooting = true;
 
-	for (unsigned int i = 0; i < numUnits; i++) {
+	assert(numUnits >= 0);
+	for (unsigned int i = 0; i < (unsigned int)numUnits; i++) {
 		int unit = units[i];
 		const UnitDef* udef = ai->cb->GetUnitDef(unit);
 
@@ -577,7 +587,8 @@ void CAttackGroup::MoveAlongPath(float3& groupPosition, int numUnits) {
 	// if we aren't there yet
 	if (groupPosition.distance2D(pathToTarget[pathMaxIndex]) > GROUP_DESTINATION_SLACK) {
 		// TODO: give a group the order instead of each unit
-		for (unsigned int i = 0; i < numUnits; i++) {
+		assert(numUnits >= 0);
+		for (unsigned int i = 0; i < (unsigned int)numUnits; i++) {
 			int unit = units[i];
 
 			if (ai->cb->GetUnitDef(unit) != NULL) {

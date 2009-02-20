@@ -38,10 +38,13 @@ class CGlobalAI: public IGlobalAI {
 		void PostLoad(void);
 		void Serialize(creg::ISerializer* s);
 
+		AIClasses* GetAi();
+
+	private:
 		AIClasses* ai;
 
-		char c[1024];
+		static const unsigned int c_maxSize = 1024;
+		char c[c_maxSize];
 };
 
-
-#endif
+#endif // GLOBALAI_H

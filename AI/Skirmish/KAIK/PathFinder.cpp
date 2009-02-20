@@ -84,7 +84,7 @@ void CPathFinder::Init() {
 	ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf");
 
 	while(Valuestring != errorstring) {
-		sprintf(k, "%i", NumOfMoveTypes);
+		SNPRINTF(k, 50, "%i", NumOfMoveTypes);
 		ai->parser->GetDef(Valuestring, errorstring, string(sectionstring + k + "\\Name"));
 
 		if (Valuestring != errorstring) {

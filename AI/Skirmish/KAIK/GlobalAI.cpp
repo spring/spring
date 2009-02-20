@@ -111,9 +111,9 @@ CREX_REG_STATE_COLLECTOR(KAIK, CGlobalAI);
 
 
 // TODO: move to Containers.h
-void BuildTask::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(id); }
-void TaskPlan::PostLoad(void) { def = KAIKState->ai->cb->GetUnitDef(defName.c_str()); }
-void EconomyUnitTracker::PostLoad() { unitDef = KAIKState->ai->cb->GetUnitDef(economyUnitId); }
+void BuildTask::PostLoad(void) { def = KAIKState->GetAi()->cb->GetUnitDef(id); }
+void TaskPlan::PostLoad(void) { def = KAIKState->GetAi()->cb->GetUnitDef(defName.c_str()); }
+void EconomyUnitTracker::PostLoad() { unitDef = KAIKState->GetAi()->cb->GetUnitDef(economyUnitId); }
 
 
 
@@ -165,11 +165,16 @@ void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
 
 	int team = ai->cb->GetMyTeam();
 
-	sprintf(c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (team %d).log",
-		string(LOGFOLDER).c_str(), mapname.c_str(), now2->tm_mon + 1, now2->tm_mday, now2->tm_year + 1900, now2->tm_hour, now2->tm_min, team);
+	string logFolderStr = LOGFOLDER;
+	SNPRINTF(this->c, this->c_maxSize,
+			"%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (team %d).log",
+			logFolderStr.c_str(), mapname.c_str(), now2->tm_mon + 1,
+			now2->tm_mday, now2->tm_year + 1900, now2->tm_hour, now2->tm_min,
+			team);
+	PRINTF("%s", this->c);
 
 	string cfgFolderStr = CFGFOLDER;
-	char cfgFolder[256]; sprintf(cfgFolder, "%s", cfgFolderStr.c_str());
+	char cfgFolder[256]; SNPRINTF(cfgFolder, 256, "%s", cfgFolderStr.c_str());
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, this->c);
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, cfgFolder);
@@ -237,12 +242,16 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	struct tm* now2 = localtime(&now1);
 
 	// timestamp logfile name
-	string logFolder = LOGFOLDER;
-	sprintf(this->c, "%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (team %d).log",
-		logFolder.c_str(), mapname.c_str(), (now2->tm_mon + 1), now2->tm_mday, (now2->tm_year + 1900), now2->tm_hour, now2->tm_min, team);
+	string logFolderStr = LOGFOLDER;
+	SNPRINTF(this->c, this->c_maxSize,
+			"%s%s %2.2d-%2.2d-%4.4d %2.2d%2.2d (team %d).log",
+			logFolderStr.c_str(), mapname.c_str(), (now2->tm_mon + 1),
+			now2->tm_mday, (now2->tm_year + 1900), now2->tm_hour, now2->tm_min,
+			team);
+	PRINTF("%s", this->c);
 
 	string cfgFolderStr = CFGFOLDER;
-	char cfgFolder[256]; sprintf(cfgFolder, "%s", cfgFolderStr.c_str());
+	char cfgFolder[256]; SNPRINTF(cfgFolder, 256, "%s", cfgFolderStr.c_str());
 
 	// initialize class wrapper struct
 	ai = new AIClasses;
@@ -442,4 +451,9 @@ void CGlobalAI::Update() {
 	// call attack handler and unit handler (metal maker) update routines
 	ai->ah->Update(frame);
 	ai->uh->MMakerUpdate(frame);
+}
+
+
+AIClasses* CGlobalAI::GetAi() {
+	return ai;
 }

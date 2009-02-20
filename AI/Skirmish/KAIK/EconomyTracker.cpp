@@ -403,10 +403,14 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 	}
 
 /*
-	sprintf(c,"1 %is: e: %i, %3.1f, m: %i, %3.1f",
-		time, (int)state.energyStored, (state.energyMake - state.energyUsage) * 2, (int) state.metalStored, (state.metalMake - state.metalUsage) * 2);
-	sprintf(c,"2 %is: e: %i, %3.1f, m: %i, %3.1f",
-		time, (int)state2.energyStored, (state2.energyMake - state2.energyUsage) * 2, (int) state2.metalStored, (state2.metalMake - state2.metalUsage) * 2);
+	SNPRINTF(c, c_maxSize, "1 %is: e: %i, %3.1f, m: %i, %3.1f", time,
+			(int)state.energyStored, (state.energyMake - state.energyUsage) * 2,
+			(int) state.metalStored, (state.metalMake - state.metalUsage) * 2);
+	PRINTF("%s", c);
+	SNPRINTF(c, c_maxSize, "2 %is: e: %i, %3.1f, m: %i, %3.1f", time,
+			(int)state2.energyStored, (state2.energyMake - state2.energyUsage) * 2,
+			(int) state2.metalStored, (state2.metalMake - state2.metalUsage) * 2);
+	PRINTF("%s", c);
 */
 
 	return state;
