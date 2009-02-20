@@ -284,6 +284,10 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 		char* str_fileUrl = util_allocStr(strlen(FILE_URL_PREFIX)
 				+ strlen(classPathParts[u]));
 		STRCPY(str_fileUrl, FILE_URL_PREFIX);
+		#ifdef _WIN32
+		// we can not use windows path separators in file URLs
+		util_strReplaceChar(classPathParts[u], '\\', '/');
+		#endif
 		STRCAT(str_fileUrl, classPathParts[u]);
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
 				"Skirmish AI %s %s class-path part %i: %s",

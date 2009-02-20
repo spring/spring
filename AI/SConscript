@@ -436,6 +436,7 @@ skirmishai_env.AppendUnique(CPPDEFINES = ['BUILDING_SKIRMISH_AI'])
 aiinterfaceobjs_main = create_shared_objects(aiinterface_env, filelist.get_shared_AIInterface_source(env), '-aiinterface')
 aiinterfaceobjs_SharedLib = create_shared_objects(aiinterface_env, filelist.get_shared_AIInterface_source_SharedLib(env), '-aiinterface')
 aiinterfaceobjs_CUtils = create_shared_objects(aiinterface_env, filelist.get_shared_Wrapper_source(ai_env, 'CUtils'), '-aiinterface')
+aiinterfaceobjs_CUtilsStreflopped = create_shared_objects(aiinterface_env, filelist.get_shared_Wrapper_source(ai_env, 'CUtils'), '-aiinterface_withStreflop', ['USING_STREFLOP'])
 
 # Build
 aiinterfaces_exclude_list=['build']
@@ -449,17 +450,23 @@ javaAiInterfaceProj = None
 for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinterfaces_exclude_list):
 	aiInterfaceVersion = fetch_aiInterface_version(baseName)
 	print "Found AI Interface: " + baseName + " " + aiInterfaceVersion
+	needSharedLib = baseName in aiinterfaces_needSharedLib_list
+	needCUtils = baseName in aiinterfaces_needCUtils_list
+	needStreflop = baseName in aiinterfaces_needStreflop_list
 	myEnv = create_sub_interface(aiinterface_env, baseName)
 	myEnv['installprefix'] = os.path.join(myEnv['installprefix'], aiInterfaceVersion)
 	instList = []
 	objs = []
 	objs += aiinterfaceobjs_main
-	if baseName in aiinterfaces_needSharedLib_list:
+	if needSharedLib:
 		objs += aiinterfaceobjs_SharedLib
-	if baseName in aiinterfaces_needCUtils_list:
+	if needCUtils:
 		myEnv.AppendUnique(CPPPATH = ['Wrappers'])
-		objs += aiinterfaceobjs_CUtils
-	if baseName in aiinterfaces_needStreflop_list:
+		if needStreflop:
+			objs += aiinterfaceobjs_CUtilsStreflopped
+		else:
+			objs += aiinterfaceobjs_CUtils
+	if needStreflop:
 		myEnv.AppendUnique(CPPDEFINES=['USING_STREFLOP'])
 		myEnv.AppendUnique(CPPPATH = ['#rts/lib/streflop'])
 		myEnv.AppendUnique(LIBS = [streflop_lib])
