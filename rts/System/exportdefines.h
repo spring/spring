@@ -15,12 +15,13 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+ * This file has to be C99 compatible, as it is not only used by the engine,
+ * but also by AIs.
+ */
+
 #ifndef _EXPORTDEFINES_H
 #define _EXPORTDEFINES_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
 
 #ifndef EXTERNALIZER
 	#ifdef __cplusplus
@@ -92,10 +93,5 @@ extern "C" {
 
 
 #define EXPORT(type) SHARED_EXPORT type CALLING_CONV
-
-
-#ifdef __cplusplus
-} // extern "C"
-#endif // __cplusplus
 
 #endif // _EXPORTDEFINES_H
