@@ -185,6 +185,7 @@ private:
 	float minUserSpeed;
 
 	bool noHelperAIs;
+	bool allowAdditionalPlayers;
 
 	/////////////////// sync stuff ///////////////////
 #ifdef SYNCCHECK
