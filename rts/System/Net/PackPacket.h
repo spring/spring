@@ -28,9 +28,9 @@ public:
 	PackPacket& operator<<(const std::string& text);
 	template <typename element>
 	PackPacket& operator<<(const std::vector<element>& vec) {
-		unsigned size = vec.size()* sizeof(element);
+		const size_t size = vec.size()* sizeof(element);
+		assert(size + pos <= length);
 		if (size > 0) {
-			assert(size + pos <= length);
 			std::memcpy((data+pos), (void*)(&vec[0]), size);
 			pos += size;
 		}

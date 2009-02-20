@@ -1066,9 +1066,11 @@ bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 
 /******************************************************************************/
 
-void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode,
-                              const string& msg)
+void CLuaHandle::HandleLuaMsg(int playerID, int script, int mode, const std::vector<uint8_t>& data)
 {
+	std::string msg;
+	msg.resize(data.size());
+	std::copy(data.begin(), data.end(), msg.begin());
 	if (script == LUA_HANDLE_ORDER_UI) {
 		if (luaUI) {
 			bool sendMsg = false;
