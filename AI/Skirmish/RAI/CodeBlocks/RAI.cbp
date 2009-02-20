@@ -18,11 +18,14 @@
 		</VirtualTargets>
 		<Compiler>
 			<Add option="-O3" />
-			<Add option="-DBUILD_DLL" />
+			<Add option="-DBUILDING_AI" />
+			<Add option="-DBUILDING_SKIRMISH_AI" />
 			<Add directory="..\..\..\..\rts" />
 			<Add directory="..\..\..\..\rts\System" />
-			<Add directory="..\..\..\..\..\mingwlibs\include" />
+			<Add directory="..\..\..\..\mingwlibs\include" />
 		</Compiler>
+		<Unit filename="..\AIExport.cpp" />
+		<Unit filename="..\AIExport.h" />
 		<Unit filename="..\BasicArray.h" />
 		<Unit filename="..\Builder.cpp" />
 		<Unit filename="..\Builder.h" />
@@ -30,7 +33,6 @@
 		<Unit filename="..\BuilderPlacement.h" />
 		<Unit filename="..\CombatManager.cpp" />
 		<Unit filename="..\CombatManager.h" />
-		<Unit filename="..\DLLExportRAI.cpp" />
 		<Unit filename="..\GResourceMap.cpp" />
 		<Unit filename="..\GResourceMap.h" />
 		<Unit filename="..\GTerrainMap.cpp" />
