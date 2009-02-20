@@ -3,6 +3,7 @@
 //#include "ExternalAI/IAICheats.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "CUtils/Util.h"
 //#include <vector>
 //#include <iostream>
 #include <stdio.h>
@@ -128,8 +129,8 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 	cb = callback->GetAICallback();
 	if( GRMap == 0 )
 		ClearLogFiles();
-	char c[2];
-	sprintf(c, "%i", cb->GetMyTeam());
+	char c[3];
+	SNPRINTF(c, 3, "%i", cb->GetMyTeam());
 	l = new cLogFile("RAI"+string(c)+"_LastGame.log",false);
 
 /*	string test = (char*)cb->GetMyTeam(); // Crashes Spring?  Spring-Version(v0.76b1)
@@ -1090,8 +1091,8 @@ void cRAI::ClearLogFiles()
 	string logFileName;
 	for( int i=0; i<16; i++ )
 	{	
-		char c[2];
-		sprintf(c, "%i",i);
+		char c[3];
+		SNPRINTF(c, 3, "%i", i);
 		logFileName = cLogFile::GetRAIRootDirectory()+"RAI"+string(c)+"_LastGame.log";
 		remove(logFileName.c_str());
 	}

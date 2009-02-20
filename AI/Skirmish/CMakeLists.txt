@@ -89,7 +89,7 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${RAI_SRC})
 			DESTINATION "${RAI_DATA_DIR}")
 
 	aux_source_directory(${RAI_SRC} rai)
-	add_library(${RAI_TARGET} MODULE ${rai} ${legacycppaienv})
+	add_library(${RAI_TARGET} MODULE ${rai} ${legacycppaienv} ${cutilsenv})
 	set_target_properties(${RAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
 	set_target_properties(${KAIK_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "RAI")
 	install (TARGETS ${RAI_TARGET} DESTINATION ${RAI_DATA_DIR})

@@ -1,6 +1,7 @@
 #include "GTerrainMap.h"
 #include <set>
 #include "Sim/MoveTypes/MoveInfo.h"
+#include "CUtils/Util.h"
 //#include <time.h>
 using std::deque;
 using std::set;
@@ -10,11 +11,16 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 //	l = logfile;
 	*l<<"\n Loading the Terrain-Map ...";
 
+	string cacheDir = cLogFile::GetRAIRootDirectory() + "cache"sPS;
+	if (!util_makeDir(cacheDir.c_str(), true)) {
+		*l<<"\nERROR: Could not create the cache dir: "<<cacheDir;
+	}
+
 	// Reading the WaterDamage entry from the map file
 	const int mapFileVersion = 2;
 	waterIsHarmful = false;
 	string mapFileName = cb->GetMapName();
-	mapFileName = cLogFile::GetRAIRootDirectory() + "cache/" + mapFileName.substr(0,int(mapFileName.size())-3) + "res";
+	mapFileName = cacheDir + mapFileName.substr(0,int(mapFileName.size())-3) + "res";
 	FILE *mapFile = fopen(mapFileName.c_str(),"rb");
 	bool mapFileLoaded = false;
 	if( mapFile )
@@ -35,7 +41,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 	{
 //		double mapArchiveTimer = clock();
 		string mapArchiveFileName = cb->GetMapName();
-		mapArchiveFileName = "maps\\"+mapArchiveFileName.substr(0,int(mapArchiveFileName.size())-3)+"smd";
+		mapArchiveFileName = "maps"sPS+mapArchiveFileName.substr(0,int(mapArchiveFileName.size())-3)+"smd";
 		int mapArchiveFileSize = cb->GetFileSize(mapArchiveFileName.c_str());
 		if( mapArchiveFileSize > 0 )
 		{
@@ -64,10 +70,17 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 //		*l<<"\n  Map-Archive Timer: "<<(clock()-mapArchiveTimer)/CLOCKS_PER_SEC<<" seconds";
 
 		mapFile = fopen(mapFileName.c_str(),"wb");
-		fwrite(&mapFileVersion,sizeof(int),1,mapFile);
-		fwrite(&waterIsHarmful,sizeof(bool),1,mapFile);
-		fwrite(&waterIsAVoid,sizeof(bool),1,mapFile);
-		fclose(mapFile);
+		if (mapFile)
+		{
+			fwrite(&mapFileVersion,sizeof(int),1,mapFile);
+			fwrite(&waterIsHarmful,sizeof(bool),1,mapFile);
+			fwrite(&waterIsAVoid,sizeof(bool),1,mapFile);
+			fclose(mapFile);
+		}
+		else
+		{
+			*l<<"\nERROR: Could not write to file: "<<mapFileName;
+		}
 	}
 
 	convertStoP = 64; // = 2^x, should not be less than 16
