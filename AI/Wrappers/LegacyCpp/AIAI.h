@@ -41,6 +41,7 @@ public:
 	 */
 	virtual int handleEvent(int topic, const void* data);
 
+private:
 	int team;
 	IGlobalAI* ai;
 };
