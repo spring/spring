@@ -675,10 +675,12 @@ skirmishaiobjs_mainCregged = create_shared_objects(skirmishai_env, filelist.get_
 skirmishaiobjs_creg = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_Creg(env), '-skirmishai_creg', ['USING_CREG'])
 skirmishaiobjs_LegacyCpp = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_LegacyCpp(env), '-skirmishai')
 skirmishaiobjs_LegacyCppCregged = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_LegacyCpp(env), '-skirmishai_creg', ['USING_CREG'])
+skirmishaiobjs_CUtils = create_shared_objects(skirmishai_env, filelist.get_shared_Wrapper_source(ai_env, 'CUtils'), '-skirmishai')
 
 # Build
 skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
 skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
+skirmishai_needCUtils_list=['RAI']
 skirmishai_needCreg_list=['KAIK', 'KAI']
 skirmishai_needBoost_list=['NTai']
 skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
@@ -686,6 +688,7 @@ for baseName in filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmisha
 	aiVersion = fetch_skirmishAi_version(baseName)
 	print "Found Skirmish AI: " + baseName + " " + aiVersion
 	isLegacyCpp = baseName in skirmishai_isLegacyCpp_list
+	needsCUtils = baseName in skirmishai_needCUtils_list
 	useCreg = baseName in skirmishai_needCreg_list
 	useBoost = baseName in skirmishai_needBoost_list
 	isJava = baseName in skirmishai_isJava_list
@@ -749,6 +752,9 @@ for baseName in filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmisha
 				objs += skirmishaiobjs_LegacyCppCregged
 			else:
 				objs += skirmishaiobjs_LegacyCpp
+		if needsCUtils:
+			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
+			objs += skirmishaiobjs_CUtils
 		cwdPrev = os.getcwd()
 		os.chdir(myEnv['sourcedir'])
 		mySourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)

@@ -24,6 +24,7 @@
 #include "ExternalAI/Interface/SSAILibrary.h"
 #include "LegacyCpp/AIGlobalAI.h"
 #include "Game/GameVersion.h"
+#include "CUtils/Util.h"
 
 // RAI stuff
 #include "RAI.h"
@@ -32,10 +33,6 @@
 
 // teamId -> AI map
 static std::map<int, CAIGlobalAI*> myAIs;
-
-static unsigned int myInfoSize;
-static const char** myInfoKeys;
-static const char** myInfoValues;
 
 static std::map<int, unsigned int> myOptionsSize;
 static std::map<int, const char**> myOptionsKeys;
@@ -66,9 +63,7 @@ EXPORT(int) init(int teamId,
 		return -1;
 	}
 
-	myInfoSize = infoSize;
-	myInfoKeys = infoKeys;
-	myInfoValues = infoValues;
+	util_setMyInfo(infoSize, infoKeys, infoValues, NULL, NULL);
 
 	myOptionsSize[teamId] = optionsSize;
 	myOptionsKeys[teamId] = optionsKeys;
@@ -91,6 +86,7 @@ EXPORT(int) release(int teamId) {
 	}
 
 	delete myAIs[teamId];
+	myAIs[teamId] = NULL;
 	myAIs.erase(teamId);
 
 	// signal: everything went ok
@@ -114,37 +110,16 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 
 // methods from here on are for AI internal use only
 
-static const char* util_map_getValueByKey(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		const char* key) {
-
-	const char* value = NULL;
-
-	unsigned int i;
-	for (i = 0; i < infoSize; i++) {
-		if (strcmp(infoKeys[i], key) == 0) {
-			value = infoValues[i];
-			break;
-		}
-	}
-
-	return value;
-}
-
-const char* aiexport_getMyInfo(const char* key) {
-	return util_map_getValueByKey(myInfoSize, myInfoKeys, myInfoValues, key);
-}
 const char* aiexport_getDataDir() {
 
 	static char* ddWithSlash = NULL;
 
 	if (ddWithSlash == NULL) {
-		const char* dd = aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
+		const char* dd = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
 
 		ddWithSlash = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
-		strcpy(ddWithSlash, dd);
-		strcat(ddWithSlash, "/");
+		STRCPY(ddWithSlash, dd);
+		STRCAT(ddWithSlash, sPS);
 	}
 
 	return ddWithSlash;
