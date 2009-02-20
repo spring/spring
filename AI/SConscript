@@ -687,7 +687,7 @@ skirmishaiobjs_CUtils = create_shared_objects(skirmishai_env, filelist.get_share
 # Build
 skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
 skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
-skirmishai_needCUtils_list=['RAI']
+skirmishai_needCUtils_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
 skirmishai_needCreg_list=['KAIK', 'KAI']
 skirmishai_needBoost_list=['NTai']
 skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
