@@ -50,7 +50,7 @@ bool AAIConstructor::IsBusy()
 void AAIConstructor::Idle()
 {
 	//char c[80];
-	//sprintf(c, "%s is idle", bt->unitList[def_id-1]->humanName.c_str());
+	//SNPRINTF(c, 80, "%s is idle", bt->unitList[def_id-1]->humanName.c_str());
 	//cb->SendTextMsg(c, 0);
 
 	if(builder)
