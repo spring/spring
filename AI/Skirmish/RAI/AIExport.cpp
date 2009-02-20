@@ -125,7 +125,7 @@ const char* aiexport_getDataDir() {
 	return ddWithSlash;
 }
 const char* aiexport_getVersion() {
-	return aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);
+	return util_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);
 }
 
 const char* aiexport_getMyOption(int teamId, const char* key) {
