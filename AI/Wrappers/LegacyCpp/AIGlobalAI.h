@@ -34,6 +34,7 @@ public:
 
 	void InitAI(IGlobalAICallback* globalAICallback, int teamId);
 
+private:
 	IGlobalAI* gai;
 };
 

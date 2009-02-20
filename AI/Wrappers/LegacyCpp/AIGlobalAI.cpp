@@ -31,6 +31,7 @@ CAIGlobalAI::CAIGlobalAI(int teamId, IGlobalAI* gai)
 CAIGlobalAI::~CAIGlobalAI() {
 	// TODO: check: should this really be done here?
 	delete gai;
+	gai = NULL;
 }
 
 void CAIGlobalAI::InitAI(IGlobalAICallback* globalAICallback, int teamId) {
