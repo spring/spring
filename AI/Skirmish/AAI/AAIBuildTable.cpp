@@ -68,9 +68,11 @@ AAIBuildTable::AAIBuildTable(IAICallback *cb, AAI* ai)
 		{
 			startUnits[i] = -1;
 
-			char c[120];
-			sprintf(c, "Error: starting unit %s not found\n", cfg->START_UNITS[i]);
-			cb->SendTextMsg(c,0);
+			static const unsigned int c_maxSize = 120;
+			char c[c_maxSize];
+			SNPRINTF(c, c_maxSize, "Error: starting unit %s not found\n",
+					cfg->START_UNITS[i]);
+			cb->SendTextMsg(c, 0);
 			fprintf(ai->file, "%s", c);
 		}
 
@@ -2648,7 +2650,11 @@ bool AAIBuildTable::LoadBuildTable()
 		strcat(buffer, cb->GetModName());
 		ReplaceExtension (buffer, buildtable_filename, sizeof(buildtable_filename), ".dat");
 
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_R, buildtable_filename); 
+		// As we want ot write to the file anyway,
+		// we look for a writable version of it
+		// This also creates the parent dir recursively,
+		// if it does not yet exist.
+		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, buildtable_filename); 
 
 		FILE *load_file;
 

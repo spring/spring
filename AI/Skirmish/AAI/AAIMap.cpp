@@ -276,8 +276,9 @@ void AAIMap::ReadMapCacheFile()
 {
 	// try to read cache file
 	bool loaded = false;
-	
-	char buffer[500];
+
+	static const unsigned int buffer_maxSize = 500;
+	char buffer[buffer_maxSize];
 	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, MAP_CACHE_PATH);
 	strcat(buffer, cb->GetMapName());
@@ -433,7 +434,7 @@ void AAIMap::ReadMapCacheFile()
 		{
 			this->map_type = (MapType) map_type;
 
-			sprintf(buffer, "%s detected", GetMapTypeTextString(map_type));
+			SNPRINTF(buffer, buffer_maxSize, "%s detected", GetMapTypeTextString(map_type));
 	
 			if(bt->aai_instances == 1)
 				ai->cb->SendTextMsg(buffer, 0);
@@ -472,7 +473,7 @@ void AAIMap::ReadMapCacheFile()
 
 
 		// logging
-		sprintf(buffer, "%s detected", GetMapTypeTextString(this->map_type));
+		SNPRINTF(buffer, buffer_maxSize, "%s detected", GetMapTypeTextString(this->map_type));
 		ai->cb->SendTextMsg(buffer, 0);
 		fprintf(ai->file, "\nAutodetecting map type:\n");
 		fprintf(ai->file, "%s", buffer);
