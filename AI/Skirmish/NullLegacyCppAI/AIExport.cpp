@@ -31,7 +31,7 @@
 
 
 // teamId -> AI map
-std::map<int, CAIGlobalAI*> myAIs;
+static std::map<int, CAIGlobalAI*> myAIs;
 
 
 EXPORT(int) init(int teamId,
@@ -63,8 +63,10 @@ EXPORT(int) release(int teamId) {
 		return -1;
 	}
 
-	delete myAIs[teamId];
+	CAIGlobalAI* tmpAi = myAIs[teamId];
 	myAIs.erase(teamId);
+	delete tmpAi;
+	tmpAi = NULL;
 
 	// signal: ok
 	return 0;
