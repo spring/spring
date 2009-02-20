@@ -15,58 +15,13 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _INTERFACEUTIL_H
-#define _INTERFACEUTIL_H
+#ifndef _CUTILS_UTIL_H
+#define _CUTILS_UTIL_H
+
+#include "cutilsdefines.h"
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#include <stdbool.h>	// bool, true, false
-
-#ifdef _MSC_VER
-	// Microsoft Visual C++ 7.1: MSC_VER = 1310
-	// Microsoft Visual C++ 7.0: MSC_VER = 1300
-	#if _MSC_VER > 1310 // >= Visual Studio 2005
-		#define PRINTF printf_s
-		#define FPRINTF fprintf_s
-		#define SNPRINTF sprintf_s
-		#define VSNPRINTF vsprintf_s
-		#define STRCPY strcpy_s
-		#define STRCAT strcat_s
-		#define STRNCAT strncat_s
-		#define FOPEN fopen_s
-	#else              // Visual Studio 2003
-		#define PRINTF _printf
-		#define FPRINTF _fprintf
-		#define SNPRINTF _snprintf
-		#define VSNPRINTF _vsnprintf
-		#define STRCPY strcpy
-		#define STRCAT strcat
-		#define STRNCAT strncat
-		#define FOPEN fopen
-	#endif
-	#define STRCASECMP stricmp
-#else // _MSC_VER
-	// assuming GCC
-	#define PRINTF printf
-	#define FPRINTF fprintf
-	#define SNPRINTF snprintf
-	#define VSNPRINTF vsnprintf
-	#define STRCPY strcpy
-	#define STRCAT strcat
-	#define STRNCAT strncat
-	#define FOPEN fopen
-	#define STRCASECMP strcasecmp
-#endif // _MSC_VER
-
-// define a platform independent path separator C-string
-#ifndef sPS
-#ifdef _WIN32
-#define sPS "\\"
-#else // _WIN32
-#define sPS "/"
-#endif // _WIN32
 #endif
 
 /**
@@ -333,4 +288,4 @@ void util_finalize();
 } // extern "C"
 #endif
 
-#endif // _INTERFACEUTIL_H
+#endif // _CUTILS_UTIL_H
