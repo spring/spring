@@ -22,12 +22,12 @@
 // so DO NOT CHANGE the style and format it uses without
 // major though in advance, and deliberation with hoijui!
 
+#include "aidefines.h"
+#include "SAIFloat3.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-#include "aidefines.h"
-
 
 #define COMMAND_TO_ID_ENGINE -1
 

@@ -1165,9 +1165,9 @@ EXPORT(const char*) _Clb_UnitDef_getName(int teamId, int unitDefId) {
 EXPORT(const char*) _Clb_UnitDef_getHumanName(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->humanName.c_str();
 }
-//EXPORT(const char*) _Clb_UnitDef_getFileName(int teamId, int unitDefId) {
-//	return getUnitDefById(teamId, unitDefId)->filename.c_str();
-//}
+EXPORT(const char*) _Clb_UnitDef_getFileName(int teamId, int unitDefId) {
+	return getUnitDefById(teamId, unitDefId)->filename.c_str();
+}
 //EXPORT(int) _Clb_UnitDef_getId(int teamId, int unitDefId) {
 //	return getUnitDefById(teamId, unitDefId)->id;
 //}
@@ -2292,7 +2292,7 @@ EXPORT(int) _Clb_0MULTI1VALS0FeatureDef(int teamId, int featureDefIds[], int fea
 
 EXPORT(const char*) _Clb_FeatureDef_getName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->myName.c_str();}
 EXPORT(const char*) _Clb_FeatureDef_getDescription(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->description.c_str();}
-//EXPORT(const char*) _Clb_FeatureDef_getFileName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->filename.c_str();}
+EXPORT(const char*) _Clb_FeatureDef_getFileName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->filename.c_str();}
 //EXPORT(int) _Clb_FeatureDef_getId(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->id;}
 EXPORT(float) _Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource(int teamId, int featureDefId, int resourceId) {
 
@@ -2404,8 +2404,8 @@ EXPORT(const char*) _Clb_WeaponDef_getType(int teamId, int weaponDefId) {
 	return getWeaponDefById(teamId, weaponDefId)->type.c_str();
 }
 EXPORT(const char*) _Clb_WeaponDef_getDescription(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->description.c_str();}
-//EXPORT(const char*) _Clb_WeaponDef_getFileName(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->filename.c_str();}
-//EXPORT(const char*) _Clb_WeaponDef_getCegTag(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cegTag.c_str();}
+EXPORT(const char*) _Clb_WeaponDef_getFileName(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->filename.c_str();}
+EXPORT(const char*) _Clb_WeaponDef_getCegTag(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->cegTag.c_str();}
 EXPORT(float) _Clb_WeaponDef_getRange(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->range;}
 EXPORT(float) _Clb_WeaponDef_getHeightMod(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->heightmod;}
 EXPORT(float) _Clb_WeaponDef_getAccuracy(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->accuracy;}
@@ -2763,7 +2763,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_UnitDef_isValid = _Clb_UnitDef_isValid;
 	sAICallback->Clb_UnitDef_getName = _Clb_UnitDef_getName;
 	sAICallback->Clb_UnitDef_getHumanName = _Clb_UnitDef_getHumanName;
-//	sAICallback->Clb_UnitDef_getFileName = _Clb_UnitDef_getFileName;
+	sAICallback->Clb_UnitDef_getFileName = _Clb_UnitDef_getFileName;
 	sAICallback->Clb_UnitDef_getAiHint = _Clb_UnitDef_getAiHint;
 	sAICallback->Clb_UnitDef_getCobId = _Clb_UnitDef_getCobId;
 	sAICallback->Clb_UnitDef_getTechLevel = _Clb_UnitDef_getTechLevel;
@@ -3114,7 +3114,7 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 //	sAICallback->Clb_FeatureDef_getId = _Clb_FeatureDef_getId;
 	sAICallback->Clb_FeatureDef_getName = _Clb_FeatureDef_getName;
 	sAICallback->Clb_FeatureDef_getDescription = _Clb_FeatureDef_getDescription;
-//	sAICallback->Clb_FeatureDef_getFileName = _Clb_FeatureDef_getFileName;
+	sAICallback->Clb_FeatureDef_getFileName = _Clb_FeatureDef_getFileName;
 	sAICallback->Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource = _Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource;
 	sAICallback->Clb_FeatureDef_getMaxHealth = _Clb_FeatureDef_getMaxHealth;
 	sAICallback->Clb_FeatureDef_getReclaimTime = _Clb_FeatureDef_getReclaimTime;
@@ -3155,7 +3155,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_WeaponDef_getName = _Clb_WeaponDef_getName;
 	sAICallback->Clb_WeaponDef_getType = _Clb_WeaponDef_getType;
 	sAICallback->Clb_WeaponDef_getDescription = _Clb_WeaponDef_getDescription;
-//	sAICallback->Clb_WeaponDef_getFileName = _Clb_WeaponDef_getFileName;
+	sAICallback->Clb_WeaponDef_getFileName = _Clb_WeaponDef_getFileName;
+	sAICallback->Clb_WeaponDef_getCegTag = _Clb_WeaponDef_getCegTag;
 	sAICallback->Clb_WeaponDef_getRange = _Clb_WeaponDef_getRange;
 	sAICallback->Clb_WeaponDef_getHeightMod = _Clb_WeaponDef_getHeightMod;
 	sAICallback->Clb_WeaponDef_getAccuracy = _Clb_WeaponDef_getAccuracy;

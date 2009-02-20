@@ -15,17 +15,16 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+ * This file has to be C99 compatible, as it is not only used by the engine,
+ * but also by AIs.
+ */
+
 #ifndef _AIDEFINES_H
 #define _AIDEFINES_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif // __cplusplus
-
+#include "System/maindefines.h"
 #include "System/exportdefines.h"
-//#include "Game/GameVersion.h"
-
-#include "SAIFloat3.h"
 
 #define ENGINE_VERSION_STRING VERSION_STRING
 #define ENGINE_VERSION_NUMBER 1000
@@ -44,9 +43,5 @@ extern "C" {
 #define AI_INTERFACES_DATA_DIR "AI/Interfaces"
 
 #define SKIRMISH_AI_DATA_DIR "AI/Skirmish"
-
-#ifdef	__cplusplus
-} // extern "C"
-#endif // __cplusplus
 
 #endif // _AIDEFINES_H

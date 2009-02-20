@@ -150,7 +150,7 @@ float (CALLING_CONV *Clb_UnitDef_getRadius)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isValid)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getName)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getHumanName)(int teamId, int unitDefId);
-//const char* (CALLING_CONV *Clb_UnitDef_getFileName)(int teamId, int unitDefId);
+const char* (CALLING_CONV *Clb_UnitDef_getFileName)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getAiHint)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getCobId)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getTechLevel)(int teamId, int unitDefId);
@@ -884,8 +884,8 @@ const char* (CALLING_CONV *Clb_FeatureDef_getName)(int teamId,
 		int featureDefId);
 const char* (CALLING_CONV *Clb_FeatureDef_getDescription)(int teamId,
 		int featureDefId);
-//const char* (CALLING_CONV *Clb_FeatureDef_getFileName)(int teamId,
-//		int featureDefId);
+const char* (CALLING_CONV *Clb_FeatureDef_getFileName)(int teamId,
+		int featureDefId);
 float (CALLING_CONV *Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource)(
 		int teamId, int featureDefId, int resourceId);
 float (CALLING_CONV *Clb_FeatureDef_getMaxHealth)(int teamId, int featureDefId);
@@ -989,9 +989,9 @@ const char* (CALLING_CONV *Clb_WeaponDef_getName)(int teamId, int weaponDefId);
 const char* (CALLING_CONV *Clb_WeaponDef_getType)(int teamId, int weaponDefId);
 const char* (CALLING_CONV *Clb_WeaponDef_getDescription)(int teamId,
 		int weaponDefId);
-//const char* (CALLING_CONV *Clb_WeaponDef_getFileName)(int teamId,
-//		int weaponDefId);
-//const char* (CALLING_CONV *Clb_WeaponDef_getCegTag)(int teamId, int weaponDefId);
+const char* (CALLING_CONV *Clb_WeaponDef_getFileName)(int teamId,
+		int weaponDefId);
+const char* (CALLING_CONV *Clb_WeaponDef_getCegTag)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getRange)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getHeightMod)(int teamId, int weaponDefId);
 /** Inaccuracy of whole burst */
