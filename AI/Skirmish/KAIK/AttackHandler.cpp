@@ -225,7 +225,8 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	if (startIndex > endIndex)
 		startIndex = endIndex;
 
-	char text[512];
+	static const unsigned int logMsg_maxSize = 512;
+	char logMsg[logMsg_maxSize];
 
 	if (kMeansK <= 1 || startIndex == endIndex) {
 		if (startIndex >= kMeansK)
@@ -234,7 +235,8 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 		float3 pos = kMeansBase[startIndex] + float3((RANDINT % SAFE_SPOT_DISTANCE), 0, (RANDINT % SAFE_SPOT_DISTANCE));
 		pos.y = ai->cb->GetElevation(pos.x, pos.z);
 
-		sprintf(text, "AH::FSA1 minS: %3.2f, maxS: %3.2f,", minSafety, maxSafety);
+		SNPRINTF(logMsg, logMsg_maxSize, "AH::FSA1 minS: %3.2f, maxS: %3.2f,", minSafety, maxSafety);
+		PRINTF("%s", logMsg);
 		return pos;
 	}
 
@@ -263,10 +265,10 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	assert(subset.size() > 0);
 
 	if ((whichPath + 1) < (int) subset.size() && subset[whichPath].distance2D(subset[whichPath + 1]) > KMEANS_MINIMUM_LINE_LENGTH) {
-        vector<float3> posPath;
-		 //TODO: implement one in pathfinder without radius (or unit ID)
-	//	if (size > (int)kMeansBase.size())
-	//		size = kMeansBase.size();
+		vector<float3> posPath;
+		//TODO: implement one in pathfinder without radius (or unit ID)
+		//	if (size > (int)kMeansBase.size())
+		//		size = kMeansBase.size();
 
 		float dist = ai->pather->MakePath(&posPath, &subset[whichPath], &subset[whichPath + 1], THREATRES * 8);
 		float3 res;
@@ -280,13 +282,19 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 			res = subset[whichPath];
 		}
 
-		sprintf(text, "AH::FSA-2 path:minS: %3.2f, maxS: %3.2f, pos:x: %f5.1 y: %f5.1 z: %f5.1", minSafety, maxSafety, res.x, res.y, res.z);
+		SNPRINTF(logMsg, logMsg_maxSize,
+				"AH::FSA-2 path:minS: %3.2f, maxS: %3.2f, pos:x: %f5.1 y: %f5.1 z: %f5.1",
+				minSafety, maxSafety, res.x, res.y, res.z);
+		PRINTF("%s", logMsg);
 		return res;
 	}
 	else {
 		assert(whichPath < (int) subset.size());
 		float3 res = subset[whichPath];
-		sprintf(text, "AH::FSA-3 minS: %f, maxS: %f, pos:x: %f y: %f z: %f", minSafety, maxSafety, res.x, res.y, res.z);
+		SNPRINTF(logMsg, logMsg_maxSize,
+				"AH::FSA-3 minS: %f, maxS: %f, pos:x: %f y: %f z: %f",
+				minSafety, maxSafety, res.x, res.y, res.z);
+		PRINTF("%s", logMsg);
 		return res;
 	}
 }
@@ -583,14 +591,14 @@ void CAttackHandler::AirPatrol(int currentFrame) {
 	// points for air patrol route updates (if we
 	// aren't attacking)
 	vector<float3> outerMeans;
-	const int numClusters = 3;
+	const unsigned int numClusters = 3;
 	outerMeans.reserve(numClusters);
 
 	if (kMeansK > 1) {
 		// offset the outermost one
 		int counter = (kMeansK / 8);
 
-		for (int i = 0; i < numClusters; i++) {
+		for (unsigned int i = 0; i < numClusters; i++) {
 			outerMeans.push_back(kMeansBase[counter]);
 
 			if (counter < kMeansK - 1)
@@ -598,7 +606,7 @@ void CAttackHandler::AirPatrol(int currentFrame) {
 		}
 	} else {
 		// there is just 1 k-means cluster and we need three
-		for (int i = 0; i < numClusters; i++) {
+		for (unsigned int i = 0; i < numClusters; i++) {
 			outerMeans.push_back(kMeansBase[0] + float3(250 * i, 0, 0));
 		}
 	}
@@ -613,7 +621,7 @@ void CAttackHandler::AirPatrol(int currentFrame) {
 		// do this first in case we are in the enemy base
 		u->Move(outerMeans[0] + float3(0, 50, 0));
 
-		for (int i = 0; i < outerMeans.size(); i++) {
+		for (unsigned int i = 0; i < outerMeans.size(); i++) {
 			u->PatrolShift(outerMeans[i]);
 		}
 	}
@@ -740,14 +748,14 @@ void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& pot
 	std::sort(mobileTargets.begin(), mobileTargets.end(), &ComparePairs);
 
 	// copy over all static targets
-	for (int i = 0; i < staticTargets.size(); i++) {
+	for (unsigned int i = 0; i < staticTargets.size(); i++) {
 		potentialTargets.push_back(staticTargets[i]);
 	}
 
 	// if there weren't any static targets
 	// then copy over all the mobile ones
 	if (staticTargets.size() == 0) {
-		for (int i = 0; i < mobileTargets.size(); i++) {
+		for (unsigned int i = 0; i < mobileTargets.size(); i++) {
 			potentialTargets.push_back(mobileTargets[i]);
 		}
 	}

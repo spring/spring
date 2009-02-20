@@ -87,9 +87,9 @@ bool CMetalMaker::Add(int unit) {
 	while (theIterator != myUnits.end() && !inserted) {
 		// insert it where it should be in order for the list to remain sorted (insertion sort)
 		if (info.metalPerEnergy > theIterator->metalPerEnergy ||
-			(info.metalPerEnergy == theIterator->metalPerEnergy &&
+			((info.metalPerEnergy == theIterator->metalPerEnergy &&
 			(aicb->GetUnitPos(info.id).x == aicb->GetUnitPos(theIterator->id).x &&
-			aicb->GetUnitPos(info.id).z > aicb->GetUnitPos(theIterator->id).z) ||
+			aicb->GetUnitPos(info.id).z > aicb->GetUnitPos(theIterator->id).z)) ||
 			(info.metalPerEnergy == theIterator->metalPerEnergy &&
 			aicb->GetUnitPos(info.id).x > aicb->GetUnitPos(theIterator->id).x))
 		) {

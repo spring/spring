@@ -86,7 +86,8 @@ int CUnitTable::BuildModSideMap() {
 	std::string commName;	// eg. "arm_commander"
 	std::string sideKey;	// eg. "SIDE4\\name"
 	std::string sideName;	// eg. "Arm"
-	char sideNum[64] = {0};
+	static const unsigned int sideNum_maxSize = 64;
+	char sideNum[sideNum_maxSize] = {0};
 
 	// FIXME: can be a .lua script now
 	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
@@ -94,7 +95,7 @@ int CUnitTable::BuildModSideMap() {
 	// look at SIDE0 through SIDE9
 	// (should be enough for any mod)
 	for (int side = 0; side < 10; side++) {
-		sprintf(sideNum, "%i", side);
+		SNPRINTF(sideNum, sideNum_maxSize, "%i", side);
 
 		commKey = "SIDE" + std::string(sideNum) + "\\commander";
 		sideKey = "SIDE" + std::string(sideNum) + "\\name";
@@ -153,10 +154,13 @@ void CUnitTable::ReadModConfig() {
 	L("[CUnitTable::ReadModConfig()]");
 
 	const char* modName = ai->cb->GetModName();
-	char configFileName[1024] = {'\0'};
-	char logMsg[2048] = {'\0'};
+	static const unsigned int configFileName_maxSize = 1024;
+	char configFileName[configFileName_maxSize] = {'\0'};
+	static const unsigned int logMsg_maxSize = 2048;
+	char logMsg[logMsg_maxSize] = {'\0'};
 	std::string cfgFolderStr = CFGFOLDER;
-	snprintf(configFileName, 1023, "%s%s.cfg", cfgFolderStr.c_str(), modName);
+	SNPRINTF(configFileName, configFileName_maxSize, "%s%s.cfg",
+			cfgFolderStr.c_str(), modName);
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, configFileName);
 
 	FILE* f = fopen(configFileName, "r");
@@ -231,7 +235,8 @@ void CUnitTable::ReadModConfig() {
 			}
 		}
 
-		sprintf(logMsg, "read mod configuration file %s", configFileName);
+		SNPRINTF(logMsg, logMsg_maxSize, "read mod configuration file %s",
+				configFileName);
 	} else {
 		L("\tcreating new mod configuration file " << configFileName);
 
@@ -245,12 +250,14 @@ void CUnitTable::ReadModConfig() {
 			// and techLevel, category is already set in ::Init()
 			utype->costMultiplier = 1.0f;
 			utype->techLevel = -1;
-			fprintf(f, "%s %.2f %d %d\n", utype->def->name.c_str(), utype->costMultiplier, utype->techLevel, utype->category);
+			fprintf(f, "%s %.2f %d %d\n", utype->def->name.c_str(),
+					utype->costMultiplier, utype->techLevel, utype->category);
 
 			L("\t\tname: " << (utype->def->name) << ", .cfg category: " << (utype->category));
 		}
 
-		sprintf(logMsg, "wrote mod configuration file %s", configFileName);
+		SNPRINTF(logMsg, logMsg_maxSize, "wrote mod configuration file %s",
+				configFileName);
 	}
 
 	ai->cb->SendTextMsg(logMsg, 0);

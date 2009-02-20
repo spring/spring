@@ -1,5 +1,5 @@
-#ifndef INCLUDE_H
-#define INCLUDE_H
+#ifndef _KAIK_INCLUDE_H
+#define _KAIK_INCLUDE_H
 
 
 #include <ctime>
@@ -20,22 +20,23 @@
 #include <assert.h>
 #include <float.h>
 
+#include "ExternalAI/Interface/aidefines.h" // SNPRINTF, STRCPY, ...
 
 
-#ifdef WIN32
+#if defined WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#else
+#else // defined WIN32
 #include <sys/time.h>
 
 #define LARGE_INTEGER struct timeval
 static inline void itoa(int i, char* buf, int size) {
-	snprintf(buf, size, "%d", i);
+	SNPRINTF(buf, size, "%d", i);
 }
-#endif
+#endif // defined WIN32
 
 
 
@@ -89,4 +90,4 @@ static inline void itoa(int i, char* buf, int size) {
 #include "DGunController.hpp"
 
 
-#endif
+#endif // _KAIK_

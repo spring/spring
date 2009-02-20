@@ -199,6 +199,9 @@ void MicroPather::SetMapData(bool *canMoveArray, float *costArray, int mapSizeX,
 	this -> mapSizeX = mapSizeX;
 	this -> mapSizeY = mapSizeY;
 
+	assert(mapSizeX >= 0);
+	assert(mapSizeY >= 0);
+
 	if (mapSizeY * mapSizeX  > (int) ALLOCATE) {
 		// L("Error: 'mapSizeY * mapSizeX  > ALLOCATE' in pather");
 		// Stop running:
@@ -362,21 +365,21 @@ void MicroPather::FixNode( void** Node) {
 	size_t index = (size_t) *Node;
 	int y = index / mapSizeX;
 	int x = index - y * mapSizeX;
-	
+
 	assert(index >= 0);
-	assert(index <= mapSizeX * mapSizeY);
-	
+	assert(index <= (unsigned int) ((unsigned int)mapSizeX * mapSizeY));
+
 	// no node can be at the edge!
 	if (x == 0)
 		x = 1;
 	else if (x == mapSizeX)
 		x = mapSizeX - 1;
-	
+
 	if (y == 0)
 		y = 1;
 	else if (y == mapSizeY)
 		y = mapSizeY - 1;
-	
+
 	*Node = (void*) (y * mapSizeX + x);
 }
 

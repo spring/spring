@@ -96,7 +96,7 @@ void CMetalMap::Init() {
 
 	/*
 	char k[256];
-	sprintf(k, "Metal Spots Found: %i", NumSpotsFound);
+	SNPRINTF(k, 256, "Metal Spots Found: %i", NumSpotsFound);
 	ai->cb->SendTextMsg(k, 0);
 	*/
 }

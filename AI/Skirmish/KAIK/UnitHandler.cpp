@@ -91,9 +91,13 @@ void CUnitHandler::IdleUnitUpdate(int frame) {
 				// two sec delay is ok
 				if (((*i)->commandOrderPushFrame + LAG_ACCEPTANCE) < frame) {
 					if (!ans) {
-						char text[512];
+						static const unsigned int logMsg_maxSize = 512;
+						char logMsg[logMsg_maxSize];
 						float3 pos = ai->cb->GetUnitPos((*i)->builderID);
-						sprintf(text, "builder %i VerifyOrder failed ", (*i)->builderID);
+						SNPRINTF(logMsg, logMsg_maxSize,
+								"builder %i VerifyOrder failed ",
+								(*i)->builderID);
+						PRINTF("%s", logMsg);
 
 						ClearOrder(*i, false);
 
@@ -287,11 +291,21 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 			// test that this builder is on repair on this unit
 			BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
 
-			if (c->id == CMD_REPAIR && c->params[0] == builderTracker->buildTaskId
-				|| (c->id == -buildTask->def->id && c->params[0] == buildTask->pos.x && c->params[2] == buildTask->pos.z))
+			if (
+					(
+						(c->id == CMD_REPAIR)
+						&& (c->params[0] == builderTracker->buildTaskId)
+					)
+					||
+					(
+						(c->id == -buildTask->def->id)
+						&& (c->params[0] == buildTask->pos.x)
+						&& (c->params[2] == buildTask->pos.z)
+					)) {
 				commandFound = true;
-			else
+			} else {
 				return false;
+			}
 		}
 
 		if (builderTracker->taskPlanId != 0) {
@@ -299,7 +313,9 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 			hit = true;
 			TaskPlan* taskPlan = GetTaskPlan(builderTracker->taskPlanId);
 
-			if (c->id == -taskPlan->def->id && c->params[0] == taskPlan->pos.x && c->params[2] == taskPlan->pos.z)
+			if ((c->id == -taskPlan->def->id)
+					&& (c->params[0] == taskPlan->pos.x)
+					&& (c->params[2] == taskPlan->pos.z))
 				commandFound = true;
 			else
 				return false;
@@ -346,6 +362,8 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 
 // use this only if the unit does not have any orders at the moment
 void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) {
+	static const unsigned int logMsg_maxSize = 512;
+	char logMsg[logMsg_maxSize];
 	bool hit = false;
 	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
 	assert(mycommands->empty() || !reportError);
@@ -354,8 +372,10 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 		// why is this builder idle?
 		hit = true;
 		BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
-		char text[512];
-		sprintf(text, "builder %i: was idle, but it is on buildTaskId: %i  (stuck?)", builderTracker->builderID, builderTracker->buildTaskId);
+		SNPRINTF(logMsg, logMsg_maxSize,
+				"builder %i: was idle, but it is on buildTaskId: %i  (stuck?)",
+				builderTracker->builderID, builderTracker->buildTaskId);
+		PRINTF("%s", logMsg);
 
 		if (buildTask->builderTrackers.size() > 1) {
 			BuildTaskRemove(builderTracker);
@@ -370,8 +390,10 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 		hit = true;
 		// why is this builder idle?
 		TaskPlan* taskPlan = GetTaskPlan(builderTracker->taskPlanId);
-		char text[512];
-		sprintf(text, "builder %i: was idle, but it is on taskPlanId: %s (masking this spot)", builderTracker->builderID, taskPlan->def->humanName.c_str());
+		SNPRINTF(logMsg, logMsg_maxSize,
+				"builder %i: was idle, but it is on taskPlanId: %s (masking this spot)",
+				builderTracker->builderID, taskPlan->def->humanName.c_str());
+		PRINTF("%s", logMsg);
 
 		ai->dm->MaskBadBuildSpot(taskPlan->pos);
 		// TODO: fix this, remove all builders from this plan
@@ -391,8 +413,10 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 		assert(!hit);
 		hit = true;
 		// why is this builder idle?
-		char text[512];
-		sprintf(text, "builder %i: was idle, but it is on factoryId: %i (removing the builder from the job)", builderTracker->builderID, builderTracker->factoryId);
+		SNPRINTF(logMsg, logMsg_maxSize,
+				"builder %i: was idle, but it is on factoryId: %i (removing the builder from the job)",
+				builderTracker->builderID, builderTracker->factoryId);
+		PRINTF("%s", logMsg);
 
 		FactoryBuilderRemove(builderTracker);
 	}
@@ -402,8 +426,10 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 		hit = true;
 		// why is this builder idle?
 		// no tracking of custom orders yet
-		// char text[512];
-		// sprintf(text, "builder %i: was idle, but it is on customOrderId: %i (removing the builder from the job)", unit, builderTracker->customOrderId);
+		//SNPRINTF(logMsg, logMsg_maxSize,
+		//		"builder %i: was idle, but it is on customOrderId: %i (removing the builder from the job)",
+		//		unit, builderTracker->customOrderId);
+		//PRINTF("%s", logMsg);
 		builderTracker->customOrderId = 0;
 	}
 
@@ -417,6 +443,8 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 
 
 void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError) {
+	static const unsigned int logMsg_maxSize = 512;
+	char logMsg[logMsg_maxSize];
 	// take a look and see what it's doing
 	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
 
@@ -430,8 +458,10 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 		}
 
 		if (reportError) {
-			char text[512];
-			sprintf(text, "builder %i: claimed idle, but has command c->id: %i, c->params[0]: %f", builderTracker->builderID, c->id, c->params[0]);
+			SNPRINTF(logMsg, logMsg_maxSize,
+					"builder %i: claimed idle, but has command c->id: %i, c->params[0]: %f",
+					builderTracker->builderID, c->id, c->params[0]);
+			PRINTF("%s", logMsg);
 		}
 
 		if (c->id < 0) {
@@ -591,6 +621,8 @@ void CUnitHandler::MMakerUpdate(int frame) {
 
 
 void CUnitHandler::BuildTaskCreate(int id) {
+	static const unsigned int logMsg_maxSize = 512;
+	char logMsg[logMsg_maxSize];
 	const UnitDef* newUnitDef = ai->cb->GetUnitDef(id);
 	int category = ai->ut->GetCategory(id);
 	float3 pos = ai->cb->GetUnitPos(id);
@@ -641,8 +673,8 @@ void CUnitHandler::BuildTaskCreate(int id) {
 
 			bt.pos = pos;
 			bt.def = newUnitDef;
-			char text[512];
-			sprintf(text, "BuildTask Creation Error: %i", id);
+			SNPRINTF(logMsg, logMsg_maxSize, "BuildTask Creation Error: %i", id);
+			PRINTF("%s", logMsg);
 			int num = BuilderTrackers.size();
 
 			if (num == 0) {
@@ -689,7 +721,11 @@ void CUnitHandler::BuildTaskCreate(int id) {
 
 							// add it to this task
 							BuildTaskAddBuilder(&bt, builderTracker);
-							sprintf(text, "Added builder %i to buildTaskId %i (human order?)", builderTracker->builderID, builderTracker->buildTaskId);
+							SNPRINTF(logMsg, logMsg_maxSize,
+									"Added builder %i to buildTaskId %i (human order?)",
+									builderTracker->builderID,
+									builderTracker->buildTaskId);
+							PRINTF("%s", logMsg);
 						}
 					}
 				}
