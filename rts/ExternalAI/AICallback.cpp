@@ -337,18 +337,18 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 		return -1;
 
 	if (noMessages)
-		return -1;
+		return -2;
 
 	CUnit *unit = uh->units[unitId];
 
 	if (!unit)
-		return -1;
+		return -3;
 
 	if (group && unit->group != group)
-		return -1;
+		return -4;
 
 	if (unit->team != team)
-		return -1;
+		return -5;
 
 	net->Send(CBaseNetProtocol::Get().SendAICommand(gu->myPlayerNum, unitId, c->id, c->options, c->params));
 	return 0;
