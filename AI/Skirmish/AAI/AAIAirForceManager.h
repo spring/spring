@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -38,7 +38,7 @@ public:
 	// tries to attack units of a certain category
 	void BombUnitsOfCategory(UnitCategory category);
 
-	// attacks the most promising target 
+	// attacks the most promising target
 	void BombBestUnit(float cost, float danger);
 
 	// returns true if uni already in target list

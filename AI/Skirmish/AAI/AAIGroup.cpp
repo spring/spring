@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 
 	// set movement type of group (filter out add. movement info like underwater, floater, etc.)
 	group_movement_type = bt->units_static[def->id].movement_type & MOVE_TYPE_UNIT;
-	
+
 	continent = continent_id;
 
 	// now we know type and category, determine max group size
@@ -38,7 +38,7 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 		maxSize = cfg->MAX_AIR_GROUP_SIZE;
 	}
 	else if(group_unit_type == ANTI_AIR_UNIT)
-			maxSize = cfg->MAX_ANTI_AIR_GROUP_SIZE;	
+			maxSize = cfg->MAX_ANTI_AIR_GROUP_SIZE;
 	else
 	{
 		if(category >= GROUND_ARTY && category <= HOVER_ARTY)
@@ -67,7 +67,7 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 
 	// get a rally point
 	GetNewRallyPoint();
-	
+
 	// get speed group (if necessary)
 	if(cfg->AIR_ONLY_MOD)
 	{
@@ -89,7 +89,7 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 	}
 
 	avg_speed = bt->unitList[def->id-1]->speed;
-	
+
 	//fprintf(ai->file, "Creating new group - max size: %i   move type: %i   speed group: %i   continent: %i\n", maxSize, group_movement_type, speed_group, continent);
 }
 
@@ -128,7 +128,7 @@ bool AAIGroup::AddUnit(int unit_id, int def_id, UnitType type, int continent_id)
 			{
 				if(category == GROUND_ASSAULT && speed_group != floor((bt->unitList[def_id-1]->speed - bt->min_speed[0][ai->side-1])/bt->group_speed[0][ai->side-1]))
 					return false;
-			
+
 				if(category == SEA_ASSAULT && speed_group != floor((bt->unitList[def_id-1]->speed - bt->min_speed[3][ai->side-1])/bt->group_speed[3][ai->side-1]))
 					return false;
 			}
@@ -178,14 +178,14 @@ bool AAIGroup::RemoveUnit(int unit, int attacker)
 				{
 					// todo: improve criteria
 					if(size < 2)
-						attack->RemoveGroup(this);	
+						attack->RemoveGroup(this);
 				}
 				else if(group_unit_type == ANTI_AIR_UNIT)
 				{
 					if(size < 1)
 						attack->RemoveGroup(this);
 				}
-			}	
+			}
 
 			// check if attacking still sensible
 			if(attack)
@@ -301,7 +301,7 @@ float AAIGroup::GetPowerVS(int assault_cat_id)
 
 	for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
 		power += bt->units_static[unit->y].efficiency[assault_cat_id];
-	
+
 	return power;
 }
 
@@ -311,7 +311,7 @@ float3 AAIGroup::GetGroupPos()
 	{
 		return cb->GetUnitPos(units.begin()->x);
 	}
-	else 
+	else
 		return ZeroVector;
 }
 
@@ -322,7 +322,7 @@ void AAIGroup::TargetUnitKilled()
 	{
 		// air groups retreat to rally point
 		if(category == AIR_ASSAULT)
-		{	
+		{
 			Command c;
 			c.id = CMD_MOVE;
 			c.params.push_back(rally_point.x);
@@ -346,10 +346,10 @@ void AAIGroup::AttackSector(AAISector *dest, float importance)
 
 	int group_x = pos.x/ai->map->xSectorSize;
 	int group_y = pos.z/ai->map->ySectorSize;
-				
+
 	c.params[0] = (dest->left + dest->right)/2;
 	c.params[2] = (dest->bottom + dest->top)/2;
-							
+
 	// choose location that way that attacking units must cross the entire sector
 	if(dest->x > group_x)
 		c.params[0] = (dest->left + 7 * dest->right)/8;
@@ -369,9 +369,9 @@ void AAIGroup::AttackSector(AAISector *dest, float importance)
 
 	// move group to that sector
 	GiveOrder(&c, importance + 8, UNIT_ATTACKING, "Group::AttackSector");
-	
+
 	target_sector = dest;
-	task = GROUP_ATTACKING;			
+	task = GROUP_ATTACKING;
 }
 
 void AAIGroup::Defend(int unit, float3 *enemy_pos, int importance)
@@ -393,7 +393,7 @@ void AAIGroup::Defend(int unit, float3 *enemy_pos, int importance)
 	{
 		cmd.id = CMD_GUARD;
 		cmd.params.push_back(unit);
-			
+
 		GiveOrder(&cmd, importance, GUARDING, "Group::Defend");
 
 		float3 pos = cb->GetUnitPos(unit);
@@ -447,7 +447,7 @@ bool AAIGroup::SufficientAttackPower()
 		else if(units.size() >= maxSize/3.0f &&  avg_combat_power > 1.5 * bt->avg_eff[bt->GetIDOfAssaultCategory(category)][5])
 			return true;
 	}
-	
+
 	return false;*/
 
 	if(group_unit_type == ASSAULT_UNIT)
@@ -492,7 +492,7 @@ void AAIGroup::UnitIdle(int unit)
 
 		if(temp == target_sector || !target_sector)
 		{
-			// combat groups 
+			// combat groups
 			if(group_unit_type == ASSAULT_UNIT && attack->dest->enemy_structures <= 0)
 			{
 				ai->am->GetNextDest(attack);
@@ -532,10 +532,10 @@ void AAIGroup::UnitIdle(int unit)
 
 				int pos_x = pos.x/ai->map->xSectorSize;
 				int pos_y = pos.z/ai->map->ySectorSize;
-				
+
 				c.params[0] = (target_sector->left + target_sector->right)/2;
 				c.params[2] = (target_sector->bottom + target_sector->top)/2;
-							
+
 				// choose location that way that attacking units must cross the entire sector
 				if(target_sector->x > pos_x)
 					c.params[0] = (target_sector->left + 7 * target_sector->right)/8;
@@ -554,7 +554,7 @@ void AAIGroup::UnitIdle(int unit)
 				c.params[1] = cb->GetElevation(c.params[0], c.params[2]);
 
 				// move group to that sector
-				GiveOrder(&c, 110, UNIT_ATTACKING, "Group::Idle_c");	
+				GiveOrder(&c, 110, UNIT_ATTACKING, "Group::Idle_c");
 			}
 		}
 	}
@@ -630,8 +630,8 @@ void AAIGroup::UpdateRallyPoint()
 		GetNewRallyPoint();
 
 	// check if rally point is blocked by building
-		
-	
+
+
 }
 
 void AAIGroup::GetNewRallyPoint()

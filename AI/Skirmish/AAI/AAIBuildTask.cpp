@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ void AAIBuildTask::BuilderDestroyed()
 
 	// com only allowed if buildpos is inside the base
 	bool commander = false;
-	
+
 	int x = build_pos.x / ai->map->xSectorSize;
 	int y = build_pos.z / ai->map->ySectorSize;
 
@@ -43,10 +43,10 @@ void AAIBuildTask::BuilderDestroyed()
 		if(ai->map->sector[x][y].distance_to_base == 0)
 			commander = true;
 	}
-	
-	// look for new builder 
+
+	// look for new builder
 	AAIConstructor* new_builder = ai->ut->FindClosestAssistant(build_pos, 10, commander);
-	
+
 	if(new_builder)
 	{
 		new_builder->TakeOverConstruction(this);
@@ -58,8 +58,8 @@ void AAIBuildTask::BuildtaskFailed()
 {
 	// cleanup buildmap etc.
 	ai->execute->ConstructionFailed(build_pos, def_id);
-	
+
 	// tell builder to stop construction (and release assisters) (if still alive)
 	if(builder_id >= 0 && ai->ut->units[builder_id].cons)
-		ai->ut->units[builder_id].cons->ConstructionFinished();	
+		ai->ut->units[builder_id].cons->ConstructionFinished();
 }

@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -30,11 +30,11 @@ public:
 	// return true if building will be placed at a valid pos = inside sectors
 	bool InitBuildingAt(const UnitDef *def, float3 *pos, bool water);
 
-	void ConstructBuildingAt(int building, int builder, float3 position); 
+	void ConstructBuildingAt(int building, int builder, float3 position);
 
 	void CreateBuildTask(int unit, const UnitDef *def, float3 *pos);
 
-	void MoveUnitTo(int unit, float3 *position);  
+	void MoveUnitTo(int unit, float3 *position);
 
 	void stopUnit(int unit);
 
@@ -42,7 +42,7 @@ public:
 
 	void AddUnitToGroup(int unit_id, int def_id, UnitCategory category);
 
-	void UpdateRecon(); 
+	void UpdateRecon();
 
 	// returns a position to retreat unit of certain type
 	float3 GetSafePos(int def_id, float3 unit_pos);
@@ -69,7 +69,7 @@ public:
 	// the following functions determine how urgent it is to build a further building of the specified type
 	void CheckFactories();
 	void CheckAirBase();
-	void CheckRecon(); 
+	void CheckRecon();
 	void CheckJammer();
 	void CheckStationaryArty();
 
@@ -99,7 +99,7 @@ public:
 	// builds defences around mex spot if necessary
 	void DefendMex(int mex, int def_id);
 
-	// returns a position for the unit to withdraw from close quarters combat (but try to keep enemies in weapons range) 
+	// returns a position for the unit to withdraw from close quarters combat (but try to keep enemies in weapons range)
 	// returns ZeroVector if no suitable pos found (or no enemies close enough)
 	void GetFallBackPos(float3 *pos, int unit_id, float range);
 
@@ -126,11 +126,11 @@ public:
 
 	// returns the the total air defence power of all units
 	float GetTotalAirPower();
-	
+
 	// chooses a starting sector close to specified sector
 	void ChooseDifferentStartingSector(int x, int y);
 
-	// returns closest (taking into account movement speed) group with units of specified unit type that may reach the location 
+	// returns closest (taking into account movement speed) group with units of specified unit type that may reach the location
 	AAIGroup* GetClosestGroupForDefence(UnitType group_type, float3 *pos, int continent, int importance);
 
 	float3 GetRallyPoint(unsigned int unit_movement_type, int continent_id, int min_dist, int max_dist);
@@ -140,7 +140,7 @@ public:
 	float3 GetUnitBuildsite(int builder, int unit);
 
 	void InitBuildques();
-	
+
 	// accelerates game startup
 	void AddStartFactory();
 
@@ -153,7 +153,7 @@ public:
 	bool static defend_vs_ground(AAISector *left, AAISector *right);
 	bool static defend_vs_air(AAISector *left, AAISector *right);
 	bool static defend_vs_hover(AAISector *left, AAISector *right);
-	bool static defend_vs_sea(AAISector *left, AAISector *right);	
+	bool static defend_vs_sea(AAISector *left, AAISector *right);
 	bool static suitable_for_ground_rallypoint(AAISector *left, AAISector *right);
 	bool static suitable_for_sea_rallypoint(AAISector *left, AAISector *right);
 	bool static suitable_for_all_rallypoint(AAISector *left, AAISector *right);
@@ -161,14 +161,14 @@ public:
 	// cache to speed things up a bit
 	float static learned;
 	float static current;
-	
+
 	// buildques for the factories
 	vector<list<int> > buildques;
 
 	// number of factories (both mobile and sationary)
 	int numOfFactories;
 
-	int unitProductionRate;			
+	int unitProductionRate;
 
 	// ressource management
 	// tells ai, how many times additional metal/energy has been requested
@@ -182,9 +182,9 @@ public:
 	float averageEnergyUsage;
 	float averageMetalSurplus;
 	float averageEnergySurplus;
-	int disabledMMakers; 
+	int disabledMMakers;
 
-	int counter; 
+	int counter;
 	float metalSurplus[8];
 	float energySurplus[8];
 

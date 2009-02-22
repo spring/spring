@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -75,7 +75,7 @@ void AAIAttackManager::LaunchAttack()
 
 	// todo: improve decision when to attack base or outposts
 	a_type = OUTPOST_ATTACK;
-	
+
 	if(cfg->AIR_ONLY_MOD)
 	{
 		land = true;
@@ -104,7 +104,7 @@ void AAIAttackManager::LaunchAttack()
 			water = false;
 		}
 	}
-	
+
 	// get target sector
 	dest = ai->brain->GetAttackDest(land, water, a_type);
 
@@ -119,7 +119,7 @@ void AAIAttackManager::LaunchAttack()
 			for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
 			{
 				for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
-				{		
+				{
 					if(!(*group)->attack && (*group)->SufficientAttackPower())
 						combat_available.insert(*group);
 				}
@@ -133,7 +133,7 @@ void AAIAttackManager::LaunchAttack()
 				land = false;
 				water = true;
 			}
-			else 
+			else
 			{
 				water = false;
 				land = true;
@@ -145,7 +145,7 @@ void AAIAttackManager::LaunchAttack()
 				{
 					// check movement type first
 					suitable = true;
-	
+
 					if(land && (*group)->group_movement_type & MOVE_TYPE_SEA)
 						suitable = false;
 
@@ -166,7 +166,7 @@ void AAIAttackManager::LaunchAttack()
 		if((combat_available.size() > 0 && SufficientAttackPowerVS(dest, &combat_available, 2)) ||  combat_available.size() > 10)
 		{
 			AAIAttack *attack;
-			
+
 			attack = new AAIAttack(ai);
 			attacks.push_back(attack);
 
@@ -176,7 +176,7 @@ void AAIAttackManager::LaunchAttack()
 			// add combat groups
 			for(set<AAIGroup*>::iterator group = combat_available.begin(); group != combat_available.end(); ++group)
 				attack->AddGroup(*group);
-			
+
 			// add antiair defence
 			if(!aa_available.empty())
 			{
@@ -185,7 +185,7 @@ void AAIAttackManager::LaunchAttack()
 				// check how much aa sensible
 				if(brain->max_units_spotted[1] < 0.2)
 					max_aa = 0;
-				else 
+				else
 					max_aa = 1;
 
 
@@ -250,7 +250,7 @@ void AAIAttackManager::CheckAttack(AAIAttack *attack)
 
 				break;
 			}
-		}	
+		}
 	}
 }
 
@@ -267,7 +267,7 @@ void AAIAttackManager::GetNextDest(AAIAttack *attack)
 	if(dest && SufficientAttackPowerVS(dest, &(attack->combat_groups), 2))
 		attack->AttackSector(dest, attack->type);
 	else
-		attack->StopAttack();	
+		attack->StopAttack();
 }
 
 bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness)
@@ -285,11 +285,11 @@ bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *
 
 		// get total att power
 		for(set<AAIGroup*>::iterator group = combat_groups->begin(); group != combat_groups->end(); ++group)
-		{	
+		{
 			attack_power += (*group)->GetPowerVS(5);
 			available_combat_cat[(*group)->combat_category] += (*group)->size;
 			total_units += (*group)->size;
-		} 
+		}
 
 		attack_power += (float)total_units * 0.2f;
 
@@ -297,15 +297,15 @@ bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *
 		for(int i = 0; i < bt->ass_categories; ++i)
 			sector_defence += dest->stat_combat_power[i] * (float)available_combat_cat[i];
 
-		sector_defence /= (float)total_units; 
+		sector_defence /= (float)total_units;
 
 		//fprintf(ai->file, "Checking attack power - att power / def power %f %f\n", aggressiveness * attack_power, sector_defence);
-				
+
 		if(aggressiveness * attack_power >= sector_defence)
 			return true;
 	}
 
-	return false;	
+	return false;
 }
 
 bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness)
@@ -320,7 +320,7 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 		for(int i = 0; i < bt->combat_categories; ++i)
 			available_combat_cat[i] = 0;
 
-		// get total att power 
+		// get total att power
 		for(int i = 0; i < bt->combat_categories; ++i)
 		{
 			cat = (int) bt->GetAssaultCategoryOfID(i);
@@ -337,7 +337,7 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 					total_units +=  dest->enemyUnitsOfType[cat];
 				}
 			}
-		} 
+		}
 
 		// skip if no enemy units found
 		if(total_units == 0)
@@ -393,14 +393,14 @@ bool AAIAttackManager::SufficientDefencePowerAt(AAISector *dest, float aggressiv
 
 				for(list<AAIDefence>::iterator def = dest->defences.begin(); def != dest->defences.end(); ++def)
 					temp += bt->units_static[def->def_id].efficiency[i];
-				
+
 				my_power += temp * dest->enemyUnitsOfType[cat];
 			}
 		}
 
 		if(enemies > 0)
 			my_power /= enemies;
-	
+
 		// get enemy attack power vs buildings
 		enemy_power = dest->GetAreaCombatPowerVs(5, 0.5);
 

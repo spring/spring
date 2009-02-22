@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@ public:
 
 	void GetNextDest(AAIAttack *attack);
 
-	void LaunchAttack(); 
+	void LaunchAttack();
 
 	void StopAttack(AAIAttack *attack);
 
@@ -45,10 +45,10 @@ public:
 	// true if combat groups have suffiecient attack power to face stationary defences
 	bool SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness);
 
-	// true if units have sufficient combat power to face mobile units in dest 
+	// true if units have sufficient combat power to face mobile units in dest
 	bool SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *combat_groups, float aggressiveness);
 
-	// true if defences have sufficient combat power to push back mobile units in dest 
+	// true if defences have sufficient combat power to push back mobile units in dest
 	bool SufficientDefencePowerAt(AAISector *dest, float aggressiveness);
 
 	list<AAIAttack*> attacks;

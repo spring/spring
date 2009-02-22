@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ public:
 	// orders fighters to defend air space
 	void DefendAirSpace(float3 *pos);
 
-	// orders air units to attack 
+	// orders air units to attack
 	void AirRaidUnit(int unit_id);
 
 	int GetRandomUnit();
@@ -68,11 +68,11 @@ public:
 
 	int maxSize;
 	int size;
-	int speed_group; 
+	int speed_group;
 	float avg_speed;
-	
+
 	list<int2> units;
-	
+
 	Command lastCommand;
 	int lastCommandFrame;
 
@@ -99,7 +99,7 @@ public:
 	int continent;
 
 private:
-	
+
 	IAICallback *cb;
 	AAI* ai;
 	AAIBuildTable *bt;

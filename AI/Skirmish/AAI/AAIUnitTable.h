@@ -17,7 +17,7 @@ public:
 
 	bool AddUnit(int unit_id, int def_id, AAIGroup *group = 0, AAIConstructor *cons = 0);
 	void RemoveUnit(int unit_id);
-	
+
 	void AddScout(int unit_id);
 	void RemoveScout(int unit_id);
 
@@ -80,11 +80,11 @@ public:
 
 	// id of commander
 	int cmdr;
-		
+
 	set<int> scouts;
 	set<int> constructors;
 	set<int> metal_makers;
-	set<int> jammers; 
+	set<int> jammers;
 	set<int> recon;
 	set<int> extractors;
 	set<int> power_plants;

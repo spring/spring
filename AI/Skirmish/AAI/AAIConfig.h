@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -36,12 +36,12 @@ public:
 	void LoadConfig(AAI *ai);
 
 	bool initialized;
- 
+
 	// constants (will be loaded in aaiconfig)
 
 	// mod specific
 	float SECTOR_SIZE;
-	int MIN_ENERGY;  // min energy make value to be considered beeing a power plant 
+	int MIN_ENERGY;  // min energy make value to be considered beeing a power plant
 	int MAX_UNITS;
 	int MAX_SCOUTS;
 	int MAX_XROW;
@@ -72,7 +72,7 @@ public:
 	int AIRCRAFT_RATE;
 	int HIGH_RANGE_UNITS_RATE;
 	int FAST_UNITS_RATE;
-	int SIDES;			
+	int SIDES;
 	int MIN_ENERGY_STORAGE;
 	int MIN_METAL_STORAGE;
 	int MAX_METAL_COST;
@@ -98,7 +98,7 @@ public:
 	int MAX_STAT_ARTY;
 	int MAX_AIR_BASE;
 	bool AIR_ONLY_MOD;
-	int MAX_STORAGE; 
+	int MAX_STORAGE;
 	int MAX_METAL_MAKERS;
 	int MAX_MEX_DISTANCE;
 	int MAX_MEX_DEFENCE_DISTANCE;

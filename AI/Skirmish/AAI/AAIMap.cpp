@@ -16,18 +16,18 @@
 int AAIMap::aai_instances = 0;
 char AAIMap::map_filename[500];
 int AAIMap::xSize;
-int AAIMap::ySize;	
+int AAIMap::ySize;
 int AAIMap::xMapSize;
-int AAIMap::yMapSize;				
+int AAIMap::yMapSize;
 int AAIMap::xDefMapSize;
 int AAIMap::yDefMapSize;
 int AAIMap::xContMapSize;
-int AAIMap::yContMapSize;	
+int AAIMap::yContMapSize;
 int AAIMap::xSectors;
-int AAIMap::ySectors;				
-int AAIMap::xSectorSize; 
-int AAIMap::ySectorSize;		
-int AAIMap::xSectorSizeMap; 
+int AAIMap::ySectors;
+int AAIMap::xSectorSize;
+int AAIMap::ySectorSize;
+int AAIMap::xSectorSizeMap;
 int AAIMap::ySectorSizeMap;
 
 list<AAIMetalSpot>  AAIMap::metal_spots;
@@ -36,13 +36,13 @@ int AAIMap::land_metal_spots;
 int AAIMap::water_metal_spots;
 
 bool AAIMap::metalMap;
-MapType AAIMap::map_type;	
+MapType AAIMap::map_type;
 
 vector< vector<int> > AAIMap::team_sector_map;
-vector<int> AAIMap::buildmap;	
-vector<int> AAIMap::blockmap;	
+vector<int> AAIMap::buildmap;
+vector<int> AAIMap::blockmap;
 vector<float> AAIMap::plateau_map;
-vector<int> AAIMap::continent_map;	
+vector<int> AAIMap::continent_map;
 
 vector<AAIContinent> AAIMap::continents;
 int AAIMap::land_continents;
@@ -127,7 +127,7 @@ AAIMap::~AAIMap(void)
 			}
 
 			// save
-			for(int j = 0; j < bt->assault_categories.size(); ++j)
+			for(unsigned int j = 0; j < bt->assault_categories.size(); ++j)
 				fprintf(save_file, "%f ", map_usefulness[j][i]);
 		}
 
@@ -140,7 +140,7 @@ AAIMap::~AAIMap(void)
 				// save sector data
 				fprintf(save_file, "%f %f %f", sector[x][y].flat_ratio, sector[x][y].water_ratio, sector[x][y].importance_this_game);
 				// save combat data
-				for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
+				for(unsigned int cat = 0; cat < bt->assault_categories.size(); ++cat)
 					fprintf(save_file, "%f %f ", sector[x][y].attacked_by_this_game[cat], sector[x][y].combats_this_game[cat]);
 			}
 
@@ -162,7 +162,7 @@ void AAIMap::Init()
 {
 	++aai_instances;
 
-	// all static vars are only initialized by the first aai instance 
+	// all static vars are only initialized by the first aai instance
 	if(aai_instances == 1)
 	{
 		// get size
@@ -193,7 +193,7 @@ void AAIMap::Init()
 		blockmap.resize(xMapSize*yMapSize, 0);
 		continent_map.resize(xContMapSize*yContMapSize, -1);
 		plateau_map.resize(xContMapSize*yContMapSize, 0);
-		
+
 		// create map that stores which aai player has occupied which sector (visible to all aai players)
 		team_sector_map.resize(xSectors);
 
@@ -236,8 +236,8 @@ void AAIMap::Init()
 
 	// create defence
 	defence_map.resize(xDefMapSize*yDefMapSize, 0);
-	air_defence_map.resize(xDefMapSize*yDefMapSize, 0); 
-	submarine_defence_map.resize(xDefMapSize*yDefMapSize, 0); 
+	air_defence_map.resize(xDefMapSize*yDefMapSize, 0);
+	submarine_defence_map.resize(xDefMapSize*yDefMapSize, 0);
 
 	initialized = true;
 
@@ -284,7 +284,9 @@ void AAIMap::ReadMapCacheFile()
 	strcat(buffer, cb->GetMapName());
 	ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".dat");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, map_filename);
+	// as we will have to write to the file later on anyway,
+	// we want it writeable
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, map_filename);
 
 	FILE *file;
 
@@ -308,19 +310,19 @@ void AAIMap::ReadMapCacheFile()
 			fscanf(file, "%i ", &temp);
 			metalMap = (bool)temp;
 
-			// load buildmap 
+			// load buildmap
 			for(int i = 0; i < xMapSize*yMapSize; ++i)
 			{
 				//fread(&temp, sizeof(int), 1, file);
-				fscanf(file, "%i ", &temp); 
+				fscanf(file, "%i ", &temp);
 				buildmap[i] = temp;
 			}
-		
+
 			// load plateau map
 			for(int i = 0; i < xMapSize*yMapSize/16; ++i)
 			{
 				//fread(&temp_float, sizeof(float), 1, file);
-				fscanf(file, "%f ", &temp_float); 
+				fscanf(file, "%f ", &temp_float);
 				plateau_map[i] = temp_float;
 			}
 
@@ -335,7 +337,7 @@ void AAIMap::ReadMapCacheFile()
 				metal_spots.push_back(spot);
 			}
 
-			fscanf(file, "%i %i ", &land_metal_spots, &water_metal_spots); 
+			fscanf(file, "%i %i ", &land_metal_spots, &water_metal_spots);
 
 			fclose(file);
 
@@ -349,7 +351,7 @@ void AAIMap::ReadMapCacheFile()
 	{
 		// look for metalspots
 		SearchMetalSpots();
-	
+
 		// detect cliffs/water and create plateau map
 		AnalyseMap();
 
@@ -371,13 +373,13 @@ void AAIMap::ReadMapCacheFile()
 
 		// save buildmap
 		for(int i = 0; i < xMapSize*yMapSize; ++i)
-			fprintf(file, "%i ", buildmap[i]); 
+			fprintf(file, "%i ", buildmap[i]);
 
 		fprintf(file, "\n");
 
 		// save plateau map
 		for(int i = 0; i < xMapSize*yMapSize/16; ++i)
-			fprintf(file, "%f ", plateau_map[i]); 
+			fprintf(file, "%f ", plateau_map[i]);
 
 		// save mex spots
 		land_metal_spots = 0;
@@ -435,7 +437,7 @@ void AAIMap::ReadMapCacheFile()
 			this->map_type = (MapType) map_type;
 
 			SNPRINTF(buffer, buffer_maxSize, "%s detected", GetMapTypeTextString(map_type));
-	
+
 			if(bt->aai_instances == 1)
 				ai->cb->SendTextMsg(buffer, 0);
 		}
@@ -549,7 +551,7 @@ void AAIMap::ReadMapCacheFile()
 
 			map_categories_id.push_back(1);
 		}
-	}		
+	}
 }
 
 void AAIMap::ReadContinentFile()
@@ -563,11 +565,14 @@ void AAIMap::ReadContinentFile()
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+	// as we will have to write to the file later on anyway,
+	// we want it writeable
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	FILE *file;
 
-	if(file = fopen(filename, "r"))
+	file = fopen(filename, "r");
+	if (file)
 	{
 		// check if correct version
 		fscanf(file, "%s ", buffer);
@@ -579,15 +584,15 @@ void AAIMap::ReadContinentFile()
 			fclose(file);
 		}
 		else
-		{	
+		{
 			int temp, temp2;
 
-			// load continent map 
+			// load continent map
 			for(int j = 0; j < yContMapSize; ++j)
 			{
 				for(int i = 0; i < xContMapSize; ++i)
 				{
-					fscanf(file, "%i ", &temp); 
+					fscanf(file, "%i ", &temp);
 					continent_map[j * xContMapSize + i] = temp;
 				}
 			}
@@ -606,8 +611,8 @@ void AAIMap::ReadContinentFile()
 			}
 
 			// load statistical data
-			fscanf(file, "%i %i %i %i %i %i %i %i", &land_continents, &water_continents, &avg_land_continent_size, &avg_water_continent_size, 
-																			&max_land_continent_size, &max_water_continent_size, 
+			fscanf(file, "%i %i %i %i %i %i %i %i", &land_continents, &water_continents, &avg_land_continent_size, &avg_water_continent_size,
+																			&max_land_continent_size, &max_water_continent_size,
 																			&min_land_continent_size, &min_water_continent_size);
 
 			fclose(file);
@@ -620,7 +625,7 @@ void AAIMap::ReadContinentFile()
 
 
 	// loading has not been succesful -> create new continent maps
-	
+
 	// create continent/movement map
 	CalculateContinentMaps();
 
@@ -636,14 +641,14 @@ void AAIMap::ReadContinentFile()
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	file = fopen(filename, "w+");
-		
+
 	fprintf(file, "%s\n",  CONTINENT_DATA_VERSION);
 
 	// save continent map
 	for(int j = 0; j < yContMapSize; ++j)
 	{
 		for(int i = 0; i < xContMapSize; ++i)
-			fprintf(file, "%i ", continent_map[j * xContMapSize + i]); 
+			fprintf(file, "%i ", continent_map[j * xContMapSize + i]);
 
 		fprintf(file, "\n");
 	}
@@ -651,12 +656,12 @@ void AAIMap::ReadContinentFile()
 	// save continents
 	fprintf(file, "\n%i \n", continents.size());
 
-	for(int c = 0; c < continents.size(); ++c)
+	for(unsigned int c = 0; c < continents.size(); ++c)
 		fprintf(file, "%i %i \n", continents[c].size, (int)continents[c].water);
 
 	// save statistical data
-	fprintf(file, "%i %i %i %i %i %i %i %i\n", land_continents, water_continents, avg_land_continent_size, avg_water_continent_size, 
-																	max_land_continent_size, max_water_continent_size, 
+	fprintf(file, "%i %i %i %i %i %i %i %i\n", land_continents, water_continents, avg_land_continent_size, avg_water_continent_size,
+																	max_land_continent_size, max_water_continent_size,
 																	min_land_continent_size, min_water_continent_size);
 
 	fclose(file);
@@ -676,7 +681,9 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 	strcat(buffer, cb->GetModName());
 	ReplaceExtension(buffer, filename, sizeof(filename), ".dat");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
+	// as we will have to write to the file later on anyway,
+	// we want it writeable
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 
 	// open learning files
 	FILE *load_file = fopen(filename, "r");
@@ -711,13 +718,13 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 				{
 					map_usefulness.resize(bt->assault_categories.size());
 
-					for(int i = 0; i < bt->assault_categories.size(); ++i)
+					for(unsigned int i = 0; i < bt->assault_categories.size(); ++i)
 						map_usefulness[i].resize(cfg->SIDES);
 
 					// load units map_usefulness
 					for(int i = 0; i < cfg->SIDES; ++i)
 					{
-						for(int j = 0; j < bt->assault_categories.size(); ++j)
+						for(unsigned int j = 0; j < bt->assault_categories.size(); ++j)
 							fscanf(load_file, "%f ", &map_usefulness[j][i]);
 					}
 				}
@@ -728,7 +735,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 
 					for(int i = 0; i < cfg->SIDES; ++i)
 					{
-						for(int j = 0; j < bt->assault_categories.size(); ++j)
+						for(unsigned int j = 0; j < bt->assault_categories.size(); ++j)
 							fscanf(load_file, "%f ", &dummy);
 					}
 				}
@@ -740,12 +747,12 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 	{
 		map_usefulness.resize(bt->assault_categories.size());
 
-		for(int i = 0; i < bt->assault_categories.size(); ++i)
+		for(unsigned int i = 0; i < bt->assault_categories.size(); ++i)
 			map_usefulness[i].resize(cfg->SIDES);
 
 		for(int i = 0; i < cfg->SIDES; ++i)
 		{
-			for(int j = 0; j < bt->assault_categories.size(); ++j)
+			for(unsigned int j = 0; j < bt->assault_categories.size(); ++j)
 				map_usefulness[j][i] = bt->mod_usefulness[j][i][map_type];
 		}
 	}
@@ -759,7 +766,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 			{
 				// load sector data
 				fscanf(load_file, "%f %f %f", &sector[i][j].flat_ratio, &sector[i][j].water_ratio, &sector[i][j].importance_learned);
-				
+
 				// set movement types that may enter this sector
 				// always: MOVE_TYPE_AIR, MOVE_TYPE_AMPHIB, MOVE_TYPE_HOVER;
 				sector[i][j].allowed_movement_types = 22;
@@ -778,14 +785,14 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 					sector[i][j].importance_learned += (rand()%5)/20.0;
 
 				// load combat data
-				for(int cat = 0; cat < bt->assault_categories.size(); cat++)
+				for(unsigned int cat = 0; cat < bt->assault_categories.size(); cat++)
 					fscanf(load_file, "%f %f ", &sector[i][j].attacked_by_learned[cat], &sector[i][j].combats_learned[cat]);
 
 				if(auto_set)
 				{
 					sector[i][j].importance_this_game = sector[i][j].importance_learned;
 
-					for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
+					for(unsigned int cat = 0; cat < bt->assault_categories.size(); ++cat)
 					{
 						sector[i][j].attacked_by_this_game[cat] = sector[i][j].attacked_by_learned[cat];
 						sector[i][j].combats_this_game[cat] = sector[i][j].combats_learned[cat];
@@ -822,7 +829,7 @@ void AAIMap::ReadMapLearnFile(bool auto_set)
 				{
 					sector[i][j].importance_this_game = sector[i][j].importance_learned;
 
-					for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
+					for(unsigned int cat = 0; cat < bt->assault_categories.size(); ++cat)
 					{
 						sector[i][j].attacked_by_this_game[cat] = sector[i][j].attacked_by_learned[cat];
 						sector[i][j].combats_this_game[cat] = sector[i][j].combats_learned[cat];
@@ -853,7 +860,7 @@ void AAIMap::Learn()
 			if(sector->importance_this_game < 1)
 				sector->importance_this_game = 1;
 
-			for(int cat = 0; cat < bt->assault_categories.size(); ++cat)
+			for(unsigned int cat = 0; cat < bt->assault_categories.size(); ++cat)
 			{
 				sector->attacked_by_this_game[cat] = 0.90f * (sector->attacked_by_this_game[cat] + 3.0f * sector->attacked_by_learned[cat])/4.0f;
 
@@ -1399,12 +1406,12 @@ void AAIMap::CheckRows(int xPos, int yPos, int xSize, int ySize, bool add, bool 
 void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, bool water)
 {
 	// make sure to stay within map if too close to the edges
-	int xEnd = xPos + width; 
-	int yEnd = yPos + height; 
+	int xEnd = xPos + width;
+	int yEnd = yPos + height;
 
 	if(xEnd > xMapSize)
 		xEnd = xMapSize;
-	
+
 	if(yEnd > yMapSize)
 		yEnd = yMapSize;
 
@@ -1456,7 +1463,7 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 				{
 					--blockmap[cell];
 
-					// if cell is not blocked anymore, mark cell on buildmap as empty (only if it has been marked bloked 
+					// if cell is not blocked anymore, mark cell on buildmap as empty (only if it has been marked bloked
 					//					- if it is not marked as blocked its occupied by another building or unpassable)
 					if(blockmap[cell] == 0 && buildmap[cell] == 2)
 					{
@@ -1480,7 +1487,7 @@ void AAIMap::BlockCells(int xPos, int yPos, int width, int height, bool block, b
 void AAIMap::UpdateBuildMap(float3 build_pos, const UnitDef *def, bool block, bool water, bool factory)
 {
 	Pos2BuildMapPos(&build_pos, def);
-		
+
 	if(block)
 	{
 		if(water)
@@ -1528,13 +1535,13 @@ void AAIMap::Pos2FinalBuildPos(float3 *pos, const UnitDef* def)
 int AAIMap::GetNextX(int direction, int xPos, int yPos, int value)
 {
 	int x = xPos;
-	
+
 	if(direction)
 	{
 		while(buildmap[x+yPos*xMapSize] == value)
 		{
 			++x;
-			
+
 			// search went out of map
 			if(x >= xMapSize)
 				return -1;
@@ -1545,7 +1552,7 @@ int AAIMap::GetNextX(int direction, int xPos, int yPos, int value)
 		while(buildmap[x+yPos*xMapSize] == value)
 		{
 			--x;
-			
+
 			// search went out of map
 			if(x < 0)
 				return -1;
@@ -1557,7 +1564,7 @@ int AAIMap::GetNextX(int direction, int xPos, int yPos, int value)
 
 int AAIMap::GetNextY(int direction, int xPos, int yPos, int value)
 {
-	int y = yPos; 
+	int y = yPos;
 
 	if(direction)
 	{
@@ -1565,7 +1572,7 @@ int AAIMap::GetNextY(int direction, int xPos, int yPos, int value)
 		while(buildmap[xPos+y*xMapSize] == value)
 		{
 			++y;
-		
+
 			// search went out of map
 			if(y >= yMapSize)
 				return -1;
@@ -1577,7 +1584,7 @@ int AAIMap::GetNextY(int direction, int xPos, int yPos, int value)
 		while(buildmap[xPos+y*xMapSize] == value)
 		{
 			--y;
-		
+
 			// search went out of map
 			if(y < 0)
 				return -1;
@@ -1655,7 +1662,7 @@ void AAIMap::AnalyseMap()
 			if(height_map[y * xMapSize + x] < 0)
 				buildmap[x+y*xMapSize] = 4;
 			else if(x < xMapSize - 4 && y < yMapSize - 4)
-			// check slope 
+			// check slope
 			{
 				slope = (height_map[y * xMapSize + x] - height_map[y * xMapSize + x + 4])/64.0;
 
@@ -1673,7 +1680,7 @@ void AAIMap::AnalyseMap()
 		}
 	}
 
-	// calculate plateu map 
+	// calculate plateu map
 	int xSize = xMapSize/4;
 	int ySize = yMapSize/4;
 
@@ -1733,22 +1740,22 @@ void AAIMap::CalculateContinentMaps()
 	AAIContinent temp;
 	int continent_id = 0;
 
-	
+
 	for(int i = 0; i < xContMapSize; i += 1)
 	{
 		for(int j = 0; j < yContMapSize; j += 1)
 		{
 			// add new continent if cell has not been visited yet
 			if(continent_map[j * xContMapSize + i] < 0 && height_map[4 * (j * xMapSize + i)] >= 0)
-			{		
+			{
 				temp.id = continent_id;
 				temp.size = 1;
 				temp.water = false;
-		
+
 				continents.push_back(temp);
-				
+
 				continent_map[j * xContMapSize + i] = continent_id;
-				
+
 				old_edge_cells->push_back(j * xContMapSize + i);
 
 				// check edges of the continent as long as new cells have been added to the continent during the last loop
@@ -1819,11 +1826,11 @@ void AAIMap::CalculateContinentMaps()
 								continent_map[(y + 1) * xContMapSize + x] = -2;
 								new_edge_cells->push_back( (y + 1) * xContMapSize + x );
 							}
-						}	
+						}
 					}
-					
+
 					old_edge_cells->clear();
-				
+
 					// invert pointers to new/old edge cells
 					if(new_edge_cells == &a)
 					{
@@ -1834,7 +1841,7 @@ void AAIMap::CalculateContinentMaps()
 					{
 						new_edge_cells = &a;
 						old_edge_cells = &b;
-					}		
+					}
 				}
 
 				// finished adding continent
@@ -1852,15 +1859,15 @@ void AAIMap::CalculateContinentMaps()
 		{
 			// add new continent if cell has not been visited yet
 			if(continent_map[j * xContMapSize + i] < 0)
-			{		
+			{
 				temp.id = continent_id;
 				temp.size = 1;
 				temp.water = true;
 
 				continents.push_back(temp);
-				
+
 				continent_map[j * xContMapSize + i] = continent_id;
-				
+
 				old_edge_cells->push_back(j * xContMapSize + i);
 
 				// check edges of the continent as long as new cells have been added to the continent during the last loop
@@ -1880,7 +1887,7 @@ void AAIMap::CalculateContinentMaps()
 								continent_map[y * xContMapSize + x - 1] = continent_id;
 								continents[continent_id].size += 1;
 								new_edge_cells->push_back( y * xContMapSize + x - 1 );
-							}	
+							}
 						}
 
 						if(x < xContMapSize-1 && continent_map[y * xContMapSize + x + 1] < 0)
@@ -1915,7 +1922,7 @@ void AAIMap::CalculateContinentMaps()
 					}
 
 					old_edge_cells->clear();
-				
+
 					// invert pointers to new/old edge cells
 					if(new_edge_cells == &a)
 					{
@@ -1926,7 +1933,7 @@ void AAIMap::CalculateContinentMaps()
 					{
 						new_edge_cells = &a;
 						old_edge_cells = &b;
-					}		
+					}
 				}
 
 				// finished adding continent
@@ -1948,7 +1955,7 @@ void AAIMap::CalculateContinentMaps()
 	min_land_continent_size = xContMapSize * yContMapSize;
 	min_water_continent_size = xContMapSize * yContMapSize;
 
-	for(int i = 0; i < continents.size(); ++i)
+	for(unsigned int i = 0; i < continents.size(); ++i)
 	{
 		if(continents[i].water)
 		{
@@ -2010,7 +2017,7 @@ void AAIMap::SearchMetalSpots()
 	unsigned char DoubleRadius = cb->GetExtractorRadius() / 8.0;
 	int SquareRadius = (cb->GetExtractorRadius() / 16.0) * (cb->GetExtractorRadius() / 16.0); //used to speed up loops so no recalculation needed
 	int DoubleSquareRadius = (cb->GetExtractorRadius() / 8.0) * (cb->GetExtractorRadius() / 8.0); // same as above
-	int CellsInRadius = PI * XtractorRadius * XtractorRadius; //yadda yadda
+	//int CellsInRadius = PI * XtractorRadius * XtractorRadius; //yadda yadda
 	unsigned char* MexArrayA = new unsigned char [TotalCells];
 	unsigned char* MexArrayB = new unsigned char [TotalCells];
 	int* TempAverage = new int [TotalCells];
@@ -2223,11 +2230,11 @@ void AAIMap::UpdateRecon()
 				if(unitsInSector[x+y*xSectors] == 0)
 				{
 					++unitsInSector[x+y*xSectors];
-						
+
 					fill(sector->enemyUnitsOfType.begin(), sector->enemyUnitsOfType.end(), 0);
 					fill(sector->stat_combat_power.begin(), sector->stat_combat_power.end(), 0);
 					fill(sector->mobile_combat_power.begin(), sector->mobile_combat_power.end(), 0);
-				
+
 					sector->threat = 0;
 					sector->allied_structures = 0;
 					sector->enemy_structures = 0;
@@ -2255,7 +2262,7 @@ void AAIMap::UpdateRecon()
 
 	// go through the list
 	for(int i = 0; i < number_of_units; ++i)
-	{	
+	{
 		pos = cb->GetUnitPos(unitsInLos[i]);
 
 		// calculate in which sector unit is located
@@ -2431,7 +2438,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 			power = (bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3]) / 2.0f;
 		else
 			power = bt->fixed_eff[defence][0];
-		
+
 		air_power = bt->fixed_eff[defence][1];
 		submarine_power = bt->fixed_eff[defence][4];
 	}
@@ -2439,7 +2446,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 	int xPos = pos->x / 32;
 	int yPos = pos->z / 32;
 
-	// x range will change from line to line 
+	// x range will change from line to line
 	int xStart;
 	int xEnd;
 	int xRange;
@@ -2457,7 +2464,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 	{
 		// determine x-range
 		xRange = (int) floor( sqrt( (float) ( range * range - (y - yPos) * (y - yPos) ) ) + 0.5f );
-		
+
 		xStart = xPos - xRange;
 		xEnd = xPos + xRange;
 
@@ -2473,7 +2480,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 			defence_map[cell] += power;
 			air_defence_map[cell] += air_power;
 			submarine_defence_map[cell] += submarine_power;
-		}	
+		}
 	}
 
 	// further increase values close around the bulding (to prevent aai from packing buildings too close together)
@@ -2497,7 +2504,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 		for(int x = xStart; x <= xEnd; ++x)
 		{
 			cell = x + xDefMapSize*y;
-			
+
 			defence_map[cell] += 1000.0f;
 			air_defence_map[cell] += 1000.0f;
 			submarine_defence_map[cell] += 1000.0f;
@@ -2526,11 +2533,11 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 			power = (bt->fixed_eff[defence][2] + bt->fixed_eff[defence][3]) / 2.0f;
 		else
 			power = bt->fixed_eff[defence][0];
-		
+
 		air_power = bt->fixed_eff[defence][1];
 		submarine_power = bt->fixed_eff[defence][4];
 	}
-	
+
 	int xPos = pos->x / 32;
 	int yPos = pos->z / 32;
 
@@ -2555,7 +2562,7 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 		for(int x = xStart; x <= xEnd; ++x)
 		{
 			cell = x + xDefMapSize*y;
-			
+
 			defence_map[cell] -= 1000.0f;
 			air_defence_map[cell] -= 1000.0f;
 			submarine_defence_map[cell] -= 1000.0f;
@@ -2576,7 +2583,7 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 	{
 		// determine x-range
 		xRange = (int) floor( sqrt( (float) ( range * range - (y - yPos) * (y - yPos) ) ) + 0.5f );
-		
+
 		xStart = xPos - xRange;
 		xEnd = xPos + xRange;
 
@@ -2588,14 +2595,14 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 		for(int x = xStart; x < xEnd; ++x)
 		{
 			cell= x + xDefMapSize*y;
-			
+
 			defence_map[cell] -= power;
 			air_defence_map[cell] -= air_power;
 			submarine_defence_map[cell] -= submarine_power;
 
 			if(defence_map[cell] < 0)
 				defence_map[cell] = 0;
-			
+
 			if(air_defence_map[cell] < 0)
 				air_defence_map[cell] = 0;
 
@@ -2658,7 +2665,7 @@ float AAIMap::GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xSta
 
 				// prevent aai from building defences too close to the edges of the map
 				if( (float)edge_distance < range)
-					my_rating -= (range - (float)edge_distance);	
+					my_rating -= (range - (float)edge_distance);
 
 				if(my_rating > best_rating)
 				{

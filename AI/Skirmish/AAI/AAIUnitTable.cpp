@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 
 	units.resize(cfg->MAX_UNITS);
 
-	// fill buildtable 
+	// fill buildtable
 	for(int i = 0; i < cfg->MAX_UNITS; ++i)
 	{
 		units[i].unit_id = -1;
@@ -110,27 +110,27 @@ void AAIUnitTable::AddConstructor(int unit_id, int def_id)
 
 	if(bt->units_static[def_id].unit_type & UNIT_TYPE_FACTORY)
 		factory = true;
-	else 
+	else
 		factory = false;
 
 	if(bt->units_static[def_id].unit_type & UNIT_TYPE_BUILDER)
 		builder = true;
-	else 
+	else
 		builder = false;
 
 	if(bt->units_static[def_id].unit_type & UNIT_TYPE_ASSISTER)
 		assister = true;
-	else 
+	else
 		assister = false;
 
 	AAIConstructor *cons = new AAIConstructor(ai, unit_id, def_id, factory, builder, assister);
-	
+
 	constructors.insert(unit_id);
 	units[unit_id].cons = cons;
 
 	// increase/decrease number of available/requested builders for all buildoptions of the builder
-	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)	
-	{	
+	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)
+	{
 		bt->units_dynamic[*unit].constructorsAvailable += 1;
 		bt->units_dynamic[*unit].constructorsRequested -= 1;
 	}
@@ -159,9 +159,9 @@ void AAIUnitTable::RemoveConstructor(int unit_id, int def_id)
 
 	if(units[unit_id].cons->factory && bt->IsStatic(def_id))
 		activeFactories -= 1;
-	
+
 	// decrease number of available builders for all buildoptions of the builder
-	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)		
+	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)
 		bt->units_dynamic[*unit].constructorsAvailable -= 1;
 
 	// erase from builders list
@@ -181,17 +181,17 @@ void AAIUnitTable::AddCommander(int unit_id, int def_id)
 
 	if(bt->units_static[def_id].unit_type & UNIT_TYPE_FACTORY)
 		factory = true;
-	else 
+	else
 		factory = false;
 
 	if(bt->units_static[def_id].unit_type & UNIT_TYPE_BUILDER)
 		builder = true;
-	else 
+	else
 		builder = false;
 
 	if(bt->units_static[def_id].unit_type & UNIT_TYPE_ASSISTER)
 		assister = true;
-	else 
+	else
 		assister = false;
 
 	AAIConstructor *cons = new AAIConstructor(ai, unit_id, def_id, factory, builder, assister);
@@ -200,16 +200,16 @@ void AAIUnitTable::AddCommander(int unit_id, int def_id)
 
 	cmdr = unit_id;
 
-	// increase number of builders for all buildoptions of the commander 
-	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)		
+	// increase number of builders for all buildoptions of the commander
+	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)
 		++bt->units_dynamic[*unit].constructorsAvailable;
-	
+
 }
 
 void AAIUnitTable::RemoveCommander(int unit_id, int def_id)
 {
-	// decrease number of builders for all buildoptions of the commander 
-	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)	
+	// decrease number of builders for all buildoptions of the commander
+	for(list<int>::iterator unit = bt->units_static[def_id].canBuildList.begin();  unit != bt->units_static[def_id].canBuildList.end(); ++unit)
 		--bt->units_dynamic[*unit].constructorsAvailable;
 
 	// erase from builders list
@@ -219,8 +219,8 @@ void AAIUnitTable::RemoveCommander(int unit_id, int def_id)
 	units[unit_id].cons->Killed();
 	delete units[unit_id].cons;
 	units[unit_id].cons = 0;
-			
-	// commander has been destroyed, set pointer to zero 
+
+	// commander has been destroyed, set pointer to zero
 	if(unit_id == cmdr)
 		cmdr = -1;
 }
@@ -255,7 +255,7 @@ void AAIUnitTable::AddPowerPlant(int unit_id, int def_id)
 	power_plants.insert(unit_id);
 
 	float output = bt->units_static[def_id].efficiency[0];
-			
+
 	ai->execute->futureAvailableEnergy -= output;
 }
 
@@ -281,7 +281,7 @@ void AAIUnitTable::RemoveMetalMaker(int unit_id)
 void AAIUnitTable::AddRecon(int unit_id, int def_id)
 {
 	recon.insert(unit_id);
-	
+
 	ai->execute->futureRequestedEnergy -= bt->units_static[def_id].efficiency[0];
 }
 
@@ -313,7 +313,7 @@ void AAIUnitTable::RemoveStationaryArty(int unit_id)
 }
 
 AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander)
-{	
+{
 	//fprintf(ai->file, "constructor for %s\n", bt->GetCategoryString(building));
 	AAIConstructor *builder;
 
@@ -325,11 +325,11 @@ AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander)
 		{
 			builder = units[*i].cons;
 
-			// find unit that can directly build that building 
+			// find unit that can directly build that building
 			if(builder->task != BUILDING && bt->CanBuildUnit(builder->def_id, building))
 			{
 				//if(bt->units_static[building].category == STATIONARY_JAMMER)
-				//	fprintf(ai->file, "%s can build %s\n", bt->unitList[builder->def_id-1]->humanName.c_str(), bt->unitList[building-1]->humanName.c_str()); 
+				//	fprintf(ai->file, "%s can build %s\n", bt->unitList[builder->def_id-1]->humanName.c_str(), bt->unitList[building-1]->humanName.c_str());
 
 				// filter out commander (if not allowed)
 				if(! (!commander &&  bt->IsCommander(builder->def_id)) )
@@ -337,13 +337,13 @@ AAIConstructor* AAIUnitTable::FindBuilder(int building, bool commander)
 			}
 		}
 	}
-	
-	// no builder found 
+
+	// no builder found
 	return 0;
 }
 
 AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool commander, float *min_dist)
-{	
+{
 	float my_dist;
 	AAIConstructor *best_builder = 0, *builder;
 	float3 builder_pos;
@@ -359,18 +359,18 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool
 		if(units[*i].cons->builder)
 		{
 			builder = units[*i].cons;
-				
+
 			// find idle or assisting builder, who can build this building
-			if(  builder->task != BUILDING && bt->CanBuildUnit(builder->def_id, building)) 
+			if(  builder->task != BUILDING && bt->CanBuildUnit(builder->def_id, building))
 			{
 				builder_pos = cb->GetUnitPos(builder->unit_id);
 
 				// check continent if necessary
-				if(bt->units_static[builder->def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND) 
+				if(bt->units_static[builder->def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND)
 				{
 					if(ai->map->GetContinentID(&builder_pos) == continent)
 						suitable = true;
-					else 
+					else
 						suitable = false;
 				}
 				else
@@ -380,7 +380,7 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool
 				if(suitable && ( commander || !bt->IsCommander(builder->def_id) ) )
 				{
 					my_dist = fastmath::sqrt( (builder_pos.x - pos->x) * (builder_pos.x - pos->x) + (builder_pos.z - pos->z) * (builder_pos.z - pos->z) );
-					
+
 					if(bt->unitList[builder->def_id-1]->speed > 0)
 						my_dist /= bt->unitList[builder->def_id-1]->speed;
 
@@ -393,7 +393,7 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool
 			}
 		}
 	}
-		
+
 	return best_builder;
 }
 
@@ -413,18 +413,18 @@ AAIConstructor* AAIUnitTable::FindClosestAssistant(float3 pos, int importance, b
 		if(units[*i].cons->assistant)
 		{
 			assistant = units[*i].cons;
-				
+
 			// find idle assister
 			if(assistant->task == UNIT_IDLE)
 			{
 				assistant_pos = cb->GetUnitPos(assistant->unit_id);
 
 				// check continent if necessary
-				if(bt->units_static[assistant->def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND) 
+				if(bt->units_static[assistant->def_id].movement_type & MOVE_TYPE_CONTINENT_BOUND)
 				{
 					if(ai->map->GetContinentID(&assistant_pos) == continent)
 						suitable = true;
-					else 
+					else
 						suitable = false;
 				}
 				else
@@ -434,12 +434,12 @@ AAIConstructor* AAIUnitTable::FindClosestAssistant(float3 pos, int importance, b
 				if(suitable && ( commander || !bt->IsCommander(assistant->def_id) ) )
 				{
 					dist = (pos.x - assistant_pos.x) * (pos.x - assistant_pos.x) + (pos.z - assistant_pos.z) * (pos.z - assistant_pos.z);
-				
-					if(dist > 0)	
+
+					if(dist > 0)
 						my_rating = assistant->buildspeed / fastmath::sqrt(dist);
 					else
 						my_rating = 1;
-		
+
 					if(my_rating > best_rating)
 					{
 						best_rating = my_rating;
@@ -449,18 +449,18 @@ AAIConstructor* AAIUnitTable::FindClosestAssistant(float3 pos, int importance, b
 			}
 		}
 	}
-		
-	// no assister found -> request one 
+
+	// no assister found -> request one
 	if(!best_assistant)
 	{
 		unsigned int allowed_movement_types = 22;
-		
+
 		if(cb->GetElevation(pos.x, pos.z) < 0)
 			allowed_movement_types |= MOVE_TYPE_SEA;
-		else 
+		else
 			allowed_movement_types |= MOVE_TYPE_GROUND;
 
-		bt->AddAssistant(allowed_movement_types, true);	
+		bt->AddAssistant(allowed_movement_types, true);
 	}
 
 	return best_assistant;
@@ -491,7 +491,7 @@ void AAIUnitTable::EnemyKilled(int unit)
 {
 	if(units[unit].status == BOMB_TARGET)
 		ai->af->RemoveTarget(unit);
-	
+
 
 	if(units[unit].group)
 		units[unit].group->TargetUnitKilled();

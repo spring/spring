@@ -45,7 +45,7 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_87"
 
 // all paths
-#define MAIN_PATH aiexport_getDataDir()
+#define MAIN_PATH aiexport_getDataDir(false)
 #define AILOG_PATH "log/"
 #define MOD_CFG_PATH "cfg/mod/"
 #define GENERAL_CFG_FILE "cfg/general.cfg"

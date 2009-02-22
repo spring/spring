@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ class AAI;
 class AAIUnitTable;
 class AAIMap;
 
-struct DefenceCoverage 
+struct DefenceCoverage
 {
 	Direction direction;
 	float defence;
@@ -33,25 +33,25 @@ public:
 	AAIMetalSpot* GetFreeMetalSpot();
 	void FreeMetalSpot(float3 pos, const UnitDef *extractor);
 	void Init(AAI *ai, int x, int y, int left, int right, int top, int bottom);
-	
+
 	// adds/removes the sector from base sectors; returns true if succesful
 	bool SetBase(bool base);
-	
+
 	int GetNumberOfMetalSpots();
 	void Update();
 
 	// associates an extractor with a metal spot in that sector
 	void AddExtractor(int unit_id, int def_id, float3 *pos);
 
-	// returns buildsite for a unit in that sector (or zerovector if nothing found)	
-	float3 GetBuildsite(int building, bool water = false);	
-	
+	// returns buildsite for a unit in that sector (or zerovector if nothing found)
+	float3 GetBuildsite(int building, bool water = false);
+
 	// returns a buildsite for a defence building
 	float3 GetDefenceBuildsite(int building, UnitCategory category, float terrain_modifier, bool water);
 	float3 GetRandomBuildsite(int building, int tries, bool water = false);
 	float3 GetCenterBuildsite(int building, bool water = false);
 	float3 GetHighestBuildsite(int building);
-	
+
 	// gets rectangle for possible buildsite
 	void GetBuildsiteRectangle(int *xStart, int *xEnd, int *yStart, int *yEnd);
 
@@ -103,7 +103,7 @@ public:
 	void GetMovePos(float3 *pos);
 
 	// returns a free position in sector on specified continent for the movement type (ZeroVector if none found)
-	void GetMovePosOnContinent(float3 *pos, unsigned int movement_type, int continent); 
+	void GetMovePosOnContinent(float3 *pos, unsigned int movement_type, int continent);
 
 	// returns true is pos is within sector
 	bool PosInSector(float3 *pos);
@@ -116,9 +116,9 @@ public:
 	bool ConnectedToOcean();
 
 	// sector number
-	int x, y;  
+	int x, y;
 
-	float enemy_structures; 
+	float enemy_structures;
 	float own_structures;
 	float allied_structures;
 
@@ -131,16 +131,16 @@ public:
 	vector<int> enemyUnitsOfType;
 	vector<int> unitsOfType;
 
-	// how many times the sector was not scouted 
+	// how many times the sector was not scouted
 	float last_scout;
-	
+
 	// importance of the sector
 	float importance_this_game;
 	float importance_learned;
-	
+
 	// how many times ai has been attacked by a certain assault category in this sector
-	vector<float> attacked_by_this_game; 
-	vector<float> attacked_by_learned; 
+	vector<float> attacked_by_this_game;
+	vector<float> attacked_by_learned;
 
 	// how many battles took place in that sector (of each assault category)
 	vector<float> combats_this_game;
@@ -171,7 +171,7 @@ public:
 
 	bool freeMetalSpots;
 
-	int distance_to_base;	// 0 = base, 1 = neighbour to base 
+	int distance_to_base;	// 0 = base, 1 = neighbour to base
 	bool interior;			// true if sector is no inner sector
 
 	unsigned int allowed_movement_types;	// movement types that may enter this sector

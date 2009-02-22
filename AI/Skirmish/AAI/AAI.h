@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -28,12 +28,12 @@ using namespace std;
 
 class AAIExecute;
 
-class AAI : public IGlobalAI 
+class AAI : public IGlobalAI
 {
 public:
 	AAI();
 	virtual ~AAI();
-	
+
 	void InitAI(IGlobalAICallback* callback, int team);
 
 	void UnitCreated(int unit);												//called when a new unit is created on ai team
@@ -58,7 +58,7 @@ public:
 
 	// called every frame
 	void Update();
-	
+
 	// callbacks
 	IAICallback* cb;
 	IGlobalAICallback* aicb;
