@@ -1,16 +1,32 @@
 #include <SDL.h>
 
+#include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
 #include "OggStream.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
 
+namespace
+{
 // 512KB buffer
 const int BUFFER_SIZE = (4096 * 128);
 
+size_t VorbisStreamRead(void* ptr, size_t size, size_t nmemb, void* datasource)
+{
+	CFileHandler* buffer = (CFileHandler*)datasource;
+	return buffer->Read(ptr, size * nmemb);
+}
+
+int	VorbisStreamClose(void* datasource)
+{
+	CFileHandler* buffer = (CFileHandler*)datasource;
+	delete buffer;
+	return 0;
+}
+}
+
 COggStream::COggStream() {
 	source = 0;
-	oggFile = 0x0;
 	vorbisInfo = 0x0;
 	vorbisComment = 0x0;
 
@@ -30,13 +46,14 @@ void COggStream::Play(const std::string& path, float volume) {
 
 	int result = 0;
 
-	if (!(oggFile = fopen(path.c_str(), "rb"))) {
-		logOutput.Print("Could not open Ogg file.");
-		return;
-	}
+	ov_callbacks vorbisCallbacks;
+	vorbisCallbacks.read_func  = VorbisStreamRead;
+	vorbisCallbacks.close_func = VorbisStreamClose;
+	vorbisCallbacks.seek_func  = NULL;
+	vorbisCallbacks.tell_func  = NULL;
 
-	if ((result = ov_open(oggFile, &oggStream, NULL, 0)) < 0) {
-		fclose(oggFile);
+	CFileHandler* buf = new CFileHandler(path);
+	if ((result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks)) < 0) {
 		logOutput.Print("Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
 		return;
 	}
