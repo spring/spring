@@ -13,7 +13,6 @@
 #include "Console.h"
 #include "GameData.h"
 #include "PlayerBase.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "UnsyncedRNG.h"
 #include "SFloat3.h"
 

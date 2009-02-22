@@ -460,8 +460,8 @@ void CGameServer::Update()
 		if (serverframenum > 0) {
 			//send info about the players
 			int curpos=0;
-			int ping[MAX_PLAYERS];
-			float cpu[MAX_PLAYERS];
+			std::vector<int> ping(players.size());
+			std::vector<float> cpu(players.size());
 			float refCpu=0.0f;
 			for (unsigned a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::INGAME) {
@@ -479,8 +479,8 @@ void CGameServer::Update()
 			medianCpu=0.0f;
 			medianPing=0;
 			if(enforceSpeed && curpos>0) {
-				std::sort(cpu,cpu+curpos);
-				std::sort(ping,ping+curpos);
+				std::sort(cpu.begin(), cpu.end());
+				std::sort(ping.begin(), ping.end());
 
 				int midpos=curpos/2;
 				medianCpu=cpu[midpos];
