@@ -138,7 +138,6 @@ void COggStream::ReleaseBuffers() {
 }
 
 
-
 // returns true if both buffers were
 // filled with data from the stream
 bool COggStream::StartPlaying() {
@@ -153,7 +152,6 @@ bool COggStream::StartPlaying() {
 
 	return true;
 }
-
 
 
 // returns true if we're still playing
@@ -182,8 +180,6 @@ void COggStream::TogglePause() {
 		}
 	}
 }
-
-
 
 
 // pop the processed buffers from the queue,
@@ -246,7 +242,6 @@ void COggStream::Update() {
 }
 
 
-
 // read decoded data from audio stream into PCM buffer
 bool COggStream::DecodeStream(ALuint buffer) {
 	char pcm[BUFFER_SIZE];
@@ -279,7 +274,6 @@ bool COggStream::DecodeStream(ALuint buffer) {
 }
 
 
-
 // dequeue any buffers pending on source
 void COggStream::EmptyBuffers() {
 	int queued = 0;
@@ -293,7 +287,6 @@ void COggStream::EmptyBuffers() {
 }
 
 
-
 // check for any OpenAL errors
 void COggStream::CheckErrors() {
 	int error = alGetError();
@@ -304,20 +297,3 @@ void COggStream::CheckErrors() {
 }
 
 
-
-std::string COggStream::ErrorString(int code) {
-	switch (code) {
-		case OV_EREAD:
-			return std::string("Read from media.");
-		case OV_ENOTVORBIS:
-			return std::string("Not Vorbis data.");
-		case OV_EVERSION:
-			return std::string("Vorbis version mismatch.");
-		case OV_EBADHEADER:
-			return std::string("Invalid Vorbis header.");
-		case OV_EFAULT:
-			return std::string("Internal logic fault (bug or heap/stack corruption.");
-		default:
-			return std::string("Unknown Ogg error.");
-	}
-}
