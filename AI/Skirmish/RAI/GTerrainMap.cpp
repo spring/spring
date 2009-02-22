@@ -11,16 +11,19 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 //	l = logfile;
 	*l<<"\n Loading the Terrain-Map ...";
 
-	string cacheDir = cLogFile::GetRAIRootDirectory() + "cache"sPS;
-	if (!util_makeDir(cacheDir.c_str(), true)) {
-		*l<<"\nERROR: Could not create the cache dir: "<<cacheDir;
+	string cacheDirectory = cLogFile::GetRAIRootDirectory() + "cache"sPS;
+	cacheDirectory.reserve(512 + cacheDirectory.length());
+	bool isCreated = cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)cacheDirectory.c_str() );
+
+	if (!isCreated) {
+		*l<<"\nERROR: Could not create the cache dir: "<<cacheDirectory;
 	}
 
 	// Reading the WaterDamage entry from the map file
 	const int mapFileVersion = 2;
 	waterIsHarmful = false;
 	string mapFileName = cb->GetMapName();
-	mapFileName = cacheDir + mapFileName.substr(0,int(mapFileName.size())-3) + "res";
+	mapFileName = cacheDirectory + mapFileName.substr(0,int(mapFileName.size())-3) + "res";
 	FILE *mapFile = fopen(mapFileName.c_str(),"rb");
 	bool mapFileLoaded = false;
 	if( mapFile )
@@ -41,7 +44,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 	{
 //		double mapArchiveTimer = clock();
 		string mapArchiveFileName = cb->GetMapName();
-		mapArchiveFileName = "maps"sPS+mapArchiveFileName.substr(0,int(mapArchiveFileName.size())-3)+"smd";
+		mapArchiveFileName = "maps\\"+mapArchiveFileName.substr(0,int(mapArchiveFileName.size())-3)+"smd";
 		int mapArchiveFileSize = cb->GetFileSize(mapArchiveFileName.c_str());
 		if( mapArchiveFileSize > 0 )
 		{

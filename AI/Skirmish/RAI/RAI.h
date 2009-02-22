@@ -100,9 +100,6 @@ using namespace std;
 
 #include "GTerrainMap.h"
 #include "GResourceMap.h"
-static GlobalResourceMap* GRMap=0;
-static GlobalTerrainMap* GTMap=0;
-static int RAIs=0;
 
 // how often lists are updated by frame interval.  NOTE: this is different from in-game graphics frames and will always be trigger 30x per second (assuming the game speed is 1.00)
 #define FUPDATE_MINIMAL 90		// 3 seconds, the minimal time for an update.  NOTE: excluding FUPDATE_UNITS, this value needs to be 'a factor' of the other FUPDATE values

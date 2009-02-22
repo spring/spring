@@ -58,7 +58,7 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data);
 
 // methods from here on are for AI internal use only
 const char* aiexport_getMyInfo(const char* key);
-const char* aiexport_getDataDir();
+const char* aiexport_getDataDir(bool absoluteAndWriteable);
 const char* aiexport_getVersion();
 const char* aiexport_getMyOption(int teamId, const char* key);
 
