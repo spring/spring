@@ -1,8 +1,10 @@
+
+#include "OggStream.h"
+
 #include <SDL.h>
 
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
-#include "OggStream.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
 
