@@ -123,8 +123,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 		return false;
 	}
 
-	if (header->datalen > buffer.size() - sizeof(WAVHeader)) {
-//		logOutput.Print("\n");
+	if (static_cast<unsigned>(header->datalen) > buffer.size() - sizeof(WAVHeader)) {
 		logOutput.Print("OpenAL: file %s has data length %d greater than actual data length %ld\n",
 						file.c_str(), header->datalen, buffer.size() - sizeof(WAVHeader));
 //		logOutput.Print("OpenAL: size %d\n", size);
@@ -141,7 +140,6 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 		// FIXME: setting datalen to size - sizeof(WAVHeader) only
 		// works for some files that have a garbage datalen field
 		// in their header, others cause SEGV's inside alBufferData()
-		// (eg. ionbeam.wav in XTA 9.2) -- Kloot
 		// header->datalen = size - sizeof(WAVHeader);
 		header->datalen = 1;
 	}
@@ -230,7 +228,7 @@ void SoundBuffer::Initialise()
 
 void SoundBuffer::Deinitialise()
 {
-	buffers.resize(0); // empty ("zero") buffer
+	buffers.resize(0);
 };
 
 size_t SoundBuffer::GetId(const std::string& name)
