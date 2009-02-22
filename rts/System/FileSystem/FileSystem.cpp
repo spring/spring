@@ -621,29 +621,6 @@ bool FileSystem::CheckFile(const std::string& file) const
 	return true;
 }
 
-/**
- * @brief does a little checking of a modestring
- */
-bool FileSystem::CheckMode(const char* mode) const
-{
-	assert(mode && *mode);
-	return true;
-}
-
-/**
- * @brief locate a file
- *
- * Attempts to locate a file.
- *
- * If the FileSystem::WRITE flag is set, it just returns the argument
- * (assuming the file should come in the current working directory).
- * If FileSystem::CREATE_DIRS is set it tries to create the subdirectory
- * the file should live in.
- *
- * Otherwise (if flags == 0), it dispatches the call to
- * FileSystemHandler::LocateFile(), which either searches for it in multiple
- * data directories (UNIX) or just returns the argument (Windows).
- */
 std::string FileSystem::LocateFile(std::string file, int flags) const
 {
 	if (!CheckFile(file)) {
@@ -653,10 +630,14 @@ std::string FileSystem::LocateFile(std::string file, int flags) const
 	FixSlashes(file);
 
 	if (flags & WRITE) {
+		std::string writeableFile = fs.GetWriteDir()
+				+ (char)fs.GetNativePathSeparator() + file;
+		FixSlashes(writeableFile);
 		if (flags & CREATE_DIRS) {
-			CreateDirectory(GetDirectory(file));
+			
+			CreateDirectory(GetDirectory(writeableFile));
 		}
-		return file;
+		return writeableFile;
 	}
 
 	return fs.LocateFile(file);
@@ -665,18 +646,15 @@ std::string FileSystem::LocateFile(std::string file, int flags) const
 
 bool FileSystem::InReadDir(const std::string& path)
 {
-	if (path.find("..") != std::string::npos) {
-		return false; // realpath() would be nice
-	}
-	const std::vector<std::string> readDirs = fs.GetDataDirectories();
-	return true;
+	std::string locatedFile = LocateFile(path);
+	return (locatedFile != "") && (locatedFile != path);
 }
 
 
 bool FileSystem::InWriteDir(const std::string& path, const std::string& prefix)
 {
-	const std::string writeDir = fs.GetWriteDir();
-	return true;
+	std::string locatedFile = LocateFile(path, WRITE);
+	return (locatedFile != "") && (locatedFile != path);
 }
 
 
