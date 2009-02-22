@@ -59,7 +59,7 @@ protected:
 /**
  * @brief filesystem interface
  *
- * Use this from the rest of the spring code!
+ * Use this from the rest of the spring code, not FileSystemHandler!
  */
 class FileSystem
 {
@@ -80,6 +80,20 @@ class FileSystem
 		FileSystem() {}
 
 		// generic functions
+		/**
+		 * @brief locate a file
+		 *
+		 * Attempts to locate a file.
+		 *
+		 * If the FileSystem::WRITE flag is set, the path is assembled in the
+		 * writeable data-dir.
+		 * If FileSystem::CREATE_DIRS is set it tries to create the subdirectory
+		 * the file should live in.
+		 *
+		 * Otherwise (if flags == 0), it dispatches the call to
+		 * FileSystemHandler::LocateFile(), which either searches for it in multiple
+		 * data directories (UNIX) or just returns the argument (Windows).
+		 */
 		std::string LocateFile(std::string file, int flags = 0) const;
 		bool Remove(std::string file) const;
 
@@ -100,13 +114,22 @@ class FileSystem
 		std::string& ForwardSlashes(std::string& path) const;
 
 		// access check functions
+		/**
+		 * Returns true if path is a relative path that exists in one of the
+		 * data-dirs.
+		 */
 		bool InReadDir(const std::string& path);
+		/**
+		 * Returns true if path is a relative path that exists in the writable
+		 * data-dir.
+		 * As it is not known what the person initially creating
+		 * this function, intended to do with prefix, it is ignored.
+		 */
 		bool InWriteDir(const std::string& path, const std::string& prefix = "");
 
 	private:
 		bool CheckFile(const std::string& file) const;
 		bool CheckDir(const std::string& dir) const;
-		bool CheckMode(const char* mode) const;
 
 		FileSystem(const FileSystem&);
 		FileSystem& operator=(const FileSystem&);
