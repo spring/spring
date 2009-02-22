@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ class AAIBrain
 public:
 	AAIBrain(AAI *ai);
 	~AAIBrain(void);
-	
+
 	// adds/removes sector to the base
 	void AddSector(AAISector *sector);
 	void RemoveSector(AAISector *sector);
@@ -33,7 +33,7 @@ public:
 	bool SectorInList(list<AAISector*> mylist, AAISector *sector);
 	list<AAISector*> GetSectors();
 
-	void RemoveProducer(list<ProductionRequest> builders, int builder_id);   
+	void RemoveProducer(list<ProductionRequest> builders, int builder_id);
 
 	// returns dest attack sector
 	AAISector* GetAttackDest(bool land, bool water, AttackType type);
@@ -42,7 +42,7 @@ public:
 	AAISector* GetNextAttackDest(AAISector *current_sector, bool land, bool water);
 
 	// checks for new neighbours (and removes old ones if necessary)
-	void UpdateNeighbouringSectors(); 
+	void UpdateNeighbouringSectors();
 
 	// recalculates the center of the base
 	void UpdateBaseCenter();
@@ -78,10 +78,10 @@ public:
 	// adds new sectors to base
 	bool ExpandBase(SectorType sectorType);
 
-	// returns how much ressources can be spent for unit construction atm 
+	// returns how much ressources can be spent for unit construction atm
 	float Affordable();
 
-	// returns true if commander is allowed for construction at the specified position in the sector 
+	// returns true if commander is allowed for construction at the specified position in the sector
 	bool CommanderAllowedForConstructionAt(AAISector *sector, float3 *pos);
 
 	// returns true if AAI may build a mex in this sector (e.g. safe sector)
@@ -95,12 +95,12 @@ public:
 	void BuildUnits();
 
 	void BuildUnitOfCategory(UnitCategory category, float cost, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, bool urgent);
-	
+
 	// returns game period
 	int GetGamePeriod();
 
 	//  0 = sectors the ai uses to build its base, 1 = direct neighbours etc.
-	vector<list<AAISector*> > sectors; 
+	vector<list<AAISector*> > sectors;
 
 	// ratio of land/water cells in all base sectors
 	float baseLandRatio;
@@ -112,8 +112,8 @@ public:
 	float3 base_center;
 
 	// are there any free metal spots within the base
-	bool freeBaseSpots;		
-	bool expandable; 
+	bool freeBaseSpots;
+	bool expandable;
 
 	// holding max number of units of a category spotted at the same time
 	vector<float> max_units_spotted;
@@ -122,7 +122,7 @@ public:
 
 	// pos where com spawned
 	float3 start_pos;
-		
+
 	AAIExecute *execute;
 
 private:

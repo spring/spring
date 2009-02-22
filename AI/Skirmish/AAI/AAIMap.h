@@ -13,7 +13,7 @@ public:
 	~AAIMap(void);
 
 	void Init();
-	
+
 	// sets cells of the builmap to value
 	bool SetBuildMap(int xPos, int yPos, int xSize, int ySize, int value, int ignore_value = -1);
 
@@ -34,7 +34,7 @@ public:
 
 	// returns sector (0 if out of sector map -> e.g. aircraft flying outside of the map) of a position
 	AAISector* GetSectorOfPos(float3 *pos);
-	
+
 	// returns buildsites for normal and defence buildings
 	float3 GetHighestBuildsite(const UnitDef *def, int xStart, int xEnd, int yStart, int yEnd);
 	float3 GetCenterBuildsite(const UnitDef *def, int xStart, int xEnd, int yStart, int yEnd, bool water = false);
@@ -43,7 +43,7 @@ public:
 
 	// return rating of a the best buidliste fpr a def. building vs category within specified rect (and stores pos in pointer)
 	float GetDefenceBuildsite(float3 *best_pos, const UnitDef *def, int xStart, int xEnd, int yStart, int yEnd, UnitCategory category,  float terrain_modifier, bool water);
-	
+
 	float3 GetClosestBuildsite(const UnitDef *def, float3 pos, int max_distance, bool water);
 
 	// returns footprint size of a building
@@ -67,16 +67,16 @@ public:
 
 	void UpdateSectors();
 
-	// increases/decreases usefulness of the category of the killer/killed unit 
+	// increases/decreases usefulness of the category of the killer/killed unit
 	void UpdateCategoryUsefulness(const UnitDef *killer_def, int killer, const UnitDef *killed_def, int killed);
 
 	const char* GetMapTypeTextString(int map_type);
 	const char* GetMapTypeString(int map_type);
 
 	// return next cell in direction with a certain value
-	int GetNextX(int direction, int xPos, int yPos, int value);	// 0 means left, other right; returns -1 if not found 
+	int GetNextX(int direction, int xPos, int yPos, int value);	// 0 means left, other right; returns -1 if not found
 	int GetNextY(int direction, int xPos, int yPos, int value);	// 0 means up, other down; returns -1 if not found
-	
+
 	// returns true if buildmap allows construction
 	bool CanBuildAt(int xPos, int yPos, int xSize, int ySize, bool water = false);
 
@@ -87,7 +87,7 @@ public:
 	// reads continent cache file (and creates new one if necessary)
 	void ReadContinentFile();
 
-	// if auto_set == true, the loaded values are assigned to the current sectordata as well 
+	// if auto_set == true, the loaded values are assigned to the current sectordata as well
 	void ReadMapLearnFile(bool auto_set);
 
 	// calculates learning effect
@@ -148,35 +148,35 @@ public:
 	static int water_metal_spots;
 
 	static bool metalMap;
-	static MapType map_type;	// 0 -> unknown ,1-> land map (default), 2 -> air map, 
-								// 3 -> water map with land connections 
+	static MapType map_type;	// 0 -> unknown ,1-> land map (default), 2 -> air map,
+								// 3 -> water map with land connections
 								// 4 -> "full water map
 
 	static vector< vector<int> > team_sector_map;	// stores the number of ai player which has taken that sector (-1 if none)
 											// this helps preventing aai from expanding into sectors of other aai players
 
-	
-	static vector<int> buildmap;	// map of the cells in the sector; 
-							// 0 unoccupied, flat terrain 
-							// 1 occupied flat terrain, 
-							// 2 spaces between buildings 
+
+	static vector<int> buildmap;	// map of the cells in the sector;
+							// 0 unoccupied, flat terrain
+							// 1 occupied flat terrain,
+							// 2 spaces between buildings
 							// 3 terrain not suitable for constr.
 							// 4 water
 							// 5 occupied water
 	static vector<int> blockmap;		// number of buildings which ordered a cell to blocked
 	static vector<float> plateau_map;	// positive values indicate plateaus, 1/4 of resolution of blockmap/buildmap
 	static vector<int> continent_map;	// id of continent a cell belongs to
-	
+
 	static vector<int> ship_movement_map;	// movement maps for different categories, 1/4 of resolution of blockmap/buildmap
 	static vector<int> kbot_movement_map;
 	static vector<int> vehicle_movement_map;
 	static vector<int> hover_movement_map;
-	
+
 
 	static vector<AAIContinent> continents;
 	static int land_continents;
 	static int water_continents;
-	
+
 	static int avg_land_continent_size;
 	static int avg_water_continent_size;
 	static int max_land_continent_size;

@@ -689,7 +689,7 @@ void AAI::UnitIdle(int unit)
 
 void AAI::UnitMoveFailed(int unit)
 {
-	const UnitDef *def = cb->GetUnitDef(unit);
+	//const UnitDef *def = cb->GetUnitDef(unit);
 
 	if(ut->units[unit].cons)
 	{

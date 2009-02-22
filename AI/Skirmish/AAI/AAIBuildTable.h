@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ public:
 
 	// precaches speed/cost/buildtime/range stats
 	void PrecacheStats();
-	
+
 	// only precaches costs (called after possible cost multipliers have been assigned)
 	void PrecacheCosts();
 
@@ -51,7 +51,7 @@ public:
 	// ******************************************************************************************************
 	// the following functions are used to determine units that suit a certain purpose
 	// if water == true, only water based units/buildings will be returned
-	// randomness == 1 means no randomness at all; never set randomnes to zero -> crash 
+	// randomness == 1 means no randomness at all; never set randomnes to zero -> crash
 	// ******************************************************************************************************
 	// returns power plant
 	int GetPowerPlant(int side, float cost, float urgency, float max_power, float current_energy, bool water, bool geo, bool canBuild);
@@ -73,12 +73,12 @@ public:
 	// return repair pad
 	int GetAirBase(int side, float cost, bool water, bool canBuild);
 
-	// returns a ground unit according to the following criteria 
+	// returns a ground unit according to the following criteria
 	int GetGroundAssault(int side, float power, float gr_eff, float air_eff, float hover_eff, float sea_eff, float stat_eff, float efficiency, float speed, float range, float cost, int randomness, bool canBuild);
-	
+
 	int GetHoverAssault(int side, float power, float gr_eff, float air_eff, float hover_eff, float sea_eff, float stat_eff, float efficiency, float speed, float range, float cost, int randomness, bool canBuild);
-	
-	// returns an air unit according to the following criteria 
+
+	// returns an air unit according to the following criteria
 	int GetAirAssault(int side, float power, float gr_eff, float air_eff, float hover_eff, float sea_eff, float stat_eff, float efficiency, float speed, float range, float cost, int randomness, bool canBuild);
 
 	int GetSeaAssault(int side, float power, float gr_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, float efficiency, float speed, float range, float cost, int randomness, bool canBuild);
@@ -171,13 +171,13 @@ public:
 	// returns id of assault category
 	int GetIDOfAssaultCategory(UnitCategory category);
 	UnitCategory GetAssaultCategoryOfID(int id);
-		
-	// number of sides 
+
+	// number of sides
 	int numOfSides;
-	
+
 	// side names
 	vector<string> sideNames;
-		
+
 	// start units of each side (e.g. commander)
 	vector<int> startUnits;
 
@@ -199,26 +199,26 @@ public:
 	// number of assault cat + arty & stat defences
 	static const int combat_categories = 6;
 
-	// usefulness of unit category of side 
+	// usefulness of unit category of side
 	static float ***mod_usefulness;
 
 	// how many aai instances have been initialized
-	static int aai_instances; 
+	static int aai_instances;
 
 	// path/name of the file in which AAI stores the build table
 	static char buildtable_filename[500];
 
 	// all the unit defs
 	static const UnitDef **unitList;
-	
+
 	// cached values of average costs and buildtime
-	static float *avg_cost[MOBILE_CONSTRUCTOR+1]; 
+	static float *avg_cost[MOBILE_CONSTRUCTOR+1];
 	static float *avg_buildtime[MOBILE_CONSTRUCTOR+1];
 	static float *avg_value[MOBILE_CONSTRUCTOR+1];	// used for different things, range of weapons, radar range, mex efficiency
-	static float *max_cost[MOBILE_CONSTRUCTOR+1]; 
+	static float *max_cost[MOBILE_CONSTRUCTOR+1];
 	static float *max_buildtime[MOBILE_CONSTRUCTOR+1];
 	static float *max_value[MOBILE_CONSTRUCTOR+1];
-	static float *min_cost[MOBILE_CONSTRUCTOR+1]; 
+	static float *min_cost[MOBILE_CONSTRUCTOR+1];
 	static float *min_buildtime[MOBILE_CONSTRUCTOR+1];
 	static float *min_value[MOBILE_CONSTRUCTOR+1];
 
@@ -272,16 +272,16 @@ public:
 
 	void SaveBuildTable();
 
-private:	
+private:
 	// for internal use
 	void CalcBuildTree(int unit);
 	bool LoadBuildTable();
-	
+
 
 	void DebugPrint();
 
 	IAICallback *cb;
 	AAI * ai;
-		
+
 	FILE *file;
 };

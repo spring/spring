@@ -110,19 +110,34 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 
 // methods from here on are for AI internal use only
 
-const char* aiexport_getDataDir() {
+const char* aiexport_getDataDir(bool absoluteAndWriteable) {
 
-	static char* ddWithSlash = NULL;
+	static char* dd_ws_rel = NULL;
+	static char* dd_ws_abs_w = NULL;
 
-	if (ddWithSlash == NULL) {
-		const char* dd = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
+	if (absoluteAndWriteable) {
+		if (dd_ws_abs_w == NULL) {
+			// this is the writeable one, absolute
+			const char* dd = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
 
-		ddWithSlash = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
-		STRCPY(ddWithSlash, dd);
-		STRCAT(ddWithSlash, sPS);
+			dd_ws_abs_w = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
+			STRCPY(dd_ws_abs_w, dd);
+			STRCAT(dd_ws_abs_w, sPS);
+		}
+		return dd_ws_abs_w;
+	} else {
+		if (dd_ws_rel == NULL) {
+			dd_ws_rel = util_allocStrCatFSPath(4,
+					SKIRMISH_AI_DATA_DIR, "AAI", aiexport_getVersion(), "X");
+			// remove the X, so we end up with a slash at the end
+			if (dd_ws_rel != NULL) {
+				dd_ws_rel[strlen(dd_ws_rel) -1] = '\0';
+			}
+		}
+		return dd_ws_rel;
 	}
 
-	return ddWithSlash;
+	return NULL;
 }
 const char* aiexport_getVersion() {
 	return util_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);

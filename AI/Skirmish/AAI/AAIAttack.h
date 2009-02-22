@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ public:
 
 	void RemoveGroup(AAIGroup *group);
 
-	// returns true if attack has failed 
+	// returns true if attack has failed
 	bool Failed();
 
 	// orders units to attack specidied sector
@@ -42,7 +42,7 @@ public:
 
 	AttackType type;
 
-	// tick when last attack order has been given (to prevent overflow when unit gets stuck and sends "unit idel" all the time) 
+	// tick when last attack order has been given (to prevent overflow when unit gets stuck and sends "unit idel" all the time)
 	int lastAttack;
 
 	// specifies what kind of sector the involved unit groups may attack
@@ -50,7 +50,7 @@ public:
 	bool water;
 
 	// groups participating
-	set<AAIGroup*> combat_groups; 
+	set<AAIGroup*> combat_groups;
 	set<AAIGroup*> aa_groups;
 	set<AAIGroup*> arty_groups;
 

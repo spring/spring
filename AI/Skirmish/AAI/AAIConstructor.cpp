@@ -77,7 +77,7 @@ void AAIConstructor::Idle()
 			ReleaseAllAssistants();
 		}
 	}
-	
+
 	if(factory)
 	{
 		ConstructionFinished();
@@ -95,7 +95,7 @@ void AAIConstructor::Update()
 			int def_id = (*buildque->begin());
 			UnitCategory cat = ai->bt->units_static[def_id].category;
 
-			if(ai->bt->IsBuilder(def_id) || cat == SCOUT || ai->cb->GetMetal() > 50 
+			if(ai->bt->IsBuilder(def_id) || cat == SCOUT || ai->cb->GetMetal() > 50
 				|| ai->bt->units_static[def_id].cost < ai->bt->avg_cost[ai->bt->units_static[def_id].category][ai->side-1])
 			{
 				// check if mobile or stationary builder
@@ -117,7 +117,7 @@ void AAIConstructor::Update()
 				{
 					// find buildpos for the unit
 					float3 pos = ai->execute->GetUnitBuildsite(unit_id, def_id);
-				
+
 					if(pos.x > 0)
 					{
 						// give build order
@@ -148,13 +148,13 @@ void AAIConstructor::Update()
 
 		CheckAssistance();
 	}
-	
+
 	if(builder)
 	{
 		if(task == BUILDING)
 		{
 			// if building has begun, check for possible assisters
-			if(construction_unit_id >= 0) 
+			if(construction_unit_id >= 0)
 				CheckAssistance();
 			// if building has not yet begun, check if something unexpected happened (buildsite blocked)
 			else
@@ -164,7 +164,7 @@ void AAIConstructor::Update()
 					//cb->SendTextMsg("idle", 0);
 					ai->bt->units_dynamic[construction_def_id].active -= 1;
 					ai->ut->futureUnits[construction_category] -= 1;
-	
+
 					// clear up buildmap etc.
 					ai->execute->ConstructionFailed(build_pos, construction_def_id);
 
@@ -199,7 +199,7 @@ void AAIConstructor::Update()
 								c.id = CMD_RESURRECT;
 							else
 								c.id = CMD_RECLAIM;
-						} 
+						}
 						else
 							c.id = CMD_RECLAIM;
 
@@ -214,7 +214,7 @@ void AAIConstructor::Update()
 						ai->execute->GiveOrder(&c, unit_id, "Builder::Reclaming");
 					}
 				}
-			}	
+			}
 		}
 		*/
 	}
@@ -238,7 +238,7 @@ void AAIConstructor::CheckAssistance()
 					bt->units_dynamic[*j].constructorsRequested += 1;
 			}
 		}
-		
+
 		// check if support needed
 		if(assistants.size() < cfg->MAX_ASSISTANTS)
 		{
@@ -246,9 +246,9 @@ void AAIConstructor::CheckAssistance()
 
 			if(buildque->size() > 2)
 				assist = true;
-			else if(construction_def_id && (bt->unitList[construction_def_id-1]->buildTime/(30.0f * bt->unitList[def_id-1]->buildSpeed) > cfg->MIN_ASSISTANCE_BUILDTIME)) 
+			else if(construction_def_id && (bt->unitList[construction_def_id-1]->buildTime/(30.0f * bt->unitList[def_id-1]->buildSpeed) > cfg->MIN_ASSISTANCE_BUILDTIME))
 				assist = true;
-		
+
 			if(assist)
 			{
 				AAIConstructor* assistant = ai->ut->FindClosestAssistant(ai->cb->GetUnitPos(unit_id), 5, true);
@@ -266,14 +266,14 @@ void AAIConstructor::CheckAssistance()
 			//cb->SendTextMsg("factory releasing assistants",0);
 			ReleaseAllAssistants();
 		}
-	
+
 	}
 
 	if(builder && build_task)
 	{
 		// prevent assisting when low on ressources
 		if(ai->execute->averageMetalSurplus < 0.1)
-		{	
+		{
 			if(construction_category == METAL_MAKER)
 			{
 				if(ai->execute->averageEnergySurplus < 0.5 * ai->bt->unitList[construction_def_id-1]->energyUpkeep)
@@ -289,7 +289,7 @@ void AAIConstructor::CheckAssistance()
 		{
 			// com only allowed if buildpos is inside the base
 			bool commander = false;
-	
+
 			int x = build_pos.x / ai->map->xSectorSize;
 			int y = build_pos.z / ai->map->ySectorSize;
 
@@ -300,7 +300,7 @@ void AAIConstructor::CheckAssistance()
 			}
 
 			AAIConstructor* assistant = ai->ut->FindClosestAssistant(build_pos, 5, commander);
-			
+
 			if(assistant)
 			{
 				assistants.insert(assistant->unit_id);
@@ -329,7 +329,7 @@ void AAIConstructor::GiveReclaimOrder(int unit_id)
 
 		assistance = -1;
 	}
-	
+
 	task = RECLAIMING;
 
 	Command c;
@@ -344,7 +344,7 @@ void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool wat
 {
 	// get def and final position
 	const UnitDef *def = ai->bt->unitList[id_building-1];
-	
+
 	// give order if building can be placed at the desired position (position lies within a valid sector)
 	if(ai->execute->InitBuildingAt(def, &pos, water))
 	{
@@ -431,7 +431,7 @@ void AAIConstructor::TakeOverConstruction(AAIBuildTask *build_task)
 	construction_def_id = build_task->def_id;
 	construction_category = ai->bt->units_static[construction_def_id].category;
 	build_pos = build_task->build_pos;
-	
+
 	Command c;
 	c.id = CMD_REPAIR;
 	c.params.push_back(build_task->unit_id);
@@ -452,7 +452,7 @@ void AAIConstructor::ConstructionFinished()
 
 	build_pos = ZeroVector;
 	construction_def_id = 0;
-	construction_unit_id = -1; 
+	construction_unit_id = -1;
 	construction_category = UNKNOWN;
 
 	build_task = 0;
@@ -477,7 +477,7 @@ void AAIConstructor::StopAssisting()
 {
 	task = UNIT_IDLE;
 	assistance = -1;
-	
+
 	Command c;
 	c.id = CMD_STOP;
 	//cb->GiveOrder(unit_id, &c);
@@ -491,23 +491,23 @@ void AAIConstructor::Killed()
 {
 	if(builder)
 	{
-		// when builder was killed on the way to the buildsite, inform ai that construction 
+		// when builder was killed on the way to the buildsite, inform ai that construction
 		// of building hasnt been started
 		if(task == BUILDING)
 		{
 			//if buildling has not begun yet, decrease some values
 			if(construction_unit_id == -1)
 			{
-				ai->bt->units_dynamic[construction_def_id].requested -= 1; 
+				ai->bt->units_dynamic[construction_def_id].requested -= 1;
 				ai->ut->requestedUnits[construction_category] -= 1;
 
-				// killed on the way to the buildsite 
+				// killed on the way to the buildsite
 				int x = build_pos.x / ai->map->xSectorSize;
 				int y = build_pos.z / ai->map->ySectorSize;
 
 				if(ai->map->sector[x][y].distance_to_base > 0)
 					ai->map->sector[x][y].lost_units[MOBILE_CONSTRUCTOR-COMMANDER] += 1;
-	
+
 				// clear up buildmap etc.
 				ai->execute->ConstructionFailed(build_pos, construction_def_id);
 			}
@@ -515,7 +515,7 @@ void AAIConstructor::Killed()
 			else
 			{
 				if(build_task)
-					build_task->BuilderDestroyed();	
+					build_task->BuilderDestroyed();
 			}
 		}
 		else if(task == ASSISTING)
@@ -536,7 +536,7 @@ void AAIConstructor::Retreat(UnitCategory attacked_by)
 
 		int x = pos.x / ai->map->xSectorSize;
 		int y = pos.z / ai->map->ySectorSize;
-		
+
 		// attacked by scout
 		if(attacked_by == SCOUT)
 		{
@@ -563,7 +563,7 @@ void AAIConstructor::Retreat(UnitCategory attacked_by)
 					return;
 			}
 		}
-		
+
 
 		// get safe position
 		pos = ai->execute->GetSafePos(def_id, pos);

@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ AAIConfig::AAIConfig(void)
 {
 	SIDES = 2;
 	SECTOR_SIZE = 100.0;
-	MIN_ENERGY = 18;  // min energy make value to be considered beeing a power plant 
+	MIN_ENERGY = 18;  // min energy make value to be considered beeing a power plant
 	MAX_UNITS = 10000;
 	MAX_SCOUTS = 4;
 	MAX_SECTOR_IMPORTANCE = 6;
@@ -69,13 +69,13 @@ AAIConfig::AAIConfig(void)
 	UNIT_SPEED_SUBGROUPS = 3;
 	MIN_SUBMARINE_WATERLINE = 15;
 	MAX_ATTACKS = 4;
-	
+
 	NON_AMPHIB_MAX_WATERDEPTH = 15.0f;
 
 	MAX_COST_LIGHT_ASSAULT = 0.025f;
 	MAX_COST_MEDIUM_ASSAULT = 0.13f;
 	MAX_COST_HEAVY_ASSAULT = 0.55f;
-	
+
 	LIGHT_ASSAULT_RATIO = 40.0f;
 	MEDIUM_ASSAULT_RATIO = 30.0f;
 	HEAVY_ASSAULT_RATIO = 25.0f;
@@ -85,7 +85,7 @@ AAIConfig::AAIConfig(void)
 	MIN_FALLBACK_RANGE = 450.0f;
 	MAX_FALLBACK_RANGE = 800.0f;
 	MIN_FALLBACK_TURNRATE = 250.0f;
-	
+
 	LEARN_SPEED = 0.2f;
 	LEARN_RATE = 5;
 	CONSTRUCTION_TIMEOUT = 1500;
@@ -93,13 +93,13 @@ AAIConfig::AAIConfig(void)
 	SCOUT_UPDATE_FREQUENCY = 127;
 	WATER_MAP_RATIO = 0.8f;
 	LAND_WATER_MAP_RATIO = 0.3f;
-	
+
 	initialized = false;
 }
 
 AAIConfig::~AAIConfig(void)
 {
-	for(int i = 0; i < SIDES; i++) 
+	for(int i = 0; i < SIDES; i++)
 	{
 		delete [] START_UNITS[i];
 		delete [] SIDE_NAMES[i];
@@ -119,14 +119,14 @@ void AAIConfig::LoadConfig(AAI *ai)
 	strcat(buffer, ai->cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename); 
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	FILE *file = fopen(filename, "r");
 	char keyword[50];
 	int ival;
 	float fval;
 	const UnitDef *def;
-	
+
 	bool error = false;
 	bool loaded = false;
 
@@ -178,7 +178,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 					fscanf(file, "%s", filename);
 					if(ai->cb->GetUnitDef(filename))
 						SCOUTS.push_back(ai->cb->GetUnitDef(filename)->id);
-					else 
+					else
 					{
 						fprintf(ai->file, "ERROR: loading scouts - could not find unit %s\n", filename);
 						error = true;
@@ -196,7 +196,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 					fscanf(file, "%s", filename);
 					if(ai->cb->GetUnitDef(filename))
 						ATTACKERS.push_back(ai->cb->GetUnitDef(filename)->id);
-					else 
+					else
 					{
 						fprintf(ai->file, "ERROR: loading attackers - could not find unit %s\n", filename);
 						error = true;
@@ -214,7 +214,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 					fscanf(file, "%s", filename);
 					if(ai->cb->GetUnitDef(filename))
 						TRANSPORTERS.push_back(ai->cb->GetUnitDef(filename)->id);
-					else 
+					else
 					{
 						fprintf(ai->file, "ERROR: loading transporters - could not find unit %s\n", filename);
 						error = true;
@@ -232,7 +232,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 					fscanf(file, "%s", filename);
 					if(ai->cb->GetUnitDef(filename))
 						DONT_BUILD.push_back(ai->cb->GetUnitDef(filename)->id);
-					else 
+					else
 					{
 						fprintf(ai->file, "ERROR: loading dont_build units - could not find unit %s\n", filename);
 						error = true;
@@ -245,7 +245,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 				// get the unit def
 				fscanf(file, "%s", filename);
 				def = ai->cb->GetUnitDef(filename);
-				
+
 				if(def)
 				{
 					fscanf(file, "%f", &fval);
@@ -256,7 +256,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 
 					cost_multipliers.push_back(temp);
 				}
-				else 
+				else
 				{
 					fprintf(ai->file, "ERROR: could not set cost multiplier - could not find unit %s\n", filename);
 					error = true;
@@ -565,7 +565,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 				break;
 			}
 		}
-		
+
 		if(error)
 		{
 			fprintf(ai->file, "Mod config file %s contains erroneous keyword %s\n", filename, keyword);
@@ -585,14 +585,14 @@ void AAIConfig::LoadConfig(AAI *ai)
 		initialized = false;
 		return;
 	}
-	
+
 
 	// load general settings
 	strcpy(buffer, MAIN_PATH);
 	strcat(buffer, GENERAL_CFG_FILE);
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename); 
+	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
 
 	file = fopen(filename, "r");
 
@@ -648,7 +648,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 			return;
 		}
 	}
-	else 
+	else
 	{
 		fprintf(ai->file, "General config file %s not found\n", filename);
 		initialized = false;

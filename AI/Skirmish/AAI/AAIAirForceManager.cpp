@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ void AAIAirForceManager::AddTarget(int unit_id, int def_id)
 	{
 		if(targets[i].unit_id == -1)
 		{
-			ai->cb->SendTextMsg("Target added...", 0); 
+			ai->cb->SendTextMsg("Target added...", 0);
 
 			targets[i].pos = cb->GetUnitPos(unit_id);
 			targets[i].def_id = def_id;
@@ -156,7 +156,7 @@ void AAIAirForceManager::RemoveTarget(int unit_id)
 	{
 		if(targets[i].unit_id == unit_id)
 		{
-			ai->cb->SendTextMsg("Target removed...", 0); 
+			ai->cb->SendTextMsg("Target removed...", 0);
 
 			targets[i].unit_id = -1;
 
@@ -197,11 +197,11 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 		AAIGroup *group = GetAirGroup(100.0, BOMBER_UNIT);
 
 		if(group)
-		{	
+		{
 			//ai->cb->SendTextMsg("Bombing...", 0);
 
 			group->BombTarget(targets[i].unit_id, &targets[i].pos);
-			
+
 			targets[i].unit_id = -1;
 			--num_of_targets;
 		}
@@ -220,7 +220,7 @@ AAIGroup* AAIAirForceManager::GetAirGroup(float importance, UnitType group_type)
 	}
 	else
 	{
-		
+
 		for(list<AAIGroup*>::iterator group = air_groups->begin(); group != air_groups->end(); ++group)
 		{
 			if((*group)->task_importance < importance && group_type == (*group)->group_unit_type && (*group)->units.size() >= (*group)->maxSize)

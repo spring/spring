@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // ------------------------------------------------------------------------
 
@@ -16,14 +16,14 @@ AAISector::AAISector()
 }
 
 AAISector::~AAISector(void)
-{	
+{
 	defences.clear();
-	
-	attacked_by_this_game.clear(); 
-	attacked_by_learned.clear(); 
 
-	stat_combat_power.clear(); 
-	mobile_combat_power.clear(); 
+	attacked_by_this_game.clear();
+	attacked_by_learned.clear();
+
+	stat_combat_power.clear();
+	mobile_combat_power.clear();
 
 	combats_learned.clear();
 	combats_this_game.clear();
@@ -52,14 +52,14 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	distance_to_base = -1;
 	last_scout = 1;
 	rally_points = 0;
-	
+
 	// nothing sighted in that sector
 	enemy_structures = 0;
 	own_structures = 0;
 	allied_structures = 0;
 	threat = 0;
 	failed_defences = 0;
-	
+
 	int categories = ai->bt->assault_categories.size();
 
 	combats_learned.resize(categories, 0);
@@ -151,8 +151,8 @@ AAIMetalSpot* AAISector::GetFreeMetalSpot()
 		if(!(*i)->occupied)
 			return *i;
 	}
-	
-	
+
+
 	return 0;
 }
 void AAISector::FreeMetalSpot(float3 pos, const UnitDef *extractor)
@@ -176,7 +176,7 @@ void AAISector::FreeMetalSpot(float3 pos, const UnitDef *extractor)
 				(*spot)->extractor_def = -1;
 
 				freeMetalSpots = true;
-				
+
 				// if part of the base, tell the brain that the base has now free spots again
 				if(distance_to_base == 0)
 					ai->brain->freeBaseSpots = true;
@@ -201,7 +201,7 @@ void AAISector::AddExtractor(int unit_id, int def_id, float3 *pos)
 			spot_pos = (*spot)->pos;
 			ai->map->Pos2FinalBuildPos(&spot_pos, ai->bt->unitList[def_id-1]);
 
-			if(pos->x == spot_pos.x && pos->z == spot_pos.z)	
+			if(pos->x == spot_pos.x && pos->z == spot_pos.z)
 			{
 				(*spot)->extractor = unit_id;
 				(*spot)->extractor_def = def_id;
@@ -246,7 +246,7 @@ float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, float
 
 	list<Direction> directions;
 
-	// get possible directions 
+	// get possible directions
 	if(category == AIR_ASSAULT && !cfg->AIR_ONLY_MOD)
 	{
 		directions.push_back(CENTER);
@@ -260,64 +260,64 @@ float3 AAISector::GetDefenceBuildsite(int building, UnitCategory category, float
 			// filter out frontiers to other base sectors
 			if(x > 0 && map->sector[x-1][y].distance_to_base > 0 && map->sector[x-1][y].allied_structures < 100 && map->team_sector_map[x-1][y] != my_team )
 				directions.push_back(WEST);
-	
+
 			if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0 && map->sector[x+1][y].allied_structures < 100 && map->team_sector_map[x+1][y] != my_team)
 				directions.push_back(EAST);
 
 			if(y > 0 && map->sector[x][y-1].distance_to_base > 0 && map->sector[x][y-1].allied_structures < 100 && map->team_sector_map[x][y-1] != my_team)
 				directions.push_back(NORTH);
-	
+
 			if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0 && map->sector[x][y+1].allied_structures < 100 && map->team_sector_map[x][y+1] != my_team)
 				directions.push_back(SOUTH);
 		}
 	}
-	
+
 	int xStart = 0;
-	int xEnd = 0; 
+	int xEnd = 0;
 	int yStart = 0;
 	int yEnd = 0;
 
 	// check possible directions
 	for(list<Direction>::iterator dir =directions.begin(); dir != directions.end(); ++dir)
 	{
-		// get area to perform search 
+		// get area to perform search
 		if(*dir == CENTER)
 		{
 			xStart = x * map->xSectorSizeMap;
-			xEnd = (x+1) * map->xSectorSizeMap; 
+			xEnd = (x+1) * map->xSectorSizeMap;
 			yStart = y * map->ySectorSizeMap;
-			yEnd = (y+1) * map->ySectorSizeMap; 
+			yEnd = (y+1) * map->ySectorSizeMap;
 		}
 		else if(*dir == WEST)
 		{
 			xStart = x * map->xSectorSizeMap;
-			xEnd = x * map->xSectorSizeMap + map->xSectorSizeMap/4.0f; 
+			xEnd = x * map->xSectorSizeMap + map->xSectorSizeMap/4.0f;
 			yStart = y * map->ySectorSizeMap;
-			yEnd = (y+1) * map->ySectorSizeMap; 
+			yEnd = (y+1) * map->ySectorSizeMap;
 		}
 		else if(*dir == EAST)
 		{
 			xStart = (x+1) * map->xSectorSizeMap - map->xSectorSizeMap/4.0f;
 			xEnd = (x+1) * map->xSectorSizeMap;
 			yStart = y * map->ySectorSizeMap;
-			yEnd = (y+1) * map->ySectorSizeMap; 
+			yEnd = (y+1) * map->ySectorSizeMap;
 		}
 		else if(*dir == NORTH)
 		{
 			xStart = x * map->xSectorSizeMap;
 			xEnd = (x+1) * map->xSectorSizeMap;
 			yStart = y * map->ySectorSizeMap;
-			yEnd = y * map->ySectorSizeMap + map->ySectorSizeMap/4.0f; 
+			yEnd = y * map->ySectorSizeMap + map->ySectorSizeMap/4.0f;
 		}
 		else if(*dir == SOUTH)
 		{
 			xStart = x * map->xSectorSizeMap ;
 			xEnd = (x+1) * map->xSectorSizeMap;
 			yStart = (y+1) * map->ySectorSizeMap - map->ySectorSizeMap/4.0f;
-			yEnd = (y+1) * map->ySectorSizeMap; 
+			yEnd = (y+1) * map->ySectorSizeMap;
 		}
 
-		// 
+		//
 		my_rating = map->GetDefenceBuildsite(&pos, def, xStart, xEnd, yStart, yEnd, category, terrain_modifier, water);
 
 		if(my_rating > best_rating)
@@ -372,27 +372,27 @@ float3 AAISector::GetRandomBuildsite(int building, int tries, bool water)
 void AAISector::GetBuildsiteRectangle(int *xStart, int *xEnd, int *yStart, int *yEnd)
 {
 	*xStart = x * map->xSectorSizeMap;
-	*xEnd = *xStart + map->xSectorSizeMap; 
+	*xEnd = *xStart + map->xSectorSizeMap;
 
 	if(*xStart == 0)
 		*xStart = 8;
 
 	*yStart = y * map->ySectorSizeMap;
-	*yEnd = *yStart + map->ySectorSizeMap; 
-	
+	*yEnd = *yStart + map->ySectorSizeMap;
+
 	if(*yStart == 0)
 		*yStart = 8;
 
 	// reserve buildspace for def. buildings
 	if(x > 0 && map->sector[x-1][y].distance_to_base > 0 )
 		*xStart += map->xSectorSizeMap/8;
-	
+
 	if(x < map->xSectors-1 && map->sector[x+1][y].distance_to_base > 0)
 		*xEnd -= map->xSectorSizeMap/8;
 
 	if(y > 0 && map->sector[x][y-1].distance_to_base > 0)
 		*yStart += map->ySectorSizeMap/8;
-	
+
 	if(y < map->ySectors-1 && map->sector[x][y+1].distance_to_base > 0)
 		*yEnd -= map->ySectorSizeMap/8;
 }
@@ -432,9 +432,9 @@ float AAISector::GetDefencePowerVs(UnitCategory category)
 {
 	float power = 0.5;
 
-	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); ++i)	
+	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); ++i)
 		power += ai->bt->GetEfficiencyAgainst(i->def_id, category);
-	
+
 	return power;
 }
 
@@ -442,9 +442,9 @@ float AAISector::GetDefencePowerVsID(int combat_cat_id)
 {
 	float power = 0.5;
 
-	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); ++i)	
+	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); ++i)
 		power +=  ai->bt->units_static[i->def_id].efficiency[combat_cat_id];
-	
+
 	return power;
 }
 
@@ -455,7 +455,7 @@ UnitCategory AAISector::GetWeakestCategory()
 
 	if(defences.size() > cfg->MAX_DEFENCES)
 		return UNKNOWN;
-	
+
 	float learned = 60000 / (ai->cb->GetCurrentFrame() + 30000) + 0.5;
 	float current = 2.5 - learned;
 
@@ -470,7 +470,7 @@ UnitCategory AAISector::GetWeakestCategory()
 			importance = GetThreatBy(*cat, learned, current)/GetDefencePowerVs(*cat);
 
 			if(importance > most_important)
-			{	
+			{
 				most_important = importance;
 				weakest = *cat;
 			}
@@ -508,22 +508,22 @@ float AAISector::GetThreatTo(float ground, float air, float hover, float sea, fl
 
 float AAISector::GetLostUnits(float ground, float air, float hover, float sea, float submarine)
 {
-	return (ground * lost_units[GROUND_ASSAULT-COMMANDER] + air * lost_units[AIR_ASSAULT-COMMANDER] 
-		  + hover * lost_units[HOVER_ASSAULT-COMMANDER] + sea * lost_units[SEA_ASSAULT-COMMANDER] 
+	return (ground * lost_units[GROUND_ASSAULT-COMMANDER] + air * lost_units[AIR_ASSAULT-COMMANDER]
+		  + hover * lost_units[HOVER_ASSAULT-COMMANDER] + sea * lost_units[SEA_ASSAULT-COMMANDER]
 		  + submarine * lost_units[SUBMARINE_ASSAULT-COMMANDER]);
 }
 
 float AAISector::GetOverallThreat(float learned, float current)
 {
 	return (learned * (attacked_by_learned[0] + attacked_by_learned[1] + attacked_by_learned[2] + attacked_by_learned[3])
-		+ current *	(attacked_by_this_game[0] + attacked_by_this_game[1] + attacked_by_this_game[2] + attacked_by_this_game[3])) 
+		+ current *	(attacked_by_this_game[0] + attacked_by_this_game[1] + attacked_by_this_game[2] + attacked_by_this_game[3]))
 		/(learned + current);
 }
 
 void AAISector::RemoveBuildingType(int def_id)
 {
 	unitsOfType[ai->bt->units_static[def_id].category] -= 1;
-	
+
 	own_structures -= ai->bt->units_static[def_id].cost;
 
 	if(own_structures < 0)
@@ -571,7 +571,7 @@ float AAISector::GetFlatRatio()
 {
 	// get number of cliffy tiles
 	float flat_ratio = ai->map->GetCliffyCells(left/SQUARE_SIZE, top/SQUARE_SIZE, ai->map->xSectorSizeMap, ai->map->ySectorSizeMap);
-	
+
 	// get number of flat tiles
 	flat_ratio = (ai->map->xSectorSizeMap * ai->map->ySectorSizeMap) - flat_ratio;
 
@@ -595,7 +595,7 @@ float AAISector::GetMapBorderDist()
 
 void AAISector::UpdateThreatValues(UnitCategory unit, UnitCategory attacker)
 {
-	// if lost unit is a building, increase attacked_by 
+	// if lost unit is a building, increase attacked_by
 	if(unit <= METAL_MAKER)
 	{
 		float change;
@@ -681,8 +681,8 @@ bool AAISector::ConnectedToOcean()
 		return false;
 
 	// find water cell
-	int x_cell = (left + right) / 16.0f; 
-	int y_cell = (top + bottom) / 16.0f; 
+	int x_cell = (left + right) / 16.0f;
+	int y_cell = (top + bottom) / 16.0f;
 
 	// get continent
 	int cont = map->GetContinentID(x_cell, y_cell);
@@ -690,7 +690,7 @@ bool AAISector::ConnectedToOcean()
 	if(map->continents[cont].water)
 	{
 		if(map->continents[cont].size > 1200 && map->continents[cont].size > 0.5f * (float)map->avg_water_continent_size )
-			return true;	
+			return true;
 	}
 
 	return false;
@@ -700,7 +700,7 @@ void AAISector::GetMovePos(float3 *pos)
 {
 	int x,y;
 	*pos = ZeroVector;
-		
+
 	// try to get random spot
 	for(int i = 0; i < 6; ++i)
 	{
@@ -715,14 +715,14 @@ void AAISector::GetMovePos(float3 *pos)
 			return;
 	}
 
-	// search systematically 
+	// search systematically
 	for(int i = 0; i < map->xSectorSizeMap; i += 8)
 	{
 		for(int j = 0; j < map->ySectorSizeMap; j += 8)
 		{
 			pos->x = left + i * SQUARE_SIZE;
 			pos->z = top + j * SQUARE_SIZE;
-			
+
 			// get cell index of middlepoint
 			x = (int) (pos->x / SQUARE_SIZE);
 			y = (int) (pos->z / SQUARE_SIZE);
@@ -740,7 +740,7 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 {
 	int x,y;
 	*pos = ZeroVector;
-		
+
 	// try to get random spot
 	for(int i = 0; i < 6; ++i)
 	{
@@ -758,15 +758,15 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 				return;
 		}
 	}
-	
-	// search systematically 
+
+	// search systematically
 	for(int i = 0; i < map->xSectorSizeMap; i += 8)
 	{
 		for(int j = 0; j < map->ySectorSizeMap; j += 8)
 		{
 			pos->x = left + i * SQUARE_SIZE;
 			pos->z = top + j * SQUARE_SIZE;
-			
+
 			// get cell index of middlepoint
 			x = (int) (pos->x / SQUARE_SIZE);
 			y = (int) (pos->z / SQUARE_SIZE);
@@ -774,7 +774,7 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 			if(map->buildmap[x + y * map->xMapSize] != 1)
 			{
 				if(map->GetContinentID(pos) == continent)
-					return;	
+					return;
 			}
 		}
 	}
