@@ -1,5 +1,6 @@
 #include "VorbisShared.h"
 
+#include <vorbis/vorbisfile.h>
 #include <string.h>
 
 std::string ErrorString(int code)

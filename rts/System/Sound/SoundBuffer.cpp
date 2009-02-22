@@ -32,6 +32,9 @@ int	VorbisClose(void* datasource)
 };
 }
 
+SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
+SoundBuffer::bufferVecT SoundBuffer::buffers;
+
 SoundBuffer::SoundBuffer() : id(0)
 {
 }
@@ -219,6 +222,51 @@ int SoundBuffer::BufferSize() const
 	alGetBufferi(id, AL_SIZE, &size);
 	return static_cast<int>(size);
 }
+
+void SoundBuffer::Initialise()
+{
+	buffers.resize(1); // empty ("zero") buffer
+};
+
+void SoundBuffer::Deinitialise()
+{
+	buffers.resize(0); // empty ("zero") buffer
+};
+
+size_t SoundBuffer::GetId(const std::string& name)
+{
+	bufferMapT::const_iterator it = bufferMap.find(name);
+	if (it != bufferMap.end())
+		return it->second;
+	else
+		return 0;
+};
+
+boost::shared_ptr<SoundBuffer> SoundBuffer::GetById(const size_t id)
+{
+	return buffers.at(id);
+};
+
+size_t SoundBuffer::Count()
+{
+	return buffers.size();
+};
+
+size_t SoundBuffer::AllocedSize()
+{
+	int numBytes = 0;
+	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
+		numBytes += (*it)->BufferSize();
+	return numBytes;
+};
+
+size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
+{
+	size_t bufId = buffers.size();
+	buffers.push_back(buffer);
+	bufferMap[buffer->GetFilename()] = bufId;
+	return bufId;
+};
 
 void SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const uint8_t* data, size_t datalength, int rate)
 {

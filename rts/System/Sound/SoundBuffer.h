@@ -3,7 +3,9 @@
 
 #include <AL/al.h>
 #include <boost/noncopyable.hpp>
+#include <boost/shared_ptr.hpp>
 #include <string>
+#include <map>
 #include <vector>
 
 /**
@@ -35,12 +37,27 @@ public:
 	};
 	
 	int BufferSize() const;
-
+	
+	static void Initialise();
+	static void Deinitialise();
+	
+	static size_t GetId(const std::string& name);
+	static boost::shared_ptr<SoundBuffer> GetById(const size_t id);
+	
+	static size_t Count();
+	static size_t AllocedSize();
+	
+	static size_t Insert(boost::shared_ptr<SoundBuffer> buffer);
 private:
 	void AlGenBuffer(const std::string& file, ALenum format, const uint8_t* data, size_t datalength, int rate);
 
 	std::string filename;
 	ALuint id;
+	
+	typedef std::map<std::string, size_t> bufferMapT;
+	typedef std::vector< boost::shared_ptr<SoundBuffer> > bufferVecT;
+	static bufferMapT bufferMap; // filename, index into Buffers
+	static bufferVecT buffers;
 };
 
 

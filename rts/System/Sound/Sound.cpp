@@ -75,12 +75,11 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 		alDistanceModel (AL_INVERSE_DISTANCE);
 		alDopplerFactor(0.1);
 	}
-
-	buffers.resize(1); // empty ("zero") buffer
 	
+	SoundBuffer::Initialise();
 	soundItemDef temp;
 	temp["name"] = "EmptySource";
-	SoundItem* empty = new SoundItem(buffers[0], temp);
+	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
 	sounds.push_back(empty);
 	posScale.x = 0.02f;
 	posScale.y = 0.0005f;
@@ -140,7 +139,7 @@ CSound::~CSound()
 	{
 		sources.clear(); // delete all sources
 		sounds.clear();
-		buffers.clear(); // delete all buffers
+		SoundBuffer::Deinitialise();
 		ALCcontext *curcontext = alcGetCurrentContext();
 		ALCdevice *curdevice = alcGetContextsDevice(curcontext);
 		alcMakeContextCurrent(NULL);
@@ -416,11 +415,9 @@ void CSound::PrintDebugInfo()
 {
 	LogObject(LOG_SOUND) << "OpenAL Sound System:";
 	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
-	LogObject(LOG_SOUND) << "# SoundBuffers: " << buffers.size();
-	int numBytes = 0;
-	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
-		numBytes += (*it)->BufferSize();
-	LogObject(LOG_SOUND) << "# reserved for buffers: " << (numBytes/1024) << " kB";
+	LogObject(LOG_SOUND) << "# SoundBuffers: " << SoundBuffer::Count();
+;
+	LogObject(LOG_SOUND) << "# reserved for buffers: " << (SoundBuffer::AllocedSize()/1024) << " kB";
 	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
@@ -461,10 +458,7 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 	}
 	else
 	{
-		size_t bufId = buffers.size();
-		buffers.push_back(buffer);
-		bufferMap[path] = bufId;
-		return bufId;
+		return SoundBuffer::Insert(buffer);
 	}
 }
 
@@ -474,18 +468,14 @@ size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
 	if (sources.empty())
 		return 0;
-	bufferMapT::const_iterator it = bufferMap.find(path);
-	if (it != bufferMap.end()) {
-		return it->second;
-	}
-
-	const size_t buffer = LoadALBuffer(path, hardFail);
-	return buffer;
+	
+	const size_t id = SoundBuffer::GetId(path);
+	return (id == 0) ? LoadALBuffer(path, hardFail) : id;
 }
 
 boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bool hardFail)
 {
-	return buffers[GetWaveId(path, hardFail)];
+	return SoundBuffer::GetById(GetWaveId(path, hardFail));
 }
 
 void CSound::NewFrame()
