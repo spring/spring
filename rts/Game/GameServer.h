@@ -17,7 +17,6 @@
 #include "UnsyncedRNG.h"
 #include "SFloat3.h"
 
-class CBaseNetProtocol;
 namespace netcode
 {
 	class RawPacket;
@@ -104,10 +103,7 @@ public:
 
 private:
 	/**
-	@brief catch commands from chat messages and handle them
-	Insert chat messages here. If it contains a command (e.g. .nopause) usefull for the server it get filtered out, otherwise it will forwarded to all clients.
-	@param msg The whole message
-	@param player The playernumber which sent the message
+	@brief relay chat messages to players / autohost
 	*/
 	void GotChatMessage(const ChatMessage& msg);
 

@@ -30,7 +30,6 @@ class COggStream {
 		bool UpdateBuffers();
 		void UpdateTimer();
 		void CheckErrors();
-		std::string ErrorString(int code);
 
 		OggVorbis_File oggStream;
 		vorbis_info* vorbisInfo;
