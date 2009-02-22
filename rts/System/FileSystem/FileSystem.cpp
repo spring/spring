@@ -93,12 +93,13 @@ FileSystemHandler::~FileSystemHandler()
 	configHandler.Deallocate();
 }
 
-FileSystemHandler::FileSystemHandler() :
 #ifndef _WIN32
-	native_path_separator('/')
+const int FileSystemHandler::native_path_separator = '/';
 #else
-	native_path_separator('\\')
+const int FileSystemHandler::native_path_separator = '\\';
 #endif
+
+FileSystemHandler::FileSystemHandler()
 {
 	// NOTE TO SELF: NEVER EVAR DO THIS AGAIN THIS WAY
 
@@ -140,7 +141,7 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 	std::vector<std::string> matches;
 
 	// if it's an absolute path, don't look for it in the data directories
-	if ((dir[0] == '/') || ((dir.length() > 1) && (dir[1] == ':'))) {
+	if (FileSystemHandler::IsAbsolutePath(dir)) {
 		FindFilesSingleDir(matches, dir, pattern, flags);
 		return matches;
 	}
@@ -156,33 +157,22 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 std::string FileSystemHandler::LocateFile(const std::string& file) const
 {
 	// if it's an absolute path, don't look for it in the data directories
+	if (FileSystemHandler::IsAbsolutePath(file)) {
+		return file;
+	}
+
+	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
+	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
+		std::string fn(d->path + file);
 #ifdef WIN32
-	if ((file.length() > 1) && (file[1] == ':')) {
-		return file;
-	}
-
-	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		std::string fn(d->path + file);
 		if (_access(fn.c_str(), 4) == 0) {
-			return fn;
-		}
-	}
-	return file;
 #else
-	if (file[0] == '/') {
-		return file;
-	}
-
-	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
-	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
-		std::string fn(d->path + file);
 		if (access(fn.c_str(), R_OK | F_OK) == 0) {
+#endif
 			return fn;
 		}
 	}
 	return file;
-#endif
 }
 
 
@@ -195,6 +185,21 @@ std::vector<std::string> FileSystemHandler::GetDataDirectories() const
 		f.push_back(d->path);
 	}
 	return f;
+}
+
+
+bool FileSystemHandler::IsAbsolutePath(const std::string& path)
+{
+#ifdef WIN32
+	if ((path.length() > 1) && (path[1] == ':')) {
+		return true;
+	}
+#else
+	if ((path.length() > 0) && (path[0] == '/')) {
+		return true;
+	}
+#endif
+	return false;
 }
 
 

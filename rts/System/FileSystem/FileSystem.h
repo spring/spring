@@ -44,7 +44,8 @@ public:
 	std::string GetWriteDir() const;
 	std::vector<std::string> GetDataDirectories() const;
 
-	int GetNativePathSeparator() const { return native_path_separator; }
+	static int GetNativePathSeparator() { return native_path_separator; }
+	static bool IsAbsolutePath(const std::string& path);
 
 protected:
 	void InitVFS() const;
@@ -53,7 +54,7 @@ protected:
 	DataDirLocater locater;
 	static FileSystemHandler* instance;
 
-	const int native_path_separator;
+	static const int native_path_separator;
 };
 
 /**

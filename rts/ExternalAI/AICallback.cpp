@@ -1372,9 +1372,13 @@ bool CAICallback::GetValue(int id, void *data)
 			return true;
 		}case AIVAL_LOCATE_FILE_W:{
 			std::string f((char*) data);
-			f = filesystem.LocateFile(f, FileSystem::WRITE | FileSystem::CREATE_DIRS);
-			strcpy((char*) data, f.c_str());
-			return true;
+			std::string f_abs = filesystem.LocateFile(f, FileSystem::WRITE | FileSystem::CREATE_DIRS);
+			if (!FileSystemHandler::IsAbsolutePath(f_abs)) {
+				return false;
+			} else {
+				strcpy((char*) data, f.c_str());
+				return true;
+			}
 		}
 		case AIVAL_UNIT_LIMIT: {
 			*(int*) data = uh->maxUnits;
