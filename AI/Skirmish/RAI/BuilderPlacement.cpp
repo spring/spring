@@ -640,7 +640,7 @@ cBuilderPlacement::cBuilderPlacement(IAICallback* callback, cRAI* global)
 						path->push_back(Resources[bestRLI->index]->S->position);
 						path->push_back(Resources[bestRLI->bestI]->S->position);
 					}
-					for( int i=0; i<int(path->size())-1; i++ )
+					for( unsigned int i=0; i<int(path->size())-1; i++ )
 					{
 						float3 Pos1=path->at(i);
 						float3 Pos2=path->at(i+1);

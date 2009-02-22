@@ -12,6 +12,9 @@
 #include <time.h>		// time(NULL)
 //#include "KrogsMetalClass-v0.4/MetalMap.h"
 
+static GlobalResourceMap* GRMap=0;
+static GlobalTerrainMap* GTMap=0;
+static int RAIs=0;
 
 namespace std
 {
@@ -1084,31 +1087,31 @@ void cRAI::DebugDrawShape(float3 CenterPos, float linelength, float width, int a
 
 void cRAI::ClearLogFiles()
 {
-	const string dataDirectory = cLogFile::GetRAIRootDirectory() + "cache/";
-	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)cLogFile::GetRAIRootDirectory().c_str() );
-	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)dataDirectory.c_str() );
+	string logDir = cLogFile::GetRAIRootDirectory();
+	logDir.reserve(512 + logDir.length());
+	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)logDir.c_str() );
 
 	string logFileName;
 	for( int i=0; i<16; i++ )
 	{	
 		char c[3];
 		SNPRINTF(c, 3, "%i", i);
-		logFileName = cLogFile::GetRAIRootDirectory()+"RAI"+string(c)+"_LastGame.log";
+		logFileName = logDir+"RAI"+string(c)+"_LastGame.log";
 		remove(logFileName.c_str());
 	}
 
-	logFileName=cLogFile::GetRAIRootDirectory()+"RAIGlobal_LastGame.log";
+	logFileName=logDir+"RAIGlobal_LastGame.log";
 	remove(logFileName.c_str());
-	logFileName=cLogFile::GetRAIRootDirectory()+"TerrainMapDebug.log";
+	logFileName=logDir+"TerrainMapDebug.log";
 	remove(logFileName.c_str());
-//	logFileName=cLogFile::GetRAIRootDirectory()+"PathfinderDebug.log";
+//	logFileName=logDir+"PathfinderDebug.log";
 //	remove(logFileName.c_str());
-//	logFileName=cLogFile::GetRAIRootDirectory()+"PathFinderAPNDebug.log";
+//	logFileName=logDir+"PathFinderAPNDebug.log";
 //	remove(logFileName.c_str());
-//	logFileName=cLogFile::GetRAIRootDirectory()+"PathFinderNPNDebug.log";
+//	logFileName=logDir+"PathFinderNPNDebug.log";
 //	remove(logFileName.c_str());
-//	logFileName=cLogFile::GetRAIRootDirectory()+"Prerequisite.log";
+//	logFileName=logDir+"Prerequisite.log";
 //	remove(logFileName.c_str());
-//	logFileName=cLogFile::GetRAIRootDirectory()+"Debug.log";
+//	logFileName=logDir+"Debug.log";
 //	remove(logFileName.c_str());
 }

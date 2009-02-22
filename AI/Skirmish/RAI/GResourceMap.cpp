@@ -98,7 +98,11 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 				fList[i] = fList[--fSize];
 	}
 
-	resourceFileName = cLogFile::GetRAIRootDirectory() + "cache/" + string(cb->GetModName());
+	string cacheDirectory = cLogFile::GetRAIRootDirectory() + "cache"sPS;
+	cacheDirectory.reserve(512 + cacheDirectory.length());
+	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)cacheDirectory.c_str() );
+
+	resourceFileName = cacheDirectory + string(cb->GetModName());
 	resourceFileName.resize(resourceFileName.size()-4);
 	resourceFileName += "-" + string(cb->GetMapName());
 	resourceFileName.resize(resourceFileName.size()-3);
@@ -504,23 +508,30 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 			const int MMapToHMap = HeightMapXSize/MMXSize;
 			MMSAssessingSize = 0;
 			float3 position;// temp variable
-			for( int x=0; x<MMXSize; x++ )
-				for(int z=0; z<MMZSize; z++)
-					if( MMS[x][z].assessing )
-						if( TM->waterIsHarmful && StandardHeightMap[(z*MMapToHMap+MMapToHMap/2)*HeightMapXSize+(x*MMapToHMap+MMapToHMap/2)] < 0 )
+			for( int x=0; x<MMXSize; x++ ) {
+				for(int z=0; z<MMZSize; z++) {
+					if( MMS[x][z].assessing ) {
+						if( TM->waterIsHarmful && StandardHeightMap[(z*MMapToHMap+MMapToHMap/2)*HeightMapXSize+(x*MMapToHMap+MMapToHMap/2)] < 0 ) {
 							MMS[x][z].assessing = false;
-						else
+						} else {
 							MMSAssessingSize++;
+						}
+					}
+				}
+			}
 
 			// try cutting it down a little more, if needed
 			if( MMSAssessingSize > 250000 )
 			{
 				*l<<"\n   Assessing "<<MMSAssessingSize<<" possible metal-sites.";
 				*l<<"\n    Reducing Assessment ... ";
-				for( int x=0; x<MMXSize; x++ )
-					for(int z=0; z<MMZSize; z++)
-						if( MMS[x][z].assessing && MMS[x][z].totalMetal < 1.75*RAI_MinimalMetalSite )
+				for( int x=0; x<MMXSize; x++ ) {
+					for(int z=0; z<MMZSize; z++) {
+						if( MMS[x][z].assessing && MMS[x][z].totalMetal < 1.75*RAI_MinimalMetalSite ) {
 							MMS[x][z].assessing = false;
+						}
+					}
+				}
 			}
 
 //			MSTimerTemp = clock();

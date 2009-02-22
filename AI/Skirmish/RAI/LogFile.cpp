@@ -86,6 +86,6 @@ void cLogFile::Write(int message)
 
 const std::string& cLogFile::GetRAIRootDirectory() {
 
-	static std::string raiRootDirectory = aiexport_getDataDir();
+	static std::string raiRootDirectory = aiexport_getDataDir(false);
 	return raiRootDirectory;
 }

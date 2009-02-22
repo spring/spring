@@ -82,8 +82,10 @@ void cSWeaponManager::UnitIdle(int unit, sRAIUnitDef* udr)
 	}
 	else if( stockPile+stockQued < 5 || (!udr->SWeapon->manualfire && stockPile+stockQued < 10) )
 	{
-		if( (G->UDH->BLMetal->UDefActive == 0 && G->UDH->BLMetalL->UDefActive == 0) || 0.66*cb->GetMetalIncome() > udr->SWeapon->metalcost/udr->SWeapon->reload &&
-			(G->UDH->BLEnergy->UDefActive == 0 && G->UDH->BLEnergyL->UDefActive == 0) || 0.66*cb->GetEnergyIncome() > udr->SWeapon->energycost/udr->SWeapon->reload )
+		if( ((G->UDH->BLMetal->UDefActive == 0 && G->UDH->BLMetalL->UDefActive == 0)
+				|| 0.66*cb->GetMetalIncome() > udr->SWeapon->metalcost/udr->SWeapon->reload) &&
+			((G->UDH->BLEnergy->UDefActive == 0 && G->UDH->BLEnergyL->UDefActive == 0)
+				|| 0.66*cb->GetEnergyIncome() > udr->SWeapon->energycost/udr->SWeapon->reload) )
 		{
 			Command c;
 			c.id = CMD_STOCKPILE;
