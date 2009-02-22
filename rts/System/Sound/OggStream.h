@@ -32,7 +32,6 @@ class COggStream {
 		void CheckErrors();
 		std::string ErrorString(int code);
 
-		FILE* oggFile;
 		OggVorbis_File oggStream;
 		vorbis_info* vorbisInfo;
 		vorbis_comment* vorbisComment;
