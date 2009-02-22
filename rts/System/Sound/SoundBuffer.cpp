@@ -9,6 +9,29 @@
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 
+namespace
+{
+struct VorbisInputBuffer
+{
+	uint8_t* data;
+	size_t pos;
+	size_t size;
+};
+
+size_t VorbisRead(void* ptr, size_t size, size_t nmemb, void* datasource)
+{
+	VorbisInputBuffer* buffer = (VorbisInputBuffer*)datasource;
+	const size_t maxRead = std::max(size * nmemb, buffer->size - buffer->pos);
+	memcpy(ptr, buffer->data + buffer->pos, maxRead);
+	return maxRead;
+};
+
+int	VorbisClose(void* datasource)
+{
+	return 0; // nothing to be done here
+};
+}
+
 SoundBuffer::SoundBuffer() : id(0)
 {
 }
@@ -134,8 +157,8 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<uint8_t> buffe
 	ov_callbacks vorbisCallbacks;
 	vorbisCallbacks.read_func  = VorbisRead;
 	vorbisCallbacks.close_func = VorbisClose;
-	vorbisCallbacks.seek_func  = VorbisSeek;
-	vorbisCallbacks.tell_func  = VorbisTell;
+	vorbisCallbacks.seek_func  = NULL;
+	vorbisCallbacks.tell_func  = NULL;
 
 	OggVorbis_File oggStream;
 	int result = 0;
