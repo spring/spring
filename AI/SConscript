@@ -532,6 +532,10 @@ for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinter
 		awkVars += ['SPRING_SOURCE_DIR=' + filelist.getAbsDir(env, springSrcDir)]
 		awkVars += ['INTERFACE_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceJavaSrcDir)]
 		awkVars += ['GENERATED_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)]
+		# gawk doesn't like backslashes on windows
+		if os.name == 'nt':
+			for i, e in enumerate(awkVars):
+				awkVars[i] = e.replace('\\', '/')
 
 		#def debugFunc1_buildTime(toCreateDir):
                 #
