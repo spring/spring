@@ -325,7 +325,7 @@ class CLuaHandle : public CEventClient
 		static bool GetModUICtrl() { return modUICtrl; }
 
 		static void HandleLuaMsg(int playerID, int script, int mode,
-		                         const string& msg);
+		                         const std::vector<uint8_t>& msg);
 
 	protected: // static
 		static CLuaHandle* activeHandle;

@@ -139,6 +139,8 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 	medianPing=0;
 	enforceSpeed=!setup->hostDemo && configHandler.Get("EnforceGameSpeed", false);
 
+	allowAdditionalPlayers = configHandler.Get("AllowAdditionalPlayers", false);
+
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(settings->hostport));
 
@@ -1098,7 +1100,7 @@ void CGameServer::StartGame()
 {
 	gameStartTime = SDL_GetTicks();
 
-	if (UDPNet)
+	if (UDPNet && !allowAdditionalPlayers)
 		UDPNet->Listen(false); // don't accept new connections
 
 	// make sure initial game speed is within allowed range and sent a new speed if not
@@ -1470,7 +1472,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 
 	if (hisNewNumber >= players.size())
 	{
-		if (demoReader)
+		if (demoReader || allowAdditionalPlayers)
 		{
 			GameParticipant buf;
 			buf.isFromDemo = false;
@@ -1482,7 +1484,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 		else
 		{
 			// player not found
-			Message(str(format("Player %s not found, rejecting connection attempt") %name));
+			Message(str(format("Player %s not found in script, rejecting connection attempt") %name));
 			return 0;
 		}
 	}
