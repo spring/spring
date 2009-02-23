@@ -119,7 +119,6 @@ const char* aiexport_getDataDir(bool absoluteAndWriteable) {
 		if (dd_ws_abs_w == NULL) {
 			// this is the writeable one, absolute
 			const char* dd = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
-
 			dd_ws_abs_w = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
 			STRCPY(dd_ws_abs_w, dd);
 			STRCAT(dd_ws_abs_w, sPS);
@@ -127,8 +126,9 @@ const char* aiexport_getDataDir(bool absoluteAndWriteable) {
 		return dd_ws_abs_w;
 	} else {
 		if (dd_ws_rel == NULL) {
+			const char* shortName = util_getMyInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 			dd_ws_rel = util_allocStrCatFSPath(4,
-					SKIRMISH_AI_DATA_DIR, "RAI", aiexport_getVersion(), "X");
+					SKIRMISH_AI_DATA_DIR, shortName, aiexport_getVersion(), "X");
 			// remove the X, so we end up with a slash at the end
 			if (dd_ws_rel != NULL) {
 				dd_ws_rel[strlen(dd_ws_rel) -1] = '\0';
