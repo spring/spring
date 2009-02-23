@@ -35,7 +35,7 @@
 	#define IMPLEMENT_PURE_VIRTUAL(proto) proto{}
 #endif
 
-#include "exportdefines.h"
+#include "Interface/aidefines.h"
 
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/UnitDef.h"
