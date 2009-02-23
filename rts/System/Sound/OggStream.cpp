@@ -1,16 +1,34 @@
+
+#include "OggStream.h"
+
 #include <SDL.h>
 
+#include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
-#include "OggStream.h"
 #include "ALShared.h"
 #include "VorbisShared.h"
 
+namespace
+{
 // 512KB buffer
 const int BUFFER_SIZE = (4096 * 128);
 
+size_t VorbisStreamRead(void* ptr, size_t size, size_t nmemb, void* datasource)
+{
+	CFileHandler* buffer = (CFileHandler*)datasource;
+	return buffer->Read(ptr, size * nmemb);
+}
+
+int	VorbisStreamClose(void* datasource)
+{
+	CFileHandler* buffer = (CFileHandler*)datasource;
+	delete buffer;
+	return 0;
+}
+}
+
 COggStream::COggStream() {
 	source = 0;
-	oggFile = 0x0;
 	vorbisInfo = 0x0;
 	vorbisComment = 0x0;
 
@@ -30,13 +48,14 @@ void COggStream::Play(const std::string& path, float volume) {
 
 	int result = 0;
 
-	if (!(oggFile = fopen(path.c_str(), "rb"))) {
-		logOutput.Print("Could not open Ogg file.");
-		return;
-	}
+	ov_callbacks vorbisCallbacks;
+	vorbisCallbacks.read_func  = VorbisStreamRead;
+	vorbisCallbacks.close_func = VorbisStreamClose;
+	vorbisCallbacks.seek_func  = NULL;
+	vorbisCallbacks.tell_func  = NULL;
 
-	if ((result = ov_open(oggFile, &oggStream, NULL, 0)) < 0) {
-		fclose(oggFile);
+	CFileHandler* buf = new CFileHandler(path);
+	if ((result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks)) < 0) {
 		logOutput.Print("Could not open Ogg stream (reason: %s).", ErrorString(result).c_str());
 		return;
 	}
@@ -119,7 +138,6 @@ void COggStream::ReleaseBuffers() {
 }
 
 
-
 // returns true if both buffers were
 // filled with data from the stream
 bool COggStream::StartPlaying() {
@@ -134,7 +152,6 @@ bool COggStream::StartPlaying() {
 
 	return true;
 }
-
 
 
 // returns true if we're still playing
@@ -163,8 +180,6 @@ void COggStream::TogglePause() {
 		}
 	}
 }
-
-
 
 
 // pop the processed buffers from the queue,
@@ -227,7 +242,6 @@ void COggStream::Update() {
 }
 
 
-
 // read decoded data from audio stream into PCM buffer
 bool COggStream::DecodeStream(ALuint buffer) {
 	char pcm[BUFFER_SIZE];
@@ -260,7 +274,6 @@ bool COggStream::DecodeStream(ALuint buffer) {
 }
 
 
-
 // dequeue any buffers pending on source
 void COggStream::EmptyBuffers() {
 	int queued = 0;
@@ -274,7 +287,6 @@ void COggStream::EmptyBuffers() {
 }
 
 
-
 // check for any OpenAL errors
 void COggStream::CheckErrors() {
 	int error = alGetError();
@@ -285,20 +297,3 @@ void COggStream::CheckErrors() {
 }
 
 
-
-std::string COggStream::ErrorString(int code) {
-	switch (code) {
-		case OV_EREAD:
-			return std::string("Read from media.");
-		case OV_ENOTVORBIS:
-			return std::string("Not Vorbis data.");
-		case OV_EVERSION:
-			return std::string("Vorbis version mismatch.");
-		case OV_EBADHEADER:
-			return std::string("Invalid Vorbis header.");
-		case OV_EFAULT:
-			return std::string("Internal logic fault (bug or heap/stack corruption.");
-		default:
-			return std::string("Unknown Ogg error.");
-	}
-}

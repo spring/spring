@@ -65,11 +65,6 @@ private:
 
 	float globalVolume;
 
-	typedef std::map<std::string, size_t> bufferMapT;
-	typedef std::vector< boost::shared_ptr<SoundBuffer> > bufferVecT;
-	bufferMapT bufferMap; // filename, index into Buffers
-	bufferVecT buffers;
-
 	typedef std::map<std::string, size_t> soundMapT;
 	typedef boost::ptr_vector<SoundItem> soundVecT;
 	soundMapT soundMap;
