@@ -28,7 +28,7 @@
 #define TIMER_SECS		ai->math->TimerSecs()
 
 // Folders
-#define ROOTFOLDER		aiexport_getDataDir()
+#define ROOTFOLDER		aiexport_getDataDir(false)
 
 #define LOGFOLDER		std::string(ROOTFOLDER) + "Logs/"
 #define METALFOLDER		std::string(ROOTFOLDER) + "Metal/"
