@@ -9,6 +9,32 @@
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
 
+namespace
+{
+struct VorbisInputBuffer
+{
+	uint8_t* data;
+	size_t pos;
+	size_t size;
+};
+
+size_t VorbisRead(void* ptr, size_t size, size_t nmemb, void* datasource)
+{
+	VorbisInputBuffer* buffer = (VorbisInputBuffer*)datasource;
+	const size_t maxRead = std::max(size * nmemb, buffer->size - buffer->pos);
+	memcpy(ptr, buffer->data + buffer->pos, maxRead);
+	return maxRead;
+};
+
+int	VorbisClose(void* datasource)
+{
+	return 0; // nothing to be done here
+};
+}
+
+SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
+SoundBuffer::bufferVecT SoundBuffer::buffers;
+
 SoundBuffer::SoundBuffer() : id(0)
 {
 }
@@ -97,8 +123,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 		return false;
 	}
 
-	if (header->datalen > buffer.size() - sizeof(WAVHeader)) {
-//		logOutput.Print("\n");
+	if (static_cast<unsigned>(header->datalen) > buffer.size() - sizeof(WAVHeader)) {
 		logOutput.Print("OpenAL: file %s has data length %d greater than actual data length %ld\n",
 						file.c_str(), header->datalen, buffer.size() - sizeof(WAVHeader));
 //		logOutput.Print("OpenAL: size %d\n", size);
@@ -115,7 +140,6 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 		// FIXME: setting datalen to size - sizeof(WAVHeader) only
 		// works for some files that have a garbage datalen field
 		// in their header, others cause SEGV's inside alBufferData()
-		// (eg. ionbeam.wav in XTA 9.2) -- Kloot
 		// header->datalen = size - sizeof(WAVHeader);
 		header->datalen = 1;
 	}
@@ -134,8 +158,8 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<uint8_t> buffe
 	ov_callbacks vorbisCallbacks;
 	vorbisCallbacks.read_func  = VorbisRead;
 	vorbisCallbacks.close_func = VorbisClose;
-	vorbisCallbacks.seek_func  = VorbisSeek;
-	vorbisCallbacks.tell_func  = VorbisTell;
+	vorbisCallbacks.seek_func  = NULL;
+	vorbisCallbacks.tell_func  = NULL;
 
 	OggVorbis_File oggStream;
 	int result = 0;
@@ -196,6 +220,51 @@ int SoundBuffer::BufferSize() const
 	alGetBufferi(id, AL_SIZE, &size);
 	return static_cast<int>(size);
 }
+
+void SoundBuffer::Initialise()
+{
+	buffers.resize(1); // empty ("zero") buffer
+};
+
+void SoundBuffer::Deinitialise()
+{
+	buffers.resize(0);
+};
+
+size_t SoundBuffer::GetId(const std::string& name)
+{
+	bufferMapT::const_iterator it = bufferMap.find(name);
+	if (it != bufferMap.end())
+		return it->second;
+	else
+		return 0;
+};
+
+boost::shared_ptr<SoundBuffer> SoundBuffer::GetById(const size_t id)
+{
+	return buffers.at(id);
+};
+
+size_t SoundBuffer::Count()
+{
+	return buffers.size();
+};
+
+size_t SoundBuffer::AllocedSize()
+{
+	int numBytes = 0;
+	for (bufferVecT::const_iterator it = ++buffers.begin(); it != buffers.end(); ++it)
+		numBytes += (*it)->BufferSize();
+	return numBytes;
+};
+
+size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
+{
+	size_t bufId = buffers.size();
+	buffers.push_back(buffer);
+	bufferMap[buffer->GetFilename()] = bufId;
+	return bufId;
+};
 
 void SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const uint8_t* data, size_t datalength, int rate)
 {

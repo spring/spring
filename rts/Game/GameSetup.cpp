@@ -120,12 +120,13 @@ void CGameSetup::LoadStartPositions()
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
+		size_t numTeams = teamStartingData.size();
 		rng.Seed(gameSetupText.length()^ SDL_GetTicks());
-		int teamStartNum[MAX_TEAMS];
-		for (int i = 0; i < MAX_TEAMS; ++i)
+		std::vector<int> teamStartNum(numTeams);
+		for (size_t i = 0; i < numTeams; ++i)
 			teamStartNum[i] = i;
-		std::random_shuffle(&teamStartNum[0], &teamStartNum[numTeams], rng);
-		for (unsigned int i = 0; i < teamStartingData.size(); ++i)
+		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
+		for (size_t i = 0; i < numTeams; ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
 	}
 	else
@@ -414,23 +415,6 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		data.leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
 		data.side = StringToLower(file.SGetValueDef("", s + "side").c_str());
 		data.teamAllyteam = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
-//
-//		// Is this team (Lua) AI controlled?
-//		// If this is a demo replay, non-Lua AIs aren't loaded.
-//		data.luaAI = file.SGetValueDef("", s + "aispecifier");
-//		if (data.luaAI.empty()) {
-//			data.luaAI = file.SGetValueDef("", s + "LuaAI");
-//		// this else if is only here fo rbackwards compatibility
-//		} else if (data.luaAI.size() > 6 && data.luaAI.substr(0, 6) == "LuaAI:") {
-//			data.luaAI = data.luaAI.substr(6);
-//		}
-//
-//		string aiS(s + "AI\\");
-//		data.skirmishAIShortName = file.SGetValueDef("", aiS + "Name");
-//		data.skirmishAIVersion = file.SGetValueDef("", aiS + "Version");
-//		if (file.SectionExist(aiS + "Options")) {
-//			data.skirmishAIOptions = file.GetAllValues(aiS + "Options");
-//		}
 
 		teamStartingData.push_back(data);
 

@@ -13,11 +13,9 @@
 #include "Console.h"
 #include "GameData.h"
 #include "PlayerBase.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "UnsyncedRNG.h"
 #include "SFloat3.h"
 
-class CBaseNetProtocol;
 namespace netcode
 {
 	class RawPacket;
@@ -66,6 +64,7 @@ public:
 	SFloat3 startpos;
 	bool readyToStart;
 	int allyTeam;
+	bool active;
 };
 
 /**
@@ -104,10 +103,7 @@ public:
 
 private:
 	/**
-	@brief catch commands from chat messages and handle them
-	Insert chat messages here. If it contains a command (e.g. .nopause) usefull for the server it get filtered out, otherwise it will forwarded to all clients.
-	@param msg The whole message
-	@param player The playernumber which sent the message
+	@brief relay chat messages to players / autohost
 	*/
 	void GotChatMessage(const ChatMessage& msg);
 
@@ -167,7 +163,7 @@ private:
 	bool cheating;
 
 	std::vector<GameParticipant> players;
-	boost::scoped_ptr<GameTeam> teams[MAX_TEAMS];
+	std::vector<GameTeam> teams;
 
 	float medianCpu;
 	int medianPing;
