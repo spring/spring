@@ -1998,6 +1998,8 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
+	std::vector<uint8_t> data(msg.size());
+	std::copy(msg.begin(), msg.end(), data.begin());
 	const string mode = luaL_optstring(L, 2, "");
 	unsigned char modeNum = 0;
 	if ((mode == "s") || (mode == "specs")) {
@@ -2009,7 +2011,7 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 	else if (!mode.empty()) {
 		luaL_error(L, "Unknown SendLuaUIMsg() mode");
 	}
-	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, msg));
+	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_UI, modeNum, data));
 	return 0;
 }
 
@@ -2020,7 +2022,9 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, msg));
+	std::vector<uint8_t> data(msg.size());
+	std::copy(msg.begin(), msg.end(), data.begin());
+	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
 	return 0;
 }
 
@@ -2031,7 +2035,9 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, msg));
+	std::vector<uint8_t> data(msg.size());
+	std::copy(msg.begin(), msg.end(), data.begin());
+	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
 	return 0;
 }
 

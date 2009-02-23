@@ -266,9 +266,9 @@ PacketType CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 }
 
 // NETMSG_LUAMSG = 50, uchar myPlayerNum; std::string modName; (e.g. `custom msg')
-PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::string& msg)
+PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<uint8_t>& msg)
 {
-	uint16_t size = 7 + msg.size()+1;
+	uint16_t size = 7 + msg.size();
 	PackPacket* packet = new PackPacket(size, NETMSG_LUAMSG);
 	*packet << size << myPlayerNum << script << mode << msg;
 	return PacketType(packet);

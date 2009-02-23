@@ -76,7 +76,7 @@ enum NETMSG {
 	NETMSG_SD_RESET         = 45,
 #endif // SYNCDEBUG
 
-	NETMSG_LUAMSG           = 50, // /* short! messageSize */, uchar myPlayerNum, unsigned short script, uchar mode, std::string msg
+	NETMSG_LUAMSG           = 50, // /* uint16_t messageSize */, uchar myPlayerNum, unsigned short script, uchar mode, std::vector<uint8_t> msg
 	NETMSG_TEAM             = 51, // uchar myPlayerNum, uchar action, uchar parameter1
 	NETMSG_GAMEDATA         = 52, // /* uchar messageSize */, std::string setupText, std::string script, std::string map, int mapChecksum,
 	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
@@ -144,7 +144,7 @@ public:
 	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::string& msg);
+	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<uint8_t>& msg);
 	
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
 	PacketType SendResign(uchar myPlayerNum);

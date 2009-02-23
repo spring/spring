@@ -19,14 +19,19 @@ PackPacket::PackPacket(const unsigned length, unsigned char msgID) : RawPacket(l
 
 PackPacket& PackPacket::operator<<(const std::string& text)
 {
-	unsigned size = std::min(text.size()+1, static_cast<size_t>(length-pos));
+	size_t size = std::min(text.size()+1, static_cast<size_t>(length-pos));
+	if (std::string::npos != text.find_first_of('\0'))
+	{
+		logOutput.Print("A text must not contain a '\\0' inside, truncating");
+		size = text.find_first_of('\0')+1;
+	}
 	if (size + pos > length) {
 		logOutput.Print("netcode warning: string data truncated in packet\n");
 		#ifdef DEBUG
 		std::abort();
 		#endif
 	}
-	memcpy((char*)(data+pos), text.data(), size);
+	memcpy((char*)(data+pos), text.c_str(), size);
 	pos += size;
 	return *this;
 }

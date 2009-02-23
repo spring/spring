@@ -127,6 +127,7 @@
 #include "Sound/Sound.h"
 #include "FileSystem/SimpleParser.h"
 #include "Net/RawPacket.h"
+#include "Net/UnpackPacket.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
 #include "UI/EndGameBox.h"
@@ -3608,11 +3609,20 @@ void CGame::ClientReadNet()
 				if ((player < 0) || (player >= playerHandler->TotalPlayers())) {
 					logOutput.Print("Got invalid player num %i in LuaMsg", player);
 				}
-				const int script = *reinterpret_cast<const unsigned short*>(inbuf+4);
-				const int mode = inbuf[6];
-				const int msglen = *((short*)(inbuf + 1)) - 8;
-				const string msg((char*)&inbuf[7], msglen); // allow embedded 0's
-				CLuaHandle::HandleLuaMsg(player, script, mode, msg);
+				netcode::UnpackPacket unpack(packet, 1);
+				uint16_t size;
+				unpack >> size;
+				assert(size == packet->length);
+				uint8_t playerNum;
+				unpack >> playerNum;
+				assert(player == playerNum);
+				uint16_t script;
+				unpack >> script;
+				uint8_t mode;
+				unpack >> mode;
+				std::vector<uint8_t> data(size - 7);
+				unpack >> data;
+				CLuaHandle::HandleLuaMsg(player, script, mode, data);
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
