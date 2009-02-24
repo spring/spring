@@ -49,7 +49,7 @@ public abstract class AICommand extends Structure/* implements Structure.ByRefer
 			int bitField = 0;
 
 			for (Option option : options) {
-				bitField += option.bitValue;
+				bitField = bitField | option.bitValue;
 			}
 
 			return bitField;
