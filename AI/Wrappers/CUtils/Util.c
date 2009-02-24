@@ -81,12 +81,12 @@ void util_setMyInfo(
 			// the read data dir is already a writeable dir
 			myDataDir_versioned_rw = util_allocStrCpy(myDataDir_versioned_r);
 		} else {
-			char* myShortName = util_getMyInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
+			const char* myShortName = util_getMyInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 			if (myShortName == NULL) {
 				// shortName has to be available!!
 				exit(666);
 			}
-			char* myVersion = util_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);
+			const char* myVersion = util_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);
 			if (myVersion == NULL) {
 				myVersion = "UNKOWN_VERSION";
 			}
