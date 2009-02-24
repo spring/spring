@@ -26,8 +26,6 @@ if (WIN32)
 	SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--kill-at -Wl,--add-stdcall-alias")
 endif (WIN32)
 
-aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
-
 list (APPEND ai_common ${CMAKE_SOURCE_DIR}/rts/Game/GameVersion)
 
 list (APPEND errorhandler ${CMAKE_SOURCE_DIR}/rts/System/Platform/errorhandler)
@@ -40,6 +38,10 @@ list (APPEND legacycppaifiles ${ai_common})
 list (APPEND legacycppaifiles ${CMAKE_SOURCE_DIR}/rts/System/float3)
 list (APPEND legacycppaifiles ${CMAKE_SOURCE_DIR}/rts/Sim/Misc/DamageArray)
 add_library(legacycpp STATIC ${legacycppaifiles})
+
+aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
+add_library(legacycpp-creg STATIC ${legacycppaifiles} ${creg})
+set_target_properties(legacycpp-creg PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils cutilsenv)
 
