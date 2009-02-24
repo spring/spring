@@ -40,18 +40,6 @@ static inline unsigned int next_power_of_2(unsigned int x)
  */
 static inline unsigned int count_bits_set(unsigned int w)
 {
-#if 0
-	const unsigned int all1   = ~0;
-	const unsigned int mask1h = all1 /  3  << 1;
-	const unsigned int mask2l = all1 /  5;
-	const unsigned int mask4l = all1 / 17;
-	w -= (mask1h & w) >> 1;
-	w = (w & mask2l) + ((w>>2) & mask2l);
-	w = w + (w >> 4) & mask4l;
-	w += w >> 8;
-	w += w >> 16;
-	return w & 0xff;
-#else
 	/*
 	 * This is faster, and runs in parallel
 	 */
@@ -64,7 +52,6 @@ static inline unsigned int count_bits_set(unsigned int w)
 	c = ((c >> S[3]) & B[3]) + (c & B[3]);
 	c = ((c >> S[4]) & B[4]) + (c & B[4]);
 	return c;
-#endif
 }
 
 /**

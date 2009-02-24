@@ -1,8 +1,15 @@
 set (AIDIR ${DATADIR} CACHE STRING "Where AIs are installed")
 
-include_directories(${CMAKE_SOURCE_DIR}/rts ${CMAKE_SOURCE_DIR}/rts/ExternalAI ${CMAKE_SOURCE_DIR}/AI/Wrappers ${CMAKE_SOURCE_DIR}/rts/System ${SDL_INCLUDE_DIR})
-
 add_definitions(-DBUILDING_AI)
+
+include_directories(
+	${CMAKE_SOURCE_DIR}/rts
+	${CMAKE_SOURCE_DIR}/rts/System
+	${CMAKE_SOURCE_DIR}/rts/ExternalAI
+	${CMAKE_SOURCE_DIR}/rts/ExternalAI/Interface
+	Wrappers
+	${SDL_INCLUDE_DIR})
+
 
 # set these for C Interfaces and AIs
 SET(CMAKE_C_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}")
@@ -20,29 +27,21 @@ if (WIN32)
 endif (WIN32)
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
-#list (APPEND creg ${CMAKE_SOURCE_DIR}/rts/System/float3)
 
-aux_source_directory(${CMAKE_SOURCE_DIR}/rts/ExternalAI/Interface aienv)
-list (APPEND aienv ${CMAKE_SOURCE_DIR}/rts/Game/GameVersion)
+list (APPEND ai_common ${CMAKE_SOURCE_DIR}/rts/Game/GameVersion)
 
 list (APPEND errorhandler ${CMAKE_SOURCE_DIR}/rts/System/Platform/errorhandler)
 if (UNIX AND NOT MINGW)
 	list (APPEND errorhandler ${CMAKE_SOURCE_DIR}/rts/System/Platform/Linux/X_MessageBox)
 endif (UNIX AND NOT MINGW)
 
-#aux_source_directory(${CMAKE_SOURCE_DIR}/rts/Lua/LuaParser luaparsingenv)
-#aux_source_directory(${CMAKE_SOURCE_DIR}/rts/Map/MapParser luaparsingenv)
-
-aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/LegacyCpp legacycppaienv)
-list (APPEND legacycppaienv ${aienv})
-list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/System/float3)
-list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/Sim/Misc/DamageArray)
-#list (APPEND legacycppaienv ${errorhandler})
-#list (APPEND legacycppaienv ${CMAKE_SOURCE_DIR}/rts/System/LogOutput)
+aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/LegacyCpp legacycppaifiles)
+list (APPEND legacycppaifiles ${ai_common})
+list (APPEND legacycppaifiles ${CMAKE_SOURCE_DIR}/rts/System/float3)
+list (APPEND legacycppaifiles ${CMAKE_SOURCE_DIR}/rts/Sim/Misc/DamageArray)
+add_library(legacycpp STATIC ${legacycppaifiles})
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils cutilsenv)
 
-
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)
-#Add_Subdirectory(Group)
