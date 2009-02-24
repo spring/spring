@@ -1263,11 +1263,11 @@ float CAIAICallback::GetGravity() {
 }
 
 bool CAIAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing) {
-	return sAICallback->Clb_Map_isPossibleToBuildAt(teamId, unitDef->id, pos.toSAIFloat3(), facing);
+	return sAICallback->Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(teamId, unitDef->id, pos.toSAIFloat3(), facing);
 }
 
 float3 CAIAICallback::ClosestBuildSite(const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing) {
-	return float3(sAICallback->Clb_Map_findClosestBuildSite(teamId, unitDef->id, pos.toSAIFloat3(), searchRadius, minDist, facing));
+	return float3(sAICallback->Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite(teamId, unitDef->id, pos.toSAIFloat3(), searchRadius, minDist, facing));
 }
 
 /*

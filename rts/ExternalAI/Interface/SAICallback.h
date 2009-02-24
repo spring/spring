@@ -866,9 +866,9 @@ struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getFirstPosition)(int teamId,
 struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getSecondPosition)(int teamId,
 		int lineId);
 struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getColor)(int teamId, int lineId);
-bool (CALLING_CONV *Clb_Map_isPossibleToBuildAt)(int teamId, int unitDefId,
+bool (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(int teamId, int unitDefId,
 		struct SAIFloat3 pos, int facing);
-struct SAIFloat3 (CALLING_CONV *Clb_Map_findClosestBuildSite)(int teamId,
+struct SAIFloat3 (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId,
 		int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist,
 		int facing);
 // BEGINN OBJECT Map
