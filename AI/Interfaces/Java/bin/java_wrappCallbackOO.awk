@@ -284,16 +284,36 @@ function printClass(ancestors_c, clsName_c) {
 
 	# print static instance fetcher method
 	{
+		clsIsBuffered_c = myBufferedClasses["_" clsNameExternal_c];
+		fullNameAvailable_c = ancestorsClass_available[clsId_c];
+
+		if (clsIsBuffered_c) {
+			print("\t" "private static java.util.Map<Integer, " clsNameExternal_c "> _buffer_instances = new java.util.HashMap<Integer, " clsNameExternal_c ">();") >> outFile_c;
+			print("") >> outFile_c;
+		}
 		print("\t" "static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
 		print("") >> outFile_c;
 		print("\t\t" clsNameExternal_c " _ret = null;") >> outFile_c;
-		fullNameAvailable_c = ancestorsClass_available[clsId_c];
 		if (fullNameAvailable_c == "") {
 			print("\t\t" "_ret = new " clsNameExternal_c "(" ctorParamsNoTypes ");") >> outFile_c;
 		} else {
 			print("\t\t" "boolean isAvailable = " myClassVar ".getInnerCallback()." fullNameAvailable_c "(" myClassVar ".getTeamId()" condaddIndPars_c addIndParsNoTypes_c ");") >> outFile_c;
 			print("\t\t" "if (isAvailable) {") >> outFile_c;
 			print("\t\t\t" "_ret = new " clsNameExternal_c "(" ctorParamsNoTypes ");") >> outFile_c;
+			print("\t\t" "}") >> outFile_c;
+		}
+		if (clsIsBuffered_c) {
+			if (fullNameAvailable_c == "") {
+				print("\t\t" "{") >> outFile_c;
+			} else {
+				print("\t\t" "if (_ret != null) {") >> outFile_c;
+			}
+			print("\t\t\t" "Integer indexHash = _ret.hashCode();") >> outFile_c;
+			print("\t\t\t" "if (_buffer_instances.containsKey(indexHash)) {") >> outFile_c;
+			print("\t\t\t\t" "_ret = _buffer_instances.get(indexHash);") >> outFile_c;
+			print("\t\t\t" "} else {") >> outFile_c;
+			print("\t\t\t\t" "_buffer_instances.put(indexHash, _ret);") >> outFile_c;
+			print("\t\t\t" "}") >> outFile_c;
 			print("\t\t" "}") >> outFile_c;
 		}
 		print("\t\t" "return _ret;") >> outFile_c;
@@ -367,6 +387,31 @@ function printClass(ancestors_c, clsName_c) {
 		print("") >> outFile_c;
 	}
 
+
+	# print hashCode() method
+	if (!isClbRootCls) {
+		print("\t" "@Override") >> outFile_c;
+		print("\t" "public int hashCode() {") >> outFile_c;
+		print("") >> outFile_c;
+		print("\t\t" "int _res = 23;") >> outFile_c;
+		print("") >> outFile_c;
+
+		if (isClbRootCls) {
+			print("\t\t" "_res += this.teamId * 10E8;") >> outFile_c;
+		} else {
+			# NOTE: This could go wrong if we have more then 7 additional indices
+			# see 10E" (7-ai) below
+			for (ai=0; ai < size_addInds; ai++) {
+				addIndName = additionalClsIndices[clsId_c "#" ai];
+				print("\t\t" "_res += this.get" capitalize(addIndName) "() * 10E" (7-ai) ";") >> outFile_c;
+			}
+			print("\t\t" "_res += this." myClassVar ".hashCode();") >> outFile_c;
+		}
+		print("") >> outFile_c;
+		print("\t\t" "return _res;") >> outFile_c;
+		print("\t" "}") >> outFile_c;
+		print("") >> outFile_c;
+	}
 
 	# print member functions
 	size_funcs = ownerOfFunc[clsId_c "*"];
@@ -468,8 +513,8 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 
 		isBuffered_mf = isBufferedFunc(clsFull_mf "_" memberClsName_mf);
 		if (!isInterface_mf && isBuffered_mf) {
-			print(indent_mf "private " retType " buffer_" fn ";") >> outFile_mf;
-			print(indent_mf "private boolean buffer_isInitialized_" fn " = false;") >> outFile_mf;
+			print(indent_mf "private " retType " _buffer_" fn ";") >> outFile_mf;
+			print(indent_mf "private boolean _buffer_isInitialized_" fn " = false;") >> outFile_mf;
 		}
 
 		printFunctionComment_Common(outFile_mf, funcDocComment, fullNameMultiSize_mf, indent_mf);
@@ -478,8 +523,8 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 		print("") >> outFile_mf;
 		indent_mf = indent_mf "\t";
 		if (isBuffered_mf) {
-			print(indent_mf retType " _ret = buffer_" fn ";") >> outFile_mf;
-			print(indent_mf "if (!buffer_isInitialized_" fn ") {") >> outFile_mf;
+			print(indent_mf retType " _ret = _buffer_" fn ";") >> outFile_mf;
+			print(indent_mf "if (!_buffer_isInitialized_" fn ") {") >> outFile_mf;
 			indent_mf = indent_mf "\t";
 		} else {
 			print(indent_mf retType " _ret;") >> outFile_mf;
@@ -505,8 +550,8 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 			print(indent_mf "_ret = " memberClassImpl_mf ".getInstance(" myClassVarLocal condIndexComma_mf indexParams_mf ");") >> outFile_mf;
 		}
 		if (isBuffered_mf) {
-			print(indent_mf "buffer_" fn " = _ret;") >> outFile_mf;
-			print(indent_mf "buffer_isInitialized_" fn " = true;") >> outFile_mf;
+			print(indent_mf "_buffer_" fn " = _ret;") >> outFile_mf;
+			print(indent_mf "_buffer_isInitialized_" fn " = true;") >> outFile_mf;
 			sub(/\t/, "", indent_mf);
 			print(indent_mf "}") >> outFile_mf;
 			print("") >> outFile_mf;
@@ -651,8 +696,8 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 	}
 
 	if (!isInterface_m && isBuffered_m) {
-		print(indent_m retType " buffer_" memName ";") >> outFile_m;
-		print(indent_m "boolean buffer_isInitialized_" memName " = false;") >> outFile_m;
+		print(indent_m retType " _buffer_" memName ";") >> outFile_m;
+		print(indent_m "boolean _buffer_isInitialized_" memName " = false;") >> outFile_m;
 	}
 
 	printFunctionComment_Common(outFile_m, funcDocComment, fullName_m, indent_m);
@@ -666,8 +711,8 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			print(indent_m "command.write();") >> outFile_m;
 		}
 		if (isBuffered_m) {
-			print(indent_m retType " _ret = buffer_" memName ";") >> outFile_m;
-			print(indent_m "if (!buffer_isInitialized_" memName ") {") >> outFile_m;
+			print(indent_m retType " _ret = _buffer_" memName ";") >> outFile_m;
+			print(indent_m "if (!_buffer_isInitialized_" memName ") {") >> outFile_m;
 			indent_m = indent_m "\t";
 		} else {
 			print(indent_m retType " _ret;") >> outFile_m;
@@ -709,8 +754,8 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			print(indent_m condRet myWrapper "." fullName_m "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
 		}
 		if (isBuffered_m) {
-			print(indent_m "buffer_" memName " = _ret;") >> outFile_m;
-			print(indent_m "buffer_isInitialized_" memName " = true;") >> outFile_m;
+			print(indent_m "_buffer_" memName " = _ret;") >> outFile_m;
+			print(indent_m "_buffer_isInitialized_" memName " = true;") >> outFile_m;
 			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_m;
 			print("") >> outFile_m;
