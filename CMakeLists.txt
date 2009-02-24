@@ -21,6 +21,7 @@ else (UNIX AND NOT MINGW)
 	set (AIDIR "." CACHE STRING "Where AIs are installed")
 	set (CMAKE_INSTALL_PREFIX "/")
 endif (UNIX AND NOT MINGW)
+set (AIINTERFACES "ALL" CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
 
 ### Usr-definable build options
 SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")

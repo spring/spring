@@ -209,7 +209,7 @@ def check_python(env, conf):
 
 
 def check_java(env, conf):
-	print "Checking for Java...",
+	print "Checking for Java includes ...",
 	if env.has_key('javapath') and env['javapath']:
 		env.AppendUnique(CPPPATH = [env['javapath']])
 		env.AppendUnique(CPPPATH = [os.path.join(env['javapath'], "linux")])
@@ -238,6 +238,12 @@ def check_java(env, conf):
 		print possible_dirs[-1]
 		env.AppendUnique(CPPPATH = [possible_dirs[-1]])
 		env.AppendUnique(CPPPATH = [os.path.join(possible_dirs[-1], "linux")])
+
+def check_java_bin(env, conf):
+	print "Checking for Java executables ...",
+	if (os.environ.has_key('JAVA_HOME')):
+		env.AppendENVPath('PATH', os.environ['JAVA_HOME'] + '/bin')
+		#env.AppendENVPath('LD_LIBRARY_PATH', os.environ['JAVA_HOME'] + '/jre/lib/i386/server/')
 
 
 class Dependency:
@@ -353,6 +359,7 @@ def configure(env, conf_dir):
 
 	check_python(env, conf)
 	check_java(env, conf)
+	check_java_bin(env, conf)
 	CheckHeadersAndLibraries(env, conf)
 	env = conf.Finish()
 

@@ -21,7 +21,7 @@ local infos = {
 	},
 	{
 		key    = 'version',
-		value  = 'XE9.81',
+		value  = 'XE9.81', -- AI version - !This comment is used for parsing!
 	},
 	{
 		key    = 'name',
@@ -45,12 +45,12 @@ local infos = {
 	},
 	{
 		key    = 'interfaceShortName',
-		value  = 'C',
+		value  = 'C', -- AI Interface name - !This comment is used for parsing!
 		desc   = 'the shortName of the AI interface this AI needs',
 	},
 	{
 		key    = 'interfaceVersion',
-		value  = '0.1',
+		value  = '0.1', -- AI Interface version - !This comment is used for parsing!
 		desc   = 'the minimum version of the AI interface this AI needs',
 	},
 }

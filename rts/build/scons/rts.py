@@ -114,6 +114,7 @@ def generate(env):
 		('profile',           'Set to yes to produce a binary with profiling information', False),
 		('profile_generate',  'Set to yes to compile with -fprofile-generate to generate profiling information', False),
 		('profile_use',       'Set to yes to compile with -fprofile-use to use profiling information', False),
+		('ai_interfaces',     'Which AI Interfaces (and AIs using them) to build [all|native|java|none]', 'all'),
 		('cpppath',           'Set path to extra header files', []),
 		('libpath',           'Set path to extra libraries', []),
 		('fpmath',            'Set to 387 or SSE on i386 and AMD64 architectures', 'sse'),
@@ -181,7 +182,7 @@ def generate(env):
 			'libpath', 'prefix', 'installprefix', 'builddir',
 			'mingwlibsdir', 'datadir', 'bindir', 'libdir',
 			'cachedir', 'strip', 'disable_avi', 'use_tcmalloc',
-			'use_nedmalloc', 'use_mmgr', 'use_gch',
+			'use_nedmalloc', 'use_mmgr', 'use_gch', 'ai_interfaces',
 			'LINKFLAGS', 'LIBPATH', 'LIBS', 'CCFLAGS',
 			'CXXFLAGS', 'CPPDEFINES', 'CPPPATH', 'CC', 'CXX',
 			'is_configured', 'spring_defines', 'arch']:
@@ -437,6 +438,7 @@ def generate(env):
 		string_opt('bindir', 'games')
 		string_opt('libdir', 'lib/spring')
 		string_opt('cachedir', None)
+		string_opt('ai_interfaces', 'all')
 
 		# Make a list of preprocessor defines.
 		env.AppendUnique(CPPDEFINES = ['_REENTRANT', '_SZ_ONE_DIRECTORY'])

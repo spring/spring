@@ -199,15 +199,27 @@ def get_shared_skirmishAI_source_Creg(env):
 
 
 # lists source directories for AI Interfaces or Skirmish AIs
-def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.'):
+def list_AIs(env, path, exclude_list = (), exclude_regexp = '^\.', include_interfaces = None):
 	exclude = re.compile(exclude_regexp)
 	files = os.listdir(path)
 	result = []
 	for f in files:
 		g = os.path.join(path, f)
+		if (path == 'Skirmish'):
+			infoFile = os.path.join(g, 'data', 'AIInfo.lua')
+		else:
+			infoFile = os.path.join(g, 'data', 'InterfaceInfo.lua')
 		if os.path.exists(g) and not f in exclude_list and not exclude.search(f):
-			if os.path.isdir(g):
-				result += [f]
+			if os.path.isdir(g) and os.path.exists(infoFile):
+				if include_interfaces == None:
+					result += [f]
+				else:
+					# only list AIs whichs info lua file sais that it uses one of the include interfaces
+					for i in include_interfaces:
+						searchStr = "'" + i + "', -- AI Interface name"
+						if (searchStr in open(infoFile).read()):
+							result += [f]
+							break;
 	return result
 
 # lists source directories for AI Interfaces
@@ -215,6 +227,6 @@ def list_AIInterfaces(env, exclude_list = (), exclude_regexp = '^\.'):
 	return list_AIs(env, 'Interfaces', exclude_list, exclude_regexp)
 
 # lists source directories for Skirmish AIs
-def list_skirmishAIs(env, exclude_list = (), exclude_regexp = '^\.'):
-	return list_AIs(env, 'Skirmish', exclude_list, exclude_regexp)
+def list_skirmishAIs(env, exclude_list = (), exclude_regexp = '^\.', include_interfaces = None):
+	return list_AIs(env, 'Skirmish', exclude_list, exclude_regexp, include_interfaces)
 
