@@ -934,14 +934,14 @@ EXPORT(float) _Clb_Map_getGravity(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetGravity();
 }
 
-EXPORT(bool) _Clb_Map_isPossibleToBuildAt(int teamId, int unitDefId,
+EXPORT(bool) _Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(int teamId, int unitDefId,
 		SAIFloat3 pos, int facing) {
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
 	return clb->CanBuildAt(unitDef, pos, facing);
 }
 
-EXPORT(SAIFloat3) _Clb_Map_findClosestBuildSite(int teamId, int unitDefId,
+EXPORT(SAIFloat3) _Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite(int teamId, int unitDefId,
 		SAIFloat3 pos, float searchRadius, int minDist, int facing) {
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
@@ -3107,8 +3107,8 @@ SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 	sAICallback->Clb_Map_Line_getFirstPosition = _Clb_Map_Line_getFirstPosition;
 	sAICallback->Clb_Map_Line_getSecondPosition = _Clb_Map_Line_getSecondPosition;
 	sAICallback->Clb_Map_Line_getColor = _Clb_Map_Line_getColor;
-	sAICallback->Clb_Map_isPossibleToBuildAt = _Clb_Map_isPossibleToBuildAt;
-	sAICallback->Clb_Map_findClosestBuildSite = _Clb_Map_findClosestBuildSite;
+	sAICallback->Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt = _Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt;
+	sAICallback->Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite = _Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite;
 	sAICallback->Clb_0MULTI1SIZE0FeatureDef = _Clb_0MULTI1SIZE0FeatureDef;
 	sAICallback->Clb_0MULTI1VALS0FeatureDef = _Clb_0MULTI1VALS0FeatureDef;
 //	sAICallback->Clb_FeatureDef_getId = _Clb_FeatureDef_getId;
