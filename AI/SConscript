@@ -444,10 +444,19 @@ aiinterfaces_needSharedLib_list=['C']
 aiinterfaces_needStreflop_list=['Java']
 aiinterfaces_needCUtils_list=['C', 'Java']
 
+if (aiinterface_env['ai_interfaces'] == "native"):
+	aiinterfaces_toBuild = ['C']
+elif (aiinterface_env['ai_interfaces'] == "java"):
+	aiinterfaces_toBuild = ['Java']
+elif (aiinterface_env['ai_interfaces'] == "none"):
+	aiinterfaces_toBuild = []
+else:
+	aiinterfaces_toBuild = filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinterfaces_exclude_list)
+
 # These two will be filled here and used by Java Skirmish AIs further down
 javaAiInterfaceProj = None
 
-for baseName in filelist.list_AIInterfaces(aiinterface_env, exclude_list=aiinterfaces_exclude_list):
+for baseName in aiinterfaces_toBuild:
 	aiInterfaceVersion = fetch_aiInterface_version(baseName)
 	print "Found AI Interface: " + baseName + " " + aiInterfaceVersion
 	needSharedLib = baseName in aiinterfaces_needSharedLib_list
@@ -695,7 +704,10 @@ skirmishai_needCUtils_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTa
 skirmishai_needCreg_list=['KAIK', 'KAI']
 skirmishai_needBoost_list=['NTai']
 skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
-for baseName in filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmishai_exclude_list):
+
+skirmishais_toBuild = filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmishai_exclude_list, include_interfaces = aiinterfaces_toBuild)
+
+for baseName in skirmishais_toBuild:
 	aiVersion = fetch_skirmishAi_version(baseName)
 	print "Found Skirmish AI: " + baseName + " " + aiVersion
 	isLegacyCpp = baseName in skirmishai_isLegacyCpp_list
