@@ -91,7 +91,8 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define AI_INT_VERS ${AI_INT_VERS_${aiIntName}}
   SetOutPath "$INSTDIR\AI\Interfaces\${aiIntName}\${AI_INT_VERS}"
-  File /r /x *.a /x *.def /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Interfaces\${aiIntName}\${AI_INT_VERS}\*.*"
+  ;buildbot creates 7z, and those get included in installer, fix here until buildserv got fixed
   ;File /r "..\AI\Interfaces\${aiIntName}\data\*.*"
   !undef AI_INT_VERS
 !endif
