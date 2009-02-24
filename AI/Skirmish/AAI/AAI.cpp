@@ -872,15 +872,20 @@ int AAI::HandleEvent(int msg, const void* data)
 			{
 				const IGlobalAI::ChangeTeamEvent* cte =
 						(const IGlobalAI::ChangeTeamEvent*) data;
-				UnitCreated(cte->unit);
-				UnitFinished(cte->unit);
+				if(cte->newteam == cb->GetMyTeam())
+				{
+					UnitCreated(cte->unit);
+					UnitFinished(cte->unit);
+				}
 				break;
 			}
 		case AI_EVENT_UNITCAPTURED: // 2
 			{
 				const IGlobalAI::ChangeTeamEvent* cte =
 						(const IGlobalAI::ChangeTeamEvent*) data;
-				UnitDestroyed(cte->unit,-1);
+				if ((cte->oldteam) == (cb->GetMyTeam())) {
+					UnitDestroyed(cte->unit, -1);
+				}
 				break;
 			}
 	}
