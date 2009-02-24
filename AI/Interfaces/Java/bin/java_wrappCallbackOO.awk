@@ -67,13 +67,23 @@ BEGIN {
 
 function printHeader(outFile_h, javaPkg_h, javaClassName_h, isOrHasInterface_h) {
 
-	classOrInterface = "class";
-	implementedInterfacePart = "";
+	classOrInterface_h = "class";
+	implementedInterfacesPart_h = "";
+	interfacesPref_h = "";
+
 	if (isOrHasInterface_h == 1) {
-		classOrInterface = "interface";
-	} else if (isOrHasInterface_h != 0) {
-		implementedInterfacePart = " implements " isOrHasInterface_h;
+		# is interface
+		classOrInterface_h = "interface";
+	} else {
+		# is class
+		interfacesPref_h = " implements "
+		implementedInterfacesPart_h = "Comparable<" javaClassName_h ">";
+		if (isOrHasInterface_h != 0) {
+			# has interface
+			implementedInterfacesPart_h = isOrHasInterface_h ", " implementedInterfacesPart_h;
+		}
 	}
+	implementedInterfacesPart_h = interfacesPref_h implementedInterfacesPart_h;
 
 	printCommentsHeader(outFile_h);
 	print("") >> outFile_h;
@@ -88,7 +98,7 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h, isOrHasInterface_h) 
 	print(" * @author	AWK wrapper script") >> outFile_h;
 	print(" * @version	GENERATED") >> outFile_h;
 	print(" */") >> outFile_h;
-	print("public " classOrInterface " " javaClassName_h implementedInterfacePart " {") >> outFile_h;
+	print("public " classOrInterface_h " " javaClassName_h implementedInterfacesPart_h " {") >> outFile_h;
 	print("") >> outFile_h;
 }
 
@@ -258,6 +268,8 @@ function printClass(ancestors_c, clsName_c) {
 	}
 	print("\t" "}") >> outFile_c;
 	print("") >> outFile_c;
+	
+	# print additional vars fetchers
 	for (ai=0; ai < size_addInds; ai++) {
 		addIndName = additionalClsIndices[clsId_c "#" ai];
 		#if (ai < (size_addInds-1)) {
@@ -270,9 +282,8 @@ function printClass(ancestors_c, clsName_c) {
 		print("") >> outFile_c;
 	}
 
-
+	# print static instance fetcher method
 	{
-		# print static fetcher method
 		print("\t" "static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
 		print("") >> outFile_c;
 		print("\t\t" clsNameExternal_c " _ret = null;") >> outFile_c;
@@ -299,6 +310,59 @@ function printClass(ancestors_c, clsName_c) {
 		# print teamId fetcher method
 		print("\t" "public int getTeamId() {") >> outFile_c;
 		print("\t\t" "return this.teamId;") >> outFile_c;
+		print("\t" "}") >> outFile_c;
+		print("") >> outFile_c;
+	}
+
+
+	# print compareTo(other) method
+	{
+		print("\t" "@Override") >> outFile_c;
+		print("\t" "public int compareTo(" clsNameExternal_c " other) {") >> outFile_c;
+		print("\t\t" "final int BEFORE = -1;") >> outFile_c;
+		print("\t\t" "final int EQUAL  =  0;") >> outFile_c;
+		print("\t\t" "final int AFTER  =  1;") >> outFile_c;
+		print("") >> outFile_c;
+		print("\t\t" "if (this == other) return EQUAL;") >> outFile_c;
+		print("") >> outFile_c;
+
+		if (isClbRootCls) {
+			print("\t\t" "if (this.teamId < other.teamId) return BEFORE;") >> outFile_c;
+			print("\t\t" "if (this.teamId > other.teamId) return AFTER;") >> outFile_c;
+			print("\t\t" "return EQUAL;") >> outFile_c;
+		} else {
+			for (ai=0; ai < size_addInds; ai++) {
+				addIndName = additionalClsIndices[clsId_c "#" ai];
+				print("\t\t" "if (this.get" capitalize(addIndName) "() < other.get" capitalize(addIndName) "()) return BEFORE;") >> outFile_c;
+				print("\t\t" "if (this.get" capitalize(addIndName) "() > other.get" capitalize(addIndName) "()) return AFTER;") >> outFile_c;
+			}
+			print("\t\t" "return this." myClassVar ".compareTo(other." myClassVar ");") >> outFile_c;
+		}
+		print("\t" "}") >> outFile_c;
+		print("") >> outFile_c;
+	}
+
+
+	# print equals(other) method
+	if (!isClbRootCls) {
+		print("\t" "@Override") >> outFile_c;
+		print("\t" "public boolean equals(Object otherObject) {") >> outFile_c;
+		print("") >> outFile_c;
+		print("\t\t" "if (this == otherObject) return true;") >> outFile_c;
+		print("\t\t" "if (!(otherObject instanceof " clsNameExternal_c ")) return false;") >> outFile_c;
+		print("\t\t" clsNameExternal_c " other = (" clsNameExternal_c ") otherObject;") >> outFile_c;
+		print("") >> outFile_c;
+
+		if (isClbRootCls) {
+			print("\t\t" "if (this.teamId != other.teamId) return false;") >> outFile_c;
+			print("\t\t" "return true;") >> outFile_c;
+		} else {
+			for (ai=0; ai < size_addInds; ai++) {
+				addIndName = additionalClsIndices[clsId_c "#" ai];
+				print("\t\t" "if (this.get" capitalize(addIndName) "() != other.get" capitalize(addIndName) "()) return false;") >> outFile_c;
+			}
+			print("\t\t" "return this." myClassVar ".equals(other." myClassVar ");") >> outFile_c;
+		}
 		print("\t" "}") >> outFile_c;
 		print("") >> outFile_c;
 	}
