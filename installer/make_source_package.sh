@@ -59,6 +59,7 @@ include=" \
  $dir/AI/Interfaces/CMakeLists.txt \
  $dir/AI/Interfaces/C/ \
  $dir/AI/Interfaces/Java/ \
+ $dir/AI/Wrappers/
  $dir/AI/Skirmish/CMakeLists.txt \
  $dir/AI/Skirmish/AAI/ \
  $dir/AI/Skirmish/KAIK/ \
