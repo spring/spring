@@ -83,9 +83,10 @@ void SoundSource::Play(SoundItem* item, const float3& pos, const float3& velocit
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 	alSourcePlay(id);
 #ifdef DEBUG
-	/*LogObject(LOG_SOUND) << "Playing: " << item->name;
+	LogObject(LOG_SOUND) << "Playing: " << item->name;
 	LogObject(LOG_SOUND) << "# Pitch: " << item->pitch * globalPitch << "  Vol: " << item->gain * volume;
-	LogObject(LOG_SOUND) << "# Vel: " << velocity.x << ", " << velocity.y << ", " << velocity.z;*/
+	//LogObject(LOG_SOUND) << "# Pos: " << pos.x << ", " << pos.y << ", " << pos.z;
+	//LogObject(LOG_SOUND) << "# Vel: " << velocity.x << ", " << velocity.y << ", " << velocity.z;
 #endif
 	if (item->buffer->GetId() == 0)
 		logOutput.Print("SoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
