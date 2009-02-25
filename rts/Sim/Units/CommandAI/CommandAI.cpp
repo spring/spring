@@ -5,7 +5,7 @@
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/Group.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/WaitCommandsAI.h"

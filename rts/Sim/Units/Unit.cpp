@@ -11,7 +11,6 @@
 #include "CommandAI/FactoryCAI.h"
 #include "creg/STL_List.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/Group.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
@@ -29,6 +28,7 @@
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/GroundFlash.h"
 
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"

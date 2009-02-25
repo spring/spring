@@ -18,7 +18,6 @@ class CUnitSet;
 
 /**
  * Handles All Groups of a single team.
- * NOTE: Does not handle GroupAIs anymore, this is done by the groups themself.
  */
 class CGroupHandler {
 private:

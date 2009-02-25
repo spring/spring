@@ -24,8 +24,6 @@
 #include "LuaUtils.h"
 #include "LuaTextures.h"
 
-#include "ExternalAI/Group.h"
-#include "ExternalAI/GroupHandler.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
 #include "Game/Camera/CameraController.h"
@@ -54,6 +52,8 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
+#include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "LogOutput.h"
 #include "NetProtocol.h"
 #include "Sound/Sound.h"

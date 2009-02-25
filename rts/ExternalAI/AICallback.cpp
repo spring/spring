@@ -44,8 +44,8 @@
 #include "GlobalAICallback.h"
 #include "SkirmishAIWrapper.h"
 #include "EngineOutHandler.h"
-#include "Group.h"
-#include "GroupHandler.h"
+#include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "LogOutput.h"
 #include "mmgr.h"
 

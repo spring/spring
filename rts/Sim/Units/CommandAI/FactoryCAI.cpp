@@ -3,7 +3,7 @@
 
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
-#include "ExternalAI/Group.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"

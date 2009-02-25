@@ -23,7 +23,6 @@
 #include "AIInterfaceLibrary.h"
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
-#include "GroupAILibraryInfo.h"
 
 #include <vector>
 #include <map>

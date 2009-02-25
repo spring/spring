@@ -11,7 +11,7 @@
 
 #include "CommandColors.h"
 #include "CursorIcons.h"
-#include "ExternalAI/Group.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"
 #include "Game/CameraHandler.h"
