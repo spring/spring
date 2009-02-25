@@ -311,22 +311,6 @@ EXPORT(int) _Clb_handleCommand(int teamId, int toId, int commandId,
 			break;
 		}
 
-		case COMMAND_SHARED_MEM_AREA_CREATE:
-		{
-			SCreateSharedMemAreaCommand* cmd =
-					(SCreateSharedMemAreaCommand*) commandData;
-			cmd->ret_sharedMemArea =
-					clb->CreateSharedMemArea(cmd->name, cmd->size);
-			break;
-		}
-		case COMMAND_SHARED_MEM_AREA_RELEASE:
-		{
-			SReleaseSharedMemAreaCommand* cmd =
-					(SReleaseSharedMemAreaCommand*) commandData;
-			clb->ReleasedSharedMemArea(cmd->name);
-			break;
-		}
-
 		case COMMAND_GROUP_CREATE:
 		{
 			SCreateGroupCommand* cmd = (SCreateGroupCommand*) commandData;

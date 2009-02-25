@@ -172,6 +172,7 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath,
 
 	if (sharedLib == NULL) {
 		reportError(std::string("Failed loading shared library: ") + libFilePath);
+		return NULL;
 	}
 
 	// initialize the AI library
