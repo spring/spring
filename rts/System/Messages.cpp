@@ -48,15 +48,15 @@ void CMessages::Load()
 	vector<string> labels;
 	root.GetKeys(labels);
 
-	for (int i = 0; i < labels.size(); i++) {
-		const string label = StringToLower(labels[i]);
+	for (size_t l = 0; l < labels.size(); l++) {
+		const string label = StringToLower(labels[l]);
 		const LuaTable msgTable = root.SubTable(label);
 		if (!msgTable.IsValid()) {
 			continue;
 		}
 		vector<string> msgs;
-		for (int i = 1; true; i++) {
-			const string msg = msgTable.GetString(i, "");
+		for (int s = 1; true; s++) {
+			const string msg = msgTable.GetString(s, "");
 			if (msg.empty()) {
 				break;
 			}

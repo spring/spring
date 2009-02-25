@@ -70,7 +70,7 @@ void CFileFilter::AddRule(const string& rule)
 
 	// Split lines if line endings are present.
 	if (rule.find('\n') != string::npos) {
-		int beg = 0, end = 0;
+		size_t beg = 0, end = 0;
 		while ((end = rule.find('\n', beg)) != string::npos) {
 			//printf("line: %s\n", rule.substr(beg, end - beg).c_str());
 			AddRule(rule.substr(beg, end - beg));
@@ -81,7 +81,7 @@ void CFileFilter::AddRule(const string& rule)
 	}
 
 	// Eat leading whitespace, return if we reach end of string.
-	int p = 0;
+	size_t p = 0;
 	while (isspace(rule[p]))
 		if (++p >= rule.length())
 			return;
@@ -91,17 +91,20 @@ void CFileFilter::AddRule(const string& rule)
 		return;
 
 	// Eat trailing whitespace, return if we meet p.
-	int q = rule.length() - 1;
-	while (isspace(rule[q]))
-		if (--q < p)
+	size_t q = rule.length() - 1;
+	while (isspace(rule[q])) {
+		if (--q < p) {
 			return;
+		}
+	}
 
 	// Build the rule.
 	Rule r;
 	if (rule[p] == '!') {
 		r.negate = true;
-		if (++p > q)
+		if (++p > q) {
 			return;
+		}
 	}
 	r.glob = rule.substr(p, 1 + q - p);
 	r.regex = boost::regex(glob_to_regex(r.glob)
@@ -137,7 +140,7 @@ string CFileFilter::glob_to_regex(const string& glob)
 	// Otherwise we 'just' need to make sure the glob matches only full path
 	// elements, so we require either start of line OR path separator.
 
-	if (i != glob.end() && *i == '/' || *i == '\\') {
+	if ((i != glob.end() && *i == '/') || *i == '\\') {
 		regex << '^';
 		++i;
 	}
