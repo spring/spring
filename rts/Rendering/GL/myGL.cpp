@@ -94,13 +94,35 @@ void LoadExtensions()
 	}
 */
 
-	if(!GLEW_ARB_multitexture || !GLEW_ARB_texture_env_combine){
-		handleerror(0,"Needed extension GL_ARB_texture_env_combine not found","Update drivers",0);
-		exit(0);
+	std::string missingExts = "";
+	if(!GL_ARB_fragment_program_shadow) {
+		// used by the ground shadow shaders
+		// if this is not found, the installed graphic drivers most likely
+		// have no OpenGL support at all, eg. VESA
+		missingExts += " GL_ARB_fragment_program_shadow";
+	}
+	if(!GLEW_ARB_multitexture) {
+		missingExts += " GLEW_ARB_multitexture";
+	}
+	if(!GLEW_ARB_texture_env_combine) {
+		missingExts += " GLEW_ARB_texture_env_combine";
+	}
+	if(!GLEW_ARB_texture_compression) {
+		missingExts += " GLEW_ARB_texture_compression";
 	}
 
-	if(!GLEW_ARB_texture_compression){
-		handleerror(0,"Needed extension GL_ARB_texture_compression not found","Update drivers",0);
+	if(!missingExts.empty()) {
+		static const unsigned int errorMsg_maxSize = 2048;
+		char errorMsg[errorMsg_maxSize];
+		SNPRINTF(errorMsg, errorMsg_maxSize,
+				"Needed OpenGL extension(s) not found:\n"
+				"%s\n"
+				"Update your graphic-card driver!\n"
+				"graphic card:   %s\n"
+				"OpenGL version: %s\n",
+				missingExts.c_str(), (const char*)glGetString(GL_RENDERER),
+				(const char*)glGetString(GL_RENDERER));
+		handleerror(0, errorMsg, "Update graphic drivers", 0);
 		exit(0);
 	}
 
@@ -365,10 +387,12 @@ static void CheckParseErrors(const char * program_type, const char * filename, c
 	// Print implementation-dependent program
 	// errors and warnings string.
 	const GLubyte *errString=glGetString( GL_PROGRAM_ERROR_STRING_ARB);
-	char c[512];
-	SNPRINTF(c,512,"Error at position %d near \"%.30s\" when loading %s program file %s",
-		errPos, program+errPos, program_type, filename);
-	throw content_error(c);
+	static const unsigned int errorMsg_maxSize = 2048;
+	char errorMsg[errorMsg_maxSize];
+	SNPRINTF(errorMsg, errorMsg_maxSize,
+			"Error at position %d near \"%.30s\" when loading %s program file %s:\n%s",
+			errPos, program+errPos, program_type, filename, (const char*)errString);
+	throw content_error(errorMsg);
 }
 
 
