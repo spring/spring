@@ -2,7 +2,7 @@
 #include "GlobalAICallback.h"
 #include "SkirmishAIWrapper.h"
 #include "LogOutput.h"
-#include "GroupHandler.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "AICheats.h"
 #include "mmgr.h"
 

@@ -3,7 +3,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-#include "ExternalAI/Group.h"
 #include <set>
 #include <list>
 #include <cctype>
@@ -22,7 +21,6 @@ using namespace std;
 
 #include "LuaHandle.h"
 #include "LuaHashString.h"
-#include "ExternalAI/GroupHandler.h"
 #include "Game/Camera.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Game.h"
@@ -51,6 +49,8 @@ using namespace std;
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
+#include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "NetProtocol.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"

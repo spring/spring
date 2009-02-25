@@ -54,8 +54,8 @@
 #  include "winerror.h"
 #endif
 #include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/Group.h"
-#include "ExternalAI/GroupHandler.h"
+#include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"

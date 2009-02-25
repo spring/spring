@@ -3,7 +3,6 @@
 #include "mmgr.h"
 
 #include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/GroupHandler.h"
 #include "LoadSaveHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Map/ReadMap.h"
@@ -27,6 +26,7 @@
 #include "Game/WaitCommandsAI.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/CommandAI/BuilderCAI.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "Game/GameServer.h"
 #include "Rendering/InMapDraw.h"
 #include "GlobalUnsynced.h"

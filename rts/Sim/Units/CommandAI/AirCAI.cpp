@@ -3,7 +3,7 @@
 
 #include "AirCAI.h"
 #include "LineDrawer.h"
-#include "ExternalAI/Group.h"
+#include "Sim/Units/Groups/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/CommandColors.h"

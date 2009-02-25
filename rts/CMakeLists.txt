@@ -113,6 +113,7 @@ AUX_SOURCE_DIRECTORY(Sim/Projectiles/Unsynced simfiles)
 AUX_SOURCE_DIRECTORY(Sim/Units simfiles)
 AUX_SOURCE_DIRECTORY(Sim/Units/COB simfiles)
 AUX_SOURCE_DIRECTORY(Sim/Units/CommandAI simfiles)
+AUX_SOURCE_DIRECTORY(Sim/Units/Groups simfiles)
 AUX_SOURCE_DIRECTORY(Sim/Units/UnitTypes simfiles)
 AUX_SOURCE_DIRECTORY(Sim/Weapons simfiles)
 

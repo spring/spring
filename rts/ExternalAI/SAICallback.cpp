@@ -23,6 +23,8 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Features/FeatureHandler.h"
@@ -36,8 +38,6 @@
 #include "Map/MetalMap.h"
 #include "Game/SelectedUnits.h"
 #include "Game/UI/GuiHandler.h" //TODO: fix some switch for new gui
-#include "ExternalAI/Group.h"
-#include "ExternalAI/GroupHandler.h"
 #include "Interface/AISCommands.h"
 #include "GlobalUnsynced.h" // for myTeam
 

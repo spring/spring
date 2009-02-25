@@ -21,10 +21,8 @@
 #include "Interface/SAIInterfaceLibrary.h"
 #include "Interface/SStaticGlobalData.h"
 #include "SkirmishAILibrary.h"
-#include "GroupAILibrary.h"
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
-#include "GroupAILibraryInfo.h"
 
 #include "System/Util.h"
 #include "System/Platform/errorhandler.h"

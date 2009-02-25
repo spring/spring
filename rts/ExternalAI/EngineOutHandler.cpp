@@ -16,14 +16,14 @@
 */
 
 #include "EngineOutHandler.h"
-#include "Group.h"
-#include "GroupHandler.h"
 #include "SkirmishAIWrapper.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/Groups/Group.h"
+#include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "ConfigHandler.h"
 #include "LogOutput.h"
