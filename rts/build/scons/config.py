@@ -242,7 +242,7 @@ def check_java(env, conf):
 def check_java_bin(env, conf):
 	print "Checking for Java executables ...",
 	if (os.environ.has_key('JAVA_HOME')):
-		env.AppendENVPath('PATH', os.environ['JAVA_HOME'] + '/bin')
+		env.AppendENVPath('PATH', os.path.join(os.environ['JAVA_HOME'], 'bin'))
 		#env.AppendENVPath('LD_LIBRARY_PATH', os.environ['JAVA_HOME'] + '/jre/lib/i386/server/')
 
 
