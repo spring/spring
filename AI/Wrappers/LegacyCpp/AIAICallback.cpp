@@ -39,6 +39,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon() {}
 WeaponDef::~WeaponDef() {}
 
 #include <string>
+#include <cassert>
 
 
 static inline void fillWithNULL(void** arr, int size) {
@@ -1798,11 +1799,21 @@ int CAIAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeam)
 }
 
 void* CAIAICallback::CreateSharedMemArea(char* name, int size) {
-		SCreateSharedMemAreaCommand cmd = {name, size}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_CREATE, &cmd); return cmd.ret_sharedMemArea;
+
+	//SCreateSharedMemAreaCommand cmd = {name, size};
+	//sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_CREATE, &cmd);
+	//return cmd.ret_sharedMemArea;
+	static const bool deprecatedMethod = true;
+	assert(!deprecatedMethod);
+	return NULL;
 }
 
 void CAIAICallback::ReleasedSharedMemArea(char* name) {
-	SReleaseSharedMemAreaCommand cmd = {name}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_RELEASE, &cmd);
+
+	//SReleaseSharedMemAreaCommand cmd = {name};
+	//sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_RELEASE, &cmd);
+	static const bool deprecatedMethod = true;
+	assert(!deprecatedMethod);
 }
 
 int CAIAICallback::CreateGroup(const char* libraryName, unsigned aiNumber) {

@@ -128,6 +128,10 @@ int CAIInterfaceLibrary::GetLoadCount() const {
 	return totalSkirmishAILibraryLoadCount;
 }
 
+// used as fallback, when an AI could not be found
+static int handleEvent_empty(int teamId, int receiver, const void* data) {
+	return 0; // signaling: OK
+}
 
 // Skirmish AI methods
 const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(
@@ -144,6 +148,28 @@ const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(
 		const SSAILibrary* sLib =
 				sAIInterfaceLibrary.loadSkirmishAILibrary(
 				infSize, infKeys, infValues);
+		if (sLib == NULL) {
+			logOutput.Print(
+					"ERROR: Skirmish AI %s-%s not found!\n"
+					"The game will go on without it.\n"
+					"This usually indicates a problem in the used"
+					"AI Interface library (%s-%s),\n"
+					"or the Skirmish AI library is not in the same"
+					"place as its AIInfo.lua.",
+					skirmishAIKey.GetShortName().c_str(),
+					skirmishAIKey.GetVersion().c_str(),
+					skirmishAIKey.GetInterface().GetShortName().c_str(),
+					skirmishAIKey.GetInterface().GetVersion().c_str());
+			struct SSAILibrary* sLib_empty = new SSAILibrary();
+			sLib_empty->getLevelOfSupportFor = NULL;
+			sLib_empty->init = NULL;
+			sLib_empty->release = NULL;
+			sLib_empty->handleEvent = &handleEvent_empty;
+			// NOTE: this causes a memory leack
+			// as it is never freed anywhere()
+			// no problem because it is used till the end of the game anyway.
+			sLib = sLib_empty;
+		}
 		ai = new CSkirmishAILibrary(*sLib, skirmishAIKey);
 		loadedSkirmishAILibraries[skirmishAIKey] = ai;
 	} else {

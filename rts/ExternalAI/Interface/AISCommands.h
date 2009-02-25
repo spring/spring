@@ -55,8 +55,8 @@ enum CommandTopic {
 	COMMAND_SET_LAST_POS_MESSAGE                  =  7,
 	COMMAND_SEND_RESOURCES                        =  8,
 	COMMAND_SEND_UNITS                            =  9,
-	COMMAND_SHARED_MEM_AREA_CREATE                = 10,
-	COMMAND_SHARED_MEM_AREA_RELEASE               = 11,
+	COMMAND_UNUSED_0                              = 10, // unused
+	COMMAND_UNUSED_1                              = 11, // unused
 	COMMAND_GROUP_CREATE                          = 12,
 	COMMAND_GROUP_ERASE                           = 13,
 	COMMAND_GROUP_ADD_UNIT                        = 14,
@@ -197,16 +197,6 @@ struct SSendUnitsCommand {
 	int receivingTeam;
 	int ret_sentUnits;
 }; // COMMAND_SEND_UNITS
-
-struct SCreateSharedMemAreaCommand {
-	char* name;
-	int size;
-	void* ret_sharedMemArea;
-}; // COMMAND_SHARED_MEM_AREA_CREATE
-
-struct SReleaseSharedMemAreaCommand {
-	char* name;
-}; // COMMAND_SHARED_MEM_AREA_RELEASE
 
 struct SCreateGroupCommand {
 	const char* libraryName;
