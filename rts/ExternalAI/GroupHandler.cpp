@@ -5,7 +5,6 @@
 
 #include "GroupHandler.h"
 #include "Group.h"
-#include "IGroupAI.h"
 #include "LogOutput.h"
 #include "Game/SelectedUnits.h"
 #include "TimeProfiler.h"
@@ -38,23 +37,19 @@ CR_REG_METADATA(CGroupHandler, (
 //////////////////////////////////////////////////////////////////////
 
 CGroupHandler::CGroupHandler(int team)
-: firstUnusedGroup(10),
-	team(team)
+		: firstUnusedGroup(10),
+		team(team)
 {
-	defaultKey.dllName="default";
-	defaultKey.aiNumber=0;
-
-	//FindDlls();
-
-	for(int a=0;a<10;++a){
-		groups.push_back(new CGroup(defaultKey,a,this));
+	for(int g=0; g < 10; ++g) {
+		groups.push_back(new CGroup(g, this));
 	}
 }
 
 CGroupHandler::~CGroupHandler()
 {
-	for(int a=0;a<firstUnusedGroup;++a)
-		delete groups[a];
+	for(int g=0; g < firstUnusedGroup; ++g) {
+		delete groups[g];
+	}
 }
 
 void CGroupHandler::PostLoad()
@@ -63,91 +58,32 @@ void CGroupHandler::PostLoad()
 
 void CGroupHandler::Load(std::istream *s)
 {
-	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
-		if((*ai)&&((*ai)->ai)) {
-			(*ai)->ai->Load((IGroupAICallback*)(*ai)->callback,s);
-		}
 }
 
 void CGroupHandler::Save(std::ostream *s)
 {
-	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
-		if((*ai)&&((*ai)->ai)) {
-			(*ai)->ai->Save(s);
-		}
 }
 
 void CGroupHandler::Update()
 {
 	SCOPED_TIMER("Group AI");
-	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
-		if((*ai)!=0)
-			(*ai)->Update();
+	for (std::vector<CGroup*>::iterator g=groups.begin(); g!=groups.end(); ++g)
+	{
+		if ((*g) != NULL) {
+			(*g)->Update();
+		}
+	}
 }
 
 void CGroupHandler::DrawCommands()
 {
 //	GML_STDMUTEX_LOCK(cai); // not needed, protected via SelectedUnits::DrawCommands
-	for(std::vector<CGroup*>::iterator ai=groups.begin();ai!=groups.end();++ai)
-		if((*ai)!=0)
-			(*ai)->DrawCommands();
-}
-
-void CGroupHandler::TestDll(std::string name)
-{
-	typedef int (* GETGROUPAIVERSION)();
-	typedef const char ** (* GETAINAMELIST)();
-	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
-
-	SharedLib *lib;
-	GETGROUPAIVERSION GetGroupAiVersion;
-	GETAINAMELIST GetAiNameList;
-	ISUNITSUITED IsUnitSuited;
-
-	lib = SharedLib::Instantiate(name);
-	if (!lib){
-		logOutput.Print ("Cant load dll: %s",name.c_str());
-		return;
+	for (std::vector<CGroup*>::iterator g=groups.begin(); g!=groups.end(); ++g)
+	{
+		if ((*g) != NULL) {
+			(*g)->DrawCommands();
+		}
 	}
-
-	GetGroupAiVersion = (GETGROUPAIVERSION)lib->FindAddress("GetGroupAiVersion");
-	if (!GetGroupAiVersion){
-		logOutput.Print("Incorrect AI dll(%s): No GetGroupAiVersion function found", name.c_str());
-		delete lib;
-		return;
-	}
-
-	int i=GetGroupAiVersion();
-
-	if (i!=AI_INTERFACE_VERSION){
-		logOutput.Print("AI dll %s has incorrect version", name.c_str());
-		delete lib;
-		return;
-	}
-
-	IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
-	if (!IsUnitSuited){
-		logOutput.Print ("No IsUnitSuited function found in AI dll %s", name.c_str());
-		delete lib;
-		return;
-	}
-
-	GetAiNameList = (GETAINAMELIST)lib->FindAddress("GetAiNameList");
-	if (!GetAiNameList){
-		logOutput.Print("No GetAiNameList function found in AI dll %s",name.c_str());
-		delete lib;
-		return;
-	}
-
-	const char ** aiNameList=GetAiNameList();
-
-	for(unsigned i=0;aiNameList[i]!=NULL;i++){
-		AIKey key;
-		key.dllName=name;
-		key.aiNumber=i;
-		availableAI[key] = std::string(aiNameList[i]);
-	}
-	delete lib;
 }
 
 void CGroupHandler::GroupCommand(int num)
@@ -256,22 +192,12 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 	selectedUnits.SelectGroup(num);
 }
 
-void CGroupHandler::FindDlls(void)
-{
-	std::vector<std::string> match;
-	std::string dir("AI/Helper-libs");
-	match = filesystem.FindFiles(dir, std::string("*.") + SharedLib::GetLibExtension());
-
-	for (std::vector<std::string>::iterator it = match.begin(); it != match.end(); it++)
-		TestDll(*it);
-}
-
-CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
+CGroup* CGroupHandler::CreateNewGroup()
 {
 	GML_STDMUTEX_LOCK(group); // GroupCommand
 
 	if(freeGroups.empty()){
-		CGroup* group=new CGroup(aiKey,firstUnusedGroup++,this);
+		CGroup* group=new CGroup(firstUnusedGroup++, this);
 		groups.push_back(group);
 		if(group!=groups[group->id]){
 			handleerror(0,"Id error when creating group","Error",0);
@@ -280,7 +206,7 @@ CGroup* CGroupHandler::CreateNewGroup(AIKey aiKey)
 	} else {
 		int id=freeGroups.back();
 		freeGroups.pop_back();
-		CGroup* group=new CGroup(aiKey,id,this);
+		CGroup* group=new CGroup(id, this);
 		groups[id]=group;
 		return group;
 	}
@@ -300,41 +226,4 @@ void CGroupHandler::RemoveGroup(CGroup* group)
 	groups[group->id]=0;
 	freeGroups.push_back(group->id);
 	delete group;
-}
-
-std::map<AIKey, std::string> CGroupHandler::GetSuitedAis(const CUnitSet& units)
-{
-	GML_RECMUTEX_LOCK(sel); // GetSuitedAis
-
-	typedef bool (* ISUNITSUITED)(unsigned aiNumber,const UnitDef* unitDef);
-	ISUNITSUITED IsUnitSuited;
-
-	std::map<AIKey, std::string> suitedAis;
-	suitedAis[defaultKey]="default";
-
-	std::map<AIKey, std::string>::iterator aai;
-	for(aai=availableAI.begin();aai!=availableAI.end();++aai)
-	{
-		SharedLib *lib;
-		const AIKey& aiKey = aai->first;
-		lib = SharedLib::Instantiate(aiKey.dllName);
-		IsUnitSuited = (ISUNITSUITED)lib->FindAddress("IsUnitSuited");
-		bool suited = false;
-		CUnitSet::const_iterator ui;
-		for(ui=units.begin();ui!=units.end();++ui)
-		{
-			const UnitDef* ud = (*ui)->unitDef;
-			if(IsUnitSuited(aiKey.aiNumber,ud))
-			{
-				suited = true;
-				break;
-			}
-		}
-		if(suited)
-			suitedAis[aiKey]=aai->second;
-		delete lib;
-	}
-
-	lastSuitedAis = suitedAis;
-	return suitedAis;
 }

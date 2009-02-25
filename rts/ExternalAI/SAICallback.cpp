@@ -315,7 +315,7 @@ EXPORT(int) _Clb_handleCommand(int teamId, int toId, int commandId,
 		{
 			SCreateGroupCommand* cmd = (SCreateGroupCommand*) commandData;
 			cmd->ret_groupId =
-					clb->CreateGroup(cmd->libraryName, cmd->aiNumber);
+					clb->CreateGroup();
 			break;
 		}
 		case COMMAND_GROUP_ERASE:

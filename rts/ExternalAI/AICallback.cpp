@@ -46,7 +46,6 @@
 #include "EngineOutHandler.h"
 #include "Group.h"
 #include "GroupHandler.h"
-#include "IGroupAI.h"
 #include "LogOutput.h"
 #include "mmgr.h"
 
@@ -256,12 +255,9 @@ void CAICallback::ReleasedSharedMemArea(char* name)
 				"Spring is closing:", MBF_OK | MBF_EXCL);
 }
 
-int CAICallback::CreateGroup(const char* libraryName, unsigned aiNumber)
+int CAICallback::CreateGroup()
 {
-	AIKey key;
-	key.dllName=libraryName;
-	key.aiNumber=aiNumber;
-	CGroup* g=gh->CreateNewGroup(key);
+	CGroup* g=gh->CreateNewGroup();
 	return g->id;
 }
 
@@ -312,20 +308,11 @@ int CAICallback::GetUnitGroup(int unitId)
 const std::vector<CommandDescription>* CAICallback::GetGroupCommands(int groupId)
 {
 	static std::vector<CommandDescription> tempcmds;
-
-	if (CHECK_GROUPID(groupId)) {
-		if(gh->groups[groupId] && gh->groups[groupId]->ai)
-			return &gh->groups[groupId]->ai->GetPossibleCommands();
-	}
 	return &tempcmds;
 }
 
 int CAICallback::GiveGroupOrder(int groupId, Command* c)
 {
-	if (CHECK_GROUPID(groupId) && c != NULL) {
-		if(gh->groups[groupId] && gh->groups[groupId]->ai)
-			gh->groups[groupId]->ai->GiveCommand(c);
-	}
 	return 0;
 }
 

@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "aikey.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "creg/creg_cond.h"
 
 class CGroup;
 class CUnitSet;
@@ -42,27 +42,17 @@ public:
 	void DrawCommands();
 	void GroupCommand(int num);
 	void GroupCommand(int num, const std::string& cmd);
-	CGroup* CreateNewGroup(AIKey aiKey);
+	CGroup* CreateNewGroup();
 	void RemoveGroup(CGroup* group);
 	void Load(std::istream *s);
 	void Save(std::ostream *s);
 
 	std::vector<CGroup*> groups;
-	std::map<AIKey, std::string> availableAI;
-
-	std::map<AIKey, std::string> GetSuitedAis(const CUnitSet& units);
-	std::map<AIKey, std::string> lastSuitedAis;
 
 	int team;
 protected:
-//	std::vector<CGroup*> groups;
-	void FindDlls(void);
-	void TestDll(std::string name);
-
 	std::vector<int> freeGroups;
 	int firstUnusedGroup;
-private:
-	AIKey defaultKey;
 };
 
 //extern CGroupHandler* grouphandler;

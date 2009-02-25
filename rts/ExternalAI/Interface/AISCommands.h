@@ -199,8 +199,6 @@ struct SSendUnitsCommand {
 }; // COMMAND_SEND_UNITS
 
 struct SCreateGroupCommand {
-	const char* libraryName;
-	unsigned int aiNumber;
 	int ret_groupId;
 }; // COMMAND_GROUP_CREATE
 struct SEraseGroupCommand {
