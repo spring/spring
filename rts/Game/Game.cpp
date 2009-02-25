@@ -1657,22 +1657,8 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "aiselect") {
 		if (gs->noHelperAIs) {
-			logOutput.Print("GroupAI and LuaUI control is disabled");
+			logOutput.Print("GroupAI controll is not available anymore, and LuaUI control is disabled");
 			return true;
-		}
-		map<AIKey, string>::iterator aai;
-		map<AIKey, string> suitedAis =
-			grouphandlers[gu->myTeam]->GetSuitedAis(selectedUnits.selectedUnits);
-		int i = 0;
-		for (aai = suitedAis.begin(); aai != suitedAis.end(); ++aai) {
-			i++;
-			if (action.extra == aai->second) {
-				Command cmd;
-				cmd.id = CMD_AISELECT;
-				cmd.params.push_back((float)i);
-				selectedUnits.GiveCommand(cmd);
-				break;
-			}
 		}
 	}
 	else if (cmd == "vsync") {

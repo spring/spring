@@ -84,22 +84,6 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 
 	possibleCommandsChanged = false;
 
-	if (selectedGroup != -1 && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
-		AvailableCommandsStruct ac;
-		ac.commandPage = grouphandlers[gu->myTeam]->groups[selectedGroup]->lastCommandPage;
-		ac.commands = grouphandlers[gu->myTeam]->groups[selectedGroup]->GetPossibleCommands();
-
-		CommandDescription c;			//make sure we can clear the group even when selected
-		c.id      = CMD_GROUPCLEAR;
-		c.action  = "groupclear";
-		c.type    = CMDTYPE_ICON;
-		c.name    = "Clear group";
-		c.tooltip = "Removes the units from any group they belong to";
-		ac.commands.push_back(c);
-
-		return ac;
-	}
-
 	int commandPage = 1000;
 	int foundGroup = -2;
 	int foundGroup2 = -2;
@@ -131,63 +115,6 @@ CSelectedUnits::AvailableCommandsStruct CSelectedUnits::GetAvailableCommands()
 	}
 
 	vector<CommandDescription> groupCommands;
-	if (!gs->noHelperAIs) {
-		//create a new group
-		if (foundGroup != -2) {
-			map<AIKey, string>::iterator aai;
-			map<AIKey, string> suitedAis = grouphandlers[gu->myTeam]->GetSuitedAis(selectedUnits);
-			if (suitedAis.size() >= 2) { // default doesn't count
-				CommandDescription c;
-				c.id      = CMD_AISELECT;
-				c.action  = "aiselect";
-				c.type    = CMDTYPE_COMBO_BOX;
-				c.name    = "Select AI";
-				c.tooltip = "Create a new group using the selected units and with the ai selected";
-
-				c.params.push_back("0");
-				c.params.push_back("None");
-				for (aai = suitedAis.begin(); aai != suitedAis.end(); ++aai) {
-					c.params.push_back((aai->second).c_str());
-				}
-				groupCommands.push_back(c);
-			}
-		}
-
-		// add the selected units to a previous group (that at least one unit is also selected from)
-		if ((foundGroup < 0) && (foundGroup2 >= 0)) {
-			CommandDescription c;
-			c.id      = CMD_GROUPADD;
-			c.action  = "groupadd";
-			c.type    = CMDTYPE_ICON;
-			c.name    = "Add to group";
-			c.tooltip = "Adds the selected to an existing group (of which one or more units is already selected)";
-			groupCommands.push_back(c);
-		}
-
-		// select the group to which the units belong
-		if (foundGroup >= 0) {
-			CommandDescription c;
-
-			c.id      = CMD_GROUPSELECT;
-			c.action  = "groupselect";
-			c.type    = CMDTYPE_ICON;
-			c.name    = "Select group";
-			c.tooltip = "Select the group that these units belong to";
-			groupCommands.push_back(c);
-		}
-
-		// remove all selected units from any groups they belong to
-		if (foundGroup2 != -2) {
-			CommandDescription c;
-
-			c.id      = CMD_GROUPCLEAR;
-			c.action  = "groupclear";
-			c.type    = CMDTYPE_ICON;
-			c.name    = "Clear group";
-			c.tooltip = "Removes the units from any group they belong to";
-			groupCommands.push_back(c);
-		}
-	} // end if (!gs->noHelperAIs)
 
 	vector<CommandDescription> commands ;
 	// load the first set  (separating build and non-build commands)
@@ -306,12 +233,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 			return;
 		}
 		if(c.params[0]!=0){
-			map<AIKey,string>::iterator aai;
-			int a=0;
-			for(aai=grouphandlers[gu->myTeam]->lastSuitedAis.begin();aai!=grouphandlers[gu->myTeam]->lastSuitedAis.end() && a<c.params[0]-1;++aai){
-				a++;
-			}
-			CGroup* group=grouphandlers[gu->myTeam]->CreateNewGroup(aai->first);
+			CGroup* group=grouphandlers[gu->myTeam]->CreateNewGroup();
 
 			for(CUnitSet::iterator ui=selectedUnits.begin();ui!=selectedUnits.end();++ui){
 				(*ui)->SetGroup(group);
@@ -338,13 +260,6 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	}
 	else if (c.id == CMD_GATHERWAIT) {
 		waitCommandsAI.AddGatherWait(c);
-		return;
-	}
-
-//	FIXME:  selectedUnitsAI.GiveCommand(c);
-
-	if ((selectedGroup != -1) && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
-		grouphandlers[gu->myTeam]->groups[selectedGroup]->GiveCommand(c);
 		return;
 	}
 
@@ -649,10 +564,6 @@ int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
 		return luaCmd;
 	}
 
-	if ((selectedGroup != -1) && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
-		return grouphandlers[gu->myTeam]->groups[selectedGroup]->GetDefaultCmd(unit, feature);
-	}
-
 	// return the default if there are no units selected
 	CUnitSet::const_iterator ui = selectedUnits.begin();
 	if (ui == selectedUnits.end()) {
@@ -750,10 +661,8 @@ std::string CSelectedUnits::GetTooltip(void)
 	GML_RECMUTEX_LOCK(sel); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
 	GML_STDMUTEX_LOCK(group); // GetTooltip
 
-	std::string s;
-	if ((selectedGroup != -1) && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai) {
-		s = "Group selected";
-	} else if (!selectedUnits.empty()) {
+	std::string s = "";
+	if (!selectedUnits.empty()) {
 		// show the player name instead of unit name if it has FBI tag showPlayerName
 		if ((*selectedUnits.begin())->unitDef->showPlayerName) {
 			if (teamHandler->Team((*selectedUnits.begin())->team)->leader >= 0)
@@ -827,10 +736,6 @@ void CSelectedUnits::SetCommandPage(int page)
 {
 	GML_RECMUTEX_LOCK(sel); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc --> SetCommandPage
 	GML_STDMUTEX_LOCK(group); // SetCommandPage
-
-	if(selectedGroup!=-1 && grouphandlers[gu->myTeam]->groups[selectedGroup]->ai){
-		grouphandlers[gu->myTeam]->groups[selectedGroup]->lastCommandPage=page;
-	}
 
 	CUnitSet::iterator ui;
 	for (ui = selectedUnits.begin(); ui != selectedUnits.end(); ++ui) {

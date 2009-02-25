@@ -37,7 +37,7 @@ public:
 	void* CreateSharedMemArea(char* name, int size);
 	void ReleasedSharedMemArea(char* name);
 
-	int CreateGroup(const char* libraryName, unsigned aiNumber);
+	int CreateGroup();
 	void EraseGroup(int groupId);
 	bool AddUnitToGroup(int unitId, int groupId);
 	bool RemoveUnitFromGroup(int unitId);

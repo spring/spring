@@ -51,7 +51,7 @@ public:
 
 	virtual void ReleasedSharedMemArea(char* name);
 
-	virtual int CreateGroup(const char* dll, unsigned aiNumber);
+	virtual int CreateGroup();
 
 	virtual void EraseGroup(int groupid);
 	virtual bool AddUnitToGroup(int unitid, int groupid);

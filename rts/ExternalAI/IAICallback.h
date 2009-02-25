@@ -155,8 +155,8 @@ public:
 	// release your reference to a memory area
 	virtual void ReleasedSharedMemArea(char* name) = 0;
 
-	virtual int CreateGroup(const char* libraryName, unsigned aiNumber) = 0;			// creates a group and return the id it was given, return -1 on
-																						// failure (dll didn't exist, etc)
+	virtual int CreateGroup() = 0;														// creates a group and returns the id it was given,
+																						// returns -1 on failure
 	virtual void EraseGroup(int groupId) = 0;											// erases a specified group
 	virtual bool AddUnitToGroup(int unitId, int groupId) = 0;							// adds a unit to a specific group, if it was previously in a group
 																						// it is removed from that, return false if the group didn't exist

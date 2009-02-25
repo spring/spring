@@ -935,7 +935,7 @@ int LuaUnsyncedRead::GetCameraNames(lua_State* L)
 
 	lua_newtable(L);
 	const std::vector<CCameraController*>& cc = camHandler->GetAvailableControllers();
-	for (int i = 0; i < cc.size(); ++i) {
+	for (size_t i = 0; i < cc.size(); ++i) {
 		lua_pushstring(L, cc[i]->GetName().c_str());
 		lua_pushnumber(L, i);
 		lua_rawset(L, -3);
@@ -1785,20 +1785,9 @@ int LuaUnsyncedRead::GetGroupAIList(lua_State* L)
 {
 	GML_STDMUTEX_LOCK(group); // GetGroupAIList
 
-	CheckNoArgs(L, __FUNCTION__);
-	lua_newtable(L);
-	const map<AIKey, string>& availableAI = grouphandlers[gu->myTeam]->availableAI;
-	map<AIKey, string>::const_iterator it;
-	int count = 0;
-	for (it = availableAI.begin(); it != availableAI.end(); ++it) {
-		count++;
-		lua_pushnumber(L, count);
-		lua_pushstring(L, it->second.c_str());
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
+	int groupAIsDoNotExistAnymore = false;
+	assert(groupAIsDoNotExistAnymore);
+
 	return 1;
 }
 
@@ -1807,31 +1796,10 @@ int LuaUnsyncedRead::GetGroupAIName(lua_State* L)
 {
 	GML_STDMUTEX_LOCK(group); // GetGroupAIName
 
-	const int args = lua_gettop(L); // number of arguments
-	if ((args != 1) || !lua_isnumber(L, 1)) {
-		luaL_error(L, "Incorrect arguments to GetGroupAIName(groupID)");
-	}
+	int groupAIsDoNotExistAnymore = false;
+	assert(groupAIsDoNotExistAnymore);
 
-	const int groupID = lua_toint(L, 1);
-	if ((groupID < 0) || (groupID >= (int)grouphandlers[gu->myTeam]->groups.size())) {
-		return 0; // bad group
-	}
-
-	const CGroup* group = grouphandlers[gu->myTeam]->groups[groupID];
-	if (group->ai == NULL) {
-		lua_pushstring(L, "");
-		return 1;
-	}
-
-	const AIKey& aikey = group->currentAiKey;
-	const map<AIKey, string>& availableAI = grouphandlers[gu->myTeam]->availableAI;
-	map<AIKey, string>::const_iterator fit = availableAI.find(aikey);
-	if (fit == availableAI.end()) {
-		lua_pushstring(L, ""); // should not happen?
-	} else {
-		lua_pushstring(L, fit->second.c_str());
-	}
-	return 1;
+	return 0; // failure
 }
 
 
