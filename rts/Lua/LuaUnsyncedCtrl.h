@@ -30,7 +30,6 @@ class LuaUnsyncedCtrl {
 		static int SendMessageToAllyTeam(lua_State* L);
 		static int SendMessageToSpectators(lua_State* L);
 
-		static int GenerateSoundItem(lua_State* L);
 		static int PlaySoundFile(lua_State* L);
 		static int PlaySoundStream(lua_State* L);
 		static int StopSoundStream(lua_State* L);
