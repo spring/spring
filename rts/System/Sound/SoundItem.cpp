@@ -8,11 +8,18 @@
 
 namespace
 {
-template<typename T>
-void StringConvert(const std::string& input, T& t)
+template <typename T>
+inline bool MapEntryValExtract(const std::map<std::string, std::string> map, const std::string& key, T& t)
 {
-	std::istringstream stream(input);
-	stream >> t;
+	std::map<std::string, std::string>::const_iterator it = map.find(key);
+	if (it != map.end())
+	{
+		std::istringstream stream(it->second);
+		stream >> t;
+		return true;
+	}
+	else
+		return false;
 }
 }
 
@@ -27,28 +34,16 @@ currentlyPlaying(0),
 loopTime(0),
 in3D(true)
 {
-	std::map<std::string, std::string>::const_iterator it = items.find("name");
-
-	it = items.find("name");
-	if (it != items.end())
-		name = it->second;
-	else
+	if (!MapEntryValExtract(items, "name", name))
 		name = buffer->GetFilename();
 
-	if ((it = items.find("gain")) != items.end())
-		StringConvert(it->second, gain);
-	if ((it = items.find("pitch")) != items.end())
-		StringConvert(it->second, pitch);
-	if ((it = items.find("priority")) != items.end())
-		StringConvert(it->second, priority);
-	if ((it = items.find("maxconcurrent")) != items.end())
-		StringConvert(it->second, maxConcurrent);
-	if ((it = items.find("maxdist")) != items.end())
-		StringConvert(it->second, maxDist);
-	if ((it = items.find("in3d")) != items.end())
-		StringConvert(it->second, in3D);
-	if ((it = items.find("looptime")) != items.end())
-		StringConvert(it->second, loopTime);
+	MapEntryValExtract(items, "gain", gain);
+	MapEntryValExtract(items, "pitch", pitch);
+	MapEntryValExtract(items, "priority", priority);
+	MapEntryValExtract(items, "maxconcurrent", maxConcurrent);
+	MapEntryValExtract(items, "maxdist", maxDist);
+	MapEntryValExtract(items, "in3d", in3D);
+	MapEntryValExtract(items, "looptime", loopTime);
 }
 
 bool SoundItem::PlayNow()
