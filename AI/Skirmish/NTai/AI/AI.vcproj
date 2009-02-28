@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="AI"
 	ProjectGUID="{9F9564F7-AD4B-4D7A-AD03-9148792B5159}"
 	RootNamespace="AI"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -40,6 +41,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
+				PreprocessorDefinitions="BUILDING_SKIRMISH_AI;BUILDING_AI"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -62,6 +64,8 @@
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				LargeAddressAware="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -81,9 +85,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -115,6 +116,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
+				PreprocessorDefinitions="BUILDING_SKIRMISH_AI"
 				RuntimeLibrary="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -136,6 +138,8 @@
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -155,9 +159,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -189,6 +190,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
+				PreprocessorDefinitions="BUILDING_SKIRMISH_AI"
 				RuntimeLibrary="2"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -213,6 +215,8 @@
 				MapExports="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -234,9 +238,6 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -255,6 +256,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\CBuildingPlacer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Core\CCached.cpp"
 				>
 			</File>
 			<File
@@ -295,6 +300,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\DTHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\rts\Game\GameVersion.cpp"
 				>
 			</File>
 			<File
@@ -651,6 +660,150 @@
 			>
 			<File
 				RelativePath=".\NTai\Core\NTAI.rc"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="cppwrapper"
+			>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIAI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIAI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIAICallback.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIAICallback.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIAICheats.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIAICheats.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIEnemyDamagedEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIEnemyDestroyedEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIEnemyEnterLOSEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIEnemyEnterRadarEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIEnemyLeaveLOSEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIEnemyLeaveRadarEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIEvents.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIGlobalAI.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIGlobalAI.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIGlobalAICallback.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AIGlobalAICallback.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIInitEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIMessageEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AINullEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIPlayerCommandEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIReleaseEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\AISCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AISeismicPingEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUnitCapturedEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUnitCreatedEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUnitDamagedEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUnitDestroyedEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUnitFinishedEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUnitGivenEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUnitIdleEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUnitMoveFailedEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIUpdateEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIWeaponFiredEvent.h"
 				>
 			</File>
 		</Filter>
