@@ -1,7 +1,11 @@
 #ifndef __COMMAND_QUEUE_H__
 #define __COMMAND_QUEUE_H__
 
+#ifndef BUILDING_AI
 #include "Rendering/GL/myGL.h"
+#else
+#define GML_STDMUTEX_LOCK(x)
+#endif
 #include <deque>
 #include "Command.h"
 
