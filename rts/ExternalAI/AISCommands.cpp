@@ -57,7 +57,7 @@ void freeSUnitCommand(void* sCommandData, int sCommandId) {
 	sCommandData = NULL;
 }
 
-void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int sCommandId[0]) {
+void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId) {
 
 	int sCmdId = COMMAND_NULL;
 	void* sCommandData;
