@@ -32,44 +32,58 @@
 	// Microsoft Visual C++ 7.0: MSC_VER = 1300
 	// Microsoft Visual C++ 7.1: MSC_VER = 1310
 	#if _MSC_VER > 1310 // >= Visual Studio 2005
-		#define PRINTF printf_s
-		#define FPRINTF fprintf_s
-		#define SNPRINTF sprintf_s
+		#define PRINTF    printf_s
+		#define FPRINTF   fprintf_s
+		#define SNPRINTF  sprintf_s
 		#define VSNPRINTF vsprintf_s
-		#define STRCPY strcpy_s
-		#define STRCAT strcat_s
-		#define STRNCAT strncat_s
-		#define FOPEN fopen_s
+		#define STRCPY    strcpy_s
+		#define STRNCPY_  strncpy_s
+		#define STRCAT    strcat_s
+		#define STRNCAT   strncat_s
+		#define FOPEN     fopen_s
 	#else              // Visual Studio 2003
-		#define PRINTF _printf
-		#define FPRINTF _fprintf
-		#define SNPRINTF _snprintf
+		#define PRINTF    _printf
+		#define FPRINTF   _fprintf
+		#define SNPRINTF  _snprintf
 		#define VSNPRINTF _vsnprintf
-		#define STRCPY strcpy
-		#define STRCAT strcat
-		#define STRNCAT strncat
-		#define FOPEN fopen
+		#define STRCPY    _strcpy
+		#define STRNCPY_  _strncpy
+		#define STRCAT    _strcat
+		#define STRNCAT   _strncat
+		#define FOPEN     _fopen
 	#endif
-	#define STRCASECMP stricmp
+	#define STRCASECMP    stricmp
 #else // _MSC_VER
 	// assuming GCC
-	#define PRINTF printf
-	#define FPRINTF fprintf
-	#define SNPRINTF snprintf
-	#define VSNPRINTF vsnprintf
-	#define STRCPY strcpy
-	#define STRCAT strcat
-	#define STRNCAT strncat
-	#define FOPEN fopen
+	#define PRINTF     printf
+	#define FPRINTF    fprintf
+	#define SNPRINTF   snprintf
+	#define VSNPRINTF  vsnprintf
+	#define STRCPY     strcpy
+	#define STRNCPY_   strncpy
+	#define STRCAT     strcat
+	#define STRNCAT    strncat
+	#define FOPEN      fopen
 	#define STRCASECMP strcasecmp
 #endif // _MSC_VER
+#define STRNCPY(dst, src, dst_sizeMax) \
+	STRNCPY_(dst, src, dst_sizeMax); \
+	/* Safety net! Add the NULL just in case src is larger than dst. */ \
+	dst[dst_sizeMax-1] = '\0';
 
-// define a platform independent path separator C-string
+// define a platform independent path separator C-string and char
 #ifndef sPS
 #ifdef _WIN32
 #define sPS "\\"
 #else // _WIN32
 #define sPS "/"
+#endif // _WIN32
+#endif
+#ifndef cPS
+#ifdef _WIN32
+#define cPS '\\'
+#else // _WIN32
+#define cPS '/'
 #endif // _WIN32
 #endif
 
