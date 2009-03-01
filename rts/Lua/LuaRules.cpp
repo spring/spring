@@ -1163,7 +1163,7 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad teamID type\n", caller);
 	}
 	const int teamID = lua_toint(L, index);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		luaL_error(L, "%s(): Bad teamID: %i\n", teamID);
 	}
 	CTeam* team = teamHandler->Team(teamID);

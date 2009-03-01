@@ -805,7 +805,7 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 	// FIXME: doesn't work for 3DO team textures
 	//        doesn't play nicely with cached team color (in scripts, etc...)
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 	CTeam* team = teamHandler->Team(teamID);

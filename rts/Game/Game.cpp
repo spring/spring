@@ -3074,7 +3074,7 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
-		for (int a = 0; a < MAX_TEAMS; a++) {
+		for (int a = 0; a < teamHandler->ActiveTeams(); a++) {
 			grouphandlers[a]->Update();
 		}
 		profiler.Update();
@@ -3763,7 +3763,7 @@ void CGame::ClientReadNet()
 				const int whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
 				const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
-				if (whichAllyTeam < MAX_TEAMS && whichAllyTeam >= 0) {
+				if (whichAllyTeam < teamHandler->ActiveAllyTeams() && whichAllyTeam >= 0) {
 					// FIXME - need to reset unit allyTeams
 					//       - need to reset unit texture for 3do
 					//       - need a call-in for AIs
@@ -4671,7 +4671,7 @@ static unsigned char GetLuaColor(const LuaTable& tbl, int channel, unsigned char
 
 void CGame::ReColorTeams()
 {
-	for (int t = 0; t < MAX_TEAMS; t++) {
+	for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		CTeam* team = teamHandler->Team(t);
 		team->origColor[0] = team->color[0];
 		team->origColor[1] = team->color[1];
