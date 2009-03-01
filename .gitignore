@@ -60,6 +60,11 @@
 /rts/build/vstudio8/Release+MT with error catching
 /rts/build/vstudio8/Syncdebug
 
+# NTai build folders
+/AI/Skirmish/NTai/AI/Debug
+/AI/Skirmish/NTai/AI/Release
+/AI/Skirmish/NTai/AI/AI.ncb
+/AI/Skirmish/NTai/AI/AI.suo
 
 # Windows libraries used by spring when compiling with MinGW
 # recommended: place the dir somewhere else, and specify with
