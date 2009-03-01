@@ -14,6 +14,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
 #include "Rendering/Textures/TAPalette.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "UnsyncedRNG.h"
 #include "Exceptions.h"
 #include "Util.h"
@@ -432,7 +433,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 /**
 @brief Load allyteams and remove gaps in the allyteam numbering.
 @pre numAllyTeams initialized
-@post allyteams loaded
+@post allyteams loaded, alliances initialised (no remapping needed here)
 */
 void CGameSetup::LoadAllyTeams(const TdfParser& file)
 {
@@ -451,24 +452,30 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 		data.startRectLeft   = atof(file.SGetValueDef("0", s + "StartRectLeft").c_str());
 		data.startRectRight  = atof(file.SGetValueDef("1", s + "StartRectRight").c_str());
 
-		int numAllies = atoi(file.SGetValueDef("0", s + "NumAllies").c_str());
-
-		for (int otherAllyTeam = 0; otherAllyTeam < MAX_TEAMS; ++otherAllyTeam) {
-			data.allies[otherAllyTeam] = (a == otherAllyTeam);
-		}
-		for (int b = 0; b < numAllies; ++b) {
-			char key[100];
-			sprintf(key, "GAME\\ALLYTEAM%i\\Ally%i", a, b);
-			int other = atoi(file.SGetValueDef("0",key).c_str());
-			data.allies[other] = true;
-		}
-		data.allies[a] = true; // team i is ally from team i
 		allyStartingData.push_back(data);
 
 		allyteamRemap[a] = i;
 		++i;
 	}
 
+	{
+		const size_t numAllyTeams = allyStartingData.size();
+		for (size_t a = 0; a < numAllyTeams; ++a)
+		{
+			allyStartingData[a].allies.resize(numAllyTeams, false);
+			allyStartingData[a].allies[a] = true; // each team is allied with itself
+	
+			std::ostringstream section;
+			section << "GAME\\ALLYTEAM" << a << "\\";
+			size_t numAllies = atoi(file.SGetValueDef("0", section.str() + "NumAllies").c_str());
+			for (size_t b = 0; b < numAllies; ++b) {
+				std::ostringstream key;
+				key << "GAME\\ALLYTEAM" << a << "\\Ally" << b;
+				int other = atoi(file.SGetValueDef("0",key.str()).c_str());
+				allyStartingData[a].allies[allyteamRemap[other]] = true;
+			}
+		}
+	}
 
 	unsigned allyCount = 0;
 	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || allyStartingData.size() == allyCount)
@@ -518,7 +525,7 @@ void CGameSetup::RemapTeams()
 	}
 }
 
-/** @brief Update all allyteam indices to refer to the right allyteams. */
+/** @brief Update all allyteam indices to refer to the right allyteams. (except allies) */
 void CGameSetup::RemapAllyteams()
 {
 	// relocate Team.Allyteam field
@@ -527,16 +534,6 @@ void CGameSetup::RemapAllyteams()
 			throw content_error("invalid Team.Allyteam in GameSetup script");
 		}
 		teamStartingData[a].teamAllyteam = allyteamRemap[teamStartingData[a].teamAllyteam];
-	}
-
-	// relocate gs->allies matrix
-	for (int a = 0; a < MAX_TEAMS; ++a) {
-		for (int b = 0; b < MAX_TEAMS; ++b) {
-			if (allyteamRemap.find(a) != allyteamRemap.end() &&
-				allyteamRemap.find(b) != allyteamRemap.end()) {
-				allyStartingData[allyteamRemap[a]].allies[allyteamRemap[b]] = allyStartingData[a].allies[b];
-			}
-		}
 	}
 }
 
