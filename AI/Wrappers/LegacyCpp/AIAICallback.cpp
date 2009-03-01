@@ -147,11 +147,12 @@ const std::vector<CommandDescription>* CAIAICallback::GetGroupCommands(int group
 		commandDescription.disabled = sAICallback->Clb_Group_SupportedCommand_isDisabled(teamId, groupId, c);
 
 		int numParams = sAICallback->Clb_Group_SupportedCommand_0ARRAY1SIZE0getParams(teamId, groupId, c);
-		const char* params[numParams];
+		const char** params = (const char**) calloc(numParams, sizeof(char*));
 		numParams = sAICallback->Clb_Group_SupportedCommand_0ARRAY1VALS0getParams(teamId, groupId, c, params, numParams);
 		for (int p=0; p < numParams; p++) {
 			commandDescription.params.push_back(params[p]);
 		}
+		free(params);
 		cmdDescVec->push_back(commandDescription);
 	}
 
@@ -179,11 +180,12 @@ const std::vector<CommandDescription>* CAIAICallback::GetUnitCommands(int unitId
 		commandDescription.disabled = sAICallback->Clb_Unit_SupportedCommand_isDisabled(teamId, unitId, c);
 
 		int numParams = sAICallback->Clb_Unit_SupportedCommand_0ARRAY1SIZE0getParams(teamId, unitId, c);
-		const char* params[numParams];
+		const char** params = (const char**) calloc(numParams, sizeof(char*));
 		numParams = sAICallback->Clb_Unit_SupportedCommand_0ARRAY1VALS0getParams(teamId, unitId, c, params, numParams);
 		for (int p=0; p < numParams; p++) {
 			commandDescription.params.push_back(params[p]);
 		}
+		free(params);
 		cmdDescVec->push_back(commandDescription);
 	}
 
@@ -211,11 +213,12 @@ const CCommandQueue* CAIAICallback::GetCurrentUnitCommands(int unitId) {
 		command.timeOut = sAICallback->Clb_Unit_CurrentCommand_getTimeOut(teamId, unitId, c);
 
 		int numParams = sAICallback->Clb_Unit_CurrentCommand_0ARRAY1SIZE0getParams(teamId, unitId, c);
-		float params[numParams];
+		float* params = (float*) calloc(numParams, sizeof(float));
 		numParams = sAICallback->Clb_Unit_CurrentCommand_0ARRAY1VALS0getParams(teamId, unitId, c, params, numParams);
 		for (int p=0; p < numParams; p++) {
 			command.params.push_back(params[p]);
 		}
+		free(params);
 
 		cc->push_back(command);
 	}
@@ -547,14 +550,16 @@ unitDef->stockpileWeaponDef = this->GetWeaponDefById(sAICallback->Clb_UnitDef_0S
 }
 {
 	int size = sAICallback->Clb_UnitDef_0MAP1SIZE0getCustomParams(teamId, unitDefId);
-	const char* cKeys[size];
-	const char* cValues[size];
+	const char** cKeys = (const char**) calloc(size, sizeof(char*));
+	const char** cValues = (const char**) calloc(size, sizeof(char*));
 	sAICallback->Clb_UnitDef_0MAP1KEYS0getCustomParams(teamId, unitDefId, cKeys);
 	sAICallback->Clb_UnitDef_0MAP1VALS0getCustomParams(teamId, unitDefId, cValues);
 	int i;
 	for (i=0; i < size; ++i) {
 		unitDef->customParams[cKeys[i]] = cValues[i];
 	}
+	free(cKeys);
+	free(cValues);
 }
 if (sAICallback->Clb_UnitDef_0AVAILABLE0MoveData(teamId, unitDefId)) {
 	unitDef->movedata = new MoveData(NULL, -1);
@@ -1010,14 +1015,16 @@ featureDef->zsize = sAICallback->Clb_FeatureDef_getZSize(teamId, featureDefId);
 {
 	int size = sAICallback->Clb_FeatureDef_0MAP1SIZE0getCustomParams(teamId, featureDefId);
 	featureDef->customParams = std::map<std::string,std::string>();
-	const char* cKeys[size];
-	const char* cValues[size];
+	const char** cKeys = (const char**) calloc(size, sizeof(char*));
+	const char** cValues = (const char**) calloc(size, sizeof(char*));
 	sAICallback->Clb_FeatureDef_0MAP1KEYS0getCustomParams(teamId, featureDefId, cKeys);
 	sAICallback->Clb_FeatureDef_0MAP1VALS0getCustomParams(teamId, featureDefId, cValues);
 	int i;
 	for (i=0; i < size; ++i) {
 		featureDef->customParams[cKeys[i]] = cValues[i];
 	}
+	free(cKeys);
+	free(cValues);
 }
 	if (featureDefs[featureDefId] != NULL) {
 		delete featureDefs[featureDefId];
@@ -1087,13 +1094,15 @@ const WeaponDef* CAIAICallback::GetWeaponDefById(int weaponDefId) {
 int numTypes = sAICallback->Clb_WeaponDef_Damage_0ARRAY1SIZE0getTypes(teamId, weaponDefId);
 //	logT("GetWeaponDefById 1");
 //float* typeDamages = new float[numTypes];
-float typeDamages[numTypes];
+float* typeDamages = (float*) calloc(numTypes, sizeof(float));
 numTypes = sAICallback->Clb_WeaponDef_Damage_0ARRAY1VALS0getTypes(teamId, weaponDefId, typeDamages, numTypes);
 //	logT("GetWeaponDefById 2");
 //for(int i=0; i < numTypes; ++i) {
 //	typeDamages[i] = sAICallback->Clb_WeaponDef_Damages_getType(teamId, weaponDefId, i);
 //}
 DamageArray da(numTypes, typeDamages);
+// DamageArray is copying the array internaly, so it does no harm freeing it here
+free(typeDamages);
 //	logT("GetWeaponDefById 3");
 //AIDamageArray tmpDa(numTypes, typeDamages);
 //AIDamageArray tmpDa;
@@ -1240,14 +1249,16 @@ weaponDef->dynDamageInverted = sAICallback->Clb_WeaponDef_isDynDamageInverted(te
 {
 	int size = sAICallback->Clb_WeaponDef_0MAP1SIZE0getCustomParams(teamId, weaponDefId);
 	weaponDef->customParams = std::map<std::string,std::string>();
-	const char* cKeys[size];
-	const char* cValues[size];
+	const char** cKeys = (const char**) calloc(size, sizeof(char*));
+	const char** cValues = (const char**) calloc(size, sizeof(char*));
 	sAICallback->Clb_WeaponDef_0MAP1KEYS0getCustomParams(teamId, weaponDefId, cKeys);
 	sAICallback->Clb_WeaponDef_0MAP1VALS0getCustomParams(teamId, weaponDefId, cValues);
 	int i;
 	for (i=0; i < size; ++i) {
 		weaponDef->customParams[cKeys[i]] = cValues[i];
 	}
+	free(cKeys);
+	free(cValues);
 }
 	if (weaponDefs[weaponDefId] != NULL) {
 		delete weaponDefs[weaponDefId];
@@ -1283,15 +1294,22 @@ void CAIAICallback::AddNotification(float3 pos, float3 color, float alpha) {
 }
 
 bool CAIAICallback::SendResources(float mAmount, float eAmount, int receivingTeam) {
-		SSendResourcesCommand cmd = {mAmount, eAmount, receivingTeam}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_RESOURCES, &cmd); return cmd.ret_isExecuted;
+
+	SSendResourcesCommand cmd = {mAmount, eAmount, receivingTeam};
+	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_RESOURCES, &cmd);
+	return cmd.ret_isExecuted;
 }
 
 int CAIAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeam) {
-	int arr_unitIds[unitIds.size()];
-	for (unsigned int i=0; i < unitIds.size(); ++i) {
+
+	int* arr_unitIds = (int*) calloc(unitIds.size(), sizeof(int));
+	for (size_t i=0; i < unitIds.size(); ++i) {
 		arr_unitIds[i] = unitIds[i];
 	}
-	SSendUnitsCommand cmd = {arr_unitIds, unitIds.size(), receivingTeam}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_UNITS, &cmd); return cmd.ret_sentUnits;
+	SSendUnitsCommand cmd = {arr_unitIds, unitIds.size(), receivingTeam};
+	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_UNITS, &cmd);
+	free(arr_unitIds);
+	return cmd.ret_sentUnits;
 }
 
 void* CAIAICallback::CreateSharedMemArea(char* name, int size) {
@@ -1314,7 +1332,7 @@ void CAIAICallback::ReleasedSharedMemArea(char* name) {
 
 int CAIAICallback::CreateGroup() {
 
-	SCreateGroupCommand cmd = {}; 
+	SCreateGroupCommand cmd = {};
 	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_CREATE, &cmd);
 	return cmd.ret_groupId;
 }
