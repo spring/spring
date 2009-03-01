@@ -127,7 +127,7 @@ int CAIInterfaceLibrary::GetLoadCount() const {
 }
 
 // used as fallback, when an AI could not be found
-static int handleEvent_empty(int teamId, int receiver, const void* data) {
+static int CALLING_CONV handleEvent_empty(int teamId, int receiver, const void* data) {
 	return 0; // signaling: OK
 }
 
@@ -162,7 +162,7 @@ const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(
 			sLib_empty->getLevelOfSupportFor = NULL;
 			sLib_empty->init = NULL;
 			sLib_empty->release = NULL;
-			sLib_empty->handleEvent = &handleEvent_empty;
+			sLib_empty->handleEvent = handleEvent_empty;
 			// NOTE: this causes a memory leack
 			// as it is never freed anywhere()
 			// no problem because it is used till the end of the game anyway.
