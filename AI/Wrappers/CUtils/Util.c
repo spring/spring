@@ -405,8 +405,8 @@ char* util_allocStrCatFSPath(int numParts, const char* first, ...) {
 	}
 	va_end(args);
 	*p = '\0';
-	if (PS != '/') {
-		util_strReplaceChar(result, '/', PS);
+	if (cPS != '/') {
+		util_strReplaceChar(result, '/', cPS);
 	}
 
 	return result;
