@@ -539,9 +539,9 @@ CGame::~CGame()
 	SafeDelete(sky);
 	SafeDelete(resourceBar);
 
+	SafeDelete(featureHandler);
 	SafeDelete(uh);
 	SafeDelete(unitDrawer);
-	SafeDelete(featureHandler);
 	SafeDelete(geometricObjects);
 	SafeDelete(ph);
 	SafeDelete(minimap);
