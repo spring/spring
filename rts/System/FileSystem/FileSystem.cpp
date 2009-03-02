@@ -23,7 +23,7 @@
 	#include <sstream>
 	#include <unistd.h>
 #else
-	#include <windows.h> 
+	#include <windows.h>
 	#include <io.h>
 	#include <direct.h>
 	// winapi redifines this which breaks things
@@ -153,6 +153,14 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 	return matches;
 }
 
+bool FileSystemHandler::IsReadableFile(const std::string& file) const
+{
+#ifdef WIN32
+	return (_access(file.c_str(), 4) == 0);
+#else
+	return (access(file.c_str(), R_OK | F_OK) == 0);
+#endif
+}
 
 std::string FileSystemHandler::LocateFile(const std::string& file) const
 {
@@ -164,11 +172,8 @@ std::string FileSystemHandler::LocateFile(const std::string& file) const
 	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
 	for (std::vector<DataDir>::const_iterator d = datadirs.begin(); d != datadirs.end(); ++d) {
 		std::string fn(d->path + file);
-#ifdef WIN32
-		if (_access(fn.c_str(), 4) == 0) {
-#else
-		if (access(fn.c_str(), R_OK | F_OK) == 0) {
-#endif
+		// does the file exist, and is it readable?
+		if (IsReadableFile(fn)) {
 			return fn;
 		}
 	}
@@ -191,15 +196,10 @@ std::vector<std::string> FileSystemHandler::GetDataDirectories() const
 bool FileSystemHandler::IsAbsolutePath(const std::string& path)
 {
 #ifdef WIN32
-	if ((path.length() > 1) && (path[1] == ':')) {
-		return true;
-	}
+	return ((path.length() > 1) && (path[1] == ':'));
 #else
-	if ((path.length() > 0) && (path[0] == '/')) {
-		return true;
-	}
+	return ((path.length() > 0) && (path[0] == '/'));
 #endif
-	return false;
 }
 
 
@@ -219,29 +219,32 @@ bool FileSystemHandler::IsAbsolutePath(const std::string& path)
  */
 bool FileSystemHandler::mkdir(const std::string& dir) const
 {
-#ifdef _WIN32
-	struct _stat info;
-
 	// First check if directory exists. We'll return success if it does.
-	if (_stat(dir.c_str(), &info) == 0 && (info.st_mode&_S_IFDIR))
+	if (DirExists(dir)) {
 		return true;
-#else
-	struct stat info;
+	}
 
-	// First check if directory exists. We'll return success if it does.
-	if (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode))
-		return true;
-#endif
 	// If it doesn't exist we try to mkdir it and return success if that succeeds.
 #ifndef _WIN32
 	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
 #else
-		if (::_mkdir(dir.c_str()) == 0)
+	if (::_mkdir(dir.c_str()) == 0)
 #endif
-			return true;
+		return true;
 
 	// Otherwise we return false.
 	return false;
+}
+
+bool FileSystemHandler::DirExists(const std::string& dir) const
+{
+#ifdef _WIN32
+	struct _stat info;
+	return (_stat(dir.c_str(), &info) == 0 && (info.st_mode&_S_IFDIR));
+#else
+	struct stat info;
+	return (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode));
+#endif
 }
 
 
@@ -571,8 +574,9 @@ std::string FileSystem::GetBasename(const std::string& path) const
 {
 	std::string fn = GetFilename(path);
 	size_t dot = fn.find_last_of('.');
-	if (dot != std::string::npos)
+	if (dot != std::string::npos) {
 		return fn.substr(0, dot);
+	}
 	return fn;
 }
 
@@ -583,8 +587,9 @@ std::string FileSystem::GetExtension(const std::string& path) const
 {
 	std::string fn = GetFilename(path);
 	size_t dot = fn.find_last_of('.');
-	if (dot != std::string::npos)
+	if (dot != std::string::npos) {
 		return fn.substr(dot + 1);
+	}
 	return "";
 }
 
@@ -594,9 +599,11 @@ std::string FileSystem::GetExtension(const std::string& path) const
 std::string& FileSystem::FixSlashes(std::string& path) const
 {
 	int sep = fs.GetNativePathSeparator();
-	for (unsigned i = 0; i < path.size(); ++i)
-		if (path[i] == '/' || path[i] == '\\')
+	for (size_t i = 0; i < path.size(); ++i) {
+		if (path[i] == '/' || path[i] == '\\') {
 			path[i] = sep;
+		}
+	}
 	return path;
 }
 
@@ -605,9 +612,11 @@ std::string& FileSystem::FixSlashes(std::string& path) const
  */
 std::string& FileSystem::ForwardSlashes(std::string& path) const
 {
-	for (unsigned i = 0; i < path.size(); ++i)
-		if (path[i] == '\\')
+	for (size_t i = 0; i < path.size(); ++i) {
+		if (path[i] == '\\') {
 			path[i] = '/';
+		}
+	}
 	return path;
 }
 
@@ -625,11 +634,19 @@ bool FileSystem::CheckFile(const std::string& file) const
 
 	return true;
 }
+// bool FileSystem::CheckDir(const std::string& dir) const {
+// 	return CheckFile(dir);
+// }
 
 std::string FileSystem::LocateFile(std::string file, int flags) const
 {
 	if (!CheckFile(file)) {
 		return "";
+	}
+
+	// if it's an absolute path, don't look for it in the data directories
+	if (FileSystemHandler::IsAbsolutePath(file)) {
+		return file;
 	}
 
 	FixSlashes(file);
@@ -639,13 +656,47 @@ std::string FileSystem::LocateFile(std::string file, int flags) const
 				+ (char)fs.GetNativePathSeparator() + file;
 		FixSlashes(writeableFile);
 		if (flags & CREATE_DIRS) {
-			
 			CreateDirectory(GetDirectory(writeableFile));
 		}
 		return writeableFile;
 	}
 
 	return fs.LocateFile(file);
+}
+
+std::string FileSystem::LocateDir(std::string _dir, int flags) const
+{
+	if (!CheckFile(_dir)) {
+		return "";
+	}
+
+	// if it's an absolute path, don't look for it in the data directories
+	if (FileSystemHandler::IsAbsolutePath(_dir)) {
+		return _dir;
+	}
+
+	std::string dir = _dir;
+	FixSlashes(dir);
+
+	if (flags & WRITE) {
+		std::string writeableDir = fs.GetWriteDir()
+				+ (char)fs.GetNativePathSeparator() + dir;
+		FixSlashes(writeableDir);
+		if (flags & CREATE_DIRS) {
+			CreateDirectory(writeableDir);
+		}
+		return writeableDir;
+	} else {
+		const std::vector<std::string>& datadirs = fs.GetDataDirectories();
+		std::vector<std::string>::const_iterator dd;
+		for (dd = datadirs.begin(); dd != datadirs.end(); ++dd) {
+			std::string dirPath((*dd) + dir);
+			if (fs.DirExists(dirPath)) {
+				return dirPath;
+			}
+		}
+		return dir;
+	}
 }
 
 
