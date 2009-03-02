@@ -48,6 +48,11 @@ namespace ntai {
 			throw string(" error cb ==0");
 		}
 		CLOG("Started Global::Global class constructor");
+
+		unit_array = new CUnit*[MAX_UNITS];
+		memset(unit_array,0,sizeof(CUnit*)*MAX_UNITS);
+
+
 		CLOG("Starting CCached initialisation");
 		Cached = new CCached(this);
 		CLOG("getting team value");
@@ -64,6 +69,10 @@ namespace ntai {
 
 		CLOG("Logging class Opened");
 		L.print("logging started");
+		
+		CLOG("Retrieving cheat interface");
+		chcb = callback->GetCheatInterface();
+		CLOG("cheat interface retrieved");
 
 		CLOG("Loading modinfo.tdf");
 		TdfParser sf(G);
@@ -74,12 +83,12 @@ namespace ntai {
 		}
 
 		CLOG("Getting tdfpath value");
-		info->tdfpath =  sf.SGetValueDef(string(cb->GetModName()), "MOD\\NTAI\\tdfpath");
+		const char* modname = cb->GetModName();
+		info->tdfpath =  sf.SGetValueDef(string(modname), "MOD\\NTAI\\tdfpath");
 
-		CLOG("Retrieving cheat interface");
-		chcb = callback->GetCheatInterface();
+		
 
-		CLOG("cheat interface retrieved");
+		
 
 		CLOG("Creating Actions class");
 		Actions = new CActions(G);
@@ -103,14 +112,7 @@ namespace ntai {
 		M->loadState();
 
 		CLOG("View The NTai Log file from here on");
-		/*if(M->hotspot.empty() == false){
-			 for(vector<float3>::iterator hs = M->hotspot.begin(); hs != M->hotspot.end(); ++hs){
-				 float3 tpos = *hs;
-				 tpos.y = cb->GetElevation(tpos.x,tpos.z);
-				 ctri triangle = Tri(tpos);
-				 triangles.push_back(triangle);
-			 }
-		 }*/
+
 		//if(L.FirstInstance() == true){
 		L << " :: Found " << M->m->NumSpotsFound << " Metal Spots" << endline;
 		//}
@@ -202,12 +204,17 @@ namespace ntai {
 
 		NLOG("Global::Update()");
 		cb->GetValue(AIVAL_GAME_PAUSED, &paused);
-		if(paused) return;
-		START_EXCEPTION_HANDLING
+		if(paused){
+			return;
+		}
 
-		if(!handlers.empty()){
-			if(!msgqueue.empty()){
-				int n = 0;
+		START_EXCEPTION_HANDLING
+		if(!msgqueue.empty()){
+			bool loopfinished = true;
+			int n = 0;
+			if(!handlers.empty()){
+			
+				
 				for(vector<CMessage>::iterator mi = msgqueue.begin(); mi != msgqueue.end(); ++mi){
 					if(mi->IsDead(GetCurrentFrame())){
 						continue;
@@ -222,19 +229,26 @@ namespace ntai {
 							RemoveHandler((*k));
 						}
 					}
+					for(int i = 0; i < MAX_UNITS; i++){
+						CUnit* u = unit_array[i];
+						if(u){
+							u->RecieveMessage(*mi);
+						}
+					}
 
 					// We dont want to do everything at once if the queue is gigantic
 					if(n >15){
 						// so erase what we've already parsed and exit the loop, we
 						// can do the rest of the queue in the next update call.
 						msgqueue.erase(msgqueue.begin(),mi);
+						loopfinished = false;
 						break;
 					}
-				}
-
+				}	
+			}
+			if(loopfinished){
 				msgqueue.erase(msgqueue.begin(),msgqueue.end());
 			}
-
 		}
 
 		if(cb->GetCurrentFrame() == (1 SECOND)){
@@ -251,7 +265,7 @@ namespace ntai {
 				cb->SendTextMsg("Please check www.darkstars.co.uk for updates", 0);
 			}
 
-			int* ax = new int[10000];
+			int* ax = new int[MAX_UNITS];
 			int anum =cb->GetFriendlyUnits(ax);
 			
 			ComName = string("");
@@ -344,7 +358,9 @@ namespace ntai {
 
 	void Global::UnitCreated(int unit){
 
-		if(!ValidUnitID(unit)) return;
+		if(!ValidUnitID(unit)){
+			return;
+		}
 		START_EXCEPTION_HANDLING
 		SortSolobuilds(unit);
 		END_EXCEPTION_HANDLING("Sorting solobuilds and singlebuilds in Global::UnitCreated")
@@ -366,12 +382,12 @@ namespace ntai {
 		END_EXCEPTION_HANDLING("Global::UnitFinished blocking map for unit")
 
 		START_EXCEPTION_HANDLING
-		boost::shared_ptr<CUnit> Unit = boost::shared_ptr<CUnit>(new CUnit(G, unit));
-		boost::shared_ptr<ITaskManager> taskManager(new CConfigTaskManager(G,Unit));
-		Unit->SetTaskManager(taskManager);
-		Unit->Init();
-		units[unit] = Unit;
-		RegisterMessageHandler(Unit);
+		CUnit* u = new CUnit(G, unit);
+		unit_array[unit] = u;
+		ITaskManager* taskManager = new CConfigTaskManager(G,unit);
+		u->SetTaskManager(taskManager);
+		u->Init();
+		//RegisterMessageHandler(Unit);
 		CMessage message("unitcreated");
 		message.AddParameter(unit);
 		FireEvent(message);
@@ -716,7 +732,6 @@ namespace ntai {
 		if(!(ValidUnitID(unit)&&ValidUnitID(attacker))){
 			return;
 		}
-		units.erase(unit);
 
 		idlenextframe.erase(unit);
 
@@ -761,7 +776,9 @@ namespace ntai {
 		Manufacturer->UnitDestroyed(unit);
 		Ch->UnitDestroyed(unit, attacker);
 		OrderRouter->UnitDestroyed(unit);
-		units.erase(unit);
+		
+		delete unit_array[unit];
+		unit_array[unit] = 0;
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -770,13 +787,12 @@ namespace ntai {
 		L.print("Initialisising");
 
 		mrand.seed(uint(time(NULL)*team));
-		string filename = info->datapath + slash + string("NTai.tdf");
-
-		filename = info->datapath + "/" +  info->tdfpath + string(".tdf");
+		string filename = info->datapath + "\\data\\" +  info->tdfpath + string(".tdf");
 		string* buffer = new string();
 		TdfParser* q = new TdfParser(this);
 
-		if(cb->GetFileSize(filename.c_str())!=-1){
+		int s =cb->GetFileSize(filename.c_str());
+		if(s!=-1){
 
 			q->LoadFile(filename);
 			L.print("Mod TDF loaded");
@@ -1415,17 +1431,17 @@ namespace ntai {
 	}
 
 	bool Global::HasUnit(int unit){
-		return (units.find(unit) != units.end());
+		assert(unit >= 0);
+		assert(unit < MAX_UNITS);
+		return unit_array[unit] != 0;
 	}
 
-	boost::shared_ptr<IModule> Global::GetUnit(int unit){
+	CUnit* Global::GetUnit(int unit){
 		if(HasUnit(unit)==false){
-			IModule* a = 0;
-			boost::shared_ptr<IModule> t(a);
-			return t;
+			return 0;
 		}
 
-		return units[unit];
+		return unit_array[unit];
 	}
 
 	void Global::RegisterMessageHandler(boost::shared_ptr<IModule> handler){

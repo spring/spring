@@ -265,16 +265,7 @@ namespace ntai {
 	}
 
 	void CBuildingPlacer::GetBuildPosMessage(IModule* reciever, int builderID, float3 builderpos, CUnitTypeData* builder, CUnitTypeData* building, float freespace){
-		/*if(G->UnitDefHelper->IsFactory(builder)&&(!G->UnitDefHelper->IsHub(builder))){
-		 if(G->UnitDefHelper->IsMobile(building)){
-		 CMessage m("buildposition");
-		 m.AddParameter(builderpos);
-		 //if(reciever->IsValid()){
-		 reciever->RecieveMessage(m);
-		 //}
-		 return;
-		 }
-		 }*/
+
 		if(reciever->IsValid()==false){
 			// oh noes! invalid module
 			CMessage m("buildposition");
@@ -282,9 +273,6 @@ namespace ntai {
 			reciever->RecieveMessage(m);
 			return;
 		}
-
-
-
 
 		float3 q = UpVector;
 		if(building->IsMex()){
@@ -474,81 +462,6 @@ namespace ntai {
 
 		pool->invoke(cb);
 	}
-
-	/*float3 CBuildingPlacer::findfreespace(const UnitDef* building, float3 MapPos, float buildingradius, float searchradius){
-		NLOG("CBuildingPlacer::findfreespace");
-		float bestDistance = searchradius+1;
-		float3 bestPosition = UpVector;
-		vector<float3> cells = this->blockingmap.GetCellsInRadius(MapPos, searchradius);
-		if(!cells.empty()){
-			NLOG("if(!cells.empty()){");
-			for(vector<float3>::iterator i = cells.begin(); i != cells.end(); ++i){// for each cell
-				float3 gpos= *i;
-				float3 mpos = blockingmap.GridtoMap(gpos);
-				float distance = mpos.distance2D(MapPos);
-				if(distance < bestDistance){
-					vector<float3> cells2 = this->blockingmap.GetCellsInRadius(mpos, buildingradius);
-
-					if(!cells2.empty()){
-						bool cnt = false;
-						for(vector<float3>::iterator i2 = cells2.begin(); i2 != cells2.end(); ++i2){//for each cell
-							int o = blockingmap.GetIndex(*i2);
-							if (blockingmap.CellExists(o)){
-								cnt = true;
-								break;
-							}
-						}
-						if(cnt) continue;
-					}else{
-						continue;
-					}
-					//int h = blockingmap.GetHighestindexInRadius(mpos,buildingradius);
-					//if(h!= -1) continue;
-					/*
-					 if(blockingmap.ValidIndex(h)){
-					 float j = blockingmap.GetValue(h);
-					 if(j ==1){
-					 continue;
-					 }
-					 }else{
-					 continue;
-					 }*//*
-					float fh = highheightmap.GetValuebyMap(mpos);
-					float fl = lowheightmap.GetValuebyMap(mpos);
-					if(min(fl, fh) <0){
-						//
-						if(building->minWaterDepth>fl) continue;
-						if(building->maxWaterDepth<fh) continue;
-					}
-					float dh = fh-fl;
-					if(dh > building->maxHeightDif){
-						//
-						continue;
-					}
-
-					if(!blockingmap.ValidGridPos(gpos)){
-						continue;
-					}else{
-						bestDistance = distance;
-						bestPosition = gpos;
-					}
-				}
-			}
-		}else{
-			return UpVector;
-		}
-
-		float3 fipos = blockingmap.GridtoMap(bestPosition);
-		/*if(!G->UnitDefHelper->IsMobile(building)){
-		 AIHCAddMapPoint ac;
-		 int l = building->name.size()+1;
-		 ac.label=new char[l];
-		 memcpy(ac.label,building->name.c_str(),l);
-		 ac.pos = fipos;
-		 G->cb->HandleCommand(AIHCAddMapPointId,&ac);
-		 }*//*
-		return fipos;
-	}*/
 
 	void CBuildingPlacer::Block(float3 pos, CUnitTypeData* utd){
 		Block(pos, utd->GetSpacing());

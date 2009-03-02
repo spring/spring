@@ -52,7 +52,7 @@ namespace ntai {
 	}
 
 	CUnit::~CUnit(){
-		//
+		delete taskManager;
 	}
 
 	bool CUnit::Init(){
@@ -115,7 +115,7 @@ namespace ntai {
 
 				G->RemoveHandler(currentTask);
 				taskManager->RemoveAllTasks();
-				G->RemoveHandler(taskManager);
+				//G->RemoveHandler(taskManager);
 
 				if(!behaviours.empty()){
 					behaviours.erase(behaviours.begin(),behaviours.end());
@@ -313,12 +313,12 @@ namespace ntai {
 		return true;
 	}
 	
-	void CUnit::SetTaskManager(boost::shared_ptr<ITaskManager> taskManager){
+	void CUnit::SetTaskManager(ITaskManager* taskManager){
 		//
 		this->taskManager = taskManager;
 	}
 
-	boost::shared_ptr<ITaskManager> CUnit::GetTaskManager(){
+	ITaskManager* CUnit::GetTaskManager(){
 		//
 		return taskManager;
 	}
