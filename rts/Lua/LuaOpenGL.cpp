@@ -1550,7 +1550,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -1906,7 +1906,7 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -3578,8 +3578,8 @@ static bool ParseUnitTexture(const string& texture)
 
 	S3DModel* model;
 
-	if (id>=MAX_UNITS) {
-		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id-MAX_UNITS);
+	if (id >= uh->MaxUnits()) {
+		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - uh->MaxUnits());
 		if (fd == NULL) {
 			return false;
 		}
@@ -3623,7 +3623,7 @@ int LuaOpenGL::Texture(lua_State* L)
 	//
 	// #12          --  unitDef 12 buildpic
 	// %34:1        --  unitDef 34 s3o tex2
-	// %5034:1      --  featureDef 34+MAX_UNITS s3o tex2
+	// %5034:1      --  featureDef 34+uh->MaxUnits() s3o tex2
 	// !56          --  lua generated texture 56
 	// $shadow      --  shadowmap
 	// $specular    --  specular cube map
