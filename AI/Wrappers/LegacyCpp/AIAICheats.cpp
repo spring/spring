@@ -17,13 +17,13 @@
 
 #include "AIAICheats.h"
 
-#include "ExternalAI/Interface/SAICallback.h"
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "AIAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
 
 static int resIndMetal = -1;
 static int resIndEnergy = -1;
-static inline int getResourceIndex_Metal(SAICallback* sAICallback, int teamId) {
+static inline int getResourceIndex_Metal(SSkirmishAICallback* sAICallback, int teamId) {
 
 	if (resIndMetal == -1) {
 		resIndMetal = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(
@@ -32,7 +32,7 @@ static inline int getResourceIndex_Metal(SAICallback* sAICallback, int teamId) {
 
 	return resIndMetal;
 }
-static inline int getResourceIndex_Energy(SAICallback* sAICallback, int teamId)
+static inline int getResourceIndex_Energy(SSkirmishAICallback* sAICallback, int teamId)
 {
 	if (resIndEnergy == -1) {
 		resIndEnergy = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(
@@ -45,7 +45,7 @@ static inline int getResourceIndex_Energy(SAICallback* sAICallback, int teamId)
 CAIAICheats::CAIAICheats()
 	: IAICheats(), teamId(-1), sAICallback(NULL), aiCallback(NULL) {}
 
-CAIAICheats::CAIAICheats(int teamId, SAICallback* sAICallback,
+CAIAICheats::CAIAICheats(int teamId, SSkirmishAICallback* sAICallback,
 		CAIAICallback* aiCallback)
 		: IAICheats(), teamId(teamId), sAICallback(sAICallback),
 		aiCallback(aiCallback) {}

@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #include "SAIFloat3.h"
-#include "SAICallback.h"
+#include "SSkirmishAICallback.h"
 
 /**
  * Each event type can be identified through a unique ID,
@@ -103,7 +103,7 @@ const unsigned int NUM_EVENTS          = 23;
  */
 struct SInitEvent {
 	int team;
-	struct SAICallback* callback;
+	struct SSkirmishAICallback* callback;
 	unsigned int infoSize;
 	const char** infoKeys;
 	const char** infoValues;

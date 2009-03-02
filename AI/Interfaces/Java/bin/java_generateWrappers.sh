@@ -23,7 +23,7 @@ MKDIR="mkdir -p"
 ##############################################
 ### do not change anything below this line ###
 
-C_CALLBACK=${SPRING_SOURCE}/ExternalAI/Interface/SAICallback.h
+C_CALLBACK=${SPRING_SOURCE}/ExternalAI/Interface/SSkirmishAICallback.h
 C_EVENTS=${SPRING_SOURCE}/ExternalAI/Interface/AISEvents.h
 C_COMMANDS=${SPRING_SOURCE}/ExternalAI/Interface/AISCommands.h
 JNA_CALLBACK=${GENERATED_SOURCE_DIR}/${JAVA_PKG}/AICallback.java

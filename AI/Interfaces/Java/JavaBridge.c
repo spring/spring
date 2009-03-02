@@ -22,7 +22,7 @@
 #include "CUtils/SimpleLog.h"
 
 #include "ExternalAI/Interface/aidefines.h"
-#include "ExternalAI/Interface/SAICallback.h"
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SSAILibrary.h"
 #include "ExternalAI/Interface/AISEvents.h"
@@ -45,7 +45,7 @@ static unsigned int maxTeams = 0;
 static unsigned int maxSkirmishImpls = 0;
 static unsigned int sizeImpls = 0;
 
-static const struct SAICallback** teamId_cCallback;
+static const struct SSkirmishAICallback** teamId_cCallback;
 static jobject* teamId_jCallback;
 static unsigned int* teamId_aiImplId;
 
@@ -701,8 +701,8 @@ bool java_initStatic(int _interfaceId,
 	sizeImpls = 0;
 
 	teamId_aiImplId = (unsigned int*) calloc(maxTeams, sizeof(unsigned int));
-	teamId_cCallback =(const struct SAICallback**)
-			calloc(maxTeams, sizeof(struct SAICallback*));
+	teamId_cCallback =(const struct SSkirmishAICallback**)
+			calloc(maxTeams, sizeof(struct SSkirmishAICallback*));
 	teamId_jCallback = (jobject*) calloc(maxTeams, sizeof(jobject));
 	unsigned int t;
 	for (t = 0; t < maxTeams; ++t) {
@@ -1234,7 +1234,7 @@ bool java_releaseAllSkirmishAIClasses() {
 }
 
 
-const struct SAICallback* java_getSkirmishAICCallback(int teamId) {
+const struct SSkirmishAICallback* java_getSkirmishAICCallback(int teamId) {
 	return teamId_cCallback[teamId];
 }
 

@@ -36,7 +36,7 @@ extern "C" {
  * has to be the ID of the team that is controlled by the AI instance
  * using the callback.
  */
-struct SAICallback {
+struct SSkirmishAICallback {
 
 /**
  * Whenever an AI wants to change the engine state in any way,
@@ -1306,7 +1306,7 @@ void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId,
 
 #if defined __cplusplus && !defined BUILDING_AI
 class IGlobalAICallback;
-SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback);
+SSkirmishAICallback* initSSkirmishAICallback(int teamId, IGlobalAICallback* aiGlobalCallback);
 #endif // defined __cplusplus && !defined BUILDING_AI
 
 #endif // _SAICALLBACK_H

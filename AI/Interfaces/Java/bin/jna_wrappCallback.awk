@@ -2,7 +2,7 @@
 #
 # This awk script creates a Java class with JNA functions
 # to call to C function pointers in:
-# rts/ExternalAI/Interface/SAICallback.h
+# rts/ExternalAI/Interface/SSkirmishAICallback.h
 #
 # This script uses functions from the following files:
 # * common.awk

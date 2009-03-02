@@ -22,7 +22,7 @@
 #include "ISkirmishAI.h"
 #include "GlobalAICallback.h"
 #include "SkirmishAIKey.h"
-#include "Interface/SAICallback.h"
+#include "Interface/SSkirmishAICallback.h"
 #include "Platform/SharedLib.h"
 
 #include <map>
@@ -96,7 +96,7 @@ private:
 
 	ISkirmishAI* ai;
 	CGlobalAICallback* callback;
-	SAICallback* c_callback;
+	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;
 	const struct InfoItem* info;
 	unsigned int size_info;

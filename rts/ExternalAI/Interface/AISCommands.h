@@ -42,7 +42,7 @@ extern "C" {
  * You should always append new command topics at the end of this list,
  * and adjust NUM_CMD_TOPICS.
  *
- * @see SAICallback.handleCommand()
+ * @see SSkirmishAICallback.handleCommand()
  */
 enum CommandTopic {
 	COMMAND_NULL                                  =  0,

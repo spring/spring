@@ -192,7 +192,7 @@ if (BUILD_Java_AIINTERFACE)
 		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappCallback.awk"
 		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
 		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
-		"${SPRING_AIINTERFACE_SOURCE_DIR}/SAICallback.h"
+		"${SPRING_AIINTERFACE_SOURCE_DIR}/SSkirmishAICallback.h"
 		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
 		COMMENT "  Generating Java AI Callback source files ..." VERBATIM)
 

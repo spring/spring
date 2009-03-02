@@ -292,7 +292,7 @@ function convertCToJNAType(cType__common) {
 	isComplex__common += sub(/char\*\*/, "Pointer", jnaType__common);
 	isComplex__common += sub(/char\*/, "String", jnaType__common);
 	isComplex__common += sub(/struct SAIFloat3(\*)?/, "AIFloat3", jnaType__common);
-	isComplex__common += sub(/struct SAICallback(\*)?/, "AICallback", jnaType__common);
+	isComplex__common += sub(/struct SSkirmishAICallback(\*)?/, "AICallback", jnaType__common);
 	isComplex__common += sub(/struct [0-9a-zA-Z_]*/, "Structure", jnaType__common);
 
 	isPrimitive__common = 0;

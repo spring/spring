@@ -18,7 +18,7 @@
 #include "AIAICallback.h"
 
 
-#include "ExternalAI/Interface/SAICallback.h"
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
 
 #include "creg/creg_cond.h"
@@ -55,7 +55,7 @@ static inline void fillWithMinusOne(int* arr, int size) {
 
 static int resIndMetal = -1;
 static int resIndEnergy = -1;
-static inline int getResourceId_Metal(SAICallback* sAICallback, int teamId) {
+static inline int getResourceId_Metal(SSkirmishAICallback* sAICallback, int teamId) {
 
 	if (resIndMetal == -1) {
 		resIndMetal = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(teamId, "Metal");
@@ -63,7 +63,7 @@ static inline int getResourceId_Metal(SAICallback* sAICallback, int teamId) {
 
 	return resIndMetal;
 }
-static inline int getResourceId_Energy(SAICallback* sAICallback, int teamId) {
+static inline int getResourceId_Energy(SSkirmishAICallback* sAICallback, int teamId) {
 
 	if (resIndEnergy == -1) {
 		resIndEnergy = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(teamId, "Energy");
@@ -78,7 +78,7 @@ CAIAICallback::CAIAICallback()
 	init();
 }
 
-CAIAICallback::CAIAICallback(int teamId, SAICallback* sAICallback)
+CAIAICallback::CAIAICallback(int teamId, SSkirmishAICallback* sAICallback)
 	: IAICallback(), teamId(teamId), sAICallback(sAICallback) {
 	init();
 }

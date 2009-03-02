@@ -155,7 +155,7 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 void CSkirmishAIWrapper::Init() {
 
 	callback = new CGlobalAICallback(this);
-	c_callback = initSAICallback(teamId, callback);
+	c_callback = initSSkirmishAICallback(teamId, callback);
 
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 	const CSkirmishAILibraryInfo* skiInf = libMan->GetSkirmishAIInfos().find(key)->second;

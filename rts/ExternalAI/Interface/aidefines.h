@@ -41,7 +41,7 @@
 // * ExternalAI/Interface/ELevelOfSupport.h
 // * ExternalAI/Interface/SAIFloat3.h
 // * ExternalAI/Interface/SSAILibrary.h
-// * ExternalAI/Interface/SAICallback.h
+// * ExternalAI/Interface/SSkirmishAICallback.h
 // * ExternalAI/Interface/SAIInterfaceLibrary.h
 // * ExternalAI/Interface/SAIInterfaceCallback.h
 // * ExternalAI/Interface/AISEvents.h
@@ -57,7 +57,7 @@
 	  sizeof(enum LevelOfSupport) \
 	+ sizeof(struct SAIFloat3) \
 	+ sizeof(struct SSAILibrary) \
-	+ sizeof(struct SAICallback) \
+	+ sizeof(struct SSkirmishAICallback) \
 	+ sizeof(struct SAIInterfaceLibrary) \
 	+ sizeof(struct SAIInterfaceCallback) \
 	+ AIINTERFACE_EVENTS_ABI_VERSION \
