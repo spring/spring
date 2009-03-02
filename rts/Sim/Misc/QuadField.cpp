@@ -9,6 +9,7 @@
 #include "QuadField.h"
 
 #include "GlobalSynced.h"
+#include "GlobalConstants.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/TeamHandler.h"

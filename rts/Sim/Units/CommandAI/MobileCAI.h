@@ -3,6 +3,7 @@
 
 #include "CommandAI.h"
 #include "Sim/MoveTypes/AAirMoveType.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 class CMobileCAI :
 	public CCommandAI

@@ -9,6 +9,7 @@
 
 #include "Game/GameSetup.h"
 #include "Lua/LuaGaia.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "mmgr.h"
 #include "Util.h"
 #include "Platform/errorhandler.h"

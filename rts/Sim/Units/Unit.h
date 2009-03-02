@@ -11,7 +11,6 @@
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Matrix44f.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "Vec2.h"
 
 class CCobInstance;

@@ -4,7 +4,6 @@
 #include <string>
 
 #include "float3.h"
-#include "GlobalConstants.h"
 #include "creg/creg.h"
 
 

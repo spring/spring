@@ -6,7 +6,6 @@
 
 #include "Object.h"
 #include "float3.h"
-#include "GlobalConstants.h"
 
 class CUnit;
 
