@@ -20,7 +20,6 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
-#include "Sim/Units/UnitDef.h" // MAX_UNITS
 #include "Sim/Units/CommandAI/Command.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "Util.h"

@@ -11,6 +11,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "GameHelper.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"

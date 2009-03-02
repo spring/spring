@@ -389,11 +389,11 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 				if (drawRadarAndJammer) {
 					const int rxsize = radarhandler->xsize;
 					const int rzsize = radarhandler->zsize;
-					const int posScale = highResInfoTexWanted ? SQUARE_SIZE : (SQUARE_SIZE * 2);
+					//const int posScale = highResInfoTexWanted ? SQUARE_SIZE : (SQUARE_SIZE * 2);
 					for (int y = starty; y < endy; ++y) {
-						const float zPos = y * posScale;
+						//const float zPos = y * posScale;
 						for (int x = 0; x < endx; ++x) {
-							const float xPos = x * posScale;
+							//const float xPos = x * posScale;
 							int a = (y * pwr2mapx) + x;
 							int totalLos;
 							if (gs->globalLOS) {

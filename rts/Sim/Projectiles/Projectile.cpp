@@ -10,6 +10,7 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "LogOutput.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/Colors.h"

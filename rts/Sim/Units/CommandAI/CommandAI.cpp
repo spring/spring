@@ -405,14 +405,14 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 
 	if ((c.id == CMD_RECLAIM) && (c.params.size() == 1)) {
 		const int unitID = (int) c.params[0];
-		if (unitID < MAX_UNITS) { // not a feature
+		if (unitID < uh->MaxUnits()) { // not a feature
 			CUnit* unit = uh->units[unitID];
 			if (unit && !unit->unitDef->reclaimable)
 				return false;
 			if (unit && !unit->AllowedReclaim(owner)) return false;
 		} else {
 			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-			CFeatureSet::const_iterator f = fset.find(unitID - MAX_UNITS);
+			CFeatureSet::const_iterator f = fset.find(unitID - uh->MaxUnits());
 			if (f != fset.end() && !(*f)->def->reclaimable)
 				return false;
 		}
@@ -1127,7 +1127,7 @@ void CCommandAI::ExecuteAttack(Command &c)
 
 		if (c.params.size() == 1) {
 			const int targetID     = int(c.params[0]);
-			const bool legalTarget = (targetID >= 0 && targetID < MAX_UNITS);
+			const bool legalTarget = (targetID >= 0 && targetID < uh->MaxUnits());
 			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
 
 			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
@@ -1311,7 +1311,7 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 
 	if (paramsCount == 1) {
 		const int unitID = int(c.params[0]);
-		if ((unitID >= 0) && (unitID < MAX_UNITS)) {
+		if ((unitID >= 0) && (unitID < uh->MaxUnits())) {
 			const CUnit* unit = uh->units[unitID];
 			if((unit != NULL) && isTrackable(unit)) {
 				const float3 endPos =
