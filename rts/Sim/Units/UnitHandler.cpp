@@ -93,7 +93,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(units),
 	CR_MEMBER(freeIDs),
 	CR_MEMBER(waterDamage),
-	CR_MEMBER(maxUnits),
+	CR_MEMBER(unitsPerTeam),
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(lastDamageWarning),
 	CR_MEMBER(lastCmdDamageWarning),
@@ -128,7 +128,8 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler(bool serializing)
 :
-	maxUnits(MAX_UNITS),
+	unitsPerTeam(MAX_UNITS),
+	units(MAX_UNITS),
 	maxUnitRadius(0.0f),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
@@ -149,10 +150,10 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 	waterDamage = mapInfo->water.damage;
 
-	maxUnits = gameSetup->maxUnits;
+	unitsPerTeam = gameSetup->maxUnits;
 
-	if (maxUnits > ((MAX_UNITS / teamHandler->ActiveTeams()) - 5)) {
-		maxUnits = (MAX_UNITS / teamHandler->ActiveTeams()) -5;
+	if (unitsPerTeam > ((MAX_UNITS / teamHandler->ActiveTeams()) - 5)) {
+		unitsPerTeam = (MAX_UNITS / teamHandler->ActiveTeams()) -5;
 	}
 
 	if (gameSetup->limitDgun) {
@@ -699,7 +700,7 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
 {
-	if (teamHandler->Team(team)->units.size() >= uh->maxUnits) {
+	if (teamHandler->Team(team)->units.size() >= unitsPerTeam) {
 		return false;
 	}
 	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit) {

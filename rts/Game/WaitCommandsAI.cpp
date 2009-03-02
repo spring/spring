@@ -701,7 +701,7 @@ CWaitCommandsAI::DeathWait::DeathWait(const Command& cmd)
 
 	if (cmd.params.size() == 1) {
 		const int unitID = (int)cmd.params[0];
-		if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+		if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
 			return;
 		}
 		CUnit* unit = uh->units[unitID];

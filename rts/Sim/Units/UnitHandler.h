@@ -53,11 +53,21 @@ public:
 	void LoadSaveUnits(CLoadSaveInterface* file, bool loading);
 	Command GetBuildCommand(float3 pos, float3 dir);
 
+	int MaxUnitsPerTeam() const
+	{
+		return unitsPerTeam;
+	};
+
+	size_t MaxUnits() const
+	{
+		return units.size();
+	};
+
 	std::vector< vector<CUnitSet> > unitsByDefs; // units sorted by team and unitDef
 
 	std::list<CUnit*> activeUnits;				//used to get all active units
 	std::vector<int> freeIDs;
-	CUnit* units[MAX_UNITS];							//used to get units from IDs (0 if not created)
+	std::vector<CUnit*> units;							//used to get units from IDs (0 if not created)
 
 	std::vector<CUnit*> toBeRemoved;			//units that will be removed at start of next update
 
@@ -69,8 +79,6 @@ public:
 	std::list<CBuilderCAI*> builderCAIs;
 
 	float waterDamage;
-
-	int maxUnits;			//max units per team
 
 	float maxUnitRadius; // largest radius seen so far
 
@@ -85,6 +93,9 @@ public:
 	float metalMakerEfficiency;
 
 	bool morphUnitToFeature;
+
+private:
+	int unitsPerTeam;
 };
 
 extern CUnitHandler* uh;
