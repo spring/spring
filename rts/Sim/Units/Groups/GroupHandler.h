@@ -10,7 +10,6 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "Sim/Misc/GlobalConstants.h"
 #include "creg/creg_cond.h"
 
 class CGroup;

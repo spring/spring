@@ -10,6 +10,7 @@
 #include "Lua/LuaRules.h"
 #include "Team.h"
 #include "TeamHandler.h"
+#include "GlobalConstants.h"
 #include "Util.h"
 
 
