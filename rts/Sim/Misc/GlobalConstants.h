@@ -35,7 +35,7 @@ const int MAX_VIEW_RANGE = 8000;
  * Defines the maximum number of teams
  * as 17 (16 real teams, and an extra slot for the GAIA team)
  */
-const int MAX_TEAMS = 17;
+const int MAX_TEAMS = 254;
 
 /**
  * @brief max players

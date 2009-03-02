@@ -48,6 +48,8 @@ public:
 	static const int ALLY_VAR_END   = ALLY_VAR_START   + ALLY_VAR_COUNT   - 1;
 	static const int GLOBAL_VAR_END = GLOBAL_VAR_START + GLOBAL_VAR_COUNT - 1;
 
+	static void InitVars(int numTeams, int numAllyTeams);
+
 protected:
 	CCobFile& script;
 	enum AnimType {ATurn, ASpin, AMove};
@@ -66,8 +68,8 @@ protected:
 	bool yardOpen;
 	void UnblockAll(struct AnimInfo * anim);
 
-	static int teamVars[MAX_TEAMS][TEAM_VAR_COUNT];
-	static int allyVars[MAX_TEAMS][ALLY_VAR_COUNT];
+	static std::vector<int> teamVars[TEAM_VAR_COUNT];
+	static std::vector<int> allyVars[ALLY_VAR_COUNT];
 	static int globalVars[GLOBAL_VAR_COUNT];
 
 	int unitVars[UNIT_VAR_COUNT];
@@ -132,8 +134,8 @@ public:
 public:
 	const int* GetUnitVars() const { return unitVars; };
 
-	static const int* GetTeamVars(int team) { return teamVars[team]; }
-	static const int* GetAllyVars(int ally) { return allyVars[ally]; }
+	static const int* GetTeamVars(int team) { return &teamVars[team][0]; }
+	static const int* GetAllyVars(int ally) { return &allyVars[ally][0]; }
 	static const int* GetGlobalVars()       { return globalVars; }
 
 public:

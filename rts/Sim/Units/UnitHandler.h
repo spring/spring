@@ -53,7 +53,7 @@ public:
 	void LoadSaveUnits(CLoadSaveInterface* file, bool loading);
 	Command GetBuildCommand(float3 pos, float3 dir);
 
-	vector<CUnitSet> unitsByDefs[MAX_TEAMS]; // units sorted by team and unitDef
+	std::vector< vector<CUnitSet> > unitsByDefs; // units sorted by team and unitDef
 
 	std::list<CUnit*> activeUnits;				//used to get all active units
 	std::vector<int> freeIDs;

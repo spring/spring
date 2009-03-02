@@ -234,7 +234,8 @@ CUnit::CUnit ()
 	lodCount(0),
 	currentLOD(0),
 	alphaThreshold(0.1f),
-	cegDamage(1)
+	cegDamage(1),
+	losStatus(teamHandler->ActiveAllyTeams(), 0)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl = NULL;
@@ -346,10 +347,6 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 	uh->AddUnit(this);
 	qf->MovedUnit(this);
 	oldRadarPos.x = -1;
-
-	for (int a = 0; a < MAX_TEAMS; ++a) {
-		losStatus[a] = 0;
-	}
 
 	losStatus[allyteam] = LOS_ALL_MASK_BITS |
 		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
@@ -1251,7 +1248,7 @@ void CUnit::DoSeismicPing(float pingSize)
 	float rx = gs->randFloat();
 	float rz = gs->randFloat();
 
-	const float* errorScale = radarhandler->radarErrorSize;
+	const float* errorScale = &radarhandler->radarErrorSize[0];
 	if (!(losStatus[gu->myAllyTeam] & LOS_INLOS) &&
 	    radarhandler->InSeismicDistance(this, gu->myAllyTeam)) {
 		const float3 err(errorScale[gu->myAllyTeam] * (0.5f - rx), 0.0f,

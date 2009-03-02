@@ -11,7 +11,6 @@
 
 #include "creg/creg.h"
 #include "float3.h"
-#include "GlobalConstants.h"
 
 class CUnit;
 class CWorldObject;
@@ -50,8 +49,9 @@ public:
 
 	struct Quad {
 		CR_DECLARE_STRUCT(Quad);
+		Quad();
 		std::list<CUnit*> units;
-		std::list<CUnit*> teamUnits[MAX_TEAMS];
+		std::vector< std::list<CUnit*> > teamUnits;
 		std::list<CFeature*> features;
 	};
 

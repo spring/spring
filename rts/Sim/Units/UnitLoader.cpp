@@ -30,6 +30,7 @@
 #include "Platform/errorhandler.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Sim/Misc/CollisionVolume.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
@@ -108,7 +109,9 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	}
 
 	if (team < 0) {
-		team = MAX_TEAMS - 1; // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
+		team = teamHandler->GaiaTeamID(); // FIXME use gs->gaiaTeamID ?  (once it is always enabled)
+		if (team < 0)
+			throw content_error("Invalid team and no gaia team to put unit in");
 	}
 
 	if (type == "GroundUnit") {

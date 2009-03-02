@@ -183,12 +183,13 @@ void SerializeColor(creg::ISerializer &s, unsigned char **color)
 	if (s.IsWriting()) {
 		char ColorType = 0;
 		char ColorId = 0;
-		if (!ColorType) for (int a=0;a<MAX_TEAMS;a++)
-			if (*color==teamHandler->Team(a)->color) {
-				ColorType = 1;
-				ColorId = a;
-				break;
-			}
+		if (!ColorType)
+			for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
+				if (*color==teamHandler->Team(a)->color) {
+					ColorType = 1;
+					ColorId = a;
+					break;
+				}
 		s.Serialize(&ColorId,sizeof(ColorId));
 		s.Serialize(&ColorType,sizeof(ColorType));
 	} else {
