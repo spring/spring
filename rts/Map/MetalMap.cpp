@@ -18,9 +18,9 @@ Receiving a map over all metal, and creating a map over extraction.
 CMetalMap::CMetalMap(unsigned char* map,
                      int _sizeX, int _sizeZ, float _metalScale)
 : metalMap(map),
+  metalScale(_metalScale),
   sizeX(_sizeX),
-  sizeZ(_sizeZ),
-  metalScale(_metalScale)
+  sizeZ(_sizeZ)
 {
 	// Creating an empty map over extraction.
 //	extractionMap = new float[sizeX * sizeZ];

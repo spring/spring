@@ -39,12 +39,12 @@ bool CProjectile::inArray = false;
 CVertexArray* CProjectile::va = 0;
 
 CProjectile::CProjectile():
-	ownerId(0),
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
+	collisionFlags(0),
 	s3domodel(0),
-	collisionFlags(0)
+	ownerId(0)
 {
 	GML_GET_TICKS(lastProjUpdate);
 }
@@ -63,15 +63,15 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 
 CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon GML_PARG_C)
 :	CExpGenSpawnable(pos),
-	ownerId(0),
-	speed(speed),
+	synced(synced),
+	weapon(weapon),
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
-	s3domodel(0),
 	collisionFlags(0),
-	synced(synced),
-	weapon(weapon)
+	speed(speed),
+	s3domodel(0),
+	ownerId(0)
 {
 	SetRadius(1.7f);
 	ph->AddProjectile(this);

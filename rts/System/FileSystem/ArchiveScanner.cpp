@@ -99,7 +99,7 @@ CArchiveScanner::ModData CArchiveScanner::GetModData(const LuaTable& modTable)
 	// append "springcontent.sdz" for primary mods that haven't already added it
 	if (md.modType == 1) {
 		bool found = false;
-		for (int dep = 0; dep < md.dependencies.size(); dep++) {
+		for (size_t dep = 0; dep < md.dependencies.size(); dep++) {
 			if (StringToLower(md.dependencies[dep]) == "springcontent.sdz") {
 				found = true;
 				break;

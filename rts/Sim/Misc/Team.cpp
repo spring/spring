@@ -112,7 +112,16 @@ CR_REG_METADATA_SUB(CTeam, Statistics, (
 //////////////////////////////////////////////////////////////////////
 
 CTeam::CTeam()
-: gaia(false),
+: isDead(false),
+  gaia(false),
+  leader(-1),
+  lineageRoot(-1),
+  handicap(1),
+  side(""),
+  isAI(false),
+  luaAI(""),
+//  skirmishAISpecifier(SSAIKey()),
+  startPos(100,100,100),
   metal(200000),
   energy(900000),
   metalPull(0),     prevMetalPull(0),
@@ -133,15 +142,6 @@ CTeam::CTeam()
   metalReceived(0),
   energySent(0),
   energyReceived(0),
-  side(""),
-  isAI(false),
-  luaAI(""),
-//  skirmishAISpecifier(SSAIKey()),
-  startPos(100,100,100),
-  handicap(1),
-  leader(-1),
-  lineageRoot(-1),
-  isDead(false),
   lastStatSave(0),
   numCommanders(0)
 {

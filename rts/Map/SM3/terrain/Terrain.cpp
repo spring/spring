@@ -317,7 +317,7 @@ namespace terrain {
 			heightmap = heightmap->lowDetail;
 			delete p;
 		}
-		for (int a=0;a<qmaps.size();a++)
+		for (size_t a=0;a<qmaps.size();a++)
 			delete qmaps[a];
 		qmaps.clear();
 		delete quadtree;
@@ -440,10 +440,10 @@ namespace terrain {
 		renderDataManager->ClearStat();
 
 		// clear LOD values of previously used renderquads
-		for (int a=0;a<contexts.size();a++)
+		for (size_t a=0;a<contexts.size();a++)
 		{
 			RenderContext *rc = contexts[a];
-			for (int n = 0; n < rc->quads.size();n++) {
+			for (size_t n = 0; n < rc->quads.size();n++) {
 				TQuad *q = rc->quads [n].quad;
 
 				q->maxLodValue = 0.0f;
@@ -452,7 +452,7 @@ namespace terrain {
 			}
 		}
 
-		for (int ctx=0;ctx<contexts.size();ctx++)
+		for (size_t ctx=0;ctx<contexts.size();ctx++)
 		{
 			RenderContext *rc = curRC = contexts[ctx];
 
@@ -472,7 +472,7 @@ namespace terrain {
 
 			// update lod state and copy the rendering list to the render context...
 			rc->quads.clear();
-			for (int a=0;a<updatequads.size();a++)
+			for (size_t a=0;a<updatequads.size();a++)
 			{
 				if (updatequads[a]->drawState == TQuad::Queued)
 				{
@@ -495,24 +495,24 @@ namespace terrain {
 			sort (rc->quads.begin(), rc->quads.end(), QuadSortFunc);
 
 			// the active set of quads is determined, so their draw-states can be reset for the next context
-			for (int a=0;a<culled.size();a++)
+			for (size_t a=0;a<culled.size();a++)
 				culled[a]->drawState = TQuad::NoDraw;
 			culled.clear();
 
 			// clear the list of queued quads
-			for (int a=0;a<updatequads.size();a++)
+			for (size_t a=0;a<updatequads.size();a++)
 				updatequads[a]->drawState = TQuad::NoDraw;
 			updatequads.clear ();
 		}
 
 		renderDataManager->FreeUnused ();
 
-		for (int ctx=0;ctx<contexts.size();ctx++)
+		for (size_t ctx=0;ctx<contexts.size();ctx++)
 		{
 			RenderContext *rc = curRC = contexts[ctx];
 
 			// allocate required vertex buffers
-			for (int a=0;a<rc->quads.size();a++)
+			for (size_t a=0;a<rc->quads.size();a++)
 			{
 				TQuad *q = rc->quads[a].quad;
 
@@ -538,7 +538,7 @@ namespace terrain {
 	{
 		glEnable(GL_CULL_FACE);
 
-		for (int a=0;a<activeRC->quads.size();a++)
+		for (size_t a=0;a<activeRC->quads.size();a++)
 		{
 			QuadRenderInfo *q = &activeRC->quads[a];
 			q->quad->Draw (indexTable, true, q->lodState);
@@ -609,7 +609,7 @@ namespace terrain {
 			glEnable (GL_TEXTURE_2D);
 			glDisable (GL_LIGHTING);
 
-			for (int a=0;a<activeRC->quads.size();a++)
+			for (size_t a=0;a<activeRC->quads.size();a++)
 			{
 				TQuad *q = activeRC->quads[a].quad;
 
@@ -625,7 +625,7 @@ namespace terrain {
 				glTexGenfv (GL_S, GL_OBJECT_PLANE, v);
 				v[0] = 0.0f;
 				v[2] = 1.0f / (q->end.z - q->start.z + ht * 2);
-                v[3] = -v[2] * (q->start.z - ht);
+				v[3] = -v[2] * (q->start.z - ht);
 				glTexGenfv (GL_T, GL_OBJECT_PLANE, v);
 
 				// draw
@@ -651,7 +651,7 @@ namespace terrain {
 
 				texturing->BeginPass(pass);
 
-				for (int a=0;a<activeRC->quads.size();a++)
+				for (size_t a=0;a<activeRC->quads.size();a++)
 				{
 					TQuad *q = activeRC->quads[a].quad;
 
@@ -688,7 +688,7 @@ namespace terrain {
 		stats.renderDataSize = 0;
 		stats.tris = 0;
 
-		for (int a=0;a<ctx->quads.size();a++) {
+		for (size_t a=0;a<ctx->quads.size();a++) {
 			TQuad *q = ctx->quads[a].quad;
 			if (q->cacheTexture)
 				stats.cacheTextureSize += config.cacheTextureSize * config.cacheTextureSize * 3;
@@ -793,13 +793,13 @@ namespace terrain {
 		glDisable(GL_LIGHTING);
 
 		// Make sure every node that might be drawn, has a cached texture
-		for (int ctx=0;ctx<contexts.size();ctx++)
+		for (size_t ctx=0;ctx<contexts.size();ctx++)
 		{
 			RenderContext *rc = contexts[ctx];
 			if (!rc->needsTexturing)
 				continue;
 
-			for (int a=0;a<rc->quads.size();a++)
+			for (size_t a=0;a<rc->quads.size();a++)
 			{
 				TQuad *q = rc->quads[a].quad;
 

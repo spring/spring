@@ -366,11 +366,11 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 	glUseProgramObjectARB(nodeShader->program);
 
 	// set texture image units to texture samplers in the shader
-	for (int a=0;a<nodeShader->texUnits.size();a++)
+	for (size_t a=0;a<nodeShader->texUnits.size();a++)
 	{
 		BaseTexture *tex = nodeShader->texUnits[a];
 		GLint location = glGetUniformLocationARB(nodeShader->program, tex->name.c_str());
-		glUniform1iARB(location, a);
+		glUniform1iARB(location, (int)a);
 	}
 
 	// have bumpmapping?
@@ -443,7 +443,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader *ns, uint passIndex, cons
 
 	// insert texture samplers
 	string textureSamplers;
-	for (int a=0;a<ns->texUnits.size();a++)
+	for (size_t a=0;a<ns->texUnits.size();a++)
 	{
 		BaseTexture *tex = ns->texUnits[a];
 		if (tex->IsRect())
@@ -473,6 +473,8 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader *ns, uint passIndex, cons
 		else // passIndex=1
 			gentxt += "return Light(ReadDiffuseColor(), color);}\n";
 		break;
+	case SM_Impossible:
+		break;
 	}
 
 	fragmentShader.texts.push_back (gentxt);
@@ -489,10 +491,11 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader *ns, uint passIndex, Shader
 
 	// generate texture coords
 	std::string tcgen = "void CalculateTexCoords() {\n";
-	for (int a=0;a<ns->texCoordGen.size();a++)
+	static const size_t buf_sizeMax = 160;
+	for (size_t a=0;a<ns->texCoordGen.size();a++)
 	{
-		char buf[160];
-		sprintf (buf, "gl_TexCoord[%d].st = vec2(dot(gl_Vertex, gl_ObjectPlaneS[%d]), dot(gl_Vertex,gl_ObjectPlaneT[%d]));\n", a, a, a);
+		char buf[buf_sizeMax];
+		SNPRINTF(buf, buf_sizeMax, "gl_TexCoord[%lu].st = vec2(dot(gl_Vertex, gl_ObjectPlaneS[%lu]), dot(gl_Vertex,gl_ObjectPlaneT[%lu]));\n", a, a, a);
 		tcgen += buf;
 	}
 	tcgen += "}\n";
@@ -666,7 +669,7 @@ void NodeGLSLShader::Setup (NodeSetupParams& params)
 	}*/
 
 	glUseProgramObjectARB(program);
-	for (int a=0;a<texUnits.size();a++) {
+	for (size_t a=0;a<texUnits.size();a++) {
 		glActiveTextureARB( GL_TEXTURE0_ARB+a);
 
 		GLenum target;
@@ -676,7 +679,7 @@ void NodeGLSLShader::Setup (NodeSetupParams& params)
 		if (texUnits[a]->id) glBindTexture(target, texUnits[a]->id);
 		glEnable (target);
 	}
-	for (int a=0;a<texCoordGen.size();a++) {
+	for (size_t a=0;a<texCoordGen.size();a++) {
 		glActiveTextureARB(GL_TEXTURE0_ARB+a);
 		texCoordGen[a]->SetupTexGen ();
 	}
@@ -706,7 +709,7 @@ void NodeGLSLShader::Setup (NodeSetupParams& params)
 
 void NodeGLSLShader::Cleanup()
 {
-	for (int a=0;a<texUnits.size();a++) {
+	for (size_t a=0;a<texUnits.size();a++) {
 		glActiveTextureARB( GL_TEXTURE0_ARB+a);
 		glDisable(texUnits[a]->IsRect() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D);
 	}
@@ -796,7 +799,7 @@ bool GLSLShaderHandler::SetupShader (IShaderSetup *ps, NodeSetupParams& params)
 void GLSLShaderHandler::EndBuild()
 {
 	bool multipass = false;
-	for (int a=0;a<renderSetups.size();a++)
+	for (size_t a=0;a<renderSetups.size();a++)
 		if (renderSetups[a]->passes.size()>1) {
 			multipass = true;
 			break;
@@ -808,7 +811,7 @@ void GLSLShaderHandler::EndBuild()
 	scShader = new SimpleCopyShader(buffer);
 
 	// make sure all rendersetups have 2 passes
-	for (int a=0;a<renderSetups.size();a++)
+	for (size_t a=0;a<renderSetups.size();a++)
 	{
 		if (renderSetups[a]->passes.size()==2)
 			continue;

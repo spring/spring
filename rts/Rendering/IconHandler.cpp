@@ -68,7 +68,7 @@ bool CIconHandler::LoadIcons(const string& filename)
 	std::vector<string> iconNames;
 	iconTypes.GetKeys(iconNames);
 
-	for (int i = 0; i < iconNames.size(); i++) {
+	for (size_t i = 0; i < iconNames.size(); i++) {
 		const string& iconName = iconNames[i];
 		const LuaTable iconTable = iconTypes.SubTable(iconName);
 		AddIcon(
@@ -259,10 +259,17 @@ CIcon::~CIcon()
 //  CIconData
 //
 
-CIconData::CIconData()
-: ownTexture(false), refCount(123456), name("safety"), texID(0),
-  size(1.0f), distance(1.0f), distSqr(1.0f), radiusAdjust(false),
-  xsize(1), ysize(1)
+CIconData::CIconData() :
+	ownTexture(false),
+	refCount(123456),
+	name("safety"),
+	texID(0),
+	xsize(1),
+	ysize(1),
+	size(1.0f),
+	distance(1.0f),
+	distSqr(1.0f),
+	radiusAdjust(false)
 {
 }
 

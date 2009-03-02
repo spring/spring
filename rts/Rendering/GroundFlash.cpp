@@ -71,15 +71,15 @@ CStandardGroundFlash::CStandardGroundFlash()
 
 CStandardGroundFlash::CStandardGroundFlash(const float3& p,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, const float3& col GML_PARG_C)
 	: CGroundFlash(p GML_PARG_P),
+	flashSize(flashSize),
+	circleSize(circleSpeed),
+	circleGrowth(circleSpeed),
 	circleAlpha(circleAlpha),
 	flashAlpha(flashAlpha),
-	flashSize(flashSize),
-	circleGrowth(circleSpeed),
-	circleSize(circleSpeed),
 	flashAge(0),
-	ttl((int)ttl),
+	flashAgeSpeed(ttl?1.0f/ttl:0),
 	circleAlphaDec(ttl?circleAlpha/ttl:0),
-	flashAgeSpeed(ttl?1.0f/ttl:0)
+	ttl((int)ttl)
 {
 	for (int a=0;a<3;a++)
 		color[a] = (unsigned char)(col[a]*255.0f);
@@ -177,12 +177,12 @@ void CStandardGroundFlash::Draw()
 
 CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col GML_PARG_C)
 	: CGroundFlash(p GML_PARG_P),
+	texture(texture),
 	sizeGrowth(sizeGrowth),
 	size(size),
-	texture(texture),
 	alpha(alpha),
-	ttl(ttl),
-	fade(fade)
+	fade(fade),
+	ttl(ttl)
 {
 	alwaysVisible = true;
 

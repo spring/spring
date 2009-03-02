@@ -1225,7 +1225,7 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 	}
 
 	const int weaponNum = luaL_checkint(L,2);
-	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
+	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
 	CWeapon* weapon = unit->weapons[weaponNum];

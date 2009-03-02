@@ -77,7 +77,7 @@ public:
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
 	inline LocalModelPiece* GetLocalModelPiece(int scriptnum) const {
-		if (scriptnum<pieces.size()) {
+		if (scriptnum >= 0 && (size_t)scriptnum < pieces.size()) {
 			return pieces[scriptnum];
 		}else{
 			return NULL;

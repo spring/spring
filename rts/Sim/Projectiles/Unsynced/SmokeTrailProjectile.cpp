@@ -49,17 +49,17 @@ CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& po
 : CProjectile((pos1+pos2)*0.5f,ZeroVector,owner, false GML_PARG_P),
 	pos1(pos1),
 	pos2(pos2),
+	orgSize(size),
 	creationTime(gs->frameNum),
 	lifeTime((int)time),
-	orgSize(size),
 	color(color),
 	dir1(dir1),
 	dir2(dir2),
 	drawTrail(drawTrail),
 	drawSegmented(false),
-	drawCallbacker(drawCallback),
 	firstSegment(firstSegment),
 	lastSegment(lastSegment),
+	drawCallbacker(drawCallback),
 	texture(texture)
 {
 	checkCol=false;

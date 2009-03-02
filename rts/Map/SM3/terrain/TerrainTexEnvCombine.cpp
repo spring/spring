@@ -63,7 +63,7 @@ string NodeTexEnvSetup::GetDebugDesc ()
 		"None", "TextureSrc", "ColorSrc"
 	};
 
-	for (int a=0;a<stages.size();a++)
+	for (size_t a=0;a<stages.size();a++)
 	{
 		str += "{" + string(opstr[(int)stages[a].operation]) + ", " + srcstr[(int)stages[a].source];
 		if (stages[a].source == TexEnvStage::TextureSrc) str += " = " + string(stages[a].srcTexture->name);
@@ -74,9 +74,9 @@ string NodeTexEnvSetup::GetDebugDesc ()
 
 void NodeTexEnvSetup::GetTextureUnits(BaseTexture *tex, int& imageUnit,int& coordUnit)
 {
-	for (int a=0;a<stages.size();a++)
+	for (size_t a=0;a<stages.size();a++)
 		if (stages[a].source == TexEnvStage::TextureSrc && stages[a].srcTexture == tex) {
-			imageUnit = coordUnit = a;
+			imageUnit = coordUnit = (int)a;
 			break;
 		}
 }
@@ -242,7 +242,7 @@ bool TexEnvSetupHandler::SetupShader (IShaderSetup *shadercfg, NodeSetupParams& 
 	NodeTexEnvSetup* ns = (NodeTexEnvSetup *)shadercfg;
 
 	int tu = 0;// texture unit
-	for (int cur = 0; cur < ns->stages.size(); cur ++)
+	for (size_t cur = 0; cur < ns->stages.size(); cur ++)
 	{
 		TexEnvStage& st = ns->stages[cur];
 
@@ -276,6 +276,8 @@ bool TexEnvSetupHandler::SetupShader (IShaderSetup *shadercfg, NodeSetupParams& 
 			case TexEnvStage::TextureSrc:
 				texture = st.srcTexture;
 				glTexEnvi (GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+				break;
+			case TexEnvStage::None:
 				break;
 		}
 		if (texture) {

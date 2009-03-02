@@ -220,7 +220,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	float mx=MouseX(x);
 	float my=MouseY(y);
 
-	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead){
+	if(InBox(mx,my,box+resignBox) || (InBox(mx,my,box+giveAwayBox) && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead)){
 		// give away all units (and resources)
 		if(InBox(mx,my,box+giveAwayBox)) {
 			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam));

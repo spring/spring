@@ -271,7 +271,7 @@ void CSm3ReadMap::LoadFeatureData()
 		numFeatures = swabdword(nf);
 
 		featureInfo = new MapFeatureInfo[numFeatures];
-		for (int a=0;a<numFeatures;a++) {
+		for (unsigned int a=0;a<numFeatures;a++) {
 			MapFeatureInfo& fi = featureInfo[a];
 			fh.Read(&fi.featureType, 4);
 			fh.Read(&fi.pos, 12);
