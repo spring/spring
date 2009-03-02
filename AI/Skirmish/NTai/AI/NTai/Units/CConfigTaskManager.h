@@ -6,7 +6,7 @@ LGPL 2
 namespace ntai {
 	class CConfigTaskManager : public ITaskManager {
 	public:
-		CConfigTaskManager(Global* G, boost::shared_ptr<IModule> unit);
+		CConfigTaskManager(Global* G, int unit);
 		
 		virtual bool Init();
 		virtual void RecieveMessage(CMessage &message);
@@ -24,6 +24,6 @@ namespace ntai {
 		std::list< boost::shared_ptr<IModule> > tasks;
 		bool nolist;
 		bool repeat;
-		boost::shared_ptr<IModule> unit;
+		int unit;
 	};
 }

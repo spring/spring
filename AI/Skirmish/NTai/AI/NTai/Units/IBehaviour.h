@@ -8,7 +8,6 @@ namespace ntai {
 		virtual bool Init(){ return false;}
 		virtual void RecieveMessage(CMessage &message){}
 	protected:
-		boost::shared_ptr<IModule> unit;
 		int uid;
 		bool active;
 	};

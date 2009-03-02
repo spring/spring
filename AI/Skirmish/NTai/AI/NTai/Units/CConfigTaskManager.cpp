@@ -10,7 +10,7 @@ LGPL 2 licence 2004+
 namespace ntai {
 	
 
-	CConfigTaskManager::CConfigTaskManager(Global* G, boost::shared_ptr<IModule> unit){
+	CConfigTaskManager::CConfigTaskManager(Global* G, int unit){
 		//
 		this->G = G;
 		nolist = false;
@@ -60,8 +60,7 @@ namespace ntai {
 	bool CConfigTaskManager::LoadTaskList(){
 		NLOG("CConfigTaskManager::LoadTaskList");
 
-		IModule* im = unit.get();
-		CUnit* u = dynamic_cast<CUnit* >(im);
+		CUnit* u = G->unit_array[unit];
 
 		CUnitTypeData* utd = u->GetUnitDataType();
 

@@ -12,8 +12,7 @@ namespace ntai {
 	CMoveFailReclaimBehaviour::CMoveFailReclaimBehaviour(Global* GL, int uid){
 		//
 		G = GL;
-		unit = G->GetUnit(uid);
-		this->uid = ((CUnit*)unit.get())->GetID();
+		this->uid = uid;
 	}
 
 	CMoveFailReclaimBehaviour::~CMoveFailReclaimBehaviour(){

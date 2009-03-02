@@ -114,7 +114,7 @@ namespace ntai {
 		MTRand_int32 mrand;
 
 		bool HasUnit(int unit);
-		boost::shared_ptr<IModule> GetUnit(int unit);
+		CUnit* GetUnit(int unit);
 
 		// event handling
 		void RegisterMessageHandler(boost::shared_ptr<IModule> handler);
@@ -122,10 +122,14 @@ namespace ntai {
 		void DestroyHandler(boost::shared_ptr<IModule> handler);
 		void RemoveHandler(boost::shared_ptr<IModule> handler);
 
+		CUnit** unit_array;
+
 	private:
 		std::set<boost::shared_ptr<IModule> > dead_handlers;
 		std::set<boost::shared_ptr<IModule> > handlers;
-		std::map<int,boost::shared_ptr<IModule> > units;
+		//std::map<int,boost::shared_ptr<IModule> > units;
+
+		
 		std::vector<CMessage> msgqueue;
 	};
 

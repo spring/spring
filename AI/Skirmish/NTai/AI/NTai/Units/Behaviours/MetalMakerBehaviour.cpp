@@ -11,7 +11,8 @@ namespace ntai {
 	CMetalMakerBehaviour::CMetalMakerBehaviour(Global* GL, int uid){
 		//
 		G = GL;
-		unit = G->GetUnit(uid);
+		
+		this->uid = uid;
 		turnedOn = false;
 	}
 
@@ -20,21 +21,22 @@ namespace ntai {
 	}
 
 	bool CMetalMakerBehaviour::Init(){
-		//
 
-		turnedOn = G->cb->IsUnitActivated(((CUnit*)unit.get())->GetID());
-		energyUse=min(((CUnit*)unit.get())->GetUnitDataType()->GetUnitDef()->energyUpkeep,1.0f);
+		CUnit* unit = G->GetUnit(uid);
+		turnedOn = G->cb->IsUnitActivated(uid);
+		energyUse=min(unit->GetUnitDataType()->GetUnitDef()->energyUpkeep,1.0f);
 		return true;
 	}
 
 	void CMetalMakerBehaviour::RecieveMessage(CMessage &message){
+		
 		if(message.GetType() == string("update")){
 			if(EVERY_((1 SECONDS))){
 				float energy=G->cb->GetEnergy();
 				float estore=G->cb->GetEnergyStorage();
 				if(energy<estore*0.3f){
 					if(turnedOn){
-						TCommand tc(((CUnit*)unit.get())->GetID(),"assigner:: turnoff");
+						TCommand tc(uid,"assigner:: turnoff");
 						tc.ID(CMD_ONOFF);
 						tc.Push(0);
 						G->OrderRouter->GiveOrder(tc);
@@ -42,7 +44,7 @@ namespace ntai {
 					}
 				} else if(energy>estore*0.6f){
 					if(!turnedOn){
-						TCommand tc(((CUnit*)unit.get())->GetID(),"assigner:: turnon");
+						TCommand tc(uid,"assigner:: turnon");
 						tc.ID(CMD_ONOFF);
 						tc.Push(1);
 						G->OrderRouter->GiveOrder(tc);
@@ -51,7 +53,7 @@ namespace ntai {
 				}
 			}
 		}else if(message.GetType() == string("unitdestroyed")){
-			if(message.GetParameter(0)== ((CUnit*)unit.get())->GetID()){
+			if(message.GetParameter(0)== uid){
 				End();
 			}
 		}
