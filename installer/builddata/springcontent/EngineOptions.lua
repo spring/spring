@@ -93,11 +93,11 @@ local options =
   {
     key    = 'MaxUnits',
     name   = 'Max units',
-    desc   = 'Determines the ceiling of how many units and buildings a player is allowed to own at the same time',
+    desc   = 'Maximum number of units (including buildings) allowed at the same time',
     type   = 'number',
     def    = 500,
     min    = 1,
-    max    = 10000,
+    max    = 32000,
     step   = 1,  -- quantization is aligned to the def value
                     -- (step <= 0) means that there is no quantization
   },
