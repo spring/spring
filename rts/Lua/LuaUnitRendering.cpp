@@ -87,7 +87,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -285,8 +285,8 @@ static GLuint ParseUnitTexture(const string& texture)
 
 	S3DModel* model;
 
-	if (id>=MAX_UNITS) {
-		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - MAX_UNITS);
+	if (id >= uh->MaxUnits()) {
+		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - uh->MaxUnits());
 		if (fd == NULL) {
 			return 0;
 		}
@@ -684,7 +684,7 @@ int LuaUnitRendering::SetUnitUniform(lua_State* L) // FIXME
 int LuaUnitRendering::SetUnitLuaDraw(lua_State* L)
 {
 	const int unitID = luaL_checkint(L, 1);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
 		return 0;
 	}
 	CUnit* unit = uh->units[unitID];
