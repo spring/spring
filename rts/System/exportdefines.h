@@ -91,6 +91,10 @@
 	#endif
 #endif // CALLING_CONV_FUNC_POINTER
 
+#ifdef _MSC_VER
+	#undef CALLING_CONV
+	#define CALLING_CONV
+#endif
 
 #define EXPORT(type) SHARED_EXPORT type CALLING_CONV
 
