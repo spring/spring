@@ -26,8 +26,59 @@
 #include "System/maindefines.h"
 #include "System/exportdefines.h"
 
+#include <stdbool.h> // contians only defines: bool, true, false
+
 #define ENGINE_VERSION_STRING VERSION_STRING
 #define ENGINE_VERSION_NUMBER 1000
+
+// Changing these structs breaks the AI Interface ABI.
+// Though we can only keep track of the number of function pointers
+// in the callback structs, and not their arguments.
+// Therefore, this number will stay the same, if you only change parameters
+// of function pointers, which is why it is only partly representing
+// the real ABI.
+// Files that have ot be included when using this define:
+// * ExternalAI/Interface/ELevelOfSupport.h
+// * ExternalAI/Interface/SAIFloat3.h
+// * ExternalAI/Interface/SSAILibrary.h
+// * ExternalAI/Interface/SAICallback.h
+// * ExternalAI/Interface/SAIInterfaceLibrary.h
+// * ExternalAI/Interface/SAIInterfaceCallback.h
+// * ExternalAI/Interface/AISEvents.h
+// * ExternalAI/Interface/AISCommands.h
+/**
+ * Returns the Application Binary Interface version, fail part.
+ * If the engine and the AI INterface differ in this,
+ * the AI Interface will not be used.
+ * Changes here usually indicate that struct memebers were
+ * added or removed.
+ */
+#define AIINTERFACE_ABI_VERSION_FAIL ( \
+	  sizeof(enum LevelOfSupport) \
+	+ sizeof(struct SAIFloat3) \
+	+ sizeof(struct SSAILibrary) \
+	+ sizeof(struct SAICallback) \
+	+ sizeof(struct SAIInterfaceLibrary) \
+	+ sizeof(struct SAIInterfaceCallback) \
+	+ AIINTERFACE_EVENTS_ABI_VERSION \
+	+ AIINTERFACE_COMMANDS_ABI_VERSION \
+	)
+/**
+ * Returns the Application Binary Interface version, warning part.
+ * Interface and engine will try to run/work together,
+ * if they differ only in the warning part of the ABI version.
+ * Changes here could indicate that function arguments got changed,
+ * which could cause a crash, but it could be unimportant changes
+ * like added comments or code reformatting aswell.
+ */
+#define AIINTERFACE_ABI_VERSION_WARNING ( \
+	  sizeof(int) \
+	+ sizeof(char) \
+	+ sizeof(void*) \
+	+ sizeof(size_t) \
+	+ sizeof(float) \
+	+ sizeof(short) \
+	)
 
 /**
  * @brief max skirmish AIs

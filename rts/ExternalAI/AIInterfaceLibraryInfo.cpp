@@ -22,120 +22,112 @@
 #include "Interface/aidefines.h"
 #include "Interface/SAIInterfaceLibrary.h"
 #include "Util.h"
+#include "Info.h"
 
 #include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
 
+
 static const char* BAD_CHARS = "\t _#";
-
-static const std::string& info_getValue(
-		const std::map<std::string, InfoItem>& info,
-		const std::string& key, const std::string& defValue) {
-
-	std::map<std::string, InfoItem>::const_iterator inf = info.find(StringToLower(key));
-	if (inf == info.end()) {
-		return defValue;
-	} else {
-		return inf->second.value;
-	}
-}
+static const std::string DEFAULT_VALUE = "";
 
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
 		const CAIInterfaceLibraryInfo& interfaceInfo)
-		: info(interfaceInfo.info), infoKeys_c(NULL), infoValues_c(NULL) {}
+		: keyLower_key(interfaceInfo.keyLower_key),
+		key_value(interfaceInfo.key_value),
+		key_description(interfaceInfo.key_description)
+		{}
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
-		const std::string& interfaceInfoFile)
-		: infoKeys_c(NULL), infoValues_c(NULL) {
+		const std::string& interfaceInfoFile) {
 
 	std::vector<InfoItem> tmpInfo;
 	parseInfo(tmpInfo, interfaceInfoFile);
 	std::vector<InfoItem>::const_iterator ii;
 	for (ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
-		info[StringToLower(ii->key)] = *ii;
+		SetInfo(ii->key, ii->value, ii->desc);
 	}
 }
 
-CAIInterfaceLibraryInfo::~CAIInterfaceLibraryInfo() {
+CAIInterfaceLibraryInfo::~CAIInterfaceLibraryInfo() {}
 
-	FreeCReferences();
+size_t CAIInterfaceLibraryInfo::size() const {
+	return keys.size();
+}
+const std::string& CAIInterfaceLibraryInfo::GetKeyAt(size_t index) const {
+
+	if (index < keys.size()) {
+		return *(keys.begin() + index);
+	} else {
+		return DEFAULT_VALUE;
+	}
+}
+const std::string& CAIInterfaceLibraryInfo::GetValueAt(size_t index) const {
+
+	if (index < keys.size()) {
+		return key_value.find(GetKeyAt(index))->second;
+	} else {
+		return DEFAULT_VALUE;
+	}
+}
+const std::string& CAIInterfaceLibraryInfo::GetDescriptionAt(size_t index) const {
+
+	if (index < keys.size()) {
+		return key_description.find(GetKeyAt(index))->second;
+	} else {
+		return DEFAULT_VALUE;
+	}
 }
 
 AIInterfaceKey CAIInterfaceLibraryInfo::GetKey() const {
 
-	static const std::string defVal = "";
-	static const std::string snKey = StringToLower(AI_INTERFACE_PROPERTY_SHORT_NAME);
-	static const std::string vKey = StringToLower(AI_INTERFACE_PROPERTY_VERSION);
-
-	const std::string& sn = info_getValue(info, snKey, defVal);
-	const std::string& v = info_getValue(info, vKey, defVal);
+	const std::string& sn = GetInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
+	const std::string& v = GetInfo(AI_INTERFACE_PROPERTY_VERSION);
 	AIInterfaceKey key = AIInterfaceKey(sn, v);
 
 	return key;
 }
 
-std::string CAIInterfaceLibraryInfo::GetDataDir() const {
+const std::string& CAIInterfaceLibraryInfo::GetDataDir() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_DATA_DIR);
 }
-std::string CAIInterfaceLibraryInfo::GetShortName() const {
+const std::string& CAIInterfaceLibraryInfo::GetShortName() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
 }
-std::string CAIInterfaceLibraryInfo::GetVersion() const {
+const std::string& CAIInterfaceLibraryInfo::GetVersion() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_VERSION);
 }
-std::string CAIInterfaceLibraryInfo::GetName() const {
+const std::string& CAIInterfaceLibraryInfo::GetName() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_NAME);
 }
-std::string CAIInterfaceLibraryInfo::GetDescription() const {
+const std::string& CAIInterfaceLibraryInfo::GetDescription() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_DESCRIPTION);
 }
-std::string CAIInterfaceLibraryInfo::GetURL() const {
+const std::string& CAIInterfaceLibraryInfo::GetURL() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_URL);
 }
-std::string CAIInterfaceLibraryInfo::GetInfo(const std::string& key) const {
+const std::string& CAIInterfaceLibraryInfo::GetInfo(const std::string& key) const {
 
-	static const std::string defVal = "";
-	const std::string& val = info_getValue(info, key, defVal);
-	if (val == defVal) {
-		std::string errorMsg = std::string("AI interface property '") + key
-				+ "' could not be found.\n";
-		handleerror(NULL, errorMsg.c_str(), "AI Interface Info Error",
-				MBF_OK | MBF_EXCL);
+	bool found = false;
+	std::map<std::string, std::string>::const_iterator strPair;
+
+	// get real key through lower case key
+	strPair = keyLower_key.find(StringToLower(key));
+	found = (strPair != keyLower_key.end());
+
+	// get value
+	if (found) {
+		strPair = key_value.find(strPair->second);
+		found = (strPair != key_value.end());
 	}
 
-	return val;
-}
-const std::map<std::string, InfoItem>& CAIInterfaceLibraryInfo::GetInfo() const {
-	return info;
-}
-void CAIInterfaceLibraryInfo::CreateCReferences() {
-
-	FreeCReferences();
-
-	infoKeys_c = (const char**) calloc(info.size(), sizeof(char*));
-	infoValues_c = (const char**) calloc(info.size(), sizeof(char*));
-	unsigned int i=0;
-	std::map<std::string, InfoItem>::const_iterator ii;
-	for (ii=info.begin(); ii != info.end(); ++ii) {
-		infoKeys_c[i] = ii->second.key.c_str();
-		infoValues_c[i] = ii->second.value.c_str();
-		i++;
+	if (!found) {
+		logOutput.Print("AI interface property '%s' could not be found.", key.c_str());
+		return DEFAULT_VALUE;
+	} else {
+		return strPair->second;
 	}
-}
-void CAIInterfaceLibraryInfo::FreeCReferences() {
-
-	free(infoKeys_c);
-	infoKeys_c = NULL;
-	free(infoValues_c);
-	infoValues_c = NULL;
-}
-
-const char** CAIInterfaceLibraryInfo::GetCInfoKeys() const {
-	return infoKeys_c;
-}
-const char** CAIInterfaceLibraryInfo::GetCInfoValues() const {
-	return infoValues_c;
 }
 
 
@@ -158,26 +150,29 @@ void CAIInterfaceLibraryInfo::SetURL(const std::string& url) {
 	SetInfo(AI_INTERFACE_PROPERTY_URL, url);
 }
 bool CAIInterfaceLibraryInfo::SetInfo(const std::string& key,
-		const std::string& value) {
+		const std::string& value, const std::string& description) {
 
 	static const std::string snKey = StringToLower(AI_INTERFACE_PROPERTY_SHORT_NAME);
 	static const std::string vKey = StringToLower(AI_INTERFACE_PROPERTY_VERSION);
 
-	std::string lowerKey = StringToLower(key);
-	if (lowerKey == snKey || key == vKey) {
+	std::string keyLower = StringToLower(key);
+	if (keyLower == snKey || keyLower == vKey) {
 		if (value.find_first_of(BAD_CHARS) != std::string::npos) {
-			std::string msg = "AI interface property (shortName or version)\n";
-			msg += "contains illegal characters (";
-			msg += BAD_CHARS;
-			msg += ")";
-			handleerror(NULL, msg.c_str(), "AI Interface Info Error",
-					MBF_OK | MBF_EXCL);
+		logOutput.Print("Error, AI interface property (%s or %s)\n"
+				"contains illegal characters (%s).",
+				AI_INTERFACE_PROPERTY_SHORT_NAME, AI_INTERFACE_PROPERTY_VERSION,
+				BAD_CHARS);
 			return false;
 		}
 	}
 
-	InfoItem ii = {key, value, ""};
-	info[lowerKey] = ii;
+	// only add the key if it is not yet present
+	if (key_value.find(key) == key_value.end()) {
+		keys.push_back(key);
+	}
+	keyLower_key[keyLower] = key;
+	key_value[key] = value;
+	key_description[key] = description;
 
 	return true;
 }

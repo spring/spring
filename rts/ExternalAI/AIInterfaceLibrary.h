@@ -22,6 +22,7 @@
 
 #include "Platform/SharedLib.h"
 #include "Interface/SAIInterfaceLibrary.h"
+#include "Interface/SAIInterfaceCallback.h"
 #include "SkirmishAIKey.h"
 
 #include <string>
@@ -52,7 +53,8 @@ public:
 	virtual int ReleaseAllSkirmishAILibraries();
 
 private:
-	SStaticGlobalData* staticGlobalData;
+	int interfaceId;
+	struct SAIInterfaceCallback callback;
 	void InitStatic();
 	void ReleaseStatic();
 

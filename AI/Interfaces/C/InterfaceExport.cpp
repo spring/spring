@@ -18,10 +18,10 @@
 #include "InterfaceExport.h"
 
 #include "Interface.h"
-#include "CUtils/Util.h"
+//#include "CUtils/Util.h"
 
-#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
-#include "ExternalAI/Interface/SStaticGlobalData.h"
+//#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
+//#include "ExternalAI/Interface/SStaticGlobalData.h"
 
 static CInterface* myInterface = NULL;
 
@@ -34,50 +34,38 @@ static void local_copyToInfoMap(std::map<std::string, std::string>& map,
 	}
 }
 
-EXPORT(int) initStatic(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		const SStaticGlobalData* staticGlobalData) {
+EXPORT(int) initStatic(int interfaceId,
+		const struct SAIInterfaceCallback* callback) {
 
-	util_setMyInfo(infoSize, infoKeys, infoValues,
-			staticGlobalData->numDataDirs, staticGlobalData->dataDirs);
+	if (myInterface == NULL) {
+		myInterface = new CInterface(interfaceId, callback);
+	}
 
-	std::map<std::string, std::string> infoMap;
-	local_copyToInfoMap(infoMap, infoSize, infoKeys, infoValues);
-
-	myInterface = new CInterface(infoMap, staticGlobalData);
-	return 0;
+	return 0; // signal: OK
 }
 
 EXPORT(int) releaseStatic() {
 
 	delete myInterface;
 	myInterface = NULL;
+
 	return 0;
 }
 
-EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
-		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
-	return myInterface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
-}
+//EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
+//		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
+//	return myInterface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
+//}
 
 EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues) {
-
-	std::map<std::string, std::string> infoMap;
-	local_copyToInfoMap(infoMap, infoSize, infoKeys, infoValues);
-
-	return myInterface->LoadSkirmishAILibrary(infoMap);
+		const char* const shortName,
+		const char* const version) {
+	return myInterface->LoadSkirmishAILibrary(shortName, version);
 }
 EXPORT(int) unloadSkirmishAILibrary(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues) {
-
-	std::map<std::string, std::string> infoMap;
-	local_copyToInfoMap(infoMap, infoSize, infoKeys, infoValues);
-
-	return myInterface->UnloadSkirmishAILibrary(infoMap);
+		const char* const shortName,
+		const char* const version) {
+	return myInterface->UnloadSkirmishAILibrary(shortName, version);
 }
 EXPORT(int) unloadAllSkirmishAILibraries() {
 	return myInterface->UnloadAllSkirmishAILibraries();

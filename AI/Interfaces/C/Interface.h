@@ -32,23 +32,23 @@ struct SStaticGlobalData;
 
 class CInterface {
 public:
-	CInterface(const std::map<std::string, std::string>& infoMap,
-			const SStaticGlobalData* staticGlobalData);
+	CInterface(int interfaceId,
+			const struct SAIInterfaceCallback* callback);
 
-	// static properties
-	LevelOfSupport GetLevelOfSupportFor(
-			const char* engineVersion, int engineAIInterfaceGeneratedVersion);
+//	// static properties
+//	LevelOfSupport GetLevelOfSupportFor(
+//			const char* engineVersion, int engineAIInterfaceGeneratedVersion);
 
 	// skirmish AI methods
 	const SSAILibrary* LoadSkirmishAILibrary(
-			const std::map<std::string, std::string>& infoMap);
+		const char* const shortName,
+		const char* const version);
 	int UnloadSkirmishAILibrary(
-			const std::map<std::string, std::string>& infoMap);
+		const char* const shortName,
+		const char* const version);
 	int UnloadAllSkirmishAILibraries();
 
 private:
-	static SSkirmishAISpecifier ExtractSpecifier(
-		const std::map<std::string, std::string>& infoMap);
 	// these functions actually load and unload the libraries
 	SharedLib* Load(const SSkirmishAISpecifier& aiKeyHash, SSAILibrary* ai);
 	SharedLib* LoadSkirmishAILib(const std::string& libFilePath,
@@ -62,19 +62,21 @@ private:
 	bool FitsThisInterface(const std::string& requestedShortName,
 			const std::string& requestedVersion);
 private:
-	const std::map<std::string, std::string> myInfo;
-	const SStaticGlobalData* staticGlobalData;
+	const int interfaceId;
+	const struct SAIInterfaceCallback* callback;
 
-	std::set<SSkirmishAISpecifier, SSkirmishAISpecifier_Comparator>
-			mySkirmishAISpecifiers;
-	typedef std::map<const SSkirmishAISpecifier,
-			std::map<std::string, std::string>,
-			SSkirmishAISpecifier_Comparator> T_skirmishAIInfos;
+	typedef std::set<SSkirmishAISpecifier, SSkirmishAISpecifier_Comparator>
+			T_skirmishAISpecifiers;
+// 	typedef std::map<const SSkirmishAISpecifier,
+// 			std::map<std::string, std::string>,
+// 			SSkirmishAISpecifier_Comparator> T_skirmishAIInfos;
 	typedef std::map<const SSkirmishAISpecifier, SSAILibrary*,
 			SSkirmishAISpecifier_Comparator> T_skirmishAIs;
 	typedef std::map<const SSkirmishAISpecifier, SharedLib*,
 			SSkirmishAISpecifier_Comparator> T_skirmishAILibs;
-	T_skirmishAIInfos mySkirmishAIInfos;
+
+	T_skirmishAISpecifiers mySkirmishAISpecifiers;
+// 	T_skirmishAIInfos mySkirmishAIInfos;
 	T_skirmishAIs myLoadedSkirmishAIs;
 	T_skirmishAILibs myLoadedSkirmishAILibs;
 };

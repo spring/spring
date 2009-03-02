@@ -156,7 +156,6 @@ void CAILibraryManager::GetAllInfosFromCache() {
 					new CAIInterfaceLibraryInfo(infoFile.at(0));
 
 			interfaceInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
-			interfaceInfo->CreateCReferences();
 
 			AIInterfaceKey interfaceKey = interfaceInfo->GetKey();
 

@@ -18,9 +18,9 @@
 #ifndef _AIINTERFACELIBRARYINFO_H
 #define _AIINTERFACELIBRARYINFO_H
 
+#include <vector>
 #include <map>
 #include <string>
-#include "Info.h"
 
 class IAIInterfaceLibrary;
 class AIInterfaceKey;
@@ -31,27 +31,24 @@ public:
 	CAIInterfaceLibraryInfo(const std::string& interfaceInfoFile);
 	~CAIInterfaceLibraryInfo();
 
-	virtual void CreateCReferences();
-private:
-	virtual void FreeCReferences();
-public:
-
 	//virtual LevelOfSupport GetLevelOfSupportForCurrentEngine() const;
+
+	virtual size_t size() const;
+	virtual const std::string& GetKeyAt(size_t index) const;
+	virtual const std::string& GetValueAt(size_t index) const;
+	virtual const std::string& GetDescriptionAt(size_t index) const;
 
 	virtual AIInterfaceKey GetKey() const;
 
-	virtual std::string GetDataDir() const;
+	virtual const std::string& GetDataDir() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual std::string GetShortName() const;
+	virtual const std::string& GetShortName() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual std::string GetVersion() const;
-	virtual std::string GetName() const;
-	virtual std::string GetDescription() const;
-	virtual std::string GetURL() const;
-	virtual std::string GetInfo(const std::string& key) const;
-	virtual const std::map<std::string, InfoItem>& GetInfo() const;
-	virtual const char** GetCInfoKeys() const;
-	virtual const char** GetCInfoValues() const;
+	virtual const std::string& GetVersion() const;
+	virtual const std::string& GetName() const;
+	virtual const std::string& GetDescription() const;
+	virtual const std::string& GetURL() const;
+	virtual const std::string& GetInfo(const std::string& key) const;
 
 	virtual void SetDataDir(const std::string& dataDir);
 	/** Restrictions: none of the following: spaces, '_', '#' */
@@ -61,12 +58,16 @@ public:
 	virtual void SetName(const std::string& name);
 	virtual void SetDescription(const std::string& description);
 	virtual void SetURL(const std::string& url);
-	virtual bool SetInfo(const std::string& key, const std::string& value);
+	virtual bool SetInfo(const std::string& key, const std::string& value,
+			const std::string& description = "");
 
 private:
-	std::map<std::string, InfoItem> info;
-	const char** infoKeys_c;
-	const char** infoValues_c;
+	//std::map<std::string, InfoItem> info;
+	// for having a well defined order
+	std::vector<std::string> keys;
+	std::map<std::string, std::string> keyLower_key;
+	std::map<std::string, std::string> key_value;
+	std::map<std::string, std::string> key_description;
 };
 
 #endif // _AIINTERFACELIBRARYINFO_H

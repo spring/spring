@@ -16,7 +16,7 @@
 */
 
 #ifndef _SAIINTERFACELIBRARY_H
-#define	_SAIINTERFACELIBRARY_H
+#define _SAIINTERFACELIBRARY_H
 
 /*
  * All this is not needed when building an AI,
@@ -77,12 +77,13 @@ extern "C" {
  * Everything following is (code wise) only interesting for the engine,
  * not for AI Interfaces.
  */
-#if !defined BUILDING_AI_INTERFACE
+#if !defined BUILDING_AI
 
-#include "ELevelOfSupport.h"
-#include "SSAILibrary.h"
 #include "System/exportdefines.h"
+//#include "ELevelOfSupport.h"
 
+//enum ELevelOfSupport;
+struct SSAILibrary;
 struct SStaticGlobalData;
 
 /**
@@ -123,10 +124,11 @@ struct SAIInterfaceLibrary {
 	 * @return     0: ok
 	 *          != 0: error
 	 */
-	int (CALLING_CONV *initStatic)(
-			unsigned int infoSize,
-			const char** infoKeys, const char** infoValues,
-			const struct SStaticGlobalData* staticGlobalData);
+	int (CALLING_CONV *initStatic)(int interfaceId,
+			const struct SAIInterfaceCallback* const);
+//			unsigned int infoSize,
+//			const char** infoKeys, const char** infoValues,
+//			const struct SStaticGlobalData* staticGlobalData);
 
 	/**
 	 * This function is called right right before the library is unloaded.
@@ -143,14 +145,14 @@ struct SAIInterfaceLibrary {
 	 */
 	int (CALLING_CONV *releaseStatic)();
 
-	/**
-	 * Level of Support for a specific engine version.
-	 *
-	 * [optional]
-	 * An AI Interface not exporting this function is still valid.
-	 */
-	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
-			const char* engineVersionString, int engineVersionNumber);
+//	/**
+//	 * Level of Support for a specific engine version.
+//	 *
+//	 * [optional]
+//	 * An AI Interface not exporting this function is still valid.
+//	 */
+//	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
+//			const char* engineVersionString, int engineVersionNumber);
 
 
 	// skirmish AI methods
@@ -162,8 +164,8 @@ struct SAIInterfaceLibrary {
 	 *          != 0: error
 	 */
 	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
-			unsigned int infoSize,
-			const char** infoKeys, const char** infoValues);
+			const char* const shortName,
+			const char* const version);
 
 	/**
 	 * Unloads the specified Skirmish AI.
@@ -172,8 +174,8 @@ struct SAIInterfaceLibrary {
 	 *          != 0: error
 	 */
 	int (CALLING_CONV *unloadSkirmishAILibrary)(
-			unsigned int infoSize,
-			const char** infoKeys, const char** infoValues);
+			const char* const shortName,
+			const char* const version);
 
 	/**
 	 * Unloads all Skirmish AI libraries currently loaded by this interface.
@@ -184,7 +186,7 @@ struct SAIInterfaceLibrary {
 	int (CALLING_CONV *unloadAllSkirmishAILibraries)();
 };
 
-#endif // !defined BUILDING_AI_INTERFACE
+#endif // !defined BUILDING_AI
 
 #ifdef	__cplusplus
 } // extern "C"
