@@ -17,7 +17,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="..\..\..\..\..\..\..\..\..\..\SpringTest\AI\Skirmish\NTai\10"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
@@ -39,8 +39,9 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
+				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System;..\..\..\..\AI\Wrappers"
 				PreprocessorDefinitions="BUILDING_SKIRMISH_AI;BUILDING_AI"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -48,6 +49,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
+				CallingConvention="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -255,6 +257,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Core\AIExport.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Helpers\Terrain\CBuildingPlacer.cpp"
 				>
 			</File>
@@ -299,7 +305,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\rts\Sim\Misc\DamageArray.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Helpers\Terrain\DTHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\rts\System\float3.cpp"
 				>
 			</File>
 			<File
@@ -437,6 +451,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Core\AIExport.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NTai\Helpers\Terrain\CBuildingPlacer.h"
 				>
 			</File>
@@ -474,6 +492,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\CWorkerThread.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\rts\Sim\Misc\DamageArray.h"
 				>
 			</File>
 			<File

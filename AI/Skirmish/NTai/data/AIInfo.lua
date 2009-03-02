@@ -21,11 +21,11 @@ local infos = {
 	},
 	{
 		key    = 'version',
-		value  = 'XE9.81', -- AI version - !This comment is used for parsing!
+		value  = 'XE9.9', -- AI version - !This comment is used for parsing!
 	},
 	{
 		key    = 'name',
-		value  = 'AFs Skirmish AI (NTai). Uses config files.',
+		value  = 'AF/Tom J Nowells Skirmish AI (NTai). Uses config files.',
 		desc   = 'human readable name.',
 	},
 	{
