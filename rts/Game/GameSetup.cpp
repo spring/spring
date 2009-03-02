@@ -380,6 +380,10 @@ const SkirmishAIData* CGameSetup::GetSkirmishAIDataForTeam(int teamId) const {
 	}
 }
 
+size_t CGameSetup::GetSkirmishAIs() const {
+	return team_skirmishAI.size();
+}
+
 /**
 @brief Load teams and remove gaps in the team numbering.
 @pre numTeams, hostDemo initialized
