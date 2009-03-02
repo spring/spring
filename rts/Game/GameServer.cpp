@@ -994,7 +994,7 @@ void CGameServer::ServerReadNet()
 		}
 	}
 
-	for(unsigned a=0; (int)a < players.size(); a++)
+	for(unsigned a=0; (size_t)a < players.size(); a++)
 	{
 		if (!players[a].link)
 			continue; // player not connected
@@ -1522,9 +1522,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 		players[hisNewNumber].team = hisTeam;
 		if (!setup->playerStartingData[hisNewNumber].spectator)
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
-		for (int a = 0; a < teams.size(); ++a)
+		for (size_t a = 0; a < teams.size(); ++a)
 		{
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, teams[a].readyToStart, teams[a].startpos.x, teams[a].startpos.y, teams[a].startpos.z));
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, (int)a, teams[a].readyToStart, teams[a].startpos.x, teams[a].startpos.y, teams[a].startpos.z));
 		}
 	}
 

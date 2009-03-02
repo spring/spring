@@ -1748,7 +1748,7 @@ int LuaOpenGL::UnitPiece(lua_State* L)
 	const LocalModel* localModel = unit->localmodel;
 
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->pieces.size())) {
+	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	LocalModelPiece* localPiece = localModel->pieces[piece];
@@ -1770,7 +1770,7 @@ int LuaOpenGL::UnitPieceMatrix(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->pieces.size())) {
+	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 
@@ -1795,7 +1795,7 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->pieces.size())) {
+	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 
@@ -5392,7 +5392,6 @@ int LuaOpenGL::SelectBuffer(lua_State* L)
 int LuaOpenGL::SelectBufferData(lua_State* L)
 {
 	const int index = luaL_checkint(L, 1);
-	bool error = false;
 	if (!selectBuffer.ValidIndex(index)) {
 		return 0;
 	}

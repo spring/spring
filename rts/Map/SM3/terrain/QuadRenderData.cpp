@@ -74,9 +74,9 @@ namespace terrain {
 
 	RenderDataManager::~RenderDataManager()
 	{
-		for (int a=0;a<freeRD.size();a++)
+		for (size_t a=0;a<freeRD.size();a++)
 			delete freeRD[a];
-		for (int a=0;a<qrd.size();a++)
+		for (size_t a=0;a<qrd.size();a++)
 			delete qrd[a];
 	}
 
@@ -122,7 +122,7 @@ namespace terrain {
 	void RenderDataManager::UpdateRect (int sx,int sy,int w,int h)
 	{
 		vector<QuadRenderData*> remain;
-		for (int a=0;a<qrd.size();a++)
+		for (size_t a=0;a<qrd.size();a++)
 		{
 			QuadRenderData *rd = qrd[a];
 			TQuad *q = rd->GetQuad();

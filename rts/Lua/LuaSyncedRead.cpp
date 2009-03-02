@@ -870,7 +870,7 @@ int LuaSyncedRead::GetAllyTeamStartBox(lua_State* L)
 	}
 
 	const int allyTeam = (int)luaL_checkint(L, 1);
-	if ((allyTeam < 0) || (allyTeam >= gameSetup->allyStartingData.size())) {
+	if ((allyTeam < 0) || ((size_t)allyTeam >= gameSetup->allyStartingData.size())) {
 		return 0;
 	}
 	const float xmin = (gs->mapx * 8.0f) * gameSetup->allyStartingData[allyTeam].startRectLeft;
@@ -2770,7 +2770,7 @@ int LuaSyncedRead::GetUnitWeaponState(lua_State* L)
 		return 0;
 	}
 	const int weaponNum = luaL_checkint(L, 2);
-	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
+	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
 	const CWeapon* weapon = unit->weapons[weaponNum];
@@ -2828,7 +2828,7 @@ int LuaSyncedRead::GetUnitWeaponVectors(lua_State* L)
 		luaL_error(L, "Incorrect arguments to GetUnitWeaponVectors(unitID,weaponNum)");
 	}
 	const int weaponNum = (int)lua_tonumber(L, 2);
-	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
+	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
 
@@ -3006,7 +3006,7 @@ int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 	}
 
 	float dist;
-	const int args = lua_gettop(L); // number of arguments
+	//const int args = lua_gettop(L); // number of arguments
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		dist = pos1.distance2D(pos2);
 	} else {
@@ -3057,7 +3057,7 @@ static void PackCommand(lua_State* L, const Command& cmd)
 
 	HSTR_PUSH(L, "params");
 	lua_newtable(L);
-	for (int p = 0; p < cmd.params.size(); p++) {
+	for (size_t p = 0; p < cmd.params.size(); p++) {
 		lua_pushnumber(L, p + 1);
 		lua_pushnumber(L, cmd.params[p]);
 		lua_rawset(L, -3);
@@ -4233,7 +4233,7 @@ int LuaSyncedRead::GetUnitPieceMap(lua_State* L)
 	}
 	const LocalModel* localModel = unit->localmodel;
 	lua_newtable(L);
-	for (int i = 0; i < localModel->pieces.size(); i++) {
+	for (size_t i = 0; i < localModel->pieces.size(); i++) {
 		const LocalModelPiece& lp = *localModel->pieces[i];
 		lua_pushstring(L, lp.name.c_str());
 		lua_pushnumber(L, i + 1);
@@ -4251,7 +4251,7 @@ int LuaSyncedRead::GetUnitPieceList(lua_State* L)
 	}
 	const LocalModel* localModel = unit->localmodel;
 	lua_newtable(L);
-	for (int i = 0; i < localModel->pieces.size(); i++) {
+	for (size_t i = 0; i < localModel->pieces.size(); i++) {
 		const LocalModelPiece& lp = *localModel->pieces[i];
 		lua_pushnumber(L, i + 1);
 		lua_pushstring(L, lp.name.c_str());
@@ -4318,7 +4318,7 @@ int LuaSyncedRead::GetUnitPieceInfo(lua_State* L)
 	const LocalModel* localModel = unit->localmodel;
 
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->pieces.size())) {
+	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 
@@ -4340,7 +4340,7 @@ int LuaSyncedRead::GetUnitPiecePosition(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->pieces.size())) {
+	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	const float3 pos = localModel->GetRawPiecePos(piece);
@@ -4362,7 +4362,7 @@ int LuaSyncedRead::GetUnitPiecePosDir(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->pieces.size())) {
+	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	float3 dir(0,0,0);
@@ -4395,7 +4395,7 @@ int LuaSyncedRead::GetUnitPieceDirection(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->pieces.size())) {
+	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	const float3 dir = localModel->GetRawPieceDirection(piece);
@@ -4417,7 +4417,7 @@ int LuaSyncedRead::GetUnitPieceMatrix(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || (piece >= localModel->pieces.size())) {
+	if ((piece < 0) || ((size_t)piece >= localModel->pieces.size())) {
 		return 0;
 	}
 	const CMatrix44f mat = unit->localmodel->GetRawPieceMatrix(piece);
@@ -4442,7 +4442,7 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	if (!lua_isnumber(L, 2)) {
 		// return the whole script->piece map
 		lua_newtable(L);
-		for (int sp = 0; sp < cob->pieces.size(); sp++) {
+		for (size_t sp = 0; sp < cob->pieces.size(); sp++) {
 			const int piece = cob->ScriptToModel(sp);
 			if (piece != -1) {
 				lua_pushnumber(L, sp);
@@ -4476,7 +4476,7 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 	const vector<LocalModelPiece*>& pieces = unit->cob->pieces;
 
 	lua_newtable(L);
-	for (int sp = 0; sp < pieces.size(); sp++) {
+	for (size_t sp = 0; sp < pieces.size(); sp++) {
 		lua_pushstring(L, pieces[sp]->name.c_str());
 		lua_pushnumber(L, sp);
 		lua_rawset(L, -3);

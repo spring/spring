@@ -319,8 +319,8 @@ int LuaVFS::DirList(lua_State* L, bool synced)
 	const vector<string> filenames = CFileHandler::DirList(dir, pattern, modes);
 
 	lua_newtable(L);
-	for (int i = 0; i < filenames.size(); i++) {
-		lua_pushnumber(L, i + 1);
+	for (size_t i = 0; i < filenames.size(); i++) {
+		lua_pushnumber(L, (int) (i + 1));
 		lua_pushstring(L, filenames[i].c_str());
 		lua_rawset(L, -3);
 	}
@@ -377,8 +377,8 @@ int LuaVFS::SubDirs(lua_State* L, bool synced)
 	const vector<string> filenames = CFileHandler::SubDirs(dir, pattern, modes);
 
 	lua_newtable(L);
-	for (int i = 0; i < filenames.size(); i++) {
-		lua_pushnumber(L, i + 1);
+	for (size_t i = 0; i < filenames.size(); i++) {
+		lua_pushnumber(L, (int) (i + 1));
 		lua_pushstring(L, filenames[i].c_str());
 		lua_rawset(L, -3);
 	}
@@ -516,7 +516,7 @@ int UnpackType(lua_State* L)
 
 	if (lua_isnumber(L, 2)) {
 		const int pos = lua_toint(L, 2);
-		if ((pos < 1) || (pos >= len)) {
+		if ((pos < 1) || ((size_t)pos >= len)) {
 			return 0;
 		}
 		const int offset = (pos - 1);
@@ -524,7 +524,7 @@ int UnpackType(lua_State* L)
 		len -= offset;
 	}
 	
-	const int eSize = sizeof(T);
+	const size_t eSize = sizeof(T);
 	if (len < eSize) {
 		return 0;
 	}
@@ -535,12 +535,12 @@ int UnpackType(lua_State* L)
 		return 1;
 	}
 	else {
-		const int maxCount = (len / eSize);
+		const size_t maxCount = (len / eSize);
 		int tableCount = lua_toint(L, 3);
 		if (tableCount < 0) {
 			tableCount = maxCount;
 		}
-		tableCount = min(maxCount, tableCount);
+		tableCount = min((int)maxCount, tableCount);
 		lua_newtable(L);
 		for (int i = 0; i < tableCount; i++) {
 			const T value = *(((T*)str) + i);

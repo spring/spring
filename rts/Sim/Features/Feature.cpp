@@ -56,26 +56,26 @@ CR_REG_METADATA(CFeature, (
 
 
 CFeature::CFeature():
-	def(0),
-	collisionVolume(0),
-	inUpdateQue(false),
-	reclaimLeft(1),
-	fireTime(0),
-	myFire(0),
-	drawQuad(-1),
-	team(0),
-	allyteam(0),
-	noSelect(false),
-	tempNum(0),
-	emitSmokeTime(0),
-	lastReclaim(0),
+	model(NULL),
 	isRepairingBeforeResurrect(false),
 	resurrectProgress(0),
 	health(0),
+	reclaimLeft(1),
+	allyteam(0),
+	team(0),
+	noSelect(false),
+	tempNum(0),
+	lastReclaim(0),
+	def(0),
+	collisionVolume(0),
+	inUpdateQue(false),
+	drawQuad(-1),
 	finalHeight(0),
 	reachedFinalPos(false),
-	solidOnTop(0),
-	model(NULL)
+	myFire(0),
+	fireTime(0),
+	emitSmokeTime(0),
+	solidOnTop(0)
 {
 	immobile=true;
 	physicalState = OnGround;
@@ -581,7 +581,7 @@ bool CFeature::Update(void)
 
 	if (emitSmokeTime != 0) {
 		--emitSmokeTime;
-		if (!(gs->frameNum + id & 3) && ph->particleSaturation < 0.7f) {
+		if (!((gs->frameNum + id) & 3) && ph->particleSaturation < 0.7f) {
 			new CSmokeProjectile(midPos + gu->usRandVector() * radius * 0.3f,
 				gu->usRandVector() * 0.3f + UpVector, emitSmokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
 		}

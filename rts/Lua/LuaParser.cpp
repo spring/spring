@@ -618,8 +618,8 @@ int LuaParser::DontMessWithMyCase(lua_State* L)
 //
 
 LuaTable::LuaTable()
-: isValid(false),
-  path(""),
+: path(""),
+  isValid(false),
   parser(NULL),
   L(NULL),
   refnum(LUA_NOREF)
