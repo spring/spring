@@ -577,7 +577,6 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetDef(gameMode,         "0", "GAME\\ModOptions\\GameMode");
 	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
 	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");
-	maxUnits = std::min(maxUnits, MAX_UNITS);
 	file.GetDef(limitDgun,        "0", "GAME\\ModOptions\\LimitDgun");
 	file.GetDef(diminishingMMs,   "0", "GAME\\ModOptions\\DiminishingMMs");
 	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");

@@ -137,8 +137,9 @@ CUnitHandler::CUnitHandler(bool serializing)
 	limitDgun(false),
 	morphUnitToFeature(true)
 {
-	units.resize(gameSetup->maxUnits);
-	unitsPerTeam = units.size() / teamHandler->ActiveTeams() - 5;
+	const size_t maxUnitsTemp = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
+	units.resize(maxUnitsTemp);
+	unitsPerTeam = maxUnitsTemp / teamHandler->ActiveTeams() - 5;
 
 	freeIDs.reserve(units.size()-1);
 	for (int a = 1; a < units.size(); a++) {
