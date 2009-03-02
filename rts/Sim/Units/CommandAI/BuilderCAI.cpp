@@ -414,7 +414,7 @@ void CBuilderCAI::SlowUpdate()
 						if (luaRules && !luaRules->AllowUnitCreation(build.def, owner, &build.pos)) {
 							FinishCommand();
 						}
-						else if (uh->maxUnits > (int) teamHandler->Team(owner->team)->units.size()) {
+						else if (uh->MaxUnitsPerTeam() > (int) teamHandler->Team(owner->team)->units.size()) {
 							// max unitlimit reached
 							buildRetries++;
 							owner->moveType->KeepPointingTo(build.pos, fac->buildDistance * 0.7f + radius, false);
