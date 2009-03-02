@@ -1716,7 +1716,7 @@ int LuaOpenGL::UnitShape(lua_State* L)
 		return 0;
 	}
 	const int teamID = lua_toint(L, 2);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 
@@ -1871,7 +1871,7 @@ int LuaOpenGL::FeatureShape(lua_State* L)
 	const int fDefID = luaL_checkint(L, 1);
 	//const int teamID = luaL_checkint(L, 2);
 
-	//if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	//if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 	//	return 0;
 	//}
 	const FeatureDef* fd = featureHandler->GetFeatureDefByID(fDefID);

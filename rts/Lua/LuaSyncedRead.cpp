@@ -477,7 +477,7 @@ static inline CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Bad teamID type in %s()\n", caller);
 	}
 	const int teamID = lua_toint(L, index);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		luaL_error(L, "Bad teamID in %s\n", caller);
 	}
 	return teamHandler->Team(teamID);
@@ -490,7 +490,7 @@ static inline int ParseTeamID(lua_State* L, const char* caller, int index)
 		luaL_error(L, "Bad teamID type in %s()\n", caller);
 	}
 	const int teamID = lua_toint(L, index);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		luaL_error(L, "Bad teamID in %s\n", caller);
 	}
 	CTeam* team = teamHandler->Team(teamID);
@@ -4516,7 +4516,7 @@ int LuaSyncedRead::GetCOBUnitVar(lua_State* L)
 int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
 {
 	const int teamID = luaL_checkint(L, 1);
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 	if (!IsAlliedTeam(teamID)) {
@@ -4541,7 +4541,7 @@ int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
 int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
 {
 	const int allyTeamID = luaL_checkint(L, 1);
-	if ((allyTeamID < 0) || (allyTeamID >= MAX_TEAMS)) {
+	if ((allyTeamID < 0) || (allyTeamID >= teamHandler->ActiveTeams())) {
 		return 0;
 	}
 	if (!IsAlliedAllyTeam(allyTeamID)) {
