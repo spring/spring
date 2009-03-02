@@ -51,7 +51,7 @@ const int MAX_PLAYERS = 251;
  * The real maximum of the game is stored in uh->maxUnits,
  * and may not be higher then this value.
  */
-const int MAX_UNITS = 10000;
+const int MAX_UNITS = 32000;
 
 /**
  * @brief near plane
