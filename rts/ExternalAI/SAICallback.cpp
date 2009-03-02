@@ -132,7 +132,7 @@ static bool isControlledByLocalPlayer(int teamId) {
 
 static const CUnit* getUnit(int unitId) {
 
-	if ((unsigned int)unitId < (unsigned int)MAX_UNITS) {
+	if ((unsigned int)unitId < uh->MaxUnits()) {
 		return uh->units[unitId];
 	} else {
 		return NULL;

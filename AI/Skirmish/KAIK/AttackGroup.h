@@ -7,6 +7,7 @@
 #include "Defines.h"
 
 #include "ExternalAI/aibase.h"					// DLL exports and definitions
+#include "Sim/Misc/GlobalConstants.h"
 
 using std::vector;
 using std::list;

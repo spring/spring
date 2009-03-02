@@ -232,13 +232,13 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 	if (id < 0) {
 		return false;
 	}
-	else if (id < MAX_UNITS) {
+	else if (id < uh->MaxUnits()) {
 		obj = uh->units[id];
 	}
 	else {
 		// features don't move, but maybe the unit was transported?
 		const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-		CFeatureSet::const_iterator it = fset.find(id - MAX_UNITS);
+		CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
 		if (it != fset.end()) {
 			obj = *it;
 		}
@@ -462,7 +462,7 @@ void CBuilderCAI::SlowUpdate()
 					Command c2;
 					c2.id=CMD_RECLAIM;
 					c2.options=0;
-					c2.params.push_back(f->id+MAX_UNITS);
+					c2.params.push_back(f->id + uh->MaxUnits());
 					commandQue.push_front(c2);
 					SlowUpdate(); //this assumes that the reclaim command can never return directly without having reclaimed the target
 				}
@@ -713,9 +713,9 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 	assert(owner->unitDef->canReclaim);
 	if(c.params.size()==1){
 		int id=(int) c.params[0];
-		if (id >= MAX_UNITS) {     //reclaim feature
+		if (id >= uh->MaxUnits()) {     //reclaim feature
 			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-			CFeatureSet::const_iterator it = fset.find(id - MAX_UNITS);
+			CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
 			if (it != fset.end()) {
 				CFeature* feature = *it;
 				if(!ReclaimObject(feature)){
@@ -777,8 +777,8 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 	CBuilder* fac=(CBuilder*)owner;
 	if(c.params.size()==1){
 		int id=(int)c.params[0];
-		if(id>=MAX_UNITS){		//resurrect feature
-			CFeatureSet::const_iterator it = featureHandler->GetActiveFeatures().find(id - MAX_UNITS);
+		if(id>=uh->MaxUnits()){		//resurrect feature
+			CFeatureSet::const_iterator it = featureHandler->GetActiveFeatures().find(id - uh->MaxUnits());
 			if (it != featureHandler->GetActiveFeatures().end() && (*it)->createdFromUnit != "") {
 				CFeature* feature = *it;
 				if (f3SqDist(feature->pos, fac->pos) < Square(fac->buildDistance*0.9f+feature->radius)) {
@@ -1071,7 +1071,7 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId)
 		}
 
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-MAX_UNITS == featureId) {
+		if (cmdFeatureId-uh->MaxUnits() == featureId) {
 			retval = true;
 			break;
 		}
@@ -1145,7 +1145,7 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(const float3& pos,
 		}
 		cmd.options = options | INTERNAL_ORDER;
 		cmd.id = CMD_RECLAIM;
-		cmd.params.push_back(MAX_UNITS + best->id);
+		cmd.params.push_back(uh->MaxUnits() + best->id);
 		commandQue.push_front(cmd);
 		return true;
 	}
@@ -1183,7 +1183,7 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 		Command c2;
 		c2.options = options | INTERNAL_ORDER;
 		c2.id = CMD_RESURRECT;
-		c2.params.push_back(MAX_UNITS + best->id);
+		c2.params.push_back(uh->MaxUnits() + best->id);
 		commandQue.push_front(c2);
 		return true;
 	}
@@ -1413,9 +1413,9 @@ void CBuilderCAI::DrawCommands(void)
 					lineDrawer.RestartSameColor();
 				} else {
 					int id = (int)ci->params[0];
-					if (id >= MAX_UNITS) {
+					if (id >= uh->MaxUnits()) {
 						const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-						CFeatureSet::const_iterator it = fset.find(id - MAX_UNITS);
+						CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
 						if (it != fset.end()) {
 							const float3 endPos = (*it)->midPos;
 							lineDrawer.DrawLineAndIcon(ci->id, endPos, color);

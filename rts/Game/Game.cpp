@@ -2182,7 +2182,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			int currentNumUnits = teamHandler->Team(team)->units.size();
 
 			if (currentNumUnits >= uh->MaxUnitsPerTeam()) {
-				logOutput.Print("Unable to give any more units to team %i", team);
+				logOutput.Print("Unable to give any more units to team %i (current: %i, max: %i)", team, currentNumUnits, uh->MaxUnits());
 				return;
 			}
 
