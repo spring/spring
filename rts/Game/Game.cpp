@@ -419,9 +419,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	keyBindings->Load("uikeys.txt");
 
 	water=CBaseWater::GetWater(NULL);
-	for(int a=0;a<MAX_TEAMS;a++)
-		grouphandlers[a] = new CGroupHandler(a);
-
+	for(int a = 0; a < teamHandler->ActiveTeams(); ++a)
+		grouphandlers.push_back(new CGroupHandler(a));
+	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
 
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
@@ -533,9 +533,7 @@ CGame::~CGame()
 	eoh->PreDestroy();
 	CEngineOutHandler::Destroy();
 
-	for(int a=0;a<MAX_TEAMS;a++) {
-		SafeDelete(grouphandlers[a]);
-	}
+	grouphandlers.clear();
 
 	SafeDelete(water);
 	SafeDelete(sky);

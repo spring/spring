@@ -59,6 +59,8 @@ protected:
 		void AddStat(int team,float value){
 			if(value>max)
 				max=value;
+			if (team >= values.size())
+				values.resize(team+1);
 			if(values[team].size()>0 && fabs(value-values[team].back())>maxdif)
 				maxdif = fabs(value-values[team].back());
 
@@ -68,7 +70,7 @@ protected:
 		float max;
 		float maxdif;
 
-		std::vector<float> values[MAX_TEAMS];
+		std::vector< std::vector<float> > values;
 	};
 
 	std::vector<Stat> stats;

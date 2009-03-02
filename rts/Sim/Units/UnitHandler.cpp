@@ -166,9 +166,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	if (!serializing) {
 		airBaseHandler = new CAirBaseHandler;
 
-		for (int i = 0; i < MAX_TEAMS; i++) {
-			unitsByDefs[i].resize(unitDefHandler->numUnitDefs + 1);
-		}
+		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->numUnitDefs + 1));
 	}
 }
 

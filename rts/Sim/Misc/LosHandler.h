@@ -120,8 +120,8 @@ public:
 	CLosHandler();
 	~CLosHandler();
 
-	CLosMap losMap[MAX_TEAMS];
-	CLosMap airLosMap[MAX_TEAMS];
+	std::vector<CLosMap> losMap;
+	std::vector<CLosMap> airLosMap;
 
 	const int losMipLevel;
 	const int airMipLevel;

@@ -55,6 +55,6 @@ protected:
 };
 
 //extern CGroupHandler* grouphandler;
-extern CGroupHandler* grouphandlers[MAX_TEAMS];
+extern std::vector<CGroupHandler*> grouphandlers;
 
 #endif	// _GROUPHANDLER_H

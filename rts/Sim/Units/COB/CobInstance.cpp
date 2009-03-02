@@ -139,10 +139,21 @@
 
 // NOTE: shared variables use codes [1024 - 5119]
 
-int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = {{ 0 }};
-int CCobInstance::allyVars[MAX_TEAMS][ALLY_VAR_COUNT] = {{ 0 }};
+std::vector<int>  CCobInstance::teamVars[TEAM_VAR_COUNT];
+std::vector<int>  CCobInstance::allyVars[ALLY_VAR_COUNT];
 int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        =  { 0 };
 
+void CCobInstance::InitVars(int numTeams, int numAllyTeams)
+{
+	for (int t = 0; t != TEAM_VAR_COUNT; ++t)
+	{
+		teamVars[t].resize(numTeams,0);
+	}
+	for (int t = 0; t != ALLY_VAR_COUNT; ++t)
+	{
+		allyVars[t].resize(numAllyTeams,0);
+	}
+}
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 : script(_script), unit(_unit)

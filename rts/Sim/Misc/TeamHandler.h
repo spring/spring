@@ -86,8 +86,8 @@ public:
 	int GaiaTeamID() const { return gaiaTeamID; }
 	int GaiaAllyTeamID() const { return gaiaAllyTeamID; }
 
-	int ActiveTeams() const { return activeTeams; }
-	int ActiveAllyTeams() const { return activeAllyTeams; }
+	int ActiveTeams() const { return teams.size(); }
+	int ActiveAllyTeams() const { return allies.size(); }
 
 	void GameFrame(int frameNum);
 
@@ -108,42 +108,27 @@ private:
 	int gaiaAllyTeamID;
 
 	/**
-	 * @brief active teams
-	 *
-	 * The number of active teams
-	 * (don't change during play)
-	 */
-	int activeTeams;
-
-	/**
-	 * @brief active ally teams
-	 *
-	 * The number of active ally teams
-	 */
-	int activeAllyTeams;
-
-	/**
 	 * @brief allies array
 	 *
 	 * Array indicates whether teams are allied,
 	 * allies[a][b] means allyteam a is allied with
 	 * allyteam b, NOT the other way around
 	 */
-	bool allies[MAX_TEAMS][MAX_TEAMS];
+	std::vector< std::vector<bool> > allies;
 
 	/**
 	 * @brief team to ally team
 	 *
 	 * Array stores what ally team a specific team is part of
 	 */
-	int team2allyteam[MAX_TEAMS];
+	std::vector<int> team2allyteam;
 
 	/**
 	 * @brief teams
 	 *
 	 * Array of CTeam instances for teams in game
 	 */
-	CTeam teams[MAX_TEAMS];
+	std::vector<CTeam> teams;
 };
 
 extern CTeamHandler* teamHandler;
