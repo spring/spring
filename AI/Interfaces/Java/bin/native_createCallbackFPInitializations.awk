@@ -20,7 +20,7 @@ function trim(s)  { return rtrim(ltrim(s)); }
 
 
 function printInit(functionName) {
-	print("	sAICallback->" functionName " = _" functionName ";")
+	print("	callback->" functionName " = &_" functionName ";")
 }
 
 

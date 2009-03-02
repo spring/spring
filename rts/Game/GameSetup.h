@@ -76,6 +76,7 @@ public:
 	std::vector<SkirmishAIData> skirmishAIStartingData;
 	std::map<int, const SkirmishAIData*> team_skirmishAI;
 	const SkirmishAIData* GetSkirmishAIDataForTeam(int teamId) const;
+	size_t GetSkirmishAIs() const;
 
 	struct TeamData
 	{
