@@ -23,7 +23,7 @@
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SSAILibrary.h"
-#include "ExternalAI/Interface/SStaticGlobalData.h"
+#include "ExternalAI/Interface/SAIInterfaceCallback.h"
 
 #include "System/Platform/SharedLib.h"
 #include "System/Util.h"
@@ -36,6 +36,7 @@
 #include <sys/types.h>  // mkdir()
 #endif // WIN32
 
+/*
 static std::string local_getValueByKey(
 		const std::map<std::string, std::string>& map, std::string key) {
 
@@ -46,75 +47,78 @@ static std::string local_getValueByKey(
 		return "";
 	}
 }
+*/
 
-CInterface::CInterface(const std::map<std::string, std::string>& myInfo,
-		const SStaticGlobalData* staticGlobalData)
-		: myInfo(myInfo), staticGlobalData(staticGlobalData) {
+CInterface::CInterface(int interfaceId,
+		const struct SAIInterfaceCallback* callback)
+		: interfaceId(interfaceId), callback(callback) {
 
-	// "C:/Games/spring/AI/Interfaces/C/0.1"
-	const char* dd_versioned_rw = util_dataDirs_allocDir("", true);
-	if (dd_versioned_rw != NULL) {
-		util_makeDir(dd_versioned_rw, true);
-	} else {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-			"Failed retrieving read-write data-dir path");
-	}
-
-// 	// "C:/Games/spring/AI/Interfaces/C"
-// 	const char* dd_unversioned_rw = util_getDataDir(false, true);
-// 	if (dd_unversioned_rw != NULL) {
-// 		util_makeDir(dd_unversioned_rw, true);
-// 	}
-
-	char* logFileName = util_allocStrCatFSPath(3,
-			dd_versioned_rw, "log", "interface-log.txt");
+	char* logFileName = util_allocStrCatFSPath(2, "log", "interface-log.txt");
 	bool timeStamps = true;
 	int logLevel = SIMPLELOG_LEVEL_ERROR;
 #if defined DEBUG
 	logLevel = SIMPLELOG_LEVEL_FINE;
 #endif // defined DEBUG
-	simpleLog_init(logFileName, timeStamps, logLevel);
+	static const unsigned int logFilePath_sizeMax = 1024;
+	char logFilePath[logFilePath_sizeMax];
+	// eg: "~/.spring/AI/Interfaces/C/log/interface-log.txt"
+	bool ok = callback->DataDirs_locatePath(interfaceId,
+			logFilePath, logFilePath_sizeMax,
+			logFileName, true, true, false);
+	if (!ok) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+			"Failed locating the log file %s.", logFileName);
+	}
 
-	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
-	const char* myVersion = util_getMyInfo(AI_INTERFACE_PROPERTY_VERSION);
+	simpleLog_init(logFilePath, timeStamps, logLevel);
 
-	simpleLog_log("This is the log-file of the %s version %s", myShortName,
-			myVersion);
-	simpleLog_log("Using read-write data-directory (version specific): %s",
-			dd_versioned_rw);
-// 	simpleLog_log("Using read-write data-directory (version-less): %s",
-// 			dd_unversioned_rw);
+	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId,
+			AI_INTERFACE_PROPERTY_SHORT_NAME);
+	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId,
+			AI_INTERFACE_PROPERTY_VERSION);
+
+	simpleLog_log("This is the log-file of the %s version %s",
+			myShortName, myVersion);
+	simpleLog_log("Using read/write data-directory: %s",
+			callback->DataDirs_getWriteableDir(interfaceId));
 	simpleLog_log("Using log file: %s", logFileName);
 
 	free(logFileName);
 	logFileName = NULL;
 }
 
-LevelOfSupport CInterface::GetLevelOfSupportFor(
-		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
-	return LOS_Working;
-}
+//LevelOfSupport CInterface::GetLevelOfSupportFor(
+//		const char* engineVersion, int engineAIInterfaceGeneratedVersion) {
+//	return LOS_Working;
+//}
 
-SSkirmishAISpecifier CInterface::ExtractSpecifier(
-		const std::map<std::string, std::string>& infoMap) {
-
-	const char* sn = infoMap.find(SKIRMISH_AI_PROPERTY_SHORT_NAME)->second.c_str();
-	const char* v = infoMap.find(SKIRMISH_AI_PROPERTY_VERSION)->second.c_str();
-
-	SSkirmishAISpecifier spec = {sn, v};
-
-	return spec;
-}
+// SSkirmishAISpecifier CInterface::ExtractSpecifier(
+// 		const std::map<std::string, std::string>& infoMap) {
+//
+// 	const char* const skirmDD =
+// 			callback->SkirmishAIs_Info_getValueByKey(interfaceId,
+// 			shortName, version,
+// 			SKIRMISH_AI_PROPERTY_DATA_DIR);
+// 	const char* sn = callback->AIInterface_Info_getValueByKey)(int interfaceId, const char* const key);
+// 	.find(SKIRMISH_AI_PROPERTY_SHORT_NAME)->second.c_str();
+// 	const char* v = infoMap.find(SKIRMISH_AI_PROPERTY_VERSION)->second.c_str();
+//
+// 	SSkirmishAISpecifier spec = {sn, v};
+//
+// 	return spec;
+// }
 
 const SSAILibrary* CInterface::LoadSkirmishAILibrary(
-		const std::map<std::string, std::string>& infoMap) {
+		const char* const shortName,
+		const char* const version) {
 
-	SSAILibrary* ai;
+	SSAILibrary* ai = NULL;
 
-	SSkirmishAISpecifier spec = ExtractSpecifier(infoMap);
+	SSkirmishAISpecifier spec;
+	spec.shortName = shortName;
+	spec.version = version;
 
 	mySkirmishAISpecifiers.insert(spec);
-	mySkirmishAIInfos[spec] = infoMap;
 
 	T_skirmishAIs::iterator skirmishAI;
 	skirmishAI = myLoadedSkirmishAIs.find(spec);
@@ -130,9 +134,12 @@ const SSAILibrary* CInterface::LoadSkirmishAILibrary(
 	return ai;
 }
 int CInterface::UnloadSkirmishAILibrary(
-		const std::map<std::string, std::string>& infoMap) {
+		const char* const shortName,
+		const char* const version) {
 
-	SSkirmishAISpecifier spec = ExtractSpecifier(infoMap);
+	SSkirmishAISpecifier spec;
+	spec.shortName = shortName;
+	spec.version = version;
 
 	T_skirmishAIs::iterator skirmishAI =
 			myLoadedSkirmishAIs.find(spec);
@@ -152,8 +159,9 @@ int CInterface::UnloadSkirmishAILibrary(
 int CInterface::UnloadAllSkirmishAILibraries() {
 
 	while (myLoadedSkirmishAIs.size() > 0) {
-		UnloadSkirmishAILibrary(
-				mySkirmishAIInfos[myLoadedSkirmishAIs.begin()->first]);
+		T_skirmishAISpecifiers::const_iterator ai =
+				mySkirmishAISpecifiers.begin();
+		UnloadSkirmishAILibrary((*ai).shortName, (*ai).version);
 	}
 
 	return 0;
@@ -240,22 +248,14 @@ void CInterface::reportError(const std::string& msg) {
 
 std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 
-	// fetch the data-dir and file-name from the info about the AI to load,
-	// which was supplied to us by the engine
-	T_skirmishAIInfos::const_iterator info =
-			mySkirmishAIInfos.find(spec);
-	if (info == mySkirmishAIInfos.end()) {
-		reportError(std::string("Missing Skirmish AI info for ")
-				+ spec.shortName + " " + spec.version);
-	}
-
-	std::map<std::string, std::string>::const_iterator prop =
-			info->second.find(SKIRMISH_AI_PROPERTY_DATA_DIR);
-	if (prop == info->second.end()) {
+	const char* const skirmDD =
+			callback->SkirmishAIs_Info_getValueByKey(interfaceId,
+			spec.shortName, spec.version,
+			SKIRMISH_AI_PROPERTY_DATA_DIR);
+	if (skirmDD == NULL) {
 		reportError(std::string("Missing Skirmish AI data-dir for ")
 				+ spec.shortName + " " + spec.version);
 	}
-	const std::string& dataDir(prop->second);
 
 	const std::string& fileName("SkirmishAI");
 
@@ -267,14 +267,16 @@ std::string CInterface::FindLibFile(const SSkirmishAISpecifier& spec) {
 	// eg. "libSkirmishAI.so"
 	libFileName = libFileName + "." + SharedLib::GetLibExtension();
 
-	return util_allocStrCatFSPath(2, dataDir.c_str(), libFileName.c_str());
+	return util_allocStrCatFSPath(2, skirmDD, libFileName.c_str());
 }
 
 bool CInterface::FitsThisInterface(const std::string& requestedShortName,
 		const std::string& requestedVersion) {
 
-	std::string myShortName = local_getValueByKey(myInfo, AI_INTERFACE_PROPERTY_SHORT_NAME);
-	std::string myVersion = local_getValueByKey(myInfo, AI_INTERFACE_PROPERTY_VERSION);
+	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId,
+			AI_INTERFACE_PROPERTY_SHORT_NAME);
+	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId,
+			AI_INTERFACE_PROPERTY_VERSION);
 
 	bool shortNameFits = (requestedShortName == myShortName);
 	bool versionFits = (requestedVersion == myVersion);

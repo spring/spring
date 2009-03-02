@@ -17,7 +17,6 @@
 
 #include "Util.h"
 
-#include "ExternalAI/Interface/SStaticGlobalData.h" // for SStaticGlobalData, sPS
 #include "ExternalAI/Interface/aidefines.h" // for SKIRMISH_AI_PROPERTY_DATA_DIR, AI_INTERFACES_DATA_DIR
 #if defined USING_STREFLOP
 #include "lib/streflop/streflopC.h" // for streflop_init_Simple()

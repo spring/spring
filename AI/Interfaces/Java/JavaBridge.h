@@ -18,14 +18,6 @@
 #ifndef _JAVABRIDGE_H
 #define _JAVABRIDGE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <stdbool.h>	// bool, true, false
-
-struct SStaticGlobalData;
-struct SAICallback;
 
 #define JVM_PROPERTIES_FILE "jvm.properties"
 
@@ -73,6 +65,14 @@ struct SAICallback;
 #define PATH_DELIM "/"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <stdbool.h>	// bool, true, false
+
+struct SAIInterfaceCallback;
+struct SAICallback;
 
 ///**
 // * Returns a JNI environment, which includes a JVM.
@@ -85,7 +85,8 @@ struct SAICallback;
 //JNIEnv* getJNIEnv();
 bool java_preloadJNIEnv();
 bool java_unloadJNIEnv();
-bool java_initStatic(const struct SStaticGlobalData* staticGlobalData);
+bool java_initStatic(int interfaceId,
+		const struct SAIInterfaceCallback* callback);
 bool java_releaseStatic();
 /**
  * Instantiates an instance of the specified className.
