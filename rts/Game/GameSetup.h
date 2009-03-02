@@ -7,7 +7,6 @@
 #include <set>
 
 #include "SFloat3.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "PlayerBase.h"
 #include "ExternalAI/SkirmishAIData.h"
 
@@ -96,7 +95,7 @@ public:
 		float startRectBottom;
 		float startRectLeft;
 		float startRectRight;
-		bool allies[MAX_TEAMS];
+		std::vector<bool> allies;
 	};
 	std::vector<AllyTeamData> allyStartingData;
 

@@ -894,7 +894,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	if (lua_israwnumber(L, 6)) {
 		teamID = lua_toint(L, 6);
 	}
-	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
+	if ((teamID < 0) || (teamID >= teamHandler->ActiveTeams())) {
 		luaL_error(L, "CreateUnit(): bad team number: %d", teamID);
 		return 0;
 	}
@@ -1339,7 +1339,7 @@ int LuaSyncedCtrl::SetUnitLosMask(lua_State* L)
 		return 0;
 	}
 	const int allyTeam = luaL_checkint(L, 2);
-	if ((allyTeam < 0) || (allyTeam >= MAX_TEAMS)) {
+	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveTeams())) {
 		luaL_error(L, "bad allyTeam");
 	}
 	const unsigned short losStatus = unit->losStatus[allyTeam];
@@ -1361,7 +1361,7 @@ int LuaSyncedCtrl::SetUnitLosState(lua_State* L)
 		return 0;
 	}
 	const int allyTeam = luaL_checkint(L, 2);
-	if ((allyTeam < 0) || (allyTeam >= MAX_TEAMS)) {
+	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveTeams())) {
 		luaL_error(L, "bad allyTeam");
 	}
 	const unsigned short losStatus = unit->losStatus[allyTeam];
@@ -2086,7 +2086,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 		team = lua_toint(L, 6);
 		if (team < -1) {
 			team = -1;
-		} else if (team >= MAX_TEAMS) {
+		} else if (team >= teamHandler->ActiveTeams()) {
 			return 0;
 		}
 	}
@@ -2140,7 +2140,7 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 		return 0;
 	}
 	const int team = luaL_checkint(L, 2);
-	if (team >= MAX_TEAMS) {
+	if (team >= teamHandler->ActiveTeams()) {
 		return 0;
 	}
 	feature->ChangeTeam(team);

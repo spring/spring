@@ -97,7 +97,7 @@ void CPlayer::SetControlledTeams()
 
 	if (gs->godMode) {
 		// anyone can control any unit
-		for (int t = 0; t < MAX_TEAMS; t++) {
+		for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
 			controlledTeams.insert(t);
 		}
 		return;
