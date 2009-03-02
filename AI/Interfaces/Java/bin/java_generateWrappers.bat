@@ -13,7 +13,7 @@ SET AWK=gawk.exe
 REM ##############################################
 REM ### do not change anything below this line ###
 
-SET C_CALLBACK=%SPRING_SOURCE%/ExternalAI/Interface/SAICallback.h
+SET C_CALLBACK=%SPRING_SOURCE%/ExternalAI/Interface/SSkirmishAICallback.h
 SET C_EVENTS=%SPRING_SOURCE%/ExternalAI/Interface/AISEvents.h
 SET C_COMMANDS=%SPRING_SOURCE%/ExternalAI/Interface/AISCommands.h
 SET JNA_CALLBACK=%MY_SOURCE_JAVA%%JAVA_PKG%/AICallback.java

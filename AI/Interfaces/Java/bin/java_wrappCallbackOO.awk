@@ -5,7 +5,7 @@
 # In other words, the output of this file wrapps:
 # com/clan_sy/spring/ai/AICallback.java
 # which wrapps:
-# rts/ExternalAI/Interface/SAICallback.h
+# rts/ExternalAI/Interface/SSkirmishAICallback.h
 #
 # This script uses functions from the following files:
 # * common.awk

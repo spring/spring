@@ -20,7 +20,7 @@
 
 #include "ExternalAI/IAICallback.h"
 
-struct SAICallback;
+struct SSkirmishAICallback;
 
 /**
  * The AI side wrapper over the C AI interface for IAICallback.
@@ -28,7 +28,7 @@ struct SAICallback;
 class CAIAICallback : public IAICallback {
 public:
 	CAIAICallback();
-	CAIAICallback(int teamId, SAICallback* sAICallback);
+	CAIAICallback(int teamId, SSkirmishAICallback* sAICallback);
 
 	virtual void SendTextMsg(const char* text, int zone);
 	virtual void SetLastMsgPos(float3 pos);
@@ -204,7 +204,7 @@ public:
 
 private:
 	int teamId;
-	SAICallback* sAICallback;
+	SSkirmishAICallback* sAICallback;
 //	int currentFrame;
 	void init();
 //	void setCurrentFrame(int frame) { currentFrame = frame; }

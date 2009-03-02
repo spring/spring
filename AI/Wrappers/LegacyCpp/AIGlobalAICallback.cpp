@@ -23,7 +23,7 @@ CAIGlobalAICallback::CAIGlobalAICallback()
 	: IGlobalAICallback(), sAICallback(NULL), teamId(-1),
 		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 
-CAIGlobalAICallback::CAIGlobalAICallback(SAICallback* sAICallback, int teamId)
+CAIGlobalAICallback::CAIGlobalAICallback(SSkirmishAICallback* sAICallback, int teamId)
 	: IGlobalAICallback(), sAICallback(sAICallback), teamId(teamId),
 		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 

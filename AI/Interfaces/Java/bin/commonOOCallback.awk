@@ -2,7 +2,7 @@
 #
 # This awk script contains common functions that may be used by other scripts.
 # Contains functions suitable for creating Object Oriented wrappers of
-# the callback in: rts/ExternalAI/Interface/SAICallback.h
+# the callback in: rts/ExternalAI/Interface/SSkirmishAICallback.h
 # use like this:
 # 	awk -f yourScript.awk -f common.awk [additional-params]
 # this should work with all flavours of AWK (eg. gawk, mawk, nawk, ...)

@@ -617,7 +617,7 @@ for baseName in aiinterfaces_toBuild:
 		awkScripts += ['jna_wrappCallback.awk']
 		awkScripts += ['common.awk']
 		awkScripts += ['commonDoc.awk']
-		awkInputFile = os.path.join(springInterfaceSrcDir, 'SAICallback.h')
+		awkInputFile = os.path.join(springInterfaceSrcDir, 'SSkirmishAICallback.h')
 		awkOutput = [os.path.join(genSrcPkgDir, 'AICallback.java')]
 		wrapp_callback = AWKExecutor(myEnv, 'wrapp_callback', awkScripts, awkVars, awkInputFile, awkOutput, workDir = awkScriptsDir)
 		wrapp_callback_cmd = wrapp_callback.createExecuteCommand()

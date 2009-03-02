@@ -20,7 +20,7 @@
 
 #include "ExternalAI/IGlobalAICallback.h"
 
-struct SAICallback;
+struct SSkirmishAICallback;
 class CAIAICallback;
 class CAIAICheats;
 
@@ -30,14 +30,14 @@ class CAIAICheats;
 class CAIGlobalAICallback : public IGlobalAICallback {
 public:
 	CAIGlobalAICallback();
-	CAIGlobalAICallback(SAICallback* sAICallback, int teamId);
+	CAIGlobalAICallback(SSkirmishAICallback* sAICallback, int teamId);
 	~CAIGlobalAICallback();
 
 	virtual IAICheats* GetCheatInterface();
 	virtual IAICallback* GetAICallback();
 
 private:
-	SAICallback* sAICallback;
+	SSkirmishAICallback* sAICallback;
 	int teamId;
 	CAIAICallback* wrappedAICallback;
 	CAIAICheats* wrappedAICheats;

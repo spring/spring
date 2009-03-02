@@ -72,7 +72,7 @@ extern "C" {
 #include <stdbool.h>	// bool, true, false
 
 struct SAIInterfaceCallback;
-struct SAICallback;
+struct SSkirmishAICallback;
 
 ///**
 // * Returns a JNI environment, which includes a JVM.
@@ -126,7 +126,7 @@ int java_skirmishAI_init(int teamId,
 		const char** optionsKeys, const char** optionsValues);
 int java_skirmishAI_release(int teamId);
 int java_skirmishAI_handleEvent(int teamId, int topic, const void* data);
-const struct SAICallback* java_getSkirmishAICCallback(int teamId);
+const struct SSkirmishAICallback* java_getSkirmishAICCallback(int teamId);
 
 
 #ifdef __cplusplus

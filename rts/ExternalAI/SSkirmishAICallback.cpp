@@ -15,7 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Interface/SAICallback.h"
+#include "Interface/SSkirmishAICallback.h"
 
 #include "IGlobalAICallback.h"
 #include "IAICallback.h"
@@ -2701,9 +2701,9 @@ EXPORT(bool) _Clb_Group_isSelected(int teamId, int groupId) {
 
 
 
-SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
+SSkirmishAICallback* initSSkirmishAICallback(int teamId, IGlobalAICallback* aiGlobalCallback) {
 
-	SAICallback* sAICallback = new SAICallback();
+	SSkirmishAICallback* sAICallback = new SSkirmishAICallback();
 	// INSERT AUTO GENERATED PART FROM HERE ...
 	sAICallback->Clb_handleCommand = _Clb_handleCommand;
 	sAICallback->Clb_Game_getCurrentFrame = _Clb_Game_getCurrentFrame;

@@ -26,7 +26,7 @@
 
 #include "ExternalAI/Interface/AISEvents.h"
 #include "ExternalAI/Interface/AISCommands.h"
-#include "ExternalAI/Interface/SAICallback.h"
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
 
 #include "AIEvent.h"
 #include "AINullEvent.h"
