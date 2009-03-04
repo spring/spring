@@ -11,11 +11,9 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 //	l = logfile;
 	*l<<"\n Loading the Terrain-Map ...";
 
-	string cacheDirectory = cLogFile::GetRAIRootDirectory() + "cache"sPS;
-	cacheDirectory.reserve(512 + cacheDirectory.length());
-	bool isCreated = cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)cacheDirectory.c_str() );
+	string cacheDirectory = cLogFile::GetDir(true, "cache");
 
-	if (!isCreated) {
+	if (cacheDirectory.empty()) {
 		*l<<"\nERROR: Could not create the cache dir: "<<cacheDirectory;
 	}
 
@@ -309,8 +307,8 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 		*l<<", has been detected with "<<areaIU[i]->sector.size()<<" sectors.";
 	}
 */
-	const int MAMinimalSectors = 8;				// Minimal # of sector for a valid MapArea
-	const float MAMinimalSectorPercent = 0.5;	// Minimal % of map for a valid MapArea
+	const size_t MAMinimalSectors = 8;          // Minimal # of sector for a valid MapArea
+	const float MAMinimalSectorPercent = 0.5;   // Minimal % of map for a valid MapArea
 	for( list<TerrainMapMobileType>::iterator iMT=mobileType.begin(); iMT!=mobileType.end(); iMT++ )
 	{
 		*l<<"\n   Mobile-Type: Min/Max Elevation=(";
@@ -633,10 +631,12 @@ bool GlobalTerrainMap::IsSectorValid(const int& sIndex)
 
 int GlobalTerrainMap::GetFileValue(int &fileSize, char *&file, string entry)
 {
-	for(int i=0; i<entry.size(); i++)
-		if( !islower(entry[i]) )
+	for(size_t i=0; i<entry.size(); i++) {
+		if( !islower(entry[i]) ) {
 			entry[i] = tolower(entry[i]);
-	int entryIndex = 0;
+		}
+	}
+	size_t entryIndex = 0;
 	string entryValue = "";
 	for(int i=0; i<fileSize; i++)
 	{

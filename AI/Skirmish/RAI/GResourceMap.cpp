@@ -98,9 +98,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 				fList[i] = fList[--fSize];
 	}
 
-	string cacheDirectory = cLogFile::GetRAIRootDirectory() + "cache"sPS;
-	cacheDirectory.reserve(512 + cacheDirectory.length());
-	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)cacheDirectory.c_str() );
+	string cacheDirectory = cLogFile::GetDir(true, "cache");
 
 	resourceFileName = cacheDirectory + string(cb->GetModName());
 	resourceFileName.resize(resourceFileName.size()-4);

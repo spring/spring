@@ -33,6 +33,7 @@
 #include "Interface/AISCommands.h"
 #include "Interface/SSAILibrary.h"
 #include "SkirmishAILibraryInfo.h"
+#include "SSkirmishAICallbackImpl.h"
 
 #include <sstream>
 
@@ -41,9 +42,6 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(teamId),
 	CR_MEMBER(cheatEvents),
 	CR_MEMBER(key),
-//	CR_MEMBER(options),
-//	CR_MEMBER(optionKeys),
-//	CR_MEMBER(optionValues),
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -70,11 +68,12 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key)
-		: teamId(teamId), cheatEvents(false), key(key) {
+		: teamId(teamId), cheatEvents(false), ai(NULL), c_callback(NULL), key(key) {
 
-	LoadSkirmishAI(false);
-
-	Init();
+	if (c_callback == NULL) {
+		callback = new CGlobalAICallback(this);
+		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback);
+	}
 }
 
 void CSkirmishAIWrapper::PreDestroy() {
@@ -85,7 +84,7 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 
 	if (ai) {
 		Release();
-		delete c_callback;
+		skirmishAiCallback_release(teamId);
 		delete callback;
 		delete ai;
 		c_callback = NULL;
@@ -154,23 +153,11 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 void CSkirmishAIWrapper::Init() {
 
-	callback = new CGlobalAICallback(this);
-	c_callback = initSSkirmishAICallback(teamId, callback);
+	if (ai == NULL) {
+		LoadSkirmishAI(false);
+	}
 
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-	const CSkirmishAILibraryInfo* skiInf = libMan->GetSkirmishAIInfos().find(key)->second;
-
-	unsigned int infSize = skiInf->GetInfo().size();
-	const char** infKeys = skiInf->GetCInfoKeys();
-	const char** infValues = skiInf->GetCInfoValues();
-
-	unsigned int optSize = libMan->GetSkirmishAICOptionSize(teamId);
-	const char** optKeys = libMan->GetSkirmishAICOptionKeys(teamId);
-	const char** optValues = libMan->GetSkirmishAICOptionValues(teamId);
-
-	SInitEvent evtData = {teamId, c_callback,
-			infSize, infKeys, infValues,
-			optSize, optKeys, optValues};
+	SInitEvent evtData = {teamId, GetCallback()};
 	ai->HandleEvent(EVENT_INIT, &evtData);
 }
 
@@ -337,6 +324,12 @@ void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId,
 
 int CSkirmishAIWrapper::GetTeamId() const {
 	return teamId;
+}
+const SkirmishAIKey& CSkirmishAIWrapper::GetKey() const {
+	return key;
+}
+const SSkirmishAICallback* CSkirmishAIWrapper::GetCallback() const {
+	return c_callback;
 }
 
 void CSkirmishAIWrapper::SetCheatEventsEnabled(bool enable) {

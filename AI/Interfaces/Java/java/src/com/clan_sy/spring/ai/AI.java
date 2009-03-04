@@ -19,7 +19,6 @@ package com.clan_sy.spring.ai;
 
 
 import com.sun.jna.Pointer;
-import java.util.Properties;
 
 /**
  * Serves as Interface for a Java Skirmish AIs for the Spring engine.
@@ -29,7 +28,7 @@ import java.util.Properties;
  */
 public interface AI {
 
-	public int init(int teamId, Properties info, Properties options);
+	public int init(int teamId, AICallback callback);
 
 	public int release(int teamId);
 

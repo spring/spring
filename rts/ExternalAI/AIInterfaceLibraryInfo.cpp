@@ -33,8 +33,8 @@ static const std::string DEFAULT_VALUE = "";
 
 
 CAIInterfaceLibraryInfo::CAIInterfaceLibraryInfo(
-		const CAIInterfaceLibraryInfo& interfaceInfo)
-		: keyLower_key(interfaceInfo.keyLower_key),
+		const CAIInterfaceLibraryInfo& interfaceInfo) :
+		keyLower_key(interfaceInfo.keyLower_key),
 		key_value(interfaceInfo.key_value),
 		key_description(interfaceInfo.key_description)
 		{}
@@ -123,7 +123,7 @@ const std::string& CAIInterfaceLibraryInfo::GetInfo(const std::string& key) cons
 	}
 
 	if (!found) {
-		logOutput.Print("AI interface property '%s' could not be found.", key.c_str());
+		logOutput.Print("AI Interface property '%s' could not be found.", key.c_str());
 		return DEFAULT_VALUE;
 	} else {
 		return strPair->second;

@@ -113,6 +113,7 @@ function printOOAIFactoryHeader(outFile) {
 	print("") >> outFile;
 	print("") >> outFile;
 	print("import com.clan_sy.spring.ai.AI;") >> outFile;
+	print("import com.clan_sy.spring.ai.AICallback;") >> outFile;
 	print("import com.clan_sy.spring.ai.AICommand;") >> outFile;
 	print("import com.clan_sy.spring.ai.AICommandWrapper;") >> outFile;
 	print("import com.clan_sy.spring.ai.event.*;") >> outFile;
@@ -132,15 +133,18 @@ function printOOAIFactoryHeader(outFile) {
 	print("	private Map<Integer, OOAI> ais = new HashMap<Integer, OOAI>();") >> outFile;
 	print("	private Map<Integer, OOAICallback> ooClbs = new HashMap<Integer, OOAICallback>();") >> outFile;
 	print("") >> outFile;
-	print("	public final int init(int teamId, Properties info, Properties options) {") >> outFile;
+	print("	@Override") >> outFile;
+	print("	public final int init(int teamId, AICallback callback) {") >> outFile;
 	print("") >> outFile;
-	print("		OOAI ai = createAI(teamId, info, options);") >> outFile;
+	print("		OOAICallback ooCallback = OOAICallback.getInstance(callback, teamId);") >> outFile;
+	print("		OOAI ai = createAI(teamId, ooCallback);") >> outFile;
 	print("		if (ai != null) {") >> outFile;
 	print("			ais.put(teamId, ai);") >> outFile;
 	print("		}") >> outFile;
 	print("		return (ai == null) ? -1 : 0;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
+	print("	@Override") >> outFile;
 	print("	public final int release(int teamId) {") >> outFile;
 	print("") >> outFile;
 	print("		OOAI ai = ais.remove(teamId);") >> outFile;
@@ -148,6 +152,7 @@ function printOOAIFactoryHeader(outFile) {
 	print("		return (ai == null) ? -1 : 0;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
+	print("	@Override") >> outFile;
 	print("	public final int handleEvent(int teamId, int topic, Pointer event) {") >> outFile;
 	print("") >> outFile;
 	print("		int _ret = -1;") >> outFile;
@@ -173,7 +178,7 @@ function printOOAIFactoryEnd(outFile) {
 	print("		return _ret;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
-	print("	public abstract OOAI createAI(int teamId, Properties info, Properties options);") >> outFile;
+	print("	public abstract OOAI createAI(int teamId, OOAICallback callback);") >> outFile;
 	print("}") >> outFile;
 	print("") >> outFile;
 }
@@ -214,8 +219,8 @@ function printEventOO(evtIndex) {
 	sub(/evt.weaponDefId/, "WeaponDef.getInstance(ooClb, evt.weaponDefId)", paramsEvt);
 
 	if (eNameLowerized == "init") {
-		paramsTypes = "int teamId, OOAICallback callback, Properties info, Properties options";
-		paramsEvt = "evt.team, ooClb, evt.info, evt.options";
+		paramsTypes = "int teamId, OOAICallback callback";
+		paramsEvt = "evt.team, ooClb";
 	} else if (eNameLowerized == "playerCommand") {
 		paramsTypes = "java.util.List<Unit> units, AICommand command, int playerId";
 		paramsEvt = "units, command, evt.playerId";
@@ -333,50 +338,14 @@ function printEventJavaCls(evtIndex) {
 		print("			Win32InitAIEvent initEvtImpl = new Win32InitAIEvent(memory);") >> javaFile;
 		for (m=0; m < evtsNumMembers[evtIndex]; m++) {
 			name = evtsMembers_name[evtIndex, m];
-			if (!match(name, /(info|options)(Size|Keys|Values)/)) {
-				print("			this." name " = initEvtImpl." name ";") >> javaFile;
-			}
+			print("			this." name " = initEvtImpl." name ";") >> javaFile;
 		}
-		print("") >> javaFile;
-		print("			Pointer[] pOptionKeys = initEvtImpl.optionsKeys.getPointerArray(0L, initEvtImpl.optionsSize);") >> javaFile;
-		print("			Pointer[] pOptionValues = initEvtImpl.optionsValues.getPointerArray(0L, initEvtImpl.optionsSize);") >> javaFile;
-		print("			java.util.Properties tmpOptions = new java.util.Properties();") >> javaFile;
-		print("			for (int i=0; i < initEvtImpl.optionsSize; i++) {") >> javaFile;
-		print("				tmpOptions.setProperty(pOptionKeys[i].getString(0L), pOptionValues[i].getString(0L));") >> javaFile;
-		print("			}") >> javaFile;
-		print("			this.options = tmpOptions;") >> javaFile;
-		print("") >> javaFile;
-		print("			Pointer[] pInfoKeys = initEvtImpl.infoKeys.getPointerArray(0L, initEvtImpl.infoSize);") >> javaFile;
-		print("			Pointer[] pInfoValues = initEvtImpl.infoValues.getPointerArray(0L, initEvtImpl.infoSize);") >> javaFile;
-		print("			java.util.Properties tmpInfo = new java.util.Properties();") >> javaFile;
-		print("			for (int i=0; i < initEvtImpl.infoSize; i++) {") >> javaFile;
-		print("				tmpInfo.setProperty(pInfoKeys[i].getString(0L), pInfoValues[i].getString(0L));") >> javaFile;
-		print("			}") >> javaFile;
-		print("			this.info = tmpInfo;") >> javaFile;
 		print("		} else {") >> javaFile;
 		print("			DefaultInitAIEvent initEvtImpl =  new DefaultInitAIEvent(memory);") >> javaFile;
 		for (m=0; m < evtsNumMembers[evtIndex]; m++) {
 			name = evtsMembers_name[evtIndex, m];
-			if (!match(name, /(sizeInfo)|(info)|(sizeOptions)|(optionKeys)|(optionValues)/)) {
-				print("			this." name " = initEvtImpl." name ";") >> javaFile;
-			}
+			print("			this." name " = initEvtImpl." name ";") >> javaFile;
 		}
-		print("") >> javaFile;
-		print("			Pointer[] pOptionKeys = initEvtImpl.optionsKeys.getPointerArray(0L, initEvtImpl.optionsSize);") >> javaFile;
-		print("			Pointer[] pOptionValues = initEvtImpl.optionsValues.getPointerArray(0L, initEvtImpl.optionsSize);") >> javaFile;
-		print("			java.util.Properties tmpOptions = new java.util.Properties();") >> javaFile;
-		print("			for (int i=0; i < initEvtImpl.optionsSize; i++) {") >> javaFile;
-		print("				tmpOptions.setProperty(pOptionKeys[i].getString(0L), pOptionValues[i].getString(0L));") >> javaFile;
-		print("			}") >> javaFile;
-		print("			this.options = tmpOptions;") >> javaFile;
-		print("") >> javaFile;
-		print("			Pointer[] pInfoKeys = initEvtImpl.infoKeys.getPointerArray(0L, initEvtImpl.infoSize);") >> javaFile;
-		print("			Pointer[] pInfoValues = initEvtImpl.infoValues.getPointerArray(0L, initEvtImpl.infoSize);") >> javaFile;
-		print("			java.util.Properties tmpInfo = new java.util.Properties();") >> javaFile;
-		print("			for (int i=0; i < initEvtImpl.infoSize; i++) {") >> javaFile;
-		print("				tmpInfo.setProperty(pInfoKeys[i].getString(0L), pInfoValues[i].getString(0L));") >> javaFile;
-		print("			}") >> javaFile;
-		print("			this.info = tmpInfo;") >> javaFile;
 		print("		}") >> javaFile;
 	} else {
 		print("		useMemory(memory);") >> javaFile;
@@ -395,14 +364,8 @@ function printEventJavaCls(evtIndex) {
 			} else if (className == "DefaultInitAIEvent") {
 				type_jna = "DefaultAICallback";
 			}
-		} else if (className == "InitAIEvent" && match(name, /(sizeInfo)|(info)|(sizeOptions)|(optionKeys)|(optionValues)/)) {
-			continue;
 		}
 		print("	" memMods type_jna " " name ";") >> javaFile;
-	}
-	if (className == "InitAIEvent") {
-		print("	" memMods "java.util.Properties info;") >> javaFile;
-		print("	" memMods "java.util.Properties options;") >> javaFile;
 	}
 	print("}") >> javaFile;
 	print("") >> javaFile;

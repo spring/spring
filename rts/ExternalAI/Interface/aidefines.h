@@ -26,7 +26,9 @@
 #include "System/maindefines.h"
 #include "System/exportdefines.h"
 
-#include <stdbool.h> // contians only defines: bool, true, false
+#ifndef _MSC_VER
+#include <stdbool.h>// contains only defines: bool, true, false
+#endif
 
 #define ENGINE_VERSION_STRING VERSION_STRING
 #define ENGINE_VERSION_NUMBER 1000

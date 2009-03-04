@@ -22,25 +22,27 @@
 
 // AI interface stuff
 #include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "LegacyCpp/AIGlobalAI.h"
 #include "Game/GameVersion.h"
+#include "CUtils/Util.h"
 
 // NTai stuff
 #include "CNTai.h"
 
 #include <map>
 
-
 // teamId -> AI map
 static std::map<int, CAIGlobalAI*> myAIs;
 
-static unsigned int myInfoSize;
-static const char** myInfoKeys;
-static const char** myInfoValues;
+// filled with the teamId for the first team handled by this Skirmish AI
+static int firstTeamId = -1;
+// filled with the callback for the first team handled by this Skirmish AI
+// this can be used for calling functions that
+static const struct SSkirmishAICallback* firstCallback = NULL;
 
-static std::map<int, unsigned int> myOptionsSize;
-static std::map<int, const char**> myOptionsKeys;
-static std::map<int, const char**> myOptionsValues;
+// callbacks for all the teams controlled by this Skirmish AI
+static std::map<int, const struct SSkirmishAICallback*> teamId_callback;
 
 
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
@@ -55,11 +57,7 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 	return LOS_None;
 }
 
-EXPORT(int) init(int teamId,
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		unsigned int optionsSize,
-		const char** optionsKeys, const char** optionsValues) {
+EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
 
 	if (myAIs.count(teamId) > 0) {
 		// the map already has an AI for this team.
@@ -68,13 +66,11 @@ EXPORT(int) init(int teamId,
 		return -1;
 	}
 
-	myInfoSize = infoSize;
-	myInfoKeys = infoKeys;
-	myInfoValues = infoValues;
-
-	myOptionsSize[teamId] = optionsSize;
-	myOptionsKeys[teamId] = optionsKeys;
-	myOptionsValues[teamId] = optionsValues;
+	if (firstTeamId == -1) {
+		firstTeamId = teamId;
+		firstCallback = callback;
+	}
+	teamId_callback[teamId] = callback;
 
 	// CAIGlobalAI is the Legacy C++ wrapper, CGlobalAI is KAIK
 	myAIs[teamId] = new CAIGlobalAI(teamId, new ntai::CNTai());
@@ -93,6 +89,7 @@ EXPORT(int) release(int teamId) {
 	}
 
 	delete myAIs[teamId];
+	myAIs[teamId] = NULL;
 	myAIs.erase(teamId);
 
 	// signal: everything went ok
@@ -116,49 +113,42 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 
 // methods from here on are for AI internal use only
 
-static const char* util_map_getValueByKey(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		const char* key) {
+const char* aiexport_getDataDir(bool absoluteAndWriteable) {
 
-	const char* value = NULL;
+	static char* dd_ws_rel = NULL;
+	static char* dd_ws_abs_w = NULL;
 
-	unsigned int i;
-	for (i = 0; i < infoSize; i++) {
-		if (strcmp(infoKeys[i], key) == 0) {
-			value = infoValues[i];
-			break;
+	if (absoluteAndWriteable) {
+		if (dd_ws_abs_w == NULL) {
+			// this is the writeable one, absolute
+			//dd_ws_abs_w = firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_DATA_DIR);
+			dd_ws_abs_w = util_allocStrCpy(firstCallback->Clb_DataDirs_getWriteableDir(firstTeamId));
+// 			const char* dd = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
+// 			dd_ws_abs_w = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
+// 			STRCPY(dd_ws_abs_w, dd);
+// 			STRCAT(dd_ws_abs_w, sPS);
 		}
+		return dd_ws_abs_w;
+	} else {
+		if (dd_ws_rel == NULL) {
+// 			const char* const shortName = firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
+// 			dd_ws_rel = util_allocStrCatFSPath(4,
+// 					SKIRMISH_AI_DATA_DIR, shortName, aiexport_getVersion(), "X");
+			dd_ws_rel = util_allocStrCpy(firstCallback->Clb_DataDirs_getConfigDir(firstTeamId));
+			// remove the X, so we end up with a slash at the end
+			if (dd_ws_rel != NULL) {
+				dd_ws_rel[strlen(dd_ws_rel) -1] = '\0';
+			}
+		}
+		return dd_ws_rel;
 	}
 
-	return value;
-}
-
-const char* aiexport_getMyInfo(const char* key) {
-	return util_map_getValueByKey(myInfoSize, myInfoKeys, myInfoValues, key);
-}
-const char* aiexport_getDataDir() {
-
-//	static char* ddWithSlash = NULL;
-//
-//	if (ddWithSlash == NULL) {
-//		const char* dd = aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
-//
-//		ddWithSlash = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
-//		strcpy(ddWithSlash, dd);
-//		strcat(ddWithSlash, "/");
-//	}
-//
-//	return ddWithSlash;
-	return aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
+	return NULL;
 }
 const char* aiexport_getVersion() {
-	return aiexport_getMyInfo(SKIRMISH_AI_PROPERTY_VERSION);
+	return firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_VERSION);
 }
 
 const char* aiexport_getMyOption(int teamId, const char* key) {
-	return util_map_getValueByKey(
-			myOptionsSize[teamId],
-			myOptionsKeys[teamId], myOptionsValues[teamId],
-			key);
+	return teamId_callback[teamId]->Clb_SkirmishAI_OptionValues_getValueByKey(teamId, key);
 }

@@ -26,8 +26,6 @@ import com.sun.jna.Pointer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Properties;
-import java.util.Set;
 import java.util.logging.*;
 
 /**
@@ -40,7 +38,6 @@ public class NullJavaAI implements AI {
 
 	private int teamId = -1;
 	private AICallback clb = null;
-	private String myDataDir = null;
 	private String myLogFile = null;
 	private Logger log = null;
 
@@ -78,15 +75,19 @@ public class NullJavaAI implements AI {
 
 
 	public  NullJavaAI() {}
-	
-	public int init(int teamId, Properties info, Properties options) {
+
+	@Override
+	public int init(int teamId, AICallback callback) {
 
 		int ret = -1;
 
+		this.clb = callback;
+
 		// initialize the log
 		try {
-			myDataDir = info.getProperty("dataDir");
-			myLogFile = myDataDir + "/log.txt";
+			// most likely, this causes a memory leak, as the C string
+			// allocated by this, is never freed
+			myLogFile = callback.Clb_DataDirs_allocatePath(teamId, "log.txt", true, true, false);
 			FileHandler fileLogger = new FileHandler(myLogFile, false);
 			fileLogger.setFormatter(new MyCustomLogFormatter());
 			fileLogger.setLevel(Level.ALL);
@@ -106,27 +107,37 @@ public class NullJavaAI implements AI {
 		try {
 			log.info("initializing team " + teamId);
 
-			log.info("info (items: " + info.size() + ") ...");
-			Set<String> infoKeys = info.stringPropertyNames();
-			for (String infoKey : infoKeys) {
-				log.info(infoKey + " = " + info.getProperty(infoKey));
+			int numInfo = callback.Clb_SkirmishAI_Info_getSize(teamId);
+			log.info("info (items: " + numInfo + ") ...");
+			for (int i = 0; i < numInfo; i++) {
+				String key = callback.Clb_SkirmishAI_Info_getKey(teamId, i);
+				String value = callback.Clb_SkirmishAI_Info_getValue(teamId, i);
+				log.info(key + " = " + value);
 			}
 
-			log.info("options (items: " + options.size() + ") ...");
-			Set<String> optionsKeys = options.stringPropertyNames();
-			for (String optionsKey : optionsKeys) {
-				log.info(optionsKey + " = " + options.getProperty(optionsKey));
+			int numOptions = callback.Clb_SkirmishAI_OptionValues_getSize(teamId);
+			log.info("options (items: " + numOptions + ") ...");
+			for (int i = 0; i < numOptions; i++) {
+				String key = callback.Clb_SkirmishAI_OptionValues_getKey(teamId, i);
+				String value = callback.Clb_SkirmishAI_OptionValues_getValue(teamId, i);
+				log.info(key + " = " + value);
 			}
 
 			ret = 0;
 		} catch (Exception ex) {
 			log.log(Level.SEVERE, "Failed initializing", ex);
+			log.log(Level.SEVERE, "msg: " + ex.getMessage());
+			StackTraceElement[] stackTrace = ex.getStackTrace();
+			for (int i = 0; i < stackTrace.length; i++) {
+				log.log(Level.SEVERE, "ste: " + stackTrace[i].toString());
+			}
 			ret = -3;
 		}
 
 		return ret;
 	}
 
+	@Override
 	public int release(int teamId) {
 
 		int ret = -1;
@@ -143,6 +154,7 @@ public class NullJavaAI implements AI {
 		return ret;
 	}
 
+	@Override
 	public int handleEvent(int teamId, int topic, Pointer event) {
 
 		if (log == null) {
@@ -159,7 +171,8 @@ public class NullJavaAI implements AI {
 				this.teamId = evt.team;
 				clb = evt.callback;
 				log.info("handleEvent:InitAIEvent:team: " + evt.team);
-				log.info("handleEvent:InitAIEvent:sizeOptions: " + evt.options.size());
+				int numOptions = clb.Clb_SkirmishAI_OptionValues_getSize(teamId);
+				log.info("handleEvent:InitAIEvent:sizeOptions: " + numOptions);
 				log.info("handleEvent:InitAIEvent:options:");
 //				Pointer[] pKeys = evt.optionKeys.getPointerArray(0L, evt.sizeOptions);
 //				Pointer[] pValues = evt.optionValues.getPointerArray(0L, evt.sizeOptions);
@@ -167,9 +180,10 @@ public class NullJavaAI implements AI {
 //				for (int i = 0; i < evt.sizeOptions; i++) {
 //					options.setProperty(pKeys[i].getString(0L), pValues[i].getString(0L));
 //				}
-				Set<String> optionsKeys = evt.options.stringPropertyNames();
-				for (String optionsKey : optionsKeys) {
-					log.info(optionsKey + " = " + evt.options.getProperty(optionsKey));
+				for (int i = 0; i < numOptions; i++) {
+					String key = clb.Clb_SkirmishAI_OptionValues_getKey(teamId, i);
+					String value = clb.Clb_SkirmishAI_OptionValues_getValue(teamId, i);
+					log.info(key + " = " + value);
 				}
 				log.info("handleEvent:InitAIEvent:stored");
 			} else if (topic == UpdateAIEvent.TOPIC) {
@@ -186,7 +200,7 @@ public class NullJavaAI implements AI {
 					cmd.text = "Hello Engine (from NullJavaAI.java)";
 					cmd.zone = 0;
 					cmd.write();
-					int ret = clb.Clb_handleCommand(teamId, 0, -1, cmd.getTopic(), cmd.getPointer());
+					int ret = clb.Clb_Engine_handleCommand(teamId, 0, -1, cmd.getTopic(), cmd.getPointer());
 					log.finer("handleEvent UNKNOWN event: sending chat msg return: " + ret);
 				}
 			}

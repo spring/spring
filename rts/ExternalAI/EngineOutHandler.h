@@ -32,6 +32,7 @@ class WeaponDef;
 class SkirmishAIKey;
 class CSkirmishAIWrapper;
 class CGroupAIWrapper;
+struct SSkirmishAICallback;
 
 void handleAIException(const char* description);
 
@@ -87,7 +88,9 @@ public:
 
 	// Skirmish AI stuff
 	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key);
+	const SkirmishAIKey* GetSkirmishAIKey(int teamId) const;
 	bool IsSkirmishAI(int teamId) const;
+	const SSkirmishAICallback* GetSkirmishAICallback(int teamId) const;
 	void DestroySkirmishAI(int teamId);
 
 

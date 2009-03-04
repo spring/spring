@@ -107,6 +107,16 @@ function printClass(clsName_c) {
 		clbType_c = "StdCallLibrary.StdCallCallback";
 	}
 
+	# print the static insantiator method
+	print("\t" "public static " clsName_c " getInstance(Pointer memory) {") >> outFile_c;
+	print("") >> outFile_c;
+	print("\t" "	" clsName_c " _inst = new " clsName_c "();") >> outFile_c;
+	print("\t" "	_inst.useMemory(memory);") >> outFile_c;
+	print("\t" "	_inst.read();") >> outFile_c;
+	print("\t" "	return _inst;") >> outFile_c;
+	print("\t" "}") >> outFile_c;
+	print("") >> outFile_c;
+
 	for (i=0; i < fi; i++) {
 		fullName = funcFullName[i];
 		retType = funcRetType[i];

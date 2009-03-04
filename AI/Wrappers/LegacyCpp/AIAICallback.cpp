@@ -39,6 +39,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon() {}
 WeaponDef::~WeaponDef() {}
 
 #include <string>
+#include <string.h>
 #include <cassert>
 
 
@@ -55,7 +56,7 @@ static inline void fillWithMinusOne(int* arr, int size) {
 
 static int resIndMetal = -1;
 static int resIndEnergy = -1;
-static inline int getResourceId_Metal(SSkirmishAICallback* sAICallback, int teamId) {
+static inline int getResourceId_Metal(const SSkirmishAICallback* sAICallback, int teamId) {
 
 	if (resIndMetal == -1) {
 		resIndMetal = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(teamId, "Metal");
@@ -63,7 +64,7 @@ static inline int getResourceId_Metal(SSkirmishAICallback* sAICallback, int team
 
 	return resIndMetal;
 }
-static inline int getResourceId_Energy(SSkirmishAICallback* sAICallback, int teamId) {
+static inline int getResourceId_Energy(const SSkirmishAICallback* sAICallback, int teamId) {
 
 	if (resIndEnergy == -1) {
 		resIndEnergy = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(teamId, "Energy");
@@ -78,7 +79,7 @@ CAIAICallback::CAIAICallback()
 	init();
 }
 
-CAIAICallback::CAIAICallback(int teamId, SSkirmishAICallback* sAICallback)
+CAIAICallback::CAIAICallback(int teamId, const SSkirmishAICallback* sAICallback)
 	: IAICallback(), teamId(teamId), sAICallback(sAICallback) {
 	init();
 }
@@ -852,11 +853,19 @@ bool CAIAICallback::GetValue(int valueId, void *data)
 			*(float3*)data = sAICallback->Clb_Gui_Camera_getPosition(teamId);
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
-			sAICallback->Clb_File_locateForReading(teamId, (char*) data);
-			return true;
+			//sAICallback->Clb_File_locateForReading(teamId, (char*) data);
+			static const size_t absPath_sizeMax = 2048;
+			char absPath[absPath_sizeMax];
+			bool located = sAICallback->Clb_DataDirs_locatePath(teamId, absPath, absPath_sizeMax, (const char*) data, false, false, false);
+			STRCPY((char*)data, absPath);
+			return located;
 		}case AIVAL_LOCATE_FILE_W:{
-			sAICallback->Clb_File_locateForWriting(teamId, (char*) data);
-			return true;
+			//sAICallback->Clb_File_locateForWriting(teamId, (char*) data);
+			static const size_t absPath_sizeMax = 2048;
+			char absPath[absPath_sizeMax];
+			bool located = sAICallback->Clb_DataDirs_locatePath(teamId, absPath, absPath_sizeMax, (const char*) data, true, true, false);
+			STRCPY((char*)data, absPath);
+			return located;
 		}
 		case AIVAL_UNIT_LIMIT: {
 			*(int*) data = sAICallback->Clb_Unit_0STATIC0getLimit(teamId);
@@ -1282,21 +1291,21 @@ const float3* CAIAICallback::GetStartPos() {
 
 void CAIAICallback::SendTextMsg(const char* text, int zone) {
 	SSendTextMessageCommand cmd = {text, zone};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_TEXT_MESSAGE, &cmd);
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_TEXT_MESSAGE, &cmd);
 }
 
 void CAIAICallback::SetLastMsgPos(float3 pos) {
-	SSetLastPosMessageCommand cmd = {pos.toSAIFloat3()}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SET_LAST_POS_MESSAGE, &cmd);
+	SSetLastPosMessageCommand cmd = {pos.toSAIFloat3()}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SET_LAST_POS_MESSAGE, &cmd);
 }
 
 void CAIAICallback::AddNotification(float3 pos, float3 color, float alpha) {
-	SAddNotificationDrawerCommand cmd = {pos.toSAIFloat3(), color.toSAIFloat3(), alpha}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_ADD_NOTIFICATION, &cmd);
+	SAddNotificationDrawerCommand cmd = {pos.toSAIFloat3(), color.toSAIFloat3(), alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_ADD_NOTIFICATION, &cmd);
 }
 
 bool CAIAICallback::SendResources(float mAmount, float eAmount, int receivingTeam) {
 
 	SSendResourcesCommand cmd = {mAmount, eAmount, receivingTeam};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_RESOURCES, &cmd);
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_RESOURCES, &cmd);
 	return cmd.ret_isExecuted;
 }
 
@@ -1307,7 +1316,7 @@ int CAIAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeam)
 		arr_unitIds[i] = unitIds[i];
 	}
 	SSendUnitsCommand cmd = {arr_unitIds, unitIds.size(), receivingTeam};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_UNITS, &cmd);
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_UNITS, &cmd);
 	free(arr_unitIds);
 	return cmd.ret_sentUnits;
 }
@@ -1315,7 +1324,7 @@ int CAIAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeam)
 void* CAIAICallback::CreateSharedMemArea(char* name, int size) {
 
 	//SCreateSharedMemAreaCommand cmd = {name, size};
-	//sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_CREATE, &cmd);
+	//sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_CREATE, &cmd);
 	//return cmd.ret_sharedMemArea;
 	static const bool deprecatedMethod = true;
 	assert(!deprecatedMethod);
@@ -1325,7 +1334,7 @@ void* CAIAICallback::CreateSharedMemArea(char* name, int size) {
 void CAIAICallback::ReleasedSharedMemArea(char* name) {
 
 	//SReleaseSharedMemAreaCommand cmd = {name};
-	//sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_RELEASE, &cmd);
+	//sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SHARED_MEM_AREA_RELEASE, &cmd);
 	static const bool deprecatedMethod = true;
 	assert(!deprecatedMethod);
 }
@@ -1333,20 +1342,20 @@ void CAIAICallback::ReleasedSharedMemArea(char* name) {
 int CAIAICallback::CreateGroup() {
 
 	SCreateGroupCommand cmd = {};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_CREATE, &cmd);
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_CREATE, &cmd);
 	return cmd.ret_groupId;
 }
 
 void CAIAICallback::EraseGroup(int groupId) {
-	SEraseGroupCommand cmd = {groupId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ERASE, &cmd);
+	SEraseGroupCommand cmd = {groupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ERASE, &cmd);
 }
 
 bool CAIAICallback::AddUnitToGroup(int unitId, int groupId) {
-		SAddUnitToGroupCommand cmd = {unitId, groupId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ADD_UNIT, &cmd); return cmd.ret_isExecuted;
+		SAddUnitToGroupCommand cmd = {unitId, groupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ADD_UNIT, &cmd); return cmd.ret_isExecuted;
 }
 
 bool CAIAICallback::RemoveUnitFromGroup(int unitId) {
-		SRemoveUnitFromGroupCommand cmd = {unitId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_REMOVE_UNIT, &cmd); return cmd.ret_isExecuted;
+		SRemoveUnitFromGroupCommand cmd = {unitId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_REMOVE_UNIT, &cmd); return cmd.ret_isExecuted;
 }
 
 int CAIAICallback::GiveGroupOrder(int groupId, Command* c) {
@@ -1366,133 +1375,133 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 		case CMD_STOP:
 		{
 			SStopUnitCommand cmd = {unitId, groupId, c->options, c->timeOut};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_STOP, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_STOP, &cmd);
 			break;
 		}
 		case CMD_WAIT:
 		{
 			SWaitUnitCommand cmd = {unitId, groupId, c->options, c->timeOut};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT, &cmd);
 			break;
 		}
 		case CMD_TIMEWAIT:
 		{
 			STimeWaitUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT_TIME, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT_TIME, &cmd);
 			break;
 		}
 		case CMD_DEATHWAIT:
 		{
 			SDeathWaitUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT_DEATH, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT_DEATH, &cmd);
 			break;
 		}
 		case CMD_SQUADWAIT:
 		{
 			SSquadWaitUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT_SQUAD, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT_SQUAD, &cmd);
 			break;
 		}
 		case CMD_GATHERWAIT:
 		{
 			SGatherWaitUnitCommand cmd = {unitId, groupId, c->options, c->timeOut};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT_GATHER, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_WAIT_GATHER, &cmd);
 			break;
 		}
 		case CMD_MOVE:
 		{
 			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SMoveUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, toPos};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_MOVE, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_MOVE, &cmd);
 			break;
 		}
 		case CMD_PATROL:
 		{
 			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SPatrolUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, toPos};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_PATROL, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_PATROL, &cmd);
 			break;
 		}
 		case CMD_FIGHT:
 		{
 			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SFightUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, toPos};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_FIGHT, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_FIGHT, &cmd);
 			break;
 		}
 		case CMD_ATTACK:
 		{
 			if (c->params.size() < 3) {
 				SAttackUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_ATTACK, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_ATTACK, &cmd);
 			} else {
 				SAIFloat3 toAttackPos = {c->params[0], c->params[1], c->params[2]};
 				float radius = 0.0f;
 				if (c->params.size() >= 4) radius = c->params[3];
 				SAttackAreaUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, toAttackPos, radius};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_ATTACK_AREA, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_ATTACK_AREA, &cmd);
 			}
 			break;
 		}
 		case CMD_GUARD:
 		{
 			SGuardUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_GUARD, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_GUARD, &cmd);
 			break;
 		}
 		case CMD_AISELECT:
 		{
 			SAiSelectUnitCommand cmd = {unitId, groupId, c->options, c->timeOut};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_AI_SELECT, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_AI_SELECT, &cmd);
 			break;
 		}
 		case CMD_GROUPADD:
 		{
 			SGroupAddUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_GROUP_ADD, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_GROUP_ADD, &cmd);
 			break;
 		}
 		case CMD_GROUPCLEAR:
 		{
 			SGroupClearUnitCommand cmd = {unitId, groupId, c->options, c->timeOut};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_GROUP_CLEAR, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_GROUP_CLEAR, &cmd);
 			break;
 		}
 		case CMD_REPAIR:
 		{
 			SRepairUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_REPAIR, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_REPAIR, &cmd);
 			break;
 		}
 		case CMD_FIRE_STATE:
 		{
 			SSetFireStateUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_FIRE_STATE, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_FIRE_STATE, &cmd);
 			break;
 		}
 		case CMD_MOVE_STATE:
 		{
 			SSetMoveStateUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_MOVE_STATE, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_MOVE_STATE, &cmd);
 			break;
 		}
 		case CMD_SETBASE:
 		{
 			SAIFloat3 basePos = {c->params[0], c->params[1], c->params[2]};
 			SSetBaseUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, basePos};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_BASE, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_BASE, &cmd);
 			break;
 		}
 		case CMD_SELFD:
 		{
 			SSelfDestroyUnitCommand cmd = {unitId, groupId, c->options, c->timeOut};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SELF_DESTROY, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SELF_DESTROY, &cmd);
 			break;
 		}
 		case CMD_SET_WANTED_MAX_SPEED:
 		{
 			SSetWantedMaxSpeedUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_WANTED_MAX_SPEED, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_WANTED_MAX_SPEED, &cmd);
 			break;
 		}
 		case CMD_LOAD_UNITS:
@@ -1500,77 +1509,77 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 			if (c->params.size() < 3) {
 				int toLoadUnitId = (int) c->params[0];
 				SLoadUnitsUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, &toLoadUnitId, 1};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_LOAD_UNITS, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_LOAD_UNITS, &cmd);
 			} else {
 				SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 				float radius = 0.0f;
 				if (c->params.size() >= 4) radius = c->params[3];
 				SLoadUnitsAreaUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, pos, radius};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_LOAD_UNITS_AREA, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_LOAD_UNITS_AREA, &cmd);
 			}
 			break;
 		}
 		case CMD_LOAD_ONTO:
 		{
 			SLoadOntoUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_LOAD_ONTO, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_LOAD_ONTO, &cmd);
 			break;
 		}
 		case CMD_UNLOAD_UNIT:
 		{
 			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SUnloadUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, toPos, (int) c->params[3]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_UNLOAD_UNIT, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_UNLOAD_UNIT, &cmd);
 			break;
 		}
 		case CMD_UNLOAD_UNITS:
 		{
 			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SUnloadUnitsAreaUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, toPos, c->params[3]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_UNLOAD_UNITS_AREA, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_UNLOAD_UNITS_AREA, &cmd);
 			break;
 		}
 		case CMD_ONOFF:
 		{
 			SSetOnOffUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (bool) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_ON_OFF, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_ON_OFF, &cmd);
 			break;
 		}
 		case CMD_RECLAIM:
 		{
 			if (c->params.size() < 3) {
 				SReclaimUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RECLAIM, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RECLAIM, &cmd);
 			} else {
 				SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 				float radius = 0.0f;
 				if (c->params.size() >= 4) radius = c->params[3];
 				SReclaimAreaUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, pos, radius};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RECLAIM_AREA, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RECLAIM_AREA, &cmd);
 			}
 			break;
 		}
 		case CMD_CLOAK:
 		{
 			SCloakUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (bool) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_CLOAK, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_CLOAK, &cmd);
 			break;
 		}
 		case CMD_STOCKPILE:
 		{
 			SStockpileUnitCommand cmd = {unitId, groupId, c->options, c->timeOut};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_STOCKPILE, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_STOCKPILE, &cmd);
 			break;
 		}
 		case CMD_DGUN:
 		{
 			if (c->params.size() < 3) {
 				SDGunUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_D_GUN, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_D_GUN, &cmd);
 			} else {
 				SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 				SDGunPosUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, pos};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_D_GUN_POS, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_D_GUN_POS, &cmd);
 			}
 			break;
 		}
@@ -1578,32 +1587,32 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 		{
 			SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 			SRestoreAreaUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, pos, c->params[3]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RESTORE_AREA, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RESTORE_AREA, &cmd);
 			break;
 		}
 		case CMD_REPEAT:
 		{
 			SSetRepeatUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (bool) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_REPEAT, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_REPEAT, &cmd);
 			break;
 		}
 		case CMD_TRAJECTORY:
 		{
 			SSetTrajectoryUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_TRAJECTORY, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_TRAJECTORY, &cmd);
 			break;
 		}
 		case CMD_RESURRECT:
 		{
 			if (c->params.size() < 3) {
 				SResurrectUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RESURRECT, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RESURRECT, &cmd);
 			} else {
 				SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 				float radius = 0.0f;
 				if (c->params.size() >= 4) radius = c->params[3];
 				SResurrectAreaUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, pos, radius};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RESURRECT_AREA, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_RESURRECT_AREA, &cmd);
 			}
 			break;
 		}
@@ -1611,26 +1620,26 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 		{
 			if (c->params.size() < 3) {
 				SCaptureUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_CAPTURE, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_CAPTURE, &cmd);
 			} else {
 				SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 				float radius = 0.0f;
 				if (c->params.size() >= 4) radius = c->params[3];
 				SCaptureAreaUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, pos, radius};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_CAPTURE_AREA, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_CAPTURE_AREA, &cmd);
 			}
 			break;
 		}
 		case CMD_AUTOREPAIRLEVEL:
 		{
 			SSetAutoRepairLevelUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL, &cmd);
 			break;
 		}
 		case CMD_IDLEMODE:
 		{
 			SSetIdleModeUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, (int) c->params[0]};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_IDLE_MODE, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_SET_IDLE_MODE, &cmd);
 			break;
 		}
 		default:
@@ -1641,13 +1650,13 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 				int facing = UNIT_COMMAND_BUILD_NO_FACING;
 				if (c->params.size() >= 4) facing = c->params[3];
 				SBuildUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, toBuildUnitDefId, buildPos, facing};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_BUILD, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_BUILD, &cmd);
 			} else { // CMD_CUSTOM
 				int cmdId = c->id;
 				int numParams = c->params.size();
 				float params[numParams];
 				SCustomUnitCommand cmd = {unitId, groupId, c->options, c->timeOut, cmdId, params, numParams};
-				ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_CUSTOM, &cmd);
+				ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_UNIT_CUSTOM, &cmd);
 			}
 			break;
 		}
@@ -1659,7 +1668,7 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 	int sCommandId;
 	void* sCommandData = mallocSUnitCommand(unitId, groupId, c, &sCommandId);
 
-	int ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, sCommandId, sCommandData);
+	int ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, sCommandId, sCommandData);
 
 	freeSUnitCommand(sCommandData, sCommandId);
 
@@ -1667,80 +1676,80 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 }
 
 int CAIAICallback::InitPath(float3 start, float3 end, int pathType) {
-		SInitPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_INIT, &cmd); return cmd.ret_pathId;
+		SInitPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_INIT, &cmd); return cmd.ret_pathId;
 }
 
 float3 CAIAICallback::GetNextWaypoint(int pathId) {
-		SGetNextWaypointPathCommand cmd = {pathId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_NEXT_WAYPOINT, &cmd); return float3(cmd.ret_nextWaypoint);
+		SGetNextWaypointPathCommand cmd = {pathId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_NEXT_WAYPOINT, &cmd); return float3(cmd.ret_nextWaypoint);
 }
 
 float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType) {
-		SGetApproximateLengthPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
+		SGetApproximateLengthPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
 }
 
 void CAIAICallback::FreePath(int pathId) {
-	SFreePathCommand cmd = {pathId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_FREE, &cmd);
+	SFreePathCommand cmd = {pathId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_FREE, &cmd);
 }
 
 void CAIAICallback::LineDrawerStartPath(const float3& pos, const float* color) {
 	SAIFloat3 col3 = {color[0], color[1], color[2]};
 	float alpha = color[3];
-	SStartPathDrawerCommand cmd = {pos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_START, &cmd);
+	SStartPathDrawerCommand cmd = {pos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_START, &cmd);
 }
 
 void CAIAICallback::LineDrawerFinishPath() {
-	SFinishPathDrawerCommand cmd = {}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_FINISH, &cmd);
+	SFinishPathDrawerCommand cmd = {}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_FINISH, &cmd);
 }
 
 void CAIAICallback::LineDrawerDrawLine(const float3& endPos, const float* color) {
 	SAIFloat3 col3 = {color[0], color[1], color[2]};
 	float alpha = color[3];
-	SDrawLinePathDrawerCommand cmd = {endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE, &cmd);
+	SDrawLinePathDrawerCommand cmd = {endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE, &cmd);
 }
 
 void CAIAICallback::LineDrawerDrawLineAndIcon(int cmdId, const float3& endPos, const float* color) {
 	SAIFloat3 col3 = {color[0], color[1], color[2]};
 	float alpha = color[3];
-	SDrawLineAndIconPathDrawerCommand cmd = {cmdId, endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON, &cmd);
+	SDrawLineAndIconPathDrawerCommand cmd = {cmdId, endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON, &cmd);
 }
 
 void CAIAICallback::LineDrawerDrawIconAtLastPos(int cmdId) {
-	SDrawIconAtLastPosPathDrawerCommand cmd = {cmdId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS, &cmd);
+	SDrawIconAtLastPosPathDrawerCommand cmd = {cmdId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS, &cmd);
 }
 
 void CAIAICallback::LineDrawerBreak(const float3& endPos, const float* color) {
 	SAIFloat3 col3 = {color[0], color[1], color[2]};
 	float alpha = color[3];
-	SBreakPathDrawerCommand cmd = {endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_BREAK, &cmd);
+	SBreakPathDrawerCommand cmd = {endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_BREAK, &cmd);
 }
 
 void CAIAICallback::LineDrawerRestart() {
-	SRestartPathDrawerCommand cmd = {false}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
+	SRestartPathDrawerCommand cmd = {false}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
 }
 
 void CAIAICallback::LineDrawerRestartSameColor() {
-	SRestartPathDrawerCommand cmd = {true}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
+	SRestartPathDrawerCommand cmd = {true}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
 }
 
 int CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) {
-		SCreateSplineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), pos3.toSAIFloat3(), pos4.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd); return cmd.ret_newFigureGroupId;
+		SCreateSplineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), pos3.toSAIFloat3(), pos4.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd); return cmd.ret_newFigureGroupId;
 }
 
 int CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) {
-		SCreateLineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd); return cmd.ret_newFigureGroupId;
+		SCreateLineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd); return cmd.ret_newFigureGroupId;
 }
 
 void CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) {
 	SAIFloat3 col3 = {red, green, blue};
-	SSetColorFigureDrawerCommand cmd = {figureGroupId, col3, alpha}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
+	SSetColorFigureDrawerCommand cmd = {figureGroupId, col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
 }
 
 void CAIAICallback::DeleteFigureGroup(int figureGroupId) {
-	SDeleteFigureDrawerCommand cmd = {figureGroupId}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
+	SDeleteFigureDrawerCommand cmd = {figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
 }
 
 void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int lifeTime, int unitTeamId, bool transparent, bool drawBorder, int facing) {
-	SDrawUnitDrawerCommand cmd = {sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, name), pos.toSAIFloat3(), rotation, lifeTime, unitTeamId, transparent, drawBorder, facing}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
+	SDrawUnitDrawerCommand cmd = {sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, name), pos.toSAIFloat3(), rotation, lifeTime, unitTeamId, transparent, drawBorder, facing}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
 }
 
 int CAIAICallback::HandleCommand(int commandId, void* data) {
@@ -1751,32 +1760,32 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 	switch (commandId) {
 		case AIHCQuerySubVersionId: {
 //			SQuerySubVersionCommand cmd;
-//			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+//			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
 			ret = sAICallback->Clb_Game_getAiInterfaceVersion(teamId);
 			break;
 		}
 		case AIHCAddMapPointId: {
 			AIHCAddMapPoint* myData = (AIHCAddMapPoint*) data;
 			SAddPointDrawCommand cmd = {myData->pos.toSAIFloat3(), myData->label};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
 			break;
 		}
 		case AIHCAddMapLineId: {
 			AIHCAddMapLine* myData = (AIHCAddMapLine*) data;
 			SAddLineDrawCommand cmd = {myData->posfrom.toSAIFloat3(), myData->posto.toSAIFloat3()};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
 			break;
 		}
 		case AIHCRemoveMapPointId: {
 			AIHCRemoveMapPoint* myData = (AIHCRemoveMapPoint*) data;
 			SRemovePointDrawCommand cmd = {myData->pos.toSAIFloat3()};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
 			break;
 		}
 		case AIHCSendStartPosId: {
 			AIHCSendStartPos* myData = (AIHCSendStartPos*) data;
 			SSendStartPosCommand cmd = {myData->ready, myData->pos.toSAIFloat3()};
-			ret = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
 			break;
 		}
 	}
@@ -1785,12 +1794,12 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 }
 
 bool CAIAICallback::ReadFile(const char* filename, void* buffer, int bufferLen) {
-//		SReadFileCommand cmd = {name, buffer, bufferLen}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_READ_FILE, &cmd); return cmd.ret_isExecuted;
+//		SReadFileCommand cmd = {name, buffer, bufferLen}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_READ_FILE, &cmd); return cmd.ret_isExecuted;
 	return sAICallback->Clb_File_getContent(teamId, filename, buffer, bufferLen);
 }
 
 const char* CAIAICallback::CallLuaRules(const char* data, int inSize, int* outSize) {
-		SCallLuaRulesCommand cmd = {data, inSize, outSize}; sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_RULES, &cmd); return cmd.ret_outData;
+		SCallLuaRulesCommand cmd = {data, inSize, outSize}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_CALL_LUA_RULES, &cmd); return cmd.ret_outData;
 }
 
 

@@ -21,11 +21,14 @@
 #include "SkirmishAILibrary.h"
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
+#include "SAIInterfaceCallbackImpl.h"
 
 #include "System/Util.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "IAILibraryManager.h"
+#include "LogOutput.h"
+
 
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 		: interfaceId(-1), info(_info) {
@@ -58,7 +61,7 @@ void CAIInterfaceLibrary::InitStatic() {
 
 	if (sAIInterfaceLibrary.initStatic != NULL) {
 		if (interfaceId == -1) {
-			interfaceId = SAIInterfaceCallback_getInstanceFor(&info, &callback);
+			interfaceId = aiInterfaceCallback_getInstanceFor(&info, &callback);
 		}
 		int ret = sAIInterfaceLibrary.initStatic(interfaceId, &callback);
 		if (ret != 0) {
@@ -89,7 +92,7 @@ void CAIInterfaceLibrary::ReleaseStatic() {
 		}
 	}
 	if (interfaceId != -1) {
-		SAIInterfaceCallback_release(interfaceId);
+		aiInterfaceCallback_release(interfaceId);
 	}
 }
 

@@ -23,8 +23,9 @@ CAIGlobalAICallback::CAIGlobalAICallback()
 	: IGlobalAICallback(), sAICallback(NULL), teamId(-1),
 		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 
-CAIGlobalAICallback::CAIGlobalAICallback(SSkirmishAICallback* sAICallback, int teamId)
-	: IGlobalAICallback(), sAICallback(sAICallback), teamId(teamId),
+CAIGlobalAICallback::CAIGlobalAICallback(const SSkirmishAICallback* sAICallback,
+		int teamId) :
+		IGlobalAICallback(), sAICallback(sAICallback), teamId(teamId),
 		wrappedAICallback(NULL), wrappedAICheats(NULL) {}
 
 CAIGlobalAICallback::~CAIGlobalAICallback() {}
