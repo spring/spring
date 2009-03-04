@@ -652,8 +652,7 @@ std::string FileSystem::LocateFile(std::string file, int flags) const
 	FixSlashes(file);
 
 	if (flags & WRITE) {
-		std::string writeableFile = fs.GetWriteDir()
-				+ (char)fs.GetNativePathSeparator() + file;
+		std::string writeableFile = fs.GetWriteDir() + file;
 		FixSlashes(writeableFile);
 		if (flags & CREATE_DIRS) {
 			CreateDirectory(GetDirectory(writeableFile));
@@ -679,8 +678,7 @@ std::string FileSystem::LocateDir(std::string _dir, int flags) const
 	FixSlashes(dir);
 
 	if (flags & WRITE) {
-		std::string writeableDir = fs.GetWriteDir()
-				+ (char)fs.GetNativePathSeparator() + dir;
+		std::string writeableDir = fs.GetWriteDir() + dir;
 		FixSlashes(writeableDir);
 		if (flags & CREATE_DIRS) {
 			CreateDirectory(writeableDir);
