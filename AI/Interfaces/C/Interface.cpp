@@ -24,30 +24,10 @@
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SSAILibrary.h"
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
+struct SSkirmishAICallback;
 
 #include "System/Platform/SharedLib.h"
 #include "System/Util.h"
-
-#include <sys/stat.h>   // used for check if a file exists
-#ifdef WIN32
-#include <direct.h>     // mkdir()
-#else // WIN32
-#include <sys/stat.h>   // mkdir()
-#include <sys/types.h>  // mkdir()
-#endif // WIN32
-
-/*
-static std::string local_getValueByKey(
-		const std::map<std::string, std::string>& map, std::string key) {
-
-	std::map<std::string, std::string>::const_iterator it = map.find(key);
-	if (it != map.end()) {
-		return it->second;
-	} else {
-		return "";
-	}
-}
-*/
 
 CInterface::CInterface(int interfaceId,
 		const struct SAIInterfaceCallback* callback)
@@ -199,10 +179,7 @@ SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath,
 	funcName = "init";
 	skirmishAILibrary->init
 			= (int (CALLING_CONV_FUNC_POINTER *)(int teamId,
-			unsigned int infoSize,
-			const char** infoKeys, const char** infoValues,
-			unsigned int optionsSize,
-			const char** optionsKeys, const char** optionsValues))
+			const struct SSkirmishAICallback*))
 			sharedLib->FindAddress(funcName.c_str());
 	if (skirmishAILibrary->init == NULL) {
 		// do nothing: it is permitted that an AI does not export this function,

@@ -61,11 +61,11 @@ EXPORT(int) releaseStatic();
 // skirmish AI related methods
 
 EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues);
+		const char* const shortName,
+		const char* const version);
 EXPORT(int) unloadSkirmishAILibrary(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues);
+		const char* const shortName,
+		const char* const version);
 EXPORT(int) unloadAllSkirmishAILibraries();
 
 

@@ -22,13 +22,13 @@
 #include "ISkirmishAI.h"
 #include "GlobalAICallback.h"
 #include "SkirmishAIKey.h"
-#include "Interface/SSkirmishAICallback.h"
 #include "Platform/SharedLib.h"
 
 #include <map>
 #include <string>
 
 class CAICallback;
+struct SSkirmishAICallback;
 struct Command;
 struct float3;
 
@@ -76,6 +76,8 @@ public:
 	virtual void PreDestroy();
 
 	virtual int GetTeamId() const;
+	virtual const SkirmishAIKey& GetKey() const;
+	virtual const SSkirmishAICallback* GetCallback() const;
 
 	virtual void SetCheatEventsEnabled(bool enable);
 	virtual bool IsCheatEventsEnabled() const;
@@ -86,8 +88,8 @@ public:
 	 */
 	virtual int HandleEvent(int topic, const void* data) const;
 
-private:
 	virtual void Init();
+private:
 	virtual void Release();
 
 private:

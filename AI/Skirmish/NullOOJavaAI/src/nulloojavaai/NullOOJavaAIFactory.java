@@ -20,8 +20,6 @@ package nulloojavaai;
 
 import com.clan_sy.spring.ai.oo.*;
 
-import java.util.Properties;
-
 /**
  * Serves as Interface for a Java Skirmish AIs for the Spring engine.
  *
@@ -37,7 +35,7 @@ public class NullOOJavaAIFactory extends OOAIFactory {
 	}
 
 	@Override
-	public OOAI createAI(int teamId, Properties info, Properties options) {
-		return new NullOOJavaAI(teamId, info, options);
+	public OOAI createAI(int teamId, OOAICallback callback) {
+		return new NullOOJavaAI(teamId, callback);
 	}
 }

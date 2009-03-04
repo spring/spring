@@ -103,13 +103,7 @@ const unsigned int NUM_EVENTS          = 23;
  */
 struct SInitEvent {
 	int team;
-	struct SSkirmishAICallback* callback;
-	unsigned int infoSize;
-	const char** infoKeys;
-	const char** infoValues;
-	unsigned int optionsSize;
-	const char** optionsKeys;
-	const char** optionsValues;
+	const struct SSkirmishAICallback* callback;
 }; // EVENT_INIT
 
 /**

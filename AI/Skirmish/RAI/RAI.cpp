@@ -292,7 +292,7 @@ void cRAI::UnitFinished(int unit)
 	}
 	if( U->ud->speed == 0 )
 		UnitIdle(unit);
-		
+
 	if( RAIDEBUGGING ) *l<<"#";
 }
 
@@ -1087,13 +1087,11 @@ void cRAI::DebugDrawShape(float3 CenterPos, float linelength, float width, int a
 
 void cRAI::ClearLogFiles()
 {
-	string logDir = cLogFile::GetRAIRootDirectory();
-	logDir.reserve(512 + logDir.length());
-	cb->GetValue( AIVAL_LOCATE_FILE_W, (char*)logDir.c_str() );
+	string logDir = cLogFile::GetDir();
 
 	string logFileName;
 	for( int i=0; i<16; i++ )
-	{	
+	{
 		char c[3];
 		SNPRINTF(c, 3, "%i", i);
 		logFileName = logDir+"RAI"+string(c)+"_LastGame.log";

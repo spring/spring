@@ -21,7 +21,7 @@ function isBufferedFunc(funcFullName_b) {
 
 function isBufferedClass(clsName_bc) {
 
-	np_bc = extractNormalPart(clsName_bc);
+	np_bc = extractNormalPart("_" clsName_bc);
 
 	return matchesAnyKey(np_bc, myBufferedClasses);
 }

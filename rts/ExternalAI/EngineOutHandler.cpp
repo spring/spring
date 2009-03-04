@@ -408,6 +408,7 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key) {
 		}
 
 		skirmishAIs[teamId] = new CSkirmishAIWrapper(teamId, key);
+		skirmishAIs[teamId]->Init();
 		hasSkirmishAIs = true;
 
 		return true;
@@ -416,8 +417,26 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key) {
 	return false;
 }
 
+const SkirmishAIKey* CEngineOutHandler::GetSkirmishAIKey(int teamId) const {
+
+	if (IsSkirmishAI(teamId)) {
+		return &(skirmishAIs[teamId]->GetKey());
+	} else {
+		return NULL;
+	}
+}
+
 bool CEngineOutHandler::IsSkirmishAI(int teamId) const {
-	return skirmishAIs[teamId];
+	return skirmishAIs[teamId] != NULL;
+}
+
+const SSkirmishAICallback* CEngineOutHandler::GetSkirmishAICallback(int teamId) const {
+
+	if (IsSkirmishAI(teamId)) {
+		return skirmishAIs[teamId]->GetCallback();
+	} else {
+		return NULL;
+	}
 }
 
 void CEngineOutHandler::DestroySkirmishAI(int teamId) {

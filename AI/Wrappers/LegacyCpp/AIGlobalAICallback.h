@@ -30,14 +30,14 @@ class CAIAICheats;
 class CAIGlobalAICallback : public IGlobalAICallback {
 public:
 	CAIGlobalAICallback();
-	CAIGlobalAICallback(SSkirmishAICallback* sAICallback, int teamId);
+	CAIGlobalAICallback(const SSkirmishAICallback* sAICallback, int teamId);
 	~CAIGlobalAICallback();
 
 	virtual IAICheats* GetCheatInterface();
 	virtual IAICallback* GetAICallback();
 
 private:
-	SSkirmishAICallback* sAICallback;
+	const SSkirmishAICallback* sAICallback;
 	int teamId;
 	CAIAICallback* wrappedAICallback;
 	CAIAICheats* wrappedAICheats;

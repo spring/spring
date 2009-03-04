@@ -33,7 +33,7 @@ void cSWeaponManager::UnitIdle(int unit, sRAIUnitDef* udr)
 	int stockQued;
 	cb->GetProperty(unit,AIVAL_STOCKPILED,&stockPile);
 	cb->GetProperty(unit,AIVAL_STOCKPILE_QUED,&stockQued);
-	if( stockPile > 0 && udr->SWeapon->manualfire && int(G->Enemies.size()) >= 1+(G->UMobile.size()/25) )
+	if( stockPile > 0 && udr->SWeapon->manualfire && G->Enemies.size() >= (G->UMobile.size()/25)+1 )
 	{
 		set<int> Targets;
 		set<int> ImmobileTargets;

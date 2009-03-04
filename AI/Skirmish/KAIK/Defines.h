@@ -1,7 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#include "AIExport.h" // for aiexport_getVersion() and aiexport_getDataDir()
+#include "AIExport.h" // for aiexport_getVersion()
 
 #define AI_VERSION_NUMBER aiexport_getVersion()
 //#define AI_VERSION_NUMBER "0.13"
@@ -28,7 +28,7 @@
 #define TIMER_SECS		ai->math->TimerSecs()
 
 // Folders
-#define ROOTFOLDER		aiexport_getDataDir(false)
+#define ROOTFOLDER		""
 
 #define LOGFOLDER		std::string(ROOTFOLDER) + "Logs/"
 #define METALFOLDER		std::string(ROOTFOLDER) + "Metal/"
