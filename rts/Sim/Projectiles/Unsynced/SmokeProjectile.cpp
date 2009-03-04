@@ -34,9 +34,14 @@ CR_REG_METADATA(CSmokeProjectile,
 //////////////////////////////////////////////////////////////////////
 
 CSmokeProjectile::CSmokeProjectile()
-: color(0.5f), age(0.0f), ageSpeed(1.0f), startSize(0.0f), size(0.0f), sizeExpansion(0.0f)
+	: color(0.5f),
+	age(0.0f),
+	ageSpeed(1.0f),
+	size(0.0f),
+	startSize(0.0f),
+	sizeExpansion(0.0f),
+	textureNum(0)
 {
-	textureNum = 0;
 	checkCol=false;
 	synced=false;
 }

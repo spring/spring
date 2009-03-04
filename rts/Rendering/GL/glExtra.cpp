@@ -16,7 +16,7 @@ static void defSurfaceCircle(const float3& center, float radius, unsigned int re
 {
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
-	for (int i = 0; i < res; ++i) {
+	for (unsigned int i = 0; i < res; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)res;
 		float3 pos;
 		pos.x = center.x + (fastmath::sin(radians) * radius);
@@ -69,7 +69,7 @@ void glBallisticCircle(const float3& center, const float radius,
 {
 	CVertexArray* va=GetVertexArray();
 	va->Initialize();
-	for (int i = 0; i < resolution; ++i) {
+	for (unsigned int i = 0; i < resolution; ++i) {
 		const float radians = (2.0f * PI) * (float)i / (float)resolution;
 		float rad = radius;
 		float3 pos;

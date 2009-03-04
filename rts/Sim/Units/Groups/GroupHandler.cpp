@@ -20,7 +20,7 @@
 #include "mmgr.h"
 
 //CGroupHandler* grouphandler;
-CGroupHandler* grouphandlers[MAX_TEAMS];
+std::vector<CGroupHandler*> grouphandlers;
 extern Uint8 *keys;
 
 CR_BIND(CGroupHandler, (0))

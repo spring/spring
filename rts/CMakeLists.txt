@@ -134,7 +134,7 @@ AUX_SOURCE_DIRECTORY(System/creg sysfiles)
 
 ### Add icon and manifest to exe using windres
 IF (MINGW)
-	FIND_PROGRAM(WINDRES NAMES windres i686-mingw32-windres DOC "path to mingw's windres executable")
+	FIND_PROGRAM(WINDRES NAMES windres i586-mingw32msvc-windres i686-mingw32-windres DOC "path to mingw's windres executable")
 	ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/icon.o COMMAND ${WINDRES} -I${CMAKE_CURRENT_SOURCE_DIR} -i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc -o ${CMAKE_CURRENT_BINARY_DIR}/icon.o -v)
 	LIST(APPEND sysfiles icon.o)
 ENDIF (MINGW)

@@ -10,7 +10,6 @@
 #include <vector>
 #include <SDL_types.h>
 
-#include "Sim/Misc/GlobalConstants.h"
 
 /**
  * @brief sync debugger class

@@ -33,16 +33,16 @@ CR_REG_METADATA(CMoveType,
 		));
 
 AMoveType::AMoveType(CUnit* owner)
-: owner(owner),
-	forceTurn(0),
+	: forceTurn(0),
 	forceTurnTo(0),
+	owner(owner),
+	goalPos(owner->pos),
 	maxSpeed(0.2f),
 	maxWantedSpeed(0.2f),
-	useHeading(true),
-	goalPos(owner->pos),
 	reservedPad(0),
 	padStatus(0),
 	repairBelowHealth(0.3f),
+	useHeading(true),
 	progressState(Done)
 {
 }

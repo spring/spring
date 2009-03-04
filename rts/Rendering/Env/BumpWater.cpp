@@ -789,8 +789,8 @@ void CBumpWater::UpdateCoastmap(const int x1, const int y1, const int x2, const 
 	int xmax = min(x2 + 10*2,gs->mapx);
 	int ymin = max(y1 - 10*2,0);
 	int ymax = min(y2 + 10*2,gs->mapy);
-	int xsize = xmax - xmin;
-	int ysize = ymax - ymin;
+	//int xsize = xmax - xmin;
+	//int ysize = ymax - ymin;
 
 	glUniform2f(blurDirLoc,1.0f/gs->mapx,0.0f);
 	glDrawBuffer(GL_COLOR_ATTACHMENT0_EXT);

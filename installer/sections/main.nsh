@@ -119,7 +119,7 @@ ${EndIf}
   ;So we have to use this, which has to be supplied to us on the cmd-line
   !define SKIRM_AI_VERS ${SKIRM_AI_VERS_${skirAiName}}
   SetOutPath "$INSTDIR\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}"
-  File /r /x *.a /x *.def /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
+  File /r /x *.a /x *.def /x *.7z /x *.dbg "..\game\AI\Skirmish\${skirAiName}\${SKIRM_AI_VERS}\*.*"
   ;File /r "..\AI\Skirmish\${skirAiName}\data\*.*"
   !undef SKIRM_AI_VERS
 !endif

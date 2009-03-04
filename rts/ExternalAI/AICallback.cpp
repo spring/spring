@@ -51,10 +51,10 @@
 
 /* Cast id to unsigned to catch negative ids in the same operations,
 cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning. */
-#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)MAX_UNITS)
+#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 /* With some hacking you can raise an abort (assert) instead of ignoring the id, */
-//#define CHECK_UNITID(id) (assert(id > 0 && id < MAX_UNITS), true)
+//#define CHECK_UNITID(id) (assert(id > 0 && id < uh->MaxUnits()), true)
 /* ...or disable the check altogether for release... */
 //#define CHECK_UNITID(id) true
 
@@ -147,7 +147,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 					for (std::vector<int>::const_iterator it = unitIds.begin(); it != unitIds.end(); it++ ) {
 						const int unitID = *it;
 
-						if (unitID > 0 && unitID < MAX_UNITS) {
+						if (unitID > 0 && unitID < uh->MaxUnits()) {
 							CUnit* unit = uh->units[unitID];
 
 							if (unit && unit->team == team) {
@@ -1368,7 +1368,7 @@ bool CAICallback::GetValue(int id, void *data)
 			}
 		}
 		case AIVAL_UNIT_LIMIT: {
-			*(int*) data = uh->maxUnits;
+			*(int*) data = uh->MaxUnitsPerTeam();
 			return true;
 		}
 		case AIVAL_SCRIPT: {

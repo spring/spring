@@ -51,10 +51,10 @@ extern std::string stupidGlobalMapname;
  * constructor, loads precalculated data if it exists
  */
 CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int mmOpt, std::string name):
-	pathFinder(pf),
 	BLOCK_SIZE(BSIZE),
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
+	pathFinder(pf),
 	moveMathOptions(mmOpt),
 	pathChecksum(0),
 	offsetBlockNum(-1),costBlockNum(-1),
@@ -124,7 +124,8 @@ CPathEstimator::~CPathEstimator() {
 
 
 void CPathEstimator::InitEstimator(const std::string& name) {
-	int numThreads = configHandler.Get("HardwareThreadCount", 0);
+	int numThreads_tmp = configHandler.Get("HardwareThreadCount", 0);
+	size_t numThreads = ((numThreads_tmp < 0) ? 0 : numThreads_tmp);
 
 	if (numThreads == 0) {
 		#if (BOOST_VERSION >= 103500)
@@ -154,7 +155,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		pathBarrier=new boost::barrier(numThreads);
 
 		// Start threads if applicable
-		for(int i=1; i<numThreads; ++i) {
+		for(size_t i=1; i<numThreads; ++i) {
 			pathFinders[i] = new CPathFinder();
 			threads[i] = new boost::thread(boost::bind(&CPathEstimator::CalcOffsetsAndPathCosts, this, i));
 		}
@@ -162,7 +163,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 		// Use the current thread as thread zero
 		CalcOffsetsAndPathCosts(0);
 
-		for(int i=1; i<numThreads; ++i) {
+		for(size_t i=1; i<numThreads; ++i) {
 			threads[i]->join();
 			delete threads[i];
 			delete pathFinders[i];
@@ -177,7 +178,7 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 
 
 void CPathEstimator::InitVertices() {
-	for (int i = 0; i < nbrOfVertices; i++)
+	for (unsigned int i = 0; i < nbrOfVertices; i++)
 		vertex[i] = PATHCOST_INFINITY;
 }
 
@@ -257,16 +258,16 @@ void CPathEstimator::FindOffset(const MoveData& moveData, int blockX, int blockZ
 	int lowerZ = blockZ * BLOCK_SIZE;
 
 	float best = 100000000.0f;
-	int bestX = BLOCK_SIZE >> 1;
-	int bestZ = BLOCK_SIZE >> 1;
-	int num = (BLOCK_SIZE * BLOCK_SIZE) >> 3;
+	unsigned int bestX = BLOCK_SIZE >> 1;
+	unsigned int bestZ = BLOCK_SIZE >> 1;
+	unsigned int num = (BLOCK_SIZE * BLOCK_SIZE) >> 3;
 
 	// search for an accessible position
-	for (int z = 1; z < BLOCK_SIZE; z += 2) {
-		for (int x = 1; x < BLOCK_SIZE; x += 2) {
+	for (unsigned int z = 1; z < BLOCK_SIZE; z += 2) {
+		for (unsigned int x = 1; x < BLOCK_SIZE; x += 2) {
 			int dx = x - (BLOCK_SIZE >> 1);
 			int dz = z - (BLOCK_SIZE >> 1);
-			float cost = (dx * dx + dz * dz) + num / (0.001f + moveData.moveMath->SpeedMod(moveData, lowerX + x, lowerZ + z));
+			float cost = (dx * dx + dz * dz) + num / (0.001f + moveData.moveMath->SpeedMod(moveData, (int)(lowerX + x), (int)(lowerZ + z)));
 			int mask = CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN;
 
 			if (moveData.moveMath->IsBlocked2(moveData, lowerX + x, lowerZ + z, true) & mask) {
@@ -400,7 +401,7 @@ void CPathEstimator::MapChanged(unsigned int x1, unsigned int z1, unsigned int x
  */
 void CPathEstimator::Update() {
 	pathCache->Update();
-	int counter = 0;
+	unsigned int counter = 0;
 
 	while (!needUpdate.empty() && counter < BLOCKS_TO_UPDATE) {
 		// next block in line
@@ -603,7 +604,7 @@ void CPathEstimator::TestBlock(const MoveData& moveData, const CPathFinderDef &p
 	}
 	*/
 
-	if (vertexNbr < 0 || vertexNbr >= nbrOfVertices)
+	if (vertexNbr < 0 || (unsigned int)vertexNbr >= nbrOfVertices)
 		return;
 
 	int blocknr = block.y * nbrOfBlocksX + block.x;
@@ -876,7 +877,6 @@ void CPathEstimator::Draw(void)
 	glEnd();
 
 
-/*
 	glEnable(GL_TEXTURE_2D);
 	for (int z = 0; z < nbrOfBlocksZ; z++) {
 		for (int x = 0; x < nbrOfBlocksX; x++) {

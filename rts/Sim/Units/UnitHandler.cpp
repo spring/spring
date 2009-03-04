@@ -93,7 +93,7 @@ CR_REG_METADATA(CUnitHandler, (
 	CR_MEMBER(units),
 	CR_MEMBER(freeIDs),
 	CR_MEMBER(waterDamage),
-	CR_MEMBER(maxUnits),
+	CR_MEMBER(unitsPerTeam),
 	CR_MEMBER(maxUnitRadius),
 	CR_MEMBER(lastDamageWarning),
 	CR_MEMBER(lastCmdDamageWarning),
@@ -128,7 +128,6 @@ void CUnitHandler::PostLoad()
 
 CUnitHandler::CUnitHandler(bool serializing)
 :
-	maxUnits(MAX_UNITS),
 	maxUnitRadius(0.0f),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
@@ -138,8 +137,12 @@ CUnitHandler::CUnitHandler(bool serializing)
 	limitDgun(false),
 	morphUnitToFeature(true)
 {
-	freeIDs.reserve(MAX_UNITS-1);
-	for (int a = 1; a < MAX_UNITS; a++) {
+	const size_t maxUnitsTemp = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
+	units.resize(maxUnitsTemp);
+	unitsPerTeam = maxUnitsTemp / teamHandler->ActiveTeams() - 5;
+
+	freeIDs.reserve(units.size()-1);
+	for (int a = 1; a < units.size(); a++) {
 		freeIDs.push_back(a);
 		units[a] = NULL;
 	}
@@ -148,12 +151,6 @@ CUnitHandler::CUnitHandler(bool serializing)
 	slowUpdateIterator = activeUnits.end();
 
 	waterDamage = mapInfo->water.damage;
-
-	maxUnits = gameSetup->maxUnits;
-
-	if (maxUnits > ((MAX_UNITS / teamHandler->ActiveTeams()) - 5)) {
-		maxUnits = (MAX_UNITS / teamHandler->ActiveTeams()) -5;
-	}
 
 	if (gameSetup->limitDgun) {
 		limitDgun = true;
@@ -166,9 +163,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	if (!serializing) {
 		airBaseHandler = new CAirBaseHandler;
 
-		for (int i = 0; i < MAX_TEAMS; i++) {
-			unitsByDefs[i].resize(unitDefHandler->numUnitDefs + 1);
-		}
+		unitsByDefs.resize(teamHandler->ActiveTeams(), std::vector<CUnitSet>(unitDefHandler->numUnitDefs + 1));
 	}
 }
 
@@ -633,37 +628,6 @@ void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 
 void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 {
-/*	for(int a=0;a<MAX_UNITS;++a){
-		bool exists=!!units[a];
-		file->lsBool(exists);
-		if(exists){
-			if(loading){
-				overrideId=a;
-				float3 pos;
-				file->lsFloat3(pos);
-				string name;
-				file->lsString(name);
-				int team;
-				file->lsInt(team);
-				bool build;
-				file->lsBool(build);
-				unitLoader.LoadUnit(name,pos,team,build);
-			} else {
-				file->lsFloat3(units[a]->pos);
-				file->lsString(units[a]->unitDef->name);
-				file->lsInt(units[a]->team);
-				file->lsBool(units[a]->beingBuilt);
-			}
-		} else {
-			if(loading)
-				freeIDs.push_back(a);
-		}
-	}
-	for(int a=0;a<MAX_UNITS;++a){
-		if(units[a])
-			units[a]->LoadSave(file,loading);
-	}
-	overrideId=-1;*/
 }
 
 
@@ -701,7 +665,7 @@ Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 
 bool CUnitHandler::CanBuildUnit(const UnitDef* unitdef, int team)
 {
-	if (teamHandler->Team(team)->units.size() >= uh->maxUnits) {
+	if (teamHandler->Team(team)->units.size() >= unitsPerTeam) {
 		return false;
 	}
 	if (unitsByDefs[team][unitdef->id].size() >= unitdef->maxThisUnit) {

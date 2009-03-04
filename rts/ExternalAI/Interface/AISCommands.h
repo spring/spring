@@ -158,6 +158,85 @@ enum UnitCommandOptions {
 #define UNIT_COMMAND_BUILD_NO_FACING -1
 
 
+#define AIINTERFACE_COMMANDS_ABI_VERSION     ( \
+		  sizeof(struct SSetMyHandicapCheatCommand) \
+		+ sizeof(struct SGiveMeResourceCheatCommand) \
+		+ sizeof(struct SGiveMeNewUnitCheatCommand) \
+		+ sizeof(struct SSendTextMessageCommand) \
+		+ sizeof(struct SSetLastPosMessageCommand) \
+		+ sizeof(struct SSendResourcesCommand) \
+		+ sizeof(struct SSendUnitsCommand) \
+		+ sizeof(struct SCreateGroupCommand) \
+		+ sizeof(struct SEraseGroupCommand) \
+		+ sizeof(struct SAddUnitToGroupCommand) \
+		+ sizeof(struct SRemoveUnitFromGroupCommand) \
+		+ sizeof(struct SInitPathCommand) \
+		+ sizeof(struct SGetApproximateLengthPathCommand) \
+		+ sizeof(struct SGetNextWaypointPathCommand) \
+		+ sizeof(struct SFreePathCommand) \
+		+ sizeof(struct SCallLuaRulesCommand) \
+		+ sizeof(struct SSendStartPosCommand) \
+		+ sizeof(struct SAddNotificationDrawerCommand) \
+		+ sizeof(struct SAddPointDrawCommand) \
+		+ sizeof(struct SRemovePointDrawCommand) \
+		+ sizeof(struct SAddLineDrawCommand) \
+		+ sizeof(struct SStartPathDrawerCommand) \
+		+ sizeof(struct SFinishPathDrawerCommand) \
+		+ sizeof(struct SDrawLinePathDrawerCommand) \
+		+ sizeof(struct SDrawLineAndIconPathDrawerCommand) \
+		+ sizeof(struct SDrawIconAtLastPosPathDrawerCommand) \
+		+ sizeof(struct SBreakPathDrawerCommand) \
+		+ sizeof(struct SRestartPathDrawerCommand) \
+		+ sizeof(struct SCreateSplineFigureDrawerCommand) \
+		+ sizeof(struct SCreateLineFigureDrawerCommand) \
+		+ sizeof(struct SSetColorFigureDrawerCommand) \
+		+ sizeof(struct SDeleteFigureDrawerCommand) \
+		+ sizeof(struct SDrawUnitDrawerCommand) \
+		+ sizeof(struct SBuildUnitCommand) \
+		+ sizeof(struct SStopUnitCommand) \
+		+ sizeof(struct SWaitUnitCommand) \
+		+ sizeof(struct STimeWaitUnitCommand) \
+		+ sizeof(struct SDeathWaitUnitCommand) \
+		+ sizeof(struct SSquadWaitUnitCommand) \
+		+ sizeof(struct SGatherWaitUnitCommand) \
+		+ sizeof(struct SMoveUnitCommand) \
+		+ sizeof(struct SPatrolUnitCommand) \
+		+ sizeof(struct SFightUnitCommand) \
+		+ sizeof(struct SAttackUnitCommand) \
+		+ sizeof(struct SAttackAreaUnitCommand) \
+		+ sizeof(struct SGuardUnitCommand) \
+		+ sizeof(struct SAiSelectUnitCommand) \
+		+ sizeof(struct SGroupAddUnitCommand) \
+		+ sizeof(struct SGroupClearUnitCommand) \
+		+ sizeof(struct SRepairUnitCommand) \
+		+ sizeof(struct SSetFireStateUnitCommand) \
+		+ sizeof(struct SSetMoveStateUnitCommand) \
+		+ sizeof(struct SSetBaseUnitCommand) \
+		+ sizeof(struct SSelfDestroyUnitCommand) \
+		+ sizeof(struct SSetWantedMaxSpeedUnitCommand) \
+		+ sizeof(struct SLoadUnitsUnitCommand) \
+		+ sizeof(struct SLoadUnitsAreaUnitCommand) \
+		+ sizeof(struct SLoadOntoUnitCommand) \
+		+ sizeof(struct SUnloadUnitCommand) \
+		+ sizeof(struct SUnloadUnitsAreaUnitCommand) \
+		+ sizeof(struct SSetOnOffUnitCommand) \
+		+ sizeof(struct SReclaimUnitCommand) \
+		+ sizeof(struct SReclaimAreaUnitCommand) \
+		+ sizeof(struct SCloakUnitCommand) \
+		+ sizeof(struct SStockpileUnitCommand) \
+		+ sizeof(struct SDGunUnitCommand) \
+		+ sizeof(struct SDGunPosUnitCommand) \
+		+ sizeof(struct SRestoreAreaUnitCommand) \
+		+ sizeof(struct SSetRepeatUnitCommand) \
+		+ sizeof(struct SSetTrajectoryUnitCommand) \
+		+ sizeof(struct SResurrectUnitCommand) \
+		+ sizeof(struct SResurrectAreaUnitCommand) \
+		+ sizeof(struct SCaptureUnitCommand) \
+		+ sizeof(struct SCaptureAreaUnitCommand) \
+		+ sizeof(struct SSetAutoRepairLevelUnitCommand) \
+		+ sizeof(struct SSetIdleModeUnitCommand) \
+		+ sizeof(struct SCustomUnitCommand) \
+		)
 
 struct SSetMyHandicapCheatCommand {
 	float handicap;

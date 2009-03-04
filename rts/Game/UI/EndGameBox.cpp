@@ -300,7 +300,7 @@ void CEndGameBox::Draw()
 			glColor4f(1,1,1,0.8f);
 		}
 		float ypos=0.55f;
-		for(int a=0;a<stats.size();++a){
+		for(size_t a=0;a<stats.size();++a){
 			font->glPrintAt(box.x1+0.01f,box.y1+ypos,0.8f,stats[a].name.c_str());
 			ypos-=0.02f;
 		}

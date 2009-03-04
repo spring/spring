@@ -11,7 +11,6 @@
 #include "Lua/LuaUnitMaterial.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Matrix44f.h"
-#include "Sim/Misc/GlobalConstants.h"
 #include "Vec2.h"
 
 class CCobInstance;
@@ -216,7 +215,7 @@ public:
 	int realLosRadius;				//set los to this when finished building
 	int realAirLosRadius;
 
-	unsigned short losStatus[MAX_TEAMS];	//indicate the los/radar status the allyteam has on this unit
+	std::vector<unsigned short> losStatus;	//indicate the los/radar status the allyteam has on this unit
 
 	bool inBuildStance;				//used by constructing units
 	bool stunned;							//if we are stunned by a weapon or for other reason

@@ -318,7 +318,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -401,7 +401,7 @@ static CUnit* CheckUnitID(lua_State* L, int index)
 {
 	luaL_checknumber(L, index);
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
 		luaL_error(L, "Bad unitID: %d\n", unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -1225,7 +1225,7 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 	}
 
 	const int weaponNum = luaL_checkint(L,2);
-	if ((weaponNum < 0) || (weaponNum >= unit->weapons.size())) {
+	if ((weaponNum < 0) || ((size_t)weaponNum >= unit->weapons.size())) {
 		return 0;
 	}
 	CWeapon* weapon = unit->weapons[weaponNum];
@@ -1909,7 +1909,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 
 	CUnit* attacker = NULL;
 	if (attackerID >= 0) {
-		if (attackerID >= MAX_UNITS) {
+		if (attackerID >= uh->MaxUnits()) {
 			return 0;
 		}
 		attacker = uh->units[attackerID];

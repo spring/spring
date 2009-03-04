@@ -10,6 +10,7 @@
 #include "GroundBlockingObjectMap.h"
 
 #include "GlobalSynced.h"
+#include "GlobalConstants.h"
 
 #include "CollisionHandler.h"
 #include "CollisionVolume.h"

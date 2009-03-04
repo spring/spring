@@ -2,6 +2,7 @@
 #define __FEATURE_H__
 
 #include "Sim/Objects/SolidObject.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Rendering/UnitModels/3DModel.h"
 #include "Matrix44f.h"
 #include <vector>
@@ -30,7 +31,7 @@ public:
 	/** Pos of quad must not change after this. */
 	void Initialize(const float3& pos, const FeatureDef* def, short int heading, int facing,
 		int allyteam, std::string fromUnit, const float3& speed = ZeroVector);
-	int GetBlockingMapID() const { return id + (10 * /*MAX_UNITS*/ 10000); }
+	int GetBlockingMapID() const { return id + (10 * uh->MaxUnits()); }
 
 	/** Negative amount = reclaim
 	    @return true if reclaimed */

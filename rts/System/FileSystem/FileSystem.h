@@ -37,9 +37,18 @@ public:
 
 	// almost direct wrappers to system calls
 	bool mkdir(const std::string& dir) const;
+	bool DirExists(const std::string& dir) const;
 
 	// custom functions
 	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
+	bool IsReadableFile(const std::string& file) const;
+	/**
+	 * Returns an absolute path if the file was found in one of the data-dirs,
+	 * or the argument (relative path) if it was not found.
+	 *
+	 * @return  an absolute path to file on success, or the argument
+	 *          (relative path) on failure
+	 */
 	std::string LocateFile(const std::string& file) const;
 	std::string GetWriteDir() const;
 	std::vector<std::string> GetDataDirectories() const;
@@ -92,11 +101,16 @@ class FileSystem
 		 * the file should live in.
 		 *
 		 * Otherwise (if flags == 0), it dispatches the call to
-		 * FileSystemHandler::LocateFile(), which either searches for it in multiple
-		 * data directories (UNIX) or just returns the argument (Windows).
+		 * FileSystemHandler::LocateFile(), which either searches for it
+		 * in all the data directories.
+		 *
+		 * @return  an absolute path to file on success, or the argument
+		 *          (relative path) on failure
 		 */
 		std::string LocateFile(std::string file, int flags = 0) const;
 		bool Remove(std::string file) const;
+
+		std::string LocateDir(std::string dir, int flags = 0) const;
 
 		// metadata read functions
 		size_t GetFilesize(std::string path) const;
@@ -130,10 +144,10 @@ class FileSystem
 
 	private:
 		bool CheckFile(const std::string& file) const;
-		bool CheckDir(const std::string& dir) const;
+//		bool CheckDir(const std::string& dir) const;
 
-		FileSystem(const FileSystem&);
-		FileSystem& operator=(const FileSystem&);
+//		FileSystem(const FileSystem&);
+//		FileSystem& operator=(const FileSystem&);
 };
 
 // basically acts like a namespace, but with semantics like configHandler has

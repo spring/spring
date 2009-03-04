@@ -10,7 +10,6 @@
 #include <string>
 #include <vector>
 #include <set>
-#include "Sim/Misc/GlobalConstants.h"
 #include "creg/creg_cond.h"
 
 class CGroup;
@@ -55,6 +54,6 @@ protected:
 };
 
 //extern CGroupHandler* grouphandler;
-extern CGroupHandler* grouphandlers[MAX_TEAMS];
+extern std::vector<CGroupHandler*> grouphandlers;
 
 #endif	// _GROUPHANDLER_H

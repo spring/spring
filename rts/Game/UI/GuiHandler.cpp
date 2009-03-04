@@ -68,19 +68,19 @@ CGuiHandler* guihandler = NULL;
 
 
 CGuiHandler::CGuiHandler()
-: inCommand(-1),
-  activeMousePress(false),
+	: inCommand(-1),
+	buildFacing(0),
+	buildSpacing(0),
+	needShift(false),
+	showingMetal(false),
+	activeMousePress(false),
 	forceLayoutUpdate(false),
-  defaultCmdMemory(-1),
-  needShift(false),
-  maxPage(0),
-  activePage(0),
-  showingMetal(false),
-  buildSpacing(0),
-  buildFacing(0),
-  actionOffset(0),
-  gatherMode(false),
-  drawSelectionInfo(true)
+	maxPage(0),
+	activePage(0),
+	defaultCmdMemory(-1),
+	actionOffset(0),
+	drawSelectionInfo(true),
+	gatherMode(false)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;
@@ -453,7 +453,7 @@ int CGuiHandler::FindInCommandPage()
 {
 //	GML_RECMUTEX_LOCK(gui); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> FindInCommandPage. Not needed, Draw thread.
 
-	if ((inCommand < 0) || (inCommand >= commands.size())) {
+	if ((inCommand < 0) || ((size_t)inCommand >= commands.size())) {
 		return -1;
 	}
 	for (int ii = 0; ii < iconsCount; ii++) {
@@ -471,7 +471,7 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 {
 //	GML_RECMUTEX_LOCK(gui); // updates inCommand, CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc. Not needed, protected via other func.
 
-	for (int a = 0; a < commands.size(); ++a) {
+	for (size_t a = 0; a < commands.size(); ++a) {
 		if (commands[a].id == cmdDesc.id) {
 			if (defaultCommand) {
 				defaultCmdMemory = a;
@@ -510,7 +510,7 @@ void CGuiHandler::LayoutIcons(bool useSelectionPage)
 	const int activeCmd = defCmd ? defaultCmdMemory : inCommand;
 
 	// copy the current command state
-	const bool validInCommand = (activeCmd >= 0) && (activeCmd < commands.size());
+	const bool validInCommand = (activeCmd >= 0) && ((size_t)activeCmd < commands.size());
 	CommandDescription cmdDesc;
 	if (validInCommand) {
 		cmdDesc = commands[activeCmd];
@@ -696,7 +696,7 @@ bool CGuiHandler::LayoutCustomIcons(bool useSelectionPage)
 	set<int> removeIDs;
 	for (i = 0; i < removeCmds.size(); i++) {
 		const int index = removeCmds[i];
-		if ((index >= 0) || (index < cmds.size())) {
+		if ((index >= 0) || ((size_t)index < cmds.size())) {
 			removeIDs.insert(index);
 		} else {
 			logOutput.Print("LayoutCustomIcons() skipping bad removeCmd (%i)\n",
@@ -984,7 +984,7 @@ void CGuiHandler::SetCursorIcon() const
 
 	const bool useMinimap = (minimap->ProxyMode() || ((activeReceiver != this) && (ir == minimap)));
 
-	if ((inCommand >= 0) && (inCommand<commands.size())) {
+	if ((inCommand >= 0) && ((size_t)inCommand<commands.size())) {
 		const CommandDescription& cmdDesc = commands[inCommand];
 
 		if (!cmdDesc.mouseicon.empty()) {
@@ -1017,7 +1017,7 @@ void CGuiHandler::SetCursorIcon() const
 		} else {
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 		}
-		if ((defcmd >= 0) && (defcmd < commands.size())) {
+		if ((defcmd >= 0) && ((size_t)defcmd < commands.size())) {
 			const CommandDescription& cmdDesc = commands[defcmd];
 			if (!cmdDesc.mouseicon.empty()) {
 				newCursor=cmdDesc.mouseicon;
@@ -1115,7 +1115,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 		defaultCmdMemory = -1;
 	}
 
-	if ((iconCmd >= 0) && (iconCmd < commands.size())) {
+	if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
 		const bool rmb = (button == SDL_BUTTON_RIGHT);
 		SetActiveCommand(iconCmd, rmb);
 		return;
@@ -1572,7 +1572,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 
 	// only process the build options while building
 	// (conserve the keybinding space where we can)
-	if ((inCommand >= 0) && (inCommand < commands.size()) &&
+	if ((inCommand >= 0) && ((size_t)inCommand < commands.size()) &&
 			(commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		if (ProcessBuildActions(action)) {
 			return true;
@@ -1594,7 +1594,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 	else if (action.command == "hotbind") {
 		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
 		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
-		if ((iconCmd >= 0) && (iconCmd < commands.size())) {
+		if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
 			game->SetHotBinding(commands[iconCmd].action);
 		}
 		return true;
@@ -1602,7 +1602,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 	else if (action.command == "hotunbind") {
 		const int iconPos = IconAtPos(mouse->lastx, mouse->lasty);
 		const int iconCmd = (iconPos >= 0) ? icons[iconPos].commandsID : -1;
-		if ((iconCmd >= 0) && (iconCmd < commands.size())) {
+		if ((iconCmd >= 0) && ((size_t)iconCmd < commands.size())) {
 			std::string cmd = "unbindaction " + commands[iconCmd].action;
 			keyBindings->Command(cmd);
 			logOutput.Print("%s", cmd.c_str());
@@ -1612,8 +1612,8 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 	else if (action.command == "showcommands") {
 		// bonus command for debugging
 		logOutput.Print("Available Commands:\n");
-		for(int i = 0; i < commands.size(); ++i){
-			logOutput.Print("  command: %i, id = %i, action = %s\n",
+		for(size_t i = 0; i < commands.size(); ++i){
+			logOutput.Print("  command: %lu, id = %i, action = %s\n",
 						 i, commands[i].id, commands[i].action.c_str());
 		}
 		// show the icon/command linkage
@@ -1901,7 +1901,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 					newMode = atoi(cmdDesc.params[0].c_str()) + 1;
 				}
 
-				if ((newMode < 0) || (newMode > (cmdDesc.params.size() - 2))) {
+				if ((newMode < 0) || ((size_t)newMode > (cmdDesc.params.size() - 2))) {
 					newMode = 0;
 				}
 
@@ -2049,7 +2049,7 @@ void CGuiHandler::MenuChoice(std::string s)
 
 	delete list;
 
-	if (inCommand >= 0 && inCommand < commands.size()) {
+	if (inCommand >= 0 && (size_t)inCommand < commands.size()) {
 		CommandDescription& cd = commands[inCommand];
 		switch (cd.type) {
 			case CMDTYPE_COMBO_BOX: {
@@ -2132,7 +2132,7 @@ std::string CGuiHandler::GetBuildTooltip() const
 {
 	GML_RECMUTEX_LOCK(gui); // luaunsyncedread::getcurrenttooltip --> mousehandler::getcurrenttooltip --> GetBuildTooltip
 
-	if ((inCommand >= 0) && (inCommand < commands.size()) &&
+	if ((inCommand >= 0) && ((size_t)inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		return commands[inCommand].tooltip;
 	}
@@ -2175,7 +2175,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 		}
 	}
 
-	if(tempInCommand>=0 && tempInCommand<commands.size()){
+	if(tempInCommand>=0 && (size_t)tempInCommand<commands.size()){
 		switch(commands[tempInCommand].type){
 
 		case CMDTYPE_NUMBER:{
@@ -2345,7 +2345,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				}
 
 				if (feature!=0 && dist3<dist2 && commands[tempInCommand].type==CMDTYPE_ICON_UNIT_FEATURE_OR_AREA) {  // clicked on feature
-					c.params.push_back(MAX_UNITS+feature->id);
+					c.params.push_back(uh->MaxUnits()+feature->id);
 				} else if (unit!=0 && commands[tempInCommand].type!=CMDTYPE_ICON_AREA) {  // clicked on unit
 					c.params.push_back(unit->id);
 				} else { // clicked in map
@@ -3244,7 +3244,7 @@ void CGuiHandler::DrawNumberInput() // Only called by drawbuttons
 //	GML_RECMUTEX_LOCK(gui); // DrawNumberInput
 
 	// draw the value for CMDTYPE_NUMBER commands
-	if ((inCommand >= 0) && (inCommand < commands.size())) {
+	if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
 		const CommandDescription& cd = commands[inCommand];
 		if (cd.type == CMDTYPE_NUMBER) {
 			const float value = GetNumberInput(cd);
@@ -3503,7 +3503,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	if (activeMousePress) {
 		int cmdIndex = -1;
 		int button = SDL_BUTTON_LEFT;
-		if ((inCommand >= 0) && (inCommand < commands.size())) {
+		if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
 			cmdIndex = inCommand;
 		} else {
 			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
@@ -3513,7 +3513,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			}
 		}
 
-		if ((cmdIndex >= 0) && (cmdIndex < commands.size())) {
+		if ((cmdIndex >= 0) && ((size_t)cmdIndex < commands.size())) {
 			const CommandDescription& cmdDesc = commands[cmdIndex];
 			switch (cmdDesc.type) {
 				case CMDTYPE_ICON_FRONT: {
@@ -3721,7 +3721,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 	}
 
 	// draw buildings we are about to build
-	if ((inCommand >= 0) && (inCommand < commands.size()) &&
+	if ((inCommand >= 0) && ((size_t)inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
 		{ // limit the locking scope to avoid deadlock
 			GML_STDMUTEX_LOCK(cai); // DrawMapStuff
@@ -3848,8 +3848,8 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 //	GML_RECMUTEX_LOCK(quad); // getdefaultcommand calls guitraceray which accesses quadfield
 	// draw range circles if attack orders are imminent
 	int defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty, camerapos, mousedir);
-	if ((inCommand>=0 && inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
-	    (inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
+	if ((inCommand>=0 && (size_t)inCommand<commands.size() && commands[inCommand].id==CMD_ATTACK) ||
+		(inCommand==-1 && defcmd>0 && commands[defcmd].id==CMD_ATTACK)){
 
 		GML_RECMUTEX_LOCK(sel); // DrawMapStuff
 
@@ -3950,7 +3950,7 @@ void CGuiHandler::DrawCentroidCursor()
 //	GML_RECMUTEX_LOCK(gui); // DrawCentroidCursor. Not needed, Draw thread.
 
 	int cmd = -1;
-	if ((inCommand >= 0) && (inCommand < commands.size())) {
+	if ((inCommand >= 0) && ((size_t)inCommand < commands.size())) {
 		cmd = commands[inCommand].id;
 	} else {
 		int defcmd;
@@ -3960,7 +3960,7 @@ void CGuiHandler::DrawCentroidCursor()
 		} else {
 			defcmd = GetDefaultCommand(mouse->lastx, mouse->lasty);
 		}
-		if ((defcmd >= 0) && (defcmd < commands.size())) {
+		if ((defcmd >= 0) && ((size_t)defcmd < commands.size())) {
 			cmd = commands[defcmd].id;
 		}
 	}
@@ -4177,7 +4177,7 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
 {
 	BoxData boxData;
 	boxData.mins = float3(std::min(pos0.x, pos1.x), readmap->minheight - 250.0f,
-                        std::min(pos0.z, pos1.z));
+	                       std::min(pos0.z, pos1.z));
 	boxData.maxs = float3(std::max(pos0.x, pos1.x), readmap->maxheight + 10000.0f,
 	                      std::max(pos0.z, pos1.z));
 

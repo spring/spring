@@ -106,7 +106,7 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s.SerializeObjectInstance(&wind, wind.GetClass());
 	s.SerializeObjectInstance(inMapDrawer,inMapDrawer->GetClass());
-	for (int a=0;a<MAX_TEAMS;a++)
+	for (int a=0; a < teamHandler->ActiveTeams(); a++)
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
 	s.SerializeObjectInstance(eoh, eoh->GetClass());
 	s.SerializeObjectInstance(&CBuilderCAI::reclaimers,CBuilderCAI::reclaimers.GetClass());
@@ -148,7 +148,7 @@ void CLoadSaveHandler::SaveGame(std::string file)
 		os.SavePackage(&ofs, gsc, gsc->GetClass());
 		PrintSize("Game",ofs.tellp());
 		int aistart = ofs.tellp();
-		for (int a=0;a<MAX_TEAMS;a++)
+		for (int a=0; a < teamHandler->ActiveTeams();a++)
 			grouphandlers[a]->Save(&ofs);
 		eoh->Save(&ofs);
 		PrintSize("AIs",((int)ofs.tellp())-aistart);
@@ -199,11 +199,11 @@ void CLoadSaveHandler::LoadGame()
 
 	CGameStateCollector *gsc = (CGameStateCollector *)pGSC;
 	delete gsc; // only job of gsc is to collect gamestate data
-	for (int a=0;a<MAX_TEAMS;a++)
+	for (int a=0; a < teamHandler->ActiveTeams();a++)
 		grouphandlers[a]->Load(ifs);
 	eoh->Load(ifs);
 	delete ifs;
-	for (int a=0;a<MAX_TEAMS;a++) {//For old savegames
+	for (int a=0; a < teamHandler->ActiveTeams();a++) {//For old savegames
 		if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
 			eoh->DestroySkirmishAI(a);
 		}

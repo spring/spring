@@ -72,6 +72,31 @@ enum EventTopic {
 const unsigned int NUM_EVENTS          = 23;
 
 
+#define AIINTERFACE_EVENTS_ABI_VERSION     ( \
+		  sizeof(struct SInitEvent) \
+		+ sizeof(struct SReleaseEvent) \
+		+ sizeof(struct SUpdateEvent) \
+		+ sizeof(struct SMessageEvent) \
+		+ sizeof(struct SUnitCreatedEvent) \
+		+ sizeof(struct SUnitFinishedEvent) \
+		+ sizeof(struct SUnitIdleEvent) \
+		+ sizeof(struct SUnitMoveFailedEvent) \
+		+ sizeof(struct SUnitDamagedEvent) \
+		+ sizeof(struct SUnitDestroyedEvent) \
+		+ sizeof(struct SUnitGivenEvent) \
+		+ sizeof(struct SUnitCapturedEvent) \
+		+ sizeof(struct SEnemyEnterLOSEvent) \
+		+ sizeof(struct SEnemyLeaveLOSEvent) \
+		+ sizeof(struct SEnemyEnterRadarEvent) \
+		+ sizeof(struct SEnemyLeaveRadarEvent) \
+		+ sizeof(struct SEnemyDamagedEvent) \
+		+ sizeof(struct SEnemyDestroyedEvent) \
+		+ sizeof(struct SWeaponFiredEvent) \
+		+ sizeof(struct SPlayerCommandEvent) \
+		+ sizeof(struct SCommandFinishedEvent) \
+		+ sizeof(struct SSeismicPingEvent) \
+		)
+
 /**
  * This AI event initializes a Skirmish AI instance.
  * It is sent only once per AI instance and game, as the very first event.

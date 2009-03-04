@@ -5,6 +5,7 @@
 #include "GroundBlockingObjectMap.h"
 
 #include "GlobalSynced.h"
+#include "GlobalConstants.h"
 #include "Sim/Objects/SolidObject.h"
 #include "Sim/Path/PathManager.h"
 #include "creg/STL_Map.h"

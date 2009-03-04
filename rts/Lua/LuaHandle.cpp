@@ -59,7 +59,6 @@ CLuaHandle::CLuaHandle(const string& _name, int _order,
                        bool _userMode, LuaCobCallback callback)
 : CEventClient(_name, _order, false), // FIXME
   userMode   (_userMode),
-  cobCallback(callback),
   killMe     (false),
   synced     (false),
 #ifdef DEBUG
@@ -67,6 +66,7 @@ CLuaHandle::CLuaHandle(const string& _name, int _order,
 #else
   printTracebacks(false),
 #endif
+  cobCallback(callback),
   callinErrors(0)
 {
 	L = lua_open();

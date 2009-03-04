@@ -9,8 +9,10 @@
 #include "QuadField.h"
 
 #include "GlobalSynced.h"
+#include "GlobalConstants.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "LogOutput.h"
 #include "creg/STL_List.h"
 
@@ -23,6 +25,10 @@ CR_REG_METADATA(CQuadField, (
 		CR_SERIALIZER(Serialize)
 		));
 
+
+CQuadField::Quad::Quad() : teamUnits(teamHandler->ActiveAllyTeams())
+{
+};
 
 void CQuadField::Serialize(creg::ISerializer& s)
 {

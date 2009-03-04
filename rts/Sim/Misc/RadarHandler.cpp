@@ -64,17 +64,17 @@ CRadarHandler::CRadarHandler(bool circularRadar)
 	commonJammerMap.SetSize(xsize, zsize);
 	commonSonarJammerMap.SetSize(xsize, zsize);
 
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		radarMaps[a].SetSize(xsize, zsize);
-		sonarMaps[a].SetSize(xsize, zsize);
-		seismicMaps[a].SetSize(xsize, zsize);
-		airRadarMaps[a].SetSize(xsize, zsize);
-		jammerMaps[a].SetSize(xsize, zsize);
+	CLosMap tmp;
+	tmp.SetSize(xsize, zsize);
+	radarMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
+	sonarMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
+	seismicMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
+	airRadarMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
+	jammerMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 #ifdef SONAR_JAMMER_MAPS
-		sonarJammerMaps[a].SetSize(xsize, zsize);
+	sonarJammerMaps.resize(teamHandler->ActiveAllyTeams(), tmp);
 #endif
-		radarErrorSize[a] = 96;
-	}
+	radarErrorSize.resize(teamHandler->ActiveAllyTeams(), 96);
 }
 
 

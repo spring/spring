@@ -90,17 +90,17 @@ public:
 	const float invRadarDiv;
 	const bool circularRadar;
 
-	CLosMap radarMaps[MAX_TEAMS];
-	CLosMap airRadarMaps[MAX_TEAMS];
-	CLosMap sonarMaps[MAX_TEAMS];
-	CLosMap jammerMaps[MAX_TEAMS];
+	std::vector<CLosMap> radarMaps;
+	std::vector<CLosMap> airRadarMaps;
+	std::vector<CLosMap> sonarMaps;
+	std::vector<CLosMap> jammerMaps;
 #ifdef SONAR_JAMMER_MAPS
-	CLosMap sonarJammerMaps[MAX_TEAMS];
+	std::vector<CLosMap> sonarJammerMaps;
 #endif
-	CLosMap seismicMaps[MAX_TEAMS];
+	std::vector<CLosMap> seismicMaps;
 	CLosMap commonJammerMap;
 	CLosMap commonSonarJammerMap;
-	float radarErrorSize[MAX_TEAMS];
+	std::vector<float> radarErrorSize;
 	float baseRadarErrorSize;
 
 	int xsize;

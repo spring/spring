@@ -38,8 +38,8 @@ CGfxProjectile::CGfxProjectile()
 
 CGfxProjectile::CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color GML_PARG_C)
 : CProjectile(pos,speed,0, false GML_PARG_P),
-	lifeTime(lifeTime),
-	creationTime(gs->frameNum)
+	creationTime(gs->frameNum),
+	lifeTime(lifeTime)
 {
 	checkCol=false;
 	this->color[0]=(unsigned char) (color[0]*255);
