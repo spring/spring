@@ -147,12 +147,14 @@ void CGlobalUnsyncedStuff::SetMyPlayer(const int mynumber)
 	{
 		myTeam = gameSetup->playerStartingData[myPlayerNum].team;
 		myAllyTeam = gameSetup->teamStartingData[myTeam].teamAllyteam;
-	
+
 		spectating = gameSetup->playerStartingData[myPlayerNum].spectator;
 		spectatingFullView   = gameSetup->playerStartingData[myPlayerNum].spectator;
 		spectatingFullSelect = gameSetup->playerStartingData[myPlayerNum].spectator;
-		
-		assert(myPlayerNum >= 0 && gameSetup->playerStartingData.size() >= myPlayerNum &&
-				gameSetup->teamStartingData.size() >= myTeam);
+
+		assert(myPlayerNum >= 0
+				&& gameSetup->playerStartingData.size() >= (size_t)myPlayerNum
+				&& myTeam >= 0
+				&& gameSetup->teamStartingData.size() >= myTeam);
 	}
 }

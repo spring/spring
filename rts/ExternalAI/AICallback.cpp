@@ -147,7 +147,7 @@ int CAICallback::SendUnits(const std::vector<int>& unitIds, int receivingTeamId)
 					for (std::vector<int>::const_iterator it = unitIds.begin(); it != unitIds.end(); it++ ) {
 						const int unitID = *it;
 
-						if (unitID > 0 && unitID < uh->MaxUnits()) {
+						if (unitID > 0 && (size_t)unitID < uh->MaxUnits()) {
 							CUnit* unit = uh->units[unitID];
 
 							if (unit && unit->team == team) {
