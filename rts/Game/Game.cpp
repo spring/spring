@@ -419,9 +419,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	keyBindings->Load("uikeys.txt");
 
 	water=CBaseWater::GetWater(NULL);
-	for(int a=0;a<MAX_TEAMS;a++)
-		grouphandlers[a] = new CGroupHandler(a);
-
+	for(int a = 0; a < teamHandler->ActiveTeams(); ++a)
+		grouphandlers.push_back(new CGroupHandler(a));
+	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
 
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
@@ -533,17 +533,15 @@ CGame::~CGame()
 	eoh->PreDestroy();
 	CEngineOutHandler::Destroy();
 
-	for(int a=0;a<MAX_TEAMS;a++) {
-		SafeDelete(grouphandlers[a]);
-	}
+	grouphandlers.clear();
 
 	SafeDelete(water);
 	SafeDelete(sky);
 	SafeDelete(resourceBar);
 
+	SafeDelete(featureHandler);
 	SafeDelete(uh);
 	SafeDelete(unitDrawer);
-	SafeDelete(featureHandler);
 	SafeDelete(geometricObjects);
 	SafeDelete(ph);
 	SafeDelete(minimap);
@@ -2156,8 +2154,8 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			int numRequestedUnits = unitDefHandler->numUnitDefs;
 
 			// make sure team unit-limit not exceeded
-			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
-				numRequestedUnits = uh->maxUnits - currentNumUnits;
+			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
+				numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
 			}
 
 			// make sure square is entirely on the map
@@ -2183,14 +2181,14 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			int numRequestedUnits = amount;
 			int currentNumUnits = teamHandler->Team(team)->units.size();
 
-			if (currentNumUnits >= uh->maxUnits) {
-				logOutput.Print("Unable to give any more units to team %i", team);
+			if (currentNumUnits >= uh->MaxUnitsPerTeam()) {
+				logOutput.Print("Unable to give any more units to team %i (current: %i, max: %i)", team, currentNumUnits, uh->MaxUnits());
 				return;
 			}
 
 		// make sure team unit-limit not exceeded
-			if ((currentNumUnits + numRequestedUnits) > uh->maxUnits) {
-				numRequestedUnits = uh->maxUnits - currentNumUnits;
+			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
+				numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
 			}
 
 			const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
@@ -2351,7 +2349,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		ASSERT_SYNCED_PRIMITIVE((short)(gu->myPlayerNum * 123 + 123));
 		ASSERT_SYNCED_FLOAT3(float3(gu->myPlayerNum, gu->myPlayerNum, gu->myPlayerNum));
 
-		for (int i = MAX_UNITS - 1; i >= 0; --i) {
+		for (size_t i = uh->MaxUnits() - 1; i >= 0; --i) {
 			if (uh->units[i]) {
 				if (playernum == gu->myPlayerNum) {
 					++uh->units[i]->midPos.x; // and desync...
@@ -3461,7 +3459,7 @@ void CGame::ClientReadNet()
 					vector<int> selected;
 					for (int a = 0; a < ((*((short int*)&inbuf[1])-4)/2); ++a) {
 						int unitid=*((short int*)&inbuf[4+a*2]);
-						if(unitid>=MAX_UNITS || unitid<0){
+						if(unitid>= uh->MaxUnits() || unitid<0){
 							logOutput.Print("Got invalid unitid %i in netselect msg",unitid);
 							break;
 						}
@@ -3485,7 +3483,7 @@ void CGame::ClientReadNet()
 				}
 
 				int unitid = *((short int*) &inbuf[4]);
-				if (unitid >= MAX_UNITS || unitid < 0) {
+				if (unitid >= uh->MaxUnits() || unitid < 0) {
 					logOutput.Print("Got invalid unitID (%i) in NETMSG_AICOMMAND", unitid);
 					break;
 				}
@@ -4539,7 +4537,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 	}
 	CCobFile* newScript = &GCobEngine.ReloadCobFile(udef->scriptPath);
 	int count = 0;
-	for (int i = 0; i < MAX_UNITS; i++) {
+	for (size_t i = 0; i < uh->MaxUnits(); i++) {
 		CUnit* unit = uh->units[i];
 		if (unit != NULL) {
 			if (unit->cob->GetScriptAddr() == oldScript) {
@@ -4569,7 +4567,7 @@ void CGame::SelectUnits(const string& line)
 			if (endPtr == startPtr) {
 				continue; // bad number
 			}
-			if ((unitIndex < 0) || (unitIndex >= MAX_UNITS)) {
+			if ((unitIndex < 0) || (unitIndex >= uh->MaxUnits())) {
 				continue; // bad index
 			}
 			CUnit* unit = uh->units[unitIndex];

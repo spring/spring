@@ -26,7 +26,7 @@
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SSAILibrary.h"
 #include "ExternalAI/Interface/AISEvents.h"
-#include "ExternalAI/Interface/SStaticGlobalData.h"
+#include "ExternalAI/Interface/SAIInterfaceCallback.h"
 
 #include <jni.h>
 
@@ -39,8 +39,8 @@
 // The JVM sets the environment it wants automatically
 #define ESTABLISH_JAVA_ENV
 
-
-static const struct SStaticGlobalData* staticGlobalData = NULL;
+static int interfaceId = -1;
+static const struct SAIInterfaceCallback* callback = NULL;
 static unsigned int maxTeams = 0;
 static unsigned int maxSkirmishImpls = 0;
 static unsigned int sizeImpls = 0;
@@ -107,54 +107,47 @@ static bool java_createClassPath(char* classPathStr) {
 
 	classPathStr[0] = '\0';
 
-	unsigned int i, j;
-
 	// the .jar files in the following list will be added to the classpath
-	static const unsigned int MAX_ENTRIES = 128;
-	char* classPath[MAX_ENTRIES];
+	static const unsigned int classPath_sizeMax = 128;
+	char* classPath[classPath_sizeMax];
 	int unsigned classPath_size = 0;
-	// the Java AI Interfaces file name
-	classPath[classPath_size++] = util_dataDirs_allocFilePath(
-			JAVA_AI_INTERFACE_LIBRARY_FILE_NAME, false);
 
+	//static const unsigned int path_sizeMax = 2048;
+
+	// the Java AI Interfaces file name
+	classPath[classPath_size++] = callback->DataDirs_allocatePath(interfaceId,
+			JAVA_AI_INTERFACE_LIBRARY_FILE_NAME,
+			false, false, false);
 
 	// the directories in the following list will be searched for .jar files
 	// which then will be added to the classpath, plus they will be added
 	// to the classpath directly, so you can keep .class files in there
-	char* jarDirs[MAX_ENTRIES];
+	static const unsigned int jarDirs_sizeMax = 128;
+	char* jarDirs[jarDirs_sizeMax];
 	int unsigned jarDirs_size = 0;
-	jarDirs[jarDirs_size++] = util_dataDirs_allocDir(JAVA_LIBS_DIR, false);
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
+			callback->DataDirs_getConfigDir(interfaceId), JAVA_LIBS_DIR);
 
-// 	// search the individual jar files and add everything to the classpath
-// 	for (i = 0; i < sizeJarFiles; ++i) {
-// 		char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
-// 		bool found = util_findFile(
-// 				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-// 				jarFiles[i], absoluteFilePath);
-// 		if (found) {
-// 			if (i > 0) {
-// 				STRCAT(classPath, ENTRY_DELIM);
-// 			}
-// 			STRCAT(classPath, absoluteFilePath);
-// 		}
-// 	}
 	// add the jar dirs (for .class files) and all contained .jars recursively
-	for (i=0; i < jarDirs_size; ++i) {
-		if (util_fileExists(jarDirs[i])) {
+	unsigned int jd, jf;
+	for (jd=0; jd < jarDirs_size && classPath_size < classPath_sizeMax; ++jd) {
+		if (util_fileExists(jarDirs[jd])) {
 			// add the dir directly
-			classPath[classPath_size++] = util_allocStrCpy(jarDirs[i]);
+			classPath[classPath_size++] = util_allocStrCpy(jarDirs[jd]);
 
 			// add the contained jars recursively
-			char* jarFiles[MAX_ENTRIES];
-			unsigned int jarFiles_size = util_listFiles(jarDirs[i], ".jar",
-					jarFiles, true, MAX_ENTRIES);
-			for (j=0; j < jarFiles_size; ++j) {
+			static const unsigned int jarFiles_sizeMax = 128;
+			char* jarFiles[jarFiles_sizeMax];
+			unsigned int jarFiles_size = util_listFiles(jarDirs[jd], ".jar",
+					jarFiles, true, jarFiles_sizeMax);
+			for (jf=0; jf < jarFiles_size && classPath_size < classPath_sizeMax;
+					++jf) {
 				classPath[classPath_size++] = util_allocStrCatFSPath(2,
-						jarDirs[i], jarFiles[j]);
+						jarDirs[jd], jarFiles[jf]);
 			}
 		}
-		free(jarDirs[i]);
-		jarDirs[i] = NULL;
+		free(jarDirs[jd]);
+		jarDirs[jd] = NULL;
 	}
 
 	// concat the classpath entries
@@ -163,12 +156,13 @@ static bool java_createClassPath(char* classPathStr) {
 		free(classPath[0]);
 		classPath[0] = NULL;
 	}
-	for (i=1; i < classPath_size; ++i) {
-		if (classPath[i] != NULL) {
+	unsigned int cp;
+	for (cp=1; cp < classPath_size; ++cp) {
+		if (classPath[cp] != NULL) {
 			STRCAT(classPathStr, ENTRY_DELIM);
-			STRCAT(classPathStr, classPath[i]);
-			free(classPath[i]);
-			classPath[i] = NULL;
+			STRCAT(classPathStr, classPath[cp]);
+			free(classPath[cp]);
+			classPath[cp] = NULL;
 		}
 	}
 
@@ -187,7 +181,7 @@ static bool java_createClassPath(char* classPathStr) {
 static bool java_createAIClassPath(const char* shortName, const char* version,
 		char** classPathParts, int classPathParts_max) {
 
-	static const unsigned int MAX_TEXT_LEN = 256;
+//	static const unsigned int MAX_TEXT_LEN = 256;
 
 	int classPathParts_num = 0;
 
@@ -195,12 +189,17 @@ static bool java_createAIClassPath(const char* shortName, const char* version,
 	char* jarFiles[classPathParts_max];
 	int unsigned sizeJarFiles = 0;
 
-	if (version != NULL) {
-		jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(4,
-				SKIRMISH_AI_DATA_DIR, shortName, version, "SkirmishAI.jar");
+	const char* const skirmDD =
+			callback->SkirmishAIs_Info_getValueByKey(interfaceId,
+			shortName, version,
+			SKIRMISH_AI_PROPERTY_DATA_DIR);
+	if (skirmDD == NULL) {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+				"Retrieving the data-dir of Skirmish AI %s-%s failed.",
+				shortName, version);
 	}
-	jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(3,
-			SKIRMISH_AI_DATA_DIR, shortName, "SkirmishAI.jar");
+	jarFiles[sizeJarFiles++] = util_allocStrCatFSPath(2,
+			skirmDD, "SkirmishAI.jar");
 
 
 	// the directories in the following list will be searched for .jar files
@@ -209,56 +208,58 @@ static bool java_createAIClassPath(const char* shortName, const char* version,
 	char* jarDirs[classPathParts_max];
 	int unsigned sizeJarDirs = 0;
 
-	if (version != NULL) {
-		jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(4,
-			SKIRMISH_AI_DATA_DIR, shortName, version, JAVA_LIBS_DIR);
-	}
-	jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(3,
-			SKIRMISH_AI_DATA_DIR, shortName, JAVA_LIBS_DIR);
+	jarDirs[sizeJarDirs++] = util_allocStrCatFSPath(2,
+			skirmDD, JAVA_LIBS_DIR);
 
 
 	// get the absolute paths of the jar files
 	int i;
 	for (i = 0; i < sizeJarFiles && classPathParts_num < classPathParts_max;
 			++i) {
-		char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
-		bool found = util_findFile(
-				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-				jarFiles[i], absoluteFilePath, false);
-//simpleLog_log("jarFiles[%i]: %i", i, found);
-		if (found) {
-			classPathParts[classPathParts_num++] = absoluteFilePath;
-		}
+//		char* absoluteFilePath = util_allocStr(MAX_TEXT_LEN);
+//		bool found = util_findFile(
+//				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
+//				jarFiles[i], absoluteFilePath, false);
+// //simpleLog_log("jarFiles[%i]: %i", i, found);
+//		if (found) {
+//			classPathParts[classPathParts_num++] = absoluteFilePath;
+			classPathParts[classPathParts_num++] = jarFiles[i];
+//		}
 	}
-	// add the jar dirs (for .class files)
-	for (i = 0; i < sizeJarDirs && classPathParts_num < classPathParts_max; ++i)
-	{
-		char* absoluteDirPath = util_allocStr(MAX_TEXT_LEN);
-		bool found = util_findDir(
-				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
-				jarDirs[i], absoluteDirPath, false, false);
-		if (found) {
-			classPathParts[classPathParts_num++] = absoluteDirPath;
-		} else {
-			free(jarDirs[i]);
-			jarDirs[i] = NULL;
-		}
-	}
-	// add the jars in the dirs
+// 	// add the jar dirs (for .class files)
+// 	for (i = 0; i < sizeJarDirs && classPathParts_num < classPathParts_max; ++i)
+// 	{
+// 		char* absoluteDirPath = util_allocStr(MAX_TEXT_LEN);
+// 		bool found = util_findDir(
+// 				staticGlobalData->dataDirs, staticGlobalData->numDataDirs,
+// 				jarDirs[i], absoluteDirPath, false, false);
+//		if (found) {
+//			classPathParts[classPathParts_num++] = absoluteDirPath;
+//		classPathParts[classPathParts_num++] = jarDirs[i];
+// 		} else {
+// 			free(jarDirs[i]);
+// 			jarDirs[i] = NULL;
+// 		}
+//	}
+//	// add the jars in the dirs
 	int j;
 	for (i = 0; i < sizeJarDirs && classPathParts_num < classPathParts_max; ++i)
 	{
 		if (jarDirs[i] != NULL) {
+			// add the jar dir (for .class files)
+			classPathParts[classPathParts_num++] = jarDirs[i];
+
+			// add the jars in the dir
 			char* jarFileNames[classPathParts_max-classPathParts_num];
 			unsigned int sizeJarFileNames = util_listFiles(jarDirs[i], ".jar",
 					jarFileNames, true, classPathParts_max-classPathParts_num);
-			for (j = 0; j < sizeJarFileNames; ++j) {
+			for (j = 0; j < sizeJarFileNames && classPathParts_num < classPathParts_max; ++j) {
 				classPathParts[classPathParts_num++] =
 						util_allocStrCatFSPath(2, jarDirs[i], jarFileNames[j]);
 			}
 		}
-		free(jarDirs[i]);
-		jarDirs[i] = NULL;
+// 		free(jarDirs[i]);
+// 		jarDirs[i] = NULL;
 	}
 
 	return true;
@@ -320,19 +321,20 @@ static bool java_createNativeLibsPath(char* libraryPath) {
 	// consists of:
 
 	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/
-	char* dd_r = util_dataDirs_allocDir("", false);
+	const char* const dd_r =
+			callback->AIInterface_Info_getValueByKey(interfaceId,
+			AI_INTERFACE_PROPERTY_DATA_DIR);
 	if (dd_r == NULL) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 				"Unable to find read-only data-dir.");
 		return false;
 	} else {
 		STRCPY(libraryPath, dd_r);
-		free(dd_r);
-		dd_r = NULL;
 	}
 
 	// * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/lib/
-	char* dd_lib_r = util_dataDirs_allocDir(NATIVE_LIBS_DIR, false);
+	char* dd_lib_r = callback->DataDirs_allocatePath(interfaceId,
+			NATIVE_LIBS_DIR, false, false, true);
 	if (dd_lib_r == NULL) {
 		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
 				"Unable to find read-only native libs data-dir (optional): %s",
@@ -354,7 +356,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 
 	// ### read JVM options config file ###
 	int numProps = 0;
-	char* jvmPropFile = util_dataDirs_allocFilePath(JVM_PROPERTIES_FILE, false);
+	char* jvmPropFile = callback->DataDirs_allocatePath(interfaceId,
+			JVM_PROPERTIES_FILE, false, false, false);
 	if (jvmPropFile != NULL) {
 		numProps = util_parsePropertiesFile(jvmPropFile,
 				propKeys, propValues, maxProps);
@@ -433,9 +436,9 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	if (jvmPropFile != NULL) {
 		// ..., and append the part from the jvm options properties file,
 		// if it is specified there
-		// TODO: this will not work, as the key is "jvm.option.x",
+		// TODO: FIXME: this will not work, as the key is "jvm.option.x",
 		// and the value would be "-Djava.class.path=/patha:/pathb:..."
-		// Adjust!!
+		// NOTE: Possibly already fixed, see below!
 		const char* clsPathFromCfg =
 				util_map_getValueByKey(numProps, propKeys, propValues,
 				"-Djava.class.path");
@@ -463,9 +466,9 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	if (jvmPropFile != NULL) {
 		// ..., and append the part from the jvm options properties file,
 		// if it is specified there
-		// TODO: this will not work, as the key is "jvm.option.x",
+		// TODO: FIXME: this will not work, as the key is "jvm.option.x",
 		// and the value would be "-Djava.class.path=/patha:/pathb:..."
-		// Adjust!!
+		// NOTE: Possibly already fixed, see below!
 		const char* libPathFromCfg =
 				util_map_getValueByKey(numProps, propKeys, propValues,
 				"-Djava.library.path");
@@ -522,7 +525,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	// fill strOptions into the JVM options
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: options (%i):", numOptions);
 	unsigned int i;
-	char* dd_rw = util_dataDirs_allocDir("", true);
+	char* dd_rw = callback->DataDirs_allocatePath(interfaceId,
+			"", true, true, true);
 	for (i = 0; i < numOptions; ++i) {
 		options[i].optionString = util_allocStrReplaceStr(strOptions[i],
 				"${home-dir}", dd_rw);
@@ -686,13 +690,14 @@ bool java_preloadJNIEnv() {
 }
 
 
-bool java_initStatic(const struct SStaticGlobalData* _staticGlobalData) {
+bool java_initStatic(int _interfaceId,
+		const struct SAIInterfaceCallback* _callback) {
 
-	staticGlobalData = _staticGlobalData;
+	interfaceId = _interfaceId;
+	callback = _callback;
 
-	maxTeams = staticGlobalData->maxTeams;
-	maxTeams = staticGlobalData->maxTeams;
-	maxSkirmishImpls = maxTeams;
+	maxTeams = callback->Teams_getSize(interfaceId);
+	maxSkirmishImpls = callback->Teams_getSize(interfaceId);
 	sizeImpls = 0;
 
 	teamId_aiImplId = (unsigned int*) calloc(maxTeams, sizeof(unsigned int));

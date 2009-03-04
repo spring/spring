@@ -37,6 +37,7 @@
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "LogOutput.h"
 #include "MouseInput.h"
 #include "bitops.h"

@@ -139,10 +139,21 @@
 
 // NOTE: shared variables use codes [1024 - 5119]
 
-int CCobInstance::teamVars[MAX_TEAMS][TEAM_VAR_COUNT] = {{ 0 }};
-int CCobInstance::allyVars[MAX_TEAMS][ALLY_VAR_COUNT] = {{ 0 }};
+std::vector<int>  CCobInstance::teamVars[TEAM_VAR_COUNT];
+std::vector<int>  CCobInstance::allyVars[ALLY_VAR_COUNT];
 int CCobInstance::globalVars[GLOBAL_VAR_COUNT]        =  { 0 };
 
+void CCobInstance::InitVars(int numTeams, int numAllyTeams)
+{
+	for (int t = 0; t != TEAM_VAR_COUNT; ++t)
+	{
+		teamVars[t].resize(numTeams,0);
+	}
+	for (int t = 0; t != ALLY_VAR_COUNT; ++t)
+	{
+		allyVars[t].resize(numAllyTeams,0);
+	}
+}
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 : script(_script), unit(_unit)
@@ -1089,7 +1100,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case HEALTH:{
 		if (p1 <= 0)
 			return (int) ((unit->health/unit->maxHealth)*100.0f);
-		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u == NULL)
 			return 0;
 		else
@@ -1121,7 +1132,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case UNIT_XZ: {
 		if (p1 <= 0)
 			return PACKXZ(unit->pos.x, unit->pos.z);
-		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u == NULL)
 			return PACKXZ(0,0);
 		else
@@ -1130,7 +1141,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		//logOutput.Print("Unit-y %d", p1);
 		if (p1 <= 0)
 			return (int)(unit->pos.y * COBSCALE);
-		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u == NULL)
 			return 0;
 		else
@@ -1138,7 +1149,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case UNIT_HEIGHT:{
 		if (p1 <= 0)
 			return (int)(unit->radius * COBSCALE);
-		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u == NULL)
 			return 0;
 		else
@@ -1180,18 +1191,18 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case IN_WATER:
 		return (unit->pos.y < 0.0f) ? 1 : 0;
 	case MAX_ID:
-		return MAX_UNITS-1;
+		return uh->MaxUnits()-1;
 	case MY_ID:
 		return unit->id;
 	case UNIT_TEAM:{
-		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		return u ? unit->team : 0; }
 	case UNIT_ALLIED:{
-		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u) return teamHandler->Ally (unit->allyteam, u->allyteam) ? 1 : 0;
 		return 0;}
 	case UNIT_BUILD_PERCENT_LEFT:{
-		CUnit *u = (p1 >= 0 && p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u) return (int)((1 - u->buildProgress) * 100);
 		return 0;}
 	case MAX_SPEED:
@@ -1213,7 +1224,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case HEADING: {
 		if (p1 <= 0)
 			return unit->heading;
-		CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+		CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u == NULL)
 			return -1;
 		else
@@ -1284,7 +1295,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		if (p1 <= 0) {
 			return unit->unitDef->cobID;
 		} else {
-			const CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+			const CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 			return (u == NULL) ? -1 : u->unitDef->cobID;
 		}
 	}
@@ -1333,7 +1344,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 		CWeapon* weapon = unit->weapons[weaponID];
 		if (weapon == NULL) { return 0; }
-		if ((targetID < 0) || (targetID >= MAX_UNITS)) { return 0; }
+		if ((targetID < 0) || (targetID >= uh->MaxUnits())) { return 0; }
 		CUnit* target = (targetID == 0) ? NULL : uh->units[targetID];
 		return weapon->AttackUnit(target, userTarget) ? 1 : 0;
 	}
@@ -1377,7 +1388,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 	case FLANK_B_MIN_DAMAGE:
 		return int((unit->flankingBonusAvgDamage - unit->flankingBonusDifDamage) * COBSCALE);
 	case KILL_UNIT: {
-		if (p1 >= 0 && p1 < MAX_UNITS) {
+		if (p1 >= 0 && p1 < uh->MaxUnits()) {
 			CUnit *u = p1 ? uh->units[p1] : unit;
 			if (!u) {
 				return 0;
@@ -1486,13 +1497,13 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			}
 			else if (p1 > 0) {
 				// get the unit var for another unit
-				const CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+				const CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 				return (u == NULL) ? 0 : u->cob->unitVars[varID];
 			}
 			else {
 				// set the unit var for another unit
 				p1 = -p1;
-				const CUnit *u = (p1 < MAX_UNITS) ? uh->units[p1] : NULL;
+				const CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 				if (u != NULL) {
 					u->cob->unitVars[varID] = p2;
 					return 1;

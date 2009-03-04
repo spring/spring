@@ -55,7 +55,7 @@ bool CStartPosSelecter::MousePress(int x, int y, int button)
 {
 	float mx = MouseX(x);
 	float my = MouseY(y);
-	if (showReady && InBox(mx, my, readyBox) || gs->frameNum > 0) {
+	if ((showReady && InBox(mx, my, readyBox)) || gs->frameNum > 0) {
 		return !Ready();
 	}
 

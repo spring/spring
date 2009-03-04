@@ -77,7 +77,7 @@ CColorMap::~CColorMap(void)
 
 void CColorMap::DeleteColormaps()
 {
-	for(int i=0; i<colorMaps.size(); i++)
+	for(size_t i=0; i<colorMaps.size(); i++)
 	{
 		delete colorMaps[i];
 	}

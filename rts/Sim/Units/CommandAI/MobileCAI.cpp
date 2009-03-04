@@ -703,7 +703,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 		if (c.params.size() == 1) {
 			const int targetID     = int(c.params[0]);
-			const bool legalTarget = (targetID >= 0 && targetID < MAX_UNITS);
+			const bool legalTarget = (targetID >= 0 && targetID < uh->MaxUnits());
 			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
 
 			// check if we have valid target parameter and that we aren't attacking ourselves

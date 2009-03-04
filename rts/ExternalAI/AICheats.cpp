@@ -14,7 +14,7 @@
 #include "Game/GameSetup.h"
 #include "mmgr.h"
 
-#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)MAX_UNITS)
+#define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 
 using namespace std;

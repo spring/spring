@@ -159,7 +159,7 @@ bool CTextureAtlas::Finalize()
 	}
 
 	CreateTexture();
-	for(int i=0; i<memtextures.size(); i++)
+	for(size_t i=0; i<memtextures.size(); i++)
 	{
 		AtlasedTexture tex;
 		//adjust texture coordinates by half a pixel to avoid filtering artifacts
@@ -171,8 +171,9 @@ bool CTextureAtlas::Finalize()
 		tex.yend = (memtextures[i]->ypos+memtextures[i]->ysize)/(float)ysize - halfy;
 		tex.ixstart = memtextures[i]->xpos;
 		tex.iystart = memtextures[i]->ypos;
-		for(int n=0; n<memtextures[i]->names.size(); n++)
+		for(size_t n=0; n<memtextures[i]->names.size(); n++) {
 			textures[memtextures[i]->names[n]] = tex;
+		}
 
 		usedPixels += memtextures[i]->xpos*memtextures[i]->ypos;
 		delete [] (char*)memtextures[i]->data;
@@ -190,7 +191,7 @@ void CTextureAtlas::CreateTexture()
 	data = new unsigned char[xsize*ysize*4];
 	memset(data,0,xsize*ysize*4); // make spacing between textures black transparent to avoid ugly lines with linear filtering
 
-	for(int i=0; i<memtextures.size(); i++)
+	for(size_t i=0; i<memtextures.size(); i++)
 	{
 		MemTex *tex = memtextures[i];
 		for(int x=0; x<tex->xsize; x++) {

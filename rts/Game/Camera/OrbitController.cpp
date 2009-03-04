@@ -17,8 +17,8 @@ extern Uint8* keys;
 static const float3 YVEC(0.0f, 1.0f, 0.0f);
 
 COrbitController::COrbitController():
-	lastMousePressX(0), lastMousePressY(0),
 	lastMouseMoveX(0), lastMouseMoveY(0),
+	lastMousePressX(0), lastMousePressY(0),
 	lastMouseButton(-1),
 	currentState(Orbiting),
 	distance(512.0f), cDistance(512.0f),

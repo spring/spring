@@ -75,15 +75,15 @@ CMiniMap::CMiniMap()
   fullProxy(false),
   proxyMode(false),
   selecting(false),
-  mouseMove(false),
-  mouseResize(false),
-  mouseLook(false),
   maxspect(false),
   maximized(false),
   minimized(false),
+  mouseLook(false),
+  mouseMove(false),
+  mouseResize(false),
+  slaveDrawMode(false),
   showButtons(false),
-  useIcons(true),
-  slaveDrawMode(false)
+  useIcons(true)
  {
 	lastWindowSizeX = gu->viewSizeX;
 	lastWindowSizeY = gu->viewSizeY;

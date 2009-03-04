@@ -24,18 +24,17 @@ const char* corape_name [] = { "core_rapier", "CORAPE", NULL };
 
 CAirScript::CAirScript()
 : CScript(std::string("Air combat test")),
+	curPlane(0),
+	lastUpdateTime(0),
 	tcp(500,100,500),
 	tcf(0,0,1),
-	lastUpdateTime(0),
-	timeOut(15),
+	oldCamDir(1,0,0),
 	oldCamPos(500,500,500),
-	oldCamDir(1,0,0)
+	doRoll(false),
+	timeOut(15)
 {
-	curPlane=0;
 	for(int a=0;a<32;++a)
 		oldUp[a]=UpVector;
-
-	doRoll=false;
 }
 
 CAirScript::~CAirScript()

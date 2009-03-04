@@ -380,6 +380,10 @@ const SkirmishAIData* CGameSetup::GetSkirmishAIDataForTeam(int teamId) const {
 	}
 }
 
+size_t CGameSetup::GetSkirmishAIs() const {
+	return team_skirmishAI.size();
+}
+
 /**
 @brief Load teams and remove gaps in the team numbering.
 @pre numTeams, hostDemo initialized
@@ -572,7 +576,7 @@ bool CGameSetup::Init(const std::string& buf)
 
 	file.GetDef(gameMode,         "0", "GAME\\ModOptions\\GameMode");
 	file.GetDef(noHelperAIs,      "0", "GAME\\ModOptions\\NoHelperAIs");
-	file.GetDef(maxUnits,       "500", "GAME\\ModOptions\\MaxUnits");
+	file.GetDef(maxUnits,       "1500", "GAME\\ModOptions\\MaxUnits");
 	file.GetDef(limitDgun,        "0", "GAME\\ModOptions\\LimitDgun");
 	file.GetDef(diminishingMMs,   "0", "GAME\\ModOptions\\DiminishingMMs");
 	file.GetDef(disableMapDamage, "0", "GAME\\ModOptions\\DisableMapDamage");

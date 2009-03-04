@@ -65,8 +65,8 @@ static const LuaHashString unsyncedStr("UNSYNCED");
 CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order,
                                    LuaCobCallback callback,
                                    const string& msgPrefix)
-: messagePrefix(msgPrefix),
-  CLuaHandle(_name, _order, false, callback),
+: CLuaHandle(_name, _order, false, callback),
+  messagePrefix(msgPrefix),
   allowChanges(false),
   allowUnsafeChanges(false),
   teamsLocked(false)

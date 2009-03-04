@@ -19,11 +19,12 @@
 extern Uint8 *keys;
 
 COverheadController::COverheadController()
-	: height(500),zscale(0.5f),
+	: flipped(false),
+	zscale(0.5f),
+	height(500),
 	oldAltHeight(500),
-	maxHeight(10000),
 	changeAltHeight(true),
-	flipped(false)
+	maxHeight(10000)
 {
 	scrollSpeed = configHandler.Get("OverheadScrollSpeed",10)*0.1f;
 	tiltSpeed = configHandler.Get("OverheadTiltSpeed",1.0f);

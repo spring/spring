@@ -222,7 +222,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= MAX_UNITS)) {
+	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -1825,7 +1825,7 @@ int LuaUnsyncedRead::GetGroupUnits(lua_State* L)
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-	if ((groupID < 0) || (groupID >= groups.size()) ||
+	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}
@@ -1852,7 +1852,7 @@ int LuaUnsyncedRead::GetGroupUnitsSorted(lua_State* L)
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-	if ((groupID < 0) || (groupID >= groups.size()) ||
+	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}
@@ -1893,7 +1893,7 @@ int LuaUnsyncedRead::GetGroupUnitsCounts(lua_State* L)
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-	if ((groupID < 0) || (groupID >= groups.size()) ||
+	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}
@@ -1931,7 +1931,7 @@ int LuaUnsyncedRead::GetGroupUnitsCount(lua_State* L)
 
 	const int groupID = luaL_checkint(L, 1);
 	const vector<CGroup*>& groups = grouphandlers[gu->myTeam]->groups;
-	if ((groupID < 0) || (groupID >= groups.size()) ||
+	if ((groupID < 0) || ((size_t)groupID >= groups.size()) ||
 	    (groups[groupID] == NULL)) {
 		return 0; // nils
 	}

@@ -9,7 +9,6 @@
 #include "creg/creg_cond.h"
 #include "float3.h"
 #include "Rendering/Icon.h"
-#include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
 
 struct MoveData;
 struct WeaponDef;

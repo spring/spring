@@ -6,7 +6,6 @@
 
 #include "Object.h"
 #include "float3.h"
-#include "GlobalConstants.h"
 
 class CUnit;
 
@@ -61,8 +60,8 @@ public:
 	float3 FindClosestAirBasePos(CUnit* unit, float minPower);
 
 private:
-	std::list<AirBase*> freeBases[MAX_TEAMS];
-	std::list<AirBase*> bases[MAX_TEAMS];
+	std::vector< std::list<AirBase*> > freeBases;
+	std::vector< std::list<AirBase*> > bases;
 
 	typedef std::list<AirBase*> airBaseLst;
 	typedef std::list<AirBase*>::iterator airBaseLstIt;

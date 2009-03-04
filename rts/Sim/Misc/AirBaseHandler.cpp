@@ -35,7 +35,7 @@ CR_REG_METADATA_SUB(CAirBaseHandler, AirBase, (
 	));
 
 
-CAirBaseHandler::CAirBaseHandler(void)
+CAirBaseHandler::CAirBaseHandler(void) : freeBases(teamHandler->ActiveAllyTeams()), bases(teamHandler->ActiveAllyTeams())
 {
 }
 

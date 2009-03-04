@@ -745,8 +745,8 @@ void CProjectileHandler::CheckUnitCol()
 {
 	Projectile_List::iterator psi;
 
-	static CUnit* tempUnits[MAX_UNITS] = {0x0};
-	static CFeature* tempFeatures[MAX_UNITS] = {0x0};
+	static std::vector<CUnit*> tempUnits(uh->MaxUnits(), NULL);
+	static std::vector<CFeature*> tempFeatures(uh->MaxUnits(), NULL);
 	CollisionQuery q;
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
@@ -758,11 +758,11 @@ void CProjectileHandler::CheckUnitCol()
 
 			float speedf = p->speed.Length();
 
-			CUnit** endUnit = tempUnits;
-			CFeature** endFeature = tempFeatures;
+			CUnit** endUnit = &tempUnits[0];
+			CFeature** endFeature = &tempFeatures[0];
 			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
 
-			for (CUnit** ui = tempUnits; ui != endUnit; ++ui) {
+			for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
 				CUnit* unit = *ui;
 				const bool friendlyShot = (p->owner() && (unit->allyteam == p->owner()->allyteam));
 				const bool raytraced =
@@ -806,7 +806,7 @@ void CProjectileHandler::CheckUnitCol()
 			}
 
 			if (!(p->collisionFlags & COLLISION_NOFEATURE)) {
-				for (CFeature** fi = tempFeatures; fi != endFeature; ++fi) {
+				for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
 					CFeature* feature = *fi;
 					const bool raytraced =
 						(feature->collisionVolume &&

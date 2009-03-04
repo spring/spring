@@ -69,8 +69,8 @@ static float GetLODFloat(const string& name, float def)
 
 
 CUnitDrawer::CUnitDrawer(void)
-:	showHealthBars(true),
-	updateFace(0)
+	: updateFace(0),
+	showHealthBars(true)
 {
 	if (texturehandler3DO == 0) {
 		texturehandler3DO = new C3DOTextureHandler;

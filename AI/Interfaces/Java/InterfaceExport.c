@@ -23,7 +23,7 @@
 #include "CUtils/SimpleLog.h"
 
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
-#include "ExternalAI/Interface/SStaticGlobalData.h"
+#include "ExternalAI/Interface/SAIInterfaceCallback.h"
 #include "ExternalAI/Interface/SSAILibrary.h"
 
 #include <stdbool.h>  // bool, true, false
@@ -32,29 +32,29 @@
 
 #define INTERFACE_PROPERTIES_FILE "interface.properties"
 
-static const struct SStaticGlobalData* staticGlobalData = NULL;
+static int interfaceId = -1;
+static const struct SAIInterfaceCallback* callback = NULL;
 
-EXPORT(int) initStatic(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		const struct SStaticGlobalData* _staticGlobalData) {
+EXPORT(int) initStatic(int _interfaceId,
+		const struct SAIInterfaceCallback* _callback) {
 
 	bool success = false;
 
 	// initialize C part of the interface
-	staticGlobalData = _staticGlobalData;
+	interfaceId = _interfaceId;
+	callback = _callback;
 
-	util_setMyInfo(infoSize, infoKeys, infoValues,
-			staticGlobalData->numDataDirs, staticGlobalData->dataDirs);
-
-	const char* myShortName = util_getMyInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
-	const char* myVersion = util_getMyInfo(AI_INTERFACE_PROPERTY_VERSION);
+	const char* const myShortName = callback->AIInterface_Info_getValueByKey(interfaceId,
+			AI_INTERFACE_PROPERTY_SHORT_NAME);
+	const char* const myVersion = callback->AIInterface_Info_getValueByKey(interfaceId,
+			AI_INTERFACE_PROPERTY_VERSION);
 
 	static const int maxProps = 64;
 	const char* propKeys[maxProps];
 	char* propValues[maxProps];
 	int numProps = 0;
 
+/*
 	char dd_r[2048];
 	bool dd_r_found = util_dataDirs_findFile("", dd_r, false, false, false);
 	if (!dd_r_found) {
@@ -67,17 +67,35 @@ EXPORT(int) initStatic(
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 				"Unable to find writeable data-dir: %s", dd_rw);
 	}
+*/
 
 	// ### read the interface config file (optional) ###
-	char* interfacePropFile =
-			util_dataDirs_allocFilePath(INTERFACE_PROPERTIES_FILE, false);
-	if (interfacePropFile != NULL) {
-		numProps = util_parsePropertiesFile(interfacePropFile,
+	static const unsigned int propFilePath_sizeMax = 1024;
+	char propFilePath[propFilePath_sizeMax];
+	// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
+	bool propFileFetched = callback->DataDirs_locatePath(interfaceId,
+			propFilePath, propFilePath_sizeMax,
+			INTERFACE_PROPERTIES_FILE, false, false, false);
+	if (propFileFetched) {
+		numProps = util_parsePropertiesFile(propFilePath,
 				propKeys, (const char**)propValues, maxProps);
+
+		static const unsigned int ddw_sizeMax = 1024;
+		char ddw[ddw_sizeMax];
+		// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
+		bool ddwFetched = callback->DataDirs_locatePath(interfaceId,
+				ddw, ddw_sizeMax,
+				"", true, true, true);
+		if (!ddwFetched) {
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Failed locating writeable data-dir \"%s\"", ddw);
+		}
 		int p;
 		for (p=0; p < numProps; ++p) {
 			char* propValue_tmp = util_allocStrReplaceStr(propValues[p],
-					"${home-dir}", dd_rw);
+					"${home-dir}", ddw);
+// 			char* propValue_tmp = util_allocStrReplaceStr(propValues[p],
+// 					"${home-dir}/", "");
 			free(propValues[p]);
 			propValues[p] = propValue_tmp;
 		}
@@ -106,26 +124,31 @@ EXPORT(int) initStatic(
 	}
 
 	// ### init the log file ###
-	char* logFile_tmp = util_allocStrCpy(
+	char* logFile = util_allocStrCpy(
 			util_map_getValueByKey(numProps, propKeys, (const char**)propValues,
 			"log.file"));
-	if (logFile_tmp == NULL) {
-		logFile_tmp = util_allocStrCatFSPath(2, "log", MY_LOG_FILE);
+	if (logFile == NULL) {
+		logFile = util_allocStrCatFSPath(2, "log", MY_LOG_FILE);
 	}
 
-	char* logFile = util_dataDirs_allocFilePath(logFile_tmp, true);
+	static const unsigned int logFilePath_sizeMax = 1024;
+	char logFilePath[logFilePath_sizeMax];
+	// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
+	bool logFileFetched = callback->DataDirs_locatePath(interfaceId,
+			logFilePath, logFilePath_sizeMax,
+			logFile, true, true, false);
 
-	if (logFile != NULL) {
-		simpleLog_init(logFile, useTimeStamps, logLevel);
+	if (logFileFetched) {
+		simpleLog_init(logFilePath, useTimeStamps, logLevel);
 	} else {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed initializing log-file \"%s\"", logFile);
+				"Failed initializing log-file \"%s\"", logFileFetched);
 	}
 
 	// log settings loaded from interface config file
-	if (interfacePropFile != NULL) {
+	if (propFileFetched) {
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "settings loaded from: %s",
-				interfacePropFile);
+				propFilePath);
 		int p;
 		for (p=0; p < numProps; ++p) {
 			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "\t%i: %s = %s",
@@ -133,25 +156,27 @@ EXPORT(int) initStatic(
 		}
 	} else {
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "settings NOT loaded from: %s",
-				interfacePropFile);
+				propFilePath);
 	}
 
 	simpleLog_log("This is the log-file of the %s v%s AI Interface",
 			myShortName, myVersion);
-	simpleLog_log("Using read/write data-directory: %s", dd_rw);
-	simpleLog_log("Using read-only data-directory: %s", dd_r);
-	simpleLog_log("Using log file: %s", logFile);
+	simpleLog_log("Using read/write data-directory: %s",
+			callback->DataDirs_getWriteableDir(interfaceId));
+	simpleLog_log("Using log file: %s", propFilePath);
 
-	free(interfacePropFile);
 	free(logFile);
-	interfacePropFile = NULL;
 	logFile = NULL;
 
 	// initialize Java part of the interface
-	success = java_initStatic(staticGlobalData);
+	success = java_initStatic(interfaceId, callback);
 	// load the JVM
 	success = success && java_preloadJNIEnv();
-	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "initStatic java_preloadJNIEnv done.");
+	if (success) {
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "Initialization successfull.");
+	} else {
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Initialization failed.");
+	}
 
 	return success ? 0 : -1;
 }

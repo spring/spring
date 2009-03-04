@@ -18,6 +18,7 @@
 #include "GameSetup.h"
 #include "GameData.h"
 #include "Sim/Misc/GlobalSynced.h"
+#include "Sim/Misc/GlobalConstants.h"
 #include "NetProtocol.h"
 #include "Net/RawPacket.h"
 #include "DemoRecorder.h"

@@ -332,17 +332,17 @@ namespace terrain {
 	{
 		if (texture->ShareTexCoordUnit())
 		{
-			for(int a=0;a<coordUnits.size();a++) {
+			for(size_t a=0;a<coordUnits.size();a++) {
 				BaseTexture *t = coordUnits[a];
 				if (t == texture)
-					return a;
+					return (int)a;
 				if (t->ShareTexCoordUnit() && t->tilesize.x == texture->tilesize.x && t->tilesize.y == texture->tilesize.y)
-					return a;
+					return (int)a;
 			}
 		}
 		else {
-			for(int a=0;a<coordUnits.size();a++)
-				if(coordUnits[a]==texture) return a;
+			for(size_t a=0;a<coordUnits.size();a++)
+				if(coordUnits[a]==texture) return (int)a;
 		}
 
 		if (maxCoords >= 0 && maxCoords == (int)coordUnits.size())
@@ -357,8 +357,8 @@ namespace terrain {
 		if (maxUnits >= 0 && maxUnits == (int)texUnits.size())
 			return -1;
 
-		for(int a=0;a<texUnits.size();a++)
-			if(texUnits[a] == texture) return a;
+		for(size_t a=0;a<texUnits.size();a++)
+			if(texUnits[a] == texture) return (int)a;
 		texUnits.push_back(texture);
 		return (int)texUnits.size()-1;
 	}

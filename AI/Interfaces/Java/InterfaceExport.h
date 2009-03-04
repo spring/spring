@@ -39,11 +39,10 @@
 extern "C" {
 #endif
 
-#include "ExternalAI/Interface/ELevelOfSupport.h"
+//#include "ExternalAI/Interface/ELevelOfSupport.h"
 
-struct SSAISpecifier;
 struct SSAILibrary;
-struct SStaticGlobalData;
+struct SAIInterfaceCallback;
 
 // for a list of the functions that have to be exported,
 // see struct SAIInterfaceLibrary in:
@@ -52,13 +51,11 @@ struct SStaticGlobalData;
 
 // static AI interface library functions
 
-EXPORT(int) initStatic(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		const struct SStaticGlobalData* staticGlobalData);
+EXPORT(int) initStatic(int interfaceId,
+		const struct SAIInterfaceCallback* callback);
 EXPORT(int) releaseStatic();
-EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
-		const char* engineVersion, int engineAIInterfaceGeneratedVersion);
+//EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
+//		const char* engineVersion, int engineAIInterfaceGeneratedVersion);
 
 
 // skirmish AI related methods

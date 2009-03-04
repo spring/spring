@@ -35,7 +35,7 @@ const int MAX_VIEW_RANGE = 8000;
  * Defines the maximum number of teams
  * as 17 (16 real teams, and an extra slot for the GAIA team)
  */
-const int MAX_TEAMS = 17;
+const int MAX_TEAMS = 254;
 
 /**
  * @brief max players
@@ -51,7 +51,7 @@ const int MAX_PLAYERS = 251;
  * The real maximum of the game is stored in uh->maxUnits,
  * and may not be higher then this value.
  */
-const int MAX_UNITS = 10000;
+const int MAX_UNITS = 32000;
 
 /**
  * @brief near plane

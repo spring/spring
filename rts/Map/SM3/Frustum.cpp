@@ -14,13 +14,15 @@
 
 void Frustum::InversePlanes ()
 {
-	for(int a=0;a<planes.size();a++)
-		planes[a].Inverse ();
+	std::vector<Plane>::iterator p;
+	for(p=planes.begin(); p!=planes.end(); ++p) {
+		p->Inverse ();
+	}
 }
 
 // find the box vertices to compare against the plane
-static void BoxPlaneVerts (const Vector3& min, const Vector3& max, const Vector3& plane, 
-						   Vector3& close, Vector3& far)
+static void BoxPlaneVerts (const Vector3& min, const Vector3& max, const Vector3& plane,
+                           Vector3& close, Vector3& far)
 {
 	if(plane.x > 0) { close.x = min.x; far.x = max.x; }
 	else { close.x = max.x; far.x = min.x; }
@@ -90,8 +92,9 @@ void Frustum::Draw ()
 		}
 		glEnd();
 		glBegin (GL_LINE_LOOP);
-		for (int a=0;a<4;a++) 
+		for (int a=0;a<4;a++) {
 			glVertex3fv ((float*)&pos[a]);
+		}
 		glEnd();
 	//}
 	glColor3ub(255,255,255);
@@ -103,12 +106,13 @@ Frustum::VisType Frustum::IsBoxVisible (const Vector3& min, const Vector3& max)
 	Vector3 c,f;
 	float dc, df;
 
-	for(int a=0;a<planes.size();a++)
+	std::vector<Plane>::iterator p;
+	for(p=planes.begin(); p!=planes.end(); ++p)
 	{
-		BoxPlaneVerts (min, max, planes[a].GetVector(), c, f);
+		BoxPlaneVerts (min, max, p->GetVector(), c, f);
 		
-		dc = planes[a].Dist (&c);
-		df = planes[a].Dist (&f);
+		dc = p->Dist (&c);
+		df = p->Dist (&f);
 		if(dc < 0.0f || df < 0.0f) full=false;
 		if(dc < 0.0f && df < 0.0f) return Outside;
 	}
@@ -118,8 +122,9 @@ Frustum::VisType Frustum::IsBoxVisible (const Vector3& min, const Vector3& max)
 
 Frustum::VisType Frustum::IsPointVisible (const Vector3& pt)
 {
-	for (int a=0;a<planes.size();a++) {
-		float d = planes[a].Dist (&pt);
+	std::vector<Plane>::const_iterator p;
+	for(p=planes.begin(); p!=planes.end(); ++p) {
+		float d = p->Dist (&pt);
 
 		if (d < 0.0f) return Outside;
 	}
