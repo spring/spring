@@ -7,7 +7,7 @@ CMemPool mempool;
 
 CMemPool::CMemPool()
 {
-	for(int a=0; a < MAX_MEM_SIZE+1; a++){
+	for(size_t a=0; a < MAX_MEM_SIZE+1; a++){
 		nextFree[a]=0;
 		poolSize[a]=10;
 	}

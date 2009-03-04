@@ -117,7 +117,7 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	if (postLoad && !loadSupported) {
 		// fallback code to help the AI if it
 		// doesn't implement load/save support
-		for (int a = 0; a < uh->MaxUnits(); a++) {
+		for (size_t a = 0; a < uh->MaxUnits(); a++) {
 			if (!uh->units[a])
 				continue;
 
