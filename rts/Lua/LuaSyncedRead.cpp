@@ -397,7 +397,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		if (caller != NULL) {
 			luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 		} else {
@@ -4216,8 +4216,8 @@ int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 	const float x     = luaL_checkfloat(L, 2);
 	const float z     = luaL_checkfloat(L, 3);
 	const float r     = luaL_checkfloat(L, 4);
-	const int mx = (int)max(0 , min(gs->mapx - 1, (int)(x / SQUARE_SIZE)));
-	const int mz = (int)max(0 , min(gs->mapy - 1, (int)(z / SQUARE_SIZE)));
+	//const int mx = (int)max(0 , min(gs->mapx - 1, (int)(x / SQUARE_SIZE)));
+	//const int mz = (int)max(0 , min(gs->mapy - 1, (int)(z / SQUARE_SIZE)));
 	return 0;
 }
 

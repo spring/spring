@@ -36,8 +36,7 @@ static ParamMap paramMap;
 
 static bool InitParamMap();
 
-static void PushFeatureDef(lua_State* L,
-                           const FeatureDef* featureDef, int index);
+//static void PushFeatureDef(lua_State* L, const FeatureDef* featureDef, int index);
 
 // iteration routines
 static int Next(lua_State* L);
@@ -120,7 +119,7 @@ bool LuaFeatureDefs::IsDefaultParam(const string& word)
 
 /******************************************************************************/
 
-static void PushFeatureDef(lua_State* L, const FeatureDef* fd, int index)
+/*static void PushFeatureDef(lua_State* L, const FeatureDef* fd, int index)
 {
 	lua_pushnumber(L, fd->id);
 	lua_newtable(L); { // the proxy table
@@ -155,7 +154,7 @@ static void PushFeatureDef(lua_State* L, const FeatureDef* fd, int index)
 	lua_rawset(L, -3);
 
 	lua_rawset(L, index); // proxy table into FeatureDefs
-}
+}*/
 
 
 /******************************************************************************/
@@ -277,7 +276,7 @@ static int FeatureDefNewIndex(lua_State* L)
 static int FeatureDefMetatable(lua_State* L)
 {
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const FeatureDef* fd = (const FeatureDef*)userData;
+	//const FeatureDef* fd = (const FeatureDef*)userData;
 	return 0;
 }
 

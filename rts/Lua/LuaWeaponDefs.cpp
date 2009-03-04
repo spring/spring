@@ -55,7 +55,7 @@ static int DamagesArray(lua_State* L, const void* data);
 static int CustomParamsTable(lua_State* L, const void* data);
 static int GuiSoundSetTable(lua_State* L, const void* data);
 static int CategorySetFromBits(lua_State* L, const void* data);
-static int CategorySetFromString(lua_State* L, const void* data);
+//static int CategorySetFromString(lua_State* L, const void* data);
 
 
 /******************************************************************************/
@@ -232,7 +232,7 @@ static int WeaponDefNewIndex(lua_State* L)
 static int WeaponDefMetatable(lua_State* L)
 {
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const WeaponDef* wd = (const WeaponDef*)userData;
+	//const WeaponDef* wd = (const WeaponDef*)userData;
 	return 0;
 }
 
@@ -361,13 +361,13 @@ static int CategorySetFromBits(lua_State* L, const void* data)
 }
 
 
-static int CategorySetFromString(lua_State* L, const void* data)
+/*static int CategorySetFromString(lua_State* L, const void* data)
 {
 	const string& str = *((const string*)data);
 	const string lower = StringToLower(str);
 	const vector<string> cats = CSimpleParser::Tokenize(lower, 0);
 	return BuildCategorySet(L, cats);
-}
+}*/
 
 
 static int CustomParamsTable(lua_State* L, const void* data)
