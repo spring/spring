@@ -74,7 +74,7 @@ bool hpiutil::sqshstream::decompress()
 	boost::uint8_t *compstring = (boost::uint8_t*)calloc(compressedsize,sizeof(boost::uint8_t));
 	stream->read(compstring,SQSH_HEADER,compressedsize);
 	if (encrypt) {
-		for (int i = 0; i < compressedsize; i++)
+		for (boost::uint32_t i = 0; i < compressedsize; i++)
 			compstring[i] = compstring[i] - i ^ i;
 	}
 	position = 0;
@@ -121,7 +121,7 @@ boost::uint32_t hpiutil::sqshstream::read(boost::uint8_t *buf)
 		return 0;
 	boost::uint32_t oldpos = position;
 	boost::uint32_t len = bitmin(sizeof(buf),(fullsize-position));
-	for (int i = 0; i < len; i++)
+	for (boost::uint32_t i = 0; i < len; i++)
 		buf[i] = data[position++];
 	return position - oldpos;
 }
@@ -140,7 +140,7 @@ boost::uint32_t hpiutil::sqshstream::read(boost::uint8_t *buf, const boost::uint
 	if ((position >= fullsize)||!valid)
 		return 0;
 	boost::uint32_t reallen = bitmin(len,(fullsize-position));
-	for (int i = 0; i < reallen; i++)
+	for (boost::uint32_t i = 0; i < reallen; i++)
 		buf[i] = data[position++];
 	return position - off;
 }
@@ -157,7 +157,7 @@ boost::uint32_t hpiutil::sqshstream::readall(boost::uint8_t *buf)
 {
 	if (!valid)
 		return 0;
-	int i;
+	boost::uint32_t i;
 	for (i = 0; i < fullsize; i++)
 		buf[i] = data[i];
 	return i;

@@ -212,11 +212,11 @@ CR_REG_METADATA(CGame,(
 
 
 CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile)
-: lastFrameTime(0),
-  drawMode(notDrawing),
+: drawMode(notDrawing),
   drawSky(true),
   drawWater(true),
-  drawGround(true)
+  drawGround(true),
+  lastFrameTime(0)
 {
 	game = this;
 	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
@@ -4669,7 +4669,7 @@ static unsigned char GetLuaColor(const LuaTable& tbl, int channel, unsigned char
 
 void CGame::ReColorTeams()
 {
-	for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
+	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		CTeam* team = teamHandler->Team(t);
 		team->origColor[0] = team->color[0];
 		team->origColor[1] = team->color[1];
