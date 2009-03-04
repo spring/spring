@@ -31,7 +31,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Interface/AISEvents.h"
 #include "Interface/AISCommands.h"
-#include "Interface/SSAILibrary.h"
+#include "Interface/SSkirmishAILibrary.h"
 #include "SkirmishAILibraryInfo.h"
 #include "SSkirmishAICallbackImpl.h"
 

@@ -23,7 +23,7 @@
 #include "AIInterfaceKey.h"
 #include <string>
 
-CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
+CSkirmishAILibrary::CSkirmishAILibrary(const SSkirmishAILibrary& ai,
 		const SkirmishAIKey& key)
 		: sSAI(ai), key(key) {
 

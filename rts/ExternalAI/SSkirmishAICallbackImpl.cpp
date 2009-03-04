@@ -25,7 +25,7 @@
 #include "SAIInterfaceCallbackImpl.h"
 #include "EngineOutHandler.h"
 #include "Interface/AISCommands.h"
-#include "Interface/SSAILibrary.h"
+#include "Interface/SSkirmishAILibrary.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"

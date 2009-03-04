@@ -83,7 +83,7 @@ extern "C" {
 //#include "ELevelOfSupport.h"
 
 //enum ELevelOfSupport;
-struct SSAILibrary;
+struct SSkirmishAILibrary;
 struct SStaticGlobalData;
 
 /**
@@ -163,7 +163,7 @@ struct SAIInterfaceLibrary {
 	 * @return     0: ok
 	 *          != 0: error
 	 */
-	const struct SSAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
+	const struct SSkirmishAILibrary* (CALLING_CONV *loadSkirmishAILibrary)(
 			const char* const shortName,
 			const char* const version);
 

@@ -21,7 +21,7 @@
 #include "AIExport.h"
 
 // AI interface stuff
-#include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "LegacyCpp/AIGlobalAI.h"
 #include "Game/GameVersion.h"

@@ -18,7 +18,7 @@
 #ifndef _INTERFACE_H
 #define _INTERFACE_H
 
-#include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "CUtils/SSkirmishAISpecifier.h"
 
 #include <map>
@@ -40,7 +40,7 @@ public:
 //			const char* engineVersion, int engineAIInterfaceGeneratedVersion);
 
 	// skirmish AI methods
-	const SSAILibrary* LoadSkirmishAILibrary(
+	const SSkirmishAILibrary* LoadSkirmishAILibrary(
 		const char* const shortName,
 		const char* const version);
 	int UnloadSkirmishAILibrary(
@@ -50,9 +50,9 @@ public:
 
 private:
 	// these functions actually load and unload the libraries
-	SharedLib* Load(const SSkirmishAISpecifier& aiKeyHash, SSAILibrary* ai);
+	SharedLib* Load(const SSkirmishAISpecifier& aiKeyHash, SSkirmishAILibrary* ai);
 	SharedLib* LoadSkirmishAILib(const std::string& libFilePath,
-			SSAILibrary* ai);
+			SSkirmishAILibrary* ai);
 
 	static void reportInterfaceFunctionError(const std::string& libFileName,
 			const std::string& functionName);
@@ -70,7 +70,7 @@ private:
 // 	typedef std::map<const SSkirmishAISpecifier,
 // 			std::map<std::string, std::string>,
 // 			SSkirmishAISpecifier_Comparator> T_skirmishAIInfos;
-	typedef std::map<const SSkirmishAISpecifier, SSAILibrary*,
+	typedef std::map<const SSkirmishAISpecifier, SSkirmishAILibrary*,
 			SSkirmishAISpecifier_Comparator> T_skirmishAIs;
 	typedef std::map<const SSkirmishAISpecifier, SharedLib*,
 			SSkirmishAISpecifier_Comparator> T_skirmishAILibs;

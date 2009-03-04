@@ -42,7 +42,7 @@
 // Files that have ot be included when using this define:
 // * ExternalAI/Interface/ELevelOfSupport.h
 // * ExternalAI/Interface/SAIFloat3.h
-// * ExternalAI/Interface/SSAILibrary.h
+// * ExternalAI/Interface/SSkirmishAILibrary.h
 // * ExternalAI/Interface/SSkirmishAICallback.h
 // * ExternalAI/Interface/SAIInterfaceLibrary.h
 // * ExternalAI/Interface/SAIInterfaceCallback.h
@@ -58,7 +58,7 @@
 #define AIINTERFACE_ABI_VERSION_FAIL ( \
 	  sizeof(enum LevelOfSupport) \
 	+ sizeof(struct SAIFloat3) \
-	+ sizeof(struct SSAILibrary) \
+	+ sizeof(struct SSkirmishAILibrary) \
 	+ sizeof(struct SSkirmishAICallback) \
 	+ sizeof(struct SAIInterfaceLibrary) \
 	+ sizeof(struct SAIInterfaceCallback) \
