@@ -22,7 +22,7 @@
 
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
-#include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
 struct SSkirmishAICallback;
 
@@ -88,11 +88,11 @@ CInterface::CInterface(int interfaceId,
 // 	return spec;
 // }
 
-const SSAILibrary* CInterface::LoadSkirmishAILibrary(
+const SSkirmishAILibrary* CInterface::LoadSkirmishAILibrary(
 		const char* const shortName,
 		const char* const version) {
 
-	SSAILibrary* ai = NULL;
+	SSkirmishAILibrary* ai = NULL;
 
 	SSkirmishAISpecifier spec;
 	spec.shortName = shortName;
@@ -103,7 +103,7 @@ const SSAILibrary* CInterface::LoadSkirmishAILibrary(
 	T_skirmishAIs::iterator skirmishAI;
 	skirmishAI = myLoadedSkirmishAIs.find(spec);
 	if (skirmishAI == myLoadedSkirmishAIs.end()) {
-		ai = new SSAILibrary;
+		ai = new SSkirmishAILibrary;
 		SharedLib* lib = Load(spec, ai);
 		myLoadedSkirmishAIs[spec] = ai;
 		myLoadedSkirmishAILibs[spec] = lib;
@@ -150,11 +150,11 @@ int CInterface::UnloadAllSkirmishAILibraries() {
 
 // private functions following
 
-SharedLib* CInterface::Load(const SSkirmishAISpecifier& spec, SSAILibrary* skirmishAILibrary) {
+SharedLib* CInterface::Load(const SSkirmishAISpecifier& spec, SSkirmishAILibrary* skirmishAILibrary) {
 	return LoadSkirmishAILib(FindLibFile(spec), skirmishAILibrary);
 }
 SharedLib* CInterface::LoadSkirmishAILib(const std::string& libFilePath,
-		SSAILibrary* skirmishAILibrary) {
+		SSkirmishAILibrary* skirmishAILibrary) {
 
 	SharedLib* sharedLib = SharedLib::Instantiate(libFilePath);
 

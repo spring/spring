@@ -18,7 +18,7 @@
 #include "SkirmishAILibraryInfo.h"
 
 #include "Interface/aidefines.h"
-#include "Interface/SSAILibrary.h"
+#include "Interface/SSkirmishAILibrary.h"
 #include "SkirmishAIKey.h"
 #include "ISkirmishAILibrary.h"
 #include "Util.h"

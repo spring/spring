@@ -24,7 +24,7 @@
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
-#include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/AISEvents.h"
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
 
@@ -952,7 +952,7 @@ bool java_releaseStatic() {
 	return true;
 }
 
-bool java_getSkirmishAIAndMethod(unsigned int teamId, jobject* o_ai,
+static inline bool java_getSkirmishAIAndMethod(unsigned int teamId, jobject* o_ai,
 		unsigned int methodIndex, jmethodID* mth) {
 
 	bool success = false;
@@ -960,7 +960,7 @@ bool java_getSkirmishAIAndMethod(unsigned int teamId, jobject* o_ai,
 	unsigned int implId = teamId_aiImplId[teamId];
 	*o_ai = aiImplId_instance[implId];
 	*mth = aiImplId_methods[implId][methodIndex];
-	success = (*mth) != NULL;
+	success = ((*mth) != NULL);
 
 	return success;
 }
@@ -1303,22 +1303,30 @@ int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
 	if (success) {
 		ESTABLISH_JAVA_ENV
 		JNIEnv* env = java_getJNIEnv();
+
 		jlong jniPointerToData = (jlong) ((intptr_t)data);
+
 		// instantiate a JNA Pointer
 		jobject jnaPointerToData = (*env)->NewObject(env, g_cls_jnaPointer,
 				g_m_jnaPointer_ctor_long, jniPointerToData);
-		if ((*env)->ExceptionCheck(env)) {
+
+		if (jnaPointerToData == NULL || (*env)->ExceptionCheck(env)) {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 					"handleEvent: creating JNA pointer to data failed");
 			(*env)->ExceptionDescribe(env);
 			res = -3;
+			jnaPointerToData = NULL;
+			success = false;
 		}
-		res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId, topic,
-				jnaPointerToData);
-		if ((*env)->ExceptionCheck(env)) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "handleEvent: call failed");
-			(*env)->ExceptionDescribe(env);
-			res = -2;
+
+		if (success) {
+			res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId, topic,
+					jnaPointerToData);
+			if ((*env)->ExceptionCheck(env)) {
+				simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "handleEvent: call failed");
+				(*env)->ExceptionDescribe(env);
+				res = -2;
+			}
 		}
 		ESTABLISH_SPRING_ENV
 	}

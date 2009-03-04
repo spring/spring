@@ -25,7 +25,7 @@
 #endif
 #if defined BUILDING_SKIRMISH_AI
 // for SKIRMISH_AI_PROPERTY_DATA_DIR
-#include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #elif defined BUILDING_AI_INTERFACE
 // for AI_INTERFACE_PROPERTY_DATA_DIR
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"

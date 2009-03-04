@@ -25,7 +25,7 @@
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #include "ExternalAI/Interface/SAIInterfaceCallback.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
-#include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 
 #include <stdbool.h>  // bool, true, false
 #include <string.h>   // strlen(), strcat(), strcpy()
@@ -211,7 +211,7 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
 }
 
 // skirmish AI methods
-static struct SSAILibrary* mySSAILibrary = NULL;
+static struct SSkirmishAILibrary* mySSkirmishAILibrary = NULL;
 
 
 
@@ -262,28 +262,28 @@ int CALLING_CONV proxy_skirmishAI_handleEvent(
 }
 
 
-EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
+EXPORT(const struct SSkirmishAILibrary*) loadSkirmishAILibrary(
 		const char* const shortName,
 		const char* const version) {
 
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary %u", 0);
-	if (mySSAILibrary == NULL) {
-		mySSAILibrary =
-				(struct SSAILibrary*) malloc(sizeof(struct SSAILibrary));
+	if (mySSkirmishAILibrary == NULL) {
+		mySSkirmishAILibrary =
+				(struct SSkirmishAILibrary*) malloc(sizeof(struct SSkirmishAILibrary));
 
-		mySSAILibrary->getLevelOfSupportFor =
+		mySSkirmishAILibrary->getLevelOfSupportFor =
 				&proxy_skirmishAI_getLevelOfSupportFor;
 /*
-		mySSAILibrary->getInfo = proxy_skirmishAI_getInfo;
-		mySSAILibrary->getOptions = proxy_skirmishAI_getOptions;
+		mySSkirmishAILibrary->getInfo = proxy_skirmishAI_getInfo;
+		mySSkirmishAILibrary->getOptions = proxy_skirmishAI_getOptions;
 */
-		mySSAILibrary->init = &proxy_skirmishAI_init;
-		mySSAILibrary->release = &proxy_skirmishAI_release;
-		mySSAILibrary->handleEvent = &proxy_skirmishAI_handleEvent;
+		mySSkirmishAILibrary->init = &proxy_skirmishAI_init;
+		mySSkirmishAILibrary->release = &proxy_skirmishAI_release;
+		mySSkirmishAILibrary->handleEvent = &proxy_skirmishAI_handleEvent;
 	}
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "loadSkirmishAILibrary %u", 10);
 
-	return mySSAILibrary;
+	return mySSkirmishAILibrary;
 }
 EXPORT(int) unloadSkirmishAILibrary(
 		const char* const shortName,

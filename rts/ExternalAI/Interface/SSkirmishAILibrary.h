@@ -103,7 +103,7 @@ struct SSkirmishAICallback;
  * by the shared AI library. This struct then goes to the engine
  * which calls the functions appropriately.
  */
-struct SSAILibrary {
+struct SSkirmishAILibrary {
 
 	// static AI library functions
 

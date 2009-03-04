@@ -42,7 +42,7 @@ extern "C" {
  * You should always append new event topics at the end of this list,
  * and adjust NUM_EVENTS.
  *
- * @see SSAILibrary.handleEvent()
+ * @see SSkirmishAILibrary.handleEvent()
  */
 enum EventTopic {
 	EVENT_NULL                         =  0,
