@@ -69,7 +69,7 @@ boost::uint32_t hpiutil::substream::read(boost::uint8_t *buf)
 		return 0;
 	boost::uint32_t oldpos = position;
 	boost::uint32_t len = bitmin(sizeof(buf),(length-position));
-	for (int j = 0; j < len; j++)
+	for (boost::uint32_t j = 0; j < len; j++)
 		buf[j] = data[position++];
 	return position - oldpos;
 }
@@ -88,7 +88,7 @@ boost::uint32_t hpiutil::substream::read(boost::uint8_t *buf, const boost::uint3
 	if (position >= length)
 		return 0;
 	boost::uint32_t reallen = bitmin(len,(length-position));
-	for (int j = 0; j < reallen; j++)
+	for (boost::uint32_t j = 0; j < reallen; j++)
 		buf[j] = data[position++];
 	return position-off;
 }
@@ -103,7 +103,7 @@ boost::uint32_t hpiutil::substream::read(boost::uint8_t *buf, const boost::uint3
 boost::uint32_t hpiutil::substream::checksum(const boost::uint32_t start)
 {
 	boost::uint32_t check = 0;
-	for (int i = start; i < length; i++)
+	for (boost::uint32_t i = start; i < length; i++)
 		check += data[i];
 	return check;
 }

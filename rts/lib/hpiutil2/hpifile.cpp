@@ -104,7 +104,7 @@ hpiutil::hpientry_ptr hpiutil::hpifile::dirinfo(std::string const &parentname, s
 	file->seek(offset);
 	boost::uint32_t entries = file->readint();
 	file->readint(); // unknown dword
-	for (int i = 0; i < entries; i++) {
+	for (boost::uint32_t i = 0; i < entries; i++) {
 		boost::uint32_t nameoffset = file->readint();
 		boost::uint32_t infooffset = file->readint();
 		boost::uint8_t entrytype = file->read();
@@ -167,11 +167,11 @@ boost::uint32_t hpiutil::hpifile::getdata(hpientry_ptr const &he, boost::uint8_t
 	boost::uint32_t chunknum = bitdiv(he->size,16) + (bitmod(he->size,16)?1:0);
 	boost::uint32_t *chunksizes = (boost::uint32_t*)calloc(chunknum,sizeof(boost::uint32_t));
 	file->seek(he->offset);
-	for (int i = 0; i < chunknum; i++)
+	for (boost::uint32_t i = 0; i < chunknum; i++)
 		chunksizes[i] = file->readint();
 	boost::uint32_t chunkoffset = he->offset + (chunknum * 4);
 	int j = 0;
-	for (int i = 0; i < chunknum; i++) {
+	for (boost::uint32_t i = 0; i < chunknum; i++) {
 		boost::uint32_t chunksize = chunksizes[i];
 		substream *ss = new substream(*file,chunkoffset,chunksize);
 		sqshstream *sqsh = new sqshstream(*ss);

@@ -31,7 +31,7 @@
  * @param s size of the object
  */
 hpiutil::hpientry::hpientry(hpifile &f, std::string const &pname, std::string const &n, const boost::uint32_t o, const boost::uint32_t s)
-  : name(n), parentname(pname), offset(o), size(s), file(&f), directory(false)
+  : name(n), parentname(pname), directory(false), offset(o), size(s), file(&f)
 {
 }
 
