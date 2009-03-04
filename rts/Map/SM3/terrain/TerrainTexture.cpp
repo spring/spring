@@ -57,13 +57,13 @@ namespace terrain {
 
 	RenderSetup::~RenderSetup()
 	{
-		for (int a=0;a<passes.size();a++)
+		for (size_t a=0;a<passes.size();a++)
 			delete passes[a].shaderSetup;
 	}
 
 	void RenderSetup::DebugOutput()
 	{
-		for (int a=0;a<passes.size();a++)
+		for (size_t a=0;a<passes.size();a++)
 		{
 			const char *str=0;
 			RenderPass& p = passes[a];
@@ -78,7 +78,7 @@ namespace terrain {
 				str="Pass_Replace";
 
 			string shaderstr = p.shaderSetup ? p.shaderSetup->GetDebugDesc () : string("none");
-			d_trace ("Pass (%d): %s, %s. Shader: %s\n", a, str, p.invertAlpha ? "invertalpha" : "", shaderstr.c_str());
+			d_trace ("Pass (%lu): %s, %s. Shader: %s\n", a, str, p.invertAlpha ? "invertalpha" : "", shaderstr.c_str());
 		}
 		d_trace ("\n");
 	}
@@ -89,7 +89,7 @@ namespace terrain {
 
 	RenderSetupCollection::~RenderSetupCollection()
 	{
-		for (int a=0;a<renderSetup.size();a++)
+		for (size_t a=0;a<renderSetup.size();a++)
 			delete renderSetup[a];
 	}
 
@@ -116,18 +116,18 @@ namespace terrain {
 	{
 		delete shadowMapParams;
 		delete lightmap;
-		for (int a=0;a<texNodeSetup.size();a++)
+		for (size_t a=0;a<texNodeSetup.size();a++)
 			delete texNodeSetup[a];
 
 		delete shaderHandler;
 		texNodeSetup.clear();
 
 		// free all blendmaps
-		for (int a=0;a<blendMaps.size();a++)
+		for (size_t a=0;a<blendMaps.size();a++)
 			delete blendMaps[a];
 		blendMaps.clear();
 		// free all textures
-		for (int a=0;a<textures.size();a++)
+		for (size_t a=0;a<textures.size();a++)
 			delete textures[a];
 		textures.clear();
 	}
@@ -202,7 +202,7 @@ namespace terrain {
 
 		if (cb) cb->PrintMsg ("  loading textures and blendmaps...");
 		bool hasBumpmaps = false;
-		for (int a=0;a<shaderDef.stages.size();a++)
+		for (size_t a=0;a<shaderDef.stages.size();a++)
 		{
 			ShaderDef::Stage* st = &shaderDef.stages [a];
 			// Already loaded?
@@ -217,7 +217,7 @@ namespace terrain {
 
 		if (cfg->useBumpMaps && hasBumpmaps)
 		{
-			for (int a=0;a<shaderDef.normalMapStages.size();a++)
+			for (size_t a=0;a<shaderDef.normalMapStages.size();a++)
 			{
 				ShaderDef::Stage* st = &shaderDef.normalMapStages [a];
 
@@ -252,7 +252,7 @@ namespace terrain {
 
 		if (cb) { cb->PrintMsg ("  generating blendmap mipmaps..."); }
 
-		for (int a=0;a<blendMaps.size();a++) {
+		for (size_t a=0;a<blendMaps.size();a++) {
 			Blendmap *bm = blendMaps[a];
 
 			AlphaImage *cur = bm->image;
@@ -263,9 +263,9 @@ namespace terrain {
 				cur = cur->CreateMipmap ();
 			} while (cur);
 
-			for (int c=0;c<bmMipmaps[a].size();c++)
+			for (size_t c=0;c<bmMipmaps[a].size();c++)
 				if (bmMipmaps[a][c]->w == QUAD_W) {
-					gi.testlod.push_back (c);
+					gi.testlod.push_back ((int)c);
 					break;
 				}
 		}
@@ -273,13 +273,13 @@ namespace terrain {
 		if (cb) cb->PrintMsg ("  loading blendmaps into OpenGL...");
 
 		// Convert to textures
-		for (int a=0;a<blendMaps.size();a++) {
+		for (size_t a=0;a<blendMaps.size();a++) {
 			AlphaImage *bm = bmMipmaps[a].back();
 
 			// Save image
 			if (blendMaps[a]->generatorInfo) {
 				char fn[32];
-				SNPRINTF (fn,32, "blendmap%d.jpg", a);
+				SNPRINTF (fn,32, "blendmap%lu.jpg", a);
 				remove(fn);
 				bm->Save (fn);
 			}
@@ -292,9 +292,9 @@ namespace terrain {
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, cfg->anisotropicFiltering);
 
 			deque<AlphaImage*>& mipmaps = bmMipmaps[a];
-			for (int d=0;d<mipmaps.size();d++) {
+			for (size_t d=0;d<mipmaps.size();d++) {
 				AlphaImage *lod = mipmaps[mipmaps.size()-d-1];
-				glTexImage2D (GL_TEXTURE_2D, d, GL_ALPHA, lod->w, lod->h, 0, GL_ALPHA, GL_FLOAT, lod->data);
+				glTexImage2D (GL_TEXTURE_2D, (int)d, GL_ALPHA, lod->w, lod->h, 0, GL_ALPHA, GL_FLOAT, lod->data);
 			}
 			blendMaps[a]->image = 0;
 		}
@@ -325,7 +325,7 @@ namespace terrain {
 		// count passes
 		maxPasses = 0;
 		for (map<uint, RenderSetupCollection*>::iterator mi=gi.nodesetup.begin();mi!=gi.nodesetup.end();++mi) {
-			for (int i = 0; i < mi->second->renderSetup.size(); i++) {
+			for (size_t i = 0; i < mi->second->renderSetup.size(); i++) {
 				RenderSetup *rs = mi->second->renderSetup[i];
 
 				if (rs->passes.size () > maxPasses) {
@@ -335,10 +335,10 @@ namespace terrain {
 			texNodeSetup.push_back (mi->second);
 		}
 
-        if (cb) cb->PrintMsg ("  deleting temporary blendmap data...");
+		if (cb) cb->PrintMsg ("  deleting temporary blendmap data...");
 
 		// Free blendmap mipmap images
-		for (int a=0;a<blendMaps.size();a++) {
+		for (size_t a=0;a<blendMaps.size();a++) {
 			for (deque<AlphaImage*>::iterator i=bmMipmaps[a].begin();i!=bmMipmaps[a].end();++i) {
 				delete *i;
 			}
@@ -354,7 +354,7 @@ namespace terrain {
 	void TerrainTexture::CreateTexProg (TQuad *node, TerrainTexture::GenerateInfo *gi)
 	{
 		// Test blendmaps
-		for (int a=0;a<blendMaps.size();a++) {
+		for (size_t a=0;a<blendMaps.size();a++) {
 			deque <AlphaImage*>& mipmaps = gi->bmMipmaps[a];
 			int mipIndex = node->depth + gi->testlod[a];
 
@@ -377,14 +377,14 @@ namespace terrain {
 			uint vda = 0;
 
 			// create a rendersetup for every shader expression
-			for (int a=0;a<shaders.size();a++)
+			for (size_t a=0;a<shaders.size();a++)
 			{
 				RenderSetup *rs = tns->renderSetup [a] = new RenderSetup;
 
 				shaders[a]->def.Optimize(&rs->shaderDef);
 				shaderHandler->BuildNodeSetup(&rs->shaderDef, rs);
 
-				for (int p=0;p<tns->renderSetup [a]->passes.size();p++) {
+				for (size_t p=0;p<tns->renderSetup [a]->passes.size();p++) {
 					if(tns->renderSetup [a]->passes[p].shaderSetup)
 						vda |= tns->renderSetup [a]->passes[p].shaderSetup->GetVertexDataRequirements ();
 				}
@@ -410,7 +410,7 @@ namespace terrain {
 	{
 		uint key=0;
 		uint mul=1;
-		for (int a=0;a<blendMaps.size();a++) {
+		for (size_t a=0;a<blendMaps.size();a++) {
 			key += mul * (uint)blendMaps[a]->curAreaResult;
 			mul *= 3; // every blendmap::curAreaResult has 3 different states
 		}
@@ -689,7 +689,7 @@ namespace terrain {
 		AlphaImage::AreaTestResult atr = AlphaImage::AREA_ONE;
 
 		// create an optimized shader definition based on replacing the blendmap with a constant
-		for (int a=0;a<src.size();a++)
+		for (size_t a=0;a<src.size();a++)
 		{
 			Stage &st = src[a];
 			if (a == 0) atr = AlphaImage::AREA_MIXED;
@@ -733,8 +733,8 @@ namespace terrain {
 	{
 		const char *opstr[] = { "add", "mul", "alpha" ,"blend" };
 		d_trace ("Shader: %lu stages.\n", stages.size());
-		for (int a=0;a<stages.size();a++){
-			d_trace ("%d\toperation=%s\n",a, opstr[(int)stages[a].operation]);
+		for (size_t a=0;a<stages.size();a++){
+			d_trace ("%lu\toperation=%s\n",a, opstr[(int)stages[a].operation]);
 			d_trace ("\tsource=%s\n", stages[a].sourceName.c_str());
 		}
 	}
