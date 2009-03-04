@@ -87,7 +87,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -285,7 +285,7 @@ static GLuint ParseUnitTexture(const string& texture)
 
 	S3DModel* model;
 
-	if (id >= uh->MaxUnits()) {
+	if (static_cast<size_t>(id) >= uh->MaxUnits()) {
 		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - uh->MaxUnits());
 		if (fd == NULL) {
 			return 0;
@@ -547,9 +547,9 @@ static int material_index(lua_State* L)
 	if (bin == NULL) {
 		return 0;
 	}
-	const LuaMaterial& mat = *bin;
-	if (key == "type") {
-	}
+	//const LuaMaterial& mat = *bin;
+	//if (key == "type") {
+	//}
 	return 0;
 }
 
@@ -684,7 +684,7 @@ int LuaUnitRendering::SetUnitUniform(lua_State* L) // FIXME
 int LuaUnitRendering::SetUnitLuaDraw(lua_State* L)
 {
 	const int unitID = luaL_checkint(L, 1);
-	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		return 0;
 	}
 	CUnit* unit = uh->units[unitID];
@@ -748,7 +748,7 @@ int LuaUnitRendering::Debug(lua_State* L)
 	logOutput.Print("LUAMAT_OPAQUE_REFLECT lastLOD = %i\n", opaqueReflMat.GetLastLOD());
 	logOutput.Print("LUAMAT_SHADOW         lastLOD = %i\n", shadowMat.GetLastLOD());
 
-	for (int lod = 0; lod < unit->lodCount; lod++) {
+	for (unsigned lod = 0; lod < unit->lodCount; lod++) {
 		PrintUnitLOD(unit, lod);
 	}
 

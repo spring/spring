@@ -1212,7 +1212,7 @@ static CUnit* ParseUnit(lua_State* L, const char* caller, int luaIndex)
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
 	const int unitID = lua_toint(L, luaIndex);
-	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];

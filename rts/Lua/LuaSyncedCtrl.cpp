@@ -318,7 +318,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -401,7 +401,7 @@ static CUnit* CheckUnitID(lua_State* L, int index)
 {
 	luaL_checknumber(L, index);
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		luaL_error(L, "Bad unitID: %d\n", unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -912,7 +912,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 
-	if (uh->unitsByDefs[teamID][unitDef->id].size() >= unitDef->maxThisUnit) {
+	if (uh->unitsByDefs[teamID][unitDef->id].size() >= static_cast<size_t>(unitDef->maxThisUnit)) {
 		return 0; // unit limit reached
 	}
 
@@ -1909,7 +1909,7 @@ int LuaSyncedCtrl::AddUnitDamage(lua_State* L)
 
 	CUnit* attacker = NULL;
 	if (attackerID >= 0) {
-		if (attackerID >= uh->MaxUnits()) {
+		if (static_cast<size_t>(attackerID) >= uh->MaxUnits()) {
 			return 0;
 		}
 		attacker = uh->units[attackerID];

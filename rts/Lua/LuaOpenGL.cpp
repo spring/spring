@@ -1254,7 +1254,7 @@ int LuaOpenGL::Text(lua_State* L)
 	if (outline) {
 		const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
 		const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
-		const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		//const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 		if (lightOut) {
 			font->OutlineS(true, lightOutline);
@@ -1550,7 +1550,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -1906,7 +1906,7 @@ static inline CUnit* ParseDrawUnit(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (unitID >= uh->MaxUnits())) {
+	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %i\n", caller, unitID);
 	}
 	CUnit* unit = uh->units[unitID];
@@ -3578,7 +3578,7 @@ static bool ParseUnitTexture(const string& texture)
 
 	S3DModel* model;
 
-	if (id >= uh->MaxUnits()) {
+	if (static_cast<size_t>(id) >= uh->MaxUnits()) {
 		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - uh->MaxUnits());
 		if (fd == NULL) {
 			return false;

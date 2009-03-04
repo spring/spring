@@ -265,7 +265,7 @@ static int UnitDefNewIndex(lua_State* L)
 static int UnitDefMetatable(lua_State* L)
 {
 	const void* userData = lua_touserdata(L, lua_upvalueindex(1));
-	const UnitDef* ud = (const UnitDef*)userData;
+	//const UnitDef* ud = (const UnitDef*)userData;
 	return 0;
 }
 
