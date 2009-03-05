@@ -31,7 +31,7 @@ public:
 	 *
 	 * Accesses a CTeam instance at a given index
 	 */
-	CTeam* Team(int i) { return &teams[i]; }
+	CTeam* Team(int i);
 
 	/**
 	 * @brief ally
@@ -41,7 +41,7 @@ public:
 	 *
 	 * Returns ally at [a][b]
 	 */
-	bool Ally(int a, int b) { return allies[a][b]; }
+	bool Ally(int a, int b);
 
 	/**
 	 * @brief ally team
@@ -50,7 +50,7 @@ public:
 	 *
 	 * returns the team2ally at given index
 	 */
-	int AllyTeam(int team) { return team2allyteam[team]; }
+	int AllyTeam(int team);
 
 	/**
 	 * @brief allied teams
@@ -60,7 +60,7 @@ public:
 	 *
 	 * Tests whether teams are allied
 	 */
-	bool AlliedTeams(int a, int b) { return allies[team2allyteam[a]][team2allyteam[b]]; }
+	bool AlliedTeams(int a, int b);
 
 	/**
 	 * @brief set ally team
@@ -69,7 +69,7 @@ public:
 	 *
 	 * Sets team's ally team
 	 */
-	void SetAllyTeam(int team, int allyteam) { team2allyteam[team] = allyteam; }
+	void SetAllyTeam(int team, int allyteam);
 
 	/**
 	 * @brief set ally
@@ -79,15 +79,15 @@ public:
 	 *
 	 * Sets two allyteams to be allied or not
 	 */
-	void SetAlly(int allyteamA, int allyteamB, bool allied) { allies[allyteamA][allyteamB] = allied; }
+	void SetAlly(int allyteamA, int allyteamB, bool allied);
 
 	// accessors
 
-	int GaiaTeamID() const { return gaiaTeamID; }
-	int GaiaAllyTeamID() const { return gaiaAllyTeamID; }
+	int GaiaTeamID() const;
+	int GaiaAllyTeamID() const;
 
-	int ActiveTeams() const { return teams.size(); }
-	int ActiveAllyTeams() const { return allies.size(); }
+	int ActiveTeams() const;
+	int ActiveAllyTeams() const;
 
 	void GameFrame(int frameNum);
 
