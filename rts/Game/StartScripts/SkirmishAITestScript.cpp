@@ -42,8 +42,8 @@ void CSkirmishAITestScript::GameStart(void)
 	teamHandler->Team(skirmishAI_teamId)->isAI = true;
 	teamHandler->Team(skirmishAI_teamId)->skirmishAIKey = key;
 	teamHandler->Team(skirmishAI_teamId)->skirmishAIOptions = options;
-	teamHandler->Team(skirmishAI_teamId)->leader = 0;
-	playerHandler->Player(0)->SetControlledTeams();
+	teamHandler->Team(skirmishAI_teamId)->leader = player_teamId;
+	playerHandler->Player(player_teamId)->SetControlledTeams();
 
 	teamHandler->Team(player_teamId)->energy        = 1000;
 	teamHandler->Team(player_teamId)->energyStorage = 1000;
