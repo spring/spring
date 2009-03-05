@@ -732,7 +732,7 @@ const char* CAIAICallback::GetMapName() {
 }
 
 const char* CAIAICallback::GetModName() {
-	return sAICallback->Clb_Mod_getName(teamId);
+	return sAICallback->Clb_Mod_getFileName(teamId);
 }
 
 float CAIAICallback::GetElevation(float x, float z) {

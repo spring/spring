@@ -10,7 +10,8 @@ public:
 
 	void Init(const char* modname);
 
-	std::string filename; // archive filename
+	/// archive filename
+	std::string filename;
 
 	std::string humanName;
 	std::string shortName;
@@ -19,43 +20,64 @@ public:
 	std::string description;
 
 	bool allowTeamColors;
-	
+
 	// Build behaviour
-	bool constructionDecay;               // Should constructions without builders decay?
-	int constructionDecayTime;            // How long until they start decaying?
-	float constructionDecaySpeed;         // How fast do they decay?
+	/// Should constructions without builders decay?
+	bool constructionDecay;
+	/// How long until they start decaying?
+	int constructionDecayTime;
+	/// How fast do they decay?
+	float constructionDecaySpeed;
 
 	// Reclaim behaviour
-	int multiReclaim;	                  // 0 = 1 reclaimer per feature max, otherwise unlimited
-	int reclaimMethod;	                  // 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
-	int reclaimUnitMethod;                // 0 = Revert to wireframe, gradual reclaim, 1 = Subtract HP, give full metal at end, default 1
-	float reclaimUnitEnergyCostFactor;    // How much energy should reclaiming a unit cost, default 0.0
-	float reclaimUnitEfficiency;          // How much metal should reclaim return, default 1.0
-	float reclaimFeatureEnergyCostFactor; // How much should energy should reclaiming a feature cost, default 0.0
-	bool reclaimAllowEnemies;             // Allow reclaiming enemies? default true
-	bool reclaimAllowAllies;              // Allow reclaiming allies? default true
+	/// 0 = 1 reclaimer per feature max, otherwise unlimited
+	int multiReclaim;
+	/// 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
+	int reclaimMethod;
+	/// 0 = Revert to wireframe, gradual reclaim, 1 = Subtract HP, give full metal at end, default 1
+	int reclaimUnitMethod;
+	/// How much energy should reclaiming a unit cost, default 0.0
+	float reclaimUnitEnergyCostFactor;
+	/// How much metal should reclaim return, default 1.0
+	float reclaimUnitEfficiency;
+	/// How much should energy should reclaiming a feature cost, default 0.0
+	float reclaimFeatureEnergyCostFactor;
+	/// Allow reclaiming enemies? default true
+	bool reclaimAllowEnemies;
+	/// Allow reclaiming allies? default true
+	bool reclaimAllowAllies;
 
 	// Repair behaviour
-	float repairEnergyCostFactor;         // How much should energy should repair cost, default 0.0
+	/// How much should energy should repair cost, default 0.0
+	float repairEnergyCostFactor;
 
 	// Resurrect behaviour
-	float resurrectEnergyCostFactor;      // How much should energy should resurrect cost, default 0.5
+	/// How much should energy should resurrect cost, default 0.5
+	float resurrectEnergyCostFactor;
 
 	// Capture behaviour
-	float captureEnergyCostFactor;        // How much should energy should capture cost, default 0.0
+	/// How much should energy should capture cost, default 0.0
+	float captureEnergyCostFactor;
 
 	// Transportation behaviour
-	int transportGround;                  // 0 = all ground units cannot be transported, 1 = all ground units can be transported (mass and size restrictions still apply). Defaults to 1.
-	int transportHover;                   // 0 = all hover units cannot be transported, 1 = all hover units can be transported (mass and size restrictions still apply). Defaults to 0.
-	int transportShip;                    // 0 = all naval units cannot be transported, 1 = all naval units can be transported (mass and size restrictions still apply). Defaults to 0.
-	int transportAir;                     // 0 = all air units cannot be transported, 1 = all air units can be transported (mass and size restrictions still apply). Defaults to 0.
+	/// 0 = all ground units cannot be transported, 1 = all ground units can be transported (mass and size restrictions still apply). Defaults to 1.
+	int transportGround;
+	/// 0 = all hover units cannot be transported, 1 = all hover units can be transported (mass and size restrictions still apply). Defaults to 0.
+	int transportHover;
+	/// 0 = all naval units cannot be transported, 1 = all naval units can be transported (mass and size restrictions still apply). Defaults to 0.
+	int transportShip;
+	/// 0 = all air units cannot be transported, 1 = all air units can be transported (mass and size restrictions still apply). Defaults to 0.
+	int transportAir;
 
 	// Fire-on-dying-units behaviour
-	int fireAtKilled;                     // 1 = units fire at enemies running Killed() script, 0 = units ignore such enemies
-	int fireAtCrashing;                   // 1 = units fire at crashing aircrafts, 0 = units ignore crashing aircrafts
+	/// 1 = units fire at enemies running Killed() script, 0 = units ignore such enemies
+	int fireAtKilled;
+	/// 1 = units fire at crashing aircrafts, 0 = units ignore crashing aircrafts
+	int fireAtCrashing;
 
-	int flankingBonusModeDefault;         // 0=no flanking bonus;  1=global coords, mobile;  2=unit coords, mobile;  3=unit coords, locked
-	
+	/// 0=no flanking bonus;  1=global coords, mobile;  2=unit coords, mobile;  3=unit coords, locked
+	int flankingBonusModeDefault;
+
 	// Sensor behaviour
 	/// miplevel for los
 	int losMipLevel;
