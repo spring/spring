@@ -15,6 +15,7 @@
 #include "LogOutput.h"
 #include "FileSystem/FileSystem.h"
 #include "Game/GameSetup.h"
+#include "Game/PlayerHandler.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 
@@ -29,12 +30,6 @@ CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIKey& key,
 			+ std::string(key.GetVersion())),
 		key(key), options(options)
 {
-	teamHandler->Team(skirmishAI_teamId)->isAI = true;
-	teamHandler->Team(skirmishAI_teamId)->skirmishAIKey
-			= SkirmishAIKey(
-					"CSkirmishAITestScript:TEMP",
-					"CSkirmishAITestScript:TEMP");
-	teamHandler->Team(skirmishAI_teamId)->leader = 0;
 }
 
 
@@ -48,6 +43,7 @@ void CSkirmishAITestScript::GameStart(void)
 	teamHandler->Team(skirmishAI_teamId)->skirmishAIKey = key;
 	teamHandler->Team(skirmishAI_teamId)->skirmishAIOptions = options;
 	teamHandler->Team(skirmishAI_teamId)->leader = 0;
+	playerHandler->Player(0)->SetControlledTeams();
 
 	teamHandler->Team(player_teamId)->energy        = 1000;
 	teamHandler->Team(player_teamId)->energyStorage = 1000;
