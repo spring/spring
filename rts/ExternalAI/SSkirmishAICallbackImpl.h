@@ -570,7 +570,50 @@ EXPORT(bool             ) skirmishAiCallback_Group_isSelected(int teamId, int gr
 
 
 // BEGINN OBJECT Mod
-EXPORT(const char*      ) skirmishAiCallback_Mod_getName(int teamId);
+EXPORT(const char* const) skirmishAiCallback_Mod_getFileName(int teamId);
+
+EXPORT(const char* const) skirmishAiCallback_Mod_getHumanName(int teamId);
+EXPORT(const char* const) skirmishAiCallback_Mod_getShortName(int teamId);
+EXPORT(const char* const) skirmishAiCallback_Mod_getVersion(int teamId);
+EXPORT(const char* const) skirmishAiCallback_Mod_getMutator(int teamId);
+EXPORT(const char* const) skirmishAiCallback_Mod_getDescription(int teamId);
+
+EXPORT(bool             ) skirmishAiCallback_Mod_getAllowTeamColors(int teamId);
+
+EXPORT(bool             ) skirmishAiCallback_Mod_getConstructionDecay(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getConstructionDecayTime(int teamId);
+EXPORT(float            ) skirmishAiCallback_Mod_getConstructionDecaySpeed(int teamId);
+
+EXPORT(int              ) skirmishAiCallback_Mod_getMultiReclaim(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getReclaimMethod(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getReclaimUnitMethod(int teamId);
+EXPORT(float            ) skirmishAiCallback_Mod_getReclaimUnitEnergyCostFactor(int teamId);
+EXPORT(float            ) skirmishAiCallback_Mod_getReclaimUnitEfficiency(int teamId);
+EXPORT(float            ) skirmishAiCallback_Mod_getReclaimFeatureEnergyCostFactor(int teamId);
+EXPORT(bool             ) skirmishAiCallback_Mod_getReclaimAllowEnemies(int teamId);
+EXPORT(bool             ) skirmishAiCallback_Mod_getReclaimAllowAllies(int teamId);
+
+EXPORT(float            ) skirmishAiCallback_Mod_getRepairEnergyCostFactor(int teamId);
+
+EXPORT(float            ) skirmishAiCallback_Mod_getResurrectEnergyCostFactor(int teamId);
+
+EXPORT(float            ) skirmishAiCallback_Mod_getCaptureEnergyCostFactor(int teamId);
+
+EXPORT(int              ) skirmishAiCallback_Mod_getTransportGround(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getTransportHover(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getTransportShip(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getTransportAir(int teamId);
+
+EXPORT(int              ) skirmishAiCallback_Mod_getFireAtKilled(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getFireAtCrashing(int teamId);
+
+EXPORT(int              ) skirmishAiCallback_Mod_getFlankingBonusModeDefault(int teamId);
+
+EXPORT(int              ) skirmishAiCallback_Mod_getLosMipLevel(int teamId);
+EXPORT(int              ) skirmishAiCallback_Mod_getAirMipLevel(int teamId);
+EXPORT(float            ) skirmishAiCallback_Mod_getLosMul(int teamId);
+EXPORT(float            ) skirmishAiCallback_Mod_getAirLosMul(int teamId);
+EXPORT(bool             ) skirmishAiCallback_Mod_getRequireSonarUnderWater(int teamId);
 // END OBJECT Mod
 
 

@@ -523,7 +523,7 @@ float (CALLING_CONV *Clb_UnitDef_getMaxAileron)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMaxElevator)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMaxRudder)(int teamId, int unitDefId);
 // end: aircraft stuff
-///* returned size is 4 */
+// /* returned size is 4 */
 //const unsigned char*[] (CALLING_CONV *Clb_UnitDef_getYardMaps)(int teamId,
 //		int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getXSize)(int teamId, int unitDefId);
@@ -960,7 +960,135 @@ bool (CALLING_CONV *Clb_Group_isSelected)(int teamId, int groupId);
 
 
 // BEGINN OBJECT Mod
-const char* (CALLING_CONV *Clb_Mod_getName)(int teamId);
+
+/**
+ * archive filename
+ */
+const char* const (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
+
+/**
+ * archive filename
+ */
+const char* const (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
+const char* const (CALLING_CONV *Clb_Mod_getShortName)(int teamId);
+const char* const (CALLING_CONV *Clb_Mod_getVersion)(int teamId);
+const char* const (CALLING_CONV *Clb_Mod_getMutator)(int teamId);
+const char* const (CALLING_CONV *Clb_Mod_getDescription)(int teamId);
+
+bool              (CALLING_CONV *Clb_Mod_getAllowTeamColors)(int teamId);
+
+/**
+ * Should constructions without builders decay?
+ */
+bool              (CALLING_CONV *Clb_Mod_getConstructionDecay)(int teamId);
+/**
+ * How long until they start decaying?
+ */
+int               (CALLING_CONV *Clb_Mod_getConstructionDecayTime)(int teamId);
+/**
+ * How fast do they decay?
+ */
+float             (CALLING_CONV *Clb_Mod_getConstructionDecaySpeed)(int teamId);
+
+/**
+ * 0 = 1 reclaimer per feature max, otherwise unlimited
+ */
+int               (CALLING_CONV *Clb_Mod_getMultiReclaim)(int teamId);
+/**
+ * 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
+ */
+int               (CALLING_CONV *Clb_Mod_getReclaimMethod)(int teamId);
+/**
+ * 0 = Revert to wireframe, gradual reclaim, 1 = Subtract HP, give full metal at end, default 1
+ */
+int               (CALLING_CONV *Clb_Mod_getReclaimUnitMethod)(int teamId);
+/**
+ * How much energy should reclaiming a unit cost, default 0.0
+ */
+float             (CALLING_CONV *Clb_Mod_getReclaimUnitEnergyCostFactor)(int teamId);
+/**
+ * How much metal should reclaim return, default 1.0
+ */
+float             (CALLING_CONV *Clb_Mod_getReclaimUnitEfficiency)(int teamId);
+/**
+ * How much should energy should reclaiming a feature cost, default 0.0
+ */
+float             (CALLING_CONV *Clb_Mod_getReclaimFeatureEnergyCostFactor)(int teamId);
+/**
+ * Allow reclaiming enemies? default true
+ */
+bool              (CALLING_CONV *Clb_Mod_getReclaimAllowEnemies)(int teamId);
+/**
+ * Allow reclaiming allies? default true
+ */
+bool              (CALLING_CONV *Clb_Mod_getReclaimAllowAllies)(int teamId);
+
+/**
+ * How much should energy should repair cost, default 0.0
+ */
+float             (CALLING_CONV *Clb_Mod_getRepairEnergyCostFactor)(int teamId);
+
+/**
+ * How much should energy should resurrect cost, default 0.5
+ */
+float             (CALLING_CONV *Clb_Mod_getResurrectEnergyCostFactor)(int teamId);
+
+/**
+ * How much should energy should capture cost, default 0.0
+ */
+float             (CALLING_CONV *Clb_Mod_getCaptureEnergyCostFactor)(int teamId);
+
+/**
+ * 0 = all ground units cannot be transported, 1 = all ground units can be transported (mass and size restrictions still apply). Defaults to 1.
+ */
+int               (CALLING_CONV *Clb_Mod_getTransportGround)(int teamId);
+/**
+ * 0 = all hover units cannot be transported, 1 = all hover units can be transported (mass and size restrictions still apply). Defaults to 0.
+ */
+int               (CALLING_CONV *Clb_Mod_getTransportHover)(int teamId);
+/**
+ * 0 = all naval units cannot be transported, 1 = all naval units can be transported (mass and size restrictions still apply). Defaults to 0.
+ */
+int               (CALLING_CONV *Clb_Mod_getTransportShip)(int teamId);
+/**
+ * 0 = all air units cannot be transported, 1 = all air units can be transported (mass and size restrictions still apply). Defaults to 0.
+ */
+int               (CALLING_CONV *Clb_Mod_getTransportAir)(int teamId);
+
+/**
+ * 1 = units fire at enemies running Killed() script, 0 = units ignore such enemies
+ */
+int               (CALLING_CONV *Clb_Mod_getFireAtKilled)(int teamId);
+/**
+ * 1 = units fire at crashing aircrafts, 0 = units ignore crashing aircrafts
+ */
+int               (CALLING_CONV *Clb_Mod_getFireAtCrashing)(int teamId);
+
+/**
+ * 0=no flanking bonus;  1=global coords, mobile;  2=unit coords, mobile;  3=unit coords, locked
+ */
+int               (CALLING_CONV *Clb_Mod_getFlankingBonusModeDefault)(int teamId);
+
+/**
+ * miplevel for los
+ */
+int               (CALLING_CONV *Clb_Mod_getLosMipLevel)(int teamId);
+/**
+ * miplevel to use for airlos
+ */
+int               (CALLING_CONV *Clb_Mod_getAirMipLevel)(int teamId);
+/**
+ * units sightdistance will be multiplied with this, for testing purposes
+ */
+float             (CALLING_CONV *Clb_Mod_getLosMul)(int teamId);
+/**
+ * units airsightdistance will be multiplied with this, for testing purposes
+ */
+float             (CALLING_CONV *Clb_Mod_getAirLosMul)(int teamId);
+/**
+ * when underwater, units are not in LOS unless also in sonar
+ */
+bool              (CALLING_CONV *Clb_Mod_getRequireSonarUnderWater)(int teamId);
 // END OBJECT Mod
 
 
@@ -1213,7 +1341,7 @@ float (CALLING_CONV *Clb_WeaponDef_0REF1Resource2resourceId0getCost)(int teamId,
 float (CALLING_CONV *Clb_WeaponDef_getSupplyCost)(int teamId, int weaponDefId);
 int (CALLING_CONV *Clb_WeaponDef_getProjectilesPerShot)(int teamId,
 		int weaponDefId);
-///** The "id=" tag in the TDF */
+// /** The "id=" tag in the TDF */
 //int (CALLING_CONV *Clb_WeaponDef_getTdfId)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isTurret)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isOnlyForward)(int teamId, int weaponDefId);

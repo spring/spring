@@ -40,6 +40,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Map/ReadMap.h"
 #include "Map/MetalMap.h"
 #include "Game/SelectedUnits.h"
@@ -952,9 +953,122 @@ EXPORT(SAIFloat3) skirmishAiCallback_Gui_Camera_getPosition(int teamId) {
 
 
 
-EXPORT(const char*) skirmishAiCallback_Mod_getName(int teamId) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetModName();
+
+//########### BEGINN Mod
+
+EXPORT(const char* const) skirmishAiCallback_Mod_getFileName(int teamId) {
+	return modInfo.filename.c_str();
 }
+
+EXPORT(const char* const) skirmishAiCallback_Mod_getHumanName(int teamId) {
+	return modInfo.humanName.c_str();
+}
+EXPORT(const char* const) skirmishAiCallback_Mod_getShortName(int teamId) {
+	return modInfo.shortName.c_str();
+}
+EXPORT(const char* const) skirmishAiCallback_Mod_getVersion(int teamId) {
+	return modInfo.version.c_str();
+}
+EXPORT(const char* const) skirmishAiCallback_Mod_getMutator(int teamId) {
+	return modInfo.mutator.c_str();
+}
+EXPORT(const char* const) skirmishAiCallback_Mod_getDescription(int teamId) {
+	return modInfo.description.c_str();
+}
+
+EXPORT(bool) skirmishAiCallback_Mod_getAllowTeamColors(int teamId) {
+	return modInfo.allowTeamColors;
+}
+
+EXPORT(bool) skirmishAiCallback_Mod_getConstructionDecay(int teamId) {
+	return modInfo.constructionDecay;
+}
+EXPORT(int) skirmishAiCallback_Mod_getConstructionDecayTime(int teamId) {
+	return modInfo.constructionDecayTime;
+}
+EXPORT(float) skirmishAiCallback_Mod_getConstructionDecaySpeed(int teamId) {
+	return modInfo.constructionDecaySpeed;
+}
+
+EXPORT(int) skirmishAiCallback_Mod_getMultiReclaim(int teamId) {
+	return modInfo.multiReclaim;
+}
+EXPORT(int) skirmishAiCallback_Mod_getReclaimMethod(int teamId) {
+	return modInfo.reclaimMethod;
+}
+EXPORT(int) skirmishAiCallback_Mod_getReclaimUnitMethod(int teamId) {
+	return modInfo.reclaimUnitMethod;
+}
+EXPORT(float) skirmishAiCallback_Mod_getReclaimUnitEnergyCostFactor(int teamId) {
+	return modInfo.reclaimUnitEnergyCostFactor;
+}
+EXPORT(float) skirmishAiCallback_Mod_getReclaimUnitEfficiency(int teamId) {
+	return modInfo.reclaimUnitEfficiency;
+}
+EXPORT(float) skirmishAiCallback_Mod_getReclaimFeatureEnergyCostFactor(int teamId) {
+	return modInfo.reclaimFeatureEnergyCostFactor;
+}
+EXPORT(bool) skirmishAiCallback_Mod_getReclaimAllowEnemies(int teamId) {
+	return modInfo.reclaimAllowEnemies;
+}
+EXPORT(bool) skirmishAiCallback_Mod_getReclaimAllowAllies(int teamId) {
+	return modInfo.reclaimAllowAllies;
+}
+
+EXPORT(float) skirmishAiCallback_Mod_getRepairEnergyCostFactor(int teamId) {
+	return modInfo.repairEnergyCostFactor;
+}
+
+EXPORT(float) skirmishAiCallback_Mod_getResurrectEnergyCostFactor(int teamId) {
+	return modInfo.resurrectEnergyCostFactor;
+}
+
+EXPORT(float) skirmishAiCallback_Mod_getCaptureEnergyCostFactor(int teamId) {
+	return modInfo.captureEnergyCostFactor;
+}
+
+EXPORT(int) skirmishAiCallback_Mod_getTransportGround(int teamId) {
+	return modInfo.transportGround;
+}
+EXPORT(int) skirmishAiCallback_Mod_getTransportHover(int teamId) {
+	return modInfo.transportHover;
+}
+EXPORT(int) skirmishAiCallback_Mod_getTransportShip(int teamId) {
+	return modInfo.transportShip;
+}
+EXPORT(int) skirmishAiCallback_Mod_getTransportAir(int teamId) {
+	return modInfo.transportAir;
+}
+
+EXPORT(int) skirmishAiCallback_Mod_getFireAtKilled(int teamId) {
+	return modInfo.fireAtKilled;
+}
+EXPORT(int) skirmishAiCallback_Mod_getFireAtCrashing(int teamId) {
+	return modInfo.fireAtCrashing;
+}
+
+EXPORT(int) skirmishAiCallback_Mod_getFlankingBonusModeDefault(int teamId) {
+	return modInfo.flankingBonusModeDefault;
+}
+
+EXPORT(int) skirmishAiCallback_Mod_getLosMipLevel(int teamId) {
+	return modInfo.losMipLevel;
+}
+EXPORT(int) skirmishAiCallback_Mod_getAirMipLevel(int teamId) {
+	return modInfo.airMipLevel;
+}
+EXPORT(float) skirmishAiCallback_Mod_getLosMul(int teamId) {
+	return modInfo.losMul;
+}
+EXPORT(float) skirmishAiCallback_Mod_getAirLosMul(int teamId) {
+	return modInfo.airLosMul;
+}
+EXPORT(bool) skirmishAiCallback_Mod_getRequireSonarUnderWater(int teamId) {
+	return modInfo.requireSonarUnderWater;
+}
+//########### END Mod
+
+
 
 //########### BEGINN Map
 EXPORT(bool) skirmishAiCallback_Map_isPosInCamera(int teamId, SAIFloat3 pos, float radius) {
@@ -3330,7 +3444,39 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Group_OrderPreview_0ARRAY1SIZE0getParams = &skirmishAiCallback_Group_OrderPreview_0ARRAY1SIZE0getParams;
 	callback->Clb_Group_OrderPreview_0ARRAY1VALS0getParams = &skirmishAiCallback_Group_OrderPreview_0ARRAY1VALS0getParams;
 	callback->Clb_Group_isSelected = &skirmishAiCallback_Group_isSelected;
-	callback->Clb_Mod_getName = &skirmishAiCallback_Mod_getName;
+	callback->Clb_Mod_getFileName = &skirmishAiCallback_Mod_getFileName;
+	callback->Clb_Mod_getHumanName = &skirmishAiCallback_Mod_getHumanName;
+	callback->Clb_Mod_getShortName = &skirmishAiCallback_Mod_getShortName;
+	callback->Clb_Mod_getVersion = &skirmishAiCallback_Mod_getVersion;
+	callback->Clb_Mod_getMutator = &skirmishAiCallback_Mod_getMutator;
+	callback->Clb_Mod_getDescription = &skirmishAiCallback_Mod_getDescription;
+	callback->Clb_Mod_getAllowTeamColors = &skirmishAiCallback_Mod_getAllowTeamColors;
+	callback->Clb_Mod_getConstructionDecay = &skirmishAiCallback_Mod_getConstructionDecay;
+	callback->Clb_Mod_getConstructionDecayTime = &skirmishAiCallback_Mod_getConstructionDecayTime;
+	callback->Clb_Mod_getConstructionDecaySpeed = &skirmishAiCallback_Mod_getConstructionDecaySpeed;
+	callback->Clb_Mod_getMultiReclaim = &skirmishAiCallback_Mod_getMultiReclaim;
+	callback->Clb_Mod_getReclaimMethod = &skirmishAiCallback_Mod_getReclaimMethod;
+	callback->Clb_Mod_getReclaimUnitMethod = &skirmishAiCallback_Mod_getReclaimUnitMethod;
+	callback->Clb_Mod_getReclaimUnitEnergyCostFactor = &skirmishAiCallback_Mod_getReclaimUnitEnergyCostFactor;
+	callback->Clb_Mod_getReclaimUnitEfficiency = &skirmishAiCallback_Mod_getReclaimUnitEfficiency;
+	callback->Clb_Mod_getReclaimFeatureEnergyCostFactor = &skirmishAiCallback_Mod_getReclaimFeatureEnergyCostFactor;
+	callback->Clb_Mod_getReclaimAllowEnemies = &skirmishAiCallback_Mod_getReclaimAllowEnemies;
+	callback->Clb_Mod_getReclaimAllowAllies = &skirmishAiCallback_Mod_getReclaimAllowAllies;
+	callback->Clb_Mod_getRepairEnergyCostFactor = &skirmishAiCallback_Mod_getRepairEnergyCostFactor;
+	callback->Clb_Mod_getResurrectEnergyCostFactor = &skirmishAiCallback_Mod_getResurrectEnergyCostFactor;
+	callback->Clb_Mod_getCaptureEnergyCostFactor = &skirmishAiCallback_Mod_getCaptureEnergyCostFactor;
+	callback->Clb_Mod_getTransportGround = &skirmishAiCallback_Mod_getTransportGround;
+	callback->Clb_Mod_getTransportHover = &skirmishAiCallback_Mod_getTransportHover;
+	callback->Clb_Mod_getTransportShip = &skirmishAiCallback_Mod_getTransportShip;
+	callback->Clb_Mod_getTransportAir = &skirmishAiCallback_Mod_getTransportAir;
+	callback->Clb_Mod_getFireAtKilled = &skirmishAiCallback_Mod_getFireAtKilled;
+	callback->Clb_Mod_getFireAtCrashing = &skirmishAiCallback_Mod_getFireAtCrashing;
+	callback->Clb_Mod_getFlankingBonusModeDefault = &skirmishAiCallback_Mod_getFlankingBonusModeDefault;
+	callback->Clb_Mod_getLosMipLevel = &skirmishAiCallback_Mod_getLosMipLevel;
+	callback->Clb_Mod_getAirMipLevel = &skirmishAiCallback_Mod_getAirMipLevel;
+	callback->Clb_Mod_getLosMul = &skirmishAiCallback_Mod_getLosMul;
+	callback->Clb_Mod_getAirLosMul = &skirmishAiCallback_Mod_getAirLosMul;
+	callback->Clb_Mod_getRequireSonarUnderWater = &skirmishAiCallback_Mod_getRequireSonarUnderWater;
 	callback->Clb_Map_getChecksum = &skirmishAiCallback_Map_getChecksum;
 	callback->Clb_Map_getStartPos = &skirmishAiCallback_Map_getStartPos;
 	callback->Clb_Map_getMousePos = &skirmishAiCallback_Map_getMousePos;
