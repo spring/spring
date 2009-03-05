@@ -34,6 +34,7 @@
 
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/VFSHandler.h"
+#include "FileSystem/FileHandler.h"
 #include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "Util.h"
@@ -695,6 +696,60 @@ std::string FileSystem::LocateDir(std::string _dir, int flags) const
 		}
 		return dir;
 	}
+}
+std::vector<std::string> FileSystem::LocateDirs(const std::string& _dir) const
+{
+	std::vector<std::string> found;
+
+	if (!CheckFile(_dir) || FileSystemHandler::IsAbsolutePath(_dir)) {
+		return found;
+	}
+
+	std::string dir = _dir;
+	FixSlashes(dir);
+
+	const std::vector<std::string>& datadirs = fs.GetDataDirectories();
+	std::vector<std::string>::const_iterator dd;
+	for (dd = datadirs.begin(); dd != datadirs.end(); ++dd) {
+		std::string dirPath((*dd) + dir);
+		if (fs.DirExists(dirPath)) {
+			found.push_back(dirPath);
+		}
+	}
+
+	return found;
+}
+
+std::vector<std::string> FileSystem::FindDirsAndDirectSubDirs(
+		const std::string& relPath) const {
+
+	std::vector<std::string> found;
+
+	static const std::string pattern = "*";
+
+	// list of all occurences of the relative path in the data directories
+	std::vector<std::string> rootDirs = filesystem.LocateDirs(relPath);
+
+	// list of all occurences of the relative path in the data directories
+	std::vector<std::string> mainDirs;
+
+	// add all subdirectories in the rootDirs
+	std::vector<std::string>::const_iterator dir;
+	for (dir = rootDirs.begin(); dir != rootDirs.end(); ++dir) {
+		std::vector<std::string> localMainDirs =
+				CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
+		mainDirs.insert(mainDirs.end(), localMainDirs.begin(), localMainDirs.end());
+	}
+	found.insert(found.end(), mainDirs.begin(), mainDirs.end());
+
+	// ... and all subdriectories of these
+	for (dir = mainDirs.begin(); dir != mainDirs.end(); ++dir) {
+		std::vector<std::string> subDirs =
+				CFileHandler::SubDirs(*dir, pattern, SPRING_VFS_RAW);
+		found.insert(found.end(), subDirs.begin(), subDirs.end());
+	}
+
+	return found;
 }
 
 
