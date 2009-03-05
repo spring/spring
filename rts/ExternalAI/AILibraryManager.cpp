@@ -28,6 +28,7 @@
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/FileSystem.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -101,7 +102,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	// {AI_INTERFACES_DATA_DIR}/{*}/InterfaceInfo.lua
 	// {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
 	T_dirs aiInterfaceDataDirs =
-			FindDirsAndDirectSubDirs(AI_INTERFACES_DATA_DIR);
+			filesystem.FindDirsAndDirectSubDirs(AI_INTERFACES_DATA_DIR);
 	typedef std::map<const AIInterfaceKey, std::set<std::string> > T_dupInt;
 	T_dupInt duplicateInterfaceInfoCheck;
 	for (T_dirs::iterator dir = aiInterfaceDataDirs.begin();
@@ -148,7 +149,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	// we are looking for:
 	// {SKIRMISH_AI_DATA_DIR/{*}/AIInfo.lua
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
-	T_dirs skirmishAIDataDirs = FindDirsAndDirectSubDirs(SKIRMISH_AI_DATA_DIR);
+	T_dirs skirmishAIDataDirs = filesystem.FindDirsAndDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 	T_dupSkirm duplicateSkirmishAIInfoCheck;
 	for (T_dirs::iterator dir = skirmishAIDataDirs.begin();
 			dir != skirmishAIDataDirs.end(); ++dir) {
@@ -399,28 +400,6 @@ void CAILibraryManager::ReleaseEverything() {
 	ReleaseAllSkirmishAILibraries();
 }
 
-std::vector<std::string> CAILibraryManager::FindDirsAndDirectSubDirs(
-		const std::string& path) {
-
-	std::vector<std::string> found;
-
-	 std::string pattern = "*";
-
-	// find dirs
-	std::vector<std::string> mainDirs = CFileHandler::SubDirs(path, pattern,
-			SPRING_VFS_RAW);
-	found = mainDirs;
-
-	// find sub-dirs
-	for (std::vector<std::string>::iterator dir = mainDirs.begin();
-			dir != mainDirs.end(); ++dir) {
-		std::vector<std::string> sub_dirs = CFileHandler::SubDirs(*dir, pattern,
-				SPRING_VFS_RAW);
-		found.insert(found.end(), sub_dirs.begin(), sub_dirs.end());
-	}
-
-	return found;
-}
 
 AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 		const std::string& shortName,

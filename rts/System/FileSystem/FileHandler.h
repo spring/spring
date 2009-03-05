@@ -7,7 +7,11 @@
 
 #include "VFSModes.h"
 
-
+/**
+ * This is for direct file system access.
+ * If you need data-dir related file and dir handling methods,
+ * have a look at the FileSystem class.
+ */
 class CFileHandler {
 	public:
 		CFileHandler(const char* filename,
@@ -15,7 +19,7 @@ class CFileHandler {
 		CFileHandler(const std::string& filename,
 		             const std::string& modes = SPRING_VFS_RAW_FIRST);
 		~CFileHandler(void);
-		
+
 		int Read(void* buf,int length);
 		void Seek(int pos);
 
@@ -24,7 +28,7 @@ class CFileHandler {
 		int Peek() const;
 		int GetPos() const;
 		int FileSize() const;
-		
+
 		bool LoadStringData(std::string& data);
 
 	public:

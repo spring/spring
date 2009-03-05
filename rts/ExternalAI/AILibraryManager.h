@@ -139,7 +139,6 @@ private:
 	static void reportError2(const char* topic, const char* msg, const char* arg0, const char* arg1);
 	static void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);
 	static std::string extractFileName(const std::string& libFile, bool includeExtension);
-	static std::vector<std::string> FindDirsAndDirectSubDirs(const std::string& path);
 	/**
 	 * Finds the best fitting interface.
 	 * The  short name has to fit perfectly, and the version of the interface

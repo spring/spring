@@ -1544,19 +1544,19 @@ EXPORT(int) GetModOptionCount()
 		try {
 			ParseOptions("EngineOptions.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
 		}
-		UNITSYNC_CATCH_BLOCKS;	
+		UNITSYNC_CATCH_BLOCKS;
 		try {
 			ParseOptions("ModOptions.lua", SPRING_VFS_MOD, SPRING_VFS_MOD);
 		}
 		UNITSYNC_CATCH_BLOCKS;
-		
+
 		optionsSet.clear();
 
 		return options.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	// Failed to load engineoptions 
+	// Failed to load engineoptions
 	options.clear();
 	optionsSet.clear();
 
@@ -1693,22 +1693,10 @@ EXPORT(int) GetSkirmishAICount() {
 		skirmishAIDataDirs.clear();
 
 		std::vector<std::string> dataDirs_tmp =
-				CFileHandler::SubDirs(SKIRMISH_AI_DATA_DIR, "*",
-				SPRING_VFS_RAW);
-		std::vector<std::string> dataDirsSubs_tmp;
-
-
-		std::vector<std::string>::const_iterator i;
-		for (i = dataDirs_tmp.begin(); i != dataDirs_tmp.end(); ++i) {
-			std::vector<std::string> sub_tmp =
-					CFileHandler::SubDirs(*i, "*", SPRING_VFS_RAW);
-			dataDirsSubs_tmp.insert(dataDirsSubs_tmp.end(),
-					sub_tmp.begin(), sub_tmp.end());
-		}
-		dataDirs_tmp.insert(dataDirs_tmp.end(),
-				dataDirsSubs_tmp.begin(), dataDirsSubs_tmp.end());
+				filesystem.FindDirsAndDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 
 		// filter out dirs not containing an AIInfo.lua file
+		std::vector<std::string>::const_iterator i;
 		for (i = dataDirs_tmp.begin(); i != dataDirs_tmp.end(); ++i) {
 			const std::string& possibleDataDir = *i;
 			vector<std::string> infoFile = CFileHandler::FindFiles(

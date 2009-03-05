@@ -111,6 +111,10 @@ class FileSystem
 		bool Remove(std::string file) const;
 
 		std::string LocateDir(std::string dir, int flags = 0) const;
+		std::vector<std::string> LocateDirs(const std::string& dir) const;
+
+		std::vector<std::string> FindDirsAndDirectSubDirs(
+				const std::string& relPath) const;
 
 		// metadata read functions
 		size_t GetFilesize(std::string path) const;
