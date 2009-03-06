@@ -161,10 +161,14 @@ EXPORT(void) aiInterfaceCallback_Log_exception(int interfaceId, const char* cons
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	logOutput.Print("AI Interface <%s-%s>: error, severety %i: [%s] %s",
 			info->GetName().c_str(), info->GetVersion().c_str(), severety,
-			(die ? "AI shut down" : "AI still running"), msg);
+			(die ? "AI Interface shutting down" : "AI Interface still running"), msg);
 	if (die) {
 		// TODO: FIXME: unload all skirmish AIs of this interface plus the interface itsself
-		//IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(...);
+// 		std::vector<int> teamIds = IAILibraryManager::GetInstance()->GetAllTeamIdsAccociatedWithInterface(info->GetKey());
+// 		std::vector<int>::const_iterator teamId;
+// 		for (teamId = teamIds.begin(); teamId != teamIds.end(); ++teamId) {
+// 			eoh->DestroySkirmishAI(*teamId);
+// 		}
 	}
 }
 

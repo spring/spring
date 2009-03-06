@@ -1,14 +1,14 @@
-// Generalized callback interface - shared between global AI and group AI
 #ifndef IAICALLBACK_H
 #define IAICALLBACK_H
+
 #include <vector>
 #include <deque>
-#include "aibase.h"
 #include "float3.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
-//struct UnitDef;
+
+struct UnitDef;
 struct FeatureDef;
 struct WeaponDef;
 class CCommandQueue;
@@ -113,8 +113,8 @@ struct AIHCGetFeatureDefById ///< result of HandleCommand is 1 - ok supported
 	const FeatureDef* ret;
 };
 
-
-class SPRING_API IAICallback
+/// Generalized callback interface, used by Global AIs
+class IAICallback
 {
 public:
 	virtual void SendTextMsg(const char* text, int zone) = 0;
@@ -335,7 +335,13 @@ public:
 	//    copy it if you wish to continue using it
 	virtual const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL) = 0;
 
-	DECLARE_PURE_VIRTUAL(~IAICallback())
+	// use virtual instead of pure virtual,
+	// becuase pur evirtual is not well supported
+	// among different OSs and compilers,
+	// and pure virtual has no advantage
+	// if we have other pure virtual functions
+	// in the class
+	virtual ~IAICallback() {}
 };
 
 #endif /* IAICALLBACK_H */
