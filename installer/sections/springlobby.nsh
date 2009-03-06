@@ -1,12 +1,7 @@
 !ifdef INSTALL
   SetOutPath "$INSTDIR"
-  !ifdef TEST_BUILD
-   inetc::get \
-               "http://www.springlobby.info/installer/svn/springlobby.exe" "$INSTDIR\springlobby.exe"
-  !else
-   inetc::get \
-               "http://www.springlobby.info/installer/springlobby.exe" "$INSTDIR\springlobby.exe"
-  !endif
+  inetc::get \
+              "http://www.springlobby.info/installer/springlobby.exe" "$INSTDIR\springlobby.exe"
 
   File /r "..\installer\Springlobby\SLArchive\*.*"
 !else
