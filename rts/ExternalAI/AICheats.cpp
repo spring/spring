@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include <vector>
+#include <list>
 #include "AICheats.h"
 #include "SkirmishAIWrapper.h"
 #include "Sim/Units/Unit.h"
@@ -17,7 +18,6 @@
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
 
-using namespace std;
 
 CAICheats::CAICheats(CSkirmishAIWrapper* ai): ai(ai)
 {
@@ -100,10 +100,10 @@ float3 CAICheats::GetUnitPos(int unitid)
 
 int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 {
-	list<CUnit*>::iterator ui;
+	std::list<CUnit*>::iterator ui;
 	int a = 0;
 
-	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
@@ -121,8 +121,8 @@ int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 
 int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
-	vector<CUnit*>::iterator ui;
+	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
+	std::vector<CUnit*>::iterator ui;
 	int a = 0;
 
 	for (ui = unit.begin(); ui != unit.end(); ++ui) {
@@ -147,7 +147,7 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 {
 	int a = 0;
 
-	for (list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+	for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {
@@ -163,8 +163,8 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 
 int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max)
 {
-	vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
-	vector<CUnit*>::iterator ui;
+	std::vector<CUnit*> unit = qf->GetUnitsExact(pos, radius);
+	std::vector<CUnit*>::iterator ui;
 	int a = 0;
 
 	for (ui = unit.begin(); ui != unit.end(); ++ui) {
@@ -363,5 +363,3 @@ int CAICheats::HandleCommand(int commandId, void *data)
 			return 0;
 	}
 }
-
-IMPLEMENT_PURE_VIRTUAL(IAICheats::~IAICheats())

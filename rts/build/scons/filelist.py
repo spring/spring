@@ -147,7 +147,6 @@ def get_shared_AI_source(env):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/Game/GameVersion.cpp')]
-#		result += [os.path.join(env['builddir'], 'rts/System/Platform/errorhandler.cpp')]
 	return result
 
 # lists source files common for all AI Interfaces

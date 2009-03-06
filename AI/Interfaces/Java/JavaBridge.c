@@ -54,7 +54,6 @@ static jobject* aiImplId_classLoader;
 
 
 
-
 static JNIEnv* g_jniEnv = NULL;
 static JavaVM* g_jvm = NULL;
 
@@ -72,6 +71,10 @@ static jclass g_cls_aiCallback = NULL;
 static jmethodID g_m_aiCallback_getInstance = NULL;
 
 
+
+static inline size_t min(const size_t s1, const size_t s2) {
+	return s1 < s2 ? s1 : s2;
+}
 
 static bool checkException(JNIEnv* env, const char* const errorMsg) {
 
@@ -458,12 +461,6 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 			}
 		}
 	}
-	//else {
-	//	//vm_args->version = JNI_VERSION_1_1;
-	//	//vm_args->version = JNI_VERSION_1_2;
-	//	vm_args->version = JNI_VERSION_1_4;
-	//	//vm_args->version = JNI_VERSION_1_6;
-	//}
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: JNI version: %#x", jniVersion);
 	vm_args->version = jniVersion;
 
@@ -509,12 +506,9 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	if (jvmPropFile != NULL) {
 		// ..., and append the part from the jvm options properties file,
 		// if it is specified there
-		// TODO: FIXME: this will not work, as the key is "jvm.option.x",
-		// and the value would be "-Djava.class.path=/patha:/pathb:..."
-		// NOTE: Possibly already fixed, see below!
 		const char* clsPathFromCfg =
 				util_map_getValueByKey(numProps, propKeys, propValues,
-				"-Djava.class.path");
+				"jvm.option.java.class.path");
 		if (clsPathFromCfg != NULL) {
 			STRCAT(classPath, ENTRY_DELIM);
 			STRCAT(classPath, clsPathFromCfg);
@@ -539,12 +533,9 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	if (jvmPropFile != NULL) {
 		// ..., and append the part from the jvm options properties file,
 		// if it is specified there
-		// TODO: FIXME: this will not work, as the key is "jvm.option.x",
-		// and the value would be "-Djava.class.path=/patha:/pathb:..."
-		// NOTE: Possibly already fixed, see below!
 		const char* libPathFromCfg =
 				util_map_getValueByKey(numProps, propKeys, propValues,
-				"-Djava.library.path");
+				"jvm.option.java.library.path");
 		if (libPathFromCfg != NULL) {
 			STRCAT(libraryPath, ENTRY_DELIM);
 			STRCAT(libraryPath, libPathFromCfg);
@@ -558,11 +549,22 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	strOptions[op++] = classPath;
 	strOptions[op++] = libraryPath;
 
+	static const char* const JCPVAL = "-Djava.class.path=";
+	const size_t JCPVAL_size = strlen(JCPVAL);
+	static const char* const JLPVAL = "-Djava.library.path=";
+	const size_t JLPVAL_size = strlen(JCPVAL);
 	if (jvmPropFile != NULL) {
 		int i;
 		for (i=0; i < numProps; ++i) {
 			if (strcmp(propKeys[i], "jvm.option.x") == 0) {
-				strOptions[op++] = propValues[i];
+				const char* const val = propValues[i];
+				const size_t val_size = strlen(val);
+				// ignore "-Djava.class.path=..."
+				// and "-Djava.library.path=..." options
+				if (strncmp(val, JCPVAL, min(val_size, JCPVAL_size)) != 0 &&
+					strncmp(val, JLPVAL, min(val_size, JLPVAL_size)) != 0) {
+					strOptions[op++] = propValues[i];
+				}
 			}
 		}
 	} else {

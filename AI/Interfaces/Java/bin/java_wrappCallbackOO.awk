@@ -135,7 +135,7 @@ function printInterface(clsName_i) {
 	size_memCls = split(interface_class[clsName], memCls, ",");
 	for (mc=0; mc < size_memCls; mc++) {
 		memberClass = memCls[mc+1];
-		fullNameMultiSize_i = ancestorsInterface_isMulti[clsName "-" memberClass];TODO
+		fullNameMultiSize_i = ancestorsInterface_isMulti[clsName "-" memberClass];
 		if (fullNameMultiSize_i != "") {
 			if (match(fullNameMultiSize_i, /^.*0MULTI1[^0]*3/)) { # wants a different function name then the default one
 				fn = fullNameMultiSize_i;

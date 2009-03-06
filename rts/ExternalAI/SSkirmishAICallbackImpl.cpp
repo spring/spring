@@ -583,7 +583,7 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int teamId)
 	}
 }
 
-EXPORT(int              ) skirmishAiCallback_SkirmishAI_Info_getSize(int teamId) {
+EXPORT(int) skirmishAiCallback_SkirmishAI_Info_getSize(int teamId) {
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	return (int)info->size();
@@ -612,7 +612,7 @@ EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getValueByKey(int t
 static inline bool checkOptionIndex(int optionIndex, const std::vector<std::string>& optionKeys) {
 	return ((optionIndex < 0) || ((size_t)optionIndex >= optionKeys.size()));
 }
-EXPORT(int              ) skirmishAiCallback_SkirmishAI_OptionValues_getSize(int teamId) {
+EXPORT(int) skirmishAiCallback_SkirmishAI_OptionValues_getSize(int teamId) {
 
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 	const std::map<std::string, std::string>& options = libMan->GetSkirmishAIOptionValues(teamId);
@@ -673,10 +673,9 @@ EXPORT(void) skirmishAiCallback_Log_exception(int teamId, const char* const msg,
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	logOutput.Print("Skirmish AI <%s-%s>: error, severety %i: [%s] %s",
 			info->GetName().c_str(), info->GetVersion().c_str(), severety,
-			(die ? "AI shut down" : "AI still running"), msg);
+			(die ? "AI shutting down" : "AI still running"), msg);
 	if (die) {
-		// TODO: FIXME: unload all skirmish AIs of this interface plus the interface itsself
-		//IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(...);
+		eoh->DestroySkirmishAI(teamId);
 	}
 }
 

@@ -1,14 +1,14 @@
 #ifndef IAICHEATS_H
 #define IAICHEATS_H
 
-#include "aibase.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Misc/GlobalConstants.h" // needed for MAX_UNITS
 #include "float3.h"
 #include "IAICallback.h"
+
 struct UnitDef;
 
-class SPRING_API IAICheats
+class IAICheats
 {
 public:
 	// note that all of the non-readonly commands are network-
@@ -62,7 +62,13 @@ public:
 	virtual bool GetValue(int id, void* dst) = 0;
 	virtual int HandleCommand(int commandId, void* data) = 0;
 
-	DECLARE_PURE_VIRTUAL(~IAICheats())
+	// use virtual instead of pure virtual,
+	// becuase pur evirtual is not well supported
+	// among different OSs and compilers,
+	// and pure virtual has no advantage
+	// if we have other pure virtual functions
+	// in the class
+	virtual ~IAICheats() {}
 };
 
-#endif
+#endif // IAICHEATS_H

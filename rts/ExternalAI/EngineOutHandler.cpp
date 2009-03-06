@@ -25,6 +25,7 @@
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 #include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "Util.h"

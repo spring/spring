@@ -1664,6 +1664,3 @@ const char* CAICallback::CallLuaRules(const char* data, int inSize, int* outSize
 	}
 	return luaRules->AICallIn(data, inSize, outSize);
 }
-
-
-IMPLEMENT_PURE_VIRTUAL(IAICallback::~IAICallback())
