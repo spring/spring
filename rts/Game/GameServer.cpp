@@ -149,7 +149,7 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 		AddAutohostInterface(settings->autohostport);
 	}
 	rng.Seed(SDL_GetTicks());
-	Message(str( format(ServerStart) %settings->hostport) );
+	Message(str( format(ServerStart) %settings->hostport));
 
 	lastTick = SDL_GetTicks();
 
@@ -352,14 +352,10 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 #endif
 }
 
-void CGameServer::Message(const std::string& message)
+void CGameServer::Message(const std::string& message, bool broadcast)
 {
-	Warning(message);
-}
-
-void CGameServer::Warning(const std::string& message)
-{
-	Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
+	if (broadcast)
+		Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
 	if (hostif)
 		hostif->Message(message);
 #if defined DEDICATED || defined DEBUG
@@ -403,7 +399,7 @@ void CGameServer::CheckSync()
 				syncWarningFrame = *f;
 
 				std::string players = GetPlayerNames(noSyncResponse);
-				Warning(str(format(NoSyncResponse) %players %(*f)));
+				Message(str(format(NoSyncResponse) %players %(*f)));
 			}
 		}
 
@@ -428,7 +424,7 @@ void CGameServer::CheckSync()
 				std::map<unsigned, std::vector<int> >::const_iterator g = desyncGroups.begin();
 				for (; g != desyncGroups.end(); ++g) {
 					std::string players = GetPlayerNames(g->second);
-					Warning(str(format(SyncError) %players %(*f) %(g->first ^ correctChecksum)));
+					Message(str(format(SyncError) %players %(*f) %(g->first ^ correctChecksum)));
 				}
 			}
 		}
@@ -449,7 +445,7 @@ void CGameServer::CheckSync()
 	// Make it clear this build isn't suitable for release.
 	if (!syncErrorFrame || (serverframenum - syncErrorFrame > SYNCCHECK_MSG_TIMEOUT)) {
 		syncErrorFrame = serverframenum;
-		Warning(NoSyncCheck);
+		Message(NoSyncCheck);
 	}
 #endif
 }
@@ -584,7 +580,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_PAUSE:
 			if(inbuf[1]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				if (!inbuf[2])  // reset sync checker
 					syncErrorFrame = 0;
@@ -631,11 +627,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_PLAYERNAME: {
 			unsigned playerNum = inbuf[2];
 			if(playerNum!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %playerNum));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %playerNum));
 			} else {
 				players[playerNum].name = (std::string)((char*)inbuf+3);
 				players[playerNum].myState = GameParticipant::INGAME;
-				Message(str(format(PlayerJoined) %players[playerNum].name));
+				Message(str(format(PlayerJoined) %players[playerNum].name), false);
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
 				if (hostif)
 				{
@@ -648,7 +644,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_CHAT: {
 			ChatMessage msg(packet);
 			if (msg.fromPlayer != a ) {
-				Warning(str(format(WrongPlayer) %(unsigned)NETMSG_CHAT %a %(unsigned)msg.fromPlayer));
+				Message(str(format(WrongPlayer) %(unsigned)NETMSG_CHAT %a %(unsigned)msg.fromPlayer));
 			} else {
 				GotChatMessage(msg);
 			}
@@ -656,7 +652,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_SYSTEMMSG:
 			if(inbuf[2]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]));
 			} else {
 				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(inbuf[2], (char*)(&inbuf[3])));
 			}
@@ -664,13 +660,13 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_STARTPOS:
 			if(inbuf[1] != a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			}
 			else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame)
 			{
 				unsigned team = (unsigned)inbuf[2];
 				if (team >= teams.size())
-					Warning(str( boost::format("Invalid teamID in startpos-message from palyer %d") %team ));
+					Message(str( boost::format("Invalid teamID in startpos-message from palyer %d") %team ));
 				else
 				{
 					teams[team].startpos = SFloat3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
@@ -686,13 +682,13 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 			else
 			{
-				Warning(str(format(NoStartposChange) %a));
+				Message(str(format(NoStartposChange) %a));
 			}
 			break;
 
 		case NETMSG_COMMAND:
 			if(inbuf[3]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
 			} else {
 				if (!demoReader)
 					Broadcast(packet); //forward data
@@ -701,7 +697,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_SELECT:
 			if(inbuf[3]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
 			} else {
 				if (!demoReader)
 					Broadcast(packet); //forward data
@@ -710,10 +706,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_AICOMMAND: {
 			if (inbuf[3] != a) {
-				Warning(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
+				Message(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
 			}
 			else if (noHelperAIs) {
-				Warning(str(format(NoHelperAI) %players[a].name %a));
+				Message(str(format(NoHelperAI) %players[a].name %a));
 			}
 			else if (!demoReader) {
 				Broadcast(packet); //forward data
@@ -722,10 +718,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_AICOMMANDS: {
 			if (inbuf[3] != a) {
-				Warning(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
+				Message(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
 			}
 			else if (noHelperAIs) {
-				Warning(str(format(NoHelperAI) %players[a].name %a));
+				Message(str(format(NoHelperAI) %players[a].name %a));
 			}
 			else if (!demoReader) {
 				Broadcast(packet); //forward data
@@ -734,9 +730,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_AISHARE: {
 			if (inbuf[3] != a) {
-				Warning(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
+				Message(str(format(WrongPlayer) %(unsigned) inbuf[0]  %a  %(unsigned) inbuf[3]));
 			} else if (noHelperAIs) {
-				Warning(str(format(NoHelperAI) %players[a].name %a));
+				Message(str(format(NoHelperAI) %players[a].name %a));
 			} else if (!demoReader) {
 				Broadcast(packet); //forward data
 			}
@@ -744,7 +740,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_LUAMSG:
 			if(inbuf[3]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
 			}
 			else if (!demoReader) {
 				Broadcast(packet); //forward data
@@ -754,14 +750,14 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_SYNCRESPONSE:
 #ifdef SYNCCHECK
 			if(inbuf[1]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				int frameNum = *(int*)&inbuf[2];
 				if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 					players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[6];
 				else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
 					delayedSyncResponseFrame = serverframenum;
-					Warning(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
+					Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
 				}
 				// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 				players[a].ping = serverframenum - frameNum;
@@ -771,7 +767,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_SHARE:
 			if(inbuf[1]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
 					Broadcast(CBaseNetProtocol::Get().SendShare(inbuf[1], inbuf[2], inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8])));
@@ -780,7 +776,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_SETSHARE:
 			if(inbuf[1]!= a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
 					Broadcast(CBaseNetProtocol::Get().SendSetShare(inbuf[1], inbuf[2], *((float*)&inbuf[3]), *((float*)&inbuf[7])));
@@ -789,7 +785,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_PLAYERSTAT:
 			if(inbuf[1]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				Broadcast(packet); //forward data
 			}
@@ -802,7 +798,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 #ifdef DIRECT_CONTROL_ALLOWED
 		case NETMSG_DIRECT_CONTROL:
 			if(inbuf[1]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
 					Broadcast(CBaseNetProtocol::Get().SendDirectControl(inbuf[1]));
@@ -811,7 +807,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_DC_UPDATE:
 			if(inbuf[1]!=a){
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
 				if (!demoReader)
 					Broadcast(CBaseNetProtocol::Get().SendDirectControlUpdate(inbuf[1], inbuf[2], *((short*)&inbuf[3]), *((short*)&inbuf[5])));
@@ -831,7 +827,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const unsigned player = (unsigned)inbuf[1];
 			if (player != a)
 			{
-				Warning(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)player));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)player));
 			}
 			else
 			{
@@ -872,7 +868,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						}
 						else
 						{
-							Warning(str(format(NoTeamChange) %players[player].name %player));
+							Message(str(format(NoTeamChange) %players[player].name %player));
 						}
 						break;
 					}
@@ -896,7 +892,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						break;
 					}
 					default: {
-						Warning(str(format(UnknownTeammsg) %action %player));
+						Message(str(format(UnknownTeammsg) %action %player));
 					}
 				}
 				break;
@@ -932,7 +928,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				else
 				{
 								// hack!
-					Warning(str(boost::format(CommandNotAllowed) %msg.player %msg.action.command.c_str()));
+					Message(str(boost::format(CommandNotAllowed) %msg.player %msg.action.command.c_str()));
 				}
 			}
 			break;
@@ -945,7 +941,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_GAMEDATA:
 		case NETMSG_RANDSEED:
 #ifdef DEBUG
-			Warning(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
+			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
 #endif
 			break;
 #ifdef SYNCDEBUG
@@ -961,7 +957,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 #endif
 		default:
 		{
-			Warning(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
+			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
 		}
 		break;
 	}
@@ -986,10 +982,10 @@ void CGameServer::ServerReadNet()
 		else
 		{
 			if (packet && packet->length >= 3) {
-				Warning(str(format(ConnectionReject) %packet->data[0] %packet->data[2] %packet->length));
+				Message(str(format(ConnectionReject) %packet->data[0] %packet->data[2] %packet->length));
 			}
 			else {
-				Warning("Connection attempt rejected: Packet too short");
+				Message("Connection attempt rejected: Packet too short");
 			}
 			UDPNet->RejectConnection();
 		}

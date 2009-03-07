@@ -138,8 +138,7 @@ private:
 	*/
 	void SkipTo(int targetframe);
 
-	void Message(const std::string& message);
-	void Warning(const std::string& message);
+	void Message(const std::string& message, bool broadcast=true);
 
 	/////////////////// game status variables ///////////////////
 
