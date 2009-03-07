@@ -3251,7 +3251,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SENDPLAYERSTAT: {
-				logOutput.Print("Game over");
+				//logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
 				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));

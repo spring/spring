@@ -44,7 +44,7 @@ public:
 	CGameSetup();
 	~CGameSetup();
 	bool Init(const std::string& script);
-	void LoadStartPositions();
+	void LoadStartPositions(bool withoutMap = false);
 
 	enum StartPosType
 	{
