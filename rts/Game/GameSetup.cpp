@@ -114,10 +114,13 @@ void CGameSetup::LoadStartPositionsFromMap()
 
 Unlike the other functions, this is not called on Init() , instead we wait for CPreGame to call this. The reason is that the map is not known before CPreGame recieves the gamedata from the server.
  */
-void CGameSetup::LoadStartPositions()
+void CGameSetup::LoadStartPositions(bool withoutMap)
 {
 	TdfParser file(gameSetupText.c_str(), gameSetupText.length());
 
+	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
+		throw content_error("You need the map to use the map's startpositions");
+	
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
@@ -137,7 +140,8 @@ void CGameSetup::LoadStartPositions()
 		}
 	}
 
-	LoadStartPositionsFromMap();
+	if (!withoutMap)
+		LoadStartPositionsFromMap();
 
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
