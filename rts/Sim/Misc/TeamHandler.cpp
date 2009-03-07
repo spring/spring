@@ -140,39 +140,6 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	assert(teams.size() <= MAX_TEAMS);
 }
 
-CTeam* CTeamHandler::Team(int i) {
-
-	assert(i >= 0 && (size_t)i < teams.size());
-	return &teams[i];
-}
-bool CTeamHandler::Ally(int a, int b) {
-	return allies[a][b];
-}
-int CTeamHandler::AllyTeam(int team) {
-	return team2allyteam[team];
-}
-bool CTeamHandler::AlliedTeams(int a, int b) {
-	return allies[team2allyteam[a]][team2allyteam[b]];
-}
-void CTeamHandler::SetAllyTeam(int team, int allyteam) {
-	team2allyteam[team] = allyteam;
-}
-void CTeamHandler::SetAlly(int allyteamA, int allyteamB, bool allied) {
-	allies[allyteamA][allyteamB] = allied;
-}
-int CTeamHandler::GaiaTeamID() const {
-	return gaiaTeamID;
-}
-int CTeamHandler::GaiaAllyTeamID() const {
-	return gaiaAllyTeamID;
-}
-int CTeamHandler::ActiveTeams() const {
-	return teams.size();
-}
-int CTeamHandler::ActiveAllyTeams() const {
-	return allies.size();
-}
-
 void CTeamHandler::GameFrame(int frameNum)
 {
 	if (!(frameNum & 31)) {

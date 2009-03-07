@@ -55,7 +55,7 @@ void CSkirmishAITestScript::GameStart(void)
 	teamHandler->Team(skirmishAI_teamId)->metal         = 1000;
 	teamHandler->Team(skirmishAI_teamId)->metalStorage  = 1000;
 
-	eoh->CreateSkirmishAI(skirmishAI_teamId, key);
+	eoh->CreateSkirmishAI(1, key);
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");
 	const std::string startUnit1 = sideParser.GetStartUnit(1, startUnit0);
