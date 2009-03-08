@@ -1626,7 +1626,7 @@ static void GetLuaAIInfo()
  * Usually LUA AIs are shipped inside a mod, so be sure to map the mod into
  * the VFS using AddArchive() or AddAllArchives() prior to using this function.
  */
-static int GetLuaAICount()
+static int GetNumberOfLuaAIs()
 {
 	try {
 		CheckInit();
@@ -1637,6 +1637,13 @@ static int GetLuaAICount()
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
 }
+/**
+ * DEPRECATED: LUA AIs are now handled the same way as Skimrish AIs.
+ */
+EXPORT(int) GetLuaAICount()
+{
+	return 0;
+}
 
 
 /**
@@ -1644,18 +1651,18 @@ static int GetLuaAICount()
  * @return NULL on error; the name of the LUA AI on success
  *
  * Be sure you've made a call to GetLuaAICount() prior to using this.
+ *
+ * DEPRECATED: LUA AIs are handled the same way as Skimrish AIs.
  */
-/*static const char* GetLuaAIName(int aiIndex)
+EXPORT(const char*) GetLuaAIName(int aiIndex)
 {
 	try {
-		CheckInit();
-		CheckBounds(aiIndex, luaAIInfo.size());
-
-		return GetStr(luaAIInfo[aiIndex].name);
+		static const char* DEPSTRING = "DEPRECATED_FUNCTION_CALLED";
+		return DEPSTRING;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
-}*/
+}
 
 
 /**
@@ -1663,18 +1670,18 @@ static int GetLuaAICount()
  * @return NULL on error; the description of the LUA AI on success
  *
  * Be sure you've made a call to GetLuaAICount() prior to using this.
+ *
+ * DEPRECATED: LUA AIs are handled the same way as Skimrish AIs.
  */
-/*static const char* GetLuaAIDesc(int aiIndex)
+EXPORT(const char*) GetLuaAIDesc(int aiIndex)
 {
 	try {
-		CheckInit();
-		CheckBounds(aiIndex, luaAIInfo.size());
-
-		return GetStr(luaAIInfo[aiIndex].desc);
+		static const char* DEPSTRING = "DEPRECATED_FUNCTION_CALLED";
+		return DEPSTRING;
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return NULL;
-}*/
+}
 
 
 //////////////////////////
@@ -1708,7 +1715,7 @@ EXPORT(int) GetSkirmishAICount() {
 
 		sort(skirmishAIDataDirs.begin(), skirmishAIDataDirs.end());
 
-		int luaAIs = GetLuaAICount();
+		int luaAIs = GetNumberOfLuaAIs();
 
 //logOutput.Print(LOG_UNITSYNC, "GetSkirmishAICount: luaAIs: %i / skirmishAIs: %u", luaAIs, skirmishAIDataDirs.size());
 		return skirmishAIDataDirs.size() + luaAIs;
