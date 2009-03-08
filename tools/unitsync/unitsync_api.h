@@ -66,6 +66,12 @@ EXPORT(int         ) GetSideCount();
 EXPORT(const char* ) GetSideName(int side);
 EXPORT(const char* ) GetSideStartUnit(int side);
 
+// The following three are DEPRECATED
+// Lua AIs are integrated into the Skirmish AI system
+EXPORT(int         ) GetLuaAICount();
+EXPORT(const char* ) GetLuaAIName(int aiIndex);
+EXPORT(const char* ) GetLuaAIDesc(int aiIndex);
+
 EXPORT(int         ) GetMapOptionCount(const char* name);
 EXPORT(int         ) GetModOptionCount();
 EXPORT(const char* ) GetOptionKey(int optIndex);
