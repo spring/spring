@@ -718,7 +718,7 @@ int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 	return a;
 }
 
-int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius, 
+int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
@@ -1206,15 +1206,17 @@ int CAICallback::GetFeatures (int *features, int features_max)
 	int allyteam = teamHandler->AllyTeam(team);
 
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	for (CFeatureSet::const_iterator it = fset.begin(); it != fset.end(); ++i) {
+	for (CFeatureSet::const_iterator it = fset.begin(); it != fset.end(); ++it) {
 		CFeature *f = *it;
+		assert(f);
 
 		if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
 			continue;
 
+		assert(i < features_max);
 		features [i++] = f->id;
 
-		if (i == features_max) {
+		if (i >= features_max) {
 			break;
 		}
 	}
@@ -1230,13 +1232,15 @@ int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, floa
 
 	for (unsigned int a=0;a<ft.size();a++)
 	{
+		assert(ft[a]);
 		CFeature *f = ft[a];
 
 		if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
 			continue;
 
+		assert(n < maxids);
 		features [n++] = f->id;
-		if (maxids == n)
+		if (maxids >= n)
 			break;
 	}
 
@@ -1568,7 +1572,7 @@ int CAICallback::GetSelectedUnits(int *unitIds, int unitIds_max)
 			}
 		}
 	}
-	
+
 	return a;
 }
 
