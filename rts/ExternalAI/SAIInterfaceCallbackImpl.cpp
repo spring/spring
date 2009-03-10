@@ -39,17 +39,16 @@
 
 static std::vector<const CAIInterfaceLibraryInfo*> infos;
 
-#define CHECK_INTERFACE_ID(interfaceId) \
-	if (interfaceId < 0 || (size_t)interfaceId >= infos.size()) { \
-		const static size_t interfaceIdError_maxSize = 512; \
-		char interfaceIdError[interfaceIdError_maxSize]; \
-		SNPRINTF(interfaceIdError, interfaceIdError_maxSize, \
-				"Bad AI Interface ID supplied by an interface.\n" \
-				"Is %i, but should be between min %i and  max %u.", \
-				interfaceId, 0, infos.size()); \
-		/* log exception to the engine and die */ \
-		aiInterfaceCallback_Log_exception(interfaceId, interfaceIdError, 1, true); \
+void CHECK_INTERFACE_ID(const int interfaceId)
+{
+	if (interfaceId < 0 || (size_t)interfaceId >= infos.size())
+	{
+		std::ostringstream buf;
+		buf << "Bad AI Interface ID supplied by an interface.\n";
+		buf << "Is " << interfaceId << ", but should be between min 0 and max " << infos.size() << ".";
+		aiInterfaceCallback_Log_exception(interfaceId, buf.str().c_str(), 1, true);
 	}
+}
 
 
 EXPORT(int) aiInterfaceCallback_Engine_AIInterface_ABIVersion_getFailPart(int UNUSED_interfaceId) {
