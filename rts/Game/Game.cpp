@@ -3072,7 +3072,7 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
-		for (int a = 0; a < teamHandler->ActiveTeams(); a++) {
+		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
 		profiler.Update();
