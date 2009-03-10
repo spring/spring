@@ -417,7 +417,7 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "OpenAL Sound System:";
 	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
 	LogObject(LOG_SOUND) << "# SoundBuffers: " << SoundBuffer::Count();
-;
+
 	LogObject(LOG_SOUND) << "# reserved for buffers: " << (SoundBuffer::AllocedSize()/1024) << " kB";
 	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
