@@ -1,8 +1,8 @@
 ; Section descriptions
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_MAIN} "The core components required to run Spring. This includes the configuration utilities.$\n$\nNote: This section is required and cannot be deselected."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_TASCLIENT} "TASClient is the default multiplayer battleroom used to set up multiplayer games and find opponents.$\n$\nNote: You must install either TASClient or SpringLobby to play."
-  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_SPRINGLOBBY} "SpringLobby is another multiplayer battleroom used to set up multiplayer games and find opponents.$\n$\nNote: You must install either TASClient or SpringLobby to play."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_SPRINGLOBBY} "SpringLobby is the default multiplayer battleroom used to set up multiplayer games and find opponents.$\n$\nNote: You must install either TASClient or SpringLobby to play."
+  !insertmacro MUI_DESCRIPTION_TEXT ${SEC_TASCLIENT} "TASClient is the old multiplayer battleroom, which is now unmaintained and partially outdated. Can still be user to set up multiplayer games wthout bots."
 
   !insertmacro MUI_DESCRIPTION_TEXT ${SEC_ARCHIVEMOVER} "The tool and the necessary file associations (for sd7 and sdz files) to ease installation of new content."
 
