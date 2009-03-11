@@ -20,7 +20,7 @@ namespace ntai {
 		cs.LoadFile("AI/AI.tdf");
 		
 		//CLOG("Retrieving datapath value");
-<<<<<<< HEAD:AI/Skirmish/NTai/AI/NTai/Helpers/CConfigData.cpp
+
 		datapath = cs.SGetValueDef(string(aiexport_getDataDir()), "AI/Skirmish/NTai/data");
 
 		CLOG("Getting tdfpath value");
@@ -34,9 +34,6 @@ namespace ntai {
 		}
 		const char* modname = G->cb->GetModName();
 		tdfpath =  sf.SGetValueDef(string(modname), "MOD\\NTAI\\tdfpath");
-=======
-		datapath = cs.SGetValueDef(string(aiexport_getDataDir(false)), "AI\\data_path");
->>>>>>> 4b0fba37f7ec208c0d0ca788a7bb1c3cdfdeabd9:AI/Skirmish/NTai/AI/NTai/Helpers/CConfigData.cpp
 	}
 
 	CConfigData::~CConfigData(){
