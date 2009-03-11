@@ -15,16 +15,25 @@ boost::thread* musicThread = NULL;
 boost::mutex musicMutex;
 volatile bool playing = false;
 
+void EndMusicUpdater()
+{
+	boost::mutex::scoped_lock controlLock(musicMutex);
+	musicThread->join();
+	delete musicThread;
+	musicThread = NULL;
+};
+
 void UpdateMusicStream()
 {
 	playing = true;
+	boost::this_thread::at_thread_exit(EndMusicUpdater);
 	while (playing)
 	{
 		{ // sleep a second
 			boost::xtime xt;
 			boost::xtime_get(&xt,boost::TIME_UTC);
 			xt.nsec += 200;
-			musicThread->sleep(xt);
+			boost::this_thread::sleep(xt);
 		}
 
 		{ // update buffers
@@ -34,13 +43,14 @@ void UpdateMusicStream()
 	}
 	
 	oggStream.Stop();
+	playing = false;
 };
 
 void Play(const std::string& path, float volume)
 {
 	boost::mutex::scoped_lock controlLock(musicMutex);
 	oggStream.Play(path, volume);
-	if (!playing)
+	if (!musicThread)
 	{
 		musicThread = new boost::thread(UpdateMusicStream);
 	}
