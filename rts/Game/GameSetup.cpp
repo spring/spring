@@ -31,7 +31,7 @@ LocalSetup::LocalSetup() :
 		hostport(8452),
 		sourceport(0),
 		autohostport(0),
-		isHost(true)
+		isHost(false)
 {
 }
 
@@ -49,12 +49,9 @@ void LocalSetup::Init(const std::string& setup)
 	file.GetDef(autohostport, "0", "GAME\\AutohostPort");
 
 	file.GetDef(myPlayerName,  "", "GAME\\MyPlayerName");
-	int tmp_isHost = 0;
-	if (file.GetValue(tmp_isHost, "GAME\\IsHost"))
-		isHost = static_cast<bool>(tmp_isHost);
-	else
+
+	if (!file.GetValue(isHost, "GAME\\IsHost"))
 	{
-		isHost = false;
 		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");
 	}
 }
@@ -287,28 +284,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
 			continue;
 		}
-//		PlayerBase data;
-//
-//		// expects lines of form team=x rather than team=TEAMx
-//		// team field is relocated in RemapTeams
-//		std::map<std::string, std::string> setup = file.GetAllValues(s);
-//		std::map<std::string, std::string>::iterator it;
-//		if ((it = setup.find("team")) != setup.end())
-//			data.team = atoi(it->second.c_str());
-//		if ((it = setup.find("rank")) != setup.end())
-//			data.rank = atoi(it->second.c_str());
-//		if ((it = setup.find("name")) != setup.end())
-//			data.name = it->second;
-//		if ((it = setup.find("countryCode")) != setup.end())
-//			data.countryCode = it->second;
-//		if ((it = setup.find("spectator")) != setup.end())
-//			data.spectator = static_cast<bool>(atoi(it->second.c_str()));
-//		if ((it = setup.find("isfromdemo")) != setup.end())
-//			data.isFromDemo = static_cast<bool>(atoi(it->second.c_str()));
-//
-//		playerStartingData.push_back(data);
-//		playerRemap[a] = i;
-//		++i;
 
 		SkirmishAIData data;
 
@@ -332,13 +307,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		static std::set<std::string> luaAINames = LoadLuaAINames();
 		data.isLuaAI = (luaAINames.find(data.shortName) != luaAINames.end());
 
-//		if (data.luaAI.empty()) {
-//			data.luaAI = file.SGetValueDef("", s + "LuaAI");
-//		// this else if is only here fo rbackwards compatibility
-//		} else if (data.luaAI.size() > 6 && data.luaAI.substr(0, 6) == "LuaAI:") {
-//			data.luaAI = data.luaAI.substr(6);
-//		}
-
 		data.version = file.SGetValueDef("", s + "Version");
 		if (file.SectionExist(s + "Options")) {
 			data.options = file.GetAllValues(s + "Options");
@@ -349,9 +317,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		int instanceIndex = 0;
 		std::string name_unique = name;
 		while (nameList.find(name_unique) != nameList.end()) {
-			//throw content_error(str(
-			//		boost::format("GameSetup: Skirmish AI %i has name %s, which is already taken")
-			//		%a %tmpName.c_str()));
 			name_unique = name + "_" + IntToString(instanceIndex++);
 			// so we possibly end up with something like myBot_0, or RAI_2
 		}
@@ -359,9 +324,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		nameList.insert(data.name);
 
 		skirmishAIStartingData.push_back(data);
-
-//		skirmishAIRemap[a] = i;
-//		++i;
 	}
 
 	unsigned aiCount = 0;
