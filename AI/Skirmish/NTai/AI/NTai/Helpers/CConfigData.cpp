@@ -21,6 +21,18 @@ namespace ntai {
 		
 		//CLOG("Retrieving datapath value");
 		datapath = cs.SGetValueDef(string(aiexport_getDataDir()), "AI/Skirmish/NTai/data");
+
+		CLOG("Getting tdfpath value");
+		
+		CLOG("Loading modinfo.tdf");
+		TdfParser sf(G);
+		if(sf.LoadFile("modinfo.tdf")){
+			G->L.print("modinfo.tdf loaded into parser");
+		} else {
+			G->L.eprint("error modinfo.tdf retrieval failed");
+		}
+		const char* modname = G->cb->GetModName();
+		tdfpath =  sf.SGetValueDef(string(modname), "MOD\\NTAI\\tdfpath");
 	}
 
 	CConfigData::~CConfigData(){

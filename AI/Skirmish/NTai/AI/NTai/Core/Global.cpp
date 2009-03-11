@@ -52,10 +52,8 @@ namespace ntai {
 		unit_array = new CUnit*[MAX_UNITS];
 		memset(unit_array,0,sizeof(CUnit*)*MAX_UNITS);
 
-
 		CLOG("Starting CCached initialisation");
 		Cached = new CCached(this);
-		CLOG("getting team value");
 
 		CLOG("Creating Config holder class");
 		info = new CConfigData(G);
@@ -73,22 +71,6 @@ namespace ntai {
 		CLOG("Retrieving cheat interface");
 		chcb = callback->GetCheatInterface();
 		CLOG("cheat interface retrieved");
-
-		CLOG("Loading modinfo.tdf");
-		TdfParser sf(G);
-		if(sf.LoadFile("modinfo.tdf")){
-			L.print("modinfo.tdf loaded into parser");
-		} else {
-			L.eprint("error modinfo.tdf retrieval failed");
-		}
-
-		CLOG("Getting tdfpath value");
-		const char* modname = cb->GetModName();
-		info->tdfpath =  sf.SGetValueDef(string(modname), "MOD\\NTAI\\tdfpath");
-
-		
-
-		
 
 		CLOG("Creating Actions class");
 		Actions = new CActions(G);
@@ -151,6 +133,7 @@ namespace ntai {
 		SaveUnitData();
 		L.Close();
 		delete[] Cached->encache;
+		delete[] unit_array;
 		delete info;
 		delete DTHandler;
 		delete Economy;
@@ -163,6 +146,7 @@ namespace ntai {
 		delete Cached;
 		delete OrderRouter;
 		delete UnitDefLoader;
+		
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
@@ -729,9 +713,12 @@ namespace ntai {
 
 	void Global::UnitDestroyed(int unit, int attacker){
 
-		if(!(ValidUnitID(unit)&&ValidUnitID(attacker))){
+		if(!ValidUnitID(unit)){//&&ValidUnitID(attacker)))
 			return;
 		}
+		
+		CUnit* un = unit_array[unit];
+		unit_array[unit] = 0;
 
 		idlenextframe.erase(unit);
 
@@ -777,8 +764,9 @@ namespace ntai {
 		Ch->UnitDestroyed(unit, attacker);
 		OrderRouter->UnitDestroyed(unit);
 		
-		delete unit_array[unit];
-		unit_array[unit] = 0;
+		
+		delete un;
+		
 	}
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
