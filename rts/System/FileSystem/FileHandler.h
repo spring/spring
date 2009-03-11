@@ -11,6 +11,9 @@
  * This is for direct file system access.
  * If you need data-dir related file and dir handling methods,
  * have a look at the FileSystem class.
+ * 
+ * This class should be threadsafe (multiple threads can use multiple CFileHandler simulatneously)
+ * as long as there are no new Archives added to the VFS (should not happen after PreGame).
  */
 class CFileHandler {
 	public:
