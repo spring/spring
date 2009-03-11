@@ -2,35 +2,32 @@
 
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/thread/xtime.hpp>
 
 #include "OggStream.h"
 
 namespace music
 {
 
-// Ogg-Vorbis audio stream object
-COggStream oggStream;
+struct TrackItem
+{
+	std::string path;
+	float volume;
+};
 
 boost::thread* musicThread = NULL;
-boost::mutex musicMutex;
 volatile bool playing = false;
 
-void EndMusicUpdater()
-{
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	musicThread->join();
-	delete musicThread;
-	musicThread = NULL;
-};
+COggStream oggStream; // not threadsafe, only used from musicThread
+
+boost::mutex musicMutex;
+TrackItem nextTrack; // protected by musicMutex
+volatile bool playNext = false; // protected by musicMutex
 
 void UpdateMusicStream()
 {
-	playing = true;
-	boost::this_thread::at_thread_exit(EndMusicUpdater);
 	while (playing)
 	{
-		{ // sleep a second
+		{ // sleep some time
 			boost::xtime xt;
 			boost::xtime_get(&xt,boost::TIME_UTC);
 			xt.nsec += 200;
@@ -39,27 +36,49 @@ void UpdateMusicStream()
 
 		{ // update buffers
 			boost::mutex::scoped_lock updaterLock(musicMutex);
+			if (playNext)
+			{
+				oggStream.Stop(); // just to be sure
+				oggStream.Play(nextTrack.path, nextTrack.volume);
+				playNext = false;
+			}
 			oggStream.Update();
 		}
 	}
 	
-	oggStream.Stop();
-	playing = false;
+	{
+		boost::mutex::scoped_lock updaterLock(musicMutex);
+		oggStream.Stop();
+	}
 };
 
 void Play(const std::string& path, float volume)
 {
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	oggStream.Play(path, volume);
-	if (!musicThread)
+	if (!playing)
 	{
+		if (musicThread)
+		{
+			musicThread->join();
+			delete musicThread;
+		}
+		// no thread running, no lock needed
+		playing = true;
+		playNext = true;
+		nextTrack.path = path;
+		nextTrack.volume = volume;
 		musicThread = new boost::thread(UpdateMusicStream);
+	}
+	else
+	{
+		boost::mutex::scoped_lock updaterLock(musicMutex);
+		playNext = true;
+		nextTrack.path = path;
+		nextTrack.volume = volume;
 	}
 }
 
 void Stop()
 {
-	boost::mutex::scoped_lock controlLock(musicMutex);
 	playing = false;
 }
 
