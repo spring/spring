@@ -23,14 +23,14 @@ CR_REG_METADATA(AAirMoveType, (
 AAirMoveType::AAirMoveType(CUnit* unit) :
 	AMoveType(unit),
 	aircraftState(AIRCRAFT_LANDED),
-	autoLand(true),
+	oldGoalPos(owner? owner->pos:float3(0, 0, 0)),
+	oldpos(0,0,0),
+	reservedLandingPos(-1,-1,-1),
+	wantedHeight(80),
 	collide(true),
 	lastColWarning(0),
 	lastColWarningType(0),
-	oldpos(0,0,0),
-	oldGoalPos(owner? owner->pos:float3(0, 0, 0)),
-	reservedLandingPos(-1,-1,-1),
-	wantedHeight(80)
+	autoLand(true)
 {
 	useHeading = false;
 }

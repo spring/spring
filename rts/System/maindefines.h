@@ -24,9 +24,9 @@
 #define _MAINDEFINES_H
 
 // include the bool type
-#if !defined __cplusplus && !defined bool
+#if !defined __cplusplus && !defined bool && !defined _MSC_VER
 #include <stdbool.h> // defines: bool, true, false
-#endif // !defined __cplusplus && !defined bool
+#endif // !defined __cplusplus && !defined bool && !defined _MSC_VER
 
 #ifdef _MSC_VER
 	// Microsoft Visual C++ 7.0: MSC_VER = 1300

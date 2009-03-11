@@ -20,7 +20,7 @@ public:
 	cLogFile& operator<<(float message);
 	cLogFile& operator<<(string message);
 
-	static const std::string& GetRAIRootDirectory();
+	static std::string GetDir(bool writeableAndCreate = true, std::string relPath = "");
 
 private:
 	string logFileName;

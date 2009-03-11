@@ -18,16 +18,13 @@
 #ifndef _SKIRMISHAILIBRARYINFO_H
 #define _SKIRMISHAILIBRARYINFO_H
 
-#include "Interface/ELevelOfSupport.h"
-
 #include <vector>
 #include <map>
 #include <string>
-#include "Info.h"
-#include "Option.h"
 
 class ISkirmishAILibrary;
 class SkirmishAIKey;
+struct Option;
 
 class CSkirmishAILibraryInfo {
 public:
@@ -36,29 +33,24 @@ public:
 			const std::string& aiOptionFile = "");
 	~CSkirmishAILibraryInfo();
 
-	virtual void CreateCReferences();
-private:
-	virtual void FreeCReferences();
-public:
+	virtual size_t size() const;
+	virtual const std::string& GetKeyAt(size_t index) const;
+	virtual const std::string& GetValueAt(size_t index) const;
+	virtual const std::string& GetDescriptionAt(size_t index) const;
 
 	virtual SkirmishAIKey GetKey() const;
 
-	virtual std::string GetDataDir() const;
+	virtual const std::string& GetDataDir() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual std::string GetShortName() const;
+	virtual const std::string& GetShortName() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
-	virtual std::string GetVersion() const;
-	virtual std::string GetName() const;
-	virtual std::string GetDescription() const;
-	virtual std::string GetURL() const;
-	virtual std::string GetInterfaceShortName() const;
-	virtual std::string GetInterfaceVersion() const;
-	virtual std::string GetInfo(const std::string& key) const;
-	virtual const std::map<std::string, InfoItem>& GetInfo() const;
-	virtual const char** GetCInfoKeys() const;
-	virtual const char** GetCInfoValues() const;
-
-	virtual const std::vector<Option>& GetOptions() const;
+	virtual const std::string& GetVersion() const;
+	virtual const std::string& GetName() const;
+	virtual const std::string& GetDescription() const;
+	virtual const std::string& GetURL() const;
+	virtual const std::string& GetInterfaceShortName() const;
+	virtual const std::string& GetInterfaceVersion() const;
+	virtual const std::string& GetInfo(const std::string& key) const;
 
 	virtual void SetDataDir(const std::string& dataDir);
 	/** Restrictions: none of the following: spaces, '_', '#' */
@@ -70,14 +62,19 @@ public:
 	virtual void SetURL(const std::string& url);
 	virtual void SetInterfaceShortName(const std::string& interfaceShortName);
 	virtual void SetInterfaceVersion(const std::string& interfaceVersion);
-	virtual bool SetInfo(const std::string& key, const std::string& value);
+	virtual bool SetInfo(const std::string& key, const std::string& value,
+			const std::string& description = "");
 
-	virtual void SetOptions(const std::vector<Option>& options);
+
+	virtual const std::vector<Option>& GetOptions() const;
 
 private:
-	std::map<std::string, InfoItem> info;
-	const char** infoKeys_c;
-	const char** infoValues_c;
+	// for having a well defined order
+	std::vector<std::string> info_keys;
+	std::map<std::string, std::string> info_keyLower_key;
+	std::map<std::string, std::string> info_key_value;
+	std::map<std::string, std::string> info_key_description;
+
 	std::vector<Option> options;
 };
 

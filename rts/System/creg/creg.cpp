@@ -223,7 +223,7 @@ static void StringHash(const std::string &str, unsigned int hash)
 
 void Class::CalculateChecksum (unsigned int& checksum)
 {
-	for (int a=0;a<members.size();a++)
+	for (size_t a=0;a<members.size();a++)
 	{
 		Member *m = members[a];
 		checksum += m->flags;

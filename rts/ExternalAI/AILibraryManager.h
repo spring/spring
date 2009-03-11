@@ -51,9 +51,8 @@ public:
 	virtual const T_interfaceInfos& GetInterfaceInfos() const;
 	virtual const T_skirmishAIInfos& GetSkirmishAIInfos() const;
 
-	virtual unsigned int GetSkirmishAICOptionSize(int teamId) const;
-	virtual const char** GetSkirmishAICOptionKeys(int teamId) const;
-	virtual const char** GetSkirmishAICOptionValues(int teamId) const;
+	virtual const std::vector<std::string>& GetSkirmishAIOptionValueKeys(int teamId) const;
+	virtual const std::map<std::string, std::string>& GetSkirmishAIOptionValues(int teamId) const;
 
 	virtual const T_skirmishAIInfos& GetUsedSkirmishAIInfos();
 
@@ -90,9 +89,10 @@ private:
 	T_interfaceInfos interfaceInfos;
 	T_skirmishAIInfos skirmishAIInfos;
 
-	std::map<int, const char**> teamId_skirmishOptionKeys_c;
-	std::map<int, const char**> teamId_skirmishOptionValues_c;
-	std::map<int, unsigned int> teamId_skirmishOptionsSize_c;
+	std::map<int, std::vector<std::string> > teamId_skirmishAIOptionValueKeys;
+	static const std::vector<std::string> EMPTY_OPTION_VALUE_KEYS;
+	std::map<int, std::map<std::string, std::string> > teamId_skirmishAIOptionValues;
+	static const std::map<std::string, std::string> EMPTY_OPTION_VALUES;
 
 	T_skirmishAIInfos usedSkirmishAIInfos;
 	bool usedSkirmishAIInfos_initialized;
@@ -132,9 +132,6 @@ private:
 	 */
 	void ClearAllInfos();
 
-	void CreateCOptions();
-	void DeleteCOptions();
-
 private:
 	// helper functions
 	static void reportError(const char* topic, const char* msg);
@@ -142,7 +139,6 @@ private:
 	static void reportError2(const char* topic, const char* msg, const char* arg0, const char* arg1);
 	static void reportInterfaceFunctionError(const std::string* libFileName, const std::string* functionName);
 	static std::string extractFileName(const std::string& libFile, bool includeExtension);
-	static std::vector<std::string> FindDirsAndDirectSubDirs(const std::string& path);
 	/**
 	 * Finds the best fitting interface.
 	 * The  short name has to fit perfectly, and the version of the interface

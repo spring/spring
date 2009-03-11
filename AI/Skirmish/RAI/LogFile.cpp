@@ -9,7 +9,7 @@ using namespace std;
 
 cLogFile::cLogFile(string sFilename, bool bAppend)
 {
-	logFileName = cLogFile::GetRAIRootDirectory() + sFilename;
+	logFileName = cLogFile::GetDir() + sFilename;
 	if( bAppend )
 		logFile = fopen(logFileName.c_str(),"a");
 //		logFile = new ofstream();
@@ -84,8 +84,6 @@ void cLogFile::Write(int message)
 }
 */
 
-const std::string& cLogFile::GetRAIRootDirectory() {
-
-	static std::string raiRootDirectory = aiexport_getDataDir(false);
-	return raiRootDirectory;
+std::string cLogFile::GetDir(bool writeableAndCreate, std::string relPath) {
+	return aiexport_getDataDir(writeableAndCreate, relPath.c_str());
 }

@@ -3,7 +3,7 @@
 
 #include <new>
 
-const int MAX_MEM_SIZE=200;
+const size_t MAX_MEM_SIZE=200;
 
 class CMemPool
 {

@@ -21,11 +21,14 @@
 #include "SkirmishAILibrary.h"
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
+#include "SAIInterfaceCallbackImpl.h"
 
 #include "System/Util.h"
 #include "System/Platform/errorhandler.h"
 #include "System/FileSystem/FileHandler.h"
 #include "IAILibraryManager.h"
+#include "LogOutput.h"
+
 
 CAIInterfaceLibrary::CAIInterfaceLibrary(const CAIInterfaceLibraryInfo& _info)
 		: interfaceId(-1), info(_info) {
@@ -58,7 +61,7 @@ void CAIInterfaceLibrary::InitStatic() {
 
 	if (sAIInterfaceLibrary.initStatic != NULL) {
 		if (interfaceId == -1) {
-			interfaceId = SAIInterfaceCallback_getInstanceFor(&info, &callback);
+			interfaceId = aiInterfaceCallback_getInstanceFor(&info, &callback);
 		}
 		int ret = sAIInterfaceLibrary.initStatic(interfaceId, &callback);
 		if (ret != 0) {
@@ -89,7 +92,7 @@ void CAIInterfaceLibrary::ReleaseStatic() {
 		}
 	}
 	if (interfaceId != -1) {
-		SAIInterfaceCallback_release(interfaceId);
+		aiInterfaceCallback_release(interfaceId);
 	}
 }
 
@@ -133,7 +136,7 @@ const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(
 
 	const SkirmishAIKey& skirmishAIKey = aiInfo.GetKey();
 	if (skirmishAILoadCount[skirmishAIKey] == 0) {
-		const SSAILibrary* sLib =
+		const SSkirmishAILibrary* sLib =
 				sAIInterfaceLibrary.loadSkirmishAILibrary(
 				aiInfo.GetShortName().c_str(), aiInfo.GetVersion().c_str());
 		if (sLib == NULL) {
@@ -148,7 +151,7 @@ const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(
 					skirmishAIKey.GetVersion().c_str(),
 					skirmishAIKey.GetInterface().GetShortName().c_str(),
 					skirmishAIKey.GetInterface().GetVersion().c_str());
-			struct SSAILibrary* sLib_empty = new SSAILibrary();
+			struct SSkirmishAILibrary* sLib_empty = new SSkirmishAILibrary();
 			sLib_empty->getLevelOfSupportFor = NULL;
 			sLib_empty->init = NULL;
 			sLib_empty->release = NULL;
@@ -254,7 +257,7 @@ int CAIInterfaceLibrary::InitializeFromLib(const std::string& libFilePath) {
 
 	funcName = "loadSkirmishAILibrary";
 	sAIInterfaceLibrary.loadSkirmishAILibrary
-			= (const SSAILibrary* (CALLING_CONV_FUNC_POINTER *)(
+			= (const SSkirmishAILibrary* (CALLING_CONV_FUNC_POINTER *)(
 			const char* const shortName,
 			const char* const version))
 			sharedLib->FindAddress(funcName.c_str());

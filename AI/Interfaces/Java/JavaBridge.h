@@ -40,7 +40,7 @@
 
 #define MTH_INDEX_SKIRMISH_AI_INIT          0
 #define MTH_SKIRMISH_AI_INIT "init"
-#define SIG_SKIRMISH_AI_INIT "(ILjava/util/Properties;Ljava/util/Properties;)I"
+#define SIG_SKIRMISH_AI_INIT "(ILcom/clan_sy/spring/ai/AICallback;)I"
 
 #define MTH_INDEX_SKIRMISH_AI_RELEASE       1
 #define MTH_SKIRMISH_AI_RELEASE "release"
@@ -72,7 +72,7 @@ extern "C" {
 #include <stdbool.h>	// bool, true, false
 
 struct SAIInterfaceCallback;
-struct SAICallback;
+struct SSkirmishAICallback;
 
 ///**
 // * Returns a JNI environment, which includes a JVM.
@@ -91,14 +91,16 @@ bool java_releaseStatic();
 /**
  * Instantiates an instance of the specified className.
  *
- * @param	className	fully qualified name of a Java clas that implements
+ * @param	className	fully qualified name of a Java class that implements
  *						interface com.clan_sy.spring.ai.AI, eg:
  *						"com.myai.AI"
  * @param	aiInstance	where the AI instance will be stored
  * @param	methods		where the method IDs of the AI will be stored
  */
-bool java_initSkirmishAIClass(unsigned int infoSize,
-		const char** infoKeys, const char** infoValues);
+bool java_initSkirmishAIClass(
+		const char* const shortName,
+		const char* const version,
+		const char* const className);
 /**
  * Release an instance of the specified className.
  *
@@ -110,23 +112,10 @@ bool java_initSkirmishAIClass(unsigned int infoSize,
  */
 bool java_releaseSkirmishAIClass(const char* className);
 bool java_releaseAllSkirmishAIClasses();
-/**
- * Instantiates an instance of the class specified className.
- *
- * @param	className	fully qualified name of a Java clas that implements
- *						interface com.clan_sy.spring.ai.AI, eg:
- *						"com.myai.AI"
- * @param	aiInstance	where the AI instance will be stored
- * @param	methods		where the method IDs of the AI will be stored
- */
-int java_skirmishAI_init(int teamId,
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		unsigned int optionsSize,
-		const char** optionsKeys, const char** optionsValues);
+int java_skirmishAI_init(int teamId, const struct SSkirmishAICallback* callback);
 int java_skirmishAI_release(int teamId);
 int java_skirmishAI_handleEvent(int teamId, int topic, const void* data);
-const struct SAICallback* java_getSkirmishAICCallback(int teamId);
+//const struct SSkirmishAICallback* java_getSkirmishAICCallback(int teamId);
 
 
 #ifdef __cplusplus

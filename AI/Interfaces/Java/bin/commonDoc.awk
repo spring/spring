@@ -3,7 +3,7 @@
 # This awk script contains common functions that may be used by other scripts.
 # Contains functions that help parsing storing and printing API doc comments,
 # think of Doxygen or JavaDoc.
-# the callback in: rts/ExternalAI/Interface/SAICallback.h
+# the callback in: rts/ExternalAI/Interface/SSkirmishAICallback.h
 # use like this:
 # 	awk -f yourScript.awk -f common.awk [additional-params]
 # this should work with all flavours of AWK (eg. gawk, mawk, nawk, ...)
@@ -42,6 +42,20 @@ function hasStoredDoc() {
 #function getStoredDocLines() {
 #	return docComLines_num__doc;
 #}
+
+function printStoredDoc(indent__doc) {
+
+	# print the documentation comment only if it is not empty
+	if (hasStoredDoc()) {
+		print(indent__doc "/**");
+		for (l__doc=0; l__doc < docComLines_num__doc; l__doc++) {
+			docLine__doc = docComLines__doc[l__doc];
+			print(indent__doc " * " docLine__doc);
+		}
+		print(indent__doc " */");
+	}
+}
+
 # Stores the current doc lines in a container at a specified index
 # This container can then be passed to printFunctionComment_Common() eg.
 function storeDocLines(container__doc, index__doc) {
@@ -70,7 +84,7 @@ function printFunctionComment_Common(outFile__doc, container__doc, index__doc, i
 	}
 }
 
-# end of doc comment
+# end of doc comment: */
 /\*\// {
 
 	if (isInsideDocComment__doc == 1) {
@@ -89,6 +103,11 @@ function printFunctionComment_Common(outFile__doc, container__doc, index__doc, i
 
 # inside of doc comment
 {
+	if (singleLineDocComment__doc == 1) {
+		singleLineDocComment__doc = 0;
+		isInsideDocComment__doc = 0;
+	}
+
 	if (isInsideDocComment__doc == 1) {
 		usefullLinePart__doc = $0;
 		sub(/^[ \t]*(\*)?/, "", usefullLinePart__doc);
@@ -106,12 +125,13 @@ function printFunctionComment_Common(outFile__doc, container__doc, index__doc, i
 	}
 }
 
-# beginn of doc comment
+# beginn of doc comment: /**
 /^[ \t]*\/\*\*/ {
 
 	isInsideDocComment__doc = 1;
 	docComLines_num__doc = 0;
 	linesWithNoDocComment__doc = 0;
+	singleLineDocComment__doc = 0;
 
 	usefullLinePart__doc = $0;
 	sub(/^[ \t]*\/\*\*/, "", usefullLinePart__doc);
@@ -119,6 +139,23 @@ function printFunctionComment_Common(outFile__doc, container__doc, index__doc, i
 	if (sub(/\*\/.*/, "", usefullLinePart__doc)) {
 		isInsideDocComment__doc = 0;
 	}
+	usefullLinePart__doc = rtrim(usefullLinePart__doc);
+	if (usefullLinePart__doc != "") {
+		docComLines__doc[docComLines_num__doc++] = usefullLinePart__doc;
+	}
+}
+
+# beginn of single line doc comment: ///
+/^[ \t]*\/\/\// {
+
+	isInsideDocComment__doc = 1;
+	docComLines_num__doc = 0;
+	linesWithNoDocComment__doc = 0;
+	singleLineDocComment__doc = 1;
+
+	usefullLinePart__doc = $0;
+	sub(/^[ \t]*\/\/\//, "", usefullLinePart__doc);
+	sub(/^[ \t]/, "", usefullLinePart__doc);
 	usefullLinePart__doc = rtrim(usefullLinePart__doc);
 	if (usefullLinePart__doc != "") {
 		docComLines__doc[docComLines_num__doc++] = usefullLinePart__doc;

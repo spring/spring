@@ -187,15 +187,15 @@ SectionEnd
 
 
 SectionGroup "Multiplayer battlerooms"
-  Section "TASClient" SEC_TASCLIENT
-  !define INSTALL
-  !include "sections\tasclient.nsh"
-  !undef INSTALL
-  SectionEnd
-
   Section "SpringLobby" SEC_SPRINGLOBBY
   !define INSTALL
   !include "sections\springlobby.nsh"
+  !undef INSTALL
+  SectionEnd
+  
+  Section "TASClient (only Multiplayer)" SEC_TASCLIENT
+  !define INSTALL
+  !include "sections\tasclient.nsh"
   !undef INSTALL
   SectionEnd
 SectionGroupEnd

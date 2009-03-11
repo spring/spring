@@ -2,7 +2,7 @@
 #
 # This awk script creates a Java class with JNA functions
 # to call to C function pointers in:
-# rts/ExternalAI/Interface/SAICallback.h
+# rts/ExternalAI/Interface/SSkirmishAICallback.h
 #
 # This script uses functions from the following files:
 # * common.awk
@@ -106,6 +106,16 @@ function printClass(clsName_c) {
 	if (clsName_c == myWin32Class) {
 		clbType_c = "StdCallLibrary.StdCallCallback";
 	}
+
+	# print the static insantiator method
+	print("\t" "public static " clsName_c " getInstance(Pointer memory) {") >> outFile_c;
+	print("") >> outFile_c;
+	print("\t" "	" clsName_c " _inst = new " clsName_c "();") >> outFile_c;
+	print("\t" "	_inst.useMemory(memory);") >> outFile_c;
+	print("\t" "	_inst.read();") >> outFile_c;
+	print("\t" "	return _inst;") >> outFile_c;
+	print("\t" "}") >> outFile_c;
+	print("") >> outFile_c;
 
 	for (i=0; i < fi; i++) {
 		fullName = funcFullName[i];

@@ -15,18 +15,15 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _SAICALLBACK_H
-#define	_SAICALLBACK_H
+#ifndef _SKIRMISHAICALLBACK_H
+#define	_SKIRMISHAICALLBACK_H
+
+#include "aidefines.h"
 
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-#include "aidefines.h"
-
-#ifndef _MSC_VER
-	#include <stdbool.h>
-#endif
 
 /**
  * Skirmish AI Callback function pointers.
@@ -36,7 +33,7 @@ extern "C" {
  * has to be the ID of the team that is controlled by the AI instance
  * using the callback.
  */
-struct SAICallback {
+struct SSkirmishAICallback {
 
 /**
  * Whenever an AI wants to change the engine state in any way,
@@ -59,9 +56,161 @@ struct SAICallback {
  * @return     0: if command handling ok
  *          != 0: something else otherwise
  */
-int (CALLING_CONV *Clb_handleCommand)(int teamId, int toId, int commandId,
+int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId,
 		int commandTopic, void* commandData);
 
+	/** Returns the major engine revision number (e.g. 0.77) */
+	const char* const (CALLING_CONV *Clb_Engine_Version_getMajor)(int teamId);
+	/** Returns the minor engine revision */
+	const char* const (CALLING_CONV *Clb_Engine_Version_getMinor)(int teamId);
+	/**
+	 * Clients that only differ in patchset can still play together.
+	 * Also demos should be compatible between patchsets.
+	 */
+	const char* const (CALLING_CONV *Clb_Engine_Version_getPatchset)(int teamId);
+	/** Returns additional information (compiler flags, svn revision etc.) */
+	const char* const (CALLING_CONV *Clb_Engine_Version_getAdditional)(int teamId);
+	/** Returns the time of build */
+	const char* const (CALLING_CONV *Clb_Engine_Version_getBuildTime)(int teamId);
+	/** Returns "Major.Minor" */
+	const char* const (CALLING_CONV *Clb_Engine_Version_getNormal)(int teamId);
+	/** Returns "Major.Minor.Patchset (Additional)" */
+	const char* const (CALLING_CONV *Clb_Engine_Version_getFull)(int teamId);
+
+	/** Returns the number of teams in this game */
+	int               (CALLING_CONV *Clb_Teams_getSize)(int teamId);
+
+	/** Returns the number of skirmish AIs in this game */
+	int               (CALLING_CONV *Clb_SkirmishAIs_getSize)(int teamId);
+	/** Returns the maximum number of skirmish AIs in any game */
+	int               (CALLING_CONV *Clb_SkirmishAIs_getMax)(int teamId);
+
+	/**
+	 * Returns the number of info key-value pairs in the info map
+	 * for this Skirmish AI.
+	 */
+	int               (CALLING_CONV *Clb_SkirmishAI_Info_getSize)(int teamId);
+	/**
+	 * Returns the key at index infoIndex in the info map
+	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
+	 */
+	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getKey)(int teamId, int infoIndex);
+	/**
+	 * Returns the value at index infoIndex in the info map
+	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
+	 */
+	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getValue)(int teamId, int infoIndex);
+	/**
+	 * Returns the description of the key at index infoIndex in the info map
+	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
+	 */
+	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getDescription)(int teamId, int infoIndex);
+	/**
+	 * Returns the value associated with the given key in the info map
+	 * for this Skirmish AI, or NULL if not found.
+	 */
+	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getValueByKey)(int teamId, const char* const key);
+
+	/**
+	 * Returns the number of option key-value pairs in the options map
+	 * for this Skirmish AI.
+	 */
+	int               (CALLING_CONV *Clb_SkirmishAI_OptionValues_getSize)(int teamId);
+	/**
+	 * Returns the key at index optionIndex in the options map
+	 * for this Skirmish AI, or NULL if the optionIndex is invalid.
+	 */
+	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getKey)(int teamId, int optionIndex);
+	/**
+	 * Returns the value at index optionIndex in the options map
+	 * for this Skirmish AI, or NULL if the optionIndex is invalid.
+	 */
+	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValue)(int teamId, int optionIndex);
+	/**
+	 * Returns the value associated with the given key in the options map
+	 * for this Skirmish AI, or NULL if not found.
+	 */
+	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValueByKey)(int teamId, const char* const key);
+
+	/** This will end up in infolog */
+	void              (CALLING_CONV *Clb_Log_log)(int teamId, const char* const msg);
+	/**
+	 * Inform the engine of an error that happend in the interface.
+	 * @param   msg       error message
+	 * @param   severety  from 10 for minor to 0 for fatal
+	 * @param   die       if this is set to true, the engine assumes
+	 *                    the interface is in an irreparable state, and it will
+	 *                    unload it immediately.
+	 */
+	void               (CALLING_CONV *Clb_Log_exception)(int teamId, const char* const msg, int severety, bool die);
+
+	/** Returns '/' on posix and '\\' on windows */
+	char (CALLING_CONV *Clb_DataDirs_getPathSeparator)(int teamId);
+	/**
+	 * This interfaces main data dir, which is where the shared library
+	 * and the InterfaceInfo.lua file are located, e.g.:
+	 * /usr/share/games/spring/AI/Interfaces/C/0.1/
+	 */
+	const char* const (CALLING_CONV *Clb_DataDirs_getConfigDir)(int teamId);
+	/**
+	 * This interfaces writeable data dir, which is where eg logs, caches
+	 * and learning data should be stored, e.g.:
+	 * ~/.spring/AI/Interfaces/C/0.1/
+	 */
+	const char* const (CALLING_CONV *Clb_DataDirs_getWriteableDir)(int teamId);
+	/**
+	 * Returns an absolute path which consists of:
+	 * data-dir + AI-Interface-path + relative-path.
+	 *
+	 * example:
+	 * input:  "log/main.log", writeable, create, !dir
+	 * output: "/home/userX/.spring/AI/Interfaces/C/0.1/log/main.log"
+	 * The path "/home/userX/.spring/AI/Interfaces/C/0.1/log/" is created,
+	 * if it does not yet exist.
+	 *
+	 * @see DataDirs_Roots_locatePath
+	 * @param   path          store for the resulting absolute path
+	 * @param   path_sizeMax  storage size of the above
+	 * @param   writeable  if true, only the writeable data-dir is considered
+	 * @param   create     if true, and realPath is not found, its dir structure
+	 *                     is created recursively under the writeable data-dir
+	 * @param   dir        if true, realPath specifies a dir, which means if
+	 *                     create is true, the whole path will be created,
+	 *                     including the last part
+	 * @return  whether the locating process was successfull
+	 *          -> the path exists and is stored in an absolute form in path
+	 */
+	bool              (CALLING_CONV *Clb_DataDirs_locatePath)(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
+	char*             (CALLING_CONV *Clb_DataDirs_allocatePath)(int teamId, const char* const relPath, bool writeable, bool create, bool dir);
+	/// Returns the number of springs data dirs.
+	int               (CALLING_CONV *Clb_DataDirs_Roots_getSize)(int teamId);
+	/// Returns the data dir at dirIndex, which is valid between 0 and (DataDirs_Roots_getSize() - 1).
+	bool              (CALLING_CONV *Clb_DataDirs_Roots_getDir)(int teamId, char* path, int path_sizeMax, int dirIndex);
+	/**
+	 * Returns an absolute path which consists of:
+	 * data-dir + relative-path.
+	 *
+	 * example:
+	 * input:  "AI/Skirmish", writeable, create, dir
+	 * output: "/home/userX/.spring/AI/Skirmish/"
+	 * The path "/home/userX/.spring/AI/Skirmish/" is created,
+	 * if it does not yet exist.
+	 *
+	 * @see DataDirs_locatePath
+	 * @param   path          store for the resulting absolute path
+	 * @param   path_sizeMax  storage size of the above
+	 * @param   relPath    the relative path to find
+	 * @param   writeable  if true, only the writeable data-dir is considered
+	 * @param   create     if true, and realPath is not found, its dir structure
+	 *                     is created recursively under the writeable data-dir
+	 * @param   dir        if true, realPath specifies a dir, which means if
+	 *                     create is true, the whole path will be created,
+	 *                     including the last part
+	 * @return  whether the locating process was successfull
+	 *          -> the path exists and is stored in an absolute form in path
+	 */
+	bool              (CALLING_CONV *Clb_DataDirs_Roots_locatePath)(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
+	char*             (CALLING_CONV *Clb_DataDirs_Roots_allocatePath)(int teamId, const char* const relPath, bool writeable, bool create, bool dir);
 
 // BEGINN misc callback functions
 /**
@@ -129,8 +278,8 @@ float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getStorage)(
 int (CALLING_CONV *Clb_File_getSize)(int teamId, const char* fileName);
 bool (CALLING_CONV *Clb_File_getContent)(int teamId, const char* fileName,
 		void* buffer, int bufferLen);
-bool (CALLING_CONV *Clb_File_locateForReading)(int teamId, char* fileName);
-bool (CALLING_CONV *Clb_File_locateForWriting)(int teamId, char* fileName);
+// bool (CALLING_CONV *Clb_File_locateForReading)(int teamId, char* fileName, int fileName_sizeMax);
+// bool (CALLING_CONV *Clb_File_locateForWriting)(int teamId, char* fileName, int fileName_sizeMax);
 // END OBJECT File
 
 
@@ -374,7 +523,7 @@ float (CALLING_CONV *Clb_UnitDef_getMaxAileron)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMaxElevator)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMaxRudder)(int teamId, int unitDefId);
 // end: aircraft stuff
-///* returned size is 4 */
+// /* returned size is 4 */
 //const unsigned char*[] (CALLING_CONV *Clb_UnitDef_getYardMaps)(int teamId,
 //		int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getXSize)(int teamId, int unitDefId);
@@ -811,7 +960,135 @@ bool (CALLING_CONV *Clb_Group_isSelected)(int teamId, int groupId);
 
 
 // BEGINN OBJECT Mod
-const char* (CALLING_CONV *Clb_Mod_getName)(int teamId);
+
+/**
+ * archive filename
+ */
+const char* const (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
+
+/**
+ * archive filename
+ */
+const char* const (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
+const char* const (CALLING_CONV *Clb_Mod_getShortName)(int teamId);
+const char* const (CALLING_CONV *Clb_Mod_getVersion)(int teamId);
+const char* const (CALLING_CONV *Clb_Mod_getMutator)(int teamId);
+const char* const (CALLING_CONV *Clb_Mod_getDescription)(int teamId);
+
+bool              (CALLING_CONV *Clb_Mod_getAllowTeamColors)(int teamId);
+
+/**
+ * Should constructions without builders decay?
+ */
+bool              (CALLING_CONV *Clb_Mod_getConstructionDecay)(int teamId);
+/**
+ * How long until they start decaying?
+ */
+int               (CALLING_CONV *Clb_Mod_getConstructionDecayTime)(int teamId);
+/**
+ * How fast do they decay?
+ */
+float             (CALLING_CONV *Clb_Mod_getConstructionDecaySpeed)(int teamId);
+
+/**
+ * 0 = 1 reclaimer per feature max, otherwise unlimited
+ */
+int               (CALLING_CONV *Clb_Mod_getMultiReclaim)(int teamId);
+/**
+ * 0 = gradual reclaim, 1 = all reclaimed at end, otherwise reclaim in reclaimMethod chunks
+ */
+int               (CALLING_CONV *Clb_Mod_getReclaimMethod)(int teamId);
+/**
+ * 0 = Revert to wireframe, gradual reclaim, 1 = Subtract HP, give full metal at end, default 1
+ */
+int               (CALLING_CONV *Clb_Mod_getReclaimUnitMethod)(int teamId);
+/**
+ * How much energy should reclaiming a unit cost, default 0.0
+ */
+float             (CALLING_CONV *Clb_Mod_getReclaimUnitEnergyCostFactor)(int teamId);
+/**
+ * How much metal should reclaim return, default 1.0
+ */
+float             (CALLING_CONV *Clb_Mod_getReclaimUnitEfficiency)(int teamId);
+/**
+ * How much should energy should reclaiming a feature cost, default 0.0
+ */
+float             (CALLING_CONV *Clb_Mod_getReclaimFeatureEnergyCostFactor)(int teamId);
+/**
+ * Allow reclaiming enemies? default true
+ */
+bool              (CALLING_CONV *Clb_Mod_getReclaimAllowEnemies)(int teamId);
+/**
+ * Allow reclaiming allies? default true
+ */
+bool              (CALLING_CONV *Clb_Mod_getReclaimAllowAllies)(int teamId);
+
+/**
+ * How much should energy should repair cost, default 0.0
+ */
+float             (CALLING_CONV *Clb_Mod_getRepairEnergyCostFactor)(int teamId);
+
+/**
+ * How much should energy should resurrect cost, default 0.5
+ */
+float             (CALLING_CONV *Clb_Mod_getResurrectEnergyCostFactor)(int teamId);
+
+/**
+ * How much should energy should capture cost, default 0.0
+ */
+float             (CALLING_CONV *Clb_Mod_getCaptureEnergyCostFactor)(int teamId);
+
+/**
+ * 0 = all ground units cannot be transported, 1 = all ground units can be transported (mass and size restrictions still apply). Defaults to 1.
+ */
+int               (CALLING_CONV *Clb_Mod_getTransportGround)(int teamId);
+/**
+ * 0 = all hover units cannot be transported, 1 = all hover units can be transported (mass and size restrictions still apply). Defaults to 0.
+ */
+int               (CALLING_CONV *Clb_Mod_getTransportHover)(int teamId);
+/**
+ * 0 = all naval units cannot be transported, 1 = all naval units can be transported (mass and size restrictions still apply). Defaults to 0.
+ */
+int               (CALLING_CONV *Clb_Mod_getTransportShip)(int teamId);
+/**
+ * 0 = all air units cannot be transported, 1 = all air units can be transported (mass and size restrictions still apply). Defaults to 0.
+ */
+int               (CALLING_CONV *Clb_Mod_getTransportAir)(int teamId);
+
+/**
+ * 1 = units fire at enemies running Killed() script, 0 = units ignore such enemies
+ */
+int               (CALLING_CONV *Clb_Mod_getFireAtKilled)(int teamId);
+/**
+ * 1 = units fire at crashing aircrafts, 0 = units ignore crashing aircrafts
+ */
+int               (CALLING_CONV *Clb_Mod_getFireAtCrashing)(int teamId);
+
+/**
+ * 0=no flanking bonus;  1=global coords, mobile;  2=unit coords, mobile;  3=unit coords, locked
+ */
+int               (CALLING_CONV *Clb_Mod_getFlankingBonusModeDefault)(int teamId);
+
+/**
+ * miplevel for los
+ */
+int               (CALLING_CONV *Clb_Mod_getLosMipLevel)(int teamId);
+/**
+ * miplevel to use for airlos
+ */
+int               (CALLING_CONV *Clb_Mod_getAirMipLevel)(int teamId);
+/**
+ * units sightdistance will be multiplied with this, for testing purposes
+ */
+float             (CALLING_CONV *Clb_Mod_getLosMul)(int teamId);
+/**
+ * units airsightdistance will be multiplied with this, for testing purposes
+ */
+float             (CALLING_CONV *Clb_Mod_getAirLosMul)(int teamId);
+/**
+ * when underwater, units are not in LOS unless also in sonar
+ */
+bool              (CALLING_CONV *Clb_Mod_getRequireSonarUnderWater)(int teamId);
 // END OBJECT Mod
 
 
@@ -1064,7 +1341,7 @@ float (CALLING_CONV *Clb_WeaponDef_0REF1Resource2resourceId0getCost)(int teamId,
 float (CALLING_CONV *Clb_WeaponDef_getSupplyCost)(int teamId, int weaponDefId);
 int (CALLING_CONV *Clb_WeaponDef_getProjectilesPerShot)(int teamId,
 		int weaponDefId);
-///** The "id=" tag in the TDF */
+// /** The "id=" tag in the TDF */
 //int (CALLING_CONV *Clb_WeaponDef_getTdfId)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isTurret)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isOnlyForward)(int teamId, int weaponDefId);
@@ -1304,9 +1581,4 @@ void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId,
 } // extern "C"
 #endif
 
-#if defined __cplusplus && !defined BUILDING_AI
-class IGlobalAICallback;
-SAICallback* initSAICallback(int teamId, IGlobalAICallback* aiGlobalCallback);
-#endif // defined __cplusplus && !defined BUILDING_AI
-
-#endif // _SAICALLBACK_H
+#endif // _SKIRMISHAICALLBACK_H

@@ -18,8 +18,8 @@ CR_REG_METADATA(CStarburstLauncher,(
 
 CStarburstLauncher::CStarburstLauncher(CUnit* owner)
 : CWeapon(owner),
-	uptime(3),
-	tracking(0)
+	tracking(0),
+	uptime(3)
 {
 }
 

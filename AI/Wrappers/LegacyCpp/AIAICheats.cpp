@@ -17,13 +17,13 @@
 
 #include "AIAICheats.h"
 
-#include "ExternalAI/Interface/SAICallback.h"
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "AIAICallback.h"
 #include "ExternalAI/Interface/AISCommands.h"
 
 static int resIndMetal = -1;
 static int resIndEnergy = -1;
-static inline int getResourceIndex_Metal(SAICallback* sAICallback, int teamId) {
+static inline int getResourceIndex_Metal(const SSkirmishAICallback* sAICallback, int teamId) {
 
 	if (resIndMetal == -1) {
 		resIndMetal = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(
@@ -32,7 +32,7 @@ static inline int getResourceIndex_Metal(SAICallback* sAICallback, int teamId) {
 
 	return resIndMetal;
 }
-static inline int getResourceIndex_Energy(SAICallback* sAICallback, int teamId)
+static inline int getResourceIndex_Energy(const SSkirmishAICallback* sAICallback, int teamId)
 {
 	if (resIndEnergy == -1) {
 		resIndEnergy = sAICallback->Clb_0MULTI1FETCH3ResourceByName0Resource(
@@ -45,7 +45,7 @@ static inline int getResourceIndex_Energy(SAICallback* sAICallback, int teamId)
 CAIAICheats::CAIAICheats()
 	: IAICheats(), teamId(-1), sAICallback(NULL), aiCallback(NULL) {}
 
-CAIAICheats::CAIAICheats(int teamId, SAICallback* sAICallback,
+CAIAICheats::CAIAICheats(int teamId, const SSkirmishAICallback* sAICallback,
 		CAIAICallback* aiCallback)
 		: IAICheats(), teamId(teamId), sAICallback(sAICallback),
 		aiCallback(aiCallback) {}
@@ -58,7 +58,7 @@ void CAIAICheats::setCheatsEnabled(bool enabled) {
 void CAIAICheats::SetMyHandicap(float handicap) {
 	setCheatsEnabled(true);
 	SSetMyHandicapCheatCommand cmd = {handicap};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
 			COMMAND_CHEATS_SET_MY_HANDICAP, &cmd);
 	setCheatsEnabled(false);
 }
@@ -67,7 +67,7 @@ void CAIAICheats::GiveMeMetal(float amount) {
 	static int m = getResourceIndex_Metal(sAICallback, teamId);
 	setCheatsEnabled(true);
 	SGiveMeResourceCheatCommand cmd = {m, amount};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
 			COMMAND_CHEATS_GIVE_ME_RESOURCE, &cmd);
 	setCheatsEnabled(false);
 }
@@ -76,7 +76,7 @@ void CAIAICheats::GiveMeEnergy(float amount) {
 	static int e = getResourceIndex_Energy(sAICallback, teamId);
 	setCheatsEnabled(true);
 	SGiveMeResourceCheatCommand cmd = {e, amount};
-	sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
 			COMMAND_CHEATS_GIVE_ME_RESOURCE, &cmd);
 	setCheatsEnabled(false);
 }
@@ -86,7 +86,7 @@ int CAIAICheats::CreateUnit(const char* unitDefName, float3 pos) {
 	int unitDefId = sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(
 			teamId, unitDefName);
 	SGiveMeNewUnitCheatCommand cmd = {unitDefId, pos.toSAIFloat3()};
-	int unitId = sAICallback->Clb_handleCommand(teamId, COMMAND_TO_ID_ENGINE,
+	int unitId = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE,
 			-1, COMMAND_CHEATS_GIVE_ME_NEW_UNIT, &cmd);
 	setCheatsEnabled(false);
 	return unitId;

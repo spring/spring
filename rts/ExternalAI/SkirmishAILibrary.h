@@ -21,7 +21,7 @@
 #include "ISkirmishAILibrary.h"
 
 #include "SkirmishAIKey.h"
-#include "Interface/SSAILibrary.h"
+#include "Interface/SSkirmishAILibrary.h"
 #include <vector>
 
 class AIInterfaceKey;
@@ -31,7 +31,7 @@ class AIInterfaceKey;
  */
 class CSkirmishAILibrary : public ISkirmishAILibrary {
 public:
-	CSkirmishAILibrary(const SSAILibrary& ai, const SkirmishAIKey& key);
+	CSkirmishAILibrary(const SSkirmishAILibrary& ai, const SkirmishAIKey& key);
 	virtual ~CSkirmishAILibrary();
 
 	virtual SkirmishAIKey GetKey() const;
@@ -49,7 +49,7 @@ public:
 	virtual int HandleEvent(int teamId, int topic, const void* data) const;
 
 private:
-	SSAILibrary sSAI;
+	SSkirmishAILibrary sSAI;
 	SkirmishAIKey key;
 };
 

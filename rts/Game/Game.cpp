@@ -212,11 +212,11 @@ CR_REG_METADATA(CGame,(
 
 
 CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile)
-: lastFrameTime(0),
-  drawMode(notDrawing),
+: drawMode(notDrawing),
   drawSky(true),
   drawWater(true),
-  drawGround(true)
+  drawGround(true),
+  lastFrameTime(0)
 {
 	game = this;
 	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
@@ -3072,7 +3072,7 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
-		for (int a = 0; a < teamHandler->ActiveTeams(); a++) {
+		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
 		profiler.Update();
@@ -3251,7 +3251,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SENDPLAYERSTAT: {
-				logOutput.Print("Game over");
+				//logOutput.Print("Game over");
 			// Warning: using CPlayer::Statistics here may cause endianness problems
 			// once net->SendData is endian aware!
 				net->Send(CBaseNetProtocol::Get().SendPlayerStat(gu->myPlayerNum, playerHandler->Player(gu->myPlayerNum)->currentStats));
@@ -4669,7 +4669,7 @@ static unsigned char GetLuaColor(const LuaTable& tbl, int channel, unsigned char
 
 void CGame::ReColorTeams()
 {
-	for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
+	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
 		CTeam* team = teamHandler->Team(t);
 		team->origColor[0] = team->color[0];
 		team->origColor[1] = team->color[1];

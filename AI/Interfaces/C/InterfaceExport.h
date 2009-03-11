@@ -41,7 +41,7 @@ extern "C" {
 
 //#include "ExternalAI/Interface/ELevelOfSupport.h"
 
-struct SSAILibrary;
+struct SSkirmishAILibrary;
 struct SAIInterfaceCallback;
 
 // for a list of the functions that have to be exported,
@@ -60,7 +60,7 @@ EXPORT(int) releaseStatic();
 
 // skirmish AI related methods
 
-EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
+EXPORT(const struct SSkirmishAILibrary*) loadSkirmishAILibrary(
 		const char* const shortName,
 		const char* const version);
 EXPORT(int) unloadSkirmishAILibrary(

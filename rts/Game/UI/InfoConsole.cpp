@@ -24,12 +24,12 @@
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-const int CInfoConsole::maxRawLines   = 1024;
-const int CInfoConsole::maxLastMsgPos = 10;
+const size_t CInfoConsole::maxRawLines   = 1024;
+const size_t CInfoConsole::maxLastMsgPos = 10;
 
 CInfoConsole::CInfoConsole():
-	disabled(false), newLines(0), rawId(0),
-	lastMsgIter(lastMsgPositions.begin())
+	disabled(false), lastMsgIter(lastMsgPositions.begin()), newLines(0),
+	rawId(0)
 {
 	data.clear();
 

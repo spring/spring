@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 #include "SAIFloat3.h"
-#include "SAICallback.h"
+#include "SSkirmishAICallback.h"
 
 /**
  * Each event type can be identified through a unique ID,
@@ -42,7 +42,7 @@ extern "C" {
  * You should always append new event topics at the end of this list,
  * and adjust NUM_EVENTS.
  *
- * @see SSAILibrary.handleEvent()
+ * @see SSkirmishAILibrary.handleEvent()
  */
 enum EventTopic {
 	EVENT_NULL                         =  0,
@@ -103,13 +103,7 @@ const unsigned int NUM_EVENTS          = 23;
  */
 struct SInitEvent {
 	int team;
-	struct SAICallback* callback;
-	unsigned int infoSize;
-	const char** infoKeys;
-	const char** infoValues;
-	unsigned int optionsSize;
-	const char** optionsKeys;
-	const char** optionsValues;
+	const struct SSkirmishAICallback* callback;
 }; // EVENT_INIT
 
 /**

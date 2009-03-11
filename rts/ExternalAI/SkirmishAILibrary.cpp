@@ -19,10 +19,11 @@
 
 #include "LogOutput.h"
 #include "IAILibraryManager.h"
+#include "EngineOutHandler.h"
 #include "AIInterfaceKey.h"
 #include <string>
 
-CSkirmishAILibrary::CSkirmishAILibrary(const SSAILibrary& ai,
+CSkirmishAILibrary::CSkirmishAILibrary(const SSkirmishAILibrary& ai,
 		const SkirmishAIKey& key)
 		: sSAI(ai), key(key) {
 
@@ -60,21 +61,8 @@ LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(int teamId,
 void CSkirmishAILibrary::Init(int teamId) const {
 
 	if (sSAI.init != NULL) {
-		const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-		const CSkirmishAILibraryInfo* skiInf =
-				libMan->GetSkirmishAIInfos().find(key)->second;
-
-		unsigned int infSize = skiInf->GetInfo().size();
-		const char** infKeys = skiInf->GetCInfoKeys();
-		const char** infValues = skiInf->GetCInfoValues();
-
-		unsigned int optSize = libMan->GetSkirmishAICOptionSize(teamId);
-		const char** optKeys = libMan->GetSkirmishAICOptionKeys(teamId);
-		const char** optValues = libMan->GetSkirmishAICOptionValues(teamId);
-
-		int error = sSAI.init(teamId,
-				infSize, infKeys, infValues,
-				optSize, optKeys, optValues);
+		const SSkirmishAICallback* c_callback = eoh->GetSkirmishAICallback(teamId);
+		int error = sSAI.init(teamId, c_callback);
 		if (error != 0) {
 			// init failed
 			logOutput.Print("Failed to initialize an AI for team %d, error: %d",

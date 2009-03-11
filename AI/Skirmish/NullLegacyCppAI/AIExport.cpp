@@ -21,24 +21,43 @@
 #include "AIExport.h"
 
 // AI interface stuff
-#include "ExternalAI/Interface/SSAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
 #include "LegacyCpp/AIGlobalAI.h"
+#include "Game/GameVersion.h"
+#include "CUtils/Util.h"
 
 // NullLegacyCppAI stuff
 #include "TestGlobalAI.h"
 
 #include <map>
 
-
 // teamId -> AI map
 static std::map<int, CAIGlobalAI*> myAIs;
 
+// filled with the teamId for the first team handled by this Skirmish AI
+static int firstTeamId = -1;
+// filled with the callback for the first team handled by this Skirmish AI
+// this can be used for calling functions that
+static const struct SSkirmishAICallback* firstCallback = NULL;
 
-EXPORT(int) init(int teamId,
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		unsigned int optionsSize,
-		const char** optionsKeys, const char** optionsValues) {
+// callbacks for all the teams controlled by this Skirmish AI
+static std::map<int, const struct SSkirmishAICallback*> teamId_callback;
+
+
+EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
+		const char* engineVersionString, int engineVersionNumber,
+		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
+
+	if (strcmp(engineVersionString, SpringVersion::GetFull().c_str()) == 0 &&
+			engineVersionNumber <= ENGINE_VERSION_NUMBER) {
+		return LOS_Working;
+	}
+
+	return LOS_None;
+}
+
+EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
 
 	if (myAIs.count(teamId) > 0) {
 		// the map already has an AI for this team.
@@ -47,10 +66,16 @@ EXPORT(int) init(int teamId,
 		return -1;
 	}
 
+	if (firstTeamId == -1) {
+		firstTeamId = teamId;
+		firstCallback = callback;
+	}
+	teamId_callback[teamId] = callback;
+
 	// CAIGlobalAI is the Legacy C++ wrapper, TestGlobalAI is NullLegacyCppAI
 	myAIs[teamId] = new CAIGlobalAI(teamId, new TestGlobalAI());
 
-	// signal: ok
+	// signal: everything went ok
 	return 0;
 }
 
@@ -63,12 +88,11 @@ EXPORT(int) release(int teamId) {
 		return -1;
 	}
 
-	CAIGlobalAI* tmpAi = myAIs[teamId];
+	delete myAIs[teamId];
+	myAIs[teamId] = NULL;
 	myAIs.erase(teamId);
-	delete tmpAi;
-	tmpAi = NULL;
 
-	// signal: ok
+	// signal: everything went ok
 	return 0;
 }
 
@@ -86,3 +110,23 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 	return -1;
 }
 
+
+// methods from here on are for AI internal use only
+
+const char* aiexport_getDataDir(bool writeableAndCreate, const char* const relPath) {
+
+	char* absPath = firstCallback->Clb_DataDirs_allocatePath(firstTeamId, relPath, writeableAndCreate, writeableAndCreate, true);
+
+	if (absPath == NULL) {
+		absPath = NULL;
+	}
+
+	return absPath;
+}
+const char* aiexport_getVersion() {
+	return firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_VERSION);
+}
+
+const char* aiexport_getMyOption(int teamId, const char* key) {
+	return teamId_callback[teamId]->Clb_SkirmishAI_OptionValues_getValueByKey(teamId, key);
+}

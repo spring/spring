@@ -44,9 +44,9 @@ static void ShieldScriptCallback(int retCode, void* p1, void* p2)
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 : CWeapon(owner),
+	curPower(0),
 	radius(0),
 	sqRadius(0),
-	curPower(0),
 	hitFrames(0),
 	rechargeDelay(0),
 	isEnabled(true),

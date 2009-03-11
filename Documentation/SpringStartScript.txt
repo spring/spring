@@ -1,14 +1,14 @@
-// A clients example using the new syntax
+// A minimal client example using the new syntax
 // If spring is started as client, it needs the following information to work properly
 
 [GAME]
 {
 	HostIP=xxx.xxx.xxx.xxx;
 	HostPort=xxx;       // standard is 8452
-	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select
+	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select and should be prefered
 
 	MyPlayerName=somename;
-	IsHost=x;           // 0 - no server will be started in this instance, 1 - start a server
+	IsHost=0;           // tell the engine this is a client
 }
 
 // A host example (or client using the old syntax)
@@ -16,7 +16,7 @@
 [GAME]
 {
 	Mapname=;           //with .smf extension
-	Gametype=xtape.sd7; //the primary mod archive
+	Gametype=Balanced Annihilation V6.81; //the primary mod NAME (archive works too, but name is prefered)
 	Scriptname=Commanders;
 	StartPosType=x;     // 0 fixed, 1 random, 2 choose in game, 3 choose before game (see StartPosX)
 
@@ -25,14 +25,13 @@
 
 	HostIP=xxx.xxx.xxx.xxx; // you normally won't set this as host
 	HostPort=xxx;       // usually 8452
-	SourcePort=0;       // set this if you want a different source port (as client)
+	SourcePort=0;       // set this if you want a different source port (as client, no effect for host)
 	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
 
-	MyPlayerNum=x;      // deprecated, better use myPlayerName
-	MyPlayerName=somename; //can be used instead of MyPlayerNum (will overwrite it in fact)
+	MyPlayerName=somename; // our ingame-name (needs to match one players Name= field)
 
 	IsHost=x;           // 0: no server will be started in this instance
-	                    // 1: start a server (if not set, you need myPlayerNum)
+	                    // 1: start a server
 	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
 	NumTeams=y;         // same here, set this to check if the script is right
 	NumAllyTeams=z;     // see above

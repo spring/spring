@@ -59,9 +59,13 @@ int main(int argc, char *argv[])
 		data->SetRandomSeed(SDL_GetTicks());
 
 		//  Use script provided hashes if they exist
-		if (gameSetup->mapHash != 0) {
+		if (gameSetup->mapHash != 0)
+		{
 			data->SetMap(gameSetup->mapName, gameSetup->mapHash);
-		} else {
+			gameSetup->LoadStartPositions(false); // reduced mode
+		}
+		else
+		{
 			data->SetMap(gameSetup->mapName, archiveScanner->GetMapChecksum(gameSetup->mapName));
 
 			CFileHandler* f = new CFileHandler("maps/" + gameSetup->mapName);
@@ -77,9 +81,8 @@ int main(int argc, char *argv[])
 				}
 			}
 			delete f;
-		
-			gameSetup->LoadStartPositions();
-                }
+			gameSetup->LoadStartPositions(); // full mode
+		}
 
 		if (gameSetup->modHash != 0) {
 			data->SetMod(gameSetup->baseMod, gameSetup->modHash);

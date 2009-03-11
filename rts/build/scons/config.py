@@ -69,7 +69,7 @@ def check_debian_powerpc(env, conf):
 def guess_include_path(env, conf, name, subdir):
 	print "  Guessing", name, "include path...",
 	if env['platform'] == 'windows':
-		path = [os.path.join(os.path.join(env['mingwlibsdir'], 'include'), subdir)]
+		path = [os.path.abspath(os.path.join(os.path.join(env['mingwlibsdir'], 'include'), subdir))]
 		# Everything lives in mingwlibs anyway...
 		#if os.environ.has_key('MINGDIR'):
 		#	path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]

@@ -28,11 +28,6 @@ endif (WIN32)
 
 list (APPEND ai_common ${CMAKE_SOURCE_DIR}/rts/Game/GameVersion)
 
-list (APPEND errorhandler ${CMAKE_SOURCE_DIR}/rts/System/Platform/errorhandler)
-if (UNIX AND NOT MINGW)
-	list (APPEND errorhandler ${CMAKE_SOURCE_DIR}/rts/System/Platform/Linux/X_MessageBox)
-endif (UNIX AND NOT MINGW)
-
 aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/LegacyCpp legacycppaifiles)
 list (APPEND legacycppaifiles ${ai_common})
 list (APPEND legacycppaifiles ${CMAKE_SOURCE_DIR}/rts/System/float3)

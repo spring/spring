@@ -5,7 +5,7 @@
 --  These keywords must be lowercase for LuaParser to read them.
 --
 --  key:      user defined or one of the SKIRMISH_AI_PROPERTY_* defines in
---            SSAILibrary.h
+--            SSkirmishAILibrary.h
 --  value:    the value of the property
 --  desc:     the description (could be used as a tooltip)
 --

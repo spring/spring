@@ -82,6 +82,8 @@ extern "C" {
 #include "ELevelOfSupport.h"
 #include "exportdefines.h"
 
+struct SSkirmishAICallback;
+
 /**
  * @brief Skirmish Artificial Intelligence library interface
  *
@@ -101,7 +103,7 @@ extern "C" {
  * by the shared AI library. This struct then goes to the engine
  * which calls the functions appropriately.
  */
-struct SSAILibrary {
+struct SSkirmishAILibrary {
 
 	// static AI library functions
 
@@ -146,19 +148,11 @@ struct SSAILibrary {
 	 * An AI not exporting this function is still valid.
 	 *
 	 * @param	teamId        the teamId this library shall create an instance for
-	 * @param	info          info about this AI (nessesary for non C/C++ AIs)
-	 * @param	numInfoItems  now many items are stored in info
-	 * @param	optionKeys    user specified option values (keys)
-	 * @param	optionValues  user specified option values (values)
-	 * @param	numOptions    user specified option values (size)
+	 * @param	callback      the callback for this Skirmish AI
 	 * @return     0: ok
 	 *          != 0: error
 	 */
-	int (CALLING_CONV *init)(int teamId,
-			unsigned int infoSize,
-			const char** infoKeys, const char** infoValues,
-			unsigned int optionsSize,
-			const char** optionsKeys, const char** optionsValues);
+	int (CALLING_CONV *init)(int teamId, const struct SSkirmishAICallback* callback);
 
 	/**
 	 * This function is called, when an AI instance shall be deleted.

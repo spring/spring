@@ -7,42 +7,39 @@
 
 #include <string>
 
-class COggStream {
-	public:
-		COggStream();
+class COggStream
+{
+public:
+	COggStream();
 
-		void Play(const std::string& path, float volume);
-		void Stop();
-		void TogglePause();
-		void Update();
-		unsigned int GetPlayTime() const { return ((stopped)? 0 : secsPlayed); }
-		unsigned int GetTotalTime();
-		void SetVolume(float, bool b = false);
+	void Play(const std::string& path, float volume);
+	void Stop();
+	void TogglePause();
+	void Update();
+	float GetPlayTime();
+	float GetTotalTime();
+	void SetVolume(float, bool b = false);
 
-    private:
-		void DisplayInfo();
-		bool IsPlaying();
-		bool StartPlaying();
+private:
+	void DisplayInfo();
+	bool IsPlaying();
+	bool StartPlaying();
 
-		bool DecodeStream(ALuint buffer);
-		void EmptyBuffers();
-		void ReleaseBuffers();
-		bool UpdateBuffers();
-		void UpdateTimer();
-		void CheckErrors();
+	bool DecodeStream(ALuint buffer);
+	void EmptyBuffers();
+	void ReleaseBuffers();
+	bool UpdateBuffers();
 
-		OggVorbis_File oggStream;
-		vorbis_info* vorbisInfo;
-		vorbis_comment* vorbisComment;
+	OggVorbis_File oggStream;
+	vorbis_info* vorbisInfo;
+	vorbis_comment* vorbisComment;
 
-		ALuint buffers[2];
-		ALuint source;
-		ALenum format;
+	ALuint buffers[2];
+	ALuint source;
+	ALenum format;
 
-		unsigned int secsPlayed;
-		unsigned int lastTick;
-		bool stopped;
-		bool paused;
+	bool stopped;
+	bool paused;
 };
 
 

@@ -40,7 +40,7 @@
 //#include "ExternalAI/Interface/ELevelOfSupport.h"
 
 // for a list of the functions that have to be exported,
-// see struct SSAILibrary in "ExternalAI/Interface/SSAILibrary.h"
+// see struct SSkirmishAILibrary in "ExternalAI/Interface/SSkirmishAILibrary.h"
 
 // static AI library methods (optional to implement)
 //EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,

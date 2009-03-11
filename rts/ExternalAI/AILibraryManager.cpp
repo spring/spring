@@ -28,6 +28,7 @@
 #include "Platform/errorhandler.h"
 #include "Platform/SharedLib.h"
 #include "FileSystem/FileHandler.h"
+#include "FileSystem/FileSystem.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -70,45 +71,6 @@ std::string CAILibraryManager::extractFileName(const std::string& libFile, bool 
 }
 
 
-static unsigned int allocCPropertiesMap(
-		std::map<std::string, std::string> propMap,
-		const char*** cKeys, const char*** cValues) {
-
-	unsigned int size = propMap.size();
-
-	(*cKeys) = (const char**) calloc(size, sizeof(char*));
-	(*cValues) = (const char**) calloc(size, sizeof(char*));
-	unsigned int i;
-	std::map<std::string, std::string>::const_iterator pi;
-	for (i=0, pi=propMap.begin(); i < size; ++i, ++pi) {
-		const char* key = pi->first.c_str();
-		const char* value = pi->second.c_str();
-		char* key_cpy = (char*) calloc(strlen(key) + 1, sizeof(char));
-		char* value_cpy = (char*) calloc(strlen(value) + 1, sizeof(char));
-		strcpy(key_cpy, key);
-		strcpy(value_cpy, value);
-		(*cKeys)[i] = key_cpy;
-		(*cValues)[i] = value_cpy;
-	}
-
-	return size;
-}
-static void freeCPropertiesMap(unsigned int mapSize, const char** cKeys,
-		const char** cValues) {
-
-	unsigned int i;
-	for (i=0; i < mapSize; ++i) {
-		free(const_cast<char*>(cKeys[i]));
-		free(const_cast<char*>(cValues[i]));
-		cKeys[i] = NULL;
-		cValues[i] = NULL;
-	}
-	free(const_cast<char**>(cKeys));
-	free(const_cast<char**>(cValues));
-	cKeys = NULL;
-	cValues = NULL;
-}
-
 static std::string noSlashAtEnd(const std::string& dir) {
 
 	std::string resDir = dir;
@@ -124,7 +86,6 @@ static std::string noSlashAtEnd(const std::string& dir) {
 CAILibraryManager::CAILibraryManager() : usedSkirmishAIInfos_initialized(false) {
 
 	GetAllInfosFromCache();
-	CreateCOptions();
 }
 
 void CAILibraryManager::GetAllInfosFromCache() {
@@ -141,7 +102,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	// {AI_INTERFACES_DATA_DIR}/{*}/InterfaceInfo.lua
 	// {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
 	T_dirs aiInterfaceDataDirs =
-			FindDirsAndDirectSubDirs(AI_INTERFACES_DATA_DIR);
+			filesystem.FindDirsAndDirectSubDirs(AI_INTERFACES_DATA_DIR);
 	typedef std::map<const AIInterfaceKey, std::set<std::string> > T_dupInt;
 	T_dupInt duplicateInterfaceInfoCheck;
 	for (T_dirs::iterator dir = aiInterfaceDataDirs.begin();
@@ -188,7 +149,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	// we are looking for:
 	// {SKIRMISH_AI_DATA_DIR/{*}/AIInfo.lua
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
-	T_dirs skirmishAIDataDirs = FindDirsAndDirectSubDirs(SKIRMISH_AI_DATA_DIR);
+	T_dirs skirmishAIDataDirs = filesystem.FindDirsAndDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 	T_dupSkirm duplicateSkirmishAIInfoCheck;
 	for (T_dirs::iterator dir = skirmishAIDataDirs.begin();
 			dir != skirmishAIDataDirs.end(); ++dir) {
@@ -207,7 +168,6 @@ void CAILibraryManager::GetAllInfosFromCache() {
 					new CSkirmishAILibraryInfo(infoFile.at(0), optionFileName);
 
 			skirmishAIInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
-			skirmishAIInfo->CreateCReferences();
 
 			SkirmishAIKey aiKey = skirmishAIInfo->GetKey();
 			AIInterfaceKey interfaceKey =
@@ -265,73 +225,33 @@ void CAILibraryManager::ClearAllInfos() {
 	skirmishAIKeys.clear();
 }
 
-void CAILibraryManager::CreateCOptions() {
 
-	int t;
-	int size_t = teamHandler->ActiveTeams();
-	for (t=0; t < size_t; ++t) {
-		std::map<std::string, std::string> teamOptions = teamHandler->Team(t)->skirmishAIOptions;
-		const char** keys;
-		const char** values;
-		int unsigned size = allocCPropertiesMap(teamOptions, &keys, &values);
-		teamId_skirmishOptionKeys_c[t] = values;
-		teamId_skirmishOptionValues_c[t] = keys;
-		teamId_skirmishOptionsSize_c[t] = size;
-	}
-}
+const std::vector<std::string> CAILibraryManager::EMPTY_OPTION_VALUE_KEYS;
+const std::vector<std::string>& CAILibraryManager::GetSkirmishAIOptionValueKeys(int teamId) const {
 
-void CAILibraryManager::DeleteCOptions() {
-
-	std::map<int, const char**>::const_iterator ki;
-	for (ki=teamId_skirmishOptionKeys_c.begin();
-			ki != teamId_skirmishOptionKeys_c.end(); ++ki) {
-		int t = ki->first;
-		const char** keys = ki->second;
-		const char** values = teamId_skirmishOptionValues_c[t];
-		int unsigned size = teamId_skirmishOptionsSize_c[t];
-		freeCPropertiesMap(size, keys, values);
-//		free(keys);
-//		free(values);
-	}
-}
-
-
-unsigned int CAILibraryManager::GetSkirmishAICOptionSize(int teamId) const {
-
-	std::map<int, unsigned int>::const_iterator size
-			= teamId_skirmishOptionsSize_c.find(teamId);
-	if (size != teamId_skirmishOptionsSize_c.end()) {
-		return size->second;
+	std::map<int, std::vector<std::string> >::const_iterator optionValueKeys
+			= teamId_skirmishAIOptionValueKeys.find(teamId);
+	if (optionValueKeys != teamId_skirmishAIOptionValueKeys.end()) {
+		return optionValueKeys->second;
 	} else {
-		return 0;
+		return EMPTY_OPTION_VALUE_KEYS;
 	}
 }
-const char** CAILibraryManager::GetSkirmishAICOptionKeys(int teamId) const {
+const std::map<std::string, std::string> CAILibraryManager::EMPTY_OPTION_VALUES;
+const std::map<std::string, std::string>& CAILibraryManager::GetSkirmishAIOptionValues(int teamId) const {
 
-	std::map<int, const char**>::const_iterator keys
-			= teamId_skirmishOptionKeys_c.find(teamId);
-	if (keys != teamId_skirmishOptionKeys_c.end()) {
-		return keys->second;
+	std::map<int, std::map<std::string, std::string> >::const_iterator optionValues
+			= teamId_skirmishAIOptionValues.find(teamId);
+	if (optionValues != teamId_skirmishAIOptionValues.end()) {
+		return optionValues->second;
 	} else {
-		return NULL;
-	}
-}
-const char** CAILibraryManager::GetSkirmishAICOptionValues(int teamId) const {
-
-	std::map<int, const char**>::const_iterator values
-			= teamId_skirmishOptionValues_c.find(teamId);
-	if (values != teamId_skirmishOptionValues_c.end()) {
-		return values->second;
-	} else {
-		return NULL;
+		return EMPTY_OPTION_VALUES;
 	}
 }
 
 CAILibraryManager::~CAILibraryManager() {
 
 	ReleaseEverything();
-
-	DeleteCOptions();
 }
 
 const IAILibraryManager::T_interfaceSpecs& CAILibraryManager::GetInterfaceKeys() const {
@@ -480,28 +400,6 @@ void CAILibraryManager::ReleaseEverything() {
 	ReleaseAllSkirmishAILibraries();
 }
 
-std::vector<std::string> CAILibraryManager::FindDirsAndDirectSubDirs(
-		const std::string& path) {
-
-	std::vector<std::string> found;
-
-	 std::string pattern = "*";
-
-	// find dirs
-	std::vector<std::string> mainDirs = CFileHandler::SubDirs(path, pattern,
-			SPRING_VFS_RAW);
-	found = mainDirs;
-
-	// find sub-dirs
-	for (std::vector<std::string>::iterator dir = mainDirs.begin();
-			dir != mainDirs.end(); ++dir) {
-		std::vector<std::string> sub_dirs = CFileHandler::SubDirs(*dir, pattern,
-				SPRING_VFS_RAW);
-		found.insert(found.end(), sub_dirs.begin(), sub_dirs.end());
-	}
-
-	return found;
-}
 
 AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 		const std::string& shortName,

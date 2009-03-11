@@ -64,29 +64,30 @@ CR_REG_METADATA(CTAAirMoveType, (
 
 CTAAirMoveType::CTAAirMoveType(CUnit* owner) :
 	AAirMoveType(owner),
-	altitudeRate(3.0f),
-	currentBank(0),
-	// we want to take off in direction of factory facing
-	wantedHeading(owner? GetHeadingFromFacing(owner->buildFacing): 0),
-	wantToStop(false),
-	forceHeading(false),
+	flyState(FLY_CRUISING),
 	dontCheckCol(false),
 	bankingAllowed(true),
+
+	circlingPos(ZeroVector),
+	goalDistance(1),
+	waitCounter(0),
+	wantToStop(false),
+	// we want to take off in direction of factory facing
+	wantedHeading(owner? GetHeadingFromFacing(owner->buildFacing): 0),
+	wantedSpeed(ZeroVector),
+	deltaSpeed(ZeroVector),
+	currentBank(0),
+	currentPitch(0),
+	turnRate(1),
+	accRate(1),
+	decRate(1),
+	altitudeRate(3.0f),
+	breakDistance(1),
 	dontLand(false),
 	lastMoveRate(0),
-	waitCounter(0),
-	deltaSpeed(ZeroVector),
-	accRate(1),
-	breakDistance(1),
-	circlingPos(ZeroVector),
-	decRate(1),
-	flyState(FLY_CRUISING),
+	forceHeading(false),
 	forceHeadingTo(wantedHeading),
-	goalDistance(1),
-	turnRate(1),
-	wantedSpeed(ZeroVector),
-	maxDrift(1),
-	currentPitch(0)
+	maxDrift(1)
 {
 	if (owner) {
 		owner->dontUseWeapons = true;

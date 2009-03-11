@@ -57,6 +57,7 @@
 #include "LogOutput.h"
 #include "NetProtocol.h"
 #include "Sound/Sound.h"
+#include "Sound/Music.h"
 
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
@@ -542,15 +543,7 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 	const string soundFile = luaL_checkstring(L, 1);
 	const float volume = luaL_optnumber(L, 2, 1.0f);
 
-	if (args < 5) {
-		sound->PlayStream(soundFile, volume);
-	}
-	else {
-		const float3 pos(luaL_checkfloat(L, 3),
-		                 luaL_checkfloat(L, 4),
-		                 luaL_checkfloat(L, 5));
-		sound->PlayStream(soundFile, volume, pos);
-	}
+	music::Play(soundFile, volume);
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
@@ -564,19 +557,19 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
 {
-	sound->StopStream();
+	music::Stop();
 	return 0;
 }
 int LuaUnsyncedCtrl::PauseSoundStream(lua_State*)
 {
-	sound->PauseStream();
+	music::Pause();
 	return 0;
 }
 int LuaUnsyncedCtrl::SetSoundStreamVolume(lua_State* L)
 {
 	const int args = lua_gettop(L);
 	if (args == 1) {
-		sound->SetStreamVolume(lua_tonumber(L, 1));
+		music::SetVolume(lua_tonumber(L, 1));
 	} else {
 		luaL_error(L, "Incorrect arguments to SetSoundStreamVolume(v)");
 	}
