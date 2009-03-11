@@ -92,7 +92,7 @@
 			<arg value="-f"/><arg value="jna_wrappCallback.awk"/>
 			<arg value="-f"/><arg value="common.awk"/>
 			<arg value="-f"/><arg value="commonDoc.awk"/>
-			<arg value="${spring.ai.interface.home}/SAICallback.h"/>
+			<arg value="${spring.ai.interface.home}/SSkirmishAICallback.h"/>
 		</exec>
 	</target>
 

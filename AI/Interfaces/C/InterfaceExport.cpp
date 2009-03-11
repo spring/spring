@@ -57,7 +57,7 @@ EXPORT(int) releaseStatic() {
 //	return myInterface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
 //}
 
-EXPORT(const struct SSAILibrary*) loadSkirmishAILibrary(
+EXPORT(const struct SSkirmishAILibrary*) loadSkirmishAILibrary(
 		const char* const shortName,
 		const char* const version) {
 	return myInterface->LoadSkirmishAILibrary(shortName, version);

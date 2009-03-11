@@ -13,13 +13,13 @@ struct WeaponDef;
 
 #define GLOBAL_AI_INTERFACE_VERSION (19 + AI_INTERFACE_GENERATED_VERSION)
 
-#define AI_EVENT_UNITGIVEN 1    // Both use ChangeTeamEvent for data
-#define AI_EVENT_UNITCAPTURED 2
-#define AI_EVENT_WEAPON_FIRED 3
-#define AI_EVENT_PLAYER_COMMAND 4
-#define AI_EVENT_SEISMIC_PING	5
+#define AI_EVENT_UNITGIVEN       1 // ChangeTeamEvent
+#define AI_EVENT_UNITCAPTURED    2 // ChangeTeamEvent
+#define AI_EVENT_WEAPON_FIRED    3 // WeaponFireEvent
+#define AI_EVENT_PLAYER_COMMAND  4 // PlayerCommandEvent
+#define AI_EVENT_SEISMIC_PING    5 // SeismicPingEvent
 
-class SPRING_API IGlobalAI
+class IGlobalAI
 {
 public:
 	struct ChangeTeamEvent {
@@ -69,7 +69,13 @@ public:
 	virtual void Load(IGlobalAICallback* callback,std::istream *s){};	//load ai from file
 	virtual void Save(std::ostream *s){};							//save ai to file
 
-	DECLARE_PURE_VIRTUAL(~IGlobalAI())
+	// use virtual instead of pure virtual,
+	// becuase pur evirtual is not well supported
+	// among different OSs and compilers,
+	// and pure virtual has no advantage
+	// if we have other pure virtual functions
+	// in the class
+	virtual ~IGlobalAI() {}
 };
 
-#endif
+#endif // IGLOBALAI_H

@@ -1,8 +1,8 @@
 #include "StdAfx.h"
 #include "GlobalAICallback.h"
 #include "SkirmishAIWrapper.h"
-#include "LogOutput.h"
 #include "Sim/Units/Groups/GroupHandler.h"
+#include "LogOutput.h"
 #include "AICheats.h"
 #include "mmgr.h"
 
@@ -33,5 +33,3 @@ IAICallback* CGlobalAICallback::GetAICallback()
 {
 	return &callback;
 }
-
-IMPLEMENT_PURE_VIRTUAL(IGlobalAICallback::~IGlobalAICallback())

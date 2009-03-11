@@ -24,101 +24,7 @@
 extern "C" {
 #endif
 
-/**
- * Stores a C [string, string] properties map,
- * for later retreival of values.
- * The data-dirs can be left empty by supplying these values:
- * dataDirsSize = 0, dataDirs = NULL
- *
- * @see util_getMyInfo()
- * @see util_getDataDirVersioned()
- * @see util_getDataDirUnversioned()
- */
-void util_setMyInfo(
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		unsigned int dataDirsSize,
-		const char** dataDirs);
-const char* util_getMyInfo(const char* key);
-
-#if defined BUILDING_AI
-/**
- * Returns the data-dir from the stored infos.
- * Example (versioned):
- *     "~/.spring/AI/Skirmish/RAI/0.1"
- * Example (unversioned):
- *     "~/.spring/AI/Skirmish/RAI"
- *
- * You have to initialize before using this function,
- * through calling the function util_setMyInfo() wiht your
- * AI or Interface Info.
- * @see util_setMyInfo()
- *
- * @param  versioned  This can, for example, be used for storing cache that
- *                    is version independand.
- * @param  writeable  if set to true, the returned data-dir
- *                    is guaranteed to be writeable,
- *                    but may has to be created first
- */
-//const char* util_getDataDir(bool versioned, bool writeable);
-
-/**
- * Checks whether a string contians an absolute path.
- * The corresponding matcher-regexes are:
- * on Windows: "^.:(\\|/).*"
- * otherwise:  "^/.*"
- *
- * @param  path  the dir or file path to be checked for absoluteness
- * @return  true if the path is absolute; it does not have to exist
- */
-bool util_isPathAbsolute(const char* path);
-
-/**
- * Finds a file or directory in the data-dir(s), located at the relativePath,
- * and saves the resulting path in absolutePath.
- *
- * @param  relativePath  what to look for, eg. "log/interface-log.txt"
- * @param  absolutePath  will contain the result, eg.:
- *                       "/home/user/.spring/AI/Interfaces/C/log/interface-log.txt"
- * @param  searchOnlyWriteable  will only search in writable data-dirs
- * @param  createParent  will try to create the parent dir recursively
- * @param  createAsDir  will try to create the path as a dir recursively
- * @return  true if the file exists, the parent dir or the dir was created
- */
-bool util_dataDirs_findFile(const char* relativePath, char* absolutePath,
-		bool searchOnlyWriteable, bool createParent, bool createAsDir);
-
-/**
- * Finds a file in the data-dir(s), located at the relativePath,
- * and saves the resulting path in absolutePath.
- *
- * @param  relativePath  what to look for, eg. "log/interface-log.txt"
- * @param  forWrite  whether we need a writable file
- * @return  the result, eg.
- *          "/home/user/.spring/AI/Interfaces/C/log/interface-log.txt",
- *          or NULL, if:
- *             (forWrite == false, and the file could not be found)
- *             or
- *             (forWrite == true, and the parent-dir does not exist
- *             and could not be created)
- */
-char* util_dataDirs_allocFilePath(const char* relativePath, bool forWrite);
-/**
- * Finds a dir in the data-dir(s), located at the relativePath,
- * and saves the resulting path in absolutePath.
- *
- * @param  relativePath  what to look for, eg. "jlib"
- * @param  forWrite  whether we need a writable dir
- * @return  the result, eg.
- *          "/home/user/.spring/AI/Interfaces/Java/jlib",
- *          or NULL, if:
- *             (forWrite == false, and the dir could not be found)
- *             or
- *             (forWrite == true, and the dir does not exist
- *             and could not be created)
- */
-char* util_dataDirs_allocDir(const char* relativePath, bool forWrite);
-#endif // defined BUILDING_AI
+// BEGINN: String realated functions
 
 /**
  * Allocates fresh memory for storing a C string of the specified length.
@@ -181,6 +87,22 @@ bool util_startsWith(const char* str, const char* prefix);
 bool util_endsWith(const char* str, const char* suffix);
 
 bool util_strToBool(const char* str);
+
+// END: String realated functions
+
+
+// BEGINN: File system realated functions
+
+/**
+ * Checks whether a string contians an absolute path.
+ * The corresponding matcher-regexes are:
+ * on Windows: "^.:(\\|/).*"
+ * otherwise:  "^/.*"
+ *
+ * @param  path  the dir or file path to be checked for absoluteness
+ * @return  true if the path is absolute; it does not have to exist
+ */
+bool util_isPathAbsolute(const char* path);
 
 /**
  * Lists all files found below a directory.
@@ -263,6 +185,9 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
  */
 int util_parsePropertiesFile(const char* propertiesFile,
 		const char* keys[], const char* values[], int maxProperties);
+
+// END: File system realated functions
+
 
 /**
  * Find the value assigned to a key in a C [string, string] map.

@@ -89,32 +89,32 @@ CR_REG_METADATA_SUB(CAirMoveType, RudderInfo, (CR_MEMBER(rotation)));
 
 CAirMoveType::CAirMoveType(CUnit* owner):
 	AAirMoveType(owner),
+	subState(0),
+	maneuver(0),
+	maneuverSubState(0),
+	loopbackAttack(false),
+	isFighter(false),
 	wingDrag(0.07f),
 	wingAngle(0.1f),
+	invDrag(0.995f),
+	crashDrag(0.995f),
 	frontToSpeed(0.04f),
 	speedToFront(0.01f),
+	myGravity(0.8f),
 	maxBank(0.55f),
 	maxPitch(0.35f),
+	maxSpeed(owner->maxSpeed),
+	turnRadius(150),
 	maxAcc(0.006f),
 	maxAileron(0.04f),
 	maxElevator(0.02f),
 	maxRudder(0.01f),
-	maxSpeed(owner->maxSpeed),
-	invDrag(0.995f),
-	crashDrag(0.995f),
 	inSupply(0),
-	subState(0),
-	myGravity(0.8f),
 	mySide(1),
-	isFighter(false),
-	maneuver(0),
-	maneuverSubState(0),
-	inefficientAttackTime(0),
 	oldSlowUpdatePos(-1, -1, -1),
-	loopbackAttack(false)
-{
-	turnRadius = 150;
 
+	inefficientAttackTime(0)
+{
 	// force LOS recalculation
 	if (owner) owner->mapSquare += 1;
 

@@ -563,7 +563,7 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 	if (name != "") {
 		if (!sound->HasSoundItem(name))
 		{
-			if (name.find(".wav") == -1) {
+			if (name.find(".wav") == string::npos) {
 				// .wav extension missing, add it
 				name += ".wav";
 			}

@@ -39,13 +39,6 @@ public:
 	void PlayUnitReply(size_t id, CUnit* p, float volume = 1.0f, bool squashDupes = false);
 	void PlayUnitActivate(size_t id, CUnit* p, float volume = 1.0f);
 
-	void PlayStream(const std::string& path, float volume = 1.0f, const float3& pos = ZeroVector, bool loop = false);
-	void StopStream();
-	void PauseStream();
-	unsigned int GetStreamTime();
-	unsigned int GetStreamPlayTime();
-	void SetStreamVolume(float);
-
 	void PitchAdjust(const float newPitch);
 
 	bool Mute();

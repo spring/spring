@@ -53,9 +53,8 @@ public:
 	virtual const T_interfaceInfos& GetInterfaceInfos() const = 0;
 	virtual const T_skirmishAIInfos& GetSkirmishAIInfos() const = 0;
 
-	virtual unsigned int GetSkirmishAICOptionSize(int teamId) const = 0;
-	virtual const char** GetSkirmishAICOptionKeys(int teamId) const = 0;
-	virtual const char** GetSkirmishAICOptionValues(int teamId) const = 0;
+	virtual const std::vector<std::string>& GetSkirmishAIOptionValueKeys(int teamId) const = 0;
+	virtual const std::map<std::string, std::string>& GetSkirmishAIOptionValues(int teamId) const = 0;
 
 	virtual const T_skirmishAIInfos& GetUsedSkirmishAIInfos() = 0;
 

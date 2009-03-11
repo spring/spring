@@ -76,7 +76,7 @@ boost::uint32_t hpiutil::scrambledfile::read(boost::uint8_t *buf)
 	file.read((char*)buf,sizeof(buf));
 	boost::uint32_t read = (boost::uint32_t)file.tellg() - oldpos;
 	if (scrambled) {
-		for (int i = 0; i < read; i++)
+		for (boost::uint32_t i = 0; i < read; i++)
 			buf[i] = (boost::uint8_t)(((key ^ (oldpos+i)) ^ ~buf[i])&0x00ff);
 	}
 	return read;
@@ -95,7 +95,7 @@ boost::uint32_t hpiutil::scrambledfile::read(boost::uint8_t *buf, const boost::u
 	file.seekg(off);
 	file.read((char*)buf,len);
 	if (scrambled) {
-		for (int i = 0; i < len; i++)
+		for (boost::uint32_t i = 0; i < len; i++)
 			buf[i] = (boost::uint8_t)(((key ^ (i+off)) ^ ~buf[i])&0x00ff);
 	}
 	return ((boost::uint32_t)file.tellg()-off);

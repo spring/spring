@@ -39,8 +39,10 @@
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"
 
+struct SSkirmishAICallback;
+
 // for a list of the functions that have to be exported,
-// see struct SSAILibrary in "ExternalAI/Interface/SSAILibrary.h"
+// see struct SSkirmishAILibrary in "ExternalAI/Interface/SSkirmishAILibrary.h"
 
 // static AI library methods (optional to implement)
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
@@ -48,11 +50,7 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion);
 
 // team instance functions
-EXPORT(int) init(int teamId,
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues,
-		unsigned int optionsSize,
-		const char** optionsKeys, const char** optionsValues);
+EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback);
 EXPORT(int) release(int teamId);
 EXPORT(int) handleEvent(int teamId, int topic, const void* data);
 

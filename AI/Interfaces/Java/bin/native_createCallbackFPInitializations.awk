@@ -1,7 +1,9 @@
 #!/bin/awk
 #
-# This awk script creates the function pointer initializations for the SAICallback struct in:
-# rts/ExternalAI/Interface/SAICallback.h
+# This awk script creates the function pointer initializations
+# for the C callbacks; eg:
+# rts/ExternalAI/Interface/SSkirmishAICallback.h
+# rts/ExternalAI/Interface/SAIInterfaceCallback.h
 #
 
 BEGIN {

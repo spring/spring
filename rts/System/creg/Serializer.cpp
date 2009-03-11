@@ -106,13 +106,13 @@ void WriteVarSizeUInt(std::ostream *stream, unsigned int val)
 		unsigned char a = val;
 		stream->write ((char*)&a, sizeof(char));
 	} else if (val<0x4000) {
-		unsigned char a = val&0x7F | 0x80;
+		unsigned char a = (val & 0x7F) | 0x80;
 		unsigned char b = val>>7;
 		stream->write ((char*)&a, sizeof(char));
 		stream->write ((char*)&b, sizeof(char));
 	} else if (val<0x40000000) {
-		unsigned char a = val&0x7F | 0x80;
-		unsigned char b = (val>>7)&0x7F | 0x80;
+		unsigned char a = (val & 0x7F) | 0x80;
+		unsigned char b = ((val>>7) & 0x7F) | 0x80;
 		unsigned short c = swabword(val>>14);
 		stream->write ((char*)&a, sizeof(char));
 		stream->write ((char*)&b, sizeof(char));
@@ -569,7 +569,7 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 			throw std::runtime_error ("Package file contains reference to unknown class " + className);
 		unsigned int cnt;
 		ReadVarSizeUInt(stream, &cnt);
-		for (int b=0;b<cnt;b++) {
+		for (unsigned int b=0;b<cnt;b++) {
 			int namehash;
 			stream->read ((char*)&namehash, sizeof(int));
 			char typehash;
@@ -597,13 +597,13 @@ void CInputStreamSerializer::LoadPackage (std::istream *s, void*& root, creg::Cl
 		stream->read ((char*)&isEmbedded, sizeof(char));
 		unsigned int mgcnt;
 		ReadVarSizeUInt(stream,&mgcnt);
-		for (int b=0;b<mgcnt;b++) {
+		for (unsigned int b=0;b<mgcnt;b++) {
 			unsigned int cid,mcnt;
 			char groupFlags;
 			ReadVarSizeUInt(stream,&cid);
 			ReadVarSizeUInt(stream,&mcnt);
 			stream->read ((char*)&groupFlags, sizeof(char));
-			for (int c=0;c<mcnt;c++) {
+			for (unsigned int c=0;c<mcnt;c++) {
 				unsigned int size;
 				ReadVarSizeUInt(stream,&size);
 			}

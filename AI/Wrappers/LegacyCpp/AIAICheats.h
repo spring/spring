@@ -20,7 +20,7 @@
 
 #include "ExternalAI/IAICheats.h"
 
-class SAICallback;
+class SSkirmishAICallback;
 class CAIAICallback;
 
 /**
@@ -29,7 +29,7 @@ class CAIAICallback;
 class CAIAICheats : public IAICheats {
 public:
 	CAIAICheats();
-	CAIAICheats(int teamId, SAICallback* sAICallback,
+	CAIAICheats(int teamId, const SSkirmishAICallback* sAICallback,
 			CAIAICallback* aiCallback);
 
 
@@ -75,7 +75,7 @@ public:
 
 private:
 	int teamId;
-	SAICallback* sAICallback;
+	const SSkirmishAICallback* sAICallback;
 	CAIAICallback* aiCallback;
 	void setCheatsEnabled(bool enable);
 };

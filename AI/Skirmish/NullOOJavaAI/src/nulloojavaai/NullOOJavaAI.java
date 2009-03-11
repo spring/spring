@@ -76,24 +76,40 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 
 	private int teamId = -1;
 	private Properties info = null;
-	private Properties options = null;
+	private Properties optionValues = null;
 	private OOAICallback clb = null;
-	private String myDataDir = null;
 	private String myLogFile = null;
 	private Logger log = null;
 
 	private static final int DEFAULT_ZONE = 0;
 
 
-	NullOOJavaAI(int teamId, Properties info, Properties options) {
+	NullOOJavaAI(int teamId, OOAICallback callback) {
 
 		this.teamId = teamId;
-		this.info = info;
-		this.options = options;
+		this.clb = callback;
+
+		info = new Properties();
+		Info inf = clb.getSkirmishAI().getInfo();
+		int numInfo = inf.getSize();
+		for (int i=0; i < numInfo; i++) {
+			String key = inf.getKey(i);
+			String value = inf.getValue(i);
+			info.setProperty(key, value);
+		}
+
+		optionValues = new Properties();
+		OptionValues opVals = clb.getSkirmishAI().getOptionValues();
+		int numOpVals = opVals.getSize();
+		for (int i=0; i < numOpVals; i++) {
+			String key = opVals.getKey(i);
+			String value = opVals.getValue(i);
+			optionValues.setProperty(key, value);
+		}
 	}
 
 	private int handleEngineCommand(AICommand command) {
-		return clb.handleCommand(
+		return clb.getEngine().handleCommand(
 				com.clan_sy.spring.ai.AICommandWrapper.COMMAND_TO_ID_ENGINE,
 				-1, command);
 	}
@@ -105,15 +121,15 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	}
 
 	@Override
-	public int init(int teamId, OOAICallback callback, Properties info,
-			Properties options) {
+	public int init(int teamId, OOAICallback callback) {
 
 		int ret = -1;
 
+		this.clb = callback;
+
 		// initialize the log
 		try {
-			myDataDir = info.getProperty("dataDir");
-			myLogFile = myDataDir + "/log.txt";
+			myLogFile = callback.getDataDirs().allocatePath("log.txt", true, true, false);
 			FileHandler fileLogger = new FileHandler(myLogFile, false);
 			fileLogger.setFormatter(new MyCustomLogFormatter());
 			fileLogger.setLevel(Level.ALL);
@@ -139,7 +155,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 			logProperties(log, Level.FINE, info);
 
 			log.log(Level.FINE, "options:");
-			logProperties(log, Level.FINE, options);
+			logProperties(log, Level.FINE, optionValues);
 
 			ret = 0;
 		} catch (Exception ex) {
@@ -154,6 +170,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	public int update(int frame) {
 
 		if (frame % 300 == 0) {
+			sendTextMsg("listing resources ...");
 			List<Resource> resources = clb.getResources();
 			for (Resource resource : resources) {
 				sendTextMsg("Resource " + resource.getName() + " optimum: "

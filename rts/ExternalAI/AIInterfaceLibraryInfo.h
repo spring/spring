@@ -62,7 +62,6 @@ public:
 			const std::string& description = "");
 
 private:
-	//std::map<std::string, InfoItem> info;
 	// for having a well defined order
 	std::vector<std::string> keys;
 	std::map<std::string, std::string> keyLower_key;

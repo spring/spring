@@ -5,7 +5,7 @@
 # In other words, the output of this file wrapps:
 # com/clan_sy/spring/ai/AICallback.java
 # which wrapps:
-# rts/ExternalAI/Interface/SAICallback.h
+# rts/ExternalAI/Interface/SSkirmishAICallback.h
 #
 # This script uses functions from the following files:
 # * common.awk
@@ -113,7 +113,6 @@ function printInterfaces() {
 
 		# check if an interface is needed
 		if (clsName in interfaces) {
-#print("printInterfaces");
 			printInterface(clsName);
 		}
 	}
@@ -127,7 +126,6 @@ function printInterface(clsName_i) {
 
 	# print member functions
 	size_funcs = interfaceOwnerOfFunc[clsName_i "*"];
-#print(size_funcs);
 	for (f=0; f < size_funcs; f++) {
 		fullName_i = interfaceOwnerOfFunc[clsName "#" f];
 		printMember(outFile_i, fullName_i, size_addInds, 1);
@@ -135,10 +133,9 @@ function printInterface(clsName_i) {
 
 	# print member class fetchers (single, multi, multi-fetch-single)
 	size_memCls = split(interface_class[clsName], memCls, ",");
-#print("printInterface size_memCls: " size_memCls);
 	for (mc=0; mc < size_memCls; mc++) {
 		memberClass = memCls[mc+1];
-		fullNameMultiSize_i = ancestorsInterface_isMulti[clsName "-" memberClass];TODO
+		fullNameMultiSize_i = ancestorsInterface_isMulti[clsName "-" memberClass];
 		if (fullNameMultiSize_i != "") {
 			if (match(fullNameMultiSize_i, /^.*0MULTI1[^0]*3/)) { # wants a different function name then the default one
 				fn = fullNameMultiSize_i;
@@ -284,7 +281,7 @@ function printClass(ancestors_c, clsName_c) {
 
 	# print static instance fetcher method
 	{
-		clsIsBuffered_c = myBufferedClasses["_" clsNameExternal_c];
+		clsIsBuffered_c = isBufferedClass(clsNameExternal_c);
 		fullNameAvailable_c = ancestorsClass_available[clsId_c];
 
 		if (clsIsBuffered_c) {
@@ -578,7 +575,7 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 	innerParams = funcInnerParams[fullName_m];
 	memName = extractNormalPart(fullName_m);
 	sub(/^.*_/, "", memName);
-	isVoid_m = retType == "void";
+	isVoid_m = (retType == "void");
 	isBuffered_m = !isVoid_m && isBufferedFunc(fullName_m);
 
 	if (memName == "handleCommand") {
@@ -714,7 +711,7 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			print(indent_m retType " _ret = _buffer_" memName ";") >> outFile_m;
 			print(indent_m "if (!_buffer_isInitialized_" memName ") {") >> outFile_m;
 			indent_m = indent_m "\t";
-		} else {
+		} else if (!isVoid_m) {
 			print(indent_m retType " _ret;") >> outFile_m;
 		}
 		if (isArraySize) {

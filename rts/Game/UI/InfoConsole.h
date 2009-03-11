@@ -57,9 +57,9 @@ public:
 	bool disabled;
 
 public:
-	static const int maxLastMsgPos;
+	static const size_t maxLastMsgPos;
 
-	static const int maxRawLines;
+	static const size_t maxRawLines;
 	struct RawLine {
 		RawLine(const std::string& text, const CLogSubsystem* subsystem, int id)
 		: text(text), subsystem(subsystem), id(id), time(0) {}
@@ -76,7 +76,7 @@ private:
 	std::list<float3>::iterator lastMsgIter;
 
 	std::deque<RawLine> rawData;
-	int newLines;
+	size_t newLines;
 	int rawId;
 
 	struct InfoLine {

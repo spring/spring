@@ -18,141 +18,129 @@
 #include "SkirmishAILibraryInfo.h"
 
 #include "Interface/aidefines.h"
-#include "Interface/SSAILibrary.h"
+#include "Interface/SSkirmishAILibrary.h"
 #include "SkirmishAIKey.h"
 #include "ISkirmishAILibrary.h"
 #include "Util.h"
+#include "Info.h"
+#include "Option.h"
 
 #include "Platform/errorhandler.h"
 #include "FileSystem/VFSModes.h"
 
+
 static const char* BAD_CHARS = "\t _#";
-
-static const std::string& info_getValue(
-		const std::map<std::string, InfoItem>& info,
-		const std::string& key, const std::string& defValue) {
-
-	std::map<std::string, InfoItem>::const_iterator inf
-			= info.find(StringToLower(key));
-	if (inf == info.end()) {
-		return defValue;
-	} else {
-		return inf->second.value;
-	}
-}
+static const std::string DEFAULT_VALUE = "";
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
-		const CSkirmishAILibraryInfo& aiInfo)
-		: info(aiInfo.info), infoKeys_c(NULL), infoValues_c(NULL),
-		options(aiInfo.options) {}
+		const CSkirmishAILibraryInfo& aiInfo) :
+		info_keyLower_key(aiInfo.info_keyLower_key),
+		info_key_value(aiInfo.info_key_value),
+		info_key_description(aiInfo.info_key_description),
+		options(aiInfo.options)
+		{}
 
 CSkirmishAILibraryInfo::CSkirmishAILibraryInfo(
 		const std::string& aiInfoFile,
-		const std::string& aiOptionFile)
-		: infoKeys_c(NULL), infoValues_c(NULL) {
+		const std::string& aiOptionFile) {
 
 	std::vector<InfoItem> tmpInfo;
 	parseInfo(tmpInfo, aiInfoFile);
 	std::vector<InfoItem>::const_iterator ii;
 	for (ii = tmpInfo.begin(); ii != tmpInfo.end(); ++ii) {
-		info[StringToLower(ii->key)] = *ii;
+		SetInfo(ii->key, ii->value, ii->desc);
 	}
 
-	if (aiOptionFile != "") {
+	if (!aiOptionFile.empty()) {
 		parseOptions(options, aiOptionFile);
 	}
 }
 
-CSkirmishAILibraryInfo::~CSkirmishAILibraryInfo() {
+CSkirmishAILibraryInfo::~CSkirmishAILibraryInfo() {}
 
-	FreeCReferences();
+
+size_t CSkirmishAILibraryInfo::size() const {
+	return info_keys.size();
+}
+const std::string& CSkirmishAILibraryInfo::GetKeyAt(size_t index) const {
+
+	if (index < info_keys.size()) {
+		return *(info_keys.begin() + index);
+	} else {
+		return DEFAULT_VALUE;
+	}
+}
+const std::string& CSkirmishAILibraryInfo::GetValueAt(size_t index) const {
+
+	if (index < info_keys.size()) {
+		return info_key_value.find(GetKeyAt(index))->second;
+	} else {
+		return DEFAULT_VALUE;
+	}
+}
+const std::string& CSkirmishAILibraryInfo::GetDescriptionAt(size_t index) const {
+
+	if (index < info_keys.size()) {
+		return info_key_description.find(GetKeyAt(index))->second;
+	} else {
+		return DEFAULT_VALUE;
+	}
 }
 
 SkirmishAIKey CSkirmishAILibraryInfo::GetKey() const {
 
-	static const std::string defVal = "";
-	static const std::string snKey = StringToLower(SKIRMISH_AI_PROPERTY_SHORT_NAME);
-	static const std::string vKey = StringToLower(SKIRMISH_AI_PROPERTY_VERSION);
-
-	const std::string& sn = info_getValue(info, snKey, defVal);
-	const std::string& v = info_getValue(info, vKey, defVal);
-
+	const std::string& sn = GetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
+	const std::string& v = GetInfo(SKIRMISH_AI_PROPERTY_VERSION);
 	SkirmishAIKey key = SkirmishAIKey(sn, v);
+
 	return key;
 }
 
-std::string CSkirmishAILibraryInfo::GetDataDir() const {
+const std::string& CSkirmishAILibraryInfo::GetDataDir() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
 }
-std::string CSkirmishAILibraryInfo::GetShortName() const {
+const std::string& CSkirmishAILibraryInfo::GetShortName() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 }
-std::string CSkirmishAILibraryInfo::GetVersion() const {
+const std::string& CSkirmishAILibraryInfo::GetVersion() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_VERSION);
 }
-std::string CSkirmishAILibraryInfo::GetName() const {
+const std::string& CSkirmishAILibraryInfo::GetName() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_NAME);
 }
-std::string CSkirmishAILibraryInfo::GetDescription() const {
+const std::string& CSkirmishAILibraryInfo::GetDescription() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_DESCRIPTION);
 }
-std::string CSkirmishAILibraryInfo::GetURL() const {
+const std::string& CSkirmishAILibraryInfo::GetURL() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_URL);
 }
-std::string CSkirmishAILibraryInfo::GetInterfaceShortName() const {
+const std::string& CSkirmishAILibraryInfo::GetInterfaceShortName() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME);
 }
-std::string CSkirmishAILibraryInfo::GetInterfaceVersion() const {
+const std::string& CSkirmishAILibraryInfo::GetInterfaceVersion() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_INTERFACE_VERSION);
 }
-std::string CSkirmishAILibraryInfo::GetInfo(const std::string& key) const {
+const std::string& CSkirmishAILibraryInfo::GetInfo(const std::string& key) const {
 
-	static const std::string defVal = "";
-	const std::string& val = info_getValue(info, key, defVal);
-	if (val == defVal) {
-		std::string errorMsg = std::string("Skirmish AI property '") + key
-				+ "' could not be found.\n";
-		handleerror(NULL, errorMsg.c_str(), "Skirmish AI Info Error",
-				MBF_OK | MBF_EXCL);
+	bool found = false;
+	std::map<std::string, std::string>::const_iterator strPair;
+
+	// get real key through lower case key
+	strPair = info_keyLower_key.find(StringToLower(key));
+	found = (strPair != info_keyLower_key.end());
+
+	// get value
+	if (found) {
+		strPair = info_key_value.find(strPair->second);
+		found = (strPair != info_key_value.end());
 	}
 
-	return val;
-}
-const std::map<std::string, InfoItem>& CSkirmishAILibraryInfo::GetInfo() const {
-	return info;
-}
-
-const std::vector<Option>& CSkirmishAILibraryInfo::GetOptions() const {
-	return options;
-}
-
-void CSkirmishAILibraryInfo::CreateCReferences() {
-
-	FreeCReferences();
-
-	infoKeys_c = (const char**) calloc(info.size(), sizeof(char*));
-	infoValues_c = (const char**) calloc(info.size(), sizeof(char*));
-	unsigned int i=0;
-	std::map<std::string, InfoItem>::const_iterator ii;
-	for (ii=info.begin(); ii != info.end(); ++ii) {
-		infoKeys_c[i] = ii->second.key.c_str();
-		infoValues_c[i] = ii->second.value.c_str();
-		i++;
+	if (!found) {
+		logOutput.Print("Skirmish AI property '%s' could not be found.", key.c_str());
+		return DEFAULT_VALUE;
+	} else {
+		return strPair->second;
 	}
-}
-void CSkirmishAILibraryInfo::FreeCReferences() {
-
-	free(infoKeys_c);
-	infoKeys_c = NULL;
-	free(infoValues_c);
-	infoValues_c = NULL;
-}
-
-const char** CSkirmishAILibraryInfo::GetCInfoKeys() const {
-	return infoKeys_c;
-}
-const char** CSkirmishAILibraryInfo::GetCInfoValues() const {
-	return infoValues_c;
 }
 
 
@@ -183,32 +171,34 @@ void CSkirmishAILibraryInfo::SetInterfaceVersion(
 	SetInfo(SKIRMISH_AI_PROPERTY_INTERFACE_VERSION, interfaceVersion);
 }
 bool CSkirmishAILibraryInfo::SetInfo(const std::string& key,
-				const std::string& value) {
+		const std::string& value, const std::string& description) {
 
 	static const std::string snKey = StringToLower(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 	static const std::string vKey = StringToLower(SKIRMISH_AI_PROPERTY_VERSION);
 
-	std::string lowerKey = StringToLower(key);
-	if (lowerKey == snKey || key == vKey) {
+	std::string keyLower = StringToLower(key);
+	if (keyLower == snKey || keyLower == vKey) {
 		if (value.find_first_of(BAD_CHARS) != std::string::npos) {
-			std::string msg = "Skirmish AI property (shortName or version)\n";
-			msg += "contains illegal characters (";
-			msg += BAD_CHARS;
-			msg += ")";
-			handleerror(NULL, msg.c_str(), "Skirmish AI Info Error",
-					MBF_OK | MBF_EXCL);
+		logOutput.Print("Error, Skirmish AI property (%s or %s)\n"
+				"contains illegal characters (%s).",
+				SKIRMISH_AI_PROPERTY_SHORT_NAME, SKIRMISH_AI_PROPERTY_VERSION,
+				BAD_CHARS);
 			return false;
 		}
 	}
 
-	InfoItem ii = {key, value, ""};
-	info[lowerKey] = ii;
+	// only add the key if it is not yet present
+	if (info_key_value.find(key) == info_key_value.end()) {
+		info_keys.push_back(key);
+	}
+	info_keyLower_key[keyLower] = key;
+	info_key_value[key] = value;
+	info_key_description[key] = description;
 
 	return true;
 }
 
-void CSkirmishAILibraryInfo::SetOptions(const std::vector<Option>& _options) {
 
-	// implicit convertible types -> range-ctor can be used
-	options = std::vector<Option>(_options.begin(), _options.end());
+const std::vector<Option>& CSkirmishAILibraryInfo::GetOptions() const {
+	return options;
 }

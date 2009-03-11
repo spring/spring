@@ -52,9 +52,9 @@ struct SAIInterfaceCallback {
 	 */
 	int               (CALLING_CONV *Engine_AIInterface_ABIVersion_getWarningPart)(int interfaceId);
 
-	/// major revision number (e.g. 0.77)
+	/// Returns the major engine revision number (e.g. 0.77)
 	const char* const (CALLING_CONV *Engine_Version_getMajor)(int interfaceId);
-	/// minor revision
+	/// Returns the minor engine revision
 	const char* const (CALLING_CONV *Engine_Version_getMinor)(int interfaceId);
 	/**
 	 * Clients that only differ in patchset can still play together.
@@ -85,6 +85,11 @@ struct SAIInterfaceCallback {
 	 * for this interface, or NULL if the infoIndex is invalid.
 	 */
 	const char* const (CALLING_CONV *AIInterface_Info_getValue)(int interfaceId, int infoIndex);
+	/**
+	 * Returns the description of the key at index infoIndex in the info map
+	 * for this interface, or NULL if the infoIndex is invalid.
+	 */
+	const char* const (CALLING_CONV *AIInterface_Info_getDescription)(int interfaceId, int infoIndex);
 	/**
 	 * Returns the value associated with the given key in the info map
 	 * for this interface, or NULL if not found.
@@ -188,13 +193,5 @@ struct SAIInterfaceCallback {
 #ifdef __cplusplus
 } // extern "C"
 #endif
-
-#if defined __cplusplus
-class CAIInterfaceLibraryInfo;
-
-int SAIInterfaceCallback_getInstanceFor(const CAIInterfaceLibraryInfo* info, struct SAIInterfaceCallback* callback);
-void SAIInterfaceCallback_release(int interfaceId);
-#endif // defined __cplusplus
-
 
 #endif // _SAIINTERFACECALLBACK_H

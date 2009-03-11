@@ -14,12 +14,8 @@
 #include "ConfigHandler.h"
 #include "Exceptions.h"
 #include "FileSystem/FileHandler.h"
-#include "OggStream.h"
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
-
-// Ogg-Vorbis audio stream object
-COggStream oggStream;
 
 CSound* sound = NULL;
 
@@ -215,42 +211,6 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	return 0;
 }
 
-void CSound::PlayStream(const std::string& path, float volume, const float3& pos, bool loop)
-{
-	GML_RECMUTEX_LOCK(sound);
-	oggStream.Play(path, volume);
-}
-
-void CSound::StopStream()
-{
-	GML_RECMUTEX_LOCK(sound); // StopStream
-	oggStream.Stop();
-}
-
-void CSound::PauseStream()
-{
-	GML_RECMUTEX_LOCK(sound); // PauseStream
-	oggStream.TogglePause();
-}
-
-unsigned int CSound::GetStreamTime()
-{
-	GML_RECMUTEX_LOCK(sound); // GetStreamTime
-	return oggStream.GetTotalTime();
-}
-
-unsigned int CSound::GetStreamPlayTime()
-{
-	GML_RECMUTEX_LOCK(sound); // GetStreamPlayTime
-	return oggStream.GetPlayTime();
-}
-
-void CSound::SetStreamVolume(float v)
-{
-	GML_RECMUTEX_LOCK(sound); // SetStreamVolume
-	oggStream.SetVolume(v);
-}
-
 void CSound::PitchAdjust(const float newPitch)
 {
 	SoundSource::SetPitch(newPitch);
@@ -381,9 +341,6 @@ void CSound::Update()
 	updateCounter++;
 	GML_RECMUTEX_LOCK(sound); // Update
 
-	// every 4th frame
-	if (updateCounter % 4) oggStream.Update();
-
 	if (sources.empty())
 		return;
 
@@ -417,7 +374,7 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "OpenAL Sound System:";
 	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
 	LogObject(LOG_SOUND) << "# SoundBuffers: " << SoundBuffer::Count();
-;
+
 	LogObject(LOG_SOUND) << "# reserved for buffers: " << (SoundBuffer::AllocedSize()/1024) << " kB";
 	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
