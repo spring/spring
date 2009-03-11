@@ -1,7 +1,4 @@
-
 #include "OggStream.h"
-
-#include <SDL.h>
 
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
@@ -27,20 +24,19 @@ int	VorbisStreamClose(void* datasource)
 }
 }
 
-COggStream::COggStream() {
+COggStream::COggStream()
+{
 	source = 0;
 	vorbisInfo = 0x0;
 	vorbisComment = 0x0;
-
-	secsPlayed = 0;
-	lastTick = 0;
 
 	stopped = true;
 	paused = false;
 }
 
 // open an Ogg stream from a given file and start playing it
-void COggStream::Play(const std::string& path, float volume) {
+void COggStream::Play(const std::string& path, float volume)
+{
 	if (!stopped) {
 		// we're already playing another stream
 		return;
@@ -70,8 +66,8 @@ void COggStream::Play(const std::string& path, float volume) {
 		format = AL_FORMAT_STEREO16;
 	}
 
-	alGenBuffers(2, buffers); CheckErrors();
-	alGenSources(1, &source); CheckErrors();
+	alGenBuffers(2, buffers); CheckError("COggStream");
+	alGenSources(1, &source); CheckError("COggStream");
 
 	SetVolume(volume, true);
 
@@ -84,15 +80,14 @@ void COggStream::Play(const std::string& path, float volume) {
 	if (!StartPlaying()) {
 		ReleaseBuffers();
 	} else {
-		secsPlayed = 0;
-		lastTick = SDL_GetTicks();
 		stopped = false;
 		paused = false;
 	}
 }
 
 
-void COggStream::SetVolume(float volume, bool b) {
+void COggStream::SetVolume(float volume, bool b)
+{
 	if (!stopped || b) {
 		volume = std::max(0.0f, std::min(volume, 1.0f));
 
@@ -100,14 +95,20 @@ void COggStream::SetVolume(float volume, bool b) {
 	}
 }
 
+float COggStream::GetPlayTime()
+{
+	return ((stopped)? 0.0 : ov_time_tell(&oggStream));
+}
 
-unsigned int COggStream::GetTotalTime() {
+float COggStream::GetTotalTime()
+{
 	return ov_time_total(&oggStream,-1);
 }
 
 
 // display Ogg info and comments
-void COggStream::DisplayInfo() {
+void COggStream::DisplayInfo()
+{
 	logOutput.Print("version:           %d", vorbisInfo->version);
 	logOutput.Print("channels:          %d", vorbisInfo->channels);
 	logOutput.Print("time (sec):        %lf", ov_time_total(&oggStream,-1));
@@ -125,14 +126,15 @@ void COggStream::DisplayInfo() {
 
 
 // clean up the OpenAL resources
-void COggStream::ReleaseBuffers() {
+void COggStream::ReleaseBuffers()
+{
 	stopped = true;
 	paused = false;
 
 	alSourceStop(source); EmptyBuffers();
 
-	alDeleteBuffers(2, buffers); CheckErrors();
-	alDeleteSources(1, &source); CheckErrors();
+	alDeleteBuffers(2, buffers); CheckError("COggStream");
+	alDeleteSources(1, &source); CheckError("COggStream");
 
 	ov_clear(&oggStream);
 }
@@ -140,7 +142,8 @@ void COggStream::ReleaseBuffers() {
 
 // returns true if both buffers were
 // filled with data from the stream
-bool COggStream::StartPlaying() {
+bool COggStream::StartPlaying()
+{
 	if (!DecodeStream(buffers[0]))
 		return false;
 
@@ -155,7 +158,8 @@ bool COggStream::StartPlaying() {
 
 
 // returns true if we're still playing
-bool COggStream::IsPlaying() {
+bool COggStream::IsPlaying()
+{
 	ALenum state = 0;
 	alGetSourcei(source, AL_SOURCE_STATE, &state);
 
@@ -163,13 +167,15 @@ bool COggStream::IsPlaying() {
 }
 
 // stops the currently playing stream
-void COggStream::Stop() {
+void COggStream::Stop()
+{
 	if (!stopped) {
 		ReleaseBuffers();
 	}
 }
 
-void COggStream::TogglePause() {
+void COggStream::TogglePause()
+{
 	if (!stopped) {
 		paused = !paused;
 
@@ -184,7 +190,8 @@ void COggStream::TogglePause() {
 
 // pop the processed buffers from the queue,
 // refill them, and push them back in line
-bool COggStream::UpdateBuffers() {
+bool COggStream::UpdateBuffers()
+{
 	int processed = 0;
 	bool active = true;
 
@@ -192,35 +199,21 @@ bool COggStream::UpdateBuffers() {
 
 	while (processed-- > 0) {
 		ALuint buffer;
-		alSourceUnqueueBuffers(source, 1, &buffer); CheckErrors();
+		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream");
 
 		// false if we've reached end of stream
 		active = DecodeStream(buffer);
 
-		alSourceQueueBuffers(source, 1, &buffer); CheckErrors();
+		alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream");
 	}
 
 	return active;
 }
 
-void COggStream::UpdateTimer() {
-	unsigned int tick = SDL_GetTicks();
 
-	if (paused) {
-		lastTick = tick;
-	}
-
-	if ((tick - lastTick) >= 1000) {
-		secsPlayed += (tick - lastTick) / 1000;
-		lastTick = tick;
-	}
-}
-
-
-void COggStream::Update() {
+void COggStream::Update()
+{
 	if (!stopped) {
-		UpdateTimer();
-
 		if (!paused) {
 			if (UpdateBuffers()) {
 				if (!IsPlaying()) {
@@ -243,7 +236,8 @@ void COggStream::Update() {
 
 
 // read decoded data from audio stream into PCM buffer
-bool COggStream::DecodeStream(ALuint buffer) {
+bool COggStream::DecodeStream(ALuint buffer)
+{
 	char pcm[BUFFER_SIZE];
 	int size = 0;
 	int section = 0;
@@ -268,32 +262,21 @@ bool COggStream::DecodeStream(ALuint buffer) {
 	}
 
 	alBufferData(buffer, format, pcm, size, vorbisInfo->rate);
-	CheckErrors();
+	CheckError("COggStream");
 
 	return true;
 }
 
 
 // dequeue any buffers pending on source
-void COggStream::EmptyBuffers() {
+void COggStream::EmptyBuffers()
+{
 	int queued = 0;
 	alGetSourcei(source, AL_BUFFERS_QUEUED, &queued);
 
 	while (queued-- > 0) {
 		ALuint buffer;
 		alSourceUnqueueBuffers(source, 1, &buffer);
-		CheckErrors();
+		CheckError("COggStream");
 	}
 }
-
-
-// check for any OpenAL errors
-void COggStream::CheckErrors() {
-	int error = alGetError();
-
-	if (error != AL_NO_ERROR) {
-		logOutput.Print("OpenAL error occurred, code: %d", error);
-	}
-}
-
-
