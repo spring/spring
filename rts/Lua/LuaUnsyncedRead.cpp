@@ -55,7 +55,7 @@ using namespace std;
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
-#include "Sound/Sound.h"
+#include "Sound/Music.h"
 
 
 extern Uint8 *keys;
@@ -1255,8 +1255,8 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 
 int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
 {
-	lua_pushnumber(L, sound->GetStreamPlayTime());
-	lua_pushnumber(L, sound->GetStreamTime());
+	lua_pushnumber(L, music::GetPlayTime());
+	lua_pushnumber(L, music::GetTime());
 	return 2;
 }
 
