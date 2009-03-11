@@ -110,7 +110,7 @@ namespace ntai {
 	}
 
 	void TdfParser::LoadBuffer( char const* buf, std::size_t size){
-		this->filename = "buffer";
+		//this->filename = "buffer";
 		std::list<std::string> junk_data;
 		tdf_grammar grammar( &root_section, &junk_data );
 
@@ -224,12 +224,6 @@ namespace ntai {
 		return true;
 	}*/
 
-	/*void TdfParser::Test()
-	{
-		TdfSection *unitinfo = sections["UNITINFO"];
-		TdfSection *weapons = unitinfo->sections["WEAPONS"];
-		std::string mo = weapons->values["weapon1"];
-	}*/
 
 	//finds a value in the file , if not found returns false, and errormessages is returned in value
 	//location of value is sent as a string "section\section\value"

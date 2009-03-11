@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="..\..\..\..\game\AI\Skirmish\impls\$(ProjectName)-debug.dll"
+				OutputFile="$(OutDir)\SkirmishAI.dll"
 				AdditionalLibraryDirectories="..\..\..\..\vclibs\Boost\lib"
 				GenerateDebugInformation="true"
 				LargeAddressAware="2"
@@ -117,7 +117,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
+				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System;..\..\..\..\AI\Wrappers"
 				PreprocessorDefinitions="BUILDING_SKIRMISH_AI"
 				RuntimeLibrary="2"
 				WarningLevel="3"
@@ -191,7 +191,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System"
+				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System;..\..\..\..\AI\Wrappers"
 				PreprocessorDefinitions="BUILDING_SKIRMISH_AI"
 				RuntimeLibrary="2"
 				WarningLevel="3"
