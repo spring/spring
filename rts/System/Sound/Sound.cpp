@@ -16,6 +16,7 @@
 #include "FileSystem/FileHandler.h"
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
+#include <boost/cstdint.hpp>
 
 CSound* sound = NULL;
 
@@ -106,8 +107,8 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 				const LuaTable buf(soundItemTable.SubTable(*it));
 				buf.GetMap(bufmap);
 				bufmap["name"] = name;
-				soundItemDefMap::const_iterator it = soundItemDefs.find(name);
-				if (it != soundItemDefs.end())
+				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
+				if (sit != soundItemDefs.end())
 					LogObject(LOG_SOUND) << "CSound(): two SoundItems have the same name: " << name;
 
 				soundItemDef::const_iterator inspec = bufmap.find("file");
@@ -385,7 +386,7 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 	assert(path.length() > 3);
 	CFileHandler file(path);
 
-	std::vector<uint8_t> buf;
+	std::vector<boost::uint8_t> buf;
 	if (file.FileExists()) {
 		buf.resize(file.FileSize());
 		file.Read(&buf[0], file.FileSize());

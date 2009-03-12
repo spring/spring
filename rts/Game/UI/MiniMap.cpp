@@ -915,6 +915,7 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return buildTip;
 	}
 
+	GML_RECMUTEX_LOCK(sel); // anti deadlock
 	GML_RECMUTEX_LOCK(quad); //unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
 
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));

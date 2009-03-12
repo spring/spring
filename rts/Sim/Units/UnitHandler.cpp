@@ -39,6 +39,7 @@
 #include "creg/STL_List.h"
 #include "creg/STL_Set.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
+#include "Lua/LuaUnsyncedCtrl.h"
 
 using std::min;
 using std::max;
@@ -224,6 +225,13 @@ void CUnitHandler::DeleteUnit(CUnit* unit)
 
 void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
+#if defined(USE_GML) && GML_ENABLE_SIM
+	{
+		GML_STDMUTEX_LOCK(dque);
+		LuaUnsyncedCtrl::drawCmdQueueUnits.erase(delUnit);
+	}
+#endif
+	
 	int delTeam = 0;
 	int delType = 0;
 	std::list<CUnit*>::iterator usi;

@@ -63,6 +63,8 @@
 #include "FileSystem/FileSystem.h"
 #include "ConfigHandler.h"
 
+#include <boost/cstdint.hpp>
+
 using namespace std;
 
 // MinGW defines this for a WINAPI function
@@ -356,13 +358,16 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 	glLineWidth(cmdColors.QueuedLineWidth());
 
 	GML_STDMUTEX_LOCK(cai); // DrawUnitCommandQueues
+	GML_STDMUTEX_LOCK(dque); // DrawUnitCommandQueues
 
 	const CUnitSet& units = drawCmdQueueUnits;
 	CUnitSet::const_iterator ui;
 	for (ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* unit = *ui;
 		if (unit) {
-			unit->commandAI->DrawCommands();
+			CCommandAI *cai=unit->commandAI;
+			if(cai)
+				cai->DrawCommands();
 		}
 	}
 
@@ -374,7 +379,7 @@ void LuaUnsyncedCtrl::DrawUnitCommandQueues()
 
 void LuaUnsyncedCtrl::ClearUnitCommandQueues()
 {
-	GML_STDMUTEX_LOCK(cai); // ClearUnitCommandQueues
+	GML_STDMUTEX_LOCK(dque); // ClearUnitCommandQueues
 
 	drawCmdQueueUnits.clear();
 }
@@ -643,7 +648,7 @@ int LuaUnsyncedCtrl::AddWorldUnit(lua_State* L)
 
 int LuaUnsyncedCtrl::DrawUnitCommands(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(cai); // DrawUnitCommands
+	GML_STDMUTEX_LOCK(dque); // DrawUnitCommands
 
 	if (lua_istable(L, 1)) {
 		const bool isMap = lua_isboolean(L, 2) && lua_toboolean(L, 2);
@@ -1696,7 +1701,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 
 int LuaUnsyncedCtrl::SetUnitGroup(lua_State* L)
 {
-	GML_STDMUTEX_LOCK(group); // SetUnitGroup
+	GML_RECMUTEX_LOCK(group); // SetUnitGroup
 
 	if (!CheckModUICtrl()) {
 		return 0;
@@ -1986,7 +1991,7 @@ int LuaUnsyncedCtrl::SendLuaUIMsg(lua_State* L)
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<uint8_t> data(msg.size());
+	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	const string mode = luaL_optstring(L, 2, "");
 	unsigned char modeNum = 0;
@@ -2010,7 +2015,7 @@ int LuaUnsyncedCtrl::SendLuaGaiaMsg(lua_State* L)
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<uint8_t> data(msg.size());
+	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_GAIA, 0, data));
 	return 0;
@@ -2023,7 +2028,7 @@ int LuaUnsyncedCtrl::SendLuaRulesMsg(lua_State* L)
 		return 0;
 	}
 	const string msg = GetRawMsg(L, __FUNCTION__, 1);
-	std::vector<uint8_t> data(msg.size());
+	std::vector<boost::uint8_t> data(msg.size());
 	std::copy(msg.begin(), msg.end(), data.begin());
 	net->Send(CBaseNetProtocol::Get().SendLuaMsg(gu->myPlayerNum, LUA_HANDLE_ORDER_RULES, 0, data));
 	return 0;

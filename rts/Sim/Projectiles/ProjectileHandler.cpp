@@ -397,6 +397,7 @@ void CProjectileHandler::SetMaxParticles(int value)
 
 void CProjectileHandler::Update()
 {
+	GML_RECMUTEX_LOCK(lua); // Update
 	GML_RECMUTEX_LOCK(proj); // Update
 
 	SCOPED_TIMER("Projectile handler");

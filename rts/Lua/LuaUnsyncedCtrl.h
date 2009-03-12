@@ -17,9 +17,9 @@ class LuaUnsyncedCtrl {
 
 		static void DrawUnitCommandQueues();
 		static void ClearUnitCommandQueues();
+		static CUnitSet drawCmdQueueUnits;
 
 	private:
-		static CUnitSet drawCmdQueueUnits;
 
 	private:
 		static int Echo(lua_State* L);
