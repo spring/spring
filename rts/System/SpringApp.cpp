@@ -843,12 +843,16 @@ int SpringApp::Sim() {
 				SDL_Delay(200);
 		}
 		else if (activeController) {
-			GML_STDMUTEX_LOCK(sim);
-
 			gmlProcessor->ExpandAuxQueue();
-			if (!activeController->Update()) {
-				return 0;
+
+			{
+				GML_STDMUTEX_LOCK(sim);
+
+				if (!activeController->Update()) {
+					return 0;
+				}
 			}
+
 			gmlProcessor->GetQueue();
 		}
 		boost::thread::yield();

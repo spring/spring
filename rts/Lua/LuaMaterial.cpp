@@ -31,7 +31,7 @@ LuaMatHandler LuaMatHandler::handler;
 LuaMatHandler& luaMatHandler = LuaMatHandler::handler;
 
 
-#define PRINTF logOutput.Print
+#define LOGPRINTF logOutput.Print
 
 #define STRING_CASE(ptr, x) case x: ptr = #x; break;
 
@@ -200,7 +200,7 @@ void LuaMatShader::Print(const string& indent) const
 		STRING_CASE(typeName, LUASHADER_3DO);
 		STRING_CASE(typeName, LUASHADER_S3O);
 	}
-	PRINTF("%s%s %i\n", indent.c_str(), typeName, openglID);
+	LOGPRINTF("%s%s %i\n", indent.c_str(), typeName, openglID);
 }
 
 /******************************************************************************/
@@ -309,7 +309,7 @@ void LuaMatTexture::Print(const string& indent) const
 		STRING_CASE(typeName, LUATEX_REFLECTION);
 		STRING_CASE(typeName, LUATEX_SPECULAR);
 	}
-	PRINTF("%s%s %i %s\n", indent.c_str(),
+	LOGPRINTF("%s%s %i %s\n", indent.c_str(),
 	       typeName, openglID, enable ? "true" : "false");
 }
 
@@ -481,23 +481,23 @@ void LuaMaterial::Print(const string& indent) const
 #define CULL_TO_STR(x) \
 	(x==GL_FRONT) ? "front" : (x==GL_BACK) ? "back" : (x!=0) ? "false" : "unknown"
 
-	PRINTF("%s%s\n", indent.c_str(), GetMatTypeName(type));
-	PRINTF("%sorder = %i\n", indent.c_str(), order);
+	LOGPRINTF("%s%s\n", indent.c_str(), GetMatTypeName(type));
+	LOGPRINTF("%sorder = %i\n", indent.c_str(), order);
 	shader.Print(indent);
-	PRINTF("%stexCount = %i\n", indent.c_str(), texCount);
+	LOGPRINTF("%stexCount = %i\n", indent.c_str(), texCount);
 	for (int t = 0; t < texCount; t++) {
 		char buf[32];
 		SNPRINTF(buf, sizeof(buf), "%s  tex[%i] ", indent.c_str(), t);
 		textures[t].Print(buf);
 	}
-	PRINTF("%spreList  = %i\n",  indent.c_str(), preList);
-	PRINTF("%spostList = %i\n",  indent.c_str(), postList);
-	PRINTF("%suseCamera = %s\n", indent.c_str(), useCamera ? "true" : "false");
-	PRINTF("%sculling = %s\n", indent.c_str(), CULL_TO_STR(culling));
-	PRINTF("%scameraLoc = %i\n", indent.c_str(), cameraLoc);
-	PRINTF("%scameraPosLoc = %i\n", indent.c_str(), cameraPosLoc);
-	PRINTF("%sshadowLoc = %i\n", indent.c_str(), shadowLoc);
-	PRINTF("%sshadowParamsLoc = %i\n", indent.c_str(), shadowParamsLoc);
+	LOGPRINTF("%spreList  = %i\n",  indent.c_str(), preList);
+	LOGPRINTF("%spostList = %i\n",  indent.c_str(), postList);
+	LOGPRINTF("%suseCamera = %s\n", indent.c_str(), useCamera ? "true" : "false");
+	LOGPRINTF("%sculling = %s\n", indent.c_str(), CULL_TO_STR(culling));
+	LOGPRINTF("%scameraLoc = %i\n", indent.c_str(), cameraLoc);
+	LOGPRINTF("%scameraPosLoc = %i\n", indent.c_str(), cameraPosLoc);
+	LOGPRINTF("%sshadowLoc = %i\n", indent.c_str(), shadowLoc);
+	LOGPRINTF("%sshadowParamsLoc = %i\n", indent.c_str(), shadowParamsLoc);
 }
 
 
@@ -584,8 +584,8 @@ void LuaMatBin::UnRef()
 
 void LuaMatBin::Print(const string& indent) const
 {
-	PRINTF("%sunitCount = %i\n", indent.c_str(), (int)units.size());
-	PRINTF("%spointer = %p\n", indent.c_str(), this);
+	LOGPRINTF("%sunitCount = %i\n", indent.c_str(), (int)units.size());
+	LOGPRINTF("%spointer = %p\n", indent.c_str(), this);
 	LuaMaterial::Print(indent + "  ");
 }
 
@@ -681,10 +681,10 @@ void LuaMatHandler::PrintBins(const string& indent, LuaMatType type) const
 	const LuaMatBinSet& binSet = binTypes[type];
 	LuaMatBinSet::const_iterator it;
 	int num = 0;
-	PRINTF("%sBINCOUNT = %lu\n", indent.c_str(), binSet.size());
+	LOGPRINTF("%sBINCOUNT = %lu\n", indent.c_str(), binSet.size());
 	for (it = binSet.begin(); it != binSet.end(); ++it) {
 		LuaMatBin* bin = *it;
-		PRINTF("%sBIN %i:\n", indent.c_str(), num);
+		LOGPRINTF("%sBIN %i:\n", indent.c_str(), num);
 		bin->Print(indent + "    ");
 		num++;
 	}

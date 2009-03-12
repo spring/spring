@@ -7,6 +7,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <boost/cstdint.hpp>
 
 /**
  * @brief A buffer holding a sound
@@ -23,8 +24,8 @@ public:
 	SoundBuffer();
 	~SoundBuffer();
 
-	bool LoadWAV(const std::string& file, std::vector<uint8_t> buffer, bool strict);
-	bool LoadVorbis(const std::string& file, std::vector<uint8_t> buffer, bool strict);
+	bool LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict);
+	bool LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict);
 
 	const std::string& GetFilename() const
 	{
@@ -49,7 +50,7 @@ public:
 	
 	static size_t Insert(boost::shared_ptr<SoundBuffer> buffer);
 private:
-	void AlGenBuffer(const std::string& file, ALenum format, const uint8_t* data, size_t datalength, int rate);
+	void AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate);
 
 	std::string filename;
 	ALuint id;
