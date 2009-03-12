@@ -2,8 +2,8 @@
 #define BASENETPROTOCOL_H
 
 #include <boost/shared_ptr.hpp>
-
 #include "Game/Player.h"
+#include <boost/cstdint.hpp>
 
 namespace netcode
 {
@@ -144,7 +144,7 @@ public:
 	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
-	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<uint8_t>& msg);
+	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg);
 	
 	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
 	PacketType SendResign(uchar myPlayerNum);

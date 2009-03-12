@@ -130,6 +130,8 @@ void CPathEstimator::InitEstimator(const std::string& name) {
 	if (numThreads == 0) {
 		#if (BOOST_VERSION >= 103500)
 		numThreads = boost::thread::hardware_concurrency();
+		#elif defined(USE_GML)
+		numThreads = gmlCPUCount();
 		#else
 		numThreads = 1;
 		#endif

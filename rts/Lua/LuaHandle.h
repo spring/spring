@@ -10,6 +10,7 @@
 using std::string;
 using std::vector;
 using std::set;
+#include <boost/cstdint.hpp>
 
 #include "EventClient.h"
 //FIXME#include "LuaArrays.h"
@@ -325,7 +326,7 @@ class CLuaHandle : public CEventClient
 		static bool GetModUICtrl() { return modUICtrl; }
 
 		static void HandleLuaMsg(int playerID, int script, int mode,
-		                         const std::vector<uint8_t>& msg);
+			const std::vector<boost::uint8_t>& msg);
 
 	protected: // static
 		static CLuaHandle* activeHandle;

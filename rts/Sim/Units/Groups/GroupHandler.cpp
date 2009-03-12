@@ -89,7 +89,7 @@ void CGroupHandler::DrawCommands()
 void CGroupHandler::GroupCommand(int num)
 {
 	GML_RECMUTEX_LOCK(sel); // GroupCommand
-	GML_STDMUTEX_LOCK(group); // GroupCommand
+	GML_RECMUTEX_LOCK(group); // GroupCommand
 
 	if (keys[SDLK_LCTRL]) {
 		if (!keys[SDLK_LSHIFT]) {
@@ -138,7 +138,7 @@ void CGroupHandler::GroupCommand(int num)
 void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 {
 	GML_RECMUTEX_LOCK(sel); // GroupCommand
-	GML_STDMUTEX_LOCK(group); // GroupCommand
+	GML_RECMUTEX_LOCK(group); // GroupCommand
 
 	if ((cmd == "set") || (cmd == "add")) {
 		if (cmd == "set") {
@@ -194,7 +194,7 @@ void CGroupHandler::GroupCommand(int num, const std::string& cmd)
 
 CGroup* CGroupHandler::CreateNewGroup()
 {
-	GML_STDMUTEX_LOCK(group); // GroupCommand
+	GML_RECMUTEX_LOCK(group); // GroupCommand
 
 	if(freeGroups.empty()){
 		CGroup* group=new CGroup(firstUnusedGroup++, this);
@@ -215,7 +215,7 @@ CGroup* CGroupHandler::CreateNewGroup()
 void CGroupHandler::RemoveGroup(CGroup* group)
 {
 	GML_RECMUTEX_LOCK(sel); // RemoveGroup
-	GML_STDMUTEX_LOCK(group); // RemoveGroup
+	GML_RECMUTEX_LOCK(group); // RemoveGroup
 
 	if(group->id<10){
 		logOutput.Print("Warning trying to remove hotkey group %i",group->id);

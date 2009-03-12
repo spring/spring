@@ -1414,6 +1414,8 @@ void CBuilderCAI::DrawCommands(void)
 				} else {
 					int id = (int)ci->params[0];
 					if (id >= uh->MaxUnits()) {
+						GML_RECMUTEX_LOCK(feat); // DrawCommands
+
 						const CFeatureSet& fset = featureHandler->GetActiveFeatures();
 						CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
 						if (it != fset.end()) {

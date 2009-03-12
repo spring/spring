@@ -372,6 +372,8 @@ void CEventHandler::ViewResize()
       return;                                     \
     }                                             \
                                                   \
+    GML_RECMUTEX_LOCK(unit);                      \
+    GML_RECMUTEX_LOCK(lua);                       \
     LuaOpenGL::EnableDraw ## name ();             \
     listDraw ## name [0]->Draw ## name ();        \
                                                   \
