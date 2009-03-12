@@ -329,10 +329,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NTai\Core\Interface.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\NTai\Helpers\Log.cpp"
 				>
 			</File>
