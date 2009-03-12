@@ -1847,6 +1847,8 @@ static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 
 int LuaOpenGL::Feature(lua_State* L) // FIXME -- implement properly
 {
+	GML_RECMUTEX_LOCK(feat); // Feature
+
 	CheckDrawingEnabled(L, __FUNCTION__);
 	const CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
 	if (feature == NULL) {

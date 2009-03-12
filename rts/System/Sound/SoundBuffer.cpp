@@ -13,7 +13,7 @@ namespace
 {
 struct VorbisInputBuffer
 {
-	uint8_t* data;
+	boost::uint8_t* data;
 	size_t pos;
 	size_t size;
 };
@@ -47,22 +47,22 @@ SoundBuffer::~SoundBuffer()
 // Header copied from WavLib by Michael McTernan
 struct WAVHeader
 {
-	uint8_t riff[4];         // "RIFF"
-	int32_t totalLength;
-	uint8_t wavefmt[8];      // WAVEfmt "
-	int32_t length;         // Remaining length 4 bytes
-	int16_t format_tag;
-	int16_t channels;       // Mono=1 Stereo=2
-	int32_t SamplesPerSec;
-	int32_t AvgBytesPerSec;
-	int16_t BlockAlign;
-	int16_t BitsPerSample;
-	uint8_t data[4];         // "data"
-	int32_t datalen;        // Raw data length 4 bytes
+	boost::uint8_t riff[4];         // "RIFF"
+	boost::int32_t totalLength;
+	boost::uint8_t wavefmt[8];      // WAVEfmt "
+	boost::int32_t length;         // Remaining length 4 bytes
+	boost::int16_t format_tag;
+	boost::int16_t channels;       // Mono=1 Stereo=2
+	boost::int32_t SamplesPerSec;
+	boost::int32_t AvgBytesPerSec;
+	boost::int16_t BlockAlign;
+	boost::int16_t BitsPerSample;
+	boost::uint8_t data[4];         // "data"
+	boost::int32_t datalen;        // Raw data length 4 bytes
 };
 #pragma pack(pop)
 
-bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, bool strict)
+bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict)
 {
 	WAVHeader* header = (WAVHeader*)(&buffer[0]);
 
@@ -148,7 +148,7 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<uint8_t> buffer, 
 	return true;
 }
 
-bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<uint8_t> buffer, bool strict)
+bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t> buffer, bool strict)
 {
 	VorbisInputBuffer buf;
 	buf.data = &buffer[0];
@@ -205,7 +205,7 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<uint8_t> buffe
 		return false;
 	}
 
-	std::vector<uint8_t> decodeBuffer(ov_pcm_total(&oggStream, -1));
+	std::vector<boost::uint8_t> decodeBuffer(ov_pcm_total(&oggStream, -1));
 	int section = 0;
 	long read = ov_read(&oggStream, (char*)&decodeBuffer[0], decodeBuffer.size(), 0, 2, 1, &section);
 	LogObject() << "Read " << read << " bytes from vorbis sample";
@@ -266,7 +266,7 @@ size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
 	return bufId;
 };
 
-void SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const uint8_t* data, size_t datalength, int rate)
+void SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate)
 {
 	alGenBuffers(1, &id);
 	filename = file;

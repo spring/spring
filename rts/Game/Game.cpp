@@ -148,6 +148,7 @@
 #include "UI/ProfileDrawer.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
+#include <boost/cstdint.hpp>
 
 #ifndef NO_AVI
 #  include "Platform/Win/AVIGenerator.h"
@@ -1742,6 +1743,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
+
+			GML_STDMUTEX_LOCK(sim); // ActionPressed
+
 			guihandler->RunLayoutCommand(action.extra);
 		}
 	}
@@ -3594,17 +3598,17 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in LuaMsg", player);
 				}
 				netcode::UnpackPacket unpack(packet, 1);
-				uint16_t size;
+				boost::uint16_t size;
 				unpack >> size;
 				assert(size == packet->length);
-				uint8_t playerNum;
+				boost::uint8_t playerNum;
 				unpack >> playerNum;
 				assert(player == playerNum);
-				uint16_t script;
+				boost::uint16_t script;
 				unpack >> script;
-				uint8_t mode;
+				boost::uint8_t mode;
 				unpack >> mode;
-				std::vector<uint8_t> data(size - 7);
+				std::vector<boost::uint8_t> data(size - 7);
 				unpack >> data;
 				CLuaHandle::HandleLuaMsg(player, script, mode, data);
 				AddTraffic(player, packetCode, dataLength);

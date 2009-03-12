@@ -247,6 +247,7 @@ void* CAICallback::CreateSharedMemArea(char* name, int size)
 {
 	handleerror (0, "AI wants to use deprecated function \"CreateSharedMemArea\"",
 				"Spring is closing:", MBF_OK | MBF_EXCL);
+	return NULL;
 }
 
 void CAICallback::ReleasedSharedMemArea(char* name)
