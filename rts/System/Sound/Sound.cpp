@@ -33,8 +33,11 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 	}
 	else
 	{
-		ALCdevice *device = alcOpenDevice(NULL);
-		LogObject(LOG_SOUND) <<  "OpenAL: using device: " << (const char*)alcGetString(device, ALC_DEVICE_SPECIFIER);
+		//TODO: device choosing, like this:
+		//const ALchar* deviceName = "ALSA Software on SB Live 5.1 [SB0220] [Multichannel Playback]";
+		const ALchar* deviceName = NULL;
+		ALCdevice *device = alcOpenDevice(deviceName);
+		
 		if (device == NULL)
 		{
 			LogObject(LOG_SOUND) <<  "Could not open a sounddevice, disabling sounds";
@@ -56,8 +59,24 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 			}
 		}
 
-		LogObject(LOG_SOUND) <<  "OpenAL: " << (const char*)alGetString(AL_VERSION);
-		LogObject(LOG_SOUND) <<  "OpenAL: " << (const char*)alGetString(AL_EXTENSIONS);
+		LogObject(LOG_SOUND) << "OpenAL info:\n";
+		LogObject(LOG_SOUND) << "  Vendor:     " << (const char*)alGetString(AL_VENDOR );
+		LogObject(LOG_SOUND) << "  Version:    " << (const char*)alGetString(AL_VERSION);
+		LogObject(LOG_SOUND) << "  Renderer:   " << (const char*)alGetString(AL_RENDERER);
+		LogObject(LOG_SOUND) << "  AL Extensions: " << (const char*)alGetString(AL_EXTENSIONS);
+		LogObject(LOG_SOUND) << "  ALC Extensions: " << (const char*)alcGetString(device, ALC_EXTENSIONS);
+		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
+		{
+			LogObject(LOG_SOUND) << "  Device:     " << alcGetString(device, ALC_DEVICE_SPECIFIER);
+			const char *s = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+			LogObject(LOG_SOUND) << "  Available Devices:  ";
+			while (*s != '\0')
+			{
+				LogObject(LOG_SOUND) << "                      " << s;
+				while (*s++ != '\0')
+					;
+			}
+		}
 
 		// Generate sound sources
 		#if (BOOST_VERSION >= 103500)
