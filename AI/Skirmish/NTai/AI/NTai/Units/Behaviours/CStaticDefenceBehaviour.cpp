@@ -12,8 +12,7 @@ namespace ntai {
 		//
 		G = GL;
 		engaged = false;
-		unit = G->GetUnit(uid);
-		uid = ((CUnit*)unit.get())->GetID();
+		this->uid = uid;
 	}
 
 	CStaticDefenceBehaviour::~CStaticDefenceBehaviour(){

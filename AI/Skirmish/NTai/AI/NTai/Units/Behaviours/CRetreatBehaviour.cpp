@@ -11,8 +11,7 @@ namespace ntai {
 	CRetreatBehaviour::CRetreatBehaviour(Global* GL, int uid){
 		//
 		G = GL;
-		unit = G->GetUnit(uid);
-		uid = ((CUnit*)unit.get())->GetID();
+		this->uid = uid;
 		active = false;
 	}
 
@@ -40,8 +39,8 @@ namespace ntai {
 						return;
 					}
 
-					int* garbage = new int[1000];
-					int n =G->cb->GetFriendlyUnits(garbage,dpos,400);
+					int* garbage = new int[6];
+					int n =G->cb->GetFriendlyUnits(garbage,dpos,5);
 					delete[] garbage;
 
 					if(n > 4){

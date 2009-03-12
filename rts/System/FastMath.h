@@ -116,14 +116,14 @@ namespace fastmath {
 	*
 	* Four over pi
 	*/
-	static const float PIU4 = 4.0 / PI;
+	static const float PIU4 = 4.0f / PI;
 
 	/**
 	* @brief Negative four divided by pi squared
 	*
 	* Negative four over (pi squared)
 	*/
-	static const float PISUN4 = -4.0 / (PI * PI);
+	static const float PISUN4 = -4.0f / (PI * PI);
 
 	/**
 	* @brief reciprocal of pi
@@ -160,7 +160,7 @@ namespace fastmath {
 		}
 		/* approximation */
 		x = (PIU4) * x + (PISUN4) * x * math::fabs(x);
-		x = 0.225 * (x * fabs(x) - x) + x;
+		x = 0.225f * (x * fabs(x) - x) + x;
 		return x;
 	}
 

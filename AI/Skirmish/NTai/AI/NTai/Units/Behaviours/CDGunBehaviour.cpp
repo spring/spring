@@ -12,8 +12,7 @@ namespace ntai {
 	CDGunBehaviour::CDGunBehaviour(Global* GL, int uid){
 		//
 		G = GL;
-		unit = G->GetUnit(uid);
-		uid = ((CUnit*)unit.get())->GetID();
+		this->uid = uid;
 		active = false;
 	}
 

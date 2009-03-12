@@ -29,13 +29,13 @@ namespace ntai {
 
 		
 
-		void SetTaskManager(boost::shared_ptr<ITaskManager> taskManager);
-		boost::shared_ptr<ITaskManager> GetTaskManager();
+		void SetTaskManager(ITaskManager* taskManager);
+		ITaskManager* GetTaskManager();
 	protected:
 		
 		bool doingplan;
 		uint curplan;
-		boost::shared_ptr<ITaskManager> taskManager;
+		ITaskManager* taskManager;
 		bool under_construction;
 		boost::shared_ptr<IModule> currentTask;
 		list< boost::shared_ptr<IBehaviour> > behaviours;
