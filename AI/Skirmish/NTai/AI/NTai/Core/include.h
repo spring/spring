@@ -9,9 +9,11 @@
 namespace ntai{
 	// Prototype the Global class
 	class Global;
+
+	class CUnit;
 	
 	// The name NTAI gives to the spring engine.
-	const char AI_NAME[]= {"NTai XE9.79+"};
+	const char AI_NAME[]= {"NTai XE9.9+"};
 }
 
 //using namespace ntai;
