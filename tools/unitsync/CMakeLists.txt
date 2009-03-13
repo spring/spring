@@ -8,29 +8,25 @@
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "../..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-IF (MINGW)
-	set (unitsync_libs glew32 opengl32 glu32 devil ilu python25)
-	set (PYTHONLIBS_FOUND TRUE) # Python libs are part of the mingwlibs package
-	INCLUDE_DIRECTORIES(${MINGWLIBS}/include/python2.5)
+FIND_PACKAGE(Freetype REQUIRED)
+INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
 
+FIND_PACKAGE(GLEW REQUIRED)
+set (unitsync_libs ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY} ${DEVIL_ILU_LIBRARY} ${GL_gl_LIBRARY} ${GL_glu_LIBRARY})
+
+FIND_PACKAGE(PythonLibs)
+if (PYTHONLIBS_FOUND)
+	INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
+	list (APPEND unitsync_libs ${PYTHON_LIBRARIES})
+else (PYTHONLIBS_FOUND)
+	message ("No python libraries found, python bindings disabled")
+endif (PYTHONLIBS_FOUND)
+
+IF (MINGW)
 	set (JAVA_FOUND TRUE)
 	INCLUDE_DIRECTORIES(${MINGWLIBS}/include/java)
 ELSE (MINGW)
-	FIND_PACKAGE(Freetype REQUIRED)
-	INCLUDE_DIRECTORIES(${FREETYPE_INCLUDE_DIR})
-	
-	FIND_PACKAGE(GLEW REQUIRED)
-	
-	set (unitsync_libs ${GLEW_LIBRARIES} ${DEVIL_IL_LIBRARY} ${GL_gl_LIBRARY} ${GL_glu_LIBRARY})
 	list (APPEND unitsync_libs util) # sometimes this is needed (and I have no clue why)
-	
-	FIND_PACKAGE(PythonLibs)
-	if (PYTHONLIBS_FOUND)
-		INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_PATH})
-		list (APPEND unitsync_libs ${PYTHON_LIBRARIES})
-	else (PYTHONLIBS_FOUND)
-		message ("No python libraries found, python bindings disabled")
-	endif (PYTHONLIBS_FOUND)
 	
 	FIND_PACKAGE(JNI)
 	if (JAVA_INCLUDE_PATH)
