@@ -65,29 +65,33 @@ if (CUSTOM_COMPILER_DEFINITIONS)
 	ADD_DEFINITIONS(${CUSTOM_COMPILER_DEFINITIONS})
 endif (CUSTOM_COMPILER_DEFINITIONS)
 
+
+FIND_PACKAGE(SDL)
+if (SDL_FOUND)
+	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+else (SDL_FOUND)
+	message("SDL not found on your system, disabling:")
+	message("* spring (engine)")
+	message("* AIs")
+endif (SDL_FOUND)
+
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex REQUIRED)
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+
+FIND_PACKAGE(Devil REQUIRED)
+
 ### mingwlibs
 if (MINGW)
 	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
-	include_directories(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
+	include_directories(${MINGWLIBS}/include)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
 	
 	SET(CMAKE_SHARED_LIBRARY_PREFIX "")
 	SET(CMAKE_SHARED_MODULE_PREFIX "")
-	set (SDL_LIBRARY SDL)
-	set (Boost_REGEX_LIBRARY boost_regex-mt)
-	set (Boost_THREAD_LIBRARY boost_thread-mt)
-	set (DEVIL_ILU_LIBRARY ilu)
-	set (DEVIL_LIBRARIES devil ${DEVIL_ILU_LIBRARY})
 elseif (UNIX)
-	# AIs need it
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-
-	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
-	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-	
-	FIND_PACKAGE(Devil REQUIRED)
+	# unix specifics
 else (UNIX)
+	# mac
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
 	INCLUDE_DIRECTORIES("${COREFOUNDATION_LIBRARY}/Headers")
 endif (MINGW)
@@ -148,8 +152,10 @@ elseif (MINGW)
 endif (NOT MINGW AND NOT APPLE)
 
 ### Where the other CMakeLists.txt are
-Add_Subdirectory(rts)
-Add_Subdirectory(AI)
+if (SDL_FOUND)
+	Add_Subdirectory(rts)
+	Add_Subdirectory(AI)
+endif (SDL_FOUND)
 Add_Subdirectory(tools/DedicatedServer)
 Add_Subdirectory(tools/unitsync)
 #Add_Subdirectory(tools/DemoAnalyser)
@@ -172,7 +178,7 @@ if (UNIX AND NOT MINGW)
 	install (FILES installer/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
 	install (FILES installer/freedesktop/pixmaps/spring.png installer/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
 else (UNIX AND NOT MINGW)
-	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR})
+	install (DIRECTORY ${MINGWLIBS}/bin/ DESTINATION ${BINDIR} PATTERN "*.dll")
 endif (UNIX AND NOT MINGW)
 
 # additional tools
