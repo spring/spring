@@ -11,7 +11,6 @@
 
 #include <string>
 #include <iostream>
-#include <SDL_timer.h>
 
 #ifdef _WIN32
 #include <windows.h>

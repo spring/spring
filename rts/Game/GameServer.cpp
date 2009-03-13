@@ -1331,7 +1331,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 				timeElapsed = millisec(200);
 			}
 
-			timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed.seconds());
+			timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed.total_milliseconds())*0.001;
 			lastTick=currentTick;
 			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
