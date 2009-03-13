@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <map>
-#include <SDL_timer.h>
 #include <cctype>
 #include <cstring>
 #include <boost/format.hpp>
@@ -122,7 +121,8 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
 		size_t numTeams = teamStartingData.size();
-		rng.Seed(gameSetupText.length()^ SDL_GetTicks());
+		rng.Seed(gameSetupText.length());
+		rng.Seed((size_t)gameSetupText.c_str());
 		std::vector<int> teamStartNum(numTeams);
 		for (size_t i = 0; i < numTeams; ++i)
 			teamStartNum[i] = i;
