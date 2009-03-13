@@ -8,7 +8,8 @@
 #include <algorithm>
 #include <limits.h>
 #include <boost/regex.hpp>
-#include <SDL_timer.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+using namespace boost::posix_time;
 
 #include "mmgr.h"
 
@@ -429,15 +430,15 @@ int LuaParser::TimeCheck(lua_State* L)
 	}
 	const string name = lua_tostring(L, 1);
 	lua_remove(L, 1);
-	const Uint32 startTime = SDL_GetTicks();
+	const ptime startTime = microsec_clock::local_time();
 	const int error = lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0);
 	if (error != 0) {
 		const string errmsg = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		luaL_error(L, errmsg.c_str());
 	}
-	const Uint32 endTime = SDL_GetTicks();
-	const float elapsed = 1.0e-3f * (float)(endTime - startTime);
+	const ptime endTime = microsec_clock::local_time();
+	const float elapsed = 1.0e-3f * (float)((endTime - startTime).total_milliseconds());
 	logOutput.Print("%s %f", name.c_str(), elapsed);
 	return lua_gettop(L);
 }

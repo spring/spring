@@ -27,13 +27,7 @@ void UpdateMusicStream()
 {
 	while (playing)
 	{
-		{ // sleep some time
-			boost::xtime xt;
-			boost::xtime_get(&xt,boost::TIME_UTC);
-			xt.nsec += 200;
-			boost::this_thread::sleep(xt);
-		}
-
+		boost::this_thread::sleep(boost::posix_time::milliseconds(200));
 		{ // update buffers
 			boost::mutex::scoped_lock updaterLock(musicMutex);
 			if (playNext)
