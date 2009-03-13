@@ -35,7 +35,7 @@ namespace ntai {
 	TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection( std::string const& name )
 	{
 	  std::string lowerd_name = name;
-		std::transform(lowerd_name.begin(), lowerd_name.end(), lowerd_name.begin(), std::tolower);
+		std::transform(lowerd_name.begin(), lowerd_name.end(), lowerd_name.begin(), ::tolower);
 	  std::map<std::string,TdfSection*>::iterator it = sections.find(lowerd_name);
 	  if( it != sections.end() )
 		return it->second;
@@ -49,7 +49,7 @@ namespace ntai {
 	void TdfParser::TdfSection::add_name_value(std::string const& name, std::string& value )
 	{
 	  std::string lowerd_name = name;
-		std::transform(lowerd_name.begin(), lowerd_name.end(), lowerd_name.begin(), std::tolower);
+		std::transform(lowerd_name.begin(), lowerd_name.end(), lowerd_name.begin(), ::tolower);
 	  values[lowerd_name] = value;
 	}
 
@@ -166,7 +166,7 @@ namespace ntai {
 	//find value, display messagebox if no such value found
 	std::string TdfParser::SGetValueMSG(std::string const& location){
 	  std::string lowerd = location;
-		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), std::tolower);
+		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), ::tolower);
 		std::string value="";
 		bool found = SGetValue(value, lowerd);
 		if(!found){
@@ -179,7 +179,7 @@ namespace ntai {
 	//find value, return default value if no such value found
 	std::string TdfParser::SGetValueDef(std::string const& defaultvalue, std::string const& location){
 	  std::string lowerd = location;
-		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), std::tolower);
+		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), ::tolower);
 		std::string value;
 		bool found = SGetValue(value, lowerd);
 		if(!found){
@@ -229,7 +229,7 @@ namespace ntai {
 	//location of value is sent as a string "section\section\value"
 	bool TdfParser::SGetValue(std::string &value, std::string const& location){
 		std::string lowerd = location;
-		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), std::tolower);
+		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), ::tolower);
 		std::string searchpath; //for errormessages
 
 		//split the location string
@@ -266,7 +266,7 @@ namespace ntai {
 	//return a map with all values in section
 	const std::map<std::string, std::string> TdfParser::GetAllValues(std::string const& location){
 	  std::string lowerd = location;
-		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), std::tolower);
+		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), ::tolower);
 		std::map<std::string, std::string> emptymap;
 		std::string searchpath; //for errormessages
 		std::vector<std::string> loclist = GetLocationVector(lowerd);
@@ -293,7 +293,7 @@ namespace ntai {
 	//return vector with all section names in it
 	std::vector<std::string> TdfParser::GetSectionList(std::string const& location){
 	  std::string lowerd = location;
-		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), std::tolower);
+		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), ::tolower);
 		std::vector<std::string> loclist = GetLocationVector(lowerd);
 		std::vector<std::string> returnvec;
 		std::map<std::string,TdfSection*> *sectionsptr = &root_section.sections;
@@ -313,14 +313,14 @@ namespace ntai {
 		std::map<std::string,TdfSection*>::iterator it;
 		for(it=sectionsptr->begin(); it!=sectionsptr->end(); it++){
 			returnvec.push_back(it->first);
-			std::transform(returnvec.back().begin(), returnvec.back().end(), returnvec.back().begin(), (int (*)(int))std::tolower);
+			std::transform(returnvec.back().begin(), returnvec.back().end(), returnvec.back().begin(), (int (*)(int))::tolower);
 		}
 		return returnvec;
 	}
 
 	bool TdfParser::SectionExist(std::string const& location){
 	  std::string lowerd = location;
-		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), std::tolower);
+		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), ::tolower);
 		std::vector<std::string> loclist = GetLocationVector(lowerd);
 		if(root_section.sections.find(loclist[0]) == root_section.sections.end()){
 			return false;
@@ -337,7 +337,7 @@ namespace ntai {
 
 	std::vector<std::string> TdfParser::GetLocationVector(std::string const& location){
 	  std::string lowerd = location;
-		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), std::tolower);
+		std::transform(lowerd.begin(), lowerd.end(), lowerd.begin(), ::tolower);
 		std::vector<std::string> loclist;
 		int start = 0;
 		int next = 0;
