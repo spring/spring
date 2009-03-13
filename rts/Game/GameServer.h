@@ -4,6 +4,8 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+using boost::posix_time::ptime;
 #include <string>
 #include <map>
 #include <deque>
@@ -145,15 +147,15 @@ private:
 	volatile bool quitServer;
 	int serverframenum;
 
-	unsigned serverStartTime;
-	unsigned readyTime;
-	unsigned gameStartTime;
-	unsigned gameEndTime;	//Tick when game end was detected
+	ptime serverStartTime;
+	ptime readyTime;
+	ptime gameStartTime;
+	ptime gameEndTime;	//Tick when game end was detected
 	bool sentGameOverMsg;
-	unsigned lastTick;
+	ptime lastTick;
 	float timeLeft;
-	unsigned lastPlayerInfo;
-	unsigned lastUpdate;
+	ptime lastPlayerInfo;
+	ptime lastUpdate;
 	float modGameTime;
 
 	bool isPaused;

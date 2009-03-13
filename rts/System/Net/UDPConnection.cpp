@@ -1,9 +1,9 @@
-#include <SDL_timer.h>
 #include <boost/version.hpp>
 #include <boost/format.hpp>
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <deque>
 
 #ifdef _WIN32
@@ -23,6 +23,7 @@
 
 namespace netcode {
 
+using namespace boost::posix_time;
 
 const unsigned UDPConnection::hsize = 9;
 const unsigned UDPMaxPacketSize = 4096;
@@ -101,19 +102,19 @@ void UDPConnection::Update()
 		}
 	}
 	
-	const unsigned curTime = SDL_GetTicks();
+	const ptime curTime = microsec_clock::local_time();
 	bool force = false;	// should we force to send a packet?
 
-	if((dataRecv == 0) && lastSendTime < curTime-1000 && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
+	if((dataRecv == 0) && lastSendTime < curTime-seconds(1) && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
 		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
 		lastSendTime = curTime;
 		force = true;
 	}
 
-	if (lastSendTime<curTime-5000 && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
+	if (lastSendTime<curTime-seconds(5) && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
 		force = true;
 	}
-	else if(lastSendTime<curTime-200 && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
+	else if(lastSendTime<curTime-milliseconds(200) && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
 		force = true;
 	}
 
@@ -122,7 +123,7 @@ void UDPConnection::Update()
 
 void UDPConnection::ProcessRawPacket(RawPacket* packet)
 {
-	lastReceiveTime=SDL_GetTicks();
+	lastReceiveTime = microsec_clock::local_time();
 	dataRecv += packet->length;
 	recvOverhead += hsize;
 	++recvPackets;
@@ -141,7 +142,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 			// we got a nak for packets which never got sent
 			//TODO give error message
 		}
-		else if (nak_abs != lastNak || lastNakTime < lastReceiveTime-100)
+		else if (nak_abs != lastNak || lastNakTime < lastReceiveTime-milliseconds(100))
 		{
 			// resend all packets from firstUnacked till nak_abs
 			lastNak=nak_abs;
@@ -247,15 +248,15 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 void UDPConnection::Flush(const bool forced)
 {
-	const unsigned curTime = SDL_GetTicks();
+	const ptime curTime = microsec_clock::local_time();
 
 	unsigned outgoingLength = 0;
 	for (packetList::const_iterator it = outgoingData.begin(); it != outgoingData.end(); ++it)
 		outgoingLength += (*it)->length;
 
-	if (forced || (!outgoingData.empty() && (lastSendTime < (curTime - 200 + outgoingLength * 10))))
+	if (forced || (!outgoingData.empty() && (lastSendTime < (curTime - milliseconds(200) + milliseconds(outgoingLength * 10)))))
 	{
-		lastSendTime=SDL_GetTicks();
+		lastSendTime = microsec_clock::local_time();
 
 		boost::uint8_t buffer[UDPMaxPacketSize];
 		unsigned pos = 0;
@@ -290,9 +291,8 @@ void UDPConnection::Flush(const bool forced)
 
 bool UDPConnection::CheckTimeout() const
 {
-	const unsigned curTime = SDL_GetTicks();
-	const unsigned timeout = ((dataRecv == 0) ? 45000 : 30000);
-	if((lastReceiveTime+timeout) < curTime)
+	const time_duration timeout = ((dataRecv == 0) ? seconds(45) : seconds(30));
+	if((lastReceiveTime+timeout) < microsec_clock::local_time())
 	{
 		return true;
 	}
@@ -342,14 +342,12 @@ void UDPConnection::SetMTU(unsigned mtu2)
 
 void UDPConnection::Init()
 {
-	lastReceiveTime = SDL_GetTicks();
+	lastReceiveTime = microsec_clock::local_time();
 	lastInOrder=-1;
 	waitingPackets.clear();
 	firstUnacked=0;
 	currentNum=0;
 	lastNak=-1;
-	lastNakTime=0;
-	lastSendTime=0;
 	sentOverhead = 0;
 	recvOverhead = 0;
 	fragmentedFlushes = 0;

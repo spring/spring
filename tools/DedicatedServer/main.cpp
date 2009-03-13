@@ -54,9 +54,9 @@ int main(int argc, char *argv[])
 		// Create the server, it will run in a separate thread
 		GameData* data = new GameData();
 		UnsyncedRNG rng;
-		rng.Seed(SDL_GetTicks());
 		rng.Seed(gameSetup->gameSetupText.length());
-		data->SetRandomSeed(SDL_GetTicks());
+		rng.Seed(script.length());
+		data->SetRandomSeed(rng.RandInt());
 
 		//  Use script provided hashes if they exist
 		if (gameSetup->mapHash != 0)
