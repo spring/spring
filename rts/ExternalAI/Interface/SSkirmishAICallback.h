@@ -20,7 +20,7 @@
 
 #include "aidefines.h"
 
-#ifdef	__cplusplus
+#if	defined(__cplusplus) && !defined(_MSC_VER)
 extern "C" {
 #endif
 
@@ -1577,7 +1577,7 @@ void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId,
 
 };
 
-#ifdef __cplusplus
+#if	defined(__cplusplus) && !defined(_MSC_VER)
 } // extern "C"
 #endif
 

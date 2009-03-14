@@ -445,7 +445,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib"
+				AdditionalDependencies="dsound.lib freetype2110.lib zlibwapi.lib glew32s.lib opengl32.lib glu32.lib ogg.lib vorbis.lib vorbisfile.lib SDL.lib DevIL.lib winmm.lib wsock32.lib ilu.lib imagehlp.lib advapi32.lib ole32.lib openal32.lib"
 				OutputFile="../../../game/spring.exe"
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
@@ -600,7 +600,51 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\ExternalAI\AIInterfaceKey.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\AIInterfaceKey.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\AIInterfaceLibrary.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\AIInterfaceLibrary.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\AIInterfaceLibraryInfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\AIInterfaceLibraryInfo.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\ExternalAI\aikey.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\AILibraryManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\AILibraryManager.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\AISCommands.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\EngineOutHandler.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\EngineOutHandler.h"
 				>
 			</File>
 			<File
@@ -617,6 +661,14 @@
 			</File>
 			<File
 				RelativePath="..\..\ExternalAI\IAICheats.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\IAILibraryManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\IAILibraryManager.h"
 				>
 			</File>
 			<File
@@ -641,6 +693,14 @@
 			</File>
 			<File
 				RelativePath="..\..\ExternalAI\ISkirmishAILibrary.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SAIInterfaceCallbackImpl.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SAIInterfaceCallbackImpl.h"
 				>
 			</File>
 			<File
@@ -677,6 +737,22 @@
 			</File>
 			<File
 				RelativePath="..\..\ExternalAI\SkirmishAILibraryInfo.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SkirmishAIWrapper.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SkirmishAIWrapper.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SSkirmishAICallbackImpl.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\ExternalAI\SSkirmishAICallbackImpl.h"
 				>
 			</File>
 		</Filter>
@@ -797,6 +873,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Game\GlobalConstants.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\OSCStatsSender.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\OSCStatsSender.h"
 				>
 			</File>
 			<File
@@ -1752,6 +1836,14 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\StartScripts\ScriptHandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\StartScripts\SkirmishAITestScript.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\StartScripts\SkirmishAITestScript.h"
 					>
 				</File>
 				<File
@@ -3339,6 +3431,22 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\Resource.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\Resource.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\ResourceHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\ResourceHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\SideParser.cpp"
 					>
 				</File>
@@ -3704,6 +3812,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Info.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Info.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\LogOutput.cpp"
 				>
 			</File>
@@ -3809,6 +3925,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\Object.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Option.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Option.h"
 				>
 			</File>
 			<File
@@ -13053,6 +13177,34 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\gml\gmlsrv.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="oscpack"
+				>
+				<File
+					RelativePath="..\..\lib\oscpack\OscException.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\oscpack\OscHostEndianness.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\oscpack\OscOutboundPacketStream.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\oscpack\OscOutboundPacketStream.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\oscpack\OscTypes.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\oscpack\OscTypes.h"
 					>
 				</File>
 			</Filter>

@@ -15,6 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "Rendering/GL/myGL.h"
 #include "EngineOutHandler.h"
 #include "SkirmishAIWrapper.h"
 #include "Sim/Misc/GlobalSynced.h"

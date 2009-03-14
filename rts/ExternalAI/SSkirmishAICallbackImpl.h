@@ -21,7 +21,7 @@
 // Doc-comments for the functions in this header can be found in this file
 #include "Interface/SSkirmishAICallback.h"
 
-#ifdef	__cplusplus
+#if	defined(__cplusplus) && !defined(_MSC_VER)
 extern "C" {
 #endif
 
@@ -958,7 +958,7 @@ EXPORT(void) skirmishAiCallback_WeaponDef_0MAP1VALS0getCustomParams(int teamId,
 		int weaponDefId, const char* values[]);
 // END OBJECT WeaponDef
 
-#ifdef __cplusplus
+#if	defined(__cplusplus) && !defined(_MSC_VER)
 } // extern "C"
 #endif
 

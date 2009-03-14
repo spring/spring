@@ -15,6 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "Rendering/GL/myGL.h"
 #include "AILibraryManager.h"
 
 #include "Interface/aidefines.h"

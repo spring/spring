@@ -193,7 +193,7 @@ int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SkirmishAIKey& key) {
 }
 int CAIInterfaceLibrary::GetSkirmishAILibraryLoadCount(const SkirmishAIKey& key)
 		const {
-	return skirmishAILoadCount.at(key);
+	return *&skirmishAILoadCount.find(key)->second;
 }
 int CAIInterfaceLibrary::ReleaseAllSkirmishAILibraries() {
 

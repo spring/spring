@@ -24,7 +24,7 @@
 #define _EXPORTDEFINES_H
 
 #ifndef EXTERNALIZER
-	#ifdef __cplusplus
+	#if defined(__cplusplus) && !defined(_MSC_VER)
 		#define EXTERNALIZER extern "C"
 	#else // __cplusplus
 		// we dont have to export if we are in C already
@@ -91,11 +91,7 @@
 	#endif
 #endif // CALLING_CONV_FUNC_POINTER
 
-#ifdef _MSC_VER
-	#define EXPORT(type) SHARED_EXPORT type 	
-#else
-	#define EXPORT(type) SHARED_EXPORT type CALLING_CONV
-#endif
+#define EXPORT(type) SHARED_EXPORT type CALLING_CONV
 
 
 #endif // _EXPORTDEFINES_H

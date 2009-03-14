@@ -15,6 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "Rendering/GL/myGL.h"
 #include "SkirmishAIWrapper.h"
 
 #include "StdAfx.h"
@@ -109,7 +110,7 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
 	libManager->FetchSkirmishAILibrary(key);
 	const CSkirmishAILibraryInfo* infos =
-			libManager->GetSkirmishAIInfos().at(key);
+			&*libManager->GetSkirmishAIInfos().find(key)->second;
 	bool loadSupported =
 			infos->GetInfo(SKIRMISH_AI_PROPERTY_LOAD_SUPPORTED) == "yes";
 	libManager->ReleaseSkirmishAILibrary(key);
@@ -296,7 +297,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 		const std::vector<int>& selectedUnits, const Command& c, int playerId) {
 
 	unsigned int numUnits = selectedUnits.size();
-	int unitIds[numUnits];
+	int *unitIds=new int[numUnits];
 	for (unsigned int i=0; i < numUnits; ++i) {
 		unitIds[i] = selectedUnits.at(i);
 	}
@@ -306,6 +307,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 	SPlayerCommandEvent evtData = {unitIds, numUnits, sCommandId, sCommandData,
 			playerId};
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
+	delete [] unitIds;
 }
 
 void CSkirmishAIWrapper::CommandFinished(int unitId, int commandTopicId) {
