@@ -19,11 +19,16 @@ else (UNIX AND NOT MINGW)
 	set (LIBDIR "." CACHE STRING "Where to install libraries")
 	set (DATADIR "." CACHE STRING "Where to install game content")
 	set (AIDIR "." CACHE STRING "Where AIs are installed")
-	set (CMAKE_INSTALL_PREFIX "/")
+
+	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
+	include_directories(${MINGWLIBS}/include)
+	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
+	list (APPEND CMAKE_FIND_ROOT_PATH ${MINGWLIBS})
 endif (UNIX AND NOT MINGW)
-set (AIINTERFACES "ALL" CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
 
 ### Usr-definable build options
+set (AIINTERFACES "ALL" CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
+
 SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
 if (SYNCCHECK)
 	ADD_DEFINITIONS(-DSYNCCHECK)
@@ -81,11 +86,7 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 FIND_PACKAGE(Devil REQUIRED)
 
 ### mingwlibs
-if (MINGW)
-	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
-	include_directories(${MINGWLIBS}/include)
-	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
-	
+if (MINGW)	
 	SET(CMAKE_SHARED_LIBRARY_PREFIX "")
 	SET(CMAKE_SHARED_MODULE_PREFIX "")
 elseif (UNIX)
