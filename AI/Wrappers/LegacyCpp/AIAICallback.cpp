@@ -857,14 +857,22 @@ bool CAIAICallback::GetValue(int valueId, void *data)
 			static const size_t absPath_sizeMax = 2048;
 			char absPath[absPath_sizeMax];
 			bool located = sAICallback->Clb_DataDirs_locatePath(teamId, absPath, absPath_sizeMax, (const char*) data, false, false, false);
+#ifdef _MSC_VER
+			STRCPY((char*)data, absPath_sizeMax, absPath);
+#else
 			STRCPY((char*)data, absPath);
+#endif
 			return located;
 		}case AIVAL_LOCATE_FILE_W:{
 			//sAICallback->Clb_File_locateForWriting(teamId, (char*) data);
 			static const size_t absPath_sizeMax = 2048;
 			char absPath[absPath_sizeMax];
 			bool located = sAICallback->Clb_DataDirs_locatePath(teamId, absPath, absPath_sizeMax, (const char*) data, true, true, false);
+#ifdef _MSC_VER
+			STRCPY((char*)data, absPath_sizeMax, absPath);
+#else
 			STRCPY((char*)data, absPath);
+#endif
 			return located;
 		}
 		case AIVAL_UNIT_LIMIT: {
