@@ -24,7 +24,7 @@
 #define _EXPORTDEFINES_H
 
 #ifndef EXTERNALIZER
-	#if defined(__cplusplus) && !defined(_MSC_VER)
+	#if defined(__cplusplus)
 		#define EXTERNALIZER extern "C"
 	#else // __cplusplus
 		// we dont have to export if we are in C already
