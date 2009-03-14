@@ -15,6 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "Rendering/GL/myGL.h"
 #include "SAIInterfaceCallbackImpl.h"
 
 #include "Game/GameVersion.h"
@@ -36,6 +37,12 @@
 #include <vector>
 #include <stdlib.h> // malloc(), calloc(), free()
 
+#ifdef _MSC_VER
+#undef STRNCPY
+#define STRNCPY(a,b,c) strncpy(a,b,c)
+#undef STRCPY
+#define STRCPY(a,b) strcpy(a,b)
+#endif
 
 static std::vector<const CAIInterfaceLibraryInfo*> infos;
 
@@ -170,7 +177,6 @@ EXPORT(void) aiInterfaceCallback_Log_exception(int interfaceId, const char* cons
 // 		}
 	}
 }
-
 EXPORT(char) aiInterfaceCallback_DataDirs_getPathSeparator(int UNUSED_interfaceId) {
 #ifdef _WIN32
 	return '\\';
@@ -208,7 +214,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 		}
 	}
 	std::string locatedPath = "";
-	char tmpRelPath[strlen(relPath) + 1];
+	char *tmpRelPath=new char[strlen(relPath) + 1];
 	STRCPY(tmpRelPath, relPath);
 	std::string tmpRelPathStr = tmpRelPath;
 	if (dir) {
@@ -219,6 +225,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 	exists = (locatedPath != relPath);
 	STRNCPY(path, locatedPath.c_str(), path_sizeMax);
 
+	delete [] tmpRelPath;
 	return exists;
 }
 EXPORT(char*) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfaceId, const char* const relPath, bool writeable, bool create, bool dir) {
