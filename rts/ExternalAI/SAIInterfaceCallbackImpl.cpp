@@ -37,13 +37,6 @@
 #include <vector>
 #include <stdlib.h> // malloc(), calloc(), free()
 
-#ifdef _MSC_VER
-#undef STRNCPY
-#define STRNCPY(a,b,c) strncpy(a,b,c)
-#undef STRCPY
-#define STRCPY(a,b) strcpy(a,b)
-#endif
-
 static std::vector<const CAIInterfaceLibraryInfo*> infos;
 
 void CHECK_INTERFACE_ID(const int interfaceId)
@@ -196,7 +189,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, c
 			FileSystemHandler::GetInstance().GetDataDirectories();
 	size_t numDataDirs = dds.size();
 	if (dirIndex >= 0 && (size_t)dirIndex < numDataDirs) {
-		STRNCPY(path, dds[dirIndex].c_str(), path_sizeMax);
+		STRCPYS(path, path_sizeMax, dds[dirIndex].c_str());
 		return true;
 	} else {
 		return false;
@@ -214,8 +207,9 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 		}
 	}
 	std::string locatedPath = "";
-	char *tmpRelPath=new char[strlen(relPath) + 1];
-	STRCPY(tmpRelPath, relPath);
+	const size_t tmpRelPath_size = strlen(relPath) + 1;
+	char* tmpRelPath = new char[tmpRelPath_size];
+	STRCPYS(tmpRelPath, tmpRelPath_size, relPath);
 	std::string tmpRelPathStr = tmpRelPath;
 	if (dir) {
 		locatedPath = filesystem.LocateDir(tmpRelPathStr, locateFlags);
@@ -223,7 +217,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 		locatedPath = filesystem.LocateFile(tmpRelPathStr, locateFlags);
 	}
 	exists = (locatedPath != relPath);
-	STRNCPY(path, locatedPath.c_str(), path_sizeMax);
+	STRCPYS(path, path_sizeMax, locatedPath.c_str());
 
 	delete [] tmpRelPath;
 	return exists;
@@ -236,8 +230,7 @@ EXPORT(char*) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfa
 	bool fetchOk = aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, path_sizeMax, relPath, writeable, create, dir);
 
 	if (!fetchOk) {
-		free(path);
-		path = NULL;
+		FREE(path);
 	}
 
 	return path;
@@ -271,8 +264,7 @@ EXPORT(char*) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const c
 	bool fetchOk = aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, path_sizeMax, relPath, writeable, create, dir);
 
 	if (!fetchOk) {
-		free(path);
-		path = NULL;
+		FREE(path);
 	}
 
 	return path;
