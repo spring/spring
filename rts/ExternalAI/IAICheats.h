@@ -39,6 +39,10 @@ public:
 	virtual int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
 	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
 
+	virtual int GetFeatures(int *features, int max) = 0;
+	virtual int GetFeatures(int *features, int max, const float3& pos,
+			float radius) = 0;
+
 	virtual int GetUnitTeam(int unitid) = 0;
 	virtual int GetUnitAllyTeam(int unitid) = 0;
 	virtual float GetUnitHealth(int unitid) = 0;

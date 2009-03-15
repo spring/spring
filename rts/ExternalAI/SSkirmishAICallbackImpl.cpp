@@ -42,6 +42,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/QuadField.h" // for qf->GetFeaturesExact(pos, radius)
 #include "Map/ReadMap.h"
 #include "Map/MetalMap.h"
 #include "Game/SelectedUnits.h"
@@ -2686,20 +2687,68 @@ EXPORT(void) skirmishAiCallback_FeatureDef_0MAP1VALS0getCustomParams(int teamId,
 
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE0Feature(int teamId) {
 
-	tmpSize[teamId] = team_callback[teamId]->GetFeatures(tmpIntArr[teamId], TMP_ARR_SIZE);
-	return tmpSize[teamId];
+	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
+		return featureHandler->GetActiveFeatures().size();
+	} else {
+		tmpSize[teamId] = team_callback[teamId]->GetFeatures(tmpIntArr[teamId], TMP_ARR_SIZE);
+		return tmpSize[teamId];
+	}
 }
-EXPORT(int) skirmishAiCallback_0MULTI1VALS0Feature(int teamId, int* featureIds, int featureIds_max) {
-	return copyIntArr(featureIds, tmpIntArr[teamId], min(tmpSize[teamId], featureIds_max));
+EXPORT(int) skirmishAiCallback_0MULTI1VALS0Feature(int teamId, int* featureIds, int _featureIds_max) {
+
+	if (_featureIds_max <= 0) {
+		return 0;
+	}
+	const size_t featureIds_max = static_cast<size_t>(_featureIds_max);
+
+	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
+		const CFeatureSet& fset = featureHandler->GetActiveFeatures();
+		CFeatureSet::const_iterator it;
+		size_t i=0;
+		for (it = fset.begin(); it != fset.end() && i < featureIds_max; ++it) {
+			CFeature *f = *it;
+			assert(f);
+
+			assert(i < featureIds_max);
+			featureIds[i++] = f->id;
+		}
+		return i;
+	} else {
+		return copyIntArr(featureIds, tmpIntArr[teamId], min(tmpSize[teamId], featureIds_max));
+	}
 }
 
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE3FeaturesIn0Feature(int teamId, SAIFloat3 pos, float radius) {
 
-	tmpSize[teamId] = team_callback[teamId]->GetFeatures(tmpIntArr[teamId], TMP_ARR_SIZE, pos, radius);
-	return tmpSize[teamId];
+	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
+		return qf->GetFeaturesExact(pos, radius).size();
+	} else {
+		tmpSize[teamId] = team_callback[teamId]->GetFeatures(tmpIntArr[teamId], TMP_ARR_SIZE, pos, radius);
+		return tmpSize[teamId];
+	}
 }
-EXPORT(int) skirmishAiCallback_0MULTI1VALS3FeaturesIn0Feature(int teamId, SAIFloat3 pos, float radius, int* featureIds, int featureIds_max) {
-	return copyIntArr(featureIds, tmpIntArr[teamId], min(tmpSize[teamId], featureIds_max));
+EXPORT(int) skirmishAiCallback_0MULTI1VALS3FeaturesIn0Feature(int teamId, SAIFloat3 pos, float radius, int* featureIds, int _featureIds_max) {
+
+	if (_featureIds_max <= 0) {
+		return 0;
+	}
+	const size_t featureIds_max = static_cast<size_t>(_featureIds_max);
+
+	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
+		const vector<CFeature*>& fset = qf->GetFeaturesExact(pos, radius);
+		vector<CFeature*>::const_iterator it;
+		size_t i=0;
+		for (it = fset.begin(); it != fset.end() && i < featureIds_max; ++it) {
+			CFeature *f = *it;
+			assert(f);
+
+			assert(i < featureIds_max);
+			featureIds[i++] = f->id;
+		}
+		return i;
+	} else {
+		return copyIntArr(featureIds, tmpIntArr[teamId], min(tmpSize[teamId], featureIds_max));
+	}
 }
 
 EXPORT(int) skirmishAiCallback_Feature_0SINGLE1FETCH2FeatureDef0getDef(int teamId, int featureId) {

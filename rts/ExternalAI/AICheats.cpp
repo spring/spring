@@ -181,6 +181,16 @@ int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, in
 	return a;
 }
 
+int CAICheats::GetFeatures(int *features, int max) {
+	// this method is never called anyway, see SSkirmishAICallbackImpl.cpp
+	return 0;
+}
+int CAICheats::GetFeatures(int *features, int max, const float3& pos,
+			float radius) {
+	// this method is never called anyway, see SSkirmishAICallbackImpl.cpp
+	return 0;
+}
+
 
 
 int CAICheats::GetUnitTeam(int unitid)
