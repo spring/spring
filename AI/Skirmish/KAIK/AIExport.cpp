@@ -121,19 +121,11 @@ const char* aiexport_getDataDir(bool absoluteAndWriteable) {
 	if (absoluteAndWriteable) {
 		if (dd_ws_abs_w == NULL) {
 			// this is the writeable one, absolute
-			//dd_ws_abs_w = firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_DATA_DIR);
 			dd_ws_abs_w = util_allocStrCpy(firstCallback->Clb_DataDirs_getWriteableDir(firstTeamId));
-// 			const char* dd = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
-// 			dd_ws_abs_w = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
-// 			STRCPY(dd_ws_abs_w, dd);
-// 			STRCAT(dd_ws_abs_w, sPS);
 		}
 		return dd_ws_abs_w;
 	} else {
 		if (dd_ws_rel == NULL) {
-// 			const char* const shortName = firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
-// 			dd_ws_rel = util_allocStrCatFSPath(4,
-// 					SKIRMISH_AI_DATA_DIR, shortName, aiexport_getVersion(), "X");
 			dd_ws_rel = util_allocStrCpy(firstCallback->Clb_DataDirs_getConfigDir(firstTeamId));
 			// remove the X, so we end up with a slash at the end
 			if (dd_ws_rel != NULL) {

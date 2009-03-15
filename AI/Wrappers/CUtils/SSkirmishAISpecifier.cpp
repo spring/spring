@@ -37,14 +37,13 @@ struct SSkirmishAISpecifier SSkirmishAISpecifier_copy(
 	return copy;
 }
 
-void SSkirmishAISpecifier_delete(
-		struct SSkirmishAISpecifier* spec) {
+void SSkirmishAISpecifier_delete(struct SSkirmishAISpecifier* spec) {
+
 	free(const_cast<char*>(spec->shortName));
 	spec->shortName = NULL;
 	free(const_cast<char*>(spec->version));
 	spec->version = NULL;
-	free(spec);
-	spec = NULL;
+	FREE(spec);
 }
 
 
@@ -72,25 +71,25 @@ int SSkirmishAISpecifier_hash(
 	bool useShortName = spec->shortName != NULL;
 	bool useVersion = spec->version != NULL;
 
-	int size_hashString = 0;
+	size_t hashString_size = 0;
 	if (useShortName) {
-		size_hashString += strlen(spec->shortName);
+		hashString_size += strlen(spec->shortName);
 	}
-	size_hashString += 1; // for the '#' char
+	hashString_size += 1; // for the '#' char
 	if (useVersion) {
-		size_hashString += strlen(spec->version);
+		hashString_size += strlen(spec->version);
 	}
-	size_hashString += 1; // for the '\0' char
+	hashString_size += 1; // for the '\0' char
 
-	char hashString[size_hashString];
+	char hashString[hashString_size];
 	hashString[0] = '\0';
 
 	if (useShortName) {
-		STRCAT(hashString, spec->shortName);
+		STRCATS(hashString, hashString_size, spec->shortName);
 	}
-	STRCAT(hashString, "#");
+	STRCATS(hashString, hashString_size, "#");
 	if (useVersion) {
-		STRCAT(hashString, spec->version);
+		STRCATS(hashString, hashString_size, spec->version);
 	}
 
 	int keyHash = string_simpleHash(hashString);

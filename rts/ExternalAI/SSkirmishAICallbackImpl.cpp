@@ -68,17 +68,19 @@ static LineMarker tmpLineMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 static const char* tmpKeysArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 static const char* tmpValuesArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 
-#define CHECK_TEAM_ID(teamId) \
-	if ((teamId < 0) || (team_cCallback.find((size_t)teamId) == team_cCallback.end())) { \
-		const static size_t teamIdError_maxSize = 512; \
-		char teamIdError[teamIdError_maxSize]; \
-		SNPRINTF(teamIdError, teamIdError_maxSize, \
-				"Bad team ID supplied by a Skirmish AI.\n" \
-				"Is %i, but should be between min %i and  max %u.", \
-				teamId, 0, MAX_SKIRMISH_AIS); \
-		/* log exception to the engine and die */ \
-		skirmishAiCallback_Log_exception(teamId, teamIdError, 1, true); \
+static void checkTeamId(int teamId) {
+
+	if ((teamId < 0) || (team_cCallback.find(static_cast<size_t>(teamId)) == team_cCallback.end())) {
+		const static size_t teamIdError_maxSize = 512;
+		char teamIdError[teamIdError_maxSize];
+		SNPRINTF(teamIdError, teamIdError_maxSize,
+				"Bad team ID supplied by a Skirmish AI.\n"
+				"Is %i, but should be between min %i and max %u.",
+				teamId, 0, MAX_SKIRMISH_AIS);
+		// log exception to the engine and die
+		skirmishAiCallback_Log_exception(teamId, teamIdError, 1, true);
 	}
+}
 
 static int fillCMap(const std::map<std::string,std::string>* map,
 		const char* cMapKeys[], const char* cMapValues[]) {
@@ -663,14 +665,14 @@ EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getValueByK
 
 EXPORT(void) skirmishAiCallback_Log_log(int teamId, const char* const msg) {
 
-	CHECK_TEAM_ID(teamId);
+	checkTeamId(teamId);
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	logOutput.Print("Skirmish AI <%s-%s>: %s", info->GetName().c_str(), info->GetVersion().c_str(), msg);
 }
 EXPORT(void) skirmishAiCallback_Log_exception(int teamId, const char* const msg, int severety, bool die) {
 
-	CHECK_TEAM_ID(teamId);
+	checkTeamId(teamId);
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	logOutput.Print("Skirmish AI <%s-%s>: error, severety %i: [%s] %s",
@@ -698,7 +700,7 @@ EXPORT(char*) skirmishAiCallback_DataDirs_Roots_allocatePath(int UNUSED_teamId, 
 }
 EXPORT(const char* const) skirmishAiCallback_DataDirs_getConfigDir(int teamId) {
 
-	CHECK_TEAM_ID(teamId);
+	checkTeamId(teamId);
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	return info->GetDataDir().c_str();
@@ -725,8 +727,7 @@ EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* c
 	bool fetchOk = skirmishAiCallback_DataDirs_locatePath(teamId, path, path_sizeMax, relPath, writeable, create, dir);
 
 	if (!fetchOk) {
-		free(path);
-		path = NULL;
+		FREE(path);
 	}
 
 	return path;
@@ -734,7 +735,7 @@ EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* c
 static std::vector<std::string> writeableDataDirs;
 EXPORT(const char* const) skirmishAiCallback_DataDirs_getWriteableDir(int teamId) {
 
-	CHECK_TEAM_ID(teamId);
+	checkTeamId(teamId);
 
 	// fill up writeableDataDirs until teamId index is in there
 	// if it is not yet
