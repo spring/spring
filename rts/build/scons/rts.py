@@ -509,6 +509,7 @@ def generate(env):
 		elif env['platform'] == 'windows':
 			include_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'include'))]
 			lib_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'lib'))]
+			lib_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'dll'))]
 			if os.environ.has_key('MINGDIR'):
 				include_path += [os.path.join(os.environ['MINGDIR'], 'include')]
 				lib_path += [os.path.join(os.environ['MINGDIR'], 'lib')]
