@@ -200,7 +200,7 @@ class CPathEstimator: public IPath {
 
 		boost::barrier *pathBarrier;
 
-		gmlCount offsetBlockNum, costBlockNum;
+		boost::detail::atomic_count offsetBlockNum, costBlockNum;
 
 		int lastOffsetMessage, lastCostMessage;
 };

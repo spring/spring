@@ -57,7 +57,10 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	pathFinder(pf),
 	moveMathOptions(mmOpt),
 	pathChecksum(0),
-	offsetBlockNum(-1),costBlockNum(-1),
+	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
+	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
+	nbrOfBlocks(nbrOfBlocksX * nbrOfBlocksZ),
+	offsetBlockNum(nbrOfBlocks),costBlockNum(nbrOfBlocks),
 	lastOffsetMessage(-1),lastCostMessage(-1)
 {
 	// these give the changes in (x, z) coors
@@ -82,10 +85,6 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	goalSqrOffset.x = BLOCK_SIZE / 2;
 	goalSqrOffset.y = BLOCK_SIZE / 2;
 
-	// create the block-map and the vertices-map
-	nbrOfBlocksX = gs->mapx / BLOCK_SIZE;
-	nbrOfBlocksZ = gs->mapy / BLOCK_SIZE;
-	nbrOfBlocks = nbrOfBlocksX * nbrOfBlocksZ;
 	blockState = new BlockInfo[nbrOfBlocks];
 	nbrOfVertices = moveinfo->moveData.size() * nbrOfBlocks * PATH_DIRECTION_VERTICES;
 	vertex = new float[nbrOfVertices];
@@ -206,12 +205,12 @@ void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 	// let thread i execute (A_i, B_i), but instead have to split the work such that every
 	// thread finishes its part of A before any starts B_i.
 	int i;
-	while((i=++offsetBlockNum) < nbrOfBlocks)
+	while((i=--offsetBlockNum) >= 0)
 		CalculateBlockOffsets(i,thread);
 
 	pathBarrier->wait();
 
-	while((i=++costBlockNum) < nbrOfBlocks)
+	while((i=--costBlockNum) >= 0)
 		EstimatePathCosts(i,thread);
 }
 
@@ -223,7 +222,7 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread) {
 	if (thread == 0 && (idx/1000)!=lastOffsetMessage) {
 		lastOffsetMessage=idx/1000;
 		char calcMsg[128];
-		sprintf(calcMsg, "Block offset %d of %d (block-size %d)", lastOffsetMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		sprintf(calcMsg, "Block offset remaining: %d of %d (block-size %d)", lastOffsetMessage*1000, nbrOfBlocks, BLOCK_SIZE);
 		PrintLoadMsg(calcMsg);
 	}
 
@@ -238,7 +237,7 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 	if (thread == 0 && (idx/1000)!=lastCostMessage) {
 		lastCostMessage=idx/1000;
 		char calcMsg[128];
-		sprintf(calcMsg, "Path cost %d of %d (block-size %d)", lastCostMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		sprintf(calcMsg, "Path cost remaining: %d of %d (block-size %d)", lastCostMessage*1000, nbrOfBlocks, BLOCK_SIZE);
 		PrintLoadMsg(calcMsg);
 	}
 
