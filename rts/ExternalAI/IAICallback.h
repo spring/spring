@@ -135,7 +135,7 @@ public:
 	//   LuaRules might block part of it
 	virtual int SendUnits(const std::vector<int>& unitIds, int receivingTeamId) = 0;
 
-	// checks if pos is within view of the current camera, using radius as a margin
+	/// checks if pos is within view of the current camera, using radius as a margin
 	virtual bool PosInCamera(float3 pos, float radius) = 0;
 
 	// get the current game time measured in frames (the
@@ -155,40 +155,60 @@ public:
 	// release your reference to a memory area
 	virtual void ReleasedSharedMemArea(char* name) = 0;
 
-	virtual int CreateGroup() = 0;														// creates a group and returns the id it was given,
-																						// returns -1 on failure
-	virtual void EraseGroup(int groupId) = 0;											// erases a specified group
-	virtual bool AddUnitToGroup(int unitId, int groupId) = 0;							// adds a unit to a specific group, if it was previously in a group
-																						// it is removed from that, return false if the group didn't exist
-																						// or didn't accept the unit
-	virtual bool RemoveUnitFromGroup(int unitId) = 0;									// removes a unit from its group
-	virtual int GetUnitGroup(int unitId) = 0;											// returns the group a unit belongs to, -1 if none
-	virtual const std::vector<CommandDescription>* GetGroupCommands(int groupId) = 0;	// the commands that this group can understand, other commands will be ignored
+	/// Creates a group and returns the id it was given, returns -1 on failure
+	virtual int CreateGroup() = 0;
+	/// Erases a specified group
+	virtual void EraseGroup(int groupId) = 0;
+	/**
+	 * @brief Adds a unit to a specific group.
+	 * If it was previously in a group, it is removed from that.
+	 * Returns false if the group did not exist or did not accept the unit.
+	 */
+	virtual bool AddUnitToGroup(int unitId, int groupId) = 0;
+	/// Removes a unit from its group
+	virtual bool RemoveUnitFromGroup(int unitId) = 0;
+	/// Returns the group a unit belongs to, -1 if none
+	virtual int GetUnitGroup(int unitId) = 0;
+	/// The commands that this group can understand, other commands will be ignored
+	virtual const std::vector<CommandDescription>* GetGroupCommands(int groupId) = 0;
 	virtual int GiveGroupOrder(int unitId, Command* c) = 0;
 
 	virtual int GiveOrder(int unitId, Command* c) = 0;
 
-	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitId) = 0;         // the commands that this unit can understand, other commands will be ignored
+	/// The commands that this unit can understand, other commands will be ignored
+	virtual const std::vector<CommandDescription>* GetUnitCommands(int unitId) = 0;
 	virtual const CCommandQueue* GetCurrentUnitCommands(int unitId) = 0;
 
 	// these functions always work on allied units, but for
 	// enemies only when you have LOS on them (so watch out
 	// when calling GetUnitDef)
-	virtual int GetUnitAiHint(int unitId) = 0;				// integer telling something about the units main function, not implemented yet
+	/// integer telling something about the units main function, not implemented yet
+	virtual int GetUnitAiHint(int unitId) = 0;
 	virtual int GetUnitTeam(int unitId) = 0;
 	virtual int GetUnitAllyTeam(int unitId) = 0;
-	virtual float GetUnitHealth(int unitId) = 0;			// the unit's current health
-	virtual float GetUnitMaxHealth(int unitId) = 0;			// the unit's max health
-	virtual float GetUnitSpeed(int unitId) = 0;				// the unit's max speed
-	virtual float GetUnitPower(int unitId) = 0;				// sort of the measure of the units overall power
-	virtual float GetUnitExperience(int unitId) = 0;		// how experienced the unit is (0.0f-1.0f)
-	virtual float GetUnitMaxRange(int unitId) = 0;			// the furthest any weapon of the unit can fire
+	/// the unit's current health
+	virtual float GetUnitHealth(int unitId) = 0;
+	/// the unit's max health
+	virtual float GetUnitMaxHealth(int unitId) = 0;
+	/// the unit's max speed
+	virtual float GetUnitSpeed(int unitId) = 0;
+	/// sort of the measure of the units overall power
+	virtual float GetUnitPower(int unitId) = 0;
+	/// how experienced the unit is (0.0f-1.0f)
+	virtual float GetUnitExperience(int unitId) = 0;
+	/// the furthest any weapon of the unit can fire
+	virtual float GetUnitMaxRange(int unitId) = 0;
 	virtual bool IsUnitActivated (int unitId) = 0;
-	virtual bool UnitBeingBuilt(int unitId) = 0;			// true if the unit is currently being built
-	virtual const UnitDef* GetUnitDef(int unitId) = 0;		// returns the unit's unitdef struct from which you can read all the
-															// statistics of the unit, do NOT try to change any values in it
+	/// true if the unit is currently being built
+	virtual bool UnitBeingBuilt(int unitId) = 0;
+	/**
+	 * Returns the unit's unitdef struct from which you can read all
+	 * the statistics of the unit, do NOT try to change any values in it.
+	 */
+	virtual const UnitDef* GetUnitDef(int unitId) = 0;
 	virtual float3 GetUnitPos(int unitId) = 0;
-	virtual int GetBuildingFacing(int unitId) = 0;			// returns the unit's build facing (0-3)
+	/// returns the unit's build facing (0-3)
+	virtual int GetBuildingFacing(int unitId) = 0;
 	virtual bool IsUnitCloaked(int unitId) = 0;
 	virtual bool IsUnitParalyzed(int unitId) = 0;
 	virtual bool IsUnitNeutral(int unitId) = 0;
@@ -216,13 +236,20 @@ public:
 	// * the return value indicates how many units were returned, the rest of the array is unchanged
 	// * all forms of GetEnemyUnits and GetFriendlyUnits filter out any neutrals, use the GetNeutral
 	//   callbacks to retrieve them
-	virtual int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;										// returns all known (in LOS) enemy units
-	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;		// returns all known enemy units within radius from pos
-	virtual int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = MAX_UNITS) = 0;							// returns all enemy units in radar and los
-	virtual int GetFriendlyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;									// returns all friendly units
-	virtual int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;	// returns all friendly units within radius from pos
-	virtual int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;									// returns all known (in LOS) neutral units
-	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;	// returns all known neutral units within radius from pos
+	/// returns all known (in LOS) enemy units
+	virtual int GetEnemyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
+	/// returns all known enemy units within radius from pos
+	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
+	/// returns all enemy units in radar and los
+	virtual int GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
+	/// returns all friendly units
+	virtual int GetFriendlyUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
+	/// returns all friendly units within radius from pos
+	virtual int GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
+	/// returns all known (in LOS) neutral units
+	virtual int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
+	/// returns all known neutral units within radius from pos
+	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
 
 	// the following functions are used to get information about the map
 	// * do NOT modify or delete any of the pointers returned
@@ -231,22 +258,53 @@ public:
 	// * note that some of the type-maps are stored in a lower resolution than this
 	virtual int GetMapWidth() = 0;
 	virtual int GetMapHeight() = 0;
-	virtual const float* GetHeightMap() = 0;			// this is the height for the center of the squares, this differs slightly from the drawn map since it uses the height at the corners
-	virtual float GetMinHeight() = 0;					// readmap->minHeight
-	virtual float GetMaxHeight() = 0;					// readmap->maxHeight
-	virtual const float* GetSlopeMap() = 0;				// slopemap, half the resolution of the standard map (values are 1
-														// minus the y-component of the (average) facenormal of the square)
-	virtual const unsigned short* GetLosMap() = 0;		// a square with value zero means you don't have LOS coverage on it, half the resolution of the standard map
-	virtual const unsigned short* GetRadarMap() = 0;	// a square with value zero means you don't have radar coverage on it, 1/8 the resolution of the standard map
-	virtual const unsigned short* GetJammerMap() = 0;	// a square with value zero means you don't have radar jamming coverage on it, 1/8 the resolution of the standard map
-	virtual const unsigned char* GetMetalMap() = 0;		// this map shows the metal density on the map, half the resolution of the standard map
+	/**
+	 * This is the height for the center of the squares.
+	 * This differs slightly from the drawn map since
+	 * it uses the height at the corners
+	 */
+	virtual const float* GetHeightMap() = 0;
+	/// readmap->minHeight
+	virtual float GetMinHeight() = 0;
+	/// readmap->maxHeight
+	virtual float GetMaxHeight() = 0;
+	/**
+	 * FIXME
+	 * Returns the slope-map, half the resolution of the standard map
+	 * (values are 1 minus the y-component of the (average) facenormal of the square)
+	 */
+	virtual const float* GetSlopeMap() = 0;
+	/**
+	 * FIXME
+	 * A square with value zero means you don't have LOS coverage on it.
+	 * This has half the resolution of the standard map
+	 */
+	virtual const unsigned short* GetLosMap() = 0;
+	/**
+	 * A square with value zero means you don't have radar coverage on it,
+	 * 1/8 the resolution of the standard map
+	 */
+	virtual const unsigned short* GetRadarMap() = 0;
+	/**
+	 * A square with value zero means you don't have radar jamming coverage
+	 * on it, 1/8 the resolution of the standard map.
+	 */
+	virtual const unsigned short* GetJammerMap() = 0;
+	/**
+	 * This map shows the metal density on the map, half the resolution
+	 * of the standard map
+	 */
+	virtual const unsigned char* GetMetalMap() = 0;
 	virtual const char* GetMapName() = 0;
 	virtual const char* GetModName() = 0;
 
-	virtual float GetElevation(float x, float z) = 0;	// gets the elevation of the map at position (x, z)
+	/// Gets the elevation of the map at position (x, z)
+	virtual float GetElevation(float x, float z) = 0;
 
-	virtual float GetMaxMetal() = 0;					// returns what metal value 255 in the metal map is worth
-	virtual float GetExtractorRadius() = 0;				// returns extraction radius for metal extractors
+	/// Returns what metal value 255 in the metal map is worth
+	virtual float GetMaxMetal() = 0;
+	/// Returns extraction radius for metal extractors
+	virtual float GetExtractorRadius() = 0;
 	virtual float GetMinWind() = 0;
 	virtual float GetMaxWind() = 0;
 	virtual float GetTidalStrength() = 0;
@@ -269,8 +327,7 @@ public:
 	// * when creating figures use 0 as figureGroupId to get a new figureGroup, the return value is the new figureGroup
 	// * the lifeTime is how many frames a figure should live before being autoremoved, 0 means no removal
 	// * arrow != 0 means that the figure will get an arrow at the end
-	//
-	// creates a cubic Bezier spline figure (from pos1 to pos4 with control points pos2 and pos3)
+	/// Creates a cubic Bezier spline figure (from pos1 to pos4 with control points pos2 and pos3)
 	virtual int CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) = 0;
 	virtual int CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) = 0;
 	virtual void SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) = 0;
@@ -283,18 +340,22 @@ public:
 	virtual void DrawUnit(const char* unitName, float3 pos, float rotation, int lifeTime, int teamId, bool transparent, bool drawBorder, int facing = 0) = 0;
 
 	virtual bool CanBuildAt(const UnitDef* unitDef, float3 pos, int facing = 0) = 0;
-	// returns the closest position from a given position that the building can be built at
-	// minDist is the distance in squares that the building must keep to other buildings (to
-	// make it easier to create paths through a base)
+	/**
+	 * Returns the closest position from a given position that a building can be built at.
+	 * @param minDist the distance in squares that the building must keep to other buildings,
+	 *                to make it easier to keep free paths through a base
+	 */
 	virtual float3 ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing = 0) = 0;
 
-	// for certain future callback extensions
+	/// For certain future callback extensions
 	virtual bool GetProperty(int unitId, int propertyId, void* dst) = 0;
 	virtual bool GetValue(int valueId, void* dst) = 0;
 	virtual int HandleCommand(int commandId, void* data) = 0;
 
-	virtual int GetFileSize(const char* filename) = 0;								// return -1 when the file doesn't exist
-	virtual bool ReadFile(const char* filename, void* buffer, int bufferLen) = 0;	// returns false when file doesn't exist or buffer is too small
+	/// Return -1 when the file does not exist
+	virtual int GetFileSize(const char* filename) = 0;
+	/// Returns false when file does not exist or the buffer is too small
+	virtual bool ReadFile(const char* filename, void* buffer, int bufferLen) = 0;
 
 	// added by alik
 	virtual int GetSelectedUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
@@ -336,7 +397,7 @@ public:
 	virtual const char* CallLuaRules(const char* data, int inSize = -1, int* outSize = NULL) = 0;
 
 	// use virtual instead of pure virtual,
-	// becuase pur evirtual is not well supported
+	// because pure virtual is not well supported
 	// among different OSs and compilers,
 	// and pure virtual has no advantage
 	// if we have other pure virtual functions
