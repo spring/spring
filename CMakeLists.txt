@@ -21,6 +21,10 @@ else (UNIX AND NOT MINGW)
 	set (AIDIR "." CACHE STRING "Where AIs are installed")
 
 	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
+	if (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
+		MESSAGE(FATAL_ERROR "MINGWLIBS is not a valid directory")
+	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
+
 	include_directories(${MINGWLIBS}/include)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
 	list (APPEND CMAKE_FIND_ROOT_PATH ${MINGWLIBS})
