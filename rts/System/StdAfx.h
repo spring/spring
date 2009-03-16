@@ -37,15 +37,6 @@
 #include "lib/streflop/streflop_cond.h"
 #endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
 
-#if !defined BUILDING_AI // Also non-GML builds use this atomic count
-# ifndef GML_COMPATIBLE_ATOMIC_COUNT
-#	define GML_COMPATIBLE_ATOMIC_COUNT
-#	define private public
-#	include <boost/detail/atomic_count.hpp>
-#	undef private
-# endif
-#endif // !defined BUILDING_AI
-
 
 #if !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
 // top included files without lots of dependencies
