@@ -15,13 +15,11 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Rendering/GL/myGL.h"
-#include "SSkirmishAICallbackImpl.h"
-
 #include "IGlobalAICallback.h"
 #include "IAICallback.h"
 #include "IAICheats.h"
 #include "IAILibraryManager.h"
+#include "SSkirmishAICallbackImpl.h"
 #include "SkirmishAILibraryInfo.h"
 #include "SAIInterfaceCallbackImpl.h"
 #include "EngineOutHandler.h"
