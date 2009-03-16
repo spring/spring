@@ -322,8 +322,16 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		case COMMAND_SEND_RESOURCES:
 		{
 			SSendResourcesCommand* cmd = (SSendResourcesCommand*) commandData;
-			cmd->ret_isExecuted = clb->SendResources(cmd->mAmount, cmd->eAmount,
-					cmd->receivingTeam);
+			if (cmd->resourceId == rh->GetMetalId()) {
+				cmd->ret_isExecuted = clb->SendResources(cmd->amount, 0, cmd->receivingTeam);
+				ret = -2;
+			} else if (cmd->resourceId == rh->GetEnergyId()) {
+				cmd->ret_isExecuted = clb->SendResources(0, cmd->amount, cmd->receivingTeam);
+				ret = -3;
+			} else {
+				cmd->ret_isExecuted = false;
+				ret = -4;
+			}
 			break;
 		}
 

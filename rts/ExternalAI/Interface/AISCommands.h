@@ -32,15 +32,20 @@ extern "C" {
 #define COMMAND_TO_ID_ENGINE -1
 
 /**
+ * Commands are used for all activities that change game state,
+ * in spring terms: synced events
+ * Activities that leave the game state as it is (-> unsynced events)
+ * are handled through function pointers in SSkirmishAICallback.h.
+ *
  * Each command type can be identified through a unique ID,
  * which we call command topic.
  * Commands are usually sent from AIs to the engine,
  * but there are plans for the future to allow AI -> AI command scheduling.
  *
- * Note: Do NOT change the values assigned to these topics,
+ * Note: Do NOT change the values assigned to these topics in enum CommandTopic,
  * as this would be bad for inter-version compatibility.
  * You should always append new command topics at the end of this list,
- * and adjust NUM_CMD_TOPICS.
+ * adjust NUM_CMD_TOPICS and add the struct in AIINTERFACE_COMMANDS_ABI_VERSION.
  *
  * @see SSkirmishAICallback.handleCommand()
  */
@@ -238,13 +243,25 @@ enum UnitCommandOptions {
 		+ sizeof(struct SCustomUnitCommand) \
 		)
 
+/**
+ * This function has the same effect as setting a handicap value
+ * in the GameSetup script (currently gives a bonus on collected
+ * resources)
+ */
 struct SSetMyHandicapCheatCommand {
 	float handicap;
 }; // COMMAND_CHEATS_SET_MY_HANDICAP
+/**
+ * The AI team receives the specified amount of units of the specified resource.
+ */
 struct SGiveMeResourceCheatCommand {
 	int resourceId;
 	float amount;
 }; // COMMAND_CHEATS_GIVE_ME_RESOURCE
+/**
+ * Creates a new unit with the selected name at pos,
+ * and returns its unit ID in ret_newUnitId.
+ */
 struct SGiveMeNewUnitCheatCommand {
 	int unitDefId;
 	struct SAIFloat3 pos;
@@ -252,24 +269,44 @@ struct SGiveMeNewUnitCheatCommand {
 }; // COMMAND_CHEATS_GIVE_ME_NEW_UNIT
 
 /**
- * Sends a chat/text message to other players.
+ * @brief Sends a chat/text message to other players.
+ * This text will also end up in infolog.txt.
  */
 struct SSendTextMessageCommand {
 	const char* text;
 	int zone;
 }; // COMMAND_SEND_TEXT_MESSAGE
 
+/**
+ * Assigns a map location to the last text message sent by the AI.
+ */
 struct SSetLastPosMessageCommand {
 	struct SAIFloat3 pos;
 }; // COMMAND_SET_LAST_POS_MESSAGE
 
+/**
+ * Give <amount> units of resource <resourceId> to team <receivingTeam>.
+ * - the amount is capped to the AI team's resource levels
+ * - does not check for alliance with <receivingTeam>
+ * - LuaRules might not allow resource transfers, AI's must verify the deduction
+ */
 struct SSendResourcesCommand {
-	float mAmount;
-	float eAmount;
+	int resourceId;
+	float amount;
 	int receivingTeam;
 	bool ret_isExecuted;
 }; // COMMAND_SEND_RESOURCES
 
+/**
+ * Give units specified by <unitIds> to team <receivingTeam>.
+ * <ret_sentUnits> represents how many actually were transferred.
+ * Make sure this always matches the size of <unitIds> you passed in.
+ * If it does not, then some unitId's were filtered out.
+ * - does not check for alliance with <receivingTeam>
+ * - AI's should check each unit if it is still under control of their
+ *   team after the transaction via UnitTaken() and UnitGiven(), since
+ *   LuaRules might block part of it
+ */
 struct SSendUnitsCommand {
 	int* unitIds;
 	int numUnitIds;
@@ -277,23 +314,45 @@ struct SSendUnitsCommand {
 	int ret_sentUnits;
 }; // COMMAND_SEND_UNITS
 
+/// Creates a group and returns the id it was given, returns -1 on failure
 struct SCreateGroupCommand {
 	int ret_groupId;
 }; // COMMAND_GROUP_CREATE
+/// Erases a specified group
 struct SEraseGroupCommand {
 	int groupId;
 }; // COMMAND_GROUP_ERASE
+/**
+ * @brief Adds a unit to a specific group.
+ * If it was previously in a group, it is removed from that.
+ * Returns false if the group did not exist or did not accept the unit.
+ */
 struct SAddUnitToGroupCommand {
 	int groupId;
 	int unitId;
 	bool ret_isExecuted;
 }; // COMMAND_GROUP_ADD_UNIT
+/// Removes a unit from its group
 struct SRemoveUnitFromGroupCommand {
 	int unitId;
 	bool ret_isExecuted;
 }; // COMMAND_GROUP_REMOVE_UNIT
 
 
+/**
+ * The following functions allow the AI to use the built-in path-finder.
+ *
+ * - call InitPath and you get a pathid back
+ * - use this to call GetNextWaypoint to get subsequent waypoints,
+ *   the waypoints are centered on 8*8 squares
+ * - note that the pathfinder calculates the waypoints as needed,
+ *   so do not retrieve them until they are needed
+ * - the waypoint's x and z coordinates are returned in x and z,
+ *   while y is used for error codes:
+ *   y >= 0: worked ok
+ *   y = -2: still thinking, call again
+ *   y = -1: end of path reached or path is invalid
+ */
 struct SInitPathCommand {
 	struct SAIFloat3 start;
 	struct SAIFloat3 end;
@@ -302,8 +361,9 @@ struct SInitPathCommand {
 }; // COMMAND_PATH_INIT
 /**
  * Returns the approximate path cost between two points
- * note: needs to calculate the complete path so somewhat expensive
- * note: currently disabled, always returns 0
+ * This needs to calculate the complete path, so it is somewhat expensive.
+ *
+ * NOTE: currently disabled, always returns 0
  */
 struct SGetApproximateLengthPathCommand {
 	struct SAIFloat3 start;
@@ -320,32 +380,42 @@ struct SFreePathCommand {
 }; // COMMAND_PATH_FREE
 
 struct SCallLuaRulesCommand {
+	/// Can be setup to NULL to skip passing in a string
 	const char* data;
+	/// If this is less than 0, the data size is calculated using strlen()
 	int inSize;
 	int* outSize;
+	/// this is subject to lua garbage collection, copy it if you wish to continue using it
 	const char* ret_outData;
 }; // COMMAND_CALL_LUA_RULES
 
-struct SSendStartPosCommand {///< result of HandleCommand is 1 - ok supported
+struct SSendStartPosCommand {
 	bool ready;
+	/// on this position, only x and z matter
 	struct SAIFloat3 pos;
 }; // COMMAND_SEND_START_POS
 
 struct SAddNotificationDrawerCommand {
+	/// on this position, only x and z matter
 	struct SAIFloat3 pos;
 	struct SAIFloat3 color;
 	float alpha;
 }; // COMMAND_DRAWER_ADD_NOTIFICATION
-struct SAddPointDrawCommand { // result of HandleCommand is 1 - ok supported
-	struct SAIFloat3 pos; // on this position, only x and z matter
-	const char* label; // create this text on pos in my team color
+struct SAddPointDrawCommand {
+	/// on this position, only x and z matter
+	struct SAIFloat3 pos;
+	/// create this text on pos in my team color
+	const char* label;
 }; // COMMAND_DRAWER_POINT_ADD
-struct SRemovePointDrawCommand { // result of HandleCommand is 1 - ok supported
-	struct SAIFloat3 pos; // remove map points and lines near this point (100 distance)
+struct SRemovePointDrawCommand {
+	/// remove map points and lines near this point (100 distance)
+	struct SAIFloat3 pos;
 }; // COMMAND_DRAWER_POINT_REMOVE
-struct SAddLineDrawCommand { // result of HandleCommand is 1 - ok supported
-	struct SAIFloat3 posFrom; // draw line from this pos
-	struct SAIFloat3 posTo; // to this pos, again only x and z matter
+struct SAddLineDrawCommand {
+	/// draw line from this pos
+	struct SAIFloat3 posFrom;
+	/// to this pos, again only x and z matter
+	struct SAIFloat3 posTo;
 }; // COMMAND_DRAWER_LINE_ADD
 
 struct SStartPathDrawerCommand {
@@ -378,8 +448,17 @@ struct SRestartPathDrawerCommand {
 	bool sameColor;
 }; // COMMAND_DRAWER_PATH_RESTART
 
+
 /**
- * Creates a cubic Bezier spline figure (from pos1 to pos4 with control points pos2 and pos3)
+ * @brief Creates a cubic Bezier spline figure
+ * Creates a cubic Bezier spline figure from pos1 to pos4, with control points pos2 and pos3.
+ *
+ * - Each figure is part of a figure group
+ * - When creating figures, use 0 as <figureGroupId> to create a new figure group.
+ *   The id of this figure group is returned in <ret_newFigureGroupId>
+ * - <lifeTime> specifies how many frames a figure should live before being auto-removed;
+ *   0 means no removal
+ * - <arrow> == true means that the figure will get an arrow at the end
  */
 struct SCreateSplineFigureDrawerCommand {
 	struct SAIFloat3 pos1;
@@ -387,34 +466,68 @@ struct SCreateSplineFigureDrawerCommand {
 	struct SAIFloat3 pos3;
 	struct SAIFloat3 pos4;
 	float width;
-	bool arrow; // true: means that the figure will get an arrow at the end
-	int lifeTime; // how many frames a figure should live before being autoremoved, 0 means no removal
-	int figureGroupId; // use 0 to get a new group
-	int ret_newFigureGroupId; // the new group
+	/// true: means that the figure will get an arrow at the end
+	bool arrow;
+	/// how many frames a figure should live before being autoremoved, 0 means no removal
+	int lifeTime;
+	/// use 0 to get a new group
+	int figureGroupId;
+	/// the new group
+	int ret_newFigureGroupId;
 }; // COMMAND_DRAWER_FIGURE_CREATE_SPLINE
+/**
+ * @brief Creates a straight line
+ * Creates a straight line from pos1 to pos2.
+ *
+ * - Each figure is part of a figure group
+ * - When creating figures, use 0 as <figureGroupId> to create a new figure group.
+ *   The id of this figure group is returned in <ret_newFigureGroupId>
+ * @param lifeTime specifies how many frames a figure should live before being auto-removed;
+ *                 0 means no removal
+ * @param arrow true means that the figure will get an arrow at the end
+ */
 struct SCreateLineFigureDrawerCommand {
 	struct SAIFloat3 pos1;
 	struct SAIFloat3 pos2;
 	float width;
-	bool arrow; // true: means that the figure will get an arrow at the end
-	int lifeTime; // how many frames a figure should live before being autoremoved, 0 means no removal
-	int figureGroupId; // use 0 to get a new group
-	int ret_newFigureGroupId; // the new group
+	/// true: means that the figure will get an arrow at the end
+	bool arrow;
+	/// how many frames a figure should live before being autoremoved, 0 means no removal
+	int lifeTime;
+	/// use 0 to get a new group
+	int figureGroupId;
+	/// the new group
+	int ret_newFigureGroupId;
 }; // COMMAND_DRAWER_FIGURE_CREATE_LINE
+/**
+ * Sets the color used to draw all lines of figures in a figure group.
+ */
 struct SSetColorFigureDrawerCommand {
 	int figureGroupId;
+	/// (x, y, z) -> (red, green, blue)
 	struct SAIFloat3 color;
 	float alpha;
 }; // COMMAND_DRAWER_FIGURE_SET_COLOR
+/**
+ * Removes a figure group, which means it will not be drawn anymore.
+ */
 struct SDeleteFigureDrawerCommand {
 	int figureGroupId;
 }; // COMMAND_DRAWER_FIGURE_DELETE
 
+/**
+ * This function allows you to draw units onto the map.
+ * - they only show up on the local player's screen
+ * - they will be drawn in the "standard pose" (as if before any COB scripts are run)
+ */
 struct SDrawUnitDrawerCommand {
 	int toDrawUnitDefId;
 	struct SAIFloat3 pos;
+	/// in radians
 	float rotation;
+	/// specifies how many frames a figure should live before being auto-removed; 0 means no removal
 	int lifeTime;
+	/// teamId affects the color of the unit
 	int teamId;
 	bool transparent;
 	bool drawBorder;
@@ -426,47 +539,56 @@ struct SDrawUnitDrawerCommand {
 struct SBuildUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toBuildUnitDefId;
 	struct SAIFloat3 buildPos;
-	int facing; // set it to UNIT_COMMAND_BUILD_NO_FACING, if you do not want to specify a certain facing
+	/// set it to UNIT_COMMAND_BUILD_NO_FACING, if you do not want to specify a certain facing
+	int facing;
 }; // COMMAND_UNIT_BUILD
 
 struct SStopUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 }; // COMMAND_UNIT_STOP
 
-//	struct SInsertUnitCommand {
-//		int unitId;
-//		int groupId;
-//		unsigned int options; // see enum UnitCommandOptions
-//		int timeOut; // command execution-time in ?seconds?
-//	};
+//struct SInsertUnitCommand {
+//	int unitId;
+//	int groupId;
+//	unsigned int options; // see enum UnitCommandOptions
+//	int timeOut; // command execution-time in ?seconds?
+//};
 //
-//	struct SRemoveUnitCommand {
-//		int unitId;
-//		int groupId;
-//		unsigned int options; // see enum UnitCommandOptions
-//		int timeOut; // command execution-time in ?seconds?
-//	};
+//struct SRemoveUnitCommand {
+//	int unitId;
+//	int groupId;
+//	unsigned int options; // see enum UnitCommandOptions
+//	int timeOut; // command execution-time in ?seconds?
+//};
 
 struct SWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 }; // COMMAND_UNIT_WAIT
 
 struct STimeWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	// the time in seconds to wait
 	int time;
@@ -475,18 +597,22 @@ struct STimeWaitUnitCommand {
 struct SDeathWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
-	// wait until this unit is dead
+	/// wait until this unit is dead
 	int toDieUnitId;
 }; // COMMAND_UNIT_WAIT_DEATH
 
 struct SSquadWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int numUnits;
 }; // COMMAND_UNIT_WAIT_SQUAD
@@ -494,15 +620,19 @@ struct SSquadWaitUnitCommand {
 struct SGatherWaitUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 }; // COMMAND_UNIT_WAIT_GATHER
 
 struct SMoveUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 toPos;
 }; // COMMAND_UNIT_MOVE
@@ -510,8 +640,10 @@ struct SMoveUnitCommand {
 struct SPatrolUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 toPos;
 }; // COMMAND_UNIT_PATROL
@@ -519,8 +651,10 @@ struct SPatrolUnitCommand {
 struct SFightUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 toPos;
 }; // COMMAND_UNIT_FIGHT
@@ -528,8 +662,10 @@ struct SFightUnitCommand {
 struct SAttackUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toAttackUnitId;
 }; // COMMAND_UNIT_ATTACK
@@ -538,25 +674,31 @@ struct SAttackUnitCommand {
 struct SAttackAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 toAttackPos;
 	float radius;
 }; // COMMAND_UNIT_ATTACK_AREA
 
-//	struct SAttackAreaUnitCommand {
-//		int unitId;
-//		int groupId;
-//		unsigned int options; // see enum UnitCommandOptions
-//		int timeOut; // command execution-time in ?seconds?
-//	};
+//struct SAttackAreaUnitCommand {
+//	int unitId;
+//	int groupId;
+//	/// see enum UnitCommandOptions
+//	unsigned int options;
+//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	int timeOut;
+//};
 
 struct SGuardUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toGuardUnitId;
 }; // COMMAND_UNIT_GUARD
@@ -564,22 +706,28 @@ struct SGuardUnitCommand {
 struct SAiSelectUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 }; // COMMAND_UNIT_AI_SELECT
 
-//	struct SGroupSelectUnitCommand {
-//		int unitId;
-//		int groupId;
-//		unsigned int options; // see enum UnitCommandOptions
-//		int timeOut; // command execution-time in ?seconds?
-//	};
+//struct SGroupSelectUnitCommand {
+//	int unitId;
+//	int groupId;
+//	/// see enum UnitCommandOptions
+//	unsigned int options;
+//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	int timeOut;
+//};
 
 struct SGroupAddUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toGroupId;
 }; // COMMAND_UNIT_GROUP_ADD
@@ -587,15 +735,19 @@ struct SGroupAddUnitCommand {
 struct SGroupClearUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 }; // COMMAND_UNIT_GROUP_CLEAR
 
 struct SRepairUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toRepairUnitId;
 }; // COMMAND_UNIT_REPAIR
@@ -603,8 +755,10 @@ struct SRepairUnitCommand {
 struct SSetFireStateUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	// can be: 0=hold fire, 1=return fire, 2=fire at will
 	int fireState;
@@ -613,8 +767,10 @@ struct SSetFireStateUnitCommand {
 struct SSetMoveStateUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int moveState;
 }; // COMMAND_UNIT_SET_MOVE_STATE
@@ -622,31 +778,39 @@ struct SSetMoveStateUnitCommand {
 struct SSetBaseUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 basePos;
 }; // COMMAND_UNIT_SET_BASE
 
-//	struct SInternalUnitCommand {
-//		int unitId;
-//		int groupId;
-//		unsigned int options; // see enum UnitCommandOptions
-//		int timeOut; // command execution-time in ?seconds?
-//	};
+//struct SInternalUnitCommand {
+//	int unitId;
+//	int groupId;
+//	/// see enum UnitCommandOptions
+//	unsigned int options;
+//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	int timeOut;
+//};
 
 struct SSelfDestroyUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 }; // COMMAND_UNIT_SELF_DESTROY
 
 struct SSetWantedMaxSpeedUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	float wantedMaxSpeed;
 }; // COMMAND_UNIT_SET_WANTED_MAX_SPEED
@@ -654,7 +818,8 @@ struct SSetWantedMaxSpeedUnitCommand {
 struct SLoadUnitsUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
+	/// see enum UnitCommandOptions
+	unsigned int options;
 	int timeOut; // command execution-time in ?milli-seconds?
 
 	int* toLoadUnitIds;
@@ -664,8 +829,10 @@ struct SLoadUnitsUnitCommand {
 struct SLoadUnitsAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 pos;
 	float radius;
@@ -674,8 +841,10 @@ struct SLoadUnitsAreaUnitCommand {
 struct SLoadOntoUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int transporterUnitId;
 }; // COMMAND_UNIT_LOAD_ONTO
@@ -683,8 +852,10 @@ struct SLoadOntoUnitCommand {
 struct SUnloadUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 toPos;
 	int toUnloadUnitId;
@@ -693,8 +864,10 @@ struct SUnloadUnitCommand {
 struct SUnloadUnitsAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 toPos;
 	float radius;
@@ -703,8 +876,10 @@ struct SUnloadUnitsAreaUnitCommand {
 struct SSetOnOffUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	bool on;
 }; // COMMAND_UNIT_SET_ON_OFF
@@ -712,8 +887,10 @@ struct SSetOnOffUnitCommand {
 struct SReclaimUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toReclaimUnitIdOrFeatureId;
 }; // COMMAND_UNIT_RECLAIM
@@ -721,8 +898,10 @@ struct SReclaimUnitCommand {
 struct SReclaimAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 pos;
 	float radius;
@@ -731,8 +910,10 @@ struct SReclaimAreaUnitCommand {
 struct SCloakUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	bool cloak;
 }; // COMMAND_UNIT_CLOAK
@@ -740,15 +921,19 @@ struct SCloakUnitCommand {
 struct SStockpileUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 }; // COMMAND_UNIT_STOCKPILE
 
 struct SDGunUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toAttackUnitId;
 }; // COMMAND_UNIT_D_GUN
@@ -756,8 +941,10 @@ struct SDGunUnitCommand {
 struct SDGunPosUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 pos;
 }; // COMMAND_UNIT_D_GUN_POS
@@ -765,8 +952,10 @@ struct SDGunPosUnitCommand {
 struct SRestoreAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 pos;
 	float radius;
@@ -775,8 +964,10 @@ struct SRestoreAreaUnitCommand {
 struct SSetRepeatUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	bool repeat;
 }; // COMMAND_UNIT_SET_REPEAT
@@ -784,8 +975,10 @@ struct SSetRepeatUnitCommand {
 struct SSetTrajectoryUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int trajectory;
 }; // COMMAND_UNIT_SET_TRAJECTORY
@@ -793,8 +986,10 @@ struct SSetTrajectoryUnitCommand {
 struct SResurrectUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toResurrectFeatureId;
 }; // COMMAND_UNIT_RESURRECT
@@ -802,8 +997,10 @@ struct SResurrectUnitCommand {
 struct SResurrectAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 pos;
 	float radius;
@@ -812,8 +1009,10 @@ struct SResurrectAreaUnitCommand {
 struct SCaptureUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int toCaptureUnitId;
 }; // COMMAND_UNIT_CAPTURE
@@ -821,8 +1020,10 @@ struct SCaptureUnitCommand {
 struct SCaptureAreaUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	struct SAIFloat3 pos;
 	float radius;
@@ -831,24 +1032,30 @@ struct SCaptureAreaUnitCommand {
 struct SSetAutoRepairLevelUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int autoRepairLevel;
 }; // COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL
 
-//	struct SAttackLoopbackUnitCommand {
-//		int unitId;
-//		int groupId;
-//		unsigned int options; // see enum UnitCommandOptions
-//		int timeOut; // command execution-time in ?seconds?
-//	};
+//struct SAttackLoopbackUnitCommand {
+//	int unitId;
+//	int groupId;
+//	/// see enum UnitCommandOptions
+//	unsigned int options;
+//	/// max command execution-time in frames; if it takes longer then this -> abort
+//	int timeOut;
+//};
 
 struct SSetIdleModeUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int idleMode;
 }; // COMMAND_UNIT_SET_IDLE_MODE
@@ -856,8 +1063,10 @@ struct SSetIdleModeUnitCommand {
 struct SCustomUnitCommand {
 	int unitId;
 	int groupId;
-	unsigned int options; // see enum UnitCommandOptions
-	int timeOut; // command execution-time in ?seconds?
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
 
 	int cmdId;
 	float* params;
