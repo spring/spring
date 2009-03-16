@@ -1,6 +1,5 @@
 // Generalized callback interface - shared between global AI and group AI
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/Camera/CameraController.h"
 #include "Game/Camera.h"

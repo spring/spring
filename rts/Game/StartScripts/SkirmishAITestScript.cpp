@@ -1,5 +1,4 @@
 
-#include "Rendering/GL/myGL.h"
 #include "SkirmishAITestScript.h"
 
 #include <algorithm>
