@@ -30,7 +30,6 @@
 #include "MouseHandler.h"
 #include "ConfigHandler.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/Textures/Bitmap.h"

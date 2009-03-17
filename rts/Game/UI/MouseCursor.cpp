@@ -11,7 +11,6 @@
 #include "MouseCursor.h"
 #include "HwMouseCursor.h"
 #include "myMath.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 
 

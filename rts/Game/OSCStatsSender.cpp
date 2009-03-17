@@ -15,7 +15,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Rendering/GL/myGL.h"
 #include "OSCStatsSender.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/Game.h"

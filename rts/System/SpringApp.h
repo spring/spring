@@ -1,7 +1,6 @@
 #ifndef SPRING_APP
 #define SPRING_APP
 
-#include "Rendering/GL/myGL.h"
 #include <string>
 #include <SDL_types.h>
 

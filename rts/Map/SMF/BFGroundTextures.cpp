@@ -3,10 +3,8 @@
 
 #include "BFGroundTextures.h"
 #include "FileSystem/FileHandler.h"
-#include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
 #include "mapfile.h"
 #include "Platform/errorhandler.h"
 #include "SmfReadMap.h"

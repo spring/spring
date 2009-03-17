@@ -7,7 +7,6 @@
 #include <string>
 #include "mmgr.h"
 
-#include "Rendering/GL/myGL.h"
 #include "ReadMap.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Ground.h"

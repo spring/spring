@@ -3,7 +3,6 @@
 
 #include "DynWater.h"
 #include "Game/Game.h"
-#include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Map/MapInfo.h"

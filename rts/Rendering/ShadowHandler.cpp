@@ -13,7 +13,6 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/UI/MiniMap.h"
 #include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "EventHandler.h"

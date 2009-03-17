@@ -19,7 +19,6 @@ using std::vector;
 #include "LuaOpenGL.h"
 
 #include "Game/Camera.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
 #include "LogOutput.h"
 #include "Util.h"

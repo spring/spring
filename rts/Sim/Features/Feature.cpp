@@ -12,7 +12,6 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/QuadField.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/CollisionVolume.h"
