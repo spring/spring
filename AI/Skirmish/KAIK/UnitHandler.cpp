@@ -394,8 +394,8 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 		assert(!hit);
 		hit = true;
 
-		TaskPlan*    taskPlan = GetTaskPlan(builderTracker->taskPlanId);
-		std::string& taskName = taskPlan->def->humanName;
+		const TaskPlan*    taskPlan = GetTaskPlan(builderTracker->taskPlanId);
+		const std::string& taskName = taskPlan->def->humanName;
 
 		std::stringstream msg;
 			msg << "[CUnitHandler::ClearOrder()] frame " << frame << "\n";
@@ -683,7 +683,7 @@ void CUnitHandler::BuildTaskCreate(int id) {
 			// make one anyway
 			std::stringstream msg;
 				msg << "[CUnitHandler::BuildTaskCreate()] frame " << (ai->cb->GetCurrentFrame()) << "\n";
-				msg << "\tBuildTask Creation Error for task with ID " << id "\n";
+				msg << "\tBuildTask Creation Error for task with ID " << id << "\n";
 			L(msg.str());
 
 			if (category == CAT_DEFENCE) {
@@ -742,7 +742,7 @@ void CUnitHandler::BuildTaskCreate(int id) {
 
 							msg.str("");
 								msg << "\tadded builder " << builderTracker->builderID << " to";
-								msg << " build-task with ID " << builderTracker->buildTaskID << "\n";
+								msg << " build-task with ID " << builderTracker->buildTaskId << "\n";
 							L(msg.str());
 						}
 					}
