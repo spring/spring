@@ -33,10 +33,10 @@ void CBuildUp::Update(int frame) {
 		ai->tm->Create();
 		Buildup(frame);
 
-		// KLOOTNOTE: b1 will be false if we
-		// have huge amounts of metal storage,
-		// so make multiplier variable (more
-		// or less assumes a starting storage
+		// KLOOTNOTE: b1 will be false if we have
+		// large amounts of metal storage, so the
+		// multiplier <m> must not be a constant
+		// (more or less assumes starting storage
 		// capacity of 1000)
 		float m = 900.0f / (ai->cb->GetMetalStorage());
 		bool b1 = (ai->cb->GetMetal()) > (ai->cb->GetMetalStorage() * m);
@@ -67,35 +67,48 @@ void CBuildUp::Update(int frame) {
 void CBuildUp::Buildup(int frame) {
 	// KLOOTNOTE: make it emphasize mexes and energy more
 	// during the first two minutes (important for PURE)
-	float mIncome = ai->cb->GetMetalIncome();
-	float eIncome = ai->cb->GetEnergyIncome();
-	float mLevel = ai->cb->GetMetal();
-	float eLevel = ai->cb->GetEnergy();
-	float mStorage = ai->cb->GetMetalStorage();
-	float eStorage = ai->cb->GetEnergyStorage();
-	float mUsage = ai->cb->GetMetalUsage();
-	float eUsage = ai->cb->GetEnergyUsage();
-	bool makersOn = ai->uh->metalMaker->AllAreOn();
+	const float mIncome  = ai->cb->GetMetalIncome();
+	const float eIncome  = ai->cb->GetEnergyIncome();
+	const float mLevel   = ai->cb->GetMetal();
+	const float eLevel   = ai->cb->GetEnergy();
+	const float mStorage = ai->cb->GetMetalStorage();
+	const float eStorage = ai->cb->GetEnergyStorage();
+	const float mUsage   = ai->cb->GetMetalUsage();
+	const float eUsage   = ai->cb->GetEnergyUsage();
+	const bool makersOn  = ai->uh->metalMaker->AllAreOn();
 
-	float m1 = 500.0f / mStorage;					// 0.5f
-	float m2 = 200.0f / mStorage;					// 0.2f
-	float e1 = 500.0f / eStorage;					// 0.5f
-	float e2 = 800.0f / eStorage;					// 0.8f
-	bool mLevel50 = (mLevel < (mStorage * m1));		// is our current metal level less than 50% of our current metal storage capacity?
-	bool eLevel50 = (eLevel > (eStorage * e1));		// is our current energy level more than 50% of our current energy storage capacity?
-	bool eLevel80 = (eLevel > (eStorage * e2));		// is our current energy level more than 80% of our current energy storage capacity?
+	const float m1 = 500.0f / mStorage;					// 0.5f IIF starting with 1000E
+	const float m2 = 200.0f / mStorage;					// 0.2f IIF starting with 1000E
+	const float e1 = 500.0f / eStorage;					// 0.5f IIF starting with 1000M
+	const float e2 = 800.0f / eStorage;					// 0.8f IIF starting with 1000M
+	// const float m1 = mStorage * 0.5f;				// bad: as M-storage cap. increases the needed M-level to build also rises
+	// const float m2 = mStorage * 0.2f;
+	// const float e1 = eStorage * 0.5f;				// bad: as E-storage cap. increases the needed E-level to build also rises
+	// const float e2 = eStorage * 0.8f;
+	const bool mLevel50  = (mLevel < (mStorage * m1));	// is our current M-level less than 50% of our current M-storage capacity?
+	const bool eLevel50  = (eLevel > (eStorage * e1));	// is our current E-level more than 50% of our current E-storage capacity?
+	const bool eLevel80  = (eLevel > (eStorage * e2));	// is our current E-level more than 80% of our current E-storage capacity?
 
 	// fake a resource crisis during the first
 	// minute to get our economy going quicker
 	// KLOOTNOTE: reverted, has opposite effect
-	bool mStall = (/*(frame < 1800) ||*/ (mIncome < (mUsage * 1.3f)));	// are we currently producing less metal than we are currently expending * 1.3?
-	bool eStall = (/*(frame <  900) ||*/ (eIncome < (eUsage * 1.6f)));	// are we currently producing less energy than we are currently expending * 1.6?
+	const bool mStall = (/*(frame < 1800) ||*/ (mIncome < (mUsage * 1.3f)));
+	const bool eStall = (/*(frame <  900) ||*/ (eIncome < (eUsage * 1.6f)));
+
+	// these determine if we can tell our idle
+	// factories to start building something
+	// M- and E-levels can never exceed the
+	// storage capacity, so we need to make
+	// sure that e2 and m2 are less than 1
+	const bool b1 = ((eLevel > (eStorage * e2)) || (eIncome > 6000.0f && eUsage < eIncome));
+	const bool b2 = ((mLevel > (mStorage * m2)) || (mIncome >  100.0f && mUsage < mIncome));
+	const bool b3 = (m2 >= 1.0f || e2 >= 1.0f);
 
 
 	// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
 	// everybody (assuming we can build them at all in current mod)
 	// TODO: use actual metal and energy drain of nuke weapon here
-	bool buildNukeSilo =
+	const bool buildNukeSilo =
 		(mIncome > 100.0f && eIncome > 6000.0f && mUsage < mIncome && eUsage < eIncome &&
 		ai->ut->nuke_silos->size() > 0 && ai->uh->NukeSilos.size() < MAX_NUKE_SILOS);
 
@@ -212,11 +225,12 @@ void CBuildUp::Buildup(int frame) {
 
 				// do we have more factories than defense (and have at least 10 minutes passed)?
 				if (numFactories > (numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
-					if (mOverflow && numMStorage > 0 && storageTimer <= 0 && (numFactories > 0)) {
+					if (mOverflow && (numMStorage > 0) && (storageTimer <= 0) && (numFactories > 0)) {
 						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_MSTOR)) {
 							// build metal storage
-							if (BuildNow(builderID, CAT_MSTOR))
+							if (BuildNow(builderID, CAT_MSTOR)) {
 								storageTimer += 90;
+							}
 						}
 					} else {
 						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_DEFENCE)) {
@@ -242,7 +256,7 @@ void CBuildUp::Buildup(int frame) {
 						if (!ai->uh->FactoryBuilderAdd(builderID)) {
 							// if we can't add this builder to some
 							// other factory then construct new one
-							if (ai->uh->AllUnitsByCat[CAT_FACTORY].size() < 1 || frame > 9000) {
+							if (ai->uh->AllUnitsByCat[CAT_FACTORY].size() < 1) {
 								// one factory for the first 5 minutes
 								BuildNow(builderID, CAT_FACTORY, factoryDef);
 							}
@@ -253,11 +267,7 @@ void CBuildUp::Buildup(int frame) {
 		}
 	}
 
-
-	bool b1 = ((eLevel > (eStorage * e2)) || (eIncome > 6000.0f && eUsage < eIncome));
-	bool b2 = ((mLevel > (mStorage * m2)) || (mIncome > 100.0f && mUsage < mIncome));
-
-	if (b1 && b2) {
+	if ((b1 && b2) || b3) {
 		FactoryCycle(frame);
 	}
 
@@ -274,19 +284,19 @@ void CBuildUp::FactoryCycle(int frame) {
 
 	for (int i = 0; i < numIdleFactories; i++) {
 		// pick the i-th idle factory we have
-		int producedCat = LASTCATEGORY;
-		int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
-		bool isHub = (ai->MyUnits[factoryUnitID]->isHub());
-		const UnitDef* factDef = ai->MyUnits[factoryUnitID]->def();
+		int producedCat         = LASTCATEGORY;
+		const int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
+		const bool isHub        = (ai->MyUnits[factoryUnitID]->isHub());
+		const UnitDef* factDef  = ai->MyUnits[factoryUnitID]->def();
 
 		// assume that factories with tech-level TL > 0 are
 		// useful to keep active and building for (TL * 30)
 		// minutes, but depreciate rapidly after that point
 		// TODO: don't reduce factory build frequency, but
 		// focus more on mobile constructors instead?
-		int tchLvl = ai->ut->unitTypes[factDef->id].techLevel;
-		bool obsolete = ((tchLvl > 0)? ((tchLvl * 30) > (frame / 1800)): false);
-		bool mayBuild = ((obsolete)? (frame % 1800 == 0): true);
+		const int tchLvl    = ai->ut->unitTypes[factDef->id].techLevel;
+		const bool obsolete = ((tchLvl > 0)? ((tchLvl * 30) > (frame / 1800)): false);
+		const bool mayBuild = ((obsolete)? (frame % 1800 == 0): true);
 
 		if (mayBuild) {
 			if (isHub) {
@@ -301,8 +311,7 @@ void CBuildUp::FactoryCycle(int frame) {
 					producedCat = CAT_FACTORY;
 					factoryTimer = 0;
 				}
-			}
-			else {
+			} else {
 				if ((builderTimer > 0) || (ai->uh->NumIdleUnits(CAT_BUILDER) > 2)) {
 					// if we have more than two idle builders
 					// then compensate with an offensive unit
