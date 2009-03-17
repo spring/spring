@@ -138,9 +138,12 @@ int CUnitTable::ReadTeamSides() {
 		const char* sideKey = ai->cb->GetTeamSide(team);
 
 		if (sideKey != NULL && *sideKey != 0) {
+			// the side keys are only non-NULL _and_ non-empty
+			// if we have a real (non-generated) setup script,
+			// override the default side index (0, 1, 0, 0, 0,
+			// ...) for this team
+			//
 			// FIXME: Gaia-team side?
-			// team index was valid (and we are in a GameSetup-type
-			// game), override the default side index for this team
 			teamSides[team] = modSideMap[sideKey];
 
 			L("\tteam: " << team << ", key: " << sideKey << ", side: " << modSideMap[sideKey] << " (index: " << teamSides[team] << ")");
