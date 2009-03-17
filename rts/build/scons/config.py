@@ -296,12 +296,12 @@ def CheckHeadersAndLibraries(env, conf):
 	d = [boost_common, boost_regex, boost_serial, boost_thread]
 
 	d += [Dependency(['GL', 'opengl32'], ['GL/gl.h'])]
-	d += [Dependency(['GLU', 'glu32'],   ['GL/glu.h'])]
+	d += [Dependency(['GLU', 'glu32'], ['GL/glu.h'])]
 	d += [Dependency(['GLEW', 'glew32'], ['GL/glew.h'])]
-	d += [Dependency(['zlib1'],              ['zlib.h'])]
-	d += [Dependency(['freetype6'],       ['ft2build.h'])]
-	d += [Dependency(['IL', 'devil'],    ['IL/il.h'])]
-	d += [Dependency(['ILU', 'ilu'],     ['IL/ilu.h'])]	
+	d += [Dependency(['zlib1', 'z'], ['zlib.h'])]
+	d += [Dependency(['freetype6', 'freetype'], ['ft2build.h'])]
+	d += [Dependency(['IL', 'devil'], ['IL/il.h'])]
+	d += [Dependency(['ILU', 'ilu'], ['IL/ilu.h'])]
 	d += [Dependency(['openal', 'openal32', 'OpenAL32'], ['AL/al.h'])]
 
 	if env['platform'] == 'windows':
