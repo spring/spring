@@ -12,7 +12,6 @@
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Map/ReadMap.h"
-#include "Rendering/GL/myGL.h"
 #include "AdvTreeGenerator.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "LogOutput.h"

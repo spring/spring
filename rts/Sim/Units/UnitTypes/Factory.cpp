@@ -9,7 +9,6 @@
 #include "Game/WaitCommandsAI.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/QuadField.h"

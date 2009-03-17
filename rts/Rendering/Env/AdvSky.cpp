@@ -7,7 +7,6 @@
 
 #include "AdvSky.h"
 
-#include "Rendering/GL/myGL.h"
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"

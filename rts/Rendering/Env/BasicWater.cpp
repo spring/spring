@@ -5,7 +5,6 @@
 #include "mmgr.h"
 
 #include "BasicWater.h"
-#include "Rendering/GL/myGL.h"
 
 #include "Rendering/Textures/Bitmap.h"
 #include "Map/MapInfo.h"

@@ -8,7 +8,6 @@
  */
 
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 #include <boost/format.hpp>
 #include "mmgr.h"
 

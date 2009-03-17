@@ -3,7 +3,6 @@
 
 #include "glExtra.h"
 #include "VertexArray.h"
-#include "myGL.h"
 #include "Map/Ground.h"
 #include "Sim/Weapons/Weapon.h"
 #include "LogOutput.h"

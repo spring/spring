@@ -1,5 +1,4 @@
 #include "StdAfx.h"
-#include "GL/myGL.h"
 #include "mmgr.h"
 
 #include "FartextureHandler.h"

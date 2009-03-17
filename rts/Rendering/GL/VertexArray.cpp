@@ -7,7 +7,6 @@
 #include "mmgr.h"
 
 #include "VertexArray.h"
-#include "myGL.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
