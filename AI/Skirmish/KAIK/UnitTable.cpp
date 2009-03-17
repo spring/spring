@@ -127,20 +127,23 @@ int CUnitTable::BuildModSideMap() {
 int CUnitTable::ReadTeamSides() {
 	L("[CUnitTable::ReadTeamSides()]");
 
+	// team N defaults to side N (in the
+	// SkirmishAI startscript) for N in
+	// [0, 1]
 	teamSides.resize(MAX_TEAMS, 0);
-	teamSides[0] = 0;	// team 0 defaults to side 0 (in GlobalAI startscript)
-	teamSides[1] = 1;	// team 1 defaults to side 1 (in GlobalAI startscript)
+	teamSides[0] = 0;
+	teamSides[1] = 1;
 
 	for (int team = 0; team < MAX_TEAMS; team++) {
 		const char* sideKey = ai->cb->GetTeamSide(team);
 
-		if (sideKey) {
+		if (sideKey != NULL && *sideKey != 0) {
 			// FIXME: Gaia-team side?
 			// team index was valid (and we are in a GameSetup-type
 			// game), override the default side index for this team
 			teamSides[team] = modSideMap[sideKey];
 
-			L("\tteam: " << team << ", side: " << modSideMap[sideKey] << " (index: " << teamSides[team] << ")");
+			L("\tteam: " << team << ", key: " << sideKey << ", side: " << modSideMap[sideKey] << " (index: " << teamSides[team] << ")");
 		} else {
 			L("\tno \"game\\team\\side\" value found for team " << team);
 		}

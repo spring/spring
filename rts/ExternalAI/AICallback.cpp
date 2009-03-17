@@ -228,17 +228,10 @@ int CAICallback::GetPlayerTeam(int playerId)
 
 const char* CAICallback::GetTeamSide(int teamId)
 {
-	if (teamId < teamHandler->ActiveTeams() && gameSetup) {
-		return teamHandler->Team(teamId)->side.c_str();
+	if (teamId < teamHandler->ActiveTeams()) {
+		return (teamHandler->Team(teamId)->side.c_str());
 	} else {
-		// if this is not a GameSetup-type game but a
-		// SkirmishAI-test one, the side-strings for all
-		// active teams (0, 1, 2) will always be "arm"
-		// since CSkirmishAITestScript does not override
-		// the CTeam defaults (unlike CGameSetup), so
-		// return 0 or AI's that rely on this function
-		// will break in SkirmishAI tests
-		return 0;
+		return NULL;
 	}
 }
 
