@@ -4,7 +4,6 @@
 #include "BaseTreeDrawer.h"
 #include "BasicTreeDrawer.h"
 #include "AdvTreeDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "Sim/Misc/GlobalConstants.h"

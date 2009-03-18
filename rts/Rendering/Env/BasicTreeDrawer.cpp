@@ -10,7 +10,6 @@
 #include "Lua/LuaParser.h"
 #include "Map/Ground.h"
 #include "Map/ReadMap.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "LogOutput.h"

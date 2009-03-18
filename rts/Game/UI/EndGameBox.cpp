@@ -4,7 +4,6 @@
 
 #include "EndGameBox.h"
 #include "MouseHandler.h"
-#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"

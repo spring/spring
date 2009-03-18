@@ -34,7 +34,6 @@
 #include "Rendering/IconHandler.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/glList.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/UnitModels/3DOParser.h"
