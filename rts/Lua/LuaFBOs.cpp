@@ -19,7 +19,6 @@ using std::map;
 #include "LuaRBOs.h"
 #include "LuaTextures.h"
 
-#include "Rendering/GL/myGL.h"
 #include "LogOutput.h"
 
 

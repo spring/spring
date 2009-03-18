@@ -11,7 +11,6 @@
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TAPalette.h"
-#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"

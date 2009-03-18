@@ -10,7 +10,6 @@
 #include "HeightLinePalette.h"
 #include "ReadMap.h"
 #include "MapInfo.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"

@@ -14,7 +14,6 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "glFont.h"
-#include "GL/myGL.h"
 #include "GL/VertexArray.h"
 #include "EventHandler.h"
 #include "NetProtocol.h"
