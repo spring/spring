@@ -440,7 +440,7 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 {
 	const int playerID = msg[2];
 
-	if ((playerID < 0) || (playerID >= playerHandler->TotalPlayers())) {
+	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers())) {
 		return;
 	}
 	const CPlayer* sender = playerHandler->Player(playerID);
@@ -472,7 +472,7 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
                             int playerID)
 {
-	if ((playerID < 0) || (playerID >= playerHandler->TotalPlayers()))
+	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
 		return;
 
 	GML_STDMUTEX_LOCK(inmap);
