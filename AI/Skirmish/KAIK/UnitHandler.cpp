@@ -1259,14 +1259,26 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 
 		// don't assist hubs (or factories that cannot be assisted)
 		if ((u->def())->canBeAssisted && !u->isHub()) {
-			float totalbuildercost = 0.0f;
+			float totalBuilderCost = 0.0f;
 
-			// HACK
+			// HACK: get the sum of the heuristic costs of every
+			// builder that is already assisting this factory
 			for (list<int>::iterator j = i->supportbuilders.begin(); j != i->supportbuilders.end(); j++) {
-				totalbuildercost += ai->math->GetUnitCost(*j);
+				if ((ai->MyUnits[*j]->def())->isCommander) {
+					continue;
+				}
+
+				totalBuilderCost += ai->math->GetUnitCost(*j);
 			}
 
-			if (totalbuildercost < ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO) {
+			// if this sum is less than the heuristic cost of the
+			// factory itself, add the builder to this factory
+			//
+			// this is based purely on the metal and energy costs
+			// of all involved parties, and silently expects that
+			// building _another_ factory would always be better
+			// than assisting it further
+			if (totalBuilderCost < (ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO * 2.0f)) {
 				builderTracker->factoryId = i->id;
 				i->supportbuilders.push_back(builderTracker->builderID);
 				i->supportBuilderTrackers.push_back(builderTracker);

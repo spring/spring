@@ -28,10 +28,13 @@ CBuildUp::~CBuildUp() {
 
 
 void CBuildUp::Update(int frame) {
+	if (frame % 5 == 0) {
+		Buildup(frame);
+	}
+
 	if (frame % 15 == 0) {
 		// update current threat map
 		ai->tm->Create();
-		Buildup(frame);
 
 		// KLOOTNOTE: b1 will be false if we have
 		// large amounts of metal storage, so the
@@ -112,23 +115,24 @@ void CBuildUp::Buildup(int frame) {
 		(mIncome > 100.0f && eIncome > 6000.0f && mUsage < mIncome && eUsage < eIncome &&
 		ai->ut->nuke_silos->size() > 0 && ai->uh->NukeSilos.size() < MAX_NUKE_SILOS);
 
+	const int nIdleBuilders = ai->uh->NumIdleUnits(CAT_BUILDER);
 
-	if (ai->uh->NumIdleUnits(CAT_BUILDER)) {
+	if (nIdleBuilders > 0) {
 		// get first idle (mobile) builder every Update() cycle
-		int builderID = ai->uh->GetIU(CAT_BUILDER);
+		const int      builderID  = ai->uh->GetIU(CAT_BUILDER);
 		const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
 		const UnitDef* factoryDef = ai->ut->GetUnitByScore(builderID, CAT_FACTORY);
 
 		// if this builder cannot build any factories, pretend it's feasible
-		bool factFeasM = (factoryDef? ai->math->MFeasibleConstruction(builderDef, factoryDef): true);
-		bool factFeasE = (factoryDef? ai->math->EFeasibleConstruction(builderDef, factoryDef): true);
-		bool factFeas = (factoryDef && factFeasM && factFeasE);
-		bool eLevelMed = (eLevel50 && makersOn);
-		bool mLevelLow = (mLevel50 || (((RANDINT % 3) == 0) && mStall && eLevel80) || (!factFeasM && factoryTimer <= 0));
+		const bool factFeasM = (factoryDef? ai->math->MFeasibleConstruction(builderDef, factoryDef): true);
+		const bool factFeasE = (factoryDef? ai->math->EFeasibleConstruction(builderDef, factoryDef): true);
+		const bool factFeas  = (factoryDef && factFeasM && factFeasE);
+		const bool eLevelMed = (eLevel50 && makersOn);
+		const bool mLevelLow = (mLevel50 || (mStall && eLevel80) || (!factFeasM && factoryTimer <= 0));
 
 		// number of buildings in unit-table, not how many currently built
 		int buildableEStorage = ai->ut->energy_storages->size();
-		int buildableMMakers = ai->ut->metal_makers->size();
+		int buildableMMakers  = ai->ut->metal_makers->size();
 
 
 		if (!builderDef) {
@@ -177,22 +181,22 @@ void CBuildUp::Buildup(int frame) {
 				// only reclaim features during odd frames so we don't
 				// spend the entire game just chasing after rocks etc.
 				// (problem on Cooper Hill and similar maps)
-				bool reclaimFeature = ((frame & 1) && ai->MyUnits[builderID]->ReclaimBestFeature(true));
+				const bool reclaimFeature = ((frame & 1) && ai->MyUnits[builderID]->ReclaimBestFeature(true));
 
 				if (!reclaimFeature) {
-					bool b = BuildUpgradeExtractor(builderID);
-					bool eOverflow = (eStorage / (eIncome + 0.01) < STORAGETIME);
-					bool eExcess = (eIncome > (eUsage * 1.5));
+					const bool haveNewMex = BuildUpgradeExtractor(builderID);
+					const bool eOverflow  = (eStorage / (eIncome + 0.01) < STORAGETIME);
+					const bool eExcess    = (eIncome > (eUsage * 1.5));
 
 					// if we couldn't build or upgrade an extractor
-					if (!b && eOverflow && buildableEStorage > 0 && storageTimer <= 0) {
+					if (!haveNewMex && eOverflow && buildableEStorage > 0 && storageTimer <= 0) {
 						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_ESTOR)) {
 							// build energy storage
 							if (BuildNow(builderID, CAT_ESTOR))
 								storageTimer += 90;
 						}
 					}
-					else if (!b && buildableMMakers > 0 && eExcess && ((RANDINT % 10) == 0)) {
+					else if (!haveNewMex && buildableMMakers > 0 && eExcess) {
 						// build metal maker
 						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_MMAKER)) {
 							BuildNow(builderID, CAT_MMAKER);
@@ -218,12 +222,12 @@ void CBuildUp::Buildup(int frame) {
 			}
 
 			else {
-				bool mOverflow = (mStorage / (mIncome + 0.01)) < (STORAGETIME * 2);
-				bool numMStorage = ai->ut->metal_storages->size();
-				int numDefenses = ai->uh->AllUnitsByCat[CAT_DEFENCE].size();
-				int numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
+				const bool mOverflow    = (mStorage / (mIncome + 0.01)) < (STORAGETIME * 2);
+				const bool numMStorage  = ai->ut->metal_storages->size();
+				const int  numDefenses  = ai->uh->AllUnitsByCat[CAT_DEFENCE].size();
+				const int  numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
 
-				// do we have more factories than defense (and have at least 10 minutes passed)?
+				// do we have more factories than defenses (and have at least 10 minutes passed)?
 				if (numFactories > (numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
 					if (mOverflow && (numMStorage > 0) && (storageTimer <= 0) && (numFactories > 0)) {
 						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_MSTOR)) {
@@ -256,9 +260,14 @@ void CBuildUp::Buildup(int frame) {
 						if (!ai->uh->FactoryBuilderAdd(builderID)) {
 							// if we can't add this builder to some
 							// other factory then construct new one
-							if (ai->uh->AllUnitsByCat[CAT_FACTORY].size() < 1) {
-								// one factory for the first 5 minutes
+							// (but restrict the number of factories
+							// to one for the first 10 minutes)
+							if (ai->uh->AllUnitsByCat[CAT_FACTORY].size() < 1 || frame > 18000) {
 								BuildNow(builderID, CAT_FACTORY, factoryDef);
+							} else {
+								L("[CBuildUp::BuildUp()] frame " << frame);
+								L("\tbuilder " << builderID << " is currently in limbo");
+								L("\ttotal number of idle builders: " << nIdleBuilders);
 							}
 						}
 					}
