@@ -269,7 +269,7 @@ void CTeam::Died()
 	// this message is not relayed to clients, it's only for the server
 	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 
-	for (int a = 0; a < playerHandler->TotalPlayers(); ++a) {
+	for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
 		if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == teamNum)) {
 			playerHandler->Player(a)->StartSpectating();
 		}
