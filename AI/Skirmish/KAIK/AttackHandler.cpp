@@ -235,8 +235,8 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 		float3 pos = kMeansBase[startIndex] + float3((RANDINT % SAFE_SPOT_DISTANCE), 0, (RANDINT % SAFE_SPOT_DISTANCE));
 		pos.y = ai->cb->GetElevation(pos.x, pos.z);
 
-		SNPRINTF(logMsg, logMsg_maxSize, "AH::FSA1 minS: %3.2f, maxS: %3.2f,", minSafety, maxSafety);
-		PRINTF("%s", logMsg);
+		// SNPRINTF(logMsg, logMsg_maxSize, "AH::FSA1 minS: %3.2f, maxS: %3.2f,", minSafety, maxSafety);
+		// PRINTF("%s", logMsg);
 		return pos;
 	}
 
@@ -282,19 +282,23 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 			res = subset[whichPath];
 		}
 
+		/*
 		SNPRINTF(logMsg, logMsg_maxSize,
 				"AH::FSA-2 path:minS: %3.2f, maxS: %3.2f, pos:x: %f5.1 y: %f5.1 z: %f5.1",
 				minSafety, maxSafety, res.x, res.y, res.z);
 		PRINTF("%s", logMsg);
+		*/
 		return res;
 	}
 	else {
 		assert(whichPath < (int) subset.size());
 		float3 res = subset[whichPath];
+		/*
 		SNPRINTF(logMsg, logMsg_maxSize,
 				"AH::FSA-3 minS: %f, maxS: %f, pos:x: %f y: %f z: %f",
 				minSafety, maxSafety, res.x, res.y, res.z);
 		PRINTF("%s", logMsg);
+		*/
 		return res;
 	}
 }

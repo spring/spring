@@ -198,6 +198,7 @@ int CAttackGroup::PopStuckUnit() {
 		if (ai->MyUnits[*it]->stuckCounter > UNIT_STUCK_COUNTER_LIMIT) {
 			int id = *it;
 			// mark it
+			/*
 			SNPRINTF(logMsg, logMsg_maxSize,
 					"stuck %i: %i, dropping from group: %i. isMoving = %i",
 					id, ai->MyUnits[*it]->stuckCounter, groupID, isMoving);
@@ -205,7 +206,7 @@ int CAttackGroup::PopStuckUnit() {
 			SNPRINTF(logMsg, logMsg_maxSize, "humanName: %s",
 					ai->MyUnits[*it]->def()->humanName.c_str());
 			PRINTF("%s", logMsg);
-
+			*/
 			ai->MyUnits[*it]->stuckCounter = 0;
 			units.erase(it);
 			return id;
