@@ -73,7 +73,7 @@
 // #define USE_BINARY_HASH
 
 namespace NSMicroPather {
-	const float FLT_BIG = FLT_MAX / 2.0f;
+	const float FLT_BIG = MY_FLT_MAX / 2.0f;
 
 	/*
 	 * A pure abstract class used to define a set of callbacks.

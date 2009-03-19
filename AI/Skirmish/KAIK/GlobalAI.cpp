@@ -151,7 +151,7 @@ CGlobalAI::~CGlobalAI() {
 
 // called instead of InitAI() on load if IsLoadSupported() returns 1
 void CGlobalAI::Load(IGlobalAICallback* callback, std::istream* ifs) {
-	ai = new AIClasses;
+	ai = new AIClasses();
 	ai->cb = callback->GetAICallback();
 	ai->cheat = callback->GetCheatInterface();
 
@@ -208,6 +208,7 @@ void CGlobalAI::Serialize(creg::ISerializer* s) {
 	if (!s->IsWriting()) {
 		// if de-serializing a saved state, allocate
 		// here instead of in InitAI() which we skip
+		ai->unitIDs.resize(MAX_UNITS, -1);
 		ai->MyUnits.resize(MAX_UNITS, new CUNIT(ai));
 	}
 
@@ -254,7 +255,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 	char cfgFolder[256]; SNPRINTF(cfgFolder, 256, "%s", cfgFolderStr.c_str());
 
 	// initialize class wrapper struct
-	ai = new AIClasses;
+	ai = new AIClasses();
 	ai->cb = callback->GetAICallback();
 	ai->cheat = callback->GetCheatInterface();
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, this->c);
@@ -262,6 +263,7 @@ void CGlobalAI::InitAI(IGlobalAICallback* callback, int team) {
 
 
 	ai->MyUnits.resize(MAX_UNITS, 0x0);
+	ai->unitIDs.resize(MAX_UNITS, -1);
 
 	// initialize MAX_UNITS CUNIT objects
 	for (int i = 0; i < MAX_UNITS; i++) {

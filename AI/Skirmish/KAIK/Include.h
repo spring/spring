@@ -4,45 +4,18 @@
 
 #include <ctime>
 #include <fstream>
-#include <algorithm>
 #include <deque>
 #include <set>
 
 #include <iostream>
 #include <sstream>
-
-#include <stdarg.h>
-
-#include <functional>
-#include <memory.h>
-#include <stdio.h>
-
-#include <assert.h>
-#include <float.h>
+#include <cassert>
 
 #include "ExternalAI/Interface/aidefines.h" // SNPRINTF, STRCPY, ...
 
 
-#if defined WIN32
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#else // defined WIN32
-#include <sys/time.h>
-
-#define LARGE_INTEGER struct timeval
-static inline void itoa(int i, char* buf, int size) {
-	SNPRINTF(buf, size, "%d", i);
-}
-#endif // defined WIN32
-
-
-
 // Spring Standard Header
 #include "System/StdAfx.h"
-
 
 // Spring Component Registration System Headers
 #include "creg/creg.h"

@@ -181,6 +181,7 @@ void CBuildUp::Buildup(int frame) {
 				// only reclaim features during odd frames so we don't
 				// spend the entire game just chasing after rocks etc.
 				// (problem on Cooper Hill and similar maps)
+				// FIXME: not happening often enough during res. stalls
 				const bool reclaimFeature = ((frame & 1) && ai->MyUnits[builderID]->ReclaimBestFeature(true));
 
 				if (!reclaimFeature) {
@@ -295,7 +296,7 @@ void CBuildUp::FactoryCycle(int frame) {
 		// pick the i-th idle factory we have
 		int producedCat         = LASTCATEGORY;
 		const int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
-		const bool isHub        = (ai->MyUnits[factoryUnitID]->isHub());
+		const bool isHub        = ai->MyUnits[factoryUnitID]->isHub();
 		const UnitDef* factDef  = ai->MyUnits[factoryUnitID]->def();
 
 		// assume that factories with tech-level TL > 0 are
@@ -312,7 +313,7 @@ void CBuildUp::FactoryCycle(int frame) {
 				// if we are a hub then assume we can only construct
 				// factories and some other types of static buildings
 				// note: not always true, in Evolution the "commander"
-				// (starting factory unit) can construct mobile units!
+				// (starting factory unit) can construct mobile units
 				if (factDef->isCommander) {
 					producedCat = CAT_BUILDER;
 					builderTimer = 0;
@@ -349,11 +350,26 @@ void CBuildUp::FactoryCycle(int frame) {
 
 			if (udef) {
 				if (isHub) {
-					bool factFeasM = ai->math->MFeasibleConstruction(factDef, udef);
-					bool factFeasE = ai->math->EFeasibleConstruction(factDef, udef);
-					bool factFeas = factFeasM && factFeasE;
-					if (factFeas) {
-						(ai->MyUnits[factoryUnitID])->HubBuild(udef);
+					const bool factFeasM = ai->math->MFeasibleConstruction(factDef, udef);
+					const bool factFeasE = ai->math->EFeasibleConstruction(factDef, udef);
+
+					if (factFeasM && factFeasE) {
+						bool            skip = false;
+						const float3&    pos = ai->MyUnits[factoryUnitID]->pos();
+						const float      rad = ai->cb->GetUnitDef(factoryUnitID)->buildDistance;
+						const int     nUnits = ai->cb->GetFriendlyUnits(&ai->unitIDs[0], pos, rad * 2.0f);
+
+						for (int i = 0; i < nUnits; i++) {
+							if (udef == ai->cb->GetUnitDef(ai->unitIDs[i])) {
+								// already have a factory of the type we
+								// want to build nearby, skip the order
+								skip = true; break;
+							}
+						}
+
+						if (!skip) {
+							(ai->MyUnits[factoryUnitID])->HubBuild(udef);
+						}
 					}
 				} else {
 					(ai->MyUnits[factoryUnitID])->FactoryBuild(udef);
@@ -385,11 +401,10 @@ void CBuildUp::NukeSiloCycle(void) {
 
 void CBuildUp::FallbackBuild(int builderID, int failedCat) {
 	// called if an idle builder was selected to construct
-	// some category of unit, but builder not capable of
-	// constructing anything of that category (note that
+	// some category of unit, but the builder was incapable
+	// of constructing anything of that category (note that
 	// if AI is swimming in resources then most L1 builders
 	// will be used in assisting roles)
-
 	bool b1 = ai->uh->BuildTaskAddBuilder(builderID, CAT_MEX);
 	bool b2 = false;
 	bool b3 = false;
@@ -515,7 +530,7 @@ bool CBuildUp::BuildUpgradeExtractor(int builderID) {
 			const UnitDef* oldMex = ai->cb->GetUnitDef(oldMexID);
 
 			if (oldMex) {
-				if ((mexDef->extractsMetal / oldMex->extractsMetal) >= 2.0f) {
+				if ((mexDef->extractsMetal / oldMex->extractsMetal) >= 1.5f) {
 					return (ai->MyUnits[builderID]->Upgrade(oldMexID, mexDef));
 				}
 			}

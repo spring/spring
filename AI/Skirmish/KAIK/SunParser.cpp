@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include "SunParser.h"
 
 CSunParser::CSunParser(AIClasses* ai) {

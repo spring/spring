@@ -40,6 +40,9 @@
 #define ERRORVECTOR		float3(-1, 0, 0)
 
 // Maths
+#define MY_FLT_MAX		3.40282347e+38F
+#define MY_FLT_MIN		1.17549435e-38F
+
 #define DEG2RAD			0.01745329252f
 #define RAD2DEG			57.2957795f
 

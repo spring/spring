@@ -48,8 +48,6 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 	float3 bestSpot = ERRORVECTOR;
 
 	if (VectoredSpots.size()) {
-		int enemies[MAX_UNITS];
-
 		for (unsigned int i = 0; i != VectoredSpots.size(); i++) {
 			spotCoords = ai->cb->ClosestBuildSite(extractor, VectoredSpots[i], MaxDivergence, 2);
 
@@ -57,7 +55,7 @@ float3 CMetalMap::GetNearestMetalSpot(int builderid, const UnitDef* extractor) {
 				float distance = spotCoords.distance2D(ai->cb->GetUnitPos(builderid)) + 150;
 				float myThreat = ai->tm->ThreatAtThisPoint(VectoredSpots[i]);
 				float spotScore = VectoredSpots[i].y / distance / (myThreat + 10);
-				int numEnemies = ai->cheat->GetEnemyUnits(enemies, VectoredSpots[i], XtractorRadius * 2);
+				int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0], VectoredSpots[i], XtractorRadius * 2);
 
 				// NOTE: threat at VectoredSpots[i] is determined
 				// by presence of ARMED enemy units or buildings

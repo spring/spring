@@ -103,7 +103,7 @@ void CSpotFinder::MakeCachePoints()
 	for (int y = 0; y < MapHeight / CACHEFACTOR; y++) {
 		for (int x = 0; x < MapWidth / CACHEFACTOR; x++) {
 			int cacheIndex = y * MapWidth/CACHEFACTOR + x;
-			cachePoints[cacheIndex].maxValueInBox = FLT_MIN;
+			cachePoints[cacheIndex].maxValueInBox = MY_FLT_MIN;
 			cachePoints[cacheIndex].isValid = true;
 		}
 	}
@@ -325,7 +325,7 @@ void CSpotFinder::UpdateSumMapArea(int cacheX, int cacheY)
 	if (X_End >= MapWidth)
 		X_End = MapWidth - 1;
 
-	float currentBest = FLT_MIN;
+	float currentBest = MY_FLT_MIN;
 	int currentBestX = 0;
 	int currentBestY = 0;
 	int XtractorRadius = radius;
