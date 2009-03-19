@@ -441,15 +441,14 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
-	int enemies[MAX_UNITS];
-	int numEnemies = ai->cheat->GetEnemyUnits(enemies);
+	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
 	vector<int> enemiesOfType;
 	float score = 0.01f;
 	float totalCost = 0.01f;
 	enemiesOfType.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < numEnemies; i++) {
-		const UnitDef* udef = ai->cheat->GetUnitDef(enemies[i]);
+		const UnitDef* udef = ai->cheat->GetUnitDef(ai->unitIDs[i]);
 
 		if (udef) {
 			enemiesOfType[udef->id]++;
@@ -492,8 +491,7 @@ void CUnitTable::UpdateChokePointArray() {
 	EnemyCostsByMoveType.resize(ai->pather->NumOfMoveTypes);
 	vector<int> enemiesOfType;
 	float totalCost = 1.0f;
-	int enemies[MAX_UNITS];
-	int numEnemies = ai->cheat->GetEnemyUnits(enemies);
+	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
 	enemiesOfType.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < ai->pather->totalcells; i++) {
@@ -503,7 +501,7 @@ void CUnitTable::UpdateChokePointArray() {
 		EnemyCostsByMoveType[i] = 0;
 	}
 	for (int i = 0; i < numEnemies; i++) {
-		enemiesOfType[ai->cheat->GetUnitDef(enemies[i])->id]++;
+		enemiesOfType[ai->cheat->GetUnitDef(ai->unitIDs[i])->id]++;
 	}
 
 	for (unsigned int i = 1; i < enemiesOfType.size(); i++) {
@@ -882,9 +880,12 @@ void CUnitTable::Init() {
 				attackerParser.LoadVirtualFile(me->def->filename.c_str());
 
 				for (unsigned int w = 0; w != me->def->weapons.size(); w++) {
-					char weaponnumber[10] = "";
-					itoa(w, weaponnumber, 10);
-					attackerParser.GetDef(me->TargetCategories[w], "-1", string("UNITINFO\\OnlyTargetCategory") + string(weaponnumber));
+					std::stringstream ss;
+						ss.str("");
+						ss << "UNITINFO\\OnlyTargetCategory";
+						ss << w;
+
+					attackerParser.GetDef(me->TargetCategories[w], "-1", ss.str());
 				}
 			}
 
@@ -1116,7 +1117,7 @@ float CUnitTable::GetMaxRange(const UnitDef* unit) {
 }
 
 float CUnitTable::GetMinRange(const UnitDef* unit) {
-	float min_range = FLT_MAX;
+	float min_range = MY_FLT_MAX;
 
 	for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
 		if ((i->def->range) < min_range)

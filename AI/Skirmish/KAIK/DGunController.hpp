@@ -85,7 +85,6 @@ class DGunController {
 		AIClasses* ai;
 		const UnitDef* commanderUD;
 		const WeaponDef* commanderWD;
-		std::vector<int> units;
 		ControllerState state;
 		int commanderID;
 };

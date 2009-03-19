@@ -1,8 +1,18 @@
 #ifndef MATHS_H
 #define MATHS_H
 
-
 #include "GlobalAI.h"
+
+#if defined WIN32
+  #ifndef NOMINMAX
+    #define NOMINMAX
+  #endif
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
+#else
+  #include <sys/time.h>
+  #define LARGE_INTEGER struct timeval
+#endif
 
 class CMaths {
 	public:

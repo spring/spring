@@ -32,7 +32,6 @@ DGunController::DGunController(AIClasses* ai) {
 	if (ai)
 		CALLOUT = ai->cb;
 
-	units.resize(MAX_UNITS, 0);
 	srand((unsigned) time(0));
 }
 
@@ -125,21 +124,21 @@ void DGunController::selectTarget(unsigned int currentFrame) {
 
 	// get all units within immediate (non-walking) dgun range
 	float maxRange = CALLOUT->GetUnitMaxRange(commanderID);
-	int numUnits = CALLOUT->GetEnemyUnits(&units[0], commanderPos, maxRange * 0.9f);
+	int numUnits = CALLOUT->GetEnemyUnits(&ai->unitIDs[0], commanderPos, maxRange * 0.9f);
 
 	for (int i = 0; i < numUnits; i++) {
 		// if enemy unit with valid ID found in array
-		if (units[i] > 0) {
+		if (ai->unitIDs[i] > 0) {
 			// check if unit still alive (needed since when UnitDestroyed()
 			// triggered GetEnemyUnits() is not immediately updated as well)
-			if (CALLOUT->GetUnitHealth(units[i]) > 0) {
-				const UnitDef* attackerDef = CALLOUT->GetUnitDef(units[i]);
+			if (CALLOUT->GetUnitHealth(ai->unitIDs[i]) > 0) {
+				const UnitDef* attackerDef = CALLOUT->GetUnitDef(ai->unitIDs[i]);
 
 				// don't directly pop enemy commanders
 				if (attackerDef && !attackerDef->isCommander && !attackerDef->canDGun) {
 					state.targetSelectionFrame = currentFrame;
-					state.targetID = units[i];
-					state.oldTargetPos = CALLOUT->GetUnitPos(units[i]);
+					state.targetID = ai->unitIDs[i];
+					state.oldTargetPos = CALLOUT->GetUnitPos(ai->unitIDs[i]);
 					return;
 				}
 			}

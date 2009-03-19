@@ -45,6 +45,8 @@ struct AIClasses {
 	vector<CUNIT*>		MyUnits;
 	std::ofstream*		LOGGER;
 	DGunController*		dgunController;
+
+	std::vector<int>	unitIDs;
 };
 
 struct UnitType {

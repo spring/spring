@@ -83,7 +83,7 @@ void CPathFinder::Init() {
 	// FIXME: can be a .lua script now
 	ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf");
 
-	while(Valuestring != errorstring) {
+	while (Valuestring != errorstring) {
 		SNPRINTF(k, 50, "%i", NumOfMoveTypes);
 		ai->parser->GetDef(Valuestring, errorstring, string(sectionstring + k + "\\Name"));
 
@@ -110,8 +110,6 @@ void CPathFinder::Init() {
 	MoveArrays.resize(NumOfMoveTypes);
 
 	for (int m = 0; m < NumOfMoveTypes; m++) {
-		char k[10];
-		itoa (m, k, 10);
 		MoveArrays[m] = new bool[totalcells];
 
 		for (int i = 0; i < totalcells; i++) {
@@ -146,8 +144,6 @@ void CPathFinder::Init() {
 			int k = PathMapXSize * (PathMapYSize - 1) + i;
 			MoveArrays[m][k] = false;
 		}
-
-		itoa (m, k, 10);
 	}
 }
 
@@ -185,8 +181,6 @@ void CPathFinder::CreateDefenseMatrix() {
 		float3 mypos = ai->cb->GetUnitPos(ai->uh->AllUnitsByCat[CAT_BUILDER].front());
 		ai->dm->ChokeMapsByMovetype[m].resize(totalcells);
 		int reruns = 35;
-		char k[10];
-		itoa(m, k, 10);
 
 		micropather->SetMapData(MoveArrays[m], &ai->dm->ChokeMapsByMovetype[m][0], PathMapXSize, PathMapYSize);
 		double pathCostSum = 0.0;
