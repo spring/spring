@@ -27,7 +27,7 @@ else (UNIX AND NOT MINGW)
 
 	include_directories(${MINGWLIBS}/include)
 	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
-	list (APPEND CMAKE_FIND_ROOT_PATH ${MINGWLIBS})
+	set (CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
 endif (UNIX AND NOT MINGW)
 
 ### Usr-definable build options
