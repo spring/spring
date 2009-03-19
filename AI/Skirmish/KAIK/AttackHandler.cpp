@@ -855,8 +855,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 			if ((enemiesInArea > 0) && group_in->Size() >= 4 && (group_in->Power() > powerOfEnemies * 1.25f)) {
 				// assign target to this group
 				group_in->AssignTarget(pathToTarget, pathToTarget.back(), ATTACKED_AREA_RADIUS);
-			}
-			else {
+			} else {
 				// group too weak, forget about this target
 				group_in->ClearTarget();
 			}
@@ -946,6 +945,7 @@ void CAttackHandler::Update(int frameNr) {
 	if (frameNr % 30 == 0) {
 		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			int stuckUnit = it->PopStuckUnit();
+
 			if (stuckUnit != -1 && ai->cb->GetUnitDef(stuckUnit) != NULL) {
 				pair<int, float3> foo;
 				foo.first = stuckUnit;
@@ -975,8 +975,8 @@ void CAttackHandler::Update(int frameNr) {
 		CAttackGroup* existingGroup = NULL;
 		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			if (it->Size() < 16 && it->defending && this->DistanceToBase(it->GetGroupPos()) < 300) {
-				existingGroup = &(*it);
 				// KLOOTNOTE: pick the first valid group, not the last
+				existingGroup = &(*it);
 				break;
 			}
 		}
