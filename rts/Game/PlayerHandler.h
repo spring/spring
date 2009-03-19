@@ -43,20 +43,16 @@ public:
 
 	void PlayerLeft(int playernum, unsigned char reason);
 
-	int ActivePlayers() const { return activePlayers; }
-	int TotalPlayers() const { return players.size(); };
+	/**
+	 * @brief Nubmer of players the game was created for
+	 * 
+	 * Constant at runtime
+	 */
+	int ActivePlayers() const { return players.size(); };
 
 	void GameFrame(int frameNum);
 
 private:
-
-	/**
-	 * @brief active players
-	 *
-	 * The number of active players
-	 */
-	int activePlayers;
-
 	typedef std::vector<CPlayer> playerVec;
 	/**
 	 * @brief players
