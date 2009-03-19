@@ -78,32 +78,34 @@ void CUnitHandler::IdleUnitUpdate(int frame) {
 	// make sure that all the builders are in action (hack?)
 	if (frame % 15 == 0) {
 		for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
-			// the new test
 			if ((*i)->idleStartFrame != -2) {
 				// the brand new builders must be filtered still
 				bool ans = VerifyOrder(*i);
-				const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands((*i)->builderID);
+				const int builderID = (*i)->builderID;
+				const CCommandQueue* myCommands = ai->cb->GetCurrentUnitCommands(builderID);
 				Command c;
 
-				if (mycommands->size() > 0)
-					c = mycommands->front();
+				if (myCommands->size() > 0) {
+					c = myCommands->front();
+				}
 
 				// two sec delay is ok
 				if (((*i)->commandOrderPushFrame + LAG_ACCEPTANCE) < frame) {
 					if (!ans) {
-						float3 pos = ai->cb->GetUnitPos((*i)->builderID);
+						float3 pos = ai->cb->GetUnitPos(builderID);
 
 						std::stringstream msg;
 							msg << "[CUnitHandler::IdleUnitUpdate()] frame " << frame << "\n";
-							msg << "\tfailed to verify order for builder " << ((*i)->builderID) << "\n";
+							msg << "\tfailed to verify order for builder " << builderID;
+							msg << " with " << (myCommands->size()) << " remaining commands\n";
 						L(msg.str());
 
 						ClearOrder(*i, false);
 
-						if (!mycommands->empty()) {
+						if (!myCommands->empty()) {
 							DecodeOrder(*i, true);
 						} else {
-							IdleUnitAdd((*i)->builderID, frame);
+							IdleUnitAdd(builderID, frame);
 						}
 					}
 				}
@@ -137,13 +139,13 @@ void CUnitHandler::UnitCreated(int unitID) {
 
 		if (ucat == CAT_BUILDER) {
 			// add the new builder
-			BuilderTracker* builderTracker = new BuilderTracker;
-			builderTracker->builderID = unitID;
-			builderTracker->buildTaskId = 0;
-			builderTracker->taskPlanId = 0;
-			builderTracker->factoryId = 0;
-			builderTracker->stuckCount = 0;
-			builderTracker->customOrderId = 0;
+			BuilderTracker* builderTracker = new BuilderTracker();
+			builderTracker->builderID      = unitID;
+			builderTracker->buildTaskId    = 0;
+			builderTracker->taskPlanId     = 0;
+			builderTracker->factoryId      = 0;
+			builderTracker->stuckCount     = 0;
+			builderTracker->customOrderId  = 0;
 			// under construction
 			builderTracker->commandOrderPushFrame = -2;
 			builderTracker->categoryMaker = -1;
@@ -225,9 +227,9 @@ void CUnitHandler::IdleUnitAdd(int unit, int frame) {
 	int category = ai->ut->GetCategory(unit);
 
 	if (category != -1) {
-		const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(unit);
+		const CCommandQueue* myCommands = ai->cb->GetCurrentUnitCommands(unit);
 
-		if (mycommands->empty()) {
+		if (myCommands->empty()) {
 			if (category == CAT_BUILDER) {
 				BuilderTracker* builderTracker = GetBuilderTracker(unit);
 				// add clear here
@@ -250,16 +252,16 @@ void CUnitHandler::IdleUnitAdd(int unit, int frame) {
 			integer2 myunit(unit, LIMBOTIME);
 			Limbo.remove(myunit);
 			Limbo.push_back(myunit);
-		}
-		else {
-			// the unit has orders still
+		} else {
+			// the unit has orders still, so should not be idle
 			if (category == CAT_BUILDER) {
 				if (false) {
-					// KLOOTNOTE: somehow we are now reaching this branch
+					// KLOOTNOTE: somehow we are reaching this branch
 					// on initialization when USE_CREG is not defined,
 					// mycommands->size() returns garbage?
-					BuilderTracker* builderTracker = GetBuilderTracker(unit);
-					DecodeOrder(builderTracker, true);
+					//
+					// BuilderTracker* builderTracker = GetBuilderTracker(unit);
+					// DecodeOrder(builderTracker, true);
 				}
 			}
 		}
@@ -291,19 +293,15 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 			// test that this builder is on repair on this unit
 			BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
 
-			if (
-					(
-						(c->id == CMD_REPAIR)
-						&& (c->params[0] == builderTracker->buildTaskId)
-					)
-					||
-					(
-						(c->id == -buildTask->def->id)
-						&& (c->params[0] == buildTask->pos.x)
-						&& (c->params[2] == buildTask->pos.z)
-					)) {
-				commandFound = true;
-			} else {
+			commandFound =
+				((c->id        == CMD_REPAIR                 ) &&
+				 (c->params[0] == builderTracker->buildTaskId)) ||
+
+				((c->id       == -buildTask->def->id) &&
+				 (c->params[0] == buildTask->pos.x  ) &&
+				 (c->params[2] == buildTask->pos.z  ));
+
+			if (!commandFound) {
 				return false;
 			}
 		}
@@ -364,13 +362,13 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) {
 	bool hit = false;
 
-	const int frame       = ai->cb->GetCurrentFrame();
-	const int builderID   = builderTracker->builderID;
-	const int buildTaskID = builderTracker->buildTaskId;
-	const int factoryID   = builderTracker->factoryId;
+	const int frame        = ai->cb->GetCurrentFrame();
+	const int builderID    = builderTracker->builderID;
+	const int buildTaskID  = builderTracker->buildTaskId;
+	const int factoryID    = builderTracker->factoryId;
+	const CCommandQueue* q = ai->cb->GetCurrentUnitCommands(builderID);
 
-	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderID);
-	assert(mycommands->empty() || !reportError);
+	assert(q->empty() || !reportError);
 
 	if (buildTaskID != 0) {
 		hit = true;
@@ -454,25 +452,25 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 
 
 void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError) {
-	const int builderID = builderTracker->builderID;
-	// take a look and see what it's doing
-	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderID);
+	const int            frame     = ai->cb->GetCurrentFrame();
+	const int            builderID = builderTracker->builderID;
+	const CCommandQueue* builderQ  = ai->cb->GetCurrentUnitCommands(builderID);
 
-	if (mycommands->size() > 0) {
+	if (builderQ->size() > 0) {
 		// builder has orders
-		const Command* c   = &mycommands->front();
+		const Command* c   = &builderQ->front();
 		const int      n   = c->params.size();
 		const int      cID = c->id;
 
-		if (mycommands->size() == 2 && cID == CMD_MOVE) {
+		if (builderQ->size() == 2 && cID == CMD_MOVE) {
 			// it might have a move order before the real order,
 			// take command nr. 2 if nr. 1 is a move order
-			c = &mycommands->back();
+			c = &builderQ->back();
 		}
 
 		if (reportError) {
 			std::stringstream msg;
-				msg << "[CUnitHandler::DecodeOrder()] frame " << (ai->cb->GetCurrentFrame()) << "\n";
+				msg << "[CUnitHandler::DecodeOrder()] frame " << frame << "\n";
 				msg << "\tbuilder " << builderID << " claimed idle, but has";
 				msg << " command " << cID << " with " << n << " parameters";
 				msg << " (params[0]: " << ((n > 0)? c->params[0]: -1) << ")\n";
@@ -553,10 +551,16 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 				builderTracker->idleStartFrame = -1;
 			}
 		}
-	}
-	else {
+	} else {
 		// error: this function needs a builder with orders
-		assert(false);
+		// should not be possible because IdleUnitUpdate()
+		// calls us only if a unit's command-queue is NOT
+		// empty?
+		// assert(false);
+		std::stringstream msg;
+			msg << "[CUnitHandler::DecodeOrder()] frame " << frame << "\n";
+			msg << "\tbuilder " << builderID << " should not have an empty queue!\n";
+		L(msg.str());
 	}
 }
 
@@ -704,6 +708,7 @@ void CUnitHandler::BuildTaskCreate(int id) {
 
 					// check what builder is doing
 					const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
+
 					if (mycommands->size() > 0) {
 						Command c = mycommands->front();
 
