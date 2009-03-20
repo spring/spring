@@ -296,8 +296,9 @@ void CBuildUp::FactoryCycle(int frame) {
 		// pick the i-th idle factory we have
 		int producedCat         = LASTCATEGORY;
 		const int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
-		const bool isHub        = ai->MyUnits[factoryUnitID]->isHub();
-		const UnitDef* factDef  = ai->MyUnits[factoryUnitID]->def();
+		const CUNIT* u          = ai->MyUnits[factoryUnitID];
+		const bool isHub        = u->isHub();
+		const UnitDef* factDef  = u->def();
 
 		// assume that factories with tech-level TL > 0 are
 		// useful to keep active and building for (TL * 30)
@@ -350,8 +351,6 @@ void CBuildUp::FactoryCycle(int frame) {
 
 			if (udef) {
 				if (isHub) {
-					CUNIT* u = ai->MyUnits[factoryUnitID];
-
 					const bool factFeasM = ai->math->MFeasibleConstruction(factDef, udef);
 					const bool factFeasE = ai->math->EFeasibleConstruction(factDef, udef);
 					const bool b0 = (producedCat == CAT_FACTORY && udef->canBeAssisted);

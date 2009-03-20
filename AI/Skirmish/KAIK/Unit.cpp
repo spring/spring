@@ -42,17 +42,17 @@ void CUNIT::PostLoad(void) {
 
 
 
-bool CUNIT::isHub(void) {
+bool CUNIT::isHub(void) const {
 	// look up the type of this unit via its unitdef ID,
 	// then check if it has been flagged as a hub or not
 	return (ai->ut->unitTypes[this->def()->id]).isHub;
 }
 
-const UnitDef* CUNIT::def() {
+const UnitDef* CUNIT::def() const {
 	return ai->cb->GetUnitDef(myid);
 }
 
-float3 CUNIT::pos() {
+float3 CUNIT::pos() const {
 	return ai->cb->GetUnitPos(myid);
 }
 
@@ -121,7 +121,7 @@ bool CUNIT::NukeSiloBuild(void) {
 
 
 
-int CUNIT::GetBestBuildFacing(float3& pos) {
+int CUNIT::GetBestBuildFacing(float3& pos) const {
 	int frame = (ai->cb)->GetCurrentFrame();
 	int mapWidth = (ai->cb)->GetMapWidth() * 8;
 	int mapHeight = (ai->cb)->GetMapHeight() * 8;
@@ -185,7 +185,7 @@ bool CUNIT::Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int sepa
 
 
 // tell a factory to build something
-bool CUNIT::FactoryBuild(const UnitDef* toBuild) {
+bool CUNIT::FactoryBuild(const UnitDef* toBuild) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c;
 	c.id = -(toBuild->id);
@@ -196,7 +196,7 @@ bool CUNIT::FactoryBuild(const UnitDef* toBuild) {
 }
 
 // tell a hub to build something
-bool CUNIT::HubBuild(const UnitDef* toBuild) {
+bool CUNIT::HubBuild(const UnitDef* toBuild) const {
 	int hub = myid;
 	assert(ai->cb->GetUnitDef(hub) != NULL);
 
@@ -296,7 +296,7 @@ bool CUNIT::ReclaimBestFeature(bool metal, float radius) {
 }
 
 
-Command CUNIT::MakePosCommand(int id, float3 pos, float radius, int facing) {
+Command CUNIT::MakePosCommand(int id, float3 pos, float radius, int facing) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 
 	if (pos.x > ai->cb->GetMapWidth() * 8)
@@ -487,7 +487,7 @@ bool CUNIT::MoveShift(float3 pos) {
 	return false;
 }
 
-bool CUNIT::Patrol(float3 pos) {
+bool CUNIT::Patrol(float3 pos) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_PATROL, pos);
 
