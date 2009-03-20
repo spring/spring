@@ -268,8 +268,8 @@ void CBuildUp::Buildup(int frame) {
 							} else {
 								std::stringstream msg;
 									msg << "[CBuildUp::BuildUp()] frame " << frame << "\n";
-									msg << "\tbuilder " << builderID << " is currently in limbo; "
-									msg << "total number of idle builders: " << nIdleBuilders << "\n";
+									msg << "\tbuilder " << builderID << " is currently in limbo";
+									msg << " (total number of idle builders: " << nIdleBuilders << ")\n";
 								L(msg.str());
 							}
 						}
