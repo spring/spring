@@ -266,9 +266,11 @@ void CBuildUp::Buildup(int frame) {
 							if (ai->uh->AllUnitsByCat[CAT_FACTORY].size() < 1 || frame > 18000) {
 								BuildNow(builderID, CAT_FACTORY, factoryDef);
 							} else {
-								L("[CBuildUp::BuildUp()] frame " << frame);
-								L("\tbuilder " << builderID << " is currently in limbo");
-								L("\ttotal number of idle builders: " << nIdleBuilders);
+								std::stringstream msg;
+									msg << "[CBuildUp::BuildUp()] frame " << frame << "\n";
+									msg << "\tbuilder " << builderID << " is currently in limbo; "
+									msg << "total number of idle builders: " << nIdleBuilders << "\n";
+								L(msg.str());
 							}
 						}
 					}
