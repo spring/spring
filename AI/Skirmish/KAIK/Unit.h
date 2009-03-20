@@ -96,7 +96,7 @@ class CUNIT {
 
 
 	private:
-		AIClasses *ai;
+		AIClasses* ai;
 
 		// command generators
 		Command MakePosCommand(int cmdID, float3 pos, float radius = -1.0f, int facing = -1) const;
