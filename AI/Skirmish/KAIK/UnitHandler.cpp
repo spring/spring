@@ -1021,16 +1021,21 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 	}
 
 
-	bool existingtp = false;
+	bool existingTP = false;
 	for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
-		if (pos.distance2D(i->pos) < 20 && builtdef == i->def) {
+		if (pos.distance2D(i->pos) < 20.0f && builtdef == i->def) {
 			// make sure there are no other TaskPlans
-			assert(!existingtp);
-			existingtp = true;
-			TaskPlanAdd(&*i, builderTracker);
+			if (!existingTP) {
+				existingTP = true;
+				TaskPlanAdd(&*i, builderTracker);
+			} else {
+				L("[CUnitHandler::TaskPlanCreate()] frame " << ai->cb->GetCurrentFrame());
+				L("\ttask-plan for \"" << builtdef->humanName << "\" already present");
+				L(" at position <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n");
+			}
 		}
 	}
-	if (!existingtp) {
+	if (!existingTP) {
 		TaskPlan tp;
 		tp.pos = pos;
 		tp.def = builtdef;
@@ -1040,7 +1045,7 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 		TaskPlanAdd(&tp, builderTracker);
 
 		if (category == CAT_DEFENCE)
-			ai->dm->AddDefense(pos,builtdef);
+			ai->dm->AddDefense(pos, builtdef);
 
 		TaskPlans[category].push_back(tp);
 	}
@@ -1283,7 +1288,7 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 			// of all involved parties, and silently expects that
 			// building _another_ factory would always be better
 			// than assisting it further
-			if (totalBuilderCost < (ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO * 2.0f)) {
+			if (totalBuilderCost < (ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO * 3.0f)) {
 				builderTracker->factoryId = i->id;
 				i->supportbuilders.push_back(builderTracker->builderID);
 				i->supportBuilderTrackers.push_back(builderTracker);
