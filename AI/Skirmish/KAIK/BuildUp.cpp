@@ -350,29 +350,22 @@ void CBuildUp::FactoryCycle(int frame) {
 
 			if (udef) {
 				if (isHub) {
+					CUNIT* u = ai->MyUnits[factoryUnitID];
+
 					const bool factFeasM = ai->math->MFeasibleConstruction(factDef, udef);
 					const bool factFeasE = ai->math->EFeasibleConstruction(factDef, udef);
+					const bool b0 = (category == CAT_FACTORY && udef->canBeAssisted);
+					const bool b1 = ((ai->uh->AllUnitsByType[udef->id]).size() == 2);
 
 					if (factFeasM && factFeasE) {
-						bool            skip = false;
-						const float3&    pos = ai->MyUnits[factoryUnitID]->pos();
-						const float      rad = ai->cb->GetUnitDef(factoryUnitID)->buildDistance;
-						const int     nUnits = ai->cb->GetFriendlyUnits(&ai->unitIDs[0], pos, rad * 2.0f);
-
-						for (int i = 0; i < nUnits; i++) {
-							if (udef == ai->cb->GetUnitDef(ai->unitIDs[i])) {
-								// already have a factory of the type we
-								// want to build nearby, skip the order
-								skip = true; break;
-							}
-						}
-
-						if (!skip) {
-							(ai->MyUnits[factoryUnitID])->HubBuild(udef);
+						if (!(b0 && b1)) {
+							u->HubBuild(udef);
+						} else {
+							u->Patrol(u->pos());
 						}
 					}
 				} else {
-					(ai->MyUnits[factoryUnitID])->FactoryBuild(udef);
+					u->FactoryBuild(udef);
 				}
 			}
 		}
@@ -489,7 +482,13 @@ bool CBuildUp::BuildNow(int builderID, int category) {
 	bool r = false;
 
 	if (building) {
-		r = ai->MyUnits[builderID]->Build_ClosestSite(building, ai->cb->GetUnitPos(builderID));
+		// cap the number of assistable factories
+		const bool b0 = (category == CAT_FACTORY && building->canBeAssisted);
+		const bool b1 = ((ai->uh->AllUnitsByType[building->id]).size() == 2);
+
+		if (!(b0 && b1)) {
+			r = ai->MyUnits[builderID]->Build_ClosestSite(building, ai->cb->GetUnitPos(builderID));
+		}
 	} else {
 		FallbackBuild(builderID, category);
 	}
