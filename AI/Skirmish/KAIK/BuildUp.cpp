@@ -354,7 +354,7 @@ void CBuildUp::FactoryCycle(int frame) {
 
 					const bool factFeasM = ai->math->MFeasibleConstruction(factDef, udef);
 					const bool factFeasE = ai->math->EFeasibleConstruction(factDef, udef);
-					const bool b0 = (category == CAT_FACTORY && udef->canBeAssisted);
+					const bool b0 = (producedCat == CAT_FACTORY && udef->canBeAssisted);
 					const bool b1 = ((ai->uh->AllUnitsByType[udef->id]).size() == 2);
 
 					if (factFeasM && factFeasE) {
