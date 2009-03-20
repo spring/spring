@@ -675,6 +675,7 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 
 			if (unitcounter > 0) {
 				benefit /= (unitcounter * pow(float(ai->uh->AllUnitsByType[udef->id].size() + 1), 3.0f));
+				benefit /= ((m > 0)? (m * 2.0f): 1.0f);
 			} else {
 				benefit = 0.0f;
 			}
