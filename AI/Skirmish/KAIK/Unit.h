@@ -20,11 +20,11 @@ class CUNIT {
 		void PostLoad();
 
 		// misc. info
-		float3 pos();
+		float3 pos() const;
 		float Health();
 		int category();
 
-		const UnitDef* def();
+		const UnitDef* def() const;
 		int myid;
 		// 0: mine, 1: allied, 2: enemy -1: non-existant
 		int owner();
@@ -46,14 +46,14 @@ class CUNIT {
 		bool ReclaimBestFeature(bool metal, float radius = 1000);
 
 		// construction
-		int GetBestBuildFacing(float3& pos);
+		int GetBestBuildFacing(float3& pos) const;
 		bool Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int separation = DEFCBS_SEPARATION, float radius = DEFCBS_RADIUS);
-		bool FactoryBuild(const UnitDef* built);
+		bool FactoryBuild(const UnitDef* built) const;
 
 		// nuke- and hub-related functions
 		bool NukeSiloBuild(void);
-		bool isHub(void);
-		bool HubBuild(const UnitDef* built);
+		bool isHub(void) const;
+		bool HubBuild(const UnitDef* built) const;
 
 
 		// target-based abilities
@@ -71,7 +71,7 @@ class CUNIT {
 		bool BuildShift(float3 pos, const UnitDef* unit, int facing);
 		bool Move(float3 pos);
 		bool MoveShift(float3 pos);
-		bool Patrol(float3 pos);
+		bool Patrol(float3 pos) const;
 		bool PatrolShift(float3 pos);
 
 		// radius abilities
@@ -99,7 +99,7 @@ class CUNIT {
 		AIClasses *ai;
 
 		// command generators
-		Command MakePosCommand(int cmdID, float3 pos, float radius = -1.0f, int facing = -1);
+		Command MakePosCommand(int cmdID, float3 pos, float radius = -1.0f, int facing = -1) const;
 		Command MakeIntCommand(int cmdID, int param, int maxParam = 4999);
 };
 
