@@ -1029,9 +1029,11 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 				existingTP = true;
 				TaskPlanAdd(&*i, builderTracker);
 			} else {
-				L("[CUnitHandler::TaskPlanCreate()] frame " << ai->cb->GetCurrentFrame());
-				L("\ttask-plan for \"" << builtdef->humanName << "\" already present");
-				L(" at position <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n");
+				std::stringstream msg;
+					msg << "[CUnitHandler::TaskPlanCreate()] frame " << ai->cb->GetCurrentFrame() << "\n";
+					msg << "\ttask-plan for \"" << builtdef->humanName << "\" already present";
+					msg << " at position <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
+				L(msg.str());
 			}
 		}
 	}
