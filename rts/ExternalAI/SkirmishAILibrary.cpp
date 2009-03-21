@@ -85,5 +85,16 @@ void CSkirmishAILibrary::Release(int teamId) const {
 
 int CSkirmishAILibrary::HandleEvent(int teamId, int topic, const void* data)
 		const {
-	return sSAI.handleEvent(teamId, topic, data);
+
+	int ret = sSAI.handleEvent(teamId, topic, data);
+
+	if (ret != 0) {
+		// event handling failed!
+		logOutput.Print(
+				"Warning: AI for team %i failed handling event with topic %i"
+				", error: %i",
+				teamId, topic, ret);
+	}
+
+	return ret;
 }
