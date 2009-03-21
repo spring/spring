@@ -1065,52 +1065,76 @@ const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 	return searchOffsets;
 }
 
-float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef,float3 pos,float searchRadius,int minDist, int facing)
+float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing)
 {
-	if (!unitdef) return float3(-1.0f,0.0f,0.0f);
-	CFeature* feature;
-	int allyteam=teamHandler->AllyTeam(team);
+	if (!unitdef) {
+		return float3(-1.0f, 0.0f, 0.0f);
+	}
 
-	int endr = (int)(searchRadius / (SQUARE_SIZE*2));
-	const vector<SearchOffset>& ofs = GetSearchOffsetTable (endr);
+	CFeature* feature = NULL;
 
-	for(int so=0;so<endr*endr*4;so++) {
-		float x = pos.x+ofs[so].dx*SQUARE_SIZE*2;
-		float z = pos.z+ofs[so].dy*SQUARE_SIZE*2;
-		BuildInfo bi(unitdef, float3(x,0,z), facing);
-		bi.pos = helper->Pos2BuildPos (bi);
-		if(uh->TestUnitBuildSquare(bi,feature,allyteam) && (!feature || feature->allyteam!=allyteam))
-		{
-			int xs=(int)(x/SQUARE_SIZE);
-			int zs=(int)(z/SQUARE_SIZE);
-			bool good=true;
-			int xsize=bi.GetXSize();
-			int zsize=bi.GetZSize();
-			for(int z2=std::max(0,zs-zsize/2-minDist);z2<std::min(gs->mapy,zs+(zsize+1)/2+minDist);++z2){
-				for(int x2=std::max(0,xs-xsize/2-minDist);x2<std::min(gs->mapx,xs+(xsize+1)/2+minDist);++x2){
+	const int allyteam = teamHandler->AllyTeam(team);
+	const int endr = int(searchRadius / (SQUARE_SIZE * 2));
+	const vector<SearchOffset>& ofs = GetSearchOffsetTable(endr);
+
+	for (int so = 0; so < endr * endr * 4; so++) {
+		float x = pos.x + ofs[so].dx * SQUARE_SIZE * 2;
+		float z = pos.z + ofs[so].dy * SQUARE_SIZE * 2;
+
+		BuildInfo bi(unitdef, float3(x, 0.0f, z), facing);
+		bi.pos = helper->Pos2BuildPos(bi);
+
+		if (uh->TestUnitBuildSquare(bi, feature, allyteam) && (!feature || feature->allyteam != allyteam)) {
+			const int xs = int(x / SQUARE_SIZE);
+			const int zs = int(z / SQUARE_SIZE);
+			const int xsize = bi.GetXSize();
+			const int zsize = bi.GetZSize();
+
+			bool good = true;
+
+			int z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist);
+			int z2Max = std::min(gs->mapy, zs + (zsize + 1) / 2 + minDist);
+			int x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist);
+			int x2Max = std::min(gs->mapx, xs + (xsize + 1) / 2 + minDist);
+
+			// check for nearby blocking features
+			for (int z2 = z2Min; z2 < z2Max; ++z2) {
+				for (int x2 = x2Min; x2 < x2Max; ++x2) {
 					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
-					if(so && so->immobile && !dynamic_cast<CFeature*>(so)){
-						good=false;
+
+					if (so && so->immobile && !dynamic_cast<CFeature*>(so)) {
+						good = false;
 						break;
 					}
 				}
 			}
-			//Checking factories near - factory can open yard for building
-			if (good) for(int z2=std::max(0,zs-zsize/2-minDist-2);z2<std::min(gs->mapy,zs+(zsize+1)/2+minDist+2);++z2){
-				for(int x2=std::max(0,xs-xsize/2-minDist-2);x2<std::min(gs->mapx,xs+(xsize+1)/2+minDist+2);++x2){
-					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
-					if(so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening){
-						good=false;
-						break;
+
+			if (good) {
+				z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist - 2);
+				z2Max = std::min(gs->mapy, zs + (zsize + 1) / 2 + minDist + 2);
+				x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist - 2);
+				x2Max = std::min(gs->mapx, xs + (xsize + 1) / 2 + minDist + 2);
+
+				// check for nearby factories with open yards
+				for (int z2 = z2Min; z2 < z2Max; ++z2) {
+					for (int x2 = x2Min; x2 < x2Max; ++x2) {
+						CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
+
+						if (so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening) {
+							good = false;
+							break;
+						}
 					}
 				}
 			}
-			if(good)
+
+			if (good) {
 				return bi.pos;
+			}
 		}
 	}
 
-	return float3(-1.0f,0.0f,0.0f);
+	return float3(-1.0f, 0.0f, 0.0f);
 }
 
 

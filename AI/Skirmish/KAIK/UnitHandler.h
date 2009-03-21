@@ -60,6 +60,12 @@ class CUnitHandler {
 		bool FactoryBuilderAdd(BuilderTracker* builderTracker);
 		void FactoryBuilderRemove(BuilderTracker* builderTracker);
 
+		UpgradeTask* CreateUpgradeTask(int oldBuildingID, const float3& oldBuildingPos, const UnitDef* newBuildingDef);
+		UpgradeTask* FindUpgradeTask(int oldBuildingID);
+		void RemoveUpgradeTask(UpgradeTask* task);
+		bool AddUpgradeTaskBuilder(UpgradeTask* task, int builderID);
+		void UpdateUpgradeTasks(int frame);
+
 		// use this to tell the tracker that the builder is on a reclaim job
 		void BuilderReclaimOrder(int builderId, float3 pos);
 
@@ -88,6 +94,8 @@ class CUnitHandler {
 	private:
 		AIClasses* ai;
 		int taskPlanCounter;
+
+		std::map<int, UpgradeTask*> upgradeTasks;
 };
 
 
