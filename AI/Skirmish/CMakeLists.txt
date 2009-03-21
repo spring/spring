@@ -311,34 +311,3 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 	install (FILES ${BUILD_DIR}/${JAR_FILE_BIN} DESTINATION ${NullOOJavaAI_DATA_DIR})
 	install (FILES ${BUILD_DIR}/${JAR_FILE_SRC} DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
-
-
-## JCAI
-# does currently not build in win32
-if (UNIX)
-	set(JCAI_SRC "${SKIRMISH_SRC}/JCAI")
-	if (BUILD_C_AIINTERFACE AND EXISTS ${JCAI_SRC})
-		set(JCAI_VERS "UNKNOWN_VERSION")
-		if (EXISTS ${JCAI_SRC}/VERSION)
-			file(STRINGS "${JCAI_SRC}/VERSION" JCAI_VERS LIMIT_COUNT 1)
-		endif (EXISTS ${JCAI_SRC}/VERSION)
-		#set(JCAI_TARGET "JCAI-${JCAI_VERS}")
-		set(JCAI_TARGET "JCAI")
-		set(JCAI_DATA_DIR ${SKIRMISH_DATA}/JCAI/${JCAI_VERS})
-		if (NOT SKIRMISHAI_FIND_QUIETLY)
-			message(STATUS "Found Skirmish AI: JCAI ${JCAI_VERS}")
-		endif (NOT SKIRMISHAI_FIND_QUIETLY)
-
-		# install data files
-		#install(DIRECTORY "${JCAI_SRC}/data/"
-		#		DESTINATION "${JCAI_DATA_DIR}")
-
-		aux_source_directory(${JCAI_SRC} jcai)
-		#add_library(${JCAI_TARGET} MODULE ${jcai})
-		#target_link_libraries(${JCAI_TARGET} legacycpp)
-		#set_target_properties(${JCAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
-		#set_target_properties(${JCAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "JCAI")
-		#install (TARGETS ${JCAI_TARGET} DESTINATION ${JCAI_DATA_DIR})
-	endif (BUILD_C_AIINTERFACE AND EXISTS ${JCAI_SRC})
-endif (UNIX)
-
