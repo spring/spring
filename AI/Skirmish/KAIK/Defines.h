@@ -6,7 +6,7 @@
 #define AI_VERSION_NUMBER aiexport_getVersion()
 //#define AI_VERSION_NUMBER "0.13"
 #define AI_NAME			std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
-#define AI_DATE			"20/10/2008"
+#define AI_DATE			"21/03/2009"
 #define AI_VERSION		AI_NAME + " (rev. " + AI_DATE + ")"
 #define AI_CREDITS		"(original developer: Krogothe, current maintainer: Kloot)"
 

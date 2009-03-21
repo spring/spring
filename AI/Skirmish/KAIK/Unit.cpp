@@ -57,7 +57,7 @@ float3 CUNIT::pos() const {
 }
 
 // 0: mine, 1: allied, 2: enemy -1: non-existant
-int CUNIT::owner() {
+int CUNIT::owner() const {
 	if (ai->cheat->GetUnitDef(myid)) {
 		if (def()) {
 			if (ai->cb->GetUnitTeam(myid) == ai->cb->GetMyTeam()) {
@@ -75,15 +75,10 @@ int CUNIT::owner() {
 }
 
 
-float CUNIT::Health() {
-	return ai->cb->GetUnitHealth(myid);
-}
+float CUNIT::Health() const { return ai->cb->GetUnitHealth(myid); }
+int CUNIT::category() const { return GCAT(myid); }
 
-int CUNIT::category() {
-	return GCAT(myid);
-}
-
-bool CUNIT::CanAttack(int otherUnit) {
+bool CUNIT::CanAttack(int otherUnit) const {
 	// currently doesn't see if sending me vs other is a good idea, like peewee vs bomber (not)
 	const UnitDef *ud_mine = ai->cb->GetUnitDef(this->myid);
 	const UnitDef *ud_other = ai->cheat->GetUnitDef(otherUnit);
@@ -100,7 +95,7 @@ bool CUNIT::CanAttack(int otherUnit) {
 	return false;
 }
 
-bool CUNIT::CanAttackMe(int otherUnit) {
+bool CUNIT::CanAttackMe(int otherUnit) const {
 	otherUnit = otherUnit;
 	// TODO: the function above, in reverse
 	return true;
@@ -109,7 +104,8 @@ bool CUNIT::CanAttackMe(int otherUnit) {
 
 
 // tell a nuke-silo to build a missile
-bool CUNIT::NukeSiloBuild(void) {
+// TODO: use this for mobile units too
+bool CUNIT::NukeSiloBuild(void) const {
 	if (!def()->stockpileWeaponDef)
 		return false;
 
@@ -121,7 +117,7 @@ bool CUNIT::NukeSiloBuild(void) {
 
 
 
-int CUNIT::GetBestBuildFacing(float3& pos) const {
+int CUNIT::GetBestBuildFacing(const float3& pos) const {
 	int frame = (ai->cb)->GetCurrentFrame();
 	int mapWidth = (ai->cb)->GetMapWidth() * 8;
 	int mapHeight = (ai->cb)->GetMapHeight() * 8;
@@ -165,15 +161,17 @@ int CUNIT::GetBestBuildFacing(float3& pos) const {
 
 
 // called for mobile construction units
-bool CUNIT::Build_ClosestSite(const UnitDef* unitdef, float3 targetpos, int separation, float radius) {
-	int buildFacing = GetBestBuildFacing(targetpos);
-	float3 buildpos = ai->cb->ClosestBuildSite(unitdef, targetpos, radius, separation, buildFacing);
+bool CUNIT::Build_ClosestSite(const UnitDef* def, const float3& bpos, int separation, float radius) {
+	const int buildFacing = GetBestBuildFacing(bpos);
+	const float3 cpos = ai->cb->ClosestBuildSite(def, bpos, radius, separation, buildFacing);
 
-	targetpos.y += 20;
-	buildpos.y += 20;
+	L("[CUNIT::Build_ClosestSite()] builder: " << myid << ", def: " << def);
+	L("\tbpos: <" << bpos.x << ", " << bpos.y << ", " << bpos.z << ">");
+	L("\tcpos: <" << cpos.x << ", " << cpos.y << ", " << cpos.z << ">");
+	L("\n");
 
-	if (buildpos.x != -1) {
-		Build(buildpos, unitdef, buildFacing);
+	if (cpos.x != -1.0f) {
+		Build(cpos, def, buildFacing);
 		return true;
 	}
 
@@ -196,6 +194,9 @@ bool CUNIT::FactoryBuild(const UnitDef* toBuild) const {
 }
 
 // tell a hub to build something
+// note: hubs themselves should not be built
+// within range of each other, or the newer
+// ones may fail to construct anything
 bool CUNIT::HubBuild(const UnitDef* toBuild) const {
 	int hub = myid;
 	assert(ai->cb->GetUnitDef(hub) != NULL);
@@ -325,7 +326,7 @@ Command CUNIT::MakePosCommand(int id, float3 pos, float radius, int facing) cons
 	return c;
 }
 
-Command CUNIT::MakeIntCommand(int cmdID, int param, int) {
+Command CUNIT::MakeIntCommand(int cmdID, int param) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 
 	Command c;
@@ -339,7 +340,7 @@ Command CUNIT::MakeIntCommand(int cmdID, int param, int) {
 
 
 // Target-based Abilities
-bool CUNIT::Attack(int target) {
+bool CUNIT::Attack(int target) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_ATTACK, target);
 
@@ -350,7 +351,7 @@ bool CUNIT::Attack(int target) {
 
 	return false;
 }
-bool CUNIT::Capture(int target) {
+bool CUNIT::Capture(int target) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_CAPTURE, target);
 
@@ -362,7 +363,7 @@ bool CUNIT::Capture(int target) {
 	return false;
 }
 
-bool CUNIT::Guard(int target) {
+bool CUNIT::Guard(int target) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_GUARD, target);
 
@@ -374,7 +375,7 @@ bool CUNIT::Guard(int target) {
 	return false;
 }
 
-bool CUNIT::Load(int target) {
+bool CUNIT::Load(int target) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_LOAD_UNITS, target);
 
@@ -385,7 +386,7 @@ bool CUNIT::Load(int target) {
 
 	return false;
 }
-bool CUNIT::Reclaim(int target) {
+bool CUNIT::Reclaim(int target) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_RECLAIM, target);
 
@@ -396,7 +397,7 @@ bool CUNIT::Reclaim(int target) {
 
 	return false;
 }
-bool CUNIT::Repair(int target) {
+bool CUNIT::Repair(int target) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_REPAIR, target);
 
@@ -406,7 +407,7 @@ bool CUNIT::Repair(int target) {
 	}
 	return false;
 }
-bool CUNIT::Ressurect(int target) {
+bool CUNIT::Ressurect(int target) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_RESURRECT, target);
 
@@ -418,8 +419,8 @@ bool CUNIT::Ressurect(int target) {
 	return false;
 }
 
-
-bool CUNIT::Upgrade(int target, const UnitDef* newTarget) {
+/*
+bool CUNIT::Upgrade(int target, const UnitDef* newTarget) const {
 	int facing = ai->cb->GetBuildingFacing(target);
 	float3 pos = ai->cb->GetUnitPos(target) + float3(60.0f, 0.0f, 60.0f);
 
@@ -429,16 +430,17 @@ bool CUNIT::Upgrade(int target, const UnitDef* newTarget) {
 	bool b2 = BuildShift(pos, newTarget, facing);
 	return (b1 && b2);
 }
-
+*/
 
 
 
 // Location Point Abilities
-bool CUNIT::Build(float3 pos, const UnitDef* unit, int facing) {
+bool CUNIT::Build(float3 pos, const UnitDef* unit, int facing) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(-(unit->id), pos, -1.0f, facing);
 
 	if (c.id != 0) {
+		// c.options |= SHIFT_KEY;
 		ai->cb->GiveOrder(myid, &c);
 		ai->uh->TaskPlanCreate(myid, pos, unit);
 		return true;
@@ -447,22 +449,7 @@ bool CUNIT::Build(float3 pos, const UnitDef* unit, int facing) {
 	return false;
 }
 
-bool CUNIT::BuildShift(float3 pos, const UnitDef* unit, int facing) {
-	assert(ai->cb->GetUnitDef(myid) != NULL);
-	Command c = MakePosCommand(-(unit->id), pos, -1.0f, facing);
-
-	if (c.id != 0) {
-		c.options |= SHIFT_KEY;
-		ai->cb->GiveOrder(myid, &c);
-		ai->uh->TaskPlanCreate(myid, pos, unit);
-		return true;
-	}
-
-	return false;
-}
-
-
-bool CUNIT::Move(float3 pos) {
+bool CUNIT::Move(float3 pos) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_MOVE, pos);
 
@@ -474,7 +461,7 @@ bool CUNIT::Move(float3 pos) {
 	return false;
 }
 
-bool CUNIT::MoveShift(float3 pos) {
+bool CUNIT::MoveShift(float3 pos) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_MOVE, pos);
 
@@ -498,7 +485,7 @@ bool CUNIT::Patrol(float3 pos) const {
 	return false;
 }
 
-bool CUNIT::PatrolShift(float3 pos) {
+bool CUNIT::PatrolShift(float3 pos) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_PATROL, pos);
 
@@ -513,7 +500,7 @@ bool CUNIT::PatrolShift(float3 pos) {
 
 
 // Radius Abilities
-bool CUNIT::Attack(float3 pos, float radius) {
+bool CUNIT::Attack(float3 pos, float radius) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_ATTACK, pos, radius);
 
@@ -524,7 +511,7 @@ bool CUNIT::Attack(float3 pos, float radius) {
 
 	return false;
 }
-bool CUNIT::Ressurect(float3 pos, float radius) {
+bool CUNIT::Ressurect(float3 pos, float radius) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_RESURRECT, pos, radius);
 
@@ -536,7 +523,7 @@ bool CUNIT::Ressurect(float3 pos, float radius) {
 	return false;
 }
 
-bool CUNIT::Reclaim(float3 pos, float radius) {
+bool CUNIT::Reclaim(float3 pos, float radius) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_RECLAIM, pos, radius);
 
@@ -549,7 +536,7 @@ bool CUNIT::Reclaim(float3 pos, float radius) {
 	return false;
 }
 
-bool CUNIT::Capture(float3 pos, float radius) {
+bool CUNIT::Capture(float3 pos, float radius) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_CAPTURE, pos, radius);
 
@@ -561,7 +548,7 @@ bool CUNIT::Capture(float3 pos, float radius) {
 	return false;
 }
 
-bool CUNIT::Restore(float3 pos, float radius) {
+bool CUNIT::Restore(float3 pos, float radius) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_RESTORE, pos, radius);
 
@@ -573,7 +560,7 @@ bool CUNIT::Restore(float3 pos, float radius) {
 	return false;
 }
 
-bool CUNIT::Load(float3 pos, float radius) {
+bool CUNIT::Load(float3 pos, float radius) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_LOAD_UNITS, pos, radius);
 
@@ -585,7 +572,7 @@ bool CUNIT::Load(float3 pos, float radius) {
 	return false;
 }
 
-bool CUNIT::Unload(float3 pos, float radius) {
+bool CUNIT::Unload(float3 pos, float radius) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakePosCommand(CMD_UNLOAD_UNITS, pos, radius);
 
@@ -599,7 +586,7 @@ bool CUNIT::Unload(float3 pos, float radius) {
 
 
 // Toggable Abilities
-bool CUNIT::Cloaking(bool on) {
+bool CUNIT::Cloaking(bool on) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_CLOAK, on);
 
@@ -610,7 +597,7 @@ bool CUNIT::Cloaking(bool on) {
 
 	return false;
 }
-bool CUNIT::OnOff(bool on) {
+bool CUNIT::OnOff(bool on) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_ONOFF, on);
 
@@ -624,7 +611,7 @@ bool CUNIT::OnOff(bool on) {
 
 
 // Special Abilities
-bool CUNIT::SelfDestruct() {
+bool CUNIT::SelfDestruct() const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c;
 	c.id = CMD_SELFD;
@@ -634,7 +621,7 @@ bool CUNIT::SelfDestruct() {
 }
 
 // state can be 0: hold fire, 1: return fire, 2: fire at will
-bool CUNIT::SetFireState(int state) {
+bool CUNIT::SetFireState(int state) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c = MakeIntCommand(CMD_FIRE_STATE, state);
 
@@ -646,7 +633,7 @@ bool CUNIT::SetFireState(int state) {
 	return false;
 }
 
-bool CUNIT::Stop() {
+bool CUNIT::Stop() const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c;
 	c.id = CMD_STOP;
@@ -655,7 +642,7 @@ bool CUNIT::Stop() {
 	return true;
 }
 
-bool CUNIT::SetMaxSpeed(float speed) {
+bool CUNIT::SetMaxSpeed(float speed) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c;
 	c.id = CMD_SET_WANTED_MAX_SPEED;

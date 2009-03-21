@@ -588,17 +588,18 @@ void CUnitHandler::IdleUnitRemove(int unit) {
 		}
 
 		list<integer2>::iterator tempunit;
-		bool foundit = false;
+		bool found = false;
 
 		for (list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++) {
 			if (i->x == unit) {
 				tempunit = i;
-				foundit = true;
+				found = true;
 			}
 		}
 
-		if (foundit)
+		if (found) {
 			Limbo.erase(tempunit);
+		}
 	}
 }
 
@@ -1334,4 +1335,146 @@ void CUnitHandler::BuilderReclaimOrder(int builderId, float3 pos) {
 	assert(builderTracker->customOrderId == 0);
 	// Just use taskPlanCounter for the id.
 	builderTracker->customOrderId = taskPlanCounter++;
+}
+
+
+
+
+
+
+UpgradeTask* CUnitHandler::CreateUpgradeTask(int oldBuildingID, const float3& oldBuildingPos, const UnitDef* newBuildingDef) {
+	assert(FindUpgradeTask(oldBuildingID) == NULL);
+
+	// UpdateTasks() handles the deletion
+	UpgradeTask* task = new UpgradeTask(oldBuildingID, ai->cb->GetCurrentFrame(), oldBuildingPos, newBuildingDef);
+	upgradeTasks[oldBuildingID] = task;
+
+	return task;
+}
+
+UpgradeTask* CUnitHandler::FindUpgradeTask(int oldBuildingID) {
+	std::map<int, UpgradeTask*>::iterator it = upgradeTasks.find(oldBuildingID);
+
+	if (it != upgradeTasks.end()) {
+		return (it->second);
+	}
+
+	return NULL;
+}
+
+void CUnitHandler::RemoveUpgradeTask(UpgradeTask* task) {
+	assert(task != NULL);
+	assert(FindUpgradeTask(task->oldBuildingID) != NULL);
+
+	upgradeTasks.erase(task->oldBuildingID);
+	delete task;
+}
+
+bool CUnitHandler::AddUpgradeTaskBuilder(UpgradeTask* task, int builderID) {
+	std::set<int>::iterator it = task->builderIDs.find(builderID);
+
+	if (it == task->builderIDs.end()) {
+		task->builderIDs.insert(builderID);
+		return true;
+	}
+
+	return false;
+}
+
+void CUnitHandler::UpdateUpgradeTasks(int frame) {
+	std::map<int, UpgradeTask*>::iterator upgradeTaskIt;
+
+	std::list<UpgradeTask*> deadTasks;
+	std::list<UpgradeTask*>::iterator deadTasksIt;
+
+	for (
+		upgradeTaskIt = upgradeTasks.begin();
+		upgradeTaskIt != upgradeTasks.end();
+		upgradeTaskIt++
+	) {
+		UpgradeTask* task = upgradeTaskIt->second;
+
+		const int oldBuildingID = task->oldBuildingID;
+		const bool oldBuildingDead =
+			(ai->cb->GetUnitDef(oldBuildingID) == NULL) ||
+			(ai->cb->GetUnitHealth(oldBuildingID) < 0.0f);
+
+		std::set<int>::iterator builderIDsIt;
+		std::list<int> deadBuilderIDs;
+		std::list<int>::iterator deadBuilderIDsIt;
+
+
+		for (
+			builderIDsIt = task->builderIDs.begin();
+			builderIDsIt != task->builderIDs.end();
+			builderIDsIt++
+		) {
+			const int builderID = *builderIDsIt;
+			const bool builderDead =
+				(ai->cb->GetUnitDef(builderID) == NULL) ||
+				(ai->cb->GetUnitHealth(builderID) <= 0.0f);
+
+			if (builderDead) {
+				deadBuilderIDs.push_back(builderID);
+			} else {
+				const CCommandQueue* cq = ai->cb->GetCurrentUnitCommands(builderID);
+
+				if (oldBuildingDead) {
+					if (!task->reclaimStatus) {
+						task->creationFrame = frame;
+						task->reclaimStatus = true;
+					}
+
+					// give a build order for the replacement structure
+					if (cq->size() == 0 || ((cq->front()).id != -task->newBuildingDef->id)) {
+						std::stringstream msg;
+							msg << "[CUnitHandler::UpdateUpgradeTasks()] frame " << frame << "\n";
+							msg << "\tgiving build order for \"" << task->newBuildingDef->humanName;
+							msg << "\" to builder " << builderID << "\n";
+						L(msg.str());
+
+						// Build() --> MakePosCommand() --> IdleUnitRemove()
+						ai->MyUnits[builderID]->Build_ClosestSite(task->newBuildingDef, task->oldBuildingPos);
+						// ai->MyUnits[builderID]->Build(task->oldBuildingPos, task->newBuildingDef, -1);
+					}
+				} else {
+					// give a reclaim order for the original structure
+					if (cq->size() == 0 || ((cq->front()).id != CMD_RECLAIM)) {
+						std::stringstream msg;
+							msg << "[CUnitHandler::UpdateUpgradeTasks()] frame " << frame << "\n";
+							msg << "\tgiving reclaim order for \"" << ai->cb->GetUnitDef(oldBuildingID)->humanName;
+							msg << "\" to builder " << builderID << "\n";
+						L(msg.str());
+
+						// Reclaim() --> MakeIntCommand() --> IdleUnitRemove()
+						ai->MyUnits[builderID]->Reclaim(oldBuildingID);
+					}
+				}
+			}
+		}
+
+
+		// filter any dead builders from the upgrade task
+		// (probably should tie this into UnitDestroyed())
+		for (
+			deadBuilderIDsIt = deadBuilderIDs.begin();
+			deadBuilderIDsIt != deadBuilderIDs.end();
+			deadBuilderIDsIt++
+		) {
+			task->builderIDs.erase(*deadBuilderIDsIt);
+		}
+
+		if (oldBuildingDead) {
+	//		if ((task->creationFrame - frame) > 30) {
+				// all builders have been given a build order
+				// for the replacement structure at this point,
+				// so the task itself is no longer needed
+				deadTasks.push_back(task);
+	//		}
+		}
+	}
+
+	for (deadTasksIt = deadTasks.begin(); deadTasksIt != deadTasks.end(); deadTasksIt++) {
+		RemoveUpgradeTask(*deadTasksIt);
+	}
 }

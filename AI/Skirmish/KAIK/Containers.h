@@ -162,6 +162,26 @@ struct TaskPlan {
 	float3 pos;
 };
 
+struct UpgradeTask {
+	CR_DECLARE_STRUCT(UpgradeTask);
+
+	UpgradeTask(int buildingID, int frame, const float3& buildingPos, const UnitDef* buildingDef) {
+		oldBuildingID  = buildingID;
+		oldBuildingPos = buildingPos;
+		newBuildingDef = buildingDef;
+		creationFrame  = frame;
+		reclaimStatus  = false;
+	}
+
+	int            oldBuildingID;
+	float3         oldBuildingPos;
+	const UnitDef* newBuildingDef;
+	int            creationFrame;
+	bool           reclaimStatus;
+
+	std::set<int> builderIDs;
+};
+
 struct Factory {
 	CR_DECLARE_STRUCT(Factory);
 
