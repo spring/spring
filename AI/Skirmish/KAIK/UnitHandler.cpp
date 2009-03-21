@@ -1433,9 +1433,7 @@ void CUnitHandler::UpdateUpgradeTasks(int frame) {
 							msg << "\" to builder " << builderID << "\n";
 						L(msg.str());
 
-						// Build() --> MakePosCommand() --> IdleUnitRemove()
 						ai->MyUnits[builderID]->Build_ClosestSite(task->newBuildingDef, task->oldBuildingPos);
-						// ai->MyUnits[builderID]->Build(task->oldBuildingPos, task->newBuildingDef, -1);
 					}
 				} else {
 					// give a reclaim order for the original structure
@@ -1446,7 +1444,6 @@ void CUnitHandler::UpdateUpgradeTasks(int frame) {
 							msg << "\" to builder " << builderID << "\n";
 						L(msg.str());
 
-						// Reclaim() --> MakeIntCommand() --> IdleUnitRemove()
 						ai->MyUnits[builderID]->Reclaim(oldBuildingID);
 					}
 				}
@@ -1465,12 +1462,10 @@ void CUnitHandler::UpdateUpgradeTasks(int frame) {
 		}
 
 		if (oldBuildingDead) {
-	//		if ((task->creationFrame - frame) > 30) {
-				// all builders have been given a build order
-				// for the replacement structure at this point,
-				// so the task itself is no longer needed
-				deadTasks.push_back(task);
-	//		}
+			// all builders have been given a build order
+			// for the replacement structure at this point,
+			// so the task itself is no longer needed
+			deadTasks.push_back(task);
 		}
 	}
 
