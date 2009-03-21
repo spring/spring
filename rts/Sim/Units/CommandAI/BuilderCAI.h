@@ -27,7 +27,8 @@ public:
 	bool FindReclaimableFeatureAndReclaim(const float3& pos, float radius,
 	                                      unsigned char options,
 	                                      bool noResCheck,  // no resources check
-	                                      bool recAnyTeam); // allows self-reclamation
+	                                      bool recAnyTeam,  // allows self-reclamation
+	                                      bool recUnits);  // reclaims units and features
 	bool FindResurrectableFeatureAndResurrect(const float3& pos, float radius,
 	                                          unsigned char options);
 	void FinishCommand(void);
