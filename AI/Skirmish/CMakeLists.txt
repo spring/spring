@@ -16,33 +16,6 @@ set(Java_AIINTERFACE_TARGET "Java-AI-Interface")
 
 #set(SKIRMISHAI_FIND_QUIETLY True)
 
-## KAI
-set(KAI_SRC "${SKIRMISH_SRC}/KAI")
-if (BUILD_C_AIINTERFACE AND EXISTS ${KAI_SRC})
-	set(KAI_VERS "UNKNOWN_VERSION")
-	if (EXISTS ${KAI_SRC}/VERSION)
-		file(STRINGS "${KAI_SRC}/VERSION" KAI_VERS LIMIT_COUNT 1)
-	endif (EXISTS ${KAI_SRC}/VERSION)
-	#set(KAI_TARGET "KAI-${KAI_VERS}")
-	set(KAI_TARGET "KAI")
-	set(KAI_DATA_DIR ${SKIRMISH_DATA}/KAI/${KAI_VERS})
-	if (NOT SKIRMISHAI_FIND_QUIETLY)
-		message(STATUS "Found Skirmish AI: KAI ${KAI_VERS}")
-	endif (NOT SKIRMISHAI_FIND_QUIETLY)
-
-	# install data files
-	#install(DIRECTORY "${KAI_SRC}/data/"
-	#		DESTINATION "${KAI_DATA_DIR}")
-
-	aux_source_directory(${KAI_SRC} kai)
-	#add_library(${KAI_TARGET} MODULE ${kai} ${creg} ${cutilsenv})
-	#target_link_libraries(${KAI_TARGET} legacycpp)
-	#set_target_properties(${KAI_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
-	#set_target_properties(${KAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
-	#set_target_properties(${KAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "KAI")
-	#install (TARGETS ${KAI_TARGET} DESTINATION ${KAI_DATA_DIR})
-endif (BUILD_C_AIINTERFACE AND EXISTS ${KAI_SRC})
-
 
 ## KAIK
 set(KAIK_SRC "${SKIRMISH_SRC}/KAIK")
