@@ -752,7 +752,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		const bool recAnyTeam = ((c.options & CONTROL_KEY) != 0);
-		const bool recUnits = ((c.options & SHIFT_KEY) != 0);
+		const bool recUnits = ((c.options & ALT_KEY) != 0);
 		RemoveUnitFromReclaimers(owner);
 		RemoveUnitFromFeatureReclaimers(owner);
 		if (FindReclaimableFeatureAndReclaim(pos, radius, c.options, true, recAnyTeam, recUnits)) {
@@ -1121,49 +1121,47 @@ bool CBuilderCAI::FindReclaimableFeatureAndReclaim(const float3& pos,
 	float bestDist = 1.0e30f;
 	const CTeam* team = teamHandler->Team(owner->team);
 
-	for (fi = features.begin(); fi != features.end(); ++fi) {
-		const CFeature* f = *fi;
-		if (f->def->reclaimable &&
-		    (recAnyTeam || (f->allyteam != owner->allyteam))) {
-			const float dist = f3SqLen(f->pos - owner->pos);
-			if ((dist < bestDist) &&
-			    (noResCheck ||
-			     ((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
-			     ((f->def->energy > 0.0f) && (team->energy < team->energyStorage)))) {
-				if (!owner->unitDef->canmove && !ObjInBuildRange(f)) {
-					continue;
-				}
-				bestDist = dist;
-				best = f;
-			}
-		}
-	}
-
 	int rid = -1;
-	if(best)
-		rid = uh->MaxUnits() + best->id;
 
 	if(recUnits) {
-		best=NULL;
 		for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
 			const CUnit* u = *ui;
 			if (u->unitDef->reclaimable &&
-				(recAnyTeam || (u->allyteam == owner->allyteam))) {
+				(recAnyTeam || (u->team == owner->team))) {
 				const float dist = f3SqLen(u->pos - owner->pos);
-				if ((dist < bestDist) &&
-					(noResCheck ||
-					((u->unitDef->metalCost  > 0.0f) && (team->metal  < team->metalStorage)) ||
-					((u->unitDef->energyCost > 0.0f) && (team->energy < team->energyStorage)))) {
-						if (!owner->unitDef->canmove && !ObjInBuildRange(u)) {
-							continue;
-						}
-						bestDist = dist;
-						best = u;
+				if (dist < bestDist) {
+					if (!owner->unitDef->canmove && !ObjInBuildRange(u)) {
+						continue;
+					}
+					bestDist = dist;
+					best = u;
 				}
 			}
 		}
 		if(best)
 			rid = best->id;
+	}
+
+	if(!best) {
+		for (fi = features.begin(); fi != features.end(); ++fi) {
+			const CFeature* f = *fi;
+			if (f->def->reclaimable &&
+				(recAnyTeam || (f->allyteam != owner->allyteam))) {
+				const float dist = f3SqLen(f->pos - owner->pos);
+				if ((dist < bestDist) &&
+					(noResCheck ||
+					((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
+					((f->def->energy > 0.0f) && (team->energy < team->energyStorage)))) {
+					if (!owner->unitDef->canmove && !ObjInBuildRange(f)) {
+						continue;
+					}
+					bestDist = dist;
+					best = f;
+				}
+			}
+		}
+		if(best)
+			rid = uh->MaxUnits() + best->id;
 	}
 
 	if (rid >= 0) {
