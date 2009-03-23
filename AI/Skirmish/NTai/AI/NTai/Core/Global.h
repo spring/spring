@@ -38,6 +38,7 @@ namespace ntai {
 		
 		CMap* Map;
 		CActions* Actions;
+		CEfficiency* efficiency;
 		
 		CCached* Cached; // cached data or other data used across the AI at runtime
 		CConfigData* info; // stuff loaded from configs that ideally should not change

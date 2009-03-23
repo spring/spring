@@ -21,7 +21,7 @@ namespace ntai {
 		
 		//CLOG("Retrieving datapath value");
 
-		datapath = cs.SGetValueDef(string(aiexport_getDataDir()), "AI/Skirmish/NTai/data");
+		datapath = cs.SGetValueDef(string(aiexport_getDataDir(true)), "AI/Skirmish/NTai/data");
 
 		CLOG("Getting tdfpath value");
 		

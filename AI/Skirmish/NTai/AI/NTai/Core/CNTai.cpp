@@ -19,7 +19,7 @@ namespace ntai {
 
 	//// Constructor/Destructor/Initialisation
 
-	CNTai::CNTai(){
+	CNTai::CNTai(const SSkirmishAICallback* callback){
 		G = 0;
 	}
 

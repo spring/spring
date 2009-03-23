@@ -313,6 +313,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NTai\Helpers\Efficiency.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\rts\System\float3.cpp"
 				>
 			</File>
@@ -496,6 +500,10 @@
 			</File>
 			<File
 				RelativePath=".\NTai\Helpers\Terrain\DTHandler.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NTai\Helpers\Efficiency.h"
 				>
 			</File>
 			<File
@@ -822,6 +830,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIWeaponFiredEvent.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\Wrappers\CUtils\Util.c"
 				>
 			</File>
 		</Filter>
