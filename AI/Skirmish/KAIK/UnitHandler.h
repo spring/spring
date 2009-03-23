@@ -1,14 +1,15 @@
-#ifndef UNITHANDLER_H
-#define UNITHANDLER_H
+#ifndef KAIK_UNITHANDLER_HDR
+#define KAIK_UNITHANDLER_HDR
 
+#include <vector>
 
-#include "GlobalAI.h"
-#include "MetalMaker.h"
+#include "Containers.h"
+#include "IncCREG.h"
 
-using std::list;
-using std::vector;
+struct UnitDef;
 
 class CMetalMaker;
+struct AIClasses;
 
 class CUnitHandler {
 	public:
@@ -73,18 +74,18 @@ class CUnitHandler {
 		void ClearOrder(BuilderTracker* builderTracker, bool reportError);
 		void DecodeOrder(BuilderTracker* builderTracker, bool reportError);
 
-		vector<list<int> > IdleUnits;
-		vector<list<BuildTask> > BuildTasks;
-		vector<list<TaskPlan> > TaskPlans;
-		vector<list<int> > AllUnitsByCat;
-		vector<list<int> > AllUnitsByType;
+		std::vector<std::list<int> > IdleUnits;
+		std::vector<std::list<BuildTask> > BuildTasks;
+		std::vector<std::list<TaskPlan> > TaskPlans;
+		std::vector<std::list<int> > AllUnitsByCat;
+		std::vector<std::list<int> > AllUnitsByType;
 
-		list<Factory> Factories;
-		list<NukeSilo> NukeSilos;
-		vector<MetalExtractor> MetalExtractors;
+		std::list<Factory> Factories;
+		std::list<NukeSilo> NukeSilos;
+		std::vector<MetalExtractor> MetalExtractors;
 
-		list<integer2> Limbo;
-		list<BuilderTracker*> BuilderTrackers;
+		std::list<integer2> Limbo;
+		std::list<BuilderTracker*> BuilderTrackers;
 
 		CMetalMaker* metalMaker;
 

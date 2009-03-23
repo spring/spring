@@ -1,5 +1,5 @@
-#include "BuildUp.h"
-
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CR_BIND(CBuildUp, (NULL));
 CR_REG_METADATA(CBuildUp, (
@@ -10,7 +10,6 @@ CR_REG_METADATA(CBuildUp, (
 	CR_MEMBER(nukeSiloTimer),
 	CR_RESERVED(16)
 ));
-
 
 CBuildUp::CBuildUp(AIClasses* ai) {
 	this->ai = ai;
@@ -33,6 +32,7 @@ void CBuildUp::Update(int frame) {
 		ai->tm->Create();
 		ai->uh->UpdateUpgradeTasks(frame);
 
+		GetEconState(&econState);
 		Buildup(frame);
 
 		// KLOOTNOTE: b1 will be false if we have
@@ -55,231 +55,284 @@ void CBuildUp::Update(int frame) {
 			factoryTimer--;
 		}
 
-		if (storageTimer > 0)
-			storageTimer--;
-
-		if (nukeSiloTimer > 0)
-			nukeSiloTimer--;
+		if (storageTimer > 0) { storageTimer--; }
+		if (nukeSiloTimer > 0) { nukeSiloTimer--; }
 	}
 }
 
 
 
+void CBuildUp::GetEconState(EconState* es) const {
+	es->nIdleBuilders = ai->uh->NumIdleUnits(CAT_BUILDER);
+	// get the first idle (mobile) builder
+	es->builderID  = (es->nIdleBuilders > 0)? ai->uh->GetIU(CAT_BUILDER): -1;
+	es->builderDef = (es->nIdleBuilders > 0)? ai->cb->GetUnitDef(es->builderID): NULL;
+	es->factoryDef = (es->nIdleBuilders > 0)? ai->ut->GetUnitByScore(es->builderID, CAT_FACTORY): NULL;
 
-void CBuildUp::Buildup(int frame) {
-	// KLOOTNOTE: make it emphasize mexes and energy more
-	// during the first two minutes (important for PURE)
-	const float mIncome  = ai->cb->GetMetalIncome();
-	const float eIncome  = ai->cb->GetEnergyIncome();
-	const float mLevel   = ai->cb->GetMetal();
-	const float eLevel   = ai->cb->GetEnergy();
-	const float mStorage = ai->cb->GetMetalStorage();
-	const float eStorage = ai->cb->GetEnergyStorage();
-	const float mUsage   = ai->cb->GetMetalUsage();
-	const float eUsage   = ai->cb->GetEnergyUsage();
-	const bool makersOn  = ai->uh->metalMaker->AllAreOn();
+	// TODO: emphasize mexes and energy more during
+	// the first two minutes (important for eg. PURE)
+	es->mIncome  = ai->cb->GetMetalIncome();
+	es->eIncome  = ai->cb->GetEnergyIncome();
+	es->mLevel   = ai->cb->GetMetal();
+	es->eLevel   = ai->cb->GetEnergy();
+	es->mStorage = ai->cb->GetMetalStorage();
+	es->eStorage = ai->cb->GetEnergyStorage();
+	es->mUsage   = ai->cb->GetMetalUsage();
+	es->eUsage   = ai->cb->GetEnergyUsage();
+	es->makersOn = ai->uh->metalMaker->AllAreOn();
 
-	const float m1 = 500.0f / mStorage;					// 0.5f IIF starting with 1000E
-	const float m2 = 200.0f / mStorage;					// 0.2f IIF starting with 1000E
-	const float e1 = 500.0f / eStorage;					// 0.5f IIF starting with 1000M
-	const float e2 = 800.0f / eStorage;					// 0.8f IIF starting with 1000M
-	// const float m1 = mStorage * 0.5f;				// bad: as M-storage cap. increases the needed M-level to build also rises
-	// const float m2 = mStorage * 0.2f;
-	// const float e1 = eStorage * 0.5f;				// bad: as E-storage cap. increases the needed E-level to build also rises
-	// const float e2 = eStorage * 0.8f;
-	const bool mLevel50  = (mLevel < (mStorage * m1));	// is our current M-level less than 50% of our current M-storage capacity?
-	const bool eLevel50  = (eLevel > (eStorage * e1));	// is our current E-level more than 50% of our current E-storage capacity?
-	const bool eLevel80  = (eLevel > (eStorage * e2));	// is our current E-level more than 80% of our current E-storage capacity?
+	es->m1 = 500.0f / es->mStorage;				// 0.5f IIF starting with 1000E
+	es->m2 = 200.0f / es->mStorage;				// 0.2f IIF starting with 1000E
+	es->e1 = 500.0f / es->eStorage;				// 0.5f IIF starting with 1000M
+	es->e2 = 800.0f / es->eStorage;				// 0.8f IIF starting with 1000M
+	// es->m1 = es->mStorage * 0.5f;			// bad: as M-storage cap. increases the needed M-level to build also rises
+	// es->m2 = es->mStorage * 0.2f;
+	// es->e1 = es->eStorage * 0.5f;			// bad: as E-storage cap. increases the needed E-level to build also rises
+	// es->e2 = es->eStorage * 0.8f;
+	es->mLevel50 = (es->mLevel < (es->mStorage * es->m1));
+	es->eLevel50 = (es->eLevel > (es->eStorage * es->e1));
+	es->eLevel80 = (es->eLevel > (es->eStorage * es->e2));
 
 	// fake a resource crisis during the first
 	// minute to get our economy going quicker
 	// KLOOTNOTE: reverted, has opposite effect
-	const bool mStall = (/*(frame < 1800) ||*/ (mIncome < (mUsage * 1.3f)));
-	const bool eStall = (/*(frame <  900) ||*/ (eIncome < (eUsage * 1.6f)));
+	es->mStall = (/*(frame < 1800) ||*/ (es->mIncome < (es->mUsage * 1.3f)));
+	es->eStall = (/*(frame <  900) ||*/ (es->eIncome < (es->eUsage * 1.6f)));
+	es->mOverflow = (es->mStorage / (es->mIncome + 0.01)) < (STORAGETIME * 2);
+
+	es->eLevelMed = (es->eLevel50 && es->makersOn);
+	es->mLevelLow =
+		es->mLevel50 ||
+		(es->mStall && es->eLevel80) ||
+		(!es->factFeasM && factoryTimer <= 0);
+
+	es->factFeasM =
+		(es->factoryDef != NULL)?
+		ai->math->MFeasibleConstruction(es->builderDef, es->factoryDef):
+		true;
+	es->factFeasE =
+		(es->factoryDef != NULL)?
+		ai->math->EFeasibleConstruction(es->builderDef, es->factoryDef):
+		true;
+	es->factFeas =
+		((es->factoryDef != NULL) && es->factFeasM && es->factFeasE);
 
 	// these determine if we can tell our idle
 	// factories to start building something
 	// M- and E-levels can never exceed the
 	// storage capacity, so we need to make
 	// sure that e2 and m2 are less than 1
-	const bool b1 = ((eLevel > (eStorage * e2)) || (eIncome > 6000.0f && eUsage < eIncome));
-	const bool b2 = ((mLevel > (mStorage * m2)) || (mIncome >  100.0f && mUsage < mIncome));
-	const bool b3 = (m2 >= 1.0f || e2 >= 1.0f);
-
+	es->b1 = ((es->eLevel > (es->eStorage * es->e2)) || (es->eIncome > 6000.0f && es->eUsage < es->eIncome));
+	es->b2 = ((es->mLevel > (es->mStorage * es->m2)) || (es->mIncome >  100.0f && es->mUsage < es->mIncome));
+	es->b3 = (es->m2 >= 1.0f || es->e2 >= 1.0f);
 
 	// KLOOTNOTE: <MAX_NUKE_SILOS> nuke silos ought to be enough for
 	// everybody (assuming we can build them at all in current mod)
 	// TODO: use actual metal and energy drain of nuke weapon here
-	const bool buildNukeSilo =
-		(mIncome > 100.0f && eIncome > 6000.0f && mUsage < mIncome && eUsage < eIncome &&
-		ai->ut->nuke_silos->size() > 0 && ai->uh->NukeSilos.size() < MAX_NUKE_SILOS);
+	es->buildNukeSilo =
+		ai->ut->nuke_silos[ai->ut->GetSide()].size() > 0 &&
+		es->mIncome > 100.0f && es->eIncome > 6000.0f &&
+		es->mUsage < es->mIncome && es->eUsage < es->eIncome &&
+		ai->uh->NukeSilos.size() < MAX_NUKE_SILOS;
 
-	const int nIdleBuilders = ai->uh->NumIdleUnits(CAT_BUILDER);
+	es->numM = ai->uh->AllUnitsByCat[CAT_MEX].size();
+	es->numE = ai->uh->AllUnitsByCat[CAT_ENERGY].size();
+	es->numF = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
 
-	if (nIdleBuilders > 0) {
-		// get first idle (mobile) builder every Update() cycle
-		const int      builderID  = ai->uh->GetIU(CAT_BUILDER);
-		const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
-		const UnitDef* factoryDef = ai->ut->GetUnitByScore(builderID, CAT_FACTORY);
+	es->numDefenses  = ai->uh->AllUnitsByCat[CAT_DEFENCE].size();
+	es->numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
 
-		// if this builder cannot build any factories, pretend it's feasible
-		const bool factFeasM = (factoryDef? ai->math->MFeasibleConstruction(builderDef, factoryDef): true);
-		const bool factFeasE = (factoryDef? ai->math->EFeasibleConstruction(builderDef, factoryDef): true);
-		const bool factFeas  = (factoryDef && factFeasM && factFeasE);
-		const bool eLevelMed = (eLevel50 && makersOn);
-		const bool mLevelLow = (mLevel50 || (mStall && eLevel80) || (!factFeasM && factoryTimer <= 0));
+	// these are static; the number of building
+	// _types_ in the unit-table never changes
+	es->canBuildEStores = (ai->ut->energy_storages[ai->ut->GetSide()].size() > 0);
+	es->canBuildMMakers = (ai->ut->metal_makers[ai->ut->GetSide()].size() > 0);
+	es->canBuildMStores = (ai->ut->metal_storages[ai->ut->GetSide()].size() > 0);
+}
 
-		// number of buildings in unit-table, not how many currently built
-		int buildableEStorage = ai->ut->energy_storages->size();
-		int buildableMMakers  = ai->ut->metal_makers->size();
+BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
+	if (es->numM < 3 || es->numE < 3 || es->numF < 1) {
+		return BUILD_INIT;
+	}
 
+	if (es->buildNukeSilo && nukeSiloTimer <= 0) {
+		return BUILD_NUKE;
+	}
 
-		if (!builderDef) {
-			ai->uh->UnitDestroyed(builderID);
-		}
+	if (es->eLevelMed && es->mLevelLow) {
+		return BUILD_M_STALL;
+	}
 
-		else {
-			if (builderDef->isCommander) {
-				if (builderDef->canDGun && ai->dgunController->isBusy()) {
-					// don't start building solars etc. while dgun-controller is doing stuff
-					return;
-				} else {
-					int numM = ai->uh->AllUnitsByCat[CAT_MEX].size();
-					int numE = ai->uh->AllUnitsByCat[CAT_ENERGY].size();
-					int numF = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
+	if (
+		es->eIncome > 2000.0f && es->eUsage < (es->eIncome - 1000.0f) &&
+		(es->mStall && es->mLevel < 100.0f) && es->canBuildMMakers) {
+		return BUILD_E_EXCESS;
+	}
 
-					// note: in EE metal processors belong to CAT_ENERGY
-					// note: this probably breaks mods with static commanders
-					if ((numM < 3 && numE <= 3) && BuildUpgradeExtractor(builderID)) { return; }
-					if ((numE < 3 && numM <= 3) && BuildUpgradeReactor(builderID)) { return; }
-					if ((numF < 1 && factFeas) && BuildNow(builderID, CAT_FACTORY, factoryDef)) { return; }
+	if (es->eStall || !es->factFeasE) {
+		return BUILD_E_STALL;
+	}
 
-					if (ai->uh->FactoryBuilderAdd(builderID)) {
-						// add commander to factory so it doesn't wander around too much (works best if
-						// AI given bonus, otherwise initial expansion still mostly done by commander)
-						// note: 5 minutes should be enough to get the resource income needed for this,
-						// don't use hardcoded metal- and energy-values
-						builderTimer = 0;
-					}
-				}
-			}
+	if (es->numFactories > (es->numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
+		return BUILD_DEFENSE;
+	}
+
+	return BUILD_FACTORY;
+}
 
 
-			else if (buildNukeSilo && nukeSiloTimer <= 0) {
-				if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_NUKE)) {
-					// always favor building one silo at a time rather than
-					// many in parallel to prevent a sudden massive resource
-					// drain when silos are finished
-					if (BuildNow(builderID, CAT_NUKE))
-						nukeSiloTimer += 300;
-				}
-			}
 
 
-			else if (eLevelMed && mLevelLow) {
-				// only reclaim features during odd frames so we don't
-				// spend the entire game just chasing after rocks etc.
-				// (problem on Cooper Hill and similar maps)
-				// FIXME: not happening often enough during res. stalls
-				const bool reclaimFeature = ((frame & 1) && ai->MyUnits[builderID]->ReclaimBestFeature(true));
+void CBuildUp::Buildup(int frame) {
+	if (econState.nIdleBuilders > 0) {
+		const BuildState buildState = GetBuildState(frame, &econState);
+		const bool buildInterrupted =
+			econState.builderDef != NULL &&
+			econState.builderDef->isCommander &&
+			econState.builderDef->canDGun &&
+			ai->dgunController->isBusy();
 
-				if (!reclaimFeature) {
-					const bool haveNewMex = BuildUpgradeExtractor(builderID);
-					const bool eOverflow  = (eStorage / (eIncome + 0.01) < STORAGETIME);
-					const bool eExcess    = (eIncome > (eUsage * 1.5));
+		if (econState.builderDef == NULL) {
+			ai->uh->UnitDestroyed(econState.builderID);
+		} else {
+			switch (buildState) {
+				case BUILD_INIT: {
+					if (!buildInterrupted) {
+						// note: in E&E metal processors belong to CAT_ENERGY,
+						// so numM never reaches 3 and we need to allow overlap
+						// note: this probably breaks mods with static commanders
+						if (econState.numM < 3 && econState.numE <= 3) {
+							BuildUpgradeExtractor(econState.builderID); return;
+						}
+						if (econState.numE < 3 && econState.numM <= 3) {
+							BuildUpgradeReactor(econState.builderID); return;
+						}
+						if (econState.numF < 1 && econState.factFeas) {
+							BuildNow(econState.builderID, CAT_FACTORY, econState.factoryDef); return;
+						}
 
-					// if we couldn't build or upgrade an extractor
-					if (!haveNewMex && eOverflow && buildableEStorage > 0 && storageTimer <= 0) {
-						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_ESTOR)) {
-							// build energy storage
-							if (BuildNow(builderID, CAT_ESTOR))
-								storageTimer += 90;
+						if (ai->uh->FactoryBuilderAdd(econState.builderID)) {
+							// add commander to factory so it doesn't wander around too much (works best if
+							// AI given bonus, otherwise initial expansion still mostly done by commander)
+							// note: 5 minutes should be enough to get the resource income needed for this,
+							// don't use hardcoded metal- and energy-values
+							builderTimer = 0;
 						}
 					}
-					else if (!haveNewMex && buildableMMakers > 0 && eExcess) {
-						// build metal maker
-						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_MMAKER)) {
-							BuildNow(builderID, CAT_MMAKER);
+				} break;
+
+				case BUILD_NUKE: {
+					if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_NUKE)) {
+						// always favor building one silo at a time rather than
+						// many in parallel to prevent a sudden massive resource
+						// drain when silos are finished
+						if (BuildNow(econState.builderID, CAT_NUKE)) {
+							nukeSiloTimer += 300;
 						}
 					}
-				}
-			}
+				} break;
 
+				case BUILD_M_STALL: {
+					// only reclaim features during odd frames so we don't
+					// spend the entire game just chasing after rocks etc.
+					// (problem on Cooper Hill and similar maps)
+					// FIXME: not happening often enough during res. stalls
+					//
+					const bool reclaimFeature =
+						((frame & 1) && ai->MyUnits[econState.builderID]->ReclaimBestFeature(true));
 
-			// we're producing lots of energy but aren't using it
-			else if (eIncome > 2000.0f && eUsage < (eIncome - 1000.0f) && (mStall && mLevel < 100.0f) && buildableMMakers > 0) {
-				if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_MMAKER)) {
-					BuildNow(builderID, CAT_MMAKER);
-				}
-			}
+					if (!reclaimFeature) {
+						const bool haveNewMex = BuildUpgradeExtractor(econState.builderID);
+						const bool eOverflow  = (econState.eStorage / (econState.eIncome + 0.01) < STORAGETIME);
+						const bool eExcess    = (econState.eIncome > (econState.eUsage * 1.5));
 
-			else if (eStall || !factFeasE) {
-				// build energy generator
-				BuildUpgradeReactor(builderID);
-			}
-
-			else {
-				const bool mOverflow    = (mStorage / (mIncome + 0.01)) < (STORAGETIME * 2);
-				const bool numMStorage  = ai->ut->metal_storages->size();
-				const int  numDefenses  = ai->uh->AllUnitsByCat[CAT_DEFENCE].size();
-				const int  numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
-
-				// do we have more factories than defenses (and have at least 10 minutes passed)?
-				if (numFactories > (numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
-					if (mOverflow && (numMStorage > 0) && (storageTimer <= 0) && (numFactories > 0)) {
-						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_MSTOR)) {
-							// build metal storage
-							if (BuildNow(builderID, CAT_MSTOR)) {
-								storageTimer += 90;
+						// if we couldn't build or upgrade an extractor
+						if (!haveNewMex && eOverflow && econState.canBuildEStores > 0 && storageTimer <= 0) {
+							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_ESTOR)) {
+								// build energy storage
+								if (BuildNow(econState.builderID, CAT_ESTOR)) {
+									storageTimer += 90;
+								}
 							}
 						}
-					} else {
-						if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_DEFENCE)) {
-							// if we can't add this builder to some defense
-							// task then build something in CAT_DEFENCE
-							const UnitDef* building = ai->ut->GetUnitByScore(builderID, CAT_DEFENCE);
-							bool r = false;
-
-							if (building) {
-								float3 buildPos = ai->dm->GetDefensePos(building, ai->MyUnits[builderID]->pos());
-								r = ai->MyUnits[builderID]->Build_ClosestSite(building, buildPos, 2);
-							} else {
-								FallbackBuild(builderID, CAT_DEFENCE);
+						else if (!haveNewMex && econState.canBuildMMakers && eExcess) {
+							// build metal maker
+							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MMAKER)) {
+								BuildNow(econState.builderID, CAT_MMAKER);
 							}
 						}
 					}
-				}
+				} break;
 
-				// no, build more factories
-				else {
-					if (!ai->uh->BuildTaskAddBuilder(builderID, CAT_FACTORY)) {
+				case BUILD_E_EXCESS: {
+					if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MMAKER)) {
+						BuildNow(econState.builderID, CAT_MMAKER);
+					}
+				} break;
+
+				case BUILD_E_STALL: {
+					BuildUpgradeReactor(econState.builderID);
+				} break;
+
+				case BUILD_DEFENSE: {
+					// do we have more factories than defenses (and have at least 10 minutes passed)?
+					if (econState.numFactories > (econState.numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
+						if (econState.mOverflow && econState.canBuildMStores && (storageTimer <= 0) && (econState.numFactories > 0)) {
+							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MSTOR)) {
+								// build metal storage
+								if (BuildNow(econState.builderID, CAT_MSTOR)) {
+									storageTimer += 90;
+								}
+							}
+						} else {
+							/*
+							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_DEFENCE)) {
+								// if we can't add this builder to some defense
+								// task then build something in CAT_DEFENCE
+								const UnitDef* building = ai->ut->GetUnitByScore(econState.builderID, CAT_DEFENCE);
+								bool r = false;
+
+								if (building) {
+									float3 buildPos = ai->dm->GetDefensePos(building, ai->MyUnits[econState.builderID]->pos());
+									r = ai->MyUnits[econState.builderID]->Build_ClosestSite(building, buildPos, 2);
+								} else {
+									FallbackBuild(econState.builderID, CAT_DEFENCE);
+								}
+							}
+							*/
+						}
+					}
+				} break;
+
+				case BUILD_FACTORY: {
+					// no, build more factories
+					if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_FACTORY)) {
 						// if we can't add this builder to some other buildtask
-						if (!ai->uh->FactoryBuilderAdd(builderID)) {
+						if (!ai->uh->FactoryBuilderAdd(econState.builderID)) {
 							// if we can't add this builder to some
 							// other factory then construct new one
 							// (but restrict the number of factories
 							// to one for the first 10 minutes)
 							if (ai->uh->AllUnitsByCat[CAT_FACTORY].size() < 1 || frame > 18000) {
-								BuildNow(builderID, CAT_FACTORY, factoryDef);
+								BuildNow(econState.builderID, CAT_FACTORY, econState.factoryDef);
 							} else {
 								std::stringstream msg;
 									msg << "[CBuildUp::BuildUp()] frame " << frame << "\n";
-									msg << "\tbuilder " << builderID << " is currently in limbo";
-									msg << " (total number of idle builders: " << nIdleBuilders << ")\n";
-								L(msg.str());
+									msg << "\tbuilder " << econState.builderID << " is currently in limbo";
+									msg << " (total number of idle builders: " << econState.nIdleBuilders << ")\n";
+								L(ai, msg);
 							}
 						}
 					}
-				}
+				} break;
 			}
 		}
 	}
 
-	if ((b1 && b2) || b3) {
+	if ((econState.b1 && econState.b2) || econState.b3) {
 		FactoryCycle(frame);
 	}
 
-	if (buildNukeSilo) {
+	if (econState.buildNukeSilo) {
 		NukeSiloCycle();
 	}
 }
@@ -436,8 +489,9 @@ void CBuildUp::FallbackBuild(int builderID, int failedCat) {
 */
 
 	// unable to assist and unable to build, just patrol
-	if (!b1 && !b2 && !b3 && !b4)
+	if (!b1 && !b2 && !b3 && !b4) {
 		ai->MyUnits[builderID]->Patrol(builderPos);
+	}
 }
 
 
@@ -450,7 +504,7 @@ const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
 	int leastBuiltBuilderCount = 65536;
 	assert(factoryCount > 0);
 
-	for (list<int>::iterator j = ai->uh->AllUnitsByCat[CAT_FACTORY].begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY].end(); j++) {
+	for (std::list<int>::iterator j = ai->uh->AllUnitsByCat[CAT_FACTORY].begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY].end(); j++) {
 		// get factory unitID
 		int factoryToLookAt = *j;
 

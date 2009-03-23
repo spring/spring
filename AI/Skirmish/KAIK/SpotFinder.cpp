@@ -1,4 +1,10 @@
+#include <cassert>
+#include <cmath>
+
 #include "SpotFinder.h"
+#include "Containers.h"
+#include "Maths.h"
+#include "Defines.h"
 
 CSpotFinder::CSpotFinder(AIClasses* ai, int height, int width) {
 	this->ai = ai;

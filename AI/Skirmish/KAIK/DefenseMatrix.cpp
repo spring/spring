@@ -1,5 +1,5 @@
-#include "DefenseMatrix.h"
-
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CR_BIND(CDefenseMatrix, (NULL));
 CR_REG_METADATA(CDefenseMatrix, (
@@ -31,7 +31,7 @@ void CDefenseMatrix::PostLoad() {
 
 void CDefenseMatrix::Init() {
 	ChokePointArray.resize(ai->pather->totalcells);
-	// temp only, will be used to mask bad spots that workers can't build at
+	// used to mask bad spots that workers can't build at
 	BuildMaskArray.resize(ai->pather->totalcells,0);
 
 	ai->pather->CreateDefenseMatrix();

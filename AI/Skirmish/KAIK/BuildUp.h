@@ -1,8 +1,72 @@
-#ifndef BUILDUP_H
-#define BUILDUP_H
+#ifndef KAIK_BUILDUP_HDR
+#define KAIK_BUILDUP_HDR
 
+#include "IncCREG.h"
+struct AIClasses;
 
-#include "GlobalAI.h"
+enum BuildState {
+	BUILD_INIT,
+	BUILD_NUKE,
+	BUILD_M_STALL,
+	BUILD_E_EXCESS,
+	BUILD_E_STALL,
+	BUILD_DEFENSE,
+	BUILD_FACTORY
+};
+
+struct EconState {
+	float mIncome;
+	float eIncome;
+	float mLevel;
+	float eLevel;
+	float mStorage;
+	float eStorage;
+	float mUsage;
+	float eUsage;
+	bool makersOn;
+
+	float m1;
+	float m2;
+	float e1;
+	float e2;
+
+	bool mLevel50;
+	bool eLevel50;
+	bool eLevel80;
+
+	bool mStall;
+	bool eStall;
+	bool mOverflow;
+
+	bool eLevelMed;
+	bool mLevelLow;
+
+	bool factFeasM;
+	bool factFeasE;
+	bool factFeas;
+
+	bool b1;
+	bool b2;
+	bool b3;
+
+	bool buildNukeSilo;
+
+	int numM;
+	int numE;
+	int numF;
+
+	int numDefenses;
+	int numFactories;
+
+	bool canBuildEStores;
+	bool canBuildMMakers;
+	bool canBuildMStores;
+
+	int nIdleBuilders;
+	int builderID;
+	const UnitDef* builderDef;
+	const UnitDef* factoryDef;
+};
 
 class CBuildUp {
 	public:
@@ -14,6 +78,9 @@ class CBuildUp {
 		void Update(int);
 
 	private:
+		BuildState GetBuildState(int, const EconState*) const;
+		void GetEconState(EconState*) const;
+
 		void Buildup(int);
 		void FactoryCycle(int);
 		void NukeSiloCycle(void);
@@ -28,6 +95,8 @@ class CBuildUp {
 		int builderTimer;
 		int storageTimer;
 		int nukeSiloTimer;
+
+		EconState econState;
 
 		AIClasses* ai;
 };

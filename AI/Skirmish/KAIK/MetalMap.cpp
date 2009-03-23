@@ -1,5 +1,7 @@
-#include "MetalMap.h"
+#include <string>
 
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CMetalMap::CMetalMap(AIClasses* ai) {
 	this->ai = ai;
@@ -87,8 +89,8 @@ void CMetalMap::Init() {
 		GetMetalPoints();
 		SaveMetalMap();
 
-		string mapname =  string("Metal - ") + ai->cb->GetMapName();
-		mapname.resize(mapname.size() - 4);
+		// std::string mapname = std::string("Metal - ") + ai->cb->GetMapName();
+		// mapname.resize(mapname.size() - 4);
 		// ai->debug->MakeBWTGA(MexArrayC, MetalMapWidth, MetalMapHeight, mapname);
 	}
 
@@ -460,9 +462,9 @@ void CMetalMap::GetMetalPoints() {
 
 
 void CMetalMap::SaveMetalMap() {
-	string filename = string(METALFOLDER) + string(ai->cb->GetMapName());
+	std::string filename = std::string(METALFOLDER) + std::string(ai->cb->GetMapName());
 	filename.resize(filename.size() - 3);
-	filename += string("Metal");
+	filename += std::string("Metal");
 
 	char filename_buf[1024];
 	strcpy(filename_buf, filename.c_str());
@@ -482,9 +484,9 @@ void CMetalMap::SaveMetalMap() {
 
 
 bool CMetalMap::LoadMetalMap() {
-	string filename = string(METALFOLDER) + string(ai->cb->GetMapName());
+	std::string filename = std::string(METALFOLDER) + std::string(ai->cb->GetMapName());
 	filename.resize(filename.size() - 3);
-	filename += string("Metal");
+	filename += std::string("Metal");
 
 	char filename_buf[1024];
 	strcpy(filename_buf, filename.c_str());
