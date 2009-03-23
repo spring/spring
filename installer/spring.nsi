@@ -123,7 +123,7 @@ Function .onInit
   ${IfNot} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro SetSectionFlag 0 16 ; make the core section read only
   ${EndIf}
-  !insertmacro UnselectSection 2 ; unselect TASClient section (2) by default
+  !insertmacro UnselectSection 3 ; unselect TASClient section (3) by default
   ${If} ${FileExists} "$INSTDIR\spring.exe"
     !insertmacro UnselectSection 6 ; unselect default section (6) by default
   ${EndIf}
