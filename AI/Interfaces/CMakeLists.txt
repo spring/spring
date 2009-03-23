@@ -66,7 +66,7 @@ if (NOT JAVA_FOUND)
 	FIND_PACKAGE(JavaExtended) # Note: this is not the CMake builtin FindJava
 endif (NOT JAVA_FOUND)
 IF (MINGW)
-	set (JAVA_JVM_LIBRARY jvm)
+	set (JAVA_JVM_LIBRARY ${MINGWLIBS}/lib/libjvm.dll.a)
 	set (JNI_FOUND TRUE)
 ELSE (MINGW)
 	FIND_PACKAGE(JNI)
