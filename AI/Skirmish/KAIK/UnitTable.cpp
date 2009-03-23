@@ -1,93 +1,64 @@
-// Based on Submarine's BuildTable Class from AAI. Thanks sub!
-
-#include "UnitTable.h"
-
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"
 
-/// CR_BIND(CUnitTable, );
-/// CR_REG_METADATA(CUnitTable, (
-/// 	CR_MEMBER(all_lists),
-/// 	CR_MEMBER(ground_factories),
-/// 	CR_MEMBER(ground_builders),
-/// 	CR_MEMBER(ground_attackers),
-/// 	CR_MEMBER(metal_extractors),
-/// 	CR_MEMBER(metal_makers),
-/// 	CR_MEMBER(ground_energy),
-/// 	CR_MEMBER(ground_defences),
-/// 	CR_MEMBER(metal_storages),
-/// 	CR_MEMBER(energy_storages),
-/// 	CR_MEMBER(nuke_silos),
-///
-/// 	CR_MEMBER(numOfSides),
-/// 	CR_MEMBER(sideNames),
-/// 	CR_MEMBER(modSideMap),
-/// 	CR_MEMBER(teamSides),
-///
-/// 	CR_MEMBER(unitTypes)
-/// ));
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
+
+#include "KAIK.h"
+extern CKAIK* KAIKStateExt;
+
+CR_BIND(CUnitTable, );
+CR_REG_METADATA(CUnitTable, (
+	CR_MEMBER(all_lists),
+	CR_MEMBER(ground_factories),
+	CR_MEMBER(ground_builders),
+	CR_MEMBER(ground_attackers),
+	CR_MEMBER(metal_extractors),
+	CR_MEMBER(metal_makers),
+	CR_MEMBER(ground_energy),
+	CR_MEMBER(ground_defences),
+	CR_MEMBER(metal_storages),
+	CR_MEMBER(energy_storages),
+	CR_MEMBER(nuke_silos),
+
+	CR_MEMBER(numOfSides),
+	CR_MEMBER(sideNames),
+	CR_MEMBER(modSideMap),
+	CR_MEMBER(teamSides),
+
+	CR_MEMBER(numDefs),
+	CR_MEMBER(unitTypes),
+
+	CR_POSTLOAD(PostLoad)
+));
 
 
-CUnitTable::CUnitTable(AIClasses* ai) {
-	this->ai = ai;
 
-	numOfUnits = 0;
-	unitList = 0;
-
-	BuildModSideMap();
-	ReadTeamSides();
-
-	// now set up the unit lists
-	ground_factories = new vector<int>[numOfSides];
-	ground_builders = new vector<int>[numOfSides];
-	ground_attackers = new vector<int>[numOfSides];
-	metal_extractors = new vector<int>[numOfSides];
-	metal_makers = new vector<int>[numOfSides];
-	ground_energy = new vector<int>[numOfSides];
-	ground_defences = new vector<int>[numOfSides];
-	metal_storages = new vector<int>[numOfSides];
-	energy_storages = new vector<int>[numOfSides];
-	nuke_silos = new vector<int>[numOfSides];
-
-	all_lists.push_back(ground_factories);	// CAT_FACTORY  (idx: 0, cat enum:  7)
-	all_lists.push_back(ground_builders);	// CAT_BUILDER  (idx: 1, cat enum:  4)
-	all_lists.push_back(ground_attackers);	// CAT_G_ATTACK (idx: 2, cat enum:  9)
-	all_lists.push_back(metal_extractors);	// CAT_MEX      (idx: 3, cat enum:  2)
-	all_lists.push_back(metal_makers);		// CAT_MMAKER   (idx: 4, cat enum:  3)
-	all_lists.push_back(ground_energy);		// CAT_ENERGY   (idx: 5, cat enum:  1)
-	all_lists.push_back(ground_defences);	// CAT_DEFENCE  (idx: 6, cat enum:  8)
-	all_lists.push_back(metal_storages);	// CAT_MSTOR    (idx: 7, cat enum:  6)
-	all_lists.push_back(energy_storages);	// CAT_ESTOR    (idx: 8, cat enum:  5)
-	all_lists.push_back(nuke_silos);		// CAT_NUKE     (idx: 9, cat enum: 10)
+CUnitTable::CUnitTable(AIClasses* aic) {
+	ai = aic;
 }
 
 CUnitTable::~CUnitTable() {
-	delete[] unitTypes;
-	delete[] unitList;
+}
 
-	delete[] ground_factories;
-	delete[] ground_builders;
-	delete[] ground_attackers;
-	delete[] metal_extractors;
-	delete[] metal_makers;
-	delete[] ground_energy;
-	delete[] ground_defences;
-	delete[] metal_storages;
-	delete[] energy_storages;
-	delete[] nuke_silos;
+void CUnitTable::PostLoad() {
+	// NOTE: can we actually restore the UT
+	// state sensibly wrt. team sides etc.?
+	ai = KAIKStateExt->GetAi();
+
+	Init();
 }
 
 
+
 int CUnitTable::BuildModSideMap() {
-	L("[CUnitTable::BuildModSideMap()]");
+	L(ai, "[CUnitTable::BuildModSideMap()]");
 
 	// get all sides and commanders
 	std::string commKey;	// eg. "SIDE4\\commander"
 	std::string commName;	// eg. "arm_commander"
 	std::string sideKey;	// eg. "SIDE4\\name"
 	std::string sideName;	// eg. "Arm"
-	static const unsigned int sideNum_maxSize = 64;
-	char sideNum[sideNum_maxSize] = {0};
 
 	// FIXME: can be a .lua script now
 	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
@@ -95,10 +66,10 @@ int CUnitTable::BuildModSideMap() {
 	// look at SIDE0 through SIDE9
 	// (should be enough for any mod)
 	for (int side = 0; side < 10; side++) {
-		SNPRINTF(sideNum, sideNum_maxSize, "%i", side);
+		std::stringstream sside; sside << side;
 
-		commKey = "SIDE" + std::string(sideNum) + "\\commander";
-		sideKey = "SIDE" + std::string(sideNum) + "\\name";
+		commKey = "SIDE" + sside.str() + "\\commander";
+		sideKey = "SIDE" + sside.str() + "\\name";
 
 		ai->parser->GetDef(commName, "-1", commKey);
 		const UnitDef* udef = ai->cb->GetUnitDef(commName.c_str());
@@ -115,17 +86,19 @@ int CUnitTable::BuildModSideMap() {
 			modSideMap[sideName] = side;
 			numOfSides = side + 1;
 
-			L("\tside index: " << side << ", root unit: " << udef->name << ", side name: " << sideName << ", " << sideName << " ==> " << side);
+			L(ai, "\tside index: " << side << ", root unit: " << udef->name << ", side name: " << sideName << ", " << sideName << " ==> " << side);
 		} else {
-			L("\tside " << side << " not defined");
+			L(ai, "\tside " << side << " not defined");
 		}
+
+		sside.str("");
 	}
 
 	return numOfSides;
 }
 
 int CUnitTable::ReadTeamSides() {
-	L("[CUnitTable::ReadTeamSides()]");
+	L(ai, "[CUnitTable::ReadTeamSides()]");
 
 	// team N defaults to side N (in the
 	// SkirmishAI startscript) for N in
@@ -146,18 +119,18 @@ int CUnitTable::ReadTeamSides() {
 			// FIXME: Gaia-team side?
 			teamSides[team] = modSideMap[sideKey];
 
-			L("\tteam: " << team << ", key: " << sideKey << ", side: " << modSideMap[sideKey] << " (index: " << teamSides[team] << ")");
+			L(ai, "\tteam: " << team << ", key: " << sideKey << ", side: " << modSideMap[sideKey] << " (index: " << teamSides[team] << ")");
 		} else {
-			L("\tno \"game\\team\\side\" value found for team " << team);
+			L(ai, "\tno \"game\\team\\side\" value found for team " << team);
 		}
 	}
 
-	return teamSides[ai->cb->GetMyTeam()];
+	return (teamSides[ai->cb->GetMyTeam()]);
 }
 
 // called at the end of Init()
 void CUnitTable::ReadModConfig() {
-	L("[CUnitTable::ReadModConfig()]");
+	L(ai, "[CUnitTable::ReadModConfig()]");
 
 	const char* modName = ai->cb->GetModName();
 	static const unsigned int configFileName_maxSize = 1024;
@@ -172,7 +145,7 @@ void CUnitTable::ReadModConfig() {
 	FILE* f = fopen(configFileName, "r");
 
 	if (f) {
-		L("\tparsing existing mod configuration file " << configFileName);
+		L(ai, "\tparsing existing mod configuration file " << configFileName);
 
 		// read the mod's .cfg file
 		char str[1024];
@@ -194,16 +167,18 @@ void CUnitTable::ReadModConfig() {
 				utype->costMultiplier = costMult;
 				utype->techLevel = techLvl;
 
-				L("\t\tudef->id: " << udef->id << ", udef->name: " << udef->name << ", utype->category: " << utype->category << ", .cfg category: " << category);
+				L(ai, "\t\tudef->id: " << udef->id << ", udef->name: " << udef->name << ", utype->category: " << utype->category << ", .cfg category: " << category);
 
 				// TODO: look for any possible side-effects that might arise
 				// from overriding categories like this, then enable overrides
 				// other than builder --> attacker?
+				//
 				// FIXME: SEGV when unarmed CAT_BUILDER units masquerading as
 				// CAT_G_ATTACK'ers want to or are attacked
+				//
 				if (category >= 0 && category < LASTCATEGORY) {
 					if (category == CAT_G_ATTACK && utype->category == CAT_BUILDER) {
-						L("\t\t\t.cfg category (CAT_G_ATTACK) overrides utype->category (CAT_BUILDER)");
+						L(ai, "\t\t\t.cfg category (CAT_G_ATTACK) overrides utype->category (CAT_BUILDER)");
 
 						// maps unit categories to indices into all_lists
 						// FIXME: hackish, poorly maintainable, bad style
@@ -215,16 +190,16 @@ void CUnitTable::ReadModConfig() {
 						int idx2 = catLstIdx[category];
 
 						if (idx1 != idx2) {
-							std::vector<int>* oldLst = all_lists[idx1];	// old category list
-							std::vector<int>* newLst = all_lists[idx2];	// new category list
+							std::vector<std::vector<int> >& oldLst = all_lists[idx1];	// old category list
+							std::vector<std::vector<int> >& newLst = all_lists[idx2];	// new category list
 							std::set<int>::iterator sit;
 							std::vector<int>::iterator vit;
 
 							for (sit = utype->sides.begin(); sit != utype->sides.end(); sit++) {
-								int side = *sit;
+								const int side = *sit;
 
 								for (vit = oldLst[side].begin(); vit != oldLst[side].end(); vit++) {
-									int udefID = *vit;
+									const int udefID = *vit;
 
 									if (udefID == udef->id) {
 										oldLst[side].erase(vit);
@@ -244,13 +219,13 @@ void CUnitTable::ReadModConfig() {
 		SNPRINTF(logMsg, logMsg_maxSize, "read mod configuration file %s",
 				configFileName);
 	} else {
-		L("\tcreating new mod configuration file " << configFileName);
+		L(ai, "\tcreating new mod configuration file " << configFileName);
 
 		// write a new .cfg file with default values
 		f = fopen(configFileName, "w");
 		fprintf(f, "// unitName costMultiplier techLevel category\n");
 
-		for (int i = 1; i <= numOfUnits; i++) {
+		for (int i = 1; i <= numDefs; i++) {
 			UnitType* utype = &unitTypes[i];
 			// assign and write default values for costMultiplier
 			// and techLevel, category is already set in ::Init()
@@ -259,7 +234,7 @@ void CUnitTable::ReadModConfig() {
 			fprintf(f, "%s %.2f %d %d\n", utype->def->name.c_str(),
 					utype->costMultiplier, utype->techLevel, utype->category);
 
-			L("\t\tname: " << (utype->def->name) << ", .cfg category: " << (utype->category));
+			L(ai, "\t\tname: " << (utype->def->name) << ", .cfg category: " << (utype->category));
 		}
 
 		SNPRINTF(logMsg, logMsg_maxSize, "wrote mod configuration file %s",
@@ -272,23 +247,28 @@ void CUnitTable::ReadModConfig() {
 
 
 
-int CUnitTable::GetSide(int unitID) {
-	int team = ai->cb->GetUnitTeam(unitID);
-	int side = teamSides[team];
+int CUnitTable::GetSide(void) const {
+	const int team = ai->cb->GetMyTeam();
+	const int side = teamSides[team];
+
+	return side;
+}
+int CUnitTable::GetSide(int unitID) const {
+	const int team = ai->cb->GetUnitTeam(unitID);
+	const int side = teamSides[team];
 
 	return side;
 }
 
-int CUnitTable::GetCategory(const UnitDef* unitdef) {
-	return unitTypes[unitdef->id].category;
+int CUnitTable::GetCategory(const UnitDef* unitdef) const {
+	return (unitTypes[unitdef->id].category);
 }
-
-int CUnitTable::GetCategory(int unit) {
+int CUnitTable::GetCategory(int unit) const {
 	const UnitDef* udef = ai->cb->GetUnitDef(unit);
 
 	if (udef != NULL) {
-		UnitType& utype = unitTypes[udef->id];
-		return (utype.category);
+		const UnitType* utype = &unitTypes[udef->id];
+		return (utype->category);
 	} else {
 		return -1;
 	}
@@ -301,10 +281,10 @@ int CUnitTable::GetCategory(int unit) {
 // non-squad units like Flashes could become
 // artifically overrated by a massive amount)
 float CUnitTable::GetDPS(const UnitDef* unit) {
-	if (unit) {
+	if (unit != NULL) {
 		float totaldps = 0.0f;
 
-		for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
+		for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
 			float dps = 0.0f;
 
 			if (!i->def->paralyzer) {
@@ -331,7 +311,7 @@ float CUnitTable::GetDPS(const UnitDef* unit) {
 
 
 float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
-	if (unit->weapons.size()) {
+	if (unit->weapons.size() > 0) {
 		ai->math->TimerStart();
 
 		float dps = 0.0f;
@@ -385,7 +365,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 					float timetoarrive = 0.0f;
 					float u = unit->weapons[i].def->projectilespeed * 30;
 
-					if (unit->weapons[i].def->type == string("Cannon")) {
+					if (unit->weapons[i].def->type == std::string("Cannon")) {
 						float sinoid = (distancetravelled * gravity) / (u * u);
 						sinoid = std::min(sinoid, 1.0f);
 						firingangle = asin(sinoid) / 2;
@@ -414,7 +394,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 					}
 
 					if (unit->weapons[i].def->turnrate == 0.0f && unit->weapons[i].def->projectilespeed != 0 && victim->speed != 0 && unit->weapons[i].def->beamtime == 1) {
-						if (unit->weapons[i].def->type == string("Cannon")) {
+						if (unit->weapons[i].def->type == std::string("Cannon")) {
 							timetoarrive = (2 * u * sin(firingangle)) / gravity;
 						} else {
 							timetoarrive = distancetravelled / (unit->weapons[i].def->projectilespeed * 30);
@@ -442,7 +422,7 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
-	vector<int> enemiesOfType;
+	std::vector<int> enemiesOfType;
 	float score = 0.01f;
 	float totalCost = 0.01f;
 	enemiesOfType.resize(ai->cb->GetNumUnitDefs() + 1, 0);
@@ -487,12 +467,11 @@ float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
 
 
 void CUnitTable::UpdateChokePointArray() {
-	vector<float> EnemyCostsByMoveType;
-	EnemyCostsByMoveType.resize(ai->pather->NumOfMoveTypes);
-	vector<int> enemiesOfType;
+	std::vector<float> EnemyCostsByMoveType(ai->pather->NumOfMoveTypes);
+	std::vector<int> enemiesOfType(ai->cb->GetNumUnitDefs() + 1, 0);
+
 	float totalCost = 1.0f;
 	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
-	enemiesOfType.resize(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	for (int i = 0; i < ai->pather->totalcells; i++) {
 		ai->dm->ChokePointArray[i] = 0;
@@ -506,7 +485,9 @@ void CUnitTable::UpdateChokePointArray() {
 
 	for (unsigned int i = 1; i < enemiesOfType.size(); i++) {
 		if (unitTypes[i].sides.size() > 0 && !unitTypes[i].def->canfly && unitTypes[i].def->speed > 0) {
-			float currentcosts = ((unitTypes[i].def->metalCost * METAL2ENERGY) + unitTypes[i].def->energyCost) * (enemiesOfType[i]);
+			float currentcosts =
+				((unitTypes[i].def->metalCost * METAL2ENERGY) +
+				unitTypes[i].def->energyCost) * (enemiesOfType[i]);
 			EnemyCostsByMoveType[unitTypes[i].def->moveType] += currentcosts;
 			totalCost += currentcosts;
 		}
@@ -718,46 +699,57 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 
 // operates in terms of GetScore() (which is recursive for factories)
 const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
-	if (category == LASTCATEGORY)
-		return 0x0;
+	if (category == LASTCATEGORY) {
+		return NULL;
+	}
 
-	vector<int>* tempList = 0;
+	std::vector<int>* tempList = NULL;
 	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
-	const UnitDef* tempUnitDef = 0;
-	int side = GetSide(builderUnitID);
+	const UnitDef* tempUnitDef = NULL;
+	const int side = GetSide(builderUnitID);
 	float tempScore = 0.0f;
 	float bestScore = 0.0f;
 
 	switch (category) {
 		case CAT_ENERGY:
-			tempList = ground_energy;
+			assert(ground_energy.size() >= (side + 1));
+			tempList = &ground_energy[side];
 			break;
 		case CAT_MEX:
-			tempList = metal_extractors;
+			assert(metal_extractors.size() >= (side + 1));
+			tempList = &metal_extractors[side];
 			break;
 		case CAT_MMAKER:
-			tempList = metal_makers;
+			assert(metal_makers.size() >= (side + 1));
+			tempList = &metal_makers[side];
 			break;
 		case CAT_G_ATTACK:
-			tempList = ground_attackers;
+			assert(ground_attackers.size() >= (side + 1));
+			tempList = &ground_attackers[side];
 			break;
 		case CAT_DEFENCE:
-			tempList = ground_defences;
+			assert(ground_defences.size() >= (side + 1));
+			tempList = &ground_defences[side];
 			break;
 		case CAT_BUILDER:
-			tempList = ground_builders;
+			assert(ground_builders.size() >= (side + 1));
+			tempList = &ground_builders[side];
 			break;
 		case CAT_FACTORY:
-			tempList = ground_factories;
+			assert(ground_factories.size() >= (side + 1));
+			tempList = &ground_factories[side];
 			break;
 		case CAT_MSTOR:
-			tempList = metal_storages;
+			assert(metal_storages.size() >= (side + 1));
+			tempList = &metal_storages[side];
 			break;
 		case CAT_ESTOR:
-			tempList = energy_storages;
+			assert(energy_storages.size() >= (side + 1));
+			tempList = &energy_storages[side];
 			break;
 		case CAT_NUKE:
-			tempList = nuke_silos;
+			assert(nuke_silos.size() >= (side + 1));
+			tempList = &nuke_silos[side];
 			break;
 	}
 
@@ -769,8 +761,8 @@ const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, int category) {
 	//
 	// if (tempList->size() >= side + 1) {
 		// iterate over all units for <side> in tempList (eg. Core ground_defences)
-		for (unsigned int i = 0; i != tempList[side].size(); i++) {
-			int tempUnitDefID = tempList[side][i];
+		for (unsigned int i = 0; i != tempList->size(); i++) {
+			int tempUnitDefID = (*tempList)[i];
 
 			// if our builder can build the i-th unit
 			if (CanBuildUnit(builderDef->id, tempUnitDefID)) {
@@ -813,28 +805,56 @@ const UnitDef* CUnitTable::GetBestEconomyBuilding(int builder, float minUsefulne
 
 
 void CUnitTable::Init() {
-	// get the unitdefs and stick them in the unitTypes[] array
-	numOfUnits = ai->cb->GetNumUnitDefs();
-	unitList = new const UnitDef*[numOfUnits];
-	ai->cb->GetUnitDefList(unitList);
+	numDefs = ai->cb->GetNumUnitDefs();
+
+	BuildModSideMap();
+	ReadTeamSides();
+
+	// now set up the unit lists
+	ground_factories.resize(numOfSides, std::vector<int>(0, -1));
+	ground_builders.resize(numOfSides, std::vector<int>(0, -1));
+	ground_attackers.resize(numOfSides, std::vector<int>(0, -1));
+	metal_extractors.resize(numOfSides, std::vector<int>(0, -1));
+	metal_makers.resize(numOfSides, std::vector<int>(0, -1));
+	ground_energy.resize(numOfSides, std::vector<int>(0, -1));
+	ground_defences.resize(numOfSides, std::vector<int>(0, -1));
+	metal_storages.resize(numOfSides, std::vector<int>(0, -1));
+	energy_storages.resize(numOfSides, std::vector<int>(0, -1));
+	nuke_silos.resize(numOfSides, std::vector<int>(0, -1));
+
+	all_lists.push_back(ground_factories);	// CAT_FACTORY  (idx: 0, cat enum:  7)
+	all_lists.push_back(ground_builders);	// CAT_BUILDER  (idx: 1, cat enum:  4)
+	all_lists.push_back(ground_attackers);	// CAT_G_ATTACK (idx: 2, cat enum:  9)
+	all_lists.push_back(metal_extractors);	// CAT_MEX      (idx: 3, cat enum:  2)
+	all_lists.push_back(metal_makers);		// CAT_MMAKER   (idx: 4, cat enum:  3)
+	all_lists.push_back(ground_energy);	// CAT_ENERGY   (idx: 5, cat enum:  1)
+	all_lists.push_back(ground_defences);	// CAT_DEFENCE  (idx: 6, cat enum:  8)
+	all_lists.push_back(metal_storages);	// CAT_MSTOR    (idx: 7, cat enum:  6)
+	all_lists.push_back(energy_storages);	// CAT_ESTOR    (idx: 8, cat enum:  5)
+	all_lists.push_back(nuke_silos);		// CAT_NUKE     (idx: 9, cat enum: 10)
 
 	// one more than needed because [0] is a dummy object (so
 	// UnitDef->id can be used to adress that unit in array)
-	unitTypes = new UnitType[numOfUnits + 1];
+	unitTypes.resize(numDefs + 1);
+	unitDefs.resize(numDefs, NULL);
+
+	ai->cb->GetUnitDefList(&unitDefs[0]);
 
 	// add units to UnitTable
-	for (int i = 1; i <= numOfUnits; i++) {
-		unitTypes[i].def = unitList[i - 1];
+	for (int i = 1; i <= numDefs; i++) {
+		unitTypes[i].def = unitDefs[i - 1];
 		// side has not been assigned - will be done later
 		unitTypes[i].category = -1;
 
-		// GetUnitDefList() filled our unitList
+		// GetUnitDefList() filled our unitDefs
 		// partially with null UnitDef*'s (bad,
 		// nothing much to do if this happens)
 		assert(unitTypes[i].def != 0x0);
 
+		std::map<int, std::string>::const_iterator j;
+
 		// get build options
-		for (map<int, string>::const_iterator j = unitTypes[i].def->buildOptions.begin(); j != unitTypes[i].def->buildOptions.end(); j++) {
+		for (j = unitTypes[i].def->buildOptions.begin(); j != unitTypes[i].def->buildOptions.end(); j++) {
 			const char* buildOptionName = j->second.c_str();
 			const UnitDef* buildOptionDef = ai->cb->GetUnitDef(buildOptionName);
 			unitTypes[i].canBuildList.push_back(buildOptionDef->id);
@@ -852,7 +872,7 @@ void CUnitTable::Init() {
 	}
 
 	// add unit to different groups
-	for (int i = 1; i <= numOfUnits; i++) {
+	for (int i = 1; i <= numDefs; i++) {
 		UnitType* me = &unitTypes[i];
 
 		// KLOOTNOTE: this is a hack to make KAIK recognize Lua
@@ -891,10 +911,10 @@ void CUnitTable::Init() {
 			}
 
 
-			me->DPSvsUnit.resize(numOfUnits + 1);
+			me->DPSvsUnit.resize(numDefs + 1);
 
 			// calculate this unit type's DPS against all other unit types
-			for (int v = 1; v <= numOfUnits; v++) {
+			for (int v = 1; v <= numDefs; v++) {
 				me->DPSvsUnit[v] = GetDPSvsUnit(me->def, unitTypes[v].def);
 			}
 
@@ -1035,9 +1055,6 @@ void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
 
 
 void CUnitTable::DebugPrint() {
-	if (!unitList)
-		return;
-
 	// NOTE: same order as all_lists, not as CAT_* enum
 	const char* listCategoryNames[12] = {
 		"GROUND-FACTORY", "GROUND-BUILDER", "GROUND-ATTACKER", "METAL-EXTRACTOR",
@@ -1051,11 +1068,11 @@ void CUnitTable::DebugPrint() {
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
 	FILE* file = fopen(filename, "w");
 
-	for (int i = 1; i <= numOfUnits; i++) {
+	for (int i = 1; i <= numDefs; i++) {
 		UnitType* utype = &unitTypes[i];
 
 		fprintf(file, "UnitDef ID: %i\n", i);
-		fprintf(file, "Name:       %s\n", unitList[i - 1]->humanName.c_str());
+		fprintf(file, "Name:       %s\n", unitDefs[i - 1]->humanName.c_str());
 		fprintf(file, "Sides:      ");
 
 		for (std::set<int>::iterator it = utype->sides.begin(); it != utype->sides.end(); it++) {
@@ -1109,7 +1126,7 @@ void CUnitTable::DebugPrint() {
 float CUnitTable::GetMaxRange(const UnitDef* unit) {
 	float max_range = 0.0f;
 
-	for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
+	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
 		if ((i->def->range) > max_range)
 			max_range = i->def->range;
 	}
@@ -1120,7 +1137,7 @@ float CUnitTable::GetMaxRange(const UnitDef* unit) {
 float CUnitTable::GetMinRange(const UnitDef* unit) {
 	float min_range = MY_FLT_MAX;
 
-	for (vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
+	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
 		if ((i->def->range) < min_range)
 			min_range = i->def->range;
 	}

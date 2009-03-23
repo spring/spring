@@ -1,8 +1,7 @@
-#include <cstdlib>
-#include <ctime>
+#include <vector>
 
-#include "DGunController.hpp"
-
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CR_BIND(DGunController, (NULL));
 CR_REG_METADATA(DGunController, (

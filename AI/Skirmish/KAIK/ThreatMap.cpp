@@ -1,6 +1,5 @@
-#include "ThreatMap.h"
-
-
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CR_BIND(CThreatMap, (NULL))
 CR_REG_METADATA(CThreatMap, (
@@ -29,12 +28,12 @@ CThreatMap::CThreatMap(AIClasses* ai) {
 CThreatMap::~CThreatMap() {
 }
 
-
 void CThreatMap::PostLoad() {
 	ThreatMapWidth = ai->cb->GetMapWidth() / ThreatResolution;
 	ThreatMapHeight = ai->cb->GetMapHeight() / ThreatResolution;
 	TotalCells = ThreatMapWidth * ThreatMapHeight;
 }
+
 
 
 void CThreatMap::Create() {

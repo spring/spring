@@ -1,8 +1,8 @@
-#ifndef SPOTFINDER_H
-#define SPOTFINDER_H
+#ifndef KAIK_SPOTFINDER_HDR
+#define KAIK_SPOTFINDER_HDR
 
-
-#include "GlobalAI.h"
+#include <vector>
+struct AIClasses;
 
 struct CachePoint {
 	float maxValueInBox;
@@ -50,6 +50,5 @@ class CSpotFinder {
 		AIClasses* ai;
 		std::vector<CachePoint> cachePoints;
 };
-
 
 #endif

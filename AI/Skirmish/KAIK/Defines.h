@@ -1,18 +1,17 @@
-#ifndef DEFINES_H
-#define DEFINES_H
+#ifndef KAIK_DEFINES_HDR
+#define KAIK_DEFINES_HDR
 
 #include "AIExport.h" // for aiexport_getVersion()
 
-#define AI_VERSION_NUMBER aiexport_getVersion()
-//#define AI_VERSION_NUMBER "0.13"
-#define AI_NAME			std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
-#define AI_DATE			"21/03/2009"
-#define AI_VERSION		AI_NAME + " (rev. " + AI_DATE + ")"
-#define AI_CREDITS		"(original developer: Krogothe, current maintainer: Kloot)"
+#define AI_VERSION_NUMBER	aiexport_getVersion()
+#define AI_NAME				std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
+#define AI_DATE				"22/03/2009"
+#define AI_VERSION			AI_NAME + " (rev. " + AI_DATE + ")"
+#define AI_CREDITS			"(developed by Krogothe, Tournesol, Firenu; now maintained by Kloot)"
 
 // Logger
-#define L(a)			(*ai->LOGGER << a << std::endl)
-#define LN(a)			(*ai->LOGGER << a)
+#define L(ai, msg)                            \
+	CLogger& log = *(ai->logger); log << msg; \
 
 // Shortcuts
 #define GCAT(a)			(ai->ut->GetCategory(a))

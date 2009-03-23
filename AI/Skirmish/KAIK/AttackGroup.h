@@ -1,16 +1,11 @@
-#ifndef ATTACKGROUP_H
-#define ATTACKGROUP_H
+#ifndef KAIK_ATTACKGROUP_HDR
+#define KAIK_ATTACKGROUP_HDR
 
-#include "System/StdAfx.h"
-#include "creg/creg.h"
-#include "creg/STL_List.h"
+#include <list>
+#include <vector>
+
+#include "IncCREG.h"
 #include "Defines.h"
-
-#include "ExternalAI/aibase.h"					// DLL exports and definitions
-#include "Sim/Misc/GlobalConstants.h"
-
-using std::vector;
-using std::list;
 
 class AIClasses;
 
@@ -40,27 +35,25 @@ class CAttackGroup {
 		bool defending;
 		float3 attackPosition;
 		float attackRadius;
-		vector<float3> pathToTarget;
+		std::vector<float3> pathToTarget;
 		void FindDefenseTarget(float3 groupPosition, int);
 
 		int GetWorstMoveType();
 
 		// for combining
-		vector<int>* GetAllUnits();
-
-		list<int> GetAssignedEnemies();
+		std::vector<int>* GetAllUnits();
+		std::list<int> GetAssignedEnemies();
 		void ClearTarget();
 
 		bool NeedsNewTarget();
 		int SelectEnemy(int, const float3&);
 		void AttackEnemy(int, int, float, int);
-		void AssignTarget(vector<float3> path, float3 target, float radius);
+		void AssignTarget(std::vector<float3> path, float3 target, float radius);
 		void MoveAlongPath(float3& groupPosition, int numUnits);
 
-
 	private:
-		AIClasses *ai;
-		vector<int> units;
+		AIClasses* ai;
+		std::vector<int> units;
 		int groupID;
 		bool isMoving;
 

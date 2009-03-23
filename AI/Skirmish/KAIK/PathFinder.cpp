@@ -1,4 +1,5 @@
-#include "PathFinder.h"
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CPathFinder::CPathFinder(AIClasses* ai) {
 	this->ai = ai;
@@ -72,12 +73,12 @@ void CPathFinder::Init() {
 	}
 
 	// get all the different movetypes
-	vector<int> moveslopes;
-	vector<int> maxwaterdepths;
-	vector<int>	minwaterdepths;
-	string sectionstring = "CLASS";
-	string errorstring = "-1";
-	string Valuestring = "0";
+	std::vector<int> moveslopes;
+	std::vector<int> maxwaterdepths;
+	std::vector<int> minwaterdepths;
+	std::string sectionstring = "CLASS";
+	std::string errorstring = "-1";
+	std::string Valuestring = "0";
 	char k[50];
 
 	// FIXME: can be a .lua script now
@@ -85,16 +86,16 @@ void CPathFinder::Init() {
 
 	while (Valuestring != errorstring) {
 		SNPRINTF(k, 50, "%i", NumOfMoveTypes);
-		ai->parser->GetDef(Valuestring, errorstring, string(sectionstring + k + "\\Name"));
+		ai->parser->GetDef(Valuestring, errorstring, std::string(sectionstring + k + "\\Name"));
 
 		if (Valuestring != errorstring) {
-			ai->parser->GetDef(Valuestring, string("10000"), string(sectionstring + k + "\\MaxWaterDepth"));
+			ai->parser->GetDef(Valuestring, std::string("10000"), std::string(sectionstring + k + "\\MaxWaterDepth"));
 			maxwaterdepths.push_back(atoi(Valuestring.c_str()));
 
-			ai->parser->GetDef(Valuestring, string("-10000"), string(sectionstring + k + "\\MinWaterDepth"));
+			ai->parser->GetDef(Valuestring, std::string("-10000"), std::string(sectionstring + k + "\\MinWaterDepth"));
 			minwaterdepths.push_back(atoi(Valuestring.c_str()));
 
-			ai->parser->GetDef(Valuestring, string("10000"), string(sectionstring + k + "\\MaxSlope"));
+			ai->parser->GetDef(Valuestring, std::string("10000"), std::string(sectionstring + k + "\\MaxSlope"));
 			moveslopes.push_back(atoi(Valuestring.c_str()));
 
 			NumOfMoveTypes++;
@@ -229,8 +230,7 @@ void CPathFinder::CreateDefenseMatrix() {
 	delete[] costmask;
 }
 
-void CPathFinder::PrintData(string s) {
-	s = s;
+void CPathFinder::PrintData(std::string) {
 }
 
 void CPathFinder::ClearPath() {
@@ -270,7 +270,7 @@ void* CPathFinder::Pos2Node(float3 pos) {
  * radius is in full res.
  * returns the path cost.
  */
-float CPathFinder::MakePath(vector<float3>* posPath, float3* startPos, float3* endPos, int radius) {
+float CPathFinder::MakePath(std::vector<float3>* posPath, float3* startPos, float3* endPos, int radius) {
 	ai->math->TimerStart();
 	float totalcost;
 	ClearPath();
@@ -297,20 +297,20 @@ float CPathFinder::MakePath(vector<float3>* posPath, float3* startPos, float3* e
 }
 
 
-float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float myMaxRange, vector<float3>* possibleTargets) {
+float CPathFinder::FindBestPath(std::vector<float3>* posPath, float3* startPos, float myMaxRange, std::vector<float3>* possibleTargets) {
 	ai->math->TimerStart();
 	float totalcost;
 	ClearPath();
 
 	// make a list with the points that will count as end nodes
-	static vector<void*> endNodes;
+	static std::vector<void*> endNodes;
 	int radius = int(myMaxRange / (8 * resmodifier));
 	int offsetSize = 0;
 
 	endNodes.resize(0);
 	endNodes.reserve(possibleTargets->size() * radius * 10);
 
-	pair<int, int>* offsets;
+	std::pair<int, int>* offsets;
 
 	{
 		int DoubleRadius = radius * 2;
@@ -324,7 +324,7 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 			xend[a] = int(sqrt(floatsqrradius - z * z));
 		}
 
-		offsets = new pair<int, int>[DoubleRadius * 5];
+		offsets = new std::pair<int, int>[DoubleRadius * 5];
 		int index = 0;
 
 		offsets[index].first = 0;
@@ -407,8 +407,8 @@ float CPathFinder::FindBestPath(vector<float3>* posPath, float3* startPos, float
 
 
 //alias hack to above function for one target (added for convenience in other parts of the code)
-float CPathFinder::FindBestPathToRadius(vector<float3>* posPath, float3* startPos, float radiusAroundTarget, float3* target) {
-	vector<float3> foo;
+float CPathFinder::FindBestPathToRadius(std::vector<float3>* posPath, float3* startPos, float radiusAroundTarget, float3* target) {
+	std::vector<float3> foo;
 	foo.push_back(*target);
 	return (this->FindBestPath(posPath, startPos, radiusAroundTarget, &foo));
 }

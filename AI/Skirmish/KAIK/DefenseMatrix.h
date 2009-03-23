@@ -1,10 +1,11 @@
-#ifndef DEFENSEMATRIX_H
-#define DEFENSEMATRIX_H
+#ifndef KAIK_DEFENSEMATRIX_HDR
+#define KAIK_DEFENSEMATRIX_HDR
 
-
-#include "GlobalAI.h"
+#include <vector>
+#include "IncCREG.h"
 
 class CSpotFinder;
+struct AIClasses;
 
 class CDefenseMatrix {
 	public:
@@ -21,15 +22,14 @@ class CDefenseMatrix {
 		float3 GetDefensePos(const UnitDef* def, float3 builderpos);
 		void MaskBadBuildSpot(float3 pos);
 
-		vector<vector<float> > ChokeMapsByMovetype;
-		vector<float> ChokePointArray;
-		vector<int> BuildMaskArray;
+		std::vector<std::vector<float> > ChokeMapsByMovetype;
+		std::vector<float> ChokePointArray;
+		std::vector<int> BuildMaskArray;
 
 	private:
 		CSpotFinder* spotFinder;
 		int ThreatMapXSize, ThreatMapYSize, TotalCells;
 		AIClasses* ai;
 };
-
 
 #endif
