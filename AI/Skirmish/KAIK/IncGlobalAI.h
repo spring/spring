@@ -22,5 +22,6 @@
 #include "AttackHandler.h"
 #include "DGunController.h"
 #include "Logger.h"
+#include "Util.h"
 
 #endif

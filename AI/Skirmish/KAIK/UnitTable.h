@@ -62,8 +62,7 @@ class CUnitTable {
 		// returns min range for all weapons (or FLT_MAX)
 		float GetMinRange(const UnitDef* unit);
 
-		// std::vector<std::vector<int> std::vector<int> > all_lists;
-		std::vector<   std::vector<std::vector<int> >   > all_lists;
+		std::vector<  std::vector<std::vector<int> >  > all_lists;
 
 		std::vector<std::vector<int> > ground_factories;
 		std::vector<std::vector<int> > ground_builders;
@@ -75,6 +74,8 @@ class CUnitTable {
 		std::vector<std::vector<int> > metal_storages;
 		std::vector<std::vector<int> > energy_storages;
 		std::vector<std::vector<int> > nuke_silos;
+
+		std::map<std::string, int> catIndexMap; // category name ("nuke_silos") to all_lists index
 
 		int numOfSides;							// the number of sides (races) the mod offers
 		std::vector<std::string> sideNames;		// side number (0) to side string ("Arm")
@@ -94,10 +95,12 @@ class CUnitTable {
 		void CalcBuildTree(int unit, int rootSide);
 		void DebugPrint();
 
+		std::string GetDbgLogName() const;
+		std::string GetModCfgName() const;
+
 		// start units of each side (e.g. commander)
 		std::vector<int> startUnits;
 
-		FILE* file;
 		AIClasses* ai;
 };
 

@@ -23,7 +23,7 @@ CKAIK::CKAIK() {
 
 CKAIK::~CKAIK() {
 	for (int i = 0; i < MAX_UNITS; i++) {
-		delete ai->MyUnits[i]; ai->MyUnits[i] = 0x0;
+		delete ai->MyUnits[i];
 	}
 
 	delete ai->logger;
@@ -52,43 +52,7 @@ void CKAIK::Load(IGlobalAICallback* callback, std::istream* ifs) {
 	ai = new AIClasses();
 	ai->cb = callback->GetAICallback();
 	ai->cheat = callback->GetCheatInterface();
-
-	// initialize log filename
-	std::string mapname(callback->GetAICallback()->GetMapName());
-	mapname.resize(mapname.size() - 4);
-
-	time_t now1;
-	time(&now1);
-	struct tm* now2 = localtime(&now1);
-
-	std::string cfgFolderStr(CFGFOLDER);
-	std::string logFolderStr(LOGFOLDER);
-
-	std::stringstream logFileName;
-		logFileName << logFolderStr;
-		logFileName << mapname;
-		logFileName << "_";
-		logFileName << now2->tm_mon + 1;
-		logFileName << "-";
-		logFileName << now2->tm_mday;
-		logFileName << "-";
-		logFileName << now2->tm_year + 1900;
-		logFileName << "_";
-		logFileName << now2->tm_hour;
-		logFileName << ":";
-		logFileName << now2->tm_min;
-		logFileName << "_(";
-		logFileName << ai->cb->GetMyTeam();
-		logFileName << ").txt";
-
-	memset(m_cfgFolderBuf, 0, 1024);
-	memset(m_logFileBuf, 0, 1024);
-	SNPRINTF(m_cfgFolderBuf, 1023, "%s", cfgFolderStr.c_str());
-	SNPRINTF(m_logFileBuf, 1023, "%s", logFileName.str().c_str());
-
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, m_cfgFolderBuf);
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, m_logFileBuf);
-	ai->logger = new CLogger(logFileName.str());
+	ai->logger = new CLogger(ai->cb);
 
 	CREX_SC_LOAD(KAIK, ifs);
 }
@@ -134,47 +98,7 @@ void CKAIK::Serialize(creg::ISerializer* s) {
 
 
 
-
-
-
 void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
-	// initialize log filename
-	std::string mapname(callback->GetAICallback()->GetMapName());
-	mapname.resize(mapname.size() - 4);
-
-	time_t now1;
-	time(&now1);
-	struct tm* now2 = localtime(&now1);
-
-	std::string cfgFolderStr(CFGFOLDER);
-	std::string logFolderStr(LOGFOLDER);
-
-	std::stringstream logFileName;
-		logFileName << logFolderStr;
-		logFileName << mapname;
-		logFileName << "_";
-		logFileName << now2->tm_mon + 1;
-		logFileName << "-";
-		logFileName << now2->tm_mday;
-		logFileName << "-";
-		logFileName << now2->tm_year + 1900;
-		logFileName << "_";
-		logFileName << now2->tm_hour;
-		logFileName << ":";
-		logFileName << now2->tm_min;
-		logFileName << "_(";
-		logFileName << team;
-		logFileName << ").txt";
-
-	memset(m_cfgFolderBuf, 0, 1024);
-	memset(m_logFileBuf, 0, 1024);
-	SNPRINTF(m_cfgFolderBuf, 1023, "%s", cfgFolderStr.c_str());
-	SNPRINTF(m_logFileBuf, 1023, "%s", logFileName.str().c_str());
-
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, m_cfgFolderBuf);
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, m_logFileBuf);
-
-	// initialize class wrapper struct
 	ai = new AIClasses();
 	ai->cb = callback->GetAICallback();
 	ai->cheat = callback->GetCheatInterface();
@@ -189,8 +113,8 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 		ai->MyUnits[i]->groupID = -1;
 	}
 
+	ai->logger			= new CLogger(ai->cb);
 	ai->math			= new CMaths(ai);
-	ai->logger			= new CLogger(logFileName.str());
 	ai->parser			= new CSunParser(ai);
 	ai->ut				= new CUnitTable(ai);
 	ai->mm				= new CMetalMap(ai);
@@ -207,10 +131,16 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 	ai->ut->Init();
 	ai->pather->Init();
 
-	std::string versMsg = std::string(AI_VERSION) + " initialized succesfully!";
-	ai->cb->SendTextMsg(versMsg.c_str(), 0);
+	std::string verMsg =
+		std::string(AI_VERSION) + " initialized succesfully!";
+	std::string logMsg =
+		"logging events to " + ai->logger->GetLogName();
+
+	ai->cb->SendTextMsg(verMsg.c_str(), 0);
+	ai->cb->SendTextMsg(logMsg.c_str(), 0);
 	ai->cb->SendTextMsg(AI_CREDITS, 0);
 }
+
 
 
 void CKAIK::UnitCreated(int unitID) {
@@ -223,7 +153,7 @@ void CKAIK::UnitFinished(int unit) {
 	int frame = ai->cb->GetCurrentFrame();
 	const UnitDef* udef = ai->cb->GetUnitDef(unit);
 
-	if (udef) {
+	if (udef != NULL) {
 		// let attackhandler handle cat_g_attack units
 		if (GCAT(unit) == CAT_G_ATTACK) {
 			ai->ah->AddUnit(unit);

@@ -21,6 +21,8 @@ class CMetalMap {
 		void SaveMetalMap();
 		bool LoadMetalMap();
 
+		std::string GetCacheName() const;
+
 		float3 BufferSpot;
 		bool Stopme;
 		int MaxSpots;
@@ -42,6 +44,7 @@ class CMetalMap {
 		unsigned char* MexArrayB;
 		unsigned char* MexArrayC;
 		int* TempAverage;
+
 		AIClasses* ai;
 };
 
