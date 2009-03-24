@@ -2,7 +2,6 @@
 #define KAIK_DEFENSEMATRIX_HDR
 
 #include <vector>
-#include "IncCREG.h"
 
 class CSpotFinder;
 struct AIClasses;

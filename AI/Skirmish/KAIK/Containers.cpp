@@ -12,7 +12,7 @@ CR_REG_METADATA(AIClasses, (
 	CR_MEMBER(uh),
 	CR_MEMBER(dm),
 	CR_MEMBER(ah),
-	CR_MEMBER(dgunController),
+	CR_MEMBER(dgunConHandler),
 	CR_RESERVED(16)
 ));
 

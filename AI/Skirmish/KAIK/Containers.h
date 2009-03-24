@@ -24,30 +24,30 @@ class CDefenseMatrix;
 class CEconomyTracker;
 class CBuildUp;
 class CAttackHandler;
-class DGunController;
+class CDGunControllerHandler;
 class CLogger;
 
 struct AIClasses {
 	CR_DECLARE_STRUCT(AIClasses);
 
-	IAICallback*        cb;
-	IAICheats*          cheat;
-	CEconomyTracker*    econTracker;
-	CBuildUp*           bu;
-	CSunParser*         parser;
-	CMetalMap*          mm;
-	CMaths*             math;
-	CPathFinder*        pather;
-	CUnitTable*         ut;
-	CThreatMap*         tm;
-	CUnitHandler*       uh;
-	CDefenseMatrix*     dm;
-	CAttackHandler*     ah;
-	DGunController*     dgunController;
-	CLogger*            logger;
+	IAICallback*            cb;
+	IAICheats*              cheat;
+	CEconomyTracker*        econTracker;
+	CBuildUp*               bu;
+	CSunParser*             parser;
+	CMetalMap*              mm;
+	CMaths*                 math;
+	CPathFinder*            pather;
+	CUnitTable*             ut;
+	CThreatMap*             tm;
+	CUnitHandler*           uh;
+	CDefenseMatrix*         dm;
+	CAttackHandler*         ah;
+	CLogger*                logger;
+	CDGunControllerHandler* dgunConHandler;
 
-	std::vector<CUNIT*> MyUnits;
-	std::vector<int>    unitIDs;
+	std::vector<CUNIT*>     MyUnits;
+	std::vector<int>        unitIDs;
 };
 
 struct UnitType {

@@ -6,7 +6,7 @@
 #include "Util.h"
 #include "IncExternAI.h"
 
-const std::string& CLogger::GetLogName() {
+std::string CLogger::GetLogName() const {
 	if (name.size() > 0) {
 		return name;
 	}
@@ -30,12 +30,12 @@ const std::string& CLogger::GetLogName() {
 		ss << now2->tm_hour;
 		ss << "-";
 		ss << now2->tm_min;
-		ss << "_team-";
+		ss << "_team";
 		ss << icb->GetMyTeam();
 		ss << ".txt";
 
 	std::string relName = ss.str();
 	std::string absName = AIUtil::GetAbsFileName(icb, relName);
 
-	return (name = absName);
+	return absName;
 }

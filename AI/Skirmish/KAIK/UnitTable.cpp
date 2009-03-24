@@ -1,6 +1,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "System/Util.h"
 
+#include "IncCREG.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 

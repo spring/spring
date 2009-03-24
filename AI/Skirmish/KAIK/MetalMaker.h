@@ -2,7 +2,6 @@
 #define KAIK_METALMAKER_HDR
 
 #include <vector>
-#include "IncCREG.h"
 
 class IAICallback;
 struct AIClasses;

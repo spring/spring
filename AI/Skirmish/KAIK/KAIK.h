@@ -5,7 +5,6 @@
 
 #include "System/float3.h"
 #include "IncExternAI.h"
-#include "IncCREG.h"
 
 struct AIClasses;
 

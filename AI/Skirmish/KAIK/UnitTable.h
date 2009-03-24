@@ -1,10 +1,8 @@
-#ifndef UNITTABLE_H
-#define UNITTABLE_H
+#ifndef KAIK_UNITTABLE_HDR
+#define KAIK_UNITTABLE_HDR
 
 #include <string>
 #include <vector>
-
-#include "IncCREG.h"
 
 struct UnitDef;
 struct AIClasses;

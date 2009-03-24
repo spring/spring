@@ -37,7 +37,7 @@ CKAIK::~CKAIK() {
 	delete ai->ut;
 	delete ai->mm;
 	delete ai->uh;
-	delete ai->dgunController;
+	delete ai->dgunConHandler;
 	delete ai;
 }
 
@@ -113,19 +113,19 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 		ai->MyUnits[i]->groupID = -1;
 	}
 
-	ai->logger			= new CLogger(ai->cb);
-	ai->math			= new CMaths(ai);
-	ai->parser			= new CSunParser(ai);
-	ai->ut				= new CUnitTable(ai);
-	ai->mm				= new CMetalMap(ai);
-	ai->pather			= new CPathFinder(ai);
-	ai->tm				= new CThreatMap(ai);
-	ai->uh				= new CUnitHandler(ai);
-	ai->dm				= new CDefenseMatrix(ai);
-	ai->econTracker		= new CEconomyTracker(ai);
-	ai->bu				= new CBuildUp(ai);
-	ai->ah				= new CAttackHandler(ai);
-	ai->dgunController	= new DGunController(ai);
+	ai->logger         = new CLogger(ai->cb);
+	ai->math           = new CMaths(ai);
+	ai->parser         = new CSunParser(ai);
+	ai->ut             = new CUnitTable(ai);
+	ai->mm             = new CMetalMap(ai);
+	ai->pather         = new CPathFinder(ai);
+	ai->tm             = new CThreatMap(ai);
+	ai->uh             = new CUnitHandler(ai);
+	ai->dm             = new CDefenseMatrix(ai);
+	ai->econTracker    = new CEconomyTracker(ai);
+	ai->bu             = new CBuildUp(ai);
+	ai->ah             = new CAttackHandler(ai);
+	ai->dgunConHandler = new CDGunControllerHandler(ai);
 
 	ai->mm->Init();
 	ai->ut->Init();
@@ -227,7 +227,7 @@ void CKAIK::EnemyLeaveRadar(int enemy) {
 }
 
 void CKAIK::EnemyDestroyed(int enemy, int attacker) {
-	ai->dgunController->handleDestroyEvent(attacker, enemy);
+	ai->dgunConHandler->NotifyEnemyDestroyed(enemy, attacker);
 }
 
 void CKAIK::EnemyDamaged(int damaged, int attacker, float damage, float3 dir) {
@@ -282,6 +282,7 @@ void CKAIK::Update() {
 
 	// call economy tracker update routine
 	ai->econTracker->frameUpdate(frame);
+	ai->dgunConHandler->Update(frame);
 
 	if (frame == 1) {
 		// init defense matrix
@@ -292,8 +293,6 @@ void CKAIK::Update() {
 		ai->bu->Update(frame);
 		ai->uh->IdleUnitUpdate(frame);
 	}
-
-	ai->dgunController->update(frame);
 
 	// call attack handler and unit handler (metal maker) update routines
 	ai->ah->Update(frame);

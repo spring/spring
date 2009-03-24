@@ -1,10 +1,9 @@
 #ifndef KAIK_UNIT_HDR
 #define KAIK_UNIT_HDR
 
-#include "IncCREG.h"
-#include "IncEngine.h"
 #include "Defines.h"
 
+struct Command;
 struct UnitDef;
 class AIClasses;
 
