@@ -2,17 +2,23 @@
 #define KAIK_LOGGER_HDR
 
 #include <string>
-#include <sstream>
 #include <fstream>
+
+class IAICallback;
 
 class CLogger {
 	public:
-		CLogger(const std::string& fname) {
-			log = new std::ofstream(fname.c_str());
+		CLogger(IAICallback* cb) {
+			icb  = cb;
+			name = GetLogName();
+			log  = new std::ofstream(name.c_str());
 		}
 		~CLogger() {
+			log->close();
 			delete log;
 		}
+
+		const std::string& GetLogName();
 
 		CLogger& operator << (const char c) {
 			*log << c; *log << std::endl; return *this;
@@ -25,6 +31,8 @@ class CLogger {
 		}
 
 	private:
+		IAICallback* icb;
+		std::string name;
 		std::ofstream* log;
 };
 

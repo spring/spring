@@ -137,7 +137,6 @@ void CBuildUp::GetEconState(EconState* es) const {
 
 	es->numM = ai->uh->AllUnitsByCat[CAT_MEX].size();
 	es->numE = ai->uh->AllUnitsByCat[CAT_ENERGY].size();
-	es->numF = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
 
 	es->numDefenses  = ai->uh->AllUnitsByCat[CAT_DEFENCE].size();
 	es->numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
@@ -150,7 +149,7 @@ void CBuildUp::GetEconState(EconState* es) const {
 }
 
 BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
-	if (es->numM < 3 || es->numE < 3 || es->numF < 1) {
+	if (es->numM < 3 || es->numE < 3 || es->numFactories < 1) {
 		return BUILD_INIT;
 	}
 
@@ -172,9 +171,12 @@ BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
 		return BUILD_E_STALL;
 	}
 
+	/*
+	// if we never build defenses, this will always be true
 	if (es->numFactories > (es->numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
 		return BUILD_DEFENSE;
 	}
+	*/
 
 	return BUILD_FACTORY;
 }
@@ -206,7 +208,7 @@ void CBuildUp::Buildup(int frame) {
 						if (econState.numE < 3 && econState.numM <= 3) {
 							BuildUpgradeReactor(econState.builderID); return;
 						}
-						if (econState.numF < 1 && econState.factFeas) {
+						if (econState.numFactories < 1 && econState.factFeas) {
 							BuildNow(econState.builderID, CAT_FACTORY, econState.factoryDef); return;
 						}
 
@@ -404,6 +406,8 @@ void CBuildUp::FactoryCycle(int frame) {
 				if (isHub) {
 					const bool factFeasM = ai->math->MFeasibleConstruction(factDef, udef);
 					const bool factFeasE = ai->math->EFeasibleConstruction(factDef, udef);
+
+					// cap the number of assistable factories of type <udef>
 					const bool b0 = (producedCat == CAT_FACTORY && udef->canBeAssisted);
 					const bool b1 = ((ai->uh->AllUnitsByType[udef->id]).size() < 1);
 
@@ -499,12 +503,11 @@ void CBuildUp::FallbackBuild(int builderID, int failedCat) {
 // look at all online factories and their best builders,
 // then find the best builder that there are least of
 const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
-	int factoryCount = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
 	const UnitDef* leastBuiltBuilder = 0;
 	int leastBuiltBuilderCount = 65536;
-	assert(factoryCount > 0);
 
-	for (std::list<int>::iterator j = ai->uh->AllUnitsByCat[CAT_FACTORY].begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY].end(); j++) {
+	std::list<int>::iterator j;
+	for (j = ai->uh->AllUnitsByCat[CAT_FACTORY].begin(); j != ai->uh->AllUnitsByCat[CAT_FACTORY].end(); j++) {
 		// get factory unitID
 		int factoryToLookAt = *j;
 
@@ -529,16 +532,16 @@ const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
 
 
 bool CBuildUp::BuildNow(int builderID, int category) {
-	const UnitDef* building = ai->ut->GetUnitByScore(builderID, category);
+	const UnitDef* udef = ai->ut->GetUnitByScore(builderID, category);
 	bool r = false;
 
-	if (building) {
-		// cap the number of assistable factories
-		const bool b0 = (category == CAT_FACTORY && building->canBeAssisted);
-		const bool b1 = ((ai->uh->AllUnitsByType[building->id]).size() < 1);
+	if (udef != NULL) {
+		// cap the number of assistable factories of type <building>
+		const bool b0 = (category == CAT_FACTORY && udef->canBeAssisted);
+		const bool b1 = ((ai->uh->AllUnitsByType[udef->id]).size() < 1);
 
 		if (!b0 || b1) {
-			r = ai->MyUnits[builderID]->Build_ClosestSite(building, ai->cb->GetUnitPos(builderID));
+			r = ai->MyUnits[builderID]->Build_ClosestSite(udef, ai->cb->GetUnitPos(builderID));
 		}
 	} else {
 		FallbackBuild(builderID, category);
@@ -550,7 +553,7 @@ bool CBuildUp::BuildNow(int builderID, int category) {
 bool CBuildUp::BuildNow(int builderID, int category, const UnitDef* udef) {
 	bool r = false;
 
-	if (udef) {
+	if (udef != NULL) {
 		r = ai->MyUnits[builderID]->Build_ClosestSite(udef, ai->cb->GetUnitPos(builderID));
 	} else {
 		FallbackBuild(builderID, CAT_FACTORY);

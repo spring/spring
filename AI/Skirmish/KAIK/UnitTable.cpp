@@ -60,8 +60,12 @@ int CUnitTable::BuildModSideMap() {
 	std::string sideKey;	// eg. "SIDE4\\name"
 	std::string sideName;	// eg. "Arm"
 
-	// FIXME: can be a .lua script now
-	ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf");
+	std::stringstream msg;
+
+	if (!ai->parser->LoadVirtualFile("gamedata\\SIDEDATA.tdf")) {
+		L(ai, "\tmod side-data not in TDF format, aborting AI initialization");
+		assert(false);
+	}
 
 	// look at SIDE0 through SIDE9
 	// (should be enough for any mod)
@@ -86,9 +90,14 @@ int CUnitTable::BuildModSideMap() {
 			modSideMap[sideName] = side;
 			numOfSides = side + 1;
 
-			L(ai, "\tside index: " << side << ", root unit: " << udef->name << ", side name: " << sideName << ", " << sideName << " ==> " << side);
+			msg.str("");
+			msg << "\tside index: " << side << ", root unit: " << udef->name;
+			msg << ", side name: " << sideName << ", " << sideName << " ==> " << side;
+			L(ai, msg);
 		} else {
-			L(ai, "\tside " << side << " not defined");
+			msg.str("");
+			msg << "\tside " << side << " not defined";
+			L(ai, msg);
 		}
 
 		sside.str("");
@@ -107,6 +116,8 @@ int CUnitTable::ReadTeamSides() {
 	teamSides[0] = 0;
 	teamSides[1] = 1;
 
+	std::stringstream msg;
+
 	for (int team = 0; team < MAX_TEAMS; team++) {
 		const char* sideKey = ai->cb->GetTeamSide(team);
 
@@ -119,9 +130,14 @@ int CUnitTable::ReadTeamSides() {
 			// FIXME: Gaia-team side?
 			teamSides[team] = modSideMap[sideKey];
 
-			L(ai, "\tteam: " << team << ", key: " << sideKey << ", side: " << modSideMap[sideKey] << " (index: " << teamSides[team] << ")");
+			msg.str("");
+			msg << "\tteam: " << team << ", key: " << sideKey << ", side: ";
+			msg << modSideMap[sideKey] << " (index: " << teamSides[team] << ")";
+			L(ai, msg);
 		} else {
-			L(ai, "\tno \"game\\team\\side\" value found for team " << team);
+			msg.str("");
+			msg << "\tno \"game\\team\\side\" value found for team " << team;
+			L(ai, msg);
 		}
 	}
 
@@ -132,53 +148,53 @@ int CUnitTable::ReadTeamSides() {
 void CUnitTable::ReadModConfig() {
 	L(ai, "[CUnitTable::ReadModConfig()]");
 
-	const char* modName = ai->cb->GetModName();
-	static const unsigned int configFileName_maxSize = 1024;
-	char configFileName[configFileName_maxSize] = {'\0'};
-	static const unsigned int logMsg_maxSize = 2048;
-	char logMsg[logMsg_maxSize] = {'\0'};
-	std::string cfgFolderStr = CFGFOLDER;
-	SNPRINTF(configFileName, configFileName_maxSize, "%s%s.cfg",
-			cfgFolderStr.c_str(), modName);
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, configFileName);
+	std::stringstream msg;
+	std::string cfgFileName = GetModCfgName();
 
-	FILE* f = fopen(configFileName, "r");
+	FILE* f = fopen(cfgFileName.c_str(), "r");
 
-	if (f) {
-		L(ai, "\tparsing existing mod configuration file " << configFileName);
+	if (f != NULL) {
+		msg << "\tparsing existing mod configuration file ";
+		msg << cfgFileName;
+		L(ai, msg);
 
 		// read the mod's .cfg file
-		char str[1024];
-		char name[512];
-		float costMult = 1.0f;
-		int techLvl = -1;
-		int category = -1;
+		char  str[1024];
+		char  unitName[512]  = {0};
+		float unitCostMult   =  1.0f;
+		int   unitTechLvl    = -1;
+		int   unitCategory   = -1;
 
 		while (fgets(str, 1024, f) != 0x0) {
 			if (str[0] == '/' && str[1] == '/') {
 				continue;
 			}
 
-			int i = sscanf(str, "%s %f %d %d", name, &costMult, &techLvl, &category);
-			const UnitDef* udef = ai->cb->GetUnitDef(name);
+			const int i = sscanf(str, "%s %f %d %d", unitName, &unitCostMult, &unitTechLvl, &unitCategory);
+			const UnitDef* udef = ai->cb->GetUnitDef(unitName);
 
-			if ((i == 4) && udef) {
+			if ((i == 4) && udef != NULL) {
 				UnitType* utype = &unitTypes[udef->id];
-				utype->costMultiplier = costMult;
-				utype->techLevel = techLvl;
+				utype->costMultiplier = unitCostMult;
+				utype->techLevel      = unitTechLvl;
 
-				L(ai, "\t\tudef->id: " << udef->id << ", udef->name: " << udef->name << ", utype->category: " << utype->category << ", .cfg category: " << category);
+				msg.str("");
+				msg << "\t\tudef->id: " << udef->id << ", udef->name: " << udef->name;
+				msg << ", utype->category: " << utype->category << ", .cfg category: " << unitCategory;
+				L(ai, msg);
 
 				// TODO: look for any possible side-effects that might arise
 				// from overriding categories like this, then enable overrides
 				// other than builder --> attacker?
 				//
 				// FIXME: SEGV when unarmed CAT_BUILDER units masquerading as
-				// CAT_G_ATTACK'ers want to or are attacked
+				// CAT_G_ATTACK'ers want to or are attacked (NULL weapondefs)
 				//
-				if (category >= 0 && category < LASTCATEGORY) {
-					if (category == CAT_G_ATTACK && utype->category == CAT_BUILDER) {
-						L(ai, "\t\t\t.cfg category (CAT_G_ATTACK) overrides utype->category (CAT_BUILDER)");
+				if (unitCategory >= 0 && unitCategory < LASTCATEGORY) {
+					if (unitCategory == CAT_G_ATTACK && utype->category == CAT_BUILDER) {
+						msg.str("");
+						msg << "\t\t\t.cfg category (CAT_G_ATTACK) overrides utype->category (CAT_BUILDER)";
+						L(ai, msg);
 
 						// maps unit categories to indices into all_lists
 						// FIXME: hackish, poorly maintainable, bad style
@@ -187,7 +203,7 @@ void CUnitTable::ReadModConfig() {
 						// index of sublist (eg. ground_builders) that ::Init() thinks it belongs to
 						int idx1 = catLstIdx[utype->category];
 						// index of sublist (eg. ground_attackers) that mod .cfg says it belongs to
-						int idx2 = catLstIdx[category];
+						int idx2 = catLstIdx[unitCategory];
 
 						if (idx1 != idx2) {
 							std::vector<std::vector<int> >& oldLst = all_lists[idx1];	// old category list
@@ -209,39 +225,53 @@ void CUnitTable::ReadModConfig() {
 								}
 							}
 
-							utype->category = category;
+							utype->category = unitCategory;
 						}
 					}
 				}
 			}
 		}
 
-		SNPRINTF(logMsg, logMsg_maxSize, "read mod configuration file %s",
-				configFileName);
+		msg.str("");
+		msg << "read mod configuration file ";
+		msg << cfgFileName;
+		L(ai, msg);
 	} else {
-		L(ai, "\tcreating new mod configuration file " << configFileName);
+		msg.str("");
+		msg << "\tcreating new mod configuration file ";
+		msg << cfgFileName;
+		L(ai, msg);
 
 		// write a new .cfg file with default values
-		f = fopen(configFileName, "w");
+		f = fopen(cfgFileName.c_str(), "w");
 		fprintf(f, "// unitName costMultiplier techLevel category\n");
 
 		for (int i = 1; i <= numDefs; i++) {
 			UnitType* utype = &unitTypes[i];
 			// assign and write default values for costMultiplier
 			// and techLevel, category is already set in ::Init()
-			utype->costMultiplier = 1.0f;
-			utype->techLevel = -1;
-			fprintf(f, "%s %.2f %d %d\n", utype->def->name.c_str(),
-					utype->costMultiplier, utype->techLevel, utype->category);
+			utype->costMultiplier =  1.0f;
+			utype->techLevel      = -1;
 
-			L(ai, "\t\tname: " << (utype->def->name) << ", .cfg category: " << (utype->category));
+			fprintf(
+				f,
+				"%s %.2f %d %d\n",
+				utype->def->name.c_str(), utype->costMultiplier,
+				utype->techLevel, utype->category
+			);
+
+			msg.str("");
+			msg << "\t\tname: " << (utype->def->name);
+			msg << ", .cfg category: " << (utype->category);
+			L(ai, msg);
 		}
 
-		SNPRINTF(logMsg, logMsg_maxSize, "wrote mod configuration file %s",
-				configFileName);
+		msg.str("");
+		msg << "wrote mod configuration file ";
+		msg << cfgFileName;
+		L(ai, msg);
 	}
 
-	ai->cb->SendTextMsg(logMsg, 0);
 	fclose(f);
 }
 
@@ -289,14 +319,14 @@ float CUnitTable::GetDPS(const UnitDef* unit) {
 
 			if (!i->def->paralyzer) {
 				float reloadtime = i->def->reload;
-				int numberofdamages;
-				ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
+				int numDamages = 0;
+				ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numDamages);
 
-				for (int k = 0; k < numberofdamages; k++) {
+				for (int k = 0; k < numDamages; k++) {
 					dps += i->def->damages[k];
 				}
 
-				dps = dps * i->def->salvosize / numberofdamages / reloadtime;
+				dps = dps * i->def->salvosize / numDamages / reloadtime;
 			}
 
 			totaldps += dps;
@@ -317,8 +347,8 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 		float dps = 0.0f;
 		bool canhit = false;
 		int armortype = victim->armorType;
-		int numberofdamages = 0;
-		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numberofdamages);
+		int numDamages = 0;
+		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numDamages);
 
 		for (unsigned int i = 0; i != unit->weapons.size(); i++) {
 			if (!unit->weapons[i].def->paralyzer) {
@@ -504,6 +534,30 @@ void CUnitTable::UpdateChokePointArray() {
 
 
 
+float CUnitTable::GetMaxRange(const UnitDef* unit) {
+	float max_range = 0.0f;
+
+	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
+		if ((i->def->range) > max_range)
+			max_range = i->def->range;
+	}
+
+	return max_range;
+}
+
+float CUnitTable::GetMinRange(const UnitDef* unit) {
+	float min_range = MY_FLT_MAX;
+
+	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
+		if ((i->def->range) < min_range)
+			min_range = i->def->range;
+	}
+
+	return min_range;
+}
+
+
+
 
 
 
@@ -588,13 +642,14 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 				dps /= 6;
 			}
 
-			benefit = pow((aoe + 80), 1.5f)
-					* pow(GetMaxRange(udef) + 200, 1.5f)
-					* pow(dps, 1.0f)
-					* pow(udef->speed + 40, 1.0f)
-					* pow(Hitpoints, 1.0f)
-					* pow(RandNum, 2.5f)
-					* pow(Cost, -0.5f);
+			benefit =
+				pow((aoe + 80), 1.5f) *
+				pow(GetMaxRange(udef) + 200, 1.5f) *
+				pow(dps, 1.0f) *
+				pow(udef->speed + 40, 1.0f) *
+				pow(Hitpoints, 1.0f) *
+				pow(RandNum, 2.5f) *
+				pow(Cost, -0.5f);
 
 			if (udef->canfly || udef->canhover) {
 				// general hack: reduce feasibility of aircraft for 20 mins
@@ -606,12 +661,13 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 
 		case CAT_DEFENCE: {
 			aoe = ((udef->weapons.size())? ((udef->weapons.front()).def)->areaOfEffect: 0.0f);
-			benefit = pow((aoe + 80), 1.5f)
-					* pow(GetMaxRange(udef), 2.0f)
-					* pow(GetCurrentDamageScore(udef), 1.5f)
-					* pow(Hitpoints, 0.5f)
-					* pow(RandNum, 2.5f)
-					* pow(Cost, -1.0f);
+			benefit =
+				pow((aoe + 80), 1.5f) *
+				pow(GetMaxRange(udef), 2.0f) *
+				pow(GetCurrentDamageScore(udef), 1.5f) *
+				pow(Hitpoints, 0.5f) *
+				pow(RandNum, 2.5f) *
+				pow(Cost, -1.0f);
 		} break;
 
 		case CAT_BUILDER: {
@@ -629,10 +685,11 @@ float CUnitTable::GetScore(const UnitDef* udef, int category) {
 			if (!candevelop) {
 				benefit = 0.0f;
 			} else {
-				benefit = pow(udef->buildSpeed, 1.0f)
-						* pow(udef->speed, 0.5f)
-						* pow(Hitpoints, 0.3f)
-						* pow(RandNum, 0.4f);
+				benefit =
+					pow(udef->buildSpeed, 1.0f) *
+					pow(udef->speed, 0.5f) *
+					pow(Hitpoints, 0.3f) *
+					pow(RandNum, 0.4f);
 			}
 		} break;
 
@@ -811,27 +868,27 @@ void CUnitTable::Init() {
 	ReadTeamSides();
 
 	// now set up the unit lists
-	ground_factories.resize(numOfSides, std::vector<int>(0, -1));
-	ground_builders.resize(numOfSides, std::vector<int>(0, -1));
-	ground_attackers.resize(numOfSides, std::vector<int>(0, -1));
-	metal_extractors.resize(numOfSides, std::vector<int>(0, -1));
-	metal_makers.resize(numOfSides, std::vector<int>(0, -1));
-	ground_energy.resize(numOfSides, std::vector<int>(0, -1));
-	ground_defences.resize(numOfSides, std::vector<int>(0, -1));
-	metal_storages.resize(numOfSides, std::vector<int>(0, -1));
-	energy_storages.resize(numOfSides, std::vector<int>(0, -1));
-	nuke_silos.resize(numOfSides, std::vector<int>(0, -1));
+	ground_factories.resize(numOfSides);
+	ground_builders.resize(numOfSides);
+	ground_attackers.resize(numOfSides);
+	metal_extractors.resize(numOfSides);
+	metal_makers.resize(numOfSides);
+	ground_energy.resize(numOfSides);
+	ground_defences.resize(numOfSides);
+	metal_storages.resize(numOfSides);
+	energy_storages.resize(numOfSides);
+	nuke_silos.resize(numOfSides);
 
-	all_lists.push_back(ground_factories);	// CAT_FACTORY  (idx: 0, cat enum:  7)
-	all_lists.push_back(ground_builders);	// CAT_BUILDER  (idx: 1, cat enum:  4)
-	all_lists.push_back(ground_attackers);	// CAT_G_ATTACK (idx: 2, cat enum:  9)
-	all_lists.push_back(metal_extractors);	// CAT_MEX      (idx: 3, cat enum:  2)
-	all_lists.push_back(metal_makers);		// CAT_MMAKER   (idx: 4, cat enum:  3)
-	all_lists.push_back(ground_energy);	// CAT_ENERGY   (idx: 5, cat enum:  1)
-	all_lists.push_back(ground_defences);	// CAT_DEFENCE  (idx: 6, cat enum:  8)
-	all_lists.push_back(metal_storages);	// CAT_MSTOR    (idx: 7, cat enum:  6)
-	all_lists.push_back(energy_storages);	// CAT_ESTOR    (idx: 8, cat enum:  5)
-	all_lists.push_back(nuke_silos);		// CAT_NUKE     (idx: 9, cat enum: 10)
+	all_lists.push_back(ground_factories); catIndexMap["ground_factories"] = all_lists.size() - 1; // CAT_FACTORY  (idx: 0, cat enum:  7)
+	all_lists.push_back(ground_builders);  catIndexMap["ground_builders" ] = all_lists.size() - 1; // CAT_BUILDER  (idx: 1, cat enum:  4)
+	all_lists.push_back(ground_attackers); catIndexMap["ground_attackers"] = all_lists.size() - 1; // CAT_G_ATTACK (idx: 2, cat enum:  9)
+	all_lists.push_back(metal_extractors); catIndexMap["metal_extractors"] = all_lists.size() - 1; // CAT_MEX      (idx: 3, cat enum:  2)
+	all_lists.push_back(metal_makers);     catIndexMap["metal_makers"    ] = all_lists.size() - 1; // CAT_MMAKER   (idx: 4, cat enum:  3)
+	all_lists.push_back(ground_energy);    catIndexMap["ground_energy"   ] = all_lists.size() - 1; // CAT_ENERGY   (idx: 5, cat enum:  1)
+	all_lists.push_back(ground_defences);  catIndexMap["ground_defences" ] = all_lists.size() - 1; // CAT_DEFENCE  (idx: 6, cat enum:  8)
+	all_lists.push_back(metal_storages);   catIndexMap["metal_storages"  ] = all_lists.size() - 1; // CAT_MSTOR    (idx: 7, cat enum:  6)
+	all_lists.push_back(energy_storages);  catIndexMap["energy_storages" ] = all_lists.size() - 1; // CAT_ESTOR    (idx: 8, cat enum:  5)
+	all_lists.push_back(nuke_silos);       catIndexMap["nuke_silos"      ] = all_lists.size() - 1; // CAT_NUKE     (idx: 9, cat enum: 10)
 
 	// one more than needed because [0] is a dummy object (so
 	// UnitDef->id can be used to adress that unit in array)
@@ -1062,25 +1119,31 @@ void CUnitTable::DebugPrint() {
 		"ENERGY-STORAGE", "NUKE-SILO", "SHIELD-GENERATOR", "LAST-CATEGORY"
 	};
 
-	char filename[1024];
-	strcpy(filename, ROOTFOLDER);
-	strcat(filename, "CUnitTable.log");
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename);
-	FILE* file = fopen(filename, "w");
+	std::stringstream msg;
+	std::string logFileName = GetDbgLogName();
+
+	FILE* f = fopen(logFileName.c_str(), "w");
+
+	if (f == NULL) {
+		msg << "[CUnitTable::DebugPrint()] could not open ";
+		msg << "debug log " << logFileName << " for writing";
+		L(ai, msg);
+		return;
+	}
 
 	for (int i = 1; i <= numDefs; i++) {
 		UnitType* utype = &unitTypes[i];
 
-		fprintf(file, "UnitDef ID: %i\n", i);
-		fprintf(file, "Name:       %s\n", unitDefs[i - 1]->humanName.c_str());
-		fprintf(file, "Sides:      ");
+		fprintf(f, "UnitDef ID: %i\n", i);
+		fprintf(f, "Name:       %s\n", unitDefs[i - 1]->humanName.c_str());
+		fprintf(f, "Sides:      ");
 
 		for (std::set<int>::iterator it = utype->sides.begin(); it != utype->sides.end(); it++) {
-			fprintf(file, "%d (%s) ", *it, sideNames[*it].c_str());
+			fprintf(f, "%d (%s) ", *it, sideNames[*it].c_str());
 		}
 
-		fprintf(file, "\n");
-		fprintf(file, "Can Build:  ");
+		fprintf(f, "\n");
+		fprintf(f, "Can Build:  ");
 
 		for (unsigned int j = 0; j != utype->canBuildList.size(); j++) {
 			UnitType* buildOption = &unitTypes[utype->canBuildList[j]];
@@ -1088,12 +1151,12 @@ void CUnitTable::DebugPrint() {
 			for (std::set<int>::iterator it = buildOption->sides.begin(); it != buildOption->sides.end(); it++) {
 				const char* sideName = sideNames[*it].c_str();
 				const char* buildOptionName = buildOption->def->humanName.c_str();
-				fprintf(file, "'(%s) %s' ", sideName, buildOptionName);
+				fprintf(f, "'(%s) %s' ", sideName, buildOptionName);
 			}
 		}
 
-		fprintf(file, "\n");
-		fprintf(file, "Built by:   ");
+		fprintf(f, "\n");
+		fprintf(f, "Built by:   ");
 
 		for (unsigned int k = 0; k != utype->builtByList.size(); k++) {
 			UnitType* parent = &unitTypes[utype->builtByList[k]];
@@ -1101,46 +1164,43 @@ void CUnitTable::DebugPrint() {
 			for (std::set<int>::iterator it = parent->sides.begin(); it != parent->sides.end(); it++) {
 				const char* sideName = sideNames[*it].c_str();
 				const char* parentName = parent->def->humanName.c_str();
-				fprintf(file, "'(%s) %s' ", sideName, parentName);
+				fprintf(f, "'(%s) %s' ", sideName, parentName);
 			}
 		}
 
-		fprintf(file, "\n\n");
+		fprintf(f, "\n\n");
 	}
 
-	for (int s = 0; s < numOfSides; s++) {
-		for (unsigned int l = 0; l != all_lists.size(); l++) {
-			fprintf(file, "\n\n%s (side %d) units of category %s:\n", sideNames[s].c_str(), s, listCategoryNames[l]);
+	for (unsigned int l = 0; l != all_lists.size(); l++) {
+		for (int s = 0; s < numOfSides; s++) {
+			fprintf(f, "\n\n%s (side %d) units of category %s:\n", sideNames[s].c_str(), s, listCategoryNames[l]);
 
-			for (unsigned int i = 0; i != all_lists[l][s].size(); i++)
-				fprintf(file, "\t%s\n", unitTypes[all_lists[l][s][i]].def->humanName.c_str());
+			for (unsigned int i = 0; i != all_lists[l][s].size(); i++) {
+				fprintf(f, "\t%s\n", unitTypes[all_lists[l][s][i]].def->humanName.c_str());
+			}
 		}
 	}
 
-	fclose(file);
+	fclose(f);
 }
 
 
 
+std::string CUnitTable::GetDbgLogName() const {
+	std::string relFile =
+		std::string(LOGFOLDER) +
+		"CUnitTable.log";
+	std::string absFile = AIUtil::GetAbsFileName(ai->cb, relFile);
 
-float CUnitTable::GetMaxRange(const UnitDef* unit) {
-	float max_range = 0.0f;
-
-	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
-		if ((i->def->range) > max_range)
-			max_range = i->def->range;
-	}
-
-	return max_range;
+	return absFile;
 }
 
-float CUnitTable::GetMinRange(const UnitDef* unit) {
-	float min_range = MY_FLT_MAX;
+std::string CUnitTable::GetModCfgName() const {
+	std::string relFile =
+		std::string(CFGFOLDER) +
+		(ai->cb->GetModName()) +
+		".cfg";
+	std::string absFile = AIUtil::GetAbsFileName(ai->cb, relFile);
 
-	for (std::vector<UnitDef::UnitDefWeapon>::const_iterator i = unit->weapons.begin(); i != unit->weapons.end(); i++) {
-		if ((i->def->range) < min_range)
-			min_range = i->def->range;
-	}
-
-	return min_range;
+	return absFile;
 }

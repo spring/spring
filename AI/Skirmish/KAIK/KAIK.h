@@ -44,8 +44,6 @@ class CKAIK: public IGlobalAI {
 
 		AIClasses* GetAi() const { return ai; }
 
-		char m_cfgFolderBuf[1024];
-		char m_logFileBuf[1024];
 	private:
 		AIClasses* ai;
 };

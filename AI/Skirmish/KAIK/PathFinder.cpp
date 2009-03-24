@@ -82,7 +82,11 @@ void CPathFinder::Init() {
 	char k[50];
 
 	// FIXME: can be a .lua script now
-	ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf");
+	if (!ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf")) {
+		L(ai, "[CPathFinder::Init()]");
+		L(ai, "\tmod move-data not in TDF format, aborting AI initialization");
+		assert(false);
+	}
 
 	while (Valuestring != errorstring) {
 		SNPRINTF(k, 50, "%i", NumOfMoveTypes);

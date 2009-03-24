@@ -5,13 +5,13 @@
 
 #define AI_VERSION_NUMBER	aiexport_getVersion()
 #define AI_NAME				std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
-#define AI_DATE				"22/03/2009"
+#define AI_DATE				"23/03/2009"
 #define AI_VERSION			AI_NAME + " (rev. " + AI_DATE + ")"
 #define AI_CREDITS			"(developed by Krogothe, Tournesol, Firenu; now maintained by Kloot)"
 
 // Logger
-#define L(ai, msg)                            \
-	CLogger& log = *(ai->logger); log << msg; \
+#define L(ai, msg) \
+	(*(ai->logger) << msg);
 
 // Shortcuts
 #define GCAT(a)			(ai->ut->GetCategory(a))
@@ -27,6 +27,7 @@
 #define TIMER_SECS		ai->math->TimerSecs()
 
 // Folders
+//    relative to "AI/Skirmish/KAIK/0.13"
 #define ROOTFOLDER		""
 
 #define LOGFOLDER		std::string(ROOTFOLDER) + "Logs/"

@@ -14,8 +14,8 @@ class CSunParser {
 		CSunParser(AIClasses* ai);
 		~CSunParser();
 
-		void LoadVirtualFile(std::string filename);
-		void LoadRealFile(std::string filename);
+		bool LoadVirtualFile(std::string filename);
+		// void LoadRealFile(std::string filename);
 
 		  /**
 			*  @param value pointer to string to store the value in.

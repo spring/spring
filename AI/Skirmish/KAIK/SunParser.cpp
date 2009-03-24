@@ -21,12 +21,12 @@ void CSunParser::DeleteSection(std::map<std::string, SSection*>* section) {
 	}
 }
 
-void CSunParser::LoadVirtualFile(std::string filename) {
+bool CSunParser::LoadVirtualFile(std::string filename) {
 	this->filename = filename;
 	int size = ai->cb->GetFileSize(filename.c_str());
 
 	if (size == -1) {
-		return;
+		return false;
 	}
 
 	char* filebuf = new char[size + 1];
@@ -40,8 +40,10 @@ void CSunParser::LoadVirtualFile(std::string filename) {
 	}
 
 	delete[] filebuf;
+	return true;
 }
 
+/*
 void CSunParser::LoadRealFile(std::string filename) {
 	char filename_buf[1024];
 	strcpy(filename_buf, filename.c_str());
@@ -71,6 +73,7 @@ void CSunParser::LoadRealFile(std::string filename) {
 
 	delete[] filebuf;
 }
+*/
 
 void CSunParser::LoadBuffer(char* buf, int size) {
     this->filename = "\'Buffer\'";

@@ -919,6 +919,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 	assert(builderID >= 0);
 	assert(ai->MyUnits[builderID] != NULL);
 
+	CUNIT* u = ai->MyUnits[builderID];
 	BuilderTracker* builderTracker = GetBuilderTracker(builderID);
 	const int frame = ai->cb->GetCurrentFrame();
 
@@ -930,19 +931,15 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 	bool b2 = (builderTracker->buildTaskId == 0);
 	bool b3 = (builderTracker->factoryId == 0);
 	bool b4 = (builderTracker->customOrderId == 0);
-	bool b5 = (ai->MyUnits[builderID]->def())->canAssist;
+	bool b5 = (u->def())->canAssist;
 	bool b6 = (category == CAT_FACTORY && frame >= 18000);
 
 	if (!b1 || !b2 || !b3 || !b4 || !b5) {
 		if (b6) {
-			// note that FactoryBuilderAdd() asserts the following
+			// note that FactoryBuilderAdd() asserts b1 through b4
 			// immediately after BuildTaskAddBuilder() is tried and
-			// fails in BuildUp(), so at least b1 - b4 must be true
-			// (and so should b5 in the *A mods)
-			// assert(builderTracker->buildTaskId == 0);
-			// assert(builderTracker->taskPlanId == 0);
-			// assert(builderTracker->factoryId == 0);
-			// assert(builderTracker->customOrderId == 0);
+			// fails in BuildUp(), so at least those must be true
+			// (and so should b5 in most of the *A mods)
 
 			std::stringstream msg;
 				msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
@@ -971,7 +968,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 
 		if (largestTime > 0.0f) {
 			BuildTaskAddBuilder(&*bestTask, builderTracker);
-			ai->MyUnits[builderID]->Repair(bestTask->id);
+			u->Repair(bestTask->id);
 			return true;
 		}
 	}
@@ -988,12 +985,11 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 			// must test if this builder can make this unit/building too
 			if (buildTime > largestTime) {
 				const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
-				std::vector<int>* canBuildList = &ai->ut->unitTypes[builderDef->id].canBuildList;
+				const std::vector<int>* canBuildList = &ai->ut->unitTypes[builderDef->id].canBuildList;
 				const int buildListSize = canBuildList->size();
-				const int thisBuildingID = plan->def->id;
 
 				for (int j = 0; j < buildListSize; j++) {
-					if (canBuildList->at(j) == thisBuildingID) {
+					if (canBuildList->at(j) == plan->def->id) {
 						largestTime = buildTime;
 						bestPlan = plan;
 						break;
@@ -1002,13 +998,12 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 			}
 		}
 
-		if (largestTime > 30.0f) { /// 10??
+		if (largestTime > 10.0f) {
 			assert(builderID >= 0);
-			assert(ai->MyUnits[builderID] !=  NULL);
 
-			// this is bad, as ai->MyUnits[builderID]->Build uses TaskPlanCreate()
-			ai->MyUnits[builderID]->Build(bestPlan->pos, bestPlan->def, -1);
-			return true;
+			// bad, CUNIT::Build() uses TaskPlanCreate()
+			// should we really give build orders here?
+			// return u->Build(bestPlan->pos, bestPlan->def, -1);
 		}
 	}
 
