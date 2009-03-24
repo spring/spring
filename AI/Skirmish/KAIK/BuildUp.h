@@ -1,7 +1,6 @@
 #ifndef KAIK_BUILDUP_HDR
 #define KAIK_BUILDUP_HDR
 
-#include "IncCREG.h"
 struct AIClasses;
 
 enum BuildState {
@@ -53,7 +52,6 @@ struct EconState {
 
 	int numM;
 	int numE;
-	int numF;
 
 	int numDefenses;
 	int numFactories;

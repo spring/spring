@@ -5,8 +5,6 @@
 #include <utility>
 #include <vector>
 
-#include "IncCREG.h"
-
 class CAttackGroup;
 struct AIClasses;
 

@@ -4,8 +4,6 @@
 #include <list>
 #include <vector>
 
-#include "IncCREG.h"
-
 struct EconomyUnitTracker;
 
 struct BuildingTracker {

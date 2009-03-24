@@ -18,7 +18,7 @@ class CLogger {
 			delete log;
 		}
 
-		const std::string& GetLogName();
+		std::string GetLogName() const;
 
 		CLogger& operator << (const char c) {
 			*log << c; *log << std::endl; return *this;

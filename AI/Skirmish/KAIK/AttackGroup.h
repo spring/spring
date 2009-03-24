@@ -4,7 +4,6 @@
 #include <list>
 #include <vector>
 
-#include "IncCREG.h"
 #include "Defines.h"
 
 class AIClasses;

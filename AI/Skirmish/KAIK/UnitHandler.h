@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "Containers.h"
-#include "IncCREG.h"
 
 struct UnitDef;
 

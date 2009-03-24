@@ -1,3 +1,4 @@
+#include "IncCREG.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 
@@ -165,10 +166,9 @@ void CUnitHandler::UnitCreated(int unitID) {
 	}
 
 	if (udef->isCommander && udef->canDGun) {
-		ai->dgunController->init(unitID);
+		ai->dgunConHandler->AddController(unitID);
 	} else {
-		CUNIT* u = ai->MyUnits[unitID];
-		u->SetFireState(2);
+		ai->MyUnits[unitID]->SetFireState(2);
 	}
 }
 

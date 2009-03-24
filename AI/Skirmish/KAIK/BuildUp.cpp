@@ -1,3 +1,4 @@
+#include "IncCREG.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 
@@ -188,10 +189,8 @@ void CBuildUp::Buildup(int frame) {
 	if (econState.nIdleBuilders > 0) {
 		const BuildState buildState = GetBuildState(frame, &econState);
 		const bool buildInterrupted =
-			econState.builderDef != NULL &&
-			econState.builderDef->isCommander &&
-			econState.builderDef->canDGun &&
-			ai->dgunController->isBusy();
+			(ai->dgunConHandler->GetController(econState.builderID) != NULL) &&
+			(ai->dgunConHandler->GetController(econState.builderID)->IsBusy());
 
 		if (econState.builderDef == NULL) {
 			ai->uh->UnitDestroyed(econState.builderID);
@@ -586,15 +585,17 @@ bool CBuildUp::BuildUpgradeExtractor(int builderID) {
 			const UnitDef* oldMexDef = ai->cb->GetUnitDef(oldMexID);
 
 			if (oldMexDef != NULL) {
-				if ((newMexDef->extractsMetal / oldMexDef->extractsMetal) >= 1.5f) {
-					UpgradeTask* task = ai->uh->FindUpgradeTask(oldMexID);
+				if (ai->cb->GetUnitHealth(oldMexID) >= ai->cb->GetUnitMaxHealth(oldMexID)) {
+					if ((newMexDef->extractsMetal / oldMexDef->extractsMetal) >= 1.5f) {
+						UpgradeTask* task = ai->uh->FindUpgradeTask(oldMexID);
 
-					if (task == NULL) {
-						task = ai->uh->CreateUpgradeTask(oldMexID, oldMexPos, newMexDef);
+						if (task == NULL) {
+							task = ai->uh->CreateUpgradeTask(oldMexID, oldMexPos, newMexDef);
+						}
+
+						ai->uh->AddUpgradeTaskBuilder(task, builderID);
+						return true;
 					}
-
-					ai->uh->AddUpgradeTaskBuilder(task, builderID);
-					return true;
 				}
 			}
 		}
@@ -617,29 +618,32 @@ bool CBuildUp::BuildUpgradeReactor(int builderID) {
 			float        netEnergy    = newReactorDef->energyMake - newReactorDef->energyUpkeep;
 			float        closestDstSq = MY_FLT_MAX;
 
-			int            oldReactorID = -1;
+			int            oldReactorID  = -1;
 			float3         oldReactorPos = ZEROVECTOR;
 			const UnitDef* oldReactorDef = NULL;
 
 			std::list<int> lst = ai->uh->AllUnitsByCat[CAT_ENERGY];
 
 			for (std::list<int>::iterator it = lst.begin(); it != lst.end(); it++) {
-				const float3 itReactorPos = ai->cb->GetUnitPos(*it);
-				const UnitDef* itReactorDef = ai->cb->GetUnitDef(*it);
+				const int      itReactorID  = *it;
+				const float3   itReactorPos = ai->cb->GetUnitPos(itReactorID);
+				const UnitDef* itReactorDef = ai->cb->GetUnitDef(itReactorID);
 
-				if (itReactorDef->energyMake <= 0.0f || itReactorDef->windGenerator) {
-					// only look at solars and windmills which produce energy through
-					// negative upkeep (something of a hack for OTA-style mods)
-					const float itNetEnergy = itReactorDef->energyMake - itReactorDef->energyUpkeep;
-					const float distanceSq = (itReactorPos - builderPos).SqLength();
+				if (ai->cb->GetUnitHealth(itReactorID) >= ai->cb->GetUnitMaxHealth(itReactorID)) {
+					if (itReactorDef->energyMake <= 0.0f || itReactorDef->windGenerator) {
+						// only look at solars and windmills which produce energy through
+						// negative upkeep (something of a hack for OTA-style mods)
+						const float itNetEnergy = itReactorDef->energyMake - itReactorDef->energyUpkeep;
+						const float distanceSq = (itReactorPos - builderPos).SqLength();
 
-					// find the closest CAT_ENERGY structure we have
-					if (distanceSq < closestDstSq) {
-						// check if it is worth upgrading
-						if ((netEnergy / itNetEnergy) >= 2.0f) {
-							oldReactorID  = *it;
-							oldReactorPos = itReactorPos;
-							oldReactorDef = itReactorDef;
+						// find the closest CAT_ENERGY structure we have
+						if (distanceSq < closestDstSq) {
+							// check if it is worth upgrading
+							if ((netEnergy / itNetEnergy) >= 2.0f) {
+								oldReactorID  = itReactorID;
+								oldReactorPos = itReactorPos;
+								oldReactorDef = itReactorDef;
+							}
 						}
 					}
 				}
