@@ -117,7 +117,7 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 			std::stringstream msg;
 				msg << "[CAttackHandler::UnitDestroyed()] frame " << (ai->cb->GetCurrentFrame()) << "\n";
 				msg << "\tidle attack unit " << unitID << " was destroyed but already erased\n";
-			L(ai, msg);
+			L(ai, msg.str());
 		}
 	}
 
@@ -275,11 +275,11 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 		float3 res;
 
 		if (dist > 0) {
-			// L("attackhandler:findsafespot #1 dist > 0 from path, using res from pather. dist:" << dist);
+			// dist > 0 from path, use res from pather
 			int whichPos = RANDINT % (int) posPath.size();
 			res = posPath[whichPos];
 		} else {
-			// L("attackhandler:findsafespot #2 dist == 0 from path, using first point. dist:" << dist);
+			// dist == 0 from path, using first point
 			res = subset[whichPath];
 		}
 

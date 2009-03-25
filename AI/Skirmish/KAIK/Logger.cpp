@@ -28,7 +28,6 @@ std::string CLogger::GetLogName() const {
 		ss << now2->tm_year + 1900;
 		ss << "_";
 		ss << now2->tm_hour;
-		ss << "-";
 		ss << now2->tm_min;
 		ss << "_team";
 		ss << icb->GetMyTeam();
