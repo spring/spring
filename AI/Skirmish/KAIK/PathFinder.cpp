@@ -76,10 +76,11 @@ void CPathFinder::Init() {
 	std::vector<int> moveslopes;
 	std::vector<int> maxwaterdepths;
 	std::vector<int> minwaterdepths;
+	std::stringstream moveTypeSStr;
+	std::string moveTypeStr;
 	std::string sectionstring = "CLASS";
 	std::string errorstring = "-1";
 	std::string Valuestring = "0";
-	char k[50];
 
 	// FIXME: can be a .lua script now
 	if (!ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf")) {
@@ -89,17 +90,21 @@ void CPathFinder::Init() {
 	}
 
 	while (Valuestring != errorstring) {
-		SNPRINTF(k, 50, "%i", NumOfMoveTypes);
-		ai->parser->GetDef(Valuestring, errorstring, std::string(sectionstring + k + "\\Name"));
+		moveTypeStr.clear();
+		moveTypeSStr.str("");
+		moveTypeSStr << NumOfMoveTypes;
+		moveTypeSStr >> moveTypeStr;
+
+		ai->parser->GetDef(Valuestring, errorstring, std::string(sectionstring + moveTypeStr + "\\Name"));
 
 		if (Valuestring != errorstring) {
-			ai->parser->GetDef(Valuestring, std::string("10000"), std::string(sectionstring + k + "\\MaxWaterDepth"));
+			ai->parser->GetDef(Valuestring, std::string("10000"), std::string(sectionstring + moveTypeStr + "\\MaxWaterDepth"));
 			maxwaterdepths.push_back(atoi(Valuestring.c_str()));
 
-			ai->parser->GetDef(Valuestring, std::string("-10000"), std::string(sectionstring + k + "\\MinWaterDepth"));
+			ai->parser->GetDef(Valuestring, std::string("-10000"), std::string(sectionstring + moveTypeStr + "\\MinWaterDepth"));
 			minwaterdepths.push_back(atoi(Valuestring.c_str()));
 
-			ai->parser->GetDef(Valuestring, std::string("10000"), std::string(sectionstring + k + "\\MaxSlope"));
+			ai->parser->GetDef(Valuestring, std::string("10000"), std::string(sectionstring + moveTypeStr + "\\MaxSlope"));
 			moveslopes.push_back(atoi(Valuestring.c_str()));
 
 			NumOfMoveTypes++;
