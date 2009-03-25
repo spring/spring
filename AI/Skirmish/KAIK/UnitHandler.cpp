@@ -1004,6 +1004,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 			// bad, CUNIT::Build() uses TaskPlanCreate()
 			// should we really give build orders here?
 			// return u->Build(bestPlan->pos, bestPlan->def, -1);
+			return true;
 		}
 	}
 
