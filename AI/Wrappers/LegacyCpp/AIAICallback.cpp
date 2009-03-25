@@ -86,23 +86,45 @@ CAIAICallback::CAIAICallback(int teamId, const SSkirmishAICallback* sAICallback)
 
 
 void CAIAICallback::init() {
+	// FIXME: group ID's have no runtime bound
+	const int maxGroups = MAX_UNITS;
 
-	// init caches
-	int maxCacheSize = 1024;
-	int maxUnits = 10000;
-	int maxGroups = 100;
+	// FIXME: these are far too generous, but we
+	// don't have easy access to the right values
+	// on the AI side (so better waste memory than
+	// risk SEGVs)
+	const int numUnitDefs = MAX_UNITS; // unitDefHandler->numUnitDefs;
+	const int numFeatDefs = MAX_UNITS; // featureHandler->numFeatureDefs;
+	const int numWeapDefs = MAX_UNITS; // weaponDefHandler->numWeaponDefs;
 
-	weaponDefs = new WeaponDef*[maxCacheSize]; fillWithNULL((void**)weaponDefs, maxCacheSize);
-	weaponDefFrames = new int[maxCacheSize]; fillWithMinusOne(weaponDefFrames, maxCacheSize);
+	weaponDefs      = new WeaponDef*[numWeapDefs];
+	weaponDefFrames = new int[numWeapDefs];
 
-	unitDefs = new UnitDef*[maxCacheSize]; fillWithNULL((void**)unitDefs, maxCacheSize);
-	unitDefFrames = new int[maxCacheSize]; fillWithMinusOne(unitDefFrames, maxCacheSize);
-	groupPossibleCommands = new std::vector<CommandDescription>*[maxGroups]; fillWithNULL((void**)groupPossibleCommands, maxGroups);
-	unitPossibleCommands = new std::vector<CommandDescription>*[maxUnits]; fillWithNULL((void**)unitPossibleCommands, maxUnits);
-	unitCurrentCommandQueues = new CCommandQueue*[maxUnits]; fillWithNULL((void**)unitCurrentCommandQueues, maxUnits);
+	fillWithNULL((void**) weaponDefs, numWeapDefs);
+	fillWithMinusOne(weaponDefFrames, numWeapDefs);
 
-	featureDefs = new FeatureDef*[maxCacheSize]; fillWithNULL((void**)featureDefs, maxCacheSize);
-	featureDefFrames = new int[maxCacheSize]; fillWithMinusOne(featureDefFrames, maxCacheSize);
+
+	unitDefs      = new UnitDef*[numUnitDefs];
+	unitDefFrames = new int[numUnitDefs];
+
+	fillWithNULL((void**) unitDefs, numUnitDefs);
+	fillWithMinusOne(unitDefFrames, numUnitDefs);
+
+
+	groupPossibleCommands    = new std::vector<CommandDescription>*[maxGroups];
+	unitPossibleCommands     = new std::vector<CommandDescription>*[MAX_UNITS];
+	unitCurrentCommandQueues = new CCommandQueue*[MAX_UNITS];
+
+	fillWithNULL((void**) groupPossibleCommands,    maxGroups);
+	fillWithNULL((void**) unitPossibleCommands,     MAX_UNITS);
+	fillWithNULL((void**) unitCurrentCommandQueues, MAX_UNITS);
+
+
+	featureDefs      = new FeatureDef*[numFeatDefs];
+	featureDefFrames = new int[numFeatDefs];
+
+	fillWithNULL((void**) featureDefs, numFeatDefs);
+	fillWithMinusOne(featureDefFrames, numFeatDefs);
 }
 
 
