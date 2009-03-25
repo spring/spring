@@ -1,20 +1,21 @@
-#ifndef SUNPARSER_H
-#define SUNPARSER_H
+#ifndef KAIK_SUNPARSER_HDR
+#define KAIK_SUNPARSER_HDR
 
+#include <string>
+#include <sstream>
+#include <map>
+#include <vector>
 
-#include "GlobalAI.h"
-
-using std::string;
-using std::stringstream;
-using std::map;
+#include "System/float3.h"
+struct AIClasses;
 
 class CSunParser {
 	public:
 		CSunParser(AIClasses* ai);
 		~CSunParser();
 
-		void LoadVirtualFile(string filename);
-		void LoadRealFile(string filename);
+		bool LoadVirtualFile(std::string filename);
+		// void LoadRealFile(std::string filename);
 
 		  /**
 			*  @param value pointer to string to store the value in.
@@ -22,14 +23,14 @@ class CSunParser {
 			*  @param ... location of value, terminate with NULL.
 			*  @return true on success.
 			*/
-		bool GetValue(string &value, void* amJustHereForIntelCompilerCompatibility, ...);
+		bool GetValue(std::string &value, void* amJustHereForIntelCompilerCompatibility, ...);
 
 		  /**
 			*  Retreive a specific value from the file and returns it, gives an error messagebox if value not found.
 			*  @param location location of value in the form "section\\section\\ ... \\name".
 			*  @return returns the value on success, undefined on failure.
 			*/
-		string SGetValueMSG(string location);
+		std::string SGetValueMSG(std::string location);
 
 		  /**
 			*  Retreive a specific value from the file and returns it, returns the specified default value if not found.
@@ -37,7 +38,7 @@ class CSunParser {
 			*  @param location location of value.
 			*  @return returns the value on success, default otherwise.
 			*/
-		string SGetValueDef(string defaultvalue, string location);
+		std::string SGetValueDef(std::string defaultvalue, std::string location);
 
 		  /**
 			*  Retreive a specific value from the file and returns it.
@@ -45,20 +46,20 @@ class CSunParser {
 			*  @param location location of value in the form "section\\section\\ ... \\name".
 			*  @return returns true on success, false otherwise and error message in value.
 			*/
-		bool SGetValue(string &value, string location);
+		bool SGetValue(std::string& value, std::string location);
 
-		const map<string, string> GetAllValues(string location);
-		vector<string> GetSectionList(string location);
-		bool SectionExist(string location);
+		const std::map<std::string, std::string> GetAllValues(std::string location);
+		std::vector<std::string> GetSectionList(std::string location);
+		bool SectionExist(std::string location);
 		void Test();
 
-		float3 GetFloat3(float3 def, string location);
+		float3 GetFloat3(float3 def, std::string location);
 		void LoadBuffer(char* buf, int size);
 		AIClasses* ai;
 
 
-		template<typename T> void ParseArray(string value, T* array, int length) {
-			stringstream stream;
+		template<typename T> void ParseArray(std::string value, T* array, int length) {
+			std::stringstream stream;
 			stream << value;
 
 			for (int i = 0; i < length; i++) {
@@ -66,41 +67,32 @@ class CSunParser {
 			}
 		}
 
-		template<typename T> void GetMsg(T& value, const string& key) {
-			string str;
-			str = SGetValueMSG(key);
-
-			stringstream stream;
-			stream << str;
+		template<typename T> void GetMsg(T& value, const std::string& key) {
+			std::stringstream stream;
+			stream << SGetValueMSG(key);
 			stream >> value;
 		}
 
-		template<typename T> void GetDef(T& value, const string& defvalue, const string& key) {
-			// L("CSunParser::GetDef(" << (T) value << ", " << defvalue << ", " << key << ")" << endl);
-			string str;
-			str = SGetValueDef(defvalue, key);
-
-			stringstream stream;
-			stream << str;
+		template<typename T> void GetDef(T& value, const std::string& defvalue, const std::string& key) {
+			std::stringstream stream;
+			stream << SGetValueDef(defvalue, key);
 			stream >> value;
 		}
 
 
 	private:
 		struct SSection {
-			map<string, SSection*> sections;
-			map<string, string> values;
+			std::map<std::string, SSection*> sections;
+			std::map<std::string, std::string> values;
 		};
 
-		map<string, SSection*> sections;
-		string filename;
+		std::map<std::string, SSection*> sections;
+		std::string filename;
 
 		void Parse(char* buf, int size);
-		void DeleteSection(map<string, SSection*>* section);
-		vector<string> GetLocationVector(string location);
+		void DeleteSection(std::map<std::string, SSection*>* section);
+		std::vector<std::string> GetLocationVector(std::string location);
 		char* ParseSection(char* buf, int size, SSection* section);
-
 };
-
 
 #endif

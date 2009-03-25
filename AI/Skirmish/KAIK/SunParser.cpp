@@ -1,5 +1,9 @@
-#include <stdarg.h>
+#include <fstream>
+#include <cstdarg>
+
 #include "SunParser.h"
+#include "IncExternAI.h"
+#include "Containers.h"
 
 CSunParser::CSunParser(AIClasses* ai) {
 	this->ai = ai;
@@ -8,8 +12,8 @@ CSunParser::~CSunParser() {
 	DeleteSection(&sections);
 }
 
-void CSunParser::DeleteSection(map<string, SSection*>* section) {
-	map<string, SSection*>::iterator ui;
+void CSunParser::DeleteSection(std::map<std::string, SSection*>* section) {
+	std::map<std::string, SSection*>::iterator ui;
 
 	for (ui = section->begin(); ui != section->end(); ui++) {
 		DeleteSection(&ui->second->sections);
@@ -17,12 +21,12 @@ void CSunParser::DeleteSection(map<string, SSection*>* section) {
 	}
 }
 
-void CSunParser::LoadVirtualFile(string filename) {
+bool CSunParser::LoadVirtualFile(std::string filename) {
 	this->filename = filename;
 	int size = ai->cb->GetFileSize(filename.c_str());
 
 	if (size == -1) {
-		return;
+		return false;
 	}
 
 	char* filebuf = new char[size + 1];
@@ -36,9 +40,11 @@ void CSunParser::LoadVirtualFile(string filename) {
 	}
 
 	delete[] filebuf;
+	return true;
 }
 
-void CSunParser::LoadRealFile(string filename) {
+/*
+void CSunParser::LoadRealFile(std::string filename) {
 	char filename_buf[1024];
 	strcpy(filename_buf, filename.c_str());
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
@@ -67,6 +73,7 @@ void CSunParser::LoadRealFile(string filename) {
 
 	delete[] filebuf;
 }
+*/
 
 void CSunParser::LoadBuffer(char* buf, int size) {
     this->filename = "\'Buffer\'";
@@ -78,7 +85,7 @@ void CSunParser::LoadBuffer(char* buf, int size) {
 }
 
 void CSunParser::Parse(char* buf, int size) {
-	string thissection;
+	std::string thissection;
 	SSection* section = NULL;
 
 	char* endptr = buf + size;
@@ -109,7 +116,7 @@ void CSunParser::Parse(char* buf, int size) {
 			buf++;
 			section = new SSection;
 			transform(thissection.begin(), thissection.end(), thissection.begin(), (int (*)(int)) tolower);
-			map<string, SSection*>::iterator ui = sections.find(thissection);
+			std::map<std::string, SSection*>::iterator ui = sections.find(thissection);
 
 			if (ui != sections.end()) {
 				DeleteSection(&ui->second->sections);
@@ -126,7 +133,7 @@ void CSunParser::Parse(char* buf, int size) {
 }
 
 char* CSunParser::ParseSection(char* buf, int size, SSection* section) {
-	string thissection;
+	std::string thissection;
 	char* endptr = buf + size;
 
 	while (buf <= endptr) {
@@ -159,7 +166,7 @@ char* CSunParser::ParseSection(char* buf, int size, SSection* section) {
 			buf++;
 			SSection* newsection = new SSection;
 			transform(thissection.begin(), thissection.end(), thissection.begin(), (int (*)(int)) tolower);
-			map<string, SSection*>::iterator ui = section->sections.find(thissection);
+			std::map<std::string, SSection*>::iterator ui = section->sections.find(thissection);
 
 			if (ui != section->sections.end()) {
 				DeleteSection(&ui->second->sections);
@@ -177,8 +184,8 @@ char* CSunParser::ParseSection(char* buf, int size, SSection* section) {
 		}
 
 		else if (*buf >= '0' && *buf <= 'z') {
-			string name;
-			string value;
+			std::string name;
+			std::string value;
 
 			while (*buf != '=') {
 				name += *buf;
@@ -203,18 +210,18 @@ char* CSunParser::ParseSection(char* buf, int size, SSection* section) {
 }
 
 // find value, display messagebox if no such value found
-string CSunParser::SGetValueMSG(string location) {
+std::string CSunParser::SGetValueMSG(std::string location) {
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int)) tolower);
-	string value;
+	std::string value;
 
 	SGetValue(value, location);
 	return value;
 }
 
 // find value, return default value if no such value found
-string CSunParser::SGetValueDef(string defaultvalue, string location) {
+std::string CSunParser::SGetValueDef(std::string defaultvalue, std::string location) {
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int)) tolower);
-	string value;
+	std::string value;
 
 	bool found = SGetValue(value, location);
 
@@ -228,8 +235,8 @@ string CSunParser::SGetValueDef(string defaultvalue, string location) {
 
 //finds a value in the file, if not found returns false
 // errormessages is returned in value
-bool CSunParser::GetValue(string &value, void* amJustHereForIntelCompilerCompatibility, ...) {
-	string searchpath;
+bool CSunParser::GetValue(std::string& value, void* amJustHereForIntelCompilerCompatibility, ...) {
+	std::string searchpath;
 
 	va_list loc;
 	va_start(loc, amJustHereForIntelCompilerCompatibility);
@@ -257,7 +264,7 @@ bool CSunParser::GetValue(string &value, void* amJustHereForIntelCompilerCompati
 	}
 
 	char* arg = va_arg(loc, char*);
-	string svalue = sectionptr->values[arg];
+	std::string svalue = sectionptr->values[arg];
 
 	searchpath += '\\';
 	searchpath += arg;
@@ -275,19 +282,19 @@ void CSunParser::Test() {
 	SSection* unitinfo = sections["UNITINFO"];
 	SSection* weapons = unitinfo->sections["WEAPONS"];
 
-	string mo = weapons->values["weapon1"];
+	std::string mo = weapons->values["weapon1"];
 }
 
 
 // finds a value in the file , if not found returns false
 // errormessage is returned in value, location of value is
 // sent as a string "section\section\value"
-bool CSunParser::SGetValue(string &value, string location) {
+bool CSunParser::SGetValue(std::string& value, std::string location) {
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int)) tolower);
-	string searchpath;
+	std::string searchpath;
 
 	//split the location string
-	vector<string> loclist = GetLocationVector(location);
+	std::vector<std::string> loclist = GetLocationVector(location);
 
 	if (sections.find(loclist[0]) == sections.end()) {
 		value = "Section " + loclist[0] + " missing in file " + filename;
@@ -317,17 +324,17 @@ bool CSunParser::SGetValue(string &value, string location) {
 		return false;
 	}
 
-	string svalue = sectionptr->values[loclist[loclist.size() - 1]];
+	std::string svalue = sectionptr->values[loclist[loclist.size() - 1]];
 	value = svalue;
 	return true;
 }
 
 //return a map with all values in section
-const map<string, string> CSunParser::GetAllValues(string location) {
+const std::map<std::string, std::string> CSunParser::GetAllValues(std::string location) {
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int)) tolower);
-	map<string, string> emptymap;
-	string searchpath;
-	vector<string> loclist = GetLocationVector(location);
+	std::map<std::string, std::string> emptymap;
+	std::string searchpath;
+	std::vector<std::string> loclist = GetLocationVector(location);
 
 	if (sections.find(loclist[0]) == sections.end()) {
 		return emptymap;
@@ -351,14 +358,14 @@ const map<string, string> CSunParser::GetAllValues(string location) {
 }
 
 // return vector with all section names in it
-vector<string> CSunParser::GetSectionList(string location) {
+std::vector<std::string> CSunParser::GetSectionList(std::string location) {
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int)) tolower);
-	vector<string> loclist = GetLocationVector(location);
-	vector<string> returnvec;
-	map<string, SSection*>* sectionsptr = &sections;
+	std::vector<std::string> loclist = GetLocationVector(location);
+	std::vector<std::string> returnvec;
+	std::map<std::string, SSection*>* sectionsptr = &sections;
 
 	if (loclist[0].compare("") != 0) {
- 		string searchpath;
+ 		std::string searchpath;
 		for (unsigned int i = 0; i < loclist.size(); i++) {
 			searchpath += loclist[i];
 
@@ -371,7 +378,7 @@ vector<string> CSunParser::GetSectionList(string location) {
 		}
 	}
 
-	map<string,SSection*>::iterator it;
+	std::map<std::string, SSection*>::iterator it;
 	for (it = sectionsptr->begin(); it != sectionsptr->end(); it++) {
 		returnvec.push_back(it->first);
 		transform(returnvec.back().begin(), returnvec.back().end(), returnvec.back().begin(), (int (*)(int)) tolower);
@@ -380,9 +387,9 @@ vector<string> CSunParser::GetSectionList(string location) {
 	return returnvec;
 }
 
-bool CSunParser::SectionExist(string location) {
+bool CSunParser::SectionExist(std::string location) {
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int)) tolower);
-	vector<string> loclist = GetLocationVector(location);
+	std::vector<std::string> loclist = GetLocationVector(location);
 
 	if (sections.find(loclist[0]) == sections.end()) {
 		return false;
@@ -401,9 +408,9 @@ bool CSunParser::SectionExist(string location) {
 	return true;
 }
 
-vector<string> CSunParser::GetLocationVector(string location) {
+std::vector<std::string> CSunParser::GetLocationVector(std::string location) {
 	transform(location.begin(), location.end(), location.begin(), (int (*)(int)) tolower);
-	vector<string> loclist;
+	std::vector<std::string> loclist;
 
 	unsigned long start = 0;
 	unsigned long next = 0;
@@ -418,7 +425,7 @@ vector<string> CSunParser::GetLocationVector(string location) {
 	return loclist;
 }
 
-float3 CSunParser::GetFloat3(float3 def, string location) {
+float3 CSunParser::GetFloat3(float3 def, std::string location) {
 	def = def;
 	location = location;
 	return float3(0, 0, 0);

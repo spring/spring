@@ -1,7 +1,7 @@
-#include "Unit.h"
-#include "GlobalAI.h"
-
-#include "Sim/Misc/GlobalConstants.h"
+#include "IncCREG.h"
+#include "IncEngine.h"
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CR_BIND(CUNIT, )
 CR_REG_METADATA(CUNIT, (
@@ -13,7 +13,6 @@ CR_REG_METADATA(CUNIT, (
 	CR_RESERVED(8),
 	CR_POSTLOAD(PostLoad)
 ));
-
 
 CUNIT::CUNIT(void) {
 	this->ai = 0;
@@ -165,10 +164,10 @@ bool CUNIT::Build_ClosestSite(const UnitDef* def, const float3& bpos, int separa
 	const int buildFacing = GetBestBuildFacing(bpos);
 	const float3 cpos = ai->cb->ClosestBuildSite(def, bpos, radius, separation, buildFacing);
 
-	// L("[CUNIT::Build_ClosestSite()] builder: " << myid << ", def: " << def);
-	// L("\tbpos: <" << bpos.x << ", " << bpos.y << ", " << bpos.z << ">");
-	// L("\tcpos: <" << cpos.x << ", " << cpos.y << ", " << cpos.z << ">");
-	// L("\n");
+	// L(ai, "[CUNIT::Build_ClosestSite()] builder: " << myid << ", def: " << def);
+	// L(ai, "\tbpos: <" << bpos.x << ", " << bpos.y << ", " << bpos.z << ">");
+	// L(ai, "\tcpos: <" << cpos.x << ", " << cpos.y << ", " << cpos.z << ">");
+	// L(ai, "\n");
 
 	if (cpos.x != -1.0f) {
 		Build(cpos, def, buildFacing);

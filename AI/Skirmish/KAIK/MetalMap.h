@@ -1,8 +1,9 @@
-#ifndef METALMAP_H
-#define METALMAP_H
+#ifndef KAIK_METALMAP_HDR
+#define KAIK_METALMAP_HDR
 
+#include <vector>
 
-#include "GlobalAI.h"
+struct AIClasses;
 
 class CMetalMap {
 	public:
@@ -13,12 +14,14 @@ class CMetalMap {
 		int NumSpotsFound;
 		float AverageMetal;
 		float3 GetNearestMetalSpot(int builderid, const UnitDef* extractor);
-		vector<float3> VectoredSpots;
+		std::vector<float3> VectoredSpots;
 
 	private:
 		void GetMetalPoints();
 		void SaveMetalMap();
 		bool LoadMetalMap();
+
+		std::string GetCacheName() const;
 
 		float3 BufferSpot;
 		bool Stopme;
@@ -41,6 +44,7 @@ class CMetalMap {
 		unsigned char* MexArrayB;
 		unsigned char* MexArrayC;
 		int* TempAverage;
+
 		AIClasses* ai;
 };
 

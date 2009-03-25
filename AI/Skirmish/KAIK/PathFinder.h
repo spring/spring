@@ -1,10 +1,11 @@
-#ifndef PATHFINDER_H
-#define PATHFINDER_H
+#ifndef KAIK_PATHFINDER_HDR
+#define KAIK_PATHFINDER_HDR
 
+#include <string>
+#include <vector>
+#include "MicroPather.h"
 
-#include "GlobalAI.h"
-
-using std::vector;
+struct AIClasses;
 using namespace NSMicroPather;
 
 class CPathFinder: public Graph {
@@ -20,10 +21,10 @@ class CPathFinder: public Graph {
 
 		void ClearPath();
 		unsigned Checksum();
-		float MakePath(vector<float3>* posPath, float3* startPos, float3* endPos, int radius);
-		float FindBestPath(vector<float3>* posPath, float3* startPos, float myMaxRange, vector<float3>* possibleTargets);
+		float MakePath(std::vector<float3>* posPath, float3* startPos, float3* endPos, int radius);
+		float FindBestPath(std::vector<float3>* posPath, float3* startPos, float myMaxRange, std::vector<float3>* possibleTargets);
 		// added for convenience
-		float FindBestPathToRadius(vector<float3>* posPath, float3* startPos, float radiusAroundTarget, float3* target);
+		float FindBestPathToRadius(std::vector<float3>* posPath, float3* startPos, float radiusAroundTarget, float3* target);
 
 		void CreateDefenseMatrix();
 
@@ -31,10 +32,10 @@ class CPathFinder: public Graph {
 	//		state = state;
 	//	}
 
-		void PrintData(string s);
+		void PrintData(std::string s);
 		MicroPather* micropather;
 		bool* TestMoveArray;
-		vector<bool*> MoveArrays;
+		std::vector<bool*> MoveArrays;
 		int NumOfMoveTypes;
 
 		float* SlopeMap;

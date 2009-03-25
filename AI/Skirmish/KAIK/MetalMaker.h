@@ -1,8 +1,10 @@
-#ifndef METALMAKER_H
-#define METALMAKER_H
+#ifndef KAIK_METALMAKER_HDR
+#define KAIK_METALMAKER_HDR
 
+#include <vector>
 
-#include "Include.h"
+class IAICallback;
+struct AIClasses;
 
 class CMetalMaker {
 	public:
@@ -27,7 +29,7 @@ class CMetalMaker {
 			bool turnedOn;
 		};
 
-		vector<UnitInfo> myUnits;
+		std::vector<UnitInfo> myUnits;
 		float lastEnergy;
 		AIClasses* ai;
 		IAICallback* aicb;

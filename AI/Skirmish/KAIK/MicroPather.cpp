@@ -39,6 +39,10 @@
  * --Tobi Vollebregt
  */
 
+// malloc(), free()
+#include <cstdlib>
+#include <cassert>
+#include <cmath>
 
 #include "MicroPather.h"
 
@@ -56,7 +60,7 @@ class OpenQueueBH {
 	public:
 	
 	OpenQueueBH(AIClasses* ai, PathNode** heapArray): ai(ai), size(0) {
-		this -> heapArray = heapArray;
+		this->heapArray = heapArray;
 	}
 
 	~OpenQueueBH() {}
@@ -76,8 +80,8 @@ class OpenQueueBH {
 				heapArray[i >> 1] = heapArray[i];
 				heapArray[i] = temp;
 
-				temp -> myIndex = i;
-				heapArray[i >> 1] -> myIndex = i >> 1;
+				temp->myIndex = i;
+				heapArray[i >> 1]->myIndex = i >> 1;
 
 				i >>= 1;
 			}
@@ -98,14 +102,14 @@ class OpenQueueBH {
 			// heapify now
 			int i = pNode->myIndex;
 
-			while(i > 1 && ((heapArray[i >> 1] -> totalCost) > (heapArray[i] -> totalCost))) {
+			while(i > 1 && ((heapArray[i >> 1]->totalCost) > (heapArray[i]->totalCost))) {
 				// swap them
 				PathNode* temp = heapArray[i >> 1];
 				heapArray[i >> 1] = heapArray[i];
 				heapArray[i] = temp;
 
-				temp -> myIndex = i;
-				heapArray[i >> 1] -> myIndex =  i >> 1;
+				temp->myIndex = i;
+				heapArray[i >> 1]->myIndex =  i >> 1;
 				i >>= 1;
 			}
 		}
@@ -117,7 +121,7 @@ class OpenQueueBH {
 
 		// get the first one
 		PathNode* min = heapArray[1];
-		min -> inOpen = 0;
+		min->inOpen = 0;
 		heapArray[1] = heapArray[size];
 		size--;
 
@@ -125,7 +129,7 @@ class OpenQueueBH {
 			return min;
 		}
 
-		heapArray[1] -> myIndex = 1;
+		heapArray[1]->myIndex = 1;
 		# define Parent(x) (x >> 1)
 		# define Left(x)  (x << 1)
 		# define Right(x) ((x << 1) + 1)
@@ -141,12 +145,12 @@ class OpenQueueBH {
 			int right = Right(index);
 			// L("left: " << left << ", index: " << index);
 
-			if (left <= size && ((heapArray[left] -> totalCost) < (heapArray[index] -> totalCost)))
+			if (left <= size && ((heapArray[left]->totalCost) < (heapArray[index]->totalCost)))
 				smalest = left;
 			else
 				smalest = index;
 
-			if (right <= size && ((heapArray[right] -> totalCost) < (heapArray[smalest] -> totalCost)))
+			if (right <= size && ((heapArray[right]->totalCost) < (heapArray[smalest]->totalCost)))
 				smalest = right;
 
 			// L("index: " << index << ", smalest: " << smalest);
@@ -156,8 +160,8 @@ class OpenQueueBH {
 				heapArray[index] = heapArray[smalest];
 				heapArray[smalest] = temp;
 
-				temp -> myIndex = smalest;
-				heapArray[index] -> myIndex = index;
+				temp->myIndex = smalest;
+				heapArray[index]->myIndex = index;
 
 				goto LOOPING_HEAPIFY;
 			}
@@ -181,7 +185,7 @@ class OpenQueueBH {
 MicroPather::MicroPather(Graph* _graph, AIClasses* ai, unsigned allocate):
 	ALLOCATE(allocate), BLOCKSIZE(allocate - 1), graph(_graph), pathNodeMem(0), availMem(0), pathNodeCount(0), frame(0), checksum(0) {
 
-	this -> ai = ai;
+	this->ai = ai;
 	AllocatePathNode();
 	hasStartedARun = false;
 }
@@ -193,11 +197,11 @@ MicroPather::~MicroPather() {
 
 
 // make sure that costArray doesn't contain values below 1.0 (for speed), and below 0.0 (for eternal loop)
-void MicroPather::SetMapData(bool *canMoveArray, float *costArray, int mapSizeX, int mapSizeY) {
-	this -> canMoveArray = canMoveArray;
-	this -> costArray = costArray;
-	this -> mapSizeX = mapSizeX;
-	this -> mapSizeY = mapSizeY;
+void MicroPather::SetMapData(bool* canMoveArray, float* costArray, int mapSizeX, int mapSizeY) {
+	this->canMoveArray = canMoveArray;
+	this->costArray = costArray;
+	this->mapSizeX = mapSizeX;
+	this->mapSizeY = mapSizeY;
 
 	assert(mapSizeX >= 0);
 	assert(mapSizeY >= 0);
@@ -231,7 +235,7 @@ void MicroPather::Reset() {
 	// L("Reseting pather, frame is: " << frame);
 	for (unsigned i = 0; i < ALLOCATE; i++) {
 		PathNode* directNode = &pathNodeMem[i];
-		directNode -> Reuse(0);
+		directNode->Reuse(0);
 	}
 
 	frame = 1;
@@ -254,8 +258,8 @@ PathNode* MicroPather::AllocatePathNode() {
 		for (unsigned i = 0; i < ALLOCATE; i++) {
 			result = &pathNodeMem[i];
 			++pathNodeCount;
-			result -> Init(0, FLT_BIG, 0);
-			result -> isEndNode = 0;
+			result->Init(0, FLT_BIG, 0);
+			result->isEndNode = 0;
 		}
 
 		result = newBlock;
@@ -270,46 +274,46 @@ PathNode* MicroPather::AllocatePathNode() {
 	return result;
 }
 
-void MicroPather::GoalReached(PathNode* node, void* start, void* end, vector<void*>* path) {
-	path -> clear();
+void MicroPather::GoalReached(PathNode* node, void* start, void* end, std::vector<void*>* path) {
+	path->clear();
 
 	// we have reached the goal, how long is the path?
 	// (used to allocate the vector which is returned)
 	int count = 1;
 	PathNode* it = node;
 
-	while (it -> parent) {
+	while (it->parent) {
 		++count;
-		it = it -> parent;
+		it = it->parent;
 	}
 
 	// now that the path has a known length, allocate
 	// and fill the vector that will be returned
 	if (count < 3) {
 		// Handle the short, special case.
-		path -> resize(2);
+		path->resize(2);
 		(*path)[0] = start;
 		(*path)[1] = end;
 	}
 	else {
-		path -> resize(count);
+		path->resize(count);
 
 		(*path)[0] = start;
 		(*path)[count - 1] = end;
 
 		count -= 2;
-		it = node -> parent;
+		it = node->parent;
 
-		while (it -> parent) {
+		while (it->parent) {
 			(*path)[count] = (void*) ((((size_t) it) - ((size_t) pathNodeMem)) / sizeof(PathNode));
-			it = it -> parent;
+			it = it->parent;
 			--count;
 		}
 	}
 
 	#ifdef DEBUG_PATH
 	printf("Path: ");
-	printf("Cost = %.1f Checksum %d\n", node -> costFromStart, checksum);
+	printf("Cost = %.1f Checksum %d\n", node->costFromStart, checksum);
 	#endif
 }
 
@@ -385,7 +389,7 @@ void MicroPather::FixNode( void** Node) {
 
 
 
-int MicroPather::Solve(void* startNode, void* endNode, vector<void*>* path, float* cost) {
+int MicroPather::Solve(void* startNode, void* endNode, std::vector<void*>* path, float* cost) {
 	assert(!hasStartedARun);
 	hasStartedARun = true;
 	*cost = 0.0f;
@@ -421,9 +425,9 @@ int MicroPather::Solve(void* startNode, void* endNode, vector<void*>* path, floa
 	{
 		PathNode* tempStartNode = &pathNodeMem[(size_t) startNode];
 		float estToGoal = LeastCostEstimateLocal( (size_t) startNode);
-		tempStartNode -> Reuse(frame);
-		tempStartNode -> costFromStart = 0;
-		tempStartNode -> totalCost = estToGoal;
+		tempStartNode->Reuse(frame);
+		tempStartNode->costFromStart = 0;
+		tempStartNode->totalCost = estToGoal;
 		open.Push(tempStartNode);
 	}
 
@@ -434,7 +438,7 @@ int MicroPather::Solve(void* startNode, void* endNode, vector<void*>* path, floa
 
 		if (node == endPathNode) {
 			GoalReached(node, startNode, endNode, path);
-			*cost = node -> costFromStart;
+			*cost = node->costFromStart;
 			hasStartedARun = false;
 			return SOLVED;
 		}
@@ -451,7 +455,7 @@ int MicroPather::Solve(void* startNode, void* endNode, vector<void*>* path, floa
 			assert(ystart != 0 && ystart != mapSizeY);
 			#endif
 
-			float nodeCostFromStart = node -> costFromStart;
+			float nodeCostFromStart = node->costFromStart;
 
 			for (int i = 0; i < 8; ++i) {
 				int indexEnd = offsets[i] + indexStart;
@@ -462,8 +466,8 @@ int MicroPather::Solve(void* startNode, void* endNode, vector<void*>* path, floa
 
 				PathNode* directNode = &pathNodeMem[indexEnd];
 
-				if (directNode -> frame != frame)
-					directNode -> Reuse(frame);
+				if (directNode->frame != frame)
+					directNode->Reuse(frame);
 
 				#ifdef USE_ASSERTIONS
 				int yend = indexEnd / mapSizeX;
@@ -485,30 +489,30 @@ int MicroPather::Solve(void* startNode, void* endNode, vector<void*>* path, floa
 				else
 					newCost += costArray[indexEnd];
 
-				if (directNode -> costFromStart <= newCost) {
+				if (directNode->costFromStart <= newCost) {
 					// do nothing, this path is not better than existing one
 					continue;
 				}
 
 				// it's better, update its data
-				directNode -> parent = node;
-				directNode -> costFromStart = newCost;
-				directNode -> totalCost = newCost + LeastCostEstimateLocal(indexEnd);
+				directNode->parent = node;
+				directNode->costFromStart = newCost;
+				directNode->totalCost = newCost + LeastCostEstimateLocal(indexEnd);
 				#ifdef USE_ASSERTIONS
 				assert(indexEnd == ((((unsigned) directNode) - ((unsigned) pathNodeMem)) / sizeof(PathNode)));
 				#endif
 
-				if (directNode -> inOpen) {
+				if (directNode->inOpen) {
 					open.Update(directNode);
 				}
 				else {
-					directNode -> inClosed = 0;
+					directNode->inClosed = 0;
 					open.Push(directNode);
 				}
 			}
 		}
 
-		node -> inClosed = 1;
+		node->inClosed = 1;
 	}
 
 	hasStartedARun = false;
@@ -516,7 +520,7 @@ int MicroPather::Solve(void* startNode, void* endNode, vector<void*>* path, floa
 }
 
 
-int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endNodes, vector<void*>* path, float* cost) {
+int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*> endNodes, std::vector<void*>* path, float* cost) {
 	assert(!hasStartedARun);
 	hasStartedARun = true;
 	*cost = 0.0f;
@@ -524,10 +528,9 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endN
 	for (unsigned i = 0; i < ALLOCATE; i++) {
 		PathNode* theNode = &pathNodeMem[i];
 
-		if (theNode -> isEndNode) {
-			// L("i: " << i << ", " << theNode->isEndNode);
-			theNode -> isEndNode = 0;
-			assert(theNode -> isEndNode == 0);
+		if (theNode->isEndNode) {
+			theNode->isEndNode = 0;
+			assert(theNode->isEndNode == 0);
 		}
 	}
 
@@ -559,9 +562,9 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endN
 	{
 		PathNode* tempStartNode = &pathNodeMem[(size_t) startNode];
 		float estToGoal = LeastCostEstimateLocal( (size_t) startNode);
-		tempStartNode -> Reuse(frame);
-		tempStartNode -> costFromStart = 0;
-		tempStartNode -> totalCost = estToGoal;
+		tempStartNode->Reuse(frame);
+		tempStartNode->costFromStart = 0;
+		tempStartNode->totalCost = estToGoal;
 		open.Push( tempStartNode );
 	}
 
@@ -569,22 +572,22 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endN
 	for (unsigned i = 0; i < endNodes.size(); i++) {
 		FixNode(&endNodes[i]);
 		PathNode* tempEndNode = &pathNodeMem[(size_t) endNodes[i]];
-		tempEndNode -> isEndNode = 1;
+		tempEndNode->isEndNode = 1;
 	}
 
 	while (!open.Empty()) {
 		PathNode* node = open.Pop();
 
-		if (node -> isEndNode) {
+		if (node->isEndNode) {
 			void* theEndNode = (void*) ((((size_t) node) - ((size_t) pathNodeMem)) / sizeof(PathNode));
 			GoalReached(node, startNode, theEndNode, path);
-			*cost = node -> costFromStart;
+			*cost = node->costFromStart;
 			hasStartedARun = false;
 
 			// unmark the endNodes
 			for (unsigned i = 0; i < endNodes.size(); i++) {
 				PathNode* tempEndNode = &pathNodeMem[(size_t) endNodes[i]];
-				tempEndNode -> isEndNode = 0;
+				tempEndNode->isEndNode = 0;
 			}
 
 			return SOLVED;
@@ -602,7 +605,7 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endN
 			assert(ystart != 0 && ystart != mapSizeY);
 			#endif
 
-			float nodeCostFromStart = node -> costFromStart;
+			float nodeCostFromStart = node->costFromStart;
 
 			for (int i = 0; i < 8; ++i) {
 				int indexEnd = offsets[i] + indexStart;
@@ -613,8 +616,8 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endN
 
 				PathNode* directNode = &pathNodeMem[indexEnd];
 
-				if (directNode -> frame != frame)
-					directNode -> Reuse(frame);
+				if (directNode->frame != frame)
+					directNode->Reuse(frame);
 
 				#ifdef USE_ASSERTIONS
 				int yend = indexEnd / mapSizeX;
@@ -636,37 +639,37 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endN
 				else
 					newCost += costArray[indexEnd];
 
-				if (directNode -> costFromStart <= newCost) {
+				if (directNode->costFromStart <= newCost) {
 					// do nothing, this path is not better than existing one
 					continue;
 				}
 
 				// it's better, update its data
-				directNode -> parent = node;
-				directNode -> costFromStart = newCost;
-				directNode -> totalCost = newCost + LeastCostEstimateLocal(indexEnd);
+				directNode->parent = node;
+				directNode->costFromStart = newCost;
+				directNode->totalCost = newCost + LeastCostEstimateLocal(indexEnd);
 
 				#ifdef USE_ASSERTIONS
 				assert(indexEnd == ((((unsigned) directNode) - ((unsigned) pathNodeMem)) / sizeof(PathNode)));
 				#endif
 
-				if (directNode -> inOpen) {
+				if (directNode->inOpen) {
 					open.Update(directNode);
 				}
 				else {
-					directNode -> inClosed = 0;
+					directNode->inClosed = 0;
 					open.Push(directNode);
 				}
 			}
 		}
 
-		node -> inClosed = 1;
+		node->inClosed = 1;
 	}
 
 	// unmark the endNodes
 	for (unsigned i = 0; i < endNodes.size(); i++) {
 		PathNode* tempEndNode = &pathNodeMem[(size_t)endNodes[i]];
-		tempEndNode -> isEndNode = 0;
+		tempEndNode->isEndNode = 0;
 	}
 
 	hasStartedARun = false;
@@ -675,7 +678,7 @@ int MicroPather::FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endN
 
 
 
-int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, vector<void*>* path, float* cost, int radius) {
+int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, std::vector<void*>* path, float* cost, int radius) {
 	assert(!hasStartedARun);
 	hasStartedARun = true;
 	*cost = 0.0f;
@@ -706,9 +709,9 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, vec
 	{
 		PathNode* tempStartNode = &pathNodeMem[(size_t) startNode];
 		float estToGoal = LeastCostEstimateLocal( (size_t) startNode);
-		tempStartNode -> Reuse(frame);
-		tempStartNode -> costFromStart = 0;
-		tempStartNode -> totalCost = estToGoal;
+		tempStartNode->Reuse(frame);
+		tempStartNode->costFromStart = 0;
+		tempStartNode->totalCost = estToGoal;
 		open.Push(tempStartNode);
 	}
 	
@@ -748,7 +751,7 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, vec
 				// L("Its a hit: " << counter);
 
 				GoalReached(node, startNode, (void*) (indexStart), path);
-				*cost = node -> costFromStart;
+				*cost = node->costFromStart;
 				hasStartedARun = false;
 				return SOLVED;
 			}
@@ -762,7 +765,7 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, vec
 			assert(ystart != 0 && ystart != mapSizeY);
 			#endif
 
-			float nodeCostFromStart = node -> costFromStart;
+			float nodeCostFromStart = node->costFromStart;
 			for (int i = 0; i < 8; ++i) {
 				int indexEnd = offsets[i] + indexStart;
 
@@ -773,7 +776,7 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, vec
 				PathNode* directNode = &pathNodeMem[indexEnd];
 
 				if (directNode->frame != frame)
-					directNode -> Reuse(frame);
+					directNode->Reuse(frame);
 
 				#ifdef USE_ASSERTIONS
 				int yend = indexEnd / mapSizeX;
@@ -795,31 +798,31 @@ int MicroPather::FindBestPathToPointOnRadius(void* startNode, void* endNode, vec
 				else
 					newCost += costArray[indexEnd];
 
-				if (directNode -> costFromStart <= newCost) {
+				if (directNode->costFromStart <= newCost) {
 					// do nothing, this path is not better than existing one
 					continue;
 				}
 
 				// it's better, update its data
-				directNode -> parent = node;
-				directNode -> costFromStart = newCost;
-				directNode -> totalCost = newCost + LeastCostEstimateLocal(indexEnd);
+				directNode->parent = node;
+				directNode->costFromStart = newCost;
+				directNode->totalCost = newCost + LeastCostEstimateLocal(indexEnd);
 
 				#ifdef USE_ASSERTIONS
 				assert(indexEnd == ((((size_t) directNode) - ((size_t) pathNodeMem)) / sizeof(PathNode)));
 				#endif
 
-				if (directNode -> inOpen) {
+				if (directNode->inOpen) {
 					open.Update(directNode);
 				}
 				else {
-					directNode -> inClosed = 0;
+					directNode->inClosed = 0;
 					open.Push(directNode);
 				}
 			}
 		}
 
-		node -> inClosed = 1;
+		node->inClosed = 1;
 	}
 
 	hasStartedARun = false;

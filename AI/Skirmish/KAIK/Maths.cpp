@@ -1,4 +1,5 @@
-#include "Maths.h"
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CMaths::CMaths(AIClasses* ai) {
 	this->ai = ai;
@@ -30,14 +31,15 @@ void CMaths::F3MapBound(float3* pos) {
 		pos->z = mapfloat3height - 65;
 }
 
-float3 CMaths::F3Randomize(float3 pos, float radius) {
-	pos.x += sin(float(RANDINT / 1000)) * radius;
-	pos.z += sin(float(RANDINT / 1000)) * radius;
+float3 CMaths::F3Randomize(const float3& pos, float radius) {
+	float3 p;
+	p.x = pos.x + sin(float(RANDINT / 1000)) * radius;
+	p.z = pos.z + sin(float(RANDINT / 1000)) * radius;
 
-	return pos;
+	return p;
 }
 
-void  CMaths::F32XY(float3 pos, int* x, int* y, int resolution) {
+void  CMaths::F32XY(const float3& pos, int* x, int* y, int resolution) {
 	*x = int(pos.x / 8 / resolution);
 	*y = int(pos.z / 8 / resolution);
 }
@@ -140,35 +142,34 @@ bool CMaths::EFeasibleConstruction(const UnitDef* builder, const UnitDef* built,
 }
 
 
-float CMaths::ETA(int unit, float3 destination) {
+float CMaths::ETA(int unit, const float3& destination) {
 	float speed = ai->cb->GetUnitDef(unit)->speed;
 	float distance = destination.distance2D(ai->cb->GetUnitPos(unit));
 
 	return (distance / speed * 2);
 }
 
-float CMaths::ETT(BuildTask bt) {
+float CMaths::ETT(BuildTask& bt) {
 	float percentdone = (ai->cb->GetUnitHealth(bt.id)) / (ai->cb->GetUnitMaxHealth(bt.id));
-	float buildpower = 0;
-	list<int> killbuilders;
+	float buildpower = 0.0f;
+	std::list<int> killbuilders;
 
-	for (list<int>::iterator i = bt.builders.begin(); i != bt.builders.end(); i++) {
+	for (std::list<int>::iterator i = bt.builders.begin(); i != bt.builders.end(); i++) {
 		if (ai->cb->GetUnitDef(*i))
 			buildpower += ai->cb->GetUnitDef(*i)->buildSpeed;
 		else
 			killbuilders.push_back(*i);
 	}
 
-	for (list<int>::iterator i = killbuilders.begin(); i != killbuilders.end(); i++) {
+	for (std::list<int>::iterator i = killbuilders.begin(); i != killbuilders.end(); i++) {
 		bt.builders.remove(*i);
 	}
 
-	if (buildpower > 0) {
+	if (buildpower > 0.0f) {
 		return ((ai->cb->GetUnitDef(bt.id)->buildTime) / buildpower) * (1 - percentdone);
 	}
 
-	// L("Error, buildpower <= 0");
-	return 1000000000000000000.0;
+	return MY_FLT_MAX;
 }
 
 
