@@ -10,8 +10,7 @@
 #define AI_CREDITS			"(developed by Krogothe, Tournesol, Firenu; now maintained by Kloot)"
 
 // Logger
-#define L(ai, msg) \
-	(*(ai->logger) << msg);
+#define L(ai, msg)		(ai->logger->Log(msg));
 
 // Shortcuts
 #define GCAT(a)			(ai->ut->GetCategory(a))

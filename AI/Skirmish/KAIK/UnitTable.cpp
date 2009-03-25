@@ -94,11 +94,11 @@ int CUnitTable::BuildModSideMap() {
 			msg.str("");
 			msg << "\tside index: " << side << ", root unit: " << udef->name;
 			msg << ", side name: " << sideName << ", " << sideName << " ==> " << side;
-			L(ai, msg);
+			L(ai, msg.str());
 		} else {
 			msg.str("");
 			msg << "\tside " << side << " not defined";
-			L(ai, msg);
+			L(ai, msg.str());
 		}
 
 		sside.str("");
@@ -134,11 +134,11 @@ int CUnitTable::ReadTeamSides() {
 			msg.str("");
 			msg << "\tteam: " << team << ", key: " << sideKey << ", side: ";
 			msg << modSideMap[sideKey] << " (index: " << teamSides[team] << ")";
-			L(ai, msg);
+			L(ai, msg.str());
 		} else {
 			msg.str("");
 			msg << "\tno \"game\\team\\side\" value found for team " << team;
-			L(ai, msg);
+			L(ai, msg.str());
 		}
 	}
 
@@ -157,7 +157,7 @@ void CUnitTable::ReadModConfig() {
 	if (f != NULL) {
 		msg << "\tparsing existing mod configuration file ";
 		msg << cfgFileName;
-		L(ai, msg);
+		L(ai, msg.str());
 
 		// read the mod's .cfg file
 		char  str[1024];
@@ -182,7 +182,7 @@ void CUnitTable::ReadModConfig() {
 				msg.str("");
 				msg << "\t\tudef->id: " << udef->id << ", udef->name: " << udef->name;
 				msg << ", utype->category: " << utype->category << ", .cfg category: " << unitCategory;
-				L(ai, msg);
+				L(ai, msg.str());
 
 				// TODO: look for any possible side-effects that might arise
 				// from overriding categories like this, then enable overrides
@@ -195,7 +195,7 @@ void CUnitTable::ReadModConfig() {
 					if (unitCategory == CAT_G_ATTACK && utype->category == CAT_BUILDER) {
 						msg.str("");
 						msg << "\t\t\t.cfg category (CAT_G_ATTACK) overrides utype->category (CAT_BUILDER)";
-						L(ai, msg);
+						L(ai, msg.str());
 
 						// maps unit categories to indices into all_lists
 						// FIXME: hackish, poorly maintainable, bad style
@@ -236,12 +236,12 @@ void CUnitTable::ReadModConfig() {
 		msg.str("");
 		msg << "read mod configuration file ";
 		msg << cfgFileName;
-		L(ai, msg);
+		L(ai, msg.str());
 	} else {
 		msg.str("");
 		msg << "\tcreating new mod configuration file ";
 		msg << cfgFileName;
-		L(ai, msg);
+		L(ai, msg.str());
 
 		// write a new .cfg file with default values
 		f = fopen(cfgFileName.c_str(), "w");
@@ -264,13 +264,13 @@ void CUnitTable::ReadModConfig() {
 			msg.str("");
 			msg << "\t\tname: " << (utype->def->name);
 			msg << ", .cfg category: " << (utype->category);
-			L(ai, msg);
+			L(ai, msg.str());
 		}
 
 		msg.str("");
 		msg << "wrote mod configuration file ";
 		msg << cfgFileName;
-		L(ai, msg);
+		L(ai, msg.str());
 	}
 
 	fclose(f);
@@ -1128,7 +1128,7 @@ void CUnitTable::DebugPrint() {
 	if (f == NULL) {
 		msg << "[CUnitTable::DebugPrint()] could not open ";
 		msg << "debug log " << logFileName << " for writing";
-		L(ai, msg);
+		L(ai, msg.str());
 		return;
 	}
 

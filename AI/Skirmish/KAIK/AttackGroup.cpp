@@ -103,18 +103,17 @@ bool CAttackGroup::RemoveUnit(int unitID) {
 	for (it = units.begin(); it != units.end(); it++) {
 		if (*it == unitID) {
 			found = true;
-			// L("AttackGroup: erasing unit with id:" << unitID);
 			break;
 		}
 	}
 
 	if (found) {
 		units.erase(it);
-		// L("AttackGroup: about to attempt to reset the group ID of a removed unit");
+
+		// attempt to reset the group ID of a removed unit
+		// for debugging, check ai->MyUnits[unitID]->stuckCounter
 		if (ai->cb->GetUnitDef(unitID) != NULL) {
 			ai->MyUnits[unitID]->groupID = 0;
-			// L("AttackGroup: groupid = 0 ==> success");
-			// L("AttackGroup: this unit's stuck counter was " << ai->MyUnits[unitID]->stuckCounter);
 		}
 	}
 

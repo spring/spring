@@ -6,34 +6,45 @@
 
 class IAICallback;
 
+enum LogLevel {
+	LOG_BASIC,
+	LOG_DEBUG,
+};
+
 class CLogger {
 	public:
 		CLogger(IAICallback* cb) {
 			icb  = cb;
 			name = GetLogName();
-			log  = new std::ofstream(name.c_str());
+
+			log.open(name.c_str());
 		}
 		~CLogger() {
-			log->close();
-			delete log;
+			log.flush();
+			log.close();
 		}
 
 		std::string GetLogName() const;
 
-		CLogger& operator << (const char c) {
-			*log << c; *log << std::endl; return *this;
-		}
-		CLogger& operator << (const std::string& s) {
-			*log << s; *log << std::endl; return *this;
-		}
-		CLogger& operator << (const std::stringstream& ss) {
-			*log << ss.str(); *log << std::endl; return *this;
+		template<typename T> CLogger& Log(const T& t, LogLevel lvl = LOG_BASIC) {
+			switch (lvl) {
+				case LOG_BASIC: {
+					log << t; log << std::endl;
+				} break;
+				case LOG_DEBUG: {
+					/* TODO */
+				} break;
+				default: {
+				} break;
+			}
+
+			return *this;
 		}
 
 	private:
 		IAICallback* icb;
 		std::string name;
-		std::ofstream* log;
+		std::ofstream log;
 };
 
 #endif

@@ -97,7 +97,7 @@ void CUnitHandler::IdleUnitUpdate(int frame) {
 							msg << "[CUnitHandler::IdleUnitUpdate()] frame " << frame << "\n";
 							msg << "\tfailed to verify order for builder " << builderID;
 							msg << " with " << (myCommands->size()) << " remaining commands\n";
-						L(ai, msg);
+						L(ai, msg.str());
 
 						ClearOrder(*i, false);
 
@@ -376,7 +376,7 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 			msg << "[CUnitHandler::ClearOrder()] frame " << frame << "\n";
 			msg << "\tbuilder " << builderID << " is reported idle but";
 			msg << " still has a build-task with ID " << (buildTaskID) << "\n";
-		L(ai, msg);
+		L(ai, msg.str());
 
 		if (buildTask->builderTrackers.size() > 1) {
 			BuildTaskRemove(builderTracker);
@@ -397,7 +397,7 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 			msg << "[CUnitHandler::ClearOrder()] frame " << frame << "\n";
 			msg << "\tbuilder " << builderID << " is reported idle but";
 			msg << " still has a task-plan named \"" << (taskName) << "\"\n";
-		L(ai, msg);
+		L(ai, msg.str());
 
 		// mask this build-spot as bad
 		ai->dm->MaskBadBuildSpot(taskPlan->pos);
@@ -422,7 +422,7 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 			msg << "[CUnitHandler::ClearOrder()] frame " << frame << "\n";
 			msg << "\tbuilder " << builderID << " is reported idle but";
 			msg << " still has a factory ID of " << factoryID << "\n";
-		L(ai, msg);
+		L(ai, msg.str());
 
 		// remove the builder from its job
 		FactoryBuilderRemove(builderTracker);
@@ -472,7 +472,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 				msg << "\tbuilder " << builderID << " claimed idle, but has";
 				msg << " command " << cID << " with " << n << " parameters";
 				msg << " (params[0]: " << ((n > 0)? c->params[0]: -1) << ")\n";
-			L(ai, msg);
+			L(ai, msg.str());
 		}
 
 		if (cID < 0) {
@@ -558,7 +558,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 		std::stringstream msg;
 			msg << "[CUnitHandler::DecodeOrder()] frame " << frame << "\n";
 			msg << "\tbuilder " << builderID << " should not have an empty queue!\n";
-		L(ai, msg);
+		L(ai, msg.str());
 	}
 }
 
@@ -687,7 +687,7 @@ void CUnitHandler::BuildTaskCreate(int id) {
 			std::stringstream msg;
 				msg << "[CUnitHandler::BuildTaskCreate()] frame " << (ai->cb->GetCurrentFrame()) << "\n";
 				msg << "\tBuildTask Creation Error for task with ID " << id << "\n";
-			L(ai, msg);
+			L(ai, msg.str());
 
 			if (category == CAT_DEFENCE) {
 				ai->dm->AddDefense(pos, newUnitDef);
@@ -747,7 +747,7 @@ void CUnitHandler::BuildTaskCreate(int id) {
 							msg.str("");
 								msg << "\tadded builder " << builderTracker->builderID << " to";
 								msg << " build-task with ID " << builderTracker->buildTaskId << "\n";
-							L(ai, msg);
+							L(ai, msg.str());
 						}
 					}
 				}
@@ -946,7 +946,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 				msg << "\tbuilder " << builderID << "\tnot able to be added to CAT_FACTORY build-task\n";
 				msg << "\tb1: " << b1 << ", b2: " << b2 << ", b3: " << b3;
 				msg << ", b4: " << b4 << ", b5: " << b5 << ", b6: " << b6;
-			L(ai, msg);
+			L(ai, msg.str());
 		}
 		return false;
 	}
@@ -1011,7 +1011,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 		std::stringstream msg;
 			msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
 			msg << "\tno joinable build-tasks or task-plans for builder " << builderID;
-		L(ai, msg);
+		L(ai, msg.str());
 	}
 
 	return false;
@@ -1059,7 +1059,7 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 					msg << "[CUnitHandler::TaskPlanCreate()] frame " << ai->cb->GetCurrentFrame() << "\n";
 					msg << "\ttask-plan for \"" << builtdef->humanName << "\" already present";
 					msg << " at position <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
-				L(ai, msg);
+				L(ai, msg.str());
 			}
 		}
 	}
@@ -1456,7 +1456,7 @@ void CUnitHandler::UpdateUpgradeTasks(int frame) {
 							msg << "[CUnitHandler::UpdateUpgradeTasks()] frame " << frame << "\n";
 							msg << "\tgiving build order for \"" << task->newBuildingDef->humanName;
 							msg << "\" to builder " << builderID << "\n";
-						L(ai, msg);
+						L(ai, msg.str());
 
 						ai->MyUnits[builderID]->Build_ClosestSite(task->newBuildingDef, task->oldBuildingPos);
 					}
@@ -1467,7 +1467,7 @@ void CUnitHandler::UpdateUpgradeTasks(int frame) {
 							msg << "[CUnitHandler::UpdateUpgradeTasks()] frame " << frame << "\n";
 							msg << "\tgiving reclaim order for \"" << ai->cb->GetUnitDef(oldBuildingID)->humanName;
 							msg << "\" to builder " << builderID << "\n";
-						L(ai, msg);
+						L(ai, msg.str());
 
 						ai->MyUnits[builderID]->Reclaim(oldBuildingID);
 					}

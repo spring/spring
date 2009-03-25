@@ -320,7 +320,7 @@ void CBuildUp::Buildup(int frame) {
 									msg << "[CBuildUp::BuildUp()] frame " << frame << "\n";
 									msg << "\tbuilder " << econState.builderID << " is currently in limbo";
 									msg << " (total number of idle builders: " << econState.nIdleBuilders << ")\n";
-								L(ai, msg);
+								L(ai, msg.str());
 							}
 						}
 					}
