@@ -1,17 +1,20 @@
-#ifndef CONTAINERS_H
-#define CONTAINERS_H
+#ifndef KAIK_CONTAINERS_HDR
+#define KAIK_CONTAINERS_HDR
 
-using std::vector;
-using std::list;
-using std::set;
-using std::string;
+#include <list>
+#include <set>
+#include <vector>
+
+#include "System/float3.h"
+#include "IncCREG.h"
+
+struct UnitDef;
 
 class IAICallback;
 class IAICheats;
 class CSunParser;
 class CMetalMap;
 class CMaths;
-class CDebug;
 class CPathFinder;
 class CUnitTable;
 class CThreatMap;
@@ -21,41 +24,42 @@ class CDefenseMatrix;
 class CEconomyTracker;
 class CBuildUp;
 class CAttackHandler;
-class CEconomyManager;
-class DGunController;
+class CDGunControllerHandler;
+class CLogger;
 
 struct AIClasses {
 	CR_DECLARE_STRUCT(AIClasses);
 
-	IAICallback*		cb;
-	IAICheats*			cheat;
-	CEconomyTracker*	econTracker;
-	CBuildUp *			bu;
-	CSunParser*			parser;
-	CMetalMap*			mm;
-	CMaths*				math;
-	CDebug*				debug;
-	CPathFinder*		pather;
-	CUnitTable*			ut;
-	CThreatMap*			tm;
-	CUnitHandler*		uh;
-	CDefenseMatrix*		dm;
-	CAttackHandler*		ah;
-	CEconomyManager*	em;
-	vector<CUNIT*>		MyUnits;
-	std::ofstream*		LOGGER;
-	DGunController*		dgunController;
+	IAICallback*            cb;
+	IAICheats*              cheat;
+	CEconomyTracker*        econTracker;
+	CBuildUp*               bu;
+	CSunParser*             parser;
+	CMetalMap*              mm;
+	CMaths*                 math;
+	CPathFinder*            pather;
+	CUnitTable*             ut;
+	CThreatMap*             tm;
+	CUnitHandler*           uh;
+	CDefenseMatrix*         dm;
+	CAttackHandler*         ah;
+	CLogger*                logger;
+	CDGunControllerHandler* dgunConHandler;
 
-	std::vector<int>	unitIDs;
+	std::vector<CUNIT*>     MyUnits;
+	std::vector<int>        unitIDs;
 };
 
 struct UnitType {
+	CR_DECLARE_STRUCT(UnitType);
+	void PostLoad();
+
 	// NOTE: CUNIT does not know about this structure
 	// NOTE: category used here not UnitDef::category!
-	vector<int> canBuildList;
-	vector<int> builtByList;
-	vector<float> DPSvsUnit;
-	vector<string> TargetCategories;
+	std::vector<int> canBuildList;
+	std::vector<int> builtByList;
+	std::vector<float> DPSvsUnit;
+	std::vector<std::string> TargetCategories;
 	const UnitDef* def;
 	int category;
 	bool isHub;
@@ -65,7 +69,7 @@ struct UnitType {
 	// which sides can build this UnitType (usually only
 	// one, needed for types that are shared among sides
 	// in certain mods)
-	set<int> sides;
+	std::set<int> sides;
 };
 
 
@@ -90,8 +94,10 @@ class integer2 {
 };
 
 
+
 /*
- * builder container: main task is to make sure that tracking builders is easy (making asserts and tests)
+ * builder container: main task is to make sure that
+ * tracking builders is easy (making asserts and tests)
  */
 struct BuilderTracker {
 	CR_DECLARE_STRUCT(BuilderTracker);
@@ -134,10 +140,10 @@ struct BuildTask {
 	int id;
 	int category;
 	// temp only, for compatibility (will be removed)
-	list<int> builders;
+	std::list<int> builders;
 	// the new container
-	list<BuilderTracker*> builderTrackers;
-	// temp?
+	std::list<BuilderTracker*> builderTrackers;
+
 	float currentBuildPower;
 	// for speed up, and debugging
 	const UnitDef* def;
@@ -152,9 +158,8 @@ struct TaskPlan {
 	// this will be some smart number (a counter?)
 	int id;
 	// temp only, for compatibility (will be removed)
-	list<int> builders;
-	// the new container
-	list<BuilderTracker*> builderTrackers;
+	std::list<int> builders;
+	std::list<BuilderTracker*> builderTrackers;
 
 	float currentBuildPower;
 	const UnitDef* def;
@@ -164,6 +169,15 @@ struct TaskPlan {
 
 struct UpgradeTask {
 	CR_DECLARE_STRUCT(UpgradeTask);
+	void PostLoad(void);
+
+	UpgradeTask() {
+		oldBuildingID  = -1;
+		oldBuildingPos = float3(-1.0f, -1.0f, -1.0f);
+		newBuildingDef = NULL;
+		creationFrame  = -1;
+		reclaimStatus  = false;
+	}
 
 	UpgradeTask(int buildingID, int frame, const float3& buildingPos, const UnitDef* buildingDef) {
 		oldBuildingID  = buildingID;
@@ -182,14 +196,15 @@ struct UpgradeTask {
 	std::set<int> builderIDs;
 };
 
+
+
 struct Factory {
 	CR_DECLARE_STRUCT(Factory);
 
 	int id;
 	// temp only, for compatibility (will be removed)
-	list<int> supportbuilders;
-	// the new container
-	list<BuilderTracker*> supportBuilderTrackers;
+	std::list<int> supportbuilders;
+	std::list<BuilderTracker*> supportBuilderTrackers;
 };
 
 struct NukeSilo {
@@ -206,6 +221,5 @@ struct MetalExtractor {
 	int id;
 	int buildFrame;
 };
-
 
 #endif

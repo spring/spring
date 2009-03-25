@@ -1,5 +1,7 @@
-#include "MetalMap.h"
+#include <string>
 
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CMetalMap::CMetalMap(AIClasses* ai) {
 	this->ai = ai;
@@ -87,16 +89,12 @@ void CMetalMap::Init() {
 		GetMetalPoints();
 		SaveMetalMap();
 
-		string mapname =  string("Metal - ") + ai->cb->GetMapName();
-		mapname.resize(mapname.size() - 4);
+		// std::string mapname = std::string("Metal - ") + ai->cb->GetMapName();
+		// mapname.resize(mapname.size() - 4);
 		// ai->debug->MakeBWTGA(MexArrayC, MetalMapWidth, MetalMapHeight, mapname);
 	}
 
-	/*
-	char k[256];
-	SNPRINTF(k, 256, "Metal Spots Found: %i", NumSpotsFound);
-	ai->cb->SendTextMsg(k, 0);
-	*/
+	// "Metal Spots Found: %i", NumSpotsFound);
 }
 
 
@@ -460,51 +458,49 @@ void CMetalMap::GetMetalPoints() {
 
 
 void CMetalMap::SaveMetalMap() {
-	string filename = string(METALFOLDER) + string(ai->cb->GetMapName());
-	filename.resize(filename.size() - 3);
-	filename += string("Metal");
+	std::string map = GetCacheName();
+	FILE* saveFile = fopen(map.c_str(), "wb");
 
-	char filename_buf[1024];
-	strcpy(filename_buf, filename.c_str());
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, filename_buf);
+	assert(saveFile != NULL);
 
-	FILE* save_file = fopen(filename_buf, "wb");
-	fwrite(&NumSpotsFound, sizeof(int), 1, save_file);
-
-	fwrite(&AverageMetal, sizeof(float), 1, save_file);
+	fwrite(&NumSpotsFound, sizeof(int), 1, saveFile);
+	fwrite(&AverageMetal, sizeof(float), 1, saveFile);
 
 	for (int i = 0; i < NumSpotsFound; i++) {
-		fwrite(&VectoredSpots[i], sizeof(float3), 1, save_file);
+		fwrite(&VectoredSpots[i], sizeof(float3), 1, saveFile);
 	}
 
-	fclose(save_file);
+	fclose(saveFile);
 }
 
-
 bool CMetalMap::LoadMetalMap() {
-	string filename = string(METALFOLDER) + string(ai->cb->GetMapName());
-	filename.resize(filename.size() - 3);
-	filename += string("Metal");
+	std::string map = GetCacheName();
+	FILE* loadFile = fopen(map.c_str(), "rb");
 
-	char filename_buf[1024];
-	strcpy(filename_buf, filename.c_str());
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename_buf);
-
-	FILE* load_file;
-
-	// load Spots if file exists
-	if ((load_file = fopen(filename_buf, "rb"))) {
-		fread(&NumSpotsFound, sizeof(int), 1, load_file);
+	if (loadFile != NULL) {
+		fread(&NumSpotsFound, sizeof(int), 1, loadFile);
 		VectoredSpots.resize(NumSpotsFound);
-		fread(&AverageMetal, sizeof(float), 1, load_file);
+		fread(&AverageMetal, sizeof(float), 1, loadFile);
 
 		for (int i = 0; i < NumSpotsFound; i++) {
-			fread(&VectoredSpots[i], sizeof(float3), 1, load_file);
+			fread(&VectoredSpots[i], sizeof(float3), 1, loadFile);
 		}
 
-		fclose(load_file);
+		fclose(loadFile);
 		return true;
 	}
 
 	return false;
+}
+
+
+
+std::string CMetalMap::GetCacheName() const {
+	std::string relFile =
+		std::string(METALFOLDER) +
+		std::string(ai->cb->GetMapName()) +
+		"Metal";
+	std::string absFile = AIUtil::GetAbsFileName(ai->cb, relFile);
+
+	return absFile;
 }

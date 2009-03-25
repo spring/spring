@@ -1,11 +1,12 @@
-#ifndef ATTACKHANDLER_H
-#define ATTACKHANDLER_H
+#ifndef KAIK_ATTACKHANDLER_HDR
+#define KAIK_ATTACKHANDLER_HDR
 
+#include <list>
+#include <utility>
+#include <vector>
 
-#include "GlobalAI.h"
-
-using std::pair;
 class CAttackGroup;
+struct AIClasses;
 
 class CAttackHandler {
 	public:
@@ -19,7 +20,7 @@ class CAttackHandler {
 		void UnitDestroyed(int unitID);
 
 		// K-means functions are placed here for now
-		vector<float3> KMeansIteration(vector<float3> means, vector<float3> unitPositions, int newK);
+		std::vector<float3> KMeansIteration(std::vector<float3> means, std::vector<float3> unitPositions, int newK);
 		float DistanceToBase(float3 pos);
 		float3 GetClosestBaseSpot(float3 pos);
 		bool PlaceIdleUnit(int unit);
@@ -56,11 +57,11 @@ class CAttackHandler {
 	private:
 		AIClasses* ai;
 
-		list<int> attackUnits;
-		list< pair<int, float3> > stuckUnits;
+		std::list<int> attackUnits;
+		std::list< std::pair<int, float3> > stuckUnits;
 		// TODO: should be sets
-		list<int> unarmedAirUnits;
-		list<int> armedAirUnits;
+		std::list<int> unarmedAirUnits;
+		std::list<int> armedAirUnits;
 
 		bool airIsAttacking;
 		bool airPatrolOrdersGiven;
@@ -68,12 +69,12 @@ class CAttackHandler {
 
 		int newGroupID;
 
-		list<CAttackGroup> attackGroups;
-	//	list<CAttackGroup> defenseGroups;
+		std::list<CAttackGroup> attackGroups;
+	//	std::list<CAttackGroup> defenseGroups;
 
-		vector<float3> kMeansBase;
+		std::vector<float3> kMeansBase;
+		std::vector<float3> kMeansEnemyBase;
 		int kMeansK;
-		vector<float3> kMeansEnemyBase;
 		int kMeansEnemyK;
 };
 

@@ -1,14 +1,11 @@
-#ifndef UNIT_H
-#define UNIT_H
-
-#include "System/StdAfx.h"
-#include "creg/creg.h"
-#include "Sim/Units/UnitDef.h"				// Unit Definitions
+#ifndef KAIK_UNIT_HDR
+#define KAIK_UNIT_HDR
 
 #include "Defines.h"
 
+struct Command;
+struct UnitDef;
 class AIClasses;
-
 
 class CUNIT {
 	public:

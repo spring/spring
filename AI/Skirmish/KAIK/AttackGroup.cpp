@@ -1,5 +1,9 @@
-#include "AttackGroup.h"
-#include "GlobalAI.h"
+// #include "ExternalAI/aibase.h"
+// #include "Sim/Misc/GlobalConstants.h"
+
+#include "IncCREG.h"
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 #define UNIT_STUCK_MOVE_DISTANCE 2.0f
 // not moving for 5 * 60 frames = stuck
@@ -94,7 +98,7 @@ void CAttackGroup::AddUnit(int unitID) {
 
 bool CAttackGroup::RemoveUnit(int unitID) {
 	bool found = false;
-	vector<int>::iterator it;
+	std::vector<int>::iterator it;
 
 	for (it = units.begin(); it != units.end(); it++) {
 		if (*it == unitID) {
@@ -170,7 +174,7 @@ int CAttackGroup::GetWorstMoveType() {
 	return PATHTOUSE;
 }
 
-vector<int>* CAttackGroup::GetAllUnits() {
+std::vector<int>* CAttackGroup::GetAllUnits() {
 	return &(this->units);
 }
 
@@ -179,7 +183,7 @@ vector<int>* CAttackGroup::GetAllUnits() {
 float CAttackGroup::Power() {
 	float sum = 0.00001f;
 
-	for (vector<int>::iterator it = units.begin(); it != units.end(); it++) {
+	for (std::vector<int>::iterator it = units.begin(); it != units.end(); it++) {
 		if (ai->cb->GetUnitDef(*it) != NULL) {
 			sum += ai->cb->GetUnitPower(*it);
 		}
@@ -192,7 +196,7 @@ float CAttackGroup::Power() {
 
 int CAttackGroup::PopStuckUnit() {
 	// removes a stuck unit from the group if there is one, and puts a marker on the map
-	for (vector<int>::iterator it = units.begin(); it != units.end(); it++) {
+	for (std::vector<int>::iterator it = units.begin(); it != units.end(); it++) {
 		if (ai->MyUnits[*it]->stuckCounter > UNIT_STUCK_COUNTER_LIMIT) {
 			int id = *it;
 			// mark it
@@ -270,8 +274,8 @@ float3 CAttackGroup::GetGroupPos() {
 
 
 // returns enemies in my attack area
-list<int> CAttackGroup::GetAssignedEnemies() {
-	list<int> takenEnemies;
+std::list<int> CAttackGroup::GetAssignedEnemies() {
+	std::list<int> takenEnemies;
 
 	if (!defending) {
 		int numTaken = ai->cheat->GetEnemyUnits(&ai->unitIDs[0], attackPosition, attackRadius);
@@ -284,7 +288,7 @@ list<int> CAttackGroup::GetAssignedEnemies() {
 	return takenEnemies;
 }
 
-void CAttackGroup::AssignTarget(vector<float3> path, float3 position, float radius) {
+void CAttackGroup::AssignTarget(std::vector<float3> path, float3 position, float radius) {
 	this->attackPosition = position;
 	this->attackRadius = radius;
 	this->pathToTarget = path;
@@ -315,7 +319,7 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 	int numEnemies = ai->cb->GetEnemyUnitsInRadarAndLos(&ai->unitIDs[0]);
 
 	if (numEnemies > 0) {
-		vector<float3> enemyPositions;
+		std::vector<float3> enemyPositions;
 		enemyPositions.reserve(numEnemies);
 
 		// make a vector with the positions of all enemies
@@ -523,7 +527,7 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 				bool debug1 = true;
 				bool debug2 = false;
 
-				vector<float3> tempPath;
+				std::vector<float3> tempPath;
 
 				// note 1: we don't need a path, just a position
 				// note 2: should avoid other immediate friendly units and/or immediate enemy units + radius

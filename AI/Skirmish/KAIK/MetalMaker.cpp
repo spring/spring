@@ -1,9 +1,6 @@
-#include "MetalMaker.h"
-#include "ExternalAI/IAICallback.h"
-#include "Sim/Units/UnitDef.h"
-#include <vector>
-
-
+#include "IncCREG.h"
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CR_BIND(CMetalMaker, (NULL))
 CR_REG_METADATA(CMetalMaker, (
@@ -82,7 +79,7 @@ bool CMetalMaker::Add(int unit) {
 	// insert sorted by metalPerEnergy
 	bool inserted = false;
 	int counter = 0;
-	vector<UnitInfo>::iterator theIterator = myUnits.begin();
+	std::vector<UnitInfo>::iterator theIterator = myUnits.begin();
 
 	while (theIterator != myUnits.end() && !inserted) {
 		// insert it where it should be in order for the list to remain sorted (insertion sort)
@@ -134,7 +131,7 @@ bool CMetalMaker::Add(int unit) {
 bool CMetalMaker::Remove(int unit) {
 	bool found = false;
 	int counter = 0;
-	vector<UnitInfo>::iterator it;
+	std::vector<UnitInfo>::iterator it;
 
 	for (it = myUnits.begin(); it != myUnits.end(); it++) {
 		if (it->id == unit) {

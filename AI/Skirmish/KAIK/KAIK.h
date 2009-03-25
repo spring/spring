@@ -1,16 +1,19 @@
-#ifndef GLOBALAI_H
-#define GLOBALAI_H
+#ifndef KAIK_GLOBALAI_HDR
+#define KAIK_GLOBALAI_HDR
 
+#include <fstream>
 
-#include "Unit.h"
-#include "Include.h"
+#include "System/float3.h"
+#include "IncExternAI.h"
 
-class CGlobalAI: public IGlobalAI {
+struct AIClasses;
+
+class CKAIK: public IGlobalAI {
 	public:
-		CR_DECLARE(CGlobalAI);
+		CR_DECLARE(CKAIK);
 
-		CGlobalAI();
-		~CGlobalAI();
+		CKAIK();
+		~CKAIK();
 
 		void InitAI(IGlobalAICallback* callback, int team);
 
@@ -38,13 +41,10 @@ class CGlobalAI: public IGlobalAI {
 		void PostLoad(void);
 		void Serialize(creg::ISerializer* s);
 
-		AIClasses* GetAi();
+		AIClasses* GetAi() const { return ai; }
 
 	private:
 		AIClasses* ai;
-
-		static const unsigned int c_maxSize = 1024;
-		char c[c_maxSize];
 };
 
-#endif // GLOBALAI_H
+#endif

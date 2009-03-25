@@ -51,17 +51,20 @@
  * on the Grinning Lizard website: http://grinninglizard.com/micropather/
  */
 
-
-#include "GlobalAI.h"
-
 #ifndef GRINNINGLIZARD_MICROPATHER_INCLUDED
 #define GRINNINGLIZARD_MICROPATHER_INCLUDED
+
+#include <vector>
 
 #ifdef _DEBUG
 	#ifndef DEBUG
 		#define DEBUG
 	#endif
 #endif
+
+#define FLT_BIG (3.40282347e+38F / 2.0)
+
+struct AIClasses;
 
 /*
  * USE_LIST and USE_BINARY_HASH change the some of details the pather algorithms. They
@@ -73,8 +76,6 @@
 // #define USE_BINARY_HASH
 
 namespace NSMicroPather {
-	const float FLT_BIG = MY_FLT_MAX / 2.0f;
-
 	/*
 	 * A pure abstract class used to define a set of callbacks.
 	 * The client application inherits from 
@@ -136,7 +137,7 @@ namespace NSMicroPather {
 			}
 
 			inline void Reuse(unsigned _frame) {
-				costFromStart = FLT_BIG;
+				costFromStart = (FLT_BIG / 2.0f);
 				parent = 0;
 				frame = _frame;
 
@@ -178,7 +179,7 @@ namespace NSMicroPather {
 			}
 			#ifdef DEBUG
 			void CheckList() {
-				assert(totalCost == FLT_MAX);
+				assert(totalCost == FLT_BIG);
 
 				for (PathNode* it = next; it != this; it = it -> next) {
 					assert(it -> prev == this || it -> totalCost >= it -> prev -> totalCost);
@@ -232,7 +233,7 @@ namespace NSMicroPather {
 			 * @param totalCost	Output, the cost of the path, if found.
 			 * @return				Success or failure, expressed as SOLVED, NO_SOLUTION, or START_END_SAME.
 			 */
-			int Solve( void* startState, void* endState, std::vector<void*>* path, float* totalCost );
+			int Solve(void* startState, void* endState, std::vector<void*>* path, float* totalCost);
 
 			// Should not be called unless there is danger for frame overflow (16bit atm)
 			void Reset();
@@ -255,8 +256,8 @@ namespace NSMicroPather {
 			int xEndNode, yEndNode;
 			bool hasStartedARun;
 			void SetMapData(bool* canMoveArray, float* costArray, int mapSizeX, int mapSizeY);
-			int FindBestPathToPointOnRadius(void* startNode, void* endNode, vector<void*>* path, float* cost, int radius);
-			int FindBestPathToAnyGivenPoint(void* startNode, vector<void*> endNodes, vector<void*>* path, float* cost);
+			int FindBestPathToPointOnRadius(void* startNode, void* endNode, std::vector<void*>* path, float* cost, int radius);
+			int FindBestPathToAnyGivenPoint(void* startNode, std::vector<void*> endNodes, std::vector<void*>* path, float* cost);
 
 		private:
 			void GoalReached(PathNode* node, void* start, void* end, std::vector<void*> *path);
