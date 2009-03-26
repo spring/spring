@@ -99,6 +99,9 @@ SkirmishAIKey CSkirmishAILibraryInfo::GetKey() const {
 const std::string& CSkirmishAILibraryInfo::GetDataDir() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
 }
+const std::string& CSkirmishAILibraryInfo::GetDataDirCommon() const {
+	return GetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR_COMMON);
+}
 const std::string& CSkirmishAILibraryInfo::GetShortName() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
 }
@@ -146,6 +149,9 @@ const std::string& CSkirmishAILibraryInfo::GetInfo(const std::string& key) const
 
 void CSkirmishAILibraryInfo::SetDataDir(const std::string& dataDir) {
 	SetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR, dataDir);
+}
+void CSkirmishAILibraryInfo::SetDataDirCommon(const std::string& dataDirCommon) {
+	SetInfo(SKIRMISH_AI_PROPERTY_DATA_DIR_COMMON, dataDirCommon);
 }
 void CSkirmishAILibraryInfo::SetShortName(const std::string& shortName) {
 	SetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME, shortName);
