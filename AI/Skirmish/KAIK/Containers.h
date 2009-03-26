@@ -7,6 +7,7 @@
 
 #include "System/float3.h"
 #include "IncCREG.h"
+#include "Defines.h"
 
 struct UnitDef;
 
@@ -50,18 +51,17 @@ struct AIClasses {
 	std::vector<int>        unitIDs;
 };
 
+// NOTE: CUNIT does not know about this structure
 struct UnitType {
 	CR_DECLARE_STRUCT(UnitType);
 	void PostLoad();
 
-	// NOTE: CUNIT does not know about this structure
-	// NOTE: category used here not UnitDef::category!
 	std::vector<int> canBuildList;
 	std::vector<int> builtByList;
 	std::vector<float> DPSvsUnit;
 	std::vector<std::string> TargetCategories;
 	const UnitDef* def;
-	int category;
+	UnitCategory category;
 	bool isHub;
 	int techLevel;
 	float costMultiplier;
@@ -119,7 +119,7 @@ struct BuilderTracker {
 	// the frame an order is given, needed for lag tolerance when verifying unit command
 	int commandOrderPushFrame;
 	// TODO: this is (or will be in the future) a hint of what this builder will make
-	int categoryMaker;
+	UnitCategory categoryMaker;
 
 	// these are unused
 
@@ -138,7 +138,7 @@ struct BuildTask {
 	void PostLoad(void);
 
 	int id;
-	int category;
+	UnitCategory category;
 	// temp only, for compatibility (will be removed)
 	std::list<int> builders;
 	// the new container

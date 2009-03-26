@@ -75,14 +75,15 @@ int CUNIT::owner() const {
 
 
 float CUNIT::Health() const { return ai->cb->GetUnitHealth(myid); }
-int CUNIT::category() const { return GCAT(myid); }
+UnitCategory CUNIT::category() const { return GCAT(myid); }
 
 bool CUNIT::CanAttack(int otherUnit) const {
-	// currently doesn't see if sending me vs other is a good idea, like peewee vs bomber (not)
-	const UnitDef *ud_mine = ai->cb->GetUnitDef(this->myid);
-	const UnitDef *ud_other = ai->cheat->GetUnitDef(otherUnit);
+	// currently doesn't see if sending me vs. other
+	// is a good idea or not, like peewee vs bomber
+	const UnitDef* ud_mine = ai->cb->GetUnitDef(this->myid);
+	const UnitDef* ud_other = ai->cheat->GetUnitDef(otherUnit);
 
-	if (ud_mine && ud_other) {
+	if (ud_mine != NULL && ud_other != NULL) {
 		assert(otherUnit != 0);
 
 		// float dps = this->ai->ut->GetDPSvsUnit(ud_mine, ud_other);

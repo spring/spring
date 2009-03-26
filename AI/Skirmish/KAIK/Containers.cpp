@@ -24,7 +24,7 @@ CR_REG_METADATA(UnitType, (
 	CR_MEMBER(TargetCategories),
 	// cannot serialize this directly
 	// CR_MEMBER(def),
-	CR_MEMBER(category),
+	CR_ENUM_MEMBER(category),
 	CR_MEMBER(isHub),
 	CR_MEMBER(techLevel),
 	CR_MEMBER(costMultiplier),
@@ -48,7 +48,7 @@ CR_REG_METADATA(BuilderTracker, (
 	CR_MEMBER(stuckCount),
 	CR_MEMBER(idleStartFrame),
 	CR_MEMBER(commandOrderPushFrame),
-	CR_MEMBER(categoryMaker),
+	CR_ENUM_MEMBER(categoryMaker),
 	CR_MEMBER(estimateRealStartFrame),
 	CR_MEMBER(estimateFramesForNanoBuildActivation),
 	CR_MEMBER(estimateETAforMoveingToBuildSite),
@@ -59,7 +59,7 @@ CR_REG_METADATA(BuilderTracker, (
 CR_BIND(BuildTask, );
 CR_REG_METADATA(BuildTask, (
 	CR_MEMBER(id),
-	CR_MEMBER(category),
+	CR_ENUM_MEMBER(category),
 	CR_MEMBER(builders),
 	CR_MEMBER(builderTrackers),
 	CR_MEMBER(currentBuildPower),
