@@ -222,7 +222,7 @@ int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallb
 
 	if (className != NULL) {
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 2);
-		ret = java_initSkirmishAIClass(shortName, version, className) ? 0 : 1;
+		ret = java_initSkirmishAIClass(shortName, version, className, teamId) ? 0 : 1;
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 3);
 	}
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 4);

@@ -51,7 +51,7 @@ BEGIN {
 
 	ind_evtTopics = 0;
 	ind_evtStructs = 0;
-	insideEvtStruct = 0;
+	isInsideEvtStruct = 0;
 }
 
 

@@ -362,6 +362,7 @@ function printClass(ancestors_c, clsName_c) {
 
 	# print equals(other) method
 	if (!isClbRootCls) {
+	#{
 		print("\t" "@Override") >> outFile_c;
 		print("\t" "public boolean equals(Object otherObject) {") >> outFile_c;
 		print("") >> outFile_c;
@@ -387,20 +388,28 @@ function printClass(ancestors_c, clsName_c) {
 
 	# print hashCode() method
 	if (!isClbRootCls) {
+	#{
 		print("\t" "@Override") >> outFile_c;
 		print("\t" "public int hashCode() {") >> outFile_c;
 		print("") >> outFile_c;
-		print("\t\t" "int _res = 23;") >> outFile_c;
-		print("") >> outFile_c;
 
 		if (isClbRootCls) {
+			print("\t\t" "int _res = 0;") >> outFile_c;
+			print("") >> outFile_c;
 			print("\t\t" "_res += this.teamId * 10E8;") >> outFile_c;
 		} else {
+			print("\t\t" "int _res = 23;") >> outFile_c;
+			print("") >> outFile_c;
 			# NOTE: This could go wrong if we have more then 7 additional indices
 			# see 10E" (7-ai) below
+			# the conversion to int is nessesarry,
+			# as otherwise it would be a double,
+			# which would be higher then max int,
+			# and most hashes would end up being max int,
+			# when converted from double to int
 			for (ai=0; ai < size_addInds; ai++) {
 				addIndName = additionalClsIndices[clsId_c "#" ai];
-				print("\t\t" "_res += this.get" capitalize(addIndName) "() * 10E" (7-ai) ";") >> outFile_c;
+				print("\t\t" "_res += this.get" capitalize(addIndName) "() * (int) (10E" (7-ai) ");") >> outFile_c;
 			}
 			print("\t\t" "_res += this." myClassVar ".hashCode();") >> outFile_c;
 		}
@@ -410,11 +419,35 @@ function printClass(ancestors_c, clsName_c) {
 		print("") >> outFile_c;
 	}
 
+
+	# print toString() method
+	{
+		print("\t" "@Override") >> outFile_c;
+		print("\t" "public String toString() {") >> outFile_c;
+		print("") >> outFile_c;
+		print("\t\t" "String _res = this.getClass().toString();") >> outFile_c;
+		print("") >> outFile_c;
+
+		if (isClbRootCls) {
+			print("\t\t" "_res = _res + \"(teamId=\" + this.teamId + \", \";") >> outFile_c;
+		} else {
+			print("\t\t" "_res = _res + \"(clbHash=\" + this." myClassVar ".hashCode() + \", \";") >> outFile_c;
+			print("\t\t" "_res = _res + \"teamId=\" + this." myClassVar ".getTeamId() + \", \";") >> outFile_c;
+			for (ai=0; ai < size_addInds; ai++) {
+				addIndName = additionalClsIndices[clsId_c "#" ai];
+				print("\t\t" "_res = _res + \"" addIndName "=\" + this.get" capitalize(addIndName) "() + \", \";") >> outFile_c;
+			}
+		}
+		print("\t\t" "_res = _res + \")\";") >> outFile_c;
+		print("") >> outFile_c;
+		print("\t\t" "return _res;") >> outFile_c;
+		print("\t" "}") >> outFile_c;
+		print("") >> outFile_c;
+	}
+
+
 	# print member functions
 	size_funcs = ownerOfFunc[clsId_c "*"];
-#print("");
-#print(clsId_c);
-#print(size_funcs);
 	for (f=0; f < size_funcs; f++) {
 		fullName_c = ownerOfFunc[clsId_c "#" f];
 		printMember(outFile_c, fullName_c, size_addInds, 0);
@@ -423,11 +456,8 @@ function printClass(ancestors_c, clsName_c) {
 
 	# print member class fetchers (single, multi, multi-fetch-single)
 	size_memCls = split(ancestors_class[clsFull_c], memCls, ",");
-#if (match(clsFull_c, /Clb$/)) { print("Clb ancestors: " ancestors_class[clsFull_c]); }
-#print("printClass size_memCls: " clsFull_c " / " size_memCls);
 	for (mc=0; mc < size_memCls; mc++) {
 		memberClass_c = memCls[mc+1];
-#if (match(clsFull_c, /Clb$/)) { print("cls/mem: " clsFull_c " / " memberClass_c); }
 		printMemberClassFetchers(outFile_c, clsFull_c, clsId_c, memberClass_c, isInterface_c);
 	}
 
@@ -438,14 +468,12 @@ function printClass(ancestors_c, clsName_c) {
 
 function printMemberClassFetchers(outFile_mc, clsFull_mc, clsId_mc, memberClsName_mc, isInterface_mc) {
 
-#if (match(clsFull_mc, /Clb$/)) { print("clsFull_mc: " clsFull_mc); }
 		memberClassId_mc = clsFull_mc "-" memberClsName_mc;
 		size_multi_mc = ancestorsClass_multiSizes[memberClassId_mc "*"];
 		isMulti_mc = (size_multi_mc != "");
 		if (isMulti_mc) { # multi element fetcher(s)
 			for (mmc=0; mmc < size_multi_mc; mmc++) {
 				fullNameMultiSize_mc = ancestorsClass_multiSizes[memberClassId_mc "#" mmc];
-#print("multi mem cls: " memberClassId_mc "#" mmc " / " fullNameMultiSize_mc);
 				printMemberClassFetcher(outFile_mc, clsFull_mc, clsId_mc, memberClsName_mc, isInterface_mc, fullNameMultiSize_mc);
 			}
 		} else { # single element fetcher
