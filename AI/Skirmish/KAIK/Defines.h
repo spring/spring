@@ -5,7 +5,7 @@
 
 #define AI_VERSION_NUMBER	aiexport_getVersion()
 #define AI_NAME				std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
-#define AI_DATE				"23/03/2009"
+#define AI_DATE				"26/03/2009"
 #define AI_VERSION			AI_NAME + " (rev. " + AI_DATE + ")"
 #define AI_CREDITS			"(developed by Krogothe, Tournesol, Firenu; now maintained by Kloot)"
 
