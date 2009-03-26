@@ -30,6 +30,13 @@ extern "C" {
  */
 #define SKIRMISH_AI_PROPERTY_DATA_DIR                "dataDir"
 /**
+ * [string]
+ * Absolute, version independent data dir.
+ * This property is set by the engine, not read from any file.
+ * example: "/home/john/spring/AI/Skirmish/RAI/common"
+ */
+#define SKIRMISH_AI_PROPERTY_DATA_DIR_COMMON         "dataDirCommon"
+/**
  * [string: [a-zA-Z0-9_.]*]
  * example: "RAI"
  */
