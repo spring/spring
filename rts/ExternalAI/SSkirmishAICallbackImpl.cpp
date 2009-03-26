@@ -547,25 +547,25 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 }
 
 
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getMajor(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getMajor(int teamId) {
 	return SpringVersion::Major;
 }
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getMinor(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getMinor(int teamId) {
 	return SpringVersion::Minor;
 }
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getPatchset(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getPatchset(int teamId) {
 	return SpringVersion::Patchset;
 }
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getAdditional(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getAdditional(int teamId) {
 	return SpringVersion::Additional;
 }
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getBuildTime(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getBuildTime(int teamId) {
 	return SpringVersion::BuildTime;
 }
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getNormal(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getNormal(int teamId) {
 	return SpringVersion::Get().c_str();
 }
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getFull(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Engine_Version_getFull(int teamId) {
 	return SpringVersion::GetFull().c_str();
 }
 
@@ -598,22 +598,22 @@ EXPORT(int) skirmishAiCallback_SkirmishAI_Info_getSize(int teamId) {
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	return (int)info->size();
 }
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getKey(int teamId, int infoIndex) {
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getKey(int teamId, int infoIndex) {
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	return info->GetKeyAt(infoIndex).c_str();
 }
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getValue(int teamId, int infoIndex) {
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getValue(int teamId, int infoIndex) {
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	return info->GetValueAt(infoIndex).c_str();
 }
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getDescription(int teamId, int infoIndex) {
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getDescription(int teamId, int infoIndex) {
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	return info->GetDescriptionAt(infoIndex).c_str();
 }
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getValueByKey(int teamId, const char* const key) {
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getValueByKey(int teamId, const char* const key) {
 
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	return info->GetInfo(key).c_str();
@@ -628,7 +628,7 @@ EXPORT(int) skirmishAiCallback_SkirmishAI_OptionValues_getSize(int teamId) {
 	const std::map<std::string, std::string>& options = libMan->GetSkirmishAIOptionValues(teamId);
 	return (int)options.size();
 }
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int teamId, int optionIndex) {
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int teamId, int optionIndex) {
 
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 	const std::vector<std::string>& optionKeys = libMan->GetSkirmishAIOptionValueKeys(teamId);
@@ -639,7 +639,7 @@ EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int 
 		return key.c_str();
 	}
 }
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int teamId, int optionIndex) {
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int teamId, int optionIndex) {
 
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 	const std::vector<std::string>& optionKeys = libMan->GetSkirmishAIOptionValueKeys(teamId);
@@ -656,7 +656,7 @@ EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getValue(in
 		}
 	}
 }
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int teamId, const char* const key) {
+EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int teamId, const char* const key) {
 
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 	const std::map<std::string, std::string>& options = libMan->GetSkirmishAIOptionValues(teamId);
@@ -704,7 +704,7 @@ EXPORT(bool) skirmishAiCallback_DataDirs_Roots_locatePath(int UNUSED_teamId, cha
 EXPORT(char*) skirmishAiCallback_DataDirs_Roots_allocatePath(int UNUSED_teamId, const char* const relPath, bool writeable, bool create, bool dir) {
 	return aiInterfaceCallback_DataDirs_Roots_allocatePath(-1, relPath, writeable, create, dir);
 }
-EXPORT(const char* const) skirmishAiCallback_DataDirs_getConfigDir(int teamId) {
+EXPORT(const char*) skirmishAiCallback_DataDirs_getConfigDir(int teamId) {
 
 	checkTeamId(teamId);
 
@@ -739,7 +739,7 @@ EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* c
 	return path;
 }
 static std::vector<std::string> writeableDataDirs;
-EXPORT(const char* const) skirmishAiCallback_DataDirs_getWriteableDir(int teamId) {
+EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int teamId) {
 
 	checkTeamId(teamId);
 
@@ -964,23 +964,23 @@ EXPORT(SAIFloat3) skirmishAiCallback_Gui_Camera_getPosition(int teamId) {
 
 //########### BEGINN Mod
 
-EXPORT(const char* const) skirmishAiCallback_Mod_getFileName(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Mod_getFileName(int teamId) {
 	return modInfo.filename.c_str();
 }
 
-EXPORT(const char* const) skirmishAiCallback_Mod_getHumanName(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Mod_getHumanName(int teamId) {
 	return modInfo.humanName.c_str();
 }
-EXPORT(const char* const) skirmishAiCallback_Mod_getShortName(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Mod_getShortName(int teamId) {
 	return modInfo.shortName.c_str();
 }
-EXPORT(const char* const) skirmishAiCallback_Mod_getVersion(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Mod_getVersion(int teamId) {
 	return modInfo.version.c_str();
 }
-EXPORT(const char* const) skirmishAiCallback_Mod_getMutator(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Mod_getMutator(int teamId) {
 	return modInfo.mutator.c_str();
 }
-EXPORT(const char* const) skirmishAiCallback_Mod_getDescription(int teamId) {
+EXPORT(const char*) skirmishAiCallback_Mod_getDescription(int teamId) {
 	return modInfo.description.c_str();
 }
 
