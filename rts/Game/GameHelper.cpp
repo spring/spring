@@ -469,7 +469,7 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 	float radius = weapon->range;
 	float3 pos = attacker->pos;
 	float heightMod = weapon->heightMod;
-	float aHeight = pos.y;
+	float aHeight = weapon->weaponPos.y;
 	// how much damage the weapon deals over 1 second
 	float secDamage = weapon->weaponDef->damages[0] * weapon->salvoSize / weapon->reloadTime * 30;
 	bool paralyzer = !!weapon->weaponDef->damages.paralyzeDamageTime;
