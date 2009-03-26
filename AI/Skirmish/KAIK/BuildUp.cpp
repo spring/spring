@@ -131,7 +131,7 @@ void CBuildUp::GetEconState(EconState* es) const {
 	// everybody (assuming we can build them at all in current mod)
 	// TODO: use actual metal and energy drain of nuke weapon here
 	es->buildNukeSilo =
-		ai->ut->sideData[ai->ut->GetSide()].nukeSilos.size() > 0 &&
+		ai->ut->sideData[ai->ut->GetSide()].CanBuild(CAT_NUKE_SILO) &&
 		es->mIncome > 100.0f && es->eIncome > 6000.0f &&
 		es->mUsage < es->mIncome && es->eUsage < es->eIncome &&
 		ai->uh->NukeSilos.size() < MAX_NUKE_SILOS;
@@ -144,13 +144,17 @@ void CBuildUp::GetEconState(EconState* es) const {
 
 	// these are static; the number of building
 	// _types_ in the unit-table never changes
-	es->canBuildEStores = (ai->ut->sideData[ai->ut->GetSide()].energyStorages.size() > 0);
-	es->canBuildMMakers = (ai->ut->sideData[ai->ut->GetSide()].metalMakers.size() > 0);
-	es->canBuildMStores = (ai->ut->sideData[ai->ut->GetSide()].metalStorages.size() > 0);
+	es->canBuildEStores = (ai->ut->sideData[ai->ut->GetSide()].CanBuild(CAT_ENERGY_STORAGE));
+	es->canBuildMMakers = (ai->ut->sideData[ai->ut->GetSide()].CanBuild(CAT_METAL_MAKER));
+	es->canBuildMStores = (ai->ut->sideData[ai->ut->GetSide()].CanBuild(CAT_METAL_STORAGE));
 }
 
 BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
-	if (es->numM < 3 || es->numE < 3 || es->numFactories < 1) {
+	if (
+		(es->numM < 3 && es->numE <= 3) ||
+		(es->numE < 3 && es->numM <= 3) ||
+		(es->numFactories < 1)
+	) {
 		return BUILD_INIT;
 	}
 
@@ -162,16 +166,16 @@ BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
 		return BUILD_M_STALL;
 	}
 
-	if (
-		es->eIncome > 2000.0f && es->eUsage < (es->eIncome - 1000.0f) &&
-		(es->mStall && es->mLevel < 100.0f) && es->canBuildMMakers) {
-		return BUILD_E_EXCESS;
-	}
-
 	if (es->eStall || !es->factFeasE) {
 		return BUILD_E_STALL;
 	}
 
+	if (
+		es->eIncome > 2000.0f && es->eUsage < (es->eIncome - 1000.0f) &&
+		es->mStall && es->mLevel < 100.0f && es->canBuildMMakers
+	) {
+		return BUILD_E_EXCESS;
+	}
 	/*
 	// if we never build defenses, this will always be true
 	if (es->numFactories > (es->numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
@@ -212,10 +216,7 @@ void CBuildUp::Buildup(int frame) {
 						}
 
 						if (ai->uh->FactoryBuilderAdd(econState.builderID)) {
-							// add commander to factory so it doesn't wander around too much (works best if
-							// AI given bonus, otherwise initial expansion still mostly done by commander)
-							// note: 5 minutes should be enough to get the resource income needed for this,
-							// don't use hardcoded metal- and energy-values
+							// add commander to factory so it doesn't wander
 							builderTimer = 0;
 						}
 					}
@@ -264,14 +265,14 @@ void CBuildUp::Buildup(int frame) {
 					}
 				} break;
 
+				case BUILD_E_STALL: {
+					BuildUpgradeReactor(econState.builderID);
+				} break;
+
 				case BUILD_E_EXCESS: {
 					if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MMAKER)) {
 						BuildNow(econState.builderID, CAT_MMAKER, NULL);
 					}
-				} break;
-
-				case BUILD_E_STALL: {
-					BuildUpgradeReactor(econState.builderID);
 				} break;
 
 				case BUILD_DEFENSE: {

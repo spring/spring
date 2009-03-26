@@ -32,7 +32,7 @@ struct SideData {
 	// maps UnitCategory to UnitDefCategory
 	std::vector<int>& GetDefsForUnitCat(UnitCategory c) {
 		switch (c) {
-			case CAT_COMM: { return groundFactories; } break;
+			case CAT_COMM: { return groundFactories; } break; // ??
 			case CAT_ENERGY: { return groundEnergy; } break;
 			case CAT_MEX: { return metalExtractors; } break;
 			case CAT_MMAKER: { return metalMakers; } break;

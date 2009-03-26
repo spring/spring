@@ -658,10 +658,11 @@ void CUnitHandler::BuildTaskCreate(int id) {
 		BuildTask bt;
 		bt.id = -1;
 
-		redo:
-		for (std::list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
-			if (pos.distance2D(i->pos) < 1 && newUnitDef == i->def){
-				assert(bt.id == -1); // There can not be more than one TaskPlan that is found;
+		std::list<TaskPlan>::iterator i;
+		for (i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
+			if (pos.distance2D(i->pos) < 1.0f && newUnitDef == i->def) {
+				 // there can not be more than one found TaskPlan
+				assert(bt.id == -1);
 
 				bt.category = category;
 				bt.id       = id;
@@ -679,7 +680,7 @@ void CUnitHandler::BuildTaskCreate(int id) {
 					BuildTaskAddBuilder(&bt, *builder);
 				}
 
-				goto redo;
+				i = TaskPlans[category].begin();
 			}
 		}
 
@@ -701,57 +702,56 @@ void CUnitHandler::BuildTaskCreate(int id) {
 			bt.pos = pos;
 			bt.def = newUnitDef;
 
-			if (BuilderTrackers.size() == 0) {
-				// no friendly builders found
-			} else {
-				// iterate over the list and find the builders
-				for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
-					BuilderTracker* builderTracker = *i;
+			// if we have any friendly builders
+			for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
+				BuilderTracker* builderTracker = *i;
 
-					// check what builder is doing
-					const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
+				// check what builder is doing
+				const CCommandQueue* cq = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
 
-					if (mycommands->size() > 0) {
-						Command c = mycommands->front();
+				if (!cq->empty()) {
+					Command c = cq->front();
 
-						if ((c.id == -newUnitDef->id && c.params[0] == pos.x && c.params[2] == pos.z) // at this pos
-							|| (c.id == CMD_REPAIR  && c.params[0] == id)  // at this unit (id)
-							|| (c.id == CMD_GUARD  && c.params[0] == id)) // at this unit (id)
-						{
-							if (builderTracker->buildTaskId != 0) {
-								BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
+					const bool b0 = (c.id == -newUnitDef->id && c.params[0] == pos.x && c.params[2] == pos.z); // at this pos
+					const bool b1 = (c.id == CMD_REPAIR && c.params[0] == id); // at this unit (id)
+					const bool b2 = (c.id == CMD_GUARD  && c.params[0] == id); // at this unit (id)
+					const bool b3 = b0 || b1 || b2;
 
-								if (buildTask->builderTrackers.size() > 1) {
-									BuildTaskRemove(builderTracker);
-								} else {
-									// only builder of this thing, and now idle
-									BuildTaskRemove(builderTracker);
-								}
+					if (b3) {
+						if (builderTracker->buildTaskId != 0) {
+							BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
+
+							if (buildTask->builderTrackers.size() > 1) {
+								BuildTaskRemove(builderTracker);
+							} else {
+								// only builder of this thing, and now idle
+								BuildTaskRemove(builderTracker);
 							}
-
-							if (builderTracker->taskPlanId != 0) {
-								GetTaskPlan(builderTracker->taskPlanId);
-								TaskPlanRemove(builderTracker);
-							}
-							if (builderTracker->factoryId != 0) {
-								FactoryBuilderRemove(builderTracker);
-							}
-							if (builderTracker->customOrderId != 0) {
-								builderTracker->customOrderId = 0;
-							}
-
-							// this builder is now free
-							if (builderTracker->idleStartFrame == -2)
-								IdleUnitRemove(builderTracker->builderID);
-
-							// add it to this task
-							BuildTaskAddBuilder(&bt, builderTracker);
-
-							msg.str("");
-								msg << "\tadded builder " << builderTracker->builderID << " to";
-								msg << " build-task with ID " << builderTracker->buildTaskId << "\n";
-							L(ai, msg.str());
 						}
+
+						if (builderTracker->taskPlanId != 0) {
+							GetTaskPlan(builderTracker->taskPlanId);
+							TaskPlanRemove(builderTracker);
+						}
+						if (builderTracker->factoryId != 0) {
+							FactoryBuilderRemove(builderTracker);
+						}
+						if (builderTracker->customOrderId != 0) {
+							builderTracker->customOrderId = 0;
+						}
+
+						// this builder is now free
+						if (builderTracker->idleStartFrame == -2) {
+							IdleUnitRemove(builderTracker->builderID);
+						}
+
+						// add it to this task
+						BuildTaskAddBuilder(&bt, builderTracker);
+
+						msg.str("");
+							msg << "\tadded builder " << builderTracker->builderID << " to";
+							msg << " build-task with ID " << builderTracker->buildTaskId << "\n";
+						L(ai, msg.str());
 					}
 				}
 			}
@@ -919,18 +919,16 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 
 	CUNIT* u = ai->MyUnits[builderID];
 	BuilderTracker* builderTracker = GetBuilderTracker(builderID);
+	const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
 	const int frame = ai->cb->GetCurrentFrame();
 
 	// make sure this builder is free
-	// KLOOTNOTE: no longer use assertions
-	// since new code for extractor upgrading
-	// (in CBuildUp) seems to trigger them?
-	bool b1 = (builderTracker->taskPlanId == 0);
-	bool b2 = (builderTracker->buildTaskId == 0);
-	bool b3 = (builderTracker->factoryId == 0);
-	bool b4 = (builderTracker->customOrderId == 0);
-	bool b5 = (u->def())->canAssist;
-	bool b6 = (category == CAT_FACTORY && frame >= 18000);
+	const bool b1 = (builderTracker->taskPlanId == 0);
+	const bool b2 = (builderTracker->buildTaskId == 0);
+	const bool b3 = (builderTracker->factoryId == 0);
+	const bool b4 = (builderTracker->customOrderId == 0);
+	const bool b5 = builderDef->canAssist;
+	const bool b6 = (category == CAT_FACTORY && frame >= 18000);
 
 	if (!b1 || !b2 || !b3 || !b4 || !b5) {
 		if (b6) {
@@ -941,7 +939,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 
 			std::stringstream msg;
 				msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
-				msg << "\tbuilder " << builderID << "\tnot able to be added to CAT_FACTORY build-task\n";
+				msg << "\tbuilder " << builderID << "not able to be added to CAT_FACTORY build-task\n";
 				msg << "\tb1: " << b1 << ", b2: " << b2 << ", b3: " << b3;
 				msg << ", b4: " << b4 << ", b5: " << b5 << ", b6: " << b6;
 			L(ai, msg.str());
@@ -982,7 +980,6 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 
 			// must test if this builder can make this unit/building too
 			if (buildTime > largestTime) {
-				const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
 				const std::vector<int>* canBuildList = &ai->ut->unitTypes[builderDef->id].canBuildList;
 				const int buildListSize = canBuildList->size();
 
@@ -1002,6 +999,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 			// bad, CUNIT::Build() uses TaskPlanCreate()
 			// should we really give build orders here?
 			// return u->Build(bestPlan->pos, bestPlan->def, -1);
+			// TaskPlanCreate(builderID, bestPlan->pos, bestPlan->def);
 			return true;
 		}
 	}
@@ -1009,7 +1007,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 	if (b6) {
 		std::stringstream msg;
 			msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
-			msg << "\tno joinable build-tasks or task-plans for builder " << builderID;
+			msg << "\tno joinable CAT_FACTORY build-tasks or task-plans for builder " << builderID;
 		L(ai, msg.str());
 	}
 
