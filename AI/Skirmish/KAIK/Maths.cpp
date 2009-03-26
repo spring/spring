@@ -1,3 +1,5 @@
+#include <ctime>
+
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 
