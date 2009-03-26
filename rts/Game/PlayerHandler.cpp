@@ -12,7 +12,6 @@ CR_BIND(CPlayerHandler,);
 
 CR_REG_METADATA(CPlayerHandler, (
 	CR_MEMBER(players),
-	CR_MEMBER(activePlayers),
 	CR_RESERVED(64)
 ));
 
@@ -22,7 +21,6 @@ CPlayerHandler* playerHandler;
 
 CPlayerHandler::CPlayerHandler()
 {
-	activePlayers = 0;
 }
 
 
@@ -33,10 +31,9 @@ CPlayerHandler::~CPlayerHandler()
 
 void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 {
-	activePlayers = setup->numPlayers;
 	players.resize(setup->numPlayers);
 
-	for (int i = 0; i < activePlayers; ++i)
+	for (int i = 0; i < setup->numPlayers; ++i)
 	{
 		players[i] = setup->playerStartingData[i];
 		players[i].playerNum = i;

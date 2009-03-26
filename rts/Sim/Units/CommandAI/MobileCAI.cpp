@@ -9,7 +9,6 @@
 #include "Game/SelectedUnits.h"
 #include "Game/UI/CommandColors.h"
 #include "Map/Ground.h"
-#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/TeamHandler.h"

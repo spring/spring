@@ -1,6 +1,5 @@
-#ifndef MTRAND_H
-#define MTRAND_H
-
+#ifndef KAIK_MTRAND_HDR
+#define KAIK_MTRAND_HDR
 
 // Mersenne Twister random number generator
 class MTRand_int32 {

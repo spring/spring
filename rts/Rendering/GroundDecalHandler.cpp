@@ -12,7 +12,6 @@
 #include "Map/ReadMap.h"
 #include "ConfigHandler.h"
 #include "ShadowHandler.h"
-#include "GL/myGL.h"
 #include "GL/VertexArray.h"
 #include "Textures/Bitmap.h"
 #include "Sim/Units/Unit.h"

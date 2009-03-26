@@ -1,16 +1,17 @@
-#ifndef ECONOMYTRACKER_H
-#define ECONOMYTRACKER_H
+#ifndef KAIK_ECONOMYTRACKER_HDR
+#define KAIK_ECONOMYTRACKER_HDR
 
-#include "GlobalAI.h"
+#include <list>
+#include <vector>
+#include "Defines.h"
 
-using std::vector;
 struct EconomyUnitTracker;
 
 struct BuildingTracker {
 	CR_DECLARE_STRUCT(BuildingTracker);
 
 	int unitUnderConstruction;
-	int category;
+	UnitCategory category;
 	float hpLastFrame;
 	float damage;								// track the damage to get the right ETA
 	float hpSomeTimeAgo;						// for nano-stalling support
@@ -28,7 +29,7 @@ struct BuildingTracker {
 
 	void clear(void) {
 		unitUnderConstruction		= 0;
-		category					= 0;
+		category					= CAT_COMM;
 		hpLastFrame					= 0;
 		damage						= 0;		// track the damage to get the right ETA
 		hpSomeTimeAgo				= 0;		// for nano-stalling support
@@ -45,61 +46,7 @@ struct BuildingTracker {
 	}
 };
 
-struct EconomyUnitTracker {
-	CR_DECLARE_STRUCT(EconomyUnitTracker);
-	void PostLoad();
-
-	int economyUnitId;							// Only economyUnitId and createFrame gives a correct ID
-	int createFrame;							// If the unit is under construction, this is the globally made ETA
-	BuildingTracker* buildingTracker;			// pointer to the BuildingTracker for this unit (if not done), MUST be updated before use
-	bool alive;
-	const UnitDef* unitDef;						// We will lose the unit id later on
-	int dieFrame;
-	int category;
-	float totalEnergyMake;						// total lifetime sum
-	float totalMetalMake;						// total lifetime sum
-	float totalEnergyUsage;						// total lifetime sum
-	float totalMetalUsage;						// total lifetime sum
-	float lastUpdateEnergyMake;					// last 16 frame sum
-	float lastUpdateMetalMake;					// last 16 frame sum
-	float lastUpdateEnergyUsage;				// last 16 frame sum
-	float lastUpdateMetalUsage;					// last 16 frame sum
-	bool dynamicChangingUsage;					// for windmills and units with guns
-	bool nonEconomicUnit;						// for units that is to be ignored by the economy planner (?)
-	float estimateEnergyChangeFromDefWhileOn;	// sum change from unitDef*
-	float estimateMetalChangeFromDefWhileOn;	// sum change from unitDef*
-	float estimateEnergyChangeFromDefWhileOff;	// sum change from unitDef*
-	float estimateMetalChangeFromDefWhileOff;	// sum change from unitDef*
-
-	void clear(void) {
-		economyUnitId = 0;
-		createFrame = 0;
-		// BuildingTracker* buildingTracker;
-		alive = false;
-		unitDef = 0;
-		dieFrame = 0;
-		category = 0;
-		totalEnergyMake = 0;
-		totalMetalMake = 0;
-		totalEnergyUsage = 0;
-		totalMetalUsage = 0;
-		lastUpdateEnergyMake = 0;
-		lastUpdateMetalMake = 0;
-		lastUpdateEnergyUsage = 0;
-		lastUpdateMetalUsage = 0;
-		dynamicChangingUsage = false;
-		estimateEnergyChangeFromDefWhileOn = 0;
-		estimateMetalChangeFromDefWhileOn = 0;
-		estimateEnergyChangeFromDefWhileOff = 0;
-		estimateMetalChangeFromDefWhileOff = 0;
-	}
-	
-};
-
-/*
-Intended to contain units under construction only.
-High speed loop version (late design)
-*/
+// Intended to contain units under construction only.
 struct UnitStateRequirement {
 	/*
 	If this is the "current" frame, then its what this unit will do with the economy the next 16 frames.
@@ -163,6 +110,55 @@ struct BuilderETAdata {
 	float distanceToSiteBeforeItCanStartBuilding;	// def->buildDistance or something.
 };
 
+struct EconomyUnitTracker {
+	CR_DECLARE_STRUCT(EconomyUnitTracker);
+	void PostLoad();
+
+	int economyUnitId;							// Only economyUnitId and createFrame gives a correct ID
+	int createFrame;							// If the unit is under construction, this is the globally made ETA
+	BuildingTracker* buildingTracker;			// pointer to the BuildingTracker for this unit (if not done), MUST be updated before use
+	bool alive;
+	const UnitDef* unitDef;						// We will lose the unit id later on
+	int dieFrame;
+	UnitCategory category;
+	float totalEnergyMake;						// total lifetime sum
+	float totalMetalMake;						// total lifetime sum
+	float totalEnergyUsage;						// total lifetime sum
+	float totalMetalUsage;						// total lifetime sum
+	float lastUpdateEnergyMake;					// last 16 frame sum
+	float lastUpdateMetalMake;					// last 16 frame sum
+	float lastUpdateEnergyUsage;				// last 16 frame sum
+	float lastUpdateMetalUsage;					// last 16 frame sum
+	bool dynamicChangingUsage;					// for windmills and units with guns
+	bool nonEconomicUnit;						// for units that is to be ignored by the economy planner (?)
+	float estimateEnergyChangeFromDefWhileOn;	// sum change from unitDef*
+	float estimateMetalChangeFromDefWhileOn;	// sum change from unitDef*
+	float estimateEnergyChangeFromDefWhileOff;	// sum change from unitDef*
+	float estimateMetalChangeFromDefWhileOff;	// sum change from unitDef*
+
+	void clear(void) {
+		economyUnitId = 0;
+		createFrame = 0;
+		// BuildingTracker* buildingTracker;
+		alive = false;
+		unitDef = 0;
+		dieFrame = 0;
+		category = CAT_COMM;
+		totalEnergyMake = 0;
+		totalMetalMake = 0;
+		totalEnergyUsage = 0;
+		totalMetalUsage = 0;
+		lastUpdateEnergyMake = 0;
+		lastUpdateMetalMake = 0;
+		lastUpdateEnergyUsage = 0;
+		lastUpdateMetalUsage = 0;
+		dynamicChangingUsage = false;
+		estimateEnergyChangeFromDefWhileOn = 0;
+		estimateMetalChangeFromDefWhileOn = 0;
+		estimateEnergyChangeFromDefWhileOff = 0;
+		estimateMetalChangeFromDefWhileOff = 0;
+	}
+};
 
 /*
 This is a planed building. Its either a metal or energy making building (or unit).
@@ -184,11 +180,11 @@ class CEconomyTracker {
 		void UnitDamaged(int unit, float damage);
 
 	private:
-		vector<list<BuildingTracker> > allTheBuildingTrackers;
-		list<EconomyUnitTracker*> deadEconomyUnitTrackers;
-		list<EconomyUnitTracker*> newEconomyUnitTrackers;
-		list<EconomyUnitTracker*> activeEconomyUnitTrackers;
-		list<EconomyUnitTracker*> underConstructionEconomyUnitTrackers;
+		std::vector<std::list<BuildingTracker> > allTheBuildingTrackers;
+		std::list<EconomyUnitTracker*> deadEconomyUnitTrackers;
+		std::list<EconomyUnitTracker*> newEconomyUnitTrackers;
+		std::list<EconomyUnitTracker*> activeEconomyUnitTrackers;
+		std::list<EconomyUnitTracker*> underConstructionEconomyUnitTrackers;
 
 		AIClasses* ai;
 		void updateUnitUnderConstruction(BuildingTracker* bt);

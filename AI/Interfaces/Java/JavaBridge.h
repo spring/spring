@@ -91,24 +91,28 @@ bool java_releaseStatic();
 /**
  * Instantiates an instance of the specified className.
  *
- * @param	className	fully qualified name of a Java class that implements
- *						interface com.clan_sy.spring.ai.AI, eg:
- *						"com.myai.AI"
- * @param	aiInstance	where the AI instance will be stored
- * @param	methods		where the method IDs of the AI will be stored
+ * @param  shortName  further specifies the the AI to load
+ * @param  version  further specifies the the AI to load
+ * @param  className  fully qualified name of a Java class that implements
+ *                    interface com.clan_sy.spring.ai.AI, eg:
+ *                    "com.myai.AI"
+ * @param  teamI   The team that will be using this AI.
+ *                 Multiple teams may use the same AI implementation.
+ * @return  true, if the AI implementation is now loaded
  */
 bool java_initSkirmishAIClass(
 		const char* const shortName,
 		const char* const version,
-		const char* const className);
+		const char* const className,
+		int teamId);
 /**
- * Release an instance of the specified className.
+ * Release the loaded AI specified through a class name.
  *
- * @param	className	fully qualified name of a Java clas that implements
- *						interface com.clan_sy.spring.ai.AI, eg:
- *						"com.myai.AI"
- * @param	aiInstance	where the AI instance will be stored
- * @param	methods		where the method IDs of the AI will be stored
+ * @param  className  fully qualified name of a Java class that implements
+ *                    interface com.clan_sy.spring.ai.AI, eg:
+ *                    "com.myai.AI"
+ * @return  true, if the AI implementation was loaded and is now
+ *          successfully unloaded
  */
 bool java_releaseSkirmishAIClass(const char* className);
 bool java_releaseAllSkirmishAIClasses();

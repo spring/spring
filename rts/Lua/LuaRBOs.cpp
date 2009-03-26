@@ -13,7 +13,6 @@
 #include "LuaHashString.h"
 #include "LuaUtils.h"
 
-#include "Rendering/GL/myGL.h"
 #include "LogOutput.h"
 
 

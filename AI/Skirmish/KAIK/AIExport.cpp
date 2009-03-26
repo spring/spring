@@ -18,19 +18,18 @@
 	@author Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#include "AIExport.h"
+#include <map>
 
 // AI interface stuff
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "ExternalAI/Interface/SSkirmishAICallback.h"
-#include "LegacyCpp/AIGlobalAI.h"
+#include "../Wrappers/LegacyCpp/AIGlobalAI.h"
+#include "../Wrappers/CUtils/Util.h"
 #include "Game/GameVersion.h"
-#include "CUtils/Util.h"
 
 // KAIK stuff
-#include "GlobalAI.h"
-
-#include <map>
+#include "AIExport.h"
+#include "KAIK.h"
 
 // teamId -> AI map
 static std::map<int, CAIGlobalAI*> myAIs;
@@ -58,7 +57,6 @@ EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
 }
 
 EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
-
 	if (myAIs.count(teamId) > 0) {
 		// the map already has an AI for this team.
 		// raise an error, since it's probably a mistake if we're trying
@@ -70,17 +68,17 @@ EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
 		firstTeamId = teamId;
 		firstCallback = callback;
 	}
+
 	teamId_callback[teamId] = callback;
 
-	// CAIGlobalAI is the Legacy C++ wrapper, CGlobalAI is KAIK
-	myAIs[teamId] = new CAIGlobalAI(teamId, new CGlobalAI());
+	// CAIGlobalAI is the Legacy C++ wrapper
+	myAIs[teamId] = new CAIGlobalAI(teamId, new CKAIK());
 
 	// signal: everything went ok
 	return 0;
 }
 
 EXPORT(int) release(int teamId) {
-
 	if (myAIs.count(teamId) == 0) {
 		// the map has no AI for this team.
 		// raise an error, since it's probably a mistake if we're trying to
@@ -97,7 +95,6 @@ EXPORT(int) release(int teamId) {
 }
 
 EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
-
 	if (teamId < 0) {
 		// events sent to team -1 will always be to the AI object itself,
 		// not to a particular team.
@@ -114,26 +111,17 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 // methods from here on are for AI internal use only
 
 const char* aiexport_getDataDir(bool absoluteAndWriteable) {
-
 	static char* dd_ws_rel = NULL;
 	static char* dd_ws_abs_w = NULL;
 
 	if (absoluteAndWriteable) {
 		if (dd_ws_abs_w == NULL) {
 			// this is the writeable one, absolute
-			//dd_ws_abs_w = firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_DATA_DIR);
 			dd_ws_abs_w = util_allocStrCpy(firstCallback->Clb_DataDirs_getWriteableDir(firstTeamId));
-// 			const char* dd = util_getMyInfo(SKIRMISH_AI_PROPERTY_DATA_DIR);
-// 			dd_ws_abs_w = (char*) calloc(strlen(dd) + 1 + 1, sizeof(char));
-// 			STRCPY(dd_ws_abs_w, dd);
-// 			STRCAT(dd_ws_abs_w, sPS);
 		}
 		return dd_ws_abs_w;
 	} else {
 		if (dd_ws_rel == NULL) {
-// 			const char* const shortName = firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
-// 			dd_ws_rel = util_allocStrCatFSPath(4,
-// 					SKIRMISH_AI_DATA_DIR, shortName, aiexport_getVersion(), "X");
 			dd_ws_rel = util_allocStrCpy(firstCallback->Clb_DataDirs_getConfigDir(firstTeamId));
 			// remove the X, so we end up with a slash at the end
 			if (dd_ws_rel != NULL) {

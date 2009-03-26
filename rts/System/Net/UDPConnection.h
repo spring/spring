@@ -4,6 +4,8 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+using boost::posix_time::ptime;
 #include <deque>
 #include <list>
 
@@ -77,8 +79,8 @@ public:
 private:
 	void Init();
 	
-	unsigned lastSendTime;
-	unsigned lastReceiveTime;
+	ptime lastSendTime;
+	ptime lastReceiveTime;
 	
 	typedef boost::ptr_map<int,RawPacket> packetMap;
 	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
@@ -106,7 +108,7 @@ private:
 	packetMap waitingPackets;
 	int lastInOrder;
 	int lastNak;
-	unsigned lastNakTime;
+	ptime lastNakTime;
 	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
 
 	/** Our socket.

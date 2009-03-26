@@ -41,6 +41,7 @@ public:
 	virtual AIInterfaceKey GetKey() const;
 
 	virtual const std::string& GetDataDir() const;
+	virtual const std::string& GetDataDirCommon() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
 	virtual const std::string& GetShortName() const;
 	/** Restrictions: none of the following: spaces, '_', '#' */
@@ -51,6 +52,7 @@ public:
 	virtual const std::string& GetInfo(const std::string& key) const;
 
 	virtual void SetDataDir(const std::string& dataDir);
+	virtual void SetDataDirCommon(const std::string& dataDirCommon);
 	/** Restrictions: none of the following: spaces, '_', '#' */
 	virtual void SetShortName(const std::string& shortName);
 	/** Restrictions: none of the following: spaces, '_', '#' */

@@ -30,12 +30,11 @@
 #include "Interface/SAIFloat3.h"           // for ABI version
 #include "Interface/AISEvents.h"           // for ABI version
 #include "Interface/AISCommands.h"         // for ABI version
-#include "Interface/SSkirmishAILibrary.h"         // for ABI version
+#include "Interface/SSkirmishAILibrary.h"  // for ABI version
 #include "Interface/SAIInterfaceLibrary.h" // for ABI version and AI_INTERFACE_PROPERTY_*
 
 #include <vector>
 #include <stdlib.h> // malloc(), calloc(), free()
-
 
 static std::vector<const CAIInterfaceLibraryInfo*> infos;
 
@@ -58,25 +57,25 @@ EXPORT(int) aiInterfaceCallback_Engine_AIInterface_ABIVersion_getWarningPart(int
 	return AIINTERFACE_ABI_VERSION_WARNING;
 }
 
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getMajor(int UNUSED_interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getMajor(int UNUSED_interfaceId) {
 	return SpringVersion::Major;
 }
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getMinor(int UNUSED_interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getMinor(int UNUSED_interfaceId) {
 	return SpringVersion::Minor;
 }
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getPatchset(int UNUSED_interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getPatchset(int UNUSED_interfaceId) {
 	return SpringVersion::Patchset;
 }
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_interfaceId) {
 	return SpringVersion::Additional;
 }
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId) {
 	return SpringVersion::BuildTime;
 }
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getNormal(int UNUSED_interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getNormal(int UNUSED_interfaceId) {
 	return SpringVersion::Get().c_str();
 }
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getFull(int UNUSED_interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_Engine_Version_getFull(int UNUSED_interfaceId) {
 	return SpringVersion::GetFull().c_str();
 }
 
@@ -90,28 +89,28 @@ EXPORT(int) aiInterfaceCallback_AIInterface_Info_getSize(int interfaceId) {
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return (int)info->size();
 }
-EXPORT(const char* const) aiInterfaceCallback_AIInterface_Info_getKey(int interfaceId, int infoIndex) {
+EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getKey(int interfaceId, int infoIndex) {
 
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return info->GetKeyAt(infoIndex).c_str();
 }
-EXPORT(const char* const) aiInterfaceCallback_AIInterface_Info_getValue(int interfaceId, int infoIndex) {
+EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getValue(int interfaceId, int infoIndex) {
 
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return info->GetValueAt(infoIndex).c_str();
 }
-EXPORT(const char* const) aiInterfaceCallback_AIInterface_Info_getDescription(int interfaceId, int infoIndex) {
+EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getDescription(int interfaceId, int infoIndex) {
 
 	CHECK_INTERFACE_ID(interfaceId);
 
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return info->GetDescriptionAt(infoIndex).c_str();
 }
-EXPORT(const char* const) aiInterfaceCallback_AIInterface_Info_getValueByKey(int interfaceId, const char* const key) {
+EXPORT(const char*) aiInterfaceCallback_AIInterface_Info_getValueByKey(int interfaceId, const char* const key) {
 
 	CHECK_INTERFACE_ID(interfaceId);
 
@@ -129,7 +128,7 @@ EXPORT(int) aiInterfaceCallback_SkirmishAIs_getSize(int UNUSED_interfaceId) {
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getMax(int UNUSED_interfaceId) {
 	return MAX_TEAMS;
 }
-EXPORT(const char* const) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key) {
+EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key) {
 
 	const char* value = NULL;
 
@@ -170,7 +169,6 @@ EXPORT(void) aiInterfaceCallback_Log_exception(int interfaceId, const char* cons
 // 		}
 	}
 }
-
 EXPORT(char) aiInterfaceCallback_DataDirs_getPathSeparator(int UNUSED_interfaceId) {
 #ifdef _WIN32
 	return '\\';
@@ -190,7 +188,7 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, c
 			FileSystemHandler::GetInstance().GetDataDirectories();
 	size_t numDataDirs = dds.size();
 	if (dirIndex >= 0 && (size_t)dirIndex < numDataDirs) {
-		STRNCPY(path, dds[dirIndex].c_str(), path_sizeMax);
+		STRCPYS(path, path_sizeMax, dds[dirIndex].c_str());
 		return true;
 	} else {
 		return false;
@@ -208,8 +206,9 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 		}
 	}
 	std::string locatedPath = "";
-	char tmpRelPath[strlen(relPath) + 1];
-	STRCPY(tmpRelPath, relPath);
+	const size_t tmpRelPath_size = strlen(relPath) + 1;
+	char* tmpRelPath = new char[tmpRelPath_size];
+	STRCPYS(tmpRelPath, tmpRelPath_size, relPath);
 	std::string tmpRelPathStr = tmpRelPath;
 	if (dir) {
 		locatedPath = filesystem.LocateDir(tmpRelPathStr, locateFlags);
@@ -217,8 +216,9 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceI
 		locatedPath = filesystem.LocateFile(tmpRelPathStr, locateFlags);
 	}
 	exists = (locatedPath != relPath);
-	STRNCPY(path, locatedPath.c_str(), path_sizeMax);
+	STRCPYS(path, path_sizeMax, locatedPath.c_str());
 
+	delete [] tmpRelPath;
 	return exists;
 }
 EXPORT(char*) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfaceId, const char* const relPath, bool writeable, bool create, bool dir) {
@@ -229,13 +229,12 @@ EXPORT(char*) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfa
 	bool fetchOk = aiInterfaceCallback_DataDirs_Roots_locatePath(-1, path, path_sizeMax, relPath, writeable, create, dir);
 
 	if (!fetchOk) {
-		free(path);
-		path = NULL;
+		FREE(path);
 	}
 
 	return path;
 }
-EXPORT(const char* const) aiInterfaceCallback_DataDirs_getConfigDir(int interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_DataDirs_getConfigDir(int interfaceId) {
 
 	CHECK_INTERFACE_ID(interfaceId);
 
@@ -264,14 +263,13 @@ EXPORT(char*) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const c
 	bool fetchOk = aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, path_sizeMax, relPath, writeable, create, dir);
 
 	if (!fetchOk) {
-		free(path);
-		path = NULL;
+		FREE(path);
 	}
 
 	return path;
 }
 static std::vector<std::string> writeableDataDirs;
-EXPORT(const char* const) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId) {
+EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId) {
 
 	CHECK_INTERFACE_ID(interfaceId);
 

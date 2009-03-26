@@ -17,15 +17,19 @@ public:
 	// or more players are around (although you actually can't,
 	// since they call OnlyPassiveCheats() internally)
 
-	// this function has the same effect as setting a handicap value
-	// in the GameSetup script (currently gives a bonus on collected
-	// resources)
+	/**
+	 * This function has the same effect as setting a handicap value
+	 * in the GameSetup script (currently gives a bonus on collected
+	 * resources)
+	 */
 	virtual void SetMyHandicap(float handicap) = 0;
 
-	virtual void GiveMeMetal(float amount) = 0;			// give selected amount of metal
-	virtual void GiveMeEnergy(float amount) = 0;		// give selected amount of energy
+	/// give selected amount of metal
+	virtual void GiveMeMetal(float amount) = 0;
+	/// give selected amount of energy
+	virtual void GiveMeEnergy(float amount) = 0;
 
-	// creates a unit with the selected name at pos
+	/// creates a unit with the selected name at pos
 	virtual int CreateUnit(const char* name, float3 pos) = 0;
 
 
@@ -38,6 +42,10 @@ public:
 	virtual int GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
 	virtual int GetNeutralUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
 	virtual int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max = MAX_UNITS) = 0;
+
+	virtual int GetFeatures(int *features, int max) = 0;
+	virtual int GetFeatures(int *features, int max, const float3& pos,
+			float radius) = 0;
 
 	virtual int GetUnitTeam(int unitid) = 0;
 	virtual int GetUnitAllyTeam(int unitid) = 0;
@@ -63,7 +71,7 @@ public:
 	virtual int HandleCommand(int commandId, void* data) = 0;
 
 	// use virtual instead of pure virtual,
-	// becuase pur evirtual is not well supported
+	// because pure virtual is not well supported
 	// among different OSs and compilers,
 	// and pure virtual has no advantage
 	// if we have other pure virtual functions

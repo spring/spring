@@ -16,11 +16,10 @@
 */
 
 #include "OSCStatsSender.h"
-
-#include "lib/oscpack/OscOutboundPacketStream.h"
-#include "Net/UDPSocket.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/Game.h"
+#include "lib/oscpack/OscOutboundPacketStream.h"
+#include "Net/UDPSocket.h"
 #include "Game/GameVersion.h"
 #include "Game/PlayerHandler.h"
 #include "GlobalUnsynced.h"

@@ -13,7 +13,7 @@
 
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
+*/
 
 #ifndef _INTERFACEDEFINES_H
 #define _INTERFACEDEFINES_H
@@ -28,10 +28,9 @@ extern "C" {
 #define JAVA_AI_INTERFACE_LIBRARY_FILE_NAME "AIInterface.jar"
 #define JAVA_LIBS_DIR "jlib"
 #define NATIVE_LIBS_DIR "lib"
+#define JRE_LOCATION_FILE "jre-location.txt"
 
-#ifndef NULL
-#define NULL 0
-#endif
+#include <stddef.h> // for NULL
 
 #ifdef __cplusplus
 } // extern "C"

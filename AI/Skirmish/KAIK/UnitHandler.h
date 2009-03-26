@@ -1,14 +1,14 @@
-#ifndef UNITHANDLER_H
-#define UNITHANDLER_H
+#ifndef KAIK_UNITHANDLER_HDR
+#define KAIK_UNITHANDLER_HDR
 
+#include <vector>
 
-#include "GlobalAI.h"
-#include "MetalMaker.h"
+#include "Containers.h"
 
-using std::list;
-using std::vector;
+struct UnitDef;
 
 class CMetalMaker;
+struct AIClasses;
 
 class CUnitHandler {
 	public:
@@ -23,8 +23,8 @@ class CUnitHandler {
 		void IdleUnitUpdate(int);
 		void IdleUnitAdd(int unit, int);
 		void IdleUnitRemove(int unit);
-		int GetIU(int category);
-		int NumIdleUnits(int category);
+		int GetIU(UnitCategory);
+		int NumIdleUnits(UnitCategory);
 		// used to track stuck workers
 		void UnitMoveFailed(int unit);
 
@@ -35,7 +35,7 @@ class CUnitHandler {
 		void BuildTaskCreate(int id);
 		void BuildTaskRemove(int id);
 		void BuildTaskRemove(BuilderTracker* builderTracker);
-		bool BuildTaskAddBuilder (int builder, int category);
+		bool BuildTaskAddBuilder (int builder, UnitCategory);
 		void BuildTaskAddBuilder(BuildTask* buildTask, BuilderTracker* builderTracker);
 		BuildTask* GetBuildTask(int buildTaskId);
 		BuildTask* BuildTaskExist(float3 pos, const UnitDef* builtdef);
@@ -60,6 +60,12 @@ class CUnitHandler {
 		bool FactoryBuilderAdd(BuilderTracker* builderTracker);
 		void FactoryBuilderRemove(BuilderTracker* builderTracker);
 
+		UpgradeTask* CreateUpgradeTask(int oldBuildingID, const float3& oldBuildingPos, const UnitDef* newBuildingDef);
+		UpgradeTask* FindUpgradeTask(int oldBuildingID);
+		void RemoveUpgradeTask(UpgradeTask* task);
+		bool AddUpgradeTaskBuilder(UpgradeTask* task, int builderID);
+		void UpdateUpgradeTasks(int frame);
+
 		// use this to tell the tracker that the builder is on a reclaim job
 		void BuilderReclaimOrder(int builderId, float3 pos);
 
@@ -67,18 +73,18 @@ class CUnitHandler {
 		void ClearOrder(BuilderTracker* builderTracker, bool reportError);
 		void DecodeOrder(BuilderTracker* builderTracker, bool reportError);
 
-		vector<list<int> > IdleUnits;
-		vector<list<BuildTask> > BuildTasks;
-		vector<list<TaskPlan> > TaskPlans;
-		vector<list<int> > AllUnitsByCat;
-		vector<list<int> > AllUnitsByType;
+		std::vector<std::list<int> > IdleUnits;
+		std::vector<std::list<BuildTask> > BuildTasks;
+		std::vector<std::list<TaskPlan> > TaskPlans;
+		std::vector<std::list<int> > AllUnitsByCat;
+		std::vector<std::list<int> > AllUnitsByType;
 
-		list<Factory> Factories;
-		list<NukeSilo> NukeSilos;
-		vector<MetalExtractor> MetalExtractors;
+		std::list<Factory> Factories;
+		std::list<NukeSilo> NukeSilos;
+		std::vector<MetalExtractor> MetalExtractors;
 
-		list<integer2> Limbo;
-		list<BuilderTracker*> BuilderTrackers;
+		std::list<integer2> Limbo;
+		std::list<BuilderTracker*> BuilderTrackers;
 
 		CMetalMaker* metalMaker;
 
@@ -88,6 +94,8 @@ class CUnitHandler {
 	private:
 		AIClasses* ai;
 		int taskPlanCounter;
+
+		std::map<int, UpgradeTask*> upgradeTasks;
 };
 
 

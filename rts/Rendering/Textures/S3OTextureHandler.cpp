@@ -15,7 +15,6 @@
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
 #include "Platform/errorhandler.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/UnitDrawer.h"

@@ -37,9 +37,11 @@
 #include "Rendering/GL/myGL.h"
 #include "Util.h"
 
-#include <SDL.h>
 #include <IL/il.h>
 #include <assert.h>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+using namespace boost::posix_time;
 
 namespace terrain {
 
@@ -79,7 +81,7 @@ void BlurGrayscaleImage(int w, int h, uchar *data)
 
 Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo *li)
 {
-	int startTicks = SDL_GetTicks();
+	const ptime startTicks = microsec_clock::local_time();
 	tilesize.x = orghm->w-1;
 	tilesize.y = orghm->h-1;
 	name = "lightmap";
@@ -183,8 +185,8 @@ Lightmap::Lightmap(Heightmap *orghm, int level, int shadowLevelDif, LightingInfo
 	delete[] shading;
 	delete[] centerhm;
 
-	int numTicks = SDL_GetTicks() - startTicks;
-	d_trace ("Lightmap generation: %2.3f seconds\n", numTicks * 0.001f);
+	const time_duration numTicks = microsec_clock::local_time() - startTicks;
+	d_trace ("Lightmap generation: %2.3f seconds\n", numTicks.total_milliseconds() * 0.001f);
 }
 
 Lightmap::~Lightmap()

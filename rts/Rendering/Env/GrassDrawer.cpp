@@ -8,7 +8,6 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Map/ReadMap.h"
 #include "Map/BaseGroundDrawer.h"
-#include "Rendering/GL/myGL.h"
 #include "AdvTreeDrawer.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "LogOutput.h"

@@ -416,7 +416,7 @@ static CPlayer* CheckPlayerID(lua_State* L, int index)
 {
 	luaL_checknumber(L, index);
 	const int playerID = lua_toint(L, index);
-	if ((playerID < 0) || (playerID >= playerHandler->TotalPlayers())) {
+	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers())) {
 		luaL_error(L, "Bad playerID: %d\n", playerID);
 	}
 	CPlayer* player = playerHandler->Player(playerID);

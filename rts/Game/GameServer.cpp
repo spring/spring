@@ -10,8 +10,8 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <deque>
-#include <SDL_timer.h>
 #if defined DEDICATED || defined DEBUG
 #include <iostream>
 #endif
@@ -61,22 +61,23 @@
 
 
 using netcode::RawPacket;
+using namespace boost::posix_time;
 
 
 /// frames until a syncchech will time out and a warning is given out
-const int SYNCCHECK_TIMEOUT = 300;
+const unsigned SYNCCHECK_TIMEOUT = 300;
 
 /// used to prevent msg spam
-const int SYNCCHECK_MSG_TIMEOUT = 400;
+const unsigned SYNCCHECK_MSG_TIMEOUT = 400;
 
 ///msecs to wait until the game starts after all players are ready
-const unsigned GameStartDelay = 3800;
+const time_duration gameStartDelay = seconds(4);
 
 /// The time intervall in msec for sending player statistics to each client
-const unsigned playerInfoTime= 2000;
+const time_duration playerInfoTime = seconds(2);
 
 /// msecs to wait until the timeout condition (na active clients) activates
-const unsigned serverTimeout = 30000;
+const time_duration serverTimeout = seconds(30);
 
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
 const unsigned serverKeyframeIntervall = 16;
@@ -113,17 +114,13 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 : setup(mysetup)
 {
 	assert(setup);
-	serverStartTime = SDL_GetTicks();
+	serverStartTime = microsec_clock::local_time();
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
 	syncWarningFrame=0;
-	lastPlayerInfo = 0;
 	serverframenum=0;
 	timeLeft=0;
-	readyTime = 0;
-	gameStartTime = 0;
-	gameEndTime=0;
-	lastUpdate = SDL_GetTicks();
+	lastUpdate = microsec_clock::local_time();
 	modGameTime = 0.0f;
 	quitServer=false;
 	hasLocalClient = false;
@@ -148,10 +145,10 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 	if (settings->autohostport > 0) {
 		AddAutohostInterface(settings->autohostport);
 	}
-	rng.Seed(SDL_GetTicks());
+	rng.Seed(newGameData->GetSetup().length());
 	Message(str( format(ServerStart) %settings->hostport));
 
-	lastTick = SDL_GetTicks();
+	lastTick = microsec_clock::local_time();
 
 	maxUserSpeed = setup->maxSpeed;
 	minUserSpeed = setup->minSpeed;
@@ -227,7 +224,7 @@ CGameServer::~CGameServer()
 		}
 	}*/ //TODO figure out who won
 	// Finally pass it on to the CDemoRecorder.
-	demoRecorder->SetTime(serverframenum / 30, (SDL_GetTicks()-serverStartTime)/1000);
+	demoRecorder->SetTime(serverframenum / 30, (microsec_clock::local_time()-serverStartTime).total_milliseconds()/1000);
 	demoRecorder->InitializeStats(players.size(), numTeams, winner);
 	/*for (int i = 0; i < numPlayers; ++i) {
 		record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
@@ -259,7 +256,7 @@ void CGameServer::AddAutohostInterface(const int remotePort)
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
-	lastTick = newlastTick;
+	//lastTick = boost::some_time; FIXME
 	serverframenum = newserverframenum;
 }
 
@@ -282,7 +279,7 @@ void CGameServer::SkipTo(int targetframe)
 
 		if (UDPNet)
 			UDPNet->Update();
-		lastUpdate = SDL_GetTicks();
+		lastUpdate = microsec_clock::local_time();
 		isPaused = true;
 	}
 	else
@@ -312,7 +309,7 @@ void CGameServer::SendDemoData(const bool skipping)
 		if (msgCode == NETMSG_NEWFRAME || msgCode == NETMSG_KEYFRAME)
 		{
 			// we can't use CreateNewFrame() here
-			lastTick = SDL_GetTicks();
+			lastTick = microsec_clock::local_time();
 			serverframenum++;
 #ifdef SYNCCHECK
 			if (!skipping)
@@ -336,7 +333,7 @@ void CGameServer::SendDemoData(const bool skipping)
 	if (demoReader->ReachedEnd()) {
 		demoReader.reset();
 		Message(DemoEnd);
-		gameEndTime = SDL_GetTicks();
+		gameEndTime = microsec_clock::local_time();
 	}
 }
 
@@ -380,7 +377,7 @@ void CGameServer::CheckSync()
 				continue;
 			std::map<int, unsigned>::iterator it = players[a].syncResponse.find(*f);
 			if (it == players[a].syncResponse.end()) {
-				if (*f >= serverframenum - SYNCCHECK_TIMEOUT)
+				if (*f >= serverframenum - static_cast<int>(SYNCCHECK_TIMEOUT))
 					bComplete = false;
 				else
 					noSyncResponse.push_back(a);
@@ -395,7 +392,7 @@ void CGameServer::CheckSync()
 		}
 
 		if (!noSyncResponse.empty()) {
-			if (!syncWarningFrame || (*f - syncWarningFrame > SYNCCHECK_MSG_TIMEOUT)) {
+			if (!syncWarningFrame || (*f - syncWarningFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncWarningFrame = *f;
 
 				std::string players = GetPlayerNames(noSyncResponse);
@@ -407,7 +404,7 @@ void CGameServer::CheckSync()
 		// TODO take care of !bComplete case?
 		// Should we start resync then immediately or wait for the missing packets (while paused)?
 		if ( /*bComplete && */ !desyncGroups.empty()) {
-			if (!syncErrorFrame || (*f - syncErrorFrame > SYNCCHECK_MSG_TIMEOUT)) {
+			if (!syncErrorFrame || (*f - syncErrorFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncErrorFrame = *f;
 
 				// TODO enable this when we have resync
@@ -452,14 +449,14 @@ void CGameServer::CheckSync()
 
 void CGameServer::Update()
 {
-	if (!isPaused && gameStartTime > 0)
+	if (!isPaused && !gameStartTime.is_not_a_date_time())
 	{
-		modGameTime += float(SDL_GetTicks() - lastUpdate) * 0.001f * internalSpeed;
+		modGameTime += float((microsec_clock::local_time() - lastUpdate).total_milliseconds()) * 0.001f * internalSpeed;
 	}
-	lastUpdate = SDL_GetTicks();
+	lastUpdate = microsec_clock::local_time();
 
-	if(lastPlayerInfo < (SDL_GetTicks() - playerInfoTime)){
-		lastPlayerInfo = SDL_GetTicks();
+	if(lastPlayerInfo < (microsec_clock::local_time() - playerInfoTime)){
+		lastPlayerInfo = microsec_clock::local_time();
 
 		if (serverframenum > 0) {
 			//send info about the players
@@ -514,7 +511,7 @@ void CGameServer::Update()
 		}
 	}
 
-	if (!gameStartTime)
+	if (gameStartTime.is_not_a_date_time())
 	{
 		CheckForGameStart();
 	}
@@ -547,7 +544,7 @@ void CGameServer::Update()
 		}
 	}
 
-	if (SDL_GetTicks() > serverTimeout + serverStartTime || gameStartTime)
+	if (microsec_clock::local_time() > serverStartTime + serverTimeout || gameStartTime.is_not_a_date_time())
 	{
 		bool hasPlayers = false;
 		for (unsigned i = 0; i < players.size(); ++i)
@@ -643,7 +640,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_CHAT: {
 			ChatMessage msg(packet);
-			if (msg.fromPlayer != a ) {
+			if (static_cast<unsigned>(msg.fromPlayer) != a ) {
 				Message(str(format(WrongPlayer) %(unsigned)NETMSG_CHAT %a %(unsigned)msg.fromPlayer));
 			} else {
 				GotChatMessage(msg);
@@ -755,7 +752,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				int frameNum = *(int*)&inbuf[2];
 				if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
 					players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[6];
-				else if (serverframenum - delayedSyncResponseFrame > SYNCCHECK_MSG_TIMEOUT) {
+				else if (serverframenum - delayedSyncResponseFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT)) {
 					delayedSyncResponseFrame = serverframenum;
 					Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
 				}
@@ -817,7 +814,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_STARTPLAYING:
 		{
-			if (players[a].isLocal && !gameStartTime)
+			if (players[a].isLocal && !gameStartTime.is_not_a_date_time())
 				CheckForGameStart(true);
 			break;
 		}
@@ -1041,7 +1038,7 @@ void CGameServer::GenerateAndSendGameID()
 	gameID.intArray[2] = crc.GetDigest();
 
 	CRC entropy;
-	entropy.Update(lastTick);
+	entropy.Update((lastTick-serverStartTime).total_milliseconds());
 	gameID.intArray[3] = entropy.GetDigest();
 
 	Broadcast(CBaseNetProtocol::Get().SendGameID(gameID.charArray));
@@ -1052,7 +1049,7 @@ void CGameServer::GenerateAndSendGameID()
 
 void CGameServer::CheckForGameStart(bool forced)
 {
-	assert(!gameStartTime);
+	assert(gameStartTime.is_not_a_date_time());
 	bool allReady = true;
 
 #ifdef DEDICATED
@@ -1064,7 +1061,7 @@ void CGameServer::CheckForGameStart(bool forced)
 	for (int a = setup->numDemoPlayers; a < players.size(); a++)
 #endif
 	{
-		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + 45000 < SDL_GetTicks())
+		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + seconds(45) < microsec_clock::local_time())
 		{
 			// autostart the game when 45 seconds have passed and everyone who managed to connect is ready
 			continue;
@@ -1082,13 +1079,13 @@ void CGameServer::CheckForGameStart(bool forced)
 
 	if (allReady || forced)
 	{
-		if (readyTime == 0) {
-			readyTime = SDL_GetTicks();
-			rng.Seed(readyTime);
-			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(GameStartDelay));
+		if (readyTime.is_not_a_date_time()) {
+			readyTime = microsec_clock::local_time();
+			rng.Seed((readyTime-serverStartTime).total_milliseconds());
+			Broadcast(CBaseNetProtocol::Get().SendStartPlaying(gameStartDelay.total_milliseconds()));
 		}
 	}
-	if (readyTime && (SDL_GetTicks() - readyTime) > GameStartDelay)
+	if (!readyTime.is_not_a_date_time() && (microsec_clock::local_time() - readyTime) > gameStartDelay)
 	{
 		StartGame();
 	}
@@ -1096,7 +1093,7 @@ void CGameServer::CheckForGameStart(bool forced)
 
 void CGameServer::StartGame()
 {
-	gameStartTime = SDL_GetTicks();
+	gameStartTime = microsec_clock::local_time();
 
 	if (UDPNet && !allowAdditionalPlayers)
 		UDPNet->Listen(false); // don't accept new connections
@@ -1127,7 +1124,7 @@ void CGameServer::StartGame()
 		hostif->SendStartPlaying();
 	}
 	timeLeft=0;
-	lastTick = SDL_GetTicks()-1;
+	lastTick = microsec_clock::local_time() - milliseconds(1);
 	CreateNewFrame(true, false);
 }
 
@@ -1191,7 +1188,7 @@ void CGameServer::PushAction(const Action& action)
 	}
 	else if (action.command == "forcestart")
 	{
-		if (!gameStartTime)
+		if (gameStartTime.is_not_a_date_time())
 			CheckForGameStart(true);
 	}
 	else if (action.command == "skip")
@@ -1244,8 +1241,8 @@ bool CGameServer::HasFinished() const
 
 void CGameServer::CheckForGameEnd()
 {
-	if (gameEndTime > 0) {
-		if (gameEndTime < SDL_GetTicks() - 2000) {
+	if (!gameEndTime.is_not_a_date_time()) {
+		if (gameEndTime < microsec_clock::local_time() - seconds(2)) {
 			Message(GameEnd);
 			Broadcast(CBaseNetProtocol::Get().SendGameOver());
 			if (hostif) {
@@ -1307,7 +1304,7 @@ void CGameServer::CheckForGameEnd()
 #endif
 	if (numActiveAllyTeams <= 1)
 	{
-		gameEndTime=SDL_GetTicks();
+		gameEndTime = microsec_clock::local_time();
 		Broadcast(CBaseNetProtocol::Get().SendSendPlayerStat());
 	}
 }
@@ -1328,13 +1325,13 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 		int newFrames = 1;
 
 		if(!fixedFrameTime){
-			unsigned currentTick = SDL_GetTicks();
-			unsigned timeElapsed = currentTick - lastTick;
-			if (timeElapsed>200) {
-				timeElapsed=200;
+			ptime currentTick = microsec_clock::local_time();
+			time_duration timeElapsed = currentTick - lastTick;
+			if (timeElapsed > millisec(200)) {
+				timeElapsed = millisec(200);
 			}
 
-			timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed) / 1000.0f;
+			timeLeft += GAME_SPEED * internalSpeed * float(timeElapsed.total_milliseconds())*0.001;
 			lastTick=currentTick;
 			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
@@ -1384,7 +1381,7 @@ void CGameServer::UpdateLoop()
 		bool hasData = false;
 		if (hasLocalClient || !UDPNet)
 		{
-			SDL_Delay(10); // don't take 100% cpu time
+			boost::this_thread::sleep(milliseconds(10));
 			hasData = true;
 		}
 		else
@@ -1412,7 +1409,7 @@ bool CGameServer::WaitsOnCon() const
 
 bool CGameServer::GameHasStarted() const
 {
-	return (gameStartTime>0);
+	return (!gameStartTime.is_not_a_date_time());
 }
 
 void CGameServer::KickPlayer(const int playerNum)

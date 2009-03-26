@@ -323,6 +323,26 @@ function convertCToJNAType(cType__common) {
 ################################################################################
 
 
+
+################################################################################
+### BEGIN: C++ functions
+
+# Awaits this format:	const char* const
+# Returns this format:	const std::string
+function convertCToCppType(cType__common) {
+
+	cppType__common = trim(cType__common);
+
+	sub(/char\*( const)?/, "std::string", cppType__common);
+
+	return cppType__common;
+}
+
+
+### END: C++ functions
+################################################################################
+
+
 END {
 	# finalize things
 }

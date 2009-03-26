@@ -1,7 +1,6 @@
 #ifndef PATHESTIMATOR_H
 #define PATHESTIMATOR_H
 
-#include "lib/gml/gmlcnt.h"
 #include "IPath.h"
 #include "PathFinder.h"
 #include "float3.h"
@@ -11,6 +10,7 @@
 #include "PathCache.h"
 
 #include <boost/thread/thread.hpp>
+#include <boost/detail/atomic_count.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/barrier.hpp>
 #ifdef _MSC_VER // failcompiler does not support
@@ -200,7 +200,7 @@ class CPathEstimator: public IPath {
 
 		boost::barrier *pathBarrier;
 
-		gmlCount offsetBlockNum, costBlockNum;
+		boost::detail::atomic_count offsetBlockNum, costBlockNum;
 
 		int lastOffsetMessage, lastCostMessage;
 };
