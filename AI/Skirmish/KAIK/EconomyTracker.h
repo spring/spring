@@ -3,6 +3,7 @@
 
 #include <list>
 #include <vector>
+#include "Defines.h"
 
 struct EconomyUnitTracker;
 
@@ -10,7 +11,7 @@ struct BuildingTracker {
 	CR_DECLARE_STRUCT(BuildingTracker);
 
 	int unitUnderConstruction;
-	int category;
+	UnitCategory category;
 	float hpLastFrame;
 	float damage;								// track the damage to get the right ETA
 	float hpSomeTimeAgo;						// for nano-stalling support
@@ -28,7 +29,7 @@ struct BuildingTracker {
 
 	void clear(void) {
 		unitUnderConstruction		= 0;
-		category					= 0;
+		category					= CAT_COMM;
 		hpLastFrame					= 0;
 		damage						= 0;		// track the damage to get the right ETA
 		hpSomeTimeAgo				= 0;		// for nano-stalling support
@@ -119,7 +120,7 @@ struct EconomyUnitTracker {
 	bool alive;
 	const UnitDef* unitDef;						// We will lose the unit id later on
 	int dieFrame;
-	int category;
+	UnitCategory category;
 	float totalEnergyMake;						// total lifetime sum
 	float totalMetalMake;						// total lifetime sum
 	float totalEnergyUsage;						// total lifetime sum
@@ -142,7 +143,7 @@ struct EconomyUnitTracker {
 		alive = false;
 		unitDef = 0;
 		dieFrame = 0;
-		category = 0;
+		category = CAT_COMM;
 		totalEnergyMake = 0;
 		totalMetalMake = 0;
 		totalEnergyUsage = 0;

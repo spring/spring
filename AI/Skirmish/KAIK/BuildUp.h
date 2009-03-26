@@ -1,6 +1,7 @@
 #ifndef KAIK_BUILDUP_HDR
 #define KAIK_BUILDUP_HDR
 
+#include "Defines.h"
 struct AIClasses;
 
 enum BuildState {
@@ -83,8 +84,7 @@ class CBuildUp {
 		void FactoryCycle(int);
 		void NukeSiloCycle(void);
 		void FallbackBuild(int, int);
-		bool BuildNow(int, int);
-		bool BuildNow(int, int, const UnitDef*);
+		bool BuildNow(int, UnitCategory, const UnitDef*);
 		const UnitDef* GetLeastBuiltBuilder(void);
 		bool BuildUpgradeExtractor(int);
 		bool BuildUpgradeReactor(int);

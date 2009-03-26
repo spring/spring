@@ -131,7 +131,7 @@ void CBuildUp::GetEconState(EconState* es) const {
 	// everybody (assuming we can build them at all in current mod)
 	// TODO: use actual metal and energy drain of nuke weapon here
 	es->buildNukeSilo =
-		ai->ut->nuke_silos[ai->ut->GetSide()].size() > 0 &&
+		ai->ut->sideData[ai->ut->GetSide()].nukeSilos.size() > 0 &&
 		es->mIncome > 100.0f && es->eIncome > 6000.0f &&
 		es->mUsage < es->mIncome && es->eUsage < es->eIncome &&
 		ai->uh->NukeSilos.size() < MAX_NUKE_SILOS;
@@ -144,9 +144,9 @@ void CBuildUp::GetEconState(EconState* es) const {
 
 	// these are static; the number of building
 	// _types_ in the unit-table never changes
-	es->canBuildEStores = (ai->ut->energy_storages[ai->ut->GetSide()].size() > 0);
-	es->canBuildMMakers = (ai->ut->metal_makers[ai->ut->GetSide()].size() > 0);
-	es->canBuildMStores = (ai->ut->metal_storages[ai->ut->GetSide()].size() > 0);
+	es->canBuildEStores = (ai->ut->sideData[ai->ut->GetSide()].energyStorages.size() > 0);
+	es->canBuildMMakers = (ai->ut->sideData[ai->ut->GetSide()].metalMakers.size() > 0);
+	es->canBuildMStores = (ai->ut->sideData[ai->ut->GetSide()].metalStorages.size() > 0);
 }
 
 BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
@@ -226,7 +226,7 @@ void CBuildUp::Buildup(int frame) {
 						// always favor building one silo at a time rather than
 						// many in parallel to prevent a sudden massive resource
 						// drain when silos are finished
-						if (BuildNow(econState.builderID, CAT_NUKE)) {
+						if (BuildNow(econState.builderID, CAT_NUKE, NULL)) {
 							nukeSiloTimer += 300;
 						}
 					}
@@ -250,7 +250,7 @@ void CBuildUp::Buildup(int frame) {
 						if (!haveNewMex && eOverflow && econState.canBuildEStores > 0 && storageTimer <= 0) {
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_ESTOR)) {
 								// build energy storage
-								if (BuildNow(econState.builderID, CAT_ESTOR)) {
+								if (BuildNow(econState.builderID, CAT_ESTOR, NULL)) {
 									storageTimer += 90;
 								}
 							}
@@ -258,7 +258,7 @@ void CBuildUp::Buildup(int frame) {
 						else if (!haveNewMex && econState.canBuildMMakers && eExcess) {
 							// build metal maker
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MMAKER)) {
-								BuildNow(econState.builderID, CAT_MMAKER);
+								BuildNow(econState.builderID, CAT_MMAKER, NULL);
 							}
 						}
 					}
@@ -266,7 +266,7 @@ void CBuildUp::Buildup(int frame) {
 
 				case BUILD_E_EXCESS: {
 					if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MMAKER)) {
-						BuildNow(econState.builderID, CAT_MMAKER);
+						BuildNow(econState.builderID, CAT_MMAKER, NULL);
 					}
 				} break;
 
@@ -280,7 +280,7 @@ void CBuildUp::Buildup(int frame) {
 						if (econState.mOverflow && econState.canBuildMStores && (storageTimer <= 0) && (econState.numFactories > 0)) {
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MSTOR)) {
 								// build metal storage
-								if (BuildNow(econState.builderID, CAT_MSTOR)) {
+								if (BuildNow(econState.builderID, CAT_MSTOR, NULL)) {
 									storageTimer += 90;
 								}
 							}
@@ -346,18 +346,18 @@ void CBuildUp::FactoryCycle(int frame) {
 
 	for (int i = 0; i < numIdleFactories; i++) {
 		// pick the i-th idle factory we have
-		int producedCat         = LASTCATEGORY;
-		const int factoryUnitID = ai->uh->GetIU(CAT_FACTORY);
-		const CUNIT* u          = ai->MyUnits[factoryUnitID];
-		const bool isHub        = u->isHub();
-		const UnitDef* factDef  = u->def();
+		UnitCategory producedCat = CAT_LAST;
+		const int factoryUnitID  = ai->uh->GetIU(CAT_FACTORY);
+		const CUNIT* u           = ai->MyUnits[factoryUnitID];
+		const bool isHub         = u->isHub();
+		const UnitDef* factDef   = u->def();
 
 		// assume that factories with tech-level TL > 0 are
 		// useful to keep active and building for (TL * 30)
 		// minutes, but depreciate rapidly after that point
 		// TODO: don't reduce factory build frequency, but
 		// focus more on mobile constructors instead?
-		const int tchLvl    = ai->ut->unitTypes[factDef->id].techLevel;
+		const int  tchLvl   = ai->ut->unitTypes[factDef->id].techLevel;
 		const bool obsolete = ((tchLvl > 0)? ((tchLvl * 30) > (frame / 1800)): false);
 		const bool mayBuild = ((obsolete)? (frame % 1800 == 0): true);
 
@@ -371,7 +371,7 @@ void CBuildUp::FactoryCycle(int frame) {
 					producedCat = CAT_BUILDER;
 					builderTimer = 0;
 				} else {
-					producedCat = (frame & 1)? CAT_FACTORY: CAT_ENERGY;
+					producedCat = (econState.eStall)? CAT_ENERGY: CAT_FACTORY;
 					factoryTimer = 0;
 				}
 			} else {
@@ -530,32 +530,23 @@ const UnitDef* CBuildUp::GetLeastBuiltBuilder(void) {
 
 
 
-bool CBuildUp::BuildNow(int builderID, int category) {
-	const UnitDef* udef = ai->ut->GetUnitByScore(builderID, category);
+bool CBuildUp::BuildNow(int builderID, UnitCategory cat, const UnitDef* udef) {
 	bool r = false;
+
+	if (udef == NULL) {
+		udef = ai->ut->GetUnitByScore(builderID, cat);
+	}
 
 	if (udef != NULL) {
 		// cap the number of assistable factories of type <building>
-		const bool b0 = (category == CAT_FACTORY && udef->canBeAssisted);
+		const bool b0 = (cat == CAT_FACTORY && udef->canBeAssisted);
 		const bool b1 = ((ai->uh->AllUnitsByType[udef->id]).size() < 1);
 
 		if (!b0 || b1) {
 			r = ai->MyUnits[builderID]->Build_ClosestSite(udef, ai->cb->GetUnitPos(builderID));
 		}
 	} else {
-		FallbackBuild(builderID, category);
-	}
-
-	return r;
-}
-
-bool CBuildUp::BuildNow(int builderID, int category, const UnitDef* udef) {
-	bool r = false;
-
-	if (udef != NULL) {
-		r = ai->MyUnits[builderID]->Build_ClosestSite(udef, ai->cb->GetUnitPos(builderID));
-	} else {
-		FallbackBuild(builderID, CAT_FACTORY);
+		FallbackBuild(builderID, cat);
 	}
 
 	return r;
@@ -659,7 +650,7 @@ bool CBuildUp::BuildUpgradeReactor(int builderID) {
 				ai->uh->AddUpgradeTaskBuilder(task, builderID);
 				ret = true;
 			} else {
-				ret = BuildNow(builderID, 0, newReactorDef);
+				ret = BuildNow(builderID, CAT_ENERGY, newReactorDef);
 			}
 		} else {
 			ret = false;

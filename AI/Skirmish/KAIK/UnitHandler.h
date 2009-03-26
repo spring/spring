@@ -23,8 +23,8 @@ class CUnitHandler {
 		void IdleUnitUpdate(int);
 		void IdleUnitAdd(int unit, int);
 		void IdleUnitRemove(int unit);
-		int GetIU(int category);
-		int NumIdleUnits(int category);
+		int GetIU(UnitCategory);
+		int NumIdleUnits(UnitCategory);
 		// used to track stuck workers
 		void UnitMoveFailed(int unit);
 
@@ -35,7 +35,7 @@ class CUnitHandler {
 		void BuildTaskCreate(int id);
 		void BuildTaskRemove(int id);
 		void BuildTaskRemove(BuilderTracker* builderTracker);
-		bool BuildTaskAddBuilder (int builder, int category);
+		bool BuildTaskAddBuilder (int builder, UnitCategory);
 		void BuildTaskAddBuilder(BuildTask* buildTask, BuilderTracker* builderTracker);
 		BuildTask* GetBuildTask(int buildTaskId);
 		BuildTask* BuildTaskExist(float3 pos, const UnitDef* builtdef);

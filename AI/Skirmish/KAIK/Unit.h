@@ -19,7 +19,7 @@ class CUNIT {
 		// misc. info
 		float3 pos() const;
 		float Health() const;
-		int category() const;
+		UnitCategory category() const;
 
 		const UnitDef* def() const;
 		int myid;
