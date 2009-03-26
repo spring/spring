@@ -197,7 +197,12 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	@Override
 	public int unitCreated(Unit unit) {
 
-		int ret = sendTextMsg("unitCreated: " + unit.getDef().getName());
+		int ret = sendTextMsg("unitCreated: " + unit.toString());
+		sendTextMsg("unitCreated def: " + unit.getDef().getName());
+		List<UnitDef> buildOptions = unit.getDef().getBuildOptions();
+		for (UnitDef unitDef : buildOptions) {
+			sendTextMsg("\tbuildOption x: " + unitDef.getName() + "\t" + unitDef.getHumanName() + "\t" + unitDef.toString() + "\t" + unitDef.hashCode());
+		}
 
 		return ret;
 	}
