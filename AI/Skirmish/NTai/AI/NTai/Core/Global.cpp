@@ -122,7 +122,7 @@ namespace ntai {
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
 	Global::~Global(){
-		SaveUnitData();
+		efficiency->SaveUnitData();
 		L.Close();
 		delete[] Cached->encache;
 		delete[] unit_array;
@@ -278,7 +278,7 @@ namespace ntai {
 		START_EXCEPTION_HANDLING
 		if(EVERY_((2 MINUTES))){
 			//L.print("saving UnitData");
-			SaveUnitData();
+			efficiency->SaveUnitData();
 			/*if(!SaveUnitData()){
 			 L.print("UnitData saved");
 			 }else{
@@ -387,16 +387,16 @@ namespace ntai {
 			if(endefs.find(enemy) != endefs.end()) endefs.erase(enemy);
 			const UnitDef* uda = GetUnitDef(enemy);
 			if(uda != 0){
-				float e = GetEfficiency(uda->name, uda->power);
+				float e = efficiency->GetEfficiency(uda->name, uda->power);
 				e =200/uda->metalCost;
-				SetEfficiency(uda->name, e);
+				efficiency->SetEfficiency(uda->name, e);
 			}
 
 			uda = GetUnitDef(enemy);
 			if(uda != 0){
-				float e = GetEfficiency(uda->name, uda->power);
+				float e = efficiency->GetEfficiency(uda->name, uda->power);
 				e -=200/uda->metalCost;
-				SetEfficiency(uda->name, e);
+				efficiency->SetEfficiency(uda->name, e);
 			}
 
 			Ch->EnemyDestroyed(enemy, attacker);
@@ -516,7 +516,7 @@ namespace ntai {
 	void Global::Crash(){
 		NLOG(" Deliberate Global::Crash routine");
 		// close the logfile
-		SaveUnitData();
+		efficiency->SaveUnitData();
 		L.header("\n :: The user has initiated a crash, terminating NTai \n");
 		L.Close();
 		START_EXCEPTION_HANDLING
@@ -549,16 +549,16 @@ namespace ntai {
 		const UnitDef* uda = GetUnitDef(attacker);
 
 		if(uda != 0){
-			float e = GetEfficiency(uda->name, uda->power);
+			float e = efficiency->GetEfficiency(uda->name, uda->power);
 			e += 10000/uda->metalCost;
-			SetEfficiency(uda->name, e);
+			efficiency->SetEfficiency(uda->name, e);
 		}
 		const UnitDef* udb = GetUnitDef(damaged);
 
 		if(udb != 0){
-			float e = GetEfficiency(udb->name, udb->power);
+			float e = efficiency->GetEfficiency(udb->name, udb->power);
 			e -= 10000/uda->metalCost;
-			SetEfficiency(udb->name, e);
+			efficiency->SetEfficiency(udb->name, e);
 			/*if(udb->builder && UnitDefHelper->IsMobile(udb)&&udb->weapons.empty()){
 				// if ti isnt currently building something then retreat
 				const CCommandQueue* uc = cb->GetCurrentUnitCommands(damaged);
@@ -607,9 +607,9 @@ namespace ntai {
 		}else if(tmsg == string(".isfirst")){
 			if(L.FirstInstance() == true) L.iprint(" info :: This is the first NTai instance");
 		}else if(tmsg == string(".save")){
-			if(L.FirstInstance() == true) SaveUnitData();
+			if(L.FirstInstance() == true) efficiency->SaveUnitData();
 		}else if(tmsg == string(".reload")){
-			if(L.FirstInstance() == true) LoadUnitData();
+			if(L.FirstInstance() == true) efficiency->LoadUnitData();
 		}else if(tmsg == string(".flush")){
 			L.Flush();
 		}else if(tmsg == string(".threat")){
@@ -1064,7 +1064,7 @@ namespace ntai {
 	}
 
 
-	float Global::GetTargettingWeight(string unit, string target){
+	/*float Global::GetTargettingWeight(string unit, string target){
 		float tempscore = 0;
 
 		if(info->hardtarget == false){
@@ -1079,7 +1079,7 @@ namespace ntai {
 		}
 
 		return tempscore;
-	}
+	}*/
 
 
 	void Global::EnemyEnterLOS(int enemy){ // an enemy has entered LOS
