@@ -66,22 +66,22 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 		int commandTopic, void* commandData);
 
 	/** Returns the major engine revision number (e.g. 0.77) */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getMajor)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getMajor)(int teamId);
 	/** Returns the minor engine revision */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getMinor)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getMinor)(int teamId);
 	/**
 	 * Clients that only differ in patchset can still play together.
 	 * Also demos should be compatible between patchsets.
 	 */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getPatchset)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getPatchset)(int teamId);
 	/** Returns additional information (compiler flags, svn revision etc.) */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getAdditional)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getAdditional)(int teamId);
 	/** Returns the time of build */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getBuildTime)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getBuildTime)(int teamId);
 	/** Returns "Major.Minor" */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getNormal)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getNormal)(int teamId);
 	/** Returns "Major.Minor.Patchset (Additional)" */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getFull)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getFull)(int teamId);
 
 	/** Returns the number of teams in this game */
 	int               (CALLING_CONV *Clb_Teams_getSize)(int teamId);
@@ -100,22 +100,22 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 	 * Returns the key at index infoIndex in the info map
 	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getKey)(int teamId, int infoIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_Info_getKey)(int teamId, int infoIndex);
 	/**
 	 * Returns the value at index infoIndex in the info map
 	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getValue)(int teamId, int infoIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_Info_getValue)(int teamId, int infoIndex);
 	/**
 	 * Returns the description of the key at index infoIndex in the info map
 	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getDescription)(int teamId, int infoIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_Info_getDescription)(int teamId, int infoIndex);
 	/**
 	 * Returns the value associated with the given key in the info map
 	 * for this Skirmish AI, or NULL if not found.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getValueByKey)(int teamId, const char* const key);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_Info_getValueByKey)(int teamId, const char* const key);
 
 	/**
 	 * Returns the number of option key-value pairs in the options map
@@ -126,17 +126,17 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 	 * Returns the key at index optionIndex in the options map
 	 * for this Skirmish AI, or NULL if the optionIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getKey)(int teamId, int optionIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_OptionValues_getKey)(int teamId, int optionIndex);
 	/**
 	 * Returns the value at index optionIndex in the options map
 	 * for this Skirmish AI, or NULL if the optionIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValue)(int teamId, int optionIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValue)(int teamId, int optionIndex);
 	/**
 	 * Returns the value associated with the given key in the options map
 	 * for this Skirmish AI, or NULL if not found.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValueByKey)(int teamId, const char* const key);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValueByKey)(int teamId, const char* const key);
 
 	/** This will end up in infolog */
 	void              (CALLING_CONV *Clb_Log_log)(int teamId, const char* const msg);
@@ -157,13 +157,13 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 	 * and the InterfaceInfo.lua file are located, e.g.:
 	 * /usr/share/games/spring/AI/Interfaces/C/0.1/
 	 */
-	const char* const (CALLING_CONV *Clb_DataDirs_getConfigDir)(int teamId);
+	const char*       (CALLING_CONV *Clb_DataDirs_getConfigDir)(int teamId);
 	/**
 	 * This interfaces writeable data dir, which is where eg logs, caches
 	 * and learning data should be stored, e.g.:
 	 * ~/.spring/AI/Interfaces/C/0.1/
 	 */
-	const char* const (CALLING_CONV *Clb_DataDirs_getWriteableDir)(int teamId);
+	const char*       (CALLING_CONV *Clb_DataDirs_getWriteableDir)(int teamId);
 	/**
 	 * Returns an absolute path which consists of:
 	 * data-dir + AI-Interface-path + relative-path.
@@ -989,16 +989,16 @@ bool (CALLING_CONV *Clb_Group_isSelected)(int teamId, int groupId);
 /**
  * archive filename
  */
-const char* const (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
 
 /**
  * archive filename
  */
-const char* const (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
-const char* const (CALLING_CONV *Clb_Mod_getShortName)(int teamId);
-const char* const (CALLING_CONV *Clb_Mod_getVersion)(int teamId);
-const char* const (CALLING_CONV *Clb_Mod_getMutator)(int teamId);
-const char* const (CALLING_CONV *Clb_Mod_getDescription)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getShortName)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getVersion)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getMutator)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getDescription)(int teamId);
 
 bool              (CALLING_CONV *Clb_Mod_getAllowTeamColors)(int teamId);
 

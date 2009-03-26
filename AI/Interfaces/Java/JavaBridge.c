@@ -111,8 +111,9 @@ static inline void establishSpringEnv() {
 /// The JVM sets the environment it wants automatically, so this is a no-op
 static inline void establishJavaEnv() {}
 
-static inline size_t min(const size_t s1, const size_t s2) {
-	return ((s1 < s2) ? s1 : s2);
+
+static inline size_t minSize(size_t size1, size_t size2) {
+	return (size1 < size2) ? size1 : size2;
 }
 
 
@@ -668,8 +669,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 				const size_t val_size = strlen(val);
 				// ignore "-Djava.class.path=..."
 				// and "-Djava.library.path=..." options
-				if (strncmp(val, JCPVAL, min(val_size, JCPVAL_size)) != 0 &&
-					strncmp(val, JLPVAL, min(val_size, JLPVAL_size)) != 0) {
+				if (strncmp(val, JCPVAL, minSize(val_size, JCPVAL_size)) != 0 &&
+					strncmp(val, JLPVAL, minSize(val_size, JLPVAL_size)) != 0) {
 					strOptions[op++] = cfgProps_values[i];
 				}
 			}

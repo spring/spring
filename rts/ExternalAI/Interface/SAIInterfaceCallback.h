@@ -53,22 +53,22 @@ struct SAIInterfaceCallback {
 	int               (CALLING_CONV *Engine_AIInterface_ABIVersion_getWarningPart)(int interfaceId);
 
 	/// Returns the major engine revision number (e.g. 0.77)
-	const char* const (CALLING_CONV *Engine_Version_getMajor)(int interfaceId);
+	const char*       (CALLING_CONV *Engine_Version_getMajor)(int interfaceId);
 	/// Returns the minor engine revision
-	const char* const (CALLING_CONV *Engine_Version_getMinor)(int interfaceId);
+	const char*       (CALLING_CONV *Engine_Version_getMinor)(int interfaceId);
 	/**
 	 * Clients that only differ in patchset can still play together.
 	 * Also demos should be compatible between patchsets.
 	 */
-	const char* const (CALLING_CONV *Engine_Version_getPatchset)(int interfaceId);
+	const char*       (CALLING_CONV *Engine_Version_getPatchset)(int interfaceId);
 	/// additional information (compiler flags, svn revision etc.)
-	const char* const (CALLING_CONV *Engine_Version_getAdditional)(int interfaceId);
+	const char*       (CALLING_CONV *Engine_Version_getAdditional)(int interfaceId);
 	/// time of build
-	const char* const (CALLING_CONV *Engine_Version_getBuildTime)(int interfaceId);
+	const char*       (CALLING_CONV *Engine_Version_getBuildTime)(int interfaceId);
 	/// Major.Minor
-	const char* const (CALLING_CONV *Engine_Version_getNormal)(int interfaceId);
+	const char*       (CALLING_CONV *Engine_Version_getNormal)(int interfaceId);
 	/// Major.Minor.Patchset (Additional)
-	const char* const (CALLING_CONV *Engine_Version_getFull)(int interfaceId);
+	const char*       (CALLING_CONV *Engine_Version_getFull)(int interfaceId);
 
 	/**
 	 * Returns the number of info key-value pairs in the info map
@@ -79,22 +79,22 @@ struct SAIInterfaceCallback {
 	 * Returns the key at index infoIndex in the info map
 	 * for this interface, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *AIInterface_Info_getKey)(int interfaceId, int infoIndex);
+	const char*       (CALLING_CONV *AIInterface_Info_getKey)(int interfaceId, int infoIndex);
 	/**
 	 * Returns the value at index infoIndex in the info map
 	 * for this interface, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *AIInterface_Info_getValue)(int interfaceId, int infoIndex);
+	const char*       (CALLING_CONV *AIInterface_Info_getValue)(int interfaceId, int infoIndex);
 	/**
 	 * Returns the description of the key at index infoIndex in the info map
 	 * for this interface, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *AIInterface_Info_getDescription)(int interfaceId, int infoIndex);
+	const char*       (CALLING_CONV *AIInterface_Info_getDescription)(int interfaceId, int infoIndex);
 	/**
 	 * Returns the value associated with the given key in the info map
 	 * for this interface, or NULL if not found.
 	 */
-	const char* const (CALLING_CONV *AIInterface_Info_getValueByKey)(int interfaceId, const char* const key);
+	const char*       (CALLING_CONV *AIInterface_Info_getValueByKey)(int interfaceId, const char* const key);
 
 	/// the number of teams in this game
 	int               (CALLING_CONV *Teams_getSize)(int interfaceId);
@@ -104,7 +104,7 @@ struct SAIInterfaceCallback {
 	/// the maximum number of skirmish AIs in any game
 	int               (CALLING_CONV *SkirmishAIs_getMax)(int interfaceId);
 	/// Returns the value accosiated to the given key from the skirmish AIs info map
-	const char* const (CALLING_CONV *SkirmishAIs_Info_getValueByKey)(int interfaceId, const char* const shortName, const char* const version, const char* const key);
+	const char*       (CALLING_CONV *SkirmishAIs_Info_getValueByKey)(int interfaceId, const char* const shortName, const char* const version, const char* const key);
 
 	/// This will end up in infolog
 	void              (CALLING_CONV *Log_log)(int interfaceId, const char* const msg);
@@ -125,13 +125,13 @@ struct SAIInterfaceCallback {
 	 * and the InterfaceInfo.lua file are located, e.g.:
 	 * /usr/share/games/spring/AI/Interfaces/C/0.1/
 	 */
-	const char* const (CALLING_CONV *DataDirs_getConfigDir)(int interfaceId);
+	const char*       (CALLING_CONV *DataDirs_getConfigDir)(int interfaceId);
 	/**
 	 * This interfaces writeable data dir, which is where eg logs, caches
 	 * and learning data should be stored, e.g.:
 	 * ~/.spring/AI/Interfaces/C/0.1/
 	 */
-	const char* const (CALLING_CONV *DataDirs_getWriteableDir)(int interfaceId);
+	const char*       (CALLING_CONV *DataDirs_getWriteableDir)(int interfaceId);
 	/**
 	 * Returns an absolute path which consists of:
 	 * data-dir + AI-Interface-path + relative-path.
