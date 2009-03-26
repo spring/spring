@@ -7,7 +7,6 @@
 #include "HeightMapTexture.h"
 
 #include "ReadMap.h"
-#include "Rendering/GL/myGL.h"
 #include "ConfigHandler.h"
 
 /******************************************************************************/

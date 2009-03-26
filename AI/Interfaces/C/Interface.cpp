@@ -63,8 +63,7 @@ CInterface::CInterface(int interfaceId,
 			callback->DataDirs_getWriteableDir(interfaceId));
 	simpleLog_log("Using log file: %s", logFileName);
 
-	free(logFileName);
-	logFileName = NULL;
+	FREE(logFileName);
 }
 
 //LevelOfSupport CInterface::GetLevelOfSupportFor(

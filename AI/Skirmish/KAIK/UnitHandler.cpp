@@ -1,6 +1,6 @@
-#include "UnitHandler.h"
-#include "MetalMaker.h"
-
+#include "IncCREG.h"
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 CR_BIND(CUnitHandler, (NULL));
 CR_REG_METADATA(CUnitHandler, (
@@ -32,10 +32,10 @@ CUnitHandler::CUnitHandler(AIClasses* ai) {
 	lastCapturedUnitFrame = -1;
 	lastCapturedUnitID = -1;
 
-	IdleUnits.resize(LASTCATEGORY);
-	BuildTasks.resize(LASTCATEGORY);
-	TaskPlans.resize(LASTCATEGORY);
-	AllUnitsByCat.resize(LASTCATEGORY);
+	IdleUnits.resize(CAT_LAST);
+	BuildTasks.resize(CAT_LAST);
+	TaskPlans.resize(CAT_LAST);
+	AllUnitsByCat.resize(CAT_LAST);
 
 	if (ai) {
 		AllUnitsByType.resize(ai->cb->GetNumUnitDefs() + 1);
@@ -44,7 +44,7 @@ CUnitHandler::CUnitHandler(AIClasses* ai) {
 }
 
 CUnitHandler::~CUnitHandler() {
-	for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
+	for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
 		delete *i;
 	}
 }
@@ -52,13 +52,12 @@ CUnitHandler::~CUnitHandler() {
 
 
 void CUnitHandler::IdleUnitUpdate(int frame) {
-	list<integer2> limboremoveunits;
+	std::list<integer2> limboremoveunits;
 
-	for (list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++) {
+	for (std::list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++) {
 		if (i->y > 0) {
 			i->y--;
-		}
-		else {
+		} else {
 			if (ai->cb->GetUnitDef(i->x) == NULL) {
 				// ignore dead unit
 			} else {
@@ -70,41 +69,43 @@ void CUnitHandler::IdleUnitUpdate(int frame) {
 	}
 
 	if (limboremoveunits.size()) {
-		for (list<integer2>::iterator i = limboremoveunits.begin(); i != limboremoveunits.end(); i++) {
+		for (std::list<integer2>::iterator i = limboremoveunits.begin(); i != limboremoveunits.end(); i++) {
 			Limbo.remove(*i);
 		}
 	}
 
 	// make sure that all the builders are in action (hack?)
 	if (frame % 15 == 0) {
-		for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
-			// the new test
+		for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
 			if ((*i)->idleStartFrame != -2) {
 				// the brand new builders must be filtered still
 				bool ans = VerifyOrder(*i);
-				const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands((*i)->builderID);
+				const int builderID = (*i)->builderID;
+				const CCommandQueue* myCommands = ai->cb->GetCurrentUnitCommands(builderID);
 				Command c;
 
-				if (mycommands->size() > 0)
-					c = mycommands->front();
+				if (myCommands->size() > 0) {
+					c = myCommands->front();
+				}
 
 				// two sec delay is ok
 				if (((*i)->commandOrderPushFrame + LAG_ACCEPTANCE) < frame) {
 					if (!ans) {
-						static const unsigned int logMsg_maxSize = 512;
-						char logMsg[logMsg_maxSize];
-						float3 pos = ai->cb->GetUnitPos((*i)->builderID);
-						SNPRINTF(logMsg, logMsg_maxSize,
-								"builder %i VerifyOrder failed ",
-								(*i)->builderID);
-						PRINTF("%s", logMsg);
+						float3 pos = ai->cb->GetUnitPos(builderID);
+
+						std::stringstream msg;
+							msg << "[CUnitHandler::IdleUnitUpdate()] frame " << frame << "\n";
+							msg << "\tfailed to verify order for builder " << builderID;
+							msg << " with " << (myCommands->size()) << " remaining commands\n";
+						L(ai, msg.str());
 
 						ClearOrder(*i, false);
 
-						if (!mycommands->empty())
+						if (!myCommands->empty()) {
 							DecodeOrder(*i, true);
-						else
-							IdleUnitAdd((*i)->builderID, frame);
+						} else {
+							IdleUnitAdd(builderID, frame);
+						}
 					}
 				}
 			}
@@ -122,10 +123,10 @@ void CUnitHandler::UnitMoveFailed(int unit) {
 // called when unit nanoframe first created
 // (CEconomyTracker deals with UnitFinished())
 void CUnitHandler::UnitCreated(int unitID) {
-	int ucat = ai->ut->GetCategory(unitID);
+	UnitCategory ucat = ai->ut->GetCategory(unitID);
 	const UnitDef* udef = ai->cb->GetUnitDef(unitID);
 
-	if (ucat != -1) {
+	if (ucat != CAT_LAST) {
 		AllUnitsByCat[ucat].push_back(unitID);
 		AllUnitsByType[udef->id].push_back(unitID);
 
@@ -137,16 +138,16 @@ void CUnitHandler::UnitCreated(int unitID) {
 
 		if (ucat == CAT_BUILDER) {
 			// add the new builder
-			BuilderTracker* builderTracker = new BuilderTracker;
-			builderTracker->builderID = unitID;
-			builderTracker->buildTaskId = 0;
-			builderTracker->taskPlanId = 0;
-			builderTracker->factoryId = 0;
-			builderTracker->stuckCount = 0;
-			builderTracker->customOrderId = 0;
+			BuilderTracker* builderTracker = new BuilderTracker();
+			builderTracker->builderID      = unitID;
+			builderTracker->buildTaskId    = 0;
+			builderTracker->taskPlanId     = 0;
+			builderTracker->factoryId      = 0;
+			builderTracker->stuckCount     = 0;
+			builderTracker->customOrderId  = 0;
 			// under construction
 			builderTracker->commandOrderPushFrame = -2;
-			builderTracker->categoryMaker = -1;
+			builderTracker->categoryMaker = CAT_LAST;
 			// wait for the first idle call, as this unit might be under construction
 			builderTracker->idleStartFrame = -2;
 			BuilderTrackers.push_back(builderTracker);
@@ -165,18 +166,17 @@ void CUnitHandler::UnitCreated(int unitID) {
 	}
 
 	if (udef->isCommander && udef->canDGun) {
-		ai->dgunController->init(unitID);
+		ai->dgunConHandler->AddController(unitID);
 	} else {
-		CUNIT* u = ai->MyUnits[unitID];
-		u->SetFireState(2);
+		ai->MyUnits[unitID]->SetFireState(2);
 	}
 }
 
 void CUnitHandler::UnitDestroyed(int unit) {
-	int category = ai->ut->GetCategory(unit);
+	UnitCategory category = ai->ut->GetCategory(unit);
 	const UnitDef* unitDef = ai->cb->GetUnitDef(unit);
 
-	if (category != -1) {
+	if (category != CAT_LAST) {
 		AllUnitsByType[unitDef->id].remove(unit);
 		AllUnitsByCat[category].remove(unit);
 		IdleUnitRemove(unit);
@@ -194,7 +194,7 @@ void CUnitHandler::UnitDestroyed(int unit) {
 
 		if (category == CAT_BUILDER) {
 			// remove the builder
-			for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
+			for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
 				if ((*i)->builderID == unit) {
 					if ((*i)->buildTaskId)
 						BuildTaskRemove(*i);
@@ -222,12 +222,12 @@ void CUnitHandler::UnitDestroyed(int unit) {
 
 
 void CUnitHandler::IdleUnitAdd(int unit, int frame) {
-	int category = ai->ut->GetCategory(unit);
+	UnitCategory category = ai->ut->GetCategory(unit);
 
-	if (category != -1) {
-		const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(unit);
+	if (category != CAT_LAST) {
+		const CCommandQueue* myCommands = ai->cb->GetCurrentUnitCommands(unit);
 
-		if (mycommands->empty()) {
+		if (myCommands->empty()) {
 			if (category == CAT_BUILDER) {
 				BuilderTracker* builderTracker = GetBuilderTracker(unit);
 				// add clear here
@@ -250,16 +250,16 @@ void CUnitHandler::IdleUnitAdd(int unit, int frame) {
 			integer2 myunit(unit, LIMBOTIME);
 			Limbo.remove(myunit);
 			Limbo.push_back(myunit);
-		}
-		else {
-			// the unit has orders still
+		} else {
+			// the unit has orders still, so should not be idle
 			if (category == CAT_BUILDER) {
 				if (false) {
-					// KLOOTNOTE: somehow we are now reaching this branch
+					// KLOOTNOTE: somehow we are reaching this branch
 					// on initialization when USE_CREG is not defined,
 					// mycommands->size() returns garbage?
-					BuilderTracker* builderTracker = GetBuilderTracker(unit);
-					DecodeOrder(builderTracker, true);
+					//
+					// BuilderTracker* builderTracker = GetBuilderTracker(unit);
+					// DecodeOrder(builderTracker, true);
 				}
 			}
 		}
@@ -291,19 +291,15 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 			// test that this builder is on repair on this unit
 			BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
 
-			if (
-					(
-						(c->id == CMD_REPAIR)
-						&& (c->params[0] == builderTracker->buildTaskId)
-					)
-					||
-					(
-						(c->id == -buildTask->def->id)
-						&& (c->params[0] == buildTask->pos.x)
-						&& (c->params[2] == buildTask->pos.z)
-					)) {
-				commandFound = true;
-			} else {
+			commandFound =
+				((c->id        == CMD_REPAIR                 ) &&
+				 (c->params[0] == builderTracker->buildTaskId)) ||
+
+				((c->id       == -buildTask->def->id) &&
+				 (c->params[0] == buildTask->pos.x  ) &&
+				 (c->params[2] == buildTask->pos.z  ));
+
+			if (!commandFound) {
 				return false;
 			}
 		}
@@ -362,20 +358,25 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 
 // use this only if the unit does not have any orders at the moment
 void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) {
-	static const unsigned int logMsg_maxSize = 512;
-	char logMsg[logMsg_maxSize];
 	bool hit = false;
-	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
-	assert(mycommands->empty() || !reportError);
 
-	if (builderTracker->buildTaskId != 0) {
-		// why is this builder idle?
+	const int frame        = ai->cb->GetCurrentFrame();
+	const int builderID    = builderTracker->builderID;
+	const int buildTaskID  = builderTracker->buildTaskId;
+	const int factoryID    = builderTracker->factoryId;
+	const CCommandQueue* q = ai->cb->GetCurrentUnitCommands(builderID);
+
+	assert(q->empty() || !reportError);
+
+	if (buildTaskID != 0) {
 		hit = true;
-		BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
-		SNPRINTF(logMsg, logMsg_maxSize,
-				"builder %i: was idle, but it is on buildTaskId: %i  (stuck?)",
-				builderTracker->builderID, builderTracker->buildTaskId);
-		PRINTF("%s", logMsg);
+		BuildTask* buildTask = GetBuildTask(buildTaskID);
+
+		std::stringstream msg;
+			msg << "[CUnitHandler::ClearOrder()] frame " << frame << "\n";
+			msg << "\tbuilder " << builderID << " is reported idle but";
+			msg << " still has a build-task with ID " << (buildTaskID) << "\n";
+		L(ai, msg.str());
 
 		if (buildTask->builderTrackers.size() > 1) {
 			BuildTaskRemove(builderTracker);
@@ -388,19 +389,23 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 	if (builderTracker->taskPlanId != 0) {
 		assert(!hit);
 		hit = true;
-		// why is this builder idle?
-		TaskPlan* taskPlan = GetTaskPlan(builderTracker->taskPlanId);
-		SNPRINTF(logMsg, logMsg_maxSize,
-				"builder %i: was idle, but it is on taskPlanId: %s (masking this spot)",
-				builderTracker->builderID, taskPlan->def->humanName.c_str());
-		PRINTF("%s", logMsg);
 
+		const TaskPlan*    taskPlan = GetTaskPlan(builderTracker->taskPlanId);
+		const std::string& taskName = taskPlan->def->humanName;
+
+		std::stringstream msg;
+			msg << "[CUnitHandler::ClearOrder()] frame " << frame << "\n";
+			msg << "\tbuilder " << builderID << " is reported idle but";
+			msg << " still has a task-plan named \"" << (taskName) << "\"\n";
+		L(ai, msg.str());
+
+		// mask this build-spot as bad
 		ai->dm->MaskBadBuildSpot(taskPlan->pos);
-		// TODO: fix this, remove all builders from this plan
 
+		// TODO: remove all builders from this plan
 		if (reportError) {
-			list<BuilderTracker*> builderTrackers = taskPlan->builderTrackers;
-			for (list<BuilderTracker*>::iterator i = builderTrackers.begin(); i != builderTrackers.end(); i++) {
+			std::list<BuilderTracker*> builderTrackers = taskPlan->builderTrackers;
+			for (std::list<BuilderTracker*>::iterator i = builderTrackers.begin(); i != builderTrackers.end(); i++) {
 				TaskPlanRemove(*i);
 				ai->MyUnits[(*i)->builderID]->Stop();
 			}
@@ -409,15 +414,17 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 		}
 	}
 
-	if (builderTracker->factoryId != 0) {
+	if (factoryID != 0) {
 		assert(!hit);
 		hit = true;
-		// why is this builder idle?
-		SNPRINTF(logMsg, logMsg_maxSize,
-				"builder %i: was idle, but it is on factoryId: %i (removing the builder from the job)",
-				builderTracker->builderID, builderTracker->factoryId);
-		PRINTF("%s", logMsg);
 
+		std::stringstream msg;
+			msg << "[CUnitHandler::ClearOrder()] frame " << frame << "\n";
+			msg << "\tbuilder " << builderID << " is reported idle but";
+			msg << " still has a factory ID of " << factoryID << "\n";
+		L(ai, msg.str());
+
+		// remove the builder from its job
 		FactoryBuilderRemove(builderTracker);
 	}
 
@@ -443,35 +450,41 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 
 
 void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError) {
-	static const unsigned int logMsg_maxSize = 512;
-	char logMsg[logMsg_maxSize];
-	// take a look and see what it's doing
-	const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
+	const int            frame     = ai->cb->GetCurrentFrame();
+	const int            builderID = builderTracker->builderID;
+	const CCommandQueue* builderQ  = ai->cb->GetCurrentUnitCommands(builderID);
 
-	if (mycommands->size() > 0) {
+	if (builderQ->size() > 0) {
 		// builder has orders
-		const Command* c = &mycommands->front();
-		if (mycommands->size() == 2 && c->id == CMD_MOVE) { //&& (c->id == CMD_MOVE || c->id == CMD_RECLAIM))
+		const Command* c   = &builderQ->front();
+		const int      n   = c->params.size();
+		const int      cID = c->id;
+
+		if (builderQ->size() == 2 && cID == CMD_MOVE) {
 			// it might have a move order before the real order,
 			// take command nr. 2 if nr. 1 is a move order
-			c = &mycommands->back();
+			c = &builderQ->back();
 		}
 
 		if (reportError) {
-			SNPRINTF(logMsg, logMsg_maxSize,
-					"builder %i: claimed idle, but has command c->id: %i, c->params[0]: %f",
-					builderTracker->builderID, c->id, c->params[0]);
-			PRINTF("%s", logMsg);
+			std::stringstream msg;
+				msg << "[CUnitHandler::DecodeOrder()] frame " << frame << "\n";
+				msg << "\tbuilder " << builderID << " claimed idle, but has";
+				msg << " command " << cID << " with " << n << " parameters";
+				msg << " (params[0]: " << ((n > 0)? c->params[0]: -1) << ")\n";
+			L(ai, msg.str());
 		}
 
-		if (c->id < 0) {
+		if (cID < 0) {
+			assert(n >= 3);
+
 			// it's building a unit
 			float3 newUnitPos;
 			newUnitPos.x = c->params[0];
 			newUnitPos.y = c->params[1];
 			newUnitPos.z = c->params[2];
-			// c.id == -newUnitDef->id
-			const UnitDef* newUnitDef = ai->ut->unitTypes[-c->id].def;
+
+			const UnitDef* newUnitDef = ai->ut->unitTypes[-cID].def;
 			// make sure that no BuildTasks exists there
 			BuildTask* buildTask = BuildTaskExist(newUnitPos, newUnitDef);
 
@@ -479,21 +492,25 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 				BuildTaskAddBuilder(buildTask, builderTracker);
 			} else {
 				// make a new TaskPlan (or join an existing one)
-				TaskPlanCreate(builderTracker->builderID, newUnitPos, newUnitDef);
+				TaskPlanCreate(builderID, newUnitPos, newUnitDef);
 			}
 		}
 
-		if (c->id == CMD_REPAIR) {
-			// it's repairing
+		if (cID == CMD_REPAIR) {
+			assert(n >= 1);
+
+			// it's repairing, find the unit being repaired
 			int guardingID = int(c->params[0]);
-			// find the unit being repaired
-			int category = ai->ut->GetCategory(guardingID);
 			bool found = false;
 
-			if (category == -1)
-				return;
+			UnitCategory cat = ai->ut->GetCategory(guardingID);
+			std::list<BuildTask>::iterator i;
 
-			for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
+			if (cat == CAT_LAST) {
+				return;
+			}
+
+			for (i = BuildTasks[cat].begin(); i != BuildTasks[cat].end(); i++) {
 				if (i->id == guardingID) {
 					// whatever the old order was, update it now
 					bool hit = false;
@@ -535,19 +552,25 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 				builderTracker->idleStartFrame = -1;
 			}
 		}
-	}
-	else {
+	} else {
 		// error: this function needs a builder with orders
-		assert(false);
+		// should not be possible because IdleUnitUpdate()
+		// calls us only if a unit's command-queue is NOT
+		// empty?
+		// assert(false);
+		std::stringstream msg;
+			msg << "[CUnitHandler::DecodeOrder()] frame " << frame << "\n";
+			msg << "\tbuilder " << builderID << " should not have an empty queue!\n";
+		L(ai, msg.str());
 	}
 }
 
 
 
 void CUnitHandler::IdleUnitRemove(int unit) {
-	int category = ai->ut->GetCategory(unit);
+	UnitCategory category = ai->ut->GetCategory(unit);
 
-	if (category != -1) {
+	if (category != CAT_LAST) {
 		IdleUnits[category].remove(unit);
 
 		if (category == CAT_BUILDER) {
@@ -565,23 +588,24 @@ void CUnitHandler::IdleUnitRemove(int unit) {
 			// assert(builderTracker->factoryId == 0);
 		}
 
-		list<integer2>::iterator tempunit;
-		bool foundit = false;
+		std::list<integer2>::iterator tempunit;
+		bool found = false;
 
-		for (list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++) {
+		for (std::list<integer2>::iterator i = Limbo.begin(); i != Limbo.end(); i++) {
 			if (i->x == unit) {
 				tempunit = i;
-				foundit = true;
+				found = true;
 			}
 		}
 
-		if (foundit)
+		if (found) {
 			Limbo.erase(tempunit);
+		}
 	}
 }
 
 
-int CUnitHandler::GetIU(int category) {
+int CUnitHandler::GetIU(UnitCategory category) {
 	assert(IdleUnits[category].size() > 0);
 	int unitID = IdleUnits[category].front();
 
@@ -596,8 +620,8 @@ int CUnitHandler::GetIU(int category) {
 	return unitID;
 }
 
-int CUnitHandler::NumIdleUnits(int category) {
-	assert(category >= 0 && category < LASTCATEGORY);
+int CUnitHandler::NumIdleUnits(UnitCategory category) {
+	assert(category < CAT_LAST);
 	IdleUnits[category].sort();
 	IdleUnits[category].unique();
 	return IdleUnits[category].size();
@@ -621,43 +645,42 @@ void CUnitHandler::MMakerUpdate(int frame) {
 
 
 void CUnitHandler::BuildTaskCreate(int id) {
-	static const unsigned int logMsg_maxSize = 512;
-	char logMsg[logMsg_maxSize];
 	const UnitDef* newUnitDef = ai->cb->GetUnitDef(id);
-	int category = ai->ut->GetCategory(id);
+	UnitCategory category = ai->ut->GetCategory(id);
 	float3 pos = ai->cb->GetUnitPos(id);
 
-	if ((!newUnitDef->movedata || category == CAT_DEFENCE) && !newUnitDef->canfly && category != -1) {
+	if ((!newUnitDef->movedata || category == CAT_DEFENCE) && !newUnitDef->canfly && category != CAT_LAST) {
 		// this needs to change, so that it can make more stuff
-		if (category == -1)
+		if (category >= CAT_LAST) {
 			return;
-
-		assert(category >= 0);
-		assert(category < LASTCATEGORY);
+		}
 
 		BuildTask bt;
 		bt.id = -1;
 
-		redo:
-		for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
-			if(pos.distance2D(i->pos) < 1 && newUnitDef == i->def){
-				assert(bt.id == -1); // There can not be more than one TaskPlan that is found;
-				bt.category = category;
-				bt.id = id;
-				bt.pos = i->pos;
-				bt.def = newUnitDef;
-				list<BuilderTracker*> moveList;
+		std::list<TaskPlan>::iterator i;
+		for (i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
+			if (pos.distance2D(i->pos) < 1.0f && newUnitDef == i->def) {
+				 // there can not be more than one found TaskPlan
+				assert(bt.id == -1);
 
-				for (list<BuilderTracker*>::iterator builder = i->builderTrackers.begin(); builder != i->builderTrackers.end(); builder++) {
+				bt.category = category;
+				bt.id       = id;
+				bt.pos      = i->pos;
+				bt.def      = newUnitDef;
+
+				std::list<BuilderTracker*> moveList;
+
+				for (std::list<BuilderTracker*>::iterator builder = i->builderTrackers.begin(); builder != i->builderTrackers.end(); builder++) {
 					moveList.push_back(*builder);
 				}
 
-				for (list<BuilderTracker*>::iterator builder = moveList.begin(); builder != moveList.end(); builder++) {
+				for (std::list<BuilderTracker*>::iterator builder = moveList.begin(); builder != moveList.end(); builder++) {
 					TaskPlanRemove(*builder);
 					BuildTaskAddBuilder(&bt, *builder);
 				}
 
-				goto redo;
+				i = TaskPlans[category].begin();
 			}
 		}
 
@@ -665,68 +688,70 @@ void CUnitHandler::BuildTaskCreate(int id) {
 			// buildtask creation error (can happen if builder manages
 			// to restart a dead building, or a human has taken control),
 			// make one anyway
+			std::stringstream msg;
+				msg << "[CUnitHandler::BuildTaskCreate()] frame " << (ai->cb->GetCurrentFrame()) << "\n";
+				msg << "\tBuildTask Creation Error for task with ID " << id << "\n";
+			L(ai, msg.str());
+
+			if (category == CAT_DEFENCE) {
+				ai->dm->AddDefense(pos, newUnitDef);
+			}
+
 			bt.category = category;
 			bt.id = id;
-
-			if (category == CAT_DEFENCE)
-				ai->dm->AddDefense(pos,newUnitDef);
-
 			bt.pos = pos;
 			bt.def = newUnitDef;
-			SNPRINTF(logMsg, logMsg_maxSize, "BuildTask Creation Error: %i", id);
-			PRINTF("%s", logMsg);
-			int num = BuilderTrackers.size();
 
-			if (num == 0) {
-				// no friendly builders found
-			} else {
-				// iterate over the list and find the builders
-				for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
-					BuilderTracker* builderTracker = *i;
+			// if we have any friendly builders
+			for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
+				BuilderTracker* builderTracker = *i;
 
-					// check what builder is doing
-					const CCommandQueue* mycommands = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
-					if (mycommands->size() > 0) {
-						Command c = mycommands->front();
+				// check what builder is doing
+				const CCommandQueue* cq = ai->cb->GetCurrentUnitCommands(builderTracker->builderID);
 
-						if ((c.id == -newUnitDef->id && c.params[0] == pos.x && c.params[2] == pos.z) // at this pos
-							|| (c.id == CMD_REPAIR  && c.params[0] == id)  // at this unit (id)
-							|| (c.id == CMD_GUARD  && c.params[0] == id)) // at this unit (id)
-						{
-							if (builderTracker->buildTaskId != 0) {
-								BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
+				if (!cq->empty()) {
+					Command c = cq->front();
 
-								if (buildTask->builderTrackers.size() > 1) {
-									BuildTaskRemove(builderTracker);
-								} else {
-									// only builder of this thing, and now idle
-									BuildTaskRemove(builderTracker);
-								}
+					const bool b0 = (c.id == -newUnitDef->id && c.params[0] == pos.x && c.params[2] == pos.z); // at this pos
+					const bool b1 = (c.id == CMD_REPAIR && c.params[0] == id); // at this unit (id)
+					const bool b2 = (c.id == CMD_GUARD  && c.params[0] == id); // at this unit (id)
+					const bool b3 = b0 || b1 || b2;
+
+					if (b3) {
+						if (builderTracker->buildTaskId != 0) {
+							BuildTask* buildTask = GetBuildTask(builderTracker->buildTaskId);
+
+							if (buildTask->builderTrackers.size() > 1) {
+								BuildTaskRemove(builderTracker);
+							} else {
+								// only builder of this thing, and now idle
+								BuildTaskRemove(builderTracker);
 							}
-
-							if (builderTracker->taskPlanId != 0) {
-								GetTaskPlan(builderTracker->taskPlanId);
-								TaskPlanRemove(builderTracker);
-							}
-							if (builderTracker->factoryId != 0) {
-								FactoryBuilderRemove(builderTracker);
-							}
-							if (builderTracker->customOrderId != 0) {
-								builderTracker->customOrderId = 0;
-							}
-
-							// this builder is now free
-							if (builderTracker->idleStartFrame == -2)
-								IdleUnitRemove(builderTracker->builderID);
-
-							// add it to this task
-							BuildTaskAddBuilder(&bt, builderTracker);
-							SNPRINTF(logMsg, logMsg_maxSize,
-									"Added builder %i to buildTaskId %i (human order?)",
-									builderTracker->builderID,
-									builderTracker->buildTaskId);
-							PRINTF("%s", logMsg);
 						}
+
+						if (builderTracker->taskPlanId != 0) {
+							GetTaskPlan(builderTracker->taskPlanId);
+							TaskPlanRemove(builderTracker);
+						}
+						if (builderTracker->factoryId != 0) {
+							FactoryBuilderRemove(builderTracker);
+						}
+						if (builderTracker->customOrderId != 0) {
+							builderTracker->customOrderId = 0;
+						}
+
+						// this builder is now free
+						if (builderTracker->idleStartFrame == -2) {
+							IdleUnitRemove(builderTracker->builderID);
+						}
+
+						// add it to this task
+						BuildTaskAddBuilder(&bt, builderTracker);
+
+						msg.str("");
+							msg << "\tadded builder " << builderTracker->builderID << " to";
+							msg << " build-task with ID " << builderTracker->buildTaskId << "\n";
+						L(ai, msg.str());
 					}
 				}
 			}
@@ -745,19 +770,13 @@ void CUnitHandler::BuildTaskCreate(int id) {
 
 
 void CUnitHandler::BuildTaskRemove(int id) {
-	int category = ai->ut->GetCategory(id);
+	UnitCategory category = ai->ut->GetCategory(id);
 
-	if (category == -1)
-		return;
-
-	assert(category >= 0);
-	assert(category < LASTCATEGORY);
-
-	if (category != -1) {
-		list<BuildTask>::iterator killtask;
+	if (category < CAT_LAST) {
+		std::list<BuildTask>::iterator killtask;
 		bool found = false;
 
-		for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
+		for (std::list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
 			if (i->id == id) {
 				killtask = i;
 				assert(!found);
@@ -766,11 +785,11 @@ void CUnitHandler::BuildTaskRemove(int id) {
 		}
 		if (found) {
 			// remove the builders from this BuildTask
-			list<BuilderTracker*> removeList;
-			for (list<BuilderTracker*>::iterator builder = killtask->builderTrackers.begin(); builder != killtask->builderTrackers.end(); builder++) {
+			std::list<BuilderTracker*> removeList;
+			for (std::list<BuilderTracker*>::iterator builder = killtask->builderTrackers.begin(); builder != killtask->builderTrackers.end(); builder++) {
 				removeList.push_back(*builder);
 			}
-			for (list<BuilderTracker*>::iterator builder = removeList.begin(); builder != removeList.end(); builder++) {
+			for (std::list<BuilderTracker*>::iterator builder = removeList.begin(); builder != removeList.end(); builder++) {
 				BuildTaskRemove(*builder);
 			}
 
@@ -781,7 +800,7 @@ void CUnitHandler::BuildTaskRemove(int id) {
 
 
 BuilderTracker* CUnitHandler::GetBuilderTracker(int builder) {
-	for (list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
+	for (std::list<BuilderTracker*>::iterator i = BuilderTrackers.begin(); i != BuilderTrackers.end(); i++) {
 		if ((*i)->builderID == builder) {
 			return (*i);
 		}
@@ -798,26 +817,29 @@ void CUnitHandler::BuildTaskRemove(BuilderTracker* builderTracker) {
 		assert(false);
 		return;
 	}
-	int category = ai->ut->GetCategory(builderTracker->buildTaskId);
+
+	UnitCategory category = ai->ut->GetCategory(builderTracker->buildTaskId);
+
 	// TODO: Hack fix
-	if (category == -1)
+	if (category == CAT_LAST) {
 		return;
+	}
 
 	assert(category >= 0);
-	assert(category < LASTCATEGORY);
+	assert(category < CAT_LAST);
 	assert(builderTracker->buildTaskId != 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
 	assert(builderTracker->customOrderId == 0);
-	// list<BuildTask>::iterator killtask;
+	// std::list<BuildTask>::iterator killtask;
 	bool found = false;
 	bool found2 = false;
 
-	for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
+	for (std::list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
 		if (i->id == builderTracker->buildTaskId){
 			// killtask = i;
 			assert(!found);
-			for (list<int>::iterator builder = i->builders.begin(); builder != i->builders.end(); builder++) {
+			for (std::list<int>::iterator builder = i->builders.begin(); builder != i->builders.end(); builder++) {
 				if (builderTracker->builderID == *builder) {
 					assert(!found2);
 					i->builders.erase(builder);
@@ -826,7 +848,7 @@ void CUnitHandler::BuildTaskRemove(BuilderTracker* builderTracker) {
 					break;
 				}
 			}
-			for (list<BuilderTracker*>::iterator builder = i->builderTrackers.begin(); builder != i->builderTrackers.end(); builder++) {
+			for (std::list<BuilderTracker*>::iterator builder = i->builderTrackers.begin(); builder != i->builderTrackers.end(); builder++) {
 				if (builderTracker == *builder) {
 					assert(!found);
 					i->builderTrackers.erase(builder);
@@ -858,8 +880,8 @@ void CUnitHandler::BuildTaskAddBuilder(BuildTask* buildTask, BuilderTracker* bui
 }
 
 BuildTask* CUnitHandler::GetBuildTask(int buildTaskId) {
-	for (int k = 0; k < LASTCATEGORY; k++) {
-		for (list<BuildTask>::iterator i = BuildTasks[k].begin(); i != BuildTasks[k].end(); i++) {
+	for (int k = 0; k < CAT_LAST; k++) {
+		for (std::list<BuildTask>::iterator i = BuildTasks[k].begin(); i != BuildTasks[k].end(); i++) {
 			if (i->id == buildTaskId)
 				return  &*i;
 		}
@@ -873,96 +895,120 @@ BuildTask* CUnitHandler::GetBuildTask(int buildTaskId) {
 
 
 BuildTask* CUnitHandler::BuildTaskExist(float3 pos, const UnitDef* builtdef) {
-	int category = ai->ut->GetCategory(builtdef);
+	UnitCategory category = ai->ut->GetCategory(builtdef);
 
-	if (category == -1)
-		return false;
+	if (category >= CAT_LAST) {
+		return NULL;
+	}
 
-	assert(category >= 0);
-	assert(category < LASTCATEGORY);
-
-	for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
+	for (std::list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
 		if (i->pos.distance2D(pos) < 1 && ai->ut->GetCategory(i->def) == category) {
 			return &*i;
 		}
 	}
+
 	return NULL;
 }
 
 
 
-bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
-	assert(category >= 0);
-	assert(category < LASTCATEGORY);
+bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
+	assert(category < CAT_LAST);
 	assert(builderID >= 0);
 	assert(ai->MyUnits[builderID] != NULL);
+
+	CUNIT* u = ai->MyUnits[builderID];
 	BuilderTracker* builderTracker = GetBuilderTracker(builderID);
+	const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
+	const int frame = ai->cb->GetCurrentFrame();
 
 	// make sure this builder is free
-	// KLOOTNOTE: no longer use assertions
-	// since new code for extractor upgrading
-	// (in CBuildUp) seems to trigger them?
-	bool b1 = (builderTracker->taskPlanId == 0);
-	bool b2 = (builderTracker->buildTaskId == 0);
-	bool b3 = (builderTracker->factoryId == 0);
-	bool b4 = (builderTracker->customOrderId == 0);
-	bool b5 = (ai->MyUnits[builderID]->def())->canAssist;
+	const bool b1 = (builderTracker->taskPlanId == 0);
+	const bool b2 = (builderTracker->buildTaskId == 0);
+	const bool b3 = (builderTracker->factoryId == 0);
+	const bool b4 = (builderTracker->customOrderId == 0);
+	const bool b5 = builderDef->canAssist;
+	const bool b6 = (category == CAT_FACTORY && frame >= 18000);
 
 	if (!b1 || !b2 || !b3 || !b4 || !b5) {
+		if (b6) {
+			// note that FactoryBuilderAdd() asserts b1 through b4
+			// immediately after BuildTaskAddBuilder() is tried and
+			// fails in BuildUp(), so at least those must be true
+			// (and so should b5 in most of the *A mods)
+
+			std::stringstream msg;
+				msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
+				msg << "\tbuilder " << builderID << "not able to be added to CAT_FACTORY build-task\n";
+				msg << "\tb1: " << b1 << ", b2: " << b2 << ", b3: " << b3;
+				msg << ", b4: " << b4 << ", b5: " << b5 << ", b6: " << b6;
+			L(ai, msg.str());
+		}
 		return false;
 	}
 
 	// see if there are any BuildTasks that it can join
-	if (BuildTasks[category].size()) {
-		float largestime = 0.0f;
-		list<BuildTask>::iterator besttask;
+	if (BuildTasks[category].size() > 0) {
+		float largestTime = 0.0f;
+		std::list<BuildTask>::iterator task;
+		std::list<BuildTask>::iterator bestTask;
 
-		for (list<BuildTask>::iterator i = BuildTasks[category].begin(); i != BuildTasks[category].end(); i++) {
-			float timebuilding = ai->math->ETT(*i) - ai->math->ETA(builderID, ai->cb->GetUnitPos(i->id));
-			if (timebuilding > largestime) {
-				largestime = timebuilding;
-				besttask = i;
+		for (task = BuildTasks[category].begin(); task != BuildTasks[category].end(); task++) {
+			float buildTime = ai->math->ETT(*task) - ai->math->ETA(builderID, ai->cb->GetUnitPos(task->id));
+
+			if (buildTime > largestTime) {
+				largestTime = buildTime;
+				bestTask = task;
 			}
 		}
 
-		if (largestime > 0.0f) {
-			BuildTaskAddBuilder(&*besttask, builderTracker);
-			ai->MyUnits[builderID]->Repair(besttask->id);
+		if (largestTime > 0.0f) {
+			BuildTaskAddBuilder(&*bestTask, builderTracker);
+			u->Repair(bestTask->id);
 			return true;
 		}
 	}
 
-	if (TaskPlans[category].size()) {
-			float largestime = 0.0f;
-			list<TaskPlan>::iterator besttask;
+	// see if there any joinable TaskPlans
+	if (TaskPlans[category].size() > 0) {
+		float largestTime = 0.0f;
+		std::list<TaskPlan>::iterator plan;
+		std::list<TaskPlan>::iterator bestPlan;
 
-			for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
-				float timebuilding = (i->def->buildTime / i->currentBuildPower) - ai->math->ETA(builderID, i->pos);
+		for (plan = TaskPlans[category].begin(); plan != TaskPlans[category].end(); plan++) {
+			float buildTime = (plan->def->buildTime / plan->currentBuildPower) - ai->math->ETA(builderID, plan->pos);
 
-				// must test if this builder can make this unit/building too
-				if (timebuilding > largestime) {
-					const UnitDef* builderDef = ai->cb->GetUnitDef(builderID);
-					vector<int>* canBuildList = &ai->ut->unitTypes[builderDef->id].canBuildList;
-					int size = canBuildList->size();
-					int thisBuildingID = i->def->id;
+			// must test if this builder can make this unit/building too
+			if (buildTime > largestTime) {
+				const std::vector<int>* canBuildList = &ai->ut->unitTypes[builderDef->id].canBuildList;
+				const int buildListSize = canBuildList->size();
 
-					for (int j = 0; j < size; j++) {
-						if (canBuildList->at(j) == thisBuildingID) {
-							largestime = timebuilding;
-							besttask = i;
-							break;
-						}
+				for (int j = 0; j < buildListSize; j++) {
+					if (canBuildList->at(j) == plan->def->id) {
+						largestTime = buildTime;
+						bestPlan = plan;
+						break;
 					}
 				}
 			}
-
-			if (largestime > 10.0f) {
-				assert(builderID >= 0);
-				assert(ai->MyUnits[builderID] !=  NULL);
-				// this is bad, as ai->MyUnits[builderID]->Build uses TaskPlanCreate()
-				ai->MyUnits[builderID]->Build(besttask->pos, besttask->def, -1);
-				return true;
 		}
+
+		if (largestTime > 10.0f) {
+			assert(builderID >= 0);
+
+			// bad, CUNIT::Build() uses TaskPlanCreate()
+			// should we really give build orders here?
+			// return u->Build(bestPlan->pos, bestPlan->def, -1);
+			// TaskPlanCreate(builderID, bestPlan->pos, bestPlan->def);
+			return true;
+		}
+	}
+
+	if (b6) {
+		std::stringstream msg;
+			msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
+			msg << "\tno joinable CAT_FACTORY build-tasks or task-plans for builder " << builderID;
+		L(ai, msg.str());
 	}
 
 	return false;
@@ -972,14 +1018,12 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, int category) {
 
 
 void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtdef) {
-	int category = ai->ut->GetCategory(builtdef);
+	UnitCategory category = ai->ut->GetCategory(builtdef);
 
 	// HACK
-	if (category == -1)
+	if (category >= CAT_LAST) {
 		return;
-
-	assert(category >= 0);
-	assert(category < LASTCATEGORY);
+	}
 
 	// find this builder
 	BuilderTracker* builderTracker = GetBuilderTracker(builder);
@@ -998,16 +1042,23 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 	}
 
 
-	bool existingtp = false;
-	for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
-		if (pos.distance2D(i->pos) < 20 && builtdef == i->def) {
+	bool existingTP = false;
+	for (std::list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
+		if (pos.distance2D(i->pos) < 20.0f && builtdef == i->def) {
 			// make sure there are no other TaskPlans
-			assert(!existingtp);
-			existingtp = true;
-			TaskPlanAdd(&*i, builderTracker);
+			if (!existingTP) {
+				existingTP = true;
+				TaskPlanAdd(&*i, builderTracker);
+			} else {
+				std::stringstream msg;
+					msg << "[CUnitHandler::TaskPlanCreate()] frame " << ai->cb->GetCurrentFrame() << "\n";
+					msg << "\ttask-plan for \"" << builtdef->humanName << "\" already present";
+					msg << " at position <" << pos.x << ", " << pos.y << ", " << pos.z << ">\n";
+				L(ai, msg.str());
+			}
 		}
 	}
-	if (!existingtp) {
+	if (!existingTP) {
 		TaskPlan tp;
 		tp.pos = pos;
 		tp.def = builtdef;
@@ -1017,7 +1068,7 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 		TaskPlanAdd(&tp, builderTracker);
 
 		if (category == CAT_DEFENCE)
-			ai->dm->AddDefense(pos,builtdef);
+			ai->dm->AddDefense(pos, builtdef);
 
 		TaskPlans[category].push_back(tp);
 	}
@@ -1035,8 +1086,8 @@ void CUnitHandler::TaskPlanAdd(TaskPlan* taskPlan, BuilderTracker* builderTracke
 }
 
 void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
-	list<TaskPlan>::iterator killplan;
-	list<int>::iterator killBuilder;
+	std::list<TaskPlan>::iterator killplan;
+	std::list<int>::iterator killBuilder;
 	// make sure this builder is in a TaskPlan
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId != 0);
@@ -1047,9 +1098,9 @@ void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
 	bool found = false;
 	bool found2 = false;
 
-	for (int k = 0; k < LASTCATEGORY;k++) {
-		for (list<TaskPlan>::iterator i = TaskPlans[k].begin(); i != TaskPlans[k].end(); i++) {
-			for (list<int>::iterator j = i->builders.begin(); j != i->builders.end(); j++) {
+	for (int k = 0; k < CAT_LAST;k++) {
+		for (std::list<TaskPlan>::iterator i = TaskPlans[k].begin(); i != TaskPlans[k].end(); i++) {
+			for (std::list<int>::iterator j = i->builders.begin(); j != i->builders.end(); j++) {
 				if (*j == builder) {
 					killplan = i;
 					killBuilder = j;
@@ -1060,7 +1111,7 @@ void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
 			}
 		}
 		if (found2) {
-			for (list<BuilderTracker*>::iterator i = killplan->builderTrackers.begin(); i != killplan->builderTrackers.end(); i++) {
+			for (std::list<BuilderTracker*>::iterator i = killplan->builderTrackers.begin(); i != killplan->builderTrackers.end(); i++) {
 				if (builderTracker == *i) {
 					// give it time to change command
 					builderTracker->commandOrderPushFrame = ai->cb->GetCurrentFrame();
@@ -1089,8 +1140,8 @@ void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
 }
 
 TaskPlan* CUnitHandler::GetTaskPlan(int taskPlanId) {
-	for (int k = 0; k < LASTCATEGORY;k++) {
-		for (list<TaskPlan>::iterator i = TaskPlans[k].begin(); i != TaskPlans[k].end(); i++) {
+	for (int k = 0; k < CAT_LAST;k++) {
+		for (std::list<TaskPlan>::iterator i = TaskPlans[k].begin(); i != TaskPlans[k].end(); i++) {
 			if (i->id == taskPlanId)
 				return  &*i;
 		}
@@ -1103,21 +1154,19 @@ TaskPlan* CUnitHandler::GetTaskPlan(int taskPlanId) {
 
 
 
-// not used
 bool CUnitHandler::TaskPlanExist(float3 pos, const UnitDef* builtdef) {
-	int category = ai->ut->GetCategory(builtdef);
+	UnitCategory category = ai->ut->GetCategory(builtdef);
 
-	if (category == -1)
+	if (category >= CAT_LAST) {
 		return false;
+	}
 
-	assert(category >= 0);
-	assert(category < LASTCATEGORY);
-
-	for (list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
+	for (std::list<TaskPlan>::iterator i = TaskPlans[category].begin(); i != TaskPlans[category].end(); i++) {
 		if (i->pos.distance2D(pos) < 100 && ai->ut->GetCategory(i->def) == category) {
 			return true;
 		}
 	}
+
 	return false;
 }
 
@@ -1137,7 +1186,7 @@ void CUnitHandler::MetalExtractorAdd(int extractorID) {
 }
 
 void CUnitHandler::MetalExtractorRemove(int extractorID) {
-	for (vector<MetalExtractor>::iterator i = MetalExtractors.begin(); i != MetalExtractors.end(); i++) {
+	for (std::vector<MetalExtractor>::iterator i = MetalExtractors.begin(); i != MetalExtractors.end(); i++) {
 		if (i->id == extractorID) {
 			MetalExtractors.erase(i);
 			break;
@@ -1175,7 +1224,7 @@ void CUnitHandler::NukeSiloAdd(int siloID) {
 }
 
 void CUnitHandler::NukeSiloRemove(int siloID) {
-	for (list<NukeSilo>::iterator i = NukeSilos.begin(); i != NukeSilos.end(); i++) {
+	for (std::list<NukeSilo>::iterator i = NukeSilos.begin(); i != NukeSilos.end(); i++) {
 		if (i->id == siloID) {
 			NukeSilos.erase(i);
 			break;
@@ -1198,10 +1247,10 @@ void CUnitHandler::FactoryAdd(int factory) {
 }
 
 void CUnitHandler::FactoryRemove(int id) {
-	list<Factory>::iterator iter;
+	std::list<Factory>::iterator iter;
 	bool factoryFound = false;
 
-	for (list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
+	for (std::list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
 		if (i->id == id) {
 			iter = i;
 			factoryFound = true;
@@ -1210,9 +1259,9 @@ void CUnitHandler::FactoryRemove(int id) {
 	}
 	if (factoryFound) {
 		// remove all builders from this plan
-		list<BuilderTracker*> builderTrackers = iter->supportBuilderTrackers;
+		std::list<BuilderTracker*> builderTrackers = iter->supportBuilderTrackers;
 
-		for (list<BuilderTracker*>::iterator i = builderTrackers.begin(); i != builderTrackers.end(); i++) {
+		for (std::list<BuilderTracker*>::iterator i = builderTrackers.begin(); i != builderTrackers.end(); i++) {
 			FactoryBuilderRemove(*i);
 		}
 
@@ -1236,19 +1285,31 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 	assert(builderTracker->factoryId == 0);
 	assert(builderTracker->customOrderId == 0);
 
-	for (list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
+	for (std::list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
 		CUNIT* u = ai->MyUnits[i->id];
 
 		// don't assist hubs (or factories that cannot be assisted)
 		if ((u->def())->canBeAssisted && !u->isHub()) {
-			float totalbuildercost = 0.0f;
+			float totalBuilderCost = 0.0f;
 
-			// HACK
-			for (list<int>::iterator j = i->supportbuilders.begin(); j != i->supportbuilders.end(); j++) {
-				totalbuildercost += ai->math->GetUnitCost(*j);
+			// HACK: get the sum of the heuristic costs of every
+			// builder that is already assisting this factory
+			for (std::list<int>::iterator j = i->supportbuilders.begin(); j != i->supportbuilders.end(); j++) {
+				if ((ai->MyUnits[*j]->def())->isCommander) {
+					continue;
+				}
+
+				totalBuilderCost += ai->math->GetUnitCost(*j);
 			}
 
-			if (totalbuildercost < ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO) {
+			// if this sum is less than the heuristic cost of the
+			// factory itself, add the builder to this factory
+			//
+			// this is based purely on the metal and energy costs
+			// of all involved parties, and silently expects that
+			// building _another_ factory would always be better
+			// than assisting it further
+			if (totalBuilderCost < (ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO * 3.0f)) {
 				builderTracker->factoryId = i->id;
 				i->supportbuilders.push_back(builderTracker->builderID);
 				i->supportBuilderTrackers.push_back(builderTracker);
@@ -1266,9 +1327,9 @@ void CUnitHandler::FactoryBuilderRemove(BuilderTracker* builderTracker) {
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId != 0);
 	assert(builderTracker->customOrderId == 0);
-	list<Factory>::iterator killfactory;
+	std::list<Factory>::iterator killfactory;
 
-	for (list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
+	for (std::list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
 		if (builderTracker->factoryId == i->id) {
 			i->supportbuilders.remove(builderTracker->builderID);
 			i->supportBuilderTrackers.remove(builderTracker);
@@ -1292,4 +1353,129 @@ void CUnitHandler::BuilderReclaimOrder(int builderId, float3 pos) {
 	assert(builderTracker->customOrderId == 0);
 	// Just use taskPlanCounter for the id.
 	builderTracker->customOrderId = taskPlanCounter++;
+}
+
+
+
+
+
+
+UpgradeTask* CUnitHandler::CreateUpgradeTask(int oldBuildingID, const float3& oldBuildingPos, const UnitDef* newBuildingDef) {
+	assert(FindUpgradeTask(oldBuildingID) == NULL);
+
+	// UpdateTasks() handles the deletion
+	UpgradeTask* task = new UpgradeTask(oldBuildingID, ai->cb->GetCurrentFrame(), oldBuildingPos, newBuildingDef);
+	upgradeTasks[oldBuildingID] = task;
+
+	return task;
+}
+
+UpgradeTask* CUnitHandler::FindUpgradeTask(int oldBuildingID) {
+	std::map<int, UpgradeTask*>::iterator it = upgradeTasks.find(oldBuildingID);
+
+	if (it != upgradeTasks.end()) {
+		return (it->second);
+	}
+
+	return NULL;
+}
+
+void CUnitHandler::RemoveUpgradeTask(UpgradeTask* task) {
+	assert(task != NULL);
+	assert(FindUpgradeTask(task->oldBuildingID) != NULL);
+
+	upgradeTasks.erase(task->oldBuildingID);
+	delete task;
+}
+
+bool CUnitHandler::AddUpgradeTaskBuilder(UpgradeTask* task, int builderID) {
+	std::set<int>::iterator it = task->builderIDs.find(builderID);
+
+	if (it == task->builderIDs.end()) {
+		task->builderIDs.insert(builderID);
+		return true;
+	}
+
+	return false;
+}
+
+void CUnitHandler::UpdateUpgradeTasks(int frame) {
+	std::map<int, UpgradeTask*>::iterator upgradeTaskIt;
+
+	std::list<UpgradeTask*> deadTasks;
+	std::list<UpgradeTask*>::iterator deadTasksIt;
+
+	for (upgradeTaskIt = upgradeTasks.begin(); upgradeTaskIt != upgradeTasks.end(); upgradeTaskIt++) {
+		UpgradeTask* task = upgradeTaskIt->second;
+
+		const int oldBuildingID = task->oldBuildingID;
+		const bool oldBuildingDead =
+			(ai->cb->GetUnitDef(oldBuildingID) == NULL) ||
+			(ai->cb->GetUnitHealth(oldBuildingID) < 0.0f);
+
+		std::set<int>::iterator builderIDsIt;
+		std::list<int> deadBuilderIDs;
+		std::list<int>::iterator deadBuilderIDsIt;
+
+
+		for (builderIDsIt = task->builderIDs.begin(); builderIDsIt != task->builderIDs.end(); builderIDsIt++) {
+			const int builderID = *builderIDsIt;
+			const bool builderDead =
+				(ai->cb->GetUnitDef(builderID) == NULL) ||
+				(ai->cb->GetUnitHealth(builderID) <= 0.0f);
+
+			if (builderDead) {
+				deadBuilderIDs.push_back(builderID);
+			} else {
+				const CCommandQueue* cq = ai->cb->GetCurrentUnitCommands(builderID);
+
+				if (oldBuildingDead) {
+					if (!task->reclaimStatus) {
+						task->creationFrame = frame;
+						task->reclaimStatus = true;
+					}
+
+					// give a build order for the replacement structure
+					if (cq->size() == 0 || ((cq->front()).id != -task->newBuildingDef->id)) {
+						std::stringstream msg;
+							msg << "[CUnitHandler::UpdateUpgradeTasks()] frame " << frame << "\n";
+							msg << "\tgiving build order for \"" << task->newBuildingDef->humanName;
+							msg << "\" to builder " << builderID << "\n";
+						L(ai, msg.str());
+
+						ai->MyUnits[builderID]->Build_ClosestSite(task->newBuildingDef, task->oldBuildingPos);
+					}
+				} else {
+					// give a reclaim order for the original structure
+					if (cq->size() == 0 || ((cq->front()).id != CMD_RECLAIM)) {
+						std::stringstream msg;
+							msg << "[CUnitHandler::UpdateUpgradeTasks()] frame " << frame << "\n";
+							msg << "\tgiving reclaim order for \"" << ai->cb->GetUnitDef(oldBuildingID)->humanName;
+							msg << "\" to builder " << builderID << "\n";
+						L(ai, msg.str());
+
+						ai->MyUnits[builderID]->Reclaim(oldBuildingID);
+					}
+				}
+			}
+		}
+
+
+		// filter any dead builders from the upgrade task
+		// (probably should tie this into UnitDestroyed())
+		for (deadBuilderIDsIt = deadBuilderIDs.begin(); deadBuilderIDsIt != deadBuilderIDs.end(); deadBuilderIDsIt++) {
+			task->builderIDs.erase(*deadBuilderIDsIt);
+		}
+
+		if (oldBuildingDead) {
+			// all builders have been given a build order
+			// for the replacement structure at this point,
+			// so the task itself is no longer needed
+			deadTasks.push_back(task);
+		}
+	}
+
+	for (deadTasksIt = deadTasks.begin(); deadTasksIt != deadTasks.end(); deadTasksIt++) {
+		RemoveUpgradeTask(*deadTasksIt);
+	}
 }

@@ -178,10 +178,12 @@ bool util_findDir(const char* dirs[], unsigned int numDirs,
 
 /**
  * Parses a properties file into a C [string, string] map.
- * Lines that contian only white-spaces and lines beginning
+ * Lines that contain only white-spaces and lines beginning
  * with '#' or ';' are ignored.
  * Regex for a valid property:
  * ^[\w]*[^;#][^=]*=.+$
+ * The strings in the <keys> and <values> arrays have to
+ * be freed by the callee.
  */
 int util_parsePropertiesFile(const char* propertiesFile,
 		const char* keys[], const char* values[], int maxProperties);

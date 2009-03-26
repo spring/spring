@@ -20,15 +20,21 @@
 
 #include "aidefines.h"
 
-#ifdef	__cplusplus
+#if	defined(__cplusplus)
 extern "C" {
 #endif
 
 
 /**
- * Skirmish AI Callback function pointers.
+ * @brief Skirmish AI Callback function pointers.
  * Each Skirmish AI instance will receive an instance of this struct
- * with the SInitEvent.
+ * in its init(teamId) function and with the SInitEvent.
+ *
+ * This struct contians only activities that leave the game state as it is,
+ * in spring terms: unsynced events
+ * Activities that change game state (-> synced events) are handled through
+ * AI commands, defined in AISCommands.h.
+ *
  * The teamId passed as the first parameter to each function in this struct
  * has to be the ID of the team that is controlled by the AI instance
  * using the callback.
@@ -60,22 +66,22 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 		int commandTopic, void* commandData);
 
 	/** Returns the major engine revision number (e.g. 0.77) */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getMajor)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getMajor)(int teamId);
 	/** Returns the minor engine revision */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getMinor)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getMinor)(int teamId);
 	/**
 	 * Clients that only differ in patchset can still play together.
 	 * Also demos should be compatible between patchsets.
 	 */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getPatchset)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getPatchset)(int teamId);
 	/** Returns additional information (compiler flags, svn revision etc.) */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getAdditional)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getAdditional)(int teamId);
 	/** Returns the time of build */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getBuildTime)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getBuildTime)(int teamId);
 	/** Returns "Major.Minor" */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getNormal)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getNormal)(int teamId);
 	/** Returns "Major.Minor.Patchset (Additional)" */
-	const char* const (CALLING_CONV *Clb_Engine_Version_getFull)(int teamId);
+	const char*       (CALLING_CONV *Clb_Engine_Version_getFull)(int teamId);
 
 	/** Returns the number of teams in this game */
 	int               (CALLING_CONV *Clb_Teams_getSize)(int teamId);
@@ -94,22 +100,22 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 	 * Returns the key at index infoIndex in the info map
 	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getKey)(int teamId, int infoIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_Info_getKey)(int teamId, int infoIndex);
 	/**
 	 * Returns the value at index infoIndex in the info map
 	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getValue)(int teamId, int infoIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_Info_getValue)(int teamId, int infoIndex);
 	/**
 	 * Returns the description of the key at index infoIndex in the info map
 	 * for this Skirmish AI, or NULL if the infoIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getDescription)(int teamId, int infoIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_Info_getDescription)(int teamId, int infoIndex);
 	/**
 	 * Returns the value associated with the given key in the info map
 	 * for this Skirmish AI, or NULL if not found.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_Info_getValueByKey)(int teamId, const char* const key);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_Info_getValueByKey)(int teamId, const char* const key);
 
 	/**
 	 * Returns the number of option key-value pairs in the options map
@@ -120,17 +126,17 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 	 * Returns the key at index optionIndex in the options map
 	 * for this Skirmish AI, or NULL if the optionIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getKey)(int teamId, int optionIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_OptionValues_getKey)(int teamId, int optionIndex);
 	/**
 	 * Returns the value at index optionIndex in the options map
 	 * for this Skirmish AI, or NULL if the optionIndex is invalid.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValue)(int teamId, int optionIndex);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValue)(int teamId, int optionIndex);
 	/**
 	 * Returns the value associated with the given key in the options map
 	 * for this Skirmish AI, or NULL if not found.
 	 */
-	const char* const (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValueByKey)(int teamId, const char* const key);
+	const char*       (CALLING_CONV *Clb_SkirmishAI_OptionValues_getValueByKey)(int teamId, const char* const key);
 
 	/** This will end up in infolog */
 	void              (CALLING_CONV *Clb_Log_log)(int teamId, const char* const msg);
@@ -151,13 +157,13 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 	 * and the InterfaceInfo.lua file are located, e.g.:
 	 * /usr/share/games/spring/AI/Interfaces/C/0.1/
 	 */
-	const char* const (CALLING_CONV *Clb_DataDirs_getConfigDir)(int teamId);
+	const char*       (CALLING_CONV *Clb_DataDirs_getConfigDir)(int teamId);
 	/**
 	 * This interfaces writeable data dir, which is where eg logs, caches
 	 * and learning data should be stored, e.g.:
 	 * ~/.spring/AI/Interfaces/C/0.1/
 	 */
-	const char* const (CALLING_CONV *Clb_DataDirs_getWriteableDir)(int teamId);
+	const char*       (CALLING_CONV *Clb_DataDirs_getWriteableDir)(int teamId);
 	/**
 	 * Returns an absolute path which consists of:
 	 * data-dir + AI-Interface-path + relative-path.
@@ -214,7 +220,9 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 
 // BEGINN misc callback functions
 /**
- * Returns the current game frame.
+ * Returns the current game time measured in frames (the
+ * simulation runs at 30 frames per second at normal speed)
+ *
  * DEPRECATED: this should not be used, as we get the frame from the
  * SUpdateEvent
  */
@@ -275,7 +283,9 @@ float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getStorage)(
 
 
 // BEGINN OBJECT File
+/// Return -1 when the file does not exist
 int (CALLING_CONV *Clb_File_getSize)(int teamId, const char* fileName);
+/// Returns false when file does not exist, or the buffer is too small
 bool (CALLING_CONV *Clb_File_getContent)(int teamId, const char* fileName,
 		void* buffer, int bufferLen);
 // bool (CALLING_CONV *Clb_File_locateForReading)(int teamId, char* fileName, int fileName_sizeMax);
@@ -296,7 +306,9 @@ int (CALLING_CONV *Clb_0MULTI1VALS0UnitDef)(int teamId, int unitDefIds[],
 int (CALLING_CONV *Clb_0MULTI1FETCH3UnitDefByName0UnitDef)(int teamId,
 		const char* unitName);
 //int (CALLING_CONV *Clb_UnitDef_getId)(int teamId, int unitDefId);
+/// Forces loading of the unit model
 float (CALLING_CONV *Clb_UnitDef_getHeight)(int teamId, int unitDefId);
+/// Forces loading of the unit model
 float (CALLING_CONV *Clb_UnitDef_getRadius)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isValid)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getName)(int teamId, int unitDefId);
@@ -793,6 +805,10 @@ int (CALLING_CONV *Clb_0MULTI1VALS3TeamUnits0Unit)(int teamId, int unitIds[],
 int (CALLING_CONV *Clb_0MULTI1SIZE3SelectedUnits0Unit)(int teamId);
 int (CALLING_CONV *Clb_0MULTI1VALS3SelectedUnits0Unit)(int teamId,
 		int unitIds[], int unitIds_max);
+/**
+ * Returns the unit's unitdef struct from which you can read all
+ * the statistics of the unit, do NOT try to change any values in it.
+ */
 int (CALLING_CONV *Clb_Unit_0SINGLE1FETCH2UnitDef0getDef)(int teamId,
 		int unitId);
 /**
@@ -841,10 +857,15 @@ int (CALLING_CONV *Clb_Unit_getAiHint)(int teamId, int unitId);
 int (CALLING_CONV *Clb_Unit_getStockpile)(int teamId, int unitId);
 int (CALLING_CONV *Clb_Unit_getStockpileQueued)(int teamId, int unitId);
 float (CALLING_CONV *Clb_Unit_getCurrentFuel)(int teamId, int unitId);
+/// The unit's max speed
 float (CALLING_CONV *Clb_Unit_getMaxSpeed)(int teamId, int unitId);
+/// The furthest any weapon of the unit can fire
 float (CALLING_CONV *Clb_Unit_getMaxRange)(int teamId, int unitId);
+/// The unit's max health
 float (CALLING_CONV *Clb_Unit_getMaxHealth)(int teamId, int unitId);
+/// How experienced the unit is (0.0f-1.0f)
 float (CALLING_CONV *Clb_Unit_getExperience)(int teamId, int unitId);
+/// Returns the group a unit belongs to, -1 if none
 int (CALLING_CONV *Clb_Unit_getGroup)(int teamId, int unitId);
 int (CALLING_CONV *Clb_Unit_0MULTI1SIZE1Command0CurrentCommand)(int teamId,
 		int unitId);
@@ -870,7 +891,7 @@ int (CALLING_CONV *Clb_Unit_CurrentCommand_0ARRAY1SIZE0getParams)(int teamId,
 		int unitId, int commandId);
 int (CALLING_CONV *Clb_Unit_CurrentCommand_0ARRAY1VALS0getParams)(int teamId,
 		int unitId, int commandId, float params[], int params_max);
-
+/// The commands that this unit can understand, other commands will be ignored
 int (CALLING_CONV *Clb_Unit_0MULTI1SIZE0SupportedCommand)(int teamId,
 		int unitId);
 /**
@@ -892,11 +913,13 @@ int (CALLING_CONV *Clb_Unit_SupportedCommand_0ARRAY1SIZE0getParams)(int teamId,
 int (CALLING_CONV *Clb_Unit_SupportedCommand_0ARRAY1VALS0getParams)(int teamId,
 		int unitId, int commandId, const char* params[], int params_max);
 
+/// The unit's current health
 float (CALLING_CONV *Clb_Unit_getHealth)(int teamId, int unitId);
 float (CALLING_CONV *Clb_Unit_getSpeed)(int teamId, int unitId);
 /**
  * Indicate the relative power of the unit,
  * used for experience calulations etc.
+ * This is sort of the measure of the units overall power.
  */
 float (CALLING_CONV *Clb_Unit_getPower)(int teamId, int unitId);
 int (CALLING_CONV *Clb_Unit_0MULTI1SIZE0ResourceInfo)(int teamId, int unitId);
@@ -906,10 +929,12 @@ float (CALLING_CONV *Clb_Unit_0REF1Resource2resourceId0getResourceMake)(
 		int teamId, int unitId, int resourceId);
 struct SAIFloat3 (CALLING_CONV *Clb_Unit_getPos)(int teamId, int unitId);
 bool (CALLING_CONV *Clb_Unit_isActivated)(int teamId, int unitId);
+/// Returns true if the unit is currently being built
 bool (CALLING_CONV *Clb_Unit_isBeingBuilt)(int teamId, int unitId);
 bool (CALLING_CONV *Clb_Unit_isCloaked)(int teamId, int unitId);
 bool (CALLING_CONV *Clb_Unit_isParalyzed)(int teamId, int unitId);
 bool (CALLING_CONV *Clb_Unit_isNeutral)(int teamId, int unitId);
+/// Returns the unit's build facing (0-3)
 int (CALLING_CONV *Clb_Unit_getBuildingFacing)(int teamId, int unitId);
 /** Number of the last frame this unit received an order from a player. */
 int (CALLING_CONV *Clb_Unit_getLastUserOrderFrame)(int teamId, int unitId);
@@ -964,16 +989,16 @@ bool (CALLING_CONV *Clb_Group_isSelected)(int teamId, int groupId);
 /**
  * archive filename
  */
-const char* const (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getFileName)(int teamId);
 
 /**
  * archive filename
  */
-const char* const (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
-const char* const (CALLING_CONV *Clb_Mod_getShortName)(int teamId);
-const char* const (CALLING_CONV *Clb_Mod_getVersion)(int teamId);
-const char* const (CALLING_CONV *Clb_Mod_getMutator)(int teamId);
-const char* const (CALLING_CONV *Clb_Mod_getDescription)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getHumanName)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getShortName)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getVersion)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getMutator)(int teamId);
+const char*       (CALLING_CONV *Clb_Mod_getDescription)(int teamId);
 
 bool              (CALLING_CONV *Clb_Mod_getAllowTeamColors)(int teamId);
 
@@ -1099,34 +1124,107 @@ struct SAIFloat3 (CALLING_CONV *Clb_Map_getStartPos)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Clb_Map_getMousePos)(int teamId);
 bool (CALLING_CONV *Clb_Map_isPosInCamera)(int teamId, struct SAIFloat3 pos,
 		float radius);
+/// Returns the maps width in full resolution
 int (CALLING_CONV *Clb_Map_getWidth)(int teamId);
+/// Returns the maps height in full resolution
 int (CALLING_CONV *Clb_Map_getHeight)(int teamId);
+/**
+ * Returns the height for the center of the squares.
+ * This differs slightly from the drawn map, since
+ * that one uses the height at the corners.
+ *
+ * - do NOT modify or delete the height-map (native code relevant only)
+ * - index 0 is top left
+ * - each data position is 8*8 in size
+ * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+ */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getHeightMap)(int teamId);
 int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId,
 		float heights[], int heights_max);
 float (CALLING_CONV *Clb_Map_getMinHeight)(int teamId);
 float (CALLING_CONV *Clb_Map_getMaxHeight)(int teamId);
+/**
+ * @brief the slope map
+ * The values are 1 minus the y-component of the (average) facenormal of the square.
+ *
+ * - do NOT modify or delete the height-map (native code relevant only)
+ * - index 0 is top left
+ * - each data position is 2*2 in size
+ * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+ * - the last value, bottom right, is at index (width/2 * height/2 - 1)
+ */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getSlopeMap)(int teamId);
 int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getSlopeMap)(int teamId, float slopes[],
 		int slopes_max);
+/**
+ * @brief the level of sight map
+ * gs->mapx >> losMipLevel
+ * A square with value zero means you do not have LOS coverage on it.
+ *Clb_Mod_getLosMipLevel
+ * - do NOT modify or delete the height-map (native code relevant only)
+ * - index 0 is top left
+ * - resolution factor (res) is min(1, gs->mapx << Clb_Mod_getLosMipLevel())
+ *   examples:
+ *   	+ losMipLevel(0) -> res(1)
+ *   	+ losMipLevel(1) -> res(2)
+ *   	+ losMipLevel(2) -> res(4)
+ *   	+ losMipLevel(3) -> res(8)
+ * - each data position is res*res in size
+ * - the value for the full resolution position (x, z) is at index (x/res * width + z/res)
+ * - the last value, bottom right, is at index (width/res * height/res - 1)
+ */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getLosMap)(int teamId);
 int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getLosMap)(int teamId,
 		unsigned short losValues[], int losValues_max);
+/**
+ * @brief the radar map
+ * A square with value 0 means you do not have radar coverage on it.
+ *
+ * - do NOT modify or delete the height-map (native code relevant only)
+ * - index 0 is top left
+ * - each data position is 8*8 in size
+ * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+ */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getRadarMap)(int teamId);
 int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getRadarMap)(int teamId,
 		unsigned short radarValues[], int radarValues_max);
+/**
+ * @brief the radar jammer map
+ * A square with value 0 means you do not have radar jamming coverage.
+ *
+ * - do NOT modify or delete the height-map (native code relevant only)
+ * - index 0 is top left
+ * - each data position is 8*8 in size
+ * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+ */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getJammerMap)(int teamId);
 int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getJammerMap)(int teamId,
 		unsigned short jammerValues[], int jammerValues_max);
+/**
+ * @brief resource maps
+ * This map shows the resource density on the map.
+ *
+ * - do NOT modify or delete the height-map (native code relevant only)
+ * - index 0 is top left
+ * - each data position is 2*2 in size
+ * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+ * - the last value, bottom right, is at index (width/2 * height/2 - 1)
+ */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap)(
 		int teamId, int resourceId);
 int (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap)(
 		int teamId, int resourceId, unsigned char resources[],
 		int resources_max);
 const char* (CALLING_CONV *Clb_Map_getName)(int teamId);
+/// Gets the elevation of the map at position (x, z)
 float (CALLING_CONV *Clb_Map_getElevationAt)(int teamId, float x, float z);
+/// Returns what value 255 in the resource map is worth
 float (CALLING_CONV *Clb_Map_0REF1Resource2resourceId0getMaxResource)(
 		int teamId, int resourceId);
+/// Returns extraction radius for resource extractors
 float (CALLING_CONV *Clb_Map_0REF1Resource2resourceId0getExtractorRadius)(
 		int teamId, int resourceId);
 float (CALLING_CONV *Clb_Map_getMinWind)(int teamId);
@@ -1147,6 +1245,11 @@ struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getSecondPosition)(int teamId,
 struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getColor)(int teamId, int lineId);
 bool (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(int teamId, int unitDefId,
 		struct SAIFloat3 pos, int facing);
+/**
+ * Returns the closest position from a given position that a building can be built at.
+ * @param minDist the distance in squares that the building must keep to other buildings,
+ *                to make it easier to keep free paths through a base
+ */
 struct SAIFloat3 (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId,
 		int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist,
 		int facing);
@@ -1577,7 +1680,7 @@ void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId,
 
 };
 
-#ifdef __cplusplus
+#if	defined(__cplusplus)
 } // extern "C"
 #endif
 

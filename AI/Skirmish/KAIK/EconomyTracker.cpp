@@ -1,11 +1,14 @@
-#include "EconomyTracker.h"
+#include "IncCREG.h"
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
-
+#include "KAIK.h"
+extern CKAIK* KAIKStateExt;
 
 CR_BIND(BuildingTracker, )
 CR_REG_METADATA(BuildingTracker, (
 	CR_MEMBER(unitUnderConstruction),
-	CR_MEMBER(category),
+	CR_ENUM_MEMBER(category),
 	CR_MEMBER(hpLastFrame),
 	CR_MEMBER(damage),
 	CR_MEMBER(hpSomeTimeAgo),
@@ -30,7 +33,7 @@ CR_REG_METADATA(EconomyUnitTracker, (
 	CR_MEMBER(buildingTracker),
 	CR_MEMBER(alive),
 	CR_MEMBER(dieFrame),
-	CR_MEMBER(category),
+	CR_ENUM_MEMBER(category),
 	CR_MEMBER(totalEnergyMake),
 	CR_MEMBER(totalMetalMake),
 	CR_MEMBER(totalEnergyUsage),
@@ -69,11 +72,15 @@ CR_REG_METADATA(CEconomyTracker, (
 	CR_RESERVED(16)
 ));
 
+void EconomyUnitTracker::PostLoad() {
+	unitDef = KAIKStateExt->GetAi()->cb->GetUnitDef(economyUnitId);
+}
 
 
-CEconomyTracker::CEconomyTracker(AIClasses* ai) {
-	this->ai = ai;
-	allTheBuildingTrackers.resize(LASTCATEGORY);
+
+CEconomyTracker::CEconomyTracker(AIClasses* aic) {
+	ai = aic;
+	allTheBuildingTrackers.resize(CAT_LAST);
 
 	if (ai) {
 		oldEnergy = ai->cb->GetEnergy();
@@ -85,7 +92,7 @@ CEconomyTracker::CEconomyTracker(AIClasses* ai) {
 	constructionEnergy = 0;
 	constructionMetal = 0;
 
-	for (int i = 0; i < LASTCATEGORY; i++) {
+	for (int i = 0; i < CAT_LAST; i++) {
 		allTheBuildingTrackers[i].clear();
 	}
 
@@ -93,16 +100,16 @@ CEconomyTracker::CEconomyTracker(AIClasses* ai) {
 }
 
 CEconomyTracker::~CEconomyTracker() {
-	for (list<EconomyUnitTracker*>::iterator i = deadEconomyUnitTrackers.begin(); i != deadEconomyUnitTrackers.end(); i++) {
+	for (std::list<EconomyUnitTracker*>::iterator i = deadEconomyUnitTrackers.begin(); i != deadEconomyUnitTrackers.end(); i++) {
 		delete *i;
 	}
-	for (list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
+	for (std::list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
 		delete *i;
 	}
-	for (list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
+	for (std::list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
 		delete *i;
 	}
-	for (list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
+	for (std::list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
 		delete *i;
 	}
 }
@@ -116,16 +123,16 @@ void CEconomyTracker::frameUpdate(int frame) {
 
 /*
 	// iterate over all the BuildTasks
-	for (int category = 0; category < LASTCATEGORY; category++) {
-		for (list<BuildTask>::iterator i = ai->uh->BuildTasks[category]->begin(); i != ai->uh->BuildTasks[category]->end(); i++) {
+	for (UnitCategory category = 0; category < CAT_LAST; category++) {
+		for (std::list<BuildTask>::iterator i = ai->uh->BuildTasks[category]->begin(); i != ai->uh->BuildTasks[category]->end(); i++) {
 			BuildTask bt = *i;
 			updateUnitUnderConstruction(&bt);
 		}
 	}
 */
 
-	for (int category = 0; category < LASTCATEGORY; category++) {
-		for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
+	for (int category = 0; category < CAT_LAST; category++) {
+		for (std::list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 			BuildingTracker* bt = &(*i);
 			updateUnitUnderConstruction(bt);
 		}
@@ -137,9 +144,9 @@ void CEconomyTracker::frameUpdate(int frame) {
 
 
 	// move the new EconomyUnitTrackers
-	list<EconomyUnitTracker*> removeList;
+	std::list<EconomyUnitTracker*> removeList;
 
-	for (list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
+	for (std::list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
 		EconomyUnitTracker* bt = *i;
 		assert(frame - bt->createFrame <= 16);
 
@@ -152,7 +159,7 @@ void CEconomyTracker::frameUpdate(int frame) {
 	}
 
 	// remove them from newEconomyUnitTrackers
-	for (list<EconomyUnitTracker*>::iterator i = removeList.begin(); i != removeList.end(); i++) {
+	for (std::list<EconomyUnitTracker*>::iterator i = removeList.begin(); i != removeList.end(); i++) {
 		newEconomyUnitTrackers.remove(*i);
 	}
 
@@ -164,7 +171,7 @@ void CEconomyTracker::frameUpdate(int frame) {
 	float metalUsage = 0.0f;
 
 	if (frame % 16 == 0) {
-		for (list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
+		for (std::list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker* bt = *i;
 			assert(bt->alive);
 
@@ -233,8 +240,8 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 		float constructionEnergy = 0;
 		float constructionMetal = 0;
 
-		for (int category = 0; category < LASTCATEGORY; category++ ) {
-			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
+		for (int category = 0; category < CAT_LAST; category++ ) {
+			for (std::list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 				BuildingTracker* bt = &*i;
 
 				// using the "semi-useless" GetCurrentFrame() stats only
@@ -250,7 +257,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 		float unitMetal = 0;
 
 		// do the EconomyUnitTrackers in activeEconomyUnitTrackers, it needs no changes (metalmakers == bad)
-		for (list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
+		for (std::list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker* eut = *i;
 
 			// we guess it's on ATM
@@ -259,7 +266,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 		}
 
 		// do the EconomyUnitTrackers in newEconomyUnitTrackers, it needs no changes (metalmakers == bad)
-		for (list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
+		for (std::list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker* eut = *i;
 
 			// we guess it's on ATM
@@ -268,7 +275,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 		}
 
 		// do the EconomyUnitTrackers in newEconomyUnitTrackers, it needs to test the ETA first (metalmakers == bad,  nanostall == bad)
-		for (list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
+		for (std::list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker* eut = *i;
 
 			if (eut->createFrame +16 < preFrame) {
@@ -315,7 +322,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 		float unitMetal = 0;
 
 		// do the EconomyUnitTrackers in activeEconomyUnitTrackers, it needs no changes (metalmakers == bad)
-		for (list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
+		for (std::list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker* eut = *i;
 
 			// we guess it's on ATM
@@ -328,13 +335,13 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 
 
 		// make a copy of the EconomyUnitTracker lists
-		list<EconomyUnitTracker*> allFutureEconomyUnitTrackers;
-		for (list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
+		std::list<EconomyUnitTracker*> allFutureEconomyUnitTrackers;
+		for (std::list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker* eut = *i;
 			allFutureEconomyUnitTrackers.push_back(eut);
 		}
 
-		for (list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
+		for (std::list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker* eut = *i;
 			allFutureEconomyUnitTrackers.push_back(eut);
 		}
@@ -345,7 +352,7 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 			unitEnergy = 0;
 			unitMetal = 0;
 
-			for (list<EconomyUnitTracker*>::iterator i = allFutureEconomyUnitTrackers.begin(); i != allFutureEconomyUnitTrackers.end(); i++) {
+			for (std::list<EconomyUnitTracker*>::iterator i = allFutureEconomyUnitTrackers.begin(); i != allFutureEconomyUnitTrackers.end(); i++) {
 				EconomyUnitTracker* eut = *i;
 
 				if (eut->createFrame +16 < preFrame && eut->createFrame + 32 >= preFrame) {
@@ -365,8 +372,8 @@ TotalEconomyState CEconomyTracker::makePrediction(int targetFrame) {
 			float constructionEnergy = 0;
 			float constructionMetal = 0;
 
-			for (int category = 0; category < LASTCATEGORY; category++) {
-				for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
+			for (int category = 0; category < CAT_LAST; category++) {
+				for (std::list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 					BuildingTracker* bt = &*i;
 
 					// HACK: using the "semi-useless" GetCurrentFrame() stats only
@@ -429,11 +436,11 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 	int frame = ai->cb->GetCurrentFrame();
 	bt->economyUnitTracker->buildingTracker = bt;
 	// make the builder list
-	list<int>* builderList = 0;
+	std::list<int>* builderList = 0;
 
 	if (bt->buildTask) {
 		bool found = false;
-		for (list<BuildTask>::iterator i = ai->uh->BuildTasks[bt->category].begin(); i != ai->uh->BuildTasks[bt->category].end(); i++) {
+		for (std::list<BuildTask>::iterator i = ai->uh->BuildTasks[bt->category].begin(); i != ai->uh->BuildTasks[bt->category].end(); i++) {
 			if (i->id == unitUnderConstruction) {
 				builderList = &i->builders;
 				found = true;
@@ -444,7 +451,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 		assert(found);
 	} else {
 		bool found = false;
-		for (list<Factory>::iterator i = ai->uh->Factories.begin(); i != ai->uh->Factories.end(); i++) {
+		for (std::list<Factory>::iterator i = ai->uh->Factories.begin(); i != ai->uh->Factories.end(); i++) {
 			if (i->id == bt->factory) {
 				builderList = &i->supportbuilders;
 				found = true;
@@ -464,7 +471,7 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 	float maxBuildPower = 0;
 	float maxAssignedBuildPower = 0;
 
-	for (list<int>::iterator i = builderList->begin(); i != builderList->end(); i++) {
+	for (std::list<int>::iterator i = builderList->begin(); i != builderList->end(); i++) {
 		int builder = *i;
 		UnitResourceInfo resourceInfo;
 		bool isAlive = ai->cb->GetUnitResourceInfo(builder, &resourceInfo);
@@ -601,11 +608,12 @@ void CEconomyTracker::updateUnitUnderConstruction(BuildingTracker* bt) {
 }
 
 
-void CEconomyTracker::UnitCreated(int unit) {
-	if(trackerOff)
+void CEconomyTracker::UnitCreated(int unitID) {
+	if (trackerOff) {
 		return;
+	}
 
-	int frame = ai->cb->GetCurrentFrame();
+	const int frame = ai->cb->GetCurrentFrame();
 
 	if (frame == 0) {
 		// ignore the commander
@@ -614,30 +622,35 @@ void CEconomyTracker::UnitCreated(int unit) {
 
 	EconomyUnitTracker* economyUnitTracker = new EconomyUnitTracker;
 	economyUnitTracker->clear();
-	economyUnitTracker->economyUnitId = unit;
+	economyUnitTracker->economyUnitId = unitID;
 	economyUnitTracker->createFrame = -frame;
 	economyUnitTracker->alive = true;
-	economyUnitTracker->category = GCAT(unit);
-	economyUnitTracker->unitDef = ai->cb->GetUnitDef(unit);
+	economyUnitTracker->category = GCAT(unitID);
+	economyUnitTracker->unitDef = ai->cb->GetUnitDef(unitID);
+
 	SetUnitDefDataInTracker(economyUnitTracker);
 	underConstructionEconomyUnitTrackers.push_back(economyUnitTracker);
 
 
 	// find it (slow++)
-	bool found = false;
-	for (int category = 0; category < LASTCATEGORY; category++ ) {
-		for (list<BuildTask>::iterator i = ai->uh->BuildTasks[category].begin(); i != ai->uh->BuildTasks[category].end(); i++) {
+	int  catIdx = int(CAT_COMM);
+	bool found  = false;
+
+	for (; catIdx < int(CAT_LAST); catIdx++ ) {
+		std::list<BuildTask>::iterator i;
+
+		for (i = ai->uh->BuildTasks[catIdx].begin(); i != ai->uh->BuildTasks[catIdx].end(); i++) {
 			BuildTask bt = *i;
 
-			if (bt.id == unit) {
+			if (bt.id == unitID) {
 				// add this new unit to the list
 				BuildingTracker tracker;
 				tracker.clear();
 				tracker.economyUnitTracker = economyUnitTracker;
 				tracker.buildTask = true;
-				tracker.category = category;
-				tracker.unitUnderConstruction = unit;
-				allTheBuildingTrackers[category].push_front(tracker);
+				tracker.category = UnitCategory(catIdx);
+				tracker.unitUnderConstruction = unitID;
+				allTheBuildingTrackers[catIdx].push_front(tracker);
 				found = true;
 				break;
 			}
@@ -646,22 +659,22 @@ void CEconomyTracker::UnitCreated(int unit) {
 
 	if (!found) {
 		// it is made by a factory
-		float3 unitPos = ai->cb->GetUnitPos(unit);
-		int category = GCAT(unit);
+		float3 unitPos = ai->cb->GetUnitPos(unitID);
+		UnitCategory category = GCAT(unitID);
 
-		for (list<Factory>::iterator i = ai->uh->Factories.begin(); i != ai->uh->Factories.end(); i++) {
+		for (std::list<Factory>::iterator i = ai->uh->Factories.begin(); i != ai->uh->Factories.end(); i++) {
 			Factory factory = *i;
 			int factoryId = factory.id;
 			// bad, no easy way to get the factory of the unit
 			float3 factoryPos = ai->cb->GetUnitPos(factoryId);
 			float distance = factoryPos.distance2D(unitPos);
 
-			if (distance < 100) {
+			if (distance < 100.0f) {
 				BuildingTracker tracker;
 				tracker.clear();
 				tracker.economyUnitTracker = economyUnitTracker;
 				tracker.category = category;
-				tracker.unitUnderConstruction = unit;
+				tracker.unitUnderConstruction = unitID;
 				tracker.factory = factoryId;
 				allTheBuildingTrackers[category].push_front(tracker);
 				found = true;
@@ -670,9 +683,8 @@ void CEconomyTracker::UnitCreated(int unit) {
 		}
 	}
 
-	if (!found) {
-		// unit constructor not found?!
-	}
+	// unit constructor not found?!
+	// assert(found);
 }
 
 
@@ -710,13 +722,12 @@ void CEconomyTracker::SetUnitDefDataInTracker(EconomyUnitTracker* economyUnitTra
 
 	if (economyUnitTracker->unitDef->extractsMetal) {
 		// it's a mex: must find out what it will make later on (look at the metalMap spot data?)
-		vector<float3> spots = ai->mm->VectoredSpots;
+		std::vector<float3> spots = ai->mm->VectoredSpots;
 		float3 thisPos = ai->cb->GetUnitPos(economyUnitTracker->economyUnitId);
 		bool foundMexSpot = false;
 
-		for (vector<float3>::iterator i = spots.begin(); i != spots.end(); i++) {
-			float distance = i->distance2D(thisPos);
-			if (distance < 48) {
+		for (std::vector<float3>::iterator i = spots.begin(); i != spots.end(); i++) {
+			if (i->distance2D(thisPos) < 48) {
 				// HACK
 				float metalMakeFromThisSpot = i->y;
 				metalMakeFromThisSpot *= economyUnitTracker->unitDef->extractsMetal;
@@ -757,8 +768,8 @@ void CEconomyTracker::UnitFinished(int unit) {
 
 	// move the new EconomyUnitTrackers
 	bool found = false;
-	list<EconomyUnitTracker*> removeList;
-	for (list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
+	std::list<EconomyUnitTracker*> removeList;
+	for (std::list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
 		EconomyUnitTracker *bt = *i;
 		if (bt->economyUnitId == unit) {
 			 bt->createFrame = frame;
@@ -772,15 +783,15 @@ void CEconomyTracker::UnitFinished(int unit) {
 
 	assert(found);
 	// remove them from underConstructionEconomyUnitTrackers
-	for (list<EconomyUnitTracker*>::iterator i = removeList.begin(); i != removeList.end(); i++) {
+	for (std::list<EconomyUnitTracker*>::iterator i = removeList.begin(); i != removeList.end(); i++) {
 		underConstructionEconomyUnitTrackers.remove(*i);
 	}
 
-	int category = ai->ut->GetCategory(unit);
+	UnitCategory category = ai->ut->GetCategory(unit);
 	found = false;
 
-	if (category != -1) {
-		for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
+	if (category != CAT_LAST) {
+		for (std::list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 			BuildingTracker* bt = &*i;
 			if (bt->unitUnderConstruction == unit) {
 				updateUnitUnderConstruction(bt);
@@ -807,7 +818,7 @@ void CEconomyTracker::UnitDestroyed(int unit) {
 
 	// move the dead EconomyUnitTracker
 	bool found = false;
-	for (list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
+	for (std::list<EconomyUnitTracker*>::iterator i = activeEconomyUnitTrackers.begin(); i != activeEconomyUnitTrackers.end(); i++) {
 		EconomyUnitTracker *bt = *i;
 		if (bt->economyUnitId == unit) {
 			assert(bt->alive);
@@ -821,7 +832,7 @@ void CEconomyTracker::UnitDestroyed(int unit) {
 		}
 	}
 	if (!found) {
-		for (list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
+		for (std::list<EconomyUnitTracker*>::iterator i = underConstructionEconomyUnitTrackers.begin(); i != underConstructionEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker *bt = *i;
 			if (bt->economyUnitId == unit) {
 				assert(bt->alive);
@@ -836,7 +847,7 @@ void CEconomyTracker::UnitDestroyed(int unit) {
 		}
 	}
 	if (!found) {
-		for (list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
+		for (std::list<EconomyUnitTracker*>::iterator i = newEconomyUnitTrackers.begin(); i != newEconomyUnitTrackers.end(); i++) {
 			EconomyUnitTracker *bt = *i;
 			if (bt->economyUnitId == unit) {
 				assert(bt->alive);
@@ -853,11 +864,11 @@ void CEconomyTracker::UnitDestroyed(int unit) {
 
 	// if unit was being built, remove it
 	if (ai->cb->UnitBeingBuilt(unit)) {
-		int category = ai->ut->GetCategory(unit);
+		UnitCategory category = ai->ut->GetCategory(unit);
 		bool found = false;
 
-		if (category != -1) {
-			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
+		if (category != CAT_LAST) {
+			for (std::list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 				BuildingTracker *bt = &*i;
 				if (bt->unitUnderConstruction == unit) {
 					// hp will be negative if this re-enabled
@@ -881,11 +892,11 @@ void CEconomyTracker::UnitDamaged(int unit, float damage) {
 		return;
 
 	if (ai->cb->UnitBeingBuilt(unit)) {
-		int category = ai->ut->GetCategory(unit);
+		UnitCategory category = ai->ut->GetCategory(unit);
 		bool found = false;
 
-		if (category != -1) {
-			for (list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
+		if (category != CAT_LAST) {
+			for (std::list<BuildingTracker>::iterator i = allTheBuildingTrackers[category].begin(); i != allTheBuildingTrackers[category].end(); i++) {
 				BuildingTracker *bt = &*i;
 				if (bt->unitUnderConstruction == unit) {
 					bt->damage += damage;

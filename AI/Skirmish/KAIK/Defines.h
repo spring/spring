@@ -1,18 +1,16 @@
-#ifndef DEFINES_H
-#define DEFINES_H
+#ifndef KAIK_DEFINES_HDR
+#define KAIK_DEFINES_HDR
 
 #include "AIExport.h" // for aiexport_getVersion()
 
-#define AI_VERSION_NUMBER aiexport_getVersion()
-//#define AI_VERSION_NUMBER "0.13"
-#define AI_NAME			std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
-#define AI_DATE			"20/10/2008"
-#define AI_VERSION		AI_NAME + " (rev. " + AI_DATE + ")"
-#define AI_CREDITS		"(original developer: Krogothe, current maintainer: Kloot)"
+#define AI_VERSION_NUMBER	aiexport_getVersion()
+#define AI_NAME				std::string("KAIK ") + AI_VERSION_NUMBER + " Unofficial"
+#define AI_DATE				"26/03/2009"
+#define AI_VERSION			AI_NAME + " (rev. " + AI_DATE + ")"
+#define AI_CREDITS			"(developed by Krogothe, Tournesol, Firenu; now maintained by Kloot)"
 
 // Logger
-#define L(a)			(*ai->LOGGER << a << std::endl)
-#define LN(a)			(*ai->LOGGER << a)
+#define L(ai, msg)		(ai->logger->Log(msg));
 
 // Shortcuts
 #define GCAT(a)			(ai->ut->GetCategory(a))
@@ -28,6 +26,7 @@
 #define TIMER_SECS		ai->math->TimerSecs()
 
 // Folders
+//    relative to "AI/Skirmish/KAIK/0.13"
 #define ROOTFOLDER		""
 
 #define LOGFOLDER		std::string(ROOTFOLDER) + "Logs/"
@@ -40,19 +39,11 @@
 #define ERRORVECTOR		float3(-1, 0, 0)
 
 // Maths
+#define MY_FLT_MAX		3.40282347e+38F
+#define MY_FLT_MIN		1.17549435e-38F
+
 #define DEG2RAD			0.01745329252f
 #define RAD2DEG			57.2957795f
-
-
-// Unit Categories
-enum {
-	CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER,
-	CAT_BUILDER, CAT_ESTOR, CAT_MSTOR, CAT_FACTORY,
-	CAT_DEFENCE, CAT_G_ATTACK, CAT_NUKE, /* CAT_SHIELD, */
-	LASTCATEGORY
-};
-
-
 
 // Map sizing multipliers
 #define METALMAP2MAPUNIT		 2
@@ -109,5 +100,26 @@ enum {
 
 #define MAX_NUKE_SILOS		16
 
+// Unit categories
+enum UnitCategory {
+	CAT_COMM, CAT_ENERGY, CAT_MEX, CAT_MMAKER,
+	CAT_BUILDER, CAT_ESTOR, CAT_MSTOR, CAT_FACTORY,
+	CAT_DEFENCE, CAT_G_ATTACK, CAT_NUKE, /* CAT_SHIELD, */
+	CAT_LAST
+};
+
+// UnitDef categories
+enum UnitDefCategory {
+	CAT_GROUND_FACTORY,
+	CAT_GROUND_BUILDER,
+	CAT_GROUND_ATTACKER,
+	CAT_METAL_EXTRACTOR,
+	CAT_METAL_MAKER,
+	CAT_METAL_STORAGE,
+	CAT_ENERGY_STORAGE,
+	CAT_GROUND_ENERGY,
+	CAT_GROUND_DEFENSE,
+	CAT_NUKE_SILO
+};
 
 #endif

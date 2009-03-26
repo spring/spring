@@ -1,5 +1,4 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 #include <boost/lexical_cast.hpp>
 #include "mmgr.h"
 

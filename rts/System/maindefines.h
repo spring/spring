@@ -36,9 +36,11 @@
 		#define FPRINTF   fprintf_s
 		#define SNPRINTF  sprintf_s
 		#define VSNPRINTF vsprintf_s
-		#define STRCPY    strcpy_s
-		#define STRNCPY_  strncpy_s
-		#define STRCAT    strcat_s
+		#define STRCPY    strcpy
+		#define STRCPYS   strcpy_s
+		#define STRNCPY   strncpy_s
+		#define STRCAT    strcat
+		#define STRCATS   strcat_s
 		#define STRNCAT   strncat_s
 		#define FOPEN     fopen_s
 	#else              // Visual Studio 2003
@@ -47,8 +49,10 @@
 		#define SNPRINTF  _snprintf
 		#define VSNPRINTF _vsnprintf
 		#define STRCPY    _strcpy
-		#define STRNCPY_  _strncpy
+		#define STRCPYS(dst, dstSize, src) _strcpy(dst, src)
+		#define STRNCPY   _strncpy
 		#define STRCAT    _strcat
+		#define STRCATS(dst, dstSize, src) _strcat(dst, src)
 		#define STRNCAT   _strncat
 		#define FOPEN     _fopen
 	#endif
@@ -60,16 +64,16 @@
 	#define SNPRINTF   snprintf
 	#define VSNPRINTF  vsnprintf
 	#define STRCPY     strcpy
-	#define STRNCPY_   strncpy
+	#define STRCPYS(dst, dstSize, src) strcpy(dst, src)
+	#define STRNCPY    strncpy
 	#define STRCAT     strcat
+	#define STRCATS(dst, dstSize, src) strcat(dst, src)
 	#define STRNCAT    strncat
 	#define FOPEN      fopen
 	#define STRCASECMP strcasecmp
 #endif // _MSC_VER
-#define STRNCPY(dst, src, dst_sizeMax) \
-	STRNCPY_(dst, src, dst_sizeMax); \
-	/* Safety net! Add the NULL just in case src is larger than dst. */ \
-	dst[dst_sizeMax-1] = '\0';
+
+#define FREE(x) free(x); x = NULL;
 
 // define a platform independent path separator C-string and char
 #ifndef sPS

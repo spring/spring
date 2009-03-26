@@ -1,4 +1,6 @@
-#include "AttackHandler.h"
+#include "IncCREG.h"
+#include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
 #define K_MEANS_ELEVATION 40
 #define IDLE_GROUP_ID 0
@@ -101,7 +103,7 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 	if (attackGroupID == IDLE_GROUP_ID) {
 		bool found_dead_unit_in_attackHandler = false;
 
-		for (list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
+		for (std::list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
 			if (*it == unitID) {
 				attackUnits.erase(it);
 				found_dead_unit_in_attackHandler = true;
@@ -109,11 +111,13 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 			}
 		}
 
-		if (!found_dead_unit_in_attackHandler) {
+		if (found_dead_unit_in_attackHandler) {
 			// one of our (idle) attack units died but
 			// we somehow have lost track of it before
-			L("[CAttackHandler::UnitDestroyed(" << unitID << ")] idle attacker destroyed but already erased");
-			return;
+			std::stringstream msg;
+				msg << "[CAttackHandler::UnitDestroyed()] frame " << (ai->cb->GetCurrentFrame()) << "\n";
+				msg << "\tidle attack unit " << unitID << " was destroyed but already erased\n";
+			L(ai, msg.str());
 		}
 	}
 
@@ -121,7 +125,7 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 		// unit in an attack-group died
 		bool foundGroup = false;
 		bool removedDeadUnit = false;
-		list<CAttackGroup>::iterator it;
+		std::list<CAttackGroup>::iterator it;
 
 		for (it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			if (it->GetGroupID() == attackGroupID) {
@@ -143,8 +147,8 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 	else if (attackGroupID == AIR_GROUP_ID) {
 		// unit in air-group died
 		bool armed = true;
-		list<int>::iterator unarmedAirIt = unarmedAirUnits.begin();
-		list<int>::iterator armedAirIt = armedAirUnits.begin();
+		std::list<int>::iterator unarmedAirIt = unarmedAirUnits.begin();
+		std::list<int>::iterator armedAirIt = armedAirUnits.begin();
 
 		for (; unarmedAirIt != unarmedAirUnits.end(); unarmedAirIt++) {
 			if (unitID == *unarmedAirIt) {
@@ -166,7 +170,7 @@ void CAttackHandler::UnitDestroyed(int unitID) {
 	else {
 		// unit in stuck-units group
 		bool found_dead_in_stuck_units = false;
-		list<pair<int, float3> >::iterator it;
+		std::list<std::pair<int, float3> >::iterator it;
 
 		for (it = stuckUnits.begin(); it != stuckUnits.end(); it++) {
 			if (it->first == unitID) {
@@ -225,9 +229,6 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	if (startIndex > endIndex)
 		startIndex = endIndex;
 
-	static const unsigned int logMsg_maxSize = 512;
-	char logMsg[logMsg_maxSize];
-
 	if (kMeansK <= 1 || startIndex == endIndex) {
 		if (startIndex >= kMeansK)
 			startIndex = kMeansK - 1;
@@ -235,8 +236,8 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 		float3 pos = kMeansBase[startIndex] + float3((RANDINT % SAFE_SPOT_DISTANCE), 0, (RANDINT % SAFE_SPOT_DISTANCE));
 		pos.y = ai->cb->GetElevation(pos.x, pos.z);
 
-		SNPRINTF(logMsg, logMsg_maxSize, "AH::FSA1 minS: %3.2f, maxS: %3.2f,", minSafety, maxSafety);
-		PRINTF("%s", logMsg);
+		// SNPRINTF(logMsg, logMsg_maxSize, "AH::FSA1 minS: %3.2f, maxS: %3.2f,", minSafety, maxSafety);
+		// PRINTF("%s", logMsg);
 		return pos;
 	}
 
@@ -245,7 +246,7 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	assert(endIndex <= kMeansK);
 
 	// get a subset of the k-means
-	vector<float3> subset;
+	std::vector<float3> subset;
 
 	for (int i = startIndex; i < endIndex; i++) {
 		// subset[i] = kMeansBase[startIndex + i];
@@ -265,7 +266,7 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 	assert(subset.size() > 0);
 
 	if ((whichPath + 1) < (int) subset.size() && subset[whichPath].distance2D(subset[whichPath + 1]) > KMEANS_MINIMUM_LINE_LENGTH) {
-		vector<float3> posPath;
+		std::vector<float3> posPath;
 		//TODO: implement one in pathfinder without radius (or unit ID)
 		//	if (size > (int)kMeansBase.size())
 		//		size = kMeansBase.size();
@@ -274,27 +275,31 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 		float3 res;
 
 		if (dist > 0) {
-			// L("attackhandler:findsafespot #1 dist > 0 from path, using res from pather. dist:" << dist);
+			// dist > 0 from path, use res from pather
 			int whichPos = RANDINT % (int) posPath.size();
 			res = posPath[whichPos];
 		} else {
-			// L("attackhandler:findsafespot #2 dist == 0 from path, using first point. dist:" << dist);
+			// dist == 0 from path, using first point
 			res = subset[whichPath];
 		}
 
+		/*
 		SNPRINTF(logMsg, logMsg_maxSize,
 				"AH::FSA-2 path:minS: %3.2f, maxS: %3.2f, pos:x: %f5.1 y: %f5.1 z: %f5.1",
 				minSafety, maxSafety, res.x, res.y, res.z);
 		PRINTF("%s", logMsg);
+		*/
 		return res;
 	}
 	else {
 		assert(whichPath < (int) subset.size());
 		float3 res = subset[whichPath];
+		/*
 		SNPRINTF(logMsg, logMsg_maxSize,
 				"AH::FSA-3 minS: %f, maxS: %f, pos:x: %f y: %f z: %f",
 				minSafety, maxSafety, res.x, res.y, res.z);
 		PRINTF("%s", logMsg);
+		*/
 		return res;
 	}
 }
@@ -328,7 +333,7 @@ float3 CAttackHandler::FindUnsafeArea(float3 pos) {
 
 
 float CAttackHandler::DistanceToBase(float3 pos) {
-	float closestDistance = FLT_MAX;
+	float closestDistance = MY_FLT_MAX;
 
 	for (int i = 0; i < this->kMeansK; i++) {
 		float3 mean = this->kMeansBase[i];
@@ -341,7 +346,7 @@ float CAttackHandler::DistanceToBase(float3 pos) {
 
 
 float3 CAttackHandler::GetClosestBaseSpot(float3 pos) {
-	float closestDistance = FLT_MAX;
+	float closestDistance = MY_FLT_MAX;
 	int index = 0;
 
 	for (int i = 0; i < this->kMeansK; i++) {
@@ -358,7 +363,7 @@ float3 CAttackHandler::GetClosestBaseSpot(float3 pos) {
 }
 
 
-vector<float3> CAttackHandler::KMeansIteration(vector<float3> means, vector<float3> unitPositions, int newK) {
+std::vector<float3> CAttackHandler::KMeansIteration(std::vector<float3> means, std::vector<float3> unitPositions, int newK) {
 	assert(newK > 0 && means.size() > 0);
 	int numUnits = unitPositions.size();
 	// change the number of means according to newK
@@ -373,14 +378,12 @@ vector<float3> CAttackHandler::KMeansIteration(vector<float3> means, vector<floa
 	}
 
 	// check all positions and assign them to means, complexity n*k for one iteration
-	vector<int> unitsClosestMeanID;
-	unitsClosestMeanID.resize(numUnits, -1);
-	vector<int> numUnitsAssignedToMean;
-	numUnitsAssignedToMean.resize(newK, 0);
+	std::vector<int> unitsClosestMeanID(numUnits, -1);
+	std::vector<int> numUnitsAssignedToMean(newK, 0);
 
 	for (int i = 0; i < numUnits; i++) {
 		float3 unitPos = unitPositions.at(i);
-		float closestDistance = FLT_MAX;
+		float closestDistance = MY_FLT_MAX;
 		int closestIndex = -1;
 
 		for (int m = 0; m < newK; m++) {
@@ -401,8 +404,7 @@ vector<float3> CAttackHandler::KMeansIteration(vector<float3> means, vector<floa
 	// change the means according to which positions are assigned to them
 	// use meanAverage for indexes with 0 pos'es assigned
 	// make a new means list
-	vector<float3> newMeans;
-	newMeans.resize(newK, float3(0, 0, 0));
+	std::vector<float3> newMeans(newK, float3(0, 0, 0));
 
 	for (int i = 0; i < numUnits; i++) {
 		int meanIndex = unitsClosestMeanID[i];
@@ -431,24 +433,23 @@ void CAttackHandler::UpdateKMeans(void) {
 	// we want local variable definitions
 	{
 		// get positions of all friendly units and put them in a vector (completed buildings only)
-		int numFriendlies = 0;
-		vector<float3> friendlyPositions;
-		int friendlies[MAX_UNITS];
-		numFriendlies = ai->cb->GetFriendlyUnits(friendlies);
+		std::vector<float3> friendlyPositions;
+		int numFriendlies = ai->cb->GetFriendlyUnits(&ai->unitIDs[0]);
 
 		for (int i = 0; i < numFriendlies; i++) {
-			int unit = friendlies[i];
+			int unit = ai->unitIDs[i];
 			CUNIT* u = ai->MyUnits[unit];
 			// its a building, it has hp, and its mine (0)
 			if (this->UnitBuildingFilter(u->def()) && this->UnitReadyFilter(unit) && u->owner() == 0) {
 				friendlyPositions.push_back(u->pos());
 			}
 		}
+
 		// hack to make it at least 1 unit, should only happen when you have no base
 		if (friendlyPositions.size() < 1) {
 			// it has to be a proper position, unless there are no proper positions
-			if (numFriendlies > 0 && ai->cb->GetUnitDef(friendlies[0]) && ai->MyUnits[friendlies[0]]->owner() == 0) {
-				friendlyPositions.push_back(ai->cb->GetUnitPos(friendlies[0]));
+			if (numFriendlies > 0 && ai->cb->GetUnitDef(ai->unitIDs[0]) && ai->MyUnits[ai->unitIDs[0]]->owner() == 0) {
+				friendlyPositions.push_back(ai->cb->GetUnitPos(ai->unitIDs[0]));
 			}
 			else {
 			 	// when everything is dead
@@ -457,31 +458,30 @@ void CAttackHandler::UpdateKMeans(void) {
 		}
 
 		// calculate a new K. change the formula to adjust max K, needs to be 1 minimum.
-		this->kMeansK = int(std::min((float) (KMEANS_BASE_MAX_K), 1.0f + sqrtf((float)numFriendlies + 0.01f)));
+		this->kMeansK = int(std::min((float) (KMEANS_BASE_MAX_K), 1.0f + sqrtf((float) numFriendlies + 0.01f)));
 		// iterate k-means algo over these positions and move the means
 		this->kMeansBase = KMeansIteration(this->kMeansBase, friendlyPositions, this->kMeansK);
 	}
 	
 	// update enemy position k-means
 	// get positions of all enemy units and put them in a vector (completed buildings only)
-	int numEnemies = 0;
-	vector<float3> enemyPositions;
-	int enemies[MAX_UNITS];
-	numEnemies = ai->cheat->GetEnemyUnits(enemies);
+	std::vector<float3> enemyPositions;
+	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
 
 	for (int i = 0; i < numEnemies; i++) {
-		const UnitDef* ud = ai->cheat->GetUnitDef(enemies[i]);
+		const UnitDef* ud = ai->cheat->GetUnitDef(ai->unitIDs[i]);
+
 		if (this->UnitBuildingFilter(ud)) {
-//		if (this->UnitBuildingFilter(ud) && this->UnitReadyFilter(unit)) {
-			enemyPositions.push_back(ai->cheat->GetUnitPos(enemies[i]));
+			// if (this->UnitReadyFilter(unit)) { ... }
+			enemyPositions.push_back(ai->cheat->GetUnitPos(ai->unitIDs[i]));
 		}
 	}
 
 	// hack to make it at least 1 unit, should only happen when you have no base
 	if (enemyPositions.size() < 1) {
 		// it has to be a proper position, unless there are no proper positions
-		if (numEnemies > 0 && ai->cheat->GetUnitDef(enemies[0])) {
-			enemyPositions.push_back(ai->cheat->GetUnitPos(enemies[0]));
+		if (numEnemies > 0 && ai->cheat->GetUnitDef(ai->unitIDs[0])) {
+			enemyPositions.push_back(ai->cheat->GetUnitPos(ai->unitIDs[0]));
 		}
 		else {
 			// when everything is dead
@@ -497,8 +497,7 @@ void CAttackHandler::UpdateKMeans(void) {
 
 	// base k-means and enemy base k-means are updated
 	// approach: add up (max - distance) to enemies
-	vector<float> proximity;
-	proximity.resize(kMeansK, 0.0000001f);
+	std::vector<float> proximity(kMeansK, 0.0000001f);
 	const float mapDiagonal = sqrt(pow((float) ai->cb->GetMapHeight() * 8,2) + pow((float) ai->cb->GetMapWidth() * 8, 2) + 1.0f);
 
 	for (int f = 0; f < kMeansK; f++) {
@@ -552,12 +551,12 @@ bool CAttackHandler::UnitReadyFilter(int unit) {
 
 
 void CAttackHandler::AirAttack(int currentFrame) {
-	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
+	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
 	int bestTargetID = -1;
 	float bestTargetCost = -1.0f;
 
 	for (int i = 0; i < numEnemies; i++) {
-		int enemyID = unitArray[i];
+		int enemyID = ai->unitIDs[i];
 		const UnitDef* udef = (enemyID >= 0)? ai->cheat->GetUnitDef(enemyID): 0;
 
 		if (udef) {
@@ -576,7 +575,7 @@ void CAttackHandler::AirAttack(int currentFrame) {
 
 	if (bestTargetID != -1) {
 		// attack en-masse, regardless of AA
-		for (list<int>::iterator it = armedAirUnits.begin(); it != armedAirUnits.end(); it++) {
+		for (std::list<int>::iterator it = armedAirUnits.begin(); it != armedAirUnits.end(); it++) {
 			CUNIT* u = ai->MyUnits[*it];
 			u->Attack(bestTargetID);
 		}
@@ -590,7 +589,7 @@ void CAttackHandler::AirPatrol(int currentFrame) {
 	// get and make up some outer base perimeter
 	// points for air patrol route updates (if we
 	// aren't attacking)
-	vector<float3> outerMeans;
+	std::vector<float3> outerMeans;
 	const unsigned int numClusters = 3;
 	outerMeans.reserve(numClusters);
 
@@ -616,7 +615,7 @@ void CAttackHandler::AirPatrol(int currentFrame) {
 		return;
 	}
 
-	for (list<int>::iterator it = armedAirUnits.begin(); it != armedAirUnits.end(); it++) {
+	for (std::list<int>::iterator it = armedAirUnits.begin(); it != armedAirUnits.end(); it++) {
 		CUNIT* u = ai->MyUnits[*it];
 		// do this first in case we are in the enemy base
 		u->Move(outerMeans[0] + float3(0, 50, 0));
@@ -717,14 +716,14 @@ inline bool ComparePairs(const std::pair<int, float>& l, const std::pair<int, fl
 
 // sort all enemy targets in decreasing order by unit value
 void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& potentialTargets) {
-	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
+	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
 	float minTargetValue = 500.0f;
 
 	std::vector<std::pair<int, float> > staticTargets;
 	std::vector<std::pair<int, float> > mobileTargets;
 
 	for (int i = 0; i < numEnemies; i++) {
-		int targetID = unitArray[i];
+		int targetID = ai->unitIDs[i];
 		const UnitDef* udef = ai->cheat->GetUnitDef(targetID);
 
 		if (udef) {
@@ -767,50 +766,49 @@ void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& pot
 
 
 void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
-	// get all enemies on map
-	int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
+	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
 
-	if (numEnemies) {
-		vector<int> allEligibleEnemies;
+	if (numEnemies > 0) {
+		std::vector<int> allEligibleEnemies;
 		allEligibleEnemies.reserve(numEnemies);
 
 		// make a vector with the positions of all
 		// non-air and non-cloaked (non-dead) enemies
 		for (int i = 0; i < numEnemies; i++) {
-			if (unitArray[i] != -1) {
-				const UnitDef* ud = ai->cheat->GetUnitDef(unitArray[i]);
+			if (ai->unitIDs[i] != -1) {
+				const UnitDef* ud = ai->cheat->GetUnitDef(ai->unitIDs[i]);
 
 				if (ud) {
 					bool canFly = ud->canfly;
 					bool isCloaked = ud->canCloak && ud->startCloaked;
-					bool goodPos = !(ai->cheat->GetUnitPos(unitArray[i]) == ZEROVECTOR);
+					bool goodPos = !(ai->cheat->GetUnitPos(ai->unitIDs[i]) == ZEROVECTOR);
 
 					if (!canFly && !isCloaked && goodPos) {
-						allEligibleEnemies.push_back(unitArray[i]);
+						allEligibleEnemies.push_back(ai->unitIDs[i]);
 					}
 				}
 			}
 		}
 
-		vector<int> availableEnemies;
-		vector<float3> enemyPositions;
+		std::vector<int> availableEnemies;
+		std::vector<float3> enemyPositions;
 		availableEnemies.reserve(allEligibleEnemies.size());
 
 		// make a list of all enemies already assigned to (non-defending) groups
-		list<int> takenEnemies;
-		for (list<CAttackGroup>::iterator groupIt = attackGroups.begin(); groupIt != attackGroups.end(); groupIt++) {
+		std::list<int> takenEnemies;
+		for (std::list<CAttackGroup>::iterator groupIt = attackGroups.begin(); groupIt != attackGroups.end(); groupIt++) {
 			if ((!groupIt->defending) && (groupIt->GetGroupID() != group_in->GetGroupID())) {
-				list<int> assignedEnemies = groupIt->GetAssignedEnemies();
+				std::list<int> assignedEnemies = groupIt->GetAssignedEnemies();
 				takenEnemies.merge(assignedEnemies);
 			}
 		}
 
 		// filter out assigned enemies from eligible enemies
-		for (vector<int>::iterator enemy = allEligibleEnemies.begin(); enemy != allEligibleEnemies.end(); enemy++) {
+		for (std::vector<int>::iterator enemy = allEligibleEnemies.begin(); enemy != allEligibleEnemies.end(); enemy++) {
 			int enemyID = *enemy;
 			bool taken = false;
 
-			for (list<int>::iterator it = takenEnemies.begin(); it != takenEnemies.end(); it++) {
+			for (std::list<int>::iterator it = takenEnemies.begin(); it != takenEnemies.end(); it++) {
 				if (*it == enemyID) {
 					taken = true;
 					break;
@@ -823,11 +821,12 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 			}
 		}
 
-		if (availableEnemies.size() == 0)
+		if (availableEnemies.size() == 0) {
 			return;
+		}
 
 		// find cheapest (best) target for this group
-		vector<float3> pathToTarget;
+		std::vector<float3> pathToTarget;
 		float3 groupPos = group_in->GetGroupPos();
 
 		ai->pather->micropather->SetMapData(ai->pather->MoveArrays[group_in->GetWorstMoveType()],
@@ -845,21 +844,20 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 			float3 endPos = pathToTarget[lastIndex];
 
 			// get all enemies surrounding endpoint of found path
-			int enemiesInArea = ai->cheat->GetEnemyUnits(unitArray, endPos, ATTACKED_AREA_RADIUS);
+			int enemiesInArea = ai->cheat->GetEnemyUnits(&ai->unitIDs[0], endPos, ATTACKED_AREA_RADIUS);
 			float powerOfEnemies = 0.000001;
 
 			// calculate combined "firepower" of armed enemies near endpoint
 			for (int i = 0; i < enemiesInArea; i++) {
-				if (ai->cheat->GetUnitDef(unitArray[i])->weapons.size() > 0) {
-					powerOfEnemies += ai->cheat->GetUnitPower(unitArray[i]);
+				if (ai->cheat->GetUnitDef(ai->unitIDs[i])->weapons.size() > 0) {
+					powerOfEnemies += ai->cheat->GetUnitPower(ai->unitIDs[i]);
 				}
 			}
 
 			if ((enemiesInArea > 0) && group_in->Size() >= 4 && (group_in->Power() > powerOfEnemies * 1.25f)) {
 				// assign target to this group
 				group_in->AssignTarget(pathToTarget, pathToTarget.back(), ATTACKED_AREA_RADIUS);
-			}
-			else {
+			} else {
 				// group too weak, forget about this target
 				group_in->ClearTarget();
 			}
@@ -871,7 +869,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 void CAttackHandler::AssignTargets(int frameNr) {
 	if (frameNr % 120 == 0) {
 		// for each attack-group check whether it needs new target, if so assign one
-		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
+		for (std::list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			CAttackGroup* group = &(*it);
 			// force group target updates every 300 frames
 			if (group->NeedsNewTarget() || frameNr % 300 == 0) {
@@ -887,21 +885,21 @@ void CAttackHandler::CombineGroups(void) {
 	bool removedSomething = false;
 
 	// pick a group A
-	for (list<CAttackGroup>::iterator groupA = attackGroups.begin(); groupA != attackGroups.end(); groupA++) {
+	for (std::list<CAttackGroup>::iterator groupA = attackGroups.begin(); groupA != attackGroups.end(); groupA++) {
 		// if it is defending
 		if (groupA->defending) {
 			int groupAid = groupA->GetGroupID();
 			float3 groupApos = groupA->GetGroupPos();
 			// look for other groups that are defending
-			for (list<CAttackGroup>::iterator groupB = attackGroups.begin(); groupB != attackGroups.end(); groupB++) {
+			for (std::list<CAttackGroup>::iterator groupB = attackGroups.begin(); groupB != attackGroups.end(); groupB++) {
 				// if they are close, combine
 				float3 groupBpos = groupB->GetGroupPos();
 				int groupBid = groupB->GetGroupID();
 
 				if ((groupB->defending) && (groupAid != groupBid) && (groupApos.distance2D(groupBpos) < 1500)) {
-					vector<int>* bUnits = groupB->GetAllUnits();
+					std::vector<int>* bUnits = groupB->GetAllUnits();
 
-					for (vector<int>::iterator groupBunit = bUnits->begin(); groupBunit != bUnits->end(); groupBunit++) {
+					for (std::vector<int>::iterator groupBunit = bUnits->begin(); groupBunit != bUnits->end(); groupBunit++) {
 						groupA->AddUnit(*groupBunit);
 					}
 
@@ -947,12 +945,13 @@ void CAttackHandler::Update(int frameNr) {
 
 	// check for stuck units in each attack group every second
 	if (frameNr % 30 == 0) {
-		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
+		for (std::list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			int stuckUnit = it->PopStuckUnit();
+
 			if (stuckUnit != -1 && ai->cb->GetUnitDef(stuckUnit) != NULL) {
-				pair<int, float3> foo;
-				foo.first = stuckUnit;
-				foo.second = ai->cb->GetUnitPos(stuckUnit);
+				std::pair<int, float3> foo;
+					foo.first = stuckUnit;
+					foo.second = ai->cb->GetUnitPos(stuckUnit);
 				stuckUnits.push_back(foo);
 				// popped a stuck unit from attack group it->GetGroupID()
 				ai->MyUnits[stuckUnit]->Stop();
@@ -976,18 +975,19 @@ void CAttackHandler::Update(int frameNr) {
 	// nearby defending group of less than 16 units
 	if (frameNr % 30 == 0 && attackUnits.size() > 0) {
 		CAttackGroup* existingGroup = NULL;
-		for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
+		for (std::list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 			if (it->Size() < 16 && it->defending && this->DistanceToBase(it->GetGroupPos()) < 300) {
-				existingGroup = &(*it);
 				// KLOOTNOTE: pick the first valid group, not the last
+				existingGroup = &(*it);
 				break;
 			}
 		}
 
 		if (existingGroup != NULL) {
 			// add all new units to found group
-			for (list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
+			for (std::list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
 				int unit = *it;
+
 				if (ai->cb->GetUnitDef(unit) != NULL) {
 					existingGroup->AddUnit(unit);
 				}
@@ -1001,7 +1001,7 @@ void CAttackHandler::Update(int frameNr) {
 			CAttackGroup newGroup(ai, newGroupID);
 			newGroup.defending = true;
 
-			for (list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
+			for (std::list<int>::iterator it = attackUnits.begin(); it != attackUnits.end(); it++) {
 				int unit = *it;
 				if (ai->cb->GetUnitDef(unit) != NULL) {
 					newGroup.AddUnit(unit);
@@ -1021,7 +1021,7 @@ void CAttackHandler::Update(int frameNr) {
 	AssignTargets(frameNr);
 
 	// update current groups
-	for (list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
+	for (std::list<CAttackGroup>::iterator it = attackGroups.begin(); it != attackGroups.end(); it++) {
 		it->Update(frameNr);
 	}
 }

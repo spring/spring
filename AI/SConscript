@@ -123,7 +123,7 @@ class AWKExecutor:
 	instances = {}
 	awk_bin = 'awk'
 	if sys.platform == 'win32':
-		awk_bin = 'gawk.exe'
+		awk_bin = os.path.join(env['mingwlibsdir'], 'bin', 'awk.exe')
 
 	myEnv = None
 	myName = []
@@ -284,6 +284,9 @@ class JavaProject:
 	def doPrepareEnv(self):
 		self.env['JAVACLASSPATH'] = self.createClassPath()
 		self.env['JAVASOURCEPATH'] = self.createSourcePath()
+		if (self.env['debug'] > 0):
+			# Generate all java debug info
+			env['JAVACFLAGS'] = '-g'
 		return
 
 	def createCompileCommand(self):
@@ -486,37 +489,6 @@ for baseName in aiinterfaces_toBuild:
 	myObjs = objs + mySourceObjs
 	os.chdir(cwdPrev)
 	if baseName == 'Java':
-		if myEnv['platform'] != 'windows':
-			# for windows we use libjvm.dll.a from mingwlibs
-			myEnv['JAVA_HOME'] = myEnv.get('JAVA_HOME', os.environ['JAVA_HOME'])
-			myEnv.AppendUnique(LIBPATH = [
-				os.path.join(myEnv['JAVA_HOME'], 'jre/lib/i386/server'),
-				os.path.join(myEnv['JAVA_HOME'], 'jre/lib/amd64/server'),
-				os.path.join(myEnv['JAVA_HOME'], 'jre/lib/ppc/server'),
-				os.path.join(myEnv['JAVA_HOME'], 'jre/lib/sparc/server'),
-				'/usr/lib/server',
-				'/usr/local/lib/server',
-				'/usr/lib/jvm/java/lib/server',
-				'/usr/lib/java/jre/lib/i386/server',
-				'/usr/local/lib/java/jre/lib/i386/server',
-				'/usr/local/share/java/jre/lib/i386/server',
-				'/usr/lib/j2sdk1.4-sun/jre/lib/i386/server',
-				'/usr/lib/j2sdk1.5-sun/jre/lib/i386/server',
-				'/opt/sun-jdk-1.5.0.04/jre/lib/amd64/server',
-				'/usr/lib/jvm/java-6-sun-1.6.0.00/jre/lib/amd64/server',
-				'/usr/lib/java/jre/lib/amd64/server',
-				'/usr/local/lib/java/jre/lib/amd64/server',
-				'/usr/local/share/java/jre/lib/amd64/server',
-				'/usr/lib/j2sdk1.4-sun/jre/lib/amd64/server',
-				'/usr/lib/j2sdk1.5-sun/jre/lib/amd64/server',
-				'/usr/lib/java/jre/lib/ppc/server',
-				'/usr/local/lib/java/jre/lib/ppc/server',
-				'/usr/local/share/java/jre/lib/ppc/server',
-				'/usr/lib/j2sdk1.4-sun/jre/lib/ppc/server',
-				'/usr/lib/j2sdk1.5-sun/jre/lib/ppc/server',
-				])
-		myEnv.AppendUnique(LIBS = ['jvm'])
-
 		# generate class files
 		springSrcDir = filelist.getAbsDir(env, '..')
 		springInterfaceSrcDir = os.path.join(springSrcDir, 'rts', 'ExternalAI', 'Interface')
@@ -545,48 +517,6 @@ for baseName in aiinterfaces_toBuild:
 		if os.name == 'nt':
 			for i, e in enumerate(awkVars):
 				awkVars[i] = e.replace('\\', '/')
-
-		#def debugFunc1_buildTime(toCreateDir):
-                #
-		#	sys.stderr.write("\n\ncreating dirs .?.?. \n")
-		#	
-		#	genDirEvent = os.path.join(genSrcPkgDir, 'event')
-		#	sys.stderr.write('dir event: ' + genDirEvent + "\n")
-		#	if not os.path.exists(genDirEvent):
-		#		sys.stderr.write('creating dir: ' + genDirEvent + "...\n")
-		#		try:
-		#			os.makedirs(genDirEvent)
-		#		except os.error:
-		#			sys.stderr.write('failed creating dir ' + genDirEvent + "\n")
-		#		sys.stderr.write("created dir: " + genDirEvent + "\n")
-		#	
-		#	genDirCommand = os.path.join(genSrcPkgDir, 'command')
-		#	sys.stderr.write('dir command: ' + genDirCommand + "\n")
-		#	if not os.path.exists(genDirCommand):
-		#		sys.stderr.write('creating dir: ' + genDirCommand + "...\n")
-		#		try:
-		#			os.makedirs(genDirCommand)
-		#		except os.error:
-		#			sys.stderr.write('failed creating dir ' + genDirCommand + "\n")
-		#		sys.stderr.write("created dir: " + genDirCommand + "\n")
-		#	
-		#	genDirOo = os.path.join(genSrcPkgDir, 'oo')
-		#	sys.stderr.write('dir oo: ' + genDirOo + "\n")
-		#	if not os.path.exists(genDirOo):
-		#		sys.stderr.write('creating dir: ' + genDirOo + "...\n")
-		#		try:
-		#			os.makedirs(genDirOo)
-		#		except os.error:
-		#			sys.stderr.write('failed creating dir ' + genDirOo + "\n")
-		#		sys.stderr.write("created dir: " + genDirOo + "\n")
-		#	
-		#	sys.stderr.write("\n")
-		#debugFunc1_action = SCons.Action.ActionFactory(debugFunc1_buildTime, lambda name: 'Debugging "%s"' % name)
-		#debugFunc1_cmd = myEnv.Command('#dummyTarget_debugFunc1', os.path.join(springInterfaceSrcDir, 'AISEvents.h'), debugFunc1_action('#dummyTarget_debugFunc1'))
-		#Alias(baseName, debugFunc1_cmd)
-		#Alias('AIInterfaces', debugFunc1_cmd)
-		#Default(debugFunc1_cmd)
-		
 
 		# wrapp the AI Events
 		awkScripts = []

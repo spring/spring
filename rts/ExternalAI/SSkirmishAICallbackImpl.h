@@ -21,20 +21,20 @@
 // Doc-comments for the functions in this header can be found in this file
 #include "Interface/SSkirmishAICallback.h"
 
-#ifdef	__cplusplus
+#if	defined(__cplusplus)
 extern "C" {
 #endif
 
 EXPORT(int              ) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int commandId,
 		int commandTopic, void* commandData);
 
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getMajor(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getMinor(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getPatchset(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getAdditional(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getBuildTime(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getNormal(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Engine_Version_getFull(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getMajor(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getMinor(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getPatchset(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getAdditional(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getBuildTime(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getNormal(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Engine_Version_getFull(int teamId);
 
 
 EXPORT(int              ) skirmishAiCallback_Teams_getSize(int teamId);
@@ -43,15 +43,15 @@ EXPORT(int              ) skirmishAiCallback_SkirmishAIs_getSize(int teamId);
 EXPORT(int              ) skirmishAiCallback_SkirmishAIs_getMax(int teamId);
 
 EXPORT(int              ) skirmishAiCallback_SkirmishAI_Info_getSize(int teamId);
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getKey(int teamId, int infoIndex);
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getValue(int teamId, int infoIndex);
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getDescription(int teamId, int infoIndex);
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_Info_getValueByKey(int teamId, const char* const key);
+EXPORT(const char*      ) skirmishAiCallback_SkirmishAI_Info_getKey(int teamId, int infoIndex);
+EXPORT(const char*      ) skirmishAiCallback_SkirmishAI_Info_getValue(int teamId, int infoIndex);
+EXPORT(const char*      ) skirmishAiCallback_SkirmishAI_Info_getDescription(int teamId, int infoIndex);
+EXPORT(const char*      ) skirmishAiCallback_SkirmishAI_Info_getValueByKey(int teamId, const char* const key);
 
 EXPORT(int              ) skirmishAiCallback_SkirmishAI_OptionValues_getSize(int teamId);
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int teamId, int optionIndex);
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int teamId, int optionIndex);
-EXPORT(const char* const) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int teamId, const char* const key);
+EXPORT(const char*      ) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int teamId, int optionIndex);
+EXPORT(const char*      ) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int teamId, int optionIndex);
+EXPORT(const char*      ) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int teamId, const char* const key);
 
 EXPORT(void             ) skirmishAiCallback_Log_log(int teamId, const char* const msg);
 EXPORT(void             ) skirmishAiCallback_Log_exception(int teamId, const char* const msg, int severety, bool die);
@@ -61,10 +61,10 @@ EXPORT(int              ) skirmishAiCallback_DataDirs_Roots_getSize(int UNUSED_t
 EXPORT(bool             ) skirmishAiCallback_DataDirs_Roots_getDir(int UNUSED_teamId, char* path, int path_sizeMax, int dirIndex);
 EXPORT(bool             ) skirmishAiCallback_DataDirs_Roots_locatePath(int UNUSED_teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
 EXPORT(char*            ) skirmishAiCallback_DataDirs_Roots_allocatePath(int UNUSED_teamId, const char* const relPath, bool writeable, bool create, bool dir);
-EXPORT(const char* const) skirmishAiCallback_DataDirs_getConfigDir(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_DataDirs_getConfigDir(int teamId);
 EXPORT(bool             ) skirmishAiCallback_DataDirs_locatePath(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
 EXPORT(char*            ) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* const relPath, bool writeable, bool create, bool dir);
-EXPORT(const char* const) skirmishAiCallback_DataDirs_getWriteableDir(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_DataDirs_getWriteableDir(int teamId);
 
 // BEGINN misc callback functions
 EXPORT(int              ) skirmishAiCallback_Game_getCurrentFrame(int teamId);
@@ -570,13 +570,13 @@ EXPORT(bool             ) skirmishAiCallback_Group_isSelected(int teamId, int gr
 
 
 // BEGINN OBJECT Mod
-EXPORT(const char* const) skirmishAiCallback_Mod_getFileName(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Mod_getFileName(int teamId);
 
-EXPORT(const char* const) skirmishAiCallback_Mod_getHumanName(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Mod_getShortName(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Mod_getVersion(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Mod_getMutator(int teamId);
-EXPORT(const char* const) skirmishAiCallback_Mod_getDescription(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Mod_getHumanName(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Mod_getShortName(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Mod_getVersion(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Mod_getMutator(int teamId);
+EXPORT(const char*      ) skirmishAiCallback_Mod_getDescription(int teamId);
 
 EXPORT(bool             ) skirmishAiCallback_Mod_getAllowTeamColors(int teamId);
 
@@ -958,7 +958,7 @@ EXPORT(void) skirmishAiCallback_WeaponDef_0MAP1VALS0getCustomParams(int teamId,
 		int weaponDefId, const char* values[]);
 // END OBJECT WeaponDef
 
-#ifdef __cplusplus
+#if	defined(__cplusplus)
 } // extern "C"
 #endif
 

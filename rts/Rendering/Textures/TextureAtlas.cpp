@@ -6,7 +6,6 @@
 #include "Bitmap.h"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
-#include "Rendering/GL/myGL.h"
 #include "Util.h"
 #include "Exceptions.h"
 #include "Vec2.h"

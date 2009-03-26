@@ -132,6 +132,19 @@ int CAIAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius,
 	return numUnits;
 }
 
+int CAIAICheats::GetFeatures(int* featureIds, int featureIds_max) {
+	setCheatsEnabled(true);
+	int numFeatures = aiCallback->GetFeatures(featureIds, featureIds_max);
+	setCheatsEnabled(false);
+	return numFeatures;
+}
+int CAIAICheats::GetFeatures(int* featureIds, int featureIds_max, const float3& pos, float radius) {
+	setCheatsEnabled(true);
+	int numFeatures = aiCallback->GetFeatures(featureIds, featureIds_max, pos, radius);
+	setCheatsEnabled(false);
+	return numFeatures;
+}
+
 int CAIAICheats::GetUnitTeam(int unitId) {
 	setCheatsEnabled(true);
 	int t = aiCallback->GetUnitTeam(unitId);

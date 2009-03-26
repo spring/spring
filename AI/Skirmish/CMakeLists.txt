@@ -16,33 +16,6 @@ set(Java_AIINTERFACE_TARGET "Java-AI-Interface")
 
 #set(SKIRMISHAI_FIND_QUIETLY True)
 
-## KAI
-set(KAI_SRC "${SKIRMISH_SRC}/KAI")
-if (BUILD_C_AIINTERFACE AND EXISTS ${KAI_SRC})
-	set(KAI_VERS "UNKNOWN_VERSION")
-	if (EXISTS ${KAI_SRC}/VERSION)
-		file(STRINGS "${KAI_SRC}/VERSION" KAI_VERS LIMIT_COUNT 1)
-	endif (EXISTS ${KAI_SRC}/VERSION)
-	#set(KAI_TARGET "KAI-${KAI_VERS}")
-	set(KAI_TARGET "KAI")
-	set(KAI_DATA_DIR ${SKIRMISH_DATA}/KAI/${KAI_VERS})
-	if (NOT SKIRMISHAI_FIND_QUIETLY)
-		message(STATUS "Found Skirmish AI: KAI ${KAI_VERS}")
-	endif (NOT SKIRMISHAI_FIND_QUIETLY)
-
-	# install data files
-	#install(DIRECTORY "${KAI_SRC}/data/"
-	#		DESTINATION "${KAI_DATA_DIR}")
-
-	aux_source_directory(${KAI_SRC} kai)
-	#add_library(${KAI_TARGET} MODULE ${kai} ${creg} ${cutilsenv})
-	#target_link_libraries(${KAI_TARGET} legacycpp)
-	#set_target_properties(${KAI_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
-	#set_target_properties(${KAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
-	#set_target_properties(${KAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "KAI")
-	#install (TARGETS ${KAI_TARGET} DESTINATION ${KAI_DATA_DIR})
-endif (BUILD_C_AIINTERFACE AND EXISTS ${KAI_SRC})
-
 
 ## KAIK
 set(KAIK_SRC "${SKIRMISH_SRC}/KAIK")
@@ -258,6 +231,7 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullJavaAI_SRC})
 	add_custom_target(${NullJavaAI_TARGET} ALL
 		DEPENDS ${Java_AIINTERFACE_TARGET}
 		COMMAND "${JAVA_COMPILE}"
+			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 			"-cp" "${NullJavaAI_CLASSPATH}"
 			"-d" "${JAVA_BUILD_DIR}"
 			${NullJavaAI_JAVA_SOURCES}
@@ -320,6 +294,7 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 	add_custom_target(${NullOOJavaAI_TARGET} ALL
 		DEPENDS ${Java_AIINTERFACE_TARGET}
 		COMMAND "${JAVA_COMPILE}"
+			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
 			"-cp" "${NullOOJavaAI_CLASSPATH}"
 			"-d" "${JAVA_BUILD_DIR}"
 			${NullOOJavaAI_JAVA_SOURCES}
@@ -338,34 +313,3 @@ if (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
 	install (FILES ${BUILD_DIR}/${JAR_FILE_BIN} DESTINATION ${NullOOJavaAI_DATA_DIR})
 	install (FILES ${BUILD_DIR}/${JAR_FILE_SRC} DESTINATION ${NullOOJavaAI_DATA_DIR}/jlib)
 endif (BUILD_Java_AIINTERFACE AND EXISTS ${NullOOJavaAI_SRC})
-
-
-## JCAI
-# does currently not build in win32
-if (UNIX)
-	set(JCAI_SRC "${SKIRMISH_SRC}/JCAI")
-	if (BUILD_C_AIINTERFACE AND EXISTS ${JCAI_SRC})
-		set(JCAI_VERS "UNKNOWN_VERSION")
-		if (EXISTS ${JCAI_SRC}/VERSION)
-			file(STRINGS "${JCAI_SRC}/VERSION" JCAI_VERS LIMIT_COUNT 1)
-		endif (EXISTS ${JCAI_SRC}/VERSION)
-		#set(JCAI_TARGET "JCAI-${JCAI_VERS}")
-		set(JCAI_TARGET "JCAI")
-		set(JCAI_DATA_DIR ${SKIRMISH_DATA}/JCAI/${JCAI_VERS})
-		if (NOT SKIRMISHAI_FIND_QUIETLY)
-			message(STATUS "Found Skirmish AI: JCAI ${JCAI_VERS}")
-		endif (NOT SKIRMISHAI_FIND_QUIETLY)
-
-		# install data files
-		#install(DIRECTORY "${JCAI_SRC}/data/"
-		#		DESTINATION "${JCAI_DATA_DIR}")
-
-		aux_source_directory(${JCAI_SRC} jcai)
-		#add_library(${JCAI_TARGET} MODULE ${jcai})
-		#target_link_libraries(${JCAI_TARGET} legacycpp)
-		#set_target_properties(${JCAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
-		#set_target_properties(${JCAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "JCAI")
-		#install (TARGETS ${JCAI_TARGET} DESTINATION ${JCAI_DATA_DIR})
-	endif (BUILD_C_AIINTERFACE AND EXISTS ${JCAI_SRC})
-endif (UNIX)
-

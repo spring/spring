@@ -55,21 +55,6 @@ EXPORT(int) initStatic(int _interfaceId,
 	char* propValues[maxProps];
 	int numProps = 0;
 
-/*
-	char dd_r[2048];
-	bool dd_r_found = util_dataDirs_findFile("", dd_r, false, false, false);
-	if (!dd_r_found) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Unable to find read-only data-dir: %s", dd_r);
-	}
-	char dd_rw[2048];
-	bool dd_rw_found = util_dataDirs_findFile("", dd_rw, true, false, true);
-	if (!dd_rw_found) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Unable to find writeable data-dir: %s", dd_rw);
-	}
-*/
-
 	// ### read the interface config file (optional) ###
 	static const unsigned int propFilePath_sizeMax = 1024;
 	char propFilePath[propFilePath_sizeMax];
@@ -166,8 +151,7 @@ EXPORT(int) initStatic(int _interfaceId,
 			callback->DataDirs_getWriteableDir(interfaceId));
 	simpleLog_log("Using log file: %s", propFilePath);
 
-	free(logFile);
-	logFile = NULL;
+	FREE(logFile);
 
 	// initialize Java part of the interface
 	success = java_initStatic(interfaceId, callback);
@@ -238,7 +222,7 @@ int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallb
 
 	if (className != NULL) {
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 2);
-		ret = java_initSkirmishAIClass(shortName, version, className) ? 0 : 1;
+		ret = java_initSkirmishAIClass(shortName, version, className, teamId) ? 0 : 1;
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 3);
 	}
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 4);

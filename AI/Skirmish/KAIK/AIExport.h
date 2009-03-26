@@ -35,7 +35,6 @@
 #	error SYNCIFY should not be defined when building Skirmish AIs
 #endif
 
-
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"
 

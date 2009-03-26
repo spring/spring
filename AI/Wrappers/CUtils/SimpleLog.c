@@ -77,7 +77,11 @@ static void simpleLog_out(int level, const char* msg) {
 		file = NULL;
 	} else {
 		// fallback method: write to stdout
-		PRINTF("%s", outBuffer);
+		if (level > SIMPLELOG_LEVEL_WARNING || level < 0) {
+			FPRINTF(stdout, "%s", outBuffer);
+		} else {
+			FPRINTF(stderr, "%s", outBuffer);
+		}
 	}
 }
 
@@ -96,38 +100,44 @@ static void simpleLog_logv(int level, const char* fmt, va_list argp) {
 void simpleLog_init(const char* _logFileName, bool _useTimeStamps,
 		int _logLevel) {
 
-	// NOTE: this causes a memory leack, as it is never freed.
-	// but it is used till the end of the applications runtime anyway
-	// -> no problem
-	logFileName = util_allocStrCpy(_logFileName);
+	if (_logFileName != NULL) {
+		// NOTE: this causes a memory leack, as it is never freed.
+		// but it is used till the end of the applications runtime anyway
+		// -> no problem
+		logFileName = util_allocStrCpy(_logFileName);
+	
+		// delete the logFile, and try writing to it
+		FILE* file = NULL;
+		if (logFileName != NULL) {
+			file = FOPEN(logFileName, "w");
+		}
+		if (file != NULL) {
+			// make the file empty
+			FPRINTF(file, "%s", "");
+			fclose(file);
+			file = NULL;
+		} else {
+			// report the error to stderr
+			FPRINTF(stderr, "Failed writing to the log file \"%s\".\n%s",
+					logFileName, "We will continue logging to stdout.");
+		}
 
-	// delete the logFile, and try writing to it
-	FILE* file = NULL;
-	if (logFileName != NULL) {
-		file = FOPEN(logFileName, "w");
-	}
-	if (file != NULL) {
-		// make the file empty
-		FPRINTF(file, "%s", "");
-		fclose(file);
-		file = NULL;
+		// make sure the dir of the log file exists
+		char* logFileDir = util_allocStrCpy(logFileName);
+		if (!util_getParentDir(logFileDir)) {
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Failed to evaluate the parent dir of the config file: %s",
+					logFileName);
+		} else if (!util_makeDir(logFileDir, true)) {
+			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
+					"Failed to create the parent dir of the config file: %s",
+					logFileDir);
+		}
+		free(logFileDir);
 	} else {
-		// report the error to stderr
-		FPRINTF(stderr, "Failed writing to the log file \"%s\".\n%s",
-				logFileName, "We will continue logging to stdout.");
-	}
-
-	// make sure the dir of the log file exists
-	char logFileDir[strlen(logFileName) + 1];
-	STRCPY(logFileDir, logFileName);
-	if (!util_getParentDir(logFileDir)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed to evaluate the parent dir of the config file: %s",
-				logFileName);
-	} else if (!util_makeDir(logFileDir, true)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed to create the parent dir of the config file: %s",
-				logFileDir);
+		simpleLog_logL(-1, "No log file name supplied -> logging to stdout and stderr",
+			useTimeStamps ? "yes" : "no", logLevel);
+		logFileName = NULL;
 	}
 
 	useTimeStamps = _useTimeStamps;

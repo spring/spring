@@ -37,10 +37,6 @@ BEGIN {
 	myDefaultClass = "DefaultAICallback";
 	myWin32Class = "Win32AICallback";
 
-	# Print a warning header
-	#printHeader(myPkgA, myClass);
-	#printLoadNativeFunc(myWrapClass, myWrapVar)
-
 	fi = 0;
 }
 
@@ -107,7 +103,7 @@ function printClass(clsName_c) {
 		clbType_c = "StdCallLibrary.StdCallCallback";
 	}
 
-	# print the static insantiator method
+	# print the static instantiator method
 	print("\t" "public static " clsName_c " getInstance(Pointer memory) {") >> outFile_c;
 	print("") >> outFile_c;
 	print("\t" "	" clsName_c " _inst = new " clsName_c "();") >> outFile_c;
@@ -126,7 +122,7 @@ function printClass(clsName_c) {
 		condRet_c = isVoid_c ? "" : "return ";
 		paramListNoTypes = removeParamTypes(paramList);
 
-		print("\t" "public static interface _" fullName " extends " clbType_c " {") >> outFile_c;
+		print("\t" "public interface _" fullName " extends " clbType_c " {") >> outFile_c;
 		print("\t" "\t" retType " invoke(" paramList ");") >> outFile_c;
 		print("\t" "}") >> outFile_c;
 		print("\t" "public _" fullName " _M_" fullName ";") >> outFile_c;

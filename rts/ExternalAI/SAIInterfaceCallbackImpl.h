@@ -24,26 +24,26 @@
 EXPORT(int              ) aiInterfaceCallback_Engine_AIInterface_ABIVersion_getFailPart(int UNUSED_interfaceId);
 EXPORT(int              ) aiInterfaceCallback_Engine_AIInterface_ABIVersion_getWarningPart(int UNUSED_interfaceId);
 
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getMajor(int UNUSED_interfaceId);
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getMinor(int UNUSED_interfaceId);
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getPatchset(int UNUSED_interfaceId);
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_interfaceId);
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId);
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getNormal(int UNUSED_interfaceId);
-EXPORT(const char* const) aiInterfaceCallback_Engine_Version_getFull(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getMajor(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getMinor(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getPatchset(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getAdditional(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getBuildTime(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getNormal(int UNUSED_interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_Engine_Version_getFull(int UNUSED_interfaceId);
 
 
 EXPORT(int              ) aiInterfaceCallback_AIInterface_Info_getSize(int interfaceId);
-EXPORT(const char* const) aiInterfaceCallback_AIInterface_Info_getKey(int interfaceId, int infoIndex);
-EXPORT(const char* const) aiInterfaceCallback_AIInterface_Info_getValue(int interfaceId, int infoIndex);
-EXPORT(const char* const) aiInterfaceCallback_AIInterface_Info_getDescription(int interfaceId, int infoIndex);
-EXPORT(const char* const) aiInterfaceCallback_AIInterface_Info_getValueByKey(int interfaceId, const char* const key);
+EXPORT(const char*      ) aiInterfaceCallback_AIInterface_Info_getKey(int interfaceId, int infoIndex);
+EXPORT(const char*      ) aiInterfaceCallback_AIInterface_Info_getValue(int interfaceId, int infoIndex);
+EXPORT(const char*      ) aiInterfaceCallback_AIInterface_Info_getDescription(int interfaceId, int infoIndex);
+EXPORT(const char*      ) aiInterfaceCallback_AIInterface_Info_getValueByKey(int interfaceId, const char* const key);
 
 EXPORT(int              ) aiInterfaceCallback_Teams_getSize(int UNUSED_interfaceId);
 
 EXPORT(int              ) aiInterfaceCallback_SkirmishAIs_getSize(int UNUSED_interfaceId);
 EXPORT(int              ) aiInterfaceCallback_SkirmishAIs_getMax(int UNUSED_interfaceId);
-EXPORT(const char* const) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key);
+EXPORT(const char*      ) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key);
 
 EXPORT(void             ) aiInterfaceCallback_Log_log(int interfaceId, const char* const msg);
 EXPORT(void             ) aiInterfaceCallback_Log_exception(int interfaceId, const char* const msg, int severety, bool die);
@@ -53,10 +53,10 @@ EXPORT(int              ) aiInterfaceCallback_DataDirs_Roots_getSize(int UNUSED_
 EXPORT(bool             ) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_interfaceId, char* path, int path_sizeMax, int dirIndex);
 EXPORT(bool             ) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
 EXPORT(char*            ) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfaceId, const char* const relPath, bool writeable, bool create, bool dir);
-EXPORT(const char* const) aiInterfaceCallback_DataDirs_getConfigDir(int interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_DataDirs_getConfigDir(int interfaceId);
 EXPORT(bool             ) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
 EXPORT(char*            ) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir);
-EXPORT(const char* const) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId);
+EXPORT(const char*      ) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId);
 
 
 #if defined __cplusplus && !defined BUILDING_AI

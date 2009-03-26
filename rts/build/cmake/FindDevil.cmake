@@ -19,7 +19,10 @@ IF (DEVIL_INCLUDE_DIR)
 ENDIF (DEVIL_INCLUDE_DIR)
 
 FIND_LIBRARY(DEVIL_IL_LIBRARY
-  NAMES IL devil
+  NAMES IL devil DevIL
+  HINTS
+  $ENV{OPENALDIR}
+  PATH_SUFFIXES lib64 lib libs64 libs libs/Win32 libs/Win64
   PATHS
   ${PROJECT_BINARY_DIR}/lib64
   ${PROJECT_BINARY_DIR}/lib
@@ -27,10 +30,9 @@ FIND_LIBRARY(DEVIL_IL_LIBRARY
   ${PROJECT_SOURCE_DIR}/lib
   ENV LD_LIBRARY_PATH
   ENV LIBRARY_PATH
-  /usr/lib64
-  /usr/lib
-  /usr/local/lib64
-  /usr/local/lib
+  /usr
+  /usr/local
+  /usr/bin
   NO_DEFAULT_PATH
 )
 FIND_LIBRARY(DEVIL_IL_LIBRARY NAMES IL devil)

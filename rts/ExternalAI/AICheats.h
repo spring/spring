@@ -25,6 +25,10 @@ public:
 	int GetNeutralUnits(int* unitIds, int unitIds_max);
 	int GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max);
 
+	int GetFeatures(int *features, int max);
+	int GetFeatures(int *features, int max, const float3& pos,
+			float radius);
+
 	int GetUnitTeam(int unitId);
 	int GetUnitAllyTeam(int unitId);
 	float GetUnitHealth(int unitId);

@@ -1,8 +1,8 @@
-#ifndef THREATMAP_H
-#define THREATMAP_H
+#ifndef KAIK_THREATMAP_HDR
+#define KAIK_THREATMAP_HDR
 
-
-#include "GlobalAI.h"
+#include <vector>
+struct AIClasses;
 
 class CThreatMap {
 	public:
@@ -20,7 +20,7 @@ class CThreatMap {
 
 		float GetAverageThreat();
 		float ThreatAtThisPoint(float3 pos);
-		vector<float> ThreatArray;
+		std::vector<float> ThreatArray;
 		int ThreatMapHeight;
 		int ThreatMapWidth;
 		int ThreatResolution;

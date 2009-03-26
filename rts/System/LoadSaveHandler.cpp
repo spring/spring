@@ -4,7 +4,6 @@
 
 #include "ExternalAI/EngineOutHandler.h"
 #include "LoadSaveHandler.h"
-#include "Rendering/GL/myGL.h"
 #include "Map/ReadMap.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Units/UnitHandler.h"

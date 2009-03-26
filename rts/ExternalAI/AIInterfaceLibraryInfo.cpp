@@ -92,6 +92,9 @@ AIInterfaceKey CAIInterfaceLibraryInfo::GetKey() const {
 const std::string& CAIInterfaceLibraryInfo::GetDataDir() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_DATA_DIR);
 }
+const std::string& CAIInterfaceLibraryInfo::GetDataDirCommon() const {
+	return GetInfo(AI_INTERFACE_PROPERTY_DATA_DIR_COMMON);
+}
 const std::string& CAIInterfaceLibraryInfo::GetShortName() const {
 	return GetInfo(AI_INTERFACE_PROPERTY_SHORT_NAME);
 }
@@ -133,6 +136,9 @@ const std::string& CAIInterfaceLibraryInfo::GetInfo(const std::string& key) cons
 
 void CAIInterfaceLibraryInfo::SetDataDir(const std::string& dataDir) {
 	SetInfo(AI_INTERFACE_PROPERTY_DATA_DIR, dataDir);
+}
+void CAIInterfaceLibraryInfo::SetDataDirCommon(const std::string& dataDirCommon) {
+	SetInfo(AI_INTERFACE_PROPERTY_DATA_DIR_COMMON, dataDirCommon);
 }
 void CAIInterfaceLibraryInfo::SetShortName(const std::string& shortName) {
 	SetInfo(AI_INTERFACE_PROPERTY_SHORT_NAME, shortName);

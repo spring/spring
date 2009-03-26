@@ -19,11 +19,23 @@ else (UNIX AND NOT MINGW)
 	set (LIBDIR "." CACHE STRING "Where to install libraries")
 	set (DATADIR "." CACHE STRING "Where to install game content")
 	set (AIDIR "." CACHE STRING "Where AIs are installed")
-	set (CMAKE_INSTALL_PREFIX "/")
+
+	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
+	if (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
+		MESSAGE(FATAL_ERROR "MINGWLIBS is not a valid directory")
+	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
+	include_directories(${MINGWLIBS}/include)
+	
+	# some cross-compile fixes
+	set (CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
+	#set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+	set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 endif (UNIX AND NOT MINGW)
-set (AIINTERFACES "ALL" CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
 
 ### Usr-definable build options
+set (AIINTERFACES "ALL" CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
+
 SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
 if (SYNCCHECK)
 	ADD_DEFINITIONS(-DSYNCCHECK)
@@ -53,41 +65,47 @@ ELSE (CMAKE_HOST_WIN32)
 	SET(PATH_DELIM ":")
 ENDIF(CMAKE_HOST_WIN32)
 
-SET(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+set(SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
+set (SPRING_DATADIR_INTERNAL "")
 if (SPRING_DATADIR)
-	ADD_DEFINITIONS(-DSPRING_DATADIR="${SPRING_DATADIR}:${CMAKE_INSTALL_PREFIX}/${DATADIR}:${CMAKE_INSTALL_PREFIX}/${AIDIR}")
-else (SPRING_DATADIR)
-	ADD_DEFINITIONS(-DSPRING_DATADIR="${CMAKE_INSTALL_PREFIX}/${DATADIR}:${CMAKE_INSTALL_PREFIX}/${AIDIR}")
+	set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR}${PATH_DELIM}")
 endif (SPRING_DATADIR)
+if (NOT MINGW)
+	if (NOT "${DATADIR}" STREQUAL "${AIDIR}")
+		set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}/${AIDIR}${PATH_DELIM}")
+	endif (NOT "${DATADIR}" STREQUAL "${AIDIR}")
+	set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}/${DATADIR}")
+endif (NOT MINGW)
+ADD_DEFINITIONS(-DSPRING_DATADIR="${SPRING_DATADIR_INTERNAL}")
 
 set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
 if (CUSTOM_COMPILER_DEFINITIONS)
 	ADD_DEFINITIONS(${CUSTOM_COMPILER_DEFINITIONS})
 endif (CUSTOM_COMPILER_DEFINITIONS)
 
+
+FIND_PACKAGE(SDL)
+if (SDL_FOUND)
+	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
+else (SDL_FOUND)
+	message("SDL not found on your system, disabling:")
+	message("* spring (engine)")
+	message("* AIs")
+endif (SDL_FOUND)
+
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex REQUIRED)
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+
+FIND_PACKAGE(Devil REQUIRED)
+
 ### mingwlibs
-if (MINGW)
-	SET(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs (you can't build windows executables without them)")
-	include_directories(${MINGWLIBS}/include ${MINGWLIBS}/include/SDL)
-	LINK_DIRECTORIES(${MINGWLIBS}/lib ${MINGWLIBS}/dll)
-	
+if (MINGW)	
 	SET(CMAKE_SHARED_LIBRARY_PREFIX "")
 	SET(CMAKE_SHARED_MODULE_PREFIX "")
-	set (SDL_LIBRARY SDL)
-	set (Boost_REGEX_LIBRARY boost_regex-mt)
-	set (Boost_THREAD_LIBRARY boost_thread-mt)
-	set (DEVIL_ILU_LIBRARY ilu)
-	set (DEVIL_LIBRARIES devil ${DEVIL_ILU_LIBRARY})
 elseif (UNIX)
-	# AIs need it
-	FIND_PACKAGE(SDL REQUIRED)
-	INCLUDE_DIRECTORIES(${SDL_INCLUDE_DIR})
-
-	FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex REQUIRED)
-	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
-	
-	FIND_PACKAGE(Devil REQUIRED)
+	# unix specifics
 else (UNIX)
+	# mac
 	FIND_LIBRARY(COREFOUNDATION_LIBRARY CoreFoundation)
 	INCLUDE_DIRECTORIES("${COREFOUNDATION_LIBRARY}/Headers")
 endif (MINGW)
@@ -148,8 +166,10 @@ elseif (MINGW)
 endif (NOT MINGW AND NOT APPLE)
 
 ### Where the other CMakeLists.txt are
-Add_Subdirectory(rts)
-Add_Subdirectory(AI)
+if (SDL_FOUND)
+	Add_Subdirectory(rts)
+	Add_Subdirectory(AI)
+endif (SDL_FOUND)
 Add_Subdirectory(tools/DedicatedServer)
 Add_Subdirectory(tools/unitsync)
 #Add_Subdirectory(tools/DemoAnalyser)
@@ -172,7 +192,7 @@ if (UNIX AND NOT MINGW)
 	install (FILES installer/freedesktop/mime/spring.xml DESTINATION ${MIME_DIR}/packages)
 	install (FILES installer/freedesktop/pixmaps/spring.png installer/freedesktop/pixmaps/application-x-spring-demo.png DESTINATION ${PIXMAPS_DIR})
 else (UNIX AND NOT MINGW)
-	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR})
+	install (DIRECTORY ${MINGWLIBS}/dll/ DESTINATION ${BINDIR} PATTERN "*.dll")
 endif (UNIX AND NOT MINGW)
 
 # additional tools

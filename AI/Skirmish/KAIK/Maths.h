@@ -1,8 +1,24 @@
-#ifndef MATHS_H
-#define MATHS_H
+#ifndef KAIK_MATHS_HDR
+#define KAIK_MATHS_HDR
 
+#if defined WIN32
+  #ifndef NOMINMAX
+    #define NOMINMAX
+  #endif
+  #define WIN32_LEAN_AND_MEAN
+  #include <windows.h>
+#else
+  #include <sys/time.h>
+  #define LARGE_INTEGER struct timeval
+#endif
 
-#include "GlobalAI.h"
+#include "System/float3.h"
+#include "Defines.h"
+#include "MTRand.h"
+
+struct AIClasses;
+struct BuildTask;
+struct UnitDef;
 
 class CMaths {
 	public:
@@ -12,10 +28,10 @@ class CMaths {
 		// sets the float3 so it is inside the game area
 		void F3MapBound(float3* pos);
 		// Returns a random point inside a circle centered on pos
-		float3 F3Randomize(float3 pos, float radius);//Returns a random point inside a circle centered on pos
+		float3 F3Randomize(const float3& pos, float radius);//Returns a random point inside a circle centered on pos
 
 		// Converts a float3 into X Y coordinates for use in arrays, divided by this resolution
-		void F32XY(float3 pos, int* x, int* y, int resolution = 1);
+		void F32XY(const float3& pos, int* x, int* y, int resolution = 1);
 		// Converts X Y coordinates into a float3 for use in commands etc, divided by this resolution
 		float3 XY2F3(int x, int y, int resolution = 1);
 
@@ -37,9 +53,9 @@ class CMaths {
 		float GetUnitCost(int unit);
 
 		// Estimated time for the unit to arrive at location in a flat straight line, in seconds
-		float ETA(int unit, float3 destination);
+		float ETA(int unit, const float3& destination);
 		// Estimated time for this buildtask to complete with the current builders with full resources
-		float ETT(BuildTask bt);
+		float ETT(BuildTask& bt);
 
 		// RNGs
 		float RandNormal(float m, float s, bool positiveonly = false);

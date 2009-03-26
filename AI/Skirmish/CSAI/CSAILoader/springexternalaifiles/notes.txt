@@ -1,3 +1,0 @@
-note that AICAllback.h and IAICallback.h dont need to be in this directory;
-it's just for convenience so they are easy to find when I need to look at them.
-

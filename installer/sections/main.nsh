@@ -16,6 +16,9 @@
   File "..\mingwlibs\dll\zlib1.dll"
   File "..\mingwlibs\dll\OpenAL32.dll"
   File "..\mingwlibs\dll\wrap_oal.dll"
+  File "..\mingwlibs\dll\vorbisfile.dll"
+  File "..\mingwlibs\dll\vorbis.dll"
+  File "..\mingwlibs\dll\ogg.dll"
 
   ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
   File "..\external\SDL.dll"
@@ -100,17 +103,6 @@ ${EndIf}
   !insertmacro InstallAIInterface "C"
   !insertmacro InstallAIInterface "Java"
 
-;  ; Group AIs -> dont exist anymore
-;  ;TODO: Fix the vc projects to use the same names.
-;  SetOutPath "$INSTDIR\AI\Helper-libs"
-;  File "..\game\AI\Helper-libs\CentralBuildAI.dll"
-;  File "..\game\AI\Helper-libs\MetalMakerAI.dll"
-;  File "..\game\AI\Helper-libs\SimpleFormationAI.dll"
-;  File "..\game\AI\Helper-libs\RadarAI.dll"
-;  File "..\game\AI\Helper-libs\MexUpgraderAI.dll"
-;  File "..\game\AI\Helper-libs\EconomyAI.dll"
-;  File "..\game\AI\Helper-libs\ReportIdleAI.dll"
-
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
 !macro InstallSkirmishAI skirAiName
 !ifdef INSTALL
@@ -184,6 +176,9 @@ ${EndIf}
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\OpenAL32.dll"
   Delete "$INSTDIR\wrap_oal.dll"
+  Delete "$INSTDIR\vorbisfile.dll"
+  Delete "$INSTDIR\vorbis.dll"
+  Delete "$INSTDIR\ogg.dll"
 
 
   Delete "$INSTDIR\PALETTE.PAL"
