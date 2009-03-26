@@ -29,10 +29,10 @@ extern "C" {
 
 #ifdef _WIN32
 	#include <windows.h>
-	#define sharedLib_t  HINSTANCE
+	typedef HINSTANCE sharedLib_t;
 #else // _WIN32
 	#include <dlfcn.h>
-	#define sharedLib_t  void*
+	typedef void*     sharedLib_t;
 #endif // _WIN32
 
 sharedLib_t sharedLib_load(const char* libFilePath);
