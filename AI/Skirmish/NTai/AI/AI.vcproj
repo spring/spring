@@ -42,7 +42,7 @@
 				AdditionalOptions="/MP"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\..\..\vclibs\glew\include;..\..\..\..\vclibs\Boost\include;..\..\..\..\rts\ExternalAI;..\..\..\..\rts;..\..\..\..\rts\Sim;..\..\..\..\rts\System;..\..\..\..\AI\Wrappers"
-				PreprocessorDefinitions="BUILDING_SKIRMISH_AI;BUILDING_AI"
+				PreprocessorDefinitions="BUILDING_SKIRMISH_AI;BUILDING_AI;_SCL_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -830,10 +830,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\Wrappers\LegacyCpp\Event\AIWeaponFiredEvent.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\Wrappers\CUtils\Util.c"
 				>
 			</File>
 		</Filter>

@@ -89,12 +89,12 @@ namespace ntai {
 		TdfParser* Get_mod_tdf();// returns a TdfParser object loaded with the contents of mod.tdf
 
 		//learning stuff
-		void SetEfficiency(std::string s, float e);
-		float GetEfficiency(std::string s, float def_value=500.0f); // returns the efficiency of the unit with name s.
-		float GetEfficiency(std::string s,std::set<std::string>& doneconstructors,int techlevel=1); // returns the efficiency of the unit with name s, but not including those in the vector constructors if it's a builder to prevent recursive loops
-		float GetTargettingWeight(std::string unit, std::string target);
-		bool LoadUnitData(); // loads unit efficiency data from the learning file
-		bool SaveUnitData(); // saves unit efficiency data back to file
+		//void SetEfficiency(std::string s, float e);
+		//float GetEfficiency(std::string s, float def_value=500.0f); // returns the efficiency of the unit with name s.
+		//float GetEfficiency(std::string s,std::set<std::string>& doneconstructors,int techlevel=1); // returns the efficiency of the unit with name s, but not including those in the vector constructors if it's a builder to prevent recursive loops
+		//float GetTargettingWeight(std::string unit, std::string target);
+		//bool LoadUnitData(); // loads unit efficiency data from the learning file
+		//bool SaveUnitData(); // saves unit efficiency data back to file
 
 		int GetCurrentFrame();
 		const UnitDef* GetEnemyDef(int enemy);
