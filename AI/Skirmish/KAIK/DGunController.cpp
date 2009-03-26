@@ -1,4 +1,5 @@
 #include <cassert>
+#include <ctime>
 #include <vector>
 
 #include "IncCREG.h"
