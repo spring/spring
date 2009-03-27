@@ -403,7 +403,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		}
 	}
 
-	if ((c.id == CMD_RECLAIM) && (c.params.size() == 1)) {
+	if ((c.id == CMD_RECLAIM) && (c.params.size() == 1 || c.params.size() == 5)) {
 		const int unitID = (int) c.params[0];
 		if (unitID < uh->MaxUnits()) { // not a feature
 			CUnit* unit = uh->units[unitID];
@@ -418,7 +418,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		}
 	}
 
-	if ((c.id == CMD_REPAIR) && (c.params.size() == 1)) {
+	if ((c.id == CMD_REPAIR) && (c.params.size() == 1 || c.params.size() == 5)) {
 		CUnit* unit = uh->units[(int) c.params[0]];
 		if (unit && ((unit->beingBuilt && !ud->canAssist) || (!unit->beingBuilt && !ud->canRepair)))
 			return false;
