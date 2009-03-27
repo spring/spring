@@ -91,7 +91,7 @@ FileSystemHandler::~FileSystemHandler()
 {
 	SafeDelete(archiveScanner);
 	SafeDelete(vfsHandler);
-	configHandler.Deallocate();
+	configHandler->Deallocate();
 }
 
 #ifndef _WIN32

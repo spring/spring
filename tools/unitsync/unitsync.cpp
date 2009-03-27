@@ -292,7 +292,7 @@ EXPORT(int) Init(bool isServer, int id)
 
 		_UnInit();
 
-		if (!_configHandler)
+		if (!configHandler)
 			ConfigHandler::Instantiate("");
 		FileSystemHandler::Initialize(false);
 
@@ -2810,12 +2810,12 @@ EXPORT(void) SetSpringConfigFile(const char* filenameAsAbsolutePath)
 
 EXPORT(const char*) GetSpringConfigFile()
 {
-	return GetStr(configHandler.GetConfigFile());
+	return GetStr(configHandler->GetConfigFile());
 }
 
 static void CheckConfigHandler()
 {
-	if (!_configHandler)
+	if (!configHandler)
 		throw std::logic_error("Unitsync config handler not initialized, check config source.");
 }
 
@@ -2830,7 +2830,7 @@ EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue
 {
 	try {
 		CheckConfigHandler();
-		string res = configHandler.GetString(name, defValue);
+		string res = configHandler->GetString(name, defValue);
 		return GetStr(res);
 	}
 	UNITSYNC_CATCH_BLOCKS;
@@ -2847,7 +2847,7 @@ EXPORT(int) GetSpringConfigInt(const char* name, const int defValue)
 {
 	try {
 		CheckConfigHandler();
-		return configHandler.Get(name, defValue);
+		return configHandler->Get(name, defValue);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return defValue;
@@ -2863,7 +2863,7 @@ EXPORT(float) GetSpringConfigFloat(const char* name, const float defValue)
 {
 	try {
 		CheckConfigHandler();
-		return configHandler.Get(name, defValue);
+		return configHandler->Get(name, defValue);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return defValue;
@@ -2878,7 +2878,7 @@ EXPORT(void) SetSpringConfigString(const char* name, const char* value)
 {
 	try {
 		CheckConfigHandler();
-		configHandler.SetString( name, value );
+		configHandler->SetString( name, value );
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -2892,7 +2892,7 @@ EXPORT(void) SetSpringConfigInt(const char* name, const int value)
 {
 	try {
 		CheckConfigHandler();
-		configHandler.Set(name, value);
+		configHandler->Set(name, value);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
@@ -2906,7 +2906,7 @@ EXPORT(void) SetSpringConfigFloat(const char* name, const float value)
 {
 	try {
 		CheckConfigHandler();
-		configHandler.Set(name, value);
+		configHandler->Set(name, value);
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }

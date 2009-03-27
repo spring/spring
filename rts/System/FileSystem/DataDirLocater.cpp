@@ -236,7 +236,7 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(SubstEnvVars(env));
 
 	// user defined (in spring config handler (Linux: ~/.springrc, Windows: registry))
-	std::string userDef = configHandler.GetString("SpringData", "");
+	std::string userDef = configHandler->GetString("SpringData", "");
 	if (!userDef.empty()) {
 		AddDirs(SubstEnvVars(userDef));
 	}

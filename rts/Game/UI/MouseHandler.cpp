@@ -84,17 +84,17 @@ CMouseHandler::CMouseHandler()
 	SDL_ShowCursor(SDL_DISABLE);
 
 #ifndef __APPLE__
-	hardwareCursor = !!configHandler.Get("HardwareCursor", 0);
+	hardwareCursor = !!configHandler->Get("HardwareCursor", 0);
 #else
 	hardwareCursor = false;
 #endif
 
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
-	invertMouse = !!configHandler.Get("InvertMouse",1);
-	doubleClickTime = (float)configHandler.Get("DoubleClickTime", 200) / 1000.0f;
+	invertMouse = !!configHandler->Get("InvertMouse",1);
+	doubleClickTime = (float)configHandler->Get("DoubleClickTime", 200) / 1000.0f;
 
-	scrollWheelSpeed = (float)configHandler.Get("ScrollWheelSpeed", 25);
+	scrollWheelSpeed = (float)configHandler->Get("ScrollWheelSpeed", 25);
 	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
 }
 

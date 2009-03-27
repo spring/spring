@@ -73,7 +73,7 @@ CBasicSky::CBasicSky()
 
 	dynamicSky=true;
 	CreateClouds();
-	dynamicSky=!!configHandler.Get("DynamicSky",0);
+	dynamicSky=!!configHandler->Get("DynamicSky",0);
 
 	InitSun();
 	oldCoverBaseX=-5;

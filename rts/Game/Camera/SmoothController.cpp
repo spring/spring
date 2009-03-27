@@ -29,10 +29,10 @@ SmoothController::SmoothController()
 	maxHeight(10000),
 	speedFactor(1)
 {
-	scrollSpeed = configHandler.Get("SmoothScrollSpeed",10)*0.1f;
-	tiltSpeed = configHandler.Get("SmoothTiltSpeed",1.0f);
-	enabled = !!configHandler.Get("SmoothEnabled",1);
-	fov = configHandler.Get("SmoothFOV", 45.0f);
+	scrollSpeed = configHandler->Get("SmoothScrollSpeed",10)*0.1f;
+	tiltSpeed = configHandler->Get("SmoothTiltSpeed",1.0f);
+	enabled = !!configHandler->Get("SmoothEnabled",1);
+	fov = configHandler->Get("SmoothFOV", 45.0f);
 	lastSource = Noone;
 }
 

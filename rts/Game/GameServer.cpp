@@ -135,9 +135,9 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 
 	medianCpu=0.0f;
 	medianPing=0;
-	enforceSpeed=!setup->hostDemo && configHandler.Get("EnforceGameSpeed", false);
+	enforceSpeed=!setup->hostDemo && configHandler->Get("EnforceGameSpeed", false);
 
-	allowAdditionalPlayers = configHandler.Get("AllowAdditionalPlayers", false);
+	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(settings->hostport));

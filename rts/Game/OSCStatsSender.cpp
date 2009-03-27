@@ -39,7 +39,7 @@ COSCStatsSender::COSCStatsSender(const std::string& dstAddress,
 		destination(NULL), outSocket(NULL),
 		oscOutputBuffer(NULL), oscPacker(NULL)
 {
-	SetEnabled(configHandler.Get("OscStatsSenderEnabled", false));
+	SetEnabled(configHandler->Get("OscStatsSenderEnabled", false));
 }
 COSCStatsSender::~COSCStatsSender() {
 	SetEnabled(false);
@@ -82,9 +82,9 @@ bool COSCStatsSender::IsEnabled() const {
 COSCStatsSender* COSCStatsSender::GetInstance() {
 
 	if (COSCStatsSender::singleton == NULL) {
-		std::string dstAddress =configHandler.GetString(
+		std::string dstAddress =configHandler->GetString(
 				"OscStatsSenderDestinationAddress", "127.0.0.1");
-		unsigned int dstPort = configHandler.Get(
+		unsigned int dstPort = configHandler->Get(
 				"OscStatsSenderDestinationPort", (unsigned int) 6447);
 		COSCStatsSender::singleton = new COSCStatsSender(dstAddress, dstPort);
 	}

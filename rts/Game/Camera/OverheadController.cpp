@@ -26,10 +26,10 @@ COverheadController::COverheadController()
 	changeAltHeight(true),
 	maxHeight(10000)
 {
-	scrollSpeed = configHandler.Get("OverheadScrollSpeed",10)*0.1f;
-	tiltSpeed = configHandler.Get("OverheadTiltSpeed",1.0f);
-	enabled = !!configHandler.Get("OverheadEnabled",1);
-	fov = configHandler.Get("OverheadFOV", 45.0f);
+	scrollSpeed = configHandler->Get("OverheadScrollSpeed",10)*0.1f;
+	tiltSpeed = configHandler->Get("OverheadTiltSpeed",1.0f);
+	enabled = !!configHandler->Get("OverheadEnabled",1);
+	fov = configHandler->Get("OverheadFOV", 45.0f);
 }
 
 void COverheadController::KeyMove(float3 move)
