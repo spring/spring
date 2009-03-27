@@ -522,11 +522,8 @@ bool CGameSetup::Init(const std::string& buf)
 	scriptName  = file.SGetValueDef("Commanders", "GAME\\ModOptions\\ScriptName");
 
 	// Used by dedicated server only
-	int tempMapHash, tempModHash;
-	file.GetDef(tempMapHash, "0", "GAME\\MapHash");
-	file.GetDef(tempModHash, "0", "GAME\\ModHash");
-	mapHash = (unsigned int) tempMapHash;
-	modHash = (unsigned int) tempModHash;
+	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
+	file.GetTDef(modHash, unsigned(0), "GAME\\ModHash");
 
 	baseMod     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
