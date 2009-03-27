@@ -8,6 +8,8 @@
 struct AIClasses;
 using namespace NSMicroPather;
 
+typedef std::vector<float3> F3Vec;
+
 class CPathFinder: public Graph {
 	public:
 		CPathFinder(AIClasses* ai);
@@ -19,12 +21,10 @@ class CPathFinder: public Graph {
 		float3 Node2Pos(void* node);
 		void* Pos2Node(float3 pos);
 
-		void ClearPath();
 		unsigned Checksum();
-		float MakePath(std::vector<float3>* posPath, float3* startPos, float3* endPos, int radius);
-		float FindBestPath(std::vector<float3>* posPath, float3* startPos, float myMaxRange, std::vector<float3>* possibleTargets);
-		// added for convenience
-		float FindBestPathToRadius(std::vector<float3>* posPath, float3* startPos, float radiusAroundTarget, float3* target);
+		float MakePath(F3Vec& posPath, float3& startPos, float3& endPos, int radius);
+		float FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRange, F3Vec& possibleTargets);
+		float FindBestPathToRadius(F3Vec& posPath, float3& startPos, float radiusAroundTarget, const float3& target);
 
 		void CreateDefenseMatrix();
 
