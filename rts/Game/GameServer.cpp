@@ -1432,8 +1432,7 @@ void CGameServer::KickPlayer(const int playerNum)
 
 unsigned CGameServer::BindConnection(std::string name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
-	unsigned hisNewNumber = 0;
-	bool found = false;
+	size_t hisNewNumber = players.size();
 
 	unsigned startnum;
 	if (demoReader)
@@ -1453,7 +1452,6 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 			if (players[i].myState == GameParticipant::UNCONNECTED || players[i].myState == GameParticipant::DISCONNECTED)
 			{
 				hisNewNumber = i;
-				found = true;
 				break;
 			}
 			else
