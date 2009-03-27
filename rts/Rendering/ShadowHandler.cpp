@@ -47,14 +47,14 @@ CShadowHandler::CShadowHandler(void)
 		GLEW_ARB_shadow &&
 		GLEW_ARB_depth_texture &&
 		GLEW_ARB_texture_env_combine;
-	const int configValue = configHandler.Get("Shadows", 0);
+	const int configValue = configHandler->Get("Shadows", 0);
 
 	if (configValue < 0 || !haveShadowExts) {
 		logOutput.Print("shadows disabled or required OpenGL extension missing");
 		return;
 	}
 
-	shadowMapSize = configHandler.Get("ShadowMapSize", DEFAULT_SHADOWMAPSIZE);
+	shadowMapSize = configHandler->Get("ShadowMapSize", DEFAULT_SHADOWMAPSIZE);
 
 	if (tmpFirstInstance) {
 		// this already checks for GLEW_ARB_fragment_program

@@ -25,11 +25,11 @@ COrbitController::COrbitController():
 	rotation(0.0f), cRotation(0.0f),
 	elevation(0.0f), cElevation(0.0f)
 {
-	enabled = !!configHandler.Get("OrbitControllerEnabled", 1);
+	enabled = !!configHandler->Get("OrbitControllerEnabled", 1);
 
-	orbitSpeedFact = configHandler.Get("OrbitControllerOrbitSpeed", 0.25f);
-	panSpeedFact   = configHandler.Get("OrbitControllerPanSpeed",   2.00f);
-	zoomSpeedFact  = configHandler.Get("OrbitControllerZoomSpeed",  5.00f);
+	orbitSpeedFact = configHandler->Get("OrbitControllerOrbitSpeed", 0.25f);
+	panSpeedFact   = configHandler->Get("OrbitControllerPanSpeed",   2.00f);
+	zoomSpeedFact  = configHandler->Get("OrbitControllerZoomSpeed",  5.00f);
 
 	orbitSpeedFact = std::max(0.1f, std::min(10.0f, orbitSpeedFact));
 	panSpeedFact   = std::max(0.1f, std::min(10.0f, panSpeedFact));

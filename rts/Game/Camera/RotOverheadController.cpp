@@ -12,10 +12,10 @@
 CRotOverheadController::CRotOverheadController()
 	: oldHeight(500)
 {
-	mouseScale = configHandler.Get("RotOverheadMouseScale", 0.01f);
-	scrollSpeed = configHandler.Get("RotOverheadScrollSpeed",10)*0.1f;
-	enabled=!!configHandler.Get("RotOverheadEnabled",1);
-	fov = configHandler.Get("RotOverheadFOV", 45.0f);
+	mouseScale = configHandler->Get("RotOverheadMouseScale", 0.01f);
+	scrollSpeed = configHandler->Get("RotOverheadScrollSpeed",10)*0.1f;
+	enabled=!!configHandler->Get("RotOverheadEnabled",1);
+	fov = configHandler->Get("RotOverheadFOV", 45.0f);
 }
 
 

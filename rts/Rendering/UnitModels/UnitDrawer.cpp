@@ -57,7 +57,7 @@ static float GetLODFloat(const string& name, float def)
 	// NOTE: the inverse of the value is used
 	char buf[64];
 	SNPRINTF(buf, sizeof(buf), "%.3f", def);
-	const string valueStr = configHandler.GetString(name, buf);
+	const string valueStr = configHandler->GetString(name, buf);
 	char* end;
 	float value = (float)strtod(valueStr.c_str(), &end);
 	if ((end == valueStr.c_str()) || (value <= 0.0f)) {
@@ -78,11 +78,11 @@ CUnitDrawer::CUnitDrawer(void)
 		texturehandlerS3O = new CS3OTextureHandler;
 	}
 
-	SetUnitDrawDist((float)configHandler.Get("UnitLodDist",  200));
-	SetUnitIconDist((float)configHandler.Get("UnitIconDist", 200));
+	SetUnitDrawDist((float)configHandler->Get("UnitLodDist",  200));
+	SetUnitIconDist((float)configHandler->Get("UnitIconDist", 200));
 
-	specTexSize = configHandler.Get("CubeTexSizeSpecular", 128);
-	reflTexSize = configHandler.Get("CubeTexSizeReflection", 128);
+	specTexSize = configHandler->Get("CubeTexSizeSpecular", 128);
+	reflTexSize = configHandler->Get("CubeTexSizeReflection", 128);
 
 	LODScale           = GetLODFloat("LODScale",           1.0f);
 	LODScaleShadow     = GetLODFloat("LODScaleShadow",     1.0f);
@@ -102,7 +102,7 @@ CUnitDrawer::CUnitDrawer(void)
 	unitShadowDensity = mapInfo->light.unitShadowDensity;
 
 	float3 specularSunColor = mapInfo->light.specularSunColor;
-	advShading = !!configHandler.Get("AdvUnitShading", GLEW_ARB_fragment_program ? 1: 0);
+	advShading = !!configHandler->Get("AdvUnitShading", GLEW_ARB_fragment_program ? 1: 0);
 
 	if (advShading && !GLEW_ARB_fragment_program) {
 		logOutput.Print("You are missing an OpenGL extension needed to use advanced unit shading (GL_ARB_fragment_program)");
@@ -151,8 +151,8 @@ CUnitDrawer::CUnitDrawer(void)
 	}
 
 #ifdef USE_GML
-	multiThreadDrawUnit=configHandler.Get("MultiThreadDrawUnit", 1);
-	multiThreadDrawUnitShadow=configHandler.Get("MultiThreadDrawUnitShadow", 1);
+	multiThreadDrawUnit=configHandler->Get("MultiThreadDrawUnit", 1);
+	multiThreadDrawUnitShadow=configHandler->Get("MultiThreadDrawUnitShadow", 1);
 #endif
 }
 
@@ -190,8 +190,8 @@ CUnitDrawer::~CUnitDrawer(void)
 	}
 
 #ifdef USE_GML
-	configHandler.Set("MultiThreadDrawUnit", multiThreadDrawUnit);
-	configHandler.Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
+	configHandler->Set("MultiThreadDrawUnit", multiThreadDrawUnit);
+	configHandler->Set("MultiThreadDrawUnitShadow", multiThreadDrawUnitShadow);
 #endif
 }
 

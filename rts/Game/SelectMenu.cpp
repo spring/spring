@@ -43,7 +43,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	game->AddPair("IsHost", 1);
 	game->add_name_value("MyPlayerName", playername);
 
-	game->AddPair("NoHelperAIs", configHandler.Get("NoHelperAIs", 0));
+	game->AddPair("NoHelperAIs", configHandler->Get("NoHelperAIs", 0));
 
 	TdfParser::TdfSection* player0 = game->construct_subsection("PLAYER0");
 	player0->add_name_value("Name", playername);
@@ -77,10 +77,10 @@ SelectMenu::SelectMenu(bool server) :
 {
 	mySettings = new LocalSetup();
 	mySettings->isHost = server;
-	mySettings->myPlayerName = configHandler.GetString("name", "unnamed");
+	mySettings->myPlayerName = configHandler->GetString("name", "unnamed");
 	if (!mySettings->isHost)
 	{
-		userInput=configHandler.GetString("address","");
+		userInput=configHandler->GetString("address","");
 		writingPos = userInput.length();
 		userPrompt = "Enter server address: ";
 		userWriting = true;
@@ -193,7 +193,7 @@ bool SelectMenu::Update()
 		// we are a client, wait for user to type address
 		if (!userWriting)
 		{
-			configHandler.SetString("address",userInput);
+			configHandler->SetString("address",userInput);
 			mySettings->hostip = userInput;
 			pregame = new CPreGame(mySettings);
 			delete this;

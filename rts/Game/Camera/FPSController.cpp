@@ -15,9 +15,9 @@ using std::max;
 CFPSController::CFPSController()
 	: oldHeight(300)
 {
-	scrollSpeed = configHandler.Get("FPSScrollSpeed", 10) * 0.1f;
-	enabled = !!configHandler.Get("FPSEnabled", 1);
-	fov = configHandler.Get("FPSFOV", 45.0f);
+	scrollSpeed = configHandler->Get("FPSScrollSpeed", 10) * 0.1f;
+	enabled = !!configHandler->Get("FPSEnabled", 1);
+	fov = configHandler->Get("FPSFOV", 45.0f);
 }
 
 

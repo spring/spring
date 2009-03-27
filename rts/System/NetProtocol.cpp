@@ -40,7 +40,7 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 	boost::shared_ptr<netcode::UDPSocket> sock(new netcode::UDPSocket(sourceport));
 	sock->SetBlocking(false);
 	netcode::UDPConnection* conn = new netcode::UDPConnection(sock, server_addr, portnum);
-	conn->SetMTU(configHandler.Get("MaximumTransmissionUnit", 0));
+	conn->SetMTU(configHandler->Get("MaximumTransmissionUnit", 0));
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
 	serverConn->Flush(true);

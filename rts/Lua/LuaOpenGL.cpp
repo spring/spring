@@ -114,7 +114,7 @@ void LuaOpenGL::Init()
 
 	haveGL20 = !!GLEW_VERSION_2_0;
 
-	if (haveGL20 && !!configHandler.Get("LuaShaders", 1)) {
+	if (haveGL20 && !!configHandler->Get("LuaShaders", 1)) {
 		canUseShaders = true;
 	}
 }

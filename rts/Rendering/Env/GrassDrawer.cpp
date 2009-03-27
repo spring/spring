@@ -38,7 +38,7 @@ inline float fRand(float size)
 
 CGrassDrawer::CGrassDrawer()
 {
-	int detail=configHandler.Get("GrassDetail",3);
+	int detail=configHandler->Get("GrassDetail",3);
 
 	if(detail==0){
 		grassOff=true;
