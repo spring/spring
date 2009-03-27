@@ -432,7 +432,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case CMD_RECLAIM:
 		{
-			if (c->params.size() < 3) {
+			if (c->params.size() < 3 || c->params.size() == 5) {
 				SReclaimUnitCommand* cmd = (SReclaimUnitCommand*) malloc(sizeof (SReclaimUnitCommand));
 				cmd->unitId = unitId;
 				cmd->groupId = groupId;
