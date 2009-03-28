@@ -1,8 +1,10 @@
 #include "StdAfx.h"
-#include <string.h>
-#include "mmgr.h"
 
 #include "AutohostInterface.h"
+
+#include <string.h>
+#include <vector>
+#include "mmgr.h"
 #include "Net/UDPConnectedSocket.h" 
 
 namespace {
@@ -50,7 +52,14 @@ enum EVENT
 	PLAYER_CHAT = 13,
  
 	/// Player has been defeated (uchar playernumber)
-	PLAYER_DEFEATED = 14
+	PLAYER_DEFEATED = 14,
+
+	/**
+	 * @brief Message sent by lua script
+	 * 
+	 * (uchar playernumber, uint16_t script, uint8_t mode, uint8_t[X] data) (X = space left in packet)
+	 * */
+	GAME_LUAMSG = 20
 };
 }
 
@@ -147,6 +156,14 @@ void AutohostInterface::Warning(const std::string& message)
 	strncpy((char*)msg+1, message.c_str(), message.size());
 	autohost->Send(msg, msgsize);
 	delete[] msg;
+}
+
+void AutohostInterface::SendLuaMsg(const uint8_t* msg, size_t msgSize)
+{
+	std::vector<uint8_t> buffer(msgSize+1);
+	buffer[0] = GAME_LUAMSG;
+	std::copy(msg, msg+msgSize, buffer.begin()+1);
+	autohost->Send(&buffer[0], buffer.size());
 }
 
 std::string AutohostInterface::GetChatMessage() const

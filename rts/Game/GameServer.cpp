@@ -742,6 +742,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 			else if (!demoReader) {
 				Broadcast(packet); //forward data
+				if (hostif)
+					hostif->SendLuaMsg(packet->data, packet->length);
 			}
 			break;
 
