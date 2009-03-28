@@ -950,6 +950,19 @@ bool CGame::ActionPressed(const Action& action,
 			}
 		}
 	}
+	else if (cmd == "wbynum") {
+		const std::string::size_type pos = action.extra.find_first_of(" ");
+		if (pos != std::string::npos) {
+			std::istringstream buf(action.extra.substr(0, pos));
+			int playernum;
+			buf >> playernum;
+			if (playernum >= 0) {
+				SendNetChat(action.extra.substr(pos+1), playernum);
+			} else {
+				logOutput.Print("Playernumber invalid: %i", playernum);
+			}
+		}
+	}
 	else if (cmd == "echo") {
 		logOutput.Print(action.extra);
 	}
