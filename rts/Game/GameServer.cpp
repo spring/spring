@@ -227,10 +227,10 @@ CGameServer::~CGameServer()
 	// Finally pass it on to the CDemoRecorder.
 	demoRecorder->SetTime(serverframenum / 30, (microsec_clock::local_time()-serverStartTime).total_milliseconds()/1000);
 	demoRecorder->InitializeStats(players.size(), numTeams, winner);
-	/*for (int i = 0; i < numPlayers; ++i) {
-		record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
+	for (size_t i = 0; i < players.size(); ++i) {
+		demoRecorder->SetPlayerStats(i, players[i].lastStats);
 	}
-	for (int i = 0; i < numTeams; ++i) {
+	/*for (int i = 0; i < numTeams; ++i) {
 		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
 	}*/ //TODO add
 #endif
@@ -784,6 +784,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			if(inbuf[1]!=a){
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
+				players[a].lastStats = *(PlayerStatistics*)&inbuf[2];
 				Broadcast(packet); //forward data
 			}
 			break;

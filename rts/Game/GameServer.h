@@ -55,6 +55,7 @@ public:
 
 	bool isLocal;
 	boost::shared_ptr<netcode::CConnection> link;
+	PlayerStatistics lastStats;
 #ifdef SYNCCHECK
 	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum
 #endif
