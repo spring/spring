@@ -745,22 +745,19 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 			break;
 
-		case NETMSG_SYNCRESPONSE:
+		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
-			if(inbuf[1]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
-			} else {
-				int frameNum = *(int*)&inbuf[2];
-				if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
-					players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[6];
-				else if (serverframenum - delayedSyncResponseFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT)) {
-					delayedSyncResponseFrame = serverframenum;
-					Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
-				}
-				// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
-				players[a].ping = serverframenum - frameNum;
+			int frameNum = *(int*)&inbuf[1];
+			if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
+				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
+			else if (serverframenum - delayedSyncResponseFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT)) {
+				delayedSyncResponseFrame = serverframenum;
+				Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
 			}
+			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
+			players[a].ping = serverframenum - frameNum;
 #endif
+		}
 			break;
 
 		case NETMSG_SHARE:
