@@ -115,12 +115,13 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 {
 	assert(setup);
 	serverStartTime = microsec_clock::local_time();
+	lastUpdate = serverStartTime;
+	lastPlayerInfo  = serverStartTime;
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
 	syncWarningFrame=0;
 	serverframenum=0;
 	timeLeft=0;
-	lastUpdate = microsec_clock::local_time();
 	modGameTime = 0.0f;
 	quitServer=false;
 	hasLocalClient = false;
@@ -566,7 +567,7 @@ void CGameServer::Update()
 
 void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	const unsigned char* inbuf = packet->data;
+	const uint8_t* inbuf = packet->data;
 	const unsigned a = playernum;
 
 	switch (inbuf[0]){
