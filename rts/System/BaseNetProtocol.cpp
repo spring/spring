@@ -228,10 +228,10 @@ PacketType CBaseNetProtocol::SendSyncRequest(int frameNum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum)
+PacketType CBaseNetProtocol::SendSyncResponse(int frameNum, uint checksum)
 {
-	PackPacket* packet = new PackPacket(10, NETMSG_SYNCRESPONSE);
-	*packet << myPlayerNum << frameNum << checksum;
+	PackPacket* packet = new PackPacket(9, NETMSG_SYNCRESPONSE);
+	*packet << frameNum << checksum;
 	return PacketType(packet);
 }
 
@@ -390,7 +390,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEOVER, 1);
 	proto->AddType(NETMSG_MAPDRAW, -1);
 	proto->AddType(NETMSG_SYNCREQUEST, 5);
-	proto->AddType(NETMSG_SYNCRESPONSE, 10);
+	proto->AddType(NETMSG_SYNCRESPONSE, 9);
 	proto->AddType(NETMSG_SYSTEMMSG, -1);
 	proto->AddType(NETMSG_STARTPOS, 16);
 	proto->AddType(NETMSG_PLAYERINFO, 10);
