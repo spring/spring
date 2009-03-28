@@ -1058,7 +1058,7 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		CLuaUI::UpdateTeams();
 	}
-	else if (cmd == "ally"){
+	else if (cmd == "ally" && !gu->spectating){
 		if (action.extra.size() > 0)
 		{
 			if (!gameSetup->fixedAllies)
