@@ -1,17 +1,19 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
+
+#include "FileHandler.h"
+
 #include <fstream>
 #include <algorithm>
 #include <cctype>
 #include <limits.h>
 #include <boost/regex.hpp>
-#include "mmgr.h"
 
-#include "FileHandler.h"
+#include "mmgr.h"
+#include "lib/gml/gml.h"
 #include "VFSHandler.h"
 #include "FileSystem/FileSystem.h"
-
 #include "Util.h"
+
 using namespace std;
 
 

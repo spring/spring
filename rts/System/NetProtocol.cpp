@@ -1,5 +1,4 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 #include <SDL_timer.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
