@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <deque>
 #include <vector>
-#include <SDL_types.h>
 
 
 /**
@@ -97,14 +96,14 @@ class CSyncDebugger {
 		unsigned historyIndex;         ///< Where are we in the history buffer?
 		volatile bool disable_history; ///< Volatile because it is read by server thread and written by client thread.
 		bool may_enable_history;       ///< Is it safe already to set disable_history = false?
-		Uint64 flop;                   ///< Current (local) operation number.
+		uint64_t flop;                   ///< Current (local) operation number.
 
 		// server thread
 
 		struct PlayerStruct
 		{
 			std::vector<unsigned> checksumResponses;
-			Uint64 remoteFlop;
+			uint64_t remoteFlop;
 			std::vector<unsigned> remoteHistory;
 		};
 		typedef std::vector<PlayerStruct> playerVec;

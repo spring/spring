@@ -2,7 +2,6 @@
 #define SPRING_APP
 
 #include <string>
-#include <SDL_types.h>
 
 
 class BaseCmd;
@@ -130,14 +129,14 @@ extern bool globalQuit;
  *
  * Array of possible keys, and which are being pressed
  */
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 /**
  * @brief currentUnicode
  *
  * Unicode character for the current KeyPressed or KeyReleased
  */
-extern Uint16 currentUnicode;
+extern uint16_t currentUnicode;
 
 /**
  * @brief fullscreen
