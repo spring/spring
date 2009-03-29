@@ -69,7 +69,7 @@ using std::string;
 CGameController* activeController = 0;
 bool globalQuit = false;
 uint8_t *keys = 0;
-Uint16 currentUnicode = 0;
+uint16_t currentUnicode = 0;
 bool fullscreen = true;
 char *win_lpCmdLine = 0;
 

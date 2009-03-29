@@ -18,8 +18,6 @@ using namespace boost::posix_time;
 #include "LuaIO.h"
 #include "LuaUtils.h"
 
-#include "Game/GameSetup.h"
-
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"

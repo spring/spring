@@ -2,16 +2,11 @@
 #include <SDL_timer.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/ptr_container/ptr_deque.hpp>
-#include <boost/ptr_container/ptr_map.hpp>
-#include <boost/shared_ptr.hpp>
-#include <deque>
 
 #include "mmgr.h"
 
 #include "NetProtocol.h"
 
-#include "Game/GameSetup.h"
 #include "Game/GameData.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
