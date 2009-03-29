@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <deque>
 #include <vector>
-#include <SDL_types.h>
+#include <stdint.h>
 
 #ifdef TRACE_SYNC
 #include "SyncTracer.h"

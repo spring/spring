@@ -15,13 +15,12 @@
 #include "Platform/SharedLib.h"
 #include "Platform/errorhandler.h"
 #include "FileSystem/FileSystem.h"
-#include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "mmgr.h"
 
 //CGroupHandler* grouphandler;
 std::vector<CGroupHandler*> grouphandlers;
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 CR_BIND(CGroupHandler, (0))
 

@@ -32,6 +32,7 @@
 #include "TdfParser.h"
 
 #include <cassert>
+#include <cstring>
 #include <deque>
 
 #include "TerrainBase.h"

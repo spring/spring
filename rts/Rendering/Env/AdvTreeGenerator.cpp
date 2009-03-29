@@ -6,6 +6,9 @@
 #include "mmgr.h"
 
 #include "AdvTreeGenerator.h"
+
+#include <cstring>
+
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapInfo.h"

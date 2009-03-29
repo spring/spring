@@ -11,7 +11,6 @@ may change every Spring release without notice).
 #ifndef DEMOFILE_H
 #define DEMOFILE_H
 
-#include <SDL_types.h>
 #include "Platform/byteorder.h"
 
 /** The first 16 bytes of each demofile. */
@@ -54,8 +53,8 @@ struct DemoFileHeader
 	int version;            ///< DEMOFILE_VERSION
 	int headerSize;         ///< Size of the DemoFileHeader, minor version number.
 	char versionString[16]; ///< Spring version string, e.g. "0.75b2", "0.75b2+svn4123"
-	Uint8 gameID[16];       ///< Unique game identifier. Identical for each player of the game.
-	Uint64 unixTime;        ///< Unix time when game was started.
+	uint8_t gameID[16];       ///< Unique game identifier. Identical for each player of the game.
+	uint64_t unixTime;        ///< Unix time when game was started.
 	int scriptSize;         ///< Size of startscript.
 	int demoStreamSize;     ///< Size of the demo stream.
 	int gameTime;           ///< Total number of seconds game time.
@@ -105,7 +104,7 @@ The demo stream layout is as follows:
 struct DemoStreamChunkHeader
 {
 	float modGameTime;   ///< Gametime at which this chunk was written/should be read.
-	unsigned length;          ///< Length of the chunk of data following this header.
+	uint32_t length;          ///< Length of the chunk of data following this header.
 
 	/// Change structure from host endian to little endian or vice versa.
 	void swab() {
