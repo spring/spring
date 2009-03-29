@@ -3073,6 +3073,7 @@ static void PackCommand(lua_State* L, const Command& cmd)
 	if (cmd.options & SHIFT_KEY)       { HSTR_PUSH_BOOL(L, "shift",    true); }
 	if (cmd.options & RIGHT_MOUSE_KEY) { HSTR_PUSH_BOOL(L, "right",    true); }
 	if (cmd.options & INTERNAL_ORDER)  { HSTR_PUSH_BOOL(L, "internal", true); }
+	if (cmd.options & SPACE_KEY)       { HSTR_PUSH_BOOL(L, "space",    true); }
 	lua_rawset(L, -3); // options table
 
 	HSTR_PUSH_NUMBER(L, "tag", cmd.tag);
