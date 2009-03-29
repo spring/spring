@@ -8,7 +8,6 @@
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "NetProtocol.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/GameServer.h"
