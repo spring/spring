@@ -1715,6 +1715,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
 	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
+	HSTR_PUSH_BOOL(L, "space", !!(cmd.options & SPACE_KEY));
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 3, 1)) {

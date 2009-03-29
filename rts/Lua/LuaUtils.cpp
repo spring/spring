@@ -318,6 +318,8 @@ void LuaUtils::ParseCommandOptions(lua_State* L, const char* caller,
 					cmd.options |= CONTROL_KEY;
 				} else if (value == "shift") {
 					cmd.options |= SHIFT_KEY;
+				} else if (value == "space") {
+					cmd.options |= SPACE_KEY;
 				}
 			}
 		}

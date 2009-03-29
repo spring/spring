@@ -80,6 +80,7 @@ public:
 public:
 	static CUnitSet reclaimers;
 	static CUnitSet featureReclaimers;
+	static CUnitSet resurrecters;
 
 private:
 
@@ -87,16 +88,21 @@ private:
 	bool ObjInBuildRange(const CWorldObject* obj) const;
 	bool OutOfImmobileRange(const Command& cmd) const;
 
-	// fix for patrolling cons repairing stuff that's being reclaimed
+	// fix for patrolling cons repairing/resurrecting stuff that's being reclaimed
 	static void AddUnitToReclaimers(CUnit*);
 	static void RemoveUnitFromReclaimers(CUnit*);
-	static bool IsUnitBeingReclaimedByFriend(CUnit*);
 
 	// fix for cons wandering away from their target circle
 	static void AddUnitToFeatureReclaimers(CUnit*);
 	static void RemoveUnitFromFeatureReclaimers(CUnit*);
+
+	// fix for patrolling cons reclaiming stuff that is being resurrected
+	static void AddUnitToResurrecters(CUnit*);
+	static void RemoveUnitFromResurrecters(CUnit*);
 public:
-	static bool IsFeatureBeingReclaimed(int);
+	static bool IsUnitBeingReclaimed(CUnit *unit, CUnit *friendUnit=NULL);
+	static bool IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit=NULL);
+	static bool IsFeatureBeingResurrected(int featureId, CUnit *friendUnit=NULL);
 
 private:
 };
