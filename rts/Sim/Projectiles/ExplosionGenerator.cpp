@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include <fstream>
 #include <stdexcept>
-#include <SDL_types.h>
 #include "mmgr.h"
 
 #include "creg/VarTypes.h"
@@ -348,21 +347,21 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				return;
 			}
 			case OP_STOREI: {
-				Uint16 offset = *(Uint16*) code;
+				uint16_t offset = *(uint16_t*) code;
 				code += 2;
 				*(int*) (instance + offset) = (int) val;
 				val = 0.0f;
 				break;
 			}
 			case OP_STOREF: {
-				Uint16 offset = *(Uint16*) code;
+				uint16_t offset = *(uint16_t*) code;
 				code += 2;
 				*(float*) (instance + offset) = val;
 				val = 0.0f;
 				break;
 			}
 			case OP_STOREC: {
-				Uint16 offset = *(Uint16*) code;
+				uint16_t offset = *(uint16_t*) code;
 				code += 2;
 				*(unsigned char*) (instance + offset) = (int) val;
 				val = 0.0f;
@@ -394,14 +393,14 @@ void CCustomExplosionGenerator::ExecuteExplosionCode(const char* code, float dam
 				break;
 			}
 			case OP_STOREP: {
-				Uint16 offset = *(Uint16*) code;
+				uint16_t offset = *(uint16_t*) code;
 				code += 2;
 				*(void**) (instance + offset) = ptr;
 				ptr = NULL;
 				break;
 			}
 			case OP_DIR: {
-				Uint16 offset = *(Uint16*) code;
+				uint16_t offset = *(uint16_t*) code;
 				code += 2;
 				*(float3*) (instance + offset) = dir;
 				break;
@@ -469,7 +468,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 	if (vastr == "dir") {//first see if we can match any keywords
 		//if the user uses a keyword assume he knows that it is put on the right datatype for now
 		code += OP_DIR;
-		Uint16 ofs = offset;
+		uint16_t ofs = offset;
 		code.append((char*) &ofs, (char*) &ofs + 2);
 	}
 	else if (dynamic_cast<creg::BasicType*>(type.get())) {
@@ -528,7 +527,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 					"Contact the Spring team to fix this.");
 					break;
 		}
-		Uint16 ofs = offset;
+		uint16_t ofs = offset;
 		code.append((char*)&ofs, (char*)&ofs + 2);
 	}
 	else if (dynamic_cast<creg::ObjectInstanceType*>(type.get())) {
@@ -564,7 +563,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
 			code += OP_STOREP;
-			Uint16 ofs = offset;
+			uint16_t ofs = offset;
 			code.append((char*)&ofs, (char*)&ofs + 2);
 		}
 		else if (type->GetName() == "GroundFXTexture*") {
@@ -574,7 +573,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code += OP_LOADP;
 			code.append((char*)(&tex), ((char*)(&tex)) + sizeof(void*));
 			code += OP_STOREP;
-			Uint16 ofs = offset;
+			uint16_t ofs = offset;
 			code.append((char*)&ofs, (char*)&ofs + 2);
 		}
 		else if (type->GetName() == "CColorMap*") {
@@ -584,7 +583,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code += OP_LOADP;
 			code.append((char*)(&colormap), ((char*)(&colormap)) + sizeof(void*));
 			code += OP_STOREP;
-			Uint16 ofs = offset;
+			uint16_t ofs = offset;
 			code.append((char*)&ofs, (char*)&ofs + 2);
 		}
 		else if (type->GetName() == "CExplosionGenerator*") {
@@ -594,7 +593,7 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 			code += OP_LOADP;
 			code.append((char*)(&explgen), ((char*)(&explgen)) + sizeof(void*));
 			code += OP_STOREP;
-			Uint16 ofs = offset;
+			uint16_t ofs = offset;
 			code.append((char*)&ofs, (char*)&ofs + 2);
 		}
 	}

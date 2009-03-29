@@ -2,7 +2,6 @@
 #define PLAYERBASE_H
 
 #include <string>
-#include "Platform/byteorder.h"
 
 /**
 @brief Acts as a base class for the various player-representing classes
@@ -35,13 +34,7 @@ struct PlayerStatistics
 	int unitCommands;
 
 	/// Change structure from host endian to little endian or vice versa.
-	void swab() {
-		mousePixels = swabdword(mousePixels);
-		mouseClicks = swabdword(mouseClicks);
-		keyPresses = swabdword(keyPresses);
-		numCommands = swabdword(numCommands);
-		unitCommands = swabdword(unitCommands);
-	}
+	void swab();
 };
 
 #endif

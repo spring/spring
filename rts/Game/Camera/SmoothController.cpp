@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 
 #include <SDL_keysym.h>
-#include <SDL_types.h>
 #include <SDL_timer.h>
 
 #include "mmgr.h"
@@ -18,7 +17,7 @@
 
 
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 SmoothController::SmoothController()

@@ -20,7 +20,6 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 #include <SDL_timer.h>
-#include <SDL_types.h>
 #include <SDL_events.h>
 #include <SDL_video.h>
 
@@ -167,7 +166,7 @@
 extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 extern bool globalQuit;
 extern bool fullscreen;
 extern string stupidGlobalMapname;

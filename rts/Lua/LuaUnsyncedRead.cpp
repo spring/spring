@@ -11,7 +11,6 @@
 using namespace std;
 
 #include "SDL_timer.h"
-#include "SDL_types.h"
 #include "SDL_keysym.h"
 #include "SDL_mouse.h"
 
@@ -59,7 +58,7 @@ using namespace std;
 #include "Sound/Music.h"
 
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 

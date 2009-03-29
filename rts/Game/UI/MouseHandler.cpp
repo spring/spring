@@ -44,7 +44,6 @@
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
 #include <SDL_events.h>
-#include <SDL_types.h>
 #include <SDL_keysym.h>
 
 
@@ -53,7 +52,7 @@
 //////////////////////////////////////////////////////////////////////
 
 extern bool	fullscreen;
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 CMouseHandler* mouse = NULL;
@@ -306,8 +305,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if (activeReceiver) {
 		activeReceiver->MouseRelease(x, y, button);
 		int x, y;
-		const Uint8 buttons = SDL_GetMouseState(&x, &y);
-		const Uint8 mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
+		const uint8_t buttons = SDL_GetMouseState(&x, &y);
+		const uint8_t mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
 		if ((buttons & mask) == 0) {
 			activeReceiver = NULL;
 		}

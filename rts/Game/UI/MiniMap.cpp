@@ -5,7 +5,6 @@
 #include "StdAfx.h"
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
-#include <SDL_types.h>
 
 #include "mmgr.h"
 
@@ -66,7 +65,7 @@
 
 CMiniMap* minimap = NULL;
 
-extern Uint8* keys;
+extern uint8_t* keys;
 
 
 CMiniMap::CMiniMap()
