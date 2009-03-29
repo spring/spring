@@ -1482,6 +1482,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 
 	players[hisNewNumber].link = link;
 	players[hisNewNumber].isLocal = isLocal;
+	players[hisNewNumber].myState = GameParticipant::CONNECTED;
 
 	link->SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
