@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 #include <fstream>
 #include <SDL_keysym.h>
-#include <SDL_types.h>
 #include "mmgr.h"
 
 #include "Game/Camera/CameraController.h"
@@ -24,7 +23,7 @@
 
 CSelectionKeyHandler *selectionKeys;
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 CSelectionKeyHandler::CSelectionKeyHandler(void)
 {
