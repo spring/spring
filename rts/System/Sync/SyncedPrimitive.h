@@ -178,8 +178,8 @@ typedef SyncedPrimitive<         double > SyncedDouble;
 typedef SyncedPrimitive<    long double > SyncedLongDouble;
 
 #ifdef UPCAST_USE_64_BIT_TYPES
-typedef SyncedPrimitive<         Sint64 > SyncedSint64;
-typedef SyncedPrimitive<         Uint64 > SyncedUint64;
+typedef SyncedPrimitive<         int64_t > SyncedSint64;
+typedef SyncedPrimitive<         uint64_t > SyncedUint64;
 #endif // UPCAST_USE_64_BIT_TYPES
 
 
@@ -214,8 +214,6 @@ namespace std {
 
 #else // SYNCDEBUG || SYNCCHECK
 
-// 64 bit types are missing here because they made AIs depend on SDL
-// (SDL_types.h specifically)
 typedef          bool  SyncedBool;
 typedef   signed char  SyncedSchar;
 typedef   signed short SyncedSshort;

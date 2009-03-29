@@ -8,8 +8,6 @@
 
 #ifndef _CONSOLE
 
-#include <SDL_types.h>
-
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"

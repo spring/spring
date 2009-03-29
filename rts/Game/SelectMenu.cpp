@@ -3,7 +3,6 @@
 
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
-#include <SDL_types.h>
 #include <boost/bind.hpp>
 #include <sstream>
 #include <stack>
@@ -24,7 +23,7 @@
 
 using std::string;
 
-extern Uint8* keys;
+extern uint8_t* keys;
 extern bool globalQuit;
 
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
