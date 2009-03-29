@@ -1,5 +1,4 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 
 #include "LogOutput.h"
 
@@ -12,6 +11,7 @@
 #include <windows.h>
 #endif
 
+#include "lib/gml/gml.h"
 #include "Util.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalSynced.h"

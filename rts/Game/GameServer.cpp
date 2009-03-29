@@ -1,6 +1,4 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
-
 
 #include <stdarg.h>
 #include <ctime>
