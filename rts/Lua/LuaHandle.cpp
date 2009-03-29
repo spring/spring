@@ -42,7 +42,7 @@
 
 #include "LuaInclude.h"
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 bool CLuaHandle::devMode = false;
 bool CLuaHandle::modUICtrl = true;

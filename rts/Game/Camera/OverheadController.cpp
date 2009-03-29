@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include <SDL_keysym.h>
-#include <SDL_types.h>
 
 #include "mmgr.h"
 
@@ -15,8 +14,7 @@
 #include "GlobalUnsynced.h"
 
 
-
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 COverheadController::COverheadController()
 	: flipped(false),

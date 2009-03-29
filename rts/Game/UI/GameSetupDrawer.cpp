@@ -21,7 +21,7 @@
 #include "Rendering/glFont.h"
 #include "EventHandler.h"
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 GameSetupDrawer* GameSetupDrawer::instance = NULL;
