@@ -131,10 +131,10 @@ void CBuildUp::GetEconState(EconState* es) const {
 	// everybody (assuming we can build them at all in current mod)
 	// TODO: use actual metal and energy drain of nuke weapon here
 	es->buildNukeSilo =
-		ai->ut->sideData[ai->ut->GetSide()].CanBuild(CAT_NUKE_SILO) &&
-		es->mIncome > 100.0f && es->eIncome > 6000.0f &&
-		es->mUsage < es->mIncome && es->eUsage < es->eIncome &&
-		ai->uh->NukeSilos.size() < MAX_NUKE_SILOS;
+		(es->builderDef != NULL) && (ai->uh->NukeSilos.size() < MAX_NUKE_SILOS) &&
+		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_NUKE_SILO)) &&
+		(es->mIncome > 100.0f && es->eIncome > 6000.0f) &&
+		(es->mUsage < es->mIncome && es->eUsage < es->eIncome);
 
 	es->numM = ai->uh->AllUnitsByCat[CAT_MEX].size();
 	es->numE = ai->uh->AllUnitsByCat[CAT_ENERGY].size();
@@ -144,9 +144,15 @@ void CBuildUp::GetEconState(EconState* es) const {
 
 	// these are static; the number of building
 	// _types_ in the unit-table never changes
-	es->canBuildEStores = (ai->ut->sideData[ai->ut->GetSide()].CanBuild(CAT_ENERGY_STORAGE));
-	es->canBuildMMakers = (ai->ut->sideData[ai->ut->GetSide()].CanBuild(CAT_METAL_MAKER));
-	es->canBuildMStores = (ai->ut->sideData[ai->ut->GetSide()].CanBuild(CAT_METAL_STORAGE));
+	es->canBuildEStores =
+		(es->builderDef != NULL) &&
+		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_ENERGY_STORAGE));
+	es->canBuildMMakers =
+		(es->builderDef != NULL) &&
+		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_METAL_MAKER));
+	es->canBuildMStores =
+		(es->builderDef != NULL) &&
+		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_METAL_STORAGE));
 }
 
 BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
@@ -334,7 +340,7 @@ void CBuildUp::Buildup(int frame) {
 		FactoryCycle(frame);
 	}
 
-	if (econState.buildNukeSilo) {
+	if (!ai->uh->AllUnitsByCat[CAT_NUKE].empty()) {
 		NukeSiloCycle();
 	}
 }
@@ -628,7 +634,8 @@ bool CBuildUp::BuildUpgradeReactor(int builderID) {
 						const float itNetEnergy = itReactorDef->energyMake - itReactorDef->energyUpkeep;
 						const float distanceSq = (itReactorPos - builderPos).SqLength();
 
-						// find the closest CAT_ENERGY structure we have
+						// find the closest CAT_ENERGY structure
+						// FIXME: find the closest and oldest?
 						if (distanceSq < closestDstSq) {
 							// check if it is worth upgrading
 							if ((netEnergy / itNetEnergy) >= 2.0f) {

@@ -277,17 +277,46 @@ void CUnitTable::ReadModConfig() {
 
 
 
+// returns the side of the AI's team
 int CUnitTable::GetSide(void) const {
 	const int team = ai->cb->GetMyTeam();
 	const int side = teamSides[team];
 
 	return side;
 }
+// returns the side of the team that is
+// currently controlling this unit (not
+// always the same as the unit's native
+// side defined by the mod's build-tree)
 int CUnitTable::GetSide(int unitID) const {
 	const int team = ai->cb->GetUnitTeam(unitID);
 	const int side = teamSides[team];
 
 	return side;
+}
+// returns the side (build-tree) that a
+// given UnitDef statically belongs to
+int CUnitTable::GetSide(const UnitDef* udef) const {
+	const UnitType&      utype  = unitTypes[udef->id];
+	const std::set<int>& sides  = utype.sides;
+	const int            mySide = GetSide();
+
+	if (!sides.empty()) {
+		if (sides.find(mySide) != sides.end()) {
+			// our team's side can build this
+			return mySide;
+		} else {
+			// our team's side cannot build this,
+			// just return the first side that it
+			// _is_ part of
+			return *(sides.begin());
+		}
+	}
+
+	// this unitdef lives outside of _all_ of the mod's
+	// build-trees (ie. is not reachable from any side's
+	// starting unit) but we are in control of it anyway
+	return mySide;
 }
 
 UnitCategory CUnitTable::GetCategory(const UnitDef* unitdef) const {
@@ -758,16 +787,18 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 
 
 // operates in terms of GetScore() (which is recursive for factories)
-const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, UnitCategory cat) {
+const UnitDef* CUnitTable::GetUnitByScore(int builderID, UnitCategory cat) {
 	if (cat == CAT_LAST) {
 		return NULL;
 	}
 
-	SideData& data = sideData[GetSide(builderUnitID)];
+	const UnitDef* builderDef  = ai->cb->GetUnitDef(builderID);
+	const UnitDef* tempUnitDef = NULL;
+	const int      side        = GetSide(builderDef);
+
+	SideData& data = sideData[side];
 
 	const std::vector<int>& defs = data.GetDefsForUnitCat(cat);
-	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
-	const UnitDef* tempUnitDef = NULL;
 	float tempScore = 0.0f;
 	float bestScore = 0.0f;
 
