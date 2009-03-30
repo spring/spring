@@ -202,7 +202,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 	std::vector<LocalModelPiece*>& lp = lmodel->pieces;
 
-	for (int piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
+	for (size_t piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
 		std::string& scriptname = script.pieceNames[piecenum]; // is already in lowercase!
 
 		unsigned int cur;
@@ -316,7 +316,7 @@ int CCobInstance::RawCall(int fn, vector<int> &args)
 
 int CCobInstance::RawCall(int fn, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
-	if ((fn < 0) || (fn >= script.scriptNames.size())) {
+	if ((fn < 0) || (static_cast<size_t>(fn) >= script.scriptNames.size())) {
 		if (cb) {
 			// in case the function doesnt exist the callback should still be called
 			(*cb)(0, p1, p2);
@@ -991,7 +991,7 @@ void CCobInstance::Explode(int piece, int flags)
 			if (cookedPiece->primitiveType == 0){
 				/* GL_TRIANGLES */
 
-				for (int i = 0; i < cookedPiece->vertexDrawOrder.size(); i += 3){
+				for (size_t i = 0; i < cookedPiece->vertexDrawOrder.size(); i += 3){
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
@@ -1008,7 +1008,7 @@ void CCobInstance::Explode(int piece, int flags)
 				}
 			} else if (cookedPiece->primitiveType == 1){
 				/* GL_TRIANGLE_STRIP */
-				for (int i = 2; i < cookedPiece->vertexDrawOrder.size(); i++){
+				for (size_t i = 2; i < cookedPiece->vertexDrawOrder.size(); i++){
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
@@ -1026,7 +1026,7 @@ void CCobInstance::Explode(int piece, int flags)
 			} else if (cookedPiece->primitiveType == 2){
 				/* GL_QUADS */
 
-				for (int i = 0; i < cookedPiece->vertexDrawOrder.size(); i += 4){
+				for (size_t i = 0; i < cookedPiece->vertexDrawOrder.size(); i += 4){
 					if(gu->usRandFloat()>pieceChance)
 						continue;
 
@@ -1298,7 +1298,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
  	case PLAY_SOUND: {
-		if ((p1 < 0) || (p1 >= script.sounds.size())) {
+		if ((p1 < 0) || (static_cast<size_t>(p1) >= script.sounds.size())) {
 			return 1;
 		}
 		switch (p3) {	//who hears the sound
@@ -1337,12 +1337,12 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		const int weaponID = p1 - 1;
 		const int targetID = p2;
 		const bool userTarget = !!p3;
-		if ((weaponID < 0) || (weaponID >= unit->weapons.size())) {
+		if ((weaponID < 0) || (static_cast<size_t>(weaponID) >= unit->weapons.size())) {
 			return 0;
 		}
 		CWeapon* weapon = unit->weapons[weaponID];
 		if (weapon == NULL) { return 0; }
-		if ((targetID < 0) || (targetID >= uh->MaxUnits())) { return 0; }
+		if ((targetID < 0) || (static_cast<size_t>(targetID) >= uh->MaxUnits())) { return 0; }
 		CUnit* target = (targetID == 0) ? NULL : uh->units[targetID];
 		return weapon->AttackUnit(target, userTarget) ? 1 : 0;
 	}
@@ -1352,7 +1352,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		                          float(p3) / float(COBSCALE),
 		                          float(UNPACKZ(p2)));
 		const bool userTarget = !!p4;
-		if ((weaponID < 0) || (weaponID >= unit->weapons.size())) {
+		if ((weaponID < 0) || (static_cast<size_t>(weaponID) >= unit->weapons.size())) {
 			return 0;
 		}
 		CWeapon* weapon = unit->weapons[weaponID];
@@ -1398,10 +1398,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return 0;
 	}
 	case WEAPON_RELOADSTATE: {
-		if (p1 > 0 && p1 <= unit->weapons.size()) {
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
 			return unit->weapons[p1-1]->reloadStatus;
 		}
-		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+		else if (p1 < 0 && p1 >= (0 - unit->weapons.size())) {
 			int old = unit->weapons[-p1-1]->reloadStatus;
 			unit->weapons[-p1-1]->reloadStatus = p2;
 			return old;
@@ -1411,7 +1411,7 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
 	case WEAPON_RELOADTIME: {
-		if (p1 > 0 && p1 <= unit->weapons.size()) {
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
 			return unit->weapons[p1-1]->reloadTime;
 		}
 		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
@@ -1424,10 +1424,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
 	case WEAPON_ACCURACY: {
-		if (p1 > 0 && p1 <= unit->weapons.size()) {
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
 			return int(unit->weapons[p1-1]->accuracy * COBSCALE);
 		}
-		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+		else if (p1 < 0 && p1 >= (0 - unit->weapons.size())) {
 			int old = int(unit->weapons[-p1-1]->accuracy * COBSCALE);
 			unit->weapons[-p1-1]->accuracy = float(p2) / COBSCALE;
 			return old;
@@ -1437,10 +1437,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
 	case WEAPON_SPRAY: {
-		if (p1 > 0 && p1 <= unit->weapons.size()) {
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
 			return int(unit->weapons[p1-1]->sprayAngle * COBSCALE);
 		}
-		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+		else if (p1 < 0 && p1 >= (0 - unit->weapons.size())) {
 			int old = int(unit->weapons[-p1-1]->sprayAngle * COBSCALE);
 			unit->weapons[-p1-1]->sprayAngle = float(p2) / COBSCALE;
 			return old;
@@ -1450,10 +1450,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
 	case WEAPON_RANGE: {
-		if (p1 > 0 && p1 <= unit->weapons.size()) {
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
 			return int(unit->weapons[p1-1]->range * COBSCALE);
 		}
-		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+		else if (p1 < 0 && p1 >= (0 - unit->weapons.size())) {
 			int old = int(unit->weapons[-p1-1]->range * COBSCALE);
 			unit->weapons[-p1-1]->range = float(p2) / COBSCALE;
 			return old;
@@ -1463,10 +1463,10 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
 	case WEAPON_PROJECTILE_SPEED: {
-		if (p1 > 0 && p1 <= unit->weapons.size()) {
+		if (p1 > 0 && static_cast<size_t>(p1) <= unit->weapons.size()) {
 			return int(unit->weapons[p1-1]->projectileSpeed * COBSCALE);
 		}
-		else if (p1 < 0 && p1 >= 0 - unit->weapons.size()) {
+		else if (p1 < 0 && p1 >= (0 - unit->weapons.size())) {
 			int old = int(unit->weapons[-p1-1]->projectileSpeed * COBSCALE);
 			unit->weapons[-p1-1]->projectileSpeed = float(p2) / COBSCALE;
 			return old;
