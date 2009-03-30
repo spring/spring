@@ -28,7 +28,8 @@ public:
 	                                      unsigned char options,
 	                                      bool noResCheck,  // no resources check
 	                                      bool recAnyTeam,  // allows self-reclamation
-	                                      bool recUnits);  // reclaims units and features
+	                                      bool recUnits,    // reclaims units and features
+	                                      bool recNonRez);  // reclaims non resurrectable only
 	bool FindResurrectableFeatureAndResurrect(const float3& pos, float radius,
 	                                          unsigned char options);
 	void FinishCommand(void);
@@ -48,6 +49,7 @@ public:
 	virtual void ExecuteRestore(Command &c);
 
 	bool ReclaimObject(CSolidObject* o);
+	bool ResurrectObject(CFeature *feature);
 
 	std::map<int, std::string> buildOptions;
 	bool building;
@@ -61,6 +63,7 @@ public:
 
 	int lastPC1; //helps avoid infinite loops
 	int lastPC2;
+	int lastPC3;
 
 	bool range3D;
 
