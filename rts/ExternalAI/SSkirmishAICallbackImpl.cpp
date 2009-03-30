@@ -36,6 +36,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Misc/Resource.h"
 #include "Sim/Misc/ResourceHandler.h"
+#include "Sim/Misc/ResourceMapAnalyzer.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -112,6 +113,9 @@ static int fillCMapValues(const std::map<std::string,std::string>* map,
 */
 static inline int min(int val1, int val2) {
 	return val1 < val2 ? val1 : val2;
+}
+static inline int max(int val1, int val2) {
+	return val1 > val2 ? val1 : val2;
 }
 static int copyIntArr(int* dest, int* src, int size) {
 
@@ -239,10 +243,10 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			SGiveMeResourceCheatCommand* cmd =
 					(SGiveMeResourceCheatCommand*) commandData;
 			if (clbCheat != NULL) {
-				if (cmd->resourceId == rh->GetMetalId()) {
+				if (cmd->resourceId == resourceHandler->GetMetalId()) {
 					clbCheat->GiveMeMetal(cmd->amount);
 					ret = 0;
-				} else if (cmd->resourceId == rh->GetEnergyId()) {
+				} else if (cmd->resourceId == resourceHandler->GetEnergyId()) {
 					clbCheat->GiveMeEnergy(cmd->amount);
 					ret = 0;
 				} else {
@@ -320,10 +324,10 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		case COMMAND_SEND_RESOURCES:
 		{
 			SSendResourcesCommand* cmd = (SSendResourcesCommand*) commandData;
-			if (cmd->resourceId == rh->GetMetalId()) {
+			if (cmd->resourceId == resourceHandler->GetMetalId()) {
 				cmd->ret_isExecuted = clb->SendResources(cmd->amount, 0, cmd->receivingTeam);
 				ret = -2;
-			} else if (cmd->resourceId == rh->GetEnergyId()) {
+			} else if (cmd->resourceId == resourceHandler->GetEnergyId()) {
 				cmd->ret_isExecuted = clb->SendResources(0, cmd->amount, cmd->receivingTeam);
 				ret = -3;
 			} else {
@@ -1194,36 +1198,25 @@ EXPORT(int) skirmishAiCallback_Map_0ARRAY1VALS0getJammerMap(int teamId,
 	return size;
 }
 
-EXPORT(const unsigned char*) skirmishAiCallback_Map_0REF1Resource2resourceId0getResourceMap(
+EXPORT(int) skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw(
 		int teamId, int resourceId) {
 
-	IAICallback* clb = team_callback[teamId];
-	if (resourceId == rh->GetMetalId()) {
-		return clb->GetMetalMap();
-	} else {
-		return NULL;
-	}
-}
-EXPORT(int) skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap(
-		int teamId, int resourceId) {
-
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return readmap->metalMap->GetSizeX() * readmap->metalMap->GetSizeZ();
 	} else {
 		return 0;
 	}
 }
-EXPORT(int) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap(
-		int teamId, int resourceId, unsigned char resources[],
-		int resources_max) {
+EXPORT(int) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapRaw(
+		int teamId, int resourceId, unsigned char resources[], int resources_max) {
 
 	IAICallback* clb = team_callback[teamId];
-	int size = skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap(
+	int size = skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw(
 			teamId, resourceId);
 	size = min(size, resources_max);
 
 	const unsigned char* tmpMap;
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		tmpMap = clb->GetMetalMap();
 	} else {
 		tmpMap = NULL;
@@ -1236,6 +1229,38 @@ EXPORT(int) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResour
 	}
 
 	return size;
+}
+static inline const CResourceMapAnalyzer* getResourceMapAnalyzer(int resourceId) {
+	return resourceHandler->GetResourceMapAnalyzer(resourceId);
+}
+EXPORT(int) skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapSpotsPositions(
+		int teamId, int resourceId) {
+
+	const std::vector<float3>& intSpots = getResourceMapAnalyzer(resourceId)->GetSpots();
+	const size_t intSpots_size = intSpots.size();
+	return static_cast<int>(intSpots_size);
+}
+EXPORT(int) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions(
+		int teamId, int resourceId, SAIFloat3 spots[], int spots_max) {
+
+	const std::vector<float3>& intSpots = getResourceMapAnalyzer(resourceId)->GetSpots();
+	const size_t spots_size = min(intSpots.size(), max(0, spots_max));
+
+	std::vector<float3>::const_iterator s;
+	size_t si = 0;
+	for (s = intSpots.begin(); s != intSpots.end() && si < spots_size; ++s) {
+		spots[si++] = s->toSAIFloat3();
+	}
+
+	return static_cast<int>(spots_size);
+}
+EXPORT(float) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome(
+		int teamId, int resourceId) {
+	return getResourceMapAnalyzer(resourceId)->GetAverageIncome();
+}
+EXPORT(struct SAIFloat3) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
+		int teamId, int resourceId, struct SAIFloat3 pos) {
+	return getResourceMapAnalyzer(resourceId)->GetNearestSpot(pos, teamId).toSAIFloat3();
 }
 
 EXPORT(const char*) skirmishAiCallback_Map_getName(int teamId) {
@@ -1250,7 +1275,7 @@ EXPORT(float) skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource(int
 		int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetMaxMetal();
 	} else {
 		return NULL;
@@ -1261,7 +1286,7 @@ EXPORT(float) skirmishAiCallback_Map_0REF1Resource2resourceId0getExtractorRadius
 		int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetExtractorRadius();
 	} else {
 		return NULL;
@@ -1380,25 +1405,25 @@ EXPORT(bool) skirmishAiCallback_File_getContent(int teamId, const char* fileName
 
 // BEGINN OBJECT Resource
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE0Resource(int teamId) {
-	return rh->GetNumResources();
+	return resourceHandler->GetNumResources();
 }
 EXPORT(int) skirmishAiCallback_0MULTI1FETCH3ResourceByName0Resource(int teamId,
 		const char* resourceName) {
-	return rh->GetResourceId(resourceName);
+	return resourceHandler->GetResourceId(resourceName);
 }
 EXPORT(const char*) skirmishAiCallback_Resource_getName(int teamId, int resourceId) {
-	return rh->GetResource(resourceId)->name.c_str();
+	return resourceHandler->GetResource(resourceId)->name.c_str();
 }
 EXPORT(float) skirmishAiCallback_Resource_getOptimum(int teamId, int resourceId) {
-	return rh->GetResource(resourceId)->optimum;
+	return resourceHandler->GetResource(resourceId)->optimum;
 }
 EXPORT(float) skirmishAiCallback_Economy_0REF1Resource2resourceId0getCurrent(int teamId,
 		int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetMetal();
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return clb->GetEnergy();
 	} else {
 		return -1.0f;
@@ -1409,9 +1434,9 @@ EXPORT(float) skirmishAiCallback_Economy_0REF1Resource2resourceId0getIncome(int 
 		int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetMetalIncome();
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return clb->GetEnergyIncome();
 	} else {
 		return -1.0f;
@@ -1422,9 +1447,9 @@ EXPORT(float) skirmishAiCallback_Economy_0REF1Resource2resourceId0getUsage(int t
 		int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetMetalUsage();
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return clb->GetEnergyUsage();
 	} else {
 		return -1.0f;
@@ -1435,9 +1460,9 @@ EXPORT(float) skirmishAiCallback_Economy_0REF1Resource2resourceId0getStorage(int
 		int resourceId) {
 
 	IAICallback* clb = team_callback[teamId];
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetMetalStorage();
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return clb->GetEnergyStorage();
 	} else {
 		return -1.0f;
@@ -1537,9 +1562,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getUpkeep(int 
 		int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->metalUpkeep;
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return ud->energyUpkeep;
 	} else {
 		return 0.0f;
@@ -1549,9 +1574,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getResourceMak
 		int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->metalMake;
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return ud->energyMake;
 	} else {
 		return 0.0f;
@@ -1561,7 +1586,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getMakesResour
 		int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->makesMetal;
 	} else {
 		return 0.0f;
@@ -1571,9 +1596,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getCost(int te
 		int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->metalCost;
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return ud->energyCost;
 	} else {
 		return 0.0f;
@@ -1583,7 +1608,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getExtractsRes
 		int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->extractsMetal;
 	} else {
 		return 0.0f;
@@ -1593,7 +1618,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getResourceExt
 		int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->extractRange;
 	} else {
 		return 0.0f;
@@ -1603,7 +1628,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getWindResourc
 		int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetEnergyId()) {
+	if (resourceId == resourceHandler->GetEnergyId()) {
 		return ud->windGenerator;
 	} else {
 		return 0.0f;
@@ -1613,7 +1638,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getTidalResour
 		int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetEnergyId()) {
+	if (resourceId == resourceHandler->GetEnergyId()) {
 		return ud->tidalGenerator;
 	} else {
 		return 0.0f;
@@ -1623,9 +1648,9 @@ EXPORT(float) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0getStorage(int
 		int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->metalStorage;
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return ud->energyStorage;
 	} else {
 		return 0.0f;
@@ -1635,7 +1660,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isSquareResourc
 		int teamId, int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->extractSquare;
 	} else {
 		return false;
@@ -1962,7 +1987,7 @@ EXPORT(bool) skirmishAiCallback_UnitDef_0REF1Resource2resourceId0isResourceMaker
 		int unitDefId, int resourceId) {
 
 	const UnitDef* ud = getUnitDefById(teamId, unitDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return ud->isMetalMaker;
 	} else {
 		return false;
@@ -2407,9 +2432,9 @@ EXPORT(float) skirmishAiCallback_Unit_0REF1Resource2resourceId0getResourceUse(in
 				&resourceInfo);
 	}
 	if (fetchOk) {
-		if (resourceId == rh->GetMetalId()) {
+		if (resourceId == resourceHandler->GetMetalId()) {
 			res = resourceInfo.metalUse;
-		} else if (resourceId == rh->GetEnergyId()) {
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
 			res = resourceInfo.energyUse;
 		}
 	}
@@ -2431,9 +2456,9 @@ EXPORT(float) skirmishAiCallback_Unit_0REF1Resource2resourceId0getResourceMake(i
 				&resourceInfo);
 	}
 	if (fetchOk) {
-		if (resourceId == rh->GetMetalId()) {
+		if (resourceId == resourceHandler->GetMetalId()) {
 			res = resourceInfo.metalMake;
-		} else if (resourceId == rh->GetEnergyId()) {
+		} else if (resourceId == resourceHandler->GetEnergyId()) {
 			res = resourceInfo.energyMake;
 		}
 	}
@@ -2646,9 +2671,9 @@ EXPORT(const char*) skirmishAiCallback_FeatureDef_getFileName(int teamId, int fe
 EXPORT(float) skirmishAiCallback_FeatureDef_0REF1Resource2resourceId0getContainedResource(int teamId, int featureDefId, int resourceId) {
 
 	const FeatureDef* fd = getFeatureDefById(teamId, featureDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return fd->metal;
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return fd->energy;
 	} else {
 		return 0.0f;
@@ -2870,9 +2895,9 @@ EXPORT(int) skirmishAiCallback_WeaponDef_getFlightTime(int teamId, int weaponDef
 EXPORT(float) skirmishAiCallback_WeaponDef_0REF1Resource2resourceId0getCost(int teamId, int weaponDefId, int resourceId) {
 
 	const WeaponDef* wd = getWeaponDefById(teamId, weaponDefId);
-	if (resourceId == rh->GetMetalId()) {
+	if (resourceId == resourceHandler->GetMetalId()) {
 		return wd->metalcost;
-	} else if (resourceId == rh->GetEnergyId()) {
+	} else if (resourceId == resourceHandler->GetEnergyId()) {
 		return wd->energycost;
 	} else {
 		return 0.0f;
@@ -2933,7 +2958,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_getVisibleShieldHitFrames(int teamId, i
 EXPORT(float) skirmishAiCallback_WeaponDef_Shield_0REF1Resource2resourceId0getResourceUse(int teamId, int weaponDefId, int resourceId) {
 
 	const WeaponDef* wd = getWeaponDefById(teamId, weaponDefId);
-	if (resourceId == rh->GetEnergyId()) {
+	if (resourceId == resourceHandler->GetEnergyId()) {
 		return wd->shieldEnergyUse;
 	} else {
 		return 0.0f;
@@ -2947,7 +2972,7 @@ EXPORT(float) skirmishAiCallback_WeaponDef_Shield_getPowerRegen(int teamId, int 
 EXPORT(float) skirmishAiCallback_WeaponDef_Shield_0REF1Resource2resourceId0getPowerRegenResource(int teamId, int weaponDefId, int resourceId) {
 
 	const WeaponDef* wd = getWeaponDefById(teamId, weaponDefId);
-	if (resourceId == rh->GetEnergyId()) {
+	if (resourceId == resourceHandler->GetEnergyId()) {
 		return wd->shieldPowerRegenEnergy;
 	} else {
 		return 0.0f;
@@ -3550,8 +3575,12 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Map_0ARRAY1VALS0getRadarMap = &skirmishAiCallback_Map_0ARRAY1VALS0getRadarMap;
 	callback->Clb_Map_0ARRAY1SIZE0getJammerMap = &skirmishAiCallback_Map_0ARRAY1SIZE0getJammerMap;
 	callback->Clb_Map_0ARRAY1VALS0getJammerMap = &skirmishAiCallback_Map_0ARRAY1VALS0getJammerMap;
-	callback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap = &skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap;
-	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap;
+	callback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw = &skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw;
+	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapRaw = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapRaw;
+	callback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapSpotsPositions = &skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapSpotsPositions;
+	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions;
+	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome;
+	callback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest = &skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest;
 	callback->Clb_Map_getName = &skirmishAiCallback_Map_getName;
 	callback->Clb_Map_getElevationAt = &skirmishAiCallback_Map_getElevationAt;
 	callback->Clb_Map_0REF1Resource2resourceId0getMaxResource = &skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource;

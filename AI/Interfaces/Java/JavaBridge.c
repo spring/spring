@@ -1471,7 +1471,7 @@ int java_skirmishAI_init(int teamId,
 				"calling Java AI method init(teamId, callback)...");
 		res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId,
 				o_aiCallback);
-		success = (res == 0);
+		success = (res == 0 && !checkException(env, "calling Java AI method init(teamId, callback) failed."));
 		if (success) {
 			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "done.");
 		} else {

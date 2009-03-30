@@ -51,6 +51,7 @@ public:
 	void BuggerOff(float3 pos, float radius,CUnit* exclude=0);
 	float3 Pos2BuildPos(const BuildInfo& buildInfo);
 	float3 Pos2BuildPos(const float3& pos, const UnitDef* ud);
+	float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
 	void Update(void);
 
 	bool LineFeatureCol(const float3& start, const float3& dir,float length);
