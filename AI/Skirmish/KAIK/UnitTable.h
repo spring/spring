@@ -99,10 +99,9 @@ class CUnitTable {
 		int ReadTeamSides();
 		void ReadModConfig();
 
-		// returns side we (the AI) are on
 		int GetSide(void) const;
-		// returns side a given unit is on
-		int GetSide(int unit) const;
+		int GetSide(int) const;
+		int GetSide(const UnitDef*) const;
 
 		// gets the average Damage Per second a unit can cause (provided all weapons are in range)
 		float GetDPS(const UnitDef* unit);
