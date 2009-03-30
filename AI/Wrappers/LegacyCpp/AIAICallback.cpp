@@ -741,9 +741,9 @@ const unsigned char* CAIAICallback::GetMetalMap() {
 	static int m = getResourceId_Metal(sAICallback, teamId);
 
 	if (metalMap == NULL) {
-		int size = sAICallback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap(teamId, m);
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw(teamId, m);
 		metalMap = new unsigned char[size]; // NOTE: memory leack, but will be used till end of the game anyway
-		sAICallback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap(teamId, m, metalMap, size);
+		sAICallback->Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapRaw(teamId, m, metalMap, size);
 	}
 
 	return metalMap;

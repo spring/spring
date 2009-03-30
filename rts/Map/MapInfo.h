@@ -75,6 +75,7 @@ public:
 		    (NOT positive units/second^2 as in the mapfile) */
 		float gravity;
 		float tidalStrength;
+		/// what metal value 255 in the metal map is worth
 		float maxMetal;
 		float extractorRadius; ///< extraction radius for mines
 		bool  voidWater;

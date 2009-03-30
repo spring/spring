@@ -23,6 +23,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Misc/GeometricObjects.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -31,6 +32,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -212,7 +214,7 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 			if (unit == hit) {
 				hitUnitDamaged = true;
 			}
-	
+
 			DoExplosionDamage(unit, expPos, expRad, expSpeed, ignoreOwner, owner, edgeEffectiveness, damages, weaponId);
 		}
 
@@ -916,6 +918,109 @@ float3 CGameHelper::Pos2BuildPos(const BuildInfo& buildInfo)
 		pos.y = -buildInfo.def->waterline;
 
 	return pos;
+}
+
+
+struct SearchOffset {
+	int dx,dy;
+	int qdist; // dx*dx+dy*dy
+};
+static bool SearchOffsetComparator (const SearchOffset& a, const SearchOffset& b)
+{
+	return a.qdist < b.qdist;
+}
+static const vector<SearchOffset>& GetSearchOffsetTable (int radius)
+{
+	static vector <SearchOffset> searchOffsets;
+	unsigned int size = radius*radius*4;
+	if (size > searchOffsets.size()) {
+		searchOffsets.resize (size);
+
+		for (int y=0;y<radius*2;y++)
+			for (int x=0;x<radius*2;x++)
+			{
+				SearchOffset& i = searchOffsets[y*radius*2+x];
+
+				i.dx = x-radius;
+				i.dy = y-radius;
+				i.qdist = i.dx*i.dx+i.dy*i.dy;
+			}
+
+		std::sort (searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
+	}
+
+	return searchOffsets;
+}
+float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing)
+{
+	if (!unitDef) {
+		return float3(-1.0f, 0.0f, 0.0f);
+	}
+
+	CFeature* feature = NULL;
+
+	const int allyteam = teamHandler->AllyTeam(team);
+	const int endr = int(searchRadius / (SQUARE_SIZE * 2));
+	const vector<SearchOffset>& ofs = GetSearchOffsetTable(endr);
+
+	for (int so = 0; so < endr * endr * 4; so++) {
+		float x = pos.x + ofs[so].dx * SQUARE_SIZE * 2;
+		float z = pos.z + ofs[so].dy * SQUARE_SIZE * 2;
+
+		BuildInfo bi(unitDef, float3(x, 0.0f, z), facing);
+		bi.pos = Pos2BuildPos(bi);
+
+		if (uh->TestUnitBuildSquare(bi, feature, allyteam) && (!feature || feature->allyteam != allyteam)) {
+			const int xs = int(x / SQUARE_SIZE);
+			const int zs = int(z / SQUARE_SIZE);
+			const int xsize = bi.GetXSize();
+			const int zsize = bi.GetZSize();
+
+			bool good = true;
+
+			int z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist);
+			int z2Max = std::min(gs->mapy, zs + (zsize + 1) / 2 + minDist);
+			int x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist);
+			int x2Max = std::min(gs->mapx, xs + (xsize + 1) / 2 + minDist);
+
+			// check for nearby blocking features
+			for (int z2 = z2Min; z2 < z2Max; ++z2) {
+				for (int x2 = x2Min; x2 < x2Max; ++x2) {
+					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
+
+					if (so && so->immobile && !dynamic_cast<CFeature*>(so)) {
+						good = false;
+						break;
+					}
+				}
+			}
+
+			if (good) {
+				z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist - 2);
+				z2Max = std::min(gs->mapy, zs + (zsize + 1) / 2 + minDist + 2);
+				x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist - 2);
+				x2Max = std::min(gs->mapx, xs + (xsize + 1) / 2 + minDist + 2);
+
+				// check for nearby factories with open yards
+				for (int z2 = z2Min; z2 < z2Max; ++z2) {
+					for (int x2 = x2Min; x2 < x2Max; ++x2) {
+						CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
+
+						if (so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening) {
+							good = false;
+							break;
+						}
+					}
+				}
+			}
+
+			if (good) {
+				return bi.pos;
+			}
+		}
+	}
+
+	return float3(-1.0f, 0.0f, 0.0f);
 }
 
 void CGameHelper::Update(void)

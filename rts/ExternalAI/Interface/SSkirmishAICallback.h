@@ -1213,11 +1213,27 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getJammerMap)(int teamId,
  * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
  * - the last value, bottom right, is at index (width/2 * height/2 - 1)
  */
-int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap)(
+int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw)(
 		int teamId, int resourceId);
-int (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap)(
-		int teamId, int resourceId, unsigned char resources[],
-		int resources_max);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapRaw)(
+		int teamId, int resourceId, unsigned char resources[], int resources_max);
+/**
+ * Returns positions indicating where to place resource extractors on the map.
+ */
+int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapSpotsPositions)(
+		int teamId, int resourceId);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions)(
+		int teamId, int resourceId, struct SAIFloat3* spots, int spots_max);
+/**
+ * Returns the average resource income for an extractor on one of the evaluated positions.
+ */
+float (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome)(
+		int teamId, int resourceId);
+/**
+ * Returns the nearest resource extractor spot to a specified position out of the evaluated list.
+ */
+struct SAIFloat3 (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(
+		int teamId, int resourceId, struct SAIFloat3 pos);
 const char* (CALLING_CONV *Clb_Map_getName)(int teamId);
 /// Gets the elevation of the map at position (x, z)
 float (CALLING_CONV *Clb_Map_getElevationAt)(int teamId, float x, float z);
