@@ -123,7 +123,7 @@ CPathEstimator::~CPathEstimator() {
 
 
 void CPathEstimator::InitEstimator(const std::string& name) {
-	int numThreads_tmp = configHandler.Get("HardwareThreadCount", 0);
+	int numThreads_tmp = configHandler->Get("HardwareThreadCount", 0);
 	size_t numThreads = ((numThreads_tmp < 0) ? 0 : numThreads_tmp);
 
 	if (numThreads == 0) {

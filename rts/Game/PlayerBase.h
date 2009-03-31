@@ -21,4 +21,20 @@ public:
 	bool isFromDemo;
 };
 
+struct PlayerStatistics
+{
+	/// how many pixels the mouse has traversed in total
+	int mousePixels;
+	int mouseClicks;
+	int keyPresses;
+
+	int numCommands;
+	/// total amount of units affected by commands
+	/// (divide by numCommands for average units/command)
+	int unitCommands;
+
+	/// Change structure from host endian to little endian or vice versa.
+	void swab();
+};
+
 #endif

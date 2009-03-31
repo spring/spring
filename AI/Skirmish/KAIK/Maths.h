@@ -26,7 +26,7 @@ class CMaths {
 		~CMaths();
 
 		// sets the float3 so it is inside the game area
-		void F3MapBound(float3* pos);
+		void F3MapBound(float3& pos);
 		// Returns a random point inside a circle centered on pos
 		float3 F3Randomize(const float3& pos, float radius);//Returns a random point inside a circle centered on pos
 

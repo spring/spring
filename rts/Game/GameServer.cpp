@@ -1,6 +1,4 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
-
 
 #include <stdarg.h>
 #include <ctime>
@@ -115,12 +113,13 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 {
 	assert(setup);
 	serverStartTime = microsec_clock::local_time();
+	lastUpdate = serverStartTime;
+	lastPlayerInfo  = serverStartTime;
 	delayedSyncResponseFrame = 0;
 	syncErrorFrame=0;
 	syncWarningFrame=0;
 	serverframenum=0;
 	timeLeft=0;
-	lastUpdate = microsec_clock::local_time();
 	modGameTime = 0.0f;
 	quitServer=false;
 	hasLocalClient = false;
@@ -135,9 +134,9 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 
 	medianCpu=0.0f;
 	medianPing=0;
-	enforceSpeed=!setup->hostDemo && configHandler.Get("EnforceGameSpeed", false);
+	enforceSpeed=!setup->hostDemo && configHandler->Get("EnforceGameSpeed", false);
 
-	allowAdditionalPlayers = configHandler.Get("AllowAdditionalPlayers", false);
+	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
 	if (!onlyLocal)
 		UDPNet.reset(new netcode::UDPListener(settings->hostport));
@@ -226,10 +225,10 @@ CGameServer::~CGameServer()
 	// Finally pass it on to the CDemoRecorder.
 	demoRecorder->SetTime(serverframenum / 30, (microsec_clock::local_time()-serverStartTime).total_milliseconds()/1000);
 	demoRecorder->InitializeStats(players.size(), numTeams, winner);
-	/*for (int i = 0; i < numPlayers; ++i) {
-		record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
+	for (size_t i = 0; i < players.size(); ++i) {
+		demoRecorder->SetPlayerStats(i, players[i].lastStats);
 	}
-	for (int i = 0; i < numTeams; ++i) {
+	/*for (int i = 0; i < numTeams; ++i) {
 		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
 	}*/ //TODO add
 #endif
@@ -566,7 +565,7 @@ void CGameServer::Update()
 
 void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	const unsigned char* inbuf = packet->data;
+	const uint8_t* inbuf = packet->data;
 	const unsigned a = playernum;
 
 	switch (inbuf[0]){
@@ -741,25 +740,24 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 			else if (!demoReader) {
 				Broadcast(packet); //forward data
+				if (hostif)
+					hostif->SendLuaMsg(packet->data, packet->length);
 			}
 			break;
 
-		case NETMSG_SYNCRESPONSE:
+		case NETMSG_SYNCRESPONSE: {
 #ifdef SYNCCHECK
-			if(inbuf[1]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
-			} else {
-				int frameNum = *(int*)&inbuf[2];
-				if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
-					players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[6];
-				else if (serverframenum - delayedSyncResponseFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT)) {
-					delayedSyncResponseFrame = serverframenum;
-					Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
-				}
-				// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
-				players[a].ping = serverframenum - frameNum;
+			int frameNum = *(int*)&inbuf[1];
+			if (outstandingSyncFrames.empty() || frameNum >= outstandingSyncFrames.front())
+				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
+			else if (serverframenum - delayedSyncResponseFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT)) {
+				delayedSyncResponseFrame = serverframenum;
+				Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
 			}
+			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
+			players[a].ping = serverframenum - frameNum;
 #endif
+		}
 			break;
 
 		case NETMSG_SHARE:
@@ -784,6 +782,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			if(inbuf[1]!=a){
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			} else {
+				players[a].lastStats = *(PlayerStatistics*)&inbuf[2];
 				Broadcast(packet); //forward data
 			}
 			break;
@@ -1432,8 +1431,7 @@ void CGameServer::KickPlayer(const int playerNum)
 
 unsigned CGameServer::BindConnection(std::string name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
-	unsigned hisNewNumber = 0;
-	bool found = false;
+	size_t hisNewNumber = players.size();
 
 	unsigned startnum;
 	if (demoReader)
@@ -1453,7 +1451,6 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 			if (players[i].myState == GameParticipant::UNCONNECTED || players[i].myState == GameParticipant::DISCONNECTED)
 			{
 				hisNewNumber = i;
-				found = true;
 				break;
 			}
 			else
@@ -1485,6 +1482,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 
 	players[hisNewNumber].link = link;
 	players[hisNewNumber].isLocal = isLocal;
+	players[hisNewNumber].myState = GameParticipant::CONNECTED;
 
 	link->SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
 	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));

@@ -3,12 +3,11 @@
 //////////////////////////////////////////////////////////////////////
 #include "TimeProfiler.h"
 
-#include "Rendering/GL/myGL.h"
 #include <SDL_timer.h>
 #include <cstring>
 
 #include "mmgr.h"
-
+#include "lib/gml/gml.h"
 #include "UnsyncedRNG.h"
 
 

@@ -30,7 +30,7 @@ CMetalMap::CMetalMap(unsigned char* map,
 //		extractionMap[i] = 0.0f;
 //	}
 
-	int whichPalette = configHandler.Get("MetalMapPalette", 0);
+	int whichPalette = configHandler->Get("MetalMapPalette", 0);
 
 	if (whichPalette == 1){
 		/* Swap the green and blue channels. making metal go

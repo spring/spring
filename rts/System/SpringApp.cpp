@@ -68,8 +68,8 @@ using std::string;
 
 CGameController* activeController = 0;
 bool globalQuit = false;
-Uint8 *keys = 0;
-Uint16 currentUnicode = 0;
+uint8_t *keys = 0;
+uint16_t currentUnicode = 0;
 bool fullscreen = true;
 char *win_lpCmdLine = 0;
 
@@ -169,7 +169,7 @@ bool SpringApp::Initialize()
 
 	ParseCmdLine();
 
-	logOutput.SetMirrorToStdout(!!configHandler.Get("StdoutDebug",0));
+	logOutput.SetMirrorToStdout(!!configHandler->Get("StdoutDebug",0));
 
 	// log OS version
 	// TODO: improve version logging of non-Windows OSes
@@ -225,8 +225,8 @@ bool SpringApp::Initialize()
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_SetModState (KMOD_NONE);
 
-	keys = new Uint8[SDLK_LAST];
-	memset (keys,0,sizeof(Uint8)*SDLK_LAST);
+	keys = new uint8_t[SDLK_LAST];
+	memset (keys,0,sizeof(uint8_t)*SDLK_LAST);
 
 	LoadFonts();
 
@@ -239,11 +239,11 @@ bool SpringApp::Initialize()
 	if (GLEW_ARB_texture_compression) {
 		// we don't even need to check it, 'cos groundtextures must have that extension
 		// default to off because it reduces quality (smallest mipmap level is bigger)
-		gu->compressTextures = !!configHandler.Get("CompressTextures", 0);
+		gu->compressTextures = !!configHandler->Get("CompressTextures", 0);
 	}
 
 	// use some ATI bugfixes?
-	gu->atiHacks = !!configHandler.Get("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
+	gu->atiHacks = !!configHandler->Get("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
 
 	// Initialize named texture handler
 	CNamedTextures::Init();
@@ -268,11 +268,11 @@ static bool MultisampleTest(void)
 {
 	if (!GL_ARB_multisample)
 		return false;
-	GLuint fsaa = configHandler.Get("FSAA",0);
+	GLuint fsaa = configHandler->Get("FSAA",0);
 	if (!fsaa)
 		return false;
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS,1);
-	GLuint fsaalevel = std::max(std::min(configHandler.Get("FSAALevel", 2), 8), 0);
+	GLuint fsaalevel = std::max(std::min(configHandler->Get("FSAALevel", 2), 8), 0);
 
 	make_even_number(fsaalevel);
 
@@ -338,7 +338,7 @@ bool SpringApp::SetSDLVideoMode ()
 	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
 	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
 
-	int bitsPerPixel = configHandler.Get("BitsPerPixel", 0);
+	int bitsPerPixel = configHandler->Get("BitsPerPixel", 0);
 
 	if (bitsPerPixel == 32)
 	{
@@ -358,10 +358,10 @@ bool SpringApp::SetSDLVideoMode ()
            bitsPerPixel = 0; // it should be either 0, 16, or 32
 	}
 
-	depthBufferBits = configHandler.Get("DepthBufferBits", 32);
+	depthBufferBits = configHandler->Get("DepthBufferBits", 32);
 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler.Get("StencilBufferBits", 1));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 1));
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -375,6 +375,19 @@ bool SpringApp::SetSDLVideoMode ()
 		return false;
 	}
 
+	// set window position
+	if (!fullscreen) {
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+
+		if (SDL_GetWMInfo(&info)) {
+#ifdef _WIN32
+			MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
+#endif
+		}
+	}
+
+
 #ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	// Set single precision floating point math.
@@ -387,7 +400,7 @@ bool SpringApp::SetSDLVideoMode ()
 
 	// setup GL smoothing
 	const int defaultSmooth = 0; // FSAA ? 0 : 3;  // until a few things get fixed
-	const int lineSmoothing = configHandler.Get("SmoothLines", defaultSmooth);
+	const int lineSmoothing = configHandler->Get("SmoothLines", defaultSmooth);
 	if (lineSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (lineSmoothing >= 3) {
@@ -398,7 +411,7 @@ bool SpringApp::SetSDLVideoMode ()
 		glEnable(GL_LINE_SMOOTH);
 		glHint(GL_LINE_SMOOTH_HINT, hint);
 	}
-	const int pointSmoothing = configHandler.Get("SmoothPoints", defaultSmooth);
+	const int pointSmoothing = configHandler->Get("SmoothPoints", defaultSmooth);
 	if (pointSmoothing > 0) {
 		GLenum hint = GL_FASTEST;
 		if (pointSmoothing >= 3) {
@@ -411,13 +424,13 @@ bool SpringApp::SetSDLVideoMode ()
 	}
 
 	// setup LOD bias factor
-	const float lodBias = std::max(std::min( configHandler.Get("TextureLODBias", 0.0f) , 4.0f), -4.0f);
+	const float lodBias = std::max(std::min( configHandler->Get("TextureLODBias", 0.0f) , 4.0f), -4.0f);
 	if (fabs(lodBias)>0.01f) {
 		glTexEnvf(GL_TEXTURE_FILTER_CONTROL,GL_TEXTURE_LOD_BIAS, lodBias );
 	}
 
 	// there must be a way to see if this is necessary, compare old/new context pointers?
-	if (!!configHandler.Get("FixAltTab", 0)) {
+	if (!!configHandler->Get("FixAltTab", 0)) {
 		// free GL resources
 		GLContext::Free();
 
@@ -491,6 +504,14 @@ bool SpringApp::GetDisplayGeometry()
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
 	gu->winPosX = rect.left;
 	gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
+
+	// get window position
+	if (!fullscreen && GetWindowRect(info.window, &rect)) {
+		windowPosX = rect.left;
+		windowPosY = rect.top;
+		configHandler->Set("WindowPosX", windowPosX);
+		configHandler->Set("WindowPosY", windowPosY);
+	}
 #endif // _WIN32
 	return true;
 }
@@ -507,10 +528,10 @@ void SpringApp::SetupViewportGeometry()
 		gu->winPosY = 0;
 	}
 
-	gu->dualScreenMode = !!configHandler.Get("DualScreenMode", 0);
+	gu->dualScreenMode = !!configHandler->Get("DualScreenMode", 0);
 	if (gu->dualScreenMode) {
 		gu->dualScreenMiniMapOnLeft =
-			!!configHandler.Get("DualScreenMiniMapOnLeft", 0);
+			!!configHandler->Get("DualScreenMiniMapOnLeft", 0);
 	} else {
 		gu->dualScreenMiniMapOnLeft = false;
 	}
@@ -564,9 +585,9 @@ void SpringApp::InitOpenGL ()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const int charFirst = configHandler.Get("FontCharFirst", 32);
-	const int charLast  = configHandler.Get("FontCharLast", 255);
-	std::string fontFile = configHandler.GetString("FontFile", "fonts/Luxi.ttf");
+	const int charFirst = configHandler->Get("FontCharFirst", 32);
+	const int charLast  = configHandler->Get("FontCharLast", 255);
+	std::string fontFile = configHandler->GetString("FontFile", "fonts/Luxi.ttf");
 
 	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
 	const float smallFontSize = 0.016f; // ~12 pixels at 1024x768
@@ -621,7 +642,7 @@ void SpringApp::ParseCmdLine()
 #ifdef _DEBUG
 	fullscreen = false;
 #else
-	fullscreen = configHandler.Get("Fullscreen", 1) != 0;
+	fullscreen = configHandler->Get("Fullscreen", 1) != 0;
 #endif
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -658,28 +679,31 @@ void SpringApp::ParseCmdLine()
 
 	string name;
 	if (cmdline->result("name", name)) {
-		configHandler.SetString("name", name);
+		configHandler->SetString("name", name);
 	}
 
 
 	if (!cmdline->result("xresolution", screenWidth)) {
-		screenWidth = configHandler.Get("XResolution", XRES_DEFAULT);
+		screenWidth = configHandler->Get("XResolution", XRES_DEFAULT);
 	} else {
 		screenWidth = std::max(screenWidth, 1);
 	}
 
 	if (!cmdline->result("yresolution", screenHeight)) {
-		screenHeight = configHandler.Get("YResolution", YRES_DEFAULT);
+		screenHeight = configHandler->Get("YResolution", YRES_DEFAULT);
 	} else {
 		screenHeight = std::max(screenHeight, 1);
 	}
 
+	windowPosX = configHandler->Get("WindowPosX", 32);
+	windowPosY = configHandler->Get("WindowPosY", 32);
+
 #ifdef USE_GML
-	gmlThreadCountOverride = configHandler.Get("HardwareThreadCount", 0);
+	gmlThreadCountOverride = configHandler->Get("HardwareThreadCount", 0);
 	gmlThreadCount=GML_CPU_COUNT;
 #if GML_ENABLE_SIM
 	extern volatile int gmlMultiThreadSim;
-	gmlMultiThreadSim=configHandler.Get("MultiThreadSim", 1);
+	gmlMultiThreadSim=configHandler->Get("MultiThreadSim", 1);
 #endif
 #endif
 }
@@ -801,7 +825,7 @@ void SpringApp::Startup()
 	else if (!demofile.empty())
 	{
 		startsetup->isHost = true; // local demo play
-		startsetup->myPlayerName = configHandler.GetString("name", "unnamed")+ " (spec)";
+		startsetup->myPlayerName = configHandler->GetString("name", "unnamed")+ " (spec)";
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
 #endif
@@ -941,9 +965,9 @@ int SpringApp::Update ()
 void SpringApp::UpdateSDLKeys ()
 {
 	int numkeys;
-	Uint8 *state;
+	uint8_t *state;
 	state = SDL_GetKeyState(&numkeys);
-	memcpy(keys, state, sizeof(Uint8) * numkeys);
+	memcpy(keys, state, sizeof(uint8_t) * numkeys);
 
 	const SDLMod mods = SDL_GetModState();
 	keys[SDLK_LALT]   = (mods & KMOD_ALT)   ? 1 : 0;
@@ -1144,10 +1168,38 @@ int SpringApp::Run (int argc, char *argv[])
 }
 
 /**
+ * Saves position of the window, if we're not in fullscreen
+ */
+void SpringApp::SaveWindowGeometry()
+{
+	if (!fullscreen) {
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+
+		if (SDL_GetWMInfo(&info)) {
+#if defined(_WIN32)
+			RECT rect;
+			if (GetWindowRect(info.window, &rect)) {
+				windowPosX = rect.left;
+				windowPosY = rect.top;
+				configHandler->Set("WindowPosX", windowPosX);
+				configHandler->Set("WindowPosY", windowPosY);
+			}
+#else
+			// TODO FIXME XXX
+#endif
+		}
+	}
+}
+
+
+/**
  * Deallocates and shuts down game
  */
 void SpringApp::Shutdown()
 {
+	SaveWindowGeometry();
+
 	if (pregame)
 		delete pregame;			//in case we exit during init
 	if (game)

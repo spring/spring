@@ -68,8 +68,10 @@ enum EventTopic {
 	EVENT_PLAYER_COMMAND               = 20,
 	EVENT_SEISMIC_PING                 = 21,
 	EVENT_COMMAND_FINISHED             = 22,
+	EVENT_LOAD                         = 23,
+	EVENT_SAVE                         = 24,
 };
-const unsigned int NUM_EVENTS          = 23;
+const unsigned int NUM_EVENTS          = 25;
 
 
 #define AIINTERFACE_EVENTS_ABI_VERSION     ( \
@@ -95,6 +97,8 @@ const unsigned int NUM_EVENTS          = 23;
 		+ sizeof(struct SPlayerCommandEvent) \
 		+ sizeof(struct SCommandFinishedEvent) \
 		+ sizeof(struct SSeismicPingEvent) \
+		+ sizeof(struct SLoadEvent) \
+		+ sizeof(struct SSaveEvent) \
 		)
 
 /**
@@ -308,8 +312,25 @@ struct SSeismicPingEvent {
 	float strength;
 }; // EVENT_SEISMIC_PING
 
+/**
+ * This AI event is sent when the AI should be loading its full state from a
+ * file.
+ */
+struct SLoadEvent {
+	/// Absolute file path, should be treated read-only
+	const char* file;
+}; // EVENT_LOAD
+
+/**
+ * This AI event is sent when the AI should be saving its full state to a file.
+ */
+struct SSaveEvent {
+	/// Absolute file path, writeable
+	const char* file;
+}; // EVENT_SAVE
+
 #ifdef	__cplusplus
 } // extern "C"
 #endif
 
-#endif	// _AISEVENTS_H
+#endif // _AISEVENTS_H

@@ -12,9 +12,6 @@
 
 
 class CUnit;
-class LuaParser;
-class CGameSetup;
-
 
 /**
  * @brief Global unsynced stuff

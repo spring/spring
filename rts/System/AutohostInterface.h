@@ -38,6 +38,8 @@ public:
 	void Message(const std::string& message);
 	void Warning(const std::string& message);
 	
+	void SendLuaMsg(const uint8_t* msg, size_t msgSize);
+	
 	/**
 	@brief Receive a chat message from the autohost
 	There should be only 1 message per UDP-Packet, and it will use the hosts playernumber to inject this message

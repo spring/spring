@@ -625,7 +625,10 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
 		arrayType = params; # getArrayType
 		sub(/^.*\, /, "", arrayType); # remove pre array type
-		sub(/\[\] .*$/, "", arrayType); # remove post array type
+		hadBraces = sub(/\[\] .*$/, "", arrayType); # remove post array type
+		if (!hadBraces) {
+			sub(/[^ \t]*$/, "", arrayType); # remove param name
+		}
 		referenceType = arrayType;
 		if (match(fullNameArraySize, /0ARRAY1SIZE1/)) {
 			# we want to reference objects, of a certain class as arrayType
@@ -745,29 +748,39 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		if (isArraySize) {
 			print("") >> outFile_m;
 			print(indent_m "int size = " myWrapper "." fullNameArraySize "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
+			print(indent_m retType " arrList = new " retType "(size);") >> outFile_m;
+			print(indent_m "if (size > 0) {") >> outFile_m;
+			indent_m = indent_m "\t";
 			print(indent_m arrayType "[] tmpArr = new " arrayType "[size];") >> outFile_m;
 			print(indent_m myWrapper "." fullNameArrayVals "(" myTeamId condInnerParamsComma innerParams ", tmpArr, size);") >> outFile_m;
-			print(indent_m retType " arrList = new " retType "(size);") >> outFile_m;
 			print(indent_m "for (int i=0; i < size; i++) {") >> outFile_m;
+			indent_m = indent_m "\t";
 			if (arrayType == referenceType) {
-				print(indent_m "\t" "arrList.add(tmpArr[i]);") >> outFile_m;
+				print(indent_m "arrList.add(tmpArr[i]);") >> outFile_m;
 			} else {
-				print(indent_m "\t" "arrList.add(" referenceType ".getInstance(" myClassVarLocal ", tmpArr[i]));") >> outFile_m;
+				print(indent_m "arrList.add(" referenceType ".getInstance(" myClassVarLocal ", tmpArr[i]));") >> outFile_m;
 			}
+			sub(/\t/, "", indent_m);
+			print(indent_m "}") >> outFile_m;
+			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_m;
 			print(indent_m "_ret = arrList;") >> outFile_m;
 		} else if (isMapSize) {
 			print("") >> outFile_m;
 			print(indent_m "int size = " myWrapper "." fullNameMapSize "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
+			retMapImplType = retType;
+			sub(/Map/, defMapJavaImpl, retMapImplType);
+			print(indent_m retType " retMap = new " retMapImplType "(size);") >> outFile_m;
+			print(indent_m "if (size > 0) {") >> outFile_m;
+			indent_m = indent_m "\t";
 			print(indent_m keyType "[] tmpKeysArr = new " keyType "[size];") >> outFile_m;
 			print(indent_m myWrapper "." fullNameMapKeys "(" myTeamId condInnerParamsComma innerParams ", tmpKeysArr);") >> outFile_m;
 			print(indent_m valType "[] tmpValsArr = new " valType "[size];") >> outFile_m;
 			print(indent_m myWrapper "." fullNameMapVals "(" myTeamId condInnerParamsComma innerParams ", tmpValsArr);") >> outFile_m;
-			retMapImplType = retType;
-			sub(/Map/, defMapJavaImpl, retMapImplType);
-			print(indent_m retType " retMap = new " retMapImplType "(size);") >> outFile_m;
 			print(indent_m "for (int i=0; i < size; i++) {") >> outFile_m;
 			print(indent_m "\t" "retMap.put(tmpKeysArr[i], tmpValsArr[i]);") >> outFile_m;
+			print(indent_m "}") >> outFile_m;
+			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_m;
 			print(indent_m "_ret = retMap;") >> outFile_m;
 		} else if (isSingleFetch) {

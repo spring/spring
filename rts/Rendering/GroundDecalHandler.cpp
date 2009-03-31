@@ -32,8 +32,8 @@ CGroundDecalHandler* groundDecals = NULL;
 CGroundDecalHandler::CGroundDecalHandler(void)
 {
 	drawDecals = false;
-	decalLevel = std::max(0, configHandler.Get("GroundDecals", 1));
-	groundScarAlphaFade = configHandler.Get("GroundScarAlphaFade", 0);
+	decalLevel = std::max(0, configHandler->Get("GroundDecals", 1));
+	groundScarAlphaFade = configHandler->Get("GroundScarAlphaFade", 0);
 
 	if (decalLevel == 0) {
 		return;

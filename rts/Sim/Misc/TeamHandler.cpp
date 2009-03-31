@@ -86,8 +86,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 					team->skirmishAIKey = SkirmishAIKey(); // unspecifyed AI Key
 				} else {
 					const char* sn = skirmishAIData->shortName.c_str();
-					const char* v = skirmishAIData->version.empty()
-							? NULL : skirmishAIData->version.c_str();
+					const char* v = skirmishAIData->version.c_str();
 					SkirmishAIKey spec = SkirmishAIKey(sn, v);
 					SkirmishAIKey fittingKey =
 							IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);

@@ -37,7 +37,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	PrintLoadMsg("Opening map file");
 
 	ConfigureAnisotropy();
-	usePBO = !!configHandler.Get("UsePBO", 1);
+	usePBO = !!configHandler->Get("UsePBO", 1);
 
 	for(int a=0;a<1024;++a){
 		for(int b=0;b<3;++b){
@@ -403,7 +403,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 
 	const char* SMFTexAniso = "SMFTexAniso";
 
-	anisotropy = atof(configHandler.GetString(SMFTexAniso, "0.0").c_str());
+	anisotropy = atof(configHandler->GetString(SMFTexAniso, "0.0").c_str());
 
 	if (anisotropy < 1.0f) {
 		anisotropy = 0.0f; // disabled
@@ -414,7 +414,7 @@ void CSmfReadMap::ConfigureAnisotropy()
 			anisotropy = maxAniso;
 			char buf[64];
 			SNPRINTF(buf, sizeof(buf), "%f", anisotropy);
-			configHandler.SetString(SMFTexAniso, buf);
+			configHandler->SetString(SMFTexAniso, buf);
 		}
 	}
 }

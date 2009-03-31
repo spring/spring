@@ -1,18 +1,12 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 #include <SDL_timer.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/ptr_container/ptr_deque.hpp>
-#include <boost/ptr_container/ptr_map.hpp>
-#include <boost/shared_ptr.hpp>
-#include <deque>
 
 #include "mmgr.h"
 
 #include "NetProtocol.h"
 
-#include "Game/GameSetup.h"
 #include "Game/GameData.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
@@ -40,7 +34,7 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 	boost::shared_ptr<netcode::UDPSocket> sock(new netcode::UDPSocket(sourceport));
 	sock->SetBlocking(false);
 	netcode::UDPConnection* conn = new netcode::UDPConnection(sock, server_addr, portnum);
-	conn->SetMTU(configHandler.Get("MaximumTransmissionUnit", 0));
+	conn->SetMTU(configHandler->Get("MaximumTransmissionUnit", 0));
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
 	serverConn->Flush(true);

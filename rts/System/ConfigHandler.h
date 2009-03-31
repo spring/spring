@@ -111,9 +111,6 @@ private:
 	void AppendLine(char* buf);
 };
 
-extern ConfigHandler* _configHandler;
-
-// quick hack so I don't have to change . to -> in the entire project
-#define configHandler (*_configHandler)
+extern ConfigHandler* configHandler;
 
 #endif /* CONFIGHANDLER_H */

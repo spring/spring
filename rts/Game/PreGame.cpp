@@ -3,7 +3,6 @@
 #include <map>
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
-#include <SDL_types.h>
 #include <set>
 #include <cfloat>
 
@@ -44,7 +43,7 @@
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
 
-extern Uint8* keys;
+extern uint8_t* keys;
 extern bool globalQuit;
 std::string stupidGlobalMapname;
 

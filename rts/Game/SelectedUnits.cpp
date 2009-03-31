@@ -4,7 +4,6 @@
 
 #include "StdAfx.h"
 #include <map>
-#include <SDL_types.h>
 #include <SDL_keysym.h>
 
 #include "mmgr.h"
@@ -40,7 +39,7 @@
 #include "Sound/Sound.h"
 #include "Util.h"
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 //////////////////////////////////////////////////////////////////////
@@ -65,7 +64,7 @@ CSelectedUnits::~CSelectedUnits()
 
 void CSelectedUnits::Init(unsigned numPlayers)
 {
-	buildIconsFirst = !!configHandler.Get("BuildIconsFirst", 0);
+	buildIconsFirst = !!configHandler->Get("BuildIconsFirst", 0);
 	netSelected.resize(numPlayers);
 }
 

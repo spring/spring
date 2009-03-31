@@ -36,13 +36,13 @@ CVerticalSync::~CVerticalSync()
 
 void CVerticalSync::Init()
 {
-	SetFrames(configHandler.Get("VSync", -1));
+	SetFrames(configHandler->Get("VSync", -1));
 }
 
 
 void CVerticalSync::SetFrames(int f)
 {
-	configHandler.Set("VSync", f);
+	configHandler->Set("VSync", f);
 	
 	frames = f;
 

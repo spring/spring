@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 
 #include <SDL_keysym.h>
-#include <SDL_types.h>
 
 #include "mmgr.h"
 
@@ -14,14 +13,14 @@
 #include "Game/UI/MouseHandler.h"
 #include "GlobalUnsynced.h"
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 CTWController::CTWController()
 {
-	scrollSpeed = configHandler.Get("TWScrollSpeed",10) * 0.1f;
-	enabled = !!configHandler.Get("TWEnabled",1);
-	fov = configHandler.Get("TWFOV", 45.0f);
+	scrollSpeed = configHandler->Get("TWScrollSpeed",10) * 0.1f;
+	enabled = !!configHandler->Get("TWEnabled",1);
+	fov = configHandler->Get("TWFOV", 45.0f);
 }
 
 

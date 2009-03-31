@@ -55,7 +55,7 @@
 #include "Util.h"
 #include "myMath.h"
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 //////////////////////////////////////////////////////////////////////
@@ -87,13 +87,13 @@ CGuiHandler::CGuiHandler()
 
 	LoadConfig("ctrlpanel.txt");
 
-	miniMapMarker = !!configHandler.Get("MiniMapMarker", 1);
-	invertQueueKey = !!configHandler.Get("InvertQueueKey", 0);
+	miniMapMarker = !!configHandler->Get("MiniMapMarker", 1);
+	invertQueueKey = !!configHandler->Get("InvertQueueKey", 0);
 
 	autoShowMetal = mapInfo->gui.autoShowMetal;
 
 	useStencil = false;
-	if (GLEW_NV_depth_clamp && !!configHandler.Get("StencilBufferBits", 1)) {
+	if (GLEW_NV_depth_clamp && !!configHandler->Get("StencilBufferBits", 1)) {
 		GLint stencilBits;
 		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 		useStencil = (stencilBits >= 1);
@@ -1271,10 +1271,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
 	// setup the mouse and key states
 	const bool  prevLMB   = mouse->buttons[SDL_BUTTON_LEFT].pressed;
 	const bool  prevRMB   = mouse->buttons[SDL_BUTTON_RIGHT].pressed;
-	const Uint8 prevAlt   = keys[SDLK_LALT];
-	const Uint8 prevCtrl  = keys[SDLK_LCTRL];
-	const Uint8 prevMeta  = keys[SDLK_LMETA];
-	const Uint8 prevShift = keys[SDLK_LSHIFT];
+	const uint8_t prevAlt   = keys[SDLK_LALT];
+	const uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	const uint8_t prevMeta  = keys[SDLK_LMETA];
+	const uint8_t prevShift = keys[SDLK_LSHIFT];
 
 	mouse->buttons[SDL_BUTTON_LEFT].pressed  = lmb;
 	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rmb;
@@ -1483,6 +1483,9 @@ void CGuiHandler::CreateOptions(Command& c, bool rmb)
 	if (keys[SDLK_LALT] || keys[SDLK_LMETA]) {
 		c.options |= ALT_KEY;
 	}
+	if (keys[SDLK_SPACE]) {
+		c.options |= SPACE_KEY;
+	}
 }
 
 
@@ -1639,7 +1642,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 			invertQueueKey = !!atoi(action.extra.c_str());
 		}
 		needShift = false;
-		configHandler.Set("InvertQueueKey", invertQueueKey ? 1 : 0);
+		configHandler->Set("InvertQueueKey", invertQueueKey ? 1 : 0);
 		return true;
 	}
 

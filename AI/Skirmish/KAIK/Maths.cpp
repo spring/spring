@@ -1,3 +1,5 @@
+#include <ctime>
+
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 
@@ -19,16 +21,16 @@ CMaths::~CMaths() {
 }
 
 
-void CMaths::F3MapBound(float3* pos) {
-	if (pos->x < 65)
-		pos->x = 65;
-	else if (pos->x > mapfloat3width - 65)
-		pos->x = mapfloat3width - 65;
+void CMaths::F3MapBound(float3& pos) {
+	if (pos.x < 65)
+		pos.x = 65;
+	else if (pos.x > mapfloat3width - 65)
+		pos.x = mapfloat3width - 65;
 
-	if (pos->z < 65)
-		pos->z = 65;
-	else if (pos->z > mapfloat3height - 65)
-		pos->z = mapfloat3height - 65;
+	if (pos.z < 65)
+		pos.z = 65;
+	else if (pos.z > mapfloat3height - 65)
+		pos.z = mapfloat3height - 65;
 }
 
 float3 CMaths::F3Randomize(const float3& pos, float radius) {

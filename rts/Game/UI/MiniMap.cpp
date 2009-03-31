@@ -5,7 +5,6 @@
 #include "StdAfx.h"
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
-#include <SDL_types.h>
 
 #include "mmgr.h"
 
@@ -66,7 +65,7 @@
 
 CMiniMap* minimap = NULL;
 
-extern Uint8* keys;
+extern uint8_t* keys;
 
 
 CMiniMap::CMiniMap()
@@ -95,31 +94,31 @@ CMiniMap::CMiniMap()
 	}
 	else {
 		const std::string geodef = "2 2 200 200";
-		const std::string geo = configHandler.GetString("MiniMapGeometry", geodef);
+		const std::string geo = configHandler->GetString("MiniMapGeometry", geodef);
 		ParseGeometry(geo);
 	}
 
-	fullProxy = !!configHandler.Get("MiniMapFullProxy", 1);
+	fullProxy = !!configHandler->Get("MiniMapFullProxy", 1);
 
-	buttonSize = configHandler.Get("MiniMapButtonSize", 16);
+	buttonSize = configHandler->Get("MiniMapButtonSize", 16);
 
 	unitBaseSize =
-		atof(configHandler.GetString("MiniMapUnitSize", "2.5").c_str());
+		atof(configHandler->GetString("MiniMapUnitSize", "2.5").c_str());
 	unitBaseSize = std::max(0.0f, unitBaseSize);
 
 	unitExponent =
-		atof(configHandler.GetString("MiniMapUnitExp", "0.25").c_str());
+		atof(configHandler->GetString("MiniMapUnitExp", "0.25").c_str());
 
 	cursorScale =
-		atof(configHandler.GetString("MiniMapCursorScale", "-0.5").c_str());
+		atof(configHandler->GetString("MiniMapCursorScale", "-0.5").c_str());
 
-	useIcons = !!configHandler.Get("MiniMapIcons", 1);
+	useIcons = !!configHandler->Get("MiniMapIcons", 1);
 
-	drawCommands = std::max(0, configHandler.Get("MiniMapDrawCommands", 1));
+	drawCommands = std::max(0, configHandler->Get("MiniMapDrawCommands", 1));
 
-	drawProjectiles = !!configHandler.Get("MiniMapDrawProjectiles", 1);
+	drawProjectiles = !!configHandler->Get("MiniMapDrawProjectiles", 1);
 
-	simpleColors = !!configHandler.Get("SimpleMiniMapColors", 0);
+	simpleColors = !!configHandler->Get("SimpleMiniMapColors", 0);
 
 	myColor[0]    = (unsigned char)(0.2f * 255);
 	myColor[1]    = (unsigned char)(0.9f * 255);

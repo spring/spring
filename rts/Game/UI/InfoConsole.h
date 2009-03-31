@@ -9,7 +9,6 @@
 #include <string>
 #include <list>
 #include <boost/thread/recursive_mutex.hpp>
-#include <SDL_types.h>
 #include "float3.h"
 #include "InputReceiver.h"
 #include "LogOutput.h"
@@ -66,7 +65,7 @@ public:
 		std::string text;
 		const CLogSubsystem* subsystem;
 		int id;
-		Uint32 time;
+		uint32_t time;
 	};
 	int  GetRawLines(std::deque<RawLine>& copy);
 	void GetNewRawLines(std::vector<RawLine>& copy);

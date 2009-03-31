@@ -1,5 +1,4 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 
 #include "LogOutput.h"
 
@@ -12,6 +11,7 @@
 #include <windows.h>
 #endif
 
+#include "lib/gml/gml.h"
 #include "Util.h"
 #include "float3.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -183,7 +183,7 @@ void CLogOutput::InitializeSubsystems()
 	// and the ones specified in the configuration file.
 	// configHandler cannot be accessed here in unitsync since it may not exist.
 #ifndef UNITSYNC
-	string subsystems = "," + StringToLower(configHandler.GetString("LogSubsystems", "")) + ",";
+	string subsystems = "," + StringToLower(configHandler->GetString("LogSubsystems", "")) + ",";
 #else
 #  ifdef DEBUG
 	// unitsync logging in debug mode always on

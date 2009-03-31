@@ -37,7 +37,7 @@
 
 using std::string;
 
-ConfigHandler* _configHandler;
+ConfigHandler* configHandler;
 
 /**
  * @brief POSIX file locking class
@@ -102,7 +102,7 @@ std::string ConfigHandler::Instantiate(std::string configSource)
 	if (configSource.empty()) {
 		configSource = GetDefaultConfig();
 	}
-	_configHandler = new ConfigHandler(configSource);
+	configHandler = new ConfigHandler(configSource);
 	return configSource;
 }
 
@@ -113,8 +113,8 @@ std::string ConfigHandler::Instantiate(std::string configSource)
 void ConfigHandler::Deallocate()
 {
 	// can not use SafeDelete because ~ConfigHandler is protected
-	delete _configHandler;
-	_configHandler = NULL;
+	delete configHandler;
+	configHandler = NULL;
 }
 
 ConfigHandler::ConfigHandler(const std::string& configFile)

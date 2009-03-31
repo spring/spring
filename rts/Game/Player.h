@@ -8,7 +8,6 @@
 #include <set>
 
 #include "creg/creg.h"
-#include "Platform/byteorder.h"
 
 #include "PlayerBase.h"
 
@@ -37,7 +36,6 @@ class CPlayer : public PlayerBase
 {
 public:
 	CR_DECLARE(CPlayer);
-	CR_DECLARE_SUB(Statistics);
 	CPlayer();
 	~CPlayer();
 
@@ -60,27 +58,7 @@ public:
 	float cpuUsage;
 	int ping;
 
-	struct Statistics {
-		CR_DECLARE_STRUCT(Statistics);
-		/// how many pixels the mouse has traversed in total
-		int mousePixels;
-		int mouseClicks;
-		int keyPresses;
-
-		int numCommands;
-		/// total amount of units affected by commands
-		/// (divide by numCommands for average units/command)
-		int unitCommands;
-
-		/// Change structure from host endian to little endian or vice versa.
-		void swab() {
-			mousePixels = swabdword(mousePixels);
-			mouseClicks = swabdword(mouseClicks);
-			keyPresses = swabdword(keyPresses);
-			numCommands = swabdword(numCommands);
-			unitCommands = swabdword(unitCommands);
-		}
-	};
+	typedef PlayerStatistics Statistics;
 
 	Statistics currentStats;
 

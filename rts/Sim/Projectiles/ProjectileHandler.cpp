@@ -67,7 +67,7 @@ CProjectileHandler::CProjectileHandler()
 {
 	PrintLoadMsg("Creating projectile texture");
 
-	maxParticles = configHandler.Get("MaxParticles",4000);
+	maxParticles = configHandler->Get("MaxParticles",4000);
 
 	currentParticles = 0;
 	particleSaturation = 0;

@@ -190,18 +190,18 @@ static void DrawRadialDisc()
 CBumpWater::CBumpWater()
 {
 	/** LOAD USER CONFIGS **/
-	reflTexSize  = next_power_of_2(configHandler.Get("BumpWaterTexSizeReflection", 512));
-	reflection   = !!configHandler.Get("BumpWaterReflection", 1);
-	refraction   = configHandler.Get("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
-	anisotropy   = atof(configHandler.GetString("BumpWaterAnisotropy", "0.0").c_str());
-	depthCopy    = !!configHandler.Get("BumpWaterUseDepthTexture", 1);
-	depthBits    = configHandler.Get("BumpWaterDepthBits", (gu->atiHacks)?16:24);
-	blurRefl     = !!configHandler.Get("BumpWaterBlurReflection", 0);
-	shoreWaves   = (!!configHandler.Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
-	endlessOcean = (!!configHandler.Get("BumpWaterEndlessOcean", 1)) && mapInfo->water.hasWaterPlane
+	reflTexSize  = next_power_of_2(configHandler->Get("BumpWaterTexSizeReflection", 512));
+	reflection   = !!configHandler->Get("BumpWaterReflection", 1);
+	refraction   = configHandler->Get("BumpWaterRefraction", 1);  /// 0:=off, 1:=screencopy, 2:=own rendering cycle
+	anisotropy   = atof(configHandler->GetString("BumpWaterAnisotropy", "0.0").c_str());
+	depthCopy    = !!configHandler->Get("BumpWaterUseDepthTexture", 1);
+	depthBits    = configHandler->Get("BumpWaterDepthBits", (gu->atiHacks)?16:24);
+	blurRefl     = !!configHandler->Get("BumpWaterBlurReflection", 0);
+	shoreWaves   = (!!configHandler->Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
+	endlessOcean = (!!configHandler->Get("BumpWaterEndlessOcean", 1)) && mapInfo->water.hasWaterPlane
 	               && ((readmap->minheight <= 0.0f) || (mapInfo->water.forceRendering));
-	dynWaves     = (!!configHandler.Get("BumpWaterDynamicWaves", 1)) && (mapInfo->water.numTiles>1);
-	useUniforms  = (!!configHandler.Get("BumpWaterUseUniforms", 0));
+	dynWaves     = (!!configHandler->Get("BumpWaterDynamicWaves", 1)) && (mapInfo->water.numTiles>1);
+	useUniforms  = (!!configHandler->Get("BumpWaterUseUniforms", 0));
 
 	if (refraction>1)
 		drawSolid = true;

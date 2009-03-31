@@ -26,7 +26,7 @@ CglList::~CglList()
 	if (place != cancelPlace) {
 		char buf[50];
 		sprintf(buf, "LastListChoice%i", id);
-		configHandler.SetString(buf, (*filteredItems)[place]);
+		configHandler->SetString(buf, (*filteredItems)[place]);
 	}
 }
 
@@ -42,7 +42,7 @@ CglList::CglList(const char *name, ListSelectCallback callback, int id) :
 {
 	char buf[50];
 	sprintf(buf, "LastListChoice%i", id);
-	lastChoosen=configHandler.GetString(buf, "");
+	lastChoosen=configHandler->GetString(buf, "");
 	box.x1 = 0.3f;
 	box.y1 = 0.1f;
 	box.x2 = 0.7f;
@@ -167,8 +167,8 @@ void CglList::Draw()
 	* *
 	****************************************
 	// Get screen res, so that the selected item is always within the middle 60% of screen
-	int iResX = configHandler.Get("XResolution", 1024);
-	int iResY = configHandler.Get("YResolution", 768);
+	int iResX = configHandler->Get("XResolution", 1024);
+	int iResY = configHandler->Get("YResolution", 768);
 
 	// Keep tabs on the last place. change this ONLY AFTER a scroll
 	static int siOldPlace = place;

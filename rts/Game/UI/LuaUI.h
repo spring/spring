@@ -7,7 +7,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "SDL_types.h"
 
 #include "Lua/LuaHandle.h"
 #include "Sim/Units/CommandAI/Command.h"

@@ -643,11 +643,18 @@ EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1VALS0getRadarMap(int tea
 EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1SIZE0getJammerMap(int teamId);
 EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1VALS0getJammerMap(int teamId,
 		unsigned short jammerValues[], int jammerValues_max);
-EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMap(
+EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw(
 		int teamId, int resourceId);
-EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMap(
-		int teamId, int resourceId, unsigned char resources[],
-		int resources_max);
+EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapRaw(
+		int teamId, int resourceId, unsigned char resources[], int resources_max);
+EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapSpotsPositions(
+		int teamId, int resourceId);
+EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions(
+		int teamId, int resourceId, SAIFloat3 spots[], int spots_max);
+EXPORT(float            ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome(
+		int teamId, int resourceId);
+EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
+		int teamId, int resourceId, struct SAIFloat3 pos);
 EXPORT(const char*      ) skirmishAiCallback_Map_getName(int teamId);
 EXPORT(float            ) skirmishAiCallback_Map_getElevationAt(int teamId, float x, float z);
 EXPORT(float            ) skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource(

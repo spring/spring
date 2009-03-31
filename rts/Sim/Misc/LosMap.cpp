@@ -3,8 +3,11 @@
 
 #include "StdAfx.h"
 #include "LosMap.h"
-#include "float3.h"
+
 #include <algorithm>
+#include <cstring>
+
+#include "float3.h"
 
 
 //////////////////////////////////////////////////////////////////////
