@@ -6,7 +6,6 @@
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
 #include <IL/il.h>
-#include <SDL_types.h>
 #include "Map/MapInfo.h"
 #include "Map/MapParser.h"
 #include "Rendering/ShadowHandler.h"
@@ -75,7 +74,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 
 		renderer->config.cacheTextures=false;
 
-		renderer->config.forceFallbackTexturing = !!configHandler.Get("SM3ForceFallbackTex", 0);
+		renderer->config.forceFallbackTexturing = !!configHandler->Get("SM3ForceFallbackTex", 0);
 
 		if (!renderer->config.forceFallbackTexturing && GLEW_ARB_fragment_shader && GLEW_ARB_shading_language_100) {
 			renderer->config.useBumpMaps = true;
@@ -97,7 +96,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		}
 
 /*		int numStages=atoi(mapDefParser.SGetValueDef("0", "map\\terrain\\numtexturestages").c_str());
-		int maxStages=configHandler.Get("SM3MaxTextureStages", 10);
+		int maxStages=configHandler->Get("SM3MaxTextureStages", 10);
 		if (numStages > maxStages) {
 			renderer->config.cacheTextures = true;
 			renderer->config.cacheTextureSize = 256;

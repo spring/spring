@@ -69,7 +69,7 @@ using namespace std;
 
 // MinGW defines this for a WINAPI function
 #undef SendMessage
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 
@@ -1484,7 +1484,7 @@ int LuaUnsyncedCtrl::GetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int def     = luaL_optint(L, 2, 0);
-	const int value = configHandler.Get(name, def);
+	const int value = configHandler->Get(name, def);
 	lua_pushnumber(L, value);
 	return 1;
 }
@@ -1497,7 +1497,7 @@ int LuaUnsyncedCtrl::SetConfigInt(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const int value   = luaL_checkint(L, 2);
-	configHandler.Set(name, value);
+	configHandler->Set(name, value);
 	return 0;
 }
 
@@ -1509,7 +1509,7 @@ int LuaUnsyncedCtrl::GetConfigString(lua_State* L)
 	}
 	const string name = luaL_checkstring(L, 1);
 	const string def  = luaL_optstring(L, 2, "");
-	const string value = configHandler.GetString(name, def);
+	const string value = configHandler->GetString(name, def);
 	lua_pushstring(L, value.c_str());
 	return 1;
 }
@@ -1522,7 +1522,7 @@ int LuaUnsyncedCtrl::SetConfigString(lua_State* L)
 	}
 	const string name  = luaL_checkstring(L, 1);
 	const string value = luaL_checkstring(L, 2);
-	configHandler.SetString(name, value);
+	configHandler->SetString(name, value);
 	return 0;
 }
 

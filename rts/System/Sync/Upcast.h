@@ -7,10 +7,6 @@
 // and SyncedSint64 & SyncedUint64 aren't needed at this moment anyway.
 //#define UPCAST_USE_64_BIT_TYPES
 
-#ifdef UPCAST_USE_64_BIT_TYPES
-#include <SDL_types.h>
-#endif
-
 namespace upcast {
 	template<class T> struct UnaryUpcast {};
 	template<class U, class V> struct BinaryUpcast {};
@@ -31,8 +27,8 @@ namespace upcast {
 	template<> struct UnaryUpcast<    long double > { typedef   long double type; };
 
 #ifdef UPCAST_USE_64_BIT_TYPES
-	template<> struct UnaryUpcast<         Sint64 > { typedef        Sint64 type; };
-	template<> struct UnaryUpcast<         Uint64 > { typedef        Uint64 type; };
+	template<> struct UnaryUpcast<         int64_t > { typedef        int64_t type; };
+	template<> struct UnaryUpcast<         uint64_t > { typedef        uint64_t type; };
 #endif // UPCAST_USE_64_BIT_TYPES
 
 #define UPCAST1(U, V, W) \
@@ -73,23 +69,23 @@ namespace upcast {
 	UPCAST1(   long double ,   long double ,   long double );
 
 #ifdef UPCAST_USE_64_BIT_TYPES
-	UPCAST2(   signed int  ,        Sint64 ,        Sint64 );
-	UPCAST2(   signed int  ,        Uint64 ,        Uint64 );
-	UPCAST2(   signed long ,        Sint64 ,        Sint64 );
-	UPCAST2(   signed long ,        Uint64 ,        Uint64 );
-	UPCAST2( unsigned int  ,        Sint64 ,        Sint64 );
-	UPCAST2( unsigned int  ,        Uint64 ,        Uint64 );
-	UPCAST2( unsigned long ,        Sint64 ,        Sint64 );
-	UPCAST2( unsigned long ,        Uint64 ,        Uint64 );
-	UPCAST1(        Sint64 ,        Sint64 ,        Sint64 );
-	UPCAST2(        Sint64 ,        Uint64 ,        Uint64 );
-	UPCAST2(        Sint64 ,         float ,         float );
-	UPCAST2(        Sint64 ,        double ,        double );
-	UPCAST2(        Sint64 ,   long double ,   long double );
-	UPCAST1(        Uint64 ,        Uint64 ,        Uint64 );
-	UPCAST2(        Uint64 ,         float ,         float );
-	UPCAST2(        Uint64 ,        double ,        double );
-	UPCAST2(        Uint64 ,   long double ,   long double );
+	UPCAST2(   signed int  ,        int64_t ,        int64_t );
+	UPCAST2(   signed int  ,        uint64_t ,        uint64_t );
+	UPCAST2(   signed long ,        int64_t ,        int64_t );
+	UPCAST2(   signed long ,        uint64_t ,        uint64_t );
+	UPCAST2( unsigned int  ,        int64_t ,        int64_t );
+	UPCAST2( unsigned int  ,        uint64_t ,        uint64_t );
+	UPCAST2( unsigned long ,        int64_t ,        int64_t );
+	UPCAST2( unsigned long ,        uint64_t ,        uint64_t );
+	UPCAST1(        int64_t ,        int64_t ,        int64_t );
+	UPCAST2(        int64_t ,        uint64_t ,        uint64_t );
+	UPCAST2(        int64_t ,         float ,         float );
+	UPCAST2(        int64_t ,        double ,        double );
+	UPCAST2(        int64_t ,   long double ,   long double );
+	UPCAST1(        uint64_t ,        uint64_t ,        uint64_t );
+	UPCAST2(        uint64_t ,         float ,         float );
+	UPCAST2(        uint64_t ,        double ,        double );
+	UPCAST2(        uint64_t ,   long double ,   long double );
 #endif // UPCAST_USE_64_BIT_TYPES
 
 #undef UPCAST1

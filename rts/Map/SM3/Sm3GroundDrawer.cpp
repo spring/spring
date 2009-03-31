@@ -23,7 +23,7 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 	tr = map->renderer;
 	rc = tr->AddRenderContext (&cam, true);
 
-	tr->config.detailMod = configHandler.Get("SM3TerrainDetail", 200) / 100.0f;
+	tr->config.detailMod = configHandler->Get("SM3TerrainDetail", 200) / 100.0f;
 
 	if (shadowHandler->drawShadows) {
 		shadowrc = tr->AddRenderContext (&shadowCam,false);
@@ -40,7 +40,7 @@ CSm3GroundDrawer::CSm3GroundDrawer(CSm3ReadMap *m)
 CSm3GroundDrawer::~CSm3GroundDrawer()
 {
 	glSafeDeleteProgram( groundShadowVP );
-	configHandler.Set("SM3TerrainDetail", int(tr->config.detailMod * 100));
+	configHandler->Set("SM3TerrainDetail", int(tr->config.detailMod * 100));
 }
 
 static void SpringCamToTerrainCam(CCamera &sc, terrain::Camera& tc)

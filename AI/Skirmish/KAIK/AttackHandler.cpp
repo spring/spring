@@ -267,11 +267,12 @@ float3 CAttackHandler::FindSafeSpot(float3 myPos, float minSafety, float maxSafe
 
 	if ((whichPath + 1) < (int) subset.size() && subset[whichPath].distance2D(subset[whichPath + 1]) > KMEANS_MINIMUM_LINE_LENGTH) {
 		std::vector<float3> posPath;
+
 		//TODO: implement one in pathfinder without radius (or unit ID)
 		//	if (size > (int)kMeansBase.size())
 		//		size = kMeansBase.size();
 
-		float dist = ai->pather->MakePath(&posPath, &subset[whichPath], &subset[whichPath + 1], THREATRES * 8);
+		float dist = ai->pather->MakePath(posPath, subset[whichPath], subset[whichPath + 1], THREATRES * 8);
 		float3 res;
 
 		if (dist > 0) {
@@ -836,7 +837,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 
 		// pick an enemy position and path to it
 		// KLOOTNOTE: should be more like KAI 0.23 by passing group DPS to FindBestPath()
-		ai->pather->FindBestPath(&pathToTarget, &groupPos, THREATRES * 8, &enemyPositions);
+		ai->pather->FindBestPath(pathToTarget, groupPos, THREATRES * 8, enemyPositions);
 
 		if (pathToTarget.size() > 2) {
 			const int ATTACKED_AREA_RADIUS = 800;

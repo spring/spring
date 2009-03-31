@@ -1031,110 +1031,9 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing)
 }
 
 
-struct SearchOffset {
-	int dx,dy;
-	int qdist; // dx*dx+dy*dy
-};
-
-
-bool SearchOffsetComparator (const SearchOffset& a, const SearchOffset& b)
+float3 CAICallback::ClosestBuildSite(const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing)
 {
-	return a.qdist < b.qdist;
-}
-
-const vector<SearchOffset>& GetSearchOffsetTable (int radius)
-{
-	static vector <SearchOffset> searchOffsets;
-	unsigned int size = radius*radius*4;
-	if (size > searchOffsets.size()) {
-		searchOffsets.resize (size);
-
-		for (int y=0;y<radius*2;y++)
-			for (int x=0;x<radius*2;x++)
-			{
-				SearchOffset& i = searchOffsets[y*radius*2+x];
-
-				i.dx = x-radius;
-				i.dy = y-radius;
-				i.qdist = i.dx*i.dx+i.dy*i.dy;
-			}
-
-		std::sort (searchOffsets.begin(), searchOffsets.end(), SearchOffsetComparator);
-	}
-
-	return searchOffsets;
-}
-
-float3 CAICallback::ClosestBuildSite(const UnitDef* unitdef, float3 pos, float searchRadius, int minDist, int facing)
-{
-	if (!unitdef) {
-		return float3(-1.0f, 0.0f, 0.0f);
-	}
-
-	CFeature* feature = NULL;
-
-	const int allyteam = teamHandler->AllyTeam(team);
-	const int endr = int(searchRadius / (SQUARE_SIZE * 2));
-	const vector<SearchOffset>& ofs = GetSearchOffsetTable(endr);
-
-	for (int so = 0; so < endr * endr * 4; so++) {
-		float x = pos.x + ofs[so].dx * SQUARE_SIZE * 2;
-		float z = pos.z + ofs[so].dy * SQUARE_SIZE * 2;
-
-		BuildInfo bi(unitdef, float3(x, 0.0f, z), facing);
-		bi.pos = helper->Pos2BuildPos(bi);
-
-		if (uh->TestUnitBuildSquare(bi, feature, allyteam) && (!feature || feature->allyteam != allyteam)) {
-			const int xs = int(x / SQUARE_SIZE);
-			const int zs = int(z / SQUARE_SIZE);
-			const int xsize = bi.GetXSize();
-			const int zsize = bi.GetZSize();
-
-			bool good = true;
-
-			int z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist);
-			int z2Max = std::min(gs->mapy, zs + (zsize + 1) / 2 + minDist);
-			int x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist);
-			int x2Max = std::min(gs->mapx, xs + (xsize + 1) / 2 + minDist);
-
-			// check for nearby blocking features
-			for (int z2 = z2Min; z2 < z2Max; ++z2) {
-				for (int x2 = x2Min; x2 < x2Max; ++x2) {
-					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
-
-					if (so && so->immobile && !dynamic_cast<CFeature*>(so)) {
-						good = false;
-						break;
-					}
-				}
-			}
-
-			if (good) {
-				z2Min = std::max(       0, zs - (zsize    ) / 2 - minDist - 2);
-				z2Max = std::min(gs->mapy, zs + (zsize + 1) / 2 + minDist + 2);
-				x2Min = std::max(       0, xs - (xsize    ) / 2 - minDist - 2);
-				x2Max = std::min(gs->mapx, xs + (xsize + 1) / 2 + minDist + 2);
-
-				// check for nearby factories with open yards
-				for (int z2 = z2Min; z2 < z2Max; ++z2) {
-					for (int x2 = x2Min; x2 < x2Max; ++x2) {
-						CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
-
-						if (so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening) {
-							good = false;
-							break;
-						}
-					}
-				}
-			}
-
-			if (good) {
-				return bi.pos;
-			}
-		}
-	}
-
-	return float3(-1.0f, 0.0f, 0.0f);
+	return helper->ClosestBuildSite(team, unitDef, pos, searchRadius, minDist, facing);
 }
 
 
@@ -1606,48 +1505,62 @@ float3 CAICallback::GetMousePos() {
 int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
 {
 	int a=0;
-	verify ();
+	verify();
 
-	if (gu->myAllyTeam != teamHandler->AllyTeam(team))
+	if (gu->myAllyTeam != teamHandler->AllyTeam(team)) {
 		return 0;
+	}
 
-	for (int i=0;i<inMapDrawer->numQuads;i++){
-		if(!inMapDrawer->drawQuads[i].points.empty()){
-			for(std::list<CInMapDraw::MapPoint>::iterator mp=inMapDrawer->drawQuads[i].points.begin();mp!=inMapDrawer->drawQuads[i].points.end();++mp){
-				if(mp->color==teamHandler->Team(team)->color) { //Maybe add so that markers of your ally team would be also found?
+	for (int i=0; i < inMapDrawer->numQuads; i++) {
+		if (!inMapDrawer->drawQuads[i].points.empty()) {
+			for (std::list<CInMapDraw::MapPoint>::iterator mp =
+					inMapDrawer->drawQuads[i].points.begin();
+					mp != inMapDrawer->drawQuads[i].points.end(); ++mp) {
+				if (mp->color==teamHandler->Team(team)->color) {
+					// TODO: Maybe add code, so that markers of your
+					// ally team would be found aswell?
 					pm[a].pos=mp->pos;
 					pm[a].color=mp->color;
 					pm[a].label=mp->label.c_str();
-					if (++a == maxPoints) return a;
+					if (++a == maxPoints) {
+						return a;
+					}
 				}
-				else{ continue; }
 			}
 		}
 	}
+
 	return a;
 }
 
 int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 {
 	int a=0;
-	verify ();
+	verify();
 
-	if (gu->myAllyTeam != teamHandler->AllyTeam(team))
+	if (gu->myAllyTeam != teamHandler->AllyTeam(team)) {
 		return 0;
+	}
 
-	for (int i=0;i<inMapDrawer->numQuads;i++){
-		if(!inMapDrawer->drawQuads[i].points.empty()){
-			for(std::list<CInMapDraw::MapLine>::iterator ml=inMapDrawer->drawQuads[i].lines.begin();ml!=inMapDrawer->drawQuads[i].lines.end();++ml){
-				if(ml->color==teamHandler->Team(team)->color){ //Maybe add so that markers of your ally team would be also found?
+	for (int i=0; i < inMapDrawer->numQuads; i++) {
+		if (!inMapDrawer->drawQuads[i].points.empty()) {
+			for (std::list<CInMapDraw::MapLine>::const_iterator ml =
+					inMapDrawer->drawQuads[i].lines.begin();
+					ml != inMapDrawer->drawQuads[i].lines.end(); ++ml) {
+				if (ml->color==teamHandler->Team(team)->color) {
+					// TODO: Maybe add code, so that markers of your
+					// ally team would be found aswell?
 					lm[a].pos=ml->pos;
 					lm[a].color=ml->color;
 					lm[a].pos2=ml->pos2;
-					if (++a == maxLines) return a;
+					if (++a == maxLines) {
+						return a;
+					}
 				}
-				else {continue;}
 			}
 		}
 	}
+
 	return a;
 }
 

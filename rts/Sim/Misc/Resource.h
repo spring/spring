@@ -29,8 +29,14 @@ public:
 	CResource();
 	~CResource();
 
+	/// The name of this resource, eg. "Energy" or "Metal"
 	std::string name;
+	/// The optimum value for this resource, eg. 0 for "Waste" or MAX_FLOAT for "Metal"
 	float optimum;
+	/// The default extractor radius for the resource map, 0.0f if non applicable
+	float extractorRadius;
+	/// What value 255 in the resource map is worth
+	float maxWorth;
 };
 
 #endif // _RESOURCE_H

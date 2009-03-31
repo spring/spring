@@ -23,7 +23,6 @@
 #include "Rendering/Textures/TAPalette.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
-#include "SDL_types.h"
 #include "SDL_timer.h"
 
 
@@ -61,7 +60,7 @@ CR_REG_METADATA(CGlobalUnsyncedStuff, (
  */
 CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
-	Uint64 randnum;
+	uint64_t randnum;
 	randnum = SDL_GetTicks();
 	usRandSeed = randnum&0xffffffff;
 	modGameTime = 0;

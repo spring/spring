@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 
 #include <SDL_keysym.h>
-#include <SDL_types.h>
 #include <SDL_timer.h>
 
 #include "mmgr.h"
@@ -18,7 +17,7 @@
 
 
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 SmoothController::SmoothController()
@@ -29,10 +28,10 @@ SmoothController::SmoothController()
 	maxHeight(10000),
 	speedFactor(1)
 {
-	scrollSpeed = configHandler.Get("SmoothScrollSpeed",10)*0.1f;
-	tiltSpeed = configHandler.Get("SmoothTiltSpeed",1.0f);
-	enabled = !!configHandler.Get("SmoothEnabled",1);
-	fov = configHandler.Get("SmoothFOV", 45.0f);
+	scrollSpeed = configHandler->Get("SmoothScrollSpeed",10)*0.1f;
+	tiltSpeed = configHandler->Get("SmoothTiltSpeed",1.0f);
+	enabled = !!configHandler->Get("SmoothEnabled",1);
+	fov = configHandler->Get("SmoothFOV", 45.0f);
 	lastSource = Noone;
 }
 

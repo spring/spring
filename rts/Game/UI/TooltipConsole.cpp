@@ -27,7 +27,7 @@ CTooltipConsole* tooltip = 0;
 
 CTooltipConsole::CTooltipConsole(void) : disabled(false)
 {
-	const std::string geo = configHandler.GetString("TooltipGeometry",
+	const std::string geo = configHandler->GetString("TooltipGeometry",
 	                                                "0.0 0.0 0.41 0.1");
 	const int vars = sscanf(geo.c_str(), "%f %f %f %f", &x, &y, &w, &h);
 	if (vars != 4) {
@@ -37,7 +37,7 @@ CTooltipConsole::CTooltipConsole(void) : disabled(false)
 		h = 0.10f;
 	}
 
-	outFont = !!configHandler.Get("TooltipOutlineFont", 0);
+	outFont = !!configHandler->Get("TooltipOutlineFont", 0);
 }
 
 

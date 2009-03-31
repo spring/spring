@@ -23,9 +23,9 @@ CSound* sound = NULL;
 CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 {
 	mute = false;
-	int maxSounds = configHandler.Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
-	globalVolume = configHandler.Get("SoundVolume", 60) * 0.01f;
-	unitReplyVolume = configHandler.Get("UnitReplyVolume", 80 ) * 0.01f;
+	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
+	globalVolume = configHandler->Get("SoundVolume", 60) * 0.01f;
+	unitReplyVolume = configHandler->Get("UnitReplyVolume", 80 ) * 0.01f;
 
 	if (maxSounds <= 0)
 	{

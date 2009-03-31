@@ -1,6 +1,5 @@
 #include "StdAfx.h"
 #include <SDL_keysym.h>
-#include <SDL_types.h>
 
 #include "mmgr.h"
 
@@ -14,7 +13,7 @@
 
 using std::max;
 using std::min;
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -44,21 +43,21 @@ CFreeController::CFreeController()
 	}
 	pos -= (dir * 1000.0f);
 
-	enabled     = !!configHandler.Get("CamFreeEnabled",   0);
-	invertAlt   = !!configHandler.Get("CamFreeInvertAlt", 0);
-	goForward   = !!configHandler.Get("CamFreeGoForward", 0);
-	fov         = configHandler.Get("CamFreeFOV",           45.0f);
-	scrollSpeed = configHandler.Get("CamFreeScrollSpeed",  500.0f);
-	gravity     = configHandler.Get("CamFreeGravity",     -500.0f);
-	slide       = configHandler.Get("CamFreeSlide",          0.5f);
-	gndOffset   = configHandler.Get("CamFreeGroundOffset",  16.0f);
-	tiltSpeed   = configHandler.Get("CamFreeTiltSpeed",    150.0f);
+	enabled     = !!configHandler->Get("CamFreeEnabled",   0);
+	invertAlt   = !!configHandler->Get("CamFreeInvertAlt", 0);
+	goForward   = !!configHandler->Get("CamFreeGoForward", 0);
+	fov         = configHandler->Get("CamFreeFOV",           45.0f);
+	scrollSpeed = configHandler->Get("CamFreeScrollSpeed",  500.0f);
+	gravity     = configHandler->Get("CamFreeGravity",     -500.0f);
+	slide       = configHandler->Get("CamFreeSlide",          0.5f);
+	gndOffset   = configHandler->Get("CamFreeGroundOffset",  16.0f);
+	tiltSpeed   = configHandler->Get("CamFreeTiltSpeed",    150.0f);
 	tiltSpeed   = tiltSpeed * (PI / 180.0);
-	autoTilt    = configHandler.Get("CamFreeAutoTilt",     150.0f);
+	autoTilt    = configHandler->Get("CamFreeAutoTilt",     150.0f);
 	autoTilt    = autoTilt * (PI / 180.0);
-	velTime     = configHandler.Get("CamFreeVelTime",        1.5f);
+	velTime     = configHandler->Get("CamFreeVelTime",        1.5f);
 	velTime     = max(0.1f, velTime);
-	avelTime    = configHandler.Get("CamFreeAngVelTime",     1.0f);
+	avelTime    = configHandler->Get("CamFreeAngVelTime",     1.0f);
 	avelTime    = max(0.1f, avelTime);
 }
 
@@ -302,9 +301,9 @@ void CFreeController::KeyMove(float3 move)
 
 void CFreeController::MouseMove(float3 move)
 {
-	Uint8 prevAlt   = keys[SDLK_LALT];
-	Uint8 prevCtrl  = keys[SDLK_LCTRL];
-	Uint8 prevShift = keys[SDLK_LSHIFT];
+	uint8_t prevAlt   = keys[SDLK_LALT];
+	uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	uint8_t prevShift = keys[SDLK_LSHIFT];
 
 	keys[SDLK_LCTRL] = !keys[SDLK_LCTRL]; // tilt
 	keys[SDLK_LALT] = (invertAlt == !keys[SDLK_LALT]);
@@ -318,9 +317,9 @@ void CFreeController::MouseMove(float3 move)
 
 void CFreeController::ScreenEdgeMove(float3 move)
 {
-	Uint8 prevAlt   = keys[SDLK_LALT];
-	Uint8 prevCtrl  = keys[SDLK_LCTRL];
-	Uint8 prevShift = keys[SDLK_LSHIFT];
+	uint8_t prevAlt   = keys[SDLK_LALT];
+	uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	uint8_t prevShift = keys[SDLK_LSHIFT];
 
 	keys[SDLK_LALT] = (invertAlt == !keys[SDLK_LALT]);
 	KeyMove(move);
@@ -333,8 +332,8 @@ void CFreeController::ScreenEdgeMove(float3 move)
 
 void CFreeController::MouseWheelMove(float move)
 {
-	Uint8 prevCtrl  = keys[SDLK_LCTRL];
-	Uint8 prevShift = keys[SDLK_LSHIFT];
+	uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	uint8_t prevShift = keys[SDLK_LSHIFT];
 	keys[SDLK_LCTRL] = 0;
 	keys[SDLK_LSHIFT] = 1;
 	const float3 m(0.0f, move, 0.0f);

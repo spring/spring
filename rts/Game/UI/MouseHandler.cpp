@@ -44,7 +44,6 @@
 // can't be up there since those contain conflicting definitions
 #include <SDL_mouse.h>
 #include <SDL_events.h>
-#include <SDL_types.h>
 #include <SDL_keysym.h>
 
 
@@ -53,7 +52,7 @@
 //////////////////////////////////////////////////////////////////////
 
 extern bool	fullscreen;
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 CMouseHandler* mouse = NULL;
@@ -84,17 +83,17 @@ CMouseHandler::CMouseHandler()
 	SDL_ShowCursor(SDL_DISABLE);
 
 #ifndef __APPLE__
-	hardwareCursor = !!configHandler.Get("HardwareCursor", 0);
+	hardwareCursor = !!configHandler->Get("HardwareCursor", 0);
 #else
 	hardwareCursor = false;
 #endif
 
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
-	invertMouse = !!configHandler.Get("InvertMouse",1);
-	doubleClickTime = (float)configHandler.Get("DoubleClickTime", 200) / 1000.0f;
+	invertMouse = !!configHandler->Get("InvertMouse",1);
+	doubleClickTime = (float)configHandler->Get("DoubleClickTime", 200) / 1000.0f;
 
-	scrollWheelSpeed = (float)configHandler.Get("ScrollWheelSpeed", 25);
+	scrollWheelSpeed = (float)configHandler->Get("ScrollWheelSpeed", 25);
 	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
 }
 
@@ -306,8 +305,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if (activeReceiver) {
 		activeReceiver->MouseRelease(x, y, button);
 		int x, y;
-		const Uint8 buttons = SDL_GetMouseState(&x, &y);
-		const Uint8 mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
+		const uint8_t buttons = SDL_GetMouseState(&x, &y);
+		const uint8_t mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
 		if ((buttons & mask) == 0) {
 			activeReceiver = NULL;
 		}

@@ -52,7 +52,7 @@ static const char* FindUnit(const char** name)
 
 void CAirScript::GameStart()
 {
-	doRoll=!configHandler.Get("ReflectiveWater",1);
+	doRoll=!configHandler->Get("ReflectiveWater",1);
 
 	tcp=camera->pos;
 	tcf=camera->forward;

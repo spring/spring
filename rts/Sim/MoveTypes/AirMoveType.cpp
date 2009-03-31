@@ -57,7 +57,7 @@ CR_REG_METADATA(CAirMoveType, (
 		CR_MEMBER(crashAileron),
 		CR_MEMBER(crashElevator),
 		CR_MEMBER(crashRudder),
-		
+
 		CR_MEMBER(oldSlowUpdatePos),
 
 		CR_MEMBER(lines),
@@ -75,7 +75,7 @@ CR_REG_METADATA(CAirMoveType, (
 
 		CR_MEMBER(inefficientAttackTime),
 		CR_MEMBER(exitVector),
-		
+
 		CR_RESERVED(63)
 		));
 
@@ -112,7 +112,6 @@ CAirMoveType::CAirMoveType(CUnit* owner):
 	inSupply(0),
 	mySide(1),
 	oldSlowUpdatePos(-1, -1, -1),
-
 	inefficientAttackTime(0)
 {
 	// force LOS recalculation
@@ -303,6 +302,7 @@ void CAirMoveType::Update(void)
 			break;
 		case AIRCRAFT_TAKEOFF:
 			UpdateTakeOff(wantedHeight);
+			break;
 		default:
 			break;
 	}
@@ -488,7 +488,7 @@ void CAirMoveType::UpdateManeuver(void)
 				elevator = 1;
 
 			UpdateAirPhysics(0, aileron, elevator, 1, owner->frontdir);
-	
+
 			if ((owner->updir.y > 0.0f && owner->frontdir.y > 0.0f && maneuverSubState == 1) || speedf < 0.2f)
 				maneuver = 0;
 			break;
@@ -708,6 +708,8 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float aileron = 0.0f;
 	float rudder = 0.0f;
 	float elevator = 0.0f;
+	// do not check if the plane can be submerged here, since it'll cause
+	// ground collisions later on
 	float gHeight = ground->GetHeight(pos.x, pos.z);
 
 	if (!((gs->frameNum + owner->id) & 3))
@@ -851,7 +853,7 @@ void CAirMoveType::UpdateTakeOff(float wantedHeight)
 
 	float h = 0.0f;
 	if (owner->unitDef->canSubmerge)
-		h = pos.y - ground->GetApproximateHeight(pos.x, pos.z);
+		h = pos.y - ground->GetHeight2(pos.x, pos.z);
 	else
 		h = pos.y - ground->GetHeight(pos.x,pos.z);
 
@@ -982,7 +984,7 @@ void CAirMoveType::UpdateLanding(void)
 	// see if we are at the reserved (not user-clicked) landing spot
 	if (dist < 1.0f) {
 		float gh = ground->GetHeight(pos.x, pos.z);
-		float gah = ground->GetApproximateHeight(pos.x, pos.z);
+		float gah = ground->GetHeight2(pos.x, pos.z);
 		float alt = 0.0f;
 
 		// can we submerge and are we still above water?
@@ -1056,10 +1058,10 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 		pos += speed;
 	}
 
-
+	// ground collision
 	if (gHeight > owner->pos.y - owner->model->radius * 0.2f && !owner->crashing) {
 		float3 gNormal = ground->GetNormal(pos.x, pos.z);
-		float impactSpeed =- speed.dot(gNormal);
+		float impactSpeed = -speed.dot(gNormal);
 
 		if (impactSpeed > 0) {
 			if (owner->stunned) {
@@ -1075,7 +1077,15 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 			}
 			pos.y = gHeight + owner->model->radius * 0.2f + 0.01f;
 			speed += gNormal * (impactSpeed * 1.5f);
-			speed *= 0.95f;
+			// fix for mantis #1355
+			// aircraft could get stuck in the ground and never recover;
+			// this only happened when the speed wasn't high enough.
+			// do not reduce speed if it's too low, add a vertical component
+			// to help get off the ground instead.
+			if (speed.SqLength() > 0.3f*0.3f * owner->unitDef->speed*owner->unitDef->speed)
+				speed *= 0.95f;
+			else
+				speed.y += impactSpeed;
 			updir = gNormal - frontdir * 0.1f;
 			frontdir = updir.cross(frontdir.cross(updir));
 		}

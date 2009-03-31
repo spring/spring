@@ -123,7 +123,14 @@ class AWKExecutor:
 	instances = {}
 	awk_bin = 'awk'
 	if sys.platform == 'win32':
-		awk_bin = os.path.join(env['mingwlibsdir'], 'bin', 'awk.exe')
+		if not env['mingwlibsdir']:
+			awk_bin = os.path.abspath(os.path.join('mingwlibs', 'bin', 'awk.exe'))
+		else:
+			awk_bin = os.path.abspath(os.path.join(env['mingwlibsdir'], 'bin', 'awk.exe'))
+		if not os.path.isfile(awk_bin):
+			# try msys default
+			print awk_bin, 'not found, trying gawk.exe'
+			awk_bin = 'gawk.exe'
 
 	myEnv = None
 	myName = []

@@ -24,6 +24,7 @@
 #include "EngineOutHandler.h"
 #include "IAILibraryManager.h"
 #include "Platform/errorhandler.h"
+#include "FileSystem/FileSystem.h"
 #include "LogOutput.h"
 #include "mmgr.h"
 #include "Sim/Units/Unit.h"
@@ -36,6 +37,8 @@
 #include "SSkirmishAICallbackImpl.h"
 
 #include <sstream>
+#include <iostream>
+#include <fstream>
 
 CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, (0, SkirmishAIKey()))
 CR_REG_METADATA(CSkirmishAIWrapper, (
@@ -169,21 +172,62 @@ void CSkirmishAIWrapper::Release() {
 	// further cleanup is done in the destructor
 }
 
+static void streamCopy(std::istream* in, std::ostream* out) {
 
-void CSkirmishAIWrapper::Load(std::istream* s) {
+	static const size_t buffer_size = 128;
+	char* buffer;
 
-/* TODO
-	SLoadAIEvent evtData = {s.TO_FILENAME(TODO), callback};
-	ai->HandleEvent(EVENT_LOAD_AI, &evtData);
-*/
+	buffer = new char[buffer_size];
+
+	in->read(buffer, buffer_size);
+	while (in->good()) {
+		out->write(buffer, in->gcount());
+		in->read(buffer, buffer_size);
+	}
+	out->write(buffer, in->gcount());
+
+	delete[] buffer;
 }
 
-void CSkirmishAIWrapper::Save(std::ostream* s) {
+void CSkirmishAIWrapper::Load(std::istream* load_s) {
 
-/* TODO
-	SSaveAIEvent evtData = {s.TO_FILENAME(TODO)};
-	ai->HandleEvent(EVENT_SAVE_AI, &evtData);
-*/
+	static const size_t tmpFileName_size = 1024;
+	char* tmpFileName = new char[tmpFileName_size];
+	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team_%i.tmp", "load", teamId);
+	std::string tmpFile = filesystem.LocateFile(tmpFileName,
+			FileSystem::WRITE | FileSystem::CREATE_DIRS);
+	delete[] tmpFileName;
+
+	std::ofstream tmpFile_s;
+	tmpFile_s.open(tmpFile.c_str(), std::ios::binary);
+	streamCopy(load_s, &tmpFile_s);
+	tmpFile_s.close();
+
+	SLoadEvent evtData = {tmpFile.c_str()};
+	ai->HandleEvent(EVENT_LOAD, &evtData);
+
+	FileSystemHandler::DeleteFile(tmpFile);
+}
+
+void CSkirmishAIWrapper::Save(std::ostream* save_s) {
+
+	static const size_t tmpFileName_size = 1024;
+	char* tmpFileName = new char[tmpFileName_size];
+	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team_%i.tmp", "save", teamId);
+	std::string tmpFile = filesystem.LocateFile(tmpFileName,
+			FileSystem::WRITE | FileSystem::CREATE_DIRS);
+	delete[] tmpFileName;
+
+	SSaveEvent evtData = {tmpFile.c_str()};
+	ai->HandleEvent(EVENT_SAVE, &evtData);
+
+	if (FileSystemHandler::FileExists(tmpFile)) {
+		std::ifstream tmpFile_s;
+		tmpFile_s.open(tmpFile.c_str(), std::ios::binary);
+		streamCopy(&tmpFile_s, save_s);
+		tmpFile_s.close();
+		FileSystemHandler::DeleteFile(tmpFile);
+	}
 }
 
 void CSkirmishAIWrapper::UnitIdle(int unitId) {

@@ -21,7 +21,7 @@
 #include "Rendering/glFont.h"
 #include "EventHandler.h"
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 GameSetupDrawer* GameSetupDrawer::instance = NULL;
@@ -50,11 +50,11 @@ void GameSetupDrawer::StartCountdown(unsigned time)
 	if (instance) {
 		instance->lastTick = SDL_GetTicks();
 		instance->readyCountdown = (int)time;
-		const std::string modeName = configHandler.GetString("CamModeName", "");
+		const std::string modeName = configHandler->GetString("CamModeName", "");
 		if (!modeName.empty()) {
 			camHandler->SetCameraMode(modeName);
 		} else {
-			const int modeIndex = configHandler.Get("CamMode", 1);
+			const int modeIndex = configHandler->Get("CamMode", 1);
 			camHandler->SetCameraMode(modeIndex);
 		}
 	}

@@ -6,7 +6,7 @@
 // to be used freely for any purpose, as
 // long as this notice remains unchanged
 
-// This code based on boost::detail::atomic_count
+// This code is largely based on boost::detail::atomic_count
 //
 // Copyright (c) 2001, 2002 Peter Dimov and Multi Media Ltd.
 //

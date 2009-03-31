@@ -348,13 +348,12 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 
 		// find path to general enemy position
 		pathToTarget.clear();
-		float costToTarget = ai->pather->FindBestPath(&pathToTarget, &groupPosition, lowestAttackRange, &enemyPositions);
+		float costToTarget = ai->pather->FindBestPath(pathToTarget, groupPosition, lowestAttackRange, enemyPositions);
 
 		if (costToTarget < 0.001f && pathToTarget.size() <= 2) {
 			// cost of zero means something is in range, isShooting will take care of it
 			isMoving = false;
-		}
-		else {
+		} else {
 			isMoving = true;
 			this->pathIterator = 0;
 		}
@@ -365,9 +364,10 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 		// (might not be the best idea to leave units lingering
 		// around however)
 		return;
+
         pathToTarget.clear();
 		float3 closestBaseSpot = ai->ah->GetClosestBaseSpot(groupPosition);
-		float costToTarget = ai->pather->FindBestPathToRadius(&pathToTarget, &groupPosition, THREATRES * 8, &closestBaseSpot);
+		float costToTarget = ai->pather->FindBestPathToRadius(pathToTarget, groupPosition, THREATRES * 8, closestBaseSpot);
 
 		// TODO: GetKBaseMeans() for support of multiple islands/movetypes
 		// TODO: this doesn't need to be to radius
@@ -378,8 +378,7 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 			if (ai->ah->DistanceToBase(groupPosition) > 500) {
 				// we could not path back to closest base spot
 			}
-		}
-		else {
+		} else {
 			isMoving = true;
 			this->pathIterator = 0;
 		}
@@ -533,7 +532,7 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 				// maybe include the height parameter in the search? probably not possible
 				// doesn't this mean pathing might happen every second? outer limit should harsher than inner
 				float3 unitPos = ai->cheat->GetUnitPos(ai->unitIDs[enemySelected]);
-				float dist = ai->pather->FindBestPathToRadius(&tempPath, &myPos, myRange, &unitPos);
+				float dist = ai->pather->FindBestPathToRadius(tempPath, myPos, myRange, unitPos);
 
 				if (tempPath.size() > 0) {
 					float3 moveHere = tempPath.back();

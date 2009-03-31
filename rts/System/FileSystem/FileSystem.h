@@ -15,9 +15,12 @@
 
 #include "DataDirLocater.h"
 
-// winapi redifines this which breaks things
+// winapi redifines these which breaks things
 #if defined(CreateDirectory)
 	#undef CreateDirectory
+#endif
+#if defined(DeleteFile)
+	#undef DeleteFile
 #endif
 
 /**
@@ -37,7 +40,9 @@ public:
 
 	// almost direct wrappers to system calls
 	bool mkdir(const std::string& dir) const;
-	bool DirExists(const std::string& dir) const;
+	static bool DeleteFile(const std::string& file);
+	static bool FileExists(const std::string& file);
+	static bool DirExists(const std::string& dir);
 
 	// custom functions
 	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;

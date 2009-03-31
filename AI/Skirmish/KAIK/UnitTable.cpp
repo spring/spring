@@ -277,17 +277,46 @@ void CUnitTable::ReadModConfig() {
 
 
 
+// returns the side of the AI's team
 int CUnitTable::GetSide(void) const {
 	const int team = ai->cb->GetMyTeam();
 	const int side = teamSides[team];
 
 	return side;
 }
+// returns the side of the team that is
+// currently controlling this unit (not
+// always the same as the unit's native
+// side defined by the mod's build-tree)
 int CUnitTable::GetSide(int unitID) const {
 	const int team = ai->cb->GetUnitTeam(unitID);
 	const int side = teamSides[team];
 
 	return side;
+}
+// returns the side (build-tree) that a
+// given UnitDef statically belongs to
+int CUnitTable::GetSide(const UnitDef* udef) const {
+	const UnitType&      utype  = unitTypes[udef->id];
+	const std::set<int>& sides  = utype.sides;
+	const int            mySide = GetSide();
+
+	if (!sides.empty()) {
+		if (sides.find(mySide) != sides.end()) {
+			// our team's side can build this
+			return mySide;
+		} else {
+			// our team's side cannot build this,
+			// just return the first side that it
+			// _is_ part of
+			return *(sides.begin());
+		}
+	}
+
+	// this unitdef lives outside of _all_ of the mod's
+	// build-trees (ie. is not reachable from any side's
+	// starting unit) but we are in control of it anyway
+	return mySide;
 }
 
 UnitCategory CUnitTable::GetCategory(const UnitDef* unitdef) const {
@@ -562,8 +591,8 @@ float CUnitTable::GetMinRange(const UnitDef* unit) {
 
 
 float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
-	int m = (ai->uh->AllUnitsByType[udef->id]).size();
-	int n = udef->maxThisUnit;
+	const int m = (ai->uh->AllUnitsByType[udef->id]).size();
+	const int n = udef->maxThisUnit;
 
 	if (m >= n) {
 		// if we've hit the build-limit for this
@@ -577,43 +606,45 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 		return 0.0f;
 	}
 
-	int frame = ai->cb->GetCurrentFrame();
-	float Cost = ((udef->metalCost * METAL2ENERGY) + udef->energyCost) + 0.1f;
-	float CurrentIncome = INCOMEMULTIPLIER * (ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) + frame / 2;
-	float Hitpoints = udef->health;
-	float buildTime = udef->buildTime + 0.1f;
+	const int frame = ai->cb->GetCurrentFrame();
+	const float cost =
+		((udef->metalCost * METAL2ENERGY) +
+		udef->energyCost) + 0.1f;
+	const float currentIncome =
+		INCOMEMULTIPLIER *
+		(ai->cb->GetEnergyIncome() + (ai->cb->GetMetalIncome() * METAL2ENERGY)) +
+		frame / 2;
+	const float Hitpoints = udef->health;
+	const float buildTime = udef->buildTime + 0.1f;
+	const float RandNum = ai->math->RandNormal(4, 3, 1) + 1;
+
 	float benefit = 0.0f;
 	float aoe = 0.0f;
 	float dps = 0.0f;
 	int unitcounter = 0;
 	bool candevelop = false;
 
-	float RandNum = ai->math->RandNormal(4, 3, 1) + 1;
-	float randMult = float((rand() % 2) + 1);
-
 	switch (cat) {
 		case CAT_ENERGY: {
-			// KLOOTNOTE: factor build-time into this as well
+			// KLOOTNOTE: factor build-time into this as well?
 			// (so benefit values generally lie closer together)
-			// benefit = (udef->energyMake - udef->energyUpkeep);
-			// benefit = (udef->energyMake - udef->energyUpkeep) * randMult;
-			benefit = ((udef->energyMake - udef->energyUpkeep) / buildTime) * randMult;
+			float baseBenefit = udef->energyMake - udef->energyUpkeep;
 
 			if (udef->windGenerator) {
 				const float minWind = ai->cb->GetMinWind();
 				const float maxWind = ai->cb->GetMaxWind();
 				const float avgWind = (minWind + maxWind) * 0.5f;
 				if (minWind >= 8.0f || (minWind >= 4.0f && avgWind >= 8.0f)) {
-					benefit += avgWind;
+					baseBenefit += avgWind;
 				}
 			}
 			if (udef->tidalGenerator) {
-				benefit += ai->cb->GetTidalStrength();
+				baseBenefit += ai->cb->GetTidalStrength();
 			}
 
 			// filter geothermals
 			if (udef->needGeo) {
-				benefit = 0.0f;
+				baseBenefit = 0.0f;
 			}
 
 			// KLOOTNOTE: dividing by cost here as well means
@@ -621,7 +652,8 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 			// cost, so expensive generators are quadratically
 			// less likely to be built if original calculation
 			// of score is used
-			// benefit /= Cost;
+			// benefit /= cost;
+			benefit = (baseBenefit / buildTime) * float((rand() % 2) + 1);
 		} break;
 
 		case CAT_MEX: {
@@ -649,7 +681,7 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 				pow(udef->speed + 40, 1.0f) *
 				pow(Hitpoints, 1.0f) *
 				pow(RandNum, 2.5f) *
-				pow(Cost, -0.5f);
+				pow(cost, -0.5f);
 
 			if (udef->canfly || udef->canhover) {
 				// general hack: reduce feasibility of aircraft for 20 mins
@@ -667,7 +699,7 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 				pow(GetCurrentDamageScore(udef), 1.5f) *
 				pow(Hitpoints, 0.5f) *
 				pow(RandNum, 2.5f) *
-				pow(Cost, -1.0f);
+				pow(cost, -1.0f);
 		} break;
 
 		case CAT_BUILDER: {
@@ -727,10 +759,10 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 		} break;
 		case CAT_NUKE: {
 			// KLOOTNOTE: should factor damage into this as well
-			float metalcost = udef->stockpileWeaponDef->metalcost;
-			float energycost = udef->stockpileWeaponDef->energycost;
-			float supplycost = udef->stockpileWeaponDef->supplycost;
-			float denom = metalcost + energycost + supplycost + 1.0f;
+			float metalCost = udef->stockpileWeaponDef->metalcost;
+			float energyCost = udef->stockpileWeaponDef->energycost;
+			float supplyCost = udef->stockpileWeaponDef->supplycost;
+			float denom = metalCost + energyCost + supplyCost + 1.0f;
 			float range = udef->stockpileWeaponDef->range;
 			benefit = (udef->stockpileWeaponDef->areaOfEffect + range) / denom;
 		} break;
@@ -747,24 +779,26 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 	}
 
 	benefit *= unitTypes[udef->id].costMultiplier;
-	// return (benefit / (CurrentIncome + Cost));
-	// return ((benefit / Cost) * CurrentIncome);
-	return ((CurrentIncome / Cost) * benefit);
+	// return (benefit / (currentIncome + cost));
+	// return ((benefit / cost) * currentIncome);
+	return ((currentIncome / cost) * benefit);
 }
 
 
 
 // operates in terms of GetScore() (which is recursive for factories)
-const UnitDef* CUnitTable::GetUnitByScore(int builderUnitID, UnitCategory cat) {
+const UnitDef* CUnitTable::GetUnitByScore(int builderID, UnitCategory cat) {
 	if (cat == CAT_LAST) {
 		return NULL;
 	}
 
-	SideData& data = sideData[GetSide(builderUnitID)];
+	const UnitDef* builderDef  = ai->cb->GetUnitDef(builderID);
+	const UnitDef* tempUnitDef = NULL;
+	const int      side        = GetSide(builderDef);
+
+	SideData& data = sideData[side];
 
 	const std::vector<int>& defs = data.GetDefsForUnitCat(cat);
-	const UnitDef* builderDef = ai->cb->GetUnitDef(builderUnitID);
-	const UnitDef* tempUnitDef = NULL;
 	float tempScore = 0.0f;
 	float bestScore = 0.0f;
 
@@ -1052,8 +1086,8 @@ void CUnitTable::CalcBuildTree(int unitDefID, int rootSide) {
 void CUnitTable::DebugPrint() {
 	const char* listCategoryNames[12] = {
 		"GROUND-FACTORY", "GROUND-BUILDER", "GROUND-ATTACKER", "METAL-EXTRACTOR",
-		"METAL-MAKER", "GROUND-ENERGY", "GROUND-DEFENSE", "METAL-STORAGE",
-		"ENERGY-STORAGE", "NUKE-SILO", "SHIELD-GENERATOR", "LAST-CATEGORY"
+		"METAL-MAKER", "METAL-STORAGE", "ENERGY-STORAGE", "GROUND-ENERGY", "GROUND-DEFENSE",
+		"NUKE-SILO", "SHIELD-GENERATOR", "LAST-CATEGORY"
 	};
 
 	std::stringstream msg;
@@ -1069,18 +1103,20 @@ void CUnitTable::DebugPrint() {
 	}
 
 	for (int i = 1; i <= numDefs; i++) {
-		UnitType* utype = &unitTypes[i];
+		const UnitType* utype = &unitTypes[i];
+		const UnitDef*  udef  = unitDefs[i - 1];
 
-		fprintf(f, "UnitDef ID: %i\n", i);
-		fprintf(f, "Name:       %s\n", unitDefs[i - 1]->humanName.c_str());
-		fprintf(f, "Sides:      ");
+		msg << "UnitDef ID: " << i << "\n";
+		msg << "\tName: " << udef->name;
+		msg << " (\"" << udef->humanName << "\")\n";
+		msg << "\tSides:\n";
 
 		for (std::set<int>::iterator it = utype->sides.begin(); it != utype->sides.end(); it++) {
-			fprintf(f, "%d (%s) ", *it, sideNames[*it].c_str());
+			msg << "\t\t" << *it;
+			msg << " (\"" << sideNames[*it] << "\")\n";
 		}
 
-		fprintf(f, "\n");
-		fprintf(f, "Can Build:  ");
+		msg << "\tCan Build:\n";
 
 		for (unsigned int j = 0; j != utype->canBuildList.size(); j++) {
 			const UnitType* buildOption = &unitTypes[utype->canBuildList[j]];
@@ -1089,12 +1125,11 @@ void CUnitTable::DebugPrint() {
 				const char* sideName     = sideNames[*it].c_str();
 				const char* buildOptName = buildOption->def->humanName.c_str();
 
-				fprintf(f, "'(%s) %s' ", sideName, buildOptName);
+				msg << "\t\t(\"" << sideName << "\") \"" << buildOptName << "\"\n";
 			}
 		}
 
-		fprintf(f, "\n");
-		fprintf(f, "Built by:   ");
+		msg << "\tBuilt By:\n";
 
 		for (unsigned int k = 0; k != utype->builtByList.size(); k++) {
 			UnitType* parent = &unitTypes[utype->builtByList[k]];
@@ -1103,11 +1138,11 @@ void CUnitTable::DebugPrint() {
 				const char* sideName   = sideNames[*it].c_str();
 				const char* parentName = parent->def->humanName.c_str();
 
-				fprintf(f, "'(%s) %s' ", sideName, parentName);
+				msg << "\t\t(\"" << sideName << "\") \"" << parentName << "\"\n";
 			}
 		}
 
-		fprintf(f, "\n\n");
+		msg << "\n\n";
 	}
 
 	for (int s = 0; s < sideData.size(); s++) {
@@ -1115,21 +1150,28 @@ void CUnitTable::DebugPrint() {
 		int defCatIdx = int(CAT_GROUND_FACTORY);
 
 		for (; defCatIdx <= int(CAT_NUKE_SILO); defCatIdx++) {
-			fprintf(
-				f,
-				"\n\n%s (side %d) units grouped under category %s:\n",
-				sideNames[s].c_str(), s, listCategoryNames[defCatIdx]
-			);
+			msg << "\"" << sideNames[s] << "\" (side idx. " << s << ")";
+			msg << " units grouped under category \"";
+			msg << listCategoryNames[defCatIdx];
+			msg << "\":\n";
 
 			const UnitDefCategory c = UnitDefCategory(defCatIdx);
 			const std::vector<int>& defs = data.GetDefsForUnitDefCat(c);
 
 			for (unsigned int i = 0; i != defs.size(); i++) {
-				fprintf(f, "\t%s\n", unitTypes[defs[i]].def->humanName.c_str());
+				const UnitDef* udef = unitTypes[defs[i]].def;
+
+				msg << "\t" << udef->name << " (\"";
+				msg << udef->humanName << "\")\n";
 			}
+
+			msg << "\n";
 		}
+
+		msg << "\n\n";
 	}
 
+	fprintf(f, "%s", msg.str().c_str());
 	fclose(f);
 }
 

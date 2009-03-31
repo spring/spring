@@ -45,11 +45,11 @@ CCameraHandler::CCameraHandler()
 	}
 
 	int modeIndex;
-	const std::string modeName = configHandler.GetString("CamModeName", "");
+	const std::string modeName = configHandler->GetString("CamModeName", "");
 	if (!modeName.empty()) {
 		modeIndex = GetModeIndex(modeName);
 	} else {
-		modeIndex = configHandler.Get("CamMode", 1);
+		modeIndex = configHandler->Get("CamMode", 1);
 	}
 	const unsigned int mode =
 		(unsigned int)std::max(0, std::min(modeIndex, (int)camCtrls.size() - 1));
@@ -57,8 +57,8 @@ CCameraHandler::CCameraHandler()
 	currCamCtrl = camControllers[currCamCtrlNum];
 
 	const double z = 0.0; // casting problems...
-	cameraTimeFactor   = std::max(z, atof(configHandler.GetString("CamTimeFactor",   "1.0").c_str()));
-	cameraTimeExponent = std::max(z, atof(configHandler.GetString("CamTimeExponent", "4.0").c_str()));
+	cameraTimeFactor   = std::max(z, atof(configHandler->GetString("CamTimeFactor",   "1.0").c_str()));
+	cameraTimeExponent = std::max(z, atof(configHandler->GetString("CamTimeExponent", "4.0").c_str()));
 
 	RegisterAction("viewfps");
 	RegisterAction("viewta");

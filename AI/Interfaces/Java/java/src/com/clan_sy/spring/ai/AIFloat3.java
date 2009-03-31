@@ -72,6 +72,7 @@ public final class AIFloat3 extends Structure implements Structure.ByValue {
 	public Vector3f toVector3f() {
 		return new Vector3f(x, y, z);
 	}
+	@Override
 	public String toString() {
 		return "(" + this.x + ", " + this.y + ", " + this.z + ")";
 	}

@@ -2,13 +2,15 @@
 #define BASENETPROTOCOL_H
 
 #include <boost/shared_ptr.hpp>
-#include "Game/Player.h"
 #include <boost/cstdint.hpp>
+#include <vector>
+#include <string>
 
 namespace netcode
 {
 	class RawPacket;
 }
+class PlayerStatistics;
 
 const unsigned char NETWORK_VERSION = 1;
 
@@ -133,13 +135,13 @@ public:
 	PacketType SendShare(uchar myPlayerNum, uchar shareTeam, uchar bShareUnits, float shareMetal, float shareEnergy);
 	PacketType SendSetShare(uchar myPlayerNum, uchar myTeam, float metalShareFraction, float energyShareFraction);
 	PacketType SendSendPlayerStat();
-	PacketType SendPlayerStat(uchar myPlayerNum, const CPlayer::Statistics& currentStats);
+	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
 	PacketType SendGameOver();
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
 	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2);
 	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label);
 	PacketType SendSyncRequest(int frameNum);
-	PacketType SendSyncResponse(uchar myPlayerNum, int frameNum, uint checksum);
+	PacketType SendSyncResponse(int frameNum, uint checksum);
 	PacketType SendSystemMessage(uchar myPlayerNum, const std::string& message);
 	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);

@@ -13,7 +13,7 @@ CBaseTreeDrawer* treeDrawer=0;
 CBaseTreeDrawer::CBaseTreeDrawer(void)
 {
 	drawTrees=true;
-	baseTreeDistance=configHandler.Get("TreeRadius",(unsigned int) (5.5f*256))/256.0f;
+	baseTreeDistance=configHandler->Get("TreeRadius",(unsigned int) (5.5f*256))/256.0f;
 }
 
 CBaseTreeDrawer::~CBaseTreeDrawer(void)
@@ -22,7 +22,7 @@ CBaseTreeDrawer::~CBaseTreeDrawer(void)
 CBaseTreeDrawer* CBaseTreeDrawer::GetTreeDrawer(void)
 {
 	CBaseTreeDrawer* td;
-	if(GLEW_ARB_vertex_program && configHandler.Get("3DTrees",1)){
+	if(GLEW_ARB_vertex_program && configHandler->Get("3DTrees",1)){
 		GLint maxTexel;
 		glGetIntegerv(GL_MAX_TEXTURE_UNITS_ARB,&maxTexel);
 		if(maxTexel>=4){

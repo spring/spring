@@ -24,7 +24,6 @@
 #include "Game/Player.h"
 #include "Platform/errorhandler.h"
 #include "Platform/byteorder.h"
-#include "SDL_types.h"
 #include "3DOParser.h"
 #include "s3oParser.h"
 #include "Util.h"
@@ -208,7 +207,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,
 		sp.normals.reserve(sp.numVertex);
 
 		curOffset=p.OffsetToVertexIndexArray;
-		Uint16 w;
+		uint16_t w;
 
 		list<int> orderVert;
 		for(int b=0;b<sp.numVertex;b++){

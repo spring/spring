@@ -85,7 +85,7 @@ using namespace std;
 #endif
 
 
-extern Uint8 *keys;
+extern uint8_t *keys;
 
 
 CLuaUI* luaUI = NULL;

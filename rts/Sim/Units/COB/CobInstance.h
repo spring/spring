@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <list>
-#include <SDL_types.h>
 
 #include "Object.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -12,8 +11,8 @@
 
 
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
-#define UNPACKX(xz) ((signed short)((Uint32)(xz) >> 16))
-#define UNPACKZ(xz) ((signed short)((Uint32)(xz) & 0xffff))
+#define UNPACKX(xz) ((signed short)((uint32_t)(xz) >> 16))
+#define UNPACKZ(xz) ((signed short)((uint32_t)(xz) & 0xffff))
 
 
 static const int COBSCALE = 65536;
