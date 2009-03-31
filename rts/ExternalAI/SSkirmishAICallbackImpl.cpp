@@ -57,10 +57,12 @@ static std::map<int, SSkirmishAICallback*> team_cCallback;
 static std::map<int, bool> team_cheatingEnabled;
 static std::map<int, IAICheats*> team_cheatCallback;
 
-static const unsigned int TMP_ARR_SIZE = 16384;
+static const size_t TMP_ARR_SIZE = 16384;
 static int tmpSize[MAX_SKIRMISH_AIS];
-// the following lines are relatively memory intensive (~1MB per line)
+// FIXME: the following lines are relatively memory intensive (~1MB per line)
 // this memory is only freed at exit of the application
+// There is quite some CPU and Memory performance waste present
+// in them and their use.
 static int tmpIntArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 static PointMarker tmpPointMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 static LineMarker tmpLineMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
