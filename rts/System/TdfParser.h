@@ -86,6 +86,24 @@ public:
 		else
 			return false;
 	};
+	
+	bool GetValue(bool& val, const std::string& location) const
+	{
+		std::string buf;
+		if (SGetValue(buf, location))
+		{
+			int tempval;
+			std::istringstream stream(buf);
+			stream >> tempval;
+			if (tempval == 0)
+				val = false;
+			else
+				val = true;
+			return true;
+		}
+		else
+			return false;
+	};
 
 	/**
 		*  Treat the value as a vector and fill out vec with the items.
