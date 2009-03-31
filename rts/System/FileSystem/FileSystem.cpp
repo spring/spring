@@ -237,7 +237,23 @@ bool FileSystemHandler::mkdir(const std::string& dir) const
 	return false;
 }
 
-bool FileSystemHandler::DirExists(const std::string& dir) const
+bool FileSystemHandler::DeleteFile(const std::string& file)
+{
+	return remove(file.c_str()) == 0;
+}
+
+bool FileSystemHandler::FileExists(const std::string& file)
+{
+#ifdef _WIN32
+	struct _stat info;
+	return (_stat(file.c_str(), &info) == 0 && !(info.st_mode & _S_IFFILE));
+#else
+	struct stat info;
+	return (stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode));
+#endif
+}
+
+bool FileSystemHandler::DirExists(const std::string& dir)
 {
 #ifdef _WIN32
 	struct _stat info;
