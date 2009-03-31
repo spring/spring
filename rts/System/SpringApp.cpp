@@ -382,7 +382,7 @@ bool SpringApp::SetSDLVideoMode ()
 
 		if (SDL_GetWMInfo(&info)) {
 #ifdef _WIN32
-			MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, false);
+			MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
 #endif
 		}
 	}
