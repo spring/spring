@@ -113,19 +113,6 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 
 // methods from here on are for AI internal use only
 
-// damn you stupid util.h
-char* util_allocStrCpy(const char* toCopy) {
-
-	if (toCopy == NULL) {
-		return NULL;
-	}
-
-	const size_t copy_sizeMax = strlen(toCopy) + 1;
-	char* copy = (char*) calloc(copy_sizeMax, sizeof(char));
-	STRCPYS(copy, copy_sizeMax, toCopy);
-	return copy;
-}
-
 const char* aiexport_getDataDir(bool absoluteAndWriteable) {
 
 	static char* dd_ws_rel = NULL;
