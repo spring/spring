@@ -154,7 +154,7 @@ const CResourceMapAnalyzer* CResourceHandler::GetResourceMapAnalyzer(int resourc
 }
 
 
-unsigned int CResourceHandler::GetNumResources() const
+size_t CResourceHandler::GetNumResources() const
 {
 	return resources.size();
 }
