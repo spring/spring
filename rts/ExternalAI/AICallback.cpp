@@ -1505,48 +1505,62 @@ float3 CAICallback::GetMousePos() {
 int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
 {
 	int a=0;
-	verify ();
+	verify();
 
-	if (gu->myAllyTeam != teamHandler->AllyTeam(team))
+	if (gu->myAllyTeam != teamHandler->AllyTeam(team)) {
 		return 0;
+	}
 
-	for (int i=0;i<inMapDrawer->numQuads;i++){
-		if(!inMapDrawer->drawQuads[i].points.empty()){
-			for(std::list<CInMapDraw::MapPoint>::iterator mp=inMapDrawer->drawQuads[i].points.begin();mp!=inMapDrawer->drawQuads[i].points.end();++mp){
-				if(mp->color==teamHandler->Team(team)->color) { //Maybe add so that markers of your ally team would be also found?
+	for (int i=0; i < inMapDrawer->numQuads; i++) {
+		if (!inMapDrawer->drawQuads[i].points.empty()) {
+			for (std::list<CInMapDraw::MapPoint>::iterator mp =
+					inMapDrawer->drawQuads[i].points.begin();
+					mp != inMapDrawer->drawQuads[i].points.end(); ++mp) {
+				if (mp->color==teamHandler->Team(team)->color) {
+					// TODO: Maybe add code, so that markers of your
+					// ally team would be found aswell?
 					pm[a].pos=mp->pos;
 					pm[a].color=mp->color;
 					pm[a].label=mp->label.c_str();
-					if (++a == maxPoints) return a;
+					if (++a == maxPoints) {
+						return a;
+					}
 				}
-				else{ continue; }
 			}
 		}
 	}
+
 	return a;
 }
 
 int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 {
 	int a=0;
-	verify ();
+	verify();
 
-	if (gu->myAllyTeam != teamHandler->AllyTeam(team))
+	if (gu->myAllyTeam != teamHandler->AllyTeam(team)) {
 		return 0;
+	}
 
-	for (int i=0;i<inMapDrawer->numQuads;i++){
-		if(!inMapDrawer->drawQuads[i].points.empty()){
-			for(std::list<CInMapDraw::MapLine>::iterator ml=inMapDrawer->drawQuads[i].lines.begin();ml!=inMapDrawer->drawQuads[i].lines.end();++ml){
-				if(ml->color==teamHandler->Team(team)->color){ //Maybe add so that markers of your ally team would be also found?
+	for (int i=0; i < inMapDrawer->numQuads; i++) {
+		if (!inMapDrawer->drawQuads[i].points.empty()) {
+			for (std::list<CInMapDraw::MapLine>::const_iterator ml =
+					inMapDrawer->drawQuads[i].lines.begin();
+					ml != inMapDrawer->drawQuads[i].lines.end(); ++ml) {
+				if (ml->color==teamHandler->Team(team)->color) {
+					// TODO: Maybe add code, so that markers of your
+					// ally team would be found aswell?
 					lm[a].pos=ml->pos;
 					lm[a].color=ml->color;
 					lm[a].pos2=ml->pos2;
-					if (++a == maxLines) return a;
+					if (++a == maxLines) {
+						return a;
+					}
 				}
-				else {continue;}
 			}
 		}
 	}
+
 	return a;
 }
 
