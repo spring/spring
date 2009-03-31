@@ -15,9 +15,12 @@
 
 #include "DataDirLocater.h"
 
-// winapi redifines this which breaks things
+// winapi redifines these which breaks things
 #if defined(CreateDirectory)
 	#undef CreateDirectory
+#endif
+#if defined(DeleteFile)
+	#undef DeleteFile
 #endif
 
 /**
