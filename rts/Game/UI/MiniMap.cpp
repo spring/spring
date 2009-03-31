@@ -1422,6 +1422,10 @@ inline const CIconData* CMiniMap::GetUnitIcon(CUnit* unit, float& scale) const
 void CMiniMap::DrawUnit(CUnit* unit)
 {
 	// the simplest test
+	if (!unit)
+		return;
+
+	// the next simplest test
 	if (unit->noMinimap) {
 		return;
 	}
