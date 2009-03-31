@@ -219,7 +219,7 @@ void CAirCAI::SlowUpdate()
 
 	if(commandQue.empty()){
 		if(myPlane->aircraftState == AAirMoveType::AIRCRAFT_FLYING
-			&& !owner->unitDef->DontLand() && myPlane->autoLand){
+				&& !owner->unitDef->DontLand() && myPlane->autoLand) {
 			StopMove();
 //			myPlane->SetState(AAirMoveType::AIRCRAFT_LANDING);
 		}
