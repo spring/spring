@@ -1924,6 +1924,18 @@ bool CGame::ActionPressed(const Action& action,
 			net->Send(pckt.Pack());
 		}
 	}
+	else if (cmd == "destroy" && gs->cheatEnabled) {
+		// kill selected units
+		std::stringstream ss;
+		ss << "destroy";
+		for (CUnitSet::iterator it = selectedUnits.selectedUnits.begin();
+				it != selectedUnits.selectedUnits.end();
+				++it) {
+			ss << " " << (*it)->id;
+		}
+		CommandMessage pckt(ss.str(), gu->myPlayerNum);
+		net->Send(pckt.Pack());
+	}
 	else if (cmd == "send") {
 		CommandMessage pckt(Action(action.extra), gu->myPlayerNum);
 		net->Send(pckt.Pack());
@@ -2271,6 +2283,21 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				}
 			}
 		}
+	}
+	else if (action.command == "destroy" && gs->cheatEnabled) {
+		std::stringstream ss(action.extra);
+		logOutput.Print("Killing units: %s", action.extra.c_str());
+		do {
+			unsigned id;
+			ss >> id;
+			if (!ss)
+				break;
+			if (id >= uh->units.size())
+				continue;
+			if (uh->units[id] == NULL)
+				continue;
+			uh->units[id]->KillUnit(false, false, 0);
+		} while (true);
 	}
 	else if (action.command == "nospectatorchat") {
 		SetBoolArg(noSpectatorChat, action.extra);
