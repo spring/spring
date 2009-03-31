@@ -36,7 +36,7 @@ namespace ntai {
 		//
 	}
 
-	float CEfficiency::GetEfficiency(string s, float def_value){
+	float CEfficiency::GetEfficiency(std::string s, float def_value){
 
 		CUnitTypeData* ud = this->G->UnitDefLoader->GetUnitTypeDataByName(s);
 		if(ud == 0){
@@ -59,7 +59,7 @@ namespace ntai {
 				alreadydone.insert(ud->GetName());
 
 				if(!ud->GetUnitDef()->buildOptions.empty()){
-					for(map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
+					for(std::map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
 						alreadydone.insert(i->second);
 						e += efficiency[s];
 					}
@@ -109,7 +109,7 @@ namespace ntai {
 				
 				doneconstructors.insert(ud->GetName());
 
-				for(map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
+				for(std::map<int, string>::const_iterator i = ud->GetUnitDef()->buildOptions.begin();i != ud->GetUnitDef()->buildOptions.end(); ++i){
 					CUnitTypeData* ud2 = G->UnitDefLoader->GetUnitTypeDataByName(i->second);
 
 					if(doneconstructors.find(i->second)==doneconstructors.end()){
@@ -166,7 +166,7 @@ namespace ntai {
 					continue;
 				}
 
-				string eu = pud->name;
+				std::string eu = pud->name;
 
 				tolowercase(eu);
 				trim(eu);
@@ -180,7 +180,7 @@ namespace ntai {
 				ef *= 2;
 
 				if(pud->weapons.empty() == false){
-					for(vector<UnitDef::UnitDefWeapon>::const_iterator k = pud->weapons.begin();k != pud->weapons.end();++k){
+					for(std::vector<UnitDef::UnitDefWeapon>::const_iterator k = pud->weapons.begin();k != pud->weapons.end();++k){
 						//ef += k->def->
 						float av=0;
 						int numTypes;// = cb->getk->def->damages.numTypes;
@@ -200,18 +200,18 @@ namespace ntai {
 				ef += pud->power;
 
 				this->efficiency[eu] = ef;
-				G->unit_names[eu] = pud->humanName;
-				G->unit_descriptions[eu] = pud->tooltip;
+				unit_names[eu] = pud->humanName;
+				unit_descriptions[eu] = pud->tooltip;
 			}
 
-			string filename = G->info->datapath;
+			std::string filename = G->info->datapath;
 			filename += slash;
 			filename += "learn";
 			filename += slash;
 			filename += G->info->tdfpath;
 			filename += ".tdf";
 
-			string* buffer = new string;
+			std::string* buffer = new std::string;
 
 			if(G->ReadFile(filename, buffer)){
 
@@ -257,7 +257,7 @@ namespace ntai {
 					}else{
 						ts += 20*ulist[i]->weapons.size();
 					}
-					string eu = ulist[i]->name;
+					std::string eu = ulist[i]->name;
 					tolowercase(eu);
 					trim(eu);
 					efficiency[eu] = ts;
@@ -277,9 +277,9 @@ namespace ntai {
 		NLOG("Global::SaveUnitData()");
 
 		if(G->L.FirstInstance() == true){
-			ofstream off;
+			std::ofstream off;
 
-			string filename = G->info->datapath;
+			std::string filename = G->info->datapath;
 			filename += slash;
 			filename += "learn";
 			filename += slash;
@@ -289,36 +289,36 @@ namespace ntai {
 			off.open(filename.c_str());
 
 			if(off.is_open() == true){
-				off << "[AI]" << endl << "{" << endl << "    // " << AI_NAME << " AF :: unit efficiency cache file" << endl << endl;
+				off << "[AI]" << endl << "{" << endl << "    // " << AI_NAME << " AF :: unit efficiency cache file" << std::endl << std::endl;
 
-				off << "    version=XE9.79;" << endl;
-				off << "    firstload=" << firstload << ";" << endl;
-				off << "    modname=" << G->cb->GetModName() << ";" << endl;
-				off << "    iterations=" << iterations << ";" << endl;
+				off << "    version=XE10;" << std::endl;
+				off << "    firstload=" << firstload << ";" << std::endl;
+				off << "    modname=" << G->cb->GetModName() << ";" << std::endl;
+				off << "    iterations=" << iterations << ";" << std::endl;
 				off << endl;
 
-				off << "    [VALUES]" << endl << "    {" << endl;
+				off << "    [VALUES]" << std::endl << "    {" << std::endl;
 
-				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-					off << "        "<< i->first << "=" << i->second << ";    // " << G->unit_names[i->first] << " :: "<< G->unit_descriptions[i->first]<<endl;
+				for(std::map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
+					off << "        "<< i->first << "=" << i->second << ";    // " << unit_names[i->first] << " :: "<< unit_descriptions[i->first]<< std::endl;
 				}
 				off << "    }" << endl;
-				off << "    [NAMES]" << endl << "    {"<< endl;
+				off << "    [NAMES]" << endl << "    {"<< std::endl;
 
-				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-					off << "        "<< i->first << "=" << G->unit_names[i->first] << ";" <<endl;
+				for(std::map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
+					off << "        "<< i->first << "=" << unit_names[i->first] << ";" << std::endl;
 				}
 
-				off << "    }" << endl;
+				off << "    }" << std::endl;
 
-				off << "    [DESCRIPTIONS]" << endl << "    {"<< endl;
+				off << "    [DESCRIPTIONS]" << endl << "    {" << std::endl;
 
-				for(map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
-					off << "        "<< i->first << "=" << G->unit_descriptions[i->first] << ";"<<endl;
+				for(std::map<string, float>::const_iterator i = efficiency.begin(); i != efficiency.end(); ++i){
+					off << "        "<< i->first << "=" << unit_descriptions[i->first] << ";"<< std::endl;
 				}
 
-				off << "    }" << endl;
-				off << "}" << endl;
+				off << "    }" << std::endl;
+				off << "}" << std::endl;
 				off.close();
 
 				saved = true;

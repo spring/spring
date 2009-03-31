@@ -21,5 +21,10 @@ namespace  ntai {
 		std::map<std::string, float> efficiency;
 		std::map<std::string, float> builderefficiency;
 		std::map<std::string, int> lastbuilderefficiencyupdate;
+
+	private:
+
+		std::map<std::string,std::string> unit_names; //unitname -> human name
+		std::map<std::string,std::string> unit_descriptions; //unitname -> human name
 	};
 }
