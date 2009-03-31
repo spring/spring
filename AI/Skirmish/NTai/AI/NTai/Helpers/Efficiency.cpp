@@ -1,8 +1,6 @@
-#include "../core/include.h"
+#include "../Core/include.h"
 
 namespace ntai {
-
-	
 
 	int iterations=0;
 	bool loaded=false;
