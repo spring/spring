@@ -39,6 +39,7 @@ protected:
 	void UpdateSDLKeys (); 				//!< Update SDL key array
 	bool GetDisplayGeometry();
 	void SetupViewportGeometry();
+	void SaveWindowGeometry();
 
 	/**
 	 * @brief command line
@@ -81,6 +82,20 @@ protected:
 	 * Game screen height
 	 */
 	int screenHeight;
+
+	/**
+	 * @brief window position - X
+	 *
+	 * Game window position from the left of the screen (if not fullscreen)
+	 */
+	int windowPosX;
+
+	/**
+	 * @brief window position - Y
+	 *
+	 * Game window position from the top of the screen (if not fullscreen)
+	 */
+	int windowPosY;
 
 	/**
 	 * @brief FSAA

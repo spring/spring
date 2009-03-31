@@ -375,6 +375,19 @@ bool SpringApp::SetSDLVideoMode ()
 		return false;
 	}
 
+	// set window position
+	if (!fullscreen) {
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+
+		if (SDL_GetWMInfo(&info)) {
+#ifdef _WIN32
+			MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, false);
+#endif
+		}
+	}
+
+
 #ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
 	// Set single precision floating point math.
@@ -491,6 +504,14 @@ bool SpringApp::GetDisplayGeometry()
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
 	gu->winPosX = rect.left;
 	gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
+
+	// get window position
+	if (!fullscreen && GetWindowRect(info.window, &rect)) {
+		windowPosX = rect.left;
+		windowPosY = rect.top;
+		configHandler->Set("WindowPosX", windowPosX);
+		configHandler->Set("WindowPosY", windowPosY);
+	}
 #endif // _WIN32
 	return true;
 }
@@ -673,6 +694,9 @@ void SpringApp::ParseCmdLine()
 	} else {
 		screenHeight = std::max(screenHeight, 1);
 	}
+
+	windowPosX = configHandler->Get("WindowPosX", 32);
+	windowPosY = configHandler->Get("WindowPosY", 32);
 
 #ifdef USE_GML
 	gmlThreadCountOverride = configHandler->Get("HardwareThreadCount", 0);
@@ -1144,10 +1168,38 @@ int SpringApp::Run (int argc, char *argv[])
 }
 
 /**
+ * Saves position of the window, if we're not in fullscreen
+ */
+void SpringApp::SaveWindowGeometry()
+{
+	if (!fullscreen) {
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+
+		if (SDL_GetWMInfo(&info)) {
+#if defined(_WIN32)
+			RECT rect;
+			if (GetWindowRect(info.window, &rect)) {
+				windowPosX = rect.left;
+				windowPosY = rect.top;
+				configHandler->Set("WindowPosX", windowPosX);
+				configHandler->Set("WindowPosY", windowPosY);
+			}
+#else
+			// TODO FIXME XXX
+#endif
+		}
+	}
+}
+
+
+/**
  * Deallocates and shuts down game
  */
 void SpringApp::Shutdown()
 {
+	SaveWindowGeometry();
+
 	if (pregame)
 		delete pregame;			//in case we exit during init
 	if (game)
