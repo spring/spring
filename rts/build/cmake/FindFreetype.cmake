@@ -56,29 +56,19 @@ else (FREETYPE_LIBRARIES AND FREETYPE_INCLUDE_DIR)
     mark_as_advanced(FREETYPE_LIBRARIES FREETYPE_INCLUDE_DIR)
 
   else(FREETYPECONFIG_EXECUTABLE AND NOT MINGW)
-    if(MINGW)
-      find_path (FREETYPE_INCLUDE_DIR freetype/freetype.h)
-      find_library(FREETYPE_LIBRARIES
-	NAMES freetype freetype.dll freetype6
-	PATH_SUFFIXES lib64 lib libs64 libs libs/Win32 libs/Win64
-	PATHS
-	  ENV LD_LIBRARY_PATH
-	  ENV LIBRARY_PATH
-	  "${MINGWLIBS}/lib")
-    else(MINGW)
       find_path (FREETYPE_INCLUDE_DIR freetype2/freetype/freetype.h)
       set (FREETYPE_INCLUDE_DIR ${FREETYPE_INCLUDE_DIR}/freetype2)
       find_library(FREETYPE_LIBRARIES
 	NAMES freetype freetype.dll freetype6
-	PATH_SUFFIXES lib64 lib libs64 libs libs/Win32 libs/Win64
+	PATH_SUFFIXES dll lib64 lib libs64 libs libs/Win32 libs/Win64
 	PATHS
 	  ENV LD_LIBRARY_PATH
 	  ENV LIBRARY_PATH
 	  /usr
 	  /usr/local
 	  /usr/bin
+	  "${MINGWLIBS}"
 	  NO_DEFAULT_PATH)
-    endif(MINGW)
     if(FREETYPE_INCLUDE_DIR AND FREETYPE_LIBRARIES)
         set(FREETYPE_FOUND TRUE)
     endif(FREETYPE_INCLUDE_DIR AND FREETYPE_LIBRARIES)
