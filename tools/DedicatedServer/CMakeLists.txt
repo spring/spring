@@ -42,7 +42,7 @@ TARGET_LINK_LIBRARIES(springserver ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY
 if (MINGW)
 	TARGET_LINK_LIBRARIES (springserver ws2_32)
 else (MINGW)
-	ADD_DEFINITIONS (-fvisibility=default ) #overwrite hidden visibility
+	set_target_properties(springserver PROPERTIES COMPILE_FLAGS "-fvisibility=default")
 endif (MINGW)
 
 ADD_EXECUTABLE(spring-dedicated main)
