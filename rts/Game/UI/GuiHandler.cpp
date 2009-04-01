@@ -4373,3 +4373,20 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 
 /******************************************************************************/
 /******************************************************************************/
+
+void CGuiHandler::SetBuildFacing(int facing)
+{
+	buildFacing = facing % 4;
+	if (buildFacing < 0)
+		buildFacing += 4;
+}
+
+void CGuiHandler::SetBuildSpacing(int spacing)
+{
+	buildSpacing = spacing;
+	if (buildSpacing < 0)
+		buildSpacing = 0;
+}
+
+/******************************************************************************/
+/******************************************************************************/

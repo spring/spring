@@ -192,6 +192,9 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetDrawSelectionInfo);
 
+	REGISTER_LUA_CFUNC(SetBuildSpacing);
+	REGISTER_LUA_CFUNC(SetBuildFacing);
+
 	return true;
 }
 
@@ -2235,5 +2238,41 @@ int LuaUnsyncedCtrl::SetDrawSelectionInfo(lua_State* L)
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+
+int LuaUnsyncedCtrl::SetBuildSpacing(lua_State* L)
+{
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1 || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetBuildSpacing(int)");
+	}
+
+	if (guihandler)
+		guihandler->SetBuildSpacing(lua_tointeger(L, 1));
+
+	return 0;
+}
+
+int LuaUnsyncedCtrl::SetBuildFacing(lua_State* L)
+{
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 1 || !lua_isnumber(L, 1)) {
+		luaL_error(L, "Incorrect arguments to SetBuildFacing(int)");
+	}
+
+	if (guihandler)
+		guihandler->SetBuildFacing(lua_tointeger(L, 1));
+
+	return 0;
+}
 /******************************************************************************/
 /******************************************************************************/
