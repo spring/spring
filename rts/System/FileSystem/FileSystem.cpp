@@ -249,7 +249,7 @@ bool FileSystemHandler::FileExists(const std::string& file)
 {
 #ifdef _WIN32
 	struct _stat info;
-	return (_stat(file.c_str(), &info) == 0 && !(info.st_mode & _S_IFREG));
+	return (_stat(file.c_str(), &info) == 0 && (info.st_mode & _S_IFREG));
 #else
 	struct stat info;
 	return (stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode));
