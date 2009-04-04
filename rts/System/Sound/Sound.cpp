@@ -376,10 +376,10 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 {
 	if (sources.empty())
 		return;
+	const float3 prevPos = myPos;
 	myPos = campos;
 	//TODO: move somewhere camera related and make accessible for everyone
 	const float3 velocity = (myPos - prevPos)*posScale/(lastFrameTime);
-	prevPos = myPos;
 	const float3 posScaled = myPos * posScale;
 	alListener3f(AL_POSITION, posScaled.x, posScaled.y, posScaled.z);
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
