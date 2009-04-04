@@ -43,11 +43,9 @@ ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG})
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
 
-list(APPEND platformfiles
-	../../rts/System/ConfigHandler)
-
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 set(unitsync_files
+	../../rts/System/ConfigHandler
 	../../rts/System/LogOutput
 	../../rts/System/TdfParser
 	../../rts/System/Info
@@ -68,7 +66,7 @@ endif (PYTHONLIBS_FOUND)
 if (JAVA_FOUND)
 	list(APPEND unitsync_files javabind)
 endif (JAVA_FOUND)
-ADD_LIBRARY(unitsync SHARED ${platformfiles} ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
+ADD_LIBRARY(unitsync SHARED ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${DEVIL_ILU_LIBRARY})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--kill-at)
