@@ -8,7 +8,6 @@ INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/Syste
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(system_files 
 	${fsfiles}
-	${platformfiles}
 	 ${netfiles}
 	../../rts/System/TdfParser
 	../../rts/System/ConfigHandler
