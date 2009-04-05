@@ -1,5 +1,6 @@
 #include "Game/GameServer.h"
 #include "GameSetup.h"
+#include "ClientSetup.h"
 #include "GameData.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
 		const std::string script(argv[0]);
 		std::cout << "Loading script from file: " << script << std::endl;
 
-		LocalSetup* settings = new LocalSetup();
+		ClientSetup* settings = new ClientSetup();
 		CFileHandler fh(argv[1]);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+script);
