@@ -293,7 +293,7 @@ static bool ParseUniformMatrixTable(lua_State* L, int index, GLuint progName)
 						}
 					}
 				}
-			}				
+			}
 		}
 	}
 	lua_pop(L, 1);
