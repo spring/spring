@@ -24,6 +24,7 @@ ADD_LIBRARY(springserver SHARED
 	${system_files}
 	${serverfiles}
 	../../rts/Game/GameServer
+	../../rts/Game/ClientSetup
 	../../rts/Game/GameSetup
 	../../rts/Game/GameData
 	../../rts/Game/PlayerBase

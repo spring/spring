@@ -10,7 +10,7 @@
 class CInfoConsole;
 class CLoadSaveHandler;
 class GameData;
-class LocalSetup;
+class ClientSetup;
 namespace netcode {
 	class RawPacket;
 }
@@ -33,7 +33,7 @@ namespace netcode {
 class CPreGame : public CGameController
 {
 public:
-	CPreGame(const LocalSetup* setup);
+	CPreGame(const ClientSetup* setup);
 	virtual ~CPreGame();
 	
 	void LoadSetupscript(const std::string& script);
@@ -67,7 +67,7 @@ private:
 	We won't start until we recieved this
 	*/
 	boost::scoped_ptr<const GameData> gameData;
-	boost::scoped_ptr<const LocalSetup> settings;
+	boost::scoped_ptr<const ClientSetup> settings;
 	std::string modArchive;
 	CLoadSaveHandler *savefile;
 	

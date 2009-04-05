@@ -12,24 +12,6 @@
 
 class TdfParser;
 
-class LocalSetup
-{
-public:
-	LocalSetup();
-
-	void Init(const std::string& setup);
-
-	int myPlayerNum;
-	std::string myPlayerName;
-
-	std::string hostip;
-	int hostport;
-	int sourceport; //the port clients will try to connect from
-	int autohostport;
-
-	bool isHost;
-};
-
 namespace GameMode
 {
 	const int ComContinue = 0;

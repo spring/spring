@@ -7,7 +7,7 @@
 #include <sstream>
 #include <stack>
 
-#include "GameSetup.h"
+#include "ClientSetup.h"
 #include "PreGame.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/glList.h"
@@ -74,7 +74,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 SelectMenu::SelectMenu(bool server) :
 		showList(NULL)
 {
-	mySettings = new LocalSetup();
+	mySettings = new ClientSetup();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "unnamed");
 	if (!mySettings->isHost)

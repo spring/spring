@@ -17,6 +17,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
+#include "Game/ClientSetup.h"
 #include "Game/GameController.h"
 #include "Game/SelectMenu.h"
 #include "Game/PreGame.h"
@@ -796,8 +797,8 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
  */
 void SpringApp::Startup()
 {
-	LocalSetup* startsetup = 0;
-	startsetup = new LocalSetup();
+	ClientSetup* startsetup = 0;
+	startsetup = new ClientSetup();
 	if (!startscript.empty())
 	{
 		CFileHandler fh(startscript);
