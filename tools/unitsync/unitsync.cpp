@@ -56,6 +56,8 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 }
 #endif
 
+static const char* LUA_AI_POSTFIX = " (Mod specific AI)";
+
 
 //////////////////////////
 //////////////////////////
@@ -1612,6 +1614,8 @@ static void GetLuaAIInfo()
 		aiData.name = optTbl.GetString("name", "");
 		if (aiData.name.empty()) {
 			continue;
+		} else {
+			aiData.name.append(LUA_AI_POSTFIX);
 		}
 		aiData.desc = optTbl.GetString("desc", aiData.name);
 		luaAIInfo.push_back(aiData);
@@ -1638,7 +1642,7 @@ static int GetNumberOfLuaAIs()
 	return 0;
 }
 /**
- * DEPRECATED: LUA AIs are now handled the same way as Skimrish AIs.
+ * DEPRECATED: LUA AIs are now handled the same way as Skirmish AIs.
  */
 EXPORT(int) GetLuaAICount()
 {
@@ -1652,7 +1656,7 @@ EXPORT(int) GetLuaAICount()
  *
  * Be sure you've made a call to GetLuaAICount() prior to using this.
  *
- * DEPRECATED: LUA AIs are handled the same way as Skimrish AIs.
+ * DEPRECATED: LUA AIs are handled the same way as Skirmish AIs.
  */
 EXPORT(const char*) GetLuaAIName(int aiIndex)
 {
@@ -1671,7 +1675,7 @@ EXPORT(const char*) GetLuaAIName(int aiIndex)
  *
  * Be sure you've made a call to GetLuaAICount() prior to using this.
  *
- * DEPRECATED: LUA AIs are handled the same way as Skimrish AIs.
+ * DEPRECATED: LUA AIs are handled the same way as Skirmish AIs.
  */
 EXPORT(const char*) GetLuaAIDesc(int aiIndex)
 {
