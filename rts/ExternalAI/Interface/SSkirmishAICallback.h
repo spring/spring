@@ -1367,9 +1367,17 @@ void (CALLING_CONV *Clb_FeatureDef_0MAP1VALS0getCustomParams)(int teamId,
 
 
 // BEGINN OBJECT Feature
+/**
+ * Returns all features currently in LOS, or all features on the map
+ * if cheating is enabled.
+ */
 int (CALLING_CONV *Clb_0MULTI1SIZE0Feature)(int teamId);
 int (CALLING_CONV *Clb_0MULTI1VALS0Feature)(int teamId, int featureIds[],
 		int featureIds_max);
+/**
+ * Returns all features in a specified area that are currently in LOS,
+ * or all features in this area if cheating is enabled.
+ */
 int (CALLING_CONV *Clb_0MULTI1SIZE3FeaturesIn0Feature)(int teamId,
 		struct SAIFloat3 pos, float radius);
 int (CALLING_CONV *Clb_0MULTI1VALS3FeaturesIn0Feature)(int teamId,
