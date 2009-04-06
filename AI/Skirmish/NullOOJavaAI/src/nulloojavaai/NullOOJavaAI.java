@@ -283,7 +283,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	}
 
 	@Override
-	public int commandFinished(Unit unit, int commandTopicId) {
+	public int commandFinished(Unit unit, int commandId, int commandTopicId) {
 		return 0; // signaling: OK
 	}
 
