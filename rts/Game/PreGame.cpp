@@ -43,7 +43,7 @@
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
 
-extern uint8_t* keys;
+extern boost::uint8_t* keys;
 extern bool globalQuit;
 std::string stupidGlobalMapname;
 

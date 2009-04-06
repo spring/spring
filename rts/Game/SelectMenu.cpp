@@ -23,7 +23,7 @@
 
 using std::string;
 
-extern uint8_t* keys;
+extern boost::uint8_t* keys;
 extern bool globalQuit;
 
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,

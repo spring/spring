@@ -60,7 +60,7 @@ CR_REG_METADATA(CGlobalUnsyncedStuff, (
  */
 CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 {
-	uint64_t randnum;
+	boost::uint64_t randnum;
 	randnum = SDL_GetTicks();
 	usRandSeed = randnum&0xffffffff;
 	modGameTime = 0;

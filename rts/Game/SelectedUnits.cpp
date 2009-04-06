@@ -39,7 +39,7 @@
 #include "Sound/Sound.h"
 #include "Util.h"
 
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 
 
 //////////////////////////////////////////////////////////////////////

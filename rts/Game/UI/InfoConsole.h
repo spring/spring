@@ -65,7 +65,7 @@ public:
 		std::string text;
 		const CLogSubsystem* subsystem;
 		int id;
-		uint32_t time;
+		boost::uint32_t time;
 	};
 	int  GetRawLines(std::deque<RawLine>& copy);
 	void GetNewRawLines(std::vector<RawLine>& copy);

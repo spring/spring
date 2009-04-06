@@ -13,7 +13,7 @@
 
 using std::max;
 using std::min;
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 
 /******************************************************************************/
 /******************************************************************************/
@@ -301,9 +301,9 @@ void CFreeController::KeyMove(float3 move)
 
 void CFreeController::MouseMove(float3 move)
 {
-	uint8_t prevAlt   = keys[SDLK_LALT];
-	uint8_t prevCtrl  = keys[SDLK_LCTRL];
-	uint8_t prevShift = keys[SDLK_LSHIFT];
+	boost::uint8_t prevAlt   = keys[SDLK_LALT];
+	boost::uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	boost::uint8_t prevShift = keys[SDLK_LSHIFT];
 
 	keys[SDLK_LCTRL] = !keys[SDLK_LCTRL]; // tilt
 	keys[SDLK_LALT] = (invertAlt == !keys[SDLK_LALT]);
@@ -317,9 +317,9 @@ void CFreeController::MouseMove(float3 move)
 
 void CFreeController::ScreenEdgeMove(float3 move)
 {
-	uint8_t prevAlt   = keys[SDLK_LALT];
-	uint8_t prevCtrl  = keys[SDLK_LCTRL];
-	uint8_t prevShift = keys[SDLK_LSHIFT];
+	boost::uint8_t prevAlt   = keys[SDLK_LALT];
+	boost::uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	boost::uint8_t prevShift = keys[SDLK_LSHIFT];
 
 	keys[SDLK_LALT] = (invertAlt == !keys[SDLK_LALT]);
 	KeyMove(move);
@@ -332,8 +332,8 @@ void CFreeController::ScreenEdgeMove(float3 move)
 
 void CFreeController::MouseWheelMove(float move)
 {
-	uint8_t prevCtrl  = keys[SDLK_LCTRL];
-	uint8_t prevShift = keys[SDLK_LSHIFT];
+	boost::uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	boost::uint8_t prevShift = keys[SDLK_LSHIFT];
 	keys[SDLK_LCTRL] = 0;
 	keys[SDLK_LSHIFT] = 1;
 	const float3 m(0.0f, move, 0.0f);

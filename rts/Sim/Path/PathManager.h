@@ -3,10 +3,7 @@
 
 #include <map>
 #include "IPath.h"
-#ifdef _MSC_VER // failcompiler does not support
 #include <boost/cstdint.hpp> /* Replace with <stdint.h> if appropriate */
-using boost::uint32_t;
-#endif
 
 class CSolidObject;
 class CPathFinder;
@@ -118,7 +115,7 @@ public:
 	void Draw();
 
 
-	uint32_t GetPathChecksum();
+	boost::uint32_t GetPathChecksum();
 
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION;

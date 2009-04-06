@@ -158,9 +158,9 @@ void AutohostInterface::Warning(const std::string& message)
 	delete[] msg;
 }
 
-void AutohostInterface::SendLuaMsg(const uint8_t* msg, size_t msgSize)
+void AutohostInterface::SendLuaMsg(const boost::uint8_t* msg, size_t msgSize)
 {
-	std::vector<uint8_t> buffer(msgSize+1);
+	std::vector<boost::uint8_t> buffer(msgSize+1);
 	buffer[0] = GAME_LUAMSG;
 	std::copy(msg, msg+msgSize, buffer.begin()+1);
 	autohost->Send(&buffer[0], buffer.size());

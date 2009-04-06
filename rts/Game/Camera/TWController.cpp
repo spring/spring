@@ -13,7 +13,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "GlobalUnsynced.h"
 
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 
 
 CTWController::CTWController()

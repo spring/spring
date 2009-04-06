@@ -55,7 +55,7 @@
 #include "Util.h"
 #include "myMath.h"
 
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 
 
 //////////////////////////////////////////////////////////////////////
@@ -1271,10 +1271,10 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, int button,
 	// setup the mouse and key states
 	const bool  prevLMB   = mouse->buttons[SDL_BUTTON_LEFT].pressed;
 	const bool  prevRMB   = mouse->buttons[SDL_BUTTON_RIGHT].pressed;
-	const uint8_t prevAlt   = keys[SDLK_LALT];
-	const uint8_t prevCtrl  = keys[SDLK_LCTRL];
-	const uint8_t prevMeta  = keys[SDLK_LMETA];
-	const uint8_t prevShift = keys[SDLK_LSHIFT];
+	const boost::uint8_t prevAlt   = keys[SDLK_LALT];
+	const boost::uint8_t prevCtrl  = keys[SDLK_LCTRL];
+	const boost::uint8_t prevMeta  = keys[SDLK_LMETA];
+	const boost::uint8_t prevShift = keys[SDLK_LSHIFT];
 
 	mouse->buttons[SDL_BUTTON_LEFT].pressed  = lmb;
 	mouse->buttons[SDL_BUTTON_RIGHT].pressed = rmb;
