@@ -10,7 +10,7 @@
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 
-extern uint8_t* keys;
+extern boost::uint8_t* keys;
 
 #define DEG2RAD(a) ((a) * (3.141592653f / 180.0f))
 #define RAD2DEG(a) ((a) * (180.0f / 3.141592653f))

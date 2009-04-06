@@ -52,7 +52,7 @@
 //////////////////////////////////////////////////////////////////////
 
 extern bool	fullscreen;
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 
 
 CMouseHandler* mouse = NULL;
@@ -305,8 +305,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	if (activeReceiver) {
 		activeReceiver->MouseRelease(x, y, button);
 		int x, y;
-		const uint8_t buttons = SDL_GetMouseState(&x, &y);
-		const uint8_t mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
+		const boost::uint8_t buttons = SDL_GetMouseState(&x, &y);
+		const boost::uint8_t mask = (SDL_BUTTON_LMASK | SDL_BUTTON_MMASK | SDL_BUTTON_RMASK);
 		if ((buttons & mask) == 0) {
 			activeReceiver = NULL;
 		}

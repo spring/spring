@@ -144,14 +144,14 @@ extern bool globalQuit;
  *
  * Array of possible keys, and which are being pressed
  */
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 
 /**
  * @brief currentUnicode
  *
  * Unicode character for the current KeyPressed or KeyReleased
  */
-extern uint16_t currentUnicode;
+extern boost::uint16_t currentUnicode;
 
 /**
  * @brief fullscreen

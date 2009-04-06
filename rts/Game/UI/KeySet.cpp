@@ -12,8 +12,9 @@
 
 #include "LogOutput.h"
 #include "Util.h"
+#include <boost/cstdint.hpp>
 
-extern uint8_t* keys; // from System/Main.cpp
+extern boost::uint8_t* keys; // from System/Main.cpp
 
 
 #define DISALLOW_RELEASE_BINDINGS

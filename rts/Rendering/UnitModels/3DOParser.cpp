@@ -207,7 +207,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,
 		sp.normals.reserve(sp.numVertex);
 
 		curOffset=p.OffsetToVertexIndexArray;
-		uint16_t w;
+		boost::uint16_t w;
 
 		list<int> orderVert;
 		for(int b=0;b<sp.numVertex;b++){

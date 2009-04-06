@@ -68,8 +68,8 @@ using std::string;
 
 CGameController* activeController = 0;
 bool globalQuit = false;
-uint8_t *keys = 0;
-uint16_t currentUnicode = 0;
+boost::uint8_t *keys = 0;
+boost::uint16_t currentUnicode = 0;
 bool fullscreen = true;
 char *win_lpCmdLine = 0;
 
@@ -225,8 +225,8 @@ bool SpringApp::Initialize()
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_SetModState (KMOD_NONE);
 
-	keys = new uint8_t[SDLK_LAST];
-	memset (keys,0,sizeof(uint8_t)*SDLK_LAST);
+	keys = new boost::uint8_t[SDLK_LAST];
+	memset (keys,0,sizeof(boost::uint8_t)*SDLK_LAST);
 
 	LoadFonts();
 
@@ -965,9 +965,9 @@ int SpringApp::Update ()
 void SpringApp::UpdateSDLKeys ()
 {
 	int numkeys;
-	uint8_t *state;
+	boost::uint8_t *state;
 	state = SDL_GetKeyState(&numkeys);
-	memcpy(keys, state, sizeof(uint8_t) * numkeys);
+	memcpy(keys, state, sizeof(boost::uint8_t) * numkeys);
 
 	const SDLMod mods = SDL_GetModState();
 	keys[SDLK_LALT]   = (mods & KMOD_ALT)   ? 1 : 0;

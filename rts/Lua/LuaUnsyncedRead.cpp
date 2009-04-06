@@ -58,7 +58,7 @@ using namespace std;
 #include "Sound/Music.h"
 
 
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 
 const int CMD_INDEX_OFFSET = 1; // starting index for command descriptions
 

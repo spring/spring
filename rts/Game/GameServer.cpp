@@ -565,7 +565,7 @@ void CGameServer::Update()
 
 void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<const netcode::RawPacket> packet)
 {
-	const uint8_t* inbuf = packet->data;
+	const boost::uint8_t* inbuf = packet->data;
 	const unsigned a = playernum;
 
 	switch (inbuf[0]){

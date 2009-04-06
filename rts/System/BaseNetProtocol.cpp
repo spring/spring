@@ -2,7 +2,6 @@
 #include "BaseNetProtocol.h"
 
 #include <boost/cstdint.hpp>
-using boost::uint16_t;
 #include "mmgr.h"
 
 #include "Game/PlayerBase.h"
@@ -158,7 +157,7 @@ PacketType CBaseNetProtocol::SendDirectControlUpdate(uchar myPlayerNum, uchar st
 
 PacketType CBaseNetProtocol::SendAttemptConnect(const std::string name, const std::string version)
 {
-	uint16_t size = 5 + name.size() + version.size();
+	boost::uint16_t size = 5 + name.size() + version.size();
 	PackPacket* packet = new PackPacket(size , NETMSG_ATTEMPTCONNECT);
 	*packet << size << name << version;
 	return PacketType(packet);
@@ -268,7 +267,7 @@ PacketType CBaseNetProtocol::SendPlayerLeft(uchar myPlayerNum, uchar bIntended)
 // NETMSG_LUAMSG = 50, uchar myPlayerNum; std::string modName; (e.g. `custom msg')
 PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg)
 {
-	uint16_t size = 7 + msg.size();
+	boost::uint16_t size = 7 + msg.size();
 	PackPacket* packet = new PackPacket(size, NETMSG_LUAMSG);
 	*packet << size << myPlayerNum << script << mode << msg;
 	return PacketType(packet);
@@ -321,7 +320,7 @@ PacketType CBaseNetProtocol::SendSdCheckresponse(uchar myPlayerNum, Uint64 flop,
 {
 	unsigned size = 1 + 2 + 1 + 8 + checksums.size() * 4;
 	PackPacket* packet = new PackPacket(size, NETMSG_SD_CHKRESPONSE);
-	*packet << static_cast<uint16_t>(size) << myPlayerNum << flop << checksums;
+	*packet << static_cast<boost::uint16_t>(size) << myPlayerNum << flop << checksums;
 	return PacketType(packet);
 }
 
@@ -342,7 +341,7 @@ PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<
 {
 	unsigned size = 1 + 2 + 1 + checksums.size() * 4;
 	PackPacket* packet = new PackPacket(size, NETMSG_SD_BLKRESPONSE);
-	*packet << static_cast<uint16_t>(size) << myPlayerNum << checksums;
+	*packet << static_cast<boost::uint16_t>(size) << myPlayerNum << checksums;
 	return PacketType(packet);
 }
 #endif

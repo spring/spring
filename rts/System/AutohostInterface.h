@@ -2,6 +2,7 @@
 #define AUTOHOSTINTERFACE
 
 #include <string>
+#include <boost/cstdint.hpp>
 
 namespace netcode {
 	class UDPConnectedSocket;
@@ -38,7 +39,7 @@ public:
 	void Message(const std::string& message);
 	void Warning(const std::string& message);
 	
-	void SendLuaMsg(const uint8_t* msg, size_t msgSize);
+	void SendLuaMsg(const boost::uint8_t* msg, size_t msgSize);
 	
 	/**
 	@brief Receive a chat message from the autohost

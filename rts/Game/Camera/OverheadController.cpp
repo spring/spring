@@ -14,7 +14,7 @@
 #include "GlobalUnsynced.h"
 
 
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 
 COverheadController::COverheadController()
 	: flipped(false),

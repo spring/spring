@@ -65,7 +65,7 @@
 
 CMiniMap* minimap = NULL;
 
-extern uint8_t* keys;
+extern boost::uint8_t* keys;
 
 
 CMiniMap::CMiniMap()

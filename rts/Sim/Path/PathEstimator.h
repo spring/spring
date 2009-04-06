@@ -13,10 +13,7 @@
 #include <boost/detail/atomic_count.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/barrier.hpp>
-#ifdef _MSC_VER // failcompiler does not support
 #include <boost/cstdint.hpp>
-using boost::uint32_t;
-#endif
 
 class CPathEstimatorDef;
 class CPathFinderDef;
@@ -99,7 +96,7 @@ class CPathEstimator: public IPath {
 		float3 FindBestBlockCenter(const MoveData* moveData, float3 pos);
 
 		/// Return a checksum that can be used to check if every player has the same path data
-		uint32_t GetPathChecksum();
+		boost::uint32_t GetPathChecksum();
 
 	private:
 		void InitEstimator(const std::string&);
@@ -196,7 +193,7 @@ class CPathEstimator: public IPath {
 
 		CPathCache* pathCache;
 
-		uint32_t pathChecksum; ///< currently crc from the zip
+		boost::uint32_t pathChecksum; ///< currently crc from the zip
 
 		boost::barrier *pathBarrier;
 

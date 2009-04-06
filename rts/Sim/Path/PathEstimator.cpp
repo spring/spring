@@ -821,7 +821,7 @@ unsigned int CPathEstimator::Hash()
 	return (readmap->mapChecksum + moveinfo->moveInfoChecksum + BLOCK_SIZE + moveMathOptions + PATHESTIMATOR_VERSION);
 }
 
-uint32_t CPathEstimator::GetPathChecksum()
+boost::uint32_t CPathEstimator::GetPathChecksum()
 {
 	return pathChecksum;
 }

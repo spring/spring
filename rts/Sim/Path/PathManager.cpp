@@ -506,7 +506,7 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 }
 
 
-uint32_t CPathManager::GetPathChecksum()
+boost::uint32_t CPathManager::GetPathChecksum()
 {
 	return pe->GetPathChecksum() + pe2->GetPathChecksum();
 }

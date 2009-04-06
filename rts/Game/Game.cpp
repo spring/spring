@@ -166,7 +166,7 @@
 extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 #endif
 
-extern uint8_t *keys;
+extern boost::uint8_t *keys;
 extern bool globalQuit;
 extern bool fullscreen;
 extern string stupidGlobalMapname;
