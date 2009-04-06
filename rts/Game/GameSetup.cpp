@@ -87,7 +87,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 
 	if (withoutMap && (startPosType == StartPos_Random || startPosType == StartPos_Fixed))
 		throw content_error("You need the map to use the map's startpositions");
-	
+
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
@@ -235,10 +235,11 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 
 		// Is this team (Lua) AI controlled?
 		static const size_t LUA_AI_POSTFIX_size = strlen(LUA_AI_POSTFIX);
+		data.isLuaAI = false;
 		if (data.shortName.size() > LUA_AI_POSTFIX_size) {
 			const size_t realShortName_size = data.shortName.size() - LUA_AI_POSTFIX_size;
 			if (data.shortName.substr(realShortName_size).compare(LUA_AI_POSTFIX) == 0) {
-				data.shortName.erase(LUA_AI_POSTFIX_size);
+				data.shortName.erase(realShortName_size);
 				data.isLuaAI = true;
 			}
 		}
@@ -370,7 +371,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 		{
 			allyStartingData[a].allies.resize(numAllyTeams, false);
 			allyStartingData[a].allies[a] = true; // each team is allied with itself
-	
+
 			std::ostringstream section;
 			section << "GAME\\ALLYTEAM" << a << "\\";
 			size_t numAllies = atoi(file.SGetValueDef("0", section.str() + "NumAllies").c_str());
