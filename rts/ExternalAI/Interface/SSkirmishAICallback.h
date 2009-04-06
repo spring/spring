@@ -155,23 +155,23 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 	/**
 	 * This interfaces main data dir, which is where the shared library
 	 * and the InterfaceInfo.lua file are located, e.g.:
-	 * /usr/share/games/spring/AI/Interfaces/C/0.1/
+	 * /usr/share/games/spring/AI/Skirmish/RAI/0.601/
 	 */
 	const char*       (CALLING_CONV *Clb_DataDirs_getConfigDir)(int teamId);
 	/**
 	 * This interfaces writeable data dir, which is where eg logs, caches
 	 * and learning data should be stored, e.g.:
-	 * ~/.spring/AI/Interfaces/C/0.1/
+	 * /home/userX/.spring/AI/Skirmish/RAI/0.601/
 	 */
 	const char*       (CALLING_CONV *Clb_DataDirs_getWriteableDir)(int teamId);
 	/**
 	 * Returns an absolute path which consists of:
-	 * data-dir + AI-Interface-path + relative-path.
+	 * data-dir + Skirmish-AI-path + relative-path.
 	 *
 	 * example:
-	 * input:  "log/main.log", writeable, create, !dir
-	 * output: "/home/userX/.spring/AI/Interfaces/C/0.1/log/main.log"
-	 * The path "/home/userX/.spring/AI/Interfaces/C/0.1/log/" is created,
+	 * input:  "log/main.log", writeable, create, !dir, !common
+	 * output: "/home/userX/.spring/AI/Skirmish/RAI/0.601/log/main.log"
+	 * The path "/home/userX/.spring/AI/Skirmish/RAI/0.601/log/" is created,
 	 * if it does not yet exist.
 	 *
 	 * @see DataDirs_Roots_locatePath
@@ -183,11 +183,17 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
 	 * @param   dir        if true, realPath specifies a dir, which means if
 	 *                     create is true, the whole path will be created,
 	 *                     including the last part
+	 * @param   common     if true, the version independent data-dir is formed,
+	 *                     which uses "common" instead of the version, eg:
+	 *                     "/home/userX/.spring/AI/Skirmish/RAI/common/..."
 	 * @return  whether the locating process was successfull
 	 *          -> the path exists and is stored in an absolute form in path
 	 */
-	bool              (CALLING_CONV *Clb_DataDirs_locatePath)(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
-	char*             (CALLING_CONV *Clb_DataDirs_allocatePath)(int teamId, const char* const relPath, bool writeable, bool create, bool dir);
+	bool              (CALLING_CONV *Clb_DataDirs_locatePath)(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir, bool common);
+	/**
+	 * @see     locatePath()
+	 */
+	char*             (CALLING_CONV *Clb_DataDirs_allocatePath)(int teamId, const char* const relPath, bool writeable, bool create, bool dir, bool common);
 	/// Returns the number of springs data dirs.
 	int               (CALLING_CONV *Clb_DataDirs_Roots_getSize)(int teamId);
 	/// Returns the data dir at dirIndex, which is valid between 0 and (DataDirs_Roots_getSize() - 1).
