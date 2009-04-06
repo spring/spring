@@ -73,7 +73,7 @@ EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
 	teamId_callback[teamId] = callback;
 
 	// CAIGlobalAI is the Legacy C++ wrapper, CGlobalAI is KAIK
-	myAIs[teamId] = new CAIGlobalAI(teamId, new ntai::CNTai());
+	myAIs[teamId] = new CAIGlobalAI(teamId, new ntai::CNTai(callback));
 
 	// signal: everything went ok
 	return 0;

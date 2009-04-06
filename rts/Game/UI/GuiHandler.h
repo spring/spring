@@ -76,6 +76,9 @@ class CGuiHandler : public CInputReceiver {
 		void SetDrawSelectionInfo(bool dsi) { drawSelectionInfo = dsi; }
 		bool GetDrawSelectionInfo() { return drawSelectionInfo; }
 
+		void SetBuildFacing(int facing);
+		void SetBuildSpacing(int spacing);
+
 	public:
 		std::vector<CommandDescription> commands;
 		int inCommand;

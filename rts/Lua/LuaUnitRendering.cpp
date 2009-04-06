@@ -488,11 +488,18 @@ static LuaMatRef ParseMaterial(lua_State* L, const char* caller, int index,
 				mat.culling = (GLenum)lua_tonumber(L, -1);
 			}
 		}
+
 		else if (key == "cameraloc") {
 			if (lua_isnumber(L, -1)) {
 				mat.cameraLoc = (GLint)lua_tonumber(L, -1);
 			}
 		}
+		else if (key == "camerainvloc") {
+			if (lua_isnumber(L, -1)) {
+				mat.cameraInvLoc = (GLint)lua_tonumber(L, -1);
+			}
+		}
+
 		else if (key == "cameraposloc") {
 			if (lua_isnumber(L, -1)) {
 				mat.cameraPosLoc = (GLint)lua_tonumber(L, -1);

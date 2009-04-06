@@ -130,7 +130,7 @@ class LuaMaterial {
 		  order(0), texCount(0),
 		  preList(0), postList(0),
 		  useCamera(true), culling(0),
-		  cameraLoc(-1), cameraPosLoc(-1),
+		  cameraLoc(-1), cameraInvLoc(-1), cameraPosLoc(-1),
 		  shadowLoc(-1), shadowParamsLoc(-1)
 		{}
 
@@ -163,9 +163,10 @@ class LuaMaterial {
 
 		bool useCamera;
 		GLenum culling;
-		GLint cameraLoc;
+		GLint cameraLoc;       // view matrix
+		GLint cameraInvLoc;    // inverse view matrix
 		GLint cameraPosLoc;
-		GLint shadowLoc;
+		GLint shadowLoc;       // shadow matrix
 		GLint shadowParamsLoc;
 
 		static const LuaMaterial defMat;

@@ -104,7 +104,7 @@ private:
 	unsigned int size_info;
 
 private:
-	void LoadSkirmishAI(bool postLoad);
+	bool LoadSkirmishAI(bool postLoad);
 };
 
 #endif // _SKIRMISHAIWRAPPER_H

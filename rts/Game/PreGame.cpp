@@ -15,6 +15,7 @@
 #include "FPUCheck.h"
 #include "GameServer.h"
 #include "GameSetup.h"
+#include "ClientSetup.h"
 #include "GameData.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
@@ -48,7 +49,7 @@ extern bool globalQuit;
 std::string stupidGlobalMapname;
 
 
-CPreGame::CPreGame(const LocalSetup* setup) :
+CPreGame::CPreGame(const ClientSetup* setup) :
 		settings(setup),
 		savefile(NULL)
 {

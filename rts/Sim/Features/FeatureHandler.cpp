@@ -230,7 +230,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
 	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
-	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy));
+	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy)*6.f);
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
@@ -490,7 +490,7 @@ void CFeatureHandler::Update()
 	if(!toBeRemoved.empty()) {
 		GML_RECMUTEX_LOCK(feat); // Update
 		GML_RECMUTEX_LOCK(quad); // Update
-		
+
 		while (!toBeRemoved.empty()) {
 			CFeatureSet::iterator it = activeFeatures.find(toBeRemoved.back());
 			toBeRemoved.pop_back();
@@ -498,16 +498,16 @@ void CFeatureHandler::Update()
 				CFeature* feature = *it;
 				toBeFreedIDs.push_back(feature->id);
 				activeFeatures.erase(feature);
-				
+
 				if (feature->drawQuad >= 0) {
 					DrawQuad* dq = &drawQuads[feature->drawQuad];
 					dq->features.erase(feature);
 				}
-				
+
 				if (feature->inUpdateQue) {
 					updateFeatures.erase(feature);
 				}
-				
+
 				delete feature;
 			}
 		}

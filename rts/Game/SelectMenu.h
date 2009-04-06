@@ -3,7 +3,7 @@
 
 #include "GameController.h"
 
-class LocalSetup;
+class ClientSetup;
 class CglList;
 
 /**
@@ -37,7 +37,7 @@ private:
 	std::string userMod;
 
 	bool addressKnown;
-	LocalSetup* mySettings;
+	ClientSetup* mySettings;
 	CglList* showList;
 };
 

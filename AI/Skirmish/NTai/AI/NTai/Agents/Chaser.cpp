@@ -585,7 +585,7 @@ namespace ntai {
 					const UnitDef* def = G->GetUnitDef(en[i]);
 					if(def){
 
-						float e = G->GetEfficiency(def->name);//def->power;
+						float e = G->efficiency->GetEfficiency(def->name);//def->power;
 
 						// manipulate the value to make threats bigger as they get closer to the AI base.
 						e /= (pos.distance2D(G->Map->nbasepos(pos))/4);

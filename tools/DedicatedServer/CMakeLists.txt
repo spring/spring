@@ -8,7 +8,6 @@ INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/Syste
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(system_files 
 	${fsfiles}
-	${platformfiles}
 	 ${netfiles}
 	../../rts/System/TdfParser
 	../../rts/System/ConfigHandler
@@ -25,6 +24,7 @@ ADD_LIBRARY(springserver SHARED
 	${system_files}
 	${serverfiles}
 	../../rts/Game/GameServer
+	../../rts/Game/ClientSetup
 	../../rts/Game/GameSetup
 	../../rts/Game/GameData
 	../../rts/Game/PlayerBase
@@ -42,7 +42,7 @@ TARGET_LINK_LIBRARIES(springserver ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY
 if (MINGW)
 	TARGET_LINK_LIBRARIES (springserver ws2_32)
 else (MINGW)
-	ADD_DEFINITIONS (-fvisibility=default ) #overwrite hidden visibility
+	set_target_properties(springserver PROPERTIES COMPILE_FLAGS "-fvisibility=default")
 endif (MINGW)
 
 ADD_EXECUTABLE(spring-dedicated main)

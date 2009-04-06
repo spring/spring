@@ -88,6 +88,7 @@ typedef boost::mutex::scoped_lock scoped_lock;
 
 #include "../Helpers/Terrain/Map.h"							// Common Map related procedures such as which corner of the mapare we in
 
+#include "../Helpers/Efficiency.h"
 #include "../Helpers/CConfigData.h"							// Stores data from the mod.tdf and AI.tdf files
 #include "../Helpers/CTokenizer.h"							// Tokenizes a string based on a delimiter aka String.split() in java
 #include "../Helpers/Terrain/RadarHandler.h"				// Spaces out radar tower placement so they cover more area and dont overlap

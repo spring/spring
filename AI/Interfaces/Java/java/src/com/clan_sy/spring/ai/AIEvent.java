@@ -21,12 +21,17 @@ package com.clan_sy.spring.ai;
 import com.sun.jna.Structure;
 
 /**
- * Serves as Interface for a Java Skirmish AIs for the Spring engine.
+ * An AI event is sent form the engine to Java Skirmish AIs.
  *
  * @author	hoijui
  * @version	0.1
  */
-//public interface AIEvent {}
 public abstract class AIEvent extends Structure/* implements Structure.ByReference*/ {
+
+	protected AIEvent() {};
+	protected AIEvent(int size) {
+		super(size);
+	}
+
 	public abstract int getTopic();
 }

@@ -8,11 +8,13 @@
 
 #include "include.h"
 
+#include "ExternalAI/Interface/SSkirmishAICallback.h"
+
 namespace ntai {
 
 	class CNTai : public IGlobalAI{
 	public:
-		CNTai();
+		CNTai(const SSkirmishAICallback* callback);
 		virtual ~CNTai();
 		void InitAI(IGlobalAICallback* callback, int team);
 		void UnitCreated(int unit);

@@ -36,7 +36,7 @@
 #include <stdio.h>       // fgets()
 #include <stdarg.h>      // var-args
 #include <sys/stat.h>    // used for check if a file exists
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>          // needed for dir listing
 #include <direct.h>      // mkdir()
 #else // WIN32

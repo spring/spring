@@ -36,6 +36,9 @@
 #include <vector>
 #include <stdlib.h> // malloc(), calloc(), free()
 
+
+static const char* AI_INTERFACES_VERSION_COMMON = "common";
+
 static std::vector<const CAIInterfaceLibraryInfo*> infos;
 
 void CHECK_INTERFACE_ID(const int interfaceId)
@@ -241,13 +244,18 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getConfigDir(int interfaceId) {
 	const CAIInterfaceLibraryInfo* info = infos[interfaceId];
 	return info->GetDataDir().c_str();
 }
-EXPORT(bool) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir) {
+EXPORT(bool) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
 
 	bool exists = false;
 
 	char ps = aiInterfaceCallback_DataDirs_getPathSeparator(interfaceId);
 	std::string interfaceShortName = aiInterfaceCallback_AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_SHORT_NAME);
-	std::string interfaceVersion = aiInterfaceCallback_AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_VERSION);
+	std::string interfaceVersion;
+	if (common) {
+		interfaceVersion = AI_INTERFACES_VERSION_COMMON;
+	} else {
+		interfaceVersion = aiInterfaceCallback_AIInterface_Info_getValueByKey(interfaceId, AI_INTERFACE_PROPERTY_VERSION);
+	}
 	std::string interfaceRelPath(AI_INTERFACES_DATA_DIR);
 	interfaceRelPath += ps + interfaceShortName + ps + interfaceVersion + ps + relPath;
 
@@ -255,12 +263,12 @@ EXPORT(bool) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path
 
 	return exists;
 }
-EXPORT(char*) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir) {
+EXPORT(char*) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
 
 	static const unsigned int path_sizeMax = 2048;
 
 	char* path = (char*) calloc(path_sizeMax, sizeof(char*));
-	bool fetchOk = aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, path_sizeMax, relPath, writeable, create, dir);
+	bool fetchOk = aiInterfaceCallback_DataDirs_locatePath(interfaceId, path, path_sizeMax, relPath, writeable, create, dir, common);
 
 	if (!fetchOk) {
 		FREE(path);
@@ -284,7 +292,7 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 		char tmpRes[sizeMax];
 		static const char* const rootPath = "";
 		bool exists = aiInterfaceCallback_DataDirs_locatePath(interfaceId,
-				tmpRes, sizeMax, rootPath, true, true, true);
+				tmpRes, sizeMax, rootPath, true, true, true, false);
 		writeableDataDirs[interfaceId] = tmpRes;
 		if (!exists) {
 			char errorMsg[sizeMax];

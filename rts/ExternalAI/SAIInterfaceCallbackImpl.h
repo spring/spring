@@ -54,8 +54,8 @@ EXPORT(bool             ) aiInterfaceCallback_DataDirs_Roots_getDir(int UNUSED_i
 EXPORT(bool             ) aiInterfaceCallback_DataDirs_Roots_locatePath(int UNUSED_interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
 EXPORT(char*            ) aiInterfaceCallback_DataDirs_Roots_allocatePath(int UNUSED_interfaceId, const char* const relPath, bool writeable, bool create, bool dir);
 EXPORT(const char*      ) aiInterfaceCallback_DataDirs_getConfigDir(int interfaceId);
-EXPORT(bool             ) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
-EXPORT(char*            ) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir);
+EXPORT(bool             ) aiInterfaceCallback_DataDirs_locatePath(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir, bool common);
+EXPORT(char*            ) aiInterfaceCallback_DataDirs_allocatePath(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir, bool common);
 EXPORT(const char*      ) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId);
 
 
