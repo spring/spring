@@ -1053,17 +1053,9 @@ void CGameServer::CheckForGameStart(bool forced)
 	assert(gameStartTime.is_not_a_date_time());
 	bool allReady = true;
 
-#ifdef DEDICATED
-	// Lobby-protocol doesn't support creating games without players inside
-	// so in dedicated mode there will always be the host-player in the script
-	// which doesn't exist and will never join, so skip it in this case
-	const unsigned int playersToSkip = std::max(setup->numDemoPlayers, 1);
-#else
-	const unsigned int playersToSkip = setup->numDemoPlayers;
-#endif
-	for (unsigned int a = playersToSkip; a < players.size(); a++)
+	for (size_t a = static_cast<size_t>(setup->numDemoPlayers); a < players.size(); a++)
 	{
-		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + seconds(45) < microsec_clock::local_time())
+		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + seconds(30) < microsec_clock::local_time())
 		{
 			// autostart the game when 45 seconds have passed and everyone who managed to connect is ready
 			continue;
