@@ -19,7 +19,7 @@ bool CArchiveFactory::IsScanArchive(const std::string& fileName)
 
 	return  (ext == "sd7") || (ext == "sdz") || (ext == "sdd") ||
 	        (ext == "ccx") || (ext == "hpi") || (ext == "ufo") ||
-	        (ext == "gp3") || (ext == "gp4") || (ext == "swx") ||
+		(ext == "gp3") || (ext == "gp4") || (ext == "swx") ||
 		(ext == "sdp");
 }
 
