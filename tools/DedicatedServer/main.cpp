@@ -1,5 +1,6 @@
 #include "Game/GameServer.h"
 #include "GameSetup.h"
+#include "ClientSetup.h"
 #include "GameData.h"
 #include "System/FileSystem/FileSystem.h"
 #include "System/FileSystem/ArchiveScanner.h"
@@ -31,7 +32,7 @@ int main(int argc, char *argv[])
 		const std::string script(argv[0]);
 		std::cout << "Loading script from file: " << script << std::endl;
 
-		LocalSetup* settings = new LocalSetup();
+		ClientSetup settings;
 		CFileHandler fh(argv[1]);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+script);
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setupscript cannot be read: "+script);
-		settings->Init(buf);
+		settings.Init(buf);
 		
 		gameSetup = new CGameSetup();	// to store the gamedata inside
 		if (!gameSetup->Init(buf))	// read the script provided by cmdline
@@ -91,7 +92,7 @@ int main(int argc, char *argv[])
 
 		data->SetScript(gameSetup->scriptName);
 		data->SetSetup(gameSetup->gameSetupText);
-		server = new CGameServer(settings, false, data, gameSetup);
+		server = new CGameServer(&settings, false, data, gameSetup);
 
 		while (!server->HasFinished()) // check if still running
 #ifdef _WIN32

@@ -127,6 +127,9 @@ class AWKExecutor:
 			awk_bin = os.path.abspath(os.path.join('mingwlibs', 'bin', 'awk.exe'))
 		else:
 			awk_bin = os.path.abspath(os.path.join(env['mingwlibsdir'], 'bin', 'awk.exe'))
+		# try ../mingwlibsdir because of chdir()
+		if not os.path.isfile(awk_bin):
+			awk_bin = os.path.abspath(os.path.join('..', env['mingwlibsdir'], 'bin', 'awk.exe'))
 		if not os.path.isfile(awk_bin):
 			# try msys default
 			print awk_bin, 'not found, trying gawk.exe'

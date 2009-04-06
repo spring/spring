@@ -28,7 +28,7 @@ class CDemoReader;
 class CDemoRecorder;
 class AutohostInterface;
 class CGameSetup;
-class LocalSetup;
+class ClientSetup;
 class ChatMessage;
 
 const unsigned SERVER_PLAYER = 255; //server generated message which needs a playernumber
@@ -78,7 +78,7 @@ class CGameServer : public CommandReceiver
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
-	CGameServer(const LocalSetup* settings, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
+	CGameServer(const ClientSetup* settings, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
 	virtual ~CGameServer();
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);

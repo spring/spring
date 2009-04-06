@@ -61,7 +61,14 @@ EXPORT(int) initStatic(int _interfaceId,
 	// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
 	bool propFileFetched = callback->DataDirs_locatePath(interfaceId,
 			propFilePath, propFilePath_sizeMax,
-			INTERFACE_PROPERTIES_FILE, false, false, false);
+			INTERFACE_PROPERTIES_FILE, false, false, false, false);
+	if (!propFileFetched) {
+		// if the version specific file does not exist,
+		// try to get the common one
+		propFileFetched = callback->DataDirs_locatePath(interfaceId,
+				propFilePath, propFilePath_sizeMax,
+				INTERFACE_PROPERTIES_FILE, false, false, false, true);
+	}
 	if (propFileFetched) {
 		numProps = util_parsePropertiesFile(propFilePath,
 				propKeys, (const char**)propValues, maxProps);
@@ -71,7 +78,7 @@ EXPORT(int) initStatic(int _interfaceId,
 		// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
 		bool ddwFetched = callback->DataDirs_locatePath(interfaceId,
 				ddw, ddw_sizeMax,
-				"", true, true, true);
+				"", true, true, true, false);
 		if (!ddwFetched) {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 					"Failed locating writeable data-dir \"%s\"", ddw);
@@ -122,7 +129,7 @@ EXPORT(int) initStatic(int _interfaceId,
 	// eg: "~/.spring/AI/Interfaces/Java/${INTERFACE_PROPERTIES_FILE}"
 	bool logFileFetched = callback->DataDirs_locatePath(interfaceId,
 			logFilePath, logFilePath_sizeMax,
-			logFile, true, true, false);
+			logFile, true, true, false, false);
 
 	if (logFileFetched) {
 		simpleLog_init(logFilePath, useTimeStamps, logLevel);

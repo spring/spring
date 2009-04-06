@@ -36,12 +36,12 @@ public:
 	void CheckForCollision(void);
 	void DependentDied(CObject* o);
 	void SetMaxSpeed(float speed);
-	
+
 	void KeepPointingTo(float3 pos, float distance, bool aggressive);
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
 	void StopMoving();
-	
+
 	void Takeoff();
 	bool IsFighter();
 
@@ -104,7 +104,7 @@ public:
 	float lastRudderPos;
 	float lastElevatorPos;
 	float lastAileronPos;
-	
+
 	float inefficientAttackTime;
 	float3 exitVector;	//used by fighters to turn away when closing in on ground targets
 };

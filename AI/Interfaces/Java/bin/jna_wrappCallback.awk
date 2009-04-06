@@ -90,6 +90,7 @@ function printInterface() {
 
 	print("}") >> outFile_i;
 	print("") >> outFile_i;
+	close(outFile_i);
 }
 
 function printClass(clsName_c) {
@@ -135,6 +136,7 @@ function printClass(clsName_c) {
 
 	print("}") >> outFile_c;
 	print("") >> outFile_c;
+	close(outFile_c);
 }
 
 

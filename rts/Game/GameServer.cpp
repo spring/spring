@@ -26,6 +26,7 @@
 
 #include "LogOutput.h"
 #include "GameSetup.h"
+#include "ClientSetup.h"
 #include "Action.h"
 #include "ChatMessage.h"
 #include "CommandMessage.h"
@@ -47,7 +48,7 @@
 #include "ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
-// This undef is needed, as somewhere there is a type interface specifyed,
+// This undef is needed, as somewhere there is a type interface specified,
 // which we need not!
 // (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
 #ifdef interface
@@ -108,7 +109,7 @@ void SetBoolArg(bool& value, const std::string& str)
 
 CGameServer* gameServer=0;
 
-CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
+CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const GameData* const newGameData, const CGameSetup* const mysetup)
 : setup(mysetup)
 {
 	assert(setup);
@@ -190,6 +191,7 @@ CGameServer::CGameServer(const LocalSetup* settings, bool onlyLocal, const GameD
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
 	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
+	delete ret;
 #endif
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
@@ -208,7 +210,7 @@ CGameServer::~CGameServer()
 	delete thread;
 #ifdef DEDICATED
 	demoRecorder->SetMaxPlayerNum(players.size());
-	
+
 	// TODO: move this to a method in CTeamHandler
 	// Figure out who won the game.
 	int numTeams = setup->numTeams;
@@ -344,7 +346,8 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 			players[p].link->SendData(packet);
 	}
 #ifdef DEDICATED
-	demoRecorder->SaveToDemo(packet->data, packet->length, modGameTime);
+	if (demoRecorder)
+		demoRecorder->SaveToDemo(packet->data, packet->length, modGameTime);
 #endif
 }
 
@@ -543,7 +546,7 @@ void CGameServer::Update()
 		}
 	}
 
-	if (microsec_clock::local_time() > serverStartTime + serverTimeout || gameStartTime.is_not_a_date_time())
+	if (microsec_clock::local_time() > serverStartTime + serverTimeout || !gameStartTime.is_not_a_date_time())
 	{
 		bool hasPlayers = false;
 		for (unsigned i = 0; i < players.size(); ++i)
@@ -582,9 +585,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
-					if(enforceSpeed && 
-						(players[a].spectator || 
-						players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) || 
+					if(enforceSpeed &&
+						(players[a].spectator ||
+						players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
 						GotChatMessage(ChatMessage(a, a, players[a].spectator ? "Pausing rejected (spectators)" : "Pausing rejected (cpu load or ping is too high)"));
 						break; // disallow pausing by players who cannot keep up gamespeed
@@ -668,7 +671,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					teams[team].startpos = SFloat3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
 					if (inbuf[3] == 1)
 						teams[team].readyToStart = static_cast<bool>(inbuf[3]);
-					
+
 					Broadcast(CBaseNetProtocol::Get().SendStartPos(inbuf[1],team, inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]))); //forward data
 					if (hostif)
 					{
@@ -831,7 +834,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				const unsigned fromTeam = players[player].team;
 				unsigned numPlayersInTeam = 0;
 				for (unsigned a = 0; a < players.size(); ++a)
-					if (players[a].team == fromTeam)
+					if (players[a].team >= 0 && static_cast<unsigned>(players[a].team) == fromTeam)
 						++numPlayersInTeam;
 
 				switch (action)
@@ -909,7 +912,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_CCOMMAND: {
 			CommandMessage msg(packet);
-			if (msg.player == a)
+			if (msg.player >= 0 && static_cast<unsigned>(msg.player) == a)
 			{
 				if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a].isLocal)
 				{
@@ -1051,16 +1054,9 @@ void CGameServer::CheckForGameStart(bool forced)
 	assert(gameStartTime.is_not_a_date_time());
 	bool allReady = true;
 
-#ifdef DEDICATED
-	// Lobby-protocol doesn't support creating games without players inside
-	// so in dedicated mode there will always be the host-player in the script
-	// which doesn't exist and will never join, so skip it in this case
-	for (int a = std::max(setup->numDemoPlayers,1); a < players.size(); a++)
-#else
-	for (int a = setup->numDemoPlayers; a < players.size(); a++)
-#endif
+	for (size_t a = static_cast<size_t>(setup->numDemoPlayers); a < players.size(); a++)
 	{
-		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + seconds(45) < microsec_clock::local_time())
+		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + seconds(30) < microsec_clock::local_time())
 		{
 			// autostart the game when 45 seconds have passed and everyone who managed to connect is ready
 			continue;
@@ -1258,7 +1254,7 @@ void CGameServer::CheckForGameEnd()
 	int numActiveAllyTeams = 0;
 	std::vector<int> numActiveTeams(teams.size(), 0); // active teams per ally team
 
-#ifndef DEDICATED
+#if !defined DEDICATED
 	for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
 	{
 		bool hasPlayer = false;
@@ -1267,17 +1263,21 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		if (!teamHandler->Team(a)->skirmishAIKey.IsUnspecified()) // is not empty?
+		if (teamHandler->Team(a)->isAI) {
 			hasPlayer = true;
+		}
 
-		if (!teamHandler->Team(a)->isDead && !teamHandler->Team(a)->gaia && hasPlayer)
+		if (!teamHandler->Team(a)->isDead && !teamHandler->Team(a)->gaia && hasPlayer) {
 			++numActiveTeams[teamHandler->AllyTeam(a)];
+		}
 	}
 
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a)
-		if (numActiveTeams[a] != 0)
+	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
+		if (numActiveTeams[a] != 0) {
 			++numActiveAllyTeams;
-#else
+		}
+	}
+#else // !defined DEDICATED
 	for (int a = 0; a < setup->numTeams; ++a)
 	{
 		bool hasPlayer = false;
@@ -1297,10 +1297,12 @@ void CGameServer::CheckForGameEnd()
 			++numActiveTeams[teams[a].allyTeam];
 	}
 
-	for (int a = 0; a < numActiveTeams.size(); ++a)
-		if (numActiveTeams[a] != 0)
+	for (unsigned int a = 0; a < numActiveTeams.size(); ++a) {
+		if (numActiveTeams[a] != 0) {
 			++numActiveAllyTeams;
-#endif
+		}
+	}
+#endif // !defined DEDICATED
 	if (numActiveAllyTeams <= 1)
 	{
 		gameEndTime = microsec_clock::local_time();
@@ -1334,7 +1336,7 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 			lastTick=currentTick;
 			newFrames = (timeLeft > 0)? int(ceil(timeLeft)): 0;
 			timeLeft -= newFrames;
-			
+
 			if (hasLocalClient)
 			{
 				// needs to set lastTick and stuff, otherwise we will get all the left out NEWFRAME's at once when client has catched up
@@ -1548,9 +1550,9 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	if(enforceSpeed && player!=SERVER_PLAYER && 
-		(players[player].spectator || 
-		players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) || 
+	if(enforceSpeed && player!=SERVER_PLAYER &&
+		(players[player].spectator ||
+		players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 		players[player].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
 		GotChatMessage(ChatMessage(player, player, players[player].spectator ? "Speed change rejected (spectators)" : "Speed change rejected (cpu load or ping is too high)"));
 		return; // disallow speed change by players who cannot keep up gamespeed

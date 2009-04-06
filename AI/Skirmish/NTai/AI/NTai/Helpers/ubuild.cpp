@@ -387,7 +387,7 @@ namespace ntai {
 					continue;
 				}
 				if(p->IsAttacker()){
-					float temp = G->GetEfficiency(p->GetName());
+					float temp = G->efficiency->GetEfficiency(p->GetName());
 					temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
 					temp -= (G->mrand()%max(int(temp/4),1));
 					if(temp > best_score){
@@ -417,7 +417,7 @@ namespace ntai {
 
 				if(G->Pl->feasable(p,utd)==false) continue;
 				if(p->IsBomber()){
-					float temp = G->GetEfficiency(p->GetName());
+					float temp = G->efficiency->GetEfficiency(p->GetName());
 					temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
 					temp = temp - G->mrand()%max(int(temp/4),1);
 					if(temp > best_score){
@@ -444,7 +444,7 @@ namespace ntai {
 
 				if(G->Pl->feasable(p,utd)==false) continue;
 				if(p->IsFighter()){
-					float temp = G->GetEfficiency(p->GetName());
+					float temp = G->efficiency->GetEfficiency(p->GetName());
 					temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
 					temp = temp - G->mrand()%max(int(temp/4),1);
 					if(temp > best_score){
@@ -471,7 +471,7 @@ namespace ntai {
 
 				if(G->Pl->feasable(p,utd)==false) continue;
 				if(p->IsGunship()){
-					float temp = G->GetEfficiency(p->GetName());
+					float temp = G->efficiency->GetEfficiency(p->GetName());
 					temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
 					temp = temp - G->mrand()%max(int(temp/4),1);
 					if(temp > best_score){
@@ -514,7 +514,7 @@ namespace ntai {
 				}
 				if(found == false) good = false;
 				if(good == true){
-					float temp = G->GetEfficiency(p->GetName());
+					float temp = G->efficiency->GetEfficiency(p->GetName());
 					temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
 					temp = temp - G->mrand()%min((int)(temp/3),1);
 					if(temp > best_score){
@@ -554,7 +554,7 @@ namespace ntai {
 					}
 				}
 				if(found == true){
-					float temp = G->GetEfficiency(p->GetName());
+					float temp = G->efficiency->GetEfficiency(p->GetName());
 					temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
 					temp = temp - G->mrand()%max(int(temp/4),1);
 					if(temp > best_score){
@@ -584,7 +584,7 @@ namespace ntai {
 					if(!G->Pl->feasable(p,utd)) continue;
 					if(p->IsUWStructure()!=(water||G->info->spacemod)) continue;
 
-					float temp = G->GetEfficiency(p->GetName());
+					float temp = G->efficiency->GetEfficiency(p->GetName());
 					temp /= (p->GetUnitDef()->energyCost+(p->GetUnitDef()->metalCost*45));
 					int r = G->mrand()%max(int(temp/4),1)+1;
 					temp += (float)abs(r);
@@ -616,10 +616,10 @@ namespace ntai {
 					if(G->Pl->feasable(p,utd)==false) continue;
 					if(p->GetUnitDef()->floater){
 						if(G->info->spacemod||water){
-							float temp = G->GetEfficiency(p->GetUnitDef()->name);
+							float temp = G->efficiency->GetEfficiency(p->GetUnitDef()->name);
 							if(!p->GetUnitDef()->buildOptions.empty()){
 								for(map<int,std::string>::const_iterator i = p->GetUnitDef()->buildOptions.begin(); i != p->GetUnitDef()->buildOptions.end(); ++i){
-									temp += G->GetEfficiency(i->second);
+									temp += G->efficiency->GetEfficiency(i->second);
 								}
 							}
 							temp*=p->GetUnitDef()->buildSpeed;
@@ -1423,7 +1423,7 @@ namespace ntai {
 				if(p->IsHub()==true){
 					if(G->Pl->feasable(p,utd)==false) continue;
 					if(p->IsUWStructure()!=(water||G->info->spacemod)) continue;
-					float temp = G->GetEfficiency(pd->name);
+					float temp = G->efficiency->GetEfficiency(pd->name);
 					temp /= (pd->energyCost+(pd->metalCost*45));
 					int r = G->mrand()%max(int(temp/4),1)+1;
 					temp += (float)abs(r);
@@ -1456,7 +1456,7 @@ namespace ntai {
 				if(p->IsHub()){
 					if(G->Pl->feasable(p,utd)==false) continue;
 					if(p->IsUWStructure()!=(water||G->info->spacemod)) continue;
-					float temp = G->GetEfficiency(pd->name);
+					float temp = G->efficiency->GetEfficiency(pd->name);
 					temp /= (pd->energyCost+(pd->metalCost*45));
 					int r = G->mrand()%max(int(temp/4),1)+1;
 					temp += (float)abs(r);

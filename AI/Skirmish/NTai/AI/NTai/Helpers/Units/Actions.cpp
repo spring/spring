@@ -343,7 +343,7 @@ bool CActions::AttackNear(int unit, float LOSmultiplier){
 
                 bool tmobile = false;
 
-                tempscore = G->GetTargettingWeight(ud->name, endi->name);
+				tempscore = G->efficiency->GetEfficiency(endi->name);
 
                 //tempscore = G->Ch->ApplyGrudge(en[i], tempscore);
 

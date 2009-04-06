@@ -348,25 +348,39 @@ void LuaMaterial::Execute(const LuaMaterial& prev) const
 
 	shader.Execute(prev.shader);
 
-	if (cameraLoc>=0) {
+	if (cameraLoc >= 0) {
 		// FIXME: this is happening too much, just use floats?
 		GLfloat array[16];
-		const GLdouble* modelview = camera->GetModelview();
-		for (int i = 0; i < 16; i++) {
-			array[i] = (GLfloat)modelview[i];
+		const GLdouble* modelview = camera->GetModelview(); // GetMatrixData("camera")
+		for (int i = 0; i < 16; i += 4) {
+			array[i    ] = (GLfloat) modelview[i    ];
+			array[i + 1] = (GLfloat) modelview[i + 1];
+			array[i + 2] = (GLfloat) modelview[i + 2];
+			array[i + 3] = (GLfloat) modelview[i + 3];
 		}
 		glUniformMatrix4fv(cameraLoc, 1, GL_FALSE, array);
 	}
+	if (cameraInvLoc >= 0) {
+		GLfloat array[16];
+		const GLdouble* modelviewInv = camera->modelviewInverse; // GetMatrixData("caminv")
+		for (int i = 0; i < 16; i += 4) {
+			array[i    ] = (GLfloat) modelviewInv[i    ];
+			array[i + 1] = (GLfloat) modelviewInv[i + 1];
+			array[i + 2] = (GLfloat) modelviewInv[i + 2];
+			array[i + 3] = (GLfloat) modelviewInv[i + 3];
+		}
+		glUniformMatrix4fv(cameraInvLoc, 1, GL_FALSE, array);
+	}
 
-	if (cameraPosLoc>=0) {
+	if (cameraPosLoc >= 0) {
 		glUniformf3(cameraPosLoc, camera->pos);
 	}
 
-	if (shadowLoc>=0) {
+	if (shadowLoc >= 0) {
 		glUniformMatrix4fv(shadowLoc, 1, GL_FALSE, shadowHandler->shadowMatrix.m);
 	}
 
-	if (shadowParamsLoc>=0) {
+	if (shadowParamsLoc >= 0) {
 		glUniform4f(shadowParamsLoc, shadowHandler->xmid, shadowHandler->ymid, shadowHandler->p17, shadowHandler->p18);
 	}
 
@@ -444,6 +458,9 @@ int LuaMaterial::Compare(const LuaMaterial& a, const LuaMaterial& b)
 	if (a.cameraLoc != b.cameraLoc) {
 		return (a.cameraLoc < b.cameraLoc) ? -1 : +1;
 	}
+	if (a.cameraInvLoc != b.cameraInvLoc) {
+		return (a.cameraInvLoc < b.cameraInvLoc) ? -1 : +1;
+	}
 
 	if (a.cameraPosLoc != b.cameraPosLoc) {
 		return (a.cameraPosLoc < b.cameraPosLoc) ? -1 : +1;
@@ -494,6 +511,7 @@ void LuaMaterial::Print(const string& indent) const
 	LOGPRINTF("%suseCamera = %s\n", indent.c_str(), useCamera ? "true" : "false");
 	LOGPRINTF("%sculling = %s\n", indent.c_str(), CULL_TO_STR(culling));
 	LOGPRINTF("%scameraLoc = %i\n", indent.c_str(), cameraLoc);
+	LOGPRINTF("%scameraInvLoc = %i\n", indent.c_str(), cameraInvLoc);
 	LOGPRINTF("%scameraPosLoc = %i\n", indent.c_str(), cameraPosLoc);
 	LOGPRINTF("%sshadowLoc = %i\n", indent.c_str(), shadowLoc);
 	LOGPRINTF("%sshadowParamsLoc = %i\n", indent.c_str(), shadowParamsLoc);

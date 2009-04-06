@@ -44,7 +44,7 @@ CInterface::CInterface(int interfaceId,
 	// eg: "~/.spring/AI/Interfaces/C/log/interface-log.txt"
 	bool ok = callback->DataDirs_locatePath(interfaceId,
 			logFilePath, logFilePath_sizeMax,
-			logFileName, true, true, false);
+			logFileName, true, true, false, false);
 	if (!ok) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 			"Failed locating the log file %s.", logFileName);

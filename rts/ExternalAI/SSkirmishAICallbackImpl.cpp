@@ -51,6 +51,9 @@
 #include "GlobalUnsynced.h" // for myTeam
 #include "LogOutput.h"
 
+
+static const char* SKIRMISH_AIS_VERSION_COMMON = "common";
+
 static std::map<int, IGlobalAICallback*> team_globalCallback;
 static std::map<int, IAICallback*> team_callback;
 static std::map<int, SSkirmishAICallback*> team_cCallback;
@@ -717,13 +720,18 @@ EXPORT(const char*) skirmishAiCallback_DataDirs_getConfigDir(int teamId) {
 	const CSkirmishAILibraryInfo* info = getSkirmishAILibraryInfo(teamId);
 	return info->GetDataDir().c_str();
 }
-EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir) {
+EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
 
 	bool exists = false;
 
 	char ps = skirmishAiCallback_DataDirs_getPathSeparator(teamId);
 	std::string aiShortName = skirmishAiCallback_SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
-	std::string aiVersion = skirmishAiCallback_SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_VERSION);
+	std::string aiVersion;
+	if (common) {
+		aiVersion = SKIRMISH_AIS_VERSION_COMMON;
+	} else {
+		aiVersion = skirmishAiCallback_SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_VERSION);
+	}
 	std::string aiRelPath(SKIRMISH_AI_DATA_DIR);
 	aiRelPath += ps + aiShortName + ps + aiVersion + ps + relPath;
 
@@ -731,12 +739,12 @@ EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(int teamId, char* path, int 
 
 	return exists;
 }
-EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* const relPath, bool writeable, bool create, bool dir) {
+EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* const relPath, bool writeable, bool create, bool dir, bool common) {
 
 	static const unsigned int path_sizeMax = 2048;
 
 	char* path = (char*) calloc(path_sizeMax, sizeof(char*));
-	bool fetchOk = skirmishAiCallback_DataDirs_locatePath(teamId, path, path_sizeMax, relPath, writeable, create, dir);
+	bool fetchOk = skirmishAiCallback_DataDirs_locatePath(teamId, path, path_sizeMax, relPath, writeable, create, dir, common);
 
 	if (!fetchOk) {
 		FREE(path);
@@ -760,7 +768,7 @@ EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int teamId) {
 		char tmpRes[sizeMax];
 		static const char* const rootPath = "";
 		bool exists = skirmishAiCallback_DataDirs_locatePath(teamId,
-				tmpRes, sizeMax, rootPath, true, true, true);
+				tmpRes, sizeMax, rootPath, true, true, true, false);
 		writeableDataDirs[teamId] = tmpRes;
 		if (!exists) {
 			char errorMsg[sizeMax];
@@ -2786,7 +2794,12 @@ EXPORT(int) skirmishAiCallback_0MULTI1VALS3FeaturesIn0Feature(int teamId, SAIFlo
 
 EXPORT(int) skirmishAiCallback_Feature_0SINGLE1FETCH2FeatureDef0getDef(int teamId, int featureId) {
 	IAICallback* clb = team_callback[teamId];
-	return clb->GetFeatureDef(featureId)->id;
+	const FeatureDef* def = clb->GetFeatureDef(featureId);
+	if (def == NULL) {
+		 return -1;
+	} else {
+		return def->id;
+	}
 }
 
 EXPORT(float) skirmishAiCallback_Feature_getHealth(int teamId, int featureId) {

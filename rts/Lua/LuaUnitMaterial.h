@@ -82,7 +82,7 @@ class LuaUnitUniforms {
 
 	public:
 		bool haveUniforms;
-		GLint speedLoc;	
+		GLint speedLoc;
 		GLint healthLoc;
 		GLint unitIDLoc;
 		GLint teamIDLoc;

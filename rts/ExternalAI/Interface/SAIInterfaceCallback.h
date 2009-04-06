@@ -129,7 +129,7 @@ struct SAIInterfaceCallback {
 	/**
 	 * This interfaces writeable data dir, which is where eg logs, caches
 	 * and learning data should be stored, e.g.:
-	 * ~/.spring/AI/Interfaces/C/0.1/
+	 * /home/userX/.spring/AI/Interfaces/C/0.1/
 	 */
 	const char*       (CALLING_CONV *DataDirs_getWriteableDir)(int interfaceId);
 	/**
@@ -137,7 +137,7 @@ struct SAIInterfaceCallback {
 	 * data-dir + AI-Interface-path + relative-path.
 	 *
 	 * example:
-	 * input:  "log/main.log", writeable, create, !dir
+	 * input:  "log/main.log", writeable, create, !dir, !common
 	 * output: "/home/userX/.spring/AI/Interfaces/C/0.1/log/main.log"
 	 * The path "/home/userX/.spring/AI/Interfaces/C/0.1/log/" is created,
 	 * if it does not yet exist.
@@ -151,11 +151,17 @@ struct SAIInterfaceCallback {
 	 * @param   dir        if true, realPath specifies a dir, which means if
 	 *                     create is true, the whole path will be created,
 	 *                     including the last part
+	 * @param   common     if true, the version independent data-dir is formed,
+	 *                     which uses "common" instead of the version, eg:
+	 *                     "/home/userX/.spring/AI/Interfaces/C/common/..."
 	 * @return  whether the locating process was successfull
 	 *          -> the path exists and is stored in an absolute form in path
 	 */
-	bool              (CALLING_CONV *DataDirs_locatePath)(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
-	char*             (CALLING_CONV *DataDirs_allocatePath)(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir);
+	bool              (CALLING_CONV *DataDirs_locatePath)(int interfaceId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir, bool common);
+	/**
+	 * @see     locatePath()
+	 */
+	char*             (CALLING_CONV *DataDirs_allocatePath)(int interfaceId, const char* const relPath, bool writeable, bool create, bool dir, bool common);
 	/// Returns the number of springs data dirs.
 	int               (CALLING_CONV *DataDirs_Roots_getSize)(int interfaceId);
 	/// Returns the data dir at dirIndex, which is valid between 0 and (DataDirs_Roots_getSize() - 1).

@@ -295,9 +295,11 @@ struct SPlayerCommandEvent {
 
 /**
  * This AI event is sent when a unit finnished processing a command.
+ * @see callback.handleCommand(..., int commandId, ...)
  */
 struct SCommandFinishedEvent {
 	int unitId;
+	int commandId;
 	int commandTopicId;
 }; // EVENT_COMMAND_FINISHED
 

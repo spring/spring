@@ -83,7 +83,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 				team->isAI = true;
 			} else {
 				if (setup->hostDemo) {
-					team->skirmishAIKey = SkirmishAIKey(); // unspecifyed AI Key
+					team->skirmishAIKey = SkirmishAIKey(); // unspecified AI Key
 				} else {
 					const char* sn = skirmishAIData->shortName.c_str();
 					const char* v = skirmishAIData->version.c_str();
@@ -98,8 +98,8 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 						const int MAX_MSG_LENGTH = 511;
 						char s_msg[MAX_MSG_LENGTH + 1];
 						SNPRINTF(s_msg, MAX_MSG_LENGTH,
-								"Specifyed Skirmish AI could not be found: %s (version: %s)",
-								spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specifyed>");
+								"Specified Skirmish AI could not be found: %s (version: %s)",
+								spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specified>");
 						handleerror(NULL, s_msg, "Team Handler Error", MBF_OK | MBF_EXCL);
 					}
 				}

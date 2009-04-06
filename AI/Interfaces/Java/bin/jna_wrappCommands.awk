@@ -40,7 +40,6 @@ BEGIN {
 	myPointerCmdWrapperClass = "AICommandWrapper";
 	myPointerCmdWrapperFile = javaGeneratedSrcRoot "/" myPkgD "/" myPointerCmdWrapperClass ".java";
 
-	# Print a warning header
 	indent = "	";
 
 	ind_cmdTopics = 0;
@@ -86,7 +85,6 @@ function printCommandJava(cmdIndex) {
 	topicName = cmdsTopicName[cmdIndex];
 	topicValue = cmdsTopicNameValue[topicName];
 	name = cmdsName[cmdIndex];
-	#isUnitCmd = cmdsIsUnitCmd[cmdIndex];
 	isUnitCmd = 0;
 
 	javaFile = javaGeneratedSrcRoot "/" myPkgCmdD "/" name "AICommand.java";
@@ -98,11 +96,6 @@ function printCommandJava(cmdIndex) {
 		firstMethod = 4;
 	}
 
-	#print("########################################################");
-	#print("creating file " javaFile);
-	#print("### topic name: " topicName);
-	#print("### topic value: " topicValue);
-	#print("########################################################");
 	printJavaCommandHeader(javaFile);
 	printFunctionComment_Common(javaFile, cmdsDocComment, cmdIndex, "");
 	print("public final class " className " extends " cmdInterface " {") >> javaFile;
@@ -191,9 +184,6 @@ function printCommandJava(cmdIndex) {
 	}
 
 	print("") >> javaFile;
-#print("//name: " name) >> javaFile;
-#print("//topicName: " topicName) >> javaFile;
-#print("//evtIndex: " evtIndex) >> javaFile;
 	for (m=firstMethod; m < cmdsNumMembers[cmdIndex]; m++) {
 		name = cmdsMembers_name[cmdIndex, m];
 		type_c = cmdsMembers_type_c[cmdIndex, m];
@@ -202,6 +192,7 @@ function printCommandJava(cmdIndex) {
 	}
 	print("}") >> javaFile;
 	print("") >> javaFile;
+	close(javaFile);
 }
 
 function saveMember(ind_mem, member) {
@@ -379,4 +370,5 @@ END {
 		}
 	}
 	printPointerAICommandWrapperEnd(myPointerCmdWrapperFile);
+	close(myPointerCmdWrapperFile);
 }
