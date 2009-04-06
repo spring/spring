@@ -105,9 +105,14 @@ void CSkirmishAIWrapper::PostLoad() {
 
 
 
-void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
+bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 	ai = new CSkirmishAI(teamId, key);
+
+	// check if initialization went ok
+	if (!eoh->IsSkirmishAI(teamId)) {
+		return false;
+	}
 
 	IAILibraryManager* libManager = IAILibraryManager::GetInstance();
 	libManager->FetchSkirmishAILibrary(key);
@@ -151,13 +156,20 @@ void CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 			}
 		}
 	}
+
+	return true;
 }
 
 
 void CSkirmishAIWrapper::Init() {
 
 	if (ai == NULL) {
-		LoadSkirmishAI(false);
+		bool loadOk = LoadSkirmishAI(false);
+		if (!loadOk) {
+			delete ai;
+			ai = NULL;
+			return;
+		}
 	}
 
 	SInitEvent evtData = {teamId, GetCallback()};
