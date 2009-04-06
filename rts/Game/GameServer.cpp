@@ -191,6 +191,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
 	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
+	delete ret;
 #endif
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
