@@ -158,7 +158,7 @@ function printInterface(clsName_i) {
 
 	print("}") >> outFile_i;
 	print("") >> outFile_i;
-
+	close(outFile_i);
 }
 
 
@@ -464,6 +464,7 @@ function printClass(ancestors_c, clsName_c) {
 
 	print("}") >> outFile_c;
 	print("") >> outFile_c;
+	close(outFile_c);
 }
 
 function printMemberClassFetchers(outFile_mc, clsFull_mc, clsId_mc, memberClsName_mc, isInterface_mc) {
