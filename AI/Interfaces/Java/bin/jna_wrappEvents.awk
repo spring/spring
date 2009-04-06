@@ -307,6 +307,7 @@ function printEventJava(evtIndex) {
 	} else {
 		printEventJavaCls(evtIndex);
 	}
+	close(javaFile);
 }
 
 function printEventJavaCls(evtIndex) {
@@ -466,4 +467,8 @@ END {
 	printOOAIEnd(myOOAIFile);
 	printOOAIEnd(myOOAIAbstractFile);
 	printOOAIFactoryEnd(myOOAIFactoryFile);
+
+	close(myOOAIFile);
+	close(myOOAIAbstractFile);
+	close(myOOAIFactoryFile);
 }
