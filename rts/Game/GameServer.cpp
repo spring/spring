@@ -345,7 +345,8 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 			players[p].link->SendData(packet);
 	}
 #ifdef DEDICATED
-	demoRecorder->SaveToDemo(packet->data, packet->length, modGameTime);
+	if (demoRecorder)
+		demoRecorder->SaveToDemo(packet->data, packet->length, modGameTime);
 #endif
 }
 
@@ -544,7 +545,7 @@ void CGameServer::Update()
 		}
 	}
 
-	if (microsec_clock::local_time() > serverStartTime + serverTimeout || gameStartTime.is_not_a_date_time())
+	if (microsec_clock::local_time() > serverStartTime + serverTimeout || !gameStartTime.is_not_a_date_time())
 	{
 		bool hasPlayers = false;
 		for (unsigned i = 0; i < players.size(); ++i)
