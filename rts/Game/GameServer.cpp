@@ -48,7 +48,7 @@
 #include "ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
-// This undef is needed, as somewhere there is a type interface specifyed,
+// This undef is needed, as somewhere there is a type interface specified,
 // which we need not!
 // (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
 #ifdef interface
@@ -832,7 +832,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				const unsigned fromTeam = players[player].team;
 				unsigned numPlayersInTeam = 0;
 				for (unsigned a = 0; a < players.size(); ++a)
-					if (players[a].team == fromTeam)
+					if (players[a].team >= 0 && static_cast<unsigned>(players[a].team) == fromTeam)
 						++numPlayersInTeam;
 
 				switch (action)
@@ -910,7 +910,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_CCOMMAND: {
 			CommandMessage msg(packet);
-			if (msg.player == a)
+			if (msg.player >= 0 && static_cast<unsigned>(msg.player) == a)
 			{
 				if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a].isLocal)
 				{
@@ -1056,10 +1056,11 @@ void CGameServer::CheckForGameStart(bool forced)
 	// Lobby-protocol doesn't support creating games without players inside
 	// so in dedicated mode there will always be the host-player in the script
 	// which doesn't exist and will never join, so skip it in this case
-	for (int a = std::max(setup->numDemoPlayers,1); a < players.size(); a++)
+	const unsigned int playersToSkip = std::max(setup->numDemoPlayers, 1);
 #else
-	for (int a = setup->numDemoPlayers; a < players.size(); a++)
+	const unsigned int playersToSkip = setup->numDemoPlayers;
 #endif
+	for (unsigned int a = playersToSkip; a < players.size(); a++)
 	{
 		if (players[a].myState == GameParticipant::UNCONNECTED && serverStartTime + seconds(45) < microsec_clock::local_time())
 		{
@@ -1298,9 +1299,11 @@ void CGameServer::CheckForGameEnd()
 			++numActiveTeams[teams[a].allyTeam];
 	}
 
-	for (int a = 0; a < numActiveTeams.size(); ++a)
-		if (numActiveTeams[a] != 0)
+	for (unsigned int a = 0; a < numActiveTeams.size(); ++a) {
+		if (numActiveTeams[a] != 0) {
 			++numActiveAllyTeams;
+		}
+	}
 #endif
 	if (numActiveAllyTeams <= 1)
 	{

@@ -328,7 +328,7 @@ std::vector<SkirmishAIKey> CAILibraryManager::FittingSkirmishAIKeys(
 			continue;
 		}
 
-		// check if the ai version fits (if one is specifyed)
+		// check if the ai version fits (if one is specified)
 		if (checkVersion && skirmishAIKey.GetVersion() != sasi->GetVersion()) {
 			continue;
 		}

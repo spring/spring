@@ -58,7 +58,7 @@ void CCommanderScript::GameStart()
 		team->energyStorage = 20;
 
 		// create a Skirmish AI if required
-		if (!team->skirmishAIKey.IsUnspecified() // is an AI specifyed?
+		if (!team->skirmishAIKey.IsUnspecified() // is an AI specified?
 				&& (gu->myPlayerNum == team->leader)) {
 			eoh->CreateSkirmishAI(a, team->skirmishAIKey);
 		}
