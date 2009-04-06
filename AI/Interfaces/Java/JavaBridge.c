@@ -1359,10 +1359,13 @@ bool java_initSkirmishAIClass(
 		establishSpringEnv();
 		if (success) {
 			skirmishAiImpl_className[sai] = util_allocStrCpy(className);
+			skirmishAiImpl_size++;
 		} else {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 					"Class loading failed for class: %s", className);
 		}
+	} else {
+		success = true;
 	}
 
 	team_skirmishAiImpl[teamId] = sai;

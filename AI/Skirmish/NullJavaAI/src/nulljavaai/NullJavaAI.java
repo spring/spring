@@ -87,7 +87,7 @@ public class NullJavaAI implements AI {
 		try {
 			// most likely, this causes a memory leak, as the C string
 			// allocated by this, is never freed
-			myLogFile = callback.Clb_DataDirs_allocatePath(teamId, "log.txt", true, true, false);
+			myLogFile = callback.Clb_DataDirs_allocatePath(teamId, "log-team-" + teamId + ".txt", true, true, false);
 			FileHandler fileLogger = new FileHandler(myLogFile, false);
 			fileLogger.setFormatter(new MyCustomLogFormatter());
 			fileLogger.setLevel(Level.ALL);

@@ -129,7 +129,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 
 		// initialize the log
 		try {
-			myLogFile = callback.getDataDirs().allocatePath("log.txt", true, true, false);
+			myLogFile = callback.getDataDirs().allocatePath("log-team-" + teamId + ".txt", true, true, false);
 			FileHandler fileLogger = new FileHandler(myLogFile, false);
 			fileLogger.setFormatter(new MyCustomLogFormatter());
 			fileLogger.setLevel(Level.ALL);
