@@ -3447,6 +3447,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\ResourceMapAnalyzer.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\ResourceMapAnalyzer.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\SideParser.cpp"
 					>
 				</File>
