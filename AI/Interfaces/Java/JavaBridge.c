@@ -256,7 +256,7 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	// the Java AI Interfaces java library file path (.../AIInterface.jar)
 	classPath[classPath_size++] = callback->DataDirs_allocatePath(interfaceId,
 			JAVA_AI_INTERFACE_LIBRARY_FILE_NAME,
-			false, false, false);
+			false, false, false, false);
 
 	// the directories in the following list will be searched for .jar files
 	// which will then be added to the classPathStr, plus the dirs will be added
@@ -483,7 +483,7 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 
 	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/lib/
 	char* dd_lib_r = callback->DataDirs_allocatePath(interfaceId,
-			NATIVE_LIBS_DIR, false, false, true);
+			NATIVE_LIBS_DIR, false, false, true, false);
 	if (dd_lib_r == NULL) {
 		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
 				"Unable to find read-only native libs data-dir (optional): %s",
@@ -508,7 +508,8 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 
 	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/lib/
 	if (dd_r_common != NULL) {
-		char* dd_lib_r_common = util_allocStrCatFSPath(2, dd_r_common, NATIVE_LIBS_DIR);
+		char* dd_lib_r_common = callback->DataDirs_allocatePath(interfaceId,
+			NATIVE_LIBS_DIR, false, false, true, true);
 		if (dd_lib_r_common == NULL || !util_fileExists(dd_lib_r_common)) {
 			simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
 					"Unable to find common read-only native libs data-dir (optional).");
@@ -530,7 +531,13 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 
 	// ### read JVM options config file ###
 	char* jvmPropFile = callback->DataDirs_allocatePath(interfaceId,
-			JVM_PROPERTIES_FILE, false, false, false);
+			JVM_PROPERTIES_FILE, false, false, false, false);
+	if (jvmPropFile == NULL) {
+		// if the version specific file does not exist,
+		// try to get the common one
+		jvmPropFile = callback->DataDirs_allocatePath(interfaceId,
+			JVM_PROPERTIES_FILE, false, false, false, true);
+	}
 	if (jvmPropFile != NULL) {
 		cfgProps_size = util_parsePropertiesFile(jvmPropFile,
 				cfgProps_keys, cfgProps_values, cfgProps_sizeMax);
@@ -709,7 +716,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	// fill strOptions into the JVM options
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: options (%i):", options_size);
 	char* dd_rw = callback->DataDirs_allocatePath(interfaceId,
-			"", true, true, true);
+			"", true, true, true, false);
 	size_t i;
 	for (i = 0; i < options_size; ++i) {
 		vm_args->options[i].optionString = util_allocStrReplaceStr(strOptions[i],
@@ -925,7 +932,7 @@ bool java_initStatic(int _interfaceId,
 
 	// dynamically load the JVM
 	char* jreLocationFile = callback->DataDirs_allocatePath(interfaceId,
-			JRE_LOCATION_FILE, false, false, false);
+			JRE_LOCATION_FILE, false, false, false, false);
 
 	static const size_t jrePath_sizeMax = 1024;
 	char jrePath[jrePath_sizeMax];

@@ -62,8 +62,8 @@ EXPORT(bool             ) skirmishAiCallback_DataDirs_Roots_getDir(int UNUSED_te
 EXPORT(bool             ) skirmishAiCallback_DataDirs_Roots_locatePath(int UNUSED_teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
 EXPORT(char*            ) skirmishAiCallback_DataDirs_Roots_allocatePath(int UNUSED_teamId, const char* const relPath, bool writeable, bool create, bool dir);
 EXPORT(const char*      ) skirmishAiCallback_DataDirs_getConfigDir(int teamId);
-EXPORT(bool             ) skirmishAiCallback_DataDirs_locatePath(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir);
-EXPORT(char*            ) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* const relPath, bool writeable, bool create, bool dir);
+EXPORT(bool             ) skirmishAiCallback_DataDirs_locatePath(int teamId, char* path, int path_sizeMax, const char* const relPath, bool writeable, bool create, bool dir, bool common);
+EXPORT(char*            ) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* const relPath, bool writeable, bool create, bool dir, bool common);
 EXPORT(const char*      ) skirmishAiCallback_DataDirs_getWriteableDir(int teamId);
 
 // BEGINN misc callback functions
