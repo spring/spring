@@ -2786,7 +2786,12 @@ EXPORT(int) skirmishAiCallback_0MULTI1VALS3FeaturesIn0Feature(int teamId, SAIFlo
 
 EXPORT(int) skirmishAiCallback_Feature_0SINGLE1FETCH2FeatureDef0getDef(int teamId, int featureId) {
 	IAICallback* clb = team_callback[teamId];
-	return clb->GetFeatureDef(featureId)->id;
+	const FeatureDef* def = clb->GetFeatureDef(featureId);
+	if (def == NULL) {
+		 return -1;
+	} else {
+		return def->id;
+	}
 }
 
 EXPORT(float) skirmishAiCallback_Feature_getHealth(int teamId, int featureId) {
