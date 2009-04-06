@@ -67,6 +67,7 @@ void CSkirmishAILibrary::Init(int teamId) const {
 			// init failed
 			logOutput.Print("Failed to initialize an AI for team %d, error: %d",
 					teamId, error);
+			eoh->DestroySkirmishAI(teamId);
 		}
 	}
 }
