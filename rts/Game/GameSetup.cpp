@@ -22,6 +22,7 @@
 
 using namespace std;
 
+static const char* LUA_AI_POSTFIX = " (Mod specific AI)";
 
 const CGameSetup* gameSetup = NULL;
 
@@ -200,45 +201,6 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 		logOutput.Print("Warning: incorrect number of players in GameSetup script");
 }
 
-
-static std::set<std::string> LoadLuaAINames()
-{
-	std::set<std::string> names;
-
-	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
-	if (!luaParser.Execute()) {
-		// it is no error if the mod does not come with LUA AIs.
-		return names;
-	}
-
-	const LuaTable root = luaParser.GetRoot();
-	if (!root.IsValid()) {
-		throw content_error("root table invalid");
-	}
-
-	for (int i=1; root.KeyExists(i); i++) {
-		// string format
-		std::string name = root.GetString(i, "");
-		if (!name.empty()) {
-			names.insert(name);
-			continue;
-		}
-
-		// table format  (name & desc)
-		const LuaTable& optTbl = root.SubTable(i);
-		if (!optTbl.IsValid()) {
-			continue;
-		}
-		name = optTbl.GetString("name", "");
-		if (name.empty()) {
-			continue;
-		}
-		names.insert(name);
-	}
-
-	return names;
-}
-
 /**
  * @brief Load LUA and Skirmish AIs.
  */
@@ -272,10 +234,14 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		}
 
 		// Is this team (Lua) AI controlled?
-		//data.isLuaAI = (file.SGetValueDef("0", s + "IsLuaAI") == "1");
-		// If this is a demo replay, non-Lua AIs aren't loaded.
-		static std::set<std::string> luaAINames = LoadLuaAINames();
-		data.isLuaAI = (luaAINames.find(data.shortName) != luaAINames.end());
+		static const size_t LUA_AI_POSTFIX_size = strlen(LUA_AI_POSTFIX);
+		if (data.shortName.size() > LUA_AI_POSTFIX_size) {
+			const size_t realShortName_size = data.shortName.size() - LUA_AI_POSTFIX_size;
+			if (data.shortName.substr(realShortName_size).compare(LUA_AI_POSTFIX) == 0) {
+				data.shortName.erase(LUA_AI_POSTFIX_size);
+				data.isLuaAI = true;
+			}
+		}
 
 		data.version = file.SGetValueDef("", s + "Version");
 		if (file.SectionExist(s + "Options")) {
