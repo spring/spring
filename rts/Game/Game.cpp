@@ -1261,7 +1261,7 @@ bool CGame::ActionPressed(const Action& action,
 				delete aviGenerator;
 				aviGenerator=0;
 			} else {
-				logOutput.Print("Recording avi to %s size %li x %li", fileName.c_str(), videoSizeX, videoSizeY);
+				LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
 			}
 
 			SDL_ShowCursor(savedCursorMode);
@@ -2213,7 +2213,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			int currentNumUnits = teamHandler->Team(team)->units.size();
 
 			if (currentNumUnits >= uh->MaxUnitsPerTeam()) {
-				logOutput.Print("Unable to give any more units to team %i (current: %i, max: %i)", team, currentNumUnits, uh->MaxUnits());
+				LogObject() << "Unable to give any more units to team " << team << "(current: " << currentNumUnits << ", max: " << uh->MaxUnits() << ")";
 				return;
 			}
 

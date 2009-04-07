@@ -4213,10 +4213,10 @@ int LuaSyncedRead::IsPosInAirLos(lua_State* L)
 int LuaSyncedRead::GetClosestValidPosition(lua_State* L)
 {
 	// FIXME -- finish this
-	const int unitDefID = luaL_checkint(L, 1);
+	/*const int unitDefID = luaL_checkint(L, 1);
 	const float x     = luaL_checkfloat(L, 2);
 	const float z     = luaL_checkfloat(L, 3);
-	const float r     = luaL_checkfloat(L, 4);
+	const float r     = luaL_checkfloat(L, 4);*/
 	//const int mx = (int)max(0 , min(gs->mapx - 1, (int)(x / SQUARE_SIZE)));
 	//const int mz = (int)max(0 , min(gs->mapy - 1, (int)(z / SQUARE_SIZE)));
 	return 0;
