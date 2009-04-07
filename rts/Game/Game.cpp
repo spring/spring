@@ -1405,8 +1405,8 @@ bool CGame::ActionPressed(const Action& action,
 
 	// Break up the if/else chain to workaround MSVC compiler limit
 	// "fatal error C1061: compiler limit : blocks nested too deeply"
-	else notfound1=true;
-	if (notfound1)
+	else { notfound1=true; }
+	if (notfound1) { // BEGINN: MSVC limit workaround
 
 	if (cmd == "speedup") {
 		float speed = gs->userSpeedFactor;
@@ -1975,7 +1975,10 @@ bool CGame::ActionPressed(const Action& action,
 		if (!Console::Instance().ExecuteAction(action))
 			return false;
 	}
-	 return true;
+
+	} // END: MSVC limit workaround
+
+	return true;
 }
 
 
@@ -4406,7 +4409,8 @@ void CGame::SendNetChat(std::string message, int destination)
 void CGame::HandleChatMsg(const ChatMessage& msg)
 {
 	if ((msg.fromPlayer < 0) ||
-		((msg.fromPlayer >= playerHandler->ActivePlayers()) && (msg.fromPlayer != SERVER_PLAYER))) {
+		((msg.fromPlayer >= playerHandler->ActivePlayers()) &&
+			(static_cast<unsigned int>(msg.fromPlayer) != SERVER_PLAYER))) {
 		return;
 	}
 
@@ -4414,7 +4418,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 	string s = msg.msg;
 
 	if (!s.empty()) {
-		CPlayer* player = (msg.fromPlayer == SERVER_PLAYER) ? 0 : playerHandler->Player(msg.fromPlayer);
+		CPlayer* player = (msg.fromPlayer >= 0 && static_cast<unsigned int>(msg.fromPlayer) == SERVER_PLAYER) ? 0 : playerHandler->Player(msg.fromPlayer);
 		const bool myMsg = (msg.fromPlayer == gu->myPlayerNum);
 
 		string label;
@@ -4610,7 +4614,7 @@ void CGame::SelectUnits(const string& line)
 			if (endPtr == startPtr) {
 				continue; // bad number
 			}
-			if ((unitIndex < 0) || (unitIndex >= uh->MaxUnits())) {
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= uh->MaxUnits())) {
 				continue; // bad index
 			}
 			CUnit* unit = uh->units[unitIndex];
