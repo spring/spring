@@ -2,6 +2,7 @@
 #define GAMEDATA_H
 
 #include <string>
+#include <vector>
 #include <boost/shared_ptr.hpp>
 
 namespace netcode {
@@ -32,6 +33,7 @@ public:
 
 private:
 	std::string setupText;
+	mutable std::vector<uint8_t> compressed;
 
 	std::string script;
 	std::string map;

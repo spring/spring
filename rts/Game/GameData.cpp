@@ -1,5 +1,7 @@
 #include "StdAfx.h"
+
 #include <assert.h>
+#include <zlib.h>
 
 #include "mmgr.h"
 
@@ -21,7 +23,15 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 {
 	assert(pckt->data[0] == NETMSG_GAMEDATA);
 	UnpackPacket packet(pckt, 3);
-	packet >> setupText;
+	uint16_t compressedSize;
+	packet >> compressedSize;
+	compressed.resize(compressedSize);
+	packet >> compressed;
+	long unsigned size = 40000;
+	std::vector<uint8_t> buffer(size);
+	const int error = uncompress(&buffer[0], &size, &compressed[0], compressed.size());
+	assert(error == Z_OK);
+	setupText = reinterpret_cast<char*>(&buffer[0]);
 	packet >> script;
 	packet >> map;
 	packet >> mapChecksum;
@@ -32,10 +42,20 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 
 const netcode::RawPacket* GameData::Pack() const
 {
-	unsigned short size = 3 + 2*sizeof(unsigned) + setupText.size()+1 + map.size() + mod.size() + script.size() + 4 + 3;
+	if (compressed.empty())
+	{
+		long unsigned bufsize = setupText.size()*1.02+32;
+		compressed.resize(bufsize);
+		const int error = compress(&compressed[0], &bufsize, reinterpret_cast<const uint8_t*>(setupText.c_str()), setupText.length());
+		compressed.resize(bufsize);
+		assert(error == Z_OK);
+	}
+
+	unsigned short size = 3 + 2*sizeof(unsigned) + compressed.size()+2 + map.size() + mod.size() + script.size() + 4 + 3;
 	PackPacket* buffer = new PackPacket(size, NETMSG_GAMEDATA);
 	*buffer << size;
-	*buffer << setupText;
+	*buffer << uint16_t(compressed.size());
+	*buffer << compressed;
 	*buffer << script;
 	*buffer << map;
 	*buffer << mapChecksum;
