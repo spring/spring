@@ -16,6 +16,7 @@ float SoundSource::globalPitch = 1.0;
 SoundSource::SoundSource() : curPlaying(0)
 {
 	alGenSources(1, &id);
+	alSourcef(id, AL_REFERENCE_DISTANCE, 50.0f);
 	CheckError("SoundSource::SoundSource");
 }
 
