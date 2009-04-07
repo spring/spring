@@ -885,7 +885,7 @@ void CWeapon::Fire()
 #endif
 	FireImpl();
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
-		sound->PlaySample(fireSoundId, owner, fireSoundVolume);
+		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
 }
 
 void CWeapon::ScriptReady(void)

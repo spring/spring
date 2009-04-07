@@ -1084,7 +1084,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 				if (unitDef->isCommander || uh->lastDamageWarning + 150 < gs->frameNum) {
 					const int soundIdx = unitDef->sounds.underattack.getRandomIdx();
 					if (soundIdx >= 0) {
-						sound->PlaySample(
+						Channels::UserInterface.PlaySample(
 							unitDef->sounds.underattack.getID(soundIdx),
 							unitDef->isCommander ? 4 : 2);
 					}
@@ -1931,7 +1931,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
 					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
 					float volume = wd->soundhit.getVolume(0);
-					sound->PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
+					Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
 				}
 			}
 		}
@@ -2049,7 +2049,7 @@ void CUnit::Activate()
 
 	int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
-		sound->PlayUnitActivate(
+		Channels::UnitReply.PlaySample(
 			unitDef->sounds.activate.getID(soundIdx), this,
 			unitDef->sounds.activate.getVolume(soundIdx));
 	}
@@ -2072,7 +2072,7 @@ void CUnit::Deactivate()
 
 	int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
-		sound->PlayUnitActivate(
+		Channels::UnitReply.PlaySample(
 			unitDef->sounds.deactivate.getID(soundIdx), this,
 			unitDef->sounds.deactivate.getVolume(soundIdx));
 	}

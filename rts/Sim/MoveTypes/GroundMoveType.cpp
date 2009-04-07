@@ -508,7 +508,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 		// Play "activate" sound.
 		int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
 		if (soundIdx >= 0) {
-			sound->PlayUnitActivate(
+			Channels::UnitReply.PlaySample(
 				owner->unitDef->sounds.activate.getID(soundIdx), owner,
 				owner->unitDef->sounds.activate.getVolume(soundIdx));
 		}
@@ -1379,7 +1379,7 @@ void CGroundMoveType::Arrived()
 		if (owner->team == gu->myTeam) {
 			int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound->PlayUnitReply(
+				Channels::UnitReply.PlaySample(
 					owner->unitDef->sounds.arrived.getID(soundIdx), owner,
 					owner->unitDef->sounds.arrived.getVolume(soundIdx));
 			}
@@ -1417,7 +1417,7 @@ void CGroundMoveType::Fail()
 		// playing "cant" sound.
 		int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
 		if (soundIdx >= 0) {
-			sound->PlayUnitReply(
+			Channels::UnitReply.PlaySample(
 				owner->unitDef->sounds.cant.getID(soundIdx), owner,
 				owner->unitDef->sounds.cant.getVolume(soundIdx));
 		}

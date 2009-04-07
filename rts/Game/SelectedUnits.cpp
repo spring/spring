@@ -269,9 +269,9 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 
 		int soundIdx = (*ui)->unitDef->sounds.ok.getRandomIdx();
 		if (soundIdx >= 0) {
-			sound->PlayUnitReply(
+			Channels::UnitReply.PlaySample(
 				(*ui)->unitDef->sounds.ok.getID(soundIdx), (*ui),
-				(*ui)->unitDef->sounds.ok.getVolume(soundIdx), true);
+				(*ui)->unitDef->sounds.ok.getVolume(soundIdx));
 		}
 	}
 }
