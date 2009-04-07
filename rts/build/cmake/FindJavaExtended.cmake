@@ -16,7 +16,7 @@
 # JAVA_ARCHIVE  - path to ${JAVA_BIN_PATH}/jar
 # JAVA_DOC      - path to ${JAVA_BIN_PATH}/javadoc
 #
-# JAVA_COMPILE_FLAG_CONDITIONAL      - "" or "-g"
+# JAVA_COMPILE_FLAG_CONDITIONAL      - "-g:lines,source" or "-g:lines,source,vars"
 #
 # JAVA_MAJOR_VERSION
 # JAVA_MINOR_VERSION
