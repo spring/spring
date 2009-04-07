@@ -519,7 +519,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		}
 
 		if (args < 5) {
-			sound->PlaySample(soundID, volume);
+			Channels::General.PlaySample(soundID, volume);
 		} else {
 			const float3 pos(lua_tofloat(L, 3),
 			                 lua_tofloat(L, 4),
@@ -527,10 +527,10 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 			if (args >= 8)
 			{
 				const float3 speed(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
-				sound->PlaySample(soundID, pos, speed, volume);
+				Channels::General.PlaySample(soundID, pos, speed, volume);
 			}
 			else
-				sound->PlaySample(soundID, pos, volume);
+				Channels::General.PlaySample(soundID, pos, volume);
 		}
 		success = true;
 	}

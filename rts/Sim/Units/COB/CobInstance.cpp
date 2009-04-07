@@ -836,7 +836,7 @@ void CCobInstance::EmitSfx(int type, int piece)
 				// detonate weapon from piece
 				const WeaponDef* weaponDef = unit->weapons[index]->weaponDef;
 				if (weaponDef->soundhit.getID(0) > 0) {
-					sound->PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
+					Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), unit, weaponDef->soundhit.getVolume(0));
 				}
 
 				helper->Explosion(
@@ -1057,7 +1057,7 @@ void CCobInstance::PlayUnitSound(int snr, int attr)
 {
 	int sid = script.sounds[snr];
 	//logOutput.Print("Playing %d %d %d", snr, attr, sid);
-	sound->PlaySample(sid, unit->pos, unit->speed, attr);
+	Channels::UnitReply.PlaySample(sid, unit->pos, unit->speed, attr);
 }
 
 void CCobInstance::ShowFlare(int piece)
@@ -1327,9 +1327,9 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				break;
 		}
 		if (p4 == 0) {
-			sound->PlaySample(script.sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			Channels::UnitReply.PlaySample(script.sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			sound->PlaySample(script.sounds[p1], float(p2) / COBSCALE);
+			Channels::UnitReply.PlaySample(script.sounds[p1], float(p2) / COBSCALE);
 		}
 		return 0;
 	}

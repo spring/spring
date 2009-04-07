@@ -681,7 +681,7 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 
 	int soundIdx = unitDef->sounds.build.getRandomIdx();
 	if (soundIdx >= 0) {
-		sound->PlaySample(
+		Channels::UnitReply.PlaySample(
 			unitDef->sounds.build.getID(soundIdx), pos,
 			unitDef->sounds.build.getVolume(soundIdx));
 	}

@@ -521,7 +521,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 		logOutput.Print("%s added point: %s",
 		                sender->name.c_str(), point.label.c_str());
 		logOutput.SetLastMsgPos(pos);
-		sound->PlaySample(blippSound);
+		Channels::UserInterface.PlaySample(blippSound);
 		minimap->AddNotification(pos, float3(1.0f, 1.0f, 1.0f), 1.0f);
 	}
 }

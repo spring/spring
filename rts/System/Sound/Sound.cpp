@@ -18,6 +18,44 @@
 #include "Lua/LuaParser.h"
 #include <boost/cstdint.hpp>
 
+namespace Channels
+{
+	AudioChannel General;
+	AudioChannel Battle;
+	AudioChannel UnitReply;
+	AudioChannel UserInterface;
+}
+
+AudioChannel::AudioChannel() : volume(1.0f), enabled(true)
+{
+};
+
+void AudioChannel::PlaySample(size_t id, float volume)
+{
+	sound->PlaySample(id, ZeroVector, ZeroVector, volume, true);
+}
+
+void AudioChannel::PlaySample(size_t id, const float3& p, float volume)
+{
+	sound->PlaySample(id, p, ZeroVector, volume, false);
+}
+
+void AudioChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float volume)
+{
+	sound->PlaySample(id, p, velocity, volume, false);
+}
+
+void AudioChannel::PlaySample(size_t id, CUnit* u,float volume)
+{
+	sound->PlaySample(id, u->pos, u->speed, volume, false);
+}
+
+void AudioChannel::PlaySample(size_t id, CWorldObject* p,float volume)
+{
+	sound->PlaySample(id, p->pos, ZeroVector, volume, false);
+}
+
+
 CSound* sound = NULL;
 
 CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
@@ -210,57 +248,6 @@ bool CSound::IsMuted() const
 void CSound::SetVolume(float v)
 {
 	globalVolume = v;
-}
-
-void CSound::PlaySample(size_t id, float volume)
-{
-	PlaySample(id, ZeroVector, ZeroVector, volume, true);
-}
-
-
-void CSound::PlaySample(size_t id, const float3& p, float volume)
-{
-	PlaySample(id, p, ZeroVector, volume, false);
-}
-
-void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume)
-{
-	PlaySample(id, p, velocity, volume, false);
-}
-
-void CSound::PlaySample(size_t id, CUnit* u,float volume)
-{
-	PlaySample(id, u->pos, u->speed, volume, false);
-}
-
-void CSound::PlaySample(size_t id, CWorldObject* p,float volume)
-{
-	PlaySample(id,p->pos,volume);
-}
-
-void CSound::PlayUnitActivate(size_t id, CUnit* p, float volume)
-{
-	PlaySample (id, p, volume);
-}
-
-void CSound::PlayUnitReply(size_t id, CUnit * p, float volume, bool squashDupes)
-{
-	GML_RECMUTEX_LOCK(sound); // PlayUnitReply
-
-	if (squashDupes) {
-		/* HACK Squash multiple command acknowledgements in the same frame, so
-		   we aren't deafened by the construction horde, or the metalmaker
-		   horde. */
-
-		/* If we've already played the sound this frame, don't play it again. */
-		if (repliesPlayed.find(id) != repliesPlayed.end()) {
-			return;
-		}
-		
-		repliesPlayed.insert(id);
-	}
-
-	PlaySample(id, volume * unitReplyVolume);
 }
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)

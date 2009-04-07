@@ -4437,26 +4437,26 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
 				logOutput.Print(label + "Allies: " + s);
-				sound->PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
 				logOutput.Print(label + "Spectators: " + s);
-				sound->PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			if (gu->spectating || !noSpectatorChat || !player->spectator) {
 				logOutput.Print(label + s);
-				sound->PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination < playerHandler->ActivePlayers())
 		{
 			if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
 				logOutput.Print(label + "Private: " + s);
-				sound->PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{

@@ -431,13 +431,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			if (addedunits == 1) {
 				int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 				if (soundIdx >= 0) {
-					sound->PlayUnitReply(
+					Channels::UnitReply.PlaySample(
 						unit->unitDef->sounds.select.getID(soundIdx), unit,
 						unit->unitDef->sounds.select.getVolume(soundIdx));
 				}
 			}
 			else if(addedunits) //more than one unit selected
-				sound->PlaySample(soundMultiselID);
+				Channels::UserInterface.PlaySample(soundMultiselID);
 		} else {
 			CUnit* unit;
 			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,false);
@@ -480,7 +480,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 				int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 				if (soundIdx >= 0) {
-					sound->PlayUnitReply(
+					Channels::UnitReply.PlaySample(
 						unit->unitDef->sounds.select.getID(soundIdx), unit,
 						unit->unitDef->sounds.select.getVolume(soundIdx));
 				}
