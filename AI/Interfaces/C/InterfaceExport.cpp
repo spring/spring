@@ -18,21 +18,9 @@
 #include "InterfaceExport.h"
 
 #include "Interface.h"
-//#include "CUtils/Util.h"
 
-//#include "ExternalAI/Interface/SAIInterfaceLibrary.h"
-//#include "ExternalAI/Interface/SStaticGlobalData.h"
 
 static CInterface* myInterface = NULL;
-
-static void local_copyToInfoMap(std::map<std::string, std::string>& map,
-		unsigned int infoSize,
-		const char** infoKeys, const char** infoValues) {
-
-	for (unsigned int i=0; i < infoSize; ++i) {
-		map[infoKeys[i]] = infoValues[i];
-	}
-}
 
 EXPORT(int) initStatic(int interfaceId,
 		const struct SAIInterfaceCallback* callback) {
