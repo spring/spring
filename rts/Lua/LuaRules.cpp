@@ -24,7 +24,6 @@
 
 #include "Sim/Units/CommandAI/Command.h"
 #include "Game/Game.h"
-#include "Rendering/GL/myGL.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
