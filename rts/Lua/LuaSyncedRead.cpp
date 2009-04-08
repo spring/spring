@@ -1239,7 +1239,7 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushnumber(L, player->team);
 	lua_pushnumber(L, teamHandler->AllyTeam(player->team));
 	const float pingScale = (GAME_SPEED * gs->speedFactor);
-	const float pingSecs = float(player->ping - 1) / pingScale;
+	const float pingSecs = float(player->ping) / pingScale;
 	lua_pushnumber(L, pingSecs);
 	lua_pushnumber(L, player->cpuUsage);
 	lua_pushstring(L, player->countryCode.c_str());
