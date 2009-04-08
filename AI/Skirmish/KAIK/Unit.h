@@ -40,7 +40,7 @@ class CUNIT {
 		int maneuverCounter;
 
 		// specialized
-		bool ReclaimBestFeature(bool metal, float radius = 1000);
+		bool ReclaimBestFeature(bool metal, float radius = 2048);
 
 		// construction
 		int GetBestBuildFacing(const float3& pos) const;
