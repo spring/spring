@@ -3657,17 +3657,6 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-			case NETMSG_SYNCREQUEST: {
-				// TODO rename this net message, change error msg, etc.
-				int frame = *((int*)&inbuf[1]);
-				if (frame != gs->frameNum) {
-					logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
-				}
-				net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
-				AddTraffic(-1, packetCode, dataLength);
-				break;
-			}
-
 			case NETMSG_SHARE: {
 				int player = inbuf[1];
 				if ((player >= playerHandler->ActivePlayers()) || (player < 0)){
