@@ -933,16 +933,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 
-					// CGameServer should never get these messages
-		case NETMSG_GAMEID:
-		case NETMSG_INTERNAL_SPEED:
-		case NETMSG_ATTEMPTCONNECT:
-		case NETMSG_GAMEDATA:
-		case NETMSG_RANDSEED:
-#ifdef DEBUG
-			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
-#endif
-			break;
 #ifdef SYNCDEBUG
 		case NETMSG_SD_CHKRESPONSE:
 		case NETMSG_SD_BLKRESPONSE:
@@ -954,6 +944,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			Broadcast(packet);
 			break;
 #endif
+		// CGameServer should never get these messages
+		//case NETMSG_GAMEID:
+		//case NETMSG_INTERNAL_SPEED:
+		//case NETMSG_ATTEMPTCONNECT:
+		//case NETMSG_GAMEDATA:
+		//case NETMSG_RANDSEED:
 		default:
 		{
 			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
