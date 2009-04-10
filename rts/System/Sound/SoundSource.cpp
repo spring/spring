@@ -62,7 +62,7 @@ void SoundSource::Stop()
 	CheckError("SoundSource::Stop");
 }
 
-void SoundSource::Play(SoundItem* item, const float3& pos, const float3& velocity, float volume, bool relative)
+void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, float volume, bool relative)
 {
 	if (!item->PlayNow())
 		return;
@@ -72,6 +72,7 @@ void SoundSource::Play(SoundItem* item, const float3& pos, const float3& velocit
 	alSourcef(id, AL_GAIN, item->gain * volume);
 	alSourcef(id, AL_PITCH, item->pitch * globalPitch);
 	alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
+	velocity *= item->dopplerScale;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	if (item->loopTime > 0)
 		alSourcei(id, AL_LOOPING, AL_TRUE);

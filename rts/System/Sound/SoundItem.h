@@ -47,6 +47,7 @@ private:
 	/// sound pitch (multiplied with globalPitch from SoundSource when played)
 	float pitch;
 	//float pitchFWHM;
+	float dopplerScale;
 
 	float maxDist;
 	int priority;

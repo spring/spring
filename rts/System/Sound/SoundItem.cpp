@@ -27,6 +27,7 @@ SoundItem::SoundItem(boost::shared_ptr<SoundBuffer> _buffer, const std::map<std:
 buffer(_buffer),
 gain(1.0),
 pitch(1.0),
+dopplerScale(1.0),
 maxDist(FLT_MAX),
 priority(0),
 maxConcurrent(16),
@@ -39,6 +40,7 @@ in3D(true)
 
 	MapEntryValExtract(items, "gain", gain);
 	MapEntryValExtract(items, "pitch", pitch);
+	MapEntryValExtract(items, "dopplerscale", dopplerScale);
 	MapEntryValExtract(items, "priority", priority);
 	MapEntryValExtract(items, "maxconcurrent", maxConcurrent);
 	MapEntryValExtract(items, "maxdist", maxDist);
