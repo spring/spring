@@ -6,110 +6,121 @@
 #include "Util.h"
 #include "mmgr.h"
 
+static unsigned int parse_int32(unsigned char c[4])
+{
+	unsigned int i = 0;
+	i = c[0] << 24 | i;
+	i = c[1] << 16 | i;
+	i = c[2] << 8  | i;
+	i = c[3] << 0  | i;
+	return i;
+}
+
+static bool gz_really(gzFile file, voidp buf, unsigned len)
+{
+	int offset = 0;
+
+	while (true) {
+		int i = gzread(file, ((char *)buf)+offset, len-offset);
+		if (i == -1) return false;
+		offset += i;
+		if (offset == len) return true;
+	}
+}
+
 CArchivePool::CArchivePool(const std::string& name):
 	CArchiveBuffered(name),
-	isOpen(false)
+	isOpen(true)
 
 {
 	gzFile in = gzopen (name.c_str(), "r");
 	if (in == NULL) return;
 
 	while (true) {
-		int n = 0;
-		FileData f;
-		std::string size_string;
+		if (gzeof(in)) break;
 
-		while (true) {
-			char c = gzgetc(in);
-			if (c == -1) return;
-			if (c == ',') break;
-			f.name.push_back(tolower(c));
-		}
+		int length = gzgetc(in);
+		if (length == -1) { isOpen = false; break; };
+		
+		char c_name[length];
+		unsigned char c_md5[16];
+		unsigned char c_crc32[4];
+		unsigned char c_size[4];
 
-		while (true) {
-			char c = gzgetc(in);
-			if (c == -1) return;
-			if (c == ',') break;
-			f.hex.push_back(c);
-		}
+		if (!gz_really(in, &c_name, length)) { isOpen = false; break; };
+		if (!gz_really(in, &c_md5, 16)) { isOpen = false; break; };
+		if (!gz_really(in, &c_crc32, 4)) { isOpen = false; break; };
+		if (!gz_really(in, &c_size, 4)) { isOpen = false; break; };
 
-
-		while (true) {
-			char c = gzgetc(in);
-			if (c == -1) return;
-			if (c == ',') break;
-			size_string.push_back(c);
-		}
-		f.size = atoi(size_string.c_str());
-
-		// Skip compressed size
-		while (true) {
-			char c = gzgetc(in);
-			if (c == -1) break;
-			if (c == '\n') break;
-		}
+		FileData *f = new FileData;
+		f->name = std::string(c_name, length);
+		memcpy(&f->md5, &c_md5, 16);
+		f->crc32 = parse_int32(c_crc32);
+		f->size = parse_int32(c_size);
 
 		files.push_back(f);
-		fileMap[f.name] = f;
-		if (gzeof(in)) break;
+		fileMap[f->name] = f;
 	}
-	isOpen = true;
 	gzclose(in);
 }
 
 CArchivePool::~CArchivePool(void)
 {
-//	Memory management goes here
+	std::vector<FileData *>::iterator i = files.begin();
+	for(; i < files.end(); i++) delete *i;
 }
 
-//unsigned int CArchivePool::GetCrc32 (const std::string& fileName)
-//{
-//	std::string lower = StringToLower(fileName);
-//	FileData fd = fileData[lower];
-//	return fd.crc;
-//	return 0;
-//}
+unsigned int CArchivePool::GetCrc32 (const std::string& fileName)
+{
+	std::string lower = StringToLower(fileName);
+	FileData *f = fileMap[lower];
+	return f->crc32;
+}
 
 bool CArchivePool::IsOpen()
 {
 	return isOpen;
 }
 
-
-
-// To simplify things, files are always read completely into memory from the zipfile, since zlib does not
-// provide any way of reading more than one file at a time
 ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 {
 
-	if (!isOpen)
-		return NULL;
+	if (!isOpen) return NULL;
 
 	std::string fileName = StringToLower(fName);
 	if (fileMap.find(fileName) == fileMap.end()) {
 		return NULL;
 	}
 
-	FileData f = fileMap[fileName];
-	
-	std::string path = filesystem.LocateFile("pool/" + f.hex + ".gz");
+	FileData *f = fileMap[fileName];
+
+	char table[] = "0123456789abcdef";
+	char c_hex[32];
+	for (int i = 0; i < 16; ++i) {
+	  c_hex[2 * i] = table[(f->md5[i] >> 4) & 0xf];
+	  c_hex[2 * i + 1] = table[f->md5[i] & 0xf];
+	}
+	std::string hex(c_hex, 32);
+
+	std::string path = filesystem.LocateFile("pool/" + hex + ".gz");
 	gzFile in = gzopen (path.c_str(), "r");
 	if (in == NULL) return NULL;
 
 	ABOpenFile_t* of = new ABOpenFile_t;
-	of->size = f.size;
+	of->size = f->size;
 	of->pos = 0;
 	of->data = (char*) malloc(of->size);
 
 	int j, i = 0;
+	bool failure = false;
 	while (true) {
 		j = gzread(in, of->data + i, of->size - i);
-		if (j == -1) {
-			delete of;
+		if (j == 0) break;
+		if (j == -1) { 
+			gzclose(in);
+                        delete of;
 			return NULL;
 		}
-
-		if (j == 0) break;
 		i += j;
 	}
 	
@@ -122,8 +133,8 @@ int CArchivePool::FindFiles(int cur, std::string* name, int* size)
 	if (cur >= files.size()) {
 		return 0;
 	} else {
-		*name = files[cur].name;
-		*size = files[cur].size;
+		*name = files[cur]->name;
+		*size = files[cur]->size;
 		return cur + 1;
 	}
 }

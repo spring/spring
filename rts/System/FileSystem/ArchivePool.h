@@ -13,14 +13,15 @@ class CArchivePool :
 {
 protected:
 	struct FileData {
-		std::string hex;
 		std::string name;
+		unsigned char md5[16];
+		unsigned int crc32;
 		unsigned int size;
 	};
 
 	bool isOpen;
-	std::vector<FileData> files;
-	std::map<std::string, FileData> fileMap;
+	std::vector<FileData *> files;
+	std::map<std::string, FileData *> fileMap;
 
 	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName);
 public:
@@ -28,7 +29,7 @@ public:
 	virtual ~CArchivePool(void);
 	virtual bool IsOpen();
 	virtual int FindFiles(int cur, std::string* name, int* size);
-//	virtual unsigned int GetCrc32 (const std::string& fileName);
+	virtual unsigned int GetCrc32 (const std::string& fileName);
 };
 
 #endif
