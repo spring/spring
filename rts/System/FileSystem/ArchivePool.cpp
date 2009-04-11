@@ -33,7 +33,7 @@ CArchivePool::CArchivePool(const std::string& name):
 	isOpen(true)
 
 {
-	gzFile in = gzopen (name.c_str(), "r");
+	gzFile in = gzopen (name.c_str(), "rb");
 	if (in == NULL) return;
 
 	while (true) {
