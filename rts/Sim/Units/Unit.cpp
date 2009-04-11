@@ -566,6 +566,11 @@ void CUnit::Update()
 			moveType->reservedPad = 0;
 			moveType->padStatus = 0;
 		}
+		// paralyzed weapons shouldn't reload
+		std::vector<CWeapon*>::iterator wi;
+		for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+			++(*wi)->reloadStatus;
+		}
 		return;
 	}
 
