@@ -97,12 +97,14 @@ ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 	char table[] = "0123456789abcdef";
 	char c_hex[32];
 	for (int i = 0; i < 16; ++i) {
-	  c_hex[2 * i] = table[(f->md5[i] >> 4) & 0xf];
-	  c_hex[2 * i + 1] = table[f->md5[i] & 0xf];
+		c_hex[2 * i] = table[(f->md5[i] >> 4) & 0xf];
+		c_hex[2 * i + 1] = table[f->md5[i] & 0xf];
 	}
 	std::string hex(c_hex, 32);
 
-	std::string path = filesystem.LocateFile("pool/" + hex + ".gz");
+	std::string rpath = "pool/" + hex + ".gz";
+	filesystem.FixSlashes(rpath);
+	std::string path = filesystem.LocateFile(rpath);
 	gzFile in = gzopen (path.c_str(), "r");
 	if (in == NULL) return NULL;
 
@@ -118,7 +120,7 @@ ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 		if (j == 0) break;
 		if (j == -1) { 
 			gzclose(in);
-                        delete of;
+			delete of;
 			return NULL;
 		}
 		i += j;
