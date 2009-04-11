@@ -503,16 +503,17 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 			(pro->owner() && teamHandler->Ally(pro->owner()->allyteam, gu->myAllyTeam)))) {
 
 			CUnit* owner = pro->owner();
-			CUnit* trans = owner? (CUnit*) owner->GetTransporter(): 0;
 			bool stunned = owner? owner->stunned: false;
 
-			if (owner && trans && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
-				// if the unit that fired this projectile is inside a non-firebase
-				// transport (so stunned) and the projectile forms part of a shield
-				// (ie., the unit has a CPlasmaRepulser weapon but cannot fire it),
-				// prevent the projectile (shield segment) from being drawn at the
-				// unit's pre-pickup position (since CPlasmaRepulser::Update() is
-				// responsible for updating CShieldPartProjectile::centerPos)
+			if (owner && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
+				// if the unit that fired this projectile is stunned and the projectile
+				// forms part of a shield (ie., the unit has a CPlasmaRepulser weapon but
+				// cannot fire it), prevent the projectile (shield segment) from being drawn
+				//
+				// also prevents shields being drawn at unit's pre-pickup position
+				// (since CPlasmaRepulser::Update() is responsible for updating
+				// CShieldPartProjectile::centerPos) if the unit is in a non-fireplatform
+				// transport
 				continue;
 			}
 
