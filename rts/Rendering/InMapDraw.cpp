@@ -342,9 +342,13 @@ void CInMapDraw::Draw(void)
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, 3000.0f, &drawer);
 
+	// draw lines
 	glDisable(GL_TEXTURE_2D);
-	glLineWidth(3);
+	// XXX hopeless drivers, retest in a year or so...
+	// values greater than 2 cause GUI flicker on ATI hardware as of version 9.3
+	glLineWidth(gu->atiHacks ? 2.f : 3.f);
 	lineva->DrawArrayC(GL_LINES);
+	// draw points
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texture);
