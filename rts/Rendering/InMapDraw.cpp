@@ -344,10 +344,15 @@ void CInMapDraw::Draw(void)
 
 	// draw lines
 	glDisable(GL_TEXTURE_2D);
-	// XXX hopeless drivers, retest in a year or so...
-	// values greater than 2 cause GUI flicker on ATI hardware as of version 9.3
-	glLineWidth(gu->atiHacks ? 2.f : 3.f);
+	glLineWidth(3.f);
 	lineva->DrawArrayC(GL_LINES);
+	// XXX hopeless drivers, retest in a year or so...
+	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
+	// so redraw lines with width 1
+	if (gu->atiHacks) {
+		glLineWidth(1.f);
+		lineva->DrawArrayC(GL_LINES);
+	}
 	// draw points
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
