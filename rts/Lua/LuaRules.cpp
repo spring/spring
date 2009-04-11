@@ -127,6 +127,7 @@ CLuaRules::CLuaRules()
 	haveTerraformComplete      = HasCallIn("TerraformComplete");
 	haveDrawUnit               = HasCallIn("DrawUnit");
 	haveAICallIn               = HasCallIn("AICallIn");
+	haveUnitPreDamaged         = HasCallIn("UnitPreDamaged");
 
 	SetupUnsyncedFunction("DrawUnit");
 	SetupUnsyncedFunction("AICallIn");
@@ -808,6 +809,69 @@ bool CLuaRules::TerraformComplete(const CUnit* unit, const CUnit* build)
 
 	// return 'true' to remove the command
 	return retval;
+}
+
+
+/**
+ * called after every damage modification (even HitByWeaponId)
+ * but before the damage is applied
+ *
+ * expects a number returned by lua code; it is stored under *newDamage if
+ * newDamage != NULL.
+ */
+bool CLuaRules::UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
+                             float damage, int weaponID, bool paralyzer,
+                             float* newDamage)
+{
+	if (!haveUnitPreDamaged) {
+		return false;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 11);
+
+	int errfunc = SetupTraceback();
+
+	static const LuaHashString cmdStr("UnitPreDamaged");
+	if (!cmdStr.GetGlobalFunc(L)) {
+		// remove error handler
+		if (errfunc) lua_pop(L, 1);
+		return false; // the call is not defined
+	}
+
+	int argCount = 5;
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, unit->unitDef->id);
+	lua_pushnumber(L, unit->team);
+	lua_pushnumber(L, damage);
+	lua_pushboolean(L, paralyzer);
+	if (fullRead) {
+		lua_pushnumber(L, weaponID);
+		argCount += 1;
+		if (attacker != NULL) {
+			lua_pushnumber(L, attacker->id);
+			lua_pushnumber(L, attacker->unitDef->id);
+			lua_pushnumber(L, attacker->team);
+			argCount += 3;
+		}
+	}
+
+	// call the routine
+	RunCallInTraceback(cmdStr, argCount, 1, errfunc);
+
+	// get the results
+	if (!lua_isnumber(L, -1)) {
+		logOutput.Print("%s() bad return value, expected number\n", cmdStr.GetString().c_str());
+		lua_pop(L, 1);
+		return false;
+	}
+
+	const float retval = lua_tonumber(L, -1);
+	lua_pop(L, 1);
+	if (newDamage) {
+		*newDamage = retval;
+	}
+	return true;
 }
 
 
