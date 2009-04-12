@@ -1421,13 +1421,16 @@ void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 void CUnitDrawer::DrawQuedS3O(void)
 {
 #ifdef USE_GML
-	int sz=quedS3Os.size();
-	for(int tex=0; tex<sz;++tex) {
-		if(quedS3Os[tex].size()>0) {
+	int sz = quedS3Os.size();
+	for (int tex = 0; tex < sz; ++tex) {
+		if (quedS3Os[tex].size() > 0) {
 			texturehandlerS3O->SetS3oTexture(tex);
 
-			for(GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui){
-				DrawWorldObjectS3O(*ui);
+			for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
+				// for unit and feature objects, this calls back
+				// to DrawUnitS3O() and to DrawFeatureStatic()
+				// respectively
+				if (*ui) { (*ui)->DrawS3O(); }
 			}
 
 			quedS3Os[tex].clear();
@@ -1439,7 +1442,7 @@ void CUnitDrawer::DrawQuedS3O(void)
 		texturehandlerS3O->SetS3oTexture(tex);
 
 		for (GML_VECTOR<CWorldObject*>::iterator ui = quedS3Os[tex].begin(); ui != quedS3Os[tex].end(); ++ui) {
-			DrawWorldObjectS3O(*ui);
+			if (*ui) { (*ui)->DrawS3O(); }
 		}
 
 		quedS3Os[tex].clear();
@@ -1954,7 +1957,6 @@ void CUnitDrawer::DrawUnitS3O(CUnit* unit)
 	DrawUnitNow(unit);
 }
 
-
 void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 {
 	glPushMatrix();
@@ -1964,15 +1966,4 @@ void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 
 	feature->model->DrawStatic();
 	glPopMatrix();
-}
-
-
-inline void CUnitDrawer::DrawWorldObjectS3O(CWorldObject* S3OObj)
-{
-	if (S3OObj) {
-		// calls back to DrawUnitS3O() for units and
-		// DrawFeatureStatic() for features, projectiles
-		// and weapons with S3O models do not
-		S3OObj->DrawS3O();
-	}
 }
