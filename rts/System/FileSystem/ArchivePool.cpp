@@ -105,7 +105,7 @@ ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 	std::string rpath = "pool/" + hex + ".gz";
 	filesystem.FixSlashes(rpath);
 	std::string path = filesystem.LocateFile(rpath);
-	gzFile in = gzopen (path.c_str(), "r");
+	gzFile in = gzopen (path.c_str(), "rb");
 	if (in == NULL) return NULL;
 
 	ABOpenFile_t* of = new ABOpenFile_t;
