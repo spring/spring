@@ -16,7 +16,7 @@ static unsigned int parse_int32(unsigned char c[4])
 	return i;
 }
 
-static bool gz_really(gzFile file, voidp buf, unsigned len)
+static bool gz_really_read(gzFile file, voidp buf, unsigned len)
 {
 	int offset = 0;
 
@@ -30,27 +30,30 @@ static bool gz_really(gzFile file, voidp buf, unsigned len)
 
 CArchivePool::CArchivePool(const std::string& name):
 	CArchiveBuffered(name),
-	isOpen(true)
+	isOpen(false)
 
 {
-	gzFile in = gzopen (name.c_str(), "r");
+	gzFile in = gzopen (name.c_str(), "rb");
 	if (in == NULL) return;
 
 	while (true) {
-		if (gzeof(in)) break;
+		if (gzeof(in)) {
+			isOpen = true;
+			break;
+		}
 
 		int length = gzgetc(in);
-		if (length == -1) { isOpen = false; break; };
+		if (length == -1) break;
 		
 		char c_name[length];
 		unsigned char c_md5[16];
 		unsigned char c_crc32[4];
 		unsigned char c_size[4];
 
-		if (!gz_really(in, &c_name, length)) { isOpen = false; break; };
-		if (!gz_really(in, &c_md5, 16)) { isOpen = false; break; };
-		if (!gz_really(in, &c_crc32, 4)) { isOpen = false; break; };
-		if (!gz_really(in, &c_size, 4)) { isOpen = false; break; };
+		if (!gz_really_read(in, &c_name, length)) break;
+		if (!gz_really_read(in, &c_md5, 16)) break;
+		if (!gz_really_read(in, &c_crc32, 4)) break;
+		if (!gz_really_read(in, &c_size, 4)) break;
 
 		FileData *f = new FileData;
 		f->name = std::string(c_name, length);
@@ -97,13 +100,15 @@ ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 	char table[] = "0123456789abcdef";
 	char c_hex[32];
 	for (int i = 0; i < 16; ++i) {
-	  c_hex[2 * i] = table[(f->md5[i] >> 4) & 0xf];
-	  c_hex[2 * i + 1] = table[f->md5[i] & 0xf];
+		c_hex[2 * i] = table[(f->md5[i] >> 4) & 0xf];
+		c_hex[2 * i + 1] = table[f->md5[i] & 0xf];
 	}
 	std::string hex(c_hex, 32);
 
-	std::string path = filesystem.LocateFile("pool/" + hex + ".gz");
-	gzFile in = gzopen (path.c_str(), "r");
+	std::string rpath = "pool/" + hex + ".gz";
+	filesystem.FixSlashes(rpath);
+	std::string path = filesystem.LocateFile(rpath);
+	gzFile in = gzopen (path.c_str(), "rb");
 	if (in == NULL) return NULL;
 
 	ABOpenFile_t* of = new ABOpenFile_t;
@@ -112,13 +117,12 @@ ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 	of->data = (char*) malloc(of->size);
 
 	int j, i = 0;
-	bool failure = false;
 	while (true) {
 		j = gzread(in, of->data + i, of->size - i);
 		if (j == 0) break;
-		if (j == -1) { 
+		if (j == -1) {
 			gzclose(in);
-                        delete of;
+			delete of;
 			return NULL;
 		}
 		i += j;
