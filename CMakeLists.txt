@@ -36,7 +36,7 @@ else (UNIX AND NOT MINGW)
 endif (UNIX AND NOT MINGW)
 
 ### Usr-definable build options
-set (AIINTERFACES "ALL" CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
+set (AITYPES "ALL" CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
 
 SET(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
 if (SYNCCHECK)
