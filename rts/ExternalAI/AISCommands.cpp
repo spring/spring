@@ -584,7 +584,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case CMD_CAPTURE:
 		{
-			if (c->params.size() < 3) {
+			if (c->params.size() < 3 || c->params.size() == 5) {
 				SCaptureUnitCommand* cmd = (SCaptureUnitCommand*) malloc(sizeof (SCaptureUnitCommand));
 				cmd->unitId = unitId;
 				cmd->groupId = groupId;

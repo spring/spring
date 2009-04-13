@@ -1480,7 +1480,7 @@ void CGuiHandler::CreateOptions(Command& c, bool rmb)
 	if (keys[SDLK_LCTRL]) {
 		c.options |= CONTROL_KEY;
 	}
-	if (keys[SDLK_LALT] || keys[SDLK_LMETA]) {
+	if (keys[SDLK_LALT]) {// || keys[SDLK_LMETA]) {
 		c.options |= ALT_KEY;
 	}
 	if (keys[SDLK_SPACE]) {
