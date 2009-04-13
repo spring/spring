@@ -170,7 +170,7 @@ CInMapDraw::~CInMapDraw(void)
 void CInMapDraw::PostLoad()
 {
 	if (drawQuads.size() != numQuads) {
-		//For old savegames
+		// For old savegames
 		drawQuads.resize(numQuads);
 	}
 }

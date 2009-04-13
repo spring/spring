@@ -18,7 +18,7 @@ static unsigned int parse_int32(unsigned char c[4])
 
 static bool gz_really_read(gzFile file, voidp buf, unsigned len)
 {
-	int offset = 0;
+	unsigned offset = 0;
 
 	while (true) {
 		int i = gzread(file, ((char *)buf)+offset, len-offset);
@@ -134,7 +134,7 @@ ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 
 int CArchivePool::FindFiles(int cur, std::string* name, int* size)
 {
-	if (cur >= files.size()) {
+	if (cur < 0 || static_cast<size_t>(cur) >= files.size()) {
 		return 0;
 	} else {
 		*name = files[cur]->name;
