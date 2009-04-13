@@ -94,7 +94,7 @@ bool CTextureAtlas::Finalize()
 	std::list<int2> nextSub;
 	std::list<int2> thisSub;
 	bool recalc=false;
-	for(int a=0;a<memtextures.size();++a){
+	for(int a=0;a<static_cast<int>(memtextures.size());++a){
 		MemTex *curtex = memtextures[a];
 
 		bool done=false;
