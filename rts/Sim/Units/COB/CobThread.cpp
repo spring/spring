@@ -12,7 +12,7 @@
 #include "Sim/Misc/GlobalSynced.h"
 
 CCobThread::CCobThread(CCobFile &script, CCobInstance *owner)
-: owner(owner), script(script)
+: script(script), owner(owner)
 {
 	for (int i = 0; i < MAX_LUA_COB_ARGS; i++) {
 		luaArgs[i] = 0;
@@ -942,7 +942,7 @@ void CCobThread::LuaCall()
 	}
 
 	// check script index validity
-	if ((r1 < 0) || (r1 >= script.luaScripts.size())) {
+	if ((r1 < 0) || (static_cast<size_t>(r1) >= script.luaScripts.size())) {
 		luaArgs[0] = 0; // failure
 		return;
 	}

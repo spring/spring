@@ -89,7 +89,9 @@ void CPathFinder::Init() {
 	// FIXME: can be a .lua script now
 	if (!ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf")) {
 		L(ai, "[CPathFinder::Init()]");
-		L(ai, "\tmod move-data not in TDF format, aborting AI initialization");
+		const char* errorMsg = "\tmod move-data not in TDF format, aborting AI initialization";
+		L(ai, errorMsg); // write to KAIK log
+		ai->cb->SendTextMsg(errorMsg, 0); // write to infolog.txt
 		assert(false);
 	}
 
@@ -315,7 +317,7 @@ float CPathFinder::FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRan
 
 	// make a list with the points that will count as end nodes
 	float totalcost = 0.0f;
-	const int radius = int(myMaxRange / (8 * resmodifier));
+	const unsigned int radius = int(myMaxRange / (8 * resmodifier));
 	int offsetSize = 0;
 
 	std::vector<std::pair<int, int> > offsets;
@@ -325,14 +327,14 @@ float CPathFinder::FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRan
 	endNodes.reserve(possibleTargets.size() * radius * 10);
 
 	{
-		const int DoubleRadius = radius * 2;
-		const int SquareRadius = radius * radius;
+		const unsigned int DoubleRadius = radius * 2;
+		const unsigned int SquareRadius = radius * radius;
 
 		xend.resize(DoubleRadius + 1);
 		offsets.resize(DoubleRadius * 5);
 
-		for (int a = 0; a < DoubleRadius + 1; a++) {
-			const float z = a - radius;
+		for (size_t a = 0; a < DoubleRadius + 1; a++) {
+			const float z = (int) (a - radius);
 			const float floatsqrradius = SquareRadius;
 			xend[a] = int(sqrt(floatsqrradius - z * z));
 		}
@@ -340,10 +342,10 @@ float CPathFinder::FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRan
 		offsets[0].first = 0;
 		offsets[0].second = 0;
 
-		int index = 1;
-		int index2 = 1;
+		size_t index = 1;
+		size_t index2 = 1;
 
-		for (int a = 1; a < radius + 1; a++) {
+		for (size_t a = 1; a < radius + 1; a++) {
 			int endPosIdx = xend[a];
 			int startPosIdx = xend[a - 1];
 
@@ -360,7 +362,7 @@ float CPathFinder::FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRan
 
 		index2 = index;
 
-		for (int a = 0; a < index2 - 2; a++) {
+		for (size_t a = 0; a < index2 - 2; a++) {
 			assert(index < offsets.size());
 			assert(a < offsets.size());
 			offsets[index].first = offsets[a].first;
@@ -370,7 +372,7 @@ float CPathFinder::FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRan
 
 		index2 = index;
 
-		for (int a = 0; a < index2; a++) {
+		for (size_t a = 0; a < index2; a++) {
 			assert(index < offsets.size());
 			assert(a < offsets.size());
 			offsets[index].first = -(offsets[a].first);
@@ -378,7 +380,7 @@ float CPathFinder::FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRan
 			index++;
 		}
 
-		for (int a = 0; a < index; a++) {
+		for (size_t a = 0; a < index; a++) {
 			assert(a < offsets.size());
 			offsets[a].first = offsets[a].first; // ??
 			offsets[a].second = offsets[a].second - radius;
