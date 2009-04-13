@@ -334,7 +334,7 @@ float CPathFinder::FindBestPath(F3Vec& posPath, float3& startPos, float myMaxRan
 		offsets.resize(DoubleRadius * 5);
 
 		for (size_t a = 0; a < DoubleRadius + 1; a++) {
-			const float z = a - radius;
+			const float z = (int) (a - radius);
 			const float floatsqrradius = SquareRadius;
 			xend[a] = int(sqrt(floatsqrradius - z * z));
 		}
