@@ -63,7 +63,6 @@ enum NETMSG {
 	NETMSG_MAPDRAW          = 31, // uchar messageSize =  8, myPlayerNum, command = CInMapDraw::NET_ERASE; short x, z;
 	                              // uchar messageSize = 12, myPlayerNum, command = CInMapDraw::NET_LINE; short x1, z1, x2, z2;
 	                              // /*messageSize*/   uchar myPlayerNum, command = CInMapDraw::NET_POINT; short x, z; std::string label;
-	NETMSG_SYNCREQUEST      = 32, // int frameNum;
 	NETMSG_SYNCRESPONSE     = 33, // uchar myPlayerNum; int frameNum; uint checksum;
 	NETMSG_SYSTEMMSG        = 35, // uchar myPlayerNum, std::string message;
 	NETMSG_STARTPOS         = 36, // uchar myPlayerNum, uchar myTeam, ready /*0: not ready, 1: ready, 2: don't update readiness*/; float x, y, z;
@@ -140,7 +139,6 @@ public:
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
 	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2);
 	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label);
-	PacketType SendSyncRequest(int frameNum);
 	PacketType SendSyncResponse(int frameNum, uint checksum);
 	PacketType SendSystemMessage(uchar myPlayerNum, const std::string& message);
 	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);

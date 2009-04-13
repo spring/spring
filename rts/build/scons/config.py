@@ -298,7 +298,7 @@ def CheckHeadersAndLibraries(env, conf):
 	d += [Dependency(['GL', 'opengl32'], ['GL/gl.h'])]
 	d += [Dependency(['GLU', 'glu32'], ['GL/glu.h'])]
 	d += [Dependency(['GLEW', 'glew32'], ['GL/glew.h'])]
-	d += [Dependency(['zlib1', 'z'], ['zlib.h'])]
+	d += [Dependency(['zlib', 'zlib1', 'z'], ['zlib.h'])]
 	d += [Dependency(['freetype6', 'freetype'], ['ft2build.h'])]
 	d += [Dependency(['IL', 'devil'], ['IL/il.h'])]
 	d += [Dependency(['ILU', 'ilu'], ['IL/ilu.h'])]

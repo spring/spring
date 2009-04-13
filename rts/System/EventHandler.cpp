@@ -134,6 +134,7 @@ CEventHandler::CEventHandler()
 	SetupEvent("AllowStartPosition",     NULL, CONTROL_BIT);
 	SetupEvent("TerraformComplete",      NULL, CONTROL_BIT);
 	SetupEvent("MoveCtrlNotify",         NULL, CONTROL_BIT);
+	SetupEvent("UnitPreDamaged",         NULL, CONTROL_BIT);
 }
 
 
@@ -271,7 +272,7 @@ void CEventHandler::ListRemove(EventClientList& ecList, CEventClient* ec)
 {
 	// FIXME: efficient, hardly
 	EventClientList newList;
-	for (int i = 0; i < ecList.size(); i++) {
+	for (size_t i = 0; i < ecList.size(); i++) {
 		if (ec != ecList[i]) {
 			newList.push_back(ecList[i]);
 		}

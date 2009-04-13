@@ -106,7 +106,7 @@ CProjectileHandler::CProjectileHandler()
 	// add all texture from sections within projectiletextures section
 	vector<string> seclist;
 	ptTable.GetKeys(seclist);
-	for (int i = 0; i < seclist.size(); i++) {
+	for (size_t i = 0; i < seclist.size(); i++) {
 		const LuaTable ptSubTable = ptTable.SubTable(seclist[i]);
 		if (ptSubTable.IsValid()) {
 			map<string, string> ptex2;
@@ -207,7 +207,7 @@ CProjectileHandler::CProjectileHandler()
 		}
 		//add all texture from sections within projectiletextures section
 		mapTable.GetKeys(seclist);
-		for (int i = 0; i < seclist.size(); i++) {
+		for (size_t i = 0; i < seclist.size(); i++) {
 			const LuaTable mapSubTable = mapTable.SubTable(seclist[i]);
 			if (mapSubTable.IsValid()) {
 				map<string, string> ptex2;
@@ -272,7 +272,7 @@ CProjectileHandler::CProjectileHandler()
 	}
 	//add all texture from sections within groundfx section
 	groundfxTable.GetKeys(seclist);
-	for (int i = 0; i < seclist.size(); i++) {
+	for (size_t i = 0; i < seclist.size(); i++) {
 		const LuaTable gfxSubTable = groundfxTable.SubTable(seclist[i]);
 		if (gfxSubTable.IsValid()) {
 			map<string, string> ptex2;
@@ -503,16 +503,17 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 			(pro->owner() && teamHandler->Ally(pro->owner()->allyteam, gu->myAllyTeam)))) {
 
 			CUnit* owner = pro->owner();
-			CUnit* trans = owner? (CUnit*) owner->GetTransporter(): 0;
 			bool stunned = owner? owner->stunned: false;
 
-			if (owner && trans && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
-				// if the unit that fired this projectile is inside a non-firebase
-				// transport (so stunned) and the projectile forms part of a shield
-				// (ie., the unit has a CPlasmaRepulser weapon but cannot fire it),
-				// prevent the projectile (shield segment) from being drawn at the
-				// unit's pre-pickup position (since CPlasmaRepulser::Update() is
-				// responsible for updating CShieldPartProjectile::centerPos)
+			if (owner && stunned && dynamic_cast<CShieldPartProjectile*>(pro)) {
+				// if the unit that fired this projectile is stunned and the projectile
+				// forms part of a shield (ie., the unit has a CPlasmaRepulser weapon but
+				// cannot fire it), prevent the projectile (shield segment) from being drawn
+				//
+				// also prevents shields being drawn at unit's pre-pickup position
+				// (since CPlasmaRepulser::Update() is responsible for updating
+				// CShieldPartProjectile::centerPos) if the unit is in a non-fireplatform
+				// transport
 				continue;
 			}
 
@@ -590,12 +591,12 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	// S3O flying pieces
 	va->DrawArrayTN(GL_QUADS);
-	for (int textureType = 1; textureType < flyings3oPieces.size(); textureType++){
+	for (size_t textureType = 1; textureType < flyings3oPieces.size(); textureType++){
 		/* TODO Skip this if there's no FlyingPieces. */
 
 		texturehandlerS3O->SetS3oTexture(textureType);
 
-		for (int team = 0; team < flyings3oPieces[textureType].size(); team++){
+		for (size_t team = 0; team < flyings3oPieces[textureType].size(); team++){
 			FlyingPiece_List * fpl = flyings3oPieces[textureType][team];
 
 			unitDrawer->SetTeamColour(team);
@@ -645,11 +646,12 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	CProjectile::inArray=false;
 	CProjectile::va=GetVertexArray();
 	CProjectile::va->Initialize();
-	for(int a=0;a<distlist.size();a++){
+	for(size_t a=0; a<distlist.size(); a++){
 		distlist.at(a).proj->Draw();
 	}
-	if(CProjectile::inArray)
+	if(CProjectile::inArray) {
 		CProjectile::DrawArray();
+	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glDisable(GL_TEXTURE_2D);
@@ -698,7 +700,7 @@ void CProjectileHandler::DrawShadowPass(void)
 	CProjectile::va = GetVertexArray();
 	CProjectile::va->Initialize();
 
-	for (int b = 0; b < distlist.size(); b++) {
+	for (size_t b = 0; b < distlist.size(); b++) {
 		distlist.at(b).proj->Draw();
 	}
 
@@ -924,11 +926,14 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	GML_RECMUTEX_LOCK(proj); // AddFlyingPiece
 
 	flyings3oPieces.reserve(textureType);
-	while(flyings3oPieces.size()<=textureType)
+	const size_t signedTextureType = (textureType < 0) ? 0 : textureType;
+	while(flyings3oPieces.size() <= signedTextureType) {
 		flyings3oPieces.push_back(vector<FlyingPiece_List*>());
+	}
 
 	flyings3oPieces[textureType].reserve(team);
-	while(flyings3oPieces[textureType].size()<=team){
+	const size_t signedTeam = (team < 0) ? 0 : team;
+	while(flyings3oPieces[textureType].size() <= signedTeam){
 		//logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
 
 		FlyingPiece_List * fpl = new FlyingPiece_List;

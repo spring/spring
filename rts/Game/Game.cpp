@@ -1261,7 +1261,7 @@ bool CGame::ActionPressed(const Action& action,
 				delete aviGenerator;
 				aviGenerator=0;
 			} else {
-				logOutput.Print("Recording avi to %s size %li x %li", fileName.c_str(), videoSizeX, videoSizeY);
+				LogObject() << "Recording avi to " << fileName << " size " << videoSizeX << " x " << videoSizeY;
 			}
 
 			SDL_ShowCursor(savedCursorMode);
@@ -1405,8 +1405,8 @@ bool CGame::ActionPressed(const Action& action,
 
 	// Break up the if/else chain to workaround MSVC compiler limit
 	// "fatal error C1061: compiler limit : blocks nested too deeply"
-	else notfound1=true;
-	if (notfound1)
+	else { notfound1=true; }
+	if (notfound1) { // BEGINN: MSVC limit workaround
 
 	if (cmd == "speedup") {
 		float speed = gs->userSpeedFactor;
@@ -1975,7 +1975,10 @@ bool CGame::ActionPressed(const Action& action,
 		if (!Console::Instance().ExecuteAction(action))
 			return false;
 	}
-	 return true;
+
+	} // END: MSVC limit workaround
+
+	return true;
 }
 
 
@@ -2210,7 +2213,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			int currentNumUnits = teamHandler->Team(team)->units.size();
 
 			if (currentNumUnits >= uh->MaxUnitsPerTeam()) {
-				logOutput.Print("Unable to give any more units to team %i (current: %i, max: %i)", team, currentNumUnits, uh->MaxUnits());
+				LogObject() << "Unable to give any more units to team " << team << "(current: " << currentNumUnits << ", max: " << uh->MaxUnits() << ")";
 				return;
 			}
 
@@ -3369,7 +3372,7 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 				} else {
 					playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
-					playerHandler->Player(player)->ping = *(int*) &inbuf[6];
+					playerHandler->Player(player)->ping = *(uint16_t*) &inbuf[6];
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;
@@ -3651,17 +3654,6 @@ void CGame::ClientReadNet()
 				unpack >> data;
 				CLuaHandle::HandleLuaMsg(player, script, mode, data);
 				AddTraffic(player, packetCode, dataLength);
-				break;
-			}
-
-			case NETMSG_SYNCREQUEST: {
-				// TODO rename this net message, change error msg, etc.
-				int frame = *((int*)&inbuf[1]);
-				if (frame != gs->frameNum) {
-					logOutput.Print("Sync request for wrong frame (%i instead of %i)", frame, gs->frameNum);
-				}
-				net->Send(CBaseNetProtocol::Get().SendCPUUsage(profiler.GetPercent("CPU load")));
-				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
 
@@ -4406,7 +4398,8 @@ void CGame::SendNetChat(std::string message, int destination)
 void CGame::HandleChatMsg(const ChatMessage& msg)
 {
 	if ((msg.fromPlayer < 0) ||
-		((msg.fromPlayer >= playerHandler->ActivePlayers()) && (msg.fromPlayer != SERVER_PLAYER))) {
+		((msg.fromPlayer >= playerHandler->ActivePlayers()) &&
+			(static_cast<unsigned int>(msg.fromPlayer) != SERVER_PLAYER))) {
 		return;
 	}
 
@@ -4414,7 +4407,7 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 	string s = msg.msg;
 
 	if (!s.empty()) {
-		CPlayer* player = (msg.fromPlayer == SERVER_PLAYER) ? 0 : playerHandler->Player(msg.fromPlayer);
+		CPlayer* player = (msg.fromPlayer >= 0 && static_cast<unsigned int>(msg.fromPlayer) == SERVER_PLAYER) ? 0 : playerHandler->Player(msg.fromPlayer);
 		const bool myMsg = (msg.fromPlayer == gu->myPlayerNum);
 
 		string label;
@@ -4610,7 +4603,7 @@ void CGame::SelectUnits(const string& line)
 			if (endPtr == startPtr) {
 				continue; // bad number
 			}
-			if ((unitIndex < 0) || (unitIndex >= uh->MaxUnits())) {
+			if ((unitIndex < 0) || (static_cast<unsigned int>(unitIndex) >= uh->MaxUnits())) {
 				continue; // bad index
 			}
 			CUnit* unit = uh->units[unitIndex];

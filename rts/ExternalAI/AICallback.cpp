@@ -1177,7 +1177,7 @@ const FeatureDef* CAICallback::GetFeatureDef (int feature)
 			return f->def;
 	}
 
-	return 0;
+	return NULL;
 }
 const FeatureDef* CAICallback::GetFeatureDefById(int featureDefId)
 {
@@ -1511,7 +1511,7 @@ int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
 		return 0;
 	}
 
-	for (int i=0; i < inMapDrawer->numQuads; i++) {
+	for (size_t i=0; i < inMapDrawer->numQuads; i++) {
 		if (!inMapDrawer->drawQuads[i].points.empty()) {
 			for (std::list<CInMapDraw::MapPoint>::iterator mp =
 					inMapDrawer->drawQuads[i].points.begin();
@@ -1542,7 +1542,7 @@ int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
 		return 0;
 	}
 
-	for (int i=0; i < inMapDrawer->numQuads; i++) {
+	for (size_t i=0; i < inMapDrawer->numQuads; i++) {
 		if (!inMapDrawer->drawQuads[i].points.empty()) {
 			for (std::list<CInMapDraw::MapLine>::const_iterator ml =
 					inMapDrawer->drawQuads[i].lines.begin();

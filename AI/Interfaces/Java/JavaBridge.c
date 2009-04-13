@@ -711,19 +711,31 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	const size_t options_size = op;
 
 	vm_args->options = (struct JavaVMOption*) calloc(options_size, sizeof(struct JavaVMOption));
-	vm_args->nOptions = options_size;
 
 	// fill strOptions into the JVM options
-	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: options (%i):", options_size);
+	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: options:", options_size);
 	char* dd_rw = callback->DataDirs_allocatePath(interfaceId,
 			"", true, true, true, false);
 	size_t i;
+	jint nOptions = 0;
 	for (i = 0; i < options_size; ++i) {
-		vm_args->options[i].optionString = util_allocStrReplaceStr(strOptions[i],
+		const char* tmpOptionString = util_allocStrReplaceStr(strOptions[i],
 				"${home-dir}", dd_rw);
-		vm_args->options[i].extraInfo = NULL;
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, vm_args->options[i].optionString);
+		// do not add empty options
+		if (tmpOptionString != NULL) {
+			if (strlen(tmpOptionString) > 0) {
+				vm_args->options[nOptions].optionString = tmpOptionString;
+				vm_args->options[nOptions].extraInfo = NULL;
+				simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM option %ul: %s", nOptions, tmpOptionString);
+				nOptions++;
+			} else {
+				free(tmpOptionString);
+				tmpOptionString = NULL;
+			}
+		}
 	}
+	vm_args->nOptions = nOptions;
+
 	FREE(dd_rw);
 	FREE(classPathOpt);
 	FREE(libraryPathOpt);

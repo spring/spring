@@ -194,11 +194,10 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 		++i;
 	}
 
+	numPlayers = playerStartingData.size();
 	unsigned playerCount = 0;
-	if (!file.GetValue(playerCount, "GAME\\NumPlayers") || playerStartingData.size() == playerCount)
-		numPlayers = playerStartingData.size();
-	else
-		logOutput.Print("Warning: incorrect number of players in GameSetup script");
+	if (file.GetValue(playerCount, "GAME\\NumPlayers") && playerStartingData.size() != playerCount)
+		logOutput.Print("Warning: %i players in GameSetup script (NumPlayers says %i)", numPlayers, playerCount);
 }
 
 /**
@@ -330,11 +329,10 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		++i;
 	}
 
+	numTeams = teamStartingData.size();
 	unsigned teamCount = 0;
-	if (!file.GetValue(teamCount, "Game\\NumTeams") || teamStartingData.size() == teamCount)
-		numTeams = teamStartingData.size();
-	else
-		logOutput.Print("Warning: incorrect number of teams in GameSetup script");
+	if (file.GetValue(teamCount, "Game\\NumTeams") && teamStartingData.size() != teamCount)
+		logOutput.Print("Warning: %i teams in GameSetup script (NumTeams: %i)", numTeams, teamCount);
 }
 
 /**

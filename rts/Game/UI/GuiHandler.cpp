@@ -1615,8 +1615,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		// bonus command for debugging
 		logOutput.Print("Available Commands:\n");
 		for(size_t i = 0; i < commands.size(); ++i){
-			logOutput.Print("  command: %lu, id = %i, action = %s\n",
-						 i, commands[i].id, commands[i].action.c_str());
+			LogObject() << "  command: " << i << ", id = " << commands[i].id << ", action = " << commands[i].action;
 		}
 		// show the icon/command linkage
 		logOutput.Print("Icon Linkage:\n");
@@ -3206,22 +3205,19 @@ void CGuiHandler::DrawSelectionInfo()
 	GML_RECMUTEX_LOCK(sel); // Draw --> DrawButtons --> DrawSelectionInfo
 
 	if (!selectedUnits.selectedUnits.empty()) {
-		char buf[64];
+		std::ostringstream buf;
 
 		if(selectedUnits.selectedGroup!=-1){
-			SNPRINTF(buf, 64, "Selected units %lu  [Group %i]",
-			         selectedUnits.selectedUnits.size(),
-			         selectedUnits.selectedGroup);
+			buf << "Selected units " << selectedUnits.selectedUnits.size() << " [Group " << selectedUnits.selectedGroup << "]";
 		} else {
-			SNPRINTF(buf, 64, "Selected units %lu",
-			         selectedUnits.selectedUnits.size());
+			buf << "Selected units " << selectedUnits.selectedUnits.size();
 		}
 
 		const float fontScale = 1.0f;
 
 		if (!outlineFonts) {
-			const float textWidth  = fontScale * smallFont->CalcTextWidth(buf);
-			const float textHeight = fontScale * smallFont->CalcTextHeight(buf);
+			const float textWidth  = fontScale * smallFont->CalcTextWidth(buf.str().c_str());
+			const float textHeight = fontScale * smallFont->CalcTextHeight(buf.str().c_str());
 
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
@@ -3230,11 +3226,11 @@ void CGuiHandler::DrawSelectionInfo()
 							xSelectionPos + frameBorder + textWidth,
 							ySelectionPos + frameBorder + (textHeight * 1.2f));
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-			smallFont->glPrintAt(xSelectionPos, ySelectionPos, fontScale, buf);
+			smallFont->glPrintAt(xSelectionPos, ySelectionPos, fontScale, buf.str().c_str());
 		}
 		else {
 			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			smallFont->glPrintOutlinedAt(xSelectionPos, ySelectionPos, fontScale, buf, white);
+			smallFont->glPrintOutlinedAt(xSelectionPos, ySelectionPos, fontScale, buf.str().c_str(), white);
 		}
 		glLoadIdentity();
 	}

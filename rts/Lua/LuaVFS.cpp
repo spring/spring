@@ -1,5 +1,4 @@
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
 // LuaVFS.cpp: implementation of the LuaVFS class.
 //
 //////////////////////////////////////////////////////////////////////

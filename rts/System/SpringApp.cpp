@@ -245,6 +245,9 @@ bool SpringApp::Initialize()
 
 	// use some ATI bugfixes?
 	gu->atiHacks = !!configHandler->Get("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
+	if (gu->atiHacks) {
+		logOutput.Print("ATI hacks enabled\n");
+	}
 
 	// Initialize named texture handler
 	CNamedTextures::Init();

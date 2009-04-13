@@ -170,7 +170,7 @@ CInMapDraw::~CInMapDraw(void)
 void CInMapDraw::PostLoad()
 {
 	if (drawQuads.size() != numQuads) {
-		//For old savegames
+		// For old savegames
 		drawQuads.resize(numQuads);
 	}
 }
@@ -342,9 +342,18 @@ void CInMapDraw::Draw(void)
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, 3000.0f, &drawer);
 
+	// draw lines
 	glDisable(GL_TEXTURE_2D);
-	glLineWidth(3);
+	glLineWidth(3.f);
 	lineva->DrawArrayC(GL_LINES);
+	// XXX hopeless drivers, retest in a year or so...
+	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
+	// so redraw lines with width 1
+	if (gu->atiHacks) {
+		glLineWidth(1.f);
+		lineva->DrawArrayC(GL_LINES);
+	}
+	// draw points
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -577,7 +586,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 
 			std::list<MapPoint>::iterator pi;
 			for (pi = dq->points.begin(); pi != dq->points.end(); /* none */) {
-				if (pi->pos.SqDistance2D(pos) < (radius*radius)) {
+				if (pi->pos.SqDistance2D(pos) < (radius*radius) && (pi->senderSpectator == sender->spectator)) {
 					pi = dq->points.erase(pi);
 				} else {
 					++pi;
@@ -585,7 +594,7 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 			}
 			std::list<MapLine>::iterator li;
 			for (li = dq->lines.begin(); li != dq->lines.end(); /* none */) {
-				if (li->pos.SqDistance2D(pos) < (radius*radius)) {
+				if (li->pos.SqDistance2D(pos) < (radius*radius) && (li->senderSpectator == sender->spectator)) {
 					li = dq->lines.erase(li);
 				} else {
 					++li;

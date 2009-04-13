@@ -221,13 +221,6 @@ PacketType CBaseNetProtocol::SendMapDrawPoint(uchar myPlayerNum, short x, short 
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSyncRequest(int frameNum)
-{
-	PackPacket* packet = new PackPacket(5, NETMSG_SYNCREQUEST);
-	*packet << frameNum;
-	return PacketType(packet);
-}
-
 PacketType CBaseNetProtocol::SendSyncResponse(int frameNum, uint checksum)
 {
 	PackPacket* packet = new PackPacket(9, NETMSG_SYNCRESPONSE);
@@ -252,8 +245,8 @@ PacketType CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, ucha
 
 PacketType CBaseNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
 {
-	PackPacket* packet = new PackPacket(10, NETMSG_PLAYERINFO);
-	*packet << myPlayerNum << cpuUsage << ping;
+	PackPacket* packet = new PackPacket(8, NETMSG_PLAYERINFO);
+	*packet << myPlayerNum << cpuUsage << static_cast<uint16_t>(ping);
 	return PacketType(packet);
 }
 
@@ -389,11 +382,10 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_PLAYERSTAT, 2 + sizeof(PlayerStatistics));
 	proto->AddType(NETMSG_GAMEOVER, 1);
 	proto->AddType(NETMSG_MAPDRAW, -1);
-	proto->AddType(NETMSG_SYNCREQUEST, 5);
 	proto->AddType(NETMSG_SYNCRESPONSE, 9);
 	proto->AddType(NETMSG_SYSTEMMSG, -1);
 	proto->AddType(NETMSG_STARTPOS, 16);
-	proto->AddType(NETMSG_PLAYERINFO, 10);
+	proto->AddType(NETMSG_PLAYERINFO, 8);
 	proto->AddType(NETMSG_PLAYERLEFT, 3);
 	proto->AddType(NETMSG_LUAMSG, -2);
 	proto->AddType(NETMSG_TEAM, 4);

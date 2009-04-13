@@ -933,16 +933,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 
-					// CGameServer should never get these messages
-		case NETMSG_GAMEID:
-		case NETMSG_INTERNAL_SPEED:
-		case NETMSG_ATTEMPTCONNECT:
-		case NETMSG_GAMEDATA:
-		case NETMSG_RANDSEED:
-#ifdef DEBUG
-			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
-#endif
-			break;
 #ifdef SYNCDEBUG
 		case NETMSG_SD_CHKRESPONSE:
 		case NETMSG_SD_BLKRESPONSE:
@@ -954,6 +944,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			Broadcast(packet);
 			break;
 #endif
+		// CGameServer should never get these messages
+		//case NETMSG_GAMEID:
+		//case NETMSG_INTERNAL_SPEED:
+		//case NETMSG_ATTEMPTCONNECT:
+		//case NETMSG_GAMEDATA:
+		//case NETMSG_RANDSEED:
 		default:
 		{
 			Message(str(format(UnknownNetmsg) %(unsigned)inbuf[0] %a));
@@ -1491,7 +1487,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 
 	for (unsigned a = 0; a < players.size(); ++a) {
 		if(players[a].myState >= GameParticipant::INGAME)
-			Broadcast(CBaseNetProtocol::Get().SendPlayerName(a, players[a].name));
+			link->SendData(CBaseNetProtocol::Get().SendPlayerName(a, players[a].name));
 	}
 
 	if (!demoReader || setup->demoName.empty()) // gamesetup from demo?
@@ -1518,7 +1514,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
 		for (size_t a = 0; a < teams.size(); ++a)
 		{
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, (int)a, teams[a].readyToStart, teams[a].startpos.x, teams[a].startpos.y, teams[a].startpos.z));
+			link->SendData(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, (int)a, teams[a].readyToStart, teams[a].startpos.x, teams[a].startpos.y, teams[a].startpos.z));
 		}
 	}
 
