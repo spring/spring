@@ -285,7 +285,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 //				GML_RECMUTEX_LOCK(gui); // UpdateExtraTexture. Not needed in draw thread
 
-				if (guihandler->inCommand > 0 && guihandler->inCommand < guihandler->commands.size() &&
+				if (guihandler->inCommand > 0 && static_cast<size_t>(guihandler->inCommand) < guihandler->commands.size() &&
 						guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING) {
 					// use the current build order
 					for (int y = starty; y < endy; ++y) {

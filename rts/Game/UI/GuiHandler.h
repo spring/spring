@@ -217,7 +217,7 @@ class CGuiHandler : public CInputReceiver {
 			Box selection;
 		};
 		IconInfo* icons;
-		int iconsSize;
+		unsigned int iconsSize;
 		int iconsCount;
 		int activeIcons;
 

@@ -416,7 +416,7 @@ bool CGuiHandler::ReloadConfig(const std::string& filename)
 
 void CGuiHandler::ResizeIconArray(unsigned int size)
 {
-	int minIconsSize = iconsSize;
+	unsigned int minIconsSize = iconsSize;
 	while (minIconsSize < size) {
 		minIconsSize *= 2;
 	}
@@ -1172,7 +1172,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 		}
 		case CMDTYPE_ICON_MODE: {
 			int newMode = atoi(cd.params[0].c_str()) + 1;
-			if (newMode > cd.params.size()-2) {
+			if (newMode > (static_cast<int>(cd.params.size())-2)) {
 				newMode = 0;
 			}
 
@@ -1625,7 +1625,7 @@ bool CGuiHandler::ProcessLocalActions(const Action& action)
 		}
 		logOutput.Print("maxPage         = %i\n", maxPage);
 		logOutput.Print("activePage      = %i\n", activePage);
-		logOutput.Print("iconsSize       = %i\n", iconsSize);
+		logOutput.Print("iconsSize       = %u\n", iconsSize);
 		logOutput.Print("iconsCount      = %i\n", iconsCount);
 		LogObject() << "commands.size() = " << commands.size();
 		return true;
@@ -1836,11 +1836,11 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 		iconCmd = GetIconPosCommand(iconSlot);
 	}
 
-	for (int a = 0; a < commands.size(); ++a) {
+	for (size_t a = 0; a < commands.size(); ++a) {
 
 		CommandDescription& cmdDesc = commands[a];
 
-		if ((a != iconCmd) && (cmdDesc.action != action.command)) {
+		if ((static_cast<int>(a) != iconCmd) && (cmdDesc.action != action.command)) {
 			continue; // not a match
 		}
 
@@ -1858,7 +1858,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 				 (cmdType == CMDTYPE_ICON_MODE) ||
 				 (cmdType == CMDTYPE_ICON_BUILDING))) {
 			for (int ii = 0; ii < iconsCount; ii++) {
-				if (icons[ii].commandsID == a) {
+				if (icons[ii].commandsID == static_cast<int>(a)) {
 					activePage = std::min(maxPage, (ii / iconsPerPage));
 					selectedUnits.SetCommandPage(activePage);
 				}
@@ -2756,7 +2756,7 @@ static inline bool BindLuaTexByString(const std::string& str)
 {
 	CLuaHandle* luaHandle = NULL;
 	const char scriptType = str[1];
-	switch (str[1]) {
+	switch (scriptType) {
 		case 'u': { luaHandle = luaUI; break; }
 		case 'g': { luaHandle = luaGaia; break; }
 		case 'm': { luaHandle = luaRules; break; }
@@ -3105,7 +3105,7 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 				if (cmdDesc.type == CMDTYPE_ICON_MODE
 						&& cmdDesc.params.size() >= 1) {
 					const int opt = atoi(cmdDesc.params[0].c_str()) + 1;
-					if (opt < cmdDesc.params.size()) {
+					if (opt < 0 || static_cast<size_t>(opt) < cmdDesc.params.size()) {
 						toPrint = cmdDesc.params[opt];
 					}
 				}
