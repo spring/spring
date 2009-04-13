@@ -19,6 +19,7 @@ SkirmishAI
 	KAIK
 	AAI
 	JCAI
+	CppTestAI
 	NullAI
 	NullLegacyCppAI
 	NullJavaAI
@@ -639,15 +640,30 @@ skirmishaiobjs_mainCregged = create_shared_objects(skirmishai_env, filelist.get_
 skirmishaiobjs_creg = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_Creg(env), '-skirmishai_creg', ['USING_CREG'])
 skirmishaiobjs_LegacyCpp = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_LegacyCpp(env), '-skirmishai')
 skirmishaiobjs_LegacyCppCregged = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_LegacyCpp(env), '-skirmishai_creg', ['USING_CREG'])
+skirmishaiobjs_CppWrapper = create_shared_objects(skirmishai_env, filelist.get_shared_Wrapper_source(ai_env, 'Cpp'), '-skirmishai')
 skirmishaiobjs_CUtils = create_shared_objects(skirmishai_env, filelist.get_shared_Wrapper_source(ai_env, 'CUtils'), '-skirmishai')
 
 # Build
 skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
 skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
+skirmishai_isCpp_list=['CppTestAI']
 skirmishai_needCUtils_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
 skirmishai_needCreg_list=['KAIK', 'KAI']
 skirmishai_needBoost_list=['NTai']
 skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
+
+# generate the C++ Skirmish AI Wrapper sources if needed
+if (skirmishai_isCpp_list != []):
+		# wrapp the Callback
+		awkScripts = []
+		awkScripts += ['wrappCallback.awk']
+		awkScripts += ['common.awk']
+		awkScripts += ['commonDoc.awk']
+		awkScripts += ['commonOOCallback.awk']
+		awkInputFile = os.path.join(springInterfaceSrcDir, 'SSkirmishAICallback.h')
+		awkWorkDir = os.path.join('Wrappers', 'Cpp', 'bin')
+		wrapp_cppWrapper = AWKExecutor(skirmishai_env, 'wrapp_callback', awkScripts, awkVars, awkInputFile, workDir = awkWorkDir)
+		wrapp_cppWrapper_cmd = wrapp_cppWrapper.createExecuteCommand()
 
 skirmishais_toBuild = filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmishai_exclude_list, include_interfaces = aiinterfaces_toBuild)
 
@@ -655,12 +671,14 @@ for baseName in skirmishais_toBuild:
 	aiVersion = fetch_skirmishAi_version(baseName)
 	print "Found Skirmish AI: " + baseName + " " + aiVersion
 	isLegacyCpp = baseName in skirmishai_isLegacyCpp_list
+	isCpp = baseName in skirmishai_isCpp_list
 	needsCUtils = baseName in skirmishai_needCUtils_list
 	useCreg = baseName in skirmishai_needCreg_list
 	useBoost = baseName in skirmishai_needBoost_list
 	isJava = baseName in skirmishai_isJava_list
 	myEnv = create_sub_interface(skirmishai_env, baseName)
 	myEnv['installprefix'] = os.path.join(myEnv['installprefix'], aiVersion)
+	buildList = []
 	instList = []
 
 	# create the library
@@ -687,9 +705,7 @@ for baseName in skirmishais_toBuild:
 		mySrcJar_cmd = skirmishAiProj.packSrcJar()
 		doAllJava = [myCompile_cmd, myBinJar_cmd, mySrcJar_cmd]
 
-		Alias(baseName, doAllJava)
-		Alias('SkirmishAI', doAllJava)
-		Default(doAllJava)
+		buildList += doAllJava
 		instList += [myEnv.Install(myEnv['installprefix'], jarFileBin_build)]
 		instList += [myEnv.Install(os.path.join(myEnv['installprefix'], 'jlib'), jarFileSrc_build)]
 	else:
@@ -719,6 +735,10 @@ for baseName in skirmishais_toBuild:
 				objs += skirmishaiobjs_LegacyCppCregged
 			else:
 				objs += skirmishaiobjs_LegacyCpp
+		if isCpp:
+			buildList += wrapp_cppWrapper_cmd
+			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
+			objs += skirmishaiobjs_CppWrapper
 		if needsCUtils:
 			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
 			objs += skirmishaiobjs_CUtils
@@ -732,9 +752,8 @@ for baseName in skirmishais_toBuild:
 		if env['platform'] != 'windows':
 			targetName = 'lib' + targetName
 		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), myObjs)
-		Alias(baseName, lib)     # Allow e.g. `scons JCAI' to compile just a skirmish AI.
-		Alias('SkirmishAI', lib) # Allow `scons SkirmishAI' to compile all skirmishAIs.
-		Default(lib)
+		
+		buildList += [lib]
 		instList += [myEnv.Install(myEnv['installprefix'], lib)]
 		if myEnv['strip']:
 			myEnv.AddPostAction(lib, Action([['strip','$TARGET']]))
@@ -742,6 +761,11 @@ for baseName in skirmishais_toBuild:
 	# record data files (eg AIInfo.lua or config files) for installation
 	source_data_dir = os.path.join(myEnv['sourcedir'], 'data')
 	install_dir_verbatim(myEnv, myEnv['installprefix'], source_data_dir, instList)
+
+	# build everything from this AI
+	Alias(baseName, buildList)     # Allow e.g. `scons JCAI' to compile just a skirmish AI.
+	Alias('SkirmishAI', buildList) # Allow `scons SkirmishAI' to compile all skirmish AIs.
+	Default(buildList)
 
 	# install everything from this AI
 	Alias('install', instList)
