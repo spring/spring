@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/cstdint.hpp>
 
 namespace netcode {
 	class RawPacket;
@@ -33,7 +34,7 @@ public:
 
 private:
 	std::string setupText;
-	mutable std::vector<uint8_t> compressed;
+	mutable std::vector<boost::uint8_t> compressed;
 
 	std::string script;
 	std::string map;

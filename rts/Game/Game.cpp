@@ -3372,7 +3372,7 @@ void CGame::ClientReadNet()
 					logOutput.Print("Got invalid player num %i in playerinfo msg", player);
 				} else {
 					playerHandler->Player(player)->cpuUsage = *(float*) &inbuf[2];
-					playerHandler->Player(player)->ping = *(uint16_t*) &inbuf[6];
+					playerHandler->Player(player)->ping = *(boost::uint16_t*) &inbuf[6];
 				}
 				AddTraffic(player, packetCode, dataLength);
 				break;

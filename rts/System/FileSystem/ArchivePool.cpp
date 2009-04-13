@@ -45,7 +45,7 @@ CArchivePool::CArchivePool(const std::string& name):
 		int length = gzgetc(in);
 		if (length == -1) break;
 		
-		char c_name[length];
+		char *c_name = new char[length];
 		unsigned char c_md5[16];
 		unsigned char c_crc32[4];
 		unsigned char c_size[4];
@@ -63,6 +63,7 @@ CArchivePool::CArchivePool(const std::string& name):
 
 		files.push_back(f);
 		fileMap[f->name] = f;
+		delete [] c_name;
 	}
 	gzclose(in);
 }

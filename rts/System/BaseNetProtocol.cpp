@@ -246,7 +246,7 @@ PacketType CBaseNetProtocol::SendStartPos(uchar myPlayerNum, uchar teamNum, ucha
 PacketType CBaseNetProtocol::SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping)
 {
 	PackPacket* packet = new PackPacket(8, NETMSG_PLAYERINFO);
-	*packet << myPlayerNum << cpuUsage << static_cast<uint16_t>(ping);
+	*packet << myPlayerNum << cpuUsage << static_cast<boost::uint16_t>(ping);
 	return PacketType(packet);
 }
 
