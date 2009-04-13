@@ -386,6 +386,7 @@ void FileSystemHandler::InitVFS() const
 		scanDirs.push_back(d->path + "maps");
 		scanDirs.push_back(d->path + "base");
 		scanDirs.push_back(d->path + "mods");
+		scanDirs.push_back(d->path + "packages");
 	}
 	archiveScanner->ScanDirs(scanDirs, true);
 
