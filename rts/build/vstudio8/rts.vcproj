@@ -792,6 +792,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Game\ClientSetup.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Game\ClientSetup.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Game\CommandMessage.cpp"
 				>
 			</File>
@@ -4220,6 +4228,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\FileSystem\ArchiveHPI.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\ArchivePool.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\FileSystem\ArchivePool.h"
 					>
 				</File>
 				<File

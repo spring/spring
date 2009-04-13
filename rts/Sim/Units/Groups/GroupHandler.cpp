@@ -108,7 +108,7 @@ void CGroupHandler::GroupCommand(int num)
 		}
 		return;
 	}
-	else if (keys[SDLK_LALT] || keys[SDLK_LMETA])  {
+	else if (keys[SDLK_LALT]) {// || keys[SDLK_LMETA])  {
 		// do not select the group, just toggle its members with the current selection
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
 		CUnitSet::const_iterator gi;

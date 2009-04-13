@@ -303,7 +303,7 @@ const FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 
 const FeatureDef* CFeatureHandler::GetFeatureDefByID(int id)
 {
-	if ((id < 0) || (id >= (int) featureDefsVector.size())) {
+	if ((id < 0) || (static_cast<size_t>(id) >= featureDefsVector.size())) {
 		return NULL;
 	}
 	return featureDefsVector[id];
