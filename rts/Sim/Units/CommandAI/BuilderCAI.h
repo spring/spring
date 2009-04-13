@@ -24,12 +24,13 @@ public:
 	void GiveCommandReal(const Command& c, bool fromSynced = true);
 	void DrawQuedBuildingSquares(void);
 
-	bool FindReclaimableFeatureAndReclaim(const float3& pos, float radius,
+	bool FindReclaimTargetAndReclaim(const float3& pos, float radius,
 	                                      unsigned char options,
 	                                      bool noResCheck,  // no resources check
 	                                      bool recAnyTeam,  // allows self-reclamation
 	                                      bool recUnits,    // reclaims units and features
-	                                      bool recNonRez);  // reclaims non resurrectable only
+	                                      bool recNonRez,   // reclaims non resurrectable only
+	                                      bool recEnemy);   // reclaims enemy units only
 	bool FindResurrectableFeatureAndResurrect(const float3& pos, float radius,
 	                                          unsigned char options);
 	void FinishCommand(void);
