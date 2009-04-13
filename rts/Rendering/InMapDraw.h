@@ -77,7 +77,7 @@ public:
 
 	int drawQuadsX;
 	int drawQuadsY;
-	int numQuads;
+	size_t numQuads;
 
 	enum NetTypes {
 		NET_POINT,

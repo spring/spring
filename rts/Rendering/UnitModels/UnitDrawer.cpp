@@ -1411,8 +1411,10 @@ void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)
 	quedS3Os.acquire(textureType).push_back(object);
 	quedS3Os.release();
 #else
-	while (quedS3Os.size() <= textureType)
+	const size_t signedTextureType = (textureType < 0) ? 0 : textureType;
+	while (quedS3Os.size() <= signedTextureType) {
 		quedS3Os.push_back(GML_VECTOR<CWorldObject*>());
+	}
 	quedS3Os[textureType].push_back(object);
 	usedS3OTextures.insert(textureType);
 #endif

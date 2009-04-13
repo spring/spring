@@ -495,7 +495,7 @@ CWeapon* CUnitLoader::LoadWeapon(const WeaponDef *weapondef, CUnit* owner, const
 
 	if (udw->slavedTo) {
 		const int index = (udw->slavedTo - 1);
-		if ((index < 0) || (index >= owner->weapons.size())) {
+		if ((index < 0) || (static_cast<size_t>(index) >= owner->weapons.size())) {
 			throw content_error("Bad weapon slave in " + owner->unitDef->name);
 		}
 		weapon->slavedTo = owner->weapons[index];
