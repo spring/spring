@@ -237,7 +237,7 @@ inline bool CBuilderCAI::OutOfImmobileRange(const Command& cmd) const
 	if (id < 0) {
 		return false;
 	}
-	else if (id < uh->MaxUnits()) {
+	else if (static_cast<unsigned int>(id) < uh->MaxUnits()) {
 		obj = uh->units[id];
 	}
 	else {
@@ -532,7 +532,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 			float3 pos(c.params[1], c.params[2], c.params[3]);
 			float radius=c.params[4]+100; // do not walk too far outside repair area
 			if(unit && ((pos-unit->pos).SqLength2D()>radius*radius ||
-				fac->curBuild == unit && unit->isMoving && !ObjInBuildRange(unit))) {
+				(fac->curBuild == unit && unit->isMoving && !ObjInBuildRange(unit)))) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -565,8 +565,8 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		float radius=c.params[3];
 		fac->StopBuild();
 		if (FindRepairTargetAndRepair(pos, radius, c.options, false) ||
-			(c.options & SPACE_KEY) && owner->unitDef->canReclaim &&  // if there is nothing more to repair, try reclaim
-			FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false)) {
+			((c.options & SPACE_KEY) && owner->unitDef->canReclaim &&  // if there is nothing more to repair, try reclaim
+			FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))) {
 			inCommand=false;
 			SlowUpdate();
 			return;
@@ -749,14 +749,19 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 {
 	CBuilder* fac=(CBuilder*)owner;
 	assert(owner->unitDef->canReclaim);
-	if(c.params.size() == 1 || c.params.size() == 5){
-		int id=(int) c.params[0];
-		if (id >= uh->MaxUnits()) {     //reclaim feature
+	if (c.params.size() == 1 || c.params.size() == 5) {
+		const int signedId = (int) c.params[0];
+		if (signedId < 0) {
+			logOutput.Print("Trying to reclaim unit or feature with id < 0 (%i), aborting.", signedId);
+			return;
+		}
+		const unsigned int id = signedId;
+		if (id >= uh->MaxUnits()) { // reclaim feature
 			const CFeatureSet& fset = featureHandler->GetActiveFeatures();
 			CFeatureSet::const_iterator it = fset.find(id - uh->MaxUnits());
 			if (it != fset.end()) {
 				CFeature* feature = *it;
-				if((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingResurrected(feature->id, owner) ||
+				if(((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingResurrected(feature->id, owner)) ||
 					!ReclaimObject(feature)) {
 					StopMove();
 					FinishCommand();
@@ -771,14 +776,14 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 			}
 			RemoveUnitFromReclaimers(owner);
 
-		} else {                   //reclaim unit
-			CUnit* unit=uh->units[id];
+		} else {                  // reclaim unit
+			CUnit* unit = uh->units[id];
 			if(c.params.size() == 5) {
 				float3 pos(c.params[1], c.params[2], c.params[3]);
 				float radius=c.params[4]+100; // do not walk too far outside reclaim area
 				if(unit && ((pos-unit->pos).SqLength2D()>radius*radius || 
-					fac->curReclaim == unit && unit->isMoving && !ObjInBuildRange(unit) ||
-					unit->unitDef->builder && !unit->commandAI->commandQue.empty() && teamHandler->Ally(owner->allyteam, unit->allyteam))) {
+					(fac->curReclaim == unit && unit->isMoving && !ObjInBuildRange(unit)) ||
+					(unit->unitDef->builder && !unit->commandAI->commandQue.empty() && teamHandler->Ally(owner->allyteam, unit->allyteam)))) {
 					StopMove();
 					RemoveUnitFromReclaimers(owner);
 					FinishCommand();
@@ -847,13 +852,13 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 {
 	assert(owner->unitDef->canResurrect);
 	CBuilder* fac=(CBuilder*)owner;
-	if(c.params.size()==1){
+	if (c.params.size()==1) {
 		int id=(int)c.params[0];
-		if(id>=uh->MaxUnits()){ //resurrect feature
+		if (id>=uh->MaxUnits()) { // resurrect feature
 			CFeatureSet::const_iterator it = featureHandler->GetActiveFeatures().find(id - uh->MaxUnits());
 			if (it != featureHandler->GetActiveFeatures().end() && (*it)->createdFromUnit != "") {
 				CFeature* feature = *it;
-				if((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner) ||
+				if(((c.options & INTERNAL_ORDER) && !(c.options & CONTROL_KEY) && IsFeatureBeingReclaimed(feature->id, owner)) ||
 					!ResurrectObject(feature)) {
 					StopMove();
 					RemoveUnitFromResurrecters(owner);
@@ -864,8 +869,8 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 				}
 			} else {
 				RemoveUnitFromResurrecters(owner);
-				if(fac->lastResurrected && uh->units[fac->lastResurrected] && owner->unitDef->canRepair){ //resurrection finished, start repair
-					c.id=CMD_REPAIR; //kind of hackery to overwrite the current order i suppose
+				if(fac->lastResurrected && uh->units[fac->lastResurrected] && owner->unitDef->canRepair) { // resurrection finished, start repair
+					c.id=CMD_REPAIR; // kind of hackery to overwrite the current order i suppose
 					c.params.clear();
 					c.params.push_back(fac->lastResurrected);
 					c.options|=INTERNAL_ORDER;
@@ -877,7 +882,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 				StopMove();
 				FinishCommand();
 			}
-		} else { //resurrect unit
+		} else { // resurrect unit
 			RemoveUnitFromResurrecters(owner);
 			FinishCommand();
 		}
@@ -885,8 +890,8 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		if(FindResurrectableFeatureAndResurrect(pos,radius,c.options) || // if there is nothing more to resurrect, try repair/reclaim
-			(c.options & SPACE_KEY) && (owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false) ||
-			owner->unitDef->canReclaim && FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))){
+			((c.options & SPACE_KEY) && ((owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false)) ||
+			(owner->unitDef->canReclaim && FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))))){
 			inCommand=false;
 			SlowUpdate();
 			return;
@@ -1613,7 +1618,14 @@ void CBuilderCAI::DrawCommands(void)
 					glSurfaceCircle(endPos, ci->params[3], 20);
 					lineDrawer.RestartSameColor();
 				} else {
-					int id = (int)ci->params[0];
+					const int signedId = (int)ci->params[0];
+					if (signedId < 0) {
+						logOutput.Print("Trying to %s a feature or unit with id < 0 (%i), aborting.",
+								(ci->id == CMD_RECLAIM) ? "reclaim" : "resurrect",
+								signedId);
+						break;
+					}
+					const unsigned int id = signedId;
 					if (id >= uh->MaxUnits()) {
 						GML_RECMUTEX_LOCK(feat); // DrawCommands
 

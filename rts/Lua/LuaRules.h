@@ -66,6 +66,10 @@ class CLuaRules : public CLuaHandleSynced
 		void Cob2Lua(const LuaHashString& funcName, const CUnit* unit,
 		             int& argsCount, int args[MAX_LUA_COB_ARGS]);
 
+		bool UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
+                             float damage, int weaponID, bool paralyzer,
+                             float* newDamage);
+
 		// unsynced
 		bool DrawUnit(int unitID);
 		const char* AICallIn(const char* data, int inSize, int* outSize);
@@ -122,6 +126,7 @@ class CLuaRules : public CLuaHandleSynced
 		bool haveTerraformComplete;
 		bool haveDrawUnit;
 		bool haveAICallIn;
+		bool haveUnitPreDamaged;
 
 		map<string, string> infoMap;
 

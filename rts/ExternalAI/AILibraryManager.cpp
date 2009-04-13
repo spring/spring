@@ -102,7 +102,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	// {AI_INTERFACES_DATA_DIR}/{*}/InterfaceInfo.lua
 	// {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
 	T_dirs aiInterfaceDataDirs =
-			filesystem.FindDirsAndDirectSubDirs(AI_INTERFACES_DATA_DIR);
+			filesystem.FindDirsInDirectSubDirs(AI_INTERFACES_DATA_DIR);
 	typedef std::map<const AIInterfaceKey, std::set<std::string> > T_dupInt;
 	T_dupInt duplicateInterfaceInfoCheck;
 	for (T_dirs::iterator dir = aiInterfaceDataDirs.begin();
@@ -151,7 +151,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 	// we are looking for:
 	// {SKIRMISH_AI_DATA_DIR/{*}/AIInfo.lua
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
-	T_dirs skirmishAIDataDirs = filesystem.FindDirsAndDirectSubDirs(SKIRMISH_AI_DATA_DIR);
+	T_dirs skirmishAIDataDirs = filesystem.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 	T_dupSkirm duplicateSkirmishAIInfoCheck;
 	for (T_dirs::iterator dir = skirmishAIDataDirs.begin();
 			dir != skirmishAIDataDirs.end(); ++dir) {

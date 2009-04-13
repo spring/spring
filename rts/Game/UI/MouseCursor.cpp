@@ -153,21 +153,15 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 
 bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 {
-	char namebuf[128];
-	if (name.size() > (sizeof(namebuf) - 20)) {
-		logOutput.Print("CMouseCursor: Long name %s", name.c_str());
-		return false;
-	}
-
 	// find the image file type to use
 	const char* ext = "";
 	const char* exts[] = { "png", "tga", "bmp" };
 	const int extCount = sizeof(exts) / sizeof(exts[0]);
 	for (int e = 0; e < extCount; e++) {
 		ext = exts[e];
-		SNPRINTF(namebuf, sizeof(namebuf), "anims/%s_%d.%s",
-		         name.c_str(), 0, ext);
-		CFileHandler* f = new CFileHandler(namebuf);
+		std::ostringstream namebuf;
+		namebuf << "anims/" << name << "_0." << ext;
+		CFileHandler* f = new CFileHandler(namebuf.str());
 		if (f->FileExists()) {
 			delete f;
 			break;
@@ -176,10 +170,10 @@ bool CMouseCursor::BuildFromFileNames(const string& name, int lastFrame)
 	}
 
 	while (int(frames.size()) < lastFrame) {
-		SNPRINTF(namebuf, sizeof(namebuf), "anims/%s_%lu.%s",
-		         name.c_str(), frames.size(), ext);
+		std::ostringstream namebuf;
+		namebuf << "anims/" << name << "_" << frames.size() << "." << ext;
 		ImageData image;
-		if (!LoadCursorImage(namebuf, image))
+		if (!LoadCursorImage(namebuf.str(), image))
 			break;
 		images.push_back(image);
 		FrameData frame(image, defFrameLength);

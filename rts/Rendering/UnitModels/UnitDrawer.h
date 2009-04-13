@@ -84,7 +84,6 @@ public:
 	void DrawUnitStats(CUnit*);                                     // was CUnit::DrawStats()
 	void DrawUnitS3O(CUnit*);                                       // was CUnit::DrawS3O()
 	void DrawFeatureStatic(CFeature*);                              // was CFeature::DrawS3O()
-	inline void DrawWorldObjectS3O(CWorldObject*);
 
 	void SetUnitDrawDist(float dist);
 	void SetUnitIconDist(float dist);

@@ -118,7 +118,7 @@ class FileSystem
 		std::string LocateDir(std::string dir, int flags = 0) const;
 		std::vector<std::string> LocateDirs(const std::string& dir) const;
 
-		std::vector<std::string> FindDirsAndDirectSubDirs(
+		std::vector<std::string> FindDirsInDirectSubDirs(
 				const std::string& relPath) const;
 
 		// metadata read functions

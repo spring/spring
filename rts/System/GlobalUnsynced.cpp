@@ -152,7 +152,7 @@ void CGlobalUnsyncedStuff::SetMyPlayer(const int mynumber)
 		spectatingFullSelect = gameSetup->playerStartingData[myPlayerNum].spectator;
 
 		assert(myPlayerNum >= 0
-				&& gameSetup->playerStartingData.size() >= (size_t)myPlayerNum
+				&& gameSetup->playerStartingData.size() >= static_cast<size_t>(myPlayerNum)
 				&& myTeam >= 0
 				&& gameSetup->teamStartingData.size() >= myTeam);
 	}

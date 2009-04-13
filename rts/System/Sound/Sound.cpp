@@ -88,8 +88,8 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 		#endif
 
 		// Set distance model (sound attenuation)
-		alDistanceModel (AL_INVERSE_DISTANCE);
-		alDopplerFactor(0.1);
+		alDistanceModel (AL_INVERSE_DISTANCE_CLAMPED);
+		alDopplerFactor(0.04);
 	}
 	
 	SoundBuffer::Initialise();
@@ -97,9 +97,9 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 	temp["name"] = "EmptySource";
 	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
 	sounds.push_back(empty);
-	posScale.x = 0.02f;
-	posScale.y = 0.0005f;
-	posScale.z = 0.02f;
+	posScale.x = 1.0f;
+	posScale.y = 0.1f;
+	posScale.z = 1.0f;
 
 	LuaParser parser("gamedata/sounds.lua", SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);

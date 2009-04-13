@@ -249,50 +249,57 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) const {
 
 
 bool CUNIT::ReclaimBestFeature(bool metal, float radius) {
-	int features[1000];
-	int numfound = ai->cb->GetFeatures(features, 1000, pos(), radius);
-	float bestscore = 0.0f;
-	float myscore = 0.0f;
-	float bestdistance = 100000.0f;
-	float mydistance = 100000.0f;
-	int bestfeature = -1;
+	int featureIDs[1000];
+
+	int   numFeatures   = ai->cb->GetFeatures(featureIDs, 1000, pos(), radius);
+	int   bestFeatureID = -1;
+	float bestScore     = 0.0f;
+	float myScore       = 0.0f;
+	float bestDist      = 100000.0f;
+	float myDist        = 100000.0f;
+	float myThreat      = 0.0f;
 
 	if (metal) {
-		for (int i = 0; i < numfound; i++) {
-			myscore = ai->cb->GetFeatureDef(features[i])->metal;
-			if (myscore > bestscore && ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(features[i])) <= ai->tm->GetAverageThreat()) {
-				bestscore = myscore;
-				bestfeature = features[i];
+		for (int i = 0; i < numFeatures; i++) {
+			myScore  = ai->cb->GetFeatureDef(featureIDs[i])->metal;
+			myDist   = ai->cb->GetFeaturePos(featureIDs[i]).distance2D(ai->cb->GetUnitPos(myid));
+			myThreat = ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(featureIDs[i]));
+
+			if (myScore > bestScore && myThreat <= ai->tm->GetAverageThreat()) {
+				bestScore = myScore;
+				bestFeatureID = featureIDs[i];
 			}
-			else if (bestscore == myscore && ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(features[i])) <= ai->tm->GetAverageThreat()) {
-				mydistance = ai->cb->GetFeaturePos(features[i]).distance2D(ai->cb->GetUnitPos(myid));
-				if (mydistance < bestdistance) {
-					bestfeature = features[i];
-					bestdistance = mydistance;
+			else if (bestScore == myScore && myThreat <= ai->tm->GetAverageThreat()) {
+				if (myDist < bestDist) {
+					bestFeatureID = featureIDs[i];
+					bestDist = myDist;
+				}
+			}
+		}
+	} else {
+		for (int i = 0; i < numFeatures;i++) {
+			myScore  = ai->cb->GetFeatureDef(featureIDs[i])->energy;
+			myDist   = ai->cb->GetFeaturePos(featureIDs[i]).distance2D(ai->cb->GetUnitPos(myid));
+			myThreat = ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(featureIDs[i]));
+
+			if (myScore > bestScore && myThreat < ai->tm->GetAverageThreat()) {
+				bestScore = myScore;
+				bestFeatureID = featureIDs[i];
+			}
+			else if (bestScore == myScore && myThreat < ai->tm->GetAverageThreat()) {
+				if (myDist < bestDist) {
+					bestFeatureID = featureIDs[i];
+					bestDist = myDist;
 				}
 			}
 		}
 	}
-	else {
-		for (int i = 0; i < numfound;i++) {
-			myscore = ai->cb->GetFeatureDef(features[i])->energy;
-			if (myscore > bestscore && ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(features[i])) < ai->tm->GetAverageThreat()) {
-				bestscore = myscore;
-				bestfeature = features[i];
-			}
-			else if (bestscore == myscore && ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(features[i])) < ai->tm->GetAverageThreat()) {
-				mydistance = ai->cb->GetFeaturePos(features[i]).distance2D(ai->cb->GetUnitPos(myid));
-				if (mydistance < bestdistance) {
-					bestfeature = features[i];
-					bestdistance = mydistance;
-				}
-			}
-		}
-	}
-	if (bestscore > 0) {
-		Reclaim(ai->cb->GetFeaturePos(bestfeature), 10);
+
+	if (bestScore > 0) {
+		Reclaim(ai->cb->GetFeaturePos(bestFeatureID), 128);
 		return true;
 	}
+
 	return false;
 }
 

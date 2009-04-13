@@ -90,7 +90,6 @@
 .*.swp
 *.a
 *.gch
-*.cmake
 *.dir
 
 # ???

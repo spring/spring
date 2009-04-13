@@ -566,6 +566,11 @@ void CUnit::Update()
 			moveType->reservedPad = 0;
 			moveType->padStatus = 0;
 		}
+		// paralyzed weapons shouldn't reload
+		std::vector<CWeapon*>::iterator wi;
+		for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
+			++(*wi)->reloadStatus;
+		}
 		return;
 	}
 
@@ -1003,6 +1008,12 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	float experienceMod = expMultiplier;
 
 	const int paralyzeTime = damages.paralyzeDamageTime;
+	float newDamage = damage;
+
+	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponId,
+			!!damages.paralyzeDamageTime, &newDamage))
+		damage = newDamage;
+
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {

@@ -296,7 +296,10 @@ class JavaProject:
 		self.env['JAVASOURCEPATH'] = self.createSourcePath()
 		if (self.env['debug'] > 0):
 			# Generate all java debug info
-			env['JAVACFLAGS'] = '-g'
+			env['JAVACFLAGS'] = '-g:lines,source,vars'
+		else:
+			# Generate only the default java debug info
+			env['JAVACFLAGS'] = '-g:lines,source'
 		return
 
 	def createCompileCommand(self):

@@ -108,6 +108,7 @@ local callInLists = {
   'UnitExperience',
   'UnitIdle',
   'UnitCmdDone',
+  'UnitPreDamaged',
   'UnitDamaged',
   'UnitTaken',
   'UnitGiven',
@@ -1254,6 +1255,19 @@ function gadgetHandler:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
     g:UnitCmdDone(unitID, unitDefID, unitTeam, cmdID, cmdTag)
   end
   return
+end
+
+
+function gadgetHandler:UnitPreDamaged(unitID, unitDefID, unitTeam,
+                                   damage, paralyzer, weaponID,
+                                   attackerID, attackerDefID, attackerTeam)
+  local dam = damage
+  for _,g in ipairs(self.UnitPreDamagedList) do
+    dam = g:UnitPreDamaged(unitID, unitDefID, unitTeam,
+                  dam, paralyzer, weaponID,
+                  attackerID, attackerDefID, attackerTeam)
+  end
+  return dam
 end
 
 

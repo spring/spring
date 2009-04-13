@@ -3,6 +3,7 @@
 #include "mmgr.h"
 
 #include "ArchiveFactory.h"
+#include "ArchivePool.h"
 #include "ArchiveDir.h"
 #include "ArchiveHPI.h"
 #include "ArchiveZip.h"
@@ -17,8 +18,9 @@ bool CArchiveFactory::IsScanArchive(const std::string& fileName)
 	std::string ext = StringToLower(filesystem.GetExtension(fileName));
 
 	return  (ext == "sd7") || (ext == "sdz") || (ext == "sdd") ||
-	        (ext == "ccx") || (ext == "hpi") || (ext == "ufo") ||
-	        (ext == "gp3") || (ext == "gp4") || (ext == "swx");
+		(ext == "ccx") || (ext == "hpi") || (ext == "ufo") ||
+		(ext == "gp3") || (ext == "gp4") || (ext == "swx") ||
+		(ext == "sdp");
 }
 
 
@@ -34,6 +36,7 @@ CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName,
 	     if (ext == "sd7") { ext = "7z";  }
 	else if (ext == "sdz") { ext = "zip"; }
 	else if (ext == "sdd") { ext = "dir"; }
+	else if (ext == "sdp") { ext = "pool"; }
 	else if ((ext == "ccx") || (ext == "hpi") || (ext == "ufo") ||
 	         (ext == "gp3") || (ext == "gp4") || (ext == "swx")) {
 		ext = "hpi";
@@ -50,6 +53,9 @@ CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName,
 		ret = new CArchiveZip(fn);
 	} else if (ext == "dir") {
 		ret = new CArchiveDir(fn);
+	} else if (ext == "pool") {
+		ret = new CArchivePool(fn);
+
 	} else if (ext == "hpi") {
 		ret = new CArchiveHPI(fn);
 	}

@@ -168,7 +168,7 @@ BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
 		return BUILD_NUKE;
 	}
 
-	if (es->eLevelMed && es->mLevelLow) {
+	if (/*es->eLevelMed &&*/ es->mLevelLow) {
 		return BUILD_M_STALL;
 	}
 
@@ -246,7 +246,7 @@ void CBuildUp::Buildup(int frame) {
 					// FIXME: not happening often enough during res. stalls
 					//
 					const bool reclaimFeature =
-						((frame & 1) && ai->MyUnits[econState.builderID]->ReclaimBestFeature(true));
+						((frame & 1) && ai->MyUnits[econState.builderID]->ReclaimBestFeature(true, 4096));
 
 					if (!reclaimFeature) {
 						const bool haveNewMex = BuildUpgradeExtractor(econState.builderID);
@@ -320,7 +320,7 @@ void CBuildUp::Buildup(int frame) {
 							// other factory then construct new one
 							// (but restrict the number of factories
 							// to one for the first 10 minutes)
-							if (ai->uh->AllUnitsByCat[CAT_FACTORY].size() < 1 || frame > 18000) {
+							if (ai->uh->AllUnitsByCat[CAT_FACTORY].size() < 1 || frame > 13500) {
 								BuildNow(econState.builderID, CAT_FACTORY, econState.factoryDef);
 							} else {
 								std::stringstream msg;

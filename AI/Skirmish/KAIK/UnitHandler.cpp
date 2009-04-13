@@ -939,7 +939,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 
 			std::stringstream msg;
 				msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
-				msg << "\tbuilder " << builderID << "not able to be added to CAT_FACTORY build-task\n";
+				msg << "\tbuilder " << builderID << " not able to be added to CAT_FACTORY build-task\n";
 				msg << "\tb1: " << b1 << ", b2: " << b2 << ", b3: " << b3;
 				msg << ", b4: " << b4 << ", b5: " << b5 << ", b6: " << b6;
 			L(ai, msg.str());
@@ -1309,7 +1309,7 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 			// of all involved parties, and silently expects that
 			// building _another_ factory would always be better
 			// than assisting it further
-			if (totalBuilderCost < (ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO * 3.0f)) {
+			if (totalBuilderCost < (ai->math->GetUnitCost(i->id) * BUILDERFACTORYCOSTRATIO * 2.5f)) {
 				builderTracker->factoryId = i->id;
 				i->supportbuilders.push_back(builderTracker->builderID);
 				i->supportBuilderTrackers.push_back(builderTracker);
