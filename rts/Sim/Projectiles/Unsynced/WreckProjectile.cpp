@@ -27,7 +27,7 @@ CR_REG_METADATA(CWreckProjectile,
 //////////////////////////////////////////////////////////////////////
 
 CWreckProjectile::CWreckProjectile(float3 pos,float3 speed,float temperature,CUnit* owner GML_PARG_C)
-: CProjectile(pos,speed,owner, false GML_PARG_P)
+: CProjectile(pos,speed,owner, false, false GML_PARG_P)
 {
 	checkCol=false;
 	drawRadius=2;
