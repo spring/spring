@@ -29,7 +29,7 @@ CR_REG_METADATA(CFlareProjectile,(
 				));
 
 CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame GML_PARG_C)
-:	CProjectile(pos,speed,owner, true GML_PARG_P),
+:	CProjectile(pos,speed,owner, true, false GML_PARG_P),
 	activateFrame(activateFrame),
 	deathFrame(activateFrame+(owner?owner->unitDef->flareTime:1)),
 	numSub(0),

@@ -60,7 +60,7 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 }
 
 CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int f, CUnit* owner, float radius GML_PARG_C):
-	CProjectile(pos, speed, owner, true GML_PARG_P),
+	CProjectile(pos, speed, owner, true, false GML_PARG_P),
 	dispList(piece? piece->displist: 0),
 	drawTrail(true),
 	oldSmoke(pos),

@@ -29,7 +29,7 @@ CExploSpikeProjectile::CExploSpikeProjectile()
 }
 
 CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner GML_PARG_C)
-:	CProjectile(pos,speed,owner, false GML_PARG_P),
+:	CProjectile(pos,speed,owner, false, false GML_PARG_P),
 	length(length),
 	width(width),
 	alpha(alpha),
