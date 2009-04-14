@@ -28,7 +28,7 @@ struct Command;
 class float3;
 class CUnit;
 class CGroup;
-class WeaponDef;
+struct WeaponDef;
 class SkirmishAIKey;
 class CSkirmishAIWrapper;
 class CGroupAIWrapper;

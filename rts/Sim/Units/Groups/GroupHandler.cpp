@@ -17,6 +17,7 @@
 #include "FileSystem/FileSystem.h"
 #include "SDL_keysym.h"
 #include "mmgr.h"
+#include <boost/cstdint.hpp>
 
 //CGroupHandler* grouphandler;
 std::vector<CGroupHandler*> grouphandlers;

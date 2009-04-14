@@ -6,7 +6,7 @@
 
 #include "Sim/Projectiles/Projectile.h"
 
-class AtlasedTexture;
+struct AtlasedTexture;
 
 class CSmokeTrailProjectile : public CProjectile
 {

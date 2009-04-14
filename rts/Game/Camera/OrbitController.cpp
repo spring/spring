@@ -9,6 +9,7 @@
 #include "Map/Ground.h"
 #include "LogOutput.h"
 #include "ConfigHandler.h"
+#include <boost/cstdint.hpp>
 
 extern boost::uint8_t* keys;
 

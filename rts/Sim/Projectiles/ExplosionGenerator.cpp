@@ -25,6 +25,7 @@
 #include <assert.h>
 #include "GlobalUnsynced.h"
 #include "Exceptions.h"
+#include <boost/cstdint.hpp>
 
 using std::min;
 using std::max;

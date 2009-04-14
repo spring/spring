@@ -10,6 +10,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
+#include <boost/cstdint.hpp>
 
 using std::max;
 using std::min;

@@ -30,7 +30,7 @@
 class CAICallback;
 struct SSkirmishAICallback;
 struct Command;
-struct float3;
+class float3;
 
 /**
  * Acts as an OO wrapper for a Skirmish AI instance.

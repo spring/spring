@@ -12,6 +12,7 @@
 #include "Map/Ground.h"
 #include "Game/UI/MouseHandler.h"
 #include "GlobalUnsynced.h"
+#include <boost/cstdint.hpp>
 
 extern boost::uint8_t *keys;
 

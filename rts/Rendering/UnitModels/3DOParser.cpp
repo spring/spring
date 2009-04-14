@@ -28,6 +28,7 @@
 #include "s3oParser.h"
 #include "Util.h"
 #include "Exceptions.h"
+#include <boost/cstdint.hpp>
 
 using namespace std;
 
