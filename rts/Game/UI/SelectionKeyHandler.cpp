@@ -20,6 +20,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "myMath.h"
+#include <boost/cstdint.hpp>
 
 CSelectionKeyHandler *selectionKeys;
 

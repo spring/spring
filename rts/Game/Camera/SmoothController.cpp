@@ -14,7 +14,7 @@
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
-
+#include <boost/cstdint.hpp>
 
 
 extern boost::uint8_t *keys;

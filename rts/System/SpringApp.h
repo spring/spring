@@ -2,7 +2,7 @@
 #define SPRING_APP
 
 #include <string>
-
+#include <boost/cstdint.hpp>
 
 class BaseCmd;
 class CGameController;

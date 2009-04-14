@@ -57,6 +57,7 @@
 #include "Util.h"
 #include "TimeProfiler.h"
 #include "TooltipConsole.h"
+#include <boost/cstdint.hpp>
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

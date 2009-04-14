@@ -20,6 +20,7 @@
 #include "FileSystem/FileSystem.h"
 #include "ConfigHandler.h"
 #include "StartScripts/ScriptHandler.h"
+#include <boost/cstdint.hpp>
 
 using std::string;
 

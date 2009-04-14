@@ -26,7 +26,7 @@
 #include <vector>
 
 class CResource;
-class UnitDef;
+struct UnitDef;
 
 class CResourceMapAnalyzer {
 	public:
