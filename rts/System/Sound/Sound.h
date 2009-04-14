@@ -82,6 +82,7 @@ private:
 	boost::shared_ptr<SoundBuffer> GetWaveBuffer(const std::string& path, bool hardFail = true);
 
 	float globalVolume;
+	bool mute;
 
 	typedef std::map<std::string, size_t> soundMapT;
 	typedef boost::ptr_vector<SoundItem> soundVecT;
@@ -95,9 +96,7 @@ private:
 
 	typedef boost::ptr_vector<SoundSource> sourceVecT;
 	sourceVecT sources;
-	std::set<unsigned int> repliesPlayed;
-	float unitReplyVolume;
-	bool mute;
+	
 	unsigned numEmptyPlayRequests;
 	unsigned updateCounter;
 

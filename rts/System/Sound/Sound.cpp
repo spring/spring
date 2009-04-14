@@ -63,7 +63,7 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 	mute = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
 	globalVolume = configHandler->Get("SoundVolume", 60) * 0.01f;
-	unitReplyVolume = configHandler->Get("UnitReplyVolume", 80 ) * 0.01f;
+	//unitReplyVolume = configHandler->Get("UnitReplyVolume", 80 ) * 0.01f;
 
 	if (maxSounds <= 0)
 	{
@@ -450,13 +450,11 @@ boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bo
 
 void CSound::NewFrame()
 {
-	GML_RECMUTEX_LOCK(sound); // NewFrame
-
-	repliesPlayed.clear();
+	//GML_RECMUTEX_LOCK(sound); // NewFrame
 }
 
 
 void CSound::SetUnitReplyVolume (float vol)
 {
-	unitReplyVolume = vol;
+	//dunitReplyVolume = vol;
 }
