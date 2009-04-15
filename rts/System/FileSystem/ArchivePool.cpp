@@ -33,6 +33,11 @@ CArchivePool::CArchivePool(const std::string& name):
 	isOpen(false)
 
 {
+	char c_name[255];
+	unsigned char c_md5[16];
+	unsigned char c_crc32[4];
+	unsigned char c_size[4];
+
 	gzFile in = gzopen (name.c_str(), "rb");
 	if (in == NULL) return;
 
@@ -45,11 +50,6 @@ CArchivePool::CArchivePool(const std::string& name):
 		int length = gzgetc(in);
 		if (length == -1) break;
 		
-		char c_name[256];
-		unsigned char c_md5[16];
-		unsigned char c_crc32[4];
-		unsigned char c_size[4];
-
 		if (!gz_really_read(in, &c_name, length)) break;
 		if (!gz_really_read(in, &c_md5, 16)) break;
 		if (!gz_really_read(in, &c_crc32, 4)) break;
@@ -142,4 +142,3 @@ int CArchivePool::FindFiles(int cur, std::string* name, int* size)
 		return cur + 1;
 	}
 }
-
