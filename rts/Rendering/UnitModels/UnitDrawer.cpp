@@ -450,7 +450,11 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 				glPushMatrix();
 				glTranslatef3(ti->second.pos);
 				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
-				LoadModel(ti->second.unitdef)->DrawStatic();
+
+				const UnitDef* udef = ti->second.unitdef;
+				S3DModel* model = udef->LoadModel();
+				
+				model->DrawStatic();
 				glPopMatrix();
 			}
 		}
@@ -866,7 +870,10 @@ void CUnitDrawer::DrawCloakedUnits(void)
 				glPushMatrix();
 				glTranslatef3(ti->second.pos);
 				glRotatef(ti->second.rotation * 180 / PI, 0, 1, 0);
-				S3DModel* model = LoadModel(ti->second.unitdef);
+
+				const UnitDef* udef = ti->second.unitdef;
+				S3DModel* model = udef->LoadModel();
+
 				model->DrawStatic();
 				glPopMatrix();
 			}
@@ -943,7 +950,7 @@ void CUnitDrawer::DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& cloakedUnits, std::
 			if (decoyDef == NULL) {
 				model = unit->model;
 			} else {
-				model = LoadModel(decoyDef);
+				model = decoyDef->LoadModel();
 			}
 			SetBasicTeamColour(unit->team);
 
@@ -1523,7 +1530,7 @@ void CUnitDrawer::DrawIndividual(CUnit* unit)
  */
 void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 pos, int facing)
 {
-	S3DModel* model = LoadModel(unitdef);
+	S3DModel* model = unitdef->LoadModel();
 
 	/* From SetupForGhostDrawing. */
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
@@ -1581,7 +1588,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 
 void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 {
-	S3DModel* model = LoadModel(unitDef);
+	S3DModel* model = unitDef->LoadModel();
 
 	glPushAttrib (GL_TEXTURE_BIT | GL_ENABLE_BIT);
 	glEnable(GL_TEXTURE_2D);
@@ -1621,6 +1628,18 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
+	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHT0);
+	glDisable(GL_LIGHT1);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_COLOR_MATERIAL);
+	glDisable(GL_BLEND);
+	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_FOG);
+	glDisable(GL_VERTEX_PROGRAM_ARB);
+	glDisable(GL_FRAGMENT_PROGRAM_ARB);
+
 	// draw the collision volume
 	if (gu->drawdebug) {
 		glPushMatrix();
@@ -1628,6 +1647,13 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 					  (unit->updir    * unit->relMidPos.y) +
 					  (unit->rightdir * unit->relMidPos.x));
 		GLUquadricObj* q = gluNewQuadric();
+
+		// draw the aimpoint
+		glColor3f(1.0f, 0.0f, 0.0f);
+		gluQuadricDrawStyle(q, GLU_FILL);
+		gluSphere(q, 2.0f, 20, 20);
+
+		glColor3f(0.0f, 0.0f, 0.0f);
 		gluQuadricDrawStyle(q, GLU_LINE);
 
 		CollisionVolume* vol = unit->collisionVolume;
@@ -1682,6 +1708,8 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 		gluDeleteQuadric(q);
 		glPopMatrix();
 	}
+
+	glPopAttrib();
 }
 
 

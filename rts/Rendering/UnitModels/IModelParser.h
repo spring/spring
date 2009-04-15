@@ -18,8 +18,8 @@ extern C3DModelParser* modelParser;
 class IModelParser
 {
 public:
-	virtual S3DModel* Load(std::string name) = 0;
-	virtual void Draw(S3DModelPiece* o) = 0;
+	virtual S3DModel* Load(std::string name, const float3& centerOffset) = 0;
+	virtual void Draw(const S3DModelPiece* o) const = 0;
 };
 
 
@@ -30,7 +30,7 @@ public:
 	~C3DModelParser(void);
 
 	void Update();
-	S3DModel* Load3DModel(std::string name);
+	S3DModel* Load3DModel(std::string name, const float3& centerOffset = ZeroVector);
 
 	void AddParser(const std::string ext, IModelParser* parser);
 

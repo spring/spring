@@ -754,17 +754,8 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.strafeToAttack = udTable.GetBool("strafeToAttack", false);
 
 
-	// aircraft collision sizes default to half their visual size, to
-	// make them less likely to collide or get hit by nontracking weapons
-	/*
-	const float defScale = ud.canfly ? 0.5f : 1.0f;
-	ud.collisionSphereScale = udTable.GetFloat("collisionSphereScale", defScale);
-	ud.collisionSphereOffset = udTable.GetFloat3("collisionSphereOffset", ZeroVector);
-	ud.useCSOffset = (ud.collisionSphereOffset != ZeroVector);
-	*/
+	ud.modelCenterOffset = udTable.GetFloat3("modelCenterOffset", ZeroVector);
 
-	// these take precedence over the old sphere tags and
-	// unit->radius (for unit <--> projectile interactions)
 	ud.collisionVolumeType = udTable.GetString("collisionVolumeType", "");
 	ud.collisionVolumeScales = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
 	ud.collisionVolumeOffsets = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
@@ -1134,16 +1125,23 @@ bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
 }
 
 
-UnitDef::~UnitDef()
-{
-	for (std::vector<CExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it)
+
+
+
+
+UnitDef::~UnitDef() {
+	for (std::vector<CExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it) {
 		delete *it;
+	}
 }
 
+S3DModel* UnitDef::LoadModel() const {
+	// not exactly kosher, but...
+	UnitDef* udef = const_cast<UnitDef*>(this);
 
-S3DModel* UnitDef::LoadModel()
-{
-	if (modelDef.model==NULL)
-		modelDef.model = modelParser->Load3DModel(modelDef.modelpath);
-	return modelDef.model;
+	if (udef->modelDef.model == NULL) {
+		udef->modelDef.model = modelParser->Load3DModel(udef->modelDef.modelpath, udef->modelCenterOffset);
+	}
+
+	return (udef->modelDef.model);
 }

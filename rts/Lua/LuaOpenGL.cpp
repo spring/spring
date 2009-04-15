@@ -3591,7 +3591,7 @@ static bool ParseUnitTexture(const string& texture)
 		if (ud == NULL) {
 			return false;
 		}
-		model = LoadModel(ud);
+		model = ud->LoadModel();
 	}
 
 	const unsigned int texType = model->textureType;
@@ -3903,7 +3903,7 @@ static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 	if (ud == NULL) {
 		return 0;
 	}
-	const S3DModel* model = LoadModel(ud);
+	const S3DModel* model = ud->LoadModel();
 	const unsigned int texType = model->textureType;
 	if (texType == 0) {
 		return 0;

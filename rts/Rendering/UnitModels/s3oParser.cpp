@@ -22,7 +22,7 @@
 #include "LogOutput.h"
 
 
-S3DModel* CS3OParser::Load(std::string name)
+S3DModel* CS3OParser::Load(std::string name, const float3& centerOffset)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {
@@ -32,10 +32,10 @@ S3DModel* CS3OParser::Load(std::string name)
 	unsigned char* fileBuf = new unsigned char[file.FileSize()];
 	file.Read(fileBuf, file.FileSize());
 	S3OHeader header;
-	memcpy(&header,fileBuf,sizeof(header));
+	memcpy(&header, fileBuf, sizeof(header));
 	header.swap();
 
-	S3DModel *model = new S3DModel;
+	S3DModel* model = new S3DModel;
 	model->type = MODELTYPE_S3O;
 	model->numobjects = 0;
 	model->name = name;
@@ -51,11 +51,12 @@ S3DModel* CS3OParser::Load(std::string name)
 	model->rootobject = rootPiece;
 	model->radius = header.radius;
 	model->height = header.height;
-	model->relMidPos.x = header.midx;
-	model->relMidPos.y = header.midy;
-	model->relMidPos.z = header.midz;
 
-	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f);
+	model->relMidPos.x = header.midx + centerOffset.x;
+	model->relMidPos.y = header.midy + centerOffset.y;
+	model->relMidPos.z = header.midz + centerOffset.z;
+
+	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
 
 	model->maxx = rootPiece->maxx;
 	model->maxy = rootPiece->maxy;
@@ -137,7 +138,7 @@ SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model
 	return piece;
 }
 
-void CS3OParser::FindMinMax(SS3OPiece* object)
+void CS3OParser::FindMinMax(SS3OPiece* object) const
 {
 	std::vector<S3DModelPiece*>::iterator si;
 
@@ -179,14 +180,14 @@ void CS3OParser::FindMinMax(SS3OPiece* object)
 	object->minz = minz;
 }
 
-void CS3OParser::Draw(S3DModelPiece* o)
+void CS3OParser::Draw(const S3DModelPiece* o) const
 {
 	if (o->isEmpty) {
 		return;
 	}
 
-	SS3OPiece* so = static_cast<SS3OPiece*>(o);
-	SS3OVertex* s3ov = static_cast<SS3OVertex*>(&so->vertices[0]);
+	const SS3OPiece* so = static_cast<const SS3OPiece*>(o);
+	const SS3OVertex* s3ov = static_cast<const SS3OVertex*>(&so->vertices[0]);
 
 
 	// pass the tangents as 3D texture coordinates
