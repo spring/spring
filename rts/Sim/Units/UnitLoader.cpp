@@ -318,7 +318,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->energyTickMake += ud->tidalGenerator * mapInfo->map.tidalStrength;
 
 
-	unit->model = LoadModel(ud);
+	unit->model = ud->LoadModel();
 	unit->SetRadius(unit->model->radius);
 
 	// copy the UnitDef volume archetype data

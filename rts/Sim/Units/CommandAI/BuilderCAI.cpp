@@ -273,7 +273,7 @@ float CBuilderCAI::GetUnitDefRadius(const UnitDef* ud, int cmdId)
 	if (cachedRadiusId == cmdId) {
 		radius = cachedRadius;
 	} else {
-		radius = LoadModel(ud)->radius;
+		radius = (ud->LoadModel())->radius;
 		cachedRadius = radius;
 		cachedRadiusId = cmdId;
 	}

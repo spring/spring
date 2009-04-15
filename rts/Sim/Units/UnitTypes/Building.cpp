@@ -47,7 +47,7 @@ CBuilding::~CBuilding()
 
 			const UnitDef* decoyDef = unitDef->decoyDef;
 			S3DModel* gbModel =
-				(decoyDef == NULL) ? model : LoadModel(decoyDef);
+				(decoyDef == NULL) ? model : decoyDef->LoadModel();
 
 			gb = new CUnitDrawer::GhostBuilding;
 			gb->pos    = pos;

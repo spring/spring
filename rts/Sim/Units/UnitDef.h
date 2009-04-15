@@ -91,7 +91,7 @@ struct UnitDef
 {
 	UnitDef() : valid(false) {}
 	~UnitDef();
-	S3DModel* LoadModel();
+	S3DModel* LoadModel() const;
 
 	bool valid;
 	std::string name;
@@ -196,14 +196,11 @@ struct UnitDef
 	float  flankingBonusMobilityAdd; // how much the ability of the flanking bonus direction to move builds up each frame
 
 	UnitModelDef modelDef;
-	/*
-	float collisionSphereScale;
-	float3 collisionSphereOffset;
-	bool useCSOffset;
-	*/
 
-	std::string scriptName;	// the name of the unit's script, e.g. "armjeth.cob"
-	std::string scriptPath;	// the path of the unit's script, e.g. "scripts/armjeth.cob"
+	std::string scriptName;		// the name of the unit's script, e.g. "armjeth.cob"
+	std::string scriptPath;		// the path of the unit's script, e.g. "scripts/armjeth.cob"
+
+	float3 modelCenterOffset;	// offset from the unit model's default center point
 
 	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
 	float3 collisionVolumeScales;		// the collision volume's full axis lengths
@@ -438,13 +435,5 @@ struct BuildInfo
 	float3 pos;
 	int buildFacing;
 };
-
-
-//not very sweet, but still better than replacing "const UnitDef" _everywhere_
-inline S3DModel* LoadModel(const UnitDef* udef)
-{
-	return const_cast<UnitDef*>(udef)->LoadModel();
-}
-
 
 #endif /* UNITDEF_H */

@@ -570,12 +570,12 @@ TYPE_STRING_FUNC(GroundUnit);
 TYPE_STRING_FUNC(MetalExtractor);
 
 
-#define TYPE_MODEL_FUNC(name, param)              \
-	static int name(lua_State* L, const void* data) \
-	{                                               \
-		const UnitDef* ud = ((const UnitDef*)data);  \
-		const S3DModel* model = LoadModel(ud);     \
-		lua_pushnumber(L, model -> param);            \
+#define TYPE_MODEL_FUNC(name, param)                  \
+	static int name(lua_State* L, const void* data)   \
+	{                                                 \
+		const UnitDef* ud = ((const UnitDef*) data);  \
+		const S3DModel* model = ud->LoadModel();      \
+		lua_pushnumber(L, model->param);              \
 		return 1;                                     \
 	}
 

@@ -75,16 +75,16 @@ class C3DOParser : public IModelParser
 public:
 	C3DOParser();
 
-	S3DModel* Load(std::string name);
-	void Draw(S3DModelPiece *o);
+	S3DModel* Load(std::string name, const float3& centerOffset);
+	void Draw(const S3DModelPiece *o) const;
 
 private:
-	void FindCenter(S3DOPiece* object);
-	float FindRadius(S3DOPiece* object,float3 offset);
-	float FindHeight(S3DOPiece* object,float3 offset);
-	void CalcNormals(S3DOPiece* o);
+	void FindCenter(S3DOPiece* object) const;
+	float FindRadius(const S3DOPiece* object, float3 offset) const;
+	float FindHeight(const S3DOPiece* object, float3 offset) const;
+	void CalcNormals(S3DOPiece* o) const;
 
-	void GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,int excludePrim);
+	void GetPrimitives(S3DOPiece* obj, int pos, int num, vertex_vector* vv, int excludePrim);
 	void GetVertexes(_3DObject* o,S3DOPiece* object);
 	std::string GetText(int pos);
 	S3DOPiece* ReadChild(int pos,S3DOPiece* root, int *numobj);

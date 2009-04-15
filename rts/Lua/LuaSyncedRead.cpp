@@ -3025,7 +3025,7 @@ int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 	if (ud == NULL) {
 		return 0;
 	}
-	const S3DModel* model = LoadModel(ud);
+	const S3DModel* model = ud->LoadModel();
 	if (model == NULL) {
 		return 0;
 	}

@@ -296,7 +296,7 @@ static GLuint ParseUnitTexture(const string& texture)
 		if (ud == NULL) {
 			return 0;
 		}
-		model = LoadModel(ud);
+		model = ud->LoadModel();
 	}
 
 	const unsigned int texType = model->textureType;

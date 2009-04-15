@@ -2225,7 +2225,7 @@ void CUnit::PostLoad()
 
 	yardMap = unitDef->yardmaps[buildFacing];
 
-	model = LoadModel(unitDef);
+	model = unitDef->LoadModel();
 	SetRadius(model->radius);
 
 	modelParser->CreateLocalModel(this);
