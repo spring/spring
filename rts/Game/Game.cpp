@@ -3383,9 +3383,6 @@ void CGame::ClientReadNet()
 				playerHandler->Player(player)->name=(char*)(&inbuf[3]);
 				playerHandler->Player(player)->readyToStart=true;
 				playerHandler->Player(player)->active=true;
-				if (net->GetDemoRecorder()) {
-					net->GetDemoRecorder()->SetMaxPlayerNum(inbuf[2]);
-				}
 				wordCompletion->AddWord(playerHandler->Player(player)->name, false, false, false); // required?
 				AddTraffic(player, packetCode, dataLength);
 				break;
