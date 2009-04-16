@@ -26,6 +26,7 @@ else (UNIX AND NOT MINGW)
 	endif (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
 	include_directories(${MINGWLIBS}/include)
 	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
+	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
 	
 	# some cross-compile fixes
 	set (CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
