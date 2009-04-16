@@ -701,28 +701,28 @@ struct gmlQueue {
 	GLint VPsize;
 	GLenum VPtype;
 	GLsizei VPstride;
-	GLvoid *VPpointer;
+	const GLvoid *VPpointer;
 	// ColorPointer
 	GLint CPsize;
 	GLenum CPtype;
 	GLsizei CPstride;
-	GLvoid *CPpointer;
+	const GLvoid *CPpointer;
 	// EdgeFlagPointer
 	GLsizei EFPstride;
-	GLboolean *EFPpointer;
+	const GLboolean *EFPpointer;
 	// IndexPointer
 	GLenum IPtype;
 	GLsizei IPstride;
-	GLvoid *IPpointer;
+	const GLvoid *IPpointer;
 	// NormalPointer
 	GLenum NPtype;
 	GLsizei NPstride;
-	GLvoid *NPpointer;
+	const GLvoid *NPpointer;
 	// TexCoordPointer
 	GLint TCPsize;
 	GLenum TCPtype;
 	GLsizei TCPstride;
-	GLvoid *TCPpointer;
+	const GLvoid *TCPpointer;
 
 	GLuint ArrayBuffer;
 	GLuint ElementArrayBuffer;
