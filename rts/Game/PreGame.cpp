@@ -286,10 +286,21 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			tgame->AddPair("Demofile", demoName);
 
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
-			char section[50];
-			sprintf(section, "PLAYER%i", MAX_PLAYERS-1);
-			string s(section);
-			TdfParser::TdfSection* me = tgame->construct_subsection(s);
+			int myPlayerNum;
+			string playerStr;
+			for (myPlayerNum = MAX_PLAYERS-1; myPlayerNum > 0; --myPlayerNum)
+			{
+				char section[50];
+				sprintf(section, "GAME\\PLAYER%i", myPlayerNum);
+				string s(section);
+				if (script.SectionExist(s))
+				{
+					++myPlayerNum;
+					playerStr = std::string(&section[5]);
+					break;
+				}
+			}
+			TdfParser::TdfSection* me = tgame->construct_subsection(playerStr);
 			me->AddPair("name", settings->myPlayerName);
 			me->AddPair("spectator", 1);
 
