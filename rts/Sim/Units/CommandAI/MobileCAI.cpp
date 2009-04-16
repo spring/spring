@@ -495,7 +495,11 @@ void CMobileCAI::ExecuteLoadUnits(Command &c) {
 void CMobileCAI::ExecutePatrol(Command &c)
 {
 	assert(owner->unitDef->canPatrol);
-	assert(c.params.size() >= 3);
+	if (c.params.size() < 3) {
+		logOutput.Print("Error: got patrol cmd with less than 3 params on %s in MobileCAI",
+			owner->unitDef->humanName.c_str());
+		return;
+	}
 	Command temp;
 	temp.id = CMD_FIGHT;
 	temp.params.push_back(c.params[0]);
@@ -538,8 +542,8 @@ void CMobileCAI::ExecuteFight(Command &c)
 		inCommand = true;
 		tempOrder = false;
 	}
-	if(c.params.size()<3){		//this shouldnt happen but anyway ...
-		logOutput.Print("Error: got fight cmd with less than 3 params on %s in mobilecai",
+	if (c.params.size() < 3) {
+		logOutput.Print("Error: got fight cmd with less than 3 params on %s in MobileCAI",
 			owner->unitDef->humanName.c_str());
 		return;
 	}
