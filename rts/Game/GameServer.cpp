@@ -209,8 +209,6 @@ CGameServer::~CGameServer()
 	thread->join();
 	delete thread;
 #ifdef DEDICATED
-	demoRecorder->SetMaxPlayerNum(players.size());
-
 	// TODO: move this to a method in CTeamHandler
 	// Figure out who won the game.
 	int numTeams = setup->numTeams;
@@ -1431,21 +1429,10 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 {
 	size_t hisNewNumber = players.size();
 
-	unsigned startnum;
-	if (demoReader)
-		 startnum = (unsigned)demoReader->GetFileHeader().maxPlayerNum+1;
-	else
-		startnum = 0;
-
-	for (unsigned i = startnum; i < players.size(); ++i)
+	for (unsigned i = 0; i < players.size(); ++i)
 	{
-		if (name == players[i].name)
+		if (!players[i].isFromDemo && name == players[i].name)
 		{
-			if (players[i].isFromDemo)
-			{
-				Message(str(format("Player %s (%i) is from demo") %name %i));
-				name += "_";
-			}
 			if (players[i].myState == GameParticipant::UNCONNECTED || players[i].myState == GameParticipant::DISCONNECTED)
 			{
 				hisNewNumber = i;
@@ -1456,6 +1443,11 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 				Message(str(format("Player %s is already ingame") %name));
 				name += "_";
 			}
+		}
+		else if (players[i].isFromDemo)
+		{
+			Message(str(format("Player %s (%i) duplicated in the demo") %name %i));
+			name += "_";
 		}
 	}
 
