@@ -296,7 +296,8 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 				if (script.SectionExist(s))
 				{
 					++myPlayerNum;
-					playerStr = std::string(&section[5]);
+					sprintf(section, "PLAYER%i", myPlayerNum);
+					playerStr = std::string(section);
 					break;
 				}
 			}
