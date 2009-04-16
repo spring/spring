@@ -87,10 +87,10 @@ CLuaGaia::CLuaGaia()
 	teamsLocked = true;
 
 	fullCtrl = false;
-	fullRead = false;
+	fullRead = true;
 	ctrlTeam = teamHandler->GaiaTeamID();
-	readTeam = teamHandler->GaiaTeamID();
-	readAllyTeam = teamHandler->GaiaAllyTeamID();
+	readTeam = AllAccessTeam;
+	readAllyTeam = AllAccessTeam;
 	selectTeam = teamHandler->GaiaTeamID();
 
 	Init(LuaGaiaSyncedFilename, LuaGaiaUnsyncedFilename, SPRING_VFS_MAP);
