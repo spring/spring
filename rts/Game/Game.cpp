@@ -1537,9 +1537,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "screenshot") {
-		const char* ext = "jpg";
-		if (action.extra == "png") {
-			ext = "png";
+		const char* ext = "png";
+		if (action.extra == "jpg") {
+			ext = "jpg";
 		}
 
 		if (filesystem.CreateDirectory("screenshots")) {
