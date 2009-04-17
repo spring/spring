@@ -42,10 +42,10 @@ struct FeatureDef
 	/// used to see if the object can be overrun
 	float mass;
 
-	std::string collisionVolumeType;  /// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
-	float3 collisionVolumeScales;     /// the collision volume's full axis lengths
-	float3 collisionVolumeOffsets;    /// relative to the feature's center position
-	int collisionVolumeTest;          /// 0: discrete, 1: continuous
+	std::string collisionVolumeTypeStr;  // can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
+	float3 collisionVolumeScales;        // the collision volume's full axis lengths
+	float3 collisionVolumeOffsets;       // relative to the feature's center position
+	int collisionVolumeTest;             // 0: discrete, 1: continuous
 
 	bool upright;
 	int drawType;

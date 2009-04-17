@@ -202,10 +202,11 @@ struct UnitDef
 
 	float3 modelCenterOffset;	// offset from the unit model's default center point
 
-	std::string collisionVolumeType;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
+	std::string collisionVolumeTypeStr;	// can be "Ell", "CylT" (where T is one of "XYZ"), or "Box"
 	float3 collisionVolumeScales;		// the collision volume's full axis lengths
 	float3 collisionVolumeOffsets;		// relative to the unit's center position
 	int collisionVolumeTest;			// 0: discrete, 1: continuous
+	bool usePieceCollisionVolumes;		// if true, collisions are checked per-piece
 
 
 	struct UnitDefWeapon {

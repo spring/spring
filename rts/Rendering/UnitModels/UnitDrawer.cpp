@@ -1626,91 +1626,130 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 }
 
 
+
+void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q) {
+	switch (vol->GetVolumeType()) {
+		case COLVOL_TYPE_FOOTPRINT:
+			// fall through, this is too hard to render correctly so just render sphere :)
+		case COLVOL_TYPE_SPHERE:
+			// fall through, sphere is special case of ellipsoid
+		case COLVOL_TYPE_ELLIPSOID: {
+			// scaled sphere: radius, slices, stacks
+			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+			glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
+			gluSphere(q, 1.0f, 20, 20);
+		} break;
+		case COLVOL_TYPE_CYLINDER: {
+			// scaled cylinder: base-radius, top-radius, height, slices, stacks
+			//
+			// (cylinder base is drawn at unit center by default so add offset
+			// by half major axis to visually match the mathematical situation,
+			// height of the cylinder equals the unit's full major axis)
+			switch (vol->GetPrimaryAxis()) {
+				case COLVOL_AXIS_X: {
+					glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
+					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+					glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
+					glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
+				} break;
+				case COLVOL_AXIS_Y: {
+					glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
+					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+					glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
+					glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
+				} break;
+				case COLVOL_AXIS_Z: {
+					glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
+					glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+					glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
+				} break;
+			}
+
+			gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
+		} break;
+		case COLVOL_TYPE_BOX: {
+			// scaled cube: length, width, height
+			glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
+			glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
+			gluMyCube(1.0f);
+		} break;
+	}
+}
+
+void DrawUnitDebugPieceTree(const LocalModelPiece* p, CMatrix44f mat, GLUquadricObj* q) {
+	mat.Translate(p->pos.x, p->pos.y, p->pos.z);
+	mat.RotateY(-p->rot[1]);
+	mat.RotateX(-p->rot[0]);
+	mat.RotateZ( p->rot[2]);
+
+	const S3DModelPiece* op = p->original;
+	const CollisionVolume* vol = op->colvol;
+
+	glPushMatrix();
+		glMultMatrixf(mat.m);
+
+		if (p->visible) {
+			DrawCollisionVolume(vol, q);
+		}
+	glPopMatrix();
+
+	for (unsigned int i = 0; i < p->childs.size(); i++) {
+		DrawUnitDebugPieceTree(p->childs[i], mat, q);
+	}
+}
+
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
-	glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_LIGHT0);
-	glDisable(GL_LIGHT1);
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_COLOR_MATERIAL);
-	glDisable(GL_BLEND);
-	glDisable(GL_ALPHA_TEST);
-	glDisable(GL_FOG);
-	glDisable(GL_VERTEX_PROGRAM_ARB);
-	glDisable(GL_FRAGMENT_PROGRAM_ARB);
-
-	// draw the collision volume
 	if (gu->drawdebug) {
+		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+		glDisable(GL_LIGHTING);
+		glDisable(GL_LIGHT0);
+		glDisable(GL_LIGHT1);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_COLOR_MATERIAL);
+		glDisable(GL_BLEND);
+		glDisable(GL_ALPHA_TEST);
+		glDisable(GL_FOG);
+		glDisable(GL_VERTEX_PROGRAM_ARB);
+		glDisable(GL_FRAGMENT_PROGRAM_ARB);
+
+		const float3 midPosOffset =
+				(unit->frontdir * unit->relMidPos.z) +
+				(unit->updir    * unit->relMidPos.y) +
+				(unit->rightdir * unit->relMidPos.x);
+
 		glPushMatrix();
-		glTranslatef3((unit->frontdir * unit->relMidPos.z) +
-					  (unit->updir    * unit->relMidPos.y) +
-					  (unit->rightdir * unit->relMidPos.x));
-		GLUquadricObj* q = gluNewQuadric();
+			glTranslatef3(midPosOffset);
 
-		// draw the aimpoint
-		glColor3f(1.0f, 0.0f, 0.0f);
-		gluQuadricDrawStyle(q, GLU_FILL);
-		gluSphere(q, 2.0f, 20, 20);
+			GLUquadricObj* q = gluNewQuadric();
 
-		glColor3f(0.0f, 0.0f, 0.0f);
-		gluQuadricDrawStyle(q, GLU_LINE);
+			LocalModelPiece* rootPiece    = unit->localmodel->pieces[0];
+			CollisionVolume* rootPieceVol = rootPiece->original->colvol;
 
-		CollisionVolume* vol = unit->collisionVolume;
+			// draw the aimpoint
+			glColor3f(1.0f, 0.0f, 0.0f);
+			gluQuadricDrawStyle(q, GLU_FILL);
+			gluSphere(q, 2.0f, 20, 20);
 
-		switch (vol->GetVolumeType()) {
-			case COLVOL_TYPE_FOOTPRINT:
-				// fall through, this is too hard to render correctly so just render sphere :)
-			case COLVOL_TYPE_SPHERE:
-				// fall through, sphere is special case of ellipsoid
-			case COLVOL_TYPE_ELLIPSOID: {
-				// scaled sphere: radius, slices, stacks
-				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-				glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetHScale(2));
-				gluSphere(q, 1.0f, 20, 20);
-			} break;
-			case COLVOL_TYPE_CYLINDER: {
-				// scaled cylinder: base-radius, top-radius, height, slices, stacks
-				//
-				// (cylinder base is drawn at unit center by default so add offset
-				// by half major axis to visually match the mathematical situation,
-				// height of the cylinder equals the unit's full major axis)
-				switch (vol->GetPrimaryAxis()) {
-					case COLVOL_AXIS_X: {
-						glTranslatef(-(vol->GetHScale(0)), 0.0f, 0.0f);
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetScale(0), vol->GetHScale(1), vol->GetHScale(2));
-						glRotatef( 90.0f, 0.0f, 1.0f, 0.0f);
-					} break;
-					case COLVOL_AXIS_Y: {
-						glTranslatef(0.0f, -(vol->GetHScale(1)), 0.0f);
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetHScale(0), vol->GetScale(1), vol->GetHScale(2));
-						glRotatef(-90.0f, 1.0f, 0.0f, 0.0f);
-					} break;
-					case COLVOL_AXIS_Z: {
-						glTranslatef(0.0f, 0.0f, -(vol->GetHScale(2)));
-						glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-						glScalef(vol->GetHScale(0), vol->GetHScale(1), vol->GetScale(2));
-					} break;
-				}
+			glColor3f(0.0f, 0.0f, 0.0f);
+			gluQuadricDrawStyle(q, GLU_LINE);
 
-				gluCylinder(q, 1.0f, 1.0f, 1.0f, 20, 20);
-			} break;
-			case COLVOL_TYPE_BOX: {
-				// scaled cube: length, width, height
-				glTranslatef(vol->GetOffset(0), vol->GetOffset(1), vol->GetOffset(2));
-				glScalef(vol->GetScale(0), vol->GetScale(1), vol->GetScale(2));
-				gluMyCube(1.0f);
-			} break;
-		}
+			if (!rootPieceVol->IsDisabled()) {
+				// draw only the piece volumes for less clutter
+				CMatrix44f mat(-midPosOffset);
+				DrawUnitDebugPieceTree(rootPiece, mat, q);
+			} else {
+				DrawCollisionVolume(unit->collisionVolume, q);
+			}
 
-		gluDeleteQuadric(q);
+			gluDeleteQuadric(q);
 		glPopMatrix();
-	}
 
-	glPopAttrib();
+		glPopAttrib();
+	}
 }
+
 
 
 void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)

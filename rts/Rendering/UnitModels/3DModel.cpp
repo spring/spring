@@ -21,10 +21,11 @@
 void S3DModelPiece::DrawStatic() const
 {
 	glPushMatrix();
-	glTranslatef(offset.x,offset.y,offset.z);
+	glTranslatef(offset.x, offset.y, offset.z);
 	glCallList(displist);
-	for(std::vector<S3DModelPiece*>::const_iterator ci=childs.begin(); ci!=childs.end(); ci++)
+	for (std::vector<S3DModelPiece*>::const_iterator ci = childs.begin(); ci != childs.end(); ci++) {
 		(*ci)->DrawStatic();
+	}
 	glPopMatrix();
 }
 
@@ -43,7 +44,8 @@ S3DModelPiece::~S3DModelPiece()
 
 LocalModel::~LocalModel()
 {
-	for(std::vector<LocalModelPiece*>::iterator pi=pieces.begin();pi!=pieces.end();pi++){
+	// delete the local piece copies
+	for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); pi++) {
 		delete *pi;
 	}
 	pieces.clear();

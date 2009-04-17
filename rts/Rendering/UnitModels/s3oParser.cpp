@@ -13,6 +13,7 @@
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "s3o.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Platform/byteorder.h"
@@ -138,11 +139,11 @@ SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model
 	return piece;
 }
 
-void CS3OParser::FindMinMax(SS3OPiece* object) const
+void CS3OParser::FindMinMax(SS3OPiece* o) const
 {
 	std::vector<S3DModelPiece*>::iterator si;
 
-	for (si = object->childs.begin(); si != object->childs.end(); ++si) {
+	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
 		FindMinMax(static_cast<SS3OPiece*>(*si));
 	}
 
@@ -151,7 +152,7 @@ void CS3OParser::FindMinMax(SS3OPiece* object) const
 
 	std::vector<SS3OVertex>::iterator vi;
 
-	for (vi = object->vertices.begin(); vi != object->vertices.end(); ++vi) {
+	for (vi = o->vertices.begin(); vi != o->vertices.end(); ++vi) {
 		maxx = std::max(maxx, vi->pos.x);
 		maxy = std::max(maxy, vi->pos.y);
 		maxz = std::max(maxz, vi->pos.z);
@@ -161,7 +162,7 @@ void CS3OParser::FindMinMax(SS3OPiece* object) const
 		minz = std::min(minz, vi->pos.z);
 	}
 
-	for (si = object->childs.begin(); si != object->childs.end(); ++si) {
+	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
 		maxx = std::max(maxx, (*si)->offset.x + (*si)->maxx);
 		maxy = std::max(maxy, (*si)->offset.y + (*si)->maxy);
 		maxz = std::max(maxz, (*si)->offset.z + (*si)->maxz);
@@ -171,13 +172,19 @@ void CS3OParser::FindMinMax(SS3OPiece* object) const
 		minz = std::min(minz, (*si)->offset.z + (*si)->minz);
 	}
 
-	object->maxx = maxx;
-	object->maxy = maxy;
-	object->maxz = maxz;
+	o->maxx = maxx;
+	o->maxy = maxy;
+	o->maxz = maxz;
 
-	object->minx = minx;
-	object->miny = miny;
-	object->minz = minz;
+	o->minx = minx;
+	o->miny = miny;
+	o->minz = minz;
+
+	const float3 cvScales((o->maxx - o->minx),        (o->maxy - o->miny),        (o->maxz - o->minz)       );
+	const float3 cvOffset((o->maxx + o->minx) * 0.5f, (o->maxy + o->miny) * 0.5f, (o->maxz + o->minz) * 0.5f);
+
+	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
+	o->colvol->Disable();
 }
 
 void CS3OParser::Draw(const S3DModelPiece* o) const

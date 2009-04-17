@@ -321,26 +321,27 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	unit->model = ud->LoadModel();
 	unit->SetRadius(unit->model->radius);
 
-	// copy the UnitDef volume archetype data
-	unit->collisionVolume = new CollisionVolume(ud->collisionVolume);
+	modelParser->CreateLocalModel(unit);
 
-	// if no "collisionVolumeScales" tag was defined in UnitDef,
-	// the default scale for this volume will be a ZeroVector
-	if (unit->collisionVolume->GetScale(COLVOL_AXIS_X) <= 1.0f &&
-		unit->collisionVolume->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
-		unit->collisionVolume->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
-		// aircraft still get half-size spheres for coldet purposes
-		// if no custom volume is defined (unit->model->radius and
-		// unit->radius themselves are no longer altered)
-		const float scaleFactor = (ud->canfly)? 0.5f: 1.0f;
-		unit->collisionVolume->SetDefaultScale(unit->model->radius * scaleFactor);
 
-		if (unit->collisionVolume->GetBoundingRadius() <= 30.0f) {
-			// the interval-based method fails too easily for units
-			// with small default volumes, force use of raytracing
-			unit->collisionVolume->SetTestType(COLVOL_TEST_CONT);
-		}
+	// copy the UnitDef volume instance
+	//
+	// aircraft still get half-size spheres for coldet purposes
+	// iif no custom volume is defined (unit->model->radius and
+	// unit->radius themselves are no longer altered)
+	unit->collisionVolume = new CollisionVolume(ud->collisionVolume, unit->model->radius * ((ud->canfly)? 0.5f: 1.0f));
+
+	if (unit->model->radius <= 60.0f) {
+		// the interval-based method fails too easily for units
+		// with small default volumes, force use of raytracing
+		unit->collisionVolume->SetTestType(COLVOL_TEST_CONT);
 	}
+
+	if (ud->usePieceCollisionVolumes) {
+		// enable the root piece volume
+		((unit->localmodel->pieces[0])->original)->colvol->Enable();
+	}
+
 
 	if (ud->floater) {
 		// restrict our depth to our waterline
@@ -349,7 +350,6 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 	}
 
-	modelParser->CreateLocalModel(unit);
 	unit->cob = new CCobInstance(GCobEngine.GetCobFile(ud->scriptPath), unit);
 
 	unit->weapons.reserve(ud->weapons.size());

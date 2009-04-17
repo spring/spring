@@ -8,6 +8,7 @@
 #include "3DModel.h"
 #include "3DOParser.h"
 #include "s3oParser.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FartextureHandler.h"
 #include "Util.h"
@@ -34,7 +35,7 @@ C3DModelParser::C3DModelParser(void)
 
 C3DModelParser::~C3DModelParser(void)
 {
-	// model cache
+	// delete model cache
 	std::map<std::string, S3DModel*>::iterator ci;
 	for (ci = cache.begin(); ci != cache.end(); ++ci) {
 		DeleteChilds(ci->second->rootobject);
@@ -42,7 +43,7 @@ C3DModelParser::~C3DModelParser(void)
 	}
 	cache.clear();
 
-	// parsers
+	// delete parsers
 	std::map<std::string, IModelParser*>::iterator pi;
 	for (pi = parsers.begin(); pi != parsers.end(); ++pi) {
 		delete pi->second;
@@ -115,7 +116,8 @@ void C3DModelParser::Update() {
 void C3DModelParser::DeleteChilds(S3DModelPiece* o)
 {
 	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); di++) {
-		delete *di;
+		delete (*di)->colvol;
+		delete (*di);
 	}
 	o->childs.clear();
 	delete o;
