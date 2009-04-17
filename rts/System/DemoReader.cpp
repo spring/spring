@@ -6,7 +6,6 @@
 #include <assert.h>
 #include "mmgr.h"
 
-#include "Game/GameSetup.h"
 #include "Net/RawPacket.h"
 #include "Game/GameVersion.h"
 #include "FileSystem/FileHandler.h"

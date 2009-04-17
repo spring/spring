@@ -312,6 +312,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			TdfParser::TdfSection* me = tgame->construct_subsection(playerStr);
 			me->AddPair("name", settings->myPlayerName);
 			me->AddPair("spectator", 1);
+			tgame->AddPair("myplayername", settings->myPlayerName);
 
 			TdfParser::TdfSection* modopts = tgame->construct_subsection("MODOPTIONS");
 			modopts->AddPair("MaxSpeed", 20);
@@ -327,7 +328,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			}
 			logOutput.Print("Starting GameServer");
 			good_fpu_control_registers("before CGameServer creation");
-			//LogObject() << buf.str() << "\n\n";
 			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 			good_fpu_control_registers("after CGameServer creation");
