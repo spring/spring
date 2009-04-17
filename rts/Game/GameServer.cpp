@@ -1444,7 +1444,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 				name += "_";
 			}
 		}
-		else if (players[i].isFromDemo)
+		else if (name == players[i].name)
 		{
 			Message(str(format("Player %s (%i) duplicated in the demo") %name %i));
 			name += "_";
