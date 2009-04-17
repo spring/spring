@@ -43,13 +43,13 @@ protected:
 	CUnit *unit;
 	const std::vector<int>& scriptIndex;
 
+	void MapScriptToModelPieces(LocalModel* lmodel);
 	void UnblockAll(struct AnimInfo * anim);
 
 public:
 	std::vector<LocalModelPiece*> pieces;
-	void MapScriptToModelPieces(LocalModel* lmodel);
 
-	inline LocalModelPiece* GetLocalModelPiece(int scriptnum) const {
+	LocalModelPiece* GetLocalModelPiece(int scriptnum) const {
 		if (scriptnum >= 0 && (size_t)scriptnum < pieces.size()) {
 			return pieces[scriptnum];
 		}else{
@@ -57,7 +57,7 @@ public:
 		}
 	};
 
-	inline int ScriptToModel(int scriptnum) const {
+	int ScriptToModel(int scriptnum) const {
 		LocalModelPiece* p = GetLocalModelPiece(scriptnum);
 
 		if (p == NULL) return -1;
@@ -70,12 +70,12 @@ public:
 		return -1;
 	};
 
-	inline bool PieceExists(int scriptnum) const {
+	bool PieceExists(int scriptnum) const {
 		return GetLocalModelPiece(scriptnum) != NULL;
 	};
 
 #define SCRIPT_TO_LOCALPIECE_FUNC(x,y,z,w) \
-	inline x y(int scriptnum) const { \
+	x y(int scriptnum) const { \
 		LocalModelPiece* p = GetLocalModelPiece(scriptnum); \
 		if (p != NULL) return p->z(); \
 		return w; \
@@ -86,7 +86,7 @@ public:
 	SCRIPT_TO_LOCALPIECE_FUNC(float3,     GetPieceDirection, GetDirection, float3(1.0f,1.0f,1.0f))
 	//SCRIPT_TO_LOCALPIECE_FUNC(int,        GetPieceVertCount, GetVertCount, 0)
 
-	inline bool GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const {
+	bool GetEmitDirPos(int scriptnum, float3 &pos, float3 &dir) const {
 		LocalModelPiece* p = GetLocalModelPiece(scriptnum);
 		if (p != NULL) {
 			return p->GetEmitDirPos(pos, dir);
