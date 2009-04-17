@@ -130,6 +130,20 @@ std::string FileSystemHandler::GetWriteDir() const
 }
 
 /**
+ * Removes "./" or ".\" from the start of a path string.
+ */
+static std::string RemoveLocalPathPrefix(const std::string& path)
+{
+	std::string p(path);
+
+	if (p.length() >= 2 && p[0] == '.' && (p[1] == '/' || p[1] == '\\')) {
+	    p.erase(0, 2);
+	}
+
+	return p;
+}
+
+/**
  * @brief find files
  * @param dir path in which to start looking (tried relative to each data directory)
  * @param pattern pattern to search for
@@ -150,9 +164,11 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 		return matches;
 	}
 
+	std::string dir2 = RemoveLocalPathPrefix(dir);
+
 	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
 	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
-		FindFilesSingleDir(matches, d->path + dir, pattern, flags);
+		FindFilesSingleDir(matches, d->path + dir2, pattern, flags);
 	}
 	return matches;
 }
@@ -748,7 +764,7 @@ std::vector<std::string> FileSystem::FindDirsInDirectSubDirs(
 	static const std::string pattern = "*";
 
 	// list of all occurences of the relative path in the data directories
-	std::vector<std::string> rootDirs = filesystem.LocateDirs(relPath);
+	std::vector<std::string> rootDirs = LocateDirs(relPath);
 
 	// list of subdirs in all occurences of the relative path in the data directories
 	std::vector<std::string> mainDirs;
