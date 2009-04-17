@@ -223,7 +223,7 @@ bool CFileHandler::LoadStringData(string& data)
 	Read(buf, filesize);
 	data.append(buf, filesize);
 	delete[] buf;
-	return true;	
+	return true;
 }
 
 
@@ -276,7 +276,7 @@ vector<string> CFileHandler::DirList(const string& path,
 	for (it = fileSet.begin(); it != fileSet.end(); ++it) {
 		fileVec.push_back(*it);
 	}
-	return fileVec;	
+	return fileVec;
 }
 
 
