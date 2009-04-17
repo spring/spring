@@ -150,6 +150,7 @@ S3DModel* C3DOParser::Load(string name, const float3& centerOffset)
 	FindCenter(rootobj);
 
 	rootobj->radius = FindRadius(rootobj, -rootobj->relMidPos);
+	rootobj->colvol->Disable();
 
 	rootobj->relMidPos.x = 0; // ?
 	rootobj->relMidPos.z = 0; // ?
@@ -479,7 +480,7 @@ void C3DOParser::FindCenter(S3DOPiece* o) const
 	const float3 cvOffset((o->maxx + o->minx) * 0.5f, (o->maxy + o->miny) * 0.5f, (o->maxz + o->minz) * 0.5f);
 
 	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
-	o->colvol->Disable();
+	o->colvol->Enable();
 
 	o->relMidPos = cvOffset;
 

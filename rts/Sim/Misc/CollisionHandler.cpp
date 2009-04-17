@@ -28,7 +28,10 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 {
 	bool r = false;
 
-	if (!(((u->localmodel->pieces[0])->original)->colvol->IsDisabled())) {
+	LocalModelPiece* rootPiece    = u->localmodel->pieces[0];
+	CollisionVolume* rootPieceVol = rootPiece->original->colvol;
+
+	if (!rootPieceVol->IsDisabled()) {
 		// if the model's root piece coldet volume is enabled,
 		// test only for ray intersections with the piece tree
 		return (CCollisionHandler::IntersectPieceTree(u, p0, p1, q));
@@ -230,7 +233,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 
 	mat.Translate(offset.x, offset.y, offset.z);
 
-	if (lmp->visible) {
+	if (lmp->visible && !vol->IsDisabled()) {
 		CMatrix44f matInv = mat.Invert();
 		const float3 pi0 = matInv.Mul(p0);
 		const float3 pi1 = matInv.Mul(p1);
