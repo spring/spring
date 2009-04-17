@@ -756,18 +756,25 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.modelCenterOffset = udTable.GetFloat3("modelCenterOffset", ZeroVector);
 
-	ud.collisionVolumeType = udTable.GetString("collisionVolumeType", "");
-	ud.collisionVolumeScales = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
-	ud.collisionVolumeOffsets = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
-	ud.collisionVolumeTest = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC);
+	ud.collisionVolumeTypeStr   = udTable.GetString("collisionVolumeType", "");
+	ud.collisionVolumeScales    = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
+	ud.collisionVolumeOffsets   = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
+	ud.collisionVolumeTest      = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC);
+	ud.usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false);
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	ud.collisionVolume = new CollisionVolume(
-		ud.collisionVolumeType,
+		ud.collisionVolumeTypeStr,
 		ud.collisionVolumeScales,
 		ud.collisionVolumeOffsets,
-		ud.collisionVolumeTest);
+		ud.collisionVolumeTest
+	);
+
+	if (ud.usePieceCollisionVolumes) {
+		ud.collisionVolume->Disable();
+	}
+
 
 	ud.seismicRadius    = udTable.GetInt("seismicDistance", 0);
 	ud.seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);

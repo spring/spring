@@ -28,8 +28,14 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 {
 	bool r = false;
 
-	if (!u->collisionVolume->disabled) {
-		switch (u->collisionVolume->testType) {
+	if (!(((u->localmodel->pieces[0])->original)->colvol->IsDisabled())) {
+		// if the model's root piece coldet volume is enabled,
+		// test only for ray intersections with the piece tree
+		return (CCollisionHandler::IntersectPieceTree(u, p0, p1, q));
+	}
+
+	if (!u->collisionVolume->IsDisabled()) {
+		switch (u->collisionVolume->GetTestType()) {
 			// Collision(CUnit*) does not need p1 or q
 			case COLVOL_TEST_DISC: { r = CCollisionHandler::Collision(u, p0       ); numCollisionTests    += 1; } break;
 			case COLVOL_TEST_CONT: { r = CCollisionHandler::Intersect(u, p0, p1, q); numIntersectionTests += 1; } break;
@@ -43,8 +49,8 @@ bool CCollisionHandler::DetectHit(const CFeature* f, const float3& p0, const flo
 {
 	bool r = false;
 
-	if (!f->collisionVolume->disabled) {
-		switch (f->collisionVolume->testType) {
+	if (!f->collisionVolume->IsDisabled()) {
+		switch (f->collisionVolume->GetTestType()) {
 			// Collision(CFeature*) does not need p1 or q
 			case COLVOL_TEST_DISC: { r = CCollisionHandler::Collision(f, p0       ); numCollisionTests    += 1; } break;
 			case COLVOL_TEST_CONT: { r = CCollisionHandler::Intersect(f, p0, p1, q); numIntersectionTests += 1; } break;
@@ -63,11 +69,11 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 {
 	const CollisionVolume* v = u->collisionVolume;
 
-	if (((u->midPos + v->axisOffsets) - p).SqLength() > v->volumeBoundingRadiusSq) {
+	if (((u->midPos + v->GetOffsets()) - p).SqLength() > v->GetBoundingRadiusSq()) {
 		return false;
 	}
 
-	switch (u->collisionVolume->volumeType) {
+	switch (u->collisionVolume->GetVolumeType()) {
 		case COLVOL_TYPE_SPHERE: {
 			return true;
 		}
@@ -79,8 +85,8 @@ bool CCollisionHandler::Collision(const CUnit* u, const float3& p)
 			// (which is where the collision volume gets drawn) because
 			// GetTransformMatrix() only uses pos
 			CMatrix44f m = u->GetTransformMatrix(true);
-			m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
-			m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
+			m.Translate(u->relMidPos);
+			m.Translate(v->GetOffsets());
 
 			return CCollisionHandler::Collision(v, m, p);
 		}
@@ -92,11 +98,11 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 {
 	const CollisionVolume* v = f->collisionVolume;
 
-	if (((f->midPos + v->axisOffsets) - p).SqLength() > v->volumeBoundingRadiusSq) {
+	if (((f->midPos + v->GetOffsets()) - p).SqLength() > v->GetBoundingRadiusSq()) {
 		return false;
 	}
 
-	switch (f->collisionVolume->volumeType) {
+	switch (f->collisionVolume->GetVolumeType()) {
 		case COLVOL_TYPE_SPHERE: {
 			return true;
 		}
@@ -107,10 +113,11 @@ bool CCollisionHandler::Collision(const CFeature* f, const float3& p)
 			// NOTE: CFeature does not have a relMidPos member so
 			// calculate and apply the translation from pos (used
 			// by transMatrix) to midPos manually
+			const float3 relMidPos(f->midPos - f->pos);
+
 			CMatrix44f m(f->transMatrix);
-			float3 frelMidPos(f->midPos - f->pos);
-			m.Translate(frelMidPos.x, frelMidPos.y, frelMidPos.z);
-			m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
+			m.Translate(relMidPos);
+			m.Translate(v->GetOffsets());
 
 			return CCollisionHandler::Collision(v, m, p);
 		}
@@ -148,45 +155,45 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 	float3 pi = mInv.Mul(p);
 	bool hit = false;
 
-	switch (v->volumeType) {
+	switch (v->GetVolumeType()) {
 		case COLVOL_TYPE_SPHERE: {
 			// normally, this code is never executed, because the higher level
 			// Collision(CFeature*) and Collision(CUnit*) already optimize
 			// for volumeType == COLVOL_TYPE_SPHERE.
-			hit = (pi.dot(pi) <= v->axisHScalesSq.x);
+			hit = (pi.dot(pi) <= v->GetHScalesSq().x);
 		} break;
 		case COLVOL_TYPE_ELLIPSOID: {
-			const float f1 = (pi.x * pi.x) / v->axisHScalesSq.x;
-			const float f2 = (pi.y * pi.y) / v->axisHScalesSq.y;
-			const float f3 = (pi.z * pi.z) / v->axisHScalesSq.z;
+			const float f1 = (pi.x * pi.x) / v->GetHScalesSq().x;
+			const float f2 = (pi.y * pi.y) / v->GetHScalesSq().y;
+			const float f3 = (pi.z * pi.z) / v->GetHScalesSq().z;
 			hit = ((f1 + f2 + f3) <= 1.0f);
 		} break;
 		case COLVOL_TYPE_CYLINDER: {
-			switch (v->primaryAxis) {
+			switch (v->GetPrimaryAxis()) {
 				case COLVOL_AXIS_X: {
-					const bool xPass = (pi.x > -v->axisHScales.x  &&  pi.x < v->axisHScales.x);
-					const float yRat = (pi.y * pi.y) / v->axisHScalesSq.y;
-					const float zRat = (pi.z * pi.z) / v->axisHScalesSq.z;
+					const bool xPass = (pi.x > -v->GetHScales().x  &&  pi.x < v->GetHScales().x);
+					const float yRat = (pi.y * pi.y) / v->GetHScalesSq().y;
+					const float zRat = (pi.z * pi.z) / v->GetHScalesSq().z;
 					hit = (xPass && (yRat + zRat <= 1.0f));
 				} break;
 				case COLVOL_AXIS_Y: {
-					const bool yPass = (pi.y > -v->axisHScales.y  &&  pi.y < v->axisHScales.y);
-					const float xRat = (pi.x * pi.x) / v->axisHScalesSq.x;
-					const float zRat = (pi.z * pi.z) / v->axisHScalesSq.z;
+					const bool yPass = (pi.y > -v->GetHScales().y  &&  pi.y < v->GetHScales().y);
+					const float xRat = (pi.x * pi.x) / v->GetHScalesSq().x;
+					const float zRat = (pi.z * pi.z) / v->GetHScalesSq().z;
 					hit = (yPass && (xRat + zRat <= 1.0f));
 				} break;
 				case COLVOL_AXIS_Z: {
-					const bool zPass = (pi.z > -v->axisHScales.z  &&  pi.z < v->axisHScales.z);
-					const float xRat = (pi.x * pi.x) / v->axisHScalesSq.x;
-					const float yRat = (pi.y * pi.y) / v->axisHScalesSq.y;
+					const bool zPass = (pi.z > -v->GetHScales().z  &&  pi.z < v->GetHScales().z);
+					const float xRat = (pi.x * pi.x) / v->GetHScalesSq().x;
+					const float yRat = (pi.y * pi.y) / v->GetHScalesSq().y;
 					hit = (zPass && (xRat + yRat <= 1.0f));
 				} break;
 			}
 		} break;
 		case COLVOL_TYPE_BOX: {
-			const bool b1 = (pi.x > -v->axisHScales.x  &&  pi.x < v->axisHScales.x);
-			const bool b2 = (pi.y > -v->axisHScales.y  &&  pi.y < v->axisHScales.y);
-			const bool b3 = (pi.z > -v->axisHScales.z  &&  pi.z < v->axisHScales.z);
+			const bool b1 = (pi.x > -v->GetHScales().x  &&  pi.x < v->GetHScales().x);
+			const bool b2 = (pi.y > -v->GetHScales().y  &&  pi.y < v->GetHScales().y);
+			const bool b3 = (pi.z > -v->GetHScales().z  &&  pi.z < v->GetHScales().z);
 			hit = (b1 && b2 && b3);
 		} break;
 	}
@@ -197,19 +204,108 @@ bool CCollisionHandler::Collision(const CollisionVolume* v, const CMatrix44f& m,
 
 bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3& p1, const CollisionVolume* v, CollisionQuery* q)
 {
+	// note: use the piece tree?
 	CMatrix44f m = u->GetTransformMatrix(false, true);
-	m.Translate(u->relMidPos + v->axisOffsets);
+	m.Translate(u->relMidPos + v->GetOffsets());
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
 }
+
+
+void CCollisionHandler::IntersectPieceTreeHelper(
+	const LocalModelPiece* lmp,
+	CMatrix44f mat,
+	const float3& p0,
+	const float3& p1,
+	std::list<CollisionQuery>* hits)
+{
+	mat.Translate(lmp->pos.x, lmp->pos.y, lmp->pos.z);
+	mat.RotateY(-lmp->rot[1]);
+	mat.RotateX(-lmp->rot[0]);
+	mat.RotateZ( lmp->rot[2]);
+
+	const S3DModelPiece* op = lmp->original;
+	const CollisionVolume* vol = op->colvol;
+	const float3& offset = vol->GetOffsets();
+
+	mat.Translate(offset.x, offset.y, offset.z);
+
+	if (lmp->visible) {
+		CMatrix44f matInv = mat.Invert();
+		const float3 pi0 = matInv.Mul(p0);
+		const float3 pi1 = matInv.Mul(p1);
+
+		CollisionQuery q;
+
+		switch (vol->GetVolumeType()) {
+			case COLVOL_TYPE_ELLIPSOID: {
+				if (CCollisionHandler::IntersectEllipsoid(vol, pi0, pi1, &q)) {
+					q.p0 = mat.Mul(q.p0);
+					q.p1 = mat.Mul(q.p1);
+					hits->push_back(q);
+				}
+			} break;
+			case COLVOL_TYPE_CYLINDER: {
+				if (CCollisionHandler::IntersectCylinder(vol, pi0, pi1, &q)) {
+					q.p0 = mat.Mul(q.p0);
+					q.p1 = mat.Mul(q.p1);
+					hits->push_back(q);
+				}
+			} break;
+			case COLVOL_TYPE_BOX: {
+				if (CCollisionHandler::IntersectBox(vol, pi0, pi1, &q)) {
+					q.p0 = mat.Mul(q.p0);
+					q.p1 = mat.Mul(q.p1);
+					hits->push_back(q);
+				}
+			} break;
+			default: {
+				// piece collision volumes
+				// can have no other type
+			} break;
+		}
+	}
+
+	mat.Translate(-offset.x, -offset.y, -offset.z);
+
+	for (unsigned int i = 0; i < lmp->childs.size(); i++) {
+		IntersectPieceTreeHelper(lmp->childs[i], mat, p0, p1, hits);
+	}
+}
+
+bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q)
+{
+	std::list<CollisionQuery> hits;
+	std::list<CollisionQuery>::const_iterator hitsIt;
+
+	CMatrix44f mat = u->GetTransformMatrix(true);
+	IntersectPieceTreeHelper(u->localmodel->pieces[0], mat, p0, p1, &hits);
+
+	float dstNearSq = 1e30f;
+
+	// save the closest intersection
+	for (hitsIt = hits.begin(); hitsIt != hits.end(); hitsIt++) {
+		const CollisionQuery& qTmp = *hitsIt;
+		const float dstSq = (qTmp.p0 - p0).SqLength();
+
+		if (dstSq < dstNearSq) {
+			dstNearSq = dstSq;
+			q->b0 = qTmp.b0; q->t0 = qTmp.t0; q->p0 = qTmp.p0;
+			q->b1 = qTmp.b1; q->t1 = qTmp.t1; q->p1 = qTmp.p1;
+		}
+	}
+
+	return (!hits.empty());
+}
+
 
 bool CCollisionHandler::Intersect(const CUnit* u, const float3& p0, const float3& p1, CollisionQuery* q)
 {
 	const CollisionVolume* v = u->collisionVolume;
 
 	CMatrix44f m = u->GetTransformMatrix(true);
-	m.Translate(u->relMidPos.x, u->relMidPos.y, u->relMidPos.z);
-	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
+	m.Translate(u->relMidPos);
+	m.Translate(v->GetOffsets());
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
 }
@@ -217,11 +313,11 @@ bool CCollisionHandler::Intersect(const CUnit* u, const float3& p0, const float3
 bool CCollisionHandler::Intersect(const CFeature* f, const float3& p0, const float3& p1, CollisionQuery* q)
 {
 	const CollisionVolume* v = f->collisionVolume;
+	const float3 relMidPos(f->midPos - f->pos);
 
 	CMatrix44f m(f->transMatrix);
-	float3 frelMidPos(f->midPos - f->pos);
-	m.Translate(frelMidPos.x, frelMidPos.y, frelMidPos.z);
-	m.Translate(v->axisOffsets.x, v->axisOffsets.y, v->axisOffsets.z);
+	m.Translate(relMidPos);
+	m.Translate(v->GetOffsets());
 
 	return CCollisionHandler::Intersect(v, m, p0, p1, q);
 }
@@ -264,8 +360,8 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	const float rmaxx = std::max(pi0.x, pi1.x), rmaxy = std::max(pi0.y, pi1.y), rmaxz = std::max(pi0.z, pi1.z);
 
 	// minimum and maximum (x, y, z) coordinates of (bounding box around) volume
-	const float vminx = -v->axisHScales.x, vminy = -v->axisHScales.y, vminz = -v->axisHScales.z;
-	const float vmaxx =  v->axisHScales.x, vmaxy =  v->axisHScales.y, vmaxz =  v->axisHScales.z;
+	const float vminx = -v->GetHScales().x, vminy = -v->GetHScales().y, vminz = -v->GetHScales().z;
+	const float vmaxx =  v->GetHScales().x, vmaxy =  v->GetHScales().y, vmaxz =  v->GetHScales().z;
 
 	// check if ray segment misses (bounding box around) volume
 	// (if so, then no further intersection tests are necessary)
@@ -273,7 +369,7 @@ bool CCollisionHandler::Intersect(const CollisionVolume* v, const CMatrix44f& m,
 	if (rmaxy < vminy || rminy > vmaxy) { return false; }
 	if (rmaxz < vminz || rminz > vmaxz) { return false; }
 
-	switch (v->volumeType) {
+	switch (v->GetVolumeType()) {
 		case COLVOL_TYPE_FOOTPRINT:
 			// fall through, intersection with footprint collision volume
 			// is not supported yet, so only test against sphere/ellipsoid
@@ -303,8 +399,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 {
 	// transform the volume-space points into (unit) sphere-space (requires fewer
 	// float-ops than solving the surface equation for arbitrary ellipsoid volumes)
-	const float3 pii0 = float3(pi0.x * v->axisHIScales.x, pi0.y * v->axisHIScales.y, pi0.z * v->axisHIScales.z);
-	const float3 pii1 = float3(pi1.x * v->axisHIScales.x, pi1.y * v->axisHIScales.y, pi1.z * v->axisHIScales.z);
+	const float3 pii0 = float3(pi0.x * v->GetHIScales().x, pi0.y * v->GetHIScales().y, pi0.z * v->GetHIScales().z);
+	const float3 pii1 = float3(pi1.x * v->GetHIScales().x, pi1.y * v->GetHIScales().y, pi1.z * v->GetHIScales().z);
 	const float rSq = 1.0f;
 
 	if (pii0.dot(pii0) <= rSq /* && pii1.dot(pii1) <= rSq */) {
@@ -339,7 +435,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			// get the intersection point in sphere-space
 			const float3 pTmp = pii0 + (dir * t0);
 			// get the intersection point in volume-space
-			const float3 p0(pTmp.x * v->axisHScales.x, pTmp.y * v->axisHScales.y, pTmp.z * v->axisHScales.z);
+			const float3 p0(pTmp.x * v->GetHScales().x, pTmp.y * v->GetHScales().y, pTmp.z * v->GetHScales().z);
 			// get the distance from the start of the segment
 			// to the intersection point in volume-space
 			const float dSq0 = (p0 - pi0).SqLength();
@@ -365,8 +461,8 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			const float3 pTmp0 = pii0 + (dir * t0);
 			const float3 pTmp1 = pii0 + (dir * t1);
 			// get the intersection points in volume-space
-			const float3 p0(pTmp0.x * v->axisHScales.x, pTmp0.y * v->axisHScales.y, pTmp0.z * v->axisHScales.z);
-			const float3 p1(pTmp1.x * v->axisHScales.x, pTmp1.y * v->axisHScales.y, pTmp1.z * v->axisHScales.z);
+			const float3 p0(pTmp0.x * v->GetHScales().x, pTmp0.y * v->GetHScales().y, pTmp0.z * v->GetHScales().z);
+			const float3 p1(pTmp1.x * v->GetHScales().x, pTmp1.y * v->GetHScales().y, pTmp1.z * v->GetHScales().z);
 			// get the distances from the start of the ray
 			// to the intersection points in volume-space
 			const float dSq0 = (p0 - pi0).SqLength();
@@ -389,11 +485,11 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 
 bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q)
 {
-	const int pAx = v->primaryAxis;
-	const int sAx0 = v->secondaryAxes[0];
-	const int sAx1 = v->secondaryAxes[1];
-	const float3& ahs = v->axisHScales;
-	const float3& ahsq = v->axisHScalesSq;
+	const int pAx = v->GetPrimaryAxis();
+	const int sAx0 = v->GetSecondaryAxis(0);
+	const int sAx1 = v->GetSecondaryAxis(1);
+	const float3& ahs = v->GetHScales();
+	const float3& ahsq = v->GetHScalesSq();
 	const float ratio =
 		((pi0[sAx0] * pi0[sAx0]) / ahsq[sAx0]) +
 		((pi0[sAx1] * pi0[sAx1]) / ahsq[sAx1]);
@@ -428,15 +524,15 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 	float b = 0.0f;
 	float c = 0.0f;
 
-	switch (v->primaryAxis) {
+	switch (pAx) {
 		case COLVOL_AXIS_X: {
-			pii0.y = pi0.y * v->axisHIScales.y;
-			pii0.z = pi0.z * v->axisHIScales.z;
-			pii1.y = pi1.y * v->axisHIScales.y;
-			pii1.z = pi1.z * v->axisHIScales.z;
+			pii0.y = pi0.y * v->GetHIScales().y;
+			pii0.z = pi0.z * v->GetHIScales().z;
+			pii1.y = pi1.y * v->GetHIScales().y;
+			pii1.z = pi1.z * v->GetHIScales().z;
 
-			inv.y = v->axisHScales.y;
-			inv.z = v->axisHScales.z;
+			inv.y = v->GetHScales().y;
+			inv.z = v->GetHScales().z;
 			diir = (pii1 - pii0).Normalize();
 
 			n0.x = -1.0f; // left
@@ -448,13 +544,13 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			c =  (pii0.y * pii0.y) + (pii0.z * pii0.z)  - 1.0f;
 		} break;
 		case COLVOL_AXIS_Y: {
-			pii0.x = pi0.x * v->axisHIScales.x;
-			pii0.z = pi0.z * v->axisHIScales.z;
-			pii1.x = pi1.x * v->axisHIScales.x;
-			pii1.z = pi1.z * v->axisHIScales.z;
+			pii0.x = pi0.x * v->GetHIScales().x;
+			pii0.z = pi0.z * v->GetHIScales().z;
+			pii1.x = pi1.x * v->GetHIScales().x;
+			pii1.z = pi1.z * v->GetHIScales().z;
 
-			inv.x = v->axisHScales.x;
-			inv.z = v->axisHScales.z;
+			inv.x = v->GetHScales().x;
+			inv.z = v->GetHScales().z;
 			diir = (pii1 - pii0).Normalize();
 
 			n0.y =  1.0f; // top
@@ -466,13 +562,13 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			c =  (pii0.x * pii0.x) + (pii0.z * pii0.z)  - 1.0f;
 		} break;
 		case COLVOL_AXIS_Z: {
-			pii0.x = pi0.x * v->axisHIScales.x;
-			pii0.y = pi0.y * v->axisHIScales.y;
-			pii1.x = pi1.x * v->axisHIScales.x;
-			pii1.y = pi1.y * v->axisHIScales.y;
+			pii0.x = pi0.x * v->GetHIScales().x;
+			pii0.y = pi0.y * v->GetHIScales().y;
+			pii1.x = pi1.x * v->GetHIScales().x;
+			pii1.y = pi1.y * v->GetHIScales().y;
 
-			inv.x = v->axisHScales.x;
-			inv.y = v->axisHScales.y;
+			inv.x = v->GetHScales().x;
+			inv.y = v->GetHScales().y;
 			diir = (pii1 - pii0).Normalize();
 
 			n0.z =  1.0f; // front
@@ -565,9 +661,9 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 
 bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0, const float3& pi1, CollisionQuery* q)
 {
-	const bool ba = (pi0.x > -v->axisHScales.x  &&  pi0.x < v->axisHScales.x);
-	const bool bb = (pi0.y > -v->axisHScales.y  &&  pi0.y < v->axisHScales.y);
-	const bool bc = (pi0.z > -v->axisHScales.z  &&  pi0.z < v->axisHScales.z);
+	const bool ba = (pi0.x > -v->GetHScales().x  &&  pi0.x < v->GetHScales().x);
+	const bool bb = (pi0.y > -v->GetHScales().y  &&  pi0.y < v->GetHScales().y);
+	const bool bc = (pi0.z > -v->GetHScales().z  &&  pi0.z < v->GetHScales().z);
 
 	if ((ba && bb && bc) /* && (bd && be && bf) */) {
 		// terminate early in the special case
@@ -586,16 +682,16 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	const float3 dir = (pi1 - pi0).Normalize();
 
 	if (dir.x > -EPS && dir.x < EPS) {
-		if (pi0.x < -v->axisHScales.x  ||  pi0.x > v->axisHScales.x) {
+		if (pi0.x < -v->GetHScales().x  ||  pi0.x > v->GetHScales().x) {
 			return false;
 		}
 	} else {
 		if (dir.x > 0.0f) {
-			t0 = (-v->axisHScales.x - pi0.x) / dir.x;
-			t1 = ( v->axisHScales.x - pi0.x) / dir.x;
+			t0 = (-v->GetHScales().x - pi0.x) / dir.x;
+			t1 = ( v->GetHScales().x - pi0.x) / dir.x;
 		} else {
-			t1 = (-v->axisHScales.x - pi0.x) / dir.x;
-			t0 = ( v->axisHScales.x - pi0.x) / dir.x;
+			t1 = (-v->GetHScales().x - pi0.x) / dir.x;
+			t0 = ( v->GetHScales().x - pi0.x) / dir.x;
 		}
 
 		if (t0 > t1) { t2 = t1; t1 = t0; t0 = t2; }
@@ -606,16 +702,16 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	}
 
 	if (dir.y > -EPS && dir.y < EPS) {
-		if (pi0.y < -v->axisHScales.y  ||  pi0.y > v->axisHScales.y) {
+		if (pi0.y < -v->GetHScales().y  ||  pi0.y > v->GetHScales().y) {
 			return false;
 		}
 	} else {
 		if (dir.y > 0.0f) {
-			t0 = (-v->axisHScales.y - pi0.y) / dir.y;
-			t1 = ( v->axisHScales.y - pi0.y) / dir.y;
+			t0 = (-v->GetHScales().y - pi0.y) / dir.y;
+			t1 = ( v->GetHScales().y - pi0.y) / dir.y;
 		} else {
-			t1 = (-v->axisHScales.y - pi0.y) / dir.y;
-			t0 = ( v->axisHScales.y - pi0.y) / dir.y;
+			t1 = (-v->GetHScales().y - pi0.y) / dir.y;
+			t0 = ( v->GetHScales().y - pi0.y) / dir.y;
 		}
 
 		if (t0 > t1) { t2 = t1; t1 = t0; t0 = t2; }
@@ -626,16 +722,16 @@ bool CCollisionHandler::IntersectBox(const CollisionVolume* v, const float3& pi0
 	}
 
 	if (dir.z > -EPS && dir.z < EPS) {
-		if (pi0.z < -v->axisHScales.z  ||  pi0.z > v->axisHScales.z) {
+		if (pi0.z < -v->GetHScales().z  ||  pi0.z > v->GetHScales().z) {
 			return false;
 		}
 	} else {
 		if (dir.z > 0.0f) {
-			t0 = (-v->axisHScales.z - pi0.z) / dir.z;
-			t1 = ( v->axisHScales.z - pi0.z) / dir.z;
+			t0 = (-v->GetHScales().z - pi0.z) / dir.z;
+			t1 = ( v->GetHScales().z - pi0.z) / dir.z;
 		} else {
-			t1 = (-v->axisHScales.z - pi0.z) / dir.z;
-			t0 = ( v->axisHScales.z - pi0.z) / dir.z;
+			t1 = (-v->GetHScales().z - pi0.z) / dir.z;
+			t0 = ( v->GetHScales().z - pi0.z) / dir.z;
 		}
 
 		if (t0 > t1) { t2 = t1; t1 = t0; t0 = t2; }

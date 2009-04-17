@@ -1811,7 +1811,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_FlankingBonus_getMobilityAdd(int teamId
 	return getUnitDefById(teamId, unitDefId)->flankingBonusMobilityAdd;
 }
 EXPORT(const char*) skirmishAiCallback_UnitDef_CollisionVolume_getType(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->collisionVolumeType.c_str();
+	return getUnitDefById(teamId, unitDefId)->collisionVolumeTypeStr.c_str();
 }
 EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_CollisionVolume_getScales(int teamId,
 		int unitDefId) {
@@ -2692,7 +2692,7 @@ EXPORT(float) skirmishAiCallback_FeatureDef_0REF1Resource2resourceId0getContaine
 EXPORT(float) skirmishAiCallback_FeatureDef_getMaxHealth(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->maxHealth;}
 EXPORT(float) skirmishAiCallback_FeatureDef_getReclaimTime(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimTime;}
 EXPORT(float) skirmishAiCallback_FeatureDef_getMass(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->mass;}
-EXPORT(const char*) skirmishAiCallback_FeatureDef_CollisionVolume_getType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeType.c_str();}
+EXPORT(const char*) skirmishAiCallback_FeatureDef_CollisionVolume_getType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTypeStr.c_str();}
 EXPORT(SAIFloat3) skirmishAiCallback_FeatureDef_CollisionVolume_getScales(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeScales.toSAIFloat3();}
 EXPORT(SAIFloat3) skirmishAiCallback_FeatureDef_CollisionVolume_getOffsets(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeOffsets.toSAIFloat3();}
 EXPORT(int) skirmishAiCallback_FeatureDef_CollisionVolume_getTest(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTest;}

@@ -33,23 +33,38 @@ struct CollisionVolume
 {
 	CR_DECLARE_STRUCT(CollisionVolume);
 
-	CollisionVolume(const CollisionVolume* src = NULL);
-	CollisionVolume(const std::string& typeStr, const float3& scales, const float3& offsets, int testType);
+	CollisionVolume(const CollisionVolume* src = NULL, float defRadius = 0.0f);
+	CollisionVolume(const std::string&, const float3&, const float3&, int);
 
-	void SetDefaultScale(const float s);
-	void Init(const float3& scales, const float3& offsets, int vType, int tType, int pAxis);
+	static std::pair<int, int> GetVolumeTypeForString(const std::string&);
+
+	void SetDefaultScale(const float);
+	void Init(const float3&, const float3&, int, int, int);
 
 	int GetVolumeType() const { return volumeType; }
 	int GetTestType() const { return testType; }
 	void SetTestType(int type) { testType = type; }
+	void Enable() { disabled = false; }
+	void Disable() { disabled = true; }
+
 	int GetPrimaryAxis() const { return primaryAxis; }
+	int GetSecondaryAxis(int axis) const { return secondaryAxes[axis]; }
+
 	float GetBoundingRadius() const { return volumeBoundingRadius; }
 	float GetBoundingRadiusSq() const { return volumeBoundingRadiusSq; }
+
+	float GetOffset(int axis) const { return axisOffsets[axis]; }
+	const float3& GetOffsets() const { return axisOffsets; }
+
 	float GetScale(int axis) const { return axisScales[axis]; }
 	float GetHScale(int axis) const { return axisHScales[axis]; }
 	float GetHScaleSq(int axis) const { return axisHScalesSq[axis]; }
-	float GetOffset(int axis) const { return axisOffsets[axis]; }
-	const float3& GetOffsets() const { return axisOffsets; }
+	const float3& GetScales() const { return axisScales; }
+	const float3& GetHScales() const { return axisHScales; }
+	const float3& GetHScalesSq() const { return axisHScalesSq; }
+	const float3& GetHIScales() const { return axisHIScales; }
+
+	bool IsDisabled() const { return disabled; }
 	bool IsSphere() const { return volumeType == COLVOL_TYPE_SPHERE; }
 	bool UseFootprint() const { return volumeType == COLVOL_TYPE_FOOTPRINT; }
 
@@ -67,8 +82,6 @@ private:
 	int primaryAxis;
 	int secondaryAxes[2];
 	bool disabled;
-
-	friend class CCollisionHandler;     // TODO: refactor
 };
 
 #endif
