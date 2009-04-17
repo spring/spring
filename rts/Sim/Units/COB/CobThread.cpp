@@ -963,3 +963,18 @@ void CCobThread::LuaCall()
 /******************************************************************************/
 /******************************************************************************/
 
+
+void CCobThread::AnimFinished(CUnitScript::AnimType type, int piece, int axis)
+{
+	//Not sure how to do this more cleanly.. Will probably rewrite it
+	if (state == CCobThread::WaitMove || state == CCobThread::WaitTurn) {
+		state = CCobThread::Run;
+		GCobEngine.AddThread(this);
+	}
+	else if (state == CCobThread::Dead) {
+		delete this;
+	}
+	else {
+		logOutput.Print("CobError: Turn/move listenener in strange state %d", state);
+	}
+}
