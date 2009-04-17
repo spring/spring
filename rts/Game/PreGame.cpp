@@ -285,6 +285,14 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 			tgame->AddPair("Demofile", demoName);
 
+			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it)
+			{
+				if (it->first.size() > 6 && it->first.substr(0, 6) == "player")
+				{
+					it->second->AddPair("isfromdemo", 1);
+				}
+			}
+
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			int myPlayerNum;
 			string playerStr;
@@ -319,6 +327,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			}
 			logOutput.Print("Starting GameServer");
 			good_fpu_control_registers("before CGameServer creation");
+			//LogObject() << buf.str() << "\n\n";
 			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 			good_fpu_control_registers("after CGameServer creation");
