@@ -28,8 +28,8 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 {
 	bool r = false;
 
-	LocalModelPiece* rootPiece    = u->localmodel->pieces[0];
-	CollisionVolume* rootPieceVol = rootPiece->original->colvol;
+	const LocalModelPiece* rootPiece    = u->localmodel->pieces[0];
+	const CollisionVolume* rootPieceVol = rootPiece->original->colvol;
 
 	if (!rootPieceVol->IsDisabled()) {
 		// if the model's root piece coldet volume is enabled,
@@ -222,7 +222,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	const float3& p1,
 	std::list<CollisionQuery>* hits)
 {
-	mat.Translate(lmp->pos.x, lmp->pos.y, lmp->pos.z);
+	mat.Translate(lmp->pos);
 	mat.RotateY(-lmp->rot[1]);
 	mat.RotateX(-lmp->rot[0]);
 	mat.RotateZ( lmp->rot[2]);
@@ -231,7 +231,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	const CollisionVolume* vol = op->colvol;
 	const float3& offset = vol->GetOffsets();
 
-	mat.Translate(offset.x, offset.y, offset.z);
+	mat.Translate(offset);
 
 	if (lmp->visible && !vol->IsDisabled()) {
 		CMatrix44f matInv = mat.Invert();
@@ -269,7 +269,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 		}
 	}
 
-	mat.Translate(-offset.x, -offset.y, -offset.z);
+	mat.Translate(-offset);
 
 	for (unsigned int i = 0; i < lmp->childs.size(); i++) {
 		IntersectPieceTreeHelper(lmp->childs[i], mat, p0, p1, hits);
