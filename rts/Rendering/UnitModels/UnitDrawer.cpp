@@ -1740,7 +1740,9 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 				CMatrix44f mat(-midPosOffset);
 				DrawUnitDebugPieceTree(rootPiece, mat, q);
 			} else {
-				DrawCollisionVolume(unit->collisionVolume, q);
+				if (!unit->collisionVolume->IsDisabled()) {
+					DrawCollisionVolume(unit->collisionVolume, q);
+				}
 			}
 
 			gluDeleteQuadric(q);

@@ -48,6 +48,7 @@ S3DModel* CS3OParser::Load(std::string name, const float3& centerOffset)
 	rootPiece->type = MODELTYPE_S3O;
 
 	FindMinMax(rootPiece);
+	rootPiece->colvol->Disable();
 
 	model->rootobject = rootPiece;
 	model->radius = header.radius;
@@ -184,7 +185,7 @@ void CS3OParser::FindMinMax(SS3OPiece* o) const
 	const float3 cvOffset((o->maxx + o->minx) * 0.5f, (o->maxy + o->miny) * 0.5f, (o->maxz + o->minz) * 0.5f);
 
 	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
-	o->colvol->Disable();
+	o->colvol->Enable();
 }
 
 void CS3OParser::Draw(const S3DModelPiece* o) const
