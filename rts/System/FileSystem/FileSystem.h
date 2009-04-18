@@ -44,6 +44,13 @@ public:
 	static bool FileExists(const std::string& file);
 	static bool DirExists(const std::string& dir);
 
+	/**
+	 * Returns true if path matches regex ...
+	 * on windows:          ^[a-zA-Z]\:[\\/]?$
+	 * on all other systems: ^/$
+	 */
+	static bool IsFSRoot(const std::string& path);
+
 	// custom functions
 	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
 	bool IsReadableFile(const std::string& file) const;
