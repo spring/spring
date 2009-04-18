@@ -143,6 +143,19 @@ static std::string RemoveLocalPathPrefix(const std::string& path)
 	return p;
 }
 
+bool FileSystemHandler::IsFSRoot(const std::string& p)
+{
+#ifdef WIN32
+	if (p.length() >= 2 && p[1] == ':' && ((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) && (p.length() == 2 || (p.length() == 3 && (p[2] == '\\' || p[2] == '/')))) {
+#else
+	if (p.length() == 1 && p[0] == '/') {
+#endif
+		return true;
+	}
+
+	return false;
+}
+
 /**
  * @brief find files
  * @param dir path in which to start looking (tried relative to each data directory)
@@ -526,8 +539,10 @@ bool FileSystem::CreateDirectory(std::string dir) const
 	ForwardSlashes(dir);
 	size_t prev_slash = 0, slash;
 	while ((slash = dir.find('/', prev_slash + 1)) != std::string::npos) {
-		if (!fs.mkdir(dir.substr(0, slash)))
+		std::string pathPart = dir.substr(0, slash);
+		if (!FileSystemHandler::IsFSRoot(pathPart) && !fs.mkdir(pathPart)) {
 			return false;
+		}
 		prev_slash = slash;
 	}
 	return fs.mkdir(dir);
