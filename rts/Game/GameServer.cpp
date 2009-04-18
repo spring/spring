@@ -1265,12 +1265,6 @@ void CGameServer::CheckForGameEnd()
 			++numActiveTeams[teamHandler->AllyTeam(a)];
 		}
 	}
-
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		if (numActiveTeams[a] != 0) {
-			++numActiveAllyTeams;
-		}
-	}
 #else // !defined DEDICATED
 	for (int a = 0; a < setup->numTeams; ++a)
 	{
@@ -1290,13 +1284,13 @@ void CGameServer::CheckForGameEnd()
 		if (teams[a].active && hasPlayer)
 			++numActiveTeams[teams[a].allyTeam];
 	}
-
-	for (unsigned int a = 0; a < numActiveTeams.size(); ++a) {
+#endif // !defined DEDICATED
+	for (size_t a = 0; a < numActiveTeams.size(); ++a) {
 		if (numActiveTeams[a] != 0) {
 			++numActiveAllyTeams;
 		}
 	}
-#endif // !defined DEDICATED
+
 	if (numActiveAllyTeams <= 1)
 	{
 		gameEndTime = microsec_clock::local_time();
