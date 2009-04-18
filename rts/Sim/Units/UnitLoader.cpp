@@ -339,7 +339,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 
 	if (ud->usePieceCollisionVolumes) {
 		// enable the root piece volume
-		((unit->localmodel->pieces[0])->original)->colvol->Enable();
+		// note: always overrides LuaSC
+		(unit->localmodel->pieces[0])->colvol->Enable();
 	}
 
 
