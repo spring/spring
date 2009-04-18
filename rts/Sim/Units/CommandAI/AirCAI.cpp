@@ -87,7 +87,7 @@ CAirCAI::~CAirCAI(void)
 void CAirCAI::GiveCommandReal(const Command &c)
 {
 	// take care not to allow aircraft to be ordered to move out of the map
-	if (c.id != CMD_MOVE && !AllowedCommand(c))
+	if (c.id != CMD_MOVE && !AllowedCommand(c, true))
 		return;
 
 	else if (c.id == CMD_MOVE && c.params.size() >= 3 &&

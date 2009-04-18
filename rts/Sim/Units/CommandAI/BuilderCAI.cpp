@@ -293,7 +293,7 @@ void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
 
 void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
-	if (!AllowedCommand(c))
+	if (!AllowedCommand(c, fromSynced))
 		return;
 
 	if ((c.id == CMD_GUARD) &&
