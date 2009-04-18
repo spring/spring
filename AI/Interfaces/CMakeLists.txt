@@ -130,6 +130,7 @@ if (BUILD_Java_AIINTERFACE)
 		set(AWK_COMMAND "awk")
 	ENDIF(CMAKE_HOST_WIN32)
 	set(AWK_SCRIPTS_DIR "${Java_AIINTERFACE_SRC}/bin")
+	set(AWK_COMMON_SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils/bin")
 	set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/Java")
 	set(SPRING_SOURCE_DIR "${PROJECT_SOURCE_DIR}")
 	set(SPRING_AIINTERFACE_SOURCE_DIR "${SPRING_SOURCE_DIR}/rts/ExternalAI/Interface")
@@ -162,8 +163,8 @@ if (BUILD_Java_AIINTERFACE)
 		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
 		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
 		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappEvents.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
 		"${SPRING_AIINTERFACE_SOURCE_DIR}/AISEvents.h"
 		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
 		COMMENT "  Generating Java AI Event source files ..." VERBATIM)
@@ -175,8 +176,8 @@ if (BUILD_Java_AIINTERFACE)
 		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
 		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
 		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappCommands.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
 		"${SPRING_AIINTERFACE_SOURCE_DIR}/AISCommands.h"
 		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
 		COMMENT "  Generating Java AI Command source files ..." VERBATIM)
@@ -188,8 +189,8 @@ if (BUILD_Java_AIINTERFACE)
 		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
 		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
 		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappCallback.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
 		"${SPRING_AIINTERFACE_SOURCE_DIR}/SSkirmishAICallback.h"
 		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
 		COMMENT "  Generating Java AI Callback source files ..." VERBATIM)
@@ -202,9 +203,9 @@ if (BUILD_Java_AIINTERFACE)
 		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
 		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
 		"-f" "${AWK_SCRIPTS_DIR}/java_wrappCallbackOO.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/common.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/commonDoc.awk"
-		"-f" "${AWK_SCRIPTS_DIR}/commonOOCallback.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonOOCallback.awk"
 		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/AICallback.java"
 		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
 		COMMENT "  Generating Java AI OO Callback source files ..." VERBATIM)

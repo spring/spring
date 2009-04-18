@@ -510,6 +510,7 @@ for baseName in aiinterfaces_toBuild:
 		interfaceManifestFile = filelist.getAbsDir(env, os.path.join(interfaceJavaSrcDir, 'manifest.mf'))
 		interfaceBinDir = os.path.join('AI', myEnv['sourcedir'], 'bin')
 		awkScriptsDir = interfaceBinDir
+		awkCommonScriptsDir = os.path.join('AI', 'Wrappers', 'CUtils', 'bin')
 		interfaceGeneratedJavaSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'generated-java-src'))
 		interfaceTmpAllSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'tmp-all-src'))
 		interfaceJavaClassesDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'classes'))
@@ -534,8 +535,8 @@ for baseName in aiinterfaces_toBuild:
 		# wrapp the AI Events
 		awkScripts = []
 		awkScripts += ['jna_wrappEvents.awk']
-		awkScripts += ['common.awk']
-		awkScripts += ['commonDoc.awk']
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
 		awkInputFile = os.path.join(springInterfaceSrcDir, 'AISEvents.h')
 		awkOutput = [os.path.join(genSrcPkgDir, 'event', 'InitAIEvent.java')]
 		wrapp_events = AWKExecutor(myEnv, 'wrapp_events', awkScripts, awkVars, awkInputFile, awkOutput, workDir = awkScriptsDir)
@@ -546,8 +547,8 @@ for baseName in aiinterfaces_toBuild:
 		# wrapp the Commands
 		awkScripts = []
 		awkScripts += ['jna_wrappCommands.awk']
-		awkScripts += ['common.awk']
-		awkScripts += ['commonDoc.awk']
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
 		awkInputFile = os.path.join(springInterfaceSrcDir, 'AISCommands.h')
 		awkOutput = [os.path.join(genSrcPkgDir, 'command', 'BuildUnitAICommand.java')]
 		wrapp_commands = AWKExecutor(myEnv, 'wrapp_commands', awkScripts, awkVars, awkInputFile, awkOutput, workDir = awkScriptsDir)
@@ -558,8 +559,8 @@ for baseName in aiinterfaces_toBuild:
 		# wrapp the Callback
 		awkScripts = []
 		awkScripts += ['jna_wrappCallback.awk']
-		awkScripts += ['common.awk']
-		awkScripts += ['commonDoc.awk']
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
 		awkInputFile = os.path.join(springInterfaceSrcDir, 'SSkirmishAICallback.h')
 		awkOutput = [os.path.join(genSrcPkgDir, 'AICallback.java')]
 		wrapp_callback = AWKExecutor(myEnv, 'wrapp_callback', awkScripts, awkVars, awkInputFile, awkOutput, workDir = awkScriptsDir)
@@ -569,9 +570,9 @@ for baseName in aiinterfaces_toBuild:
 		# wrapp the Callback in an OO layer
 		awkScripts = []
 		awkScripts += ['java_wrappCallbackOO.awk']
-		awkScripts += ['common.awk']
-		awkScripts += ['commonDoc.awk']
-		awkScripts += ['commonOOCallback.awk']
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonOOCallback.awk')]
 		awkInputFile = os.path.join(genSrcPkgDir, 'AICallback.java')
 		awkOutput = [
 				os.path.join(genSrcPkgDir, 'oo', 'OOAICallback.java'),
