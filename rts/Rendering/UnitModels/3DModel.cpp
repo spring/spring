@@ -7,6 +7,7 @@
 #include "3DModel.h"
 #include "3DOParser.h"
 #include "s3oParser.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FartextureHandler.h"
 #include "Util.h"
@@ -46,7 +47,8 @@ LocalModel::~LocalModel()
 {
 	// delete the local piece copies
 	for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); pi++) {
-		delete *pi;
+		delete (*pi)->colvol;
+		delete (*pi);
 	}
 	pieces.clear();
 }
