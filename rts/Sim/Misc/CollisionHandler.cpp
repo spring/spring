@@ -280,6 +280,7 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 	std::list<CollisionQuery> hits;
 	std::list<CollisionQuery>::const_iterator hitsIt;
 
+	// this probably needs an early-out test
 	CMatrix44f mat = u->GetTransformMatrix(true);
 	IntersectPieceTreeHelper(u->localmodel->pieces[0], mat, p0, p1, &hits);
 
