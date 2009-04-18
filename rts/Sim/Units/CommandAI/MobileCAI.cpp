@@ -213,7 +213,7 @@ static T* getAirMoveType(CUnit *owner)
 
 void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 {
-	if (!AllowedCommand(c))
+	if (!AllowedCommand(c, fromSynced))
 		return;
 
 	if (owner->unitDef->canfly && c.id == CMD_AUTOREPAIRLEVEL) {

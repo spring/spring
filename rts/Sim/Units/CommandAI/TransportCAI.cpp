@@ -1028,9 +1028,9 @@ bool CTransportCAI::LoadStillValid(CUnit* unit){
 		float3(cmd.params[0], cmd.params[1], cmd.params[2])) > Square(cmd.params[3]*2));
 }
 
-bool CTransportCAI::AllowedCommand(const Command& c)
+bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 {
-	if(!CMobileCAI::AllowedCommand(c))
+	if(!CMobileCAI::AllowedCommand(c, fromSynced))
 		return false;
 
 	switch (c.id) {
