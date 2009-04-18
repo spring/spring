@@ -32,7 +32,7 @@ struct S3DModelPiece {
 
 	int type;  //! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
 
-	// defaults to a box (TODO: Lua exposition)
+	// defaults to a box
 	CollisionVolume* colvol;
 
 	//todo: add float3 orientation;
