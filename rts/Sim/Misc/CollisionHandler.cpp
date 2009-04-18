@@ -29,7 +29,7 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 	bool r = false;
 
 	const LocalModelPiece* rootPiece    = u->localmodel->pieces[0];
-	const CollisionVolume* rootPieceVol = rootPiece->original->colvol;
+	const CollisionVolume* rootPieceVol = rootPiece->colvol;
 
 	if (!rootPieceVol->IsDisabled()) {
 		// if the model's root piece coldet volume is enabled,
@@ -227,8 +227,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	mat.RotateX(-lmp->rot[0]);
 	mat.RotateZ( lmp->rot[2]);
 
-	const S3DModelPiece* op = lmp->original;
-	const CollisionVolume* vol = op->colvol;
+	const CollisionVolume* vol = lmp->colvol;
 	const float3& offset = vol->GetOffsets();
 
 	mat.Translate(offset);

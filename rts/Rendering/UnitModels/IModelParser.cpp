@@ -98,16 +98,19 @@ S3DModel* C3DModelParser::Load3DModel(std::string name, const float3& centerOffs
 void C3DModelParser::Update() {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // Update
-	for (std::vector<ModelParserPair>::iterator i = createLists.begin(); i != createLists.end(); ++i)
+	for (std::vector<ModelParserPair>::iterator i = createLists.begin(); i != createLists.end(); ++i) {
 		CreateListsNow(i->parser, i->model);
+	}
 	createLists.clear();
 
-	for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i)
+	for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
 		FixLocalModel(*i);
+	}
 	fixLocalModels.clear();
 
-	for (std::vector<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i)
+	for (std::vector<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
 		delete *i;
+	}
 	deleteLocalModels.clear();
 #endif
 }
@@ -167,24 +170,25 @@ LocalModel* C3DModelParser::CreateLocalModel(S3DModel* model)
 }
 
 
-void C3DModelParser::CreateLocalModelPieces(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
+void C3DModelParser::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
 {
 	LocalModelPiece& lmp = *lmodel->pieces[*piecenum];
-	lmp.original  =  model;
-	lmp.name      =  model->name;
-	lmp.type      =  model->type;
-	lmp.displist  =  model->displist;
-	lmp.visible   = !model->isEmpty;
+	lmp.original  =  piece;
+	lmp.name      =  piece->name;
+	lmp.type      =  piece->type;
+	lmp.displist  =  piece->displist;
+	lmp.visible   = !piece->isEmpty;
 	lmp.updated   =  false;
-	lmp.pos       =  model->offset;
-	lmp.rot       =  float3(0.0f,0.0f,0.0f);
+	lmp.pos       =  piece->offset;
+	lmp.rot       =  float3(0.0f, 0.0f, 0.0f);
+	lmp.colvol    = new CollisionVolume(piece->colvol);
 
-	lmp.childs.reserve(model->childs.size());
-	for (unsigned int i = 0; i < model->childs.size(); i++) {
+	lmp.childs.reserve(piece->childs.size());
+	for (unsigned int i = 0; i < piece->childs.size(); i++) {
 		(*piecenum)++;
 		lmp.childs.push_back(lmodel->pieces[*piecenum]);
 		lmodel->pieces[*piecenum]->parent = &lmp;
-		CreateLocalModelPieces(model->childs[i], lmodel, piecenum);
+		CreateLocalModelPieces(piece->childs[i], lmodel, piecenum);
 	}
 }
 

@@ -78,6 +78,10 @@ struct LocalModelPiece
 	LocalModelPiece* parent;
 	std::vector<LocalModelPiece*> childs;
 
+	// initially always a clone
+	// of the original->colvol
+	CollisionVolume* colvol;
+
 	unsigned int displist;
 	std::vector<unsigned int> lodDispLists;
 

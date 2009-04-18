@@ -1682,14 +1682,11 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, CMatrix44f mat, GLUquadric
 	mat.RotateX(-p->rot[0]);
 	mat.RotateZ( p->rot[2]);
 
-	const S3DModelPiece* op = p->original;
-	const CollisionVolume* vol = op->colvol;
-
 	glPushMatrix();
 		glMultMatrixf(mat.m);
 
 		if (p->visible) {
-			DrawCollisionVolume(vol, q);
+			DrawCollisionVolume(p->colvol, q);
 		}
 	glPopMatrix();
 
@@ -1725,7 +1722,7 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			GLUquadricObj* q = gluNewQuadric();
 
 			LocalModelPiece* rootPiece    = unit->localmodel->pieces[0];
-			CollisionVolume* rootPieceVol = rootPiece->original->colvol;
+			CollisionVolume* rootPieceVol = rootPiece->colvol;
 
 			// draw the aimpoint
 			glColor3f(1.0f, 0.0f, 0.0f);
