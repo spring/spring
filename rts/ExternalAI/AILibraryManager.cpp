@@ -140,10 +140,13 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			logOutput.Print("\tfor interface: %s %s", info->first.GetShortName().c_str(),
 					info->first.GetVersion().c_str());
 			logOutput.Print("\tin files:");
+			const std::string* lastDir = NULL;
 			std::set<std::string>::const_iterator dir;
 			for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
 				logOutput.Print("\t%s", dir->c_str());
+				lastDir = &(*dir);
 			}
+			logOutput.Print("\tusing: %s", lastDir->c_str());
 		}
 	}
 
@@ -200,10 +203,13 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			logOutput.Print("\tfor Skirmish AI: %s %s", info->first.GetShortName().c_str(),
 					info->first.GetVersion().c_str());
 			logOutput.Print("\tin files:");
+			const std::string* lastDir = NULL;
 			std::set<std::string>::const_iterator dir;
 			for (dir = info->second.begin(); dir != info->second.end(); ++dir) {
 				logOutput.Print("\t%s", dir->c_str());
+				lastDir = &(*dir);
 			}
+			logOutput.Print("\tusing: %s", lastDir->c_str());
 		}
 	}
 }
