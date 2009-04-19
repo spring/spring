@@ -1736,7 +1736,7 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const bool enableLocal  = lua_toboolean(L, 5);
 	const bool enableGlobal = lua_toboolean(L, 6);
 
-	if (pieceIndex < 0 || pieceIndex > localModel->pieces.size()) {
+	if (pieceIndex < 0 || pieceIndex >= localModel->pieces.size()) {
 		return 0;
 	}
 
