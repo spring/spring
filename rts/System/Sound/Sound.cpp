@@ -32,27 +32,32 @@ AudioChannel::AudioChannel() : volume(1.0f), enabled(true)
 
 void AudioChannel::PlaySample(size_t id, float volume)
 {
-	sound->PlaySample(id, ZeroVector, ZeroVector, volume, true);
+	if (enabled)
+		sound->PlaySample(id, ZeroVector, ZeroVector, volume, true);
 }
 
 void AudioChannel::PlaySample(size_t id, const float3& p, float volume)
 {
-	sound->PlaySample(id, p, ZeroVector, volume, false);
+	if (enabled)
+		sound->PlaySample(id, p, ZeroVector, volume, false);
 }
 
 void AudioChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float volume)
 {
-	sound->PlaySample(id, p, velocity, volume, false);
+	if (enabled)
+		sound->PlaySample(id, p, velocity, volume, false);
 }
 
 void AudioChannel::PlaySample(size_t id, CUnit* u,float volume)
 {
-	sound->PlaySample(id, u->pos, u->speed, volume, false);
+	if (enabled)
+		sound->PlaySample(id, u->pos, u->speed, volume, false);
 }
 
 void AudioChannel::PlaySample(size_t id, CWorldObject* p,float volume)
 {
-	sound->PlaySample(id, p->pos, ZeroVector, volume, false);
+	if (enabled)
+		sound->PlaySample(id, p->pos, ZeroVector, volume, false);
 }
 
 
@@ -451,10 +456,4 @@ boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bo
 void CSound::NewFrame()
 {
 	//GML_RECMUTEX_LOCK(sound); // NewFrame
-}
-
-
-void CSound::SetUnitReplyVolume (float vol)
-{
-	//dunitReplyVolume = vol;
 }
