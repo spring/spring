@@ -86,7 +86,7 @@ private:
 	size_t GetWaveId(const std::string& path, bool hardFail);
 	boost::shared_ptr<SoundBuffer> GetWaveBuffer(const std::string& path, bool hardFail = true);
 
-	float globalVolume;
+	float masterVolume;
 	bool mute;
 
 	typedef std::map<std::string, size_t> soundMapT;
