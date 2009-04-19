@@ -67,8 +67,9 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 {
 	mute = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
-	globalVolume = configHandler->Get("SoundVolume", 60) * 0.01f;
-	//unitReplyVolume = configHandler->Get("UnitReplyVolume", 80 ) * 0.01f;
+	masterVolume = configHandler->Get("SoundVolume", 60) * 0.01f;
+	//TODO make generic
+	Channels::UnitReply.SetVolume(configHandler->Get("UnitReplyVolume", 80 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{
@@ -241,7 +242,7 @@ bool CSound::Mute()
 	if (mute)
 		alListenerf(AL_GAIN, 0.0);
 	else
-		alListenerf(AL_GAIN, globalVolume);
+		alListenerf(AL_GAIN, masterVolume);
 	return mute;
 }
 
@@ -252,14 +253,14 @@ bool CSound::IsMuted() const
 
 void CSound::SetVolume(float v)
 {
-	globalVolume = v;
+	masterVolume = v;
 }
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	if (sources.empty() || mute || volume == 0.0f || globalVolume == 0.0f)
+	if (sources.empty() || mute || volume == 0.0f || masterVolume == 0.0f)
 		return;
 
 	if (id == 0)
@@ -333,7 +334,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
-	alListenerf(AL_GAIN, globalVolume);
+	alListenerf(AL_GAIN, masterVolume);
 	CheckError("CSound::UpdateListener");
 }
 
