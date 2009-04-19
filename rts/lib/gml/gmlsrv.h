@@ -142,18 +142,26 @@ public:
 	~gmlClientServer() {
 		if(inited) {
 			GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+			BOOL_ dowait=TRUE;
+			for(int i=1; i<gmlThreadCount; ++i) {
+				if(!threads[i]->joinable() || threads[i]->timed_join(boost::posix_time::milliseconds(10)))
+					dowait=FALSE;
+			}
 			ex->maxthreads=0;
 			dorun=FALSE;
-			Barrier.wait();
+			if(dowait)
+				Barrier.wait();
 			for(int i=1; i<gmlThreadCount; ++i) {
 				threads[i]->join();
 				delete threads[i];
 			}
 		}
 		if(auxinited) {
+			BOOL_ dowait=threads[gmlThreadCount]->joinable() && !threads[gmlThreadCount]->timed_join(boost::posix_time::milliseconds(10));
 			auxworker=NULL;
 			dorun=FALSE;
-			AuxBarrier.wait();
+			if(dowait)
+				AuxBarrier.wait();
 			threads[gmlThreadCount]->join();
 			delete threads[gmlThreadCount];
 		}
