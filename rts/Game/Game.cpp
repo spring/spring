@@ -1422,25 +1422,31 @@ bool CGame::ActionPressed(const Action& action,
 
 	if (cmd == "speedup") {
 		float speed = gs->userSpeedFactor;
-		if (speed < 1) {
-			speed /= 0.8f;
-			if (speed > 0.99f) {
-				speed = 1;
-			}
-		} else {
+		if(speed < 5) {
+			speed += (speed < 2) ? 0.1f : 0.2f;
+			float fpart = speed - (int)speed;
+			if(fpart < 0.01f || fpart > 0.99f)
+				speed = round(speed);
+		} else if (speed < 10) {
 			speed += 0.5f;
+		} else {
+			speed += 1.0f;
 		}
 		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
 	else if (cmd == "slowdown") {
 		float speed = gs->userSpeedFactor;
-		if (speed <= 1) {
-			speed *= 0.8f;
-			if (speed < 0.1f) {
+		if (speed <= 5) {
+			speed -= (speed <= 2) ? 0.1f : 0.2f;
+			float fpart = speed - (int)speed;
+			if(fpart < 0.01f || fpart > 0.99f)
+				speed = round(speed);
+			if (speed < 0.1f)
 				speed = 0.1f;
-			}
-		} else {
+		} else if (speed <= 10) {
 			speed -= 0.5f;
+		} else {
+			speed -= 1.0f;
 		}
 		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
