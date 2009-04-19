@@ -28,7 +28,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "mmgr.h"
 
 using std::min;

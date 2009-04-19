@@ -50,7 +50,7 @@
 #include "Sim/Weapons/StarburstLauncher.h"
 #include "Sim/Weapons/TorpedoLauncher.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "myMath.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
