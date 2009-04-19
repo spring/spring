@@ -43,6 +43,7 @@ struct CollisionVolume
 
 	int GetVolumeType() const { return volumeType; }
 	int GetTestType() const { return testType; }
+	void SetVolumeType(int type) { volumeType = type; }
 	void SetTestType(int type) { testType = type; }
 	void Enable() { disabled = false; }
 	void Disable() { disabled = true; }

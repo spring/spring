@@ -363,19 +363,15 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 				(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_CONTRADAR)) ||
 				(useRadar && radarhandler->InRadar(unit, gu->myAllyTeam))) {
 
-				const CollisionVolume* cv = NULL;
+				CollisionVolume cv(unit->collisionVolume);
 
 				if (unit->isIcon) {
 					// for iconified units, just pretend the collision
 					// volume is a sphere of radius <unit->IconRadius>
-					static CollisionVolume sphere;
-					sphere.SetDefaultScale(unit->iconRadius);
-					cv = &sphere;
-				} else {
-					cv = unit->collisionVolume;
+					cv.SetDefaultScale(unit->iconRadius);
 				}
 
-				if (CCollisionHandler::MouseHit(unit, start, start + dir * length, cv, &cq)) {
+				if (CCollisionHandler::MouseHit(unit, start, start + dir * length, &cv, &cq)) {
 					// get the distance to the ray-volume egress point
 					// so we can still select stuff inside factories
 					const float len = (cq.p1 - start).SqLength();

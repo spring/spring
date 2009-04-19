@@ -1685,7 +1685,7 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, CMatrix44f mat, GLUquadric
 	glPushMatrix();
 		glMultMatrixf(mat.m);
 
-		if (p->visible) {
+		if (p->visible && !p->colvol->IsDisabled()) {
 			DrawCollisionVolume(p->colvol, q);
 		}
 	glPopMatrix();
