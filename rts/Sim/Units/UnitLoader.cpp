@@ -337,12 +337,6 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->collisionVolume->SetTestType(COLVOL_TEST_CONT);
 	}
 
-	if (ud->usePieceCollisionVolumes) {
-		// enable the root piece volume
-		// note: always overrides LuaSC
-		(unit->localmodel->pieces[0])->colvol->Enable();
-	}
-
 
 	if (ud->floater) {
 		// restrict our depth to our waterline

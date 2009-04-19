@@ -1721,9 +1721,6 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 			GLUquadricObj* q = gluNewQuadric();
 
-			LocalModelPiece* rootPiece    = unit->localmodel->pieces[0];
-			CollisionVolume* rootPieceVol = rootPiece->colvol;
-
 			// draw the aimpoint
 			glColor3f(1.0f, 0.0f, 0.0f);
 			gluQuadricDrawStyle(q, GLU_FILL);
@@ -1732,10 +1729,10 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			glColor3f(0.0f, 0.0f, 0.0f);
 			gluQuadricDrawStyle(q, GLU_LINE);
 
-			if (!rootPieceVol->IsDisabled()) {
+			if (unit->unitDef->usePieceCollisionVolumes) {
 				// draw only the piece volumes for less clutter
 				CMatrix44f mat(-midPosOffset);
-				DrawUnitDebugPieceTree(rootPiece, mat, q);
+				DrawUnitDebugPieceTree(unit->localmodel->pieces[0], mat, q);
 			} else {
 				if (!unit->collisionVolume->IsDisabled()) {
 					DrawCollisionVolume(unit->collisionVolume, q);

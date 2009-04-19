@@ -28,11 +28,7 @@ bool CCollisionHandler::DetectHit(const CUnit* u, const float3& p0, const float3
 {
 	bool r = false;
 
-	const LocalModelPiece* rootPiece    = u->localmodel->pieces[0];
-	const CollisionVolume* rootPieceVol = rootPiece->colvol;
-
-	if (!rootPieceVol->IsDisabled()) {
-		// if the model's root piece coldet volume is enabled,
+	if (u->unitDef->usePieceCollisionVolumes) {
 		// test only for ray intersections with the piece tree
 		return (CCollisionHandler::IntersectPieceTree(u, p0, p1, q));
 	}

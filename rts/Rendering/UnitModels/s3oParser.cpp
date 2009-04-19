@@ -48,7 +48,6 @@ S3DModel* CS3OParser::Load(std::string name, const float3& centerOffset)
 	rootPiece->type = MODELTYPE_S3O;
 
 	FindMinMax(rootPiece);
-	rootPiece->colvol->Disable();
 
 	model->rootobject = rootPiece;
 	model->radius = header.radius;

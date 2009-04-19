@@ -150,7 +150,6 @@ S3DModel* C3DOParser::Load(string name, const float3& centerOffset)
 	FindCenter(rootobj);
 
 	rootobj->radius = FindRadius(rootobj, -rootobj->relMidPos);
-	rootobj->colvol->Disable();
 
 	rootobj->relMidPos.x = 0; // ?
 	rootobj->relMidPos.z = 0; // ?
