@@ -101,52 +101,8 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 	posScale.y = 0.1f;
 	posScale.z = 1.0f;
 
-	LuaParser parser("gamedata/sounds.lua", SPRING_VFS_MOD, SPRING_VFS_ZIP);
-	parser.SetLowerKeys(false);
-	parser.SetLowerCppKeys(false);
-	parser.Execute();
-	if (!parser.IsValid()) {
-		LogObject(LOG_SOUND) << "Could not load gamedata/sounds.lua:";
-		LogObject(LOG_SOUND) << parser.GetErrorLog();
-	}
-	else
-	{
-		const LuaTable soundRoot = parser.GetRoot();
-		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
-		if (!soundItemTable.IsValid())
-			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table";
-		else
-		{
-			std::vector<std::string> keys;
-			soundItemTable.GetKeys(keys);
-			for (std::vector<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
-			{
-				const std::string name(*it);
-				soundItemDef bufmap;
-				const LuaTable buf(soundItemTable.SubTable(*it));
-				buf.GetMap(bufmap);
-				bufmap["name"] = name;
-				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
-				if (sit != soundItemDefs.end())
-					LogObject(LOG_SOUND) << "CSound(): two SoundItems have the same name: " << name;
-
-				soundItemDef::const_iterator inspec = bufmap.find("file");
-				if (inspec == bufmap.end())	// no file, drop
-					LogObject(LOG_SOUND) << "CSound(): SoundItem has no file tag: " << name;
-				else
-					soundItemDefs[name] = bufmap;
-
-				if (buf.KeyExists("preload"))
-				{
-					LogObject(LOG_SOUND) << "CSound(): preloading " << name;
-					const size_t newid = sounds.size();
-					sounds.push_back(new SoundItem(GetWaveBuffer(bufmap["file"], true), bufmap));
-					soundMap[name] = newid;
-				}
-			}
-			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems";
-		}
-	}
+	LoadSoundDefs("gamedata/sounds.lua");
+	LoadSoundDefs("mapdata/sounds.lua");
 }
 
 CSound::~CSound()
@@ -398,6 +354,55 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "# reserved for buffers: " << (SoundBuffer::AllocedSize()/1024) << " kB";
 	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
+}
+
+void CSound::LoadSoundDefs(const std::string& filename)
+{
+	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
+	parser.SetLowerKeys(false);
+	parser.SetLowerCppKeys(false);
+	parser.Execute();
+	if (!parser.IsValid()) {
+		LogObject(LOG_SOUND) << "Could not load " << filename << ": " << parser.GetErrorLog();
+	}
+	else
+	{
+		const LuaTable soundRoot = parser.GetRoot();
+		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
+		if (!soundItemTable.IsValid())
+			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << filename;
+		else
+		{
+			std::vector<std::string> keys;
+			soundItemTable.GetKeys(keys);
+			for (std::vector<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
+			{
+				const std::string name(*it);
+				soundItemDef bufmap;
+				const LuaTable buf(soundItemTable.SubTable(*it));
+				buf.GetMap(bufmap);
+				bufmap["name"] = name;
+				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
+				if (sit != soundItemDefs.end())
+					LogObject(LOG_SOUND) << "CSound(): two SoundItems have the same name: " << name;
+
+				soundItemDef::const_iterator inspec = bufmap.find("file");
+				if (inspec == bufmap.end())	// no file, drop
+					LogObject(LOG_SOUND) << "CSound(): SoundItem has no file tag: " << name;
+				else
+					soundItemDefs[name] = bufmap;
+
+				if (buf.KeyExists("preload"))
+				{
+					LogObject(LOG_SOUND) << "CSound(): preloading " << name;
+					const size_t newid = sounds.size();
+					sounds.push_back(new SoundItem(GetWaveBuffer(bufmap["file"], true), bufmap));
+					soundMap[name] = newid;
+				}
+			}
+			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems from " << filename;
+		}
+	}
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
