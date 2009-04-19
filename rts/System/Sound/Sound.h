@@ -9,49 +9,10 @@
 
 #include "float3.h"
 
-class CWorldObject;
-class CUnit;
 class SoundSource;
 class SoundBuffer;
 class SoundItem;
 
-class AudioChannel
-{
-public:
-	AudioChannel();
-	
-	void Enable(bool newState);
-	bool IsEnabled();
-	
-	void SetVolume(float newVolume)
-	{
-		volume = newVolume;
-	};
-	float GetVolume()
-	{
-		return volume;
-	};
-
-	void PlaySample(size_t id, float volume = 1.0f);
-	void PlaySample(size_t id, const float3& p, float volume = 1.0f);
-	void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f);
-
-	void PlaySample(size_t id, CUnit* u, float volume = 1.0f);
-	void PlaySample(size_t id, CWorldObject* p, float volume = 1.0f);
-
-private:
-	float volume;
-	
-	bool enabled;
-};
-
-namespace Channels
-{
-extern AudioChannel General;
-extern AudioChannel Battle;
-extern AudioChannel UnitReply;
-extern AudioChannel UserInterface;
-}
 
 // Sound system interface
 class CSound

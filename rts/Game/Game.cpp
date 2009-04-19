@@ -124,6 +124,7 @@
 #include "Exceptions.h"
 #include "EventHandler.h"
 #include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "FileSystem/SimpleParser.h"
 #include "Net/RawPacket.h"
 #include "Net/UnpackPacket.h"

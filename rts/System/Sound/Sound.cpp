@@ -3,63 +3,21 @@
 #include "Sound.h"
 
 #include <AL/alc.h>
+#include <boost/cstdint.hpp>
 
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
+#include "AudioChannel.h"
 #include "ALShared.h"
 
-#include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 #include "Exceptions.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
-#include <boost/cstdint.hpp>
-
-namespace Channels
-{
-	AudioChannel General;
-	AudioChannel Battle;
-	AudioChannel UnitReply;
-	AudioChannel UserInterface;
-}
-
-AudioChannel::AudioChannel() : volume(1.0f), enabled(true)
-{
-};
-
-void AudioChannel::PlaySample(size_t id, float ovolume)
-{
-	if (enabled)
-		sound->PlaySample(id, ZeroVector, ZeroVector, volume * ovolume, true);
-}
-
-void AudioChannel::PlaySample(size_t id, const float3& p, float ovolume)
-{
-	if (enabled)
-		sound->PlaySample(id, p, ZeroVector, volume * ovolume, false);
-}
-
-void AudioChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float ovolume)
-{
-	if (enabled)
-		sound->PlaySample(id, p, velocity, volume * ovolume, false);
-}
-
-void AudioChannel::PlaySample(size_t id, CUnit* u,float ovolume)
-{
-	if (enabled)
-		sound->PlaySample(id, u->pos, u->speed, volume * ovolume, false);
-}
-
-void AudioChannel::PlaySample(size_t id, CWorldObject* p,float ovolume)
-{
-	if (enabled)
-		sound->PlaySample(id, p->pos, ZeroVector, volume * ovolume, false);
-}
-
+#include "Rendering/GL/myGL.h" // I HATE IT
 
 CSound* sound = NULL;
 
