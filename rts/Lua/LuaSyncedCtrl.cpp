@@ -1713,6 +1713,12 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 
 int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 {
+	const int argc = lua_gettop(L);
+
+	if (argc != 6 && argc != 14) {
+		return 0;
+	}
+
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
 	if (unit == NULL) {
@@ -1730,11 +1736,11 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	const bool enableLocal  = lua_toboolean(L, 5);
 	const bool enableGlobal = lua_toboolean(L, 6);
 
-	if (!affectLocal && !affectGlobal) {
+	if (pieceIndex < 0 || pieceIndex > localModel->pieces.size()) {
 		return 0;
 	}
 
-	if (pieceIndex < 0 || pieceIndex > localModel->pieces.size()) {
+	if (!affectLocal && !affectGlobal) {
 		return 0;
 	}
 
@@ -1756,7 +1762,9 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	if (affectLocal) {
 		// affects this unit only
 		if (enableLocal) {
-			lmp->colvol->Init(scales, offset, vType, COLVOL_TEST_CONT, pAxis);
+			if (argc == 14) {
+				lmp->colvol->Init(scales, offset, vType, COLVOL_TEST_CONT, pAxis);
+			}
 			lmp->colvol->Enable();
 		} else {
 			lmp->colvol->Disable();
@@ -1766,7 +1774,9 @@ int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
 	if (affectGlobal) {
 		// affects all future units with this model
 		if (enableGlobal) {
-			omp->colvol->Init(scales, offset, vType, COLVOL_TEST_CONT, pAxis);
+			if (argc == 14) {
+				omp->colvol->Init(scales, offset, vType, COLVOL_TEST_CONT, pAxis);
+			}
 			omp->colvol->Enable();
 		} else {
 			omp->colvol->Disable();
