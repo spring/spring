@@ -1217,7 +1217,7 @@ bool CGame::ActionPressed(const Action& action,
 		const char* startPtr = action.extra.c_str();
 		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
 		if (endPtr != startPtr) {
-			sound->SetUnitReplyVolume(volume);
+			Channels::UnitReply.SetVolume(volume);
 			configHandler->Set("UnitReplyVolume",(int)(volume * 100.0f));
 		}
 	}

@@ -23,8 +23,14 @@ public:
 	void Enable(bool newState);
 	bool IsEnabled();
 	
-	void SetVolume(float newVolume);
-	float GetVolume();
+	void SetVolume(float newVolume)
+	{
+		volume = newVolume;
+	};
+	float GetVolume()
+	{
+		return volume;
+	};
 
 	void PlaySample(size_t id, float volume = 1.0f);
 	void PlaySample(size_t id, const float3& p, float volume = 1.0f);
@@ -68,7 +74,6 @@ public:
 	bool IsMuted() const;
 
 	void SetVolume(float vol); // 1 = full volume
-	void SetUnitReplyVolume(float vol); // also affected by global volume (SetVolume())
 
 	void PrintDebugInfo();
 
