@@ -345,9 +345,11 @@ void CSelectedUnits::SelectGroup(int num)
 
 	CUnitSet::iterator ui;
 	for(ui=group->units.begin();ui!=group->units.end();++ui){
-		(*ui)->commandAI->selected=true;
-		selectedUnits.insert(*ui);
-		AddDeathDependence(*ui);
+		if (!(*ui)->noSelect) {
+			(*ui)->commandAI->selected=true;
+			selectedUnits.insert(*ui);
+			AddDeathDependence(*ui);
+		}
 	}
 
 	selectionChanged=true;
