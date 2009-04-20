@@ -1213,6 +1213,10 @@ void CGameServer::PushAction(const Action& action)
 	{
 		quitServer = true;
 	}
+	else if (action.command == "pause")
+	{
+		isPaused = !isPaused;
+	}
 #endif
 	else
 	{
