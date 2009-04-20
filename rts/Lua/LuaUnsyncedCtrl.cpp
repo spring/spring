@@ -303,7 +303,7 @@ static inline CUnit* ParseSelectUnit(lua_State* L,
                                      const char* caller, int index)
 {
 	CUnit* unit = ParseRawUnit(L, caller, index);
-	if (unit == NULL) {
+	if (unit == NULL || unit->noSelect) {
 		return NULL;
 	}
 	const int selectTeam = CLuaHandle::GetActiveHandle()->GetSelectTeam();
@@ -1753,7 +1753,7 @@ static void ParseUnitMap(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
 			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -2); // the key
-			if (unit != NULL) {
+			if (unit != NULL && !unit->noSelect) {
 				unitIDs.push_back(unit->id);
 			}
 		}
@@ -1770,7 +1770,7 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
 			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -1); // the value
-			if (unit != NULL) {
+			if (unit != NULL && !unit->noSelect) {
 				unitIDs.push_back(unit->id);
 			}
 		}
@@ -1836,7 +1836,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 	}
 
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL || unit->noSelect) {
 		lua_pushboolean(L, false);
 		return 1;
 	}
