@@ -3520,7 +3520,7 @@ void CGame::ClientReadNet()
 					vector<int> selected;
 					for (int a = 0; a < ((*((short int*)&inbuf[1])-4)/2); ++a) {
 						int unitid=*((short int*)&inbuf[4+a*2]);
-						if(unitid>= uh->MaxUnits() || unitid<0){
+						if(unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits()){
 							logOutput.Print("Got invalid unitid %i in netselect msg",unitid);
 							break;
 						}
@@ -3544,7 +3544,7 @@ void CGame::ClientReadNet()
 				}
 
 				int unitid = *((short int*) &inbuf[4]);
-				if (unitid >= uh->MaxUnits() || unitid < 0) {
+				if (unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits()) {
 					logOutput.Print("Got invalid unitID (%i) in NETMSG_AICOMMAND", unitid);
 					break;
 				}
