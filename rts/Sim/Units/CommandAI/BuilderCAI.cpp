@@ -565,7 +565,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		float radius=c.params[3];
 		fac->StopBuild();
 		if (FindRepairTargetAndRepair(pos, radius, c.options, false) ||
-			((c.options & SPACE_KEY) && owner->unitDef->canReclaim &&  // if there is nothing more to repair, try reclaim
+			((c.options & META_KEY) && owner->unitDef->canReclaim &&  // if there is nothing more to repair, try reclaim
 			FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))) {
 			inCommand=false;
 			SlowUpdate();
@@ -616,7 +616,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		float radius = c.params[3];
 		fac->StopBuild();
 		if (FindCaptureTargetAndCapture(pos, radius, c.options) || // if there is nothing more to capture, try repair/reclaim
-			(c.options & SPACE_KEY) && (owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false) ||
+			(c.options & META_KEY) && (owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false) ||
 			owner->unitDef->canReclaim && FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))) {
 			inCommand = false;
 			SlowUpdate();
@@ -808,7 +808,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		const bool recAnyTeam = ((c.options & CONTROL_KEY) != 0);
-		const bool recUnits = ((c.options & SPACE_KEY) != 0);
+		const bool recUnits = ((c.options & META_KEY) != 0);
 		RemoveUnitFromReclaimers(owner);
 		RemoveUnitFromFeatureReclaimers(owner);
 		fac->StopBuild();
@@ -890,7 +890,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		if(FindResurrectableFeatureAndResurrect(pos,radius,c.options) || // if there is nothing more to resurrect, try repair/reclaim
-			((c.options & SPACE_KEY) && ((owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false)) ||
+			((c.options & META_KEY) && ((owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false)) ||
 			(owner->unitDef->canReclaim && FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))))){
 			inCommand=false;
 			SlowUpdate();
@@ -981,7 +981,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		}
 		return;
 	}
-	if ((c.options & SPACE_KEY) && owner->unitDef->canResurrect && // Priority 2: Resurrect (optional)
+	if ((c.options & META_KEY) && owner->unitDef->canResurrect && // Priority 2: Resurrect (optional)
 	    FindResurrectableFeatureAndResurrect(curPosOnLine, 300, c.options)) {
 		tempOrder = true;
 		inCommand = false;
@@ -992,7 +992,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 	if (owner->unitDef->canReclaim && // Priority 3: Reclaim / reclaim non resurrectable (optional) / reclaim enemy units (optional)
-	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, false, false, (c.options & ALT_KEY), (c.options & SPACE_KEY), (c.options & ALT_KEY))) {
+	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, false, false, (c.options & ALT_KEY), (c.options & META_KEY), (c.options & ALT_KEY))) {
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC3 != gs->frameNum) {  //avoid infinite loops

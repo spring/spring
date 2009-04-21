@@ -152,7 +152,12 @@ public:
 			if(dowait)
 				Barrier.wait();
 			for(int i=1; i<gmlThreadCount; ++i) {
-				threads[i]->join();
+				if(threads[i]->joinable()) {
+					if(dowait)
+						threads[i]->join();
+					else if(!threads[i]->timed_join(boost::posix_time::milliseconds(100)))
+						threads[i]->interrupt();
+				}
 				delete threads[i];
 			}
 		}
@@ -162,7 +167,12 @@ public:
 			dorun=FALSE;
 			if(dowait)
 				AuxBarrier.wait();
-			threads[gmlThreadCount]->join();
+			if(threads[gmlThreadCount]->joinable()) {
+				if(dowait)
+					threads[gmlThreadCount]->join();
+				else if(!threads[gmlThreadCount]->timed_join(boost::posix_time::milliseconds(100)))
+					threads[gmlThreadCount]->interrupt();
+			}
 			delete threads[gmlThreadCount];
 		}
 	}
