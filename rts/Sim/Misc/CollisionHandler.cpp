@@ -229,38 +229,11 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	mat.Translate(offset);
 
 	if (lmp->visible && !vol->IsDisabled()) {
-		CMatrix44f matInv = mat.Invert();
-		const float3 pi0 = matInv.Mul(p0);
-		const float3 pi1 = matInv.Mul(p1);
-
 		CollisionQuery q;
 
-		switch (vol->GetVolumeType()) {
-			case COLVOL_TYPE_ELLIPSOID: {
-				if (CCollisionHandler::IntersectEllipsoid(vol, pi0, pi1, &q)) {
-					q.p0 = mat.Mul(q.p0);
-					q.p1 = mat.Mul(q.p1);
-					hits->push_back(q);
-				}
-			} break;
-			case COLVOL_TYPE_CYLINDER: {
-				if (CCollisionHandler::IntersectCylinder(vol, pi0, pi1, &q)) {
-					q.p0 = mat.Mul(q.p0);
-					q.p1 = mat.Mul(q.p1);
-					hits->push_back(q);
-				}
-			} break;
-			case COLVOL_TYPE_BOX: {
-				if (CCollisionHandler::IntersectBox(vol, pi0, pi1, &q)) {
-					q.p0 = mat.Mul(q.p0);
-					q.p1 = mat.Mul(q.p1);
-					hits->push_back(q);
-				}
-			} break;
-			default: {
-				// piece collision volumes
-				// can have no other type
-			} break;
+		if (CCollisionHandler::Intersect(vol, mat, p0, p1, &q)) {
+			// maybe store a pointer to lmp->original too?
+			hits->push_back(q);
 		}
 	}
 
