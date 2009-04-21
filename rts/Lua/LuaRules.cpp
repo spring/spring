@@ -309,7 +309,7 @@ bool CLuaRules::CommandFallback(const CUnit* unit, const Command& cmd)
 	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
 	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
-	HSTR_PUSH_BOOL(L, "space", !!(cmd.options & SPACE_KEY));
+	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
 
 	// push the command tag
 	lua_pushnumber(L, cmd.tag);
@@ -371,7 +371,7 @@ bool CLuaRules::AllowCommand(const CUnit* unit, const Command& cmd, bool fromSyn
 	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
 	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
-	HSTR_PUSH_BOOL(L, "space", !!(cmd.options & SPACE_KEY));
+	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
 
 	// push the command tag
 	lua_pushnumber(L, cmd.tag);
