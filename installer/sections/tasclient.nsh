@@ -14,7 +14,7 @@
   File /r "..\installer\TASClient\SaveFiles\*.*"
 
   inetc::get \
-             "http://installer.clan-sy.com/SpringDownloader.exe" "$INSTDIR\SpringDownloader.exe"          
+             "http://installer.clan-sy.com/SpringDownloader.exe" "$INSTDIR\SpringDownloader.exe"
 
   SetOutPath "$INSTDIR\lobby\var"
   ${IfNot} ${FileExists} "$INSTDIR\lobby\var\groups.ini"
