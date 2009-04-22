@@ -23,4 +23,4 @@ cd TASClient
 
 7z x ../downloads/TASClientLatest.7z -oSaveFiles
 
-mv SaveFiles/Lobby/var/groups.ini .
+# mv SaveFiles/Lobby/var/groups.ini .

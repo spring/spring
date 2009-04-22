@@ -14,12 +14,9 @@
   File /r "..\installer\TASClient\SaveFiles\*.*"
 
   inetc::get \
-             "http://installer.clan-sy.com/SpringDownloader.exe" "$INSTDIR\SpringDownloader.exe"
-
-  SetOutPath "$INSTDIR\lobby\var"
-  ${IfNot} ${FileExists} "$INSTDIR\lobby\var\groups.ini"
-    File "..\installer\TASClient\groups.ini"
-  ${EndIf}
+             "http://files.caspring.org/caupdater/SpringDownloader.exe" "$INSTDIR\SpringDownloader.exe"
+  inetc::get \
+             "http://springrts.com/dl/TASClient.exe" "$INSTDIR\TASClient.exe"
 
   Call GetDotNETVersion
   Pop $0
