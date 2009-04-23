@@ -212,7 +212,7 @@ bool CCollisionHandler::MouseHit(const CUnit* u, const float3& p0, const float3&
 
 
 void CCollisionHandler::IntersectPieceTreeHelper(
-	const LocalModelPiece* lmp,
+	LocalModelPiece* lmp,
 	CMatrix44f mat,
 	const float3& p0,
 	const float3& p1,
@@ -232,7 +232,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 		CollisionQuery q;
 
 		if (CCollisionHandler::Intersect(vol, mat, p0, p1, &q)) {
-			// maybe store a pointer to lmp->original too?
+			q.lmp = lmp;
 			hits->push_back(q);
 		}
 	}
@@ -262,8 +262,11 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 
 		if (dstSq < dstNearSq) {
 			dstNearSq = dstSq;
+
 			q->b0 = qTmp.b0; q->t0 = qTmp.t0; q->p0 = qTmp.p0;
 			q->b1 = qTmp.b1; q->t1 = qTmp.t1; q->p1 = qTmp.p1;
+
+			q->lmp = qTmp.lmp;
 		}
 	}
 
