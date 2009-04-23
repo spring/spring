@@ -127,6 +127,7 @@ CUnit::CUnit ()
 	haveTarget(false),
 	lastAttacker(0),
 	lastAttackedPiece(0),
+	lastAttackedPieceFrame(-1),
 	lastAttack(-200),
 	userTarget(0),
 	userAttackGround(false),
@@ -2434,6 +2435,7 @@ CR_REG_METADATA(CUnit, (
 
 	CR_MEMBER(lastAttacker),
 	// CR_MEMBER(lastAttackedPiece),
+	CR_MEMBER(lastAttackedPieceFrame),
 	CR_MEMBER(lastAttack),
 	CR_MEMBER(lastDamage),
 	CR_MEMBER(lastFireWeapon),
