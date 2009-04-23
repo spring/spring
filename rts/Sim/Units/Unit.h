@@ -313,7 +313,7 @@ public:
 	float energyStorage;
 
 	CUnit* lastAttacker;                  // last attacker
-	LocalModelPiece* lastAttackedPiece;   // piece that was last damaged
+	LocalModelPiece* lastAttackedPiece;   // piece that was last hit by a projectile
 	int lastAttack;                       // last frame unit was attacked by other unit
 	int lastDamage;                       // last frame the unit was damaged
 	int lastFireWeapon;                   // last time this unit fired a weapon
