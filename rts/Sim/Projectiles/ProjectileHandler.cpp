@@ -775,7 +775,6 @@ void CProjectileHandler::CheckUnitCollisions(
 		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &q)) {
 			if (q.lmp != NULL) {
 				// remains valid until the next hit
-				// (and is never set to NULL again)
 				unit->lastAttackedPiece = q.lmp;
 			}
 
