@@ -2954,6 +2954,9 @@ int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
 	const LocalModelPiece* lmp = unit->lastAttackedPiece;
 	const S3DModelPiece* omp = lmp->original;
 
+	// reset the data
+	unit->lastAttackedPiece = NULL;
+
 	lua_pushstring(L, omp->name.c_str());
 	return 1;
 }

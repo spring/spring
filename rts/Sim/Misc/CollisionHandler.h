@@ -25,7 +25,7 @@ struct CollisionQuery {
 	float  t0, t1;        // distance parameter for ingress and egress point
 	float3 p0, p1;        // ray-volume ingress and egress points
 
-	LocalModelPiece* lmp; // piece that was last hit
+	LocalModelPiece* lmp; // impacted piece
 };
 
 // responsible for detecting hits between projectiles
