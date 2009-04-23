@@ -1233,6 +1233,26 @@ bool CGame::ActionPressed(const Action& action,
 		else if (channel == "UserInterface")
 			Channels::UserInterface.SetVolume(volume);
 	}
+	else if (cmd == "soundchannelenable") {
+		std::string channel;
+		int enableInt, enable;
+		std::istringstream buf(action.extra);
+		buf >> channel;
+		buf >> enableInt;
+		if (enableInt == 0)
+			enable = false;
+		else
+			enable = true;
+
+		if (channel == "UnitReply")
+			Channels::UnitReply.Enable(enable);
+		else if (channel == "General")
+			Channels::General.Enable(enable);
+		else if (channel == "Battle")
+			Channels::Battle.Enable(enable);
+		else if (channel == "UserInterface")
+			Channels::UserInterface.Enable(enable);
+	}
 	else if (cmd == "savegame"){
 		if (filesystem.CreateDirectory("Saves")) {
 			CLoadSaveHandler ls;
