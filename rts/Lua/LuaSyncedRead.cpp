@@ -2943,7 +2943,7 @@ int LuaSyncedRead::GetUnitLastAttacker(lua_State* L)
 
 int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1); // ?
 	if (unit == NULL) {
 		return 0;
 	}
