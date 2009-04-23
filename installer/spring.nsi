@@ -150,7 +150,7 @@ Function NoDotNet
   "The .NET runtime library is not installed. v2.0 or newer is required for the Complete Annihilation automatic updates. Do you wish to download and install it?" \
   IDYES true IDNO false
 true:
-    inetc::get "http://installer.clan-sy.com/dotnetfx.exe"   "$INSTDIR\dotnetfx.exe"
+    inetc::get "http://springrts.com/dl/dotnetfx.exe"   "$INSTDIR\dotnetfx.exe"
     ExecWait "$INSTDIR\dotnetfx.exe"
     Delete   "$INSTDIR\dotnetfx.exe"
   Goto next
@@ -164,7 +164,7 @@ Function OldDotNet
     IDYES true IDNO false
 true:
     inetc::get \
-             "http://installer.clan-sy.com/dotnetfx.exe"   "$INSTDIR\dotnetfx.exe"
+             "http://springrts.com/dl/dotnetfx.exe"   "$INSTDIR\dotnetfx.exe"
     ExecWait "$INSTDIR\dotnetfx.exe"
     Delete   "$INSTDIR\dotnetfx.exe"
   Goto next
