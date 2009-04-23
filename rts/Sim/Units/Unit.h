@@ -314,6 +314,7 @@ public:
 
 	CUnit* lastAttacker;                  // last attacker
 	LocalModelPiece* lastAttackedPiece;   // piece that was last hit by a projectile
+	int lastAttackedPieceFrame;           // frame in which lastAttackedPiece was hit
 	int lastAttack;                       // last frame unit was attacked by other unit
 	int lastDamage;                       // last frame the unit was damaged
 	int lastFireWeapon;                   // last time this unit fired a weapon
