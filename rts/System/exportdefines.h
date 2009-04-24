@@ -60,7 +60,10 @@
 	#if defined _WIN32
 		#define SPRING_CALLING_CONVENTION stdcall
 		#define SPRING_CALLING_CONVENTION_2 __stdcall
-	#else // defined _WIN32
+	#elif defined __POWERPC__
+		#define SPRING_CALLING_CONVENTION 
+		#define SPRING_CALLING_CONVENTION_2 
+	#else
 		#define SPRING_CALLING_CONVENTION cdecl
 		#define SPRING_CALLING_CONVENTION_2 __cdecl
 	#endif // defined _WIN32
