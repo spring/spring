@@ -1717,11 +1717,9 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 			glDisable(GL_LIGHT1);
 			glDisable(GL_CULL_FACE);
 			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_COLOR_MATERIAL);
 			glDisable(GL_BLEND);
 			glDisable(GL_ALPHA_TEST);
 			glDisable(GL_FOG);
-			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
 			glDisable(GL_CLIP_PLANE0);
 			glDisable(GL_CLIP_PLANE1);
 
