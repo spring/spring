@@ -1689,9 +1689,6 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->collisionVolume == NULL) {
-		return 0;
-	}
 
 	const float xs = luaL_checkfloat(L, 2);
 	const float ys = luaL_checkfloat(L, 3);
