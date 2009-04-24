@@ -36,6 +36,7 @@
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -224,6 +225,8 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitLosState);
 	REGISTER_LUA_CFUNC(GetUnitSeparation);
 	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
+	REGISTER_LUA_CFUNC(GetUnitCollisionVolumeData);
+	REGISTER_LUA_CFUNC(GetUnitPieceCollisionVolumeData);
 
 	REGISTER_LUA_CFUNC(GetUnitCommands);
 	REGISTER_LUA_CFUNC(GetFactoryCounts);
@@ -2943,7 +2946,7 @@ int LuaSyncedRead::GetUnitLastAttacker(lua_State* L)
 
 int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
 {
-	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1); // ?
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1); // ?
 	if (unit == NULL) {
 		return 0;
 	}
@@ -2957,6 +2960,61 @@ int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
 	lua_pushstring(L, omp->name.c_str());
 	lua_pushnumber(L, unit->lastAttackedPieceFrame);
 	return 2;
+}
+
+
+int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
+{
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const CollisionVolume* vol = unit->collisionVolume;
+
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, vol->GetTestType());
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IsDisabled());
+
+	return 10;
+}
+
+int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
+{
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const LocalModel* lm = unit->localmodel;
+	const int pieceIndex = luaL_checkint(L, 2);
+
+	if (pieceIndex < 0 || pieceIndex >= lm->pieces.size()) {
+		return 0;
+	}
+
+	const LocalModelPiece* lmp = lm->pieces[pieceIndex];
+	const CollisionVolume* vol = lmp->colvol;
+
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, vol->GetTestType());
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IsDisabled());
+
+	return 10;
 }
 
 
