@@ -1690,12 +1690,14 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 
 		if (p->visible && !p->colvol->IsDisabled()) {
 			if (p == lap) {
+				glLineWidth(2.0f);
 				glColor3f(1.0f, 0.0f, 0.0f);
 			}
 
 			DrawCollisionVolume(p->colvol, q);
 
 			if (p == lap) {
+				glLineWidth(1.0f);
 				glColor3f(0.0f, 0.0f, 0.0f);
 			}
 		}
@@ -1710,52 +1712,53 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {
 	if (gu->drawdebug) {
 		glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
-		glDisable(GL_LIGHTING);
-		glDisable(GL_LIGHT0);
-		glDisable(GL_LIGHT1);
-		glDisable(GL_CULL_FACE);
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_COLOR_MATERIAL);
-		glDisable(GL_BLEND);
-		glDisable(GL_ALPHA_TEST);
-		glDisable(GL_FOG);
-		glDisable(GL_VERTEX_PROGRAM_ARB);
-		glDisable(GL_FRAGMENT_PROGRAM_ARB);
-		glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-		glDisable(GL_CLIP_PLANE0);
-		glDisable(GL_CLIP_PLANE1);
+			glDisable(GL_LIGHTING);
+			glDisable(GL_LIGHT0);
+			glDisable(GL_LIGHT1);
+			glDisable(GL_CULL_FACE);
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_COLOR_MATERIAL);
+			glDisable(GL_BLEND);
+			glDisable(GL_ALPHA_TEST);
+			glDisable(GL_FOG);
+			glDisable(GL_TEXTURE_CUBE_MAP_ARB);
+			glDisable(GL_CLIP_PLANE0);
+			glDisable(GL_CLIP_PLANE1);
 
-		const float3 midPosOffset =
-			(unit->frontdir * unit->relMidPos.z) +
-			(unit->updir    * unit->relMidPos.y) +
-			(unit->rightdir * unit->relMidPos.x);
+			UnitDrawingTexturesOff(NULL);
 
-		glPushMatrix();
-			glTranslatef3(midPosOffset);
+			const float3 midPosOffset =
+				(unit->frontdir * unit->relMidPos.z) +
+				(unit->updir    * unit->relMidPos.y) +
+				(unit->rightdir * unit->relMidPos.x);
 
-			GLUquadricObj* q = gluNewQuadric();
+			glPushMatrix();
+				glTranslatef3(midPosOffset);
 
-			// draw the aimpoint
-			glColor3f(1.0f, 1.0f, 1.0f);
-			gluQuadricDrawStyle(q, GLU_FILL);
-			gluSphere(q, 2.0f, 20, 20);
+				GLUquadricObj* q = gluNewQuadric();
 
-			glColor3f(0.0f, 0.0f, 0.0f);
-			gluQuadricDrawStyle(q, GLU_LINE);
+				// draw the aimpoint
+				glColor3f(1.0f, 1.0f, 1.0f);
+				gluQuadricDrawStyle(q, GLU_FILL);
+				gluSphere(q, 2.0f, 20, 20);
 
-			if (unit->unitDef->usePieceCollisionVolumes) {
-				// draw only the piece volumes for less clutter
-				CMatrix44f mat(-midPosOffset);
-				DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, mat, q);
-			} else {
-				if (!unit->collisionVolume->IsDisabled()) {
-					DrawCollisionVolume(unit->collisionVolume, q);
+				glColor3f(0.0f, 0.0f, 0.0f);
+				gluQuadricDrawStyle(q, GLU_LINE);
+
+				if (unit->unitDef->usePieceCollisionVolumes) {
+					// draw only the piece volumes for less clutter
+					CMatrix44f mat(-midPosOffset);
+					DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, mat, q);
+				} else {
+					if (!unit->collisionVolume->IsDisabled()) {
+						DrawCollisionVolume(unit->collisionVolume, q);
+					}
 				}
-			}
 
-			gluDeleteQuadric(q);
-		glPopMatrix();
+				gluDeleteQuadric(q);
+			glPopMatrix();
 
+			UnitDrawingTexturesOn(NULL);
 		glPopAttrib();
 	}
 }
