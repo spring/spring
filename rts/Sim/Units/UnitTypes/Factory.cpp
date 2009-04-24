@@ -334,28 +334,33 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(void)
 {
+	if (ph->currentParticles >= ph->maxParticles)
+		return;
+#ifdef USE_GML
+	if (gs->frameNum - lastDrawFrame > 20)
+		return;
+#endif
+	if (!unitDef->showNanoSpray)
+		return;
+
 	std::vector<int> args;
 	args.push_back(0);
 	cob->Call("QueryNanoPiece", args);
 
-	if (ph->currentParticles < ph->maxParticles) {
-		if (unitDef->showNanoSpray) {
-			const float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
-			const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
-										 + (updir    * relWeaponFirePos.y)
-										 + (rightdir * relWeaponFirePos.x);
-			float3 dif = (curBuild->midPos - weaponPos);
-			const float l = fastmath::sqrt2(dif.SqLength());
-			dif /= l;
-			dif += gu->usRandVector() * 0.15f;
-			float3 color = unitDef->nanoColor;
+	const float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
+	const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
+		+ (updir    * relWeaponFirePos.y)
+		+ (rightdir * relWeaponFirePos.x);
+	float3 dif = (curBuild->midPos - weaponPos);
+	const float l = fastmath::sqrt2(dif.SqLength());
+	dif /= l;
+	dif += gu->usRandVector() * 0.15f;
+	float3 color = unitDef->nanoColor;
 
-			if (gu->teamNanospray) {
-				unsigned char* tcol = teamHandler->Team(team)->color;
-				color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
-			}
-
-			new CGfxProjectile(weaponPos, dif, (int) l, color);
-		}
+	if (gu->teamNanospray) {
+		unsigned char* tcol = teamHandler->Team(team)->color;
+		color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
 	}
+
+	new CGfxProjectile(weaponPos, dif, (int) l, color);
 }

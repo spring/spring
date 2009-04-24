@@ -426,7 +426,9 @@ public:
 
 	float alphaThreshold;	// minimum alpha value for a texel to be drawn
 	int cegDamage;			// the damage value passed to CEGs spawned by this unit's script
-
+#ifdef USE_GML
+	int lastDrawFrame; // last draw frame
+#endif
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();

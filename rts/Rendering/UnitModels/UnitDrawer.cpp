@@ -302,6 +302,7 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 	if (unit->noDraw) {
 		return;
 	}
+
 	if (camera->InView(unit->drawMidPos, unit->radius + 30)) {
 		const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
 		if ((losStatus & LOS_INLOS) || gu->spectatingFullView) {
@@ -318,13 +319,15 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 					return;
 				}
 			}
-
-			if (drawRefraction) {
+			else if (drawRefraction) {
 				if (unit->pos.y > 0.0f) {
 					return;
 				}
 			}
-
+#ifdef USE_GML
+			else
+				unit->lastDrawFrame = gs->frameNum;
+#endif
 			float sqDist = (unit->pos-camera->pos).SqLength();
 			float iconDistMult = unit->unitDef->iconType->GetDistance();
 			float realIconLength = iconLength * (iconDistMult * iconDistMult);
