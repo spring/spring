@@ -235,6 +235,9 @@ CUnit::CUnit ()
 	currentLOD(0),
 	alphaThreshold(0.1f),
 	cegDamage(1),
+#ifdef USE_GML
+	lastDrawFrame(-30),
+#endif
 	losStatus(teamHandler->ActiveAllyTeams(), 0)
 {
 #ifdef DIRECT_CONTROL_ALLOWED
