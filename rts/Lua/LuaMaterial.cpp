@@ -487,6 +487,7 @@ static const char* GetMatTypeName(LuaMatType type)
 		STRING_CASE(typeName, LUAMAT_ALPHA_REFLECT);
 		STRING_CASE(typeName, LUAMAT_OPAQUE_REFLECT);
 		STRING_CASE(typeName, LUAMAT_SHADOW);
+		case LUAMAT_TYPE_COUNT: break;
 	}
 	return typeName;
 }

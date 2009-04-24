@@ -220,6 +220,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitFuel);
 	REGISTER_LUA_CFUNC(GetUnitEstimatedPath);
 	REGISTER_LUA_CFUNC(GetUnitLastAttacker);
+	REGISTER_LUA_CFUNC(GetUnitLastAttackedPiece);
 	REGISTER_LUA_CFUNC(GetUnitLosState);
 	REGISTER_LUA_CFUNC(GetUnitSeparation);
 	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
@@ -2940,6 +2941,24 @@ int LuaSyncedRead::GetUnitLastAttacker(lua_State* L)
 	return 1;
 }
 
+int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
+{
+	CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1); // ?
+	if (unit == NULL) {
+		return 0;
+	}
+	if (unit->lastAttackedPiece == NULL) {
+		return 0;
+	}
+
+	const LocalModelPiece* lmp = unit->lastAttackedPiece;
+	const S3DModelPiece* omp = lmp->original;
+
+	lua_pushstring(L, omp->name.c_str());
+	lua_pushnumber(L, unit->lastAttackedPieceFrame);
+	return 2;
+}
+
 
 int LuaSyncedRead::GetUnitLosState(lua_State* L)
 {
@@ -2961,7 +2980,7 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 	const unsigned short losStatus = unit->losStatus[allyTeam];
 
 	if (fullRead && lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
-		lua_pushnumber(L, losStatus); // return a numberic value
+		lua_pushnumber(L, losStatus); // return a numeric value
 		return 1;
 	}
 

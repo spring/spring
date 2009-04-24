@@ -1233,6 +1233,26 @@ bool CGame::ActionPressed(const Action& action,
 		else if (channel == "UserInterface")
 			Channels::UserInterface.SetVolume(volume);
 	}
+	else if (cmd == "soundchannelenable") {
+		std::string channel;
+		int enableInt, enable;
+		std::istringstream buf(action.extra);
+		buf >> channel;
+		buf >> enableInt;
+		if (enableInt == 0)
+			enable = false;
+		else
+			enable = true;
+
+		if (channel == "UnitReply")
+			Channels::UnitReply.Enable(enable);
+		else if (channel == "General")
+			Channels::General.Enable(enable);
+		else if (channel == "Battle")
+			Channels::Battle.Enable(enable);
+		else if (channel == "UserInterface")
+			Channels::UserInterface.Enable(enable);
+	}
 	else if (cmd == "savegame"){
 		if (filesystem.CreateDirectory("Saves")) {
 			CLoadSaveHandler ls;
@@ -3175,7 +3195,7 @@ void CGame::SimFrame() {
 
 	{
 		SCOPED_TIMER("Collisions");
-		ph->CheckUnitCol();
+		ph->CheckCollisions();
 		ground->CheckCol(ph);
 	}
 
@@ -3520,7 +3540,7 @@ void CGame::ClientReadNet()
 					vector<int> selected;
 					for (int a = 0; a < ((*((short int*)&inbuf[1])-4)/2); ++a) {
 						int unitid=*((short int*)&inbuf[4+a*2]);
-						if(unitid>= uh->MaxUnits() || unitid<0){
+						if(unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits()){
 							logOutput.Print("Got invalid unitid %i in netselect msg",unitid);
 							break;
 						}
@@ -3544,7 +3564,7 @@ void CGame::ClientReadNet()
 				}
 
 				int unitid = *((short int*) &inbuf[4]);
-				if (unitid >= uh->MaxUnits() || unitid < 0) {
+				if (unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits()) {
 					logOutput.Print("Got invalid unitID (%i) in NETMSG_AICOMMAND", unitid);
 					break;
 				}

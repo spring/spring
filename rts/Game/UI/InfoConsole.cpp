@@ -161,7 +161,7 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const char* text
 	}
 
 	float maxWidth = 25.0f;
-	int pos=0, line_start=0;
+	size_t pos=0, line_start=0;
 
 	while (text[pos]) {
 		// iterate through text until maxWidth width is reached
@@ -175,7 +175,7 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const char* text
 
 		// if needed, find a breaking position
 		if (w > maxWidth) {
-			int break_pos = pos-line_start;
+			size_t break_pos = pos-line_start;
 			while (break_pos >= 0 && temp[break_pos] != ' ')
 				break_pos --;
 
