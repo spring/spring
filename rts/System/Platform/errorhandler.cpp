@@ -40,8 +40,8 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 	MessageBox (GetActiveWindow(), msg, caption, winFlags);
 
 // TODO: write Mac OS X specific message box
-// #elif defined(__APPLE__)
-        // MacMessageBox(msg, caption, flags);
+ #elif defined(__APPLE__)
+	MacMessageBox(msg, caption, flags);
 #else
 	// X implementation
 
