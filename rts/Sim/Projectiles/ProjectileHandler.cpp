@@ -744,13 +744,107 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 }
 
 
-void CProjectileHandler::CheckUnitCol()
-{
-	Projectile_List::iterator psi;
 
+
+void CProjectileHandler::CheckUnitCollisions(
+	CProjectile* p,
+	std::vector<CUnit*>& tempUnits,
+	CUnit** endUnit,
+	const float3& ppos0,
+	const float3& ppos1)
+{
+	CollisionQuery q;
+
+	for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
+		CUnit* unit = *ui;
+
+		const bool friendlyShot = (p->owner() && (unit->allyteam == p->owner()->allyteam));
+		const bool raytraced = (unit->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
+
+		// if this unit fired this projectile or (this unit is in the
+		// same allyteam as the unit that shot this projectile and we
+		// are ignoring friendly collisions)
+		if (p->owner() == unit || ((p->collisionFlags & COLLISION_NOFRIENDLY) && friendlyShot)) {
+			continue;
+		}
+
+		if (p->collisionFlags & COLLISION_NONEUTRAL) {
+			if (unit->IsNeutral()) { continue; }
+		}
+
+		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &q)) {
+			if (q.lmp != NULL) {
+				unit->lastAttackedPiece      = q.lmp;
+				unit->lastAttackedPieceFrame = gs->frameNum;
+			}
+
+			// The current projectile <p> won't reach the raytraced surface impact
+			// position until ::Update() is called (same frame). This is a problem
+			// when dealing with fast low-AOE projectiles since they would do almost
+			// no damage if detonated outside the collision volume. Therefore, smuggle
+			// a bit with its position now (rather than rolling it back in ::Update()
+			// and waiting for the next-frame CheckUnitCol(), which is problematic
+			// for noExplode projectiles).
+
+			// const float3& pimpp = (q.b0)? q.p0: q.p1;
+			const float3 pimpp =
+				(q.b0 && q.b1)? ( q.p0 +  q.p1) * 0.5f:
+				(q.b0        )? ( q.p0 + ppos1) * 0.5f:
+								(ppos0 +  q.p1) * 0.5f;
+
+			p->pos = (raytraced)? pimpp: ppos0;
+			p->Collision(unit);
+			p->pos = (raytraced)? ppos0: p->pos;
+			break;
+		}
+	}
+}
+
+void CProjectileHandler::CheckFeatureCollisions(
+	CProjectile* p,
+	std::vector<CFeature*>& tempFeatures,
+	CFeature** endFeature,
+	const float3& ppos0,
+	const float3& ppos1)
+{
+	CollisionQuery q;
+
+	if (p->collisionFlags & COLLISION_NOFEATURE) {
+		return;
+	}
+
+	for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
+		CFeature* feature = *fi;
+
+		const bool raytraced =
+			(feature->collisionVolume &&
+			feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
+
+		// geothermals do not have a collision volume, skip them
+		if (!feature->blocking || feature->def->geoThermal) {
+			continue;
+		}
+
+		if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &q)) {
+			const float3 pimpp =
+				(q.b0 && q.b1)? (q.p0 + q.p1) * 0.5f:
+				(q.b0        )? (q.p0 + ppos1) * 0.5f:
+								(ppos0 + q.p1) * 0.5f;
+
+			p->pos = (raytraced)? pimpp: ppos0;
+			p->Collision(feature);
+			p->pos = (raytraced)? ppos0: p->pos;
+			break;
+		}
+	}
+}
+
+void CProjectileHandler::CheckCollisions()
+{
 	static std::vector<CUnit*> tempUnits(uh->MaxUnits(), NULL);
 	static std::vector<CFeature*> tempFeatures(uh->MaxUnits(), NULL);
-	CollisionQuery q;
+
+	Projectile_List::iterator psi;
 
 	for (psi = ps.begin(); psi != ps.end(); ++psi) {
 		CProjectile* p = (*psi);
@@ -758,81 +852,15 @@ void CProjectileHandler::CheckUnitCol()
 		if (p->checkCol && !p->deleteMe) {
 			const float3 ppos0 = p->pos;
 			const float3 ppos1 = p->pos + p->speed;
-
-			float speedf = p->speed.Length();
+			const float speedf = p->speed.Length();
 
 			CUnit** endUnit = &tempUnits[0];
 			CFeature** endFeature = &tempFeatures[0];
+
 			qf->GetUnitsAndFeaturesExact(p->pos, p->radius + speedf, endUnit, endFeature);
 
-			for (CUnit** ui = &tempUnits[0]; ui != endUnit; ++ui) {
-				CUnit* unit = *ui;
-				const bool friendlyShot = (p->owner() && (unit->allyteam == p->owner()->allyteam));
-				const bool raytraced =
-					(unit->collisionVolume &&
-					unit->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
-
-				// if this unit fired this projectile or (this unit is in the
-				// same allyteam as the unit that shot this projectile and we
-				// are ignoring friendly collisions)
-				if (p->owner() == unit || !unit->collisionVolume ||
-					((p->collisionFlags & COLLISION_NOFRIENDLY) && friendlyShot)) {
-					continue;
-				}
-
-				if (p->collisionFlags & COLLISION_NONEUTRAL) {
-					if (unit->IsNeutral()) {
-						continue;
-					}
-				}
-
-				if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &q)) {
-					// this projectile won't reach the raytraced surface impact pos
-					// until Update() is called (right after we return, same frame)
-					// which is a problem when dealing with fast low-AOE projectiles
-					// since they would do almost no damage if detonated outside the
-					// volume, so smuggle a bit ("rolling back" its pos in Update()
-					// and waiting for the next-frame CheckUnitCol() is problematic
-					// for noExplode projectiles)
-
-					// const float3& pimpp = (q.b0)? q.p0: q.p1;
-					const float3 pimpp =
-						(q.b0 && q.b1)? (q.p0 + q.p1) * 0.5f:
-						(q.b0        )? (q.p0 + ppos1) * 0.5f:
-						                (ppos0 + q.p1) * 0.5f;
-
-					p->pos = (raytraced)? pimpp: ppos0;
-					p->Collision(unit);
-					p->pos = (raytraced)? ppos0: p->pos;
-					break;
-				}
-			}
-
-			if (!(p->collisionFlags & COLLISION_NOFEATURE)) {
-				for (CFeature** fi = &tempFeatures[0]; fi != endFeature; ++fi) {
-					CFeature* feature = *fi;
-					const bool raytraced =
-						(feature->collisionVolume &&
-						feature->collisionVolume->GetTestType() == COLVOL_TEST_CONT);
-
-					// geothermals do not have a collision volume, skip them
-					if (!feature->blocking || feature->def->geoThermal || !feature->collisionVolume) {
-						continue;
-					}
-
-					if (CCollisionHandler::DetectHit(feature, ppos0, ppos1, &q)) {
-						const float3 pimpp =
-							(q.b0 && q.b1)? (q.p0 + q.p1) * 0.5f:
-							(q.b0        )? (q.p0 + ppos1) * 0.5f:
-							                (ppos0 + q.p1) * 0.5f;
-
-						p->pos = (raytraced)? pimpp: ppos0;
-						p->Collision(feature);
-						p->pos = (raytraced)? ppos0: p->pos;
-						break;
-					}
-				}
-			}
+			CheckUnitCollisions(p, tempUnits, endUnit, ppos0, ppos1);
+			CheckFeatureCollisions(p, tempFeatures, endFeature, ppos0, ppos1);
 		}
 	}
 }

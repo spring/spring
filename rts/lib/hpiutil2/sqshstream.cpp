@@ -74,8 +74,9 @@ bool hpiutil::sqshstream::decompress()
 	boost::uint8_t *compstring = (boost::uint8_t*)calloc(compressedsize,sizeof(boost::uint8_t));
 	stream->read(compstring,SQSH_HEADER,compressedsize);
 	if (encrypt) {
-		for (boost::uint32_t i = 0; i < compressedsize; i++)
-			compstring[i] = compstring[i] - i ^ i;
+		for (boost::uint32_t i = 0; i < compressedsize; i++) {
+			compstring[i] = compstring[i] - (i ^ i);
+		}
 	}
 	position = 0;
 	boost::uint32_t ret;

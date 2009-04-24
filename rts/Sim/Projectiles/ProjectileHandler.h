@@ -4,11 +4,6 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-class CProjectileHandler;
-class CProjectile;
-struct S3DOPrimitive;
-struct S3DOPiece;
-struct SS3OVertex;
 #include <list>
 #include <vector>
 
@@ -19,10 +14,14 @@ struct SS3OVertex;
 #include "Rendering/GL/FBO.h"
 #include "float3.h"
 
-
-
+class CProjectileHandler;
+class CProjectile;
+class CUnit;
+class CFeature;
 class CGroundFlash;
-
+struct S3DOPrimitive;
+struct S3DOPiece;
+struct SS3OVertex;
 
 typedef std::list<CProjectile*> Projectile_List;
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
@@ -46,7 +45,10 @@ public:
 		return &(it->second);
 	}
 
-	void CheckUnitCol();
+	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
+	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
+	void CheckCollisions();
+
 	void LoadSmoke(unsigned char tex[512][512][4], int xoffs, int yoffs, char* filename, char* alphafile);
 
 	void SetMaxParticles(int value);

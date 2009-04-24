@@ -279,9 +279,9 @@ CIconData::CIconData(const std::string& _name, unsigned int _texID,
                      int _xsize, int _ysize)
 : ownTexture(ownTex), refCount(0),
   name(_name), texID(_texID),
+  xsize(_xsize), ysize(_ysize),
   size(_size), distance(_distance),
-  radiusAdjust(radAdj),
-  xsize(_xsize), ysize(_ysize)
+  radiusAdjust(radAdj)
 {
 	distSqr = distance * distance;
 }

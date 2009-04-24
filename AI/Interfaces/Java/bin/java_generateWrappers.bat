@@ -13,6 +13,7 @@ SET AWK=gawk.exe
 REM ##############################################
 REM ### do not change anything below this line ###
 
+SET AWK_COMMON_SCRIPTS_DIR=%SPRING_SOURCE%/AI/Wrappers/CUtils/bin
 SET C_CALLBACK=%SPRING_SOURCE%/ExternalAI/Interface/SSkirmishAICallback.h
 SET C_EVENTS=%SPRING_SOURCE%/ExternalAI/Interface/AISEvents.h
 SET C_COMMANDS=%SPRING_SOURCE%/ExternalAI/Interface/AISCommands.h
@@ -26,11 +27,14 @@ IF NOT EXIST %MY_SOURCE_JAVA%%JAVA_PKG%/event   mkdir %MY_SOURCE_JAVA%%JAVA_PKG%
 IF NOT EXIST %MY_SOURCE_JAVA%%JAVA_PKG%/command mkdir %MY_SOURCE_JAVA%%JAVA_PKG%/command
 IF NOT EXIST %MY_SOURCE_JAVA%%JAVA_PKG%/oo      mkdir %MY_SOURCE_JAVA%%JAVA_PKG%/oo
 
-%AWK% %VARS% -f jna_wrappEvents.awk -f common.awk -f commonDoc.awk %C_EVENTS%
+# To make the following lines shorter
+SET ACSD=%AWK_COMMON_SCRIPTS_DIR%
 
-%AWK% %VARS% -f jna_wrappCommands.awk -f common.awk -f commonDoc.awk %C_COMMANDS%
+%AWK% %VARS% -f jna_wrappEvents.awk -f %ACSD%/common.awk -f %ACSD%/commonDoc.awk %C_EVENTS%
 
-%AWK% %VARS% -f jna_wrappCallback.awk -f common.awk -f commonDoc.awk %C_CALLBACK%
+%AWK% %VARS% -f jna_wrappCommands.awk -f %ACSD%/common.awk -f %ACSD%/commonDoc.awk %C_COMMANDS%
 
-%AWK% %VARS% -f java_wrappCallbackOO.awk -f common.awk -f commonDoc.awk -f commonOOCallback.awk %JNA_CALLBACK%
+%AWK% %VARS% -f jna_wrappCallback.awk -f %ACSD%/common.awk -f %ACSD%/commonDoc.awk %C_CALLBACK%
+
+%AWK% %VARS% -f java_wrappCallbackOO.awk -f %ACSD%/common.awk -f %ACSD%/commonDoc.awk -f %ACSD%/commonOOCallback.awk %JNA_CALLBACK%
 
