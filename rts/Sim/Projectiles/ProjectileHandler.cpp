@@ -774,8 +774,7 @@ void CProjectileHandler::CheckUnitCollisions(
 
 		if (CCollisionHandler::DetectHit(unit, ppos0, ppos1, &q)) {
 			if (q.lmp != NULL) {
-				unit->lastAttackedPiece      = q.lmp;
-				unit->lastAttackedPieceFrame = gs->frameNum;
+				unit->SetLastAttackedPiece(q.lmp, gs->frameNum);
 			}
 
 			// The current projectile <p> won't reach the raytraced surface impact
