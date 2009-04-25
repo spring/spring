@@ -112,6 +112,11 @@ public:
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
 
 	void SetLastAttacker(CUnit* attacker);
+	void SetLastAttackedPiece(LocalModelPiece* p, int f) {
+		lastAttackedPiece      = p;
+		lastAttackedPieceFrame = f;
+	}
+
 	void DependentDied(CObject* o);
 	void SetUserTarget(CUnit* target);
 	virtual void Init(const CUnit* builder);
