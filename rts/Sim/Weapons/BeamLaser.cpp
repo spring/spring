@@ -2,7 +2,6 @@
 #include "BeamLaser.h"
 #include "Game/GameHelper.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "LogOutput.h"
 #include "Map/Ground.h"
 #include "Matrix44f.h"
 #include "Sim/Misc/InterceptHandler.h"

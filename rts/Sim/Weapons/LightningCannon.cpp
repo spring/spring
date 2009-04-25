@@ -3,6 +3,7 @@
 #include "LightningCannon.h"
 #include "Map/Ground.h"
 #include "PlasmaRepulser.h"
+#include "Rendering/UnitModels/3DModel.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/WeaponProjectiles/LightningProjectile.h"
 #include "Sim/Units/Unit.h"
@@ -84,35 +85,75 @@ void CLightningCannon::Init(void)
 
 void CLightningCannon::FireImpl()
 {
-	float3 dir=targetPos-weaponMuzzlePos;
-	dir.Normalize();
-	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.5f);
-	dir.Normalize();
-	CUnit* u=0;
-	float r=helper->TraceRay(weaponMuzzlePos,dir,range,0,owner,u,collisionFlags);
+	float3 dir = targetPos - weaponMuzzlePos;
+	dir.ANormalize();
+	dir += (gs->randVector() * sprayAngle + salvoError) * (1.0f - owner->limExperience * 0.5f);
+	dir.ANormalize();
+
+	CUnit* u = 0;
+	float r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, owner, u, collisionFlags);
 
 	float3 newDir;
-	CPlasmaRepulser* shieldHit;
-	float shieldLength=interceptHandler.AddShieldInterceptableBeam(this,weaponMuzzlePos,dir,range,newDir,shieldHit);
-	if(shieldLength<r){
-		r=shieldLength;
-		if(shieldHit) {
+	CPlasmaRepulser* shieldHit = 0;
+	const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, weaponMuzzlePos, dir, range, newDir, shieldHit);
+
+	if (shieldLength < r) {
+		r = shieldLength;
+		if (shieldHit) {
 			shieldHit->BeamIntercepted(this);
 		}
 	}
 
-//	if(u)
-//		u->DoDamage(damages,owner,ZeroVector);
+	if (u) {
+		if (u->unitDef->usePieceCollisionVolumes) {
+			u->SetLastAttackedPiece(u->localmodel->pieces[0], gs->frameNum);
+		}
+	}
 
 	// Dynamic Damage
 	DamageArray dynDamages;
-	if (weaponDef->dynDamageExp > 0)
-		dynDamages = weaponDefHandler->DynamicDamages(weaponDef->damages, weaponMuzzlePos, targetPos, weaponDef->dynDamageRange>0?weaponDef->dynDamageRange:weaponDef->range, weaponDef->dynDamageExp, weaponDef->dynDamageMin, weaponDef->dynDamageInverted);
+	if (weaponDef->dynDamageExp > 0) {
+		dynDamages = weaponDefHandler->DynamicDamages(
+			weaponDef->damages,
+			weaponMuzzlePos,
+			targetPos,
+			weaponDef->dynDamageRange > 0?
+				weaponDef->dynDamageRange:
+				weaponDef->range,
+			weaponDef->dynDamageExp,
+			weaponDef->dynDamageMin,
+			weaponDef->dynDamageInverted
+		);
+	}
 
-	helper->Explosion(weaponMuzzlePos+dir*r,weaponDef->dynDamageExp>0?dynDamages:weaponDef->damages,areaOfEffect,weaponDef->edgeEffectiveness,weaponDef->explosionSpeed,owner,false,0.5f,true,false,weaponDef->explosionGenerator, u,dir, weaponDef->id);
+	helper->Explosion(
+		weaponMuzzlePos + dir * r,
+		weaponDef->dynDamageExp > 0?
+			dynDamages:
+			weaponDef->damages,
+		areaOfEffect,
+		weaponDef->edgeEffectiveness,
+		weaponDef->explosionSpeed,
+		owner,
+		false,
+		0.5f,
+		true,
+		false,
+		weaponDef->explosionGenerator,
+		u,
+		dir,
+		weaponDef->id
+	);
 
-	new CLightningProjectile(weaponMuzzlePos,
-		weaponMuzzlePos + dir * (r + 10), owner, color, weaponDef, 10, this);
+	new CLightningProjectile(
+		weaponMuzzlePos,
+		weaponMuzzlePos + dir * (r + 10),
+		owner,
+		color,
+		weaponDef,
+		10,
+		this
+	);
 }
 
 
