@@ -321,7 +321,6 @@ public:
 	LocalModelPiece* lastAttackedPiece;   // piece that was last hit by a projectile
 	int lastAttackedPieceFrame;           // frame in which lastAttackedPiece was hit
 	int lastAttack;                       // last frame unit was attacked by other unit
-	int lastDamage;                       // last frame the unit was damaged
 	int lastFireWeapon;                   // last time this unit fired a weapon
 	float recentDamage;                   // decaying value of how much damage the unit has taken recently (for severity of death)
 

@@ -1726,6 +1726,8 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 
 			UnitDrawingTexturesOff(NULL);
 
+			const int  deltaTime  = gs->frameNum - unit->lastAttack;
+			const bool markVolume = (unit->lastAttack > 0 && deltaTime < 150);
 			const float3 midPosOffset =
 				(unit->frontdir * unit->relMidPos.z) +
 				(unit->updir    * unit->relMidPos.y) +
@@ -1750,7 +1752,17 @@ inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 					DrawUnitDebugPieceTree(unit->localmodel->pieces[0], unit->lastAttackedPiece, mat, q);
 				} else {
 					if (!unit->collisionVolume->IsDisabled()) {
+						if (markVolume) {
+							glLineWidth(2.0f);
+							glColor3f(1.0f - (deltaTime / 150.0f), 0.0f, 0.0f);
+						}
+
 						DrawCollisionVolume(unit->collisionVolume, q);
+
+						if (markVolume) {
+							glLineWidth(1.0f);
+							glColor3f(0.0f, 0.0f, 0.0f);
+						}
 					}
 				}
 
