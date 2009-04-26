@@ -1122,7 +1122,7 @@ void CDynWater::AddShipWakes()
 	CVertexArray* va2=GetVertexArray();		//never try to get more than 2 at once
 	va2->Initialize();
 
-	GML_RECMUTEX_LOCK(unit);
+	GML_RECMUTEX_LOCK(unit); // AddShipWakes
 
 	int nadd=uh->renderUnits.size()*4;
 	va->EnlargeArrays(nadd,0,VA_SIZE_TN);
