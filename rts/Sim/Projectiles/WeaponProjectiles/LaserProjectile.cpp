@@ -33,15 +33,15 @@ CR_REG_METADATA(CLaserProjectile,(
 
 CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, float length, const float3& color, const float3& color2,
-		float intensity, const WeaponDef *weaponDef, int ttl GML_PARG_C)
-: CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true,  ttl GML_PARG_P),
+		float intensity, const WeaponDef *weaponDef, int ttl GML_PARG_C):
+	CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true,  ttl GML_PARG_P),
+	intensity(intensity),
 	color(color),
 	color2(color2),
 	length(length),
 	curLength(0),
-	stayTime(0),
-	intensity(intensity),
-	intensityFalloff(weaponDef?intensity*weaponDef->falloffRate:0)
+	intensityFalloff(weaponDef?intensity*weaponDef->falloffRate:0),
+	stayTime(0)
 {
 	dir=speed;
 	dir.Normalize();

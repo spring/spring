@@ -67,18 +67,18 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
 		bool synced, int ttl GML_PARG_C):
 	CProjectile(pos, speed, owner, synced, true GML_PARG_P),
+	targeted(false),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef? weaponDef->name: std::string("")),
 	target(target),
 	targetPos(targetPos),
+	cegTag(weaponDef? weaponDef->cegTag: std::string("")),
 	startpos(pos),
-	targeted(false),
-	interceptTarget(interceptTarget),
+	ttl(ttl),
 	colorTeam(0),
 	bounces(0),
 	keepBouncing(true),
-	ttl(ttl),
-	cegTag(weaponDef? weaponDef->cegTag: std::string(""))
+	interceptTarget(interceptTarget)
 {
 	if (owner) {
 		colorTeam = owner->team;

@@ -132,10 +132,10 @@ CUnitHandler::CUnitHandler(bool serializing)
 	maxUnitRadius(0.0f),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
+	limitDgun(false),
+	diminishingMetalMakers(false),
 	metalMakerIncome(0),
 	metalMakerEfficiency(1),
-	diminishingMetalMakers(false),
-	limitDgun(false),
 	morphUnitToFeature(true)
 {
 	const size_t maxUnitsTemp = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
@@ -143,7 +143,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	unitsPerTeam = maxUnitsTemp / teamHandler->ActiveTeams() - 5;
 
 	freeIDs.reserve(units.size()-1);
-	for (int a = 1; a < units.size(); a++) {
+	for (size_t a = 1; a < units.size(); a++) {
 		freeIDs.push_back(a);
 		units[a] = NULL;
 	}

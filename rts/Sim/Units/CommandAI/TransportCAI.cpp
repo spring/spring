@@ -46,19 +46,19 @@ CR_REG_METADATA(CTransportCAI, (
 				CR_RESERVED(16)
 				));
 
-CTransportCAI::CTransportCAI()
-: CMobileCAI(),
-	lastCall(0),
+CTransportCAI::CTransportCAI():
+	CMobileCAI(),
+	toBeTransportedUnitId(-1),
 	scriptReady(false),
-	toBeTransportedUnitId(-1)
+	lastCall(0)
 {}
 
 
-CTransportCAI::CTransportCAI(CUnit* owner)
-: CMobileCAI(owner),
-	lastCall(0),
+CTransportCAI::CTransportCAI(CUnit* owner):
+	CMobileCAI(owner),
+	toBeTransportedUnitId(-1),
 	scriptReady(false),
-	toBeTransportedUnitId(-1)
+	lastCall(0)
 {
 	//for new transport methods
 	dropSpots.clear();

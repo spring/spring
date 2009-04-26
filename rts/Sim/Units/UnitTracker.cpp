@@ -24,22 +24,22 @@ const char* CUnitTracker::modeNames[TrackModeCount] = {
 };
 
 
-CUnitTracker::CUnitTracker()
-: enabled(false),
-  doRoll(false),
-  firstUpdate(true),
-  trackMode(TrackSingle),
-  trackUnit(0),
+CUnitTracker::CUnitTracker():
+	enabled(false),
+	doRoll(false),
+	firstUpdate(true),
+	trackMode(TrackSingle),
+	trackUnit(0),
+	timeOut(15),
+	lastFollowUnit(0),
+	lastUpdateTime(0),
 	trackPos(500,100,500),
-  trackDir(0,0,1),
-  lastUpdateTime(0),
-  lastFollowUnit(0),
-  timeOut(15),
-  oldCamPos(500,500,500),
-  oldCamDir(1,0,0)
+	trackDir(0,0,1),
+	oldCamDir(1,0,0),
+	oldCamPos(500,500,500)
 {
-	for (int a = 0; a < 32; ++a) {
-		oldUp[a]=UpVector;
+	for (size_t a = 0; a < 32; ++a) {
+		oldUp[a] = UpVector;
 	}
 }
 

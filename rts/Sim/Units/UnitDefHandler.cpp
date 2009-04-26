@@ -55,15 +55,15 @@ UnitDef::UnitDefWeapon::UnitDefWeapon()
 
 UnitDef::UnitDefWeapon::UnitDefWeapon(
 	std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif,
-	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
-: name(name)
-, def(def)
-, slavedTo(slavedTo)
-, mainDir(mainDir)
-, maxAngleDif(maxAngleDif)
-, badTargetCat(badTargetCat)
-, onlyTargetCat(onlyTargetCat)
-, fuelUsage(fuelUse)
+	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse):
+	name(name),
+	def(def),
+	slavedTo(slavedTo),
+	mainDir(mainDir),
+	maxAngleDif(maxAngleDif),
+	fuelUsage(fuelUse),
+	badTargetCat(badTargetCat),
+	onlyTargetCat(onlyTargetCat)
 {}
 
 
@@ -867,7 +867,7 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
 	{
 		string soundFile = "sounds/" + fileName;
 	
-		if (soundFile.find(".wav") == -1) {
+		if (soundFile.find(".wav") == string::npos) {
 			// .wav extension missing, add it
 			soundFile += ".wav";
 		}

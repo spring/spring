@@ -23,5 +23,4 @@ public:
 	float rotSpeed;
 };
 
-
 #endif /* WAKEPROJECTILE_H */

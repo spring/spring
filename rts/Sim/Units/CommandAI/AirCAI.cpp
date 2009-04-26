@@ -498,9 +498,9 @@ void CAirCAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			const int targetID     = int(c.params[0]);
-			const bool legalTarget = (targetID >= 0 && targetID < uh->MaxUnits());
-			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
+			const unsigned int targetID = (unsigned int) c.params[0];
+			const bool legalTarget      = (targetID < uh->MaxUnits());
+			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
 
 			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
 				orderTarget = targetUnit;
