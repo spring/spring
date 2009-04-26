@@ -5846,6 +5846,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Sound\AudioChannel.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Sound\AudioChannel.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Sound\Music.cpp"
 					>
 				</File>
