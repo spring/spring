@@ -24,7 +24,7 @@ using namespace std;
 CFileHandler::CFileHandler(const char* filename, const char* modes)
 : ifs(NULL), hpiFileBuffer(NULL), hpiOffset(0), filesize(-1)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // CFileHandler
 
 	Init(filename, modes);
 }
@@ -33,7 +33,7 @@ CFileHandler::CFileHandler(const char* filename, const char* modes)
 CFileHandler::CFileHandler(const string& filename, const string& modes)
 : ifs(NULL), hpiFileBuffer(NULL), hpiOffset(0), filesize(-1)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // CFileHandler
 
 	Init(filename, modes);
 }
@@ -41,7 +41,7 @@ CFileHandler::CFileHandler(const string& filename, const string& modes)
 
 CFileHandler::~CFileHandler(void)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // ~CFileHandler
 
 	if (ifs) {
 		delete ifs;
@@ -129,7 +129,7 @@ bool CFileHandler::FileExists() const
 
 int CFileHandler::Read(void* buf,int length)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // Read
 
 	if (ifs) {
 		ifs->read((char*)buf, length);
@@ -152,7 +152,7 @@ int CFileHandler::Read(void* buf,int length)
 
 void CFileHandler::Seek(int length)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // Seek
 
 	if (ifs) {
 		ifs->seekg(length);
@@ -164,7 +164,7 @@ void CFileHandler::Seek(int length)
 
 int CFileHandler::Peek() const
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // Peek
 
 	if (ifs) {
 		return ifs->peek();
@@ -182,7 +182,7 @@ int CFileHandler::Peek() const
 
 bool CFileHandler::Eof() const
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // Eof
 
 	if (ifs) {
 		return ifs->eof();
@@ -202,7 +202,7 @@ int CFileHandler::FileSize() const
 
 int CFileHandler::GetPos() const
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // GetPos
 
 	if (ifs) {
 		return ifs->tellg();
@@ -214,7 +214,7 @@ int CFileHandler::GetPos() const
 
 bool CFileHandler::LoadStringData(string& data)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // LoadStringData
 
 	if (!FileExists()) {
 		return false;
@@ -232,7 +232,7 @@ bool CFileHandler::LoadStringData(string& data)
 vector<string> CFileHandler::FindFiles(const string& path,
                                        const string& pattern)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // FindFiles
 
 	vector<string> found = filesystem.FindFiles(path, pattern);
 	boost::regex regexpattern(filesystem.glob_to_regex(pattern),
@@ -258,7 +258,7 @@ vector<string> CFileHandler::DirList(const string& path,
                                      const string& pattern,
                                      const string& modes)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // DirList
 
 	const string pat = pattern.empty() ? "*" : pattern;
 
@@ -348,7 +348,7 @@ vector<string> CFileHandler::SubDirs(const string& path,
                                      const string& pattern,
                                      const string& modes)
 {
-	GML_RECMUTEX_LOCK(file);
+	GML_RECMUTEX_LOCK(file); // SubDirs
 
 	const string pat = pattern.empty() ? "*" : pattern;
 

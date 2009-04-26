@@ -177,7 +177,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
-	GML_RECMUTEX_LOCK(lua); // Add mutex to avoid bogus errors due to concurrency
+	GML_RECMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
 
 	const int top = lua_gettop(L);
 	if (top != 0) {

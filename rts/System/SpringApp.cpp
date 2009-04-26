@@ -119,10 +119,6 @@ SpringApp::~SpringApp()
 	if (keys) delete[] keys;
 
 	creg::System::FreeClasses ();
-#ifdef USE_GML
-	if(gmlProcessor)
-		delete gmlProcessor;
-#endif
 }
 
 #ifdef WIN32
@@ -874,7 +870,7 @@ int SpringApp::Sim() {
 			gmlProcessor->ExpandAuxQueue();
 
 			{
-				GML_STDMUTEX_LOCK(sim);
+				GML_STDMUTEX_LOCK(sim); // Sim
 
 				if (!activeController->Update()) {
 					return 0;
@@ -914,7 +910,8 @@ int SpringApp::Update ()
 #else
 			if(gmlMultiThreadSim) {
 				if(!gs->frameNum) {
-					GML_STDMUTEX_LOCK(sim);
+
+					GML_STDMUTEX_LOCK(sim); // Update
 
 					activeController->Update();
 					if(gs->frameNum)
@@ -922,7 +919,8 @@ int SpringApp::Update ()
 				}
 			}
 			else {
-				GML_STDMUTEX_LOCK(sim);
+
+				GML_STDMUTEX_LOCK(sim); // Update
 
 				activeController->Update();
 			}
@@ -1023,7 +1021,8 @@ int SpringApp::Run (int argc, char *argv[])
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE: {
-					GML_STDMUTEX_LOCK(sim);
+
+					GML_STDMUTEX_LOCK(sim); // Run
 
 					screenWidth = event.resize.w;
 					screenHeight = event.resize.h;
@@ -1038,7 +1037,8 @@ int SpringApp::Run (int argc, char *argv[])
 					break;
 				}
 				case SDL_VIDEOEXPOSE: {
-					GML_STDMUTEX_LOCK(sim);
+
+					GML_STDMUTEX_LOCK(sim); // Run
 
 					// re-initialize the stencil
 					glClearStencil(0);
@@ -1062,14 +1062,10 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_MOUSEBUTTONDOWN:
 				case SDL_MOUSEBUTTONUP:
 				case SDL_SYSWMEVENT: {
-//					GML_STDMUTEX_LOCK(sim);
-
 					mouseInput->HandleSDLMouseEvent (event);
 					break;
 				}
 				case SDL_KEYDOWN: {
-//					GML_STDMUTEX_LOCK(sim);
-
 					int i = event.key.keysym.sym;
 					currentUnicode = event.key.keysym.unicode;
 
@@ -1118,7 +1114,6 @@ int SpringApp::Run (int argc, char *argv[])
 					break;
 				}
 				case SDL_KEYUP: {
-//					GML_STDMUTEX_LOCK(sim);
 					int i = event.key.keysym.sym;
 					currentUnicode = event.key.keysym.unicode;
 
@@ -1160,10 +1155,14 @@ int SpringApp::Run (int argc, char *argv[])
 		}
 	}
 
-#if defined(USE_GML) && GML_ENABLE_SIM
+#ifdef USE_GML
+	#if GML_ENABLE_SIM
 	gmlKeepRunning=0; // wait for sim to finish
 	while(!gmlProcessor->PumpAux())
 		boost::thread::yield();
+	#endif
+	if(gmlProcessor)
+		delete gmlProcessor;
 #endif
 
 	// Shutdown

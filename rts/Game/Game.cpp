@@ -1002,6 +1002,7 @@ bool CGame::ActionPressed(const Action& action,
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
 	}
 	else if (cmd == "viewselection") {
+
 		GML_RECMUTEX_LOCK(sel); // ActionPressed
 
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
@@ -2725,6 +2726,8 @@ bool CGame::Draw() {
 
 	mouse->EmptyMsgQueUpdate();
 
+	unitDrawer->Update();
+
 	if(lastSimFrame!=gs->frameNum) {
 		CInputReceiver::CollectGarbage();
 		if(!skipping)
@@ -3160,7 +3163,6 @@ void CGame::SimFrame() {
 			grouphandlers[a]->Update();
 		}
 		profiler.Update();
-		unitDrawer->Update();
 #ifdef DIRECT_CONTROL_ALLOWED
 		if (gu->directControl) {
 			unsigned char status = 0;
@@ -3994,13 +3996,16 @@ void CGame::UpdateUI(bool cam)
 			+ owner->updir    * relPos.y
 			+ owner->rightdir * relPos.x;
 		pos += UpVector * 7;
-		//camHandler->GetCurrentController().SetPos(pos); // in case of multithreading, avoid setting the cam from sim thread
+
 		GML_STDMUTEX_LOCK(pos); // UpdateUI
+
 		lastDCpos=pos;
 		plastDCpos=&lastDCpos;
 	}
 	if (plastDCpos && cam) {
+
 		GML_STDMUTEX_LOCK(pos); // UpdateUI
+
 		if(plastDCpos) {
 			camHandler->GetCurrentController().SetPos(*plastDCpos);
 			plastDCpos=NULL;

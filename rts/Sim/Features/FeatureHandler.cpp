@@ -140,7 +140,6 @@ CFeatureHandler::~CFeatureHandler()
 			delete fd->collisionVolume;
 			fd->collisionVolume = 0;
 		}
-
 		delete *fi;
 	}
 
@@ -422,7 +421,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(feat); // DeleteFeature, maybe superfluous
+	GML_RECMUTEX_LOCK(feat); // DeleteFeature - maybe superfluous
 
 	toBeRemoved.push_back(feature->id);
 
@@ -486,6 +485,7 @@ void CFeatureHandler::Update()
 	}
 
 	if(!toBeRemoved.empty()) {
+
 		GML_RECMUTEX_LOCK(feat); // Update
 		GML_RECMUTEX_LOCK(quad); // Update
 

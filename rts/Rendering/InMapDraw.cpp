@@ -485,7 +485,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers()))
 		return;
 
-	GML_STDMUTEX_LOCK(inmap);
+	GML_STDMUTEX_LOCK(inmap); // LocalPoint
 
 	// GotNetMsg() alreadys checks validity of playerID
 	const CPlayer* sender = playerHandler->Player(playerID);
@@ -531,7 +531,7 @@ void CInMapDraw::LocalPoint(const float3& constPos, const std::string& label,
 void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
                            int playerID)
 {
-	GML_STDMUTEX_LOCK(inmap);
+	GML_STDMUTEX_LOCK(inmap); // LocalLine
 
 	const CPlayer* sender = playerHandler->Player(playerID);
 
@@ -561,7 +561,7 @@ void CInMapDraw::LocalLine(const float3& constPos1, const float3& constPos2,
 
 void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 {
-	GML_STDMUTEX_LOCK(inmap);
+	GML_STDMUTEX_LOCK(inmap); // LocalErase
 
 	const CPlayer* sender = playerHandler->Player(playerID);
 

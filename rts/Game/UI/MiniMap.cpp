@@ -914,8 +914,8 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // anti deadlock
-	GML_RECMUTEX_LOCK(quad); //unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
+	GML_RECMUTEX_LOCK(sel); // GetToolTip - anti deadlock
+	GML_RECMUTEX_LOCK(quad); // GetToolTip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip
 
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 	if (unit) {
@@ -1049,7 +1049,6 @@ void CMiniMap::DrawForReal()
 	for (ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ui++) {
 		DrawUnit(*ui);
 	}
-//	GML_RECMUTEX_LOCK(quad);  // getselectunit accesses quadfield
 	// highlight the selected unit
 	CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
 	if (unit != NULL) {
@@ -1103,7 +1102,9 @@ void CMiniMap::DrawForReal()
 
 	// draw the projectiles
 	if (drawProjectiles) {
+
 		GML_RECMUTEX_LOCK(proj); // DrawForReal
+
 		if(ph->ps.size()>0) {
 			CVertexArray* lines=GetVertexArray();
 			CVertexArray* points=GetVertexArray();

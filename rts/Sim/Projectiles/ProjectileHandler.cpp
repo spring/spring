@@ -488,6 +488,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	unitDrawer->SetupForUnitDrawing();
 	unitDrawer->SetupFor3DO();
+
 	GML_RECMUTEX_LOCK(proj); // Draw
 
 	Projectile_List::iterator psi;
@@ -716,8 +717,6 @@ void CProjectileHandler::DrawShadowPass(void)
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
-//	GML_RECMUTEX_LOCK(proj); // AddProjectile
-
 	ps.push_back(p);
 
 	if (p->synced && p->weapon) {
@@ -868,7 +867,6 @@ void CProjectileHandler::CheckCollisions()
 
 void CProjectileHandler::AddGroundFlash(CGroundFlash* flash)
 {
-//	GML_RECMUTEX_LOCK(proj); // AddGroundFlash
 	groundFlashes.push_back(flash);
 }
 

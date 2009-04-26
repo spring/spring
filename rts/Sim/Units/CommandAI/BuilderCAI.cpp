@@ -1627,6 +1627,7 @@ void CBuilderCAI::DrawCommands(void)
 					}
 					const unsigned int id = signedId;
 					if (id >= uh->MaxUnits()) {
+
 						GML_RECMUTEX_LOCK(feat); // DrawCommands
 
 						const CFeatureSet& fset = featureHandler->GetActiveFeatures();

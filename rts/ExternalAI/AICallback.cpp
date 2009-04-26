@@ -1014,7 +1014,7 @@ void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int li
 	tdu.facing=facing;
 	std::pair<int,CUnitDrawer::TempDrawUnit> tp(gs->frameNum+lifetime,tdu);
 
-	GML_STDMUTEX_LOCK(temp); //unit); // maybe superfluous
+	GML_STDMUTEX_LOCK(temp); // DrawUnit
 
 	if(transparent)
 		unitDrawer->tempTransparentDrawUnits.insert(tp);

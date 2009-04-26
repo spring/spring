@@ -282,9 +282,6 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 
 		switch(drawMode) {
 			case drawPath: {
-
-//				GML_RECMUTEX_LOCK(gui); // UpdateExtraTexture. Not needed in draw thread
-
 				if (guihandler->inCommand > 0 && static_cast<size_t>(guihandler->inCommand) < guihandler->commands.size() &&
 						guihandler->commands[guihandler->inCommand].type == CMDTYPE_ICON_BUILDING) {
 					// use the current build order
@@ -296,7 +293,9 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							} else {
 								const UnitDef* unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
 								CFeature* f;
-								GML_RECMUTEX_LOCK(quad); //feat); // UpdateExtraTexture: testunitbuildsquare accesses features in the quadfield
+
+								GML_RECMUTEX_LOCK(quad); // UpdateExtraTexture - testunitbuildsquare accesses features in the quadfield
+
 								if(uh->TestUnitBuildSquare(BuildInfo(unitdef, float3(x*16+8, 0, y*16+8), guihandler->buildFacing), f, gu->myAllyTeam)) {
 									if (f) {
 										m = 0.5f;

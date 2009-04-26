@@ -54,7 +54,9 @@ void CBaseTreeDrawer::Draw (bool drawReflection)
 }
 
 void CBaseTreeDrawer::UpdateDraw() {
+
 	GML_STDMUTEX_LOCK(tree); // UpdateDraw
+
 	for(std::vector<GLuint>::iterator i=delDispLists.begin(); i!=delDispLists.end(); ++i)
 		glDeleteLists(*i, 1);
 	delDispLists.clear();

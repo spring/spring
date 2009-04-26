@@ -598,15 +598,13 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // anti deadlock
-	GML_RECMUTEX_LOCK(quad); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
+	GML_RECMUTEX_LOCK(sel); // GetCurrentTooltip - anti deadlock
+	GML_RECMUTEX_LOCK(quad); // GetCurrentTooltip - called from ToolTipConsole::Draw --> MouseHandler::GetCurrentTooltip
 
 	const float range = (gu->viewRange * 1.4f);
 	CUnit* unit = NULL;
-//	GML_RECMUTEX_LOCK(unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
 	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
 	CFeature* feature = NULL;
-//	GML_RECMUTEX_LOCK(feat); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
 	float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);
 
 	if ((udist > (range - 300.0f)) &&
