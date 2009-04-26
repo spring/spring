@@ -1689,6 +1689,7 @@ bool CUnit::SetGroup(CGroup* newGroup)
 			group=0;									//group ai didnt accept us
 			return false;
 		} else { // add us to selected units if group is selected
+
 			GML_RECMUTEX_LOCK(sel); // SetGroup
 
 			if(selectedUnits.selectedGroup == group->id)

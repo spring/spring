@@ -599,6 +599,7 @@ void CGroundDecalHandler::Draw(void)
 void CGroundDecalHandler::Update(void)
 {
 	GML_STDMUTEX_LOCK(decal); // Update
+
 	for(std::vector<CUnit *>::iterator i=moveUnits.begin(); i!=moveUnits.end(); ++i)
 		UnitMovedNow(*i);
 	moveUnits.clear();

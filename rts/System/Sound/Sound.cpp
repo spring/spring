@@ -141,7 +141,8 @@ bool CSound::HasSoundItem(const std::string& name)
 
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
-	GML_RECMUTEX_LOCK(sound);
+	GML_RECMUTEX_LOCK(sound); // GetSoundId
+
 	if (sources.empty())
 		return 0;
 
@@ -266,6 +267,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 void CSound::Update()
 {
 	updateCounter++;
+
 	GML_RECMUTEX_LOCK(sound); // Update
 
 	if (sources.empty())
@@ -400,6 +402,7 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 {
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
+
 	if (sources.empty())
 		return 0;
 	
@@ -414,5 +417,4 @@ boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bo
 
 void CSound::NewFrame()
 {
-	//GML_RECMUTEX_LOCK(sound); // NewFrame
 }

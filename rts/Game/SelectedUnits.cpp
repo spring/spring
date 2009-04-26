@@ -306,7 +306,7 @@ void CSelectedUnits::AddUnit(CUnit* unit)
 
 void CSelectedUnits::RemoveUnit(CUnit* unit)
 {
-	GML_RECMUTEX_LOCK(sel); //RemoveUnit
+	GML_RECMUTEX_LOCK(sel); // RemoveUnit
 
 	selectedUnits.erase(unit);
 	DeleteDeathDependence(unit);
@@ -337,7 +337,7 @@ void CSelectedUnits::ClearSelected()
 void CSelectedUnits::SelectGroup(int num)
 {
 	GML_RECMUTEX_LOCK(sel); // SelectGroup
-	GML_RECMUTEX_LOCK(group); // SelectGroup. not needed? only reading group
+	GML_RECMUTEX_LOCK(group); // SelectGroup - not needed? only reading group
 
 	ClearSelected();
 	selectedGroup=num;
@@ -399,13 +399,14 @@ void CSelectedUnits::Draw()
 	// highlight queued build sites if we are about to build something
 	// (or old-style, whenever the shift key is being held down)
 	if (cmdColors.buildBox[3] > 0.0f) {
-		//GML_RECMUTEX_LOCK(gui); // Draw. Not needed because of draw thread.
 		if (!selectedUnits.empty() &&
 				((cmdColors.BuildBoxesOnShift() && keys[SDLK_LSHIFT]) ||
 				 ((guihandler->inCommand >= 0) &&
 					(guihandler->inCommand < int(guihandler->commands.size())) &&
 					(guihandler->commands[guihandler->inCommand].id < 0)))) {
+
 			GML_STDMUTEX_LOCK(cai); // Draw
+
 			bool myColor = true;
 			glColor4fv(cmdColors.buildBox);
 			std::list<CBuilderCAI*>::const_iterator bi;
@@ -440,7 +441,7 @@ void CSelectedUnits::Draw()
 
 void CSelectedUnits::DependentDied(CObject *o)
 {
-	GML_RECMUTEX_LOCK(sel); // DependentDied, maybe superfluous - too late anyway
+	GML_RECMUTEX_LOCK(sel); // DependentDied - maybe superfluous, too late anyway
 
 	selectedUnits.erase((CUnit*)o);
 	selectionChanged=true;
@@ -659,7 +660,7 @@ void CSelectedUnits::DrawCommands()
 // CMouseHandler::GetCurrentTooltip --> GetTooltip
 std::string CSelectedUnits::GetTooltip(void)
 {
-	GML_RECMUTEX_LOCK(sel); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
+	GML_RECMUTEX_LOCK(sel); // GetTooltip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip --> GetTooltip
 	GML_RECMUTEX_LOCK(group); // GetTooltip
 
 	std::string s = "";
@@ -735,7 +736,7 @@ std::string CSelectedUnits::GetTooltip(void)
 
 void CSelectedUnits::SetCommandPage(int page)
 {
-	GML_RECMUTEX_LOCK(sel); // CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc --> SetCommandPage
+	GML_RECMUTEX_LOCK(sel); // SetCommandPage - called from CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc 
 	GML_RECMUTEX_LOCK(group); // SetCommandPage
 
 	CUnitSet::iterator ui;

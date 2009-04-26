@@ -212,16 +212,18 @@ void CUnitDrawer::SetUnitIconDist(float dist)
 
 void CUnitDrawer::Update(void)
 {
-	GML_STDMUTEX_LOCK(temp); //unit); // Update
+	{
+		GML_STDMUTEX_LOCK(temp); // Update
 
-	while (!tempDrawUnits.empty() && tempDrawUnits.begin()->first < gs->frameNum - 1) {
-		tempDrawUnits.erase(tempDrawUnits.begin());
-	}
-	while (!tempTransparentDrawUnits.empty() && tempTransparentDrawUnits.begin()->first <= gs->frameNum) {
-		tempTransparentDrawUnits.erase(tempTransparentDrawUnits.begin());
+		while (!tempDrawUnits.empty() && tempDrawUnits.begin()->first < gs->frameNum - 1) {
+			tempDrawUnits.erase(tempDrawUnits.begin());
+		}
+		while (!tempTransparentDrawUnits.empty() && tempTransparentDrawUnits.begin()->first <= gs->frameNum) {
+			tempTransparentDrawUnits.erase(tempTransparentDrawUnits.begin());
+		}
 	}
 
-	GML_STDMUTEX_LOCK(render);
+	GML_STDMUTEX_LOCK(render); // Update
 
 	for(std::set<CUnit *>::iterator ui=uh->toBeAdded.begin(); ui!=uh->toBeAdded.end(); ++ui)
 		uh->renderUnits.push_back(*ui);
@@ -864,7 +866,6 @@ void CUnitDrawer::DrawCloakedUnits(void)
 
 	{
 		//FIXME: doesn't support s3o's nor does it set teamcolor
-
 		GML_STDMUTEX_LOCK(temp); // DrawCloakedUnits
 		// units drawn by AI, these aren't really
 		// cloaked but the effect is the same

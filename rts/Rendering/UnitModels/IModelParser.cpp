@@ -98,6 +98,7 @@ S3DModel* C3DModelParser::Load3DModel(std::string name, const float3& centerOffs
 void C3DModelParser::Update() {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // Update
+
 	for (std::vector<ModelParserPair>::iterator i = createLists.begin(); i != createLists.end(); ++i) {
 		CreateListsNow(i->parser, i->model);
 	}
@@ -131,6 +132,7 @@ void C3DModelParser::DeleteLocalModel(CUnit* unit)
 {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // DeleteLocalModel
+
 	fixLocalModels.erase(unit);
 	deleteLocalModels.push_back(unit->localmodel);
 #else
@@ -226,7 +228,6 @@ void C3DModelParser::CreateListsNow(IModelParser* parser, S3DModelPiece* o)
 
 void C3DModelParser::CreateLists(IModelParser* parser, S3DModelPiece* o) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-	// GML_STDMUTEX_LOCK(model); // CreateLists
 	createLists.push_back(ModelParserPair(o, parser));
 #else
 	CreateListsNow(parser, o);

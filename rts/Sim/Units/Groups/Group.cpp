@@ -87,7 +87,6 @@ void CGroup::Update()
 
 void CGroup::DrawCommands()
 {
-//	GML_STDMUTEX_LOCK(cai); // DrawCommands. Not needed, protected via CGroupHandler
 	// last check is a hack so globalai groups dont get erased
 	if(units.empty() && id>=10 && /*handler==grouphandler*/handler->team==gu->myTeam) {
 		handler->RemoveGroup(this);

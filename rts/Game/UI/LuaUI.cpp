@@ -482,6 +482,7 @@ void CLuaUI::ShockFront(float power, const float3& pos, float areaOfEffect)
 bool CLuaUI::HasLayoutButtons()
 {
 	GML_RECMUTEX_LOCK(lua); // HasLayoutButtons
+
 	lua_checkstack(L, 2);
 
 	static const LuaHashString cmdStr("LayoutButtons");

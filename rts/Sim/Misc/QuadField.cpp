@@ -133,7 +133,7 @@ void CQuadField::MovedUnit(CUnit *unit)
 			return;
 	}
 
-	GML_RECMUTEX_LOCK(quad); // MovedUnit, possible performance hog
+	GML_RECMUTEX_LOCK(quad); // MovedUnit - possible performance hog
 
 	std::vector<int>::iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
@@ -378,6 +378,7 @@ void CQuadField::GetQuadsOnRay(float3 start, float3 dir,float length, int*& dst)
 void CQuadField::RemoveUnit(CUnit* unit)
 {
 	GML_RECMUTEX_LOCK(quad); // RemoveUnit
+
 	std::vector<int>::iterator qi;
 	for (qi = unit->quads.begin(); qi != unit->quads.end(); ++qi) {
 		std::list<CUnit*>::iterator ui;
@@ -398,7 +399,7 @@ void CQuadField::RemoveUnit(CUnit* unit)
 
 void CQuadField::AddFeature(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(quad); //feat); // AddFeature
+	GML_RECMUTEX_LOCK(quad); // AddFeature
 
 	vector<int> newQuads=GetQuads(feature->pos,feature->radius);
 
@@ -410,7 +411,7 @@ void CQuadField::AddFeature(CFeature* feature)
 
 void CQuadField::RemoveFeature(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(quad); //feat); // RemoveFeature
+	GML_RECMUTEX_LOCK(quad); // RemoveFeature
 
 	vector<int> quads=GetQuads(feature->pos,feature->radius);
 

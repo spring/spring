@@ -346,6 +346,7 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	CollisionQuery cq;
 
 	GML_RECMUTEX_LOCK(quad); // GuiTraceRay
+
 	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	vector<int>::iterator qi;
 
@@ -557,8 +558,6 @@ CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
 
 	float closeDist = (radius * radius);
 	CUnit* closeUnit = NULL;
-
-//	GML_RECMUTEX_LOCK(quad); //GetClosestUnit
 
 	vector<int> quads = qf->GetQuads(pos, radius);
 

@@ -39,6 +39,7 @@ CFartextureHandler::~CFartextureHandler(void)
 void CFartextureHandler::CreateFarTexture(S3DModel* model)
 {
 	GML_STDMUTEX_LOCK(tex); // CreateFarTexture
+
 	pending.push_back(model);
 }
 
@@ -51,6 +52,7 @@ void CFartextureHandler::CreateFarTexture(S3DModel* model)
 void CFartextureHandler::CreateFarTextures()
 {
 	GML_STDMUTEX_LOCK(tex); // CreateFarTextures
+
 	for(std::vector<S3DModel*>::const_iterator it = pending.begin(); it != pending.end(); ++it) {
 		ReallyCreateFarTexture(*it);
 	}
