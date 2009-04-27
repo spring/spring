@@ -262,7 +262,7 @@ void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
 
 
 // called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
-float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float power, CUnit* owner, CUnit *&hit, int collisionFlags)
+float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/, CUnit* owner, CUnit *&hit, int collisionFlags)
 {
 	float groundLength = ground->LineGroundCol(start, start + dir * length);
 	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);

@@ -63,14 +63,15 @@ struct LineMarker {
 
 // HandleCommand structs:
 
-#define AIHCQuerySubVersionId 0
-#define AIHCAddMapPointId 1
-#define AIHCAddMapLineId 2
-#define AIHCRemoveMapPointId 3
-#define AIHCSendStartPosId 4
-#define AIHCGetUnitDefByIdId 5
-#define AIHCGetWeaponDefByIdId 6
+#define AIHCQuerySubVersionId   0
+#define AIHCAddMapPointId       1
+#define AIHCAddMapLineId        2
+#define AIHCRemoveMapPointId    3
+#define AIHCSendStartPosId      4
+#define AIHCGetUnitDefByIdId    5
+#define AIHCGetWeaponDefByIdId  6
 #define AIHCGetFeatureDefByIdId 7
+#define AIHCTraceRayId          8
 
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
@@ -111,6 +112,16 @@ struct AIHCGetFeatureDefById ///< result of HandleCommand is 1 - ok supported
 {
 	int featureDefId;
 	const FeatureDef* ret;
+};
+
+struct AIHCTraceRay
+{
+	float3 rayPos;
+	float3 rayDir;
+	float  rayLen;
+	int    srcUID;
+	int    hitUID;
+	int    flags;
 };
 
 /// Generalized callback interface, used by Global AIs
