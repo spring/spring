@@ -532,6 +532,22 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 					cmd->drawBorder, cmd->facing);
 			break;
 		}
+
+		case COMMAND_TRACE_RAY: {
+			STraceRayCommand* cCmdData = (STraceRayCommand*) commandData;
+			AIHCTraceRay cppCmdData = {
+				cCmdData->rayPos,
+				cCmdData->rayDir,
+				cCmdData->rayLen,
+				cCmdData->srcUID,
+				cCmdData->hitUID,
+				cCmdData->flags
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCTraceRayId, &cppCmdData);
+			break;
+		}
+
 		default:
 		{
 			// check if it is a unit command
