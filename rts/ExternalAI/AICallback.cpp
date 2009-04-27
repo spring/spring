@@ -1339,11 +1339,20 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			if (CHECK_UNITID(cmdData->srcUID)) {
 				CUnit* srcUnit = uh->units[cmdData->srcUID];
 				CUnit* hitUnit = NULL;
+				float  realLen = 0.0f;
+				bool   haveHit = false;
+				bool   visible = true;
 
 				if (srcUnit != NULL) {
-					// note: protect against cheats if hitUnit is non-friendly?
-					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
-					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
+					realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+
+					if (hitUnit != NULL) {
+						haveHit = true;
+						visible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
+					}
+
+					cmdData->rayLen = (           visible)? realLen:     cmdData->rayLen;
+					cmdData->hitUID = (haveHit && visible)? hitUnit->id: cmdData->hitUID;
 				}
 			}
 
