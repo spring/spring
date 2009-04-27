@@ -1340,12 +1340,10 @@ int CAICallback::HandleCommand(int commandId, void* data)
 				CUnit* srcUnit = uh->units[cmdData->srcUID];
 				CUnit* hitUnit = NULL;
 
-				// note: protect against cheats if hitUnit is non-friendly?
-				cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
-				cmdData->hitUID = -1;
-
-				if (hitUnit != NULL) {
-					cmdData->hitUID = hitUnit->id;
+				if (srcUnit != NULL) {
+					// note: protect against cheats if hitUnit is non-friendly?
+					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
 				}
 			}
 
