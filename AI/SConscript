@@ -657,9 +657,9 @@ if (skirmishai_isCpp_list != []):
 		# wrapp the Callback
 		awkScripts = []
 		awkScripts += ['wrappCallback.awk']
-		awkScripts += ['common.awk']
-		awkScripts += ['commonDoc.awk']
-		awkScripts += ['commonOOCallback.awk']
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
+		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonOOCallback.awk')]
 		awkInputFile = os.path.join(springInterfaceSrcDir, 'SSkirmishAICallback.h')
 		awkWorkDir = os.path.join('Wrappers', 'Cpp', 'bin')
 		wrapp_cppWrapper = AWKExecutor(skirmishai_env, 'wrapp_callback', awkScripts, awkVars, awkInputFile, workDir = awkWorkDir)

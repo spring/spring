@@ -57,6 +57,7 @@ IF (AITYPES_NATIVE)
 	# Build static library for (new) C++ AIs
 	set(CPPWRAPPER_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/Cpp")
 	set(CPPWRAPPER_AWK_SCRIPTS_DIR "${CPPWRAPPER_SOURCE_DIR}/bin")
+	set(AWK_COMMON_SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils/bin")
 	set(CPPWRAPPER_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/Wrappers/Cpp")
 	set(CPPWRAPPER_GENERATED_SRC_DIR "${CPPWRAPPER_BUILD_DIR}/generated-src")
 	set(SPRING_SOURCE_DIR "${PROJECT_SOURCE_DIR}")
@@ -70,9 +71,9 @@ IF (AITYPES_NATIVE)
 		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
 		"-v" "GENERATED_SOURCE_DIR=${CPPWRAPPER_GENERATED_SRC_DIR}"
 		"-f" "${CPPWRAPPER_AWK_SCRIPTS_DIR}/wrappCallback.awk"
-		"-f" "${CPPWRAPPER_AWK_SCRIPTS_DIR}/common.awk"
-		"-f" "${CPPWRAPPER_AWK_SCRIPTS_DIR}/commonDoc.awk"
-		"-f" "${CPPWRAPPER_AWK_SCRIPTS_DIR}/commonOOCallback.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
+		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonOOCallback.awk"
 		"${SPRING_AIINTERFACE_SOURCE_DIR}/SSkirmishAICallback.h")
 
 	# this will regenerate the sources whenever the DEPENDS changes
