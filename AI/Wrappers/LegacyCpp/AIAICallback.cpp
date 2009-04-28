@@ -1528,7 +1528,7 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cCmdData);
 
 			cppCmdData->rayLen = cCmdData.rayLen;
-			cppCmdData->srcUID = cCmdData.srcUID;
+			cppCmdData->hitUID = cCmdData.hitUID;
 			break;
 		}
 	}
