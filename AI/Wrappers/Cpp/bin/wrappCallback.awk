@@ -120,7 +120,7 @@ function printIncludes() {
 	outS_h_inc = createFileName("IncludesSources", 1);
 	{
 		printCommentsHeader(outH_h_inc);
-		
+
 		print("") >> outH_h_inc;
 		print("#include <cstdio> // for NULL") >> outH_h_inc;
 		print("#include <vector>") >> outH_h_inc;
@@ -145,7 +145,7 @@ function printIncludes() {
 	}
 	{
 		printCommentsHeader(outS_h_inc);
-		
+
 		print("") >> outS_h_inc;
 		print("#include \"ExternalAI/Interface/SSkirmishAICallback.h\"") >> outS_h_inc;
 		print("") >> outS_h_inc;
@@ -153,10 +153,10 @@ function printIncludes() {
 		for (clsName in class_ancestors) {
 			if (clsName != "Clb") {
 				print("#include \"" clsName ".h\"") >> outS_h_inc;
-			}                                                                              
+			}
 		}
 		for (clsId in implClsNames) {
-			print("#include \"" implClsNames[clsId] ".h\"") >> outS_h_inc;                                                                            
+			print("#include \"" implClsNames[clsId] ".h\"") >> outS_h_inc;
 		}
 		for (clsName in interfaces) {
 			print("#include \"" clsName ".h\"") >> outS_h_inc;
@@ -167,9 +167,6 @@ function printIncludes() {
 
 
 function isSpringAIClass(type_isac) {
-
-	#isSpringAIClass_isac =  length(class_ancestors[type_isac]);
-	#isSpringAIClass_isac += length(interfaces[type_isac]);
 
 	for (clsName_isac in class_ancestors) {
 		if (clsName_isac == type_isac) {
@@ -186,7 +183,7 @@ function isSpringAIClass(type_isac) {
 			return 1;
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -206,9 +203,7 @@ function printInterfaces() {
 function printInterface(clsName_i) {
 
 	out_h_i = createFileName(clsName_i, 1);
-	#out_s_i = createFileName(clsName_i, 0);
 	printHeader(out_h_i, clsName_i, 1, 1);
-	#printHeader(out_s_i, clsName_i, 1, 0);
 
 	size_addInds = additionalIntIndices[clsName_i "*"];
 
@@ -260,9 +255,6 @@ function printInterface(clsName_i) {
 function printClasses() {
 
 	for (clsName in class_ancestors) {
-if (match(clsName, /^const /)) {
-	print("clsName: " clsName);
-}
 		size_ancestorParts = split(class_ancestors[clsName], ancestorParts, ",");
 
 		if (size_ancestorParts == 0) {
@@ -338,7 +330,7 @@ function printClass(ancestors_c, clsName_c) {
 	sub(/^, /, "", addIndPars_c);
 	addIndParsNoTypes_c = removeParamTypes(addIndPars_c);
 	condaddIndPars_c = (addIndPars_c == "") ? "" : ", ";
-	
+
 	print("\t" clsNameExternal_c "(" ctorParams ");") >> out_h_c;
 	print(myNameSpace "::" clsNameExternal_c "::" clsNameExternal_c "(" ctorParams ") {") >> out_s_c;
 	print("") >> out_s_c;
@@ -356,7 +348,7 @@ function printClass(ancestors_c, clsName_c) {
 	print("}") >> out_s_c;
 	print("") >> out_s_c;
 	print("") >> out_h_c;
-	
+
 	# print additional vars fetchers
 	print("public:") >> out_h_c;
 	for (ai=0; ai < size_addInds; ai++) {

@@ -52,7 +52,7 @@ BEGIN {
 
 # Checks if a field is available and is no comment
 function isFieldUsable(f) {
-	
+
 	valid = 0;
 
 	if (f && !match(f, /.*\/\/.*/)) {
@@ -237,7 +237,7 @@ function printEventOO(evtIndex) {
 		name = evtsMembers_name[evtIndex, m];
 		type_c = evtsMembers_type_c[evtIndex, m];
 		type_jna = convertCToJNAType(type_c);
-		
+
 		paramsTypes = paramsTypes ", " type_jna " " name;
 		paramsEvt = paramsEvt ", evt." name;
 	}
