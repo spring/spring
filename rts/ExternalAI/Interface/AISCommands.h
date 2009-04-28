@@ -1082,7 +1082,7 @@ struct STraceRayCommand {
 	int srcUID;
 	int hitUID;
 	int flags;
-};
+}; // COMMAND_TRACE_RAY
 
 /**
  * @brief Sets default values
