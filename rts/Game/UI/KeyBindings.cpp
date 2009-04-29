@@ -32,8 +32,8 @@ static const struct DefaultBinding {
 }
 defaultBindings[] = {
 
-	{        "esc", "quitwarn"    },
-	{  "Shift+esc", "quit"        },
+	{        "esc", "quitmenu"    },
+	{ "Ctrl+Shift+esc", "quitforce"    },
 	{  "Any+pause", "pause"       },
 	{ "Ctrl+enter", "forcestart"  },
 
