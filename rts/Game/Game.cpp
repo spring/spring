@@ -1516,57 +1516,13 @@ bool CGame::ActionPressed(const Action& action,
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
 			new CShareBox();
 	}
-	else if (cmd == "quitwarn") {
-		const CKeyBindings::HotkeyList hkl = keyBindings->GetHotkeys("quit");
-		if (hkl.empty()) {
-			logOutput.Print("How odd, you appear to be lacking a \"quit\" binding");
-		} else {
-			logOutput.Print("Use %s to quit", hkl[0].c_str());
-		}
+	else if (cmd == "quitmenu") {
+		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0)
+			new CQuitBox();
 	}
-	else if (cmd == "quit") {
-		//The user wants to quit. Do we let him?
-		bool userMayQuit=false;
-		// Six cases when he may quit:
-		//  * If the game isn't started players are free to leave.
-		//  * If the game is over
-		//  * If his team is dead.
-		//  * If he's a spectator.
-		//  * If there are other active players on his team.
-		//  * If there are no other players
-		if (!playing || gameOver || teamHandler->Team(gu->myTeam)->isDead || gu->spectating) {
-			userMayQuit = true;
-		}
-		else {
-			// Check if there are more active players on his team.
-			bool onlyActive = true;
-			for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-				if (a != gu->myPlayerNum) {
-					if (playerHandler->Player(a)->active) {
-						onlyActive = false;
-						if (playerHandler->Player(a)->team == gu->myTeam) {
-							userMayQuit = true;
-							break;
-						}
-					}
-				}
-			}
-			// If you are the only remaining active player, you can quit immediately
-			if (onlyActive) {
-				userMayQuit = true;
-			}
-		}
-
-		// User may not quit if he is the only player in his still active team.
-		// Present him with the options given in CQuitBox.
-		if (!userMayQuit) {
-			if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0) {
-				new CQuitBox();
-			}
-		} else {
-			logOutput.Print("User exited");
-			globalQuit = true;
-		}
+	else if (cmd == "quitforce") {
+		logOutput.Print("User exited");
+		globalQuit = true;
 	}
 	else if (cmd == "incguiopacity") {
 		CInputReceiver::guiAlpha = std::min(CInputReceiver::guiAlpha+0.1f,1.0f);
