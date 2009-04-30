@@ -220,7 +220,6 @@ int CCobThread::Tick(int deltaTime)
 	}
 
 	state = Run;
-	GCobEngine.SetCurThread(this);
 
 	int r1, r2, r3, r4, r5, r6;
 	vector<int> args;
@@ -259,7 +258,6 @@ int CCobThread::Tick(int deltaTime)
 				wakeTime = GCurrentTime + r1;
 				state = Sleep;
 				GCobEngine.AddThread(this);
-				GCobEngine.SetCurThread(NULL);
 
 #if COB_DEBUG > 0
 				if (COB_DEBUG_FILTER)
@@ -290,7 +288,6 @@ int CCobThread::Tick(int deltaTime)
 #endif
 
 					state = Dead;
-					GCobEngine.SetCurThread(NULL);
 					//callStack.pop_back();
 					//Leave values intact on stack in case caller wants to check them
 					return -1;
@@ -649,7 +646,6 @@ int CCobThread::Tick(int deltaTime)
 				//logOutput.Print("Waiting for turn on piece %s around axis %d", script.pieceNames[r1].c_str(), r2);
 				if (owner->AddTurnListener(r1, r2, this)) {
 					state = WaitTurn;
-					GCobEngine.SetCurThread(NULL);
 					return 0;
 				}
 				else
@@ -660,7 +656,6 @@ int CCobThread::Tick(int deltaTime)
 				//logOutput.Print("Waiting for move on piece %s on axis %d", script.pieceNames[r1].c_str(), r2);
 				if (owner->AddMoveListener(r1, r2, this)) {
 					state = WaitMove;
-					GCobEngine.SetCurThread(NULL);
 					return 0;
 				}
 				break;
@@ -745,14 +740,10 @@ int CCobThread::Tick(int deltaTime)
 					ei++;
 				}
 				state = Dead;
-				GCobEngine.SetCurThread(NULL);
 				return -1;
-				break;
 		}
-
 	}
 
-	GCobEngine.SetCurThread(NULL);
 	return 0;
 }
 
