@@ -19,7 +19,6 @@ class CCobInstance;
 class CCobFile;
 
 class CCobThreadPtr_less : public std::binary_function<CCobThread *, CCobThread *, bool> {
-	CCobThread *a, *b;
 public:
 	bool operator() (const CCobThread *const &a, const CCobThread *const &b) const {return a->GetWakeTime() > b->GetWakeTime();}
 };
@@ -31,22 +30,32 @@ protected:
 	std::list<CCobThread *> running;
 	std::list<CCobThread *> wantToRun;				//Threads are added here if they are in Running. And moved to real running after running is empty
 	std::priority_queue<CCobThread *, vector<CCobThread *>, CCobThreadPtr_less> sleeping;
-	std::map<std::string, CCobFile *> cobFiles;
 	CCobThread *curThread;
 	void TickThread(int deltaTime, CCobThread* thread);
 public:
-	CCobEngine(void);
-	~CCobEngine(void);
+	CCobEngine();
+	~CCobEngine();
 	void AddThread(CCobThread *thread);
 	void Tick(int deltaTime);
 	void ShowScriptWarning(const std::string& msg);
 	void ShowScriptError(const std::string& msg);
+};
+
+
+class CCobFileHandler
+{
+protected:
+	std::map<std::string, CCobFile *> cobFiles;
+public:
+	~CCobFileHandler();
 	CCobFile& GetCobFile(const std::string& name);
 	CCobFile& ReloadCobFile(const std::string& name);
 	const CCobFile* GetScriptAddr(const std::string& name) const;
 };
 
+
 extern CCobEngine GCobEngine;
+extern CCobFileHandler GCobFileHandler;
 extern int GCurrentTime;
 
 #endif // __COB_ENGINE_H__

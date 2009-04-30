@@ -18,16 +18,19 @@
 #define SCOPED_TIMER(a) {}
 #endif
 
+
 CCobEngine GCobEngine;
+CCobFileHandler GCobFileHandler;
 int GCurrentTime;
 
-CCobEngine::CCobEngine(void) :
-	curThread(NULL)
+
+CCobEngine::CCobEngine()
+	: curThread(NULL)
 {
 	GCurrentTime = 0;
 }
 
-CCobEngine::~CCobEngine(void)
+CCobEngine::~CCobEngine()
 {
 	//Should delete all things that the scheduler knows
 	for (std::list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
@@ -42,7 +45,10 @@ CCobEngine::~CCobEngine(void)
 		sleeping.pop();
 		delete tmp;
 	}
+}
 
+CCobFileHandler::~CCobFileHandler()
+{
 	//Free all cobfiles
 	for (std::map<std::string, CCobFile *>::iterator i = cobFiles.begin(); i != cobFiles.end(); ++i) {
 		delete i->second;
@@ -157,7 +163,7 @@ void CCobEngine::ShowScriptError(const string& msg)
 		logOutput.Print("ScriptError: %s outside script execution", msg.c_str());
 }
 
-CCobFile& CCobEngine::GetCobFile(const string& name)
+CCobFile& CCobFileHandler::GetCobFile(const string& name)
 {
 	//Already known?
 	map<string, CCobFile *>::iterator i;
@@ -177,7 +183,7 @@ CCobFile& CCobEngine::GetCobFile(const string& name)
 }
 
 
-CCobFile& CCobEngine::ReloadCobFile(const string& name)
+CCobFile& CCobFileHandler::ReloadCobFile(const string& name)
 {
 	map<string, CCobFile *>::iterator it = cobFiles.find(name);
 	if (it == cobFiles.end()) {
@@ -191,7 +197,7 @@ CCobFile& CCobEngine::ReloadCobFile(const string& name)
 }
 
 
-const CCobFile* CCobEngine::GetScriptAddr(const string& name) const
+const CCobFile* CCobFileHandler::GetScriptAddr(const string& name) const
 {
 	map<string, CCobFile *>::const_iterator it = cobFiles.find(name);
 	if (it != cobFiles.end()) {
