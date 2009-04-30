@@ -33,12 +33,12 @@ protected:
 	std::priority_queue<CCobThread *, vector<CCobThread *>, CCobThreadPtr_less> sleeping;
 	std::map<std::string, CCobFile *> cobFiles;
 	CCobThread *curThread;
+	void TickThread(int deltaTime, CCobThread* thread);
 public:
 	CCobEngine(void);
 	~CCobEngine(void);
 	void AddThread(CCobThread *thread);
 	void Tick(int deltaTime);
-	void SetCurThread(CCobThread *cur);
 	void ShowScriptWarning(const std::string& msg);
 	void ShowScriptError(const std::string& msg);
 	CCobFile& GetCobFile(const std::string& name);

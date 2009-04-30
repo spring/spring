@@ -65,6 +65,21 @@ void CCobEngine::AddThread(CCobThread *thread)
 	}
 }
 
+
+void CCobEngine::TickThread(int deltaTime, CCobThread* thread)
+{
+	curThread = thread; // for error messages originating in CUnitScript
+
+	int res = thread->Tick(deltaTime);
+	thread->CommitAnims(deltaTime);
+
+	if (res == -1)
+		delete thread;
+
+	curThread = NULL;
+}
+
+
 void CCobEngine::Tick(int deltaTime)
 {
 	SCOPED_TIMER("Scripts");
@@ -81,12 +96,7 @@ void CCobEngine::Tick(int deltaTime)
 #ifdef _CONSOLE
 		printf("----\n");
 #endif
-		int res = (*i)->Tick(deltaTime);
-		(*i)->CommitAnims(deltaTime);
-
-		if (res == -1) {
-			delete *i;
-		}
+		TickThread(deltaTime, *i);
 	}
 
 	// A thread can never go from running->running, so clear the list
@@ -117,10 +127,7 @@ void CCobEngine::Tick(int deltaTime)
 #endif
 			if (cur->state == CCobThread::Sleep) {
 				cur->state = CCobThread::Run;
-				int res = cur->Tick(deltaTime);
-				cur->CommitAnims(deltaTime);
-				if (res == -1)
-					delete cur;
+				TickThread(deltaTime, cur);
 			} else if (cur->state == CCobThread::Dead) {
 				delete cur;
 			} else {
@@ -132,12 +139,6 @@ void CCobEngine::Tick(int deltaTime)
 				cur = NULL;
 		}
 	}
-}
-
-// Threads call this when they start executing in Tick
-void CCobEngine::SetCurThread(CCobThread *cur)
-{
-	curThread = cur;
 }
 
 void CCobEngine::ShowScriptWarning(const string& msg)
