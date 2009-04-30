@@ -2,7 +2,7 @@
 /* heavily based on CobInstance.cpp */
 
 #include "UnitScript.h"
-#include "CobEngine.h"
+#include "UnitScriptEngine.h"
 
 #ifndef _CONSOLE
 
@@ -71,6 +71,9 @@ CUnitScript::~CUnitScript()
 		}
 		delete *i;
 	}
+
+	// Remove us from possible animation ticking (should only be needed when anims.size() > 0
+	GUnitScriptEngine.RemoveInstance(this);
 }
 
 
@@ -172,8 +175,9 @@ int CUnitScript::Call(const string &fname, CBCobThreadFinish cb, void *p1, void 
 int CUnitScript::Call(const string &fname, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
 	int fn = GetFunctionId(fname);
-	//TODO: check that new behaviour of actually calling cb when the function is not defined is right?
-	//      (this is consistent with
+	//TODO: Check that new behaviour of actually calling cb when the function is not defined is right?
+	//      (the callback has always been called [when the function is not defined]
+	//       in the id-based Call()s, but never in the string based calls.)
 	return RealCall(fn, args, cb, p1, p2);
 }
 
@@ -400,10 +404,10 @@ void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 			delete *i;
 			anims.erase(i);
 
-			// TODO: If this was the last animation, remove from currently animating list
-			/*if (anims.size() == 0) {
-				GCobEngine.RemoveInstance(this);
-			}*/
+			// If this was the last animation, remove from currently animating list
+			if (anims.size() == 0) {
+				GUnitScriptEngine.RemoveInstance(this);
+			}
 			return;
 		}
 	}
@@ -416,7 +420,7 @@ void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 void CUnitScript::AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptWarning("Invalid piecenumber");
+		GUnitScriptEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -455,10 +459,10 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, int speed, int des
 		ai->axis = axis;
 		anims.push_back(ai);
 
-		//TODO: If we were not animating before, inform the engine of this so it can schedule us
-		/*if (anims.size() == 1) {
-			GCobEngine.AddInstance(this);
-		}*/
+		// If we were not animating before, inform the engine of this so it can schedule us
+		if (anims.size() == 1) {
+			GUnitScriptEngine.AddInstance(this);
+		}
 	}
 
 	ai->dest  = destf;
@@ -530,7 +534,7 @@ void CUnitScript::Move(int piece, int axis, int speed, int destination, bool int
 void CUnitScript::MoveNow(int piece, int axis, int destination)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptWarning("Invalid piecenumber");
+		GUnitScriptEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -548,7 +552,7 @@ void CUnitScript::MoveNow(int piece, int axis, int destination)
 void CUnitScript::TurnNow(int piece, int axis, int destination)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptWarning("Invalid piecenumber");
+		GUnitScriptEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -562,7 +566,7 @@ void CUnitScript::TurnNow(int piece, int axis, int destination)
 void CUnitScript::SetVisibility(int piece, bool visible)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptWarning("Invalid piecenumber");
+		GUnitScriptEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -578,7 +582,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 {
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptWarning("Invalid piecenumber for emit-sfx");
+		GUnitScriptEngine.ShowScriptWarning("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
@@ -589,7 +593,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 	float3 relPos(0,0,0);
 	float3 relDir(0,1,0);
 	if (!GetEmitDirPos(piece, relPos, relDir)) {
-		GCobEngine.ShowScriptError("emit-sfx: GetEmitDirPos failed\n");
+		GUnitScriptEngine.ShowScriptError("emit-sfx: GetEmitDirPos failed\n");
 	}
 
 	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
@@ -651,7 +655,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 			{
 				unsigned index = type - 1024;
 				if (index >= unit->unitDef->sfxExplGens.size() || unit->unitDef->sfxExplGens[index] == NULL) {
-					GCobEngine.ShowScriptError("Invalid explosion generator index for emit-sfx");
+					GUnitScriptEngine.ShowScriptError("Invalid explosion generator index for emit-sfx");
 					break;
 				}
 				//float3 relDir = -GetPieceDirection(piece) * 0.2f;
@@ -663,7 +667,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 			{
 				unsigned index = type - 2048;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
-					GCobEngine.ShowScriptError("Invalid weapon index for emit-sfx");
+					GUnitScriptEngine.ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
 				//this is very hackish and probably has a lot of side effects, but might be usefull for something
@@ -685,7 +689,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 			else if (type & 4096) {
 				unsigned index = type - 4096;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
-					GCobEngine.ShowScriptError("Invalid weapon index for emit-sfx");
+					GUnitScriptEngine.ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
 				}
 				// detonate weapon from piece
@@ -712,7 +716,7 @@ void CUnitScript::AttachUnit(int piece, int u)
 {
 	// -1 is valid, indicates that the unit should be hidden
 	if ((piece >= 0) && (!PieceExists(piece))) {
-		GCobEngine.ShowScriptError("Invalid piecenumber for attach");
+		GUnitScriptEngine.ShowScriptError("Invalid piecenumber for attach");
 		return;
 	}
 
@@ -770,7 +774,7 @@ int CUnitScript::AddMoveListener(int piece, int axis, IAnimListener *listener)
 void CUnitScript::Explode(int piece, int flags)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber for explode");
+		GUnitScriptEngine.ShowScriptError("Invalid piecenumber for explode");
 		return;
 	}
 
@@ -916,7 +920,7 @@ void CUnitScript::PlayUnitSound(int snr, int attr)
 void CUnitScript::ShowFlare(int piece)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptError("Invalid piecenumber for show(flare)");
+		GUnitScriptEngine.ShowScriptError("Invalid piecenumber for show(flare)");
 		return;
 	}
 #ifndef _CONSOLE
@@ -934,7 +938,7 @@ void CUnitScript::ShowFlare(int piece)
 void CUnitScript::MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptWarning("Invalid piecenumber");
+		GUnitScriptEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
@@ -965,7 +969,7 @@ void CUnitScript::MoveSmooth(int piece, int axis, int destination, int delta, in
 void CUnitScript::TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
-		GCobEngine.ShowScriptWarning("Invalid piecenumber");
+		GUnitScriptEngine.ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 

@@ -10,13 +10,6 @@
 #define UNPACKZ(xz) ((signed short)((boost::uint32_t)(xz) & 0xffff))
 
 
-static const int COBSCALE = 65536;
-static const int COBSCALEHALF = COBSCALE / 2;
-static const float CORDDIV   = 1.0f / COBSCALE;
-static const float RAD2TAANG = COBSCALEHALF / PI;
-static const float TAANG2RAD = PI / COBSCALEHALF;
-
-
 class CCobThread;
 class CCobFile;
 class CCobInstance;

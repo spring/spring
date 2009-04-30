@@ -180,9 +180,6 @@ CCobInstance::~CCobInstance(void)
 		(*i)->state = CCobThread::Dead;
 		(*i)->SetCallback(NULL, NULL, NULL);
 	}
-
-	// Remove us from possible animation ticking (should only be needed when anims.size() > 0
-	GCobEngine.RemoveInstance(this);
 }
 
 
