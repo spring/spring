@@ -53,6 +53,9 @@ protected:
 	void MapScriptToModelPieces(LocalModel* lmodel);
 	void UnblockAll(struct AnimInfo * anim);
 
+	virtual void ShowScriptError(const std::string& msg) = 0;
+	virtual void ShowScriptWarning(const std::string& msg) = 0;
+
 public:
 	std::vector<LocalModelPiece*> pieces;
 

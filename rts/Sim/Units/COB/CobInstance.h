@@ -37,13 +37,16 @@ public:
 protected:
 	CCobFile& script;
 	bool yardOpen;
-	void UnblockAll(struct AnimInfo * anim);
 
 	static std::vector<int> teamVars[TEAM_VAR_COUNT];
 	static std::vector<int> allyVars[ALLY_VAR_COUNT];
 	static int globalVars[GLOBAL_VAR_COUNT];
 
 	int unitVars[UNIT_VAR_COUNT];
+
+	void UnblockAll(struct AnimInfo * anim);
+	void ShowScriptError(const std::string& msg);
+	void ShowScriptWarning(const std::string& msg);
 
 public:
 	bool busy;

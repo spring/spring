@@ -286,13 +286,13 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		break;
 	case PIECE_XZ:{
 		if (!PieceExists(p1))
-			GCobEngine.ShowScriptError("Invalid piecenumber for get piece_xz");
+			ShowScriptError("Invalid piecenumber for get piece_xz");
 		float3 relPos = GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return PACKXZ(pos.x, pos.z);}
 	case PIECE_Y:{
 		if (!PieceExists(p1))
-			GCobEngine.ShowScriptError("Invalid piecenumber for get piece_y");
+			ShowScriptError("Invalid piecenumber for get piece_y");
 		float3 relPos = GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return (int)(pos.y * COBSCALE);}
@@ -958,3 +958,13 @@ void CCobInstance::SetUnitVal(int val, int param)
 #endif
 }
 
+
+void CCobInstance::ShowScriptError(const std::string& msg)
+{
+	GCobEngine.ShowScriptError(msg);
+}
+
+void CCobInstance::ShowScriptWarning(const std::string& msg)
+{
+	GCobEngine.ShowScriptWarning(msg);
+}
