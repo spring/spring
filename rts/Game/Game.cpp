@@ -4563,12 +4563,12 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("Unknown unit name");
 		return;
 	}
-	const CCobFile* oldScript = GCobEngine.GetScriptAddr(udef->scriptPath);
+	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr(udef->scriptPath);
 	if (oldScript == NULL) {
 		logOutput.Print("Unknown cob script: %s", udef->scriptPath.c_str());
 		return;
 	}
-	CCobFile* newScript = &GCobEngine.ReloadCobFile(udef->scriptPath);
+	CCobFile& newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
 	int count = 0;
 	for (size_t i = 0; i < uh->MaxUnits(); i++) {
 		CUnit* unit = uh->units[i];
@@ -4576,7 +4576,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 			if (unit->cob->GetScriptAddr() == oldScript) {
 				count++;
 				delete unit->cob;
-				unit->cob = new CCobInstance(*newScript, unit);
+				unit->cob = new CCobInstance(newScript, unit);
 				unit->cob->Call("Create");
 			}
 		}
