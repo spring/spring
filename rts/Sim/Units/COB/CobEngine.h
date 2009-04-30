@@ -2,7 +2,7 @@
 #define __COB_ENGINE_H__
 
 /*
- * The cob engine is responsible for "scheduling" and running threads that are running in 
+ * The cob engine is responsible for "scheduling" and running threads that are running in
  * infinite loops.
  * It also manages reading and caching of the actual .cob files
  */
@@ -31,15 +31,12 @@ protected:
 	std::list<CCobThread *> running;
 	std::list<CCobThread *> wantToRun;				//Threads are added here if they are in Running. And moved to real running after running is empty
 	std::priority_queue<CCobThread *, vector<CCobThread *>, CCobThreadPtr_less> sleeping;
-	std::list<CCobInstance *> animating;				//hash would be optimal. but not crucial.
 	std::map<std::string, CCobFile *> cobFiles;
 	CCobThread *curThread;
 public:
 	CCobEngine(void);
 	~CCobEngine(void);
 	void AddThread(CCobThread *thread);
-	void AddInstance(CCobInstance *instance);
-	void RemoveInstance(CCobInstance *instance);
 	void Tick(int deltaTime);
 	void SetCurThread(CCobThread *cur);
 	void ShowScriptWarning(const std::string& msg);

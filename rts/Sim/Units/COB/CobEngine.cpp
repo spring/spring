@@ -65,37 +65,6 @@ void CCobEngine::AddThread(CCobThread *thread)
 	}
 }
 
-void CCobEngine::AddInstance(CCobInstance *instance)
-{
-	// Error checking
-/*	int found = 0;
-	for (list<CCobInstance *>::iterator i = animating.begin(); i != animating.end(); ++i) {
-		if (*i == instance)
-			found++;		
-	}
-
-	if (found > 0)
-		logOutput.Print("Warning: Addinstance already found %d", found); */
-
-	animating.push_front(instance);
-}
-
-void CCobEngine::RemoveInstance(CCobInstance *instance)
-{
-	// Error checking
-/*	int found = 0;
-	for (list<CCobInstance *>::iterator i = animating.begin(); i != animating.end(); ++i) {
-		if (*i == instance)
-			found++;
-	} 
-
-	if (found > 1)
-		logOutput.Print("Warning: Removeinstance found duplicates %d", found); */
-
-	//This is slow. would be better if instance was a hashlist perhaps
-	animating.remove(instance);
-}
-
 void CCobEngine::Tick(int deltaTime)
 {
 	SCOPED_TIMER("Scripts");
@@ -135,7 +104,7 @@ void CCobEngine::Tick(int deltaTime)
 	//Check on the sleeping threads
 	if (sleeping.size() > 0) {
 		CCobThread *cur = sleeping.top();
-		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {	
+		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {
 
 			// Start with removing the executing thread from the queue
 			sleeping.pop();
@@ -157,20 +126,11 @@ void CCobEngine::Tick(int deltaTime)
 			} else {
 				logOutput.Print("CobError: Sleeping thread strange state %d", cur->state);
 			}
-			if (sleeping.size() > 0) 
+			if (sleeping.size() > 0)
 				cur = sleeping.top();
 			else
 				cur = NULL;
 		}
-	}
-
-	// Tick all instances that have registered themselves as animating
-	std::list<CCobInstance *>::iterator it = animating.begin();
-	std::list<CCobInstance *>::iterator curit;
-	while (it != animating.end()) {
-		curit = it++;
-		if ((*curit)->Tick(deltaTime) == -1)
-			animating.erase(curit);
 	}
 }
 
@@ -206,7 +166,7 @@ CCobFile& CCobEngine::GetCobFile(const string& name)
 
 	CFileHandler f(name);
 	if (!f.FileExists()) {
-		handleerror(0,"No cob-file",name.c_str(),0);		
+		handleerror(0,"No cob-file",name.c_str(),0);
 		//Need to return something maybe.. this is pretty fatal though
 	}
 	CCobFile *cf = new CCobFile(f, name);

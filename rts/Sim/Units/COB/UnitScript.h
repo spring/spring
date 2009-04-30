@@ -12,6 +12,13 @@
 #include "Rendering/UnitModels/3DModel.h"
 
 
+static const int COBSCALE = 65536;
+static const int COBSCALEHALF = COBSCALE / 2;
+static const float CORDDIV   = 1.0f / COBSCALE;
+static const float RAD2TAANG = COBSCALEHALF / PI;
+static const float TAANG2RAD = PI / COBSCALEHALF;
+
+
 class CUnit;
 
 typedef void (*CBCobThreadFinish) (int retCode, void *p1, void *p2);
