@@ -75,7 +75,14 @@ public:
 	std::list<int> freeIDs;
 	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
 
-	std::vector<projdist> distlist;
+	struct dstcmp {
+		bool operator()(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2) {
+			return (arg1.dist > arg2.dist);
+		}
+	};
+
+	std::set<projdist,dstcmp> distlist;
+	std::vector<CProjectile *> drawlist;
 
 	unsigned int projectileShadowVP;
 
