@@ -26,22 +26,22 @@ CR_BIND(CollisionVolume, );
 
 CollisionVolume::CollisionVolume(const CollisionVolume* src, float defRadius)
 {
-	// src is never NULL
+	// src is NULL when loading a saved game through creg
 	// logOutput.Print(LOG_COLVOL, "CollisionVolume::CollisionVolume(src = 0x%p)", src);
 
-	axisScales             = src->axisScales;
-	axisHScales            = src->axisHScales;
-	axisHScalesSq          = src->axisHScalesSq;
-	axisHIScales           = src->axisHIScales;
-	axisOffsets            = src->axisOffsets;
-	volumeBoundingRadius   = src->volumeBoundingRadius;
-	volumeBoundingRadiusSq = src->volumeBoundingRadiusSq;
-	volumeType             = src->volumeType;
-	testType               = src->testType;
-	primaryAxis            = src->primaryAxis;
-	secondaryAxes[0]       = src->secondaryAxes[0];
-	secondaryAxes[1]       = src->secondaryAxes[1];
-	disabled               = src->disabled;
+	axisScales             = src? src->axisScales:             float3(2.0f, 2.0f, 2.0f);
+	axisHScales            = src? src->axisHScales:            float3(1.0f, 1.0f, 1.0f);
+	axisHScalesSq          = src? src->axisHScalesSq:          float3(1.0f, 1.0f, 1.0f);
+	axisHIScales           = src? src->axisHIScales:           float3(1.0f, 1.0f, 1.0f);
+	axisOffsets            = src? src->axisOffsets:            ZeroVector;
+	volumeBoundingRadius   = src? src->volumeBoundingRadius:   1.0f;
+	volumeBoundingRadiusSq = src? src->volumeBoundingRadiusSq: 1.0f;
+	volumeType             = src? src->volumeType:             COLVOL_TYPE_ELLIPSOID;
+	testType               = src? src->testType:               COLVOL_TEST_DISC;
+	primaryAxis            = src? src->primaryAxis:            COLVOL_AXIS_Z;
+	secondaryAxes[0]       = src? src->secondaryAxes[0]:       COLVOL_AXIS_X;
+	secondaryAxes[1]       = src? src->secondaryAxes[1]:       COLVOL_AXIS_Y;
+	disabled               = src? src->disabled:               false;
 
 	if (axisScales == float3(1.0f, 1.0f, 1.0f) && defRadius > 0.0f) {
 		SetDefaultScale(defRadius);
