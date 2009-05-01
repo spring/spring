@@ -26,6 +26,9 @@ public:
 	int teamStartNum;
 	int teamAllyteam;
 
+	float startMetal;
+	float startEnergy;
+
 private:
 	customOpts customValues;
 };
