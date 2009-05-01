@@ -3636,6 +3636,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 			// draw decloak distance
 			if (unit->decloakDistance > 0.0f) {
 				glColor4fv(cmdColors.rangeDecloak);
+#ifndef USE_GML
 				if (unit->unitDef->decloakSpherical && gu->drawdebug) {
 					glPushMatrix();
 					glTranslatef(unit->midPos.x, unit->midPos.y, unit->midPos.z);
@@ -3645,8 +3646,9 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 					gluSphere(q, unit->decloakDistance, 10, 10);
 					gluDeleteQuadric(q);
 					glPopMatrix();
-				}
-				else { // cylindrical
+				} else
+#endif
+				{ // cylindrical
 					glSurfaceCircle(unit->pos, unit->decloakDistance, 40);
 				}
 			}

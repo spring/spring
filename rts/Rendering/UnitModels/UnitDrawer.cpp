@@ -1880,8 +1880,9 @@ void CUnitDrawer::DrawUnitNow(CUnit* unit)
 	} else {
 		DrawUnitBeingBuilt(unit);
 	}
-
+#ifndef USE_GML
 	DrawUnitDebug(unit);
+#endif
 	glPopMatrix();
 
 	if (unit->alphaThreshold != 0.1f) {
@@ -1909,7 +1910,9 @@ void CUnitDrawer::DrawUnitWithLists(CUnit* unit, unsigned int preList, unsigned 
 		glCallList(postList);
 	}
 
+#ifndef USE_GML
 	DrawUnitDebug(unit);
+#endif
 	glPopMatrix();
 }
 

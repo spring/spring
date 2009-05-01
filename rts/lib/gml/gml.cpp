@@ -37,6 +37,8 @@
 #include "gmlcls.h"
 #include "LogOutput.h"
 
+const char *gmlProfMutex = "lua";
+
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
 #define EXEC_RES (BYTE *)-2
@@ -207,6 +209,8 @@ boost::mutex logmutex;
 boost::mutex timemutex;
 boost::mutex watermutex;
 boost::mutex dquemutex;
+boost::mutex scarmutex;
+boost::mutex trackmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -221,6 +225,8 @@ boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex soundmutex;
 boost::recursive_mutex groupmutex;
+boost::recursive_mutex flashmutex;
+boost::recursive_mutex piecemutex;
 #endif
 
 // GMLqueue implementation
@@ -673,7 +679,6 @@ void gmlQueue::SyncRequest() {
 	GML_NEXT_SIZE(name)
 
 const char *gmlNOPDummy=(gmlFunctionNames[GML_NOP]="gmlNOP");
-#define GML_QUOTE(x) #x
 #define GML_MAKENAME(name) EXTERN const char *gml##name##Dummy=(gmlFunctionNames[gml##name##Enum]=GML_QUOTE(gml##name));
 #include "gmlfun.h"
 // this item server instance needs gmlDeleteLists from gmlfun.h, that is why it is declared down here

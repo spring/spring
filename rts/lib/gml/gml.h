@@ -9,7 +9,11 @@
 #ifndef GML_H
 #define GML_H
 
+#define GML_MUTEX_PROFILER 0 // enables profiler
+
 #ifdef USE_GML
+#define GML_MUTEX_PROFILE 0 // detailed profiling of specific mutex
+extern const char *gmlProfMutex;
 
 #include <set>
 #include <map>
@@ -170,6 +174,8 @@ extern boost::mutex logmutex;
 extern boost::mutex timemutex;
 extern boost::mutex watermutex;
 extern boost::mutex dquemutex;
+extern boost::mutex scarmutex;
+extern boost::mutex trackmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -184,9 +190,31 @@ extern boost::recursive_mutex filemutex;
 extern boost::recursive_mutex &qnummutex;
 extern boost::recursive_mutex soundmutex;
 extern boost::recursive_mutex groupmutex;
+extern boost::recursive_mutex flashmutex;
+extern boost::recursive_mutex piecemutex;
 
-#define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
-#define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)
+#if GML_MUTEX_PROFILER
+#	include "System/TimeProfiler.h"
+#	if GML_MUTEX_PROFILE
+#		ifdef _DEBUG
+#			define GML_MTXCMP(a,b) !strcmp(a,b) // comparison of static strings using addresses may not work in debug mode
+#		else
+#			define GML_MTXCMP(a,b) (a==b)
+#		endif
+#		define GML_LINEMUTEX_LOCK(name, type, line) char st##name[sizeof(ScopedTimer)]; int stc##name=GML_MTXCMP(GML_QUOTE(name),gmlProfMutex); if(stc##name) new (st##name) ScopedTimer(GML_QUOTE(name ## line ## Mutex)); boost::type::scoped_lock name##lock(name##mutex); if(stc##name) ((ScopedTimer *)st##name)->~ScopedTimer()
+#		define GML_PROFMUTEX_LOCK(name, type, line) GML_LINEMUTEX_LOCK(name, type, line)
+#		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, mutex, __LINE__)
+#		define GML_RECMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, recursive_mutex, __LINE__)
+#	else
+#		define GML_PROFMUTEX_LOCK(name, type) char st##name[sizeof(ScopedTimer)]; new (st##name) ScopedTimer(GML_QUOTE(name##Mutex)); boost::type::scoped_lock name##lock(name##mutex); ((ScopedTimer *)st##name)->~ScopedTimer()
+#		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, mutex)
+#		define GML_RECMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, recursive_mutex)
+#	endif
+#else
+#	define GML_STDMUTEX_LOCK(name) boost::mutex::scoped_lock name##lock(name##mutex)
+#	define GML_RECMUTEX_LOCK(name) boost::recursive_mutex::scoped_lock name##lock(name##mutex)
+#endif
+#define GML_STDMUTEX_LOCK_NOPROF(name) boost::mutex::scoped_lock name##lock(name##mutex)
 
 extern int gmlNextTickUpdate;
 extern unsigned gmlCurrentTicks;
@@ -211,10 +239,15 @@ inline unsigned gmlGetTicks() {
 #define GML_PARG_C , boost::recursive_mutex::scoped_lock *projlock
 #define GML_PARG_P , projlock
 
+#define GML_FARG_H , boost::recursive_mutex::scoped_lock *flashlock = &boost::recursive_mutex::scoped_lock(flashmutex)
+#define GML_FARG_C , boost::recursive_mutex::scoped_lock *flashlock
+#define GML_FARG_P , flashlock
+
 #else
 
 #define GML_STDMUTEX_LOCK(name)
 #define GML_RECMUTEX_LOCK(name)
+#define GML_STDMUTEX_LOCK_NOPROF(name)
 
 #define GML_GET_TICKS(var)
 #define GML_UPDATE_TICKS()
@@ -222,6 +255,10 @@ inline unsigned gmlGetTicks() {
 #define GML_PARG_H
 #define GML_PARG_C
 #define GML_PARG_P
+
+#define GML_FARG_H
+#define GML_FARG_C
+#define GML_FARG_P
 
 #endif
 
@@ -232,6 +269,7 @@ inline unsigned gmlGetTicks() {
 
 #define GML_STDMUTEX_LOCK(name)
 #define GML_RECMUTEX_LOCK(name)
+#define GML_STDMUTEX_LOCK_NOPROF(name)
 
 #define GML_GET_TICKS(var)
 #define GML_UPDATE_TICKS()
@@ -239,6 +277,10 @@ inline unsigned gmlGetTicks() {
 #define GML_PARG_H
 #define GML_PARG_C
 #define GML_PARG_P
+
+#define GML_FARG_H
+#define GML_FARG_C
+#define GML_FARG_P
 
 #endif // USE_GML
 
