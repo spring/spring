@@ -2612,10 +2612,11 @@ bool CGame::DrawWorld()
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
 
+#if !defined(USE_GML) || !GML_ENABLE_SIM // Pathmanager is not thread safe
 	if (gu->drawdebug && gs->cheatEnabled) {
 		pathManager->Draw();
 	}
-
+#endif
 	//transparent stuff
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);

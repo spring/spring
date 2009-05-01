@@ -101,7 +101,7 @@ CLogOutput::~CLogOutput()
 
 void CLogOutput::End()
 {
-	GML_STDMUTEX_LOCK(log); // End
+	GML_STDMUTEX_LOCK_NOPROF(log); // End
 
 	SafeDelete(filelog);
 }
