@@ -173,11 +173,13 @@ struct UnitDef
 	float mass;
 
 	bool pushResistant;
-	bool strafeToAttack;                               //should the unit move sideways when it can't shoot?
+	/// should the unit move sideways when it can't shoot?
+	bool strafeToAttack;
 	float minCollisionSpeed;
 	float slideTolerance;
 	float maxSlope;
-	float maxHeightDif;									//maximum terraform height this building allows
+	/// maximum terraform height this building allows
+	float maxHeightDif;
 	float minWaterDepth;
 	float waterline;
 
@@ -219,7 +221,8 @@ struct UnitDef
 		int slavedTo;
 		float3 mainDir;
 		float maxAngleDif;
-		float fuelUsage;							//how many seconds of fuel it costs for the owning unit to fire this weapon
+		/// How many seconds of fuel it costs for the owning unit to fire this weapon
+		float fuelUsage;
 		unsigned int badTargetCat;
 		unsigned int onlyTargetCat;
 	};

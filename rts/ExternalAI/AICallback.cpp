@@ -1300,44 +1300,67 @@ bool CAICallback::GetValue(int id, void *data)
 	}
 }
 
-int CAICallback::HandleCommand (int commandId, void *data)
+int CAICallback::HandleCommand(int commandId, void* data)
 {
-	switch (commandId)
-	{
-	case AIHCQuerySubVersionId:
-		return 1; // current version of Handle Command interface
-	case AIHCAddMapPointId:
-		net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)((AIHCAddMapPoint *)data)->pos.x, (short)((AIHCAddMapPoint *)data)->pos.z, std::string(((AIHCAddMapPoint *)data)->label)));
-		return 1;
-	case AIHCAddMapLineId:
-		net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)((AIHCAddMapLine *)data)->posfrom.x, (short)((AIHCAddMapLine *)data)->posfrom.z, (short)((AIHCAddMapLine *)data)->posto.x, (short)((AIHCAddMapLine *)data)->posto.z));
-		return 1;
-	case AIHCRemoveMapPointId:
-		net->Send(CBaseNetProtocol::Get().SendMapErase(team, (short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z));
-		return 1;
-	case AIHCSendStartPosId:
-		SendStartPos(((AIHCSendStartPos *)data)->ready,((AIHCSendStartPos *)data)->pos);
-		return 1;
-	case AIHCGetUnitDefByIdId:
-	{
-		AIHCGetUnitDefById* cmdData = (AIHCGetUnitDefById*) data;
-		cmdData->ret = GetUnitDefById(cmdData->unitDefId);
-		return 1;
-	}
-	case AIHCGetWeaponDefByIdId:
-	{
-		AIHCGetWeaponDefById* cmdData = (AIHCGetWeaponDefById*) data;
-		cmdData->ret = GetWeaponDefById(cmdData->weaponDefId);
-		return 1;
-	}
-	case AIHCGetFeatureDefByIdId:
-	{
-		AIHCGetFeatureDefById* cmdData = (AIHCGetFeatureDefById*) data;
-		cmdData->ret = GetFeatureDefById(cmdData->featureDefId);
-		return 1;
-	}
-	default:
-		return 0;
+	switch (commandId) {
+		case AIHCQuerySubVersionId:
+			return 1; // current version of Handle Command interface
+		case AIHCAddMapPointId:
+			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)((AIHCAddMapPoint *)data)->pos.x, (short)((AIHCAddMapPoint *)data)->pos.z, std::string(((AIHCAddMapPoint *)data)->label)));
+			return 1;
+		case AIHCAddMapLineId:
+			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)((AIHCAddMapLine *)data)->posfrom.x, (short)((AIHCAddMapLine *)data)->posfrom.z, (short)((AIHCAddMapLine *)data)->posto.x, (short)((AIHCAddMapLine *)data)->posto.z));
+			return 1;
+		case AIHCRemoveMapPointId:
+			net->Send(CBaseNetProtocol::Get().SendMapErase(team, (short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z));
+			return 1;
+		case AIHCSendStartPosId:
+			SendStartPos(((AIHCSendStartPos *)data)->ready,((AIHCSendStartPos *)data)->pos);
+			return 1;
+		case AIHCGetUnitDefByIdId: {
+			AIHCGetUnitDefById* cmdData = (AIHCGetUnitDefById*) data;
+			cmdData->ret = GetUnitDefById(cmdData->unitDefId);
+			return 1;
+		}
+		case AIHCGetWeaponDefByIdId: {
+			AIHCGetWeaponDefById* cmdData = (AIHCGetWeaponDefById*) data;
+			cmdData->ret = GetWeaponDefById(cmdData->weaponDefId);
+			return 1;
+		}
+		case AIHCGetFeatureDefByIdId: {
+			AIHCGetFeatureDefById* cmdData = (AIHCGetFeatureDefById*) data;
+			cmdData->ret = GetFeatureDefById(cmdData->featureDefId);
+			return 1;
+		}
+
+		case AIHCTraceRayId: {
+			AIHCTraceRay* cmdData = (AIHCTraceRay*) data;
+
+			if (CHECK_UNITID(cmdData->srcUID)) {
+				CUnit* srcUnit = uh->units[cmdData->srcUID];
+				CUnit* hitUnit = NULL;
+				float  realLen = 0.0f;
+				bool   haveHit = false;
+				bool   visible = true;
+
+				if (srcUnit != NULL) {
+					realLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+
+					if (hitUnit != NULL) {
+						haveHit = true;
+						visible = (hitUnit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS);
+					}
+
+					cmdData->rayLen = (           visible)? realLen:     cmdData->rayLen;
+					cmdData->hitUID = (haveHit && visible)? hitUnit->id: cmdData->hitUID;
+				}
+			}
+
+			return 1;
+		}
+
+		default:
+			return 0;
 	}
 }
 

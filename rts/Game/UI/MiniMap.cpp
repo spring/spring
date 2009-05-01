@@ -1432,11 +1432,6 @@ void CMiniMap::DrawUnit(CUnit* unit)
 		return;
 	}
 
-	// blink for damages within the past 3 game seconds
-	if ((unit->lastDamage > (gs->frameNum - 3 * GAME_SPEED)) && (gs->frameNum & 8)) {
-		return;
-	}
-
 	// includes the visibility check
 	float iconScale;
 	const CIconData* iconData = GetUnitIcon(unit, iconScale);

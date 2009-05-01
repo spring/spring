@@ -58,20 +58,20 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 		float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError GML_PARG_C):
 	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, true,  200 GML_PARG_P),
-	maxSpeed(maxSpeed),
 	tracking(tracking),
 	dir(speed),
-	oldSmoke(pos),
+	maxSpeed(maxSpeed),
+	areaOfEffect(areaOfEffect),
 	age(0),
+	oldSmoke(pos),
+	aimError(aimError),
 	drawTrail(true),
 	numParts(0),
 	doturn(true),
 	curCallback(0),
 	numCallback(0),
 	missileAge(0),
-	areaOfEffect(areaOfEffect),
-	distanceToTravel(maxdistance),
-	aimError(aimError)
+	distanceToTravel(maxdistance)
 {
 	this->uptime=uptime;
 	if (weaponDef) {

@@ -704,37 +704,34 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 {
-	if (ph->currentParticles >= ph->maxParticles)
-		return;
+	std::vector<int> args(1, 0);
+	cob->Call("QueryNanoPiece", args);
+
 #ifdef USE_GML
 	if (gs->frameNum - lastDrawFrame > 20)
 		return;
 #endif
-	if (!unitDef->showNanoSpray)
-		return;
-
-	std::vector<int> args;
-	args.push_back(0);
-	cob->Call("QueryNanoPiece", args);
-
-	float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
-	float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
-
-	float3 dif = goal - weaponPos;
-	const float l = fastmath::sqrt2(dif.SqLength());
-
-	dif /= l;
-	float3 error = gu->usRandVector() * (radius / l);
-	float3 color = unitDef->nanoColor;
-
-	if (gu->teamNanospray) {
-		unsigned char* tcol = teamHandler->Team(team)->color;
-		color = float3(tcol[0] * (1.f / 255.f), tcol[1] * (1.f / 255.f), tcol[2] * (1.f / 255.f));
-	}
-
-	if (inverse) {
-		new CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
-	} else {
-		new CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
+	if (ph->currentParticles < ph->maxParticles && unitDef->showNanoSpray)
+	{
+		float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
+		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
+		
+		float3 dif = goal - weaponPos;
+		const float l = fastmath::sqrt2(dif.SqLength());
+		
+		dif /= l;
+		float3 error = gu->usRandVector() * (radius / l);
+		float3 color = unitDef->nanoColor;
+		
+		if (gu->teamNanospray) {
+			unsigned char* tcol = teamHandler->Team(team)->color;
+			color = float3(tcol[0] * (1.f / 255.f), tcol[1] * (1.f / 255.f), tcol[2] * (1.f / 255.f));
+		}
+		
+		if (inverse) {
+			new CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
+		} else {
+			new CGfxProjectile(weaponPos, (dif + error) * 3, int(l / 3), color);
+		}
 	}
 }

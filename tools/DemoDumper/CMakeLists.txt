@@ -20,6 +20,6 @@ SET(build_files ${fsfiles} ${platformfiles}
 	../../rts/Rendering/Textures/TAPalette
 	../../rts/Lua/LuaIO)
 
-ADD_EXECUTABLE(demoanalyser EXCLUDE_FROM_ALL main ${build_files})
-TARGET_LINK_LIBRARIES(demoanalyser ${SDL_LIBRARY} hpiutil2 7zip lua minizip ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
+ADD_EXECUTABLE(demodumper EXCLUDE_FROM_ALL DemoDumper ${build_files})
+TARGET_LINK_LIBRARIES(demodumper ${SDL_LIBRARY} hpiutil2 7zip lua minizip ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
 
