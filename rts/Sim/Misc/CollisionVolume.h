@@ -2,7 +2,7 @@
 #define COLLISION_VOLUME_H
 
 #include "float3.h"
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "Util.h"
 
 const float EPS = 0.0000000001f;

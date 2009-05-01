@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+
 #include "GL/myGL.h"
 
 class CPlayer;

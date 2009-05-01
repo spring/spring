@@ -7,7 +7,7 @@
 #include <string>
 #include <set>
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 #include "PlayerBase.h"
 

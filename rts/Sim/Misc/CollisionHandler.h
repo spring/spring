@@ -1,7 +1,7 @@
 #ifndef COLLISION_HANDLER_H
 #define COLLISION_HANDLER_H
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 struct CollisionVolume;
 class CUnit;

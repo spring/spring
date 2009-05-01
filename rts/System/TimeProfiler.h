@@ -8,7 +8,7 @@
 #include <map>
 #include <boost/noncopyable.hpp>
 
-#include "SFloat3.h"
+#include "float3.h"
 
 // disable this if you want minimal profiling (sim time is still measured because of game slowdown)
 #define SCOPED_TIMER(name) ScopedTimer myScopedTimerFromMakro(name);
@@ -46,7 +46,7 @@ public:
 		unsigned current;
 		unsigned frames[128];
 		float percent;
-		SFloat3 color;
+		float3 color;
 		bool showGraph;
 	};
 
