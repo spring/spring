@@ -1903,6 +1903,23 @@ EXPORT(const char*) GetOptionKey(int optIndex)
 
 
 /**
+ * @brief Retrieve an option's scope
+ * @param optIndex option index/id
+ * @return NULL on error; the option's scope on success
+ *
+ * Will be either "global" (default), "player", "team" or "allyteam"
+ */
+EXPORT(const char*) GetOptionScope(int optIndex)
+{
+	try {
+		CheckOptionIndex(optIndex);
+		return GetStr(options[optIndex].scope);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return NULL;
+}
+
+/**
  * @brief Retrieve an option's name
  * @param optIndex option index/id
  * @return NULL on error; the option's user visible name on success
