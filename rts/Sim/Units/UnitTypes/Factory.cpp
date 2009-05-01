@@ -48,12 +48,12 @@ CR_REG_METADATA(CFactory, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CFactory::CFactory()
-:	buildSpeed(100),
-	curBuild(0),
+CFactory::CFactory():
+	buildSpeed(100),
 	quedBuild(false),
-	lastBuild(-1000),
-	opening(false)
+	curBuild(0),
+	opening(false),
+	lastBuild(-1000)
 {
 }
 
