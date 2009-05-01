@@ -54,17 +54,6 @@ public:
 CR_BIND(CGameStateCollector, );
 CR_REG_METADATA(CGameStateCollector, CR_SERIALIZER(Serialize));
 
-static void SerializeString(creg::ISerializer& s, std::string& str)
-{
-	unsigned short size = (unsigned short)str.length();
-	s.Serialize(&size,2);
-
-	if (!s.IsWriting())
-		str.resize(size);
-
-	s.Serialize(&str[0], size);
-}
-
 static void WriteString(std::ostream& s, std::string& str)
 {
 	char c;
@@ -105,8 +94,9 @@ void CGameStateCollector::Serialize(creg::ISerializer& s)
 	s.SerializeObjectInstance(&waitCommandsAI, waitCommandsAI.GetClass());
 	s.SerializeObjectInstance(&wind, wind.GetClass());
 	s.SerializeObjectInstance(inMapDrawer,inMapDrawer->GetClass());
-	for (int a=0; a < teamHandler->ActiveTeams(); a++)
+	for (int a=0; a < teamHandler->ActiveTeams(); a++) {
 		s.SerializeObjectInstance(grouphandlers[a], grouphandlers[a]->GetClass());
+	}
 	s.SerializeObjectInstance(eoh, eoh->GetClass());
 	s.SerializeObjectInstance(&CBuilderCAI::reclaimers,CBuilderCAI::reclaimers.GetClass());
 //	s.Serialize()
