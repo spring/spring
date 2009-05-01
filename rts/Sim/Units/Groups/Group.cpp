@@ -14,7 +14,7 @@
 #include "mmgr.h"
 #include "creg/STL_List.h"
 
-CR_BIND_DERIVED(CGroup,CObject,(0,NULL))
+CR_BIND(CGroup, (0,NULL))
 
 CR_REG_METADATA(CGroup, (
 				CR_MEMBER(id),
