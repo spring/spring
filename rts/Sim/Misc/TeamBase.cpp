@@ -9,7 +9,9 @@ TeamBase::TeamBase() :
 leader(-1),
 handicap(1),
 startPos(100,100,100),
-teamAllyteam(-1)
+teamAllyteam(-1),
+startMetal(-1.0),
+startEnergy(-1.0)
 {
 }
 
@@ -24,6 +26,10 @@ void TeamBase::SetValue(const std::string& key, const std::string& value)
 		side = StringToLower(value);
 	else if (key == "allyteam")
 		teamAllyteam = std::atoi(value.c_str());
+	else if (key == "startmetal")
+		startMetal = std::atof(value.c_str());
+	else if (key == "startenergy")
+		startEnergy = std::atof(value.c_str());
 	else if (key == "rgbcolor")
 	{
 		std::istringstream buf(value);
