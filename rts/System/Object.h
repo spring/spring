@@ -5,7 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <list>
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 template<typename T>
 void ListErase(std::list<T>& list, const T& what)

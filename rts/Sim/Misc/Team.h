@@ -8,11 +8,13 @@
 #include <vector>
 #include <map>
 #include <list>
+
+#include "TeamBase.h"
 #include "Platform/byteorder.h"
 #include "Sim/Units/UnitSet.h"
 #include "ExternalAI/SkirmishAIKey.h"
 
-class CTeam
+class CTeam : public TeamBase
 {
 public:
 	CR_DECLARE(CTeam);
@@ -21,7 +23,6 @@ public:
 	~CTeam();
 	void ResetFrameVariables();
 	void SlowUpdate();
-
 
 	void AddMetal(float amount, bool handicap = true);
 	void AddEnergy(float amount, bool handicap = true);
@@ -41,6 +42,8 @@ public:
 	void StartposMessage(const float3& pos);
 
 	inline bool IsReadyToStart() const {return readyToStart;};
+	void operator=(const TeamBase& base) { TeamBase::operator=(base); };
+
 	enum AddType{
 		AddBuilt,
 		AddCaptured,
@@ -59,11 +62,7 @@ public:
 	int teamNum;
 	bool isDead;
 	bool gaia;
-	int leader;
 	int lineageRoot;
-
-	float handicap;
-	std::string side;
 
 	bool isAI;
 	std::string luaAI;
@@ -71,12 +70,9 @@ public:
 	std::map<std::string, std::string> skirmishAIOptions;
 
 	// color info is unsynced
-	unsigned char color[4];
 	unsigned char origColor[4];
 
 	CUnitSet units;
-
-	float3 startPos;
 
 	SyncedFloat metal;
 	SyncedFloat energy;

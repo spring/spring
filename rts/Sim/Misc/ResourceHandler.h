@@ -21,7 +21,7 @@
 #include <vector>
 #include <map>
 #include <boost/noncopyable.hpp>
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "Resource.h"
 
 class CResourceMapAnalyzer;

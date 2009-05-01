@@ -1,7 +1,7 @@
 #ifndef MOVETYPE_H
 #define MOVETYPE_H
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "Object.h"
 #include "Sim/Misc/AirBaseHandler.h"
 #include "float3.h"
