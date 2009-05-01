@@ -47,10 +47,10 @@ CDirtProjectile::CDirtProjectile(const float3 pos,const float3 speed,const float
 
 CDirtProjectile::CDirtProjectile() :
 	alpha(255.0f),
+	alphaFalloff(10.0f),
 	size(10.0f),
 	sizeExpansion(0.0f),
-	slowdown(1.0f),
-	alphaFalloff(10.0f)
+	slowdown(1.0f)
 {
 	checkCol=false;
 	synced=false;

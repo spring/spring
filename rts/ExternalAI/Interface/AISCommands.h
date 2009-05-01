@@ -130,6 +130,7 @@ enum CommandTopic {
 	COMMAND_UNIT_SET_IDLE_MODE                    = 77,
 	COMMAND_UNIT_CUSTOM                           = 78,
 	COMMAND_CHEATS_GIVE_ME_NEW_UNIT               = 79,
+	COMMAND_TRACE_RAY                             = 80,
 //const int COMMAND_UNIT_ATTACK_POS
 //const int COMMAND_UNIT_INSERT
 //const int COMMAND_UNIT_REMOVE
@@ -138,7 +139,7 @@ enum CommandTopic {
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
 };
-const unsigned int NUM_CMD_TOPICS                 = 80;
+const unsigned int NUM_CMD_TOPICS                 = 81;
 
 
 /**
@@ -241,6 +242,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SSetAutoRepairLevelUnitCommand) \
 		+ sizeof(struct SSetIdleModeUnitCommand) \
 		+ sizeof(struct SCustomUnitCommand) \
+		+ sizeof(struct STraceRayCommand) \
 		)
 
 /**
@@ -1072,6 +1074,15 @@ struct SCustomUnitCommand {
 	float* params;
 	int numParams;
 }; // COMMAND_UNIT_CUSTOM
+
+struct STraceRayCommand {
+	struct SAIFloat3 rayPos;
+	struct SAIFloat3 rayDir;
+	float rayLen;
+	int srcUID;
+	int hitUID;
+	int flags;
+}; // COMMAND_TRACE_RAY
 
 /**
  * @brief Sets default values

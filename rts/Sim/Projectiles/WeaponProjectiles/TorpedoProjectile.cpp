@@ -38,17 +38,18 @@ CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, C
 		float areaOfEffect, float maxSpeed, float tracking, int ttl, CUnit* target,
 		const WeaponDef *weaponDef GML_PARG_C):
 	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
-	maxSpeed(maxSpeed),
 	tracking(tracking),
-	target(target),
 	dir(speed),
+	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),
+	target(target),
 	nextBubble(4)
 {
 	curSpeed=speed.Length();
 	dir.Normalize();
-	if(target)
+	if (target) {
 		AddDeathDependence(target);
+	}
 
 	SetRadius(0.0f);
 	drawRadius=maxSpeed*8;

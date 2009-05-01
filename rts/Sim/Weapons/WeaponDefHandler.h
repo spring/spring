@@ -6,19 +6,6 @@
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Units/UnitDef.h"
 
-#define WEAPONTYPE_ROCKET 1
-#define WEAPONTYPE_CANNON 2
-#define WEAPONTYPE_AACANNON 3
-#define WEAPONTYPE_RIFLE 4
-#define WEAPONTYPE_MELEE 5
-#define WEAPONTYPE_AIRCRAFTBOMB 6
-#define WEAPONTYPE_FLAME 7
-#define WEAPONTYPE_MISSILELAUNCHER 8
-#define WEAPONTYPE_LASERCANNON 9
-#define WEAPONTYPE_EMGCANNON 10
-#define WEAPONTYPE_STARBURSTLAUNCHER 11
-#define WEAPONTYPE_UNKNOWN 12
-
 class LuaTable;
 class CColorMap;
 class CExplosionGenerator;

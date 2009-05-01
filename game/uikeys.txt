@@ -149,8 +149,8 @@
 //
 //  fakemeta          space
 //
-//  bind                esc  quitwarn
-//  bind          Shift+esc  quit
+//  bind                esc  quitmenu
+//  bind     Ctrl+Shift+esc  quitforce
 //
 //  bind          Any+enter  chat
 //  bind          Alt+enter  chatally

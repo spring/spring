@@ -1,8 +1,10 @@
-#include "StdAfx.h"
 #include <vector>
 #include <list>
+
+#include "StdAfx.h"
 #include "AICheats.h"
 #include "SkirmishAIWrapper.h"
+#include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Misc/QuadField.h"
@@ -368,6 +370,23 @@ int CAICheats::HandleCommand(int commandId, void *data)
 	switch (commandId) {
 		case AIHCQuerySubVersionId:
 			return 1; // current version of Handle Command interface
+
+		case AIHCTraceRayId: {
+			AIHCTraceRay* cmdData = (AIHCTraceRay*) data;
+
+			if (CHECK_UNITID(cmdData->srcUID)) {
+				CUnit* srcUnit = uh->units[cmdData->srcUID];
+				CUnit* hitUnit = NULL;
+
+				if (srcUnit != NULL) {
+					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);
+					cmdData->hitUID = (hitUnit != NULL)? hitUnit->id: -1;
+				}
+			}
+
+			return 1;
+		}
+
 		default:
 			return 0;
 	}
