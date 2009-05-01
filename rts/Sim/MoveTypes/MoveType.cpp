@@ -36,7 +36,7 @@ AMoveType::AMoveType(CUnit* owner)
 	: forceTurn(0),
 	forceTurnTo(0),
 	owner(owner),
-	goalPos(owner->pos),
+	goalPos(owner ? owner->pos : float3(0.0f, 0.0f, 0.0f)),
 	maxSpeed(0.2f),
 	maxWantedSpeed(0.2f),
 	reservedPad(0),
