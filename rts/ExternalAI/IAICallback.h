@@ -237,9 +237,8 @@ public:
 	virtual float3 GetNextWaypoint(int pathId) = 0;
 	virtual void FreePath(int pathId) = 0;
 
-	// returns the approximate path cost between two points(note that
+	// returns the approximate path cost between two points (note that
 	// it needs to calculate the complete path so somewhat expensive)
-	// note: currently disabled, always returns 0
 	virtual float GetPathLength(float3 start, float3 end, int pathType) = 0;
 
 	// the following function return the units into arrays that must be allocated by the dll
