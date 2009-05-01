@@ -835,6 +835,7 @@ void SpringApp::Startup()
 	else if (!savefile.empty())
 	{
 		startsetup->isHost = true;
+		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
 #endif
