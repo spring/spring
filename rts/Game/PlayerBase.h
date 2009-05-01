@@ -2,6 +2,7 @@
 #define PLAYERBASE_H
 
 #include <string>
+#include <map>
 
 /**
 @brief Acts as a base class for the various player-representing classes
@@ -19,6 +20,11 @@ public:
 	std::string countryCode;
 	bool spectator;
 	bool isFromDemo;
+	
+	void SetValue(const std::string& key, const std::string& value);
+	
+private:
+	std::map<std::string, std::string> customValues;
 };
 
 struct PlayerStatistics

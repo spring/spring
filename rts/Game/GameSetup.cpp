@@ -138,6 +138,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	}
 }
 
+
 /**
 @brief Load players and remove gaps in the player numbering.
 @pre numPlayers initialized
@@ -161,30 +162,15 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 		// expects lines of form team=x rather than team=TEAMx
 		// team field is relocated in RemapTeams
 		std::map<std::string, std::string> setup = file.GetAllValues(s);
-		std::map<std::string, std::string>::iterator it;
-		if ((it = setup.find("team")) != setup.end())
-			data.team = atoi(it->second.c_str());
-		if ((it = setup.find("rank")) != setup.end())
-			data.rank = atoi(it->second.c_str());
-		if ((it = setup.find("name")) != setup.end())
-		{
-			if (nameList.find(it->second) != nameList.end())
-				throw content_error(str(
-						boost::format("GameSetup: Player %i has name %s which is already taken")
-						%a %it->second.c_str() ));
-			data.name = it->second;
-			nameList.insert(data.name);
-		}
-		else
-		{
+		for (std::map<std::string, std::string>::const_iterator it = setup.begin(); it != setup.end(); ++it)
+			data.SetValue(it->first, it->second);
+
+		// do checks for sanity
+		if (data.name.empty())
 			throw content_error(str( boost::format("GameSetup: No name given for Player %i") %a ));
-		}
-		if ((it = setup.find("countryCode")) != setup.end())
-			data.countryCode = it->second;
-		if ((it = setup.find("spectator")) != setup.end())
-			data.spectator = static_cast<bool>(atoi(it->second.c_str()));
-		if ((it = setup.find("isfromdemo")) != setup.end())
-			data.isFromDemo = static_cast<bool>(atoi(it->second.c_str()));
+		if (nameList.find(data.name) != nameList.end())
+			throw content_error(str(boost::format("GameSetup: Player %i has name %s which is already taken")	%a %data.name.c_str() ));
+		nameList.insert(data.name);
 
 		if (data.isFromDemo)
 			numDemoPlayers++;
