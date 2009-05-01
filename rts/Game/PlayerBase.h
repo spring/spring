@@ -10,6 +10,7 @@
 class PlayerBase
 {
 public:
+	typedef std::map<std::string, std::string> customOpts;
 	/**
 	@brief Constructor assigning standard values
 	*/
@@ -22,9 +23,13 @@ public:
 	bool isFromDemo;
 	
 	void SetValue(const std::string& key, const std::string& value);
+	const customOpts& GetAllValues() const
+	{
+		return customValues;
+	};
 	
 private:
-	std::map<std::string, std::string> customValues;
+	customOpts customValues;
 };
 
 struct PlayerStatistics

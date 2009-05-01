@@ -9,9 +9,14 @@
 class TeamBase
 {
 public:
+	typedef std::map<std::string, std::string> customOpts;
 	TeamBase();
 
 	void SetValue(const std::string& key, const std::string& value);
+	const customOpts& GetAllValues() const
+	{
+		return customValues;
+	};
 
 	int leader;
 	unsigned char color[4];
@@ -22,7 +27,7 @@ public:
 	int teamAllyteam;
 
 private:
-	std::map<std::string, std::string> customValues;
+	customOpts customValues;
 };
 
 #endif
