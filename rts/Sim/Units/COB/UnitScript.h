@@ -53,6 +53,8 @@ protected:
 	void MapScriptToModelPieces(LocalModel* lmodel);
 	void UnblockAll(struct AnimInfo * anim);
 
+	// these _must_ be implemented by any type of UnitScript
+	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2) = 0;
 	virtual void ShowScriptError(const std::string& msg) = 0;
 	virtual void ShowScriptWarning(const std::string& msg) = 0;
 
@@ -108,22 +110,28 @@ public:
 public:
 	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex);
 	virtual ~CUnitScript();
+
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
+
+	// call overloads, they all call RealCall
 	int Call(const std::string &fname);
 	int Call(const std::string &fname, int p1);
 	int Call(const std::string &fname, std::vector<int> &args);
 	int Call(const std::string &fname, CBCobThreadFinish cb, void *p1, void *p2);
 	int Call(const std::string &fname, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	// these take a COBFN_* constant as argument, which is then translated to the actual function number
 	int Call(int id);
 	int Call(int id, std::vector<int> &args);
 	int Call(int id, int p1);
 	int Call(int id, CBCobThreadFinish cb, void *p1, void *p2);
 	int Call(int id, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	// these take the raw function number
 	int RawCall(int fn, std::vector<int> &args);
 	int RawCall(int fn, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
-	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2) = 0;
+
 	int Tick(int deltaTime);
+
 	int MoveToward(float &cur, float dest, float speed);
 	int TurnToward(float &cur, float dest, float speed);
 	int DoSpin(float &cur, float dest, float &speed, float accel, int divisor);
@@ -133,22 +141,23 @@ public:
 	void Move(int piece, int axis, int speed, int destination, bool interpolated = false);
 	void MoveNow(int piece, int axis, int destination);
 	void TurnNow(int piece, int axis, int destination);
+
 	void SetVisibility(int piece, bool visible);
 	void EmitSfx(int type, int piece);
 	void AttachUnit(int piece, int unit);
 	void DropUnit(int unit);
+
 	struct AnimInfo *FindAnim(AnimType anim, int piece, int axis);
 	void RemoveAnim(AnimType anim, int piece, int axis);
 	void AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated = false);
 	int AddTurnListener(int piece, int axis, IAnimListener *listener);
 	int AddMoveListener(int piece, int axis, IAnimListener *listener);
-	void Signal(int signal);
-	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
-	void SetUnitVal(int val, int param);
+
 	void Explode(int piece, int flags);
 	void ShowFlare(int piece);
 	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime);
 	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime);
+
 	bool HasScriptFunction(int id);
 	bool FunctionExist(int id);
 	int GetFunctionId(const std::string& funcName) const;

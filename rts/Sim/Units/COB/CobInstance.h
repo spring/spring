@@ -44,9 +44,9 @@ protected:
 
 	int unitVars[UNIT_VAR_COUNT];
 
-	void UnblockAll(struct AnimInfo * anim);
-	void ShowScriptError(const std::string& msg);
-	void ShowScriptWarning(const std::string& msg);
+	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	virtual void ShowScriptError(const std::string& msg);
+	virtual void ShowScriptWarning(const std::string& msg);
 
 public:
 	bool busy;
@@ -64,10 +64,9 @@ public:
 
 public:
 	CCobInstance(CCobFile &script, CUnit *unit);
-	~CCobInstance(void);
-	inline       CUnit* GetUnit()       { return unit; }
-	inline const CUnit* GetUnit() const { return unit; }
-	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	~CCobInstance();
+
+	// used by CCobThread
 	void Signal(int signal);
 	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
 	void SetUnitVal(int val, int param);
