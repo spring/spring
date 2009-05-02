@@ -136,6 +136,7 @@ private:
 
 	std::vector<TrackToAdd> tracksToBeAdded;
 	std::vector<TrackToClean> tracksToBeCleaned;
+	std::vector<UnitTrackStruct *> tracksToBeDeleted;
 
 	std::vector<CUnit *> moveUnits;
 
