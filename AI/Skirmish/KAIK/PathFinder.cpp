@@ -168,7 +168,7 @@ void CPathFinder::CreateDefenseMatrix() {
 		}
 	}
 
-	for (int m = 0; m < 	NumOfMoveTypes;m++) {
+	for (int m = 0; m < NumOfMoveTypes;m++) {
 		int numberofenemyplayers = ai->cheat->GetEnemyUnits(enemycomms);
 
 		for (int i = 0; i < numberofenemyplayers; i++) {

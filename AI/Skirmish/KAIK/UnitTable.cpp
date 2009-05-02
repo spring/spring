@@ -549,7 +549,7 @@ void CUnitTable::UpdateChokePointArray() {
 				((unitTypes[i].def->metalCost * METAL2ENERGY) +
 				unitTypes[i].def->energyCost) * (enemiesOfType[i]);
 			// non-zero speed implies non-NULL movedata
-			EnemyCostsByMoveType[(unitTypes[i].def)->movedata->moveType] += currentcosts;
+			EnemyCostsByMoveType[(unitTypes[i].def)->movedata->pathType] += currentcosts;
 			totalCost += currentcosts;
 		}
 	}
