@@ -49,7 +49,6 @@ protected:
 	virtual void ShowScriptWarning(const std::string& msg);
 
 public:
-	bool busy;
 	std::vector<int> staticVars;
 	std::list<CCobThread *> threads;
 	bool smoothAnim;
