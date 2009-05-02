@@ -45,6 +45,7 @@ void CWordCompletion::Reset()
 	words["/info "] = sl;
 	words["/luaui "] = sl;
 	words["/maxparticles "] = sl;
+	words["/maxnanoparticles "] = sl;
 	words["/minimap "] = sl;
 	words["/say "] = sl;
 	words["/shadows "] = sl;
