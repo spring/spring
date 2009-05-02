@@ -9,6 +9,7 @@
 struct UnitDef;
 struct AIClasses;
 struct UnitType;
+struct MoveData;
 
 struct SideData {
 	CR_DECLARE_STRUCT(SideData);
@@ -132,6 +133,8 @@ class CUnitTable {
 		std::vector<std::string> sideNames;		// side number (0) to side string ("Arm")
 		std::map<std::string, int> modSideMap;	// side string ("Arm") to side number (0)
 		std::vector<int> teamSides;				// team numbers to side numbers
+
+		std::map<int, MoveData*> moveDefs;
 
 		std::vector<const UnitDef*> unitDefs;
 		std::vector<UnitType> unitTypes;
