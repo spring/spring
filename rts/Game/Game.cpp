@@ -109,8 +109,8 @@
 #include "Sim/Path/PathManager.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Units/COB/CobEngine.h"
 #include "Sim/Units/COB/CobFile.h"
+#include "Sim/Units/COB/UnitScriptEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -3164,6 +3164,7 @@ void CGame::SimFrame() {
 	ph->Update();
 	featureHandler->Update();
 	GCobEngine.Tick(33);
+	GUnitScriptEngine.Tick(33);
 	wind.Update();
 	loshandler->Update();
 
