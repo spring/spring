@@ -33,7 +33,8 @@ struct CollisionVolume
 {
 	CR_DECLARE_STRUCT(CollisionVolume);
 
-	CollisionVolume(const CollisionVolume* src = NULL, float defRadius = 0.0f);
+	CollisionVolume();
+	CollisionVolume(const CollisionVolume* v, float defRadius = 0.0f);
 	CollisionVolume(const std::string&, const float3&, const float3&, int);
 
 	static std::pair<int, int> GetVolumeTypeForString(const std::string&);
