@@ -151,6 +151,8 @@ public:
 	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex);
 	virtual ~CUnitScript();
 
+	bool IsBusy() const { return busy; }
+
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 

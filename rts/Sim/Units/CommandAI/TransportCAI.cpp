@@ -150,7 +150,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 			}
 		}
 		if(inCommand){
-			if(!owner->script->busy)
+			if(!owner->script->IsBusy())
 				FinishCommand();
 			return;
 		}
@@ -621,7 +621,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 	//default unload
 	CTransportUnit* transport = (CTransportUnit*)owner;
 	if (inCommand) {
-			if (!owner->script->busy) {
+			if (!owner->script->IsBusy()) {
 		//			if(scriptReady)
 				FinishCommand();
 			}
@@ -710,7 +710,7 @@ void CTransportCAI::UnloadDrop(Command& c) {
 
 	//fly over and drop unit
 	if(inCommand){
-		if(!owner->script->busy)
+		if(!owner->script->IsBusy())
 			//if(scriptReady)
 			FinishCommand();
 	} else {
@@ -764,7 +764,7 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 	//land, then release all units at once
 	CTransportUnit* transport = (CTransportUnit*)owner;
 	if (inCommand) {
-			if (!owner->script->busy) {
+			if (!owner->script->IsBusy()) {
 			  //if(scriptReady)
 				FinishCommand();
 			}
