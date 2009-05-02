@@ -108,6 +108,8 @@ public:
 	};
 
 public:
+	bool busy;
+
 	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex);
 	virtual ~CUnitScript();
 
