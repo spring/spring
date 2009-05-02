@@ -350,7 +350,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	}
 
 	modelParser->CreateLocalModel(unit);
-	unit->cob = new CCobInstance(GCobFileHandler.GetCobFile(ud->scriptPath), unit);
+	unit->script = new CCobInstance(GCobFileHandler.GetCobFile(ud->scriptPath), unit);
 
 	unit->weapons.reserve(ud->weapons.size());
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
@@ -375,8 +375,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 	}
 
 	// Call initializing script functions
-	unit->cob->Call(COBFN_Create);
-	unit->cob->Call("SetMaxReloadTime", relMax);
+	unit->script->Call(COBFN_Create);
+	unit->script->Call("SetMaxReloadTime", relMax);
 
 	unit->heading = GetHeadingFromFacing(facing);
 	unit->frontdir = GetVectorFromHeading(unit->heading);

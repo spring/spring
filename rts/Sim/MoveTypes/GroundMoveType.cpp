@@ -236,7 +236,7 @@ void CGroundMoveType::Update()
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
 	if (owner->stunned) {
-		owner->cob->Call(COBFN_StopMoving);
+		owner->script->Call(COBFN_StopMoving);
 		owner->speed = ZeroVector;
 	} else {
 #ifdef DIRECT_CONTROL_ALLOWED
@@ -248,12 +248,12 @@ void CGroundMoveType::Update()
 				wantedSpeed = maxSpeed * 2;
 				SetDeltaSpeed();
 				owner->isMoving = true;
-				owner->cob->Call(COBFN_StartMoving);
+				owner->script->Call(COBFN_StartMoving);
 			} else {
 				wantedSpeed = 0;
 				SetDeltaSpeed();
 				owner->isMoving = false;
-				owner->cob->Call(COBFN_StopMoving);
+				owner->script->Call(COBFN_StopMoving);
 			}
 			short deltaHeading = 0;
 			if (owner->directControl->left) {
@@ -831,7 +831,7 @@ void CGroundMoveType::UpdateControlledDrop(void)
 
 	if(owner->falling){
 		//set us upright
-		owner->cob->Call("Falling"); //start/continue parachute animation
+		owner->script->Call("Falling"); //start/continue parachute animation
 
 		speed.y += mapInfo->map.gravity*owner->fallSpeed;
 
@@ -858,7 +858,7 @@ void CGroundMoveType::UpdateControlledDrop(void)
 		if(wh > midPos.y-owner->relMidPos.y){
 			owner->falling = false;
 			midPos.y = wh + owner->relMidPos.y - speed.y*0.8;
-			owner->cob->Call("Landed"); //stop parachute animation
+			owner->script->Call("Landed"); //stop parachute animation
 		}
 	}
 }
@@ -1325,7 +1325,7 @@ void CGroundMoveType::StartEngine() {
 			pathFailures = 0;
 			etaFailures = 0;
 			owner->isMoving = true;
-			owner->cob->Call(COBFN_StartMoving);
+			owner->script->Call(COBFN_StartMoving);
 
 			if (DEBUG_CONTROLLER) {
 				LogObject() << "Engine started" << " " << int(owner->id) << "\n";
@@ -1354,7 +1354,7 @@ void CGroundMoveType::StopEngine() {
 		}
 
 		// Stop animation.
-		owner->cob->Call(COBFN_StopMoving);
+		owner->script->Call(COBFN_StopMoving);
 
 		if (DEBUG_CONTROLLER) {
 			LogObject() << "Engine stopped. " << int(owner->id) << "\n";
@@ -1983,7 +1983,7 @@ void CGroundMoveType::SetMainHeading(){
 
 			if (progressState == Active && owner->heading == heading) {
 				// stop turning
-				owner->cob->Call(COBFN_StopMoving);
+				owner->script->Call(COBFN_StopMoving);
 				progressState = Done;
 			} else if (progressState == Active) {
 				ChangeHeading(heading);
@@ -1996,7 +1996,7 @@ void CGroundMoveType::SetMainHeading(){
 			  && !owner->weapons.front()->TryTarget(mainHeadingPos, true, 0)) {
 				// start moving
 				progressState = Active;
-				owner->cob->Call(COBFN_StartMoving);
+				owner->script->Call(COBFN_StartMoving);
 				ChangeHeading(heading);
 #ifdef TRACE_SYNC
 				tracefile << "Start moving; Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";

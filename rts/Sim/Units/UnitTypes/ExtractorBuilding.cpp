@@ -59,7 +59,7 @@ CExtractorBuilding::~CExtractorBuilding()
 /* CReg PostLoad */
 void CExtractorBuilding::PostLoad()
 {
-	cob->Call(COBFN_SetSpeed, int(metalExtract * 5 * 100.0f));
+	script->Call(COBFN_SetSpeed, int(metalExtract * 5 * 100.0f));
 }
 
 /* resets the metalMap and notifies the neighbours */
@@ -180,9 +180,9 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	}
 
 	// set the COB animation speed
-	cob->Call(COBFN_SetSpeed, (int)(metalExtract * 5 * 100.0f));
+	script->Call(COBFN_SetSpeed, (int)(metalExtract * 5 * 100.0f));
 	if (activated) {
-		cob->Call("Go");
+		script->Call("Go");
 	}
 }
 
@@ -221,9 +221,9 @@ void CExtractorBuilding::ReCalculateMetalExtraction()
 	}
 
 	// set the new rotation-speed
-	cob->Call(COBFN_SetSpeed, int(metalExtract * 5 * 100.0f));
+	script->Call(COBFN_SetSpeed, int(metalExtract * 5 * 100.0f));
 	if (activated) {
-		cob->Call("Go");
+		script->Call("Go");
 	}
 }
 

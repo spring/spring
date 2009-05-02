@@ -664,19 +664,29 @@ int CCobInstance::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			}
 			else if (p1 > 0) {
 				// get the unit var for another unit
-				const CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
-				return (u == NULL) ? 0 : u->cob->unitVars[varID];
+				if (p1 < uh->MaxUnits()) {
+					const CUnit* u = uh->units[p1];
+					if (u != NULL) {
+						const CCobInstance* cob = dynamic_cast<CCobInstance*>(u->script);
+						return cob ? cob->unitVars[varID] : 0;
+					}
+				}
 			}
 			else {
 				// set the unit var for another unit
 				p1 = -p1;
-				const CUnit *u = (p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
-				if (u != NULL) {
-					u->cob->unitVars[varID] = p2;
-					return 1;
+				if (p1 < uh->MaxUnits()) {
+					CUnit* u = uh->units[p1];
+					if (u != NULL) {
+						CCobInstance* cob = dynamic_cast<CCobInstance*>(u->script);
+						if (cob != NULL) {
+							cob->unitVars[varID] = p2;
+							return 1;
+						}
+					}
 				}
-				return 0;
 			}
+			return 0;
 		}
 		else {
 			logOutput.Print("CobError: Unknown get constant %d  (params = %d %d %d %d)",

@@ -3952,8 +3952,8 @@ void CGame::UpdateUI(bool cam)
 
 		std::vector<int> args;
 		args.push_back(0);
-		owner->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-		float3 relPos = owner->cob->GetPiecePos(args[0]);
+		owner->script->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
+		float3 relPos = owner->script->GetPiecePos(args[0]);
 		float3 pos = owner->pos + owner->frontdir * relPos.z
 			+ owner->updir    * relPos.y
 			+ owner->rightdir * relPos.x;
@@ -4575,11 +4575,11 @@ void CGame::ReloadCOB(const string& msg, int player)
 	for (size_t i = 0; i < uh->MaxUnits(); i++) {
 		CUnit* unit = uh->units[i];
 		if (unit != NULL) {
-			if (unit->cob->GetScriptAddr() == oldScript) {
+			if (unit->script->GetScriptAddr() == oldScript) {
 				count++;
-				delete unit->cob;
-				unit->cob = new CCobInstance(newScript, unit);
-				unit->cob->Call("Create");
+				delete unit->script;
+				unit->script = new CCobInstance(newScript, unit);
+				unit->script->Call("Create");
 			}
 		}
 	}
