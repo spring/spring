@@ -142,7 +142,7 @@ struct UnitDef
 				   //!< some of their speed. 0 to disable
 	float turnInPlaceSpeedLimit; //!< units below this speed will turn in place regardless of their
 				   //!< turnInPlace setting
-	int moveType;
+
 	bool upright;
 	bool collide;
 

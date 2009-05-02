@@ -1731,9 +1731,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getTurnInPlaceDistance(int teamId, int 
 EXPORT(float) skirmishAiCallback_UnitDef_getTurnInPlaceSpeedLimit(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->turnInPlaceSpeedLimit;
 }
-EXPORT(int) skirmishAiCallback_UnitDef_getMoveType(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->moveType;
-}
 EXPORT(bool) skirmishAiCallback_UnitDef_isUpright(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->upright;
 }
@@ -3277,7 +3274,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_UnitDef_isTurnInPlace = &skirmishAiCallback_UnitDef_isTurnInPlace;
 	callback->Clb_UnitDef_getTurnInPlaceDistance = &skirmishAiCallback_UnitDef_getTurnInPlaceDistance;
 	callback->Clb_UnitDef_getTurnInPlaceSpeedLimit = &skirmishAiCallback_UnitDef_getTurnInPlaceSpeedLimit;
-	callback->Clb_UnitDef_getMoveType = &skirmishAiCallback_UnitDef_getMoveType;
 	callback->Clb_UnitDef_isUpright = &skirmishAiCallback_UnitDef_isUpright;
 	callback->Clb_UnitDef_isCollide = &skirmishAiCallback_UnitDef_isCollide;
 	callback->Clb_UnitDef_getControlRadius = &skirmishAiCallback_UnitDef_getControlRadius;

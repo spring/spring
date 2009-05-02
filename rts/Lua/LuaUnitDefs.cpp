@@ -709,7 +709,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canSelfD", ud.canSelfD);
 	ADD_INT("selfDCountdown", ud.selfDCountdown);
 
-	ADD_INT("moveType",   ud.moveType);
 	ADD_FLOAT("speed",    ud.speed);
 	ADD_FLOAT("turnRate", ud.turnRate);
 	ADD_BOOL("turnInPlace", ud.turnInPlace);

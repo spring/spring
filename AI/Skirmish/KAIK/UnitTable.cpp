@@ -2,6 +2,7 @@
 #include "System/Util.h"
 
 #include "IncCREG.h"
+#include "IncEngine.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 
@@ -547,7 +548,7 @@ void CUnitTable::UpdateChokePointArray() {
 			float currentcosts =
 				((unitTypes[i].def->metalCost * METAL2ENERGY) +
 				unitTypes[i].def->energyCost) * (enemiesOfType[i]);
-			EnemyCostsByMoveType[unitTypes[i].def->moveType] += currentcosts;
+			EnemyCostsByMoveType[unitTypes[i].def->movedata->moveType] += currentcosts;
 			totalCost += currentcosts;
 		}
 	}
