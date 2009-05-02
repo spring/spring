@@ -3,6 +3,7 @@
 
 #include "UnitScript.h"
 
+#include "CobFile.h"
 #include "CobInstance.h"
 #include "UnitScriptEngine.h"
 
@@ -1308,7 +1309,17 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		}
 	}
  	case PLAY_SOUND: {
-		if ((p1 < 0) || (static_cast<size_t>(p1) >= script.sounds.size())) {
+ 		// FIXME: this can currently only work for CCobInstance, because Lua can not get sound IDs
+ 		// (however, for Lua scripts there is already LuaUnsyncedCtrl::PlaySoundFile)
+ 		CCobInstance* cob = dynamic_cast<CCobInstance*>(this);
+ 		if (cob == NULL) {
+ 			return 1;
+ 		}
+ 		const CCobFile* script = cob->GetScriptAddr();
+ 		if (script == NULL) {
+ 			return 1;
+ 		}
+		if ((p1 < 0) || (static_cast<size_t>(p1) >= script->sounds.size())) {
 			return 1;
 		}
 		switch (p3) {	//who hears the sound
@@ -1337,9 +1348,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				break;
 		}
 		if (p4 == 0) {
-			sound->PlaySample(script.sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
+			sound->PlaySample(script->sounds[p1], unit->pos, unit->speed, float(p2) / COBSCALE);
 		} else {
-			sound->PlaySample(script.sounds[p1], float(p2) / COBSCALE);
+			sound->PlaySample(script->sounds[p1], float(p2) / COBSCALE);
 		}
 		return 0;
 	}
