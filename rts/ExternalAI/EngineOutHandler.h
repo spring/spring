@@ -38,12 +38,12 @@ void handleAIException(const char* description);
 
 class CEngineOutHandler : public CObject {
 private:
+	CR_DECLARE(CEngineOutHandler);
+
 	CEngineOutHandler();
 	~CEngineOutHandler();
 
 public:
-	CR_DECLARE(CEngineOutHandler);
-
 	/**
 	 * This function initialized a singleton instance,
 	 * if not yet done by a call to GetInstance()

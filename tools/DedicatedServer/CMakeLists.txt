@@ -1,4 +1,4 @@
-ADD_DEFINITIONS(-DDEDICATED ${PIC_FLAG} -DNO_AVI)
+ADD_DEFINITIONS(-DDEDICATED ${PIC_FLAG} -DNO_AVI -DNOT_USING_CREG)
 remove_definitions(-DSTREFLOP_SSE)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
@@ -33,6 +33,7 @@ ADD_LIBRARY(springserver SHARED
 	../../rts/Game/ChatMessage
 	../../rts/Game/Console
 	../../rts/Game/Action
+	../../rts/Sim/Misc/TeamBase
 	../../rts/Lua/LuaIO
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils

@@ -26,7 +26,7 @@
 #endif
 
 #include <string>
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "AIInterfaceKey.h"
 
 /**

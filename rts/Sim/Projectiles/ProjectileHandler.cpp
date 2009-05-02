@@ -67,11 +67,14 @@ CProjectileHandler::CProjectileHandler()
 {
 	PrintLoadMsg("Creating projectile texture");
 
-	maxParticles = configHandler->Get("MaxParticles",4000);
+	maxParticles     = configHandler->Get("MaxParticles",      4000);
+	maxNanoParticles = configHandler->Get("MaxNanoParticles", 10000);
 
-	currentParticles = 0;
-	particleSaturation = 0;
-	numPerlinProjectiles = 0;
+	currentParticles       = 0;
+	currentNanoParticles   = 0;
+	particleSaturation     = 0.0f;
+	nanoParticleSaturation = 0.0f;
+	numPerlinProjectiles   = 0;
 
 	// preload some IDs
 	// (note that 0 is reserved for unsynced projectiles)
@@ -386,12 +389,6 @@ void CProjectileHandler::Serialize(creg::ISerializer *s)
 
 void CProjectileHandler::PostLoad()
 {
-
-}
-
-void CProjectileHandler::SetMaxParticles(int value)
-{
-	maxParticles = value;
 }
 
 
@@ -649,31 +646,39 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		glAlphaFunc(GL_GREATER,0.0f);
 		glEnable(GL_ALPHA_TEST);
 		glDepthMask(0);
-		//	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 		glDisable(GL_FOG);
 
-		currentParticles=0;
-		CProjectile::inArray=false;
-		CProjectile::va=GetVertexArray();
+		currentParticles = 0;
+		CProjectile::inArray = false;
+		CProjectile::va = GetVertexArray();
 		CProjectile::va->Initialize();
-		for(std::set<projdist,dstcmp>::iterator i=distlist.begin(); i!=distlist.end(); ++i) {
+
+		for (std::set<projdist, dstcmp>::iterator i = distlist.begin(); i != distlist.end(); ++i) {
 			(*i).proj->Draw();
 		}
-		if(CProjectile::inArray) {
-			CProjectile::DrawArray();
+		if (CProjectile::inArray) {
+			// this increments currentParticles by the draw index of
+			// the projectile's vertex array, divided by 24 because
+			// each element is 12 + 4 + 4 + 4 bytes in size (pos + 
+			// u + v + color) for each type of "projectile"
+			// note: nano-particles (CGfxProjectile instances) also
+			// contribute to the count, but have their own creation
+			// cutoff
+			currentParticles += CProjectile::DrawArray();
 		}
 	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
-	glColor4f(1,1,1,1.0f);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glDepthMask(1);
 
-	currentParticles=(int)(ps.size()*0.8f+currentParticles*0.2f);
-	currentParticles+=(int)(0.2f*drawnPieces+0.3f*numFlyingPieces);
-	particleSaturation=(float)currentParticles/(float)maxParticles;
-//	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
+	currentParticles = (int) (ps.size() * 0.8f + currentParticles * 0.2f);
+	currentParticles += (int) (0.2f * drawnPieces + 0.3f * numFlyingPieces);
+
+	particleSaturation     = currentParticles     / float(maxParticles);
+	nanoParticleSaturation = currentNanoParticles / float(maxNanoParticles);
 }
 
 void CProjectileHandler::DrawShadowPass(void)
@@ -714,8 +719,9 @@ void CProjectileHandler::DrawShadowPass(void)
 			(*i)->Draw();
 		}
 
-		if (CProjectile::inArray)
-			CProjectile::DrawArray();
+		if (CProjectile::inArray) {
+			currentParticles += CProjectile::DrawArray();
+		}
 	}
 
 	glShadeModel(GL_FLAT);

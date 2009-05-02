@@ -3,7 +3,7 @@
 
 #include <deque>
 
-#include "creg.h"
+#include "creg_cond.h"
 
 namespace creg
 {

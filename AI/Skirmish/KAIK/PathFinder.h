@@ -38,8 +38,8 @@ class CPathFinder: public Graph {
 		std::vector<bool*> MoveArrays;
 		int NumOfMoveTypes;
 
-		float* SlopeMap;
-		float* HeightMap;
+		std::vector<float> SlopeMap;
+		std::vector<float> HeightMap;
 		int PathMapXSize;
 		int PathMapYSize;
 		int totalcells;

@@ -48,12 +48,12 @@ CR_REG_METADATA(CFactory, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CFactory::CFactory()
-:	buildSpeed(100),
-	curBuild(0),
+CFactory::CFactory():
+	buildSpeed(100),
 	quedBuild(false),
-	lastBuild(-1000),
-	opening(false)
+	curBuild(0),
+	opening(false),
+	lastBuild(-1000)
 {
 }
 
@@ -341,8 +341,7 @@ void CFactory::CreateNanoParticle(void)
 	if (gs->frameNum - lastDrawFrame > 20)
 		return;
 #endif
-	if (ph->currentParticles < ph->maxParticles && unitDef->showNanoSpray)
-	{
+	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
 		const float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
 		const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
 			+ (updir    * relWeaponFirePos.y)

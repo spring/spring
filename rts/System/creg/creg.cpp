@@ -21,7 +21,7 @@ Copyright 2005 Jelmer Cnossen
 #endif
 
 #include "Util.h"
-#include "creg.h"
+#include "creg_cond.h"
 
 using namespace creg;
 using namespace std;

@@ -22,7 +22,7 @@
 
 #include <map>
 
-#include "creg.h"
+#include "creg_cond.h"
 
 namespace creg
 {

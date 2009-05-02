@@ -2,6 +2,7 @@
 #define PLAYERBASE_H
 
 #include <string>
+#include <map>
 
 /**
 @brief Acts as a base class for the various player-representing classes
@@ -9,6 +10,7 @@
 class PlayerBase
 {
 public:
+	typedef std::map<std::string, std::string> customOpts;
 	/**
 	@brief Constructor assigning standard values
 	*/
@@ -19,6 +21,15 @@ public:
 	std::string countryCode;
 	bool spectator;
 	bool isFromDemo;
+	
+	void SetValue(const std::string& key, const std::string& value);
+	const customOpts& GetAllValues() const
+	{
+		return customValues;
+	};
+	
+private:
+	customOpts customValues;
 };
 
 struct PlayerStatistics

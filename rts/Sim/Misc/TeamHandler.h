@@ -5,7 +5,7 @@
 #ifndef TEAMHANDLER_H
 #define TEAMHANDLER_H
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "Team.h"
 
 class CGameSetup;

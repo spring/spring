@@ -2,6 +2,7 @@
 #include "System/Util.h"
 
 #include "IncCREG.h"
+#include "IncEngine.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 
@@ -547,7 +548,8 @@ void CUnitTable::UpdateChokePointArray() {
 			float currentcosts =
 				((unitTypes[i].def->metalCost * METAL2ENERGY) +
 				unitTypes[i].def->energyCost) * (enemiesOfType[i]);
-			EnemyCostsByMoveType[unitTypes[i].def->moveType] += currentcosts;
+			// non-zero speed implies non-NULL movedata
+			EnemyCostsByMoveType[(unitTypes[i].def)->movedata->pathType] += currentcosts;
 			totalCost += currentcosts;
 		}
 	}
@@ -874,6 +876,10 @@ void CUnitTable::Init() {
 		// partially with null UnitDef*'s (bad,
 		// nothing much to do if this happens)
 		assert(unitTypes[i].def != 0x0);
+
+		if ((unitTypes[i].def)->movedata != NULL) {
+			moveDefs[(unitTypes[i].def)->movedata->pathType] = (unitTypes[i].def)->movedata;
+		}
 
 		std::map<int, std::string>::const_iterator j;
 

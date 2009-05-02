@@ -5,6 +5,7 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <list>
+#include <set>
 #include <vector>
 
 #include <stack>
@@ -51,7 +52,8 @@ public:
 
 	void LoadSmoke(unsigned char tex[512][512][4], int xoffs, int yoffs, char* filename, char* alphafile);
 
-	void SetMaxParticles(int value);
+	void SetMaxParticles(int value) { maxParticles = value; }
+	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawShadowPass(void);
@@ -87,8 +89,11 @@ public:
 	unsigned int projectileShadowVP;
 
 	int maxParticles;						// different effects should start to cut down on unnececary(unsynced) particles when this number is reached
+	int maxNanoParticles;
 	int currentParticles;					// number of particles weighted by how complex they are
+	int currentNanoParticles;
 	float particleSaturation;				// currentParticles / maxParticles ratio
+	float nanoParticleSaturation;
 
 	int numPerlinProjectiles;
 

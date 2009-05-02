@@ -71,7 +71,7 @@ CR_REG_METADATA(FeatureDef, (
 		));
 
 
-CR_BIND_DERIVED(CFeatureHandler,CObject, );
+CR_BIND(CFeatureHandler, );
 
 CR_REG_METADATA(CFeatureHandler, (
 

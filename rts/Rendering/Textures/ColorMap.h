@@ -6,7 +6,7 @@
 #include <list>
 #include <map>
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 //Simple class to interpolate between 32bit RGBA colors
 //Do not delete an instance of this class created by any Load function, they are deleted automaticly
