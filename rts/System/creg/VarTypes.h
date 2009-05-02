@@ -8,7 +8,7 @@ Implementations of IType for specific types
 #ifndef CR_VARIABLE_TYPES_H
 #define CR_VARIABLE_TYPES_H
 
-#include "creg.h"
+#include "creg_cond.h"
 
 namespace creg
 {

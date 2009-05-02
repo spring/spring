@@ -7,7 +7,7 @@
 
 #include <assert.h>
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "Player.h"
 
 class CGameSetup;

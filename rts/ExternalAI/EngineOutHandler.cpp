@@ -32,10 +32,11 @@
 #include "TimeProfiler.h"
 
 
-CR_BIND_DERIVED(CEngineOutHandler,CObject,)
+CR_BIND_DERIVED(CEngineOutHandler,CObject, )
 
 CR_REG_METADATA(CEngineOutHandler, (
-				CR_MEMBER(skirmishAIs)
+				CR_MEMBER(skirmishAIs),
+				CR_MEMBER(hasSkirmishAIs)
 				));
 
 /////////////////////////////

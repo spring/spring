@@ -75,6 +75,7 @@ EXPORT(const char* ) GetLuaAIDesc(int aiIndex);
 EXPORT(int         ) GetMapOptionCount(const char* name);
 EXPORT(int         ) GetModOptionCount();
 EXPORT(const char* ) GetOptionKey(int optIndex);
+EXPORT(const char* ) GetOptionScope(int optIndex);
 EXPORT(const char* ) GetOptionName(int optIndex);
 EXPORT(const char* ) GetOptionSection(int optIndex);
 EXPORT(const char* ) GetOptionStyle(int optIndex);

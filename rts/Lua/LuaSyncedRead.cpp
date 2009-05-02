@@ -1031,7 +1031,14 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushstring(L,  team->side.c_str());
 	lua_pushnumber(L,  teamHandler->AllyTeam(team->teamNum));
 
-	return 6;
+	lua_newtable(L);
+	const TeamBase::customOpts& popts(team->GetAllValues());
+	for (TeamBase::customOpts::const_iterator it = popts.begin(); it != popts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 7;
 }
 
 
@@ -1249,7 +1256,14 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushstring(L, player->countryCode.c_str());
 	lua_pushnumber(L, player->rank);
 
-	return 9;
+	lua_newtable(L);
+	const PlayerBase::customOpts& popts(player->GetAllValues());
+	for (PlayerBase::customOpts::const_iterator it = popts.begin(); it != popts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 10;
 }
 
 

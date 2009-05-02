@@ -320,8 +320,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		ud.airLosRadius = ud.airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	}
 
-	ud.moveType = 0;
-
 	ud.canSubmerge = udTable.GetBool("canSubmerge", false);
 	ud.canfly      = udTable.GetBool("canFly",      false);
 	ud.canmove     = udTable.GetBool("canMove",     false);

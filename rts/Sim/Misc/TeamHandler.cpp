@@ -58,21 +58,15 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	for (size_t i = 0; i < activeTeams; ++i) {
 		// TODO: this loop body could use some more refactoring
 		CTeam* team = Team(i);
-		const CGameSetup::TeamData& teamStartingData = setup->teamStartingData[i];
+		*team = setup->teamStartingData[i];
 		team->teamNum = i;
-		team->metal = setup->startMetal;
-		team->metalIncome = setup->startMetal; // for the endgame statistics
+		team->metal = team->startMetal < 0 ? setup->startMetal : team->startMetal;
+		team->metalIncome = team->metal; // for the endgame statistics
 
-		team->energy = setup->startEnergy;
+		team->energy = team->startEnergy < 0 ? setup->startEnergy : team->startEnergy;
 		team->energyIncome = setup->startEnergy;
 
-		float3 start(teamStartingData.startPos.x, teamStartingData.startPos.y, teamStartingData.startPos.z);
-		team->StartposMessage(start, (setup->startPosType != CGameSetup::StartPos_ChooseInGame));
-		std::memcpy(team->color, teamStartingData.color, 4);
-		team->handicap = teamStartingData.handicap;
-		team->leader = teamStartingData.leader;
-		team->side = teamStartingData.side;
-		SetAllyTeam(i, teamStartingData.teamAllyteam);
+		SetAllyTeam(i, team->teamAllyteam);
 
 		const SkirmishAIData* skirmishAIData =
 				setup->GetSkirmishAIDataForTeam(i);

@@ -54,6 +54,7 @@ struct Option {
 	Option() : typeCode(opt_error) {}
 
 	std::string key;
+	std::string scope;
 	std::string name;
 	std::string desc;
 	std::string section;

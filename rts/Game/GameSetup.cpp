@@ -70,7 +70,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 		float3 pos(1000.0f, 100.0f, 1000.0f);
 		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
-		teamStartingData[a].startPos = SFloat3(pos.x, pos.y, pos.z);
+		teamStartingData[a].startPos = float3(pos.x, pos.y, pos.z);
 	}
 }
 
@@ -138,6 +138,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	}
 }
 
+
 /**
 @brief Load players and remove gaps in the player numbering.
 @pre numPlayers initialized
@@ -161,30 +162,15 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 		// expects lines of form team=x rather than team=TEAMx
 		// team field is relocated in RemapTeams
 		std::map<std::string, std::string> setup = file.GetAllValues(s);
-		std::map<std::string, std::string>::iterator it;
-		if ((it = setup.find("team")) != setup.end())
-			data.team = atoi(it->second.c_str());
-		if ((it = setup.find("rank")) != setup.end())
-			data.rank = atoi(it->second.c_str());
-		if ((it = setup.find("name")) != setup.end())
-		{
-			if (nameList.find(it->second) != nameList.end())
-				throw content_error(str(
-						boost::format("GameSetup: Player %i has name %s which is already taken")
-						%a %it->second.c_str() ));
-			data.name = it->second;
-			nameList.insert(data.name);
-		}
-		else
-		{
+		for (std::map<std::string, std::string>::const_iterator it = setup.begin(); it != setup.end(); ++it)
+			data.SetValue(it->first, it->second);
+
+		// do checks for sanity
+		if (data.name.empty())
 			throw content_error(str( boost::format("GameSetup: No name given for Player %i") %a ));
-		}
-		if ((it = setup.find("countryCode")) != setup.end())
-			data.countryCode = it->second;
-		if ((it = setup.find("spectator")) != setup.end())
-			data.spectator = static_cast<bool>(atoi(it->second.c_str()));
-		if ((it = setup.find("isfromdemo")) != setup.end())
-			data.isFromDemo = static_cast<bool>(atoi(it->second.c_str()));
+		if (nameList.find(data.name) != nameList.end())
+			throw content_error(str(boost::format("GameSetup: Player %i has name %s which is already taken")	%a %data.name.c_str() ));
+		nameList.insert(data.name);
 
 		if (data.isFromDemo)
 			numDemoPlayers++;
@@ -297,31 +283,25 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 	int i = 0;
 	for (int a = 0; a < MAX_TEAMS; ++a) {
 		char section[50];
-		sprintf(section, "GAME\\TEAM%i\\", a);
+		sprintf(section, "GAME\\TEAM%i", a);
 		string s(section);
 
-		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
+		if (!file.SectionExist(s.substr(0, s.length()))) {
 			continue;
 		}
 
-		// Get default color from palette (based on "color" tag)
-		int colorNum = atoi(file.SGetValueDef("-1", s + "color").c_str());
-		if (colorNum == -1) colorNum = a;
-		colorNum %= palette.NumTeamColors();
-		float3 defaultCol(palette.teamColor[colorNum][0] / 255.0f, palette.teamColor[colorNum][1] / 255.0f, palette.teamColor[colorNum][2] / 255.0f);
+		TeamBase data;
 
-		// Read RGBColor, this overrides color if both had been set.
-		float3 color = file.GetFloat3(defaultCol, s + "rgbcolor");
-		TeamData data;
-		for (int b = 0; b < 3; ++b) {
-			data.color[b] = int(color[b] * 255);
+		// Get default color from palette (based on "color" tag)
+		for (size_t num = 0; num < 3; ++num)
+		{
+			data.color[num] = palette.teamColor[a][num] / 255.0f;
 		}
 		data.color[3] = 255;
 
-		data.handicap = atof(file.SGetValueDef("0", s + "handicap").c_str()) / 100 + 1;
-		data.leader = atoi(file.SGetValueDef("0", s + "teamleader").c_str());
-		data.side = StringToLower(file.SGetValueDef("", s + "side").c_str());
-		data.teamAllyteam = atoi(file.SGetValueDef("0", s + "allyteam").c_str());
+		std::map<std::string, std::string> setup = file.GetAllValues(s);
+		for (std::map<std::string, std::string>::const_iterator it = setup.begin(); it != setup.end(); ++it)
+			data.SetValue(it->first, it->second);
 
 		teamStartingData.push_back(data);
 

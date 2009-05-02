@@ -5,7 +5,7 @@ Copyright 2005 Jelmer Cnossen
 Classes for serialization of registrated class instances
 */
 #include "StdAfx.h"
-#include "creg.h"
+#include "creg_cond.h"
 #include "Serializer.h"
 #include "Platform/byteorder.h"
 #include <fstream>

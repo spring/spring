@@ -69,32 +69,32 @@ CR_REG_METADATA(CBuilder, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CBuilder::CBuilder()
-:	range3D(true),
-  buildDistance(16),
-  buildSpeed(100),
-  repairSpeed(100),
-  reclaimSpeed(100),
-  resurrectSpeed(100),
-  captureSpeed(100),
-  terraformSpeed(100),
-  curBuild(0),
-  curReclaim(0),
-  terraforming(false),
-  myTerraformLeft(0),
-  terraformType(Terraform_Building),
-  tx1(0),
-  tx2(0),
-  tz1(0),
-  tz2(0),
-  terraformCenter(0,0,0),
-  terraformRadius(0),
-  nextBuildPos(0,0,0),
-  terraformHelp(0),
-  helpTerraform(0),
-  curResurrect(0),
-  lastResurrected(0),
-  curCapture(0)
+CBuilder::CBuilder():
+	range3D(true),
+	buildDistance(16),
+	buildSpeed(100),
+	repairSpeed(100),
+	reclaimSpeed(100),
+	resurrectSpeed(100),
+	captureSpeed(100),
+	terraformSpeed(100),
+	curResurrect(0),
+	lastResurrected(0),
+	curBuild(0),
+	curCapture(0),
+	curReclaim(0),
+	helpTerraform(0),
+	terraforming(false),
+	terraformHelp(0),
+	myTerraformLeft(0),
+	terraformType(Terraform_Building),
+	tx1(0),
+	tx2(0),
+	tz1(0),
+	tz2(0),
+	terraformCenter(0,0,0),
+	terraformRadius(0),
+	nextBuildPos(0,0,0)
 {
 }
 
@@ -711,7 +711,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 	if (gs->frameNum - lastDrawFrame > 20)
 		return;
 #endif
-	if (ph->currentParticles < ph->maxParticles && unitDef->showNanoSpray)
+	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray)
 	{
 		float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;

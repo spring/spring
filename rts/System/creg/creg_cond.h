@@ -11,7 +11,7 @@
 // '-DUSING_CREG'
 #if defined BUILDING_AI && !defined USING_CREG
 	#define NOT_USING_CREG
-#else // defined BUILDING_AI && !defined USING_CREG
+#elif !defined NOT_USING_CREG // defined BUILDING_AI && !defined USING_CREG
 	#if !defined USING_CREG
 		#define USING_CREG
 	#endif // !defined USING_CREG
@@ -19,7 +19,8 @@
 #endif // defined BUILDING_AI && !defined USING_CREG
 
 #ifdef NOT_USING_CREG
-// define all creg preprocessor macros from creg.h to nothing
+#include "creg/ISerializer.h" // prevent some compiler errors
+// define all creg preprocessor macros from creg_cond.h to nothing
 #define CR_DECLARE(TCls)
 #define CR_DECLARE_STRUCT(TStr)
 #define CR_DECLARE_SUB(cl)

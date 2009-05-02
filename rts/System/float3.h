@@ -7,7 +7,6 @@
 #ifndef FLOAT3_H
 #define FLOAT3_H
 
-#include "SFloat3.h"
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg_cond.h"
 #include "ExternalAI/Interface/SAIFloat3.h"
@@ -20,7 +19,7 @@
  * Usually used to represent a vector in
  * space as x/y/z.
  */
-class float3 : public SFloat3
+class float3
 {
 public:
 	CR_DECLARE_STRUCT(float3);
@@ -33,7 +32,7 @@ public:
 	 *
 	 * With no parameters, x/y/z are just initialized to 0.
 	 */
-	inline float3() {};
+	inline float3() : x(0), y(0), z(0) {};
 
 	/**
 	 * @brief Constructor
@@ -43,7 +42,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given floats.
 	 */
-	inline float3(const float x,const float y,const float z) : SFloat3(x,y,z) {}
+	inline float3(const float x,const float y,const float z) : x(x),y(y),z(z) {};
 
 	/**
 	 * @brief Constructor
@@ -51,7 +50,7 @@ public:
 	 *
 	 * With parameters, initializes x/y/z to the given SAIFLoat3.
 	 */
-	inline float3(const SAIFloat3& sAIFloat3) : SFloat3(sAIFloat3.x, sAIFloat3.y, sAIFloat3.z) {}
+	inline float3(const SAIFloat3& sAIFloat3) : x(sAIFloat3.x), y(sAIFloat3.y), z(sAIFloat3.z) {};
 
 	/**
 	 * @brief operator =
@@ -522,6 +521,10 @@ public:
 	bool CheckInBounds(); //!< Check if this vector is in bounds and clamp x and z if not
 	
 	SAIFloat3 toSAIFloat3() const;
+
+	float x; ///< x component
+	float y; ///< y component
+	float z; ///< z component
 };
 
 /**

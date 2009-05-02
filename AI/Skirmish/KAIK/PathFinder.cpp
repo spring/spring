@@ -1,5 +1,6 @@
 #include <cassert>
 
+#include "IncEngine.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
 
@@ -11,17 +12,16 @@ CPathFinder::CPathFinder(AIClasses* aic) {
 
 	PathMapXSize   = int(ai->cb->GetMapWidth() / resmodifier);
 	PathMapYSize   = int(ai->cb->GetMapHeight() / resmodifier);
-	totalcells     = PathMapXSize*PathMapYSize;
+	totalcells     = PathMapXSize * PathMapYSize;
 	micropather    = new MicroPather(this, ai, totalcells);
-	HeightMap      = new float[totalcells];
-	SlopeMap       = new float[totalcells];
 	TestMoveArray  = new bool[totalcells];
 	NumOfMoveTypes = 0;
+
+	HeightMap.resize(totalcells, 0.0f);
+	SlopeMap.resize(totalcells, 0.0f);
 }
 
 CPathFinder::~CPathFinder() {
-	delete[] SlopeMap;
-	delete[] HeightMap;
 	delete[] TestMoveArray;
 
 	for (unsigned int i = 0; i != MoveArrays.size(); i++) {
@@ -80,46 +80,27 @@ void CPathFinder::Init() {
 	std::vector<int> moveslopes;
 	std::vector<int> maxwaterdepths;
 	std::vector<int> minwaterdepths;
-	std::stringstream moveTypeSStr;
-	std::string moveTypeStr;
-	std::string sectionstring = "CLASS";
-	std::string errorstring = "-1";
-	std::string Valuestring = "0";
 
-	// FIXME: can be a .lua script now
-	if (!ai->parser->LoadVirtualFile("gamedata\\MOVEINFO.tdf")) {
-		L(ai, "[CPathFinder::Init()]");
-		const char* errorMsg = "\tmod move-data not in TDF format, aborting AI initialization";
-		L(ai, errorMsg); // write to KAIK log
-		ai->cb->SendTextMsg(errorMsg, 0); // write to infolog.txt
-		assert(false);
-	}
+	NumOfMoveTypes = ai->ut->moveDefs.size();
 
-	while (Valuestring != errorstring) {
-		moveTypeStr.clear();
-		moveTypeSStr.str("");
-		moveTypeSStr << NumOfMoveTypes;
-		moveTypeSStr >> moveTypeStr;
+	std::map<int, MoveData*>::const_iterator it;
+	for (it = ai->ut->moveDefs.begin(); it != ai->ut->moveDefs.end(); it++) {
+		const MoveData* md = it->second;
 
-		ai->parser->GetDef(Valuestring, errorstring, std::string(sectionstring + moveTypeStr + "\\Name"));
-
-		if (Valuestring != errorstring) {
-			ai->parser->GetDef(Valuestring, std::string("10000"), std::string(sectionstring + moveTypeStr + "\\MaxWaterDepth"));
-			maxwaterdepths.push_back(atoi(Valuestring.c_str()));
-
-			ai->parser->GetDef(Valuestring, std::string("-10000"), std::string(sectionstring + moveTypeStr + "\\MinWaterDepth"));
-			minwaterdepths.push_back(atoi(Valuestring.c_str()));
-
-			ai->parser->GetDef(Valuestring, std::string("10000"), std::string(sectionstring + moveTypeStr + "\\MaxSlope"));
-			moveslopes.push_back(atoi(Valuestring.c_str()));
-
-			NumOfMoveTypes++;
+		if (md->moveType == MoveData::Ship_Move) {
+			minwaterdepths.push_back(md->depth);
+			maxwaterdepths.push_back(10000);
+		} else {
+			minwaterdepths.push_back(-10000);
+			maxwaterdepths.push_back(md->depth);
 		}
+
+		moveslopes.push_back(md->maxSlope);
 	}
 
 	// add the last, tester movetype
-	maxwaterdepths.push_back(20);
 	minwaterdepths.push_back(-10000);
+	maxwaterdepths.push_back(20);
 	moveslopes.push_back(25);
 	NumOfMoveTypes++;
 	assert(moveslopes.size() == maxwaterdepths.size());
@@ -187,7 +168,7 @@ void CPathFinder::CreateDefenseMatrix() {
 		}
 	}
 
-	for (int m = 0; m < 	NumOfMoveTypes;m++) {
+	for (int m = 0; m < NumOfMoveTypes;m++) {
 		int numberofenemyplayers = ai->cheat->GetEnemyUnits(enemycomms);
 
 		for (int i = 0; i < numberofenemyplayers; i++) {
