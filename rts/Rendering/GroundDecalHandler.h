@@ -27,6 +27,7 @@ struct UnitTrackStruct {
 	int lifeTime;
 	int trackAlpha;
 	float alphaFalloff;
+	TrackPart *lastAdded;
 	std::list<TrackPart *> parts;
 };
 
