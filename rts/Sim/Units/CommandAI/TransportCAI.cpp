@@ -150,7 +150,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 			}
 		}
 		if(inCommand){
-			if(!owner->cob->busy)
+			if(!owner->script->busy)
 				FinishCommand();
 			return;
 		}
@@ -179,11 +179,11 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 						am->dontLand=true;
 						std::vector<int> args;
 						args.push_back((int)(unit->model->height*65536));
-						owner->cob->Call("BeginTransport",args);
+						owner->script->Call("BeginTransport",args);
 						std::vector<int> args2;
 						args2.push_back(0);
 						args2.push_back((int)(unit->model->height*65536));
-						owner->cob->Call("QueryTransport",args2);
+						owner->script->Call("QueryTransport",args2);
 						((CTransportUnit*)owner)->AttachUnit(unit,args2[0]);
 						am->SetWantedAltitude(0);
 						FinishCommand();
@@ -195,7 +195,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 					StopMove();
 					std::vector<int> args;
 					args.push_back(unit->id);
-					owner->cob->Call("TransportPickup",args,ScriptCallback,this,0);
+					owner->script->Call("TransportPickup",args,ScriptCallback,this,0);
 				}
 			}
 		} else {
@@ -621,7 +621,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 	//default unload
 	CTransportUnit* transport = (CTransportUnit*)owner;
 	if (inCommand) {
-			if (!owner->cob->busy) {
+			if (!owner->script->busy) {
 		//			if(scriptReady)
 				FinishCommand();
 			}
@@ -685,7 +685,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 						transport->DetachUnit(unit);
 						if (transport->transported.empty()) {
 							am->dontLand = false;
-							owner->cob->Call("EndTransport");
+							owner->script->Call("EndTransport");
 						}
 					}
 					const float3 fix = owner->pos + owner->frontdir * 20;
@@ -699,7 +699,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 				std::vector<int> args;
 				args.push_back(transList.front().unit->id);
 				args.push_back(PACKXZ(pos.x, pos.z));
-				owner->cob->Call("TransportDrop", args, ScriptCallback, this, 0);
+				owner->script->Call("TransportDrop", args, ScriptCallback, this, 0);
 			}
 		}
 	}
@@ -710,7 +710,7 @@ void CTransportCAI::UnloadDrop(Command& c) {
 
 	//fly over and drop unit
 	if(inCommand){
-		if(!owner->cob->busy)
+		if(!owner->script->busy)
 			//if(scriptReady)
 			FinishCommand();
 	} else {
@@ -736,7 +736,7 @@ void CTransportCAI::UnloadDrop(Command& c) {
 			//if near target or have past it accidentally- drop unit
 			if(owner->pos.SqDistance2D(pos) < 1600 || (((pos - owner->pos).Normalize()).SqDistance(owner->frontdir.Normalize()) > 0.25 && owner->pos.SqDistance2D(pos)< (205*205))) {
 				am->dontLand=true;
-				owner->cob->Call("EndTransport"); //test
+				owner->script->Call("EndTransport"); //test
 				((CTransportUnit*)owner)->DetachUnitFromAir(unit,pos);
 				dropSpots.pop_back();
 
@@ -753,7 +753,7 @@ void CTransportCAI::UnloadDrop(Command& c) {
 			std::vector<int> args;
 			args.push_back(((CTransportUnit*)owner)->transported.front().unit->id);
 			args.push_back(PACKXZ(pos.x, pos.z));
-			owner->cob->Call("TransportDrop",args,ScriptCallback,this,0);
+			owner->script->Call("TransportDrop",args,ScriptCallback,this,0);
 		}
 	}
 }
@@ -764,7 +764,7 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 	//land, then release all units at once
 	CTransportUnit* transport = (CTransportUnit*)owner;
 	if (inCommand) {
-			if (!owner->cob->busy) {
+			if (!owner->script->busy) {
 			  //if(scriptReady)
 				FinishCommand();
 			}
@@ -820,7 +820,7 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 
 				//when on our way down start animations for unloading gear
 				if (isFirstIteration) {
-					owner->cob->Call("StartUnload");
+					owner->script->Call("StartUnload");
 				}
 				isFirstIteration = false;
 
@@ -831,13 +831,13 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 					std::vector<int> args;
 					args.push_back(transList.front().unit->id);
 					args.push_back(PACKXZ(pos.x, pos.z));
-					owner->cob->Call("TransportDrop", args, ScriptCallback, this, 0); //call this so that other animations such as opening doors may be started
+					owner->script->Call("TransportDrop", args, ScriptCallback, this, 0); //call this so that other animations such as opening doors may be started
 					transport->DetachUnitFromAir(unit,pos);
 
 					FinishCommand();
 					if (transport->transported.empty()) {
 						am->dontLand = false;
-						owner->cob->Call("EndTransport");
+						owner->script->Call("EndTransport");
 						am->UpdateLanded();
 					}
 				}
@@ -850,12 +850,12 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 				std::vector<int> args;
 				args.push_back(transList.front().unit->id);
 				args.push_back(PACKXZ(pos.x, pos.z));
-				owner->cob->Call("TransportDrop", args, ScriptCallback, this, 0);
+				owner->script->Call("TransportDrop", args, ScriptCallback, this, 0);
 				transport->DetachUnitFromAir(unit,pos);
 				isFirstIteration = false;
 				FinishCommand();
 				if (transport->transported.empty())
-					owner->cob->Call("EndTransport");
+					owner->script->Call("EndTransport");
 			}
 		}
 	}

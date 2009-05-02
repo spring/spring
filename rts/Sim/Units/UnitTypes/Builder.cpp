@@ -520,7 +520,7 @@ void CBuilder::StopBuild(bool callScript)
 	curCapture=0;
 	terraforming=false;
 	if(callScript)
-		cob->Call("StopBuilding");
+		script->Call("StopBuilding");
 	ReleaseTempHoldFire();
 //	logOutput.Print("stop build");
 }
@@ -677,7 +677,7 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 	std::vector<int> args;
 	args.push_back(short(h-heading));
 	args.push_back(short(p-pitch));
-	cob->Call("StartBuilding", args);
+	script->Call("StartBuilding", args);
 
 	int soundIdx = unitDef->sounds.build.getRandomIdx();
 	if (soundIdx >= 0) {
@@ -706,13 +706,13 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 {
 	std::vector<int> args;
 	args.push_back(0);
-	cob->Call("QueryNanoPiece", args);
+	script->Call("QueryNanoPiece", args);
 
 	if (ph->currentParticles < ph->maxParticles) {
 		if (!unitDef->showNanoSpray)
 			return;
 
-		float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
+		float3 relWeaponFirePos = script->GetPiecePos(args[0]);
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 
 		float3 dif = goal - weaponPos;

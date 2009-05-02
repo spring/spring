@@ -13,7 +13,6 @@
 #include "Matrix44f.h"
 #include "Vec2.h"
 
-class CCobInstance;
 class CCommandAI;
 class CGroup;
 class CLoadSaveInterface;
@@ -342,9 +341,8 @@ public:
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
-	S3DModel *model;
-	LocalModel *localmodel;
-	CCobInstance *cob;
+	S3DModel* model;
+	LocalModel* localmodel;
 	CUnitScript* script;
 
 	std::string tooltip;

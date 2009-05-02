@@ -4435,7 +4435,8 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CCobInstance* cob = unit->cob;
+	// TODO: the concept of "script pieces" is COB specific?
+	const CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
 	if (cob == NULL) {
 		return 0;
 	}
@@ -4471,10 +4472,12 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
+	// TODO: the concept of "script pieces" is COB specific?
+	const CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+	if (cob == NULL) {
 		return 0;
 	}
-	const vector<LocalModelPiece*>& pieces = unit->cob->pieces;
+	const vector<LocalModelPiece*>& pieces = cob->pieces;
 
 	lua_newtable(L);
 	for (size_t sp = 0; sp < pieces.size(); sp++) {
@@ -4496,14 +4499,15 @@ int LuaSyncedRead::GetCOBUnitVar(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
+	const CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+	if (cob == NULL) {
 		return 0;
 	}
 	const int varID = luaL_checkint(L, 2);
 	if ((varID < 0) || (varID >= CCobInstance::UNIT_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = unit->cob->GetUnitVars()[varID];
+	const int value = cob->GetUnitVars()[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));

@@ -67,8 +67,8 @@ void CBeamLaser::Update(void)
 
 			std::vector<int> args;
 			args.push_back(0);
-			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-			CMatrix44f weaponMat = owner->cob->GetPieceMatrix(args[0]);
+			owner->script->Call(COBFN_QueryPrimary+weaponNum,args);
+			CMatrix44f weaponMat = owner->script->GetPieceMatrix(args[0]);
 
 			float3 relWeaponPos = weaponMat.GetPos();
 			weaponPos=owner->pos+owner->frontdir*-relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*-relWeaponPos.x;

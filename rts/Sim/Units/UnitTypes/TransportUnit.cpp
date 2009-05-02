@@ -58,7 +58,7 @@ void CTransportUnit::Update()
 		for (ti = transported.begin(); ti != transported.end(); ++ti) {
 			float3 relPos;
 			if (ti->piece >= 0) {
-				relPos = this->cob->GetPiecePos(ti->piece);
+				relPos = script->GetPiecePos(ti->piece);
 			} else {
 				relPos = float3(0.0f, -1000.0f, 0.0f);
 			}

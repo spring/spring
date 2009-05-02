@@ -137,7 +137,6 @@ CUnit::CUnit ()
 	los(0),
 	userAttackPos(0,0,0),
 	crashing(false),
-	cob(NULL),
 	script(NULL),
 	flankingBonusMode(0),
 	flankingBonusDir(1.0f, 0.0f, 0.0f),
@@ -310,8 +309,7 @@ CUnit::~CUnit()
 		radarhandler->RemoveUnit(this);
 	}
 
-	delete cob;
-	//FIXME delete script;
+	delete script;
 	modelParser->DeleteLocalModel(this);
 }
 
@@ -985,24 +983,24 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	float3 hitDir = impulse;
 	hitDir.y = 0.0f;
 	hitDir = -hitDir.Normalize();
-	std::vector<int> cobargs;
+	std::vector<int> args;
 
-	cobargs.push_back((int)(500 * hitDir.z));
-	cobargs.push_back((int)(500 * hitDir.x));
+	args.push_back((int)(500 * hitDir.z));
+	args.push_back((int)(500 * hitDir.x));
 
-	if (cob->FunctionExist(COBFN_HitByWeaponId)) {
+	if (script->FunctionExist(COBFN_HitByWeaponId)) {
 		if (weaponId != -1) {
-			cobargs.push_back(weaponDefHandler->weaponDefs[weaponId].tdfId);
+			args.push_back(weaponDefHandler->weaponDefs[weaponId].tdfId);
 		} else {
-			cobargs.push_back(-1);
+			args.push_back(-1);
 		}
-		cobargs.push_back((int)(100 * damage));
+		args.push_back((int)(100 * damage));
 		weaponHitMod = 1.0f;
-		cob->Call(COBFN_HitByWeaponId, cobargs, hitByWeaponIdCallback, this, NULL);
+		script->Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, this, NULL);
 		damage = damage * weaponHitMod; // weaponHitMod gets set in callback function
 	}
 	else {
-		cob->Call(COBFN_HitByWeapon, cobargs);
+		script->Call(COBFN_HitByWeapon, args);
 	}
 
 	float experienceMod = expMultiplier;
@@ -1634,7 +1632,7 @@ void CUnit::Init(const CUnit* builder)
 void CUnit::UpdateTerrainType()
 {
 	if (curTerrainType != lastTerrainType) {
-		cob->Call(COBFN_SetSFXOccupy, curTerrainType);
+		script->Call(COBFN_SetSFXOccupy, curTerrainType);
 		lastTerrainType = curTerrainType;
 	}
 }
@@ -1643,7 +1641,7 @@ void CUnit::UpdateTerrainType()
 void CUnit::CalculateTerrainType()
 {
 	//Optimization: there's only about one unit that actually needs this information
-	if (!cob->HasScriptFunction(COBFN_SetSFXOccupy))
+	if (!script->HasScriptFunction(COBFN_SetSFXOccupy))
 		return;
 
 	if (transporter) {
@@ -1830,11 +1828,11 @@ void CUnit::FinishedBuilding(void)
 	if (unitDef->windGenerator > 0.0f) {
 		// start pointing in direction of wind
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
+			script->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
 		} else {
-			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
+			script->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
 		}
-		cob->Call(COBFN_SetDirection,
+		script->Call(COBFN_SetDirection,
 		          (int)GetHeadingFromVector(-wind.GetCurrentDirection().x,
 		                                    -wind.GetCurrentDirection().z));
 	}
@@ -1944,7 +1942,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 		args.push_back((int) (recentDamage / maxHealth * 100));
 		args.push_back(0);
 		// start running the unit's kill-script
-		cob->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
+		script->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
 
 		delayedWreckLevel = args[1];
 	} else {
@@ -2039,7 +2037,7 @@ void CUnit::Activate()
 		return;
 
 	activated = true;
-	cob->Call(COBFN_Activate);
+	script->Call(COBFN_Activate);
 
 	if (unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
@@ -2062,7 +2060,7 @@ void CUnit::Deactivate()
 		return;
 
 	activated = false;
-	cob->Call(COBFN_Deactivate);
+	script->Call(COBFN_Deactivate);
 
 	if (unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
@@ -2082,13 +2080,13 @@ void CUnit::Deactivate()
 void CUnit::UpdateWind(float x, float z, float strength)
 {
 	if (strength > unitDef->windGenerator) {
-		cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
+		script->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
 	}
 	else {
-		cob->Call(COBFN_SetSpeed, (int)(strength*3000.0f));
+		script->Call(COBFN_SetSpeed, (int)(strength*3000.0f));
 	}
 
-	cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-x, -z));
+	script->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-x, -z));
 }
 
 
@@ -2229,7 +2227,8 @@ void CUnit::PostLoad()
 	SetRadius(model->radius);
 
 	modelParser->CreateLocalModel(this);
-	cob = new CCobInstance(GCobFileHandler.GetCobFile(unitDef->scriptPath), this);
+	// FIXME: how to handle other script types (e.g. Lua) here?
+	script = new CCobInstance(GCobFileHandler.GetCobFile(unitDef->scriptPath), this);
 
 	// Calculate the max() of the available weapon reloadtimes
 	int relMax = 0;
@@ -2246,25 +2245,25 @@ void CUnit::PostLoad()
 		relMax = std::max(relMax, 3000);
 
 	// Call initializing script functions
-	cob->Call(COBFN_Create);
-	cob->Call("SetMaxReloadTime", relMax);
+	script->Call(COBFN_Create);
+	script->Call("SetMaxReloadTime", relMax);
 	for (vector<CWeapon*>::iterator i = weapons.begin(); i != weapons.end(); ++i) {
 		(*i)->weaponDef = unitDef->weapons[(*i)->weaponNum].def;
 	}
 
-	cob->Call(COBFN_SetSFXOccupy, curTerrainType);
+	script->Call(COBFN_SetSFXOccupy, curTerrainType);
 
 	if (unitDef->windGenerator>0) {
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
+			script->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
 		} else {
-			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
+			script->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
 		}
-		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+		script->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (activated) {
-		cob->Call(COBFN_Activate);
+		script->Call(COBFN_Activate);
 	}
 }
 

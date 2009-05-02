@@ -193,7 +193,7 @@ void CAirMoveType::Update(void)
 
 	if (reservedPad) {
 		CUnit* unit = reservedPad->GetUnit();
-		float3 relPos = unit->cob->GetPiecePos(reservedPad->GetPiece());
+		float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
 		float3 pos = unit->pos + (unit->frontdir * relPos.z) + (unit->updir * relPos.y) + (unit->rightdir * relPos.x);
 
 		if (padStatus == 0) {
@@ -904,7 +904,7 @@ void CAirMoveType::UpdateLanding(void)
 			owner->physicalState = CSolidObject::Flying;
 			pos = tp;
 			owner->Deactivate();
-			owner->cob->Call(COBFN_StopMoving);
+			owner->script->Call(COBFN_StopMoving);
 		} else {
 			goalPos.CheckInBounds();
 			UpdateFlying(wantedHeight, 1);
@@ -1127,7 +1127,7 @@ void CAirMoveType::SetState(AAirMoveType::AircraftState state)
 
 	if (state == AIRCRAFT_FLYING) {
 		owner->Activate();
-		owner->cob->Call(COBFN_StartMoving);
+		owner->script->Call(COBFN_StartMoving);
 	}
 
 	if (state == AIRCRAFT_LANDED) {

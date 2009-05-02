@@ -678,7 +678,7 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
+	if (unit->script == NULL) {
 		return 0;
 	}
 
@@ -691,11 +691,11 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	int retval;
 	if (lua_israwnumber(L, 2)) {
 		const int funcId = lua_toint(L, 2);
-		retval = unit->cob->RawCall(funcId, cobArgs);
+		retval = unit->script->RawCall(funcId, cobArgs);
 	}
 	else if (lua_israwstring(L, 2)) {
 		const string funcName = lua_tostring(L, 2);
-		retval = unit->cob->Call(funcName, cobArgs);
+		retval = unit->script->Call(funcName, cobArgs);
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to CallCOBScript()");
@@ -726,7 +726,7 @@ int LuaSyncedCtrl::CallCOBScriptCB(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
+	if (unit->script == NULL) {
 		return 0;
 	}
 
@@ -742,13 +742,13 @@ int LuaSyncedCtrl::CallCOBScriptCB(lua_State* L)
 	int retval;
 	if (lua_israwnumber(L, 2)) {
 		const int funcId = lua_toint(L, 2);
-		retval = unit->cob->RawCall(funcId, cobArgs,
+		retval = unit->script->RawCall(funcId, cobArgs,
 		                            CLuaHandle::GetActiveCallback(),
 		                            (void*) unit->id, (void*) *((int*)&cbData));
 	}
 	else if (lua_israwstring(L, 2)) {
 		const string funcName = lua_tostring(L, 2);
-		retval = unit->cob->Call(funcName, cobArgs,
+		retval = unit->script->Call(funcName, cobArgs,
 		                         CLuaHandle::GetActiveCallback(),
 			                       (void*) unit->id, (void*) *((int*)&cbData));
 	}
@@ -777,13 +777,13 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
+	if (unit->script == NULL) {
 		return 0;
 	}
 
 	const string funcName = lua_tostring(L, 2);
 
-	const int funcID = unit->cob->GetFunctionId(funcName);
+	const int funcID = unit->script->GetFunctionId(funcName);
 	if (funcID >= 0) {
 		lua_pushnumber(L, funcID);
 		return 1;
@@ -796,7 +796,7 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->cob == NULL)) {
+	if ((unit == NULL) || (unit->script == NULL)) {
 		return 0;
 	}
 
@@ -822,7 +822,7 @@ int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
 		}
 	}
 
-	const int result = unit->cob->GetUnitVal(val, p[0], p[1], p[2], p[3]);
+	const int result = unit->script->GetUnitVal(val, p[0], p[1], p[2], p[3]);
 	if (!splitData) {
 		lua_pushnumber(L, result);
 		return 1;
@@ -836,7 +836,7 @@ int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
 int LuaSyncedCtrl::SetUnitCOBValue(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->cob == NULL)) {
+	if ((unit == NULL) || (unit->script == NULL)) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
@@ -850,7 +850,7 @@ int LuaSyncedCtrl::SetUnitCOBValue(lua_State* L)
 		const int z = luaL_checkint(L, 4);
 		param = PACKXZ(x, z);
 	}
-	unit->cob->SetUnitVal(val, param);
+	unit->script->SetUnitVal(val, param);
 	return 0;
 }
 

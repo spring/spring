@@ -116,9 +116,9 @@ void CTAAirMoveType::SetState(AircraftState newState)
 
 	// Perform cob animation
 	if (aircraftState == AIRCRAFT_LANDED)
-		owner->cob->Call(COBFN_StartMoving);
+		owner->script->Call(COBFN_StartMoving);
 	if (newState == AIRCRAFT_LANDED)
-		owner->cob->Call(COBFN_StopMoving);
+		owner->script->Call(COBFN_StopMoving);
 
 	if (newState == AIRCRAFT_LANDED) {
 		owner->dontUseWeapons = true;
@@ -505,7 +505,7 @@ void CTAAirMoveType::UpdateLanding()
 			owner->Block();
 			owner->physicalState = CSolidObject::Flying;
 			owner->Deactivate();
-			owner->cob->Call(COBFN_StopMoving);
+			owner->script->Call(COBFN_StopMoving);
 		} else {
 			if (goalPos.SqDistance2D(pos) < 900) {
 				goalPos = goalPos + gs->randVector() * 300;
@@ -716,7 +716,7 @@ void CTAAirMoveType::UpdateMoveRate()
 	}
 
 	if (curRate != lastMoveRate) {
-		owner->cob->Call(COBFN_MoveRate0 + curRate);
+		owner->script->Call(COBFN_MoveRate0 + curRate);
 		lastMoveRate = curRate;
 	}
 }
@@ -779,7 +779,7 @@ void CTAAirMoveType::Update()
 
 			if (reservedPad) {
 				CUnit* unit = reservedPad->GetUnit();
-				float3 relPos = unit->cob->GetPiecePos(reservedPad->GetPiece());
+				float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
 				float3 pos = unit->pos + unit->frontdir * relPos.z
 						+ unit->updir * relPos.y + unit->rightdir * relPos.x;
 

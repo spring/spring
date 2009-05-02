@@ -60,9 +60,9 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 
 	int maxPadCount = 16; // default max pad count
 
-	if (base->cob->GetFunctionId("QueryLandingPadCount") >= 0) {
+	if (base->script->GetFunctionId("QueryLandingPadCount") >= 0) {
 		args.push_back(maxPadCount);
-		base->cob->Call("QueryLandingPadCount", args);
+		base->script->Call("QueryLandingPadCount", args);
 		maxPadCount = args[0];
 		args.clear();
 	}
@@ -71,12 +71,12 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 		args.push_back(-1);
 	}
 
-	base->cob->Call("QueryLandingPad", args);
+	base->script->Call("QueryLandingPad", args);
 
 	// FIXME: use a set to avoid multiple bases per piece?
 	for (int p = 0; p < (int)args.size(); p++) {
 		const int piece = args[p];
-		if (!base->cob->PieceExists(piece)) {
+		if (!base->script->PieceExists(piece)) {
 			continue;
 		}
 		LandingPad* pad = new LandingPad(base, piece, ab);

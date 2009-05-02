@@ -196,8 +196,8 @@ void CWeapon::SetWeaponNum(int num)
 {
 	weaponNum = num;
 
-	cobHasBlockShot = owner->cob->FunctionExist(COBFN_BlockShot + weaponNum);
-	hasTargetWeight = owner->cob->FunctionExist(COBFN_TargetWeight + weaponNum);
+	cobHasBlockShot = owner->script->FunctionExist(COBFN_BlockShot + weaponNum);
+	hasTargetWeight = owner->script->FunctionExist(COBFN_TargetWeight + weaponNum);
 }
 
 
@@ -217,7 +217,7 @@ inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
 	                   // the default is to not block the shot
 	args.push_back(haveUserTarget);
 
-	owner->cob->Call(COBFN_BlockShot + weaponNum, args);
+	owner->script->Call(COBFN_BlockShot + weaponNum, args);
 
 	return !!args[1];
 }
@@ -233,7 +233,7 @@ float CWeapon::TargetWeight(const CUnit* targetUnit) const
 	args.push_back(COBSCALE); // arg[1], for the return value
 	                          // the default is 1.0
 
-	owner->cob->Call(COBFN_TargetWeight + weaponNum, args);
+	owner->script->Call(COBFN_TargetWeight + weaponNum, args);
 
 	return (float)args[1] / (float)COBSCALE;
 }
@@ -252,14 +252,14 @@ void CWeapon::Update()
 		std::vector<int> args;
 		args.push_back(0);
 		if(useWeaponPosForAim){ //if we couldn't get a line of fire from the muzzle try if we can get it from the aim piece
-			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
+			owner->script->Call(COBFN_QueryPrimary+weaponNum,args);
 		} else {
-			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
+			owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
 		}
-		relWeaponMuzzlePos=owner->cob->GetPiecePos(args[0]);
+		relWeaponMuzzlePos=owner->script->GetPiecePos(args[0]);
 
-		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-		relWeaponPos=owner->cob->GetPiecePos(args[0]);
+		owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
+		relWeaponPos=owner->script->GetPiecePos(args[0]);
 	}
 
 	if(targetType==Target_Unit){
@@ -309,7 +309,7 @@ void CWeapon::Update()
 			std::vector<int> args;
 			args.push_back(short(heading - owner->heading));
 			args.push_back(pitch);
-			owner->cob->Call(COBFN_AimPrimary+weaponNum,args,ScriptCallback,this,0);
+			owner->script->Call(COBFN_AimPrimary+weaponNum,args,ScriptCallback,this,0);
 		}
 	}
 	if(weaponDef->stockpile && numStockpileQued){
@@ -354,8 +354,8 @@ void CWeapon::Update()
 		{
 			std::vector<int> args;
 			args.push_back(0);
-			owner->cob->Call(COBFN_QueryPrimary + weaponNum, args);
-			owner->cob->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			owner->script->Call(COBFN_QueryPrimary + weaponNum, args);
+			owner->script->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
 			weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z +
 			                               owner->updir    * relWeaponMuzzlePos.y +
 			                               owner->rightdir * relWeaponMuzzlePos.x;
@@ -386,7 +386,7 @@ void CWeapon::Update()
 
 				owner->lastMuzzleFlameSize=muzzleFlareSize;
 				owner->lastMuzzleFlameDir=wantedDir;
-				owner->cob->Call(COBFN_FirePrimary+weaponNum);
+				owner->script->Call(COBFN_FirePrimary+weaponNum);
 			}
 		} else {
 			// FIXME  -- never reached?
@@ -421,13 +421,13 @@ void CWeapon::Update()
 			std::vector<int> args;
 			args.push_back(0);
 
-			owner->cob->Call(COBFN_Shot+weaponNum,0);
+			owner->script->Call(COBFN_Shot+weaponNum,0);
 
-			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-			relWeaponPos=owner->cob->GetPiecePos(args[0]);
+			owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
+			relWeaponPos=owner->script->GetPiecePos(args[0]);
 
-			owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum*/COBFN_QueryPrimary+weaponNum/**/,args);
-			owner->cob->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			owner->script->Call(/*COBFN_AimFromPrimary+weaponNum*/COBFN_QueryPrimary+weaponNum/**/,args);
+			owner->script->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
 
 			weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
@@ -455,12 +455,12 @@ void CWeapon::Update()
 		std::vector<int> rockAngles;
 		rockAngles.push_back((int)(500 * rockDir.z));
 		rockAngles.push_back((int)(500 * rockDir.x));
-		owner->cob->Call(COBFN_RockUnit,  rockAngles);
+		owner->script->Call(COBFN_RockUnit,  rockAngles);
 
 		owner->commandAI->WeaponFired(this);
 
 		if(salvoLeft==0){
-			owner->cob->Call(COBFN_EndBurst+weaponNum);
+			owner->script->Call(COBFN_EndBurst+weaponNum);
 		}
 #ifdef TRACE_SYNC
 	tracefile << "Weapon fire: ";
@@ -592,17 +592,17 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	std::vector<int> args;
 	args.push_back(0);
 	if(useWeaponPosForAim){ //If we can't get a line of fire from the muzzle try the aim piece instead since the weapon may just be turned in a wrong way
-		owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
+		owner->script->Call(COBFN_QueryPrimary+weaponNum,args);
 		if(useWeaponPosForAim>1)
 			useWeaponPosForAim--;
 	} else {
-		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
+		owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
 	}
-	relWeaponMuzzlePos=owner->cob->GetPiecePos(args[0]);
+	relWeaponMuzzlePos=owner->script->GetPiecePos(args[0]);
 	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 
-	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-	relWeaponPos=owner->cob->GetPiecePos(args[0]);
+	owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
+	relWeaponPos=owner->script->GetPiecePos(args[0]);
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
 	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
@@ -847,11 +847,11 @@ void CWeapon::Init(void)
 {
 	std::vector<int> args;
 	args.push_back(0);
-	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-	relWeaponPos = owner->cob->GetPiecePos(args[0]);
+	owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
+	relWeaponPos = owner->script->GetPiecePos(args[0]);
 	weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
-	owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-	relWeaponMuzzlePos = owner->cob->GetPiecePos(args[0]);
+	owner->script->Call(COBFN_QueryPrimary+weaponNum,args);
+	relWeaponMuzzlePos = owner->script->GetPiecePos(args[0]);
 	weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z + owner->updir * relWeaponMuzzlePos.y + owner->rightdir * relWeaponMuzzlePos.x;
 
 	if (range > owner->maxRange) {
