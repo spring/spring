@@ -71,6 +71,7 @@ public:
 	void Signal(int signal);
 	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
 	void SetUnitVal(int val, int param);
+	void PlayUnitSound(int snr, int attr);
 };
 
 #endif // __COB_INSTANCE_H__

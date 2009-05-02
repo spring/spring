@@ -959,6 +959,14 @@ void CCobInstance::SetUnitVal(int val, int param)
 }
 
 
+void CCobInstance::PlayUnitSound(int snr, int attr)
+{
+	int sid = script.sounds[snr];
+	//logOutput.Print("Playing %d %d %d", snr, attr, sid);
+	sound->PlaySample(sid, unit->pos, unit->speed, attr);
+}
+
+
 void CCobInstance::ShowScriptError(const std::string& msg)
 {
 	GCobEngine.ShowScriptError(msg);
