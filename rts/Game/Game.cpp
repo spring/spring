@@ -4575,7 +4575,8 @@ void CGame::ReloadCOB(const string& msg, int player)
 	for (size_t i = 0; i < uh->MaxUnits(); i++) {
 		CUnit* unit = uh->units[i];
 		if (unit != NULL) {
-			if (unit->script->GetScriptAddr() == oldScript) {
+			CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+			if (cob != NULL && cob->GetScriptAddr() == oldScript) {
 				count++;
 				delete unit->script;
 				unit->script = new CCobInstance(newScript, unit);
