@@ -1789,6 +1789,13 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Set maximum particles to: %i", value);
 		}
 	}
+	else if (cmd == "maxnanoparticles") {
+		if (ph && !action.extra.empty()) {
+			const int value = std::max(1, atoi(action.extra.c_str()));
+			ph->SetMaxNanoParticles(value);
+			logOutput.Print("Set maximum nano-particles to: %i", value);
+		}
+	}
 	else if (cmd == "gathermode") {
 		if (guihandler != NULL) {
 			bool gatherMode;
@@ -2869,9 +2876,8 @@ bool CGame::Draw() {
 	glEnable(GL_TEXTURE_2D);
 
 	if (gu->drawdebug) {
-		//skriv ut fps etc
 		glColor4f(1,1,0.5f,0.8f);
-		font->glFormatAt(0.03f, 0.02f, 1.0f, "FPS %d Frame %d Part %d(%d)",
+		font->glFormatAt(0.03f, 0.02f, 1.0f, "FPS: %d  Frame: %d  Particles: %d (%d)",
 		                 fps, gs->frameNum, ph->ps.size(), ph->currentParticles);
 
 		if (playing) {

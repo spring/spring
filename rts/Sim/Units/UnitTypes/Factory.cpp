@@ -341,8 +341,7 @@ void CFactory::CreateNanoParticle(void)
 	if (gs->frameNum - lastDrawFrame > 20)
 		return;
 #endif
-	if (ph->currentParticles < ph->maxParticles && unitDef->showNanoSpray)
-	{
+	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
 		const float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
 		const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
 			+ (updir    * relWeaponFirePos.y)

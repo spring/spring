@@ -711,7 +711,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 	if (gs->frameNum - lastDrawFrame > 20)
 		return;
 #endif
-	if (ph->currentParticles < ph->maxParticles && unitDef->showNanoSpray)
+	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray)
 	{
 		float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
