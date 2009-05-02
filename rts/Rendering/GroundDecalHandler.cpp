@@ -89,6 +89,13 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 		glDeleteTextures (1, &(*tti)->texture);
 		delete *tti;
 	}
+	for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
+		TrackToAdd *tta = &(*ti);
+		delete tta->tp;
+		if(tta->unit == NULL)
+			delete tta->ts;
+	}
+
 	for(std::vector<BuildingDecalType*>::iterator tti=buildingDecalTypes.begin();tti!=buildingDecalTypes.end();++tti){
 		for(set<BuildingGroundDecal*>::iterator ti=(*tti)->buildingDecals.begin();ti!=(*tti)->buildingDecals.end();++ti){
 			if((*ti)->owner)
@@ -517,10 +524,19 @@ void CGroundDecalHandler::Draw(void)
 		// Delayed addition of new tracks
 		for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
 			TrackToAdd *tta = &(*ti);
+			if(tta->ts == NULL) {
+				delete tta->tp;
+				continue; // ts deleted
+			}
 			if(tta->ts->owner == NULL) {
 				delete tta->tp;
-				if(tta->unit == NULL)
-					delete tta->ts;
+				if(tta->unit == NULL) {
+					UnitTrackStruct *tas = tta->ts;
+					for (std::vector<TrackToAdd>::iterator ti2 = tracksToBeAdded.begin(); ti2 != tracksToBeAdded.end(); ++ti2)
+						if((*ti2).ts == tas)
+							(*ti2).ts = NULL;
+					delete tas;
+				}
 				continue; // unit removed
 			}
 
@@ -540,8 +556,10 @@ void CGroundDecalHandler::Draw(void)
 				if(((tp->pos1+(*pi)->pos1)*0.5f).SqDistance((*pi2)->pos1)<1)
 					replace = true;
 			}
-			if(replace)
+			if(replace) {
+				delete unit->myTrack->parts.back();
 				unit->myTrack->parts.back() = tp;
+			}
 			else
 				unit->myTrack->parts.push_back(tp);
 		}
@@ -605,6 +623,9 @@ void CGroundDecalHandler::Draw(void)
 				if (track->owner)
 					track->owner->myTrack = 0;
 				ttc->tracks->erase(track);
+				for (std::vector<TrackToAdd>::iterator ti2 = tracksToBeAdded.begin(); ti2 != tracksToBeAdded.end(); ++ti2)
+					if((*ti2).ts == track)
+						(*ti2).ts = NULL;
 				delete track;
 			}
 		}
@@ -725,16 +746,18 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 		ts->lifeTime = (int)(30*decalLevel*unit->unitDef->trackStrength);
 		ts->trackAlpha = (int)(unit->unitDef->trackStrength*25);
 		ts->alphaFalloff = float(ts->trackAlpha)/float(ts->lifeTime);
+		ts->lastAdded = NULL;
 		unit->myTrack = ts;
 		tta.unit = NULL; // signal new trackstruct
 	}
-	if(unit->myTrack->parts.empty()){
+	if(!unit->myTrack->lastAdded){
 		tp->texPos = 0;
 		tp->connected = false;
 	} else {
-		tp->texPos = unit->myTrack->parts.back()->texPos+tp->pos1.distance(unit->myTrack->parts.back()->pos1)/unit->unitDef->trackWidth*unit->unitDef->trackStretch;
-		tp->connected = unit->myTrack->parts.back()->creationTime == gs->frameNum-8;
+		tp->texPos = unit->myTrack->lastAdded->texPos+tp->pos1.distance(unit->myTrack->lastAdded->pos1)/unit->unitDef->trackWidth*unit->unitDef->trackStretch;
+		tp->connected = unit->myTrack->lastAdded->creationTime == gs->frameNum-8;
 	}
+	unit->myTrack->lastAdded = tp;
 
 	tta.ts = unit->myTrack;
 
