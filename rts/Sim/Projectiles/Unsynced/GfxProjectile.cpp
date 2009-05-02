@@ -36,7 +36,7 @@ CGfxProjectile::CGfxProjectile()
 	synced = false;
 }
 
-CGfxProjectile::CGfxProjectile(const float3& pos,const float3& speed,int lifeTime,const float3& color GML_PARG_C):
+CGfxProjectile::CGfxProjectile(const float3& pos, const float3& speed, int lifeTime, const float3& color GML_PARG_C):
 	CProjectile(pos, speed, 0, false, false GML_PARG_P),
 	creationTime(gs->frameNum),
 	lifeTime(lifeTime)
@@ -48,12 +48,16 @@ CGfxProjectile::CGfxProjectile(const float3& pos,const float3& speed,int lifeTim
 	this->color[3] = 20;
 	drawRadius = 3;
 
-	ph->currentNanoParticles += 1;
+	if (ph) {
+		ph->currentNanoParticles += 1;
+	}
 }
 
 CGfxProjectile::~CGfxProjectile()
 {
-	ph->currentNanoParticles -= 1;
+	if (ph) {
+		ph->currentNanoParticles -= 1;
+	}
 }
 
 
