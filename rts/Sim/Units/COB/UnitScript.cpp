@@ -908,15 +908,6 @@ void CUnitScript::Explode(int piece, int flags)
 }
 
 
-void CUnitScript::PlayUnitSound(int snr, int attr)
-{
-	//TODO: how to get script sounds in generic way?
-	/*int sid = script.sounds[snr];
-	//logOutput.Print("Playing %d %d %d", snr, attr, sid);
-	sound->PlaySample(sid, unit->pos, unit->speed, attr);*/
-}
-
-
 void CUnitScript::ShowFlare(int piece)
 {
 	if (!PieceExists(piece)) {
