@@ -90,10 +90,12 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 		delete *tti;
 	}
 	for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
-		TrackToAdd *tta = &(*ti);
-		delete tta->tp;
-		if(tta->unit == NULL)
-			delete tta->ts;
+		delete (*ti).tp;
+		if((*ti).unit == NULL)
+			tracksToBeDeleted.push_back((*ti).ts);
+	}
+	for (std::vector<UnitTrackStruct *>::iterator ti = tracksToBeDeleted.begin(); ti != tracksToBeDeleted.end(); ++ti) {
+		delete *ti;
 	}
 
 	for(std::vector<BuildingDecalType*>::iterator tti=buildingDecalTypes.begin();tti!=buildingDecalTypes.end();++tti){
@@ -524,27 +526,17 @@ void CGroundDecalHandler::Draw(void)
 		// Delayed addition of new tracks
 		for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
 			TrackToAdd *tta = &(*ti);
-			if(tta->ts == NULL) {
-				delete tta->tp;
-				continue; // ts deleted
-			}
 			if(tta->ts->owner == NULL) {
 				delete tta->tp;
-				if(tta->unit == NULL) {
-					UnitTrackStruct *tas = tta->ts;
-					for (std::vector<TrackToAdd>::iterator ti2 = tracksToBeAdded.begin(); ti2 != tracksToBeAdded.end(); ++ti2)
-						if((*ti2).ts == tas)
-							(*ti2).ts = NULL;
-					delete tas;
-				}
+				if(tta->unit == NULL)
+					tracksToBeDeleted.push_back(tta->ts);
 				continue; // unit removed
 			}
 
 			CUnit *unit = tta->unit;
 			if(unit == NULL) {
-				UnitTrackStruct *ts = tta->ts;
-				unit = ts->owner;
-				trackTypes[unit->unitDef->trackType]->tracks.insert(ts);
+				unit = tta->ts->owner;
+				trackTypes[unit->unitDef->trackType]->tracks.insert(tta->ts);
 			}
 
 			TrackPart *tp = tta->tp;
@@ -560,13 +552,20 @@ void CGroundDecalHandler::Draw(void)
 				delete unit->myTrack->parts.back();
 				unit->myTrack->parts.back() = tp;
 			}
-			else
+			else {
 				unit->myTrack->parts.push_back(tp);
+			}
 		}
 		tracksToBeAdded.clear();
 	}
 
+	for (std::vector<UnitTrackStruct *>::iterator ti = tracksToBeDeleted.begin(); ti != tracksToBeDeleted.end(); ++ti) {
+		delete *ti;
+	}
+	tracksToBeDeleted.clear();
+
 	tracksToBeCleaned.clear();
+
 	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
 		TrackType* tt = *tti;
@@ -623,10 +622,7 @@ void CGroundDecalHandler::Draw(void)
 				if (track->owner)
 					track->owner->myTrack = 0;
 				ttc->tracks->erase(track);
-				for (std::vector<TrackToAdd>::iterator ti2 = tracksToBeAdded.begin(); ti2 != tracksToBeAdded.end(); ++ti2)
-					if((*ti2).ts == track)
-						(*ti2).ts = NULL;
-				delete track;
+				tracksToBeDeleted.push_back(track);
 			}
 		}
 	}
@@ -746,19 +742,16 @@ void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 		ts->lifeTime = (int)(30*decalLevel*unit->unitDef->trackStrength);
 		ts->trackAlpha = (int)(unit->unitDef->trackStrength*25);
 		ts->alphaFalloff = float(ts->trackAlpha)/float(ts->lifeTime);
-		ts->lastAdded = NULL;
 		unit->myTrack = ts;
 		tta.unit = NULL; // signal new trackstruct
-	}
-	if(!unit->myTrack->lastAdded){
 		tp->texPos = 0;
 		tp->connected = false;
 	} else {
 		tp->texPos = unit->myTrack->lastAdded->texPos+tp->pos1.distance(unit->myTrack->lastAdded->pos1)/unit->unitDef->trackWidth*unit->unitDef->trackStretch;
 		tp->connected = unit->myTrack->lastAdded->creationTime == gs->frameNum-8;
 	}
-	unit->myTrack->lastAdded = tp;
 
+	unit->myTrack->lastAdded = tp;
 	tta.ts = unit->myTrack;
 
 	tracksToBeAdded.push_back(tta);
