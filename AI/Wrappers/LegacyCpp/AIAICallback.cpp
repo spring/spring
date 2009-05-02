@@ -389,7 +389,6 @@ unitDef->category = sAICallback->Clb_UnitDef_getCategory(teamId, unitDefId);
 unitDef->speed = sAICallback->Clb_UnitDef_getSpeed(teamId, unitDefId);
 unitDef->turnRate = sAICallback->Clb_UnitDef_getTurnRate(teamId, unitDefId);
 unitDef->turnInPlace = sAICallback->Clb_UnitDef_isTurnInPlace(teamId, unitDefId);
-unitDef->moveType = sAICallback->Clb_UnitDef_getMoveType(teamId, unitDefId);
 unitDef->upright = sAICallback->Clb_UnitDef_isUpright(teamId, unitDefId);
 unitDef->collide = sAICallback->Clb_UnitDef_isCollide(teamId, unitDefId);
 unitDef->controlRadius = sAICallback->Clb_UnitDef_getControlRadius(teamId, unitDefId);

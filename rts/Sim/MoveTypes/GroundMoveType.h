@@ -74,8 +74,6 @@ public:
 	unsigned int etaFailures;				//how many times we havent gotten to a waypoint in time
 	unsigned int nonMovingFailures;	//how many times we have requested a path from the same place
 
-	int moveType;
-
 	bool floatOnWater;
 
 	int moveSquareX;

@@ -238,7 +238,6 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 			LogObject() << "acceleration of " << ud->name.c_str() << " is zero!!\n";
 		}
 
-		mt->moveType = ud->moveType;
 		mt->accRate = ud->maxAcc;
 		mt->decRate = ud->maxDec;
 		mt->floatOnWater = (ud->movedata->moveType == MoveData::Hover_Move ||
