@@ -51,7 +51,7 @@ public:
 	 *
 	 * returns the team2ally at given index
 	 */
-	int AllyTeam(int team) { return team2allyteam[team]; }
+	int AllyTeam(int team) { return teams[team].teamAllyteam; }
 	::AllyTeam& GetAllyTeam(size_t id) { return allyTeams[id]; };
 
 	bool ValidAllyTeam(size_t id)
@@ -67,7 +67,7 @@ public:
 	 *
 	 * Tests whether teams are allied
 	 */
-	bool AlliedTeams(int a, int b) { return allyTeams[team2allyteam[a]].allies[team2allyteam[b]]; }
+	bool AlliedTeams(int a, int b) { return allyTeams[AllyTeam(a)].allies[AllyTeam(b)]; }
 
 	/**
 	 * @brief set ally team
@@ -76,7 +76,7 @@ public:
 	 *
 	 * Sets team's ally team
 	 */
-	void SetAllyTeam(int team, int allyteam) { team2allyteam[team] = allyteam; }
+	void SetAllyTeam(int team, int allyteam) { teams[team].teamAllyteam = allyteam; }
 
 	/**
 	 * @brief set ally
@@ -113,13 +113,6 @@ private:
 	 * gaia's team id
 	 */
 	int gaiaAllyTeamID;
-
-	/**
-	 * @brief team to ally team
-	 *
-	 * Array stores what ally team a specific team is part of
-	 */
-	std::vector<int> team2allyteam;
 
 	/**
 	 * @brief teams
