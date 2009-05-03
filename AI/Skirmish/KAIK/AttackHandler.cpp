@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "IncCREG.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"

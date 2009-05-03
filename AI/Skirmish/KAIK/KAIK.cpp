@@ -30,7 +30,6 @@ CKAIK::~CKAIK() {
 	delete ai->ah;
 	delete ai->bu;
 	delete ai->econTracker;
-	delete ai->parser;
 	delete ai->math;
 	delete ai->pather;
 	delete ai->tm;
@@ -64,7 +63,6 @@ void CKAIK::PostLoad(void) {
 	// AI components; the ones that were serialized
 	// have their own PostLoad() callins
 	ai->math	= new CMaths(ai);
-	ai->parser	= new CSunParser(ai);
 	ai->mm		= new CMetalMap(ai);
 	ai->pather	= new CPathFinder(ai);
 
@@ -115,7 +113,6 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 
 	ai->logger         = new CLogger(ai->cb);
 	ai->math           = new CMaths(ai);
-	ai->parser         = new CSunParser(ai);
 	ai->ut             = new CUnitTable(ai);
 	ai->mm             = new CMetalMap(ai);
 	ai->pather         = new CPathFinder(ai);
@@ -288,6 +285,7 @@ void CKAIK::Update() {
 		// init defense matrix
 		ai->dm->Init();
 	}
+
 	if (frame > 60) {
 		// call buildup manager and unit handler (idle) update routine
 		ai->bu->Update(frame);

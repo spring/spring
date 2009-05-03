@@ -13,7 +13,6 @@ struct UnitDef;
 
 class IAICallback;
 class IAICheats;
-class CSunParser;
 class CMetalMap;
 class CMaths;
 class CPathFinder;
@@ -35,7 +34,6 @@ struct AIClasses {
 	IAICheats*              cheat;
 	CEconomyTracker*        econTracker;
 	CBuildUp*               bu;
-	CSunParser*             parser;
 	CMetalMap*              mm;
 	CMaths*                 math;
 	CPathFinder*            pather;
@@ -59,7 +57,7 @@ struct UnitType {
 	std::vector<int> canBuildList;
 	std::vector<int> builtByList;
 	std::vector<float> DPSvsUnit;
-	std::vector<std::string> TargetCategories;
+
 	const UnitDef* def;
 	UnitCategory category;
 	bool isHub;
@@ -69,7 +67,7 @@ struct UnitType {
 	// which sides can build this UnitType (usually only
 	// one, needed for types that are shared among sides
 	// in certain mods)
-	std::set<int> sides;
+	/// std::set<int> sides;
 };
 
 
