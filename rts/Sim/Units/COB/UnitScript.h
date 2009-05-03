@@ -57,6 +57,13 @@ public:
 
 	static void InitVars(int numTeams, int numAllyTeams);
 
+public:
+	const int* GetUnitVars() const { return unitVars; };
+
+	static const int* GetTeamVars(int team) { return &teamVars[team][0]; }
+	static const int* GetAllyVars(int ally) { return &allyVars[ally][0]; }
+	static const int* GetGlobalVars()       { return globalVars; }
+
 protected:
 	bool busy;
 	bool yardOpen;

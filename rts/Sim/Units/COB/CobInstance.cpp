@@ -54,8 +54,6 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 		staticVars.push_back(0);
 	}
 
-	memset(unitVars,int(0),UNIT_VAR_COUNT);
-
 	yardOpen = false;
 	busy = false;
 	smoothAnim = unit->unitDef->smoothAnim;

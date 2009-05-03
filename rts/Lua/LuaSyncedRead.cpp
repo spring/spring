@@ -4497,15 +4497,15 @@ int LuaSyncedRead::GetCOBUnitVar(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
-	if (cob == NULL) {
+	const CUnitScript* script = unit->script;
+	if (script == NULL) {
 		return 0;
 	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::UNIT_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::UNIT_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = cob->GetUnitVars()[varID];
+	const int value = script->GetUnitVars()[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4526,10 +4526,10 @@ int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
 		return 0;
 	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::TEAM_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::TEAM_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetTeamVars(teamID)[varID];
+	const int value = CUnitScript::GetTeamVars(teamID)[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4551,10 +4551,10 @@ int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
 		return 0;
 	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::ALLY_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::ALLY_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetAllyVars(allyTeamID)[varID];
+	const int value = CUnitScript::GetAllyVars(allyTeamID)[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4568,10 +4568,10 @@ int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
 int LuaSyncedRead::GetCOBGlobalVar(lua_State* L)
 {
 	const int varID = luaL_checkint(L, 1);
-	if ((varID < 0) || (varID >= CCobInstance::GLOBAL_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::GLOBAL_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetGlobalVars()[varID];
+	const int value = CUnitScript::GetGlobalVars()[varID];
 	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));

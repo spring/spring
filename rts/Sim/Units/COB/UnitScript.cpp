@@ -159,6 +159,8 @@ CUnitScript::CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex)
 	: unit(unit)
 	, scriptIndex(scriptIndex)
 {
+	memset(unitVars, int(0), UNIT_VAR_COUNT);
+
 	MapScriptToModelPieces(unit->localmodel);
 }
 
@@ -1490,15 +1492,14 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		else if ((val >= UNIT_VAR_START) && (val <= UNIT_VAR_END)) {
 			const int varID = val - UNIT_VAR_START;
 			if (p1 == 0) {
-				unitVars[varID];
+				return unitVars[varID];
 			}
 			else if (p1 > 0) {
 				// get the unit var for another unit
 				if (p1 < uh->MaxUnits()) {
 					const CUnit* u = uh->units[p1];
-					if (u != NULL) {
-						const CCobInstance* cob = dynamic_cast<CCobInstance*>(u->script);
-						return cob ? cob->unitVars[varID] : 0;
+					if (u != NULL && u->script != NULL) {
+						return u->script->unitVars[varID];
 					}
 				}
 			}
@@ -1507,12 +1508,9 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 				p1 = -p1;
 				if (p1 < uh->MaxUnits()) {
 					CUnit* u = uh->units[p1];
-					if (u != NULL) {
-						CCobInstance* cob = dynamic_cast<CCobInstance*>(u->script);
-						if (cob != NULL) {
-							cob->unitVars[varID] = p2;
-							return 1;
-						}
+					if (u != NULL && u->script != NULL) {
+						u->script->unitVars[varID] = p2;
+						return 1;
 					}
 				}
 			}
