@@ -132,10 +132,10 @@ CUnitHandler::CUnitHandler(bool serializing)
 	maxUnitRadius(0.0f),
 	lastDamageWarning(0),
 	lastCmdDamageWarning(0),
+	limitDgun(false),
+	diminishingMetalMakers(false),
 	metalMakerIncome(0),
 	metalMakerEfficiency(1),
-	diminishingMetalMakers(false),
-	limitDgun(false),
 	morphUnitToFeature(true)
 {
 	const size_t maxUnitsTemp = std::min(gameSetup->maxUnits * teamHandler->ActiveTeams(), MAX_UNITS);
@@ -143,7 +143,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 	unitsPerTeam = maxUnitsTemp / teamHandler->ActiveTeams() - 5;
 
 	freeIDs.reserve(units.size()-1);
-	for (int a = 1; a < units.size(); a++) {
+	for (size_t a = 1; a < units.size(); a++) {
 		freeIDs.push_back(a);
 		units[a] = NULL;
 	}
@@ -173,6 +173,7 @@ CUnitHandler::~CUnitHandler()
 {
 	std::list<CUnit*>::iterator usi;
 	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
+		(*usi)->delayedWreckLevel = -1; // dont create wreckages since featureHandler may be destroyed already
 		delete (*usi);
 	}
 
@@ -182,8 +183,6 @@ CUnitHandler::~CUnitHandler()
 
 int CUnitHandler::AddUnit(CUnit *unit)
 {
-//	GML_RECMUTEX_LOCK(unit); // AddUnit. Not needed, protected via LoadUnit.
-
 	int num = (int)(gs->randFloat()) * ((int)activeUnits.size() - 1);
 	std::list<CUnit*>::iterator ui = activeUnits.begin();
 	for (int a = 0; a < num;++a) {
@@ -209,7 +208,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 	maxUnitRadius = max(unit->radius, maxUnitRadius);
 
-	GML_STDMUTEX_LOCK(render);
+	GML_STDMUTEX_LOCK(render); // AddUnit
 
 	toBeAdded.insert(unit);
 
@@ -227,7 +226,8 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	{
-		GML_STDMUTEX_LOCK(dque);
+		GML_STDMUTEX_LOCK(dque); // DeleteUnitNow
+
 		LuaUnsyncedCtrl::drawCmdQueueUnits.erase(delUnit);
 	}
 #endif
@@ -264,7 +264,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 	}
 
-	GML_STDMUTEX_LOCK(render);
+	GML_STDMUTEX_LOCK(render); // DeleteUnitNow
 
 	for(usi=renderUnits.begin(); usi!=renderUnits.end(); ++usi) {
 		if(*usi==delUnit) {
@@ -292,9 +292,10 @@ void CUnitHandler::Update()
 	SCOPED_TIMER("Unit handler");
 
 	if(!toBeRemoved.empty()) {
-		GML_RECMUTEX_LOCK(unit); // Update. For anti-deadlock purposes.
-		GML_RECMUTEX_LOCK(sel); // Update. Unit is removed from selectedUnits in ~CObject, which is too late.
-		GML_RECMUTEX_LOCK(quad); // Update. Make sure unit does not get partially deleted before before being removed from the quadfield
+
+		GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
+		GML_RECMUTEX_LOCK(sel); // Update - unit is removed from selectedUnits in ~CObject, which is too late.
+		GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
 
 		while (!toBeRemoved.empty()) {
 			CUnit* delUnit = toBeRemoved.back();
@@ -623,6 +624,7 @@ void CUnitHandler::UpdateWind(float x, float z, float strength)
 void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // AddBuilderCAI
+
 	builderCAIs.insert(builderCAIs.end(),b);
 }
 
@@ -630,6 +632,7 @@ void CUnitHandler::AddBuilderCAI(CBuilderCAI* b)
 void CUnitHandler::RemoveBuilderCAI(CBuilderCAI* b)
 {
 	GML_STDMUTEX_LOCK(cai); // RemoveBuilderCAI
+
 	ListErase<CBuilderCAI*>(builderCAIs, b);
 }
 
@@ -649,7 +652,9 @@ void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	float3 tempF1 = pos;
 	std::list<CUnit*>::iterator ui = this->activeUnits.begin();
+
 	GML_STDMUTEX_LOCK(cai); // GetBuildCommand
+
 	CCommandQueue::iterator ci;
 	for(; ui != this->activeUnits.end(); ui++){
 		if((*ui)->team == gu->myTeam){

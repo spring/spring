@@ -532,6 +532,25 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 					cmd->drawBorder, cmd->facing);
 			break;
 		}
+
+		case COMMAND_TRACE_RAY: {
+			STraceRayCommand* cCmdData = (STraceRayCommand*) commandData;
+			AIHCTraceRay cppCmdData = {
+				cCmdData->rayPos,
+				cCmdData->rayDir,
+				cCmdData->rayLen,
+				cCmdData->srcUID,
+				cCmdData->hitUID,
+				cCmdData->flags
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCTraceRayId, &cppCmdData);
+
+			cCmdData->rayLen = cppCmdData.rayLen;
+			cCmdData->hitUID = cppCmdData.hitUID;
+			break;
+		}
+
 		default:
 		{
 			// check if it is a unit command
@@ -1712,9 +1731,6 @@ EXPORT(float) skirmishAiCallback_UnitDef_getTurnInPlaceDistance(int teamId, int 
 EXPORT(float) skirmishAiCallback_UnitDef_getTurnInPlaceSpeedLimit(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->turnInPlaceSpeedLimit;
 }
-EXPORT(int) skirmishAiCallback_UnitDef_getMoveType(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->moveType;
-}
 EXPORT(bool) skirmishAiCallback_UnitDef_isUpright(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->upright;
 }
@@ -1811,7 +1827,7 @@ EXPORT(float) skirmishAiCallback_UnitDef_FlankingBonus_getMobilityAdd(int teamId
 	return getUnitDefById(teamId, unitDefId)->flankingBonusMobilityAdd;
 }
 EXPORT(const char*) skirmishAiCallback_UnitDef_CollisionVolume_getType(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->collisionVolumeType.c_str();
+	return getUnitDefById(teamId, unitDefId)->collisionVolumeTypeStr.c_str();
 }
 EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_CollisionVolume_getScales(int teamId,
 		int unitDefId) {
@@ -2692,7 +2708,7 @@ EXPORT(float) skirmishAiCallback_FeatureDef_0REF1Resource2resourceId0getContaine
 EXPORT(float) skirmishAiCallback_FeatureDef_getMaxHealth(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->maxHealth;}
 EXPORT(float) skirmishAiCallback_FeatureDef_getReclaimTime(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimTime;}
 EXPORT(float) skirmishAiCallback_FeatureDef_getMass(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->mass;}
-EXPORT(const char*) skirmishAiCallback_FeatureDef_CollisionVolume_getType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeType.c_str();}
+EXPORT(const char*) skirmishAiCallback_FeatureDef_CollisionVolume_getType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTypeStr.c_str();}
 EXPORT(SAIFloat3) skirmishAiCallback_FeatureDef_CollisionVolume_getScales(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeScales.toSAIFloat3();}
 EXPORT(SAIFloat3) skirmishAiCallback_FeatureDef_CollisionVolume_getOffsets(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeOffsets.toSAIFloat3();}
 EXPORT(int) skirmishAiCallback_FeatureDef_CollisionVolume_getTest(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTest;}
@@ -3258,7 +3274,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_UnitDef_isTurnInPlace = &skirmishAiCallback_UnitDef_isTurnInPlace;
 	callback->Clb_UnitDef_getTurnInPlaceDistance = &skirmishAiCallback_UnitDef_getTurnInPlaceDistance;
 	callback->Clb_UnitDef_getTurnInPlaceSpeedLimit = &skirmishAiCallback_UnitDef_getTurnInPlaceSpeedLimit;
-	callback->Clb_UnitDef_getMoveType = &skirmishAiCallback_UnitDef_getMoveType;
 	callback->Clb_UnitDef_isUpright = &skirmishAiCallback_UnitDef_isUpright;
 	callback->Clb_UnitDef_isCollide = &skirmishAiCallback_UnitDef_isCollide;
 	callback->Clb_UnitDef_getControlRadius = &skirmishAiCallback_UnitDef_getControlRadius;

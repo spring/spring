@@ -130,6 +130,33 @@ std::string FileSystemHandler::GetWriteDir() const
 }
 
 /**
+ * Removes "./" or ".\" from the start of a path string.
+ */
+static std::string RemoveLocalPathPrefix(const std::string& path)
+{
+	std::string p(path);
+
+	if (p.length() >= 2 && p[0] == '.' && (p[1] == '/' || p[1] == '\\')) {
+	    p.erase(0, 2);
+	}
+
+	return p;
+}
+
+bool FileSystemHandler::IsFSRoot(const std::string& p)
+{
+#ifdef WIN32
+	if (p.length() >= 2 && p[1] == ':' && ((p[0] >= 'a' && p[0] <= 'z') || (p[0] >= 'A' && p[0] <= 'Z')) && (p.length() == 2 || (p.length() == 3 && (p[2] == '\\' || p[2] == '/')))) {
+#else
+	if (p.length() == 1 && p[0] == '/') {
+#endif
+		return true;
+	}
+
+	return false;
+}
+
+/**
  * @brief find files
  * @param dir path in which to start looking (tried relative to each data directory)
  * @param pattern pattern to search for
@@ -150,9 +177,11 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 		return matches;
 	}
 
+	std::string dir2 = RemoveLocalPathPrefix(dir);
+
 	const std::vector<DataDir>& datadirs = locater.GetDataDirs();
 	for (std::vector<DataDir>::const_reverse_iterator d = datadirs.rbegin(); d != datadirs.rend(); ++d) {
-		FindFilesSingleDir(matches, d->path + dir, pattern, flags);
+		FindFilesSingleDir(matches, d->path + dir2, pattern, flags);
 	}
 	return matches;
 }
@@ -510,8 +539,10 @@ bool FileSystem::CreateDirectory(std::string dir) const
 	ForwardSlashes(dir);
 	size_t prev_slash = 0, slash;
 	while ((slash = dir.find('/', prev_slash + 1)) != std::string::npos) {
-		if (!fs.mkdir(dir.substr(0, slash)))
+		std::string pathPart = dir.substr(0, slash);
+		if (!FileSystemHandler::IsFSRoot(pathPart) && !fs.mkdir(pathPart)) {
 			return false;
+		}
 		prev_slash = slash;
 	}
 	return fs.mkdir(dir);
@@ -748,7 +779,7 @@ std::vector<std::string> FileSystem::FindDirsInDirectSubDirs(
 	static const std::string pattern = "*";
 
 	// list of all occurences of the relative path in the data directories
-	std::vector<std::string> rootDirs = filesystem.LocateDirs(relPath);
+	std::vector<std::string> rootDirs = LocateDirs(relPath);
 
 	// list of subdirs in all occurences of the relative path in the data directories
 	std::vector<std::string> mainDirs;

@@ -27,7 +27,21 @@ struct UnitTrackStruct {
 	int lifeTime;
 	int trackAlpha;
 	float alphaFalloff;
-	std::list<TrackPart> parts;
+	TrackPart *lastAdded;
+	std::list<TrackPart *> parts;
+};
+
+struct TrackToAdd {
+	TrackPart *tp;
+	CUnit *unit;
+	UnitTrackStruct* ts;
+};
+
+struct TrackToClean {
+	TrackToClean() {}
+	TrackToClean(UnitTrackStruct* t, std::set<UnitTrackStruct*> *ts): track(t),tracks(ts) {}
+	UnitTrackStruct* track;
+	std::set<UnitTrackStruct*> *tracks;
 };
 
 struct BuildingGroundDecal {
@@ -114,7 +128,15 @@ private:
 		CVertexArray* va;
 	};
 
+	std::vector<BuildingGroundDecal*> decalsToDraw;
+
 	std::list<Scar*> scars;
+	std::vector<Scar*> scarsToBeAdded;
+	std::vector<Scar*> scarsToBeChecked;
+
+	std::vector<TrackToAdd> tracksToBeAdded;
+	std::vector<TrackToClean> tracksToBeCleaned;
+	std::vector<UnitTrackStruct *> tracksToBeDeleted;
 
 	std::vector<CUnit *> moveUnits;
 

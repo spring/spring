@@ -59,12 +59,12 @@ void CSmokeProjectile::Init(const float3& pos, CUnit *owner GML_PARG_C)
 	CProjectile::Init(pos, owner GML_PARG_P);
 }
 
-CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color GML_PARG_C)
-: CProjectile(pos, speed, owner, false, false GML_PARG_P),
+CSmokeProjectile::CSmokeProjectile(const float3& pos,const float3& speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color GML_PARG_C):
+	CProjectile(pos, speed, owner, false, false GML_PARG_P),
 	color(color),
 	age(0),
-	startSize(startSize),
 	size(0),
+	startSize(startSize),
 	sizeExpansion(sizeExpansion)
 {
 	ageSpeed=1.0f/ttl;

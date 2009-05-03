@@ -46,7 +46,11 @@ public:
 	bool isDancing;
 	int danceTime;
 	float3 danceMove;
-	float3 danceCenter;		// vector that points towards the center of the dance to keep the movement "coherent"
+	/**
+	 * Vector that points towards the center of the dance
+	 * to keep the movement "coherent"
+	 */
+	float3 danceCenter;
 
 	float extraHeight;
 	float extraHeightDecay;

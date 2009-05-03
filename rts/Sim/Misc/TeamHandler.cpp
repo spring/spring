@@ -21,8 +21,7 @@ CR_BIND(CTeamHandler,);
 CR_REG_METADATA(CTeamHandler, (
 	CR_MEMBER(gaiaTeamID),
 	CR_MEMBER(gaiaAllyTeamID),
-	CR_MEMBER(allies),
-	CR_MEMBER(team2allyteam),
+	//CR_MEMBER(allyTeams),
 	CR_MEMBER(teams),
 	CR_RESERVED(64)
 ));
@@ -50,7 +49,6 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	const size_t activeTeams = setup->numTeams;
 	assert(activeTeams <= MAX_TEAMS);
 	teams.resize(activeTeams);
-	team2allyteam.resize(activeTeams);
 
 	const size_t activeAllyTeams = setup->numAllyTeams;
 	assert(activeAllyTeams <= MAX_TEAMS);
@@ -58,21 +56,15 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	for (size_t i = 0; i < activeTeams; ++i) {
 		// TODO: this loop body could use some more refactoring
 		CTeam* team = Team(i);
-		const CGameSetup::TeamData& teamStartingData = setup->teamStartingData[i];
+		*team = setup->teamStartingData[i];
 		team->teamNum = i;
-		team->metal = setup->startMetal;
-		team->metalIncome = setup->startMetal; // for the endgame statistics
+		team->metal = team->startMetal < 0 ? setup->startMetal : team->startMetal;
+		team->metalIncome = team->metal; // for the endgame statistics
 
-		team->energy = setup->startEnergy;
+		team->energy = team->startEnergy < 0 ? setup->startEnergy : team->startEnergy;
 		team->energyIncome = setup->startEnergy;
 
-		float3 start(teamStartingData.startPos.x, teamStartingData.startPos.y, teamStartingData.startPos.z);
-		team->StartposMessage(start, (setup->startPosType != CGameSetup::StartPos_ChooseInGame));
-		std::memcpy(team->color, teamStartingData.color, 4);
-		team->handicap = teamStartingData.handicap;
-		team->leader = teamStartingData.leader;
-		team->side = teamStartingData.side;
-		SetAllyTeam(i, teamStartingData.teamAllyteam);
+		SetAllyTeam(i, team->teamAllyteam);
 
 		const SkirmishAIData* skirmishAIData =
 				setup->GetSkirmishAIDataForTeam(i);
@@ -107,10 +99,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		}
 	}
 
-	for (size_t allyTeam1 = 0; allyTeam1 < activeAllyTeams; ++allyTeam1)
-	{
-		allies.push_back(setup->allyStartingData[allyTeam1].allies);
-	}
+	allyTeams = setup->allyStartingData;
 
 	if (useLuaGaia) {
 		// Gaia adjustments
@@ -126,16 +115,18 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		team.gaia = true;
 		team.teamNum = gaiaTeamID;
 		team.StartposMessage(float3(0.0, 0.0, 0.0), true);
+		team.teamAllyteam = gaiaAllyTeamID;
 		teams.push_back(team);
-		team2allyteam.push_back(gaiaAllyTeamID);
+
+		::AllyTeam allyteam;
+		allyteam.allies.resize(activeAllyTeams+1,false); // everyones enemy
+		allyteam.allies[gaiaTeamID] = true; // peace with itself
+		allyTeams.push_back(allyteam);
 		for (size_t allyTeam1 = 0; allyTeam1 < activeAllyTeams; ++allyTeam1)
 		{
-			allies[allyTeam1].push_back(false); // enemy to everyone
+			allyTeams[allyTeam1].allies.push_back(false); // enemy to everyone
 		}
-		allies.push_back(std::vector<bool>(activeAllyTeams+1,false)); // everyones enemy
-		allies[activeAllyTeams][activeAllyTeams] = true; // peace with itself
 	}
-	assert(team2allyteam.size() == teams.size());
 	assert(teams.size() <= MAX_TEAMS);
 }
 

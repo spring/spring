@@ -23,10 +23,10 @@ extern "C" {
 #endif
 
 /**
- * @brief C conform version of SFloat3
+ * @brief C conform version of float3
  *
- * This struct is the C conform version of SFloat3,
- * which is defined in rts/System/SFloat3.h, and
+ * This struct is the C conform version of float3,
+ * which is defined in rts/System/float3.h, and
  * is used as base class for float3 from rts/System/float3.h.
  */
 struct SAIFloat3 {

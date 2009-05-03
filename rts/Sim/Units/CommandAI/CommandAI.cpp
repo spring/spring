@@ -70,32 +70,32 @@ CR_REG_METADATA(CCommandAI, (
 				CR_RESERVED(64),
 				CR_POSTLOAD(PostLoad)
 				));
-CCommandAI::CCommandAI()
-:	lastUserCommand(-1000),
+CCommandAI::CCommandAI():
+	stockpileWeapon(0),
+	lastUserCommand(-1000),
+	lastFinishCommand(0),
+	owner(owner),
 	orderTarget(0),
 	targetDied(false),
 	inCommand(false),
 	selected(false),
-	owner(owner),
-	stockpileWeapon(0),
-	lastSelectedCommandPage(0),
 	repeatOrders(false),
-	lastFinishCommand(0),
+	lastSelectedCommandPage(0),
 	unimportantMove(false),
 	targetLostTimer(TARGET_LOST_TIMER)
 {}
 
-CCommandAI::CCommandAI(CUnit* owner)
-:	lastUserCommand(-1000),
+CCommandAI::CCommandAI(CUnit* owner):
+	stockpileWeapon(0),
+	lastUserCommand(-1000),
+	lastFinishCommand(0),
+	owner(owner),
 	orderTarget(0),
 	targetDied(false),
 	inCommand(false),
 	selected(false),
-	owner(owner),
-	stockpileWeapon(0),
-	lastSelectedCommandPage(0),
 	repeatOrders(false),
-	lastFinishCommand(0),
+	lastSelectedCommandPage(0),
 	unimportantMove(false),
 	targetLostTimer(TARGET_LOST_TIMER)
 {
@@ -404,7 +404,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	}
 
 	if ((c.id == CMD_RECLAIM) && (c.params.size() == 1 || c.params.size() == 5)) {
-		const int unitID = (int) c.params[0];
+		const unsigned int unitID = (unsigned int) c.params[0];
 		if (unitID < uh->MaxUnits()) { // not a feature
 			CUnit* unit = uh->units[unitID];
 			if (unit && !unit->unitDef->reclaimable)
@@ -1126,9 +1126,9 @@ void CCommandAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			const int targetID     = int(c.params[0]);
-			const bool legalTarget = (targetID >= 0 && targetID < uh->MaxUnits());
-			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
+			const unsigned int targetID = (unsigned int) c.params[0];
+			const bool legalTarget      = (targetID < uh->MaxUnits());
+			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
 
 			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
 				owner->AttackUnit(targetUnit, c.id == CMD_DGUN);
@@ -1310,8 +1310,8 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 	const int paramsCount = c.params.size();
 
 	if (paramsCount == 1) {
-		const int unitID = int(c.params[0]);
-		if ((unitID >= 0) && (unitID < uh->MaxUnits())) {
+		const unsigned int unitID = (unsigned int) c.params[0];
+		if (unitID < uh->MaxUnits()) {
 			const CUnit* unit = uh->units[unitID];
 			if((unit != NULL) && isTrackable(unit)) {
 				const float3 endPos =

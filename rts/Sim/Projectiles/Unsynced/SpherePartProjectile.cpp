@@ -29,17 +29,17 @@ CR_REG_METADATA(CSpherePartProjectile,(
 	CR_RESERVED(16)
 	));
 
-CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color GML_PARG_C)
-: CProjectile(centerPos,ZeroVector,owner, false, false GML_PARG_P),
+CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color GML_PARG_C):
+	CProjectile(centerPos,ZeroVector,owner, false, false GML_PARG_P),
 	centerPos(centerPos),
-	expansionSpeed(expansionSpeed),
+	color(color),
 	sphereSize(expansionSpeed),
-	age(0),
-	ttl(ttl),
-	baseAlpha(alpha),
+	expansionSpeed(expansionSpeed),
 	xbase(xpart),
 	ybase(ypart),
-	color(color)
+	baseAlpha(alpha),
+	age(0),
+	ttl(ttl)
 {
 	checkCol=false;
 

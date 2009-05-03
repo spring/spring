@@ -67,29 +67,29 @@ CUnitSet CBuilderCAI::featureReclaimers;
 CUnitSet CBuilderCAI::resurrecters;
 
 
-CBuilderCAI::CBuilderCAI()
-: CMobileCAI(),
+CBuilderCAI::CBuilderCAI():
+	CMobileCAI(),
 	building(false),
-	range3D(true),
-	cachedRadius(0),
 	cachedRadiusId(0),
+	cachedRadius(0),
 	buildRetries(0),
 	lastPC1(-1),
 	lastPC2(-1),
-	lastPC3(-1)
+	lastPC3(-1),
+	range3D(true)
 {}
 
 
-CBuilderCAI::CBuilderCAI(CUnit* owner)
-: CMobileCAI(owner),
+CBuilderCAI::CBuilderCAI(CUnit* owner):
+	CMobileCAI(owner),
 	building(false),
-	range3D(owner->unitDef->buildRange3D),
-	cachedRadius(0),
 	cachedRadiusId(0),
+	cachedRadius(0),
 	buildRetries(0),
 	lastPC1(-1),
 	lastPC2(-1),
-	lastPC3(-1)
+	lastPC3(-1),
+	range3D(owner->unitDef->buildRange3D)
 {
 	CommandDescription c;
 	if (owner->unitDef->canRepair) {
@@ -293,7 +293,7 @@ void CBuilderCAI::CancelRestrictedUnit(const std::string& buildOption)
 
 void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 {
-	if (!AllowedCommand(c))
+	if (!AllowedCommand(c, fromSynced))
 		return;
 
 	if ((c.id == CMD_GUARD) &&
@@ -565,7 +565,7 @@ void CBuilderCAI::ExecuteRepair(Command& c)
 		float radius=c.params[3];
 		fac->StopBuild();
 		if (FindRepairTargetAndRepair(pos, radius, c.options, false) ||
-			((c.options & SPACE_KEY) && owner->unitDef->canReclaim &&  // if there is nothing more to repair, try reclaim
+			((c.options & META_KEY) && owner->unitDef->canReclaim &&  // if there is nothing more to repair, try reclaim
 			FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))) {
 			inCommand=false;
 			SlowUpdate();
@@ -590,7 +590,7 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 			float3 pos(c.params[1], c.params[2], c.params[3]);
 			float radius=c.params[4]+100; // do not walk too far outside capture area
 			if(unit && ((pos-unit->pos).SqLength2D()>radius*radius ||
-				fac->curCapture == unit && unit->isMoving && !ObjInBuildRange(unit))) {
+				(fac->curCapture == unit && unit->isMoving && !ObjInBuildRange(unit)))) {
 				StopMove();
 				FinishCommand();
 				return;
@@ -616,8 +616,8 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		float radius = c.params[3];
 		fac->StopBuild();
 		if (FindCaptureTargetAndCapture(pos, radius, c.options) || // if there is nothing more to capture, try repair/reclaim
-			(c.options & SPACE_KEY) && (owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false) ||
-			owner->unitDef->canReclaim && FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))) {
+			((c.options & META_KEY) && ((owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false)) ||
+			(owner->unitDef->canReclaim && FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))))) {
 			inCommand = false;
 			SlowUpdate();
 			return;
@@ -808,7 +808,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		const bool recAnyTeam = ((c.options & CONTROL_KEY) != 0);
-		const bool recUnits = ((c.options & SPACE_KEY) != 0);
+		const bool recUnits = ((c.options & META_KEY) != 0);
 		RemoveUnitFromReclaimers(owner);
 		RemoveUnitFromFeatureReclaimers(owner);
 		fac->StopBuild();
@@ -853,8 +853,8 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 	assert(owner->unitDef->canResurrect);
 	CBuilder* fac=(CBuilder*)owner;
 	if (c.params.size()==1) {
-		int id=(int)c.params[0];
-		if (id>=uh->MaxUnits()) { // resurrect feature
+		unsigned int id = (unsigned int) c.params[0];
+		if (id >= uh->MaxUnits()) { // resurrect feature
 			CFeatureSet::const_iterator it = featureHandler->GetActiveFeatures().find(id - uh->MaxUnits());
 			if (it != featureHandler->GetActiveFeatures().end() && (*it)->createdFromUnit != "") {
 				CFeature* feature = *it;
@@ -890,7 +890,7 @@ void CBuilderCAI::ExecuteResurrect(Command& c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		if(FindResurrectableFeatureAndResurrect(pos,radius,c.options) || // if there is nothing more to resurrect, try repair/reclaim
-			((c.options & SPACE_KEY) && ((owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false)) ||
+			((c.options & META_KEY) && ((owner->unitDef->canRepair && FindRepairTargetAndRepair(pos, radius, c.options, false)) ||
 			(owner->unitDef->canReclaim && FindReclaimTargetAndReclaim(pos, radius, c.options, true, false, false, false, false))))){
 			inCommand=false;
 			SlowUpdate();
@@ -981,7 +981,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		}
 		return;
 	}
-	if ((c.options & SPACE_KEY) && owner->unitDef->canResurrect && // Priority 2: Resurrect (optional)
+	if ((c.options & META_KEY) && owner->unitDef->canResurrect && // Priority 2: Resurrect (optional)
 	    FindResurrectableFeatureAndResurrect(curPosOnLine, 300, c.options)) {
 		tempOrder = true;
 		inCommand = false;
@@ -992,7 +992,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 	if (owner->unitDef->canReclaim && // Priority 3: Reclaim / reclaim non resurrectable (optional) / reclaim enemy units (optional)
-	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, false, false, (c.options & ALT_KEY), (c.options & SPACE_KEY), (c.options & ALT_KEY))) {
+	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, false, false, (c.options & ALT_KEY), (c.options & META_KEY), (c.options & ALT_KEY))) {
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC3 != gs->frameNum) {  //avoid infinite loops
@@ -1255,17 +1255,23 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 		const std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius);
 		for (std::vector<CUnit*>::const_iterator ui = units.begin(); ui != units.end(); ++ui) {
 			const CUnit* u = *ui;
-			if (u != owner && u->unitDef->reclaimable &&
-				(!recEnemy && (u->team == owner->team) || 
-				((recAnyTeam || recEnemy && !teamHandler->Ally(owner->allyteam, u->allyteam)) && 
-				(u->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS))))) {
+			if (u != owner
+			    && u->unitDef->reclaimable
+			    && (
+			        (!recEnemy && (u->team == owner->team))
+			        || (
+			            (recAnyTeam || (recEnemy && !teamHandler->Ally(owner->allyteam, u->allyteam)))
+			            && (u->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS))
+			           )
+			       )
+			   ) {
 				// do not reclaim friendly builders that are busy
 				if(!u->unitDef->builder || u->commandAI->commandQue.empty() || !teamHandler->Ally(owner->allyteam, u->allyteam)) {
 					if(u->isMoving && stationary) { // reclaim stationary targets first
 						continue;
 					}
 					const float dist = f3SqLen(u->pos - owner->pos);
-					if(dist < bestDist || !stationary && !u->isMoving) {
+					if(dist < bestDist || (!stationary && !u->isMoving)) {
 						if (!owner->unitDef->canmove && !ObjInBuildRange(u)) {
 							continue;
 						}
@@ -1389,7 +1395,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 	for (ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
 
-		if (((options & CONTROL_KEY) && owner->team != unit->team || 
+		if ((((options & CONTROL_KEY) && owner->team != unit->team) || 
 			!teamHandler->Ally(owner->allyteam, unit->allyteam)) && (unit != owner) &&
 			(unit->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS)) &&
 			!unit->beingBuilt && unit->unitDef->capturable) {
@@ -1399,7 +1405,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 			float dist = f3SqLen(unit->pos - owner->pos);
 //				if(options & SOME_KEY)
 //					dist /= (1.0f + unit->health) / unit->maxHealth; // prefer units with high health
-			if(dist < bestDist || !stationary && !unit->isMoving) {
+			if(dist < bestDist || (!stationary && !unit->isMoving)) {
 				if (!owner->unitDef->canmove && !ObjInBuildRange(unit)) {
 					continue;
 				}
@@ -1468,7 +1474,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 				float dist = f3SqLen(unit->pos - owner->pos);
 //				if(options & SOME_KEY)
 //					dist *= unit->health / unit->maxHealth; // prefer units with low health
-				if (dist < bestDist || !stationary && !unit->isMoving) {
+				if (dist < bestDist || (!stationary && !unit->isMoving)) {
 					// dont lock-on to units outside of our reach (for immobile builders)
 					if (!owner->unitDef->canmove && !ObjInBuildRange(unit)) {
 						continue;
@@ -1627,6 +1633,7 @@ void CBuilderCAI::DrawCommands(void)
 					}
 					const unsigned int id = signedId;
 					if (id >= uh->MaxUnits()) {
+
 						GML_RECMUTEX_LOCK(feat); // DrawCommands
 
 						const CFeatureSet& fset = featureHandler->GetActiveFeatures();

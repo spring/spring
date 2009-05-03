@@ -25,7 +25,7 @@
 #include "Sync/SyncTracer.h"
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "LogOutput.h"
 #include "Matrix44f.h"
 #include "myMath.h"
@@ -48,12 +48,12 @@ CR_REG_METADATA(CFactory, (
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CFactory::CFactory()
-:	buildSpeed(100),
-	curBuild(0),
+CFactory::CFactory():
+	buildSpeed(100),
 	quedBuild(false),
-	lastBuild(-1000),
-	opening(false)
+	curBuild(0),
+	opening(false),
+	lastBuild(-1000)
 {
 }
 
@@ -144,7 +144,7 @@ void CFactory::Update()
 
 			int soundIdx = unitDef->sounds.build.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound->PlaySample(
+				Channels::UnitReply.PlaySample(
 					unitDef->sounds.build.getID(soundIdx), pos,
 					unitDef->sounds.build.getVolume(0));
 			}
@@ -334,28 +334,29 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(void)
 {
-	std::vector<int> args;
-	args.push_back(0);
+	std::vector<int> args(1, 0);
 	script->Call("QueryNanoPiece", args);
 
-	if (ph->currentParticles < ph->maxParticles) {
-		if (unitDef->showNanoSpray) {
-			const float3 relWeaponFirePos = script->GetPiecePos(args[0]);
-			const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
-										 + (updir    * relWeaponFirePos.y)
-										 + (rightdir * relWeaponFirePos.x);
-			float3 dif = (curBuild->midPos - weaponPos);
-			const float l = fastmath::sqrt2(dif.SqLength());
-			dif /= l;
-			dif += gu->usRandVector() * 0.15f;
-			float3 color = unitDef->nanoColor;
+#ifdef USE_GML
+	if (gs->frameNum - lastDrawFrame > 20)
+		return;
+#endif
 
-			if (gu->teamNanospray) {
-				unsigned char* tcol = teamHandler->Team(team)->color;
-				color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
-			}
+	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
+		const float3 relWeaponFirePos = script->GetPiecePos(args[0]);
+		const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
+			+ (updir    * relWeaponFirePos.y)
+			+ (rightdir * relWeaponFirePos.x);
+		float3 dif = (curBuild->midPos - weaponPos);
+		const float l = fastmath::sqrt2(dif.SqLength());
+		dif /= l;
+		dif += gu->usRandVector() * 0.15f;
+		float3 color = unitDef->nanoColor;
 
-			new CGfxProjectile(weaponPos, dif, (int) l, color);
+		if (gu->teamNanospray) {
+			unsigned char* tcol = teamHandler->Team(team)->color;
+			color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));
 		}
+		new CGfxProjectile(weaponPos, dif, (int) l, color);
 	}
 }

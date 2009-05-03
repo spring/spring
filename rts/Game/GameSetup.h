@@ -6,8 +6,10 @@
 #include <vector>
 #include <set>
 
-#include "SFloat3.h"
+#include "float3.h"
 #include "PlayerBase.h"
+#include "Sim/Misc/TeamBase.h"
+#include "Sim/Misc/AllyTeam.h"
 #include "ExternalAI/SkirmishAIData.h"
 
 class TdfParser;
@@ -60,27 +62,8 @@ public:
 	const SkirmishAIData* GetSkirmishAIDataForTeam(int teamId) const;
 	size_t GetSkirmishAIs() const;
 
-	struct TeamData
-	{
-		unsigned leader;
-		unsigned char color[4];
-		float handicap;
-		std::string side;
-		SFloat3 startPos;
-		int teamStartNum;
-		int teamAllyteam;
-	};
-	std::vector<TeamData> teamStartingData;
-
-	struct AllyTeamData
-	{
-		float startRectTop;
-		float startRectBottom;
-		float startRectLeft;
-		float startRectRight;
-		std::vector<bool> allies;
-	};
-	std::vector<AllyTeamData> allyStartingData;
+	std::vector<TeamBase> teamStartingData;
+	std::vector<AllyTeam> allyStartingData;
 
 	std::map<std::string, int> restrictedUnits;
 

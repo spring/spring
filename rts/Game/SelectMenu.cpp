@@ -54,10 +54,11 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	player1->AddPair("Team", 1);
 
 	TdfParser::TdfSection* team0 = game->construct_subsection("TEAM0");
-	team0->AddPair("Leader", 0);
+	team0->AddPair("TeamLeader", 0);
 	team0->AddPair("AllyTeam", 0);
 
 	TdfParser::TdfSection* team1 = game->construct_subsection("TEAM1");
+	team1->AddPair("TeamLeader", 1);
 	team1->AddPair("AllyTeam", 1);
 
 	TdfParser::TdfSection* ally0 = game->construct_subsection("ALLYTEAM0");
@@ -77,7 +78,7 @@ SelectMenu::SelectMenu(bool server) :
 {
 	mySettings = new ClientSetup();
 	mySettings->isHost = server;
-	mySettings->myPlayerName = configHandler->GetString("name", "unnamed");
+	mySettings->myPlayerName = configHandler->GetString("name", "Player");
 	if (!mySettings->isHost)
 	{
 		userInput=configHandler->GetString("address","");

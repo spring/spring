@@ -1,7 +1,7 @@
 #ifndef UNIT_DEF_IMAGE
 #define UNIT_DEF_IMAGE
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "Rendering/GL/myGL.h"
 
 struct UnitDefImage

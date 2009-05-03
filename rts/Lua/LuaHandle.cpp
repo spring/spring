@@ -177,7 +177,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 
 void CLuaHandle::CheckStack()
 {
-	GML_RECMUTEX_LOCK(lua); // Add mutex to avoid bogus errors due to concurrency
+	GML_RECMUTEX_LOCK(lua); // CheckStack - avoid bogus errors due to concurrency
 
 	const int top = lua_gettop(L);
 	if (top != 0) {
@@ -1715,7 +1715,7 @@ bool CLuaHandle::CommandNotify(const Command& cmd)
 	HSTR_PUSH_BOOL(L, "ctrl",  !!(cmd.options & CONTROL_KEY));
 	HSTR_PUSH_BOOL(L, "shift", !!(cmd.options & SHIFT_KEY));
 	HSTR_PUSH_BOOL(L, "right", !!(cmd.options & RIGHT_MOUSE_KEY));
-	HSTR_PUSH_BOOL(L, "space", !!(cmd.options & SPACE_KEY));
+	HSTR_PUSH_BOOL(L, "meta",  !!(cmd.options & META_KEY));
 
 	// call the function
 	if (!RunCallInUnsynced(cmdStr, 3, 1)) {

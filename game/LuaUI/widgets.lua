@@ -77,7 +77,7 @@ widgetHandler = {
   customCommands = {},
   inCommandsChanged = false,
 
-  autoModWidgets = false,
+  autoUserWidgets = false,
 
   actionHandler = include("actions.lua"),
   
@@ -313,8 +313,8 @@ end
 function widgetHandler:Initialize()
   self:LoadConfigData()
 
-  local autoModWidgets = Spring.GetConfigInt('LuaAutoModWidgets', 1)
-  self.autoModWidgets = (autoModWidgets ~= 0)
+  local autoUserWidgets = Spring.GetConfigInt('LuaAutoEnableUserWidgets', 0)
+  self.autoUserWidgets = (autoUserWidgets ~= 0)
 
   -- create the "LuaUI/Config" directory
   Spring.CreateDir(LUAUI_DIRNAME .. 'Config')
@@ -443,7 +443,7 @@ function widgetHandler:LoadWidget(filename, fromZip)
   local order = self.orderList[name]
   if (((order ~= nil) and (order > 0)) or
       ((order == nil) and  -- unknown widget
-       (info.enabled and ((not knownInfo.fromZip) or self.autoModWidgets)))) then
+       (info.enabled and (knownInfo.fromZip or self.autoUserWidgets)))) then
     -- this will be an active widget
     if (order == nil) then
       self.orderList[name] = 12345  -- back of the pack

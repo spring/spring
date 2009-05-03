@@ -17,6 +17,7 @@
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/SimpleParser.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Matrix44f.h"
@@ -435,10 +436,10 @@ void C3DOParser::SimStreamRead(void* buf, int length)
 }
 
 
-void C3DOParser::FindCenter(S3DOPiece* object) const
+void C3DOParser::FindCenter(S3DOPiece* o) const
 {
 	std::vector<S3DModelPiece*>::iterator si;
-	for (si = object->childs.begin(); si != object->childs.end(); ++si) {
+	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
 		FindCenter((S3DOPiece*) *si);
 	}
 
@@ -447,7 +448,7 @@ void C3DOParser::FindCenter(S3DOPiece* object) const
 	float minx = 10000.0f, miny = 10000.0f, minz = 10000.0f;
 
 	std::vector<S3DOVertex>::iterator vi;
-	for (vi = object->vertices.begin(); vi != object->vertices.end(); ++vi) {
+	for (vi = o->vertices.begin(); vi != o->vertices.end(); ++vi) {
 		maxx = max(maxx, vi->pos.x);
 		maxy = max(maxy, vi->pos.y);
 		maxz = max(maxz, vi->pos.z);
@@ -456,7 +457,7 @@ void C3DOParser::FindCenter(S3DOPiece* object) const
 		miny = min(miny, vi->pos.y);
 		minz = min(minz, vi->pos.z);
 	}
-	for (si = object->childs.begin(); si != object->childs.end(); ++si) {
+	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
 		maxx = max(maxx, (*si)->offset.x + (*si)->maxx);
 		maxy = max(maxy, (*si)->offset.y + (*si)->maxy);
 		maxz = max(maxz, (*si)->offset.z + (*si)->maxz);
@@ -466,23 +467,30 @@ void C3DOParser::FindCenter(S3DOPiece* object) const
 		minz = min(minz, (*si)->offset.z + (*si)->minz);
 	}
 
-	object->maxx = maxx;
-	object->maxy = maxy;
-	object->maxz = maxz;
-	object->minx = minx;
-	object->miny = miny;
-	object->minz = minz;
+	o->maxx = maxx;
+	o->maxy = maxy;
+	o->maxz = maxz;
 
-	object->relMidPos = float3((maxx + minx) * 0.5f, (maxy + miny) * 0.5f, (maxz + minz) * 0.5f);
+	o->minx = minx;
+	o->miny = miny;
+	o->minz = minz;
 
-	for (vi = object->vertices.begin(); vi != object->vertices.end(); ++vi) {
-		maxSize = max(maxSize, object->relMidPos.distance(vi->pos));
+	const float3 cvScales((o->maxx - o->minx),        (o->maxy - o->miny),        (o->maxz - o->minz)       );
+	const float3 cvOffset((o->maxx + o->minx) * 0.5f, (o->maxy + o->miny) * 0.5f, (o->maxz + o->minz) * 0.5f);
+
+	o->colvol = new CollisionVolume("box", cvScales, cvOffset, COLVOL_TEST_CONT);
+	o->colvol->Enable();
+
+	o->relMidPos = cvOffset;
+
+	for (vi = o->vertices.begin(); vi != o->vertices.end(); ++vi) {
+		maxSize = max(maxSize, o->relMidPos.distance(vi->pos));
 	}
-	for (si = object->childs.begin(); si != object->childs.end(); ++si) {
+	for (si = o->childs.begin(); si != o->childs.end(); ++si) {
 		S3DOPiece* p3do = (S3DOPiece*) (*si);
-		maxSize = max(maxSize, object->relMidPos.distance(p3do->offset + p3do->relMidPos) + p3do->radius);
+		maxSize = max(maxSize, o->relMidPos.distance(p3do->offset + p3do->relMidPos) + p3do->radius);
 	}
-	object->radius = maxSize;
+	o->radius = maxSize;
 }
 
 

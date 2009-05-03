@@ -36,6 +36,7 @@
 #include "Sim/Misc/SideParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
@@ -157,6 +158,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTeamStatsHistory);
 	REGISTER_LUA_CFUNC(GetTeamLuaAI);
 
+	REGISTER_LUA_CFUNC(GetAllyTeamInfo);
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
 
@@ -220,9 +222,12 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitFuel);
 	REGISTER_LUA_CFUNC(GetUnitEstimatedPath);
 	REGISTER_LUA_CFUNC(GetUnitLastAttacker);
+	REGISTER_LUA_CFUNC(GetUnitLastAttackedPiece);
 	REGISTER_LUA_CFUNC(GetUnitLosState);
 	REGISTER_LUA_CFUNC(GetUnitSeparation);
 	REGISTER_LUA_CFUNC(GetUnitDefDimensions);
+	REGISTER_LUA_CFUNC(GetUnitCollisionVolumeData);
+	REGISTER_LUA_CFUNC(GetUnitPieceCollisionVolumeData);
 
 	REGISTER_LUA_CFUNC(GetUnitCommands);
 	REGISTER_LUA_CFUNC(GetFactoryCounts);
@@ -1027,7 +1032,14 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	lua_pushstring(L,  team->side.c_str());
 	lua_pushnumber(L,  teamHandler->AllyTeam(team->teamNum));
 
-	return 6;
+	lua_newtable(L);
+	const TeamBase::customOpts& popts(team->GetAllValues());
+	for (TeamBase::customOpts::const_iterator it = popts.begin(); it != popts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 7;
 }
 
 
@@ -1245,7 +1257,14 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 	lua_pushstring(L, player->countryCode.c_str());
 	lua_pushnumber(L, player->rank);
 
-	return 9;
+	lua_newtable(L);
+	const PlayerBase::customOpts& popts(player->GetAllValues());
+	for (PlayerBase::customOpts::const_iterator it = popts.begin(); it != popts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 10;
 }
 
 
@@ -1279,6 +1298,22 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 #endif
 }
 
+int LuaSyncedRead::GetAllyTeamInfo(lua_State* L)
+{
+	const size_t allyteam = (size_t)luaL_checkint(L, -1);
+	if (!teamHandler->ValidAllyTeam(allyteam))
+		return 0;
+
+	const AllyTeam& ally = teamHandler->GetAllyTeam(allyteam);
+	lua_newtable(L);
+	const AllyTeam::customOpts& popts(ally.GetAllValues());
+	for (AllyTeam::customOpts::const_iterator it = popts.begin(); it != popts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
 
 int LuaSyncedRead::AreTeamsAllied(lua_State* L)
 {
@@ -2940,6 +2975,79 @@ int LuaSyncedRead::GetUnitLastAttacker(lua_State* L)
 	return 1;
 }
 
+int LuaSyncedRead::GetUnitLastAttackedPiece(lua_State* L)
+{
+	const CUnit* unit = ParseAllyUnit(L, __FUNCTION__, 1); // ?
+	if (unit == NULL) {
+		return 0;
+	}
+	if (unit->lastAttackedPiece == NULL) {
+		return 0;
+	}
+
+	const LocalModelPiece* lmp = unit->lastAttackedPiece;
+	const S3DModelPiece* omp = lmp->original;
+
+	lua_pushstring(L, omp->name.c_str());
+	lua_pushnumber(L, unit->lastAttackedPieceFrame);
+	return 2;
+}
+
+
+int LuaSyncedRead::GetUnitCollisionVolumeData(lua_State* L)
+{
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const CollisionVolume* vol = unit->collisionVolume;
+
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, vol->GetTestType());
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IsDisabled());
+
+	return 10;
+}
+
+int LuaSyncedRead::GetUnitPieceCollisionVolumeData(lua_State* L)
+{
+	const CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	const LocalModel* lm = unit->localmodel;
+	const int pieceIndex = luaL_checkint(L, 2);
+
+	if (pieceIndex < 0 || pieceIndex >= lm->pieces.size()) {
+		return 0;
+	}
+
+	const LocalModelPiece* lmp = lm->pieces[pieceIndex];
+	const CollisionVolume* vol = lmp->colvol;
+
+	lua_pushnumber(L, vol->GetScales().x);
+	lua_pushnumber(L, vol->GetScales().y);
+	lua_pushnumber(L, vol->GetScales().z);
+	lua_pushnumber(L, vol->GetOffsets().x);
+	lua_pushnumber(L, vol->GetOffsets().y);
+	lua_pushnumber(L, vol->GetOffsets().z);
+	lua_pushnumber(L, vol->GetVolumeType());
+	lua_pushnumber(L, vol->GetTestType());
+	lua_pushnumber(L, vol->GetPrimaryAxis());
+	lua_pushboolean(L, vol->IsDisabled());
+
+	return 10;
+}
+
 
 int LuaSyncedRead::GetUnitLosState(lua_State* L)
 {
@@ -2961,7 +3069,7 @@ int LuaSyncedRead::GetUnitLosState(lua_State* L)
 	const unsigned short losStatus = unit->losStatus[allyTeam];
 
 	if (fullRead && lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
-		lua_pushnumber(L, losStatus); // return a numberic value
+		lua_pushnumber(L, losStatus); // return a numeric value
 		return 1;
 	}
 
@@ -3073,7 +3181,7 @@ static void PackCommand(lua_State* L, const Command& cmd)
 	if (cmd.options & SHIFT_KEY)       { HSTR_PUSH_BOOL(L, "shift",    true); }
 	if (cmd.options & RIGHT_MOUSE_KEY) { HSTR_PUSH_BOOL(L, "right",    true); }
 	if (cmd.options & INTERNAL_ORDER)  { HSTR_PUSH_BOOL(L, "internal", true); }
-	if (cmd.options & SPACE_KEY)       { HSTR_PUSH_BOOL(L, "space",    true); }
+	if (cmd.options & META_KEY)        { HSTR_PUSH_BOOL(L, "meta",    true); }
 	lua_rawset(L, -3); // options table
 
 	HSTR_PUSH_NUMBER(L, "tag", cmd.tag);

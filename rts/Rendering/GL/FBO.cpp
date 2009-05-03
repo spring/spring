@@ -142,8 +142,6 @@ void FBO::GLContextLost()
 {
 	if (!IsSupported()) return;
 
-	//GML_STDMUTEX_LOCK(draw);
-
 	GLint oldReadBuffer;
 
 	for (std::vector<FBO*>::iterator fi=fboList.begin(); fi!=fboList.end(); ++fi) {
@@ -171,7 +169,6 @@ void FBO::GLContextReinit()
 {
 	if (!IsSupported()) return;
 
-	//GML_STDMUTEX_LOCK(draw);
 	for (std::map<GLuint,FBO::TexData*>::iterator ti=texBuf.begin(); ti!=texBuf.end(); ++ti) {
 		FBO::TexData* tex = ti->second;
 
@@ -215,7 +212,6 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 	// we need to bind it once, else it isn't valid
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
 
-	//GML_STDMUTEX_LOCK(fbo);
 	fboList.push_back(this);
 }
 
@@ -236,7 +232,6 @@ FBO::~FBO()
 		glDeleteRenderbuffersEXT(1, &(*ri));
 	}
 
-	//GML_STDMUTEX_LOCK(fbo);
 	for (std::vector<FBO*>::iterator fi=fboList.begin(); fi!=fboList.end(); ++fi) {
 		if (*fi==this) {
 			fboList.erase(fi);

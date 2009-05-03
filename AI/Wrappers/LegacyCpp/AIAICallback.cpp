@@ -389,7 +389,6 @@ unitDef->category = sAICallback->Clb_UnitDef_getCategory(teamId, unitDefId);
 unitDef->speed = sAICallback->Clb_UnitDef_getSpeed(teamId, unitDefId);
 unitDef->turnRate = sAICallback->Clb_UnitDef_getTurnRate(teamId, unitDefId);
 unitDef->turnInPlace = sAICallback->Clb_UnitDef_isTurnInPlace(teamId, unitDefId);
-unitDef->moveType = sAICallback->Clb_UnitDef_getMoveType(teamId, unitDefId);
 unitDef->upright = sAICallback->Clb_UnitDef_isUpright(teamId, unitDefId);
 unitDef->collide = sAICallback->Clb_UnitDef_isCollide(teamId, unitDefId);
 unitDef->controlRadius = sAICallback->Clb_UnitDef_getControlRadius(teamId, unitDefId);
@@ -430,7 +429,7 @@ unitDef->flankingBonusDir = float3(sAICallback->Clb_UnitDef_FlankingBonus_getDir
 unitDef->flankingBonusMax = sAICallback->Clb_UnitDef_FlankingBonus_getMax(teamId, unitDefId);
 unitDef->flankingBonusMin = sAICallback->Clb_UnitDef_FlankingBonus_getMin(teamId, unitDefId);
 unitDef->flankingBonusMobilityAdd = sAICallback->Clb_UnitDef_FlankingBonus_getMobilityAdd(teamId, unitDefId);
-unitDef->collisionVolumeType = sAICallback->Clb_UnitDef_CollisionVolume_getType(teamId, unitDefId);
+unitDef->collisionVolumeTypeStr = sAICallback->Clb_UnitDef_CollisionVolume_getType(teamId, unitDefId);
 unitDef->collisionVolumeScales = float3(sAICallback->Clb_UnitDef_CollisionVolume_getScales(teamId, unitDefId));
 unitDef->collisionVolumeOffsets = float3(sAICallback->Clb_UnitDef_CollisionVolume_getOffsets(teamId, unitDefId));
 unitDef->collisionVolumeTest = sAICallback->Clb_UnitDef_CollisionVolume_getTest(teamId, unitDefId);
@@ -1023,7 +1022,7 @@ featureDef->energy = sAICallback->Clb_FeatureDef_0REF1Resource2resourceId0getCon
 featureDef->maxHealth = sAICallback->Clb_FeatureDef_getMaxHealth(teamId, featureDefId);
 featureDef->reclaimTime = sAICallback->Clb_FeatureDef_getReclaimTime(teamId, featureDefId);
 featureDef->mass = sAICallback->Clb_FeatureDef_getMass(teamId, featureDefId);
-featureDef->collisionVolumeType = sAICallback->Clb_FeatureDef_CollisionVolume_getType(teamId, featureDefId);
+featureDef->collisionVolumeTypeStr = sAICallback->Clb_FeatureDef_CollisionVolume_getType(teamId, featureDefId);
 featureDef->collisionVolumeScales = float3(sAICallback->Clb_FeatureDef_CollisionVolume_getScales(teamId, featureDefId));
 featureDef->collisionVolumeOffsets = float3(sAICallback->Clb_FeatureDef_CollisionVolume_getOffsets(teamId, featureDefId));
 featureDef->collisionVolumeTest = sAICallback->Clb_FeatureDef_CollisionVolume_getTest(teamId, featureDefId);
@@ -1511,6 +1510,24 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 			AIHCSendStartPos* myData = (AIHCSendStartPos*) data;
 			SSendStartPosCommand cmd = {myData->ready, myData->pos.toSAIFloat3()};
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			break;
+		}
+
+		case AIHCTraceRayId: {
+			AIHCTraceRay* cppCmdData = (AIHCTraceRay*) data;
+			STraceRayCommand cCmdData = {
+				cppCmdData->rayPos.toSAIFloat3(),
+				cppCmdData->rayDir.toSAIFloat3(),
+				cppCmdData->rayLen,
+				cppCmdData->srcUID,
+				cppCmdData->hitUID,
+				cppCmdData->flags
+			};
+
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cCmdData);
+
+			cppCmdData->rayLen = cCmdData.rayLen;
+			cppCmdData->hitUID = cCmdData.hitUID;
 			break;
 		}
 	}

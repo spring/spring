@@ -71,7 +71,7 @@ CR_REG_METADATA(FeatureDef, (
 		));
 
 
-CR_BIND_DERIVED(CFeatureHandler,CObject, );
+CR_BIND(CFeatureHandler, );
 
 CR_REG_METADATA(CFeatureHandler, (
 
@@ -140,7 +140,6 @@ CFeatureHandler::~CFeatureHandler()
 			delete fd->collisionVolume;
 			fd->collisionVolume = 0;
 		}
-
 		delete *fi;
 	}
 
@@ -240,27 +239,26 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 		if (fd->modelname.find(".") == std::string::npos) {
 			fd->modelname += ".3do";
 		}
-		fd->modelname=string("objects3d/") + fd->modelname;
+		fd->modelname = string("objects3d/") + fd->modelname;
 	}
 
 
-	/*
-	fd->collisionSphereScale = fdTable.GetFloat("collisionSphereScale", 1.0f);
-	fd->collisionSphereOffset = fdTable.GetFloat3("collisionSphereOffset", ZeroVector);
-	fd->useCSOffset = (fd->collisionSphereOffset != ZeroVector);
-	*/
-
 	// these take precedence over the old sphere tags as well as
 	// feature->radius (for feature <--> projectile interactions)
-	fd->collisionVolumeType    = fdTable.GetString("collisionVolumeType", "");
+	fd->collisionVolumeTypeStr = fdTable.GetString("collisionVolumeType", "");
 	fd->collisionVolumeScales  = fdTable.GetFloat3("collisionVolumeScales", ZeroVector);
 	fd->collisionVolumeOffsets = fdTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
 	fd->collisionVolumeTest    = fdTable.GetInt("collisionVolumeTest", COLVOL_TEST_CONT);
 
 	// initialize the (per-featuredef) collision-volume,
 	// all CFeature instances hold a copy of this object
-	fd->collisionVolume = new CollisionVolume(fd->collisionVolumeType,
-	fd->collisionVolumeScales, fd->collisionVolumeOffsets, fd->collisionVolumeTest);
+	fd->collisionVolume = new CollisionVolume(
+		fd->collisionVolumeTypeStr,
+		fd->collisionVolumeScales,
+		fd->collisionVolumeOffsets,
+		fd->collisionVolumeTest
+	);
+
 
 	fd->upright = fdTable.GetBool("upright", false);
 
@@ -336,7 +334,6 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			fd->myName = name;
 			fd->description = "Tree";
 			fd->mass = 20;
-			// trees by default have spherical collision volumes of fixed radius <TREE_RADIUS>
 			fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
 			AddFeatureDef(name, fd);
 		}
@@ -424,7 +421,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(feat); // DeleteFeature, maybe superfluous
+	GML_RECMUTEX_LOCK(feat); // DeleteFeature - maybe superfluous
 
 	toBeRemoved.push_back(feature->id);
 
@@ -488,6 +485,7 @@ void CFeatureHandler::Update()
 	}
 
 	if(!toBeRemoved.empty()) {
+
 		GML_RECMUTEX_LOCK(feat); // Update
 		GML_RECMUTEX_LOCK(quad); // Update
 

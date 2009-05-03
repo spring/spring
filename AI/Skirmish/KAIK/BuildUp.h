@@ -57,10 +57,6 @@ struct EconState {
 	int numDefenses;
 	int numFactories;
 
-	bool canBuildEStores;
-	bool canBuildMMakers;
-	bool canBuildMStores;
-
 	int nIdleBuilders;
 	int builderID;
 	const UnitDef* builderDef;

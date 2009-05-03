@@ -4,7 +4,7 @@
 #include <string>
 
 #include "float3.h"
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 
 class CGameSetup;

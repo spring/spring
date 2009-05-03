@@ -3,20 +3,21 @@
 #include "Sound.h"
 
 #include <AL/alc.h>
+#include <boost/cstdint.hpp>
 
 #include "SoundSource.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
+#include "AudioChannel.h"
 #include "ALShared.h"
 
-#include "Sim/Units/Unit.h"
 #include "LogOutput.h"
 #include "ConfigHandler.h"
 #include "Exceptions.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
-#include <boost/cstdint.hpp>
+#include "Rendering/GL/myGL.h" // I HATE IT
 
 CSound* sound = NULL;
 
@@ -24,8 +25,9 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 {
 	mute = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
-	globalVolume = configHandler->Get("SoundVolume", 60) * 0.01f;
-	unitReplyVolume = configHandler->Get("UnitReplyVolume", 80 ) * 0.01f;
+	masterVolume = configHandler->Get("SoundVolume", 60) * 0.01f;
+	//TODO make generic
+	Channels::UnitReply.SetVolume(configHandler->Get("UnitReplyVolume", 80 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{
@@ -101,52 +103,8 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 	posScale.y = 0.1f;
 	posScale.z = 1.0f;
 
-	LuaParser parser("gamedata/sounds.lua", SPRING_VFS_MOD, SPRING_VFS_ZIP);
-	parser.SetLowerKeys(false);
-	parser.SetLowerCppKeys(false);
-	parser.Execute();
-	if (!parser.IsValid()) {
-		LogObject(LOG_SOUND) << "Could not load gamedata/sounds.lua:";
-		LogObject(LOG_SOUND) << parser.GetErrorLog();
-	}
-	else
-	{
-		const LuaTable soundRoot = parser.GetRoot();
-		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
-		if (!soundItemTable.IsValid())
-			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table";
-		else
-		{
-			std::vector<std::string> keys;
-			soundItemTable.GetKeys(keys);
-			for (std::vector<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
-			{
-				const std::string name(*it);
-				soundItemDef bufmap;
-				const LuaTable buf(soundItemTable.SubTable(*it));
-				buf.GetMap(bufmap);
-				bufmap["name"] = name;
-				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
-				if (sit != soundItemDefs.end())
-					LogObject(LOG_SOUND) << "CSound(): two SoundItems have the same name: " << name;
-
-				soundItemDef::const_iterator inspec = bufmap.find("file");
-				if (inspec == bufmap.end())	// no file, drop
-					LogObject(LOG_SOUND) << "CSound(): SoundItem has no file tag: " << name;
-				else
-					soundItemDefs[name] = bufmap;
-
-				if (buf.KeyExists("preload"))
-				{
-					LogObject(LOG_SOUND) << "CSound(): preloading " << name;
-					const size_t newid = sounds.size();
-					sounds.push_back(new SoundItem(GetWaveBuffer(bufmap["file"], true), bufmap));
-					soundMap[name] = newid;
-				}
-			}
-			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems";
-		}
-	}
+	LoadSoundDefs("gamedata/sounds.lua");
+	LoadSoundDefs("mapdata/sounds.lua");
 }
 
 CSound::~CSound()
@@ -183,7 +141,8 @@ bool CSound::HasSoundItem(const std::string& name)
 
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
-	GML_RECMUTEX_LOCK(sound);
+	GML_RECMUTEX_LOCK(sound); // GetSoundId
+
 	if (sources.empty())
 		return 0;
 
@@ -242,7 +201,7 @@ bool CSound::Mute()
 	if (mute)
 		alListenerf(AL_GAIN, 0.0);
 	else
-		alListenerf(AL_GAIN, globalVolume);
+		alListenerf(AL_GAIN, masterVolume);
 	return mute;
 }
 
@@ -253,65 +212,14 @@ bool CSound::IsMuted() const
 
 void CSound::SetVolume(float v)
 {
-	globalVolume = v;
-}
-
-void CSound::PlaySample(size_t id, float volume)
-{
-	PlaySample(id, ZeroVector, ZeroVector, volume, true);
-}
-
-
-void CSound::PlaySample(size_t id, const float3& p, float volume)
-{
-	PlaySample(id, p, ZeroVector, volume, false);
-}
-
-void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume)
-{
-	PlaySample(id, p, velocity, volume, false);
-}
-
-void CSound::PlaySample(size_t id, CUnit* u,float volume)
-{
-	PlaySample(id, u->pos, u->speed, volume, false);
-}
-
-void CSound::PlaySample(size_t id, CWorldObject* p,float volume)
-{
-	PlaySample(id,p->pos,volume);
-}
-
-void CSound::PlayUnitActivate(size_t id, CUnit* p, float volume)
-{
-	PlaySample (id, p, volume);
-}
-
-void CSound::PlayUnitReply(size_t id, CUnit * p, float volume, bool squashDupes)
-{
-	GML_RECMUTEX_LOCK(sound); // PlayUnitReply
-
-	if (squashDupes) {
-		/* HACK Squash multiple command acknowledgements in the same frame, so
-		   we aren't deafened by the construction horde, or the metalmaker
-		   horde. */
-
-		/* If we've already played the sound this frame, don't play it again. */
-		if (repliesPlayed.find(id) != repliesPlayed.end()) {
-			return;
-		}
-		
-		repliesPlayed.insert(id);
-	}
-
-	PlaySample(id, volume * unitReplyVolume);
+	masterVolume = v;
 }
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	if (sources.empty() || mute || volume == 0.0f || globalVolume == 0.0f)
+	if (sources.empty() || mute || volume == 0.0f || masterVolume == 0.0f)
 		return;
 
 	if (id == 0)
@@ -359,6 +267,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 void CSound::Update()
 {
 	updateCounter++;
+
 	GML_RECMUTEX_LOCK(sound); // Update
 
 	if (sources.empty())
@@ -385,7 +294,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
-	alListenerf(AL_GAIN, globalVolume);
+	alListenerf(AL_GAIN, masterVolume);
 	CheckError("CSound::UpdateListener");
 }
 
@@ -398,6 +307,55 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "# reserved for buffers: " << (SoundBuffer::AllocedSize()/1024) << " kB";
 	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
+}
+
+void CSound::LoadSoundDefs(const std::string& filename)
+{
+	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
+	parser.SetLowerKeys(false);
+	parser.SetLowerCppKeys(false);
+	parser.Execute();
+	if (!parser.IsValid()) {
+		LogObject(LOG_SOUND) << "Could not load " << filename << ": " << parser.GetErrorLog();
+	}
+	else
+	{
+		const LuaTable soundRoot = parser.GetRoot();
+		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
+		if (!soundItemTable.IsValid())
+			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << filename;
+		else
+		{
+			std::vector<std::string> keys;
+			soundItemTable.GetKeys(keys);
+			for (std::vector<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it)
+			{
+				const std::string name(*it);
+				soundItemDef bufmap;
+				const LuaTable buf(soundItemTable.SubTable(*it));
+				buf.GetMap(bufmap);
+				bufmap["name"] = name;
+				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
+				if (sit != soundItemDefs.end())
+					LogObject(LOG_SOUND) << "CSound(): two SoundItems have the same name: " << name;
+
+				soundItemDef::const_iterator inspec = bufmap.find("file");
+				if (inspec == bufmap.end())	// no file, drop
+					LogObject(LOG_SOUND) << "CSound(): SoundItem has no file tag: " << name;
+				else
+					soundItemDefs[name] = bufmap;
+
+				if (buf.KeyExists("preload"))
+				{
+					LogObject(LOG_SOUND) << "CSound(): preloading " << name;
+					const size_t newid = sounds.size();
+					sounds.push_back(new SoundItem(GetWaveBuffer(bufmap["file"], true), bufmap));
+					soundMap[name] = newid;
+				}
+			}
+			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems from " << filename;
+		}
+	}
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
@@ -444,6 +402,7 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 {
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
+
 	if (sources.empty())
 		return 0;
 	
@@ -458,13 +417,4 @@ boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bo
 
 void CSound::NewFrame()
 {
-	GML_RECMUTEX_LOCK(sound); // NewFrame
-
-	repliesPlayed.clear();
-}
-
-
-void CSound::SetUnitReplyVolume (float vol)
-{
-	unitReplyVolume = vol;
 }

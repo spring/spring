@@ -8,6 +8,7 @@
 #include "3DModel.h"
 #include "3DOParser.h"
 #include "s3oParser.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FartextureHandler.h"
 #include "Util.h"
@@ -34,7 +35,7 @@ C3DModelParser::C3DModelParser(void)
 
 C3DModelParser::~C3DModelParser(void)
 {
-	// model cache
+	// delete model cache
 	std::map<std::string, S3DModel*>::iterator ci;
 	for (ci = cache.begin(); ci != cache.end(); ++ci) {
 		DeleteChilds(ci->second->rootobject);
@@ -42,7 +43,7 @@ C3DModelParser::~C3DModelParser(void)
 	}
 	cache.clear();
 
-	// parsers
+	// delete parsers
 	std::map<std::string, IModelParser*>::iterator pi;
 	for (pi = parsers.begin(); pi != parsers.end(); ++pi) {
 		delete pi->second;
@@ -97,16 +98,20 @@ S3DModel* C3DModelParser::Load3DModel(std::string name, const float3& centerOffs
 void C3DModelParser::Update() {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // Update
-	for (std::vector<ModelParserPair>::iterator i = createLists.begin(); i != createLists.end(); ++i)
+
+	for (std::vector<ModelParserPair>::iterator i = createLists.begin(); i != createLists.end(); ++i) {
 		CreateListsNow(i->parser, i->model);
+	}
 	createLists.clear();
 
-	for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i)
+	for (std::set<CUnit*>::iterator i = fixLocalModels.begin(); i != fixLocalModels.end(); ++i) {
 		FixLocalModel(*i);
+	}
 	fixLocalModels.clear();
 
-	for (std::vector<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i)
+	for (std::vector<LocalModel*>::iterator i = deleteLocalModels.begin(); i != deleteLocalModels.end(); ++i) {
 		delete *i;
+	}
 	deleteLocalModels.clear();
 #endif
 }
@@ -115,7 +120,8 @@ void C3DModelParser::Update() {
 void C3DModelParser::DeleteChilds(S3DModelPiece* o)
 {
 	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); di++) {
-		delete *di;
+		delete (*di)->colvol;
+		delete (*di);
 	}
 	o->childs.clear();
 	delete o;
@@ -126,6 +132,7 @@ void C3DModelParser::DeleteLocalModel(CUnit* unit)
 {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // DeleteLocalModel
+
 	fixLocalModels.erase(unit);
 	deleteLocalModels.push_back(unit->localmodel);
 #else
@@ -165,24 +172,25 @@ LocalModel* C3DModelParser::CreateLocalModel(S3DModel* model)
 }
 
 
-void C3DModelParser::CreateLocalModelPieces(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
+void C3DModelParser::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
 {
 	LocalModelPiece& lmp = *lmodel->pieces[*piecenum];
-	lmp.original  =  model;
-	lmp.name      =  model->name;
-	lmp.type      =  model->type;
-	lmp.displist  =  model->displist;
-	lmp.visible   = !model->isEmpty;
+	lmp.original  =  piece;
+	lmp.name      =  piece->name;
+	lmp.type      =  piece->type;
+	lmp.displist  =  piece->displist;
+	lmp.visible   = !piece->isEmpty;
 	lmp.updated   =  false;
-	lmp.pos       =  model->offset;
-	lmp.rot       =  float3(0.0f,0.0f,0.0f);
+	lmp.pos       =  piece->offset;
+	lmp.rot       =  float3(0.0f, 0.0f, 0.0f);
+	lmp.colvol    = new CollisionVolume(piece->colvol);
 
-	lmp.childs.reserve(model->childs.size());
-	for (unsigned int i = 0; i < model->childs.size(); i++) {
+	lmp.childs.reserve(piece->childs.size());
+	for (unsigned int i = 0; i < piece->childs.size(); i++) {
 		(*piecenum)++;
 		lmp.childs.push_back(lmodel->pieces[*piecenum]);
 		lmodel->pieces[*piecenum]->parent = &lmp;
-		CreateLocalModelPieces(model->childs[i], lmodel, piecenum);
+		CreateLocalModelPieces(piece->childs[i], lmodel, piecenum);
 	}
 }
 
@@ -220,7 +228,6 @@ void C3DModelParser::CreateListsNow(IModelParser* parser, S3DModelPiece* o)
 
 void C3DModelParser::CreateLists(IModelParser* parser, S3DModelPiece* o) {
 #if defined(USE_GML) && GML_ENABLE_SIM
-	// GML_STDMUTEX_LOCK(model); // CreateLists
 	createLists.push_back(ModelParserPair(o, parser));
 #else
 	CreateListsNow(parser, o);

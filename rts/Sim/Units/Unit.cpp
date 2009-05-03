@@ -55,7 +55,7 @@
 #include "LogOutput.h"
 #include "Matrix44f.h"
 #include "myMath.h"
-#include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "UnitDef.h"
 #include "Unit.h"
 #include "UnitHandler.h"
@@ -88,100 +88,73 @@ float CUnit::expReloadScale = 0.4f;
 float CUnit::expGrade = 0.0f;
 
 
-CUnit::CUnit ()
-:	unitDef(0),
+CUnit::CUnit():
+	unitDef(0),
 	collisionVolume(0),
 	team(0),
-	maxHealth(100),
-	health(100),
-	travel(0.0f),
-	travelPeriod(0.0f),
-	power(100),
-	experience(0),
-	limExperience(0),
-	neutral(false),
-	armorType(0),
-	soloBuilder(NULL),
-	beingBuilt(true),
 	allyteam(0),
-	restTime(0),
-	controlRadius(2),
-	reloadSpeed(1),
-	commandAI(0),
-	tempNum(0),
-	losRadius(0),
-	airLosRadius(0),
-	losHeight(0),
-	metalCost(100),
-	energyCost(0),
-	buildTime(100),
 	frontdir(0,0,1),
 	rightdir(-1,0,0),
 	updir(0,1,0),
 	upright(true),
-	falling(false),
-	fallSpeed(0.2),
-	inAir(false),
-	inWater(false),
-	maxRange(0),
-	haveTarget(false),
-	lastAttacker(0),
-	lastAttack(-200),
-	userTarget(0),
-	userAttackGround(false),
-	commandShotCount(-1),
-	lastLosUpdate(0),
-	fireState(2),
-	moveState(0),
-	lastSlowUpdate(0),
-	los(0),
-	userAttackPos(0,0,0),
-	crashing(false),
-	script(NULL),
-	flankingBonusMode(0),
-	flankingBonusDir(1.0f, 0.0f, 0.0f),
-	flankingBonusAvgDamage(1.4f),
-	flankingBonusDifDamage(0.5f),
-	flankingBonusMobility(10.0f),
-	flankingBonusMobilityAdd(0.01f),
-	group(0),
-	lastDamage(-100),
-	lastFireWeapon(0),
-	lastMuzzleFlameSize(0),
-	lastMuzzleFlameDir(0,1,0),
-	category(0),
-	recentDamage(0),
-	armoredState(false),
-	armoredMultiple(1),
-	curArmorMultiple(1),
+	relMidPos(0,0,0),
+	travel(0.0f),
+	travelPeriod(0.0f),
+	power(100),
+	maxHealth(100),
+	health(100),
+	paralyzeDamage(0),
+	captureProgress(0),
+	experience(0),
+	limExperience(0),
+	neutral(false),
+	soloBuilder(NULL),
+	beingBuilt(true),
+	lastNanoAdd(gs->frameNum),
+	repairAmount(0.0f),
+	transporter(0),
+	toBeTransported(false),
 	buildProgress(0),
 	groundLevelled(true),
 	terraformLeft(0),
 	realLosRadius(0),
 	realAirLosRadius(0),
+	losStatus(teamHandler->ActiveAllyTeams(), 0),
 	inBuildStance(false),
-	isDead(false),
-	nextPosErrorUpdate(1),
-	posErrorDelta(0,0,0),
-	transporter(0),
-	toBeTransported(false),
-	hasUWWeapons(false),
-	lastNanoAdd(gs->frameNum),
-	cloakTimeout(128),
-	curCloakTimeout(gs->frameNum),
-	isCloaked(false),
-	wantCloak(false),
-	scriptCloak(0),
-	decloakDistance(0.0f),
+	stunned(false),
+	useHighTrajectory(false),
+	dontUseWeapons(false),
+	deathScriptFinished(false),
+	deathCountdown(0),
+	delayedWreckLevel(-1),
+	restTime(0),
 	shieldWeapon(0),
 	stockpileWeapon(0),
+	reloadSpeed(1),
+	maxRange(0),
+	haveTarget(false),
 	haveDGunRequest(false),
-	jammerRadius(0),
-	sonarJamRadius(0),
+	lastMuzzleFlameSize(0),
+	lastMuzzleFlameDir(0,1,0),
+	armorType(0),
+	category(0),
+	los(0),
+	tempNum(0),
+	lastSlowUpdate(0),
+	controlRadius(2),
+	losRadius(0),
+	airLosRadius(0),
+	losHeight(0),
+	lastLosUpdate(0),
 	radarRadius(0),
 	sonarRadius(0),
+	jammerRadius(0),
+	sonarJamRadius(0),
 	hasRadarCapacity(false),
-	stunned(false),
+	prevMoveType(NULL),
+	usingScriptMoveType(false),
+	commandAI(0),
+	group(0),
 	condUseMetal(0.0f),
 	condUseEnergy(0.0f),
 	condMakeMetal(0.0f),
@@ -204,23 +177,54 @@ CUnit::CUnit ()
 	energyMakeold(0),
 	energyTickMake(0),
 	metalExtract(0),
+	metalCost(100),
+	energyCost(0),
+	buildTime(100),
 	metalStorage(0),
 	energyStorage(0),
+	lastAttacker(0),
+	lastAttackedPiece(0),
+	lastAttackedPieceFrame(-1),
+	lastAttack(-200),
+	lastFireWeapon(0),
+	recentDamage(0),
+	userTarget(0),
+	userAttackPos(0,0,0),
+	userAttackGround(false),
+	commandShotCount(-1),
+	fireState(2),
+	dontFire(false),
+	moveState(0),
+	script(NULL),
+	crashing(false),
+	isDead(false),
+	falling(false),
+	fallSpeed(0.2),
+	inAir(false),
+	inWater(false),
+	flankingBonusMode(0),
+	flankingBonusDir(1.0f, 0.0f, 0.0f),
+	flankingBonusMobility(10.0f),
+	flankingBonusMobilityAdd(0.01f),
+	flankingBonusAvgDamage(1.4f),
+	flankingBonusDifDamage(0.5f),
+	armoredState(false),
+	armoredMultiple(1),
+	curArmorMultiple(1),
+	posErrorDelta(0,0,0),
+	nextPosErrorUpdate(1),
+	hasUWWeapons(false),
+	wantCloak(false),
+	scriptCloak(0),
+	cloakTimeout(128),
+	curCloakTimeout(gs->frameNum),
+	isCloaked(false),
+	decloakDistance(0.0f),
 	lastTerrainType(-1),
 	curTerrainType(0),
-	relMidPos(0,0,0),
 	selfDCountdown(0),
-	useHighTrajectory(false),
-	deathCountdown(0),
-	delayedWreckLevel(-1),
-	paralyzeDamage(0),
-	captureProgress(0),
-	repairAmount(0.0f),
 	myTrack(0),
 	lastFlareDrop(0),
-	dontFire(false),
-	deathScriptFinished(false),
-	dontUseWeapons(false),
 	currentFuel(0),
 	luaDraw(false),
 	noDraw(false),
@@ -228,13 +232,13 @@ CUnit::CUnit ()
 	noMinimap(false),
 	isIcon(false),
 	iconRadius(0),
-	prevMoveType(NULL),
-	usingScriptMoveType(false),
 	lodCount(0),
 	currentLOD(0),
 	alphaThreshold(0.1f),
-	cegDamage(1),
-	losStatus(teamHandler->ActiveAllyTeams(), 0)
+	cegDamage(1)
+#ifdef USE_GML
+	, lastDrawFrame(-30)
+#endif
 {
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl = NULL;
@@ -1082,7 +1086,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 				if (unitDef->isCommander || uh->lastDamageWarning + 150 < gs->frameNum) {
 					const int soundIdx = unitDef->sounds.underattack.getRandomIdx();
 					if (soundIdx >= 0) {
-						sound->PlaySample(
+						Channels::UserInterface.PlaySample(
 							unitDef->sounds.underattack.getID(soundIdx),
 							unitDef->isCommander ? 4 : 2);
 					}
@@ -1682,6 +1686,7 @@ bool CUnit::SetGroup(CGroup* newGroup)
 			group=0;									//group ai didnt accept us
 			return false;
 		} else { // add us to selected units if group is selected
+
 			GML_RECMUTEX_LOCK(sel); // SetGroup
 
 			if(selectedUnits.selectedGroup == group->id)
@@ -1929,7 +1934,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 					// HACK: loading code doesn't set sane defaults for explosion sounds, so we do it here
 					// NOTE: actually no longer true, loading code always ensures that sound volume != -1
 					float volume = wd->soundhit.getVolume(0);
-					sound->PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
+					Channels::Battle.PlaySample(wd->soundhit.getID(0), pos, (volume == -1) ? 1.0f : volume);
 				}
 			}
 		}
@@ -2047,7 +2052,7 @@ void CUnit::Activate()
 
 	int soundIdx = unitDef->sounds.activate.getRandomIdx();
 	if (soundIdx >= 0) {
-		sound->PlayUnitActivate(
+		Channels::UnitReply.PlaySample(
 			unitDef->sounds.activate.getID(soundIdx), this,
 			unitDef->sounds.activate.getVolume(soundIdx));
 	}
@@ -2070,7 +2075,7 @@ void CUnit::Deactivate()
 
 	int soundIdx = unitDef->sounds.deactivate.getRandomIdx();
 	if (soundIdx >= 0) {
-		sound->PlayUnitActivate(
+		Channels::UnitReply.PlaySample(
 			unitDef->sounds.deactivate.getID(soundIdx), this,
 			unitDef->sounds.deactivate.getVolume(soundIdx));
 	}
@@ -2431,8 +2436,9 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(energyStorage),
 
 	CR_MEMBER(lastAttacker),
+	// CR_MEMBER(lastAttackedPiece),
+	CR_MEMBER(lastAttackedPieceFrame),
 	CR_MEMBER(lastAttack),
-	CR_MEMBER(lastDamage),
 	CR_MEMBER(lastFireWeapon),
 	CR_MEMBER(recentDamage),
 	CR_MEMBER(userTarget),

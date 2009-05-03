@@ -23,6 +23,7 @@ MKDIR="mkdir -p"
 ##############################################
 ### do not change anything below this line ###
 
+AWK_COMMON_SCRIPTS_DIR=${SPRING_SOURCE}/AI/Wrappers/CUtils/bin
 C_CALLBACK=${SPRING_SOURCE}/ExternalAI/Interface/SSkirmishAICallback.h
 C_EVENTS=${SPRING_SOURCE}/ExternalAI/Interface/AISEvents.h
 C_COMMANDS=${SPRING_SOURCE}/ExternalAI/Interface/AISCommands.h
@@ -40,13 +41,16 @@ ${MKDIR} ${GENERATED_SOURCE_DIR}/${JAVA_PKG}/event
 ${MKDIR} ${GENERATED_SOURCE_DIR}/${JAVA_PKG}/command
 ${MKDIR} ${GENERATED_SOURCE_DIR}/${JAVA_PKG}/oo
 
-${AWK} ${VARS} -f jna_wrappEvents.awk -f common.awk -f commonDoc.awk ${C_EVENTS}
+# To make the following lines shorter
+ACSD=${AWK_COMMON_SCRIPTS_DIR}
 
-${AWK} ${VARS} -f jna_wrappCommands.awk -f common.awk -f commonDoc.awk ${C_COMMANDS}
+${AWK} ${VARS} -f jna_wrappEvents.awk -f ${ACSD}/common.awk -f ${ACSD}/commonDoc.awk ${C_EVENTS}
 
-${AWK} ${VARS} -f jna_wrappCallback.awk -f common.awk -f commonDoc.awk ${C_CALLBACK}
+${AWK} ${VARS} -f jna_wrappCommands.awk -f ${ACSD}/common.awk -f ${ACSD}/commonDoc.awk ${C_COMMANDS}
 
-${AWK} ${VARS} -f java_wrappCallbackOO.awk -f common.awk -f commonDoc.awk -f commonOOCallback.awk ${JNA_CALLBACK}
+${AWK} ${VARS} -f jna_wrappCallback.awk -f ${ACSD}/common.awk -f ${ACSD}/commonDoc.awk ${C_CALLBACK}
+
+${AWK} ${VARS} -f java_wrappCallbackOO.awk -f ${ACSD}/common.awk -f ${ACSD}/commonDoc.awk -f ${ACSD}/commonOOCallback.awk ${JNA_CALLBACK}
 
 cd ${CWD_BACKUP}
 

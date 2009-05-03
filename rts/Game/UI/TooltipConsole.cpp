@@ -68,8 +68,6 @@ void CTooltipConsole::Draw(void)
 		return;
 	}
 
-//	GML_RECMUTEX_LOCK(quad); // getcurrenttooltip accesses guitraceray which accesses quadfield
-
 	const std::string s = mouse->GetCurrentTooltip();
 
 	glDisable(GL_TEXTURE_2D);

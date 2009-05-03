@@ -40,6 +40,7 @@
 #include "Sim/Units/UnitTracker.h"
 #include "EventHandler.h"
 #include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include <boost/cstdint.hpp>
 
 // can't be up there since those contain conflicting definitions
@@ -431,13 +432,13 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			if (addedunits == 1) {
 				int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 				if (soundIdx >= 0) {
-					sound->PlayUnitReply(
+					Channels::UnitReply.PlaySample(
 						unit->unitDef->sounds.select.getID(soundIdx), unit,
 						unit->unitDef->sounds.select.getVolume(soundIdx));
 				}
 			}
 			else if(addedunits) //more than one unit selected
-				sound->PlaySample(soundMultiselID);
+				Channels::UserInterface.PlaySample(soundMultiselID);
 		} else {
 			CUnit* unit;
 			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,false);
@@ -480,7 +481,7 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 				int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 				if (soundIdx >= 0) {
-					sound->PlayUnitReply(
+					Channels::UnitReply.PlaySample(
 						unit->unitDef->sounds.select.getID(soundIdx), unit,
 						unit->unitDef->sounds.select.getVolume(soundIdx));
 				}
@@ -597,15 +598,13 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // anti deadlock
-	GML_RECMUTEX_LOCK(quad); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
+	GML_RECMUTEX_LOCK(sel); // GetCurrentTooltip - anti deadlock
+	GML_RECMUTEX_LOCK(quad); // GetCurrentTooltip - called from ToolTipConsole::Draw --> MouseHandler::GetCurrentTooltip
 
 	const float range = (gu->viewRange * 1.4f);
 	CUnit* unit = NULL;
-//	GML_RECMUTEX_LOCK(unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
 	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
 	CFeature* feature = NULL;
-//	GML_RECMUTEX_LOCK(feat); // tooltipconsole::draw --> mousehandler::getcurrenttooltip
 	float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);
 
 	if ((udist > (range - 300.0f)) &&

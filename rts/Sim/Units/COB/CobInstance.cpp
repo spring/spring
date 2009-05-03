@@ -39,7 +39,7 @@
 #include "Sim/Weapons/Weapon.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
-#include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "myMath.h"
 #include "Sync/SyncTracer.h"
 
@@ -185,7 +185,7 @@ void CCobInstance::PlayUnitSound(int snr, int attr)
 {
 	int sid = script.sounds[snr];
 	//logOutput.Print("Playing %d %d %d", snr, attr, sid);
-	sound->PlaySample(sid, unit->pos, unit->speed, attr);
+	Channels::UnitReply.PlaySample(sid, unit->pos, unit->speed, attr);
 }
 
 

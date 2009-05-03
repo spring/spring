@@ -52,7 +52,7 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "EventHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "FileSystem/SimpleParser.h"
 #include "Util.h"
 #include "TimeProfiler.h"
@@ -712,12 +712,12 @@ void CMiniMap::SelectUnits(int x, int y) const
 		}
 
 		if (addedunits >= 2) {
-			sound->PlaySample(mouse->soundMultiselID);
+			Channels::UserInterface.PlaySample(mouse->soundMultiselID);
 		}
 		else if (addedunits == 1) {
 			int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound->PlayUnitReply(
+				Channels::UnitReply.PlaySample(
 					unit->unitDef->sounds.select.getID(soundIdx), unit,
 					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
@@ -774,7 +774,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 
 			int soundIdx = unit->unitDef->sounds.select.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound->PlayUnitReply(
+				Channels::UnitReply.PlaySample(
 					unit->unitDef->sounds.select.getID(soundIdx), unit,
 					unit->unitDef->sounds.select.getVolume(soundIdx));
 			}
@@ -914,8 +914,8 @@ std::string CMiniMap::GetTooltip(int x, int y)
 		return buildTip;
 	}
 
-	GML_RECMUTEX_LOCK(sel); // anti deadlock
-	GML_RECMUTEX_LOCK(quad); //unit); // tooltipconsole::draw --> mousehandler::getcurrenttooltip --> gettooltip
+	GML_RECMUTEX_LOCK(sel); // GetToolTip - anti deadlock
+	GML_RECMUTEX_LOCK(quad); // GetToolTip - called from TooltipConsole::Draw --> MouseHandler::GetCurrentTooltip
 
 	const CUnit* unit = GetSelectUnit(GetMapPosition(x, y));
 	if (unit) {
@@ -1049,7 +1049,6 @@ void CMiniMap::DrawForReal()
 	for (ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ui++) {
 		DrawUnit(*ui);
 	}
-//	GML_RECMUTEX_LOCK(quad);  // getselectunit accesses quadfield
 	// highlight the selected unit
 	CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
 	if (unit != NULL) {
@@ -1103,7 +1102,9 @@ void CMiniMap::DrawForReal()
 
 	// draw the projectiles
 	if (drawProjectiles) {
+
 		GML_RECMUTEX_LOCK(proj); // DrawForReal
+
 		if(ph->ps.size()>0) {
 			CVertexArray* lines=GetVertexArray();
 			CVertexArray* points=GetVertexArray();
@@ -1428,11 +1429,6 @@ void CMiniMap::DrawUnit(CUnit* unit)
 
 	// the next simplest test
 	if (unit->noMinimap) {
-		return;
-	}
-
-	// blink for damages within the past 3 game seconds
-	if ((unit->lastDamage > (gs->frameNum - 3 * GAME_SPEED)) && (gs->frameNum & 8)) {
 		return;
 	}
 

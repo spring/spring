@@ -748,7 +748,7 @@ namespace terrain {
 
 		texturing->BeginTexturing();
 		// render to the framebuffer
-		for (int p=0;p<q->textureSetup->renderSetup [0]->passes.size();p++)
+		for (size_t p=0; p < q->textureSetup->renderSetup[0]->passes.size(); p++)
 		{
 			texturing->BeginPass(p);
 			if (texturing->SetupNode (q, p))

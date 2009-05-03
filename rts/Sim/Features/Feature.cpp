@@ -169,25 +169,15 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 		midPos = pos + model->relMidPos;
 
-		// copy the FeatureDef volume archetype data
-		collisionVolume = new CollisionVolume(def->collisionVolume);
-
-		// CFeatureHandler left this volume's axis-scales uninitialized
-		// (ie. no "collisionVolumeScales" tag was defined in FeatureDef)
-		if (collisionVolume->GetScale(COLVOL_AXIS_X) <= 1.0f &&
-			collisionVolume->GetScale(COLVOL_AXIS_Y) <= 1.0f &&
-			collisionVolume->GetScale(COLVOL_AXIS_Z) <= 1.0f) {
-			collisionVolume->SetDefaultScale(model->radius);
-		}
+		collisionVolume = new CollisionVolume(def->collisionVolume, model->radius);
 	}
 	else if (def->drawType == DRAWTYPE_TREE) {
 		SetRadius(TREE_RADIUS);
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
 
-		// copy the FeatureDef volume archetype data
-		collisionVolume = new CollisionVolume(def->collisionVolume);
-		collisionVolume->SetDefaultScale(TREE_RADIUS);
+		// LoadFeaturesFromMap() doesn't set a scale for trees
+		collisionVolume = new CollisionVolume(def->collisionVolume, TREE_RADIUS);
 	}
 	else {
 		// geothermal (no collision volume)

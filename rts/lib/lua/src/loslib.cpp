@@ -48,7 +48,6 @@ static int os_execute (lua_State *L) {
 
 static int os_remove (lua_State *L) {
   const char *filename = luaL_checkstring(L, 1);
-  int success = 0;
   if (!G(L)->remove_func) { /* SPRING */
     lua_pushnil(L);
     lua_pushliteral(L, "os.remove() is not available");

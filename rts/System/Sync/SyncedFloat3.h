@@ -12,6 +12,7 @@
 #if defined(SYNCDEBUG) || defined(SYNCCHECK)
 
 #include "lib/streflop/streflop_cond.h"
+#include "SyncedPrimitive.h"
 
 /**
  * @brief SyncedFloat3 class
@@ -23,7 +24,7 @@
 class SyncedFloat3
 {
 public:
-	CR_DECLARE_STRUCT(SyncedFloat3);
+	CR_DECLARE(SyncedFloat3);
 /*	inline void* operator new(size_t size){return mempool.Alloc(size);};
 	inline void* operator new(size_t n, void *p){return p;}; //cp visual
 	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};

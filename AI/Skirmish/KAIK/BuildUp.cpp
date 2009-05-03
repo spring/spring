@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "IncCREG.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
@@ -132,7 +134,6 @@ void CBuildUp::GetEconState(EconState* es) const {
 	// TODO: use actual metal and energy drain of nuke weapon here
 	es->buildNukeSilo =
 		(es->builderDef != NULL) && (ai->uh->NukeSilos.size() < MAX_NUKE_SILOS) &&
-		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_NUKE_SILO)) &&
 		(es->mIncome > 100.0f && es->eIncome > 6000.0f) &&
 		(es->mUsage < es->mIncome && es->eUsage < es->eIncome);
 
@@ -141,18 +142,6 @@ void CBuildUp::GetEconState(EconState* es) const {
 
 	es->numDefenses  = ai->uh->AllUnitsByCat[CAT_DEFENCE].size();
 	es->numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
-
-	// these are static; the number of building
-	// _types_ in the unit-table never changes
-	es->canBuildEStores =
-		(es->builderDef != NULL) &&
-		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_ENERGY_STORAGE));
-	es->canBuildMMakers =
-		(es->builderDef != NULL) &&
-		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_METAL_MAKER));
-	es->canBuildMStores =
-		(es->builderDef != NULL) &&
-		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_METAL_STORAGE));
 }
 
 BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
@@ -178,7 +167,7 @@ BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
 
 	if (
 		es->eIncome > 2000.0f && es->eUsage < (es->eIncome - 1000.0f) &&
-		es->mStall && es->mLevel < 100.0f && es->canBuildMMakers
+		es->mStall && es->mLevel < 100.0f
 	) {
 		return BUILD_E_EXCESS;
 	}
@@ -254,7 +243,7 @@ void CBuildUp::Buildup(int frame) {
 						const bool eExcess    = (econState.eIncome > (econState.eUsage * 1.5));
 
 						// if we couldn't build or upgrade an extractor
-						if (!haveNewMex && eOverflow && econState.canBuildEStores > 0 && storageTimer <= 0) {
+						if (!haveNewMex && eOverflow && storageTimer <= 0) {
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_ESTOR)) {
 								// build energy storage
 								if (BuildNow(econState.builderID, CAT_ESTOR, NULL)) {
@@ -262,7 +251,7 @@ void CBuildUp::Buildup(int frame) {
 								}
 							}
 						}
-						else if (!haveNewMex && econState.canBuildMMakers && eExcess) {
+						else if (!haveNewMex && eExcess) {
 							// build metal maker
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MMAKER)) {
 								BuildNow(econState.builderID, CAT_MMAKER, NULL);
@@ -284,7 +273,7 @@ void CBuildUp::Buildup(int frame) {
 				case BUILD_DEFENSE: {
 					// do we have more factories than defenses (and have at least 10 minutes passed)?
 					if (econState.numFactories > (econState.numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
-						if (econState.mOverflow && econState.canBuildMStores && (storageTimer <= 0) && (econState.numFactories > 0)) {
+						if (econState.mOverflow && (storageTimer <= 0) && (econState.numFactories > 0)) {
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MSTOR)) {
 								// build metal storage
 								if (BuildNow(econState.builderID, CAT_MSTOR, NULL)) {

@@ -77,7 +77,6 @@ void CGroupHandler::Update()
 
 void CGroupHandler::DrawCommands()
 {
-//	GML_STDMUTEX_LOCK(cai); // not needed, protected via SelectedUnits::DrawCommands
 	for (std::vector<CGroup*>::iterator g=groups.begin(); g!=groups.end(); ++g)
 	{
 		if ((*g) != NULL) {

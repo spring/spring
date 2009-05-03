@@ -56,45 +56,45 @@ CR_REG_METADATA(CMobileCAI, (
 				CR_RESERVED(16)
 				));
 
-CMobileCAI::CMobileCAI()
-: CCommandAI(),
-//	patrolTime(0),
+CMobileCAI::CMobileCAI():
+	CCommandAI(),
 	goalPos(-1,-1,-1),
+	lastUserGoal(0,0,0),
+	lastIdleCheck(0),
 	tempOrder(false),
+	lastPC(-1),
+//	patrolTime(0),
+	maxWantedSpeed(0),
 	lastBuggerOffTime(-200),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
-	maxWantedSpeed(0),
-	lastIdleCheck(0),
 	commandPos1(ZeroVector),
 	commandPos2(ZeroVector),
-	lastPC(-1),
 	cancelDistance(1024),
 	lastCloseInTry(-1),
 	slowGuard(false),
-	moveDir(gs->randFloat() > 0.5),
-	lastUserGoal(0,0,0)
+	moveDir(gs->randFloat() > 0.5)
 {}
 
 
-CMobileCAI::CMobileCAI(CUnit* owner)
-: CCommandAI(owner),
-//	patrolTime(0),
+CMobileCAI::CMobileCAI(CUnit* owner):
+	CCommandAI(owner),
 	goalPos(-1,-1,-1),
+	lastUserGoal(owner->pos),
+	lastIdleCheck(0),
 	tempOrder(false),
+	lastPC(-1),
+//	patrolTime(0),
+	maxWantedSpeed(0),
 	lastBuggerOffTime(-200),
 	buggerOffPos(0,0,0),
 	buggerOffRadius(0),
-	maxWantedSpeed(0),
-	lastIdleCheck(0),
 	commandPos1(ZeroVector),
 	commandPos2(ZeroVector),
-	lastPC(-1),
 	cancelDistance(1024),
 	lastCloseInTry(-1),
 	slowGuard(false),
-	moveDir(gs->randFloat() > 0.5),
-	lastUserGoal(owner->pos)
+	moveDir(gs->randFloat() > 0.5)
 {
 	CalculateCancelDistance();
 
@@ -213,7 +213,7 @@ static T* getAirMoveType(CUnit *owner)
 
 void CMobileCAI::GiveCommandReal(const Command &c, bool fromSynced)
 {
-	if (!AllowedCommand(c))
+	if (!AllowedCommand(c, fromSynced))
 		return;
 
 	if (owner->unitDef->canfly && c.id == CMD_AUTOREPAIRLEVEL) {
@@ -705,9 +705,9 @@ void CMobileCAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			const int targetID     = int(c.params[0]);
-			const bool legalTarget = (targetID >= 0 && targetID < uh->MaxUnits());
-			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
+			const unsigned int targetID = (unsigned int) c.params[0];
+			const bool legalTarget      = (targetID < uh->MaxUnits());
+			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
 
 			// check if we have valid target parameter and that we aren't attacking ourselves
 			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {

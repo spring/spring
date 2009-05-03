@@ -28,7 +28,7 @@ void ProfileDrawer::Disable()
 
 void ProfileDrawer::Draw()
 {
-	GML_STDMUTEX_LOCK(time); // Draw
+	GML_STDMUTEX_LOCK_NOPROF(time); // Draw
 
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
@@ -47,9 +47,12 @@ void ProfileDrawer::Draw()
 	std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
 
 	int y = 0;
-	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y)
+	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi, ++y){
+#if GML_MUTEX_PROFILER
+		if(pi->first.size()<5 || pi->first.substr(pi->first.size()-5,5).compare("Mutex")!=0) { --y; continue; }
+#endif
 		font->glFormatAt(0.655f, 0.960f - y * 0.024f, 1.0f, "%20s %6.2fs %5.2f%%", pi->first.c_str(), ((float)pi->second.total) / 1000.f, pi->second.percent * 100);
-
+	}
 	glTranslatef(0.655f,0.965f,0);
 	glScalef(0.015f,0.02f,0.02f);
 	glColor4f(1,1,1,1);
@@ -93,7 +96,7 @@ void ProfileDrawer::Draw()
 
 bool ProfileDrawer::MousePress(int x, int y, int button)
 {
-	GML_STDMUTEX_LOCK(time); // MousePress
+	GML_STDMUTEX_LOCK_NOPROF(time); // MousePress
 
 	float mx=MouseX(x);
 	float my=MouseY(y);
@@ -114,7 +117,7 @@ bool ProfileDrawer::MousePress(int x, int y, int button)
 
 bool ProfileDrawer::IsAbove(int x, int y)
 {
-	GML_STDMUTEX_LOCK(time); // IsAbove
+	GML_STDMUTEX_LOCK_NOPROF(time); // IsAbove
 
 	const float mx=MouseX(x);
 	const float my=MouseY(y);

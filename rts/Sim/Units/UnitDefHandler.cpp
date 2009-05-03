@@ -55,15 +55,15 @@ UnitDef::UnitDefWeapon::UnitDefWeapon()
 
 UnitDef::UnitDefWeapon::UnitDefWeapon(
 	std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif,
-	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse)
-: name(name)
-, def(def)
-, slavedTo(slavedTo)
-, mainDir(mainDir)
-, maxAngleDif(maxAngleDif)
-, badTargetCat(badTargetCat)
-, onlyTargetCat(onlyTargetCat)
-, fuelUsage(fuelUse)
+	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse):
+	name(name),
+	def(def),
+	slavedTo(slavedTo),
+	mainDir(mainDir),
+	maxAngleDif(maxAngleDif),
+	fuelUsage(fuelUse),
+	badTargetCat(badTargetCat),
+	onlyTargetCat(onlyTargetCat)
 {}
 
 
@@ -319,8 +319,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	} else {
 		ud.airLosRadius = ud.airLosRadius * modInfo.airLosMul / (SQUARE_SIZE * (1 << modInfo.airMipLevel));
 	}
-
-	ud.moveType = 0;
 
 	ud.canSubmerge = udTable.GetBool("canSubmerge", false);
 	ud.canfly      = udTable.GetBool("canFly",      false);
@@ -756,18 +754,25 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.modelCenterOffset = udTable.GetFloat3("modelCenterOffset", ZeroVector);
 
-	ud.collisionVolumeType = udTable.GetString("collisionVolumeType", "");
-	ud.collisionVolumeScales = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
-	ud.collisionVolumeOffsets = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
-	ud.collisionVolumeTest = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC);
+	ud.collisionVolumeTypeStr   = udTable.GetString("collisionVolumeType", "");
+	ud.collisionVolumeScales    = udTable.GetFloat3("collisionVolumeScales", ZeroVector);
+	ud.collisionVolumeOffsets   = udTable.GetFloat3("collisionVolumeOffsets", ZeroVector);
+	ud.collisionVolumeTest      = udTable.GetInt("collisionVolumeTest", COLVOL_TEST_DISC);
+	ud.usePieceCollisionVolumes = udTable.GetBool("usePieceCollisionVolumes", false);
 
 	// initialize the (per-unitdef) collision-volume
 	// all CUnit instances hold a copy of this object
 	ud.collisionVolume = new CollisionVolume(
-		ud.collisionVolumeType,
+		ud.collisionVolumeTypeStr,
 		ud.collisionVolumeScales,
 		ud.collisionVolumeOffsets,
-		ud.collisionVolumeTest);
+		ud.collisionVolumeTest
+	);
+
+	if (ud.usePieceCollisionVolumes) {
+		ud.collisionVolume->Disable();
+	}
+
 
 	ud.seismicRadius    = udTable.GetInt("seismicDistance", 0);
 	ud.seismicSignature = udTable.GetFloat("seismicSignature", -1.0f);
@@ -860,7 +865,7 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
 	{
 		string soundFile = "sounds/" + fileName;
 	
-		if (soundFile.find(".wav") == -1) {
+		if (soundFile.find(".wav") == string::npos) {
 			// .wav extension missing, add it
 			soundFile += ".wav";
 		}
