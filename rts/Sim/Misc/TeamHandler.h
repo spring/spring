@@ -52,6 +52,12 @@ public:
 	 * returns the team2ally at given index
 	 */
 	int AllyTeam(int team) { return team2allyteam[team]; }
+	::AllyTeam& GetAllyTeam(size_t id) { return allyTeams[id]; };
+
+	bool ValidAllyTeam(size_t id)
+	{
+		return id >= 0 && id < allyTeams.size();
+	};
 
 	/**
 	 * @brief allied teams
