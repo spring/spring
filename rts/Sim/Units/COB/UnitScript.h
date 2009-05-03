@@ -65,14 +65,16 @@ public:
 	static const int* GetGlobalVars()       { return globalVars; }
 
 protected:
-	bool busy;
-	bool yardOpen;
-
 	static std::vector<int> teamVars[TEAM_VAR_COUNT];
 	static std::vector<int> allyVars[ALLY_VAR_COUNT];
 	static int globalVars[GLOBAL_VAR_COUNT];
 
 	int unitVars[UNIT_VAR_COUNT];
+
+protected:
+	CUnit* unit;
+	bool yardOpen;
+	bool busy;
 
 	struct AnimInfo {
 		AnimType type;
@@ -86,7 +88,6 @@ protected:
 	};
 
 	std::list<struct AnimInfo *> anims;
-	CUnit *unit;
 	const std::vector<int>& scriptIndex;
 
 	void MapScriptToModelPieces(LocalModel* lmodel);
@@ -158,13 +159,13 @@ public:
 	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex);
 	virtual ~CUnitScript();
 
-	bool IsBusy() const { return busy; }
+	bool IsBusy() const        { return busy; }
 
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
 	// first one takes COBFN_* constant as argument
-	bool HasFunction(int id) const { return scriptIndex[id] >= 0; }
+	bool HasFunction(int id) const                   { return scriptIndex[id] >= 0; }
 	bool HasFunction(const std::string& fname) const { return GetFunctionId(fname) >= 0; }
 
 	// returns function number as expected by RawCall, but not Call

@@ -47,16 +47,14 @@
 
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
-: script(_script), CUnitScript(_unit, _script.scriptIndex)
+	: CUnitScript(_unit, _script.scriptIndex)
+	, script(_script)
+	, smoothAnim(unit->unitDef->smoothAnim)
 {
 	staticVars.reserve(script.numStaticVars);
 	for (int i = 0; i < script.numStaticVars; ++i) {
 		staticVars.push_back(0);
 	}
-
-	yardOpen = false;
-	busy = false;
-	smoothAnim = unit->unitDef->smoothAnim;
 }
 
 
