@@ -1,7 +1,6 @@
 #ifndef __COB_FILE_H__
 #define __COB_FILE_H__
 
-#include <iostream>
 #include <vector>
 #include <string>
 #include <map>
@@ -14,7 +13,7 @@
 #define COB_DEBUG	0
 
 // Should return true for scripts that should have debug output.
-#define COB_DEBUG_FILTER (script.name == "scripts/ARMJETH.cob")
+#define COB_DEBUG_FILTER false
 
 class CFileHandler;
 
