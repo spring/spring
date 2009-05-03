@@ -156,6 +156,9 @@ public:
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
+	// takes COBFN_* constant as argument
+	bool HasFunction(int id);
+
 	// call overloads, they all call RealCall
 	int Call(const std::string &fname);
 	int Call(const std::string &fname, int p1);
@@ -199,10 +202,6 @@ public:
 	void ShowFlare(int piece);
 	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
 	void SetUnitVal(int val, int param);
-
-	bool HasScriptFunction(int id);
-	bool FunctionExist(int id);
-	int GetFunctionId(const std::string& funcName) const;
 };
 
 #endif

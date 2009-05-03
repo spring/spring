@@ -224,22 +224,9 @@ void CUnitScript::MapScriptToModelPieces(LocalModel* lmodel)
 /******************************************************************************/
 
 
-bool CUnitScript::HasScriptFunction(int id)
+bool CUnitScript::HasFunction(int id)
 {
 	return scriptIndex[id] >= 0;
-}
-
-
-bool CUnitScript::FunctionExist(int id)
-{
-	return scriptIndex[id] >= 0;
-}
-
-
-int CUnitScript::GetFunctionId(const string& funcName) const
-{
-	//TODO: return script.getFunctionId(funcName);
-	return 0;
 }
 
 
