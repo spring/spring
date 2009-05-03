@@ -856,6 +856,179 @@ int LuaSyncedCtrl::SetUnitCOBValue(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::SetPieceVisibility(lua_State* L)
+{
+	// void SetVisibility(int piece, bool visible);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+
+	// note: for Lua unit scripts it would be confusing if the unit's
+	// unit->script->pieces differs from the unit->localmodel->pieces.
+
+	const int piece = luaL_checkint(L, 2) - 1;
+	const bool visible = lua_toboolean(L, 3);
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	unit->script->SetVisibility(piece, visible);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::PieceEmitSfx(lua_State* L)
+{
+	// void EmitSfx(int type, int piece);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+
+	// note: the arguments are reversed compared to the C++ (and COB?) function
+
+	const int piece = luaL_checkint(L, 2) - 1;
+	const int type = luaL_checkint(L, 3);
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	unit->script->EmitSfx(type, piece);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::PieceAttachUnit(lua_State* L)
+{
+	// void AttachUnit(int piece, int unit);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const int piece = luaL_checkint(L, 2) - 1;
+	const CUnit* transportee = ParseUnit(L, __FUNCTION__, 3);
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size()) || (transportee == NULL)) {
+		return 0;
+	}
+	unit->script->AttachUnit(piece, transportee->id);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::PieceDropUnit(lua_State* L)
+{
+	// void DropUnit(int unit);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const CUnit* transportee = ParseUnit(L, __FUNCTION__, 2);
+	if (transportee == NULL) {
+		return 0;
+	}
+	unit->script->DropUnit(transportee->id);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::PieceExplode(lua_State* L)
+{
+	// void Explode(int piece, int flags);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const int piece = luaL_checkint(L, 2) - 1;
+	const int flags = luaL_checkint(L, 3);
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	unit->script->Explode(piece, flags);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::PieceShowFlare(lua_State* L)
+{
+	// void ShowFlare(int piece);
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const int piece = luaL_checkint(L, 2) - 1;
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	unit->script->ShowFlare(piece);
+	return 0;
+}
+
+
+/*
+	void Spin(int piece, int axis, int speed, int accel);
+	void StopSpin(int piece, int axis, int decel);
+	void Turn(int piece, int axis, int speed, int destination, bool interpolated = false);
+	void Move(int piece, int axis, int speed, int destination, bool interpolated = false);
+	void MoveNow(int piece, int axis, int destination);
+	void TurnNow(int piece, int axis, int destination);
+*/
+
+
+int LuaSyncedCtrl::PieceSpin(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+
+	// TODO: implement
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::PieceStopSpin(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+
+	// TODO: implement
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::PieceTurn(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+
+	// TODO: implement
+
+	return 0;
+}
+
+
+int LuaSyncedCtrl::PieceMove(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const int args = lua_gettop(L); // number of arguments
+
+	// TODO: implement
+
+	return 0;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
