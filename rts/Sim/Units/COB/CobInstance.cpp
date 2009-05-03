@@ -74,6 +74,12 @@ CCobInstance::~CCobInstance(void)
 }
 
 
+int CCobInstance::GetFunctionId(const std::string& fname) const
+{
+	return script.GetFunctionId(fname);
+}
+
+
 /**
  * @brief Calls a cob script function
  * @param functionId int cob script function id

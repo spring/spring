@@ -224,15 +224,6 @@ void CUnitScript::MapScriptToModelPieces(LocalModel* lmodel)
 /******************************************************************************/
 
 
-bool CUnitScript::HasFunction(int id)
-{
-	return scriptIndex[id] >= 0;
-}
-
-
-/******************************************************************************/
-
-
 int CUnitScript::Call(const string &fname)
 {
 	std::vector<int> x;

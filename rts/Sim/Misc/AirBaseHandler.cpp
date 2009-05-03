@@ -60,7 +60,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 
 	int maxPadCount = 16; // default max pad count
 
-	if (base->script->GetFunctionId("QueryLandingPadCount") >= 0) {
+	if (base->script->HasFunction("QueryLandingPadCount")) {
 		args.push_back(maxPadCount);
 		base->script->Call("QueryLandingPadCount", args);
 		maxPadCount = args[0];
