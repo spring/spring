@@ -21,14 +21,13 @@ CR_REG_METADATA(UnitType, (
 	CR_MEMBER(canBuildList),
 	CR_MEMBER(builtByList),
 	CR_MEMBER(DPSvsUnit),
-	CR_MEMBER(TargetCategories),
 	// cannot serialize this directly
 	// CR_MEMBER(def),
 	CR_ENUM_MEMBER(category),
 	CR_MEMBER(isHub),
 	CR_MEMBER(techLevel),
 	CR_MEMBER(costMultiplier),
-	CR_MEMBER(sides),
+	/// CR_MEMBER(sides),
 	CR_POSTLOAD(PostLoad)
 ));
 
