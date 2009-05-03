@@ -162,8 +162,6 @@ CUnitScript::CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex)
 	, scriptIndex(scriptIndex)
 {
 	memset(unitVars, int(0), UNIT_VAR_COUNT);
-
-	MapScriptToModelPieces(unit->localmodel);
 }
 
 
@@ -180,48 +178,6 @@ CUnitScript::~CUnitScript()
 
 	// Remove us from possible animation ticking (should only be needed when anims.size() > 0
 	GUnitScriptEngine.RemoveInstance(this);
-}
-
-
-void CUnitScript::MapScriptToModelPieces(LocalModel* lmodel)
-{
-	//TODO: how to get at pieceNames used by script in a generic way?
-	/*
-	pieces.clear();
-	pieces.reserve(script.pieceNames.size());
-
-	std::vector<LocalModelPiece*>& lp = lmodel->pieces;
-
-	for (size_t piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
-		std::string& scriptname = script.pieceNames[piecenum]; // is already in lowercase!
-
-		unsigned int cur;
-
-		//Map this piecename to an index in the script's pieceinfo
-		for (cur=0; cur<lp.size(); cur++) {
-			if (lp[cur]->name.compare(scriptname) == 0) {
-				break;
-			}
-		}
-
-		//Not found? Try lowercase
-		if (cur == lp.size()) {
-			for (cur=0; cur<lp.size(); cur++) {
-				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
-					break;
-				}
-			}
-		}
-
-		//Did we find it?
-		if (cur < lp.size()) {
-			pieces.push_back(lp[cur]);
-		} else {
-			pieces.push_back(NULL);
-			logOutput.Print("CobWarning: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");
-		}
-	}
-	*/
 }
 
 
