@@ -22,7 +22,6 @@ CR_REG_METADATA(CTeamHandler, (
 	CR_MEMBER(gaiaTeamID),
 	CR_MEMBER(gaiaAllyTeamID),
 	//CR_MEMBER(allyTeams),
-	CR_MEMBER(team2allyteam),
 	CR_MEMBER(teams),
 	CR_RESERVED(64)
 ));
@@ -50,7 +49,6 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	const size_t activeTeams = setup->numTeams;
 	assert(activeTeams <= MAX_TEAMS);
 	teams.resize(activeTeams);
-	team2allyteam.resize(activeTeams);
 
 	const size_t activeAllyTeams = setup->numAllyTeams;
 	assert(activeAllyTeams <= MAX_TEAMS);
@@ -117,9 +115,9 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		team.gaia = true;
 		team.teamNum = gaiaTeamID;
 		team.StartposMessage(float3(0.0, 0.0, 0.0), true);
+		team.teamAllyteam = gaiaAllyTeamID;
 		teams.push_back(team);
 
-		team2allyteam.push_back(gaiaAllyTeamID);
 		::AllyTeam allyteam;
 		allyteam.allies.resize(activeAllyTeams+1,false); // everyones enemy
 		allyteam.allies[gaiaTeamID] = true; // peace with itself
@@ -129,7 +127,6 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 			allyTeams[allyTeam1].allies.push_back(false); // enemy to everyone
 		}
 	}
-	assert(team2allyteam.size() == teams.size());
 	assert(teams.size() <= MAX_TEAMS);
 }
 
