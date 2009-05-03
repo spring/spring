@@ -196,8 +196,8 @@ void CWeapon::SetWeaponNum(int num)
 {
 	weaponNum = num;
 
-	cobHasBlockShot = owner->script->FunctionExist(COBFN_BlockShot + weaponNum);
-	hasTargetWeight = owner->script->FunctionExist(COBFN_TargetWeight + weaponNum);
+	cobHasBlockShot = owner->script->HasFunction(COBFN_BlockShot + weaponNum);
+	hasTargetWeight = owner->script->HasFunction(COBFN_TargetWeight + weaponNum);
 }
 
 
