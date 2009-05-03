@@ -4435,17 +4435,16 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	// TODO: the concept of "script pieces" is COB specific?
-	const CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
-	if (cob == NULL) {
+	const CUnitScript* script = unit->script;
+	if (script == NULL) {
 		return 0;
 	}
 
 	if (!lua_isnumber(L, 2)) {
 		// return the whole script->piece map
 		lua_newtable(L);
-		for (size_t sp = 0; sp < cob->pieces.size(); sp++) {
-			const int piece = cob->ScriptToModel(sp);
+		for (size_t sp = 0; sp < script->pieces.size(); sp++) {
+			const int piece = script->ScriptToModel(sp);
 			if (piece != -1) {
 				lua_pushnumber(L, sp);
 				lua_pushnumber(L, piece + 1);
@@ -4456,7 +4455,7 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	}
 
 	const int scriptPiece = lua_toint(L, 2);
-	const int piece = cob->ScriptToModel(scriptPiece);
+	const int piece = script->ScriptToModel(scriptPiece);
 	if (piece < 0) {
 		return 0;
 	}
@@ -4472,12 +4471,11 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	// TODO: the concept of "script pieces" is COB specific?
-	const CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
-	if (cob == NULL) {
+	const CUnitScript* script = unit->script;
+	if (script == NULL) {
 		return 0;
 	}
-	const vector<LocalModelPiece*>& pieces = cob->pieces;
+	const vector<LocalModelPiece*>& pieces = script->pieces;
 
 	lua_newtable(L);
 	for (size_t sp = 0; sp < pieces.size(); sp++) {
