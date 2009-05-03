@@ -13,7 +13,7 @@
 //2 = show every instruction
 #define COB_DEBUG	0
 
-// Should return true for scripts that should have debug output. 
+// Should return true for scripts that should have debug output.
 #define COB_DEBUG_FILTER (script.name == "scripts/ARMJETH.cob")
 
 class CFileHandler;
@@ -65,8 +65,8 @@ public:
 	std::string name;
 public:
 	CCobFile(CFileHandler &in, std::string name);
-	~CCobFile(void);
-	int getFunctionId(const std::string &name);
+	~CCobFile();
+	int GetFunctionId(const std::string &name);
 };
 
 #endif // __COB_FILE_H__

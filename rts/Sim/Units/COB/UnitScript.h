@@ -156,8 +156,13 @@ public:
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
-	// takes COBFN_* constant as argument
-	bool HasFunction(int id);
+	// first one takes COBFN_* constant as argument
+	bool HasFunction(int id) const { return scriptIndex[id] >= 0; }
+	bool HasFunction(const std::string& fname) const { return GetFunctionId(fname) >= 0; }
+
+	// returns function number as expected by RawCall, but not Call
+	// returns -1 if the function does not exist
+	virtual int GetFunctionId(const std::string& fname) const = 0;
 
 	// call overloads, they all call RealCall
 	int Call(const std::string &fname);

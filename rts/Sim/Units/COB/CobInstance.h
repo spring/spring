@@ -35,6 +35,8 @@ public:
 	CCobInstance(CCobFile &script, CUnit *unit);
 	~CCobInstance();
 
+	virtual int GetFunctionId(const std::string& fname) const;
+
 	// used by CCobThread
 	void Signal(int signal);
 	void PlayUnitSound(int snr, int attr);
