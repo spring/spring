@@ -33,7 +33,7 @@ bool LuaConstCMD::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "OPT_SHIFT",    SHIFT_KEY);
 	LuaPushNamedNumber(L, "OPT_RIGHT",    RIGHT_MOUSE_KEY);
 	LuaPushNamedNumber(L, "OPT_INTERNAL", INTERNAL_ORDER);
-	LuaPushNamedNumber(L, "OPT_SPACE",    SPACE_KEY);
+	LuaPushNamedNumber(L, "OPT_META",     META_KEY);
 
 	LuaPushNamedNumber(L, "WAITCODE_TIME",   CMD_WAITCODE_TIMEWAIT);
 	LuaPushNamedNumber(L, "WAITCODE_DEATH",  CMD_WAITCODE_DEATHWAIT);

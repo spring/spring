@@ -5,7 +5,7 @@
 #include <list>
 #include <vector>
 #include <boost/noncopyable.hpp>
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "FeatureDef.h"
 #include "FeatureSet.h"
 

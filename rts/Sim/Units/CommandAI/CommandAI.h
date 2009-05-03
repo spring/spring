@@ -85,7 +85,7 @@ public:
 protected:
 	bool isTrackable(const CUnit* unit) const;
 	bool isAttackCapable() const;
-	virtual bool AllowedCommand(const Command &c, bool fromSynced = true);
+	virtual bool AllowedCommand(const Command &c, bool fromSynced);
 	bool SkipParalyzeTarget(const CUnit* target);
 	void GiveAllowedCommand(const Command& c, bool fromSynced = true);
 	void GiveWaitCommand(const Command& c);

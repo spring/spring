@@ -67,12 +67,12 @@ void CSmokeProjectile2::Init(const float3& pos, CUnit *owner GML_PARG_C)
 
 CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color GML_PARG_C)
 : CProjectile(pos,speed,owner, false, false GML_PARG_P),
-	wantedPos(wantedPos),
 	color(color),
 	age(0),
-	startSize(startSize),
 	size(0),
-	sizeExpansion(sizeExpansion)
+	startSize(startSize),
+	sizeExpansion(sizeExpansion),
+	wantedPos(wantedPos)
 {
 	ageSpeed=1/ttl;
 	checkCol=false;

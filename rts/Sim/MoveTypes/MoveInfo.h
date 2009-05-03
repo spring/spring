@@ -92,6 +92,10 @@ public:
 	unsigned int moveInfoChecksum;
 
 	float terrainType2MoveFamilySpeed[256][4];
+private:
+	CMoveMath* groundMoveMath;
+	CMoveMath* hoverMoveMath;
+	CMoveMath* seaMoveMath;
 };
 
 extern CMoveInfo* moveinfo;

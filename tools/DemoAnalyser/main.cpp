@@ -2,12 +2,12 @@
 #include <iostream>
 #include <limits>
 
-#include "../../rts/System/DemoReader.h"
-#include "System/FileSystem/FileSystem.h"
-#include "System/ConfigHandler.h"
+#include "DemoReader.h"
+#include "FileSystem/FileSystem.h"
+#include "ConfigHandler.h"
 #include "Game/GameSetup.h"
 #include "BaseNetProtocol.h"
-#include "../../rts/System/Net/RawPacket.h"
+#include "Net/RawPacket.h"
 
 using namespace std;
 using namespace netcode;

@@ -39,7 +39,7 @@ CTimeProfiler::~CTimeProfiler()
 
 void CTimeProfiler::Update()
 {
-	GML_STDMUTEX_LOCK(time); // Update
+	GML_STDMUTEX_LOCK_NOPROF(time); // Update
 
 	++currentPosition;
 	currentPosition &= 127;
@@ -63,15 +63,16 @@ void CTimeProfiler::Update()
 	}
 }
 
-float CTimeProfiler::GetPercent(const char *name) {
-	GML_STDMUTEX_LOCK(time); // GetTimePercent
+float CTimeProfiler::GetPercent(const char *name)
+{
+	GML_STDMUTEX_LOCK_NOPROF(time); // GetTimePercent
 
 	return profile[name].percent;
 }
 
 void CTimeProfiler::AddTime(const std::string& name, unsigned time)
 {
-	GML_STDMUTEX_LOCK(time); // AddTime
+	GML_STDMUTEX_LOCK_NOPROF(time); // AddTime
 
 	std::map<std::string, TimeRecord>::iterator pi;
 	if ( (pi = profile.find(name)) != profile.end() )

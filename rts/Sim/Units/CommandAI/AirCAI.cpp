@@ -87,7 +87,7 @@ CAirCAI::~CAirCAI(void)
 void CAirCAI::GiveCommandReal(const Command &c)
 {
 	// take care not to allow aircraft to be ordered to move out of the map
-	if (c.id != CMD_MOVE && !AllowedCommand(c))
+	if (c.id != CMD_MOVE && !AllowedCommand(c, true))
 		return;
 
 	else if (c.id == CMD_MOVE && c.params.size() >= 3 &&
@@ -498,9 +498,9 @@ void CAirCAI::ExecuteAttack(Command &c)
 		owner->commandShotCount = -1;
 
 		if (c.params.size() == 1) {
-			const int targetID     = int(c.params[0]);
-			const bool legalTarget = (targetID >= 0 && targetID < uh->MaxUnits());
-			CUnit* targetUnit      = (legalTarget)? uh->units[targetID]: 0x0;
+			const unsigned int targetID = (unsigned int) c.params[0];
+			const bool legalTarget      = (targetID < uh->MaxUnits());
+			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
 
 			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
 				orderTarget = targetUnit;

@@ -25,6 +25,7 @@ struct DamageArray;
 struct LosInstance;
 struct S3DModel;
 struct LocalModel;
+struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
 struct CollisionVolume;
@@ -110,6 +111,11 @@ public:
 	CMatrix44f GetTransformMatrix(const bool synced = false, const bool error = false) const;
 
 	void SetLastAttacker(CUnit* attacker);
+	void SetLastAttackedPiece(LocalModelPiece* p, int f) {
+		lastAttackedPiece      = p;
+		lastAttackedPieceFrame = f;
+	}
+
 	void DependentDied(CObject* o);
 	void SetUserTarget(CUnit* target);
 	virtual void Init(const CUnit* builder);
@@ -310,11 +316,12 @@ public:
 	float metalStorage;
 	float energyStorage;
 
-	CUnit* lastAttacker;				//last attacker
-	int lastAttack;							//last frame unit was attacked by other unit
-	int lastDamage;							//last frame the unit was damaged
-	int lastFireWeapon;					//last time this unit fired a weapon
-	float recentDamage;					//decaying value of how much damage the unit has taken recently (for severity of death)
+	CUnit* lastAttacker;                  // last attacker
+	LocalModelPiece* lastAttackedPiece;   // piece that was last hit by a projectile
+	int lastAttackedPieceFrame;           // frame in which lastAttackedPiece was hit
+	int lastAttack;                       // last frame unit was attacked by other unit
+	int lastFireWeapon;                   // last time this unit fired a weapon
+	float recentDamage;                   // decaying value of how much damage the unit has taken recently (for severity of death)
 
 	CUnit* userTarget;
 	float3 userAttackPos;
@@ -424,7 +431,9 @@ public:
 
 	float alphaThreshold;	// minimum alpha value for a texel to be drawn
 	int cegDamage;			// the damage value passed to CEGs spawned by this unit's script
-
+#ifdef USE_GML
+	int lastDrawFrame; // last draw frame
+#endif
 protected:
 	void ChangeTeamReset();
 	void UpdateResources();

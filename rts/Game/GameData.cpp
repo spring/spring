@@ -68,6 +68,7 @@ const netcode::RawPacket* GameData::Pack() const
 void GameData::SetSetup(const std::string& newSetup)
 {
 	setupText = newSetup;
+	compressed.clear();
 }
 
 void GameData::SetScript(const std::string& newScript)

@@ -6,7 +6,7 @@
 #include <map>
 #include "Rendering/GL/myGL.h"
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 /** @brief Class for combining multiple bitmaps into one large single bitmap. */
 struct AtlasedTexture

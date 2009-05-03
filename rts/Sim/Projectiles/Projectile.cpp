@@ -131,13 +131,18 @@ void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 	points.AddVertexQC(pos, color4::white);
 }
 
-void CProjectile::DrawArray()
+int CProjectile::DrawArray()
 {
+	int idx = 0;
+
 	va->DrawArrayTC(GL_QUADS);
-	ph->currentParticles+=va->drawIndex()/24;		//each particle quad is 24 values large
-	va=GetVertexArray();
+
+	idx = (va->drawIndex() / 24);
+	va = GetVertexArray();
 	va->Initialize();
-	inArray=false;
+	inArray = false;
+
+	return idx;
 }
 
 void CProjectile::DrawCallback(void)

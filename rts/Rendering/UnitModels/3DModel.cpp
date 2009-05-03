@@ -7,6 +7,7 @@
 #include "3DModel.h"
 #include "3DOParser.h"
 #include "s3oParser.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FartextureHandler.h"
 #include "Util.h"
@@ -21,10 +22,11 @@
 void S3DModelPiece::DrawStatic() const
 {
 	glPushMatrix();
-	glTranslatef(offset.x,offset.y,offset.z);
+	glTranslatef(offset.x, offset.y, offset.z);
 	glCallList(displist);
-	for(std::vector<S3DModelPiece*>::const_iterator ci=childs.begin(); ci!=childs.end(); ci++)
+	for (std::vector<S3DModelPiece*>::const_iterator ci = childs.begin(); ci != childs.end(); ci++) {
 		(*ci)->DrawStatic();
+	}
 	glPopMatrix();
 }
 
@@ -43,8 +45,10 @@ S3DModelPiece::~S3DModelPiece()
 
 LocalModel::~LocalModel()
 {
-	for(std::vector<LocalModelPiece*>::iterator pi=pieces.begin();pi!=pieces.end();pi++){
-		delete *pi;
+	// delete the local piece copies
+	for (std::vector<LocalModelPiece*>::iterator pi = pieces.begin(); pi != pieces.end(); pi++) {
+		delete (*pi)->colvol;
+		delete (*pi);
 	}
 	pieces.clear();
 }

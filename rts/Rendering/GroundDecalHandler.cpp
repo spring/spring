@@ -89,6 +89,15 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 		glDeleteTextures (1, &(*tti)->texture);
 		delete *tti;
 	}
+	for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
+		delete (*ti).tp;
+		if((*ti).unit == NULL)
+			tracksToBeDeleted.push_back((*ti).ts);
+	}
+	for (std::vector<UnitTrackStruct *>::iterator ti = tracksToBeDeleted.begin(); ti != tracksToBeDeleted.end(); ++ti) {
+		delete *ti;
+	}
+
 	for(std::vector<BuildingDecalType*>::iterator tti=buildingDecalTypes.begin();tti!=buildingDecalTypes.end();++tti){
 		for(set<BuildingGroundDecal*>::iterator ti=(*tti)->buildingDecals.begin();ti!=(*tti)->buildingDecals.end();++ti){
 			if((*ti)->owner)
@@ -101,6 +110,9 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 		delete *tti;
 	}
 	for(std::list<Scar*>::iterator si=scars.begin();si!=scars.end();++si){
+		delete *si;
+	}
+	for(std::vector<Scar*>::iterator si=scarsToBeAdded.begin();si!=scarsToBeAdded.end();++si){
 		delete *si;
 	}
 	if(decalLevel!=0){
@@ -434,52 +446,60 @@ void CGroundDecalHandler::Draw(void)
 		glMatrixMode(GL_MODELVIEW);
 	}
 
-	GML_STDMUTEX_LOCK(decal); // Draw
-
 	// create and draw the quads for each building decal
 	for (std::vector<BuildingDecalType*>::iterator bdti = buildingDecalTypes.begin(); bdti != buildingDecalTypes.end(); ++bdti) {
 		BuildingDecalType* bdt = *bdti;
 
 		if (!bdt->buildingDecals.empty()) {
+
 			glBindTexture(GL_TEXTURE_2D, bdt->texture);
 
-			set<BuildingGroundDecal*>::iterator bgdi = bdt->buildingDecals.begin();
+			decalsToDraw.clear();
+			{
+				GML_STDMUTEX_LOCK(decal); // Draw
 
-			while (bgdi != bdt->buildingDecals.end()) {
-				BuildingGroundDecal* decal = *bgdi;
+				set<BuildingGroundDecal*>::iterator bgdi = bdt->buildingDecals.begin();
 
-				if (decal->owner && decal->owner->buildProgress >= 0) {
-					decal->alpha = decal->owner->buildProgress;
-				} else if (!decal->gbOwner) {
-					decal->alpha -= decal->alphaFalloff * gu->lastFrameTime * gs->speedFactor;
-				}
+				while (bgdi != bdt->buildingDecals.end()) {
+					BuildingGroundDecal* decal = *bgdi;
 
-				if (decal->alpha < 0.0f) {
-					// make sure RemoveBuilding() won't try to modify this decal
-					if (decal->owner) {
-						decal->owner->buildingDecal = 0;
+					if (decal->owner && decal->owner->buildProgress >= 0) {
+						decal->alpha = decal->owner->buildProgress;
+					} else if (!decal->gbOwner) {
+						decal->alpha -= decal->alphaFalloff * gu->lastFrameTime * gs->speedFactor;
 					}
 
-					delete decal;
+					if (decal->alpha < 0.0f) {
+						// make sure RemoveBuilding() won't try to modify this decal
+						if (decal->owner) {
+							decal->owner->buildingDecal = 0;
+						}
 
-					set<BuildingGroundDecal*>::iterator next(bgdi); ++next;
-					bdt->buildingDecals.erase(bgdi);
-					bgdi = next;
+						delete decal;
 
-					continue;
+						set<BuildingGroundDecal*>::iterator next(bgdi); ++next;
+						bdt->buildingDecals.erase(bgdi);
+						bgdi = next;
+
+						continue;
+					}
+
+					if (!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectatingFullView) {
+						decalsToDraw.push_back(decal);
+					}
+
+					bgdi++;
 				}
-
-				if (camera->InView(decal->pos, decal->radius) &&
-					(!decal->owner || (decal->owner->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_PREVLOS)) || gu->spectatingFullView)) {
-
-					DrawBuildingDecal(decal);
-				}
-
-				bgdi++;
 			}
 
+			for(std::vector<BuildingGroundDecal*>::iterator di = decalsToDraw.begin(); di != decalsToDraw.end(); ++di) {
+				BuildingGroundDecal *decal = *di;
+				if(camera->InView(decal->pos, decal->radius))
+					DrawBuildingDecal(decal);
+			}
 		}
 	}
+
 
 	if (shadowHandler && shadowHandler->drawShadows) {
 		glDisable(GL_FRAGMENT_PROGRAM_ARB);
@@ -496,72 +516,148 @@ void CGroundDecalHandler::Draw(void)
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
-
-
 	glPolygonOffset(-10, -20);
 
 	unsigned char color[4] = {255, 255, 255, 255};
 	unsigned char color2[4] = {255, 255, 255, 255};
 
+	{
+		GML_STDMUTEX_LOCK(track); // Draw
+		// Delayed addition of new tracks
+		for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
+			TrackToAdd *tta = &(*ti);
+			if(tta->ts->owner == NULL) {
+				delete tta->tp;
+				if(tta->unit == NULL)
+					tracksToBeDeleted.push_back(tta->ts);
+				continue; // unit removed
+			}
+
+			CUnit *unit = tta->unit;
+			if(unit == NULL) {
+				unit = tta->ts->owner;
+				trackTypes[unit->unitDef->trackType]->tracks.insert(tta->ts);
+			}
+
+			TrackPart *tp = tta->tp;
+			//if the unit is moving in a straight line only place marks at half the rate by replacing old ones
+			bool replace = false;
+			if(unit->myTrack->parts.size()>1) {
+				list<TrackPart *>::iterator pi = --unit->myTrack->parts.end();
+				list<TrackPart *>::iterator pi2 = pi--;
+				if(((tp->pos1+(*pi)->pos1)*0.5f).SqDistance((*pi2)->pos1)<1)
+					replace = true;
+			}
+			if(replace) {
+				delete unit->myTrack->parts.back();
+				unit->myTrack->parts.back() = tp;
+			}
+			else {
+				unit->myTrack->parts.push_back(tp);
+			}
+		}
+		tracksToBeAdded.clear();
+	}
+
+	for (std::vector<UnitTrackStruct *>::iterator ti = tracksToBeDeleted.begin(); ti != tracksToBeDeleted.end(); ++ti) {
+		delete *ti;
+	}
+	tracksToBeDeleted.clear();
+
+	tracksToBeCleaned.clear();
+
 	// create and draw the unit footprint quads
 	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
-		if (!(*tti)->tracks.empty()) {
-			TrackType* tt = *tti;
+		TrackType* tt = *tti;
+		if (!tt->tracks.empty()) {
 			set<UnitTrackStruct*>::iterator utsi = tt->tracks.begin();
 
 			CVertexArray* va = GetVertexArray();
 			va->Initialize();
 			glBindTexture(GL_TEXTURE_2D, tt->texture);
 
-
 			while (utsi != tt->tracks.end()) {
 				UnitTrackStruct* track = *utsi;
-
-				while (!track->parts.empty() && track->parts.front().creationTime < gs->frameNum - track->lifeTime) {
-					track->parts.pop_front();
-				}
-
 				if (track->parts.empty()) {
-					if (track->owner)
-						track->owner->myTrack = 0;
-
-					delete track;
-
-					set<UnitTrackStruct*>::iterator next(utsi); ++next;
-					tt->tracks.erase(utsi);
-					utsi = next;
-
+					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
 					continue;
 				}
-
-				if (camera->InView((track->parts.front().pos1 + track->parts.back().pos1) * 0.5f, track->parts.front().pos1.distance(track->parts.back().pos1) + 500)) {
-					list<TrackPart>::iterator ppi = track->parts.begin();
-					color2[3] = track->trackAlpha - (int) ((gs->frameNum - ppi->creationTime) * track->alphaFalloff);
+				if (track->parts.front()->creationTime < gs->frameNum - track->lifeTime) {
+					tracksToBeCleaned.push_back(TrackToClean(track, &(tt->tracks)));
+				}
+				if (camera->InView((track->parts.front()->pos1 + track->parts.back()->pos1) * 0.5f, track->parts.front()->pos1.distance(track->parts.back()->pos1) + 500)) {
+					list<TrackPart *>::iterator ppi = track->parts.begin();
+					color2[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*ppi)->creationTime) * track->alphaFalloff));
 
 					va->EnlargeArrays(track->parts.size()*4,0,VA_SIZE_TC);
-					for (list<TrackPart>::iterator pi = ++track->parts.begin(); pi != track->parts.end(); ++pi) {
-						color[3] = track->trackAlpha - (int) ((gs->frameNum - ppi->creationTime) * track->alphaFalloff);
-						if (pi->connected) {
-							va->AddVertexQTC(ppi->pos1, ppi->texPos, 0, color2);
-							va->AddVertexQTC(ppi->pos2, ppi->texPos, 1, color2);
-							va->AddVertexQTC(pi->pos2, pi->texPos, 1, color);
-							va->AddVertexQTC(pi->pos1, pi->texPos, 0, color);
+					for (list<TrackPart *>::iterator pi = ++track->parts.begin(); pi != track->parts.end(); ++pi) {
+						color[3] = std::max(0, track->trackAlpha - (int) ((gs->frameNum - (*ppi)->creationTime) * track->alphaFalloff));
+						if ((*pi)->connected) {
+							va->AddVertexQTC((*ppi)->pos1, (*ppi)->texPos, 0, color2);
+							va->AddVertexQTC((*ppi)->pos2, (*ppi)->texPos, 1, color2);
+							va->AddVertexQTC((*pi)->pos2, (*pi)->texPos, 1, color);
+							va->AddVertexQTC((*pi)->pos1, (*pi)->texPos, 0, color);
 						}
 						color2[3] = color[3];
 						ppi = pi;
 					}
 				}
-
 				utsi++;
 			}
-
 			va->DrawArrayTC(GL_QUADS);
 		}
 	}
 
+	{
+		GML_STDMUTEX_LOCK(track); // Draw
+		// Cleanup old tracks
+		for (std::vector<TrackToClean>::iterator ti = tracksToBeCleaned.begin(); ti != tracksToBeCleaned.end(); ++ti) {
+			TrackToClean *ttc = &(*ti);
+			UnitTrackStruct *track = ttc->track;
+			while (!track->parts.empty() && track->parts.front()->creationTime < gs->frameNum - track->lifeTime) {
+				delete track->parts.front();
+				track->parts.pop_front();
+			}
+			if (track->parts.empty()) {
+				if (track->owner)
+					track->owner->myTrack = 0;
+				ttc->tracks->erase(track);
+				tracksToBeDeleted.push_back(track);
+			}
+		}
+	}
 
 	glBindTexture(GL_TEXTURE_2D, scarTex);
 	glPolygonOffset(-10, -400);
+
+	scarsToBeChecked.clear();
+	{
+		GML_STDMUTEX_LOCK(scar); // Draw
+
+		for (std::vector<Scar*>::iterator si = scarsToBeAdded.begin(); si != scarsToBeAdded.end(); ++si)
+			scarsToBeChecked.push_back(*si);
+
+		scarsToBeAdded.clear();
+	}
+
+	for (std::vector<Scar*>::iterator si = scarsToBeChecked.begin(); si != scarsToBeChecked.end(); ++si) {
+		Scar* s = *si;
+		TestOverlaps(s);
+
+		int x1 = s->x1 / 16;
+		int x2 = min(scarFieldX - 1, s->x2 / 16);
+		int y1 = s->y1 / 16;
+		int y2 = min(scarFieldY - 1, s->y2 / 16);
+
+		for (int y = y1; y <= y2; ++y) {
+			for (int x = x1; x <= x2; ++x) {
+				std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
+				quad->insert(s);
+			}
+		}
+
+		scars.push_back(s); 
+	}
 
 	// create and draw the 16x16 quads for each ground scar
 	for (std::list<Scar*>::iterator si = scars.begin(); si != scars.end(); ) {
@@ -598,7 +694,6 @@ void CGroundDecalHandler::Draw(void)
 
 void CGroundDecalHandler::Update(void)
 {
-	GML_STDMUTEX_LOCK(decal); // Update
 	for(std::vector<CUnit *>::iterator i=moveUnits.begin(); i!=moveUnits.end(); ++i)
 		UnitMovedNow(*i);
 	moveUnits.clear();
@@ -613,66 +708,62 @@ void CGroundDecalHandler::UnitMoved(CUnit* unit)
 
 void CGroundDecalHandler::UnitMovedNow(CUnit* unit)
 {
-	if(decalLevel==0)
+	if(decalLevel == 0)
 		return;
 
-	int zp=(int(unit->pos.z)/SQUARE_SIZE*2);
-	int xp=(int(unit->pos.x)/SQUARE_SIZE*2);
-	int mp=zp*gs->hmapx+xp;
+	int zp = (int(unit->pos.z)/SQUARE_SIZE*2);
+	int xp = (int(unit->pos.x)/SQUARE_SIZE*2);
+	int mp = zp*gs->hmapx+xp;
 	if(mp<0)
-		mp=0;
-	if(mp>=gs->mapSquares/4)
-		mp=gs->mapSquares/4-1;
+		mp = 0;
+	if(mp >= gs->mapSquares/4)
+		mp = gs->mapSquares/4-1;
 	if(!mapInfo->terrainTypes[readmap->typemap[mp]].receiveTracks)
 		return;
 
-	TrackType* type=trackTypes[unit->unitDef->trackType];
+	float3 pos = unit->pos+unit->frontdir*unit->unitDef->trackOffset;
+
+	TrackPart *tp = new TrackPart;
+	tp->pos1 = pos+unit->rightdir*unit->unitDef->trackWidth*0.5f;
+	tp->pos1.y = ground->GetHeight2(tp->pos1.x,tp->pos1.z);
+	tp->pos2 = pos-unit->rightdir*unit->unitDef->trackWidth*0.5f;
+	tp->pos2.y = ground->GetHeight2(tp->pos2.x,tp->pos2.z);
+	tp->creationTime = gs->frameNum;
+
+	TrackToAdd tta;
+	tta.tp = tp;
+	tta.unit = unit;
+
+	GML_STDMUTEX_LOCK(track); // Update
+
 	if(!unit->myTrack){
-		UnitTrackStruct* ts=new UnitTrackStruct;
-		ts->owner=unit;
-		ts->lifeTime=(int)(30*decalLevel*unit->unitDef->trackStrength);
-		ts->trackAlpha=(int)(unit->unitDef->trackStrength*25);
-		ts->alphaFalloff=float(ts->trackAlpha)/float(ts->lifeTime);
-		type->tracks.insert(ts);
-		unit->myTrack=ts;
-	}
-	float3 pos=unit->pos+unit->frontdir*unit->unitDef->trackOffset;
-
-	TrackPart tp;
-	tp.pos1=pos+unit->rightdir*unit->unitDef->trackWidth*0.5f;
-	tp.pos1.y=ground->GetHeight2(tp.pos1.x,tp.pos1.z);
-	tp.pos2=pos-unit->rightdir*unit->unitDef->trackWidth*0.5f;
-	tp.pos2.y=ground->GetHeight2(tp.pos2.x,tp.pos2.z);
-	tp.creationTime=gs->frameNum;
-
-	if(unit->myTrack->parts.empty()){
-		tp.texPos=0;
-		tp.connected=false;
+		UnitTrackStruct* ts = new UnitTrackStruct;
+		ts->owner = unit;
+		ts->lifeTime = (int)(30*decalLevel*unit->unitDef->trackStrength);
+		ts->trackAlpha = (int)(unit->unitDef->trackStrength*25);
+		ts->alphaFalloff = float(ts->trackAlpha)/float(ts->lifeTime);
+		unit->myTrack = ts;
+		tta.unit = NULL; // signal new trackstruct
+		tp->texPos = 0;
+		tp->connected = false;
 	} else {
-		tp.texPos=unit->myTrack->parts.back().texPos+tp.pos1.distance(unit->myTrack->parts.back().pos1)/unit->unitDef->trackWidth*unit->unitDef->trackStretch;
-		tp.connected=unit->myTrack->parts.back().creationTime==gs->frameNum-8;
+		tp->texPos = unit->myTrack->lastAdded->texPos+tp->pos1.distance(unit->myTrack->lastAdded->pos1)/unit->unitDef->trackWidth*unit->unitDef->trackStretch;
+		tp->connected = unit->myTrack->lastAdded->creationTime == gs->frameNum-8;
 	}
 
-	//if the unit is moving in a straight line only place marks at half the rate by replacing old ones
-	if(unit->myTrack->parts.size()>1){
-		list<TrackPart>::iterator pi=unit->myTrack->parts.end();
-		--pi;
-		list<TrackPart>::iterator pi2=pi;
-		--pi;
-		if(((tp.pos1+pi->pos1)*0.5f).SqDistance(pi2->pos1)<1){
-			unit->myTrack->parts.back()=tp;
-			return;
-		}
-	}
+	unit->myTrack->lastAdded = tp;
+	tta.ts = unit->myTrack;
 
-	unit->myTrack->parts.push_back(tp);
+	tracksToBeAdded.push_back(tta);
 }
 
 
 void CGroundDecalHandler::RemoveUnit(CUnit* unit)
 {
-	if(decalLevel==0)
+	if(decalLevel == 0)
 		return;
+
+	GML_STDMUTEX_LOCK(track); // RemoveUnit
 
 	if(unit->myTrack){
 		unit->myTrack->owner=0;
@@ -699,11 +790,12 @@ int CGroundDecalHandler::GetTrackType(const std::string& name)
 		++a;
 	}
 
-	GML_STDMUTEX_LOCK(decal); // GetTrackType
-
 	TrackType* tt = new TrackType;
 	tt->name = lowerName;
 	tt->texture = LoadTexture(lowerName);
+
+//	GML_STDMUTEX_LOCK(tracktype); // GetTrackType
+
 	trackTypes.push_back(tt);
 
 	return trackTypes.size() - 1;
@@ -744,8 +836,6 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 {
 	if (decalLevel == 0)
 		return;
-
-	GML_STDMUTEX_LOCK(decal); // AddExplosion
 
 	float height = pos.y - ground->GetHeight2(pos.x, pos.z);
 	if (height >= radius)
@@ -789,21 +879,9 @@ void CGroundDecalHandler::AddExplosion(float3 pos, float damage, float radius)
 	s->overdrawn = 0;
 	s->lastTest = 0;
 
-	TestOverlaps(s);
+	GML_STDMUTEX_LOCK(scar); // AddExplosion
 
-	int x1 = s->x1 / 16;
-	int x2 = min(scarFieldX - 1, s->x2 / 16);
-	int y1 = s->y1 / 16;
-	int y2 = min(scarFieldY - 1, s->y2 / 16);
-
-	for (int y = y1; y <= y2; ++y) {
-		for (int x = x1; x <= x2; ++x) {
-			std::set<Scar*>* quad = &scarField[y * scarFieldX + x];
-			quad->insert(s);
-		}
-	}
-
-	scars.push_back(s);
+	scarsToBeAdded.push_back(s);
 }
 
 
@@ -914,15 +992,12 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	if (decalLevel == 0)
 		return;
 
-	GML_STDMUTEX_LOCK(decal); // AddBuilding
-
-	BuildingDecalType* type = buildingDecalTypes[building->unitDef->buildingDecalType];
-	BuildingGroundDecal* decal = new BuildingGroundDecal;
-
 	int posx = int(building->pos.x / 8);
 	int posy = int(building->pos.z / 8);
 	int sizex = building->unitDef->buildingDecalSizeX;
 	int sizey = building->unitDef->buildingDecalSizeY;
+
+	BuildingGroundDecal* decal = new BuildingGroundDecal;
 
 	decal->owner = building;
 	decal->gbOwner = 0;
@@ -943,8 +1018,10 @@ void CGroundDecalHandler::AddBuilding(CBuilding* building)
 	decal->posx = posx - (decal->xsize / 2);
 	decal->posy = posy - (decal->ysize / 2);
 
+	GML_STDMUTEX_LOCK(decal); // AddBuilding
+
 	building->buildingDecal = decal;
-	type->buildingDecals.insert(decal);
+	buildingDecalTypes[building->unitDef->buildingDecalType]->buildingDecals.insert(decal);
 }
 
 
@@ -967,6 +1044,8 @@ void CGroundDecalHandler::RemoveBuilding(CBuilding* building, CUnitDrawer::Ghost
  */
 void CGroundDecalHandler::ForceRemoveBuilding(CBuilding* building)
 {
+	GML_STDMUTEX_LOCK(decal); // ForcedRemoveBuilding
+
 	if (!building || !building->buildingDecal)
 		return;
 
@@ -1003,8 +1082,6 @@ int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 		++a;
 	}
 
-	GML_STDMUTEX_LOCK(decal); // GetBuildingDecalType
-
 	BuildingDecalType* tt = new BuildingDecalType;
 	tt->name = lowerName;
 	const std::string fullName = "unittextures/" + lowerName;
@@ -1014,6 +1091,9 @@ int CGroundDecalHandler::GetBuildingDecalType(const std::string& name)
 	}
 
 	tt->texture = bm.CreateTexture(true);
+
+//	GML_STDMUTEX_LOCK(decaltype); // GetBuildingDecalType
+
 	buildingDecalTypes.push_back(tt);
 
 	return (buildingDecalTypes.size() - 1);

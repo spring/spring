@@ -3,7 +3,7 @@
 
 #include <map>
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "float3.h"
 
 class CSolidObject;

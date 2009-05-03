@@ -57,6 +57,7 @@
 #include "LogOutput.h"
 #include "NetProtocol.h"
 #include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "Sound/Music.h"
 
 #include "FileSystem/FileHandler.h"
@@ -302,7 +303,7 @@ static inline CUnit* ParseSelectUnit(lua_State* L,
                                      const char* caller, int index)
 {
 	CUnit* unit = ParseRawUnit(L, caller, index);
-	if (unit == NULL) {
+	if (unit == NULL || unit->noSelect) {
 		return NULL;
 	}
 	const int selectTeam = CLuaHandle::GetActiveHandle()->GetSelectTeam();
@@ -519,7 +520,7 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		}
 
 		if (args < 5) {
-			sound->PlaySample(soundID, volume);
+			Channels::General.PlaySample(soundID, volume);
 		} else {
 			const float3 pos(lua_tofloat(L, 3),
 			                 lua_tofloat(L, 4),
@@ -527,10 +528,10 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 			if (args >= 8)
 			{
 				const float3 speed(lua_tofloat(L, 6), lua_tofloat(L, 7), lua_tofloat(L, 8));
-				sound->PlaySample(soundID, pos, speed, volume);
+				Channels::General.PlaySample(soundID, pos, speed, volume);
 			}
 			else
-				sound->PlaySample(soundID, pos, volume);
+				Channels::General.PlaySample(soundID, pos, volume);
 		}
 		success = true;
 	}
@@ -1752,7 +1753,7 @@ static void ParseUnitMap(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2)) {
 			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -2); // the key
-			if (unit != NULL) {
+			if (unit != NULL && !unit->noSelect) {
 				unitIDs.push_back(unit->id);
 			}
 		}
@@ -1769,7 +1770,7 @@ static void ParseUnitArray(lua_State* L, const char* caller,
 	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 		if (lua_israwnumber(L, -2) && lua_isnumber(L, -1)) {   // avoid 'n'
 			CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, -1); // the value
-			if (unit != NULL) {
+			if (unit != NULL && !unit->noSelect) {
 				unitIDs.push_back(unit->id);
 			}
 		}
@@ -1835,7 +1836,7 @@ int LuaUnsyncedCtrl::GiveOrderToUnit(lua_State* L)
 	}
 
 	CUnit* unit = ParseCtrlUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
+	if (unit == NULL || unit->noSelect) {
 		lua_pushboolean(L, false);
 		return 1;
 	}

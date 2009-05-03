@@ -32,7 +32,7 @@ public:
 
 	static bool inArray;
 	static CVertexArray* va;
-	static void DrawArray();
+	static int DrawArray();
 
 	virtual void Draw();
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);

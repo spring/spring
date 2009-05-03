@@ -19,6 +19,8 @@
 #include <map>
 #include <set>
 
+#define GML_QUOTE(x) #x
+
 #ifdef USE_GML
 #	define GML_ENABLE 1 // multithreaded drawing of units and ground
 #else

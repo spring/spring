@@ -583,7 +583,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
-					if(enforceSpeed &&
+					if(enforceSpeed && !players[a].isLocal &&
 						(players[a].spectator ||
 						players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
@@ -666,7 +666,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					Message(str( boost::format("Invalid teamID in startpos-message from palyer %d") %team ));
 				else
 				{
-					teams[team].startpos = SFloat3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
+					teams[team].startpos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
 					if (inbuf[3] == 1)
 						teams[team].readyToStart = static_cast<bool>(inbuf[3]);
 
@@ -1213,6 +1213,10 @@ void CGameServer::PushAction(const Action& action)
 	{
 		quitServer = true;
 	}
+	else if (action.command == "pause")
+	{
+		isPaused = !isPaused;
+	}
 #endif
 	else
 	{
@@ -1265,12 +1269,6 @@ void CGameServer::CheckForGameEnd()
 			++numActiveTeams[teamHandler->AllyTeam(a)];
 		}
 	}
-
-	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		if (numActiveTeams[a] != 0) {
-			++numActiveAllyTeams;
-		}
-	}
 #else // !defined DEDICATED
 	for (int a = 0; a < setup->numTeams; ++a)
 	{
@@ -1290,13 +1288,13 @@ void CGameServer::CheckForGameEnd()
 		if (teams[a].active && hasPlayer)
 			++numActiveTeams[teams[a].allyTeam];
 	}
-
-	for (unsigned int a = 0; a < numActiveTeams.size(); ++a) {
+#endif // !defined DEDICATED
+	for (size_t a = 0; a < numActiveTeams.size(); ++a) {
 		if (numActiveTeams[a] != 0) {
 			++numActiveAllyTeams;
 		}
 	}
-#endif // !defined DEDICATED
+
 	if (numActiveAllyTeams <= 1)
 	{
 		gameEndTime = microsec_clock::local_time();
@@ -1444,7 +1442,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 				name += "_";
 			}
 		}
-		else if (players[i].isFromDemo)
+		else if (name == players[i].name)
 		{
 			Message(str(format("Player %s (%i) duplicated in the demo") %name %i));
 			name += "_";
@@ -1538,7 +1536,7 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	if(enforceSpeed && player!=SERVER_PLAYER &&
+	if(enforceSpeed && player!=SERVER_PLAYER && !players[player].isLocal &&
 		(players[player].spectator ||
 		players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 		players[player].ping - medianPing > internalSpeed*GAME_SPEED/2)) {

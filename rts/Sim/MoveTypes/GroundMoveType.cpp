@@ -35,7 +35,7 @@
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
 #include "LogOutput.h"
-#include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "FastMath.h"
 #include "myMath.h"
 
@@ -80,8 +80,6 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(pathFailures),
 		CR_MEMBER(etaFailures),
 		CR_MEMBER(nonMovingFailures),
-
-		CR_MEMBER(moveType),
 
 		CR_MEMBER(floatOnWater),
 
@@ -157,7 +155,6 @@ CGroundMoveType::CGroundMoveType(CUnit* owner) :
 	pathFailures(0),
 	etaFailures(0),
 	nonMovingFailures(0),
-	moveType(0),
 	floatOnWater(false),
 
 	nextDeltaSpeedUpdate(0),
@@ -508,7 +505,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 		// Play "activate" sound.
 		int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
 		if (soundIdx >= 0) {
-			sound->PlayUnitActivate(
+			Channels::UnitReply.PlaySample(
 				owner->unitDef->sounds.activate.getID(soundIdx), owner,
 				owner->unitDef->sounds.activate.getVolume(soundIdx));
 		}
@@ -1379,7 +1376,7 @@ void CGroundMoveType::Arrived()
 		if (owner->team == gu->myTeam) {
 			int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
 			if (soundIdx >= 0) {
-				sound->PlayUnitReply(
+				Channels::UnitReply.PlaySample(
 					owner->unitDef->sounds.arrived.getID(soundIdx), owner,
 					owner->unitDef->sounds.arrived.getVolume(soundIdx));
 			}
@@ -1417,7 +1414,7 @@ void CGroundMoveType::Fail()
 		// playing "cant" sound.
 		int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
 		if (soundIdx >= 0) {
-			sound->PlayUnitReply(
+			Channels::UnitReply.PlaySample(
 				owner->unitDef->sounds.cant.getID(soundIdx), owner,
 				owner->unitDef->sounds.cant.getVolume(soundIdx));
 		}

@@ -16,6 +16,7 @@
 	     which may be specified to ant on the command line like this:
 	     ant -propertyfile ant.properties -->
 	<property name="spring.home" location="../../.."/>
+	<property name="awk.common.scripts.dir" location="${spring.home}/AI/Wrappers/CUtils/bin"/>
 	<property name="build.home" location="${spring.home}/build"/>
 	<property name="build.dir"
 			location="${build.home}/AI/Interfaces/${interface.name}"/>
@@ -44,9 +45,9 @@
 	<target name="init">
 		<mkdir dir="${build.dir}"/>
 		
- 		<condition property="awk.bin" value="gawk.exe" else="awk">
- 			<os family="windows" />
- 		</condition>
+		<condition property="awk.bin" value="awk.exe" else="awk">
+			<os family="windows" />
+		</condition>
 	</target>
 
 
@@ -64,8 +65,8 @@
 			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
 			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
 			<arg value="-f"/><arg value="jna_wrappEvents.awk"/>
-			<arg value="-f"/><arg value="common.awk"/>
-			<arg value="-f"/><arg value="commonDoc.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
 			<arg value="${spring.ai.interface.home}/AISEvents.h"/>
 		</exec>
 	</target>
@@ -77,8 +78,8 @@
 			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
 			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
 			<arg value="-f"/><arg value="jna_wrappCommands.awk"/>
-			<arg value="-f"/><arg value="common.awk"/>
-			<arg value="-f"/><arg value="commonDoc.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
 			<arg value="${spring.ai.interface.home}/AISCommands.h"/>
 		</exec>
 	</target>
@@ -90,8 +91,8 @@
 			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
 			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
 			<arg value="-f"/><arg value="jna_wrappCallback.awk"/>
-			<arg value="-f"/><arg value="common.awk"/>
-			<arg value="-f"/><arg value="commonDoc.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
 			<arg value="${spring.ai.interface.home}/SSkirmishAICallback.h"/>
 		</exec>
 	</target>
@@ -102,9 +103,9 @@
 			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
 			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
 			<arg value="-f"/><arg value="java_wrappCallbackOO.awk"/>
-			<arg value="-f"/><arg value="common.awk"/>
-			<arg value="-f"/><arg value="commonDoc.awk"/>
-			<arg value="-f"/><arg value="commonOOCallback.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
+			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonOOCallback.awk"/>
 			<arg value="${src.generated}/${java.pkg.dir}/AICallback.java"/>
 		</exec>
 	</target>

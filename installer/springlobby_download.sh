@@ -17,6 +17,7 @@ mkdir -p Springlobby
 mkdir -p downloads
 cd downloads
 wget -N http://www.springlobby.info/installer/sl-installer-files.zip
+wget -N http://www.springlobby.info/installer/springlobby.exe
 cd ..
 
 cd Springlobby

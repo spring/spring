@@ -7,7 +7,6 @@
 #include "SpotFinder.h"
 #include "MicroPather.h"
 #include "Maths.h"
-#include "SunParser.h"
 #include "MetalMaker.h"
 #include "MetalMap.h"
 #include "PathFinder.h"

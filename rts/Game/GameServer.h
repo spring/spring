@@ -16,7 +16,7 @@ using boost::posix_time::ptime;
 #include "GameData.h"
 #include "PlayerBase.h"
 #include "UnsyncedRNG.h"
-#include "SFloat3.h"
+#include "float3.h"
 
 namespace netcode
 {
@@ -64,7 +64,7 @@ public:
 class GameTeam
 {
 public:
-	SFloat3 startpos;
+	float3 startpos;
 	bool readyToStart;
 	int allyTeam;
 	bool active;

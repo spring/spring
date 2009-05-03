@@ -3,7 +3,7 @@
 
 #include <vector>
 
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 #include "Sim/Misc/GlobalConstants.h"
 
 // Each square on metalmap is a 2x2 square on normal map.

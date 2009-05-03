@@ -283,10 +283,10 @@ TexFile* C3DOTextureHandler::CreateTex(const std::string& name, const std::strin
 {
 	TexFile* tex=new TexFile;
 	tex->tex.Load(name,30);
-	tex->name = name2;
 	//char tmp[256];
 	//sprintf(tmp,"%s%02i",name2.c_str(),team);
 	//tex->name=tmp;
+	tex->name = name2;
 
 	tex->tex2.Alloc(tex->tex.xsize,tex->tex.ysize);
 

@@ -142,19 +142,37 @@ public:
 	~gmlClientServer() {
 		if(inited) {
 			GML_TYPENAME gmlExecState<R,A,U> *ex=ExecState+ExecDepth;
+			BOOL_ dowait=TRUE;
+			for(int i=1; i<gmlThreadCount; ++i) {
+				if(!threads[i]->joinable() || threads[i]->timed_join(boost::posix_time::milliseconds(10)))
+					dowait=FALSE;
+			}
 			ex->maxthreads=0;
 			dorun=FALSE;
-			Barrier.wait();
+			if(dowait)
+				Barrier.wait();
 			for(int i=1; i<gmlThreadCount; ++i) {
-				threads[i]->join();
+				if(threads[i]->joinable()) {
+					if(dowait)
+						threads[i]->join();
+					else if(!threads[i]->timed_join(boost::posix_time::milliseconds(100)))
+						threads[i]->interrupt();
+				}
 				delete threads[i];
 			}
 		}
 		if(auxinited) {
+			BOOL_ dowait=threads[gmlThreadCount]->joinable() && !threads[gmlThreadCount]->timed_join(boost::posix_time::milliseconds(10));
 			auxworker=NULL;
 			dorun=FALSE;
-			AuxBarrier.wait();
-			threads[gmlThreadCount]->join();
+			if(dowait)
+				AuxBarrier.wait();
+			if(threads[gmlThreadCount]->joinable()) {
+				if(dowait)
+					threads[gmlThreadCount]->join();
+				else if(!threads[gmlThreadCount]->timed_join(boost::posix_time::milliseconds(100)))
+					threads[gmlThreadCount]->interrupt();
+			}
 			delete threads[gmlThreadCount];
 		}
 	}

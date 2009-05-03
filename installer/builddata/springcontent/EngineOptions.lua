@@ -16,7 +16,7 @@
 --  step:     quantization step, aligned to the def value
 --  maxlen:   the maximum string length for string options
 --  items:    array of item strings for list options
---  scope:    'all', 'player', 'team', 'allyteam'      <<< not supported yet >>>
+--  scope:    'global', 'player', 'team', 'allyteam'
 --
 
 --------------------------------------------------------------------------------
@@ -78,6 +78,19 @@ local options =
                     -- (step <= 0) means that there is no quantization
   },
   {
+   key    = 'StartMetal',
+   scope  = 'team',
+   name   = 'Team Starting metal',
+   desc   = 'Determines amount of metal and metal storage this team will start with',
+   type   = 'number',
+   section= 'StartingResources',
+   def    = 1000,
+   min    = 0,
+   max    = 10000,
+   step   = 1,  -- quantization is aligned to the def value
+   -- (step <= 0) means that there is no quantization
+  },
+  {
     key    = 'StartEnergy',
     name   = 'Starting energy',
     desc   = 'Determines amount of energy and energy storage that each player will start with',
@@ -88,6 +101,19 @@ local options =
     max    = 10000,
     step   = 1,  -- quantization is aligned to the def value
                     -- (step <= 0) means that there is no quantization
+  },
+  {
+   key    = 'StartEnergy',
+   scope  = 'team',
+   name   = 'Team Starting energy',
+   desc   = 'Determines amount of energy and energy storage that this team will start with',
+   type   = 'number',
+   section= 'StartingResources',
+   def    = 1000,
+   min    = 0,
+   max    = 10000,
+   step   = 1,  -- quantization is aligned to the def value
+   -- (step <= 0) means that there is no quantization
   },
 
   {

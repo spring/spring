@@ -10,7 +10,7 @@
 #include <map>
 
 #include "GameController.h"
-#include "creg/creg.h"
+#include "creg/creg_cond.h"
 
 class CScript;
 class CBaseWater;

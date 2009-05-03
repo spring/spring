@@ -9,9 +9,10 @@
 struct UnitDef;
 struct AIClasses;
 struct UnitType;
+struct MoveData;
 
-struct SideData {
-	CR_DECLARE_STRUCT(SideData);
+struct CategoryData {
+	CR_DECLARE_STRUCT(CategoryData);
 
 	bool CanBuild(UnitDefCategory c) const {
 		switch (c) {
@@ -95,14 +96,6 @@ class CUnitTable {
 		// true if a builder can build a certain unit (use UnitDef.id)
 		bool CanBuildUnit(int id_builder, int id_unit);
 
-		int BuildModSideMap();
-		int ReadTeamSides();
-		void ReadModConfig();
-
-		int GetSide(void) const;
-		int GetSide(int) const;
-		int GetSide(const UnitDef*) const;
-
 		// gets the average Damage Per second a unit can cause (provided all weapons are in range)
 		float GetDPS(const UnitDef* unit);
 		// finds the actual DPS versus a specific enemy unit
@@ -127,11 +120,8 @@ class CUnitTable {
 		// returns min range for all weapons (or FLT_MAX)
 		float GetMinRange(const UnitDef*);
 
-		std::vector<SideData> sideData;
-
-		std::vector<std::string> sideNames;		// side number (0) to side string ("Arm")
-		std::map<std::string, int> modSideMap;	// side string ("Arm") to side number (0)
-		std::vector<int> teamSides;				// team numbers to side numbers
+		CategoryData categoryData;
+		std::map<int, MoveData*> moveDefs;
 
 		std::vector<const UnitDef*> unitDefs;
 		std::vector<UnitType> unitTypes;
@@ -142,15 +132,24 @@ class CUnitTable {
 		int maxTechLevel;
 
 	private:
-		// for internal use
-		void CalcBuildTree(int unit, int rootSide);
+		/// int BuildModSideMap();
+		/// int ReadTeamSides();
+		void ReadModConfig();
 		void DebugPrint();
+
+		/// int GetSide(void) const;
+		/// int GetSide(int) const;
+		/// int GetSide(const UnitDef*) const;
 
 		std::string GetDbgLogName() const;
 		std::string GetModCfgName() const;
 
-		// start units of each side (e.g. commander)
-		std::vector<int> startUnits;
+		/// start units of each side (e.g. commander)
+		/// std::vector<int> startUnits;
+
+		/// std::vector<std::string> sideNames;		// side number (0) to side string ("Arm")
+		/// std::map<std::string, int> modSideMap;	// side string ("Arm") to side number (0)
+		/// std::vector<int> teamSides;				// team numbers to side numbers
 
 		AIClasses* ai;
 };

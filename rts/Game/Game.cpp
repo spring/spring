@@ -125,6 +125,7 @@
 #include "Exceptions.h"
 #include "EventHandler.h"
 #include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "FileSystem/SimpleParser.h"
 #include "Net/RawPacket.h"
 #include "Net/UnpackPacket.h"
@@ -1002,6 +1003,7 @@ bool CGame::ActionPressed(const Action& action,
 		mouse->MousePress (mouse->lastx, mouse->lasty, 5);
 	}
 	else if (cmd == "viewselection") {
+
 		GML_RECMUTEX_LOCK(sel); // ActionPressed
 
 		const CUnitSet& selUnits = selectedUnits.selectedUnits;
@@ -1204,7 +1206,7 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Sound enabled");
 		}
 	}
-	else if (cmd == "volume") {
+	else if (cmd == "volume") { // master volume
 		char* endPtr;
 		const char* startPtr = action.extra.c_str();
 		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
@@ -1213,14 +1215,45 @@ bool CGame::ActionPressed(const Action& action,
 			configHandler->Set("SoundVolume", (int)(volume * 100.0f));
 		}
 	}
-	else if (cmd == "unitreplyvolume") {
-		char* endPtr;
-		const char* startPtr = action.extra.c_str();
-		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
-		if (endPtr != startPtr) {
-			sound->SetUnitReplyVolume(volume);
-			configHandler->Set("UnitReplyVolume",(int)(volume * 100.0f));
+	else if (cmd == "soundchannelvolume" || cmd == "unitreplyvolume") {
+		std::string channel = "UnitReply";
+		float newVol = 1.0;
+		std::istringstream buf(action.extra);
+		if (cmd == "soundchannelvolume")
+		{
+			buf >> channel;
 		}
+		buf >> newVol;
+		const float volume = std::max(0.0f, std::min(1.0f, newVol));
+
+		if (channel == "UnitReply")
+			Channels::UnitReply.SetVolume(volume);
+		else if (channel == "General")
+			Channels::General.SetVolume(volume);
+		else if (channel == "Battle")
+			Channels::Battle.SetVolume(volume);
+		else if (channel == "UserInterface")
+			Channels::UserInterface.SetVolume(volume);
+	}
+	else if (cmd == "soundchannelenable") {
+		std::string channel;
+		int enableInt, enable;
+		std::istringstream buf(action.extra);
+		buf >> channel;
+		buf >> enableInt;
+		if (enableInt == 0)
+			enable = false;
+		else
+			enable = true;
+
+		if (channel == "UnitReply")
+			Channels::UnitReply.Enable(enable);
+		else if (channel == "General")
+			Channels::General.Enable(enable);
+		else if (channel == "Battle")
+			Channels::Battle.Enable(enable);
+		else if (channel == "UserInterface")
+			Channels::UserInterface.Enable(enable);
 	}
 	else if (cmd == "savegame"){
 		if (filesystem.CreateDirectory("Saves")) {
@@ -1411,25 +1444,31 @@ bool CGame::ActionPressed(const Action& action,
 
 	if (cmd == "speedup") {
 		float speed = gs->userSpeedFactor;
-		if (speed < 1) {
-			speed /= 0.8f;
-			if (speed > 0.99f) {
-				speed = 1;
-			}
-		} else {
+		if(speed < 5) {
+			speed += (speed < 2) ? 0.1f : 0.2f;
+			float fpart = speed - (int)speed;
+			if(fpart < 0.01f || fpart > 0.99f)
+				speed = round(speed);
+		} else if (speed < 10) {
 			speed += 0.5f;
+		} else {
+			speed += 1.0f;
 		}
 		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
 	else if (cmd == "slowdown") {
 		float speed = gs->userSpeedFactor;
-		if (speed <= 1) {
-			speed *= 0.8f;
-			if (speed < 0.1f) {
+		if (speed <= 5) {
+			speed -= (speed <= 2) ? 0.1f : 0.2f;
+			float fpart = speed - (int)speed;
+			if(fpart < 0.01f || fpart > 0.99f)
+				speed = round(speed);
+			if (speed < 0.1f)
 				speed = 0.1f;
-			}
-		} else {
+		} else if (speed <= 10) {
 			speed -= 0.5f;
+		} else {
+			speed -= 1.0f;
 		}
 		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
@@ -1478,57 +1517,13 @@ bool CGame::ActionPressed(const Action& action,
 		if(!inputReceivers.empty() && dynamic_cast<CShareBox*>(inputReceivers.front())==0 && !gu->spectating)
 			new CShareBox();
 	}
-	else if (cmd == "quitwarn") {
-		const CKeyBindings::HotkeyList hkl = keyBindings->GetHotkeys("quit");
-		if (hkl.empty()) {
-			logOutput.Print("How odd, you appear to be lacking a \"quit\" binding");
-		} else {
-			logOutput.Print("Use %s to quit", hkl[0].c_str());
-		}
+	else if (cmd == "quitmenu") {
+		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0)
+			new CQuitBox();
 	}
-	else if (cmd == "quit") {
-		//The user wants to quit. Do we let him?
-		bool userMayQuit=false;
-		// Six cases when he may quit:
-		//  * If the game isn't started players are free to leave.
-		//  * If the game is over
-		//  * If his team is dead.
-		//  * If he's a spectator.
-		//  * If there are other active players on his team.
-		//  * If there are no other players
-		if (!playing || gameOver || teamHandler->Team(gu->myTeam)->isDead || gu->spectating) {
-			userMayQuit = true;
-		}
-		else {
-			// Check if there are more active players on his team.
-			bool onlyActive = true;
-			for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-				if (a != gu->myPlayerNum) {
-					if (playerHandler->Player(a)->active) {
-						onlyActive = false;
-						if (playerHandler->Player(a)->team == gu->myTeam) {
-							userMayQuit = true;
-							break;
-						}
-					}
-				}
-			}
-			// If you are the only remaining active player, you can quit immediately
-			if (onlyActive) {
-				userMayQuit = true;
-			}
-		}
-
-		// User may not quit if he is the only player in his still active team.
-		// Present him with the options given in CQuitBox.
-		if (!userMayQuit) {
-			if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0) {
-				new CQuitBox();
-			}
-		} else {
-			logOutput.Print("User exited");
-			globalQuit = true;
-		}
+	else if (cmd == "quitforce") {
+		logOutput.Print("User exited");
+		globalQuit = true;
 	}
 	else if (cmd == "incguiopacity") {
 		CInputReceiver::guiAlpha = std::min(CInputReceiver::guiAlpha+0.1f,1.0f);
@@ -1538,9 +1533,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 
 	else if (cmd == "screenshot") {
-		const char* ext = "jpg";
-		if (action.extra == "png") {
-			ext = "png";
+		const char* ext = "png";
+		if (action.extra == "jpg") {
+			ext = "jpg";
 		}
 
 		if (filesystem.CreateDirectory("screenshots")) {
@@ -1793,6 +1788,13 @@ bool CGame::ActionPressed(const Action& action,
 			const int value = std::max(1, atoi(action.extra.c_str()));
 			ph->SetMaxParticles(value);
 			logOutput.Print("Set maximum particles to: %i", value);
+		}
+	}
+	else if (cmd == "maxnanoparticles") {
+		if (ph && !action.extra.empty()) {
+			const int value = std::max(1, atoi(action.extra.c_str()));
+			ph->SetMaxNanoParticles(value);
+			logOutput.Print("Set maximum nano-particles to: %i", value);
 		}
 	}
 	else if (cmd == "gathermode") {
@@ -2574,10 +2576,11 @@ bool CGame::DrawWorld()
 	unitDrawer->Draw(false);
 	featureHandler->Draw();
 
+#if !defined(USE_GML) || !GML_ENABLE_SIM // Pathmanager is not thread safe
 	if (gu->drawdebug && gs->cheatEnabled) {
 		pathManager->Draw();
 	}
-
+#endif
 	//transparent stuff
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
@@ -2687,6 +2690,8 @@ bool CGame::Draw() {
 #endif
 
 	mouse->EmptyMsgQueUpdate();
+
+	unitDrawer->Update();
 
 	if(lastSimFrame!=gs->frameNum) {
 		CInputReceiver::CollectGarbage();
@@ -2872,9 +2877,8 @@ bool CGame::Draw() {
 	glEnable(GL_TEXTURE_2D);
 
 	if (gu->drawdebug) {
-		//skriv ut fps etc
 		glColor4f(1,1,0.5f,0.8f);
-		font->glFormatAt(0.03f, 0.02f, 1.0f, "FPS %d Frame %d Part %d(%d)",
+		font->glFormatAt(0.03f, 0.02f, 1.0f, "FPS: %d  Frame: %d  Particles: %d (%d)",
 		                 fps, gs->frameNum, ph->ps.size(), ph->currentParticles);
 
 		if (playing) {
@@ -3123,7 +3127,6 @@ void CGame::SimFrame() {
 			grouphandlers[a]->Update();
 		}
 		profiler.Update();
-		unitDrawer->Update();
 #ifdef DIRECT_CONTROL_ALLOWED
 		if (gu->directControl) {
 			unsigned char status = 0;
@@ -3158,7 +3161,7 @@ void CGame::SimFrame() {
 
 	{
 		SCOPED_TIMER("Collisions");
-		ph->CheckUnitCol();
+		ph->CheckCollisions();
 		ground->CheckCol(ph);
 	}
 
@@ -3504,7 +3507,7 @@ void CGame::ClientReadNet()
 					vector<int> selected;
 					for (int a = 0; a < ((*((short int*)&inbuf[1])-4)/2); ++a) {
 						int unitid=*((short int*)&inbuf[4+a*2]);
-						if(unitid>= uh->MaxUnits() || unitid<0){
+						if(unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits()){
 							logOutput.Print("Got invalid unitid %i in netselect msg",unitid);
 							break;
 						}
@@ -3528,7 +3531,7 @@ void CGame::ClientReadNet()
 				}
 
 				int unitid = *((short int*) &inbuf[4]);
-				if (unitid >= uh->MaxUnits() || unitid < 0) {
+				if (unitid < 0 || static_cast<size_t>(unitid) >= uh->MaxUnits()) {
 					logOutput.Print("Got invalid unitID (%i) in NETMSG_AICOMMAND", unitid);
 					break;
 				}
@@ -3958,13 +3961,16 @@ void CGame::UpdateUI(bool cam)
 			+ owner->updir    * relPos.y
 			+ owner->rightdir * relPos.x;
 		pos += UpVector * 7;
-		//camHandler->GetCurrentController().SetPos(pos); // in case of multithreading, avoid setting the cam from sim thread
+
 		GML_STDMUTEX_LOCK(pos); // UpdateUI
+
 		lastDCpos=pos;
 		plastDCpos=&lastDCpos;
 	}
 	if (plastDCpos && cam) {
+
 		GML_STDMUTEX_LOCK(pos); // UpdateUI
+
 		if(plastDCpos) {
 			camHandler->GetCurrentController().SetPos(*plastDCpos);
 			plastDCpos=NULL;
@@ -4439,26 +4445,26 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			const bool allied = teamHandler->Ally(msgAllyTeam, gu->myAllyTeam);
 			if (gu->spectating || (allied && !player->spectator)) {
 				logOutput.Print(label + "Allies: " + s);
-				sound->PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_SPECTATORS) {
 			if (gu->spectating || myMsg) {
 				logOutput.Print(label + "Spectators: " + s);
-				sound->PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
 			if (gu->spectating || !noSpectatorChat || !player->spectator) {
 				logOutput.Print(label + s);
-				sound->PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 		}
 		else if (msg.destination < playerHandler->ActivePlayers())
 		{
 			if (msg.destination == gu->myPlayerNum && player && !player->spectator) {
 				logOutput.Print(label + "Private: " + s);
-				sound->PlaySample(chatSound, 5);
+				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
 			else if (player->playerNum == gu->myPlayerNum)
 			{

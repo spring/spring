@@ -4,12 +4,8 @@
 //
 //////////////////////////////////////////////////////////////////////
 
-class CProjectileHandler;
-class CProjectile;
-struct S3DOPrimitive;
-struct S3DOPiece;
-struct SS3OVertex;
 #include <list>
+#include <set>
 #include <vector>
 
 #include <stack>
@@ -19,10 +15,14 @@ struct SS3OVertex;
 #include "Rendering/GL/FBO.h"
 #include "float3.h"
 
-
-
+class CProjectileHandler;
+class CProjectile;
+class CUnit;
+class CFeature;
 class CGroundFlash;
-
+struct S3DOPrimitive;
+struct S3DOPiece;
+struct SS3OVertex;
 
 typedef std::list<CProjectile*> Projectile_List;
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
@@ -46,10 +46,14 @@ public:
 		return &(it->second);
 	}
 
-	void CheckUnitCol();
+	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
+	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
+	void CheckCollisions();
+
 	void LoadSmoke(unsigned char tex[512][512][4], int xoffs, int yoffs, char* filename, char* alphafile);
 
-	void SetMaxParticles(int value);
+	void SetMaxParticles(int value) { maxParticles = value; }
+	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawShadowPass(void);
@@ -73,13 +77,23 @@ public:
 	std::list<int> freeIDs;
 	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
 
-	std::vector<projdist> distlist;
+	struct dstcmp {
+		bool operator()(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2) {
+			return (arg1.dist > arg2.dist);
+		}
+	};
+
+	std::set<projdist,dstcmp> distlist;
+	std::vector<CProjectile *> drawlist;
 
 	unsigned int projectileShadowVP;
 
 	int maxParticles;						// different effects should start to cut down on unnececary(unsynced) particles when this number is reached
+	int maxNanoParticles;
 	int currentParticles;					// number of particles weighted by how complex they are
+	int currentNanoParticles;
 	float particleSaturation;				// currentParticles / maxParticles ratio
+	float nanoParticleSaturation;
 
 	int numPerlinProjectiles;
 

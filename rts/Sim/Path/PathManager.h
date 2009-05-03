@@ -152,10 +152,6 @@ private:
 
 	std::map<unsigned int, MultiPath*> pathMap;
 	unsigned int nextPathId;
-
-	CMoveMath* ground;
-	CMoveMath* hover;
-	CMoveMath* sea;
 };
 
 extern CPathManager *pathManager;

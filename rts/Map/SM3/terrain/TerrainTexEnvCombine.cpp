@@ -122,7 +122,8 @@ int TexEnvSetupHandler::MaxTextureCoords ()
 
 void TexEnvSetupHandler::BuildNodeSetup (ShaderDef* shaderDef, RenderSetup* renderSetup)
 {
-	int maxTextureUnits = MaxTextureUnits();
+	const int maxTextureUnitsSigned = MaxTextureUnits();
+	const size_t maxTextureUnits = (maxTextureUnitsSigned < 0) ? 0 : maxTextureUnitsSigned;
 	unsigned int c = 0;
 
 	NodeTexEnvSetup *setup = curSetup = new NodeTexEnvSetup;

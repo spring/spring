@@ -55,7 +55,7 @@ CR_REG_METADATA(CSimpleGroundFlash,
 
 CVertexArray* CGroundFlash::va=0;
 
-CGroundFlash::CGroundFlash(const float3& p GML_PARG_C)
+CGroundFlash::CGroundFlash(const float3& p GML_FARG_C)
 {
 	pos=p;
 	alwaysVisible=false;
@@ -69,8 +69,8 @@ CStandardGroundFlash::CStandardGroundFlash()
 {
 }
 
-CStandardGroundFlash::CStandardGroundFlash(const float3& p,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, const float3& col GML_PARG_C)
-	: CGroundFlash(p GML_PARG_P),
+CStandardGroundFlash::CStandardGroundFlash(const float3& p,float circleAlpha,float flashAlpha,float flashSize,float circleSpeed,float ttl, const float3& col GML_FARG_C)
+	: CGroundFlash(p GML_FARG_P),
 	flashSize(flashSize),
 	circleSize(circleSpeed),
 	circleGrowth(circleSpeed),
@@ -175,8 +175,8 @@ void CStandardGroundFlash::Draw()
 	}
 }
 
-CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col GML_PARG_C)
-	: CGroundFlash(p GML_PARG_P),
+CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, AtlasedTexture texture, int ttl, int fade, float size, float sizeGrowth, float alpha, const float3& col GML_FARG_C)
+	: CGroundFlash(p GML_FARG_P),
 	texture(texture),
 	sizeGrowth(sizeGrowth),
 	size(size),
@@ -251,7 +251,7 @@ CSimpleGroundFlash::~CSimpleGroundFlash()
 {
 }
 
-void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit *owner GML_PARG_C)
+void CSimpleGroundFlash::Init(const float3& explosionPos, CUnit *owner GML_FARG_C)
 {
 	pos += explosionPos;
 

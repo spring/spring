@@ -3,7 +3,7 @@
 
 #include "WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sound/Sound.h"
+#include "Sound/AudioChannel.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -67,18 +67,18 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
 		bool synced, int ttl GML_PARG_C):
 	CProjectile(pos, speed, owner, synced, true GML_PARG_P),
+	targeted(false),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef? weaponDef->name: std::string("")),
 	target(target),
 	targetPos(targetPos),
+	cegTag(weaponDef? weaponDef->cegTag: std::string("")),
 	startpos(pos),
-	targeted(false),
-	interceptTarget(interceptTarget),
+	ttl(ttl),
 	colorTeam(0),
 	bounces(0),
 	keepBouncing(true),
-	ttl(ttl),
-	cegTag(weaponDef? weaponDef->cegTag: std::string(""))
+	interceptTarget(interceptTarget)
 {
 	if (owner) {
 		colorTeam = owner->team;
@@ -137,7 +137,7 @@ void CWeaponProjectile::Collision()
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
-		sound->PlaySample(weaponDef->soundhit.getID(0), this,
+		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this,
 			weaponDef->soundhit.getVolume(0));
 	}
 
@@ -191,7 +191,7 @@ void CWeaponProjectile::Collision(CUnit* unit)
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
-		sound->PlaySample(weaponDef->soundhit.getID(0), this,
+		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this,
 				weaponDef->soundhit.getVolume(0));
 	}
 

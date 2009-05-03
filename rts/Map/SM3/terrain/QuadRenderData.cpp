@@ -99,7 +99,8 @@ namespace terrain {
 
 	void RenderDataManager::PruneFreeList (int maxFreeRD)
 	{
-		while (freeRD.size()>maxFreeRD) {
+		const size_t maxFreeRDUnsigned = (maxFreeRD < 0) ? 0 : maxFreeRD;
+		while (freeRD.size() > maxFreeRDUnsigned) {
 			delete freeRD.back();
 			freeRD.pop_back ();
 		}
@@ -163,12 +164,13 @@ namespace terrain {
 		QuadRenderData *rd = q->renderData = Allocate ();
 
 		// Allocate vertex data space
-		int vertexSize = q->GetVertexSize ();
-		if (vertexSize != rd->vertexSize) {
-			int size = NUM_VERTICES * vertexSize;
+		const size_t vertexSize = q->GetVertexSize ();
+		if (static_cast<int>(vertexSize) != rd->vertexSize) {
+			const size_t size = NUM_VERTICES * vertexSize;
 
-			if (rd->vertexBuffer.GetSize () != size)
+			if (rd->vertexBuffer.GetSize () != size) {
 				rd->vertexBuffer.Init (size);
+			}
 			rd->vertexSize = vertexSize;
 		}
 
@@ -231,14 +233,15 @@ namespace terrain {
 
 		// calculate dimensions
 		const int scale = 1 << (level - q->depth);
-		int w = QUAD_W * scale + 1, h = w;
+		size_t w = QUAD_W * scale + 1;
+		const size_t h = w;
 		const int startx = q->hmPos.x * scale;
 
 		// use power-of-two texture sizes if required
-		int texw=1;
+		size_t texw = 1;
 		//if (GLEW_ARB_texture_non_power_of_two) texw = w;
 		//else
-		while (texw < w) texw*=2;
+		while (texw < w) texw *= 2;
 
 		// if not yet created, create a texture for it
 		GLuint texture;
@@ -264,7 +267,7 @@ namespace terrain {
 		uchar *normals = new uchar[texw*texw*3];
 
 		// calculate normals
-		for (int y=0; y<h; y++) {
+		for (size_t y=0; y<h; y++) {
 			uchar *src = hm->GetNormal (startx,y + q->hmPos.y * scale);
 			memcpy (&normals [3 * y * texw], src, 3 * w);
 		}

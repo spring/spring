@@ -13,7 +13,7 @@
 #include <sstream>
 #include <exception>
 #include <algorithm>
-#include "../../rts/System/demofile.h"
+#include "demofile.h"
 using std::endl;
 
 

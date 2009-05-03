@@ -12,7 +12,7 @@ const int MODELTYPE_3DO   = 0;
 const int MODELTYPE_S3O   = 1;
 const int MODELTYPE_OTHER = 2;
 
-
+struct CollisionVolume;
 struct S3DModel;
 struct S3DModelPiece;
 struct LocalModel;
@@ -27,10 +27,13 @@ struct S3DModelPiece {
 	unsigned int displist;
 	float3 offset;
 	bool isEmpty;
-	float maxx,maxy,maxz;
-	float minx,miny,minz;
+	float maxx, maxy, maxz;
+	float minx, miny, minz;
 
 	int type;  //! MODELTYPE_3DO, MODELTYPE_S3O, MODELTYPE_OTHER
+
+	// defaults to a box
+	CollisionVolume* colvol;
 
 	//todo: add float3 orientation;
 
@@ -74,6 +77,10 @@ struct LocalModelPiece
 	S3DModelPiece* original;
 	LocalModelPiece* parent;
 	std::vector<LocalModelPiece*> childs;
+
+	// initially always a clone
+	// of the original->colvol
+	CollisionVolume* colvol;
 
 	unsigned int displist;
 	std::vector<unsigned int> lodDispLists;

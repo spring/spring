@@ -150,6 +150,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetUnitNeutral);
 	REGISTER_LUA_CFUNC(SetUnitTarget);
 	REGISTER_LUA_CFUNC(SetUnitCollisionVolumeData);
+	REGISTER_LUA_CFUNC(SetUnitPieceCollisionVolumeData);
 	REGISTER_LUA_CFUNC(SetUnitSensorRadius);
 
 	REGISTER_LUA_CFUNC(SetUnitPhysics);
@@ -1680,14 +1681,12 @@ int LuaSyncedCtrl::SetUnitTarget(lua_State* L)
 }
 
 
+
 int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 
 	if (unit == NULL) {
-		return 0;
-	}
-	if (unit->collisionVolume == NULL) {
 		return 0;
 	}
 
@@ -1708,6 +1707,82 @@ int LuaSyncedCtrl::SetUnitCollisionVolumeData(lua_State* L)
 
 	return 0;
 }
+
+int LuaSyncedCtrl::SetUnitPieceCollisionVolumeData(lua_State* L)
+{
+	const int argc = lua_gettop(L);
+
+	if (argc != 6 && argc != 14) {
+		return 0;
+	}
+
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+
+	if (unit == NULL) {
+		return 0;
+	}
+
+	if (!lua_isboolean(L, 3) || !lua_isboolean(L, 4)) { return 0; }
+	if (!lua_isboolean(L, 5) || !lua_isboolean(L, 6)) { return 0; }
+
+	LocalModel* localModel = unit->localmodel;
+
+	const int  pieceIndex   = luaL_checkint(L, 2);
+	const bool affectLocal  = lua_toboolean(L, 3);
+	const bool affectGlobal = lua_toboolean(L, 4);
+	const bool enableLocal  = lua_toboolean(L, 5);
+	const bool enableGlobal = lua_toboolean(L, 6);
+
+	if (pieceIndex < 0 || pieceIndex >= localModel->pieces.size()) {
+		return 0;
+	}
+
+	if (!affectLocal && !affectGlobal) {
+		return 0;
+	}
+
+	LocalModelPiece* lmp = localModel->pieces[pieceIndex];
+	S3DModelPiece*   omp = lmp->original;
+
+	const float xs  = luaL_checkfloat(L,  7);
+	const float ys  = luaL_checkfloat(L,  8);
+	const float zs  = luaL_checkfloat(L,  9);
+	const float xo  = luaL_checkfloat(L, 10);
+	const float yo  = luaL_checkfloat(L, 11);
+	const float zo  = luaL_checkfloat(L, 12);
+	const int vType = luaL_checkint(L, 13);
+	const int pAxis = luaL_checkint(L, 14);
+
+	const float3 scales(xs, ys, zs);
+	const float3 offset(xo, yo, zo);
+
+	if (affectLocal) {
+		// affects this unit only
+		if (enableLocal) {
+			if (argc == 14) {
+				lmp->colvol->Init(scales, offset, vType, COLVOL_TEST_CONT, pAxis);
+			}
+			lmp->colvol->Enable();
+		} else {
+			lmp->colvol->Disable();
+		}
+	}
+
+	if (affectGlobal) {
+		// affects all future units with this model
+		if (enableGlobal) {
+			if (argc == 14) {
+				omp->colvol->Init(scales, offset, vType, COLVOL_TEST_CONT, pAxis);
+			}
+			omp->colvol->Enable();
+		} else {
+			omp->colvol->Disable();
+		}
+	}
+
+	return 0;
+}
+
 
 
 int LuaSyncedCtrl::SetUnitSensorRadius(lua_State* L)
