@@ -8,9 +8,6 @@
 #include "LogOutput.h"
 #include "myMath.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "Sim/MoveTypes/MoveMath/GroundMoveMath.h"
-#include "Sim/MoveTypes/MoveMath/HoverMoveMath.h"
-#include "Sim/MoveTypes/MoveMath/ShipMoveMath.h"
 #include "Rendering/GL/myGL.h"
 #include "TimeProfiler.h"
 #include "PathFinder.h"
@@ -26,69 +23,20 @@ const unsigned int CPathManager::PATH_RESOLUTION = CPathFinder::PATH_RESOLUTION;
 
 CPathManager* pathManager=0;
 
-
-/*
-Constructor
-Creates pathfinder and estimators.
-*/
 CPathManager::CPathManager() {
-	//--TODO: Move to creation of MoveData!--//
-	// create the MoveMaths
-	ground = new CGroundMoveMath();
-	hover = new CHoverMoveMath();
-	sea = new CShipMoveMath();
-
-	float waterDamage = mapInfo->water.damage;
-	if (waterDamage >= 1000.0f) {
-		CGroundMoveMath::waterCost = 0.0f;
-	} else {
-		CGroundMoveMath::waterCost = 1.0f / (1.0f + waterDamage * 0.1f);
-	}
-
-	CHoverMoveMath::noWaterMove = (waterDamage >= 10000.0f);
-
-	// assign movemath and pathtype to the movedata's
-	int counter = 0;
-	std::vector<MoveData*>::iterator mi;
-	for (mi = moveinfo->moveData.begin(); mi < moveinfo->moveData.end(); mi++) {
-		(*mi)->pathType = counter;
-
-		switch ((*mi)->moveType) {
-			case MoveData::Ground_Move:
-				(*mi)->moveMath = ground;
-				break;
-			case MoveData::Hover_Move:
-				(*mi)->moveMath = hover;
-				break;
-			case MoveData::Ship_Move:
-				(*mi)->moveMath = sea;
-				break;
-		}
-		counter++;
-	}
-
 	// Create pathfinder and estimators.
-	pf = new CPathFinder();
-	pe = new CPathEstimator(pf, 8, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe");
+	pf  = new CPathFinder();
+	pe  = new CPathEstimator(pf,  8, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe");
 	pe2 = new CPathEstimator(pf, 32, CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN, "pe2");
 
 	// Reset id-counter.
 	nextPathId = 0;
 }
 
-
-/*
-Destructor
-Free used memory.
-*/
 CPathManager::~CPathManager() {
 	delete pe2;
 	delete pe;
 	delete pf;
-
-	delete ground;
-	delete hover;
-	delete sea;
 }
 
 
