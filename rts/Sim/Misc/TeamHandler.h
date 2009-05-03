@@ -7,6 +7,7 @@
 
 #include "creg/creg_cond.h"
 #include "Team.h"
+#include "AllyTeam.h"
 
 class CGameSetup;
 
@@ -41,7 +42,7 @@ public:
 	 *
 	 * Returns ally at [a][b]
 	 */
-	bool Ally(int a, int b) { return allies[a][b]; }
+	bool Ally(int a, int b) { return allyTeams[a].allies[b]; }
 
 	/**
 	 * @brief ally team
@@ -60,7 +61,7 @@ public:
 	 *
 	 * Tests whether teams are allied
 	 */
-	bool AlliedTeams(int a, int b) { return allies[team2allyteam[a]][team2allyteam[b]]; }
+	bool AlliedTeams(int a, int b) { return allyTeams[team2allyteam[a]].allies[team2allyteam[b]]; }
 
 	/**
 	 * @brief set ally team
@@ -79,7 +80,7 @@ public:
 	 *
 	 * Sets two allyteams to be allied or not
 	 */
-	void SetAlly(int allyteamA, int allyteamB, bool allied) { allies[allyteamA][allyteamB] = allied; }
+	void SetAlly(int allyteamA, int allyteamB, bool allied) { allyTeams[allyteamA].allies[allyteamB] = allied; }
 
 	// accessors
 
@@ -87,7 +88,7 @@ public:
 	int GaiaAllyTeamID() const { return gaiaAllyTeamID; }
 
 	int ActiveTeams() const { return teams.size(); }
-	int ActiveAllyTeams() const { return allies.size(); }
+	int ActiveAllyTeams() const { return allyTeams.size(); }
 
 	void GameFrame(int frameNum);
 
@@ -108,15 +109,6 @@ private:
 	int gaiaAllyTeamID;
 
 	/**
-	 * @brief allies array
-	 *
-	 * Array indicates whether teams are allied,
-	 * allies[a][b] means allyteam a is allied with
-	 * allyteam b, NOT the other way around
-	 */
-	std::vector< std::vector<bool> > allies;
-
-	/**
 	 * @brief team to ally team
 	 *
 	 * Array stores what ally team a specific team is part of
@@ -129,6 +121,7 @@ private:
 	 * Array of CTeam instances for teams in game
 	 */
 	std::vector<CTeam> teams;
+	std::vector< ::AllyTeam > allyTeams;
 };
 
 extern CTeamHandler* teamHandler;

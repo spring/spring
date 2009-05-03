@@ -21,7 +21,7 @@ CR_BIND(CTeamHandler,);
 CR_REG_METADATA(CTeamHandler, (
 	CR_MEMBER(gaiaTeamID),
 	CR_MEMBER(gaiaAllyTeamID),
-	CR_MEMBER(allies),
+	//CR_MEMBER(allyTeams),
 	CR_MEMBER(team2allyteam),
 	CR_MEMBER(teams),
 	CR_RESERVED(64)
@@ -101,10 +101,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		}
 	}
 
-	for (size_t allyTeam1 = 0; allyTeam1 < activeAllyTeams; ++allyTeam1)
-	{
-		allies.push_back(setup->allyStartingData[allyTeam1].allies);
-	}
+	allyTeams = setup->allyStartingData;
 
 	if (useLuaGaia) {
 		// Gaia adjustments
@@ -121,13 +118,16 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		team.teamNum = gaiaTeamID;
 		team.StartposMessage(float3(0.0, 0.0, 0.0), true);
 		teams.push_back(team);
+
 		team2allyteam.push_back(gaiaAllyTeamID);
+		::AllyTeam allyteam;
+		allyteam.allies.resize(activeAllyTeams+1,false); // everyones enemy
+		allyteam.allies[gaiaTeamID] = true; // peace with itself
+		allyTeams.push_back(allyteam);
 		for (size_t allyTeam1 = 0; allyTeam1 < activeAllyTeams; ++allyTeam1)
 		{
-			allies[allyTeam1].push_back(false); // enemy to everyone
+			allyTeams[allyTeam1].allies.push_back(false); // enemy to everyone
 		}
-		allies.push_back(std::vector<bool>(activeAllyTeams+1,false)); // everyones enemy
-		allies[activeAllyTeams][activeAllyTeams] = true; // peace with itself
 	}
 	assert(team2allyteam.size() == teams.size());
 	assert(teams.size() <= MAX_TEAMS);
