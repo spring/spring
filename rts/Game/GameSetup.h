@@ -9,6 +9,7 @@
 #include "float3.h"
 #include "PlayerBase.h"
 #include "Sim/Misc/TeamBase.h"
+#include "Sim/Misc/AllyTeam.h"
 #include "ExternalAI/SkirmishAIData.h"
 
 class TdfParser;
@@ -62,16 +63,7 @@ public:
 	size_t GetSkirmishAIs() const;
 
 	std::vector<TeamBase> teamStartingData;
-
-	struct AllyTeamData
-	{
-		float startRectTop;
-		float startRectBottom;
-		float startRectLeft;
-		float startRectRight;
-		std::vector<bool> allies;
-	};
-	std::vector<AllyTeamData> allyStartingData;
+	std::vector<AllyTeam> allyStartingData;
 
 	std::map<std::string, int> restrictedUnits;
 

@@ -326,16 +326,15 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 	int i = 0;
 	for (int a = 0; a < MAX_TEAMS; ++a) {
 		char section[50];
-		sprintf(section,"GAME\\ALLYTEAM%i\\",a);
+		sprintf(section,"GAME\\ALLYTEAM%i",a);
 		string s(section);
 
-		if (!file.SectionExist(s.substr(0, s.length() - 1)))
+		if (!file.SectionExist(s))
 			continue;
-		AllyTeamData data;
-		data.startRectTop    = atof(file.SGetValueDef("0", s + "StartRectTop").c_str());
-		data.startRectBottom = atof(file.SGetValueDef("1", s + "StartRectBottom").c_str());
-		data.startRectLeft   = atof(file.SGetValueDef("0", s + "StartRectLeft").c_str());
-		data.startRectRight  = atof(file.SGetValueDef("1", s + "StartRectRight").c_str());
+		AllyTeam data;
+		std::map<std::string, std::string> setup = file.GetAllValues(s);
+		for (std::map<std::string, std::string>::const_iterator it = setup.begin(); it != setup.end(); ++it)
+			data.SetValue(it->first, it->second);
 
 		allyStartingData.push_back(data);
 
