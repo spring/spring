@@ -25,13 +25,6 @@ public:
 	const CCobFile* GetScriptAddr() const { return &script; }
 
 public:
-	const int* GetUnitVars() const { return unitVars; };
-
-	static const int* GetTeamVars(int team) { return &teamVars[team][0]; }
-	static const int* GetAllyVars(int ally) { return &allyVars[ally][0]; }
-	static const int* GetGlobalVars()       { return globalVars; }
-
-public:
 	CCobInstance(CCobFile &script, CUnit *unit);
 	~CCobInstance();
 
