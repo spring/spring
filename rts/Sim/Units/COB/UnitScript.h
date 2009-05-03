@@ -90,7 +90,6 @@ protected:
 	std::list<struct AnimInfo *> anims;
 	const std::vector<int>& scriptIndex;
 
-	void MapScriptToModelPieces(LocalModel* lmodel);
 	void UnblockAll(struct AnimInfo * anim);
 
 	int MoveToward(float &cur, float dest, float speed);
@@ -107,6 +106,7 @@ protected:
 	virtual void ShowScriptWarning(const std::string& msg) = 0;
 
 public:
+	// subclass is responsible for populating this with script pieces
 	std::vector<LocalModelPiece*> pieces;
 
 	LocalModelPiece* GetLocalModelPiece(int scriptnum) const {

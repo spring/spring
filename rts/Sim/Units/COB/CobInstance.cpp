@@ -55,6 +55,8 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 	for (int i = 0; i < script.numStaticVars; ++i) {
 		staticVars.push_back(0);
 	}
+
+	MapScriptToModelPieces(unit->localmodel);
 }
 
 
@@ -66,6 +68,45 @@ CCobInstance::~CCobInstance(void)
 	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
 		(*i)->state = CCobThread::Dead;
 		(*i)->SetCallback(NULL, NULL, NULL);
+	}
+}
+
+
+void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
+{
+	pieces.clear();
+	pieces.reserve(script.pieceNames.size());
+
+	std::vector<LocalModelPiece*>& lp = lmodel->pieces;
+
+	for (size_t piecenum=0; piecenum<script.pieceNames.size(); piecenum++) {
+		std::string& scriptname = script.pieceNames[piecenum]; // is already in lowercase!
+
+		unsigned int cur;
+
+		//Map this piecename to an index in the script's pieceinfo
+		for (cur=0; cur<lp.size(); cur++) {
+			if (lp[cur]->name.compare(scriptname) == 0) {
+				break;
+			}
+		}
+
+		//Not found? Try lowercase
+		if (cur == lp.size()) {
+			for (cur=0; cur<lp.size(); cur++) {
+				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
+					break;
+				}
+			}
+		}
+
+		//Did we find it?
+		if (cur < lp.size()) {
+			pieces.push_back(lp[cur]);
+		} else {
+			pieces.push_back(NULL);
+			logOutput.Print("CobWarning: Couldn't find a piece named \""+ scriptname +"\" in the model (in "+ script.name +")");
+		}
 	}
 }
 
