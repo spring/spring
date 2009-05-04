@@ -14,6 +14,10 @@ class CCobInstance : public CUnitScript
 protected:
 	CCobFile& script;
 
+	// because COB has a set of "script pieces", which isn't necessarily equal
+	// to the set of all LocalModelPieces, we need to map script piece -> LMP.
+	std::vector<LocalModelPiece*> pieces;
+
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
 	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);

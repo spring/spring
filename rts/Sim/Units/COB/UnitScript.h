@@ -107,7 +107,7 @@ protected:
 
 public:
 	// subclass is responsible for populating this with script pieces
-	std::vector<LocalModelPiece*> pieces;
+	const std::vector<LocalModelPiece*>& pieces;
 
 	LocalModelPiece* GetLocalModelPiece(int scriptnum) const {
 		if (scriptnum >= 0 && (size_t)scriptnum < pieces.size()) {
@@ -156,7 +156,7 @@ public:
 	};
 
 public:
-	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex);
+	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex, const std::vector<LocalModelPiece*>& pieces);
 	virtual ~CUnitScript();
 
 	bool IsBusy() const        { return busy; }

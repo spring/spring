@@ -155,11 +155,12 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 }
 
 
-CUnitScript::CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex)
+CUnitScript::CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex, const std::vector<LocalModelPiece*>& pieces)
 	: unit(unit)
 	, yardOpen(false)
 	, busy(false)
 	, scriptIndex(scriptIndex)
+	, pieces(pieces)
 {
 	memset(unitVars, int(0), UNIT_VAR_COUNT);
 }
