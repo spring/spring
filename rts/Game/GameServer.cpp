@@ -663,10 +663,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			{
 				unsigned team = (unsigned)inbuf[2];
 				if (team >= teams.size())
-					Message(str( boost::format("Invalid teamID in startpos-message from palyer %d") %team ));
+					Message(str( boost::format("Invalid teamID in startPos-message from palyer %d") %team ));
 				else
 				{
-					teams[team].startpos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
+					teams[team].startPos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
 					if (inbuf[3] == 1)
 						teams[team].readyToStart = static_cast<bool>(inbuf[3]);
 
@@ -1092,7 +1092,7 @@ void CGameServer::StartGame()
 
 	if (demoReader) {
 		// the client told us to start a demo
-		// no need to send startpos and startplaying since its in the demo
+		// no need to send startPos and startplaying since its in the demo
 		Message(DemoStart);
 		return;
 	}
@@ -1101,7 +1101,7 @@ void CGameServer::StartGame()
 	for (int a = 0; a < setup->numTeams; ++a)
 	{
 		if (teams[a].active) // its a player
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a].startpos.x, teams[a].startpos.y, teams[a].startpos.z));
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
 		else // maybe an AI?
 			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, setup->teamStartingData[a].startPos.x, setup->teamStartingData[a].startPos.y, setup->teamStartingData[a].startPos.z));
 	}
@@ -1286,7 +1286,7 @@ void CGameServer::CheckForGameEnd()
 		}
 
 		if (teams[a].active && hasPlayer)
-			++numActiveTeams[teams[a].allyTeam];
+			++numActiveTeams[teams[a].teamAllyteam];
 	}
 #endif // !defined DEDICATED
 	for (size_t a = 0; a < numActiveTeams.size(); ++a) {
@@ -1486,16 +1486,16 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 		if (!teams[hisTeam].active) // create new team
 		{
 			teams[hisTeam].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
-			teams[hisTeam].allyTeam = setup->teamStartingData[hisTeam].teamAllyteam;
+			teams[hisTeam].teamAllyteam = setup->teamStartingData[hisTeam].teamAllyteam;
 			if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
 				// if the player didn't choose a start position, choose one for him
 				// it should be near the center of his startbox
 				// we let the startscript handle it
-				teams[hisTeam].startpos.x = 0;
-				teams[hisTeam].startpos.y = -500;
-				teams[hisTeam].startpos.z = 0;
+				teams[hisTeam].startPos.x = 0;
+				teams[hisTeam].startPos.y = -500;
+				teams[hisTeam].startPos.z = 0;
 			} else {
-				teams[hisTeam].startpos = setup->teamStartingData[hisTeam].startPos;
+				teams[hisTeam].startPos = setup->teamStartingData[hisTeam].startPos;
 			}
 			teams[hisTeam].active = true;
 		}
@@ -1504,7 +1504,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
 		for (size_t a = 0; a < teams.size(); ++a)
 		{
-			link->SendData(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, (int)a, teams[a].readyToStart, teams[a].startpos.x, teams[a].startpos.y, teams[a].startpos.z));
+			link->SendData(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, (int)a, teams[a].readyToStart, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
 		}
 	}
 
