@@ -32,7 +32,7 @@ typedef void (*CBCobThreadFinish) (int retCode, void *p1, void *p2);
 class CUnitScript : public CObject
 {
 public:
-	enum AnimType {ANotFound, ATurn, ASpin, AMove};
+	enum AnimType {ATurn, ASpin, AMove};
 
 	struct IAnimListener {
 		virtual ~IAnimListener() {}
@@ -215,11 +215,9 @@ public:
 	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
 	void SetUnitVal(int val, int param);
 
-	AnimType IsInAnimation(int piece, int axis) {
-		const AnimInfo* ai = FindAnim(ATurn, piece, axis);
-		if (ai && !ai->interpolated)
-			return ai->type;
-		return ANotFound;
+	bool IsInAnimation(AnimType type, int piece, int axis) {
+		const AnimInfo* ai = FindAnim(type, piece, axis);
+		return ai && !ai->interpolated;
 	}
 };
 
