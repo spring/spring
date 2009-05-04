@@ -472,7 +472,7 @@ static inline int IsInAnimation(lua_State* L, CUnitScript::AnimType wantedType)
 		return 0;
 	}
 
-	lua_pushboolean(L, unit->script->IsInAnimation(piece, axis) == wantedType);
+	lua_pushboolean(L, unit->script->IsInAnimation(wantedType, piece, axis));
 	return 1;
 }
 
