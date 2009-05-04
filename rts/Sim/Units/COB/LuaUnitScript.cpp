@@ -7,6 +7,114 @@
 #include "Sim/Units/UnitHandler.h"
 
 
+/*
+
+some notes:
+- all piece numbers are 1 based, to be consistent with other parts of interface
+- all axes are 1 based, so 1 = x, 2 = y, 3 = z
+- destination, speed for Turn are in world coords, and NOT in COB coords
+- destination, speed, accel, decel for Move, Spin, StopSpin are in radians
+- GetUnitCOBValue(PLAY_SOUND, ...) does NOT work for Lua unit scripts,
+  use Spring.PlaySound in combination with Spring.SendToUnsynced instead.
+
+
+docs for callouts defined in this file:
+
+Spring.UnitScript.SetUnitCOBValue(...)
+	see wiki for Spring.GetUnitCOBValue (unchanged)
+
+Spring.UnitScript.GetUnitCOBValue(...)
+	see wiki for Spring.GetUnitCOBValue (unchanged)
+
+Spring.UnitScript.SetPieceVisibility(number unitID, number piece, boolean visible) -> nil
+	Set's piece visibility.  Same as COB's hide/show.
+
+Spring.UnitSript.EmitSfx(number unitID, number piece, number type) -> nil
+	Same as COB's emit-sfx.
+
+Spring.UnitScript.AttachUnit(number unitID, number piece, number transporteeID) -> nil
+	Same as COB's attach-unit.
+
+Spring.UnitScript.DropUnit(number unitID, number transporteeID) -> nil
+	Same as COB's drop-unit.
+
+Spring.UnitScript.Explode(number unitID, number piece, number flags) -> nil
+	Same as COB's explode.
+
+Spring.UnitScript.ShowFlare(number unitID, number piece) -> nil
+	Same as COB's show _inside_ FireWeaponX.
+
+Spring.UnitScript.Spin(number unitID, number piece, number axis, number speed[, number accel]) -> nil
+	Same as COB's spin.  If accel isn't given spinning starts at the desired speed.
+
+Spring.UnitScript.StopSpring(number unitID, number piece, number axis[, number decel]) -> nil
+	Same as COB's stop-spin.  If decel isn't given spinning stops immediately.
+
+Spring.UnitScript.Turn(number unitID, number piece, number axis, number destination[, number speed]) -> nil
+	Same as COB's turn iff speed is given and not zero, and turn-now otherwise.
+
+Spring.UnitScript.Move(number unitID, number piece, number axis, number destination[, number speed]) -> nil
+	Same as COB's move iff speed is given and not zero, and move-now otherwise.
+
+
+
+docs for callouts still to be made (prone to change):
+
+Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
+	Replaces the current unit script (independent of type, also replaces COB)
+	with the unit script given by a table of callins for the unit.
+	Callins are similar to COB functions, e.g. a number of predefined names are
+	called by the engine if they exist in the table. (Create, FireWeapon1, etc.)
+	Callins do NOT take a unitID as argument, the unitID (and all script state
+	should be stored in a closure.)
+
+Spring.UnitScript.UpdateCallin(number unitID, string fname, function callin) -> nil
+	Replaces or adds a single callin.  See also Spring.UnitScript.CreateScript.
+
+
+
+docs for global LuaRules callins still to be made (prone to change):
+(optionally not global but inside the callin table passed to CreateScript?)
+
+TurnFinished(number unitID, number piece, number axis)
+	Called after a turn finished for this unit/piece/axis (not a turn-now!)
+	Should resume coroutine of the particular thread which called the Lua
+	WaitForTurn function (see below).
+
+MoveFinished(number unitID, number piece, number axis)
+	Called after a move finished for this unit/piece/axis (not a move-now!)
+	Should resume coroutine of the particular thread which called the Lua
+	WaitForMove function (see below).
+
+
+
+random prototype snippets of Lua framework code:
+
+function WaitForTurn(unitID, piece, axis)
+	--the code which resumed the coroutine is responsible for processing
+	--this result and putting the "thread" in the 'waitForTurn' queue.
+	coroutine.yield(unitID, "turn", piece, axis)
+end
+
+function WaitForMove(unitID, piece, axis)
+	--idem
+	coroutine.yield(unitID, "move", piece, axis)
+end
+
+function Sleep(unitID, delay)
+	--needs check for sleep smaller then a single frame
+	coroutine.yield(unitID, "sleep", math.floor(delay / 33))
+end
+
+function gagdet:GameFrame(f)
+	if (sleepQue[f] ~= nil) then
+		--resume all coroutines scheduled to run in this frame and process results
+	end
+end
+
+*/
+
+
 /******************************************************************************/
 /******************************************************************************/
 //
