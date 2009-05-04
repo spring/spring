@@ -122,6 +122,46 @@ end
 
 /******************************************************************************/
 /******************************************************************************/
+
+CLuaUnitScript::CLuaUnitScript(CUnit* unit)
+	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces)
+{
+}
+
+
+CLuaUnitScript::~CLuaUnitScript()
+{
+}
+
+
+int CLuaUnitScript::GetFunctionId(const std::string& fname) const
+{
+	// TODO: implement, should probably return ref (from Lua reference system)
+	return 0;
+}
+
+
+int CLuaUnitScript::RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+{
+	// TODO: call into Lua function stored in environ/registry?
+	return 0;
+}
+
+
+void CLuaUnitScript::ShowScriptError(const std::string& msg)
+{
+	// TODO: Raise Lua error (where to get lua_State?)
+}
+
+
+void CLuaUnitScript::ShowScriptWarning(const std::string& msg)
+{
+	// TODO: Raise Lua error (where to get lua_State?)
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
 //
 //  Access helpers
 //
@@ -142,6 +182,7 @@ static inline bool CanControlUnit(const CUnit* unit)
 	}
 	return (ctrlTeam == unit->team);
 }
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -179,6 +220,7 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 	}
 	return unit;
 }
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -493,6 +535,7 @@ int CLuaUnitScript::IsInSpin(lua_State* L)
 {
 	return ::IsInAnimation(L, ASpin);
 }
+
 
 /******************************************************************************/
 /******************************************************************************/

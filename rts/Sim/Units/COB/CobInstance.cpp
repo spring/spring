@@ -47,7 +47,7 @@
 
 
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
-	: CUnitScript(_unit, _script.scriptIndex)
+	: CUnitScript(_unit, _script.scriptIndex, pieces)
 	, script(_script)
 	, smoothAnim(unit->unitDef->smoothAnim)
 {
