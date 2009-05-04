@@ -11,6 +11,7 @@
 
 struct UnitDef;
 
+class IGlobalAICallback;
 class IAICallback;
 class IAICheats;
 class CMetalMap;
@@ -26,12 +27,19 @@ class CBuildUp;
 class CAttackHandler;
 class CDGunControllerHandler;
 class CLogger;
+struct MapData;
 
 struct AIClasses {
 	CR_DECLARE_STRUCT(AIClasses);
 
+	AIClasses() { /* CREG-only */ }
+	AIClasses(IGlobalAICallback*);
+	~AIClasses();
+	void Init();
+	void Load();
+
 	IAICallback*            cb;
-	IAICheats*              cheat;
+	IAICheats*              ccb;
 	CEconomyTracker*        econTracker;
 	CBuildUp*               bu;
 	CMetalMap*              mm;
@@ -44,6 +52,7 @@ struct AIClasses {
 	CAttackHandler*         ah;
 	CLogger*                logger;
 	CDGunControllerHandler* dgunConHandler;
+	MapData*                mapData;
 
 	std::vector<CUNIT*>     MyUnits;
 	std::vector<int>        unitIDs;

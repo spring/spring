@@ -13,6 +13,9 @@ CR_REG_METADATA(AIClasses, (
 	CR_MEMBER(dm),
 	CR_MEMBER(ah),
 	CR_MEMBER(dgunConHandler),
+	CR_MEMBER(MyUnits),
+	CR_MEMBER(unitIDs),
+	CR_POSTLOAD(Load),
 	CR_RESERVED(16)
 ));
 
@@ -118,6 +121,90 @@ CR_REG_METADATA(MetalExtractor, (
 	CR_MEMBER(buildFrame),
 	CR_RESERVED(8)
 ));
+
+
+
+AIClasses::AIClasses(IGlobalAICallback* gcb):
+	logger(NULL),
+	math(NULL),
+	ut(NULL),
+	mm(NULL),
+	pather(NULL),
+	tm(NULL),
+	uh(NULL),
+	dm(NULL),
+	econTracker(NULL),
+	bu(NULL),
+	ah(NULL),
+	dgunConHandler(NULL)
+{
+	cb  = gcb->GetAICallback();
+	ccb = gcb->GetCheatInterface();
+}
+
+AIClasses::~AIClasses() {
+	for (int i = 0; i < MAX_UNITS; i++) {
+		delete MyUnits[i];
+	}
+
+	delete logger;
+	delete ah;
+	delete bu;
+	delete econTracker;
+	delete math;
+	delete pather;
+	delete tm;
+	delete ut;
+	delete mm;
+	delete uh;
+	delete dgunConHandler;
+}
+
+void AIClasses::Init() {
+	MyUnits.resize(MAX_UNITS, NULL);
+	unitIDs.resize(MAX_UNITS, -1);
+
+	for (int i = 0; i < MAX_UNITS; i++) {
+		MyUnits[i]          = new CUNIT(this);
+		MyUnits[i]->myid    =  i;
+		MyUnits[i]->groupID = -1;
+	}
+
+	logger         = new CLogger(cb);
+	math           = new CMaths(this);
+	ut             = new CUnitTable(this);
+	mm             = new CMetalMap(this);
+	pather         = new CPathFinder(this);
+	tm             = new CThreatMap(this);
+	uh             = new CUnitHandler(this);
+	dm             = new CDefenseMatrix(this);
+	econTracker    = new CEconomyTracker(this);
+	bu             = new CBuildUp(this);
+	ah             = new CAttackHandler(this);
+	dgunConHandler = new CDGunControllerHandler(this);
+
+	mm->Init();
+	ut->Init();
+	pather->Init();
+}
+
+void AIClasses::Load() {
+	assert(MyUnits.size() == MAX_UNITS);
+	assert(unitIDs.size() == MAX_UNITS);
+
+	// allocate and initialize all NON-serialized
+	// AI components; the ones that were serialized
+	// have their own PostLoad() callins
+	logger  = new CLogger(cb);
+	math    = new CMaths(this);
+	mm      = new CMetalMap(this);
+	pather  = new CPathFinder(this);
+
+	mm->Init();
+	pather->Init();
+}
+
+
 
 void BuildTask::PostLoad() { def = KAIKStateExt->GetAi()->cb->GetUnitDef(id); }
 void TaskPlan::PostLoad() { def = KAIKStateExt->GetAi()->cb->GetUnitDef(defName.c_str()); }

@@ -146,8 +146,8 @@ void CBuildUp::GetEconState(EconState* es) const {
 
 BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
 	if (
-		(es->numM < 3 && es->numE <= 3) ||
-		(es->numE < 3 && es->numM <= 3) ||
+		(es->numM < 2 && es->numE <= 2) ||
+		(es->numE < 2 && es->numM <= 2) ||
 		(es->numFactories < 1)
 	) {
 		return BUILD_INIT;
@@ -200,10 +200,10 @@ void CBuildUp::Buildup(int frame) {
 						// note: in E&E metal processors belong to CAT_ENERGY,
 						// so numM never reaches 3 and we need to allow overlap
 						// note: this probably breaks mods with static commanders
-						if (econState.numM < 3 && econState.numE <= 3) {
+						if (econState.numM < 2 && econState.numE <= 2) {
 							BuildUpgradeExtractor(econState.builderID); return;
 						}
-						if (econState.numE < 3 && econState.numM <= 3) {
+						if (econState.numE < 2 && econState.numM <= 2) {
 							BuildUpgradeReactor(econState.builderID); return;
 						}
 						if (econState.numFactories < 1 && econState.factFeas) {
@@ -605,9 +605,9 @@ bool CBuildUp::BuildUpgradeReactor(int builderID) {
 			float        netEnergy    = newReactorDef->energyMake - newReactorDef->energyUpkeep;
 			float        closestDstSq = MY_FLT_MAX;
 
-			int            oldReactorID  = -1;
-			float3         oldReactorPos = ZEROVECTOR;
-			const UnitDef* oldReactorDef = NULL;
+			int             oldReactorID  = -1;
+			float3          oldReactorPos = ZEROVECTOR;
+			const  UnitDef* oldReactorDef = NULL;
 
 			std::list<int> lst = ai->uh->AllUnitsByCat[CAT_ENERGY];
 
@@ -617,20 +617,38 @@ bool CBuildUp::BuildUpgradeReactor(int builderID) {
 				const UnitDef* itReactorDef = ai->cb->GetUnitDef(itReactorID);
 
 				if (ai->cb->GetUnitHealth(itReactorID) >= ai->cb->GetUnitMaxHealth(itReactorID)) {
-					if (itReactorDef->energyMake <= 0.0f || itReactorDef->windGenerator) {
-						// only look at solars and windmills which produce energy through
-						// negative upkeep (something of a hack for OTA-style mods)
-						const float itNetEnergy = itReactorDef->energyMake - itReactorDef->energyUpkeep;
-						const float distanceSq = (itReactorPos - builderPos).SqLength();
+					if (itReactorDef->energyMake <= 0.0f || itReactorDef->windGenerator > 0.0f) {
+						// only look at solars which produce energy through negative
+						// upkeep (ud.energyUpkeep = udTable.GetFloat("energyUse"))
+						// rather than positive energyMake, and at windmills
+						float       itUpgradeRatio = 0.0f;
+						const float itNetEnergy    = itReactorDef->energyMake - itReactorDef->energyUpkeep;
+						const float itReactorDstSq = (itReactorPos - builderPos).SqLength();
+
+						if (itNetEnergy > 0.0f) {
+							itUpgradeRatio = netEnergy / itNetEnergy;
+						} else {
+							if (itReactorDef->windGenerator > 0.0f) {
+								const float minWind = ai->cb->GetMinWind();
+								const float maxWind = ai->cb->GetMaxWind();
+								const float avgWind = (minWind + maxWind) * 0.5f;
+								const float maxMake = std::min(maxWind, itReactorDef->windGenerator);
+								const float avgEffi = std::min(avgWind / itReactorDef->windGenerator, 1.0f);
+
+								if (maxWind > 0.0f) {
+									itUpgradeRatio = (netEnergy * 0.5f) / (maxMake * avgEffi);
+								}
+							}
+						}
 
 						// find the closest CAT_ENERGY structure
 						// FIXME: find the closest and oldest?
-						if (distanceSq < closestDstSq) {
-							// check if it is worth upgrading
-							if ((netEnergy / itNetEnergy) >= 2.0f) {
+						if (itReactorDstSq < closestDstSq) {
+							if (itUpgradeRatio > 2.0f) {
 								oldReactorID  = itReactorID;
 								oldReactorPos = itReactorPos;
 								oldReactorDef = itReactorDef;
+								closestDstSq  = itReactorDstSq;
 							}
 						}
 					}
