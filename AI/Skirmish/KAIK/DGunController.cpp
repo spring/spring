@@ -23,6 +23,7 @@ CR_REG_METADATA(ControllerState, (
 	CR_MEMBER(inited),
 	CR_MEMBER(dgunOrderFrame),
 	CR_MEMBER(reclaimOrderFrame),
+	CR_MEMBER(captureOrderFrame),
 	CR_MEMBER(targetSelectionFrame),
 	CR_MEMBER(targetID),
 	CR_MEMBER(oldTargetPos),
@@ -94,25 +95,41 @@ void CDGunController::HandleEnemyDestroyed(int attackerID, int targetID) {
 void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 	if (currentFrame - state.targetSelectionFrame == 5) {
 		// five sim-frames have passed since selecting target, attack
-		float3 newTargetPos = ai->cb->GetUnitPos(state.targetID);					// current target position
-		float3 commanderPos = ai->cb->GetUnitPos(commanderID);						// current commander position
-		float  targetDist   = (commanderPos - newTargetPos).Length();				// distance to target
-		float3 targetDir    = (newTargetPos - state.oldTargetPos).Normalize();		// target direction of movement
-		float  targetSpeed  = (newTargetPos - state.oldTargetPos).Length() / 5;		// target speed per sim-frame during tracking interval
-		float  dgunDelay    = targetDist / commanderWD->projectilespeed;			// sim-frames needed for dgun to reach target position
-		float3 attackPos    = newTargetPos + targetDir * (targetSpeed * dgunDelay);	// position where target will be in <dgunDelay> frames
-		float  maxRange     = ai->cb->GetUnitMaxRange(commanderID);
+		const UnitDef* udef = ai->cb->GetUnitDef(state.targetID);
+
+		const float3 curTargetPos = ai->cb->GetUnitPos(state.targetID);						// current target position
+		const float3 commanderPos = ai->cb->GetUnitPos(commanderID);						// current commander position
+
+		const float  targetDist   = (commanderPos - curTargetPos).Length();					// distance to target
+		const float3 targetDir    = (curTargetPos - state.oldTargetPos).Normalize();		// target direction of movement
+		const float  targetSpeed  = (curTargetPos - state.oldTargetPos).Length() / 5;		// target speed per sim-frame during tracking interval
+
+		const float  dgunDelay    = targetDist / commanderWD->projectilespeed;				// sim-frames needed for dgun to reach target position
+		const float3 dgunPos      = curTargetPos + targetDir * (targetSpeed * dgunDelay);	// position where target will be in <dgunDelay> frames
+		const float  maxRange     = ai->cb->GetUnitMaxRange(commanderID);
 		// ai->cb->CreateLineFigure(commanderPos, attackPos, 48, 1, 3600, 0);
 
-		if ((commanderPos - attackPos).Length() < maxRange * 0.9f) {
+		int orderType = -1;
+
+		if ((commanderPos - dgunPos).Length() < maxRange * 0.9f) {
 			// multiply by 0.9 to ensure commander does not have to walk
 			if ((ai->cb->GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
-				state.dgunOrderFrame = currentFrame;
-				IssueOrder(attackPos, CMD_DGUN, 0);
+				if (udef != NULL && !udef->weapons.empty()) {
+					IssueOrder(dgunPos, orderType = CMD_DGUN, 0);
+				} else {
+					IssueOrder(state.targetID, orderType = CMD_CAPTURE, 0);
+				}
 			} else {
-				state.reclaimOrderFrame = currentFrame;
-				IssueOrder(state.targetID, CMD_RECLAIM, 0);
+				if (ai->cb->GetUnitHealth(state.targetID) < ai->cb->GetUnitMaxHealth(state.targetID) * 0.5f) {
+					IssueOrder(state.targetID, orderType = CMD_RECLAIM, 0);
+				} else {
+					IssueOrder(state.targetID, orderType = CMD_CAPTURE, 0);
+				}
 			}
+
+			if (orderType == CMD_DGUN   ) { state.dgunOrderFrame    = ai->cb->GetCurrentFrame(); }
+			if (orderType == CMD_RECLAIM) { state.reclaimOrderFrame = ai->cb->GetCurrentFrame(); }
+			if (orderType == CMD_CAPTURE) { state.captureOrderFrame = ai->cb->GetCurrentFrame(); }
 		} else {
 			state.Reset(currentFrame, true);
 		}
@@ -138,7 +155,7 @@ void CDGunController::SelectTarget(unsigned int currentFrame) {
 		if (ai->unitIDs[i] > 0) {
 			// check if unit still alive (needed since when UnitDestroyed()
 			// triggered GetEnemyUnits() is not immediately updated as well)
-			if (ai->cb->GetUnitHealth(ai->unitIDs[i]) > 0) {
+			if (ai->cb->GetUnitHealth(ai->unitIDs[i]) > 0.0f) {
 				const UnitDef* attackerDef = ai->cb->GetUnitDef(ai->unitIDs[i]);
 
 				// don't directly pop enemy commanders
@@ -172,13 +189,13 @@ void CDGunController::Stop(void) const {
 	Command c; c.id = CMD_STOP; ai->cb->GiveOrder(commanderID, &c);
 }
 
-void CDGunController::IssueOrder(float3 targetPos, int orderType, int keyMod) const {
+void CDGunController::IssueOrder(const float3& pos, int orderType, int keyMod) const {
 	Command c;
 	c.id = orderType;
 	c.options |= keyMod;
-	c.params.push_back(targetPos.x);
-	c.params.push_back(targetPos.y);
-	c.params.push_back(targetPos.z);
+	c.params.push_back(pos.x);
+	c.params.push_back(pos.y);
+	c.params.push_back(pos.z);
 
 	ai->cb->GiveOrder(commanderID, &c);
 }
@@ -193,7 +210,7 @@ void CDGunController::IssueOrder(int target, int orderType, int keyMod) const {
 }
 
 bool CDGunController::IsBusy(void) const {
-	return (state.dgunOrderFrame > 0 || state.reclaimOrderFrame > 0);
+	return (state.dgunOrderFrame > 0 || state.reclaimOrderFrame > 0 || state.captureOrderFrame > 0);
 }
 
 
