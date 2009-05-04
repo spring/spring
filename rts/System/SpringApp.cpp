@@ -1057,7 +1057,7 @@ int SpringApp::Run (int argc, char *argv[])
 								if (ac->ignoreNextChar || ac->ignoreChar == char(i)) {
 									ac->ignoreNextChar = false;
 								} else {
-									if (i < SDLK_DELETE) {
+									if (i < SDLK_DELETE && (!isRepeat || ac->userInput.length()>0)) {
 										const int len = (int)ac->userInput.length();
 										ac->writingPos = std::max(0, std::min(len, ac->writingPos));
 										char str[2] = { char(i), 0 };
