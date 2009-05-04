@@ -87,6 +87,8 @@ CShareBox::~CShareBox(void)
 
 void CShareBox::Draw(void)
 {
+	const float alpha = std::max(guiAlpha,0.4f);
+
 	float mx=MouseX(mouse->lastx);
 	float my=MouseY(mouse->lasty);
 
@@ -95,34 +97,34 @@ void CShareBox::Draw(void)
 	glDisable(GL_ALPHA_TEST);
 
 	// Large Box
-	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
+	glColor4f(0.2f,0.2f,0.2f,alpha);
 	DrawBox(box);
 
 	// ok Box on mouse over
 	if(InBox(mx,my,box+okBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.7f,0.2f,0.2f,alpha);
 		DrawBox(box+okBox);
 	}
 
 	// apply Box on mouse over
 	if(InBox(mx,my,box+applyBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.7f,0.2f,0.2f,alpha);
 		DrawBox(box+applyBox);
 	}
 
 	// cancel Box on mouse over
 	if(InBox(mx,my,box+cancelBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.7f,0.2f,0.2f,alpha);
 		DrawBox(box+cancelBox);
 	}
 
-	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
+	glColor4f(0.2f,0.2f,0.2f,alpha);
 	DrawBox(box+teamBox);
 
 	if(InBox(mx,my,box+unitBox))
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.7f,0.2f,0.2f,alpha);
 	else
-		glColor4f(0.2f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.2f,0.2f,0.2f,alpha);
 	DrawBox(box+unitBox);
 
 	glColor4f(0.8f,0.8f,0.9f,0.7f);

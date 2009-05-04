@@ -152,7 +152,7 @@ void CGuiHandler::LoadDefaults()
 
 	outlineFonts = false;
 
-	attackRect = true;
+	attackRect = false;
 	newAttackMode = true;
 	invColorSelect = true;
 	frontByEnds = false;
