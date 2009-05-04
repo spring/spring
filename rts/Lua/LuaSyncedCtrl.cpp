@@ -963,68 +963,103 @@ int LuaSyncedCtrl::PieceShowFlare(lua_State* L)
 }
 
 
-/*
-	void Spin(int piece, int axis, int speed, int accel);
-	void StopSpin(int piece, int axis, int decel);
-	void Turn(int piece, int axis, int speed, int destination, bool interpolated = false);
-	void Move(int piece, int axis, int speed, int destination, bool interpolated = false);
-	void MoveNow(int piece, int axis, int destination);
-	void TurnNow(int piece, int axis, int destination);
-*/
-
-
 int LuaSyncedCtrl::PieceSpin(lua_State* L)
 {
+	// void Spin(int piece, int axis, int speed, int accel);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if ((unit == NULL) || (unit->script == NULL)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
+	const int piece = luaL_checkint(L, 2) - 1;
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	const int axis  = luaL_checkint(L, 3) - 1;
+	if ((axis < 0) || (axis > 2)) {
+		return 0;
+	}
+	const float speed = luaL_checkfloat(L, 4);
+	const float accel = luaL_optfloat(L, 5, 0.0f); // accel == 0 -> start at desired speed immediately
 
-	// TODO: implement
-
+	unit->script->Spin(piece, axis, speed, accel);
 	return 0;
 }
 
 
 int LuaSyncedCtrl::PieceStopSpin(lua_State* L)
 {
+	// void StopSpin(int piece, int axis, int decel);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if ((unit == NULL) || (unit->script == NULL)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
+	const int piece = luaL_checkint(L, 2) - 1;
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	const int axis  = luaL_checkint(L, 3) - 1;
+	if ((axis < 0) || (axis > 2)) {
+		return 0;
+	}
+	const float decel = luaL_optfloat(L, 4, 0.0f); // decel == 0 -> stop immediately
 
-	// TODO: implement
-
+	unit->script->StopSpin(piece, axis, decel);
 	return 0;
 }
 
 
 int LuaSyncedCtrl::PieceTurn(lua_State* L)
 {
+	// void Turn(int piece, int axis, int speed, int destination);
+	// void TurnNow(int piece, int axis, int destination);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if ((unit == NULL) || (unit->script == NULL)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
+	const int piece = luaL_checkint(L, 2) - 1;
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	const int axis  = luaL_checkint(L, 3) - 1;
+	if ((axis < 0) || (axis > 2)) {
+		return 0;
+	}
+	const float dest  = luaL_checkfloat(L, 4);
+	const float speed = luaL_optfloat(L, 5, 0.0f); // speed == 0 -> TurnNow
 
-	// TODO: implement
-
+	if (speed == 0.0f) {
+		unit->script->TurnNow(piece, axis, dest);
+	} else {
+		unit->script->Turn(piece, axis, speed, dest);
+	}
 	return 0;
 }
 
 
 int LuaSyncedCtrl::PieceMove(lua_State* L)
 {
+	// void Move(int piece, int axis, int speed, int destination);
+	// void MoveNow(int piece, int axis, int destination);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if ((unit == NULL) || (unit->script == NULL)) {
 		return 0;
 	}
-	const int args = lua_gettop(L); // number of arguments
+	const int piece = luaL_checkint(L, 2) - 1;
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	const int axis  = luaL_checkint(L, 3) - 1;
+	if ((axis < 0) || (axis > 2)) {
+		return 0;
+	}
+	const float dest  = luaL_checkfloat(L, 4);
+	const float speed = luaL_optfloat(L, 5, 0.0f); // speed == 0 -> MoveNow
 
-	// TODO: implement
-
+	if (speed == 0.0f) {
+		unit->script->MoveNow(piece, axis, dest);
+	} else {
+		unit->script->Move(piece, axis, speed, dest);
+	}
 	return 0;
 }
 

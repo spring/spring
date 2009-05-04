@@ -206,7 +206,6 @@ public:
 	int AddMoveListener(int piece, int axis, IAnimListener* listener);
 
 	// misc, used by CCobThread
-	// TODO: Lua binding (except GetUnitVal/SetUnitVal)
 	void SetVisibility(int piece, bool visible);
 	void EmitSfx(int type, int piece);
 	void AttachUnit(int piece, int unit);
