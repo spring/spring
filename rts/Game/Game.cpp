@@ -2777,7 +2777,7 @@ bool CGame::Draw() {
 		water->UpdateWater(this);
 	}
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);	// Clear Screen And Depth&Stencil Buffer
 
 	if (doDrawWorld) {
 		DrawWorld();
@@ -2793,7 +2793,7 @@ bool CGame::Draw() {
 		glMatrixMode(GL_MODELVIEW);
 
 		glEnable(GL_BLEND);
-		glDisable(GL_DEPTH_TEST );
+		glDisable(GL_DEPTH_TEST);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glLoadIdentity();
 	}
@@ -2807,12 +2807,12 @@ bool CGame::Draw() {
 		glLineWidth(1.49f);
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);
-		glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
-		glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
-		glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
-		glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
-		glLineWidth(1.0f);
+			glVertex2f(0.5f - (crossSize / gu->viewSizeX), 0.5f);
+			glVertex2f(0.5f + (crossSize / gu->viewSizeX), 0.5f);
+			glVertex2f(0.5f, 0.5f - (crossSize / gu->viewSizeY));
+			glVertex2f(0.5f, 0.5f + (crossSize / gu->viewSizeY));
 		glEnd();
+		glLineWidth(1.0f);
 	}
 
 #ifdef DIRECT_CONTROL_ALLOWED
