@@ -15,6 +15,7 @@ using boost::posix_time::ptime;
 #include "Console.h"
 #include "GameData.h"
 #include "PlayerBase.h"
+#include "Sim/Misc/TeamBase.h"
 #include "UnsyncedRNG.h"
 #include "float3.h"
 
@@ -61,12 +62,9 @@ public:
 #endif
 };
 
-class GameTeam
+class GameTeam : public TeamBase
 {
 public:
-	float3 startpos;
-	bool readyToStart;
-	int allyTeam;
 	bool active;
 };
 
