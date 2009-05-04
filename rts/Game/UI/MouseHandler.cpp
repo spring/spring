@@ -83,15 +83,15 @@ CMouseHandler::CMouseHandler()
 	// hide the cursor until we are ingame (not in loading screen etc.)
 	SDL_ShowCursor(SDL_DISABLE);
 
-#ifndef __APPLE__
-	hardwareCursor = !!configHandler.Get("HardwareCursor", 0);
-#else
+#ifdef __APPLE__
 	hardwareCursor = false;
+#else
+	hardwareCursor = !!configHandler.Get("HardwareCursor", 0);
 #endif
 
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
-	invertMouse = !!configHandler.Get("InvertMouse",1);
+	invertMouse = !!configHandler.Get("InvertMouse",0);
 	doubleClickTime = (float)configHandler.Get("DoubleClickTime", 200) / 1000.0f;
 
 	scrollWheelSpeed = (float)configHandler.Get("ScrollWheelSpeed", 25);

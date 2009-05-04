@@ -273,6 +273,8 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	playerRoster.SetSortTypeByCode(
 	  (PlayerRoster::SortType)configHandler.Get("ShowPlayerInfo", 1));
 
+	CInputReceiver::guiAlpha = configHandler.Get("GuiOpacity",  0.8f);
+
 	const string inputTextGeo = configHandler.GetString("InputTextGeo", "");
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(inputTextGeo);
@@ -1519,9 +1521,11 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "incguiopacity") {
 		CInputReceiver::guiAlpha = std::min(CInputReceiver::guiAlpha+0.1f,1.0f);
+		configHandler.Set("GuiOpacity", CInputReceiver::guiAlpha);
 	}
 	else if (cmd == "decguiopacity") {
 		CInputReceiver::guiAlpha = std::max(CInputReceiver::guiAlpha-0.1f,0.0f);
+		configHandler.Set("GuiOpacity", CInputReceiver::guiAlpha);
 	}
 
 	else if (cmd == "screenshot") {
