@@ -323,6 +323,8 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		throw content_error(sideParser.GetErrorLog());
 	}
 
+	PrintLoadMsg("Parsing definitions");
+
 	defsParser = new LuaParser("gamedata/defs.lua",
 	                                SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	// customize the defs environment
@@ -360,6 +362,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	shadowHandler = new CShadowHandler();
 
 	ground = new CGround();
+
+	PrintLoadMsg("Loading map informations");
+
 	mapInfo = new CMapInfo(mapname); // must go before readmap
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
