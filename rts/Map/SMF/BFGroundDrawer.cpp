@@ -284,8 +284,6 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 	float cy2 = cam2->pos.z / SQUARE_SIZE;
 
 	for (int btx = sx; btx < ex; ++btx) {
-		SetupBigSquare(btx,bty);
-
 		ma->Initialize();
 
 		for (int lod = 1; lod < neededLod; lod <<= 1) {
@@ -660,6 +658,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 
 		} //for (int lod = 1; lod < neededLod; lod <<= 1)
 
+		SetupBigSquare(btx,bty);
 		DrawGroundVertexArrayQ(ma);
 	}
 }
