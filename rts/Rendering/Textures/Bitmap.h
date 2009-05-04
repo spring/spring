@@ -34,6 +34,7 @@ public:
 	void SetTransparent(unsigned char red, unsigned char green, unsigned char blue);
 
 	void Renormalize(float3 newCol);
+	void Blur(int iterations = 1, float weight = 1.0f);
 
 	CBitmap GetRegion(int startx, int starty, int width, int height);
 	CBitmap CreateMipmapLevel(void);
@@ -41,6 +42,7 @@ public:
 	unsigned char* mem;
 	int xsize;
 	int ysize;
+	int channels;
 
 	enum BitmapType
 	{
