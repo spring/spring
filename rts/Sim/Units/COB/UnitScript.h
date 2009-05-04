@@ -32,7 +32,7 @@ typedef void (*CBCobThreadFinish) (int retCode, void *p1, void *p2);
 class CUnitScript : public CObject
 {
 public:
-	enum AnimType {ATurn, ASpin, AMove};
+	enum AnimType {ANotFound, ATurn, ASpin, AMove};
 
 	struct IAnimListener {
 		virtual ~IAnimListener() {}
@@ -87,7 +87,7 @@ protected:
 		std::list<IAnimListener *> listeners;
 	};
 
-	std::list<struct AnimInfo *> anims;
+	std::list<AnimInfo*> anims;
 	const std::vector<int>& scriptIndex;
 
 	void UnblockAll(struct AnimInfo * anim);
@@ -214,6 +214,13 @@ public:
 	void ShowFlare(int piece);
 	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
 	void SetUnitVal(int val, int param);
+
+	AnimType IsInAnimation(int piece, int axis) {
+		const AnimInfo* ai = FindAnim(ATurn, piece, axis);
+		if (ai && !ai->interpolated)
+			return ai->type;
+		return ANotFound;
+	}
 };
 
 #endif

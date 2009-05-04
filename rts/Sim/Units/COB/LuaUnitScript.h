@@ -16,6 +16,7 @@ public:
 public:
 	static bool PushEntries(lua_State* L);
 
+private:
 	// Lua COB replacement support funcs (+SpawnCEG, PlaySoundFile, etc.)
 	static int GetUnitCOBValue(lua_State* L);
 	static int SetUnitCOBValue(lua_State* L);
@@ -31,6 +32,9 @@ public:
 	static int StopSpin(lua_State* L);
 	static int Turn(lua_State* L);
 	static int Move(lua_State* L);
+	static int IsInTurn(lua_State* L);
+	static int IsInMove(lua_State* L);
+	static int IsInSpin(lua_State* L);
 };
 
 #endif
