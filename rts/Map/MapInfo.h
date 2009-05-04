@@ -4,30 +4,9 @@
 #include <string>
 #include <vector>
 #include "float3.h"
+#include "float4.h"
 
 class LuaTable;
-
-
-/** Float3 with a fourth data member, which is basically unused but required
-    to be able to pass the float3 into e.g. OpenGL functions that expect
-    an array of 4 floats. */
-struct float4 : public float3
-{
-	float w;
-
-	float4();
-	float4(const float3& f, float w = 0.0f) : float3(f), w(w) {}
-
-	inline void operator= (const float f[3]){
-		x=f[0];
-		y=f[1];
-		z=f[2];
-	}
-
-	/// Allows implicit conversion to const float* (for passing to gl functions)
-	operator const float* () const { return &x; }
-};
-
 
 class CMapInfo
 {
