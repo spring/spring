@@ -29,16 +29,15 @@
 	#define STRCASECMP strcasecmp
 #endif // defined _MSC_VER
 
-static inline char* mallocCopyString(const char* const orig) {
-
+static inline char* mallocCopyString(const char* const orig)
+{
 	char* copy;
-
 	copy = (char *) malloc(/*sizeof(char) * */strlen(orig) + 1);
 	strcpy(copy, orig);
-
 	return copy;
 }
-static inline void freeString(const char* const toFreeStr) {
+static inline void freeString(const char* const toFreeStr)
+{
 	free(const_cast<char*>(toFreeStr));
 }
 
