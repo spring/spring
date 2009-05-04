@@ -54,10 +54,8 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		CTeam* team = Team(i);
 		*team = setup->teamStartingData[i];
 		team->teamNum = i;
-		team->metal = team->startMetal < 0 ? setup->startMetal : team->startMetal;
 		team->metalIncome = team->metal; // for the endgame statistics
 
-		team->energy = team->startEnergy < 0 ? setup->startEnergy : team->startEnergy;
 		team->energyIncome = setup->startEnergy;
 
 		SetAllyTeam(i, team->teamAllyteam);
@@ -123,7 +121,6 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		allyteam.allies[gaiaTeamID] = true; // peace with itself
 		allyTeams.push_back(allyteam);
 	}
-	assert(teams.size() <= MAX_TEAMS);
 }
 
 void CTeamHandler::GameFrame(int frameNum)
