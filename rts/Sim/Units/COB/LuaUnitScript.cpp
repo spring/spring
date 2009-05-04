@@ -56,14 +56,14 @@ Spring.UnitScript.Turn(number unitID, number piece, number axis, number destinat
 Spring.UnitScript.Move(number unitID, number piece, number axis, number destination[, number speed]) -> nil
 	Same as COB's move iff speed is given and not zero, and move-now otherwise.
 
-
-
-docs for callouts still to be made (prone to change):
-
 Spring.UnitScript.IsInTurn(number unitID, number piece, number axis) -> boolean
 Spring.UnitScript.IsInMove(number unitID, number piece, number axis) -> boolean
 Spring.UnitScript.IsInSpin(number unitID, number piece, number axis) -> boolean
 	Returns true iff such an animation exists, false otherwise.
+
+
+
+docs for callouts still to be made (prone to change):
 
 Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
 	Replaces the current unit script (independent of type, also replaces COB)
