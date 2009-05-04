@@ -60,6 +60,11 @@ Spring.UnitScript.Move(number unitID, number piece, number axis, number destinat
 
 docs for callouts still to be made (prone to change):
 
+Spring.UnitScript.IsInTurn(number unitID, number piece, number axis) -> boolean
+Spring.UnitScript.IsInMove(number unitID, number piece, number axis) -> boolean
+Spring.UnitScript.IsInSpin(number unitID, number piece, number axis) -> boolean
+	Returns true iff such an animation exists, false otherwise.
+
 Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
 	Replaces the current unit script (independent of type, also replaces COB)
 	with the unit script given by a table of callins for the unit.
@@ -449,6 +454,44 @@ int CLuaUnitScript::Move(lua_State* L)
 		unit->script->Move(piece, axis, speed, dest);
 	}
 	return 0;
+}
+
+
+static inline int IsInAnimation(lua_State* L, CUnitScript::AnimType wantedType)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if ((unit == NULL) || (unit->script == NULL)) {
+		return 0;
+	}
+	const int piece = luaL_checkint(L, 2) - 1;
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
+	const int axis  = luaL_checkint(L, 3) - 1;
+	if ((axis < 0) || (axis > 2)) {
+		return 0;
+	}
+
+	lua_pushboolean(L, unit->script->IsInAnimation(piece, axis) == wantedType);
+	return 1;
+}
+
+
+int CLuaUnitScript::IsInTurn(lua_State* L)
+{
+	return ::IsInAnimation(L, ATurn);
+}
+
+
+int CLuaUnitScript::IsInMove(lua_State* L)
+{
+	return ::IsInAnimation(L, AMove);
+}
+
+
+int CLuaUnitScript::IsInSpin(lua_State* L)
+{
+	return ::IsInAnimation(L, ASpin);
 }
 
 /******************************************************************************/
