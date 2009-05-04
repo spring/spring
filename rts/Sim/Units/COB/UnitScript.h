@@ -98,7 +98,7 @@ protected:
 
 	struct AnimInfo *FindAnim(AnimType anim, int piece, int axis);
 	void RemoveAnim(AnimType anim, int piece, int axis);
-	void AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated = false);
+	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel, bool interpolated = false);
 
 	// these _must_ be implemented by any type of UnitScript
 	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2) = 0;
@@ -191,16 +191,16 @@ public:
 	int Tick(int deltaTime);
 
 	// animation, used by CCobThread
-	void Spin(int piece, int axis, int speed, int accel);
-	void StopSpin(int piece, int axis, int decel);
-	void Turn(int piece, int axis, int speed, int destination, bool interpolated = false);
-	void Move(int piece, int axis, int speed, int destination, bool interpolated = false);
-	void MoveNow(int piece, int axis, int destination);
-	void TurnNow(int piece, int axis, int destination);
+	void Spin(int piece, int axis, float speed, float accel);
+	void StopSpin(int piece, int axis, float decel);
+	void Turn(int piece, int axis, float speed, float destination, bool interpolated = false);
+	void Move(int piece, int axis, float speed, float destination, bool interpolated = false);
+	void MoveNow(int piece, int axis, float destination);
+	void TurnNow(int piece, int axis, float destination);
 
 	// for smoothing turn-now / move-now animations
-	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime);
-	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime);
+	void MoveSmooth(int piece, int axis, float destination, int delta, int deltaTime);
+	void TurnSmooth(int piece, int axis, float destination, int delta, int deltaTime);
 
 	int AddTurnListener(int piece, int axis, IAnimListener* listener);
 	int AddMoveListener(int piece, int axis, IAnimListener* listener);

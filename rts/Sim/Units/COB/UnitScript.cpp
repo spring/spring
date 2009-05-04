@@ -457,30 +457,23 @@ void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 //Overwrites old information. This means that threads blocking on turn completion
 //will now wait for this new turn instead. Not sure if this is the expected behaviour
 //Other option would be to kill them. Or perhaps unblock them.
-void CUnitScript::AddAnim(AnimType type, int piece, int axis, int speed, int dest, int accel, bool interpolated)
+void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel, bool interpolated)
 {
 	if (!PieceExists(piece)) {
 		ShowScriptWarning("Invalid piecenumber");
 		return;
 	}
 
-	// translate cob piece coords into worldcoordinates
 	float destf;
-	float speedf;
-	float accelf;
 	if (type == AMove) {
-		destf  = pieces[piece]->original->offset[axis];
-		if (axis==0) {
-			destf -= dest * CORDDIV;
+		destf = pieces[piece]->original->offset[axis];
+		if (axis == 0) {
+			destf -= dest;
 		} else {
-			destf += dest * CORDDIV;
+			destf += dest;
 		}
-		speedf = speed * CORDDIV;
-		accelf = accel;
 	} else {
-		destf  = dest  * TAANG2RAD;
-		speedf = speed * TAANG2RAD;
-		accelf = accel * TAANG2RAD;
+		destf = dest;
 		ClampRad(&destf);
 	}
 
@@ -506,31 +499,29 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, int speed, int des
 	}
 
 	ai->dest  = destf;
-	ai->speed = speedf;
-	ai->accel = accelf;
+	ai->speed = speed;
+	ai->accel = accel;
 	ai->interpolated = interpolated;
 }
 
 
-void CUnitScript::Spin(int piece, int axis, int speed, int accel)
+void CUnitScript::Spin(int piece, int axis, float speed, float accel)
 {
 	struct AnimInfo *ai;
 	ai = FindAnim(ASpin, piece, axis);
 
-	//logOutput.Print("Spin called %d %d %d %d", piece, axis, speed, accel);
-
 	//If we are already spinning, we may have to decelerate to the new speed
 	if (ai) {
-		ai->dest = speed * TAANG2RAD;
+		ai->dest = speed;
 		if (accel > 0) {
 			if (ai->speed > ai->dest)
-				ai->accel = -accel * TAANG2RAD;
+				ai->accel = -accel;
 			else
-				ai->accel = accel * TAANG2RAD;
+				ai->accel = accel;
 		}
 		else {
 			//Go there instantly. Or have a defaul accel?
-			ai->speed = speed * TAANG2RAD;
+			ai->speed = speed;
 			ai->accel = 0;
 		}
 	}
@@ -544,7 +535,7 @@ void CUnitScript::Spin(int piece, int axis, int speed, int accel)
 }
 
 
-void CUnitScript::StopSpin(int piece, int axis, int decel)
+void CUnitScript::StopSpin(int piece, int axis, float decel)
 {
 	struct AnimInfo *ai;
 	ai = FindAnim(ASpin, piece, axis);
@@ -559,19 +550,19 @@ void CUnitScript::StopSpin(int piece, int axis, int decel)
 }
 
 
-void CUnitScript::Turn(int piece, int axis, int speed, int destination, bool interpolated)
+void CUnitScript::Turn(int piece, int axis, float speed, float destination, bool interpolated)
 {
 	AddAnim(ATurn, piece, axis, speed, destination, 0, interpolated);
 }
 
 
-void CUnitScript::Move(int piece, int axis, int speed, int destination, bool interpolated)
+void CUnitScript::Move(int piece, int axis, float speed, float destination, bool interpolated)
 {
 	AddAnim(AMove, piece, axis, speed, destination, 0, interpolated);
 }
 
 
-void CUnitScript::MoveNow(int piece, int axis, int destination)
+void CUnitScript::MoveNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
 		ShowScriptWarning("Invalid piecenumber");
@@ -581,15 +572,15 @@ void CUnitScript::MoveNow(int piece, int axis, int destination)
 	LocalModelPiece* p = pieces[piece];
 	p->pos[axis] = pieces[piece]->original->offset[axis];
 	if (axis==0) {
-		p->pos[axis] -= destination * CORDDIV;
+		p->pos[axis] -= destination;
 	} else {
-		p->pos[axis] += destination * CORDDIV;
+		p->pos[axis] += destination;
 	}
 	p->updated = true;
 }
 
 
-void CUnitScript::TurnNow(int piece, int axis, int destination)
+void CUnitScript::TurnNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
 		ShowScriptWarning("Invalid piecenumber");
@@ -597,9 +588,8 @@ void CUnitScript::TurnNow(int piece, int axis, int destination)
 	}
 
 	LocalModelPiece* p = pieces[piece];
-	p->rot[axis] = destination * TAANG2RAD;
+	p->rot[axis] = destination;
 	p->updated = true;
-	//logOutput.Print("moving %s on axis %d to %d", script.pieceNames[piece].c_str(), axis, destination);
 }
 
 
@@ -966,7 +956,7 @@ void CUnitScript::ShowFlare(int piece)
 }
 
 
-void CUnitScript::MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime)
+void CUnitScript::MoveSmooth(int piece, int axis, float destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
 		ShowScriptWarning("Invalid piecenumber");
@@ -977,27 +967,24 @@ void CUnitScript::MoveSmooth(int piece, int axis, int destination, int delta, in
 	AnimInfo *ai = FindAnim(AMove, piece, axis);
 	if (ai) {
 		if (!ai->interpolated) {
-			//logOutput.Print("Anim move overwrite");
 			MoveNow(piece, axis, destination);
 			return;
 		}
 	}
 
 	float cur = pieces[piece]->pos[axis] - pieces[piece]->original->offset[axis];
-	if (axis==0) {
+	if (axis == 0) {
 		cur = -cur;
 	}
-	int dist = abs(destination - (int)(cur / CORDDIV));
+	float dist = streflop::fabsf(destination - cur);
 	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
-	int speed = (dist * timeFactor) / delta;
-
-	//logOutput.Print("SmoothMove %d, %d got %d %d", piece, (int)(cur / CORDDIV), destination, speed);
+	float speed = (dist * timeFactor) / delta;
 
 	Move(piece, axis, speed, destination, true);
 }
 
 
-void CUnitScript::TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime)
+void CUnitScript::TurnSmooth(int piece, int axis, float destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
 		ShowScriptWarning("Invalid piecenumber");
@@ -1007,18 +994,16 @@ void CUnitScript::TurnSmooth(int piece, int axis, int destination, int delta, in
 	AnimInfo *ai = FindAnim(ATurn, piece, axis);
 	if (ai) {
 		if (!ai->interpolated) {
-			//logOutput.Print("Anim turn overwrite");
 			TurnNow(piece, axis, destination);
 			return;
 		}
 	}
 
-	float cur = pieces[piece]->rot[axis];
-	short int dist = abs(destination - (short int)(cur * RAD2TAANG));
+	// not sure the ClampRad() call is necessary here
+	float cur = ClampRad(pieces[piece]->rot[axis]);
+	float dist = streflop::fabsf(destination - cur);
 	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
-	int speed = (dist * timeFactor) / delta;
-
-	//logOutput.Print("Turnx %d:%d cur %d got %d %d dist %d", piece, axis, cur, destination, speed, dist);
+	float speed = (dist * timeFactor) / delta;
 
 	Turn(piece, axis, speed, destination, true);
 }
