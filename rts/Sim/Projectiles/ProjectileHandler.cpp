@@ -530,7 +530,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 				continue;
 
 			if (pro->s3domodel) {
-				if (pro->s3domodel->textureType) {
+				if (pro->s3domodel->type == MODELTYPE_S3O) {
 					unitDrawer->QueS3ODraw(pro, pro->s3domodel->textureType);
 				} else {
 					pro->DrawUnitPart();
@@ -581,6 +581,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		va->AddVertexQTN(tp,tex->xstart,tex->yend,tn);
 	}
 	drawnPieces+=va->drawIndex()/32;
+	va->DrawArrayTN(GL_QUADS);
 
 	unitDrawer->CleanUp3DO();
 
@@ -588,7 +589,6 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	unitDrawer->DrawQuedS3O();
 
 	// S3O flying pieces
-	va->DrawArrayTN(GL_QUADS);
 	for (int textureType = 1; textureType < flyings3oPieces.size(); textureType++){
 		/* TODO Skip this if there's no FlyingPieces. */
 
