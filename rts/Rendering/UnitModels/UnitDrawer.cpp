@@ -21,6 +21,7 @@
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/IconHandler.h"
@@ -360,7 +361,12 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 				float realIconLength = iconLength * (iconDistMult * iconDistMult);
 
 				if (sqDist < realIconLength) {
-					if (unit->model->type==MODELTYPE_S3O) {
+					S3DModel* model = unit->model;
+					if (unit->unitDef->decoyDef) {
+						model = LoadModel(unit->unitDef->decoyDef);
+					}
+
+					if (model->type==MODELTYPE_S3O) {
 						drawCloakedS3O.push_back(unit);
 					} else {
 						drawCloaked.push_back(unit);
@@ -494,6 +500,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 			DrawIcon(*ui, true);
 		}
 		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_ALPHA_TEST);
 		for (ui = drawStat.begin(); ui != drawStat.end(); ++ui) {
 			DrawUnitStats(*ui);
 		}
@@ -817,6 +824,14 @@ void CUnitDrawer::SetupForGhostDrawing() const
 	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glEnable(GL_TEXTURE_2D);
+
+	glPushAttrib(GL_COLOR_BUFFER_BIT || GL_DEPTH_BUFFER_BIT);	
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0.1f);
+	glDepthMask(GL_FALSE);
 }
 
 
@@ -824,8 +839,6 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 {
 	glPopAttrib();
 	glDisable(GL_TEXTURE_2D);
-	glDepthMask(1);
-	glDisable(GL_ALPHA_TEST);
 
 	// clean up s3o drawing stuff
 	// reset texture1 state
@@ -847,14 +860,7 @@ void CUnitDrawer::DrawCloakedUnits(void)
 	SetupForGhostDrawing();
 	SetupFor3DO();
 
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_CULL_FACE);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glAlphaFunc(GL_GREATER, 0.1f);
-	glEnable(GL_ALPHA_TEST);
 	glColor4f(1, 1, 1, 0.3f);
-	glDepthMask(0);
 
 	{
 		//FIXME: doesn't support s3o's nor does it set teamcolor
@@ -1545,7 +1551,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	/* From SetupForGhostDrawing. */
-	glDepthMask(0);
+	glDepthMask(GL_FALSE);
 	glDisable(GL_CULL_FACE); /* Leave out face culling, as 3DO and 3DO translucents does. */
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
@@ -1571,7 +1577,7 @@ void CUnitDrawer::DrawBuildingSample(const UnitDef* unitdef, int side, float3 po
 	/* From CleanUpGhostDrawing. */
 	glPopAttrib();
 	glDisable(GL_TEXTURE_2D);
-	glDepthMask(1);
+	glDepthMask(GL_TRUE);
 }
 
 
@@ -1877,13 +1883,11 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	}
 
 	float3 interPos = unit->drawPos;
-
 	interPos.y += unit->model->height + 5.0f;
 
 	// setup the billboard transformation
 	glPushMatrix();
 	glTranslatef(interPos.x, interPos.y, interPos.z);
-	// glMultMatrixd(camera->billboard);
 	glCallList(CCamera::billboardList);
 
 	// black background for healthbar
