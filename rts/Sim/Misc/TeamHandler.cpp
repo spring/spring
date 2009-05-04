@@ -46,14 +46,10 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
 	const bool useLuaGaia = CLuaGaia::SetConfigString(setup->luaGaiaStr);
 
-	const size_t activeTeams = setup->numTeams;
-	assert(activeTeams <= MAX_TEAMS);
-	teams.resize(activeTeams);
+	assert(setup->numTeams <= MAX_TEAMS);
+	teams.resize(setup->numTeams);
 
-	const size_t activeAllyTeams = setup->numAllyTeams;
-	assert(activeAllyTeams <= MAX_TEAMS);
-
-	for (size_t i = 0; i < activeTeams; ++i) {
+	for (size_t i = 0; i < teams.size(); ++i) {
 		// TODO: this loop body could use some more refactoring
 		CTeam* team = Team(i);
 		*team = setup->teamStartingData[i];
@@ -100,11 +96,11 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	}
 
 	allyTeams = setup->allyStartingData;
-
+	assert(setup->numAllyTeams <= MAX_TEAMS);
 	if (useLuaGaia) {
 		// Gaia adjustments
-		gaiaTeamID = static_cast<int>(activeTeams);
-		gaiaAllyTeamID = static_cast<int>(activeAllyTeams);
+		gaiaTeamID = static_cast<int>(teams.size());
+		gaiaAllyTeamID = static_cast<int>(allyTeams.size());
 
 		// Setup the gaia team
 		CTeam team;
@@ -118,14 +114,14 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		team.teamAllyteam = gaiaAllyTeamID;
 		teams.push_back(team);
 
+		for (std::vector< ::AllyTeam >::iterator it = allyTeams.begin(); it != allyTeams.end(); ++it)
+		{
+			it->allies.push_back(false); // enemy to everyone
+		}
 		::AllyTeam allyteam;
-		allyteam.allies.resize(activeAllyTeams+1,false); // everyones enemy
+		allyteam.allies.resize(allyTeams.size()+1,false); // everyones enemy
 		allyteam.allies[gaiaTeamID] = true; // peace with itself
 		allyTeams.push_back(allyteam);
-		for (size_t allyTeam1 = 0; allyTeam1 < activeAllyTeams; ++allyTeam1)
-		{
-			allyTeams[allyTeam1].allies.push_back(false); // enemy to everyone
-		}
 	}
 	assert(teams.size() <= MAX_TEAMS);
 }
