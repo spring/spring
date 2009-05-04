@@ -157,7 +157,7 @@ int CLuaUnitScript::SetPieceVisibility(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceEmitSfx(lua_State* L)
+int CLuaUnitScript::EmitSfx(lua_State* L)
 {
 	// void EmitSfx(int type, int piece);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -177,7 +177,7 @@ int CLuaUnitScript::PieceEmitSfx(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceAttachUnit(lua_State* L)
+int CLuaUnitScript::AttachUnit(lua_State* L)
 {
 	// void AttachUnit(int piece, int unit);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -194,7 +194,7 @@ int CLuaUnitScript::PieceAttachUnit(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceDropUnit(lua_State* L)
+int CLuaUnitScript::DropUnit(lua_State* L)
 {
 	// void DropUnit(int unit);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -210,7 +210,7 @@ int CLuaUnitScript::PieceDropUnit(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceExplode(lua_State* L)
+int CLuaUnitScript::Explode(lua_State* L)
 {
 	// void Explode(int piece, int flags);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -227,7 +227,7 @@ int CLuaUnitScript::PieceExplode(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceShowFlare(lua_State* L)
+int CLuaUnitScript::ShowFlare(lua_State* L)
 {
 	// void ShowFlare(int piece);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -243,7 +243,7 @@ int CLuaUnitScript::PieceShowFlare(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceSpin(lua_State* L)
+int CLuaUnitScript::Spin(lua_State* L)
 {
 	// void Spin(int piece, int axis, int speed, int accel);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -266,7 +266,7 @@ int CLuaUnitScript::PieceSpin(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceStopSpin(lua_State* L)
+int CLuaUnitScript::StopSpin(lua_State* L)
 {
 	// void StopSpin(int piece, int axis, int decel);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -288,7 +288,7 @@ int CLuaUnitScript::PieceStopSpin(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceTurn(lua_State* L)
+int CLuaUnitScript::Turn(lua_State* L)
 {
 	// void Turn(int piece, int axis, int speed, int destination);
 	// void TurnNow(int piece, int axis, int destination);
@@ -316,7 +316,7 @@ int CLuaUnitScript::PieceTurn(lua_State* L)
 }
 
 
-int CLuaUnitScript::PieceMove(lua_State* L)
+int CLuaUnitScript::Move(lua_State* L)
 {
 	// void Move(int piece, int axis, int speed, int destination);
 	// void MoveNow(int piece, int axis, int destination);
