@@ -380,6 +380,7 @@ int LuaFonts::SetTextColor(lua_State* L)
 			color->w = 1.0f;
 		}
 	} else if (args > 4) {
+		color = new float4;
 		*color[0] = lua_tonumber(L, 2);
 		*color[1] = lua_tonumber(L, 3);
 		*color[2] = lua_tonumber(L, 4);
@@ -415,6 +416,7 @@ int LuaFonts::SetOutlineColor(lua_State* L)
 			color->w = 1.0f;
 		}
 	} else if (args > 4) {
+		color = new float4;
 		*color[0] = lua_tonumber(L, 2);
 		*color[1] = lua_tonumber(L, 3);
 		*color[2] = lua_tonumber(L, 4);
