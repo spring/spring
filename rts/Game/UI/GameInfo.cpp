@@ -82,8 +82,8 @@ struct FontString {
 	FontString(bool b)	: msg(boolString(b))  { CalcDimensions(); }
 	FontString(float f)	: msg(floatString(f)) { CalcDimensions(); }
 	void CalcDimensions() {
-		width = font->CalcTextWidth(msg.c_str());
-		height = font->GetHeight();
+		width  = font->GetSize() * font->GetTextWidth(msg) * gu->pixelX;
+		height = font->GetSize() * font->GetLineHeight() * gu->pixelY;
 	}
 	string msg;
 	float width;
@@ -260,13 +260,15 @@ void CGameInfo::Draw()
 	} else {
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	}
-	
+
 	// draw the strings
+	font->Begin();
 	for (i = 0; i < (int)labels.size(); i++) {
 		const FontString& lfs = labels[i];
 		const FontString& vfs = values[i];
 		const float y = box.y2 - (dy * (float)(i + 1)) + yBorder;
-		font->glPrintAt   (box.x1 + xBorder, y, 1.0f, lfs.msg.c_str());
-		font->glPrintRight(box.x2 - xBorder, y, 1.0f, vfs.msg.c_str());
+		font->glPrint(box.x1 + xBorder, y, 1.0f, FONT_SCALE | FONT_NORM, lfs.msg);
+		font->glPrint(box.x2 - xBorder, y, 1.0f, FONT_RIGHT | FONT_SCALE | FONT_NORM, vfs.msg);
 	}
+	font->End();
 }

@@ -10,6 +10,7 @@
 //#define USE_QUICKTIME
 #endif
 
+//#include <omp.h>
 #include <ostream>
 #include <fstream>
 #include <string.h>
@@ -27,6 +28,15 @@
 #include "FileSystem/FileSystem.h"
 #include "Bitmap.h"
 #include "bitops.h"
+
+
+
+static const float blurkernel[9] = {
+	1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f,
+	2.0f/16.0f, 4.0f/16.0f, 2.0f/16.0f,
+	1.0f/16.0f, 2.0f/16.0f, 1.0f/16.0f
+};
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -46,9 +56,9 @@ struct InitializeOpenIL {
 
 
 CBitmap::CBitmap()
-  : xsize(0), ysize(0)
+  : xsize(0), ysize(0), channels(4)
 {
-	mem=0;
+	mem = 0;
 	ddsimage = 0;
 	type = BitmapTypeStandardRGBA;
 }
@@ -65,12 +75,11 @@ CBitmap::CBitmap(const CBitmap& old)
 {
 	assert(old.type != BitmapTypeDDS);
 	ddsimage = 0;
-	type = old.type;
-	xsize=old.xsize;
-	ysize=old.ysize;
-	int size;
-	if(type == BitmapTypeStandardRGBA) 	size = xsize*ysize*4;
-	else size = xsize*ysize; // Alpha
+	type  = old.type;
+	xsize = old.xsize;
+	ysize = old.ysize;
+	channels = old.channels;
+	int size = xsize*ysize * channels;
 
 	mem=new unsigned char[size];
 	memcpy(mem,old.mem,size);
@@ -78,12 +87,12 @@ CBitmap::CBitmap(const CBitmap& old)
 
 
 CBitmap::CBitmap(unsigned char *data, int xsize, int ysize)
-  : xsize(xsize), ysize(ysize)
+  : xsize(xsize), ysize(ysize), channels(4)
 {
 	type = BitmapTypeStandardRGBA;
 	ddsimage = 0;
-	mem=new unsigned char[xsize*ysize*4];
-	memcpy(mem,data,xsize*ysize*4);
+	mem=new unsigned char[xsize*ysize*channels];
+	memcpy(mem,data,xsize*ysize*channels);
 }
 
 
@@ -91,11 +100,11 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 {
 	if( this != &bm ){
 		delete[] mem;
-		xsize=bm.xsize;
-		ysize=bm.ysize;
-		int size;
-		if(type == BitmapTypeStandardRGBA) 	size = xsize*ysize*4;
-		else size = xsize*ysize; // Alpha
+		type  = bm.type;
+		xsize = bm.xsize;
+		ysize = bm.ysize;
+		channels = bm.channels;
+		int size = xsize*ysize * channels;
 
 		mem=new unsigned char[size];
 		memcpy(mem,bm.mem,size);
@@ -109,9 +118,8 @@ void CBitmap::Alloc (int w,int h)
 	delete[] mem;
 	xsize=w;
 	ysize=h;
-	type=BitmapTypeStandardRGBA;
-	mem=new unsigned char[w*h*4];
-	memset(mem, 0, w*h*4);
+	mem=new unsigned char[w*h*channels];
+	memset(mem, 0, w*h*channels);
 }
 
 
@@ -128,6 +136,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		return ddsimage->load(filename);
 	}
 	type = BitmapTypeStandardRGBA;
+	channels = 4;
 
 	CFileHandler file(filename);
 	if(file.FileExists() == false)
@@ -184,6 +193,7 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	ilBindImage(ImageName);
 
 	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+	ilDisable(IL_ORIGIN_SET);
 	delete [] buffer;
 
 	if(success == false)
@@ -197,6 +207,8 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 		mem[3] = 255; // Non Transparent
 		return false;
 	}
+
+
 
 	noAlpha=ilGetInteger(IL_IMAGE_BYTES_PER_PIXEL)!=4;
 	ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
@@ -227,13 +239,14 @@ bool CBitmap::LoadGrayscale (const string& filename)
 #if !defined(USE_QUICKTIME) // Temporary fix to allow testing of everything
 						// else until i get a quicktime image loader written
 	type = BitmapTypeStandardAlpha;
-
-	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
-	ilEnable(IL_ORIGIN_SET);
+	channels = 1;
 
 	CFileHandler file(filename);
 	if(!file.FileExists())
 		return false;
+
+	ilOriginFunc(IL_ORIGIN_UPPER_LEFT);
+	ilEnable(IL_ORIGIN_SET);
 
 	unsigned char *buffer = new unsigned char[file.FileSize()+1];
 	file.Read(buffer, file.FileSize());
@@ -243,11 +256,11 @@ bool CBitmap::LoadGrayscale (const string& filename)
 	ilBindImage(ImageName);
 
 	const bool success = !!ilLoadL(IL_TYPE_UNKNOWN, buffer, file.FileSize());
+	ilDisable(IL_ORIGIN_SET);
 	delete [] buffer;
 
 	if(success == false)
 		return false;
-
 
 	ilConvertImage(IL_LUMINANCE, IL_UNSIGNED_BYTE);
 	xsize = ilGetInteger(IL_IMAGE_WIDTH);
@@ -315,6 +328,7 @@ bool CBitmap::Save(string const& filename, bool opaque)
 	const bool success = ilSaveImage((char*)fullpath.c_str());
 
 	ilDeleteImages(1,&ImageName);
+	ilDisable(IL_ORIGIN_SET);
 	delete[] buf;
 
 	return success;
@@ -354,11 +368,13 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+	//FIXME add glPixelStorei(GL_UNPACK_ALIGNMENT, 1); for NPOTs
+
 	if(mipmaps)
 	{
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 
-		glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize,GL_RGBA, GL_UNSIGNED_BYTE, mem);
+		glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 	}
 	else
 	{
@@ -366,7 +382,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 		//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
 		//gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 
-		glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,xsize, ysize, 0,GL_RGBA, GL_UNSIGNED_BYTE, mem);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, mem);
 	}
 	return texture;
 }
@@ -523,22 +539,90 @@ void CBitmap::Renormalize(float3 newCol)
 }
 
 
+inline void kernelBlur(CBitmap* dst, const unsigned char* src, int x, int y, int channel, float weight) {
+	float fragment = 0.0f;
+
+	const int pos = (x + y * dst->xsize) * dst->channels + channel;
+
+	for (int i=0; i<9; ++i) {
+		int yoffset = (i / 3) - 1;
+		int xoffset = (i - (yoffset + 1) * 3) - 1;
+
+		const int tx = x + xoffset;
+		const int ty = y + yoffset;
+		if (tx<0 || tx>=dst->xsize) {
+			xoffset = 0;
+		}
+		if (ty<0 || ty>=dst->ysize) {
+			yoffset = 0;
+		}
+		int offset = (xoffset + yoffset * dst->xsize) * dst->channels;
+		if (i == 4) {
+			fragment += weight * blurkernel[i] * src[pos + offset];
+		} else {
+			fragment += blurkernel[i] * src[pos + offset];
+		}
+	}
+
+	dst->mem[pos] = (unsigned char)std::min(255.0f,std::max(0.0f, fragment ));
+}
+
+
+void CBitmap::Blur(int iterations, float weight)
+{
+	if (type == BitmapTypeDDS) {
+		return;
+	}
+
+	CBitmap* src = this;
+	CBitmap* dst = new CBitmap();
+	dst->channels = src->channels;
+	dst->Alloc(xsize,ysize);
+
+	for (int i=0;i<iterations;++i){
+		#pragma omp parallel private(y,x,i)
+		{
+			#pragma omp for
+			for (int y=0;y<ysize;++y){
+				for (int x=0;x<xsize;++x){
+					for (int i=0;i<channels;++i){
+						kernelBlur(dst,src->mem,x,y,i,weight);
+					}
+				}
+			}
+		}
+		CBitmap* buf = dst;
+		dst = src;
+		src = buf;
+	}
+
+	if (dst == this) {
+		CBitmap* buf = dst;
+		dst = src;
+		src = buf;
+	}
+
+	delete dst;
+}
+
+
 // Unused
 CBitmap CBitmap::GetRegion(int startx, int starty, int width, int height)
 {
 	CBitmap bm;
 
 	delete[] bm.mem;
-	bm.mem=new unsigned char[width*height*4];
-	bm.xsize=width;
-	bm.ysize=height;
+	bm.mem=new unsigned char[width*height*channels];
+	bm.channels = channels;
+	bm.type = type;
+	bm.xsize = width;
+	bm.ysize = height;
 
 	for(int y=0;y<height;++y){
 		for(int x=0;x<width;++x){
-			bm.mem[(y*width+x)*4]=mem[((starty+y)*xsize+startx+x)*4];
-			bm.mem[(y*width+x)*4+1]=mem[((starty+y)*xsize+startx+x)*4+1];
-			bm.mem[(y*width+x)*4+2]=mem[((starty+y)*xsize+startx+x)*4+2];
-			bm.mem[(y*width+x)*4+3]=mem[((starty+y)*xsize+startx+x)*4+3];
+			for (int i=0; i<channels;++i) {
+				bm.mem[(y*width+x)*channels+i]=mem[((starty+y)*xsize+startx+x)*channels+i];
+			}
 		}
 	}
 
@@ -694,14 +778,15 @@ void CBitmap::Tint(const float tint[3])
 
 void CBitmap::ReverseYAxis()
 {
-	unsigned char* buf=new unsigned char[xsize*ysize*4];
+	//FIXME: optimize, so it doesn't alloc a new array
+
+	unsigned char* buf=new unsigned char[xsize*ysize*channels];
 
 	for(int y=0;y<ysize;++y){
 		for(int x=0;x<xsize;++x){
-			buf[((ysize-1-y)*xsize+x)*4+0]=mem[((y)*xsize+x)*4+0];
-			buf[((ysize-1-y)*xsize+x)*4+1]=mem[((y)*xsize+x)*4+1];
-			buf[((ysize-1-y)*xsize+x)*4+2]=mem[((y)*xsize+x)*4+2];
-			buf[((ysize-1-y)*xsize+x)*4+3]=mem[((y)*xsize+x)*4+3];
+			for (int i=0;i<channels;++i){
+				buf[((ysize-1-y)*xsize+x)*channels+i]=mem[((y)*xsize+x)*channels+i];
+			}
 		}
 	}
 	delete[] mem;

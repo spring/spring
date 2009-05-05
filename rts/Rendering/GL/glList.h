@@ -27,8 +27,8 @@ public:
 
 	// CglList functions
 	void Select();
-	void AddItem(const char* name,const char* description);
-	CglList(const char* name, ListSelectCallback callback, int id = 0);
+	void AddItem(const std::string& name,const std::string& description);
+	CglList(const std::string& name, ListSelectCallback callback, int id = 0);
 	virtual ~CglList();
 	int place;
 	std::vector<std::string> items;

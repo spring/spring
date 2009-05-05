@@ -450,6 +450,8 @@ void CPieceProjectile::DrawCallback(void)
 
 void CPieceProjectile::DrawUnitPart(void)
 {
+	unitDrawer->SetTeamColour(colorTeam);
+
 	if (alphaThreshold != 0.1f) {
 		glPushAttrib(GL_COLOR_BUFFER_BIT);
 		glAlphaFunc(GL_GEQUAL, alphaThreshold);
@@ -470,6 +472,5 @@ void CPieceProjectile::DrawUnitPart(void)
 void CPieceProjectile::DrawS3O(void)
 {
 	// copy of CWeaponProjectile::::DrawS3O()
-	unitDrawer->SetTeamColour(colorTeam);
 	DrawUnitPart();
 }

@@ -38,6 +38,8 @@ void CWordCompletion::Reset()
 	words["/ctrlpanel "] = sl;
 	words["/distdraw "] = sl;
 	words["/disticon "] = sl;
+	words["/incguiopacity "] = sl;
+	words["/decguiopacity "] = sl;
 	words["/echo "] = sl;
 	words["/font "] = sl;
 	words["/gameinfo"] = sl;
@@ -66,6 +68,7 @@ void CWordCompletion::Reset()
 	words["/fakemeta "] = sl;
 	words["/volume "] = sl;
 	words["/unitreplyvolume "] = sl;
+	words["/viewtaflip "] = sl;
 	words["/vsync "] = sl;
 	words["/wiremap "] = sl;
 

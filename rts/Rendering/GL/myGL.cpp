@@ -259,10 +259,10 @@ void ClearScreen()
 	glClearColor(0,0,0,1);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
-	glLoadIdentity();									// Reset The Projection Matrix
+	glMatrixMode(GL_PROJECTION); // Select The Projection Matrix
+	glLoadIdentity();            // Reset The Projection Matrix
 	gluOrtho2D(0,1,0,1);
-	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
+	glMatrixMode(GL_MODELVIEW);  // Select The Modelview Matrix
 
 	glLoadIdentity();
 	glEnable(GL_BLEND);
@@ -299,13 +299,18 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 			glTexCoord2f(1,1);glVertex2f(1,0);
 		glEnd();
 	}
-	font->glPrintCentered (0.5f,0.48f, 2.0f, text);
+
+	font->SetOutlineColor(0.0f,0.0f,0.0f,0.65f);
+	font->SetTextColor(1.0f,1.0f,1.0f,1.0f);
+
+	font->glPrint(0.5f,0.5f,   gu->viewSizeY / 15.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, text);
 #ifdef USE_GML
-	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s MT (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
+	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "Spring %s MT (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
 #else
-	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s", SpringVersion::GetFull().c_str());
+	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "Spring %s", SpringVersion::GetFull().c_str());
 #endif
-	font->glPrintCentered(0.5f,0.02f,0.6f,"This program is distributed under the GNU General Public License, see license.html for more info");
+	font->glFormat(0.5f,0.02f, gu->viewSizeY / 50.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "This program is distributed under the GNU General Public License, see license.html for more info");
+
 	if (swapbuffers) {
 		SDL_GL_SwapBuffers();
 	}
@@ -402,6 +407,9 @@ static unsigned int LoadProgram(GLenum target, const char* filename, const char 
 	if (!GLEW_ARB_vertex_program) {
 		return 0;
 	}
+	if(target==GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program) {
+		return 0;
+	}
 
 	CFileHandler VPFile(std::string("shaders/")+filename);
 	if (!VPFile.FileExists ())
@@ -458,46 +466,3 @@ void glClearErrors()
 
 
 /******************************************************************************/
-
-
-// not really the best place to put this
-void gluMyCube(float size) {
-	const float mid = size * 0.5f;
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	glBegin(GL_QUADS);
-		// top
-		glVertex3f( mid, mid,  mid);
-		glVertex3f( mid, mid, -mid);
-		glVertex3f(-mid, mid, -mid);
-		glVertex3f(-mid, mid,  mid);
-		// front
-		glVertex3f( mid,  mid, mid);
-		glVertex3f(-mid,  mid, mid);
-		glVertex3f(-mid, -mid, mid);
-		glVertex3f( mid, -mid, mid);
-		// right
-		glVertex3f(mid,  mid,  mid);
-		glVertex3f(mid, -mid,  mid);
-		glVertex3f(mid, -mid, -mid);
-		glVertex3f(mid,  mid, -mid);
-		// left
-		glVertex3f(-mid,  mid,  mid);
-		glVertex3f(-mid,  mid, -mid);
-		glVertex3f(-mid, -mid, -mid);
-		glVertex3f(-mid, -mid,  mid);
-		// bottom
-		glVertex3f( mid, -mid,  mid);
-		glVertex3f( mid, -mid, -mid);
-		glVertex3f(-mid, -mid, -mid);
-		glVertex3f(-mid, -mid,  mid);
-		// back
-		glVertex3f( mid,  mid, -mid);
-		glVertex3f(-mid,  mid, -mid);
-		glVertex3f(-mid, -mid, -mid);
-		glVertex3f( mid, -mid, -mid);
-	glEnd();
-
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-}

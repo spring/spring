@@ -30,7 +30,7 @@ CglList::~CglList()
 	}
 }
 
-CglList::CglList(const char *name, ListSelectCallback callback, int id) :
+CglList::CglList(const std::string& name, ListSelectCallback callback, int id) :
 		place(0),
 		name(name),
 		callback(callback),
@@ -49,14 +49,14 @@ CglList::CglList(const char *name, ListSelectCallback callback, int id) :
 	box.y2 = 0.9f;
 }
 
-void CglList::AddItem(const char *name,const char *description)
+void CglList::AddItem(const std::string& name,const std::string& description)
 {
 	if (lastChoosen == name)
 		place = items.size();
 	items.push_back(name);
 
 	// calculate width of text and resize box if necessary
-	float w = itemFontScale * font->CalcTextWidth(name) + 2 * itemXMargin;
+	float w = itemFontScale * font->GetSize() * font->GetTextWidth(name) * gu->pixelX + 2 * itemXMargin;
 	if (w > (box.x2 - box.x1)) {
 		box.x1 = 0.5f - 0.5f * w;
 		box.x2 = 0.5f + 0.5f * w;
@@ -144,8 +144,10 @@ void CglList::Draw()
 	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
 	DrawBox(box);
 
-	glColor4f(1,1,0.4f,0.8f);
-	font->glPrintAt(box.x1 + 0.01f, box.y2 - 0.05f, itemFontScale*0.7f, name.c_str());
+	font->Begin();
+
+	font->SetTextColor(1,1,0.4f,0.8f);
+	font->glPrint(box.x1 + 0.01f, box.y2 - 0.05f, itemFontScale*0.7f, FONT_SCALE | FONT_NORM, name);
 
 	/****************************************
 	* Insert Robert Diamond's section here *
@@ -167,8 +169,8 @@ void CglList::Draw()
 	* *
 	****************************************
 	// Get screen res, so that the selected item is always within the middle 60% of screen
-	int iResX = configHandler->Get("XResolution", 1024);
-	int iResY = configHandler->Get("YResolution", 768);
+	const int iResX = gu->viewSizeX;
+	const int iResY = gu->viewSizeY;
 
 	// Keep tabs on the last place. change this ONLY AFTER a scroll
 	static int siOldPlace = place;
@@ -193,10 +195,10 @@ void CglList::Draw()
 	// Skip to current selection - 3; ie: scroll
 	while ((nCurIndex + 7) <= place && nCurIndex+13 <= filteredItems->size()) { ii++; nCurIndex++; }
 
+	font->SetTextColor(); //default
+	font->SetOutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < 12; ii++)
 	{
-		glLoadIdentity();
-
 		b.y2 = box.y2 - 0.06f - (nDrawOffset * 0.06f);
 		b.y1 = b.y2 - 0.05f;
 
@@ -226,15 +228,10 @@ void CglList::Draw()
 			glLineWidth(1.0f);
 		}
 
-		const float dShadow = 0.002f;
 		const float xStart = box.x1 + itemXMargin;
-		const float yStart = b.y1 + 0.002f;
+		const float yStart = (b.y1 + b.y2) * 0.5f;
 
-		glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
-		font->glPrintAt(xStart + dShadow, yStart - dShadow, itemFontScale, ii->c_str());
-
-		glColor4f(1,1,1,0.8f);
-		font->glPrintAt(xStart, yStart, itemFontScale, ii->c_str());
+		font->glPrint(xStart, yStart, itemFontScale, FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;
@@ -242,7 +239,8 @@ void CglList::Draw()
 	/**************
 	* End insert *
 	**************/
-	glLoadIdentity();
+
+	font->End();
 }
 
 void CglList::UpOne()
