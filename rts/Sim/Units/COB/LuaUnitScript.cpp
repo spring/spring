@@ -74,7 +74,7 @@ Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
 	Callins do NOT take a unitID as argument, the unitID (and all script state
 	should be stored in a closure.)
 
-Spring.UnitScript.UpdateCallin(number unitID, string fname, function callin) -> nil
+Spring.UnitScript.UpdateCallIn(number unitID, string fname, function callin) -> nil
 	Replaces or adds a single callin.  See also Spring.UnitScript.CreateScript.
 
 
@@ -208,6 +208,9 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 #define REGISTER_LUA_CFUNC(x) \
 	PushEntry(L, #x, x)
 
+	REGISTER_LUA_CFUNC(CreateScript);
+	REGISTER_LUA_CFUNC(UpdateCallIn);
+
 	REGISTER_LUA_CFUNC(GetUnitCOBValue);
 	REGISTER_LUA_CFUNC(SetUnitCOBValue);
 	REGISTER_LUA_CFUNC(SetPieceVisibility);
@@ -295,6 +298,21 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 /******************************************************************************/
 /******************************************************************************/
+
+
+int CLuaUnitScript::CreateScript(lua_State* L)
+{
+	// TODO: implement
+	return 0;
+}
+
+
+int CLuaUnitScript::UpdateCallIn(lua_State* L)
+{
+	// TODO: implement
+	return 0;
+}
+
 
 // moved from LuaSyncedCtrl
 
