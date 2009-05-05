@@ -69,7 +69,7 @@ Spring.UnitScript.IsInMove(number unitID, number piece, number axis) -> boolean
 Spring.UnitScript.IsInSpin(number unitID, number piece, number axis) -> boolean
 	Returns true iff such an animation exists, false otherwise.
 
-Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
+Spring.UnitScript.CreateScript(number unitID, table callIns) -> nil
 	Replaces the current unit script (independent of type, also replaces COB)
 	with the unit script given by a table of callins for the unit.
 	Callins are similar to COB functions, e.g. a number of predefined names are
@@ -77,13 +77,11 @@ Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
 	Callins do NOT take a unitID as argument, the unitID (and all script state
 	should be stored in a closure.)
 
-Spring.UnitScript.UpdateCallIn(number unitID, string fname, function callin) -> number
-	Replaces or adds a single callin, returns functionID.
+Spring.UnitScript.UpdateCallIn(number unitID, string fname[, function callIn]) -> number|boolean
+	Iff callIn is a function, a single callIn is replaced or added, and the
+	new functionID is returned.  If callIn isn't given or is nil, the callIn is
+	nilled, returns true if it was removed, or false if the callin didn't exist.
 	See also Spring.UnitScript.CreateScript.
-
-Spring.UnitScript.UpdateCallIn(number unitID, string fname, nil callin) -> boolean
-	Overload, removes a single callin, returns true if it was removed, or false
-	if the callin didn't exist.
 
 
 
@@ -157,7 +155,7 @@ CLuaUnitScript::~CLuaUnitScript()
 int CLuaUnitScript::UpdateCallIn()
 {
 	const string fname = lua_tostring(L, 2);
-	const bool remove = lua_isnil(L, 3);
+	const bool remove = lua_isnoneornil(L, 3);
 	map<string, int>::iterator it = scriptNames.find(fname);
 	int r = -1;
 
@@ -417,7 +415,7 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 	if (L != script->L) {
 		luaL_error(L, "UpdateCallIn(): incorrect lua_State");
 	}
-	if (!lua_israwstring(L, 2) || (!lua_isfunction(L, 3) && !lua_isnil(L, 3))) {
+	if (!lua_israwstring(L, 2) || (!lua_isfunction(L, 3) && !lua_isnoneornil(L, 3))) {
 		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
 	}
 
