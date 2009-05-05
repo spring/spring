@@ -20,6 +20,10 @@ private:
 	std::vector<int> scriptIndex;
 	std::map<std::string, int> scriptNames;
 
+	// used to enforce SetDeathScriptFinished can only be used inside Killed
+	int fnKilled;
+	bool inKilled;
+
 protected:
 	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	virtual void ShowScriptError(const std::string& msg);
@@ -60,6 +64,9 @@ private:
 	static int IsInTurn(lua_State* L);
 	static int IsInMove(lua_State* L);
 	static int IsInSpin(lua_State* L);
+
+	// Lua COB functions to work around lack of working CBCobThreadFinish
+	static int SetDeathScriptFinished(lua_State* L);
 };
 
 #endif

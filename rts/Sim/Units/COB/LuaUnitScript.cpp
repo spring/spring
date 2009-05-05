@@ -69,6 +69,10 @@ Spring.UnitScript.IsInMove(number unitID, number piece, number axis) -> boolean
 Spring.UnitScript.IsInSpin(number unitID, number piece, number axis) -> boolean
 	Returns true iff such an animation exists, false otherwise.
 
+Spring.UnitScript.SetDeathScriptFinished(number unitID[, number wreckLevel])
+	Tells Spring the Killed script finished, and which wreckLevel to use.
+	If wreckLevel is not given no wreck is created.
+
 Spring.UnitScript.CreateScript(number unitID, table callIns) -> nil
 	Replaces the current unit script (independent of type, also replaces COB)
 	with the unit script given by a table of callins for the unit.
@@ -133,6 +137,7 @@ end
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces), L(L)
 	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1)
+	, fnKilled(LUA_REFNIL), inKilled(false)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
 		const string fname = lua_tostring(L, -2);
@@ -201,6 +206,11 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 	if (num >= 0) {
 		scriptIndex[num] = ref;
 	}
+
+	// Remember some functionIDs to safeguard the callOuts.
+	if (fname == "Killed") {
+		fnKilled = ref;
+	}
 }
 
 
@@ -217,6 +227,10 @@ int CLuaUnitScript::GetFunctionId(const string& fname) const
 
 int CLuaUnitScript::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
+	if (functionId == fnKilled) {
+		inKilled = true;
+	}
+
 	// TODO: call into Lua function stored in environ/registry?
 	return 0;
 }
@@ -302,6 +316,8 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsInTurn);
 	REGISTER_LUA_CFUNC(IsInMove);
 	REGISTER_LUA_CFUNC(IsInSpin);
+
+	REGISTER_LUA_CFUNC(SetDeathScriptFinished);
 
 	lua_rawset(L, -3);
 	//lua_pop(L, 1);     // pop the environment table
@@ -735,6 +751,23 @@ int CLuaUnitScript::IsInMove(lua_State* L)
 int CLuaUnitScript::IsInSpin(lua_State* L)
 {
 	return ::IsInAnimation(L, ASpin);
+}
+
+
+int CLuaUnitScript::SetDeathScriptFinished(lua_State* L)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(unit->script);
+	if (script == NULL || !script->inKilled) {
+		luaL_error(L, "SetDeathScriptFinished(): not a Lua unit script or 'Killed' not called");
+		return 0;
+	}
+	unit->deathScriptFinished = true;
+	unit->delayedWreckLevel = luaL_optint(L, 2, -1);
+	return 0;
 }
 
 
