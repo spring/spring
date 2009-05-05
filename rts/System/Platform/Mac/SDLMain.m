@@ -18,8 +18,17 @@ static int    gArgc;
 static char  **gArgv;
 static BOOL   gFinderLaunch;
 
-extern NSAutoreleasePool *pool;
-void PreInitMac();
+//extern NSAutoreleasePool *pool;
+//void PreInitMac();
+
+void MacMessageBox(const char *msg, const char *caption, unsigned int flags){
+	NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+	[alert addButtonWithTitle:@"OK"];
+	[alert setMessageText:[NSString stringWithCString:caption]];
+	[alert setInformativeText:[NSString stringWithCString:msg]];
+	[alert setAlertStyle:NSWarningAlertStyle];
+	[alert runModal];
+}
 
 #if SDL_USE_NIB_FILE
 /* A helper category for NSString */
@@ -156,10 +165,11 @@ void setupWindowMenu(void)
 }
 
 /* Replacement for NSApplicationMain */
-void CustomApplicationMain (argc, argv)
+void CustomApplicationMain ()
 {
+	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
     SDLMain				*sdlMain;
-	PreInitMac();
+	//PreInitMac();
 
     /* Ensure the application object is initialised */
     [SDLApplication sharedApplication];
@@ -273,9 +283,9 @@ int main (int argc, char **argv)
 
 #if SDL_USE_NIB_FILE
     [SDLApplication poseAsClass:[NSApplication class]];
-    NSApplicationMain (argc, argv);
+    NSApplicationMain ();
 #else
-    CustomApplicationMain (argc, argv);
+    CustomApplicationMain ();
 #endif
     return 0;
 }

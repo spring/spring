@@ -16,7 +16,7 @@
 --  step:     quantization step, aligned to the def value
 --  maxlen:   the maximum string length for string options
 --  items:    array of item strings for list options
---  scope:    'global', 'player', 'team', ('allyteam' not supported yet)
+--  scope:    'global', 'player', 'team', 'allyteam'
 --
 
 --------------------------------------------------------------------------------

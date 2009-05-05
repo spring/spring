@@ -150,9 +150,6 @@ public:
 
 	std::vector<float>         modParams;    // mod controlled parameters
 	std::map<std::string, int> modParamsMap; // name map for mod parameters
-
-private:
-	bool readyToStart;
 };
 
 #endif /* TEAM_H */

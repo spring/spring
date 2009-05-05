@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "IncCREG.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
@@ -467,22 +469,22 @@ void CAttackHandler::UpdateKMeans(void) {
 	// update enemy position k-means
 	// get positions of all enemy units and put them in a vector (completed buildings only)
 	std::vector<float3> enemyPositions;
-	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
+	int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
 
 	for (int i = 0; i < numEnemies; i++) {
-		const UnitDef* ud = ai->cheat->GetUnitDef(ai->unitIDs[i]);
+		const UnitDef* ud = ai->ccb->GetUnitDef(ai->unitIDs[i]);
 
 		if (this->UnitBuildingFilter(ud)) {
 			// if (this->UnitReadyFilter(unit)) { ... }
-			enemyPositions.push_back(ai->cheat->GetUnitPos(ai->unitIDs[i]));
+			enemyPositions.push_back(ai->ccb->GetUnitPos(ai->unitIDs[i]));
 		}
 	}
 
 	// hack to make it at least 1 unit, should only happen when you have no base
 	if (enemyPositions.size() < 1) {
 		// it has to be a proper position, unless there are no proper positions
-		if (numEnemies > 0 && ai->cheat->GetUnitDef(ai->unitIDs[0])) {
-			enemyPositions.push_back(ai->cheat->GetUnitPos(ai->unitIDs[0]));
+		if (numEnemies > 0 && ai->ccb->GetUnitDef(ai->unitIDs[0])) {
+			enemyPositions.push_back(ai->ccb->GetUnitPos(ai->unitIDs[0]));
 		}
 		else {
 			// when everything is dead
@@ -552,13 +554,13 @@ bool CAttackHandler::UnitReadyFilter(int unit) {
 
 
 void CAttackHandler::AirAttack(int currentFrame) {
-	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
+	int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
 	int bestTargetID = -1;
 	float bestTargetCost = -1.0f;
 
 	for (int i = 0; i < numEnemies; i++) {
 		int enemyID = ai->unitIDs[i];
-		const UnitDef* udef = (enemyID >= 0)? ai->cheat->GetUnitDef(enemyID): 0;
+		const UnitDef* udef = (enemyID >= 0)? ai->ccb->GetUnitDef(enemyID): 0;
 
 		if (udef) {
 			float mCost = udef->metalCost;
@@ -640,7 +642,7 @@ void CAttackHandler::UpdateAir(int currentFrame) {
 			airIsAttacking = false;
 		} else {
 			// if we are attacking but our target is dead
-			if (ai->cheat->GetUnitHealth(airTarget) <= 0.0f) {
+			if (ai->ccb->GetUnitHealth(airTarget) <= 0.0f) {
 				airIsAttacking = false;
 				airTarget = -1;
 			}
@@ -717,7 +719,7 @@ inline bool ComparePairs(const std::pair<int, float>& l, const std::pair<int, fl
 
 // sort all enemy targets in decreasing order by unit value
 void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& potentialTargets) {
-	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
+	int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
 	float minTargetValue = 500.0f;
 
 	std::vector<std::pair<int, float> > staticTargets;
@@ -725,11 +727,11 @@ void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& pot
 
 	for (int i = 0; i < numEnemies; i++) {
 		int targetID = ai->unitIDs[i];
-		const UnitDef* udef = ai->cheat->GetUnitDef(targetID);
+		const UnitDef* udef = ai->ccb->GetUnitDef(targetID);
 
 		if (udef) {
-			float mCost = ai->cheat->GetUnitDef(targetID)->metalCost;
-			float eCost = ai->cheat->GetUnitDef(targetID)->energyCost;
+			float mCost = ai->ccb->GetUnitDef(targetID)->metalCost;
+			float eCost = ai->ccb->GetUnitDef(targetID)->energyCost;
 			float targetValue = mCost + eCost * 0.1f;
 			bool isMobileTarget = (udef->speed > 0.0f);
 
@@ -767,7 +769,7 @@ void CAttackHandler::GetNukeSiloTargets(std::vector<std::pair<int, float> >& pot
 
 
 void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
-	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
+	int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
 
 	if (numEnemies > 0) {
 		std::vector<int> allEligibleEnemies;
@@ -777,12 +779,12 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 		// non-air and non-cloaked (non-dead) enemies
 		for (int i = 0; i < numEnemies; i++) {
 			if (ai->unitIDs[i] != -1) {
-				const UnitDef* ud = ai->cheat->GetUnitDef(ai->unitIDs[i]);
+				const UnitDef* ud = ai->ccb->GetUnitDef(ai->unitIDs[i]);
 
 				if (ud) {
 					bool canFly = ud->canfly;
 					bool isCloaked = ud->canCloak && ud->startCloaked;
-					bool goodPos = !(ai->cheat->GetUnitPos(ai->unitIDs[i]) == ZEROVECTOR);
+					bool goodPos = !(ai->ccb->GetUnitPos(ai->unitIDs[i]) == ZEROVECTOR);
 
 					if (!canFly && !isCloaked && goodPos) {
 						allEligibleEnemies.push_back(ai->unitIDs[i]);
@@ -818,7 +820,7 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 
 			if (!taken) {
 				availableEnemies.push_back(enemyID);
-				enemyPositions.push_back(ai->cheat->GetUnitPos(enemyID));
+				enemyPositions.push_back(ai->ccb->GetUnitPos(enemyID));
 			}
 		}
 
@@ -845,13 +847,13 @@ void CAttackHandler::AssignTarget(CAttackGroup* group_in) {
 			float3 endPos = pathToTarget[lastIndex];
 
 			// get all enemies surrounding endpoint of found path
-			int enemiesInArea = ai->cheat->GetEnemyUnits(&ai->unitIDs[0], endPos, ATTACKED_AREA_RADIUS);
+			int enemiesInArea = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], endPos, ATTACKED_AREA_RADIUS);
 			float powerOfEnemies = 0.000001;
 
 			// calculate combined "firepower" of armed enemies near endpoint
 			for (int i = 0; i < enemiesInArea; i++) {
-				if (ai->cheat->GetUnitDef(ai->unitIDs[i])->weapons.size() > 0) {
-					powerOfEnemies += ai->cheat->GetUnitPower(ai->unitIDs[i]);
+				if (ai->ccb->GetUnitDef(ai->unitIDs[i])->weapons.size() > 0) {
+					powerOfEnemies += ai->ccb->GetUnitPower(ai->unitIDs[i]);
 				}
 			}
 

@@ -79,6 +79,8 @@ SelectMenu::SelectMenu(bool server) :
 	mySettings = new ClientSetup();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "Player");
+	if (mySettings->myPlayerName.empty())
+		mySettings->myPlayerName = "Player";
 	if (!mySettings->isHost)
 	{
 		userInput=configHandler->GetString("address","");

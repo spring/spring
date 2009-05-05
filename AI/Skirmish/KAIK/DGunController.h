@@ -24,6 +24,7 @@ struct ControllerState {
 		targetID             = -1;
 		dgunOrderFrame       =  0;
 		reclaimOrderFrame    =  0;
+		captureOrderFrame    =  0;
 		targetSelectionFrame =  0;
 	}
 
@@ -31,27 +32,34 @@ struct ControllerState {
 		if (clearNow) {
 			dgunOrderFrame    =  0;
 			reclaimOrderFrame =  0;
+			captureOrderFrame =  0;
 			targetID          = -1;
 		} else {
 			if (dgunOrderFrame > 0 && (currentFrame - dgunOrderFrame) > (FRAMERATE >> 0)) {
-				// one second since last dgun order given, mark as expired
+				// one second since last dgun order, mark as expired
 				dgunOrderFrame =  0;
 				targetID       = -1;
 			}
 			if (reclaimOrderFrame > 0 && (currentFrame - reclaimOrderFrame) > (FRAMERATE << 2)) {
-				// four seconds since last reclaim order given, mark as expired
+				// four seconds since last reclaim order, mark as expired
 				reclaimOrderFrame =  0;
+				targetID          = -1;
+			}
+			if (captureOrderFrame > 0 && (currentFrame - captureOrderFrame) > (FRAMERATE << 3)) {
+				// eight seconds since last capture order, mark as expired
+				captureOrderFrame =  0;
 				targetID          = -1;
 			}
 		}
 	}
 
-	bool         inited;
-	unsigned int dgunOrderFrame;
-	unsigned int reclaimOrderFrame;
-	unsigned int targetSelectionFrame;
-	int          targetID;
-	float3       oldTargetPos;
+	bool   inited;
+	int    dgunOrderFrame;
+	int    reclaimOrderFrame;
+	int    captureOrderFrame;
+	int    targetSelectionFrame;
+	int    targetID;
+	float3 oldTargetPos;
 };
 
 class CDGunController {
@@ -73,7 +81,7 @@ class CDGunController {
 		void SelectTarget(unsigned int);
 
 		void IssueOrder(int, int, int) const;
-		void IssueOrder(float3, int, int) const;
+		void IssueOrder(const float3&, int, int) const;
 
 		AIClasses* ai;
 		const UnitDef* commanderUD;

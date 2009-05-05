@@ -11,9 +11,9 @@
 
 struct UnitDef;
 
+class IGlobalAICallback;
 class IAICallback;
 class IAICheats;
-class CSunParser;
 class CMetalMap;
 class CMaths;
 class CPathFinder;
@@ -27,15 +27,21 @@ class CBuildUp;
 class CAttackHandler;
 class CDGunControllerHandler;
 class CLogger;
+struct MapData;
 
 struct AIClasses {
 	CR_DECLARE_STRUCT(AIClasses);
 
+	AIClasses() { /* CREG-only */ }
+	AIClasses(IGlobalAICallback*);
+	~AIClasses();
+	void Init();
+	void Load();
+
 	IAICallback*            cb;
-	IAICheats*              cheat;
+	IAICheats*              ccb;
 	CEconomyTracker*        econTracker;
 	CBuildUp*               bu;
-	CSunParser*             parser;
 	CMetalMap*              mm;
 	CMaths*                 math;
 	CPathFinder*            pather;
@@ -46,6 +52,7 @@ struct AIClasses {
 	CAttackHandler*         ah;
 	CLogger*                logger;
 	CDGunControllerHandler* dgunConHandler;
+	MapData*                mapData;
 
 	std::vector<CUNIT*>     MyUnits;
 	std::vector<int>        unitIDs;
@@ -59,7 +66,7 @@ struct UnitType {
 	std::vector<int> canBuildList;
 	std::vector<int> builtByList;
 	std::vector<float> DPSvsUnit;
-	std::vector<std::string> TargetCategories;
+
 	const UnitDef* def;
 	UnitCategory category;
 	bool isHub;
@@ -69,7 +76,7 @@ struct UnitType {
 	// which sides can build this UnitType (usually only
 	// one, needed for types that are shared among sides
 	// in certain mods)
-	std::set<int> sides;
+	/// std::set<int> sides;
 };
 
 

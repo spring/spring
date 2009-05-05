@@ -7,6 +7,7 @@
 
 #include "creg/creg_cond.h"
 #include "Team.h"
+#include "AllyTeam.h"
 
 class CGameSetup;
 
@@ -21,8 +22,6 @@ public:
 	~CTeamHandler();
 
 	void LoadFromSetup(const CGameSetup* setup);
-
-	// from CGlobalSynced:
 
 	/**
 	 * @brief Team
@@ -41,7 +40,7 @@ public:
 	 *
 	 * Returns ally at [a][b]
 	 */
-	bool Ally(int a, int b) { return allies[a][b]; }
+	bool Ally(int a, int b) { return allyTeams[a].allies[b]; }
 
 	/**
 	 * @brief ally team
@@ -50,7 +49,13 @@ public:
 	 *
 	 * returns the team2ally at given index
 	 */
-	int AllyTeam(int team) { return team2allyteam[team]; }
+	int AllyTeam(int team) { return teams[team].teamAllyteam; }
+	::AllyTeam& GetAllyTeam(size_t id) { return allyTeams[id]; };
+
+	bool ValidAllyTeam(size_t id)
+	{
+		return id >= 0 && id < allyTeams.size();
+	};
 
 	/**
 	 * @brief allied teams
@@ -60,7 +65,7 @@ public:
 	 *
 	 * Tests whether teams are allied
 	 */
-	bool AlliedTeams(int a, int b) { return allies[team2allyteam[a]][team2allyteam[b]]; }
+	bool AlliedTeams(int a, int b) { return allyTeams[AllyTeam(a)].allies[AllyTeam(b)]; }
 
 	/**
 	 * @brief set ally team
@@ -69,7 +74,7 @@ public:
 	 *
 	 * Sets team's ally team
 	 */
-	void SetAllyTeam(int team, int allyteam) { team2allyteam[team] = allyteam; }
+	void SetAllyTeam(int team, int allyteam) { teams[team].teamAllyteam = allyteam; }
 
 	/**
 	 * @brief set ally
@@ -79,7 +84,7 @@ public:
 	 *
 	 * Sets two allyteams to be allied or not
 	 */
-	void SetAlly(int allyteamA, int allyteamB, bool allied) { allies[allyteamA][allyteamB] = allied; }
+	void SetAlly(int allyteamA, int allyteamB, bool allied) { allyTeams[allyteamA].allies[allyteamB] = allied; }
 
 	// accessors
 
@@ -87,7 +92,7 @@ public:
 	int GaiaAllyTeamID() const { return gaiaAllyTeamID; }
 
 	int ActiveTeams() const { return teams.size(); }
-	int ActiveAllyTeams() const { return allies.size(); }
+	int ActiveAllyTeams() const { return allyTeams.size(); }
 
 	void GameFrame(int frameNum);
 
@@ -108,27 +113,12 @@ private:
 	int gaiaAllyTeamID;
 
 	/**
-	 * @brief allies array
-	 *
-	 * Array indicates whether teams are allied,
-	 * allies[a][b] means allyteam a is allied with
-	 * allyteam b, NOT the other way around
-	 */
-	std::vector< std::vector<bool> > allies;
-
-	/**
-	 * @brief team to ally team
-	 *
-	 * Array stores what ally team a specific team is part of
-	 */
-	std::vector<int> team2allyteam;
-
-	/**
 	 * @brief teams
 	 *
 	 * Array of CTeam instances for teams in game
 	 */
 	std::vector<CTeam> teams;
+	std::vector< ::AllyTeam > allyTeams;
 };
 
 extern CTeamHandler* teamHandler;
