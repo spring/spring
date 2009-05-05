@@ -9,6 +9,9 @@
 #include "Map/ReadMap.h"
 #include "Map/MapInfo.h"
 #include "MoveMath/MoveMath.h"
+#include "MoveMath/GroundMoveMath.h"
+#include "MoveMath/HoverMoveMath.h"
+#include "MoveMath/ShipMoveMath.h"
 #include "creg/STL_Deque.h"
 #include "creg/STL_Map.h"
 #include "Exceptions.h"
@@ -70,6 +73,10 @@ CMoveInfo::CMoveInfo()
 		throw content_error("Error loading movement definitions");
 	}
 
+	groundMoveMath = new CGroundMoveMath();
+	hoverMoveMath = new CHoverMoveMath();
+	seaMoveMath = new CShipMoveMath();
+
 	moveInfoChecksum = 0;
 
 	for (size_t num = 1; /* no test */; num++) {
@@ -79,10 +86,8 @@ CMoveInfo::CMoveInfo()
 		}
 
 		MoveData* md = new MoveData(0x0, 0);
-		const string name = moveTable.GetString("name", "");
 
-		md->name = name;
-
+		md->name = moveTable.GetString("name", "");
 		md->pathType = (num - 1);
 		md->maxSlope = 1.0f;
 		md->depth = 0.0f;
@@ -92,30 +97,33 @@ CMoveInfo::CMoveInfo()
 		const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
 		const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth", 0.0f);
 
-		if ((name.find("BOAT") != string::npos) ||
-		    (name.find("SHIP") != string::npos)) {
-			md->moveType = MoveData::Ship_Move;
-			md->depth = minWaterDepth;
+		if ((md->name.find("BOAT") != string::npos) ||
+		    (md->name.find("SHIP") != string::npos)) {
+			md->moveType   = MoveData::Ship_Move;
+			md->depth      = minWaterDepth;
 			md->moveFamily = MoveData::Ship;
-			md->subMarine = moveTable.GetBool("subMarine", 0);
+			md->moveMath   = seaMoveMath;
+			md->subMarine  = moveTable.GetBool("subMarine", 0);
 		}
-		else if (name.find("HOVER") != string::npos) {
-			md->moveType = MoveData::Hover_Move;
-			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
+		else if (md->name.find("HOVER") != string::npos) {
+			md->moveType   = MoveData::Hover_Move;
+			md->maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 			md->moveFamily = MoveData::Hover;
+			md->moveMath   = hoverMoveMath;
 		}
 		else {
 			md->moveType = MoveData::Ground_Move;
 			md->depthMod = moveTable.GetFloat("depthMod", 0.1f);
-			md->depth = maxWaterDepth;
+			md->depth    = maxWaterDepth;
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
-			if (name.find("TANK") != string::npos) {
+			md->moveMath = groundMoveMath;
+
+			if (md->name.find("TANK") != string::npos) {
 				md->moveFamily = MoveData::Tank;
 			} else {
 				md->moveFamily = MoveData::KBot;
 			}
 		}
-
 
 		// ground units hug the ocean floor when in water,
 		// ships stay at a "fixed" level (their waterline)
@@ -158,7 +166,7 @@ CMoveInfo::CMoveInfo()
 		moveInfoChecksum = moveInfoChecksum * 3 + *(unsigned int*) &md->depthMod;
 
 		moveData.push_back(md);
-		name2moveData[name] = md->pathType;
+		name2moveData[md->name] = md->pathType;
 	}
 
 	for (int a = 0; a < 256; ++a) {
@@ -167,6 +175,16 @@ CMoveInfo::CMoveInfo()
 		terrainType2MoveFamilySpeed[a][2] = mapInfo->terrainTypes[a].hoverSpeed;
 		terrainType2MoveFamilySpeed[a][3] = mapInfo->terrainTypes[a].shipSpeed;
 	}
+
+
+	const float waterDamage = mapInfo->water.damage;
+	if (waterDamage >= 1000.0f) {
+		CGroundMoveMath::waterCost = 0.0f;
+	} else {
+		CGroundMoveMath::waterCost = 1.0f / (1.0f + waterDamage * 0.1f);
+	}
+
+	CHoverMoveMath::noWaterMove = (waterDamage >= 10000.0f);
 }
 
 
@@ -176,6 +194,10 @@ CMoveInfo::~CMoveInfo()
 		delete moveData.back();
 		moveData.pop_back();
 	}
+
+	delete groundMoveMath;
+	delete hoverMoveMath;
+	delete seaMoveMath;
 }
 
 

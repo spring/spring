@@ -11,13 +11,13 @@ handicap(1),
 startPos(100,100,100),
 teamAllyteam(-1),
 startMetal(-1.0),
-startEnergy(-1.0)
+startEnergy(-1.0),
+readyToStart(false)
 {
 }
 
 void TeamBase::SetValue(const std::string& key, const std::string& value)
 {
-	logOutput.Print("Setting: %s to %s", key.c_str(), value.c_str());
 	if (key == "handicap")
 		handicap = std::atof(value.c_str()) / 100 + 1;
 	else if (key == "teamleader")

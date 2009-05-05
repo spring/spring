@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "IncCREG.h"
 #include "IncExternAI.h"
 #include "IncGlobalAI.h"
@@ -132,7 +134,6 @@ void CBuildUp::GetEconState(EconState* es) const {
 	// TODO: use actual metal and energy drain of nuke weapon here
 	es->buildNukeSilo =
 		(es->builderDef != NULL) && (ai->uh->NukeSilos.size() < MAX_NUKE_SILOS) &&
-		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_NUKE_SILO)) &&
 		(es->mIncome > 100.0f && es->eIncome > 6000.0f) &&
 		(es->mUsage < es->mIncome && es->eUsage < es->eIncome);
 
@@ -141,24 +142,12 @@ void CBuildUp::GetEconState(EconState* es) const {
 
 	es->numDefenses  = ai->uh->AllUnitsByCat[CAT_DEFENCE].size();
 	es->numFactories = ai->uh->AllUnitsByCat[CAT_FACTORY].size();
-
-	// these are static; the number of building
-	// _types_ in the unit-table never changes
-	es->canBuildEStores =
-		(es->builderDef != NULL) &&
-		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_ENERGY_STORAGE));
-	es->canBuildMMakers =
-		(es->builderDef != NULL) &&
-		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_METAL_MAKER));
-	es->canBuildMStores =
-		(es->builderDef != NULL) &&
-		(ai->ut->sideData[ai->ut->GetSide(es->builderDef)].CanBuild(CAT_METAL_STORAGE));
 }
 
 BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
 	if (
-		(es->numM < 3 && es->numE <= 3) ||
-		(es->numE < 3 && es->numM <= 3) ||
+		(es->numM < 2 && es->numE <= 2) ||
+		(es->numE < 2 && es->numM <= 2) ||
 		(es->numFactories < 1)
 	) {
 		return BUILD_INIT;
@@ -178,7 +167,7 @@ BuildState CBuildUp::GetBuildState(int frame, const EconState* es) const {
 
 	if (
 		es->eIncome > 2000.0f && es->eUsage < (es->eIncome - 1000.0f) &&
-		es->mStall && es->mLevel < 100.0f && es->canBuildMMakers
+		es->mStall && es->mLevel < 100.0f
 	) {
 		return BUILD_E_EXCESS;
 	}
@@ -211,10 +200,10 @@ void CBuildUp::Buildup(int frame) {
 						// note: in E&E metal processors belong to CAT_ENERGY,
 						// so numM never reaches 3 and we need to allow overlap
 						// note: this probably breaks mods with static commanders
-						if (econState.numM < 3 && econState.numE <= 3) {
+						if (econState.numM < 2 && econState.numE <= 2) {
 							BuildUpgradeExtractor(econState.builderID); return;
 						}
-						if (econState.numE < 3 && econState.numM <= 3) {
+						if (econState.numE < 2 && econState.numM <= 2) {
 							BuildUpgradeReactor(econState.builderID); return;
 						}
 						if (econState.numFactories < 1 && econState.factFeas) {
@@ -254,7 +243,7 @@ void CBuildUp::Buildup(int frame) {
 						const bool eExcess    = (econState.eIncome > (econState.eUsage * 1.5));
 
 						// if we couldn't build or upgrade an extractor
-						if (!haveNewMex && eOverflow && econState.canBuildEStores > 0 && storageTimer <= 0) {
+						if (!haveNewMex && eOverflow && storageTimer <= 0) {
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_ESTOR)) {
 								// build energy storage
 								if (BuildNow(econState.builderID, CAT_ESTOR, NULL)) {
@@ -262,7 +251,7 @@ void CBuildUp::Buildup(int frame) {
 								}
 							}
 						}
-						else if (!haveNewMex && econState.canBuildMMakers && eExcess) {
+						else if (!haveNewMex && eExcess) {
 							// build metal maker
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MMAKER)) {
 								BuildNow(econState.builderID, CAT_MMAKER, NULL);
@@ -284,7 +273,7 @@ void CBuildUp::Buildup(int frame) {
 				case BUILD_DEFENSE: {
 					// do we have more factories than defenses (and have at least 10 minutes passed)?
 					if (econState.numFactories > (econState.numDefenses / DEFENSEFACTORYRATIO) && frame > 18000) {
-						if (econState.mOverflow && econState.canBuildMStores && (storageTimer <= 0) && (econState.numFactories > 0)) {
+						if (econState.mOverflow && (storageTimer <= 0) && (econState.numFactories > 0)) {
 							if (!ai->uh->BuildTaskAddBuilder(econState.builderID, CAT_MSTOR)) {
 								// build metal storage
 								if (BuildNow(econState.builderID, CAT_MSTOR, NULL)) {
@@ -616,9 +605,9 @@ bool CBuildUp::BuildUpgradeReactor(int builderID) {
 			float        netEnergy    = newReactorDef->energyMake - newReactorDef->energyUpkeep;
 			float        closestDstSq = MY_FLT_MAX;
 
-			int            oldReactorID  = -1;
-			float3         oldReactorPos = ZEROVECTOR;
-			const UnitDef* oldReactorDef = NULL;
+			int             oldReactorID  = -1;
+			float3          oldReactorPos = ZEROVECTOR;
+			const  UnitDef* oldReactorDef = NULL;
 
 			std::list<int> lst = ai->uh->AllUnitsByCat[CAT_ENERGY];
 
@@ -628,20 +617,38 @@ bool CBuildUp::BuildUpgradeReactor(int builderID) {
 				const UnitDef* itReactorDef = ai->cb->GetUnitDef(itReactorID);
 
 				if (ai->cb->GetUnitHealth(itReactorID) >= ai->cb->GetUnitMaxHealth(itReactorID)) {
-					if (itReactorDef->energyMake <= 0.0f || itReactorDef->windGenerator) {
-						// only look at solars and windmills which produce energy through
-						// negative upkeep (something of a hack for OTA-style mods)
-						const float itNetEnergy = itReactorDef->energyMake - itReactorDef->energyUpkeep;
-						const float distanceSq = (itReactorPos - builderPos).SqLength();
+					if (itReactorDef->energyMake <= 0.0f || itReactorDef->windGenerator > 0.0f) {
+						// only look at solars which produce energy through negative
+						// upkeep (ud.energyUpkeep = udTable.GetFloat("energyUse"))
+						// rather than positive energyMake, and at windmills
+						float       itUpgradeRatio = 0.0f;
+						const float itNetEnergy    = itReactorDef->energyMake - itReactorDef->energyUpkeep;
+						const float itReactorDstSq = (itReactorPos - builderPos).SqLength();
+
+						if (itNetEnergy > 0.0f) {
+							itUpgradeRatio = netEnergy / itNetEnergy;
+						} else {
+							if (itReactorDef->windGenerator > 0.0f) {
+								const float minWind = ai->cb->GetMinWind();
+								const float maxWind = ai->cb->GetMaxWind();
+								const float avgWind = (minWind + maxWind) * 0.5f;
+								const float maxMake = std::min(maxWind, itReactorDef->windGenerator);
+								const float avgEffi = std::min(avgWind / itReactorDef->windGenerator, 1.0f);
+
+								if (maxWind > 0.0f) {
+									itUpgradeRatio = (netEnergy * 0.5f) / (maxMake * avgEffi);
+								}
+							}
+						}
 
 						// find the closest CAT_ENERGY structure
 						// FIXME: find the closest and oldest?
-						if (distanceSq < closestDstSq) {
-							// check if it is worth upgrading
-							if ((netEnergy / itNetEnergy) >= 2.0f) {
+						if (itReactorDstSq < closestDstSq) {
+							if (itUpgradeRatio > 2.0f) {
 								oldReactorID  = itReactorID;
 								oldReactorPos = itReactorPos;
 								oldReactorDef = itReactorDef;
+								closestDstSq  = itReactorDstSq;
 							}
 						}
 					}

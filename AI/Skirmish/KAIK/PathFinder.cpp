@@ -169,10 +169,10 @@ void CPathFinder::CreateDefenseMatrix() {
 	}
 
 	for (int m = 0; m < NumOfMoveTypes;m++) {
-		int numberofenemyplayers = ai->cheat->GetEnemyUnits(enemycomms);
+		int numberofenemyplayers = ai->ccb->GetEnemyUnits(enemycomms);
 
 		for (int i = 0; i < numberofenemyplayers; i++) {
-			enemyposes[i] = ai->cheat->GetUnitPos(enemycomms[i]);
+			enemyposes[i] = ai->ccb->GetUnitPos(enemycomms[i]);
 		}
 
 		float3 mypos = ai->cb->GetUnitPos(ai->uh->AllUnitsByCat[CAT_BUILDER].front());

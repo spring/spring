@@ -158,6 +158,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetTeamStatsHistory);
 	REGISTER_LUA_CFUNC(GetTeamLuaAI);
 
+	REGISTER_LUA_CFUNC(GetAllyTeamInfo);
 	REGISTER_LUA_CFUNC(AreTeamsAllied);
 	REGISTER_LUA_CFUNC(ArePlayersAllied);
 
@@ -1297,6 +1298,22 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 #endif
 }
 
+int LuaSyncedRead::GetAllyTeamInfo(lua_State* L)
+{
+	const size_t allyteam = (size_t)luaL_checkint(L, -1);
+	if (!teamHandler->ValidAllyTeam(allyteam))
+		return 0;
+
+	const AllyTeam& ally = teamHandler->GetAllyTeam(allyteam);
+	lua_newtable(L);
+	const AllyTeam::customOpts& popts(ally.GetAllValues());
+	for (AllyTeam::customOpts::const_iterator it = popts.begin(); it != popts.end(); ++it) {
+		lua_pushstring(L, it->first.c_str());
+		lua_pushstring(L, it->second.c_str());
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
 
 int LuaSyncedRead::AreTeamsAllied(lua_State* L)
 {

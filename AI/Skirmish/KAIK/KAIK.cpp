@@ -7,6 +7,7 @@
 
 CR_BIND(CKAIK, );
 CR_REG_METADATA(CKAIK, (
+	CR_MEMBER(ai),
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -18,26 +19,10 @@ CKAIK* KAIKStateExt = KAIKState;
 
 
 
-CKAIK::CKAIK() {
+CKAIK::CKAIK(): ai(NULL) {
 }
 
 CKAIK::~CKAIK() {
-	for (int i = 0; i < MAX_UNITS; i++) {
-		delete ai->MyUnits[i];
-	}
-
-	delete ai->logger;
-	delete ai->ah;
-	delete ai->bu;
-	delete ai->econTracker;
-	delete ai->parser;
-	delete ai->math;
-	delete ai->pather;
-	delete ai->tm;
-	delete ai->ut;
-	delete ai->mm;
-	delete ai->uh;
-	delete ai->dgunConHandler;
 	delete ai;
 }
 
@@ -49,41 +34,19 @@ void CKAIK::Save(std::ostream* ofs) {
 
 // called instead of InitAI() on load if IsLoadSupported() returns 1
 void CKAIK::Load(IGlobalAICallback* callback, std::istream* ifs) {
-	ai = new AIClasses();
-	ai->cb = callback->GetAICallback();
-	ai->cheat = callback->GetCheatInterface();
-	ai->logger = new CLogger(ai->cb);
-
 	CREX_SC_LOAD(KAIK, ifs);
 }
 
-
-
 void CKAIK::PostLoad(void) {
-	// allocate and initialize all non-serialized
-	// AI components; the ones that were serialized
-	// have their own PostLoad() callins
-	ai->math	= new CMaths(ai);
-	ai->parser	= new CSunParser(ai);
-	ai->mm		= new CMetalMap(ai);
-	ai->pather	= new CPathFinder(ai);
-
-	ai->mm->Init();
-	ai->pather->Init();
+	assert(ai != NULL);
 }
 
 void CKAIK::Serialize(creg::ISerializer* s) {
-	if (!s->IsWriting()) {
-		// if de-serializing a saved state, allocate
-		// here instead of in InitAI() which we skip
-		ai->unitIDs.resize(MAX_UNITS, -1);
-		ai->MyUnits.resize(MAX_UNITS, new CUNIT(ai));
-	}
-
 	for (int i = 0; i < MAX_UNITS; i++) {
-		if (ai->cheat->GetUnitDef(i)) {
+		if (ai->ccb->GetUnitDef(i) != NULL) {
 			// do not save non-existing units
 			s->SerializeObjectInstance(ai->MyUnits[i], ai->MyUnits[i]->GetClass());
+
 			if (!s->IsWriting()) {
 				ai->MyUnits[i]->myid = i;
 			}
@@ -99,37 +62,8 @@ void CKAIK::Serialize(creg::ISerializer* s) {
 
 
 void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
-	ai = new AIClasses();
-	ai->cb = callback->GetAICallback();
-	ai->cheat = callback->GetCheatInterface();
-
-	ai->MyUnits.resize(MAX_UNITS, 0x0);
-	ai->unitIDs.resize(MAX_UNITS, -1);
-
-	// initialize MAX_UNITS CUNIT objects
-	for (int i = 0; i < MAX_UNITS; i++) {
-		ai->MyUnits[i] = new CUNIT(ai);
-		ai->MyUnits[i]->myid = i;
-		ai->MyUnits[i]->groupID = -1;
-	}
-
-	ai->logger         = new CLogger(ai->cb);
-	ai->math           = new CMaths(ai);
-	ai->parser         = new CSunParser(ai);
-	ai->ut             = new CUnitTable(ai);
-	ai->mm             = new CMetalMap(ai);
-	ai->pather         = new CPathFinder(ai);
-	ai->tm             = new CThreatMap(ai);
-	ai->uh             = new CUnitHandler(ai);
-	ai->dm             = new CDefenseMatrix(ai);
-	ai->econTracker    = new CEconomyTracker(ai);
-	ai->bu             = new CBuildUp(ai);
-	ai->ah             = new CAttackHandler(ai);
-	ai->dgunConHandler = new CDGunControllerHandler(ai);
-
-	ai->mm->Init();
-	ai->ut->Init();
-	ai->pather->Init();
+	ai = new AIClasses(callback);
+	ai->Init();
 
 	std::string verMsg =
 		std::string(AI_VERSION) + " initialized succesfully!";
@@ -150,8 +84,9 @@ void CKAIK::UnitCreated(int unitID) {
 
 void CKAIK::UnitFinished(int unit) {
 	ai->econTracker->UnitFinished(unit);
-	int frame = ai->cb->GetCurrentFrame();
-	const UnitDef* udef = ai->cb->GetUnitDef(unit);
+
+	const int      frame = ai->cb->GetCurrentFrame();
+	const UnitDef* udef  = ai->cb->GetUnitDef(unit);
 
 	if (udef != NULL) {
 		// let attackhandler handle cat_g_attack units
@@ -278,7 +213,7 @@ int CKAIK::HandleEvent(int msg, const void* data) {
 
 
 void CKAIK::Update() {
-	int frame = ai->cb->GetCurrentFrame();
+	const int frame = ai->cb->GetCurrentFrame();
 
 	// call economy tracker update routine
 	ai->econTracker->frameUpdate(frame);
@@ -288,6 +223,7 @@ void CKAIK::Update() {
 		// init defense matrix
 		ai->dm->Init();
 	}
+
 	if (frame > 60) {
 		// call buildup manager and unit handler (idle) update routine
 		ai->bu->Update(frame);

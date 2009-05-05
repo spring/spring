@@ -44,11 +44,11 @@
 #else // not SPARC -> LINUX or APPLE
 #	define LIBARCH32NAME "i386"
 #	define LIBARCH64NAME "amd64"
-#	if defined(__arch64__)
+#	if defined __arch64__ || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__
 #		define LIBARCHNAME LIBARCH64NAME
-#	else // defined(__arch64__)
+#	else // defined __arch64__ || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__
 #		define LIBARCHNAME LIBARCH32NAME
-#	endif // defined(__arch64__)
+#	endif // defined __arch64__ || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__
 #endif // SPARC
 //LIBARCH32   solaris only: sparc or i386
 //LIBARCH64   solaris only: sparcv9 or amd64
