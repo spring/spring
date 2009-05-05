@@ -43,6 +43,7 @@ const int COBFN_Weapon_Funcs   = 8;
 
 class CUnitScriptNames
 {
+public:
 	static const std::vector<std::string>& GetScriptNames(); // COBFN_* -> string
 	static const std::map<std::string, int>& GetScriptMap(); // string -> COBFN_*
 
