@@ -163,7 +163,7 @@ void CFactory::Update()
 
 			// buildPiece is the rotating platform
 			const int buildPiece = GetBuildPiece();
-			CMatrix44f mat = cob->GetPieceMatrix(buildPiece);
+			const CMatrix44f& mat = cob->GetPieceMatrix(buildPiece);
 			const int h = GetHeadingFromVector(mat[2], mat[10]);
 
 			// rotate unit nanoframe with platform
@@ -173,8 +173,9 @@ void CFactory::Update()
 			curBuild->pos = buildPos;
 
 			if (curBuild->floatOnWater) {
-				curBuild->pos.y  = ground->GetHeight(buildPos.x, buildPos.z);
-				curBuild->pos.y -= curBuild->unitDef->waterline;
+				float waterline = ground->GetHeight(buildPos.x, buildPos.z) - curBuild->unitDef->waterline;
+				if (waterline > curBuild->pos.y)
+					curBuild->pos.y = waterline;
 			}
 			curBuild->midPos = curBuild->pos + (UpVector * curBuild->relMidPos.y);
 
