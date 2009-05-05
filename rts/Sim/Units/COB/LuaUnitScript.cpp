@@ -136,8 +136,9 @@ end
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces), L(L)
-	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1)
-	, fnKilled(LUA_REFNIL), inKilled(false)
+	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), LUA_NOREF)
+	, fnKilled(LUA_NOREF), inKilled(false)
+	, fnHitByWeaponId(LUA_NOREF)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
 		const string fname = lua_tostring(L, -2);
@@ -162,7 +163,7 @@ int CLuaUnitScript::UpdateCallIn()
 	const string fname = lua_tostring(L, 2);
 	const bool remove = lua_isnoneornil(L, 3);
 	map<string, int>::iterator it = scriptNames.find(fname);
-	int r = -1;
+	int r = LUA_NOREF;
 
 	if (it != scriptNames.end()) {
 		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
@@ -207,9 +208,12 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 		scriptIndex[num] = ref;
 	}
 
-	// Remember some functionIDs to safeguard the callOuts.
+	// Remember some functionIDs for some hacks...
 	if (fname == "Killed") {
 		fnKilled = ref;
+	}
+	else if (fname == "HitByWeaponId") {
+		fnHitByWeaponId = ref;
 	}
 }
 
@@ -227,11 +231,20 @@ int CLuaUnitScript::GetFunctionId(const string& fname) const
 
 int CLuaUnitScript::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
+	if (functionId < 0) {
+		return -1;
+	}
+
 	if (functionId == fnKilled) {
 		inKilled = true;
 	}
 
 	// TODO: call into Lua function stored in environ/registry?
+
+	if (functionId == fnHitByWeaponId) {
+		//unit->weaponHitMod = lua_tofloat(L, ...);
+	}
+
 	return 0;
 }
 
