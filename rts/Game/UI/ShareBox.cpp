@@ -87,6 +87,8 @@ CShareBox::~CShareBox(void)
 
 void CShareBox::Draw(void)
 {
+	const float alpha = std::max(guiAlpha,0.4f);
+
 	float mx=MouseX(mouse->lastx);
 	float my=MouseY(mouse->lasty);
 
@@ -95,34 +97,34 @@ void CShareBox::Draw(void)
 	glDisable(GL_ALPHA_TEST);
 
 	// Large Box
-	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
+	glColor4f(0.2f,0.2f,0.2f,alpha);
 	DrawBox(box);
 
 	// ok Box on mouse over
 	if(InBox(mx,my,box+okBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.7f,0.2f,0.2f,alpha);
 		DrawBox(box+okBox);
 	}
 
 	// apply Box on mouse over
 	if(InBox(mx,my,box+applyBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.7f,0.2f,0.2f,alpha);
 		DrawBox(box+applyBox);
 	}
 
 	// cancel Box on mouse over
 	if(InBox(mx,my,box+cancelBox)){
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.7f,0.2f,0.2f,alpha);
 		DrawBox(box+cancelBox);
 	}
 
-	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
+	glColor4f(0.2f,0.2f,0.2f,alpha);
 	DrawBox(box+teamBox);
 
 	if(InBox(mx,my,box+unitBox))
-		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.7f,0.2f,0.2f,alpha);
 	else
-		glColor4f(0.2f,0.2f,0.2f,guiAlpha);
+		glColor4f(0.2f,0.2f,0.2f,alpha);
 	DrawBox(box+unitBox);
 
 	glColor4f(0.8f,0.8f,0.9f,0.7f);
@@ -151,34 +153,34 @@ void CShareBox::Draw(void)
 //		DrawBox(box+unitBox);
 		glLineWidth(3);
 		glBegin(GL_LINE_STRIP);
-		glVertex2f(box.x1+unitBox.x1+0.01f,box.y1+unitBox.y1+0.025f);
-		glVertex2f(box.x1+unitBox.x1+0.02f,box.y1+unitBox.y1+0.01f);
-		glVertex2f(box.x1+unitBox.x1+0.03f,box.y1+unitBox.y1+0.04f);
+			glVertex2f(box.x1+unitBox.x1+0.01f,box.y1+unitBox.y1+0.025f);
+			glVertex2f(box.x1+unitBox.x1+0.02f,box.y1+unitBox.y1+0.01f);
+			glVertex2f(box.x1+unitBox.x1+0.03f,box.y1+unitBox.y1+0.04f);
 		glEnd();
 		glLineWidth(1);
 	}
 
-	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1+okBox.x1+0.025f,box.y1+okBox.y1+0.005f,1,"Ok");
-	font->glPrintAt(box.x1+applyBox.x1+0.025f,box.y1+applyBox.y1+0.005f,1,"Apply");
-	font->glPrintAt(box.x1+cancelBox.x1+0.005f,box.y1+cancelBox.y1+0.005f,1,"Cancel");
+	font->Begin();
 
-	font->glPrintAt(box.x1+0.06f,box.y1+0.085f,0.7f,"Share selected units");
+	font->glPrint(box.x1+(okBox.x1+okBox.x2)*0.5f,box.y1+(okBox.y1+okBox.y2)*0.5f,1,FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM,"Ok");
+	font->glPrint(box.x1+(applyBox.x1+applyBox.x2)*0.5f,box.y1+(applyBox.y1+applyBox.y2)*0.5f,1,FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM,"Apply");
+	font->glPrint(box.x1+(cancelBox.x1+cancelBox.x2)*0.5f,box.y1+(cancelBox.y1+cancelBox.y2)*0.5f,1,FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM,"Cancel");
 
-	glColor4f(1,1,0.4f,0.8f);
-	font->glPrintAt(box.x1+0.01f,box.y1+0.16f,0.7f,"Share Energy");
+	font->glPrint(box.x1+0.06f,box.y1+0.085f,0.7f,FONT_SCALE | FONT_NORM,"Share selected units");
 
-	glColor4f(1,1,1,0.8f);
-	font->glFormatAt(box.x1+0.25f,box.y1+0.12f,0.7f,"%.0f",float(teamHandler->Team(gu->myTeam)->energy));
-	font->glFormatAt(box.x1+0.14f,box.y1+0.12f,0.7f,"%.0f",teamHandler->Team(gu->myTeam)->energy*energyShare);
+	font->SetTextColor(1,1,0.4f,0.8f);
+	font->glPrint(box.x1+0.01f,box.y1+0.16f,0.7f,FONT_SCALE | FONT_NORM,"Share Energy");
 
-	glColor4f(0.8f,0.8f,0.9f,0.8f);
-	font->glPrintAt(box.x1+0.01f,box.y1+0.22f,0.7f,"Share Metal");
+	font->SetTextColor(1,1,1,0.8f);
+	font->glFormat(box.x1+0.25f,box.y1+0.12f,0.7f,FONT_SCALE | FONT_NORM,"%.0f",float(teamHandler->Team(gu->myTeam)->energy));
+	font->glFormat(box.x1+0.14f,box.y1+0.12f,0.7f,FONT_SCALE | FONT_NORM,"%.0f",teamHandler->Team(gu->myTeam)->energy*energyShare);
 
-	glColor4f(1,1,1,0.8f);
-	font->glFormatAt(box.x1+0.25f,box.y1+0.18f,0.7f,"%.0f",float(teamHandler->Team(gu->myTeam)->metal));
-	font->glFormatAt(box.x1+0.14f,box.y1+0.18f,0.7f,"%.0f",teamHandler->Team(gu->myTeam)->metal*metalShare);
+	font->SetTextColor(0.8f,0.8f,0.9f,0.8f);
+	font->glPrint(box.x1+0.01f,box.y1+0.22f,0.7f,FONT_SCALE | FONT_NORM,"Share Metal");
+
+	font->SetTextColor(1,1,1,0.8f);
+	font->glFormat(box.x1+0.25f,box.y1+0.18f,0.7f,FONT_SCALE | FONT_NORM,"%.0f",float(teamHandler->Team(gu->myTeam)->metal));
+	font->glFormat(box.x1+0.14f,box.y1+0.18f,0.7f,FONT_SCALE | FONT_NORM,"%.0f",teamHandler->Team(gu->myTeam)->metal*metalShare);
 
 	for(int team=0;team<teamHandler->ActiveTeams()-1;++team){
 		int actualTeam=team;
@@ -197,26 +199,30 @@ void CShareBox::Draw(void)
 
 		std::string ally, dead;
 		if (teamHandler->Ally(gu->myAllyTeam, teamHandler->AllyTeam(actualTeam))) {
-			glColor4f(0.5f, 1.0f, 0.5f, alpha);
+			font->SetTextColor(0.5f, 1.0f, 0.5f, alpha);
 			ally = " <Ally>";
 		} else {
-			glColor4f(1.0f, 0.5f, 0.5f, alpha);
+			font->SetTextColor(1.0f, 0.5f, 0.5f, alpha);
 			ally = " <Enemy>";
 		}
 		if (teamHandler->Team(actualTeam)->isDead) {
-			glColor4f(0.5f, 0.5f, 1.0f, alpha);
+			font->SetTextColor(0.5f, 0.5f, 1.0f, alpha);
 			dead = " <Dead>";
 		}
 		if (actualTeam == teamHandler->GaiaTeamID()) {
-			glColor4f(0.8f, 0.8f, 0.8f, alpha);
+			font->SetTextColor(0.8f, 0.8f, 0.8f, alpha);
 			teamName = "Gaia";
 			ally   = " <Gaia>";
 		}
-		font->glFormatAt(box.x1 + teamBox.x1 + 0.002f,
+		font->glFormat(box.x1 + teamBox.x1 + 0.002f,
 		                box.y1 + teamBox.y2 - 0.025f - team * 0.025f,
-		                0.7f, "Team%i (%s)%s%s", actualTeam,
+		                0.7f, FONT_SCALE | FONT_NORM, "Team%i (%s)%s%s", actualTeam,
 		                teamName.c_str(), ally.c_str(), dead.c_str());
 	}
+
+	font->End();
+
+	glEnable(GL_TEXTURE_2D);
 }
 
 bool CShareBox::IsAbove(int x, int y)

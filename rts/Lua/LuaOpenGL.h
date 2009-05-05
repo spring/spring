@@ -31,8 +31,6 @@ class LuaOpenGL {
 
 		static bool PushEntries(lua_State* L);
 
-		static void CalcFontHeight();
-
 		static bool IsDrawingEnabled() { return drawingEnabled; }
 		static void SetDrawingEnabled(bool value) { drawingEnabled = value; }
 
@@ -106,7 +104,6 @@ class LuaOpenGL {
 		static bool drawingEnabled;
 		static bool safeMode;
 		static bool canUseShaders;
-		static float fontHeight;
 		static float screenWidth;
 		static float screenDistance;
 		static void (*resetMatrixFunc)(void);
@@ -199,8 +196,11 @@ class LuaOpenGL {
 		static int Rect(lua_State* L);
 		static int TexRect(lua_State* L);
 
+		static int BeginText(lua_State* L);
 		static int Text(lua_State* L);
+		static int EndText(lua_State* L);
 		static int GetTextWidth(lua_State* L);
+		static int GetTextHeight(lua_State* L);
 
 		static int Map1(lua_State* L);
 		static int Map2(lua_State* L);

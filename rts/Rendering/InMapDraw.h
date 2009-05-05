@@ -97,7 +97,7 @@ public:
 
 	static void InMapDrawVisCallback(int x, int y, void* userData);
 
-	void PromptLabel(const float3& pos);;
+	void PromptLabel(const float3& pos);
 };
 
 extern CInMapDraw* inMapDrawer;

@@ -5,7 +5,6 @@
 
 #include "LogOutput.h"
 #include "Rendering/GL/myGL.h"
-#include <IL/il.h>
 #include "Map/MapInfo.h"
 #include "Map/MapParser.h"
 #include "Rendering/ShadowHandler.h"

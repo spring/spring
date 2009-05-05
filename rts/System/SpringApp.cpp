@@ -585,29 +585,20 @@ void SpringApp::InitOpenGL ()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const int charFirst = configHandler->Get("FontCharFirst", 32);
-	const int charLast  = configHandler->Get("FontCharLast", 255);
-	std::string fontFile = configHandler->GetString("FontFile", "fonts/Luxi.ttf");
-
-	const float fontSize = 0.027f;      // ~20 pixels at 1024x768
-	const float smallFontSize = 0.016f; // ~12 pixels at 1024x768
+	const std::string fontFile = configHandler->GetString("FontFile", "fonts/Luxi.ttf");
+	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/Luxi.ttf");
+	const int fontSize = configHandler->Get("FontSize", 23);
+	const int smallFontSize = configHandler->Get("SmallFontSize", 14);
+	const int outlineWidth = configHandler->Get("FontOutlineWidth", 3);
+	const float outlineWeight = configHandler->Get("FontOutlineWeight", 25.0f);
+	const int smallOutlineWidth = configHandler->Get("SmallFontOutlineWidth", 2);
+	const float smallOutlineWeight = configHandler->Get("SmallFontOutlineWeight", 10.0f);
 
 	SafeDelete(font);
 	SafeDelete(smallFont);
 
-	try {
-		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
-		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
-	} catch (content_error&) {
-		// If the standard location fails, retry in fonts directory or vice versa.
-		if (fontFile.substr(0, 6) == "fonts/")
-			fontFile = fontFile.substr(6);
-		else
-			fontFile = "fonts/" + fontFile;
-
-		font = CglFont::TryConstructFont(fontFile, charFirst, charLast, fontSize);
-		smallFont = CglFont::TryConstructFont(fontFile, charFirst, charLast, smallFontSize);
-	}
+	font = CglFont::LoadFont(fontFile, fontSize, outlineWidth, outlineWeight);
+	smallFont = CglFont::LoadFont(smallFontFile, smallFontSize, smallOutlineWidth, smallOutlineWeight);
 }
 
 /**
@@ -1033,7 +1024,6 @@ int SpringApp::Run (int argc, char *argv[])
 					SetSDLVideoMode();
 #endif
 					InitOpenGL();
-					LoadFonts();
 					activeController->ResizeEvent();
 					break;
 				}
@@ -1100,7 +1090,7 @@ int SpringApp::Run (int argc, char *argv[])
 								if (ac->ignoreNextChar || ac->ignoreChar == char(i)) {
 									ac->ignoreNextChar = false;
 								} else {
-									if (i < SDLK_DELETE) {
+									if (i < SDLK_DELETE && (!isRepeat || ac->userInput.length()>0)) {
 										const int len = (int)ac->userInput.length();
 										ac->writingPos = std::max(0, std::min(len, ac->writingPos));
 										char str[2] = { char(i), 0 };
