@@ -1078,6 +1078,10 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 {
 	int iconCmd = -1;
 
+	if (button == SDL_BUTTON_RIGHT) {
+		explicitCommand = inCommand;
+	}
+
 	if (activeMousePress) {
 		activeMousePress = false;
 	} else {
@@ -2385,6 +2389,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				  // clicked on unit
 					c.params.push_back(unit->id);
 				} else { // clicked in map
+					if(explicitCommand<0) // only attack ground if explicitly set the command
+						return defaultRet;
 					float3 pos = camerapos + (mousedir * dist2);
 					c.params.push_back(pos.x);
 					c.params.push_back(pos.y);
