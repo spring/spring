@@ -48,7 +48,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/LuaUnitScript.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -210,6 +210,10 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
 
 	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L)) {
+		return false;
+	}
+
+	if (!CLuaUnitScript::PushEntries(L)) {
 		return false;
 	}
 
