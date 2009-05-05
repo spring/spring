@@ -90,7 +90,6 @@ LuaOpenGL::DrawMode LuaOpenGL::prevDrawMode = LuaOpenGL::DRAW_NONE;
 bool  LuaOpenGL::drawingEnabled = false;
 bool  LuaOpenGL::safeMode = true;
 bool  LuaOpenGL::canUseShaders = false;
-float LuaOpenGL::fontHeight = 0.001f;
 float LuaOpenGL::screenWidth = 0.36f;
 float LuaOpenGL::screenDistance = 0.60f;
 
@@ -102,8 +101,6 @@ static bool haveGL20 = false;
 
 void LuaOpenGL::Init()
 {
-	CalcFontHeight();
-
 	resetStateList = glGenLists(1);
 	glNewList(resetStateList, GL_COMPILE); {
 		ResetGLState();
@@ -130,22 +127,6 @@ void LuaOpenGL::Free()
 			glDeleteQueries(1, &(*it));
 		}
 	}
-}
-
-
-/******************************************************************************/
-
-void LuaOpenGL::CalcFontHeight()
-{
-	/*
-	// calculate the text height that we'll use to
-	// provide a consistent display when rendering text
-	// (note the missing characters)
-	fontHeight = font->CalcTextHeight("abcdef hi klmno  rstuvwx z"
-	                                  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                                    "0123456789"); */
-	fontHeight = font->GetHeight();		// get height between two baselines
-	fontHeight = max(1.0e-6f, fontHeight);  // safety for dividing
 }
 
 
@@ -253,8 +234,11 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(Rect);
 	REGISTER_LUA_CFUNC(TexRect);
 
+	REGISTER_LUA_CFUNC(BeginText);
 	REGISTER_LUA_CFUNC(Text);
+	REGISTER_LUA_CFUNC(EndText);
 	REGISTER_LUA_CFUNC(GetTextWidth);
+	REGISTER_LUA_CFUNC(GetTextHeight);
 
 	REGISTER_LUA_CFUNC(Map1);
 	REGISTER_LUA_CFUNC(Map2);
@@ -1201,6 +1185,28 @@ int LuaOpenGL::DrawMiniMap(lua_State* L)
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Font Renderer
+//
+
+int LuaOpenGL::BeginText(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	font->Begin();
+	return 0;
+}
+
+
+int LuaOpenGL::EndText(lua_State* L)
+{
+	CheckDrawingEnabled(L, __FUNCTION__);
+	font->End();
+	return 0;
+}
+
+
 int LuaOpenGL::Text(lua_State* L)
 {
 	CheckDrawingEnabled(L, __FUNCTION__);
@@ -1212,64 +1218,46 @@ int LuaOpenGL::Text(lua_State* L)
 		  "Incorrect arguments to gl.Text(msg, x, y [,size] [,\"options\"]");
 	}
 	const string text = lua_tostring(L, 1);
-	const float x     = lua_tonumber(L, 2) * gu->pixelX;
-	const float y     = lua_tonumber(L, 3) * gu->pixelY;
+	const float x     = lua_tonumber(L, 2);
+	const float y     = lua_tonumber(L, 3);
 
-	float size = 12.0f * gu->pixelY;
-	bool right = false;
-	bool center = false;
+	float size = 12.0f;
+	int options = 0;
 	bool outline = false;
-	bool colorCodes = true;
 	bool lightOut;
 
 	if ((args >= 4) && lua_isnumber(L, 4)) {
-		size = lua_tonumber(L, 4) * gu->pixelY;
+		size = lua_tonumber(L, 4);
 	}
 	if ((args >= 5) && lua_isstring(L, 5)) {
-	  const char* c = lua_tostring(L, 5);
-	  while (*c != 0) {
-	  	switch (*c) {
-	  	  case 'c': { center = true;                    break; }
-	  	  case 'r': { right = true;                     break; }
-			  case 'n': { colorCodes = false;               break; }
-			  case 'o': { outline = true; lightOut = false; break; }
-			  case 'O': { outline = true; lightOut = true;  break; }
+		const char* c = lua_tostring(L, 5);
+		while (*c != 0) {
+	  		switch (*c) {
+				case 'c': { options |= FONT_CENTER;           break; }
+				case 'r': { options |= FONT_RIGHT;            break; }
+
+				case 'v': { options |= FONT_VCENTER;          break; }
+				case 'b': { options |= FONT_BASELINE;         break; }
+				case 't': { options |= FONT_TOP;              break; }
+				case 'a': { options |= FONT_ASCENDER;         break; }
+
+				case 's': { options |= FONT_SHADOW;           break; }
+				case 'o': { options |= FONT_OUTLINE; outline = true; lightOut = false;     break; }
+				case 'O': { options |= FONT_OUTLINE; outline = true; lightOut = true;     break; }
 			}
-	  	c++;
+	  		c++;
 		}
 	}
-
-	const float fontScale = size / fontHeight * (4.0f / 3.0f);		// In the old font system, fonts were created at 96 dpi. 96/72 = 4/3. Don't ask.
-
-	float xj = x; // justified x position
-	if (right) {
-		xj -= fontScale * font->CalcTextWidth(text.c_str());
-	} else if (center) {
-		xj -= fontScale * font->CalcTextWidth(text.c_str()) * 0.5f;
-	}
-
-	glPushMatrix();
-	glScalef(gu->viewSizeX, gu->viewSizeY, 1.0f);
 
 	if (outline) {
-		const float lightOutline[4] = { 0.85f, 0.85f, 0.85f, 0.8f };
-		const float darkOutline[4]  = { 0.25f, 0.25f, 0.25f, 0.8f };
-		const float noshow[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-
 		if (lightOut) {
-			font->OutlineS(true, lightOutline);
+			font->SetOutlineColor(0.95f, 0.95f, 0.95f, 0.8f);
 		} else {
-			font->OutlineS(true, darkOutline);
+			font->SetOutlineColor(0.15f, 0.15f, 0.15f, 0.8f);
 		}
 	}
 
-	if (colorCodes) {
-		font->glPrintColorAt(xj, y, fontScale, text.c_str());
-	} else {
-		font->glPrintAt(xj, y, fontScale, text.c_str());
-	}
-
-	glPopMatrix();
+	font->glPrint(x, y, size, options, text);
 
 	return 0;
 }
@@ -1281,10 +1269,27 @@ int LuaOpenGL::GetTextWidth(lua_State* L)
 	if ((args < 1) || !lua_isstring(L, 1)) {
 		luaL_error(L, "Incorrect arguments to gl.GetTextWidth(\"text\")");
 	}
+
 	const string text = lua_tostring(L, 1);
-	const float width = font->CalcTextWidth(text.c_str()) / font->GetHeight();
+	const float width = font->GetTextWidth(text);
 	lua_pushnumber(L, width);
 	return 1;
+}
+
+
+int LuaOpenGL::GetTextHeight(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to gl.GetTextHeight(\"text\")");
+	}
+
+	const string text = lua_tostring(L, 1);
+	float descender;
+	const float height = font->GetTextHeight(text,&descender);
+	lua_pushnumber(L, height);
+	lua_pushnumber(L, descender);
+	return 2;
 }
 
 
@@ -3771,6 +3776,16 @@ int LuaOpenGL::Texture(lua_State* L)
 			glEnable(GL_TEXTURE_2D);
 			lua_pushboolean(L, true);
 		}
+		else if (texture == "$font") {
+			glBindTexture(GL_TEXTURE_2D, font->GetTexture());
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
+		else if (texture == "$smallfont") {
+			glBindTexture(GL_TEXTURE_2D, smallFont->GetTexture());
+			glEnable(GL_TEXTURE_2D);
+			lua_pushboolean(L, true);
+		}
 		else {
 			lua_pushboolean(L, false);
 		}
@@ -4022,6 +4037,16 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 			lua_newtable(L);
 			HSTR_PUSH_NUMBER(L, "xsize", 1024);
 			HSTR_PUSH_NUMBER(L, "ysize", 1024);
+		}
+		else if (texture == "$font") {
+			lua_newtable(L);
+			HSTR_PUSH_NUMBER(L, "xsize", font->GetTexWidth());
+			HSTR_PUSH_NUMBER(L, "ysize", font->GetTexHeight());
+		}
+		else if (texture == "$smallfont") {
+			lua_newtable(L);
+			HSTR_PUSH_NUMBER(L, "xsize", smallFont->GetTexWidth());
+			HSTR_PUSH_NUMBER(L, "ysize", smallFont->GetTexHeight());
 		}
 	}
 	else {

@@ -110,31 +110,35 @@ bool CPreGame::Draw()
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
 
+	font->Begin();
+
 	if (!net->Connected())
 	{
 		if (settings->isHost)
-			font->glPrintCentered (0.5f,0.48f, 2.0f, "Waiting for server to start");
+			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server to start");
 		else
 		{
-			font->glPrintCentered (0.5f,0.48f, 2.0f, "Connecting to server (%d s)", (SDL_GetTicks()-timer)/1000);
+			font->glFormat(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Connecting to server (%d s)", (SDL_GetTicks()-timer)/1000);
 		}
 	}
 	else
 	{
-		font->glPrintCentered (0.5f,0.48f, 2.0f, "Waiting for server response");
+		font->glPrint(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server response");
 	}
 
-	font->glFormatAt(0.60f,0.40f, 1.0f, "Server: %s:%d", settings->hostip.c_str(), settings->hostport);
+	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Server: %s:%d", settings->hostip.c_str(), settings->hostport);
 	if (!settings->isHost)
-		font->glFormatAt(0.60f,0.35f, 1.0f, "Local endpoint: port %d UDP%s", settings->sourceport, (settings->sourceport == 0) ? " (autoselect)" : "");
+		font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Local endpoint: port %d UDP%s", settings->sourceport, (settings->sourceport == 0) ? " (autoselect)" : "");
 	else
-		font->glFormatAt (0.60f,0.35f, 1.0f, "Local endpoint: shared memory");
+		font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Local endpoint: shared memory");
 
-	font->glFormatAt (0.60f,0.30f, 1.0f, "Using playername: %s", settings->myPlayerName.c_str());
+	font->glFormat(0.60f, 0.30f, 1.0f, FONT_SCALE | FONT_NORM, "Using playername: %s", settings->myPlayerName.c_str());
 
 	// credits
-	font->glPrintCentered(0.5f,0.06f,1.0f,"Spring %s", SpringVersion::GetFull().c_str());
-	font->glPrintCentered(0.5f,0.02f,0.6f,"This program is distributed under the GNU General Public License, see license.html for more info");
+	font->glFormat(0.5f,0.06f,1.0f,FONT_CENTER | FONT_SCALE | FONT_NORM, "Spring %s", SpringVersion::GetFull().c_str());
+	font->glPrint(0.5f,0.02f,0.6f,FONT_CENTER | FONT_SCALE | FONT_NORM, "This program is distributed under the GNU General Public License, see license.html for more info");
+
+	font->End();
 
 	return true;
 }

@@ -53,7 +53,8 @@ public:
 	float ypos;
 	float width;
 	float height;
-	int numLines;
+	float fontScale;
+	float fontSize;
 	bool disabled;
 
 public:

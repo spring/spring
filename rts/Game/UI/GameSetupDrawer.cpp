@@ -99,7 +99,7 @@ void GameSetupDrawer::Draw()
 		state = "Waiting for players";
 	}
 
-	// not the most efficent way to do this, but who cares?
+	//! not the most efficent way to do this, but who cares?
 	std::map<int, std::string> playerStates;
 	for (int a = 0; a < gameSetup->numPlayers; a++) {
 		if (!playerHandler->Player(a)->readyToStart) {
@@ -120,41 +120,51 @@ void GameSetupDrawer::Draw()
 				selector->Ready();
 			}
 		}
-		return; // LuaUI says it will do the rendering
+		return; //! LuaUI says it will do the rendering
 	}
 	if (selector) {
 		selector->ShowReady(true);
 	}
 
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	font->glPrintAt(0.3f, 0.7f, 1.0f, state.c_str());
+	font->Begin();
+	font->SetColors(); //! default
+	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM, state);
 
 	for (int a = 0; a <= gameSetup->numPlayers; a++) {
-		const float* color;
-		const float    red[4] = { 1.0f, 0.2f, 0.2f, 1.0f };
-		const float  green[4] = { 0.2f, 1.0f, 0.2f, 1.0f };
-		const float yellow[4] = { 0.8f, 0.8f, 0.2f, 1.0f };
-		const float  white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+		const float4* color;
+		static const float4      red(1.0f, 0.2f, 0.2f, 1.0f);
+		static const float4    green(0.2f, 1.0f, 0.2f, 1.0f);
+		static const float4   yellow(0.8f, 0.8f, 0.2f, 1.0f);
+		static const float4    white(1.0f, 1.0f, 1.0f, 1.0f);
+		static const float4     cyan(0.0f, 0.9f, 0.9f, 1.0f);
+		static const float4 lightred(1.0f, 0.5f, 0.5f, 1.0f);
 		if (a == gameSetup->numPlayers) {
-			color = white; //blue;
+			color = &white;
+		} else if (playerHandler->Player(a)->spectator) {
+			if (!playerHandler->Player(a)->readyToStart) {
+				color = &lightred;
+			} else {
+				color = &cyan;
+			}
 		} else if (!playerHandler->Player(a)->readyToStart) {
-			color = red;
+			color = &red;
 		} else if (!teamHandler->Team(playerHandler->Player(a)->team)->IsReadyToStart()) {
-			color = yellow;
+			color = &yellow;
 		} else {
-			color = green;
+			color = &green;
 		}
 
-		const char* name;
-		if (a == gameSetup->numPlayers) {
-			name = "Players:";
-		} else {
-			name = playerHandler->Player(a)->name.c_str();
+		std::string name = "Players:";
+		if (a != gameSetup->numPlayers) {
+			name = playerHandler->Player(a)->name;
 		}
 		const float fontScale = 1.0f;
-		const float yScale = fontScale * font->GetHeight();
+		const float fontSize  = fontScale * font->GetSize();
+		const float yScale = fontSize * font->GetLineHeight() * gu->pixelY;
 		const float yPos = 0.5f - (0.5f * yScale * gameSetup->numPlayers) + (yScale * (float)a);
 		const float xPos = 10.0f * gu->pixelX;
-		font->glPrintOutlinedAt(xPos, yPos, fontScale, name, color);
+		font->SetColors(color, NULL);
+		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM, name);
 	}
+	font->End();
 }

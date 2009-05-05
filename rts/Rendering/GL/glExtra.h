@@ -25,4 +25,6 @@ extern void setSurfaceSquareFunc(SurfaceSquareFunc func);
 typedef void (*DrawVolumeFunc)(const void* data);
 extern void glDrawVolume(DrawVolumeFunc drawFunc, const void* data);
 
+extern void gluMyCube(float);
+
 #endif

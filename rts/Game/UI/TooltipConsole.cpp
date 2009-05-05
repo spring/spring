@@ -46,22 +46,6 @@ CTooltipConsole::~CTooltipConsole(void)
 }
 
 
-// FIXME -- duplication
-static string StripColorCodes(const string& text)
-{
-	std::string nocolor;
-	const int len = (int)text.size();
-	for (int i = 0; i < len; i++) {
-		if ((unsigned char)text[i] == 255) {
-			i = i + 3;
-		} else {
-			nocolor += text[i];
-		}
-	}
-	return nocolor;
-}
-
-
 void CTooltipConsole::Draw(void)
 {
 	if (disabled) {
@@ -81,12 +65,16 @@ void CTooltipConsole::Draw(void)
 		glRectf(x, y, (x + w), (y + h));
 	}
 
-	const float fontScale = 1.0f;
-	const float fontHeight = fontScale * smallFont->GetHeight();
+	const float fontScale  = 1.0f;
+	const float fontSize   = fontScale * smallFont->GetSize();
+	const float fontHeight = fontSize * smallFont->GetLineHeight() * gu->pixelY;
 
 	float curX = x + 0.01f;
 	float curY = y + 0.07f;
 	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
+
+	smallFont->Begin();
+	smallFont->SetColors(); //default
 
 	unsigned int p = 0;
 	while (p < s.size()) {
@@ -98,14 +86,14 @@ void CTooltipConsole::Draw(void)
 			}
 		}
 		if (!outFont) {
-			smallFont->glPrintColorAt(curX, curY, fontScale, s2.c_str());
+			smallFont->glPrint(curX, curY, fontSize, FONT_NORM, s2);
 		} else {
-			const float color[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
-			smallFont->glPrintOutlinedAt(curX, curY, fontScale, StripColorCodes(s2).c_str(), color);
-			smallFont->glPrintColorAt(curX, curY, fontScale, s2.c_str());
+			smallFont->glPrint(curX, curY, fontSize, FONT_OUTLINE | FONT_NORM, s2);
 		}
 		curY -= fontHeight;
 	}
+
+	smallFont->End();
 }
 
 

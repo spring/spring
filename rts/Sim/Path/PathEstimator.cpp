@@ -906,11 +906,7 @@ void CPathEstimator::Draw(void)
 
 					p2 = (p1 + p2) / 2;
 					if (camera->pos.SqDistance(p2) < 250000) {
-						glPushMatrix();
-						glTranslatef3(p2);
-						glScalef(5, 5, 5);
-						font->glWorldPrint("%.0f", cost);
-						glPopMatrix();
+						font->glWorldPrint(p2,5,"%.0f", cost);
 					}
 				}
 			}
@@ -966,11 +962,7 @@ void CPathEstimator::Draw(void)
 		p1.y=ground->GetHeight(p1.x,p1.z)+15;
 
 		if(camera->pos.SqDistance(p1)<250000){
-			glPushMatrix();
-			glTranslatef3(p1);
-			glScalef(5,5,5);
-			font->glWorldPrint("%.0f %.0f",ob->cost,ob->currentCost);
-			glPopMatrix();
+			font->glWorldPrint(p1,5,"%.0f %.0f",ob->cost,ob->currentCost);
 		}
 		++a;
 	}
