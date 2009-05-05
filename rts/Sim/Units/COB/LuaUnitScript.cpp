@@ -162,6 +162,42 @@ void CLuaUnitScript::ShowScriptWarning(const std::string& msg)
 
 /******************************************************************************/
 /******************************************************************************/
+
+
+bool CLuaUnitScript::PushEntries(lua_State* L)
+{
+	lua_pushstring(L, "UnitScript");
+	lua_newtable(L);
+
+#define REGISTER_LUA_CFUNC(x) \
+	lua_pushstring(L, #x);      \
+	lua_pushcfunction(L, x);    \
+	lua_rawset(L, -3)
+
+	REGISTER_LUA_CFUNC(GetUnitCOBValue);
+	REGISTER_LUA_CFUNC(SetUnitCOBValue);
+	REGISTER_LUA_CFUNC(SetPieceVisibility);
+	REGISTER_LUA_CFUNC(EmitSfx);
+	REGISTER_LUA_CFUNC(AttachUnit);
+	REGISTER_LUA_CFUNC(DropUnit);
+	REGISTER_LUA_CFUNC(Explode);
+	REGISTER_LUA_CFUNC(ShowFlare);
+
+	REGISTER_LUA_CFUNC(Spin);
+	REGISTER_LUA_CFUNC(StopSpin);
+	REGISTER_LUA_CFUNC(Turn);
+	REGISTER_LUA_CFUNC(Move);
+	REGISTER_LUA_CFUNC(IsInTurn);
+	REGISTER_LUA_CFUNC(IsInMove);
+	REGISTER_LUA_CFUNC(IsInSpin);
+
+	lua_rawset(L, -3);
+	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
 //
 //  Access helpers
 //
