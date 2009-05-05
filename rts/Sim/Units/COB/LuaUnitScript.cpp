@@ -55,7 +55,7 @@ Spring.UnitScript.ShowFlare(number unitID, number piece) -> nil
 Spring.UnitScript.Spin(number unitID, number piece, number axis, number speed[, number accel]) -> nil
 	Same as COB's spin.  If accel isn't given spinning starts at the desired speed.
 
-Spring.UnitScript.StopSpring(number unitID, number piece, number axis[, number decel]) -> nil
+Spring.UnitScript.StopSpinning(number unitID, number piece, number axis[, number decel]) -> nil
 	Same as COB's stop-spin.  If decel isn't given spinning stops immediately.
 
 Spring.UnitScript.Turn(number unitID, number piece, number axis, number destination[, number speed]) -> nil
@@ -163,7 +163,7 @@ int CLuaUnitScript::UpdateCallIn()
 		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
 		if (remove) {
 			// removing existing callIn
-			scriptNames.erase(it)
+			scriptNames.erase(it);
 			lua_pushboolean(L, 1);
 			return 1;
 		}
