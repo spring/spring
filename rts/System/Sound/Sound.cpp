@@ -2,6 +2,7 @@
 #include "mmgr.h"
 #include "Sound.h"
 
+#include <cstdlib>
 #include <AL/alc.h>
 #include <boost/cstdint.hpp>
 
@@ -23,11 +24,15 @@ CSound* sound = NULL;
 
 CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 {
+	configHandler->NotifyOnChange(this);
 	mute = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
-	masterVolume = configHandler->Get("SoundVolume", 60) * 0.01f;
+	masterVolume = configHandler->Get("VolumeMaster", 60) * 0.01f;
 	//TODO make generic
-	Channels::UnitReply.SetVolume(configHandler->Get("UnitReplyVolume", 80 ) * 0.01f);
+	Channels::General.SetVolume(configHandler->Get("VolumeGeneral", 100 ) * 0.01f);
+	Channels::UnitReply.SetVolume(configHandler->Get("VolumeUnitReply", 100 ) * 0.01f);
+	Channels::Battle.SetVolume(configHandler->Get("VolumeBattle", 100 ) * 0.01f);
+	Channels::UserInterface.SetVolume(configHandler->Get("VolumeUI", 100 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{
@@ -195,6 +200,30 @@ void CSound::PitchAdjust(const float newPitch)
 	SoundSource::SetPitch(newPitch);
 }
 
+void CSound::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key == "snd_volmaster")
+	{
+		masterVolume = std::atoi(value.c_str()) * 0.01f;
+	}
+	else if (key == "snd_volgeneral")
+	{
+		Channels::General.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "snd_volunitreply")
+	{
+		Channels::UnitReply.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "snd_volbattle")
+	{
+		Channels::Battle.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "snd_volui")
+	{
+		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+}
+
 bool CSound::Mute()
 {
 	mute = !mute;
@@ -208,11 +237,6 @@ bool CSound::Mute()
 bool CSound::IsMuted() const
 {
 	return mute;
-}
-
-void CSound::SetVolume(float v)
-{
-	masterVolume = v;
 }
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)

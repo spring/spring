@@ -1212,34 +1212,21 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Sound enabled");
 		}
 	}
-	else if (cmd == "volume") { // master volume
+	else if (cmd == "volume") { // deprecated, use "/set snd_volmaster X" instead
 		char* endPtr;
 		const char* startPtr = action.extra.c_str();
 		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
 		if (endPtr != startPtr) {
-			sound->SetVolume(volume);
-			configHandler->Set("SoundVolume", (int)(volume * 100.0f));
+			configHandler->Set("snd_volmaster", (int)(volume * 100.0f));
 		}
 	}
-	else if (cmd == "soundchannelvolume" || cmd == "unitreplyvolume") {
+	else if (cmd == "unitreplyvolume") { // deprecated, use "/set snd_volunitreply X" instead
 		std::string channel = "UnitReply";
 		float newVol = 1.0;
 		std::istringstream buf(action.extra);
-		if (cmd == "soundchannelvolume")
-		{
-			buf >> channel;
-		}
 		buf >> newVol;
 		const float volume = std::max(0.0f, std::min(1.0f, newVol));
-
-		if (channel == "UnitReply")
-			Channels::UnitReply.SetVolume(volume);
-		else if (channel == "General")
-			Channels::General.SetVolume(volume);
-		else if (channel == "Battle")
-			Channels::Battle.SetVolume(volume);
-		else if (channel == "UserInterface")
-			Channels::UserInterface.SetVolume(volume);
+		Channels::UnitReply.SetVolume(volume);
 	}
 	else if (cmd == "soundchannelenable") {
 		std::string channel;
