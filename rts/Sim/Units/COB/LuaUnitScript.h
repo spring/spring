@@ -24,6 +24,10 @@ private:
 	int fnKilled;
 	bool inKilled;
 
+	// used to handle return value specially; sets it in unit->weaponHitMod
+	// TODO: refactor entire unit script system so this hack isn't needed
+	int fnHitByWeaponId;
+
 protected:
 	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	virtual void ShowScriptError(const std::string& msg);
