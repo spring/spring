@@ -1217,7 +1217,7 @@ bool CGame::ActionPressed(const Action& action,
 		const char* startPtr = action.extra.c_str();
 		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
 		if (endPtr != startPtr) {
-			configHandler->Set("snd_volmaster", (int)(volume * 100.0f));
+			configHandler->Set("snd_volmaster", volume);
 		}
 	}
 	else if (cmd == "unitreplyvolume") { // deprecated, use "/set snd_volunitreply X" instead
