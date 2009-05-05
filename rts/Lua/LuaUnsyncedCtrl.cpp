@@ -200,6 +200,22 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 //  Access helpers
 //
 
+static inline void CheckNoArgs(lua_State* L, const char* funcName)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if (args != 0) {
+		luaL_error(L, "%s() takes no arguments", funcName);
+	}
+}
+
+
+static inline bool CheckModUICtrl()
+{
+	return CLuaHandle::GetModUICtrl() ||
+	       CLuaHandle::GetActiveHandle()->GetUserMode();
+}
+
+
 static inline bool FullCtrl()
 {
 	return CLuaHandle::GetActiveHandle()->GetFullCtrl();
@@ -807,8 +823,6 @@ int LuaUnsyncedCtrl::SelectUnitMap(lua_State* L)
 
 int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 {
-	// FIXME: doesn't work for 3DO team textures
-	//        doesn't play nicely with cached team color (in scripts, etc...)
 	const int teamID = luaL_checkint(L, 1);
 	if ((teamID < 0) || (teamID >= MAX_TEAMS)) {
 		return 0;
@@ -831,6 +845,10 @@ int LuaUnsyncedCtrl::SetTeamColor(lua_State* L)
 
 int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 {
+	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
 		luaL_error(L, "Incorrect arguments to AssignMouseCursor()");
@@ -856,12 +874,17 @@ int LuaUnsyncedCtrl::AssignMouseCursor(lua_State* L)
 	} else {
 		lua_pushboolean(L, false);
 	}
+
 	return 1;
 }
 
 
 int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 {
+	if (!CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return 0;
+	}
+
 	const int args = lua_gettop(L); // number of arguments
 	if ((args < 1) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
 		luaL_error(L, "Incorrect arguments to ReplaceMouseCursor()");
@@ -878,6 +901,7 @@ int LuaUnsyncedCtrl::ReplaceMouseCursor(lua_State* L)
 	}
 
 	lua_pushboolean(L, mouse->ReplaceMouseCursor(oldName, newName, hotSpot));
+
 	return 1;
 }
 
@@ -1178,6 +1202,10 @@ int LuaUnsyncedCtrl::FreeUnitIcon(lua_State* L)
 // TODO: move this to LuaVFS?
 int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 {
+	if (!CheckModUICtrl()) {
+		return 0;
+	}
+
 	const string path = luaL_checkstring(L, 1);
 
 	CFileHandler fh(path, SPRING_VFS_MOD);
@@ -1235,21 +1263,6 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 //
 /******************************************************************************/
 /******************************************************************************/
-
-static inline bool CheckModUICtrl()
-{
-	return CLuaHandle::GetModUICtrl() ||
-	       CLuaHandle::GetActiveHandle()->GetUserMode();
-}
-
-
-static inline void CheckNoArgs(lua_State* L, const char* funcName)
-{
-	const int args = lua_gettop(L); // number of arguments
-	if (args != 0) {
-		luaL_error(L, "%s() takes no arguments", funcName);
-	}
-}
 
 
 int LuaUnsyncedCtrl::SendCommands(lua_State* L)
