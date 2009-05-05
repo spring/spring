@@ -367,7 +367,7 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 				if (sqDist < realIconLength) {
 					S3DModel* model = unit->model;
 					if (unit->unitDef->decoyDef) {
-						model = LoadModel(unit->unitDef->decoyDef);
+						model = unit->unitDef->decoyDef->LoadModel();
 					}
 
 					if (model->type==MODELTYPE_S3O) {
