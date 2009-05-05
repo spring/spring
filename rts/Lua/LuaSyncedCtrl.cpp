@@ -1159,6 +1159,45 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 }
 
 
+static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
+{
+	const string key = lua_tostring(L, index);
+	const float value = lua_tofloat(L, index + 1);
+	// FIXME: KDR -- missing checks and updates?
+	if (key == "reloadState") {
+		weapon->reloadStatus = (int)value;
+	}
+	else if (key == "reloadTime") {
+		weapon->reloadTime = (int)(value * GAME_SPEED);
+	}
+	else if (key == "accuracy") {
+		weapon->accuracy = value;
+	}
+	else if (key == "sprayAngle") {
+		weapon->sprayAngle = value;
+	}
+	else if (key == "range") {
+		weapon->range = value;
+	}
+	else if (key == "projectileSpeed") {
+		weapon->projectileSpeed = value;
+	}
+	else if (key == "burst") {
+		weapon->salvoSize = (int)value;
+	}
+	else if (key == "burstRate") {
+		weapon->salvoDelay = (int)(value * GAME_SPEED);
+	}
+	else if (key == "projectiles") {
+		weapon->projectilesPerShot = (int)value;
+	}
+	else if (key == "aimReady") {
+		// HACK, this should be set to result of lua_toboolean
+		weapon->angleGood = (value != 0.0f);
+	}
+}
+
+
 int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1176,38 +1215,12 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 		const int table = 3;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-				const string key = lua_tostring(L, -2);
-				const float value = lua_tofloat(L, -1);
-				// FIXME: KDR -- missing checks and updates?
-				if (key == "reloadState") {
-					weapon->reloadStatus = (int)value;
-				}
-				else if (key == "reloadTime") {
-					weapon->reloadTime = (int)(value * GAME_SPEED);
-				}
-				else if (key == "accuracy") {
-					weapon->accuracy = value;
-				}
-				else if (key == "sprayAngle") {
-					weapon->sprayAngle = value;
-				}
-				else if (key == "range") {
-					weapon->range = value;
-				}
-				else if (key == "projectileSpeed") {
-					weapon->projectileSpeed = value;
-				}
-				else if (key == "burst") {
-					weapon->salvoSize = (int)value;
-				}
-				else if (key == "burstRate") {
-					weapon->salvoDelay = (int)(value * GAME_SPEED);
-				}
-				else if (key == "projectiles") {
-					weapon->projectilesPerShot = (int)value;
-				}
+				SetSingleUnitWeaponState(L, weapon, -2);
 			}
 		}
+	}
+	else if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
+		SetSingleUnitWeaponState(L, weapon, 3);
 	}
 
 	return 0;
