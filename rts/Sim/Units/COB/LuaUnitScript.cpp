@@ -24,6 +24,20 @@ some notes:
 - destination, speed, accel, decel for Move, Spin, StopSpin are in radians
 - GetUnitCOBValue(PLAY_SOUND, ...) does NOT work for Lua unit scripts,
   use Spring.PlaySound in combination with Spring.SendToUnsynced instead.
+- Because in current design CBCobThreadFinish can impossibly be called, certain
+  state changes which normally happen immediately when script returns should
+  be triggered through a call to a callOut when using Lua scripts.
+  This applies to:
+  * Spring.SetUnitShieldState(unitID, false|true) replaces return value 0|1 of
+    COB's AimWeaponX function for plasma repulsers.
+  * Spring.SetUnitWeaponState(unitID, weaponNum, "aimReady", 0|1) replaces
+    return value 0|1 of COB's AimWeaponX function for all other weapons.
+  * Spring.UnitScript.SetDeathScriptFinished(unitID, wreckLevel) replaces
+    return value of wreckLevel from Killed function.
+    This MUST be called, otherwise zombie units will eat your Spring!
+- HitByWeaponId should return a fraction, instead of a percentage.
+- FIXME: Lua unit scripts get their arguments in COB scales
+
 
 
 docs for callouts defined in this file:
