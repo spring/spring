@@ -31,6 +31,9 @@ public:
 	static bool PushEntries(lua_State* L);
 
 private:
+	static int CreateScript(lua_State* L);
+	static int UpdateCallIn(lua_State* L);
+
 	// Lua COB replacement support funcs (+SpawnCEG, PlaySoundFile, etc.)
 	static int GetUnitCOBValue(lua_State* L);
 	static int SetUnitCOBValue(lua_State* L);
