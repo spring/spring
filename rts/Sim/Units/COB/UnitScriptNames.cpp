@@ -2,6 +2,7 @@
 
 #include "UnitScriptNames.h"
 #include "CobFile.h" // COBFN_* constants
+#include "LogOutput.h"
 
 
 using std::map;
@@ -12,11 +13,13 @@ using std::vector;
 
 const vector<string>& CUnitScriptNames::GetScriptNames()
 {
-	static vector<string> scriptNames(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs));
+	static vector<string> scriptNames;
 
 	if (!scriptNames.empty()) {
 		return scriptNames;
 	}
+
+	scriptNames.resize(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs));
 
 	scriptNames[COBFN_Create]        = "Create";
 	scriptNames[COBFN_StartMoving]   = "StartMoving";
@@ -52,6 +55,10 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 		scriptNames[COBFN_TargetWeight   + i] = "TargetWeight" + weapnum;
 	}
 
+	//for (size_t i = 0; i < scriptNames.size(); ++i) {
+	//	logOutput.Print("COBFN: %3d %s", i, scriptNames[i].c_str());
+	//}
+
 	return scriptNames;
 }
 
@@ -81,6 +88,10 @@ const std::map<std::string, int>& CUnitScriptNames::GetScriptMap()
 	scriptMap.insert(pair<string, int>("FirePrimary",      COBFN_FirePrimary));
 	scriptMap.insert(pair<string, int>("FireSecondary",    COBFN_FirePrimary + 1));
 	scriptMap.insert(pair<string, int>("FireTertiary",     COBFN_FirePrimary + 2));
+
+	//for (std::map<string, int>::const_iterator it = scriptMap.begin(); it != scriptMap.end(); ++it) {
+	//	logOutput.Print("COBFN: %s -> %3d", it->first.c_str(), it->second);
+	//}
 
 	return scriptMap;
 }
