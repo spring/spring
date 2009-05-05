@@ -1940,13 +1940,8 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	}
 
 	if (unit->group) {
-		const float fontScale = 10.0f / font->GetHeight();
-		char buf[16];
-		sprintf(buf, "%i", unit->group->id);
-		const float width = fontScale  * font->CalcTextWidth(buf);
-
-		glColor3f(1.0f, 1.0f, 1.0f);
-		font->glPrintAt(-7.0f - width, 0.0f, fontScale, buf);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		font->glFormat(8.0f, 0.0f, 10.0f, FONT_BASELINE, "%i", unit->group->id);
 	}
 
 	glPopMatrix();

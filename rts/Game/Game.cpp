@@ -1645,8 +1645,15 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "font") {
 		CglFont *newFont = NULL, *newSmallFont = NULL;
 		try {
-			newFont = CglFont::TryConstructFont(action.extra, font->GetCharStart(), font->GetCharEnd(), 0.027f);
-			newSmallFont = CglFont::TryConstructFont(action.extra, smallFont->GetCharStart(), smallFont->GetCharEnd(), 0.016f);
+			const int fontSize = configHandler.Get("FontSize", 23);
+			const int smallFontSize = configHandler.Get("SmallFontSize", 14);
+			const int outlineWidth = configHandler.Get("FontOutlineWidth", 3);
+			const float outlineWeight = configHandler.Get("FontOutlineWeight", 25.0f);
+			const int smallOutlineWidth = configHandler.Get("SmallFontOutlineWidth", 2);
+			const float smallOutlineWeight = configHandler.Get("SmallFontOutlineWeight", 10.0f);
+
+			newFont = CglFont::LoadFont(action.extra, fontSize, outlineWidth, outlineWeight);
+			newSmallFont = CglFont::LoadFont(action.extra, smallFontSize, smallOutlineWidth, smallOutlineWeight);
 		} catch (std::exception e) {
 			if (newFont) delete newFont;
 			if (newSmallFont) delete newSmallFont;
@@ -1660,7 +1667,7 @@ bool CGame::ActionPressed(const Action& action,
 			smallFont = newSmallFont;
 			logOutput.Print("Loaded font: %s\n", action.extra.c_str());
 			configHandler.SetString("FontFile", action.extra);
-			LuaOpenGL::CalcFontHeight();
+			configHandler.SetString("SmallFontFile", action.extra);
 		}
 	}
 	else if (cmd == "aiselect") {
@@ -2849,13 +2856,13 @@ bool CGame::Draw() {
 	glEnable(GL_TEXTURE_2D);
 
 	if (gu->drawdebug) {
-		//skriv ut fps etc
+		//print some infos (fps,gameframe,particles)
 		glColor4f(1,1,0.5f,0.8f);
-		font->glFormatAt(0.03f, 0.02f, 1.0f, "FPS %d Frame %d Part %d(%d)",
+		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS %d Frame %d Part %d(%d)",
 		                 fps, gs->frameNum, ph->ps.size(), ph->currentParticles);
 
 		if (playing) {
-			font->glFormatAt(0.03f, 0.07f, 0.7f, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
+			font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
 			                 camera->pos.x, camera->pos.y, camera->pos.z, gs->speedFactor);
 		}
 	}
@@ -2866,90 +2873,79 @@ bool CGame::Draw() {
 
 	if (!hotBinding.empty()) {
 		glColor4f(1.0f, 0.3f, 0.3f, 1.0f);
-		font->glPrintCentered(0.5f, 0.6f, 3.0f, "Hit keyset for:");
+		font->glPrint(0.5f, 0.6f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "Hit keyset for:");
 		glColor4f(0.3f, 1.0f, 0.3f, 1.0f);
-		font->glPrintCentered(0.5f, 0.5f, 3.0f, "%s", hotBinding.c_str());
+		font->glFormat(0.5f, 0.5f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "%s", hotBinding.c_str());
 		glColor4f(0.3f, 0.3f, 1.0f, 1.0f);
-		font->glPrintCentered(0.5f, 0.4f, 3.0f, "(or Escape)");
+		font->glPrint(0.5f, 0.4f, 3.0f, FONT_SCALE | FONT_CENTER | FONT_NORM, "(or Escape)");
 	}
 
-	if (showClock && !hideInterface) {
-		char buf[32];
-		const int seconds = (gs->frameNum / 30);
-		if (seconds < 3600) {
-			SNPRINTF(buf, sizeof(buf), "%02i:%02i", seconds / 60, seconds % 60);
-		} else {
-			SNPRINTF(buf, sizeof(buf), "%02i:%02i:%02i", seconds / 3600,
-			                                 (seconds / 60) % 60, seconds % 60);
-		}
+	if (!hideInterface) {
+		smallFont->Begin();
 
-		const float fontScale = 1.0f;
+		int font_options = FONT_RIGHT | FONT_SCALE | FONT_NORM;
+		if (guihandler->GetOutlineFonts())
+			font_options |= FONT_OUTLINE;
 
-		glColor4f(1,1,1,1);
-		if (!guihandler->GetOutlineFonts()) {
-			smallFont->glPrintRight(0.99f, 0.94f, fontScale, buf);
-		} else {
-			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			smallFont->glPrintOutlinedRight(0.99f, 0.94f, fontScale, buf, white);
-		}
-	}
-
-	if (showFPS && !hideInterface) {
-		char buf[32];
-		SNPRINTF(buf, sizeof(buf), "%i", fps);
-
-		const float fontScale = 1.0f;
-
-		if (!guihandler->GetOutlineFonts()) {
-			glColor4f(1.0f, 1.0f, 0.25f, 1.0f);
-			smallFont->glPrintRight(0.99f, 0.92f, fontScale, buf);
-		} else {
-			const float yellow[4] = { 1.0f, 1.0f, 0.25f, 1.0f };
-			smallFont->glPrintOutlinedRight(0.99f, 0.92f, fontScale, buf, yellow);
-		}
-	}
-
-	if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
-		char buf[128];
-		const float fontScale = 1.0f;
-		int count;
-		const std::vector<int>& indices = playerRoster.GetIndices(&count);
-
-		for (int a = 0; a < count; ++a) {
-			const CPlayer* p = playerHandler->Player(indices[a]);
-			float color[4];
-			const char* prefix;
-			if (p->spectator) {
-				color[0] = 1.0f;
-				color[1] = 1.0f;
-				color[2] = 1.0f;
-				color[3] = 1.0f;
-				prefix = "S|";
+		if (showClock) {
+			char buf[32];
+			const int seconds = (gs->frameNum / 30);
+			if (seconds < 3600) {
+				SNPRINTF(buf, sizeof(buf), "%02i:%02i", seconds / 60, seconds % 60);
 			} else {
-				const unsigned char* bColor = teamHandler->Team(p->team)->color;
-				color[0] = (float)bColor[0] / 255.0f;
-				color[1] = (float)bColor[1] / 255.0f;
-				color[2] = (float)bColor[2] / 255.0f;
-				color[3] = (float)bColor[3] / 255.0f;
-				if (gu->myAllyTeam ==teamHandler->AllyTeam(p->team))
-					prefix = "A|";	// same AllyTeam
-				else if (teamHandler->AlliedTeams(gu->myTeam, p->team))
-					prefix = "E+|";	// different AllyTeams, but are allied
-				else
-					prefix = "E|";	//no alliance at all
+				SNPRINTF(buf, sizeof(buf), "%02i:%02i:%02i", seconds / 3600, (seconds / 60) % 60, seconds % 60);
 			}
-			SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
-						(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
-						p->team, prefix, p->name.c_str(), p->cpuUsage * 100.0f,
-						(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
 
-			if (!guihandler->GetOutlineFonts()) {
-				glColor4fv(color);
-				smallFont->glPrintAt(0.76f, 0.01f + (0.02f * (count - a - 1)), fontScale, buf);
-			} else {
-				smallFont->glPrintOutlinedAt(0.76f, 0.01f + (0.02f * (count - a - 1)), fontScale, buf, color);
+			smallFont->glPrint(0.99f, 0.94f, 1.0f, font_options, buf);
+		}
+
+
+		if (showFPS) {
+			char buf[32];
+			SNPRINTF(buf, sizeof(buf), "%i", fps);
+
+			const float4 yellow(1.0f, 1.0f, 0.25f, 1.0f);
+			smallFont->SetColors(&yellow,NULL);
+			smallFont->glPrint(0.99f, 0.92f, 1.0f, font_options, buf);
+		}
+
+
+		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
+			font_options ^= FONT_RIGHT;
+
+			char buf[128];
+			int count;
+			const std::vector<int>& indices = playerRoster.GetIndices(&count);
+
+			for (int a = 0; a < count; ++a) {
+				const CPlayer* p = playerHandler->Player(indices[a]);
+				float4 color(1.0f,1.0f,1.0f,1.0f);
+				std::string prefix = "S|";
+				if (!p->spectator) {
+					const unsigned char* bColor = teamHandler->Team(p->team)->color;
+					color[0] = (float)bColor[0] / 255.0f;
+					color[1] = (float)bColor[1] / 255.0f;
+					color[2] = (float)bColor[2] / 255.0f;
+					color[3] = (float)bColor[3] / 255.0f;
+					if (gu->myAllyTeam == teamHandler->AllyTeam(p->team))
+						prefix = "A|";	// same AllyTeam
+					else if (teamHandler->AlliedTeams(gu->myTeam, p->team))
+						prefix = "E+|";	// different AllyTeams, but are allied
+					else
+						prefix = "E|";	//no alliance at all
+				}
+				SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
+							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
+							p->team, prefix.c_str(), p->name.c_str(), p->cpuUsage * 100.0f,
+							(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
+
+				smallFont->SetColors(&color, NULL);
+				float x = 0.76f, y = 0.01f + (0.02f * (count - a - 1));
+				smallFont->glPrint(x, y, 1.0f, font_options, buf);
 			}
 		}
+
+		smallFont->End();
 	}
 
 	mouse->DrawCursor();
@@ -3002,49 +2998,50 @@ void CGame::ParseInputTextGeometry(const string& geo)
 
 void CGame::DrawInputText()
 {
+	const float fontSale = 1.0f;                       // TODO: make configurable again
+	const float fontSize = fontSale * font->GetSize();
+
 	const string tempstring = userPrompt + userInput;
 
 	// draw the caret
 	const int caretPos = userPrompt.length() + writingPos;
 	const string caretStr = tempstring.substr(0, caretPos);
-	const float caretWidth = font->CalcTextWidth(caretStr.c_str());
+	const float caretWidth = fontSize * font->GetTextWidth(caretStr) * gu->pixelX;
 
 	char c = userInput[writingPos];
 	if (c == 0) { c = ' '; }
 
-	const float fontScale = 1.0f;		// TODO: make configurable again
-
-	const float cw = fontScale * font->CalcCharWidth(c);
-	const float csx = inputTextPosX + (fontScale * caretWidth);
+	const float cw = fontSize * font->GetCharacterWidth(c) * gu->pixelX;
+	const float csx = inputTextPosX + caretWidth;
 	glDisable(GL_TEXTURE_2D);
 	const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
 	glColor4f(f, f, f, 0.75f);
-	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + font->GetHeight() * fontScale);
+	glRectf(csx, inputTextPosY, csx + cw, inputTextPosY + fontSize * font->GetLineHeight() * gu->pixelY);
 	glEnable(GL_TEXTURE_2D);
 
 	// setup the color
-	const float defColor[4]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-	const float allyColor[4] = { 0.5f, 1.0f, 0.5f, 1.0f };
-	const float specColor[4] = { 1.0f, 1.0f, 0.5f, 1.0f };
-	const float* textColor = defColor;
+	static float4 const defColor(1.0f, 1.0f, 1.0f, 1.0f);
+	static float4 const allyColor(0.5f, 1.0f, 0.5f, 1.0f);
+	static float4 const specColor(1.0f, 1.0f, 0.5f, 1.0f);
+	const float4* textColor = &defColor;
 	if (userInput.length() < 2) {
-		textColor = defColor;
+		textColor = &defColor;
 	} else if ((userInput.find_first_of("aA") == 0) && (userInput[1] == ':')) {
-		textColor = allyColor;
+		textColor = &allyColor;
 	} else if ((userInput.find_first_of("sS") == 0) && (userInput[1] == ':')) {
-		textColor = specColor;
+		textColor = &specColor;
 	} else {
-		textColor = defColor;
+		textColor = &defColor;
 	}
 
 	// draw the text
 	if (!guihandler->GetOutlineFonts()) {
-		glColor4fv(textColor);
-		font->glPrintAt(inputTextPosX, inputTextPosY, fontScale, tempstring.c_str());
+		glColor4fv(*textColor);
+		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_NORM, tempstring);
 	} else {
-		font->glPrintOutlinedAt(inputTextPosX, inputTextPosY, fontScale, tempstring.c_str(), textColor);
+		font->SetColors(textColor, NULL);
+		font->glPrint(inputTextPosX, inputTextPosY, fontSize, FONT_DESCENDER | FONT_OUTLINE | FONT_NORM, tempstring);
 	}
-	glLoadIdentity();
 }
 
 
@@ -4176,10 +4173,10 @@ void CGame::DrawDirectControlHud(void)
 		glEnable(GL_TEXTURE_2D);
 
 		glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-		font->glFormatAt(0.02f, 0.65f, 1.0f, "Health %.0f / %.0f", (float)unit->health, (float)unit->maxHealth);
+		font->glFormat(0.02f, 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "Health %.0f / %.0f", (float)unit->health, (float)unit->maxHealth);
 
 		if(playerHandler->Player(gu->myPlayerNum)->myControl.mouse2){
-			font->glPrintAt(0.02f, 0.7f, 1.0f, "Free fire mode");
+			font->glPrint(0.02f, 0.7f, 1.0f, FONT_SCALE | FONT_NORM, "Free fire mode");
 		}
 
 		int numWeaponsToPrint = 0;
@@ -4207,24 +4204,24 @@ void CGame::DrawDirectControlHud(void)
 					if (wd->stockpile && !w->numStockpiled) {
 						if (w->numStockpileQued) {
 							glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-							font->glFormatAt(0.02f, yPos, fontSize, "%s:  Stockpiling %i%%", wd->description.c_str(), int(100.0f * w->buildPercent + 0.5f));
+							font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  Stockpiling %i%%", wd->description.c_str(), int(100.0f * w->buildPercent + 0.5f));
 						}
 						else {
 							glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-							font->glFormatAt(0.02f, yPos, fontSize, "%s:  No ammo", wd->description.c_str());
+							font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  No ammo", wd->description.c_str());
 						}
 					}
 					else if (w->reloadStatus > gs->frameNum) {
 						glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-						font->glFormatAt(0.02f, yPos, fontSize, "%s:  Reloading %i%%", wd->description.c_str(), 100 - int(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed) + 0.5f));
+						font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  Reloading %i%%", wd->description.c_str(), 100 - int(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed) + 0.5f));
 					}
 					else if (!w->angleGood) {
 						glColor4f(0.6f, 0.6f, 0.2f, 0.8f);
-						font->glFormatAt(0.02f, yPos, fontSize, "%s:  Aiming", wd->description.c_str());
+						font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  Aiming", wd->description.c_str());
 					}
 					else {
 						glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-						font->glFormatAt(0.02f, yPos, fontSize, "%s:  Ready", wd->description.c_str());
+						font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  Ready", wd->description.c_str());
 					}
 				}
 			}
@@ -4494,11 +4491,9 @@ void CGame::Skip(int toFrame)
 				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 				glClear(GL_COLOR_BUFFER_BIT);
 				glColor3f(0.5f, 1.0f, 0.5f);
-				font->glPrintCentered(0.5f, 0.55f, 2.5f,
-					"Skipping %.1f game seconds", seconds);
+				font->glFormat(0.5f, 0.55f, 2.5f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Skipping %.1f game seconds", seconds);
 				glColor3f(1.0f, 1.0f, 1.0f);
-				font->glPrintCentered(0.5f, 0.45f, 2.0f,
-					"(%i frames left)", framesLeft);
+				font->glFormat(0.5f, 0.45f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "(%i frames left)", framesLeft);
 
 				const float ff = (float)framesLeft / (float)totalFrames;
 				glDisable(GL_TEXTURE_2D);
