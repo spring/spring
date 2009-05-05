@@ -2,9 +2,9 @@
 
 #include "LuaUnitScript.h"
 
-#include "CobFile.h"
 #include "LogOutput.h"
 #include "LuaInclude.h"
+#include "UnitScriptNames.h"
 #include "Lua/LuaHandleSynced.h"
 #include "Sim/Units/UnitHandler.h"
 
@@ -137,10 +137,12 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
-		scriptNames.insert(pair<string, int>(lua_tostring(L, -2), luaL_ref(L, LUA_REGISTRYINDEX)));
-	}
+		const string fname = lua_tostring(L, -2);
+		const int r = luaL_ref(L, LUA_REGISTRYINDEX);
 
-	// TODO: Map common function names to indices
+		scriptNames.insert(pair<string, int>(fname, r));
+		UpdateCallIn(fname, r);
+	}
 }
 
 
@@ -154,10 +156,10 @@ CLuaUnitScript::~CLuaUnitScript()
 
 int CLuaUnitScript::UpdateCallIn()
 {
-	const char* fname = lua_tostring(L, 2);
+	const string fname = lua_tostring(L, 2);
 	const bool remove = lua_isnil(L, 3);
 	map<string, int>::iterator it = scriptNames.find(fname);
-	int r;
+	int r = -1;
 
 	if (it != scriptNames.end()) {
 		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
@@ -165,7 +167,6 @@ int CLuaUnitScript::UpdateCallIn()
 			// removing existing callIn
 			scriptNames.erase(it);
 			lua_pushboolean(L, 1);
-			return 1;
 		}
 		else {
 			// replacing existing callIn
@@ -176,7 +177,6 @@ int CLuaUnitScript::UpdateCallIn()
 	else if (remove) {
 		// removing nonexisting callIn (== no-op)
 		lua_pushboolean(L, 0);
-		return 1;
 	}
 	else {
 		// adding new callIn
@@ -184,12 +184,25 @@ int CLuaUnitScript::UpdateCallIn()
 		scriptNames.insert(pair<string, int>(fname, r));
 	}
 
-	// TODO: update scriptIndex
+	UpdateCallIn(fname, r);
 
-	// the reference doubles as the functionId, as expected by RealCall
-	// from Lua this can be used with e.g. Spring.CallCOBScript
-	lua_pushnumber(L, r);
+	if (!remove) {
+		// the reference doubles as the functionId, as expected by RealCall
+		// from Lua this can be used with e.g. Spring.CallCOBScript
+		lua_pushnumber(L, r);
+	}
 	return 1;
+}
+
+
+void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
+{
+	// Map common function names to indices
+	int num = CUnitScriptNames::GetScriptNumber(fname);
+
+	if (num >= 0) {
+		scriptIndex[num] = ref;
+	}
 }
 
 

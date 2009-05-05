@@ -30,6 +30,7 @@ protected:
 	~CLuaUnitScript();
 
 	int UpdateCallIn();
+	void UpdateCallIn(const std::string& fname, int ref);
 
 public:
 	virtual int GetFunctionId(const std::string& fname) const;
