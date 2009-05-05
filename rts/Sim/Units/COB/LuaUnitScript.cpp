@@ -2,6 +2,7 @@
 
 #include "LuaUnitScript.h"
 
+#include "LogOutput.h"
 #include "LuaInclude.h"
 #include "Lua/LuaHandleSynced.h"
 #include "Sim/Units/UnitHandler.h"
@@ -163,16 +164,49 @@ void CLuaUnitScript::ShowScriptWarning(const std::string& msg)
 /******************************************************************************/
 /******************************************************************************/
 
+// TODO: move this (LuaUtils?)
+// debugging, pretty much copied from Lua book
+static void StackDump(lua_State* L)
+{
+	int top = lua_gettop(L);
+	for (int i = 1; i <= top; ++i) {
+		int t = lua_type(L, i);
+		switch (t) {
+			case LUA_TSTRING:
+				logOutput.Print("%2d/%3d: '%s'", i, i - top - 1, lua_tostring(L, i));
+				break;
+			case LUA_TBOOLEAN:
+				logOutput.Print("%2d/%3d: %s", i, i - top - 1, lua_toboolean(L, i) ? "true" : "false");
+				break;
+			case LUA_TNUMBER:
+				logOutput.Print("%2d/%3d: %g", i, i - top - 1, lua_tonumber(L, i));
+				break;
+			default:
+				logOutput.Print("%2d/%3d: %s", i, i - top - 1, lua_typename(L, t));
+				break;
+		}
+	}
+}
+
+
+static void PushEntry(lua_State* L, const char* name, lua_CFunction fun)
+{
+	lua_pushstring(L, name);
+	lua_pushcfunction(L, fun);
+	lua_pushvalue(L, -5);      // push the environment table
+	if (lua_setfenv(L, -2) != 1) { assert(false); }
+	lua_rawset(L, -3);
+}
+
 
 bool CLuaUnitScript::PushEntries(lua_State* L)
 {
+	lua_newtable(L);   // environment table for all C functions in this file
 	lua_pushstring(L, "UnitScript");
 	lua_newtable(L);
 
 #define REGISTER_LUA_CFUNC(x) \
-	lua_pushstring(L, #x);      \
-	lua_pushcfunction(L, x);    \
-	lua_rawset(L, -3)
+	PushEntry(L, #x, x)
 
 	REGISTER_LUA_CFUNC(GetUnitCOBValue);
 	REGISTER_LUA_CFUNC(SetUnitCOBValue);
@@ -192,6 +226,7 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsInSpin);
 
 	lua_rawset(L, -3);
+	lua_pop(L, 1);     // pop the environment table
 	return true;
 }
 
