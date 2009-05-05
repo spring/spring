@@ -20,7 +20,6 @@ public:
 	CTransportCAI();
 	~CTransportCAI(void);
 	void SlowUpdate(void);
-	void ScriptReady(void);
 
 	int unloadType;
 	bool CanTransport(CUnit* unit);
@@ -38,7 +37,6 @@ public:
 	virtual void ExecuteLoadUnits(Command &c);
 
 	int toBeTransportedUnitId;
-	bool scriptReady;
 	int lastCall;
 
 private:
