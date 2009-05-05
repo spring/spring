@@ -392,10 +392,10 @@ int CLuaUnitScript::SetPieceVisibility(lua_State* L)
 	// unit->script->pieces differs from the unit->localmodel->pieces.
 
 	const int piece = luaL_checkint(L, 2) - 1;
-	const bool visible = lua_toboolean(L, 3);
 	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
 		return 0;
 	}
+	const bool visible = lua_toboolean(L, 3);
 	unit->script->SetVisibility(piece, visible);
 	return 0;
 }
@@ -412,10 +412,10 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 	// note: the arguments are reversed compared to the C++ (and COB?) function
 
 	const int piece = luaL_checkint(L, 2) - 1;
-	const int type = luaL_checkint(L, 3);
 	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
 		return 0;
 	}
+	const int type = luaL_checkint(L, 3);
 	unit->script->EmitSfx(type, piece);
 	return 0;
 }
@@ -429,8 +429,11 @@ int CLuaUnitScript::AttachUnit(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
+	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
+		return 0;
+	}
 	const CUnit* transportee = ParseUnit(L, __FUNCTION__, 3);
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size()) || (transportee == NULL)) {
+	if (transportee == NULL) {
 		return 0;
 	}
 	unit->script->AttachUnit(piece, transportee->id);
@@ -462,10 +465,10 @@ int CLuaUnitScript::Explode(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	const int flags = luaL_checkint(L, 3);
 	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
 		return 0;
 	}
+	const int flags = luaL_checkint(L, 3);
 	unit->script->Explode(piece, flags);
 	return 0;
 }
