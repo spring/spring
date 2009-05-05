@@ -2894,7 +2894,7 @@ bool CGame::Draw() {
 	if (gu->drawdebug) {
 		//print some infos (fps,gameframe,particles)
 		glColor4f(1,1,0.5f,0.8f);
-		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS %d Frame %d Part %d(%d)",
+		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %d Frame: %d Particles: %d (%d)",
 		                 fps, gs->frameNum, ph->ps.size(), ph->currentParticles);
 
 		if (playing) {

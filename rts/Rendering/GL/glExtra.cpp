@@ -167,9 +167,8 @@ void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 
 // not really the best place to put this
 void gluMyCube(float size) {
-	float mid = size * 0.5f;
+	const float mid = size * 0.5f;
 
-	glColor3f(0.0f, 0.0f, 0.0f);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glBegin(GL_QUADS);

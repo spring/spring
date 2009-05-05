@@ -3182,8 +3182,8 @@ void CGuiHandler::DrawSelectionInfo()
 
 		if (!outlineFonts) {
 			float descender;
-			const float textWidth  = fontSize * smallFont->GetTextWidth(buf) * gu->pixelX;
-			float textHeight = fontSize * smallFont->GetTextHeight(buf,&descender) * gu->pixelY;
+			const float textWidth  = fontSize * smallFont->GetTextWidth(buf.str()) * gu->pixelX;
+			float textHeight = fontSize * smallFont->GetTextHeight(buf.str(), &descender) * gu->pixelY;
 			const float textDescender = fontSize * descender * gu->pixelY; //! descender is always negative
 			textHeight -= textDescender;
 
@@ -3194,10 +3194,10 @@ void CGuiHandler::DrawSelectionInfo()
 			        xSelectionPos + frameBorder + textWidth,
 			        ySelectionPos + frameBorder + textHeight);
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-			smallFont->glPrint(xSelectionPos, ySelectionPos - textDescender, fontSize, FONT_BASELINE | FONT_NORM, buf);
+			smallFont->glPrint(xSelectionPos, ySelectionPos - textDescender, fontSize, FONT_BASELINE | FONT_NORM, buf.str());
 		} else {
 			smallFont->SetColors(); // default
-			smallFont->glPrint(xSelectionPos, ySelectionPos, fontSize, FONT_OUTLINE | FONT_NORM, buf);
+			smallFont->glPrint(xSelectionPos, ySelectionPos, fontSize, FONT_OUTLINE | FONT_NORM, buf.str());
 		}
 	}
 }
