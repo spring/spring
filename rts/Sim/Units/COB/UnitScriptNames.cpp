@@ -56,30 +56,39 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 }
 
 
-int CUnitScriptNames::GetScriptNumber(const std::string& fname)
+const std::map<std::string, int>& CUnitScriptNames::GetScriptMap()
 {
 	static map<string, int> scriptMap;
 
-	if (scriptMap.empty()) {
-		const vector<string>& n = GetScriptNames();
-		for (size_t i = 0; i < n.size(); ++i) {
-			scriptMap.insert(pair<string, int>(n[i], i));
-		}
-		// support the old naming scheme
-		scriptMap.insert(pair<string, int>("QueryPrimary",     COBFN_QueryPrimary));
-		scriptMap.insert(pair<string, int>("QuerySecondary",   COBFN_QueryPrimary + 1));
-		scriptMap.insert(pair<string, int>("QueryTertiary",    COBFN_QueryPrimary + 2));
-		scriptMap.insert(pair<string, int>("AimPrimary",       COBFN_AimPrimary));
-		scriptMap.insert(pair<string, int>("AimSecondary",     COBFN_AimPrimary + 1));
-		scriptMap.insert(pair<string, int>("AimTertiary",      COBFN_AimPrimary + 2));
-		scriptMap.insert(pair<string, int>("AimFromPrimary",   COBFN_AimFromPrimary));
-		scriptMap.insert(pair<string, int>("AimFromSecondary", COBFN_AimFromPrimary + 1));
-		scriptMap.insert(pair<string, int>("AimFromTertiary",  COBFN_AimFromPrimary + 2));
-		scriptMap.insert(pair<string, int>("FirePrimary",      COBFN_FirePrimary));
-		scriptMap.insert(pair<string, int>("FireSecondary",    COBFN_FirePrimary + 1));
-		scriptMap.insert(pair<string, int>("FireTertiary",     COBFN_FirePrimary + 2));
+	if (!scriptMap.empty()) {
+		return scriptMap;
 	}
 
+	const vector<string>& n = GetScriptNames();
+	for (size_t i = 0; i < n.size(); ++i) {
+		scriptMap.insert(pair<string, int>(n[i], i));
+	}
+	// support the old naming scheme
+	scriptMap.insert(pair<string, int>("QueryPrimary",     COBFN_QueryPrimary));
+	scriptMap.insert(pair<string, int>("QuerySecondary",   COBFN_QueryPrimary + 1));
+	scriptMap.insert(pair<string, int>("QueryTertiary",    COBFN_QueryPrimary + 2));
+	scriptMap.insert(pair<string, int>("AimPrimary",       COBFN_AimPrimary));
+	scriptMap.insert(pair<string, int>("AimSecondary",     COBFN_AimPrimary + 1));
+	scriptMap.insert(pair<string, int>("AimTertiary",      COBFN_AimPrimary + 2));
+	scriptMap.insert(pair<string, int>("AimFromPrimary",   COBFN_AimFromPrimary));
+	scriptMap.insert(pair<string, int>("AimFromSecondary", COBFN_AimFromPrimary + 1));
+	scriptMap.insert(pair<string, int>("AimFromTertiary",  COBFN_AimFromPrimary + 2));
+	scriptMap.insert(pair<string, int>("FirePrimary",      COBFN_FirePrimary));
+	scriptMap.insert(pair<string, int>("FireSecondary",    COBFN_FirePrimary + 1));
+	scriptMap.insert(pair<string, int>("FireTertiary",     COBFN_FirePrimary + 2));
+
+	return scriptMap;
+}
+
+
+int CUnitScriptNames::GetScriptNumber(const std::string& fname)
+{
+	const map<string, int>& scriptMap = GetScriptMap();
 	map<string, int>::const_iterator it = scriptMap.find(fname);
 
 	if (it != scriptMap.end()) {
