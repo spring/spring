@@ -114,7 +114,7 @@ private:
 		unsigned int pos;
 	};
 	struct word {
-		word() : isSpace(false), isLineBreak(false), pos(0), numSpaces(0), width(0.0f), text("") {};
+		word() : width(0.0f), text(""), isSpace(false), isLineBreak(false), numSpaces(0), pos(0) {};
 
 		float width;
 		std::string text;
@@ -124,12 +124,12 @@ private:
 		unsigned int pos; //! position in the original text (needed for remerging colorcodes after wrapping; in printable chars (linebreaks and space don't count))
 	};
 	struct line {
-		line() : cost(0.0f), width(0.0f), forceLineBreak(false) {};
+		line() : width(0.0f), cost(0.0f), forceLineBreak(false) {};
 
 		std::list<word>::iterator start, end;
-		bool forceLineBreak;
 		float width;
 		float cost;
+		bool forceLineBreak;
 	};
 
 	word SplitWord(word& w, float wantedWidth, bool smart = true) const;
