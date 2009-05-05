@@ -79,7 +79,8 @@ CGuiHandler::CGuiHandler()
 	defaultCmdMemory(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
-	gatherMode(false)
+	gatherMode(false),
+	explicitCommand(-1)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;
@@ -1078,7 +1079,7 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 {
 	int iconCmd = -1;
 
-	if (button == SDL_BUTTON_RIGHT) {
+	if (button != SDL_BUTTON_MIDDLE) {
 		explicitCommand = inCommand;
 	}
 
