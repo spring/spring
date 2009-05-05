@@ -31,6 +31,7 @@
 //FIXME#include "LuaVBOs.h"
 #include "LuaFBOs.h"
 #include "LuaRBOs.h"
+#include "LuaFonts.h"
 #include "LuaDisplayLists.h"
 #include "Game/Camera.h"
 #include "Game/UI/CommandColors.h"
@@ -321,6 +322,8 @@ bool LuaOpenGL::PushEntries(lua_State* L)
 	 	LuaFBOs::PushEntries(L);
 	 	LuaRBOs::PushEntries(L);
 	}
+
+	LuaFonts::PushEntries(L);
 
 //FIXME		LuaVBOs::PushEntries(L);
 
