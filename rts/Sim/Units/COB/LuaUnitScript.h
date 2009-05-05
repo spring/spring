@@ -12,19 +12,26 @@ struct lua_State;
 class CLuaUnitScript : public CUnitScript
 {
 private:
+	// needed to luaL_unref our refs in ~CLuaUnitScript
+	lua_State* L;
+
 	// contrary to COB the list of functions may differ per unit,
 	// so the COBFN_* -> function mapping can differ per unit too.
 	std::vector<int> scriptIndex;
+	std::map<std::string, int> scriptNames;
 
 protected:
 	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	virtual void ShowScriptError(const std::string& msg);
 	virtual void ShowScriptWarning(const std::string& msg);
 
-public:
-	CLuaUnitScript(CUnit* _unit);
+	// only called from CreateScript, instance can not be created from C++
+	CLuaUnitScript(lua_State* L, CUnit* unit);
 	~CLuaUnitScript();
 
+	int UpdateCallIn();
+
+public:
 	virtual int GetFunctionId(const std::string& fname) const;
 
 public:

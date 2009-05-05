@@ -2,10 +2,17 @@
 
 #include "LuaUnitScript.h"
 
+#include "CobFile.h"
 #include "LogOutput.h"
 #include "LuaInclude.h"
 #include "Lua/LuaHandleSynced.h"
 #include "Sim/Units/UnitHandler.h"
+
+
+using std::map;
+using std::pair;
+using std::string;
+using std::vector;
 
 
 /*
@@ -62,10 +69,6 @@ Spring.UnitScript.IsInMove(number unitID, number piece, number axis) -> boolean
 Spring.UnitScript.IsInSpin(number unitID, number piece, number axis) -> boolean
 	Returns true iff such an animation exists, false otherwise.
 
-
-
-docs for callouts still to be made (prone to change):
-
 Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
 	Replaces the current unit script (independent of type, also replaces COB)
 	with the unit script given by a table of callins for the unit.
@@ -74,7 +77,7 @@ Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
 	Callins do NOT take a unitID as argument, the unitID (and all script state
 	should be stored in a closure.)
 
-Spring.UnitScript.UpdateCallIn(number unitID, string fname, function callin) -> nil
+Spring.UnitScript.UpdateCallIn(number unitID, string fname, function callin) -> functionID
 	Replaces or adds a single callin.  See also Spring.UnitScript.CreateScript.
 
 
@@ -124,40 +127,79 @@ end
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaUnitScript::CLuaUnitScript(CUnit* unit)
-	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces)
+CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
+	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces), L(L)
+	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1)
 {
+	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
+		scriptNames.insert(pair<string, int>(lua_tostring(L, -2), luaL_ref(L, LUA_REGISTRYINDEX)));
+	}
+
+	// TODO: Map common function names to indices
 }
 
 
 CLuaUnitScript::~CLuaUnitScript()
 {
+	for (map<string, int>::iterator it = scriptNames.begin(); it != scriptNames.end(); ++it) {
+		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
+	}
 }
 
 
-int CLuaUnitScript::GetFunctionId(const std::string& fname) const
+int CLuaUnitScript::UpdateCallIn()
 {
-	// TODO: implement, should probably return ref (from Lua reference system)
-	return 0;
+	const char* fname = lua_tostring(L, 2);
+	map<string, int>::iterator it = scriptNames.find(fname);
+	int r;
+
+	if (it != scriptNames.end()) {
+		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
+		r = luaL_ref(L, LUA_REGISTRYINDEX);
+		it->second = r;
+	} else {
+		r = luaL_ref(L, LUA_REGISTRYINDEX);
+		scriptNames.insert(pair<string, int>(fname, r));
+	}
+
+	// TODO: update scriptIndex
+
+	// the reference doubles as the functionId, as expected by RealCall
+	// from Lua this can be used with e.g. Spring.CallCOBScript
+	lua_pushnumber(L, r);
+	return 1;
 }
 
 
-int CLuaUnitScript::RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+int CLuaUnitScript::GetFunctionId(const string& fname) const
+{
+	map<string, int>::const_iterator it = scriptNames.find(fname);
+
+	if (it != scriptNames.end()) {
+		return it->second;
+	}
+	return -1;
+}
+
+
+int CLuaUnitScript::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
 	// TODO: call into Lua function stored in environ/registry?
 	return 0;
 }
 
 
-void CLuaUnitScript::ShowScriptError(const std::string& msg)
+void CLuaUnitScript::ShowScriptError(const string& msg)
 {
-	// TODO: Raise Lua error (where to get lua_State?)
+	// TODO: add Lua traceback?
+	logOutput.Print("Lua UnitScript error: %s", msg.c_str());
 }
 
 
-void CLuaUnitScript::ShowScriptWarning(const std::string& msg)
+void CLuaUnitScript::ShowScriptWarning(const string& msg)
 {
-	// TODO: Raise Lua error (where to get lua_State?)
+	// TODO: add Lua traceback?
+	logOutput.Print("Lua UnitScript warning: %s", msg.c_str());
 }
 
 
@@ -193,15 +235,15 @@ static void PushEntry(lua_State* L, const char* name, lua_CFunction fun)
 {
 	lua_pushstring(L, name);
 	lua_pushcfunction(L, fun);
-	lua_pushvalue(L, -5);      // push the environment table
-	if (lua_setfenv(L, -2) != 1) { assert(false); }
+	//lua_pushvalue(L, -5);      // push the environment table
+	//if (lua_setfenv(L, -2) != 1) { assert(false); }
 	lua_rawset(L, -3);
 }
 
 
 bool CLuaUnitScript::PushEntries(lua_State* L)
 {
-	lua_newtable(L);   // environment table for all C functions in this file
+	//lua_newtable(L);   // environment table for all C functions in this file
 	lua_pushstring(L, "UnitScript");
 	lua_newtable(L);
 
@@ -229,7 +271,7 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsInSpin);
 
 	lua_rawset(L, -3);
-	lua_pop(L, 1);     // pop the environment table
+	//lua_pop(L, 1);     // pop the environment table
 	return true;
 }
 
@@ -302,15 +344,49 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 
 int CLuaUnitScript::CreateScript(lua_State* L)
 {
-	// TODO: implement
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+
+	// check table of callIns
+	// (we might not get a chance to clean up later on, if something is wrong)
+	if (!lua_istable(L, 2)) {
+		luaL_error(L, "CreateScript(): error parsing callIn table");
+	}
+	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
+		if (!lua_israwstring(L, -2) || !lua_isfunction(L, -1)) {
+			luaL_error(L, "CreateScript(): error parsing callIn table");
+		}
+	}
+
+	// replace the unit's script (ctor parses callIn table)
+	delete unit->script;
+	unit->script = new CLuaUnitScript(L, unit);
+
 	return 0;
 }
 
 
 int CLuaUnitScript::UpdateCallIn(lua_State* L)
 {
-	// TODO: implement
-	return 0;
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(unit->script);
+	if (script == NULL) {
+		luaL_error(L, "UpdateCallIn(): not a Lua unit script");
+	}
+	// we would get confused if our refs aren't together in a single state
+	if (L != script->L) {
+		luaL_error(L, "UpdateCallIn(): incorrect lua_State");
+	}
+	if (!lua_israwstring(L, 2) || !lua_isfunction(L, 3)) {
+		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
+	}
+
+	return script->UpdateCallIn();
 }
 
 
