@@ -3479,6 +3479,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\TeamBase.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\TeamBase.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\TeamHandler.cpp"
 					>
 				</File>
