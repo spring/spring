@@ -428,8 +428,9 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	#endif
 		gmlProcessor->Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->renderUnits,uh->renderUnits.size(),50,100,TRUE);
 	}
-	else {
+	else
 #endif
+	{
 		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			DoDrawUnit(unit,drawReflection,drawRefraction,
@@ -440,9 +441,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		#endif
 								);
 		}
-#ifdef USE_GML
 	}
-#endif
 
 	{
 		//FIXME: s3o's + teamcolor
