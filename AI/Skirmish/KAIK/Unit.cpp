@@ -57,7 +57,7 @@ float3 CUNIT::pos() const {
 
 // 0: mine, 1: allied, 2: enemy -1: non-existant
 int CUNIT::owner() const {
-	if (ai->cheat->GetUnitDef(myid)) {
+	if (ai->ccb->GetUnitDef(myid)) {
 		if (def()) {
 			if (ai->cb->GetUnitTeam(myid) == ai->cb->GetMyTeam()) {
 				return 0;
@@ -81,7 +81,7 @@ bool CUNIT::CanAttack(int otherUnit) const {
 	// currently doesn't see if sending me vs. other
 	// is a good idea or not, like peewee vs bomber
 	const UnitDef* ud_mine = ai->cb->GetUnitDef(this->myid);
-	const UnitDef* ud_other = ai->cheat->GetUnitDef(otherUnit);
+	const UnitDef* ud_other = ai->ccb->GetUnitDef(otherUnit);
 
 	if (ud_mine != NULL && ud_other != NULL) {
 		assert(otherUnit != 0);

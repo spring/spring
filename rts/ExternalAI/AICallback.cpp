@@ -656,8 +656,31 @@ void CAICallback::FreePath(int pathId)
 
 float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
 {
-	const int pathID     = InitPath(start, end, pathType);
-	float     pathLen    = 0.0f;
+	const int pathID  = InitPath(start, end, pathType);
+	float     pathLen = -1.0f;
+
+	if (pathID == 0) {
+		return pathLen;
+	}
+
+	std::vector<float3> points;
+	std::vector<int>    lengths;
+
+	pathManager->GetEstimatedPath(pathID, points, lengths);
+
+	// distance to first intermediate node
+	pathLen = (points[0] - start).Length();
+
+	// we don't care which path segment has
+	// what resolution, just lump all points
+	// together
+	for (int i = 1; i < points.size(); i++) {
+		pathLen += (points[i] - points[i - 1]).Length();
+	}
+
+	/*
+	// this method does not work without a path-owner
+	// todo: add an alternate GPL() callback for this?
 	bool      haveNextWP = true;
 	float3    currWP     = start;
 	float3    nextWP     = start;
@@ -685,6 +708,7 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
 			currWP   = nextWP;
 		}
 	}
+	*/
 
 	FreePath(pathID);
 	return pathLen;

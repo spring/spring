@@ -185,8 +185,8 @@ void CStartPosSelecter::Draw()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	// fit text into box
-	const float unitWidth = font->CalcTextWidth("Ready");
-	const float unitHeight = font->GetHeight();
+	const float unitWidth  = font->GetSize() * font->GetTextWidth("Ready") * gu->pixelX;
+	const float unitHeight = font->GetSize() * font->GetLineHeight() * gu->pixelY;
 
 	const float ySize = (readyBox.y2 - readyBox.y1);
 	const float xSize = (readyBox.x2 - readyBox.x1);
@@ -195,6 +195,6 @@ void CStartPosSelecter::Draw()
 	const float yPos = readyBox.y1 + (0.1f * ySize);
 	const float xPos = 0.5f * (readyBox.x1 + readyBox.x2);
 
-	const float white[4]  = { 1.0f, 1.0f, 1.0f, 1.0f };
-	font->glPrintOutlinedCentered(xPos, yPos, fontScale, "Ready", white);
+	font->SetColors(); // default
+	font->glPrint(xPos, yPos, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_SCALE | FONT_NORM, "Ready");
 }

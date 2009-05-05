@@ -220,7 +220,7 @@ int CAttackGroup::PopStuckUnit() {
 
 
 bool CAttackGroup::CloakedFix(int enemy) {
-	const UnitDef* ud = ai->cheat->GetUnitDef(enemy);
+	const UnitDef* ud = ai->ccb->GetUnitDef(enemy);
 
 	return ((ud != NULL) && !(ud->canCloak && ud->startCloaked && (ai->cb->GetUnitPos(enemy) == ZEROVECTOR)));
 }
@@ -277,7 +277,7 @@ std::list<int> CAttackGroup::GetAssignedEnemies() {
 	std::list<int> takenEnemies;
 
 	if (!defending) {
-		int numTaken = ai->cheat->GetEnemyUnits(&ai->unitIDs[0], attackPosition, attackRadius);
+		int numTaken = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], attackPosition, attackRadius);
 	
 		for (int i = 0; i < numTaken; i++) {
 			takenEnemies.push_back(ai->unitIDs[i]);
@@ -312,9 +312,9 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 	*/
 
 	// KLOOTNOTE: numEnemies will be zero if no enemies in LOS or radar when
-	// non-cheat callback used, rely on AttackHandler to pick "global" targets
+	// non-ccb callback used, rely on AttackHandler to pick "global" targets
 	// and on this function for "local" ones
-	// int numEnemies = ai->cheat->GetEnemyUnits(unitArray);
+	// int numEnemies = ai->ccb->GetEnemyUnits(unitArray);
 	int numEnemies = ai->cb->GetEnemyUnitsInRadarAndLos(&ai->unitIDs[0]);
 
 	if (numEnemies > 0) {
@@ -324,11 +324,11 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 		// make a vector with the positions of all enemies
 		for (int i = 0; i < numEnemies; i++) {
 			if (ai->unitIDs[i] != -1) {
-				const UnitDef* enemy_ud = ai->cheat->GetUnitDef(ai->unitIDs[i]);
-				float3 enemyPos = ai->cheat->GetUnitPos(ai->unitIDs[i]);
+				const UnitDef* enemy_ud = ai->ccb->GetUnitDef(ai->unitIDs[i]);
+				float3 enemyPos = ai->ccb->GetUnitPos(ai->unitIDs[i]);
 
 				// store enemy position if unit not cloaked and not an aircraft
-				if (ai->cb->GetUnitDef(ai->unitIDs[i]) != NULL && this->CloakedFix(ai->unitIDs[i]) && !enemy_ud->canfly) {
+				if (ai->cb->GetUnitDef(ai->unitIDs[i]) != NULL && CloakedFix(ai->unitIDs[i]) && !enemy_ud->canfly) {
 					// TODO: remove currently cloaked units
 					// TODO: remove units not reachable by my unit type and position
 					enemyPositions.push_back(enemyPos);
@@ -340,7 +340,7 @@ void CAttackGroup::FindDefenseTarget(float3 groupPosition, int frameNr) {
 		if (enemyPositions.size() == 0) {
 			for (int i = 0; i < numEnemies; i++) {
 				if (ai->unitIDs[i] != -1) {
-					float3 enemyPos = ai->cheat->GetUnitPos(ai->unitIDs[i]);
+					float3 enemyPos = ai->ccb->GetUnitPos(ai->unitIDs[i]);
 					enemyPositions.push_back(enemyPos);
 				}
 			}
@@ -430,7 +430,7 @@ void CAttackGroup::Update(int frameNr) {
 
 		// get all enemies within attack range
 		float range = highestAttackRange + 100.0f;
-		int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0], groupPosition, range);
+		int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0], groupPosition, range);
 
 		if (numEnemies > 0) {
 			// select one of the enemies
@@ -472,10 +472,10 @@ int CAttackGroup::SelectEnemy(int numEnemies, const float3& groupPos) {
 	for (int i = 0; i < numEnemies; i++) {
 		// my range not considered in picking the closest one
 		// TODO: is it air? is it cloaked?
-		bool b1 = ((temp = groupPos.distance2D(ai->cheat->GetUnitPos(ai->unitIDs[i]))) < shortestDistanceFound);
-		bool b2 = (ai->cheat->GetUnitDef(ai->unitIDs[i]) != NULL);
+		bool b1 = ((temp = groupPos.distance2D(ai->ccb->GetUnitPos(ai->unitIDs[i]))) < shortestDistanceFound);
+		bool b2 = (ai->ccb->GetUnitDef(ai->unitIDs[i]) != NULL);
 		bool b3 = CloakedFix(ai->unitIDs[i]);
-		bool b4 = ai->cheat->GetUnitDef(ai->unitIDs[i])->canfly;
+		bool b4 = ai->ccb->GetUnitDef(ai->unitIDs[i])->canfly;
 
 		if (b1 && b2 && b3 && !b4) {
 			enemySelected = i;
@@ -488,7 +488,7 @@ int CAttackGroup::SelectEnemy(int numEnemies, const float3& groupPos) {
 
 
 void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int frameSpread) {
-	float3 enemyPos = ai->cheat->GetUnitPos(ai->unitIDs[enemySelected]);
+	float3 enemyPos = ai->ccb->GetUnitPos(ai->unitIDs[enemySelected]);
 	assert(CloakedFix(ai->unitIDs[enemySelected]));
 	isShooting = true;
 
@@ -531,7 +531,7 @@ void CAttackGroup::AttackEnemy(int enemySelected, int numUnits, float range, int
 				// note 2: should avoid other immediate friendly units and/or immediate enemy units + radius
 				// maybe include the height parameter in the search? probably not possible
 				// doesn't this mean pathing might happen every second? outer limit should harsher than inner
-				float3 unitPos = ai->cheat->GetUnitPos(ai->unitIDs[enemySelected]);
+				float3 unitPos = ai->ccb->GetUnitPos(ai->unitIDs[enemySelected]);
 				float dist = ai->pather->FindBestPathToRadius(tempPath, myPos, myRange, unitPos);
 
 				if (tempPath.size() > 0) {

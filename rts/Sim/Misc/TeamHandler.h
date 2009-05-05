@@ -23,8 +23,6 @@ public:
 
 	void LoadFromSetup(const CGameSetup* setup);
 
-	// from CGlobalSynced:
-
 	/**
 	 * @brief Team
 	 * @param i index to fetch

@@ -291,6 +291,8 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		}
 
 		TeamBase data;
+		data.startMetal = startMetal;
+		data.startEnergy = startEnergy;
 
 		// Get default color from palette (based on "color" tag)
 		for (size_t num = 0; num < 3; ++num)

@@ -19,6 +19,7 @@
 #include "ConfigHandler.h"
 #include "InputReceiver.h"
 
+#define border 7
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -48,7 +49,8 @@ CInfoConsole::CInfoConsole():
 		height = 0.205f;
 	}
 
-	numLines = 8;
+	fontScale = 1.0f;
+	fontSize = fontScale * smallFont->GetSize();
 
 	logOutput.AddSubscriber(this);
 }
@@ -61,9 +63,9 @@ CInfoConsole::~CInfoConsole()
 void CInfoConsole::Draw()
 {
 	if (disabled) return;
-	if (!font) return;
+	if (!smallFont) return;
 
-	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
+	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex); //is this really needed?
 
 	if(!data.empty() && (guihandler && !guihandler->GetOutlineFonts())){
 		glDisable(GL_TEXTURE_2D);
@@ -79,30 +81,24 @@ void CInfoConsole::Draw()
 		glEnd();
 	}
 
-	const float fontScale = 0.6f;
-	const float fontHeight = fontScale * font->GetHeight();
+	const float fontHeight = fontSize * smallFont->GetLineHeight() * gu->pixelY;
 
-	float curX = xpos + 0.01f;
-	float curY = ypos - 0.026f;
+	float curX = xpos + border * gu->pixelX;
+	float curY = ypos - border * gu->pixelY;
 
-	if (guihandler && !guihandler->GetOutlineFonts()) {
-		glColor4f(1,1,1,1);
+	smallFont->Begin();
+	smallFont->SetColors(); // default
+	int fontOptions = FONT_NORM;
+	if (guihandler && guihandler->GetOutlineFonts())
+		fontOptions |= FONT_OUTLINE;
 
-		std::deque<InfoLine>::iterator ili;
-		for (ili = data.begin(); ili != data.end(); ili++) {
-			font->glPrintAt(curX, curY, fontScale, ili->text.c_str());
-			curY -= fontHeight;
-		}
+	std::deque<InfoLine>::iterator ili;
+	for (ili = data.begin(); ili != data.end(); ili++) {
+		curY -= fontHeight;
+		smallFont->glPrint(curX, curY, fontSize, fontOptions, ili->text);
 	}
-	else {
-		const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-		std::deque<InfoLine>::iterator ili;
-		for (ili = data.begin(); ili != data.end(); ili++) {
-			font->glPrintOutlinedAt(curX, curY, fontScale, ili->text.c_str(), white);
-			curY -= fontHeight;
-		}
-	}
+	smallFont->End();
 }
 
 
@@ -146,7 +142,7 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 
 void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const char* text)
 {
-	if (!font) return;
+	if (!smallFont) return;
 
 	boost::recursive_mutex::scoped_lock scoped_lock(infoConsoleMutex);
 
@@ -160,43 +156,25 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const char* text
 		newLines++;
 	}
 
-	float maxWidth = 25.0f;
-	size_t pos=0, line_start=0;
+	const float maxWidth  = width * gu->viewSizeX - border * 2;
+	const float maxHeight = height * gu->viewSizeY - border * 2;
+	const unsigned int numLines = math::floor(maxHeight / (fontSize * smallFont->GetLineHeight()));
 
-	while (text[pos]) {
-		// iterate through text until maxWidth width is reached
-		char temp[120];
-		float w = 0.0f;
-		for (;text[pos] && pos-line_start < sizeof(temp) - 1 && w <= maxWidth;pos++) {
-			w += font->CalcCharWidth(text[pos]);
-			temp[pos-line_start] = text[pos];
-		}
-		temp[pos-line_start] = 0;
+	std::list<std::string> lines = smallFont->Wrap(text,fontSize,maxWidth);
 
-		// if needed, find a breaking position
-		if (w > maxWidth) {
-			size_t break_pos = pos-line_start;
-			while (break_pos >= 0 && temp[break_pos] != ' ')
-				break_pos --;
-
-			if (break_pos <= 0) break_pos = pos-line_start;
-			line_start += break_pos + (temp[break_pos] == ' ' ? 1 : 0);
-			pos = line_start;
-			temp[break_pos] = 0;
-		} else {
-			line_start = pos;
-		}
-
-		// add the line to the console
+	std::list<std::string>::iterator il;
+	for (il = lines.begin(); il != lines.end(); il++) {
+		//! add the line to the console
 		InfoLine l;
-		if((int)data.size()>(numLines-1)){
-			data[1].time+=data[0].time;
-			data.pop_front();
-		}
 		data.push_back(l);
-		data.back().text=temp;
-		data.back().time=lifetime-lastTime;
-		lastTime=lifetime;
+		data.back().text = *il;
+		data.back().time = lifetime - lastTime;
+		lastTime = lifetime;
+	}
+
+	for (int i = data.size(); i > numLines; i--) {
+		data[1].time += data[0].time;
+		data.pop_front();
 	}
 }
 
@@ -210,6 +188,6 @@ void CInfoConsole::SetLastMsgPos(const float3& pos)
 		lastMsgPositions.pop_back();
 	}
 
-	// reset the iterator when a new msg comes in
+	//! reset the iterator when a new msg comes in
 	lastMsgIter = lastMsgPositions.begin();
 }

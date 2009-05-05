@@ -162,6 +162,7 @@ class CGuiHandler : public CInputReceiver {
 		int maxPage;
 		int activePage;
 		int defaultCmdMemory;
+		int explicitCommand;
 		//int fadein;
 		CglList* list;
 
