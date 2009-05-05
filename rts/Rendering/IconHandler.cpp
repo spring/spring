@@ -42,8 +42,7 @@ CIconHandler::CIconHandler()
 		defIconData = it->second.data;
 	}
 	else {
-		defIconData = new CIconData("default", GetDefaultTexture(),
-																		 1.0f, 1.0f, false, false, 128, 128);
+		defIconData = new CIconData("default", GetDefaultTexture(), 1.0f, 1.0f, false, false, 128, 128);
 		iconMap["default"] = CIcon(defIconData);
 	}
 }

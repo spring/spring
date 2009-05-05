@@ -1040,7 +1040,7 @@ void AAIBuildTable::InitCombatEffCache(int side)
 {
 	side--;
 
-	int max_size = 0;
+	size_t max_size = 0;
 
 	UnitCategory category;
 

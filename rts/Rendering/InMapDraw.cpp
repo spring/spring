@@ -260,7 +260,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 	CInMapDraw::DrawQuad* dq = &imd->drawQuads[y * drawQuadsX + x];
 
 	va->EnlargeArrays(dq->points.size()*12,0,VA_SIZE_TC);
-	// draw point markers
+	//! draw point markers
 	for (std::list<CInMapDraw::MapPoint>::iterator pi = dq->points.begin(); pi != dq->points.end(); ++pi) {
 		if (pi->MaySee(imd)) {
 			float3 pos = pi->pos;
@@ -297,18 +297,14 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 			va->AddVertexQTC(pos2 - dir1 * size - dir2 * size, 0.00f, 0, col);
 
 			if (pi->label.size() > 0) {
-				glPushMatrix();
-				glTranslatef3(pi->pos + UpVector * 105);
-				glScalef(1200, 1200, 1200);
-				glColor4ub(pi->color[0], pi->color[1], pi->color[2], 250);
-				font->glWorldPrint(pi->label.c_str());
-				glPopMatrix();
+				font->SetTextColor(pi->color[0]/255.0f, pi->color[1]/255.0f, pi->color[2]/255.0f, 1.0f); //FIXME (overload!)
+				font->glWorldPrint(pi->pos + UpVector * 105, 26.0f, pi->label);
 			}
 		}
 	}
 
 	va->EnlargeArrays(dq->lines.size()*2,0,VA_SIZE_C);
-	// draw line markers
+	//! draw line markers
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
 		if (li->MaySee(imd)) {
 			lineva->AddVertexQC(li->pos - (li->pos - camera->pos).ANormalize() * 26, li->color);
@@ -321,19 +317,16 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 void CInMapDraw::Draw(void)
 {
-	GML_STDMUTEX_LOCK(inmap); // Draw
+	GML_STDMUTEX_LOCK(inmap); //! Draw
 
 	glDepthMask(0);
 
 	CVertexArray* va = GetVertexArray();
 	va->Initialize();
-
 	CVertexArray* lineva = GetVertexArray();
 	lineva->Initialize();
-
-	glEnable(GL_TEXTURE_2D);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
+	//font->Begin();
+	font->SetColors(); //! default
 
 	InMapDraw_QuadDrawer drawer;
 	drawer.imd = this;
@@ -343,10 +336,11 @@ void CInMapDraw::Draw(void)
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, 3000.0f, &drawer);
 
-	// draw lines
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
 	glDisable(GL_TEXTURE_2D);
 	glLineWidth(3.f);
-	lineva->DrawArrayC(GL_LINES);
+	lineva->DrawArrayC(GL_LINES); //! draw lines
 	// XXX hopeless drivers, retest in a year or so...
 	// width greater than 2 causes GUI flicker on ATI hardware as of driver version 9.3
 	// so redraw lines with width 1
@@ -358,7 +352,8 @@ void CInMapDraw::Draw(void)
 	glLineWidth(1);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, texture);
-	va->DrawArrayTC(GL_QUADS);
+	va->DrawArrayTC(GL_QUADS); //! draw point markers 
+	//font->End(); //! draw point markers text
 
 	glDepthMask(1);
 }

@@ -128,26 +128,25 @@ void CCursorIcons::DrawTexts()
 
 	const float fontScale = 1.0f;
 	const float yOffset = 50.0f * gu->pixelY;
-	
+
+	font->Begin();
+	font->SetColors(); //default
+
 	std::set<IconText>::iterator it;
 	for (it = texts.begin(); it != texts.end(); ++it) {
 		const float3 winPos = camera->CalcWindowCoordinates(it->pos);
 		if (winPos.z <= 1.0f) {
-			const char* text = it->text.c_str();
-			const float tWidth  = fontScale * font->CalcTextWidth(text);
-			const float tHeight = fontScale * font->CalcTextHeight(text);
-			const float x = (winPos.x * gu->pixelX) - (0.5f * tWidth);
-			const float y = (winPos.y * gu->pixelY) + tHeight + yOffset;
+			const float x = (winPos.x * gu->pixelX);
+			const float y = (winPos.y * gu->pixelY) + yOffset;
 
 			if (guihandler->GetOutlineFonts()) {
-				const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-				//const float black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-				font->glPrintOutlinedAt(x, y, fontScale, text, white);
+				font->glPrint(x, y, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_TOP | FONT_SCALE | FONT_NORM, it->text);
 			} else {
-				font->glPrintAt(x, y, fontScale, text);
+				font->glPrint(x, y, fontScale, FONT_SCALE | FONT_CENTER | FONT_TOP | FONT_NORM, it->text);
 			}
 		}
 	}
+	font->End();
 }
 
 

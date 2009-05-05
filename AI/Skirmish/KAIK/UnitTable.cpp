@@ -381,14 +381,14 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 
 
 float CUnitTable::GetCurrentDamageScore(const UnitDef* unit) {
-	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
+	int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
 	std::vector<int> enemiesOfType(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	float score = 0.01f;
 	float totalCost = 0.01f;
 
 	for (int i = 0; i < numEnemies; i++) {
-		const UnitDef* udef = ai->cheat->GetUnitDef(ai->unitIDs[i]);
+		const UnitDef* udef = ai->ccb->GetUnitDef(ai->unitIDs[i]);
 
 		if (udef != NULL) {
 			enemiesOfType[udef->id]++;
@@ -429,7 +429,7 @@ void CUnitTable::UpdateChokePointArray() {
 	std::vector<int> enemiesOfType(ai->cb->GetNumUnitDefs() + 1, 0);
 
 	float totalCost = 1.0f;
-	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
+	int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
 
 	for (int i = 0; i < ai->pather->totalcells; i++) {
 		ai->dm->ChokePointArray[i] = 0;
@@ -438,7 +438,7 @@ void CUnitTable::UpdateChokePointArray() {
 		EnemyCostsByMoveType[i] = 0;
 	}
 	for (int i = 0; i < numEnemies; i++) {
-		enemiesOfType[ai->cheat->GetUnitDef(ai->unitIDs[i])->id]++;
+		enemiesOfType[ai->ccb->GetUnitDef(ai->unitIDs[i])->id]++;
 	}
 
 	for (unsigned int i = 1; i < enemiesOfType.size(); i++) {
@@ -532,15 +532,17 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 			// (so benefit values generally lie closer together)
 			float baseBenefit = udef->energyMake - udef->energyUpkeep;
 
-			if (udef->windGenerator) {
+			if (udef->windGenerator > 0.0f) {
 				const float minWind = ai->cb->GetMinWind();
 				const float maxWind = ai->cb->GetMaxWind();
 				const float avgWind = (minWind + maxWind) * 0.5f;
-				if (minWind >= 8.0f || (minWind >= 4.0f && avgWind >= 8.0f)) {
+				const float avgEffi = std::min(avgWind / udef->windGenerator, 1.0f);
+
+				if (avgEffi >= 0.4f) {
 					baseBenefit += avgWind;
 				}
 			}
-			if (udef->tidalGenerator) {
+			if (udef->tidalGenerator > 0.0f) {
 				baseBenefit += ai->cb->GetTidalStrength();
 			}
 

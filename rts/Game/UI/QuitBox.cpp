@@ -112,16 +112,16 @@ void CQuitBox::Draw(void)
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,0.4f,0.8f);
-	font->glPrintAt(box.x1+0.045f,box.y1+0.58f,0.7f,"Do you want to ...");
+	font->glPrint(box.x1+0.045f,box.y1+0.58f,0.7f,FONT_SCALE | FONT_NORM,"Do you want to ...");
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1 + resignBox.x1     + 0.025f,
-	                box.y1 + resignBox.y1     + 0.005f, 1, "Resign");
-	font->glPrintAt(box.x1 + giveAwayBox.x1   + 0.025f,
-	                box.y1 + giveAwayBox.y1   + 0.005f, 1, "Give everything to ...");
-	font->glPrintAt(box.x1 + cancelBox.x1     + 0.025f,
-	                box.y1 + cancelBox.y1     + 0.005f, 1, "Cancel");
-	font->glPrintAt(box.x1 + quitBox.x1       + 0.025f,
-	                box.y1 + quitBox.y1       + 0.005f, 1, "Quit");
+	font->glPrint(box.x1 + resignBox.x1     + 0.025f,
+	                box.y1 + resignBox.y1     + 0.005f, 1, FONT_SCALE | FONT_NORM, "Resign");
+	font->glPrint(box.x1 + giveAwayBox.x1   + 0.025f,
+	                box.y1 + giveAwayBox.y1   + 0.005f, 1, FONT_SCALE | FONT_NORM, "Give everything to ...");
+	font->glPrint(box.x1 + cancelBox.x1     + 0.025f,
+	                box.y1 + cancelBox.y1     + 0.005f, 1, FONT_SCALE | FONT_NORM, "Cancel");
+	font->glPrint(box.x1 + quitBox.x1       + 0.025f,
+	                box.y1 + quitBox.y1       + 0.005f, 1, FONT_SCALE | FONT_NORM, "Quit");
 
 	for(int team=0;team<teamHandler->ActiveTeams()-1;++team){
 		int actualTeam=team;
@@ -155,8 +155,8 @@ void CQuitBox::Draw(void)
 			teamName = "Gaia";
 			ally   = " <Gaia>";
 		}
-		font->glFormatAt(box.x1 + teamBox.x1 + 0.002f,
-		                box.y1 + teamBox.y2 - 0.025f - team * 0.025f, 0.7f,
+		font->glFormat(box.x1 + teamBox.x1 + 0.002f,
+		                box.y1 + teamBox.y2 - 0.025f - team * 0.025f, 0.7f,  FONT_SCALE | FONT_NORM,
 		                "Team%i (%s)%s%s", actualTeam,
 		                teamName.c_str(), ally.c_str(), dead.c_str());
 	}

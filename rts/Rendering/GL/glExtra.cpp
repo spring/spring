@@ -164,3 +164,45 @@ void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 
 
 /******************************************************************************/
+
+// not really the best place to put this
+void gluMyCube(float size) {
+	const float mid = size * 0.5f;
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+	glBegin(GL_QUADS);
+		// top
+		glVertex3f( mid, mid,  mid);
+		glVertex3f( mid, mid, -mid);
+		glVertex3f(-mid, mid, -mid);
+		glVertex3f(-mid, mid,  mid);
+		// front
+		glVertex3f( mid,  mid, mid);
+		glVertex3f(-mid,  mid, mid);
+		glVertex3f(-mid, -mid, mid);
+		glVertex3f( mid, -mid, mid);
+		// right
+		glVertex3f(mid,  mid,  mid);
+		glVertex3f(mid, -mid,  mid);
+		glVertex3f(mid, -mid, -mid);
+		glVertex3f(mid,  mid, -mid);
+		// left
+		glVertex3f(-mid,  mid,  mid);
+		glVertex3f(-mid,  mid, -mid);
+		glVertex3f(-mid, -mid, -mid);
+		glVertex3f(-mid, -mid,  mid);
+		// bottom
+		glVertex3f( mid, -mid,  mid);
+		glVertex3f( mid, -mid, -mid);
+		glVertex3f(-mid, -mid, -mid);
+		glVertex3f(-mid, -mid,  mid);
+		// back
+		glVertex3f( mid,  mid, -mid);
+		glVertex3f(-mid,  mid, -mid);
+		glVertex3f(-mid, -mid, -mid);
+		glVertex3f( mid, -mid, -mid);
+	glEnd();
+
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}

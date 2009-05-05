@@ -39,7 +39,7 @@ void CThreatMap::PostLoad() {
 void CThreatMap::Create() {
 	Clear();
 	double totalthreat = 0;
-	int numEnemies = ai->cheat->GetEnemyUnits(&ai->unitIDs[0]);
+	int numEnemies = ai->ccb->GetEnemyUnits(&ai->unitIDs[0]);
 
 	for (int i = 0; i < numEnemies; i++) {
 		AddEnemyUnit(ai->unitIDs[i]);
@@ -58,11 +58,11 @@ void CThreatMap::Create() {
 
 
 void CThreatMap::AddEnemyUnit(int unitid) {
-	const UnitDef* ud = ai->cheat->GetUnitDef(unitid);
+	const UnitDef* ud = ai->ccb->GetUnitDef(unitid);
 
 	// unarmed or unfinished units do not register on the threat-map
-	if (ud && (!ai->cheat->UnitBeingBuilt(unitid)) && ud->weapons.size()) {
-		float3 pos = ai->cheat->GetUnitPos(unitid);
+	if (ud && (!ai->ccb->UnitBeingBuilt(unitid)) && ud->weapons.size()) {
+		float3 pos = ai->ccb->GetUnitPos(unitid);
 		int posx = int(pos.x / (8 * ThreatResolution));
 		int posy = int(pos.z / (8 * ThreatResolution));
 
@@ -86,11 +86,11 @@ void CThreatMap::AddEnemyUnit(int unitid) {
 }
 
 void CThreatMap::RemoveEnemyUnit (int unitid) {
-	float3 pos = ai->cheat->GetUnitPos(unitid);
+	float3 pos = ai->ccb->GetUnitPos(unitid);
 	int posx = int(pos.x / (8 * ThreatResolution));
 	int posy = int(pos.z / (8 * ThreatResolution));
 
-	const UnitDef* Def = ai->cheat->GetUnitDef(unitid);
+	const UnitDef* Def = ai->ccb->GetUnitDef(unitid);
 	float Range = ai->ut->GetMaxRange(Def) / (8 * ThreatResolution);
 	float SQRange = Range * Range;
 	float DPS = ai->ut->GetDPS(Def);

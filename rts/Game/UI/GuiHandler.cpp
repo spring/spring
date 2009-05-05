@@ -79,7 +79,8 @@ CGuiHandler::CGuiHandler()
 	defaultCmdMemory(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
-	gatherMode(false)
+	gatherMode(false),
+	explicitCommand(-1)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;
@@ -151,7 +152,7 @@ void CGuiHandler::LoadDefaults()
 
 	outlineFonts = false;
 
-	attackRect = true;
+	attackRect = false;
 	newAttackMode = true;
 	invColorSelect = true;
 	frontByEnds = false;
@@ -1078,6 +1079,10 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 {
 	int iconCmd = -1;
 
+	if (button != SDL_BUTTON_MIDDLE) {
+		explicitCommand = inCommand;
+	}
+
 	if (activeMousePress) {
 		activeMousePress = false;
 	} else {
@@ -1217,7 +1222,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 					"assigned.";
 				std::vector<std::string>::const_iterator pi;
 				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
-					list->AddItem(pi->c_str(),"");
+					list->AddItem(*pi,"");
 				}
 				list->place=atoi(cd.params[0].c_str());
 			} else {
@@ -1982,7 +1987,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 						"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
 						"assigned.";
 				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
-					list->AddItem(pi->c_str(), "");
+					list->AddItem(*pi, "");
 				}
 				list->place = atoi(cd.params[0].c_str());
 				lastKeySet.Reset();
@@ -2385,6 +2390,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				  // clicked on unit
 					c.params.push_back(unit->id);
 				} else { // clicked in map
+					if(explicitCommand<0) // only attack ground if explicitly set the command
+						return defaultRet;
 					float3 pos = camerapos + (mousedir * dist2);
 					c.params.push_back(pos.x);
 					c.params.push_back(pos.y);
@@ -2591,21 +2598,6 @@ void CGuiHandler::Draw()
 }
 
 
-static std::string StripColorCodes(const std::string& text)
-{
-	std::string nocolor;
-	const int len = (int)text.size();
-	for (int i = 0; i < len; i++) {
-		if ((unsigned char)text[i] == 255) {
-			i = i + 3;
-		} else {
-			nocolor += text[i];
-		}
-	}
-	return nocolor;
-}
-
-
 static std::string FindCornerText(const std::string& corner, const vector<std::string>& params)
 {
 	for (int p = 0; p < (int)params.size(); p++) {
@@ -2658,10 +2650,10 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 		glColor4f(1.0f, 1.0f, 1.0f, textureAlpha);
 		glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitDefImage(ud));
 		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
-		glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
-		glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
-		glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
+			glTexCoord2f(0.0f, 0.0f); glVertex2f(b.x1, b.y1);
+			glTexCoord2f(1.0f, 0.0f); glVertex2f(b.x2, b.y1);
+			glTexCoord2f(1.0f, 1.0f); glVertex2f(b.x2, b.y2);
+			glTexCoord2f(0.0f, 1.0f); glVertex2f(b.x1, b.y2);
 		glEnd();
 		return true;
 	}
@@ -2886,25 +2878,18 @@ void CGuiHandler::DrawName(const IconInfo& icon, const std::string& text,
 
 	const float yShrink = offsetForLEDs ? (0.125f * yIconSize) : 0.0f;
 
-	const float tWidth  = font->CalcTextWidth(text.c_str());
-	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float tWidth  = font->GetSize() * font->GetTextWidth(text) * gu->pixelX;  //FIXME
+	const float tHeight = font->GetSize() * font->GetTextHeight(text) * gu->pixelY; //FIXME merge in 1 function?
 	const float textBorder2 = (2.0f * textBorder);
 	float xScale = (xIconSize - textBorder2) / tWidth;
 	float yScale = (yIconSize - textBorder2 - yShrink) / tHeight;
 	const float fontScale = std::min(xScale, yScale);
 
 	const float xCenter = 0.5f * (b.x1 + b.x2);
-	const float yCenter = 0.5f * (b.y1 + (b.y2 + yShrink));
-	const float xStart = xCenter - 0.5f * fontScale * tWidth;
-	const float yStart  = yCenter - (0.5f * fontScale * (1.25f * tHeight));
-	const float dShadow = 0.002f;
+	const float yCenter = 0.5f * (b.y1 + b.y2 + yShrink);
 
-	if (dropShadows) {
-		glColor4f(0.0f, 0.0f, 0.0f, 0.8f);
-		font->glPrintAt(xStart + dShadow, yStart - dShadow, fontScale, StripColorCodes(text).c_str());
-	}
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	font->glPrintAt(xStart, yStart, fontScale, text.c_str());
+	font->glPrint(xCenter, yCenter, fontScale, (dropShadows ? FONT_SHADOW : 0) | FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM, text);
 }
 
 
@@ -2914,12 +2899,12 @@ void CGuiHandler::DrawNWtext(const IconInfo& icon, const std::string& text)
 		return;
 	}
 	const Box& b = icon.visual;
-	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float tHeight = font->GetSize() * font->GetTextHeight(text) * gu->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
 	const float xPos = b.x1 + textBorder + 0.002f;
-	const float yPos = b.y1 - textBorder - (fontScale * tHeight) - 0.006f;
+	const float yPos = b.y1 - textBorder - 0.006f;
 
-	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
+	font->glPrint(xPos, yPos, fontScale, FONT_TOP | FONT_SCALE | FONT_NORM, text);
 }
 
 
@@ -2929,12 +2914,12 @@ void CGuiHandler::DrawSWtext(const IconInfo& icon, const std::string& text)
 		return;
 	}
 	const Box& b = icon.visual;
-	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float tHeight = font->GetSize() * font->GetTextHeight(text) * gu->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
 	const float xPos = b.x1 + textBorder + 0.002f;
 	const float yPos = b.y2 + textBorder + 0.002f;
 
-	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
+	font->glPrint(xPos, yPos, fontScale, FONT_SCALE | FONT_NORM, text);
 }
 
 
@@ -2944,13 +2929,12 @@ void CGuiHandler::DrawNEtext(const IconInfo& icon, const std::string& text)
 		return;
 	}
 	const Box& b = icon.visual;
-	const float tWidth = font->CalcTextWidth(text.c_str());
-	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float tHeight = font->GetSize() * font->GetTextHeight(text) * gu->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
-	const float xPos = b.x2 - textBorder - (fontScale * tWidth) - 0.002f;
-	const float yPos = b.y1 - textBorder - (fontScale * tHeight) - 0.006f;
+	const float xPos = b.x2 - textBorder - 0.002f;
+	const float yPos = b.y1 - textBorder - 0.006f;
 
-	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
+	font->glPrint(xPos, yPos, fontScale, FONT_TOP | FONT_RIGHT | FONT_SCALE | FONT_NORM, text);
 }
 
 
@@ -2960,13 +2944,12 @@ void CGuiHandler::DrawSEtext(const IconInfo& icon, const std::string& text)
 		return;
 	}
 	const Box& b = icon.visual;
-	const float tWidth = font->CalcTextWidth(text.c_str());
-	const float tHeight = font->CalcTextHeight(text.c_str());
+	const float tHeight = font->GetSize() * font->GetTextHeight(text) * gu->pixelY;
 	const float fontScale = (yIconSize * 0.2f) / tHeight;
-	const float xPos = b.x2 - textBorder - (fontScale * tWidth) - 0.002f;
+	const float xPos = b.x2 - textBorder - 0.002f;
 	const float yPos = b.y2 + textBorder + 0.002f;
 
-	font->glPrintColorAt(xPos, yPos, fontScale, text.c_str());
+	font->glPrint(xPos, yPos, fontScale, FONT_RIGHT | FONT_SCALE | FONT_NORM, text);
 }
 
 
@@ -2983,10 +2966,10 @@ void CGuiHandler::DrawHilightQuad(const IconInfo& icon)
 	glDisable(GL_TEXTURE_2D);
 	glBlendFunc(GL_ONE, GL_ONE); // additive blending
 	glBegin(GL_QUADS);
-	glVertex2f(b.x1, b.y1);
-	glVertex2f(b.x2, b.y1);
-	glVertex2f(b.x2, b.y2);
-	glVertex2f(b.x1, b.y2);
+		glVertex2f(b.x1, b.y1);
+		glVertex2f(b.x2, b.y1);
+		glVertex2f(b.x2, b.y2);
+		glVertex2f(b.x1, b.y2);
 	glEnd();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
@@ -2995,7 +2978,7 @@ void CGuiHandler::DrawHilightQuad(const IconInfo& icon)
 void CGuiHandler::DrawButtons() // Only called by Draw
 {
 	glLineWidth(1.0f);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	font->Begin();
 
 	// frame box
 	const float alpha = (frameAlpha < 0.0f) ? guiAlpha : frameAlpha;
@@ -3003,10 +2986,10 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 		glColor4f(0.2f, 0.2f, 0.2f, alpha);
 		glBegin(GL_QUADS);
 		const GLfloat fx = 0.0f; //-.2f*(1-fadein/100.0f)+.2f;
-		glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
-		glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
-		glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
-		glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
+			glVertex2f(buttonBox.x1 - fx, buttonBox.y1);
+			glVertex2f(buttonBox.x1 - fx, buttonBox.y2);
+			glVertex2f(buttonBox.x2 - fx, buttonBox.y2);
+			glVertex2f(buttonBox.x2 - fx, buttonBox.y1);
 		glEnd();
 	}
 
@@ -3033,6 +3016,7 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 		else {
 			bool usedTexture = false;
 			bool onlyTexture = cmdDesc.onlyTexture;
+			const bool useLEDs = useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE);
 
 			// specified texture
 			if (DrawTexture(icon, cmdDesc.iconname)) {
@@ -3085,12 +3069,8 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 					glColor4f(1.0f, 1.0f, 1.0f, 0.1f);
 					DrawIconFrame(icon);
 				}
-			}
 
-			const bool useLEDs = useOptionLEDs && (cmdDesc.type == CMDTYPE_ICON_MODE);
-
-			// draw the text
-			if (!usedTexture || !onlyTexture) {
+				// draw the text
 				// command name (or parameter)
 				std::string toPrint = cmdDesc.name;
 				if (cmdDesc.type == CMDTYPE_ICON_MODE
@@ -3137,20 +3117,18 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 
 	// active page indicator
 	if (luaUI == NULL) {
-		char buf[64];
-		SNPRINTF(buf, 64, "%i", activePage + 1);
 		if (selectedUnits.BuildIconsFirst()) {
 			glColor4fv(cmdColors.build);
 		} else {
 			glColor4f(0.7f, 0.7f, 0.7f, 1.0f);
 		}
 		const float textSize = 1.2f;
-		const float yBbot =
-			yBpos - (textSize * 0.5f * font->CalcTextHeight(buf));
-		font->glPrintCentered(xBpos, yBbot, textSize, buf);
+		font->glFormat(xBpos, yBpos, textSize, FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM, "%i", activePage + 1);
 	}
 
 	DrawMenuName();
+
+	font->End();
 
 	// LuaUI can handle this
 	if (luaUI == NULL || drawSelectionInfo)
@@ -3163,28 +3141,23 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 void CGuiHandler::DrawMenuName() // Only called by drawbuttons
 {
 	if (!menuName.empty() && (iconsCount > 0)) {
-		const char* text = menuName.c_str();
-
 		const float fontScale = 1.0f;
-		const float textWidth  = fontScale * font->CalcTextWidth(text);
-		const float textHeight = fontScale * font->CalcTextHeight(text);
-		const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2 - textWidth);
+		const float xp = 0.5f * (buttonBox.x1 + buttonBox.x2);
 		const float yp = buttonBox.y2 + (yIconSize * 0.125f);
 
 		if (!outlineFonts) {
+			const float textHeight = fontScale * font->GetTextHeight(menuName) * gu->pixelY;
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
 			glRectf(buttonBox.x1,
-							buttonBox.y2,
-							buttonBox.x2,
-							buttonBox.y2 + (textHeight * 1.25f) + (yIconSize * 0.250f));
-			font->glPrintColorAt(xp, yp, fontScale, text);
+			        buttonBox.y2,
+			        buttonBox.x2,
+			        buttonBox.y2 + textHeight + (yIconSize * 0.25f));
+			font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_SCALE | FONT_NORM, menuName);
 		}
 		else {
-			// use (alpha == 0.0) so that we only get the outline
-			const float white[4] = { 1.0f, 1.0f, 1.0f, 0.0f };
-			font->glPrintOutlinedAt(xp, yp, fontScale, text, white);
-			font->glPrintColorAt(xp, yp, fontScale, text);
+			font->SetColors(); // default
+			font->glPrint(xp, yp, fontScale, FONT_CENTER | FONT_OUTLINE | FONT_SCALE | FONT_NORM, menuName);
 		}
 	}
 
@@ -3205,25 +3178,27 @@ void CGuiHandler::DrawSelectionInfo()
 		}
 
 		const float fontScale = 1.0f;
+		const float fontSize  = fontScale * smallFont->GetSize();
 
 		if (!outlineFonts) {
-			const float textWidth  = fontScale * smallFont->CalcTextWidth(buf.str().c_str());
-			const float textHeight = fontScale * smallFont->CalcTextHeight(buf.str().c_str());
+			float descender;
+			const float textWidth  = fontSize * smallFont->GetTextWidth(buf.str()) * gu->pixelX;
+			float textHeight = fontSize * smallFont->GetTextHeight(buf.str(), &descender) * gu->pixelY;
+			const float textDescender = fontSize * descender * gu->pixelY; //! descender is always negative
+			textHeight -= textDescender;
 
 			glDisable(GL_TEXTURE_2D);
 			glColor4f(0.2f, 0.2f, 0.2f, guiAlpha);
 			glRectf(xSelectionPos - frameBorder,
-							ySelectionPos - frameBorder,
-							xSelectionPos + frameBorder + textWidth,
-							ySelectionPos + frameBorder + (textHeight * 1.2f));
+			        ySelectionPos - frameBorder,
+			        xSelectionPos + frameBorder + textWidth,
+			        ySelectionPos + frameBorder + textHeight);
 			glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
-			smallFont->glPrintAt(xSelectionPos, ySelectionPos, fontScale, buf.str().c_str());
+			smallFont->glPrint(xSelectionPos, ySelectionPos - textDescender, fontSize, FONT_BASELINE | FONT_NORM, buf.str());
+		} else {
+			smallFont->SetColors(); // default
+			smallFont->glPrint(xSelectionPos, ySelectionPos, fontSize, FONT_OUTLINE | FONT_NORM, buf.str());
 		}
-		else {
-			const float white[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-			smallFont->glPrintOutlinedAt(xSelectionPos, ySelectionPos, fontScale, buf.str().c_str(), white);
-		}
-		glLoadIdentity();
 	}
 }
 
@@ -3246,16 +3221,16 @@ void CGuiHandler::DrawNumberInput() // Only called by drawbuttons
 			glColor4f(0.0f, 0.0f, 1.0f, 0.8f);
 			glRectf(0.25f, 0.49f, 0.75f, 0.51f);
 			glBegin(GL_TRIANGLES);
-			glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
-			glVertex2f(slideX + 0.015f, 0.55f);
-			glVertex2f(slideX - 0.015f, 0.55f);
-			glVertex2f(slideX, 0.50f);
-			glVertex2f(slideX - 0.015f, 0.45f);
-			glVertex2f(slideX + 0.015f, 0.45f);
-			glVertex2f(slideX, 0.50f);
+				glColor4f(1.0f, 0.0f, 0.0f, 1.0f);
+				glVertex2f(slideX + 0.015f, 0.55f);
+				glVertex2f(slideX - 0.015f, 0.55f);
+				glVertex2f(slideX, 0.50f);
+				glVertex2f(slideX - 0.015f, 0.45f);
+				glVertex2f(slideX + 0.015f, 0.45f);
+				glVertex2f(slideX, 0.50f);
 			glEnd();
 			glColor4f(1.0f, 1.0f, 1.0f, 0.9f);
-			font->glPrintCentered(slideX, 0.56f, 2.0f, "%i", (int)value);
+			font->glFormat(slideX, 0.56f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "%i", (int)value);
 		}
 	}
 }
@@ -3270,11 +3245,11 @@ void CGuiHandler::DrawPrevArrow(const IconInfo& icon)
 	const float xSiz2 = 2.0f * xSize;
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_POLYGON);
-	glVertex2f(b.x2 - xSize, yCenter - ySize);
-	glVertex2f(b.x1 + xSiz2, yCenter - ySize);
-	glVertex2f(b.x1 + xSize, yCenter);
-	glVertex2f(b.x1 + xSiz2, yCenter + ySize);
-	glVertex2f(b.x2 - xSize, yCenter + ySize);
+		glVertex2f(b.x2 - xSize, yCenter - ySize);
+		glVertex2f(b.x1 + xSiz2, yCenter - ySize);
+		glVertex2f(b.x1 + xSize, yCenter);
+		glVertex2f(b.x1 + xSiz2, yCenter + ySize);
+		glVertex2f(b.x2 - xSize, yCenter + ySize);
 	glEnd();
 }
 
@@ -3288,11 +3263,11 @@ void CGuiHandler::DrawNextArrow(const IconInfo& icon)
 	const float xSiz2 = 2.0f * xSize;
 	glDisable(GL_TEXTURE_2D);
 	glBegin(GL_POLYGON);
-	glVertex2f(b.x1 + xSize, yCenter - ySize);
-	glVertex2f(b.x2 - xSiz2, yCenter - ySize);
-	glVertex2f(b.x2 - xSize, yCenter);
-	glVertex2f(b.x2 - xSiz2, yCenter + ySize);
-	glVertex2f(b.x1 + xSize, yCenter + ySize);
+		glVertex2f(b.x1 + xSize, yCenter - ySize);
+		glVertex2f(b.x2 - xSiz2, yCenter - ySize);
+		glVertex2f(b.x2 - xSize, yCenter);
+		glVertex2f(b.x2 - xSiz2, yCenter + ySize);
+		glVertex2f(b.x1 + xSize, yCenter + ySize);
 	glEnd();
 }
 
@@ -3558,9 +3533,6 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 								float3 p(pos.x, 0.0f, pos.z);
 								p.x += fastmath::sin(radians) * radius;
 								p.z += fastmath::cos(radians) * radius;
-								if (!onMinimap) {
-									p.y = ground->GetHeight(pos.x, pos.z) + 5.0f;
-								}
 								glVertexf3(p);
 							}
 							glEnd();

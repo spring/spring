@@ -39,27 +39,23 @@ CR_REG_METADATA(CSolidObject,
 CSolidObject::CSolidObject():
 	mass(100000),
 	blocking(false),
-	blockHeightChanges(false),
 	floatOnWater(false),
+	isUnderWater(false),
+	immobile(false),
+	blockHeightChanges(false),
 	xsize(1),
 	zsize(1),
 	height(1),
-
+	heading(0),
 	physicalState(Ghost),
 	midPos(pos),
-
-	immobile(false),
 	isMoving(false),
-	heading(0),
-	buildFacing(0),
 	residualImpulse(0, 0, 0),
-
 	mobility(0),
 	yardMap(0),
+	buildFacing(0),
 	isMarkedOnBlockingMap(false),
-
-	speed(0, 0, 0),
-	isUnderWater(false)
+	speed(0, 0, 0)
 {
 	mapPos = GetMapPos();
 }

@@ -55,7 +55,7 @@ CBuilding::~CBuilding()
 			gb->decal  = buildingDecal;
 			gb->facing = buildFacing;
 			gb->team   = team;
-			if (gbModel->textureType) {
+			if (gbModel->type == MODELTYPE_S3O) {
 				unitDrawer->ghostBuildingsS3O.push_back(gb); // S3O
 			} else {
 				unitDrawer->ghostBuildings.push_back(gb);    // 3DO
