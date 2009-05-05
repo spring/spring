@@ -77,8 +77,13 @@ Spring.UnitScript.CreateScript(number unitID, table callins) -> nil
 	Callins do NOT take a unitID as argument, the unitID (and all script state
 	should be stored in a closure.)
 
-Spring.UnitScript.UpdateCallIn(number unitID, string fname, function callin) -> functionID
-	Replaces or adds a single callin.  See also Spring.UnitScript.CreateScript.
+Spring.UnitScript.UpdateCallIn(number unitID, string fname, function callin) -> number
+	Replaces or adds a single callin, returns functionID.
+	See also Spring.UnitScript.CreateScript.
+
+Spring.UnitScript.UpdateCallIn(number unitID, string fname, nil callin) -> boolean
+	Overload, removes a single callin, returns true if it was removed, or false
+	if the callin didn't exist.
 
 
 
@@ -150,14 +155,31 @@ CLuaUnitScript::~CLuaUnitScript()
 int CLuaUnitScript::UpdateCallIn()
 {
 	const char* fname = lua_tostring(L, 2);
+	const bool remove = lua_isnil(L, 3);
 	map<string, int>::iterator it = scriptNames.find(fname);
 	int r;
 
 	if (it != scriptNames.end()) {
 		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
-		r = luaL_ref(L, LUA_REGISTRYINDEX);
-		it->second = r;
-	} else {
+		if (remove) {
+			// removing existing callIn
+			scriptNames.erase(it)
+			lua_pushboolean(L, 1);
+			return 1;
+		}
+		else {
+			// replacing existing callIn
+			r = luaL_ref(L, LUA_REGISTRYINDEX);
+			it->second = r;
+		}
+	}
+	else if (remove) {
+		// removing nonexisting callIn (== no-op)
+		lua_pushboolean(L, 0);
+		return 1;
+	}
+	else {
+		// adding new callIn
 		r = luaL_ref(L, LUA_REGISTRYINDEX);
 		scriptNames.insert(pair<string, int>(fname, r));
 	}
@@ -382,7 +404,7 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 	if (L != script->L) {
 		luaL_error(L, "UpdateCallIn(): incorrect lua_State");
 	}
-	if (!lua_israwstring(L, 2) || !lua_isfunction(L, 3)) {
+	if (!lua_israwstring(L, 2) || (!lua_isfunction(L, 3) && !lua_isnil(L, 3))) {
 		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
 	}
 
