@@ -37,6 +37,7 @@ public:
 	template<class T>
 	void NotifyOnChange(T* observer)
 	{
+		// issues: still needs to call configHandler->Get() on startup, automate it
 		observers.push_back(boost::bind(&T::ConfigNotify, observer, _1, _2));
 	};
 
