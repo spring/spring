@@ -507,6 +507,9 @@ def generate(env):
 			env['SHLINKFLAGS'] = '$LINKFLAGS -dynamic'
 			env['SHLIBSUFFIX'] = '.dylib'
 		elif env['platform'] == 'windows':
+			include_path += [os.path.join(env['mingwlibsdir'], 'include')]
+			lib_path += [os.path.join(env['mingwlibsdir'], 'lib')]
+			lib_path += [os.path.join(env['mingwlibsdir'], 'dll')]
 			include_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'include'))]
 			lib_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'lib'))]
 			lib_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'dll'))]
