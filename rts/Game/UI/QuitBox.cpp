@@ -9,10 +9,15 @@
 #include "NetProtocol.h"
 #include "QuitBox.h"
 #include "Game/PlayerHandler.h"
+#include "LoadSaveHandler.h"
+#include "TimeUtil.h"
+#include "FileSystem/FileSystem.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GL/myGL.h"
 
 extern bool globalQuit;
+extern std::string stupidGlobalMapname; // see Game/PreGame.cpp
 
 CQuitBox::CQuitBox(void)
 {
@@ -26,15 +31,20 @@ CQuitBox::CQuitBox(void)
 	resignBox.x2=0.30f;
 	resignBox.y2=0.57f;
 
+	saveBox.x1=0.02f;
+	saveBox.y1=0.49f;
+	saveBox.x2=0.30f;
+	saveBox.y2=0.53f;
+
 	giveAwayBox.x1=0.02f;
-	giveAwayBox.y1=0.49f;
+	giveAwayBox.y1=0.44f;
 	giveAwayBox.x2=0.30f;
-	giveAwayBox.y2=0.53f;
+	giveAwayBox.y2=0.48f;
 
 	teamBox.x1=0.02f;
 	teamBox.y1=0.11f;
 	teamBox.x2=0.30f;
-	teamBox.y2=0.48f;
+	teamBox.y2=0.43f;
 
 	quitBox.x1=0.02f;
 	quitBox.y1=0.06f;
@@ -88,7 +98,11 @@ void CQuitBox::Draw(void)
 		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
 		DrawBox(box+resignBox);
 	}
-
+	// save Box on mouse over
+	if(InBox(mx,my,box+saveBox)){
+		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
+		DrawBox(box+saveBox);
+	}
 	// give away Box on mouse over
 	if(InBox(mx,my,box+giveAwayBox)){
 		glColor4f(0.7f,0.2f,0.2f,guiAlpha);
@@ -116,6 +130,8 @@ void CQuitBox::Draw(void)
 	glColor4f(1,1,1,0.8f);
 	font->glPrint(box.x1 + resignBox.x1     + 0.025f,
 	                box.y1 + resignBox.y1     + 0.005f, 1, FONT_SCALE | FONT_NORM, "Resign");
+	font->glPrint(box.x1 + saveBox.x1   + 0.025f,
+	                box.y1 + saveBox.y1   + 0.005f, 1, FONT_SCALE | FONT_NORM, "Save");
 	font->glPrint(box.x1 + giveAwayBox.x1   + 0.025f,
 	                box.y1 + giveAwayBox.y1   + 0.005f, 1, FONT_SCALE | FONT_NORM, "Give everything to ...");
 	font->glPrint(box.x1 + cancelBox.x1     + 0.025f,
@@ -177,7 +193,9 @@ std::string CQuitBox::GetTooltip(int x, int y)
 	float my=MouseY(y);
 
 	if(InBox(mx,my,box+resignBox))
-		return "Resign the match, remain in the game.";
+		return "Resign the match, remain in the game";
+	if(InBox(mx,my,box+saveBox))
+		return "Save the current game state to a file \nfor later reload";
 	if(InBox(mx,my,box+giveAwayBox))
 		return "Give away all units and resources \nto the team specified below";
 	if(InBox(mx,my,box+teamBox))
@@ -197,7 +215,7 @@ bool CQuitBox::MousePress(int x, int y, int button)
 	float my=MouseY(y);
 	if(InBox(mx,my,box)){
 		moveBox=true;
-		if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+teamBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+quitBox))
+		if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+saveBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+teamBox) || InBox(mx,my,box+cancelBox) || InBox(mx,my,box+quitBox))
 			moveBox=false;
 		if(InBox(mx,my,box+teamBox)){
 			int team=(int)((box.y1+teamBox.y2-my)/0.025f);
@@ -220,7 +238,9 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	float mx=MouseX(x);
 	float my=MouseY(y);
 
-	if(InBox(mx,my,box+resignBox) || (InBox(mx,my,box+giveAwayBox) && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead)){
+	if(InBox(mx,my,box+resignBox)
+	   || (InBox(mx,my,box+saveBox) && !teamHandler->Team(gu->myTeam)->isDead)
+	   || (InBox(mx,my,box+giveAwayBox) && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead)) {
 		// give away all units (and resources)
 		if(InBox(mx,my,box+giveAwayBox)) {
 			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam));
@@ -235,6 +255,23 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		if (InBox(mx,my,box+resignBox)) {
 			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 		}
+		// save current game state
+		if (InBox(mx,my,box+saveBox)) {
+			if (filesystem.CreateDirectory("Saves")) {
+				std::string timeStr = CTimeUtil::GetCurrentTimeStr();
+				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + stupidGlobalMapname);
+				saveFileName = "Saves/" + saveFileName + ".ssf";
+				if (filesystem.GetFilesize(saveFileName) == 0) {
+					logOutput.Print("Saving game to %s\n", saveFileName.c_str());
+					CLoadSaveHandler ls;
+					ls.mapName = stupidGlobalMapname;
+					ls.modName = modInfo.filename;
+					ls.SaveGame(saveFileName);
+				} else {
+					logOutput.Print("Error: File %s already exists, game NOT saved!\n", saveFileName.c_str());
+				}
+			}
+		}
 	}
 	else if(InBox(mx,my,box+quitBox))
 	{
@@ -242,7 +279,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		globalQuit=true;
 	}
 	// if we're still in the game, remove the resign box
-	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+cancelBox)){
+	if(InBox(mx,my,box+resignBox) || InBox(mx,my,box+saveBox) || InBox(mx,my,box+giveAwayBox) || InBox(mx,my,box+cancelBox)){
 		delete this;
 		return;
 	}
