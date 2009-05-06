@@ -20,6 +20,7 @@
 
 #include "Util.h"
 #include <string.h>
+#include <time.h>
 
 #ifdef __GNUC__
 #define __time64_t time_t
