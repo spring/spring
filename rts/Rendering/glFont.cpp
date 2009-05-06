@@ -139,12 +139,12 @@ static const char* GetFTError(FT_Error e)
 class CFontTextureRenderer
 {
 public:
-	CFontTextureRenderer(int _outlinewidth, int _outlineweight) : 
-		outlinewidth(_outlinewidth), outlineweight(_outlineweight),
+	CFontTextureRenderer(int _outlinewidth, int _outlineweight) :
 		texWidth(0), texHeight(0),
+		outlinewidth(_outlinewidth), outlineweight(_outlineweight),
 		curX(0), curY(0), curHeight(0),
-		numPixels(0), maxGlyphWidth(0), maxGlyphHeight(0),
-		numGlyphs(0)
+		numGlyphs(0),
+		maxGlyphWidth(0), maxGlyphHeight(0), numPixels(0)
 	{
 		numGlyphs = 0;
 		texWidth = texHeight = 0;
@@ -388,12 +388,12 @@ GLuint CFontTextureRenderer::CreateTexture()
 /*******************************************************************************/
 /*******************************************************************************/
 
-CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight)
-: inBeginEnd(false),
-  fontSize(size),
-  fontPath(fontfile),
-  outlineWidth(_outlinewidth),
-  outlineWeight(_outlineweight)
+CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight):
+	fontSize(size),
+	fontPath(fontfile),
+	outlineWidth(_outlinewidth),
+	outlineWeight(_outlineweight),
+	inBeginEnd(false)
 {
 	if (size<=0)
 		size = 14;
@@ -871,7 +871,6 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 			unsigned int i = 0;
 			const unsigned char* c = reinterpret_cast<const unsigned char*>(&w.text[i]);
 			do {
-				const unsigned char* co = c;
 				const GlyphInfo& g = glyphs[*c];
 				++i;
 
