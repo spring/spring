@@ -35,8 +35,6 @@ public:
 	bool Mute();
 	bool IsMuted() const;
 
-	void SetVolume(float vol); // 1 = full volume
-
 	void PrintDebugInfo();
 
 private:
