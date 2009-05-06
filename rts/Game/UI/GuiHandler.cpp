@@ -66,8 +66,8 @@ extern boost::uint8_t *keys;
 CGuiHandler* guihandler = NULL;
 
 
-CGuiHandler::CGuiHandler()
-	: inCommand(-1),
+CGuiHandler::CGuiHandler():
+	inCommand(-1),
 	buildFacing(0),
 	buildSpacing(0),
 	needShift(false),
@@ -77,10 +77,10 @@ CGuiHandler::CGuiHandler()
 	maxPage(0),
 	activePage(0),
 	defaultCmdMemory(-1),
+	explicitCommand(-1),
 	actionOffset(0),
 	drawSelectionInfo(true),
-	gatherMode(false),
-	explicitCommand(-1)
+	gatherMode(false)
 {
 	icons = new IconInfo[16];
 	iconsSize = 16;
@@ -3707,7 +3707,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 				// get the build information
 				float3 pos = camerapos+mousedir*dist;
 				std::vector<BuildInfo> buildPos;
-				const CMouseHandler::ButtonPress& bp = mouse->buttons[SDL_BUTTON_LEFT];
+				const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 				if (GetQueueKeystate() && bp.pressed) {
 					const float dist = ground->LineGroundCol(bp.camPos, bp.camPos + bp.dir * gu->viewRange * 1.4f);
 					const float3 pos2 = bp.camPos + bp.dir * dist;
@@ -3980,7 +3980,7 @@ void CGuiHandler::DrawArea(float3 pos, float radius, const float* color)
 
 void CGuiHandler::DrawFront(int button,float maxSize,float sizeDiv, bool onMinimap, float3& camerapos, float3& mousedir)
 {
-	CMouseHandler::ButtonPress& bp = mouse->buttons[button];
+	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 	if(bp.movement<5){
 		return;
 	}
