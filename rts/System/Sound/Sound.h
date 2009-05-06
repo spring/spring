@@ -58,6 +58,7 @@ private:
 	float3 posScale;
 	/// unscaled
 	float3 myPos;
+	float3 prevVelocity;
 
 	typedef boost::ptr_vector<SoundSource> sourceVecT;
 	sourceVecT sources;

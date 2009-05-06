@@ -22,7 +22,7 @@
 
 CSound* sound = NULL;
 
-CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
+CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateCounter(0)
 {
 	configHandler->NotifyOnChange(this);
 	mute = false;
@@ -96,7 +96,7 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 
 		// Set distance model (sound attenuation)
 		alDistanceModel (AL_INVERSE_DISTANCE_CLAMPED);
-		alDopplerFactor(0.04);
+		//alDopplerFactor(1.0);
 	}
 	
 	SoundBuffer::Initialise();
@@ -311,11 +311,15 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 		return;
 	const float3 prevPos = myPos;
 	myPos = campos;
-	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (myPos - prevPos)*posScale/(lastFrameTime);
 	const float3 posScaled = myPos * posScale;
 	alListener3f(AL_POSITION, posScaled.x, posScaled.y, posScaled.z);
-	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
+
+	//TODO: move somewhere camera related and make accessible for everyone
+	const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
+	const float3 velocityAvg = (velocity+prevVelocity)/2;
+	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y , velocityAvg.z);
+	prevVelocity = velocity;
+
 	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
 	alListenerf(AL_GAIN, masterVolume);
