@@ -195,16 +195,17 @@ void CFontTextureRenderer::CopyGlyphsIntoBitmapAtlas(bool outline)
 	const int twoborder = 2 * border;
 
 	std::list<int2>::iterator gi, finish;
+	std::list<int2>::reverse_iterator rgi, rfinish;
 	if (outline) {
 		gi     = sortByHeight.begin();
 		finish = sortByHeight.end();
 	} else {
-		gi     = sortByHeight.end();
-		finish = sortByHeight.begin();
+		rgi     = sortByHeight.rbegin();
+		rfinish = sortByHeight.rend();
 	}
 
-	for(; gi != finish; (outline) ? ++gi : --gi) {
-		GlyphInfo& g = glyphs[gi->x];
+	for(; (outline && gi != finish) || (!outline && rgi != rfinish); (outline) ? (void *)&++gi : (void *)&++rgi) {
+		GlyphInfo& g = glyphs[(outline) ? gi->x : rgi->x];
 
 		if (g.xsize==0 || g.ysize==0)
 			continue;
@@ -1034,6 +1035,9 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight) const
 {
+	if(words.empty())
+		return;
+
 	const bool splitWords = false;
 
 	const unsigned int maxLines = (unsigned int)math::floor(std::max(0.0f, maxHeight / lineHeight ));
@@ -1046,6 +1050,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 	std::list<line> lines;
 	lines.push_back(line());
 	line* l = &(lines.back());
+	l->start = words.begin();
 
 	std::list<word>::iterator wi;
 	for (wi = words.begin(); wi != words.end(); wi++) {
