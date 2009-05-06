@@ -1047,7 +1047,8 @@ int SpringApp::Run (int argc, char *argv[])
 					if (event.active.state & SDL_APPACTIVE) {
 						gu->active = !!event.active.gain;
 					}
-					if(mouse->locked) {
+
+					if (mouse && mouse->locked) {
 						mouse->ToggleState();
 					}
 					break;
