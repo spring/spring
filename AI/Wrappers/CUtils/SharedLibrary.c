@@ -17,6 +17,33 @@
 
 #include "SharedLibrary.h"
 
+#include "maindefines.h"
+#include <stdio.h>
+
+const char* sharedLib_getLibExtension() {
+
+#ifdef _WIN32
+	return "dll";
+#elif defined __APPLE__
+	return "dylib";
+#else
+	return "so";
+#endif
+}
+
+void sharedLib_createFullLibName(const char* libBaseName,
+		char* libFullName, const size_t libFullName_sizeMax) {
+
+#ifdef _WIN32
+	static const char* prefix = "";
+#else
+	static const char* prefix = "lib";
+#endif
+
+	SNPRINTF(libFullName, libFullName_sizeMax, "%s%s.%s",
+			prefix, libBaseName, sharedLib_getLibExtension());
+}
+
 sharedLib_t sharedLib_load(const char* libFilePath) {
 
 #if defined _WIN32
