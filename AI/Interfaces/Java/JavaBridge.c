@@ -719,7 +719,7 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	size_t i;
 	jint nOptions = 0;
 	for (i = 0; i < options_size; ++i) {
-		const char* tmpOptionString = util_allocStrReplaceStr(strOptions[i],
+		char* tmpOptionString = util_allocStrReplaceStr(strOptions[i],
 				"${home-dir}", dd_rw);
 		// do not add empty options
 		if (tmpOptionString != NULL) {
@@ -957,14 +957,18 @@ bool java_initStatic(int _interfaceId,
 	}
 	FREE(jreLocationFile);
 
+#if defined _WIN64 || defined __arch64__ || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__
+	static const char* jvmType = "server";
+#else
+	static const char* jvmType = "client";
+#endif
 	static const size_t jvmLibPath_sizeMax = 1024;
 	char jvmLibPath[jvmLibPath_sizeMax];
-	static const char* jvmType = "client";
 	bool jvmLibFound = GetJVMPath(jrePath, jvmType, jvmLibPath,
 			jvmLibPath_sizeMax, NULL);
 	if (!jvmLibFound) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed locating the JVM, please contact spring devs.");
+				"Failed locating the %s version of the JVM, please contact spring devs.", jvmType);
 		return false;
 	}
 
