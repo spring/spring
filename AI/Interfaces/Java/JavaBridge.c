@@ -35,25 +35,15 @@
 #include <stdlib.h>	// malloc(), calloc(), free()
 
 // These defines are taken from the OpenJDK jlong_md.h files
-// one for solaris and one for windows
-#ifdef _WIN32
-	#ifdef _WIN64
-		#define jlong_to_ptr(a) ((void*)(a))
-		#define ptr_to_jlong(a) ((jlong)(a))
-	#else
-		/* Double casting to avoid warning messages looking for casting of */
-		/* smaller sizes into pointers */
-		#define jlong_to_ptr(a) ((void*)(int)(a))
-		#define ptr_to_jlong(a) ((jlong)(int)(a))
-	#endif
+// (one for solaris and one for windows)
+#ifdef __arch64__
+	#define jlong_to_ptr(a) ((void*)(a))
+	#define ptr_to_jlong(a) ((jlong)(a))
 #else
-	#ifdef _LP64
-		#define jlong_to_ptr(a) ((void*)(a))
-		#define ptr_to_jlong(a) ((jlong)(a))
-	#else
-		#define jlong_to_ptr(a) ((void*)(int)(a))
-		#define ptr_to_jlong(a) ((jlong)(int)(a))
-	#endif
+	/* Double casting to avoid warning messages looking for casting of */
+	/* smaller sizes into pointers */
+	#define jlong_to_ptr(a) ((void*)(int)(a))
+	#define ptr_to_jlong(a) ((jlong)(int)(a))
 #endif
 
 static int interfaceId = -1;
@@ -90,11 +80,11 @@ static jmethodID g_m_urlClassLoader_ctor = NULL;
 static jmethodID g_m_urlClassLoader_findClass = NULL;
 
 static jclass g_cls_jnaPointer = NULL;
-//static jmethodID g_m_jnaPointer_ctor_long = NULL;
-static jmethodID g_m_jnaPointer_getPointer_L = NULL;
-static jclass g_cls_intByRef = NULL;
-static jmethodID g_m_intByRef_ctor_I = NULL;
-static jmethodID g_m_intByRef_getPointer = NULL;
+static jmethodID g_m_jnaPointer_ctor_long = NULL;
+//static jmethodID g_m_jnaPointer_getPointer_L = NULL;
+//static jclass g_cls_intByRef = NULL;
+//static jmethodID g_m_intByRef_ctor_I = NULL;
+//static jmethodID g_m_intByRef_getPointer = NULL;
 
 static jclass g_cls_aiCallback = NULL;
 static jmethodID g_m_aiCallback_getInstance = NULL;
@@ -957,7 +947,7 @@ bool java_initStatic(int _interfaceId,
 	}
 	FREE(jreLocationFile);
 
-#if defined _WIN64 || defined __arch64__ || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__
+#if defined __arch64__
 	static const char* jvmType = "server";
 #else
 	static const char* jvmType = "client";
@@ -1059,7 +1049,9 @@ static bool java_initURLClassLoaderClass(JNIEnv* env) {
 
 static bool java_initPointerClass(JNIEnv* env) {
 
-	/*if (g_m_jnaPointer_ctor_long == NULL) {
+	// This method is 64bit save, as it does not cast to jint,
+	// which is 32bit on all architectures, even 64bit ones.
+	if (g_m_jnaPointer_ctor_long == NULL) {
 		// get the Pointer class
 		static const char* const fcCls = "com/sun/jna/Pointer";
 
@@ -1073,8 +1065,8 @@ static bool java_initPointerClass(JNIEnv* env) {
 		g_m_jnaPointer_ctor_long =
 				java_getMethodID(env, g_cls_jnaPointer, "<init>", "(J)V");
 		if (g_m_jnaPointer_ctor_long == NULL) return false;
-	}*/
-	if (g_m_intByRef_getPointer == NULL) {
+	}
+	/*if (g_m_intByRef_getPointer == NULL) {
 		// create the JNA pointer as described here:
 		// https://jna.dev.java.net/#ptr_values
 		// This way:
@@ -1108,7 +1100,7 @@ static bool java_initPointerClass(JNIEnv* env) {
 		g_m_intByRef_getPointer = java_getMethodID(env, g_cls_intByRef,
 				"getPointer", sig_intByRef_getPointer);
 		if (g_m_intByRef_getPointer == NULL) return false;
-	}
+	}*/
 
 	return true;
 }
@@ -1118,7 +1110,6 @@ static jobject java_creatJnaPointer(JNIEnv* env, const void* nativePointer) {
 	jobject jnaPointer = NULL;
 
 	// create a Java JNA Pointer to the AI Callback
-/*
 	jlong jniPointer = ptr_to_jlong(nativePointer);
 	jnaPointer = (*env)->NewObject(env, g_cls_jnaPointer,
 			g_m_jnaPointer_ctor_long, jniPointer);
@@ -1128,8 +1119,8 @@ static jobject java_creatJnaPointer(JNIEnv* env, const void* nativePointer) {
 		jnaPointer = NULL;
 	}
 	jnaPointer = java_makeGlobalRef(env, jnaPointer, "JNA Pointer");
-*/
 
+/*
 	// create the JNA pointer as described here:
 	// https://jna.dev.java.net/#ptr_values
 	// This way:
@@ -1163,6 +1154,7 @@ static jobject java_creatJnaPointer(JNIEnv* env, const void* nativePointer) {
 	}
 	jnaPointer = java_makeGlobalRef(env, jnaPointer, "JNA Pointer");
 	if (jnaPointer == NULL) return NULL;
+*/
 
 	return jnaPointer;
 }
