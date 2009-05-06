@@ -18,10 +18,12 @@ public:
 	void MouseMove(int x, int y, int dx,int dy, int button);
 	bool KeyPressed(unsigned short key, bool isRepeat);
 
+private:
 	ContainerBox box;
 
 	// in order of appereance ...
 	ContainerBox resignBox;
+	ContainerBox saveBox;
 	ContainerBox giveAwayBox;
 	ContainerBox teamBox;
 	ContainerBox quitBox;
