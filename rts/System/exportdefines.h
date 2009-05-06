@@ -23,6 +23,8 @@
 #ifndef _EXPORTDEFINES_H
 #define _EXPORTDEFINES_H
 
+#include "maindefines.h" // for __arch32__ / __arch64__
+
 #ifndef EXTERNALIZER
 	#if defined(__cplusplus)
 		#define EXTERNALIZER extern "C"
@@ -70,7 +72,7 @@
 #endif // SPRING_CALLING_CONVENTION
 
 #ifndef CALLING_CONV
-	#if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__
+	#if defined __arch64__
 		#define CALLING_CONV
 	#elif defined _WIN32
 		#define CALLING_CONV SPRING_CALLING_CONVENTION_2
