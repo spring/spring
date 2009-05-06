@@ -4,6 +4,7 @@
 
 #include "EndGameBox.h"
 #include "MouseHandler.h"
+#include "Rendering/GL/myGL.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/PlayerHandler.h"
 #include "Rendering/glFont.h"
@@ -217,15 +218,15 @@ void CEndGameBox::Draw()
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,1,0.8f);
-	font->glPrintAt(box.x1+exitBox.x1+0.025f,box.y1+exitBox.y1+0.005f,1,"Exit");
-	font->glPrintAt(box.x1+playerBox.x1+0.015f,box.y1+playerBox.y1+0.005f,0.7f,"Player stats");
-	font->glPrintAt(box.x1+sumBox.x1+0.015f,box.y1+sumBox.y1+0.005f,0.7f,"Team stats");
-	font->glPrintAt(box.x1+difBox.x1+0.015f,box.y1+difBox.y1+0.005f,0.7f,"Team delta stats");
+	font->glPrint(box.x1+exitBox.x1+0.025f,box.y1+exitBox.y1+0.005f,1,FONT_SCALE | FONT_NORM,"Exit");
+	font->glPrint(box.x1+playerBox.x1+0.015f,box.y1+playerBox.y1+0.005f,0.7f,FONT_SCALE | FONT_NORM,"Player stats");
+	font->glPrint(box.x1+sumBox.x1+0.015f,box.y1+sumBox.y1+0.005f,0.7f,FONT_SCALE | FONT_NORM,"Team stats");
+	font->glPrint(box.x1+difBox.x1+0.015f,box.y1+difBox.y1+0.005f,0.7f,FONT_SCALE | FONT_NORM,"Team delta stats");
 
 	if(teamHandler->Team(gu->myTeam)->isDead){
-		font->glPrintAt(box.x1+0.25f,box.y1+0.65f,1,"You lost the game");
+		font->glPrint(box.x1+0.25f,box.y1+0.65f,1,FONT_SCALE | FONT_NORM,"You lost the game");
 	} else {
-		font->glPrintAt(box.x1+0.25f,box.y1+0.65f,1,"You won the game");
+		font->glPrint(box.x1+0.25f,box.y1+0.65f,1,FONT_SCALE | FONT_NORM,"You won the game");
 	}
 
 	if(gs->frameNum <= 0)
@@ -237,7 +238,7 @@ void CEndGameBox::Draw()
 		string headers[]={"Name","MC/m","MP/m","KP/m","Cmds/m","ACS"};
 
 		for(int a=0;a<6;++a){
-			font->glPrintAt(box.x1+xpos,box.y1+0.55f,0.8f,headers[a].c_str());
+			font->glPrint(box.x1+xpos,box.y1+0.55f,0.8f,FONT_SCALE | FONT_NORM,headers[a].c_str());
 			xpos+=0.1f;
 		}
 
@@ -259,7 +260,7 @@ void CEndGameBox::Draw()
 
 			float xpos=0.01f;
 			for(int a=0;a<6;++a){
-				font->glPrintAt(box.x1+xpos,box.y1+ypos,0.8f,values[a]);
+				font->glPrint(box.x1+xpos,box.y1+ypos,0.8f,FONT_SCALE | FONT_NORM, values[a]);
 				xpos+=0.1f;
 			}
 
@@ -300,7 +301,7 @@ void CEndGameBox::Draw()
 		}
 		float ypos=0.55f;
 		for(size_t a=0;a<stats.size();++a){
-			font->glPrintAt(box.x1+0.01f,box.y1+ypos,0.8f,stats[a].name.c_str());
+			font->glPrint(box.x1+0.01f,box.y1+ypos,0.8f,FONT_SCALE | FONT_NORM,stats[a].name);
 			ypos-=0.02f;
 		}
 		float maxy=1;
@@ -315,15 +316,15 @@ void CEndGameBox::Draw()
 		float scaley=0.54f / maxy;
 
 		for (int a = 0; a < 5; ++a) {
-			font->glPrintAt(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f,
-			                FloatToSmallString(maxy * 0.25f * a).c_str());
-			font->glFormatAt(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, "%02i:%02i",
+			font->glPrint(box.x1 + 0.12f, box.y1 + 0.07f + (a * 0.135f), 0.8f, FONT_SCALE | FONT_NORM,
+			                FloatToSmallString(maxy * 0.25f * a));
+			font->glFormat(box.x1 + 0.135f + (a * 0.135f), box.y1 + 0.057f, 0.8f, FONT_SCALE | FONT_NORM, "%02i:%02i",
 			                int(a * 0.25f * numPoints * CTeam::statsPeriod / 60),
 			                int(a * 0.25f * (numPoints - 1) * CTeam::statsPeriod) % 60);
 		}
 
-		font->glPrintAt(box.x1+0.55f,box.y1+0.65f,0.8f, stats[stat1].name.c_str());
-		font->glPrintAt(box.x1+0.55f,box.y1+0.63f,0.8f, stat2!=-1?stats[stat2].name.c_str():"");
+		font->glPrint(box.x1+0.55f,box.y1+0.65f,0.8f, FONT_SCALE | FONT_NORM, stats[stat1].name);
+		font->glPrint(box.x1+0.55f,box.y1+0.63f,0.8f, FONT_SCALE | FONT_NORM, stat2!=-1?stats[stat2].name:"");
 
 		glDisable(GL_TEXTURE_2D);
 		glBegin(GL_LINES);

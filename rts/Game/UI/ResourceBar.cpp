@@ -3,6 +3,7 @@
 
 #include "ResourceBar.h"
 #include "MouseHandler.h"
+#include "GuiHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -151,52 +152,47 @@ void CResourceBar::Draw(void)
 	glVertex2f(x1+x-0.003f, y1-0.003f);
 	glEnd();
 
-	// draw labels
 
-	glEnable(GL_TEXTURE_2D);
-	glColor4f(1,1,1,0.8f);
+	smallFont->Begin();
 
-	const float headerFontScale = 1.2f, labelsFontScale = 1.0f;
+	const float headerFontSize = (box.y2 - box.y1) * 0.7 * gu->viewSizeY;
+	const float labelsFontSize = (box.y2 - box.y1) * 0.5 * gu->viewSizeY;
+	const int fontOptions = (guihandler && guihandler->GetOutlineFonts()) ? FONT_OUTLINE | FONT_NORM : FONT_NORM;
 
-	smallFont->glPrintAt(metalx - 0.004f, metaly, headerFontScale, "Metal");
+	smallFont->SetTextColor(0.8f,0.8f,1,0.8f);
+	smallFont->glPrint(metalx - 0.004f, (box.y1+box.y2)*0.5, headerFontSize, FONT_VCENTER | fontOptions, "Metal");
 
-	smallFont->glPrintAt(metalbarx2 - 0.01f, metaly - 0.005f, labelsFontScale,
-	                FloatToSmallString(myTeam->metalStorage).c_str());
-	smallFont->glPrintAt(metalbarx1 + metalbarlen / 2.0f, metaly - 0.005f, labelsFontScale,
-	                FloatToSmallString(myTeam->metal).c_str());
+	smallFont->SetTextColor(1,1,0.4f,0.8f);
+	smallFont->glPrint(energyx - 0.018f, (box.y1+box.y2)*0.5, headerFontSize, FONT_VCENTER | fontOptions, "Energy");
 
-	glColor4f(1.0f, 0.4f, 0.4f, 1.0f); // Expenses
-	smallFont->glFormatAt(metalx + 0.044f, metaly - 0.005f, labelsFontScale, "-%s(-%s)",
+	smallFont->SetTextColor(1.0f, 0.3f, 0.3f, 1.0f); // Expenses
+	smallFont->glFormat(metalx + 0.044f, metaly - 0.005f, labelsFontSize, fontOptions, "-%s(-%s)",
 	                FloatToSmallString(fabs(myTeam->prevMetalPull)).c_str(),
 	                FloatToSmallString(fabs(myTeam->metalSent)).c_str());
-
-	glColor4f(0.6f, 1.0f, 0.6f, 0.95f); // Income
-	smallFont->glFormatAt(metalx + 0.044f, metaly + 0.008f, labelsFontScale, "+%s",
-	                FloatToSmallString(myTeam->prevMetalIncome).c_str());
-	                // FloatToSmallString(myTeam->metalReceived).c_str());
-
-	glColor4f(1,1,0.4f,0.8f);
-	smallFont->glPrintAt(energyx - 0.018f, energyy, headerFontScale, "Energy");
-
-	glColor4f(1,1,1,0.8f);
-	smallFont->glPrintAt(energybarx2 - 0.01f, energyy - 0.005f, labelsFontScale,
-	                FloatToSmallString(myTeam->energyStorage).c_str());
-	smallFont->glPrintAt(energybarx1 + energybarlen / 2.0f, energyy - 0.005f, labelsFontScale,
-	                FloatToSmallString(myTeam->energy).c_str());
-
-	glColor4f(1.0f,.4f,.4f,1.0f); // Expenses
-	smallFont->glFormatAt(energyx + 0.044f, energyy - 0.005f, labelsFontScale, "-%s(-%s)",
+	smallFont->glFormat(energyx + 0.044f, energyy - 0.005f, labelsFontSize, fontOptions, "-%s(-%s)",
 	                FloatToSmallString(fabs(myTeam->prevEnergyPull)).c_str(),
 	                FloatToSmallString(fabs(myTeam->energySent)).c_str());
 
-	glColor4f(.6f,1.0f,.6f,.95f); // Income
-	smallFont->glFormatAt(energyx + 0.044f, energyy + 0.008f, labelsFontScale, "+%s",
+	smallFont->SetTextColor(0.4f, 1.0f, 0.4f, 0.95f); // Income
+	smallFont->glFormat(metalx + 0.044f, metaly + 0.008f, labelsFontSize, fontOptions, "+%s",
+	                FloatToSmallString(myTeam->prevMetalIncome).c_str());
+	                // FloatToSmallString(myTeam->metalReceived).c_str());
+	smallFont->glFormat(energyx + 0.044f, energyy + 0.008f, labelsFontSize, fontOptions, "+%s",
 	                FloatToSmallString(myTeam->prevEnergyIncome).c_str());
 	                // FloatToSmallString(myTeam->energyReceived).c_str());
 
-	glDisable(GL_TEXTURE_2D);
+	smallFont->SetTextColor(1,1,1,0.8f);
+	smallFont->glPrint(energybarx2 - 0.01f, energyy - 0.005f, labelsFontSize, fontOptions,
+	                FloatToSmallString(myTeam->energyStorage));
+	smallFont->glPrint(energybarx1 + energybarlen / 2.0f, energyy - 0.005f, labelsFontSize, fontOptions,
+	                FloatToSmallString(myTeam->energy));
 
-	glLoadIdentity();
+	smallFont->glPrint(metalbarx2 - 0.01f, metaly - 0.005f, labelsFontSize, fontOptions,
+	                FloatToSmallString(myTeam->metalStorage));
+	smallFont->glPrint(metalbarx1 + metalbarlen / 2.0f, metaly - 0.005f, labelsFontSize, fontOptions,
+	                FloatToSmallString(myTeam->metal));
+
+	smallFont->End();
 }
 
 
@@ -220,14 +216,14 @@ std::string CResourceBar::GetTooltip(int x, int y)
 
 	if (mx < (box.x1 + 0.36f)) {
 		return "Shows your stored metal as well as\n"
-		       "income(green) and expenditures (red)\n"
+		       "income(\xff\x40\xff\x40green\xff\xff\xff\xff) and expenditures (\xff\xff\x20\x20red\xff\xff\xff\xff).\n"
 		       "Click in the bar to select your\n"
-		       "auto share level";
+		       "AutoShareLevel.";
 	}
 	return "Shows your stored energy as well as\n"
-	       "income(green) and expenditures (red)\n"
+	       "income(\xff\x40\xff\x40green\xff\xff\xff\xff) and expenditures (\xff\xff\x20\x20red\xff\xff\xff\xff).\n"
 	       "Click in the bar to select your\n"
-	       "auto share level";
+	       "AutoShareLevel.";
 }
 
 

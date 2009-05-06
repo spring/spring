@@ -175,6 +175,10 @@ string ConfigHandler::GetString(const string name, const string def)
  */
 void ConfigHandler::SetString(const string name, const string value)
 {
+	for (std::list<ConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it)
+	{
+		(*it)(name, value);
+	}
 	FILE* file = fopen(filename.c_str(), "r+");
 
 	if (file) {

@@ -193,7 +193,7 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 {
 	int size = 1024 >> level;
 
-	GLubyte* buf = NULL;
+	GLint* buf = NULL;
 	bool usedPBO = false;
 
 	if (usePBO) {
@@ -201,34 +201,29 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, pboIDs[currentPBO++]);
 		glBufferData(GL_PIXEL_UNPACK_BUFFER, size * size / 2, 0, GL_STREAM_DRAW);
 
-		//map the buffer object into client's memory
-		buf = (GLubyte*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+		//! map the buffer object into client's memory
+		buf = (GLint*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
 		usedPBO = true;
 	}
 
 	if (buf == NULL) {
-		buf = new GLubyte[size * size / 2];
+		buf = (GLint*)new GLubyte[size * size / 2];
 		usedPBO = false;
 	}
 
 	GroundSquare* square = &squares[y * numBigTexX + x];
 	square->texLevel = level;
-
-	int numblocks = 8 / (1 << level);
+	int numblocks = 8 >> level;
 
 	for (int y1 = 0; y1 < 32; y1++) {
 		for (int x1 = 0; x1 < 32; x1++) {
-			char* tile = &tiles[tileMap[(x1 + x * 32) + (y1 + y * 32) * tileMapXSize] * SMALL_TILE_SIZE + tileoffset[level]];
+			GLint* tile = (GLint*)&tiles[tileMap[(x1 + x * 32) + (y1 + y * 32) * tileMapXSize] * SMALL_TILE_SIZE + tileoffset[level]];
 
+			const int doff = x1 * numblocks + y1 * numblocks * numblocks * 32;
 			for (int yt = 0; yt < numblocks; yt++) {
-				for (int xt = 0; xt < numblocks; xt++) {
-					GLint* sbuf = (GLint*)&tile[(xt + yt * numblocks) * 8];
-					GLint* dbuf = (GLint*)&buf[(x1 * numblocks + xt + (y1 * numblocks + yt) * (numblocks * 32)) * 8];
-
-					//copy 2x 4 bytes at once
-					dbuf[0] = sbuf[0];
-					dbuf[1] = sbuf[1];
-				}
+				GLint* sbuf = &tile[yt * numblocks * 2];
+				GLint* dbuf = &buf[(doff + yt * numblocks * 32) * 2];
+				memcpy(dbuf, sbuf, numblocks * 2 * sizeof(GLint));
 			}
 		}
 	}
@@ -248,7 +243,7 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	if (usedPBO) {
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, 0);
-		//glBufferData(GL_PIXEL_UNPACK_BUFFER, 0, 0, GL_STREAM_DRAW); //free it
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, 0, 0, GL_STREAM_DRAW); //discard old content
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	} else {
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, buf);

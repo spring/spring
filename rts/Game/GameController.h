@@ -18,8 +18,8 @@ public:
 	int  writingPos;  // current writing position
 	bool ignoreNextChar;
 	char ignoreChar;
-	std::basic_string<char> userInput;
-	std::basic_string<char> userPrompt;
+	std::string userInput;
+	std::string userPrompt;
 
 protected:
 	void PasteClipboard();

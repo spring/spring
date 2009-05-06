@@ -163,23 +163,24 @@ bool SelectMenu::Draw()
 		const float yStart = 0.75f;
 
 		const float fontScale = 1.0f;
+		const float fontSize  = fontScale * font->GetSize();
 
 		// draw the caret
 		const int caretPos = userPrompt.length() + writingPos;
 		const string caretStr = tempstring.substr(0, caretPos);
-		const float caretWidth = font->CalcTextWidth(caretStr.c_str());
+		const float caretWidth = fontSize * font->GetTextWidth(caretStr) * gu->pixelX;
 		char c = userInput[writingPos];
 		if (c == 0) { c = ' '; }
-		const float cw = fontScale * font->CalcCharWidth(c);
-		const float csx = xStart + (fontScale * caretWidth);
+		const float cw = fontSize * font->GetCharacterWidth(c) * gu->pixelX;
+		const float csx = xStart + caretWidth;
 		glDisable(GL_TEXTURE_2D);
 		const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
 		glColor4f(f, f, f, 0.75f);
-		glRectf(csx, yStart, csx + cw, yStart + fontScale * font->GetHeight());
+		glRectf(csx, yStart, csx + cw, yStart + fontSize * font->GetLineHeight() * gu->pixelY);
 		glEnable(GL_TEXTURE_2D);
 
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		font->glPrintAt(xStart, yStart, fontScale, tempstring.c_str());
+		font->glPrint(xStart, yStart, fontSize, FONT_NORM, tempstring);
 	}
 
 	if (showList) {
@@ -228,7 +229,7 @@ void SelectMenu::ShowMapList()
 
 	list->AddItem("Random map", "Random map"); // always first
 	for (std::set<std::string>::iterator sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
-		list->AddItem(sit->c_str(), sit->c_str());
+		list->AddItem(*sit, *sit);
 	}
 	showList = list;
 }
@@ -260,7 +261,7 @@ void SelectMenu::ShowModList()
 	list->AddItem("Random mod", "Random mod"); // always first
 	std::map<std::string, std::string>::iterator mit;
 	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {
-		list->AddItem(mit->first.c_str(), mit->second.c_str());
+		list->AddItem(mit->first, mit->second);
 	}
 	showList = list;
 }
