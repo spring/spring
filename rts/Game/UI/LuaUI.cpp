@@ -633,10 +633,13 @@ bool CLuaUI::BuildCmdDescTable(lua_State* L,
 		lua_newtable(L); {
 			HSTR_PUSH_NUMBER(L, "id",       cmds[i].id);
 			HSTR_PUSH_NUMBER(L, "type",     cmds[i].type);
+			HSTR_PUSH_STRING(L, "name",     cmds[i].name);
+			HSTR_PUSH_STRING(L, "tooltip",  cmds[i].tooltip);
 			HSTR_PUSH_STRING(L, "action",   cmds[i].action);
 			HSTR_PUSH_STRING(L, "texture",  cmds[i].iconname);
 			HSTR_PUSH_BOOL(L,   "hidden",   cmds[i].hidden);
 			HSTR_PUSH_BOOL(L,   "disabled", cmds[i].disabled);
+			HSTR_PUSH_BOOL(L,"onlyTexture", cmds[i].onlyTexture);
 
 			HSTR_PUSH(L, "params");
 			lua_newtable(L);

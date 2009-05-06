@@ -13,7 +13,11 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <list>
 #include <stdio.h>
+
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
 #ifdef __FreeBSD__
 #include <sys/stat.h>
@@ -28,7 +32,15 @@
  */
 class ConfigHandler
 {
+	typedef boost::function<void(const std::string&, const std::string&)> ConfigNotifyCallback;
 public:
+	template<class T>
+	void NotifyOnChange(T* observer)
+	{
+		// issues: still needs to call configHandler->Get() on startup, automate it
+		observers.push_back(boost::bind(&T::ConfigNotify, observer, _1, _2));
+	};
+
 	/**
 	* @brief set string
 	* @param name name of key to set
@@ -109,6 +121,8 @@ private:
 	void Write(FILE* file);
 	char* Strip(char* begin, char* end);
 	void AppendLine(char* buf);
+	
+	std::list<ConfigNotifyCallback> observers;
 };
 
 extern ConfigHandler* configHandler;

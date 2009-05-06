@@ -29,6 +29,7 @@ public:
 	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
 	void NewFrame();
 
+	void ConfigNotify(const std::string& key, const std::string& value);
 	void PitchAdjust(const float newPitch);
 
 	bool Mute();

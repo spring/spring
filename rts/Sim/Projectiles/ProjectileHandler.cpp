@@ -532,8 +532,6 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 			}
 		}
 
-		unitDrawer->SetupFor3DO();
-
 		// 3DO flying pieces
 		va->Initialize();
 		va->EnlargeArrays(flying3doPieces->size()*4,0,VA_SIZE_TN);
@@ -571,9 +569,11 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 			va->AddVertexQTN(tp,tex->xstart,tex->yend,tn);
 		}
 		drawnPieces+=va->drawIndex()/32;
-	}
 
-	va->DrawArrayTN(GL_QUADS);
+		unitDrawer->SetupFor3DO();
+		va->DrawArrayTN(GL_QUADS);
+		//unitDrawer->CleanUp3DO(); we will render the projectiles before we unlink it
+	}
 
 	distlist.clear();
 
@@ -617,7 +617,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 					continue;
 
 				if (pro->s3domodel) {
-					if (pro->s3domodel->textureType) {
+					if (pro->s3domodel->type == MODELTYPE_S3O) {
 						unitDrawer->QueS3ODraw(pro, pro->s3domodel->textureType);
 					} else {
 						pro->DrawUnitPart();
@@ -630,8 +630,8 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 				distlist.insert(tmp);
 			}
 		}
-
 		unitDrawer->CleanUp3DO();
+
 		// draw qued S3O projectiles
 		unitDrawer->DrawQuedS3O();
 
