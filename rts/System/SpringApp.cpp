@@ -24,6 +24,7 @@
 #include "Game/Game.h"
 #include "Sim/Misc/Team.h"
 #include "Game/UI/KeyBindings.h"
+#include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
 #include "ConfigHandler.h"
@@ -1055,6 +1056,9 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_ACTIVEEVENT: {
 					if (event.active.state & SDL_APPACTIVE) {
 						gu->active = !!event.active.gain;
+					}
+					if(mouse->locked) {
+						mouse->ToggleState();
 					}
 					break;
 				}
