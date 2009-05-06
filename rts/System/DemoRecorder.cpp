@@ -2,7 +2,6 @@
 #include "DemoRecorder.h"
 
 #include <assert.h>
-#include <time.h>
 #include <errno.h>
 
 #include "mmgr.h"
@@ -11,16 +10,10 @@
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Game/GameSetup.h"
-#include "Exceptions.h"
 #include "Util.h"
+#include "TimeUtil.h"
 
 #include "LogOutput.h"
-
-#ifdef __GNUC__
-#define __time64_t time_t
-#define _time64(x) time(x)
-#define _localtime64(x) localtime(x)
-#endif
 
 CDemoRecorder::CDemoRecorder()
 {
@@ -40,8 +33,7 @@ CDemoRecorder::CDemoRecorder()
 	fileHeader.headerSize = sizeof(DemoFileHeader);
 	strcpy(fileHeader.versionString, SpringVersion::Get().c_str());
 
-	__time64_t currtime;
-	_time64(&currtime);
+	__time64_t currtime = CTimeUtil::GetCurrentTime();
 	fileHeader.unixTime = currtime;
 
 	recordDemo.write((char*)&fileHeader, sizeof(fileHeader));
@@ -65,12 +57,12 @@ CDemoRecorder::~CDemoRecorder()
 	if (demoName != wantedName) {
 		if (rename(demoName.c_str(), wantedName.c_str()) != 0) {
 #ifndef DEDICATED
-            LogObject() << "Renaming demo " << demoName << " to " << wantedName << "\n";
-            LogObject() << "failed: " << strerror(errno) << "\n";
+			LogObject() << "Renaming demo " << demoName << " to " << wantedName << "\n";
+			LogObject() << "failed: " << strerror(errno) << "\n";
 #endif
 		}
 	} else {
-	    // pointless?
+		// pointless?
 		//remove("demos/unnamed.sdf");
 		//rename(demoName.c_str(), "demos/unnamed.sdf");
 	}
@@ -79,8 +71,9 @@ CDemoRecorder::~CDemoRecorder()
 void CDemoRecorder::WriteSetupText(const std::string& text)
 {
 	int length = text.length();
-	while (text.c_str()[length - 1] == '\0')
+	while (text.c_str()[length - 1] == '\0') {
 		--length;
+	}
 
 	fileHeader.scriptSize = length;
 	recordDemo.write(text.c_str(), length);
@@ -101,24 +94,11 @@ void CDemoRecorder::SaveToDemo(const unsigned char* buf, const unsigned length, 
 
 void CDemoRecorder::SetName(const std::string& mapname)
 {
-	struct tm* newtime;
-	__time64_t long_time;
-	_time64(&long_time);                /* Get time as long integer. */
-	newtime = _localtime64(&long_time); /* Convert to local time. */
-
-	// Don't see how this can happen (according to docs _localtime64 only returns
-	// NULL if long_time is before 1/1/1970...) but a user's stacktrace indicated
-	// NULL newtime in the snprintf line...
-	if (!newtime)
-		throw content_error("error: _localtime64 returned NULL");
-
-	char buf[1000];
-	SNPRINTF(buf, sizeof(buf), "%04i%02i%02i_%02i%02i%02i",
-		newtime->tm_year + 1900, newtime->tm_mon + 1, newtime->tm_mday,
-        newtime->tm_hour, newtime->tm_min, newtime->tm_sec);
+	// Returns the current local time as "JJJJMMDD_HHmmSS", eg: "20091231_115959"
+	const std::string curTime = CTimeUtil::GetCurrentTimeStr();
 
 	std::string name =
-		std::string(buf) +
+		curTime +
 		"_" +
 		mapname.substr(0, mapname.find_first_of(".")) +
 		"_" +
@@ -128,9 +108,10 @@ void CDemoRecorder::SetName(const std::string& mapname)
 	// note: the gameSetup pointer is non-0 when CPreGame
 	// wants to rename us even in non-scripted games now
 	if (!gameSetup || wantedName.find("local_") != std::string::npos) {
-	    name = "local_" + name;
+		name = "local_" + name;
 	}
 
+	char buf[1024];
 	SNPRINTF(buf, sizeof(buf), "demos/%s.sdf", name.c_str());
 	CFileHandler ifs(buf);
 	if (ifs.FileExists()) {
