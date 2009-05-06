@@ -219,6 +219,37 @@ public:
 		const AnimInfo* ai = FindAnim(type, piece, axis);
 		return ai && !ai->interpolated;
 	}
+
+	// callins, called throughout sim
+	// Killed must cause unit->deathScriptFinished and unit->delayedWreckLevel to be set!
+	virtual void Killed(float damageRatio) = 0;
+	virtual void SetDirection(int heading) = 0;
+	virtual void SetSpeed(float speed) = 0;
+	virtual void RockUnit(const float3& rockDir) = 0;
+	virtual void HitByWeapon(const float3& hitDir) = 0;
+	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage) = 0;
+	virtual void SetSFXOccupy(int curTerrainType) = 0;
+	// doubles as QueryLandingPadCount and QueryLandingPad
+	// in COB, the first one determines the number of arguments to the second one
+	// in Lua, we can just count the number of return values
+	virtual void QueryLandingPads(std::vector<int>& out_pieces) = 0;
+	virtual void BeginTransport(CUnit* unit) = 0;
+	virtual int  QueryTransport(CUnit* unit) = 0; // returns piece
+	virtual void TransportPickup(CUnit* unit) = 0;
+	virtual void EndTransport() = 0;
+	virtual void TransportDrop(CUnit* unit, const float3& pos) = 0;
+	virtual void SetMaxReloadTime(int maxReloadMillis) = 0;
+	virtual void StartBuilding(int heading, int pitch) = 0;
+	virtual void StopBuilding() = 0;
+	virtual int  QueryNanoPiece() = 0; // returns piece
+
+	// weapon callins
+	virtual int   QueryWeapon(int weaponNum) = 0; // returns piece, former QueryPrimary
+	virtual void  AimWeapon(int weaponNum, int heading, int pitch) = 0;
+	virtual int   AimFromWeapon(int weaponNum) = 0; // returns piece, former AimFromPrimary
+	virtual void  Shot(int weaponNum /*, FIXME maybe: CUnit* targetUnit*/) = 0;
+	virtual bool  BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked
+	virtual float TargetWeight(int weaponNum, CUnit* targetUnit) = 0; // returns target weight
 };
 
 #endif
