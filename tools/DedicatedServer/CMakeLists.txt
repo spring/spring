@@ -12,6 +12,7 @@ SET(system_files
 	../../rts/System/TdfParser
 	../../rts/System/ConfigHandler
 	../../rts/System/LogOutput
+	../../rts/System/TimeUtil
 	../../rts/System/BaseNetProtocol
 	../../rts/System/Demo
 	../../rts/System/DemoReader
