@@ -111,14 +111,14 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 		// the transport died in a place that the unit being carried
 		// could not get to on its own
 		if (!u->pos.IsInBounds()) {
-			u->KillUnit(false, false, 0x0, false);
+			u->KillUnit(false, false, NULL, false);
 			continue;
 		} else {
 			if (gh < -u->unitDef->movedata->depth) {
 				// treat depth as maxWaterDepth (fails if
 				// the transportee is a ship, but so does
 				// using UnitDef::{min, max}WaterDepth)
-				u->KillUnit(false, false, 0x0, false);
+				u->KillUnit(false, false, NULL, false);
 				continue;
 			}
 		}

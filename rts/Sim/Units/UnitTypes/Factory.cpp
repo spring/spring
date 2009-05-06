@@ -62,8 +62,8 @@ CFactory::~CFactory()
 {
 	// if uh == NULL then all pointers to units should be considered dangling pointers
 	if (uh && curBuild) {
-		curBuild->KillUnit(false, true, 0);
-		curBuild = 0;
+		curBuild->KillUnit(false, true, NULL);
+		curBuild = NULL;
 	}
 }
 
