@@ -35,12 +35,47 @@ extern "C" {
 	typedef void*     sharedLib_t;
 #endif // _WIN32
 
+/**
+ * Returns the platform specific shared library extension.
+ * examples:
+ * - Windows:      "dll"
+ * - Unix & Linux: "so"
+ * - OS X:         "dylib"
+ */
+const char* sharedLib_getLibExtension();
+
+/**
+ * Creates a full library file name out of a base name.
+ * The result is platform dependent.
+ * examples (input: "foo"):
+ * - Windows:      "foo.dll"
+ * - Unix & Linux: "libfoo.so"
+ * - OS X:         "libfoo.dylib"
+ */
+void sharedLib_createFullLibName(const char* libBaseName,
+		char* libFullName, const size_t libFullName_sizeMax);
+
+/**
+ * Loads a shared library from a file.
+ * Use sharedLib_isLoaded() to check if loading was successfull.
+ */
 sharedLib_t sharedLib_load(const char* libFilePath);
 
+/**
+ * Unloads a shared library.
+ */
 void sharedLib_unload(sharedLib_t sharedLib);
 
+/**
+ * Returns <code>true</code> if the shared library is properly loaded,
+ * <code>false</code> otherwise
+ */
 bool sharedLib_isLoaded(sharedLib_t sharedLib);
 
+/**
+ * Returns a pointer to a function in the shared library
+ * with the name given in symbol.
+ */
 void* sharedLib_findAddress(sharedLib_t sharedLib, const char* symbol);
 
 #ifdef __cplusplus

@@ -393,8 +393,9 @@ void CTeam::SlowUpdate()
 	units once it transfered the commander. */
 	if (gameSetup->gameMode == GameMode::ComEnd && numCommanders<=0 && !gaia){
 		for(std::list<CUnit*>::iterator ui=uh->activeUnits.begin();ui!=uh->activeUnits.end();++ui){
-			if ((*ui)->team==teamNum && !(*ui)->unitDef->isCommander)
-				(*ui)->KillUnit(true,false,0);
+			if ((*ui)->team==teamNum && !(*ui)->unitDef->isCommander) {
+				(*ui)->KillUnit(true, false, NULL);
+			}
 		}
 		// Set to 1 to prevent above loop from being done every update.
 		numCommanders = 1;
@@ -460,8 +461,9 @@ void CTeam::LeftLineage(CUnit* unit)
 {
 	if (gameSetup->gameMode == GameMode::Lineage && unit->id == this->lineageRoot) {
 		for (std::list<CUnit*>::iterator ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
-			if ((*ui)->lineage == this->teamNum)
-				(*ui)->KillUnit(true, false, 0);
+			if ((*ui)->lineage == this->teamNum) {
+				(*ui)->KillUnit(true, false, NULL);
+			}
 		}
 	}
 }
