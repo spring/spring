@@ -38,6 +38,21 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 	scriptNames[COBFN_SetSFXOccupy]  = "setSFXoccupy";
 	scriptNames[COBFN_HitByWeaponId] = "HitByWeaponId";
 
+	scriptNames[COBFN_QueryLandingPadCount] = "QueryLandingPadCount";
+	scriptNames[COBFN_QueryLandingPad]      = "QueryLandingPad";
+	scriptNames[COBFN_Falling]              = "Falling";
+	scriptNames[COBFN_Landed]               = "Landed";
+	scriptNames[COBFN_BeginTransport]       = "BeginTransport";
+	scriptNames[COBFN_QueryTransport]       = "QueryTransport";
+	scriptNames[COBFN_TransportPickup]      = "TransportPickup";
+	scriptNames[COBFN_EndTransport]         = "EndTransport";
+	scriptNames[COBFN_TransportDrop]        = "TransportDrop";
+	scriptNames[COBFN_SetMaxReloadTime]     = "SetMaxReloadTime";
+	scriptNames[COBFN_StartBuilding]        = "StartBuilding";
+	scriptNames[COBFN_StopBuilding]         = "StopBuilding";
+	scriptNames[COBFN_QueryNanoPiece]       = "QueryNanoPiece";
+	scriptNames[COBFN_Go]                   = "Go";
+
 	// Also add the weapon aiming stuff
 	for (int i = 0; i < COB_MaxWeapons; ++i) {
 		char buf[15];
