@@ -2211,14 +2211,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glTextBox.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Gl\glTextBox.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Rendering\Gl\IFramebuffer.h"
 					>
 				</File>
@@ -3227,6 +3219,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\AllyTeam.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\AllyTeam.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\CategoryHandler.cpp"
 					>
 				</File>
@@ -3821,6 +3821,10 @@
 			</File>
 			<File
 				RelativePath="..\..\System\FastMath.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\float4.cpp"
 				>
 			</File>
 			<File
@@ -7144,6 +7148,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaFeatureDefs.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaFonts.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaFonts.h"
 				>
 			</File>
 			<File
