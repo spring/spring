@@ -4084,6 +4084,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\TimeUtil.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\TimeUtil.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\UnsyncedRNG.cpp"
 				>
 				<FileConfiguration
