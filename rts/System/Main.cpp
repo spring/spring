@@ -14,7 +14,7 @@
 
 #include "SpringApp.h"
 
-#include <SDL.h>     // Must come after Game/UI/MouseHandler.h for ButtonPress
+#include <SDL.h>     // Must come after Game/UI/MouseHandler.h for ButtonPressEvt
 
 #ifdef WIN32
 #include "Platform/Win/win32.h"
