@@ -152,8 +152,8 @@ private:
 	int outlineWidth;
 	float outlineWeight;
 	int chars;
-	int charstart;
-	int charend;
+	unsigned int charstart;
+	unsigned int charend;
 
 	GLuint fontTexture;
 	GLuint texWidth,texHeight;

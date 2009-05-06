@@ -55,11 +55,11 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
 	pathFinder(pf),
-	moveMathOptions(mmOpt),
-	pathChecksum(0),
 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
 	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
 	nbrOfBlocks(nbrOfBlocksX * nbrOfBlocksZ),
+	moveMathOptions(mmOpt),
+	pathChecksum(0),
 	offsetBlockNum(nbrOfBlocks),costBlockNum(nbrOfBlocks),
 	lastOffsetMessage(-1),lastCostMessage(-1)
 {
