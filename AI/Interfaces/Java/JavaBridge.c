@@ -1387,7 +1387,9 @@ bool java_initSkirmishAIClass(
 		success = true;
 	}
 
-	team_skirmishAiImpl[teamId] = sai;
+	if (success) {
+		team_skirmishAiImpl[teamId] = sai;
+	}
 
 	return success;
 }
