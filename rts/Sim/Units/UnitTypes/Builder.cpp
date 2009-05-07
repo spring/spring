@@ -705,8 +705,7 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 {
-	std::vector<int> args(1, 0);
-	script->Call("QueryNanoPiece", args);
+	const int piece = script->QueryNanoPiece();
 
 #ifdef USE_GML
 	if (gs->frameNum - lastDrawFrame > 20)
@@ -714,7 +713,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 #endif
 
 	if (ph->currentParticles < ph->maxParticles && unitDef->showNanoSpray) {
-		float3 relWeaponFirePos = script->GetPiecePos(args[0]);
+		float3 relWeaponFirePos = script->GetPiecePos(piece);
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 
 		float3 dif = goal - weaponPos;

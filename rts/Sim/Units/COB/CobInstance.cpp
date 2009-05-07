@@ -308,7 +308,9 @@ void CCobInstance::StartBuilding(float heading, float pitch)
 
 int CCobInstance::QueryNanoPiece()
 {
-	return -1;
+	vector<int> args(1, 0);
+	Call(COBFN_QueryNanoPiece, args);
+	return args[0];
 }
 
 
