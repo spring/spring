@@ -40,7 +40,7 @@
 #include <iostream>
 #include <fstream>
 
-CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, (0, SkirmishAIKey()))
+CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, )
 CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_MEMBER(teamId),
 	CR_MEMBER(cheatEvents),
@@ -69,9 +69,16 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 		} else throw;									\
 	}
 
+/// used only by creg
+CSkirmishAIWrapper::CSkirmishAIWrapper():
+		teamId(-1), cheatEvents(false), ai(NULL), c_callback(NULL) {}
 
-CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key)
-		: teamId(teamId), cheatEvents(false), ai(NULL), c_callback(NULL), key(key) {
+CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key):
+		teamId(teamId), cheatEvents(false), ai(NULL), c_callback(NULL), key(key) {
+	CreateCallback();
+}
+
+void CSkirmishAIWrapper::CreateCallback() {
 
 	if (c_callback == NULL) {
 		callback = new CGlobalAICallback(this);
@@ -100,6 +107,8 @@ void CSkirmishAIWrapper::Serialize(creg::ISerializer* s) {}
 
 
 void CSkirmishAIWrapper::PostLoad() {
+
+	CreateCallback();
 	LoadSkirmishAI(true);
 }
 
@@ -125,6 +134,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	if (postLoad && !loadSupported) {
 		// fallback code to help the AI if it
 		// doesn't implement load/save support
+		Init();
 		for (size_t a = 0; a < uh->MaxUnits(); a++) {
 			if (!uh->units[a])
 				continue;
