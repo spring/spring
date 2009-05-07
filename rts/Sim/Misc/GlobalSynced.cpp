@@ -45,7 +45,6 @@ CR_REG_METADATA(CGlobalSyncedStuff, (
 	CR_MEMBER(editDefsEnabled),
 	CR_MEMBER(useLuaRules),
 	CR_MEMBER(useLuaGaia),
-	CR_MEMBER(activeTeamsBackwardCompatForLuaBinder),
 	CR_MEMBER(randSeed),
 	CR_MEMBER(initRandSeed),
 	CR_RESERVED(64)
@@ -99,8 +98,6 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	playerHandler->LoadFromSetup(setup);
 
 	teamHandler->LoadFromSetup(setup);
-
-	activeTeamsBackwardCompatForLuaBinder = teamHandler->ActiveTeams();
 }
 
 /**
