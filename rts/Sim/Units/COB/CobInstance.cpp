@@ -172,7 +172,7 @@ void CCobInstance::SetSpeed(float speed)
 
 void CCobInstance::RockUnit(const float3& rockDir)
 {
-	std::vector<int> rockAngles;
+	vector<int> rockAngles;
 	rockAngles.push_back((int)(500 * rockDir.z));
 	rockAngles.push_back((int)(500 * rockDir.x));
 	Call(COBFN_RockUnit, rockAngles);
@@ -181,11 +181,36 @@ void CCobInstance::RockUnit(const float3& rockDir)
 
 void CCobInstance::HitByWeapon(const float3& hitDir)
 {
+	vector<int> args;
+	args.push_back((int)(500 * hitDir.z));
+	args.push_back((int)(500 * hitDir.x));
+	Call(COBFN_HitByWeapon, args);
 }
+
+
+// ugly hack to get return value of HitByWeaponId script
+static float weaponHitMod; //fraction of weapondamage to use when hit by weapon
+static void hitByWeaponIdCallback(int retCode, void *p1, void *p2) { weaponHitMod = retCode*0.01f; }
 
 
 void CCobInstance::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage)
 {
+	vector<int> args;
+
+	args.push_back((int)(500 * hitDir.z));
+	args.push_back((int)(500 * hitDir.x));
+
+	if (weaponDefId != -1) {
+		args.push_back(weaponDefHandler->weaponDefs[weaponDefId].tdfId);
+	} else {
+		args.push_back(-1);
+	}
+
+	args.push_back((int)(100 * inout_damage));
+
+	weaponHitMod = 1.0f;
+	Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, this, NULL);
+	inout_damage *= weaponHitMod; // weaponHitMod gets set in callback function
 }
 
 
