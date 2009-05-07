@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 
+#include <cstdio>
 #include "mmgr.h"
 
 #include "EndGameBox.h"
@@ -16,7 +17,7 @@
 #include "LogOutput.h"
 #include "Exceptions.h"
 
-
+using std::sprintf;
 extern bool globalQuit;
 
 
