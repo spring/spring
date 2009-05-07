@@ -58,7 +58,7 @@ CR_REG_METADATA(CTAAirMoveType, (
 
 	CR_MEMBER(randomWind),
 
-	CR_RESERVED(59)
+	CR_RESERVED(32)
 	));
 
 

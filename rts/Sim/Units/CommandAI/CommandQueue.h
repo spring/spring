@@ -18,7 +18,9 @@ class CCommandQueue {
 	friend class CFactoryCAI;
 	friend class CAIAICallback; // the C++ AI interface wrapper
 
+	// see CommandAI.cpp for further creg stuff for this class
 	CR_DECLARE(CCommandQueue);
+
 	public:
 		enum QueueType {
 			CommandQueueType,
@@ -29,7 +31,7 @@ class CCommandQueue {
 		inline QueueType GetType() const { return queueType; }
 
 	public:
-		// limit to a float's integer range
+		/// limit to a float's integer range
 		static const int maxTagValue = (1 << 24); // 16777216
 
 		typedef std::deque<Command> basis;

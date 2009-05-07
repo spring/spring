@@ -20,7 +20,6 @@
 #include "myMath.h"
 
 CR_BIND_DERIVED(CScriptMoveType, AMoveType, (NULL));
-
 CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(tag),
 	CR_MEMBER(extrapolate),
@@ -31,23 +30,22 @@ CR_REG_METADATA(CScriptMoveType, (
 	CR_MEMBER(rot),
 	CR_MEMBER(rotVel),
 	CR_MEMBER(useRotVel),
-	CR_MEMBER(trackGround),
-	CR_MEMBER(hasDecal),
-	CR_MEMBER(isBuilding),
-	CR_MEMBER(gravityFactor),
-	CR_MEMBER(windFactor),
 	CR_MEMBER(trackSlope),
 	CR_MEMBER(trackGround),
 	CR_MEMBER(groundOffset),
+	CR_MEMBER(gravityFactor),
+	CR_MEMBER(windFactor),
 	CR_MEMBER(mins),
 	CR_MEMBER(maxs),
-	CR_MEMBER(isBlocking), // copy of CSolidObject::blocking (no longer used)
 	CR_MEMBER(noBlocking), // copy of CSolidObject::isMarkedOnBlockingMap
 	CR_MEMBER(gndStop),
 	CR_MEMBER(shotStop),
 	CR_MEMBER(slopeStop),
 	CR_MEMBER(collideStop),
 	CR_MEMBER(leaveTracks),
+	CR_MEMBER(hasDecal),
+	CR_MEMBER(isBuilding),
+	CR_MEMBER(isBlocking), // copy of CSolidObject::blocking (no longer used)
 	CR_MEMBER(rotOffset),
 	CR_MEMBER(lastTrackUpdate),
 	CR_MEMBER(oldPos),
@@ -57,8 +55,8 @@ CR_REG_METADATA(CScriptMoveType, (
 	));
 
 
-CScriptMoveType::CScriptMoveType(CUnit* owner)
-	: AMoveType(owner),
+CScriptMoveType::CScriptMoveType(CUnit* owner):
+	AMoveType(owner),
 	tag(0),
 	extrapolate(true),
 	drag(0.0f),
