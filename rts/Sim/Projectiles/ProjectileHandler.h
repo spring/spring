@@ -159,11 +159,22 @@ private:
 		float rot;
 		float rotSpeed;
 	};
-	typedef std::list<FlyingPiece*> FlyingPiece_List;
-	std::list<FlyingPiece_List*> flyingPieces;
-	FlyingPiece_List * flying3doPieces;
-	// flyings3oPieces[textureType][team]
-	std::vector<std::vector<FlyingPiece_List*> > flyings3oPieces;
+	typedef std::set<FlyingPiece*> FlyingPiece_Set;
+	std::list<FlyingPiece_Set*> flyingPieces;
+	FlyingPiece_Set * flying3doPieces;
+	std::vector<std::vector<FlyingPiece_Set*> > flyings3oPieces;
+
+	struct FlyingPieceToAdd {
+		FlyingPieceToAdd() {}
+		FlyingPieceToAdd(FlyingPiece *fpi, int tex, int tm): fp(fpi), texture(tex), team(tm) {}
+		FlyingPiece *fp;
+		int texture;
+		int team;
+	};
+
+	std::vector<FlyingPiece *> flying3doPiecesToAdd;
+	std::vector<FlyingPieceToAdd> flyings3oPiecesToAdd;
+	std::map<FlyingPiece *, FlyingPiece_Set *> flyingPiecesToRemove;
 
 	GLuint perlinTex[8];
 	float perlinBlend[4];
