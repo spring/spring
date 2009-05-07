@@ -238,7 +238,6 @@ public:
 	virtual void BeginTransport(CUnit* unit) = 0;
 	virtual int  QueryTransport(CUnit* unit) = 0; // returns piece
 	virtual void TransportPickup(CUnit* unit) = 0;
-	virtual void EndTransport() = 0;
 	virtual void TransportDrop(CUnit* unit, const float3& pos) = 0;
 	virtual void StartBuilding(float heading, float pitch) = 0;
 	virtual int  QueryNanoPiece() = 0; // returns piece
@@ -253,6 +252,7 @@ public:
 
 	// inlined callins, un-inline and make virtual when different behaviour is
 	// desired between the different unit script implementations (COB, Lua).
+	void EndTransport()  { Call(COBFN_EndTransport); }
 	void StartBuilding() { Call(COBFN_StartBuilding); }
 	void StopBuilding()  { Call(COBFN_StopBuilding); }
 };

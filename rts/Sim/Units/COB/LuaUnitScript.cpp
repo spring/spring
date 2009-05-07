@@ -322,11 +322,6 @@ void CLuaUnitScript::TransportPickup(CUnit* unit)
 }
 
 
-void CLuaUnitScript::EndTransport()
-{
-}
-
-
 void CLuaUnitScript::TransportDrop(CUnit* unit, const float3& pos)
 {
 }
