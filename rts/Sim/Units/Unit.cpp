@@ -2309,6 +2309,7 @@ void CUnit::StopAttackingAllyTeam(int ally)
 CR_REG_METADATA(CUnit, (
 	//CR_MEMBER(unitDef),
 	CR_MEMBER(unitDefName),
+	CR_MEMBER(collisionVolume),
 	CR_MEMBER(team),
 	CR_MEMBER(allyteam),
 	CR_MEMBER(lineage),
