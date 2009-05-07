@@ -510,7 +510,7 @@ for baseName in aiinterfaces_toBuild:
 		interfaceManifestFile = filelist.getAbsDir(env, os.path.join(interfaceJavaSrcDir, 'manifest.mf'))
 		interfaceBinDir = os.path.join('AI', myEnv['sourcedir'], 'bin')
 		awkScriptsDir = interfaceBinDir
-		awkCommonScriptsDir = os.path.join('AI', 'Wrappers', 'CUtils', 'bin')
+		awkCommonScriptsDir = os.path.join(springSrcDir, 'AI', 'Wrappers', 'CUtils', 'bin')
 		interfaceGeneratedJavaSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'generated-java-src'))
 		interfaceTmpAllSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'tmp-all-src'))
 		interfaceJavaClassesDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'classes'))
