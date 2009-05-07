@@ -125,8 +125,37 @@ int CCobInstance::GetFunctionId(const std::string& fname) const
 /******************************************************************************/
 
 
+// Called when a unit's Killed script finishes executing
+static void CUnitKilledCB(int retCode, void* p1, void* p2)
+{
+	CUnit* self = (CUnit*) p1;
+	self->deathScriptFinished = true;
+	self->delayedWreckLevel = retCode;
+}
+
+
 void CCobInstance::Killed()
 {
+	vector<int> args;
+	args.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
+	args.push_back(0);
+	RealCall(scriptIndex[COBFN_Killed], args, &CUnitKilledCB, this, NULL);
+
+	//FIXME: moved from Unit.cpp, but seems like a bug?
+
+	// If Killed script returns immediately then returned delayedWreckLevel
+	// will have been popped from stack and stored in retCode, so args[1] will
+	// have been set to 0 by RealCall, and CCobThread::CheckStack will have
+	// warned about stack size mismatch...  Workaround is to not return but to
+	// assign to the delayedWreckLevel parameter.
+
+	// If, on the other hand, the Killed script sleeps or waits, then assigning
+	// to the delayedWreckLevel parameter won't have any effect, because it
+	// does not set retCode.  In this case there must be a
+	// 		`return (delayedWreckLevel)'
+	// statement.
+
+	unit->delayedWreckLevel = args[1];
 }
 
 
