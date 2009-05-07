@@ -69,7 +69,7 @@ public:
 	SkirmishAIKey skirmishAIKey;
 	std::map<std::string, std::string> skirmishAIOptions;
 
-	// color info is unsynced
+	/// color info is unsynced
 	unsigned char origColor[4];
 
 	CUnitSet units;
@@ -90,7 +90,7 @@ public:
 	SyncedFloat metalStorage, energyStorage;
 
 	float metalShare, energyShare;
-	SyncedFloat delayedMetalShare, delayedEnergyShare; //excess that might be shared next SlowUpdate
+	SyncedFloat delayedMetalShare, delayedEnergyShare; // excess that might be shared next SlowUpdate
 
 	float metalSent;
 	float metalReceived;
@@ -103,8 +103,8 @@ public:
 		float metalUsed,     energyUsed;
 		float metalProduced, energyProduced;
 		float metalExcess,   energyExcess;
-		float metalReceived, energyReceived; //received from allies
-		float metalSent,     energySent;     //sent to allies
+		float metalReceived, energyReceived; // received from allies
+		float metalSent,     energySent;     // sent to allies
 
 		float damageDealt,   damageReceived; // Damage taken and dealt to enemy units
 
@@ -112,9 +112,12 @@ public:
 		int unitsDied;
 		int unitsReceived;
 		int unitsSent;
-		int unitsCaptured;				//units captured from enemy by us
-		int unitsOutCaptured;			//units captured from us by enemy
-		int unitsKilled;	//how many enemy units have been killed by this teams units
+		/// units captured from enemy by us
+		int unitsCaptured;
+		/// units captured from us by enemy
+		int unitsOutCaptured;
+		/// how many enemy units have been killed by this teams units
+		int unitsKilled;
 
 		/// Change structure from host endian to little endian or vice versa.
 		void swab() {
@@ -140,16 +143,20 @@ public:
 		}
 	};
 	Statistics currentStats;
-	static const int statsPeriod = 15; // every 15th second
+	/// in intervalls of this many seconds, statistics are updated
+	static const int statsPeriod = 15;
 
 	int lastStatSave;
-	int numCommanders;		//number of units with commander tag in team, if it reaches zero with cmd ends the team dies
+	/// number of units with commander tag in team, if it reaches zero with cmd ends the team dies
+	int numCommanders;
 	std::list<Statistics> statHistory;
 	void CommanderDied(CUnit* commander);
 	void LeftLineage(CUnit* unit);
 
-	std::vector<float>         modParams;    // mod controlled parameters
-	std::map<std::string, int> modParamsMap; // name map for mod parameters
+	/// mod controlled parameters
+	std::vector<float>         modParams;
+	/// name map for mod parameters
+	std::map<std::string, int> modParamsMap;
 };
 
 #endif /* TEAM_H */

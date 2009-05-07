@@ -1,19 +1,18 @@
-// AirCAI.h: Air movement type definition
-///////////////////////////////////////////////////////////////////////////
-
 #ifndef __AIR_MOVE_TYPE_H__
 #define __AIR_MOVE_TYPE_H__
 
 #include "AAirMoveType.h"
 #include <vector>
 
-
-class CAirMoveType :
-	public AAirMoveType
+/**
+ * Air movement type definition
+ */
+class CAirMoveType : public AAirMoveType
 {
 	CR_DECLARE(CAirMoveType);
 	CR_DECLARE_SUB(DrawLine);
 	CR_DECLARE_SUB(RudderInfo);
+
 public:
 
 	CAirMoveType(CUnit* owner);
@@ -56,7 +55,8 @@ public:
 	float wingDrag;
 	float wingAngle;
 	float invDrag;
-	float crashDrag;    //actually the invDrag of crashDrag
+	/// actually the invDrag of crashDrag
+	float crashDrag;
 	float frontToSpeed;
 	float speedToFront;
 	float myGravity;
@@ -74,8 +74,8 @@ public:
 
 	float inSupply;
 
-
-	float mySide;		//used while landing
+	/// used while landing
+	float mySide;
 	float crashAileron;
 	float crashElevator;
 	float crashRudder;
@@ -84,7 +84,7 @@ public:
 
 	struct DrawLine {
 		CR_DECLARE_STRUCT(DrawLine);
-		float3 pos1,pos2;
+		float3 pos1, pos2;
 		float3 color;
 	};
 	std::vector<DrawLine> lines;
@@ -106,7 +106,8 @@ public:
 	float lastAileronPos;
 
 	float inefficientAttackTime;
-	float3 exitVector;	//used by fighters to turn away when closing in on ground targets
+	/// used by fighters to turn away when closing in on ground targets
+	float3 exitVector;
 };
 
 #endif // __AIR_MOVE_TYPE_H__

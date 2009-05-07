@@ -29,9 +29,12 @@ const int MAX_CONSECUTIVE_SIMFRAMES = 15;
 
 class CGame : public CGameController
 {
-public:
-	CR_DECLARE(CGame);			//Don't use CGame pointer in CR_MEMBER()!!!
+private:
+	CR_DECLARE(CGame);	// Do not use CGame pointer in CR_MEMBER()!!!
 	void PostLoad();
+
+public:
+	CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile);
 
 	bool Draw();
 	bool DrawMT();
@@ -40,7 +43,6 @@ public:
 	bool Update();
 	int KeyReleased(unsigned short k);
 	int KeyPressed(unsigned short k,bool isRepeat);
-	CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile);
 	void ResizeEvent();
 	virtual ~CGame();
 
@@ -76,7 +78,8 @@ public:
 	unsigned lastUpdateRaw;
 	float updateDeltaSeconds;
 
-	float totalGameTime;			//time in seconds, stops at game end
+	/// Time in seconds, stops at game end
+	float totalGameTime;
 
 	std::string userInputPrefix;
 
@@ -91,10 +94,12 @@ public:
 	bool fullscreenEdgeMove;
 	bool showFPS;
 	bool showClock;
-	bool noSpectatorChat;			//prevents spectator msgs from being seen by players
+	/// Prevents spectator msgs from being seen by players
+	bool noSpectatorChat;
 	bool drawFpsHUD;
 	bool drawMapMarks;
-	float crossSize; // locked mouse indicator size	
+	/// locked mouse indicator size
+	float crossSize;
 
 	bool drawSky;
 	bool drawWater;
@@ -151,7 +156,7 @@ private:
 	bool skipping;
 	bool playing;
 	bool chatting;
-	
+
 	unsigned lastFrameTime;
 
 public:
