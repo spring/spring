@@ -839,9 +839,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		unimportantMove = false;
 		orderTarget = NULL;
 		const Command& cmd = commandQue.front();
-		if (owner->group) {
-			owner->group->CommandFinished(owner->id, cmd.id);
-		}
+		eoh->CommandFinished(*owner, cmd.id);
 		eventHandler.UnitCmdDone(owner, cmd.id, cmd.tag);
 	}
 
@@ -1362,9 +1360,7 @@ void CCommandAI::FinishCommand(void)
 	targetDied = false;
 	unimportantMove = false;
 	orderTarget = 0;
-	if (owner->group) {
-		owner->group->CommandFinished(owner->id, cmdID);
-	}
+	eoh->CommandFinished(*owner, cmdID);
 	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
 
 	if (commandQue.empty()) {
