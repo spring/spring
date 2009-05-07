@@ -216,6 +216,7 @@ void CCobInstance::HitByWeaponId(const float3& hitDir, int weaponDefId, float& i
 
 void CCobInstance::SetSFXOccupy(int curTerrainType)
 {
+	Call(COBFN_SetSFXOccupy, curTerrainType);
 }
 
 
