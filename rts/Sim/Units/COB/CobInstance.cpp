@@ -241,27 +241,40 @@ void CCobInstance::QueryLandingPads(std::vector<int>& out_pieces)
 
 void CCobInstance::BeginTransport(CUnit* unit)
 {
+	// yes, COB is silly, while it handles integers fine it uses model height to identify units
+	Call(COBFN_BeginTransport, (int)(unit->model->height*65536));
 }
 
 
 int CCobInstance::QueryTransport(CUnit* unit)
 {
-	return -1;
+	vector<int> args;
+	args.push_back(0);
+	args.push_back((int)(unit->model->height*65536));
+	Call(COBFN_QueryTransport, args);
+	return args[0];
 }
 
 
 void CCobInstance::TransportPickup(CUnit* unit)
 {
+	// funny, now it uses unitIDs instead of model height
+	Call(COBFN_TransportPickup, unit->id);
 }
 
 
 void CCobInstance::EndTransport()
 {
+	Call(COBFN_EndTransport);
 }
 
 
 void CCobInstance::TransportDrop(CUnit* unit, const float3& pos)
 {
+	vector<int> args;
+	args.push_back(unit->id);
+	args.push_back(PACKXZ(pos.x, pos.z));
+	Call(COBFN_TransportDrop, args);
 }
 
 
