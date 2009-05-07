@@ -43,7 +43,6 @@ CR_REG_METADATA(CGlobalSyncedStuff, (
 	CR_MEMBER(cheatEnabled),
 	CR_MEMBER(noHelperAIs),
 	CR_MEMBER(editDefsEnabled),
-	CR_MEMBER(useLuaRules),
 	CR_MEMBER(useLuaGaia),
 	CR_MEMBER(randSeed),
 	CR_MEMBER(initRandSeed),
@@ -71,7 +70,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	editDefsEnabled = false;
 	tempNum = 2;
 	useLuaGaia = true;
-	useLuaRules = true;
 
 	// TODO: put this somewhere else (playerHandler is unsynced, even)
 	playerHandler = new CPlayerHandler();
@@ -92,7 +90,7 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	noHelperAIs = !!setup->noHelperAIs;
 
 	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);
-	useLuaRules = CLuaRules::SetConfigString(setup->luaRulesStr);
+	CLuaRules::SetConfigString(setup->luaRulesStr);
 
 	// TODO: this call is unsynced, technically
 	playerHandler->LoadFromSetup(setup);
