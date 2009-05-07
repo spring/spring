@@ -222,6 +222,20 @@ void CCobInstance::SetSFXOccupy(int curTerrainType)
 
 void CCobInstance::QueryLandingPads(std::vector<int>& out_pieces)
 {
+	int maxPadCount = 16; // default max pad count
+
+	if (HasFunction(COBFN_QueryLandingPadCount)) {
+		vector<int> args;
+		args.push_back(maxPadCount);
+		Call(COBFN_QueryLandingPadCount, args);
+		maxPadCount = args[0];
+	}
+
+	for (int i = 0; i < maxPadCount; i++) {
+		out_pieces.push_back(-1);
+	}
+
+	Call(COBFN_QueryLandingPad, out_pieces);
 }
 
 
