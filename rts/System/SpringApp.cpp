@@ -241,7 +241,10 @@ bool SpringApp::Initialize()
 	}
 
 	// use some ATI bugfixes?
-	gu->atiHacks = !!configHandler->Get("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
+	std::string vendor = std::string((char*)glGetString(GL_VENDOR));
+	StringToLowerInPlace(vendor);
+	bool isATi = (vendor.find("ati ") != string::npos); 
+	gu->atiHacks = !!configHandler->Get("AtiHacks", isATi?1:0 );
 	if (gu->atiHacks) {
 		logOutput.Print("ATI hacks enabled\n");
 	}
