@@ -10,6 +10,7 @@
 
 #include "Object.h"
 #include "Rendering/UnitModels/3DModel.h"
+#include "UnitScriptNames.h"
 
 
 #define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
@@ -239,7 +240,7 @@ public:
 	virtual void TransportPickup(CUnit* unit) = 0;
 	virtual void EndTransport() = 0;
 	virtual void TransportDrop(CUnit* unit, const float3& pos) = 0;
-	virtual void StartBuilding(int heading, int pitch) = 0;
+	virtual void StartBuilding(float heading, float pitch) = 0;
 	virtual void StopBuilding() = 0;
 	virtual int  QueryNanoPiece() = 0; // returns piece
 
@@ -250,6 +251,10 @@ public:
 	virtual void  Shot(int weaponNum) = 0;
 	virtual bool  BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked
 	virtual float TargetWeight(int weaponNum, CUnit* targetUnit) = 0; // returns target weight
+
+	// inlined callins, un-inline and make virtual when different behaviour is
+	// desired between the different unit script implementations (COB, Lua).
+	void StartBuilding() { Call(COBFN_StartBuilding); }
 };
 
 #endif

@@ -74,7 +74,7 @@ void CFactory::PostLoad()
 		script->Call(COBFN_Activate);
 	}
 	if (curBuild) {
-		script->Call("StartBuilding");
+		script->StartBuilding();
 	}
 }
 
@@ -140,7 +140,7 @@ void CFactory::Update()
 			AddDeathDependence(b);
 			curBuild = b;
 
-			script->Call("StartBuilding");
+			script->StartBuilding();
 
 			int soundIdx = unitDef->sounds.build.getRandomIdx();
 			if (soundIdx >= 0) {
