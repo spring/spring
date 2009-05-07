@@ -58,20 +58,7 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 	AirBase* ab = new AirBase(base);
 	std::vector<int> args;
 
-	int maxPadCount = 16; // default max pad count
-
-	if (base->script->HasFunction("QueryLandingPadCount")) {
-		args.push_back(maxPadCount);
-		base->script->Call("QueryLandingPadCount", args);
-		maxPadCount = args[0];
-		args.clear();
-	}
-
-	for (int i = 0; i < maxPadCount; i++) {
-		args.push_back(-1);
-	}
-
-	base->script->Call("QueryLandingPad", args);
+	base->script->QueryLandingPads(/*out*/ args);
 
 	// FIXME: use a set to avoid multiple bases per piece?
 	for (int p = 0; p < (int)args.size(); p++) {
