@@ -337,11 +337,6 @@ void CLuaUnitScript::StartBuilding(float heading, float pitch)
 }
 
 
-void CLuaUnitScript::StopBuilding()
-{
-}
-
-
 int CLuaUnitScript::QueryNanoPiece()
 {
 	return -1;

@@ -520,7 +520,7 @@ void CBuilder::StopBuild(bool callScript)
 	curCapture=0;
 	terraforming=false;
 	if(callScript)
-		script->Call("StopBuilding");
+		script->StopBuilding();
 	ReleaseTempHoldFire();
 //	logOutput.Print("stop build");
 }

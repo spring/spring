@@ -241,7 +241,6 @@ public:
 	virtual void EndTransport() = 0;
 	virtual void TransportDrop(CUnit* unit, const float3& pos) = 0;
 	virtual void StartBuilding(float heading, float pitch) = 0;
-	virtual void StopBuilding() = 0;
 	virtual int  QueryNanoPiece() = 0; // returns piece
 
 	// weapon callins
@@ -255,6 +254,7 @@ public:
 	// inlined callins, un-inline and make virtual when different behaviour is
 	// desired between the different unit script implementations (COB, Lua).
 	void StartBuilding() { Call(COBFN_StartBuilding); }
+	void StopBuilding()  { Call(COBFN_StopBuilding); }
 };
 
 #endif

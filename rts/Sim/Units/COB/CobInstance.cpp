@@ -312,11 +312,6 @@ void CCobInstance::StartBuilding(float heading, float pitch)
 }
 
 
-void CCobInstance::StopBuilding()
-{
-}
-
-
 int CCobInstance::QueryNanoPiece()
 {
 	return -1;
