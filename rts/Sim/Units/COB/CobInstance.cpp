@@ -139,7 +139,7 @@ void CCobInstance::Killed()
 	vector<int> args;
 	args.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
 	args.push_back(0);
-	RealCall(scriptIndex[COBFN_Killed], args, &CUnitKilledCB, this, NULL);
+	Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
 
 	//FIXME: moved from Unit.cpp, but seems like a bug?
 
@@ -161,6 +161,7 @@ void CCobInstance::Killed()
 
 void CCobInstance::SetDirection(int heading)
 {
+	Call(COBFN_SetDirection, heading);
 }
 
 

@@ -1837,9 +1837,7 @@ void CUnit::FinishedBuilding(void)
 		} else {
 			script->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
 		}
-		script->Call(COBFN_SetDirection,
-		          (int)GetHeadingFromVector(-wind.GetCurrentDirection().x,
-		                                    -wind.GetCurrentDirection().z));
+		script->SetDirection(GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -2077,7 +2075,7 @@ void CUnit::UpdateWind(float x, float z, float strength)
 		script->Call(COBFN_SetSpeed, (int)(strength*3000.0f));
 	}
 
-	script->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-x, -z));
+	script->SetDirection(GetHeadingFromVector(-x, -z));
 }
 
 
@@ -2250,7 +2248,7 @@ void CUnit::PostLoad()
 		} else {
 			script->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
 		}
-		script->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+		script->SetDirection(GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (activated) {
