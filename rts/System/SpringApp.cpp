@@ -241,7 +241,10 @@ bool SpringApp::Initialize()
 	}
 
 	// use some ATI bugfixes?
-	gu->atiHacks = !!configHandler->Get("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
+	std::string vendor = std::string((char*)glGetString(GL_VENDOR));
+	StringToLowerInPlace(vendor);
+	bool isATi = (vendor.find("ati ") != string::npos); 
+	gu->atiHacks = !!configHandler->Get("AtiHacks", isATi?1:0 );
 	if (gu->atiHacks) {
 		logOutput.Print("ATI hacks enabled\n");
 	}
@@ -571,8 +574,8 @@ void SpringApp::InitOpenGL ()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const std::string fontFile = configHandler->GetString("FontFile", "fonts/Luxi.ttf");
-	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/Luxi.ttf");
+	const std::string fontFile = configHandler->GetString("FontFile", "fonts/FreeSansBold.otf");
+	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/FreeSansBold.otf");
 	const int fontSize = configHandler->Get("FontSize", 23);
 	const int smallFontSize = configHandler->Get("SmallFontSize", 14);
 	const int outlineWidth = configHandler->Get("FontOutlineWidth", 3);
