@@ -339,25 +339,10 @@ bool SpringApp::SetSDLVideoMode ()
 	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
 	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
 
-	int bitsPerPixel = configHandler->Get("BitsPerPixel", 0);
-
-	if (bitsPerPixel == 32)
-	{
-		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
-	}
-	else
-	{
-		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 6);
-		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-		// no alpha in 16bit mode
-
-        if (bitsPerPixel != 16 && bitsPerPixel != 0)
-           bitsPerPixel = 0; // it should be either 0, 16, or 32
-	}
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
 
 	depthBufferBits = configHandler->Get("DepthBufferBits", 32);
 
@@ -368,7 +353,7 @@ bool SpringApp::SetSDLVideoMode ()
 
 	FSAA = MultisampleTest();
 
-	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, bitsPerPixel, sdlflags);
+	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, 32, sdlflags);
 	if (!screen) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
