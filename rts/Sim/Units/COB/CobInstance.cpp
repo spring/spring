@@ -172,6 +172,10 @@ void CCobInstance::SetSpeed(float speed)
 
 void CCobInstance::RockUnit(const float3& rockDir)
 {
+	std::vector<int> rockAngles;
+	rockAngles.push_back((int)(500 * rockDir.z));
+	rockAngles.push_back((int)(500 * rockDir.x));
+	Call(COBFN_RockUnit, rockAngles);
 }
 
 
