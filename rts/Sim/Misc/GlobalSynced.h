@@ -162,21 +162,11 @@ public:
 	bool editDefsEnabled;
 
 	/**
-	* @brief LuaRules control
-	*
-	* Whether or not LuaRules is enabled
-	*/
-	bool useLuaRules;
-
-	/**
 	* @brief LuaGaia control
 	*
 	* Whether or not LuaGaia is enabled
 	*/
 	bool useLuaGaia;
-
-	// do not use, backward compatibility
-	int activeTeamsBackwardCompatForLuaBinder;
 
 private:
 	/**

@@ -321,10 +321,6 @@ void DataDirLocater::LocateDataDirs()
 #ifdef SPRING_DATADIR
 	AddDirs(SubstEnvVars(SPRING_DATADIR));
 #endif
-	// should not be needed because you can seperate directories with a ':' in SPRING_DATADIR(1)
-#ifdef SPRING_DATADIR_2
-	AddDirs(SubstEnvVars(SPRING_DATADIR_2));
-#endif
 
 	// Figure out permissions of all datadirs
 	DeterminePermissions();

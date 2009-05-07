@@ -31,7 +31,7 @@ class CLuaRules : public CLuaHandleSynced
 		static void LoadHandler();
 		static void FreeHandler();
 
-		static bool SetConfigString(const string& cfg);
+		static void SetConfigString(const string& cfg);
 		static const string& GetConfigString() { return configString; }
 
 		static const vector<float>&    GetGameParams();
