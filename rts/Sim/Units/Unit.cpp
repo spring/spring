@@ -1876,15 +1876,6 @@ void CUnit::FinishedBuilding(void)
 }
 
 
-// Called when a unit's Killed script finishes executing
-static void CUnitKilledCB(int retCode, void* p1, void* p2)
-{
-	CUnit* self = (CUnit*) p1;
-	self->deathScriptFinished = true;
-	self->delayedWreckLevel = retCode;
-}
-
-
 void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence)
 {
 	if (isDead) {
@@ -1943,13 +1934,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 			recentDamage += maxHealth * 2;
 		}
 
-		vector<int> args;
-		args.push_back((int) (recentDamage / maxHealth * 100));
-		args.push_back(0);
 		// start running the unit's kill-script
-		script->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
-
-		delayedWreckLevel = args[1];
+		script->Killed();
 	} else {
 		deathScriptFinished = true;
 	}
