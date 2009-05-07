@@ -567,14 +567,14 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 			float3& fpos = feature->pos;
-			if (fpos.y > ground->GetHeight(fpos.x, fpos.z)) {
+			float gh = ground->GetHeight2(fpos.x, fpos.z);
+			float wh = ground->GetHeight(fpos.x, fpos.z);
+			if(!feature->def->floating)
+				wh = gh;
+			if (fpos.y > wh || fpos.y < gh) {
 				SetFeatureUpdateable(feature);
 
-				if (feature->def->floating){
-					feature->finalHeight = ground->GetHeight(fpos.x, fpos.z);
-				} else {
-					feature->finalHeight = ground->GetHeight2(fpos.x, fpos.z);
-				}
+				feature->finalHeight = wh;
 
 				feature->CalculateTransform ();
 			}
