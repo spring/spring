@@ -125,7 +125,7 @@ int CCobInstance::GetFunctionId(const std::string& fname) const
 /******************************************************************************/
 
 
-void CCobInstance::Killed(float damageRatio)
+void CCobInstance::Killed()
 {
 }
 
