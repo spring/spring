@@ -297,7 +297,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		// Get default color from palette (based on "color" tag)
 		for (size_t num = 0; num < 3; ++num)
 		{
-			data.color[num] = palette.teamColor[a][num] / 255.0f;
+			data.color[num] = palette.teamColor[a][num];
 		}
 		data.color[3] = 255;
 
