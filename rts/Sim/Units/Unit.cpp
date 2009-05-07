@@ -2432,9 +2432,9 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(activated),
 //	CR_MEMBER(drawPos), ??
 //	CR_MEMBER(drawMidPos), ??
-#if defined(USE_GML) && GML_ENABLE_SIM
-	CR_MEMBER(lastUnitUpdate),
-#endif
+//#if defined(USE_GML) && GML_ENABLE_SIM
+//	CR_MEMBER(lastUnitUpdate),
+//#endif
 	//CR_MEMBER(model),
 	//CR_MEMBER(localmodel),
 	//CR_MEMBER(cob),
