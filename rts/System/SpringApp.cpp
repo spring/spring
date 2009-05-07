@@ -571,8 +571,8 @@ void SpringApp::InitOpenGL ()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const std::string fontFile = configHandler->GetString("FontFile", "fonts/Luxi.ttf");
-	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/Luxi.ttf");
+	const std::string fontFile = configHandler->GetString("FontFile", "fonts/FreeSansBold.otf");
+	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/FreeSansBold.otf");
 	const int fontSize = configHandler->Get("FontSize", 23);
 	const int smallFontSize = configHandler->Get("SmallFontSize", 14);
 	const int outlineWidth = configHandler->Get("FontOutlineWidth", 3);
