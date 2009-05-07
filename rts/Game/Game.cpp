@@ -463,10 +463,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	GameSetupDrawer::Enable();
 
-	if (gs->useLuaRules) {
-		PrintLoadMsg("Loading LuaRules");
-		CLuaRules::LoadHandler();
-	}
+	PrintLoadMsg("Loading LuaRules");
+	CLuaRules::LoadHandler();
+
 	if (gs->useLuaGaia) {
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
@@ -2360,34 +2359,29 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			logOutput.Print("No definition Editing");
 	}
 	else if ((action.command == "luarules") && (gs->frameNum > 1)) {
-		if (gs->useLuaRules) {
-			if ((action.extra == "reload") && (playernum == 0)) {
-				if (!gs->cheatEnabled) {
-					logOutput.Print("Cheating required to reload synced scripts");
+		if ((action.extra == "reload") && (playernum == 0)) {
+			if (!gs->cheatEnabled) {
+				logOutput.Print("Cheating required to reload synced scripts");
+			} else {
+				CLuaRules::FreeHandler();
+				CLuaRules::LoadHandler();
+				if (luaRules) {
+					logOutput.Print("LuaRules reloaded");
 				} else {
-					CLuaRules::FreeHandler();
-					CLuaRules::LoadHandler();
-					if (luaRules) {
-						logOutput.Print("LuaRules reloaded");
-					} else {
-						logOutput.Print("LuaRules reload failed");
-					}
+					logOutput.Print("LuaRules reload failed");
 				}
 			}
-			else if ((action.extra == "disable") && (playernum == 0)) {
-				if (!gs->cheatEnabled) {
-					logOutput.Print("Cheating required to disable synced scripts");
-				} else {
-					CLuaRules::FreeHandler();
-					logOutput.Print("LuaRules disabled");
-				}
+		}
+		else if ((action.extra == "disable") && (playernum == 0)) {
+			if (!gs->cheatEnabled) {
+				logOutput.Print("Cheating required to disable synced scripts");
+			} else {
+				CLuaRules::FreeHandler();
+				logOutput.Print("LuaRules disabled");
 			}
-			else if (luaRules) {
-				luaRules->GotChatMsg(action.extra, playernum);
-			}
-			else {
-				logOutput.Print("LuaRules is not enabled");
-			}
+		}
+		else {
+			luaRules->GotChatMsg(action.extra, playernum);
 		}
 	}
 	else if ((action.command == "luagaia") && (gs->frameNum > 1)) {
