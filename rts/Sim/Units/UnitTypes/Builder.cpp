@@ -669,15 +669,16 @@ void CBuilder::DependentDied(CObject *o)
 
 void CBuilder::SetBuildStanceToward(float3 pos)
 {
-	float3 wantedDir=(pos-this->midPos).Normalize();
-	short int h=GetHeadingFromVector(wantedDir.x,wantedDir.z);
-	short int p=(short int) (asin(wantedDir.dot(updir)) * RAD2TAANG);
-	short int pitch=(short int) (asin(frontdir.dot(updir)) * RAD2TAANG);
+	if (script->HasFunction(COBFN_StartBuilding)) {
+		const float3 wantedDir = (pos - midPos).Normalize();
+		const float h = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
+		const float p = asin(wantedDir.dot(updir));
+		const float pitch = asin(frontdir.dot(updir));
 
-	std::vector<int> args;
-	args.push_back(short(h-heading));
-	args.push_back(short(p-pitch));
-	script->Call("StartBuilding", args);
+		// clamping p - pitch not needed, range of asin is -PI/2..PI/2,
+		// so max difference between two asin calls is PI.
+		script->StartBuilding(ClampRad(h - heading), p - pitch);
+	}
 
 	int soundIdx = unitDef->sounds.build.getRandomIdx();
 	if (soundIdx >= 0) {

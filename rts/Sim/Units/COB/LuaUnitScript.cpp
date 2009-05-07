@@ -332,7 +332,7 @@ void CLuaUnitScript::TransportDrop(CUnit* unit, const float3& pos)
 }
 
 
-void CLuaUnitScript::StartBuilding(int heading, int pitch)
+void CLuaUnitScript::StartBuilding(float heading, float pitch)
 {
 }
 

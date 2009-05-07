@@ -303,8 +303,12 @@ void CCobInstance::TransportDrop(CUnit* unit, const float3& pos)
 }
 
 
-void CCobInstance::StartBuilding(int heading, int pitch)
+void CCobInstance::StartBuilding(float heading, float pitch)
 {
+	vector<int> args;
+	args.push_back(short(heading * RAD2TAANG));
+	args.push_back(short(pitch * RAD2TAANG));
+	Call("StartBuilding", args);
 }
 
 
