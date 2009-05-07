@@ -490,14 +490,16 @@ IFileFilter* CArchiveScanner::CreateIgnoreFilter(CArchiveBase* ar)
 	int fh = ar->OpenFile("springignore.txt");
 
 	if (fh) {
-		int fsize = ar->FileSize(fh);
+		const int fsize = ar->FileSize(fh);
 		char* buf = new char[fsize];
 
-		ar->ReadFile(fh, buf, fsize);
+		const int read = ar->ReadFile(fh, buf, fsize);
 		ar->CloseFile(fh);
 
 		// this automatically splits lines
-		ignore->AddRule(string(buf, fsize));
+		if (read > 0)
+			ignore->AddRule(string(buf, read));
+		//TODO: figure out why read != fsize sometimes
 
 		delete[] buf;
 	}

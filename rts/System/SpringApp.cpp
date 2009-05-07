@@ -773,8 +773,6 @@ void SpringApp::CheckCmdLineFile(int argc, char *argv[])
  */
 void SpringApp::Startup()
 {
-	ClientSetup* startsetup = 0;
-	startsetup = new ClientSetup();
 	if (!startscript.empty())
 	{
 		CFileHandler fh(startscript);
@@ -784,6 +782,7 @@ void SpringApp::Startup()
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setupscript cannot be read: "+startscript);
+		ClientSetup* startsetup = new ClientSetup();
 		startsetup->Init(buf);
 
 		// commandline parameters overwrite setup
@@ -801,6 +800,7 @@ void SpringApp::Startup()
 	}
 	else if (!demofile.empty())
 	{
+		ClientSetup* startsetup = new ClientSetup();
 		startsetup->isHost = true; // local demo play
 		startsetup->myPlayerName = configHandler->GetString("name", "unnamed")+ " (spec)";
 #ifdef SYNCDEBUG
@@ -811,6 +811,7 @@ void SpringApp::Startup()
 	}
 	else if (!savefile.empty())
 	{
+		ClientSetup* startsetup = new ClientSetup();
 		startsetup->isHost = true;
 		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
 #ifdef SYNCDEBUG
