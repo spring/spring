@@ -987,24 +987,12 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	float3 hitDir = impulse;
 	hitDir.y = 0.0f;
 	hitDir = -hitDir.Normalize();
-	std::vector<int> args;
-
-	args.push_back((int)(500 * hitDir.z));
-	args.push_back((int)(500 * hitDir.x));
 
 	if (script->HasFunction(COBFN_HitByWeaponId)) {
-		if (weaponId != -1) {
-			args.push_back(weaponDefHandler->weaponDefs[weaponId].tdfId);
-		} else {
-			args.push_back(-1);
-		}
-		args.push_back((int)(100 * damage));
-		weaponHitMod = 1.0f;
-		script->Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, this, NULL);
-		damage = damage * weaponHitMod; // weaponHitMod gets set in callback function
+		script->HitByWeaponId(hitDir, weaponId, /*inout*/ damage);
 	}
 	else {
-		script->Call(COBFN_HitByWeapon, args);
+		script->HitByWeapon(hitDir);
 	}
 
 	float experienceMod = expMultiplier;
@@ -2126,12 +2114,6 @@ void CUnit::ReleaseTempHoldFire(void)
 }
 
 
-void CUnit::hitByWeaponIdCallback(int retCode, void *p1, void *p2)
-{
-	((CUnit*)p1)->weaponHitMod = retCode*0.01f;
-}
-
-
 /******************************************************************************/
 
 float CUnit::lodFactor = 1.0f;
@@ -2491,7 +2473,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(seismicRadius),
 	CR_MEMBER(seismicSignature),
 	CR_MEMBER(maxSpeed),
-	CR_MEMBER(weaponHitMod),
+	CR_RESERVED(4),
 
 	CR_MEMBER(inAir),
 	CR_MEMBER(inWater),

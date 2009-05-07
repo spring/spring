@@ -417,8 +417,6 @@ public:
 
 	float maxSpeed;  //max speed of the unit
 
-	float weaponHitMod; //percentage of weapondamage to use when hit by weapon (set by script callbak
-
 	// unsynced calls
 	void SetLODCount(unsigned int count);
 	unsigned int CalcLOD(unsigned int lastLOD) const;
