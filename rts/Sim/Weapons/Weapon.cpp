@@ -450,13 +450,12 @@ void CWeapon::Update()
 		}
 
 		//Rock the unit in the direction of the fireing
-		float3 rockDir = wantedDir;
-		rockDir.y = 0;
-		rockDir = -rockDir.Normalize();
-		std::vector<int> rockAngles;
-		rockAngles.push_back((int)(500 * rockDir.z));
-		rockAngles.push_back((int)(500 * rockDir.x));
-		owner->script->Call(COBFN_RockUnit,  rockAngles);
+		if (owner->script->HasFunction(COBFN_RockUnit)) {
+			float3 rockDir = wantedDir;
+			rockDir.y = 0;
+			rockDir = -rockDir.Normalize();
+			owner->script->RockUnit(rockDir);
+		}
 
 		owner->commandAI->WeaponFired(this);
 
