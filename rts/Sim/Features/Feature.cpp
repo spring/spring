@@ -559,6 +559,13 @@ bool CFeature::UpdatePosition()
 			}
 		}
 	}
+	// if ground is restored, make sure feature does not get buried
+	if(pos.y < finalHeight) {
+		float diff = finalHeight - pos.y;
+		pos.y = finalHeight;
+		midPos.y += diff;
+		transMatrix[13] += diff;
+	}
 
 	isUnderWater = ((pos.y + height) < 0.0f);
 	return true;
