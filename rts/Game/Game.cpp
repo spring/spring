@@ -438,6 +438,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
 	pathManager = new CPathManager();
+
 #ifdef SYNCCHECK
 	// update the checksum with path data
 	{ SyncedUint tmp(pathManager->GetPathChecksum()); }
@@ -2979,11 +2980,18 @@ bool CGame::Draw() {
 					else
 						prefix = "E|";	//no alliance at all
 				}
-				SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
+				if(p->ping != 0xFFFF) {
+					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 							p->team, prefix.c_str(), p->name.c_str(), p->cpuUsage * 100.0f,
 							(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
-
+				}
+				else {
+					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %s-%d Pathing: %d",
+							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
+							p->team, prefix.c_str(), p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
+							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
+				}
 				smallFont->SetColors(&color, NULL);
 				float x = 0.76f, y = 0.01f + (0.02f * (count - a - 1));
 				smallFont->glPrint(x, y, 1.0f, font_options, buf);

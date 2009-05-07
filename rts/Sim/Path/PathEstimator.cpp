@@ -21,6 +21,8 @@
 #include "FileSystem/ArchiveZip.h"
 #include "FileSystem/FileSystem.h"
 
+#include "NetProtocol.h"
+
 #define PATHDEBUG false
 
 
@@ -223,6 +225,7 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread) {
 		lastOffsetMessage=idx/1000;
 		char calcMsg[128];
 		sprintf(calcMsg, "Block offset remaining: %d of %d (block-size %d)", lastOffsetMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (lastOffsetMessage<<8)));
 		PrintLoadMsg(calcMsg);
 	}
 
@@ -238,6 +241,7 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 		lastCostMessage=idx/1000;
 		char calcMsg[128];
 		sprintf(calcMsg, "Path cost remaining: %d of %d (block-size %d)", lastCostMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (lastCostMessage<<8)));
 		PrintLoadMsg(calcMsg);
 	}
 
