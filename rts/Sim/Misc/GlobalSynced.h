@@ -175,9 +175,6 @@ public:
 	*/
 	bool useLuaGaia;
 
-	// do not use, backward compatibility
-	int activeTeamsBackwardCompatForLuaBinder;
-
 private:
 	/**
 	* @brief random seed
