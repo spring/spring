@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include <assert.h>
+#include <cstdio>
 #include "mmgr.h"
 
 #include "MapInfo.h"
