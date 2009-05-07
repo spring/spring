@@ -316,7 +316,9 @@ int CCobInstance::QueryNanoPiece()
 
 int CCobInstance::QueryWeapon(int weaponNum)
 {
-	return -1;
+	vector<int> args(1, 0);
+	Call(COBFN_QueryPrimary + weaponNum, args);
+	return args[0];
 }
 
 
@@ -327,7 +329,9 @@ void CCobInstance::AimWeapon(int weaponNum, int heading, int pitch)
 
 int CCobInstance::AimFromWeapon(int weaponNum)
 {
-	return -1;
+	vector<int> args(1, 0);
+	Call(COBFN_AimFromPrimary + weaponNum, args);
+	return args[0];
 }
 
 

@@ -249,18 +249,21 @@ static inline bool isBeingServicedOnPad(CUnit* u)
 
 void CWeapon::Update()
 {
-	if(hasCloseTarget){
-		std::vector<int> args;
-		args.push_back(0);
-		if(useWeaponPosForAim){ //if we couldn't get a line of fire from the muzzle try if we can get it from the aim piece
-			owner->script->Call(COBFN_QueryPrimary+weaponNum,args);
+	if (hasCloseTarget) {
+		int piece;
+		// if we couldn't get a line of fire from the muzzle try if we can get it from the aim piece
+		if (useWeaponPosForAim) {
+			piece = owner->script->QueryWeapon(weaponNum);
 		} else {
-			owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
+			piece = owner->script->AimFromWeapon(weaponNum);
 		}
-		relWeaponMuzzlePos=owner->script->GetPiecePos(args[0]);
+		relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
 
-		owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
-		relWeaponPos=owner->script->GetPiecePos(args[0]);
+		//FIXME: this might be potential speedup?
+		// (AimFromWeapon may have been called already 3 lines ago)
+		//if (useWeaponPosForAim)
+		piece = owner->script->AimFromWeapon(weaponNum);
+		relWeaponPos = owner->script->GetPiecePos(piece);
 	}
 
 	if(targetType==Target_Unit){
@@ -353,10 +356,8 @@ void CWeapon::Update()
 		     (teamHandler->Team(owner->team)->metal >= metalFireCost &&
 		      teamHandler->Team(owner->team)->energy >= energyFireCost)))
 		{
-			std::vector<int> args;
-			args.push_back(0);
-			owner->script->Call(COBFN_QueryPrimary + weaponNum, args);
-			owner->script->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			const int piece = owner->script->QueryWeapon(weaponNum);
+			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
 			weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z +
 			                               owner->updir    * relWeaponMuzzlePos.y +
 			                               owner->rightdir * relWeaponMuzzlePos.x;
@@ -419,16 +420,13 @@ void CWeapon::Update()
 				owner->commandShotCount++;
 			}
 
-			std::vector<int> args;
-			args.push_back(0);
-
 			owner->script->Call(COBFN_Shot+weaponNum,0);
 
-			owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
-			relWeaponPos=owner->script->GetPiecePos(args[0]);
+			int piece = owner->script->AimFromWeapon(weaponNum);
+			relWeaponPos = owner->script->GetPiecePos(piece);
 
-			owner->script->Call(/*COBFN_AimFromPrimary+weaponNum*/COBFN_QueryPrimary+weaponNum/**/,args);
-			owner->script->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			piece = owner->script->/*AimFromWeapon*/QueryWeapon(weaponNum);
+			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
 
 			weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
@@ -589,20 +587,24 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	tracefile << "Weapon slow update: ";
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
-	std::vector<int> args;
-	args.push_back(0);
-	if(useWeaponPosForAim){ //If we can't get a line of fire from the muzzle try the aim piece instead since the weapon may just be turned in a wrong way
-		owner->script->Call(COBFN_QueryPrimary+weaponNum,args);
-		if(useWeaponPosForAim>1)
+	//If we can't get a line of fire from the muzzle try the aim piece instead since the weapon may just be turned in a wrong way
+	int piece;
+	if (useWeaponPosForAim) {
+		piece = owner->script->QueryWeapon(weaponNum);
+		if (useWeaponPosForAim > 1)
 			useWeaponPosForAim--;
 	} else {
-		owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
+		piece = owner->script->AimFromWeapon(weaponNum);
 	}
-	relWeaponMuzzlePos=owner->script->GetPiecePos(args[0]);
+	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
 	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 
-	owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
-	relWeaponPos=owner->script->GetPiecePos(args[0]);
+	//FIXME: this might be potential speedup?
+	// (AimFromWeapon may have been called already 5 lines ago)
+	//if (useWeaponPosForAim)
+	piece = owner->script->AimFromWeapon(weaponNum);
+	relWeaponPos = owner->script->GetPiecePos(piece);
+
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
 	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
@@ -845,13 +847,11 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 
 void CWeapon::Init(void)
 {
-	std::vector<int> args;
-	args.push_back(0);
-	owner->script->Call(COBFN_AimFromPrimary+weaponNum,args);
-	relWeaponPos = owner->script->GetPiecePos(args[0]);
+	int piece = owner->script->AimFromWeapon(weaponNum);
+	relWeaponPos = owner->script->GetPiecePos(piece);
 	weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
-	owner->script->Call(COBFN_QueryPrimary+weaponNum,args);
-	relWeaponMuzzlePos = owner->script->GetPiecePos(args[0]);
+	piece = owner->script->QueryWeapon(weaponNum);
+	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
 	weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z + owner->updir * relWeaponMuzzlePos.y + owner->rightdir * relWeaponMuzzlePos.x;
 
 	if (range > owner->maxRange) {

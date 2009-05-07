@@ -72,9 +72,8 @@ void CBeamLaser::Update(void)
 			owner->UseEnergy(energyFireCost / salvoSize);
 			owner->UseMetal(metalFireCost / salvoSize);
 
-			std::vector<int> args(1, 0);
-			owner->script->Call(COBFN_QueryPrimary + weaponNum, args);
-			CMatrix44f weaponMat = owner->script->GetPieceMatrix(args[0]);
+			const int piece = owner->script->QueryWeapon(weaponNum);
+			CMatrix44f weaponMat = owner->script->GetPieceMatrix(piece);
 
 			const float3 relWeaponPos = weaponMat.GetPos();
 			const float3 dir =
