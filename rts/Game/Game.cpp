@@ -178,68 +178,116 @@ CGame* game = NULL;
 CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
-	CR_RESERVED(4),//r3927
+//	CR_MEMBER(drawMode),
+//	CR_MEMBER(defsParser), // temp-var, save irrelevant
 	CR_MEMBER(oldframenum),
 //	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
-
+	CR_MEMBER(lastSimFrame),
+//	CR_MEMBER(fpstimer),
+//	CR_MEMBER(starttime),
 //	CR_MEMBER(lastUpdate),
 //	CR_MEMBER(lastMoveUpdate),
 //	CR_MEMBER(lastModGameTimeMeasure),
-//	CR_MEMBER(lastframe),
-
+//	CR_MEMBER(lastUpdateRaw),
+//	CR_MEMBER(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
-
 	CR_MEMBER(userInputPrefix),
-
 	CR_MEMBER(lastTick),
 	CR_MEMBER(chatSound),
-
+//	CR_MEMBER(camMove),
+//	CR_MEMBER(camRot),
 	CR_MEMBER(hideInterface),
+	CR_MEMBER(gameOver),
+//	CR_MEMBER(windowedEdgeMove),
+//	CR_MEMBER(fullscreenEdgeMove),
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
-	CR_MEMBER(crossSize),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawFpsHUD),
-
+	CR_MEMBER(drawMapMarks),
+	CR_MEMBER(crossSize),
+//	CR_MEMBER(drawSky),
+//	CR_MEMBER(drawWater),
+//	CR_MEMBER(drawGround),
 	CR_MEMBER(moveWarnings),
-
-	CR_MEMBER(lastSimFrame),
-
+	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
-	CR_RESERVED(64),
+//	CR_MEMBER(infoConsole),
+//	CR_MEMBER(consoleHistory),
+//	CR_MEMBER(wordCompletion),
+//	CR_MEMBER(creatingVideo),
+//	CR_MEMBER(aviGenerator),
+//	CR_MEMBER(hotBinding),
+//	CR_MEMBER(inputTextPosX),
+//	CR_MEMBER(inputTextPosY),
+//	CR_MEMBER(inputTextSizeX),
+//	CR_MEMBER(inputTextSizeY),
+//	CR_MEMBER(lastCpuUsageTime),
+//	CR_MEMBER(skipping),
+	CR_MEMBER(playing),
+//	CR_MEMBER(lastFrameTime),
+//	CR_MEMBER(leastQue),
+//	CR_MEMBER(timeLeft),
+//	CR_MEMBER(consumeSpeed),
+//	CR_MEMBER(lastframe),
+//	CR_MEMBER(leastQue),
+#ifdef DIRECT_CONTROL_ALLOWED
+	CR_MEMBER(oldHeading),
+	CR_MEMBER(oldPitch),
+	CR_MEMBER(oldStatus),
+#endif
+
 	CR_POSTLOAD(PostLoad)
 ));
 
 
-CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile)
-: drawMode(notDrawing),
-  drawSky(true),
-  drawWater(true),
-  drawGround(true),
-  lastFrameTime(0)
+CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile):
+	drawMode(notDrawing),
+	defsParser(NULL),
+	oldframenum(0),
+	fps(0),
+	thisFps(0),
+	lastSimFrame(-1),
+
+	totalGameTime(0),
+
+	hideInterface(false),
+
+	gameOver(false),
+
+	noSpectatorChat(false),
+	drawFpsHUD(true),
+	drawMapMarks(true),
+
+	drawSky(true),
+	drawWater(true),
+	drawGround(true),
+
+	script(NULL),
+
+	creatingVideo(false),
+
+	skipping(false),
+	playing(false),
+	chatting(false),
+	lastFrameTime(0),
+
+	leastQue(0),
+	timeLeft(0.0f),
+	consumeSpeed(1.0f)
 {
 	game = this;
 	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	CPlayer::UpdateControlledTeams();
 
-	leastQue = 0;
-	timeLeft = 0.0f;
-	consumeSpeed = 1.0f;
-
 	memset(gameID, 0, sizeof(gameID));
 
 	infoConsole = new CInfoConsole();
 
-	script = NULL;
-
-	defsParser = NULL;
-
 	time(&starttime);
 	lastTick = clock();
-
-	oldframenum = 0;
 
 	for(int a = 0; a < 8; ++a) {
 		camMove[a] = false;
@@ -247,22 +295,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	for(int a = 0; a < 4; ++a) {
 		camRot[a] = false;
 	}
-
-	fps = 0;
-	thisFps = 0;
-	totalGameTime = 0;
-
-	lastSimFrame=-1;
-
-	creatingVideo = false;
-
-	playing  = false;
-	gameOver = false;
-	skipping = false;
-
-	drawFpsHUD = true;
-	drawMapMarks = true;
-	hideInterface = false;
 
 	windowedEdgeMove   = !!configHandler->Get("WindowedEdgeMove",   1);
 	fullscreenEdgeMove = !!configHandler->Get("FullscreenEdgeMove", 1);
@@ -281,9 +313,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(inputTextGeo);
 
-	noSpectatorChat = false;
-
-	chatting   = false;
 	userInput  = "";
 	writingPos = 0;
 	userPrompt = "";
@@ -374,7 +403,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	moveinfo = new CMoveInfo();
 	groundDecals = new CGroundDecalHandler();
 	ReColorTeams();
-
 
 	guihandler = new CGuiHandler();
 	minimap = new CMiniMap();

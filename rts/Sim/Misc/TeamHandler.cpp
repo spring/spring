@@ -16,13 +16,13 @@
 #include "ExternalAI/SkirmishAIData.h"
 #include "ExternalAI/IAILibraryManager.h"
 
-CR_BIND(CTeamHandler,);
+CR_BIND(CTeamHandler, );
 
 CR_REG_METADATA(CTeamHandler, (
 	CR_MEMBER(gaiaTeamID),
 	CR_MEMBER(gaiaAllyTeamID),
-	//CR_MEMBER(allyTeams),
 	CR_MEMBER(teams),
+	//CR_MEMBER(allyTeams),
 	CR_RESERVED(64)
 ));
 
@@ -30,10 +30,10 @@ CR_REG_METADATA(CTeamHandler, (
 CTeamHandler* teamHandler;
 
 
-CTeamHandler::CTeamHandler()
+CTeamHandler::CTeamHandler():
+	gaiaTeamID(-1),
+	gaiaAllyTeamID(-1)
 {
-	gaiaTeamID = -1;
-	gaiaAllyTeamID = -1;
 }
 
 

@@ -54,12 +54,16 @@ class CScriptMoveType : public AMoveType
 
 		float drag;
 
-		float3 vel;     // velocity
-		float3 relVel;  // relative velocity (to current direction)
+		/// velocity
+		float3 vel;
+		/// relative velocity (to current direction)
+		float3 relVel;
 		bool useRelVel;
 
-		float3 rot;    // angular position
-		float3 rotVel; // angular velocity
+		/// angular position
+		float3 rot;
+		/// angular velocity
+		float3 rotVel;
 		bool useRotVel;
 
 		bool trackSlope;
@@ -86,7 +90,7 @@ class CScriptMoveType : public AMoveType
 		bool isBuilding;
 		bool isBlocking;
 
-		float3 rotOffset;		
+		float3 rotOffset;
 
 		int lastTrackUpdate;
 		float3 oldPos;
@@ -95,5 +99,4 @@ class CScriptMoveType : public AMoveType
 		int scriptNotify;
 };
 
-
-#endif /* SCRIPT_MOVE_TYPE_H */
+#endif // SCRIPT_MOVE_TYPE_H

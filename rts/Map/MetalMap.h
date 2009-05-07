@@ -12,8 +12,9 @@ const float METAL_MAP_SQUARE_SIZE = SQUARE_SIZE * 2;
 
 class CMetalMap
 {
-public:
 	CR_DECLARE(CMetalMap);
+
+public:
 	CMetalMap(unsigned char* map, int sizeX, int sizeZ, float metalScale);
 	virtual ~CMetalMap(void);
 

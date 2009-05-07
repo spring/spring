@@ -28,17 +28,19 @@
 CR_BIND(CPlayer,);
 
 CR_REG_METADATA(CPlayer, (
-				CR_MEMBER(active),
 				CR_MEMBER(name),
 				CR_MEMBER(countryCode),
 				CR_MEMBER(rank),
 				CR_MEMBER(spectator),
 				CR_MEMBER(team),
+
+				CR_MEMBER(active),
+				CR_MEMBER(playerNum),
 //				CR_MEMBER(readyToStart),
 //				CR_MEMBER(cpuUsage),
 //				CR_MEMBER(ping),
 //				CR_MEMBER(currentStats),
-				CR_MEMBER(playerNum),
+
 //				CR_MEMBER(controlledTeams),
 				CR_RESERVED(32)
 				));
