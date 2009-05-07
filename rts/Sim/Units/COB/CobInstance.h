@@ -82,7 +82,6 @@ public:
 	virtual void EndTransport();
 	virtual void TransportDrop(CUnit* unit, const float3& pos);
 	virtual void StartBuilding(float heading, float pitch);
-	virtual void StopBuilding();
 	virtual int  QueryNanoPiece();
 
 	// weapon callins

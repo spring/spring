@@ -270,7 +270,7 @@ void CFactory::StartBuild(string type)
 void CFactory::StopBuild()
 {
 	// cancel a build-in-progress
-	script->Call("StopBuilding");
+	script->StopBuilding();
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
 			AddMetal(curBuild->metalCost * curBuild->buildProgress, false);
