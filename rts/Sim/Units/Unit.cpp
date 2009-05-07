@@ -1624,7 +1624,7 @@ void CUnit::Init(const CUnit* builder)
 void CUnit::UpdateTerrainType()
 {
 	if (curTerrainType != lastTerrainType) {
-		script->Call(COBFN_SetSFXOccupy, curTerrainType);
+		script->SetSFXOccupy(curTerrainType);
 		lastTerrainType = curTerrainType;
 	}
 }
@@ -2222,7 +2222,7 @@ void CUnit::PostLoad()
 		(*i)->weaponDef = unitDef->weapons[(*i)->weaponNum].def;
 	}
 
-	script->Call(COBFN_SetSFXOccupy, curTerrainType);
+	script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator>0) {
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
