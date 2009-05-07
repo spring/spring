@@ -222,7 +222,7 @@ public:
 
 	// callins, called throughout sim
 	// Killed must cause unit->deathScriptFinished and unit->delayedWreckLevel to be set!
-	virtual void Killed(float damageRatio) = 0;
+	virtual void Killed() = 0;
 	virtual void SetDirection(int heading) = 0;
 	virtual void SetSpeed(float speed) = 0;
 	virtual void RockUnit(const float3& rockDir) = 0;

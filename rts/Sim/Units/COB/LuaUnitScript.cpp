@@ -261,7 +261,7 @@ void CLuaUnitScript::ShowScriptWarning(const string& msg)
 /******************************************************************************/
 
 
-void CLuaUnitScript::Killed(float damageRatio)
+void CLuaUnitScript::Killed()
 {
 }
 

@@ -44,7 +44,7 @@ public:
 	virtual int GetFunctionId(const std::string& fname) const;
 
 	// callins, called throughout sim
-	virtual void Killed(float damageRatio);
+	virtual void Killed();
 	virtual void SetDirection(int heading);
 	virtual void SetSpeed(float speed);
 	virtual void RockUnit(const float3& rockDir);
