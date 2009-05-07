@@ -43,6 +43,33 @@ protected:
 public:
 	virtual int GetFunctionId(const std::string& fname) const;
 
+	// callins, called throughout sim
+	virtual void Killed(float damageRatio);
+	virtual void SetDirection(int heading);
+	virtual void SetSpeed(float speed);
+	virtual void RockUnit(const float3& rockDir);
+	virtual void HitByWeapon(const float3& hitDir);
+	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage);
+	virtual void SetSFXOccupy(int curTerrainType);
+	virtual void QueryLandingPads(std::vector<int>& out_pieces);
+	virtual void BeginTransport(CUnit* unit);
+	virtual int  QueryTransport(CUnit* unit);
+	virtual void TransportPickup(CUnit* unit);
+	virtual void EndTransport();
+	virtual void TransportDrop(CUnit* unit, const float3& pos);
+	virtual void SetMaxReloadTime(int maxReloadMillis);
+	virtual void StartBuilding(int heading, int pitch);
+	virtual void StopBuilding();
+	virtual int  QueryNanoPiece();
+
+	// weapon callins
+	virtual int   QueryWeapon(int weaponNum);
+	virtual void  AimWeapon(int weaponNum, int heading, int pitch);
+	virtual int   AimFromWeapon(int weaponNum);
+	virtual void  Shot(int weaponNum);
+	virtual bool  BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget);
+	virtual float TargetWeight(int weaponNum, CUnit* targetUnit);
+
 public:
 	static bool PushEntries(lua_State* L);
 

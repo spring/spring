@@ -46,6 +46,10 @@
 #endif
 
 
+/******************************************************************************/
+/******************************************************************************/
+
+
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 	: CUnitScript(_unit, _script.scriptIndex, pieces)
 	, script(_script)
@@ -117,6 +121,131 @@ int CCobInstance::GetFunctionId(const std::string& fname) const
 }
 
 
+/******************************************************************************/
+/******************************************************************************/
+
+
+void CCobInstance::Killed(float damageRatio)
+{
+}
+
+
+void CCobInstance::SetDirection(int heading)
+{
+}
+
+
+void CCobInstance::SetSpeed(float speed)
+{
+}
+
+
+void CCobInstance::RockUnit(const float3& rockDir)
+{
+}
+
+
+void CCobInstance::HitByWeapon(const float3& hitDir)
+{
+}
+
+
+void CCobInstance::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage)
+{
+}
+
+
+void CCobInstance::SetSFXOccupy(int curTerrainType)
+{
+}
+
+
+void CCobInstance::QueryLandingPads(std::vector<int>& out_pieces)
+{
+}
+
+
+void CCobInstance::BeginTransport(CUnit* unit)
+{
+}
+
+
+int CCobInstance::QueryTransport(CUnit* unit)
+{
+	return -1;
+}
+
+
+void CCobInstance::TransportPickup(CUnit* unit)
+{
+}
+
+
+void CCobInstance::EndTransport()
+{
+}
+
+
+void CCobInstance::TransportDrop(CUnit* unit, const float3& pos)
+{
+}
+
+
+void CCobInstance::SetMaxReloadTime(int maxReloadMillis)
+{
+}
+
+
+void CCobInstance::StartBuilding(int heading, int pitch)
+{
+}
+
+
+void CCobInstance::StopBuilding()
+{
+}
+
+
+int CCobInstance::QueryNanoPiece()
+{
+	return -1;
+}
+
+
+int CCobInstance::QueryWeapon(int weaponNum)
+{
+	return -1;
+}
+
+
+void CCobInstance::AimWeapon(int weaponNum, int heading, int pitch)
+{
+}
+
+
+int CCobInstance::AimFromWeapon(int weaponNum)
+{
+	return -1;
+}
+
+
+void CCobInstance::Shot(int weaponNum)
+{
+}
+
+
+bool CCobInstance::BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget)
+{
+	return false;
+}
+
+
+float CCobInstance::TargetWeight(int weaponNum, CUnit* targetUnit)
+{
+	return 1.0;
+}
+
+
 /**
  * @brief Calls a cob script function
  * @param functionId int cob script function id
@@ -168,6 +297,10 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 		return 1;
 	}
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 
 void CCobInstance::Signal(int signal)

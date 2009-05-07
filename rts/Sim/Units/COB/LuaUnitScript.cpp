@@ -243,6 +243,145 @@ int CLuaUnitScript::GetFunctionId(const string& fname) const
 }
 
 
+void CLuaUnitScript::ShowScriptError(const string& msg)
+{
+	// TODO: add Lua traceback?
+	logOutput.Print("Lua UnitScript error: %s", msg.c_str());
+}
+
+
+void CLuaUnitScript::ShowScriptWarning(const string& msg)
+{
+	// TODO: add Lua traceback?
+	logOutput.Print("Lua UnitScript warning: %s", msg.c_str());
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+
+void CLuaUnitScript::Killed(float damageRatio)
+{
+}
+
+
+void CLuaUnitScript::SetDirection(int heading)
+{
+}
+
+
+void CLuaUnitScript::SetSpeed(float speed)
+{
+}
+
+
+void CLuaUnitScript::RockUnit(const float3& rockDir)
+{
+}
+
+
+void CLuaUnitScript::HitByWeapon(const float3& hitDir)
+{
+}
+
+
+void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage)
+{
+}
+
+
+void CLuaUnitScript::SetSFXOccupy(int curTerrainType)
+{
+}
+
+
+void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
+{
+}
+
+
+void CLuaUnitScript::BeginTransport(CUnit* unit)
+{
+}
+
+
+int CLuaUnitScript::QueryTransport(CUnit* unit)
+{
+	return -1;
+}
+
+
+void CLuaUnitScript::TransportPickup(CUnit* unit)
+{
+}
+
+
+void CLuaUnitScript::EndTransport()
+{
+}
+
+
+void CLuaUnitScript::TransportDrop(CUnit* unit, const float3& pos)
+{
+}
+
+
+void CLuaUnitScript::SetMaxReloadTime(int maxReloadMillis)
+{
+}
+
+
+void CLuaUnitScript::StartBuilding(int heading, int pitch)
+{
+}
+
+
+void CLuaUnitScript::StopBuilding()
+{
+}
+
+
+int CLuaUnitScript::QueryNanoPiece()
+{
+	return -1;
+}
+
+
+int CLuaUnitScript::QueryWeapon(int weaponNum)
+{
+	return -1;
+}
+
+
+void CLuaUnitScript::AimWeapon(int weaponNum, int heading, int pitch)
+{
+}
+
+
+int CLuaUnitScript::AimFromWeapon(int weaponNum)
+{
+	return -1;
+}
+
+
+void CLuaUnitScript::Shot(int weaponNum)
+{
+}
+
+
+bool CLuaUnitScript::BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget)
+{
+	return false;
+}
+
+
+float CLuaUnitScript::TargetWeight(int weaponNum, CUnit* targetUnit)
+{
+	return 1.0;
+}
+
+
 int CLuaUnitScript::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
 	if (functionId < 0) {
@@ -260,20 +399,6 @@ int CLuaUnitScript::RealCall(int functionId, vector<int> &args, CBCobThreadFinis
 	}
 
 	return 0;
-}
-
-
-void CLuaUnitScript::ShowScriptError(const string& msg)
-{
-	// TODO: add Lua traceback?
-	logOutput.Print("Lua UnitScript error: %s", msg.c_str());
-}
-
-
-void CLuaUnitScript::ShowScriptWarning(const string& msg)
-{
-	// TODO: add Lua traceback?
-	logOutput.Print("Lua UnitScript warning: %s", msg.c_str());
 }
 
 
