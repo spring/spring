@@ -335,8 +335,7 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(void)
 {
-	std::vector<int> args(1, 0);
-	script->Call("QueryNanoPiece", args);
+	const int piece = script->QueryNanoPiece();
 
 #ifdef USE_GML
 	if (gs->frameNum - lastDrawFrame > 20)
@@ -344,7 +343,7 @@ void CFactory::CreateNanoParticle(void)
 #endif
 
 	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
-		const float3 relWeaponFirePos = script->GetPiecePos(args[0]);
+		const float3 relWeaponFirePos = script->GetPiecePos(piece);
 		const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
 			+ (updir    * relWeaponFirePos.y)
 			+ (rightdir * relWeaponFirePos.x);
