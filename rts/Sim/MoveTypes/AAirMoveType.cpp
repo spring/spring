@@ -9,14 +9,15 @@ CR_REG_METADATA(AAirMoveType, (
 		CR_MEMBER(oldGoalPos),
 		CR_MEMBER(oldpos),
 		CR_MEMBER(reservedLandingPos),
+
 		CR_MEMBER(wantedHeight),
-		
+
+		CR_MEMBER(collide),
 		CR_MEMBER(lastColWarning),
 		CR_MEMBER(lastColWarningType),
-		CR_MEMBER(collide),
-		
+
 		CR_MEMBER(autoLand),
-		
+
 		CR_RESERVED(16)
 		));
 

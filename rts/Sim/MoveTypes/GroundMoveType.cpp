@@ -194,7 +194,7 @@ CGroundMoveType::~CGroundMoveType()
 
 void CGroundMoveType::PostLoad()
 {
-	//HACK: re-initialize path after load
+	// FIXME: HACK: re-initialize path after load
 	if (pathId) {
 		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
 	}

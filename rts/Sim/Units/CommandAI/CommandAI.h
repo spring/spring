@@ -15,18 +15,19 @@ class CFeature;
 class CWeapon;
 class CLoadSaveInterface;
 
-class CCommandAI :
-	public CObject
+class CCommandAI : public CObject
 {
-public:
 	CR_DECLARE(CCommandAI);
+
+public:
 	CCommandAI(CUnit* owner);
 	CCommandAI();
 	virtual ~CCommandAI(void);
 	void PostLoad();
 
 	void DependentDied(CObject* o);
-	void GiveCommand(const Command& c, bool fromSynced = true); // feeds into GiveCommandReal()
+	/// feeds into GiveCommandReal()
+	void GiveCommand(const Command& c, bool fromSynced = true);
 	virtual int GetDefaultCmd(CUnit* pointed,CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
@@ -42,10 +43,9 @@ public:
 	virtual bool HasMoreMoveCommands();
 	virtual void StopAttackingAllyTeam(int ally);
 
-	int CancelCommands(const Command &c, CCommandQueue& queue,
-	                   bool& first);
+	int CancelCommands(const Command &c, CCommandQueue& queue, bool& first);
 	CCommandQueue::iterator GetCancelQueued(const Command &c,
-	                                              CCommandQueue& queue);
+	                                        CCommandQueue& queue);
 	std::vector<Command> GetOverlapQueued(const Command &c);
 	std::vector<Command> GetOverlapQueued(const Command &c,
 	                                      CCommandQueue& queue);
@@ -67,7 +67,11 @@ public:
 
 	std::vector<CommandDescription> possibleCommands;
 	CCommandQueue commandQue;
-	std::set<int> nonQueingCommands;			//commands that wont go into the command que (and therefore not reseting it if given without shift
+	/**
+	 * commands that will not go into the command queue
+	 * (and therefore not reseting it if given without shift
+	 */
+	std::set<int> nonQueingCommands;
 	int lastUserCommand;
 	int selfDCountdown;
 	int lastFinishCommand;
@@ -95,8 +99,11 @@ protected:
 	void DrawDefaultCommand(const Command& c) const;
 
 private:
-	int targetLostTimer; // continously set to some non-zero value while target is in radar
-	                     // decremented every frame, command is canceled if it reaches 0
+	/**
+	 * continously set to some non-zero value while target is in radar
+	 * decremented every frame, command is canceled if it reaches 0
+	 */
+	int targetLostTimer;
 };
 
 

@@ -51,11 +51,10 @@ void CLosHandler::PostLoad()
 }
 
 CR_REG_METADATA(CLosHandler,(
-		CR_RESERVED(32),
 		CR_MEMBER(instanceHash),
 		CR_MEMBER(toBeDeleted),
 		CR_MEMBER(delayQue),
-		CR_RESERVED(31),
+		CR_RESERVED(8),
 		CR_POSTLOAD(PostLoad)
 		));
 

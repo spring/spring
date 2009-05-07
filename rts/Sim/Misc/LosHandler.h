@@ -49,7 +49,7 @@ struct LosInstance : public boost::noncopyable
 class CLosHandler : public boost::noncopyable
 {
 	CR_DECLARE(CLosHandler);
-	CR_DECLARE_SUB(CPoint);
+//	CR_DECLARE_SUB(CPoint);
 	CR_DECLARE_SUB(DelayedInstance);
 
 public:

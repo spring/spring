@@ -8,10 +8,10 @@
 
 class CUnit;
 
-class AMoveType :
-	public CObject
+class AMoveType : public CObject
 {
 	CR_DECLARE(AMoveType);
+
 public:
 	AMoveType(CUnit* owner);
 	virtual ~AMoveType(void);
@@ -39,17 +39,19 @@ public:
 	int forceTurnTo;
 
 	CUnit* owner;
-	
+
 	float3 goalPos;
 
 	float maxSpeed;
 	float maxWantedSpeed;
-	
+
 	CAirBaseHandler::LandingPad* reservedPad;
-	int padStatus;						//0 moving toward,1 landing at,2 arrived
+	/// 0 moving toward,1 landing at,2 arrived
+	int padStatus;
 	float repairBelowHealth;
 
-	bool useHeading;		//probably should move the code in cunit that reads this into the movementclasses
+	/// TODO: probably should move the code in CUnit that reads this into the movement classes
+	bool useHeading;
 
 	enum ProgressState {
 		Done   = 0,
@@ -64,6 +66,7 @@ protected:
 class CMoveType : public AMoveType
 {
 	CR_DECLARE(CMoveType);
+
 public:
 	CMoveType(CUnit* unit) : AMoveType(unit){};
 	virtual void StartMoving(float3 pos, float goalRadius){};
@@ -71,8 +74,7 @@ public:
 	virtual void KeepPointingTo(float3 pos, float distance, bool aggressive){};
 	virtual void StopMoving(){};
 	virtual void Update(){};
-	
 };
 
 
-#endif /* MOVETYPE_H */
+#endif // MOVETYPE_H
