@@ -34,6 +34,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
+#include "Sim/Weapons/BeamLaser.h"
 #include "Sim/Weapons/PlasmaRepulser.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
@@ -123,6 +124,30 @@ int CCobInstance::GetFunctionId(const std::string& fname) const
 
 /******************************************************************************/
 /******************************************************************************/
+
+
+void CCobInstance::Create()
+{
+	// Calculate the max() of the available weapon reloadtimes
+	int relMax = 0;
+	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
+		if ((*i)->reloadTime > relMax)
+			relMax = (*i)->reloadTime;
+		if (dynamic_cast<CBeamLaser*>(*i))
+			relMax = 150;
+	}
+
+	// convert ticks to milliseconds
+	relMax *= 30;
+
+	// TA does some special handling depending on weapon count
+	if (unit->weapons.size() > 1) {
+		relMax = std::max(relMax, 3000);
+	}
+
+	Call(COBFN_Create);
+	Call("SetMaxReloadTime", relMax);
+}
 
 
 // Called when a unit's Killed script finishes executing
@@ -275,11 +300,6 @@ void CCobInstance::TransportDrop(CUnit* unit, const float3& pos)
 	args.push_back(unit->id);
 	args.push_back(PACKXZ(pos.x, pos.z));
 	Call(COBFN_TransportDrop, args);
-}
-
-
-void CCobInstance::SetMaxReloadTime(int maxReloadMillis)
-{
 }
 
 

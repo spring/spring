@@ -221,6 +221,7 @@ public:
 	}
 
 	// callins, called throughout sim
+	virtual void Create() = 0;
 	// Killed must cause unit->deathScriptFinished and unit->delayedWreckLevel to be set!
 	virtual void Killed() = 0;
 	virtual void SetDirection(int heading) = 0;
@@ -238,7 +239,6 @@ public:
 	virtual void TransportPickup(CUnit* unit) = 0;
 	virtual void EndTransport() = 0;
 	virtual void TransportDrop(CUnit* unit, const float3& pos) = 0;
-	virtual void SetMaxReloadTime(int maxReloadMillis) = 0;
 	virtual void StartBuilding(int heading, int pitch) = 0;
 	virtual void StopBuilding() = 0;
 	virtual int  QueryNanoPiece() = 0; // returns piece

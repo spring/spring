@@ -350,26 +350,8 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def, unit, &ud->weapons[i]));
 	}
 
-	// Calculate the max() of the available weapon reloadtimes
-	int relMax = 0;
-	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
-		if ((*i)->reloadTime > relMax)
-			relMax = (*i)->reloadTime;
-		if (dynamic_cast<CBeamLaser*>(*i))
-			relMax = 150;
-	}
-
-	// convert ticks to milliseconds
-	relMax *= 30;
-
-	// TA does some special handling depending on weapon count
-	if (unit->weapons.size() > 1) {
-		relMax = std::max(relMax, 3000);
-	}
-
 	// Call initializing script functions
-	unit->script->Call(COBFN_Create);
-	unit->script->Call("SetMaxReloadTime", relMax);
+	unit->script->Create();
 
 	unit->heading = GetHeadingFromFacing(facing);
 	unit->frontdir = GetVectorFromHeading(unit->heading);

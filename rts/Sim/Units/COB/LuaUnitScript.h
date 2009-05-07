@@ -44,6 +44,7 @@ public:
 	virtual int GetFunctionId(const std::string& fname) const;
 
 	// callins, called throughout sim
+	virtual void Create();
 	virtual void Killed();
 	virtual void SetDirection(int heading);
 	virtual void SetSpeed(float speed);
@@ -57,7 +58,6 @@ public:
 	virtual void TransportPickup(CUnit* unit);
 	virtual void EndTransport();
 	virtual void TransportDrop(CUnit* unit, const float3& pos);
-	virtual void SetMaxReloadTime(int maxReloadMillis);
 	virtual void StartBuilding(int heading, int pitch);
 	virtual void StopBuilding();
 	virtual int  QueryNanoPiece();

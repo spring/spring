@@ -2201,23 +2201,9 @@ void CUnit::PostLoad()
 	// FIXME: how to handle other script types (e.g. Lua) here?
 	script = new CCobInstance(GCobFileHandler.GetCobFile(unitDef->scriptPath), this);
 
-	// Calculate the max() of the available weapon reloadtimes
-	int relMax = 0;
-	for (vector<CWeapon*>::iterator i = weapons.begin(); i != weapons.end(); ++i) {
-		if ((*i)->reloadTime > relMax)
-			relMax = (*i)->reloadTime;
-		if(dynamic_cast<CBeamLaser*>(*i))
-			relMax=150;
-	}
-	relMax *= 30;		// convert ticks to milliseconds
-
-	// TA does some special handling depending on weapon count
-	if (weapons.size() > 1)
-		relMax = std::max(relMax, 3000);
-
 	// Call initializing script functions
-	script->Call(COBFN_Create);
-	script->Call("SetMaxReloadTime", relMax);
+	script->Create();
+
 	for (vector<CWeapon*>::iterator i = weapons.begin(); i != weapons.end(); ++i) {
 		(*i)->weaponDef = unitDef->weapons[(*i)->weaponNum].def;
 	}

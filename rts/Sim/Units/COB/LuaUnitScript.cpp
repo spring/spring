@@ -261,6 +261,11 @@ void CLuaUnitScript::ShowScriptWarning(const string& msg)
 /******************************************************************************/
 
 
+void CLuaUnitScript::Create()
+{
+}
+
+
 void CLuaUnitScript::Killed()
 {
 }
@@ -323,11 +328,6 @@ void CLuaUnitScript::EndTransport()
 
 
 void CLuaUnitScript::TransportDrop(CUnit* unit, const float3& pos)
-{
-}
-
-
-void CLuaUnitScript::SetMaxReloadTime(int maxReloadMillis)
 {
 }
 
