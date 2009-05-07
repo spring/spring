@@ -350,6 +350,7 @@ const ISkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const Skirmi
 
 	T_skirmishAIInfos::const_iterator aiInfo = skirmishAIInfos.find(skirmishAIKey);
 	if (aiInfo == skirmishAIInfos.end()) {
+		logOutput.Print("Aborting the game, unknown skirmish AI specified: %s %s", skirmishAIKey.GetShortName().c_str(), skirmishAIKey.GetVersion().c_str());
 		return NULL;
 	}
 	return FetchInterface(skirmishAIKey.GetInterface())->FetchSkirmishAILibrary(*(aiInfo->second));
