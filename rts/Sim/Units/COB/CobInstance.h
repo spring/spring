@@ -79,7 +79,6 @@ public:
 	virtual void BeginTransport(CUnit* unit);
 	virtual int  QueryTransport(CUnit* unit);
 	virtual void TransportPickup(CUnit* unit);
-	virtual void EndTransport();
 	virtual void TransportDrop(CUnit* unit, const float3& pos);
 	virtual void StartBuilding(float heading, float pitch);
 	virtual int  QueryNanoPiece();
