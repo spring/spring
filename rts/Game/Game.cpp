@@ -232,11 +232,11 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(consumeSpeed),
 //	CR_MEMBER(lastframe),
 //	CR_MEMBER(leastQue),
-#ifdef DIRECT_CONTROL_ALLOWED
+//#ifdef DIRECT_CONTROL_ALLOWED // we cant have preprocessor directives here, MSVC chokes on it
 	CR_MEMBER(oldHeading),
 	CR_MEMBER(oldPitch),
 	CR_MEMBER(oldStatus),
-#endif
+//#endif
 
 	CR_POSTLOAD(PostLoad)
 ));

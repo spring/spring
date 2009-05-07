@@ -568,9 +568,9 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 			CFeature* feature = *fi;
 			float3& fpos = feature->pos;
 			float gh = ground->GetHeight2(fpos.x, fpos.z);
-			float wh = ground->GetHeight(fpos.x, fpos.z);
-			if(!feature->def->floating)
-				wh = gh;
+			float wh = gh;
+			if(feature->def->floating)
+				wh = ground->GetHeight(fpos.x, fpos.z);
 			if (fpos.y > wh || fpos.y < gh) {
 				SetFeatureUpdateable(feature);
 
