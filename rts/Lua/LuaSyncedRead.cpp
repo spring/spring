@@ -2738,10 +2738,20 @@ int LuaSyncedRead::GetUnitShieldState(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+
+	CPlasmaRepulser* shield = NULL;
+	const int idx = luaL_optint(L, 2, -1);
+
+	if (idx < 0 || idx >= unit->weapons.size()) {
+		shield = (CPlasmaRepulser*) unit->shieldWeapon;
+	} else {
+		shield = dynamic_cast<CPlasmaRepulser*>(unit->weapons[idx]);
+	}
+
 	if (shield == NULL) {
 		return 0;
 	}
+
 	lua_pushnumber(L, shield->isEnabled);
 	lua_pushnumber(L, shield->curPower);
 	return 2;
