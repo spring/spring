@@ -81,10 +81,11 @@ ${EndIf}
   RmDir "$INSTDIR\shaders"
 
   SetOutPath "$INSTDIR\fonts"
-  File "..\game\fonts\Luxi.ttf"
+  File "..\game\fonts\FreeSansBold.otf"
 
-  ; Remove Luxi.ttf, it has been moved to fonts/Luxi.ttf
+  ; Remove Luxi.ttf, it has been replaced by FreeSansBold
   Delete "$INSTDIR\Luxi.ttf"
+  Delete "$INSTDIR\fonts\Luxi.ttf"
 
   ; AI Interfaces
 !macro InstallAIInterface aiIntName
@@ -184,7 +185,7 @@ ${EndIf}
   Delete "$INSTDIR\PALETTE.PAL"
 
   ; Fonts
-  Delete "$INSTDIR\fonts\Luxi.ttf"
+  Delete "$INSTDIR\fonts\FreeSansBold.otf"
   RmDir "$INSTDIR\fonts"
 
   ; Skirmish AIs -> each Skirmish AI has its own .nsh file
