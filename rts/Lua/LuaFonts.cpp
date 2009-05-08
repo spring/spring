@@ -202,16 +202,16 @@ int LuaFonts::LoadFont(lua_State* L)
 	const int outlineWidth  = luaL_optint(L, 3, 2);
 	const float outlineWeight = luaL_optfloat(L, 4, 15.0f);
 
-	try {
-		CglFont** font = (CglFont**)lua_newuserdata(L, sizeof(CglFont*));
-		*font = CglFont::LoadFont(fileName,size,outlineWidth,outlineWeight);
-	} catch (content_error&) {
-		luaL_error(L, "Can't load font '%s'.",fileName.c_str());
+	CglFont** font = (CglFont**)lua_newuserdata(L, sizeof(CglFont*));
+	*font = CglFont::LoadFont(fileName,size,outlineWidth,outlineWeight);
+
+	if (*font == NULL) {
+		lua_pop(L, 1);
+		return 0;
 	}
 
 	luaL_getmetatable(L, "Font");
 	lua_setmetatable(L, -2);
-
 	return 1;
 }
 
