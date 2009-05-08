@@ -309,7 +309,7 @@ PacketType CBaseNetProtocol::SendSdCheckrequest(int frameNum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSdCheckresponse(uchar myPlayerNum, Uint64 flop, std::vector<unsigned> checksums)
+PacketType CBaseNetProtocol::SendSdCheckresponse(uchar myPlayerNum, uint64_t flop, std::vector<unsigned> checksums)
 {
 	unsigned size = 1 + 2 + 1 + 8 + checksums.size() * 4;
 	PackPacket* packet = new PackPacket(size, NETMSG_SD_CHKRESPONSE);

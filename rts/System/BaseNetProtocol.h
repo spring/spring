@@ -157,7 +157,7 @@ public:
 	
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);
-	PacketType SendSdCheckresponse(uchar myPlayerNum, Uint64 flop, std::vector<unsigned> checksums);
+	PacketType SendSdCheckresponse(uchar myPlayerNum, uint64_t flop, std::vector<unsigned> checksums);
 	PacketType SendSdReset();
 	PacketType SendSdBlockrequest(unsigned short begin, unsigned short length, unsigned short requestSize);
 	PacketType SendSdBlockresponse(uchar myPlayerNum, std::vector<unsigned> checksums);

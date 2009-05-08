@@ -109,7 +109,7 @@ void CSyncDebugger::Initialize(bool useBacktrace, unsigned numPlayers)
 	disable_history = false;
 	may_enable_history = false;
 	flop = 0;
-	for (int j = 0; j < numPlayers; ++j) {
+	for (unsigned j = 0; j < numPlayers; ++j) {
 		PlayerStruct buf;
 		buf.checksumResponses.clear();
 		buf.remoteHistory.clear();
@@ -250,7 +250,7 @@ bool CSyncDebugger::ServerReceived(const unsigned char* inbuf)
 					const unsigned* end = begin + HISTORY_SIZE;
 					players[player].checksumResponses.resize(HISTORY_SIZE);
 					std::copy(begin, end, players[player].checksumResponses.begin());
-					players[player].remoteFlop = *(Uint64*)&inbuf[4];
+					players[player].remoteFlop = *(uint64_t*)&inbuf[4];
 					assert(!players[player].checksumResponses.empty());
 					int i = 0;
 					while (i < playerHandler->ActivePlayers() && !players[i].checksumResponses.empty()) ++i;
@@ -399,7 +399,7 @@ void CSyncDebugger::ClientSendChecksumResponse()
 void CSyncDebugger::ServerQueueBlockRequests()
 {
 	logger.AddLine("Server: queuing block requests");
-	Uint64 correctFlop = 0;
+	uint64_t correctFlop = 0;
 	for (int j = 0; j < playerHandler->ActivePlayers(); ++j) {
 		if (correctFlop) {
 			if (players[j].remoteFlop != correctFlop)
