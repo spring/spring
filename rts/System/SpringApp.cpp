@@ -73,7 +73,6 @@ bool globalQuit = false;
 boost::uint8_t *keys = 0;
 boost::uint16_t currentUnicode = 0;
 bool fullscreen = true;
-char *win_lpCmdLine = 0;
 
 /**
  * @brief xres default
@@ -705,7 +704,7 @@ void SpringApp::Startup()
 	}
 	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
 	{
-		demofile = inputFile;
+		std::string demofile = inputFile;
 		ClientSetup* startsetup = new ClientSetup();
 		startsetup->isHost = true; // local demo play
 		startsetup->myPlayerName = configHandler->GetString("name", "unnamed")+ " (spec)";
@@ -717,7 +716,7 @@ void SpringApp::Startup()
 	}
 	else if (inputFile.rfind("ssf") == inputFile.size() - 3)
 	{
-		savefile = inputFile;
+		std::string savefile = inputFile;
 		ClientSetup* startsetup = new ClientSetup();
 		startsetup->isHost = true;
 		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
@@ -729,7 +728,7 @@ void SpringApp::Startup()
 	}
 	else
 	{
-		startscript = inputFile;
+		std::string startscript = inputFile;
 		CFileHandler fh(startscript);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+startscript);
