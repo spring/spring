@@ -117,7 +117,6 @@ int main(int argc, char *argv[])
 
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
 {
-	win_lpCmdLine = lpCmdLine;
 	return Run (__argc, __argv);
 }
 

@@ -89,37 +89,28 @@ void BaseCmd::deloption(std::string o)
  */
 void BaseCmd::parse()
 {
+	boost::program_options::options_description all;
 	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
 		std::string optionstr = it->longopt;
 		if (it->shortopt)
 			optionstr += ","+std::string(&it->shortopt);
 		if (it->parmtype == OPTPARM_NONE) {
-			desc.add_options()
-					(optionstr.c_str(), it->desc.c_str());
+			all.add_options()(optionstr.c_str(), it->desc.c_str());
 		}
 		else if (it->parmtype == OPTPARM_INT) {
-			desc.add_options()
-					(optionstr.c_str(), po::value<int>(),
-					 it->desc.c_str());
+			all.add_options()(optionstr.c_str(), po::value<int>(), it->desc.c_str());
 		}
 		else if (it->parmtype == OPTPARM_STRING) {
-			desc.add_options()
-					(optionstr.c_str(), po::value<std::string>(),
-					 it->desc.c_str());
+			all.add_options()(optionstr.c_str(), po::value<std::string>(), it->desc.c_str());
 		}
 	}
+	desc.add(all);
 
-	// input file as hidden option
-	po::options_description hidden("Hidden options");
-	hidden.add_options()("input-file", po::value<std::string>(), "input file");
+	all.add_options()("input-file", po::value<std::string>(), "input file");
 	po::positional_options_description p;
 	p.add("input-file", 1);
 
-	po::command_line_parser parser(argc, argv);
-	parser.options(desc);
-	parser.options(hidden);
-	parser.positional(p);
-	po::store(parser.run(), vm);
+	po::store(po::command_line_parser(argc, argv).options(all).positional(p).run(), vm);
 	po::notify(vm);
 
 	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
