@@ -1,5 +1,6 @@
 # Copyright (C) 2006  Tobi Vollebregt
 # Code copied from the old build system, but heavily reordered and/or rewritten.
+# vim:noet ts=4 sts=4 sw=4
 
 import os, re, sys
 
@@ -67,10 +68,12 @@ def check_debian_powerpc(env, conf):
 
 
 def guess_include_path(env, conf, name, subdir):
-	print "  Guessing", name, "include path...",
+	print "  Guessing", name, "include path..."
 	if env['platform'] == 'windows':
 		path = [os.path.join(os.path.join(env['mingwlibsdir'], 'include'), subdir)]
+		path += [os.path.join(os.path.join(env['mingwlibsdir'], 'usr', 'include'), subdir)]
 		path += [os.path.abspath(os.path.join(os.path.join(env['mingwlibsdir'], 'include'), subdir))]
+		path += [os.path.abspath(os.path.join(os.path.join(env['mingwlibsdir'], 'usr', 'include'), subdir))]
 		# Everything lives in mingwlibs anyway...
 		if os.environ.has_key('MINGDIR'):
 			path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]
@@ -82,8 +85,7 @@ def guess_include_path(env, conf, name, subdir):
 		path = [os.path.join('/usr/include', subdir)]
 	env.AppendUnique(CPPPATH = path)
 	for f in path:
-		print f,
-	print ''
+		print '\t\t', f
 
 def check_freetype2(env, conf):
 	print "Checking for Freetype2..."
