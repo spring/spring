@@ -79,18 +79,6 @@ public:
 	void addoption(const char shortopt, std::string longopt, unsigned int parmtype, std::string parmname, std::string desc);
 
 	/**
-	 * @brief delete option
-	 * @param o the single-character flag to find and remove
-	 */
-	void deloption(const char o);
-
-	/**
-	 * @brief delete option
-	 * @param o the long string parameter to find and remove
-	 */
-	void deloption(std::string o);
-
-	/**
 	 * @brief parse
 	 *
 	 * This will read the parameters and search for recognized strings.
