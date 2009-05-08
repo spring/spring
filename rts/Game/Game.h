@@ -41,7 +41,9 @@ public:
 
 	static void DrawMTcb(void *c) {((CGame *)c)->DrawMT();}
 	bool Update();
+	/// Called when a key is released by the user
 	int KeyReleased(unsigned short k);
+	/// Called when the key is pressed by the user (can be called several times due to key repeat)
 	int KeyPressed(unsigned short k,bool isRepeat);
 	void ResizeEvent();
 	virtual ~CGame();

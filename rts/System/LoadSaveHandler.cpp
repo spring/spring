@@ -41,9 +41,9 @@ CLoadSaveHandler::~CLoadSaveHandler(void)
 
 class CGameStateCollector
 {
-public:
 	CR_DECLARE(CGameStateCollector);
 
+public:
 	CGameStateCollector() {}
 
 	void Serialize(creg::ISerializer& s);
@@ -57,21 +57,25 @@ CR_REG_METADATA(CGameStateCollector, CR_SERIALIZER(Serialize));
 static void WriteString(std::ostream& s, std::string& str)
 {
 	char c;
-	for (unsigned int a=0;a<str.length();a++) {
+	// write the string char by char
+	for (unsigned int a=0; a < str.length(); a++) {
 		c = str[a];
-		s.write(&c,sizeof(char));
+		s.write(&c, sizeof(char));
 	}
-	c = 0;
+	// write the string-termination NULL char
+	c = '\0';
 	s.write(&c,sizeof(char));
 }
 
 static void ReadString(std::istream& s, std::string& str)
 {
 	char c;
-	do {
-		s.read(&c,sizeof(char));
-		if (c) str += c;
-	} while (c != 0);
+	// read until string-termination NULL char is encountered
+	s.read(&c, sizeof(char));
+	while (c != '\0') {
+		str += c;
+		s.read(&c, sizeof(char));
+	}
 }
 
 void CGameStateCollector::Serialize(creg::ISerializer& s)
@@ -110,15 +114,14 @@ void PrintSize(const char *txt, int size)
 	logOutput.Print("%s %u B",txt,size);
 }
 
-void CLoadSaveHandler::SaveGame(std::string file)
+void CLoadSaveHandler::SaveGame(const std::string& file)
 {
 	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
 	PrintLoadMsg("Saving game");
 	try {
 		std::ofstream ofs(filesystem.LocateFile(file, FileSystem::WRITE).c_str(), std::ios::out|std::ios::binary);
 		if (ofs.bad() || !ofs.is_open()) {
-			handleerror(0,"Couldnt save game to file",file.c_str(),0);
-			return;
+			throw content_error("Unable to save game to file \"" + file + "\"");
 		}
 
 		std::string scriptText;
@@ -153,10 +156,19 @@ void CLoadSaveHandler::SaveGame(std::string file)
 	UnloadStartPicture();
 }
 
-//this just loads the mapname and some other early stuff
-void CLoadSaveHandler::LoadGameStartInfo(std::string file)
+/// this just loads the mapname and some other early stuff
+void CLoadSaveHandler::LoadGameStartInfo(const std::string& file)
 {
 	ifs = new std::ifstream (filesystem.LocateFile(file).c_str(), std::ios::in|std::ios::binary);
+
+	// in case these contained values alredy
+	// (this is the case when loading a game through the spring menu eg),
+	// we set them to empty strings, as ReadString() does append,
+	// and we would end up with the correct value but two times
+	// eg: "AbcAbc" instead of "Abc"
+	scriptText = "";
+	modName = "";
+	mapName = "";
 
 	ReadString(*ifs, scriptText);
 	if (!scriptText.empty() && !gameSetup) {
@@ -174,7 +186,7 @@ void CLoadSaveHandler::LoadGameStartInfo(std::string file)
 	ReadString(*ifs, mapName);
 }
 
-//this should be called on frame 0 when the game has started
+/// this should be called on frame 0 when the game has started
 void CLoadSaveHandler::LoadGame()
 {
 	LoadStartPicture(teamHandler->Team(gu->myTeam)->side);
@@ -187,12 +199,12 @@ void CLoadSaveHandler::LoadGame()
 	assert (pGSC && gsccls == CGameStateCollector::StaticClass());
 
 	CGameStateCollector *gsc = (CGameStateCollector *)pGSC;
-	delete gsc; // only job of gsc is to collect gamestate data
+	delete gsc; // the only job of gsc is to collect gamestate data
 	for (int a=0; a < teamHandler->ActiveTeams();a++)
 		grouphandlers[a]->Load(ifs);
 	eoh->Load(ifs);
 	delete ifs;
-	for (int a=0; a < teamHandler->ActiveTeams();a++) {//For old savegames
+	for (int a=0; a < teamHandler->ActiveTeams();a++) { // For old savegames
 		if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
 			eoh->DestroySkirmishAI(a);
 		}
