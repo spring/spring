@@ -611,7 +611,16 @@ void SpringApp::ParseCmdLine()
 	cmdline->addoption(0,   "list-ai-interfaces", OPTPARM_NONE,   "",  "Dump a list of available AI Interfaces to stdout");
 	cmdline->addoption(0,   "list-skirmish-ais",  OPTPARM_NONE,   "",  "Dump a list of available Skirmish AIs to stdout");
 //	cmdline->addoption(0,   "list-group-ais",     OPTPARM_NONE,   "",  "Dump a list of available Group AIs to stdout");
-	cmdline->parse();
+	try
+	{
+		cmdline->parse();
+	}
+	catch (const std::exception& err)
+	{
+		std::cerr << err.what() << std::endl << std::endl;
+		cmdline->usage("Spring", SpringVersion::GetFull());
+		exit(1);
+	}
 
 	string configSource;
 	cmdline->result("config", configSource);
