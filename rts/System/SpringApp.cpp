@@ -688,96 +688,48 @@ void SpringApp::ParseCmdLine()
 #endif
 }
 
-/**
- * @param argc argument count
- * @param argv array of argument strings
- *
- * Checks if a demo SDF file or a startscript has
- * been specified on the command line
- */
-void SpringApp::CheckCmdLineFile(int argc, char *argv[])
-{
-	// Check if the commandline parameter is specifying a demo file
-#if defined(_WIN32) && defined(USE_OLD_OPTIONS)
-	// find the correct dir
-	char exe[128];
-	GetModuleFileName(0, exe, sizeof(exe));
-	int a,s = strlen(exe);
-	for (a=s-1;a>0;a--)
-	    // Running in gdb causes the last dir separator to be a forward slash.
-		if (exe[a] == '\\' || exe[a] == '/') break;
-	if (a > 0) {
-		string path(exe, exe+a);
-		if (path.at(0) == '"')
-			path.append(1,'"');
-		_chdir(path.c_str());
-	}
-
-	// If there are any options, they will start before the demo file name.
-
-	if (win_lpCmdLine == 0) {
-		logOutput.Print("ERROR: invalid commandline ptr");
-	}
-
-	string cmdLineStr = win_lpCmdLine;
-	string::size_type offset = 0;
-	//Simply assumes that any argument coming after a argument starting with /q is a variable to /q.
-	for(int i=1; i < argc && (argv[i][0] == '/' || (argv[i-1][0] == '/'
-			&& (argv[i-1][1] == 'q' || argv[i-1][1] == 'a'
-				|| argv[i-1][1] == 'C' || argv[i-1][1] == 'x'
-				|| argv[i-1][1] == 'y' || argv[i-1][1] == 'n'))); i++){
-		offset += strlen(argv[i]);
-		offset = cmdLineStr.find_first_not_of(' ', offset);
-		if(offset == string::npos)
-			break;
-	}
-
-	string command;
-	if(offset != string::npos)
-		command = cmdLineStr.substr(offset);
-
-
-	if (!command.empty()) {
-		if (command[0] == '"' && *command.rbegin() == '"' && command.length() > 2)
-			command = command.substr(1, command.length()-2);
-		if (command.rfind("sdf") == command.size()-3) {
-			demofile = command;
-			LogObject() << "Using demofile " << demofile.c_str() << "\n";
-		} else if (command.rfind("ssf") == command.size()-3) {
-			savefile = command;
-			LogObject() << "Using savefile " << savefile.c_str() << "\n";
-		} else {
-			startscript = command;
-			LogObject() << "Using script " << startscript.c_str() << "\n";
-		}
-	}
-#else
-	// is there a reason for not using this in windows?
-	for (int i = 1; i < argc; i++)
-		if (argv[i][0] != '-')
-		{
-			string command(argv[i]);
-			if (command.rfind("sdf") == command.size() - 3) {
-				demofile = command;
-				LogObject() << "Using demofile " << demofile.c_str() << "\n";
-			} else if (command.rfind("ssf") == command.size() - 3) {
-				savefile = command;
-				LogObject() << "Using savefile " << savefile.c_str() << "\n";
-			} else {
-				startscript = command;
-				LogObject() << "Using script " << startscript.c_str() << "\n";
-			}
-		}
-#endif
-}
 
 /**
  * Initializes instance of GameSetup
  */
 void SpringApp::Startup()
 {
-	if (!startscript.empty())
+	std::string inputFile = cmdline->GetInputFile();
+	if (inputFile.empty())
 	{
+		bool server = !cmdline->result("client") || cmdline->result("server");
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(server, 64);
+#endif
+		activeController = new SelectMenu(server);
+	}
+	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
+	{
+		demofile = inputFile;
+		ClientSetup* startsetup = new ClientSetup();
+		startsetup->isHost = true; // local demo play
+		startsetup->myPlayerName = configHandler->GetString("name", "unnamed")+ " (spec)";
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
+#endif
+		pregame = new CPreGame(startsetup);
+		pregame->LoadDemo(demofile);
+	}
+	else if (inputFile.rfind("ssf") == inputFile.size() - 3)
+	{
+		savefile = inputFile;
+		ClientSetup* startsetup = new ClientSetup();
+		startsetup->isHost = true;
+		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
+#endif
+		pregame = new CPreGame(startsetup);
+		pregame->LoadSavefile(savefile);
+	}
+	else
+	{
+		startscript = inputFile;
 		CFileHandler fh(startscript);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+startscript);
@@ -800,36 +752,6 @@ void SpringApp::Startup()
 		pregame = new CPreGame(startsetup);
 		if (startsetup->isHost)
 			pregame->LoadSetupscript(buf);
-	}
-	else if (!demofile.empty())
-	{
-		ClientSetup* startsetup = new ClientSetup();
-		startsetup->isHost = true; // local demo play
-		startsetup->myPlayerName = configHandler->GetString("name", "unnamed")+ " (spec)";
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
-#endif
-		pregame = new CPreGame(startsetup);
-		pregame->LoadDemo(demofile);
-	}
-	else if (!savefile.empty())
-	{
-		ClientSetup* startsetup = new ClientSetup();
-		startsetup->isHost = true;
-		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
-#endif
-		pregame = new CPreGame(startsetup);
-		pregame->LoadSavefile(savefile);
-	}
-	else
-	{
-		bool server = !cmdline->result("client") || cmdline->result("server");
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(server, 64);
-#endif
-		activeController = new SelectMenu(server);
 	}
 }
 
@@ -969,18 +891,8 @@ void SpringApp::UpdateSDLKeys ()
  */
 int SpringApp::Run (int argc, char *argv[])
 {
-	CheckCmdLineFile (argc, argv);
-	cmdline = BaseCmd::initialize(argc,argv);
-/*
-	logOutput.Print ("Testing error catching");
-	try {
-		int *i_=0;
-		*i_=1;
-		logOutput.Print ("Error catching doesn't work!");
-	} catch(...) {
-		logOutput.Print ("Error catching works!");
-	}
-*/
+	cmdline = new BaseCmd(argc, argv);
+
 	if (!Initialize ())
 		return -1;
 
