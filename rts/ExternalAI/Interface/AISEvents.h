@@ -287,13 +287,16 @@ struct SWeaponFiredEvent {
 }; // EVENT_WEAPON_FIRED
 
 /**
- * This AI event is sent when a weapon is fired.
+ * This AI event is sent when a user gives a command to one or multiple units
+ * belonging to a team controlled by the AI.
  */
 struct SPlayerCommandEvent {
 	int* unitIds;
 	int numUnitIds;
-	int commandTopic; // see AISCommands.h COMMAND_* defines
-	void* commandData; // see AISCommands.h S*Command structs
+	/// see AISCommands.h COMMAND_* defines
+	int commandTopic;
+	/// see AISCommands.h S*Command structs
+	void* commandData;
 	int playerId;
 }; // EVENT_PLAYER_COMMAND
 

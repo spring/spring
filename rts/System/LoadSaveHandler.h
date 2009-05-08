@@ -9,10 +9,11 @@ class CLoadInterface;
 class CLoadSaveHandler
 {
 public:
-	CLoadSaveHandler(void);
-	~CLoadSaveHandler(void);
-	void SaveGame(std::string file);
-	void LoadGameStartInfo(std::string file); // load things such as map/mod, needed to fire up the engine
+	CLoadSaveHandler();
+	~CLoadSaveHandler();
+	void SaveGame(const std::string& file);
+	/// load things such as map and mod, needed to fire up the engine
+	void LoadGameStartInfo(const std::string& file);
 	void LoadGame(); 
 	std::string FindSaveFile(const char* name);
 
@@ -23,5 +24,4 @@ protected:
 	std::ifstream *ifs;
 };
 
-
-#endif /* LOADSAVEHANDLER_H */
+#endif // LOADSAVEHANDLER_H

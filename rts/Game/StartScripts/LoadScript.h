@@ -5,21 +5,20 @@
 #include <string>
 #include "LoadSaveHandler.h"
 
-class CLoadScript :
-	public CScript
+class CLoadScript : public CScript
 {
 public:
-	CLoadScript(std::string file);
-	~CLoadScript(void);
-	void Update(void);
-	std::string GetMapName(void);
-	std::string GetModName(void);
+	CLoadScript(const std::string& file);
+	~CLoadScript();
+	void Update();
+	std::string GetMapName();
+	std::string GetModName();
 	void ScriptSelected();
 
+private:
 	bool started;
 	CLoadSaveHandler loader;
 	std::string file;
 };
 
-
-#endif /* LOADSCRIPT_H */
+#endif // LOADSCRIPT_H

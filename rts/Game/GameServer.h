@@ -32,7 +32,11 @@ class CGameSetup;
 class ClientSetup;
 class ChatMessage;
 
-const unsigned SERVER_PLAYER = 255; //server generated message which needs a playernumber
+/**
+ * When the Server generates a message,
+ * this value is used as the sending player-number.
+ */
+const unsigned SERVER_PLAYER = 255;
 
 class GameParticipant : public PlayerBase
 {
@@ -125,6 +129,7 @@ private:
 	void ServerReadNet();
 	void CheckForGameEnd();
 
+	/** @brief Generate a unique game identifier and sent it to all clients. */
 	void GenerateAndSendGameID();
 	std::string GetPlayerNames(const std::vector<int>& indices) const;
 
