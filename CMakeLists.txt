@@ -98,7 +98,7 @@ else (SDL_FOUND)
 	message("* AIs")
 endif (SDL_FOUND)
 
-FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex REQUIRED)
+FIND_PACKAGE(Boost 1.35.0 COMPONENTS thread regex program_options REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 FIND_PACKAGE(Devil REQUIRED)

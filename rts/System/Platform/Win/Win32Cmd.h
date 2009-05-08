@@ -10,6 +10,8 @@
 #ifndef WIN32CMD_H
 #define WIN32CMD_H
 
+#include <boost/program_options.hpp>
+
 #include "Platform/BaseCmd.h"
 
 /**
@@ -19,6 +21,7 @@
  */
 class Win32Cmd: public BaseCmd
 {
+	boost::program_options::options_description desc;
 public:
 	/**
 	 * @brief Constructor

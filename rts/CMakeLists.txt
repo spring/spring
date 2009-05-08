@@ -54,7 +54,7 @@ LIST(APPEND spring_libraries ${FREETYPE_LIBRARIES})
 ### Find include directories and add platform specific libraries
 IF (MINGW)
 	FIND_PACKAGE(Win32Libs REQUIRED)
-	LIST(APPEND spring_libraries ${WIN32_LIBRARIES} mingw32)
+	LIST(APPEND spring_libraries ${WIN32_LIBRARIES} mingw32 ${Boost_PROGRAM_OPTIONS_LIBRARY})
 ELSE (MINGW)
 	FIND_PACKAGE(X11 REQUIRED)
 	LIST(APPEND spring_libraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
