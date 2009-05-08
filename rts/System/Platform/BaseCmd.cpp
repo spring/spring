@@ -58,33 +58,6 @@ void BaseCmd::addoption(const char shortopt, std::string longopt, const unsigned
 }
 
 /**
- * Remove the option that has the given short flag
- */
-void BaseCmd::deloption(const char o)
-{
-	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
-		if (it->shortopt == o) {
-			options.erase(it);
-			break;
-		}
-	}
-}
-
-/**
- * Remove the option that has the given long flag
- */
-void BaseCmd::deloption(std::string o)
-{
-	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
-		if (it->longopt == o) {
-			options.erase(it);
-			break;
-		}
-	}
-}
-
-
-/**
  * Iterates through and processes arguments
  */
 void BaseCmd::parse()
