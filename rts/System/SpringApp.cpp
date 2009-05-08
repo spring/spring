@@ -243,7 +243,7 @@ bool SpringApp::Initialize()
 	// use some ATI bugfixes?
 	std::string vendor = std::string((char*)glGetString(GL_VENDOR));
 	StringToLowerInPlace(vendor);
-	bool isATi = (vendor.find("ati ") != string::npos); 
+	bool isATi = (vendor.find("ati ") != string::npos);
 	gu->atiHacks = !!configHandler->Get("AtiHacks", isATi?1:0 );
 	if (gu->atiHacks) {
 		logOutput.Print("ATI hacks enabled\n");
@@ -698,7 +698,7 @@ void SpringApp::ParseCmdLine()
 void SpringApp::CheckCmdLineFile(int argc, char *argv[])
 {
 	// Check if the commandline parameter is specifying a demo file
-#ifdef _WIN32
+#if defined(_WIN32) && defined(USE_OLD_OPTIONS)
 	// find the correct dir
 	char exe[128];
 	GetModuleFileName(0, exe, sizeof(exe));
