@@ -36,12 +36,6 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	));
 
 
-static void ShieldScriptCallback(int retCode, void* p1, void* p2)
-{
-	((CPlasmaRepulser*)p1)->isEnabled = !!retCode;
-}
-
-
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
 : CWeapon(owner),
 	curPower(0),
@@ -236,10 +230,7 @@ void CPlasmaRepulser::SlowUpdate(void)
 	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
 	                       + (owner->updir    * relWeaponPos.y)
 	                       + (owner->rightdir * relWeaponPos.x);
-	std::vector<int> args2;
-	args2.push_back(0);
-	args2.push_back(0);
-	owner->script->Call(COBFN_AimPrimary + weaponNum, args2, ShieldScriptCallback, this, 0);
+	owner->script->AimShieldWeapon(weaponNum);
 }
 
 
