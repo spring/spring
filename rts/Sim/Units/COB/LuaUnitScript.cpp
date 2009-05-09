@@ -349,6 +349,11 @@ void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
 }
 
 
+void  CLuaUnitScript::AimShieldWeapon(int weaponNum)
+{
+}
+
+
 int CLuaUnitScript::AimFromWeapon(int weaponNum)
 {
 	return -1;

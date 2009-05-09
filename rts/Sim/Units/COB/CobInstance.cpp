@@ -322,7 +322,7 @@ int CCobInstance::QueryWeapon(int weaponNum)
 }
 
 
-// Called when unit's AimWeapon script finishes executing
+// Called when unit's AimWeapon script finished executing
 static void ScriptCallback(int retCode,void* p1,void* p2)
 {
 	if (retCode == 1) {
@@ -336,6 +336,23 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 	args.push_back(short(heading * RAD2TAANG));
 	args.push_back(short(pitch * RAD2TAANG));
 	Call(COBFN_AimPrimary + weaponNum, args, ScriptCallback, unit->weapons[weaponNum], NULL);
+}
+
+
+// Called when unit's AimWeapon script finished executing (for shield weapon)
+static void ShieldScriptCallback(int retCode, void* p1, void* p2)
+{
+	((CPlasmaRepulser*)p1)->isEnabled = !!retCode;
+}
+
+void CCobInstance::AimShieldWeapon(int weaponNum)
+{
+	vector<int> args;
+	args.push_back(0); // compat with AimWeapon (same script is called)
+	args.push_back(0);
+	// FIXME: maybe we could use some check that unit->weapons[weaponNum]
+	// really is a CPlasmaRepulser?  (as ShieldScriptCallback assumes)
+	Call(COBFN_AimPrimary + weaponNum, args, ShieldScriptCallback, unit->weapons[weaponNum], 0);
 }
 
 
