@@ -47,6 +47,7 @@
 #include "Util.h"
 #include "Exceptions.h"
 #include "System/TimeProfiler.h"
+#include "System/Sound/Sound.h"
 
 #include "mmgr.h"
 
@@ -977,6 +978,7 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_ACTIVEEVENT: {
 					if (event.active.state & SDL_APPACTIVE) {
 						gu->active = !!event.active.gain;
+						sound->Iconified(!event.active.gain);
 					}
 
 					if (mouse && mouse->locked) {
