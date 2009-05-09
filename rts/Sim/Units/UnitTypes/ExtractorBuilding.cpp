@@ -182,7 +182,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	// set the COB animation speed
 	script->SetSpeed(metalExtract, 500.0f);
 	if (activated) {
-		script->Call("Go");
+		script->Go();
 	}
 }
 
@@ -223,7 +223,7 @@ void CExtractorBuilding::ReCalculateMetalExtraction()
 	// set the new rotation-speed
 	script->SetSpeed(metalExtract, 500.0f);
 	if (activated) {
-		script->Call("Go");
+		script->Go();
 	}
 }
 

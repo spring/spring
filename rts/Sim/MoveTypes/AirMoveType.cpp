@@ -904,7 +904,7 @@ void CAirMoveType::UpdateLanding(void)
 			owner->physicalState = CSolidObject::Flying;
 			pos = tp;
 			owner->Deactivate();
-			owner->script->Call(COBFN_StopMoving);
+			owner->script->StopMoving();
 		} else {
 			goalPos.CheckInBounds();
 			UpdateFlying(wantedHeight, 1);
@@ -1127,7 +1127,7 @@ void CAirMoveType::SetState(AAirMoveType::AircraftState state)
 
 	if (state == AIRCRAFT_FLYING) {
 		owner->Activate();
-		owner->script->Call(COBFN_StartMoving);
+		owner->script->StartMoving();
 	}
 
 	if (state == AIRCRAFT_LANDED) {

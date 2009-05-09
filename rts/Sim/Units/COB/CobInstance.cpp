@@ -315,6 +315,14 @@ int CCobInstance::QueryNanoPiece()
 }
 
 
+int CCobInstance::QueryBuildInfo()
+{
+	vector<int> args(1, 0);
+	Call(COBFN_QueryBuildInfo, args);
+	return args[0];
+}
+
+
 int CCobInstance::QueryWeapon(int weaponNum)
 {
 	vector<int> args(1, 0);

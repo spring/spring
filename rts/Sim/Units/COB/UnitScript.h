@@ -180,12 +180,14 @@ public:
 	int Call(const std::string &fname, std::vector<int> &args);
 	int Call(const std::string &fname, CBCobThreadFinish cb, void *p1, void *p2);
 	int Call(const std::string &fname, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+protected:
 	// these take a COBFN_* constant as argument, which is then translated to the actual function number
 	int Call(int id);
 	int Call(int id, std::vector<int> &args);
 	int Call(int id, int p1);
 	int Call(int id, CBCobThreadFinish cb, void *p1, void *p2);
 	int Call(int id, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+public:
 	// these take the raw function number
 	int RawCall(int fn, std::vector<int> &args);
 	int RawCall(int fn, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
@@ -242,6 +244,7 @@ public:
 	virtual void TransportDrop(const CUnit* unit, const float3& pos) = 0;
 	virtual void StartBuilding(float heading, float pitch) = 0;
 	virtual int  QueryNanoPiece() = 0; // returns piece
+	virtual int  QueryBuildInfo() = 0; // returns piece
 
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum) = 0; // returns piece, former QueryPrimary
@@ -254,9 +257,20 @@ public:
 
 	// inlined callins, un-inline and make virtual when different behaviour is
 	// desired between the different unit script implementations (COB, Lua).
+	void StartMoving()   { Call(COBFN_StartMoving); }
+	void StopMoving()    { Call(COBFN_StopMoving); }
+	void StartUnload()   { Call(COBFN_StartUnload); }
 	void EndTransport()  { Call(COBFN_EndTransport); }
 	void StartBuilding() { Call(COBFN_StartBuilding); }
 	void StopBuilding()  { Call(COBFN_StopBuilding); }
+	void Falling()       { Call(COBFN_Falling); }
+	void Landed()        { Call(COBFN_Landed); }
+	void Activate()      { Call(COBFN_Activate); }
+	void Deactivate()    { Call(COBFN_Deactivate); }
+	void Go()            { Call(COBFN_Go); }
+	void MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
+	void FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + weaponNum); }
+	void EndBurst(int weaponNum)   { Call(COBFN_EndBurst + weaponNum); }
 };
 
 #endif

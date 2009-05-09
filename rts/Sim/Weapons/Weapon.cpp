@@ -359,7 +359,7 @@ void CWeapon::Update()
 
 				owner->lastMuzzleFlameSize=muzzleFlareSize;
 				owner->lastMuzzleFlameDir=wantedDir;
-				owner->script->Call(COBFN_FirePrimary+weaponNum);
+				owner->script->FireWeapon(weaponNum);
 			}
 		} else {
 			// FIXME  -- never reached?
@@ -429,7 +429,7 @@ void CWeapon::Update()
 		owner->commandAI->WeaponFired(this);
 
 		if(salvoLeft==0){
-			owner->script->Call(COBFN_EndBurst+weaponNum);
+			owner->script->EndBurst(weaponNum);
 		}
 #ifdef TRACE_SYNC
 	tracefile << "Weapon fire: ";

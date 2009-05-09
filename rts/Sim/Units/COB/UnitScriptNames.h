@@ -35,12 +35,14 @@ enum {
 	COBFN_BeginTransport,       // in: unit->model->height*65536
 	COBFN_QueryTransport,       // out: piecenum, in: unit->model->height*65536
 	COBFN_TransportPickup,      // in: unit->id
+	COBFN_StartUnload,          // -
 	COBFN_EndTransport,         // -
 	COBFN_TransportDrop,        // in: unit->id, in: PACKXZ(pos.x, pos.z)
 	COBFN_SetMaxReloadTime,     // in: maxReloadTime
 	COBFN_StartBuilding,        // BUILDER: in: h-heading, in: p-pitch; FACTORY: -
 	COBFN_StopBuilding,         // -
 	COBFN_QueryNanoPiece,       // out: piecenum
+	COBFN_QueryBuildInfo,       // out: piecenum
 	COBFN_Go,                   // -
 	COBFN_Last,
 

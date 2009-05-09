@@ -82,6 +82,7 @@ public:
 	virtual void TransportDrop(const CUnit* unit, const float3& pos);
 	virtual void StartBuilding(float heading, float pitch);
 	virtual int  QueryNanoPiece();
+	virtual int  QueryBuildInfo();
 
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum);
