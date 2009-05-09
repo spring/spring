@@ -1249,7 +1249,6 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "unitreplyvolume") { // deprecated, use "/set snd_volunitreply X" instead
-		std::string channel = "UnitReply";
 		float newVol = 1.0;
 		std::istringstream buf(action.extra);
 		buf >> newVol;

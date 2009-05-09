@@ -18,7 +18,8 @@ float SoundSource::globalPitch = 1.0;
 SoundSource::SoundSource() : curPlaying(0)
 {
 	alGenSources(1, &id);
-	alSourcef(id, AL_REFERENCE_DISTANCE, 50.0f);
+	alSourcef(id, AL_REFERENCE_DISTANCE, 100.0f);
+	alSourcef(id, AL_ROLLOFF_FACTOR, 0.4f);
 	CheckError("SoundSource::SoundSource");
 }
 
@@ -89,12 +90,7 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	else
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 	alSourcePlay(id);
-#ifdef DEBUG
-	//LogObject(LOG_SOUND) << "Playing: " << item->name;
-	//LogObject(LOG_SOUND) << "# Pitch: " << item->pitch * globalPitch << "  Vol: " << item->gain * volume;
-	//LogObject(LOG_SOUND) << "# Pos: " << pos.x << ", " << pos.y << ", " << pos.z;
-	//LogObject(LOG_SOUND) << "# Vel: " << velocity.x << ", " << velocity.y << ", " << velocity.z;
-#endif
+
 	if (item->buffer->GetId() == 0)
 		logOutput.Print("SoundSource::Play: Empty buffer for item %s (file %s)", item->name.c_str(), item->buffer->GetFilename().c_str());
 	CheckError("SoundSource::Play");
