@@ -105,7 +105,7 @@ const char* PlayerRoster::GetSortName()
 
 /******************************************************************************/
 
-const std::vector<int>& PlayerRoster::GetIndices(int* count) const
+const std::vector<int>& PlayerRoster::GetIndices(int* count, bool pathinfo) const
 {
 	static std::vector<int> players;
 	static int knownPlayers = 0;
@@ -126,7 +126,7 @@ const std::vector<int>& PlayerRoster::GetIndices(int* count) const
 		int& c = *count;
 		for (c = 0; c < playerHandler->ActivePlayers(); c++) {
 			const CPlayer* p = playerHandler->Player(players[c]);
-			if ((p == NULL) || !p->active) {
+			if ((p == NULL) || !p->active && !(pathinfo && p->ping == PATHING_FLAG && gs->frameNum == 0)) {
 				break;
 			}
 		}
@@ -148,6 +148,12 @@ static inline int CompareBasics(const CPlayer* aP, const CPlayer* bP)
 	// active players first
 	if ( aP->active && !bP->active) { return -1; }
 	if (!aP->active &&  bP->active) { return +1; }
+
+	// then pathing players
+	if(gs->frameNum == 0) {
+		if(aP->ping == PATHING_FLAG && bP->ping != PATHING_FLAG) { return -1; }
+		if(aP->ping != PATHING_FLAG && bP->ping == PATHING_FLAG) { return +1; }
+	}
 
 	return 0;
 }

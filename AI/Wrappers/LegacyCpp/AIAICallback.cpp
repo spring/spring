@@ -1477,8 +1477,6 @@ void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int l
 }
 
 int CAIAICallback::HandleCommand(int commandId, void* data) {
-
-	int cmdTopicId = commandId;
 	int ret = -99;
 
 	switch (commandId) {
@@ -1491,25 +1489,25 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 		case AIHCAddMapPointId: {
 			AIHCAddMapPoint* myData = (AIHCAddMapPoint*) data;
 			SAddPointDrawCommand cmd = {myData->pos.toSAIFloat3(), myData->label};
-			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_POINT_ADD, &cmd);
 			break;
 		}
 		case AIHCAddMapLineId: {
 			AIHCAddMapLine* myData = (AIHCAddMapLine*) data;
 			SAddLineDrawCommand cmd = {myData->posfrom.toSAIFloat3(), myData->posto.toSAIFloat3()};
-			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_LINE_ADD, &cmd);
 			break;
 		}
 		case AIHCRemoveMapPointId: {
 			AIHCRemoveMapPoint* myData = (AIHCRemoveMapPoint*) data;
 			SRemovePointDrawCommand cmd = {myData->pos.toSAIFloat3()};
-			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_POINT_REMOVE, &cmd);
 			break;
 		}
 		case AIHCSendStartPosId: {
 			AIHCSendStartPos* myData = (AIHCSendStartPos*) data;
 			SSendStartPosCommand cmd = {myData->ready, myData->pos.toSAIFloat3()};
-			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cmd);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_START_POS, &cmd);
 			break;
 		}
 
@@ -1524,7 +1522,7 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 				cppCmdData->flags
 			};
 
-			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, cmdTopicId, &cCmdData);
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY, &cCmdData);
 
 			cppCmdData->rayLen = cCmdData.rayLen;
 			cppCmdData->hitUID = cCmdData.hitUID;

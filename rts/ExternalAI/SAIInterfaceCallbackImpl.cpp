@@ -15,6 +15,10 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <cstdio>
+
+using std::sprintf;
+
 #include "SAIInterfaceCallbackImpl.h"
 
 #include "Game/GameVersion.h"

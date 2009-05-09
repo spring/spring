@@ -153,7 +153,7 @@ void CVertexArray::AddVertex2dT(const float x, const float y,const float tx,cons
 
 
 void CVertexArray::CheckEndStrip() {
-	if(stripArrayPos==stripArray || *(stripArrayPos-1)!=((char *)drawArrayPos-(char *)drawArray))
+	if(stripArrayPos==stripArray || ((ptrdiff_t)*(stripArrayPos-1))!=((char *)drawArrayPos-(char *)drawArray))
 		EndStrip();
 }
 

@@ -65,6 +65,7 @@ public:
 class GameTeam : public TeamBase
 {
 public:
+	GameTeam() : active(false) {};
 	bool active;
 };
 

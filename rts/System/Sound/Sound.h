@@ -29,12 +29,13 @@ public:
 	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
 	void NewFrame();
 
+	void ConfigNotify(const std::string& key, const std::string& value);
 	void PitchAdjust(const float newPitch);
 
 	bool Mute();
 	bool IsMuted() const;
 
-	void SetVolume(float vol); // 1 = full volume
+	void Iconified(bool state);
 
 	void PrintDebugInfo();
 
@@ -49,6 +50,7 @@ private:
 
 	float masterVolume;
 	bool mute;
+	bool appIsIconified; // do not play when minimized / iconified
 
 	typedef std::map<std::string, size_t> soundMapT;
 	typedef boost::ptr_vector<SoundItem> soundVecT;
@@ -59,6 +61,7 @@ private:
 	float3 posScale;
 	/// unscaled
 	float3 myPos;
+	float3 prevVelocity;
 
 	typedef boost::ptr_vector<SoundSource> sourceVecT;
 	sourceVecT sources;

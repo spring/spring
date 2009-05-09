@@ -50,7 +50,7 @@ public:
 	void SetOutlineColor(const float& r, const float& g, const float& b, const float& a) { const float4 f = float4(r,g,b,a); SetOutlineColor(&f); };
 
 	//! Adds \n's (and '...' if it would be too high) until the text fits into maxWidth/maxHeight
-	int WrapInPlace(std::string& text, const float fontSize, const float maxWidth, const float maxHeight = 1e9) const;
+	int WrapInPlace(std::string& text, float fontSize, const float maxWidth, const float maxHeight = 1e9) const;
 	std::list<std::string> Wrap(const std::string& text, float fontSize, const float maxWidth, const float maxHeight = 1e9) const;
 
 	float GetKerning(const unsigned int& left_char, const unsigned int& right_char) const;
@@ -114,22 +114,23 @@ private:
 		unsigned int pos;
 	};
 	struct word {
-		word() : isSpace(false), isLineBreak(false), pos(0), numSpaces(0), width(0.0f), text("") {};
+		word() : width(0.0f), text(""), isSpace(false), isLineBreak(false), isColorCode(false), numSpaces(0), pos(0) {};
 
 		float width;
 		std::string text;
 		bool isSpace;
 		bool isLineBreak;
+		bool isColorCode;
 		unsigned int numSpaces;
 		unsigned int pos; //! position in the original text (needed for remerging colorcodes after wrapping; in printable chars (linebreaks and space don't count))
 	};
 	struct line {
-		line() : cost(0.0f), width(0.0f), forceLineBreak(false) {};
+		line() : width(0.0f), cost(0.0f), forceLineBreak(false) {};
 
 		std::list<word>::iterator start, end;
-		bool forceLineBreak;
 		float width;
 		float cost;
+		bool forceLineBreak;
 	};
 
 	word SplitWord(word& w, float wantedWidth, bool smart = true) const;
@@ -152,8 +153,8 @@ private:
 	int outlineWidth;
 	float outlineWeight;
 	int chars;
-	int charstart;
-	int charend;
+	unsigned int charstart;
+	unsigned int charend;
 
 	GLuint fontTexture;
 	GLuint texWidth,texHeight;

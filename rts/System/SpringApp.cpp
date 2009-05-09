@@ -24,6 +24,7 @@
 #include "Game/Game.h"
 #include "Sim/Misc/Team.h"
 #include "Game/UI/KeyBindings.h"
+#include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
 #include "ConfigHandler.h"
@@ -46,6 +47,7 @@
 #include "Util.h"
 #include "Exceptions.h"
 #include "System/TimeProfiler.h"
+#include "System/Sound/Sound.h"
 
 #include "mmgr.h"
 
@@ -72,7 +74,6 @@ bool globalQuit = false;
 boost::uint8_t *keys = 0;
 boost::uint16_t currentUnicode = 0;
 bool fullscreen = true;
-char *win_lpCmdLine = 0;
 
 /**
  * @brief xres default
@@ -240,7 +241,10 @@ bool SpringApp::Initialize()
 	}
 
 	// use some ATI bugfixes?
-	gu->atiHacks = !!configHandler->Get("AtiHacks", (GLEW_ATI_envmap_bumpmap)?1:0 );
+	std::string vendor = std::string((char*)glGetString(GL_VENDOR));
+	StringToLowerInPlace(vendor);
+	bool isATi = (vendor.find("ati ") != string::npos);
+	gu->atiHacks = !!configHandler->Get("AtiHacks", isATi?1:0 );
 	if (gu->atiHacks) {
 		logOutput.Print("ATI hacks enabled\n");
 	}
@@ -338,25 +342,10 @@ bool SpringApp::SetSDLVideoMode ()
 	//conditionally_set_flag(sdlflags, SDL_FULLSCREEN, fullscreen);
 	sdlflags |= fullscreen ? SDL_FULLSCREEN : 0;
 
-	int bitsPerPixel = configHandler->Get("BitsPerPixel", 0);
-
-	if (bitsPerPixel == 32)
-	{
-		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
-		SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
-	}
-	else
-	{
-		SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 5);
-		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 6);
-		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 5);
-		// no alpha in 16bit mode
-
-        if (bitsPerPixel != 16 && bitsPerPixel != 0)
-           bitsPerPixel = 0; // it should be either 0, 16, or 32
-	}
+	SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
 
 	depthBufferBits = configHandler->Get("DepthBufferBits", 32);
 
@@ -367,7 +356,7 @@ bool SpringApp::SetSDLVideoMode ()
 
 	FSAA = MultisampleTest();
 
-	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, bitsPerPixel, sdlflags);
+	SDL_Surface *screen = SDL_SetVideoMode(screenWidth, screenHeight, 32, sdlflags);
 	if (!screen) {
 		char buf[1024];
 		SNPRINTF(buf, sizeof(buf), "Could not set video mode:\n%s", SDL_GetError());
@@ -585,8 +574,8 @@ void SpringApp::InitOpenGL ()
 void SpringApp::LoadFonts()
 {
 	// Initialize font
-	const std::string fontFile = configHandler->GetString("FontFile", "fonts/Luxi.ttf");
-	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/Luxi.ttf");
+	const std::string fontFile = configHandler->GetString("FontFile", "fonts/FreeSansBold.otf");
+	const std::string smallFontFile = configHandler->GetString("SmallFontFile", "fonts/FreeSansBold.otf");
 	const int fontSize = configHandler->Get("FontSize", 23);
 	const int smallFontSize = configHandler->Get("SmallFontSize", 14);
 	const int outlineWidth = configHandler->Get("FontOutlineWidth", 3);
@@ -596,9 +585,31 @@ void SpringApp::LoadFonts()
 
 	SafeDelete(font);
 	SafeDelete(smallFont);
-
 	font = CglFont::LoadFont(fontFile, fontSize, outlineWidth, outlineWeight);
 	smallFont = CglFont::LoadFont(smallFontFile, smallFontSize, smallOutlineWidth, smallOutlineWeight);
+
+	if (!font || !smallFont) {
+		std::vector<std::string> fonts = CFileHandler::DirList("fonts/", "*.*tf", SPRING_VFS_RAW_FIRST);
+		std::vector<std::string>::iterator fi = fonts.begin();
+		while (fi != fonts.end()) {
+			SafeDelete(font);
+			SafeDelete(smallFont);
+			font = CglFont::LoadFont(*fi, fontSize, outlineWidth, outlineWeight);
+			smallFont = CglFont::LoadFont(*fi, smallFontSize, smallOutlineWidth, smallOutlineWeight);
+			if (font && smallFont) {
+				break;
+			} else {
+				fi++;
+			}
+		}
+		if (!font) {
+			throw content_error(std::string("Failed to load font: ") + fontFile);
+		} else if (!smallFont) {
+			throw content_error(std::string("Failed to load font: ") + smallFontFile);
+		}
+		configHandler->SetString("FontFile", *fi);
+		configHandler->SetString("SmallFontFile", *fi);
+	}
 }
 
 /**
@@ -623,7 +634,16 @@ void SpringApp::ParseCmdLine()
 	cmdline->addoption(0,   "list-ai-interfaces", OPTPARM_NONE,   "",  "Dump a list of available AI Interfaces to stdout");
 	cmdline->addoption(0,   "list-skirmish-ais",  OPTPARM_NONE,   "",  "Dump a list of available Skirmish AIs to stdout");
 //	cmdline->addoption(0,   "list-group-ais",     OPTPARM_NONE,   "",  "Dump a list of available Group AIs to stdout");
-	cmdline->parse();
+	try
+	{
+		cmdline->parse();
+	}
+	catch (const std::exception& err)
+	{
+		std::cerr << err.what() << std::endl << std::endl;
+		cmdline->usage("Spring", SpringVersion::GetFull());
+		exit(1);
+	}
 
 	string configSource;
 	cmdline->result("config", configSource);
@@ -699,98 +719,48 @@ void SpringApp::ParseCmdLine()
 #endif
 }
 
-/**
- * @param argc argument count
- * @param argv array of argument strings
- *
- * Checks if a demo SDF file or a startscript has
- * been specified on the command line
- */
-void SpringApp::CheckCmdLineFile(int argc, char *argv[])
-{
-	// Check if the commandline parameter is specifying a demo file
-#ifdef _WIN32
-	// find the correct dir
-	char exe[128];
-	GetModuleFileName(0, exe, sizeof(exe));
-	int a,s = strlen(exe);
-	for (a=s-1;a>0;a--)
-	    // Running in gdb causes the last dir separator to be a forward slash.
-		if (exe[a] == '\\' || exe[a] == '/') break;
-	if (a > 0) {
-		string path(exe, exe+a);
-		if (path.at(0) == '"')
-			path.append(1,'"');
-		_chdir(path.c_str());
-	}
-
-	// If there are any options, they will start before the demo file name.
-
-	if (win_lpCmdLine == 0) {
-		logOutput.Print("ERROR: invalid commandline ptr");
-	}
-
-	string cmdLineStr = win_lpCmdLine;
-	string::size_type offset = 0;
-	//Simply assumes that any argument coming after a argument starting with /q is a variable to /q.
-	for(int i=1; i < argc && (argv[i][0] == '/' || (argv[i-1][0] == '/'
-			&& (argv[i-1][1] == 'q' || argv[i-1][1] == 'a'
-				|| argv[i-1][1] == 'C' || argv[i-1][1] == 'x'
-				|| argv[i-1][1] == 'y' || argv[i-1][1] == 'n'))); i++){
-		offset += strlen(argv[i]);
-		offset = cmdLineStr.find_first_not_of(' ', offset);
-		if(offset == string::npos)
-			break;
-	}
-
-	string command;
-	if(offset != string::npos)
-		command = cmdLineStr.substr(offset);
-
-
-	if (!command.empty()) {
-		if (command[0] == '"' && *command.rbegin() == '"' && command.length() > 2)
-			command = command.substr(1, command.length()-2);
-		if (command.rfind("sdf") == command.size()-3) {
-			demofile = command;
-			LogObject() << "Using demofile " << demofile.c_str() << "\n";
-		} else if (command.rfind("ssf") == command.size()-3) {
-			savefile = command;
-			LogObject() << "Using savefile " << savefile.c_str() << "\n";
-		} else {
-			startscript = command;
-			LogObject() << "Using script " << startscript.c_str() << "\n";
-		}
-	}
-#else
-	// is there a reason for not using this in windows?
-	for (int i = 1; i < argc; i++)
-		if (argv[i][0] != '-')
-		{
-			string command(argv[i]);
-			if (command.rfind("sdf") == command.size() - 3) {
-				demofile = command;
-				LogObject() << "Using demofile " << demofile.c_str() << "\n";
-			} else if (command.rfind("ssf") == command.size() - 3) {
-				savefile = command;
-				LogObject() << "Using savefile " << savefile.c_str() << "\n";
-			} else {
-				startscript = command;
-				LogObject() << "Using script " << startscript.c_str() << "\n";
-			}
-		}
-#endif
-}
 
 /**
  * Initializes instance of GameSetup
  */
 void SpringApp::Startup()
 {
-	ClientSetup* startsetup = 0;
-	startsetup = new ClientSetup();
-	if (!startscript.empty())
+	std::string inputFile = cmdline->GetInputFile();
+	if (inputFile.empty())
 	{
+		bool server = !cmdline->result("client") || cmdline->result("server");
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(server, 64);
+#endif
+		activeController = new SelectMenu(server);
+	}
+	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
+	{
+		std::string demofile = inputFile;
+		ClientSetup* startsetup = new ClientSetup();
+		startsetup->isHost = true; // local demo play
+		startsetup->myPlayerName = configHandler->GetString("name", "unnamed")+ " (spec)";
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
+#endif
+		pregame = new CPreGame(startsetup);
+		pregame->LoadDemo(demofile);
+	}
+	else if (inputFile.rfind("ssf") == inputFile.size() - 3)
+	{
+		std::string savefile = inputFile;
+		ClientSetup* startsetup = new ClientSetup();
+		startsetup->isHost = true;
+		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
+#ifdef SYNCDEBUG
+		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
+#endif
+		pregame = new CPreGame(startsetup);
+		pregame->LoadSavefile(savefile);
+	}
+	else
+	{
+		std::string startscript = inputFile;
 		CFileHandler fh(startscript);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+startscript);
@@ -798,6 +768,7 @@ void SpringApp::Startup()
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setupscript cannot be read: "+startscript);
+		ClientSetup* startsetup = new ClientSetup();
 		startsetup->Init(buf);
 
 		// commandline parameters overwrite setup
@@ -812,34 +783,6 @@ void SpringApp::Startup()
 		pregame = new CPreGame(startsetup);
 		if (startsetup->isHost)
 			pregame->LoadSetupscript(buf);
-	}
-	else if (!demofile.empty())
-	{
-		startsetup->isHost = true; // local demo play
-		startsetup->myPlayerName = configHandler->GetString("name", "unnamed")+ " (spec)";
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
-#endif
-		pregame = new CPreGame(startsetup);
-		pregame->LoadDemo(demofile);
-	}
-	else if (!savefile.empty())
-	{
-		startsetup->isHost = true;
-		startsetup->myPlayerName = configHandler->GetString("name", "unnamed");
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
-#endif
-		pregame = new CPreGame(startsetup);
-		pregame->LoadSavefile(savefile);
-	}
-	else
-	{
-		bool server = !cmdline->result("client") || cmdline->result("server");
-#ifdef SYNCDEBUG
-		CSyncDebugger::GetInstance()->Initialize(server, 64);
-#endif
-		activeController = new SelectMenu(server);
 	}
 }
 
@@ -979,18 +922,8 @@ void SpringApp::UpdateSDLKeys ()
  */
 int SpringApp::Run (int argc, char *argv[])
 {
-	CheckCmdLineFile (argc, argv);
-	cmdline = BaseCmd::initialize(argc,argv);
-/*
-	logOutput.Print ("Testing error catching");
-	try {
-		int *i_=0;
-		*i_=1;
-		logOutput.Print ("Error catching doesn't work!");
-	} catch(...) {
-		logOutput.Print ("Error catching works!");
-	}
-*/
+	cmdline = new BaseCmd(argc, argv);
+
 	if (!Initialize ())
 		return -1;
 
@@ -1045,6 +978,11 @@ int SpringApp::Run (int argc, char *argv[])
 				case SDL_ACTIVEEVENT: {
 					if (event.active.state & SDL_APPACTIVE) {
 						gu->active = !!event.active.gain;
+						sound->Iconified(!event.active.gain);
+					}
+
+					if (mouse && mouse->locked) {
+						mouse->ToggleState();
 					}
 					break;
 				}

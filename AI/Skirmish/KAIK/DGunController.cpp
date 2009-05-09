@@ -107,14 +107,29 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 		const float  dgunDelay    = targetDist / commanderWD->projectilespeed;				// sim-frames needed for dgun to reach target position
 		const float3 dgunPos      = curTargetPos + targetDir * (targetSpeed * dgunDelay);	// position where target will be in <dgunDelay> frames
 		const float  maxRange     = ai->cb->GetUnitMaxRange(commanderID);
-		// ai->cb->CreateLineFigure(commanderPos, attackPos, 48, 1, 3600, 0);
 
+		bool haveClearShot = true;
 		int orderType = -1;
+
+		AIHCTraceRay rayData = {
+			commanderPos,
+			targetDir,
+			maxRange,
+			commanderID,
+			-1,
+			0
+		};
+
+		ai->cb->HandleCommand(AIHCTraceRayId, &rayData);
+
+		if (rayData.hitUID != -1) {
+			haveClearShot = (ai->cb->GetUnitAllyTeam(rayData.hitUID) != ai->cb->GetMyAllyTeam());
+		}
 
 		if ((commanderPos - dgunPos).Length() < maxRange * 0.9f) {
 			// multiply by 0.9 to ensure commander does not have to walk
 			if ((ai->cb->GetEnergy()) >= DGUN_MIN_ENERGY_LEVEL) {
-				if (udef != NULL && !udef->weapons.empty()) {
+				if (udef != NULL && !udef->weapons.empty() && haveClearShot) {
 					IssueOrder(dgunPos, orderType = CMD_DGUN, 0);
 				} else {
 					IssueOrder(state.targetID, orderType = CMD_CAPTURE, 0);

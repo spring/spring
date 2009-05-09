@@ -21,8 +21,9 @@ class CUnit;
  */
 class CGlobalUnsyncedStuff
 {
-public:
 	CR_DECLARE(CGlobalUnsyncedStuff);
+
+public:
 	CGlobalUnsyncedStuff();  //!< Constructor
 	~CGlobalUnsyncedStuff(); //!< Destructor
 

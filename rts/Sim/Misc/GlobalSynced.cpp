@@ -26,21 +26,26 @@ CGlobalSyncedStuff* gs;
 CR_BIND(CGlobalSyncedStuff,);
 
 CR_REG_METADATA(CGlobalSyncedStuff, (
-	CR_MEMBER(randSeed),
-	CR_MEMBER(initRandSeed),
 	CR_MEMBER(frameNum),
 	CR_MEMBER(speedFactor),
 	CR_MEMBER(userSpeedFactor),
 	CR_MEMBER(paused),
+	CR_MEMBER(mapx),
+	CR_MEMBER(mapy),
+	CR_MEMBER(mapSquares),
+	CR_MEMBER(hmapx),
+	CR_MEMBER(hmapy),
+	CR_MEMBER(pwr2mapx),
+	CR_MEMBER(pwr2mapy),
 	CR_MEMBER(tempNum),
 	CR_MEMBER(godMode),
 	CR_MEMBER(globalLOS),
 	CR_MEMBER(cheatEnabled),
 	CR_MEMBER(noHelperAIs),
 	CR_MEMBER(editDefsEnabled),
-	CR_MEMBER(useLuaRules),
 	CR_MEMBER(useLuaGaia),
-	CR_MEMBER(activeTeamsBackwardCompatForLuaBinder),
+	CR_MEMBER(randSeed),
+	CR_MEMBER(initRandSeed),
 	CR_RESERVED(64)
 ));
 
@@ -65,7 +70,6 @@ CGlobalSyncedStuff::CGlobalSyncedStuff()
 	editDefsEnabled = false;
 	tempNum = 2;
 	useLuaGaia = true;
-	useLuaRules = true;
 
 	// TODO: put this somewhere else (playerHandler is unsynced, even)
 	playerHandler = new CPlayerHandler();
@@ -86,14 +90,12 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 	noHelperAIs = !!setup->noHelperAIs;
 
 	useLuaGaia  = CLuaGaia::SetConfigString(setup->luaGaiaStr);
-	useLuaRules = CLuaRules::SetConfigString(setup->luaRulesStr);
+	CLuaRules::SetConfigString(setup->luaRulesStr);
 
 	// TODO: this call is unsynced, technically
 	playerHandler->LoadFromSetup(setup);
 
 	teamHandler->LoadFromSetup(setup);
-
-	activeTeamsBackwardCompatForLuaBinder = teamHandler->ActiveTeams();
 }
 
 /**

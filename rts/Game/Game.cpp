@@ -179,68 +179,116 @@ CGame* game = NULL;
 CR_BIND(CGame, (std::string(""), std::string(""), NULL));
 
 CR_REG_METADATA(CGame,(
-	CR_RESERVED(4),//r3927
+//	CR_MEMBER(drawMode),
+//	CR_MEMBER(defsParser), // temp-var, save irrelevant
 	CR_MEMBER(oldframenum),
 //	CR_MEMBER(fps),
 //	CR_MEMBER(thisFps),
-
+	CR_MEMBER(lastSimFrame),
+//	CR_MEMBER(fpstimer),
+//	CR_MEMBER(starttime),
 //	CR_MEMBER(lastUpdate),
 //	CR_MEMBER(lastMoveUpdate),
 //	CR_MEMBER(lastModGameTimeMeasure),
-//	CR_MEMBER(lastframe),
-
+//	CR_MEMBER(lastUpdateRaw),
+//	CR_MEMBER(updateDeltaSeconds),
 	CR_MEMBER(totalGameTime),
-
 	CR_MEMBER(userInputPrefix),
-
 	CR_MEMBER(lastTick),
 	CR_MEMBER(chatSound),
-
+//	CR_MEMBER(camMove),
+//	CR_MEMBER(camRot),
 	CR_MEMBER(hideInterface),
+	CR_MEMBER(gameOver),
+//	CR_MEMBER(windowedEdgeMove),
+//	CR_MEMBER(fullscreenEdgeMove),
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
-	CR_MEMBER(crossSize),
 	CR_MEMBER(noSpectatorChat),
 	CR_MEMBER(drawFpsHUD),
-
+	CR_MEMBER(drawMapMarks),
+	CR_MEMBER(crossSize),
+//	CR_MEMBER(drawSky),
+//	CR_MEMBER(drawWater),
+//	CR_MEMBER(drawGround),
 	CR_MEMBER(moveWarnings),
-
-	CR_MEMBER(lastSimFrame),
-
+	CR_MEMBER(gameID),
 //	CR_MEMBER(script),
-	CR_RESERVED(64),
+//	CR_MEMBER(infoConsole),
+//	CR_MEMBER(consoleHistory),
+//	CR_MEMBER(wordCompletion),
+//	CR_MEMBER(creatingVideo),
+//	CR_MEMBER(aviGenerator),
+//	CR_MEMBER(hotBinding),
+//	CR_MEMBER(inputTextPosX),
+//	CR_MEMBER(inputTextPosY),
+//	CR_MEMBER(inputTextSizeX),
+//	CR_MEMBER(inputTextSizeY),
+//	CR_MEMBER(lastCpuUsageTime),
+//	CR_MEMBER(skipping),
+	CR_MEMBER(playing),
+//	CR_MEMBER(lastFrameTime),
+//	CR_MEMBER(leastQue),
+//	CR_MEMBER(timeLeft),
+//	CR_MEMBER(consumeSpeed),
+//	CR_MEMBER(lastframe),
+//	CR_MEMBER(leastQue),
+//#ifdef DIRECT_CONTROL_ALLOWED // we cant have preprocessor directives here, MSVC chokes on it
+	CR_MEMBER(oldHeading),
+	CR_MEMBER(oldPitch),
+	CR_MEMBER(oldStatus),
+//#endif
+
 	CR_POSTLOAD(PostLoad)
 ));
 
 
-CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile)
-: drawMode(notDrawing),
-  drawSky(true),
-  drawWater(true),
-  drawGround(true),
-  lastFrameTime(0)
+CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFile):
+	drawMode(notDrawing),
+	defsParser(NULL),
+	oldframenum(0),
+	fps(0),
+	thisFps(0),
+	lastSimFrame(-1),
+
+	totalGameTime(0),
+
+	hideInterface(false),
+
+	gameOver(false),
+
+	noSpectatorChat(false),
+	drawFpsHUD(true),
+	drawMapMarks(true),
+
+	drawSky(true),
+	drawWater(true),
+	drawGround(true),
+
+	script(NULL),
+
+	creatingVideo(false),
+
+	skipping(false),
+	playing(false),
+	chatting(false),
+	lastFrameTime(0),
+
+	leastQue(0),
+	timeLeft(0.0f),
+	consumeSpeed(1.0f)
 {
 	game = this;
 	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
 	CPlayer::UpdateControlledTeams();
 
-	leastQue = 0;
-	timeLeft = 0.0f;
-	consumeSpeed = 1.0f;
-
 	memset(gameID, 0, sizeof(gameID));
 
 	infoConsole = new CInfoConsole();
 
-	script = NULL;
-
-	defsParser = NULL;
-
 	time(&starttime);
 	lastTick = clock();
-
-	oldframenum = 0;
 
 	for(int a = 0; a < 8; ++a) {
 		camMove[a] = false;
@@ -248,22 +296,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	for(int a = 0; a < 4; ++a) {
 		camRot[a] = false;
 	}
-
-	fps = 0;
-	thisFps = 0;
-	totalGameTime = 0;
-
-	lastSimFrame=-1;
-
-	creatingVideo = false;
-
-	playing  = false;
-	gameOver = false;
-	skipping = false;
-
-	drawFpsHUD = true;
-	drawMapMarks = true;
-	hideInterface = false;
 
 	windowedEdgeMove   = !!configHandler->Get("WindowedEdgeMove",   1);
 	fullscreenEdgeMove = !!configHandler->Get("FullscreenEdgeMove", 1);
@@ -282,9 +314,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	ParseInputTextGeometry("default");
 	ParseInputTextGeometry(inputTextGeo);
 
-	noSpectatorChat = false;
-
-	chatting   = false;
 	userInput  = "";
 	writingPos = 0;
 	userPrompt = "";
@@ -376,7 +405,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	groundDecals = new CGroundDecalHandler();
 	ReColorTeams();
 
-
 	guihandler = new CGuiHandler();
 	minimap = new CMiniMap();
 
@@ -411,6 +439,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
 	pathManager = new CPathManager();
+
 #ifdef SYNCCHECK
 	// update the checksum with path data
 	{ SyncedUint tmp(pathManager->GetPathChecksum()); }
@@ -436,10 +465,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	GameSetupDrawer::Enable();
 
-	if (gs->useLuaRules) {
-		PrintLoadMsg("Loading LuaRules");
-		CLuaRules::LoadHandler();
-	}
+	PrintLoadMsg("Loading LuaRules");
+	CLuaRules::LoadHandler();
+
 	if (gs->useLuaGaia) {
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
@@ -1213,34 +1241,20 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Sound enabled");
 		}
 	}
-	else if (cmd == "volume") { // master volume
+	else if (cmd == "volume") { // deprecated, use "/set snd_volmaster X" instead
 		char* endPtr;
 		const char* startPtr = action.extra.c_str();
 		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
 		if (endPtr != startPtr) {
-			sound->SetVolume(volume);
-			configHandler->Set("SoundVolume", (int)(volume * 100.0f));
+			configHandler->Set("snd_volmaster", volume);
 		}
 	}
-	else if (cmd == "soundchannelvolume" || cmd == "unitreplyvolume") {
-		std::string channel = "UnitReply";
+	else if (cmd == "unitreplyvolume") { // deprecated, use "/set snd_volunitreply X" instead
 		float newVol = 1.0;
 		std::istringstream buf(action.extra);
-		if (cmd == "soundchannelvolume")
-		{
-			buf >> channel;
-		}
 		buf >> newVol;
 		const float volume = std::max(0.0f, std::min(1.0f, newVol));
-
-		if (channel == "UnitReply")
-			Channels::UnitReply.SetVolume(volume);
-		else if (channel == "General")
-			Channels::General.SetVolume(volume);
-		else if (channel == "Battle")
-			Channels::Battle.SetVolume(volume);
-		else if (channel == "UserInterface")
-			Channels::UserInterface.SetVolume(volume);
+		Channels::UnitReply.SetVolume(volume);
 	}
 	else if (cmd == "soundchannelenable") {
 		std::string channel;
@@ -2346,34 +2360,29 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			logOutput.Print("No definition Editing");
 	}
 	else if ((action.command == "luarules") && (gs->frameNum > 1)) {
-		if (gs->useLuaRules) {
-			if ((action.extra == "reload") && (playernum == 0)) {
-				if (!gs->cheatEnabled) {
-					logOutput.Print("Cheating required to reload synced scripts");
+		if ((action.extra == "reload") && (playernum == 0)) {
+			if (!gs->cheatEnabled) {
+				logOutput.Print("Cheating required to reload synced scripts");
+			} else {
+				CLuaRules::FreeHandler();
+				CLuaRules::LoadHandler();
+				if (luaRules) {
+					logOutput.Print("LuaRules reloaded");
 				} else {
-					CLuaRules::FreeHandler();
-					CLuaRules::LoadHandler();
-					if (luaRules) {
-						logOutput.Print("LuaRules reloaded");
-					} else {
-						logOutput.Print("LuaRules reload failed");
-					}
+					logOutput.Print("LuaRules reload failed");
 				}
 			}
-			else if ((action.extra == "disable") && (playernum == 0)) {
-				if (!gs->cheatEnabled) {
-					logOutput.Print("Cheating required to disable synced scripts");
-				} else {
-					CLuaRules::FreeHandler();
-					logOutput.Print("LuaRules disabled");
-				}
+		}
+		else if ((action.extra == "disable") && (playernum == 0)) {
+			if (!gs->cheatEnabled) {
+				logOutput.Print("Cheating required to disable synced scripts");
+			} else {
+				CLuaRules::FreeHandler();
+				logOutput.Print("LuaRules disabled");
 			}
-			else if (luaRules) {
-				luaRules->GotChatMsg(action.extra, playernum);
-			}
-			else {
-				logOutput.Print("LuaRules is not enabled");
-			}
+		}
+		else {
+			luaRules->GotChatMsg(action.extra, playernum);
 		}
 	}
 	else if ((action.command == "luagaia") && (gs->frameNum > 1)) {
@@ -2952,7 +2961,7 @@ bool CGame::Draw() {
 
 			char buf[128];
 			int count;
-			const std::vector<int>& indices = playerRoster.GetIndices(&count);
+			const std::vector<int>& indices = playerRoster.GetIndices(&count, true);
 
 			for (int a = 0; a < count; ++a) {
 				const CPlayer* p = playerHandler->Player(indices[a]);
@@ -2971,11 +2980,18 @@ bool CGame::Draw() {
 					else
 						prefix = "E|";	//no alliance at all
 				}
-				SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
+				if(p->ping != PATHING_FLAG) {
+					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 							p->team, prefix.c_str(), p->name.c_str(), p->cpuUsage * 100.0f,
 							(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
-
+				}
+				else {
+					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %s-%d Pathing: %d",
+							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
+							p->team, prefix.c_str(), p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
+							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
+				}
 				smallFont->SetColors(&color, NULL);
 				float x = 0.76f, y = 0.01f + (0.02f * (count - a - 1));
 				smallFont->glPrint(x, y, 1.0f, font_options, buf);

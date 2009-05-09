@@ -20,6 +20,7 @@
 
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "CUtils/SSkirmishAISpecifier.h"
+#include "CUtils/SharedLibrary.h"
 
 #include <map>
 #include <set>
@@ -27,7 +28,6 @@
 #include <string>
 
 enum LevelOfSupport;
-class SharedLib;
 struct SStaticGlobalData;
 
 class CInterface {
@@ -50,8 +50,8 @@ public:
 
 private:
 	// these functions actually load and unload the libraries
-	SharedLib* Load(const SSkirmishAISpecifier& aiKeyHash, SSkirmishAILibrary* ai);
-	SharedLib* LoadSkirmishAILib(const std::string& libFilePath,
+	sharedLib_t Load(const SSkirmishAISpecifier& aiKeyHash, SSkirmishAILibrary* ai);
+	sharedLib_t LoadSkirmishAILib(const std::string& libFilePath,
 			SSkirmishAILibrary* ai);
 
 	static void reportInterfaceFunctionError(const std::string& libFileName,
@@ -72,7 +72,7 @@ private:
 // 			SSkirmishAISpecifier_Comparator> T_skirmishAIInfos;
 	typedef std::map<const SSkirmishAISpecifier, SSkirmishAILibrary*,
 			SSkirmishAISpecifier_Comparator> T_skirmishAIs;
-	typedef std::map<const SSkirmishAISpecifier, SharedLib*,
+	typedef std::map<const SSkirmishAISpecifier, sharedLib_t,
 			SSkirmishAISpecifier_Comparator> T_skirmishAILibs;
 
 	T_skirmishAISpecifiers mySkirmishAISpecifiers;

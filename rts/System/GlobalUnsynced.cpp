@@ -37,21 +37,28 @@ CGlobalUnsyncedStuff* gu;
 CR_BIND(CGlobalUnsyncedStuff,);
 
 CR_REG_METADATA(CGlobalUnsyncedStuff, (
-				CR_MEMBER(usRandSeed),
+				CR_MEMBER(teamNanospray), // ??
 				CR_MEMBER(modGameTime),
 				CR_MEMBER(gameTime),
 				CR_MEMBER(lastFrameTime),
+				CR_MEMBER(lastFrameStart),
+				CR_MEMBER(weightedSpeedFactor), // ??
+				CR_MEMBER(drawFrame), // ??
 				CR_MEMBER(myPlayerNum),
 				CR_MEMBER(myTeam),
 				CR_MEMBER(myAllyTeam),
 				CR_MEMBER(spectating),
 				CR_MEMBER(spectatingFullView),
 				CR_MEMBER(spectatingFullSelect),
+				CR_MEMBER(drawdebug), // ??
+				CR_MEMBER(active),
 				CR_MEMBER(viewRange),
 				CR_MEMBER(timeOffset),
+//				CR_MEMBER(compressTextures),
 				CR_MEMBER(drawFog),
 				CR_MEMBER(autoQuit),
 				CR_MEMBER(quitTime),
+				CR_MEMBER(usRandSeed),
 				CR_RESERVED(64)
 				));
 

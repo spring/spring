@@ -19,9 +19,8 @@
 #include <map>
 #include <list>
 #include <set>
-using std::list;
-using std::map;
-using std::pair;
+#include <cstdio>
+using namespace std;
 
 //#include "GPathfinder.h"
 

@@ -21,8 +21,8 @@ CR_REG_METADATA(CAirBaseHandler,(
 CR_BIND_DERIVED(CAirBaseHandler::LandingPad, CObject, (NULL, 0, NULL));
 CR_REG_METADATA_SUB(CAirBaseHandler, LandingPad, (
 	CR_MEMBER(unit),
-	CR_MEMBER(base),
 	CR_MEMBER(piece),
+	CR_MEMBER(base),
 	CR_RESERVED(8)
 	));
 

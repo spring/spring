@@ -2,6 +2,7 @@
 #include "mmgr.h"
 
 #include "FactoryCAI.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Misc/GlobalSynced.h"
@@ -349,18 +350,18 @@ void CFactoryCAI::SlowUpdate()
 
 	unsigned int oldSize;
 	do {
-		Command& c=commandQue.front();
-		oldSize=commandQue.size();
+		Command& c = commandQue.front();
+		oldSize = commandQue.size();
 		map<int,BuildOption>::iterator boi;
-		if((boi=buildOptions.find(c.id))!=buildOptions.end()){
+		if ((boi=buildOptions.find(c.id))!=buildOptions.end()) {
 			const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
-			if(building){
-				if(!fac->curBuild && !fac->quedBuild){
+			if (building) {
+				if (!fac->curBuild && !fac->quedBuild) {
 					building=false;
-					if(owner->group)
-						owner->group->CommandFinished(owner->id,commandQue.front().id);
-					if(!repeatOrders || c.options & DONT_REPEAT)
+					eoh->CommandFinished(*owner, commandQue.front().id);
+					if (!repeatOrders || c.options & DONT_REPEAT) {
 						boi->second.numQued--;
+					}
 					UpdateIconName(c.id,boi->second);
 					FinishCommand();
 				}

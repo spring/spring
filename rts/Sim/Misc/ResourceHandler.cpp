@@ -23,10 +23,13 @@
 #include "Map/MetalMap.h"
 #include "GlobalSynced.h" // for the map size
 
-CR_BIND(CResourceHandler,);
+CR_BIND(CResourceHandler, );
 
 CR_REG_METADATA(CResourceHandler, (
 	CR_MEMBER(resources)
+//	CR_MEMBER(resourceMapAnalyzers),
+//	CR_MEMBER(metalResourceId),
+//	CR_MEMBER(energyResourceId)
 ));
 
 CResourceHandler* CResourceHandler::instance;

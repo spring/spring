@@ -12,6 +12,7 @@
 
 #include <vector>
 #include <string>
+#include <boost/program_options.hpp>
 
 /**
  * @brief Option parameter none
@@ -50,19 +51,22 @@ public:
 	/**
 	 * @brief Constructor
 	 */
-	BaseCmd();
+	BaseCmd(int argc, char* argv[]);
 
 	/**
 	 * @brief virtual Destructor
 	 */
-	virtual ~BaseCmd();
+	~BaseCmd();
+
+	/// Get the script, or demofile given on cmdline
+	std::string GetInputFile();
 
 	/**
 	 * @brief usage
 	 * @param program name of the program
 	 * @param version version of this program
 	 */
-	virtual void usage(std::string program, std::string version);
+	void usage(std::string program, std::string version);
 
 	/**
 	 * @brief add option
@@ -75,33 +79,13 @@ public:
 	void addoption(const char shortopt, std::string longopt, unsigned int parmtype, std::string parmname, std::string desc);
 
 	/**
-	 * @brief delete option
-	 * @param o the single-character flag to find and remove
-	 */
-	void deloption(const char o);
-
-	/**
-	 * @brief delete option
-	 * @param o the long string parameter to find and remove
-	 */
-	void deloption(std::string o);
-
-	/**
 	 * @brief parse
 	 *
 	 * This will read the parameters and search for recognized strings.
 	 * As flags are specified differently on each platform, this method
 	 * is abstract and must be implemented.
 	 */
-	virtual void parse() = 0;
-
-	/**
-	 * @brief initialize
-	 * @param c number of commandline arguments
-	 * @param v array of C strings representing the commandline arguments
-	 * @return derived commandline class suitable for this platform
-	 */
-	static BaseCmd *initialize(int c, char **v);
+	void parse();
 
 	/**
 	 * @brief result
@@ -255,6 +239,9 @@ protected:
 	 * @return true if s is an integer, false if not.
 	 */
 	bool is_int(const std::string& s) const;
+
+	boost::program_options::variables_map vm;
+	boost::program_options::options_description desc;
 };
 
 #endif

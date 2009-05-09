@@ -674,7 +674,7 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
 	// we don't care which path segment has
 	// what resolution, just lump all points
 	// together
-	for (int i = 1; i < points.size(); i++) {
+	for (size_t i = 1; i < points.size(); i++) {
 		pathLen += (points[i] - points[i - 1]).Length();
 	}
 

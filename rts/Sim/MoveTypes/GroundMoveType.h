@@ -6,10 +6,10 @@
 
 struct MoveData;
 
-class CGroundMoveType :
-	public AMoveType
+class CGroundMoveType : public AMoveType
 {
 	CR_DECLARE(CGroundMoveType);
+
 public:
 	CGroundMoveType(CUnit* owner);
 	~CGroundMoveType(void);
@@ -54,8 +54,10 @@ public:
 
 	SyncedFloat3 waypoint;
 	SyncedFloat3 nextWaypoint;
-	int etaWaypoint;			//by this time it really should have gotten there genereate new path otherwise
-	int etaWaypoint2;			//by this time we get suspicious, check if goal is clogged if we are close
+	/// by this time it really should have gotten there genereate new path otherwise
+	int etaWaypoint;
+	/// by this time we get suspicious, check if goal is clogged if we are close
+	int etaWaypoint2;
 	bool atGoal;
 	bool haveFinalWaypoint;
 	float terrainSpeed;
@@ -71,8 +73,10 @@ public:
 	float3 lastGetPathPos;
 
 	unsigned int pathFailures;
-	unsigned int etaFailures;				//how many times we havent gotten to a waypoint in time
-	unsigned int nonMovingFailures;	//how many times we have requested a path from the same place
+	/// how many times we havent gotten to a waypoint in time
+	unsigned int etaFailures;
+	/// how many times we have requested a path from the same place
+	unsigned int nonMovingFailures;
 
 	bool floatOnWater;
 
@@ -144,4 +148,4 @@ public:
 
 
 
-#endif /* GROUNDMOVETYPE_H */
+#endif // GROUNDMOVETYPE_H

@@ -38,9 +38,14 @@ class float3;
  * which are then sent ot the AI.
  */
 class CSkirmishAIWrapper : public CObject, public ISkirmishAI {
-public:
+private:
 	CR_DECLARE(CSkirmishAIWrapper);
+	/// used only by creg
+	CSkirmishAIWrapper();
 
+	void CreateCallback();
+
+public:
 	CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key);
 	~CSkirmishAIWrapper();
 

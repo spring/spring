@@ -667,7 +667,7 @@ void CMiniMap::SelectUnits(int x, int y) const
 		selectedUnits.ClearSelected();
 	}
 
-	CMouseHandler::ButtonPress& bp = mouse->buttons[SDL_BUTTON_LEFT];
+	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 
 	if (fullProxy && (bp.movement > 4)) {
 		// use a selection box
@@ -824,7 +824,7 @@ void CMiniMap::ProxyMousePress(int x, int y, int button)
 		}
 	}
 
-	CMouseHandler::ButtonPress& bp = mouse->buttons[button];
+	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 	bp.camPos = mapPos;
 	bp.dir = float3(0.0f, -1.0f, 0.0f);
 
@@ -1178,7 +1178,7 @@ void CMiniMap::DrawForReal()
 
 	// selection box
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	CMouseHandler::ButtonPress& bp = mouse->buttons[SDL_BUTTON_LEFT];
+	CMouseHandler::ButtonPressEvt& bp = mouse->buttons[SDL_BUTTON_LEFT];
 	if (selecting && fullProxy && (bp.movement > 4)) {
 		const float3 oldPos = GetMapPosition(bp.x, bp.y);
 		const float3 newPos = GetMapPosition(mouse->lastx, mouse->lasty);

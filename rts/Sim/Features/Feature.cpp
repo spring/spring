@@ -540,24 +540,36 @@ bool CFeature::UpdatePosition()
 		}
 	} else {
 		if (pos.y > finalHeight) {
-			const float3 oldPos = pos;
+			if (def->drawType == DRAWTYPE_TREE)
+				treeDrawer->DeleteTree(pos);
 
 			if (pos.y > 0) {
-				// fall faster when above water
-				pos.y -= 0.8f;
-				midPos.y -= 0.8f;
-				transMatrix[13] -= 0.8f;
+				speed.y += mapInfo->map.gravity;
 			} else {
-				pos.y -= 0.4f;
-				midPos.y -= 0.4f;
-				transMatrix[13] -= 0.4f;
+				speed.y += mapInfo->map.gravity * 0.5;
 			}
+			pos.y += speed.y;
+			midPos.y += speed.y;
+			transMatrix[13] += speed.y;
 
-			if (def->drawType == DRAWTYPE_TREE) {
-				treeDrawer->DeleteTree(oldPos);
+			if (def->drawType == DRAWTYPE_TREE)
 				treeDrawer->AddTree(def->modelType, pos, 1.0f);
-			}
 		}
+	}
+
+	// if ground is restored, make sure feature does not get buried
+	if(pos.y < finalHeight) {
+		if (def->drawType == DRAWTYPE_TREE)
+			treeDrawer->DeleteTree(pos);
+
+		float diff = finalHeight - pos.y;
+		pos.y = finalHeight;
+		midPos.y += diff;
+		transMatrix[13] += diff;
+		speed.y = 0.0f;
+
+		if (def->drawType == DRAWTYPE_TREE)
+			treeDrawer->AddTree(def->modelType, pos, 1.0f);
 	}
 
 	isUnderWater = ((pos.y + height) < 0.0f);

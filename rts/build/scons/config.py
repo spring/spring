@@ -1,5 +1,6 @@
 # Copyright (C) 2006  Tobi Vollebregt
 # Code copied from the old build system, but heavily reordered and/or rewritten.
+# vim:noet ts=4 sts=4 sw=4
 
 import os, re, sys
 
@@ -67,12 +68,15 @@ def check_debian_powerpc(env, conf):
 
 
 def guess_include_path(env, conf, name, subdir):
-	print "  Guessing", name, "include path...",
+	print "  Guessing", name, "include path..."
 	if env['platform'] == 'windows':
-		path = [os.path.abspath(os.path.join(os.path.join(env['mingwlibsdir'], 'include'), subdir))]
+		path = [os.path.join(os.path.join(env['mingwlibsdir'], 'include'), subdir)]
+		path += [os.path.join(os.path.join(env['mingwlibsdir'], 'usr', 'include'), subdir)]
+		path += [os.path.abspath(os.path.join(os.path.join(env['mingwlibsdir'], 'include'), subdir))]
+		path += [os.path.abspath(os.path.join(os.path.join(env['mingwlibsdir'], 'usr', 'include'), subdir))]
 		# Everything lives in mingwlibs anyway...
-		#if os.environ.has_key('MINGDIR'):
-		#	path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]
+		if os.environ.has_key('MINGDIR'):
+			path += [os.path.join(os.path.join(os.environ['MINGDIR'], 'include'), subdir)]
 	elif env['platform'] == 'darwin':
 		path = [os.path.join('/opt/local/include', subdir)]
 	elif env['platform'] == 'freebsd':
@@ -81,8 +85,7 @@ def guess_include_path(env, conf, name, subdir):
 		path = [os.path.join('/usr/include', subdir)]
 	env.AppendUnique(CPPPATH = path)
 	for f in path:
-		print f,
-	print ''
+		print '\t\t', f
 
 def check_freetype2(env, conf):
 	print "Checking for Freetype2..."
@@ -284,16 +287,17 @@ def CheckHeadersAndLibraries(env, conf):
 	boost_thread = Dependency(['boost_thread'], ['boost/thread.hpp'])
 	boost_regex  = Dependency(['boost_regex'],   ['boost/regex.hpp'])
 	boost_serial = Dependency([], ['boost/serialization/split_member.hpp'])
+	boost_po     = Dependency(['boost_program_options'], ['boost/program_options.hpp'])
 
 	if env.Dictionary('CC').find('gcc') != -1: gcc = True
 	else: gcc = False
 
-	for boost in (boost_thread, boost_regex):
+	for boost in (boost_thread, boost_regex, boost_po):
 		l = boost.libraries[0]
 		if gcc: boost.libraries = [l+'-gcc-mt', l+'-mt', l+'-gcc', l]
 		else:   boost.libraries = [l+'-mt', l]
 
-	d = [boost_common, boost_regex, boost_serial, boost_thread]
+	d = [boost_common, boost_regex, boost_serial, boost_thread, boost_po]
 
 	d += [Dependency(['GL', 'opengl32'], ['GL/gl.h'])]
 	d += [Dependency(['GLU', 'glu32'], ['GL/glu.h'])]
