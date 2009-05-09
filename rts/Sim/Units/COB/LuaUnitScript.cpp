@@ -306,23 +306,23 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 }
 
 
-void CLuaUnitScript::BeginTransport(CUnit* unit)
+void CLuaUnitScript::BeginTransport(const CUnit* unit)
 {
 }
 
 
-int CLuaUnitScript::QueryTransport(CUnit* unit)
+int CLuaUnitScript::QueryTransport(const CUnit* unit)
 {
 	return -1;
 }
 
 
-void CLuaUnitScript::TransportPickup(CUnit* unit)
+void CLuaUnitScript::TransportPickup(const CUnit* unit)
 {
 }
 
 
-void CLuaUnitScript::TransportDrop(CUnit* unit, const float3& pos)
+void CLuaUnitScript::TransportDrop(const CUnit* unit, const float3& pos)
 {
 }
 
@@ -365,13 +365,13 @@ void CLuaUnitScript::Shot(int weaponNum)
 }
 
 
-bool CLuaUnitScript::BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget)
+bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget)
 {
 	return false;
 }
 
 
-float CLuaUnitScript::TargetWeight(int weaponNum, CUnit* targetUnit)
+float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 {
 	return 1.0;
 }

@@ -235,10 +235,10 @@ public:
 	// in COB, the first one determines the number of arguments to the second one
 	// in Lua, we can just count the number of return values
 	virtual void QueryLandingPads(std::vector<int>& out_pieces) = 0;
-	virtual void BeginTransport(CUnit* unit) = 0;
-	virtual int  QueryTransport(CUnit* unit) = 0; // returns piece
-	virtual void TransportPickup(CUnit* unit) = 0;
-	virtual void TransportDrop(CUnit* unit, const float3& pos) = 0;
+	virtual void BeginTransport(const CUnit* unit) = 0;
+	virtual int  QueryTransport(const CUnit* unit) = 0; // returns piece
+	virtual void TransportPickup(const CUnit* unit) = 0;
+	virtual void TransportDrop(const CUnit* unit, const float3& pos) = 0;
 	virtual void StartBuilding(float heading, float pitch) = 0;
 	virtual int  QueryNanoPiece() = 0; // returns piece
 
@@ -248,8 +248,8 @@ public:
 	virtual void  AimShieldWeapon(int weaponNum) = 0;
 	virtual int   AimFromWeapon(int weaponNum) = 0; // returns piece, former AimFromPrimary
 	virtual void  Shot(int weaponNum) = 0;
-	virtual bool  BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked
-	virtual float TargetWeight(int weaponNum, CUnit* targetUnit) = 0; // returns target weight
+	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked
+	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit) = 0; // returns target weight
 
 	// inlined callins, un-inline and make virtual when different behaviour is
 	// desired between the different unit script implementations (COB, Lua).
