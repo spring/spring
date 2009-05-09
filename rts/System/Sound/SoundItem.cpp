@@ -29,6 +29,7 @@ gain(1.0),
 pitch(1.0),
 dopplerScale(1.0),
 maxDist(FLT_MAX),
+rolloff(1.0f),
 priority(0),
 maxConcurrent(16),
 currentlyPlaying(0),
@@ -44,6 +45,7 @@ in3D(true)
 	MapEntryValExtract(items, "priority", priority);
 	MapEntryValExtract(items, "maxconcurrent", maxConcurrent);
 	MapEntryValExtract(items, "maxdist", maxDist);
+	MapEntryValExtract(items, "rolloff", rolloff);
 	MapEntryValExtract(items, "in3d", in3D);
 	MapEntryValExtract(items, "looptime", loopTime);
 }
