@@ -77,7 +77,6 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
 	alSourcef(id, AL_GAIN, item->gain * volume);
 	alSourcef(id, AL_PITCH, item->pitch * globalPitch);
-	alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 	velocity *= item->dopplerScale;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	if (item->loopTime > 0)
@@ -86,9 +85,15 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 		alSourcei(id, AL_LOOPING, AL_FALSE);
 	loopStop = SDL_GetTicks() + item->loopTime;
 	if (relative || !item->in3D)
+	{
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_TRUE);
+		alSource3f(id, AL_POSITION, 0.0, 0.0, -1.0);
+	}
 	else
+	{
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
+		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
+	}
 	alSourcePlay(id);
 
 	if (item->buffer->GetId() == 0)
