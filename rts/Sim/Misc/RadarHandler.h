@@ -44,7 +44,7 @@ public:
 		if (pos.y < -0.5f) {
 			return (sonarMaps[allyTeam][square] && !commonSonarJammerMap[square]);
 		}
-		else if (!circularRadar && (pos.y > 0.5f)) {
+		else if (circularRadar && (pos.y > 0.5f)) {
 			return (airRadarMaps[allyTeam][square] && !commonJammerMap[square]);
 		}
 		else {
@@ -60,7 +60,7 @@ public:
 			const int square = GetSquare(unit->pos);
 			return !!sonarMaps[allyTeam][square] && !commonSonarJammerMap[square];
 		}
-		else if (!circularRadar && unit->useAirLos) {
+		else if (circularRadar && unit->useAirLos) {
 			if (unit->stealth) {
 				return false;
 			}
