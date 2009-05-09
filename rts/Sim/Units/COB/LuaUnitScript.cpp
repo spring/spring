@@ -276,7 +276,7 @@ void CLuaUnitScript::SetDirection(int heading)
 }
 
 
-void CLuaUnitScript::SetSpeed(float speed)
+void CLuaUnitScript::SetSpeed(float speed, float)
 {
 }
 
