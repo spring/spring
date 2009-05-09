@@ -150,7 +150,7 @@ end
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces), L(L)
-	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), LUA_NOREF)
+	, scriptIndex(COBFN_Last + (unit->weapons.size() * COBFN_Weapon_Funcs), LUA_NOREF)
 	, fnKilled(LUA_NOREF), inKilled(false)
 	, fnHitByWeaponId(LUA_NOREF)
 {
@@ -218,7 +218,9 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 	// Map common function names to indices
 	int num = CUnitScriptNames::GetScriptNumber(fname);
 
-	if (num >= 0) {
+	// Check upper bound too in case user calls UpdateCallIn with nonexisting weapon.
+	// (we only allocate slots in scriptIndex for the number of weapons the unit has)
+	if (num >= 0 && num < int(scriptIndex.size())) {
 		scriptIndex[num] = ref;
 	}
 
