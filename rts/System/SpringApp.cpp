@@ -190,6 +190,8 @@ bool SpringApp::Initialize()
 
 	FileSystemHandler::Initialize(true);
 
+	UpdateOldConfigs();
+
 	if (!InitWindow(("Spring " + SpringVersion::GetFull()).c_str())) {
 		SDL_Quit();
 		return false;
@@ -568,6 +570,20 @@ void SpringApp::InitOpenGL ()
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+}
+
+
+void SpringApp::UpdateOldConfigs()
+{
+	// not very neat, should be done in the installer someday
+	const int cfgVersion = configHandler->Get("Version",0);
+	if (cfgVersion < 1) {
+		// force an update to new defaults
+		configHandler->Delete("FontFile");
+		configHandler->Delete("FontSize");
+		configHandler->Delete("SmallFontSize");
+		configHandler->Set("Version",1);
+	}
 }
 
 
