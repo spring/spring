@@ -271,7 +271,7 @@ void CLuaUnitScript::Killed()
 }
 
 
-void CLuaUnitScript::SetDirection(int heading)
+void CLuaUnitScript::SetDirection(float heading)
 {
 }
 
