@@ -108,13 +108,6 @@ CR_REG_METADATA(CWeapon,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-static void ScriptCallback(int retCode,void* p1,void* p2)
-{
-	if (retCode==1) {
-		((CWeapon*)p1)->ScriptReady();
-	}
-}
-
 CWeapon::CWeapon(CUnit* owner):
 	owner(owner),
 	weaponDef(0),
@@ -308,12 +301,11 @@ void CWeapon::Update()
 			lastRequestedDir=wantedDir;
 			lastRequest=gs->frameNum;
 
-			short int heading=GetHeadingFromVector(wantedDir.x,wantedDir.z);
-			short int pitch=(short int) (asin(wantedDir.dot(owner->updir))*RAD2TAANG);
-			std::vector<int> args;
-			args.push_back(short(heading - owner->heading));
-			args.push_back(pitch);
-			owner->script->Call(COBFN_AimPrimary+weaponNum,args,ScriptCallback,this,0);
+			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
+			const float pitch = asin(wantedDir.dot(owner->updir));
+			// for COB, this calls ScriptReady when aim script finished,
+			// for Lua, there exists a callout to set the anglegood member.
+			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading), pitch);
 		}
 	}
 	if(weaponDef->stockpile && numStockpileQued){

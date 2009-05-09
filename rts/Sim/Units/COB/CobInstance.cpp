@@ -322,8 +322,20 @@ int CCobInstance::QueryWeapon(int weaponNum)
 }
 
 
-void CCobInstance::AimWeapon(int weaponNum, int heading, int pitch)
+// Called when unit's AimWeapon script finishes executing
+static void ScriptCallback(int retCode,void* p1,void* p2)
 {
+	if (retCode == 1) {
+		((CWeapon*)p1)->ScriptReady();
+	}
+}
+
+void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
+{
+	vector<int> args;
+	args.push_back(short(heading * RAD2TAANG));
+	args.push_back(short(pitch * RAD2TAANG));
+	Call(COBFN_AimPrimary + weaponNum, args, ScriptCallback, unit->weapons[weaponNum], NULL);
 }
 
 

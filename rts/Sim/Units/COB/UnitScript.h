@@ -244,7 +244,7 @@ public:
 
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum) = 0; // returns piece, former QueryPrimary
-	virtual void  AimWeapon(int weaponNum, int heading, int pitch) = 0;
+	virtual void  AimWeapon(int weaponNum, float heading, float pitch) = 0;
 	virtual int   AimFromWeapon(int weaponNum) = 0; // returns piece, former AimFromPrimary
 	virtual void  Shot(int weaponNum) = 0;
 	virtual bool  BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked

@@ -344,7 +344,7 @@ int CLuaUnitScript::QueryWeapon(int weaponNum)
 }
 
 
-void CLuaUnitScript::AimWeapon(int weaponNum, int heading, int pitch)
+void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
 {
 }
 
