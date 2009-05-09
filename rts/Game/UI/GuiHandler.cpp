@@ -2348,6 +2348,8 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 				} else if (unit!=0 && commands[tempInCommand].type!=CMDTYPE_ICON_AREA) {  // clicked on unit
 					c.params.push_back(unit->id);
 				} else { // clicked in map
+					if(explicitCommand<0) // only attack ground if explicitly set the command
+						return defaultRet;
 					float3 pos=camerapos+mousedir*dist2;
 					c.params.push_back(pos.x);
 					c.params.push_back(pos.y);
