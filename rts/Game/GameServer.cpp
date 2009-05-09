@@ -515,8 +515,8 @@ void CGameServer::Update()
 					if(players[a].cpuUsage > 0)
 						Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, PATHING_FLAG));
 				}
-				else if(players[a].myState == GameParticipant::INGAME) { // pathing done
-					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0));
+				else {
+					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset status
 				}
 			}
 		}
@@ -639,6 +639,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			} else {
 				players[playerNum].name = (std::string)((char*)inbuf+3);
 				players[playerNum].myState = GameParticipant::INGAME;
+				Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset pathing display
 				Message(str(format(PlayerJoined) %players[playerNum].name), false);
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
 				if (hostif)

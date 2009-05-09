@@ -2965,27 +2965,29 @@ bool CGame::Draw() {
 			for (int a = 0; a < count; ++a) {
 				const CPlayer* p = playerHandler->Player(indices[a]);
 				float4 color(1.0f,1.0f,1.0f,1.0f);
-				std::string prefix = "S|";
-				if (!p->spectator) {
-					const unsigned char* bColor = teamHandler->Team(p->team)->color;
-					color[0] = (float)bColor[0] / 255.0f;
-					color[1] = (float)bColor[1] / 255.0f;
-					color[2] = (float)bColor[2] / 255.0f;
-					color[3] = (float)bColor[3] / 255.0f;
-					if (gu->myAllyTeam == teamHandler->AllyTeam(p->team))
-						prefix = "A|";	// same AllyTeam
-					else if (teamHandler->AlliedTeams(gu->myTeam, p->team))
-						prefix = "E+|";	// different AllyTeams, but are allied
-					else
-						prefix = "E|";	//no alliance at all
-				}
-				if(p->ping != PATHING_FLAG) {
+				std::string prefix;
+				if(p->ping != PATHING_FLAG || gs->frameNum != 0) {
+					prefix = "S|";
+					if (!p->spectator) {
+						const unsigned char* bColor = teamHandler->Team(p->team)->color;
+						color[0] = (float)bColor[0] / 255.0f;
+						color[1] = (float)bColor[1] / 255.0f;
+						color[2] = (float)bColor[2] / 255.0f;
+						color[3] = (float)bColor[3] / 255.0f;
+						if (gu->myAllyTeam == teamHandler->AllyTeam(p->team))
+							prefix = "A|";	// same AllyTeam
+						else if (teamHandler->AlliedTeams(gu->myTeam, p->team))
+							prefix = "E+|";	// different AllyTeams, but are allied
+						else
+							prefix = "E|";	//no alliance at all
+					}
 					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 							p->team, prefix.c_str(), p->name.c_str(), p->cpuUsage * 100.0f,
 							(int)(((p->ping) * 1000) / (GAME_SPEED * gs->speedFactor)));
 				}
 				else {
+					prefix = " |";
 					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %s-%d Pathing: %d",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 							p->team, prefix.c_str(), p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
