@@ -28,12 +28,19 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
-	masterVolume = configHandler->Get("VolumeMaster", 60) * 0.01f;
-	//TODO make generic
-	Channels::General.SetVolume(configHandler->Get("VolumeGeneral", 100 ) * 0.01f);
-	Channels::UnitReply.SetVolume(configHandler->Get("VolumeUnitReply", 100 ) * 0.01f);
-	Channels::Battle.SetVolume(configHandler->Get("VolumeBattle", 100 ) * 0.01f);
-	Channels::UserInterface.SetVolume(configHandler->Get("VolumeUI", 100 ) * 0.01f);
+
+	if (configHandler->IsSet("SoundVolume"))
+	{
+		// SoundVolume is deprecated, if this key is present, copy to snd_volmaster and delete
+		configHandler->Set("snd_volmaster", configHandler->Get("SoundVolume", 60));
+		configHandler->Delete("SoundVolume");
+	}
+
+	masterVolume = configHandler->Get("snd_volmaster", 60);
+	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
+	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
+	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
+	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{

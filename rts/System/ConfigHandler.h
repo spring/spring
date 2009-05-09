@@ -39,6 +39,8 @@ public:
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
 		observers.push_back(boost::bind(&T::ConfigNotify, observer, _1, _2));
+		for (std::map<std::string, std::string>::const_iterator it = data.begin(); it != data.end(); ++it)
+			observer->ConfigNotify(it->first, it->second);
 	};
 
 	/**
@@ -64,7 +66,12 @@ public:
 		buffer << value;
 		SetString(name, buffer.str());
 	}
-	
+
+	bool IsSet(const std::string& key) const
+	{
+		return (data.find(key) != data.end());
+	};
+
 	template<typename T>
 	T Get(const std::string& name, const T& def)
 	{
@@ -78,6 +85,12 @@ public:
 		buf >> temp;
 		return temp;
 	}
+
+	void Delete(const std::string& name)
+	{
+		std::map<std::string, std::string>::iterator pos = data.find(name);
+		data.erase(pos);
+	};
 
 	/**
 	 * @brief instantiate global configHandler
