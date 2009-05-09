@@ -5560,46 +5560,6 @@
 						>
 					</File>
 					<File
-						RelativePath="..\..\System\Platform\Win\Win32Cmd.cpp"
-						>
-						<FileConfiguration
-							Name="No debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release with error catching|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Syncdebug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release+MT with error catching|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\Win32Cmd.h"
-						>
-					</File>
-					<File
 						RelativePath="..\..\System\Platform\Win\WinVersion.cpp"
 						>
 					</File>
