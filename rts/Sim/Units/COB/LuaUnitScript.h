@@ -62,7 +62,7 @@ public:
 
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum);
-	virtual void  AimWeapon(int weaponNum, int heading, int pitch);
+	virtual void  AimWeapon(int weaponNum, float heading, float pitch);
 	virtual int   AimFromWeapon(int weaponNum);
 	virtual void  Shot(int weaponNum);
 	virtual bool  BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget);
