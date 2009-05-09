@@ -39,8 +39,6 @@ public:
 	{
 		// issues: still needs to call configHandler->Get() on startup, automate it
 		observers.push_back(boost::bind(&T::ConfigNotify, observer, _1, _2));
-		for (std::map<std::string, std::string>::const_iterator it = data.begin(); it != data.end(); ++it)
-			observer->ConfigNotify(it->first, it->second);
 	};
 
 	/**

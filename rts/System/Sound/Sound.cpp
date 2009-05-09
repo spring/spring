@@ -24,7 +24,6 @@ CSound* sound = NULL;
 
 CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateCounter(0)
 {
-	configHandler->NotifyOnChange(this);
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
@@ -36,7 +35,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		configHandler->Delete("SoundVolume");
 	}
 
-	masterVolume = configHandler->Get("snd_volmaster", 60);
+	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
 	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
@@ -118,6 +117,8 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 
 	LoadSoundDefs("gamedata/sounds.lua");
 	LoadSoundDefs("mapdata/sounds.lua");
+
+	configHandler->NotifyOnChange(this);
 }
 
 CSound::~CSound()
