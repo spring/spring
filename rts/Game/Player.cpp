@@ -141,10 +141,8 @@ void CPlayer::GameFrame(int frameNum)
 	CUnit* unit = playerControlledUnit;
 	DirectControlStruct* dc = &myControl;
 
-	std::vector<int> args;
-	args.push_back(0);
-	unit->script->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-	float3 relPos=unit->script->GetPiecePos(args[0]);
+	const int piece = unit->script->AimFromWeapon(0);
+	float3 relPos = unit->script->GetPiecePos(piece);
 	float3 pos=unit->pos+unit->frontdir*relPos.z+unit->updir*relPos.y+unit->rightdir*relPos.x;
 	pos+=UpVector*7;
 

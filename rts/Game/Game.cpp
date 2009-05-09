@@ -3962,8 +3962,9 @@ void CGame::UpdateUI(bool cam)
 
 		std::vector<int> args;
 		args.push_back(0);
-		owner->script->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-		float3 relPos = owner->script->GetPiecePos(args[0]);
+		// FIXME: SYNCED SCRIPT CODE CALLED IN UNSYNCED CONTEXT
+		const int piece = owner->script->AimFromWeapon(0);
+		float3 relPos = owner->script->GetPiecePos(piece);
 		float3 pos = owner->pos + owner->frontdir * relPos.z
 			+ owner->updir    * relPos.y
 			+ owner->rightdir * relPos.x;
@@ -4591,7 +4592,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 				count++;
 				delete unit->script;
 				unit->script = new CCobInstance(newScript, unit);
-				unit->script->Call("Create");
+				unit->script->Create();
 			}
 		}
 	}

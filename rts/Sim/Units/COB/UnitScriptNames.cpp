@@ -45,12 +45,14 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 	scriptNames[COBFN_BeginTransport]       = "BeginTransport";
 	scriptNames[COBFN_QueryTransport]       = "QueryTransport";
 	scriptNames[COBFN_TransportPickup]      = "TransportPickup";
+	scriptNames[COBFN_StartUnload]          = "StartUnload";
 	scriptNames[COBFN_EndTransport]         = "EndTransport";
 	scriptNames[COBFN_TransportDrop]        = "TransportDrop";
 	scriptNames[COBFN_SetMaxReloadTime]     = "SetMaxReloadTime";
 	scriptNames[COBFN_StartBuilding]        = "StartBuilding";
 	scriptNames[COBFN_StopBuilding]         = "StopBuilding";
 	scriptNames[COBFN_QueryNanoPiece]       = "QueryNanoPiece";
+	scriptNames[COBFN_QueryBuildInfo]       = "QueryBuildInfo";
 	scriptNames[COBFN_Go]                   = "Go";
 
 	// Also add the weapon aiming stuff

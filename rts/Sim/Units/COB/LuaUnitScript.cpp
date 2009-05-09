@@ -338,6 +338,12 @@ int CLuaUnitScript::QueryNanoPiece()
 }
 
 
+int CLuaUnitScript::QueryBuildInfo()
+{
+	return -1;
+}
+
+
 int CLuaUnitScript::QueryWeapon(int weaponNum)
 {
 	return -1;

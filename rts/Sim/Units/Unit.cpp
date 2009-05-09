@@ -2014,7 +2014,7 @@ void CUnit::Activate()
 		return;
 
 	activated = true;
-	script->Call(COBFN_Activate);
+	script->Activate();
 
 	if (unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
@@ -2037,7 +2037,7 @@ void CUnit::Deactivate()
 		return;
 
 	activated = false;
-	script->Call(COBFN_Deactivate);
+	script->Deactivate();
 
 	if (unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
@@ -2220,7 +2220,7 @@ void CUnit::PostLoad()
 	}
 
 	if (activated) {
-		script->Call(COBFN_Activate);
+		script->Activate();
 	}
 }
 

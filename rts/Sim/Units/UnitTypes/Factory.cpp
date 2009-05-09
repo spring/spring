@@ -71,7 +71,7 @@ CFactory::~CFactory()
 void CFactory::PostLoad()
 {
 	if(opening){
-		script->Call(COBFN_Activate);
+		script->Activate();
 	}
 	if (curBuild) {
 		script->StartBuilding();
@@ -86,10 +86,7 @@ void CFactory::UnitInit (const UnitDef* def, int team, const float3& position)
 
 int CFactory::GetBuildPiece()
 {
-	std::vector<int> args;
-	args.push_back(0);
-	script->Call("QueryBuildInfo", args);
-	return args[0];
+	return script->QueryBuildInfo();
 }
 
 // GetBuildPiece() is called if piece < 0
@@ -109,7 +106,7 @@ void CFactory::Update()
 	}
 
 	if (quedBuild && !opening && !stunned) {
-		script->Call(COBFN_Activate);
+		script->Activate();
 		groundBlockingObjectMap->OpenBlockingYard(this, yardMap);
 		opening = true;
 	}
@@ -237,7 +234,7 @@ void CFactory::Update()
 		// close the factory after inactivity
 		groundBlockingObjectMap->CloseBlockingYard(this, yardMap);
 		opening = false;
-		script->Call(COBFN_Deactivate);
+		script->Deactivate();
 	}
 
 	CBuilding::Update();
@@ -261,7 +258,7 @@ void CFactory::StartBuild(string type)
 	nextBuild = type;
 
 	if (!opening && !stunned) {
-		script->Call(COBFN_Activate);
+		script->Activate();
 		groundBlockingObjectMap->OpenBlockingYard(this, yardMap);
 		opening = true;
 	}

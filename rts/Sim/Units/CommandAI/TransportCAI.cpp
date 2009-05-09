@@ -789,7 +789,7 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 
 				//when on our way down start animations for unloading gear
 				if (isFirstIteration) {
-					owner->script->Call("StartUnload");
+					owner->script->StartUnload();
 				}
 				isFirstIteration = false;
 
