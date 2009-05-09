@@ -35,6 +35,8 @@ public:
 	bool Mute();
 	bool IsMuted() const;
 
+	void Iconified(bool state);
+
 	void PrintDebugInfo();
 
 private:
@@ -48,6 +50,7 @@ private:
 
 	float masterVolume;
 	bool mute;
+	bool appIsIconified; // do not play when minimized / iconified
 
 	typedef std::map<std::string, size_t> soundMapT;
 	typedef boost::ptr_vector<SoundItem> soundVecT;

@@ -26,6 +26,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 {
 	configHandler->NotifyOnChange(this);
 	mute = false;
+	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
 	masterVolume = configHandler->Get("VolumeMaster", 60) * 0.01f;
 	//TODO make generic
@@ -205,6 +206,8 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	if (key == "snd_volmaster")
 	{
 		masterVolume = std::atoi(value.c_str()) * 0.01f;
+		if (!mute && !appIsIconified)
+			alListenerf(AL_GAIN, masterVolume);
 	}
 	else if (key == "snd_volgeneral")
 	{
@@ -239,11 +242,23 @@ bool CSound::IsMuted() const
 	return mute;
 }
 
+void CSound::Iconified(bool state)
+{
+	if (appIsIconified != state && !mute)
+	{
+		if (state == false)
+			alListenerf(AL_GAIN, masterVolume);
+		else if (state == true)
+			alListenerf(AL_GAIN, 0.0);
+	}
+	appIsIconified = state;
+}
+
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	if (sources.empty() || mute || volume == 0.0f || masterVolume == 0.0f)
+	if (sources.empty() || volume == 0.0f)
 		return;
 
 	if (id == 0)
@@ -322,7 +337,6 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 
 	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
-	alListenerf(AL_GAIN, masterVolume);
 	CheckError("CSound::UpdateListener");
 }
 
