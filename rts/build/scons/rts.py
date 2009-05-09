@@ -1,4 +1,5 @@
 # Copyright (C) 2006  Tobi Vollebregt
+# vim:noet:ts=4:sts=4:sw=4
 
 import os, sys
 import platform
@@ -507,20 +508,32 @@ def generate(env):
 			env['SHLINKFLAGS'] = '$LINKFLAGS -dynamic'
 			env['SHLIBSUFFIX'] = '.dylib'
 		elif env['platform'] == 'windows':
+			# relative paths
 			include_path += [os.path.join(env['mingwlibsdir'], 'include')]
+			include_path += [os.path.join(env['mingwlibsdir'], 'usr', 'include')]
 			lib_path += [os.path.join(env['mingwlibsdir'], 'lib')]
+			lib_path += [os.path.join(env['mingwlibsdir'], 'usr', 'lib')]
 			lib_path += [os.path.join(env['mingwlibsdir'], 'dll')]
+			lib_path += [os.path.join(env['mingwlibsdir'], 'usr', 'bin')]
+			# absolute paths
 			include_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'include'))]
+			include_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'usr', 'include'))]
 			lib_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'lib'))]
+			lib_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'usr', 'lib'))]
 			lib_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'dll'))]
+			lib_path += [os.path.abspath(os.path.join(env['mingwlibsdir'], 'usr', 'bin'))]
 			if os.environ.has_key('MINGDIR'):
 				include_path += [os.path.join(os.environ['MINGDIR'], 'include')]
 				lib_path += [os.path.join(os.environ['MINGDIR'], 'lib')]
 				lib_path += [os.path.join(os.environ['MINGDIR'], 'dll')]
+				lib_path += [os.path.join(os.environ['MINGDIR'], 'bin')]
 			else:
 				print 'ERROR: MINGDIR environment variable not set and MSVC build unsupported.'
 				print 'Set it to your Dev-Cpp or MinGW install directory (e.g. C:\\Dev-Cpp) and try again.'
 				env.Exit(1)
+			print 'Library paths:'
+			for f in lib_path:
+				print '\t', f 
 			env.AppendUnique(CCFLAGS = ['-mthreads'], CXXFLAGS = ['-mthreads'], LINKFLAGS = ['-mwindows', '-mthreads'])
 		# use '-pthreads' for Solaris, according to /usr/include/boost/config/requires_threads.hpp
 
