@@ -18,7 +18,7 @@ AudioChannel::AudioChannel() : volume(1.0f), enabled(true)
 void AudioChannel::PlaySample(size_t id, float ovolume)
 {
 	if (enabled)
-		sound->PlaySample(id, ZeroVector, ZeroVector, volume * ovolume, true);
+		sound->PlaySample(id, float3(0.0, 0.0, -1.0), ZeroVector, volume * ovolume, true);
 }
 
 void AudioChannel::PlaySample(size_t id, const float3& p, float ovolume)
