@@ -366,6 +366,7 @@ int CCobInstance::AimFromWeapon(int weaponNum)
 
 void CCobInstance::Shot(int weaponNum)
 {
+	Call(COBFN_Shot + weaponNum, 0); // why the 0 argument?
 }
 
 

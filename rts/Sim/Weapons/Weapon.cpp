@@ -412,7 +412,7 @@ void CWeapon::Update()
 				owner->commandShotCount++;
 			}
 
-			owner->script->Call(COBFN_Shot+weaponNum,0);
+			owner->script->Shot(weaponNum);
 
 			int piece = owner->script->AimFromWeapon(weaponNum);
 			relWeaponPos = owner->script->GetPiecePos(piece);
