@@ -86,11 +86,7 @@ public:
 		return temp;
 	}
 
-	void Delete(const std::string& name)
-	{
-		std::map<std::string, std::string>::iterator pos = data.find(name);
-		data.erase(pos);
-	};
+	void Delete(const std::string& name);
 
 	/**
 	 * @brief instantiate global configHandler

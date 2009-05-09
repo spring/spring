@@ -90,6 +90,27 @@ ScopedFileLock::~ScopedFileLock()
 #endif
 }
 
+void ConfigHandler::Delete(const std::string& name)
+{
+	FILE* file = fopen(filename.c_str(), "r+");
+	if (file)
+	{
+		ScopedFileLock scoped_lock(fileno(file), true);
+		Read(file);
+		std::map<std::string, std::string>::iterator pos = data.find(name);
+		data.erase(pos);
+		Write(file);
+	}
+	else
+	{
+		std::map<std::string, std::string>::iterator pos = data.find(name);
+		data.erase(pos);
+	}
+
+	// must be outside above 'if (file)' block because of the lock.
+	if (file)
+		fclose(file);
+}
 
 /**
  * Instantiates a copy of the current platform's config class.
