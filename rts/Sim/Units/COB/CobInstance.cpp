@@ -164,7 +164,7 @@ void CCobInstance::Killed()
 	vector<int> args;
 	args.push_back((int) (unit->recentDamage / unit->maxHealth * 100));
 	args.push_back(0);
-	Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
+	Call(COBFN_Killed, args, &CUnitKilledCB, unit, NULL);
 
 	//FIXME: moved from Unit.cpp, but seems like a bug?
 
@@ -234,7 +234,7 @@ void CCobInstance::HitByWeaponId(const float3& hitDir, int weaponDefId, float& i
 	args.push_back((int)(100 * inout_damage));
 
 	weaponHitMod = 1.0f;
-	Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, this, NULL);
+	Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, NULL, NULL);
 	inout_damage *= weaponHitMod; // weaponHitMod gets set in callback function
 }
 
