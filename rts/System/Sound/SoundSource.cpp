@@ -1,3 +1,5 @@
+#include <climits>
+
 #include "SoundSource.h"
 
 #include <AL/alc.h>
@@ -34,7 +36,10 @@ void SoundSource::Update()
 
 int SoundSource::GetCurrentPriority() const
 {
-	assert(curPlaying);
+	if (!curPlaying) {
+		logOutput.Print("Warning: SoundSource::GetCurrentPriority() curPlaying is NULL (id %d)", id);
+		return INT_MIN;
+	}
 	return curPlaying->priority;
 }
 
