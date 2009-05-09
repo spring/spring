@@ -264,14 +264,14 @@ void CCobInstance::QueryLandingPads(std::vector<int>& out_pieces)
 }
 
 
-void CCobInstance::BeginTransport(CUnit* unit)
+void CCobInstance::BeginTransport(const CUnit* unit)
 {
 	// yes, COB is silly, while it handles integers fine it uses model height to identify units
 	Call(COBFN_BeginTransport, (int)(unit->model->height*65536));
 }
 
 
-int CCobInstance::QueryTransport(CUnit* unit)
+int CCobInstance::QueryTransport(const CUnit* unit)
 {
 	vector<int> args;
 	args.push_back(0);
@@ -281,14 +281,14 @@ int CCobInstance::QueryTransport(CUnit* unit)
 }
 
 
-void CCobInstance::TransportPickup(CUnit* unit)
+void CCobInstance::TransportPickup(const CUnit* unit)
 {
 	// funny, now it uses unitIDs instead of model height
 	Call(COBFN_TransportPickup, unit->id);
 }
 
 
-void CCobInstance::TransportDrop(CUnit* unit, const float3& pos)
+void CCobInstance::TransportDrop(const CUnit* unit, const float3& pos)
 {
 	vector<int> args;
 	args.push_back(unit->id);
@@ -323,7 +323,7 @@ int CCobInstance::QueryWeapon(int weaponNum)
 
 
 // Called when unit's AimWeapon script finished executing
-static void ScriptCallback(int retCode,void* p1,void* p2)
+static void ScriptCallback(int retCode, void* p1, void* p2)
 {
 	if (retCode == 1) {
 		((CWeapon*)p1)->ScriptReady();
@@ -370,7 +370,7 @@ void CCobInstance::Shot(int weaponNum)
 }
 
 
-bool CCobInstance::BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget)
+bool CCobInstance::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget)
 {
 	const int unitID = targetUnit ? targetUnit->id : 0;
 
@@ -379,7 +379,7 @@ bool CCobInstance::BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget)
 	args.push_back(unitID);
 	args.push_back(0); // arg[1], for the return value
 	                   // the default is to not block the shot
-	args.push_back(haveUserTarget);
+	args.push_back(userTarget);
 
 	Call(COBFN_BlockShot + weaponNum, args);
 
@@ -387,7 +387,7 @@ bool CCobInstance::BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget)
 }
 
 
-float CCobInstance::TargetWeight(int weaponNum, CUnit* targetUnit)
+float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 {
 	return 1.0;
 }
