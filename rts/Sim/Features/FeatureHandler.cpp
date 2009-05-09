@@ -317,50 +317,50 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 	for (int a = 0; a < numType; ++a) {
 		const string name = StringToLower(readmap->GetFeatureType(a));
 
-		if (name.find("treetype") != string::npos) {
-			FeatureDef* fd = new FeatureDef;
-			fd->blocking = 1;
-			fd->burnable = true;
-			fd->destructable = 1;
-			fd->reclaimable = true;
-			fd->drawType = DRAWTYPE_TREE;
-			fd->modelType = atoi(name.substr(8).c_str());
-			fd->energy = 250;
-			fd->metal = 0;
-			fd->reclaimTime = 250;
-			fd->maxHealth = 5;
-			fd->xsize = 2;
-			fd->zsize = 2;
-			fd->myName = name;
-			fd->description = "Tree";
-			fd->mass = 20;
-			fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
-			AddFeatureDef(name, fd);
-		}
-		else if (name.find("geovent") != string::npos) {
-			FeatureDef* fd = new FeatureDef;
-			fd->blocking = 0;
-			fd->burnable = 0;
-			fd->destructable = 0;
-			fd->reclaimable = false;
-			fd->geoThermal = true;
-			// geos are drawn into the ground texture and emit smoke to be visible
-			fd->drawType = DRAWTYPE_NONE;
-			fd->modelType = 0;
-			fd->energy = 0;
-			fd->metal = 0;
-			fd->reclaimTime = 0;
-			fd->maxHealth = 0;
-			fd->xsize = 0;
-			fd->zsize = 0;
-			fd->myName = name;
-			fd->mass = 100000;
-			// geothermals have no collision volume at all
-			fd->collisionVolume = 0;
-			AddFeatureDef(name, fd);
-		}
-		else {
-			if (GetFeatureDef(name) == NULL) {
+		if (GetFeatureDef(name) == NULL) {
+			if (name.find("treetype") != string::npos) {
+				FeatureDef* fd = new FeatureDef;
+				fd->blocking = 1;
+				fd->burnable = true;
+				fd->destructable = 1;
+				fd->reclaimable = true;
+				fd->drawType = DRAWTYPE_TREE;
+				fd->modelType = atoi(name.substr(8).c_str());
+				fd->energy = 250;
+				fd->metal = 0;
+				fd->reclaimTime = 250;
+				fd->maxHealth = 5;
+				fd->xsize = 2;
+				fd->zsize = 2;
+				fd->myName = name;
+				fd->description = "Tree";
+				fd->mass = 20;
+				fd->collisionVolume = new CollisionVolume("", ZeroVector, ZeroVector, COLVOL_TEST_DISC);
+				AddFeatureDef(name, fd);
+			}
+			else if (name.find("geovent") != string::npos) {
+				FeatureDef* fd = new FeatureDef;
+				fd->blocking = 0;
+				fd->burnable = 0;
+				fd->destructable = 0;
+				fd->reclaimable = false;
+				fd->geoThermal = true;
+				// geos are drawn into the ground texture and emit smoke to be visible
+				fd->drawType = DRAWTYPE_NONE;
+				fd->modelType = 0;
+				fd->energy = 0;
+				fd->metal = 0;
+				fd->reclaimTime = 0;
+				fd->maxHealth = 0;
+				fd->xsize = 0;
+				fd->zsize = 0;
+				fd->myName = name;
+				fd->mass = 100000;
+				// geothermals have no collision volume at all
+				fd->collisionVolume = 0;
+				AddFeatureDef(name, fd);
+			}
+			else {
 				logOutput.Print("Unknown map feature type %s", name.c_str());
 			}
 		}
@@ -382,7 +382,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 			const float ypos = ground->GetHeight2(mfi[a].pos.x, mfi[a].pos.z);
 			(new CFeature)->Initialize (float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
-			                                 featureDefs[name], (short int)mfi[a].rotation,
+			                                 def->second, (short int)mfi[a].rotation,
 			                                 0, -1, "");
 		}
 		delete[] mfi;
@@ -567,14 +567,14 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 		for (fi = features.begin(); fi != features.end(); ++fi) {
 			CFeature* feature = *fi;
 			float3& fpos = feature->pos;
-			if (fpos.y > ground->GetHeight(fpos.x, fpos.z)) {
+			float gh = ground->GetHeight2(fpos.x, fpos.z);
+			float wh = gh;
+			if(feature->def->floating)
+				wh = ground->GetHeight(fpos.x, fpos.z);
+			if (fpos.y > wh || fpos.y < gh) {
 				SetFeatureUpdateable(feature);
 
-				if (feature->def->floating){
-					feature->finalHeight = ground->GetHeight(fpos.x, fpos.z);
-				} else {
-					feature->finalHeight = ground->GetHeight2(fpos.x, fpos.z);
-				}
+				feature->finalHeight = wh;
 
 				feature->CalculateTransform ();
 			}

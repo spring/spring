@@ -42,9 +42,9 @@ static const float4  darkOutline(0.05f, 0.05f, 0.05f, 0.95f);
 static const float4 lightOutline(0.95f, 0.95f, 0.95f, 0.8f);
 
 static const float darkLuminosity = 0.05 +
-	0.2126f * pow(darkOutline[0], 2.2) +
-	0.7152f * pow(darkOutline[1], 2.2) +
-	0.0722f * pow(darkOutline[2], 2.2);
+	0.2126f * math::powf(darkOutline[0], 2.2) +
+	0.7152f * math::powf(darkOutline[1], 2.2) +
+	0.0722f * math::powf(darkOutline[2], 2.2);
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -139,12 +139,12 @@ static const char* GetFTError(FT_Error e)
 class CFontTextureRenderer
 {
 public:
-	CFontTextureRenderer(int _outlinewidth, int _outlineweight) : 
-		outlinewidth(_outlinewidth), outlineweight(_outlineweight),
+	CFontTextureRenderer(int _outlinewidth, int _outlineweight) :
 		texWidth(0), texHeight(0),
+		outlinewidth(_outlinewidth), outlineweight(_outlineweight),
 		curX(0), curY(0), curHeight(0),
-		numPixels(0), maxGlyphWidth(0), maxGlyphHeight(0),
-		numGlyphs(0)
+		numGlyphs(0),
+		maxGlyphWidth(0), maxGlyphHeight(0), numPixels(0)
 	{
 		numGlyphs = 0;
 		texWidth = texHeight = 0;
@@ -195,16 +195,17 @@ void CFontTextureRenderer::CopyGlyphsIntoBitmapAtlas(bool outline)
 	const int twoborder = 2 * border;
 
 	std::list<int2>::iterator gi, finish;
+	std::list<int2>::reverse_iterator rgi, rfinish;
 	if (outline) {
 		gi     = sortByHeight.begin();
 		finish = sortByHeight.end();
 	} else {
-		gi     = sortByHeight.end();
-		finish = sortByHeight.begin();
+		rgi     = sortByHeight.rbegin();
+		rfinish = sortByHeight.rend();
 	}
 
-	for(; gi != finish; (outline) ? ++gi : --gi) {
-		GlyphInfo& g = glyphs[gi->x];
+	for(; (outline && gi != finish) || (!outline && rgi != rfinish); (outline) ? (void *)&++gi : (void *)&++rgi) {
+		GlyphInfo& g = glyphs[(outline) ? gi->x : rgi->x];
 
 		if (g.xsize==0 || g.ysize==0)
 			continue;
@@ -388,12 +389,12 @@ GLuint CFontTextureRenderer::CreateTexture()
 /*******************************************************************************/
 /*******************************************************************************/
 
-CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight)
-: inBeginEnd(false),
-  fontSize(size),
-  fontPath(fontfile),
-  outlineWidth(_outlinewidth),
-  outlineWeight(_outlineweight)
+CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float _outlineweight):
+	fontSize(size),
+	fontPath(fontfile),
+	outlineWidth(_outlinewidth),
+	outlineWeight(_outlineweight),
+	inBeginEnd(false)
 {
 	if (size<=0)
 		size = 14;
@@ -463,8 +464,11 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	fontStyle  = face->style_name;
 
 	//! font's descender & height (in pixels)
-	fontDescender = invSize * FT_MulFix(face->descender, face->size->metrics.y_scale) / 64.0f;
-	lineHeight    = invSize * math::ceil(FT_MulFix(face->height, face->size->metrics.y_scale) / 64.0f);
+	fontDescender = invSize * (FT_MulFix(face->descender, face->size->metrics.y_scale) / 64.0f);
+	//lineHeight    = invSize * (FT_MulFix(face->height, face->size->metrics.y_scale) / 64.0f);
+	//lineHeight    = invSize * math::ceil(FT_MulFix(face->height, face->size->metrics.y_scale) / 64.0f);
+	lineHeight = face->height / face->units_per_EM;
+	//lineHeight = invSize * face->size->metrics.height / 64.0f;
 
 	if (lineHeight<=0.0f) {
 		lineHeight = 1.25 * invSize * (face->bbox.yMax - face->bbox.yMin);
@@ -549,7 +553,10 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 		CglFont* newFont = new CglFont(fontFile, size, outlinewidth, outlineweight);
 		return newFont;
 	} catch (texture_size_exception&) {
-		logOutput.Print("FONT ERROR: Couldn't create GlyphAtlas! (try to reduce reduce font size / outlinewidth)");
+		logOutput.Print("FONT-ERROR: Couldn't create GlyphAtlas! (try to reduce reduce font size/outlinewidth)");
+		return NULL;
+	} catch (content_error& e) {
+		logOutput.Print(e.what());
 		return NULL;
 	}
 }
@@ -674,12 +681,6 @@ static inline bool SkipColorCodesAndNewLines(const std::string& text, T* c, floa
 		}
 	}
 	return true;
-}
-
-
-static inline bool CompareColors(const float4* color1, const float4* color2)
-{
-	return (color1[0] == color2[0]) && (color1[1] == color2[1]) && (color1[2] == color2[2]) && (color1[3] == color2[3]);
 }
 
 
@@ -871,7 +872,6 @@ CglFont::word CglFont::SplitWord(CglFont::word& w, float wantedWidth, bool smart
 			unsigned int i = 0;
 			const unsigned char* c = reinterpret_cast<const unsigned char*>(&w.text[i]);
 			do {
-				const unsigned char* co = c;
 				const GlyphInfo& g = glyphs[*c];
 				++i;
 
@@ -1035,6 +1035,9 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight) const
 {
+	if(words.empty())
+		return;
+
 	const bool splitWords = false;
 
 	const unsigned int maxLines = (unsigned int)math::floor(std::max(0.0f, maxHeight / lineHeight ));
@@ -1047,6 +1050,7 @@ void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxH
 	std::list<line> lines;
 	lines.push_back(line());
 	line* l = &(lines.back());
+	l->start = words.begin();
 
 	std::list<word>::iterator wi;
 	for (wi = words.begin(); wi != words.end(); wi++) {
@@ -1218,6 +1222,7 @@ void CglFont::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& co
 		wc.text += (unsigned char)(255 * ci->color[0]);
 		wc.text += (unsigned char)(255 * ci->color[1]);
 		wc.text += (unsigned char)(255 * ci->color[2]);
+		wc.isColorCode = true;
 		wc.pos = ci->pos;
 
 		if (wi2->isSpace || wi2->isLineBreak) {
@@ -1253,8 +1258,44 @@ void CglFont::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& co
 }
 
 
-int CglFont::WrapInPlace(std::string& text, const float fontSize, const float maxWidth, const float maxHeight) const
+int CglFont::WrapInPlace(std::string& text, float _fontSize, const float maxWidth, const float maxHeight) const
 {
+	//todo: make an option to insert '-' for word wrappings (and perhaps try to syllabificate)
+
+	if (_fontSize <= 0.0f)
+		_fontSize = fontSize;
+
+	const float maxWidthf  = maxWidth / _fontSize;
+	const float maxHeightf = maxHeight / _fontSize;
+
+	std::list<word> words;
+	std::list<colorcode> colorcodes;
+
+	SplitTextInWords(text, &words, &colorcodes);
+	WrapTextConsole(words, maxWidthf, maxHeightf);
+	//WrapTextKnuth(&lines, words, maxWidthf, maxHeightf);
+	RemergeColorCodes(&words, colorcodes);
+
+	//! create the wrapped string
+	text = "";
+	unsigned int numlines = 0;
+	if (words.size() > 0) {
+		numlines++;
+		for (std::list<word>::iterator wi = words.begin(); wi != words.end(); ++wi) {
+			if (wi->isSpace) {
+				for (unsigned int j = 0; j < wi->numSpaces; ++j) {
+					text += " ";
+				}
+			} else if (wi->isLineBreak) {
+				text += "\x0d\x0a";
+				numlines++;
+			} else {
+				text += wi->text;
+			}
+		}
+	}
+
+/*
 	std::list<std::string> lines = Wrap(text, fontSize, maxWidth, maxHeight);
 
 	size_t stringlength = 0;
@@ -1274,8 +1315,9 @@ int CglFont::WrapInPlace(std::string& text, const float fontSize, const float ma
 		if (++li != lines.end())
 			text += "\x0d\x0a";
 	}
+*/
 
-	return lines.size();
+	return numlines;
 }
 
 
@@ -1298,6 +1340,7 @@ std::list<std::string> CglFont::Wrap(const std::string& text, float _fontSize, c
 	RemergeColorCodes(&words, colorcodes);
 
 	//! create the string lines of the wrapped text
+	std::list<word>::iterator lastColorCode = words.end();
 	std::list<std::string> strlines;
 	if (words.size() > 0) {
 		strlines.push_back("");
@@ -1310,8 +1353,12 @@ std::list<std::string> CglFont::Wrap(const std::string& text, float _fontSize, c
 			} else if (wi->isLineBreak) {
 				strlines.push_back("");
 				sl = &strlines.back();
+				if (lastColorCode != words.end())
+					*sl += lastColorCode->text;
 			} else {
 				*sl += wi->text;
+				if (wi->isColorCode)
+					lastColorCode = wi;
 			}
 		}
 	}
@@ -1333,7 +1380,7 @@ void CglFont::SetTextColor(const float4* color)
 {
 	if (color == NULL) color = &white;
 
-	if (inBeginEnd && !CompareColors(color,&textColor)) {
+	if (inBeginEnd && !(*color==textColor)) {
 		stripTextColors.push_back(*color);
 		va.EndStrip();
 	}
@@ -1346,7 +1393,7 @@ void CglFont::SetOutlineColor(const float4* color)
 {
 	if (color == NULL) color = ChooseOutlineColor(textColor);
 
-	if (inBeginEnd && !CompareColors(color,&outlineColor)) {
+	if (inBeginEnd && !(*color==outlineColor)) {
 		stripOutlineColors.push_back(*color);
 		va2.EndStrip();
 	}
@@ -1361,11 +1408,11 @@ void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 	if (_outlineColor == NULL) _outlineColor = ChooseOutlineColor(*_textColor);
 
 	if (inBeginEnd) {
-		if (!CompareColors(_textColor,&textColor)) {
+		if (!(*_textColor==textColor)) {
 			stripTextColors.push_back(*_textColor);
 			va.EndStrip();
 		}
-		if (!CompareColors(_outlineColor,&outlineColor)) {
+		if (!(*_outlineColor==outlineColor)) {
 			stripOutlineColors.push_back(*_outlineColor);
 			va2.EndStrip();
 		}
@@ -1379,9 +1426,9 @@ void CglFont::SetColors(const float4* _textColor, const float4* _outlineColor)
 const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 {
 	const float luminosity = 0.05 +
-		0.2126f * pow(textColor[0], 2.2) +
-		0.7152f * pow(textColor[1], 2.2) +
-		0.0722f * pow(textColor[2], 2.2);
+		0.2126f * math::powf(textColor[0], 2.2) +
+		0.7152f * math::powf(textColor[1], 2.2) +
+		0.0722f * math::powf(textColor[2], 2.2);
  
 	const float lumdiff = std::max(luminosity,darkLuminosity) / std::min(luminosity,darkLuminosity);
 	if (lumdiff > 5.0f) {

@@ -28,6 +28,13 @@
 #include <stdbool.h> // defines: bool, true, false
 #endif // !defined __cplusplus && !defined bool && !defined _MSC_VER
 
+// define a common indicator for 32bit or 64bit-ness
+#if defined _WIN64 || defined __LP64__ || defined __ppc64__ || defined __ILP64__ || defined __SILP64__ || defined __LLP64__ || defined(__sparcv9)
+#define __arch64__
+#else
+#define __arch32__
+#endif
+
 #ifdef _MSC_VER
 	// Microsoft Visual C++ 7.0: MSC_VER = 1300
 	// Microsoft Visual C++ 7.1: MSC_VER = 1310

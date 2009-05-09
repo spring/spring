@@ -172,7 +172,7 @@ void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const char* text
 		lastTime = lifetime;
 	}
 
-	for (int i = data.size(); i > numLines; i--) {
+	for (size_t i = data.size(); i > numLines; i--) {
 		data[1].time += data[0].time;
 		data.pop_front();
 	}

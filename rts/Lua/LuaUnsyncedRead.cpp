@@ -1506,7 +1506,7 @@ int LuaUnsyncedRead::GetMouseStartPosition(lua_State* L)
 	if ((button <= 0) || (button > NUM_BUTTONS)) {
 		return 0;
 	}
-	const CMouseHandler::ButtonPress& bp = mouse->buttons[button];
+	const CMouseHandler::ButtonPressEvt& bp = mouse->buttons[button];
 	lua_pushnumber(L, bp.x);
 	lua_pushnumber(L, bp.y);
 	lua_pushnumber(L, bp.camPos.x);

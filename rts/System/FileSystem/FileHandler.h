@@ -39,19 +39,11 @@ class CFileHandler {
 		static bool InWriteDir(const std::string& path);
 
 		static std::vector<std::string> FindFiles(const std::string& path, const std::string& pattern);
+		static std::vector<std::string> DirList(const std::string& path, const std::string& pattern, const std::string& modes);
+		static std::vector<std::string> SubDirs(const std::string& path, const std::string& pattern, const std::string& modes);
 
-		static std::vector<std::string> DirList(const std::string& path,
-																						const std::string& pattern,
-																						const std::string& modes);
-
-		static std::vector<std::string> SubDirs(const std::string& path,
-																						const std::string& pattern,
-																						const std::string& modes);
-
-		static std::string AllowModes(const std::string& modes,
-		                              const std::string& allowed);
-		static std::string ForbidModes(const std::string& modes,
-		                               const std::string& forbidden);
+		static std::string AllowModes(const std::string& modes, const std::string& allowed);
+		static std::string ForbidModes(const std::string& modes, const std::string& forbidden);
 
 	private:
 		void Init(const std::string& filename, const std::string& modes);

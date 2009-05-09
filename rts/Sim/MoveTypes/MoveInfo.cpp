@@ -26,8 +26,9 @@ CR_REG_METADATA(MoveData, (
 	CR_ENUM_MEMBER(moveType),
 	CR_ENUM_MEMBER(moveFamily),
 	CR_ENUM_MEMBER(terrainClass),
-	CR_MEMBER(size),
+	CR_MEMBER(followGround),
 
+	CR_MEMBER(size),
 	CR_MEMBER(depth),
 	CR_MEMBER(maxSlope),
 	CR_MEMBER(slopeMod),
@@ -37,15 +38,16 @@ CR_REG_METADATA(MoveData, (
 	CR_MEMBER(moveMath),
 	CR_MEMBER(crushStrength),
 
-	CR_MEMBER(maxSpeed),
-	CR_MEMBER(maxTurnRate),
-	CR_MEMBER(maxAcceleration),
-	CR_MEMBER(maxBreaking),
-	CR_MEMBER(subMarine),
-
 	CR_MEMBER(name),
 
-	CR_MEMBER(followGround),
+	CR_MEMBER(maxSpeed),
+	CR_MEMBER(maxTurnRate),
+
+	CR_MEMBER(maxAcceleration),
+	CR_MEMBER(maxBreaking),
+
+	CR_MEMBER(subMarine),
+
 	CR_RESERVED(16)
 ));
 

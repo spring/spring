@@ -91,49 +91,76 @@
 
 struct Command
 {
+private:
 	CR_DECLARE_STRUCT(Command);
 
-	Command()
-	: options(0), tag(0), timeOut(INT_MAX) {};
+public:
+	Command():
+		options(0),
+		tag(0),
+		timeOut(INT_MAX) {}
 
-	void AddParam(float par) {params.push_back(par);};
-	int id;                     // CMD_xxx code  (custom codes can also be used)
-	unsigned char options;      // option bits
-	std::vector<float> params;  // command parameters
+	/// CMD_xxx code  (custom codes can also be used)
+	int id;
+	/// option bits
+	unsigned char options;
+	/// command parameters
+	std::vector<float> params;
+	/// adds a value to this commands parameter list
+	void AddParam(float par) {
+		params.push_back(par);
+	}
 
-	unsigned int tag;  // unique id within a CCommandQueue
+	/// unique id within a CCommandQueue
+	unsigned int tag;
 
-	int timeOut;  // remove this command after this frame
-	              // can only be set locally, not sent over net
-	              // (used for temporary orders)
+	/**
+	 * Remove this command after this frame
+	 * can only be set locally, not sent over net
+	 * (used for temporary orders)
+	 */
+	int timeOut;
 };
 
 
 struct CommandDescription {
+private:
 	CR_DECLARE_STRUCT(CommandDescription);
 
-	CommandDescription()
-	: hidden(false),
-	  disabled(false),
-	  showUnique(false),
-	  onlyTexture(false) {}
+public:
+	CommandDescription():
+		hidden(false),
+		disabled(false),
+		showUnique(false),
+		onlyTexture(false) {}
 
-	int id;    // CMD_xxx     code  (custom codes can also be used)
-	int type;  // CMDTYPE_xxx code 
+	/// CMD_xxx     code (custom codes can also be used)
+	int id;
+	/// CMDTYPE_xxx code
+	int type;
 
-	std::string name;       // command name
-	std::string action;     // the associated command action binding name
-	std::string iconname;   // button texture
-	std::string mouseicon;  // mouse cursor
-	std::string tooltip;    // tooltip text
+	/// command name
+	std::string name;
+	/// the associated command action binding name
+	std::string action;
+	/// button texture
+	std::string iconname;
+	/// mouse cursor
+	std::string mouseicon;
+	/// tooltip text
+	std::string tooltip;
 
-	bool hidden;       // if true dont show a button for the command
-	bool disabled;     // for greying-out commands
-	bool showUnique;   // command only applies to single units
-	bool onlyTexture;  // do not draw the name if the texture is available
+	/// if true dont show a button for the command
+	bool hidden;
+	/// for greying-out commands
+	bool disabled;
+	/// command only applies to single units
+	bool showUnique;
+	/// do not draw the name if the texture is available
+	bool onlyTexture;
 
 	std::vector<std::string> params;
 };
 
 
-#endif /* COMMAND_H */
+#endif // COMMAND_H

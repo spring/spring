@@ -21,6 +21,8 @@
 #include "FileSystem/ArchiveZip.h"
 #include "FileSystem/FileSystem.h"
 
+#include "NetProtocol.h"
+
 #define PATHDEBUG false
 
 
@@ -55,11 +57,11 @@ CPathEstimator::CPathEstimator(CPathFinder* pf, unsigned int BSIZE, unsigned int
 	BLOCK_PIXEL_SIZE(BSIZE * SQUARE_SIZE),
 	BLOCKS_TO_UPDATE(SQUARES_TO_UPDATE / (BLOCK_SIZE * BLOCK_SIZE) + 1),
 	pathFinder(pf),
-	moveMathOptions(mmOpt),
-	pathChecksum(0),
 	nbrOfBlocksX(gs->mapx / BLOCK_SIZE),
 	nbrOfBlocksZ(gs->mapy / BLOCK_SIZE),
 	nbrOfBlocks(nbrOfBlocksX * nbrOfBlocksZ),
+	moveMathOptions(mmOpt),
+	pathChecksum(0),
 	offsetBlockNum(nbrOfBlocks),costBlockNum(nbrOfBlocks),
 	lastOffsetMessage(-1),lastCostMessage(-1)
 {
@@ -223,6 +225,7 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread) {
 		lastOffsetMessage=idx/1000;
 		char calcMsg[128];
 		sprintf(calcMsg, "Block offset remaining: %d of %d (block-size %d)", lastOffsetMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (lastOffsetMessage<<8)));
 		PrintLoadMsg(calcMsg);
 	}
 
@@ -238,6 +241,7 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 		lastCostMessage=idx/1000;
 		char calcMsg[128];
 		sprintf(calcMsg, "Path cost remaining: %d of %d (block-size %d)", lastCostMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (lastCostMessage<<8)));
 		PrintLoadMsg(calcMsg);
 	}
 

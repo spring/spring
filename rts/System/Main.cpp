@@ -14,7 +14,7 @@
 
 #include "SpringApp.h"
 
-#include <SDL.h>     // Must come after Game/UI/MouseHandler.h for ButtonPress
+#include <SDL.h>     // Must come after Game/UI/MouseHandler.h for ButtonPressEvt
 
 #ifdef WIN32
 #include "Platform/Win/win32.h"
@@ -117,7 +117,6 @@ int main(int argc, char *argv[])
 
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
 {
-	win_lpCmdLine = lpCmdLine;
 	return Run (__argc, __argv);
 }
 

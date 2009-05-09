@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include <cstdlib>
+#include <cstdio>
 
 #include "BFGroundTextures.h"
 #include "FileSystem/FileHandler.h"
@@ -11,6 +12,7 @@
 #include "mmgr.h"
 #include "FastMath.h"
 
+using std::sprintf;
 using std::string;
 using std::max;
 

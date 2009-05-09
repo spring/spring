@@ -49,27 +49,6 @@ protected:
 	BaseCmd *cmdline;
 
 	/**
-	 * @brief demofile
-	 *
-	 * Name of a demofile
-	 */
-	std::string demofile;
-
-	/**
-	 * @brief savefile
-	 *
-	 * Name of a savefile
-	 */
-	std::string savefile;
-
-	/**
-	 * @brief startscript
-	 *
-	 * Name of a start script
-	 */
-	std::string startscript;
-
-	/**
 	 * @brief screen width
 	 *
 	 * Game screen width
@@ -159,12 +138,5 @@ extern boost::uint16_t currentUnicode;
  * Whether or not the game is running in fullscreen
  */
 extern bool fullscreen;
-
-#ifdef WIN32
-/**
- * Win32 only: command line passed to WinMain() (not including exe filename)
- */
-extern char *win_lpCmdLine;
-#endif
 
 #endif

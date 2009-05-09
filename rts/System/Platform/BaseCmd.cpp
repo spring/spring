@@ -13,18 +13,16 @@
 #include <iostream>
 #include <cstdlib>
 
-#ifdef _WIN32
-#include "Win/Win32Cmd.h"
-#else
-#include "Linux/PosixCmd.h"
-#endif
+namespace po = boost::program_options;
 
 /**
  * The base constructor sets up the default help and
  * version options that should be available on all platforms.
  */
-BaseCmd::BaseCmd()
+BaseCmd::BaseCmd(int _argc, char* _argv[]) : desc("Allowed options")
 {
+	argc = _argc;
+	argv = _argv;
 	addoption('h',"help",OPTPARM_NONE,"","This help message");
 	addoption('V',"version",OPTPARM_NONE,"","Display program version");
 }
@@ -36,18 +34,12 @@ BaseCmd::~BaseCmd()
 {
 }
 
-/**
- * This is the static initialization function that
- * will instantiate a platform-specific derived commandline
- * class appropriate for this platform
- */
-BaseCmd *BaseCmd::initialize(int c, char **v)
+std::string BaseCmd::GetInputFile()
 {
-#ifdef _WIN32
-	return new Win32Cmd(c,v);
-#else
-	return new PosixCmd(c,v);
-#endif
+	if (vm.count("input-file"))
+		return vm["input-file"].as<std::string>();
+	else
+		return "";
 }
 
 /**
@@ -66,27 +58,45 @@ void BaseCmd::addoption(const char shortopt, std::string longopt, const unsigned
 }
 
 /**
- * Remove the option that has the given short flag
+ * Iterates through and processes arguments
  */
-void BaseCmd::deloption(const char o)
+void BaseCmd::parse()
 {
+	boost::program_options::options_description all;
 	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
-		if (it->shortopt == o) {
-			options.erase(it);
-			break;
+		std::string optionstr = it->longopt;
+		if (it->shortopt)
+			optionstr += ","+std::string(&it->shortopt);
+		if (it->parmtype == OPTPARM_NONE) {
+			all.add_options()(optionstr.c_str(), it->desc.c_str());
+		}
+		else if (it->parmtype == OPTPARM_INT) {
+			all.add_options()(optionstr.c_str(), po::value<int>(), it->desc.c_str());
+		}
+		else if (it->parmtype == OPTPARM_STRING) {
+			all.add_options()(optionstr.c_str(), po::value<std::string>(), it->desc.c_str());
 		}
 	}
-}
+	desc.add(all);
 
-/**
- * Remove the option that has the given long flag
- */
-void BaseCmd::deloption(std::string o)
-{
+	all.add_options()("input-file", po::value<std::string>(), "input file");
+	po::positional_options_description p;
+	p.add("input-file", 1);
+
+	po::store(po::command_line_parser(argc, argv).options(all).positional(p).run(), vm);
+	po::notify(vm);
+
 	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
-		if (it->longopt == o) {
-			options.erase(it);
-			break;
+		if (vm.count(it->longopt)) {
+			it->given = true;
+			if (it->parmtype != OPTPARM_NONE) {
+				if (it->parmtype == OPTPARM_INT) {
+					it->ret.intret = vm[it->longopt].as<int>();
+				} else {
+					// FIXME memleak
+					it->ret.stringret = strdup(vm[it->longopt].as<std::string>().c_str());
+				}
+			}
 		}
 	}
 }
@@ -104,7 +114,7 @@ void BaseCmd::usage(std::string program, std::string version)
 		std::cout << std::endl;
 		std::cout << "This program is licensed under the GNU General Public License" << std::endl;
 	}
-	std::cout << "Usage: " << argv[0] << " [OPTIONS]" << std::endl;
+	std::cout << desc << std::endl;
 }
 
 /**

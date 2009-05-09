@@ -19,6 +19,14 @@
 	@author hoijui
 */
 
+#include <string>
+#include <cstdio>
+
+using std::fopen;
+using std::fread;
+using std::fwrite;
+using std::fclose;
+
 #include "ResourceMapAnalyzer.h"
 
 #include "Sim/Misc/ResourceHandler.h"
@@ -31,7 +39,6 @@
 #include "FileSystem/FileSystem.h"
 #include "LogOutput.h"
 
-#include <string>
 
 static const float3 ERRORVECTOR(-1, 0, 0);
 static std::string CACHE_BASE("");

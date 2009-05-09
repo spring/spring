@@ -77,13 +77,9 @@ void CLuaRules::FreeHandler()
 }
 
 
-bool CLuaRules::SetConfigString(const string& cfg)
+void CLuaRules::SetConfigString(const string& cfg)
 {
 	configString = cfg;
-	if ((cfg == "0") || (cfg == "disabled")) {
-		return false;
-	}
-	return true;
 }
 
 

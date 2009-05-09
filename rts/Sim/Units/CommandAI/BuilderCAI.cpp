@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include "TransportCAI.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "LineDrawer.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Game/GameHelper.h"
@@ -924,9 +925,7 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 	commandQue.push_back(c);
 	commandQue.pop_front();
 	commandQue.push_front(temp);
-	if(owner->group){
-		owner->group->CommandFinished(owner->id,CMD_PATROL);
-	}
+	eoh->CommandFinished(*owner, CMD_PATROL);
 	SlowUpdate();
 	return;
 }

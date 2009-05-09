@@ -40,7 +40,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/vmg"
+				AdditionalOptions="/vmg /MP"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
 				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
@@ -126,7 +126,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/vmg"
+				AdditionalOptions="/vmg /MP"
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
@@ -221,7 +221,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/vmg"
+				AdditionalOptions="/vmg /MP"
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
@@ -319,7 +319,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/vmg"
+				AdditionalOptions="/vmg /MP"
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
@@ -413,7 +413,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/vmg"
+				AdditionalOptions="/vmg /MP"
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
@@ -511,7 +511,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/vmg"
+				AdditionalOptions="/vmg /MP"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
 				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;USE_GML;USE_GML_SIM"
@@ -2211,14 +2211,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Rendering\Gl\glTextBox.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Rendering\Gl\glTextBox.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Rendering\Gl\IFramebuffer.h"
 					>
 				</File>
@@ -3227,6 +3219,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\AllyTeam.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\AllyTeam.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\CategoryHandler.cpp"
 					>
 				</File>
@@ -3824,6 +3824,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\float4.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\FPUCheck.h"
 				>
 			</File>
@@ -4077,6 +4081,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\TimeProfiler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\TimeUtil.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\TimeUtil.h"
 				>
 			</File>
 			<File
@@ -5545,46 +5557,6 @@
 					</File>
 					<File
 						RelativePath="..\..\System\Platform\Win\win32.h"
-						>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\Win32Cmd.cpp"
-						>
-						<FileConfiguration
-							Name="No debug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release with error catching|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Syncdebug|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-						<FileConfiguration
-							Name="Release+MT with error catching|Win32"
-							>
-							<Tool
-								Name="VCCLCompilerTool"
-								UsePrecompiledHeader="0"
-							/>
-						</FileConfiguration>
-					</File>
-					<File
-						RelativePath="..\..\System\Platform\Win\Win32Cmd.h"
 						>
 					</File>
 					<File
@@ -7144,6 +7116,14 @@
 			</File>
 			<File
 				RelativePath="..\..\Lua\LuaFeatureDefs.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaFonts.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Lua\LuaFonts.h"
 				>
 			</File>
 			<File

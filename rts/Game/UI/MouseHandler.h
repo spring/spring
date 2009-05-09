@@ -46,7 +46,7 @@ public:
 	float doubleClickTime;
 	float scrollWheelSpeed;
 
-	struct ButtonPress {
+	struct ButtonPressEvt {
 		bool pressed;
 		bool chorded;
 		int x;
@@ -58,7 +58,7 @@ public:
 		int movement;
 	};
 
-	ButtonPress buttons[NUM_BUTTONS + 1]; /* One-bottomed. */
+	ButtonPressEvt buttons[NUM_BUTTONS + 1]; /* One-bottomed. */
 	int activeButton;
 	float3 dir;
 

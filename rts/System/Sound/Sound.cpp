@@ -2,6 +2,7 @@
 #include "mmgr.h"
 #include "Sound.h"
 
+#include <cstdlib>
 #include <AL/alc.h>
 #include <boost/cstdint.hpp>
 
@@ -21,13 +22,25 @@
 
 CSound* sound = NULL;
 
-CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
+CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateCounter(0)
 {
+	configHandler->NotifyOnChange(this);
 	mute = false;
+	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
-	masterVolume = configHandler->Get("SoundVolume", 60) * 0.01f;
-	//TODO make generic
-	Channels::UnitReply.SetVolume(configHandler->Get("UnitReplyVolume", 80 ) * 0.01f);
+
+	if (configHandler->IsSet("SoundVolume"))
+	{
+		// SoundVolume is deprecated, if this key is present, copy to snd_volmaster and delete
+		configHandler->Set("snd_volmaster", configHandler->Get("SoundVolume", 60));
+		configHandler->Delete("SoundVolume");
+	}
+
+	masterVolume = configHandler->Get("snd_volmaster", 60);
+	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
+	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
+	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
+	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{
@@ -90,8 +103,8 @@ CSound::CSound() : numEmptyPlayRequests(0), updateCounter(0)
 		#endif
 
 		// Set distance model (sound attenuation)
-		alDistanceModel (AL_INVERSE_DISTANCE_CLAMPED);
-		alDopplerFactor(0.04);
+		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+		//alDopplerFactor(1.0);
 	}
 	
 	SoundBuffer::Initialise();
@@ -195,6 +208,32 @@ void CSound::PitchAdjust(const float newPitch)
 	SoundSource::SetPitch(newPitch);
 }
 
+void CSound::ConfigNotify(const std::string& key, const std::string& value)
+{
+	if (key == "snd_volmaster")
+	{
+		masterVolume = std::atoi(value.c_str()) * 0.01f;
+		if (!mute && !appIsIconified)
+			alListenerf(AL_GAIN, masterVolume);
+	}
+	else if (key == "snd_volgeneral")
+	{
+		Channels::General.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "snd_volunitreply")
+	{
+		Channels::UnitReply.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "snd_volbattle")
+	{
+		Channels::Battle.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "snd_volui")
+	{
+		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+}
+
 bool CSound::Mute()
 {
 	mute = !mute;
@@ -210,16 +249,23 @@ bool CSound::IsMuted() const
 	return mute;
 }
 
-void CSound::SetVolume(float v)
+void CSound::Iconified(bool state)
 {
-	masterVolume = v;
+	if (appIsIconified != state && !mute)
+	{
+		if (state == false)
+			alListenerf(AL_GAIN, masterVolume);
+		else if (state == true)
+			alListenerf(AL_GAIN, 0.0);
+	}
+	appIsIconified = state;
 }
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
-	if (sources.empty() || mute || volume == 0.0f || masterVolume == 0.0f)
+	if (sources.empty() || volume == 0.0f)
 		return;
 
 	if (id == 0)
@@ -287,14 +333,17 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 		return;
 	const float3 prevPos = myPos;
 	myPos = campos;
-	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (myPos - prevPos)*posScale/(lastFrameTime);
 	const float3 posScaled = myPos * posScale;
 	alListener3f(AL_POSITION, posScaled.x, posScaled.y, posScaled.z);
-	alListener3f(AL_VELOCITY, velocity.x, velocity.y, velocity.z);
+
+	//TODO: move somewhere camera related and make accessible for everyone
+	const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
+	const float3 velocityAvg = (velocity+prevVelocity)/2;
+	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y , velocityAvg.z);
+	prevVelocity = velocity;
+
 	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
-	alListenerf(AL_GAIN, masterVolume);
 	CheckError("CSound::UpdateListener");
 }
 

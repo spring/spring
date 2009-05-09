@@ -39,14 +39,13 @@
 const int TARGET_LOST_TIMER =120;	// in calls to SlowUpdate() (approx. once every second)
 
 CR_BIND(CCommandQueue, );
-
 CR_REG_METADATA(CCommandQueue, (
 				CR_MEMBER(queue),
-				CR_MEMBER(tagCounter),
-				CR_ENUM_MEMBER(queueType)
+				CR_ENUM_MEMBER(queueType),
+				CR_MEMBER(tagCounter)
 				));
-CR_BIND_DERIVED(CCommandAI, CObject, );
 
+CR_BIND_DERIVED(CCommandAI, CObject, );
 CR_REG_METADATA(CCommandAI, (
 				CR_MEMBER(stockpileWeapon),
 
@@ -70,6 +69,7 @@ CR_REG_METADATA(CCommandAI, (
 				CR_RESERVED(64),
 				CR_POSTLOAD(PostLoad)
 				));
+
 CCommandAI::CCommandAI():
 	stockpileWeapon(0),
 	lastUserCommand(-1000),
@@ -316,7 +316,7 @@ CCommandAI::~CCommandAI()
 
 void CCommandAI::PostLoad()
 {
-	selected = false; // HACK: selected list does not serialized
+	selected = false; // FIXME: HACK: selected list is not serialized
 }
 
 vector<CommandDescription>& CCommandAI::GetPossibleCommands()
@@ -839,9 +839,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		unimportantMove = false;
 		orderTarget = NULL;
 		const Command& cmd = commandQue.front();
-		if (owner->group) {
-			owner->group->CommandFinished(owner->id, cmd.id);
-		}
+		eoh->CommandFinished(*owner, cmd.id);
 		eventHandler.UnitCmdDone(owner, cmd.id, cmd.tag);
 	}
 
@@ -1362,9 +1360,7 @@ void CCommandAI::FinishCommand(void)
 	targetDied = false;
 	unimportantMove = false;
 	orderTarget = 0;
-	if (owner->group) {
-		owner->group->CommandFinished(owner->id, cmdID);
-	}
+	eoh->CommandFinished(*owner, cmdID);
 	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
 
 	if (commandQue.empty()) {

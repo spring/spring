@@ -8,32 +8,29 @@
 #include <assert.h>
 
 CR_BIND_DERIVED_INTERFACE(AMoveType, CObject);
-
 CR_REG_METADATA(AMoveType, (
 		CR_MEMBER(forceTurn),
 		CR_MEMBER(forceTurnTo),
 		CR_MEMBER(owner),
+		CR_MEMBER(goalPos),
 		CR_MEMBER(maxSpeed),
 		CR_MEMBER(maxWantedSpeed),
-		CR_MEMBER(useHeading),
-		CR_MEMBER(goalPos),
 		CR_MEMBER(reservedPad),
 		CR_MEMBER(padStatus),
-		CR_ENUM_MEMBER(progressState),
 		CR_MEMBER(repairBelowHealth),
+		CR_MEMBER(useHeading),
+		CR_ENUM_MEMBER(progressState),
 		CR_RESERVED(32)
 		));
 
 CR_BIND_DERIVED(CMoveType, AMoveType, (NULL));
-
-
 CR_REG_METADATA(CMoveType,
 		(
 		CR_RESERVED(63)
 		));
 
-AMoveType::AMoveType(CUnit* owner)
-	: forceTurn(0),
+AMoveType::AMoveType(CUnit* owner):
+	forceTurn(0),
 	forceTurnTo(0),
 	owner(owner),
 	goalPos(owner ? owner->pos : float3(0.0f, 0.0f, 0.0f)),

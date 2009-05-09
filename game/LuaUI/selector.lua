@@ -10,6 +10,10 @@
 --
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+-- changes:
+--   jK (April@2009) - updated to new font system
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 function widget:GetInfo()
   return {
@@ -47,29 +51,17 @@ local fontSize = 11
 local fontSpace = 5
 local yStep = fontSize + fontSpace
 
-local fh = (1 > 0)
 local entryFont  = "LuaUI/Fonts/FreeMonoBold_12"
-local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
-local entryFont  = "LuaUI/Fonts/mephisto_12"
-local entryFont  = "LuaUI/Fonts/VeraMoBd_12"
-local entryFont  = "LuaUI/Fonts/fragileb_16"
-local entryFont  = "LuaUI/Fonts/edenmb___16"
-local headerFont = "LuaUI/Fonts/abaddon_22"
+local headerFont  = "LuaUI/Fonts/FreeMonoBold_12"
+--local headerFont = "LuaUI/Fonts/FreeMonoBold_16"
+--local entryFont  = "LuaUI/Fonts/mephisto_12"
+--local entryFont  = "LuaUI/Fonts/VeraMoBd_12"
+--local entryFont  = "LuaUI/Fonts/fragileb_16"
+--local entryFont  = "LuaUI/Fonts/edenmb___16"
+--local headerFont = "LuaUI/Fonts/abaddon_22"
 if (1 > 0) then
   entryFont  = ":n:" .. entryFont
   headerFont = ":n:" .. headerFont
-end
---fontHandler.UseDefaultFont()
---local entryFont = fontHandler.GetFontName()
-
-if (fh) then
-  fh = fontHandler.UseFont(headerFont) and
-       fontHandler.UseFont(entryFont)
-end
-if (fh) then
-  fontSize  = fontHandler.GetFontSize()
-  yStep     = fontHandler.GetFontYStep()
-  fontSpace = yStep - fontSize
 end
 
 
@@ -117,8 +109,9 @@ local function UpdateListScroll()
   widgetsList = {}
   local se = startEntry
   local ee = se + maxEntries - 1
+  local n = 1
   for i = se, ee do
-    table.insert(widgetsList, fullWidgetsList[i])
+    widgetsList[n],n = fullWidgetsList[i],n+1
   end
 end
 
@@ -150,6 +143,14 @@ function widget:MouseWheel(up, value)
 end
 
 
+local function SortWidgetListFunc(nd1, nd2)
+  if (nd1[2].fromZip ~= nd2[2].fromZip) then
+    return nd1[2].fromZip  -- mod widgets first
+  end
+  return (nd1[1] < nd2[1]) -- sort by name
+end
+
+
 local function UpdateList()
   if (not widgetHandler.knownChanged) then
     return
@@ -163,8 +164,7 @@ local function UpdateList()
     if (name ~= myName) then
       table.insert(fullWidgetsList, { name, data })
       -- look for the maxWidth
-      local width = gl.GetTextWidth(name)
-      local width = fontHandler.GetTextWidth(name)
+      local width = fontSize * gl.GetTextWidth(name)
       if (width > maxWidth) then
         maxWidth = width
       end
@@ -178,15 +178,9 @@ local function UpdateList()
     error('knownCount mismatch')
   end
 
-  table.sort(fullWidgetsList, function(nd1, nd2)
-    if (nd1[2].fromZip ~= nd2[2].fromZip) then
-      return nd1[2].fromZip  -- mod widgets first
-    end
-    return (nd1[1] < nd2[1]) -- sort by name
-  end)
+  table.sort(fullWidgetsList, SortWidgetListFunc)
 
   UpdateListScroll()
-
   UpdateGeometry()
 end
 
@@ -194,8 +188,8 @@ end
 function widget:ViewResize(viewSizeX, viewSizeY)
   vsx = viewSizeX
   vsy = viewSizeY
-  UpdateList()
-  UpdateGeometry()
+  --UpdateList()
+  --UpdateGeometry()
 end
 
 
@@ -222,22 +216,14 @@ end
 
 function widget:DrawScreen()
   UpdateList()
+  gl.BeginText()
 
-  -- draw the header  
-  if (fh) then
---    fontHandler.DisableCache()
-    gl.Color(1, 1, 1)
-    fontHandler.UseFont(headerFont)
-    fontHandler.DrawCentered("Widget Selector", floor(midx), floor(maxy + 7))
-    fontHandler.UseFont(entryFont)
-  else
-    gl.Text("Widget Selector", midx, maxy + 5, fontSize * 1.25, "oc")
-  end
-
+  -- draw the header
+  gl.Text("Widget Selector", midx, maxy + 5, fontSize * 1.25, "oc")
 
   -- draw the box
   gl.Color(0.3, 0.3, 0.3, 1.0)
-  gl.Texture("bitmaps/detailtex.bmp")
+  gl.Texture(":n:bitmaps/detailtex.bmp")
   local ts = (2.0 / 512)  --  texture scale 
   gl.Shape(GL.QUADS, {
     { v = { minx, miny }, t = { minx * ts, miny * ts } },
@@ -246,6 +232,7 @@ function widget:DrawScreen()
     { v = { minx, maxy }, t = { minx * ts, maxy * ts } } 
   })
   gl.Texture(false)
+
 
   -- draw the widget labels
   local mx,my,lmb,mmb,rmb = Spring.GetMouseState()
@@ -284,14 +271,10 @@ function widget:DrawScreen()
       tmpName = color .. name
     end
 
-    if (fh) then
-      fontHandler.DrawCentered(color..tmpName, floor(midx), floor(posy + 2))
-    else
-      gl.Text(color..tmpName, midx, posy, fontSize, "c")
-    end
-
+    gl.Text(color..tmpName, midx, posy + fontSize * 0.5, fontSize, "vc")
     posy = posy - yStep
   end
+
 
   -- outline the highlighted label
   if (pointedY) then
@@ -304,12 +287,10 @@ function widget:DrawScreen()
     else
       gl.Color(0.2, 0.2, 1.0, 0.2)
     end
-    local minyp = pointedY - 0.5
-    local maxyp = pointedY + yStep + 0.5
     local xn = minx + 0.5
     local xp = maxx - 0.5
-    local yn = pointedY - 0.5
-    local yp = yn + yStep + 1
+    local yn = pointedY - fontSpace * 0.5
+    local yp = pointedY + fontSize + fontSpace * 0.5
     gl.Blending(false)
     gl.Shape(GL.LINE_LOOP, {
       { v = { xn, yn } }, { v = { xp, yn } },
@@ -347,9 +328,7 @@ function widget:DrawScreen()
     { v = { xp, yp } }, { v = { xn, yp } }
   })
 
-  if (fh) then
-    fontHandler.EnableCache()
-  end
+  gl.EndText()
 end
 
 
