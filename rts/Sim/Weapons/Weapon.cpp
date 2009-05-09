@@ -201,19 +201,7 @@ inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
 		return false;
 	}
 
-
-	const int unitID = targetUnit ? targetUnit->id : 0;
-
-	std::vector<int> args;
-
-	args.push_back(unitID);
-	args.push_back(0); // arg[1], for the return value
-	                   // the default is to not block the shot
-	args.push_back(haveUserTarget);
-
-	owner->script->Call(COBFN_BlockShot + weaponNum, args);
-
-	return !!args[1];
+	return owner->script->BlockShot(weaponNum, targetUnit, haveUserTarget);
 }
 
 

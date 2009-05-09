@@ -372,7 +372,18 @@ void CCobInstance::Shot(int weaponNum)
 
 bool CCobInstance::BlockShot(int weaponNum, CUnit* targetUnit, bool userTarget)
 {
-	return false;
+	const int unitID = targetUnit ? targetUnit->id : 0;
+
+	vector<int> args;
+
+	args.push_back(unitID);
+	args.push_back(0); // arg[1], for the return value
+	                   // the default is to not block the shot
+	args.push_back(haveUserTarget);
+
+	Call(COBFN_BlockShot + weaponNum, args);
+
+	return !!args[1];
 }
 
 
