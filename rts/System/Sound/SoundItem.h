@@ -50,6 +50,7 @@ private:
 	float dopplerScale;
 
 	float maxDist;
+	float rolloff;
 	int priority;
 
 	unsigned maxConcurrent;
