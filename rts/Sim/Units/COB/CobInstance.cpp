@@ -326,7 +326,7 @@ int CCobInstance::QueryWeapon(int weaponNum)
 static void ScriptCallback(int retCode, void* p1, void* p2)
 {
 	if (retCode == 1) {
-		((CWeapon*)p1)->ScriptReady();
+		((CWeapon*)p1)->angleGood = true;
 	}
 }
 

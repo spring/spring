@@ -281,7 +281,7 @@ void CWeapon::Update()
 
 			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 			const float pitch = asin(wantedDir.dot(owner->updir));
-			// for COB, this calls ScriptReady when aim script finished,
+			// for COB, this sets anglegood to return value of aim script when it finished,
 			// for Lua, there exists a callout to set the anglegood member.
 			// FIXME: convert CSolidObject::heading to radians too.
 			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
@@ -857,11 +857,6 @@ void CWeapon::Fire()
 	FireImpl();
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
-}
-
-void CWeapon::ScriptReady(void)
-{
-	angleGood=true;
 }
 
 void CWeapon::CheckIntercept(void)
