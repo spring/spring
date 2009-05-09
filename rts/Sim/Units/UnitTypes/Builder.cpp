@@ -677,7 +677,8 @@ void CBuilder::SetBuildStanceToward(float3 pos)
 
 		// clamping p - pitch not needed, range of asin is -PI/2..PI/2,
 		// so max difference between two asin calls is PI.
-		script->StartBuilding(ClampRad(h - heading), p - pitch);
+		// FIXME: convert CSolidObject::heading to radians too.
+		script->StartBuilding(ClampRad(h - heading * TAANG2RAD), p - pitch);
 	}
 
 	int soundIdx = unitDef->sounds.build.getRandomIdx();

@@ -283,7 +283,8 @@ void CWeapon::Update()
 			const float pitch = asin(wantedDir.dot(owner->updir));
 			// for COB, this calls ScriptReady when aim script finished,
 			// for Lua, there exists a callout to set the anglegood member.
-			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading), pitch);
+			// FIXME: convert CSolidObject::heading to radians too.
+			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
 		}
 	}
 	if(weaponDef->stockpile && numStockpileQued){
