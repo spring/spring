@@ -190,8 +190,9 @@ void CCobInstance::SetDirection(int heading)
 }
 
 
-void CCobInstance::SetSpeed(float speed)
+void CCobInstance::SetSpeed(float speed, float cob_mult)
 {
+	Call(COBFN_SetSpeed, (int)(speed * cob_mult));
 }
 
 

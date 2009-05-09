@@ -1821,9 +1821,9 @@ void CUnit::FinishedBuilding(void)
 	if (unitDef->windGenerator > 0.0f) {
 		// start pointing in direction of wind
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			script->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
+			script->SetSpeed(unitDef->windGenerator, 3000.0f);
 		} else {
-			script->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
+			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
 		}
 		script->SetDirection(GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
@@ -2008,7 +2008,7 @@ void CUnit::AddEnergy(float energy, bool handicap)
 void CUnit::Activate()
 {
 	//if(unitDef->tidalGenerator>0)
-	//	cob->Call(COBFN_SetSpeed, (int)(readmap->tidalStrength*3000.0f*unitDef->tidalGenerator));
+	//	script->SetSpeed(readmap->tidalStrength * unitDef->tidalGenerator, 3000.0f);
 
 	if (activated)
 		return;
@@ -2057,10 +2057,10 @@ void CUnit::Deactivate()
 void CUnit::UpdateWind(float x, float z, float strength)
 {
 	if (strength > unitDef->windGenerator) {
-		script->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
+		script->SetSpeed(unitDef->windGenerator, 3000.0f);
 	}
 	else {
-		script->Call(COBFN_SetSpeed, (int)(strength*3000.0f));
+		script->SetSpeed(strength, 3000.0f);
 	}
 
 	script->SetDirection(GetHeadingFromVector(-x, -z));
@@ -2212,9 +2212,9 @@ void CUnit::PostLoad()
 
 	if (unitDef->windGenerator>0) {
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			script->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
+			script->SetSpeed(unitDef->windGenerator, 3000.0f);
 		} else {
-			script->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
+			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
 		}
 		script->SetDirection(GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}

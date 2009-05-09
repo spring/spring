@@ -227,7 +227,7 @@ public:
 	// Killed must cause unit->deathScriptFinished and unit->delayedWreckLevel to be set!
 	virtual void Killed() = 0;
 	virtual void SetDirection(int heading) = 0;
-	virtual void SetSpeed(float speed) = 0;
+	virtual void SetSpeed(float speed, float cob_mult) = 0;
 	virtual void RockUnit(const float3& rockDir) = 0;
 	virtual void HitByWeapon(const float3& hitDir) = 0;
 	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage) = 0;
