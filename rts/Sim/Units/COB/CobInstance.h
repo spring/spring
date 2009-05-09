@@ -86,7 +86,7 @@ public:
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum);
 	virtual void  AimWeapon(int weaponNum, float heading, float pitch);
-	virtual void  AimShieldWeapon(int weaponNum);
+	virtual void  AimShieldWeapon(CPlasmaRepulser* weapon);
 	virtual int   AimFromWeapon(int weaponNum);
 	virtual void  Shot(int weaponNum);
 	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget);

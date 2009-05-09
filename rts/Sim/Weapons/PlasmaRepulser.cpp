@@ -230,7 +230,7 @@ void CPlasmaRepulser::SlowUpdate(void)
 	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
 	                       + (owner->updir    * relWeaponPos.y)
 	                       + (owner->rightdir * relWeaponPos.x);
-	owner->script->AimShieldWeapon(weaponNum);
+	owner->script->AimShieldWeapon(this);
 }
 
 
