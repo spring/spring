@@ -150,16 +150,18 @@ public:
 		}
 	}
 
-	//template funktion för att häta ett värde, tar defaultvärde om värdet inte fins
 	template<typename T>
 	void GetDef(T& value, const std::string& defvalue, const std::string& key) const
 	{
 		std::string str;
 		str = SGetValueDef(defvalue, key);
-
-		std::stringstream stream;
-		stream << str;
+		std::istringstream stream(str);
 		stream >> value;
+	}
+
+	void GetDef(std::string& value, const std::string& defvalue, const std::string& key) const
+	{
+		value = SGetValueDef(defvalue, key);
 	}
 
 	//Retreive a value into value, or use defvalue if it does not exist (templeted defvalue version of GetDef)
