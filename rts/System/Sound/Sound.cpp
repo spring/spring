@@ -103,7 +103,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		#endif
 
 		// Set distance model (sound attenuation)
-		alDistanceModel (AL_INVERSE_DISTANCE_CLAMPED);
+		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
 		//alDopplerFactor(1.0);
 	}
 	
