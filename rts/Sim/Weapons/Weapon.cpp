@@ -207,17 +207,7 @@ inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
 
 float CWeapon::TargetWeight(const CUnit* targetUnit) const
 {
-	const int unitID = targetUnit ? targetUnit->id : 0;
-
-	std::vector<int> args;
-
-	args.push_back(unitID);
-	args.push_back(COBSCALE); // arg[1], for the return value
-	                          // the default is 1.0
-
-	owner->script->Call(COBFN_TargetWeight + weaponNum, args);
-
-	return (float)args[1] / (float)COBSCALE;
+	return owner->script->TargetWeight(weaponNum, targetUnit);
 }
 
 

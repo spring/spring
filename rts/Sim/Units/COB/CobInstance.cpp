@@ -389,7 +389,17 @@ bool CCobInstance::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTa
 
 float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 {
-	return 1.0;
+	const int unitID = targetUnit ? targetUnit->id : 0;
+
+	vector<int> args;
+
+	args.push_back(unitID);
+	args.push_back(COBSCALE); // arg[1], for the return value
+	                          // the default is 1.0
+
+	Call(COBFN_TargetWeight + weaponNum, args);
+
+	return (float)args[1] / (float)COBSCALE;
 }
 
 
