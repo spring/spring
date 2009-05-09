@@ -943,6 +943,16 @@ int SpringApp::Run (int argc, char *argv[])
 	bool done = false;
 
 	while (!done) {
+#ifdef WIN32
+		static unsigned lastreset = 0;
+		unsigned curreset = SDL_GetTicks();
+		if(gu->active && (curreset - lastreset > 1000)) {
+			lastreset = curreset;
+			int timeout; // reset screen saver timer
+			if(SystemParametersInfo(SPI_GETSCREENSAVETIMEOUT, 0, &timeout, 0))
+				SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
+		}
+#endif
 		while (SDL_PollEvent(&event)) {
 			switch (event.type) {
 				case SDL_VIDEORESIZE: {
