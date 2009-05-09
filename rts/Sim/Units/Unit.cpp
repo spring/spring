@@ -1825,7 +1825,7 @@ void CUnit::FinishedBuilding(void)
 		} else {
 			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
 		}
-		script->SetDirection(GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+		script->SetDirection(GetHeadingFromVectorF(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -2063,7 +2063,7 @@ void CUnit::UpdateWind(float x, float z, float strength)
 		script->SetSpeed(strength, 3000.0f);
 	}
 
-	script->SetDirection(GetHeadingFromVector(-x, -z));
+	script->SetDirection(GetHeadingFromVectorF(-x, -z));
 }
 
 
@@ -2216,7 +2216,7 @@ void CUnit::PostLoad()
 		} else {
 			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
 		}
-		script->SetDirection(GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+		script->SetDirection(GetHeadingFromVectorF(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (activated) {

@@ -46,7 +46,7 @@ public:
 	// callins, called throughout sim
 	virtual void Create();
 	virtual void Killed();
-	virtual void SetDirection(int heading);
+	virtual void SetDirection(float heading);
 	virtual void SetSpeed(float speed, float);
 	virtual void RockUnit(const float3& rockDir);
 	virtual void HitByWeapon(const float3& hitDir);

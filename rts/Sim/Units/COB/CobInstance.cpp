@@ -184,9 +184,9 @@ void CCobInstance::Killed()
 }
 
 
-void CCobInstance::SetDirection(int heading)
+void CCobInstance::SetDirection(float heading)
 {
-	Call(COBFN_SetDirection, heading);
+	Call(COBFN_SetDirection, short(heading * RAD2TAANG));
 }
 
 
