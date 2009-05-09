@@ -243,9 +243,12 @@ void DataDirLocater::LocateDataDirs()
 
 #ifdef WIN32
 	TCHAR currentDir[MAX_PATH];
-	::GetCurrentDirectory(sizeof(currentDir) - 1, currentDir);
-	std::string curPath = currentDir;
-	AddDirs(std::string(currentDir));
+	::GetModuleFileName(0, currentDir, sizeof(currentDir) - 1);
+	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
+	_splitpath(currentDir, drive, dir, file, ext);
+	std::ostringstream complete;
+	complete << drive << dir;
+	AddDirs(complete.str());
 
 	// my documents
 	TCHAR strPath[MAX_PATH];
