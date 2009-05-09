@@ -2961,7 +2961,7 @@ bool CGame::Draw() {
 
 			char buf[128];
 			int count;
-			const std::vector<int>& indices = playerRoster.GetIndices(&count);
+			const std::vector<int>& indices = playerRoster.GetIndices(&count, true);
 
 			for (int a = 0; a < count; ++a) {
 				const CPlayer* p = playerHandler->Player(indices[a]);
@@ -2980,7 +2980,7 @@ bool CGame::Draw() {
 					else
 						prefix = "E|";	//no alliance at all
 				}
-				if(p->ping != 0xFFFF) {
+				if(p->ping != PATHING_FLAG) {
 					SNPRINTF(buf, sizeof(buf), "%c%i:%s %s %3.0f%% Ping:%d ms",
 							(gu->spectating && !p->spectator && (gu->myTeam == p->team)) ? '-' : ' ',
 							p->team, prefix.c_str(), p->name.c_str(), p->cpuUsage * 100.0f,

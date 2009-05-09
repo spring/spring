@@ -20,7 +20,7 @@ class PlayerRoster {
 
 		PlayerRoster();
 
-		const std::vector<int>& GetIndices(int* count) const;
+		const std::vector<int>& GetIndices(int* count, bool pathinfo = false) const;
 
 		bool SetSortTypeByName(const std::string& type);
 		bool SetSortTypeByCode(SortType type);

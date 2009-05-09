@@ -512,7 +512,8 @@ void CGameServer::Update()
 		else {
 			for (unsigned a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::CONNECTED) { // send pathing status
-					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, 0xFFFF));
+					if(players[a].cpuUsage > 0)
+						Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, PATHING_FLAG));
 				}
 				else if(players[a].myState == GameParticipant::INGAME) { // pathing done
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0));

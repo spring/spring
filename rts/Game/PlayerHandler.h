@@ -10,6 +10,8 @@
 #include "creg/creg_cond.h"
 #include "Player.h"
 
+#define PATHING_FLAG 0xFFFF
+
 class CGameSetup;
 
 
