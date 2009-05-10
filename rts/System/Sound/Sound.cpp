@@ -337,11 +337,12 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	const float3 posScaled = myPos * posScale;
 	alListener3f(AL_POSITION, posScaled.x, posScaled.y, posScaled.z);
 
-	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
-	const float3 velocityAvg = (velocity+prevVelocity)/2;
-	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y , velocityAvg.z);
-	prevVelocity = velocity;
+	//TODO: reactivate when it does nto go crazy on camera "teleportation" or fast movement,
+	// like when clicked on minimap
+	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
+	//const float3 velocityAvg = (velocity+prevVelocity)/2;
+	//alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y , velocityAvg.z);
+	//prevVelocity = velocity;
 
 	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
