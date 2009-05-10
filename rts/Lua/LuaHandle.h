@@ -41,9 +41,6 @@ struct lua_State;
 class CLogSubsystem;
 
 
-typedef void (*LuaCobCallback)(int retCode, void* unitID, void* data);
-
-
 class CLuaHandle : public CEventClient
 {
 	public:
@@ -77,8 +74,6 @@ class CLuaHandle : public CEventClient
 		int  GetSelectTeam()   const { return selectTeam; }
 
 		bool WantsToDie() const { return killMe; }
-
-		const LuaCobCallback  GetCallback() { return cobCallback; }
 
 //FIXME		LuaArrays& GetArrays() { return arrays; }
 		LuaShaders& GetShaders() { return shaders; }
@@ -211,8 +206,7 @@ class CLuaHandle : public CEventClient
 		}
 
 	protected:
-		CLuaHandle(const string& name, int order,
-		           bool userMode, LuaCobCallback callback);
+		CLuaHandle(const string& name, int order, bool userMode);
 		virtual ~CLuaHandle();
 
 		void KillLua();
@@ -255,8 +249,6 @@ class CLuaHandle : public CEventClient
 		int  readAllyTeam;
 		int  selectTeam;
 
-		LuaCobCallback cobCallback;
-
 //FIXME		LuaArrays arrays;
 		LuaShaders shaders;
 		LuaTextures textures;
@@ -266,15 +258,6 @@ class CLuaHandle : public CEventClient
 		CLuaDisplayLists displayLists;
 
 		vector<bool> watchWeapons; // for the Explosion call-in
-
-		struct CobCallbackData {
-			CobCallbackData(int rc, int uid, float fd)
-			: retCode(rc), unitID(uid), floatData(fd) {}
-			int retCode;
-			int unitID;
-			float floatData;
-		};
-		vector<CobCallbackData> cobCallbackEntries;
 
 		int callinErrors;
 
@@ -306,9 +289,6 @@ class CLuaHandle : public CEventClient
 
 		static const bool& GetActiveFullRead()     { return activeFullRead; }
 		static const int&  GetActiveReadAllyTeam() { return activeReadAllyTeam; }
-		static const LuaCobCallback GetActiveCallback() {
-			return activeHandle->cobCallback;
-		}
 //FIXME		static LuaArrays&   GetActiveArrays()   { return activeHandle->arrays; }
 		static LuaShaders&  GetActiveShaders()  { return activeHandle->shaders; }
 		static LuaTextures& GetActiveTextures() { return activeHandle->textures; }

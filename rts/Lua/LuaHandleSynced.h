@@ -44,9 +44,7 @@ class CLuaHandleSynced : public CLuaHandle
 		int UnsyncedXCall(lua_State* srcState, const string& funcName);
 
 	protected:
-		CLuaHandleSynced(const string& name, int order,
-		                 LuaCobCallback callback,
-		                 const string& msgPrefix);
+		CLuaHandleSynced(const string& name, int order, const string& msgPrefix);
 		virtual ~CLuaHandleSynced();
 		void Init(const string& syncedFile,
 		          const string& unsyncedFile,
@@ -78,9 +76,6 @@ class CLuaHandleSynced : public CLuaHandle
 		bool allowUnsafeChanges;
 		bool teamsLocked; // disables CallAsTeam()
 		map<string, string> textCommands; // name, help
-
-	private:
-		void SendCallbacks();
 
 	private: // call-outs
 		static int SyncedRandom(lua_State* L);

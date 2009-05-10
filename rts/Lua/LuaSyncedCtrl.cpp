@@ -180,7 +180,6 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
 
 	REGISTER_LUA_CFUNC(CallCOBScript);
-	REGISTER_LUA_CFUNC(CallCOBScriptCB);
 	REGISTER_LUA_CFUNC(GetCOBScriptID);
 	//FIXME: REGISTER_LUA_CFUNC(GetUnitCOBValue);
 	//FIXME: REGISTER_LUA_CFUNC(SetUnitCOBValue);
@@ -704,61 +703,6 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to CallCOBScript()");
-		retval = 0;
-	}
-
-	lua_settop(L, 0); // FIXME - ok?
-	lua_pushnumber(L, retval);
-	for (int i = 0; i < retParams; i++) {
-		lua_pushnumber(L, cobArgs[i]);
-	}
-	return 1 + retParams;
-}
-
-
-int LuaSyncedCtrl::CallCOBScriptCB(lua_State* L)
-{
-//FIXME?	CheckAllowGameChanges(L);
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 1) || // unitID
-	    !lua_isnumber(L, 3) || // number of returned parameters
-	    !lua_isnumber(L, 4)) { // callback data (float)
-		luaL_error(L, "Incorrect arguments to CallCOBScriptCB()");
-	}
-
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	if (unit->script == NULL) {
-		return 0;
-	}
-
-	// collect the arguments
-	vector<int> cobArgs;
-	ParseCobArgs(L, 5, args, cobArgs);
-	const int retParams = min(lua_toint(L, 3),
-	                          min(MAX_LUA_COB_ARGS, (int)cobArgs.size()));
-
-	// callback data
-	float cbData = lua_tofloat(L, 4);
-
-	int retval;
-	if (lua_israwnumber(L, 2)) {
-		const int funcId = lua_toint(L, 2);
-		retval = unit->script->RawCall(funcId, cobArgs,
-		                            CLuaHandle::GetActiveCallback(),
-		                            (void*) unit->id, (void*) *((int*)&cbData));
-	}
-	else if (lua_israwstring(L, 2)) {
-		const string funcName = lua_tostring(L, 2);
-		retval = unit->script->Call(funcName, cobArgs,
-		                         CLuaHandle::GetActiveCallback(),
-			                       (void*) unit->id, (void*) *((int*)&cbData));
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to CallCOBScriptCB()");
 		retval = 0;
 	}
 
