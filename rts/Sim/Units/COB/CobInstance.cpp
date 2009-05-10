@@ -65,7 +65,7 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 }
 
 
-CCobInstance::~CCobInstance(void)
+CCobInstance::~CCobInstance()
 {
 	//Can't delete the thread here because that would confuse the scheduler to no end
 	//Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
@@ -120,6 +120,8 @@ int CCobInstance::GetFunctionId(const std::string& fname) const
 {
 	return script.GetFunctionId(fname);
 }
+
+
 
 
 /******************************************************************************/
@@ -460,6 +462,80 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 		//It has already added itself to the correct scheduler (global for sleep, or local for anim)
 		return 1;
 	}
+}
+
+
+/******************************************************************************/
+
+
+int CCobInstance::Call(const string &fname)
+{
+	vector<int> x;
+	return Call(fname, x, NULL, NULL, NULL);
+}
+
+
+int CCobInstance::Call(const string &fname, vector<int> &args)
+{
+	return Call(fname, args, NULL, NULL, NULL);
+}
+
+
+int CCobInstance::Call(const string &fname, int p1)
+{
+	vector<int> x;
+	x.push_back(p1);
+	return Call(fname, x, NULL, NULL, NULL);
+}
+
+
+int CCobInstance::Call(const string &fname, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+{
+	int fn = GetFunctionId(fname);
+	//TODO: Check that new behaviour of actually calling cb when the function is not defined is right?
+	//      (the callback has always been called [when the function is not defined]
+	//       in the id-based Call()s, but never in the string based calls.)
+	return RealCall(fn, args, cb, p1, p2);
+}
+
+
+int CCobInstance::Call(int id)
+{
+	vector<int> x;
+	return Call(id, x, NULL, NULL, NULL);
+}
+
+
+int CCobInstance::Call(int id, int p1)
+{
+	vector<int> x;
+	x.push_back(p1);
+	return Call(id, x, NULL, NULL, NULL);
+}
+
+
+int CCobInstance::Call(int id, vector<int> &args)
+{
+	return Call(id, args, NULL, NULL, NULL);
+}
+
+
+int CCobInstance::Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+{
+	return RealCall(scriptIndex[id], args, cb, p1, p2);
+}
+
+
+void CCobInstance::RawCall(int fn)
+{
+	vector<int> x;
+	RealCall(fn, x, NULL, NULL, NULL);
+}
+
+
+int CCobInstance::RawCall(int fn, vector<int> &args)
+{
+	return RealCall(fn, args, NULL, NULL, NULL);
 }
 
 

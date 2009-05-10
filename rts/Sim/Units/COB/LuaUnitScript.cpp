@@ -2,6 +2,7 @@
 
 #include "LuaUnitScript.h"
 
+#include "CobInstance.h"
 #include "LogOutput.h"
 #include "LuaInclude.h"
 #include "UnitScriptNames.h"
@@ -151,8 +152,7 @@ end
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces), L(L)
 	, scriptIndex(COBFN_Last + (unit->weapons.size() * COBFN_Weapon_Funcs), LUA_NOREF)
-	, fnKilled(LUA_NOREF), inKilled(false)
-	, fnHitByWeaponId(LUA_NOREF)
+	, inKilled(false)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
 		const string fname = lua_tostring(L, -2);
@@ -223,25 +223,6 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 	if (num >= 0 && num < int(scriptIndex.size())) {
 		scriptIndex[num] = ref;
 	}
-
-	// Remember some functionIDs for some hacks...
-	if (fname == "Killed") {
-		fnKilled = ref;
-	}
-	else if (fname == "HitByWeaponId") {
-		fnHitByWeaponId = ref;
-	}
-}
-
-
-int CLuaUnitScript::GetFunctionId(const string& fname) const
-{
-	map<string, int>::const_iterator it = scriptNames.find(fname);
-
-	if (it != scriptNames.end()) {
-		return it->second;
-	}
-	return -1;
 }
 
 
@@ -270,6 +251,7 @@ void CLuaUnitScript::Create()
 
 void CLuaUnitScript::Killed()
 {
+	inKilled = true;
 }
 
 
@@ -385,23 +367,13 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 }
 
 
-int CLuaUnitScript::RealCall(int functionId, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
+void CLuaUnitScript::RawCall(int functionId)
 {
 	if (functionId < 0) {
-		return -1;
-	}
-
-	if (functionId == fnKilled) {
-		inKilled = true;
+		return;
 	}
 
 	// TODO: call into Lua function stored in environ/registry?
-
-	if (functionId == fnHitByWeaponId) {
-		//unit->weaponHitMod = lua_tofloat(L, ...);
-	}
-
-	return 0;
 }
 
 

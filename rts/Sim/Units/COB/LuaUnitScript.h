@@ -21,15 +21,9 @@ private:
 	std::map<std::string, int> scriptNames;
 
 	// used to enforce SetDeathScriptFinished can only be used inside Killed
-	int fnKilled;
 	bool inKilled;
 
-	// used to handle return value specially; sets it in unit->weaponHitMod
-	// TODO: refactor entire unit script system so this hack isn't needed
-	int fnHitByWeaponId;
-
 protected:
-	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 	virtual void ShowScriptError(const std::string& msg);
 	virtual void ShowScriptWarning(const std::string& msg);
 
@@ -41,9 +35,8 @@ protected:
 	void UpdateCallIn(const std::string& fname, int ref);
 
 public:
-	virtual int GetFunctionId(const std::string& fname) const;
-
 	// callins, called throughout sim
+	virtual void RawCall(int functionId);
 	virtual void Create();
 	virtual void Killed();
 	virtual void SetDirection(float heading);

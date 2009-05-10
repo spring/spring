@@ -13,22 +13,8 @@
 #include "UnitScriptNames.h"
 
 
-#define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
-#define UNPACKX(xz) ((signed short)((boost::uint32_t)(xz) >> 16))
-#define UNPACKZ(xz) ((signed short)((boost::uint32_t)(xz) & 0xffff))
-
-
-static const int COBSCALE = 65536;
-static const int COBSCALEHALF = COBSCALE / 2;
-static const float CORDDIV   = 1.0f / COBSCALE;
-static const float RAD2TAANG = COBSCALEHALF / PI;
-static const float TAANG2RAD = PI / COBSCALEHALF;
-
-
 class CUnit;
 class CPlasmaRepulser;
-
-typedef void (*CBCobThreadFinish) (int retCode, void *p1, void *p2);
 
 
 class CUnitScript : public CObject
@@ -102,8 +88,6 @@ protected:
 	void RemoveAnim(AnimType anim, int piece, int axis);
 	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel, bool interpolated = false);
 
-	// these _must_ be implemented by any type of UnitScript
-	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2) = 0;
 	virtual void ShowScriptError(const std::string& msg) = 0;
 	virtual void ShowScriptWarning(const std::string& msg) = 0;
 
@@ -166,31 +150,8 @@ public:
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
-	// first one takes COBFN_* constant as argument
+	// takes COBFN_* constant as argument
 	bool HasFunction(int id) const                   { return scriptIndex[id] >= 0; }
-	bool HasFunction(const std::string& fname) const { return GetFunctionId(fname) >= 0; }
-
-	// returns function number as expected by RawCall, but not Call
-	// returns -1 if the function does not exist
-	virtual int GetFunctionId(const std::string& fname) const = 0;
-
-	// call overloads, they all call RealCall
-	int Call(const std::string &fname);
-	int Call(const std::string &fname, int p1);
-	int Call(const std::string &fname, std::vector<int> &args);
-	int Call(const std::string &fname, CBCobThreadFinish cb, void *p1, void *p2);
-	int Call(const std::string &fname, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
-protected:
-	// these take a COBFN_* constant as argument, which is then translated to the actual function number
-	int Call(int id);
-	int Call(int id, std::vector<int> &args);
-	int Call(int id, int p1);
-	int Call(int id, CBCobThreadFinish cb, void *p1, void *p2);
-	int Call(int id, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
-public:
-	// these take the raw function number
-	int RawCall(int fn, std::vector<int> &args);
-	int RawCall(int fn, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 
 	int Tick(int deltaTime);
 
@@ -225,6 +186,7 @@ public:
 	}
 
 	// callins, called throughout sim
+	virtual void RawCall(int functionId) = 0;
 	virtual void Create() = 0;
 	// Killed must cause unit->deathScriptFinished and unit->delayedWreckLevel to be set!
 	virtual void Killed() = 0;
@@ -257,6 +219,7 @@ public:
 
 	// inlined callins, un-inline and make virtual when different behaviour is
 	// desired between the different unit script implementations (COB, Lua).
+    void Call(int id)    { RawCall(scriptIndex[id]); }
 	void StartMoving()   { Call(COBFN_StartMoving); }
 	void StopMoving()    { Call(COBFN_StopMoving); }
 	void StartUnload()   { Call(COBFN_StartUnload); }
