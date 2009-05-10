@@ -55,8 +55,7 @@ int CLuaHandle::activeReadAllyTeam = CEventClient::NoAccessTeam;
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaHandle::CLuaHandle(const string& _name, int _order,
-                       bool _userMode, LuaCobCallback callback)
+CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 : CEventClient(_name, _order, false), // FIXME
   userMode   (_userMode),
   killMe     (false),
@@ -66,7 +65,6 @@ CLuaHandle::CLuaHandle(const string& _name, int _order,
 #else
   printTracebacks(false),
 #endif
-  cobCallback(callback),
   callinErrors(0)
 {
 	L = lua_open();
