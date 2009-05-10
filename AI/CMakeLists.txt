@@ -5,7 +5,6 @@ add_definitions(-DBUILDING_AI)
 include_directories(
 	${CMAKE_SOURCE_DIR}/rts
 	${CMAKE_SOURCE_DIR}/rts/System
-	${CMAKE_SOURCE_DIR}/rts/ExternalAI
 	${CMAKE_SOURCE_DIR}/rts/ExternalAI/Interface
 	Wrappers
 	${SDL_INCLUDE_DIR})

@@ -24,7 +24,7 @@ typedef unsigned short ushort;
 
 // Spring Engine
 
-#include "IGlobalAI.h" // Interface spring uses to make AI callouts
+#include "ExternalAI/IGlobalAI.h" // Interface spring uses to make AI callouts
 #include "ExternalAI/IAICallback.h" // AI Callback
 #include "ExternalAI/IGlobalAICallback.h" //GlobalAI callback
 #include "ExternalAI/IAICheats.h" // Cheat Interface
@@ -39,11 +39,4 @@ typedef unsigned short ushort;
 #include "float3.h" // map positions
 #include "aibase.h" // Cheat Interface
 #include "CommandQueue.h"
-#include "IAICallback.h" // AI Callback
-#include "IAICheats.h" // Cheat Interface
-#include "IGlobalAICallback.h" //GlobalAI callback
-#include "IGlobalAI.h" // IGlobalAI
-#include "GlobalStuff.h" // Common definitions in spring
-#include "MoveInfo.h"
-#include "FeatureDef.h" // Needed for FeatureDef
 */
