@@ -160,6 +160,7 @@ if (BUILD_C_AIINTERFACE AND EXISTS ${CppTestAI_SRC})
 			DESTINATION "${CppTestAI_DATA_DIR}")
 
 	aux_source_directory(${CppTestAI_SRC} cpptestai)
+	include_directories(BEFORE ${CPPWRAPPER_GENERATED_SRC_DIR})
 	add_library(${CppTestAI_TARGET} MODULE ${cpptestai} ${cutilsenv})
 	target_link_libraries(${CppTestAI_TARGET} cppaiwrapper)
 	set_target_properties(${CppTestAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
