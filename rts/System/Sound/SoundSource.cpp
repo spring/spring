@@ -92,7 +92,7 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	{
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
-		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * 0.04f);
+		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * 0.4f);
 	}
 	alSourcePlay(id);
 
