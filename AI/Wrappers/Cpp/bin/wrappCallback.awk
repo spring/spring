@@ -376,6 +376,12 @@ function printClass(ancestors_c, clsName_c) {
 		print("\t" "static " clsNameExternal_c "* GetInstance(" ctorParams ");") >> out_h_c;
 		print(myNameSpace "::" clsNameExternal_c "* " myNameSpace "::" clsNameExternal_c "::GetInstance(" ctorParams ") {") >> out_s_c;
 		print("") >> out_s_c;
+		if (clsNameExternal_c == "Unit") {
+			print("\t\t" "if (unitId == 0) {") >> out_s_c;
+			print("\t\t\t" "return NULL;") >> out_s_c;
+			print("\t\t" "}") >> out_s_c;
+		}
+		print("") >> out_s_c;
 		print("\t" clsNameExternal_c "* _ret = NULL;") >> out_s_c;
 		if (fullNameAvailable_c == "") {
 			print("\t" "_ret = new " clsNameExternal_c "(" ctorParamsNoTypes ");") >> out_s_c;
@@ -696,8 +702,11 @@ function printMember(out_h_m, out_s_m, clsNameExternal_m, fullName_m, additional
 		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
 		arrayType = params; # getArrayType
 		sub(/^.*\, /, "", arrayType); # remove pre array type
-		sub(/ [^ \t]+\[\] .*$/, "", arrayType); # remove post array type
+		usingBrackets = sub(/ [^ \t]+\[\] .*$/, "", arrayType); # remove post array type ([])
 		sub(/[ \t][^ \t]+$/, "", arrayType); # remove param name
+		if (!usingBrackets && match(arrayType, /SAIFloat3\*/)) {
+			sub(/\*$/, "", arrayType); # remove array type (*) if it is SAIFloat3
+		}
 		referenceType = arrayType;
 		if (match(fullNameArraySize, /0ARRAY1SIZE1/)) {
 			# we want to reference objects, of a certain class as arrayType
@@ -819,13 +828,18 @@ function printMember(out_h_m, out_s_m, clsNameExternal_m, fullName_m, additional
 	}
 
 
+	memNameExternal_m = memName;
+	if (capitalize(memName) != clsNameExternal_m) {
+		memNameExternal_m = capitalize(memName);
+	}
+
 	if (!isInterface_m) {
 		print("public:") >> out_h_m;
 	}
 	printFunctionComment_Common(out_h_m, funcDocComment, fullName_m, indent_m);
-	print(indent_m mod_m retTypeInterface " " memName "(" params ");") >> out_h_m;
+	print(indent_m mod_m retTypeInterface " " memNameExternal_m "(" params ");") >> out_h_m;
 	if (!isInterface_m) {
-		print(retTypeInterfaceSrc " " myNameSpace "::" clsNameExternal_m "::" memName "(" params ") {") >> out_s_m;
+		print(retTypeInterfaceSrc " " myNameSpace "::" clsNameExternal_m "::" memNameExternal_m "(" params ") {") >> out_s_m;
 		condRet = isVoid_m ? "" : "_ret = ";
 		condInnerParamsComma = (innerParams == "") ? "" : ", ";
 		indent_m = indent_m "\t";
