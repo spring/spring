@@ -699,7 +699,7 @@ void CUnit::SlowUpdate()
 	repairAmount=0.0f;
 
 	if (paralyzeDamage > 0) {
-		paralyzeDamage -= maxHealth * (16.0f / 30.0f / 40.0f);
+		paralyzeDamage -= maxHealth * (16.0f / GAME_SPEED / 40.0f);
 		if (paralyzeDamage < 0) {
 			paralyzeDamage = 0;
 		}
@@ -1043,19 +1043,16 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		experienceMod *= 0.1f; // reduced experience
 		if (damage > 0.0f) {
 			const float maxParaDmg = health + (maxHealth * 0.025f * (float)paralyzeTime);
-			if (paralyzeDamage >= maxParaDmg) {
+			if (paralyzeDamage >= maxParaDmg || stunned) {
 				experienceMod = 0.0f;
 			}
-			else {
-				if (stunned) {
-					experienceMod = 0.0f;
-				}
-				paralyzeDamage += damage;
-				if (paralyzeDamage > health) {
-					stunned = true;
-				}
-				paralyzeDamage = std::min(paralyzeDamage, maxParaDmg);
+
+			paralyzeDamage += damage;
+			if (paralyzeDamage > health) {
+				stunned = true;
 			}
+			paralyzeDamage = std::min(paralyzeDamage, maxParaDmg);
+
 		}
 		else { // paralyzation healing
 			if (paralyzeDamage <= 0.0f) {
