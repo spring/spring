@@ -5,8 +5,6 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "COB/CobFile.h"
-#include "COB/CobInstance.h"
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
 #include "creg/STL_List.h"

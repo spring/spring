@@ -8,10 +8,9 @@
 #include "StdAfx.h"
 #include <typeinfo>
 #include "ExtractorBuilding.h"
+#include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Map/ReadMap.h"
-#include "Sim/Units/COB/CobInstance.h"
-#include "Sim/Units/COB/CobFile.h"
 #include "LogOutput.h"
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"

@@ -16,7 +16,6 @@
 	#include "Sim/Units/UnitHandler.h"
 	#include "Sim/Weapons/Weapon.h"
 	#include "Sim/Units/COB/CobInstance.h"
-	#include "Sim/Units/COB/CobFile.h"
 	#include "UI/MouseHandler.h"
 	#include "CameraHandler.h"
 	#include "Camera.h"

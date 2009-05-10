@@ -14,8 +14,6 @@
 #include "UnitTypes/Factory.h"
 #include "UnitTypes/TransportUnit.h"
 #include "COB/CobEngine.h"
-#include "COB/CobFile.h"
-#include "COB/CobInstance.h"
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -72,7 +70,7 @@ CUnitLoader::~CUnitLoader()
 	CGroundMoveType::DeleteLineTable();
 }
 
-CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
+CUnit* CUnitLoader::LoadUnit(const std::string& name, float3 pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
 	GML_RECMUTEX_LOCK(sel); // LoadUnit - for anti deadlock purposes.
@@ -87,7 +85,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		throw content_error("Couldn't find unittype " +  name);
 	}
 
-	string type = ud->type;
+	std::string type = ud->type;
 
 	// clamp to map
 	if (pos.x < 0)
