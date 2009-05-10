@@ -4129,9 +4129,9 @@ static void StencilDrawSelectBox(const float3& pos0, const float3& pos1,
                                  bool invColorSelect)
 {
 	BoxData boxData;
-	boxData.mins = float3(std::min(pos0.x, pos1.x), readmap->minheight - 250.0f,
+	boxData.mins = float3(std::min(pos0.x, pos1.x), readmap->currMinHeight - 250.0f,
 	                       std::min(pos0.z, pos1.z));
-	boxData.maxs = float3(std::max(pos0.x, pos1.x), readmap->maxheight + 10000.0f,
+	boxData.maxs = float3(std::max(pos0.x, pos1.x), readmap->currMaxHeight + 10000.0f,
 	                      std::max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
@@ -4204,9 +4204,9 @@ void CGuiHandler::DrawSelectBox(const float3& pos0, const float3& pos1, float3& 
 		return;
 	}
 
-	const float3 mins(std::min(pos0.x, pos1.x), readmap->minheight - 250.0f,
+	const float3 mins(std::min(pos0.x, pos1.x), readmap->currMinHeight - 250.0f,
 	                  std::min(pos0.z, pos1.z));
-	const float3 maxs(std::max(pos0.x, pos1.x), readmap->maxheight + 10000.0f,
+	const float3 maxs(std::max(pos0.x, pos1.x), readmap->currMaxHeight + 10000.0f,
 	                  std::max(pos0.z, pos1.z));
 
 	glDisable(GL_TEXTURE_2D);
@@ -4293,8 +4293,8 @@ void CGuiHandler::DrawSelectCircle(const float3& pos, float radius,
 	CylinderData cylData;
 	cylData.xc = pos.x;
 	cylData.zc = pos.z;
-	cylData.yp = readmap->maxheight + 10000.0f;
-	cylData.yn = readmap->minheight - 250.0f;
+	cylData.yp = readmap->currMaxHeight + 10000.0f;
+	cylData.yn = readmap->currMinHeight - 250.0f;
 	cylData.radius = radius;
 	cylData.divs = 128;
 
