@@ -48,6 +48,7 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/COB/LuaUnitScript.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
@@ -682,8 +683,9 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->script == NULL) {
-		return 0;
+	CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+	if (cob == NULL) {
+		luaL_error(L, "CallCOBScript(): unit is not running a COB script");
 	}
 
 	// collect the arguments
@@ -695,11 +697,11 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	int retval;
 	if (lua_israwnumber(L, 2)) {
 		const int funcId = lua_toint(L, 2);
-		retval = unit->script->RawCall(funcId, cobArgs);
+		retval = cob->RawCall(funcId, cobArgs);
 	}
 	else if (lua_israwstring(L, 2)) {
 		const string funcName = lua_tostring(L, 2);
-		retval = unit->script->Call(funcName, cobArgs);
+		retval = cob->Call(funcName, cobArgs);
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to CallCOBScript()");
@@ -726,13 +728,14 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->script == NULL) {
-		return 0;
+	CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+	if (cob == NULL) {
+		luaL_error(L, "GetCOBScriptID(): unit is not running a COB script");
 	}
 
 	const string funcName = lua_tostring(L, 2);
 
-	const int funcID = unit->script->GetFunctionId(funcName);
+	const int funcID = cob->GetFunctionId(funcName);
 	if (funcID >= 0) {
 		lua_pushnumber(L, funcID);
 		return 1;

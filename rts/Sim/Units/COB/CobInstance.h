@@ -1,13 +1,28 @@
 #ifndef __COB_INSTANCE_H__
 #define __COB_INSTANCE_H__
 
-#include "Sim/Misc/GlobalConstants.h"
 #include "UnitScript.h"
+
+
+#define PACKXZ(x,z) (((int)(x) << 16)+((int)(z) & 0xffff))
+#define UNPACKX(xz) ((signed short)((boost::uint32_t)(xz) >> 16))
+#define UNPACKZ(xz) ((signed short)((boost::uint32_t)(xz) & 0xffff))
+
+
+static const int COBSCALE = 65536;
+static const int COBSCALEHALF = COBSCALE / 2;
+static const float CORDDIV   = 1.0f / COBSCALE;
+static const float RAD2TAANG = COBSCALEHALF / PI;
+static const float TAANG2RAD = PI / COBSCALEHALF;
 
 
 class CCobThread;
 class CCobFile;
 class CCobInstance;
+
+
+typedef void (*CBCobThreadFinish) (int retCode, void *p1, void *p2);
+
 
 class CCobInstance : public CUnitScript
 {
@@ -20,7 +35,8 @@ protected:
 
 	void MapScriptToModelPieces(LocalModel* lmodel);
 
-	virtual int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+
 	virtual void ShowScriptError(const std::string& msg);
 	virtual void ShowScriptWarning(const std::string& msg);
 
@@ -32,9 +48,24 @@ public:
 
 public:
 	CCobInstance(CCobFile &script, CUnit *unit);
-	~CCobInstance();
+	virtual ~CCobInstance();
 
-	virtual int GetFunctionId(const std::string& fname) const;
+	// call overloads, they all call RealCall
+	int Call(const std::string &fname);
+	int Call(const std::string &fname, int p1);
+	int Call(const std::string &fname, std::vector<int> &args);
+	int Call(const std::string &fname, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	// these take a COBFN_* constant as argument, which is then translated to the actual function number
+	int Call(int id);
+	int Call(int id, std::vector<int> &args);
+	int Call(int id, int p1);
+	int Call(int id, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
+	// these take the raw function number
+	int RawCall(int fn, std::vector<int> &args);
+
+	// returns function number as expected by RawCall, but not Call
+	// returns -1 if the function does not exist
+	int GetFunctionId(const std::string& fname) const;
 
 	// used by CCobThread
 	void Signal(int signal);
@@ -67,6 +98,7 @@ public:
 	}
 
 	// callins, called throughout sim
+	virtual void RawCall(int functionId);
 	virtual void Create();
 	virtual void Killed();
 	virtual void SetDirection(float heading);
