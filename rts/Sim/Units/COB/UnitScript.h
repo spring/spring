@@ -145,13 +145,13 @@ public:
 	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex, const std::vector<LocalModelPiece*>& pieces);
 	virtual ~CUnitScript();
 
-	bool IsBusy() const        { return busy; }
+	bool IsBusy() const { return busy; }
 
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
 
 	// takes COBFN_* constant as argument
-	bool HasFunction(int id) const                   { return scriptIndex[id] >= 0; }
+	bool HasFunction(int id) const { return scriptIndex[id] >= 0; }
 
 	int Tick(int deltaTime);
 
@@ -170,7 +170,7 @@ public:
 	int AddTurnListener(int piece, int axis, IAnimListener* listener);
 	int AddMoveListener(int piece, int axis, IAnimListener* listener);
 
-	// misc, used by CCobThread
+	// misc, used by CCobThread and callouts for Lua unitscripts
 	void SetVisibility(int piece, bool visible);
 	void EmitSfx(int type, int piece);
 	void AttachUnit(int piece, int unit);
