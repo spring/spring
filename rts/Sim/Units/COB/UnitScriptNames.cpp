@@ -1,7 +1,6 @@
 /* Author: Tobi Vollebregt */
 
 #include "UnitScriptNames.h"
-#include "CobFile.h" // COBFN_* constants
 #include "LogOutput.h"
 
 

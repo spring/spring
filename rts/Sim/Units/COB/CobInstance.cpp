@@ -148,7 +148,7 @@ void CCobInstance::Create()
 	}
 
 	Call(COBFN_Create);
-	Call("SetMaxReloadTime", relMax);
+	Call(COBFN_SetMaxReloadTime, relMax);
 }
 
 
