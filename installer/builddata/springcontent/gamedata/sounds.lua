@@ -16,6 +16,7 @@ local Sounds = {
 			--- respect where the point was set, but don't attuenuate in distace
 			file = "sounds/beep6.wav",
 			rolloff = 0,
+			dopplerscale = 0,
 		},
 	},
 }
