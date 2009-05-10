@@ -316,7 +316,7 @@ void CSelectedUnitsAI::MakeFrontMove(Command* c,int player)
 	frontLength=centerPos.distance(rightPos)*2;
 	addSpace = 0;
 	if (frontLength > sumLength*2*8) {
-		addSpace = (frontLength - sumLength*2*8)/selectedUnits.netSelected[player].size();
+		addSpace = (frontLength - sumLength*2*8)/(selectedUnits.netSelected[player].size() - 1);
 	}
 	sideDir=centerPos-rightPos;
 	sideDir.y=0;

@@ -341,6 +341,11 @@ static size_t java_createAIClassPath(const char* shortName, const char* version,
 	char**       jarDirs = (char**) calloc(jarDirs_sizeMax, sizeof(char*));
 	size_t       jarDirs_size = 0;
 
+	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/SkirmishAI/
+	// this can be usefull for AI devs while testing,
+	// if they do not want to put everything into a jar all the time
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "SkirmishAI");
+
 	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/
 	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, JAVA_LIBS_DIR);
 

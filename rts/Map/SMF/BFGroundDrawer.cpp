@@ -192,7 +192,7 @@ inline bool CBFGroundDrawer::BigTexSquareRowVisible(int bty) {
 	const int maxx =      mapWidth;
 	const int minz = bty * bigTexH;
 	const int maxz = minz + bigTexH;
-	const float miny = readmap->minheight;
+	const float miny = readmap->currMinHeight;
 	const float maxy = fabs(cam2->pos.y); // ??
 
 	const float3 mins(minx, miny, minz);
@@ -214,22 +214,28 @@ inline void CBFGroundDrawer::FindRange(int &xs, int &xe, std::vector<fline> &lef
 	std::vector<fline>::iterator fli;
 
 	for (fli = left.begin(); fli != left.end(); fli++) {
-		float xtf = fli->base / SQUARE_SIZE + fli->dir * y;
-		xt0 = ((int)xtf) / lod * lod - lod;
-		xt1 = ((int)(xtf + fli->dir * lod)) / lod * lod - lod;
+		float xtf = fli->base + fli->dir * y;
+		xt0 = (int)xtf;
+		xt1 = (int)(xtf + fli->dir * lod);
 
 		if (xt0 > xt1)
 			xt0 = xt1;
+
+		xt0 = xt0 / lod * lod - lod;
+
 		if (xt0 > xs)
 			xs = xt0;
 	}
 	for (fli = right.begin(); fli != right.end(); fli++) {
-		float xtf = fli->base / SQUARE_SIZE + fli->dir * y;
-		xt0 = ((int)xtf) / lod * lod + lod;
-		xt1 = ((int)(xtf + fli->dir * lod)) / lod * lod + lod;
+		float xtf = fli->base + fli->dir * y;
+		xt0 = (int)xtf;
+		xt1 = (int)(xtf + fli->dir * lod);
 
 		if (xt0 < xt1)
 			xt0 = xt1;
+
+		xt0 = xt0 / lod * lod + lod;
+
 		if (xt0 < xe)
 			xe = xt0;
 	}
@@ -256,7 +262,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 	//! only process the necessary big squares in the x direction
 	int bigSquareSizeY = bty * bigSquareSize;
 	for (fli = left.begin(); fli != left.end(); fli++) {
-		x0 = fli->base / SQUARE_SIZE + fli->dir * bigSquareSizeY;
+		x0 = fli->base + fli->dir * bigSquareSizeY;
 		x1 = x0 + fli->dir * bigSquareSize;
 
 		if (x0 > x1)
@@ -268,7 +274,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 			sx = (int) x0;
 	}
 	for (fli = right.begin(); fli != right.end(); fli++) {
-		x0 = fli->base / SQUARE_SIZE + fli->dir * bigSquareSizeY + bigSquareSize;
+		x0 = fli->base + fli->dir * bigSquareSizeY + bigSquareSize;
 		x1 = x0 + fli->dir * bigSquareSize;
 
 		if (x0 < x1)
@@ -1347,12 +1353,12 @@ void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
 		float3 colpoint;           // a point on the collision line
 
 		if (side.y > 0)
-			colpoint = cam2->pos - c * ((cam2->pos.y - (readmap->minheight - 100)) / c.y);
+			colpoint = cam2->pos - c * ((cam2->pos.y - (readmap->currMinHeight - 100)) / c.y);
 		else
-			colpoint = cam2->pos - c * ((cam2->pos.y - (readmap->maxheight +  30)) / c.y);
+			colpoint = cam2->pos - c * ((cam2->pos.y - (readmap->currMaxHeight +  30)) / c.y);
 
 		// get intersection between colpoint and z axis
-		temp.base = colpoint.x - colpoint.z * temp.dir;
+		temp.base = (colpoint.x - colpoint.z * temp.dir) / SQUARE_SIZE;
 
 		if (b.z > 0) {
 			left.push_back(temp);

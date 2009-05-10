@@ -55,20 +55,7 @@ tgz="spring_${branch}_src.tar.gz"
 # This is the list of files/directories that go in the source package.
 # (directories are included recursively)
 include=" \
- $dir/AI/CMakeLists.txt \
- $dir/AI/Interfaces/CMakeLists.txt \
- $dir/AI/Interfaces/C/ \
- $dir/AI/Interfaces/Java/ \
- $dir/AI/Wrappers/
- $dir/AI/Skirmish/CMakeLists.txt \
- $dir/AI/Skirmish/AAI/ \
- $dir/AI/Skirmish/KAIK/ \
- $dir/AI/Skirmish/RAI/ \
- $dir/AI/Skirmish/NTai/ \
- $dir/AI/Skirmish/NullAI/ \
- $dir/AI/Skirmish/NullLegacyCppAI/ \
- $dir/AI/Skirmish/NullJavaAI/ \
- $dir/AI/Skirmish/NullOOJavaAI/ \
+ $dir/AI/ \
  $dir/Documentation/ \
  $dir/Doxyfile \
  $dir/game/ \
@@ -84,7 +71,7 @@ include=" \
 
 # On linux, win32 executables are useless.
 # TASClient is windows only.
-exclude_from_all="$dir/game/.gitignore"
+exclude_from_all=""
 linux_exclude="${exclude_from_all} $dir/installer/pkzip.exe"
 linux_include=""
 windows_exclude="${exclude_from_all}"
@@ -98,11 +85,11 @@ git checkout $branch
 cd ..
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
 [ -n "$lzma" ] && echo "Creating .tar.lzma archive ($lzma)" && \
-	tar cfJ "../$lzma" $include $linux_include
+	tar --lzma -c -f "../$lzma" $include $linux_include
 [ -n "$tbz" ] && echo "Creating .tar.bz2 archive ($tbz)" && \
-	tar cfj "../$tbz" $include $linux_include
+	tar -c -j -f "../$tbz" $include $linux_include
 [ -n "$tgz" ] && echo "Creating .tar.gz archive ($tgz)" && \
-	tar cfz "../$tgz" $include $linux_include
+	tar -c -z -f "../$tgz" $include $linux_include
 cd ..
 echo 'Cleaning'
 rm -rf lf

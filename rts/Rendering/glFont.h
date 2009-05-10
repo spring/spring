@@ -34,7 +34,7 @@ public:
 
 	//! The calling of Begin() .. End() is optional,
 	//! but can increase the performance of drawing multiple strings a lot (upto 10x)
-	void Begin(const bool resetColor = true, const bool useColor = true);
+	void Begin(const bool immediate = false);
 	void End();
 
 	void glWorldPrint(const float3 p, const float size, const std::string& str);

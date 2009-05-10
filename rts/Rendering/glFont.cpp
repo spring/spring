@@ -1439,7 +1439,7 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 }
 
 
-void CglFont::Begin(const bool resetColor, const bool useColor)
+void CglFont::Begin(const bool immediate)
 {
 	if (inBeginEnd) {
 		logOutput.Print("FontError: called Begin() multiple times");
@@ -1449,8 +1449,8 @@ void CglFont::Begin(const bool resetColor, const bool useColor)
 
 	autoOutlineColor = true;
 
-	setColor = useColor;
-	if (resetColor) {
+	setColor = !immediate;
+	if (!immediate) {
 		SetColors(); //! default
 	}
 
@@ -1484,7 +1484,7 @@ void CglFont::End()
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (va2.drawIndex() > 0) {
-		if (stripOutlineColors.size()>1) {
+		if (stripOutlineColors.size() > 1) {
 			ColorMap::iterator sci = stripOutlineColors.begin();
 			va2.DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
 		} else {
@@ -1493,7 +1493,7 @@ void CglFont::End()
 		}
 	}
 
-	if (stripTextColors.size()>1) {
+	if (stripTextColors.size() > 1) {
 		ColorMap::iterator sci = stripTextColors.begin();
 		va.DrawArray2dT(GL_QUADS,TextStripCallback,&sci);
 	} else {
@@ -1755,7 +1755,7 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 	//! immediate mode?
 	const bool immediate = !inBeginEnd;
 	if (immediate) {
-		Begin(false,options & (FONT_OUTLINE | FONT_SHADOW));
+		Begin(!(options & (FONT_OUTLINE | FONT_SHADOW)));
 	} else {
 		//! backup text & outline colors
 		oldTextColor = textColor;

@@ -24,7 +24,6 @@ CSound* sound = NULL;
 
 CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateCounter(0)
 {
-	configHandler->NotifyOnChange(this);
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
@@ -36,7 +35,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		configHandler->Delete("SoundVolume");
 	}
 
-	masterVolume = configHandler->Get("snd_volmaster", 60);
+	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
 	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
@@ -105,6 +104,8 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		// Set distance model (sound attenuation)
 		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
 		//alDopplerFactor(1.0);
+
+		alListenerf(AL_GAIN, masterVolume);
 	}
 	
 	SoundBuffer::Initialise();
@@ -118,6 +119,8 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 
 	LoadSoundDefs("gamedata/sounds.lua");
 	LoadSoundDefs("mapdata/sounds.lua");
+
+	configHandler->NotifyOnChange(this);
 }
 
 CSound::~CSound()
@@ -336,11 +339,12 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	const float3 posScaled = myPos * posScale;
 	alListener3f(AL_POSITION, posScaled.x, posScaled.y, posScaled.z);
 
-	//TODO: move somewhere camera related and make accessible for everyone
-	const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
-	const float3 velocityAvg = (velocity+prevVelocity)/2;
-	alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y , velocityAvg.z);
-	prevVelocity = velocity;
+	//TODO: reactivate when it does nto go crazy on camera "teleportation" or fast movement,
+	// like when clicked on minimap
+	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
+	//const float3 velocityAvg = (velocity+prevVelocity)/2;
+	//alListener3f(AL_VELOCITY, velocityAvg.x, velocityAvg.y , velocityAvg.z);
+	//prevVelocity = velocity;
 
 	ALfloat ListenerOri[] = {camdir.x, camdir.y, camdir.z, camup.x, camup.y, camup.z};
 	alListenerfv(AL_ORIENTATION, ListenerOri);
