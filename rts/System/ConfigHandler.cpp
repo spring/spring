@@ -105,7 +105,8 @@ void ConfigHandler::Delete(const std::string& name)
 	else
 	{
 		std::map<std::string, std::string>::iterator pos = data.find(name);
-		data.erase(pos);
+		if (pos != data.end())
+			data.erase(pos);
 	}
 
 	// must be outside above 'if (file)' block because of the lock.
