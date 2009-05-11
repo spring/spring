@@ -221,7 +221,13 @@ class CLuaHandle : public CEventClient
 
 		/// returns stack index of traceback function
 		int SetupTraceback();
+		/// returns error code and sets traceback on error
+		int  RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback);
+		/// returns false and prints message to log on error
 		bool RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex);
+		/// returns error code and sets errormessage on error
+		int  RunCallIn(int inArgs, int outArgs, std::string& errormessage);
+		/// returns false and prints message to log on error
 		bool RunCallIn(const LuaHashString& hs, int inArgs, int outArgs);
 		bool RunCallInUnsynced(const LuaHashString& hs, int inArgs, int outArgs);
 
@@ -315,6 +321,9 @@ class CLuaHandle : public CEventClient
 
 		static bool devMode; // allows real file access
 		static bool modUICtrl; // allows non-user scripts to use UI controls
+
+		// FIXME: because CLuaUnitScript needs to access RunCallIn / activeHandle
+		friend class CLuaUnitScript;
 };
 
 
