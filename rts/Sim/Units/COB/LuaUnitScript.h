@@ -6,12 +6,16 @@
 #include "UnitScript.h"
 
 
+class CLuaHandle;
 struct lua_State;
 
 
 class CLuaUnitScript : public CUnitScript
 {
 private:
+	// remember whether we are running in LuaRules or LuaGaia
+	CLuaHandle* handle;
+
 	// needed to luaL_unref our refs in ~CLuaUnitScript
 	lua_State* L;
 
@@ -33,6 +37,12 @@ protected:
 
 	int UpdateCallIn();
 	void UpdateCallIn(const std::string& fname, int ref);
+
+	void RawPushFunction(int functionId);
+	void PushFunction(int id);
+	bool RunCallIn(int id, int inArgs, int outArgs);
+	std::string GetScriptName(int functionId) const;
+	bool RawRunCallIn(int functionId, int inArgs, int outArgs);
 
 public:
 	// callins, called throughout sim
