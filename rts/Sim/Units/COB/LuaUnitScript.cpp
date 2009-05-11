@@ -354,41 +354,173 @@ void CLuaUnitScript::Killed()
 		unit->deathScriptFinished = true;
 		unit->delayedWreckLevel = lua_toint(L, -1);
 	}
+
+	lua_pop(L, 1);
 }
 
 
 void CLuaUnitScript::SetDirection(float heading)
 {
+	const int fn = COBFN_SetDirection;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, heading);
+
+	RunCallIn(fn, 2, 0);
 }
 
 
 void CLuaUnitScript::SetSpeed(float speed, float)
 {
+	const int fn = COBFN_SetSpeed;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, speed);
+
+	RunCallIn(fn, 2, 0);
 }
 
 
 void CLuaUnitScript::RockUnit(const float3& rockDir)
 {
+	const int fn = COBFN_RockUnit;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+
+	PushFunction(fn);
+	lua_pushnumber(L, rockDir.x);
+	//FIXME: maybe we want rockDir.y too to be future proof?
+	lua_pushnumber(L, rockDir.z);
+
+	RunCallIn(fn, 3, 0);
 }
 
 
 void CLuaUnitScript::HitByWeapon(const float3& hitDir)
 {
+	const int fn = COBFN_HitByWeapon;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+
+	PushFunction(fn);
+	lua_pushnumber(L, hitDir.x);
+	//FIXME: maybe we want hitDir.y too to be future proof?
+	lua_pushnumber(L, hitDir.z);
+
+	RunCallIn(fn, 3, 0);
 }
 
 
 void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage)
 {
+	const int fn = COBFN_HitByWeaponId;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
+
+	PushFunction(fn);
+	lua_pushnumber(L, hitDir.x);
+	//FIXME: maybe we want hitDir.y too to be future proof?
+	lua_pushnumber(L, hitDir.z);
+	lua_pushnumber(L, weaponDefId);
+	lua_pushnumber(L, inout_damage);
+
+	if (!RunCallIn(fn, 5, 1)) {
+		return;
+	}
+
+	if (lua_israwnumber(L, -1)) {
+		inout_damage = lua_tonumber(L, -1);
+	}
+
+	lua_pop(L, 1);
 }
 
 
 void CLuaUnitScript::SetSFXOccupy(int curTerrainType)
 {
+	const int fn = COBFN_SetSFXOccupy;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, curTerrainType);
+
+	RunCallIn(fn, 2, 0);
 }
 
 
 void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 {
+	const int fn  = COBFN_QueryLandingPad;
+	const int fnc = COBFN_QueryLandingPadCount;
+	int maxPadCount = 0; // default max pad count
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	if (HasFunction(fnc)) {
+		LUA_CALL_IN_CHECK(L);
+		lua_checkstack(L, 2);
+
+		PushFunction(fnc);
+
+		if (RunCallIn(fnc, 1, 1)) {
+			if (lua_isnumber(L, -1)) {
+				maxPadCount = lua_toint(L, -1);
+			}
+			lua_pop(L, 1);
+		}
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, maxPadCount); // FIXME: useful?
+
+	if (RunCallIn(fn, 2, maxPadCount)) {
+		for (int idx = -maxPadCount; idx < 0; ++idx) {
+			if (lua_isnumber(L, idx)) {
+				out_pieces.push_back(lua_toint(L, idx));
+			}
+		}
+		lua_pop(L, maxPadCount);
+	}
 }
 
 
