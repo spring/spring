@@ -485,42 +485,37 @@ void CLuaUnitScript::SetSFXOccupy(int curTerrainType)
 
 void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 {
-	const int fn  = COBFN_QueryLandingPad;
-	const int fnc = COBFN_QueryLandingPadCount;
-	int maxPadCount = 0; // default max pad count
+	const int fn = COBFN_QueryLandingPad;
 
 	if (!HasFunction(fn)) {
 		return;
-	}
-
-	if (HasFunction(fnc)) {
-		LUA_CALL_IN_CHECK(L);
-		lua_checkstack(L, 2);
-
-		PushFunction(fnc);
-
-		if (RunCallIn(fnc, 1, 1)) {
-			if (lua_isnumber(L, -1)) {
-				maxPadCount = lua_toint(L, -1);
-			}
-			lua_pop(L, 1);
-		}
 	}
 
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
 
 	PushFunction(fn);
-	lua_pushnumber(L, maxPadCount); // FIXME: useful?
 
-	if (RunCallIn(fn, 2, maxPadCount)) {
-		for (int idx = -maxPadCount; idx < 0; ++idx) {
-			if (lua_isnumber(L, idx)) {
-				out_pieces.push_back(lua_toint(L, idx));
-			}
-		}
-		lua_pop(L, maxPadCount);
+	if (!RunCallIn(fn, 1, 1)) {
+		return;
 	}
+
+	if (lua_istable(L, -1)) {
+		int n = 1;
+		lua_rawgeti(L, -1, n);
+		while (lua_israwnumber(L, -1)) {
+			out_pieces.push_back(lua_toint(L, -1));
+			lua_pop(L, 1);
+			lua_rawgeti(L, -1, ++n);
+		}
+		lua_pop(L, 1);
+	}
+	else {
+		logOutput.Print("%s: bad return value, expected table",
+		                CUnitScriptNames::GetScriptName(fn).c_str());
+	}
+
+	lua_pop(L, 1);
 }
 
 
