@@ -1,11 +1,14 @@
 /* Author: Tobi Vollebregt */
 
+#define DEBUG_LUA 1
+
 #include "LuaUnitScript.h"
 
 #include "CobInstance.h"
 #include "LogOutput.h"
 #include "LuaInclude.h"
 #include "UnitScriptNames.h"
+#include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
 #include "Sim/Units/UnitHandler.h"
 
@@ -146,11 +149,45 @@ end
 */
 
 
+#if DEBUG_LUA
+#  define LUA_TRACE(m) logOutput.Print("%s: %d: %s", __FUNCTION__, unit->id, m)
+#else
+#  define LUA_TRACE(m)
+#endif
+
+
+// TODO: move this (LuaUtils?)
+// debugging, pretty much copied from Lua book
+static void StackDump(lua_State* L)
+{
+	int top = lua_gettop(L);
+	for (int i = 1; i <= top; ++i) {
+		int t = lua_type(L, i);
+		switch (t) {
+			case LUA_TSTRING:
+				logOutput.Print("%2d/%3d: '%s'", i, i - top - 1, lua_tostring(L, i));
+				break;
+			case LUA_TBOOLEAN:
+				logOutput.Print("%2d/%3d: %s", i, i - top - 1, lua_toboolean(L, i) ? "true" : "false");
+				break;
+			case LUA_TNUMBER:
+				logOutput.Print("%2d/%3d: %g", i, i - top - 1, lua_tonumber(L, i));
+				break;
+			default:
+				logOutput.Print("%2d/%3d: %s", i, i - top - 1, lua_typename(L, t));
+				break;
+		}
+	}
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
+
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
-	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces), L(L)
+	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces)
+	, handle(CLuaHandle::activeHandle), L(L)
 	, scriptIndex(COBFN_Last + (unit->weapons.size() * COBFN_Weapon_Funcs), LUA_NOREF)
 	, inKilled(false)
 {
@@ -161,6 +198,10 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 		scriptNames.insert(pair<string, int>(fname, r));
 		UpdateCallIn(fname, r);
 	}
+
+	// Since we can only be created from Lua,
+	// Create would never be called otherwise
+	Create();
 }
 
 
@@ -244,14 +285,75 @@ void CLuaUnitScript::ShowScriptWarning(const string& msg)
 /******************************************************************************/
 
 
+inline void CLuaUnitScript::RawPushFunction(int functionId)
+{
+	// Push Lua function on the stack
+	lua_rawgeti(L, LUA_REGISTRYINDEX, functionId);
+
+	// Push unitID on the stack (all callIns get this)
+	lua_pushnumber(L, unit->id);
+}
+
+
+inline void CLuaUnitScript::PushFunction(int id)
+{
+	RawPushFunction(scriptIndex[id]);
+}
+
+
+inline bool CLuaUnitScript::RunCallIn(int id, int inArgs, int outArgs)
+{
+	RawRunCallIn(scriptIndex[id], inArgs, outArgs);
+}
+
+
 void CLuaUnitScript::Create()
 {
+	const int fn = COBFN_Create;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 2);
+
+	PushFunction(fn);
+
+	RunCallIn(fn, 1, 0);
 }
 
 
 void CLuaUnitScript::Killed()
 {
+	const int fn = COBFN_Killed;
+
+	if (!HasFunction(fn)) {
+		unit->deathScriptFinished = true;
+		//FIXME: unit->delayedWreckLevel = ???
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+
+	PushFunction(fn);
+	lua_pushnumber(L, unit->recentDamage);
+	lua_pushnumber(L, unit->maxHealth);
+
 	inKilled = true;
+
+	if (!RunCallIn(fn, 3, 1)) {
+		return;
+	}
+
+	// If Killed returns an integer, it signals it hasn't started a thread.
+	// In this case the return value is the delayedWreckLevel.
+	if (lua_israwnumber(L, -1)) {
+		inKilled = false;
+		unit->deathScriptFinished = true;
+		unit->delayedWreckLevel = lua_toint(L, -1);
+	}
 }
 
 
@@ -373,36 +475,42 @@ void CLuaUnitScript::RawCall(int functionId)
 		return;
 	}
 
-	// TODO: call into Lua function stored in environ/registry?
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 2);
+
+	RawPushFunction(functionId);
+	RawRunCallIn(functionId, 1, 0);
 }
 
 
-/******************************************************************************/
-/******************************************************************************/
-
-// TODO: move this (LuaUtils?)
-// debugging, pretty much copied from Lua book
-static void StackDump(lua_State* L)
+string CLuaUnitScript::GetScriptName(int functionId) const
 {
-	int top = lua_gettop(L);
-	for (int i = 1; i <= top; ++i) {
-		int t = lua_type(L, i);
-		switch (t) {
-			case LUA_TSTRING:
-				logOutput.Print("%2d/%3d: '%s'", i, i - top - 1, lua_tostring(L, i));
-				break;
-			case LUA_TBOOLEAN:
-				logOutput.Print("%2d/%3d: %s", i, i - top - 1, lua_toboolean(L, i) ? "true" : "false");
-				break;
-			case LUA_TNUMBER:
-				logOutput.Print("%2d/%3d: %g", i, i - top - 1, lua_tonumber(L, i));
-				break;
-			default:
-				logOutput.Print("%2d/%3d: %s", i, i - top - 1, lua_typename(L, t));
-				break;
-		}
+	// only for error messages, so speed doesn't matter
+	map<string, int>::const_iterator it = scriptNames.begin();
+	for (; it != scriptNames.end(); ++it) {
+		if (it->second == functionId) return it->first;
 	}
+	return "<unnamed>";
 }
+
+
+bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
+{
+	std::string err;
+	const int error = handle->RunCallIn(inArgs, outArgs, err);
+
+	if (error != 0) {
+		logOutput.Print("%s::RunCallIn: error = %i, %s::%s, %s\n",
+		                handle->GetName().c_str(), error, /*FIXME: GetName().c_str()*/ "",
+		                GetScriptName(functionId).c_str(), err.c_str());
+		return false;
+	}
+	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
 
 
 static void PushEntry(lua_State* L, const char* name, lua_CFunction fun)
@@ -522,6 +630,7 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
+		LUA_TRACE("no such unit");
 		return 0;
 	}
 
@@ -539,6 +648,8 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	// replace the unit's script (ctor parses callIn table)
 	delete unit->script;
 	unit->script = new CLuaUnitScript(L, unit);
+
+	LUA_TRACE("script replaced with CLuaUnitScript");
 
 	return 0;
 }
