@@ -393,7 +393,9 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 		}
 	} else {
 		destf = dest;
-		ClampRad(&destf);
+		if (type == ATurn) {
+			ClampRad(&destf);
+		}
 	}
 
 	struct AnimInfo *ai;
