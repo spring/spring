@@ -82,9 +82,6 @@ public:
 	int tx1,tx2,tz1,tz2;
 	float3 terraformCenter;
 	float terraformRadius;
-
-	std::string nextBuildType;
-	float3 nextBuildPos;
 };
 
 #endif // __BUILDER_H__

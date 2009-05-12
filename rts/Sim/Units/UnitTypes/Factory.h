@@ -6,6 +6,7 @@
 #define __FACTORY_H__
 
 #include "Building.h"
+#include "Sim/Units/UnitDef.h"
 #include <string>
 
 class CFactory : public CBuilding
@@ -17,7 +18,7 @@ public:
 	virtual ~CFactory();
 	void PostLoad();
 	void StopBuild();
-	void StartBuild(std::string type);
+	void StartBuild(const UnitDef* ud);
 	void Update();
 	void DependentDied(CObject* o);
 	void FinishedBuilding(void);
@@ -31,7 +32,8 @@ public:
 	float buildSpeed;
 
 	bool quedBuild;						//if we have a unit that we want to start to nanolath when script is ready
-	std::string nextBuild;
+	const UnitDef* nextBuild;
+	std::string nextBuildName;
 	CUnit* curBuild;					//unit that we are nanolathing
 	bool opening;
 

@@ -72,20 +72,28 @@ CUnitLoader::~CUnitLoader()
 	CGroundMoveType::DeleteLineTable();
 }
 
+
 CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
+                             bool build, int facing, const CUnit* builder)
+{
+	const UnitDef* ud = unitDefHandler->GetUnitByName(name);
+	if (!ud) {
+		throw content_error("Couldn't find unittype " +  name);
+	}
+
+	LoadUnit(ud, pos, team, build, facing, builder);
+}
+
+
+CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
 	GML_RECMUTEX_LOCK(sel); // LoadUnit - for anti deadlock purposes.
 	GML_RECMUTEX_LOCK(quad); // LoadUnit - make sure other threads cannot access an incomplete unit
 
-	CUnit* unit;
-
 	SCOPED_TIMER("Unit loader");
 
-	const UnitDef* ud = unitDefHandler->GetUnitByName(name);
-	if (!ud) {
-		throw content_error("Couldn't find unittype " +  name);
-	}
+	CUnit* unit;
 
 	string type = ud->type;
 
