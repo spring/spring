@@ -814,7 +814,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	inCreateUnit = true;
 	ASSERT_SYNCED_FLOAT3(pos);
 	ASSERT_SYNCED_PRIMITIVE((int)facing);
-	CUnit* unit = unitLoader.LoadUnit(unitDef->name, pos, teamID,
+	CUnit* unit = unitLoader.LoadUnit(unitDef, pos, teamID,
 	                                  false, facing, NULL);
 	inCreateUnit = false;
 

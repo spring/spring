@@ -10,6 +10,7 @@
 	<!--
 		Targets:
 		* compile:       compile java source files
+		* doc:           generate javadoc
 		* pack,archive:  archive java classes and sources into jar files
 		* dist,install:  install these two jar files and the data dir
 		* bump-version:  changes the version string in VERSION
@@ -37,6 +38,9 @@
 		</condition>
 
 
+	<path id="source.path.id">
+		<pathelement path="${src}"/>
+	</path>
 	<path id="class.path.base">
 		<fileset dir="data">
 			<include name="jlib/**/*.jar"/>
@@ -63,6 +67,7 @@
 		<property name="build.classes.dir"        location="${build.dir}/classes"/>
 		<property name="dist.home"                location="${spring.home}/game"/>
 		<property name="dist.dir"                 location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}"/>
+		<property name="doc.dir"                  location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}/doc/jdoc"/>
 		<property name="ai.interface.src.home"    location="${spring.home}/AI/Interfaces/Java"/>
 		<property name="ai.interface.build.home"  location="${build.home}/AI/Interfaces/Java"/>
 		<property name="ai.interface.jar"         location="${ai.interface.build.home}/AIInterface.jar"/>
@@ -76,7 +81,7 @@ an independent version of this project from
 wherever you got this AI from.
 		</fail>
 
-		<path id="class.path">
+		<path id="class.path.id">
 			<path refid="class.path.base"/>
 			<fileset dir="${ai.interface.src.home}/data">
 				<include name="jlib/**/*.jar"/>
@@ -107,7 +112,7 @@ wherever you got this AI from.
 		<property name="dist.home"                location="dist"/>
 		<property name="dist.dir"                 location="${dist.home}/AI/Skirmish/${skirmish.ai.name}/${skirmish.ai.version}"/>
 
-		<path id="class.path">
+		<path id="class.path.id">
 			<path refid="class.path.base"/>
 			<fileset dir="${independent.interface.libs.dir}">
 				<include name="**/*.jar"/>
@@ -148,9 +153,19 @@ wherever you got this AI from.
 
 	<target name="compile" depends="init">
 		<javac destdir="${build.classes.dir}">
-			<src path="${src}"/>
-			<classpath refid="class.path"/>
+			<src refid="source.path.id"/>
+			<classpath refid="class.path.id"/>
 		</javac>
+	</target>
+
+
+	<target name="doc" depends="init">
+		<mkdir dir="${doc.dir}"/>
+		<javadoc
+				destdir="${doc.dir}"
+				sourcepathref="source.path.id"
+				classpathref="class.path.id"
+				Windowtitle="${skirmish.ai.name} ${skirmish.ai.version} javadoc"/>
 	</target>
 
 

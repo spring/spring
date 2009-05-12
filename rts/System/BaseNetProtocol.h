@@ -113,7 +113,7 @@ public:
 	PacketType SendKeyFrame(int frameNum);
 	PacketType SendNewFrame();
 	PacketType SendQuit();
-	PacketType SendStartPlaying(unsigned countdown); /// client can send these to force-start the game
+	PacketType SendStartPlaying(unsigned countdown); ///< client can send these to force-start the game
 	PacketType SendSetPlayerNum(uchar myPlayerNum);
 	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
 	PacketType SendRandSeed(uint randSeed);

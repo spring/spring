@@ -386,7 +386,7 @@ void CFactoryCAI::SlowUpdate()
 					CancelRestrictedUnit(c, boi->second);
 				}
 				else if(uh->MaxUnitsPerTeam() > teamHandler->Team(owner->team)->units.size()){  //max unitlimit reached?
-					fac->StartBuild(boi->second.fullName);
+					fac->StartBuild(def);
 					building=true;
 				}
 			}

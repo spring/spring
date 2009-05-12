@@ -20,6 +20,8 @@ public:
 
 	CUnit* LoadUnit(const std::string& name, float3 pos, int team,
 		bool build, int facing, const CUnit* builder /* can be NULL */);
+	CUnit* LoadUnit(const UnitDef* ud, float3 pos, int team,
+		bool build, int facing, const CUnit* builder /* can be NULL */);
 	void FlattenGround(const CUnit* unit);
 
 	CWeapon* LoadWeapon(const WeaponDef* weapondef, CUnit* owner, const UnitDef::UnitDefWeapon* udw);

@@ -57,8 +57,6 @@ CR_REG_METADATA(CBuilder, (
 				CR_MEMBER(tx1), CR_MEMBER(tx2), CR_MEMBER(tz1), CR_MEMBER(tz2),
 				CR_MEMBER(terraformCenter),
 				CR_MEMBER(terraformRadius),
-				CR_MEMBER(nextBuildType),
-				CR_MEMBER(nextBuildPos),
 				CR_ENUM_MEMBER(terraformType),
 				CR_RESERVED(12),
 				CR_POSTLOAD(PostLoad)
@@ -93,8 +91,7 @@ CBuilder::CBuilder():
 	tz1(0),
 	tz2(0),
 	terraformCenter(0,0,0),
-	terraformRadius(0),
-	nextBuildPos(0,0,0)
+	terraformRadius(0)
 {
 }
 
@@ -553,10 +550,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 	const UnitDef* unitDef = buildInfo.def;
 	SetBuildStanceToward(buildInfo.pos);
 
-	nextBuildType=buildInfo.def->name;
-	nextBuildPos=buildInfo.pos;
-
-	CUnit* b = unitLoader.LoadUnit(nextBuildType, nextBuildPos, team,
+	CUnit* b = unitLoader.LoadUnit(buildInfo.def, buildInfo.pos, team,
 	                               true, buildInfo.buildFacing, this);
 
 	// floating structures don't terraform the seabed
@@ -607,7 +601,7 @@ bool CBuilder::StartBuild(BuildInfo& buildInfo)
 		curBuild->midPos.y = groundheight + curBuild->relMidPos.y;
 	}
 	else {
-		float d=nextBuildPos.y-curBuild->pos.y;
+		float d=buildInfo.pos.y-curBuild->pos.y;
 		curBuild->pos.y+=d;
 		curBuild->midPos.y+=d;
 	}

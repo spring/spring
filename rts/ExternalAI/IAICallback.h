@@ -72,6 +72,7 @@ struct LineMarker {
 #define AIHCGetWeaponDefByIdId  6
 #define AIHCGetFeatureDefByIdId 7
 #define AIHCTraceRayId          8
+#define AIHCPauseId             9
 
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
@@ -122,6 +123,12 @@ struct AIHCTraceRay
 	int    srcUID;
 	int    hitUID;
 	int    flags;
+};
+
+struct AIHCPause
+{
+	bool        enable;
+	const char* reason;
 };
 
 /// Generalized callback interface, used by Global AIs
