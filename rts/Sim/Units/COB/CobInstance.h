@@ -38,7 +38,6 @@ protected:
 	int RealCall(int functionId, std::vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2);
 
 	virtual void ShowScriptError(const std::string& msg);
-	virtual void ShowScriptWarning(const std::string& msg);
 
 public:
 	std::vector<int> staticVars;

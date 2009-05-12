@@ -18,13 +18,6 @@ void CNullUnitScript::ShowScriptError(const std::string& msg)
 }
 
 
-void CNullUnitScript::ShowScriptWarning(const std::string& msg)
-{
-	logOutput.Print(msg);
-	logOutput.Print("why are you using CNullUnitScript anyway?");
-}
-
-
 void CNullUnitScript::RawCall(int functionId)
 {
 }

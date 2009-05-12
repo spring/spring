@@ -374,7 +374,7 @@ void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel, bool interpolated)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptWarning("Invalid piecenumber");
+		ShowScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -479,7 +479,7 @@ void CUnitScript::Move(int piece, int axis, float speed, float destination, bool
 void CUnitScript::MoveNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptWarning("Invalid piecenumber");
+		ShowScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -497,7 +497,7 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 void CUnitScript::TurnNow(int piece, int axis, float destination)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptWarning("Invalid piecenumber");
+		ShowScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -510,7 +510,7 @@ void CUnitScript::TurnNow(int piece, int axis, float destination)
 void CUnitScript::SetVisibility(int piece, bool visible)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptWarning("Invalid piecenumber");
+		ShowScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -526,7 +526,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 {
 #ifndef _CONSOLE
 	if (!PieceExists(piece)) {
-		ShowScriptWarning("Invalid piecenumber for emit-sfx");
+		ShowScriptError("Invalid piecenumber for emit-sfx");
 		return;
 	}
 
@@ -537,7 +537,8 @@ void CUnitScript::EmitSfx(int type, int piece)
 	float3 relPos(0,0,0);
 	float3 relDir(0,1,0);
 	if (!GetEmitDirPos(piece, relPos, relDir)) {
-		ShowScriptError("emit-sfx: GetEmitDirPos failed\n");
+		ShowScriptError("emit-sfx: GetEmitDirPos failed");
+		return;
 	}
 
 	float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
@@ -873,7 +874,7 @@ void CUnitScript::ShowFlare(int piece)
 void CUnitScript::MoveSmooth(int piece, int axis, float destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptWarning("Invalid piecenumber");
+		ShowScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -901,7 +902,7 @@ void CUnitScript::MoveSmooth(int piece, int axis, float destination, int delta, 
 void CUnitScript::TurnSmooth(int piece, int axis, float destination, int delta, int deltaTime)
 {
 	if (!PieceExists(piece)) {
-		ShowScriptWarning("Invalid piecenumber");
+		ShowScriptError("Invalid piecenumber");
 		return;
 	}
 
@@ -964,14 +965,18 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 			return 0;
 		break;
 	case PIECE_XZ:{
-		if (!PieceExists(p1))
+		if (!PieceExists(p1)) {
 			ShowScriptError("Invalid piecenumber for get piece_xz");
+			break;
+		}
 		float3 relPos = GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return PACKXZ(pos.x, pos.z);}
 	case PIECE_Y:{
-		if (!PieceExists(p1))
+		if (!PieceExists(p1)) {
 			ShowScriptError("Invalid piecenumber for get piece_y");
+			break;
+		}
 		float3 relPos = GetPiecePos(p1);
 		float3 pos = unit->pos + unit->frontdir * relPos.z + unit->updir * relPos.y + unit->rightdir * relPos.x;
 		return (int)(pos.y * COBSCALE);}

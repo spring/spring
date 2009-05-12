@@ -89,7 +89,6 @@ protected:
 	void AddAnim(AnimType type, int piece, int axis, float speed, float dest, float accel, bool interpolated = false);
 
 	virtual void ShowScriptError(const std::string& msg) = 0;
-	virtual void ShowScriptWarning(const std::string& msg) = 0;
 
 public:
 	// subclass is responsible for populating this with script pieces
