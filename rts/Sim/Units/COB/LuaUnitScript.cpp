@@ -739,7 +739,7 @@ void CLuaUnitScript::AnimFinished(AnimType type, int piece, int axis)
 {
 	const int fn = (type == AMove ? COBFN_MoveFinished : COBFN_TurnFinished);
 
-	Call(fn, piece, axis);
+	Call(fn, piece + 1, axis + 1);
 }
 
 
