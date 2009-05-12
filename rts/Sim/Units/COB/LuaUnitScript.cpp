@@ -286,18 +286,33 @@ void CLuaUnitScript::ShowScriptWarning(const string& msg)
 /******************************************************************************/
 
 
-inline int CLuaUnitScript::PopPieceNumber(int fn)
+inline float CLuaUnitScript::PopNumber(int fn, float def)
 {
 	if (!lua_israwnumber(L, -1)) {
-		logOutput.Print("%s: bad return value, expected piece number",
+		logOutput.Print("%s: bad return value, expected number",
 		                CUnitScriptNames::GetScriptName(fn).c_str());
 		lua_pop(L, 1);
-		return -1;
+		return def;
 	}
 
-	const int piece = lua_toint(L, -1);
+	const float ret = lua_tonumber(L, -1);
 	lua_pop(L, 1);
-	return piece;
+	return ret;
+}
+
+
+inline bool CLuaUnitScript::PopBoolean(int fn, bool def)
+{
+	if (!lua_israwnumber(L, -1)) {
+		logOutput.Print("%s: bad return value, expected boolean",
+		                CUnitScriptNames::GetScriptName(fn).c_str());
+		lua_pop(L, 1);
+		return def;
+	}
+
+	const bool ret = lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return ret;
 }
 
 
@@ -317,18 +332,27 @@ inline void CLuaUnitScript::PushFunction(int id)
 }
 
 
+inline void CLuaUnitScript::PushUnit(const CUnit* targetUnit)
+{
+	if (targetUnit) {
+		lua_pushnumber(L, targetUnit->id);
+	}
+	else {
+		lua_pushnil(L);
+	}
+}
+
+
 inline bool CLuaUnitScript::RunCallIn(int id, int inArgs, int outArgs)
 {
 	RawRunCallIn(scriptIndex[id], inArgs, outArgs);
 }
 
 
-void CLuaUnitScript::Create()
+int CLuaUnitScript::RunQueryCallIn(int fn)
 {
-	const int fn = COBFN_Create;
-
 	if (!HasFunction(fn)) {
-		return;
+		return -1;
 	}
 
 	LUA_CALL_IN_CHECK(L);
@@ -336,7 +360,54 @@ void CLuaUnitScript::Create()
 
 	PushFunction(fn);
 
-	RunCallIn(fn, 1, 0);
+	if (!RunCallIn(fn, 2, 1)) {
+		return -1;
+	}
+
+	return int(PopNumber(fn, -1));
+}
+
+
+void CLuaUnitScript::Call(int fn, float arg1)
+{
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, arg1);
+
+	RunCallIn(fn, 2, 0);
+}
+
+
+void CLuaUnitScript::Call(int fn, float arg1, float arg2)
+{
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+
+	PushFunction(fn);
+	lua_pushnumber(L, arg1);
+	lua_pushnumber(L, arg2);
+
+	RunCallIn(fn, 3, 0);
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+
+void CLuaUnitScript::Create()
+{
+	Call(COBFN_Create);
 }
 
 
@@ -377,77 +448,27 @@ void CLuaUnitScript::Killed()
 
 void CLuaUnitScript::SetDirection(float heading)
 {
-	const int fn = COBFN_SetDirection;
-
-	if (!HasFunction(fn)) {
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-
-	PushFunction(fn);
-	lua_pushnumber(L, heading);
-
-	RunCallIn(fn, 2, 0);
+	Call(COBFN_SetDirection, heading);
 }
 
 
 void CLuaUnitScript::SetSpeed(float speed, float)
 {
-	const int fn = COBFN_SetSpeed;
-
-	if (!HasFunction(fn)) {
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-
-	PushFunction(fn);
-	lua_pushnumber(L, speed);
-
-	RunCallIn(fn, 2, 0);
+	Call(COBFN_SetSpeed, speed);
 }
 
 
 void CLuaUnitScript::RockUnit(const float3& rockDir)
 {
-	const int fn = COBFN_RockUnit;
-
-	if (!HasFunction(fn)) {
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-
-	PushFunction(fn);
-	lua_pushnumber(L, rockDir.x);
 	//FIXME: maybe we want rockDir.y too to be future proof?
-	lua_pushnumber(L, rockDir.z);
-
-	RunCallIn(fn, 3, 0);
+	Call(COBFN_RockUnit, rockDir.x, rockDir.z);
 }
 
 
 void CLuaUnitScript::HitByWeapon(const float3& hitDir)
 {
-	const int fn = COBFN_HitByWeapon;
-
-	if (!HasFunction(fn)) {
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-
-	PushFunction(fn);
-	lua_pushnumber(L, hitDir.x);
 	//FIXME: maybe we want hitDir.y too to be future proof?
-	lua_pushnumber(L, hitDir.z);
-
-	RunCallIn(fn, 3, 0);
+	Call(COBFN_HitByWeapon, hitDir.x, hitDir.z);
 }
 
 
@@ -537,19 +558,7 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 
 void CLuaUnitScript::BeginTransport(const CUnit* unit)
 {
-	const int fn = COBFN_BeginTransport;
-
-	if (!HasFunction(fn)) {
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-
-	PushFunction(fn);
-	lua_pushnumber(L, unit->id);
-
-	RunCallIn(fn, 2, 0);
+	Call(COBFN_BeginTransport, unit->id);
 }
 
 
@@ -571,25 +580,13 @@ int CLuaUnitScript::QueryTransport(const CUnit* unit)
 		return -1;
 	}
 
-	return PopPieceNumber(fn);
+	return int(PopNumber(fn, -1));
 }
 
 
 void CLuaUnitScript::TransportPickup(const CUnit* unit)
 {
-	const int fn = COBFN_TransportPickup;
-
-	if (!HasFunction(fn)) {
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-
-	PushFunction(fn);
-	lua_pushnumber(L, unit->id);
-
-	RunCallIn(fn, 2, 1);
+	Call(COBFN_TransportPickup, unit->id);
 }
 
 
@@ -614,45 +611,9 @@ void CLuaUnitScript::TransportDrop(const CUnit* unit, const float3& pos)
 }
 
 
-void CLuaUnitScript::RunHPCallIn(int fn, float heading, float pitch)
-{
-	if (!HasFunction(fn)) {
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
-
-	PushFunction(fn);
-	lua_pushnumber(L, heading);
-	lua_pushnumber(L, pitch);
-
-	RunCallIn(fn, 3, 0);
-}
-
-
 void CLuaUnitScript::StartBuilding(float heading, float pitch)
 {
-	RunHPCallIn(COBFN_StartBuilding, heading, pitch);
-}
-
-
-int CLuaUnitScript::RunQueryCallIn(int fn)
-{
-	if (!HasFunction(fn)) {
-		return -1;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
-
-	PushFunction(fn);
-
-	if (!RunCallIn(fn, 2, 1)) {
-		return -1;
-	}
-
-	return PopPieceNumber(fn);
+	Call(COBFN_StartBuilding, heading, pitch);
 }
 
 
@@ -674,39 +635,28 @@ int CLuaUnitScript::QueryWeapon(int weaponNum)
 }
 
 
+void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
+{
+	Call(COBFN_AimPrimary + weaponNum, heading, pitch);
+}
+
+
+void  CLuaUnitScript::AimShieldWeapon(CPlasmaRepulser* weapon)
+{
+	Call(COBFN_AimPrimary + weapon->weaponNum);
+}
+
+
 int CLuaUnitScript::AimFromWeapon(int weaponNum)
 {
 	return RunQueryCallIn(COBFN_AimFromPrimary + weaponNum);
 }
 
 
-void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
-{
-	RunHPCallIn(COBFN_AimPrimary + weaponNum, heading, pitch);
-}
-
-
-void  CLuaUnitScript::AimShieldWeapon(CPlasmaRepulser* weapon)
-{
-	RawCall(scriptIndex[COBFN_AimPrimary + weapon->weaponNum]);
-}
-
-
 void CLuaUnitScript::Shot(int weaponNum)
 {
 	// FIXME: pass projectileID?
-	RawCall(scriptIndex[COBFN_Shot + weaponNum]);
-}
-
-
-inline void CLuaUnitScript::PushUnit(const CUnit* targetUnit)
-{
-	if (targetUnit) {
-		lua_pushnumber(L, targetUnit->id);
-	}
-	else {
-		lua_pushnil(L);
-	}
+	Call(COBFN_Shot + weaponNum);
 }
 
 
@@ -729,16 +679,7 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 		return false;
 	}
 
-	if (!lua_isboolean(L, -1)) {
-		logOutput.Print("%s: bad return value, expected boolean",
-		                CUnitScriptNames::GetScriptName(fn).c_str());
-		lua_pop(L, 1);
-		return false;
-	}
-
-	const bool blockShot = lua_toboolean(L, -1);
-	lua_pop(L, 1);
-	return blockShot;
+	return PopBoolean(fn, false);
 }
 
 
@@ -760,16 +701,7 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 		return 1.0f;
 	}
 
-	if (!lua_israwnumber(L, -1)) {
-		logOutput.Print("%s: bad return value, expected number",
-		                CUnitScriptNames::GetScriptName(fn).c_str());
-		lua_pop(L, 1);
-		return 1.0f;
-	}
-
-	const float targetWeight = lua_tonumber(L, -1);
-	lua_pop(L, 1);
-	return targetWeight;
+	return PopNumber(fn, 1.0f);
 }
 
 
