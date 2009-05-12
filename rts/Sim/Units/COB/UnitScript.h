@@ -166,8 +166,7 @@ public:
 	void MoveSmooth(int piece, int axis, float destination, int delta, int deltaTime);
 	void TurnSmooth(int piece, int axis, float destination, int delta, int deltaTime);
 
-	int AddTurnListener(int piece, int axis, IAnimListener* listener);
-	int AddMoveListener(int piece, int axis, IAnimListener* listener);
+	bool AddAnimListener(AnimType type, int piece, int axis, IAnimListener* listener);
 
 	// misc, used by CCobThread and callouts for Lua unitscripts
 	void SetVisibility(int piece, bool visible);

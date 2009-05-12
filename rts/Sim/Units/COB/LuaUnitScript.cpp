@@ -735,6 +735,14 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 }
 
 
+void CLuaUnitScript::AnimFinished(AnimType type, int piece, int axis)
+{
+	const int fn = (type == AMove ? COBFN_MoveFinished : COBFN_TurnFinished);
+
+	Call(fn, piece, axis);
+}
+
+
 void CLuaUnitScript::RawCall(int functionId)
 {
 	if (functionId < 0) {
@@ -821,6 +829,8 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(IsInTurn);
 	REGISTER_LUA_CFUNC(IsInMove);
 	REGISTER_LUA_CFUNC(IsInSpin);
+	REGISTER_LUA_CFUNC(WaitForTurn);
+	REGISTER_LUA_CFUNC(WaitForMove);
 
 	REGISTER_LUA_CFUNC(SetDeathScriptFinished);
 
@@ -1198,35 +1208,65 @@ int CLuaUnitScript::Move(lua_State* L)
 }
 
 
-static inline int IsInAnimation(lua_State* L, CUnitScript::AnimType wantedType)
+int CLuaUnitScript::IsInAnimation(lua_State* L, const char* caller, AnimType type)
 {
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	CUnit* unit = ParseUnit(L, caller, 1);
 	if ((unit == NULL) || (unit->script == NULL)) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	const int axis  = ParseAxis(L, __FUNCTION__, 3);
+	const int axis  = ParseAxis(L, caller, 3);
 
-	lua_pushboolean(L, unit->script->IsInAnimation(wantedType, piece, axis));
+	lua_pushboolean(L, unit->script->IsInAnimation(type, piece, axis));
 	return 1;
 }
 
 
 int CLuaUnitScript::IsInTurn(lua_State* L)
 {
-	return ::IsInAnimation(L, ATurn);
+	return IsInAnimation(L, __FUNCTION__, ATurn);
 }
 
 
 int CLuaUnitScript::IsInMove(lua_State* L)
 {
-	return ::IsInAnimation(L, AMove);
+	return IsInAnimation(L, __FUNCTION__, AMove);
 }
 
 
 int CLuaUnitScript::IsInSpin(lua_State* L)
 {
-	return ::IsInAnimation(L, ASpin);
+	return IsInAnimation(L, __FUNCTION__, ASpin);
+}
+
+
+int CLuaUnitScript::WaitForAnimation(lua_State* L, const char* caller, AnimType type)
+{
+	CUnit* unit = ParseUnit(L, caller, 1);
+	if (unit == NULL) {
+		return 0;
+	}
+	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(unit->script);
+	if (script == NULL) {
+		luaL_error(L, "%s(): not a Lua unit script", caller);
+	}
+	const int piece = luaL_checkint(L, 2) - 1;
+	const int axis  = ParseAxis(L, caller, 3);
+
+	lua_pushboolean(L, script->AddAnimListener(type, piece, axis, script));
+	return 1;
+}
+
+
+int CLuaUnitScript::WaitForTurn(lua_State* L)
+{
+	return WaitForAnimation(L, __FUNCTION__, ATurn);
+}
+
+
+int CLuaUnitScript::WaitForMove(lua_State* L)
+{
+	return WaitForAnimation(L, __FUNCTION__, AMove);
 }
 
 

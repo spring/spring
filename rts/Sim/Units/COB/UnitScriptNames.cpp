@@ -54,6 +54,9 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 	scriptNames[COBFN_QueryBuildInfo]       = "QueryBuildInfo";
 	scriptNames[COBFN_Go]                   = "Go";
 
+	scriptNames[COBFN_MoveFinished] = "MoveFinished";
+	scriptNames[COBFN_TurnFinished] = "TurnFinished";
+
 	// Also add the weapon aiming stuff
 	for (int i = 0; i < COB_MaxWeapons; ++i) {
 		char buf[15];
