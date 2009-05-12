@@ -266,13 +266,22 @@ bool CUnitScript::TurnToward(float &cur, float dest, float speed)
  */
 bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int divisor)
 {
-	//Check if we are not at the final speed
-	if (speed != dest) {
-		speed += accel * (30.0f / divisor);   //TA obviously defines accelerations in speed/frame (at 30 fps)
-		if (streflop::fabsf(speed) > dest)      // make sure we dont go past desired speed
-			speed = dest;
-		if ((accel < 0.0f) && (speed == 0.0f))
+	const float delta = dest - speed;
+
+	// Check if we are not at the final speed and
+	// make sure we dont go past desired speed
+	if (streflop::fabsf(delta) <= accel) {
+		speed = dest;
+		if (speed == 0.0f)
 			return true;
+	}
+	else {
+		if (delta > 0.0f) {
+			//TA obviously defines accelerations in speed/frame (at 30 fps)
+			speed += accel * (30.0f / divisor);
+		} else {
+			speed -= accel * (30.0f / divisor);
+		}
 	}
 
 	cur += (speed / divisor);
@@ -438,10 +447,7 @@ void CUnitScript::Spin(int piece, int axis, float speed, float accel)
 	if (ai) {
 		ai->dest = speed;
 		if (accel > 0) {
-			if (ai->speed > ai->dest)
-				ai->accel = -accel;
-			else
-				ai->accel = accel;
+			ai->accel = accel;
 		}
 		else {
 			//Go there instantly. Or have a defaul accel?
@@ -451,8 +457,8 @@ void CUnitScript::Spin(int piece, int axis, float speed, float accel)
 	}
 	else {
 		//No accel means we start at desired speed instantly
-		if (accel == 0)
-			AddAnim(ASpin, piece, axis, speed, speed, accel);
+		if (accel <= 0)
+			AddAnim(ASpin, piece, axis, speed, speed, 0);
 		else
 			AddAnim(ASpin, piece, axis, 0, speed, accel);
 	}
@@ -461,16 +467,18 @@ void CUnitScript::Spin(int piece, int axis, float speed, float accel)
 
 void CUnitScript::StopSpin(int piece, int axis, float decel)
 {
-	struct AnimInfo *ai;
-	ai = FindAnim(ASpin, piece, axis);
-	if (!ai)
-		return;
-
-	if (decel == 0) {
+	if (decel <= 0) {
 		RemoveAnim(ASpin, piece, axis);
 	}
-	else
-		AddAnim(ASpin, piece, axis, ai->speed, 0, -decel);
+	else {
+		struct AnimInfo *ai;
+		ai = FindAnim(ASpin, piece, axis);
+		if (!ai)
+			return;
+
+		ai->dest = 0;
+		ai->accel = decel;
+	}
 }
 
 
