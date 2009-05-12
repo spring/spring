@@ -25,8 +25,9 @@ using std::vector;
 some notes:
 - all piece numbers are 1 based, to be consistent with other parts of interface
 - all axes are 1 based, so 1 = x, 2 = y, 3 = z
-- destination, speed for Turn are in world coords, and NOT in COB coords
-- destination, speed, accel, decel for Move, Spin, StopSpin are in radians
+- destination, speed for Move are in world coords, and NOT in COB coords
+- therefore, compared to COB, the X axis for the Move callout is mirrored
+- destination, speed, accel, decel for Turn, Spin, StopSpin are in radians
 - GetUnitCOBValue(PLAY_SOUND, ...) does NOT work for Lua unit scripts,
   use Spring.PlaySound in combination with Spring.SendToUnsynced instead.
 - Because in current design CBCobThreadFinish can impossibly be called, certain
@@ -40,9 +41,40 @@ some notes:
   * Spring.UnitScript.SetDeathScriptFinished(unitID, wreckLevel) replaces
     return value of wreckLevel from Killed function.
     This MUST be called, otherwise zombie units will eat your Spring!
-- HitByWeaponId should return a fraction, instead of a percentage.
-- FIXME: Lua unit scripts get their arguments in COB scales
 
+
+callIn notes:
+- Killed takes recentDamage,maxHealth instead of severity, to calculate
+  severity use: 'local severity = recentDamage / maxHealth'
+- SetMaxReloadTime doesn't exist, max reload time can be calculated in Lua
+  (without the WTFs that are present in max reload time calculation for COB)
+- RockUnit takes x,z instead of 500z,500x
+- HitByWeapon takes x,z instead of 500z,500x
+- HitByWeaponId takes x,z,weaponDefID,damage instead of 500z,500x,tdfID,damage
+- HitByWeaponId returns the new damage, instead of a percentage of old damage
+- QueryLandingPadCount doesn't exist
+- QueryLandingPad should return an array (table) of all pieces
+- BeginTransport and QueryTransport take unitID instead of unit->height*65536,
+  use 'local height = Spring.GetUnitHeight(unitID)' to get the height.
+- TransportDrop takes x,y,z instead of PACKXZ(x,z)
+- AimWeapon for a shield (plasma repulser) takes no arguments instead of 0,0
+- Shot takes no arguments instead of 0
+- new callins MoveFinished and TurnFinished, see below
+
+
+docs for callins defined in this file:
+
+  TODO: document other callins properly
+
+TurnFinished(number unitID, number piece, number axis)
+	Called after a turn finished for this unit/piece/axis (not a turn-now!)
+	Should resume coroutine of the particular thread which called the Lua
+	WaitForTurn function (see below).
+
+MoveFinished(number unitID, number piece, number axis)
+	Called after a move finished for this unit/piece/axis (not a move-now!)
+	Should resume coroutine of the particular thread which called the Lua
+	WaitForMove function (see below).
 
 
 docs for callouts defined in this file:
@@ -88,6 +120,14 @@ Spring.UnitScript.IsInMove(number unitID, number piece, number axis) -> boolean
 Spring.UnitScript.IsInSpin(number unitID, number piece, number axis) -> boolean
 	Returns true iff such an animation exists, false otherwise.
 
+Spring.UnitScript.WaitForTurn(number unitID, number piece, number axis) -> boolean
+	Returns true iff such an animation exists, false otherwise.  Iff it returns
+	true, the TurnFinished callIn will be called once the turn completes.
+
+Spring.UnitScript.WaitForMove(number unitID, number piece, number axis) -> boolean
+	Returns true iff such an animation exists, false otherwise.  Iff it returns
+	true, the MoveFinished callIn will be called once the move completes.
+
 Spring.UnitScript.SetDeathScriptFinished(number unitID[, number wreckLevel])
 	Tells Spring the Killed script finished, and which wreckLevel to use.
 	If wreckLevel is not given no wreck is created.
@@ -97,30 +137,12 @@ Spring.UnitScript.CreateScript(number unitID, table callIns) -> nil
 	with the unit script given by a table of callins for the unit.
 	Callins are similar to COB functions, e.g. a number of predefined names are
 	called by the engine if they exist in the table. (Create, FireWeapon1, etc.)
-	Callins do NOT take a unitID as argument, the unitID (and all script state
-	should be stored in a closure.)
 
 Spring.UnitScript.UpdateCallIn(number unitID, string fname[, function callIn]) -> number|boolean
 	Iff callIn is a function, a single callIn is replaced or added, and the
 	new functionID is returned.  If callIn isn't given or is nil, the callIn is
 	nilled, returns true if it was removed, or false if the callin didn't exist.
 	See also Spring.UnitScript.CreateScript.
-
-
-
-docs for global LuaRules callins still to be made (prone to change):
-(optionally not global but inside the callin table passed to CreateScript?)
-
-TurnFinished(number unitID, number piece, number axis)
-	Called after a turn finished for this unit/piece/axis (not a turn-now!)
-	Should resume coroutine of the particular thread which called the Lua
-	WaitForTurn function (see below).
-
-MoveFinished(number unitID, number piece, number axis)
-	Called after a move finished for this unit/piece/axis (not a move-now!)
-	Should resume coroutine of the particular thread which called the Lua
-	WaitForMove function (see below).
-
 
 
 random prototype snippets of Lua framework code:
