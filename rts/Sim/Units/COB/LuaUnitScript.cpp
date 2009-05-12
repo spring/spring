@@ -459,6 +459,16 @@ void CLuaUnitScript::Killed()
 		unit->deathScriptFinished = true;
 		unit->delayedWreckLevel = lua_toint(L, -1);
 	}
+	else if (!lua_isnoneornil(L, -1)) {
+		const string& fname = CUnitScriptNames::GetScriptName(fn);
+
+		logOutput.Print("%s: bad return value, expected number or nil", fname.c_str());
+		RemoveCallIn(fname);
+
+		// without this we would end up with zombie units
+		unit->deathScriptFinished = true;
+		//FIXME: unit->delayedWreckLevel = ???
+	}
 
 	lua_pop(L, 1);
 }
@@ -514,6 +524,12 @@ void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float&
 
 	if (lua_israwnumber(L, -1)) {
 		inout_damage = lua_tonumber(L, -1);
+	}
+	else if (!lua_isnoneornil(L, -1)) {
+		const string& fname = CUnitScriptNames::GetScriptName(fn);
+
+		logOutput.Print("%s: bad return value, expected number or nil", fname.c_str());
+		RemoveCallIn(fname);
 	}
 
 	lua_pop(L, 1);
