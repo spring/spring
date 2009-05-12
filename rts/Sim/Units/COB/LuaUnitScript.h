@@ -38,18 +38,24 @@ protected:
 	int UpdateCallIn();
 	void UpdateCallIn(const std::string& fname, int ref);
 
-	int  PopPieceNumber(int fn);
+	float PopNumber(int fn, float def);
+	bool PopBoolean(int fn, bool def);
+
 	int  RunQueryCallIn(int fn);
-	void RunHPCallIn(int fn, float heading, float pitch);
-	void PushUnit(const CUnit* targetUnit);
+	void Call(int fn) { RawCall(scriptIndex[fn]); }
+	void Call(int fn, float arg1);
+	void Call(int fn, float arg1, float arg2);
 
 	void RawPushFunction(int functionId);
 	void PushFunction(int id);
+	void PushUnit(const CUnit* targetUnit);
+
 	bool RunCallIn(int id, int inArgs, int outArgs);
 	std::string GetScriptName(int functionId) const;
 	bool RawRunCallIn(int functionId, int inArgs, int outArgs);
 
 public:
+
 	// callins, called throughout sim
 	virtual void RawCall(int functionId);
 	virtual void Create();
