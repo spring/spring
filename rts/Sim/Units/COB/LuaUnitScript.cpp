@@ -288,13 +288,6 @@ void CLuaUnitScript::ShowScriptError(const string& msg)
 }
 
 
-void CLuaUnitScript::ShowScriptWarning(const string& msg)
-{
-	// TODO: add Lua traceback?
-	logOutput.Print("Lua UnitScript warning: %s", msg.c_str());
-}
-
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -878,11 +871,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
 		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
 	}
-	CUnit* unit = uh->units[unitID];
-	if (unit == NULL) {
-		return NULL;
-	}
-	return unit;
+	return uh->units[unitID];
 }
 
 

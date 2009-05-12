@@ -37,7 +37,6 @@ public:
 	~CCobEngine();
 	void AddThread(CCobThread *thread);
 	void Tick(int deltaTime);
-	void ShowScriptWarning(const std::string& msg);
 	void ShowScriptError(const std::string& msg);
 };
 

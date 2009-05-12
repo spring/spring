@@ -71,7 +71,7 @@ public:
 	const string &GetName();
 	int GetWakeTime() const;
 	void CommitAnims(int deltaTime);
-	void ShowError(const string& msg, bool warning = false);
+	void ShowError(const string& msg);
 };
 
 #endif // __COB_THREAD_H__

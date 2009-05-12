@@ -566,9 +566,3 @@ void CCobInstance::ShowScriptError(const std::string& msg)
 {
 	GCobEngine.ShowScriptError(msg);
 }
-
-
-void CCobInstance::ShowScriptWarning(const std::string& msg)
-{
-	GCobEngine.ShowScriptWarning(msg);
-}

@@ -13,7 +13,6 @@ private:
 
 protected:
 	virtual void ShowScriptError(const std::string& msg);
-	virtual void ShowScriptWarning(const std::string& msg);
 
 public:
 	CNullUnitScript(CUnit* unit);
