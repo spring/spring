@@ -532,7 +532,6 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 					cmd->drawBorder, cmd->facing);
 			break;
 		}
-
 		case COMMAND_TRACE_RAY: {
 			STraceRayCommand* cCmdData = (STraceRayCommand*) commandData;
 			AIHCTraceRay cppCmdData = {
@@ -548,6 +547,16 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 			cCmdData->rayLen = cppCmdData.rayLen;
 			cCmdData->hitUID = cppCmdData.hitUID;
+			break;
+		}
+		case COMMAND_PAUSE: {
+			SPauseCommand* cmd = (SPauseCommand*) commandData;
+			AIHCPause cppCmdData = {
+				cmd->enable,
+				cmd->reason
+			};
+
+			wrapper_HandleCommand(clb, clbCheat, AIHCPauseId, &cppCmdData);
 			break;
 		}
 
