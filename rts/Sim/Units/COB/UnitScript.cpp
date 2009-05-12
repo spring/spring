@@ -302,26 +302,28 @@ int CUnitScript::Tick(int deltaTime)
 		//Advance it, so we can erase cur safely
 		cur = it++;
 
-		done = false;
-		pieces[(*cur)->piece]->updated = true;
+		struct AnimInfo *ai = *cur;
 
-		switch ((*cur)->type) {
+		done = false;
+		pieces[ai->piece]->updated = true;
+
+		switch (ai->type) {
 			case AMove:
-				done = MoveToward(pieces[(*cur)->piece]->pos[(*cur)->axis], (*cur)->dest, (*cur)->speed / (1000 / deltaTime));
+				done = MoveToward(pieces[ai->piece]->pos[ai->axis], ai->dest, ai->speed / (1000 / deltaTime));
 				break;
 			case ATurn:
-				done = TurnToward(pieces[(*cur)->piece]->rot[(*cur)->axis], (*cur)->dest, (*cur)->speed / (1000 / deltaTime));
+				done = TurnToward(pieces[ai->piece]->rot[ai->axis], ai->dest, ai->speed / (1000 / deltaTime));
 				break;
 			case ASpin:
-				done = DoSpin(pieces[(*cur)->piece]->rot[(*cur)->axis], (*cur)->dest, (*cur)->speed, (*cur)->accel, 1000 / deltaTime);
+				done = DoSpin(pieces[ai->piece]->rot[ai->axis], ai->dest, ai->speed, ai->accel, 1000 / deltaTime);
 				break;
 		}
 
 		//Tell listeners to unblock?
 		if (done) {
-			UnblockAll(*cur);
-			delete *cur;
 			anims.erase(cur);
+			UnblockAll(ai);
+			delete ai;
 		}
 
 	}
@@ -350,13 +352,14 @@ struct CUnitScript::AnimInfo *CUnitScript::FindAnim(AnimType type, int piece, in
 void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 {
 	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
-		if (((*i)->type == type) && ((*i)->piece == piece) && ((*i)->axis == axis)) {
+		struct AnimInfo *ai = *i;
+
+		if ((ai->type == type) && (ai->piece == piece) && (ai->axis == axis)) {
+			anims.erase(i);
 
 			// We need to unblock threads waiting on this animation, otherwise they will be lost in the void
-			UnblockAll(*i);
-
-			delete *i;
-			anims.erase(i);
+			UnblockAll(ai);
+			delete ai;
 
 			// If this was the last animation, remove from currently animating list
 			if (anims.size() == 0) {
