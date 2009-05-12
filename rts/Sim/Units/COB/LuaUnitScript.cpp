@@ -282,8 +282,13 @@ void CLuaUnitScript::RemoveCallIn(const string& fname)
 
 void CLuaUnitScript::ShowScriptError(const string& msg)
 {
-	// TODO: add Lua traceback?
-	logOutput.Print("Lua UnitScript error: %s", msg.c_str());
+	// if we are in the same handle, we can truely raise an error
+	if (CLuaHandle::activeHandle == handle) {
+		luaL_error(L, "Lua UnitScript error: %s", msg.c_str());
+	}
+	else {
+		logOutput.Print("Lua UnitScript error: %s", msg.c_str());
+	}
 }
 
 
