@@ -24,8 +24,6 @@ public:
 	void AddInstance(CUnitScript *instance);
 	void RemoveInstance(CUnitScript *instance);
 	void Tick(int deltaTime);
-	void ShowScriptWarning(const std::string& msg);
-	void ShowScriptError(const std::string& msg);
 };
 
 extern CUnitScriptEngine GUnitScriptEngine;
