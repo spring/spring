@@ -864,7 +864,7 @@ static inline bool CanControlUnit(const CUnit* unit)
 
 static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 {
-	if (!lua_isnumber(L, index)) {
+	if (!lua_israwnumber(L, index)) {
 		luaL_error(L, "%s(): Bad unitID", caller);
 	}
 	const int unitID = lua_toint(L, index);
@@ -885,6 +885,19 @@ static inline CUnit* ParseUnit(lua_State* L, const char* caller, int index)
 		return NULL;
 	}
 	return unit;
+}
+
+
+static inline int ParseAxis(lua_State* L, const char* caller, int index)
+{
+	if (!lua_israwnumber(L, index)) {
+		luaL_error(L, "%s(): Bad axis", caller);
+	}
+	const int axis  = lua_toint(L, index) - 1;
+	if ((axis < 0) || (axis > 2)) {
+		luaL_error(L, "%s(): Bad axis", caller);
+	}
+	return axis;
 }
 
 
@@ -1025,9 +1038,6 @@ int CLuaUnitScript::SetPieceVisibility(lua_State* L)
 	// unit->script->pieces differs from the unit->localmodel->pieces.
 
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
 	const bool visible = lua_toboolean(L, 3);
 	unit->script->SetVisibility(piece, visible);
 	return 0;
@@ -1045,9 +1055,6 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 	// note: the arguments are reversed compared to the C++ (and COB?) function
 
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
 	const int type = luaL_checkint(L, 3);
 	unit->script->EmitSfx(type, piece);
 	return 0;
@@ -1062,9 +1069,6 @@ int CLuaUnitScript::AttachUnit(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
 	const CUnit* transportee = ParseUnit(L, __FUNCTION__, 3);
 	if (transportee == NULL) {
 		return 0;
@@ -1098,9 +1102,6 @@ int CLuaUnitScript::Explode(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
 	const int flags = luaL_checkint(L, 3);
 	unit->script->Explode(piece, flags);
 	return 0;
@@ -1115,9 +1116,6 @@ int CLuaUnitScript::ShowFlare(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
 	unit->script->ShowFlare(piece);
 	return 0;
 }
@@ -1131,13 +1129,7 @@ int CLuaUnitScript::Spin(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
-	const int axis  = luaL_checkint(L, 3) - 1;
-	if ((axis < 0) || (axis > 2)) {
-		return 0;
-	}
+	const int axis = ParseAxis(L, __FUNCTION__, 3);
 	const float speed = luaL_checkfloat(L, 4);
 	const float accel = luaL_optfloat(L, 5, 0.0f); // accel == 0 -> start at desired speed immediately
 
@@ -1154,13 +1146,7 @@ int CLuaUnitScript::StopSpin(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
-	const int axis  = luaL_checkint(L, 3) - 1;
-	if ((axis < 0) || (axis > 2)) {
-		return 0;
-	}
+	const int axis = ParseAxis(L, __FUNCTION__, 3);
 	const float decel = luaL_optfloat(L, 4, 0.0f); // decel == 0 -> stop immediately
 
 	unit->script->StopSpin(piece, axis, decel);
@@ -1177,13 +1163,7 @@ int CLuaUnitScript::Turn(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
-	const int axis  = luaL_checkint(L, 3) - 1;
-	if ((axis < 0) || (axis > 2)) {
-		return 0;
-	}
+	const int axis = ParseAxis(L, __FUNCTION__, 3);
 	const float dest  = luaL_checkfloat(L, 4);
 	const float speed = luaL_optfloat(L, 5, 0.0f); // speed == 0 -> TurnNow
 
@@ -1205,13 +1185,7 @@ int CLuaUnitScript::Move(lua_State* L)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
-	const int axis  = luaL_checkint(L, 3) - 1;
-	if ((axis < 0) || (axis > 2)) {
-		return 0;
-	}
+	const int axis = ParseAxis(L, __FUNCTION__, 3);
 	const float dest  = luaL_checkfloat(L, 4);
 	const float speed = luaL_optfloat(L, 5, 0.0f); // speed == 0 -> MoveNow
 
@@ -1231,13 +1205,7 @@ static inline int IsInAnimation(lua_State* L, CUnitScript::AnimType wantedType)
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
-	if ((piece < 0) || ((size_t)piece >= unit->script->pieces.size())) {
-		return 0;
-	}
-	const int axis  = luaL_checkint(L, 3) - 1;
-	if ((axis < 0) || (axis > 2)) {
-		return 0;
-	}
+	const int axis  = ParseAxis(L, __FUNCTION__, 3);
 
 	lua_pushboolean(L, unit->script->IsInAnimation(wantedType, piece, axis));
 	return 1;
