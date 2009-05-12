@@ -37,6 +37,7 @@ protected:
 
 	int UpdateCallIn();
 	void UpdateCallIn(const std::string& fname, int ref);
+	void RemoveCallIn(const std::string& fname);
 
 	float PopNumber(int fn, float def);
 	bool PopBoolean(int fn, bool def);

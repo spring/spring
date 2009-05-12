@@ -268,6 +268,18 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 }
 
 
+void CLuaUnitScript::RemoveCallIn(const string& fname)
+{
+	map<string, int>::iterator it = scriptNames.find(fname);
+
+	if (it != scriptNames.end()) {
+		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
+		scriptNames.erase(it);
+		UpdateCallIn(fname, LUA_NOREF);
+	}
+}
+
+
 void CLuaUnitScript::ShowScriptError(const string& msg)
 {
 	// TODO: add Lua traceback?
@@ -289,8 +301,11 @@ void CLuaUnitScript::ShowScriptWarning(const string& msg)
 inline float CLuaUnitScript::PopNumber(int fn, float def)
 {
 	if (!lua_israwnumber(L, -1)) {
-		logOutput.Print("%s: bad return value, expected number",
-		                CUnitScriptNames::GetScriptName(fn).c_str());
+		const string& fname = CUnitScriptNames::GetScriptName(fn);
+
+		logOutput.Print("%s: bad return value, expected number", fname.c_str());
+		RemoveCallIn(fname);
+
 		lua_pop(L, 1);
 		return def;
 	}
@@ -304,8 +319,11 @@ inline float CLuaUnitScript::PopNumber(int fn, float def)
 inline bool CLuaUnitScript::PopBoolean(int fn, bool def)
 {
 	if (!lua_israwnumber(L, -1)) {
-		logOutput.Print("%s: bad return value, expected boolean",
-		                CUnitScriptNames::GetScriptName(fn).c_str());
+		const string& fname = CUnitScriptNames::GetScriptName(fn);
+
+		logOutput.Print("%s: bad return value, expected boolean", fname.c_str());
+		RemoveCallIn(fname);
+
 		lua_pop(L, 1);
 		return def;
 	}
@@ -548,8 +566,10 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 		lua_pop(L, 1);
 	}
 	else {
-		logOutput.Print("%s: bad return value, expected table",
-		                CUnitScriptNames::GetScriptName(fn).c_str());
+		const string& fname = CUnitScriptNames::GetScriptName(fn);
+
+		logOutput.Print("%s: bad return value, expected table", fname.c_str());
+		RemoveCallIn(fname);
 	}
 
 	lua_pop(L, 1);
@@ -736,9 +756,13 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 	const int error = handle->RunCallIn(inArgs, outArgs, err);
 
 	if (error != 0) {
+		const string& fname = GetScriptName(functionId);
+
 		logOutput.Print("%s::RunCallIn: error = %i, %s::%s, %s\n",
 		                handle->GetName().c_str(), error, /*FIXME: GetName().c_str()*/ "",
-		                GetScriptName(functionId).c_str(), err.c_str());
+		                fname.c_str(), err.c_str());
+		RemoveCallIn(fname);
+
 		return false;
 	}
 	return true;
