@@ -199,10 +199,6 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 		scriptNames.insert(pair<string, int>(fname, r));
 		UpdateCallIn(fname, r);
 	}
-
-	// Since we can only be created from Lua,
-	// Create would never be called otherwise
-	Create();
 }
 
 
@@ -931,6 +927,10 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	unit->script = new CLuaUnitScript(L, unit);
 
 	LUA_TRACE("script replaced with CLuaUnitScript");
+
+	// Since we can only be created from Lua,
+	// Create would never be called otherwise
+	unit->script->Create();
 
 	return 0;
 }
