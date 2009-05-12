@@ -79,15 +79,3 @@ void CUnitScriptEngine::Tick(int deltaTime)
 			animating.erase(curit);
 	}
 }
-
-
-void CUnitScriptEngine::ShowScriptWarning(const std::string& msg)
-{
-	logOutput.Print("ScriptWarning: %s outside script execution", msg.c_str());
-}
-
-
-void CUnitScriptEngine::ShowScriptError(const std::string& msg)
-{
-	logOutput.Print("ScriptError: %s outside script execution", msg.c_str());
-}
