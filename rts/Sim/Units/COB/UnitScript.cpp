@@ -177,7 +177,7 @@ CUnitScript::~CUnitScript()
 		delete *i;
 	}
 
-	// Remove us from possible animation ticking (should only be needed when anims.size() > 0
+	// Remove us from possible animation ticking (should only be needed when !anims.empty()
 	GUnitScriptEngine.RemoveInstance(this);
 }
 
@@ -297,6 +297,7 @@ int CUnitScript::Tick(int deltaTime)
 	bool done;
 	std::list<struct AnimInfo *>::iterator it = anims.begin();
 	std::list<struct AnimInfo *>::iterator cur;
+	std::list<struct AnimInfo *> remove;
 
 	while (it != anims.end()) {
 		//Advance it, so we can erase cur safely
@@ -319,16 +320,20 @@ int CUnitScript::Tick(int deltaTime)
 				break;
 		}
 
-		//Tell listeners to unblock?
+		// Queue for removal (UnblockAll may add new anims)
 		if (done) {
 			anims.erase(cur);
-			UnblockAll(ai);
-			delete ai;
+			remove.push_back(ai);
 		}
-
 	}
 
-	if (anims.size() == 0)
+	//Tell listeners to unblock?
+	for (it = remove.begin(); it != remove.end(); ++it) {
+		UnblockAll(*it);
+		delete *it;
+	}
+
+	if (anims.empty())
 		return -1;
 	else
 		return 0;
@@ -359,10 +364,11 @@ void CUnitScript::RemoveAnim(AnimType type, int piece, int axis)
 
 			// We need to unblock threads waiting on this animation, otherwise they will be lost in the void
 			UnblockAll(ai);
+
 			delete ai;
 
 			// If this was the last animation, remove from currently animating list
-			if (anims.size() == 0) {
+			if (anims.empty()) {
 				GUnitScriptEngine.RemoveInstance(this);
 			}
 			return;
@@ -403,16 +409,16 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 
 	ai = FindAnim(type, piece, axis);
 	if (!ai) {
+		// If we were not animating before, inform the engine of this so it can schedule us
+		if (anims.empty()) {
+			GUnitScriptEngine.AddInstance(this);
+		}
+
 		ai = new struct AnimInfo;
 		ai->type = type;
 		ai->piece = piece;
 		ai->axis = axis;
 		anims.push_back(ai);
-
-		// If we were not animating before, inform the engine of this so it can schedule us
-		if (anims.size() == 1) {
-			GUnitScriptEngine.AddInstance(this);
-		}
 	}
 
 	ai->dest  = destf;
