@@ -688,30 +688,17 @@ void CUnitScript::DropUnit(int u)
 }
 
 
-//Returns 1 if there was a turn to listen to
-int CUnitScript::AddTurnListener(int piece, int axis, IAnimListener *listener)
+//Returns true if there was an animation to listen to
+bool CUnitScript::AddAnimListener(AnimType type, int piece, int axis, IAnimListener *listener)
 {
 	struct AnimInfo *ai;
-	ai = FindAnim(ATurn, piece, axis);
+	ai = FindAnim(type, piece, axis);
 	if (ai) {
 		ai->listeners.push_back(listener);
-		return 1;
+		return true;
 	}
 	else
-		return 0;
-}
-
-
-int CUnitScript::AddMoveListener(int piece, int axis, IAnimListener *listener)
-{
-	struct AnimInfo *ai;
-	ai = FindAnim(AMove, piece, axis);
-	if (ai) {
-		ai->listeners.push_back(listener);
-		return 1;
-	}
-	else
-		return 0;
+		return false;
 }
 
 

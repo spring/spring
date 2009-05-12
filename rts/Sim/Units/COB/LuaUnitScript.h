@@ -10,7 +10,7 @@ class CLuaHandle;
 struct lua_State;
 
 
-class CLuaUnitScript : public CUnitScript
+class CLuaUnitScript : public CUnitScript, CUnitScript::IAnimListener
 {
 private:
 	// remember whether we are running in LuaRules or LuaGaia
@@ -84,6 +84,9 @@ public:
 	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget);
 	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit);
 
+	// special callin to allow Lua to resume threads blocking on this anim
+	virtual void AnimFinished(AnimType type, int piece, int axis);
+
 public:
 	static bool PushEntries(lua_State* L);
 
@@ -106,9 +109,13 @@ private:
 	static int StopSpin(lua_State* L);
 	static int Turn(lua_State* L);
 	static int Move(lua_State* L);
+	static int IsInAnimation(lua_State* L, const char* caller, AnimType type);
 	static int IsInTurn(lua_State* L);
 	static int IsInMove(lua_State* L);
 	static int IsInSpin(lua_State* L);
+	static int WaitForAnimation(lua_State* L, const char* caller, AnimType type);
+	static int WaitForTurn(lua_State* L);
+	static int WaitForMove(lua_State* L);
 
 	// Lua COB functions to work around lack of working CBCobThreadFinish
 	static int SetDeathScriptFinished(lua_State* L);

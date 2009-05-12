@@ -44,6 +44,8 @@ enum {
 	COBFN_QueryNanoPiece,       // out: piecenum
 	COBFN_QueryBuildInfo,       // out: piecenum
 	COBFN_Go,                   // -
+	COBFN_MoveFinished,         // special callin, only used for Lua unit scripts
+	COBFN_TurnFinished,         // idem
 	COBFN_Last,
 
 	// These are special (they need space for MaxWeapons of each)
