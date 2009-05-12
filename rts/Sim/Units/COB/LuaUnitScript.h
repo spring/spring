@@ -38,6 +38,7 @@ protected:
 	int UpdateCallIn();
 	void UpdateCallIn(const std::string& fname, int ref);
 
+	int  PopPieceNumber(int id);
 	void RawPushFunction(int functionId);
 	void PushFunction(int id);
 	bool RunCallIn(int id, int inArgs, int outArgs);

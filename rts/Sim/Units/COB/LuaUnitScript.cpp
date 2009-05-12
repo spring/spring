@@ -285,6 +285,20 @@ void CLuaUnitScript::ShowScriptWarning(const string& msg)
 /******************************************************************************/
 
 
+inline int CLuaUnitScript::PopPieceNumber(int id)
+{
+	if (!lua_israwnumber(L, -1)) {
+		logOutput.Print("%s: bad return value, expected piece number",
+		                CUnitScriptNames::GetScriptName(id).c_str());
+		return -1;
+	}
+
+	const int piece = lua_toint(L, -1);
+	lua_pop(L, 1);
+	return piece;
+}
+
+
 inline void CLuaUnitScript::RawPushFunction(int functionId)
 {
 	// Push Lua function on the stack
@@ -521,22 +535,80 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 
 void CLuaUnitScript::BeginTransport(const CUnit* unit)
 {
+	const int fn = COBFN_BeginTransport;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, unit->id);
+
+	RunCallIn(fn, 2, 0);
 }
 
 
 int CLuaUnitScript::QueryTransport(const CUnit* unit)
 {
-	return -1;
+	const int fn = COBFN_QueryTransport;
+
+	if (!HasFunction(fn)) {
+		return -1;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, unit->id);
+
+	if (!RunCallIn(fn, 2, 1)) {
+		return -1;
+	}
+
+	return PopPieceNumber(fn);
 }
 
 
 void CLuaUnitScript::TransportPickup(const CUnit* unit)
 {
+	const int fn = COBFN_TransportPickup;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, unit->id);
+
+	RunCallIn(fn, 2, 1);
 }
 
 
 void CLuaUnitScript::TransportDrop(const CUnit* unit, const float3& pos)
 {
+	const int fn = COBFN_TransportDrop;
+
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 6);
+
+	PushFunction(fn);
+	lua_pushnumber(L, unit->id);
+	lua_pushnumber(L, pos.x);
+	lua_pushnumber(L, pos.y);
+	lua_pushnumber(L, pos.z);
+
+	RunCallIn(fn, 5, 0);
 }
 
 
