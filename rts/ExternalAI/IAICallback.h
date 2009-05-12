@@ -127,7 +127,7 @@ struct AIHCTraceRay
 
 struct AIHCPause
 {
-	bool        enabled;
+	bool        enable;
 	const char* reason;
 };
 
