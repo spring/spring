@@ -204,15 +204,15 @@ void CUnitScript::UnblockAll(struct AnimInfo * anim)
  * @param cur float value to update
  * @param dest float final value
  * @param speed float max increment per tick
- * @return returns 1 if destination was reached, 0 otherwise
+ * @return returns true if destination was reached, false otherwise
  */
-int CUnitScript::MoveToward(float &cur, float dest, float speed)
+bool CUnitScript::MoveToward(float &cur, float dest, float speed)
 {
 	const float delta = dest - cur;
 
 	if (streflop::fabsf(delta) <= speed) {
 		cur = dest;
-		return 1;
+		return true;
 	}
 
 	if (delta>0.0f) {
@@ -221,7 +221,7 @@ int CUnitScript::MoveToward(float &cur, float dest, float speed)
 		cur -= speed;
 	}
 
-	return 0;
+	return false;
 }
 
 
@@ -230,9 +230,9 @@ int CUnitScript::MoveToward(float &cur, float dest, float speed)
  * @param cur float value to update
  * @param dest float final value
  * @param speed float max increment per tick
- * @return returns 1 if destination was reached, 0 otherwise
+ * @return returns true if destination was reached, false otherwise
  */
-int CUnitScript::TurnToward(float &cur, float dest, float speed)
+bool CUnitScript::TurnToward(float &cur, float dest, float speed)
 {
 	ClampRad(&cur);
 
@@ -247,7 +247,7 @@ int CUnitScript::TurnToward(float &cur, float dest, float speed)
 
 	if (streflop::fabsf(delta) <= speed) {
 		cur = dest;
-		return 1;
+		return true;
 	}
 
 	if (delta>0.0f) {
@@ -256,7 +256,7 @@ int CUnitScript::TurnToward(float &cur, float dest, float speed)
 		cur -= speed;
 	}
 
-	return 0;
+	return false;
 }
 
 
@@ -266,9 +266,9 @@ int CUnitScript::TurnToward(float &cur, float dest, float speed)
  * @param dest float the final desired speed (NOT the final angle!)
  * @param speed float is updated if it is not equal to dest
  * @param divisor int is the deltatime, it is not added before the call because speed may have to be updated
- * @return 1 if the desired speed is 0 and it is reached, otherwise 0
+ * @return true if the desired speed is 0 and it is reached, false otherwise
  */
-int CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int divisor)
+bool CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int divisor)
 {
 	//Check if we are not at the final speed
 	if (speed != dest) {
@@ -276,13 +276,13 @@ int CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int d
 		if (streflop::fabsf(speed) > dest)      // make sure we dont go past desired speed
 			speed = dest;
 		if ((accel < 0.0f) && (speed == 0.0f))
-			return 1;
+			return true;
 	}
 
 	cur += (speed / divisor);
 	ClampRad(&cur);
 
-	return 0;
+	return false;
 }
 
 
@@ -294,7 +294,7 @@ int CUnitScript::DoSpin(float &cur, float dest, float &speed, float accel, int d
  */
 int CUnitScript::Tick(int deltaTime)
 {
-	int done;
+	bool done;
 	std::list<struct AnimInfo *>::iterator it = anims.begin();
 	std::list<struct AnimInfo *>::iterator cur;
 

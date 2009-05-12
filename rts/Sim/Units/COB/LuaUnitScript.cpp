@@ -926,11 +926,11 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	// check table of callIns
 	// (we might not get a chance to clean up later on, if something is wrong)
 	if (!lua_istable(L, 2)) {
-		luaL_error(L, "CreateScript(): error parsing callIn table");
+		luaL_error(L, "%s(): error parsing callIn table", __FUNCTION__);
 	}
 	for (lua_pushnil(L); lua_next(L, 2) != 0; lua_pop(L, 1)) {
 		if (!lua_israwstring(L, -2) || !lua_isfunction(L, -1)) {
-			luaL_error(L, "CreateScript(): error parsing callIn table");
+			luaL_error(L, "%s(): error parsing callIn table", __FUNCTION__);
 		}
 	}
 
@@ -956,14 +956,14 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 	}
 	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(unit->script);
 	if (script == NULL) {
-		luaL_error(L, "UpdateCallIn(): not a Lua unit script");
+		luaL_error(L, "%s(): not a Lua unit script", __FUNCTION__);
 	}
 	// we would get confused if our refs aren't together in a single state
 	if (L != script->L) {
-		luaL_error(L, "UpdateCallIn(): incorrect lua_State");
+		luaL_error(L, "%s(): incorrect lua_State", __FUNCTION__);
 	}
 	if (!lua_israwstring(L, 2) || (!lua_isfunction(L, 3) && !lua_isnoneornil(L, 3))) {
-		luaL_error(L, "Incorrect arguments to UpdateCallIn()");
+		luaL_error(L, "Incorrect arguments to %s()", __FUNCTION__);
 	}
 
 	return script->UpdateCallIn();
@@ -1278,8 +1278,7 @@ int CLuaUnitScript::SetDeathScriptFinished(lua_State* L)
 	}
 	CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>(unit->script);
 	if (script == NULL || !script->inKilled) {
-		luaL_error(L, "SetDeathScriptFinished(): not a Lua unit script or 'Killed' not called");
-		return 0;
+		luaL_error(L, "%s(): not a Lua unit script or 'Killed' not called", __FUNCTION__);
 	}
 	unit->deathScriptFinished = true;
 	unit->delayedWreckLevel = luaL_optint(L, 2, -1);

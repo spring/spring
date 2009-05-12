@@ -80,9 +80,9 @@ protected:
 
 	void UnblockAll(struct AnimInfo * anim);
 
-	int MoveToward(float &cur, float dest, float speed);
-	int TurnToward(float &cur, float dest, float speed);
-	int DoSpin(float &cur, float dest, float &speed, float accel, int divisor);
+	bool MoveToward(float &cur, float dest, float speed);
+	bool TurnToward(float &cur, float dest, float speed);
+	bool DoSpin(float &cur, float dest, float &speed, float accel, int divisor);
 
 	struct AnimInfo *FindAnim(AnimType anim, int piece, int axis);
 	void RemoveAnim(AnimType anim, int piece, int axis);
