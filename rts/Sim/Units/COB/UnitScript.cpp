@@ -230,8 +230,6 @@ bool CUnitScript::MoveToward(float &cur, float dest, float speed)
  */
 bool CUnitScript::TurnToward(float &cur, float dest, float speed)
 {
-	ClampRad(&cur);
-
 	float delta = dest - cur;
 
 	// clamp: -pi .. 0 .. +pi (remainder(x,TWOPI) would do the same but is slower due to streflop)
@@ -251,6 +249,8 @@ bool CUnitScript::TurnToward(float &cur, float dest, float speed)
 	} else {
 		cur -= speed;
 	}
+
+	ClampRad(&cur);
 
 	return false;
 }
