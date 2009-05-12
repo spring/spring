@@ -81,9 +81,15 @@ public:
 		CUnitScript::Turn(piece, axis, speed * TAANG2RAD, destination * TAANG2RAD, interpolated);
 	}
 	void Move(int piece, int axis, int speed, int destination, bool interpolated = false) {
+		// COBWTF
+		if (axis == 0)
+			destination = -destination;
 		CUnitScript::Move(piece, axis, speed * CORDDIV, destination * CORDDIV, interpolated);
 	}
 	void MoveNow(int piece, int axis, int destination) {
+		// COBWTF
+		if (axis == 0)
+			destination = -destination;
 		CUnitScript::MoveNow(piece, axis, destination * CORDDIV);
 	}
 	void TurnNow(int piece, int axis, int destination) {

@@ -394,12 +394,7 @@ void CUnitScript::AddAnim(AnimType type, int piece, int axis, float speed, float
 
 	float destf;
 	if (type == AMove) {
-		destf = pieces[piece]->original->offset[axis];
-		if (axis == 0) {
-			destf -= dest;
-		} else {
-			destf += dest;
-		}
+		destf = pieces[piece]->original->offset[axis] + dest;
 	} else {
 		destf = dest;
 		if (type == ATurn) {
@@ -502,12 +497,7 @@ void CUnitScript::MoveNow(int piece, int axis, float destination)
 	}
 
 	LocalModelPiece* p = pieces[piece];
-	p->pos[axis] = pieces[piece]->original->offset[axis];
-	if (axis==0) {
-		p->pos[axis] -= destination;
-	} else {
-		p->pos[axis] += destination;
-	}
+	p->pos[axis] = pieces[piece]->original->offset[axis] + destination;
 	p->updated = true;
 }
 
