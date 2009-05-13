@@ -88,6 +88,7 @@ public:
 	virtual void AnimFinished(AnimType type, int piece, int axis);
 
 public:
+	static void HandleFreed(CLuaHandle* handle);
 	static bool PushEntries(lua_State* L);
 
 private:
