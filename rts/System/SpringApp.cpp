@@ -98,10 +98,12 @@ void SpringApp::SigAbrtHandler(int unused)
 	#endif
 }
 
+
+
 /**
  * Initializes SpringApp variables
  */
-SpringApp::SpringApp ()
+SpringApp::SpringApp()
 {
 	cmdline = 0;
 	screenWidth = screenHeight = 0;
@@ -121,6 +123,8 @@ SpringApp::~SpringApp()
 
 	creg::System::FreeClasses ();
 }
+
+
 
 #ifdef WIN32
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
@@ -258,7 +262,7 @@ bool SpringApp::Initialize()
 	LuaOpenGL::Init();
 
 	// Create CGameSetup and CPreGame objects
-	Startup ();
+	Startup();
 
 	return true;
 }
@@ -310,7 +314,7 @@ static bool MultisampleVerify(void)
  *
  * Initializes the game window
  */
-bool SpringApp::InitWindow (const char* title)
+bool SpringApp::InitWindow(const char* title)
 {
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
 #ifdef WIN32
@@ -318,7 +322,7 @@ bool SpringApp::InitWindow (const char* title)
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
 	if ((SDL_Init(sdlInitFlags) == -1)) {
-		handleerror(NULL,"Could not initialize SDL.","ERROR",MBF_OK|MBF_EXCL);
+		handleerror(NULL, "Could not initialize SDL.", "ERROR", MBF_OK | MBF_EXCL);
 		return false;
 	}
 
@@ -326,7 +330,7 @@ bool SpringApp::InitWindow (const char* title)
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
 
-	if (!SetSDLVideoMode ())
+	if (!SetSDLVideoMode())
 		return false;
 
 	return true;
@@ -337,7 +341,7 @@ bool SpringApp::InitWindow (const char* title)
  *
  * Sets SDL video mode options/settings
  */
-bool SpringApp::SetSDLVideoMode ()
+bool SpringApp::SetSDLVideoMode()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
@@ -366,18 +370,7 @@ bool SpringApp::SetSDLVideoMode ()
 		return false;
 	}
 
-	// set window position
-	if (!fullscreen) {
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-
-		if (SDL_GetWMInfo(&info)) {
-#ifdef _WIN32
-			MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
-#endif
-		}
-	}
-
+	RestoreWindowPosition();
 
 #ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
@@ -443,6 +436,7 @@ bool SpringApp::SetSDLVideoMode ()
 }
 
 
+
 // origin for our coordinates is the bottom left corner
 bool SpringApp::GetDisplayGeometry()
 {
@@ -455,6 +449,8 @@ bool SpringApp::GetDisplayGeometry()
 
 #ifdef __APPLE__
 	return false;
+
+
 #elif !defined(_WIN32)
 	info.info.x11.lock_func();
 	{
@@ -464,6 +460,7 @@ bool SpringApp::GetDisplayGeometry()
 		XWindowAttributes attrs;
 		XGetWindowAttributes(display, window, &attrs);
 		const Screen* screen = attrs.screen;
+
 		gu->screenSizeX = WidthOfScreen(screen);
 		gu->screenSizeY = HeightOfScreen(screen);
 		gu->winSizeX = attrs.width;
@@ -476,6 +473,7 @@ bool SpringApp::GetDisplayGeometry()
 		gu->winPosY = gu->screenSizeY - gu->winSizeY - yp;
 	}
 	info.info.x11.unlock_func();
+
 #else
 	gu->screenSizeX = GetSystemMetrics(SM_CXFULLSCREEN);
 	gu->screenSizeY = GetSystemMetrics(SM_CYFULLSCREEN);
@@ -485,7 +483,7 @@ bool SpringApp::GetDisplayGeometry()
 		return false;
 	}
 
-	if((rect.right - rect.left)==0 || (rect.bottom - rect.top)==0)
+	if ((rect.right - rect.left) == 0 || (rect.bottom - rect.top) == 0)
 		return false;
 
 	gu->winSizeX = rect.right - rect.left;
@@ -506,6 +504,7 @@ bool SpringApp::GetDisplayGeometry()
 #endif // _WIN32
 	return true;
 }
+
 
 
 void SpringApp::SetupViewportGeometry()
@@ -554,10 +553,11 @@ void SpringApp::SetupViewportGeometry()
 }
 
 
+
 /**
  * Initializes OpenGL
  */
-void SpringApp::InitOpenGL ()
+void SpringApp::InitOpenGL()
 {
 	SetupViewportGeometry();
 
@@ -936,11 +936,11 @@ void SpringApp::UpdateSDLKeys ()
  * Executes the application
  * (contains main game loop)
  */
-int SpringApp::Run (int argc, char *argv[])
+int SpringApp::Run(int argc, char *argv[])
 {
 	cmdline = new BaseCmd(argc, argv);
 
-	if (!Initialize ())
+	if (!Initialize())
 		return -1;
 
 #ifdef WIN32
@@ -1126,10 +1126,37 @@ int SpringApp::Run (int argc, char *argv[])
 	return 0;
 }
 
+
+
+/**
+ * Restores position of the window, if we're not in fullscreen
+ */
+void SpringApp::RestoreWindowPosition()
+{
+	if (!fullscreen) {
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+
+		if (SDL_GetWMInfo(&info)) {
+#ifdef _WIN32
+			MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
+#else
+			info.info.x11.lock_func();
+
+			{
+				XMoveWindow(info.info.x11.display, info.info.x11.wmwindow, windowPosX, windowPosY);
+			}
+
+			info.info.x11.unlock_func();
+#endif
+		}
+	}
+}
+
 /**
  * Saves position of the window, if we're not in fullscreen
  */
-void SpringApp::SaveWindowGeometry()
+void SpringApp::SaveWindowPosition()
 {
 	if (!fullscreen) {
 		SDL_SysWMinfo info;
@@ -1145,11 +1172,27 @@ void SpringApp::SaveWindowGeometry()
 				configHandler->Set("WindowPosY", windowPosY);
 			}
 #else
-			// TODO FIXME XXX
+			info.info.x11.lock_func();
+
+			{
+				Display* display = info.info.x11.display;
+				Window window    = info.info.x11.window;
+				Window tmp;
+
+				XWindowAttributes attrs;
+				XGetWindowAttributes(display, window, &attrs);
+				XTranslateCoordinates(display, window, attrs.root, 0, 0, &windowPosX, &windowPosY, &tmp);
+			}
+
+			info.info.x11.unlock_func();
+
+			configHandler->Set("WindowPosX", windowPosX);
+			configHandler->Set("WindowPosY", windowPosY);
 #endif
 		}
 	}
 }
+
 
 
 /**
@@ -1157,7 +1200,7 @@ void SpringApp::SaveWindowGeometry()
  */
 void SpringApp::Shutdown()
 {
-	SaveWindowGeometry();
+	SaveWindowPosition();
 
 	if (pregame)
 		delete pregame;			//in case we exit during init
