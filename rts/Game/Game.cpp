@@ -4600,7 +4600,11 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("Unknown cob script: %s", udef->scriptPath.c_str());
 		return;
 	}
-	CCobFile& newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
+	CCobFile* newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
+	if (newScript == NULL) {
+		logOutput.Print("Could not load COB script from: %s", udef->scriptPath.c_str());
+		return;
+	}
 	int count = 0;
 	for (size_t i = 0; i < uh->MaxUnits(); i++) {
 		CUnit* unit = uh->units[i];
@@ -4609,7 +4613,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 			if (cob != NULL && cob->GetScriptAddr() == oldScript) {
 				count++;
 				delete unit->script;
-				unit->script = new CCobInstance(newScript, unit);
+				unit->script = new CCobInstance(*newScript, unit);
 				unit->script->Create();
 			}
 		}
