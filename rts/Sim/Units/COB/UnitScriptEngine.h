@@ -7,22 +7,22 @@
 #include "LogOutput.h"
 
 #include <list>
-#include <queue>
-#include <map>
 
+class CUnit;
 class CUnitScript;
 
 
 class CUnitScriptEngine
 {
 protected:
-	std::list<CUnitScript *> animating;         //hash would be optimal. but not crucial.
-	void CheckForDuplicates(const char* name, CUnitScript *instance);
+	std::list<CUnitScript*> animating;         //hash would be optimal. but not crucial.
+	void CheckForDuplicates(const char* name, CUnitScript* instance);
+
 public:
 	CUnitScriptEngine(void);
 	~CUnitScriptEngine(void);
-	void AddInstance(CUnitScript *instance);
-	void RemoveInstance(CUnitScript *instance);
+	void AddInstance(CUnitScript* instance);
+	void RemoveInstance(CUnitScript* instance);
 	void Tick(int deltaTime);
 };
 
