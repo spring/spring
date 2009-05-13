@@ -7,6 +7,7 @@
 #include "CobInstance.h"
 #include "LogOutput.h"
 #include "LuaInclude.h"
+#include "NullUnitScript.h"
 #include "UnitScriptNames.h"
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
@@ -226,8 +227,32 @@ CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 
 CLuaUnitScript::~CLuaUnitScript()
 {
-	for (map<string, int>::iterator it = scriptNames.begin(); it != scriptNames.end(); ++it) {
-		luaL_unref(L, LUA_REGISTRYINDEX, it->second);
+	// if L is NULL then the lua_State is closed/closing (see HandleFreed)
+	if (L != NULL) {
+		for (map<string, int>::iterator it = scriptNames.begin(); it != scriptNames.end(); ++it) {
+			luaL_unref(L, LUA_REGISTRYINDEX, it->second);
+		}
+	}
+}
+
+
+void CLuaUnitScript::HandleFreed(CLuaHandle* handle)
+{
+	std::list<CUnit*>::iterator ui;
+	for (ui = uh->activeUnits.begin(); ui != uh->activeUnits.end(); ++ui) {
+		CLuaUnitScript* script = dynamic_cast<CLuaUnitScript*>((*ui)->script);
+
+		// kill only the Lua scripts running in this handle
+		if (script != NULL && script->handle == handle) {
+
+			// we don't have anything better ...
+			(*ui)->script = new CNullUnitScript(*ui);
+
+			// signal the destructor it shouldn't unref refs
+			script->L = NULL;
+
+			delete script;
+		}
 	}
 }
 

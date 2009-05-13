@@ -40,6 +40,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/LuaUnitScript.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "EventHandler.h"
 #include "LogOutput.h"
@@ -75,6 +76,8 @@ CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order, const string
 
 CLuaHandleSynced::~CLuaHandleSynced()
 {
+	// kill all unitscripts running in this handle
+	CLuaUnitScript::HandleFreed(this);
 }
 
 
