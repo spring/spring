@@ -13,7 +13,8 @@
 #include "UnitTypes/ExtractorBuilding.h"
 #include "UnitTypes/Factory.h"
 #include "UnitTypes/TransportUnit.h"
-#include "COB/CobEngine.h"
+#include "COB/UnitScript.h"
+#include "COB/UnitScriptFactory.h"
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -349,7 +350,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 	}
 
-	unit->script = new CCobInstance(GCobFileHandler.GetCobFile(ud->scriptPath), unit);
+	unit->script = CUnitScriptFactory::CreateScript(ud->scriptPath, unit);
 
 	unit->weapons.reserve(ud->weapons.size());
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {

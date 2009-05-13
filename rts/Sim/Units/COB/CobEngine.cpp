@@ -24,11 +24,16 @@ CCobFileHandler GCobFileHandler;
 int GCurrentTime;
 
 
+/******************************************************************************/
+/******************************************************************************/
+
+
 CCobEngine::CCobEngine()
 	: curThread(NULL)
 {
 	GCurrentTime = 0;
 }
+
 
 CCobEngine::~CCobEngine()
 {
@@ -47,6 +52,7 @@ CCobEngine::~CCobEngine()
 	}
 }
 
+
 CCobFileHandler::~CCobFileHandler()
 {
 	//Free all cobfiles
@@ -54,6 +60,7 @@ CCobFileHandler::~CCobFileHandler()
 		delete i->second;
 	}
 }
+
 
 //A thread wants to continue running at a later time, and adds itself to the scheduler
 void CCobEngine::AddThread(CCobThread *thread)
@@ -147,6 +154,7 @@ void CCobEngine::Tick(int deltaTime)
 	}
 }
 
+
 void CCobEngine::ShowScriptError(const string& msg)
 {
 	if (curThread)
@@ -155,27 +163,30 @@ void CCobEngine::ShowScriptError(const string& msg)
 		logOutput.Print("ScriptError: %s outside script execution", msg.c_str());
 }
 
-CCobFile& CCobFileHandler::GetCobFile(const string& name)
+
+/******************************************************************************/
+/******************************************************************************/
+
+CCobFile* CCobFileHandler::GetCobFile(const string& name)
 {
 	//Already known?
 	map<string, CCobFile *>::iterator i;
 	if ((i = cobFiles.find(name)) != cobFiles.end()) {
-		return *(i->second);
+		return i->second;
 	}
 
 	CFileHandler f(name);
 	if (!f.FileExists()) {
-		handleerror(0,"No cob-file",name.c_str(),0);
-		//Need to return something maybe.. this is pretty fatal though
+		return NULL;
 	}
 	CCobFile *cf = new CCobFile(f, name);
 
 	cobFiles[name] = cf;
-	return *cf;
+	return cf;
 }
 
 
-CCobFile& CCobFileHandler::ReloadCobFile(const string& name)
+CCobFile* CCobFileHandler::ReloadCobFile(const string& name)
 {
 	map<string, CCobFile *>::iterator it = cobFiles.find(name);
 	if (it == cobFiles.end()) {
@@ -197,3 +208,7 @@ const CCobFile* CCobFileHandler::GetScriptAddr(const string& name) const
 	}
 	return NULL;
 }
+
+
+/******************************************************************************/
+/******************************************************************************/

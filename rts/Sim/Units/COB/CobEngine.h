@@ -47,8 +47,8 @@ protected:
 	std::map<std::string, CCobFile *> cobFiles;
 public:
 	~CCobFileHandler();
-	CCobFile& GetCobFile(const std::string& name);
-	CCobFile& ReloadCobFile(const std::string& name);
+	CCobFile* GetCobFile(const std::string& name);
+	CCobFile* ReloadCobFile(const std::string& name);
 	const CCobFile* GetScriptAddr(const std::string& name) const;
 };
 

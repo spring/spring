@@ -61,7 +61,8 @@
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
 
-#include "COB/CobEngine.h"
+#include "COB/UnitScript.h"
+#include "COB/UnitScriptFactory.h"
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -2194,7 +2195,7 @@ void CUnit::PostLoad()
 
 	modelParser->CreateLocalModel(this);
 	// FIXME: how to handle other script types (e.g. Lua) here?
-	script = new CCobInstance(GCobFileHandler.GetCobFile(unitDef->scriptPath), this);
+	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
 
 	// Call initializing script functions
 	script->Create();
