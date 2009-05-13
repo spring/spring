@@ -28,6 +28,10 @@ public:
 	/// will stop a currently playing sound, if any
 	void Play(SoundItem* buffer, const float3& pos, float3 velocity, float volume, bool relative = false);
 	static void SetPitch(float newPitch);
+	bool IsValid() const
+	{
+		return (id == 0);
+	};
 
 private:
 	/// pitch shared by all sources
