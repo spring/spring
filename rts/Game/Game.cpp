@@ -2381,7 +2381,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		}
 		else {
-			luaRules->GotChatMsg(action.extra, playernum);
+			if (luaRules) luaRules->GotChatMsg(action.extra, playernum);
 		}
 	}
 	else if ((action.command == "luagaia") && (gs->frameNum > 1)) {
