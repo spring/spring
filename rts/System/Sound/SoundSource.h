@@ -30,7 +30,7 @@ public:
 	static void SetPitch(float newPitch);
 	bool IsValid() const
 	{
-		return (id == 0);
+		return (id != 0);
 	};
 
 private:
