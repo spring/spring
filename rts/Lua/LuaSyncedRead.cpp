@@ -4554,9 +4554,6 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 		return 0;
 	}
 	const CUnitScript* script = unit->script;
-	if (script == NULL) {
-		return 0;
-	}
 
 	if (!lua_isnumber(L, 2)) {
 		// return the whole script->piece map
@@ -4589,11 +4586,7 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CUnitScript* script = unit->script;
-	if (script == NULL) {
-		return 0;
-	}
-	const vector<LocalModelPiece*>& pieces = script->pieces;
+	const vector<LocalModelPiece*>& pieces = unit->script->pieces;
 
 	lua_newtable(L);
 	for (size_t sp = 0; sp < pieces.size(); sp++) {
@@ -4615,15 +4608,11 @@ int LuaSyncedRead::GetCOBUnitVar(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CUnitScript* script = unit->script;
-	if (script == NULL) {
-		return 0;
-	}
 	const int varID = luaL_checkint(L, 2);
 	if ((varID < 0) || (varID >= CUnitScript::UNIT_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = script->GetUnitVars()[varID];
+	const int value = unit->script->GetUnitVars()[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
