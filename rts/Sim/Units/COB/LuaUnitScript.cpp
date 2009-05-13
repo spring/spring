@@ -1022,7 +1022,7 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 int CLuaUnitScript::GetUnitCOBValue(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 
@@ -1064,7 +1064,7 @@ int CLuaUnitScript::GetUnitCOBValue(lua_State* L)
 int CLuaUnitScript::SetUnitCOBValue(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int args = lua_gettop(L); // number of arguments
@@ -1087,7 +1087,7 @@ int CLuaUnitScript::SetPieceVisibility(lua_State* L)
 {
 	// void SetVisibility(int piece, bool visible);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 
@@ -1105,7 +1105,7 @@ int CLuaUnitScript::EmitSfx(lua_State* L)
 {
 	// void EmitSfx(int type, int piece);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 
@@ -1122,7 +1122,7 @@ int CLuaUnitScript::AttachUnit(lua_State* L)
 {
 	// void AttachUnit(int piece, int unit);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
@@ -1139,7 +1139,7 @@ int CLuaUnitScript::DropUnit(lua_State* L)
 {
 	// void DropUnit(int unit);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const CUnit* transportee = ParseUnit(L, __FUNCTION__, 2);
@@ -1155,7 +1155,7 @@ int CLuaUnitScript::Explode(lua_State* L)
 {
 	// void Explode(int piece, int flags);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
@@ -1169,7 +1169,7 @@ int CLuaUnitScript::ShowFlare(lua_State* L)
 {
 	// void ShowFlare(int piece);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
@@ -1182,7 +1182,7 @@ int CLuaUnitScript::Spin(lua_State* L)
 {
 	// void Spin(int piece, int axis, int speed, int accel);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
@@ -1199,7 +1199,7 @@ int CLuaUnitScript::StopSpin(lua_State* L)
 {
 	// void StopSpin(int piece, int axis, int decel);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
@@ -1216,7 +1216,7 @@ int CLuaUnitScript::Turn(lua_State* L)
 	// void Turn(int piece, int axis, int speed, int destination);
 	// void TurnNow(int piece, int axis, int destination);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
@@ -1238,7 +1238,7 @@ int CLuaUnitScript::Move(lua_State* L)
 	// void Move(int piece, int axis, int speed, int destination);
 	// void MoveNow(int piece, int axis, int destination);
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
@@ -1258,7 +1258,7 @@ int CLuaUnitScript::Move(lua_State* L)
 int CLuaUnitScript::IsInAnimation(lua_State* L, const char* caller, AnimType type)
 {
 	CUnit* unit = ParseUnit(L, caller, 1);
-	if ((unit == NULL) || (unit->script == NULL)) {
+	if (unit == NULL) {
 		return 0;
 	}
 	const int piece = luaL_checkint(L, 2) - 1;
