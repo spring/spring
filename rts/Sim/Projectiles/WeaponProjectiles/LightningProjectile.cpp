@@ -121,9 +121,9 @@ void CLightningProjectile::Draw(void)
 
 void CLightningProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 {
-	unsigned char color[4] = {(unsigned char)color[0]*255,(unsigned char)color[1]*255,(unsigned char)color[2]*255,255};
-	lines.AddVertexQC(pos, color);
-	lines.AddVertexQC(endPos, color);
+	unsigned char lcolor[4] = {(unsigned char)color[0]*255,(unsigned char)color[1]*255,(unsigned char)color[2]*255,255};
+	lines.AddVertexQC(pos, lcolor);
+	lines.AddVertexQC(endPos, lcolor);
 }
 
 void CLightningProjectile::DependentDied(CObject* o)

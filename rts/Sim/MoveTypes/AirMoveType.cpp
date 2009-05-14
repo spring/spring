@@ -913,10 +913,7 @@ void CAirMoveType::UpdateLanding(void)
 	} else {
 		// see if landing spot is still empty
 		/*
-		float3 tpos = owner->pos;
-		owner->pos = reservedLandingPos;
-		int2 mp = owner->GetMapPos();
-		owner->pos = tpos;
+		int2 mp = owner->GetMapPos(reservedLandingPos);
 
 		for (int z = mp.y; z < mp.y + owner->ysize; z++) {
 			for (int x = mp.x; x < mp.x + owner->xsize; x++) {
@@ -1180,10 +1177,7 @@ float3 CAirMoveType::FindLandingPos(void)
 
 	tryPos.CheckInBounds();
 
-	float3 tpos = owner->pos;
-	owner->pos = tryPos;
-	int2 mp = owner->GetMapPos();
-	owner->pos = tpos;
+	int2 mp = owner->GetMapPos(tryPos);
 
 	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {

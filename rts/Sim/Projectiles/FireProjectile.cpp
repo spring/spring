@@ -102,7 +102,7 @@ void CFireProjectile::Update(void)
 		}
 	}
 
-	for(std::list<SubParticle>::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
+	for(SUBPARTICLE_LIST::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
 		pi->age+=ageSpeed;
 		if(pi->age>1){
 			subParticles.pop_back();
@@ -111,7 +111,7 @@ void CFireProjectile::Update(void)
 		pi->pos+=speed + wind.GetCurrentWind()*pi->age*0.05f + pi->posDif*0.1f;
 		pi->posDif*=0.9f;
 	}
-	for(std::list<SubParticle>::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
+	for(SUBPARTICLE_LIST::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
 		pi->age+=ageSpeed*1.5f;
 		if(pi->age>1){
 			subParticles2.pop_back();
@@ -132,7 +132,7 @@ void CFireProjectile::Draw(void)
 	col[3]=1;
 	unsigned char col2[4];
 	va->EnlargeArrays(subParticles2.size()*4+subParticles.size()*8,0,VA_SIZE_TC);
-	for(std::list<SubParticle>::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
+	for(SUBPARTICLE_LIST::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
 		float age=pi->age+ageSpeed*gu->timeOffset;
 		float size=pi->maxSize*(age);
 		float rot=pi->rotSpeed*age;
@@ -153,7 +153,7 @@ void CFireProjectile::Draw(void)
 		va->AddVertexQTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
 		va->AddVertexQTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
 	}
-	for(std::list<SubParticle>::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
+	for(SUBPARTICLE_LIST::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
 		float age=pi->age+ageSpeed*gu->timeOffset;
 		float size=pi->maxSize*fastmath::sqrt(age);
 		float rot=pi->rotSpeed*age;
