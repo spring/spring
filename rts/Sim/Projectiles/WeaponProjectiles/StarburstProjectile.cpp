@@ -94,11 +94,15 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
 		drawTrail=false;
 
-	for(int a=0;a<5;++a){
+	for(int a = 0; a < 5; ++a) {
 		oldInfos[a]=new OldInfo;
 		oldInfos[a]->dir=dir;
 		oldInfos[a]->pos=pos;
 		oldInfos[a]->speedf=curSpeed;
+		for(float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f) {
+			float ageMod = 1.0f;
+			oldInfos[a]->ageMods.push_back(ageMod);
+		}
 	}
 	castShadow=true;
 
@@ -228,6 +232,10 @@ void CStarburstProjectile::Update(void)
 	oldInfos[0]->dir = dir;
 	oldInfos[0]->speedf = curSpeed;
 	oldInfos[0]->ageMods.clear();
+	for(float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f) {
+		float ageMod = (missileAge < 20) ? 1 : 0.6f + rand() * 0.8f / RAND_MAX;
+		oldInfos[0]->ageMods.push_back(ageMod);
+	}
 
 	age++;
 	numParts++;
@@ -261,7 +269,7 @@ void CStarburstProjectile::Draw(void)
 	unsigned char col2[4];
 
 	if (weaponDef->visuals.smokeTrail) {
-		va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
+		va->EnlargeArrays(4+4*8/*numParts*/,0,VA_SIZE_TC);
 		if(drawTrail){		//draw the trail as a single quad
 
 			float3 dif(drawPos-camera->pos);
@@ -336,22 +344,18 @@ void CStarburstProjectile::DrawCallback(void)
 	inArray=true;
 	unsigned char col[4];
 
-	for(int age=0;age<5;++age){
-		float3 opos=oldInfos[age]->pos;
-		float3 odir=oldInfos[age]->dir;
-		float	ospeed=oldInfos[age]->speedf;
-		bool createAgeMods=oldInfos[age]->ageMods.empty();
-		for(float a=0;a<ospeed+0.6f;a+=0.15f){
-			float ageMod;
-			if(createAgeMods){
-				if (missileAge < 20)
-					ageMod = 1;
-				else
-					ageMod=0.6f+rand()*0.8f/RAND_MAX;
-				oldInfos[age]->ageMods.push_back(ageMod);
-			} else {
-				ageMod=oldInfos[age]->ageMods[(int)(a/0.15f)];
-			}
+	for(int age = 0; age < 5; ++age) {
+#if defined(USE_GML) && GML_ENABLE_SIM
+		OldInfo *oldinfo = *(OldInfo * volatile *)&oldInfos[age];
+#else
+		OldInfo *oldinfo = oldInfos[age];
+#endif
+		float3 opos=oldinfo->pos;
+		float3 odir=oldinfo->dir;
+		float ospeed=oldinfo->speedf;
+		float a = 0;
+		for(AGEMOD_VECTOR::iterator ai = oldinfo->ageMods.begin(); ai != oldinfo->ageMods.end(); ++ai, a += 0.15f) {
+			float ageMod = *ai;
 			float age2=((age+a/(ospeed+0.01f)))*0.2f;
 			float3 interPos=opos-odir*(age*0.5f+a);
 			float drawsize;

@@ -81,7 +81,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
 		throw content_error("Couldn't find unittype " +  name);
 	}
 
-	LoadUnit(ud, pos, team, build, facing, builder);
+	return LoadUnit(ud, pos, team, build, facing, builder);
 }
 
 
