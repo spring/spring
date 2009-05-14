@@ -99,6 +99,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 			{
 				sources.pop_back();
 				maxSounds = i-1;
+				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
 				break;
 			}
 		}
