@@ -316,6 +316,13 @@ namespace creg {
 	void TCls::_ConstructInstance(void *d) { new(d) MyType ctor_args; } \
 	void TCls::_DestructInstance(void *d) { ((MyType*)d)->~MyType(); } \
 	creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
+// Stupid GCC likes this template<> crap very much
+#define CR_BIND_TEMPLATE(TCls, ctor_args) \
+	template<> creg::IMemberRegistrator* TCls::memberRegistrator=0;	\
+	template<> creg::Class* TCls::GetClass() { return binder.class_; } \
+	template<> void TCls::_ConstructInstance(void *d) { new(d) MyType ctor_args; } \
+	template<> void TCls::_DestructInstance(void *d) { ((MyType*)d)->~MyType(); } \
+	template<> creg::ClassBinder TCls::binder(#TCls, 0, 0, &TCls::memberRegistrator, sizeof(TCls), TCls::_ConstructInstance, TCls::_DestructInstance);
 
 /** @def CR_BIND_DERIVED_INTERFACE
  * Bind an abstract derived class
