@@ -972,44 +972,60 @@ template<class T,int S>
 class gmlCircularQueue {
 	CR_DECLARE_STRUCT(gmlCircularQueue);
 	T elements[S+1];
-	int front,back;
+	size_t front,back;
 	size_t csize,msize;
 public:
 	gmlCircularQueue(): front(0), back(0), csize(0), msize(S) {
 	}
 	~gmlCircularQueue() {
 	}
-	void push_back(T a) {
+	void push_back(T &a) {
 		elements[back] = a;
-		if(++back > msize)
+		if(csize == msize) {
+			if(front == msize)
+				front = 0;
+			else
+				++front;
+		}
+		else
+			++csize;
+		if(back == msize)
 			back = 0;
-		if(csize < msize)
-			++csize;
-		else if(++front > msize)
-			front = 0;
+		else
+			++back;
 	}
-	void push_front(T a) {
-		if(--front < 0)
-			front = msize;
-		elements[front] = a;
-		if(csize < msize)
+	void push_front(T &a) {
+		int newfront = (front == 0) ? msize : front - 1;
+		elements[newfront] = a;
+		front = newfront;
+		if(csize != msize)
 			++csize;
-		else if(--back < 0)
+		else if(back == 0)
 			back = msize;
+		else
+			--back;
 	}
 	T &pop_back() {
-		assert(csize > 0);
-		if(--back < 0)
-			back = msize;
+#ifdef _DEBUG
+		assert(csize != 0);
+#endif
 		--csize;
+		if(back == 0)
+			back = msize;
+		else
+			--back;
 		return elements[back];
 	}
 	T &pop_front() {
-		assert(csize > 0);
-		T &ret = elements[front];
-		if(++front > msize)
-			front = 0;
+#ifdef _DEBUG
+		assert(csize != 0);
+#endif
 		--csize;
+		T &ret = elements[front];
+		if(front == msize)
+			front = 0;
+		else
+			++front;
 		return ret;
 	}
 	size_t size() {
@@ -1043,10 +1059,10 @@ template<class U>
 	typedef CQIter<T> iterator;
 
 	iterator begin() {
-		return iterator(front,this);
+		return iterator(front, this);
 	}
 	iterator end() {
-		return iterator(front+csize,this);
+		return iterator(front + csize, this);
 	}
 };
 
