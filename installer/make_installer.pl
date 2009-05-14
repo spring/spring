@@ -60,6 +60,8 @@ if($?) {
 
 system("sh", "installer/tasclient_download.sh");
 system("sh", "installer/springlobby_download.sh");
-system("wget", "-O installer/downloads/TASServer.jar", "http://springrts.com/dl/TASServer.jar");
-system("wget", "-O installer/downloads/springsettings.exe",  "http://www.springlobby.info/installer/springsettings.exe");
+chdir("$installerDir/downloads");
+system("wget", "-N", "http://springrts.com/dl/TASServer.jar");
+system("wget", "-N",  "http://www.springlobby.info/installer/springsettings.exe");
+chdir("$installerDir/..");
 system("makensis -V3$testBuildString -DREVISION=$tag $allVersStr installer/spring.nsi");
