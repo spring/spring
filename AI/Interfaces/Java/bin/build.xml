@@ -3,10 +3,11 @@
 <project name="Java" basedir="../" default="pack">
 	<!--
 		This file does:
-			* generate java sources
-			* compile java sources
-			* pack java classes and sources into jar files
-			* install these two jar files
+			* generate-src:  generate java sources
+			* compile:       compile java sources
+			* doc:           generate javadoc
+			* pack:          pack java classes and sources into jar files
+			* dist:          install these two jar files
 	-->
 
 	<loadfile property="interface.version" srcFile="VERSION"/>
@@ -23,7 +24,9 @@
 	<property name="dist.home" location="${spring.home}/game"/>
 	<property name="dist.dir"
 				location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}"/>
-	<property name="src.generated" location="java/generated"/>
+	<property name="doc.dir"
+				location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}/doc/jdoc"/>
+	<property name="src.generated" location="${build.dir}/generated-java-src"/>
 
 	<property name="jar.file.name" value="AIInterface"/>
 	<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
@@ -34,7 +37,11 @@
 			location="${spring.home}/rts/ExternalAI/Interface"/>
 	<property name="src" location="java/src"/>
 	<property name="bin.dir" location="bin"/>
-	<path id="class_path">
+	<path id="source.path.id">
+		<pathelement path="${src}"/>
+		<pathelement path="${src.generated}"/>
+	</path>
+	<path id="class.path.id">
 		<fileset dir="data">
 			<include name="jlib/**/*.jar"/>
 		</fileset>
@@ -116,10 +123,19 @@
 
 	<target name="compile" depends="generate-src">
 		<javac destdir="${build.dir}">
-			<src path="${src}"/>
-			<src path="${src.generated}"/>
-			<classpath refid="class_path"/>
+			<src refid="source.path.id"/>
+			<classpath refid="class.path.id"/>
 		</javac>
+	</target>
+
+
+	<target name="doc" depends="generate-src">
+		<mkdir dir="${doc.dir}"/>
+		<javadoc
+				destdir="${doc.dir}"
+				sourcepathref="source.path.id"
+				classpathref="class.path.id"
+				Windowtitle="Sprint RTS Java AI Interface javadoc"/>
 	</target>
 
 

@@ -1413,6 +1413,17 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			return 1;
 		}
 
+		case AIHCPauseId: {
+			AIHCPause* cmdData = (AIHCPause*) data;
+
+			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, cmdData->enable));
+			logOutput.Print(
+					"Skirmish AI controlling team %i paused the game, reason: %s",
+					team, cmdData->reason != NULL ? cmdData->reason : "UNSPECIFIED");
+
+			return 1;
+		}
+
 		default:
 			return 0;
 	}
