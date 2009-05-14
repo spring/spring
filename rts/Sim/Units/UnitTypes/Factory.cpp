@@ -22,6 +22,7 @@
 #include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "Sim/Units/UnitDefHandler.h"
 #include "Sync/SyncTracer.h"
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
@@ -36,7 +37,8 @@ CR_BIND_DERIVED(CFactory, CBuilding, );
 CR_REG_METADATA(CFactory, (
 				CR_MEMBER(buildSpeed),
 				CR_MEMBER(quedBuild),
-				CR_MEMBER(nextBuild),
+				//CR_MEMBER(nextBuild),
+				CR_MEMBER(nextBuildName),
 				CR_MEMBER(curBuild),
 				CR_MEMBER(opening),
 				CR_MEMBER(lastBuild),
@@ -51,6 +53,7 @@ CR_REG_METADATA(CFactory, (
 CFactory::CFactory():
 	buildSpeed(100),
 	quedBuild(false),
+	nextBuild(0),
 	curBuild(0),
 	opening(false),
 	lastBuild(-1000)
@@ -70,6 +73,7 @@ CFactory::~CFactory()
 
 void CFactory::PostLoad()
 {
+	nextBuild = unitDefHandler->GetUnitByName(nextBuildName);
 	if(opening){
 		cob->Call(COBFN_Activate);
 	}
@@ -243,8 +247,7 @@ void CFactory::Update()
 	CBuilding::Update();
 }
 
-
-void CFactory::StartBuild(string type)
+void CFactory::StartBuild(const UnitDef* ud)
 {
 	if (beingBuilt)
 		return;
@@ -256,9 +259,9 @@ void CFactory::StartBuild(string type)
 
 	if (curBuild)
 		StopBuild();
-
 	quedBuild = true;
-	nextBuild = type;
+	nextBuild = ud;
+	nextBuildName = ud->name;
 
 	if (!opening && !stunned) {
 		cob->Call(COBFN_Activate);

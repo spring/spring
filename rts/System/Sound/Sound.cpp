@@ -93,13 +93,16 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		}
 
 		// Generate sound sources
-		#if (BOOST_VERSION >= 103500)
-		sources.resize(maxSounds);
-		#else
 		for (int i = 0; i < maxSounds; i++) {
 			sources.push_back(new SoundSource());
+			if (!sources[i].IsValid())
+			{
+				sources.pop_back();
+				maxSounds = i-1;
+				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+				break;
+			}
 		}
-		#endif
 
 		// Set distance model (sound attenuation)
 		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);

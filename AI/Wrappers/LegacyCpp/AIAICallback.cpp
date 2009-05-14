@@ -1528,6 +1528,16 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 			cppCmdData->hitUID = cCmdData.hitUID;
 			break;
 		}
+
+		case AIHCPauseId: {
+			AIHCPause* cppCmdData = (AIHCPause*) data;
+			SPauseCommand cCmdData = {
+				cppCmdData->enable,
+				cppCmdData->reason
+			};
+			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PAUSE, &cCmdData);
+			break;
+		}
 	}
 
 	return ret;
