@@ -10,6 +10,8 @@
   CreateDirectory "$INSTDIR\maps"
   CreateDirectory "$INSTDIR\mods"
 
+  File "..\downloads\TASServer.jar"
+
   ; DLLs (updated in mingwlibs-v8)
   File "..\mingwlibs\dll\glew32.dll"
   File "..\mingwlibs\dll\python25.dll"
