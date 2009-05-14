@@ -57,6 +57,8 @@ if($?) {
   chomp($tag);
   print "Creating installer for release $tag\n";
 }
+
 system("sh", "installer/tasclient_download.sh");
 system("sh", "installer/springlobby_download.sh");
+system("wget", "-O installer/downloads/TASServer.jar http://springrts.com/dl/TASServer.jar");
 system("makensis -V3$testBuildString -DREVISION=$tag $allVersStr installer/spring.nsi");
