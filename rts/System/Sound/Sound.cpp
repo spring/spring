@@ -38,6 +38,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
 	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
+	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
 
@@ -324,6 +325,11 @@ void CSound::Update()
 
 	if (sources.empty())
 		return;
+
+	Channels::General.UpdateFrame();
+	Channels::Battle.UpdateFrame();
+	Channels::UnitReply.UpdateFrame();
+	Channels::UserInterface.UpdateFrame();
 
 	if (updateCounter % 2)
 	{
