@@ -77,7 +77,7 @@ CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitByName(name);
-	if (!ud) {
+	if (ud==NULL) {
 		throw content_error("Couldn't find unittype " +  name);
 	}
 
