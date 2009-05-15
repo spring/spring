@@ -709,7 +709,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	else {
 #endif
 		int camBty = (int)math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
-		camBty = std::max(0,std::min(numBigTexY, camBty ));
+		camBty = std::max(0,std::min(numBigTexY-1, camBty ));
 
 		//! try to render in "front to back" (so start with the camera nearest BigGroundLines)
 		for (int bty = camBty; bty >= 0; --bty) {
