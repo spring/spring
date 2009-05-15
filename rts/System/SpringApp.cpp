@@ -353,10 +353,11 @@ bool SpringApp::SetSDLVideoMode()
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
 
-	depthBufferBits = configHandler->Get("DepthBufferBits", 32);
+	depthBufferBits = configHandler->Get("DepthBufferBits", 24);
+	if (gu) gu->depthBufferBits = depthBufferBits;
 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 1));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 8));
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -577,12 +578,14 @@ void SpringApp::UpdateOldConfigs()
 {
 	// not very neat, should be done in the installer someday
 	const int cfgVersion = configHandler->Get("Version",0);
-	if (cfgVersion < 1) {
+	if (cfgVersion < 2) {
 		// force an update to new defaults
 		configHandler->Delete("FontFile");
 		configHandler->Delete("FontSize");
 		configHandler->Delete("SmallFontSize");
-		configHandler->Set("Version",1);
+		configHandler->Delete("StencilBufferBits"); //! update to 8 bits
+		configHandler->Delete("DepthBufferBits"); //! update to 24bits
+		configHandler->Set("Version",2);
 	}
 }
 
