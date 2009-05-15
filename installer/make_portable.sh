@@ -4,6 +4,8 @@
 # Quit on error.
 set -e
 
+sh -c 'installer/springlobby_download.sh'
+
 # Sanity check.
 if [ ! -x /usr/bin/git ]; then
 	echo "Error: Couldn't find /usr/bin/git"
