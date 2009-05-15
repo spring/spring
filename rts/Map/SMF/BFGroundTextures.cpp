@@ -107,7 +107,7 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	for (int y = 0; y < numBigTexY; ++y) {
 		for (int x = 0; x < numBigTexX; ++x) {
 			GroundSquare* square = &squares[y * numBigTexX + x];
-			square->texLevel = 1;
+			square->texLevel = 2;
 			square->lastUsed = -100;
 			LoadSquare(x, y, 2);
 		}
@@ -159,27 +159,26 @@ void CBFGroundTextures::DrawUpdate(void)
 		dy = max(0.0f, float(fabs(dy) - (SQUARE_SIZE << 6)));
 
 		for (int x = 0; x < numBigTexX; ++x) {
+			GroundSquare* square = &squares[y * numBigTexX + x];
+
 			if (!TexSquareInView(x, y)) {
-				// no need to update this square's
-				// texture if we can't even see it
+				if (square->texLevel != 2 && square->lastUsed < gs->frameNum - 120) {
+					// `unload` texture (= load lowest mipmap)
+					// if the square wasn't visible for 4sec
+					glDeleteTextures(1, &square->texture);
+					LoadSquare(x, y, 2);
+				}
 				continue;
 			}
-
-			GroundSquare* square = &squares[y * numBigTexX + x];
 
 			float dx = cam2->pos.x - x * bigSquareSize * SQUARE_SIZE - (SQUARE_SIZE << 6);
 			dx = max(0.0f, float(fabs(dx) - (SQUARE_SIZE << 6)));
 			float dist = fastmath::sqrt(dx * dx + dy * dy);
 
-			if (square->lastUsed < gs->frameNum - 60)
-				dist = 8000;
-
 			float wantedLevel = dist / 1000;
 
 			if (wantedLevel > 2.5f)
 				wantedLevel = 2.5f;
-			if (wantedLevel < square->texLevel - 1)
-				wantedLevel = square->texLevel - 1;
 
 			if (square->texLevel != (int) wantedLevel) {
 				glDeleteTextures(1, &square->texture);
