@@ -5,7 +5,7 @@
 
   ; Main stuff
   File "..\game\spring.exe"
-  File "..\game\spring.def"
+  ; File "..\game\spring.def"
   File "..\game\unitsync.dll"
   CreateDirectory "$INSTDIR\maps"
   CreateDirectory "$INSTDIR\mods"
