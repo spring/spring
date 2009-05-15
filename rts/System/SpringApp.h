@@ -82,6 +82,13 @@ protected:
 	int windowPosY;
 
 	/**
+	 * @brief window state
+	 *
+	 * Game window state (0=normal,1=maximized,2=minimized)
+	 */
+	int windowState;
+
+	/**
 	 * @brief FSAA
 	 *
 	 * Level of fullscreen anti-aliasing
