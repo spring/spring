@@ -331,8 +331,7 @@ bool SpringApp::InitWindow(const char* title)
 	if (!SetSDLVideoMode())
 		return false;
 
-	if (!fullscreen)
-		RestoreWindowPosition();
+	RestoreWindowPosition();
 
 	glClearColor(0.0f,0.0f,0.0f,0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
