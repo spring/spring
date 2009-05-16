@@ -176,6 +176,8 @@ extern boost::mutex watermutex;
 extern boost::mutex dquemutex;
 extern boost::mutex scarmutex;
 extern boost::mutex trackmutex;
+extern boost::mutex rprojmutex;
+extern boost::mutex rflashmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -235,13 +237,13 @@ inline unsigned gmlGetTicks() {
 #define GML_GET_TICKS(var) var=gmlGetTicks()
 #define GML_UPDATE_TICKS() gmlUpdateTicks()
 
-#define GML_PARG_H , boost::recursive_mutex::scoped_lock *projlock = &boost::recursive_mutex::scoped_lock(projmutex)
-#define GML_PARG_C , boost::recursive_mutex::scoped_lock *projlock
-#define GML_PARG_P , projlock
+#define GML_PARG_H//, boost::recursive_mutex::scoped_lock *projlock = &boost::recursive_mutex::scoped_lock(projmutex)
+#define GML_PARG_C//, boost::recursive_mutex::scoped_lock *projlock
+#define GML_PARG_P//, projlock
 
-#define GML_FARG_H , boost::recursive_mutex::scoped_lock *flashlock = &boost::recursive_mutex::scoped_lock(flashmutex)
-#define GML_FARG_C , boost::recursive_mutex::scoped_lock *flashlock
-#define GML_FARG_P , flashlock
+#define GML_FARG_H// , boost::recursive_mutex::scoped_lock *flashlock = &boost::recursive_mutex::scoped_lock(flashmutex)
+#define GML_FARG_C// , boost::recursive_mutex::scoped_lock *flashlock
+#define GML_FARG_P// , flashlock
 
 #else
 

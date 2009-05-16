@@ -1105,16 +1105,15 @@ void CMiniMap::DrawForReal()
 
 		GML_RECMUTEX_LOCK(proj); // DrawForReal
 
-		if(ph->ps.size()>0) {
+		if(ph->renderprojectiles.size()>0) {
 			CVertexArray* lines=GetVertexArray();
 			CVertexArray* points=GetVertexArray();
 			lines->Initialize();
-			lines->EnlargeArrays(ph->ps.size()*2,0,VA_SIZE_C);
+			lines->EnlargeArrays(ph->renderprojectiles.size()*2,0,VA_SIZE_C);
 			points->Initialize();
-			points->EnlargeArrays(ph->ps.size(),0,VA_SIZE_C);
+			points->EnlargeArrays(ph->renderprojectiles.size(),0,VA_SIZE_C);
 
-			Projectile_List::iterator psi;
-			for(psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
+			for(std::set<CProjectile *>::iterator psi = ph->renderprojectiles.begin(); psi != ph->renderprojectiles.end(); ++psi) {
 				CProjectile* p = *psi;
 
 				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||

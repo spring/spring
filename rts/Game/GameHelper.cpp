@@ -399,6 +399,8 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 		length = groundLength;
 	}
 
+	GML_RECMUTEX_LOCK(quad); // TraceRayTeam
+
 	vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	hit = 0;
 
@@ -809,7 +811,7 @@ float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, fl
 {
 	float nearHit = length;
 
-	GML_RECMUTEX_LOCK(quad); //GuiTraceRayFeature
+	GML_RECMUTEX_LOCK(quad); // GuiTraceRayFeature
 
 	std::vector<int> quads = qf->GetQuadsOnRay(start, dir, length);
 	std::vector<int>::iterator qi;

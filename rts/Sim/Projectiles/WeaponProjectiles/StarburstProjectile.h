@@ -5,6 +5,12 @@
 #include "Sim/Misc/DamageArray.h"
 #include <vector>
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+#define AGEMOD_VECTOR gmlCircularQueue<float,64>
+#else
+#define AGEMOD_VECTOR std::vector<float>
+#endif
+
 class CSmokeTrailProjectile;
 
 class CStarburstProjectile :
@@ -49,7 +55,7 @@ public:
 		float3 pos;
 		float3 dir;
 		float speedf;
-		std::vector<float> ageMods;
+		AGEMOD_VECTOR ageMods;
 	};
 	OldInfo* oldInfos[5];
 };

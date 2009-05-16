@@ -1220,7 +1220,7 @@ int LuaOpenGL::Text(lua_State* L)
 		luaL_error(L,
 		  "Incorrect arguments to gl.Text(msg, x, y [,size] [,\"options\"]");
 	}
-	const string text = lua_tostring(L, 1);
+	const string text(lua_tostring(L, 1),lua_strlen(L, 1));
 	const float x     = lua_tonumber(L, 2);
 	const float y     = lua_tonumber(L, 3);
 
@@ -1273,7 +1273,7 @@ int LuaOpenGL::GetTextWidth(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.GetTextWidth(\"text\")");
 	}
 
-	const string text = lua_tostring(L, 1);
+	const string text(lua_tostring(L, 1),lua_strlen(L, 1));
 	const float width = font->GetTextWidth(text);
 	lua_pushnumber(L, width);
 	return 1;
@@ -1287,7 +1287,7 @@ int LuaOpenGL::GetTextHeight(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.GetTextHeight(\"text\")");
 	}
 
-	const string text = lua_tostring(L, 1);
+	const string text(lua_tostring(L, 1),lua_strlen(L, 1));
 	float descender;
 	const float height = font->GetTextHeight(text,&descender);
 	lua_pushnumber(L, height);
