@@ -407,8 +407,6 @@ void CGroundDecalHandler::Draw(void)
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER, 0.01f);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-10, -200);
 	glDepthMask(0);
