@@ -39,9 +39,20 @@ static inline std::string StringToLower(std::string s)
 
 static inline std::string GetFileExt(const std::string& s)
 {
-	size_t i = s.rfind('.', s.length());
+	size_t l = s.length();
+#ifdef WIN32
+	//! windows eats dots and spaces at the end of filenames
+	while (l > 0) {
+		if (s[l-1]=='.') {
+			l--;
+		} else if (s[l-1]==' ') {
+			l--;
+		} else break;
+	}
+#endif
+	size_t i = s.rfind('.', l);
 	if (i != std::string::npos) {
-		return s.substr(i+1, s.length() - i);
+		return s.substr(i+1, l - i);
 	}
 	return "";
 }
