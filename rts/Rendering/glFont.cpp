@@ -1295,28 +1295,6 @@ int CglFont::WrapInPlace(std::string& text, float _fontSize, const float maxWidt
 		}
 	}
 
-/*
-	std::list<std::string> lines = Wrap(text, fontSize, maxWidth, maxHeight);
-
-	size_t stringlength = 0;
-	std::list<std::string>::iterator li;
-	for (li = lines.begin(); li != lines.end(); li++)
-		stringlength += li->size() + 2;
-
-	text = "";
-
-	if (stringlength > 0) {
-		stringlength -= 2;
-		text.reserve(stringlength);
-	}
-
-	for (li = lines.begin(); li != lines.end();) {
-		text += (*li);
-		if (++li != lines.end())
-			text += "\x0d\x0a";
-	}
-*/
-
 	return numlines;
 }
 
@@ -1439,7 +1417,7 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 }
 
 
-void CglFont::Begin(const bool immediate)
+void CglFont::Begin(const bool immediate, const bool resetColors)
 {
 	if (inBeginEnd) {
 		logOutput.Print("FontError: called Begin() multiple times");
@@ -1450,8 +1428,8 @@ void CglFont::Begin(const bool immediate)
 	autoOutlineColor = true;
 
 	setColor = !immediate;
-	if (!immediate) {
-		SetColors(); //! default
+	if (resetColors) {
+		SetColors(); //! reset colors
 	}
 
 	va.Initialize();
@@ -1693,10 +1671,13 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 
 void CglFont::glWorldPrint(const float3 p, const float size, const std::string& str)
 {
+
 	glPushMatrix();
 	glTranslatef(p.x, p.y, p.z);
 	glCallList(CCamera::billboardList);
+	Begin(false,false);
 	glPrint(0.0f, 0.0f, size, FONT_CENTER | FONT_OUTLINE, str);
+	End();
 	glPopMatrix();
 }
 
@@ -1752,16 +1733,16 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 	float4 oldTextColor, oldOultineColor;
 	size_t sts,sos;
 
+	//! backup text & outline colors
+	oldTextColor = textColor;
+	oldOultineColor = outlineColor;
+	sts = stripTextColors.size();
+	sos = stripOutlineColors.size();
+
 	//! immediate mode?
 	const bool immediate = !inBeginEnd;
 	if (immediate) {
 		Begin(!(options & (FONT_OUTLINE | FONT_SHADOW)));
-	} else {
-		//! backup text & outline colors
-		oldTextColor = textColor;
-		oldOultineColor = outlineColor;
-		sts = stripTextColors.size();
-		sos = stripOutlineColors.size();
 	}
 
 
@@ -1774,15 +1755,17 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 		RenderString(x, y, sizeX, sizeY, text);
 	}
 
+
+	//! immediate mode?
 	if (immediate) {
 		End();
-	} else {
-		//! reset text & outline colors (if changed via in text colorcodes)
-		if (stripTextColors.size() > sts)
-			SetTextColor(&oldTextColor);
-		if (stripOutlineColors.size() > sos)
-			SetOutlineColor(&oldOultineColor);
 	}
+
+	//! reset text & outline colors (if changed via in text colorcodes)
+	if (stripTextColors.size() > sts)
+		SetTextColor(&oldTextColor);
+	if (stripOutlineColors.size() > sos)
+		SetOutlineColor(&oldOultineColor);
 }
 
 
