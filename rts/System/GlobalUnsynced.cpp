@@ -13,6 +13,7 @@
 #include <assert.h>
 
 #include "mmgr.h"
+#include "Util.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
