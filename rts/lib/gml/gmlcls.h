@@ -1032,7 +1032,7 @@ public:
 		return csize;
 	}
 	T &operator[](size_t i) {
-		return elements[(front+i)%(msize+1)];
+		return elements[(front + i) % (msize + 1)];
 	}
 	bool empty() {
 		return csize == 0;
@@ -1040,6 +1040,12 @@ public:
 	void clear() {
 		csize = 0;
 		back = front;
+	}
+	void resize(size_t i) {
+		if(i > msize)
+			i = msize;
+		csize = i;
+		back = (front + i) % (msize + 1);
 	}
 
 template<class U>
