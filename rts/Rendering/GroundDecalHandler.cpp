@@ -810,19 +810,24 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 	    (fullName.find_first_of('/')  == string::npos)) {
 		fullName = string("bitmaps/tracks/") + fullName;
 	}
+	bool isBitmap = (StringToLower(fullName).find(string(".bmp")) != string::npos);
 
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
 		throw content_error("Could not load ground decal from file " + fullName);
 	}
-	for (int y = 0; y < bm.ysize; ++y) {
-		for (int x = 0; x < bm.xsize; ++x) {
-			const int index = ((y * bm.xsize) + x) * 4;
-			bm.mem[index + 3]    = bm.mem[index + 1];
-			const int brightness = bm.mem[index + 0];
-			bm.mem[index + 0] = (brightness * 90) / 255;
-			bm.mem[index + 1] = (brightness * 60) / 255;
-			bm.mem[index + 2] = (brightness * 30) / 255;
+	if (isBitmap) {
+		//! bitmaps don't have an alpha channel
+		//! so use: red := brightness & green := alpha
+		for (int y = 0; y < bm.ysize; ++y) {
+			for (int x = 0; x < bm.xsize; ++x) {
+				const int index = ((y * bm.xsize) + x) * 4;
+				bm.mem[index + 3]    = bm.mem[index + 1];
+				const int brightness = bm.mem[index + 0];
+				bm.mem[index + 0] = (brightness * 90) / 255;
+				bm.mem[index + 1] = (brightness * 60) / 255;
+				bm.mem[index + 2] = (brightness * 30) / 255;
+			}
 		}
 	}
 
@@ -890,15 +895,31 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 	if (!bm.Load(file)) {
 		throw content_error("Could not load scar from file " + file);
 	}
-	for (int y = 0; y < bm.ysize; ++y) {
-		for (int x = 0; x < bm.xsize; ++x) {
-			const int memIndex = ((y * bm.xsize) + x) * 4;
-			const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
-			buf[bufIndex + 3]    = bm.mem[memIndex + 1];
-			const int brightness = bm.mem[memIndex + 0];
-			buf[bufIndex + 0] = (brightness * 90) / 255;
-			buf[bufIndex + 1] = (brightness * 60) / 255;
-			buf[bufIndex + 2] = (brightness * 30) / 255;
+	bool isBitmap = (StringToLower(file).find(string("bmp")) != string::npos);
+	if (isBitmap) {
+		//! bitmaps don't have an alpha channel
+		//! so use: red := brightness & green := alpha
+		for (int y = 0; y < bm.ysize; ++y) {
+			for (int x = 0; x < bm.xsize; ++x) {
+				const int memIndex = ((y * bm.xsize) + x) * 4;
+				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
+				buf[bufIndex + 3]    = bm.mem[memIndex + 1];
+				const int brightness = bm.mem[memIndex + 0];
+				buf[bufIndex + 0] = (brightness * 90) / 255;
+				buf[bufIndex + 1] = (brightness * 60) / 255;
+				buf[bufIndex + 2] = (brightness * 30) / 255;
+			}
+		}
+	} else {
+		for (int y = 0; y < bm.ysize; ++y) {
+			for (int x = 0; x < bm.xsize; ++x) {
+				const int memIndex = ((y * bm.xsize) + x) * 4;
+				const int bufIndex = (((y + yoffset) * 512) + x + xoffset) * 4;
+				buf[bufIndex + 0]    = bm.mem[memIndex + 0];
+				buf[bufIndex + 1]    = bm.mem[memIndex + 1];
+				buf[bufIndex + 2]    = bm.mem[memIndex + 2];
+				buf[bufIndex + 3]    = bm.mem[memIndex + 3];
+			}
 		}
 	}
 }
