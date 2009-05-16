@@ -38,6 +38,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
 	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
+	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
 
@@ -93,13 +94,16 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		}
 
 		// Generate sound sources
-		#if (BOOST_VERSION >= 103500)
-		sources.resize(maxSounds);
-		#else
 		for (int i = 0; i < maxSounds; i++) {
 			sources.push_back(new SoundSource());
+			if (!sources[i].IsValid())
+			{
+				sources.pop_back();
+				maxSounds = i-1;
+				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+				break;
+			}
 		}
-		#endif
 
 		// Set distance model (sound attenuation)
 		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
@@ -321,6 +325,11 @@ void CSound::Update()
 
 	if (sources.empty())
 		return;
+
+	Channels::General.UpdateFrame();
+	Channels::Battle.UpdateFrame();
+	Channels::UnitReply.UpdateFrame();
+	Channels::UserInterface.UpdateFrame();
 
 	if (updateCounter % 2)
 	{

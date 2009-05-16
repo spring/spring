@@ -69,6 +69,8 @@ public:
 	virtual void DrawS3O() { DrawUnitPart(); }
 
 	S3DModel* s3domodel;
+
+	float tempdist; // temp distance used for sorting when rendering
 	
 private:
 	int ownerId;

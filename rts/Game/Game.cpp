@@ -362,6 +362,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	// customize the defs environment
 	defsParser->GetTable("Spring");
 	defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+	defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	defsParser->EndTable();
 	// run the parser
 	if (!defsParser->Execute()) {
@@ -2568,8 +2569,12 @@ bool CGame::DrawWorld()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
-		(*usi)->UpdateDrawPos();
+	{
+		GML_RECMUTEX_LOCK(unit); // DrawWorld
+
+		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+			(*usi)->UpdateDrawPos();
+		}
 	}
 
 	if (drawSky) {
@@ -3199,6 +3204,8 @@ void CGame::SimFrame() {
 
 	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);
+
+	ph->AddRenderObjects(); // delayed addition of new rendering objects, to make sure they will be drawn next draw frame
 
 	lastUpdate = SDL_GetTicks();
 }

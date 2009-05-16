@@ -28,6 +28,10 @@ typedef std::list<CProjectile*> Projectile_List;
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<int, ProjectileMapPair> ProjectileMap;
 
+class CProjectile;
+struct distcmp {
+	bool operator()(CProjectile *arg1, CProjectile *arg2);
+};
 
 class CProjectileHandler
 {
@@ -67,6 +71,8 @@ public:
 	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
+	void AddRenderObjects();
+
 	struct projdist {
 		float dist;
 		CProjectile* proj;
@@ -76,15 +82,12 @@ public:
 	int maxUsedID;
 	std::list<int> freeIDs;
 	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
+	std::set<CProjectile *> renderprojectiles;
+	std::set<CProjectile *> tempRenderProjectilesToBeAdded;
+	std::set<CProjectile *> renderProjectilesToBeAdded;
+	std::vector<CProjectile *> projectilesToBeDeleted;
 
-	struct dstcmp {
-		bool operator()(CProjectileHandler::projdist const &arg1, CProjectileHandler::projdist const &arg2) {
-			return (arg1.dist > arg2.dist);
-		}
-	};
-
-	std::set<projdist,dstcmp> distlist;
-	std::vector<CProjectile *> drawlist;
+	std::set<CProjectile *,distcmp> distset;
 
 	unsigned int projectileShadowVP;
 
@@ -172,6 +175,8 @@ private:
 		int team;
 	};
 
+	std::vector<FlyingPiece *> tempFlying3doPiecesToAdd;
+	std::vector<FlyingPieceToAdd> tempFlyings3oPiecesToAdd;
 	std::vector<FlyingPiece *> flying3doPiecesToAdd;
 	std::vector<FlyingPieceToAdd> flyings3oPiecesToAdd;
 	std::map<FlyingPiece *, FlyingPiece_Set *> flyingPiecesToRemove;
@@ -181,7 +186,10 @@ private:
 	FBO perlinFB;
 	bool drawPerlinTex;
 	std::vector<CGroundFlash*> groundFlashes;
-
+	std::set<CGroundFlash *> renderGroundFlashes;
+	std::set<CGroundFlash *> tempRenderGroundFlashesToBeAdded;
+	std::set<CGroundFlash *> renderGroundFlashesToBeAdded;
+	std::vector<CGroundFlash *> groundFlashesToBeDeleted;
 };
 
 

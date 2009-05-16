@@ -94,11 +94,15 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
 		drawTrail=false;
 
-	for(int a=0;a<5;++a){
+	for(int a = 0; a < 5; ++a) {
 		oldInfos[a]=new OldInfo;
 		oldInfos[a]->dir=dir;
 		oldInfos[a]->pos=pos;
 		oldInfos[a]->speedf=curSpeed;
+		for(float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f) {
+			float ageMod = 1.0f;
+			oldInfos[a]->ageMods.push_back(ageMod);
+		}
 	}
 	castShadow=true;
 
@@ -227,7 +231,15 @@ void CStarburstProjectile::Update(void)
 	oldInfos[0]->pos = pos;
 	oldInfos[0]->dir = dir;
 	oldInfos[0]->speedf = curSpeed;
-	oldInfos[0]->ageMods.clear();
+	int newsize = 0;
+	for(float aa = 0; aa < curSpeed + 0.6f; aa += 0.15f, ++newsize) {
+		float ageMod = (missileAge < 20) ? 1 : 0.6f + rand() * 0.8f / RAND_MAX;
+		if(oldInfos[0]->ageMods.size()<=newsize)
+			oldInfos[0]->ageMods.push_back(ageMod);
+		else
+			oldInfos[0]->ageMods[newsize] = ageMod;
+	}
+	oldInfos[0]->ageMods.resize(newsize);
 
 	age++;
 	numParts++;
@@ -261,7 +273,12 @@ void CStarburstProjectile::Draw(void)
 	unsigned char col2[4];
 
 	if (weaponDef->visuals.smokeTrail) {
-		va->EnlargeArrays(4+4*numParts,0,VA_SIZE_TC);
+#if defined(USE_GML) && GML_ENABLE_SIM
+		int curNumParts = *(volatile int *)&numParts;
+#else
+		int curNumParts = numParts;
+#endif
+		va->EnlargeArrays(4+4*curNumParts,0,VA_SIZE_TC);
 		if(drawTrail){		//draw the trail as a single quad
 
 			float3 dif(drawPos-camera->pos);
@@ -305,7 +322,7 @@ void CStarburstProjectile::Draw(void)
 			float3 dirpos1=pos-dir*dist*0.33f;
 			float3 dirpos2=oldSmoke+oldSmokeDir*dist*0.33f;
 
-			for(int a=0;a<numParts;++a){ //! CAUTION: loop count must match EnlargeArrays above
+			for(int a=0;a<curNumParts;++a){ //! CAUTION: loop count must match EnlargeArrays above
 				//float a1=1-float(a)/Smoke_Time;
 				col[0]=(unsigned char) (color*255);
 				col[1]=(unsigned char) (color*255);
@@ -313,7 +330,7 @@ void CStarburstProjectile::Draw(void)
 				col[3]=255;//min(255,max(0,a1*255));
 				float size=(1+(a)*(1/Smoke_Time)*7);
 
-				float3 pos1=CalcBeizer(float(a)/(numParts),pos,dirpos1,dirpos2,oldSmoke);
+				float3 pos1=CalcBeizer(float(a)/(curNumParts),pos,dirpos1,dirpos2,oldSmoke);
 				va->AddVertexQTC(pos1+( camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 				va->AddVertexQTC(pos1+( camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
 				va->AddVertexQTC(pos1+(-camera->up-camera->right)*size, ph->smoketex[0].xend, ph->smoketex[0].ystart, col);
@@ -336,24 +353,20 @@ void CStarburstProjectile::DrawCallback(void)
 	inArray=true;
 	unsigned char col[4];
 
-	for(int age=0;age<5;++age){
-		float3 opos=oldInfos[age]->pos;
-		float3 odir=oldInfos[age]->dir;
-		float	ospeed=oldInfos[age]->speedf;
-		bool createAgeMods=oldInfos[age]->ageMods.empty();
-		for(float a=0;a<ospeed+0.6f;a+=0.15f){
-			float ageMod;
-			if(createAgeMods){
-				if (missileAge < 20)
-					ageMod = 1;
-				else
-					ageMod=0.6f+rand()*0.8f/RAND_MAX;
-				oldInfos[age]->ageMods.push_back(ageMod);
-			} else {
-				ageMod=oldInfos[age]->ageMods[(int)(a/0.15f)];
-			}
-			float age2=((age+a/(ospeed+0.01f)))*0.2f;
-			float3 interPos=opos-odir*(age*0.5f+a);
+	for(int a = 0; a < 5; ++a) {
+#if defined(USE_GML) && GML_ENABLE_SIM
+		OldInfo *oldinfo = *(OldInfo * volatile *)&oldInfos[a];
+#else
+		OldInfo *oldinfo = oldInfos[a];
+#endif
+		float3 opos=oldinfo->pos;
+		float3 odir=oldinfo->dir;
+		float ospeed=oldinfo->speedf;
+		float aa = 0;
+		for(AGEMOD_VECTOR::iterator ai = oldinfo->ageMods.begin(); ai != oldinfo->ageMods.end(); ++ai, aa += 0.15f) {
+			float ageMod = *ai;
+			float age2=((a+aa/(ospeed+0.01f)))*0.2f;
+			float3 interPos=opos-odir*(a*0.5f+aa);
 			float drawsize;
 			col[3]=1;
 			if (missileAge < 20) {

@@ -98,10 +98,12 @@ void SpringApp::SigAbrtHandler(int unused)
 	#endif
 }
 
+
+
 /**
  * Initializes SpringApp variables
  */
-SpringApp::SpringApp ()
+SpringApp::SpringApp()
 {
 	cmdline = 0;
 	screenWidth = screenHeight = 0;
@@ -121,6 +123,8 @@ SpringApp::~SpringApp()
 
 	creg::System::FreeClasses ();
 }
+
+
 
 #ifdef WIN32
 typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
@@ -197,13 +201,11 @@ bool SpringApp::Initialize()
 		return false;
 	}
 
-	mouseInput = IMouseInput::Get ();
+	mouseInput = IMouseInput::Get();
 
 	// Global structures
 	gs = new CGlobalSyncedStuff();
 	gu = new CGlobalUnsyncedStuff();
-
-	gu->depthBufferBits = depthBufferBits;
 
 	if (cmdline->result("minimise")) {
 		gu->active = false;
@@ -258,7 +260,7 @@ bool SpringApp::Initialize()
 	LuaOpenGL::Init();
 
 	// Create CGameSetup and CPreGame objects
-	Startup ();
+	Startup();
 
 	return true;
 }
@@ -310,7 +312,7 @@ static bool MultisampleVerify(void)
  *
  * Initializes the game window
  */
-bool SpringApp::InitWindow (const char* title)
+bool SpringApp::InitWindow(const char* title)
 {
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
 #ifdef WIN32
@@ -318,7 +320,7 @@ bool SpringApp::InitWindow (const char* title)
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
 	if ((SDL_Init(sdlInitFlags) == -1)) {
-		handleerror(NULL,"Could not initialize SDL.","ERROR",MBF_OK|MBF_EXCL);
+		handleerror(NULL, "Could not initialize SDL.", "ERROR", MBF_OK | MBF_EXCL);
 		return false;
 	}
 
@@ -326,8 +328,14 @@ bool SpringApp::InitWindow (const char* title)
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
 
-	if (!SetSDLVideoMode ())
+	if (!SetSDLVideoMode())
 		return false;
+
+	RestoreWindowPosition();
+
+	glClearColor(0.0f,0.0f,0.0f,0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	SDL_GL_SwapBuffers();
 
 	return true;
 }
@@ -337,7 +345,7 @@ bool SpringApp::InitWindow (const char* title)
  *
  * Sets SDL video mode options/settings
  */
-bool SpringApp::SetSDLVideoMode ()
+bool SpringApp::SetSDLVideoMode()
 {
 	int sdlflags = SDL_OPENGL | SDL_RESIZABLE;
 
@@ -349,10 +357,11 @@ bool SpringApp::SetSDLVideoMode ()
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8); // enable alpha channel
 
-	depthBufferBits = configHandler->Get("DepthBufferBits", 32);
+	depthBufferBits = configHandler->Get("DepthBufferBits", 24);
+	if (gu) gu->depthBufferBits = depthBufferBits;
 
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, depthBufferBits);
-	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 1));
+	SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, configHandler->Get("StencilBufferBits", 8));
 
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 
@@ -365,19 +374,6 @@ bool SpringApp::SetSDLVideoMode ()
 		handleerror(NULL, buf, "ERROR", MBF_OK|MBF_EXCL);
 		return false;
 	}
-
-	// set window position
-	if (!fullscreen) {
-		SDL_SysWMinfo info;
-		SDL_VERSION(&info.version);
-
-		if (SDL_GetWMInfo(&info)) {
-#ifdef _WIN32
-			MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
-#endif
-		}
-	}
-
 
 #ifdef STREFLOP_H
 	// Something in SDL_SetVideoMode (OpenGL drivers?) messes with the FPU control word.
@@ -429,11 +425,6 @@ bool SpringApp::SetSDLVideoMode ()
 		GLContext::Init();
 	}
 
-	// initialize the stencil
-	glClearStencil(0);
-	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-	glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-
 	int bits;
 	SDL_GL_GetAttribute(SDL_GL_BUFFER_SIZE, &bits);
 	logOutput.Print("Video mode set to  %i x %i / %i bit", screenWidth, screenHeight, bits );
@@ -441,6 +432,7 @@ bool SpringApp::SetSDLVideoMode ()
 
 	return true;
 }
+
 
 
 // origin for our coordinates is the bottom left corner
@@ -455,6 +447,8 @@ bool SpringApp::GetDisplayGeometry()
 
 #ifdef __APPLE__
 	return false;
+
+
 #elif !defined(_WIN32)
 	info.info.x11.lock_func();
 	{
@@ -464,6 +458,7 @@ bool SpringApp::GetDisplayGeometry()
 		XWindowAttributes attrs;
 		XGetWindowAttributes(display, window, &attrs);
 		const Screen* screen = attrs.screen;
+
 		gu->screenSizeX = WidthOfScreen(screen);
 		gu->screenSizeY = HeightOfScreen(screen);
 		gu->winSizeX = attrs.width;
@@ -472,10 +467,11 @@ bool SpringApp::GetDisplayGeometry()
 		Window tmp;
 		int xp, yp;
 		XTranslateCoordinates(display, window, attrs.root, 0, 0, &xp, &yp, &tmp);
-		gu->winPosX = xp;
-		gu->winPosY = gu->screenSizeY - gu->winSizeY - yp;
+		windowPosX = xp;
+		windowPosY = yp;
 	}
 	info.info.x11.unlock_func();
+
 #else
 	gu->screenSizeX = GetSystemMetrics(SM_CXFULLSCREEN);
 	gu->screenSizeY = GetSystemMetrics(SM_CYFULLSCREEN);
@@ -485,7 +481,7 @@ bool SpringApp::GetDisplayGeometry()
 		return false;
 	}
 
-	if((rect.right - rect.left)==0 || (rect.bottom - rect.top)==0)
+	if ((rect.right - rect.left) == 0 || (rect.bottom - rect.top) == 0)
 		return false;
 
 	gu->winSizeX = rect.right - rect.left;
@@ -493,19 +489,16 @@ bool SpringApp::GetDisplayGeometry()
 
 	// translate from client coords to screen coords
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
-	gu->winPosX = rect.left;
-	gu->winPosY = gu->screenSizeY - gu->winSizeY - rect.top;
-
-	// get window position
-	if (!fullscreen && GetWindowRect(info.window, &rect)) {
-		windowPosX = rect.left;
-		windowPosY = rect.top;
-		configHandler->Set("WindowPosX", windowPosX);
-		configHandler->Set("WindowPosY", windowPosY);
-	}
+	windowPosX = rect.left;
+	windowPosY = rect.top;
 #endif // _WIN32
+
+	gu->winPosX = windowPosX;
+	gu->winPosY = gu->screenSizeY - gu->winSizeY - windowPosY; //! origin BOTTOMLEFT
+
 	return true;
 }
+
 
 
 void SpringApp::SetupViewportGeometry()
@@ -554,10 +547,11 @@ void SpringApp::SetupViewportGeometry()
 }
 
 
+
 /**
  * Initializes OpenGL
  */
-void SpringApp::InitOpenGL ()
+void SpringApp::InitOpenGL()
 {
 	SetupViewportGeometry();
 
@@ -577,12 +571,14 @@ void SpringApp::UpdateOldConfigs()
 {
 	// not very neat, should be done in the installer someday
 	const int cfgVersion = configHandler->Get("Version",0);
-	if (cfgVersion < 1) {
+	if (cfgVersion < 2) {
 		// force an update to new defaults
 		configHandler->Delete("FontFile");
 		configHandler->Delete("FontSize");
 		configHandler->Delete("SmallFontSize");
-		configHandler->Set("Version",1);
+		configHandler->Delete("StencilBufferBits"); //! update to 8 bits
+		configHandler->Delete("DepthBufferBits"); //! update to 24bits
+		configHandler->Set("Version",2);
 	}
 }
 
@@ -669,7 +665,7 @@ void SpringApp::ParseCmdLine()
 #ifdef _DEBUG
 	fullscreen = false;
 #else
-	fullscreen = configHandler->Get("Fullscreen", 1) != 0;
+	fullscreen = !!configHandler->Get("Fullscreen", 1);
 #endif
 
 	// mutually exclusive options that cause spring to quit immediately
@@ -722,8 +718,9 @@ void SpringApp::ParseCmdLine()
 		screenHeight = std::max(screenHeight, 1);
 	}
 
-	windowPosX = configHandler->Get("WindowPosX", 32);
-	windowPosY = configHandler->Get("WindowPosY", 32);
+	windowPosX  = configHandler->Get("WindowPosX", 32);
+	windowPosY  = configHandler->Get("WindowPosY", 32);
+	windowState = configHandler->Get("WindowState", 0);
 
 #ifdef USE_GML
 	gmlThreadCountOverride = configHandler->Get("HardwareThreadCount", 0);
@@ -809,7 +806,8 @@ void SpringApp::Startup()
 volatile int gmlMultiThreadSim;
 volatile int gmlStartSim;
 
-int SpringApp::Sim() {
+int SpringApp::Sim()
+{
 	while(gmlKeepRunning && !gmlStartSim)
 		SDL_Delay(100);
 	while(gmlKeepRunning) {
@@ -845,7 +843,7 @@ int SpringApp::Sim() {
  * Draw function repeatedly called, it calls all the
  * other draw functions
  */
-int SpringApp::Update ()
+int SpringApp::Update()
 {
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
@@ -936,11 +934,11 @@ void SpringApp::UpdateSDLKeys ()
  * Executes the application
  * (contains main game loop)
  */
-int SpringApp::Run (int argc, char *argv[])
+int SpringApp::Run(int argc, char *argv[])
 {
 	cmdline = new BaseCmd(argc, argv);
 
-	if (!Initialize ())
+	if (!Initialize())
 		return -1;
 
 #ifdef WIN32
@@ -1126,30 +1124,95 @@ int SpringApp::Run (int argc, char *argv[])
 	return 0;
 }
 
+
+
 /**
- * Saves position of the window, if we're not in fullscreen
+ * Restores position of the window, if we're not in fullscreen
  */
-void SpringApp::SaveWindowGeometry()
+void SpringApp::RestoreWindowPosition()
 {
 	if (!fullscreen) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 
 		if (SDL_GetWMInfo(&info)) {
-#if defined(_WIN32)
-			RECT rect;
-			if (GetWindowRect(info.window, &rect)) {
-				windowPosX = rect.left;
-				windowPosY = rect.top;
-				configHandler->Set("WindowPosX", windowPosX);
-				configHandler->Set("WindowPosY", windowPosY);
+#ifdef _WIN32
+			bool stateChanged = false;
+
+			if (windowState > 0) {
+				WINDOWPLACEMENT wp;
+				memset(&wp,0,sizeof(WINDOWPLACEMENT));
+				wp.length = sizeof(WINDOWPLACEMENT);
+				stateChanged = true;
+				int wState;
+				switch (windowState) {
+					case 1: wState = SW_SHOWMAXIMIZED; break;
+					case 2: wState = SW_SHOWMINIMIZED; break;
+					default: stateChanged = false;
+				}
+				if (stateChanged) {
+					ShowWindow(info.window, wState);
+					RECT rect;
+					if (GetClientRect(info.window, &rect)) {
+						//! translate from client coords to screen coords
+						MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
+						screenWidth = rect.right - rect.left;
+						screenHeight = rect.bottom - rect.top;
+						windowPosX = rect.left;
+						windowPosY = rect.top;
+					}
+				}
+			}
+
+			if (!stateChanged) {
+				MoveWindow(info.window, windowPosX, windowPosY, screenWidth, screenHeight, true);
 			}
 #else
-			// TODO FIXME XXX
+			info.info.x11.lock_func();
+
+			{
+				XMoveWindow(info.info.x11.display, info.info.x11.wmwindow, windowPosX, windowPosY);
+			}
+
+			info.info.x11.unlock_func();
 #endif
 		}
 	}
 }
+
+/**
+ * Saves position of the window, if we're not in fullscreen
+ */
+void SpringApp::SaveWindowPosition()
+{
+	if (!fullscreen) {
+#if defined(_WIN32)
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+
+		if (SDL_GetWMInfo(&info)) {
+			WINDOWPLACEMENT wp;
+			wp.length = sizeof(WINDOWPLACEMENT);
+			if (GetWindowPlacement(info.window, &wp)) {
+				switch (wp.showCmd) {
+					case SW_SHOWMAXIMIZED:
+						windowState = 1;
+						break;
+					case SW_SHOWMINIMIZED:
+						windowState = 2;
+						break;
+					default:
+						windowState = 0;
+				}
+			}
+		}
+		configHandler->Set("WindowState", windowState);
+#endif
+		configHandler->Set("WindowPosX", windowPosX);
+		configHandler->Set("WindowPosY", windowPosY);
+	}
+}
+
 
 
 /**
@@ -1157,7 +1220,7 @@ void SpringApp::SaveWindowGeometry()
  */
 void SpringApp::Shutdown()
 {
-	SaveWindowGeometry();
+	SaveWindowPosition();
 
 	if (pregame)
 		delete pregame;			//in case we exit during init
@@ -1165,6 +1228,7 @@ void SpringApp::Shutdown()
 		delete game;
 	delete gameSetup;
 	delete font;
+	delete smallFont;
 	CNamedTextures::Kill();
 	GLContext::Free();
 	ConfigHandler::Deallocate();

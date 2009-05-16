@@ -964,4 +964,115 @@ public:
 	}
 };
 
+
+// Circular Queue - a "crash free" queue because it wraps around and keeps array index within bounds
+#include "creg/creg_cond.h"
+
+template<class T,int S>
+class gmlCircularQueue {
+	CR_DECLARE_STRUCT(gmlCircularQueue);
+	T elements[S+1];
+	size_t front,back;
+	size_t csize,msize;
+public:
+	gmlCircularQueue(): front(0), back(0), csize(0), msize(S) {
+	}
+	~gmlCircularQueue() {
+	}
+	void push_back(T &a) {
+		elements[back] = a;
+		if(csize == msize) {
+			if(front == msize)
+				front = 0;
+			else
+				++front;
+		}
+		else
+			++csize;
+		if(back == msize)
+			back = 0;
+		else
+			++back;
+	}
+	void push_front(T &a) {
+		int newfront = (front == 0) ? msize : front - 1;
+		elements[newfront] = a;
+		front = newfront;
+		if(csize != msize)
+			++csize;
+		else if(back == 0)
+			back = msize;
+		else
+			--back;
+	}
+	T &pop_back() {
+#ifdef _DEBUG
+		assert(csize != 0);
+#endif
+		--csize;
+		if(back == 0)
+			back = msize;
+		else
+			--back;
+		return elements[back];
+	}
+	T &pop_front() {
+#ifdef _DEBUG
+		assert(csize != 0);
+#endif
+		--csize;
+		T &ret = elements[front];
+		if(front == msize)
+			front = 0;
+		else
+			++front;
+		return ret;
+	}
+	size_t size() {
+		return csize;
+	}
+	T &operator[](size_t i) {
+		return elements[(front + i) % (msize + 1)];
+	}
+	bool empty() {
+		return csize == 0;
+	}
+	void clear() {
+		csize = 0;
+		back = front;
+	}
+	void resize(size_t i) {
+		if(i > msize)
+			i = msize;
+		csize = i;
+		back = (front + i) % (msize + 1);
+	}
+
+template<class U>
+	class CQIter {
+		size_t p;
+		gmlCircularQueue *q;
+	public:
+		CQIter() {} 
+		CQIter(size_t d, gmlCircularQueue *r) {p=d; q=r;}
+		void operator=(const CQIter<U> &i) {p=i.p;}
+		CQIter<U> &operator++() {++p; return *this;} 
+		CQIter<U> operator++(int) {return CQIter<U>(p++);} 
+		int operator!=(const CQIter<U> &i) const {return p<i.p;}
+		U &operator*() {return (*q)[p];}
+		U *operator->() {return &(*q)[p];}
+	};
+	typedef CQIter<T> iterator;
+
+	iterator begin() {
+		return iterator(front, this);
+	}
+	iterator end() {
+		return iterator(front + csize, this);
+	}
+};
+
+
+
+
 #endif

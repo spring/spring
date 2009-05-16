@@ -238,7 +238,7 @@ int LuaFonts::Print(lua_State* L)
 
 	CglFont* font = tofont(L, 1);
 
-	const string text = lua_tostring(L, 2);
+	const string text(lua_tostring(L, 2),lua_strlen(L, 2));
 	const float x     = lua_tonumber(L, 3);
 	const float y     = lua_tonumber(L, 4);
 	const float size  = luaL_optfloat(L, 5, font->GetSize());
@@ -305,7 +305,7 @@ int LuaFonts::WrapText(lua_State* L)
 		luaL_error(L, "Incorrect arguments to font:WrapText(\"text\", maxWidth, [maxHeight], [size])");
 	}
 
-	std::string text = lua_tostring(L, 2);
+	string text(lua_tostring(L, 2),lua_strlen(L, 2));
 	const float maxWidth   = lua_tonumber(L, 3);
 	const float maxHeight  = luaL_optfloat(L, 4, 1e9);
 	const float size       = luaL_optfloat(L, 5, font->GetSize());
@@ -329,7 +329,7 @@ int LuaFonts::GetTextWidth(lua_State* L)
 		luaL_error(L, "Incorrect arguments to font:GetTextWidth(\"text\")");
 	}
 
-	const string text = lua_tostring(L, 2);
+	const string text(lua_tostring(L, 2),lua_strlen(L, 2));
 
 	const float width = font->GetTextWidth(text);
 	lua_pushnumber(L, width);
@@ -346,7 +346,7 @@ int LuaFonts::GetTextHeight(lua_State* L)
 		luaL_error(L, "Incorrect arguments to font:GetTextHeight(\"text\")");
 	}
 
-	const string text = lua_tostring(L, 2);
+	const string text(lua_tostring(L, 2),lua_strlen(L, 2));
 	float descender;
 
 	const float height = font->GetTextHeight(text,&descender);
