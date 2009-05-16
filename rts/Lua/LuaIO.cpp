@@ -142,8 +142,13 @@ int LuaIO::remove(lua_State* L, const char* pathname)
 
 int LuaIO::rename(lua_State* L, const char* oldpath, const char* newpath)
 {
-	if (!SafeWritePath(oldpath) ||
-			!SafeWritePath(newpath)) {
+	const string namestr = StringToLower(newpath);
+	if (namestr.find_first_not_of(".exe") != string::npos || namestr.find_first_not_of(".dll") != string::npos || namestr.find_first_not_of(".so") != string::npos) {
+		errno = EPERM;
+		return -1;
+	}
+
+	if (!SafeWritePath(oldpath) || !SafeWritePath(newpath)) {
 		errno = EPERM; //EACCESS?
 		return -1;
 	}
