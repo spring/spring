@@ -361,6 +361,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	// customize the defs environment
 	defsParser->GetTable("Spring");
 	defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+	defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	defsParser->EndTable();
 	// run the parser
 	if (!defsParser->Execute()) {
