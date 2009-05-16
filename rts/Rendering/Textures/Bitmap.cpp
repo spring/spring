@@ -26,6 +26,7 @@
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
+#include "GlobalUnsynced.h"
 #include "Bitmap.h"
 #include "bitops.h"
 
