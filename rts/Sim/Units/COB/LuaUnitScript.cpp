@@ -830,7 +830,7 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 		const string& fname = GetScriptName(functionId);
 
 		logOutput.Print("%s::RunCallIn: error = %i, %s::%s, %s\n",
-		                handle->GetName().c_str(), error, /*FIXME: GetName().c_str()*/ "",
+		                handle->GetName().c_str(), error, "CLuaUnitScript",
 		                fname.c_str(), err.c_str());
 		RemoveCallIn(fname);
 
