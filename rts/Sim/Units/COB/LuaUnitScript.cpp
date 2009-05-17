@@ -212,7 +212,7 @@ static void StackDump(lua_State* L)
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces)
 	, handle(CLuaHandle::activeHandle), L(L)
-	, scriptIndex(COBFN_Last + (unit->weapons.size() * COBFN_Weapon_Funcs), LUA_NOREF)
+	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), LUA_NOREF)
 	, inKilled(false)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
