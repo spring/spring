@@ -322,7 +322,7 @@ int CCobInstance::QueryBuildInfo()
 int CCobInstance::QueryWeapon(int weaponNum)
 {
 	vector<int> args(1, 0);
-	Call(COBFN_QueryPrimary + weaponNum, args);
+	Call(COBFN_QueryPrimary + COBFN_Weapon_Funcs * weaponNum, args);
 	return args[0];
 }
 
@@ -340,7 +340,7 @@ void CCobInstance::AimWeapon(int weaponNum, float heading, float pitch)
 	vector<int> args;
 	args.push_back(short(heading * RAD2TAANG));
 	args.push_back(short(pitch * RAD2TAANG));
-	Call(COBFN_AimPrimary + weaponNum, args, ScriptCallback, unit->weapons[weaponNum], NULL);
+	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, args, ScriptCallback, unit->weapons[weaponNum], NULL);
 }
 
 
@@ -355,21 +355,21 @@ void CCobInstance::AimShieldWeapon(CPlasmaRepulser* weapon)
 	vector<int> args;
 	args.push_back(0); // compat with AimWeapon (same script is called)
 	args.push_back(0);
-	Call(COBFN_AimPrimary + weapon->weaponNum, args, ShieldScriptCallback, weapon, 0);
+	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum, args, ShieldScriptCallback, weapon, 0);
 }
 
 
 int CCobInstance::AimFromWeapon(int weaponNum)
 {
 	vector<int> args(1, 0);
-	Call(COBFN_AimFromPrimary + weaponNum, args);
+	Call(COBFN_AimFromPrimary + COBFN_Weapon_Funcs * weaponNum, args);
 	return args[0];
 }
 
 
 void CCobInstance::Shot(int weaponNum)
 {
-	Call(COBFN_Shot + weaponNum, 0); // why the 0 argument?
+	Call(COBFN_Shot + COBFN_Weapon_Funcs * weaponNum, 0); // why the 0 argument?
 }
 
 
@@ -384,7 +384,7 @@ bool CCobInstance::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTa
 	                   // the default is to not block the shot
 	args.push_back(userTarget);
 
-	Call(COBFN_BlockShot + weaponNum, args);
+	Call(COBFN_BlockShot + COBFN_Weapon_Funcs * weaponNum, args);
 
 	return !!args[1];
 }
@@ -400,7 +400,7 @@ float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	args.push_back(COBSCALE); // arg[1], for the return value
 	                          // the default is 1.0
 
-	Call(COBFN_TargetWeight + weaponNum, args);
+	Call(COBFN_TargetWeight + COBFN_Weapon_Funcs * weaponNum, args);
 
 	return (float)args[1] / (float)COBSCALE;
 }

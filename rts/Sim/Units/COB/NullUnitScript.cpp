@@ -6,7 +6,7 @@
 
 CNullUnitScript::CNullUnitScript(CUnit* unit)
 	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces)
-	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1)
+	, scriptIndex(COBFN_Last + (unit->weapons.size() * COBFN_Weapon_Funcs), -1)
 {
 }
 

@@ -1663,7 +1663,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 void CUnitScript::BenchmarkScript(CUnitScript* script)
 {
 	const int duration = 10000; // millisecs
-	const int fn = COBFN_QueryPrimary + 0;
+	const int fn = COBFN_QueryPrimary + COBFN_Weapon_Funcs * 0;
 	const string fname = CUnitScriptNames::GetScriptName(fn);
 
 	if (!script->HasFunction(fn)) {

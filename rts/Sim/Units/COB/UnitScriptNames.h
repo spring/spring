@@ -48,17 +48,18 @@ enum {
 	COBFN_TurnFinished,         // idem
 	COBFN_Last,
 
-	// These are special (they need space for MaxWeapons of each)
+	// These are special (this set of functions is repeated MaxWeapons times)
 	COB_MaxWeapons = 32,
-	COBFN_QueryPrimary   = COBFN_Last,                            // out: piecenum
-	COBFN_AimPrimary     = COBFN_QueryPrimary   + COB_MaxWeapons, // in: heading - owner->heading, in: pitch (both 0 for plasma repulser)
-	COBFN_AimFromPrimary = COBFN_AimPrimary     + COB_MaxWeapons, // out: piecenum
-	COBFN_FirePrimary    = COBFN_AimFromPrimary + COB_MaxWeapons, // -
-	COBFN_EndBurst       = COBFN_FirePrimary    + COB_MaxWeapons, // -
-	COBFN_Shot           = COBFN_EndBurst       + COB_MaxWeapons, // in: 0
-	COBFN_BlockShot      = COBFN_Shot           + COB_MaxWeapons, // in: targetUnit->id or 0, out: blockShot, in: haveUserTarget
-	COBFN_TargetWeight   = COBFN_BlockShot      + COB_MaxWeapons, // in: targetUnit->id or 0, out: targetWeight*65536
-	COBFN_Weapon_Funcs   = 8,
+	COBFN_QueryPrimary = COBFN_Last, // out: piecenum
+	COBFN_AimPrimary,                // in: heading - owner->heading, in: pitch (both 0 for plasma repulser)
+	COBFN_AimFromPrimary,            // out: piecenum
+	COBFN_FirePrimary,               // -
+	COBFN_EndBurst,                  // -
+	COBFN_Shot,                      // in: 0
+	COBFN_BlockShot,                 // in: targetUnit->id or 0, out: blockShot, in: haveUserTarget
+	COBFN_TargetWeight,              // in: targetUnit->id or 0, out: targetWeight*65536
+	COBFN_Weapon_Last,
+	COBFN_Weapon_Funcs = COBFN_Weapon_Last - COBFN_Last,
 };
 
 
