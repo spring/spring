@@ -64,14 +64,15 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 		string weapon(buf);
 		sprintf(buf, "%d", i + 1);
 		string weapnum(buf);
-		scriptNames[COBFN_QueryPrimary   + i] = "Query"   + weapon;
-		scriptNames[COBFN_AimPrimary     + i] = "Aim"     + weapon;
-		scriptNames[COBFN_AimFromPrimary + i] = "AimFrom" + weapon;
-		scriptNames[COBFN_FirePrimary    + i] = "Fire"    + weapon;
-		scriptNames[COBFN_EndBurst       + i] = "EndBurst"     + weapnum;
-		scriptNames[COBFN_Shot           + i] = "Shot"         + weapnum;
-		scriptNames[COBFN_BlockShot      + i] = "BlockShot"    + weapnum;
-		scriptNames[COBFN_TargetWeight   + i] = "TargetWeight" + weapnum;
+		const int n = COBFN_Weapon_Funcs * i;
+		scriptNames[COBFN_QueryPrimary   + n] = "Query"   + weapon;
+		scriptNames[COBFN_AimPrimary     + n] = "Aim"     + weapon;
+		scriptNames[COBFN_AimFromPrimary + n] = "AimFrom" + weapon;
+		scriptNames[COBFN_FirePrimary    + n] = "Fire"    + weapon;
+		scriptNames[COBFN_EndBurst       + n] = "EndBurst"     + weapnum;
+		scriptNames[COBFN_Shot           + n] = "Shot"         + weapnum;
+		scriptNames[COBFN_BlockShot      + n] = "BlockShot"    + weapnum;
+		scriptNames[COBFN_TargetWeight   + n] = "TargetWeight" + weapnum;
 	}
 
 	//for (size_t i = 0; i < scriptNames.size(); ++i) {
@@ -96,17 +97,17 @@ const std::map<std::string, int>& CUnitScriptNames::GetScriptMap()
 	}
 	// support the old naming scheme
 	scriptMap.insert(pair<string, int>("QueryPrimary",     COBFN_QueryPrimary));
-	scriptMap.insert(pair<string, int>("QuerySecondary",   COBFN_QueryPrimary + 1));
-	scriptMap.insert(pair<string, int>("QueryTertiary",    COBFN_QueryPrimary + 2));
+	scriptMap.insert(pair<string, int>("QuerySecondary",   COBFN_QueryPrimary + COBFN_Weapon_Funcs * 1));
+	scriptMap.insert(pair<string, int>("QueryTertiary",    COBFN_QueryPrimary + COBFN_Weapon_Funcs * 2));
 	scriptMap.insert(pair<string, int>("AimPrimary",       COBFN_AimPrimary));
-	scriptMap.insert(pair<string, int>("AimSecondary",     COBFN_AimPrimary + 1));
-	scriptMap.insert(pair<string, int>("AimTertiary",      COBFN_AimPrimary + 2));
+	scriptMap.insert(pair<string, int>("AimSecondary",     COBFN_AimPrimary + COBFN_Weapon_Funcs * 1));
+	scriptMap.insert(pair<string, int>("AimTertiary",      COBFN_AimPrimary + COBFN_Weapon_Funcs * 2));
 	scriptMap.insert(pair<string, int>("AimFromPrimary",   COBFN_AimFromPrimary));
-	scriptMap.insert(pair<string, int>("AimFromSecondary", COBFN_AimFromPrimary + 1));
-	scriptMap.insert(pair<string, int>("AimFromTertiary",  COBFN_AimFromPrimary + 2));
+	scriptMap.insert(pair<string, int>("AimFromSecondary", COBFN_AimFromPrimary + COBFN_Weapon_Funcs * 1));
+	scriptMap.insert(pair<string, int>("AimFromTertiary",  COBFN_AimFromPrimary + COBFN_Weapon_Funcs * 2));
 	scriptMap.insert(pair<string, int>("FirePrimary",      COBFN_FirePrimary));
-	scriptMap.insert(pair<string, int>("FireSecondary",    COBFN_FirePrimary + 1));
-	scriptMap.insert(pair<string, int>("FireTertiary",     COBFN_FirePrimary + 2));
+	scriptMap.insert(pair<string, int>("FireSecondary",    COBFN_FirePrimary + COBFN_Weapon_Funcs * 1));
+	scriptMap.insert(pair<string, int>("FireTertiary",     COBFN_FirePrimary + COBFN_Weapon_Funcs * 2));
 
 	//for (std::map<string, int>::const_iterator it = scriptMap.begin(); it != scriptMap.end(); ++it) {
 	//	logOutput.Print("COBFN: %s -> %3d", it->first.c_str(), it->second);

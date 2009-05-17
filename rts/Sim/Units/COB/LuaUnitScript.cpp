@@ -212,7 +212,7 @@ static void StackDump(lua_State* L)
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces)
 	, handle(CLuaHandle::activeHandle), L(L)
-	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), LUA_NOREF)
+	, scriptIndex(COBFN_Last + (unit->weapons.size() * COBFN_Weapon_Funcs), LUA_NOREF)
 	, inKilled(false)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
@@ -712,38 +712,38 @@ int CLuaUnitScript::QueryBuildInfo()
 
 int CLuaUnitScript::QueryWeapon(int weaponNum)
 {
-	return RunQueryCallIn(COBFN_QueryPrimary + weaponNum);
+	return RunQueryCallIn(COBFN_QueryPrimary + COBFN_Weapon_Funcs * weaponNum);
 }
 
 
 void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
 {
-	Call(COBFN_AimPrimary + weaponNum, heading, pitch);
+	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, heading, pitch);
 }
 
 
 void  CLuaUnitScript::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
-	Call(COBFN_AimPrimary + weapon->weaponNum);
+	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum);
 }
 
 
 int CLuaUnitScript::AimFromWeapon(int weaponNum)
 {
-	return RunQueryCallIn(COBFN_AimFromPrimary + weaponNum);
+	return RunQueryCallIn(COBFN_AimFromPrimary + COBFN_Weapon_Funcs * weaponNum);
 }
 
 
 void CLuaUnitScript::Shot(int weaponNum)
 {
 	// FIXME: pass projectileID?
-	Call(COBFN_Shot + weaponNum);
+	Call(COBFN_Shot + COBFN_Weapon_Funcs * weaponNum);
 }
 
 
 bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget)
 {
-	const int fn = COBFN_BlockShot + weaponNum;
+	const int fn = COBFN_BlockShot + COBFN_Weapon_Funcs * weaponNum;
 
 	if (!HasFunction(fn)) {
 		return false;
@@ -766,7 +766,7 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 
 float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 {
-	const int fn = COBFN_TargetWeight + weaponNum;
+	const int fn = COBFN_TargetWeight + COBFN_Weapon_Funcs * weaponNum;
 
 	if (!HasFunction(fn)) {
 		return 1.0f;

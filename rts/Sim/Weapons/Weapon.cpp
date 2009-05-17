@@ -189,8 +189,9 @@ void CWeapon::SetWeaponNum(int num)
 {
 	weaponNum = num;
 
-	cobHasBlockShot = owner->script->HasFunction(COBFN_BlockShot + weaponNum);
-	hasTargetWeight = owner->script->HasFunction(COBFN_TargetWeight + weaponNum);
+	const int n = COBFN_Weapon_Funcs * weaponNum;
+	cobHasBlockShot = owner->script->HasFunction(COBFN_BlockShot + n);
+	hasTargetWeight = owner->script->HasFunction(COBFN_TargetWeight + n);
 }
 
 

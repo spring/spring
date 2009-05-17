@@ -719,7 +719,7 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				int i;
 				for (i = 0; i < COB_MaxWeapons; ++i)
-					if (callStack.back().functionId == script.scriptIndex[COBFN_FirePrimary + i])
+					if (callStack.back().functionId == script.scriptIndex[COBFN_FirePrimary + COBFN_Weapon_Funcs * i])
 						break;
 
 				// If true, we are in a Fire-script and should show a special flare effect

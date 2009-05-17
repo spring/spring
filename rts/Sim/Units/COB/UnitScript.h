@@ -230,8 +230,8 @@ public:
 	void Deactivate()    { Call(COBFN_Deactivate); }
 	void Go()            { Call(COBFN_Go); }
 	void MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
-	void FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + weaponNum); }
-	void EndBurst(int weaponNum)   { Call(COBFN_EndBurst + weaponNum); }
+	void FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + COBFN_Weapon_Funcs * weaponNum); }
+	void EndBurst(int weaponNum)   { Call(COBFN_EndBurst + COBFN_Weapon_Funcs * weaponNum); }
 
 	// not necessary for normal operation, useful to measure callin speed
 	static void BenchmarkScript(CUnitScript* script);
