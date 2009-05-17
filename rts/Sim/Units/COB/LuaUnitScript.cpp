@@ -419,7 +419,7 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 
 	PushFunction(fn);
 
-	if (!RunCallIn(fn, 2, 1)) {
+	if (!RunCallIn(fn, 1, 1)) {
 		return -1;
 	}
 
