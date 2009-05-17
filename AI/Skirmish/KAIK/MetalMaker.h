@@ -11,7 +11,7 @@ class CMetalMaker {
 		CR_DECLARE(CMetalMaker);
 		CR_DECLARE_SUB(UnitInfo);
 
-		CMetalMaker(AIClasses* ai);
+		CMetalMaker(AIClasses*);
 		~CMetalMaker();
 		void PostLoad();
 
@@ -31,10 +31,11 @@ class CMetalMaker {
 
 		std::vector<UnitInfo> myUnits;
 		float lastEnergy;
-		AIClasses* ai;
-		IAICallback* aicb;
 		int listIndex;
 		int addedDelay;
+
+	private:
+		AIClasses* ai;
 };
 
 
