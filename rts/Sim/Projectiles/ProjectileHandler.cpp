@@ -60,7 +60,7 @@ CR_REG_METADATA(CProjectileHandler, (
 ));
 
 bool distcmp::operator() (CProjectile *arg1, CProjectile *arg2) {
-	return (arg1->tempdist > arg2->tempdist);
+	return (arg1->tempdist >= arg2->tempdist);
 }
 
 //////////////////////////////////////////////////////////////////////
