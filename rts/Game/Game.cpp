@@ -1994,6 +1994,9 @@ bool CGame::ActionPressed(const Action& action,
 		if (action.extra == "sound")
 			sound->PrintDebugInfo();
 	}
+	else if (cmd == "benchmark-script") {
+		CUnitScript::BenchmarkScript(action.extra);
+	}
 	else if (cmd == "atm" ||
 #ifdef DEBUG
 			cmd == "desync" ||

@@ -232,6 +232,10 @@ public:
 	void MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
 	void FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + weaponNum); }
 	void EndBurst(int weaponNum)   { Call(COBFN_EndBurst + weaponNum); }
+
+	// not necessary for normal operation, useful to measure callin speed
+	static void BenchmarkScript(CUnitScript* script);
+	static void BenchmarkScript(const std::string& unitname);
 };
 
 #endif

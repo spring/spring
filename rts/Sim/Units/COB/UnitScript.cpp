@@ -9,6 +9,7 @@
 
 #ifndef _CONSOLE
 
+#include <SDL_timer.h>
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
@@ -1652,3 +1653,49 @@ void CUnitScript::SetUnitVal(int val, int param)
 	}
 #endif
 }
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+#ifndef _CONSOLE
+
+void CUnitScript::BenchmarkScript(CUnitScript* script)
+{
+	const int duration = 10000; // millisecs
+	const int fn = COBFN_QueryPrimary + 0;
+	const string fname = CUnitScriptNames::GetScriptName(fn);
+
+	if (!script->HasFunction(fn)) {
+		logOutput.Print("Script does not have %s", fname.c_str());
+		return;
+	}
+
+	const unsigned start = SDL_GetTicks();
+	unsigned end = start;
+	int count = 0;
+
+	while ((end - start) < duration) {
+		script->QueryWeapon(0);
+		++count;
+		end = SDL_GetTicks();
+	}
+
+	logOutput.Print("%s: %d calls in %u ms -> %d calls/second", fname.c_str(),
+	                count, end - start, count / (duration / 1000));
+}
+
+
+void CUnitScript::BenchmarkScript(const string& unitname)
+{
+	std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
+	for (; ui != uh->activeUnits.end(); ++ui) {
+		CUnit* unit = *ui;
+		if (unit->unitDef->name == unitname) {
+			BenchmarkScript(unit->script);
+			return;
+		}
+	}
+}
+
+#endif
