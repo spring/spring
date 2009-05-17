@@ -233,4 +233,5 @@ void CKAIK::Update() {
 	// call attack handler and unit handler (metal maker) update routines
 	ai->ah->Update(frame);
 	ai->uh->MMakerUpdate(frame);
+	ai->ct->Update(frame);
 }

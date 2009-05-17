@@ -201,7 +201,7 @@ void CDGunController::Update(unsigned int currentFrame) {
 
 
 void CDGunController::Stop(void) const {
-	Command c; c.id = CMD_STOP; ai->cb->GiveOrder(commanderID, &c);
+	Command c; c.id = CMD_STOP; ai->ct->GiveOrder(commanderID, &c);
 }
 
 void CDGunController::IssueOrder(const float3& pos, int orderType, int keyMod) const {
@@ -212,7 +212,7 @@ void CDGunController::IssueOrder(const float3& pos, int orderType, int keyMod) c
 	c.params.push_back(pos.y);
 	c.params.push_back(pos.z);
 
-	ai->cb->GiveOrder(commanderID, &c);
+	ai->ct->GiveOrder(commanderID, &c);
 }
 
 void CDGunController::IssueOrder(int target, int orderType, int keyMod) const {
@@ -221,7 +221,7 @@ void CDGunController::IssueOrder(int target, int orderType, int keyMod) const {
 	c.options |= keyMod;
 	c.params.push_back(target);
 
-	ai->cb->GiveOrder(commanderID, &c);
+	ai->ct->GiveOrder(commanderID, &c);
 }
 
 bool CDGunController::IsBusy(void) const {
