@@ -272,7 +272,6 @@ void CPieceProjectile::Update()
 	speed *= 0.997f;
 	pos += speed;
 	spinPos += spinSpeed;
-	*numCallback = 0;
 
 	if (flags & PF_Fire && HasVertices()) {
 		OldInfo* tempOldInfo = oldInfos[7];
@@ -415,13 +414,12 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 void CPieceProjectile::DrawCallback(void)
 {
-	(*numCallback)++;
-
-	if ((*numCallback) < 2) {
+	if(*numCallback != gu->drawFrame) {
+		*numCallback = gu->drawFrame;
 		return;
 	}
+	*numCallback = 0;
 
-	(*numCallback) = 0;
 	inArray = true;
 	unsigned char col[4];
 
