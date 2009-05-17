@@ -308,6 +308,8 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 	if (num >= 0 && num < int(scriptIndex.size())) {
 		scriptIndex[num] = ref;
 	}
+
+	LUA_TRACE(fname.c_str());
 }
 
 
@@ -320,6 +322,8 @@ void CLuaUnitScript::RemoveCallIn(const string& fname)
 		scriptNames.erase(it);
 		UpdateCallIn(fname, LUA_NOREF);
 	}
+
+	LUA_TRACE(fname.c_str());
 }
 
 
@@ -404,7 +408,7 @@ inline void CLuaUnitScript::PushUnit(const CUnit* targetUnit)
 
 inline bool CLuaUnitScript::RunCallIn(int id, int inArgs, int outArgs)
 {
-	RawRunCallIn(scriptIndex[id], inArgs, outArgs);
+	return RawRunCallIn(scriptIndex[id], inArgs, outArgs);
 }
 
 
@@ -811,7 +815,9 @@ string CLuaUnitScript::GetScriptName(int functionId) const
 	for (; it != scriptNames.end(); ++it) {
 		if (it->second == functionId) return it->first;
 	}
-	return "<unnamed>";
+	std::stringstream s;
+	s << "<unnamed: " << functionId << ">";
+	return s.str();
 }
 
 
