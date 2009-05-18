@@ -100,10 +100,6 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 		// not to a particular team.
 	} else if (myAIs.count(teamId) > 0) {
 		// allow the AI instance to handle the event.
-
-		// FIXME: if topic == EVENT_RELEASE, CAIAI::CAIGlobalAI::handleEvent()
-		// creates an CAIReleaseEvent event but since its Run() is a no-op we
-		// never get to ::release or CKAIK::~CKAIK from here
 		return myAIs[teamId]->handleEvent(topic, data);
 	}
 
