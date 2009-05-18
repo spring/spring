@@ -1274,7 +1274,8 @@ void CAirMoveType::SetMaxSpeed(float speed)
 	maxSpeed = speed;
 	if (maxAcc != 0.0f && maxSpeed != 0.0f) {
 		// meant to set the drag such that the maxspeed becomes what it should be
-		float drag = 1.0f / (maxSpeed / GAME_SPEED * 1.1f / maxAcc) - wingAngle * wingAngle * wingDrag;
+		float drag = 1.0f / (maxSpeed * 1.1f / maxAcc) - wingAngle * wingAngle * wingDrag;
+		drag = std::min(1.0f, std::max(0.0f, drag));
 		invDrag = 1.0f - drag;
 	}
 }
