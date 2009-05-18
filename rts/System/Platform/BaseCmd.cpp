@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 
 namespace po = boost::program_options;
 
