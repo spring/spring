@@ -286,7 +286,6 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			tgame->AddPair("ScriptName", data->GetScript());
 			tgame->AddPair("MapName", data->GetMap());
 			tgame->AddPair("Gametype", data->GetMod());
-
 			tgame->AddPair("Demofile", demoName);
 
 			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it)
@@ -297,22 +296,26 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 				}
 			}
 
+
 			// add local spectator (and assert we didn't already have MAX_PLAYERS players)
 			int myPlayerNum;
 			string playerStr;
-			for (myPlayerNum = MAX_PLAYERS-1; myPlayerNum > 0; --myPlayerNum)
-			{
+			for (myPlayerNum = MAX_PLAYERS - 1; myPlayerNum >= 0; --myPlayerNum) {
 				char section[50];
-				sprintf(section, "GAME\\PLAYER%i", myPlayerNum);
+				sprintf(section, "game\\player%i", myPlayerNum);
 				string s(section);
-				if (script.SectionExist(s))
-				{
+
+				if (script.SectionExist(s)) {
 					++myPlayerNum;
-					sprintf(section, "PLAYER%i", myPlayerNum);
+					sprintf(section, "player%i", myPlayerNum);
 					playerStr = std::string(section);
 					break;
 				}
 			}
+
+			assert(!playerStr.empty());
+
+
 			TdfParser::TdfSection* me = tgame->construct_subsection(playerStr);
 			me->AddPair("name", settings->myPlayerName);
 			me->AddPair("spectator", 1);
@@ -323,6 +326,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 			std::ostringstream buf;
 			script.print(buf);
+
 			data->SetSetup(buf.str());
 			CGameSetup* tempSetup = new CGameSetup();
 
