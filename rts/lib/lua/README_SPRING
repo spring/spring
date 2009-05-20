@@ -1,3 +1,9 @@
+Lua-5.1.4 source code modifications:
+
+  1. Patch from Lua-5.1.2 to Lua-5.1.4 has been applied
+     on top of the result from the steps for Lua 5.1.2.
+
+  2. Removed the GZIP'ed files (step 6 below.)
 
 Lua-5.1.2 source code modifications:
 
