@@ -22,7 +22,6 @@
 
 
 EXPORT(const char* ) GetSpringVersion();
-EXPORT(void        ) Message(const char* p_szMessage);
 EXPORT(void        ) UnInit();
 EXPORT(int         ) ProcessUnits(void);
 EXPORT(int         ) ProcessUnitsNoChecksum(void);
@@ -77,15 +76,6 @@ static PyObject *unitsync_GetSpringVersion(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, ""))
 		return NULL;
 	return Py_BuildValue("s", GetSpringVersion());
-}
-
-static PyObject *unitsync_Message(PyObject *self, PyObject *args)
-{
-	const char *msg;
-	if (!PyArg_ParseTuple(args, "s", &msg))
-		return NULL;
-	Message(msg);
-	return Py_BuildValue("");
 }
 
 static PyObject *unitsync_Init(PyObject *self, PyObject *args)
@@ -596,7 +586,6 @@ static PyMethodDef unitsyncMethods[] = {
 #define PY(name)         { # name , unitsync_ ## name , METH_VARARGS , NULL }
 #define PYDOC(name, doc) { # name , unitsync_ ## name , METH_VARARGS , doc  }
 	PY( GetSpringVersion ),
-	PY( Message ),
 	PY( Init ),
 	PY( UnInit ),
 	PY( ProcessUnits ),
