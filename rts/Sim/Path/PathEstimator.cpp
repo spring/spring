@@ -224,7 +224,7 @@ void CPathEstimator::CalculateBlockOffsets(int idx, int thread) {
 	if (thread == 0 && (idx/1000)!=lastOffsetMessage) {
 		lastOffsetMessage=idx/1000;
 		char calcMsg[128];
-		sprintf(calcMsg, "Block offset remaining: %d of %d (block-size %d)", lastOffsetMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		sprintf(calcMsg, "Block offset: %d of %d (size %d)", lastOffsetMessage*1000, nbrOfBlocks, BLOCK_SIZE);
 		net->Send(CBaseNetProtocol::Get().SendCPUUsage(BLOCK_SIZE | (lastOffsetMessage<<8)));
 		PrintLoadMsg(calcMsg);
 	}
@@ -240,7 +240,7 @@ void CPathEstimator::EstimatePathCosts(int idx, int thread) {
 	if (thread == 0 && (idx/1000)!=lastCostMessage) {
 		lastCostMessage=idx/1000;
 		char calcMsg[128];
-		sprintf(calcMsg, "Path cost remaining: %d of %d (block-size %d)", lastCostMessage*1000, nbrOfBlocks, BLOCK_SIZE);
+		sprintf(calcMsg, "Path cost: %d of %d (size %d)", lastCostMessage*1000, nbrOfBlocks, BLOCK_SIZE);
 		net->Send(CBaseNetProtocol::Get().SendCPUUsage(0x1 | BLOCK_SIZE | (lastCostMessage<<8)));
 		PrintLoadMsg(calcMsg);
 	}
