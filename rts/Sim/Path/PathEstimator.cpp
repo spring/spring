@@ -206,14 +206,15 @@ void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 	// A must be completely finished before B_i can be safely called. This means we cannot
 	// let thread i execute (A_i, B_i), but instead have to split the work such that every
 	// thread finishes its part of A before any starts B_i.
+	int nbr = nbrOfBlocks - 1;
 	int i;
-	while((i=--offsetBlockNum) >= 0)
-		CalculateBlockOffsets(i,thread);
+	while((i = --offsetBlockNum) >= 0)
+		CalculateBlockOffsets(nbr - i, thread);
 
 	pathBarrier->wait();
 
-	while((i=--costBlockNum) >= 0)
-		EstimatePathCosts(i,thread);
+	while((i = --costBlockNum) >= 0)
+		EstimatePathCosts(nbr - i, thread);
 }
 
 
