@@ -9,6 +9,7 @@ AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(system_files 
 	${fsfiles}
 	 ${netfiles}
+	../../rts/System/Platform/Misc
 	../../rts/System/TdfParser
 	../../rts/System/ConfigHandler
 	../../rts/System/LogOutput

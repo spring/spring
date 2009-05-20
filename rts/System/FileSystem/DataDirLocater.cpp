@@ -28,6 +28,7 @@
 #include "FileSystem.h"
 #include "mmgr.h"
 #include "Exceptions.h"
+#include "Platform/Misc.h"
 
 /**
  * @brief construct a data directory object
@@ -241,15 +242,9 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(SubstEnvVars(userDef));
 	}
 
-#ifdef WIN32
-	TCHAR currentDir[MAX_PATH];
-	::GetModuleFileName(0, currentDir, sizeof(currentDir) - 1);
-	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
-	_splitpath(currentDir, drive, dir, file, ext);
-	std::ostringstream complete;
-	complete << drive << dir;
-	AddDirs(complete.str());
+	AddDirs(Platform::GetBinaryPath());
 
+#ifdef WIN32
 	// my documents
 	TCHAR strPath[MAX_PATH];
 	SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);
