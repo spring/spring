@@ -216,24 +216,6 @@ EXPORT(const char*) GetSpringVersion()
 }
 
 
-/**
- * @brief Creates a messagebox with said message
- * @param p_szMessage string holding the message
- *
- * Creates a messagebox with the title "Message from DLL", an OK button, and the specified message
- */
-EXPORT(void) Message(const char* p_szMessage)
-{
-	try {
-		logOutput.Print(LOG_UNITSYNC, "Message from DLL: %s\n", p_szMessage);
-#ifdef WIN32
-		MessageBox(NULL, p_szMessage, "Message from DLL", MB_OK);
-#endif
-	}
-	UNITSYNC_CATCH_BLOCKS;
-}
-
-
 static void _UnInit()
 {
 	lpClose();
@@ -2947,7 +2929,10 @@ class CMessageOnce
 		{
 			if (alreadyDone) return;
 			alreadyDone = true;
-			Message(msg.c_str());
+			logOutput.Print(LOG_UNITSYNC, "Message from DLL: %s\n", msg.c_str());
+#ifdef WIN32
+			MessageBox(NULL, msg.c_str(), "Message from DLL", MB_OK);
+#endif
 		}
 };
 
