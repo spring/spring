@@ -45,6 +45,7 @@ INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/Syste
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 set(unitsync_files
+	../../rts/System/Platform/Misc
 	../../rts/System/ConfigHandler
 	../../rts/System/LogOutput
 	../../rts/System/TdfParser
