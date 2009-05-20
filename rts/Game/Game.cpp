@@ -2116,7 +2116,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				}
 			}
 		}
-		logOutput.Print("GroupAI and LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
+		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (action.command == "godmode") {
 		if (!gs->cheatEnabled)

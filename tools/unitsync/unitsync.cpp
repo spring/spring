@@ -228,9 +228,6 @@ EXPORT(void) Message(const char* p_szMessage)
 		logOutput.Print(LOG_UNITSYNC, "Message from DLL: %s\n", p_szMessage);
 #ifdef WIN32
 		MessageBox(NULL, p_szMessage, "Message from DLL", MB_OK);
-#else
-		// this may cause message to be printed on console twice, if StdoutDebug is on
-		fprintf(stderr, "unitsync: Message from DLL: %s\n", p_szMessage);
 #endif
 	}
 	UNITSYNC_CATCH_BLOCKS;
