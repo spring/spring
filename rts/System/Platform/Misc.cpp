@@ -39,13 +39,14 @@ std::string GetBinaryPath()
 		return "";
 
 #elif WIN32
-	TCHAR currentDir[MAX_PATH];
-	::GetModuleFileName(0, currentDir, sizeof(currentDir) - 1);
+	TCHAR currentDir[MAX_PATH+1];
+	int ret = ::GetModuleFileName(0, currentDir, sizeof(currentDir));
+	if (ret == 0 || ret == sizeof(currentDir))
+		return "";
 	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
 	_splitpath(currentDir, drive, dir, file, ext);
-	std::ostringstream complete;
-	complete << drive << dir;
-	return complete.str();
+	_makepath(currentDir, drive, dir, NULL, NULL);
+	return std::string(currentDir);
 
 #else
 	return "";
