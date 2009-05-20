@@ -31,7 +31,6 @@ class CGroup;
 struct WeaponDef;
 class SkirmishAIKey;
 class CSkirmishAIWrapper;
-class CGroupAIWrapper;
 struct SSkirmishAICallback;
 
 void handleAIException(const char* description);

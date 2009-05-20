@@ -171,8 +171,6 @@ bool SpringApp::Initialize()
 
 	ParseCmdLine();
 
-	logOutput.SetMirrorToStdout(!!configHandler->Get("StdoutDebug",0));
-
 	// log OS version
 	// TODO: improve version logging of non-Windows OSes
 #if defined(WIN32)
@@ -690,9 +688,6 @@ void SpringApp::ParseCmdLine()
 	} else if (cmdline->result("list-skirmish-ais")) {
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
-//	} else if (cmdline->result("list-group-ais")) {
-//		IAILibraryManager::OutputGroupAIInfo();
-//		exit(0);
 	}
 
 	// flags

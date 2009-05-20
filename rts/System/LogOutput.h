@@ -118,8 +118,6 @@ public:
 	void AddSubscriber(ILogSubscriber* ls);
 	void RemoveSubscriber(ILogSubscriber* ls);
 
-	void SetMirrorToStdout(bool);
-
 	void SetFilename(const char* filename);
 	void Initialize();
 
