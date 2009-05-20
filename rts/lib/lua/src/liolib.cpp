@@ -105,19 +105,31 @@ static FILE **newfile (lua_State *L) {
 
 
 /*
-** this function has a separated environment, which defines the
-** correct __close for 'popen' files
+** function to (not) close the standard files stdin, stdout, and stderr
+*/
+static int io_noclose (lua_State *L) {
+  lua_pushnil(L);
+  lua_pushliteral(L, "cannot close standard file");
+  return 2;
+}
+
+
+/*
+** function to close 'popen' files
 */
 static int io_pclose (lua_State *L) {
-  FILE **p = topfile(L);
+  FILE **p = tofilep(L);
   int ok = lua_pclose(L, *p); // FIXME - SPRING L->pclose_func
   *p = NULL;
   return pushresult(L, ok, NULL);
 }
 
 
+/*
+** function to close regular files
+*/
 static int io_fclose (lua_State *L) {
-  FILE **p = topfile(L);
+  FILE **p = tofilep(L);
   int ok = (fclose(*p) == 0);
   *p = NULL;
   return pushresult(L, ok, NULL);
