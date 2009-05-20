@@ -62,6 +62,7 @@ cp -r game/* $dir_in_archive
 cp installer/downloads/*.exe installer/downloads/TASServer.jar $dir_in_archive
 cp -r installer/Springlobby/SettingsDlls/* installer/Springlobby/SLArchive/* $dir_in_archive
 touch $dir_in_archive/springlobby.conf # make SL go into portable mode
+touch $dir_in_archive/springsettings.cfg # make spring go into portable mode
 
 /usr/bin/zip -q -r -u -9 "$archive_filename" $dir_in_archive
 
