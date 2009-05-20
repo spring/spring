@@ -9,8 +9,6 @@
 EXPORT(const char* ) GetNextError();
 EXPORT(const char* ) GetSpringVersion();
 
-EXPORT(void        ) Message(const char* p_szMessage);
-
 EXPORT(int         ) Init(bool isServer, int id);
 EXPORT(void        ) UnInit();
 
