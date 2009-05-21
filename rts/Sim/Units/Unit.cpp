@@ -350,7 +350,7 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 	mapSquare = ground->GetSquare(pos);
 	uh->AddUnit(this);
 	qf->MovedUnit(this);
-	oldRadarPos.x = -1;
+	hasRadarPos = false;
 
 	losStatus[allyteam] = LOS_ALL_MASK_BITS |
 		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
@@ -2379,6 +2379,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(radarSquares),
 	CR_MEMBER(oldRadarPos.x),
 	CR_MEMBER(oldRadarPos.y),
+	CR_MEMBER(hasRadarPos),
 	CR_MEMBER(stealth),
 	CR_MEMBER(sonarStealth),
 	CR_MEMBER(moveType),

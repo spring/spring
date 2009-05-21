@@ -315,6 +315,7 @@ public:
 	bool hasRadarCapacity;
 	std::vector<int> radarSquares;
 	int2 oldRadarPos;
+	bool hasRadarPos;
 	bool stealth;
 	bool sonarStealth;
 
