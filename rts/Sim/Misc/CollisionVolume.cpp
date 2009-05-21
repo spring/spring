@@ -230,8 +230,8 @@ void CollisionVolume::SetAxisScales(float xs, float ys, float zs) {
 	axisHIScales.y = 1.0f / axisHScales.y;
 	axisHIScales.z = 1.0f / axisHScales.z;
 }
+
 void CollisionVolume::RescaleAxes(float xs, float ys, float zs) {
-	// TODO: also recalculate volumeBoundingRadius{Sq}
 	axisScales.x *= xs; axisHScales.x *= xs;
 	axisScales.y *= ys; axisHScales.y *= ys;
 	axisScales.z *= zs; axisHScales.z *= zs;
