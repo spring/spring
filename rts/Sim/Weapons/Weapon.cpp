@@ -742,8 +742,9 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 
 	float3 dif = pos - weaponMuzzlePos;
 	float heightDiff = 0.0f; // negative when target below owner
+	const float absTB = fabsf(targetBorder);
 
-	if (targetBorder != 0 && unit) {
+	if (targetBorder != 0.0f && unit) {
 		float3 difDir(dif);
 		difDir.Normalize();
 
@@ -751,7 +752,8 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 		CollisionVolume* cvOld = unit->collisionVolume;
 		CollisionVolume  cvNew = CollisionVolume(unit->collisionVolume);
 		CollisionQuery   cq;
-		cvNew.RescaleAxes(targetBorder, targetBorder, targetBorder);
+
+		cvNew.RescaleAxes(absTB, absTB, absTB);
 		cvNew.SetTestType(COLVOL_TEST_DISC);
 
 		unit->collisionVolume = &cvNew;
@@ -769,8 +771,9 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 			// intersection is not guaranteed if the
 			// volume has an offset, since here we're
 			// shooting at the target's midpoint
-			if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, pos, &cq)) {
-				dif -= (difDir * ((pos - cq.p0).Length()));
+			if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, pos + (difDir * cvNew.GetBoundingRadius() * 2.0f), &cq)) {
+				if (targetBorder > 0.0f) { dif -= (difDir * ((pos - cq.p0).Length())); }
+				if (targetBorder < 0.0f) { dif += (difDir * ((cq.p1 - pos).Length())); }
 			}
 		}
 
