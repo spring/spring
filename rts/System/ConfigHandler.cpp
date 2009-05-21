@@ -243,17 +243,28 @@ string ConfigHandler::GetDefaultConfig()
 #else
 	// first, check if there exists a config file in the same directory as the exe
 	// and if the file is writable (otherwise it can fail/segfault/end up in virtualstore...)
+	// try springsettings-X.Y.Z.cfg first, then springsettings.cfg
 	std::string configPath = binaryPath + "springsettings.cfg";
+	std::string verConfPath = binaryPath + "springsettings-" + SpringVersion::Get() + ".cfg";
 	// _access modes: 0 - exists; 2 - write; 4 - read; 6 - r/w
 	// doesn't work on directories (precisely, mode is always 0)
-	if (_access(configPath.c_str(), 6) != -1) {
+	if (_access(verConfPath.c_str(), 6) != -1) {
+		cfg = verConfPath;
+	}
+	else if (_access(configPath.c_str(), 6) != -1) {
 		cfg = configPath;
 	} // if not found or not writeable, use a path in appdata
 	else {
 		TCHAR strPath[MAX_PATH+1];
 		SHGetFolderPath( NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, strPath);
-		cfg = strPath;
-		cfg += "\\springsettings.cfg"; // e.g. F:\Dokumente und Einstellungen\MyUser\Anwendungsdaten
+		std::string userDir = strPath;
+		configPath = userDir + "\\springsettings-" + SpringVersion::Get() + ".cfg";
+		if (_access(configPath.c_str(), 6) != -1) {
+			cfg = configPath;
+		} else {
+			cfg = strPath;
+			cfg += "\\springsettings.cfg"; // e.g. F:\Dokumente und Einstellungen\MyUser\Anwendungsdaten
+		}
 	}
 	// log here so unitsync shows configuration source, too
 	logOutput.Print("default config file: " + cfg + "\n");
