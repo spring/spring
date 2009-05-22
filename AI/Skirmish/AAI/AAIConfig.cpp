@@ -91,8 +91,11 @@ AAIConfig::AAIConfig(void)
 	CONSTRUCTION_TIMEOUT = 1500;
 	CLIFF_SLOPE = 0.085f;
 	SCOUT_UPDATE_FREQUENCY = 127;
+	SCOUTING_MEMORY_FACTOR = 1.0f;
 	WATER_MAP_RATIO = 0.8f;
 	LAND_WATER_MAP_RATIO = 0.3f;
+
+	GAME_PERIODS = 4;
 
 	initialized = false;
 }
@@ -114,9 +117,9 @@ void AAIConfig::LoadConfig(AAI *ai)
 	char filename[500];
 	char buffer[500];
 
-	strcpy(buffer, MAIN_PATH);
-	strcat(buffer, MOD_CFG_PATH);
-	strcat(buffer, ai->cb->GetModName());
+	STRCPY(buffer, MAIN_PATH);
+	STRCAT(buffer, MOD_CFG_PATH);
+	STRCAT(buffer, ai->cb->GetModName());
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
@@ -147,7 +150,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 				{
 					START_UNITS[i] = new char[20];
 					fscanf(file, "%s", filename);
-					strcpy(START_UNITS[i], filename);
+					STRCPY(START_UNITS[i], filename);
 
 					if(!ai->cb->GetUnitDef(START_UNITS[i]))
 					{
@@ -165,7 +168,7 @@ void AAIConfig::LoadConfig(AAI *ai)
 				{
 					SIDE_NAMES[i] = new char[80];
 					fscanf(file, "%s", filename);
-					strcpy(SIDE_NAMES[i], filename);
+					STRCPY(SIDE_NAMES[i], filename);
 				}
 			}
 			else if(!strcmp(keyword, "SCOUTS"))
@@ -588,8 +591,8 @@ void AAIConfig::LoadConfig(AAI *ai)
 
 
 	// load general settings
-	strcpy(buffer, MAIN_PATH);
-	strcat(buffer, GENERAL_CFG_FILE);
+	STRCPY(buffer, MAIN_PATH);
+	STRCAT(buffer, GENERAL_CFG_FILE);
 	ReplaceExtension (buffer, filename, sizeof(filename), ".cfg");
 
 	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, filename);
@@ -624,6 +627,11 @@ void AAIConfig::LoadConfig(AAI *ai)
 			{
 				fscanf(file, "%i", &ival);
 				SCOUT_UPDATE_FREQUENCY = ival;
+			}
+			else if(!strcmp(keyword, "SCOUTING_MEMORY_FACTOR"))
+			{
+				fscanf(file, "%f", &fval);
+				SCOUTING_MEMORY_FACTOR = fval;
 			}
 			else
 			{

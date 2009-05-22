@@ -32,15 +32,13 @@ public:
 	bool Failed();
 
 	// orders units to attack specidied sector
-	void AttackSector(AAISector *sector, AttackType type);
+	void AttackSector(AAISector *sector);
 
 	// orders all units involved to retreat
 	void StopAttack();
 
 	// target sector
 	AAISector *dest;
-
-	AttackType type;
 
 	// tick when last attack order has been given (to prevent overflow when unit gets stuck and sends "unit idel" all the time)
 	int lastAttack;

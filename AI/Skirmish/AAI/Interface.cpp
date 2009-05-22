@@ -23,7 +23,7 @@
 //
 //SHARED_EXPORT void GetAiName(char* name)
 //{
-//	strcpy(name, AAI_VERSION);
+//	STRCPY(name, AAI_VERSION);
 //}
 //
 //SHARED_EXPORT IGlobalAI* GetNewAI()

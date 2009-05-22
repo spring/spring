@@ -182,7 +182,7 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 			x = targets[i].pos.x/map->xSectorSize;
 			y = targets[i].pos.z/map->ySectorSize;
 
-			current = pow(targets[i].cost, cost) / (1.0f + map->sector[x][y].stat_combat_power[1] * danger) * targets[i].health / bt->unitList[targets[i].def_id-1]->health ;
+			current = pow(targets[i].cost, cost) / (1.0f + map->sector[x][y].enemy_stat_combat_power[1] * danger) * targets[i].health / bt->unitList[targets[i].def_id-1]->health ;
 
 			if(current > best)
 			{
@@ -199,7 +199,6 @@ void AAIAirForceManager::BombBestUnit(float cost, float danger)
 		if(group)
 		{
 			//ai->cb->SendTextMsg("Bombing...", 0);
-
 			group->BombTarget(targets[i].unit_id, &targets[i].pos);
 
 			targets[i].unit_id = -1;
@@ -220,7 +219,6 @@ AAIGroup* AAIAirForceManager::GetAirGroup(float importance, UnitType group_type)
 	}
 	else
 	{
-
 		for(list<AAIGroup*>::iterator group = air_groups->begin(); group != air_groups->end(); ++group)
 		{
 			if((*group)->task_importance < importance && group_type == (*group)->group_unit_type && (*group)->units.size() >= (*group)->maxSize)

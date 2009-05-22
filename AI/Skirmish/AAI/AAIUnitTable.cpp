@@ -28,6 +28,7 @@ AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 		units[i].group = 0;
 		units[i].cons = 0;
 		units[i].status = UNIT_KILLED;
+		units[i].last_order = 0;
 	}
 
 	for(int i = 0; i <= MOBILE_CONSTRUCTOR; ++i)
@@ -37,7 +38,6 @@ AAIUnitTable::AAIUnitTable(AAI *ai, AAIBuildTable *bt)
 		requestedUnits[i] = 0;
 	}
 
-	activeScouts = futureScouts = 0;
 	activeBuilders = futureBuilders = 0;
 	activeFactories = futureFactories = 0;
 
@@ -237,26 +237,18 @@ void AAIUnitTable::RemoveExtractor(int unit_id)
 
 void AAIUnitTable::AddScout(int unit_id)
 {
-	++activeScouts;
-	--futureScouts;
-
 	scouts.insert(unit_id);
 }
 
 void AAIUnitTable::RemoveScout(int unit_id)
 {
-	--activeScouts;
-
 	scouts.erase(unit_id);
 }
 
 void AAIUnitTable::AddPowerPlant(int unit_id, int def_id)
 {
 	power_plants.insert(unit_id);
-
-	float output = bt->units_static[def_id].efficiency[0];
-
-	ai->execute->futureAvailableEnergy -= output;
+	ai->execute->futureAvailableEnergy -= bt->units_static[def_id].efficiency[0];
 }
 
 void AAIUnitTable::RemovePowerPlant(int unit_id)
@@ -530,3 +522,24 @@ void AAIUnitTable::FutureUnitKilled(UnitCategory category)
 	--futureUnits[category];
 }
 
+void AAIUnitTable::UnitCreated(UnitCategory category)
+{
+	--requestedUnits[category];
+	++futureUnits[category];
+}
+
+void AAIUnitTable::UnitFinished(UnitCategory category)
+{
+	--futureUnits[category];
+	++activeUnits[category];
+}
+
+void AAIUnitTable::UnitRequestFailed(UnitCategory category)
+{
+	--requestedUnits[category];
+}
+
+void AAIUnitTable::UnitRequested(UnitCategory category, int number)
+{
+	requestedUnits[category] += number;
+}
