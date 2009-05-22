@@ -292,7 +292,6 @@ unitsync_extra_files = [
 	'rts/System/Option.cpp',
 	'rts/System/ConfigHandler.cpp',
 	'rts/System/LogOutput.cpp',
-	'rts/System/Platform/Misc.cpp'
 ]
 unitsync_files.extend(unitsync_fs_files)
 unitsync_files.extend(unitsync_lua_files)
