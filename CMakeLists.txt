@@ -48,6 +48,16 @@ if (DIRECT_CONTROL)
 	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
 endif (DIRECT_CONTROL)
 
+SET(GML FALSE CACHE BOOL "Enable OpenGL Multithreading Library")
+if (GML)
+	ADD_DEFINITIONS(-DUSE_GML)
+endif (GML)
+
+SET(GMLSIM FALSE CACHE BOOL "Enable parallel threads for Sim/Draw")
+if (GMLSIM)
+	ADD_DEFINITIONS(-DUSE_GML_SIM)
+endif (GMLSIM)
+
 IF (WIN32)
 	SET(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
 	if (NO_AVI)
