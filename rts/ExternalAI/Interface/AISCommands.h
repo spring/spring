@@ -1112,14 +1112,31 @@ void initSUnitCommand(void* sUnitCommand);
 struct Command;
 
 // legacy support functions
+
 /**
  * @brief Allocates memory for a C Command struct
  */
 void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId);
+
 /**
  * @brief Frees memory of a C Command struct
  */
 void freeSUnitCommand(void* sCommandData, int sCommandId);
+
+/**
+ * Returns the engine internal C++ unit command (topic) ID
+ * that corresponds to the C AI Interface command topic ID specified by
+ * <code>aiCmdTopic</code>.
+ */
+int toInternalUnitCommandTopic(int aiCmdTopic, void* sUnitCommandData);
+
+/**
+ * Returns the C AI Interface command topic ID that corresponds
+ * to the engine internal C++ unit command (topic) ID specified by
+ * <code>internalUnitCmdTopic</code>.
+ */
+int extractAICommandTopic(const Command* internalUnitCmd);
+
 /**
  * @brief creates - with new - an engine C++ Command struct
  */

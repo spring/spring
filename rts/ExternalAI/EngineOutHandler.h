@@ -22,6 +22,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 #include <map>
+#include <vector>
 #include <string>
 
 struct Command;
@@ -81,7 +82,7 @@ public:
 	 * A specific unit has finished a specific command,
 	 * might be a good idea to give new orders to it.
 	*/
-	void CommandFinished(const CUnit& unit, int commandTopicId);
+	void CommandFinished(const CUnit& unit, const Command& command);
 	void GotChatMsg(const char* msg, int playerId);
 
 
