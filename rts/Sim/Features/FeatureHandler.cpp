@@ -747,16 +747,26 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 			float sqDist = (f->pos - camera->pos).SqLength2D();
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
+			float sqFadeDistE;
+			float sqFadeDistB;
+			if(farLength < sqFadeDistEnd) {
+				sqFadeDistE = farLength;
+				sqFadeDistB = farLength * 0.75f * 0.75f;
+			} else {
+				sqFadeDistE = sqFadeDistEnd;
+				sqFadeDistB = sqFadeDistBegin;
+			}
+
 			if (sqDist < farLength) {
-				if(!drawReflection && !drawRefraction && f->midPos.y > 0 && sqDist < sqFadeDistEnd && sqDist >= sqFadeDistBegin) {
-					f->tempalpha = 1.0f - (sqDist - sqFadeDistBegin) / (sqFadeDistEnd - sqFadeDistBegin);
+				if(!drawReflection && !drawRefraction && f->midPos.y > 0 && sqDist < sqFadeDistE && sqDist >= sqFadeDistB) {
+					f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
 					if (f->model->type == MODELTYPE_3DO) { // FIXME: Properly fade out submerged features also
 						featureHandler->fadeFeatures.insert(f);
 					} else {
 						featureHandler->fadeFeaturesS3O.insert(f);
 					}
 				}
-				if(drawReflection || drawRefraction || f->midPos.y <= 0 || sqDist < sqFadeDistBegin) {
+				if(drawReflection || drawRefraction || f->midPos.y <= 0 || sqDist < sqFadeDistB) {
 					f->tempalpha = 1.0f;
 					if (f->model->type == MODELTYPE_3DO) {
 						unitDrawer->DrawFeatureStatic(f);

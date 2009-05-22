@@ -8,7 +8,6 @@ TEMP tempColor,shadeColor;
 #get unit texture
 TEX texColor, fragment.texcoord[1], texture[0], 2D;
 TEX extraColor, fragment.texcoord[1], texture[1], 2D;
-MUL extraColor.w, extraColor.w, program.env[14].w;
 
 #normalize surface normal
 DP3 temp.x, fragment.texcoord[2], fragment.texcoord[2];
@@ -31,5 +30,5 @@ LRP texColor, texColor.w, program.env[14], texColor;
 ADD shadeColor, shadeColor, extraColor.x;
 
 MAD result.color, texColor, shadeColor, specular;
-MOV result.color.w, extraColor.w;
+MUL result.color.w, extraColor.w, program.env[14].w;
 END
