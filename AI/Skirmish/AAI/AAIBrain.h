@@ -33,10 +33,8 @@ public:
 	bool SectorInList(list<AAISector*> mylist, AAISector *sector);
 	list<AAISector*> GetSectors();
 
-	void RemoveProducer(list<ProductionRequest> builders, int builder_id);
-
 	// returns dest attack sector
-	AAISector* GetAttackDest(bool land, bool water, AttackType type);
+	AAISector* GetAttackDest(bool land, bool water);
 
 	// returns a sector to proceed with attack
 	AAISector* GetNextAttackDest(AAISector *current_sector, bool land, bool water);
@@ -48,9 +46,10 @@ public:
 	void UpdateBaseCenter();
 
 	// updates max units spotted
-	void UpdateMaxCombatUnitsSpotted(vector<float>& units_spotted);
+	void UpdateMaxCombatUnitsSpotted(vector<unsigned short>& units_spotted);
 
 	void UpdateAttackedByValues();
+
 	void AttackedBy(int combat_category_id);
 
 	// recalculates def capabilities of all units
@@ -94,15 +93,20 @@ public:
 
 	void BuildUnits();
 
-	void BuildUnitOfCategory(UnitCategory category, float cost, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, bool urgent);
+	void BuildUnitOfMovementType(unsigned int allowed_move_type, float cost, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, bool urgent);
 
 	// returns game period
 	int GetGamePeriod();
 
+	void UpdatePressureByEnemy();
+
+	// returns the probability that units of specified combat category will be used to attack (determine value with respect to game period, current and learning data)
+	float GetAttacksBy(int combat_category, int game_period);
+
 	//  0 = sectors the ai uses to build its base, 1 = direct neighbours etc.
 	vector<list<AAISector*> > sectors;
 
-	// ratio of land/water cells in all base sectors
+	// ratio of  flat land/water cells in all base sectors
 	float baseLandRatio;
 	float baseWaterRatio;
 
@@ -116,9 +120,13 @@ public:
 	bool expandable;
 
 	// holding max number of units of a category spotted at the same time
-	vector<float> max_units_spotted;
+	vector<float> max_combat_units_spotted;
 	vector<float> attacked_by;
 	vector<float> defence_power_vs;
+
+	// current estimations of game situation , values ranging from 0 (min) to 1 max
+
+	float enemy_pressure_estimation; 	// how much pressure done to the ai by enemy units
 
 	// pos where com spawned
 	float3 start_pos;

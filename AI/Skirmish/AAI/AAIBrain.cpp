@@ -29,16 +29,11 @@ AAIBrain::AAIBrain(AAI *ai)
 
 	base_center = ZeroVector;
 
-	max_units_spotted.resize(bt->combat_categories);
-	attacked_by.resize(bt->combat_categories);
-	defence_power_vs.resize(bt->combat_categories);
+	max_combat_units_spotted.resize(bt->ass_categories, 0);
+	attacked_by.resize(bt->combat_categories, 0);
+	defence_power_vs.resize(bt->ass_categories, 0);
 
-	for(int i = 0; i < bt->combat_categories; ++i)
-	{
-		max_units_spotted[i] = 0;
-		attacked_by[i] = 0;
-		defence_power_vs[i] = 0;
-	}
+	enemy_pressure_estimation = 0;
 }
 
 AAIBrain::~AAIBrain(void)
@@ -46,57 +41,47 @@ AAIBrain::~AAIBrain(void)
 }
 
 
-AAISector* AAIBrain::GetAttackDest(bool land, bool water, AttackType type)
+AAISector* AAIBrain::GetAttackDest(bool land, bool water)
 {
 	float best_rating = 0, my_rating;
 	AAISector *dest = 0, *sector;
 
 	int side = ai->side-1;
 
-	float ground = map->map_usefulness[0][side]/100.0f;
-	float air = map->map_usefulness[1][side]/100.0f;
-	float hover = map->map_usefulness[2][side]/100.0f;
-	float sea = map->map_usefulness[3][side]/100.0f;
-	float submarine = map->map_usefulness[4][side]/100.0f;
+	float ground =  1.0f;
+	float air = 1.0f;
+	float hover = 1.0f;
+	float sea = 1.0f;
+	float submarine = 1.0f;
+
+	float def_power;
 
 	// TODO: improve destination sector selection
-	for(int x = 0; x < map->xSectors; x++)
+	for(int x = 0; x < map->xSectors; ++x)
 	{
-		for(int y = 0; y < map->ySectors; y++)
+		for(int y = 0; y < map->ySectors; ++y)
 		{
 			sector = &map->sector[x][y];
 
 			if(sector->distance_to_base == 0 || sector->enemy_structures == 0)
 					my_rating = 0;
-			else if(type == BASE_ATTACK)
+			else
 			{
-				if(land && sector->water_ratio < 0.35)
+				if(land && sector->water_ratio < 0.4)
 				{
-					my_rating = sector->enemy_structures / (2 * sector->GetThreatTo(ground, air, hover, sea, submarine) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f) + 1);
+					def_power = sector->GetEnemyDefencePower(ground, air, hover, sea, submarine);
+
+					if(def_power)
+					my_rating = sector->enemy_structures / sector->GetEnemyDefencePower(ground, air, hover, sea, submarine);
+
+					my_rating = sector->enemy_structures / (2 * sector->GetEnemyDefencePower(ground, air, hover, sea, submarine) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f) + 1);
 					my_rating /= (8 + sector->distance_to_base);
 				}
-				else if(water && sector->water_ratio > 0.65)
+				else if(water && sector->water_ratio > 0.6)
 				{
-					my_rating = sector->enemy_structures / (2 * sector->GetThreatTo(ground, air, hover, sea, submarine) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f) + 1);
+					my_rating = sector->enemy_structures / (2 * sector->GetEnemyDefencePower(ground, air, hover, sea, submarine) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f) + 1);
 					my_rating /= (8 + sector->distance_to_base);
 				}
-				else
-					my_rating = 0;
-			}
-			else if(type == OUTPOST_ATTACK)
-			{
-				if(land && sector->water_ratio < 0.35)
-				{
-					my_rating = 1 / (1 + pow(sector->GetThreatTo(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
-					my_rating /= (2 + sector->distance_to_base);
-				}
-				else if(water && sector->water_ratio > 0.65)
-				{
-					my_rating = 1 / (1 + pow(sector->GetThreatTo(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
-					my_rating /= (2 + sector->distance_to_base);
-				}
-				else
-					my_rating = 0;
 			}
 
 			if(my_rating > best_rating)
@@ -117,11 +102,11 @@ AAISector* AAIBrain::GetNextAttackDest(AAISector *current_sector, bool land, boo
 
 	int side = ai->side-1;
 
-	float ground = map->map_usefulness[0][side]/100.0f;
-	float air = map->map_usefulness[1][side]/100.0f;
-	float hover = map->map_usefulness[2][side]/100.0f;
-	float sea = map->map_usefulness[3][side]/100.0f;
-	float submarine = map->map_usefulness[4][side]/100.0f;
+	float ground = 1.0f;
+	float air = 1.0f;
+	float hover = 1.0f;
+	float sea = 1.0f;
+	float submarine = 1.0f;
 
 	// TODO: improve destination sector selection
 	for(int x = 0; x < map->xSectors; x++)
@@ -130,7 +115,7 @@ AAISector* AAIBrain::GetNextAttackDest(AAISector *current_sector, bool land, boo
 		{
 			sector = &map->sector[x][y];
 
-			if(sector->distance_to_base == 0 || sector->enemy_structures == 0)
+			if(sector->distance_to_base == 0 || sector->enemy_structures < 0.001f)
 					my_rating = 0;
 			else
 			{
@@ -138,15 +123,15 @@ AAISector* AAIBrain::GetNextAttackDest(AAISector *current_sector, bool land, boo
 				{
 					dist = sqrt( pow((float)sector->x - current_sector->x, 2) + pow((float)sector->y - current_sector->y , 2) );
 
-					my_rating = 1 / (1 + pow(sector->GetThreatTo(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
+					my_rating = 1.0f / (1.0f + pow(sector->GetEnemyDefencePower(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
 
 				}
 				else if(water && sector->water_ratio > 0.65)
 				{
 					dist = sqrt( pow((float)(sector->x - current_sector->x), 2) + pow((float)(sector->y - current_sector->y), 2) );
 
-					my_rating = 1 / (1 + pow(sector->GetThreatTo(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
-					my_rating /= (1 + dist);
+					my_rating = 1.0f / (1.0f + pow(sector->GetEnemyDefencePower(ground, air, hover, sea, submarine), 2.0f) + pow(sector->GetLostUnits(ground, air, hover, sea, submarine) + 1, 1.5f));
+					my_rating /= (1.0f + dist);
 				}
 				else
 					my_rating = 0;
@@ -187,7 +172,11 @@ void AAIBrain::GetNewScoutDest(float3 *dest, int scout)
 
 			if(sector->distance_to_base > 0 && scout_movement_type & sector->allowed_movement_types)
 			{
-				my_rating = sector->importance_this_game * sector->last_scout;
+				if(enemy_pressure_estimation > 0.01f && sector->distance_to_base < 2)
+					my_rating = sector->importance_this_game * sector->last_scout * (1.0f + sector->enemy_combat_units[5]);
+				else
+					my_rating = sector->importance_this_game * sector->last_scout;
+
 				++sector->last_scout;
 
 				if(my_rating > best_rating)
@@ -414,9 +403,19 @@ bool AAIBrain::SectorInList(list<AAISector*> mylist, AAISector *sector)
 float AAIBrain::GetBaseBuildspaceRatio(unsigned int building_move_type)
 {
 	if(building_move_type & MOVE_TYPE_STATIC_LAND)
-		return baseLandRatio;
+	{
+		if(baseLandRatio > 0.1f)
+			return baseLandRatio;
+		else
+			return 0;
+	}
 	else if(building_move_type & MOVE_TYPE_STATIC_WATER)
-		return baseWaterRatio;
+	{
+		if(baseWaterRatio > 0.1f)
+			return baseWaterRatio;
+		else
+			return 0;
+	}
 	else
 		return 1.0f;
 }
@@ -438,7 +437,7 @@ bool AAIBrain::CommanderAllowedForConstructionAt(AAISector *sector, float3 *pos)
 
 bool AAIBrain::MexConstructionAllowedInSector(AAISector *sector)
 {
-	return sector->freeMetalSpots && sector->enemy_structures <= 0  && sector->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 0.5 && sector->threat <= 0;
+	return sector->freeMetalSpots && IsSafeSector(sector) && (map->team_sector_map[sector->x][sector->y] == -1 || map->team_sector_map[sector->x][sector->y] == cb->GetMyAllyTeam());
 }
 
 bool AAIBrain::ExpandBase(SectorType sectorType)
@@ -464,46 +463,34 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 		for(list<AAISector*>::iterator t = sectors[search_dist].begin(); t != sectors[search_dist].end(); ++t)
 		{
 			// dont expand if enemy structures in sector && check for allied buildings
-			if((*t)->enemy_structures <= 0 && (*t)->allied_structures < 200 && map->team_sector_map[(*t)->x][(*t)->y] == -1)
+			if(IsSafeSector(*t) && (*t)->allied_structures < 3 && map->team_sector_map[(*t)->x][(*t)->y] == -1)
 			{
 				// rate current sector
 				spots = (*t)->GetNumberOfMetalSpots();
 
-				my_rating = 2.0f + (float)spots / 2.0f;
+				my_rating = 1.0f + (float)spots;
 
-				my_rating += 4.0f / (*t)->GetMapBorderDist();
+				if(sectorType == LAND_SECTOR)
+					// prefer flat sectors without water
+					my_rating += ((*t)->flat_ratio - (*t)->water_ratio) * 16.0f;
+				else if(sectorType == WATER_SECTOR)
+				{
+					// check for continent size (to prevent aai to expand into little ponds instead of big ocean)
+					if((*t)->water_ratio > 0.1 &&  (*t)->ConnectedToOcean())
+						my_rating += 8.0f * (*t)->water_ratio;
+					else
+						my_rating = 0;
+				}
+				else // LAND_WATER_SECTOR
+					my_rating += ((*t)->flat_ratio + (*t)->water_ratio) * 8.0f;
 
 				// minmize distance between sectors
 				dist = 0.1f;
 
 				for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); ++sector)
-					dist += sqrt( pow( (float)((*t)->x - (*sector)->x) , 2) + pow( (float)((*t)->y - (*sector)->y) , 2)  );
+					dist += fastmath::sqrt( ((*t)->x - (*sector)->x) * ((*t)->x - (*sector)->x) + ((*t)->y - (*sector)->y) * ((*t)->y - (*sector)->y) );
 
-				dist *= 3.0f;
-
-				if(sectorType == LAND_SECTOR)
-				{
-					// prefer flat sectors without water
-					my_rating += ((*t)->flat_ratio - (*t)->water_ratio) * 8.0f;
-					my_rating /= dist;
-				}
-				else if(sectorType == WATER_SECTOR)
-				{
-
-					// check for continent size (to prevent aai to expand into little ponds instead of big ocean)
-					if((*t)->water_ratio > 0.1 &&  (*t)->ConnectedToOcean())
-					{
-						my_rating += 8.0f * (*t)->water_ratio;
-						my_rating /= dist;
-					}
-					else
-						my_rating = 0;
-				}
-				else // LAND_WATER_SECTOR
-				{
-					my_rating += ((*t)->flat_ratio + (*t)->water_ratio) * 8.0f;
-					my_rating /= dist;
-				}
+				my_rating /= (dist * fastmath::sqrt(map->GetEdgeDistance( &(*t)->GetCenter() )) );
 
 				// choose higher rated sector
 				if(my_rating > best_rating)
@@ -549,22 +536,22 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 	return false;
 }
 
-void AAIBrain::UpdateMaxCombatUnitsSpotted(vector<float>& units_spotted)
+void AAIBrain::UpdateMaxCombatUnitsSpotted(vector<unsigned short>& units_spotted)
 {
-	for(int i = 0; i < bt->combat_categories; ++i)
+	for(int i = 0; i < bt->ass_categories; ++i)
 	{
 		// decrease old values
-		max_units_spotted[i] *= 0.996f;
+		max_combat_units_spotted[i] *= 0.996f;
 
 		// check for new max values
-		if(units_spotted[i] > max_units_spotted[i])
-			max_units_spotted[i] = units_spotted[i];
+		if((float)units_spotted[i] > max_combat_units_spotted[i])
+			max_combat_units_spotted[i] = (float)units_spotted[i];
 	}
 }
 
 void AAIBrain::UpdateAttackedByValues()
 {
-	for(int i = 0; i < bt->combat_categories; ++i)
+	for(int i = 0; i < bt->ass_categories; ++i)
 	{
 		attacked_by[i] *= 0.96f;
 	}
@@ -576,13 +563,14 @@ void AAIBrain::AttackedBy(int combat_category_id)
 	attacked_by[combat_category_id] += 1;
 
 	// update counter for memory dependent on playtime
-	bt->attacked_by_category[0][combat_category_id][GetGamePeriod()] += 1.0f;
+	bt->attacked_by_category_current[GetGamePeriod()][combat_category_id] += 1.0f;
 }
 
 void AAIBrain::UpdateDefenceCapabilities()
 {
-	for(unsigned int i = 0; i < bt->assault_categories.size(); ++i)
+	for(int i = 0; i < bt->assault_categories.size(); ++i)
 		defence_power_vs[i] = 0;
+	fill(defence_power_vs.begin(), defence_power_vs.end(), 0.0f);
 
 	if(cfg->AIR_ONLY_MOD)
 	{
@@ -590,10 +578,10 @@ void AAIBrain::UpdateDefenceCapabilities()
 		{
 			for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
 			{
-				defence_power_vs[0] += (*group)->GetPowerVS(0);
-				defence_power_vs[1] += (*group)->GetPowerVS(1);
-				defence_power_vs[2] += (*group)->GetPowerVS(2);
-				defence_power_vs[3] += (*group)->GetPowerVS(3);
+				defence_power_vs[0] += (*group)->GetCombatPowerVsCategory(0);
+				defence_power_vs[1] += (*group)->GetCombatPowerVsCategory(1);
+				defence_power_vs[2] += (*group)->GetCombatPowerVsCategory(2);
+				defence_power_vs[3] += (*group)->GetCombatPowerVsCategory(3);
 			}
 		}
 	}
@@ -608,29 +596,29 @@ void AAIBrain::UpdateDefenceCapabilities()
 				{
 					if((*group)->category == GROUND_ASSAULT)
 					{
-						defence_power_vs[0] += (*group)->GetPowerVS(0);
-						defence_power_vs[2] += (*group)->GetPowerVS(2);
+						defence_power_vs[0] += (*group)->GetCombatPowerVsCategory(0);
+						defence_power_vs[2] += (*group)->GetCombatPowerVsCategory(2);
 					}
 					else if((*group)->category == HOVER_ASSAULT)
 					{
-						defence_power_vs[0] += (*group)->GetPowerVS(0);
-						defence_power_vs[2] += (*group)->GetPowerVS(2);
-						defence_power_vs[3] += (*group)->GetPowerVS(3);
+						defence_power_vs[0] += (*group)->GetCombatPowerVsCategory(0);
+						defence_power_vs[2] += (*group)->GetCombatPowerVsCategory(2);
+						defence_power_vs[3] += (*group)->GetCombatPowerVsCategory(3);
 					}
 					else if((*group)->category == SEA_ASSAULT)
 					{
-						defence_power_vs[2] += (*group)->GetPowerVS(2);
-						defence_power_vs[3] += (*group)->GetPowerVS(3);
-						defence_power_vs[4] += (*group)->GetPowerVS(4);
+						defence_power_vs[2] += (*group)->GetCombatPowerVsCategory(2);
+						defence_power_vs[3] += (*group)->GetCombatPowerVsCategory(3);
+						defence_power_vs[4] += (*group)->GetCombatPowerVsCategory(4);
 					}
 					else if((*group)->category == SUBMARINE_ASSAULT)
 					{
-						defence_power_vs[3] += (*group)->GetPowerVS(3);
-						defence_power_vs[4] += (*group)->GetPowerVS(4);
+						defence_power_vs[3] += (*group)->GetCombatPowerVsCategory(3);
+						defence_power_vs[4] += (*group)->GetCombatPowerVsCategory(4);
 					}
 				}
 				else if((*group)->group_unit_type == ANTI_AIR_UNIT)
-					defence_power_vs[1] += (*group)->GetPowerVS(1);
+					defence_power_vs[1] += (*group)->GetCombatPowerVsCategory(1);
 			}
 		}
 	}
@@ -690,17 +678,17 @@ void AAIBrain::SubtractDefenceCapabilities(int def_id, UnitCategory category)
 
 float AAIBrain::Affordable()
 {
-	return 35.0 /(cb->GetMetalIncome() + 5.0);
+	return 25.0f /(cb->GetMetalIncome() + 5.0f);
 }
 
 void AAIBrain::BuildUnits()
 {
 	int side = ai->side-1;
-	UnitCategory category;
 	bool urgent = false;
 	int k;
+	unsigned int allowed_move_type = 0;
 
-	float cost = 1 + Affordable()/12.0;
+	float cost = 1.0f + Affordable()/12.0f;
 
 	float ground_eff = 0;
 	float air_eff = 0;
@@ -716,26 +704,21 @@ void AAIBrain::BuildUnits()
 	int anti_submarine_urgency;
 
 	// determine elapsed game time
-	int t = GetGamePeriod();
+	int game_period = GetGamePeriod();
 
-	// todo: improve selection
-	category = UNKNOWN;
-
-	MapType map_type = map->map_type;
-
-	float ground_usefulness = map->map_usefulness[0][side] + bt->mod_usefulness[0][side][map_type];
-	float air_usefulness = map->map_usefulness[1][side] + bt->mod_usefulness[1][side][map_type];
-	float hover_usefulness = map->map_usefulness[2][side] + bt->mod_usefulness[2][side][map_type];
-	float sea_usefulness = map->map_usefulness[3][side] + bt->mod_usefulness[3][side][map_type];
-	float submarine_usefulness = map->map_usefulness[4][side] + bt->mod_usefulness[4][side][map_type];
+	float ground = GetAttacksBy(0, game_period);
+	float air = GetAttacksBy(0, game_period);
+	float hover = GetAttacksBy(0, game_period);
+	float sea = GetAttacksBy(0, game_period);
+	float submarine = GetAttacksBy(0, game_period);
 
 	if(cfg->AIR_ONLY_MOD)
 	{
 		// determine effectiveness vs several other units
-		anti_ground_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][0][t]) * ground_usefulness * (2.0f * attacked_by[0] + 1.0f) * (4.0f * max_units_spotted[0] + 0.2f) / (4.0f * defence_power_vs[0] + 1));
-		anti_air_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][1][t]) * air_usefulness * (2.0f * attacked_by[1] + 1.0f) * (4.0f * max_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
-		anti_hover_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][2][t]) * hover_usefulness * (2.0f * attacked_by[2] + 1.0f) * (4.0f * max_units_spotted[2] + 0.2f) / (4.0f * defence_power_vs[2] + 1));
-		anti_sea_urgency = (int) (2 + (0.05f + bt->attacked_by_category[1][3][t]) * sea_usefulness * (2.0f * attacked_by[3] + 1.0f) * (4.0f * max_units_spotted[3] + 0.2f) / (4.0f * defence_power_vs[3] + 1));
+		anti_ground_urgency = (int)( 2 + (0.05f + ground) * (2.0f * attacked_by[0] + 1.0f) * (4.0f * max_combat_units_spotted[0] + 0.2f) / (4.0f * defence_power_vs[0] + 1));
+		anti_air_urgency = (int)( 2 + (0.05f + air) * (2.0f * attacked_by[1] + 1.0f) * (4.0f * max_combat_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
+		anti_hover_urgency = (int)( 2 + (0.05f + hover) * (2.0f * attacked_by[2] + 1.0f) * (4.0f * max_combat_units_spotted[2] + 0.2f) / (4.0f * defence_power_vs[2] + 1));
+		anti_sea_urgency = (int) (2 + (0.05f + sea) * (2.0f * attacked_by[3] + 1.0f) * (4.0f * max_combat_units_spotted[3] + 0.2f) / (4.0f * defence_power_vs[3] + 1));
 
 		for(int i = 0; i < execute->unitProductionRate; ++i)
 		{
@@ -743,21 +726,6 @@ void AAIBrain::BuildUnits()
 			air_eff = 0;
 			hover_eff = 0;
 			sea_eff = 0;
-
-			// build super units only in late game
-			if(cost < 1.1 && rand()%16 == 1)
-			{
-				category = SEA_ASSAULT;
-			}
-			else
-			{
-				if(rand()%1024 > 384)
-					category = GROUND_ASSAULT;
-				else if(rand()%1024 > 384)
-					category = AIR_ASSAULT;
-				else
-					category = HOVER_ASSAULT;
-			}
 
 			k = rand()%(anti_ground_urgency + anti_air_urgency + anti_hover_urgency + anti_sea_urgency);
 
@@ -778,18 +746,18 @@ void AAIBrain::BuildUnits()
 				sea_eff = 4;
 			}
 
-			BuildUnitOfCategory(category, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, urgent);
+			BuildUnitOfMovementType(MOVE_TYPE_AIR, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, urgent);
 		}
 	}
 	else
 	{
 		// choose unit category dependend on map type
-		if(map_type == LAND_MAP)
+		if(map->map_type == LAND_MAP)
 		{
 			// determine effectiveness vs several other units
-			anti_ground_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][0][t]) * ground_usefulness * (2.0f * attacked_by[0] + 1.0f) * (4.0f * max_units_spotted[0] + 0.2f) / (4.0f * defence_power_vs[0] + 1));
-			anti_air_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][1][t]) * air_usefulness * (2.0f * attacked_by[1] + 1.0f) * (4.0f * max_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
-			anti_hover_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][2][t]) * hover_usefulness * (2.0f * attacked_by[2] + 1.0f) * (4.0f * max_units_spotted[2] + 0.2f) / (4.0f * defence_power_vs[2] + 1));
+			anti_ground_urgency = (int)( 2 + (0.1f + ground) * (attacked_by[0] + 1.0f) * (4.0f * max_combat_units_spotted[0] + 0.2f) / (4.0f * defence_power_vs[0] + 1));
+			anti_air_urgency = (int)( 2 + (0.1f + air) * (attacked_by[1] + 1.0f) * (4.0f * max_combat_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
+			anti_hover_urgency = (int)( 2 + (0.1f + hover) * (attacked_by[2] + 1.0f) * (4.0f * max_combat_units_spotted[2] + 0.2f) / (4.0f * defence_power_vs[2] + 1));
 
 			for(int i = 0; i < execute->unitProductionRate; ++i)
 			{
@@ -801,7 +769,7 @@ void AAIBrain::BuildUnits()
 				// determine unit type
 				if(rand()%(cfg->AIRCRAFT_RATE * 100) < 100)
 				{
-					category = AIR_ASSAULT;
+					allowed_move_type |= MOVE_TYPE_AIR;
 
 					k = rand()%1024;
 
@@ -821,11 +789,8 @@ void AAIBrain::BuildUnits()
 				}
 				else
 				{
-					// decide between hover and ground based on experience
-					if(rand()%((int)(ground_usefulness + hover_usefulness)) >= (int) ground_usefulness)
-						category = HOVER_ASSAULT;
-					else
-						category = GROUND_ASSAULT;
+					allowed_move_type |= MOVE_TYPE_GROUND;
+					allowed_move_type |= MOVE_TYPE_HOVER;
 
 					k = rand()%(anti_ground_urgency + anti_air_urgency + anti_hover_urgency);
 
@@ -849,24 +814,17 @@ void AAIBrain::BuildUnits()
 					}
 				}
 
-				BuildUnitOfCategory(category, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
+				BuildUnitOfMovementType(allowed_move_type, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, urgent);
 			}
-
-			// debug
-			/*fprintf(ai->file, "Selecting units: %i %i\n", k , anti_ground_urgency + anti_air_urgency + anti_hover_urgency);
-			fprintf(ai->file, "Selected: ground %f   air %f   hover %f\n", ground_eff, air_eff, hover_eff);
-			fprintf(ai->file, "Ground assault: %f %f %f %i \n", defence_power_vs[0], attacked_by[0], max_units_spotted[0], anti_ground_urgency);
-			fprintf(ai->file, "Air assault:    %f %f %f %i \n", defence_power_vs[1], attacked_by[1], max_units_spotted[1], anti_air_urgency);
-			fprintf(ai->file, "Hover assault:  %f %f %f %i \n", defence_power_vs[2], attacked_by[2], max_units_spotted[1], anti_hover_urgency);*/
 		}
-		else if(map_type == LAND_WATER_MAP)
+		else if(map->map_type == LAND_WATER_MAP)
 		{
 			// determine effectiveness vs several other units
-			anti_ground_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][0][t]) * ground_usefulness * (2.0f * attacked_by[0] + 1.0f) * (4.0f * max_units_spotted[0] + 0.2f) / (4.0f * defence_power_vs[0] + 1));
-			anti_air_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][1][t]) * air_usefulness * (2.0f * attacked_by[1] + 1.0f) * (4.0f * max_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
-			anti_hover_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][2][t]) * hover_usefulness * (2.0f * attacked_by[2] + 1.0f) * (4.0f * max_units_spotted[2] + 0.2f) / (4.0f * defence_power_vs[2] + 1));
-			anti_sea_urgency = (int) (2 + (0.05f + bt->attacked_by_category[1][3][t]) * sea_usefulness * (2.0f * attacked_by[3] + 1.0f) * (4.0f * max_units_spotted[3] + 0.2f) / (4.0f * defence_power_vs[3] + 1));
-			anti_submarine_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][4][t]) * submarine_usefulness * (2.0f * attacked_by[4] + 1.0f) * (4.0f * max_units_spotted[4] + 0.2f) / (4.0f * defence_power_vs[4] + 1));
+			anti_ground_urgency = (int)( 2 + (0.1f + ground) * (2.0f * attacked_by[0] + 1.0f) * (4.0f * max_combat_units_spotted[0] + 0.2f) / (4.0f * defence_power_vs[0] + 1));
+			anti_air_urgency = (int)( 2 + (0.1f + air) * (2.0f * attacked_by[1] + 1.0f) * (4.0f * max_combat_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
+			anti_hover_urgency = (int)( 2 + (0.1f + hover) * (2.0f * attacked_by[2] + 1.0f) * (4.0f * max_combat_units_spotted[2] + 0.2f) / (4.0f * defence_power_vs[2] + 1));
+			anti_sea_urgency = (int) (2 + (0.1f + sea) * (2.0f * attacked_by[3] + 1.0f) * (4.0f * max_combat_units_spotted[3] + 0.2f) / (4.0f * defence_power_vs[3] + 1));
+			anti_submarine_urgency = (int)( 2 + (0.1f + submarine) * (2.0f * attacked_by[4] + 1.0f) * (4.0f * max_combat_units_spotted[4] + 0.2f) / (4.0f * defence_power_vs[4] + 1));
 
 			for(int i = 0; i < execute->unitProductionRate; ++i)
 			{
@@ -880,7 +838,7 @@ void AAIBrain::BuildUnits()
 
 				if(rand()%(cfg->AIRCRAFT_RATE * 100) < 100)
 				{
-					category = AIR_ASSAULT;
+					allowed_move_type |= MOVE_TYPE_AIR;
 
 					if(rand()%1000 < 333)
 					{
@@ -900,29 +858,7 @@ void AAIBrain::BuildUnits()
 				}
 				else
 				{
-					// decide between hover and ground based on experience
-					int random = rand()%((int)(ground_usefulness + hover_usefulness + sea_usefulness + submarine_usefulness));
-
-					if(random < (int) ground_usefulness )
-					{
-						category = GROUND_ASSAULT;
-						anti_submarine_urgency = 0;
-					}
-					else if(random < (int)(ground_usefulness + hover_usefulness))
-					{
-						category = HOVER_ASSAULT;
-						anti_submarine_urgency = 0;
-					}
-					else if(random < (int)(ground_usefulness + hover_usefulness + sea_usefulness))
-					{
-						category = SEA_ASSAULT;
-						anti_submarine_urgency = (int) (1 + submarine_usefulness * (attacked_by[4] + 2) * (max_units_spotted[4] + 2) / (defence_power_vs[4] + 1));
-					}
-					else
-					{
-						category = SUBMARINE_ASSAULT;
-						anti_submarine_urgency = (int) (1 + submarine_usefulness * (attacked_by[4] + 2) * (max_units_spotted[4] + 2) / (defence_power_vs[4] + 1));
-					}
+					allowed_move_type |= MOVE_TYPE_HOVER;
 
 					k = rand()%(anti_ground_urgency + anti_air_urgency + anti_hover_urgency + anti_sea_urgency + anti_submarine_urgency);
 
@@ -931,9 +867,13 @@ void AAIBrain::BuildUnits()
 						stat_eff = 2;
 						ground_eff = 5;
 						hover_eff = 1;
+						allowed_move_type |= MOVE_TYPE_GROUND;
 					}
 					else if(k < anti_ground_urgency + anti_air_urgency)
 					{
+						allowed_move_type |= MOVE_TYPE_GROUND;
+						allowed_move_type |= MOVE_TYPE_SEA;
+
 						air_eff = 4;
 
 						if(anti_air_urgency > 2.0f * anti_ground_urgency)
@@ -941,31 +881,37 @@ void AAIBrain::BuildUnits()
 					}
 					else if(k < anti_ground_urgency + anti_air_urgency + anti_hover_urgency)
 					{
+						allowed_move_type |= MOVE_TYPE_GROUND;
+						allowed_move_type |= MOVE_TYPE_SEA;
+
 						ground_eff = 1;
 						hover_eff = 4;
 					}
 					else if(k < anti_ground_urgency + anti_air_urgency + anti_hover_urgency + anti_sea_urgency)
 					{
+						allowed_move_type |= MOVE_TYPE_SEA;
 						hover_eff = 1;
 						sea_eff = 4;
+						submarine_eff = 1;
 					}
 					else
 					{
+						allowed_move_type |= MOVE_TYPE_SEA;
 						submarine_eff = 4;
 						sea_eff = 1;
 					}
 				}
 
-				BuildUnitOfCategory(category, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
+				BuildUnitOfMovementType(allowed_move_type, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
 			}
 		}
-		else if(map_type == WATER_MAP)
+		else if(map->map_type == WATER_MAP)
 		{
 			// determine effectiveness vs several other units
-			anti_air_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][1][t]) * air_usefulness * (2.0f * attacked_by[1] + 1.0f) * (4.0f * max_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
-			anti_hover_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][2][t]) * hover_usefulness * (2.0f * attacked_by[2] + 1.0f) * (4.0f * max_units_spotted[2] + 0.2f) / (4.0f * defence_power_vs[2] + 1));
-			anti_sea_urgency = (int) (2 + (0.05f + bt->attacked_by_category[1][3][t]) * sea_usefulness * (2.0f * attacked_by[3] + 1.0f) * (4.0f * max_units_spotted[3] + 0.2f) / (4.0f * defence_power_vs[3] + 1));
-			anti_submarine_urgency = (int)( 2 + (0.05f + bt->attacked_by_category[1][4][t]) * submarine_usefulness * (2.0f * attacked_by[4] + 1.0f) * (4.0f * max_units_spotted[4] + 0.2f) / (4.0f * defence_power_vs[4] + 1));
+			anti_air_urgency = (int)( 2 + (0.1f + air) * (2.0f * attacked_by[1] + 1.0f) * (4.0f * max_combat_units_spotted[1] + 0.2f) / (4.0f * defence_power_vs[1] + 1));
+			anti_hover_urgency = (int)( 2 + (0.1f + hover) * (2.0f * attacked_by[2] + 1.0f) * (4.0f * max_combat_units_spotted[2] + 0.2f) / (4.0f * defence_power_vs[2] + 1));
+			anti_sea_urgency = (int) (2 + (0.1f + sea) * (2.0f * attacked_by[3] + 1.0f) * (4.0f * max_combat_units_spotted[3] + 0.2f) / (4.0f * defence_power_vs[3] + 1));
+			anti_submarine_urgency = (int)( 2 + (0.1f + submarine) * (2.0f * attacked_by[4] + 1.0f) * (4.0f * max_combat_units_spotted[4] + 0.2f) / (4.0f * defence_power_vs[4] + 1));
 
 			for(int i = 0; i < execute->unitProductionRate; ++i)
 			{
@@ -977,9 +923,7 @@ void AAIBrain::BuildUnits()
 
 				if(rand()%(cfg->AIRCRAFT_RATE * 100) < 100)
 				{
-					category = AIR_ASSAULT;
-					anti_submarine_urgency = (int) (1 + submarine_usefulness * (attacked_by[4] + 2) * (max_units_spotted[4] + 2) / (defence_power_vs[4] + 1));
-
+					allowed_move_type |= MOVE_TYPE_AIR;
 
 					if(rand()%1000 < 333)
 					{
@@ -987,36 +931,14 @@ void AAIBrain::BuildUnits()
 						hover_eff = 2;
 					}
 					else if(rand()%1000 < 333)
-					{
 						air_eff = 4;
-					}
 					else
-					{
 						stat_eff = 4;
-					}
 				}
 				else
 				{
-					// decide between hover and ground based on experience
-					int random = rand()%((int)(hover_usefulness + sea_usefulness + submarine_usefulness));
-
-					if(random < (int)(hover_usefulness))
-					{
-						category = HOVER_ASSAULT;
-						anti_submarine_urgency = 0;
-
-					}
-					else if(random < (int)(hover_usefulness + sea_usefulness))
-					{
-						category = SEA_ASSAULT;
-						anti_submarine_urgency = (int) (1 + submarine_usefulness * (attacked_by[4] + 2) * (max_units_spotted[4] + 2) / (defence_power_vs[4] + 1));
-
-					}
-					else
-					{
-						category = SUBMARINE_ASSAULT;
-						anti_submarine_urgency = (int) (1 + submarine_usefulness * (attacked_by[4] + 2) * (max_units_spotted[4] + 2) / (defence_power_vs[4] + 1));
-					}
+					allowed_move_type |= MOVE_TYPE_HOVER;
+					allowed_move_type |= MOVE_TYPE_SEA;
 
 					k = rand()%(anti_sea_urgency + anti_air_urgency + anti_hover_urgency + anti_submarine_urgency);
 
@@ -1031,7 +953,6 @@ void AAIBrain::BuildUnits()
 					{
 						sea_eff = 1;
 						hover_eff = 5;
-						stat_eff = 2;
 					}
 					else if(k < anti_hover_urgency + anti_air_urgency + anti_submarine_urgency)
 					{
@@ -1042,74 +963,190 @@ void AAIBrain::BuildUnits()
 					{
 						hover_eff = 1;
 						sea_eff = 5;
-						stat_eff = 2;
+						submarine_eff = 1;
 					}
 				}
 
-				BuildUnitOfCategory(category, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
+				BuildUnitOfMovementType(allowed_move_type, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
 			}
-		}
-		else if(map_type == AIR_MAP)
-		{
-			category = AIR_ASSAULT;
-
-			if(rand()%3 == 1)
-			{
-				air_eff = 0.5;
-				stat_eff = 4;
-			}
-			else
-			{
-				air_eff = 4;
-				stat_eff = 0.5;
-			}
-
-			BuildUnitOfCategory(category, cost, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff,stat_eff, urgent);
 		}
 	}
 }
 
-void AAIBrain::BuildUnitOfCategory(UnitCategory category, float cost, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, bool urgent)
+void AAIBrain::BuildUnitOfMovementType(unsigned int allowed_move_type, float cost, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, bool urgent)
 {
 	float speed = 0;
 	float range = 0;
 	float power = 2;
 	float eff = 2;
 
-	if(category != UNKNOWN)
+	// determine speed, range & eff
+	if(rand()%cfg->FAST_UNITS_RATE == 1)
 	{
-		// determine speed, range & eff
-		if(rand()%cfg->FAST_UNITS_RATE == 1)
+		if(rand()%2 == 1)
+			speed = 1;
+		else
+			speed = 2;
+	}
+	else
+		speed = 0.1f;
+
+	if(rand()%cfg->HIGH_RANGE_UNITS_RATE == 1)
+	{
+		int t = rand()%1000;
+
+		if(t < 350)
+			range = 0.75;
+		else if(t == 700)
+			range = 1.3f;
+		else
+			t = 1.7f;
+	}
+	else
+		range = 0.1f;
+
+	if(rand()%3 == 1)
+		power = 4;
+
+	if(rand()%3 == 1)
+		eff = 4;
+
+	// start selection
+	int unit = 0, ground = 0, hover = 0;
+
+	if(allowed_move_type & MOVE_TYPE_AIR)
+	{
+		if(rand()%cfg->LEARN_RATE == 1)
+			unit = bt->GetRandomUnit(bt->units_of_category[AIR_ASSAULT][ai->side-1]);
+		else
 		{
-			if(rand()%2 == 1)
-				speed = 1;
-			else
-				speed = 2;
+			unit = bt->GetAirAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, false);
+
+			if(unit && bt->units_dynamic[unit].constructorsAvailable + bt->units_dynamic[unit].constructorsRequested <= 0)
+			{
+				bt->BuildFactoryFor(unit);
+				unit = bt->GetAirAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, true);
+			}
+		}
+	}
+
+	if(allowed_move_type & MOVE_TYPE_GROUND)
+	{
+		// choose random unit (to learn more)
+		if(rand()%cfg->LEARN_RATE == 1)
+			ground = bt->GetRandomUnit(bt->units_of_category[GROUND_ASSAULT][ai->side-1]);
+		else
+		{
+			ground = bt->GetGroundAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 15, false);
+
+			if(ground && bt->units_dynamic[ground].constructorsAvailable + bt->units_dynamic[ground].constructorsRequested <= 0)
+			{
+				bt->BuildFactoryFor(ground);
+				ground = bt->GetGroundAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 15, true);
+			}
+		}
+	}
+
+	if(allowed_move_type & MOVE_TYPE_HOVER)
+	{
+		if(rand()%cfg->LEARN_RATE == 1)
+			hover = bt->GetRandomUnit(bt->units_of_category[HOVER_ASSAULT][ai->side-1]);
+		else
+		{
+			hover = bt->GetHoverAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, false);
+
+			if(hover && bt->units_dynamic[hover].constructorsAvailable + bt->units_dynamic[hover].constructorsRequested <= 0)
+			{
+				bt->BuildFactoryFor(hover);
+				hover = bt->GetHoverAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, stat_eff, eff, speed, range, cost, 9, true);
+			}
+		}
+	}
+
+	if(allowed_move_type & MOVE_TYPE_SEA)
+	{
+		int ship, submarine;
+
+		if(rand()%cfg->LEARN_RATE == 1)
+		{
+			ship = bt->GetRandomUnit(bt->units_of_category[SEA_ASSAULT][ai->side-1]);
+			submarine = bt->GetRandomUnit(bt->units_of_category[SUBMARINE_ASSAULT][ai->side-1]);
 		}
 		else
-			speed = 0.1f;
-
-		if(rand()%cfg->HIGH_RANGE_UNITS_RATE == 1)
 		{
-			int t = rand()%1000;
+			ship = bt->GetSeaAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
 
-			if(t < 350)
-				range = 0.75;
-			else if(t == 700)
-				range = 1.3f;
-			else
-				t = 1.7f;
+			if(ship && bt->units_dynamic[ship].constructorsAvailable + bt->units_dynamic[ship].constructorsRequested <= 0)
+			{
+				bt->BuildFactoryFor(ship);
+				ship = bt->GetSeaAssault(ai->side, power, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
+			}
+
+			submarine = bt->GetSubmarineAssault(ai->side, power, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
+
+			if(submarine && bt->units_dynamic[submarine].constructorsAvailable + bt->units_dynamic[submarine].constructorsRequested <= 0)
+			{
+				bt->BuildFactoryFor(submarine);
+				submarine = bt->GetSubmarineAssault(ai->side, power, sea_eff, submarine_eff, stat_eff, eff, speed, range, cost, 9, false);
+			}
 		}
+
+		// determine better unit for desired purpose
+		if(ship)
+		{
+			if(submarine)
+				unit = bt->DetermineBetterUnit(ship, submarine, 0, air_eff, hover_eff, sea_eff, submarine_eff, speed, range, cost);
+			else
+				unit = ship;
+		}
+		else if(submarine)
+			unit = submarine;
+	}
+
+	// ground and hover assault
+	if(ground)
+	{
+		if(hover)
+			unit = bt->DetermineBetterUnit(ground, hover, ground_eff, air_eff, hover_eff, sea_eff, 0, speed, range, cost);
 		else
-			range = 0.1f;
+			unit = ground;
+	}
+	// hover and sea
+	else if(hover)
+	{
+		if(unit)
+			unit =  bt->DetermineBetterUnit(unit, hover, 0, air_eff, hover_eff, sea_eff, submarine_eff, speed, range, cost);
+		else
+			unit = hover;
+	}
 
-		if(rand()%3 == 1)
-			power = 4;
-
-		if(rand()%3 == 1)
-			eff = 4;
-
-		execute->BuildUnit(category, speed, cost, range, power, ground_eff, air_eff, hover_eff, sea_eff, submarine_eff, stat_eff, eff, urgent);
+	if(unit)
+	{
+		if(bt->units_dynamic[unit].constructorsAvailable > 0)
+		{
+			if(bt->units_static[unit].cost < cfg->MAX_COST_LIGHT_ASSAULT * bt->max_cost[bt->units_static[unit].category][ai->side-1])
+			{
+				if(execute->AddUnitToBuildqueue(unit, 3, urgent))
+				{
+					bt->units_dynamic[unit].requested += 3;
+					ai->ut->UnitRequested(bt->units_static[unit].category, 3);
+				}
+			}
+			else if(bt->units_static[unit].cost < cfg->MAX_COST_MEDIUM_ASSAULT * bt->max_cost[bt->units_static[unit].category][ai->side-1])
+			{
+				if(execute->AddUnitToBuildqueue(unit, 2, urgent))
+					bt->units_dynamic[unit].requested += 2;
+					ai->ut->UnitRequested(bt->units_static[unit].category, 2);
+			}
+			else
+			{
+				if(execute->AddUnitToBuildqueue(unit, 1, urgent))
+					bt->units_dynamic[unit].requested += 1;
+					ai->ut->UnitRequested(bt->units_static[unit].category);
+			}
+		}
+		else if(bt->units_dynamic[unit].constructorsRequested <= 0)
+			bt->BuildFactoryFor(unit);
 	}
 }
 
@@ -1126,13 +1163,31 @@ int AAIBrain::GetGamePeriod()
 		return 2;
 	else
 		return 3;
+
 }
 
 bool AAIBrain::IsSafeSector(AAISector *sector)
 {
 	// TODO: improve criteria
-	if(sector->enemy_structures <= 0  && sector->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 1 && sector->threat <= 0)
-		return true;
-	else
-		return false;
+	return (sector->lost_units[MOBILE_CONSTRUCTOR-COMMANDER]  < 0.5 &&  sector->enemy_combat_units[5] < 0.1 && sector->enemy_structures < 0.01 && sector->enemies_on_radar == 0);
+}
+
+float AAIBrain::GetAttacksBy(int combat_category, int game_period)
+{
+	return (bt->attacked_by_category_current[game_period][combat_category] + bt->attacked_by_category_learned[map->map_type][game_period][combat_category]) / 2.0f;
+}
+
+void AAIBrain::UpdatePressureByEnemy()
+{
+	enemy_pressure_estimation = 0;
+
+	// check base and neighbouring sectors for enemies
+	for(list<AAISector*>::iterator s = sectors[0].begin(); s != sectors[0].end(); ++s)
+		enemy_pressure_estimation += 0.1f * (*s)->enemy_combat_units[5];
+
+	for(list<AAISector*>::iterator s = sectors[1].begin(); s != sectors[1].end(); ++s)
+		enemy_pressure_estimation += 0.1f * (*s)->enemy_combat_units[5];
+
+	if(enemy_pressure_estimation > 1.0f)
+		enemy_pressure_estimation = 1.0f;
 }
