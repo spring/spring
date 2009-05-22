@@ -925,9 +925,10 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 	commandQue.push_back(c);
 	commandQue.pop_front();
 	commandQue.push_front(temp);
-	eoh->CommandFinished(*owner, CMD_PATROL);
+	Command tmpC;
+	tmpC.id = CMD_PATROL;
+	eoh->CommandFinished(*owner, tmpC);
 	SlowUpdate();
-	return;
 }
 
 
