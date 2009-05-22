@@ -913,7 +913,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 
-	if (uh->CanBuildUnit(unitDef,teamID)) {
+	if (!uh->CanBuildUnit(unitDef, teamID)) {
 		return 0; // unit limit reached
 	}
 
