@@ -133,10 +133,6 @@ void CFeature::ChangeTeam(int newTeam)
 		team = newTeam;
 		allyteam = teamHandler->AllyTeam(newTeam);
 	}
-
-	if (def->drawType == DRAWTYPE_3DO){
-		model = LoadModel(def);
-	}
 }
 
 
