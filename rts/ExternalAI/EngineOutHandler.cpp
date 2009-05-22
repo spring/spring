@@ -120,7 +120,7 @@ void CEngineOutHandler::Destroy() {
 CEngineOutHandler::CEngineOutHandler()
 		: activeTeams(teamHandler->ActiveTeams()) {
 
-	for (int t=0; t < MAX_TEAMS; ++t) {
+	for (int t=0; t < skirmishAIs_size; ++t) {
 		skirmishAIs[t] = NULL;
 	}
 	hasSkirmishAIs = false;
@@ -128,7 +128,7 @@ CEngineOutHandler::CEngineOutHandler()
 
 CEngineOutHandler::~CEngineOutHandler() {
 
-	for (int t=0; t < MAX_TEAMS; ++t) {
+	for (int t=0; t < skirmishAIs_size; ++t) {
 		delete skirmishAIs[t];
 		skirmishAIs[t] = NULL;
 	}
