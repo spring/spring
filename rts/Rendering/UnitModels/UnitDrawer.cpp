@@ -1140,11 +1140,11 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 }
 
 
-void CUnitDrawer::SetTeamColour(int team) const
+void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
 	if (advShading) {
 		unsigned char* col = teamHandler->Team(team)->color;
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, alpha);
 		if (luaDrawing) { // FIXME?
 			SetBasicTeamColour(team);
 		}
@@ -2056,7 +2056,7 @@ void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
 
-	SetTeamColour(feature->team);
+	SetTeamColour(feature->team, feature->tempalpha);
 
 	feature->model->DrawStatic();
 	glPopMatrix();

@@ -21,6 +21,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/ShadowHandler.h"
+#include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/CollisionVolume.h"
@@ -582,7 +583,6 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 	}
 }
 
-
 void CFeatureHandler::Draw()
 {
 	drawFar.clear();
@@ -619,6 +619,66 @@ void CFeatureHandler::Draw()
 	glDisable(GL_FOG);
 }
 
+void CFeatureHandler::DrawFadeFeatures() {
+	if(unitDrawer->advShading) {
+		unitDrawer->SetupForUnitDrawing();
+
+		glDisable(GL_ALPHA_TEST);
+
+		unitDrawer->SetupFor3DO();
+
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+
+		for(std::vector<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
+			unitDrawer->DrawFeatureStatic(*i);
+		}
+
+		unitDrawer->CleanUp3DO();
+
+		for(std::vector<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
+			texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
+			(*i)->DrawS3O();
+		}
+
+		glDisable(GL_FOG);
+		glEnable(GL_ALPHA_TEST);
+
+		unitDrawer->CleanUpUnitDrawing();
+	}
+	else {
+		unitDrawer->SetupForGhostDrawing();
+
+		glDisable(GL_ALPHA_TEST);
+
+		unitDrawer->SetupFor3DO();
+
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+
+		for(std::vector<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
+			glColor4f(1,1,1,(*i)->tempalpha);
+			unitDrawer->DrawFeatureStatic(*i);
+		}
+
+		unitDrawer->CleanUp3DO();
+
+		for(std::vector<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
+			glColor4f(1,1,1,(*i)->tempalpha);
+			texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
+			(*i)->DrawS3O();
+		}
+
+		glDisable(GL_FOG);
+		glEnable(GL_ALPHA_TEST);
+
+		unitDrawer->CleanUpGhostDrawing();
+	}
+
+	fadeFeatures.clear();
+	fadeFeaturesS3O.clear();
+}
+
 
 void CFeatureHandler::DrawShadowPass()
 {
@@ -646,6 +706,8 @@ public:
 	int drawQuadsX;
 	bool drawReflection, drawRefraction;
 	float unitDrawDist;
+	float sqFadeDistBegin;
+	float sqFadeDistEnd;
 	std::vector<CFeature*>* farFeatures;
 };
 
@@ -681,11 +743,22 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 			float sqDist = (f->pos - camera->pos).SqLength2D();
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
-			if (sqDist<farLength) {
-				if (f->model->type==MODELTYPE_3DO) {
-					unitDrawer->DrawFeatureStatic(f);
-				} else {
-					unitDrawer->QueS3ODraw(f, f->model->textureType);
+			if (sqDist < farLength) {
+				if(!drawReflection && !drawRefraction && f->midPos.y > 0 && sqDist < sqFadeDistEnd && sqDist >= sqFadeDistBegin) {
+					f->tempalpha = 1.0f - (sqDist - sqFadeDistBegin) / (sqFadeDistEnd - sqFadeDistBegin);
+					if (f->model->type == MODELTYPE_3DO) { // FIXME: Properly fade out submerged features also
+						featureHandler->fadeFeatures.push_back(f);
+					} else {
+						featureHandler->fadeFeaturesS3O.push_back(f);
+					}
+				}
+				if(drawReflection || drawRefraction || f->midPos.y <= 0 || sqDist < sqFadeDistBegin) {
+					f->tempalpha = 1.0f;
+					if (f->model->type == MODELTYPE_3DO) {
+						unitDrawer->DrawFeatureStatic(f);
+					} else {
+						unitDrawer->QueS3ODraw(f, f->model->textureType);
+					}
 				}
 			} else {
 				if (farFeatures)
@@ -709,6 +782,8 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 	drawer.drawReflection=water->drawReflection;
 	drawer.drawRefraction=water->drawRefraction;
 	drawer.unitDrawDist=unitDrawer->unitDrawDist;
+	drawer.sqFadeDistEnd = featureDist * featureDist;
+	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = farFeatures;
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);

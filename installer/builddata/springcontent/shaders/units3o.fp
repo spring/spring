@@ -8,6 +8,7 @@ TEMP tempColor,shadeColor;
 #get unit texture
 TEX texColor, fragment.texcoord[1], texture[0], 2D;
 TEX extraColor, fragment.texcoord[1], texture[1], 2D;
+MUL extraColor.w, extraColor.w, program.env[14].w;
 
 #normalize surface normal
 DP3 temp.x, fragment.texcoord[2], fragment.texcoord[2];

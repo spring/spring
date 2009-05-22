@@ -2621,6 +2621,7 @@ bool CGame::DrawWorld()
 	}
 
 	unitDrawer->DrawCloakedUnits();
+	featureHandler->DrawFadeFeatures();
 	ph->Draw(false);
 
 	if (drawSky) {

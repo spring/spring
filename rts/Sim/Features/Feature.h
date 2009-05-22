@@ -96,6 +96,7 @@ public:
 
 	// initially a copy of CUnit::speed
 	float3 deathSpeed;
+	float tempalpha;
 
 private:
 	void PostLoad();

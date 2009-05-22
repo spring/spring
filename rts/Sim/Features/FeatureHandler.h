@@ -50,11 +50,16 @@ public:
 	const std::map<std::string, const FeatureDef*>& GetFeatureDefs() const { return featureDefs; }
 	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
 
+	void DrawFadeFeatures();
 private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
 	const FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const std::string& name);
 
 private:
+
+	std::vector<CFeature *> fadeFeatures;
+	std::vector<CFeature *> fadeFeaturesS3O;
+
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
 

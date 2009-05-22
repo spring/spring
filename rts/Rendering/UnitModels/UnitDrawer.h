@@ -39,7 +39,7 @@ public:
 	void DrawCloakedShaderUnits();
 	void DrawShadowShaderUnits();
 
-	void SetTeamColour(int team) const;
+	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupFor3DO() const;
 	void CleanUp3DO() const;
 	void SetupForUnitDrawing(void) const;
