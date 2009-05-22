@@ -56,8 +56,6 @@ BOOL CALLING_CONV DllMain(HINSTANCE hInst, DWORD dwReason, LPVOID lpReserved)
 }
 #endif
 
-static const char* LUA_AI_POSTFIX = " (Mod specific AI)";
-
 
 //////////////////////////
 //////////////////////////
@@ -1549,23 +1547,15 @@ EXPORT(int) GetModOptionCount()
 //////////////////////////
 //////////////////////////
 
-
-struct LuaAIInfo {
-	string name;
-	string desc;
-};
-
-
-static vector<LuaAIInfo> luaAIInfo;
-
+static std::vector< std::vector<InfoItem> > luaAIInfos;
 
 static void GetLuaAIInfo()
 {
-	luaAIInfo.clear();
+	luaAIInfos.clear();
 
 	LuaParser luaParser("LuaAI.lua", SPRING_VFS_MOD_BASE, SPRING_VFS_MOD_BASE);
 	if (!luaParser.Execute()) {
-		// it is no error if the mod does not come with LUA AIs.
+		// It is not an error if the mod does not come with Lua AIs.
 		return;
 	}
 
@@ -1575,29 +1565,54 @@ static void GetLuaAIInfo()
 	}
 
 	for (int i = 1; root.KeyExists(i); i++) {
-		struct LuaAIInfo aiData;
+		std::string shortName;
+		std::string description;
+		// Lua AIs can be specified in two different formats:
+		shortName = root.GetString(i, "");
+		if (!shortName.empty()) {
+			// ... string format (name)
 
-		// string format
-		aiData.name = root.GetString(i, "");
-		if (!aiData.name.empty()) {
-			aiData.desc = aiData.name;
-			luaAIInfo.push_back(aiData);
-			continue;
-		}
-
-		// table format  (name & desc)
-		const LuaTable& optTbl = root.SubTable(i);
-		if (!optTbl.IsValid()) {
-			continue;
-		}
-		aiData.name = optTbl.GetString("name", "");
-		if (aiData.name.empty()) {
-			continue;
+			description = "(please see mod description, forum or homepage)";
 		} else {
-			aiData.name.append(LUA_AI_POSTFIX);
+			// ... table format  (name & desc)
+
+			const LuaTable& optTbl = root.SubTable(i);
+			if (!optTbl.IsValid()) {
+				continue;
+			}
+			shortName = optTbl.GetString("name", "");
+			if (shortName.empty()) {
+				continue;
+			}
+
+			description = optTbl.GetString("desc", shortName);
 		}
-		aiData.desc = optTbl.GetString("desc", aiData.name);
-		luaAIInfo.push_back(aiData);
+
+		struct InfoItem ii;
+		std::vector<InfoItem> aiInfo;
+
+		ii.key = SKIRMISH_AI_PROPERTY_SHORT_NAME;
+		ii.value = shortName;
+		ii.desc = "the short name of this Lua Skirmish AI";
+		aiInfo.push_back(ii);
+
+		ii.key = SKIRMISH_AI_PROPERTY_VERSION;
+		ii.value = "<not versioned>";
+		ii.desc = "Lua Skirmish AIs do not have a version, "
+				"because they are fully defined by the mods version already.";
+		aiInfo.push_back(ii);
+
+		ii.key = SKIRMISH_AI_PROPERTY_NAME;
+		ii.value = shortName + " (Mod specific AI)";
+		ii.desc = "the human readable name of this Lua Skirmish AI";
+		aiInfo.push_back(ii);
+
+		ii.key = SKIRMISH_AI_PROPERTY_DESCRIPTION;
+		ii.value = description;
+		ii.desc = "a short description of this Lua Skirmish AI";
+		aiInfo.push_back(ii);
+
+		luaAIInfos.push_back(aiInfo);
 	}
 }
 
@@ -1615,7 +1630,7 @@ static int GetNumberOfLuaAIs()
 		CheckInit();
 
 		GetLuaAIInfo();
-		return luaAIInfo.size();
+		return luaAIInfos.size();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
@@ -1722,7 +1737,7 @@ static void ParseInfo(const std::string& fileName,
 static void CheckSkirmishAIIndex(int aiIndex)
 {
 	CheckInit();
-	int numSkirmishAIs = skirmishAIDataDirs.size() + luaAIInfo.size();
+	int numSkirmishAIs = skirmishAIDataDirs.size() + luaAIInfos.size();
 	CheckBounds(aiIndex, numSkirmishAIs);
 }
 
@@ -1743,7 +1758,7 @@ EXPORT(int) GetSkirmishAIInfoCount(int aiIndex) {
 
 		if (IsLuaAIIndex(aiIndex)) {
 			loadedLuaAIIndex = aiIndex;
-			return 2;
+			return luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)].size();
 		} else {
 			loadedLuaAIIndex = -1;
 
@@ -1769,7 +1784,7 @@ static void CheckSkirmishAIInfoIndex(int infoIndex)
 {
 	CheckInit();
 	if (loadedLuaAIIndex >= 0) {
-		CheckBounds(infoIndex, 2);
+		CheckBounds(infoIndex, luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)].size());
 	} else {
 		CheckBounds(infoIndex, info.size());
 	}
@@ -1780,11 +1795,7 @@ EXPORT(const char*) GetInfoKey(int infoIndex) {
 	try {
 		CheckSkirmishAIInfoIndex(infoIndex);
 		if (loadedLuaAIIndex >= 0) {
-			if (infoIndex == 0) {
-				return SKIRMISH_AI_PROPERTY_SHORT_NAME;
-			} else if (infoIndex == 1) {
-				return SKIRMISH_AI_PROPERTY_DESCRIPTION;
-			}
+			return GetStr(luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)][infoIndex].key);
 		} else {
 			return GetStr(info[infoIndex].key);
 		}
@@ -1797,11 +1808,7 @@ EXPORT(const char*) GetInfoValue(int infoIndex) {
 	try {
 		CheckSkirmishAIInfoIndex(infoIndex);
 		if (loadedLuaAIIndex >= 0) {
-			if (infoIndex == 0) {
-				return luaAIInfo[ToPureLuaAIIndex(loadedLuaAIIndex)].name.c_str();
-			} else if (infoIndex == 1) {
-				return luaAIInfo[ToPureLuaAIIndex(loadedLuaAIIndex)].desc.c_str();
-			}
+			return GetStr(luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)][infoIndex].value);
 		} else {
 			return GetStr(info[infoIndex].value);
 		}
@@ -1814,11 +1821,7 @@ EXPORT(const char*) GetInfoDescription(int infoIndex) {
 	try {
 		CheckSkirmishAIInfoIndex(infoIndex);
 		if (loadedLuaAIIndex >= 0) {
-			if (infoIndex == 0) {
-				return "The short name of this LUA AI";
-			} else if (infoIndex == 1) {
-				return "A human readable description of this LUA AI";
-			}
+			return GetStr(luaAIInfos[ToPureLuaAIIndex(loadedLuaAIIndex)][infoIndex].desc);
 		} else {
 			return GetStr(info[infoIndex].desc);
 		}
