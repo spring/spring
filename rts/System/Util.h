@@ -52,7 +52,7 @@ static inline std::string GetFileExt(const std::string& s)
 #endif
 	size_t i = s.rfind('.', l);
 	if (i != std::string::npos) {
-		return s.substr(i+1, l - i);
+		return StringToLower(s.substr(i+1, l - i));
 	}
 	return "";
 }
