@@ -1136,8 +1136,7 @@ bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
 		}
 
 		const int cmdUnitId = (int)c.params[0];
-		if (cmdUnitId == unit->id && 
-			(!friendUnit || teamHandler->Ally(friendUnit->team, (*it)->team))) {
+		if (cmdUnitId == unit->id && (!friendUnit || teamHandler->Ally(teamHandler->AllyTeam(friendUnit->team), teamHandler->AllyTeam((*it)->team)))) {
 			retval = true;
 			break;
 		}
@@ -1168,8 +1167,7 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 		}
 
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-uh->MaxUnits() == featureId && 
-			(!friendUnit || teamHandler->Ally(friendUnit->team, (*it)->team))) {
+		if (cmdFeatureId-uh->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(teamHandler->AllyTeam(friendUnit->team), teamHandler->AllyTeam((*it)->team)))) {
 			retval = true;
 			break;
 		}
@@ -1200,8 +1198,7 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 		}
 
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-uh->MaxUnits() == featureId && 
-			(!friendUnit || teamHandler->Ally(friendUnit->team, (*it)->team))) {
+		if (cmdFeatureId-uh->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(teamHandler->AllyTeam(friendUnit->team), teamHandler->AllyTeam((*it)->team)))) {
 			retval = true;
 			break;
 		}
