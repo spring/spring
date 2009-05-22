@@ -14,6 +14,12 @@
 #include "Map/MapParser.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/GlobalConstants.h"
+#if !defined DEDICATED
+// FIXME: make the dedicated server support AIs
+// and then include this unconditionally
+#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/SkirmishAIKey.h"
+#endif // !defined DEDICATED
 #include "UnsyncedRNG.h"
 #include "Exceptions.h"
 #include "Util.h"
@@ -22,16 +28,13 @@
 
 using namespace std;
 
-static const char* LUA_AI_POSTFIX = " (Mod specific AI)";
-
 const CGameSetup* gameSetup = NULL;
 
-CGameSetup::CGameSetup()
-{
-	startPosType=StartPos_Fixed;
-	numDemoPlayers=0;
-	hostDemo=false;
-}
+CGameSetup::CGameSetup():
+	startPosType(StartPos_Fixed),
+	hostDemo(false),
+	numDemoPlayers(0)
+{}
 
 CGameSetup::~CGameSetup()
 {
@@ -219,15 +222,47 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		}
 
 		// Is this team (Lua) AI controlled?
-		static const size_t LUA_AI_POSTFIX_size = strlen(LUA_AI_POSTFIX);
-		data.isLuaAI = false;
-		if (data.shortName.size() > LUA_AI_POSTFIX_size) {
-			const size_t realShortName_size = data.shortName.size() - LUA_AI_POSTFIX_size;
-			if (data.shortName.substr(realShortName_size).compare(LUA_AI_POSTFIX) == 0) {
-				data.shortName.erase(realShortName_size);
-				data.isLuaAI = true;
+		
+#if !defined DEDICATED
+// FIXME: make the dedicated server support AIs
+// and then include this unconditionally
+		data.isLuaAI = true;
+		const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys =
+				IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
+		IAILibraryManager::T_skirmishAIKeys::const_iterator skirmAiImpl;
+		for (skirmAiImpl = skirmishAIKeys.begin();
+				skirmAiImpl != skirmishAIKeys.end(); ++skirmAiImpl) {
+			if (data.shortName == skirmAiImpl->GetShortName()) {
+				data.isLuaAI = false;
+				logOutput.Print("Skirmish AI (%s) for team %i is a Lua AI",
+						data.shortName.c_str(), data.team);
+				break;
 			}
 		}
+#endif // !defined DEDICATED
+/*
+		// this is set later, in the AILibraryManager,
+		// after loading skirmish AI infos
+		//data.isLuaAI = ???;
+void CAILibraryManager::MarkLuaAIs() {
+
+	std::vector<SkirmishAIData>::iterator aiInstance;
+	for (aiInstance = gameSetup->skirmishAIStartingData.begin();
+			aiInstance != gameSetup->skirmishAIStartingData.end(); ++aiInstance) {
+		aiInstance->isLuaAI = true;
+
+		IAILibraryManager::T_skirmishAIKeys::const_iterator skirmAiImpl;
+		for (skirmAiImpl = GetSkirmishAIKeys().begin();
+				skirmAiImpl != skirmishAIKeys.end(); ++skirmAiImpl) {
+			if (aiInstance->shortName == skirmAiImpl->GetShortName()) {
+				aiInstance->isLuaAI = false;
+
+				logOutput.Print("Skirmish AI (%s) for team %i is a Lua AI",
+						aiInstance->shortName.c_str(), aiInstance->team);
+			}
+		}
+	}
+}*/
 
 		data.version = file.SGetValueDef("", s + "Version");
 		if (file.SectionExist(s + "Options")) {
