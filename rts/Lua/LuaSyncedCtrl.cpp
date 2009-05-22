@@ -913,7 +913,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 
-	if (uh->unitsByDefs[teamID][unitDef->id].size() >= static_cast<size_t>(unitDef->maxThisUnit)) {
+	if (uh->CanBuildUnit(unitDef,teamID)) {
 		return 0; // unit limit reached
 	}
 
