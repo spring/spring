@@ -134,8 +134,10 @@ public:
 
 	// game specific
 	int SCOUT_UPDATE_FREQUENCY;
+	float SCOUTING_MEMORY_FACTOR;
 	float LEARN_SPEED;
 	int LEARN_RATE;
 	float WATER_MAP_RATIO;
 	float LAND_WATER_MAP_RATIO;
+	int GAME_PERIODS;
 };

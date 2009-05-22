@@ -42,7 +42,9 @@ public:
 
 	void AddUnitToGroup(int unit_id, int def_id, UnitCategory category);
 
-	void UpdateRecon();
+	void BuildScouts();
+
+	void SendScoutToNewDest(int scout);
 
 	// returns a position to retreat unit of certain type
 	float3 GetSafePos(int def_id, float3 unit_pos);
@@ -83,7 +85,7 @@ public:
 	bool BuildFactory();
 	bool BuildDefences();
 	void BuildUnit(UnitCategory category, float speed, float cost, float range, float power, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float stat_eff, float eff, bool urgent);
-	bool BuildRecon();
+	bool BuildRadar();
 	bool BuildJammer();
 	bool BuildExtractor();
 	bool BuildMetalMaker();
@@ -149,11 +151,11 @@ public:
 	bool static suitable_for_power_plant(AAISector *left, AAISector *right);
 	bool static suitable_for_ground_factory(AAISector *left, AAISector *right);
 	bool static suitable_for_sea_factory(AAISector *left, AAISector *right);
-	bool static suitable_for_arty(AAISector *left, AAISector *right);
 	bool static defend_vs_ground(AAISector *left, AAISector *right);
 	bool static defend_vs_air(AAISector *left, AAISector *right);
 	bool static defend_vs_hover(AAISector *left, AAISector *right);
 	bool static defend_vs_sea(AAISector *left, AAISector *right);
+	bool static defend_vs_submarine(AAISector *left, AAISector *right);
 	bool static suitable_for_ground_rallypoint(AAISector *left, AAISector *right);
 	bool static suitable_for_sea_rallypoint(AAISector *left, AAISector *right);
 	bool static suitable_for_all_rallypoint(AAISector *left, AAISector *right);

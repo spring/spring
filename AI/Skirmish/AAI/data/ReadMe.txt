@@ -106,7 +106,24 @@ Thanks to: 	- Yuritch for testing and providing me with improved mod config file
 		- Brandon Potter for his TBT 12 cfg file
 
 
-AAI v0.875	- Current ammount of land/water within the base is taken into account when selecting factories (e.g. dont order 
+AAI v0.90 	- Completly redone scouting algorithm
+
+		- Enemy units on radar are taken into account now as well
+
+		- AAI will delay non-combat-critial buildtasks & upgrading of buildings when under pressure
+
+		- Redesigned the way attacks are launched. AAI should play more aggressively now, attack poorly defended areas 
+		  more often and better coordinate attacks on maps with more than one landmass (e.g. island maps)
+
+		- Improved the factory/builder selection algorithm
+
+		- Improved construction and placement of radar towers
+
+		- Fixed a bug that crashed the game when a mobile factory (= construction unit that may buil other units) was 
+		  killed on its way to the buildsite
+
+
+AAI v0.88	- Current ammount of land/water within the base is taken into account when selecting factories (e.g. dont order 
 		  water factories on a land map anymore)
 
 		- Improved AAIs behaviour on water maps with start positions on islands/land masses
@@ -117,13 +134,6 @@ AAI v0.875	- Current ammount of land/water within the base is taken into account
 		- Continent file version bumped to 0.87
 
 		- Fixed a crash on shut down introduced in Spring v0.77
-
-
-AAI v0.872	- Refactored code for getting rally points and positions to withdraw units and made 
-
-		- Construction units that are member of the DONT_BUILD list will not be built anymore
-		
-		- Fixed two bugs that have been introduced in v0.87 and could cripple AAI's economy a lot
 
 
 AAI v0.87	- Proper detection of amphibious ground units (was causing AAI to freeze on water maps)
