@@ -506,6 +506,8 @@ void CFeatureHandler::Update()
 				if (feature->inUpdateQue) {
 					updateFeatures.erase(feature);
 				}
+				fadeFeatures.erase(feature);
+				fadeFeaturesS3O.erase(feature);
 
 				delete feature;
 			}
@@ -620,6 +622,8 @@ void CFeatureHandler::Draw()
 }
 
 void CFeatureHandler::DrawFadeFeatures() {
+	GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
+
 	if(unitDrawer->advShading) {
 		unitDrawer->SetupForUnitDrawing();
 
@@ -630,13 +634,13 @@ void CFeatureHandler::DrawFadeFeatures() {
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
-		for(std::vector<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
+		for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
 			unitDrawer->DrawFeatureStatic(*i);
 		}
 
 		unitDrawer->CleanUp3DO();
 
-		for(std::vector<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
+		for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
 			texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
 			(*i)->DrawS3O();
 		}
@@ -656,14 +660,14 @@ void CFeatureHandler::DrawFadeFeatures() {
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
-		for(std::vector<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
+		for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
 			glColor4f(1,1,1,(*i)->tempalpha);
 			unitDrawer->DrawFeatureStatic(*i);
 		}
 
 		unitDrawer->CleanUp3DO();
 
-		for(std::vector<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
+		for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
 			glColor4f(1,1,1,(*i)->tempalpha);
 			texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
 			(*i)->DrawS3O();
@@ -747,9 +751,9 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 				if(!drawReflection && !drawRefraction && f->midPos.y > 0 && sqDist < sqFadeDistEnd && sqDist >= sqFadeDistBegin) {
 					f->tempalpha = 1.0f - (sqDist - sqFadeDistBegin) / (sqFadeDistEnd - sqFadeDistBegin);
 					if (f->model->type == MODELTYPE_3DO) { // FIXME: Properly fade out submerged features also
-						featureHandler->fadeFeatures.push_back(f);
+						featureHandler->fadeFeatures.insert(f);
 					} else {
-						featureHandler->fadeFeaturesS3O.push_back(f);
+						featureHandler->fadeFeaturesS3O.insert(f);
 					}
 				}
 				if(drawReflection || drawRefraction || f->midPos.y <= 0 || sqDist < sqFadeDistBegin) {

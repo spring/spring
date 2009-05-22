@@ -57,8 +57,8 @@ private:
 
 private:
 
-	std::vector<CFeature *> fadeFeatures;
-	std::vector<CFeature *> fadeFeaturesS3O;
+	std::set<CFeature *> fadeFeatures;
+	std::set<CFeature *> fadeFeaturesS3O;
 
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
