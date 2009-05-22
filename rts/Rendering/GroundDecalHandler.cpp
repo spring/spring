@@ -810,7 +810,7 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 	    (fullName.find_first_of('/')  == string::npos)) {
 		fullName = string("bitmaps/tracks/") + fullName;
 	}
-	bool isBitmap = (GetFileExt(StringToLower(fullName)) == "bmp");
+	bool isBitmap = (GetFileExt(fullName) == "bmp");
 
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
@@ -895,7 +895,7 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 	if (!bm.Load(file)) {
 		throw content_error("Could not load scar from file " + file);
 	}
-	bool isBitmap = (GetFileExt(StringToLower(file)) == "bmp");
+	bool isBitmap = (GetFileExt(file) == "bmp");
 	if (isBitmap) {
 		//! bitmaps don't have an alpha channel
 		//! so use: red := brightness & green := alpha
