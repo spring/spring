@@ -1125,7 +1125,7 @@ void CCommandAI::ExecuteAttack(Command &c)
 
 		if (c.params.size() == 1) {
 			const unsigned int targetID = (unsigned int) c.params[0];
-			const bool legalTarget      = (targetID < uh->MaxUnits());
+			const bool legalTarget      = (targetID >= 0) && (targetID < uh->MaxUnits());
 			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
 
 			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
