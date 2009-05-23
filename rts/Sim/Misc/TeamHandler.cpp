@@ -68,6 +68,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 			bool isLuaAI = true;
 			const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
 			IAILibraryManager::T_skirmishAIKeys::const_iterator skirmAiImpl;
+
 			for (skirmAiImpl = skirmishAIKeys.begin();
 				skirmAiImpl != skirmishAIKeys.end(); ++skirmAiImpl) {
 				if (skirmishAIData->shortName == skirmAiImpl->GetShortName()) {
@@ -76,11 +77,19 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 					break;
 				}
 			}
+
 			if (isLuaAI) {
 				team->luaAI = skirmishAIData->shortName;
 				team->isAI = true;
 			} else {
 				if (setup->hostDemo) {
+					// CPreGame always adds the name of the demo
+					// file to the internal setup script before
+					// CGameSetup is inited, therefore hostDemo
+					// tells us if we're watching a replay
+					// if so, then we do NOT want to load any AI
+					// libs, and therefore we must make sure each
+					// team's skirmishAIKey is left "unspecified"
 					team->skirmishAIKey = SkirmishAIKey(); // unspecified AI Key
 				} else {
 					const char* sn = skirmishAIData->shortName.c_str();
