@@ -28,11 +28,9 @@
 extern std::string stupidGlobalMapname;
 
 
-CCommanderScript::CCommanderScript()
-: CScript(std::string("Commanders"))
+CCommanderScript::CCommanderScript(): CScript(std::string("Commanders"))
 {
 }
-
 
 CCommanderScript::~CCommanderScript(void)
 {
@@ -51,15 +49,16 @@ void CCommanderScript::GameStart()
 
 		CTeam* team = teamHandler->Team(a);
 
-		if (team->gaia) continue;
+		if (team->gaia) {
+			continue;
+		}
 
 		// remove the pre-existing storage except for a small amount
 		team->metalStorage = 20;
 		team->energyStorage = 20;
 
 		// create a Skirmish AI if required
-		if (!team->skirmishAIKey.IsUnspecified() // is an AI specified?
-				&& (gu->myPlayerNum == team->leader)) {
+		if (!gameSetup->hostDemo && !team->skirmishAIKey.IsUnspecified() && (gu->myPlayerNum == team->leader)) {
 			eoh->CreateSkirmishAI(a, team->skirmishAIKey);
 		}
 
