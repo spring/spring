@@ -73,20 +73,26 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 				} else {
 					const char* sn = skirmishAIData->shortName.c_str();
 					const char* v = skirmishAIData->version.c_str();
+
 					SkirmishAIKey spec = SkirmishAIKey(sn, v);
 					SkirmishAIKey fittingKey =
 							IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
+
 					if (!fittingKey.IsUnspecified()) {
 						team->skirmishAIKey = fittingKey;
 						team->skirmishAIOptions = skirmishAIData->options;
 						team->isAI = true;
 					} else {
-						const int MAX_MSG_LENGTH = 511;
-						char s_msg[MAX_MSG_LENGTH + 1];
-						SNPRINTF(s_msg, MAX_MSG_LENGTH,
-								"Specified Skirmish AI could not be found: %s (version: %s)",
-								spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specified>");
-						handleerror(NULL, s_msg, "Team Handler Error", MBF_OK | MBF_EXCL);
+						// a missing AI lib is only a problem for
+						// the player who is supposed to load it
+						if (gu->myPlayerNum == skirmishAIData->hostPlayerNum) {
+							const int MAX_MSG_LENGTH = 511;
+							char s_msg[MAX_MSG_LENGTH + 1];
+							SNPRINTF(s_msg, MAX_MSG_LENGTH,
+									"Specified Skirmish AI could not be found: %s (version: %s)",
+									spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specified>");
+							handleerror(NULL, s_msg, "Team Handler Error", MBF_OK | MBF_EXCL);
+						}
 					}
 				}
 			}
