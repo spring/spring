@@ -39,7 +39,7 @@
 
 using std::string;
 
-ConfigHandler* configHandler;
+ConfigHandler* configHandler = NULL;
 
 /**
  * @brief POSIX file locking class
