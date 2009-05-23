@@ -34,8 +34,8 @@ struct SkirmishAIData {
 	std::string name;
 	/** Id of the team this Skirmish AI is controlling. */
 	int team;
-	/** The player whichs computer this AI runs on. */
-	int host;
+	/** Number of the player whose computer this AI runs on. */
+	int hostPlayerNum;
 	std::string shortName;
 	std::string version;
 	bool isLuaAI;
