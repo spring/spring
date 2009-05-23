@@ -624,6 +624,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			sCommandData = cmd;
 			break;
 		}
+		default:
 		case COMMAND_UNIT_CUSTOM:
 		{
 			int cmdId = c->id;
