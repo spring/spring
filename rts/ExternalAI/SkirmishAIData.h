@@ -38,7 +38,6 @@ struct SkirmishAIData {
 	int hostPlayerNum;
 	std::string shortName;
 	std::string version;
-	bool isLuaAI;
 	std::map<std::string, std::string> options;
 };
 

@@ -1299,10 +1299,9 @@ void CGameServer::CheckForGameEnd()
 			}
 		}
 		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(a);
-		if (sad != NULL && !(sad->isLuaAI))
+		if (sad)
 		{
-			++numActiveTeams[setup->teamStartingData[a].teamAllyteam];
-			continue;
+				hasPlayer = true;
 		}
 
 		if (teams[a].active && hasPlayer)
