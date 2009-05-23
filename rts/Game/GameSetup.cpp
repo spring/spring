@@ -14,12 +14,6 @@
 #include "Map/MapParser.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/GlobalConstants.h"
-#if !defined DEDICATED
-// FIXME: make the dedicated server support AIs
-// and then include this unconditionally
-#include "ExternalAI/IAILibraryManager.h"
-#include "ExternalAI/SkirmishAIKey.h"
-#endif // !defined DEDICATED
 #include "UnsyncedRNG.h"
 #include "Exceptions.h"
 #include "Util.h"
@@ -220,49 +214,6 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		if (data.shortName == "") {
 			throw content_error("missing AI.ShortName in GameSetup script");
 		}
-
-		// Is this team (Lua) AI controlled?
-		
-#if !defined DEDICATED
-// FIXME: make the dedicated server support AIs
-// and then include this unconditionally
-		data.isLuaAI = true;
-		const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys =
-				IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
-		IAILibraryManager::T_skirmishAIKeys::const_iterator skirmAiImpl;
-		for (skirmAiImpl = skirmishAIKeys.begin();
-				skirmAiImpl != skirmishAIKeys.end(); ++skirmAiImpl) {
-			if (data.shortName == skirmAiImpl->GetShortName()) {
-				data.isLuaAI = false;
-				logOutput.Print("Skirmish AI (%s) for team %i is a Lua AI",
-						data.shortName.c_str(), data.team);
-				break;
-			}
-		}
-#endif // !defined DEDICATED
-/*
-		// this is set later, in the AILibraryManager,
-		// after loading skirmish AI infos
-		//data.isLuaAI = ???;
-void CAILibraryManager::MarkLuaAIs() {
-
-	std::vector<SkirmishAIData>::iterator aiInstance;
-	for (aiInstance = gameSetup->skirmishAIStartingData.begin();
-			aiInstance != gameSetup->skirmishAIStartingData.end(); ++aiInstance) {
-		aiInstance->isLuaAI = true;
-
-		IAILibraryManager::T_skirmishAIKeys::const_iterator skirmAiImpl;
-		for (skirmAiImpl = GetSkirmishAIKeys().begin();
-				skirmAiImpl != skirmishAIKeys.end(); ++skirmAiImpl) {
-			if (aiInstance->shortName == skirmAiImpl->GetShortName()) {
-				aiInstance->isLuaAI = false;
-
-				logOutput.Print("Skirmish AI (%s) for team %i is a Lua AI",
-						aiInstance->shortName.c_str(), aiInstance->team);
-			}
-		}
-	}
-}*/
 
 		data.version = file.SGetValueDef("", s + "Version");
 		if (file.SectionExist(s + "Options")) {

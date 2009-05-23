@@ -12,6 +12,8 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "mmgr.h"
 #include "Util.h"
+#include "LogOutput.h"
+#include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
 #include "ExternalAI/SkirmishAIData.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -60,11 +62,21 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 		SetAllyTeam(i, team->teamAllyteam);
 
-		const SkirmishAIData* skirmishAIData =
-				setup->GetSkirmishAIDataForTeam(i);
+		const SkirmishAIData* skirmishAIData = setup->GetSkirmishAIDataForTeam(i);
 
 		if (skirmishAIData != NULL) {
-			if (skirmishAIData->isLuaAI) {
+			bool isLuaAI = true;
+			const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
+			IAILibraryManager::T_skirmishAIKeys::const_iterator skirmAiImpl;
+			for (skirmAiImpl = skirmishAIKeys.begin();
+				skirmAiImpl != skirmishAIKeys.end(); ++skirmAiImpl) {
+				if (skirmishAIData->shortName == skirmAiImpl->GetShortName()) {
+					isLuaAI = false;
+					logOutput.Print("Skirmish AI (%s) for team %i is no Lua AI", skirmishAIData->shortName.c_str(), skirmishAIData->team);
+					break;
+				}
+			}
+			if (isLuaAI) {
 				team->luaAI = skirmishAIData->shortName;
 				team->isAI = true;
 			} else {
