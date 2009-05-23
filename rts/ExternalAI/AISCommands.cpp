@@ -1104,7 +1104,7 @@ int extractAICommandTopic(const Command* engineCmd) {
 			if (internalUnitCmdTopic < 0) {
 				aiCommandTopic = COMMAND_UNIT_BUILD;
 			} else {
-				aiCommandTopic = engineCmd->id;
+				aiCommandTopic = COMMAND_UNIT_CUSTOM;
 			}
 			break;
 		}
