@@ -600,7 +600,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
-					if(enforceSpeed && !players[a].isLocal &&
+					if(enforceSpeed && !players[a].isLocal && !isPaused &&
 						(players[a].spectator ||
 						players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
@@ -1559,7 +1559,7 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
 	if (enforceSpeed &&
 		player >= 0 && static_cast<unsigned int>(player) != SERVER_PLAYER &&
-		!players[player].isLocal &&
+		!players[player].isLocal && !isPaused &&
 		(players[player].spectator ||
 		players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 		players[player].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
