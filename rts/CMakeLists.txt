@@ -24,6 +24,7 @@ endif (USE_MMGR)
 SET(USE_GML FALSE CACHE BOOL "Use the GML OpenGL threading library?")
 if (USE_GML)
 	ADD_DEFINITIONS(-DUSE_GML)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
 endif (USE_GML)
 
 SET(USE_GML_SIM FALSE CACHE BOOL "Use independent Simulation thread?")
