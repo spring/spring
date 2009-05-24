@@ -1546,7 +1546,7 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 	}
 
 	CPlasmaRepulser* shield = NULL;
-	const int idx = luaL_optint(L, 2, -1);
+	const int idx = luaL_optint(L, 4, -1);
 
 	if (idx < 0 || idx >= unit->weapons.size()) {
 		shield = (CPlasmaRepulser*) unit->shieldWeapon;
