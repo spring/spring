@@ -742,7 +742,7 @@ bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 
 	float3 dif = pos - weaponMuzzlePos;
 	float heightDiff = 0.0f; // negative when target below owner
-	const float absTB = fabsf(targetBorder);
+	const float absTB = streflop::fabsf(targetBorder);
 
 	if (targetBorder != 0.0f && unit) {
 		float3 difDir(dif);
