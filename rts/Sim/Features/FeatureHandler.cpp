@@ -329,7 +329,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				fd->modelType = atoi(name.substr(8).c_str());
 				fd->energy = 250;
 				fd->metal = 0;
-				fd->reclaimTime = 250;
+				fd->reclaimTime = 1500;
 				fd->maxHealth = 5;
 				fd->xsize = 2;
 				fd->zsize = 2;
