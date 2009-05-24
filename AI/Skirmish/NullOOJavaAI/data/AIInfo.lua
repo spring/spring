@@ -30,7 +30,7 @@ local infos = {
 	},
 	{
 		key    = 'name',
-		value  = 'low-level Java test Skirmish AI',
+		value  = 'high-level Java stub Skirmish AI',
 		desc   = 'human readable name.',
 	},
 	{
