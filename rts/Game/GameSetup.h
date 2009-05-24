@@ -39,7 +39,8 @@ public:
 		StartPos_Last = 3  // last entry in enum (for user input check)
 	};
 
-	int numPlayers; //the expected amount of players
+	/// the expected amount of players
+	int numPlayers;
 	int numTeams;
 	int numAllyTeams;
 	bool fixedAllies;

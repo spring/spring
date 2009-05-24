@@ -22,6 +22,7 @@
 #include "AIInterfaceLibraryInfo.h"
 #include "AIInterfaceLibrary.h"
 #include "SkirmishAILibraryInfo.h"
+#include "SkirmishAIData.h"
 
 #include "Util.h"
 #include "LogOutput.h"
@@ -99,7 +100,6 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 	// Read from AI Interface info files
 	// we are looking for:
-	// {AI_INTERFACES_DATA_DIR}/{*}/InterfaceInfo.lua
 	// {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
 	T_dirs aiInterfaceDataDirs =
 			filesystem.FindDirsInDirectSubDirs(AI_INTERFACES_DATA_DIR);
@@ -152,7 +152,6 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 	// Read from Skirmish AI info and option files
 	// we are looking for:
-	// {SKIRMISH_AI_DATA_DIR/{*}/AIInfo.lua
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
 	T_dirs skirmishAIDataDirs = filesystem.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 	T_dupSkirm duplicateSkirmishAIInfoCheck;
