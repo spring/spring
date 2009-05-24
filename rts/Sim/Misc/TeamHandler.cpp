@@ -90,7 +90,12 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 					// if so, then we do NOT want to load any AI
 					// libs, and therefore we must make sure each
 					// team's skirmishAIKey is left "unspecified"
+					//
+					// however, flag this team as an AI anyway so
+					// the original AI team's orders are not seen
+					// as invalid and we don't desync the demo
 					team->skirmishAIKey = SkirmishAIKey(); // unspecified AI Key
+					team->isAI = true;
 				} else {
 					const char* sn = skirmishAIData->shortName.c_str();
 					const char* v = skirmishAIData->version.c_str();
