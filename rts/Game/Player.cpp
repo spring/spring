@@ -103,9 +103,10 @@ void CPlayer::SetControlledTeams()
 	// AI teams
 	for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
 		const CTeam* team = teamHandler->Team(t);
-		if (team && team->isAI &&
-			!team->skirmishAIKey.IsUnspecified() && // is not empty? -> luaAI does not require client control
-			(team->leader == playerNum)) {
+
+		// don't check if !team->skirmishAIKey.IsUnspecified()
+		// because luaAI does not require client control
+		if (team && team->isAI && (team->leader == playerNum)) {
 			controlledTeams.insert(t);
 		}
 	}
