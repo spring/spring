@@ -51,6 +51,7 @@ private:
 	float masterVolume;
 	bool mute;
 	bool appIsIconified; // do not play when minimized / iconified
+	bool pitchAdjust;
 
 	typedef std::map<std::string, size_t> soundMapT;
 	typedef boost::ptr_vector<SoundItem> soundVecT;

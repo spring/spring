@@ -27,6 +27,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 64) - 1; // 1 source is occupied by eventual music (handled by OggStream)
+	pitchAdjust = configHandler->Get("PitchAdjust", true);
 
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
@@ -205,7 +206,8 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 
 void CSound::PitchAdjust(const float newPitch)
 {
-	SoundSource::SetPitch(newPitch);
+	if (pitchAdjust)
+		SoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
@@ -231,6 +233,13 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	else if (key == "snd_volui")
 	{
 		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "PitchAdjust")
+	{
+		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
+		if (!tempPitchAdjust)
+			PitchAdjust(1.0);
+		pitchAdjust = tempPitchAdjust;
 	}
 }
 
