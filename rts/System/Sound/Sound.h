@@ -38,9 +38,9 @@ public:
 	void Iconified(bool state);
 
 	void PrintDebugInfo();
+	bool LoadSoundDefs(const std::string& filename);
 
 private:
-	void LoadSoundDefs(const std::string& filename);
 
 	size_t LoadALBuffer(const std::string& path, bool strict);
 	void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
