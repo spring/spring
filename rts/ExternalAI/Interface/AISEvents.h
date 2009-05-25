@@ -301,7 +301,12 @@ struct SPlayerCommandEvent {
 }; // EVENT_PLAYER_COMMAND
 
 /**
- * This AI event is sent when a unit finnished processing a command.
+ * This AI event is sent when a unit finished processing a command.
+ * @param commandId      used on asynchronous commands only (is -1 for regular commands).
+ *                       this allows the AI to identify a possible result event,
+ *                       which would come with the same id
+ * @param commandTopicId unique identifier of a command
+ *                       (see COMMAND_* defines in AISCommands.h)
  * @see callback.handleCommand(..., int commandId, ...)
  */
 struct SCommandFinishedEvent {
