@@ -433,8 +433,10 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 		file.Read(&buf[0], file.FileSize());
 	} else {
 		if (strict) {
-			handleerror(0, "Couldn't open sound file", path.c_str(),0);
+			handleerror(0, "Couldn't open audio file", path.c_str(),0);
 		}
+		else
+			LogObject(LOG_SOUND) << "Unable to open audio file: " << path;
 		return 0;
 	}
 
