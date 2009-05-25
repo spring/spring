@@ -94,12 +94,15 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 
 	if (ai) {
 		Release();
-		skirmishAiCallback_release(teamId);
-		delete callback;
+
 		delete ai;
-		c_callback = NULL;
-		callback = NULL;
 		ai = NULL;
+
+		skirmishAiCallback_release(teamId);
+		c_callback = NULL;
+
+		delete callback;
+		callback = NULL;
 	}
 }
 
