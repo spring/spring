@@ -26,7 +26,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 {
 	mute = false;
 	appIsIconified = false;
-	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
+	int maxSounds = configHandler->Get("MaxSounds", 64) - 1; // 1 source is occupied by eventual music (handled by OggStream)
 
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
