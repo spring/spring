@@ -28,13 +28,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
 
-	if (configHandler->IsSet("SoundVolume"))
-	{
-		// SoundVolume is deprecated, if this key is present, copy to snd_volmaster and delete
-		configHandler->Set("snd_volmaster", configHandler->Get("SoundVolume", 60));
-		configHandler->Delete("SoundVolume");
-	}
-
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
 	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
