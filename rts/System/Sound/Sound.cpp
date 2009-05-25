@@ -116,7 +116,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	posScale.z = 1.0f;
 
 	LoadSoundDefs("gamedata/sounds.lua");
-	LoadSoundDefs("mapdata/sounds.lua");
 
 	configHandler->NotifyOnChange(this);
 }
@@ -373,21 +372,26 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
 
-void CSound::LoadSoundDefs(const std::string& filename)
+bool CSound::LoadSoundDefs(const std::string& filename)
 {
 	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);
 	parser.SetLowerCppKeys(false);
 	parser.Execute();
-	if (!parser.IsValid()) {
+	if (!parser.IsValid())
+	{
 		LogObject(LOG_SOUND) << "Could not load " << filename << ": " << parser.GetErrorLog();
+		return false;
 	}
 	else
 	{
 		const LuaTable soundRoot = parser.GetRoot();
 		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
 		if (!soundItemTable.IsValid())
+		{
 			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << filename;
+			return false;
+		}
 		else
 		{
 			std::vector<std::string> keys;
@@ -420,6 +424,7 @@ void CSound::LoadSoundDefs(const std::string& filename)
 			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems from " << filename;
 		}
 	}
+	return true;
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
