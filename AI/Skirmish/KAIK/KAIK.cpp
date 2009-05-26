@@ -77,7 +77,7 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 
 
 
-void CKAIK::UnitCreated(int unitID) {
+void CKAIK::UnitCreated(int unitID, int builderID) {
 	ai->uh->UnitCreated(unitID);
 	ai->econTracker->UnitCreated(unitID);
 }
@@ -187,7 +187,7 @@ int CKAIK::HandleEvent(int msg, const void* data) {
 
 			if ((cte->newteam) == (ai->cb->GetMyTeam())) {
 				// got a unit
-				UnitCreated(cte->unit);
+				UnitCreated(cte->unit, -1);
 				UnitFinished(cte->unit);
 				ai->uh->IdleUnitAdd(cte->unit, ai->cb->GetCurrentFrame());
 			}

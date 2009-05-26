@@ -226,7 +226,7 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 */
 }
 
-void cRAI::UnitCreated(int unit)
+void cRAI::UnitCreated(int unit, int builder)
 {
 	const UnitDef* ud=cb->GetUnitDef(unit);
 	if( RAIDEBUGGING ) { *l<<"\nUnitCreated("<<unit; *l<<")["+ud->humanName+"]"; }
@@ -264,7 +264,7 @@ void cRAI::UnitFinished(int unit)
 {
 	if( RAIDEBUGGING ) *l<<"\nUnitFinished("<<unit<<")";
 	if( Units.find(unit) == Units.end() ) // Occurs if a player canceled a build order with more than one quaried and something still finished
-		UnitCreated(unit);
+		UnitCreated(unit, -1);
 
 	UnitInfo* U = &Units.find(unit)->second;
 	U->unitBeingBuilt = false;
@@ -645,7 +645,7 @@ int cRAI::HandleEvent(int msg,const void* data)
 				return 0;
 			}
 
-			UnitCreated(cte->unit);
+			UnitCreated(cte->unit, -1);
 			Units.find(cte->unit)->second.AIDisabled=false;
 			if( !cb->UnitBeingBuilt(cte->unit) )
 			{

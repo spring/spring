@@ -45,7 +45,7 @@ public:
 	virtual void ReleaseAI() {};
 
 	/// called when a new unit is created on ai team
-	virtual void UnitCreated(int unit)=0;
+	virtual void UnitCreated(int unit, int builder)=0;
 	/// called when an unit has finished building
 	virtual void UnitFinished(int unit)=0;
 	/// called when a unit is destroyed
