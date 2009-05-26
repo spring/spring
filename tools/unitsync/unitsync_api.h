@@ -23,7 +23,7 @@ EXPORT(const char* ) GetFullUnitName(int unit);
 
 EXPORT(void        ) AddArchive(const char* name);
 EXPORT(void        ) AddAllArchives(const char* root);
-EXPORT(void        ) RemoveArchive(const char* name);
+EXPORT(void        ) RemoveAllArchives();
 EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
 EXPORT(const char* ) GetArchivePath(const char* arname);
 
