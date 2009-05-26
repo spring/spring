@@ -521,12 +521,14 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 					EndStripQ(ma);
 					inStrip = false;
 				}
-			}
+			} //for (y = ystart; y < yend; y += lod)
 
 			int yst=max(ystart - lod, minty);
 			int yed=min(yend + lod, maxty);
 			int nloop=(yed-yst)/lod+1;
-			ma->EnlargeArrays(8*nloop, 2*nloop);
+
+			if (nloop > 0)
+				ma->EnlargeArrays(8*nloop, 2*nloop);
 
 			//! rita yttre begr?snings yta mot n?ta lod
 			if (maxlx < maxtx && maxlx >= mintx) {
@@ -651,7 +653,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 					}
 					EndStripQ(ma);
 				}
-			} //for (y = ystart; y < yend; y += lod)
+			}
 
 		} //for (int lod = 1; lod < neededLod; lod <<= 1)
 
@@ -836,6 +838,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	for (y = ystart; y < yend; y += lod) {
 		int xs = xstart;
 		int xe = xend;
+
+		if (xe < xs) continue;
+
 		int ylod = y + lod;
 		int yhlod = y + hlod;
 
@@ -974,7 +979,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	int yst=max(ystart - lod, minty);
 	int yed=min(yend + lod, maxty);
 	int nloop=(yed-yst)/lod+1;
-	ma->EnlargeArrays(8*nloop, 2*nloop);
+
+	if (nloop > 0)
+		ma->EnlargeArrays(8*nloop, 2*nloop);
 
 	//!rita yttre begr?snings yta mot n?ta lod
 	if(maxlx<maxtx && maxlx>=mintx){
