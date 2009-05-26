@@ -556,7 +556,7 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 		logOutput.Print("FONT-ERROR: Couldn't create GlyphAtlas! (try to reduce reduce font size/outlinewidth)");
 		return NULL;
 	} catch (content_error& e) {
-		logOutput.Print(e.what());
+		logOutput.Print(std::string(e.what()));
 		return NULL;
 	}
 }
