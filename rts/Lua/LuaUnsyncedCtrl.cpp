@@ -531,7 +531,12 @@ int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
 	const string soundFile = lua_tostring(L, 1);
 	bool success = sound->LoadSoundDefs(soundFile);
 
-	return 0;
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		lua_pushboolean(L, success);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
@@ -566,7 +571,12 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 		success = true;
 	}
 
-	return 0;
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		lua_pushboolean(L, success);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 
@@ -581,7 +591,12 @@ int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
-	return 0;
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		lua_pushboolean(L, true);
+		return 1;
+	} else {
+		return 0;
+	}
 }
 
 int LuaUnsyncedCtrl::StopSoundStream(lua_State*)
