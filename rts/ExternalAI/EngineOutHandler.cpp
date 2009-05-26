@@ -248,12 +248,13 @@ void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 	DO_FOR_TEAM_SKIRMISH_AND_GROUP_AIS(UnitIdle(unitId), teamId);
 }
 
-void CEngineOutHandler::UnitCreated(const CUnit& unit) {
+void CEngineOutHandler::UnitCreated(const CUnit& unit, const CUnit* builder) {
 
-	int teamId = unit.team;
-	int unitId = unit.id;
+	int teamId    = unit.team;
+	int unitId    = unit.id;
+	int builderId = builder? builder->id: -1;
 
-	DO_FOR_TEAM_SKIRMISH_AND_GROUP_AIS(UnitCreated(unitId), teamId);
+	DO_FOR_TEAM_SKIRMISH_AND_GROUP_AIS(UnitCreated(unitId, builderId), teamId);
 }
 
 void CEngineOutHandler::UnitFinished(const CUnit& unit) {

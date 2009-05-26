@@ -57,7 +57,7 @@ public:
 	virtual void Save(std::ostream *s);
 
 	virtual void UnitIdle(int unitId);
-	virtual void UnitCreated(int unitId);
+	virtual void UnitCreated(int unitId, int builderId);
 	virtual void UnitFinished(int unitId);
 	virtual void UnitDestroyed(int unitId, int attackerUnitId);
 	virtual void UnitDamaged(int unitId, int attackerUnitId, float damage, const float3& dir);

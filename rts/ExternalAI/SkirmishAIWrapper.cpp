@@ -144,7 +144,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 			if (uh->units[a]->team == teamId) {
 				try {
-					UnitCreated(a);
+					UnitCreated(a, -1);
 				} HANDLE_EXCEPTION;
 				if (!uh->units[a]->beingBuilt)
 					try {
@@ -261,9 +261,9 @@ void CSkirmishAIWrapper::UnitIdle(int unitId) {
 	ai->HandleEvent(EVENT_UNIT_IDLE, &evtData);
 }
 
-void CSkirmishAIWrapper::UnitCreated(int unitId) {
+void CSkirmishAIWrapper::UnitCreated(int unitId, int builderId) {
 
-	SUnitCreatedEvent evtData = {unitId};
+	SUnitCreatedEvent evtData = {unitId, builderId};
 	ai->HandleEvent(EVENT_UNIT_CREATED, &evtData);
 }
 

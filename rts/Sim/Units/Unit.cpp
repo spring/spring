@@ -1628,7 +1628,7 @@ void CUnit::Init(const CUnit* builder)
 	}
 
 	eventHandler.UnitCreated(this, builder);
-	eoh->UnitCreated(*this); // FIXME -- add builder?
+	eoh->UnitCreated(*this, builder);
 }
 
 
