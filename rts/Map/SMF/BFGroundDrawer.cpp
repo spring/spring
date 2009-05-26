@@ -357,6 +357,12 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 				int xe = xend;
 				FindRange(/*inout*/ xs, /*inout*/ xe, left, right, y, lod);
 
+				// If FindRange modifies (xs, xe) to a (less then) empty range,
+				// continue to the next row.
+				// If we'd continue, nloop (below) would become negative and we'd
+				// allocate a vertex array with negative size.  (mantis #1415)
+				if (xe < xs) continue;
+
 				int ylod = y + lod;
 				int yhlod = y + hlod;
 
