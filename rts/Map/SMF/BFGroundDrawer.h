@@ -71,7 +71,7 @@ protected:
 	void CreateWaterPlanes(const bool &camOufOfMap);
 	inline void DrawWaterPlane(bool drawWaterReflection);
 
-	void FindRange(int &xs, int &xe, std::vector<fline> &left, std::vector<fline> &right, int y, int lod);
+	void FindRange(int &xs, int &xe, const std::vector<fline> &left, const std::vector<fline> &right, int y, int lod);
 	void DoDrawGroundRow(int bty);
 	void DrawVertexAQ(CVertexArray *ma, int x, int y);
 	void DrawVertexAQ(CVertexArray *ma, int x, int y, float height);
