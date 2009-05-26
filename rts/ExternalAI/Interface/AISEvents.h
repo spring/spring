@@ -143,6 +143,7 @@ struct SMessageEvent {
  */
 struct SUnitCreatedEvent {
 	int unit;
+	int builder;
 }; // EVENT_UNIT_CREATED
 
 /**

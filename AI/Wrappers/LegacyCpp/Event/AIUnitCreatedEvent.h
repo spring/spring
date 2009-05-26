@@ -29,7 +29,7 @@ public:
 	~CAIUnitCreatedEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-		ai.UnitCreated(event.unit);
+		ai.UnitCreated(event.unit /* TODO: event.builder */);
 	}
 
 private:

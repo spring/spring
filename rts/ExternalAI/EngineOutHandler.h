@@ -67,7 +67,7 @@ public:
 	void UnitEnteredRadar(const CUnit& unit, int allyTeamId);
 	void UnitLeftRadar(const CUnit& unit, int allyTeamId);
 	void UnitIdle(const CUnit& unit);
-	void UnitCreated(const CUnit& unit);
+	void UnitCreated(const CUnit& unit, const CUnit* builder);
 	void UnitFinished(const CUnit& unit);
 	void UnitDestroyed(const CUnit& destroyed, const CUnit* attacker);
 	void UnitDamaged(const CUnit& damaged, const CUnit* attacker, float damage);
