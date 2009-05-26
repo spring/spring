@@ -457,19 +457,23 @@ EXPORT(void) AddAllArchives(const char* root)
 }
 
 /**
- * @brief Removes an archive from the VFS (Virtual File System)
+ * @brief Removes all archives from the VFS (Virtual File System)
  *
- * After this, the contents of the archive are not available to other unitsync functions anymore,
+ * After this, the contents of the archives are not available to other unitsync functions anymore,
  * for example: ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
+ *
+ * In a lobby client, this may be used instead of Init() when switching mod archive.
  */
-EXPORT(void) RemoveArchive(const char* name)
+EXPORT(void) RemoveAllArchives()
 {
 	try {
 		CheckInit();
-		CheckNullOrEmpty(name);
 
-		logOutput.Print(LOG_UNITSYNC, "removing archive: %s\n", name);
-		vfsHandler->RemoveArchive(name);
+		logOutput.Print(LOG_UNITSYNC, "removing all archives\n");
+		SafeDelete(vfsHandler);
+		SafeDelete(syncer);
+		vfsHandler = new CVFSHandler();
+		syncer = new CSyncer();
 	}
 	UNITSYNC_CATCH_BLOCKS;
 }
