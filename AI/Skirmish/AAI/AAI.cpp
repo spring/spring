@@ -258,7 +258,7 @@ void AAI::UnitDamaged(int damaged, int attacker, float damage, float3 dir)
 	}
 }
 
-void AAI::UnitCreated(int unit)
+void AAI::UnitCreated(int unit, int builder)
 {
 	if(!cfg->initialized)
 		return;
@@ -880,7 +880,7 @@ int AAI::HandleEvent(int msg, const void* data)
 						(const IGlobalAI::ChangeTeamEvent*) data;
 				if(cte->newteam == cb->GetMyTeam())
 				{
-					UnitCreated(cte->unit);
+					UnitCreated(cte->unit, -1);
 					UnitFinished(cte->unit);
 				}
 				break;
