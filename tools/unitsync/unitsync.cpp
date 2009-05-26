@@ -456,6 +456,23 @@ EXPORT(void) AddAllArchives(const char* root)
 	UNITSYNC_CATCH_BLOCKS;
 }
 
+/**
+ * @brief Removes an archive from the VFS (Virtual File System)
+ *
+ * After this, the contents of the archive are not available to other unitsync functions anymore,
+ * for example: ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
+ */
+EXPORT(void) RemoveArchive(const char* name)
+{
+	try {
+		CheckInit();
+		CheckNullOrEmpty(name);
+
+		logOutput.Print(LOG_UNITSYNC, "removing archive: %s\n", name);
+		vfsHandler->RemoveArchive(name);
+	}
+	UNITSYNC_CATCH_BLOCKS;
+}
 
 /**
  * @brief Get checksum of an archive
