@@ -145,7 +145,7 @@ private:
 	void UpdatePerlin();
 	void GenerateNoiseTex(unsigned int tex,int size);
 	struct FlyingPiece{
-#if !defined(USE_MMGR)
+#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
 		inline void* operator new(size_t size){return mempool.Alloc(size);};
 		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
 #endif

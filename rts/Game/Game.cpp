@@ -2762,6 +2762,9 @@ bool CGame::Draw() {
 		for (int annoy = 0; annoy < 8; annoy++) {
 			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
+
+		GML_STDMUTEX_LOCK(sim); // Draw
+		
 		guihandler->RunLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
