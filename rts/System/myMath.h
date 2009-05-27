@@ -50,7 +50,7 @@ inline short int GetHeadingFromVector(float dx, float dz)
 
 		if (d > 1.0f) {
 			h = (PI * 0.5f) - d / (d * d + 0.28f);
-		} else if (d < -1) {
+		} else if (d < -1.0f) {
 			h = -(PI * 0.5f) - d / (d * d + 0.28f);
 		} else {
 			h = d / (1.0f + 0.28f * d * d);

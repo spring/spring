@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 
 
 #ifdef WIN32
-int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	CMyMath::Init();
 	return Run(__argc, __argv);
