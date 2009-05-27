@@ -218,6 +218,10 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		data.version = file.SGetValueDef("", s + "Version");
 		if (file.SectionExist(s + "Options")) {
 			data.options = file.GetAllValues(s + "Options");
+			std::map<std::string, std::string>::const_iterator kv;
+			for (kv = data.options.begin(); kv != data.options.end(); ++kv) {
+				data.optionKeys.push_back(kv->first);
+			}
 		}
 
 		// get the visible name (comparable to player-name)

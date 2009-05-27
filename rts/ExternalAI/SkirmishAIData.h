@@ -20,6 +20,10 @@
 #ifndef _SKIRMISHAIDATA_H
 #define _SKIRMISHAIDATA_H
 
+#include <string>
+#include <vector>
+#include <map>
+
 /**
  * Contains everything needed to initialize a Skirmish AI instance.
  * @see Game/GameSetup
@@ -38,6 +42,7 @@ struct SkirmishAIData {
 	int hostPlayerNum;
 	std::string shortName;
 	std::string version;
+	std::vector<std::string> optionKeys;
 	std::map<std::string, std::string> options;
 };
 
