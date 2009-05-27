@@ -617,8 +617,10 @@ void CGroundDecalHandler::Draw(void)
 				track->parts.pop_front();
 			}
 			if (track->parts.empty()) {
-				if (track->owner)
+				if (track->owner) {
 					track->owner->myTrack = 0;
+					track->owner = 0;
+				}
 				ttc->tracks->erase(track);
 				tracksToBeDeleted.push_back(track);
 			}
