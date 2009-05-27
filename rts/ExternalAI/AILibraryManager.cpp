@@ -33,6 +33,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Game/GameSetup.h"
 
 #include <string>
 #include <set>
@@ -234,14 +235,12 @@ void CAILibraryManager::ClearAllInfos() {
 	skirmishAIKeys.clear();
 }
 
-
 const std::vector<std::string> CAILibraryManager::EMPTY_OPTION_VALUE_KEYS;
 const std::vector<std::string>& CAILibraryManager::GetSkirmishAIOptionValueKeys(int teamId) const {
 
-	std::map<int, std::vector<std::string> >::const_iterator optionValueKeys
-			= teamId_skirmishAIOptionValueKeys.find(teamId);
-	if (optionValueKeys != teamId_skirmishAIOptionValueKeys.end()) {
-		return optionValueKeys->second;
+	const SkirmishAIData* aiData = gameSetup->GetSkirmishAIDataForTeam(teamId);
+	if (aiData != NULL) {
+		return aiData->optionKeys;
 	} else {
 		return EMPTY_OPTION_VALUE_KEYS;
 	}
@@ -249,10 +248,9 @@ const std::vector<std::string>& CAILibraryManager::GetSkirmishAIOptionValueKeys(
 const std::map<std::string, std::string> CAILibraryManager::EMPTY_OPTION_VALUES;
 const std::map<std::string, std::string>& CAILibraryManager::GetSkirmishAIOptionValues(int teamId) const {
 
-	std::map<int, std::map<std::string, std::string> >::const_iterator optionValues
-			= teamId_skirmishAIOptionValues.find(teamId);
-	if (optionValues != teamId_skirmishAIOptionValues.end()) {
-		return optionValues->second;
+	const SkirmishAIData* aiData = gameSetup->GetSkirmishAIDataForTeam(teamId);
+	if (aiData != NULL) {
+		return aiData->options;
 	} else {
 		return EMPTY_OPTION_VALUES;
 	}

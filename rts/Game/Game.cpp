@@ -648,7 +648,6 @@ void CGame::ResizeEvent()
 }
 
 
-//called when the key is pressed by the user (can be called several times due to key repeat)
 int CGame::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (!gameOver && !isRepeat) {
@@ -861,7 +860,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 }
 
 
-//Called when a key is released by the user
 int CGame::KeyReleased(unsigned short k)
 {
 	//	keys[k] = false;
