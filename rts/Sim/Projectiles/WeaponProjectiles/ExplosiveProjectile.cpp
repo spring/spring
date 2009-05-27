@@ -7,7 +7,6 @@
 
 #include "ExplosiveProjectile.h"
 #include "Game/Camera.h"
-#include "Game/GameHelper.h"
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Textures/ColorMap.h"
@@ -103,15 +102,12 @@ void CExplosiveProjectile::Collision()
 			return; //let waterweapons go underwater
 		}
 	}
-//	helper->Explosion(pos,damages,areaOfEffect,owner);
+
 	CWeaponProjectile::Collision();
 }
 
 void CExplosiveProjectile::Collision(CUnit *unit)
 {
-//	unit->DoDamage(damages,owner);
-//	helper->Explosion(pos,damages,areaOfEffect,owner);
-
 	CWeaponProjectile::Collision(unit);
 }
 
