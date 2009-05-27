@@ -102,10 +102,10 @@ namespace proc {
 		);
 	}
 	#else
-		// no-op on other compilers
-		static void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
-		{
-		}
+	// no-op on other compilers
+	static void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+	{
+	}
 	#endif
 
 	static unsigned int GetProcMaxStandardLevel()
