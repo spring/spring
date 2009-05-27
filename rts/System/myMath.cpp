@@ -17,6 +17,11 @@ void CMyMath::Init()
 		logOutput.Print("\tSSE 4.0A: %d,  SSE 5.0A: %d\n", (sseBits >> 8) & 1, (sseBits >> 7) & 1);
 
 #ifdef STREFLOP_H
+	// SSE 1.0 is mandatory in synced context
+	if (((sseBits >> 5) & 1) == 0) {
+		handleerror(0, "CPU is missing SSE instruction support", "Sync Error", 0);
+	}
+
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
 #endif
