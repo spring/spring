@@ -124,17 +124,17 @@ CR_REG_METADATA(MetalExtractor, (
 
 
 AIClasses::AIClasses(IGlobalAICallback* gcb):
-	logger(NULL),
-	math(NULL),
-	ut(NULL),
+	econTracker(NULL),
+	bu(NULL),
 	mm(NULL),
+	math(NULL),
 	pather(NULL),
+	ut(NULL),
 	tm(NULL),
 	uh(NULL),
 	dm(NULL),
-	econTracker(NULL),
-	bu(NULL),
 	ah(NULL),
+	logger(NULL),
 	dgunConHandler(NULL),
 	ct(NULL)
 {
