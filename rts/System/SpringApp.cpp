@@ -189,10 +189,8 @@ bool SpringApp::Initialize()
 	logOutput.Print("OS: unknown\n");
 #endif
 
-	// TODO: some subflag of g++ -O2 (but not -O1) causes
-	// this to produce incorrect results, find out which
 	const unsigned int sseBits = proc::GetProcSSEBits();
-		logOutput.Print("CPU SSE flags:\n");
+		logOutput.Print("CPU SSE mask: %u, flags:\n", sseBits);
 		logOutput.Print("\tSSE 1.0:  %d,  SSE 2.0:  %d\n", (sseBits >> 5) & 1, (sseBits >> 4) & 1);
 		logOutput.Print("\tSSE 3.0:  %d, SSSE 3.0:  %d\n", (sseBits >> 3) & 1, (sseBits >> 2) & 1);
 		logOutput.Print("\tSSE 4.1:  %d,  SSE 4.2:  %d\n", (sseBits >> 1) & 1, (sseBits >> 0) & 1);
