@@ -24,7 +24,7 @@ void CMyMath::Init()
 		#elif STREFLOP_X87
 		logOutput.Print("\tWARNING: streflop floating-point math is not SSE-enabled\n");
 		logOutput.Print("\tWARNING: this may cause desyncs during multi-player games\n");
-		logOutput.Print("\tWARNING: this CPU is not SSE-capable, can only use X87 math\n");
+		logOutput.Print("\tWARNING: this CPU is not SSE-capable, can only use X87 mode\n");
 		#else
 		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
 		#endif
