@@ -8,6 +8,7 @@
 
 #include "Platform/errorhandler.h"
 #include "StdAfx.h"
+#include "lib/gml/gml.h"
 #include "FPUCheck.h"
 #include "LogOutput.h"
 #include "Exceptions.h"

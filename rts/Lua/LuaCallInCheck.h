@@ -32,9 +32,9 @@ class LuaCallInCheck {
 #	if GML_ENABLE_SIM
 #		undef LUA_CALL_IN_CHECK
 #		if DEBUG_LUA
-#			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua); LuaCallInCheck ciCheck((L), __FUNCTION__);
+#			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua); GML_CALL_DEBUGGER(); LuaCallInCheck ciCheck((L), __FUNCTION__);
 #		else
-#			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua);
+#			define LUA_CALL_IN_CHECK(L) GML_RECMUTEX_LOCK(lua); GML_CALL_DEBUGGER();
 #		endif
 #	endif
 #endif
