@@ -19,14 +19,39 @@ void CMyMath::Init()
 #ifdef STREFLOP_H
 	// SSE 1.0 is mandatory in synced context
 	if (((sseBits >> 5) & 1) == 0) {
+		#ifdef STREFLOP_SSE
 		handleerror(0, "CPU is missing SSE instruction support", "Sync Error", 0);
+		#elif STREFLOP_X87
+		logOutput.Print("\tWARNING: streflop floating-point math is not SSE-enabled\n");
+		logOutput.Print("\tWARNING: this may cause desyncs during multi-player games\n");
+		logOutput.Print("\tWARNING: this CPU is not SSE-capable, can only use X87 math\n");
+		#else
+		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
+		#endif
+	} else {
+		#ifdef STREFLOP_SSE
+		logOutput.Print("\tusing streflop SSE FP-math mode, CPU supports SSE instructions\n");
+		#elif STREFLOP_X87
+		logOutput.Print("\tNOTE: streflop floating-point math is set to X87 mode\n");
+		logOutput.Print("\tNOTE: this may cause desyncs during multi-player games\n");
+		logOutput.Print("\tNOTE: this CPU is SSE-capable, consider recompiling\n");
+		#else
+		handleerror(0, "streflop FP-math mode must be either SSE or X87", "Sync Error", 0);
+		#endif
 	}
 
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
+#else
+	// probably should check if SSE was enabled during
+	// compilation and issue a warning about illegal
+	// instructions if so (or just die with an error)
+	logOutput.Print("WARNING: floating-point math is not controlled by streflop\n");
+	logOutput.Print("WARNING: this makes keeping multi-player sync 99% impossible\n");
 #endif
 
-	for (int a = 0; a <NUM_HEADINGS; ++a) {
+
+	for (int a = 0; a < NUM_HEADINGS; ++a) {
 		float ang = (a - (NUM_HEADINGS / 2)) * 2 * PI / NUM_HEADINGS;
 		float2 v;
 			v.x = sin(ang);
