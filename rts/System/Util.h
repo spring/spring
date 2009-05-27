@@ -82,9 +82,10 @@ template<class T> void SafeDelete(T &a)
 
 
 namespace proc {
-	static void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+	#if defined(__GNUC__)
+	// function inlining breaks the stack layout this assumes
+	attribute__((__noinline__)) static void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
-		#if defined(__GNUC__)
 		unsigned int t = 0;
 		__asm__ __volatile__ (
 			" mov %5, %%eax;"
@@ -99,8 +100,13 @@ namespace proc {
 			: "=r" (t), "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
 			: "a" (*a), "c" (*c), "r" (t)
 		);
-		#endif
 	}
+	#else
+		// no-op on other compilers
+		static void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
+		{
+		}
+	#endif
 
 	static unsigned int GetProcMaxStandardLevel()
 	{
