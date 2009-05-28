@@ -11,7 +11,8 @@ const int PF_Fall       = (1 << 2); // 4, if they dont fall they could live fore
 const int PF_Smoke      = (1 << 3); // 8, smoke and fire is turned off when there are too many projectiles so make sure they are unsynced
 const int PF_Fire       = (1 << 4); // 16
 const int PF_NONE       = (1 << 5); // 32
-const int PF_NoCEGTrail = (1 << 6); // 64, TODO should be 16
+const int PF_NoCEGTrail = (1 << 6); // 64
+const int PF_NoHeatCloud= (1 << 7); // 128
 
 class CSmokeTrailProjectile;
 struct LocalModelPiece;
@@ -47,7 +48,7 @@ class CPieceProjectile: public CProjectile
 	};
 	OldInfo* oldInfos[8];
 	int colorTeam;
-	
+
 public:
 	CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int flags, CUnit* owner, float radius GML_PARG_H);
 	virtual ~CPieceProjectile(void);
