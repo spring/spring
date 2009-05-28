@@ -43,6 +43,8 @@ public:
 	static bool DeleteFile(const std::string& file);
 	static bool FileExists(const std::string& file);
 	static bool DirExists(const std::string& dir);
+	/// oddly, this is non-trivial on Windows
+	static bool DirIsWritable(const std::string& dir);
 
 	/**
 	 * Returns true if path matches regex ...
