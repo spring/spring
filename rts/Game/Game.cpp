@@ -2748,12 +2748,17 @@ bool CGame::Draw() {
 	modelParser->Update();
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
+	fartextureHandler->CreateFarTextures();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
-
 	eventHandler.Update();
-
 	eventHandler.DrawGenesis();
+
+#ifdef USE_GML
+	//! in non GML builds runs in SimFrame!
+	ph->UpdateTextures();
+	sky->Update();
+#endif
 
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
@@ -2784,11 +2789,6 @@ bool CGame::Draw() {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
 	}
-
-	ph->UpdateTextures();
-	fartextureHandler->CreateFarTextures();
-
-	sky->Update();
 
 //	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -3154,6 +3154,10 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
+#ifndef USE_GML
+		ph->UpdateTextures();
+		sky->Update();
+#endif
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
