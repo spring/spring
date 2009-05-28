@@ -932,8 +932,10 @@ void CCobInstance::Explode(int piece, int flags)
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << piece << " " << flags << "\n";
 #endif
 
-	// Do an explosion at the location first
-	new CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
+	if (!(flags & PF_NoHeatCloud)) {
+		// Do an explosion at the location first
+		new CHeatCloudProjectile(pos, float3(0, 0, 0), 30, 30, NULL);
+	}
 
 	// If this is true, no stuff should fly off
 	if (flags & PF_NONE) return;
