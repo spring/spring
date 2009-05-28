@@ -234,7 +234,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 
 	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
-	fd->drawType = DRAWTYPE_3DO;
+	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_MODEL);
 	fd->modelname = fdTable.GetString("object", "");
 	if (!fd->modelname.empty()) {
 		if (fd->modelname.find(".") == std::string::npos) {
@@ -406,7 +406,7 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	activeFeatures.insert(feature);
 	SetFeatureUpdateable(feature);
 
-	if (feature->def->drawType == DRAWTYPE_3DO) {
+	if (feature->def->drawType == DRAWTYPE_MODEL) {
 		int quad = int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
 		           int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
 		DrawQuad* dq = &drawQuads[quad];
@@ -725,7 +725,7 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 		const FeatureDef* def = f->def;
 
 		if ((f->allyteam == -1 || f->allyteam == gu->myAllyTeam || gu->spectatingFullView ||
-			loshandler->InLos(f->pos, gu->myAllyTeam)) && def->drawType == DRAWTYPE_3DO) {
+			loshandler->InLos(f->pos, gu->myAllyTeam)) && def->drawType == DRAWTYPE_MODEL) {
 
 			if (drawReflection) {
 				float3 zeroPos;

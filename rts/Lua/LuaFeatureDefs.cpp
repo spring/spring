@@ -306,10 +306,10 @@ static int DrawTypeString(lua_State* L, const void* data)
 {
 	const int drawType = *((const int*)data);
 	switch (drawType) {
-		case DRAWTYPE_3DO:  { HSTR_PUSH(L,     "3do"); break; }
-		case DRAWTYPE_TREE: { HSTR_PUSH(L,    "tree"); break; }
-		case DRAWTYPE_NONE: { HSTR_PUSH(L,    "none"); break; }
-		default:            { HSTR_PUSH(L, "unknown"); break; }
+		case DRAWTYPE_MODEL: { HSTR_PUSH(L,   "model"); break; }
+		case DRAWTYPE_TREE:  { HSTR_PUSH(L,    "tree"); break; }
+		case DRAWTYPE_NONE:  { HSTR_PUSH(L,    "none"); break; }
+		default:             { HSTR_PUSH(L, "unknown"); break; }
 	}
 	return 1;
 }
