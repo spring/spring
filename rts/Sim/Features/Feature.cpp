@@ -245,6 +245,10 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			return false; // cant repair a 'fresh' feature
 		}
 
+		if (reclaimLeft <= 0) {
+			return false; // feature most likely has been deleted
+		}
+
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
 		const float part = amount / def->reclaimTime;
 
