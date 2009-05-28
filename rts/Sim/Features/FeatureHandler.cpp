@@ -218,7 +218,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	fd->resurrectable =  fdTable.GetInt("resurrectable",   -1);
 
 	//this seem to be the closest thing to floating that ta wreckage contains
-	fd->floating = fdTable.GetBool("nodrawundergray", true);
+	fd->floating = fdTable.GetBool("nodrawundergray", false);
 	if (fd->floating && !fd->blocking) {
 		fd->floating = false;
 	}
