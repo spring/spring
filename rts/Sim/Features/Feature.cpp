@@ -106,7 +106,7 @@ CFeature::~CFeature(void)
 void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDef(defName);
-	if (def->drawType == DRAWTYPE_3DO) {
+	if (def->drawType == DRAWTYPE_MODEL) {
 		model = LoadModel(def);
 		height = model->height;
 		SetRadius(model->radius);
@@ -158,7 +158,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	mass     = def->mass;
 	noSelect = def->noSelect;
 
-	if (def->drawType == DRAWTYPE_3DO) {
+	if (def->drawType == DRAWTYPE_MODEL) {
 		model = LoadModel(def);
 		height = model->height;
 		SetRadius(model->radius);
@@ -429,7 +429,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	}
 
 	// setup midPos
-	if (def->drawType == DRAWTYPE_3DO) {
+	if (def->drawType == DRAWTYPE_MODEL) {
 		midPos = pos + model->relMidPos;
 	} else if (def->drawType == DRAWTYPE_TREE) {
 		midPos = pos + (UpVector * TREE_RADIUS);
