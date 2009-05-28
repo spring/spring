@@ -687,6 +687,10 @@ const char *gmlNOPDummy=(gmlFunctionNames[GML_NOP]="gmlNOP");
 // this item server instance needs gmlDeleteLists from gmlfun.h, that is why it is declared down here
 gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);
 
+#if GML_CALL_DEBUG
+lua_State *gmlCurrentLuaState = NULL;
+#endif
+
 // queue handler - exequtes one GL command from queue (pointed to by p)
 // ptr is a temporary variable used inside the handlers
 inline void QueueHandler(BYTE *&p, BYTE *&ptr) {

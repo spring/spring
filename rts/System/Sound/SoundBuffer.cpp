@@ -145,7 +145,8 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 		//header->datalen = 1;
 	}
 
-	AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec);
+	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec))
+		LogObject(LOG_SOUND) << "Loading audio failed for " << file;
 	return true;
 }
 
@@ -267,10 +268,10 @@ size_t SoundBuffer::Insert(boost::shared_ptr<SoundBuffer> buffer)
 	return bufId;
 };
 
-void SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate)
+bool SoundBuffer::AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate)
 {
 	alGenBuffers(1, &id);
 	filename = file;
 	alBufferData(id, format, (ALvoid*) data, datalength, rate);
-	CheckError("SoundBuffer::AlGenBuffer");
+	return CheckError("SoundBuffer::AlGenBuffer");
 }

@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cstdio>
 
 namespace po = boost::program_options;
 
@@ -65,8 +66,11 @@ void BaseCmd::parse()
 	boost::program_options::options_description all;
 	for (std::vector<struct option>::iterator it = options.begin(); it != options.end(); it++) {
 		std::string optionstr = it->longopt;
-		if (it->shortopt)
-			optionstr += ","+std::string(&it->shortopt);
+		if (it->shortopt) {
+			char str[4];
+			sprintf(str,",%c",it->shortopt);
+			optionstr += str;
+		}
 		if (it->parmtype == OPTPARM_NONE) {
 			all.add_options()(optionstr.c_str(), it->desc.c_str());
 		}

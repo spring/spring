@@ -8,7 +8,7 @@
 
 #include "VertexArray.h"
 
-unsigned int CVertexArray::maxVertices = 2048; //FIXME make this customizable some how
+unsigned int CVertexArray::maxVertices = 1<<16; //FIXME make this customizable some how
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

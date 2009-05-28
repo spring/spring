@@ -3,12 +3,13 @@ remove_definitions(-DSTREFLOP_SSE)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)
-INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/System)
+INCLUDE_DIRECTORIES(../../rts/ ../../rts/lib/7zip ../../rts/System)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
-SET(system_files 
+SET(system_files
 	${fsfiles}
-	 ${netfiles}
+	${netfiles}
+	../../rts/System/Platform/Misc
 	../../rts/System/TdfParser
 	../../rts/System/ConfigHandler
 	../../rts/System/LogOutput
@@ -18,7 +19,7 @@ SET(system_files
 	../../rts/System/DemoReader
 	../../rts/System/DemoRecorder
 	../../rts/System/AutohostInterface
-	../../rts/System/UnsyncedRNG )
+	../../rts/System/UnsyncedRNG)
 
 AUX_SOURCE_DIRECTORY(../../rts/Game/Server serverfiles)
 ADD_LIBRARY(springserver SHARED

@@ -23,12 +23,14 @@
 extern std::string stupidGlobalMapname;
 
 
-CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIKey& key,
-		const std::map<std::string, std::string>& options)
-		: CScript(std::string("Skirmish AI test: ")
-			+ std::string(key.GetShortName()) + std::string(" ")
-			+ std::string(key.GetVersion())),
-		key(key), options(options)
+CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIKey& k, const std::map<std::string, std::string>& opts):
+	CScript(
+		std::string("Skirmish AI test: ")
+		+ std::string(k.GetShortName()) + std::string(" ")
+		+ std::string(k.GetVersion())
+	),
+	key(k),
+	options(opts)
 {
 }
 
@@ -43,6 +45,7 @@ void CSkirmishAITestScript::GameStart(void)
 	teamHandler->Team(skirmishAI_teamId)->skirmishAIKey = key;
 	teamHandler->Team(skirmishAI_teamId)->skirmishAIOptions = options;
 	teamHandler->Team(skirmishAI_teamId)->leader = player_teamId;
+
 	playerHandler->Player(player_teamId)->SetControlledTeams();
 
 	teamHandler->Team(player_teamId)->energy        = 1000;
@@ -55,7 +58,11 @@ void CSkirmishAITestScript::GameStart(void)
 	teamHandler->Team(skirmishAI_teamId)->metal         = 1000;
 	teamHandler->Team(skirmishAI_teamId)->metalStorage  = 1000;
 
-	eoh->CreateSkirmishAI(skirmishAI_teamId, key);
+	// do not instantiate an AI when watching a
+	// demo recorded from a SkirmishAI test-script
+	if (!gameSetup->hostDemo && !key.IsUnspecified()) {
+		eoh->CreateSkirmishAI(skirmishAI_teamId, key);
+	}
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");
 	const std::string startUnit1 = sideParser.GetStartUnit(1, startUnit0);

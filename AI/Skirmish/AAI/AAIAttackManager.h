@@ -26,7 +26,7 @@ class AAISector;
 class AAIAttackManager
 {
 public:
-	AAIAttackManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt);
+	AAIAttackManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt, int continents);
 	~AAIAttackManager(void);
 
 	void Update();
@@ -56,6 +56,15 @@ public:
 	// array stores number of combat groups per category (for SufficientAttackPowerVS(..) )
 	vector<int> available_combat_cat;
 
+	vector< list<AAIGroup*> > available_combat_groups_continent;
+	vector< list<AAIGroup*> > available_aa_groups_continent;
+
+	list<AAIGroup*> available_combat_groups_global;
+	list<AAIGroup*> available_aa_groups_global;
+
+	// stores total attack power for different unit types on each continent
+	vector< vector<float> > attack_power_continent;
+	vector<float> attack_power_global;
 
 private:
 

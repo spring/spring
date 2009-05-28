@@ -209,9 +209,9 @@ inline void CBFGroundDrawer::DrawGroundVertexArrayQ(CVertexArray * &ma)
 }
 
 
-inline void CBFGroundDrawer::FindRange(int &xs, int &xe, std::vector<fline> &left, std::vector<fline> &right, int y, int lod) {
+inline void CBFGroundDrawer::FindRange(int &xs, int &xe, const std::vector<fline> &left, const std::vector<fline> &right, int y, int lod) {
 	int xt0, xt1;
-	std::vector<fline>::iterator fli;
+	std::vector<fline>::const_iterator fli;
 
 	for (fli = left.begin(); fli != left.end(); fli++) {
 		float xtf = fli->base + fli->dir * y;
@@ -355,7 +355,13 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 			for (y = ystart; y < yend; y += lod) {
 				int xs = xstart;
 				int xe = xend;
-				FindRange(xs, xe, left, right, y, lod);
+				FindRange(/*inout*/ xs, /*inout*/ xe, left, right, y, lod);
+
+				// If FindRange modifies (xs, xe) to a (less then) empty range,
+				// continue to the next row.
+				// If we'd continue, nloop (below) would become negative and we'd
+				// allocate a vertex array with negative size.  (mantis #1415)
+				if (xe < xs) continue;
 
 				int ylod = y + lod;
 				int yhlod = y + hlod;
@@ -515,12 +521,14 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 					EndStripQ(ma);
 					inStrip = false;
 				}
-			}
+			} //for (y = ystart; y < yend; y += lod)
 
 			int yst=max(ystart - lod, minty);
 			int yed=min(yend + lod, maxty);
 			int nloop=(yed-yst)/lod+1;
-			ma->EnlargeArrays(8*nloop, 2*nloop);
+
+			if (nloop > 0)
+				ma->EnlargeArrays(8*nloop, 2*nloop);
 
 			//! rita yttre begr?snings yta mot n?ta lod
 			if (maxlx < maxtx && maxlx >= mintx) {
@@ -645,7 +653,7 @@ inline void CBFGroundDrawer::DoDrawGroundRow(int bty) {
 					}
 					EndStripQ(ma);
 				}
-			} //for (y = ystart; y < yend; y += lod)
+			}
 
 		} //for (int lod = 1; lod < neededLod; lod <<= 1)
 
@@ -830,6 +838,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	for (y = ystart; y < yend; y += lod) {
 		int xs = xstart;
 		int xe = xend;
+
+		if (xe < xs) continue;
+
 		int ylod = y + lod;
 		int yhlod = y + hlod;
 
@@ -849,7 +860,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 					}
 					DrawVertexAQ(ma, xlod, y      );
 					DrawVertexAQ(ma, xlod, ylod);
-			} 
+			}
 			else {  //! inre begr?sning mot f?eg?nde lod
 				int yhdx=ydx+x;
 				int ylhdx=yhdx+lhdx;
@@ -968,7 +979,9 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 	int yst=max(ystart - lod, minty);
 	int yed=min(yend + lod, maxty);
 	int nloop=(yed-yst)/lod+1;
-	ma->EnlargeArrays(8*nloop, 2*nloop);
+
+	if (nloop > 0)
+		ma->EnlargeArrays(8*nloop, 2*nloop);
 
 	//!rita yttre begr?snings yta mot n?ta lod
 	if(maxlx<maxtx && maxlx>=mintx){
@@ -977,7 +990,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		for(y=yst;y<yed;y+=lod){
 			DrawVertexAQ(ma, x,y);
 			DrawVertexAQ(ma, x,y+lod);
-			int yhdx=y*heightDataX+x; 
+			int yhdx=y*heightDataX+x;
 			if(y%dlod){
 				float h=(heightData[yhdx-lhdx+lod]+heightData[yhdx+lhdx+lod]) * hmcxp + heightData[yhdx+lod] * camxpart;
 				DrawVertexAQ(ma, xlod,y,h);
@@ -994,7 +1007,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 		x=minlx-lod;
 		int xlod = x + lod;
 		for(y=yst;y<yed;y+=lod){
-			int yhdx=y*heightDataX+x; 
+			int yhdx=y*heightDataX+x;
 			if(y%dlod){
 				float h=(heightData[yhdx-lhdx]+heightData[yhdx+lhdx]) * hcxp + heightData[yhdx] * mcxp;
 				DrawVertexAQ(ma, x,y,h);
@@ -1020,7 +1033,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 			ma->EnlargeArrays(2*nloop, 1);
 			int ydx=y*heightDataX;
 			if(x%dlod){
-				int ylhdx=ydx+x+lhdx; 
+				int ylhdx=ydx+x+lhdx;
 				float h=(heightData[ylhdx-lod]+heightData[ylhdx+lod]) * hmcyp + heightData[ylhdx] * camypart;
 				DrawVertexAQ(ma, x,y);
 				DrawVertexAQ(ma, x,ylod,h);
@@ -1034,7 +1047,7 @@ inline void CBFGroundDrawer::DoDrawGroundShadowLOD(int nlod) {
 					DrawVertexAQ(ma, x+lod,ylod);
 				} else {
 					DrawVertexAQ(ma, x+lod,y);
-					int ylhdx=ydx+x+lhdx; 
+					int ylhdx=ydx+x+lhdx;
 					float h=(heightData[ylhdx+dlod]+heightData[ylhdx]) * hmcyp + heightData[ylhdx+lod] * camypart;
 					DrawVertexAQ(ma, x+lod,ylod,h);
 				}

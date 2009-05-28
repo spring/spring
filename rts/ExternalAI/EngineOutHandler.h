@@ -22,6 +22,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 
 #include <map>
+#include <vector>
 #include <string>
 
 struct Command;
@@ -31,7 +32,6 @@ class CGroup;
 struct WeaponDef;
 class SkirmishAIKey;
 class CSkirmishAIWrapper;
-class CGroupAIWrapper;
 struct SSkirmishAICallback;
 
 void handleAIException(const char* description);
@@ -67,7 +67,7 @@ public:
 	void UnitEnteredRadar(const CUnit& unit, int allyTeamId);
 	void UnitLeftRadar(const CUnit& unit, int allyTeamId);
 	void UnitIdle(const CUnit& unit);
-	void UnitCreated(const CUnit& unit);
+	void UnitCreated(const CUnit& unit, const CUnit* builder);
 	void UnitFinished(const CUnit& unit);
 	void UnitDestroyed(const CUnit& destroyed, const CUnit* attacker);
 	void UnitDamaged(const CUnit& damaged, const CUnit* attacker, float damage);
@@ -82,7 +82,7 @@ public:
 	 * A specific unit has finished a specific command,
 	 * might be a good idea to give new orders to it.
 	*/
-	void CommandFinished(const CUnit& unit, int commandTopicId);
+	void CommandFinished(const CUnit& unit, const Command& command);
 	void GotChatMsg(const char* msg, int playerId);
 
 
@@ -108,7 +108,8 @@ private:
 private:
 	const unsigned int activeTeams;
 
-	CSkirmishAIWrapper* skirmishAIs[MAX_TEAMS];
+	static const size_t skirmishAIs_size = MAX_TEAMS;
+	CSkirmishAIWrapper* skirmishAIs[skirmishAIs_size];
 	bool hasSkirmishAIs;
 };
 

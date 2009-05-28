@@ -419,7 +419,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 	{
 		for(int iBQ=0; iBQ<BQSize[0]; iBQ++) // Checking old build orders
 		{
-			if( !BQ[iBQ]->IsValid(iFrame) || 
+			if( !BQ[iBQ]->IsValid(iFrame) ||
 				(iFrame > BQ[iBQ]->deletionFrame+5400 && // 5400f = 3mins
 				 int(BQ[iBQ]->creationID.size()) > 0 &&
 				 cb->GetUnitHealth(BQ[iBQ]->creationID.front()) < 0.02*cb->GetUnitMaxHealth(BQ[iBQ]->creationID.front()) ) )
@@ -1087,7 +1087,7 @@ void cBuilder::UBuilderIdle(const int& unit,UnitInfo *U)
 			for(int iBQ=0; iBQ<BQSize[0]; iBQ++)
 			{
 				if( BQ[iBQ]->builderID >= 0 && G->TM->CanMoveToPos(U->area,cb->GetUnitPos(BQ[iBQ]->builderID)) )
-				{	
+				{
 					float Dis=fPos.distance(cb->GetUnitPos(BQ[iBQ]->builderID));
 					if( BestIndex == -1 || Dis < BestDis )
 					{
@@ -1354,7 +1354,9 @@ void cBuilder::UpdateKnownFeatures(const int& unit, UnitInfo *U)
 	for( int iF=0; iF<FeatureSize; iF++ )
 	{
 		const FeatureDef* fd = cb->GetFeatureDef(F[iF]);
-		if( fd->reclaimable )
+		// fd should never be NULL, but it seems to be sometimes
+		// therefore, play safe
+		if( fd != NULL && fd->reclaimable )
 		{
 			if( fd->metal >= 40 )
 			{

@@ -66,11 +66,16 @@ struct CollisionVolume
 	const float3& GetHScalesSq() const { return axisHScalesSq; }
 	const float3& GetHIScales() const { return axisHIScales; }
 
+	void RescaleAxes(float, float, float);
+
 	bool IsDisabled() const { return disabled; }
 	bool IsSphere() const { return volumeType == COLVOL_TYPE_SPHERE; }
 	bool UseFootprint() const { return volumeType == COLVOL_TYPE_FOOTPRINT; }
 
 private:
+	void SetAxisScales(float, float, float);
+	void SetBoundingRadius();
+
 	float3 axisScales;					// full-length axis scales
 	float3 axisHScales;					// half-length axis scales
 	float3 axisHScalesSq;				// half-length axis scales (squared)

@@ -78,15 +78,15 @@ extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectAR
 extern void gmlInit();
 
 EXTERN inline GLhandleARB gmlCreateProgram() {
-	GML_ITEMSERVER_CHECK();
+	GML_ITEMSERVER_CHECK_RET(GLhandleARB);
 	return gmlProgramServer.GetItems();
 }
 EXTERN inline GLhandleARB gmlCreateProgramObjectARB() {
-	GML_ITEMSERVER_CHECK();
+	GML_ITEMSERVER_CHECK_RET(GLhandleARB);
 	return gmlProgramObjectARBServer.GetItems();
 }
 EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
-	GML_ITEMSERVER_CHECK();
+	GML_ITEMSERVER_CHECK_RET(GLhandleARB);
 	if(type==GL_VERTEX_SHADER)
 		return gmlShaderServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER)
@@ -96,7 +96,7 @@ EXTERN inline GLhandleARB gmlCreateShader(GLenum type) {
 	return 0;
 }
 EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
-	GML_ITEMSERVER_CHECK();
+	GML_ITEMSERVER_CHECK_RET(GLhandleARB);
 	if(type==GL_VERTEX_SHADER_ARB)
 		return gmlShaderObjectARBServer_VERTEX.GetItems();
 	if(type==GL_FRAGMENT_SHADER_ARB)
@@ -106,7 +106,7 @@ EXTERN inline GLhandleARB gmlCreateShaderObjectARB(GLenum type) {
 	return 0;
 }
 EXTERN inline GLUquadric *gmluNewQuadric() {
-	GML_ITEMSERVER_CHECK();
+	GML_ITEMSERVER_CHECK_RET(GLUquadric *);
 	return gmlQuadricServer.GetItems();
 }
 
@@ -145,7 +145,7 @@ EXTERN inline void gmlGenBuffers(GLsizei n, GLuint *items) {
 }
 
 EXTERN inline GLuint gmlGenLists(GLsizei items) {
-	GML_ITEMSERVER_CHECK();
+	GML_ITEMSERVER_CHECK_RET(GLuint);
 	return gmlListServer.GetItems(items);
 }
 
@@ -203,12 +203,23 @@ extern boost::recursive_mutex piecemutex;
 #		else
 #			define GML_MTXCMP(a,b) (a==b)
 #		endif
-#		define GML_LINEMUTEX_LOCK(name, type, line) char st##name[sizeof(ScopedTimer)]; int stc##name=GML_MTXCMP(GML_QUOTE(name),gmlProfMutex); if(stc##name) new (st##name) ScopedTimer(GML_QUOTE(name ## line ## Mutex)); boost::type::scoped_lock name##lock(name##mutex); if(stc##name) ((ScopedTimer *)st##name)->~ScopedTimer()
+#		define GML_LINEMUTEX_LOCK(name, type, line)\
+			char st##name[sizeof(ScopedTimer)];\
+			int stc##name=GML_MTXCMP(GML_QUOTE(name),gmlProfMutex);\
+			if(stc##name)\
+				new (st##name) ScopedTimer(GML_QUOTE(name ## line ## Mutex));\
+			boost::type::scoped_lock name##lock(name##mutex);\
+			if(stc##name)\
+				((ScopedTimer *)st##name)->~ScopedTimer()
 #		define GML_PROFMUTEX_LOCK(name, type, line) GML_LINEMUTEX_LOCK(name, type, line)
 #		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, mutex, __LINE__)
 #		define GML_RECMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, recursive_mutex, __LINE__)
 #	else
-#		define GML_PROFMUTEX_LOCK(name, type) char st##name[sizeof(ScopedTimer)]; new (st##name) ScopedTimer(GML_QUOTE(name##Mutex)); boost::type::scoped_lock name##lock(name##mutex); ((ScopedTimer *)st##name)->~ScopedTimer()
+#		define GML_PROFMUTEX_LOCK(name, type)\
+			char st##name[sizeof(ScopedTimer)];\
+			new (st##name) ScopedTimer(GML_QUOTE(name##Mutex));\
+			boost::type::scoped_lock name##lock(name##mutex);\
+			((ScopedTimer *)st##name)->~ScopedTimer()
 #		define GML_STDMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, mutex)
 #		define GML_RECMUTEX_LOCK(name) GML_PROFMUTEX_LOCK(name, recursive_mutex)
 #	endif
@@ -233,6 +244,19 @@ inline unsigned gmlGetTicks() {
 		return gmlCurrentTicks;
 	return gmlUpdateTicks();
 }
+
+#if GML_CALL_DEBUG
+#define GML_EXPGEN_CHECK() \
+	extern volatile int gmlMultiThreadSim, gmlStartSim;\
+	if(gmlThreadNumber!=gmlThreadCount && gmlMultiThreadSim && gmlStartSim) {\
+		logOutput.Print("GML error: Draw thread created ExpGenSpawnable (%s)", GML_CURRENT_LUA());\
+		if(gmlCurrentLuaState) luaL_error(gmlCurrentLuaState,"Invalid call");\
+	}
+#define GML_CALL_DEBUGGER() gmlCallDebugger gmlCDBG(L);
+#else
+#define GML_EXPGEN_CHECK()
+#define GML_CALL_DEBUGGER()
+#endif
 
 #define GML_GET_TICKS(var) var=gmlGetTicks()
 #define GML_UPDATE_TICKS() gmlUpdateTicks()
@@ -262,6 +286,9 @@ inline unsigned gmlGetTicks() {
 #define GML_FARG_C
 #define GML_FARG_P
 
+#define GML_EXPGEN_CHECK()
+#define GML_CALL_DEBUGGER()
+
 #endif
 
 #else
@@ -283,6 +310,9 @@ inline unsigned gmlGetTicks() {
 #define GML_FARG_H
 #define GML_FARG_C
 #define GML_FARG_P
+
+#define GML_EXPGEN_CHECK()
+#define GML_CALL_DEBUGGER()
 
 #endif // USE_GML
 

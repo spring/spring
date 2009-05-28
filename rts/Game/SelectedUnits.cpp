@@ -228,7 +228,7 @@ void CSelectedUnits::GiveCommand(Command c, bool fromUser)
 	}
 	else if (c.id == CMD_AISELECT) {
 		if (gs->noHelperAIs) {
-			logOutput.Print("GroupAI and LuaUI control is disabled");
+			logOutput.Print("LuaUI control is disabled");
 			return;
 		}
 		if(c.params[0]!=0){

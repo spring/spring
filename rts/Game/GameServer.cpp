@@ -465,9 +465,8 @@ void CGameServer::Update()
 
 		if (serverframenum > 0) {
 			//send info about the players
-			int curpos=0;
-			std::vector<int> ping(players.size());
-			std::vector<float> cpu(players.size());
+			std::vector<float> cpu;
+			std::vector<int> ping;
 			float refCpu=0.0f;
 			for (size_t a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::INGAME) {
@@ -476,23 +475,22 @@ void CGameServer::Update()
 						if (players[a].cpuUsage > refCpu) {
 							refCpu = players[a].cpuUsage;
 						}
-						cpu[curpos]=players[a].cpuUsage;
-						ping[curpos]=players[a].ping;
-						++curpos;
+						cpu.push_back(players[a].cpuUsage);
+						ping.push_back(players[a].ping);
 					}
 				}
 			}
 
 			medianCpu=0.0f;
 			medianPing=0;
-			if(enforceSpeed && curpos>0) {
+			if(enforceSpeed && cpu.size()>0) {
 				std::sort(cpu.begin(), cpu.end());
 				std::sort(ping.begin(), ping.end());
 
-				int midpos=curpos/2;
+				int midpos=cpu.size()/2;
 				medianCpu=cpu[midpos];
 				medianPing=ping[midpos];
-				if(midpos*2==curpos) {
+				if(midpos*2==cpu.size()) {
 					medianCpu=(medianCpu+cpu[midpos-1])/2.0f;
 					medianPing=(medianPing+ping[midpos-1])/2;
 				}
@@ -600,7 +598,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
-					if(enforceSpeed && !players[a].isLocal &&
+					if(enforceSpeed && !players[a].isLocal && !isPaused &&
 						(players[a].spectator ||
 						players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
@@ -1299,10 +1297,9 @@ void CGameServer::CheckForGameEnd()
 			}
 		}
 		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(a);
-		if (sad != NULL && !(sad->isLuaAI))
+		if (sad)
 		{
-			++numActiveTeams[setup->teamStartingData[a].teamAllyteam];
-			continue;
+				hasPlayer = true;
 		}
 
 		if (teams[a].active && hasPlayer)
@@ -1560,7 +1557,7 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
 	if (enforceSpeed &&
 		player >= 0 && static_cast<unsigned int>(player) != SERVER_PLAYER &&
-		!players[player].isLocal &&
+		!players[player].isLocal && !isPaused &&
 		(players[player].spectator ||
 		players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 		players[player].ping - medianPing > internalSpeed*GAME_SPEED/2)) {

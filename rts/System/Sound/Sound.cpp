@@ -26,14 +26,8 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 {
 	mute = false;
 	appIsIconified = false;
-	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
-
-	if (configHandler->IsSet("SoundVolume"))
-	{
-		// SoundVolume is deprecated, if this key is present, copy to snd_volmaster and delete
-		configHandler->Set("snd_volmaster", configHandler->Get("SoundVolume", 60));
-		configHandler->Delete("SoundVolume");
-	}
+	int maxSounds = configHandler->Get("MaxSounds", 64) - 1; // 1 source is occupied by eventual music (handled by OggStream)
+	pitchAdjust = configHandler->Get("PitchAdjust", true);
 
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
@@ -122,7 +116,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	posScale.z = 1.0f;
 
 	LoadSoundDefs("gamedata/sounds.lua");
-	LoadSoundDefs("mapdata/sounds.lua");
 
 	configHandler->NotifyOnChange(this);
 }
@@ -212,7 +205,8 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 
 void CSound::PitchAdjust(const float newPitch)
 {
-	SoundSource::SetPitch(newPitch);
+	if (pitchAdjust)
+		SoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
@@ -238,6 +232,13 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	else if (key == "snd_volui")
 	{
 		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "PitchAdjust")
+	{
+		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
+		if (!tempPitchAdjust)
+			PitchAdjust(1.0);
+		pitchAdjust = tempPitchAdjust;
 	}
 }
 
@@ -371,21 +372,26 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
 
-void CSound::LoadSoundDefs(const std::string& filename)
+bool CSound::LoadSoundDefs(const std::string& filename)
 {
 	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);
 	parser.SetLowerCppKeys(false);
 	parser.Execute();
-	if (!parser.IsValid()) {
+	if (!parser.IsValid())
+	{
 		LogObject(LOG_SOUND) << "Could not load " << filename << ": " << parser.GetErrorLog();
+		return false;
 	}
 	else
 	{
 		const LuaTable soundRoot = parser.GetRoot();
 		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
 		if (!soundItemTable.IsValid())
+		{
 			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << filename;
+			return false;
+		}
 		else
 		{
 			std::vector<std::string> keys;
@@ -418,6 +424,7 @@ void CSound::LoadSoundDefs(const std::string& filename)
 			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems from " << filename;
 		}
 	}
+	return true;
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
@@ -431,8 +438,10 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 		file.Read(&buf[0], file.FileSize());
 	} else {
 		if (strict) {
-			handleerror(0, "Couldn't open sound file", path.c_str(),0);
+			handleerror(0, "Couldn't open audio file", path.c_str(),0);
 		}
+		else
+			LogObject(LOG_SOUND) << "Unable to open audio file: " << path;
 		return 0;
 	}
 

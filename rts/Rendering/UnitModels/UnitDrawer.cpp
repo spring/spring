@@ -1140,11 +1140,11 @@ void CUnitDrawer::CleanUpUnitDrawing(void) const
 }
 
 
-void CUnitDrawer::SetTeamColour(int team) const
+void CUnitDrawer::SetTeamColour(int team, float alpha) const
 {
 	if (advShading) {
 		unsigned char* col = teamHandler->Team(team)->color;
-		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1);
+		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, alpha);
 		if (luaDrawing) { // FIXME?
 			SetBasicTeamColour(team);
 		}
@@ -1987,25 +1987,27 @@ void CUnitDrawer::DrawUnitStats(CUnit* unit)
 	glTranslatef(interPos.x, interPos.y, interPos.z);
 	glCallList(CCamera::billboardList);
 
-	// black background for healthbar
-	glColor3f(0.0f, 0.0f, 0.0f);
-	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
+	if (unit->health < unit->maxHealth) {
+		// black background for healthbar
+		glColor3f(0.0f, 0.0f, 0.0f);
+		glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
 
-	// healthbar
-	const float hpp = std::max(0.0f, unit->health / unit->maxHealth);
-	const float hEnd = hpp * 10.0f;
+		// healthbar
+		const float hpp = std::max(0.0f, unit->health / unit->maxHealth);
+		const float hEnd = hpp * 10.0f;
 
-	if (unit->stunned) {
-		glColor3f(0.0f, 0.0f, 1.0f);
-	} else {
-		if (hpp > 0.5f) {
-			glColor3f(1.0f - ((hpp - 0.5f) * 2.0f), 1.0f, 0.0f);
+		if (unit->stunned) {
+			glColor3f(0.0f, 0.0f, 1.0f);
 		} else {
-			glColor3f(1.0f, hpp * 2.0f, 0.0f);
+			if (hpp > 0.5f) {
+				glColor3f(1.0f - ((hpp - 0.5f) * 2.0f), 1.0f, 0.0f);
+			} else {
+				glColor3f(1.0f, hpp * 2.0f, 0.0f);
+			}
 		}
-	}
 
-	glRectf(-5.0f, 4.0f, hEnd - 5.0f, 6.0f);
+		glRectf(-5.0f, 4.0f, hEnd - 5.0f, 6.0f);
+	}
 
 	// stun level
 	if (!unit->stunned && (unit->paralyzeDamage > 0.0f)) {
@@ -2056,7 +2058,7 @@ void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 	glPushMatrix();
 	glMultMatrixf(feature->transMatrix.m);
 
-	SetTeamColour(feature->team);
+	SetTeamColour(feature->team, feature->tempalpha);
 
 	feature->model->DrawStatic();
 	glPopMatrix();

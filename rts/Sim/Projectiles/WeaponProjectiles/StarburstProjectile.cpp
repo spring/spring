@@ -90,6 +90,7 @@ CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& spee
 	drawRadius=maxSpeed*8;
 	numCallback=new int;
 	*numCallback=0;
+
 	float3 camDir=(pos-camera->pos).Normalize();
 	if(camera->pos.distance(pos)*0.2f+(1-fabs(camDir.dot(dir)))*3000 < 200)
 		drawTrail=false;
@@ -239,7 +240,8 @@ void CStarburstProjectile::Update(void)
 		else
 			oldInfos[0]->ageMods[newsize] = ageMod;
 	}
-	oldInfos[0]->ageMods.resize(newsize);
+	if(oldInfos[0]->ageMods.size() != newsize)
+		oldInfos[0]->ageMods.resize(newsize);
 
 	age++;
 	numParts++;
@@ -259,8 +261,6 @@ void CStarburstProjectile::Update(void)
 				drawTrail = true;
 		}
 	}
-
-	*numCallback = 0;
 }
 
 void CStarburstProjectile::Draw(void)
@@ -345,10 +345,11 @@ void CStarburstProjectile::Draw(void)
 
 void CStarburstProjectile::DrawCallback(void)
 {
-	(*numCallback)++;
-	if(*numCallback<2)
+	if(*numCallback != gu->drawFrame) {
+		*numCallback = gu->drawFrame;
 		return;
-	*numCallback=0;
+	}
+	*numCallback = 0;
 
 	inArray=true;
 	unsigned char col[4];

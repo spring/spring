@@ -15,7 +15,7 @@
 #include "AAIMap.h"
 #include "AAIAttack.h"
 
-AAIAttackManager::AAIAttackManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt)
+AAIAttackManager::AAIAttackManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt, int continents)
 {
 	this->ai = ai;
 	brain = ai->brain;
@@ -23,8 +23,13 @@ AAIAttackManager::AAIAttackManager(AAI *ai, IAICallback *cb, AAIBuildTable *bt)
 	this->cb = cb;
 	this->map = ai->map;
 
-//	available_combat_cat = new int[bt->combat_categories];
-	available_combat_cat.resize(bt->combat_categories);
+	available_combat_cat.resize(bt->ass_categories);
+
+	available_combat_groups_continent.resize(continents);
+	available_aa_groups_continent.resize(continents);
+
+	attack_power_continent.resize(continents, vector<float>(bt->combat_categories) );
+	attack_power_global.resize(bt->combat_categories);
 }
 
 AAIAttackManager::~AAIAttackManager(void)
@@ -32,7 +37,7 @@ AAIAttackManager::~AAIAttackManager(void)
 	for(list<AAIAttack*>::iterator a = attacks.begin(); a != attacks.end(); ++a)
 		delete (*a);
 
-//	delete [] available_combat_cat;
+	attacks.clear();
 }
 
 
@@ -67,149 +72,164 @@ void AAIAttackManager::Update()
 
 void AAIAttackManager::LaunchAttack()
 {
-	AAISector *dest;
-	AttackType a_type;
-	bool suitable, land, water;
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	// get all available combat/aa/arty groups for attack
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	int total_combat_groups = 0;
 
+	for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
+	{
+		for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
+		{
+			if( (*group)->AvailableForAttack() )
+			{
+				if((*group)->group_movement_type & MOVE_TYPE_CONTINENT_BOUND)
+				{
+					if((*group)->group_unit_type == ASSAULT_UNIT)
+					{
+						available_combat_groups_continent[(*group)->continent].push_back(*group);
+						++total_combat_groups;
+					}
+					else
+						available_aa_groups_continent[(*group)->continent].push_back(*group);
+				}
+				else
+				{
+					if((*group)->group_unit_type == ASSAULT_UNIT)
+					{
+						available_combat_groups_global.push_back(*group);
+						++total_combat_groups;
+					}
+					else
+						available_aa_groups_global.push_back(*group);
+				}
+			}
+		}
+	}
+
+	// stop planing an attack if there are no combat groups available at the moment
+	if(total_combat_groups == 0)
+		return;
+
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	// calculate max attack power for each continent
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	fill(attack_power_global.begin(), attack_power_global.end(), 0.0f);
+
+	for(list<AAIGroup*>::iterator group = available_combat_groups_global.begin(); group != available_combat_groups_global.end(); ++group)
+		(*group)->GetCombatPower( &attack_power_global );
+
+	for(int continent = 0; continent < available_combat_groups_continent.size(); ++continent)
+	{
+		fill(attack_power_continent[continent].begin(), attack_power_continent[continent].end(), 0.0f);
+
+		for(list<AAIGroup*>::iterator group = available_combat_groups_continent[continent].begin(); group != available_combat_groups_continent[continent].end(); ++group)
+			(*group)->GetCombatPower( &(attack_power_continent[continent]) );
+	}
+
+	// determine max lost units
+	float max_lost_units = 0.0f, lost_units;
+
+	for(int x = 0; x < map->xSectors; ++x)
+	{
+		for(int y = 0; y < map->ySectors; ++y)
+		{
+			lost_units = map->sector[x][y].GetLostUnits(1.0f, 1.0f, 1.0f, 1.0f, 1.0f);
+
+			if(lost_units > max_lost_units)
+				max_lost_units = lost_units;
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////////////
 	// determine attack sector
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	float def_power, att_power;
+	float best_rating = 0, my_rating;
+	AAISector *dest = 0, *sector;
 
-	// todo: improve decision when to attack base or outposts
-	a_type = OUTPOST_ATTACK;
-
-	if(cfg->AIR_ONLY_MOD)
+	for(int x = 0; x < map->xSectors; ++x)
 	{
-		land = true;
-		water = true;
-	}
-	else
-	{
-		if(map->map_type == LAND_MAP)
+		for(int y = 0; y < map->ySectors; ++y)
 		{
-			land = true;
-			water = false;
-		}
-		else if(map->map_type == LAND_WATER_MAP)
-		{
-			land = true;
-			water = true;
-		}
-		else if(map->map_type == WATER_MAP)
-		{
-			land = false;
-			water = true;
-		}
-		else
-		{
-			land = true;
-			water = false;
+			sector = &map->sector[x][y];
+
+			if(sector->distance_to_base == 0 || sector->enemy_structures < 0.0001)
+				my_rating = 0;
+			else
+			{
+				if(ai->map->continents[sector->continent].water)
+				{
+					def_power = sector->GetEnemyDefencePower(0.0f, 0.0f, 0.5f, 1.0f, 1.0f) + 0.01;
+					att_power = attack_power_global[5] + attack_power_continent[sector->continent][5];
+				}
+				else
+				{
+					def_power = sector->GetEnemyDefencePower(1.0f, 0.0f, 0.5f, 0.0f, 0.0f) + 0.01;
+					att_power = attack_power_global[5] + attack_power_continent[sector->continent][5];
+				}
+
+				my_rating = (1.0f - sector->GetLostUnits(1.0f, 1.0f, 1.0f, 1.0f, 1.0f) / max_lost_units) * sector->enemy_structures * att_power / ( def_power * (float)(2 + sector->distance_to_base) );
+
+				//if(SufficientAttackPowerVS(dest, &combat_available, 2))
+			}
+
+			if(my_rating > best_rating)
+			{
+				dest = sector;
+				best_rating = my_rating;
+			}
 		}
 	}
 
-	// get target sector
-	dest = ai->brain->GetAttackDest(land, water, a_type);
+	//////////////////////////////////////////////////////////////////////////////////////////////
+	// order attack
+	//////////////////////////////////////////////////////////////////////////////////////////////
 
 	if(dest)
 	{
-		// get all available combat/aa/arty groups for attack
-		set<AAIGroup*> combat_available;
-		set<AAIGroup*> aa_available;
+		AAIAttack *attack = new AAIAttack(ai);
+		attacks.push_back(attack);
 
-		if(cfg->AIR_ONLY_MOD)
+		// add combat groups
+		for(list<AAIGroup*>::iterator group = available_combat_groups_continent[dest->continent].begin(); group != available_combat_groups_continent[dest->continent].end(); ++group)
+			attack->AddGroup(*group);
+
+		for(list<AAIGroup*>::iterator group = available_combat_groups_global.begin(); group != available_combat_groups_global.end(); ++group)
+			attack->AddGroup(*group);
+
+		// add anti-air defence
+		int aa_added = 0, max_aa;
+
+		// check how much aa sensible
+		if(brain->max_combat_units_spotted[1] < 0.2)
+			max_aa = 0;
+		else
+			max_aa = 1;
+
+		for(list<AAIGroup*>::iterator group = available_aa_groups_continent[dest->continent].begin(); group != available_aa_groups_continent[dest->continent].end(); ++group)
 		{
-			for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
-			{
-				for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
-				{
-					if(!(*group)->attack && (*group)->SufficientAttackPower())
-						combat_available.insert(*group);
-				}
-			}
-		}
-		else	// non air only mods must take movement type into account
-		{
-			// todo: improve by checking how to reach that sector
-			if(dest->water_ratio > 0.65)
-			{
-				land = false;
-				water = true;
-			}
-			else
-			{
-				water = false;
-				land = true;
-			}
+			if(aa_added >= max_aa)
+				break;
 
-			for(list<UnitCategory>::iterator category = bt->assault_categories.begin(); category != bt->assault_categories.end(); ++category)
-			{
-				for(list<AAIGroup*>::iterator group = ai->group_list[*category].begin(); group != ai->group_list[*category].end(); ++group)
-				{
-					// check movement type first
-					suitable = true;
-
-					if(land && (*group)->group_movement_type & MOVE_TYPE_SEA)
-						suitable = false;
-
-					if(water && (*group)->group_movement_type & MOVE_TYPE_GROUND)
-						suitable = false;
-
-					if(suitable && !(*group)->attack && (*group)->task == GROUP_IDLE )
-					{
-						if((*group)->group_unit_type == ASSAULT_UNIT && (*group)->SufficientAttackPower())
-							combat_available.insert(*group);
-						else if((*group)->group_unit_type == ANTI_AIR_UNIT)
-							aa_available.insert(*group);
-					}
-				}
-			}
+			attack->AddGroup(*group);
+			++aa_added;
 		}
 
-		if((combat_available.size() > 0 && SufficientAttackPowerVS(dest, &combat_available, 2)) ||  combat_available.size() > 10)
+		for(list<AAIGroup*>::iterator group = available_aa_groups_global.begin(); group != available_aa_groups_global.end(); ++group)
 		{
-			AAIAttack *attack;
+			if(aa_added >= max_aa)
+				break;
 
-			attack = new AAIAttack(ai);
-			attacks.push_back(attack);
-
-			attack->land = land;
-			attack->water = water;
-
-			// add combat groups
-			for(set<AAIGroup*>::iterator group = combat_available.begin(); group != combat_available.end(); ++group)
-				attack->AddGroup(*group);
-
-			// add antiair defence
-			if(!aa_available.empty())
-			{
-				int aa_added = 0, max_aa;
-
-				// check how much aa sensible
-				if(brain->max_units_spotted[1] < 0.2)
-					max_aa = 0;
-				else
-					max_aa = 1;
-
-
-				for(set<AAIGroup*>::iterator group = aa_available.begin(); group != aa_available.end(); ++group)
-				{
-					attack->AddGroup(*group);
-
-					++aa_added;
-
-					if(aa_added >= max_aa)
-						break;
-				}
-			}
-
-			// rally attacking groups
-			//this->RallyGroups(attack);
-
-			// start the attack
-			attack->AttackSector(dest, a_type);
+			attack->AddGroup(*group);
+			++aa_added;
 		}
 
-		// clean up
-		aa_available.clear();
-		combat_available.clear();
+		// rally attacking groups
+		//RallyGroups(attack);
+
+		// start the attack
+		attack->AttackSector(dest);
 	}
 }
 
@@ -265,7 +285,7 @@ void AAIAttackManager::GetNextDest(AAIAttack *attack)
 
 	//fprintf(ai->file, "Getting next dest\n");
 	if(dest && SufficientAttackPowerVS(dest, &(attack->combat_groups), 2))
-		attack->AttackSector(dest, attack->type);
+		attack->AttackSector(dest);
 	else
 		attack->StopAttack();
 }
@@ -280,13 +300,12 @@ bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *
 		int total_units = 1;
 
 		// store ammount and category of involved groups;
-		for(int i = 0; i < bt->combat_categories; ++i)
-			available_combat_cat[i] = 0;
+		fill(available_combat_cat.begin(), available_combat_cat.end(), 0);
 
 		// get total att power
 		for(set<AAIGroup*>::iterator group = combat_groups->begin(); group != combat_groups->end(); ++group)
 		{
-			attack_power += (*group)->GetPowerVS(5);
+			attack_power += (*group)->GetCombatPowerVsCategory(5);
 			available_combat_cat[(*group)->combat_category] += (*group)->size;
 			total_units += (*group)->size;
 		}
@@ -295,7 +314,7 @@ bool AAIAttackManager::SufficientAttackPowerVS(AAISector *dest, set<AAIGroup*> *
 
 		//  get expected def power
 		for(int i = 0; i < bt->ass_categories; ++i)
-			sector_defence += dest->stat_combat_power[i] * (float)available_combat_cat[i];
+			sector_defence += dest->enemy_stat_combat_power[i] * (float)available_combat_cat[i];
 
 		sector_defence /= (float)total_units;
 
@@ -314,27 +333,25 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 	{
 		// store ammount and category of involved groups;
 		double my_power = 0, enemy_power = 0;
-		int total_units = 0, cat;
+		int total_units = 0;
 
 		// reset counter
-		for(int i = 0; i < bt->combat_categories; ++i)
+		for(int i = 0; i < bt->ass_categories; ++i)
 			available_combat_cat[i] = 0;
 
 		// get total att power
-		for(int i = 0; i < bt->combat_categories; ++i)
+		for(int i = 0; i < bt->ass_categories; ++i)
 		{
-			cat = (int) bt->GetAssaultCategoryOfID(i);
-
 			// skip if no enemy units of that category present
-			if(dest->enemyUnitsOfType[cat] > 0)
+			if(dest->enemy_combat_units[i] > 0)
 			{
 				// filter out air in normal mods
 				if(i != 1 || cfg->AIR_ONLY_MOD)
 				{
 					for(set<AAIGroup*>::iterator group = combat_groups->begin(); group != combat_groups->end(); ++group)
-						my_power += (*group)->GetPowerVS(i) * dest->enemyUnitsOfType[cat];
+						my_power += (*group)->GetCombatPowerVsCategory(i) * dest->enemy_combat_units[i];
 
-					total_units +=  dest->enemyUnitsOfType[cat];
+					total_units +=  dest->enemy_combat_units[i];
 				}
 			}
 		}
@@ -357,8 +374,8 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 		}
 
 		// get total enemy power
-		for(int i = 0; i < bt->combat_categories; ++i)
-			enemy_power += dest->GetAreaCombatPowerVs(i, 0.25) * (float)available_combat_cat[i];
+		for(int i = 0; i < bt->ass_categories; ++i)
+			enemy_power += dest->GetEnemyAreaCombatPowerVs(i, 0.25) * (float)available_combat_cat[i];
 
 		enemy_power /= (float)total_units;
 
@@ -373,40 +390,26 @@ bool AAIAttackManager::SufficientCombatPowerAt(AAISector *dest, set<AAIGroup*> *
 
 bool AAIAttackManager::SufficientDefencePowerAt(AAISector *dest, float aggressiveness)
 {
-	if(dest)
+	// store ammount and category of involved groups;
+	double my_power = 0, enemy_power = 0;
+	float enemies = 0;
+
+	// get defence power
+	for(int i = 0; i < bt->ass_categories; ++i)
 	{
-		// store ammount and category of involved groups;
-		double my_power = 0, enemy_power = 0;
-		int cat;
-		float temp, enemies = 0;
-
-		// get defence power
-		for(int i = 0; i < bt->combat_categories; ++i)
+		// only check if enemies of that category present
+		if(dest->enemy_combat_units[i] > 0)
 		{
-			cat = (int) bt->GetAssaultCategoryOfID(i);
-
-			// only check if enemies of that category present
-			if(dest->enemyUnitsOfType[cat] > 0)
-			{
-				temp = 0;
-				enemies += dest->enemyUnitsOfType[cat];
-
-				for(list<AAIDefence>::iterator def = dest->defences.begin(); def != dest->defences.end(); ++def)
-					temp += bt->units_static[def->def_id].efficiency[i];
-
-				my_power += temp * dest->enemyUnitsOfType[cat];
-			}
+			enemies += dest->enemy_combat_units[i];
+			my_power += dest->my_stat_combat_power[i] * dest->enemy_combat_units[i];
 		}
+	}
 
-		if(enemies > 0)
-			my_power /= enemies;
+	if(enemies > 0)
+	{
+		my_power /= enemies;
 
-		// get enemy attack power vs buildings
-		enemy_power = dest->GetAreaCombatPowerVs(5, 0.5);
-
-		//fprintf(ai->file, "Checking defence power - att power / def power %f %f\n", aggressiveness * my_power, enemy_power);
-
-		if(aggressiveness * my_power >= enemy_power)
+		if(aggressiveness * my_power >= dest->GetEnemyAreaCombatPowerVs(5, 0.5))
 			return true;
 	}
 

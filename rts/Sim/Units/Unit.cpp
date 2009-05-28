@@ -347,7 +347,7 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 	mapSquare = ground->GetSquare(pos);
 	uh->AddUnit(this);
 	qf->MovedUnit(this);
-	oldRadarPos.x = -1;
+	hasRadarPos = false;
 
 	losStatus[allyteam] = LOS_ALL_MASK_BITS |
 		LOS_INLOS | LOS_INRADAR | LOS_PREVLOS | LOS_CONTRADAR;
@@ -752,9 +752,13 @@ void CUnit::SlowUpdate()
 			}
 			UpdateResources();
 		}
+
+		// damage nano-frames too
+		DoWaterDamage();
 		return;
 	}
-	//below is stuff that shouldnt be run while being built
+
+	// below is stuff that should not be run while being built
 
 	lastSlowUpdate=gs->frameNum;
 
@@ -857,20 +861,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	if (uh->waterDamage) {
-		if (pos.IsInBounds()) {
-			bool inWater = (pos.y <= -3);
-			bool isFloating = (physicalState == CSolidObject::Floating);
-			bool onGround = (physicalState == CSolidObject::OnGround);
-			bool isWaterSquare = (readmap->mipHeightmap[1][int((pos.z / (SQUARE_SIZE * 2)) * gs->hmapx + (pos.x / (SQUARE_SIZE * 2)))] < -1);
-
-			// old: "floating or (on ground and height < -3 and mapheight < -1)"
-			// new: "height < -3 and (floating or on ground) and mapheight < -1"
-			if (inWater && (isFloating || onGround) && isWaterSquare) {
-				DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
-			}
-		}
-	}
+	DoWaterDamage();
 
 	if (unitDef->canKamikaze) {
 		if (fireState >= 2) {
@@ -941,6 +932,24 @@ void CUnit::SetDirectionFromHeading(void)
 	}
 }
 
+
+
+void CUnit::DoWaterDamage()
+{
+	if (uh->waterDamage > 0.0f) {
+		if (pos.IsInBounds()) {
+			const int  px            = int(pos.x / (SQUARE_SIZE * 2));
+			const int  pz            = int(pos.z / (SQUARE_SIZE * 2));
+			const bool isFloating    = (physicalState == CSolidObject::Floating);
+			const bool onGround      = (physicalState == CSolidObject::OnGround);
+			const bool isWaterSquare = (readmap->mipHeightmap[1][pz * gs->hmapx + px] <= 0.0f);
+
+			if ((pos.y <= 0.0f) && isWaterSquare && (isFloating || onGround)) {
+				DoDamage(DamageArray() * uh->waterDamage, 0, ZeroVector, -1);
+			}
+		}
+	}
+}
 
 void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponId)
 {
@@ -1107,10 +1116,13 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 #endif
 }
 
+
+
 void CUnit::Kill(float3& impulse) {
 	DamageArray da;
 	DoDamage(da * (health / da[armorType]), 0, impulse, -1);
 }
+
 
 
 void CUnit::UpdateDrawPos() {
@@ -1613,7 +1625,7 @@ void CUnit::Init(const CUnit* builder)
 	}
 
 	eventHandler.UnitCreated(this, builder);
-	eoh->UnitCreated(*this); // FIXME -- add builder?
+	eoh->UnitCreated(*this, builder);
 }
 
 
@@ -2329,6 +2341,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(radarSquares),
 	CR_MEMBER(oldRadarPos.x),
 	CR_MEMBER(oldRadarPos.y),
+	CR_MEMBER(hasRadarPos),
 	CR_MEMBER(stealth),
 	CR_MEMBER(sonarStealth),
 	CR_MEMBER(moveType),

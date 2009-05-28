@@ -287,6 +287,7 @@ unitsync_extra_files = [
 	'rts/Rendering/Textures/Bitmap.cpp',
 	'rts/Rendering/Textures/nv_dds.cpp',
 	'rts/Sim/Misc/SideParser.cpp',
+	'rts/System/Platform/Misc.cpp',
 	'rts/System/Info.cpp',
 	'rts/System/Option.cpp',
 	'rts/System/ConfigHandler.cpp',

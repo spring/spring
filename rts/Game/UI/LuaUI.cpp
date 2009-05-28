@@ -171,8 +171,8 @@ CLuaUI::CLuaUI()
 	lua_getglobal(L, "os"); {
 		lua_pushliteral(L, "exit");      lua_pushnil(L); lua_rawset(L, -3);
 		lua_pushliteral(L, "execute");   lua_pushnil(L); lua_rawset(L, -3);
-		lua_pushliteral(L, "remove");    lua_pushnil(L); lua_rawset(L, -3);
-		lua_pushliteral(L, "rename");    lua_pushnil(L); lua_rawset(L, -3);
+		//lua_pushliteral(L, "remove");    lua_pushnil(L); lua_rawset(L, -3);
+		//lua_pushliteral(L, "rename");    lua_pushnil(L); lua_rawset(L, -3);
 		lua_pushliteral(L, "tmpname");   lua_pushnil(L); lua_rawset(L, -3);
 		lua_pushliteral(L, "getenv");    lua_pushnil(L); lua_rawset(L, -3);
 		lua_pushliteral(L, "setlocale"); lua_pushnil(L); lua_rawset(L, -3);

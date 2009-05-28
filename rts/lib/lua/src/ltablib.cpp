@@ -1,5 +1,5 @@
 /*
-** $Id: ltablib.c,v 1.38 2005/10/23 17:38:15 roberto Exp $
+** $Id: ltablib.c,v 1.38.1.3 2008/02/14 16:46:58 roberto Exp $
 ** Library for Table Manipulation
 ** See Copyright Notice in lua.h
 */
@@ -118,7 +118,8 @@ static int tinsert (lua_State *L) {
 static int tremove (lua_State *L) {
   int e = aux_getn(L, 1);
   int pos = luaL_optint(L, 2, e);
-  if (e == 0) return 0;  /* table is `empty' */
+  if (!(1 <= pos && pos <= e))  /* position is outside bounds? */
+   return 0;  /* nothing to remove */
   luaL_setn(L, 1, e - 1);  /* t.n = n-1 */
   lua_rawgeti(L, 1, pos);  /* result = t[pos] */
   for ( ;pos<e; pos++) {
@@ -131,6 +132,15 @@ static int tremove (lua_State *L) {
 }
 
 
+static void addfield (lua_State *L, luaL_Buffer *b, int i) {
+  lua_rawgeti(L, 1, i);
+  if (!lua_isstring(L, -1))
+    luaL_error(L, "invalid value (%s) at index %d in table for "
+                  LUA_QL("concat"), luaL_typename(L, -1), i);
+    luaL_addvalue(b);
+}
+
+
 static int tconcat (lua_State *L) {
   luaL_Buffer b;
   size_t lsep;
@@ -140,13 +150,12 @@ static int tconcat (lua_State *L) {
   i = luaL_optint(L, 3, 1);
   last = luaL_opt(L, luaL_checkint, 4, luaL_getn(L, 1));
   luaL_buffinit(L, &b);
-  for (; i <= last; i++) {
-    lua_rawgeti(L, 1, i);
-    luaL_argcheck(L, lua_isstring(L, -1), 1, "table contains non-strings");
-    luaL_addvalue(&b);
-    if (i != last)
-      luaL_addlstring(&b, sep, lsep);
+  for (; i < last; i++) {
+    addfield(L, &b, i);
+    luaL_addlstring(&b, sep, lsep);
   }
+  if (i == last)  /* add last value (if interval was not empty) */
+    addfield(L, &b, i);
   luaL_pushresult(&b);
   return 1;
 }

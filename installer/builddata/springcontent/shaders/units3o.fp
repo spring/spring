@@ -30,5 +30,5 @@ LRP texColor, texColor.w, program.env[14], texColor;
 ADD shadeColor, shadeColor, extraColor.x;
 
 MAD result.color, texColor, shadeColor, specular;
-MOV result.color.w, extraColor.w;
+MUL result.color.w, extraColor.w, program.env[14].w;
 END

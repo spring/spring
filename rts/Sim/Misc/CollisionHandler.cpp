@@ -260,7 +260,7 @@ bool CCollisionHandler::IntersectPieceTree(const CUnit* u, const float3& p0, con
 		const CollisionQuery& qTmp = *hitsIt;
 		const float dstSq = (qTmp.p0 - p0).SqLength();
 
-		if (dstSq < dstNearSq) {
+		if (q != NULL && dstSq < dstNearSq) {
 			dstNearSq = dstSq;
 
 			q->b0 = qTmp.b0; q->t0 = qTmp.t0; q->p0 = qTmp.p0;

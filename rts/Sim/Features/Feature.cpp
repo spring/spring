@@ -106,7 +106,7 @@ CFeature::~CFeature(void)
 void CFeature::PostLoad()
 {
 	def = featureHandler->GetFeatureDef(defName);
-	if (def->drawType == DRAWTYPE_3DO) {
+	if (def->drawType == DRAWTYPE_MODEL) {
 		model = LoadModel(def);
 		height = model->height;
 		SetRadius(model->radius);
@@ -133,10 +133,6 @@ void CFeature::ChangeTeam(int newTeam)
 		team = newTeam;
 		allyteam = teamHandler->AllyTeam(newTeam);
 	}
-
-	if (def->drawType == DRAWTYPE_3DO){
-		model = LoadModel(def);
-	}
 }
 
 
@@ -162,7 +158,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	mass     = def->mass;
 	noSelect = def->noSelect;
 
-	if (def->drawType == DRAWTYPE_3DO) {
+	if (def->drawType == DRAWTYPE_MODEL) {
 		model = LoadModel(def);
 		height = model->height;
 		SetRadius(model->radius);
@@ -249,6 +245,10 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			return false; // cant repair a 'fresh' feature
 		}
 
+		if (reclaimLeft <= 0) {
+			return false; // feature most likely has been deleted
+		}
+
 		// Work out how much to try to put back, based on the speed this unit would reclaim at.
 		const float part = amount / def->reclaimTime;
 
@@ -264,6 +264,10 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			if (reclaimLeft >= 1) {
 				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
 				reclaimLeft = 1;
+			} else if (reclaimLeft <= 0) {
+				// this can happen when a mod tampers the feature in AllowFeatureBuildStep
+				featureHandler->DeleteFeature(this);
+				return false;
 			}
 			return true;
 		}
@@ -425,7 +429,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	}
 
 	// setup midPos
-	if (def->drawType == DRAWTYPE_3DO) {
+	if (def->drawType == DRAWTYPE_MODEL) {
 		midPos = pos + model->relMidPos;
 	} else if (def->drawType == DRAWTYPE_TREE) {
 		midPos = pos + (UpVector * TREE_RADIUS);
