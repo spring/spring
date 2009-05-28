@@ -5,12 +5,14 @@
  * Main application class that launches
  * everything else
  */
+
+#include "Platform/errorhandler.h"
 #include "StdAfx.h"
-#include "Rendering/GL/myGL.h"
+#include "lib/gml/gml.h"
 #include "FPUCheck.h"
 #include "LogOutput.h"
-#include "Platform/errorhandler.h"
 #include "Exceptions.h"
+#include "myMath.h"
 
 #include "SpringApp.h"
 
@@ -27,7 +29,7 @@
 
 // On msvc main() is declared as a non-throwing function.
 // Moving the catch clause to a seperate function makes it possible to re-throw the exception for the installed crash reporter
-int Run(int argc, char *argv[])
+int Run(int argc, char* argv[])
 {
 #ifdef __MINGW32__
 	// For the MinGW backtrace() implementation we need to know the stack end.
@@ -38,16 +40,12 @@ int Run(int argc, char *argv[])
 	}
 #endif
 
-#ifdef STREFLOP_H
-	// Set single precision floating point math.
-	streflop_init<streflop::Simple>();
-#endif
 	good_fpu_control_registers("::Run");
 
 #ifdef USE_GML
 	set_threadnum(0);
 #	if GML_ENABLE_TLS_CHECK
-	if(gmlThreadNumber!=0) {
+	if (gmlThreadNumber != 0) {
 		handleerror(NULL, "Thread Local Storage test failed", "GML error:", MBF_OK | MBF_EXCL);
 	}
 #	endif
@@ -57,19 +55,19 @@ int Run(int argc, char *argv[])
 #ifndef NO_CATCH_EXCEPTIONS
 	try {
 		SpringApp app;
-		return app.Run (argc,argv);
+		return app.Run(argc, argv);
 	}
 	catch (const content_error& e) {
 		SDL_Quit();
 		logOutput.RemoveAllSubscribers();
-		logOutput.Print ("Content error: %s\n",  e.what());
+		logOutput.Print("Content error: %s\n", e.what());
 		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
 		return -1;
 	}
 	catch (const std::exception& e) {
 		SDL_Quit();
 	#ifdef _MSC_VER
-		logOutput.Print ("Fatal error: %s\n",  e.what());
+		logOutput.Print("Fatal error: %s\n", e.what());
 		logOutput.RemoveAllSubscribers();
 		throw; // let the error handler catch it
 	#else
@@ -81,7 +79,7 @@ int Run(int argc, char *argv[])
 	catch (const char* e) {
 		SDL_Quit();
 	#ifdef _MSC_VER
-		logOutput.Print ("Fatal error: %s\n",  e);
+		logOutput.Print("Fatal error: %s\n", e);
 		logOutput.RemoveAllSubscribers();
 		throw; // let the error handler catch it
 	#else
@@ -92,7 +90,7 @@ int Run(int argc, char *argv[])
 	}
 #else
 	SpringApp app;
-	return app.Run (argc, argv);
+	return app.Run(argc, argv);
 #endif
 }
 
@@ -106,20 +104,18 @@ int Run(int argc, char *argv[])
  *
  * Main entry point function
  */
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
-	return Run (argc,argv);
+	CMyMath::Init();
+	return Run(argc, argv);
 }
 
 
 
 #ifdef WIN32
-
-int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE	hPrevInstance, LPSTR lpCmdLine,int nCmdShow)
+int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	return Run (__argc, __argv);
+	CMyMath::Init();
+	return Run(__argc, __argv);
 }
-
 #endif
-
-

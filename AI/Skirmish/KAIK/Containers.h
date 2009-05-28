@@ -27,6 +27,7 @@ class CBuildUp;
 class CAttackHandler;
 class CDGunControllerHandler;
 class CLogger;
+class CCommandTracker;
 struct MapData;
 
 struct AIClasses {
@@ -52,6 +53,7 @@ struct AIClasses {
 	CAttackHandler*         ah;
 	CLogger*                logger;
 	CDGunControllerHandler* dgunConHandler;
+	CCommandTracker*        ct;
 	MapData*                mapData;
 
 	std::vector<CUNIT*>     MyUnits;

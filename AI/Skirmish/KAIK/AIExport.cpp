@@ -37,19 +37,22 @@ static std::map<int, CAIGlobalAI*> myAIs;
 // filled with the teamId for the first team handled by this Skirmish AI
 static int firstTeamId = -1;
 // filled with the callback for the first team handled by this Skirmish AI
-// this can be used for calling functions that
 static const struct SSkirmishAICallback* firstCallback = NULL;
 
 // callbacks for all the teams controlled by this Skirmish AI
 static std::map<int, const struct SSkirmishAICallback*> teamId_callback;
 
 
-EXPORT(enum LevelOfSupport) getLevelOfSupportFor(int teamId,
-		const char* engineVersionString, int engineVersionNumber,
-		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 
-	if (strcmp(engineVersionString, SpringVersion::GetFull().c_str()) == 0 &&
-			engineVersionNumber <= ENGINE_VERSION_NUMBER) {
+EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
+	int teamId,
+	const char* engineVersionString, int engineVersionNumber,
+	const char* aiInterfaceShortName, const char* aiInterfaceVersion
+) {
+	const char* springVersion = SpringVersion::GetFull().c_str();
+	const int cmp = strcmp(engineVersionString, springVersion);
+
+	if (cmp == 0 && engineVersionNumber <= ENGINE_VERSION_NUMBER) {
 		return LOS_Working;
 	}
 
@@ -65,7 +68,7 @@ EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
 	}
 
 	if (firstTeamId == -1) {
-		firstTeamId = teamId;
+		firstTeamId   = teamId;
 		firstCallback = callback;
 	}
 
@@ -74,15 +77,12 @@ EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
 	// CAIGlobalAI is the Legacy C++ wrapper
 	myAIs[teamId] = new CAIGlobalAI(teamId, new CKAIK());
 
-	// signal: everything went ok
 	return 0;
 }
 
 EXPORT(int) release(int teamId) {
 	if (myAIs.count(teamId) == 0) {
-		// the map has no AI for this team.
-		// raise an error, since it's probably a mistake if we're trying to
-		// release a team that's not initialized.
+		// no AI for this team, raise an error
 		return -1;
 	}
 
@@ -108,10 +108,12 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 }
 
 
-// methods from here on are for AI internal use only
 
+///////////////////////////////////////////////////////
+// methods from here on are for AI internal use only //
+///////////////////////////////////////////////////////
 const char* aiexport_getDataDir(bool absoluteAndWriteable) {
-	static char* dd_ws_rel = NULL;
+	static char* dd_ws_rel   = NULL;
 	static char* dd_ws_abs_w = NULL;
 
 	if (absoluteAndWriteable) {

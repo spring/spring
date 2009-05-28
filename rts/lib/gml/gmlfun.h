@@ -306,15 +306,82 @@ EXTERN inline int gmlSizeOf(int datatype) {
 	GML_PREP_VAR(name,sizefun)\
 	GML_UPD_SIZE()
 
+#ifdef _MSC_VER
+#define GML_FUNCTION __FUNCTION__
+#else
+#define GML_FUNCTION __func__
+#endif
+
+#if GML_CALL_DEBUG
+#include "lib/lua/include/lauxlib.h"
+extern lua_State *gmlCurrentLuaState;
+class gmlCallDebugger {
+public:
+	bool set;
+	gmlCallDebugger(lua_State *L) { 
+		if(!gmlCurrentLuaState) {
+			gmlCurrentLuaState = L;
+			set=true;
+		} 
+		else 
+			set = false;
+	}
+	~gmlCallDebugger() {
+		if(set)
+			gmlCurrentLuaState = NULL;
+	}
+};
+#define GML_CURRENT_LUA() (gmlCurrentLuaState ? "LUA" : "Unknown")
+#define GML_THREAD_ERROR(msg, ret)\
+	logOutput.Print("GML error: Sim thread called %s (%s)", msg, GML_CURRENT_LUA());\
+	if(gmlCurrentLuaState)\
+		luaL_error(gmlCurrentLuaState, "Invalid call");\
+	ret
+#define GML_ITEMLOG_PRINT() GML_THREAD_ERROR(GML_FUNCTION,)
+#define GML_DUMMYRET() return;
+#define GML_DUMMYRETVAL(rettype)\
+	rettype rdummy = (rettype)0;\
+	return rdummy;
+#define GML_DEBUG_RET(name)\
+	if(gmlThreadNumber == gmlThreadCount) {\
+		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRET())\
+	}
+#define GML_DEBUG_RETVAL(name, rettype)\
+	if(gmlThreadNumber == gmlThreadCount) {\
+		GML_THREAD_ERROR(GML_QUOTE(gml##name), GML_DUMMYRETVAL(rettype))\
+	}
+#else
+#define GML_ITEMLOG_PRINT() logOutput.Print("GML error: Sim thread called %s",GML_FUNCTION);
+#define GML_DUMMYRET()
+#define GML_DUMMYRETVAL(rettype)
+#define GML_DEBUG_RET(name)
+#define GML_DEBUG_RETVAL(name, rettype)
+#endif
+
 #define GML_COND(name,...)\
+	GML_DEBUG_RET(name)\
 	GML_IF_SERVER_THREAD() {\
 		gl##name(__VA_ARGS__);\
 		return;\
 	}
 
-#define GML_COND_RET(name,...)\
+#define GML_COND0(name)\
+	GML_DEBUG_RET(name)\
+	GML_IF_SERVER_THREAD() {\
+		gl##name();\
+		return;\
+	}
+
+#define GML_COND_RET(name,rettype,...)\
+	GML_DEBUG_RETVAL(name,rettype)\
 	GML_IF_SERVER_THREAD() {\
 		return gl##name(__VA_ARGS__);\
+	}
+
+#define GML_COND_RET0(name,rettype)\
+	GML_DEBUG_RETVAL(name,rettype)\
+	GML_IF_SERVER_THREAD() {\
+		return gl##name();\
 	}
 
 EXTERN inline void gmlSync(gmlQueue *qd) {
@@ -334,24 +401,27 @@ EXTERN inline void gmlSync(gmlQueue *qd) {
 	GML_MAKENAME(name)\
 	EXTERN inline ftype gml##name(__VA_ARGS__)
 
-#ifdef _MSC_VER
-#define GML_FUNCTION __FUNCTION__
-#else
-#define GML_FUNCTION __func__
-#endif
 
 #if GML_ENABLE_ITEMSERVER_CHECK
 #define GML_ITEMSERVER_CHECK()\
-    if(gmlThreadNumber==gmlThreadCount)\
-        logOutput.Print("GML error: Sim thread called %s",GML_FUNCTION);
+	if(gmlThreadNumber == gmlThreadCount) {\
+		GML_ITEMLOG_PRINT()\
+		GML_DUMMYRET()\
+	}
+#define GML_ITEMSERVER_CHECK_RET(rettype)\
+	if(gmlThreadNumber == gmlThreadCount) {\
+		GML_ITEMLOG_PRINT()\
+		GML_DUMMYRETVAL(rettype)\
+	}
 #else
 #define GML_ITEMSERVER_CHECK()
+#define GML_ITEMSERVER_CHECK_RET(rettype)
 #endif
 
 #define GML_MAKEFUN0(name)\
 	GML_MAKEDATA(name)\
 GML_FUN(void, name) {\
-	GML_COND(name)\
+	GML_COND0(name)\
 	GML_PREP_FIXED(name)\
 	GML_UPD_POS()\
 }
@@ -360,7 +430,7 @@ GML_FUN(void, name) {\
 	GML_MAKEDATA(name)\
 	GML_MAKEVAR_RET(tR)\
 GML_FUN(tR, name) {\
-	GML_COND_RET(name)\
+	GML_COND_RET0(name,tR)\
 	cache\
 	GML_PREP_FIXED(name)\
 	GML_UPD_POS()\
@@ -381,7 +451,7 @@ GML_FUN(void, name, tA A) {\
 	GML_MAKEDATA_A(name,tA)\
 	GML_MAKEVAR_RET(tR)\
 GML_FUN(tR, name, tA A) {\
-	GML_COND_RET(name,A)\
+	GML_COND_RET(name,tR,A)\
 	cache\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_A()\
@@ -425,7 +495,7 @@ GML_FUN(void, name, tA A, tB B) {\
 	GML_MAKEDATA_B(name,tA,tB)\
 	GML_MAKEVAR_RET(tR)\
 GML_FUN(tR, name, tA A,tB B) {\
-	GML_COND_RET(name,A,B)\
+	GML_COND_RET(name,tR,A,B)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_B()\
 	GML_UPD_POS()\
@@ -505,7 +575,7 @@ GML_FUN(void, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI I) {\
 	GML_MAKEDATA_I(name,tA,tB,tC,tD,tE,tF,tG,tH,tI)\
 	GML_MAKEVAR_RET(tR)\
 GML_FUN(tR, name, tA A, tB B, tC C, tD D, tE E, tF F, tG G, tH H, tI I) {\
-	GML_COND_RET(name,A,B,C,D,E,F,G,H,I)\
+	GML_COND_RET(name,tR,A,B,C,D,E,F,G,H,I)\
 	GML_PREP_FIXED(name)\
 	GML_MAKEASS_I()\
 	GML_UPD_POS()\

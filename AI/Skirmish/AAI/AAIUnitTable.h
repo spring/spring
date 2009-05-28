@@ -1,3 +1,12 @@
+// -------------------------------------------------------------------------
+// AAI
+//
+// A skirmish AI for the TA Spring engine.
+// Copyright Alexander Seizinger
+//
+// Released under GPL license: see LICENSE.html for more information.
+// -------------------------------------------------------------------------
+
 #pragma once
 
 #include <set>
@@ -63,6 +72,17 @@ public:
 	bool IsDefCommander(int def_id);
 	bool IsBuilder(int unit_id);
 
+	// called when unit of specified catgeory has been created (= construction started)
+	void UnitCreated(UnitCategory category);
+
+	// called when construction of unit has been finished
+	void UnitFinished(UnitCategory category);
+
+	// called when unit request failed (e.g. builder has been killed on the way to the crash site)
+	void UnitRequestFailed(UnitCategory category);
+
+	void UnitRequested(UnitCategory category, int number = 1);
+
 	// get/set methods
 	//int GetActiveScouts();
 	//int GetActiveBuilders();
@@ -95,7 +115,6 @@ public:
 	int futureUnits[(int)MOBILE_CONSTRUCTOR+1];
 	int requestedUnits[(int)MOBILE_CONSTRUCTOR+1];
 
-	int activeScouts, futureScouts;
 	int activeBuilders, futureBuilders;
 	int activeFactories, futureFactories;
 };

@@ -1,5 +1,5 @@
 /*
-** $Id: lapi.c,v 2.55 2006/06/07 12:37:17 roberto Exp $
+** $Id: lapi.c,v 2.55.1.5 2008/07/04 18:41:18 roberto Exp $
 ** Lua API
 ** See Copyright Notice in lua.h
 */
@@ -94,15 +94,14 @@ void luaA_pushobject (lua_State *L, const TValue *o) {
 
 
 LUA_API int lua_checkstack (lua_State *L, int size) {
-  int res;
+  int res = 1;
   lua_lock(L);
-  if ((L->top - L->base + size) > LUAI_MAXCSTACK)
+  if (size > LUAI_MAXCSTACK || (L->top - L->base + size) > LUAI_MAXCSTACK)
     res = 0;  /* stack overflow */
-  else {
+  else if (size > 0) {
     luaD_checkstack(L, size);
     if (L->ci->top < L->top + size)
       L->ci->top = L->top + size;
-    res = 1;
   }
   lua_unlock(L);
   return res;
@@ -121,6 +120,11 @@ LUA_API void lua_xmove (lua_State *from, lua_State *to, int n) {
     setobj2s(to, to->top++, from->top + i);
   }
   lua_unlock(to);
+}
+
+
+LUA_API void lua_setlevel (lua_State *from, lua_State *to) {
+  to->nCcalls = from->nCcalls;
 }
 
 
@@ -770,7 +774,7 @@ LUA_API int lua_setfenv (lua_State *L, int idx) {
       res = 0;
       break;
   }
-  luaC_objbarrier(L, gcvalue(o), hvalue(L->top - 1));
+  if (res) luaC_objbarrier(L, gcvalue(o), hvalue(L->top - 1));
   L->top--;
   lua_unlock(L);
   return res;
@@ -946,10 +950,13 @@ LUA_API int lua_gc (lua_State *L, int what, int data) {
         g->GCthreshold = g->totalbytes - a;
       else
         g->GCthreshold = 0;
-      while (g->GCthreshold <= g->totalbytes)
+      while (g->GCthreshold <= g->totalbytes) {
         luaC_step(L);
-      if (g->gcstate == GCSpause)  /* end of cycle? */
-        res = 1;  /* signal it */
+        if (g->gcstate == GCSpause) {  /* end of cycle? */
+          res = 1;  /* signal it */
+          break;
+        }
+      }
       break;
     }
     case LUA_GCSETPAUSE: {

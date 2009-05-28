@@ -52,6 +52,9 @@ class LuaUtils {
 		// (implementation copied from lua/src/lib/lbaselib.c)
 		static int Echo(lua_State* L);
 
+		static int ZlibCompress(lua_State* L);
+		static int ZlibDecompress(lua_State* L);
+
 		static bool PushCustomBaseFunctions(lua_State* L);
 		static int tobool(lua_State* L);
 		static int isnil(lua_State* L);

@@ -33,6 +33,12 @@
 #	define GML_ENABLE_SIM 0  // manually enable sim thread here
 #endif
 
+#ifdef USE_GML_DEBUG
+#	define GML_CALL_DEBUG (GML_ENABLE && GML_ENABLE_SIM && 1) // checks for calls made from the wrong thread
+#else
+#	define GML_CALL_DEBUG 0  // manually enable call debug here
+#endif
+
 #define GML_ENABLE_DRAW (GML_ENABLE && 0) // draws everything in a separate thread (for testing only, will degrade performance)
 #define GML_SERVER_GLCALL 1 // allows the server thread (0) to make direct GL calls
 #define GML_INIT_QUEUE_SIZE 10 // initial queue size, will be reallocated, but must be >= 4
@@ -1028,8 +1034,8 @@ public:
 			++front;
 		return ret;
 	}
-	size_t size() {
-		return csize;
+	volatile size_t size() {
+		return *(volatile size_t *)&csize;
 	}
 	T &operator[](size_t i) {
 		return elements[(front + i) % (msize + 1)];

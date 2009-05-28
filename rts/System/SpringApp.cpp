@@ -171,8 +171,6 @@ bool SpringApp::Initialize()
 
 	ParseCmdLine();
 
-	logOutput.SetMirrorToStdout(!!configHandler->Get("StdoutDebug",0));
-
 	// log OS version
 	// TODO: improve version logging of non-Windows OSes
 #if defined(WIN32)
@@ -191,12 +189,11 @@ bool SpringApp::Initialize()
 	logOutput.Print("OS: unknown\n");
 #endif
 
-
 	FileSystemHandler::Initialize(true);
 
 	UpdateOldConfigs();
 
-	if (!InitWindow(("Spring " + SpringVersion::GetFull()).c_str())) {
+	if (!InitWindow(("Spring " + SpringVersion::Get()).c_str())) {
 		SDL_Quit();
 		return false;
 	}
@@ -489,6 +486,12 @@ bool SpringApp::GetDisplayGeometry()
 
 	// translate from client coords to screen coords
 	MapWindowPoints(info.window, HWND_DESKTOP, (LPPOINT)&rect, 2);
+
+	// GetClientRect doesn't do the right thing for restoring window position
+	if (!fullscreen) {
+		GetWindowRect(info.window, &rect);
+	}
+
 	windowPosX = rect.left;
 	windowPosY = rect.top;
 #endif // _WIN32
@@ -684,9 +687,6 @@ void SpringApp::ParseCmdLine()
 	} else if (cmdline->result("list-skirmish-ais")) {
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
-//	} else if (cmdline->result("list-group-ais")) {
-//		IAILibraryManager::OutputGroupAIInfo();
-//		exit(0);
 	}
 
 	// flags

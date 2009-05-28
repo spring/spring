@@ -26,7 +26,6 @@
 #endif
 
 EXPORT(const char* ) GetSpringVersion();
-EXPORT(void        ) Message(const char* p_szMessage);
 EXPORT(void        ) UnInit();
 EXPORT(int         ) ProcessUnits(void);
 EXPORT(int         ) ProcessUnitsNoChecksum(void);
@@ -149,18 +148,6 @@ extern "C" {
 	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetSpringVersion
 		(JNIEnv *env, jclass myobject){
 			return env->NewStringUTF(GetSpringVersion());
-		}
-
-	/*
-	* Class:     aflobby_CUnitSyncJNIBindings
-	* Method:    Message
-	* Signature: (Ljava/lang/String;)V
-	*/
-	JNIEXPORT void JNICALL Java_aflobby_CUnitSyncJNIBindings_Message
-		(JNIEnv *env, jclass myobject, jstring  p_szMessage){
-			const char* c = env->GetStringUTFChars( p_szMessage,0);
-			Message(c);
-			env->ReleaseStringUTFChars( p_szMessage,c);
 		}
 
 	/*

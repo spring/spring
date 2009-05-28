@@ -376,8 +376,10 @@ GLuint CFontTextureRenderer::CreateTexture()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	if (GLEW_ARB_texture_border_clamp) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	}
 	static const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlas);
@@ -556,7 +558,7 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 		logOutput.Print("FONT-ERROR: Couldn't create GlyphAtlas! (try to reduce reduce font size/outlinewidth)");
 		return NULL;
 	} catch (content_error& e) {
-		logOutput.Print(e.what());
+		logOutput.Print(std::string(e.what()));
 		return NULL;
 	}
 }

@@ -90,7 +90,8 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 	newPos.x = (int) (unit->pos.x * invRadarDiv);
 	newPos.y = (int) (unit->pos.z * invRadarDiv);
 
-	if ((newPos.x != unit->oldRadarPos.x) ||
+	if (!unit->hasRadarPos ||
+		(newPos.x != unit->oldRadarPos.x) ||
 	    (newPos.y != unit->oldRadarPos.y)) {
 		RemoveUnit(unit);
 		SCOPED_TIMER("Radar");
@@ -118,6 +119,7 @@ void CRadarHandler::MoveUnit(CUnit* unit)
 			seismicMaps[unit->allyteam].AddMapArea(newPos, unit->seismicRadius, 1);
 		}
 		unit->oldRadarPos = newPos;
+		unit->hasRadarPos = true;
 	}
 }
 
@@ -126,7 +128,7 @@ void CRadarHandler::RemoveUnit(CUnit* unit)
 {
 	SCOPED_TIMER("Radar");
 
-	if (unit->oldRadarPos.x >= 0) {
+	if (unit->hasRadarPos) {
 		if (unit->jammerRadius) {
 			jammerMaps[unit->allyteam].AddMapArea(unit->oldRadarPos, unit->jammerRadius, -1);
 			commonJammerMap.AddMapArea(unit->oldRadarPos, unit->jammerRadius, -1);
@@ -150,6 +152,6 @@ void CRadarHandler::RemoveUnit(CUnit* unit)
 		if (unit->seismicRadius) {
 			seismicMaps[unit->allyteam].AddMapArea(unit->oldRadarPos, unit->seismicRadius, -1);
 		}
-		unit->oldRadarPos.x = -1;
+		unit->hasRadarPos = false;
 	}
 }

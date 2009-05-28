@@ -649,7 +649,6 @@ void CGame::ResizeEvent()
 }
 
 
-//called when the key is pressed by the user (can be called several times due to key repeat)
 int CGame::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (!gameOver && !isRepeat) {
@@ -862,7 +861,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 }
 
 
-//Called when a key is released by the user
 int CGame::KeyReleased(unsigned short k)
 {
 	//	keys[k] = false;
@@ -2120,7 +2118,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				}
 			}
 		}
-		logOutput.Print("GroupAI and LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
+		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (action.command == "godmode") {
 		if (!gs->cheatEnabled)
@@ -2625,6 +2623,7 @@ bool CGame::DrawWorld()
 	}
 
 	unitDrawer->DrawCloakedUnits();
+	featureHandler->DrawFadeFeatures();
 	ph->Draw(false);
 
 	if (drawSky) {
@@ -2753,18 +2752,26 @@ bool CGame::Draw() {
 	modelParser->Update();
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
+	fartextureHandler->CreateFarTextures();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
-
 	eventHandler.Update();
-
 	eventHandler.DrawGenesis();
+
+#ifdef USE_GML
+	//! in non GML builds runs in SimFrame!
+	ph->UpdateTextures();
+	sky->Update();
+#endif
 
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
 		for (int annoy = 0; annoy < 8; annoy++) {
 			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
+
+		GML_STDMUTEX_LOCK(sim); // Draw
+		
 		guihandler->RunLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
@@ -2786,11 +2793,6 @@ bool CGame::Draw() {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
 	}
-
-	ph->UpdateTextures();
-	fartextureHandler->CreateFarTextures();
-
-	sky->Update();
 
 //	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -3003,7 +3005,7 @@ bool CGame::Draw() {
 							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
 				}
 				smallFont->SetColors(&color, NULL);
-				float x = 0.76f, y = 0.01f + (0.02f * (count - a - 1));
+				float x = 0.88f, y = 0.005f + (0.0125f * (count - a - 1));
 				smallFont->glPrint(x, y, 1.0f, font_options, buf);
 			}
 		}
@@ -3156,6 +3158,10 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
+#ifndef USE_GML
+		ph->UpdateTextures();
+		sky->Update();
+#endif
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
@@ -3382,8 +3388,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_INTERNAL_SPEED: {
 				gs->speedFactor = *((float*) &inbuf[1]);
-				if (configHandler->Get("PitchAdjust", true))
-					sound->PitchAdjust(sqrt(gs->speedFactor));
+				sound->PitchAdjust(sqrt(gs->speedFactor));
 				//	logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
 				AddTraffic(-1, packetCode, dataLength);
 				break;

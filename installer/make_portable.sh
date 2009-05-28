@@ -4,8 +4,6 @@
 # Quit on error.
 set -e
 
-sh -c 'installer/springlobby_download.sh'
-
 # Sanity check.
 if [ ! -x /usr/bin/git ]; then
 	echo "Error: Couldn't find /usr/bin/git"
@@ -23,6 +21,8 @@ while [ ! -d installer ]; do
         fi
         cd ..
 done
+
+sh -c 'installer/springlobby_download.sh'
 
 set +e # turn of quit on error
 git describe --candidates 0 --tags &> /dev/null
@@ -62,7 +62,8 @@ cp -r game/* $dir_in_archive
 cp installer/downloads/*.exe installer/downloads/TASServer.jar $dir_in_archive
 cp -r installer/Springlobby/SettingsDlls/* installer/Springlobby/SLArchive/* $dir_in_archive
 touch $dir_in_archive/springlobby.conf # make SL go into portable mode
+touch $dir_in_archive/springsettings.cfg # make spring go into portable mode
 
-/usr/bin/zip -dc -dg -q -r -u -9 "$archive_filename" $dir_in_archive
+/usr/bin/zip -q -r -u -9 "$archive_filename" $dir_in_archive
 
 rm -rf $dir_in_archive

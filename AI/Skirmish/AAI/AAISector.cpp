@@ -17,13 +17,19 @@ AAISector::AAISector()
 
 AAISector::~AAISector(void)
 {
-	defences.clear();
-
 	attacked_by_this_game.clear();
 	attacked_by_learned.clear();
 
-	stat_combat_power.clear();
-	mobile_combat_power.clear();
+	my_stat_combat_power.clear();
+	enemy_stat_combat_power.clear();
+
+	my_mobile_combat_power.clear();
+	enemy_mobile_combat_power.clear();
+
+	my_combat_units.clear();
+	enemy_combat_units.clear();
+
+	my_buildings.clear();
 
 	combats_learned.clear();
 	combats_this_game.clear();
@@ -46,6 +52,21 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	this->top = top;
 	this->bottom = bottom;
 
+	// determine map border distance
+	map_border_dist = x;
+
+	if(map->xSectors - x < map_border_dist)
+		map_border_dist = map->xSectors - x;
+
+	if(y < map_border_dist)
+		map_border_dist = y;
+
+	if(map->ySectors - y < map_border_dist)
+		map_border_dist = map->ySectors - y;
+
+
+	continent = map->GetContinentID(&GetCenter());
+
 	// init all kind of stuff
 	freeMetalSpots = false;
 	interior = false;
@@ -57,7 +78,6 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	enemy_structures = 0;
 	own_structures = 0;
 	allied_structures = 0;
-	threat = 0;
 	failed_defences = 0;
 
 	int categories = ai->bt->assault_categories.size();
@@ -72,11 +92,16 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 
 	lost_units.resize((int)MOBILE_CONSTRUCTOR-(int)COMMANDER+1.0);
 
-	enemyUnitsOfType.resize((int)MOBILE_CONSTRUCTOR+1, 0);
-	unitsOfType.resize((int)MOBILE_CONSTRUCTOR+1, 0);
+	my_stat_combat_power.resize(categories, 0);
+	enemy_stat_combat_power.resize(categories, 0);
 
-	stat_combat_power.resize(categories, 0);
-	mobile_combat_power.resize(categories+1, 0);
+	my_mobile_combat_power.resize(categories+1, 0);
+	enemy_mobile_combat_power.resize(categories+1, 0);
+
+	my_combat_units.resize(categories, 0);
+	enemy_combat_units.resize(categories + 1, 0);
+
+	my_buildings.resize(METAL_MAKER+1, 0);
 }
 
 void AAISector::AddMetalSpot(AAIMetalSpot *spot)
@@ -339,6 +364,15 @@ float3 AAISector::GetCenterBuildsite(int building, bool water)
 	return map->GetCenterBuildsite(ai->bt->unitList[building-1], xStart, xEnd, yStart, yEnd, water);
 }
 
+float3 AAISector::GetRadarArtyBuildsite(int building, float range, bool water)
+{
+	int xStart, xEnd, yStart, yEnd;
+
+	GetBuildsiteRectangle(&xStart, &xEnd, &yStart, &yEnd);
+
+	return map->GetRadarArtyBuildsite(ai->bt->unitList[building-1], xStart, xEnd, yStart, yEnd, range, water);
+}
+
 float3 AAISector::GetHighestBuildsite(int building)
 {
 	if(building < 1)
@@ -428,33 +462,10 @@ void AAISector::SectorMapPos2Pos(float3 *pos, const UnitDef *def)
 	pos->z *= SQUARE_SIZE;
 }
 
-float AAISector::GetDefencePowerVs(UnitCategory category)
-{
-	float power = 0.5;
-
-	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); ++i)
-		power += ai->bt->GetEfficiencyAgainst(i->def_id, category);
-
-	return power;
-}
-
-float AAISector::GetDefencePowerVsID(int combat_cat_id)
-{
-	float power = 0.5;
-
-	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); ++i)
-		power +=  ai->bt->units_static[i->def_id].efficiency[combat_cat_id];
-
-	return power;
-}
-
 UnitCategory AAISector::GetWeakestCategory()
 {
 	UnitCategory weakest = UNKNOWN;
 	float importance, most_important = 0;
-
-	if(defences.size() > cfg->MAX_DEFENCES)
-		return UNKNOWN;
 
 	float learned = 60000 / (ai->cb->GetCurrentFrame() + 30000) + 0.5;
 	float current = 2.5 - learned;
@@ -467,7 +478,7 @@ UnitCategory AAISector::GetWeakestCategory()
 	{
 		for(list<UnitCategory>::iterator cat = ai->bt->assault_categories.begin(); cat != ai->bt->assault_categories.end(); ++cat)
 		{
-			importance = GetThreatBy(*cat, learned, current)/GetDefencePowerVs(*cat);
+			importance = GetThreatBy(*cat, learned, current) / ( 0.1f + GetMyDefencePowerAgainstAssaultCategory(*cat));
 
 			if(importance > most_important)
 			{
@@ -498,12 +509,89 @@ float AAISector::GetThreatBy(UnitCategory category, float learned, float current
 
 float AAISector::GetThreatByID(int combat_cat_id, float learned, float current)
 {
-	return 0.25f + (learned * attacked_by_learned[combat_cat_id] + current * attacked_by_this_game[combat_cat_id] ) / (learned + current);
+	return (learned * attacked_by_learned[combat_cat_id] + current * attacked_by_this_game[combat_cat_id] ) / (learned + current);
 }
 
-float AAISector::GetThreatTo(float ground, float air, float hover, float sea, float submarine)
+float AAISector::GetMyCombatPower(float ground, float air, float hover, float sea, float submarine)
 {
-	return (ground * stat_combat_power[0] + air * stat_combat_power[1] + hover * stat_combat_power[2] + sea * stat_combat_power[3] + submarine * stat_combat_power[4]);
+	return (ground * my_mobile_combat_power[0] + air * my_mobile_combat_power[1] + hover * my_mobile_combat_power[2] + sea * my_mobile_combat_power[3] + submarine * my_mobile_combat_power[4]);
+}
+
+float AAISector::GetEnemyCombatPower(float ground, float air, float hover, float sea, float submarine)
+{
+	return (ground * enemy_mobile_combat_power[0] + air * enemy_mobile_combat_power[1] + hover * enemy_mobile_combat_power[2] + sea * enemy_mobile_combat_power[3] + submarine * enemy_mobile_combat_power[4]);
+}
+
+float AAISector::GetMyCombatPowerAgainstCombatCategory(int combat_category)
+{
+	return my_mobile_combat_power[combat_category];
+}
+
+float AAISector::GetEnemyCombatPowerAgainstCombatCategory(int combat_category)
+{
+	return enemy_stat_combat_power[combat_category];
+}
+
+float AAISector::GetMyDefencePower(float ground, float air, float hover, float sea, float submarine)
+{
+	return (ground * my_stat_combat_power[0] + air * my_stat_combat_power[1] + hover * my_stat_combat_power[2] + sea * my_stat_combat_power[3] + submarine * my_stat_combat_power[4]);
+}
+
+float AAISector::GetEnemyDefencePower(float ground, float air, float hover, float sea, float submarine)
+{
+	return (ground * (enemy_stat_combat_power[0] + enemy_mobile_combat_power[0])
+		+ air * (enemy_stat_combat_power[1] + enemy_mobile_combat_power[1])
+		+ hover * (enemy_stat_combat_power[2] + enemy_mobile_combat_power[2])
+		+ sea * (enemy_stat_combat_power[3] + enemy_mobile_combat_power[3])
+		+ submarine * (enemy_stat_combat_power[4] + enemy_mobile_combat_power[4]) );
+}
+
+float AAISector::GetMyDefencePowerAgainstAssaultCategory(int assault_category)
+{
+	return my_stat_combat_power[assault_category];
+}
+
+float AAISector::GetEnemyDefencePowerAgainstAssaultCategory(int assault_category)
+{
+	return enemy_stat_combat_power[assault_category];
+}
+
+float AAISector::GetEnemyThreatToMovementType(unsigned int movement_type)
+{
+	if(movement_type && MOVE_TYPE_GROUND)
+		return enemy_stat_combat_power[0] + enemy_mobile_combat_power[0];
+	else if(movement_type && MOVE_TYPE_AIR)
+		return enemy_stat_combat_power[1] + enemy_mobile_combat_power[1];
+	else if(movement_type && MOVE_TYPE_HOVER)
+		return enemy_stat_combat_power[2] + enemy_mobile_combat_power[2];
+	else if(movement_type && MOVE_TYPE_FLOATER)
+		return enemy_stat_combat_power[3] + enemy_mobile_combat_power[3];
+	else if(movement_type && MOVE_TYPE_UNDERWATER)
+		return enemy_stat_combat_power[4] + enemy_mobile_combat_power[4];
+	else if(movement_type && MOVE_TYPE_SEA)
+		return 0.5 * (enemy_stat_combat_power[4] + enemy_mobile_combat_power[4] + enemy_stat_combat_power[3] + enemy_mobile_combat_power[3]);
+	else
+		return 0;
+}
+
+float AAISector::GetEnemyAreaCombatPowerVs(int combat_category, float neighbour_importance)
+{
+	float result = enemy_mobile_combat_power[combat_category];
+
+	// take neighbouring sectors into account (if possible)
+	if(x > 0)
+		result += neighbour_importance * ai->map->sector[x-1][y].enemy_mobile_combat_power[combat_category];
+
+	if(x < map->xSectors-1)
+		result += neighbour_importance * ai->map->sector[x+1][y].enemy_mobile_combat_power[combat_category];
+
+	if(y > 0)
+		result += neighbour_importance * ai->map->sector[x][y-1].enemy_mobile_combat_power[combat_category];
+
+	if(y < map->ySectors-1)
+		result += neighbour_importance * ai->map->sector[x][y+1].enemy_mobile_combat_power[combat_category];
+
+	return result;
 }
 
 float AAISector::GetLostUnits(float ground, float air, float hover, float sea, float submarine)
@@ -522,33 +610,7 @@ float AAISector::GetOverallThreat(float learned, float current)
 
 void AAISector::RemoveBuildingType(int def_id)
 {
-	unitsOfType[ai->bt->units_static[def_id].category] -= 1;
-
-	own_structures -= ai->bt->units_static[def_id].cost;
-
-	if(own_structures < 0)
-		own_structures = 0;
-}
-
-void AAISector::RemoveDefence(int unit_id)
-{
-	for(list<AAIDefence>::iterator i = defences.begin(); i != defences.end(); i++)
-	{
-		if(i->unit_id == unit_id)
-		{
-			defences.erase(i);
-			return;
-		}
-	}
-}
-
-void AAISector::AddDefence(int unit_id, int def_id)
-{
-	AAIDefence def;
-	def.unit_id = unit_id;
-	def.def_id = def_id;
-
-	defences.push_back(def);
+	my_buildings[ai->bt->units_static[def_id].category] -= 1;
 }
 
 float AAISector::GetWaterRatio()
@@ -570,27 +632,14 @@ float AAISector::GetWaterRatio()
 float AAISector::GetFlatRatio()
 {
 	// get number of cliffy tiles
-	float flat_ratio = ai->map->GetCliffyCells(left/SQUARE_SIZE, top/SQUARE_SIZE, ai->map->xSectorSizeMap, ai->map->ySectorSizeMap);
+	float flat_ratio = map->GetCliffyCells(left/SQUARE_SIZE, top/SQUARE_SIZE, map->xSectorSizeMap, map->ySectorSizeMap);
 
 	// get number of flat tiles
-	flat_ratio = (ai->map->xSectorSizeMap * ai->map->ySectorSizeMap) - flat_ratio;
+	flat_ratio = (float)(map->xSectorSizeMap * map->ySectorSizeMap) - flat_ratio;
 
-	flat_ratio /= (ai->map->xSectorSizeMap * ai->map->ySectorSizeMap);
+	flat_ratio /= (float)(map->xSectorSizeMap * map->ySectorSizeMap);
 
 	return flat_ratio;
-}
-
-float AAISector::GetMapBorderDist()
-{
-	float result = 2;
-
-	if(x == 0 || x == ai->map->xSectors-1)
-		result -= 0.5;
-
-	if(y == 0 || y == ai->map->ySectors-1)
-		result -= 0.5;
-
-	return result;
 }
 
 void AAISector::UpdateThreatValues(UnitCategory unit, UnitCategory attacker)
@@ -632,37 +681,6 @@ void AAISector::UpdateThreatValues(UnitCategory unit, UnitCategory attacker)
 
 		++lost_units[unit-COMMANDER];
 	}
-}
-
-
-float AAISector::GetAreaCombatPowerVs(int combat_category, float neighbour_importance)
-{
-	float result = mobile_combat_power[combat_category];
-
-	// take neighbouring sectors into account (if possible)
-	if(x > 0)
-		result += neighbour_importance * ai->map->sector[x-1][y].mobile_combat_power[combat_category];
-
-	if(x < map->xSectors-1)
-		result += neighbour_importance * ai->map->sector[x+1][y].mobile_combat_power[combat_category];
-
-	if(y > 0)
-		result += neighbour_importance * ai->map->sector[x][y-1].mobile_combat_power[combat_category];
-
-	if(y < map->ySectors-1)
-		result += neighbour_importance * ai->map->sector[x][y+1].mobile_combat_power[combat_category];
-
-	return result;
-}
-
-int AAISector::GetNumberOfBuildings()
-{
-	int result = 0;
-
-	for(int i = STATIONARY_DEF; i <= METAL_MAKER; ++i)
-		result += unitsOfType[i];
-
-	return result;
 }
 
 bool AAISector::PosInSector(float3 *pos)
@@ -782,3 +800,20 @@ void AAISector::GetMovePosOnContinent(float3 *pos, unsigned int movement_type, i
 	*pos = ZeroVector;
 }
 
+int AAISector::GetEdgeDistance()
+{
+	if(x > y)
+	{
+		if(y < map->ySectors - y)
+			return y;
+		else
+			return map->ySectors - y;
+	}
+	else
+	{
+		if(x < map->xSectors - x)
+			return x;
+		else
+			return map->xSectors - x;
+	}
+}

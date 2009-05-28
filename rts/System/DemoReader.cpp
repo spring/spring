@@ -63,11 +63,13 @@ CDemoReader::CDemoReader(const std::string& filename, float curTime)
 	nextDemoRead = curTime - 0.01f;
 
 	if (fileHeader.demoStreamSize != 0) {
-		bytesRemaining = fileHeader.demoStreamSize - sizeof(chunkHeader);
+		bytesRemaining = fileHeader.demoStreamSize;
 	} else {
-		// Spring crashed while recording the demo: replay until EOF.
-		bytesRemaining = INT_MAX;
+		// Spring crashed while recording the demo: replay until EOF,
+		// but at most filesize bytes to block watching demo of running game.
+		bytesRemaining = playbackDemo->FileSize() - fileHeader.headerSize - fileHeader.scriptSize;
 	}
+	bytesRemaining -= sizeof(chunkHeader);
 }
 
 netcode::RawPacket* CDemoReader::GetData(float curTime)

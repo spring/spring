@@ -127,18 +127,26 @@ void CWeaponProjectile::Collision()
 					weaponDef->dynDamageExp, weaponDef->dynDamageMin,
 					weaponDef->dynDamageInverted);
 
-		helper->Explosion(pos,
-			(weaponDef->dynDamageExp > 0) ? dynDamages : weaponDef->damages,
-			weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed, owner(), true,
-			weaponDef->noExplode ? 0.3f : 1,
-			weaponDef->noExplode || weaponDef->noSelfDamage, weaponDef->impactOnly,
-			weaponDef->explosionGenerator, 0, impactDir, weaponDef->id);
+		helper->Explosion(
+			pos,
+			(weaponDef->dynDamageExp > 0)? dynDamages: weaponDef->damages,
+			weaponDef->areaOfEffect,
+			weaponDef->edgeEffectiveness,
+			weaponDef->explosionSpeed,
+			owner(),
+			true,
+			weaponDef->noExplode? 0.3f: 1.0f,
+			weaponDef->noExplode || weaponDef->noSelfDamage,
+			weaponDef->impactOnly,
+			weaponDef->explosionGenerator,
+			0,
+			impactDir,
+			weaponDef->id
+		);
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {
-		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this,
-			weaponDef->soundhit.getVolume(0));
+		Channels::Battle.PlaySample(weaponDef->soundhit.getID(0), this, weaponDef->soundhit.getVolume(0));
 	}
 
 	if (!weaponDef->noExplode){
@@ -181,13 +189,22 @@ void CWeaponProjectile::Collision(CUnit* unit)
 			damages = weaponDef->damages;
 		}
 
-		helper->Explosion(pos, damages,
-			weaponDef->areaOfEffect, weaponDef->edgeEffectiveness,
-			weaponDef->explosionSpeed, owner(), true,
-			weaponDef->noExplode ? 0.3f : 1,
-			weaponDef->noExplode, weaponDef->impactOnly,
-			weaponDef->explosionGenerator, unit,
-			impactDir, weaponDef->id);
+		helper->Explosion(
+			pos,
+			damages,
+			weaponDef->areaOfEffect,
+			weaponDef->edgeEffectiveness,
+			weaponDef->explosionSpeed,
+			owner(),
+			true,
+			weaponDef->noExplode? 0.3f: 1.0f,
+			weaponDef->noExplode || weaponDef->noSelfDamage,
+			weaponDef->impactOnly,
+			weaponDef->explosionGenerator,
+			unit,
+			impactDir,
+			weaponDef->id
+		);
 	}
 
 	if (weaponDef->soundhit.getID(0) > 0) {

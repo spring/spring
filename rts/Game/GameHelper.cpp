@@ -168,13 +168,15 @@ void CGameHelper::DoExplosionDamage(CFeature* feature,
 }
 
 
-void CGameHelper::Explosion(float3 expPos, const DamageArray& damages,
-                            float expRad, float edgeEffectiveness,
-                            float expSpeed, CUnit* owner,
-                            bool damageGround, float gfxMod, bool ignoreOwner, bool impactOnly,
-                            CExplosionGenerator* explosionGraphics, CUnit* hit,
-                            const float3& impactDir, int weaponId)
-{
+void CGameHelper::Explosion(
+	float3 expPos, const DamageArray& damages,
+	float expRad, float edgeEffectiveness,
+	float expSpeed, CUnit* owner,
+	bool damageGround, float gfxMod,
+	bool ignoreOwner, bool impactOnly,
+	CExplosionGenerator* explosionGraphics, CUnit* hit,
+	const float3& impactDir, int weaponId
+) {
 	if (luaUI) {
 		if ((weaponId >= 0) && (weaponId <= weaponDefHandler->numWeaponDefs)) {
 			WeaponDef& wd = weaponDefHandler->weaponDefs[weaponId];

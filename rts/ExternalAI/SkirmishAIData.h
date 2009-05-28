@@ -20,6 +20,10 @@
 #ifndef _SKIRMISHAIDATA_H
 #define _SKIRMISHAIDATA_H
 
+#include <string>
+#include <vector>
+#include <map>
+
 /**
  * Contains everything needed to initialize a Skirmish AI instance.
  * @see Game/GameSetup
@@ -34,11 +38,11 @@ struct SkirmishAIData {
 	std::string name;
 	/** Id of the team this Skirmish AI is controlling. */
 	int team;
-	/** The player whichs computer this AI runs on. */
-	int host;
+	/** Number of the player whose computer this AI runs on. */
+	int hostPlayerNum;
 	std::string shortName;
 	std::string version;
-	bool isLuaAI;
+	std::vector<std::string> optionKeys;
 	std::map<std::string, std::string> options;
 };
 

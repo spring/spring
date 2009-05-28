@@ -30,7 +30,6 @@ CR_REG_METADATA(UnitType, (
 	CR_MEMBER(isHub),
 	CR_MEMBER(techLevel),
 	CR_MEMBER(costMultiplier),
-	/// CR_MEMBER(sides),
 	CR_POSTLOAD(PostLoad)
 ));
 
@@ -125,18 +124,19 @@ CR_REG_METADATA(MetalExtractor, (
 
 
 AIClasses::AIClasses(IGlobalAICallback* gcb):
-	logger(NULL),
-	math(NULL),
-	ut(NULL),
+	econTracker(NULL),
+	bu(NULL),
 	mm(NULL),
+	math(NULL),
 	pather(NULL),
+	ut(NULL),
 	tm(NULL),
 	uh(NULL),
 	dm(NULL),
-	econTracker(NULL),
-	bu(NULL),
 	ah(NULL),
-	dgunConHandler(NULL)
+	logger(NULL),
+	dgunConHandler(NULL),
+	ct(NULL)
 {
 	cb  = gcb->GetAICallback();
 	ccb = gcb->GetCheatInterface();
@@ -147,6 +147,7 @@ AIClasses::~AIClasses() {
 		delete MyUnits[i];
 	}
 
+	delete ct;
 	delete logger;
 	delete ah;
 	delete bu;
@@ -171,6 +172,7 @@ void AIClasses::Init() {
 	}
 
 	logger         = new CLogger(cb);
+	ct             = new CCommandTracker(this);
 	math           = new CMaths(this);
 	ut             = new CUnitTable(this);
 	mm             = new CMetalMap(this);
@@ -196,6 +198,7 @@ void AIClasses::Load() {
 	// AI components; the ones that were serialized
 	// have their own PostLoad() callins
 	logger  = new CLogger(cb);
+	ct      = new CCommandTracker(this);
 	math    = new CMaths(this);
 	mm      = new CMetalMap(this);
 	pather  = new CPathFinder(this);

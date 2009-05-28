@@ -839,7 +839,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		unimportantMove = false;
 		orderTarget = NULL;
 		const Command& cmd = commandQue.front();
-		eoh->CommandFinished(*owner, cmd.id);
+		eoh->CommandFinished(*owner, cmd);
 		eventHandler.UnitCmdDone(owner, cmd.id, cmd.tag);
 	}
 
@@ -1125,7 +1125,7 @@ void CCommandAI::ExecuteAttack(Command &c)
 
 		if (c.params.size() == 1) {
 			const unsigned int targetID = (unsigned int) c.params[0];
-			const bool legalTarget      = (targetID < uh->MaxUnits());
+			const bool legalTarget      = (targetID >= 0) && (targetID < uh->MaxUnits());
 			CUnit* targetUnit           = (legalTarget)? uh->units[targetID]: 0x0;
 
 			if (legalTarget && targetUnit != 0x0 && targetUnit != owner) {
@@ -1360,7 +1360,7 @@ void CCommandAI::FinishCommand(void)
 	targetDied = false;
 	unimportantMove = false;
 	orderTarget = 0;
-	eoh->CommandFinished(*owner, cmdID);
+	eoh->CommandFinished(*owner, cmd);
 	eventHandler.UnitCmdDone(owner, cmdID, cmdTag);
 
 	if (commandQue.empty()) {
@@ -1541,9 +1541,13 @@ void CCommandAI::StopAttackingAllyTeam(int ally)
 	// erasing in the middle invalidates all iterators
 	for (CCommandQueue::iterator it = commandQue.begin(); it != commandQue.end(); ++it) {
 		const Command &c = *it;
-		if ((c.id == CMD_FIGHT || c.id == CMD_ATTACK) && c.params.size() == 1 &&
-				uh->units[(int)c.params[0]]->allyteam == ally)
-			todel.push_back(it - commandQue.begin());
+		if ((c.id == CMD_FIGHT || c.id == CMD_ATTACK) && c.params.size() == 1) {
+			int targetId = (int)c.params[0];
+			if (targetId < uh->MaxUnits() && uh->units[targetId]
+					&& uh->units[targetId]->allyteam == ally) {
+				todel.push_back(it - commandQue.begin());
+			}
+		}
 	}
 	for (std::vector<int>::reverse_iterator it = todel.rbegin(); it != todel.rend(); ++it) {
 		commandQue.erase(commandQue.begin() + *it);

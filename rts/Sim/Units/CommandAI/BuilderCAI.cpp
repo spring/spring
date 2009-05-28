@@ -782,7 +782,7 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 			if(c.params.size() == 5) {
 				float3 pos(c.params[1], c.params[2], c.params[3]);
 				float radius=c.params[4]+100; // do not walk too far outside reclaim area
-				if(unit && ((pos-unit->pos).SqLength2D()>radius*radius || 
+				if(unit && ((pos-unit->pos).SqLength2D()>radius*radius ||
 					(fac->curReclaim == unit && unit->isMoving && !ObjInBuildRange(unit)) ||
 					(unit->unitDef->builder && !unit->commandAI->commandQue.empty() && teamHandler->Ally(owner->allyteam, unit->allyteam)))) {
 					StopMove();
@@ -925,9 +925,10 @@ void CBuilderCAI::ExecutePatrol(Command& c)
 	commandQue.push_back(c);
 	commandQue.pop_front();
 	commandQue.push_front(temp);
-	eoh->CommandFinished(*owner, CMD_PATROL);
+	Command tmpC;
+	tmpC.id = CMD_PATROL;
+	eoh->CommandFinished(*owner, tmpC);
 	SlowUpdate();
-	return;
 }
 
 
@@ -1136,8 +1137,7 @@ bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
 		}
 
 		const int cmdUnitId = (int)c.params[0];
-		if (cmdUnitId == unit->id && 
-			(!friendUnit || teamHandler->Ally(friendUnit->team, (*it)->team))) {
+		if (cmdUnitId == unit->id && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
 			retval = true;
 			break;
 		}
@@ -1168,8 +1168,7 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 		}
 
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-uh->MaxUnits() == featureId && 
-			(!friendUnit || teamHandler->Ally(friendUnit->team, (*it)->team))) {
+		if (cmdFeatureId-uh->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
 			retval = true;
 			break;
 		}
@@ -1200,8 +1199,7 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 		}
 
 		const int cmdFeatureId = (int)c.params[0];
-		if (cmdFeatureId-uh->MaxUnits() == featureId && 
-			(!friendUnit || teamHandler->Ally(friendUnit->team, (*it)->team))) {
+		if (cmdFeatureId-uh->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
 			retval = true;
 			break;
 		}
@@ -1394,7 +1392,7 @@ bool CBuilderCAI::FindCaptureTargetAndCapture(const float3& pos, float radius,
 	for (ui = cu.begin(); ui != cu.end(); ++ui) {
 		CUnit* unit = *ui;
 
-		if ((((options & CONTROL_KEY) && owner->team != unit->team) || 
+		if ((((options & CONTROL_KEY) && owner->team != unit->team) ||
 			!teamHandler->Ally(owner->allyteam, unit->allyteam)) && (unit != owner) &&
 			(unit->losStatus[owner->allyteam] & (LOS_INRADAR|LOS_INLOS)) &&
 			!unit->beingBuilt && unit->unitDef->capturable) {

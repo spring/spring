@@ -80,6 +80,14 @@ bool LuaIO::SafeWritePath(const string& path)
 		prefix = lh->GetName() + "/" + "Write";
 	}
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
+	const size_t numExtensions = 5;
+	const char* exeFiles[numExtensions] = {"exe", "dll", "so", "bat", "com"};
+	const string ext = GetFileExt(path);
+	for (size_t i = 0; i < numExtensions; ++i)
+	{
+		if (ext == exeFiles[i])
+			return false;
+	}
 	return filesystem.InWriteDir(path, prefix);
 }
 
@@ -142,8 +150,7 @@ int LuaIO::remove(lua_State* L, const char* pathname)
 
 int LuaIO::rename(lua_State* L, const char* oldpath, const char* newpath)
 {
-	if (!SafeWritePath(oldpath) ||
-			!SafeWritePath(newpath)) {
+	if (!SafeWritePath(oldpath) || !SafeWritePath(newpath)) {
 		errno = EPERM; //EACCESS?
 		return -1;
 	}

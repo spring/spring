@@ -801,7 +801,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 
-	if (uh->unitsByDefs[teamID][unitDef->id].size() >= static_cast<size_t>(unitDef->maxThisUnit)) {
+	if (!uh->CanBuildUnit(unitDef, teamID)) {
 		return 0; // unit limit reached
 	}
 
@@ -1446,21 +1446,23 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 		return 0;
 	}
 
-	CPlasmaRepulser* shield = NULL;
-	const int idx = luaL_optint(L, 2, -1);
+	int args = lua_gettop(L);
+	int arg = 2;
 
-	if (idx < 0 || idx >= unit->weapons.size()) {
-		shield = (CPlasmaRepulser*) unit->shieldWeapon;
-	} else {
-		shield = dynamic_cast<CPlasmaRepulser*>(unit->weapons[idx]);
+	CPlasmaRepulser* shield = (CPlasmaRepulser*) unit->shieldWeapon;
+	if (lua_isnumber(L, 2) && args > 2) {
+		arg++;
+		const int idx = luaL_optint(L, 2, -1);
+		if (idx >= 0 && idx < unit->weapons.size())
+			shield = dynamic_cast<CPlasmaRepulser*>(unit->weapons[idx]);
 	}
 
 	if (shield == NULL) {
 		return 0;
 	}
 
-	if (lua_isboolean(L, 2)) { shield->isEnabled = lua_toboolean(L, 2); }
-	if (lua_isnumber(L, 3)) { shield->curPower = lua_tofloat(L, 3); }
+	if (lua_isboolean(L, arg)) { shield->isEnabled = lua_toboolean(L, arg);	arg++; }
+	if (lua_isnumber(L, arg)) { shield->curPower = lua_tofloat(L, arg); }
 	return 0;
 }
 
