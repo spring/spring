@@ -3001,7 +3001,7 @@ bool CGame::Draw() {
 							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
 				}
 				smallFont->SetColors(&color, NULL);
-				float x = 0.76f, y = 0.01f + (0.02f * (count - a - 1));
+				float x = 0.88f, y = 0.005f + (0.0125f * (count - a - 1));
 				smallFont->glPrint(x, y, 1.0f, font_options, buf);
 			}
 		}
