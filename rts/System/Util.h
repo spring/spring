@@ -86,7 +86,7 @@ namespace proc {
 	// function inlining breaks the stack layout this assumes
 	// force a common calling convention across all platforms
 	__attribute__((__noinline__))
-	__attribute__((cdecl))
+	// __attribute__((cdecl))
 	static void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
 		unsigned int t = 0;
@@ -135,7 +135,7 @@ namespace proc {
 		return rEAX;
 	}
 
-	static inline unsigned int GetProcSSEBits()
+	static unsigned int GetProcSSEBits()
 	{
 		unsigned int rEAX = 0;
 		unsigned int rEBX = 0;
