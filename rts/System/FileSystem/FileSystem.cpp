@@ -313,9 +313,11 @@ bool FileSystemHandler::DirIsWritable(const std::string& dir)
 	const char *testdata = "THIS IS A TEST";
 	os << testdata;
 	os.close();
+
+	// this part should only be needed when there's no manifest embedded
 	std::ifstream is(testfile.c_str());
 	if (is.fail())
-		return false;
+		return false; // the file most likely exists in the virtual store
 	std::string input;
 	getline(is, input);
 	if (input != testdata) {
