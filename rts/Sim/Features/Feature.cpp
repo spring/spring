@@ -260,6 +260,10 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 			if (reclaimLeft >= 1) {
 				isRepairingBeforeResurrect = false; // They can start reclaiming it again if they so wish
 				reclaimLeft = 1;
+			} else if (reclaimLeft <= 0) {
+				// this can happen when a mod tampers the feature in AllowFeatureBuildStep
+				featureHandler->DeleteFeature(this);
+				return false;
 			}
 			return true;
 		}
