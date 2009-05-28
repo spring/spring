@@ -84,25 +84,13 @@ template<class T> void SafeDelete(T &a)
 namespace proc {
 	#if defined(__GNUC__)
 	// function inlining breaks the stack layout this assumes
-	// force a common calling convention across all platforms
 	__attribute__((__noinline__))
-	// __attribute__((cdecl))
 	static void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
-		unsigned int t = 0;
-		__asm__ __volatile__ (
-			" mov %5, %%eax;"
-			" mov %6, %%ecx;"
-			" mov %%ebx, %0;"
-			" cpuid;"
-			" mov %%eax, %1;"
-			" mov %%ebx, %2;"
-			" mov %%ecx, %3;"
-			" mov %%edx, %4;"
-			" mov %7, %%ebx"
-			: "=r" (t), "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
-			: "a" (*a), "c" (*c), "r" (t)
-			: "ebx" // redundant?
+		__asm__ __volatile__(
+			"cpuid"
+			: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
+			: "0" (*a)
 		);
 	}
 	#else
