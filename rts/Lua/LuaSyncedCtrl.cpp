@@ -1548,11 +1548,11 @@ int LuaSyncedCtrl::SetUnitShieldState(lua_State* L)
 	int args = lua_gettop(L);
 	int arg = 2;
 
-	CPlasmaRepulser* shield = (CPlasmaRepulser*)unit->shieldWeapon;
+	CPlasmaRepulser* shield = (CPlasmaRepulser*) unit->shieldWeapon;
 	if (lua_isnumber(L, 2) && arg>2) {
 		arg++;
 		const int idx = luaL_optint(L, 2, -1);
-		if (idx >= 0 || idx < unit->weapons.size())
+		if (idx >= 0 && idx < unit->weapons.size())
 			shield = dynamic_cast<CPlasmaRepulser*>(unit->weapons[idx]);
 	}
 
