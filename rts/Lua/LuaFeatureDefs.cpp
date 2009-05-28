@@ -77,7 +77,7 @@ bool LuaFeatureDefs::PushEntries(lua_State* L)
 				HSTR_PUSH(L, "__index");
 				lua_pushlightuserdata(L, (void*)fd);
 				lua_pushcclosure(L, FeatureDefIndex, 1);
-				lua_rawset(L, -3); // closure 
+				lua_rawset(L, -3); // closure
 
 				HSTR_PUSH(L, "__newindex");
 				lua_pushlightuserdata(L, (void*)fd);
@@ -334,7 +334,7 @@ static int ModelHeight(lua_State* L, const void* data)
 	const FeatureDef* fd = ((const FeatureDef*)data);
 	float height = 0.0f;
 	switch (fd->drawType) {
-		case DRAWTYPE_3DO:  { height = LoadModel(fd)->height;  break; }
+		case DRAWTYPE_MODEL:  { height = LoadModel(fd)->height;  break; }
 		case DRAWTYPE_TREE: { height = TREE_RADIUS * 2.0f;     break; }
 		case DRAWTYPE_NONE: { height = 0.0f;                   break; }
 		default:            { height = 0.0f;                   break; }
@@ -349,7 +349,7 @@ static int ModelRadius(lua_State* L, const void* data)
 	const FeatureDef* fd = ((const FeatureDef*)data);
 	float radius = 0.0f;
 	switch (fd->drawType) {
-		case DRAWTYPE_3DO:  { radius = LoadModel(fd)->radius;  break; }
+		case DRAWTYPE_MODEL:  { radius = LoadModel(fd)->radius;  break; }
 		case DRAWTYPE_TREE: { radius = TREE_RADIUS;            break; }
 		case DRAWTYPE_NONE: { radius = 0.0f;                   break; }
 		default:            { radius = 0.0f;                   break; }
@@ -363,7 +363,7 @@ static int ModelRadius(lua_State* L, const void* data)
 	static int Model ## name(lua_State* L, const void* data) \
 	{                                                        \
 		const FeatureDef* fd = ((const FeatureDef*)data);     \
-		if (fd->drawType == DRAWTYPE_3DO) {                     \
+		if (fd->drawType == DRAWTYPE_MODEL) {                     \
 			const S3DModel* model = LoadModel(fd);            \
 			lua_pushnumber(L, model -> param);                   \
 			return 1;                                            \
