@@ -3768,7 +3768,10 @@ void CGame::ClientReadNet()
 
 				unsigned numPlayersInTeam = 0;
 				for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-					if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == fromTeam)) {
+					CPlayer* playah = playerHandler->Player(a);
+
+					// do not count spectators or demos will desync
+					if (playah->active && !playah->spectator && playah->team == fromTeam) {
 						++numPlayersInTeam;
 					}
 				}
@@ -3777,6 +3780,7 @@ void CGame::ClientReadNet()
 				{
 					case TEAMMSG_GIVEAWAY: {
 						const int toTeam = inbuf[3];
+
 						if (numPlayersInTeam == 1) {
 							teamHandler->Team(fromTeam)->GiveEverythingTo(toTeam);
 							teamHandler->Team(fromTeam)->leader = -1;
