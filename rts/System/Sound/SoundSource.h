@@ -33,12 +33,18 @@ public:
 		return (id != 0);
 	};
 
+	static void SetHeightRolloffModifer(float mod)
+	{
+		heightAdjustedRolloffModifier = mod;
+	};
+
 private:
 	/// pitch shared by all sources
 	static float globalPitch;
 	ALuint id;
 	SoundItem* curPlaying;
 	unsigned loopStop;
+	static float heightAdjustedRolloffModifier;
 };
 
 #endif

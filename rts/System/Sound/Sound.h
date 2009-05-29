@@ -40,14 +40,6 @@ public:
 	void PrintDebugInfo();
 	bool LoadSoundDefs(const std::string& filename);
 
-	float GetExtraRolloff() { return extraRolloff; }
-	void SetExtraRolloff(float newRolloff) {
-		if (newRolloff < 0.f)
-			extraRolloff = 0.f;
-		else
-			extraRolloff = newRolloff;
-	}
-
 private:
 
 	size_t LoadALBuffer(const std::string& path, bool strict);
@@ -57,7 +49,6 @@ private:
 	boost::shared_ptr<SoundBuffer> GetWaveBuffer(const std::string& path, bool hardFail = true);
 
 	float masterVolume;
-	float extraRolloff;
 	bool mute;
 	bool appIsIconified; // do not play when minimized / iconified
 	bool pitchAdjust;
@@ -67,8 +58,6 @@ private:
 	soundMapT soundMap;
 	soundVecT sounds;
 
-	/// some scale, so camera above will still hear sounds from far below
-	float3 posScale;
 	/// unscaled
 	float3 myPos;
 	float3 prevVelocity;
