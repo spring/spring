@@ -174,6 +174,7 @@ public:
 	void AttachUnit(int piece, int unit);
 	void DropUnit(int unit);
 	void Explode(int piece, int flags);
+	void Shatter(int piece, const float3& pos, const float3& speed);
 	void ShowFlare(int piece);
 	int GetUnitVal(int val, int p1, int p2, int p3, int p4);
 	void SetUnitVal(int val, int param);
