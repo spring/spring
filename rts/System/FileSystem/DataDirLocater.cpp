@@ -147,15 +147,22 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 		// like network mounted datadir lost connection and suddenly files end up in some
 		// other random writedir you didn't even remember you had added it.
 		if (!writedir && access(d->path.c_str(), W_OK) == 0) {
-#else
-	if (_access(d->path.c_str(), 4) == 0) {
-		if (!writedir && _access(d->path.c_str(), 2) == 0) {
-#endif
 			d->writable = true;
 			writedir = &*d;
 		}
 		return true;
-	} else {
+	}
+#else
+	if (_access(d->path.c_str(), 4) == 0
+			&& FileSystemHandler::GetInstance().DirIsWritable(d->path)) {
+		if (!writedir) {
+			d->writable = true;
+			writedir = &*d;
+		}
+		return true;
+	}
+#endif
+	else {
 		if (filesystem.CreateDirectory(d->path)) {
 			// it didn't exist before, now it does and we just created it with rw access,
 			// so we just assume we still have read-write acces...
@@ -242,6 +249,14 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(SubstEnvVars(userDef));
 	}
 
+#ifdef WIN32
+	// try current directory first, exe dir later
+	TCHAR currentDir[MAX_PATH];
+	::GetCurrentDirectory(sizeof(currentDir) - 1, currentDir);
+	std::string curPath = currentDir;
+	AddDirs(std::string(currentDir));
+#endif
+
 	AddDirs(Platform::GetBinaryPath());
 
 #ifdef WIN32
@@ -281,10 +296,10 @@ void DataDirLocater::LocateDataDirs()
 	// CFRelease(mainBundleURL);
 	// CFRelease(cfStringRef);
 	// std::string path(cPath);
-	
+
 	// datadirs.clear();
 	// writedir = NULL;
-	
+
 	// // Add bundle resources:
 	// datadirs.push_back(path + "/Contents/Resources/");
 	// datadirs.rbegin()->readable = true;

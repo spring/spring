@@ -58,15 +58,13 @@ private:
 	soundMapT soundMap;
 	soundVecT sounds;
 
-	/// some scale, so camera above will still hear sounds from far below
-	float3 posScale;
 	/// unscaled
 	float3 myPos;
 	float3 prevVelocity;
 
 	typedef boost::ptr_vector<SoundSource> sourceVecT;
 	sourceVecT sources;
-	
+
 	unsigned numEmptyPlayRequests;
 	unsigned updateCounter;
 

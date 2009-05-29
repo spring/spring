@@ -233,7 +233,7 @@ void CTeam::GiveEverythingTo(const unsigned toTeam)
 	CTeam* target = teamHandler->Team(toTeam);
 
 	if (!target) {
-		logOutput.Print("Team %i didn't exists, can't give units", toTeam);
+		logOutput.Print("Team %i does not exist, can't give units", toTeam);
 		return;
 	}
 
