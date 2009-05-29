@@ -736,14 +736,6 @@ void CUnitScript::Explode(int piece, int flags)
 	if (flags & PF_NONE) return;
 
 	// This means that we are going to do a full fledged piece explosion!
-	int newflags = 0;
-	newflags |= PF_Fall; // if they don't fall they could live forever
-	if (flags & PF_Explode) { newflags |= PF_Explode; }
-//	if (flags & PF_Fall) { newflags |=  PF_Fall; }
-	if ((flags & PF_Smoke) && ph->particleSaturation < 1) { newflags |= PF_Smoke; }
-	if ((flags & PF_Fire) && ph->particleSaturation < 0.95f) { newflags |= PF_Fire; }
-	if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
-
 	float3 baseSpeed = unit->speed + unit->residualImpulse * 0.5f;
 	float sql = baseSpeed.SqLength();
 
@@ -768,7 +760,15 @@ void CUnitScript::Explode(int piece, int flags)
 	}
 	else {
 		LocalModelPiece* pieceData = pieces[piece];
+
 		if (pieceData->original != NULL) {
+			int newflags = PF_Fall; // if they don't fall they could live forever
+			if (flags & PF_Explode) { newflags |= PF_Explode; }
+			//if (flags & PF_Fall) { newflags |=  PF_Fall; }
+			if ((flags & PF_Smoke) && ph->particleSaturation < 1) { newflags |= PF_Smoke; }
+			if ((flags & PF_Fire) && ph->particleSaturation < 0.95f) { newflags |= PF_Fire; }
+			if (flags & PF_NoCEGTrail) { newflags |= PF_NoCEGTrail; }
+
 			//logOutput.Print("Exploding %s as %d", script.pieceNames[piece].c_str(), dl);
 			new CPieceProjectile(pos, speed, pieceData, newflags,unit,0.5f);
 		}
