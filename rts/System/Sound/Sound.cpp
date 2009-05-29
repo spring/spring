@@ -3,6 +3,7 @@
 #include "Sound.h"
 
 #include <cstdlib>
+#include <cmath>
 #include <AL/alc.h>
 #include <boost/cstdint.hpp>
 
@@ -35,7 +36,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
-	SetExtraRolloff(configHandler->Get("snd_extrarolloff", 0.0f));
 
 	if (maxSounds <= 0)
 	{
@@ -112,9 +112,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	temp["name"] = "EmptySource";
 	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
 	sounds.push_back(empty);
-	posScale.x = 1.0f;
-	posScale.y = 0.1f;
-	posScale.z = 1.0f;
 
 	LoadSoundDefs("gamedata/sounds.lua");
 
@@ -241,10 +238,6 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 			PitchAdjust(1.0);
 		pitchAdjust = tempPitchAdjust;
 	}
-	else if (key == "snd_extrarolloff")
-	{
-		SetExtraRolloff(std::atof(value.c_str()));
-	}
 }
 
 bool CSound::Mute()
@@ -319,7 +312,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	}
 
 	if (found1Free)
-		sources[minPos].Play(&sounds[id], p * posScale, velocity, volume, relative);
+		sources[minPos].Play(&sounds[id], p, velocity, volume, relative);
 	CheckError("CSound::PlaySample");
 }
 
@@ -351,9 +344,9 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 		return;
 	const float3 prevPos = myPos;
 	myPos = campos;
-	const float3 posScaled = myPos * posScale;
-	alListener3f(AL_POSITION, posScaled.x, posScaled.y, posScaled.z);
+	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 
+	SoundSource::SetHeightRolloffModifer(std::min(5.*600./campos.y, 5.0));
 	//TODO: reactivate when it does nto go crazy on camera "teleportation" or fast movement,
 	// like when clicked on minimap
 	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);

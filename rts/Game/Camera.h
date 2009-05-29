@@ -8,7 +8,7 @@
 #include "Rendering/GL/myGL.h"
 
 
-class CCamera  
+class CCamera
 {
 public:
 	float3 CalcPixelDir(int x,int y);
