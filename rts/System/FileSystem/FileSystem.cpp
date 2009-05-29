@@ -297,6 +297,42 @@ bool FileSystemHandler::DirExists(const std::string& dir)
 }
 
 
+bool FileSystemHandler::DirIsWritable(const std::string& dir)
+{
+#ifdef _WIN32
+	// this exists because _access doesn't do the right thing
+	// see http://msdn.microsoft.com/en-us/library/1w06ktdy(VS.71).aspx
+	// for now, try to create a temporary file in a directory and open it
+	// to rule out the possibility of it being created in the virtual store
+	// TODO perhaps use SECURITY_DESCRIPTOR winapi calls here
+
+	std::string testfile = dir + "\\__$testfile42$.test";
+	std::ofstream os(testfile.c_str());
+	if (os.fail())
+		return false;
+	const char *testdata = "THIS IS A TEST";
+	os << testdata;
+	os.close();
+
+	// this part should only be needed when there's no manifest embedded
+	std::ifstream is(testfile.c_str());
+	if (is.fail())
+		return false; // the file most likely exists in the virtual store
+	std::string input;
+	getline(is, input);
+	if (input != testdata) {
+		unlink(testfile.c_str());
+		return false;
+	}
+	is.close();
+	unlink(testfile.c_str());
+	return true;
+#else
+	return (access(dir.c_str(), W_OK) == 0);
+#endif
+}
+
+
 static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, int flags)
 {
 #ifdef _WIN32

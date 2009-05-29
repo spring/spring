@@ -380,6 +380,10 @@ GLuint CFontTextureRenderer::CreateTexture()
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	}
+	else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	}
 	static const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlas);
@@ -1255,7 +1259,7 @@ void CglFont::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& co
 			}
 		}
 		wi = wi2;
-		wi++;	
+		wi++;
 	}
 }
 
@@ -1409,7 +1413,7 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 		0.2126f * math::powf(textColor[0], 2.2) +
 		0.7152f * math::powf(textColor[1], 2.2) +
 		0.0722f * math::powf(textColor[2], 2.2);
- 
+
 	const float lumdiff = std::max(luminosity,darkLuminosity) / std::min(luminosity,darkLuminosity);
 	if (lumdiff > 5.0f) {
 		return &darkOutline;
@@ -1489,7 +1493,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 {
 	/**
 	 * NOTE:
-	 * Font rendering does not use display lists, but VAs. It's actually faster 
+	 * Font rendering does not use display lists, but VAs. It's actually faster
 	 * (450% faster with a 7600GT!) for these reasons:
 	 *
 	 * 1. When using DLs, we can not group multiple glyphs into one glBegin/End pair

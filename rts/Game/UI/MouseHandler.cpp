@@ -93,9 +93,9 @@ CMouseHandler::CMouseHandler()
 	soundMultiselID = sound->GetSoundId("MultiSelect", false);
 
 	invertMouse = !!configHandler->Get("InvertMouse",0);
-	doubleClickTime = (float)configHandler->Get("DoubleClickTime", 200) / 1000.0f;
+	doubleClickTime = configHandler->Get("DoubleClickTime", 200.0f) / 1000.0f;
 
-	scrollWheelSpeed = (float)configHandler->Get("ScrollWheelSpeed", 25);
+	scrollWheelSpeed = configHandler->Get("ScrollWheelSpeed", 25.0f);
 	scrollWheelSpeed = std::max(-255.0f, std::min(255.0f, scrollWheelSpeed));
 }
 
@@ -493,10 +493,10 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 
 void CMouseHandler::MouseWheel(float delta)
 {
-	delta *= scrollWheelSpeed;
-	if (eventHandler.MouseWheel(delta>1.0f, delta)) {
+	if (eventHandler.MouseWheel(delta>0.0f, delta)) {
 		return;
 	}
+	delta *= scrollWheelSpeed;
 	camHandler->GetCurrentController().MouseWheelMove(delta);
 }
 
