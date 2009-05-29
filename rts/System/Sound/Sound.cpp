@@ -35,6 +35,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
+	SetExtraRolloff(configHandler->Get("snd_extrarolloff", 0.0f));
 
 	if (maxSounds <= 0)
 	{
@@ -46,7 +47,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		//const ALchar* deviceName = "ALSA Software on SB Live 5.1 [SB0220] [Multichannel Playback]";
 		const ALchar* deviceName = NULL;
 		ALCdevice *device = alcOpenDevice(deviceName);
-		
+
 		if (device == NULL)
 		{
 			LogObject(LOG_SOUND) <<  "Could not open a sounddevice, disabling sounds";
@@ -105,7 +106,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 
 		alListenerf(AL_GAIN, masterVolume);
 	}
-	
+
 	SoundBuffer::Initialise();
 	soundItemDef temp;
 	temp["name"] = "EmptySource";
@@ -240,6 +241,10 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 			PitchAdjust(1.0);
 		pitchAdjust = tempPitchAdjust;
 	}
+	else if (key == "snd_extrarolloff")
+	{
+		SetExtraRolloff(std::atof(value.c_str()));
+	}
 }
 
 bool CSound::Mute()
@@ -281,7 +286,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 		numEmptyPlayRequests++;
 		return;
 	}
-	
+
 	if (p.distance(myPos) > sounds[id].MaxDistance())
 	{
 		if (!relative)
@@ -476,7 +481,7 @@ size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 
 	if (sources.empty())
 		return 0;
-	
+
 	const size_t id = SoundBuffer::GetId(path);
 	return (id == 0) ? LoadALBuffer(path, hardFail) : id;
 }
