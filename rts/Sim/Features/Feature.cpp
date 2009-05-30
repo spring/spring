@@ -296,7 +296,7 @@ bool CFeature::AddBuildPower(float amount, CUnit* builder)
 
 		const float part = (-amount) / def->reclaimTime;
 
-		if (luaRules && !luaRules->AllowFeatureBuildStep(builder, this, part)) {
+		if (luaRules && !luaRules->AllowFeatureBuildStep(builder, this, -part)) {
 			return false;
 		}
 
