@@ -1342,7 +1342,7 @@ void CCommandAI::DrawDefaultCommand(const Command& c) const
 void CCommandAI::FinishCommand(void)
 {
 	assert(!commandQue.empty());
-	const Command& cmd = commandQue.front();
+	const Command cmd = commandQue.front();
 	const int cmdID  = cmd.id;  // save
 	const int cmdTag = cmd.tag; // save
 	const bool dontrepeat = (cmd.options & DONT_REPEAT) ||
