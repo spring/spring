@@ -257,7 +257,11 @@ void CGameServer::AddAutohostInterface(const int remotePort)
 void CGameServer::PostLoad(unsigned newlastTick, int newserverframenum)
 {
 	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+#if SPRING_TIME
+	lastTick = newlastTick;
+#else
 	//lastTick = boost::some_time; FIXME
+#endif
 	serverframenum = newserverframenum;
 }
 
