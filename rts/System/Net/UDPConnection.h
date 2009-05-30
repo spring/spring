@@ -4,13 +4,12 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
-using boost::posix_time::ptime;
 #include <deque>
 #include <list>
 
 #include "Connection.h"
 #include "UDPSocket.h"
+#include "System/myTime.h"
 
 namespace netcode {
 
@@ -79,8 +78,8 @@ public:
 private:
 	void Init();
 	
-	ptime lastSendTime;
-	ptime lastReceiveTime;
+	spring_time lastSendTime;
+	spring_time lastReceiveTime;
 	
 	typedef boost::ptr_map<int,RawPacket> packetMap;
 	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
@@ -108,7 +107,7 @@ private:
 	packetMap waitingPackets;
 	int lastInOrder;
 	int lastNak;
-	ptime lastNakTime;
+	spring_time lastNakTime;
 	std::deque< boost::shared_ptr<const RawPacket> > msgQueue;
 
 	/** Our socket.
