@@ -19,15 +19,6 @@ CKAIK* KAIKStateExt = KAIKState;
 
 
 
-CKAIK::CKAIK(): ai(NULL) {
-}
-
-CKAIK::~CKAIK() {
-	delete ai;
-}
-
-
-
 void CKAIK::Save(std::ostream* ofs) {
 	CREX_SC_SAVE(KAIK, ofs);
 }
@@ -73,6 +64,10 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 	ai->cb->SendTextMsg(verMsg.c_str(), 0);
 	ai->cb->SendTextMsg(logMsg.c_str(), 0);
 	ai->cb->SendTextMsg(AI_CREDITS, 0);
+}
+
+void CKAIK::ReleaseAI() {
+	delete ai; ai = NULL;
 }
 
 
