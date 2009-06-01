@@ -12,10 +12,11 @@ class CKAIK: public IGlobalAI {
 	public:
 		CR_DECLARE(CKAIK);
 
-		CKAIK();
-		~CKAIK();
+		CKAIK(): ai(NULL) {}
+		~CKAIK() {}
 
 		void InitAI(IGlobalAICallback* callback, int team);
+		void ReleaseAI();
 
 		void UnitCreated(int unit, int builder);
 		void UnitFinished(int unit);
