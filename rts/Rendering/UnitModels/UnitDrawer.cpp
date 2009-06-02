@@ -110,8 +110,16 @@ CUnitDrawer::CUnitDrawer(void)
 		advShading = false;
 	}
 
+	advFade = false;
+
 	if (advShading) {
-		unitVP = LoadVertexProgram("units3o.vp");
+		if(GLEW_NV_vertex_program2) {
+			unitVP = LoadVertexProgram("units3o2.vp");
+			advFade = true;
+		}
+		else {
+			unitVP = LoadVertexProgram("units3o.vp");
+		}
 		unitFP = LoadFragmentProgram("units3o.fp");
 
 		if (shadowHandler->canUseShadows) {
@@ -860,12 +868,15 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 }
 
 
-void CUnitDrawer::DrawCloakedUnits(void)
+void CUnitDrawer::DrawCloakedUnits(bool submerged)
 {
 	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
 	SetupForGhostDrawing();
 	SetupFor3DO();
+
+	double plane[4]={0,submerged?-1:1,0,0};
+	glClipPlane(GL_CLIP_PLANE3, plane);
 
 	glColor4f(1, 1, 1, 0.3f);
 

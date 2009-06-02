@@ -2612,14 +2612,27 @@ bool CGame::DrawWorld()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
+	bool clip = unitDrawer->advFade || !unitDrawer->advShading;
+	if(clip) { // draw cloaked part below surface
+		glEnable(GL_CLIP_PLANE3);
+		unitDrawer->DrawCloakedUnits(true);
+		featureHandler->DrawFadeFeatures(true);
+		glDisable(GL_CLIP_PLANE3);
+	}
+
 	if (drawWater) {
 		if (!mapInfo->map.voidWater && !water->drawSolid) {
 			water->Draw();
 		}
 	}
 
-	unitDrawer->DrawCloakedUnits();
-	featureHandler->DrawFadeFeatures();
+	if(clip) // draw cloaked part above surface
+		glEnable(GL_CLIP_PLANE3);
+	unitDrawer->DrawCloakedUnits(false);
+	featureHandler->DrawFadeFeatures(false);
+	if(clip)
+		glDisable(GL_CLIP_PLANE3);
+
 	ph->Draw(false);
 
 	if (drawSky) {

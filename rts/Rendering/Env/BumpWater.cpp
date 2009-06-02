@@ -1023,7 +1023,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 	readmap->GetGroundDrawer()->Draw();
 	unitDrawer->Draw(false,true);
 	featureHandler->Draw();
-	unitDrawer->DrawCloakedUnits();
+	unitDrawer->DrawCloakedUnits(true);
+	featureHandler->DrawFadeFeatures(true);
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
 
@@ -1078,6 +1079,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
+	featureHandler->DrawFadeFeatures(false,true);
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
 
