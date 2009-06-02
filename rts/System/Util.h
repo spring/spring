@@ -19,12 +19,27 @@ static inline void StringToLowerInPlace(std::string &s)
 	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
 }
 
-
 static inline std::string StringToLower(std::string s)
 {
 	StringToLowerInPlace(s);
 	return s;
 }
+
+//! replace all characters matching 'c' in a string by 'd'
+static inline std::string& StringReplaceInPlace(std::string& s, char c, char d)
+{
+	size_t i = 0;
+	while (i < s.size()) {
+		if (s[i] == c) {
+			s[i] = d;
+		}
+		i++;
+	}
+
+	return s;
+}
+
+
 
 static inline std::string GetFileExt(const std::string& s)
 {
