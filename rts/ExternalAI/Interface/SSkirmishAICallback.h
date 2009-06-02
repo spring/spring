@@ -1170,7 +1170,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getSlopeMap)(int teamId, float slopes[],
  *Clb_Mod_getLosMipLevel
  * - do NOT modify or delete the height-map (native code relevant only)
  * - index 0 is top left
- * - resolution factor (res) is min(1, gs->mapx << Clb_Mod_getLosMipLevel())
+ * - resolution factor (res) is min(1, 1 << Clb_Mod_getLosMipLevel())
  *   examples:
  *   	+ losMipLevel(0) -> res(1)
  *   	+ losMipLevel(1) -> res(2)
