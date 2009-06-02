@@ -37,11 +37,6 @@
      lua_pcall((L), 0, 0, 0);
 #endif
 
-
-static string StringReplace(const string& text,
-                            const string& from, const string& to);
-
-
 // FIXME -- use 'em
 static const string UnitDefsName    = "UnitDefs";
 static const string ReqFuncName     = "HasReqs";
@@ -399,28 +394,3 @@ bool CKeyAutoBinder::IsBetter(lua_State* L, int thisDefID, int thatDefID)
 	lua_pop(L, 1);
 	return value;
 }
-
-
-/******************************************************************************/
-
-static string StringReplace(const string& text,
-                            const string& from, const string& to)
-{
-	string working = text;
-	string::size_type pos = 0;
-	while (true) {
-		pos = working.find(from, pos);
-		if (pos == string::npos) {
-			break;
-		}
-		string tmp = working.substr(0, pos);
-		tmp += to;
-		tmp += working.substr(pos + from.size(), string::npos);
-		pos += to.size();
-		working = tmp;
-	}
-	return working;
-}
-
-
-/******************************************************************************/
