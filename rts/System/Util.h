@@ -39,6 +39,25 @@ static inline std::string& StringReplaceInPlace(std::string& s, char c, char d)
 	return s;
 }
 
+static std::string StringReplace(const std::string& text,
+                            const std::string& from, const std::string& to)
+{
+	std::string working = text;
+	std::string::size_type pos = 0;
+	while (true) {
+		pos = working.find(from, pos);
+		if (pos == std::string::npos) {
+			break;
+		}
+		std::string tmp = working.substr(0, pos);
+		tmp += to;
+		tmp += working.substr(pos + from.size(), std::string::npos);
+		pos += to.size();
+		working = tmp;
+	}
+	return working;
+}
+
 
 
 static inline std::string GetFileExt(const std::string& s)
