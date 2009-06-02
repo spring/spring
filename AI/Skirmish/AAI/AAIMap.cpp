@@ -138,8 +138,9 @@ void AAIMap::Init()
 		xSize = xMapSize * SQUARE_SIZE;
 		ySize = yMapSize * SQUARE_SIZE;
 
-		xLOSMapSize = xMapSize / 2;
-		yLOSMapSize = yMapSize / 2;
+		const int losMapRes = cb->GetLosMapResolution();
+		xLOSMapSize = xMapSize / losMapRes;
+		yLOSMapSize = yMapSize / losMapRes;
 
 		xDefMapSize = xMapSize / 4;
 		yDefMapSize = yMapSize / 4;
@@ -2214,7 +2215,7 @@ void AAIMap::UpdateRecon()
 	{
 		for(int x = 0; x < xLOSMapSize; ++x)
 		{
-			if(los_map[x + y * yLOSMapSize])
+			if(los_map[x + y * xLOSMapSize])
 			{
 				scout_map[x + y * xLOSMapSize] = 0;
 				last_updated_map[x + y * xLOSMapSize] = frame;

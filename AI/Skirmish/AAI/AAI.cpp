@@ -444,7 +444,7 @@ void AAI::UnitFinished(int unit)
 
 void AAI::UnitDestroyed(int unit, int attacker)
 {
-	// get unit�s id
+	// get unit's id
 	const UnitDef *def = cb->GetUnitDef(unit);
 
 	// get unit's category and position

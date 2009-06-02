@@ -15,6 +15,7 @@ namespace ntai {
 		CCached(Global* G);
 
 		const unsigned short* losmap;
+		int losmapres;
 		set<int> enemies; // enemies in LOS
 		//vector<ctri> triangles; // contains all the triangle markers being displayed on map
 
