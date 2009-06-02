@@ -708,6 +708,14 @@ const unsigned short* CAIAICallback::GetLosMap() {
 	return losMap;
 }
 
+int CAIAICallback::GetLosMapResolution() {
+
+	int fullSize = GetMapWidth() * GetMapHeight();
+	int losSize = sAICallback->Clb_Map_0ARRAY1SIZE0getLosMap(teamId);
+
+	return fullSize / losSize;
+}
+
 const unsigned short* CAIAICallback::GetRadarMap() {
 
 	static unsigned short* radarMap = NULL;

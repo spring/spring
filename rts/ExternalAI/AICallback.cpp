@@ -973,6 +973,13 @@ const unsigned short* CAICallback::GetLosMap()
 	return &loshandler->losMap[teamHandler->AllyTeam(team)].front();
 }
 
+int CAICallback::GetLosMapResolution()
+{
+	// as this will never be called (it is implemented in CAIAICallback),
+	// it does not matter what we return here.
+	return -1;
+}
+
 const unsigned short* CAICallback::GetRadarMap()
 {
 	return &radarhandler->radarMaps[teamHandler->AllyTeam(team)].front();

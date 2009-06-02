@@ -26,6 +26,7 @@ namespace ntai {
 		
 		//CLOG("Getting LOS pointer");
 		losmap = G->cb->GetLosMap();
+		losmapres = G->cb->GetLosMapResolution();
 		
 		//CLOG("initialising enemy cache elements to zero");
 		for(int i = 0; i< 6000; i++){
