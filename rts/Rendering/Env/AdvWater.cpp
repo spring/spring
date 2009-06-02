@@ -350,6 +350,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
+	featureHandler->DrawFadeFeatures(false,true);
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
 

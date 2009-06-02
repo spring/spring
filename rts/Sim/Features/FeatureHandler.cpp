@@ -587,6 +587,9 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 
 void CFeatureHandler::Draw()
 {
+	fadeFeatures.clear();
+	fadeFeaturesS3O.clear();
+
 	drawFar.clear();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
@@ -621,15 +624,18 @@ void CFeatureHandler::Draw()
 	glDisable(GL_FOG);
 }
 
-void CFeatureHandler::DrawFadeFeatures() {
+void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading) {
 	GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
 
-	if(unitDrawer->advShading) {
+	if(unitDrawer->advShading && !noAdvShading) {
 		unitDrawer->SetupForUnitDrawing();
 
 		glDisable(GL_ALPHA_TEST);
 
 		unitDrawer->SetupFor3DO();
+
+		double plane[4]={0,submerged?-1:1,0,0};
+		glClipPlane(GL_CLIP_PLANE3, plane);
 
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
@@ -657,6 +663,9 @@ void CFeatureHandler::DrawFadeFeatures() {
 
 		unitDrawer->SetupFor3DO();
 
+		double plane[4]={0,submerged?-1:1,0,0};
+		glClipPlane(GL_CLIP_PLANE3, plane);
+
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
@@ -678,9 +687,6 @@ void CFeatureHandler::DrawFadeFeatures() {
 
 		unitDrawer->CleanUpGhostDrawing();
 	}
-
-	fadeFeatures.clear();
-	fadeFeaturesS3O.clear();
 }
 
 
@@ -758,20 +764,20 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 			}
 
 			if (sqDist < farLength) {
-				if(!drawReflection && !drawRefraction && f->midPos.y > 0 && sqDist < sqFadeDistE && sqDist >= sqFadeDistB) {
-					f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
-					if (f->model->type == MODELTYPE_3DO) { // FIXME: Properly fade out submerged features also
-						featureHandler->fadeFeatures.insert(f);
-					} else {
-						featureHandler->fadeFeaturesS3O.insert(f);
-					}
-				}
-				if(drawReflection || drawRefraction || f->midPos.y <= 0 || sqDist < sqFadeDistB) {
+				if((!unitDrawer->advFade && unitDrawer->advShading) || sqDist < sqFadeDistB) {
 					f->tempalpha = 1.0f;
 					if (f->model->type == MODELTYPE_3DO) {
 						unitDrawer->DrawFeatureStatic(f);
 					} else {
 						unitDrawer->QueS3ODraw(f, f->model->textureType);
+					}
+				}
+				else if(sqDist < sqFadeDistE) {
+					f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+					if (f->model->type == MODELTYPE_3DO) {
+						featureHandler->fadeFeatures.insert(f);
+					} else {
+						featureHandler->fadeFeaturesS3O.insert(f);
 					}
 				}
 			} else {

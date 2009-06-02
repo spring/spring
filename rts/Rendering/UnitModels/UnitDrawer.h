@@ -31,7 +31,7 @@ public:
 	void DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
 	void DrawUnitLOD(CUnit* unit);
 
-	void DrawCloakedUnits(void);     // cloaked units must be drawn after all others
+	void DrawCloakedUnits(bool submerged);     // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 	void DoDrawUnitShadow(CUnit *unit);
 
@@ -100,6 +100,7 @@ public:
 	CVertexArray* va;
 
 	bool advShading;
+	bool advFade;
 
 	float LODScale;
 	float LODScaleShadow;

@@ -1,0 +1,58 @@
+!!ARBvp1.0
+OPTION NV_vertex_program2;
+
+ATTRIB pos = vertex.position;
+PARAM mat[4]  = { state.matrix.projection };
+PARAM mat2[4] = { state.matrix.modelview };
+PARAM mat3[4] = { state.matrix.program[0] };
+OUTPUT opos = result.position;
+TEMP worldPos,temp,temp2;
+
+#color
+DP3 temp.x, vertex.normal,mat2[0];  #normal to world space
+DP3 temp.y, vertex.normal,mat2[1];
+DP3 temp.z, vertex.normal,mat2[2];
+
+MOV result.texcoord[2],temp;		#send surface normal to fragment program
+
+DP3 temp,temp,program.env[10];		#dot product with light
+MAX temp,temp,{0,0,0,0};
+MAD result.color,temp,program.env[11],program.env[12];
+
+#position to world space
+DP4 worldPos.x, pos, mat2[0];
+DP4 worldPos.y, pos, mat2[1];
+DP4 worldPos.z, pos, mat2[2];
+DP4 worldPos.w, pos, mat2[3];
+
+SUB result.texcoord[3], worldPos, program.env[13];	#send the camera direction to fragment program
+
+#tex coords for shadow texture
+DP4 temp.x, worldPos, mat3[0];
+DP4 temp.y, worldPos, mat3[1];
+
+ABS temp2,temp;
+ADD temp2,temp2,program.env[17];
+RSQ temp2.x, temp2.x;
+RSQ temp2.y, temp2.y;
+ADD temp2,temp2,program.env[18];
+MAD result.texcoord[0], temp, temp2,program.env[16];
+
+DP4 result.texcoord[0].z, worldPos, mat3[2];
+DP4 result.texcoord[0].w, worldPos, mat3[3];
+
+#texcoord for normal texture
+MOV result.texcoord[1],vertex.texcoord[0];
+
+#world space to clip space
+DP4 opos.x, worldPos, mat[0];
+DP4 opos.y, worldPos, mat[1];
+DP4 opos.z, worldPos, mat[2];
+DP4 opos.w, worldPos, mat[3];
+
+DP4 result.fogcoord.x, worldPos, mat[2];
+
+DP4 result.clip[3].x, worldPos, state.clip[3].plane;
+
+END
+
