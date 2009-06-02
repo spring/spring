@@ -702,7 +702,11 @@ void SpringApp::ParseCmdLine()
 
 	string name;
 	if (cmdline->result("name", name)) {
-		configHandler->SetString("name", name);
+		if (name.empty()) {
+			configHandler->SetString("name", "UnnamedPlayer");
+		} else {
+			configHandler->SetString("name", StringReplaceInPlace(name, ' ', '_'));
+		}
 	}
 
 
@@ -749,15 +753,27 @@ void SpringApp::Startup()
 	}
 	else if (inputFile.rfind("sdf") == inputFile.size() - 3)
 	{
-		std::string demofile = inputFile;
+		std::string demoFileName = inputFile;
+		std::string demoPlayerName = configHandler->GetString("name", "UnnamedPlayer");
+
+		if (demoPlayerName.empty()) {
+			demoPlayerName = "UnnamedPlayer";
+		} else {
+			demoPlayerName = StringReplaceInPlace(demoPlayerName, ' ', '_');
+		}
+
+		demoPlayerName += " (spec)";
+
 		ClientSetup* startsetup = new ClientSetup();
-		startsetup->isHost = true; // local demo play
-		startsetup->myPlayerName = configHandler->GetString("name", "unnamed")+ " (spec)";
+			startsetup->isHost       = true; // local demo play
+			startsetup->myPlayerName = demoPlayerName;
+
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(true, 64); //FIXME: add actual number of player
 #endif
+
 		pregame = new CPreGame(startsetup);
-		pregame->LoadDemo(demofile);
+		pregame->LoadDemo(demoFileName);
 	}
 	else if (inputFile.rfind("ssf") == inputFile.size() - 3)
 	{
@@ -776,11 +792,11 @@ void SpringApp::Startup()
 		std::string startscript = inputFile;
 		CFileHandler fh(startscript);
 		if (!fh.FileExists())
-			throw content_error("Setupscript doesn't exists in given location: "+startscript);
+			throw content_error("Setup-script does not exist in given location: "+startscript);
 
 		std::string buf;
 		if (!fh.LoadStringData(buf))
-			throw content_error("Setupscript cannot be read: "+startscript);
+			throw content_error("Setup-script cannot be read: " + startscript);
 		ClientSetup* startsetup = new ClientSetup();
 		startsetup->Init(buf);
 

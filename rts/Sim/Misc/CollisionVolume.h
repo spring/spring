@@ -18,15 +18,15 @@ enum COLVOL_TYPES {
 };
 
 enum COLVOL_AXES {
-	COLVOL_AXIS_X,
-	COLVOL_AXIS_Y,
-	COLVOL_AXIS_Z,
-	COLVOL_NUM_AXES     // number of collision volume axes
+	COLVOL_AXIS_X   = 0,
+	COLVOL_AXIS_Y   = 1,
+	COLVOL_AXIS_Z   = 2,
+	COLVOL_NUM_AXES = 3    // number of collision volume axes
 };
 enum COLVOL_TESTS {
-	COLVOL_TEST_DISC,
-	COLVOL_TEST_CONT,
-	COLVOL_NUM_TESTS    // number of tests
+	COLVOL_TEST_DISC = 0,
+	COLVOL_TEST_CONT = 1,
+	COLVOL_NUM_TESTS = 2   // number of tests
 };
 
 struct CollisionVolume
