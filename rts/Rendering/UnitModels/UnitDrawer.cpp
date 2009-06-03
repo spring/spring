@@ -105,6 +105,8 @@ CUnitDrawer::CUnitDrawer(void)
 	float3 specularSunColor = mapInfo->light.specularSunColor;
 	advShading = !!configHandler->Get("AdvUnitShading", GLEW_ARB_fragment_program ? 1: 0);
 
+	cloakAlpha = std::max(0.11f, std::min(1.0f, 1.0f - configHandler->Get("UnitTransparency", 0.7f)));
+
 	if (advShading && !GLEW_ARB_fragment_program) {
 		logOutput.Print("You are missing an OpenGL extension needed to use advanced unit shading (GL_ARB_fragment_program)");
 		advShading = false;
@@ -878,7 +880,7 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged)
 	double plane[4]={0,submerged?-1:1,0,0};
 	glClipPlane(GL_CLIP_PLANE3, plane);
 
-	glColor4f(1, 1, 1, 0.3f);
+	glColor4f(1, 1, 1, cloakAlpha);
 
 	{
 		//FIXME: doesn't support s3o's nor does it set teamcolor
