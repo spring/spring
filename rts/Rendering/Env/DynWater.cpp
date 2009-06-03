@@ -453,6 +453,7 @@ void CDynWater::DrawReflection(CGame* game)
 
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
+	unitDrawer->DrawCloakedUnits(false);
 	featureHandler->DrawFadeFeatures(false,true);
 
 	ph->Draw(true);
