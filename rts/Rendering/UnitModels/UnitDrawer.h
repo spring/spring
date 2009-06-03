@@ -101,6 +101,7 @@ public:
 
 	bool advShading;
 	bool advFade;
+	float cloakAlpha;
 
 	float LODScale;
 	float LODScaleShadow;
