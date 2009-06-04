@@ -70,9 +70,6 @@ void CTracerProjectile::Update()
 
 void CTracerProjectile::Draw()
 {
-	if(inArray)
-		DrawArray();
-
 	if(drawLength>3)
 		drawLength=3;
 
@@ -82,4 +79,6 @@ void CTracerProjectile::Draw()
 		glVertexf3( drawPos);				
 		glVertexf3( drawPos-dir*drawLength);				
 	glEnd();
+	glColor4f(1,1,1,1);
+	glTexCoord2f(0,0);
 }

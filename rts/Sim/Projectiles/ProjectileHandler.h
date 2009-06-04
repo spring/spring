@@ -7,8 +7,9 @@
 #include <list>
 #include <set>
 #include <vector>
-
 #include <stack>
+#include "lib/gml/ThreadSafeContainers.h"
+
 #include "MemPool.h"
 #include "Rendering/Textures/TextureAtlas.h"
 #include "Rendering/GL/myGL.h"
@@ -24,7 +25,6 @@ struct S3DOPrimitive;
 struct S3DOPiece;
 struct SS3OVertex;
 
-typedef std::list<CProjectile*> Projectile_List;
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<int, ProjectileMapPair> ProjectileMap;
 
@@ -54,48 +54,40 @@ public:
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
 	void CheckCollisions();
 
-	void LoadSmoke(unsigned char tex[512][512][4], int xoffs, int yoffs, char* filename, char* alphafile);
-
 	void SetMaxParticles(int value) { maxParticles = value; }
 	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
 	void DrawShadowPass(void);
 	void DrawGroundFlashes(void);
+
 	void Update();
 	void UpdateTextures();
+
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
-
-	void ConvertTex(unsigned char tex[512][512][4], int startx, int starty, int endx, int endy, float absorb);
 	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
-
-	void AddRenderObjects();
 
 	struct projdist {
 		float dist;
 		CProjectile* proj;
 	};
 
-	Projectile_List ps;						// contains both synced and unsynced projectiles
+	ThreadListSimRender<CProjectile*> projectiles;	// contains both synced and unsynced projectiles
 	int maxUsedID;
 	std::list<int> freeIDs;
 	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
-	std::set<CProjectile *> renderprojectiles;
-	std::set<CProjectile *> tempRenderProjectilesToBeAdded;
-	std::set<CProjectile *> renderProjectilesToBeAdded;
-	std::vector<CProjectile *> projectilesToBeDeleted;
 
-	std::set<CProjectile *,distcmp> distset;
+	std::set<CProjectile*,distcmp> distset;
 
 	unsigned int projectileShadowVP;
 
-	int maxParticles;						// different effects should start to cut down on unnececary(unsynced) particles when this number is reached
+	int maxParticles;              // different effects should start to cut down on unnececary(unsynced) particles when this number is reached
 	int maxNanoParticles;
-	int currentParticles;					// number of particles weighted by how complex they are
+	int currentParticles;          // number of particles weighted by how complex they are
 	int currentNanoParticles;
-	float particleSaturation;				// currentParticles / maxParticles ratio
+	float particleSaturation;      // currentParticles / maxParticles ratio
 	float nanoParticleSaturation;
 
 	int numPerlinProjectiles;
@@ -164,8 +156,8 @@ private:
 	};
 	typedef std::set<FlyingPiece*> FlyingPiece_Set;
 	std::list<FlyingPiece_Set*> flyingPieces;
-	FlyingPiece_Set * flying3doPieces;
-	std::vector<std::vector<FlyingPiece_Set*> > flyings3oPieces;
+	FlyingPiece_Set* flying3doPieces;
+	std::vector< std::vector<FlyingPiece_Set*> > flyings3oPieces;
 
 	struct FlyingPieceToAdd {
 		FlyingPieceToAdd() {}
@@ -174,22 +166,18 @@ private:
 		int texture;
 		int team;
 	};
-
 	std::vector<FlyingPiece *> tempFlying3doPiecesToAdd;
 	std::vector<FlyingPieceToAdd> tempFlyings3oPiecesToAdd;
 	std::vector<FlyingPiece *> flying3doPiecesToAdd;
 	std::vector<FlyingPieceToAdd> flyings3oPiecesToAdd;
 	std::map<FlyingPiece *, FlyingPiece_Set *> flyingPiecesToRemove;
 
+	ThreadListSimRender<CGroundFlash*> groundFlashes;
+
 	GLuint perlinTex[8];
 	float perlinBlend[4];
 	FBO perlinFB;
 	bool drawPerlinTex;
-	std::vector<CGroundFlash*> groundFlashes;
-	std::set<CGroundFlash *> renderGroundFlashes;
-	std::set<CGroundFlash *> tempRenderGroundFlashesToBeAdded;
-	std::set<CGroundFlash *> renderGroundFlashesToBeAdded;
-	std::vector<CGroundFlash *> groundFlashesToBeDeleted;
 };
 
 
