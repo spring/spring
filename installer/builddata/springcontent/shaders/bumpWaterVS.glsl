@@ -56,18 +56,22 @@ varying vec3 ligVec;
 
 void main(void)
 {
-	gl_Position = ftransform();
+	//gl_Position = ftransform();
 
 	// COMPUTE TEXCOORDS
-	gl_TexCoord[0]     = TexGenPlane*gl_Vertex.xzxz;
+	gl_TexCoord[0] = TexGenPlane*gl_Vertex.xzxz;
+	gl_TexCoord[4].pq = ShadingPlane.xy*gl_Vertex.xz;
 
 	// COMPUTE WAVE TEXTURE COORDS
 	const float fstart = PerlinStartFreq;
 	const float f      = PerlinLacunarity;
-	gl_TexCoord[1].st = (vec2(-1.0,-1.0) + gl_TexCoord[0].st + 0.75) * fstart       + frame * Speed;
-	gl_TexCoord[1].pq = (vec2(-1.0, 1.0) + gl_TexCoord[0].st + 0.50) * fstart*f     - frame * Speed;
-	gl_TexCoord[2].st = (vec2( 1.0,-1.0) + gl_TexCoord[0].st + 0.25) * fstart*f*f   + frame * Speed * vec2(1.0,-1.0);
-	gl_TexCoord[2].pq = (vec2( 1.0, 1.0) + gl_TexCoord[0].st + 0.00) * fstart*f*f*f + frame * Speed * vec2(-1.0,1.0);
+	gl_TexCoord[1].st = (vec2(-1.0,-1.0) + gl_TexCoord[0].pq + 0.75) * fstart       + frame * Speed;
+	gl_TexCoord[1].pq = (vec2(-1.0, 1.0) + gl_TexCoord[0].pq + 0.50) * fstart*f     - frame * Speed;
+	gl_TexCoord[2].st = (vec2( 1.0,-1.0) + gl_TexCoord[0].pq + 0.25) * fstart*f*f   + frame * Speed * vec2(1.0,-1.0);
+	gl_TexCoord[2].pq = (vec2( 1.0, 1.0) + gl_TexCoord[0].pq + 0.00) * fstart*f*f*f + frame * Speed * vec2(-1.0,1.0);
+	gl_TexCoord[3].st = gl_TexCoord[0].pq * 160.0 + frame;
+	gl_TexCoord[3].pq = gl_TexCoord[0].pq * 90.0  + frame;
+	gl_TexCoord[4].st = gl_TexCoord[0].pq * 2.0;
 
 	// COMPUTE LIGHT VECTORS
 	eyeVec = eyePos - gl_Vertex.xyz;
@@ -76,8 +80,6 @@ void main(void)
 	// FOG
 	gl_FogFragCoord = (gl_ModelViewMatrix*gl_Vertex).z;
 
-
-	gl_TexCoord[3].st = gl_TexCoord[0].st * 160.0 + frame;
-	gl_TexCoord[3].pq = gl_TexCoord[0].st * 90.0  + frame;
-	gl_TexCoord[4].st = gl_TexCoord[0].st * 2.0;
+	gl_Vertex.y += 3.0 * (cos(frame * 500.0 + gl_Vertex.z) * sin(frame * 500.0 + gl_Vertex.x / 1000.0));
+	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 }

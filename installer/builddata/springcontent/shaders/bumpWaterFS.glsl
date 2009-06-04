@@ -37,7 +37,7 @@
 // #define PerlinLacunarity float
 // #define PerlinAmp        float
 // #define TexGenPlane      vec4
-// #define ShadingPlane     vec2
+// #define ShadingPlane     vec4
 
 #define CausticDepth 0.5
 #define CausticRange 0.45
@@ -139,13 +139,13 @@ float waveIntensity(const float x) {
 #else
     float waterdepth;
 
-    if ( any(greaterThanEqual(gl_TexCoord[0].pq,ShadingPlane.xy)) ||
-         any(lessThanEqual(gl_TexCoord[0].pq,vec2(0.0,0.0)))
+    if ( any(greaterThanEqual(gl_TexCoord[4].pq,ShadingPlane.pq)) ||
+         any(lessThanEqual(gl_TexCoord[4].pq,vec2(0.0,0.0)))
        )
     {
       waterdepth = 1.0;
     }else{
-      waterdepth = 1.0 - texture2D(heightmap,gl_TexCoord[0].pq).a; //heightmap in alpha channel
+      waterdepth = 1.0 - texture2D(heightmap,gl_TexCoord[4].pq).a; //heightmap in alpha channel
       if (waterdepth==0.0) discard;
     }
     //float invwaterdepth = 1.0 - waterdepth;
@@ -214,12 +214,12 @@ float waveIntensity(const float x) {
 // CAUSTICS
 #ifdef use_heightmap
     if ((waterdepth/maxWaterDepth)<1.0) {
-      vec3 caust = texture2D(caustic,gl_TexCoord[0].st*80.0).rgb;
+      vec3 caust = texture2D(caustic,gl_TexCoord[0].pq*80.0).rgb;
       gl_FragColor.rgb = mix(gl_FragColor.rgb,refrColor+(caust*(waterdepth/maxWaterDepth)*0.25),1.0-(waterdepth/maxWaterDepth));
     }
 #else
     if (waterdepth>0.0) {
-      vec3 caust = texture2D(caustic,gl_TexCoord[0].st*75.0).rgb;
+      vec3 caust = texture2D(caustic,gl_TexCoord[0].pq*75.0).rgb;
   #ifdef use_refraction
       float caustBlend = smoothstep(CausticRange,0.0,abs(waterdepth-CausticDepth));
       gl_FragColor.rgb += caust*caustBlend*0.08;  
@@ -236,7 +236,7 @@ float waveIntensity(const float x) {
     vec3 shorewavesColor = vec3(0.0);
     float inwaterdepth = 1.0-waterdepth;
     if (waterdepth<1.0) {
-      float coastdist = texture2D(coastmap, gl_TexCoord[0].st ).r + octave3.x*0.1;
+      float coastdist = texture2D(coastmap, gl_TexCoord[0].pq).r + octave3.x*0.1;
       if (coastdist>0.0) {
 
         vec3 wavefoam  = texture2D(foam, gl_TexCoord[3].st ).rgb;
