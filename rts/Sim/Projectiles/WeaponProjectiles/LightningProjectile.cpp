@@ -26,8 +26,8 @@ CR_REG_METADATA(CLightningProjectile,(
 
 CLightningProjectile::CLightningProjectile(const float3& pos, const float3& end,
 		CUnit* owner, const float3& color, const WeaponDef *weaponDef,
-		int ttl, CWeapon* weap GML_PARG_C):
-	CWeaponProjectile(pos, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
+		int ttl, CWeapon* weap GML_PARG_C)
+:	CWeaponProjectile(pos, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
 	color(color),
 	endPos(end),
 	weapon(weap)
