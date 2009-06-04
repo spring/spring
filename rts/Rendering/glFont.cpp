@@ -367,7 +367,7 @@ GLuint CFontTextureRenderer::CreateTexture()
 
 	//! generate the ogl texture
 	texHeight = curY + curHeight;
-	if (!GLEW_ARB_texture_non_power_of_two)
+	if (!gu->supportNPOTs)
 		texHeight = next_power_of_2(texHeight);
 	GLuint tex;
 	glGenTextures(1, &tex);
