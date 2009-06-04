@@ -340,6 +340,8 @@ void CSound::Update()
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
+	GML_RECMUTEX_LOCK(sound); // UpdateListener
+
 	if (sources.empty())
 		return;
 	const float3 prevPos = myPos;
