@@ -627,66 +627,46 @@ void CFeatureHandler::Draw()
 void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading) {
 	GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
 
-	if(unitDrawer->advShading && !noAdvShading) {
+	bool oldAdvShading = unitDrawer->advShading;
+	unitDrawer->advShading = unitDrawer->advShading && !noAdvShading;
+
+	if(unitDrawer->advShading)
 		unitDrawer->SetupForUnitDrawing();
-
-		glDisable(GL_ALPHA_TEST);
-
-		unitDrawer->SetupFor3DO();
-
-		double plane[4]={0,submerged?-1:1,0,0};
-		glClipPlane(GL_CLIP_PLANE3, plane);
-
-		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-
-		for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
-			unitDrawer->DrawFeatureStatic(*i);
-		}
-
-		unitDrawer->CleanUp3DO();
-
-		for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
-			texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
-			(*i)->DrawS3O();
-		}
-
-		glDisable(GL_FOG);
-		glEnable(GL_ALPHA_TEST);
-
-		unitDrawer->CleanUpUnitDrawing();
-	}
-	else {
+	else
 		unitDrawer->SetupForGhostDrawing();
 
-		glDisable(GL_ALPHA_TEST);
+	glDisable(GL_ALPHA_TEST);
 
-		unitDrawer->SetupFor3DO();
+	glEnable(GL_FOG);
+	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 
-		double plane[4]={0,submerged?-1:1,0,0};
-		glClipPlane(GL_CLIP_PLANE3, plane);
+	double plane[4]={0,submerged?-1:1,0,0};
+	glClipPlane(GL_CLIP_PLANE3, plane);
 
-		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	unitDrawer->SetupFor3DO();
 
-		for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
-			glColor4f(1,1,1,(*i)->tempalpha);
-			unitDrawer->DrawFeatureStatic(*i);
-		}
-
-		unitDrawer->CleanUp3DO();
-
-		for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
-			glColor4f(1,1,1,(*i)->tempalpha);
-			texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
-			(*i)->DrawS3O();
-		}
-
-		glDisable(GL_FOG);
-		glEnable(GL_ALPHA_TEST);
-
-		unitDrawer->CleanUpGhostDrawing();
+	for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
+		glColor4f(1,1,1,(*i)->tempalpha);
+		unitDrawer->DrawFeatureStatic(*i);
 	}
+
+	unitDrawer->CleanUp3DO();
+
+	for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
+		glColor4f(1,1,1,(*i)->tempalpha);
+		texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
+		(*i)->DrawS3O();
+	}
+
+	glDisable(GL_FOG);
+	glEnable(GL_ALPHA_TEST);
+
+	if(unitDrawer->advShading)
+		unitDrawer->CleanUpUnitDrawing();
+	else
+		unitDrawer->CleanUpGhostDrawing();
+
+	unitDrawer->advShading = oldAdvShading;
 }
 
 
