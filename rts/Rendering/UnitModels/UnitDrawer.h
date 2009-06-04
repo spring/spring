@@ -31,7 +31,7 @@ public:
 	void DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
 	void DrawUnitLOD(CUnit* unit);
 
-	void DrawCloakedUnits(bool submerged);     // cloaked units must be drawn after all others
+	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);     // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 	void DoDrawUnitShadow(CUnit *unit);
 
@@ -102,6 +102,9 @@ public:
 	bool advShading;
 	bool advFade;
 	float cloakAlpha;
+	float cloakAlpha1;
+	float cloakAlpha2;
+	float cloakAlpha3;
 
 	float LODScale;
 	float LODScaleShadow;
