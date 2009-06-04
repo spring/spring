@@ -37,7 +37,7 @@ public:
 	void UpdateDrawQuad(CFeature* feature, const float3& newPos);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
-	const FeatureDef* GetFeatureDef(const std::string name);
+	const FeatureDef* GetFeatureDef(const std::string name, const bool showError = true);
 	const FeatureDef* GetFeatureDefByID(int id);
 
 	void SetFeatureUpdateable(CFeature* feature);

@@ -282,7 +282,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 }
 
 
-const FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
+const FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase, const bool showError)
 {
 	if (mixedCase.empty())
 		return NULL;
@@ -294,7 +294,8 @@ const FeatureDef* CFeatureHandler::GetFeatureDef(const std::string mixedCase)
 		return fi->second;
 	}
 
-	logOutput.Print("Couldnt find wreckage info %s", name.c_str());
+	if (showError)
+		logOutput.Print("Couldnt find wreckage info %s", name.c_str());
 
 	return NULL;
 }
