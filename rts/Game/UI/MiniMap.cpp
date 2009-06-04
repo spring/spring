@@ -6,6 +6,8 @@
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
 
+#include "lib/gml/ThreadSafeContainers.h"
+
 #include "mmgr.h"
 
 #include "CommandColors.h"
@@ -1102,18 +1104,17 @@ void CMiniMap::DrawForReal()
 
 	// draw the projectiles
 	if (drawProjectiles) {
-
 		GML_RECMUTEX_LOCK(proj); // DrawForReal
 
-		if(ph->renderprojectiles.size()>0) {
+		if(ph->projectiles.render_size()>0) {
 			CVertexArray* lines=GetVertexArray();
 			CVertexArray* points=GetVertexArray();
 			lines->Initialize();
-			lines->EnlargeArrays(ph->renderprojectiles.size()*2,0,VA_SIZE_C);
+			lines->EnlargeArrays(ph->projectiles.render_size()*2,0,VA_SIZE_C);
 			points->Initialize();
-			points->EnlargeArrays(ph->renderprojectiles.size(),0,VA_SIZE_C);
+			points->EnlargeArrays(ph->projectiles.render_size(),0,VA_SIZE_C);
 
-			for(std::set<CProjectile *>::iterator psi = ph->renderprojectiles.begin(); psi != ph->renderprojectiles.end(); ++psi) {
+			for(ThreadListSimRender<CProjectile*>::render_iterator psi = ph->projectiles.render_begin(); psi != ph->projectiles.render_end(); ++psi) {
 				CProjectile* p = *psi;
 
 				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||

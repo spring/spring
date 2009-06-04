@@ -64,17 +64,18 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 
 
 CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon GML_PARG_C)
-:	CExpGenSpawnable(pos),
-	synced(synced),
-	weapon(weapon),
-	checkCol(true),
+:	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
 	collisionFlags(0),
-	speed(speed),
 	s3domodel(0),
-	ownerId(0)
+	ownerId(0),
+	CExpGenSpawnable(pos),
+	weapon(weapon),
+	speed(speed)
 {
+	synced = synced;
+
 	if (owner) {
 		ownerId = owner->id;
 	}
@@ -139,6 +140,9 @@ int CProjectile::DrawArray()
 
 	va->DrawArrayTC(GL_QUADS);
 
+	// divided by 24 because each element is 
+	// 12 + 4 + 4 + 4 bytes in size (pos + u + v + color)
+	// for each type of "projectile"
 	idx = (va->drawIndex() / 24);
 	va = GetVertexArray();
 	va->Initialize();

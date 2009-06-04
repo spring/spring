@@ -30,9 +30,9 @@ CGround::~CGround()
 
 void CGround::CheckCol(CProjectileHandler* ph)
 {
-	Projectile_List::iterator psi;
+	ThreadListSimRender<CProjectile*>::iterator psi;
 
-	for (psi = ph->ps.begin(); psi != ph->ps.end(); ++psi) {
+	for (psi = ph->projectiles.begin(); psi != ph->projectiles.end(); ++psi) {
 		CProjectile* p = *psi;
 		if (p->checkCol) {
 			if (GetHeight(p->pos.x, p->pos.z) > p->pos.y /* - p->radius*/) {

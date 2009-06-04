@@ -26,12 +26,12 @@ void CGeoThermSmokeProjectile::Update()
 		float sql = d.SqLength();
 		if (sql > 0.0f && sql < o->radius*o->radius && o->blocking)
 		{
-			d *= o->radius * fastmath::isqrt2(sql);
+			d *= o->radius * fastmath::isqrt(sql);
 			pos = pos * 0.3f + (o->pos + d) * 0.7f;
 
 			if(d.y < o->radius*0.4f)
 			{
-				float speedlen = speed.Length();
+				float speedlen = fastmath::sqrt(speed.SqLength());
 				float3 right(d.z, 0.0f, -d.x);
 				speed = d.cross(right);
 				speed.ANormalize();
@@ -39,9 +39,9 @@ void CGeoThermSmokeProjectile::Update()
 			}
 		}
 	}
-	float l = speed.Length();
+	float l = fastmath::sqrt(speed.SqLength());
 	speed.y += 1.0f;
-	speed *= l/speed.Length();
+	speed *= l * fastmath::isqrt(speed.SqLength());
 
 	CSmokeProjectile::Update();
 }
@@ -49,11 +49,9 @@ void CGeoThermSmokeProjectile::Update()
 
 void CGeoThermSmokeProjectile::GeoThermDestroyed(const CFeature* geo)
 {
-	Projectile_List& pList = ph->ps;
-	Projectile_List::iterator it;
-	for (it = pList.begin(); it != pList.end(); ++it) {
-		CGeoThermSmokeProjectile* geoPuff =
-			dynamic_cast<CGeoThermSmokeProjectile*>(*it);
+	ThreadListSimRender<CProjectile*>::iterator it;
+	for (it = ph->projectiles.begin(); it != ph->projectiles.end(); ++it) {
+		CGeoThermSmokeProjectile* geoPuff = dynamic_cast<CGeoThermSmokeProjectile*>(*it);
 		if (geoPuff) {
 			geoPuff->geo = NULL;
 		}
