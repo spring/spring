@@ -17,6 +17,9 @@
 //#define SHGFP_TYPE_CURRENT 0
 //#endif
 
+#elif MACOSX_BUNDLE
+#include <CoreFoundation/CoreFoundation.h>
+
 #else
 
 #endif
@@ -47,6 +50,21 @@ std::string GetBinaryPath()
 	_splitpath(currentDir, drive, dir, file, ext);
 	_makepath(currentDir, drive, dir, NULL, NULL);
 	return std::string(currentDir);
+
+#elif MACOSX_BUNDLE
+	char cPath[1024];
+	CFBundleRef mainBundle = CFBundleGetMainBundle();
+	
+	CFURLRef mainBundleURL = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault , CFBundleCopyBundleURL(mainBundle));
+	
+	CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
+	
+	CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
+	
+	CFRelease(mainBundleURL);
+	CFRelease(cfStringRef);
+	
+	return std::string(cPath);
 
 #else
 	return "";

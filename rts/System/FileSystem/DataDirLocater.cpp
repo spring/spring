@@ -275,43 +275,17 @@ void DataDirLocater::LocateDataDirs()
 	cfg = strPath;
 	cfg += "\\Spring"; // e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
 	AddDirs(cfg);
-// TODO: enable Mac OS X specific bundle code again
-// #elif defined(__APPLE__)
-	// // copied from old MacFileSystemHandler, won't compile here, but would not compile in its old location either
-	// // needs fixing for new DataDirLocater-structure
-	// // Get the path to the application bundle we are running:
-	// char cPath[1024];
-	// CFBundleRef mainBundle = CFBundleGetMainBundle();
-	// if(!mainBundle)
-		// throw content_error("Could not determine bundle path");
-
-	// CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-	// if(!mainBundleURL)
-		// throw content_error("Could not determine bundle path");
-
-	// CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
-	// if(!cfStringRef)
-		// throw content_error("Could not determine bundle path");
-
-	// CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
-
-	// CFRelease(mainBundleURL);
-	// CFRelease(cfStringRef);
-	// std::string path(cPath);
-
-	// datadirs.clear();
-	// writedir = NULL;
-
-	// // Add bundle resources:
-	// datadirs.push_back(path + "/Contents/Resources/");
-	// datadirs.rbegin()->readable = true;
-	// // Add the directory surrounding the bundle, for users to add mods and maps in:
-	// datadirs.push_back(filesystem.GetDirectory(path));
-	// // Use surrounding directory as writedir for now, should propably
-	// // change this to something inside the home directory:
-	// datadirs.rbegin()->writable = true;
-	// datadirs.rbegin()->readable = true;
-	// writedir = &*datadirs.rbegin();
+#elif defined(MACOSX_BUNDLE)
+	// Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
+	// cannot find them since it does not know spring binary path. I have no idea but to force users 
+	// to locate lobby executables in the same as spring's dir and add its location to search dirs.
+#ifdef UNITSYNC
+	AddDirs(Platform::GetBinaryPath());
+#endif
+	// libs and data are are supposed to be located in subdirectories of spring executable, so they
+	// sould be added instead of SPRING_DATADIR definition.
+	AddDirs(Platform::GetBinaryPath() + "/" + SubstEnvVars(DATADIR));
+	AddDirs(Platform::GetBinaryPath() + "/" + SubstEnvVars(LIBDIR));
 #else
 	// home
 	AddDirs(SubstEnvVars("$HOME/.spring"));
