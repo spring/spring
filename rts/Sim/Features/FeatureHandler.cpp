@@ -625,8 +625,6 @@ void CFeatureHandler::Draw()
 }
 
 void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading) {
-	GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
-
 	bool oldAdvShading = unitDrawer->advShading;
 	unitDrawer->advShading = unitDrawer->advShading && !noAdvShading;
 
@@ -645,17 +643,21 @@ void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading) {
 
 	unitDrawer->SetupFor3DO();
 
-	for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
-		glColor4f(1,1,1,(*i)->tempalpha);
-		unitDrawer->DrawFeatureStatic(*i);
-	}
+	{
+		GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
 
-	unitDrawer->CleanUp3DO();
+		for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
+			glColor4f(1,1,1,(*i)->tempalpha);
+			unitDrawer->DrawFeatureStatic(*i);
+		}
 
-	for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
-		glColor4f(1,1,1,(*i)->tempalpha);
-		texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
-		(*i)->DrawS3O();
+		unitDrawer->CleanUp3DO();
+
+		for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
+			glColor4f(1,1,1,(*i)->tempalpha);
+			texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
+			(*i)->DrawS3O();
+		}
 	}
 
 	glDisable(GL_FOG);
