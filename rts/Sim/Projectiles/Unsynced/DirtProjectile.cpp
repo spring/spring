@@ -46,6 +46,7 @@ CDirtProjectile::CDirtProjectile(const float3 pos,const float3 speed,const float
 }
 
 CDirtProjectile::CDirtProjectile() :
+	CProjectile(),
 	alpha(255.0f),
 	alphaFalloff(10.0f),
 	size(10.0f),

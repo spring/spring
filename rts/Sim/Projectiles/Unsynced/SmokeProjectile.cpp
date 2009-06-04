@@ -34,7 +34,8 @@ CR_REG_METADATA(CSmokeProjectile,
 //////////////////////////////////////////////////////////////////////
 
 CSmokeProjectile::CSmokeProjectile()
-	: color(0.5f),
+:	CProjectile(),
+	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
 	size(0.0f),
@@ -43,7 +44,6 @@ CSmokeProjectile::CSmokeProjectile()
 	textureNum(0)
 {
 	checkCol=false;
-	synced=false;
 }
 
 void CSmokeProjectile::Init(const float3& pos, CUnit *owner GML_PARG_C)

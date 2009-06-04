@@ -25,8 +25,8 @@ CR_REG_METADATA(CFlameProjectile,(
 
 
 CFlameProjectile::CFlameProjectile(const float3& pos, const float3& speed, const float3& spread,
-		CUnit* owner, const WeaponDef* weaponDef, int ttl GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
+		CUnit* owner, const WeaponDef* weaponDef, int ttl GML_PARG_C)
+:	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
 	color(color),
 	color2(color2),
 	intensity(intensity),

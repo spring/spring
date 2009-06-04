@@ -50,6 +50,7 @@ CR_REG_METADATA(CWeaponProjectile,(
 	));
 
 CWeaponProjectile::CWeaponProjectile()
+:	CProjectile()
 {
 	targeted = false;
 	weaponDef = 0;
@@ -65,8 +66,8 @@ CWeaponProjectile::CWeaponProjectile()
 CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, CUnit* target, const float3 &targetPos,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
-		bool synced, int ttl GML_PARG_C):
-	CProjectile(pos, speed, owner, synced, true GML_PARG_P),
+		bool synced, int ttl GML_PARG_C)
+:	CProjectile(pos, speed, owner, synced, true GML_PARG_P),
 	targeted(false),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef? weaponDef->name: std::string("")),

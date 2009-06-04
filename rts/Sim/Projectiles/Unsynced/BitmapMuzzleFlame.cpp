@@ -27,7 +27,8 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 	CR_RESERVED(8)
 ));
 
-CBitmapMuzzleFlame::CBitmapMuzzleFlame(void)
+CBitmapMuzzleFlame::CBitmapMuzzleFlame(void) :
+	CProjectile()
 {
 	deleteMe=false;
 	checkCol=false;

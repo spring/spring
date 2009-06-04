@@ -41,6 +41,7 @@ CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,i
 	age(0),
 	ttl(ttl)
 {
+	deleteMe=false;
 	checkCol=false;
 
 	for(int y=0;y<5;++y){
@@ -110,6 +111,7 @@ void CSpherePartProjectile::CreateSphere(float3 pos, float alpha, int ttl, float
 }
 
 CSpherePartSpawner::CSpherePartSpawner()
+:	CProjectile()
 {
 }
 
