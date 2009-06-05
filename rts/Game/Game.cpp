@@ -1540,7 +1540,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0)
 			new CQuitBox();
 	}
-	else if (cmd == "quitforce") {
+	else if (cmd == "quitforce" || cmd == "quit") {
 		logOutput.Print("User exited");
 		globalQuit = true;
 	}
