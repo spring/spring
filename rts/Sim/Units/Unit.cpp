@@ -2295,7 +2295,7 @@ void CUnit::LogMessage(const char *fmt, ...)
 #ifdef DEBUG
 	va_list argp;
 	int l = strlen(fmt) + unitDefName.size() + 15;
-	char tmp[l], *tmpi = tmp;
+	char tmp[l];
 	SNPRINTF(tmp, l, "%s(%d): %s", unitDefName.c_str(), id, fmt);
 
 	va_start(argp, fmt);
