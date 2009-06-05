@@ -252,7 +252,7 @@ void CUnitDrawer::Update(void)
 	{
 		GML_RECMUTEX_LOCK(unit); // DrawWorld
 
-		for (std::vector<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			(*usi)->UpdateDrawPos();
 		}
 	}
