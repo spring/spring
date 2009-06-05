@@ -3215,6 +3215,8 @@ void CGame::SimFrame() {
 	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);
 
+	ph->AddRenderObjects(); // delayed addition of new rendering objects, to make sure they will be drawn next draw frame
+
 	lastUpdate = SDL_GetTicks();
 }
 

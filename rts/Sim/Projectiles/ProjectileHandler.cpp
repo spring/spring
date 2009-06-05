@@ -354,7 +354,7 @@ CProjectileHandler::CProjectileHandler()
 
 CProjectileHandler::~CProjectileHandler()
 {
-	Update();
+	AddRenderObjects();
 
 	for (int a = 0; a < 8; ++a) {
 		glDeleteTextures (1, &perlinTex[a]);
@@ -372,6 +372,14 @@ CProjectileHandler::~CProjectileHandler()
 
 	if (shadowHandler->canUseShadows) {
 		glSafeDeleteProgram(projectileShadowVP);
+	}
+
+	for(std::vector<FlyingPiece *>::iterator fpi = flying3doPiecesToAdd.begin(); fpi != flying3doPiecesToAdd.end(); ++fpi) {
+		flying3doPieces->insert(*fpi);
+	}
+
+	for(std::vector<FlyingPieceToAdd>::iterator fpi = flyings3oPiecesToAdd.begin(); fpi != flyings3oPiecesToAdd.end(); ++fpi) {
+		flying3doPieces->insert((*fpi).fp); // it's not 3do, but we just want it deleted...
 	}
 
 	/* Also invalidates flying3doPieces and flyings3oPieces. */
@@ -416,58 +424,87 @@ void CProjectileHandler::PostLoad()
 {
 }
 
+void CProjectileHandler::AddRenderObjects() {
+	{
+		GML_STDMUTEX_LOCK(rproj); // AddRenderObjects
+
+		projectiles.add_render();
+	}
+
+	{
+		GML_STDMUTEX_LOCK(rflash); // AddRenderObjects
+
+		groundFlashes.add_render();
+	}
+
+	{
+		GML_RECMUTEX_LOCK(piece); // AddRenderObjects
+
+		for(std::vector<FlyingPiece *>::iterator pi=tempFlying3doPiecesToAdd.begin(); pi!=tempFlying3doPiecesToAdd.end(); ++pi) {
+			flying3doPiecesToAdd.push_back(*pi);
+		}
+
+		for(std::vector<FlyingPieceToAdd>::iterator pi=tempFlyings3oPiecesToAdd.begin(); pi!=tempFlyings3oPiecesToAdd.end(); ++pi) {
+			flyings3oPiecesToAdd.push_back(*pi);
+		}
+	}
+
+	tempFlying3doPiecesToAdd.clear();
+	tempFlyings3oPiecesToAdd.clear();
+}
+
 void CProjectileHandler::Update()
 {
 	SCOPED_TIMER("Projectile handler");
 
 	GML_UPDATE_TICKS();
 
-	{
-		ThreadListSimRender<CProjectile*>::iterator psi = projectiles.begin();
-		while (psi != projectiles.end()) {
-			CProjectile* p = *psi;
+	ThreadListSimRender<CProjectile*>::iterator psi = projectiles.begin();
+	while (psi != projectiles.end()) {
+		CProjectile* p = *psi;
 
-			if (p->deleteMe) {
-				if (p->synced && p->weapon) {
-					//! iterator is always valid
-					ProjectileMap::iterator it = weaponProjectileIDs.find(p->id);
-					const ProjectileMapPair& pp = it->second;
-					eventHandler.ProjectileDestroyed(pp.first, pp.second);
-					weaponProjectileIDs.erase(it);
-					if (p->id != 0) {
-						freeIDs.push_back(p->id);
-					}
+		if (p->deleteMe) {
+			if (p->synced && p->weapon) {
+				//! iterator is always valid
+				ProjectileMap::iterator it = weaponProjectileIDs.find(p->id);
+				const ProjectileMapPair& pp = it->second;
+				eventHandler.ProjectileDestroyed(pp.first, pp.second);
+				weaponProjectileIDs.erase(it);
+				if (p->id != 0) {
+					freeIDs.push_back(p->id);
 				}
-				psi = projectiles.erase(psi);
-				delete p;
-			} else {
-				p->Update();
-				GML_GET_TICKS(p->lastProjUpdate);
-				psi++;
 			}
+			psi = projectiles.erase_delete(psi);
+		} else {
+			p->Update();
+			GML_GET_TICKS(p->lastProjUpdate);
+			psi++;
 		}
-
-		//GML_RECMUTEX_LOCK(proj); // Update
-		GML_STDMUTEX_LOCK(rproj); // Update
-		projectiles.update();
 	}
 
 	{
-		ThreadListSimRender<CGroundFlash*>::iterator gfi = groundFlashes.begin();
-		while (gfi != groundFlashes.end()) {
-			CGroundFlash* gf = *gfi;
+		GML_RECMUTEX_LOCK(proj); // Update
+		GML_STDMUTEX_LOCK(rproj); // Update
 
-			if (!gf->Update()) {
-				gfi = groundFlashes.erase(gfi);
-				delete gf;
-			} else {
-				gfi++;
-			}
+		projectiles.delete_erased();
+	}
+
+	ThreadListSimRender<CGroundFlash*>::iterator gfi = groundFlashes.begin();
+	while (gfi != groundFlashes.end()) {
+		CGroundFlash* gf = *gfi;
+
+		if (!gf->Update()) {
+			gfi = groundFlashes.erase_delete(gfi);
+		} else {
+			gfi++;
 		}
+	}
 
-		//GML_RECMUTEX_LOCK(flash); // Update
+	{
+		GML_RECMUTEX_LOCK(flash); // Update
 		GML_STDMUTEX_LOCK(rflash); // Update
-		groundFlashes.update();
+
+		groundFlashes.delete_erased();
 	}
 
 	{
@@ -490,6 +527,7 @@ void CProjectileHandler::Update()
 		}
 	}
 }
+
 
 
 void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
@@ -632,11 +670,12 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	distset.clear();
 
 	{
-		{
-			GML_STDMUTEX_LOCK(rproj); // Draw
-			projectiles.update();
-		}
+		GML_STDMUTEX_LOCK(rproj); // Draw
 
+		projectiles.update();
+	}
+
+	{
 		GML_RECMUTEX_LOCK(proj); // Draw
 
 		// Projectiles (3do's get rendered, s3o qued)
@@ -970,11 +1009,12 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	CGroundFlash::va->Initialize();
 
 	{
-		{
-			GML_STDMUTEX_LOCK(rflash); // DrawGroundFlashes
-			groundFlashes.update();
-		}
+		GML_STDMUTEX_LOCK(rflash); // DrawGroundFlashes
 
+		groundFlashes.update();
+	}
+
+	{
 		GML_RECMUTEX_LOCK(flash); // DrawGroundFlashes
 
 		CGroundFlash::va->EnlargeArrays(8*groundFlashes.render_size(),0,VA_SIZE_TC);
