@@ -2565,14 +2565,6 @@ bool CGame::DrawWorld()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	{
-		GML_RECMUTEX_LOCK(unit); // DrawWorld
-
-		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
-			(*usi)->UpdateDrawPos();
-		}
-	}
-
 	if (drawSky) {
 		sky->Draw();
 	}
