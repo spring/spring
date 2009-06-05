@@ -149,6 +149,12 @@ CUnitDrawer::CUnitDrawer(void)
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA,GL_UNSIGNED_BYTE, 0);
 		glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, 0, GL_RGBA8, reflTexSize, reflTexSize, 0, GL_RGBA,GL_UNSIGNED_BYTE, 0);
 
+		if (unitReflectFBO.IsValid()) {
+			unitReflectFBO.Bind();
+			unitReflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT, reflTexSize, reflTexSize);
+			unitReflectFBO.Unbind();
+		}
+
 		glGenTextures(1,&specularTex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -242,6 +248,14 @@ void CUnitDrawer::Update(void)
 	for(std::set<CUnit *>::iterator ui=uh->toBeAdded.begin(); ui!=uh->toBeAdded.end(); ++ui)
 		uh->renderUnits.push_back(*ui);
 	uh->toBeAdded.clear();
+
+	{
+		GML_RECMUTEX_LOCK(unit); // DrawWorld
+
+		for (std::vector<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+			(*usi)->UpdateDrawPos();
+		}
+	}
 }
 
 
@@ -1416,6 +1430,11 @@ void CUnitDrawer::UpdateReflectTex(void)
 
 void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 {
+	if (unitReflectFBO.IsValid()) {
+		unitReflectFBO.Bind();
+		unitReflectFBO.AttachTexture(boxtex, gltype);
+	}
+
 	glViewport(0, 0, reflTexSize, reflTexSize);
 
 //	CCamera *realCam = camera;
@@ -1440,14 +1459,17 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	glLoadIdentity();
 	gluPerspective(90, 1, NEAR_PLANE, gu->viewRange);
 	glMatrixMode(GL_MODELVIEW);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 	sky->Draw();
 	readmap->GetGroundDrawer()->Draw(false, true);
 
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
-	glCopyTexSubImage2D(gltype, 0, 0, 0, 0, 0,reflTexSize, reflTexSize);
+	if (unitReflectFBO.IsValid()) {
+		unitReflectFBO.Unbind();
+	}else{
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
+		glCopyTexSubImage2D(gltype, 0, 0, 0, 0, 0,reflTexSize, reflTexSize);
+	}
 
 	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 

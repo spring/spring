@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 
 class CVertexArray;
 struct S3DModel;
@@ -110,6 +111,8 @@ public:
 	float LODScaleShadow;
 	float LODScaleReflection;
 	float LODScaleRefraction;
+
+	FBO unitReflectFBO;
 
 	unsigned int unitVP;             // vertex program
 	unsigned int unitFP;             // fragment program, shadows disabled
