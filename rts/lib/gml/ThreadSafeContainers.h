@@ -341,6 +341,7 @@ class ThreadListSimRender {
 private:
 	typedef typename std::list<T>::iterator SimIT;
 	typedef typename std::set<T>::const_iterator RenderIT;
+	typedef typename std::set<T>::const_iterator setIT;
 
 public:
 	CR_DECLARE_STRUCT(ThreadListSimRender);
@@ -360,7 +361,7 @@ public:
 
 	SimIT erase(SimIT& it) {
 		delRender.push(*it);
-		return cont.erase(it);
+		return contSim.erase(it);
 	};
 
 	void resize(const size_t& s) {
@@ -386,12 +387,12 @@ public:
 public:
 	//! RENDER/UNSYNCED METHODS
 	inline void update() {
-		for (std::set<T>::iterator it = addRender.begin(); it != addRender.end(); it++)
+		for (setIT it = addRender.begin(); it != addRender.end(); it++)
 		{
 			contRender.push_back(*it);
 		}
 		addRender.clear();
-		for (std::set<T>::iterator it = delRender.begin(); rit != delRender.end(); it++)
+		for (setIT it = delRender.begin(); it != delRender.end(); it++)
 		{
 			contRender.erase(*it);
 		}
@@ -431,6 +432,7 @@ class ThreadVectorSimRender {
 private:
 	typedef typename std::vector<T>::iterator SimIT;
 	typedef typename std::set<T>::const_iterator RenderIT;
+	typedef typename std::set<T>::const_iterator setIT;
 
 public:
 	CR_DECLARE_STRUCT(ThreadVectorSimRender);
@@ -443,7 +445,7 @@ public:
 		addRender.push_back(x);
 	};
 
-	VectorIT insert(VectorIT& it, const T& x) {
+	SimIT insert(SimIT& it, const T& x) {
 		addRender.push_back(x);
 		if (it != contSim.end()) {
 			//! fast insert
@@ -457,7 +459,7 @@ public:
 	SimIT erase(SimIT& it) {
 		delRender.push(*it);
 
-		VectorIT ito = it++;
+		SimIT ito = it++;
 		if (it == contSim.end()) {
 			contSim.pop_back();
 			return contSim.end();
@@ -490,12 +492,12 @@ public:
 public:
 	//! RENDER/UNSYNCED METHODS
 	inline void update() {
-		for (std::set<T>::iterator it = addRender.begin(); it != addRender.end(); it++)
+		for (setIT it = addRender.begin(); it != addRender.end(); it++)
 		{
 			contRender.push_back(*it);
 		}
 		addRender.clear();
-		for (std::set<T>::iterator it = delRender.begin(); rit != delRender.end(); it++)
+		for (setIT it = delRender.begin(); it != delRender.end(); it++)
 		{
 			contRender.erase(*it);
 		}
