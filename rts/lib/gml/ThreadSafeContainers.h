@@ -8,8 +8,8 @@
 // Licensed under the terms of the GNU GPL, v2 or later.
 //
 
-#ifndef TSL_H
-#define TSL_H
+#ifndef TSC_H
+#define TSC_H
 
 #include <list>
 #include <vector>
@@ -346,7 +346,11 @@ private:
 public:
 	CR_DECLARE_STRUCT(ThreadListSimRender);
 
-	void PostLoad();
+	void PostLoad() {
+		for (SimIT it = cont.begin(); it != cont.end(); it++) {
+			addRender.insert(*it);
+		}
+	}
 
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
@@ -419,8 +423,10 @@ public:
 	typedef SimIT iterator;
 	typedef RenderIT render_iterator;
 
-private:
+public: //!needed by CREG
 	std::list<T> cont;
+
+private:
 	std::set<T> contRender;
 	std::set<T> addRender;
 	std::set<T> delRender;
@@ -437,7 +443,11 @@ private:
 public:
 	CR_DECLARE_STRUCT(ThreadVectorSimRender);
 
-	void PostLoad();
+	void PostLoad() {
+		for (SimIT it = cont.begin(); it != cont.end(); it++) {
+			addRender.insert(*it);
+		}
+	}
 
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
@@ -524,8 +534,10 @@ public:
 	typedef SimIT iterator;
 	typedef RenderIT render_iterator;
 
-private:
+public: //!needed by CREG
 	std::vector<T> cont;
+
+private:
 	std::set<T> contRender;
 	std::set<T> addRender;
 	std::set<T> delRender;
@@ -534,4 +546,4 @@ private:
 
 #endif
 
-#endif // #ifndef TSL_H
+#endif // #ifndef TSC_H
