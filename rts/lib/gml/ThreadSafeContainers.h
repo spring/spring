@@ -269,6 +269,7 @@ public:
 
 #else
 
+#include <set>
 
 /*FIXME (how to erase items?)
 template <class T>
@@ -409,7 +410,7 @@ public:
 		return contRender.begin();
 	};
 
-	RenderITT render_end() const {
+	RenderIT render_end() const {
 		return contRender.end();
 	};
 
@@ -513,7 +514,7 @@ public:
 		return contRender.begin();
 	};
 
-	RenderITT render_end() const {
+	RenderIT render_end() const {
 		return contRender.end();
 	};
 
