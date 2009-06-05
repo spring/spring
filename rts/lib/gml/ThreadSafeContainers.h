@@ -25,75 +25,7 @@
 
 /////////////////////////////////////////////////////////
 
-#ifndef USE_GML
-
-/*FIXME (GML version needs work)
-template <class T>
-class ThreadVector {
-private:
-	typedef typename std::vector<T>::iterator VectorIT;
-
-public:
-	CR_DECLARE_STRUCT(ThreadVector);
-
-	void PostLoad() {};
-
-	void push(const T& x) {
-		cont.push_back(x);
-	};
-
-	VectorIT insert(VectorIT& it, const T& x) {
-		if (it != cont.end()) {
-			//! fast insert
-			cont.push_back(*it);
-			*it = x;
-			return it;
-		}
-		return cont.insert(it, x);
-	};
-
-	VectorIT erase(VectorIT& it) {
-		VectorIT ito = it++;
-		if (it == cont.end()) {
-			cont.pop_back();
-			return cont.end();
-		}
-		*ito = cont.back();
-		cont.pop_back();
-		return ito;
-	};
-
-	void resize(const size_t& s) {
-		cont.resize(s);
-	};
-
-	size_t size() const {
-		return cont.size();
-	};
-
-	bool empty() const {
-		return cont.empty();
-	};
-
-	VectorIT begin() const {
-		return cont.begin();
-	};
-
-	VectorIT end() const {
-		return cont.end();
-	};
-
-public:
-	inline void update() const {
-	};
-
-public:
-	typedef VectorIT iterator;
-
-public:
-	std::vector<T> cont;
-};
-*/
+#if !defined(USE_GML) || !GML_ENABLE_SIM
 
 template <class T>
 class ThreadListSimRender {
@@ -115,7 +47,7 @@ public:
 		return cont.insert(it, x);
 	};
 
-	ListIT erase(ListIT& it) {
+	ListIT erase_delete(ListIT& it) {
 		/*VectorIT ito = it++;
 		if (it == cont.end()) {
 			cont.pop_back();
@@ -124,8 +56,15 @@ public:
 		*ito = cont.back();
 		cont.pop_back();
 		return ito;*/
+		delete *it;
 		return cont.erase(it);
 	};
+
+	void delete_erased() {
+	}
+
+	void add_render() {
+	}
 
 	void resize(const size_t& s) {
 		cont.resize(s);
@@ -265,76 +204,9 @@ public:
 	std::vector<T> cont;
 };
 
-
-
 #else
 
 #include <set>
-
-/*FIXME (how to erase items?)
-template <class T>
-class ThreadVector {
-private:
-	typedef typename std::vector<T>::iterator VectorIT;
-
-public:
-	CR_DECLARE_STRUCT(ThreadVector);
-
-	void PostLoad();
-
-	//! SIMULATION/SYNCED METHODS
-	void push(const T& x) {
-		add.push_back(x);
-	};
-
-	void erase(VectorIT& it) {
-		del.push(*it); //FAIL (don't use iterators?)
-	};
-
-	void resize(const size_t& s) {
-		cont.resize(s);
-	};
-
-	size_t size() const {
-		return cont.size();
-	};
-
-	bool empty() const {
-		return cont.empty();
-	};
-
-	VectorIT begin() {
-		return cont.begin();
-	};
-
-	VectorIT end() {
-		return cont.end();
-	};
-
-public:
-	inline void update() {
-		for (std::vector<T>::iterator it = del.begin(); it != del.end(); it++)
-		{
-			cont.push_back(*it); //FIXME
-		}
-		del.clear();
-
-		for (std::vector<T>::iterator it = add.begin(); it != add.end(); it++)
-		{
-			cont.push_back(*it);
-		}
-		add.clear();
-	};
-
-public:
-	typedef VectorIT iterator;
-
-private:
-	std::vector<T> cont;
-	std::vector<T> add;
-	std::vector<T> del;
-};*/
-
 
 template <class T>
 class ThreadListSimRender {
@@ -354,19 +226,37 @@ public:
 
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
+		tempAddRender.insert(x);
 		cont.push_back(x);
-		addRender.insert(x);
 	};
 
 	SimIT insert(SimIT& it, const T& x) {
-		addRender.insert(x);
+		tempAddRender.insert(x);
 		return cont.insert(it, x);
 	};
 
-	SimIT erase(SimIT& it) {
+	SimIT erase_delete(SimIT& it) {
 		delRender.insert(*it);
 		return cont.erase(it);
 	};
+
+	void delete_erased() {
+		for (setIT it = delRender.begin(); it != delRender.end(); it++) {
+			T s = *it;
+			contRender.erase(s);
+			tempAddRender.erase(s);
+			addRender.erase(s);
+			delete s;
+		}
+		delRender.clear();
+	}
+
+	void add_render() {
+		for (setIT it = tempAddRender.begin(); it != tempAddRender.end(); it++) {
+			addRender.insert(*it);
+		}
+		tempAddRender.clear();
+	}
 
 	void resize(const size_t& s) {
 		cont.resize(s);
@@ -396,11 +286,6 @@ public:
 			contRender.insert(*it);
 		}
 		addRender.clear();
-		for (setIT it = delRender.begin(); it != delRender.end(); it++)
-		{
-			contRender.erase(*it);
-		}
-		delRender.clear();
 	};
 
 	size_t render_size() const {
@@ -429,6 +314,7 @@ public: //!needed by CREG
 private:
 	std::set<T> contRender;
 	std::set<T> addRender;
+	std::set<T> tempAddRender;
 	std::set<T> delRender;
 };
 

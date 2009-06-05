@@ -243,14 +243,16 @@ void CUnitDrawer::Update(void)
 		}
 	}
 
-	GML_STDMUTEX_LOCK(render); // Update
+	{
+		GML_STDMUTEX_LOCK(render); // Update
 
-	for(std::set<CUnit *>::iterator ui=uh->toBeAdded.begin(); ui!=uh->toBeAdded.end(); ++ui)
-		uh->renderUnits.push_back(*ui);
-	uh->toBeAdded.clear();
+		for(std::set<CUnit *>::iterator ui=uh->toBeAdded.begin(); ui!=uh->toBeAdded.end(); ++ui)
+			uh->renderUnits.push_back(*ui);
+		uh->toBeAdded.clear();
+	}
 
 	{
-		GML_RECMUTEX_LOCK(unit); // DrawWorld
+		GML_RECMUTEX_LOCK(unit); // Update
 
 		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			(*usi)->UpdateDrawPos();

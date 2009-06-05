@@ -69,6 +69,8 @@ public:
 	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
+	void AddRenderObjects();
+
 	struct projdist {
 		float dist;
 		CProjectile* proj;
