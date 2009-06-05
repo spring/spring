@@ -11,7 +11,7 @@ CR_REG_METADATA(ThreadListSimRender,(
 
 /*CR_BIND_TEMPLATE(ThreadListSimRender, )
 CR_REG_METADATA(ThreadListSimRender,(
-	CR_MEMBER(contSim),
+	CR_MEMBER(cont),
 	CR_POSTLOAD(PostLoad)
 ));*/
 
@@ -19,7 +19,7 @@ CR_REG_METADATA(ThreadListSimRender,(
 template<class T>
 void ThreadListSimRender<T>::PostLoad()
 {
-	for (SimIT it = contSim.begin(); it != contSim.end(); it++) {
+	for (SimIT it = cont.begin(); it != cont.end(); it++) {
 		addRender.push_back(*it);
 	}
 }
@@ -27,7 +27,7 @@ void ThreadListSimRender<T>::PostLoad()
 template<class T>
 void ThreadVectorSimRender<T>::PostLoad()
 {
-	for (SimIT it = contSim.begin(); it != contSim.end(); it++) {
+	for (SimIT it = cont.begin(); it != cont.end(); it++) {
 		addRender.push_back(*it);
 	}
 }
