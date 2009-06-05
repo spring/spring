@@ -350,38 +350,38 @@ public:
 
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
-		contSim.push_back(x);
-		addRender.push_back(x);
+		cont.push_back(x);
+		addRender.insert(x);
 	};
 
 	SimIT insert(SimIT& it, const T& x) {
-		addRender.push_back(x);
-		return contSim.insert(it, x);
+		addRender.insert(x);
+		return cont.insert(it, x);
 	};
 
 	SimIT erase(SimIT& it) {
-		delRender.push(*it);
-		return contSim.erase(it);
+		delRender.insert(*it);
+		return cont.erase(it);
 	};
 
 	void resize(const size_t& s) {
-		contSim.resize(s);
+		cont.resize(s);
 	};
 
 	size_t size() const {
-		return contSim.size();
+		return cont.size();
 	};
 
 	bool empty() const {
-		return contSim.empty();
+		return cont.empty();
 	};
 
 	SimIT begin() {
-		return contSim.begin();
+		return cont.begin();
 	};
 
 	SimIT end() {
-		return contSim.end();
+		return cont.end();
 	};
 
 public:
@@ -389,7 +389,7 @@ public:
 	inline void update() {
 		for (setIT it = addRender.begin(); it != addRender.end(); it++)
 		{
-			contRender.push_back(*it);
+			contRender.insert(*it);
 		}
 		addRender.clear();
 		for (setIT it = delRender.begin(); it != delRender.end(); it++)
@@ -420,7 +420,7 @@ public:
 	typedef RenderIT render_iterator;
 
 private:
-	std::list<T> contSim;
+	std::list<T> cont;
 	std::set<T> contRender;
 	std::set<T> addRender;
 	std::set<T> delRender;
@@ -441,52 +441,52 @@ public:
 
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
-		contSim.push_back(x);
-		addRender.push_back(x);
+		cont.push_back(x);
+		addRender.insert(x);
 	};
 
 	SimIT insert(SimIT& it, const T& x) {
-		addRender.push_back(x);
-		if (it != contSim.end()) {
+		addRender.insert(x);
+		if (it != cont.end()) {
 			//! fast insert
-			contSim.push_back(*it);
+			cont.push_back(*it);
 			*it = x;
 			return it;
 		}
-		return contSim.insert(it, x);
+		return cont.insert(it, x);
 	};
 
 	SimIT erase(SimIT& it) {
-		delRender.push(*it);
+		delRender.insert(*it);
 
 		SimIT ito = it++;
-		if (it == contSim.end()) {
-			contSim.pop_back();
-			return contSim.end();
+		if (it == cont.end()) {
+			cont.pop_back();
+			return cont.end();
 		}
-		*ito = contSim.back();
-		contSim.pop_back();
+		*ito = cont.back();
+		cont.pop_back();
 		return ito;
 	};
 
 	void resize(const size_t& s) {
-		contSim.resize(s);
+		cont.resize(s);
 	};
 
 	size_t size() const {
-		return contSim.size();
+		return cont.size();
 	};
 
 	bool empty() const {
-		return contSim.empty();
+		return cont.empty();
 	};
 
 	SimIT begin() {
-		return contSim.begin();
+		return cont.begin();
 	};
 
 	SimIT end() {
-		return contSim.end();
+		return cont.end();
 	};
 
 public:
@@ -494,7 +494,7 @@ public:
 	inline void update() {
 		for (setIT it = addRender.begin(); it != addRender.end(); it++)
 		{
-			contRender.push_back(*it);
+			contRender.insert(*it);
 		}
 		addRender.clear();
 		for (setIT it = delRender.begin(); it != delRender.end(); it++)
@@ -525,7 +525,7 @@ public:
 	typedef RenderIT render_iterator;
 
 private:
-	std::vector<T> contSim;
+	std::vector<T> cont;
 	std::set<T> contRender;
 	std::set<T> addRender;
 	std::set<T> delRender;
