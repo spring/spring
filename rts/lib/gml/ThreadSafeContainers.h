@@ -453,7 +453,7 @@ public:
 			*it = x;
 			return it;
 		}
-		return cont.insert(it, x);
+		return contSim.insert(it, x);
 	};
 
 	SimIT erase(SimIT& it) {
