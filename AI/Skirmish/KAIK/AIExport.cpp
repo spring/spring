@@ -80,6 +80,7 @@ EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
 	return 0;
 }
 
+/*
 EXPORT(int) release(int teamId) {
 	if (myAIs.count(teamId) == 0) {
 		// no AI for this team, raise an error
@@ -93,6 +94,7 @@ EXPORT(int) release(int teamId) {
 	// signal: everything went ok
 	return 0;
 }
+*/
 
 EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 	if (teamId < 0) {
