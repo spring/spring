@@ -16,14 +16,16 @@ CR_REG_METADATA(ThreadListSimRender,(
 ));*/
 
 
-void ThreadListSimRender::PostLoad()
+template<class T>
+void ThreadListSimRender<class T>::PostLoad()
 {
 	for (SimIT it = contSim.begin(); it != contSim.end(); it++) {
 		addRender.push_back(*it);
 	}
 }
 
-void ThreadVectorSimRender::PostLoad()
+template<class T>
+void ThreadVectorSimRender<class T>::PostLoad()
 {
 	for (SimIT it = contSim.begin(); it != contSim.end(); it++) {
 		addRender.push_back(*it);
