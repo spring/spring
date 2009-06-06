@@ -1899,9 +1899,9 @@ int AAIBuildTable::GetGroundAssault(int side, float power, float gr_eff, float a
 	float best_ranking = -10000, my_ranking;
 	int best_unit = 0;
 
-	float max_cost = this->max_cost[GROUND_ASSAULT][side-1];
-	float max_range = max_value[GROUND_ASSAULT][side-1];
-	float max_speed = this->max_speed[0][side-1];
+	float max_cost = this->max_cost[GROUND_ASSAULT][side];
+	float max_range = max_value[GROUND_ASSAULT][side];
+	float max_speed = this->max_speed[0][side];
 
 	float max_power = 0;
 	float max_efficiency  = 0;
@@ -1989,9 +1989,9 @@ int AAIBuildTable::GetHoverAssault(int side,  float power, float gr_eff, float a
 
 	int c = 0;
 
-	float max_cost = this->max_cost[HOVER_ASSAULT][side-1];
-	float max_range = max_value[HOVER_ASSAULT][side-1];
-	float max_speed = this->max_speed[2][side-1];
+	float max_cost = this->max_cost[HOVER_ASSAULT][side];
+	float max_range = max_value[HOVER_ASSAULT][side];
+	float max_speed = this->max_speed[2][side];
 
 	float max_power = 0;
 	float max_efficiency  = 0;
@@ -2072,9 +2072,9 @@ int AAIBuildTable::GetAirAssault(int side,  float power, float gr_eff, float air
 
 	int c = 0;
 
-	float max_cost = this->max_cost[AIR_ASSAULT][side-1];
-	float max_range = max_value[AIR_ASSAULT][side-1];
-	float max_speed = this->max_speed[1][side-1];
+	float max_cost = this->max_cost[AIR_ASSAULT][side];
+	float max_range = max_value[AIR_ASSAULT][side];
+	float max_speed = this->max_speed[1][side];
 
 	float max_power = 0;
 	float max_efficiency  = 0;
@@ -2154,9 +2154,9 @@ int AAIBuildTable::GetSeaAssault(int side,  float power, float gr_eff, float air
 
 	int c = 0;
 
-	float max_cost = this->max_cost[SEA_ASSAULT][side-1];
-	float max_range = max_value[SEA_ASSAULT][side-1];
-	float max_speed = this->max_speed[3][side-1];
+	float max_cost = this->max_cost[SEA_ASSAULT][side];
+	float max_range = max_value[SEA_ASSAULT][side];
+	float max_speed = this->max_speed[3][side];
 
 	float max_power = 0;
 	float max_efficiency  = 0;
@@ -2236,9 +2236,9 @@ int AAIBuildTable::GetSubmarineAssault(int side, float power, float sea_eff, flo
 
 	int c = 0;
 
-	float max_cost = this->max_cost[SUBMARINE_ASSAULT][side-1];
-	float max_range = max_value[SUBMARINE_ASSAULT][side-1];
-	float max_speed = this->max_speed[4][side-1];
+	float max_cost = this->max_cost[SUBMARINE_ASSAULT][side];
+	float max_range = max_value[SUBMARINE_ASSAULT][side];
+	float max_speed = this->max_speed[4][side];
 
 	float max_power = 0;
 	float max_efficiency  = 0;
