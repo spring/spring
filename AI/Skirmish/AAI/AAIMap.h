@@ -175,7 +175,8 @@ public:
 
 	static int xSize, ySize;					// x and y size of the map (unit coordinates)
 	static int xMapSize, yMapSize;				// x and y size of the map (map coordinates)
-	static int xLOSMapSize, yLOSMapSize;		// x and y size of the LOS map (1/2 resolution of map)
+	static int losMapRes;				// resolution of the LOS map
+	static int xLOSMapSize, yLOSMapSize;		// x and y size of the LOS map
 	static int xDefMapSize, yDefMapSize;		// x and y size of the defence maps (1/4 resolution of map)
 	static int xContMapSize, yContMapSize;		// x and y size of the continent maps (1/4 resolution of map)
 	static int xSectors, ySectors;				// number of sectors
