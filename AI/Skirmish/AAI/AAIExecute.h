@@ -147,6 +147,7 @@ public:
 	void AddStartFactory();
 
 	// custom relations
+	float static sector_threat(AAISector *);
 	bool static least_dangerous(AAISector *left, AAISector *right);
 	bool static suitable_for_power_plant(AAISector *left, AAISector *right);
 	bool static suitable_for_ground_factory(AAISector *left, AAISector *right);
