@@ -686,10 +686,9 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	//	viewRadius = ((int)(viewRadius * LODScaleRefraction)) & 0xfffffe;
 	//}
 
-	viewRadius = max(max(numBigTexY,numBigTexX), viewRadius);
-
 	float zoom  = 45.0f / camera->GetFov();
 	viewRadius  = (int) (viewRadius * fastmath::sqrt(zoom));
+	viewRadius  = max(max(numBigTexY,numBigTexX), viewRadius);
 	viewRadius += (viewRadius & 1); //! we need a multiple of 2
 	neededLod   = int((gu->viewRange * 0.125f) / viewRadius) << 1;
 
@@ -1151,7 +1150,6 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
-		glMultiTexCoord1f(GL_TEXTURE1_ARB,0); //fixes a nvidia bug with gltexgen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
