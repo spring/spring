@@ -739,7 +739,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		CProjectile::va = GetVertexArray();
 		CProjectile::va->Initialize();
 
-		for (std::set<CProjectile *, distcmp>::iterator i = distset.begin(); i != distset.end(); ++i) {
+		for (std::set<CProjectile*, distcmp>::iterator i = distset.begin(); i != distset.end(); ++i) {
 			(*i)->Draw();
 		}
 	}
@@ -826,16 +826,6 @@ void CProjectileHandler::DrawShadowPass(void)
 
 void CProjectileHandler::AddProjectile(CProjectile* p)
 {
-	ThreadListSimRender<CProjectile*>::iterator psi = projectiles.begin();
-	while (psi != projectiles.end()) {
-		if (p == *psi){
-			logOutput.Print("DOUBLED ADDED PROJECTILE!!!!!");
-			return;
-		}
-		psi++;
-	}
-
-
 	projectiles.push(p);
 
 	if (p->synced && p->weapon) {
