@@ -102,7 +102,7 @@ void CFireProjectile::Update(void)
 		}
 	}
 
-	for(std::list<SubParticle>::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
+	for(SUBPARTICLE_LIST::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
 		pi->age+=ageSpeed;
 		if(pi->age>1){
 			subParticles.pop_back();
@@ -111,7 +111,7 @@ void CFireProjectile::Update(void)
 		pi->pos+=speed + wind.GetCurrentWind()*pi->age*0.05f + pi->posDif*0.1f;
 		pi->posDif*=0.9f;
 	}
-	for(std::list<SubParticle>::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
+	for(SUBPARTICLE_LIST::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
 		pi->age+=ageSpeed*1.5f;
 		if(pi->age>1){
 			subParticles2.pop_back();
@@ -131,8 +131,15 @@ void CFireProjectile::Draw(void)
 	unsigned char col[4];
 	col[3]=1;
 	unsigned char col2[4];
-	va->EnlargeArrays(subParticles2.size()*4+subParticles.size()*8,0,VA_SIZE_TC);
-	for(std::list<SubParticle>::iterator pi=subParticles2.begin();pi!=subParticles2.end();++pi){
+	size_t sz2 = subParticles2.size();
+	size_t sz = subParticles.size();
+	va->EnlargeArrays(sz2 * 4 + sz * 8, 0, VA_SIZE_TC);
+#if defined(USE_GML) && GML_ENABLE_SIM
+	size_t temp = 0;
+	for(SUBPARTICLE_LIST::iterator pi = subParticles2.begin(); temp < sz2; ++pi, ++temp) {
+#else
+	for(SUBPARTICLE_LIST::iterator pi = subParticles2.begin(); pi != subParticles2.end(); ++pi) {
+#endif
 		float age=pi->age+ageSpeed*gu->timeOffset;
 		float size=pi->maxSize*(age);
 		float rot=pi->rotSpeed*age;
@@ -153,7 +160,17 @@ void CFireProjectile::Draw(void)
 		va->AddVertexQTC(interPos+dir1+dir2,ph->explotex.xend ,ph->explotex.yend ,col);
 		va->AddVertexQTC(interPos-dir1+dir2,ph->explotex.xstart,ph->explotex.yend ,col);
 	}
-	for(std::list<SubParticle>::iterator pi=subParticles.begin();pi!=subParticles.end();++pi){
+#if defined(USE_GML) && GML_ENABLE_SIM
+	temp = 0;
+	for(SUBPARTICLE_LIST::iterator pi = subParticles.begin(); temp < sz; ++pi, ++temp) {
+		int smokeType = *(volatile int *)&pi->smokeType;
+		if(smokeType < 0 || smokeType >= ph->smoketex.size())
+			continue;
+		AtlasedTexture *at = &ph->smoketex[smokeType];
+#else
+	for(SUBPARTICLE_LIST::iterator pi = subParticles.begin(); pi != subParticles.end(); ++pi) {
+		AtlasedTexture *at = &ph->smoketex[pi->smokeType];
+#endif
 		float age=pi->age+ageSpeed*gu->timeOffset;
 		float size=pi->maxSize*fastmath::sqrt(age);
 		float rot=pi->rotSpeed*age;
@@ -188,10 +205,10 @@ void CFireProjectile::Draw(void)
 		col2[2]=(unsigned char)(c*0.6f);
 		col2[3]=c;
 
-		va->AddVertexQTC(interPos-dir1-dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].ystart,col2);
-		va->AddVertexQTC(interPos+dir1-dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].ystart,col2);
-		va->AddVertexQTC(interPos+dir1+dir2,ph->smoketex[pi->smokeType].xend,ph->smoketex[pi->smokeType].yend,col2);
-		va->AddVertexQTC(interPos-dir1+dir2,ph->smoketex[pi->smokeType].xstart,ph->smoketex[pi->smokeType].yend,col2);
+		va->AddVertexQTC(interPos-dir1-dir2,at->xstart,at->ystart,col2);
+		va->AddVertexQTC(interPos+dir1-dir2,at->xend,at->ystart,col2);
+		va->AddVertexQTC(interPos+dir1+dir2,at->xend,at->yend,col2);
+		va->AddVertexQTC(interPos-dir1+dir2,at->xstart,at->yend,col2);
 	}
 }
 

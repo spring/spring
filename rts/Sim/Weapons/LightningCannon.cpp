@@ -137,8 +137,8 @@ void CLightningCannon::FireImpl()
 		owner,
 		false,
 		0.5f,
-		true,
-		false,
+		weaponDef->noExplode || weaponDef->noSelfDamage, /*true*/
+		weaponDef->impactOnly,                           /*false*/
 		weaponDef->explosionGenerator,
 		u,
 		dir,

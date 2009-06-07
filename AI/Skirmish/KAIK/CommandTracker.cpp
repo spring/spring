@@ -1,85 +1,61 @@
+#include <fstream>
+#include <sstream>
+
 #include "IncExternAI.h"
+#include "IncGlobalAI.h"
 
-/*
-struct AIClasses;
-class CommandTracker {
-	public:
-		CommandTracker(AIClasses* aic):
-			ai(aic),
-			avgCommandsPerFrame(0.0f),
-			maxCommandsPerFrame(0),
-			peakCommandCountFrame(0),
-			avgCommandSize(0.0f),
-			totalCommandSize(0) {
-		}
-		~CommandTracker();
-
-		static void GiveOrder(int, const Command*);
-
-	private:
-		AIClasses* ai;
-		std::map<int, int> commandsPerFrame;
-
-		int numCommands;
-
-		float avgCommandsPerFrame;
-		int maxCommandsPerFrame;
-		int peakCommandFrame;
-
-		float avgCommandSize;
-		int totalCommandSize;
-};
-
-CommandTracker::CommandTracker(): peakCommandFrame(0) {
-}
-CommandTracker::~CommandTracker() {
+CCommandTracker::~CCommandTracker() {
 	std::ofstream fs;
 	std::stringstream ss;
+	std::string s = ai->logger->GetLogName() + ".cmdstats";
 	std::map<int, int>::const_iterator it;
 
-	for (it = commandsPerFrame.begin(); it != commandsPerFrame.end(); it++) {
+	for (it = cmdsPerFrame.begin(); it != cmdsPerFrame.end(); it++) {
 		ss << it->first << "\t" << it->second << "\n";
 	}
 
-	// TODO: make sure logger isn't deleted yet
-	fs.open(ai->logger->GetLogName() + ".cmdstats");
+	fs.open(s.c_str(), std::ios::out);
 	fs << ss.str();
 	fs.close();
 }
 
-void CommandTracker::Update() {
-	if ((ai->cb->GetCurrentFrame() % 1800) == 0) {
-		avgCommandsPerFrame = numCommands / commandsPerFrame.size();
-		avgCommandSize = totalCommandSize / numCommands;
+void CCommandTracker::Update(int currFrame) {
+	if ((currFrame % 1800) == 0 && !cmdsPerFrame.empty()) {
+		const int   numFrames        = cmdsPerFrame.size();
+		const float avgCmdsRegFrames = totalNumCmds / float(numFrames);
+		const float avgCmdsAllFrames = totalNumCmds / float(currFrame);
+		const float avgCmdSize       = totalCmdSize / float(totalNumCmds);
 
 		std::stringstream msg;
-			msg << "[CommandTracker::Update()]\n";
-			msg << "\taverage number of commands per frame: " << avgCommandsPerFrame << "\n";
-			msg << "\tnumber of frames tracked: " << commandsPerFrame.size() << "\n";
-			msg << "\tmaximum number of commands per frame: " << maxCommandsPerFrame << "\n";
-			msg << "\tpeak command-count frame: " << peakCommandFrame << "\n";
+			msg << "[CCommandTracker::Update()] frame " << currFrame << "\n";
+			msg << "\tnumber of frames registered:                    " << numFrames        << "\n";
+			msg << "\t(avg.) number of commands (registered frames):  " << avgCmdsRegFrames << "\n";
+			msg << "\t(avg.) number of commands (all elapsed frames): " << avgCmdsAllFrames << "\n";
+			msg << "\t(avg.) number of parameters per command:        " << avgCmdSize       << "\n";
+			msg << "\t(max.) number of commands, peak frame:          "
+				<< maxCmdsPerFrame << ", "
+				<< peakCmdFrame    << "\n";
 
 		L(ai, msg.str());
 	}
 }
 
-void CommandTracker::GiveOrder(int id, const Command* c) {
+void CCommandTracker::GiveOrder(int id, Command* c) {
 	const int f = ai->cb->GetCurrentFrame();
 
-	if (commandsPerFrame.find(f) == commandsPerFrame.end()) {
-		commandsPerFrame[f] = 1;
+	if (cmdsPerFrame.find(f) == cmdsPerFrame.end()) {
+		cmdsPerFrame[f] = 1;
 	} else {
-		commandsPerFrame[f] += 1;
+		cmdsPerFrame[f] += 1;
 	}
 
-	if (commandsPerFrame[f] > maxCommandsPerFrame) {
-		maxCommandsPerFrame = commandsPerFrame[f];
-		peakCommandFrame = f;
+	if (cmdsPerFrame[f] > maxCmdsPerFrame) {
+		maxCmdsPerFrame = cmdsPerFrame[f];
+		peakCmdFrame    = f;
 	}
 
-	numCommands += 1;
-	totalCommandSize += c->params.size();
+	totalNumCmds += 1;
+	totalCmdSize += c->params.size();
 
 	ai->cb->GiveOrder(id, c);
 }
-*/

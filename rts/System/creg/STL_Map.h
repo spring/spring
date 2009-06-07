@@ -20,7 +20,9 @@
 	#error Unsupported compiler
 #endif
 
+#include <string>
 #include <map>
+#include <boost/shared_ptr.hpp>
 
 #include "creg_cond.h"
 

@@ -13,6 +13,7 @@
 #include <assert.h>
 
 #include "mmgr.h"
+#include "Util.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
@@ -90,14 +91,25 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	viewRange = MAX_VIEW_RANGE;
 	timeOffset = 0;
 	drawFog = true;
-	compressTextures = false;
-	atiHacks = false;
 	teamNanospray = false;
 	autoQuit = false;
 	quitTime = 0;
 #ifdef DIRECT_CONTROL_ALLOWED
 	directControl = 0;
 #endif
+	compressTextures = false;
+	atiHacks = false;
+	supportNPOTs = GLEW_ARB_texture_non_power_of_two;
+	{
+		std::string vendor = std::string((char*)glGetString(GL_VENDOR));
+		StringToLowerInPlace(vendor);
+		bool isATi = (vendor.find("ati ") != string::npos);
+		if (isATi) {
+			std::string renderer = std::string((char*)glGetString(GL_RENDERER));
+			StringToLowerInPlace(renderer);
+			supportNPOTs = (renderer.find(" x") == string::npos && renderer.find(" 9") == string::npos); //! x-series doesn't support NPOTs
+		}
+	}
 }
 
 /**

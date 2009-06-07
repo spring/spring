@@ -4,6 +4,12 @@
 #include "WeaponProjectile.h"
 #include <deque>
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+#define SPARK_QUEUE gmlCircularQueue<CFireBallProjectile::Spark,32>
+#else
+#define SPARK_QUEUE std::deque<Spark>
+#endif
+
 class CFireBallProjectile :
 	public CWeaponProjectile
 {
@@ -28,7 +34,7 @@ public:
 	void Collision();
 
 private:
-	std::deque<Spark> sparks;
+	SPARK_QUEUE sparks;
 
 	void EmitSpark();
 };

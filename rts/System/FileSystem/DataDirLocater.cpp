@@ -28,6 +28,7 @@
 #include "FileSystem.h"
 #include "mmgr.h"
 #include "Exceptions.h"
+#include "Platform/Misc.h"
 
 /**
  * @brief construct a data directory object
@@ -146,15 +147,22 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 		// like network mounted datadir lost connection and suddenly files end up in some
 		// other random writedir you didn't even remember you had added it.
 		if (!writedir && access(d->path.c_str(), W_OK) == 0) {
-#else
-	if (_access(d->path.c_str(), 4) == 0) {
-		if (!writedir && _access(d->path.c_str(), 2) == 0) {
-#endif
 			d->writable = true;
 			writedir = &*d;
 		}
 		return true;
-	} else {
+	}
+#else
+	if (_access(d->path.c_str(), 4) == 0
+			&& FileSystemHandler::GetInstance().DirIsWritable(d->path)) {
+		if (!writedir) {
+			d->writable = true;
+			writedir = &*d;
+		}
+		return true;
+	}
+#endif
+	else {
 		if (filesystem.CreateDirectory(d->path)) {
 			// it didn't exist before, now it does and we just created it with rw access,
 			// so we just assume we still have read-write acces...
@@ -242,14 +250,18 @@ void DataDirLocater::LocateDataDirs()
 	}
 
 #ifdef WIN32
+	// try current directory first, exe dir later
 	TCHAR currentDir[MAX_PATH];
-	::GetModuleFileName(0, currentDir, sizeof(currentDir) - 1);
-	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
-	_splitpath(currentDir, drive, dir, file, ext);
-	std::ostringstream complete;
-	complete << drive << dir;
-	AddDirs(complete.str());
+	::GetCurrentDirectory(sizeof(currentDir) - 1, currentDir);
+	std::string curPath = currentDir;
+	AddDirs(std::string(currentDir));
+#endif
 
+#ifndef UNITSYNC
+	AddDirs(Platform::GetBinaryPath());
+#endif
+
+#ifdef WIN32
 	// my documents
 	TCHAR strPath[MAX_PATH];
 	SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);
@@ -286,10 +298,10 @@ void DataDirLocater::LocateDataDirs()
 	// CFRelease(mainBundleURL);
 	// CFRelease(cfStringRef);
 	// std::string path(cPath);
-	
+
 	// datadirs.clear();
 	// writedir = NULL;
-	
+
 	// // Add bundle resources:
 	// datadirs.push_back(path + "/Contents/Resources/");
 	// datadirs.rbegin()->readable = true;

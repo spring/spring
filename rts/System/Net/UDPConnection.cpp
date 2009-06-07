@@ -3,7 +3,6 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <deque>
 
 #ifdef _WIN32
@@ -22,8 +21,6 @@
 #include <boost/cstdint.hpp>
 
 namespace netcode {
-
-using namespace boost::posix_time;
 
 const unsigned UDPConnection::hsize = 9;
 const unsigned UDPMaxPacketSize = 4096;
@@ -102,19 +99,19 @@ void UDPConnection::Update()
 		}
 	}
 	
-	const ptime curTime = microsec_clock::local_time();
+	const spring_time curTime = spring_gettime();
 	bool force = false;	// should we force to send a packet?
 
-	if((dataRecv == 0) && lastSendTime < curTime-seconds(1) && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
+	if((dataRecv == 0) && lastSendTime < curTime-spring_secs(1) && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
 		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
 		lastSendTime = curTime;
 		force = true;
 	}
 
-	if (lastSendTime<curTime-seconds(5) && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
+	if (lastSendTime<curTime-spring_secs(5) && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
 		force = true;
 	}
-	else if(lastSendTime<curTime-milliseconds(200) && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
+	else if(lastSendTime<curTime-spring_msecs(200) && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
 		force = true;
 	}
 
@@ -123,7 +120,7 @@ void UDPConnection::Update()
 
 void UDPConnection::ProcessRawPacket(RawPacket* packet)
 {
-	lastReceiveTime = microsec_clock::local_time();
+	lastReceiveTime = spring_gettime();
 	dataRecv += packet->length;
 	recvOverhead += hsize;
 	++recvPackets;
@@ -142,7 +139,7 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 			// we got a nak for packets which never got sent
 			//TODO give error message
 		}
-		else if (nak_abs != lastNak || lastNakTime < lastReceiveTime-milliseconds(100))
+		else if (nak_abs != lastNak || lastNakTime < lastReceiveTime-spring_msecs(100))
 		{
 			// resend all packets from firstUnacked till nak_abs
 			lastNak=nak_abs;
@@ -248,15 +245,15 @@ void UDPConnection::ProcessRawPacket(RawPacket* packet)
 
 void UDPConnection::Flush(const bool forced)
 {
-	const ptime curTime = microsec_clock::local_time();
+	const spring_time curTime = spring_gettime();
 
 	unsigned outgoingLength = 0;
 	for (packetList::const_iterator it = outgoingData.begin(); it != outgoingData.end(); ++it)
 		outgoingLength += (*it)->length;
 
-	if (forced || (!outgoingData.empty() && (lastSendTime < (curTime - milliseconds(200) + milliseconds(outgoingLength * 10)))))
+	if (forced || (!outgoingData.empty() && (lastSendTime < (curTime - spring_msecs(200) + spring_msecs(outgoingLength * 10)))))
 	{
-		lastSendTime = microsec_clock::local_time();
+		lastSendTime = spring_gettime();
 
 		boost::uint8_t buffer[UDPMaxPacketSize];
 		unsigned pos = 0;
@@ -291,8 +288,8 @@ void UDPConnection::Flush(const bool forced)
 
 bool UDPConnection::CheckTimeout() const
 {
-	const time_duration timeout = ((dataRecv == 0) ? seconds(45) : seconds(30));
-	if((lastReceiveTime+timeout) < microsec_clock::local_time())
+	const spring_duration timeout = ((dataRecv == 0) ? spring_secs(45) : spring_secs(30));
+	if((lastReceiveTime+timeout) < spring_gettime())
 	{
 		return true;
 	}
@@ -342,7 +339,9 @@ void UDPConnection::SetMTU(unsigned mtu2)
 
 void UDPConnection::Init()
 {
-	lastReceiveTime = microsec_clock::local_time();
+	spring_notime(lastNakTime);
+	spring_notime(lastSendTime);
+	lastReceiveTime = spring_gettime();
 	lastInOrder=-1;
 	waitingPackets.clear();
 	firstUnacked=0;

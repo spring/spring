@@ -23,6 +23,7 @@
 #include "System/Vec2.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/Weapon.h"
 #include "Sim/Units/CommandAI/CommandQueue.h"
 #include "AAIConfig.h"
 #include "AIExport.h"
@@ -39,9 +40,9 @@ void ReplaceExtension (const char *n, char *dst,int s, const char *ext);
 #define AIDEF_H
 
 #define AAI_VERSION aiexport_getVersion()
-#define MAP_FILE_VERSION "MAP_LEARN_0_80"
-#define TABLE_FILE_VERSION "MOD_LEARN_0_87"
-#define MAP_CACHE_VERSION "MAP_DATA_0_87"
+#define MAP_CACHE_VERSION "MAP_DATA_0_89"
+#define MAP_LEARN_VERSION "MAP_LEARN_0_89"
+#define MOD_LEARN_VERSION "MOD_LEARN_0_90"
 #define CONTINENT_DATA_VERSION "MOVEMENT_MAPS_0_87"
 
 // all paths
@@ -102,7 +103,7 @@ public:
 
 enum Direction {WEST, EAST, SOUTH, NORTH, CENTER, NO_DIRECTION};
 
-enum MapType {UNKNOWN_MAP, LAND_MAP, AIR_MAP, LAND_WATER_MAP, WATER_MAP};
+enum MapType {LAND_MAP, LAND_WATER_MAP, WATER_MAP, UNKNOWN_MAP};
 
 enum SectorType {UNKNOWN_SECTOR, LAND_SECTOR, LAND_WATER_SECTOR, WATER_SECTOR};
 
@@ -117,15 +118,7 @@ enum UnitType {UNKNOWN_UNIT, ASSAULT_UNIT, ANTI_AIR_UNIT, BOMBER_UNIT, ARTY_UNIT
 
 enum UnitTask {UNIT_IDLE, UNIT_ATTACKING, DEFENDING, GUARDING, MOVING, BUILDING, SCOUTING, ASSISTING, RECLAIMING, HEADING_TO_RALLYPOINT, UNIT_KILLED, ENEMY_UNIT, BOMB_TARGET};
 
-enum AttackType {NO_ATTACK, BASE_ATTACK, OUTPOST_ATTACK};
-
 enum BuildOrderStatus {BUILDORDER_FAILED, BUILDORDER_NOBUILDPOS, BUILDORDER_NOBUILDER, BUILDORDER_SUCCESFUL};
-
-struct AAIDefence
-{
-	int unit_id;
-	int def_id;
-};
 
 struct AAIAirTarget
 {
@@ -175,20 +168,13 @@ struct AAIUnit
 	AAIGroup *group;
 	AAIConstructor *cons;
 	UnitTask status;
-};
-
-struct ProductionRequest
-{
-	int builder_id;		// id of that building/builder/mine layer etc.
-	int built;			// how many facs/builder of that type have been build
-	int requested;		// how many units/buildings need this fac. to be built
+	int last_order;
 };
 
 struct AAIContinent
 {
 	int id;
 	int size;			// number of cells
-
 	bool water;
 };
 

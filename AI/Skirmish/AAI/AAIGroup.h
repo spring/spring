@@ -59,12 +59,17 @@ public:
 
 	void UnitIdle(int unit);
 
-	float GetPowerVS(int assault_cat_id);
+	float GetCombatPowerVsCategory(int assault_cat_id);
+
+	void GetCombatPower(vector<float> *combat_power);
 
 	float3 GetGroupPos();
 
 	// returns true if group is strong enough to attack
 	bool SufficientAttackPower();
+
+	// checks if the group may participate in an attack (= idle, sufficient combat power, etc.)
+	bool AvailableForAttack();
 
 	int maxSize;
 	int size;

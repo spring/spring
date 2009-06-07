@@ -16,20 +16,26 @@ static const float TWOPI = 2*PI;
 #define NUM_HEADINGS 4096
 
 #if (NUM_HEADINGS == 1024)
-#  define HEADING_CHECKSUM	HEADING_CHECKSUM_1024
+#  define HEADING_CHECKSUM  HEADING_CHECKSUM_1024
 #elif (NUM_HEADINGS == 4096)
-#  define HEADING_CHECKSUM	HEADING_CHECKSUM_4096
+#  define HEADING_CHECKSUM  HEADING_CHECKSUM_4096
 #else
 #  error "HEADING_CHECKSUM not set, invalid NUM_HEADINGS?"
 #endif
 
-extern float2 headingToVectorTable[NUM_HEADINGS];
+class CMyMath {
+public:
+	static void Init();
+	static float2 headingToVectorTable[NUM_HEADINGS];
+};
+
+
 
 inline short int GetHeadingFromFacing(int facing)
 {
 	switch (facing) {
-		case 0: return 0;		// south
-		case 1: return 16384;	// east
+		case 0: return      0;	// south
+		case 1: return  16384;	// east
 		case 2: return  32767;	// north == -32768
 		case 3: return -16384;	// west
 		default: return 0;
@@ -44,7 +50,7 @@ inline short int GetHeadingFromVector(float dx, float dz)
 
 		if (d > 1.0f) {
 			h = (PI * 0.5f) - d / (d * d + 0.28f);
-		} else if (d < -1) {
+		} else if (d < -1.0f) {
 			h = -(PI * 0.5f) - d / (d * d + 0.28f);
 		} else {
 			h = d / (1.0f + 0.28f * d * d);
@@ -73,9 +79,9 @@ inline short int GetHeadingFromVector(float dx, float dz)
 
 	int ih = (int) h;
 	if (ih == -SHORTINT_MAXVALUE) {
-		// ih represents due-north, but modulo operation
-		// would cause it to wrap around from -32768 to 0
-		// which means due-south
+		// ih now represents due-north, but the modulo operation
+		// below would cause it to wrap around from -32768 to 0
+		// which means due-south, so add 1
 		ih += 1;
 	}
 	ih %= SHORTINT_MAXVALUE;
@@ -94,7 +100,7 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 	// Prevents ret.y from going beyond SHORTINT_MAXVALUE.
 	// If h goes beyond SHORTINT_MAXVALUE, the following
 	// conversion to a short int crashes.
-	//this change destroys the whole meaning with using short ints....
+	// this change destroys the whole meaning with using short ints....
 	#if defined BUILDING_AI
 	int iy = (int) (std::asin(vec.y) * (SHORTINT_MAXVALUE / PI));
 	#else
@@ -108,7 +114,7 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 
 inline float3 GetVectorFromHeading(short int heading)
 {
-	float2 v = headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
+	float2 v = CMyMath::headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
 	return float3(v.x, 0.0f, v.y);
 }
 
@@ -116,7 +122,7 @@ float3 GetVectorFromHAndPExact(short int heading,short int pitch);
 
 inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const float3& p3, const float3& p4)
 {
-	float ni=1-i;
+	float ni = 1 - i;
 
 	float3 res((p1 * ni * ni * ni) + (p2 * 3 * i * ni * ni) + (p3 * 3 * i * i * ni) + (p4 * i * i * i));
 	return res;
@@ -124,33 +130,37 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
+float smoothstep(float edge0, float edge1, float value);
 
-
-float smoothstep(float edge0,float edge1,float value);
 
 
 #ifndef __GNUC__
-#  define  __attribute__(x)  /*NOTHING*/
+float Square(const float x);
+#else
+float Square(const float x) __attribute__((const));
 #endif
 
-float Square(const float x) __attribute__((const));
-inline float Square(const float x)
-{
-	return x*x;
-}
+inline float Square(const float x) { return x * x; }
+
 
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp
  */
+#ifndef __GNUC__
+float ClampRad(float f);
+#else
 float ClampRad(float f) __attribute__((const));
+#endif
+
 inline float ClampRad(float f)
 {
-	f = fmod(f,TWOPI);
-	if (f<0.0f) f += TWOPI;
+	f = fmod(f, TWOPI);
+	if (f < 0.0f) f += TWOPI;
 	return f;
 }
+
 
 
 /**
@@ -159,9 +169,10 @@ inline float ClampRad(float f)
  */
 inline void ClampRad(float* f)
 {
-	*f = fmod(*f,TWOPI);
-	if (*f<0.0f) *f += TWOPI;
+	*f = fmod(*f, TWOPI);
+	if (*f < 0.0f) *f += TWOPI;
 }
+
 
 
 /**
@@ -169,10 +180,15 @@ inline void ClampRad(float* f)
  * @param f1 float* first compare value
  * @param f2 float* second compare value
  */
+#ifndef __GNUC__
+bool RadsAreEqual(const float f1, const float f2);
+#else
 bool RadsAreEqual(const float f1, const float f2) __attribute__((const));
+#endif
+
 inline bool RadsAreEqual(const float f1, const float f2)
 {
-	return (fmod(f1 - f2, TWOPI)==0.0f);
+	return (fmod(f1 - f2, TWOPI) == 0.0f);
 }
 
 #endif // MYMATH_H

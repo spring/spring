@@ -332,8 +332,8 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			owner,
 			true,
 			1.0f,
-			false,
-			false,
+			weaponDef->noExplode || weaponDef->noSelfDamage, /*false*/
+			weaponDef->impactOnly,                           /*false*/
 			weaponDef->explosionGenerator,
 			hit,
 			dir,

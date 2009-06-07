@@ -51,23 +51,14 @@ public:
 	float3 GetRandomBuildsite(int building, int tries, bool water = false);
 	float3 GetCenterBuildsite(int building, bool water = false);
 	float3 GetHighestBuildsite(int building);
+	float3 GetRadarArtyBuildsite(int building, float range, bool water);
 
 	// gets rectangle for possible buildsite
 	void GetBuildsiteRectangle(int *xStart, int *xEnd, int *yStart, int *yEnd);
 
-	// returns a float ranging from 1 to 2 indicating how close the sector is to the map border (1 is closest)
-	float GetMapBorderDist();
-
-	// returns number of own buildings in that sector
-	int GetNumberOfBuildings();
-
 	// helper functions
 	void Pos2SectorMapPos(float3 *pos, const UnitDef* def);
 	void SectorMapPos2Pos(float3 *pos, const UnitDef* def);
-
-	// add and remove defence buidlings to that sector
-	void RemoveDefence(int unit_id);
-	void AddDefence(int unit_id, int def_id);
 
 	// removes building from sector -> update own_structure & unitsOfType[]
 	void RemoveBuildingType(int def_id);
@@ -75,20 +66,30 @@ public:
 	// returns the category with the weakest defence in comparison with threat
 	UnitCategory GetWeakestCategory();
 
-	// returns the defence power vs a certain unit category, -1 if failed
-	float GetDefencePowerVs(UnitCategory category);
-	float GetDefencePowerVsID(int combat_cat_id);
-
-	// returns threatzo the sector by a certain category
+	// returns threat to the sector by a certain category
 	float GetThreatBy(UnitCategory category, float learned, float current);
 	float GetThreatByID(int combat_cat_id, float learned, float current);
 	float GetOverallThreat(float learned, float current);
 
-	// returns threat by the sector to categories
-	float GetThreatTo(float ground, float air, float hover, float sea, float submarine);
+	// returns combat power of all own/known enemy units in the sector
+	float GetMyCombatPower(float ground, float air, float hover, float sea, float submarine);
+	float GetEnemyCombatPower(float ground, float air, float hover, float sea, float submarine);
+
+	float GetMyCombatPowerAgainstCombatCategory(int combat_category);
+	float GetEnemyCombatPowerAgainstCombatCategory(int combat_category);
+
+	// returns defence power of all own/known enemy stat defences in the sector
+	float GetMyDefencePower(float ground, float air, float hover, float sea, float submarine);
+	float GetEnemyDefencePower(float ground, float air, float hover, float sea, float submarine);
+
+	float GetMyDefencePowerAgainstAssaultCategory(int assault_category);
+	float GetEnemyDefencePowerAgainstAssaultCategory(int assault_category);
+
+	// returns enemy combat power of all known enemy units/stat defences in the sector
+	float GetEnemyThreatToMovementType(unsigned int movement_type);
 
 	// returns combat power of units in that and neighbouring sectors vs combat cat
-	float GetAreaCombatPowerVs(int combat_category, float neighbour_importance);
+	float GetEnemyAreaCombatPowerVs(int combat_category, float neighbour_importance);
 
 	// updates threat map
 	void UpdateThreatValues(UnitCategory unit, UnitCategory attacker);
@@ -115,23 +116,51 @@ public:
 	// returns true if sector is connected with a big ocean (and not only a small pond)
 	bool ConnectedToOcean();
 
-	// sector number
+	// returns min dist to edge in number of sectors
+	int GetEdgeDistance();
+
+	AAI *ai;
+	AAIUnitTable *ut;
+	AAIMap *map;
+
+	// sector x/y index
 	int x, y;
+
+	// minimum distance to edge in number of sectors
+	int map_border_dist;
+
+	// water and flat terrain ratio
+	float flat_ratio;
+	float water_ratio;
+
+	// id of the continent of the center of the sector
+	int continent;
+
+	// coordinates of the edges
+	float left, right, top, bottom;
+
+	// list of all metal spots in the sector
+	list<AAIMetalSpot*> metalSpots;
+
+	bool freeMetalSpots;
+
+	int distance_to_base;	// 0 = base, 1 = neighbour to base
+
+	bool interior;			// true if sector is no inner sector
+
+	unsigned int allowed_movement_types;	// movement types that may enter this sector
 
 	float enemy_structures;
 	float own_structures;
 	float allied_structures;
 
-	int rally_points;	// how many groups got a rally point in that sector
+	// how many groups got a rally point in that sector
+	int rally_points;
 
-	list<AAIDefence> defences;
-	int failed_defences; // how many times aai tried to build defences and could not find possible constructionsite
+	// how many times aai tried to build defences and could not find possible construction site
+	int failed_defences;
 
-	// units in the sector
-	vector<int> enemyUnitsOfType;
-	vector<int> unitsOfType;
-
-	// how many times the sector was not scouted
+	// indicates how many times scouts have been sent to another sector
 	float last_scout;
 
 	// importance of the sector
@@ -149,30 +178,20 @@ public:
 	// how many units of certain type recently lost in that sector
 	vector<float> lost_units;
 
+	// combat units in the sector
+	vector<short> my_combat_units;
+	vector<float> enemy_combat_units; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine, 5 total
+
+	int enemies_on_radar;
+
+	// buildings units in the sector
+	vector<short> my_buildings;
+
 	// stores combat power of all stationary defs/combat unit vs different categories
-	vector<float> stat_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine
-	vector<float> mobile_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine, 5 building
+	vector<float> my_stat_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine
+	vector<float> my_mobile_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine, 5 building
 
-	// combat.eff of all enemy units in this sector (0 if safe sector)
-	float threat;
-
-	// water and flat terrain ratio
-	float flat_ratio;
-	float water_ratio;
-
-	float left, right, top, bottom;
-
-	list<AAIMetalSpot*> metalSpots;
-
-	AAI *ai;
-
-	AAIUnitTable *ut;
-	AAIMap *map;
-
-	bool freeMetalSpots;
-
-	int distance_to_base;	// 0 = base, 1 = neighbour to base
-	bool interior;			// true if sector is no inner sector
-
-	unsigned int allowed_movement_types;	// movement types that may enter this sector
+	// stores combat power of all stationary enemy defs/combat unit vs different categories
+	vector<float> enemy_stat_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine
+	vector<float> enemy_mobile_combat_power; // 0 ground, 1 air, 2 hover, 3 sea, 4 submarine, 5 building
 };

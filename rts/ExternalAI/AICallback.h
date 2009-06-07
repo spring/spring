@@ -95,6 +95,7 @@ public:
 	float GetMaxHeight();
 	const float* GetSlopeMap();
 	const unsigned short* GetLosMap();
+	int GetLosMapResolution();
 	const unsigned short* GetRadarMap();
 	const unsigned short* GetJammerMap();
 	const unsigned char* GetMetalMap();

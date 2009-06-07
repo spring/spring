@@ -24,14 +24,11 @@ CR_REG_METADATA_SUB(CMetalMaker, UnitInfo, (
 
 
 
-CMetalMaker::CMetalMaker(AIClasses* ai) {
-	listIndex = 0;
+CMetalMaker::CMetalMaker(AIClasses* aic) {
+	listIndex  = 0;
 	lastEnergy = 0;
 	addedDelay = 0;
-	this->ai = ai;
-
-	if (ai)
-		this->aicb = ai->cb;
+	ai         = aic;
 }
 
 CMetalMaker::~CMetalMaker() {
@@ -41,13 +38,12 @@ CMetalMaker::~CMetalMaker() {
 }
 
 void CMetalMaker::PostLoad() {
-	 this->aicb = ai->cb;
 }
 
 
 
 bool CMetalMaker::Add(int unit) {
-	const UnitDef* ud = aicb->GetUnitDef(unit);
+	const UnitDef* ud = ai->cb->GetUnitDef(unit);
 
 	if (!(ud->energyUpkeep > 0.0f && ud->makesMetal > 0.0f)) {
 		// can only use metal makers
@@ -56,7 +52,7 @@ bool CMetalMaker::Add(int unit) {
 
 	// analyse the command
 	UnitInfo info;
-	const std::vector<CommandDescription>* cd = aicb->GetUnitCommands(unit);
+	const std::vector<CommandDescription>* cd = ai->cb->GetUnitCommands(unit);
 
 	for (std::vector<CommandDescription>::const_iterator cdi = cd->begin(); cdi != cd->end(); ++cdi) {
 		if (cdi->id == CMD_ONOFF) {
@@ -85,10 +81,10 @@ bool CMetalMaker::Add(int unit) {
 		// insert it where it should be in order for the list to remain sorted (insertion sort)
 		if (info.metalPerEnergy > theIterator->metalPerEnergy ||
 			((info.metalPerEnergy == theIterator->metalPerEnergy &&
-			(aicb->GetUnitPos(info.id).x == aicb->GetUnitPos(theIterator->id).x &&
-			aicb->GetUnitPos(info.id).z > aicb->GetUnitPos(theIterator->id).z)) ||
+			(ai->cb->GetUnitPos(info.id).x == ai->cb->GetUnitPos(theIterator->id).x &&
+			ai->cb->GetUnitPos(info.id).z > ai->cb->GetUnitPos(theIterator->id).z)) ||
 			(info.metalPerEnergy == theIterator->metalPerEnergy &&
-			aicb->GetUnitPos(info.id).x > aicb->GetUnitPos(theIterator->id).x))
+			ai->cb->GetUnitPos(info.id).x > ai->cb->GetUnitPos(theIterator->id).x))
 		) {
 			myUnits.insert(theIterator, info);
 			inserted = true;
@@ -108,7 +104,7 @@ bool CMetalMaker::Add(int unit) {
 			Command c;
 			c.id = CMD_ONOFF;
 			c.params.push_back(1);
-			aicb->GiveOrder(myUnits[counter].id, &c);
+			ai->ct->GiveOrder(myUnits[counter].id, &c);
 			myUnits[counter].turnedOn = true;
 		}
 
@@ -119,7 +115,7 @@ bool CMetalMaker::Add(int unit) {
 			Command c;
 			c.id = CMD_ONOFF;
 			c.params.push_back(0);
-			aicb->GiveOrder(myUnits[counter].id, &c);
+			ai->ct->GiveOrder(myUnits[counter].id, &c);
 			myUnits[counter].turnedOn = false;
 		}
 	}
@@ -163,11 +159,10 @@ void CMetalMaker::Update(int frameNum) {
 	int numUnits = (int) myUnits.size();
 
 	if (frameNum % updateSpread == 0 && numUnits > 0 && addedDelay-- <= 0) {
-		// lastUpdate = frameNum;
-		float energy = aicb->GetEnergy();
-		float estore = aicb->GetEnergyStorage();
-		float difference = energy - lastEnergy;
-		difference /= 4.0f;
+		float energy     = ai->cb->GetEnergy();
+		float estore     = ai->cb->GetEnergyStorage();
+		float difference = (energy - lastEnergy) * 0.25f;
+
 		lastEnergy = energy;
 
 		// turn something off
@@ -181,7 +176,8 @@ void CMetalMaker::Update(int frameNum) {
 					Command c;
 					c.id = CMD_ONOFF;
 					c.params.push_back(0);
-					aicb->GiveOrder(myUnits[listIndex].id, &c);
+					ai->ct->GiveOrder(myUnits[listIndex].id, &c);
+
 					myUnits[listIndex].turnedOn = false;
 					difference += myUnits[listIndex].energyUse;
 				}
@@ -193,7 +189,7 @@ void CMetalMaker::Update(int frameNum) {
 				Command c;
 				c.id = CMD_ONOFF;
 				c.params.push_back(1);
-				aicb->GiveOrder(myUnits[listIndex].id, &c);
+				ai->ct->GiveOrder(myUnits[listIndex].id, &c);
 				myUnits[listIndex].turnedOn = true;
 
 				if (difference < myUnits[listIndex].energyUse)
@@ -221,7 +217,7 @@ void CMetalMaker::Update(int frameNum) {
 					Command c;
 					c.id = CMD_ONOFF;
 					c.params.push_back(0);
-					aicb->GiveOrder(myUnits[i].id, &c);
+					ai->ct->GiveOrder(myUnits[i].id, &c);
 					myUnits[i].turnedOn = false;
 				}
 			}
@@ -240,7 +236,7 @@ void CMetalMaker::Update(int frameNum) {
 					Command c;
 					c.id = CMD_ONOFF;
 					c.params.push_back(1);
-					aicb->GiveOrder(myUnits[i].id, &c);
+					ai->ct->GiveOrder(myUnits[i].id, &c);
 					myUnits[i].turnedOn = true;
 				}
 			}
@@ -258,7 +254,7 @@ void CMetalMaker::Update(int frameNum) {
 			Command c;
 			c.id = CMD_ONOFF;
 			c.params.push_back(0);
-			aicb->GiveOrder(myUnits[i].id, &c);
+			ai->ct->GiveOrder(myUnits[i].id, &c);
 			myUnits[i].turnedOn = false;
 		}
 

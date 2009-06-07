@@ -8,8 +8,6 @@
 #include <algorithm>
 #include <limits.h>
 #include <boost/regex.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-using namespace boost::posix_time;
 
 #include "mmgr.h"
 
@@ -24,6 +22,7 @@ using namespace boost::posix_time;
 #include "FileSystem/FileSystem.h"
 #include "Platform/errorhandler.h"
 #include "Util.h"
+#include "System/myTime.h"
 
 
 #if (LUA_VERSION_NUM < 500)
@@ -428,15 +427,15 @@ int LuaParser::TimeCheck(lua_State* L)
 	}
 	const string name = lua_tostring(L, 1);
 	lua_remove(L, 1);
-	const ptime startTime = microsec_clock::local_time();
+	const spring_time startTime = spring_gettime();
 	const int error = lua_pcall(L, lua_gettop(L) - 1, LUA_MULTRET, 0);
 	if (error != 0) {
 		const string errmsg = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		luaL_error(L, errmsg.c_str());
 	}
-	const ptime endTime = microsec_clock::local_time();
-	const float elapsed = 1.0e-3f * (float)((endTime - startTime).total_milliseconds());
+	const spring_time endTime = spring_gettime();
+	const float elapsed = 1.0e-3f * (float)(spring_tomsecs(endTime - startTime));
 	logOutput.Print("%s %f", name.c_str(), elapsed);
 	return lua_gettop(L);
 }

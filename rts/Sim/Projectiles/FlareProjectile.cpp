@@ -39,6 +39,8 @@ CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* 
 	checkCol=false;
 	useAirLos=true;
 	SetRadius(45);
+	subPos.resize(owner->unitDef->flareSalvoSize);
+	subSpeed.resize(owner->unitDef->flareSalvoSize);
 }
 
 CFlareProjectile::~CFlareProjectile(void)
@@ -66,12 +68,12 @@ void CFlareProjectile::Update(void)
 
 		//FIXME: just spawn new flares, if new missiles incoming?
 		if(owner && lastSub<(gs->frameNum - owner->unitDef->flareSalvoDelay) && numSub<owner->unitDef->flareSalvoSize){
-			subPos.push_back(owner->pos);
+			subPos[numSub] = owner->pos;
 			float3 s=owner->speed;
 			s+=owner->rightdir*owner->unitDef->flareDropVector.x;
 			s+=owner->updir*owner->unitDef->flareDropVector.y;
 			s+=owner->frontdir*owner->unitDef->flareDropVector.z;
-			subSpeed.push_back(s);
+			subSpeed[numSub] = s;
 			++numSub;
 			lastSub=gs->frameNum;
 

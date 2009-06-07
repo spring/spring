@@ -113,7 +113,7 @@ public:
 	cRAI();
 	virtual ~cRAI();
 	void InitAI(IGlobalAICallback* callback, int team);
-	void UnitCreated(int unit);						// called when a new unit is created on an ai team
+	void UnitCreated(int unit, int builder);		// called when a new unit is created on an ai team
 	void UnitFinished(int unit);					// called when a unit has finished being build
 	void UnitDestroyed(int unit,int attacker);		// called when a unit is destroyed
 	void EnemyEnterLOS(int enemy);					// called when an enemy unit enters the "line of sight" of you or your ally

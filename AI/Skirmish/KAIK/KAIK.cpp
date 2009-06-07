@@ -19,15 +19,6 @@ CKAIK* KAIKStateExt = KAIKState;
 
 
 
-CKAIK::CKAIK(): ai(NULL) {
-}
-
-CKAIK::~CKAIK() {
-	delete ai;
-}
-
-
-
 void CKAIK::Save(std::ostream* ofs) {
 	CREX_SC_SAVE(KAIK, ofs);
 }
@@ -75,9 +66,13 @@ void CKAIK::InitAI(IGlobalAICallback* callback, int team) {
 	ai->cb->SendTextMsg(AI_CREDITS, 0);
 }
 
+void CKAIK::ReleaseAI() {
+	delete ai; ai = NULL;
+}
 
 
-void CKAIK::UnitCreated(int unitID) {
+
+void CKAIK::UnitCreated(int unitID, int builderID) {
 	ai->uh->UnitCreated(unitID);
 	ai->econTracker->UnitCreated(unitID);
 }
@@ -187,7 +182,7 @@ int CKAIK::HandleEvent(int msg, const void* data) {
 
 			if ((cte->newteam) == (ai->cb->GetMyTeam())) {
 				// got a unit
-				UnitCreated(cte->unit);
+				UnitCreated(cte->unit, -1);
 				UnitFinished(cte->unit);
 				ai->uh->IdleUnitAdd(cte->unit, ai->cb->GetCurrentFrame());
 			}
@@ -233,4 +228,5 @@ void CKAIK::Update() {
 	// call attack handler and unit handler (metal maker) update routines
 	ai->ah->Update(frame);
 	ai->uh->MMakerUpdate(frame);
+	ai->ct->Update(frame);
 }

@@ -117,13 +117,12 @@ void AAIAttack::StopAttack()
 	arty_groups.clear();
 }
 
-void AAIAttack::AttackSector(AAISector *sector, AttackType type)
+void AAIAttack::AttackSector(AAISector *sector)
 {
 	int unit;
 	float importance = 110;
 
 	dest = sector;
-	this->type = type;
 
 	lastAttack = ai->cb->GetCurrentFrame();
 
@@ -179,17 +178,14 @@ void AAIAttack::RemoveGroup(AAIGroup *group)
 {
 	if(group->group_unit_type == ASSAULT_UNIT)
 	{
-		group->attack = 0;
 		combat_groups.erase(group);
 	}
 	else if(group->group_unit_type == ANTI_AIR_UNIT)
 	{
-		group->attack = 0;
 		aa_groups.erase(group);
 	}
 	else
 	{
-		group->attack = 0;
 		arty_groups.erase(group);
 	}
 

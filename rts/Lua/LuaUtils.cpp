@@ -5,6 +5,8 @@
 
 #include <set>
 #include <cctype>
+#include <zlib.h>
+#include <boost/cstdint.hpp>
 
 #include "mmgr.h"
 
@@ -529,6 +531,43 @@ int LuaUtils::Echo(lua_State* L)
 	return 0;
 }
 
+int LuaUtils::ZlibCompress(lua_State* L)
+{
+	size_t inLen;
+	const char* inData = luaL_checklstring(L, 1, &inLen);
+
+	long unsigned bufsize = inLen*1.02+32;
+	std::vector<boost::uint8_t> compressed(bufsize, 0);
+	const int error = compress(&compressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	if (error == Z_OK)
+	{
+		lua_pushlstring(L, (const char*)&compressed[0], bufsize);
+		return 1;
+	}
+	else
+	{
+		return luaL_error(L, "Error while compressing");
+	}
+}
+
+int LuaUtils::ZlibDecompress(lua_State* L)
+{
+	size_t inLen;
+	const char* inData = luaL_checklstring(L, 1, &inLen);
+
+	long unsigned bufsize = 65000;
+	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
+	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
+	if (error == Z_OK)
+	{
+		lua_pushlstring(L, (const char*)&uncompressed[0], bufsize);
+		return 1;
+	}
+	else
+	{
+		return luaL_error(L, "Error while decompressing");
+	}
+}
 
 /******************************************************************************/
 /******************************************************************************/

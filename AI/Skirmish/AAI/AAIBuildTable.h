@@ -24,6 +24,8 @@ public:
 	// loads everything from a cache file or creates a new one
 	void Init();
 
+	void SaveBuildTable(int game_period, MapType map_type);
+
 	// cache for combat eff (needs side, thus initialized later)
 	void InitCombatEffCache(int side);
 
@@ -64,6 +66,9 @@ public:
 	// return defence buildings to counter a certain category
 	int GetDefenceBuilding(int side, double efficiency, double combat_power, double cost, double ground_eff, double air_eff, double hover_eff, double sea_eff, double submarine_eff, double urgency, double range, int randomness, bool water, bool canBuild);
 
+	// returns a cheap defence building (= avg_cost taken
+	int GetCheapDefenceBuilding(int side, double efficiency, double combat_power, double cost, double urgency, double ground_eff, double air_eff, double hover_eff, double sea_eff, double submarine_eff, bool water);
+
 	// returns a metal maker
 	int GetMetalMaker(int side, float cost, float efficiency, float metal, float urgency, bool water, bool canBuild);
 
@@ -88,6 +93,9 @@ public:
 	// returns a random unit from the list
 	int GetRandomUnit(list<int> unit_list);
 
+	// compares two units with respect to their combat power
+	int DetermineBetterUnit(int unit1, int unit2, float ground_eff, float air_eff, float hover_eff, float sea_eff, float submarine_eff, float speed, float range, float cost);
+
 	int GetRandomDefence(int side, UnitCategory category);
 
 	int GetStationaryArty(int side, float cost, float range, float efficiency, bool water, bool canBuild);
@@ -100,12 +108,12 @@ public:
 	int GetJammer(int side, float cost, float range, bool water, bool canBuild);
 
 	// checks which factory is needed for a specific unit and orders it to be built
-	void BuildConstructorFor(int def_id);
+	void BuildFactoryFor(int unit_def_id);
 
 	// tries to build another builder for a certain building
-	void AddBuilder(int building_id);
+	void BuildBuilderFor(int building_def_id);
+
 	// tries to build an assistant for the specified kind of unit
-	//void AddAssitantBuilder(bool water, bool floater, bool canBuild);
 	void AddAssistant(unsigned int allowed_movement_types, bool canBuild);
 
 	// returns the allowed movement types for an assisters to assist constrcution of a specified building
@@ -172,22 +180,6 @@ public:
 	int GetIDOfAssaultCategory(UnitCategory category);
 	UnitCategory GetAssaultCategoryOfID(int id);
 
-	// number of sides
-	int numOfSides;
-
-	// side names
-	vector<string> sideNames;
-
-	// start units of each side (e.g. commander)
-	vector<int> startUnits;
-
-	// number of unit definitions
-	int numOfUnits;
-
-	vector<float> combat_eff;
-
-	// true if initialized correctly
-	bool initialized;
 
 	//
 	// these data are shared by several instances of aai
@@ -198,9 +190,6 @@ public:
 
 	// number of assault cat + arty & stat defences
 	static const int combat_categories = 6;
-
-	// usefulness of unit category of side
-	static float ***mod_usefulness;
 
 	// how many aai instances have been initialized
 	static int aai_instances;
@@ -222,28 +211,25 @@ public:
 	static float *min_buildtime[MOBILE_CONSTRUCTOR+1];
 	static float *min_value[MOBILE_CONSTRUCTOR+1];
 
-	static float *max_builder_buildtime;
-	static float *max_builder_cost;
-	static float *max_builder_buildspeed;
-
 	static float **avg_speed;
 	static float **min_speed;
 	static float **max_speed;
 	static float **group_speed;
 
-	static float **attacked_by_category[2];
+	// combat categories that attacked AI in certain game period attacked_by_category_learned[map_type][period][cat]
+	static vector< vector< vector<float> > > attacked_by_category_learned;
+
+	// combat categories that attacked AI in certain game period attacked_by_category_current[period][cat]
+	static vector< vector<float> > attacked_by_category_current;
 
 	// units of the different categories
 	static list<int> *units_of_category[MOBILE_CONSTRUCTOR+1];
 
 	// AAI unit defs (static things like id, side, etc.)
-//	static UnitTypeStatic *units_static;
 	static vector<UnitTypeStatic> units_static;
 
 	// storage for def. building selection
-//	static double **def_power;
 	static vector<vector<double> > def_power;
-//	static double *max_pplant_eff;
 	static vector<double> max_pplant_eff;
 
 	// cached combat efficiencies
@@ -260,6 +246,24 @@ public:
 	//	non static variales
 	//
 
+	// number of sides
+	int numOfSides;
+
+	// side names
+	vector<string> sideNames;
+
+	// start units of each side (e.g. commander)
+	vector<int> startUnits;
+
+	// number of unit definitions
+	int numOfUnits;
+
+	vector<float> combat_eff;
+
+	// true if initialized correctly
+	bool initialized;
+
+
 	// AAI unit defs with aai-instance specific information (number of requested, active units, etc.)
 	vector<UnitTypeDynamic> units_dynamic;
 
@@ -270,14 +274,10 @@ public:
 	// all assault unit categories
 	list<UnitCategory> assault_categories;
 
-	void SaveBuildTable();
-
 private:
 	// for internal use
 	void CalcBuildTree(int unit);
 	bool LoadBuildTable();
-
-
 	void DebugPrint();
 
 	IAICallback *cb;

@@ -17,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -4148,6 +4148,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\System\Util.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Util.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\System\Vec2.h"
 				>
 			</File>
@@ -5474,6 +5482,14 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Platform\errorhandler.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\Misc.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\Misc.h"
 					>
 				</File>
 				<File

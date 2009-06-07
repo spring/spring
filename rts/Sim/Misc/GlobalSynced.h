@@ -150,7 +150,7 @@ public:
 	/**
 	* @brief disable helper AIs
 	*
-	* Whether helper AIs are allowed, including GroupAI and LuaUI control widgets
+	* Whether helper AIs are allowed, including LuaUI control widgets
 	*/
 	bool noHelperAIs;
 

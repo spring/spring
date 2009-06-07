@@ -102,6 +102,7 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SendMessageToAllyTeam);
 	REGISTER_LUA_CFUNC(SendMessageToSpectators);
 
+	REGISTER_LUA_CFUNC(LoadSoundDef);
 	REGISTER_LUA_CFUNC(PlaySoundFile);
 	REGISTER_LUA_CFUNC(PlaySoundStream);
 	REGISTER_LUA_CFUNC(StopSoundStream);
@@ -519,6 +520,24 @@ int LuaUnsyncedCtrl::SendMessageToAllyTeam(lua_State* L)
 
 
 /******************************************************************************/
+
+int LuaUnsyncedCtrl::LoadSoundDef(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args < 1) || !lua_isstring(L, 1)) {
+		luaL_error(L, "Incorrect arguments to LoadSoundDef()");
+	}
+
+	const string soundFile = lua_tostring(L, 1);
+	bool success = sound->LoadSoundDefs(soundFile);
+
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		lua_pushboolean(L, success);
+		return 1;
+	} else {
+		return 0;
+	}
+}
 
 int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 {

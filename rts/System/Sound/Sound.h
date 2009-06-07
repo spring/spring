@@ -38,9 +38,9 @@ public:
 	void Iconified(bool state);
 
 	void PrintDebugInfo();
+	bool LoadSoundDefs(const std::string& filename);
 
 private:
-	void LoadSoundDefs(const std::string& filename);
 
 	size_t LoadALBuffer(const std::string& path, bool strict);
 	void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
@@ -51,21 +51,20 @@ private:
 	float masterVolume;
 	bool mute;
 	bool appIsIconified; // do not play when minimized / iconified
+	bool pitchAdjust;
 
 	typedef std::map<std::string, size_t> soundMapT;
 	typedef boost::ptr_vector<SoundItem> soundVecT;
 	soundMapT soundMap;
 	soundVecT sounds;
 
-	/// some scale, so camera above will still hear sounds from far below
-	float3 posScale;
 	/// unscaled
 	float3 myPos;
 	float3 prevVelocity;
 
 	typedef boost::ptr_vector<SoundSource> sourceVecT;
 	sourceVecT sources;
-	
+
 	unsigned numEmptyPlayRequests;
 	unsigned updateCounter;
 

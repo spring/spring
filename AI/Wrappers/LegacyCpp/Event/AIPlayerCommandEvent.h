@@ -25,25 +25,25 @@
 
 class CAIPlayerCommandEvent : public CAIEvent {
 public:
-    CAIPlayerCommandEvent(const SPlayerCommandEvent& event) : event(event) {}
+	CAIPlayerCommandEvent(const SPlayerCommandEvent& event) : event(event) {}
 	~CAIPlayerCommandEvent() {}
 
-    void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
+	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		int evtId = AI_EVENT_PLAYER_COMMAND;
 		std::vector<int> unitIds;
 		int i;
 		for (i=0; i < event.numUnitIds; i++) {
-		    unitIds.push_back(event.unitIds[i]);
+			unitIds.push_back(event.unitIds[i]);
 		}
 		Command* c = (Command*) newCommand(event.commandData,
 				event.commandTopic);
 		IGlobalAI::PlayerCommandEvent evt = {unitIds, *c, event.playerId};
-	    ai.HandleEvent(evtId, &evt);
+		ai.HandleEvent(evtId, &evt);
 		delete c;
 	}
 
 private:
-    SPlayerCommandEvent event;
+	SPlayerCommandEvent event;
 };
 
 #endif // _AIPLAYERCOMMANDEVENT_H

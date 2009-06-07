@@ -69,6 +69,7 @@ public:
 	// Old stuff. Used for back-compability. NOTE: Don't use these!
 	float3 speed;
 	int2 GetMapPos();
+	int2 GetMapPos(const float3 &position);
 };
 
 #endif

@@ -37,7 +37,7 @@ public:
 	void UpdateDrawQuad(CFeature* feature, const float3& newPos);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
-	const FeatureDef* GetFeatureDef(const std::string name);
+	const FeatureDef* GetFeatureDef(const std::string name, const bool showError = true);
 	const FeatureDef* GetFeatureDefByID(int id);
 
 	void SetFeatureUpdateable(CFeature* feature);
@@ -50,11 +50,16 @@ public:
 	const std::map<std::string, const FeatureDef*>& GetFeatureDefs() const { return featureDefs; }
 	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
 
+	void DrawFadeFeatures(bool submerged, bool noAdvShading = false);
 private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
 	const FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const std::string& name);
 
 private:
+
+	std::set<CFeature *> fadeFeatures;
+	std::set<CFeature *> fadeFeaturesS3O;
+
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
 

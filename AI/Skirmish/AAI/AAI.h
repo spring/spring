@@ -36,7 +36,7 @@ public:
 
 	void InitAI(IGlobalAICallback* callback, int team);
 
-	void UnitCreated(int unit);												//called when a new unit is created on ai team
+	void UnitCreated(int unit, int builder);								//called when a new unit is created on ai team
 	void UnitFinished(int unit);											//called when an unit has finished building
 	void UnitIdle(int unit);												//called when a unit go idle and is not assigned to any group
 	void UnitDestroyed(int unit, int attacker);								//called when a unit is destroyed

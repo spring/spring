@@ -2322,65 +2322,92 @@ EXPORT(float) skirmishAiCallback_Unit_getMaxHealth(int teamId, int unitId) {
 	}
 }
 
+
+
 EXPORT(int) skirmishAiCallback_Unit_0MULTI1SIZE1Command0CurrentCommand(int teamId, int unitId) {
-//	IAICallback* clb = team_callback[teamId];
-//	return clb->GetCurrentUnitCommands(unitId)->size();
+	const CCommandQueue* q = NULL;
+
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->size();
+		q = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->size();
+		q = team_callback[teamId]->GetCurrentUnitCommands(unitId);
 	}
+
+	return (q? q->size(): 0);
 }
+
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_0STATIC0getType(int teamId, int unitId) {
-//	IAICallback* clb = team_callback[teamId];
-//	CCommandQueue::QueueType qt = clb->GetCurrentUnitCommands(unitId)->GetType();
-//	return qt;
+	const CCommandQueue* q = NULL;
+
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->GetType();
+		q = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->GetType();
+		q = team_callback[teamId]->GetCurrentUnitCommands(unitId);
 	}
+
+	return (q? q->GetType(): -1);
 }
+
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getId(int teamId, int unitId, int commandId) {
+	const CCommandQueue* q = NULL;
 
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).id;
+		q = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).id;
+		q = team_callback[teamId]->GetCurrentUnitCommands(unitId);
 	}
+
+	return ((q && q->size() >= commandId)? q->at(commandId).id: 0);
 }
+
 EXPORT(unsigned char) skirmishAiCallback_Unit_CurrentCommand_getOptions(int teamId, int unitId, int commandId) {
+	const CCommandQueue* q = NULL;
 
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).options;
+		q = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).options;
+		q = team_callback[teamId]->GetCurrentUnitCommands(unitId);
 	}
+
+	return ((q && q->size() >= commandId)? q->at(commandId).options: 0);
 }
+
 EXPORT(unsigned int) skirmishAiCallback_Unit_CurrentCommand_getTag(int teamId, int unitId, int commandId) {
+	const CCommandQueue* q = NULL;
 
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).tag;
+		q = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).tag;
+		q = team_callback[teamId]->GetCurrentUnitCommands(unitId);
 	}
+
+	return ((q && q->size() >= commandId)? q->at(commandId).tag: 0);
 }
+
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getTimeOut(int teamId, int unitId, int commandId) {
+	const CCommandQueue* q = NULL;
 
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).timeOut;
+		q = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).timeOut;
+		q = team_callback[teamId]->GetCurrentUnitCommands(unitId);
 	}
+
+	return ((q && q->size() >= commandId)? q->at(commandId).timeOut: 0);
 }
+
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_0ARRAY1SIZE0getParams(int teamId, int unitId, int commandId) {
+	const CCommandQueue* q = NULL;
 
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).params.size();
+		q = team_cheatCallback[teamId]->GetCurrentUnitCommands(unitId);
 	} else {
-		return team_callback[teamId]->GetCurrentUnitCommands(unitId)->at(commandId).params.size();
+		q = team_callback[teamId]->GetCurrentUnitCommands(unitId);
 	}
+
+	return ((q && q->size() >= commandId)? q->at(commandId).params.size(): 0);
 }
+
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_0ARRAY1VALS0getParams(int teamId,
 		int unitId, int commandId, float* params, int params_max) {
 
@@ -2408,6 +2435,8 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_0ARRAY1VALS0getParams(int tea
 
 	return numParams;
 }
+
+
 
 EXPORT(float) skirmishAiCallback_Unit_getExperience(int teamId, int unitId) {
 //	IAICallback* clb = team_callback[teamId]; return clb->GetUnitExperience(unitId);

@@ -25,10 +25,10 @@
 
 class CAIWeaponFiredEvent : public CAIEvent {
 public:
-    CAIWeaponFiredEvent(const SWeaponFiredEvent& event) : event(event) {}
+	CAIWeaponFiredEvent(const SWeaponFiredEvent& event) : event(event) {}
 	~CAIWeaponFiredEvent() {}
 
-    void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
+	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		int evtId = AI_EVENT_WEAPON_FIRED;
 
 		WeaponDef* weaponDef = NULL;
@@ -46,14 +46,14 @@ public:
 		}
 
 		IGlobalAI::WeaponFireEvent evt = {event.unitId, weaponDef};
-	    ai.HandleEvent(evtId, &evt);
+		ai.HandleEvent(evtId, &evt);
 
 		delete weaponDef;
 		weaponDef = NULL;
 	}
 
 private:
-    SWeaponFiredEvent event;
+	SWeaponFiredEvent event;
 };
 
 #endif // _AIWEAPONFIREDEVENT_H

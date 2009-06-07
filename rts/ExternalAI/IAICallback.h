@@ -292,11 +292,11 @@ public:
 	 */
 	virtual const float* GetSlopeMap() = 0;
 	/**
-	 * FIXME
 	 * A square with value zero means you don't have LOS coverage on it.
-	 * This has half the resolution of the standard map
+	 * This has the resolution returned by GetLosMapResolution().
 	 */
 	virtual const unsigned short* GetLosMap() = 0;
+	virtual int GetLosMapResolution() = 0;
 	/**
 	 * A square with value zero means you don't have radar coverage on it,
 	 * 1/8 the resolution of the standard map

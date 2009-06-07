@@ -82,6 +82,7 @@ public:
 
 	virtual void DoDamage(const DamageArray& damages, CUnit* attacker,
 	                      const float3& impulse, int weaponId = -1);
+	virtual void DoWaterDamage();
 	virtual void Kill(float3& impulse);
 	virtual void FinishedBuilding(void);
 
@@ -315,6 +316,7 @@ public:
 	bool hasRadarCapacity;
 	std::vector<int> radarSquares;
 	int2 oldRadarPos;
+	bool hasRadarPos;
 	bool stealth;
 	bool sonarStealth;
 

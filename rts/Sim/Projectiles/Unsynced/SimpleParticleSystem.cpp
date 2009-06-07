@@ -53,11 +53,10 @@ CR_REG_METADATA_SUB(CSimpleParticleSystem, Particle,
 ));
 
 CSimpleParticleSystem::CSimpleParticleSystem(void)
+:	CProjectile()
 {
-	deleteMe=false;
 	checkCol=false;
 	useAirLos=true;
-	synced=false;
 	particles=0;
 	emitMul = float3(1,1,1);
 }
@@ -178,6 +177,7 @@ CR_REG_METADATA(CSphereParticleSpawner,
 ));
 
 CSphereParticleSpawner::CSphereParticleSpawner()
+: 	CSimpleParticleSystem()
 {
 }
 

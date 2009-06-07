@@ -3,6 +3,7 @@
 #include "Sound.h"
 
 #include <cstdlib>
+#include <cmath>
 #include <AL/alc.h>
 #include <boost/cstdint.hpp>
 
@@ -26,18 +27,13 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 {
 	mute = false;
 	appIsIconified = false;
-	int maxSounds = configHandler->Get("MaxSounds", 16) - 1; // 1 source is occupied by eventual music (handled by OggStream)
-
-	if (configHandler->IsSet("SoundVolume"))
-	{
-		// SoundVolume is deprecated, if this key is present, copy to snd_volmaster and delete
-		configHandler->Set("snd_volmaster", configHandler->Get("SoundVolume", 60));
-		configHandler->Delete("SoundVolume");
-	}
+	int maxSounds = configHandler->Get("MaxSounds", 64) - 1; // 1 source is occupied by eventual music (handled by OggStream)
+	pitchAdjust = configHandler->Get("PitchAdjust", true);
 
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
 	Channels::UnitReply.SetVolume(configHandler->Get("snd_volunitreply", 100 ) * 0.01f);
+	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
 
@@ -51,7 +47,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		//const ALchar* deviceName = "ALSA Software on SB Live 5.1 [SB0220] [Multichannel Playback]";
 		const ALchar* deviceName = NULL;
 		ALCdevice *device = alcOpenDevice(deviceName);
-		
+
 		if (device == NULL)
 		{
 			LogObject(LOG_SOUND) <<  "Could not open a sounddevice, disabling sounds";
@@ -93,13 +89,16 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 		}
 
 		// Generate sound sources
-		#if (BOOST_VERSION >= 103500)
-		sources.resize(maxSounds);
-		#else
 		for (int i = 0; i < maxSounds; i++) {
 			sources.push_back(new SoundSource());
+			if (!sources[i].IsValid())
+			{
+				sources.pop_back();
+				maxSounds = i-1;
+				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+				break;
+			}
 		}
-		#endif
 
 		// Set distance model (sound attenuation)
 		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
@@ -107,18 +106,14 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 
 		alListenerf(AL_GAIN, masterVolume);
 	}
-	
+
 	SoundBuffer::Initialise();
 	soundItemDef temp;
 	temp["name"] = "EmptySource";
 	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
 	sounds.push_back(empty);
-	posScale.x = 1.0f;
-	posScale.y = 0.1f;
-	posScale.z = 1.0f;
 
 	LoadSoundDefs("gamedata/sounds.lua");
-	LoadSoundDefs("mapdata/sounds.lua");
 
 	configHandler->NotifyOnChange(this);
 }
@@ -208,7 +203,8 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 
 void CSound::PitchAdjust(const float newPitch)
 {
-	SoundSource::SetPitch(newPitch);
+	if (pitchAdjust)
+		SoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
@@ -234,6 +230,13 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	else if (key == "snd_volui")
 	{
 		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
+	else if (key == "PitchAdjust")
+	{
+		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
+		if (!tempPitchAdjust)
+			PitchAdjust(1.0);
+		pitchAdjust = tempPitchAdjust;
 	}
 }
 
@@ -276,7 +279,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 		numEmptyPlayRequests++;
 		return;
 	}
-	
+
 	if (p.distance(myPos) > sounds[id].MaxDistance())
 	{
 		if (!relative)
@@ -309,7 +312,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	}
 
 	if (found1Free)
-		sources[minPos].Play(&sounds[id], p * posScale, velocity, volume, relative);
+		sources[minPos].Play(&sounds[id], p, velocity, volume, relative);
 	CheckError("CSound::PlaySample");
 }
 
@@ -322,6 +325,11 @@ void CSound::Update()
 	if (sources.empty())
 		return;
 
+	Channels::General.UpdateFrame();
+	Channels::Battle.UpdateFrame();
+	Channels::UnitReply.UpdateFrame();
+	Channels::UserInterface.UpdateFrame();
+
 	if (updateCounter % 2)
 	{
 		for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
@@ -332,13 +340,15 @@ void CSound::Update()
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
+	GML_RECMUTEX_LOCK(sound); // UpdateListener
+
 	if (sources.empty())
 		return;
 	const float3 prevPos = myPos;
 	myPos = campos;
-	const float3 posScaled = myPos * posScale;
-	alListener3f(AL_POSITION, posScaled.x, posScaled.y, posScaled.z);
+	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 
+	SoundSource::SetHeightRolloffModifer(std::min(5.*600./campos.y, 5.0));
 	//TODO: reactivate when it does nto go crazy on camera "teleportation" or fast movement,
 	// like when clicked on minimap
 	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
@@ -362,21 +372,26 @@ void CSound::PrintDebugInfo()
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
 
-void CSound::LoadSoundDefs(const std::string& filename)
+bool CSound::LoadSoundDefs(const std::string& filename)
 {
 	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);
 	parser.SetLowerCppKeys(false);
 	parser.Execute();
-	if (!parser.IsValid()) {
+	if (!parser.IsValid())
+	{
 		LogObject(LOG_SOUND) << "Could not load " << filename << ": " << parser.GetErrorLog();
+		return false;
 	}
 	else
 	{
 		const LuaTable soundRoot = parser.GetRoot();
 		const LuaTable soundItemTable = soundRoot.SubTable("SoundItems");
 		if (!soundItemTable.IsValid())
+		{
 			LogObject(LOG_SOUND) << "CSound(): could not parse SoundItems table in " << filename;
+			return false;
+		}
 		else
 		{
 			std::vector<std::string> keys;
@@ -409,6 +424,7 @@ void CSound::LoadSoundDefs(const std::string& filename)
 			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems from " << filename;
 		}
 	}
+	return true;
 }
 
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
@@ -422,8 +438,10 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 		file.Read(&buf[0], file.FileSize());
 	} else {
 		if (strict) {
-			handleerror(0, "Couldn't open sound file", path.c_str(),0);
+			handleerror(0, "Couldn't open audio file", path.c_str(),0);
 		}
+		else
+			LogObject(LOG_SOUND) << "Unable to open audio file: " << path;
 		return 0;
 	}
 
@@ -458,7 +476,7 @@ size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 
 	if (sources.empty())
 		return 0;
-	
+
 	const size_t id = SoundBuffer::GetId(path);
 	return (id == 0) ? LoadALBuffer(path, hardFail) : id;
 }

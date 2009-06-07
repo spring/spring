@@ -12,6 +12,8 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "mmgr.h"
 #include "Util.h"
+#include "LogOutput.h"
+#include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
 #include "ExternalAI/SkirmishAIData.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -60,33 +62,63 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 		SetAllyTeam(i, team->teamAllyteam);
 
-		const SkirmishAIData* skirmishAIData =
-				setup->GetSkirmishAIDataForTeam(i);
+		const SkirmishAIData* skirmishAIData = setup->GetSkirmishAIDataForTeam(i);
 
 		if (skirmishAIData != NULL) {
-			if (skirmishAIData->isLuaAI) {
+			bool isLuaAI = true;
+			const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
+			IAILibraryManager::T_skirmishAIKeys::const_iterator skirmAiImpl;
+
+			for (skirmAiImpl = skirmishAIKeys.begin();
+				skirmAiImpl != skirmishAIKeys.end(); ++skirmAiImpl) {
+				if (skirmishAIData->shortName == skirmAiImpl->GetShortName()) {
+					isLuaAI = false;
+					logOutput.Print("Skirmish AI (%s) for team %i is no Lua AI", skirmishAIData->shortName.c_str(), skirmishAIData->team);
+					break;
+				}
+			}
+
+			if (isLuaAI) {
 				team->luaAI = skirmishAIData->shortName;
 				team->isAI = true;
 			} else {
 				if (setup->hostDemo) {
+					// CPreGame always adds the name of the demo
+					// file to the internal setup script before
+					// CGameSetup is inited, therefore hostDemo
+					// tells us if we're watching a replay
+					// if so, then we do NOT want to load any AI
+					// libs, and therefore we must make sure each
+					// team's skirmishAIKey is left "unspecified"
+					//
+					// however, flag this team as an AI anyway so
+					// the original AI team's orders are not seen
+					// as invalid and we don't desync the demo
 					team->skirmishAIKey = SkirmishAIKey(); // unspecified AI Key
+					team->isAI = true;
 				} else {
 					const char* sn = skirmishAIData->shortName.c_str();
 					const char* v = skirmishAIData->version.c_str();
+
 					SkirmishAIKey spec = SkirmishAIKey(sn, v);
 					SkirmishAIKey fittingKey =
 							IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(spec);
+
 					if (!fittingKey.IsUnspecified()) {
 						team->skirmishAIKey = fittingKey;
 						team->skirmishAIOptions = skirmishAIData->options;
 						team->isAI = true;
 					} else {
-						const int MAX_MSG_LENGTH = 511;
-						char s_msg[MAX_MSG_LENGTH + 1];
-						SNPRINTF(s_msg, MAX_MSG_LENGTH,
-								"Specified Skirmish AI could not be found: %s (version: %s)",
-								spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specified>");
-						handleerror(NULL, s_msg, "Team Handler Error", MBF_OK | MBF_EXCL);
+						// a missing AI lib is only a problem for
+						// the player who is supposed to load it
+						if (gu->myPlayerNum == skirmishAIData->hostPlayerNum) {
+							const int MAX_MSG_LENGTH = 511;
+							char s_msg[MAX_MSG_LENGTH + 1];
+							SNPRINTF(s_msg, MAX_MSG_LENGTH,
+									"Specified Skirmish AI could not be found: %s (version: %s)",
+									spec.GetShortName().c_str(), spec.GetVersion() != "" ? spec.GetVersion().c_str() : "<not specified>");
+							handleerror(NULL, s_msg, "Team Handler Error", MBF_OK | MBF_EXCL);
+						}
 					}
 				}
 			}

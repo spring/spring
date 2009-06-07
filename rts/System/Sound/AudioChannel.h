@@ -41,9 +41,20 @@ public:
 	void PlaySample(size_t id, CUnit* u, float volume = 1.0f);
 	void PlaySample(size_t id, CWorldObject* p, float volume = 1.0f);
 
+	void UpdateFrame()
+	{
+		emmitsThisFrame = 0;
+	};
+	void SetMaxEmmits(unsigned max)
+	{
+		emmitsPerFrame = max;
+	};
+
 private:
 	float volume;
 	bool enabled;
+	unsigned emmitsPerFrame;
+	unsigned emmitsThisFrame;
 };
 
 /**

@@ -19,6 +19,7 @@
 #include "Sim/Misc/CategoryHandler.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/Wind.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "Util.h"
@@ -57,7 +58,7 @@ bool LuaConstGame::PushEntries(lua_State* L)
 
 	LuaPushNamedString(L, "version",       SpringVersion::GetFull());
 
-	LuaPushNamedNumber(L, "maxUnits",      MAX_UNITS);
+	LuaPushNamedNumber(L, "maxUnits",      uh->MaxUnits());
 	LuaPushNamedNumber(L, "maxTeams",      MAX_TEAMS);
 	LuaPushNamedNumber(L, "maxPlayers",    MAX_PLAYERS);
 	LuaPushNamedNumber(L, "gameSpeed",     GAME_SPEED);

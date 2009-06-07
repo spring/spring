@@ -22,16 +22,13 @@
 
 using namespace std;
 
-static const char* LUA_AI_POSTFIX = " (Mod specific AI)";
-
 const CGameSetup* gameSetup = NULL;
 
-CGameSetup::CGameSetup()
-{
-	startPosType=StartPos_Fixed;
-	numDemoPlayers=0;
-	hostDemo=false;
-}
+CGameSetup::CGameSetup():
+	startPosType(StartPos_Fixed),
+	hostDemo(false),
+	numDemoPlayers(0)
+{}
 
 CGameSetup::~CGameSetup()
 {
@@ -208,8 +205,8 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		if (data.team == -1) {
 			throw content_error("missing AI.Team in GameSetup script");
 		}
-		data.host = atoi(file.SGetValueDef("-1", s + "Host").c_str());
-		if (data.host == -1) {
+		data.hostPlayerNum = atoi(file.SGetValueDef("-1", s + "Host").c_str());
+		if (data.hostPlayerNum == -1) {
 			throw content_error("missing AI.Host in GameSetup script");
 		}
 
@@ -218,20 +215,13 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 			throw content_error("missing AI.ShortName in GameSetup script");
 		}
 
-		// Is this team (Lua) AI controlled?
-		static const size_t LUA_AI_POSTFIX_size = strlen(LUA_AI_POSTFIX);
-		data.isLuaAI = false;
-		if (data.shortName.size() > LUA_AI_POSTFIX_size) {
-			const size_t realShortName_size = data.shortName.size() - LUA_AI_POSTFIX_size;
-			if (data.shortName.substr(realShortName_size).compare(LUA_AI_POSTFIX) == 0) {
-				data.shortName.erase(realShortName_size);
-				data.isLuaAI = true;
-			}
-		}
-
 		data.version = file.SGetValueDef("", s + "Version");
 		if (file.SectionExist(s + "Options")) {
 			data.options = file.GetAllValues(s + "Options");
+			std::map<std::string, std::string>::const_iterator kv;
+			for (kv = data.options.begin(); kv != data.options.end(); ++kv) {
+				data.optionKeys.push_back(kv->first);
+			}
 		}
 
 		// get the visible name (comparable to player-name)
@@ -380,11 +370,12 @@ void CGameSetup::RemapPlayers()
 		}
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}
-	// relocate AI.host field
+	// relocate AI.hostPlayerNum field
 	for (unsigned int a = 0; a < skirmishAIStartingData.size(); ++a) {
-		if (playerRemap.find(skirmishAIStartingData[a].host) == playerRemap.end())
-			throw content_error("invalid AI.host in GameSetup script");
-		skirmishAIStartingData[a].host = playerRemap[skirmishAIStartingData[a].host];
+		if (playerRemap.find(skirmishAIStartingData[a].hostPlayerNum) == playerRemap.end()) {
+			throw content_error("invalid AI.hostPlayerNum in GameSetup script");
+		}
+		skirmishAIStartingData[a].hostPlayerNum = playerRemap[skirmishAIStartingData[a].hostPlayerNum];
 	}
 }
 

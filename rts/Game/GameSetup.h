@@ -39,7 +39,8 @@ public:
 		StartPos_Last = 3  // last entry in enum (for user input check)
 	};
 
-	int numPlayers; //the expected amount of players
+	/// the expected amount of players
+	int numPlayers;
 	int numTeams;
 	int numAllyTeams;
 	bool fixedAllies;
@@ -57,8 +58,6 @@ public:
 	StartPosType startPosType;
 
 	std::vector<PlayerBase> playerStartingData;
-	std::vector<SkirmishAIData> skirmishAIStartingData;
-	std::map<int, const SkirmishAIData*> team_skirmishAI;
 	const SkirmishAIData* GetSkirmishAIDataForTeam(int teamId) const;
 	size_t GetSkirmishAIs() const;
 
@@ -107,6 +106,9 @@ private:
 	std::map<int, int> playerRemap;
 	std::map<int, int> teamRemap;
 	std::map<int, int> allyteamRemap;
+
+	std::vector<SkirmishAIData> skirmishAIStartingData;
+	std::map<int, const SkirmishAIData*> team_skirmishAI;
 };
 
 extern const CGameSetup* gameSetup;

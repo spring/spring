@@ -117,9 +117,14 @@ bool CSolidObject::AddBuildPower(float amount, CUnit* builder) {
 
 int2 CSolidObject::GetMapPos()
 {
+	return GetMapPos(pos);
+}
+
+int2 CSolidObject::GetMapPos(const float3 &position)
+{
 	int2 p;
-	p.x = (int(pos.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - xsize / 2;
-	p.y = (int(pos.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - zsize / 2;
+	p.x = (int(position.x + SQUARE_SIZE / 2) / SQUARE_SIZE) - xsize / 2;
+	p.y = (int(position.z + SQUARE_SIZE / 2) / SQUARE_SIZE) - zsize / 2;
 
 	if (p.x < 0)
 		p.x = 0;
