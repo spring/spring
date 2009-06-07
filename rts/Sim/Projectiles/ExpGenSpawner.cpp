@@ -16,6 +16,7 @@ CR_REG_METADATA(CExpGenSpawner,
 ));
 
 CExpGenSpawner::CExpGenSpawner(void) :
+	CProjectile(),
 	damage(0)
 {
 	checkCol=false;

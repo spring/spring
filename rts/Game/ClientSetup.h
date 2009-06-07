@@ -6,6 +6,8 @@
 class ClientSetup
 {
 public:
+	static const unsigned int DEFAULT_HOST_PORT = 8452;
+
 	ClientSetup();
 
 	void Init(const std::string& setup);
@@ -15,10 +17,11 @@ public:
 
 	std::string hostip;
 	int hostport;
-	int sourceport; //the port clients will try to connect from
+	int sourceport; ///< the port clients will try to connect from
 	int autohostport;
 
 	bool isHost;
-}; 
+};
 
-#endif
+#endif // CLIENT_SETUP_H
+

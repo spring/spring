@@ -4,6 +4,12 @@
 #include "Projectile.h"
 #include <list>
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+#define SUBPARTICLE_LIST gmlCircularQueue<CFireProjectile::SubParticle,16>
+#else
+#define SUBPARTICLE_LIST std::list<SubParticle>
+#endif
+
 class CFireProjectile :
 	public CProjectile
 {
@@ -35,8 +41,8 @@ public:
 		int smokeType;
 	};
 
-	std::list<SubParticle> subParticles;
-	std::list<SubParticle> subParticles2;
+	SUBPARTICLE_LIST subParticles;
+	SUBPARTICLE_LIST subParticles2;
 
 private:
 	virtual void FireImpl() {};

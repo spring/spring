@@ -913,10 +913,7 @@ void CAirMoveType::UpdateLanding(void)
 	} else {
 		// see if landing spot is still empty
 		/*
-		float3 tpos = owner->pos;
-		owner->pos = reservedLandingPos;
-		int2 mp = owner->GetMapPos();
-		owner->pos = tpos;
+		int2 mp = owner->GetMapPos(reservedLandingPos);
 
 		for (int z = mp.y; z < mp.y + owner->ysize; z++) {
 			for (int x = mp.x; x < mp.x + owner->xsize; x++) {
@@ -1180,10 +1177,7 @@ float3 CAirMoveType::FindLandingPos(void)
 
 	tryPos.CheckInBounds();
 
-	float3 tpos = owner->pos;
-	owner->pos = tryPos;
-	int2 mp = owner->GetMapPos();
-	owner->pos = tpos;
+	int2 mp = owner->GetMapPos(tryPos);
 
 	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {
@@ -1280,7 +1274,8 @@ void CAirMoveType::SetMaxSpeed(float speed)
 	maxSpeed = speed;
 	if (maxAcc != 0.0f && maxSpeed != 0.0f) {
 		// meant to set the drag such that the maxspeed becomes what it should be
-		float drag = 1.0f / (maxSpeed / GAME_SPEED * 1.1f / maxAcc) - wingAngle * wingAngle * wingDrag;
+		float drag = 1.0f / (maxSpeed * 1.1f / maxAcc) - wingAngle * wingAngle * wingDrag;
+		drag = std::min(1.0f, std::max(0.0f, drag));
 		invDrag = 1.0f - drag;
 	}
 }

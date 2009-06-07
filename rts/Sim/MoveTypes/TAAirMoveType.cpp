@@ -970,10 +970,7 @@ bool CTAAirMoveType::CanLandAt(float3 pos)
 	if ((h < 0) && !(owner -> unitDef -> floater || owner -> unitDef -> canSubmerge))
 		return false;
 
-	float3 tpos = owner->pos;
-	owner->pos = pos;
-	int2 mp = owner->GetMapPos();
-	owner->pos = tpos;
+	int2 mp = owner->GetMapPos(pos);
 
 	for (int z = mp.y; z < mp.y + owner->zsize; z++) {
 		for (int x = mp.x; x < mp.x + owner->xsize; x++) {

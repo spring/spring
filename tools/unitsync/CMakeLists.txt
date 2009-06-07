@@ -45,6 +45,7 @@ INCLUDE_DIRECTORIES(../../rts/ ../../rts/Game ../../rts/lib/7zip ../../rts/Syste
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 set(unitsync_files
+	../../rts/System/Platform/Misc
 	../../rts/System/ConfigHandler
 	../../rts/System/LogOutput
 	../../rts/System/TdfParser
@@ -67,9 +68,9 @@ if (JAVA_FOUND)
 	list(APPEND unitsync_files javabind)
 endif (JAVA_FOUND)
 ADD_LIBRARY(unitsync SHARED ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
-TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${DEVIL_ILU_LIBRARY})
+TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
 if (MINGW)
-	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--kill-at)
+	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)
 if (PYTHONLIBS_FOUND)
 	TARGET_LINK_LIBRARIES(unitsync ${PYTHON_LIBRARIES})

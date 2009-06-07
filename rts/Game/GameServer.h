@@ -4,8 +4,6 @@
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/scoped_ptr.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
-using boost::posix_time::ptime;
 #include <string>
 #include <map>
 #include <deque>
@@ -18,6 +16,7 @@ using boost::posix_time::ptime;
 #include "Sim/Misc/TeamBase.h"
 #include "UnsyncedRNG.h"
 #include "float3.h"
+#include "System/myTime.h"
 
 namespace netcode
 {
@@ -152,15 +151,15 @@ private:
 	volatile bool quitServer;
 	int serverframenum;
 
-	ptime serverStartTime;
-	ptime readyTime;
-	ptime gameStartTime;
-	ptime gameEndTime;	//Tick when game end was detected
+	spring_time serverStartTime;
+	spring_time readyTime;
+	spring_time gameStartTime;
+	spring_time gameEndTime;	//Tick when game end was detected
 	bool sentGameOverMsg;
-	ptime lastTick;
+	spring_time lastTick;
 	float timeLeft;
-	ptime lastPlayerInfo;
-	ptime lastUpdate;
+	spring_time lastPlayerInfo;
+	spring_time lastUpdate;
 	float modGameTime;
 
 	bool isPaused;

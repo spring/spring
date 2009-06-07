@@ -96,9 +96,10 @@ AAIGroup::AAIGroup(AAI *ai, const UnitDef *def, UnitType unit_type, int continen
 AAIGroup::~AAIGroup(void)
 {
 	if(attack)
+	{
 		attack->RemoveGroup(this);
-
-	attack = 0;
+		attack = 0;
+	}
 
 	units.clear();
 
@@ -178,12 +179,18 @@ bool AAIGroup::RemoveUnit(int unit, int attacker)
 				{
 					// todo: improve criteria
 					if(size < 2)
+					{
 						attack->RemoveGroup(this);
+						attack = 0;
+					}
 				}
 				else if(group_unit_type == ANTI_AIR_UNIT)
 				{
 					if(size < 1)
+					{
 						attack->RemoveGroup(this);
+						attack = 0;
+					}
 				}
 			}
 
@@ -295,7 +302,7 @@ void AAIGroup::Update()
 	}
 }
 
-float AAIGroup::GetPowerVS(int assault_cat_id)
+float AAIGroup::GetCombatPowerVsCategory(int assault_cat_id)
 {
 	float power = 0;
 
@@ -303,6 +310,15 @@ float AAIGroup::GetPowerVS(int assault_cat_id)
 		power += bt->units_static[unit->y].efficiency[assault_cat_id];
 
 	return power;
+}
+
+void AAIGroup::GetCombatPower(vector<float> *combat_power)
+{
+	for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
+	{
+		for(int cat = 0; cat < bt->combat_categories; ++cat)
+			(*combat_power)[cat] += bt->units_static[unit->y].efficiency[cat];
+	}
 }
 
 float3 AAIGroup::GetGroupPos()
@@ -430,9 +446,7 @@ int AAIGroup::GetRandomUnit()
 
 bool AAIGroup::SufficientAttackPower()
 {
-	/*if(units.size() >= maxSize)
-		return true;
-	else if(units.size() > 0)
+	/*else if(units.size() > 0)
 	{
 		// group not full, check combat eff. of units
 		float avg_combat_power = 0;
@@ -450,18 +464,90 @@ bool AAIGroup::SufficientAttackPower()
 
 	return false;*/
 
+	if(units.size() >= maxSize - 1)
+		return true;
+
 	if(group_unit_type == ASSAULT_UNIT)
 	{
-		if(size > maxSize/3)
-			return true;
+		float avg_combat_power = 0;
+
+		if(category == GROUND_ASSAULT)
+		{
+			float ground = 1.0f;
+			float hover = 0.2f;
+
+			for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
+				avg_combat_power += ground * bt->units_static[unit->y].efficiency[0] + hover * bt->units_static[unit->y].efficiency[2];
+
+			if( avg_combat_power > (ground * bt->avg_eff[ai->side-1][0][0] + hover * bt->avg_eff[ai->side-1][0][2]) * (float)units.size() )
+				return true;
+		}
+		else if(category == HOVER_ASSAULT)
+		{
+			float ground = 1.0f;
+			float hover = 0.2f;
+			float sea = 1.0f;
+
+			for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
+				avg_combat_power += ground * bt->units_static[unit->y].efficiency[0] + hover * bt->units_static[unit->y].efficiency[2] + sea * bt->units_static[unit->y].efficiency[3];
+
+			if( avg_combat_power > (ground * bt->avg_eff[ai->side-1][2][0] + hover * bt->avg_eff[ai->side-1][2][2] + sea * bt->avg_eff[ai->side-1][2][3]) * (float)units.size() )
+				return true;
+		}
+		else if(category == SEA_ASSAULT)
+		{
+			float hover = 0.3f;
+			float sea = 1.0f;
+			float submarine = 0.8f;
+
+			for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
+				avg_combat_power += hover * bt->units_static[unit->y].efficiency[2] + sea * bt->units_static[unit->y].efficiency[3] + submarine * bt->units_static[unit->y].efficiency[4];
+
+			if( avg_combat_power > (hover * bt->avg_eff[ai->side-1][3][2] + sea * bt->avg_eff[ai->side-1][3][3] + submarine * bt->avg_eff[ai->side-1][3][4]) * (float)units.size() )
+				return true;
+		}
+		else if(category == SUBMARINE_ASSAULT)
+		{
+			float sea = 1.0f;
+			float submarine = 0.8f;
+
+			for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
+				avg_combat_power += sea * bt->units_static[unit->y].efficiency[3] + submarine * bt->units_static[unit->y].efficiency[4];
+
+			if( avg_combat_power > (sea * bt->avg_eff[ai->side-1][4][3] + submarine * bt->avg_eff[ai->side-1][4][4]) * (float)units.size() )
+				return true;
+		}
 	}
 	else
 	{
-		if(size > maxSize/2)
+		float avg_combat_power = 0;
+
+		for(list<int2>::iterator unit = units.begin(); unit != units.end(); ++unit)
+			avg_combat_power += bt->units_static[unit->y].efficiency[1];
+
+		if(avg_combat_power > bt->avg_eff[ai->side-1][category][1] * (float)units.size())
 			return true;
 	}
 
 	return false;
+}
+
+bool AAIGroup::AvailableForAttack()
+{
+	if(!attack && task == GROUP_IDLE)
+	{
+		if(group_unit_type == ASSAULT_UNIT)
+		{
+			if(SufficientAttackPower())
+				return true;
+			else
+				return false;
+		}
+		else
+			return true;
+	}
+	else
+		return false;
 }
 
 void AAIGroup::UnitIdle(int unit)

@@ -64,7 +64,6 @@ static vector<ILogSubscriber*> subscribers;
 static const char* filename = "infolog.txt";
 static std::ofstream* filelog = 0;
 static bool initialized = false;
-static bool stdoutDebug = false;
 static boost::recursive_mutex tempstrMutex;
 static string tempstr;
 
@@ -104,14 +103,6 @@ void CLogOutput::End()
 	GML_STDMUTEX_LOCK_NOPROF(log); // End
 
 	SafeDelete(filelog);
-}
-
-
-void CLogOutput::SetMirrorToStdout(bool value)
-{
-	GML_STDMUTEX_LOCK(log); // SetMirrorToStdout
-
-	stdoutDebug = value;
 }
 
 
@@ -271,16 +262,14 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const char* str)
 		filelog->flush();
 	}
 
-	if (stdoutDebug) {
-		if (subsystem.name && *subsystem.name) {
-			fputs(subsystem.name, stdout);
-			fputs(": ", stdout);
-		}
-		fputs(str, stdout);
-		if (newline)
-			putchar('\n');
-		fflush(stdout);
+	if (subsystem.name && *subsystem.name) {
+		fputs(subsystem.name, stdout);
+		fputs(": ", stdout);
 	}
+	fputs(str, stdout);
+	if (newline)
+		putchar('\n');
+	fflush(stdout);
 }
 
 

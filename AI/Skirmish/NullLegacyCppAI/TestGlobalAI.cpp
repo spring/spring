@@ -36,7 +36,7 @@ void TestGlobalAI::InitAI(IGlobalAICallback* callback, int team)
 	this->callback=callback;
 }
 
-void TestGlobalAI::UnitCreated(int unit)
+void TestGlobalAI::UnitCreated(int unit, int builder)
 {
 	myUnits.insert(unit);
 }

@@ -44,7 +44,8 @@ bool AAIConstructor::IsBusy()
 
 	if(commands->empty())
 		return false;
-	return true;
+	else
+		return true;
 }
 
 void AAIConstructor::Idle()
@@ -60,10 +61,11 @@ void AAIConstructor::Idle()
 			if(construction_unit_id == -1)
 			{
 				ai->bt->units_dynamic[construction_def_id].active -= 1;
-				ai->ut->futureUnits[construction_category] -= 1;
+				ai->ut->UnitRequestFailed(construction_category);
 
-				// clear up buildmap etc.
-				ai->execute->ConstructionFailed(build_pos, construction_def_id);
+				// clear up buildmap etc. (make sure conctructor wanted to build a building and not a unit)
+				if(bt->units_static[construction_def_id].category <= METAL_MAKER)
+					ai->execute->ConstructionFailed(build_pos, construction_def_id);
 
 				// free builder
 				ConstructionFinished();
@@ -134,11 +136,7 @@ void AAIConstructor::Update()
 
 						++ai->ut->futureUnits[cat];
 
-						//if(bt->IsFactory(def_id))
-						//	++ai->futureFactories;
-
 						buildque->pop_front();
-
 					}
 				}
 
@@ -160,17 +158,7 @@ void AAIConstructor::Update()
 			else
 			{
 				if(!IsBusy() && construction_unit_id == -1)
-				{
-					//cb->SendTextMsg("idle", 0);
-					ai->bt->units_dynamic[construction_def_id].active -= 1;
-					ai->ut->futureUnits[construction_category] -= 1;
-
-					// clear up buildmap etc.
-					ai->execute->ConstructionFailed(build_pos, construction_def_id);
-
-					// free builder
-					ConstructionFinished();
-				}
+					ConstructionFailed();
 			}
 		}
 		/*else if(task == UNIT_IDLE)
@@ -225,14 +213,14 @@ void AAIConstructor::CheckAssistance()
 	if(factory)
 	{
 		// check if another factory of that type needed
-		if(buildque->size() >= cfg->MAX_BUILDQUE_SIZE - 1 && assistants.size() >= cfg->MAX_ASSISTANTS-1)
+		if(buildque->size() >= cfg->MAX_BUILDQUE_SIZE - 2 && assistants.size() >= cfg->MAX_ASSISTANTS-2)
 		{
-			if(ai->bt->units_dynamic[def_id].active < cfg->MAX_FACTORIES_PER_TYPE && ai->bt->units_dynamic[def_id].requested <= 0)
+			if(ai->bt->units_dynamic[def_id].active + ai->bt->units_dynamic[def_id].requested + ai->bt->units_dynamic[def_id].under_construction  < cfg->MAX_FACTORIES_PER_TYPE)
 			{
 				ai->bt->units_dynamic[def_id].requested += 1;
 
-				if(ai->execute->urgency[STATIONARY_CONSTRUCTOR] < 1)
-					ai->execute->urgency[STATIONARY_CONSTRUCTOR] = 1;
+				if(ai->execute->urgency[STATIONARY_CONSTRUCTOR] < 1.5f)
+					ai->execute->urgency[STATIONARY_CONSTRUCTOR] = 1.5f;
 
 				for(list<int>::iterator j = bt->units_static[def_id].canBuildList.begin(); j != bt->units_static[def_id].canBuildList.end(); ++j)
 					bt->units_dynamic[*j].constructorsRequested += 1;
@@ -375,7 +363,8 @@ void AAIConstructor::GiveConstructionOrder(int id_building, float3 pos, bool wat
 
 		// increase number of active units of that type/category
 		bt->units_dynamic[def->id].requested += 1;
-		ai->ut->requestedUnits[construction_category] += 1;
+
+		ai->ut->UnitRequested(construction_category);
 
 		if(bt->IsFactory(id_building))
 			ai->ut->futureFactories += 1;
@@ -442,6 +431,13 @@ void AAIConstructor::TakeOverConstruction(AAIBuildTask *build_task)
 
 void AAIConstructor::ConstructionFailed()
 {
+	--bt->units_dynamic[construction_def_id].requested;
+	ai->ut->UnitRequestFailed(construction_category);
+
+	// clear up buildmap etc.
+	if(bt->units_static[construction_def_id].category <= METAL_MAKER)
+		ai->execute->ConstructionFailed(build_pos, construction_def_id);
+
 	// tells the builder construction has finished
 	ConstructionFinished();
 }
@@ -498,18 +494,11 @@ void AAIConstructor::Killed()
 			//if buildling has not begun yet, decrease some values
 			if(construction_unit_id == -1)
 			{
-				ai->bt->units_dynamic[construction_def_id].requested -= 1;
-				ai->ut->requestedUnits[construction_category] -= 1;
-
 				// killed on the way to the buildsite
-				int x = build_pos.x / ai->map->xSectorSize;
-				int y = build_pos.z / ai->map->ySectorSize;
-
-				if(ai->map->sector[x][y].distance_to_base > 0)
-					ai->map->sector[x][y].lost_units[MOBILE_CONSTRUCTOR-COMMANDER] += 1;
+				ai->map->UnitKilledAt(&build_pos, MOBILE_CONSTRUCTOR);
 
 				// clear up buildmap etc.
-				ai->execute->ConstructionFailed(build_pos, construction_def_id);
+				ConstructionFailed();
 			}
 			// building has begun
 			else

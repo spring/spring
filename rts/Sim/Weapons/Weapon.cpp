@@ -12,6 +12,8 @@
 #include "Map/Ground.h"
 #include "myMath.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Sim/Misc/CollisionHandler.h"
+#include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/GeometricObjects.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Misc/LosHandler.h"
@@ -345,8 +347,8 @@ void CWeapon::Update()
 	    && (reloadStatus <= gs->frameNum)
 	    && (!weaponDef->stockpile || numStockpiled)
 	    && (weaponDef->fireSubmersed || (weaponMuzzlePos.y > 0))
-	    && ((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0)
-	    && !isBeingServicedOnPad(owner))
+	    && ((((owner->unitDef->maxFuel == 0) || (owner->currentFuel > 0) || (fuelUsage == 0)) &&
+	       !isBeingServicedOnPad(owner)))
 	   )
 	{
 		if ((weaponDef->stockpile ||
@@ -413,8 +415,8 @@ void CWeapon::Update()
 			// add to the commandShotCount if this is the last salvo,
 			// and it is being directed towards the current target
 			// (helps when deciding if a queued ground attack order has been completed)
-			if ((salvoLeft == 0) && (owner->commandShotCount >= 0) &&
-			    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos)) ||
+			if (((salvoLeft == 0) && (owner->commandShotCount >= 0) &&
+			    ((targetType == Target_Pos) && (targetPos == owner->userAttackPos))) ||
 					((targetType == Target_Unit) && (targetUnit == owner->userTarget))) {
 				owner->commandShotCount++;
 			}
@@ -723,55 +725,82 @@ void CWeapon::DependentDied(CObject *o)
 		interceptTarget = 0;
 }
 
-bool CWeapon::TryTarget(const float3 &pos,bool userTarget,CUnit* unit)
+bool CWeapon::TryTarget(const float3& pos, bool userTarget, CUnit* unit)
 {
 	if (unit && !(onlyTargetCategory & unit->category)) {
 		return false;
 	}
 
-	if(unit && ((unit->isDead   && (modInfo.fireAtKilled==0)) ||
-	            (unit->crashing && (modInfo.fireAtCrashing==0)))) {
+	if (unit && ((unit->isDead  && (modInfo.fireAtKilled   == 0)) ||
+	            (unit->crashing && (modInfo.fireAtCrashing == 0)))) {
 		return false;
 	}
 	if (weaponDef->stockpile && !numStockpiled) {
 		return false;
 	}
 
-	float3 dif=pos-weaponMuzzlePos;
-	float heightDiff; // negative when target below owner
 
-	if (targetBorder != 0 && unit) {
-		float3 diff(dif);
-		diff.Normalize();
-		// weapon inside target sphere
-		if (dif.SqLength() < unit->sqRadius*targetBorder*targetBorder) {
-			dif -= diff*(dif.Length() - 10); // a hack
-			//LogObject() << "inside\n";
+	float3 dif = pos - weaponMuzzlePos;
+	float heightDiff = 0.0f; // negative when target below owner
+	const float absTB = streflop::fabsf(targetBorder);
+
+	if (targetBorder != 0.0f && unit) {
+		float3 difDir(dif);
+		difDir.Normalize();
+
+
+		CollisionVolume* cvOld = unit->collisionVolume;
+		CollisionVolume  cvNew = CollisionVolume(unit->collisionVolume);
+		CollisionQuery   cq;
+
+		cvNew.RescaleAxes(absTB, absTB, absTB);
+		cvNew.SetTestType(COLVOL_TEST_DISC);
+
+		unit->collisionVolume = &cvNew;
+
+		if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, ZeroVector, NULL)) {
+			// weapon inside target unit's volume, no
+			// real need to calculate penetration depth
+			dif = ZeroVector;
 		} else {
-			dif -= diff*(unit->radius*targetBorder);
-			//LogObject() << "outside\n";
+			// raytrace to find the proper correction
+			// factor for non-spherical volumes based
+			// on ingress position
+			cvNew.SetTestType(COLVOL_TEST_CONT);
+
+			// intersection is not guaranteed if the
+			// volume has an offset, since here we're
+			// shooting at the target's midpoint
+			if (CCollisionHandler::DetectHit(unit, weaponMuzzlePos, pos + (difDir * cvNew.GetBoundingRadius() * 2.0f), &cq)) {
+				if (targetBorder > 0.0f) { dif -= (difDir * ((pos - cq.p0).Length())); }
+				if (targetBorder < 0.0f) { dif += (difDir * ((cq.p1 - pos).Length())); }
+			}
 		}
-		//geometricObjects->AddLine(weaponMuzzlePos, weaponMuzzlePos+dif, 3, 0, 16);
+
+		unit->collisionVolume = cvOld;
+
+
 		heightDiff = (weaponPos.y + dif.y) - owner->pos.y;
 	} else {
 		heightDiff = pos.y - owner->pos.y;
 	}
 
+
 	float r;
-	if (!unit || cylinderTargetting < 0.01) {
-		r=GetRange2D(heightDiff*heightMod);
+	if (!unit || cylinderTargetting < 0.01f) {
+		r = GetRange2D(heightDiff * heightMod);
 	} else {
-		if (cylinderTargetting * range > fabs(heightDiff)*heightMod) {
+		if (cylinderTargetting * range > fabs(heightDiff) * heightMod) {
 			r = GetRange2D(0);
 		} else {
 			r = 0;
 		}
 	}
 
-	if(dif.SqLength2D()>=r*r)
+	if (dif.SqLength2D() >= r * r)
 		return false;
 
-	if(maxMainDirAngleDif>-0.999f){
+	if (maxMainDirAngleDif > -0.999f) {
 		dif.Normalize();
 		float3 modMainDir=owner->frontdir*mainDir.z+owner->rightdir*mainDir.x+owner->updir*mainDir.y;
 

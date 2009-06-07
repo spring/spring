@@ -133,38 +133,30 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 	// assign these here, since we can be
 	// called from outside the constructor
 	primaryAxis = std::max(pAxis, 0) % COLVOL_NUM_AXES;
-	volumeType = std::max(vType, 0) % COLVOL_NUM_TYPES;
-	testType = std::max(tType, 0) % COLVOL_NUM_TESTS;
+	volumeType  = std::max(vType, 0) % COLVOL_NUM_TYPES;
+	testType    = std::max(tType, 0) % COLVOL_NUM_TESTS;
 
-	// allow defining a custom volume without using it
-	disabled = (scales.x < 0.0f || scales.y < 0.0f || scales.z < 0.0f);
+	// allow defining a custom volume without using it for coldet
+	disabled    = (scales.x < 0.0f || scales.y < 0.0f || scales.z < 0.0f);
+	axisOffsets = offsets;
 
 	// make sure none of the scales are ever negative
 	// or zero; if the resulting vector is <1, 1, 1>
 	// then the unit / feature loaders will override
 	// the (clone) scales with the model's radius
-	axisScales.x = std::max(1.0f, scales.x);
-	axisScales.y = std::max(1.0f, scales.y);
-	axisScales.z = std::max(1.0f, scales.z);
+	SetAxisScales(std::max(1.0f, scales.x), std::max(1.0f, scales.y), std::max(1.0f, scales.z));
 
-	axisHScales.x = axisScales.x * 0.5f;  axisHScalesSq.x = axisHScales.x * axisHScales.x;
-	axisHScales.y = axisScales.y * 0.5f;  axisHScalesSq.y = axisHScales.y * axisHScales.y;
-	axisHScales.z = axisScales.z * 0.5f;  axisHScalesSq.z = axisHScales.z * axisHScales.z;
+	if (volumeType == COLVOL_TYPE_ELLIPSOID) {
+		// if all axes (or half-axes) are equal in scale,
+		// volume is a sphere (a special-case ellipsoid)
+		if ((streflop::fabsf(axisHScales.x - axisHScales.y) < EPS) &&
+		    (streflop::fabsf(axisHScales.y - axisHScales.z) < EPS)) {
 
-	axisHIScales.x = 1.0f / axisHScales.x;  axisOffsets.x = offsets.x;
-	axisHIScales.y = 1.0f / axisHScales.y;  axisOffsets.y = offsets.y;
-	axisHIScales.z = 1.0f / axisHScales.z;  axisOffsets.z = offsets.z;
-
-	// if all axes (or half-axes) are equal in scale, volume is a sphere
-	const bool spherical =
-		((volumeType == COLVOL_TYPE_ELLIPSOID) &&
-		(streflop::fabsf(axisHScales.x - axisHScales.y) < EPS) &&
-		(streflop::fabsf(axisHScales.y - axisHScales.z) < EPS));
-
-	if (spherical) {
-		logOutput.Print(LOG_COLVOL, "Auto converting spherical ellipsoid to sphere");
-		volumeType = COLVOL_TYPE_SPHERE;
+			logOutput.Print(LOG_COLVOL, "auto-converting spherical COLVOL_TYPE_ELLIPSOID to COLVOL_TYPE_SPHERE");
+			volumeType = COLVOL_TYPE_SPHERE;
+		}
 	}
+
 
 	// secondaryAxes[0] = (primaryAxis + 1) % 3;
 	// secondaryAxes[1] = (primaryAxis + 2) % 3;
@@ -184,6 +176,10 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 		} break;
 	}
 
+	SetBoundingRadius();
+}
+
+void CollisionVolume::SetBoundingRadius() {
 	// set the radius of the minimum bounding sphere
 	// that encompasses this custom collision volume
 	// (for early-out testing)
@@ -215,4 +211,38 @@ void CollisionVolume::Init(const float3& scales, const float3& offsets, int vTyp
 			volumeBoundingRadiusSq = volumeBoundingRadius * volumeBoundingRadius;
 		} break;
 	}
+}
+
+void CollisionVolume::SetAxisScales(float xs, float ys, float zs) {
+	axisScales.x = xs;
+	axisScales.y = ys;
+	axisScales.z = zs;
+
+	axisHScales.x = axisScales.x * 0.5f;
+	axisHScales.y = axisScales.y * 0.5f;
+	axisHScales.z = axisScales.z * 0.5f;
+
+	axisHScalesSq.x = axisHScales.x * axisHScales.x;
+	axisHScalesSq.y = axisHScales.y * axisHScales.y;
+	axisHScalesSq.z = axisHScales.z * axisHScales.z;
+
+	axisHIScales.x = 1.0f / axisHScales.x;
+	axisHIScales.y = 1.0f / axisHScales.y;
+	axisHIScales.z = 1.0f / axisHScales.z;
+}
+
+void CollisionVolume::RescaleAxes(float xs, float ys, float zs) {
+	axisScales.x *= xs; axisHScales.x *= xs;
+	axisScales.y *= ys; axisHScales.y *= ys;
+	axisScales.z *= zs; axisHScales.z *= zs;
+
+	axisHScalesSq.x *= (xs * xs);
+	axisHScalesSq.y *= (ys * ys);
+	axisHScalesSq.z *= (zs * zs);
+
+	axisHIScales.x *= (1.0f / xs);
+	axisHIScales.y *= (1.0f / ys);
+	axisHIScales.z *= (1.0f / zs);
+
+	SetBoundingRadius();
 }

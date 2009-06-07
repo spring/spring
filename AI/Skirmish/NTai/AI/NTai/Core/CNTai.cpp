@@ -100,7 +100,7 @@ namespace ntai {
 
 	// ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
 
-	void CNTai::UnitCreated(int unit){
+	void CNTai::UnitCreated(int unit, int builder){
 		if(Good == false) return;
 		G->UnitCreated(unit);
 	}

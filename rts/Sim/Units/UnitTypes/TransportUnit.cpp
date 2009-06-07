@@ -114,10 +114,12 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 			u->KillUnit(false, false, NULL, false);
 			continue;
 		} else {
-			if (gh < -u->unitDef->movedata->depth) {
-				// treat depth as maxWaterDepth (fails if
-				// the transportee is a ship, but so does
-				// using UnitDef::{min, max}WaterDepth)
+			// immobile units can still be transported
+			// via script trickery, guard against this
+			if (u->unitDef->movedata != NULL && gh < -u->unitDef->movedata->depth) {
+				// always treat depth as maxWaterDepth (fails if
+				// the transportee is a ship, but so does using
+				// UnitDef::{min, max}WaterDepth)
 				u->KillUnit(false, false, NULL, false);
 				continue;
 			}

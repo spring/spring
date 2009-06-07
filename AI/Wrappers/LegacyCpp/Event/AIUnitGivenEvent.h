@@ -24,18 +24,18 @@
 
 class CAIUnitGivenEvent : public CAIEvent {
 public:
-    CAIUnitGivenEvent(const SUnitGivenEvent& event) : event(event) {}
+	CAIUnitGivenEvent(const SUnitGivenEvent& event) : event(event) {}
 	~CAIUnitGivenEvent() {}
 
-    void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
+	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		int evtId = AI_EVENT_UNITGIVEN;
 		IGlobalAI::ChangeTeamEvent evt = {event.unitId, event.newTeamId,
 				event.oldTeamId};
-	    ai.HandleEvent(evtId, &evt);
+		ai.HandleEvent(evtId, &evt);
 	}
 
 private:
-    SUnitGivenEvent event;
+	SUnitGivenEvent event;
 };
 
 #endif // _AIUNITGIVENEVENT_H

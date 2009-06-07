@@ -115,6 +115,7 @@ public:
 	virtual const float* GetSlopeMap();
 
 	virtual const unsigned short* GetLosMap();
+	virtual int GetLosMapResolution();
 	virtual const unsigned short* GetRadarMap();
 	virtual const unsigned short* GetJammerMap();
 	virtual const unsigned char* GetMetalMap();

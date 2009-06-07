@@ -32,11 +32,11 @@ CR_REG_METADATA(CHeatCloudProjectile,
 //////////////////////////////////////////////////////////////////////
 
 CHeatCloudProjectile::CHeatCloudProjectile()
+:	CProjectile()
 {
 	heat=maxheat=heatFalloff=size=sizeGrowth=sizemod=sizemodmod=0.0f;
 	checkCol=false;
 	useAirLos=true;
-	synced=false;
 	texture = &ph->heatcloudtex;
 }
 

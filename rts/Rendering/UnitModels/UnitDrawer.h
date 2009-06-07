@@ -8,6 +8,7 @@
 #include <string>
 #include <map>
 #include "Rendering/GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 
 class CVertexArray;
 struct S3DModel;
@@ -31,7 +32,7 @@ public:
 	void DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
 	void DrawUnitLOD(CUnit* unit);
 
-	void DrawCloakedUnits(void);     // cloaked units must be drawn after all others
+	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);     // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 	void DoDrawUnitShadow(CUnit *unit);
 
@@ -39,7 +40,7 @@ public:
 	void DrawCloakedShaderUnits();
 	void DrawShadowShaderUnits();
 
-	void SetTeamColour(int team) const;
+	void SetTeamColour(int team, float alpha = 1.0f) const;
 	void SetupFor3DO() const;
 	void CleanUp3DO() const;
 	void SetupForUnitDrawing(void) const;
@@ -100,11 +101,18 @@ public:
 	CVertexArray* va;
 
 	bool advShading;
+	bool advFade;
+	float cloakAlpha;
+	float cloakAlpha1;
+	float cloakAlpha2;
+	float cloakAlpha3;
 
 	float LODScale;
 	float LODScaleShadow;
 	float LODScaleReflection;
 	float LODScaleRefraction;
+
+	FBO unitReflectFBO;
 
 	unsigned int unitVP;             // vertex program
 	unsigned int unitFP;             // fragment program, shadows disabled

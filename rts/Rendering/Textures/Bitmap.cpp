@@ -26,6 +26,7 @@
 #include "Rendering/GL/myGL.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
+#include "GlobalUnsynced.h"
 #include "Bitmap.h"
 #include "bitops.h"
 
@@ -113,7 +114,7 @@ CBitmap& CBitmap::operator=(const CBitmap& bm)
 }
 
 
-void CBitmap::Alloc (int w,int h)
+void CBitmap::Alloc(int w,int h)
 {
 	delete[] mem;
 	xsize=w;
@@ -352,8 +353,7 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 	// jcnossen: Some drivers return "2.0" as a version string,
 	// but switch to software rendering for non-power-of-two textures.
 	// GL_ARB_texture_non_power_of_two indicates that the hardware will actually support it.
-	if ((xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)) && !GLEW_ARB_texture_non_power_of_two)
-		 //&& strcmp(reinterpret_cast<const char*>(glGetString(GL_VERSION)), "2.0") < 0 )
+	if (!gu->supportNPOTs && (xsize != next_power_of_2(xsize) || ysize != next_power_of_2(ysize)))
 	{
 		CBitmap bm = CreateRescaled(next_power_of_2(xsize), next_power_of_2(ysize));
 		return bm.CreateTexture(mipmaps);

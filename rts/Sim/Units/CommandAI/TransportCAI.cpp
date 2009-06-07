@@ -1037,14 +1037,17 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_UNLOAD_UNIT:
 		case CMD_UNLOAD_UNITS: {
 			CTransportUnit* transport = (CTransportUnit*) owner;
-			if (transport->transported.empty()) return false;
-			CUnit* u = transport->transported.front().unit;
-			float3 pos(c.params[0],c.params[1],c.params[2]);
-			float radius = c.params[3];
-			float spread = u->radius * transport->unitDef->unloadSpread;
-			float3 found;
-			bool canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u);
-			if(!canUnload) return false;
+
+			// allow unloading empty transports for easier setup of transport bridges
+			if (!transport->transported.empty()) {
+				CUnit* u = transport->transported.front().unit;
+				float3 pos(c.params[0],c.params[1],c.params[2]);
+				float radius = c.params[3];
+				float spread = u->radius * transport->unitDef->unloadSpread;
+				float3 found;
+				bool canUnload = FindEmptySpot(pos, std::max(16.0f, radius), spread, found, u);
+				if(!canUnload) return false;
+			}
 			break;
 		}
 	}

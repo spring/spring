@@ -28,6 +28,15 @@ public:
 	/// will stop a currently playing sound, if any
 	void Play(SoundItem* buffer, const float3& pos, float3 velocity, float volume, bool relative = false);
 	static void SetPitch(float newPitch);
+	bool IsValid() const
+	{
+		return (id != 0);
+	};
+
+	static void SetHeightRolloffModifer(float mod)
+	{
+		heightAdjustedRolloffModifier = mod > 0.0f ? mod : 0.0f;
+	};
 
 private:
 	/// pitch shared by all sources
@@ -35,6 +44,7 @@ private:
 	ALuint id;
 	SoundItem* curPlaying;
 	unsigned loopStop;
+	static float heightAdjustedRolloffModifier;
 };
 
 #endif

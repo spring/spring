@@ -50,7 +50,7 @@ public:
 	
 	static size_t Insert(boost::shared_ptr<SoundBuffer> buffer);
 private:
-	void AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate);
+	bool AlGenBuffer(const std::string& file, ALenum format, const boost::uint8_t* data, size_t datalength, int rate);
 
 	std::string filename;
 	ALuint id;

@@ -1,11 +1,9 @@
-#include <climits>
-
 #include "SoundSource.h"
 
+#include <climits>
 #include <AL/alc.h>
 #include <SDL_timer.h>
 
-#include "Sound.h"
 #include "SoundBuffer.h"
 #include "SoundItem.h"
 #include "ALShared.h"
@@ -13,13 +11,20 @@
 #include "LogOutput.h"
 
 float SoundSource::globalPitch = 1.0;
-
+float SoundSource::heightAdjustedRolloffModifier = 1.0;
 
 SoundSource::SoundSource() : curPlaying(0)
 {
 	alGenSources(1, &id);
-	alSourcef(id, AL_REFERENCE_DISTANCE, 100.0f);
-	CheckError("SoundSource::SoundSource");
+	if (!CheckError("SoundSource::SoundSource"))
+	{
+		id = 0;
+	}
+	else
+	{
+		alSourcef(id, AL_REFERENCE_DISTANCE, 200.0f);
+		CheckError("SoundSource::SoundSource");
+	}
 }
 
 SoundSource::~SoundSource()
@@ -92,7 +97,7 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	{
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
-		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * 0.4f);
+		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * heightAdjustedRolloffModifier);
 	}
 	alSourcePlay(id);
 

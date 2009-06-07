@@ -3,7 +3,7 @@
 //
 // A skirmish AI for the TA Spring engine.
 // Copyright Alexander Seizinger
-// 
+//
 // Released under GPL license: see LICENSE.html for more information.
 // -------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ public:
 	// stops this unit from assisting another builder/factory
 	void StopAssisting();
 
-	// removes an assiting con unit
+	// removes an assisting con unit
 	void RemoveAssitant(int unit_id);
 
 	void ConstructionFinished();
@@ -69,7 +69,7 @@ public:
 	bool factory;		// can build units
 	bool builder;		// can build buildings
 	bool assistant;		// can assists construction (nanotowers, fark, etc.)
-	bool resurrect;		// can resurrect 
+	bool resurrect;		// can resurrect
 
 	// ids of the construction unit
 	int unit_id;
@@ -77,7 +77,7 @@ public:
 	int buildspeed;
 
 	// ids of the currently constructed unit/building (-1 if none)
-	int construction_def_id;		
+	int construction_def_id;
 	int construction_unit_id;
 	UnitCategory construction_category;
 
@@ -86,20 +86,20 @@ public:
 
 	// zero vector if none
 	float3 build_pos;
-	
+
 	// id of the unit, the builder currently assists (-1 if none)
 	int assistance;
 
 	// assistant builders
 	set<int> assistants;
-	
+
 	// engine tick the build order had been given
 	int order_tick;
 
 	// buildque
 	list<int> *buildque;
 
-	// pointer to possible buildtask 
+	// pointer to possible buildtask
 	AAIBuildTask *build_task;
 
 };

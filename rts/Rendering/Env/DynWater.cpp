@@ -453,6 +453,9 @@ void CDynWater::DrawReflection(CGame* game)
 
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
+	unitDrawer->DrawCloakedUnits(false,true);
+	featureHandler->DrawFadeFeatures(false,true);
+
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
 
@@ -509,7 +512,8 @@ void CDynWater::DrawRefraction(CGame* game)
 	drawReflection=true;
 	unitDrawer->Draw(false,true);
 	featureHandler->Draw();
-	unitDrawer->DrawCloakedUnits();
+	unitDrawer->DrawCloakedUnits(true,true);
+	featureHandler->DrawFadeFeatures(true,true); // FIXME: Make it fade out correctly without "noAdvShading"
 	drawReflection=false;
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();

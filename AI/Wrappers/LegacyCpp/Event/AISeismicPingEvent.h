@@ -24,17 +24,17 @@
 
 class CAISeismicPingEvent : public CAIEvent {
 public:
-    CAISeismicPingEvent(const SSeismicPingEvent& event) : event(event) {}
+	CAISeismicPingEvent(const SSeismicPingEvent& event) : event(event) {}
 	~CAISeismicPingEvent() {}
 
-    void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
+	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		int evtId = AI_EVENT_SEISMIC_PING;
 		IGlobalAI::SeismicPingEvent evt = {float3(event.pos), event.strength};
-	    ai.HandleEvent(evtId, &evt);
+		ai.HandleEvent(evtId, &evt);
 	}
 
 private:
-    SSeismicPingEvent event;
+	SSeismicPingEvent event;
 };
 
 #endif // _AISEISMICPINGEVENT_H

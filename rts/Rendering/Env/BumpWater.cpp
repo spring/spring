@@ -447,9 +447,10 @@ CBumpWater::CBumpWater()
 		const int mapZ = readmap->height * SQUARE_SIZE;
 		const float shadingX = (float)gs->mapx / gs->pwr2mapx;
 		const float shadingZ = (float)gs->mapy / gs->pwr2mapy;
-
-		GLSLDefineConst4f(definitions, "TexGenPlane", 1.0f/mapX, 1.0f/mapZ, shadingX/mapX, shadingZ/mapZ);
-		GLSLDefineConstf2(definitions, "ShadingPlane", shadingX,shadingZ);
+		const float scaleX = (mapX > mapZ) ? (readmap->height/64)/16.0f * (float)mapX/mapZ : (readmap->width/64)/16.0f;
+		const float scaleZ = (mapX > mapZ) ? (readmap->height/64)/16.0f : (readmap->width/64)/16.0f * (float)mapZ/mapX;
+		GLSLDefineConst4f(definitions, "TexGenPlane", 1.0f/mapX, 1.0f/mapZ, scaleX/mapX, scaleZ/mapZ);
+		GLSLDefineConst4f(definitions, "ShadingPlane", shadingX/mapX, shadingZ/mapZ, shadingX,shadingZ);
 	}
 
 	/** LOAD SHADERS **/
@@ -521,12 +522,23 @@ CBumpWater::CBumpWater()
 	}else{
 		const int mapX = readmap->width  * SQUARE_SIZE;
 		const int mapZ = readmap->height * SQUARE_SIZE;
-		glBegin(GL_QUADS);
+		/*glBegin(GL_QUADS);
 		glVertex3i(   0, 0, 0);
 		glVertex3i(   0, 0, mapZ);
 		glVertex3i(mapX, 0, mapZ);
 		glVertex3i(mapX, 0, 0);
-		glEnd();
+		glEnd();*/
+		CVertexArray *va = GetVertexArray();
+		va->Initialize();
+		for (int z = 0; z < 9; z++) {
+			for (int x = 0; x < 10; x++) {
+				for (int zs = 0; zs <= 1; zs++) {
+					va->AddVertex0(float3(x*(mapX/9.0f), 0.0f, (z+zs)*(mapZ/9.0f)));
+				}
+			}
+			va->EndStrip();
+		}
+		va->DrawArray0(GL_TRIANGLE_STRIP);
 	}
 	glEndList();
 }
@@ -1023,7 +1035,8 @@ void CBumpWater::DrawRefraction(CGame* game)
 	readmap->GetGroundDrawer()->Draw();
 	unitDrawer->Draw(false,true);
 	featureHandler->Draw();
-	unitDrawer->DrawCloakedUnits();
+	unitDrawer->DrawCloakedUnits(true);
+	featureHandler->DrawFadeFeatures(true);
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
 
@@ -1078,6 +1091,8 @@ void CBumpWater::DrawReflection(CGame* game)
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
+	unitDrawer->DrawCloakedUnits(false,true);
+	featureHandler->DrawFadeFeatures(false,true);
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
 

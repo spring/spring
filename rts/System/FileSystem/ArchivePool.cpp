@@ -6,6 +6,11 @@
 #include "Util.h"
 #include "mmgr.h"
 
+#include <sstream>
+#include <string>
+#include <iostream>
+
+
 static unsigned int parse_int32(unsigned char c[4])
 {
 	unsigned int i = 0;
@@ -103,9 +108,13 @@ ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 		c_hex[2 * i] = table[(f->md5[i] >> 4) & 0xf];
 		c_hex[2 * i + 1] = table[f->md5[i] & 0xf];
 	}
-	std::string hex(c_hex, 32);
+	std::string prefix(c_hex, 2);
+	std::string postfix(c_hex+2, 30);
 
-	std::string rpath = "pool/" + hex + ".gz";
+	std::ostringstream accu;
+	accu << "pool/" << prefix << "/" << postfix << ".gz";
+	std::string rpath = accu.str();
+
 	filesystem.FixSlashes(rpath);
 	std::string path = filesystem.LocateFile(rpath);
 	gzFile in = gzopen (path.c_str(), "rb");

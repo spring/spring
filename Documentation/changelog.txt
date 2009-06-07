@@ -1,5 +1,21 @@
 Spring change log
 
+0.79.1:
+Bugfixes:
+ - fix crash when a direct-controlled unit dies
+ - fix watching of demos
+ - various AI-related fixes
+ - SetUnitShieldState fixed
+ - fix an infinite memory allocation loop on startup
+ - restore acceptable framerate on vey old cards
+
+0.79:
+Major stuff:
+ - rewritten AI interface in C
+ - new font renderer
+ - sound system and music overhaul
+ -> 2292 files changed, 149700 insertions, 290245 deletions
+
 0.78.2.1:
 Bugfixes:
  - fix for game refusing to speed up after a slowdown

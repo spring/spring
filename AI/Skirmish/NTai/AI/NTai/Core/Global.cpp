@@ -922,7 +922,8 @@ namespace ntai {
 
 	bool Global::InLOS(float3 pos){
 		const unsigned short* lmap = G->cb->GetLosMap();
-		ushort v = lmap[(int(pos.y/16))*G->cb->GetMapWidth()+(int(pos.x/16))];
+		const int lmapres = G->cb->GetLosMapResolution();
+		ushort v = lmap[(int(pos.y/lmapres))*G->cb->GetMapWidth()+(int(pos.x/lmapres))];
 		return (v >0);
 	}
 

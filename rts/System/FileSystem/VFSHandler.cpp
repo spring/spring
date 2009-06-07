@@ -25,7 +25,6 @@ CVFSHandler::CVFSHandler()
 }
 
 
-// Override determines whether if conflicts overwrites an existing entry in the virtual filesystem or not
 bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std::string& type)
 {
 	logOutput.Print(LOG_VFS, "AddArchive(arName = \"%s\", override = %s, type = \"%s\")",
@@ -68,6 +67,28 @@ bool CVFSHandler::AddArchive(const std::string& arName, bool override, const std
 	return true;
 }
 
+bool CVFSHandler::RemoveArchive(const std::string& arName)
+{
+	logOutput.Print(LOG_VFS, "RemoveArchive(arName = \"%s\")", arName.c_str());
+
+	CArchiveBase* ar = archives[arName];
+	if (ar == NULL) {
+		// archive is not loaded
+		return true;
+	}
+	
+	// remove the files loaded from the archive to remove
+	for (std::map<std::string, FileData>::iterator f = files.begin(); f != files.end(); ++f) {
+		if (f->second.ar == ar) {
+			logOutput.Print(LOG_VFS_DETAIL, "%s (removing)", f->first.c_str());
+			files.erase(f);
+		}
+	}
+	delete ar;
+	archives.erase(arName);
+
+	return true;
+}
 
 CVFSHandler::~CVFSHandler()
 {

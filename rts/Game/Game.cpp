@@ -361,6 +361,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	// customize the defs environment
 	defsParser->GetTable("Spring");
 	defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+	defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
 	defsParser->EndTable();
 	// run the parser
 	if (!defsParser->Execute()) {
@@ -647,7 +648,6 @@ void CGame::ResizeEvent()
 }
 
 
-//called when the key is pressed by the user (can be called several times due to key repeat)
 int CGame::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (!gameOver && !isRepeat) {
@@ -860,7 +860,6 @@ int CGame::KeyPressed(unsigned short k, bool isRepeat)
 }
 
 
-//Called when a key is released by the user
 int CGame::KeyReleased(unsigned short k)
 {
 	//	keys[k] = false;
@@ -1541,7 +1540,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (!inputReceivers.empty() && dynamic_cast<CQuitBox*>(inputReceivers.front()) == 0)
 			new CQuitBox();
 	}
-	else if (cmd == "quitforce") {
+	else if (cmd == "quitforce" || cmd == "quit") {
 		logOutput.Print("User exited");
 		globalQuit = true;
 	}
@@ -2115,7 +2114,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				}
 			}
 		}
-		logOutput.Print("GroupAI and LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
+		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
 	else if (action.command == "godmode") {
 		if (!gs->cheatEnabled)
@@ -2381,7 +2380,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		}
 		else {
-			luaRules->GotChatMsg(action.extra, playernum);
+			if (luaRules) luaRules->GotChatMsg(action.extra, playernum);
 		}
 	}
 	else if ((action.command == "luagaia") && (gs->frameNum > 1)) {
@@ -2525,7 +2524,6 @@ bool CGame::Update()
 	{
 		UpdateUI(false);
 		sound->Update();
-		sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
 	}
 
 	net->Update();
@@ -2567,10 +2565,6 @@ bool CGame::DrawWorld()
 
 	CBaseGroundDrawer* gd = readmap->GetGroundDrawer();
 
-	for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
-		(*usi)->UpdateDrawPos();
-	}
-
 	if (drawSky) {
 		sky->Draw();
 	}
@@ -2609,13 +2603,27 @@ bool CGame::DrawWorld()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
+	bool clip = unitDrawer->advFade || !unitDrawer->advShading;
+	if(clip) { // draw cloaked part below surface
+		glEnable(GL_CLIP_PLANE3);
+		unitDrawer->DrawCloakedUnits(true);
+		featureHandler->DrawFadeFeatures(true);
+		glDisable(GL_CLIP_PLANE3);
+	}
+
 	if (drawWater) {
 		if (!mapInfo->map.voidWater && !water->drawSolid) {
 			water->Draw();
 		}
 	}
 
-	unitDrawer->DrawCloakedUnits();
+	if(clip) // draw cloaked part above surface
+		glEnable(GL_CLIP_PLANE3);
+	unitDrawer->DrawCloakedUnits(false);
+	featureHandler->DrawFadeFeatures(false);
+	if(clip)
+		glDisable(GL_CLIP_PLANE3);
+
 	ph->Draw(false);
 
 	if (drawSky) {
@@ -2719,8 +2727,10 @@ bool CGame::Draw() {
 
 	if(lastSimFrame!=gs->frameNum) {
 		CInputReceiver::CollectGarbage();
-		if(!skipping)
+		if(!skipping) {
 			water->Update();
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+		}
 		lastSimFrame=gs->frameNum;
 	}
 
@@ -2744,18 +2754,26 @@ bool CGame::Draw() {
 	modelParser->Update();
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
+	fartextureHandler->CreateFarTextures();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
-
 	eventHandler.Update();
-
 	eventHandler.DrawGenesis();
+
+#ifdef USE_GML
+	//! in non GML builds runs in SimFrame!
+	ph->UpdateTextures();
+	sky->Update();
+#endif
 
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
 		for (int annoy = 0; annoy < 8; annoy++) {
 			LogObject() << "5 errors deep in LuaUI, disabling...\n";
 		}
+
+		GML_STDMUTEX_LOCK(sim); // Draw
+		
 		guihandler->RunLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
@@ -2777,11 +2795,6 @@ bool CGame::Draw() {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
 	}
-
-	ph->UpdateTextures();
-	fartextureHandler->CreateFarTextures();
-
-	sky->Update();
 
 //	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2904,7 +2917,7 @@ bool CGame::Draw() {
 		//print some infos (fps,gameframe,particles)
 		glColor4f(1,1,0.5f,0.8f);
 		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %d Frame: %d Particles: %d (%d)",
-		                 fps, gs->frameNum, ph->ps.size(), ph->currentParticles);
+		                 fps, gs->frameNum, ph->projectiles.size(), ph->currentParticles);
 
 		if (playing) {
 			font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
@@ -2994,7 +3007,7 @@ bool CGame::Draw() {
 							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
 				}
 				smallFont->SetColors(&color, NULL);
-				float x = 0.76f, y = 0.01f + (0.02f * (count - a - 1));
+				float x = 0.88f, y = 0.005f + (0.0125f * (count - a - 1));
 				smallFont->glPrint(x, y, 1.0f, font_options, buf);
 			}
 		}
@@ -3147,6 +3160,10 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
+#ifndef USE_GML
+		ph->UpdateTextures();
+		sky->Update();
+#endif
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
@@ -3197,6 +3214,8 @@ void CGame::SimFrame() {
 
 	teamHandler->GameFrame(gs->frameNum);
 	playerHandler->GameFrame(gs->frameNum);
+
+	ph->AddRenderObjects(); // delayed addition of new rendering objects, to make sure they will be drawn next draw frame
 
 	lastUpdate = SDL_GetTicks();
 }
@@ -3370,8 +3389,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_INTERNAL_SPEED: {
 				gs->speedFactor = *((float*) &inbuf[1]);
-				if (configHandler->Get("PitchAdjust", true))
-					sound->PitchAdjust(sqrt(gs->speedFactor));
+				sound->PitchAdjust(sqrt(gs->speedFactor));
 				//	logOutput.Print("Internal speed set to %.2f",gs->speedFactor);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -3756,7 +3774,10 @@ void CGame::ClientReadNet()
 
 				unsigned numPlayersInTeam = 0;
 				for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-					if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == fromTeam)) {
+					CPlayer* playah = playerHandler->Player(a);
+
+					// do not count spectators or demos will desync
+					if (playah->active && !playah->spectator && playah->team == fromTeam) {
 						++numPlayersInTeam;
 					}
 				}
@@ -3765,6 +3786,7 @@ void CGame::ClientReadNet()
 				{
 					case TEAMMSG_GIVEAWAY: {
 						const int toTeam = inbuf[3];
+
 						if (numPlayersInTeam == 1) {
 							teamHandler->Team(fromTeam)->GiveEverythingTo(toTeam);
 							teamHandler->Team(fromTeam)->leader = -1;
@@ -4126,8 +4148,8 @@ void CGame::MakeMemDump(void)
 		file << "  heading " << u->heading << " power " << u->power << " experience " << u->experience << "\n";
 		file << " health " << u->health << "\n";
 	}
-	Projectile_List::iterator psi;
-	for(psi=ph->ps.begin();psi != ph->ps.end();++psi){
+	ThreadListSimRender<CProjectile*>::iterator psi;
+	for(psi=ph->projectiles.begin();psi != ph->projectiles.end();++psi){
 		CProjectile* p=*psi;
 		file << "Projectile " << p->radius << "\n";
 		file << "  xpos " << p->pos.x << " ypos " << p->pos.y << " zpos " << p->pos.z << "\n";

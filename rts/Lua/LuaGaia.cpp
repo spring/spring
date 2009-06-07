@@ -86,9 +86,9 @@ CLuaGaia::CLuaGaia()
 
 	teamsLocked = true;
 
-	fullCtrl = false;
+	fullCtrl = true;
 	fullRead = true;
-	ctrlTeam = teamHandler->GaiaTeamID();
+	ctrlTeam = AllAccessTeam; //teamHandler->GaiaTeamID();
 	readTeam = AllAccessTeam;
 	readAllyTeam = AllAccessTeam;
 	selectTeam = teamHandler->GaiaTeamID();

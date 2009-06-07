@@ -2,6 +2,7 @@
 #define INC_GLOBALAI_HDR
 
 #include "Containers.h"
+#include "CommandTracker.h"
 #include "Defines.h"
 #include "MTRand.h"
 #include "SpotFinder.h"

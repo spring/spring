@@ -22,6 +22,7 @@
 #include "AIInterfaceLibraryInfo.h"
 #include "AIInterfaceLibrary.h"
 #include "SkirmishAILibraryInfo.h"
+#include "SkirmishAIData.h"
 
 #include "Util.h"
 #include "LogOutput.h"
@@ -32,6 +33,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Game/GameSetup.h"
 
 #include <string>
 #include <set>
@@ -99,7 +101,6 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 	// Read from AI Interface info files
 	// we are looking for:
-	// {AI_INTERFACES_DATA_DIR}/{*}/InterfaceInfo.lua
 	// {AI_INTERFACES_DATA_DIR}/{*}/{*}/InterfaceInfo.lua
 	T_dirs aiInterfaceDataDirs =
 			filesystem.FindDirsInDirectSubDirs(AI_INTERFACES_DATA_DIR);
@@ -152,7 +153,6 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 	// Read from Skirmish AI info and option files
 	// we are looking for:
-	// {SKIRMISH_AI_DATA_DIR/{*}/AIInfo.lua
 	// {SKIRMISH_AI_DATA_DIR}/{*}/{*}/AIInfo.lua
 	T_dirs skirmishAIDataDirs = filesystem.FindDirsInDirectSubDirs(SKIRMISH_AI_DATA_DIR);
 	T_dupSkirm duplicateSkirmishAIInfoCheck;
@@ -235,14 +235,12 @@ void CAILibraryManager::ClearAllInfos() {
 	skirmishAIKeys.clear();
 }
 
-
 const std::vector<std::string> CAILibraryManager::EMPTY_OPTION_VALUE_KEYS;
 const std::vector<std::string>& CAILibraryManager::GetSkirmishAIOptionValueKeys(int teamId) const {
 
-	std::map<int, std::vector<std::string> >::const_iterator optionValueKeys
-			= teamId_skirmishAIOptionValueKeys.find(teamId);
-	if (optionValueKeys != teamId_skirmishAIOptionValueKeys.end()) {
-		return optionValueKeys->second;
+	const SkirmishAIData* aiData = gameSetup->GetSkirmishAIDataForTeam(teamId);
+	if (aiData != NULL) {
+		return aiData->optionKeys;
 	} else {
 		return EMPTY_OPTION_VALUE_KEYS;
 	}
@@ -250,10 +248,9 @@ const std::vector<std::string>& CAILibraryManager::GetSkirmishAIOptionValueKeys(
 const std::map<std::string, std::string> CAILibraryManager::EMPTY_OPTION_VALUES;
 const std::map<std::string, std::string>& CAILibraryManager::GetSkirmishAIOptionValues(int teamId) const {
 
-	std::map<int, std::map<std::string, std::string> >::const_iterator optionValues
-			= teamId_skirmishAIOptionValues.find(teamId);
-	if (optionValues != teamId_skirmishAIOptionValues.end()) {
-		return optionValues->second;
+	const SkirmishAIData* aiData = gameSetup->GetSkirmishAIDataForTeam(teamId);
+	if (aiData != NULL) {
+		return aiData->options;
 	} else {
 		return EMPTY_OPTION_VALUES;
 	}

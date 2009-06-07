@@ -27,10 +27,20 @@ public:
 	std::vector<std::string> GetFilesInDir(const std::string& dir);
 	std::vector<std::string> GetDirsInDir(const std::string& dir);
 
+	/**
+	 * Override determines whether if conflicts overwrites
+	 * an existing entry in the virtual filesystem or not
+	 */
 	bool AddArchive(const std::string& arName, bool override,
 	                const std::string& type = "");
+	/**
+	 * Returns true if the archive is not loaded,
+	 * so it may was not loaded in the first place or was unloaded
+	 * successfully.
+	 */
+	bool RemoveArchive(const std::string& arName);
 };
 
 extern CVFSHandler* vfsHandler;
 
-#endif
+#endif // __VFS_HANDLER_H

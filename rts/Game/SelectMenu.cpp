@@ -14,6 +14,7 @@
 #include "LogOutput.h"
 #include "Exceptions.h"
 #include "TdfParser.h"
+#include "Util.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
@@ -73,23 +74,24 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server) :
-		showList(NULL)
+SelectMenu::SelectMenu(bool server): showList(NULL)
 {
 	mySettings = new ClientSetup();
 	mySettings->isHost = server;
-	mySettings->myPlayerName = configHandler->GetString("name", "Player");
-	if (mySettings->myPlayerName.empty())
-		mySettings->myPlayerName = "Player";
-	if (!mySettings->isHost)
-	{
-		userInput=configHandler->GetString("address","");
+	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
+
+	if (mySettings->myPlayerName.empty()) {
+		mySettings->myPlayerName = "UnnamedPlayer";
+	} else {
+		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
+	}
+
+	if (!mySettings->isHost) {
+		userInput = configHandler->GetString("address", "");
 		writingPos = userInput.length();
 		userPrompt = "Enter server address: ";
 		userWriting = true;
-	}
-	else
-	{
+	} else {
 		ShowModList();
 	}
 }

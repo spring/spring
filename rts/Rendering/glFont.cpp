@@ -367,7 +367,7 @@ GLuint CFontTextureRenderer::CreateTexture()
 
 	//! generate the ogl texture
 	texHeight = curY + curHeight;
-	if (!GLEW_ARB_texture_non_power_of_two)
+	if (!gu->supportNPOTs)
 		texHeight = next_power_of_2(texHeight);
 	GLuint tex;
 	glGenTextures(1, &tex);
@@ -376,8 +376,14 @@ GLuint CFontTextureRenderer::CreateTexture()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	if (GLEW_ARB_texture_border_clamp) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+	}
+	else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	}
 	static const GLfloat borderColor[4] = {1.0f,1.0f,1.0f,0.0f};
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, texWidth, texHeight, 0, GL_ALPHA, GL_UNSIGNED_BYTE, atlas);
@@ -556,7 +562,7 @@ CglFont* CglFont::LoadFont(const std::string& fontFile, int size, int outlinewid
 		logOutput.Print("FONT-ERROR: Couldn't create GlyphAtlas! (try to reduce reduce font size/outlinewidth)");
 		return NULL;
 	} catch (content_error& e) {
-		logOutput.Print(e.what());
+		logOutput.Print(std::string(e.what()));
 		return NULL;
 	}
 }
@@ -1253,7 +1259,7 @@ void CglFont::RemergeColorCodes(std::list<word>* words, std::list<colorcode>& co
 			}
 		}
 		wi = wi2;
-		wi++;	
+		wi++;
 	}
 }
 
@@ -1294,28 +1300,6 @@ int CglFont::WrapInPlace(std::string& text, float _fontSize, const float maxWidt
 			}
 		}
 	}
-
-/*
-	std::list<std::string> lines = Wrap(text, fontSize, maxWidth, maxHeight);
-
-	size_t stringlength = 0;
-	std::list<std::string>::iterator li;
-	for (li = lines.begin(); li != lines.end(); li++)
-		stringlength += li->size() + 2;
-
-	text = "";
-
-	if (stringlength > 0) {
-		stringlength -= 2;
-		text.reserve(stringlength);
-	}
-
-	for (li = lines.begin(); li != lines.end();) {
-		text += (*li);
-		if (++li != lines.end())
-			text += "\x0d\x0a";
-	}
-*/
 
 	return numlines;
 }
@@ -1429,7 +1413,7 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 		0.2126f * math::powf(textColor[0], 2.2) +
 		0.7152f * math::powf(textColor[1], 2.2) +
 		0.0722f * math::powf(textColor[2], 2.2);
- 
+
 	const float lumdiff = std::max(luminosity,darkLuminosity) / std::min(luminosity,darkLuminosity);
 	if (lumdiff > 5.0f) {
 		return &darkOutline;
@@ -1439,7 +1423,7 @@ const float4* CglFont::ChooseOutlineColor(const float4& textColor)
 }
 
 
-void CglFont::Begin(const bool immediate)
+void CglFont::Begin(const bool immediate, const bool resetColors)
 {
 	if (inBeginEnd) {
 		logOutput.Print("FontError: called Begin() multiple times");
@@ -1450,8 +1434,8 @@ void CglFont::Begin(const bool immediate)
 	autoOutlineColor = true;
 
 	setColor = !immediate;
-	if (!immediate) {
-		SetColors(); //! default
+	if (resetColors) {
+		SetColors(); //! reset colors
 	}
 
 	va.Initialize();
@@ -1509,7 +1493,7 @@ void CglFont::RenderString(float x, float y, const float& scaleX, const float& s
 {
 	/**
 	 * NOTE:
-	 * Font rendering does not use display lists, but VAs. It's actually faster 
+	 * Font rendering does not use display lists, but VAs. It's actually faster
 	 * (450% faster with a 7600GT!) for these reasons:
 	 *
 	 * 1. When using DLs, we can not group multiple glyphs into one glBegin/End pair
@@ -1693,10 +1677,13 @@ void CglFont::RenderStringOutlined(float x, float y, const float& scaleX, const 
 
 void CglFont::glWorldPrint(const float3 p, const float size, const std::string& str)
 {
+
 	glPushMatrix();
 	glTranslatef(p.x, p.y, p.z);
 	glCallList(CCamera::billboardList);
+	Begin(false,false);
 	glPrint(0.0f, 0.0f, size, FONT_CENTER | FONT_OUTLINE, str);
+	End();
 	glPopMatrix();
 }
 
@@ -1752,16 +1739,16 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 	float4 oldTextColor, oldOultineColor;
 	size_t sts,sos;
 
+	//! backup text & outline colors
+	oldTextColor = textColor;
+	oldOultineColor = outlineColor;
+	sts = stripTextColors.size();
+	sos = stripOutlineColors.size();
+
 	//! immediate mode?
 	const bool immediate = !inBeginEnd;
 	if (immediate) {
 		Begin(!(options & (FONT_OUTLINE | FONT_SHADOW)));
-	} else {
-		//! backup text & outline colors
-		oldTextColor = textColor;
-		oldOultineColor = outlineColor;
-		sts = stripTextColors.size();
-		sos = stripOutlineColors.size();
 	}
 
 
@@ -1774,15 +1761,17 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 		RenderString(x, y, sizeX, sizeY, text);
 	}
 
+
+	//! immediate mode?
 	if (immediate) {
 		End();
-	} else {
-		//! reset text & outline colors (if changed via in text colorcodes)
-		if (stripTextColors.size() > sts)
-			SetTextColor(&oldTextColor);
-		if (stripOutlineColors.size() > sos)
-			SetOutlineColor(&oldOultineColor);
 	}
+
+	//! reset text & outline colors (if changed via in text colorcodes)
+	if (stripTextColors.size() > sts)
+		SetTextColor(&oldTextColor);
+	if (stripOutlineColors.size() > sos)
+		SetOutlineColor(&oldOultineColor);
 }
 
 

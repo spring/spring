@@ -111,7 +111,7 @@ bool CUNIT::NukeSiloBuild(void) const {
 
 	Command c;
 	c.id = CMD_STOCKPILE;
-	ai->cb->GiveOrder(myid, &c);
+	ai->ct->GiveOrder(myid, &c);
 	return true;
 }
 
@@ -187,7 +187,7 @@ bool CUNIT::FactoryBuild(const UnitDef* toBuild) const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c;
 	c.id = -(toBuild->id);
-	ai->cb->GiveOrder(myid, &c);
+	ai->ct->GiveOrder(myid, &c);
 	ai->uh->IdleUnitRemove(myid);
 
 	return true;
@@ -233,7 +233,7 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) const {
 				c.params.push_back(closestPos.y);
 				c.params.push_back(closestPos.z);
 				c.params.push_back(facing);
-				ai->cb->GiveOrder(hub, &c);
+				ai->ct->GiveOrder(hub, &c);
 				ai->uh->IdleUnitRemove(hub);
 				return true;
 			}
@@ -352,7 +352,7 @@ bool CUNIT::Attack(int target) const {
 	Command c = MakeIntCommand(CMD_ATTACK, target);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -363,7 +363,7 @@ bool CUNIT::Capture(int target) const {
 	Command c = MakeIntCommand(CMD_CAPTURE, target);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -375,7 +375,7 @@ bool CUNIT::Guard(int target) const {
 	Command c = MakeIntCommand(CMD_GUARD, target);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -387,7 +387,7 @@ bool CUNIT::Load(int target) const {
 	Command c = MakeIntCommand(CMD_LOAD_UNITS, target);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -398,7 +398,7 @@ bool CUNIT::Reclaim(int target) const {
 	Command c = MakeIntCommand(CMD_RECLAIM, target);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -409,7 +409,7 @@ bool CUNIT::Repair(int target) const {
 	Command c = MakeIntCommand(CMD_REPAIR, target);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 	return false;
@@ -419,7 +419,7 @@ bool CUNIT::Ressurect(int target) const {
 	Command c = MakeIntCommand(CMD_RESURRECT, target);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -448,7 +448,7 @@ bool CUNIT::Build(float3 pos, const UnitDef* unit, int facing) const {
 
 	if (c.id != 0) {
 		// c.options |= SHIFT_KEY;
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		ai->uh->TaskPlanCreate(myid, pos, unit);
 		return true;
 	}
@@ -461,7 +461,7 @@ bool CUNIT::Move(float3 pos) const {
 	Command c = MakePosCommand(CMD_MOVE, pos);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -474,7 +474,7 @@ bool CUNIT::MoveShift(float3 pos) const {
 
 	if (c.id != 0) {
 		c.options |= SHIFT_KEY;
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -486,7 +486,7 @@ bool CUNIT::Patrol(float3 pos) const {
 	Command c = MakePosCommand(CMD_PATROL, pos);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 	return false;
@@ -498,7 +498,7 @@ bool CUNIT::PatrolShift(float3 pos) const {
 
 	if (c.id != 0) {
 		c.options |= SHIFT_KEY;
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -512,7 +512,7 @@ bool CUNIT::Attack(float3 pos, float radius) const {
 	Command c = MakePosCommand(CMD_ATTACK, pos, radius);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -523,7 +523,7 @@ bool CUNIT::Ressurect(float3 pos, float radius) const {
 	Command c = MakePosCommand(CMD_RESURRECT, pos, radius);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -535,7 +535,7 @@ bool CUNIT::Reclaim(float3 pos, float radius) const {
 	Command c = MakePosCommand(CMD_RECLAIM, pos, radius);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		ai->uh->BuilderReclaimOrder(myid, pos);
 		return true;
 	}
@@ -548,7 +548,7 @@ bool CUNIT::Capture(float3 pos, float radius) const {
 	Command c = MakePosCommand(CMD_CAPTURE, pos, radius);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -560,7 +560,7 @@ bool CUNIT::Restore(float3 pos, float radius) const {
 	Command c = MakePosCommand(CMD_RESTORE, pos, radius);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -572,7 +572,7 @@ bool CUNIT::Load(float3 pos, float radius) const {
 	Command c = MakePosCommand(CMD_LOAD_UNITS, pos, radius);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -584,7 +584,7 @@ bool CUNIT::Unload(float3 pos, float radius) const {
 	Command c = MakePosCommand(CMD_UNLOAD_UNITS, pos, radius);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -598,7 +598,7 @@ bool CUNIT::Cloaking(bool on) const {
 	Command c = MakeIntCommand(CMD_CLOAK, on);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -609,7 +609,7 @@ bool CUNIT::OnOff(bool on) const {
 	Command c = MakeIntCommand(CMD_ONOFF, on);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -622,7 +622,7 @@ bool CUNIT::SelfDestruct() const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c;
 	c.id = CMD_SELFD;
-	ai->cb->GiveOrder(myid, &c);
+	ai->ct->GiveOrder(myid, &c);
 
 	return true;
 }
@@ -633,7 +633,7 @@ bool CUNIT::SetFireState(int state) const {
 	Command c = MakeIntCommand(CMD_FIRE_STATE, state);
 
 	if (c.id != 0) {
-		ai->cb->GiveOrder(myid, &c);
+		ai->ct->GiveOrder(myid, &c);
 		return true;
 	}
 
@@ -644,7 +644,7 @@ bool CUNIT::Stop() const {
 	assert(ai->cb->GetUnitDef(myid) != NULL);
 	Command c;
 	c.id = CMD_STOP;
-	ai->cb->GiveOrder(myid, &c);
+	ai->ct->GiveOrder(myid, &c);
 
 	return true;
 }
@@ -654,7 +654,7 @@ bool CUNIT::SetMaxSpeed(float speed) const {
 	Command c;
 	c.id = CMD_SET_WANTED_MAX_SPEED;
 	c.params.push_back(speed);
-	ai->cb->GiveOrder(myid, &c);
+	ai->ct->GiveOrder(myid, &c);
 
 	return true;
 }

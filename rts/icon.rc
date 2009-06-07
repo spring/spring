@@ -1,2 +1,16 @@
+#if defined(__MWERKS__)
+#include <winresrc.h>
+#else
+#include <windows.h>
+#endif
+
+// see "about isolated applications" topic in MSDN
+#ifdef ISOLATION_AWARE_ENABLED
+#define MANIFEST_ID 2
+#else
+#define MANIFEST_ID 1
+#endif
+
+MANIFEST_ID 24 "spring.exe.manifest"
+
 1 ICON "spring.ico"
-1 RT_MANIFEST "spring.exe.manifest"

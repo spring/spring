@@ -36,8 +36,9 @@ CR_REG_METADATA(CSmokeProjectile2,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CSmokeProjectile2::CSmokeProjectile2()
-	: color(0.5f),
+CSmokeProjectile2::CSmokeProjectile2() :
+	CProjectile(),
+	color(0.5f),
 	age(0.0f),
 	ageSpeed(1.0f),
 	size(0.0f),
@@ -46,6 +47,7 @@ CSmokeProjectile2::CSmokeProjectile2()
 	textureNum(0),
 	glowFalloff(0.0f)
 {
+	deleteMe=false;
 	checkCol=false;
 	synced=false;
 }

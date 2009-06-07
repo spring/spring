@@ -7,17 +7,6 @@
 
 #include "maindefines.h"
 
-static inline char* mallocCopyString(const char* const orig)
-{
-	char* copy;
-	copy = (char *) malloc(/*sizeof(char) * */strlen(orig) + 1);
-	strcpy(copy, orig);
-	return copy;
-}
-static inline void freeString(const char* const toFreeStr)
-{
-	free(const_cast<char*>(toFreeStr));
-}
 
 
 #ifdef __cplusplus
@@ -30,18 +19,63 @@ static inline void StringToLowerInPlace(std::string &s)
 	std::transform(s.begin(), s.end(), s.begin(), (int (*)(int))tolower);
 }
 
-
 static inline std::string StringToLower(std::string s)
 {
 	StringToLowerInPlace(s);
 	return s;
 }
 
+//! replace all characters matching 'c' in a string by 'd'
+static inline std::string& StringReplaceInPlace(std::string& s, char c, char d)
+{
+	size_t i = 0;
+	while (i < s.size()) {
+		if (s[i] == c) {
+			s[i] = d;
+		}
+		i++;
+	}
+
+	return s;
+}
+
+static std::string StringReplace(const std::string& text,
+                            const std::string& from, const std::string& to)
+{
+	std::string working = text;
+	std::string::size_type pos = 0;
+	while (true) {
+		pos = working.find(from, pos);
+		if (pos == std::string::npos) {
+			break;
+		}
+		std::string tmp = working.substr(0, pos);
+		tmp += to;
+		tmp += working.substr(pos + from.size(), std::string::npos);
+		pos += to.size();
+		working = tmp;
+	}
+	return working;
+}
+
+
+
 static inline std::string GetFileExt(const std::string& s)
 {
-	size_t i = s.rfind('.', s.length());
+	size_t l = s.length();
+#ifdef WIN32
+	//! windows eats dots and spaces at the end of filenames
+	while (l > 0) {
+		if (s[l-1]=='.') {
+			l--;
+		} else if (s[l-1]==' ') {
+			l--;
+		} else break;
+	}
+#endif
+	size_t i = s.rfind('.', l);
 	if (i != std::string::npos) {
-		return s.substr(i+1, s.length() - i);
+		return StringToLower(s.substr(i+1, l - i));
 	}
 	return "";
 }
@@ -63,6 +97,21 @@ template<class T> void SafeDelete(T &a)
 	T tmp = a;
 	a = NULL;
 	delete tmp;
+}
+
+
+
+namespace proc {
+	#if defined(__GNUC__)
+	__attribute__((__noinline__))
+	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d);
+	#else
+	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d);
+	#endif
+
+	unsigned int GetProcMaxStandardLevel();
+	unsigned int GetProcMaxExtendedLevel();
+	unsigned int GetProcSSEBits();
 }
 
 #endif // __cplusplus

@@ -24,7 +24,18 @@ endif (USE_MMGR)
 SET(USE_GML FALSE CACHE BOOL "Use the GML OpenGL threading library?")
 if (USE_GML)
 	ADD_DEFINITIONS(-DUSE_GML)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
 endif (USE_GML)
+
+SET(USE_GML_SIM FALSE CACHE BOOL "Use independent Simulation thread?")
+if (USE_GML_SIM)
+	ADD_DEFINITIONS(-DUSE_GML_SIM)
+endif (USE_GML_SIM)
+
+SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
+if (USE_GML_DEBUG)
+	ADD_DEFINITIONS(-DUSE_GML_DEBUG)
+endif (USE_GML_DEBUG)
 
 SET(TRACE_SYNC FALSE CACHE BOOL "Enable sync tracker")
 if (TRACE_SYNC)
@@ -144,8 +155,8 @@ ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfi
 TARGET_LINK_LIBRARIES(spring ${spring_libraries})
 
 IF (MINGW)
-	SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
-	install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
+	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
+	#install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
 install (TARGETS spring DESTINATION ${BINDIR})

@@ -6,7 +6,7 @@
 
 #include "float3.h"
 
-#define DRAWTYPE_3DO 0
+#define DRAWTYPE_MODEL 0
 #define DRAWTYPE_TREE 1
 #define DRAWTYPE_NONE -1
 
@@ -21,7 +21,7 @@ struct FeatureDef
 	FeatureDef():
 		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
 		upright(false), drawType(0), model(NULL), modelType(0),
-		resurrectable(false), destructable(false), reclaimable(true), blocking(false),
+		resurrectable(false), smokeTime(0), destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), noSelect(false), geoThermal(false),
 		xsize(0), zsize(0) {}
 

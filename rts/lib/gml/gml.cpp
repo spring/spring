@@ -37,7 +37,7 @@
 #include "gmlcls.h"
 #include "LogOutput.h"
 
-const char *gmlProfMutex = "lua";
+const char *gmlProfMutex = "piece";
 
 #define EXEC_RUN (BYTE *)NULL
 #define EXEC_SYNC (BYTE *)-1
@@ -64,6 +64,7 @@ int gmlItemsConsumed=0;
 
 int gmlNextTickUpdate=0;
 unsigned gmlCurrentTicks;
+
 
 // gmlCPUCount returns the number of CPU cores
 // it was taken from the latest version of boost
@@ -211,6 +212,8 @@ boost::mutex watermutex;
 boost::mutex dquemutex;
 boost::mutex scarmutex;
 boost::mutex trackmutex;
+boost::mutex rprojmutex;
+boost::mutex rflashmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -684,6 +687,10 @@ const char *gmlNOPDummy=(gmlFunctionNames[GML_NOP]="gmlNOP");
 // this item server instance needs gmlDeleteLists from gmlfun.h, that is why it is declared down here
 gmlItemSequenceServer<GLuint, GLsizei,GLuint (GML_GLAPIENTRY *)(GLsizei)> gmlListServer(&glGenLists, &gmlDeleteLists, 100, 25, 20, 5);
 
+#if GML_CALL_DEBUG
+lua_State *gmlCurrentLuaState = NULL;
+#endif
+
 // queue handler - exequtes one GL command from queue (pointed to by p)
 // ptr is a temporary variable used inside the handlers
 inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
@@ -1084,5 +1091,27 @@ void gmlQueue::ExecuteSynced(void (gmlQueue::*execfun)() ) {
 #endif
 //	GML_DEBUG("ExecuteSync ",procs, 2);
 }
+
+#if GML_ENABLE_SIM
+#include "Sim/Projectiles/FireProjectile.h"
+CR_BIND_TEMPLATE(SUBPARTICLE_LIST, );
+CR_REG_METADATA(SUBPARTICLE_LIST, (
+		CR_MEMBER(elements),
+		CR_MEMBER(front),
+		CR_MEMBER(back),
+		CR_MEMBER(csize),
+		CR_MEMBER(msize)
+		));
+
+#include "Sim/Projectiles/WeaponProjectiles/FireBallProjectile.h"
+CR_BIND_TEMPLATE(SPARK_QUEUE, );
+CR_REG_METADATA(SPARK_QUEUE, (
+		CR_MEMBER(elements),
+		CR_MEMBER(front),
+		CR_MEMBER(back),
+		CR_MEMBER(csize),
+		CR_MEMBER(msize)
+		));
+#endif
 
 #endif

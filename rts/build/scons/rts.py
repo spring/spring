@@ -104,6 +104,7 @@ def generate(env):
 		('platform',          'Set to linux, freebsd or windows', None),
 		('gml',               'Set to yes to enable the OpenGL Multithreading Library', False),
 		('gmlsim',            'Set to yes to enable parallel threads for Sim/Draw', False),
+		('gmldebug',          'Set to yes to enable GML call debugging', False),
 		('debug',             'Set to yes to produce a binary with debug information', 0),
 		('debugdefines',      'Set to no to suppress DEBUG and _DEBUG preprocessor #defines (use to add symbols to release build)', True),
 		('syncdebug',         'Set to yes to enable the sync debugger', False),
@@ -177,7 +178,7 @@ def generate(env):
 	if 'configure' in sys.argv:
 
 		# be paranoid, unset existing variables
-		for key in ['platform', 'gml', 'gmlsim', 'debug', 'optimize',
+		for key in ['platform', 'gml', 'gmlsim', 'gmldebug', 'debug', 'optimize',
 			'profile', 'profile_use', 'profile_generate', 'cpppath',
 			'libpath', 'prefix', 'installprefix', 'builddir',
 			'mingwlibsdir', 'datadir', 'bindir', 'libdir',
@@ -423,6 +424,7 @@ def generate(env):
 
 		bool_opt('gml', False)
 		bool_opt('gmlsim', False)
+		bool_opt('gmldebug', False)
 		bool_opt('strip', False)
 		bool_opt('disable_avi', env['platform'] != 'windows')
 		bool_opt('use_tcmalloc', False)
@@ -458,6 +460,11 @@ def generate(env):
 			if env['gmlsim']:
 				spring_defines += ['USE_GML_SIM']
 				print 'Parallel threads for Sim/Draw is enabled'
+				if env['gmldebug']:
+					spring_defines += ['USE_GML_DEBUG']
+					print 'GML call debugging is enabled'
+				else:
+					print 'GML call debugging is NOT enabled'
 			else:
 				print 'Parallel threads for Sim/Draw is NOT enabled'
 		else:
