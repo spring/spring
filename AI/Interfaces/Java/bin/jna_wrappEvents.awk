@@ -207,6 +207,7 @@ function printEventOO(evtIndex) {
 	sub(/^\, /, "", paramsEvt);
 
 	sub(/int unit(Id)?/, "Unit unit", paramsTypes);
+	sub(/int builder(Id)?/, "Unit builder", paramsTypes);
 	sub(/int attacker(Id)?/, "Unit attacker", paramsTypes);
 	sub(/int enemy(Id)?/, "Unit enemy", paramsTypes);
 	sub(/int weaponDef(Id)?/, "WeaponDef weaponDef", paramsTypes);
@@ -215,6 +216,7 @@ function printEventOO(evtIndex) {
 	if (unitRepls == 0) {
 		sub(/evt.unit/, "Unit.getInstance(ooClb, evt.unit)", paramsEvt);
 	}
+	sub(/evt.builder/, "Unit.getInstance(ooClb, evt.builder)", paramsEvt);
 	sub(/evt.attacker/, "Unit.getInstance(ooClb, evt.attacker)", paramsEvt);
 	sub(/evt.enemy/, "Unit.getInstance(ooClb, evt.enemy)", paramsEvt);
 	sub(/evt.weaponDefId/, "WeaponDef.getInstance(ooClb, evt.weaponDefId)", paramsEvt);
