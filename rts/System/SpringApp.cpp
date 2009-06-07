@@ -183,8 +183,8 @@ bool SpringApp::Initialize()
 	logOutput.Print("OS: Linux\n");
 #elif defined(__FreeBSD__)
 	logOutput.Print("OS: FreeBSD\n");
-#elif defined(MACOS_X)
-	logOutput.Print("OS: MacOS X\n");
+#elif defined(__APPLE__)
+	logOutput.Print("OS: Mac OS X\n");
 #else
 	logOutput.Print("OS: unknown\n");
 #endif
