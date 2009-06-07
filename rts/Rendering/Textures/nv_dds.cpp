@@ -368,11 +368,16 @@ bool CDDSImage::load(string filename, bool flipImage)
     ddsh.dwHeight = swabdword(ddsh.dwHeight);
     ddsh.dwWidth = swabdword(ddsh.dwWidth);
     ddsh.dwPitchOrLinearSize = swabdword(ddsh.dwPitchOrLinearSize);
+    ddsh.dwDepth = swabdword(ddsh.dwDepth);
     ddsh.dwMipMapCount = swabdword(ddsh.dwMipMapCount);
     ddsh.ddspf.dwSize = swabdword(ddsh.ddspf.dwSize);
     ddsh.ddspf.dwFlags = swabdword(ddsh.ddspf.dwFlags);
     ddsh.ddspf.dwFourCC = swabdword(ddsh.ddspf.dwFourCC);
     ddsh.ddspf.dwRGBBitCount = swabdword(ddsh.ddspf.dwRGBBitCount);
+    ddsh.ddspf.dwRBitMask = swabdword(ddsh.ddspf.dwRBitMask);
+    ddsh.ddspf.dwGBitMask = swabdword(ddsh.ddspf.dwGBitMask);
+    ddsh.ddspf.dwBBitMask = swabdword(ddsh.ddspf.dwBBitMask);
+    ddsh.ddspf.dwABitMask = swabdword(ddsh.ddspf.dwABitMask);
     ddsh.dwCaps1 = swabdword(ddsh.dwCaps1);
     ddsh.dwCaps2 = swabdword(ddsh.dwCaps2);
 
