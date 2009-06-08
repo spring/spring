@@ -118,8 +118,8 @@ void CFeature::PostLoad()
 		midPos = pos;
 	}
 
-	if (def->drawType == DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->modelType, pos, 1);
+	if (def->drawType >= DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->drawType - 1, pos, 1);
 	}
 }
 
@@ -196,8 +196,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		finalHeight = ground->GetHeight2(pos.x, pos.z);
 	}
 
-	if (def->drawType == DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->modelType, pos, 1);
+	if (def->drawType >= DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->drawType - 1, pos, 1);
 	}
 
 
@@ -381,9 +381,9 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges = false;
 
-		if (def->drawType == DRAWTYPE_TREE) {
+		if (def->drawType >= DRAWTYPE_TREE) {
 			if (impulse.SqLength2D() > 0.25f) {
-				treeDrawer->AddFallingTree(pos, impulse, def->modelType);
+				treeDrawer->AddFallingTree(pos, impulse, def->drawType - 1);
 			}
 		}
 	}
@@ -442,8 +442,8 @@ void CFeature::ForcedMove(const float3& newPos)
 
 	// insert into managers
 	qf->AddFeature(this);
-	if (def->drawType == DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->modelType, pos, 1.0f);
+	if (def->drawType >= DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 	}
 
 	if (blocking) {
@@ -457,9 +457,9 @@ void CFeature::ForcedSpin(const float3& newDir)
 /*
 	heading = GetHeadingFromVector(newDir.x, newDir.z);
 	CalculateTransform();
-	if (def->drawType == DRAWTYPE_TREE) {
+	if (def->drawType >= DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
-		treeDrawer->AddTree(def->modelType, pos, 1.0f);
+		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 	}
 */
 
@@ -556,8 +556,8 @@ bool CFeature::UpdatePosition()
 			midPos.y += speed.y;
 			transMatrix[13] += speed.y;
 
-			if (def->drawType == DRAWTYPE_TREE)
-				treeDrawer->AddTree(def->modelType, pos, 1.0f);
+			if (def->drawType >= DRAWTYPE_TREE)
+				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 		}
 	}
 
@@ -572,8 +572,8 @@ bool CFeature::UpdatePosition()
 		transMatrix[13] += diff;
 		speed.y = 0.0f;
 
-		if (def->drawType == DRAWTYPE_TREE)
-			treeDrawer->AddTree(def->modelType, pos, 1.0f);
+		if (def->drawType >= DRAWTYPE_TREE)
+			treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 	}
 
 	isUnderWater = ((pos.y + height) < 0.0f);

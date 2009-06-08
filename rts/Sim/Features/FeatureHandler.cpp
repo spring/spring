@@ -58,7 +58,6 @@ CR_REG_METADATA(FeatureDef, (
 		CR_MEMBER(drawType),
 		//CR_MEMBER(model), FIXME
 		CR_MEMBER(modelname),
-		CR_MEMBER(modelType),
 		CR_MEMBER(resurrectable),
 		CR_MEMBER(destructable),
 		CR_MEMBER(blocking),
@@ -326,8 +325,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				fd->burnable = true;
 				fd->destructable = 1;
 				fd->reclaimable = true;
-				fd->drawType = DRAWTYPE_TREE;
-				fd->modelType = atoi(name.substr(8).c_str());
+				fd->drawType = DRAWTYPE_TREE + atoi(name.substr(8).c_str());
 				fd->energy = 250;
 				fd->metal = 0;
 				fd->reclaimTime = 1500;
@@ -349,7 +347,6 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				fd->geoThermal = true;
 				// geos are drawn into the ground texture and emit smoke to be visible
 				fd->drawType = DRAWTYPE_NONE;
-				fd->modelType = 0;
 				fd->energy = 0;
 				fd->metal = 0;
 				fd->reclaimTime = 0;

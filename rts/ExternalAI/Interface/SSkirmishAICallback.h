@@ -1324,7 +1324,6 @@ bool (CALLING_CONV *Clb_FeatureDef_isUpright)(int teamId, int featureDefId);
 int (CALLING_CONV *Clb_FeatureDef_getDrawType)(int teamId, int featureDefId);
 const char* (CALLING_CONV *Clb_FeatureDef_getModelName)(int teamId,
 		int featureDefId);
-int (CALLING_CONV *Clb_FeatureDef_getModelType)(int teamId, int featureDefId);
 /**
  * Used to determine whether the feature is resurrectable.
  *

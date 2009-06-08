@@ -715,7 +715,6 @@ EXPORT(bool             ) skirmishAiCallback_FeatureDef_isUpright(int teamId, in
 EXPORT(int              ) skirmishAiCallback_FeatureDef_getDrawType(int teamId, int featureDefId);
 EXPORT(const char*      ) skirmishAiCallback_FeatureDef_getModelName(int teamId,
 		int featureDefId);
-EXPORT(int              ) skirmishAiCallback_FeatureDef_getModelType(int teamId, int featureDefId);
 EXPORT(int              ) skirmishAiCallback_FeatureDef_getResurrectable(int teamId,
 		int featureDefId);
 EXPORT(int              ) skirmishAiCallback_FeatureDef_getSmokeTime(int teamId, int featureDefId);
