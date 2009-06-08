@@ -1037,7 +1037,6 @@ featureDef->collisionVolumeTest = sAICallback->Clb_FeatureDef_CollisionVolume_ge
 featureDef->upright = sAICallback->Clb_FeatureDef_isUpright(teamId, featureDefId);
 featureDef->drawType = sAICallback->Clb_FeatureDef_getDrawType(teamId, featureDefId);
 featureDef->modelname = sAICallback->Clb_FeatureDef_getModelName(teamId, featureDefId);
-featureDef->modelType = sAICallback->Clb_FeatureDef_getModelType(teamId, featureDefId);
 featureDef->resurrectable = sAICallback->Clb_FeatureDef_getResurrectable(teamId, featureDefId);
 featureDef->smokeTime = sAICallback->Clb_FeatureDef_getSmokeTime(teamId, featureDefId);
 featureDef->destructable = sAICallback->Clb_FeatureDef_isDestructable(teamId, featureDefId);
