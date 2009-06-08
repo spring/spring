@@ -2717,10 +2717,6 @@ bool CGame::DrawMT() {
 bool CGame::Draw() {
 #endif
 
-	mouse->EmptyMsgQueUpdate();
-
-	unitDrawer->Update();
-
 	if(lastSimFrame!=gs->frameNum) {
 		CInputReceiver::CollectGarbage();
 		if(!skipping)
@@ -2728,37 +2724,28 @@ bool CGame::Draw() {
 		lastSimFrame=gs->frameNum;
 	}
 
-	if(!skipping)
-		UpdateUI(true);
-
+	//! timings and frame interpolation
 	thisFps++;
-
-	SetDrawMode(normalDraw);
-
 	const unsigned currentTime = SDL_GetTicks();
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
+	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
+		gu->lastFrameStart = SDL_GetTicks();
+		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
+		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
+	} else  {
+		gu->timeOffset=0;
+		lastUpdate = SDL_GetTicks();
+	}
+
+	if(!skipping)
+		UpdateUI(true);
+
+	SetDrawMode(normalDraw);
 
  	if (luaUI)    { luaUI->CheckStack(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
-
-	//GML delayed loading
-	texturehandlerS3O->Update();
-	modelParser->Update();
-	treeDrawer->UpdateDraw();
-	readmap->UpdateDraw();
-	fartextureHandler->CreateFarTextures();
-
-	LuaUnsyncedCtrl::ClearUnitCommandQueues();
-	eventHandler.Update();
-	eventHandler.DrawGenesis();
-
-#ifdef USE_GML
-	//! in non GML builds runs in SimFrame!
-	ph->UpdateTextures();
-	sky->Update();
-#endif
 
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
@@ -2773,6 +2760,24 @@ bool CGame::Draw() {
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
+	texturehandlerS3O->Update();
+	modelParser->Update();
+	treeDrawer->UpdateDraw();
+	readmap->UpdateDraw();
+	fartextureHandler->CreateFarTextures();
+	mouse->EmptyMsgQueUpdate();
+	unitDrawer->Update();
+
+	LuaUnsyncedCtrl::ClearUnitCommandQueues();
+	eventHandler.Update();
+	eventHandler.DrawGenesis();
+
+#ifdef USE_GML
+	//! in non GML builds runs in SimFrame!
+	ph->UpdateTextures();
+	sky->Update();
+#endif
+
 	if (!gu->active) {
 		guihandler->Update();
 		SDL_Delay(10); // milliseconds
@@ -2780,15 +2785,6 @@ bool CGame::Draw() {
 	}
 
 	lineDrawer.UpdateLineStipple();
-
-	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
-		gu->lastFrameStart = SDL_GetTicks();
-		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
-		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
-	} else  {
-		gu->timeOffset=0;
-		lastUpdate = SDL_GetTicks();
-	}
 
 //	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -2815,8 +2811,7 @@ bool CGame::Draw() {
 		gd->Update(); // let it update before shadows have to be drawn
 	}
 
-	const bool doDrawWorld =
-		hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
+	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 
 	if (doDrawWorld) {
 		SCOPED_TIMER("Shadows/Reflect");
