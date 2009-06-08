@@ -88,8 +88,9 @@ CFeature::~CFeature(void)
 
 	qf->RemoveFeature(this);
 
-	if (def->drawType == DRAWTYPE_TREE)
+	if (def->drawType >= DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
+	}
 
 	if (myFire) {
 		myFire->StopFire();
@@ -111,7 +112,7 @@ void CFeature::PostLoad()
 		height = model->height;
 		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
-	} else if (def->drawType == DRAWTYPE_TREE) {
+	} else if (def->drawType >= DRAWTYPE_TREE) {
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
 	} else {
@@ -167,7 +168,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 		collisionVolume = new CollisionVolume(def->collisionVolume, model->radius);
 	}
-	else if (def->drawType == DRAWTYPE_TREE) {
+	else if (def->drawType >= DRAWTYPE_TREE) {
 		SetRadius(TREE_RADIUS);
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
@@ -415,7 +416,7 @@ void CFeature::ForcedMove(const float3& newPos)
 
 	// remove from managers
 	qf->RemoveFeature(this);
-	if (def->drawType == DRAWTYPE_TREE) {
+	if (def->drawType >= DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
 	}
 
@@ -431,7 +432,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	// setup midPos
 	if (def->drawType == DRAWTYPE_MODEL) {
 		midPos = pos + model->relMidPos;
-	} else if (def->drawType == DRAWTYPE_TREE) {
+	} else if (def->drawType >= DRAWTYPE_TREE) {
 		midPos = pos + (UpVector * TREE_RADIUS);
 	} else {
 		midPos = pos;
@@ -544,8 +545,9 @@ bool CFeature::UpdatePosition()
 		}
 	} else {
 		if (pos.y > finalHeight) {
-			if (def->drawType == DRAWTYPE_TREE)
+			if (def->drawType >= DRAWTYPE_TREE) {
 				treeDrawer->DeleteTree(pos);
+			}
 
 			if (pos.y > 0) {
 				speed.y += mapInfo->map.gravity;
@@ -556,15 +558,17 @@ bool CFeature::UpdatePosition()
 			midPos.y += speed.y;
 			transMatrix[13] += speed.y;
 
-			if (def->drawType >= DRAWTYPE_TREE)
+			if (def->drawType >= DRAWTYPE_TREE) {
 				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
+			}
 		}
 	}
 
 	// if ground is restored, make sure feature does not get buried
-	if(pos.y < finalHeight) {
-		if (def->drawType == DRAWTYPE_TREE)
+	if (pos.y < finalHeight) {
+		if (def->drawType >= DRAWTYPE_TREE) {
 			treeDrawer->DeleteTree(pos);
+		}
 
 		float diff = finalHeight - pos.y;
 		pos.y = finalHeight;
