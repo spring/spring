@@ -2726,6 +2726,8 @@ bool CGame::Draw() {
 		if(!skipping) {
 			water->Update();
 			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+			ph->UpdateTextures();
+			sky->Update();
 		}
 		lastSimFrame=gs->frameNum;
 	}
@@ -2773,16 +2775,11 @@ bool CGame::Draw() {
 	fartextureHandler->CreateFarTextures();
 	mouse->EmptyMsgQueUpdate();
 	unitDrawer->Update();
+	lineDrawer.UpdateLineStipple();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
 	eventHandler.DrawGenesis();
-
-#ifdef USE_GML
-	//! in non GML builds runs in SimFrame!
-	ph->UpdateTextures();
-	sky->Update();
-#endif
 
 	if (!gu->active) {
 		guihandler->Update();
@@ -2790,13 +2787,9 @@ bool CGame::Draw() {
 		return true;
 	}
 
-	lineDrawer.UpdateLineStipple();
-
-//	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	glDisable(GL_BLEND);
-	glDisable(GL_TEXTURE_2D);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glDisable(GL_TEXTURE_2D);
 
 	//set camera
 	camHandler->UpdateCam();
@@ -3162,10 +3155,6 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
-#ifndef USE_GML
-		ph->UpdateTextures();
-		sky->Update();
-#endif
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}
