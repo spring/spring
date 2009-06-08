@@ -2964,16 +2964,16 @@ bool CGame::Draw() {
 
 
 		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
-			font_options ^= FONT_RIGHT;
-
+			static std::string chart; chart = "";
+			static std::string prefix;
 			char buf[128];
+
 			int count;
 			const std::vector<int>& indices = playerRoster.GetIndices(&count, true);
 
 			for (int a = 0; a < count; ++a) {
 				const CPlayer* p = playerHandler->Player(indices[a]);
 				float4 color(1.0f,1.0f,1.0f,1.0f);
-				std::string prefix;
 				if(p->ping != PATHING_FLAG || gs->frameNum != 0) {
 					prefix = "S|";
 					if (!p->spectator) {
@@ -3001,10 +3001,17 @@ bool CGame::Draw() {
 							p->team, prefix.c_str(), p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
 							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
 				}
-				smallFont->SetColors(&color, NULL);
-				float x = 0.88f, y = 0.005f + (0.0125f * (count - a - 1));
-				smallFont->glPrint(x, y, 1.0f, font_options, buf);
+				chart += '\xff';
+				chart += (unsigned char)(color[0] * 255.0f);
+				chart += (unsigned char)(color[1] * 255.0f);
+				chart += (unsigned char)(color[2] * 255.0f);
+				chart += buf;
+				if (a + 1 < count) chart += "\n";
 			}
+
+			font_options |= FONT_BOTTOM;
+			smallFont->SetColors();
+			smallFont->glPrint(1.0f - 5 * gu->pixelX, 0.00f + 5 * gu->pixelY, 1.0f, font_options, chart);
 		}
 
 		smallFont->End();
