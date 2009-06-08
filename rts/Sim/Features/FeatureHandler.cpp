@@ -380,10 +380,13 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			}
 
 			const float ypos = ground->GetHeight2(mfi[a].pos.x, mfi[a].pos.z);
-			(new CFeature)->Initialize(float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
-			                                 def->second, (short int)mfi[a].rotation,
-			                                 0, -1, 0, "");
+			(new CFeature)->Initialize(
+				float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
+				def->second, (short int) mfi[a].rotation,
+				0, -1, -1, ""
+			);
 		}
+
 		delete[] mfi;
 	}
 }
