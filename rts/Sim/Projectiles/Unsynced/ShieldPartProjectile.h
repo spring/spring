@@ -23,6 +23,7 @@ public:
 
 	float baseAlpha;
 	float3 color;
+	bool usePerlin;
 };
 
 #endif // SHIELDPARTPROJECTILE_H
