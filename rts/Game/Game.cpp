@@ -2304,7 +2304,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 							float minposy = ground->GetHeight2(minposx, minposz);
 							const float3 upos(minposx, minposy, minposz);
 							CFeature* feature = new CFeature();
-							feature->Initialize(upos, featureDef, 0, 0, team, "");
+							feature->Initialize(upos, featureDef, 0, 0, team, teamHandler->AllyTeam(team), "");
 							--total;
 						}
 					}

@@ -137,7 +137,7 @@ void CFeature::ChangeTeam(int newTeam)
 
 
 void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int _heading,
-	int facing, int _team, std::string fromUnit, const float3& speed)
+	int facing, int _team, int _allyteam, std::string fromUnit, const float3& speed, int _smokeTime)
 {
 	pos = _pos;
 	def = _def;
@@ -145,9 +145,9 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	heading = _heading;
 	buildFacing = facing;
 	team = _team;
+	allyteam = _allyteam;
+	emitSmokeTime = _smokeTime;
 	createdFromUnit = fromUnit;
-
-	ChangeTeam(team);
 
 	pos.CheckInBounds();
 
