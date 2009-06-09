@@ -2004,7 +2004,11 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else {
 		if (!Console::Instance().ExecuteAction(action))
+		{
+			if (guihandler != NULL) // maybe a widget is interested?
+				guihandler->RunLayoutCommand(action.rawline);
 			return false;
+		}
 	}
 
 	} // END: MSVC limit workaround
