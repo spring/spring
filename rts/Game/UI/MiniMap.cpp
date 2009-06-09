@@ -1114,7 +1114,7 @@ void CMiniMap::DrawForReal()
 			points->Initialize();
 			points->EnlargeArrays(ph->projectiles.render_size(),0,VA_SIZE_C);
 
-			for(ThreadListSimRender<CProjectile*>::render_iterator psi = ph->projectiles.render_begin(); psi != ph->projectiles.render_end(); ++psi) {
+			for(PROJ_CONTAINER::render_iterator psi = ph->projectiles.render_begin(); psi != ph->projectiles.render_end(); ++psi) {
 				CProjectile* p = *psi;
 
 				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||

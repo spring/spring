@@ -30,7 +30,7 @@ CGround::~CGround()
 
 void CGround::CheckCol(CProjectileHandler* ph)
 {
-	ThreadListSimRender<CProjectile*>::iterator psi;
+	PROJ_CONTAINER::iterator psi;
 
 	for (psi = ph->projectiles.begin(); psi != ph->projectiles.end(); ++psi) {
 		CProjectile* p = *psi;

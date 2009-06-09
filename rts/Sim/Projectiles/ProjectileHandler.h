@@ -28,9 +28,40 @@ struct SS3OVertex;
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<int, ProjectileMapPair> ProjectileMap;
 
-class CProjectile;
+
+#define PROJ_CONTAINER ThreadListSimRender<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*>
+#define FLASH_CONTAINER ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*>
+#define PIECE_CONTAINER ThreadListSimRender<std::set<FlyingPiece *>, std::set<FlyingPiece *, piececmp>, FlyingPiece *>
+
+struct FlyingPiece{
+#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+	inline void* operator new(size_t size){return mempool.Alloc(size);};
+	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
+#endif
+	FlyingPiece() {}
+	~FlyingPiece();
+
+	S3DOPrimitive* prim;
+	S3DOPiece* object;
+
+	SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
+
+	float3 pos;
+	float3 speed;
+
+	float3 rotAxis;
+	float rot;
+	float rotSpeed;
+	size_t texture;
+	size_t team;
+};
+
 struct distcmp {
-	bool operator()(CProjectile *arg1, CProjectile *arg2);
+	bool operator()(const CProjectile *arg1, const CProjectile *arg2) const;
+};
+
+struct piececmp {
+	bool operator()(const FlyingPiece *fp1, const FlyingPiece *fp2) const;
 };
 
 class CProjectileHandler
@@ -71,12 +102,10 @@ public:
 
 	void AddRenderObjects();
 
-	struct projdist {
-		float dist;
-		CProjectile* proj;
-	};
+	PROJ_CONTAINER projectiles;	// contains both synced and unsynced projectiles
+	PIECE_CONTAINER flyingPieces;
+	FLASH_CONTAINER groundFlashes;
 
-	ThreadListSimRender<CProjectile*> projectiles;	// contains both synced and unsynced projectiles
 	int maxUsedID;
 	std::list<int> freeIDs;
 	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
@@ -138,43 +167,6 @@ public:
 private:
 	void UpdatePerlin();
 	void GenerateNoiseTex(unsigned int tex,int size);
-	struct FlyingPiece{
-#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
-		inline void* operator new(size_t size){return mempool.Alloc(size);};
-		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
-#endif
-
-		S3DOPrimitive* prim;
-		S3DOPiece* object;
-
-		SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
-
-		float3 pos;
-		float3 speed;
-
-		float3 rotAxis;
-		float rot;
-		float rotSpeed;
-	};
-	typedef std::set<FlyingPiece*> FlyingPiece_Set;
-	std::list<FlyingPiece_Set*> flyingPieces;
-	FlyingPiece_Set* flying3doPieces;
-	std::vector< std::vector<FlyingPiece_Set*> > flyings3oPieces;
-
-	struct FlyingPieceToAdd {
-		FlyingPieceToAdd() {}
-		FlyingPieceToAdd(FlyingPiece *fpi, int tex, int tm): fp(fpi), texture(tex), team(tm) {}
-		FlyingPiece *fp;
-		int texture;
-		int team;
-	};
-	std::vector<FlyingPiece *> tempFlying3doPiecesToAdd;
-	std::vector<FlyingPieceToAdd> tempFlyings3oPiecesToAdd;
-	std::vector<FlyingPiece *> flying3doPiecesToAdd;
-	std::vector<FlyingPieceToAdd> flyings3oPiecesToAdd;
-	std::map<FlyingPiece *, FlyingPiece_Set *> flyingPiecesToRemove;
-
-	ThreadListSimRender<CGroundFlash*> groundFlashes;
 
 	GLuint perlinTex[8];
 	float perlinBlend[4];
@@ -184,6 +176,5 @@ private:
 
 
 extern CProjectileHandler* ph;
-
 
 #endif /* PROJECTILEHANDLER_H */
