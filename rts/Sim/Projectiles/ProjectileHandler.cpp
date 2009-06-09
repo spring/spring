@@ -1070,7 +1070,7 @@ void CProjectileHandler::UpdatePerlin()
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_2D);
+	//glDisable(GL_TEXTURE_2D);
 	glDepthMask(1);
 
 	glPopMatrix();

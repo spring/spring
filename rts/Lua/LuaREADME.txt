@@ -28,7 +28,7 @@ Access Modes
              userMode  readFull  readAllyTeam  ctrlFull  ctrlTeam    selectTeam
              --------  --------  ------------  --------  --------    ----------
 LuaRules     false     true      ALL           true      ALL         ALL
-LuaGaia      false     false     Gaia          false     Gaia        Gaia
+LuaGaia      false     true      ALL           true      ALL         Gaia
 LuaUI        true      false     PlayerTeam    false     PlayerTeam  PlayerTeam
 LuaUI(spec)  true      true      ALL           false     NONE        *depends*
 

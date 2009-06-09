@@ -307,9 +307,15 @@ static int DrawTypeString(lua_State* L, const void* data)
 	const int drawType = *((const int*)data);
 	switch (drawType) {
 		case DRAWTYPE_MODEL: { HSTR_PUSH(L,   "model"); break; }
-		case DRAWTYPE_TREE:  { HSTR_PUSH(L,    "tree"); break; }
 		case DRAWTYPE_NONE:  { HSTR_PUSH(L,    "none"); break; }
-		default:             { HSTR_PUSH(L, "unknown"); break; }
+		default:             {
+			if (drawType >= DRAWTYPE_TREE) {
+				HSTR_PUSH(L,    "tree");
+			} else {
+				HSTR_PUSH(L, "unknown");
+			}
+			break;
+		}
 	}
 	return 1;
 }
@@ -334,10 +340,16 @@ static int ModelHeight(lua_State* L, const void* data)
 	const FeatureDef* fd = ((const FeatureDef*)data);
 	float height = 0.0f;
 	switch (fd->drawType) {
-		case DRAWTYPE_MODEL:  { height = LoadModel(fd)->height;  break; }
-		case DRAWTYPE_TREE: { height = TREE_RADIUS * 2.0f;     break; }
-		case DRAWTYPE_NONE: { height = 0.0f;                   break; }
-		default:            { height = 0.0f;                   break; }
+		case DRAWTYPE_MODEL: { height = LoadModel(fd)->height;  break; }
+		case DRAWTYPE_NONE:  { height = 0.0f;                   break; }
+		default:             {
+			if (fd->drawType >= DRAWTYPE_TREE) {
+				height = TREE_RADIUS * 2.0f;
+			} else {
+				height = 0.0f;
+			}
+			break;
+		}
 	}
 	lua_pushnumber(L, height);
 	return 1;
@@ -349,10 +361,16 @@ static int ModelRadius(lua_State* L, const void* data)
 	const FeatureDef* fd = ((const FeatureDef*)data);
 	float radius = 0.0f;
 	switch (fd->drawType) {
-		case DRAWTYPE_MODEL:  { radius = LoadModel(fd)->radius;  break; }
-		case DRAWTYPE_TREE: { radius = TREE_RADIUS;            break; }
-		case DRAWTYPE_NONE: { radius = 0.0f;                   break; }
-		default:            { radius = 0.0f;                   break; }
+		case DRAWTYPE_MODEL: { radius = LoadModel(fd)->radius;  break; }
+		case DRAWTYPE_NONE:  { radius = 0.0f;                   break; }
+		default:             {
+			if (fd->drawType >= DRAWTYPE_TREE) {
+				radius = TREE_RADIUS;
+			} else {
+				radius = 0.0f;
+			}
+			break;
+		}
 	}
 	lua_pushnumber(L, radius);
 	return 1;
@@ -437,7 +455,6 @@ static bool InitParamMap()
 	*/
 
 	ADD_INT("drawType",     fd.drawType);
-	ADD_INT("modelType",    fd.modelType);
 	ADD_STRING("modelname", fd.modelname);
 
 	ADD_BOOL("upright",      fd.upright);
