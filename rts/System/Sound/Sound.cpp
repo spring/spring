@@ -90,12 +90,16 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 
 		// Generate sound sources
 		for (int i = 0; i < maxSounds; i++) {
-			sources.push_back(new SoundSource());
-			if (!sources[i].IsValid())
+			SoundSource* thenewone = new SoundSource();
+			if (thenewone->IsValid())
 			{
-				sources.pop_back();
+				sources.push_back(thenewone);
+			}
+			else
+			{
 				maxSounds = i-1;
 				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+				delete thenewone;
 				break;
 			}
 		}
