@@ -48,16 +48,13 @@ CProjectileHandler* ph;
 using namespace std;
 
 
-#define PROJ_VECTOR ThreadListSimRender<CProjectile*>
-#define GFLASH_VECTOR ThreadListSimRender<CGroundFlash*>
-
-CR_BIND_TEMPLATE(PROJ_VECTOR, )
-CR_REG_METADATA(PROJ_VECTOR, (
+CR_BIND_TEMPLATE(PROJ_CONTAINER, )
+CR_REG_METADATA(PROJ_CONTAINER, (
 	CR_MEMBER(cont),
 	CR_POSTLOAD(PostLoad)
 ));
-CR_BIND_TEMPLATE(GFLASH_VECTOR, )
-CR_REG_METADATA(GFLASH_VECTOR, (
+CR_BIND_TEMPLATE(FLASH_CONTAINER, )
+CR_REG_METADATA(FLASH_CONTAINER, (
 	CR_MEMBER(cont),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -74,11 +71,25 @@ CR_REG_METADATA(CProjectileHandler, (
 	CR_POSTLOAD(PostLoad)
 ));
 
-bool distcmp::operator() (CProjectile *arg1, CProjectile *arg2) {
-	if(arg1->tempdist == arg2->tempdist) // strict ordering required
-		return arg1 > arg2;
-	return arg1->tempdist > arg2->tempdist;
+bool distcmp::operator() (const CProjectile *arg1, const CProjectile *arg2) const {
+	if(arg1->tempdist != arg2->tempdist) // strict ordering required
+		return arg1->tempdist > arg2->tempdist;
+	return arg1 > arg2;
 }
+
+bool piececmp::operator() (const FlyingPiece *fp1, const FlyingPiece *fp2) const {
+	if(fp1->texture != fp2->texture)
+		return fp1->texture > fp2->texture;
+	if(fp1->team != fp2->team)
+		return fp1->team > fp2->team;
+	return fp1 > fp2;
+}
+
+FlyingPiece::~FlyingPiece() {
+	if (verts != NULL)
+		delete [] verts;
+}
+
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -319,10 +330,6 @@ CProjectileHandler::CProjectileHandler()
 		projectileShadowVP = LoadVertexProgram("projectileshadow.vp");
 	}
 
-
-	flying3doPieces = new FlyingPiece_Set;
-	flyingPieces.push_back(flying3doPieces);
-
 	for (int a = 0; a < 4; ++a) {
 		perlinBlend[a]=0;
 	}
@@ -360,39 +367,12 @@ CProjectileHandler::~CProjectileHandler()
 		glDeleteTextures (1, &perlinTex[a]);
 	}
 
-	ThreadListSimRender<CProjectile*>::iterator psi;
-	for (psi = projectiles.begin(); psi != projectiles.end(); ++psi) {
-		delete *psi;
-	}
-	ThreadListSimRender<CGroundFlash*>::iterator gfi;
-	for(gfi = groundFlashes.begin(); gfi != groundFlashes.end(); ++gfi) {
-		delete *gfi;
-	}
 	distset.clear();
 
 	if (shadowHandler->canUseShadows) {
 		glSafeDeleteProgram(projectileShadowVP);
 	}
 
-	for(std::vector<FlyingPiece *>::iterator fpi = flying3doPiecesToAdd.begin(); fpi != flying3doPiecesToAdd.end(); ++fpi) {
-		flying3doPieces->insert(*fpi);
-	}
-
-	for(std::vector<FlyingPieceToAdd>::iterator fpi = flyings3oPiecesToAdd.begin(); fpi != flyings3oPiecesToAdd.end(); ++fpi) {
-		flying3doPieces->insert((*fpi).fp); // it's not 3do, but we just want it deleted...
-	}
-
-	/* Also invalidates flying3doPieces and flyings3oPieces. */
-	for (list<FlyingPiece_Set*>::iterator pti = flyingPieces.begin(); pti != flyingPieces.end(); ++pti) {
-		FlyingPiece_Set * fpl = *pti;
-		for(std::set<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
-			if ((*pi)->verts != NULL){
-				delete[] ((*pi)->verts);
-			}
-			delete *pi;
-		}
-		delete fpl;
-	}
 	ph=0;
 	delete textureAtlas;
 	delete groundFXAtlas;
@@ -403,7 +383,7 @@ void CProjectileHandler::Serialize(creg::ISerializer *s)
 	if (s->IsWriting ()) {
 		int size = (int)projectiles.size();
 		s->Serialize(&size,sizeof(int));
-		ThreadListSimRender<CProjectile*>::iterator it;
+		PROJ_CONTAINER::iterator it;
 		for (it = projectiles.begin(); it!=projectiles.end(); ++it) {
 			void **ptr = (void**)&*it;
 			s->SerializeObjectPtr(ptr,(*it)->GetClass());
@@ -412,7 +392,7 @@ void CProjectileHandler::Serialize(creg::ISerializer *s)
 		int size;
 		s->Serialize(&size, sizeof(int));
 		projectiles.resize(size);
-		ThreadListSimRender<CProjectile*>::iterator it;
+		PROJ_CONTAINER::iterator it;
 		for (it = projectiles.begin(); it!=projectiles.end(); ++it) {
 			void **ptr = (void**)&*it;
 			s->SerializeObjectPtr(ptr,0/*FIXME*/);
@@ -428,29 +408,8 @@ void CProjectileHandler::AddRenderObjects() {
 	{
 		GML_STDMUTEX_LOCK(rproj); // AddRenderObjects
 
-		projectiles.add_render();
+		projectiles.delay_add();
 	}
-
-	{
-		GML_STDMUTEX_LOCK(rflash); // AddRenderObjects
-
-		groundFlashes.add_render();
-	}
-
-	{
-		GML_RECMUTEX_LOCK(piece); // AddRenderObjects
-
-		for(std::vector<FlyingPiece *>::iterator pi=tempFlying3doPiecesToAdd.begin(); pi!=tempFlying3doPiecesToAdd.end(); ++pi) {
-			flying3doPiecesToAdd.push_back(*pi);
-		}
-
-		for(std::vector<FlyingPieceToAdd>::iterator pi=tempFlyings3oPiecesToAdd.begin(); pi!=tempFlyings3oPiecesToAdd.end(); ++pi) {
-			flyings3oPiecesToAdd.push_back(*pi);
-		}
-	}
-
-	tempFlying3doPiecesToAdd.clear();
-	tempFlyings3oPiecesToAdd.clear();
 }
 
 void CProjectileHandler::Update()
@@ -459,7 +418,7 @@ void CProjectileHandler::Update()
 
 	GML_UPDATE_TICKS();
 
-	ThreadListSimRender<CProjectile*>::iterator psi = projectiles.begin();
+	PROJ_CONTAINER::iterator psi = projectiles.begin();
 	while (psi != projectiles.end()) {
 		CProjectile* p = *psi;
 
@@ -482,52 +441,51 @@ void CProjectileHandler::Update()
 		}
 	}
 
-	{
+	if(projectiles.can_delete()) {
 		GML_RECMUTEX_LOCK(proj); // Update
 		GML_STDMUTEX_LOCK(rproj); // Update
 
 		projectiles.delete_erased();
 	}
 
-	ThreadListSimRender<CGroundFlash*>::iterator gfi = groundFlashes.begin();
+	FLASH_CONTAINER::iterator gfi = groundFlashes.begin();
 	while (gfi != groundFlashes.end()) {
 		CGroundFlash* gf = *gfi;
 
-		if (!gf->Update()) {
+		if (!gf->Update())
 			gfi = groundFlashes.erase_delete(gfi);
-		} else {
+		else
 			gfi++;
-		}
 	}
 
 	{
-		GML_RECMUTEX_LOCK(flash); // Update
 		GML_STDMUTEX_LOCK(rflash); // Update
 
-		groundFlashes.delete_erased();
+		groundFlashes.delay_delete();
+		groundFlashes.delay_add();
+	}
+
+	PIECE_CONTAINER::iterator pti = flyingPieces.begin();
+	while(pti != flyingPieces.end()) {
+		FlyingPiece* p = *pti;
+		p->pos     += p->speed;
+		p->speed   *= 0.996f;
+		p->speed.y += mapInfo->map.gravity;
+		p->rot     += p->rotSpeed;
+
+		if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10))
+			flyingPieces.erase_delete_noret(pti++);
+		else
+			++pti;
 	}
 
 	{
 		GML_RECMUTEX_LOCK(piece); // Update
 
-		for (list<FlyingPiece_Set*>::iterator pti = flyingPieces.begin(); pti != flyingPieces.end(); ++pti) {
-			FlyingPiece_Set* fpl = *pti;
-			FlyingPiece_Set::iterator pi = fpl->begin();
-			while ( pi != fpl->end() ) {
-				FlyingPiece* p = *pi;
-				p->pos     += p->speed;
-				p->speed   *= 0.996f;
-				p->speed.y += mapInfo->map.gravity;
-				p->rot     += p->rotSpeed;
-
-				if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10))
-					flyingPiecesToRemove[p]=fpl; // use map to avoid duplicated objects
-				++pi;
-			}
-		}
+		flyingPieces.delay_delete();
+		flyingPieces.delay_add();
 	}
 }
-
 
 
 void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
@@ -538,9 +496,6 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 	CVertexArray* va=GetVertexArray();
 
-	int numFlyingPieces = 0;
-	int drawnPieces = 0;
-
 	/* Putting in, say, viewport culling will deserve refactoring. */
 
 	unitDrawer->SetupForUnitDrawing();
@@ -548,94 +503,63 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	{
 		GML_RECMUTEX_LOCK(piece); // Draw
 
-		for(std::map<FlyingPiece *, FlyingPiece_Set *>::iterator fpi = flyingPiecesToRemove.begin(); fpi != flyingPiecesToRemove.end(); ++fpi) {
-			FlyingPiece *p=(*fpi).first;
-			FlyingPiece_Set *fps=(*fpi).second;
-			fps->erase(p);
-			if (p->verts != NULL)
-				delete[] p->verts;
-			delete p;
-		}
-		flyingPiecesToRemove.clear();
-
-		for(std::vector<FlyingPiece *>::iterator fpi = flying3doPiecesToAdd.begin(); fpi != flying3doPiecesToAdd.end(); ++fpi) {
-			flying3doPieces->insert(*fpi);
-		}
-		flying3doPiecesToAdd.clear();
-
-		for(std::vector<FlyingPieceToAdd>::iterator fpi = flyings3oPiecesToAdd.begin(); fpi != flyings3oPiecesToAdd.end(); ++fpi) {
-			FlyingPieceToAdd *fpa = &(*fpi);
-			int textureType = fpa->texture;
-			int team = fpa->team;
-			const size_t signedTextureType = (textureType < 0) ? 0 : textureType;
-			const size_t signedTeam = (team < 0) ? 0 : team;
-
-			flyings3oPieces.reserve(textureType);
-			while(flyings3oPieces.size() <= signedTextureType) {
-				flyings3oPieces.push_back(std::vector<FlyingPiece_Set*>());
-			}
-
-			flyings3oPieces[textureType].reserve(team);
-			while(flyings3oPieces[textureType].size() <= signedTeam){
-				//logOutput.Print("Creating piece list %d %d.", textureType, flyings3oPieces[textureType].size());
-				FlyingPiece_Set * fpl = new FlyingPiece_Set;
-				flyings3oPieces[textureType].push_back(fpl);
-				flyingPieces.push_back(fpl);
-			}
-
-			flyings3oPieces[textureType][team]->insert(fpa->fp);
-		}
-		flyings3oPiecesToAdd.clear();
+		flyingPieces.delete_delayed();
+		flyingPieces.add_delayed();
 	}
 
+	size_t lasttex = 0xFFFFFFFF;
+	size_t lastteam = 0xFFFFFFFF;
+	va->Initialize();
+	int numFlyingPieces = flyingPieces.render_size();
+	int drawnPieces = numFlyingPieces;
+	va->EnlargeArrays(numFlyingPieces * 4, 0, VA_SIZE_TN);
+
+	PIECE_CONTAINER::render_iterator fpi = flyingPieces.render_begin();
 	// S3O flying pieces
-	for (size_t textureType = 1; textureType < flyings3oPieces.size(); textureType++){
-		/* TODO Skip this if there's no FlyingPieces. */
-
-		texturehandlerS3O->SetS3oTexture(textureType);
-
-		for (size_t team = 0; team < flyings3oPieces[textureType].size(); team++){
-			FlyingPiece_Set * fpl = flyings3oPieces[textureType][team];
-
-			unitDrawer->SetTeamColour(team);
-
-			va->Initialize();
-			va->EnlargeArrays(fpl->size()*4,0,VA_SIZE_TN);
-
-			numFlyingPieces += fpl->size();
-
-			for(std::set<FlyingPiece*>::iterator pi=fpl->begin();pi!=fpl->end();++pi){
-				CMatrix44f m;
-				m.Rotate((*pi)->rot,(*pi)->rotAxis);
-				float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
-
-				SS3OVertex * verts = (*pi)->verts;
-
-				float3 tp, tn;
-
-				for (int i = 0; i < 4; i++){
-					tp=m.Mul(verts[i].pos);
-					tn=m.Mul(verts[i].normal);
-					tp+=interPos;
-					va->AddVertexQTN(tp,verts[i].textureX,verts[i].textureY,tn);
-				}
-			}
-			drawnPieces+=va->drawIndex()/32;
+	for( ; fpi != flyingPieces.render_end(); ++fpi) {
+		FlyingPiece *fp = *fpi;
+		if(fp->texture != lasttex) {
+			lasttex = fp->texture;
+			if(lasttex == 0)
+				break;
 			va->DrawArrayTN(GL_QUADS);
+			va->Initialize();
+			texturehandlerS3O->SetS3oTexture(lasttex);
+		}
+		if(fp->team != lastteam) {
+			lastteam = fp->team;
+			va->DrawArrayTN(GL_QUADS);
+			va->Initialize();
+			unitDrawer->SetTeamColour(lastteam);
+		}
+		CMatrix44f m;
+		m.Rotate(fp->rot,fp->rotAxis);
+		float3 interPos=fp->pos+fp->speed*gu->timeOffset;
+		SS3OVertex * verts = fp->verts;
+		float3 tp, tn;
+
+		for (int i = 0; i < 4; i++){
+			tp=m.Mul(verts[i].pos);
+			tn=m.Mul(verts[i].normal);
+			tp+=interPos;
+			va->AddVertexQTN(tp,verts[i].textureX,verts[i].textureY,tn);
 		}
 	}
+
+	va->DrawArrayTN(GL_QUADS);
+	va->Initialize();
+
+	unitDrawer->SetupFor3DO();
 
 	// 3DO flying pieces
-	va->Initialize();
-	va->EnlargeArrays(flying3doPieces->size()*4,0,VA_SIZE_TN);
-	numFlyingPieces += flying3doPieces->size();
-	for(std::set<FlyingPiece*>::iterator pi=flying3doPieces->begin();pi!=flying3doPieces->end();++pi){
+	for( ; fpi != flyingPieces.render_end(); ++fpi) {
+		FlyingPiece *fp = *fpi;
 		CMatrix44f m;
-		m.Rotate((*pi)->rot,(*pi)->rotAxis);
-		float3 interPos=(*pi)->pos+(*pi)->speed*gu->timeOffset;
-		C3DOTextureHandler::UnitTexture* tex=(*pi)->prim->texture;
-		const std::vector<S3DOVertex>& vertices    = (*pi)->object->vertices;
-		const std::vector<int>&        verticesIdx = (*pi)->prim->vertices;
+		m.Rotate(fp->rot,fp->rotAxis);
+		float3 interPos=fp->pos+fp->speed*gu->timeOffset;
+		C3DOTextureHandler::UnitTexture* tex=fp->prim->texture;
+		const std::vector<S3DOVertex>& vertices    = fp->object->vertices;
+		const std::vector<int>&        verticesIdx = fp->prim->vertices;
 
 		const S3DOVertex* v=&vertices[verticesIdx[0]];
 		float3 tp=m.Mul(v->pos);
@@ -662,9 +586,6 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		va->AddVertexQTN(tp,tex->xstart,tex->yend,tn);
 	}
 
-	drawnPieces+=va->drawIndex()/32;
-
-	unitDrawer->SetupFor3DO();
 	va->DrawArrayTN(GL_QUADS);
 
 	distset.clear();
@@ -672,14 +593,14 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	{
 		GML_STDMUTEX_LOCK(rproj); // Draw
 
-		projectiles.update();
+		projectiles.add_delayed();
 	}
 
 	{
 		GML_RECMUTEX_LOCK(proj); // Draw
 
 		// Projectiles (3do's get rendered, s3o qued)
-		ThreadListSimRender<CProjectile*>::render_iterator psi = projectiles.render_begin();
+		PROJ_CONTAINER::render_iterator psi = projectiles.render_begin();
 		while (psi != projectiles.render_end()) {
 			CProjectile* pro = *psi;
 			++psi;
@@ -778,7 +699,6 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 
 void CProjectileHandler::DrawShadowPass(void)
 {
-	distset.clear();
 	glBindProgramARB( GL_VERTEX_PROGRAM_ARB, projectileShadowVP );
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_TEXTURE_2D);
@@ -790,18 +710,17 @@ void CProjectileHandler::DrawShadowPass(void)
 		CProjectile::va = GetVertexArray();
 		CProjectile::va->Initialize();
 
-		ThreadListSimRender<CProjectile*>::render_iterator psi = projectiles.render_begin();
+		PROJ_CONTAINER::render_iterator psi = projectiles.render_begin();
 		while (psi != projectiles.render_end()) {
 			CProjectile* p = *psi;
 			psi++;
 			if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
-				(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam))))
-			{
-					if (p->s3domodel) {
-						p->DrawUnitPart();
-					} else if (p->castShadow) {
-						p->Draw();
-					}
+				(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam)))) {
+				if (p->s3domodel) {
+					p->DrawUnitPart();
+				} else if (p->castShadow) {
+					p->Draw();
+				}
 			}
 		}
 	}
@@ -951,7 +870,7 @@ void CProjectileHandler::CheckCollisions()
 	static std::vector<CUnit*> tempUnits(uh->MaxUnits(), NULL);
 	static std::vector<CFeature*> tempFeatures(uh->MaxUnits(), NULL);
 
-	ThreadListSimRender<CProjectile*>::iterator psi;
+	PROJ_CONTAINER::iterator psi;
 	for (psi = projectiles.begin(); psi != projectiles.end(); ++psi) {
 		CProjectile* p = (*psi);
 
@@ -1001,20 +920,17 @@ void CProjectileHandler::DrawGroundFlashes(void)
 	{
 		GML_STDMUTEX_LOCK(rflash); // DrawGroundFlashes
 
-		groundFlashes.update();
+		groundFlashes.delete_delayed();
+		groundFlashes.add_delayed();
 	}
 
-	{
-		GML_RECMUTEX_LOCK(flash); // DrawGroundFlashes
+	CGroundFlash::va->EnlargeArrays(8*groundFlashes.render_size(),0,VA_SIZE_TC);
 
-		CGroundFlash::va->EnlargeArrays(8*groundFlashes.render_size(),0,VA_SIZE_TC);
-
-		ThreadListSimRender<CGroundFlash*>::render_iterator gfi;
-		for(gfi = groundFlashes.render_begin(); gfi != groundFlashes.render_end(); ++gfi){
-			if ((*gfi)->alwaysVisible || gu->spectatingFullView ||
-				loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
-				(*gfi)->Draw();
-		}
+	FLASH_CONTAINER::render_iterator gfi;
+	for(gfi = groundFlashes.render_begin(); gfi != groundFlashes.render_end(); ++gfi){
+		if ((*gfi)->alwaysVisible || gu->spectatingFullView ||
+			loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
+			(*gfi)->Draw();
 	}
 
 	CGroundFlash::va->DrawArrayTC(GL_QUADS);
@@ -1027,7 +943,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 }
 
 
-void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DOPiece* object,S3DOPrimitive* piece)
+void CProjectileHandler::AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece)
 {
 	FlyingPiece* fp=new FlyingPiece;
 	fp->pos=pos;
@@ -1041,11 +957,17 @@ void CProjectileHandler::AddFlyingPiece(float3 pos,float3 speed,S3DOPiece* objec
 	fp->rotSpeed=gu->usRandFloat()*0.1f;
 	fp->rot=0;
 
-	tempFlying3doPiecesToAdd.push_back(fp);
+	fp->team = 0;
+	fp->texture = 0;
+
+	flyingPieces.insert(fp);
 }
 
 
-void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts){
+void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts)
+{
+	if(textureType <= 0)
+		return; // texture 0 means 3do
 
 	FlyingPiece* fp=new FlyingPiece;
 	fp->pos=pos;
@@ -1060,7 +982,10 @@ void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, f
 	fp->rotSpeed=gu->usRandFloat()*0.1f;
 	fp->rot=0;
 
-	tempFlyings3oPiecesToAdd.push_back(FlyingPieceToAdd(fp,textureType,team));
+	fp->team = team;
+	fp->texture = textureType;
+
+	flyingPieces.insert(fp);
 }
 
 void CProjectileHandler::UpdateTextures()
