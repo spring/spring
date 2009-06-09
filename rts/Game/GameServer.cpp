@@ -195,6 +195,13 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
 	delete ret;
 #endif
+	// AIs do not join in here, so jsut set their teams as active
+	for (size_t i = 0; i < setup->numTeams; ++i)
+	{
+		if (setup->GetSkirmishAIDataForTeam(i))
+			teams[i].active = true;
+	}
+
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
 
 #ifdef STREFLOP_H

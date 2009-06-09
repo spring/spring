@@ -1239,21 +1239,6 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Sound enabled");
 		}
 	}
-	else if (cmd == "volume") { // deprecated, use "/set snd_volmaster X" instead
-		char* endPtr;
-		const char* startPtr = action.extra.c_str();
-		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
-		if (endPtr != startPtr) {
-			configHandler->Set("snd_volmaster", volume);
-		}
-	}
-	else if (cmd == "unitreplyvolume") { // deprecated, use "/set snd_volunitreply X" instead
-		float newVol = 1.0;
-		std::istringstream buf(action.extra);
-		buf >> newVol;
-		const float volume = std::max(0.0f, std::min(1.0f, newVol));
-		Channels::UnitReply.SetVolume(volume);
-	}
 	else if (cmd == "soundchannelenable") {
 		std::string channel;
 		int enableInt, enable;
@@ -2004,7 +1989,11 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else {
 		if (!Console::Instance().ExecuteAction(action))
+		{
+			if (guihandler != NULL) // maybe a widget is interested?
+				guihandler->RunLayoutCommand(action.rawline);
 			return false;
+		}
 	}
 
 	} // END: MSVC limit workaround
@@ -2304,7 +2293,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 							float minposy = ground->GetHeight2(minposx, minposz);
 							const float3 upos(minposx, minposy, minposz);
 							CFeature* feature = new CFeature();
-							feature->Initialize(upos, featureDef, 0, 0, team, "");
+							feature->Initialize(upos, featureDef, 0, 0, team, teamHandler->AllyTeam(team), "");
 							--total;
 						}
 					}
@@ -2721,50 +2710,39 @@ bool CGame::DrawMT() {
 bool CGame::Draw() {
 #endif
 
-	mouse->EmptyMsgQueUpdate();
-
-	unitDrawer->Update();
-
 	if(lastSimFrame!=gs->frameNum) {
 		CInputReceiver::CollectGarbage();
 		if(!skipping) {
 			water->Update();
 			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+			ph->UpdateTextures();
+			sky->Update();
 		}
 		lastSimFrame=gs->frameNum;
+	}
+
+	//! timings and frame interpolation
+	thisFps++;
+	const unsigned currentTime = SDL_GetTicks();
+	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
+	lastUpdateRaw = SDL_GetTicks();
+	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
+		gu->lastFrameStart = SDL_GetTicks();
+		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
+		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
+	} else  {
+		gu->timeOffset=0;
+		lastUpdate = SDL_GetTicks();
 	}
 
 	if(!skipping)
 		UpdateUI(true);
 
-	thisFps++;
-
 	SetDrawMode(normalDraw);
-
-	const unsigned currentTime = SDL_GetTicks();
-	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
-	lastUpdateRaw = SDL_GetTicks();
 
  	if (luaUI)    { luaUI->CheckStack(); }
 	if (luaGaia)  { luaGaia->CheckStack(); }
 	if (luaRules) { luaRules->CheckStack(); }
-
-	//GML delayed loading
-	texturehandlerS3O->Update();
-	modelParser->Update();
-	treeDrawer->UpdateDraw();
-	readmap->UpdateDraw();
-	fartextureHandler->CreateFarTextures();
-
-	LuaUnsyncedCtrl::ClearUnitCommandQueues();
-	eventHandler.Update();
-	eventHandler.DrawGenesis();
-
-#ifdef USE_GML
-	//! in non GML builds runs in SimFrame!
-	ph->UpdateTextures();
-	sky->Update();
-#endif
 
 	// XXX ugly hack to minimize luaUI errors
 	if (luaUI && luaUI->GetCallInErrors() >= 5) {
@@ -2779,28 +2757,28 @@ bool CGame::Draw() {
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
+	texturehandlerS3O->Update();
+	modelParser->Update();
+	treeDrawer->UpdateDraw();
+	readmap->UpdateDraw();
+	fartextureHandler->CreateFarTextures();
+	mouse->EmptyMsgQueUpdate();
+	unitDrawer->Update();
+	lineDrawer.UpdateLineStipple();
+
+	LuaUnsyncedCtrl::ClearUnitCommandQueues();
+	eventHandler.Update();
+	eventHandler.DrawGenesis();
+
 	if (!gu->active) {
 		guihandler->Update();
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
 
-	lineDrawer.UpdateLineStipple();
-
-	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
-		gu->lastFrameStart = SDL_GetTicks();
-		gu->weightedSpeedFactor = 0.001f * GAME_SPEED * gs->speedFactor;
-		gu->timeOffset = (float)(gu->lastFrameStart - lastUpdate) * gu->weightedSpeedFactor;
-	} else  {
-		gu->timeOffset=0;
-		lastUpdate = SDL_GetTicks();
-	}
-
-//	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	glDisable(GL_BLEND);
-	glDisable(GL_TEXTURE_2D);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glDisable(GL_TEXTURE_2D);
 
 	//set camera
 	camHandler->UpdateCam();
@@ -2821,8 +2799,7 @@ bool CGame::Draw() {
 		gd->Update(); // let it update before shadows have to be drawn
 	}
 
-	const bool doDrawWorld =
-		hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
+	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 
 	if (doDrawWorld) {
 		SCOPED_TIMER("Shadows/Reflect");
@@ -2969,16 +2946,16 @@ bool CGame::Draw() {
 
 
 		if (playerRoster.GetSortType() != PlayerRoster::Disabled) {
-			font_options ^= FONT_RIGHT;
-
+			static std::string chart; chart = "";
+			static std::string prefix;
 			char buf[128];
+
 			int count;
 			const std::vector<int>& indices = playerRoster.GetIndices(&count, true);
 
 			for (int a = 0; a < count; ++a) {
 				const CPlayer* p = playerHandler->Player(indices[a]);
 				float4 color(1.0f,1.0f,1.0f,1.0f);
-				std::string prefix;
 				if(p->ping != PATHING_FLAG || gs->frameNum != 0) {
 					prefix = "S|";
 					if (!p->spectator) {
@@ -3006,10 +2983,17 @@ bool CGame::Draw() {
 							p->team, prefix.c_str(), p->name.c_str(), (((int)p->cpuUsage) & 0x1)?"PC":"BO",
 							((int)p->cpuUsage) & 0xFE, (((int)p->cpuUsage)>>8)*1000);
 				}
-				smallFont->SetColors(&color, NULL);
-				float x = 0.88f, y = 0.005f + (0.0125f * (count - a - 1));
-				smallFont->glPrint(x, y, 1.0f, font_options, buf);
+				chart += '\xff';
+				chart += (unsigned char)(color[0] * 255.0f);
+				chart += (unsigned char)(color[1] * 255.0f);
+				chart += (unsigned char)(color[2] * 255.0f);
+				chart += buf;
+				if (a + 1 < count) chart += "\n";
 			}
+
+			font_options |= FONT_BOTTOM;
+			smallFont->SetColors();
+			smallFont->glPrint(1.0f - 5 * gu->pixelX, 0.00f + 5 * gu->pixelY, 1.0f, font_options, chart);
 		}
 
 		smallFont->End();
@@ -3160,10 +3144,6 @@ void CGame::SimFrame() {
 		sound->NewFrame();
 		treeDrawer->Update();
 		eoh->Update();
-#ifndef USE_GML
-		ph->UpdateTextures();
-		sky->Update();
-#endif
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
 		}

@@ -7,7 +7,7 @@
 #include "float3.h"
 
 #define DRAWTYPE_MODEL 0
-#define DRAWTYPE_TREE 1
+#define DRAWTYPE_TREE 1 // >= different types of trees
 #define DRAWTYPE_NONE -1
 
 
@@ -19,9 +19,9 @@ struct FeatureDef
 	CR_DECLARE_STRUCT(FeatureDef);
 
 	FeatureDef():
-		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0), smokeTime(0),
-		upright(false), drawType(0), model(NULL), modelType(0),
-		resurrectable(false), destructable(false), reclaimable(true), blocking(false),
+		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
+		upright(false), drawType(0), model(NULL),
+		resurrectable(false), smokeTime(0), destructable(false), reclaimable(true), blocking(false),
 		burnable(false), floating(false), noSelect(false), geoThermal(false),
 		xsize(0), zsize(0) {}
 
@@ -51,8 +51,6 @@ struct FeatureDef
 	int drawType;
 	S3DModel* model;
 	std::string modelname;
-	/// used by tree etc
-	int modelType;
 
 	/// -1 := only if it is the 1st wreckage of the unitdef (default), 0 := no it isn't, 1 := yes it is
 	int  resurrectable;

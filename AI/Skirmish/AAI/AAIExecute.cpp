@@ -2879,50 +2879,30 @@ bool AAIExecute::AssistConstructionOfCategory(UnitCategory category, int importa
 	return false;
 }
 
+float AAIExecute::sector_threat(AAISector *sec)
+{
+	float threat = sec->GetThreatBy(AIR_ASSAULT, learned, current);
+
+	if(cfg->AIR_ONLY_MOD)
+		return threat;
+
+	threat += sec->GetThreatBy(HOVER_ASSAULT, learned, current);
+
+	if(sec->map->map_type == LAND_MAP || sec->map->map_type == LAND_WATER_MAP)
+		threat += sec->GetThreatBy(GROUND_ASSAULT, learned, current);
+	if(sec->map->map_type == WATER_MAP || sec->map->map_type == LAND_WATER_MAP)
+		threat += sec->GetThreatBy(SEA_ASSAULT, learned, current);
+	return threat;
+}
+
 bool AAIExecute::least_dangerous(AAISector *left, AAISector *right)
 {
-	if(cfg->AIR_ONLY_MOD)
-		return (left->GetThreatBy(AIR_ASSAULT, learned, current) < right->GetThreatBy(AIR_ASSAULT, learned, current));
-	else
-	{
-		if(left->map->map_type == LAND_MAP)
-			return ((left->GetThreatBy(GROUND_ASSAULT, learned, current) + left->GetThreatBy(AIR_ASSAULT, learned, current) + left->GetThreatBy(HOVER_ASSAULT, learned, current))
-					< (right->GetThreatBy(GROUND_ASSAULT, learned, current) + right->GetThreatBy(AIR_ASSAULT, learned, current) + right->GetThreatBy(HOVER_ASSAULT, learned, current)));
-
-		else if(left->map->map_type == LAND_WATER_MAP)
-		{
-			return ((left->GetThreatBy(GROUND_ASSAULT, learned, current) + left->GetThreatBy(SEA_ASSAULT, learned, current) + left->GetThreatBy(AIR_ASSAULT, learned, current) + left->GetThreatBy(HOVER_ASSAULT, learned, current))
-					< (right->GetThreatBy(GROUND_ASSAULT, learned, current) + right->GetThreatBy(SEA_ASSAULT, learned, current) + right->GetThreatBy(AIR_ASSAULT, learned, current) + right->GetThreatBy(HOVER_ASSAULT, learned, current)));
-		}
-		else if(left->map->map_type == WATER_MAP)
-		{
-			return ((left->GetThreatBy(SEA_ASSAULT, learned, current) + left->GetThreatBy(AIR_ASSAULT, learned, current) + left->GetThreatBy(HOVER_ASSAULT, learned, current))
-					< (right->GetThreatBy(SEA_ASSAULT, learned, current) + right->GetThreatBy(AIR_ASSAULT, learned, current) + right->GetThreatBy(HOVER_ASSAULT, learned, current)));
-		} else throw "AAIExecute::least_dangerous: invalid mapType";
-	}
+	return sector_threat(left) < sector_threat(right);
 }
 
 bool AAIExecute::suitable_for_power_plant(AAISector *left, AAISector *right)
 {
-	if(cfg->AIR_ONLY_MOD)
-		return (left->GetThreatBy(AIR_ASSAULT, learned, current) * (float)left->map_border_dist  < right->GetThreatBy(AIR_ASSAULT, learned, current) * (float)right->map_border_dist);
-	else
-	{
-		if(left->map->map_type == LAND_MAP)
-			return ((left->GetThreatBy(GROUND_ASSAULT, learned, current) + left->GetThreatBy(AIR_ASSAULT, learned, current) + left->GetThreatBy(HOVER_ASSAULT, learned, current) * (float)left->map_border_dist )
-					< (right->GetThreatBy(GROUND_ASSAULT, learned, current) + right->GetThreatBy(AIR_ASSAULT, learned, current) + right->GetThreatBy(HOVER_ASSAULT, learned, current) * (float)right->map_border_dist));
-
-		else if(left->map->map_type == LAND_WATER_MAP)
-		{
-			return ((left->GetThreatBy(GROUND_ASSAULT, learned, current) + left->GetThreatBy(SEA_ASSAULT, learned, current) + left->GetThreatBy(AIR_ASSAULT, learned, current) + left->GetThreatBy(HOVER_ASSAULT, learned, current) * (float)left->map_border_dist )
-					< (right->GetThreatBy(GROUND_ASSAULT, learned, current) + right->GetThreatBy(SEA_ASSAULT, learned, current) + right->GetThreatBy(AIR_ASSAULT, learned, current) + right->GetThreatBy(HOVER_ASSAULT, learned, current) * (float)right->map_border_dist));
-		}
-		else if(left->map->map_type == WATER_MAP)
-		{
-			return ((left->GetThreatBy(SEA_ASSAULT, learned, current) + left->GetThreatBy(AIR_ASSAULT, learned, current) + left->GetThreatBy(HOVER_ASSAULT, learned, current) * (float)left->map_border_dist)
-					< (right->GetThreatBy(SEA_ASSAULT, learned, current) + right->GetThreatBy(AIR_ASSAULT, learned, current) + right->GetThreatBy(HOVER_ASSAULT, learned, current) * (float)right->map_border_dist));
-		} else throw "AAIExecute::suitable_for_power_plant: invalid mapType";
-	}
+	return sector_threat(left) * (float)left->map_border_dist < sector_threat(right) * (float)right->map_border_dist;
 }
 
 bool AAIExecute::suitable_for_ground_factory(AAISector *left, AAISector *right)

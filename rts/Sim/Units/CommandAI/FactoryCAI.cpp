@@ -358,7 +358,6 @@ void CFactoryCAI::SlowUpdate()
 			if (building) {
 				if (!fac->curBuild && !fac->quedBuild) {
 					building=false;
-					eoh->CommandFinished(*owner, commandQue.front());
 					if (!repeatOrders || c.options & DONT_REPEAT) {
 						boi->second.numQued--;
 					}

@@ -2753,7 +2753,6 @@ EXPORT(int) skirmishAiCallback_FeatureDef_CollisionVolume_getTest(int teamId, in
 EXPORT(bool) skirmishAiCallback_FeatureDef_isUpright(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->upright;}
 EXPORT(int) skirmishAiCallback_FeatureDef_getDrawType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->drawType;}
 EXPORT(const char*) skirmishAiCallback_FeatureDef_getModelName(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelname.c_str();}
-EXPORT(int) skirmishAiCallback_FeatureDef_getModelType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->modelType;}
 EXPORT(int) skirmishAiCallback_FeatureDef_getResurrectable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->resurrectable;}
 EXPORT(int) skirmishAiCallback_FeatureDef_getSmokeTime(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->smokeTime;}
 EXPORT(bool) skirmishAiCallback_FeatureDef_isDestructable(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->destructable;}
@@ -3683,7 +3682,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_FeatureDef_isUpright = &skirmishAiCallback_FeatureDef_isUpright;
 	callback->Clb_FeatureDef_getDrawType = &skirmishAiCallback_FeatureDef_getDrawType;
 	callback->Clb_FeatureDef_getModelName = &skirmishAiCallback_FeatureDef_getModelName;
-	callback->Clb_FeatureDef_getModelType = &skirmishAiCallback_FeatureDef_getModelType;
 	callback->Clb_FeatureDef_getResurrectable = &skirmishAiCallback_FeatureDef_getResurrectable;
 	callback->Clb_FeatureDef_getSmokeTime = &skirmishAiCallback_FeatureDef_getSmokeTime;
 	callback->Clb_FeatureDef_isDestructable = &skirmishAiCallback_FeatureDef_isDestructable;
