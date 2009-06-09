@@ -1239,21 +1239,6 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Sound enabled");
 		}
 	}
-	else if (cmd == "volume") { // deprecated, use "/set snd_volmaster X" instead
-		char* endPtr;
-		const char* startPtr = action.extra.c_str();
-		float volume = std::max(0.0f, std::min(1.0f, (float)strtod(startPtr, &endPtr)));
-		if (endPtr != startPtr) {
-			configHandler->Set("snd_volmaster", volume);
-		}
-	}
-	else if (cmd == "unitreplyvolume") { // deprecated, use "/set snd_volunitreply X" instead
-		float newVol = 1.0;
-		std::istringstream buf(action.extra);
-		buf >> newVol;
-		const float volume = std::max(0.0f, std::min(1.0f, newVol));
-		Channels::UnitReply.SetVolume(volume);
-	}
 	else if (cmd == "soundchannelenable") {
 		std::string channel;
 		int enableInt, enable;
