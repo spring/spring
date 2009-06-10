@@ -63,9 +63,14 @@ public:
 		return cont.erase(it);
 	}
 
-	void erase_delete_noret(const ListIT& it) {
+	ListIT erase_delete_set(ListIT& it) {
 		delete *it;
-		cont.erase(it);
+#ifdef _MSC_VER
+		return cont.erase(it);
+#else
+		cont.erase(it++);
+		return it;
+#endif
 	}
 
 	bool can_delete() {
@@ -236,6 +241,8 @@ private:
 	typedef typename C::iterator SimIT;
 	typedef typename R::const_iterator RenderIT;
 	typedef typename std::set<T>::const_iterator setIT;
+	typedef typename std::set<T>::iterator isetIT;
+	typedef typename std::vector<T>::const_iterator vecIT;
 
 public:
 	CR_DECLARE_STRUCT(ThreadListSimRender);
@@ -270,13 +277,18 @@ public:
 	}
 
 	SimIT erase_delete(SimIT& it) {
-		delRender.insert(*it);
+		delRender.push_back(*it);
 		return cont.erase(it);
 	}
 
-	void erase_delete_noret(const SimIT& it) {
-		delRender.insert(*it);
-		cont.erase(it);
+	SimIT erase_delete_set(SimIT& it) {
+		delRender.push_back(*it);
+#ifdef _MSC_VER
+		return cont.erase(it);
+#else
+		cont.erase(it++);
+		return it;
+#endif
 	}
 
 	bool can_delete() {
@@ -288,32 +300,35 @@ public:
 	}
 
 	void delete_erased() {
-		for (setIT it = delRender.begin(); it != delRender.end(); it++) {
+		for (vecIT it = delRender.begin(); it != delRender.end(); it++) {
 			T s = *it;
-			contRender.erase(s);
-			tempAddRender.erase(s);
-			addRender.erase(s);
+			if(!contRender.erase(s) && !addRender.erase(s) && !tempAddRender.erase(s))
+				assert(false);
 			delete s;
 		}
 		delRender.clear();
 	}
 
 	void delay_delete() {
-		for (setIT it = delRender.begin(); it != delRender.end(); it++) {
+		for (vecIT it = delRender.begin(); it != delRender.end(); it++) {
 			tempDelRender.insert(*it);
 		}
 		delRender.clear();
 	}
 
 	void delete_delayed() {
-		for (setIT it = tempDelRender.begin(); it != tempDelRender.end(); it++) {
+		for (isetIT it = tempDelRender.begin(); it != tempDelRender.end();) {
 			T s = *it;
-			contRender.erase(s);
-			tempAddRender.erase(s);
-			addRender.erase(s);
-			delete s;
+			if(contRender.erase(s) || addRender.erase(s)) {
+#ifdef _MSC_VER
+				it = tempDelRender.erase(it);
+#else
+				tempDelRender.erase(it++);
+#endif
+			}
+			else
+				it++;
 		}
-		tempDelRender.clear();
 	}
 
 	void delay_add() {
@@ -380,7 +395,7 @@ private:
 	R contRender;
 	std::set<T> addRender;
 	std::set<T> tempAddRender;
-	std::set<T> delRender;
+	std::vector<T> delRender;
 	std::set<T> tempDelRender;
 };
 

@@ -361,13 +361,9 @@ CProjectileHandler::CProjectileHandler()
 
 CProjectileHandler::~CProjectileHandler()
 {
-	AddRenderObjects();
-
 	for (int a = 0; a < 8; ++a) {
 		glDeleteTextures (1, &perlinTex[a]);
 	}
-
-	distset.clear();
 
 	if (shadowHandler->canUseShadows) {
 		glSafeDeleteProgram(projectileShadowVP);
@@ -404,13 +400,6 @@ void CProjectileHandler::PostLoad()
 {
 }
 
-void CProjectileHandler::AddRenderObjects() {
-	{
-		GML_STDMUTEX_LOCK(rproj); // AddRenderObjects
-
-		projectiles.delay_add();
-	}
-}
 
 void CProjectileHandler::Update()
 {
@@ -441,11 +430,15 @@ void CProjectileHandler::Update()
 		}
 	}
 
-	if(projectiles.can_delete()) {
-		GML_RECMUTEX_LOCK(proj); // Update
+	{
 		GML_STDMUTEX_LOCK(rproj); // Update
 
-		projectiles.delete_erased();
+		if(projectiles.can_delete()) {
+			GML_RECMUTEX_LOCK(proj); // Update
+
+			projectiles.delete_erased();
+		}
+		projectiles.delay_add();
 	}
 
 	FLASH_CONTAINER::iterator gfi = groundFlashes.begin();
@@ -474,7 +467,7 @@ void CProjectileHandler::Update()
 		p->rot     += p->rotSpeed;
 
 		if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10))
-			flyingPieces.erase_delete_noret(pti++);
+			pti = flyingPieces.erase_delete_set(pti);
 		else
 			++pti;
 	}

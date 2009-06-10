@@ -100,8 +100,6 @@ public:
 	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
-	void AddRenderObjects();
-
 	PROJ_CONTAINER projectiles;	// contains both synced and unsynced projectiles
 	PIECE_CONTAINER flyingPieces;
 	FLASH_CONTAINER groundFlashes;
