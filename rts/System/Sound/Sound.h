@@ -42,6 +42,7 @@ public:
 	bool LoadSoundDefs(const std::string& filename);
 
 private:
+	void StartThread(int maxSounds);
 	void Update();
 
 	size_t LoadALBuffer(const std::string& path, bool strict);
