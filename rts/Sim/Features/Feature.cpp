@@ -480,7 +480,9 @@ void CFeature::ForcedSpin(const float3& newDir)
 
 bool CFeature::UpdatePosition()
 {
-	if (createdFromUnit.size() > 0) {
+	bool finishedUpdate = true;
+
+	if (!createdFromUnit.empty()) {
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
 			bool haveForwardSpeed = false;
@@ -545,32 +547,31 @@ bool CFeature::UpdatePosition()
 			featureHandler->UpdateDrawQuad(this, pos);
 			CalculateTransform();
 		}
-	} else {
-		if (pos.y > finalHeight) {
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->DeleteTree(pos);
-			}
 
-			if (pos.y > 0) {
-				speed.y += mapInfo->map.gravity;
-			} else {
-				speed.y += mapInfo->map.gravity * 0.5;
-			}
-			pos.y += speed.y;
-			midPos.y += speed.y;
-			transMatrix[13] += speed.y;
-
-			if (def->drawType >= DRAWTYPE_TREE) {
-				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-			}
-		}
+		if (!reachedFinalPos)
+			finishedUpdate = false;
 	}
 
-	// if ground is restored, make sure feature does not get buried
-	if (pos.y < finalHeight) {
-		if (def->drawType >= DRAWTYPE_TREE) {
+	if (pos.y > finalHeight) {
+		//! feature is falling
+		if (def->drawType >= DRAWTYPE_TREE)
 			treeDrawer->DeleteTree(pos);
+
+		if (pos.y > 0.0f) {
+			speed.y += mapInfo->map.gravity; //! gravity is negative
+		} else { //! fall slower in water
+			speed.y += mapInfo->map.gravity * 0.5;
 		}
+		pos.y += speed.y;
+		midPos.y += speed.y;
+		transMatrix[13] += speed.y;
+
+		if (def->drawType >= DRAWTYPE_TREE)
+			treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
+	} else if (pos.y < finalHeight) {
+		//! if ground is restored, make sure feature does not get buried
+		if (def->drawType >= DRAWTYPE_TREE)
+			treeDrawer->DeleteTree(pos);
 
 		float diff = finalHeight - pos.y;
 		pos.y = finalHeight;
@@ -582,13 +583,17 @@ bool CFeature::UpdatePosition()
 			treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 	}
 
+	if (pos.y != finalHeight)
+		finishedUpdate = false;
+
 	isUnderWater = ((pos.y + height) < 0.0f);
-	return true;
+	return finishedUpdate;
 }
 
 bool CFeature::Update(void)
 {
-	bool retValue = UpdatePosition();
+	bool finishedUpdate = true;
+	finishedUpdate = UpdatePosition();
 
 	if (emitSmokeTime != 0) {
 		--emitSmokeTime;
@@ -596,14 +601,15 @@ bool CFeature::Update(void)
 			new CSmokeProjectile(midPos + gu->usRandVector() * radius * 0.3f,
 				gu->usRandVector() * 0.3f + UpVector, emitSmokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
 		}
-		retValue = true;
+		if (emitSmokeTime > 0)
+			finishedUpdate = false;
 	}
 
 	if (fireTime > 0) {
 		fireTime--;
 		if (fireTime == 1)
 			featureHandler->DeleteFeature(this);
-		retValue = true;
+		finishedUpdate = false;
 	}
 
 	if (def->geoThermal) {
@@ -642,10 +648,10 @@ bool CFeature::Update(void)
 			}
 		}
 
-		retValue = true;
+		finishedUpdate = false;
 	}
 
-	return retValue;
+	return !finishedUpdate;
 }
 
 

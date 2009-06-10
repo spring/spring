@@ -1,6 +1,5 @@
 #include "Music.h"
 
-#include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "OggStream.h"
@@ -14,7 +13,6 @@ struct TrackItem
 	float volume;
 };
 
-boost::thread* musicThread = NULL;
 volatile bool playing = false;
 
 COggStream oggStream; // not threadsafe, only used from musicThread
@@ -25,23 +23,20 @@ volatile bool playNext = false; // protected by musicMutex
 
 void UpdateMusicStream()
 {
-	while (playing)
+	boost::mutex::scoped_lock updaterLock(musicMutex);
+	if (playing)
 	{
-		boost::this_thread::sleep(boost::posix_time::milliseconds(200));
-		{ // update buffers
-			boost::mutex::scoped_lock updaterLock(musicMutex);
-			if (playNext)
-			{
-				oggStream.Stop(); // just to be sure
-				oggStream.Play(nextTrack.path, nextTrack.volume);
-				playNext = false;
-			}
-			oggStream.Update();
+		// update buffers
+		if (playNext)
+		{
+			oggStream.Stop(); // just to be sure
+			oggStream.Play(nextTrack.path, nextTrack.volume);
+			playNext = false;
 		}
+		oggStream.Update();
 	}
-	
+	else
 	{
-		boost::mutex::scoped_lock updaterLock(musicMutex);
 		oggStream.Stop();
 	}
 };
@@ -50,17 +45,11 @@ void Play(const std::string& path, float volume)
 {
 	if (!playing)
 	{
-		if (musicThread)
-		{
-			musicThread->join();
-			delete musicThread;
-		}
 		// no thread running, no lock needed
 		playing = true;
 		playNext = true;
 		nextTrack.path = path;
 		nextTrack.volume = volume;
-		musicThread = new boost::thread(UpdateMusicStream);
 	}
 	else
 	{

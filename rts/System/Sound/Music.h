@@ -5,6 +5,8 @@
 
 namespace music
 {
+	void UpdateMusicStream();
+
 	/**
 	 * @brief Start playing an ogg-file
 	 * 

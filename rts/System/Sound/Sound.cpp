@@ -12,6 +12,7 @@
 #include "SoundItem.h"
 #include "AudioChannel.h"
 #include "ALShared.h"
+#include "Music.h"
 
 #include "LogOutput.h"
 #include "ConfigHandler.h"
@@ -23,7 +24,7 @@
 
 CSound* sound = NULL;
 
-CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateCounter(0)
+CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundThread(NULL)
 {
 	mute = false;
 	appIsIconified = false;
@@ -87,24 +88,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 					;
 			}
 		}
-
-		// Generate sound sources
-		for (int i = 0; i < maxSounds; i++) {
-			sources.push_back(new SoundSource());
-			if (!sources[i].IsValid())
-			{
-				sources.pop_back();
-				maxSounds = i-1;
-				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
-				break;
-			}
-		}
-
-		// Set distance model (sound attenuation)
-		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
-		//alDopplerFactor(1.0);
-
-		alListenerf(AL_GAIN, masterVolume);
 	}
 
 	SoundBuffer::Initialise();
@@ -115,6 +98,9 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 
 	LoadSoundDefs("gamedata/sounds.lua");
 
+	if (maxSounds > 0)
+		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
+
 	configHandler->NotifyOnChange(this);
 }
 
@@ -122,6 +108,11 @@ CSound::~CSound()
 {
 	if (!sources.empty())
 	{
+		soundThread->interrupt();
+		soundThread->join();
+		delete soundThread;
+		soundThread = 0;
+
 		sources.clear(); // delete all sources
 		sounds.clear();
 		SoundBuffer::Deinitialise();
@@ -152,6 +143,7 @@ bool CSound::HasSoundItem(const std::string& name)
 
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
+	boost::mutex::scoped_lock(soundThread);
 	GML_RECMUTEX_LOCK(sound); // GetSoundId
 
 	if (sources.empty())
@@ -203,12 +195,14 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 
 void CSound::PitchAdjust(const float newPitch)
 {
+	boost::mutex::scoped_lock(soundThread);
 	if (pitchAdjust)
 		SoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
+	boost::mutex::scoped_lock(soundThread);
 	if (key == "snd_volmaster")
 	{
 		masterVolume = std::atoi(value.c_str()) * 0.01f;
@@ -242,6 +236,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 
 bool CSound::Mute()
 {
+	boost::mutex::scoped_lock(soundThread);
 	mute = !mute;
 	if (mute)
 		alListenerf(AL_GAIN, 0.0);
@@ -257,6 +252,7 @@ bool CSound::IsMuted() const
 
 void CSound::Iconified(bool state)
 {
+	boost::mutex::scoped_lock(soundThread);
 	if (appIsIconified != state && !mute)
 	{
 		if (state == false)
@@ -269,6 +265,7 @@ void CSound::Iconified(bool state)
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
+	boost::mutex::scoped_lock(soundThread);
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
 	if (sources.empty() || volume == 0.0f)
@@ -316,30 +313,58 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	CheckError("CSound::PlaySample");
 }
 
+void CSound::StartThread(int maxSounds)
+{
+	{
+		boost::mutex::scoped_lock(soundThread);
+		// Generate sound sources
+		for (int i = 0; i < maxSounds; i++)
+		{
+			SoundSource* thenewone = new SoundSource();
+			if (thenewone->IsValid())
+			{
+				sources.push_back(thenewone);
+			}
+			else
+			{
+				maxSounds = i-1;
+				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+				delete thenewone;
+				break;
+			}
+		}
+
+		// Set distance model (sound attenuation)
+		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+		//alDopplerFactor(1.0);
+
+		alListenerf(AL_GAIN, masterVolume);
+	}
+
+	while (true)
+	{
+		boost::this_thread::sleep(boost::posix_time::millisec(50));
+		boost::this_thread::interruption_point();
+
+		boost::mutex::scoped_lock(soundThread);
+		GML_RECMUTEX_LOCK(sound); // Update
+		
+		Update();
+	}
+}
+
 void CSound::Update()
 {
-	updateCounter++;
+	music::UpdateMusicStream();
 
-	GML_RECMUTEX_LOCK(sound); // Update
-
-	if (sources.empty())
-		return;
-
-	Channels::General.UpdateFrame();
-	Channels::Battle.UpdateFrame();
-	Channels::UnitReply.UpdateFrame();
-	Channels::UserInterface.UpdateFrame();
-
-	if (updateCounter % 2)
-	{
-		for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-			it->Update();
-	}
+	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+		it->Update();
 	CheckError("CSound::Update");
 }
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
+	boost::mutex::scoped_lock(soundThread);
 	GML_RECMUTEX_LOCK(sound); // UpdateListener
 
 	if (sources.empty())
@@ -472,6 +497,7 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 
 size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 {
+	boost::mutex::scoped_lock(soundThread);
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
 
 	if (sources.empty())
@@ -488,4 +514,8 @@ boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bo
 
 void CSound::NewFrame()
 {
+	Channels::General.UpdateFrame();
+	Channels::Battle.UpdateFrame();
+	Channels::UnitReply.UpdateFrame();
+	Channels::UserInterface.UpdateFrame();
 }
