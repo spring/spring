@@ -6,6 +6,8 @@
 #include <map>
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "float3.h"
 
@@ -25,7 +27,6 @@ public:
 	bool HasSoundItem(const std::string& name);
 	size_t GetSoundId(const std::string& name, bool hardFail = true);
 
-	void Update();
 	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
 	void NewFrame();
 
@@ -41,6 +42,7 @@ public:
 	bool LoadSoundDefs(const std::string& filename);
 
 private:
+	void Update();
 
 	size_t LoadALBuffer(const std::string& path, bool strict);
 	void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
@@ -66,12 +68,14 @@ private:
 	sourceVecT sources;
 
 	unsigned numEmptyPlayRequests;
-	unsigned updateCounter;
 
 	typedef std::map<std::string, std::string> soundItemDef;
 	typedef std::map<std::string, soundItemDef> soundItemDefMap;
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
+
+	boost::thread* soundThread;
+	boost::mutex soundMutex;
 };
 
 extern CSound* sound;
