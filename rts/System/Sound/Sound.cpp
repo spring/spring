@@ -88,28 +88,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 					;
 			}
 		}
-
-		// Generate sound sources
-		for (int i = 0; i < maxSounds; i++) {
-			SoundSource* thenewone = new SoundSource();
-			if (thenewone->IsValid())
-			{
-				sources.push_back(thenewone);
-			}
-			else
-			{
-				maxSounds = i-1;
-				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
-				delete thenewone;
-				break;
-			}
-		}
-
-		// Set distance model (sound attenuation)
-		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
-		//alDopplerFactor(1.0);
-
-		alListenerf(AL_GAIN, masterVolume);
 	}
 
 	SoundBuffer::Initialise();
@@ -121,7 +99,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	LoadSoundDefs("gamedata/sounds.lua");
 
 	if (maxSounds > 0)
-		soundThread = new boost::thread(boost::bind(&CSound::Update, this));
+		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
 
 	configHandler->NotifyOnChange(this);
 }
@@ -335,8 +313,34 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	CheckError("CSound::PlaySample");
 }
 
-void CSound::Update()
+void CSound::StartThread(int maxSounds)
 {
+	{
+		boost::mutex::scoped_lock(soundThread);
+		// Generate sound sources
+		for (int i = 0; i < maxSounds; i++)
+		{
+			SoundSource* thenewone = new SoundSource();
+			if (thenewone->IsValid())
+			{
+				sources.push_back(thenewone);
+			}
+			else
+			{
+				maxSounds = i-1;
+				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+				delete thenewone;
+				break;
+			}
+		}
+
+		// Set distance model (sound attenuation)
+		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+		//alDopplerFactor(1.0);
+
+		alListenerf(AL_GAIN, masterVolume);
+	}
+
 	while (true)
 	{
 		boost::this_thread::sleep(boost::posix_time::millisec(50));
@@ -344,13 +348,18 @@ void CSound::Update()
 
 		boost::mutex::scoped_lock(soundThread);
 		GML_RECMUTEX_LOCK(sound); // Update
-
-		music::UpdateMusicStream();
-
-		for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-			it->Update();
-		CheckError("CSound::Update");
+		
+		Update();
 	}
+}
+
+void CSound::Update()
+{
+	music::UpdateMusicStream();
+
+	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+		it->Update();
+	CheckError("CSound::Update");
 }
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
