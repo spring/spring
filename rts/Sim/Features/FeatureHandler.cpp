@@ -318,7 +318,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 	for (int a = 0; a < numType; ++a) {
 		const string name = StringToLower(readmap->GetFeatureType(a));
 
-		if (GetFeatureDef(name) == NULL) {
+		if (GetFeatureDef(name, false) == NULL) {
 			if (name.find("treetype") != string::npos) {
 				FeatureDef* fd = new FeatureDef;
 				fd->blocking = 1;
@@ -571,11 +571,8 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 			if(feature->def->floating)
 				wh = ground->GetHeight(fpos.x, fpos.z);
 			if (fpos.y > wh || fpos.y < gh) {
-				SetFeatureUpdateable(feature);
-
 				feature->finalHeight = wh;
-
-				feature->CalculateTransform ();
+				SetFeatureUpdateable(feature);
 			}
 		}
 	}
@@ -731,31 +728,38 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 			float sqDist = (f->pos - camera->pos).SqLength2D();
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
-			float sqFadeDistE;
-			float sqFadeDistB;
-			if(farLength < sqFadeDistEnd) {
-				sqFadeDistE = farLength;
-				sqFadeDistB = farLength * 0.75f * 0.75f;
-			} else {
-				sqFadeDistE = sqFadeDistEnd;
-				sqFadeDistB = sqFadeDistBegin;
-			}
-
 			if (sqDist < farLength) {
-				if((!unitDrawer->advFade && unitDrawer->advShading) || sqDist < sqFadeDistB) {
+				if(unitDrawer->advFade && unitDrawer->advShading) {
+					float sqFadeDistE;
+					float sqFadeDistB;
+					if(farLength < sqFadeDistEnd) {
+						sqFadeDistE = farLength;
+						sqFadeDistB = farLength * 0.75f * 0.75f;
+					} else {
+						sqFadeDistE = sqFadeDistEnd;
+						sqFadeDistB = sqFadeDistBegin;
+					}
+					if(sqDist < sqFadeDistB) {
+						f->tempalpha = 1.0f;
+						if (f->model->type == MODELTYPE_3DO) {
+							unitDrawer->DrawFeatureStatic(f);
+						} else {
+							unitDrawer->QueS3ODraw(f, f->model->textureType);
+						}
+					} else if(sqDist < sqFadeDistE) {
+						f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+						if (f->model->type == MODELTYPE_3DO) {
+							featureHandler->fadeFeatures.insert(f);
+						} else {
+							featureHandler->fadeFeaturesS3O.insert(f);
+						}
+					}
+				} else {
 					f->tempalpha = 1.0f;
 					if (f->model->type == MODELTYPE_3DO) {
 						unitDrawer->DrawFeatureStatic(f);
 					} else {
 						unitDrawer->QueS3ODraw(f, f->model->textureType);
-					}
-				}
-				else if(sqDist < sqFadeDistE) {
-					f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
-					if (f->model->type == MODELTYPE_3DO) {
-						featureHandler->fadeFeatures.insert(f);
-					} else {
-						featureHandler->fadeFeaturesS3O.insert(f);
 					}
 				}
 			} else {
