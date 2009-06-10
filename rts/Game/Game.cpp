@@ -2512,7 +2512,6 @@ bool CGame::Update()
 	if (!skipping)
 	{
 		UpdateUI(false);
-		sound->Update();
 	}
 
 	net->Update();
