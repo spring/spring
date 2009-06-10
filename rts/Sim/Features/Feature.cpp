@@ -150,6 +150,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	emitSmokeTime = _smokeTime;
 	createdFromUnit = fromUnit;
 
+	ChangeTeam(team); // maybe should not be here, but it prevents crashes caused by team = -1
+
 	pos.CheckInBounds();
 
 	health   = def->maxHealth;
