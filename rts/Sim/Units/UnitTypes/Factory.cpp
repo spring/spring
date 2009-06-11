@@ -120,17 +120,10 @@ void CFactory::Update()
 
 	if (quedBuild && inBuildStance && !stunned) {
 		// start building a unit
-		float3 buildPos = CalcBuildPos();
+		const float3        buildPos = CalcBuildPos();
+		const CSolidObject* solidObj = groundBlockingObjectMap->GroundBlocked(buildPos);
 
-		bool canBuild = true;
-		std::vector<CUnit*> units = qf->GetUnitsExact(buildPos, 16);
-
-		for (std::vector<CUnit*>::iterator ui = units.begin(); ui != units.end(); ++ui) {
-			if ((*ui) != this)
-				canBuild = false;
-		}
-
-		if (canBuild) {
+		if (solidObj == NULL || (dynamic_cast<const CUnit*>(solidObj) == this)) {
 			quedBuild = false;
 			CUnit* b = unitLoader.LoadUnit(nextBuild, buildPos + float3(0.01f, 0.01f, 0.01f), team,
 											true, buildFacing, this);
@@ -259,6 +252,7 @@ void CFactory::StartBuild(const UnitDef* ud)
 
 	if (curBuild)
 		StopBuild();
+
 	quedBuild = true;
 	nextBuild = ud;
 	nextBuildName = ud->name;
