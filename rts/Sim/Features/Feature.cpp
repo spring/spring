@@ -587,7 +587,7 @@ bool CFeature::UpdatePosition()
 		finishedUpdate = false;
 
 	isUnderWater = ((pos.y + height) < 0.0f);
-	return !finishedUpdate;
+	return finishedUpdate;
 }
 
 bool CFeature::Update(void)
