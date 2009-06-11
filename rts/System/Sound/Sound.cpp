@@ -143,7 +143,7 @@ bool CSound::HasSoundItem(const std::string& name)
 
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	GML_RECMUTEX_LOCK(sound); // GetSoundId
 
 	if (sources.empty())
@@ -195,14 +195,14 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 
 void CSound::PitchAdjust(const float newPitch)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (pitchAdjust)
 		SoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (key == "snd_volmaster")
 	{
 		masterVolume = std::atoi(value.c_str()) * 0.01f;
@@ -236,7 +236,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 
 bool CSound::Mute()
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	mute = !mute;
 	if (mute)
 		alListenerf(AL_GAIN, 0.0);
@@ -252,7 +252,7 @@ bool CSound::IsMuted() const
 
 void CSound::Iconified(bool state)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (appIsIconified != state && !mute)
 	{
 		if (state == false)
@@ -265,7 +265,7 @@ void CSound::Iconified(bool state)
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
 	if (sources.empty() || volume == 0.0f)
@@ -316,7 +316,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 void CSound::StartThread(int maxSounds)
 {
 	{
-		boost::mutex::scoped_lock(soundThread);
+		boost::mutex::scoped_lock lck(soundMutex);
 		// Generate sound sources
 		for (int i = 0; i < maxSounds; i++)
 		{
@@ -346,7 +346,7 @@ void CSound::StartThread(int maxSounds)
 		boost::this_thread::sleep(boost::posix_time::millisec(50));
 		boost::this_thread::interruption_point();
 
-		boost::mutex::scoped_lock(soundThread);
+		boost::mutex::scoped_lock lck(soundMutex);
 		GML_RECMUTEX_LOCK(sound); // Update
 		
 		Update();
@@ -364,7 +364,7 @@ void CSound::Update()
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	GML_RECMUTEX_LOCK(sound); // UpdateListener
 
 	if (sources.empty())
@@ -497,7 +497,7 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 
 size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	GML_RECMUTEX_LOCK(sound); // GetWaveId
 
 	if (sources.empty())
