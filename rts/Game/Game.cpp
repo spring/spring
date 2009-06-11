@@ -4120,16 +4120,14 @@ void CGame::MakeMemDump(void)
 	}
 
 	file << "Frame " << gs->frameNum <<"\n";
-	std::list<CUnit*>::iterator usi;
-	for (usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); usi++) {
+	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); usi++) {
 		CUnit* u=*usi;
 		file << "Unit " << u->id << "\n";
 		file << "  xpos " << u->pos.x << " ypos " << u->pos.y << " zpos " << u->pos.z << "\n";
 		file << "  heading " << u->heading << " power " << u->power << " experience " << u->experience << "\n";
 		file << " health " << u->health << "\n";
 	}
-	ProjectileContainer::iterator psi;
-	for(psi=ph->projectiles.begin();psi != ph->projectiles.end();++psi){
+	for(ProjectileContainer::iterator psi=ph->projectiles.begin(); psi != ph->projectiles.end();++psi){
 		CProjectile* p=*psi;
 		file << "Projectile " << p->radius << "\n";
 		file << "  xpos " << p->pos.x << " ypos " << p->pos.y << " zpos " << p->pos.z << "\n";

@@ -606,7 +606,7 @@ void CFeatureHandler::Draw()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
-		for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
+		for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); ++usi) {
 			DrawFar(*usi, va);
 		}
 		va->DrawArrayTN(GL_QUADS);

@@ -33,6 +33,7 @@ class ThreadListSimRender {
 private:
 	typedef typename C::iterator ListIT;
 	typedef typename C::const_iterator constIT;
+	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
 	CR_DECLARE_STRUCT(ThreadListSimRender);
@@ -43,6 +44,7 @@ public:
 	void push(const T& x) {
 		cont.push_back(x);
 	}
+
 	void insert(const T& x) {
 		cont.insert(x);
 	}
@@ -51,21 +53,14 @@ public:
 		return cont.insert(it, x);
 	}
 
-	ListIT erase_delete(ListIT& it) {
-		/*VectorIT ito = it++;
-		if (it == cont.end()) {
-			cont.pop_back();
-			return cont.end();
-		}
-		*ito = cont.back();
-		cont.pop_back();
-		return ito;*/
-		delete *it;
+	// keep same deletion order in MT and non-MT version to reduce risk for desync
+	ListIT erase_delete_synced(ListIT& it) {
+		delObj.push_back(*it);
 		return cont.erase(it);
 	}
 
-	ListIT erase_delete_set(ListIT& it) {
-		delete *it;
+	ListIT erase_delete_set_synced(ListIT& it) {
+		delObj.push_back(*it);
 #ifdef _MSC_VER
 		return cont.erase(it);
 #else
@@ -74,24 +69,15 @@ public:
 #endif
 	}
 
-	bool can_delete() {
-		return false;
+	bool can_delete_synced() const {
+		return !delObj.empty();
 	}
 
-	bool can_delay_add() {
-		return false;
-	}
-
-	void delete_erased() {
-	}
-
-	void delay_add() {
-	}
-
-	void delay_delete() {
-	}
-
-	void delete_delayed() {
+	void delete_erased_synced() {
+		for (VecIT it = delObj.begin(); it != delObj.end(); ++it) {
+			delete *it;
+		}
+		delObj.clear();
 	}
 
 	void resize(const size_t& s) {
@@ -116,7 +102,42 @@ public:
 
 public:
 	//! RENDER/UNSYNCED METHODS
-	inline void add_delayed() const {
+	void delay_add() const {
+	}
+
+	void add_delayed() const {
+	}
+
+	bool can_delay_add() const {
+		return false;
+	}
+
+	ListIT erase_delete(ListIT& it) {
+		delete *it;
+		return cont.erase(it);
+	}
+
+	ListIT erase_delete_set(ListIT& it) {
+		delete *it;
+#ifdef _MSC_VER
+		return cont.erase(it);
+#else
+		cont.erase(it++);
+		return it;
+#endif
+	}
+
+	bool can_delete() const {
+		return false;
+	}
+
+	void delete_erased() const {
+	}
+
+	void delay_delete() const {
+	}
+
+	void delete_delayed() const {
 	}
 
 	size_t render_size() const {
@@ -139,9 +160,9 @@ public:
 	typedef ListIT iterator;
 	typedef constIT render_iterator;
 
-//private:
 public:
 	C cont;
+	std::vector<T> delObj;
 };
 
 
@@ -241,9 +262,9 @@ class ThreadListSimRender {
 private:
 	typedef typename C::iterator SimIT;
 	typedef typename R::const_iterator RenderIT;
-	typedef typename std::set<T>::const_iterator setIT;
-	typedef typename std::set<T>::iterator isetIT;
-	typedef typename std::vector<T>::const_iterator vecIT;
+	typedef typename std::set<T>::const_iterator constSetIT;
+	typedef typename std::set<T>::iterator SetIT;
+	typedef typename std::vector<T>::const_iterator VecIT;
 
 public:
 	CR_DECLARE_STRUCT(ThreadListSimRender);
@@ -257,32 +278,33 @@ public:
 	}
 
 	void PostLoad() {
-		for (SimIT it = cont.begin(); it != cont.end(); it++) {
-			tempAddRender.insert(*it);
+		for (SimIT it = cont.begin(); it != cont.end(); ++it) {
+			preAddRender.insert(*it);
 		}
 	}
 
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
-		tempAddRender.insert(x);
+		preAddRender.insert(x);
 		cont.push_back(x);
 	}
 	void insert(const T& x) {
-		tempAddRender.insert(x);
+		preAddRender.insert(x);
 		cont.insert(x);
 	}
 
 	SimIT insert(SimIT& it, const T& x) {
-		tempAddRender.insert(x);
+		preAddRender.insert(x);
 		return cont.insert(it, x);
 	}
 
-	SimIT erase_delete(SimIT& it) {
+	// keep same deletion order in MT and non-MT version to reduce risk for desync
+	SimIT erase_delete_synced(SimIT& it) {
 		delRender.push_back(*it);
 		return cont.erase(it);
 	}
 
-	SimIT erase_delete_set(SimIT& it) {
+	SimIT erase_delete_set_synced(SimIT& it) {
 		delRender.push_back(*it);
 #ifdef _MSC_VER
 		return cont.erase(it);
@@ -292,51 +314,18 @@ public:
 #endif
 	}
 
-	bool can_delete() {
+	bool can_delete_synced() {
 		return !delRender.empty();
 	}
 
-	bool can_delay_add() {
-		return !tempAddRender.empty();
-	}
-
-	void delete_erased() {
-		for (vecIT it = delRender.begin(); it != delRender.end(); it++) {
+	void delete_erased_synced() {
+		for (VecIT it = delRender.begin(); it != delRender.end(); ++it) {
 			T s = *it;
-			if(!contRender.erase(s) && !addRender.erase(s) && !tempAddRender.erase(s))
+			if(!contRender.erase(s) && !addRender.erase(s) && !preAddRender.erase(s))
 				assert(false);
 			delete s;
 		}
 		delRender.clear();
-	}
-
-	void delay_delete() {
-		for (vecIT it = delRender.begin(); it != delRender.end(); it++) {
-			tempDelRender.insert(*it);
-		}
-		delRender.clear();
-	}
-
-	void delete_delayed() {
-		for (isetIT it = tempDelRender.begin(); it != tempDelRender.end();) {
-			T s = *it;
-			if(contRender.erase(s) || addRender.erase(s)) {
-#ifdef _MSC_VER
-				it = tempDelRender.erase(it);
-#else
-				tempDelRender.erase(it++);
-#endif
-			}
-			else
-				it++;
-		}
-	}
-
-	void delay_add() {
-		for (setIT it = tempAddRender.begin(); it != tempAddRender.end(); it++) {
-			addRender.insert(*it);
-		}
-		tempAddRender.clear();
 	}
 
 	void resize(const size_t& s) {
@@ -361,11 +350,73 @@ public:
 
 public:
 	//! RENDER/UNSYNCED METHODS
+	void delay_add() {
+		for (constSetIT it = preAddRender.begin(); it != preAddRender.end(); ++it) {
+			addRender.insert(*it);
+		}
+		preAddRender.clear();
+	}
+
 	void add_delayed() {
-		for (setIT it = addRender.begin(); it != addRender.end(); it++) {
+		for (constSetIT it = addRender.begin(); it != addRender.end(); ++it) {
 			contRender.insert(*it);
 		}
 		addRender.clear();
+	}
+
+	bool can_delay_add() {
+		return !preAddRender.empty();
+	}
+
+	SimIT erase_delete(SimIT& it) {
+		delRender.push_back(*it);
+		return cont.erase(it);
+	}
+
+	SimIT erase_delete_set(SimIT& it) {
+		delRender.push_back(*it);
+#ifdef _MSC_VER
+		return cont.erase(it);
+#else
+		cont.erase(it++);
+		return it;
+#endif
+	}
+
+	bool can_delete() {
+		return !delRender.empty();
+	}
+
+	void delete_erased() {
+		for (VecIT it = delRender.begin(); it != delRender.end(); ++it) {
+			T s = *it;
+			if(!contRender.erase(s) && !addRender.erase(s) && !preAddRender.erase(s))
+				assert(false);
+			delete s;
+		}
+		delRender.clear();
+	}
+
+	void delay_delete() {
+		for (VecIT it = delRender.begin(); it != delRender.end(); ++it) {
+			postDelRender.insert(*it);
+		}
+		delRender.clear();
+	}
+
+	void delete_delayed() {
+		for (SetIT it = postDelRender.begin(); it != postDelRender.end();) {
+			T s = *it;
+			if(contRender.erase(s) || addRender.erase(s)) {
+#ifdef _MSC_VER
+				it = postDelRender.erase(it);
+#else
+				postDelRender.erase(it++);
+#endif
+			}
+			else
+				++it;
+		}
 	}
 
 	size_t render_size() const {
@@ -392,11 +443,11 @@ public: //!needed by CREG
 	C cont;
 
 private:
-	R contRender;
+	std::set<T> preAddRender;
 	std::set<T> addRender;
-	std::set<T> tempAddRender;
+	R contRender;
 	std::vector<T> delRender;
-	std::set<T> tempDelRender;
+	std::set<T> postDelRender;
 };
 
 
@@ -405,13 +456,13 @@ class ThreadVectorSimRender {
 private:
 	typedef typename std::vector<T>::iterator SimIT;
 	typedef typename std::set<T>::const_iterator RenderIT;
-	typedef typename std::set<T>::const_iterator setIT;
+	typedef typename std::set<T>::const_iterator constSetIT;
 
 public:
 	CR_DECLARE_STRUCT(ThreadVectorSimRender);
 
 	void PostLoad() {
-		for (SimIT it = cont.begin(); it != cont.end(); it++) {
+		for (SimIT it = cont.begin(); it != cont.end(); ++it) {
 			addRender.insert(*it);
 		}
 	}
@@ -469,12 +520,12 @@ public:
 public:
 	//! RENDER/UNSYNCED METHODS
 	inline void update() {
-		for (setIT it = addRender.begin(); it != addRender.end(); it++)
+		for (constSetIT it = addRender.begin(); it != addRender.end(); ++it)
 		{
 			contRender.insert(*it);
 		}
 		addRender.clear();
-		for (setIT it = delRender.begin(); it != delRender.end(); it++)
+		for (constSetIT it = delRender.begin(); it != delRender.end(); ++it)
 		{
 			contRender.erase(*it);
 		}
