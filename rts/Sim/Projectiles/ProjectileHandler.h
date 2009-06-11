@@ -21,17 +21,17 @@ class CProjectile;
 class CUnit;
 class CFeature;
 class CGroundFlash;
+struct FlyingPiece;
 struct S3DOPrimitive;
 struct S3DOPiece;
 struct SS3OVertex;
+struct piececmp;
 
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<int, ProjectileMapPair> ProjectileMap;
-
-
-#define PROJ_CONTAINER ThreadListSimRender<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*>
-#define FLASH_CONTAINER ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*>
-#define PIECE_CONTAINER ThreadListSimRender<std::set<FlyingPiece *>, std::set<FlyingPiece *, piececmp>, FlyingPiece *>
+typedef ThreadListSimRender<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*> ProjectileContainer;
+typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
+typedef ThreadListSimRender<std::set<FlyingPiece *>, std::set<FlyingPiece *, piececmp>, FlyingPiece *> FlyingPieceContainer;
 
 struct FlyingPiece{
 #if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
@@ -100,9 +100,9 @@ public:
 	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
-	PROJ_CONTAINER projectiles;	// contains both synced and unsynced projectiles
-	PIECE_CONTAINER flyingPieces;
-	FLASH_CONTAINER groundFlashes;
+	ProjectileContainer projectiles;	// contains both synced and unsynced projectiles
+	FlyingPieceContainer flyingPieces;
+	GroundFlashContainer groundFlashes;
 
 	int maxUsedID;
 	std::list<int> freeIDs;

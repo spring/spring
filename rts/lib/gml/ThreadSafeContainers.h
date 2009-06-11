@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "creg/creg_cond.h"
+#include "gml.h"
 
 /////////////////////////////////////////////////////////
 //
@@ -257,7 +258,7 @@ public:
 
 	void PostLoad() {
 		for (SimIT it = cont.begin(); it != cont.end(); it++) {
-			addRender.insert(*it);
+			tempAddRender.insert(*it);
 		}
 	}
 
@@ -360,9 +361,8 @@ public:
 
 public:
 	//! RENDER/UNSYNCED METHODS
-	inline void add_delayed() {
-		for (setIT it = addRender.begin(); it != addRender.end(); it++)
-		{
+	void add_delayed() {
+		for (setIT it = addRender.begin(); it != addRender.end(); it++) {
 			contRender.insert(*it);
 		}
 		addRender.clear();

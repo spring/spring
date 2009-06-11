@@ -4125,7 +4125,7 @@ void CGame::MakeMemDump(void)
 		file << "  heading " << u->heading << " power " << u->power << " experience " << u->experience << "\n";
 		file << " health " << u->health << "\n";
 	}
-	PROJ_CONTAINER::iterator psi;
+	ProjectileContainer::iterator psi;
 	for(psi=ph->projectiles.begin();psi != ph->projectiles.end();++psi){
 		CProjectile* p=*psi;
 		file << "Projectile " << p->radius << "\n";
