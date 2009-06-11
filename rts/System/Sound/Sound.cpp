@@ -37,6 +37,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
+	Channels::UserInterface.SetVolume(configHandler->Get("snd_volmusic", 100 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{
@@ -229,6 +230,10 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	{
 		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
+	else if (key == "snd_volmusic")
+	{
+		Channels::BGMusic.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
 	else if (key == "PitchAdjust")
 	{
 		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
@@ -359,7 +364,7 @@ void CSound::StartThread(int maxSounds)
 
 void CSound::Update()
 {
-	music::UpdateMusicStream();
+	Channels::BGMusic.Update();
 
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();

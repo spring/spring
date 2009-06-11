@@ -2,10 +2,19 @@
 #define MUSIC_H
 
 #include <string>
+#include <boost/thread/mutex.hpp>
 
-namespace music
+#include "AudioChannel.h"
+#include "OggStream.h"
+
+class MusicChannel : public AudioChannel
 {
-	void UpdateMusicStream();
+public:
+	MusicChannel();
+	~MusicChannel();
+
+	void SetVolume(float volume);
+	void Enable(bool newState);
 
 	/**
 	 * @brief Start playing an ogg-file
@@ -25,7 +34,27 @@ namespace music
 	void Stop();
 	unsigned int GetTime();
 	unsigned int GetPlayTime();
-	void SetVolume(float volume);
+
+	void Update();
+	
+private:
+	COggStream oggStream;
+
+	struct TrackItem
+	{
+		std::string path;
+		float volume;
+	};
+	TrackItem nextTrack;
+	volatile bool playNext;
+	volatile bool playing;
+
+	boost::mutex musicMutex;
+};
+
+namespace Channels
+{
+	extern MusicChannel BGMusic;
 };
 
 #endif
