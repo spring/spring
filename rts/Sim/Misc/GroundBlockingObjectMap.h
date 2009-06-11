@@ -30,7 +30,7 @@ public:
 	// these retrieve either the top-most or the bottom-most
 	// object in a given cell, or NULL if the cell is empty
 	CSolidObject* GroundBlocked(int mapSquare, bool topMost = true);
-	CSolidObject* GroundBlocked(float3 pos, bool topMost = true);
+	CSolidObject* GroundBlocked(const float3& pos, bool topMost = true);
 	// same as GroundBlocked(), but does not bounds-check mapSquare
 	CSolidObject* GroundBlockedUnsafe(int mapSquare, bool topMost = true);
 

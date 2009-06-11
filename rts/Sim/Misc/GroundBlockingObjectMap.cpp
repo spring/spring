@@ -181,9 +181,13 @@ CSolidObject* CGroundBlockingObjectMap::GroundBlocked(int mapSquare, bool topMos
 	return GroundBlockedUnsafe(mapSquare);
 }
 
-CSolidObject* CGroundBlockingObjectMap::GroundBlocked(float3 pos, bool topMost) {
-	const int xSqr = int(pos.x / SQUARE_SIZE) % gs->mapx;
-	const int zSqr = int(pos.z / SQUARE_SIZE) / gs->mapx;
+CSolidObject* CGroundBlockingObjectMap::GroundBlocked(const float3& pos, bool topMost) {
+	if (!pos.IsInBounds()) {
+		return NULL;
+	}
+
+	const int xSqr = int(pos.x / SQUARE_SIZE);
+	const int zSqr = int(pos.z / SQUARE_SIZE);
 	return GroundBlocked(xSqr + zSqr * gs->mapx, topMost);
 }
 
