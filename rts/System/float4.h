@@ -36,6 +36,25 @@ struct float4 : public float3
 		z=f.z;
 	}
 
+	inline void operator= (const float4 f){
+		x=f.x;
+		y=f.y;
+		z=f.z;
+		w=f.w;
+	}
+
+	inline bool operator== (const float4 &f) const {
+		return math::fabs(x-f.x) <= math::fabs(1.0E-4f*x) &&
+			math::fabs(y-f.y) <= math::fabs(1.0E-4f*y) &&
+			math::fabs(z-f.z) <= math::fabs(1.0E-4f*z) &&
+			math::fabs(w-f.w) <= math::fabs(1.0E-4f*w);
+	}
+
+	inline bool operator!= (const float4 &f) const {
+		return !(*this == f);
+	}
+
+
 	/// Allows implicit conversion to float* (for passing to gl functions)
 	operator const float* () const { return &x; }
 	operator float* () { return &x; }

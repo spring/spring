@@ -37,6 +37,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
+	Channels::UserInterface.SetVolume(configHandler->Get("snd_volmusic", 100 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{
@@ -141,9 +142,11 @@ bool CSound::HasSoundItem(const std::string& name)
 	}
 }
 
+
+
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	GML_RECMUTEX_LOCK(sound); // GetSoundId
 
 	if (sources.empty())
@@ -193,16 +196,18 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	return 0;
 }
 
+
+
 void CSound::PitchAdjust(const float newPitch)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (pitchAdjust)
 		SoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (key == "snd_volmaster")
 	{
 		masterVolume = std::atoi(value.c_str()) * 0.01f;
@@ -225,6 +230,10 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	{
 		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
+	else if (key == "snd_volmusic")
+	{
+		Channels::BGMusic.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
 	else if (key == "PitchAdjust")
 	{
 		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
@@ -236,7 +245,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 
 bool CSound::Mute()
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	mute = !mute;
 	if (mute)
 		alListenerf(AL_GAIN, 0.0);
@@ -252,7 +261,7 @@ bool CSound::IsMuted() const
 
 void CSound::Iconified(bool state)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (appIsIconified != state && !mute)
 	{
 		if (state == false)
@@ -265,7 +274,7 @@ void CSound::Iconified(bool state)
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	GML_RECMUTEX_LOCK(sound); // PlaySample
 
 	if (sources.empty() || volume == 0.0f)
@@ -316,7 +325,8 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 void CSound::StartThread(int maxSounds)
 {
 	{
-		boost::mutex::scoped_lock(soundThread);
+		boost::mutex::scoped_lock lck(soundMutex);
+
 		// Generate sound sources
 		for (int i = 0; i < maxSounds; i++)
 		{
@@ -341,21 +351,20 @@ void CSound::StartThread(int maxSounds)
 		alListenerf(AL_GAIN, masterVolume);
 	}
 
-	while (true)
-	{
+	while (true) {
 		boost::this_thread::sleep(boost::posix_time::millisec(50));
 		boost::this_thread::interruption_point();
 
-		boost::mutex::scoped_lock(soundThread);
+		boost::mutex::scoped_lock lck(soundMutex);
 		GML_RECMUTEX_LOCK(sound); // Update
-		
+
 		Update();
 	}
 }
 
 void CSound::Update()
 {
-	music::UpdateMusicStream();
+	Channels::BGMusic.Update();
 
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
@@ -364,7 +373,7 @@ void CSound::Update()
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
-	boost::mutex::scoped_lock(soundThread);
+	boost::mutex::scoped_lock lck(soundMutex);
 	GML_RECMUTEX_LOCK(sound); // UpdateListener
 
 	if (sources.empty())
@@ -374,7 +383,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 
 	SoundSource::SetHeightRolloffModifer(std::min(5.*600./campos.y, 5.0));
-	//TODO: reactivate when it does nto go crazy on camera "teleportation" or fast movement,
+	//TODO: reactivate when it does not go crazy on camera "teleportation" or fast movement,
 	// like when clicked on minimap
 	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
 	//const float3 velocityAvg = (velocity+prevVelocity)/2;
@@ -388,6 +397,8 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 
 void CSound::PrintDebugInfo()
 {
+	boost::mutex::scoped_lock lck(soundMutex);
+
 	LogObject(LOG_SOUND) << "OpenAL Sound System:";
 	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
 	LogObject(LOG_SOUND) << "# SoundBuffers: " << SoundBuffer::Count();
@@ -399,6 +410,9 @@ void CSound::PrintDebugInfo()
 
 bool CSound::LoadSoundDefs(const std::string& filename)
 {
+	//! can be called from LuaUnsyncedCtrl too
+	boost::mutex::scoped_lock lck(soundMutex);
+
 	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);
 	parser.SetLowerCppKeys(false);
@@ -452,6 +466,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 	return true;
 }
 
+
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 {
 	assert(path.length() > 3);
@@ -495,11 +510,10 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 }
 
 
+
+//! only used internally, locked in caller's scope
 size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 {
-	boost::mutex::scoped_lock(soundThread);
-	GML_RECMUTEX_LOCK(sound); // GetWaveId
-
 	if (sources.empty())
 		return 0;
 
@@ -507,10 +521,13 @@ size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 	return (id == 0) ? LoadALBuffer(path, hardFail) : id;
 }
 
+//! only used internally, locked in caller's scope
 boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bool hardFail)
 {
 	return SoundBuffer::GetById(GetWaveId(path, hardFail));
 }
+
+
 
 void CSound::NewFrame()
 {

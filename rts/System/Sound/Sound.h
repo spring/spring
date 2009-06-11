@@ -19,7 +19,7 @@ class SoundItem;
 // Sound system interface
 class CSound
 {
-	friend class AudioChannel;
+	friend class EffectChannel;
 public:
 	CSound();
 	~CSound();
