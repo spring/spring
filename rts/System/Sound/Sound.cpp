@@ -141,6 +141,8 @@ bool CSound::HasSoundItem(const std::string& name)
 	}
 }
 
+
+
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
 	boost::mutex::scoped_lock lck(soundMutex);
@@ -192,6 +194,8 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 
 	return 0;
 }
+
+
 
 void CSound::PitchAdjust(const float newPitch)
 {
@@ -317,6 +321,7 @@ void CSound::StartThread(int maxSounds)
 {
 	{
 		boost::mutex::scoped_lock lck(soundMutex);
+
 		// Generate sound sources
 		for (int i = 0; i < maxSounds; i++)
 		{
@@ -341,14 +346,13 @@ void CSound::StartThread(int maxSounds)
 		alListenerf(AL_GAIN, masterVolume);
 	}
 
-	while (true)
-	{
+	while (true) {
 		boost::this_thread::sleep(boost::posix_time::millisec(50));
 		boost::this_thread::interruption_point();
 
 		boost::mutex::scoped_lock lck(soundMutex);
 		GML_RECMUTEX_LOCK(sound); // Update
-		
+
 		Update();
 	}
 }
@@ -374,7 +378,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 
 	SoundSource::SetHeightRolloffModifer(std::min(5.*600./campos.y, 5.0));
-	//TODO: reactivate when it does nto go crazy on camera "teleportation" or fast movement,
+	//TODO: reactivate when it does not go crazy on camera "teleportation" or fast movement,
 	// like when clicked on minimap
 	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
 	//const float3 velocityAvg = (velocity+prevVelocity)/2;
@@ -388,6 +392,8 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 
 void CSound::PrintDebugInfo()
 {
+	boost::mutex::scoped_lock lck(soundMutex);
+
 	LogObject(LOG_SOUND) << "OpenAL Sound System:";
 	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
 	LogObject(LOG_SOUND) << "# SoundBuffers: " << SoundBuffer::Count();
@@ -399,6 +405,9 @@ void CSound::PrintDebugInfo()
 
 bool CSound::LoadSoundDefs(const std::string& filename)
 {
+	//! can be called from LuaUnsyncedCtrl too
+	boost::mutex::scoped_lock lck(soundMutex);
+
 	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);
 	parser.SetLowerCppKeys(false);
@@ -452,6 +461,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 	return true;
 }
 
+
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 {
 	assert(path.length() > 3);
@@ -495,11 +505,10 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 }
 
 
+
+//! only used internally, locked in caller's scope
 size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 {
-	boost::mutex::scoped_lock lck(soundMutex);
-	GML_RECMUTEX_LOCK(sound); // GetWaveId
-
 	if (sources.empty())
 		return 0;
 
@@ -507,10 +516,13 @@ size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 	return (id == 0) ? LoadALBuffer(path, hardFail) : id;
 }
 
+//! only used internally, locked in caller's scope
 boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bool hardFail)
 {
 	return SoundBuffer::GetById(GetWaveId(path, hardFail));
 }
+
+
 
 void CSound::NewFrame()
 {
