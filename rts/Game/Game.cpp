@@ -125,6 +125,7 @@
 #include "EventHandler.h"
 #include "Sound/Sound.h"
 #include "Sound/AudioChannel.h"
+#include "Sound/Music.h"
 #include "FileSystem/SimpleParser.h"
 #include "Net/RawPacket.h"
 #include "Net/UnpackPacket.h"
@@ -1258,6 +1259,8 @@ bool CGame::ActionPressed(const Action& action,
 			Channels::Battle.Enable(enable);
 		else if (channel == "UserInterface")
 			Channels::UserInterface.Enable(enable);
+		else if (channel == "Music")
+			Channels::BGMusic.Enable(enable);
 	}
 	else if (cmd == "savegame"){
 		if (filesystem.CreateDirectory("Saves")) {

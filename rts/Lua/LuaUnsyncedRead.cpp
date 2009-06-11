@@ -1255,8 +1255,8 @@ int LuaUnsyncedRead::DiffTimers(lua_State* L)
 
 int LuaUnsyncedRead::GetSoundStreamTime(lua_State* L)
 {
-	lua_pushnumber(L, music::GetPlayTime());
-	lua_pushnumber(L, music::GetTime());
+	lua_pushnumber(L, Channels::BGMusic.GetPlayTime());
+	lua_pushnumber(L, Channels::BGMusic.GetTime());
 	return 2;
 }
 
