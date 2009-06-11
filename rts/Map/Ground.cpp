@@ -30,7 +30,7 @@ CGround::~CGround()
 
 void CGround::CheckCol(CProjectileHandler* ph)
 {
-	PROJ_CONTAINER::iterator psi;
+	ProjectileContainer::iterator psi;
 
 	for (psi = ph->projectiles.begin(); psi != ph->projectiles.end(); ++psi) {
 		CProjectile* p = *psi;

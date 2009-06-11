@@ -48,13 +48,13 @@ CProjectileHandler* ph;
 using namespace std;
 
 
-CR_BIND_TEMPLATE(PROJ_CONTAINER, )
-CR_REG_METADATA(PROJ_CONTAINER, (
+CR_BIND_TEMPLATE(ProjectileContainer, )
+CR_REG_METADATA(ProjectileContainer, (
 	CR_MEMBER(cont),
 	CR_POSTLOAD(PostLoad)
 ));
-CR_BIND_TEMPLATE(FLASH_CONTAINER, )
-CR_REG_METADATA(FLASH_CONTAINER, (
+CR_BIND_TEMPLATE(GroundFlashContainer, )
+CR_REG_METADATA(GroundFlashContainer, (
 	CR_MEMBER(cont),
 	CR_POSTLOAD(PostLoad)
 ));
@@ -379,7 +379,7 @@ void CProjectileHandler::Serialize(creg::ISerializer *s)
 	if (s->IsWriting ()) {
 		int size = (int)projectiles.size();
 		s->Serialize(&size,sizeof(int));
-		PROJ_CONTAINER::iterator it;
+		ProjectileContainer::iterator it;
 		for (it = projectiles.begin(); it!=projectiles.end(); ++it) {
 			void **ptr = (void**)&*it;
 			s->SerializeObjectPtr(ptr,(*it)->GetClass());
@@ -388,7 +388,7 @@ void CProjectileHandler::Serialize(creg::ISerializer *s)
 		int size;
 		s->Serialize(&size, sizeof(int));
 		projectiles.resize(size);
-		PROJ_CONTAINER::iterator it;
+		ProjectileContainer::iterator it;
 		for (it = projectiles.begin(); it!=projectiles.end(); ++it) {
 			void **ptr = (void**)&*it;
 			s->SerializeObjectPtr(ptr,0/*FIXME*/);
@@ -407,7 +407,7 @@ void CProjectileHandler::Update()
 
 	GML_UPDATE_TICKS();
 
-	PROJ_CONTAINER::iterator psi = projectiles.begin();
+	ProjectileContainer::iterator psi = projectiles.begin();
 	while (psi != projectiles.end()) {
 		CProjectile* p = *psi;
 
@@ -441,7 +441,7 @@ void CProjectileHandler::Update()
 		projectiles.delay_add();
 	}
 
-	FLASH_CONTAINER::iterator gfi = groundFlashes.begin();
+	GroundFlashContainer::iterator gfi = groundFlashes.begin();
 	while (gfi != groundFlashes.end()) {
 		CGroundFlash* gf = *gfi;
 
@@ -458,7 +458,7 @@ void CProjectileHandler::Update()
 		groundFlashes.delay_add();
 	}
 
-	PIECE_CONTAINER::iterator pti = flyingPieces.begin();
+	FlyingPieceContainer::iterator pti = flyingPieces.begin();
 	while(pti != flyingPieces.end()) {
 		FlyingPiece* p = *pti;
 		p->pos     += p->speed;
@@ -507,7 +507,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	int drawnPieces = numFlyingPieces;
 	va->EnlargeArrays(numFlyingPieces * 4, 0, VA_SIZE_TN);
 
-	PIECE_CONTAINER::render_iterator fpi = flyingPieces.render_begin();
+	FlyingPieceContainer::render_iterator fpi = flyingPieces.render_begin();
 	// S3O flying pieces
 	for( ; fpi != flyingPieces.render_end(); ++fpi) {
 		FlyingPiece *fp = *fpi;
@@ -593,7 +593,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 		GML_RECMUTEX_LOCK(proj); // Draw
 
 		// Projectiles (3do's get rendered, s3o qued)
-		PROJ_CONTAINER::render_iterator psi = projectiles.render_begin();
+		ProjectileContainer::render_iterator psi = projectiles.render_begin();
 		while (psi != projectiles.render_end()) {
 			CProjectile* pro = *psi;
 			++psi;
@@ -696,14 +696,14 @@ void CProjectileHandler::DrawShadowPass(void)
 	glEnable( GL_VERTEX_PROGRAM_ARB );
 	glDisable(GL_TEXTURE_2D);
 
+	CProjectile::inArray = false;
+	CProjectile::va = GetVertexArray();
+	CProjectile::va->Initialize();
+
 	{
 		GML_RECMUTEX_LOCK(proj); // DrawShadowPass
 
-		CProjectile::inArray = false;
-		CProjectile::va = GetVertexArray();
-		CProjectile::va->Initialize();
-
-		PROJ_CONTAINER::render_iterator psi = projectiles.render_begin();
+		ProjectileContainer::render_iterator psi = projectiles.render_begin();
 		while (psi != projectiles.render_end()) {
 			CProjectile* p = *psi;
 			psi++;
@@ -863,7 +863,7 @@ void CProjectileHandler::CheckCollisions()
 	static std::vector<CUnit*> tempUnits(uh->MaxUnits(), NULL);
 	static std::vector<CFeature*> tempFeatures(uh->MaxUnits(), NULL);
 
-	PROJ_CONTAINER::iterator psi;
+	ProjectileContainer::iterator psi;
 	for (psi = projectiles.begin(); psi != projectiles.end(); ++psi) {
 		CProjectile* p = (*psi);
 
@@ -919,7 +919,7 @@ void CProjectileHandler::DrawGroundFlashes(void)
 
 	CGroundFlash::va->EnlargeArrays(8*groundFlashes.render_size(),0,VA_SIZE_TC);
 
-	FLASH_CONTAINER::render_iterator gfi;
+	GroundFlashContainer::render_iterator gfi;
 	for(gfi = groundFlashes.render_begin(); gfi != groundFlashes.render_end(); ++gfi){
 		if ((*gfi)->alwaysVisible || gu->spectatingFullView ||
 			loshandler->InAirLos((*gfi)->pos,gu->myAllyTeam))
