@@ -1047,8 +1047,7 @@ void CMiniMap::DrawForReal()
 
 	GML_RECMUTEX_LOCK(unit); // DrawForReal
 	// draw the units
-	std::list<CUnit*>::iterator ui;
-	for (ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ui++) {
+	for (std::list<CUnit*>::iterator ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ++ui) {
 		DrawUnit(*ui);
 	}
 	// highlight the selected unit
@@ -1104,7 +1103,7 @@ void CMiniMap::DrawForReal()
 
 	// draw the projectiles
 	if (drawProjectiles) {
-		GML_RECMUTEX_LOCK(proj); // DrawForReal
+		GML_STDMUTEX_LOCK(proj); // DrawForReal
 
 		if(ph->projectiles.render_size()>0) {
 			CVertexArray* lines=GetVertexArray();

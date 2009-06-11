@@ -176,8 +176,10 @@ extern boost::mutex watermutex;
 extern boost::mutex dquemutex;
 extern boost::mutex scarmutex;
 extern boost::mutex trackmutex;
+extern boost::mutex projmutex;
 extern boost::mutex rprojmutex;
 extern boost::mutex rflashmutex;
+extern boost::mutex rpiecemutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 extern boost::recursive_mutex unitmutex;
@@ -185,15 +187,12 @@ extern boost::recursive_mutex quadmutex;
 extern boost::recursive_mutex selmutex;
 extern boost::recursive_mutex &luamutex;
 extern boost::recursive_mutex featmutex;
-extern boost::recursive_mutex projmutex;
 extern boost::recursive_mutex grassmutex;
 extern boost::recursive_mutex &guimutex;
 extern boost::recursive_mutex filemutex;
 extern boost::recursive_mutex &qnummutex;
 extern boost::recursive_mutex soundmutex;
 extern boost::recursive_mutex groupmutex;
-extern boost::recursive_mutex flashmutex;
-extern boost::recursive_mutex piecemutex;
 
 #if GML_MUTEX_PROFILER
 #	include "System/TimeProfiler.h"

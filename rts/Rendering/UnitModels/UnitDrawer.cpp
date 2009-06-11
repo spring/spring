@@ -483,8 +483,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 		GML_STDMUTEX_LOCK(temp); // Draw
 
-		std::multimap<int, TempDrawUnit>::iterator ti;
-		for (ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
+		for (std::multimap<int, TempDrawUnit>::iterator ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
 			if (camera->InView(ti->second.pos, 100)) {
 				glPushMatrix();
 				glTranslatef3(ti->second.pos);
@@ -752,8 +751,7 @@ void CUnitDrawer::DrawShadowPass(void)
 	else
 #endif
 	{
-		std::list<CUnit*>::iterator usi;
-		for (usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			DoDrawUnitShadow(unit);
 		}

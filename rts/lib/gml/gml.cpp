@@ -212,8 +212,10 @@ boost::mutex watermutex;
 boost::mutex dquemutex;
 boost::mutex scarmutex;
 boost::mutex trackmutex;
+boost::mutex projmutex;
 boost::mutex rprojmutex;
 boost::mutex rflashmutex;
+boost::mutex rpiecemutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -221,15 +223,12 @@ boost::recursive_mutex selmutex;
 boost::recursive_mutex &luamutex=selmutex;
 boost::recursive_mutex quadmutex;
 boost::recursive_mutex featmutex;
-boost::recursive_mutex projmutex;
 boost::recursive_mutex grassmutex;
 boost::recursive_mutex &guimutex=selmutex;
 boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
 boost::recursive_mutex soundmutex;
 boost::recursive_mutex groupmutex;
-boost::recursive_mutex flashmutex;
-boost::recursive_mutex piecemutex;
 #endif
 
 // GMLqueue implementation

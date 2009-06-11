@@ -171,8 +171,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 CUnitHandler::~CUnitHandler()
 {
-	std::list<CUnit*>::iterator usi;
-	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
+	for (std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		(*usi)->delayedWreckLevel = -1; // dont create wreckages since featureHandler may be destroyed already
 		delete (*usi);
 	}
@@ -242,15 +241,18 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			}
 			delTeam = delUnit->team;
 			delType = delUnit->unitDef->id;
+			{
+				GML_STDMUTEX_LOCK(proj); // DeleteUnitNow - projectile drawing may access owner() and lead to crash
 
-			activeUnits.erase(usi);
-			units[delUnit->id] = 0;
-			freeIDs.push_back(delUnit->id);
-			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
+				activeUnits.erase(usi);
+				units[delUnit->id] = 0;
+				freeIDs.push_back(delUnit->id);
+				teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
-			unitsByDefs[delTeam][delType].erase(delUnit);
+				unitsByDefs[delTeam][delType].erase(delUnit);
 
-			delete delUnit;
+				delete delUnit;
+			}
 			break;
 		}
 	}
@@ -308,7 +310,7 @@ void CUnitHandler::Update()
 	GML_UPDATE_TICKS();
 
 	std::list<CUnit*>::iterator usi;
-	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
+	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		(*usi)->Update();
 	}
 
@@ -612,9 +614,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 void CUnitHandler::UpdateWind(float x, float z, float strength)
 {
 	//todo: save windgens in list (would be a little faster)
-	std::list<CUnit*>::iterator usi;
-	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
-	{
+	for(std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		if((*usi)->unitDef->windGenerator)
 			(*usi)->UpdateWind(x,z,strength);
 	}
@@ -651,12 +651,11 @@ void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 
 Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	float3 tempF1 = pos;
-	std::list<CUnit*>::iterator ui = this->activeUnits.begin();
 
 	GML_STDMUTEX_LOCK(cai); // GetBuildCommand
 
 	CCommandQueue::iterator ci;
-	for(; ui != this->activeUnits.end(); ui++){
+	for(std::list<CUnit*>::iterator ui = this->activeUnits.begin(); ui != this->activeUnits.end(); ++ui){
 		if((*ui)->team == gu->myTeam){
 			ci = (*ui)->commandAI->commandQue.begin();
 			for(; ci != (*ui)->commandAI->commandQue.end(); ci++){

@@ -379,8 +379,7 @@ void CProjectileHandler::Serialize(creg::ISerializer *s)
 	if (s->IsWriting ()) {
 		int size = (int)projectiles.size();
 		s->Serialize(&size,sizeof(int));
-		ProjectileContainer::iterator it;
-		for (it = projectiles.begin(); it!=projectiles.end(); ++it) {
+		for (ProjectileContainer::iterator it = projectiles.begin(); it!=projectiles.end(); ++it) {
 			void **ptr = (void**)&*it;
 			s->SerializeObjectPtr(ptr,(*it)->GetClass());
 		}
@@ -388,8 +387,7 @@ void CProjectileHandler::Serialize(creg::ISerializer *s)
 		int size;
 		s->Serialize(&size, sizeof(int));
 		projectiles.resize(size);
-		ProjectileContainer::iterator it;
-		for (it = projectiles.begin(); it!=projectiles.end(); ++it) {
+		for (ProjectileContainer::iterator it = projectiles.begin(); it!=projectiles.end(); ++it) {
 			void **ptr = (void**)&*it;
 			s->SerializeObjectPtr(ptr,0/*FIXME*/);
 		}
@@ -422,21 +420,21 @@ void CProjectileHandler::Update()
 					freeIDs.push_back(p->id);
 				}
 			}
-			psi = projectiles.erase_delete(psi);
+			psi = projectiles.erase_delete_synced(psi);
 		} else {
 			p->Update();
 			GML_GET_TICKS(p->lastProjUpdate);
-			psi++;
+			++psi;
 		}
 	}
 
 	{
 		GML_STDMUTEX_LOCK(rproj); // Update
 
-		if(projectiles.can_delete()) {
-			GML_RECMUTEX_LOCK(proj); // Update
+		if(projectiles.can_delete_synced()) {
+			GML_STDMUTEX_LOCK(proj); // Update
 
-			projectiles.delete_erased();
+			projectiles.delete_erased_synced();
 		}
 		projectiles.delay_add();
 	}
@@ -448,7 +446,7 @@ void CProjectileHandler::Update()
 		if (!gf->Update())
 			gfi = groundFlashes.erase_delete(gfi);
 		else
-			gfi++;
+			++gfi;
 	}
 
 	{
@@ -473,7 +471,7 @@ void CProjectileHandler::Update()
 	}
 
 	{
-		GML_RECMUTEX_LOCK(piece); // Update
+		GML_STDMUTEX_LOCK(rpiece); // Update
 
 		flyingPieces.delay_delete();
 		flyingPieces.delay_add();
@@ -494,7 +492,7 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	unitDrawer->SetupForUnitDrawing();
 
 	{
-		GML_RECMUTEX_LOCK(piece); // Draw
+		GML_STDMUTEX_LOCK(rpiece); // Draw
 
 		flyingPieces.delete_delayed();
 		flyingPieces.add_delayed();
@@ -590,13 +588,12 @@ void CProjectileHandler::Draw(bool drawReflection,bool drawRefraction)
 	}
 
 	{
-		GML_RECMUTEX_LOCK(proj); // Draw
+		GML_STDMUTEX_LOCK(proj); // Draw
 
 		// Projectiles (3do's get rendered, s3o qued)
-		ProjectileContainer::render_iterator psi = projectiles.render_begin();
-		while (psi != projectiles.render_end()) {
+		
+		for(ProjectileContainer::render_iterator psi = projectiles.render_begin(); psi != projectiles.render_end(); ++psi) {
 			CProjectile* pro = *psi;
-			++psi;
 
 			pro->UpdateDrawPos();
 
@@ -701,12 +698,10 @@ void CProjectileHandler::DrawShadowPass(void)
 	CProjectile::va->Initialize();
 
 	{
-		GML_RECMUTEX_LOCK(proj); // DrawShadowPass
+		GML_STDMUTEX_LOCK(proj); // DrawShadowPass
 
-		ProjectileContainer::render_iterator psi = projectiles.render_begin();
-		while (psi != projectiles.render_end()) {
+		for(ProjectileContainer::render_iterator psi = projectiles.render_begin(); psi != projectiles.render_end(); ++psi) {
 			CProjectile* p = *psi;
-			psi++;
 			if ((gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam) ||
 				(p->owner() && teamHandler->Ally(p->owner()->allyteam, gu->myAllyTeam)))) {
 				if (p->s3domodel) {
@@ -863,8 +858,7 @@ void CProjectileHandler::CheckCollisions()
 	static std::vector<CUnit*> tempUnits(uh->MaxUnits(), NULL);
 	static std::vector<CFeature*> tempFeatures(uh->MaxUnits(), NULL);
 
-	ProjectileContainer::iterator psi;
-	for (psi = projectiles.begin(); psi != projectiles.end(); ++psi) {
+	for (ProjectileContainer::iterator psi = projectiles.begin(); psi != projectiles.end(); ++psi) {
 		CProjectile* p = (*psi);
 
 		if (p->checkCol && !p->deleteMe) {
