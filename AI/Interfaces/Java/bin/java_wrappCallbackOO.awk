@@ -292,7 +292,7 @@ function printClass(ancestors_c, clsName_c) {
 		print("") >> outFile_c;
 		if (clsNameExternal_c == "Unit") {
 			# the first valid unit id is 1
-			print("\t\t" "if (unitId == 0) {") >> outFile_c;
+			print("\t\t" "if (unitId <= 0) {") >> outFile_c;
 			print("\t\t\t" "return null;") >> outFile_c;
 			print("\t\t" "}") >> outFile_c;
 		} else if (match(ctorParams, /^[^ \t]+Id$/)) {
