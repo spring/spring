@@ -410,6 +410,7 @@ void CGameServer::CheckSync()
 		}
 
 		if (!noSyncResponse.empty()) {
+			size_t mss = noSyncResponse.size();
 			if (!syncWarningFrame || (*f - syncWarningFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncWarningFrame = *f;
 
@@ -1310,13 +1311,13 @@ void CGameServer::CheckForGameEnd()
 			}
 		}
 		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(a);
-		if (sad)
-		{
-				hasPlayer = true;
+		if (sad) {
+			hasPlayer = true;
 		}
 
-		if (teams[a].active && hasPlayer)
+		if (teams[a].active && hasPlayer) {
 			++numActiveTeams[teams[a].teamAllyteam];
+		}
 	}
 #endif // !defined DEDICATED
 	for (size_t a = 0; a < numActiveTeams.size(); ++a) {
