@@ -1126,50 +1126,52 @@ void CDynWater::AddShipWakes()
 	CVertexArray* va2=GetVertexArray();		//never try to get more than 2 at once
 	va2->Initialize();
 
-	GML_RECMUTEX_LOCK(unit); // AddShipWakes
+	{
+		GML_RECMUTEX_LOCK(unit); // AddShipWakes
 
-	int nadd=uh->renderUnits.size()*4;
-	va->EnlargeArrays(nadd,0,VA_SIZE_TN);
-	va2->EnlargeArrays(nadd,0,VA_SIZE_TN);
+		int nadd=uh->renderUnits.size()*4;
+		va->EnlargeArrays(nadd,0,VA_SIZE_TN);
+		va2->EnlargeArrays(nadd,0,VA_SIZE_TN);
 
-	for(std::list<CUnit*>::iterator ui=uh->renderUnits.begin(); ui!=uh->renderUnits.end();++ui){
-		CUnit* unit=*ui;
-		if(unit->moveType && unit->mobility) {
-			if(unit->unitDef->canhover){	//hover
-				float3 pos=unit->pos;
-				if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
-					continue;
-				if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-					continue;
-				if(pos.y>-4 && pos.y<4){
-					float3 frontAdd=unit->frontdir*unit->radius*0.75f;
-					float3 sideAdd=unit->rightdir*unit->radius*0.75f;
-					float depth=sqrt(sqrt(unit->mass))*0.4f;
-					float3 n(depth, 0.05f*depth, depth);
+		for(std::list<CUnit*>::iterator ui=uh->renderUnits.begin(); ui!=uh->renderUnits.end();++ui){
+			CUnit* unit=*ui;
+			if(unit->moveType && unit->mobility) {
+				if(unit->unitDef->canhover){	//hover
+					float3 pos=unit->pos;
+					if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
+						continue;
+					if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+						continue;
+					if(pos.y>-4 && pos.y<4){
+						float3 frontAdd=unit->frontdir*unit->radius*0.75f;
+						float3 sideAdd=unit->rightdir*unit->radius*0.75f;
+						float depth=sqrt(sqrt(unit->mass))*0.4f;
+						float3 n(depth, 0.05f*depth, depth);
 
-					va2->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
-					va2->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
-					va2->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
-					va2->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+						va2->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
+						va2->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
+						va2->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
+						va2->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+					}
 				}
-			}
-			else if(unit->floatOnWater){	//boat
-				float speedf=unit->speed.Length2D();
-				float3 pos=unit->pos;
-				if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
-					continue;
-				if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
-					continue;
-				if(pos.y>-4 && pos.y<1){
-					float3 frontAdd=unit->frontdir*unit->radius*0.75f;
-					float3 sideAdd=unit->rightdir*unit->radius*0.18f;
-					float depth=sqrt(sqrt(unit->mass));
-					float3 n(depth, 0.04f*speedf*depth, depth);
+				else if(unit->floatOnWater){	//boat
+					float speedf=unit->speed.Length2D();
+					float3 pos=unit->pos;
+					if(fabs(pos.x-camPosBig.x)>WH_SIZE-50 || fabs(pos.z-camPosBig.z)>WH_SIZE-50)
+						continue;
+					if(!(unit->losStatus[gu->myAllyTeam] & LOS_INLOS) && !gu->spectatingFullView)
+						continue;
+					if(pos.y>-4 && pos.y<1){
+						float3 frontAdd=unit->frontdir*unit->radius*0.75f;
+						float3 sideAdd=unit->rightdir*unit->radius*0.18f;
+						float depth=sqrt(sqrt(unit->mass));
+						float3 n(depth, 0.04f*speedf*depth, depth);
 
-					va->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
-					va->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
-					va->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
-					va->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+						va->AddVertexQTN(pos+frontAdd+sideAdd,0,0,n);
+						va->AddVertexQTN(pos+frontAdd-sideAdd,1,0,n);
+						va->AddVertexQTN(pos-frontAdd-sideAdd,1,1,n);
+						va->AddVertexQTN(pos-frontAdd+sideAdd,0,1,n);
+					}
 				}
 			}
 		}

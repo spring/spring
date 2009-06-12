@@ -166,7 +166,7 @@ extern boost::mutex mapmutex;
 extern boost::mutex inmapmutex;
 extern boost::mutex tempmutex;
 extern boost::mutex posmutex;
-extern boost::mutex rendermutex;
+extern boost::mutex runitmutex;
 extern boost::mutex simmutex;
 extern boost::mutex netmutex;
 extern boost::mutex histmutex;

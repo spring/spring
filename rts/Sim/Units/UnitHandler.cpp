@@ -207,7 +207,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 	maxUnitRadius = max(unit->radius, maxUnitRadius);
 
-	GML_STDMUTEX_LOCK(render); // AddUnit
+	GML_STDMUTEX_LOCK(runit); // AddUnit
 
 	toBeAdded.insert(unit);
 
@@ -241,18 +241,16 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			}
 			delTeam = delUnit->team;
 			delType = delUnit->unitDef->id;
-			{
-				GML_STDMUTEX_LOCK(proj); // DeleteUnitNow - projectile drawing may access owner() and lead to crash
 
-				activeUnits.erase(usi);
-				units[delUnit->id] = 0;
-				freeIDs.push_back(delUnit->id);
-				teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
+			activeUnits.erase(usi);
+			units[delUnit->id] = 0;
+			freeIDs.push_back(delUnit->id);
+			teamHandler->Team(delTeam)->RemoveUnit(delUnit, CTeam::RemoveDied);
 
-				unitsByDefs[delTeam][delType].erase(delUnit);
+			unitsByDefs[delTeam][delType].erase(delUnit);
 
-				delete delUnit;
-			}
+			delete delUnit;
+
 			break;
 		}
 	}
@@ -266,7 +264,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 	}
 
-	GML_STDMUTEX_LOCK(render); // DeleteUnitNow
+	GML_STDMUTEX_LOCK(runit); // DeleteUnitNow
 
 	for(usi=renderUnits.begin(); usi!=renderUnits.end(); ++usi) {
 		if(*usi==delUnit) {
@@ -298,6 +296,7 @@ void CUnitHandler::Update()
 		GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
 		GML_RECMUTEX_LOCK(sel); // Update - unit is removed from selectedUnits in ~CObject, which is too late.
 		GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
+		GML_STDMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
 
 		while (!toBeRemoved.empty()) {
 			CUnit* delUnit = toBeRemoved.back();

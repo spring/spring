@@ -244,7 +244,7 @@ void CUnitDrawer::Update(void)
 	}
 
 	{
-		GML_STDMUTEX_LOCK(render); // Update
+		GML_STDMUTEX_LOCK(runit); // Update
 
 		for(std::set<CUnit *>::iterator ui=uh->toBeAdded.begin(); ui!=uh->toBeAdded.end(); ++ui)
 			uh->renderUnits.push_back(*ui);
@@ -889,8 +889,6 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 
 void CUnitDrawer::DrawCloakedUnits(bool submerged, bool noAdvShading)
 {
-	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
-
 	bool oldAdvShading = advShading;
 	advShading = advShading && !noAdvShading;
 	if(advShading) {
@@ -906,6 +904,8 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool noAdvShading)
 	SetupFor3DO();
 
 	glColor4f(1, 1, 1, cloakAlpha);
+
+	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
 	{
 		//FIXME: doesn't support s3o's nor does it set teamcolor
