@@ -5,6 +5,8 @@
 #ifndef TEAMHANDLER_H
 #define TEAMHANDLER_H
 
+#include <cassert>
+
 #include "creg/creg_cond.h"
 #include "Team.h"
 #include "AllyTeam.h"
@@ -30,7 +32,7 @@ public:
 	 *
 	 * Accesses a CTeam instance at a given index
 	 */
-	CTeam* Team(int i) { return &teams[i]; }
+	CTeam* Team(int i) { assert(i >= 0); return &teams[i]; }
 
 	/**
 	 * @brief ally
