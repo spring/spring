@@ -384,7 +384,9 @@ void CGameSetup::RemapTeams()
 {
 	// relocate Player.team field
 	for (int a = 0; a < numPlayers; ++a) {
-		if (!playerStartingData[a].spectator)
+		if (playerStartingData[a].spectator)
+			playerStartingData[a].team = 0; // start speccing on team 0
+		else
 		{
 			if (teamRemap.find(playerStartingData[a].team) == teamRemap.end())
 				throw content_error( str(boost::format("GameSetup: Player %i belong to wrong team: %i") %a %playerStartingData[a].team) );
