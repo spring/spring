@@ -202,7 +202,7 @@ boost::mutex mapmutex;
 boost::mutex inmapmutex;
 boost::mutex tempmutex;
 boost::mutex posmutex;
-boost::mutex rendermutex;
+boost::mutex runitmutex;
 boost::mutex simmutex;
 boost::mutex netmutex;
 boost::mutex histmutex;
