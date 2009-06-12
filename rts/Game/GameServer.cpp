@@ -850,7 +850,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_TEAM:
 		{
-						//TODO update players[] and teams[] and send all to hostif
+			//TODO update players[] and teams[] and send all to hostif
 			const unsigned player = (unsigned)inbuf[1];
 			if (player != a)
 			{
@@ -870,6 +870,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				switch (action)
 				{
 					case TEAMMSG_GIVEAWAY: {
+						if (players[player].spectator)
+						{
+							Message(str( boost::format("Spectator %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %players[player].name), true);
+							break;
+						}
 						const unsigned toTeam = inbuf[3];
 						Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam));
 						if (numPlayersInTeam <= 1)
@@ -882,6 +887,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						break;
 					}
 					case TEAMMSG_RESIGN: {
+						if (players[player].spectator)
+						{
+							Message(str(boost::format("Spectator %s tried to hack the game (spoofed TEAMMSG_RESIGN)") %players[player].name), true);
+							break;
+						}
 						Broadcast(CBaseNetProtocol::Get().SendResign(player));
 						players[player].team = 0;
 						players[player].spectator = true;
