@@ -74,6 +74,9 @@ int main (int argc, char* argv[])
 			case NETMSG_LUAMSG:
 				cout << "LUAMSG length:" << packet->length << endl;
 				break;
+			case NETMSG_TEAM:
+				cout << "TEAMMSG type:" << unsigned(buffer[2]) << " from: " << (int)buffer[1] << endl;
+				break;
 			default:
 				cout << "MSG: " << (unsigned)buffer[0] << endl;
 		}
