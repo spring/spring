@@ -6,7 +6,7 @@
 #include "Platform/byteorder.h"
 
 PlayerBase::PlayerBase() :
-team(0),
+team(-1),
 rank(-1),
 name("no name"),
 spectator(false),
