@@ -27,6 +27,9 @@ public:
 	bool HasSoundItem(const std::string& name);
 	size_t GetSoundId(const std::string& name, bool hardFail = true);
 
+	/// returns a free soundsource if available, the one with the lowest priority otherwise
+	SoundSource* GetNextBestSource();
+
 	void UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime);
 	void NewFrame();
 
