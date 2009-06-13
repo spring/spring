@@ -142,8 +142,6 @@ bool CSound::HasSoundItem(const std::string& name)
 	}
 }
 
-
-
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
 	boost::mutex::scoped_lock lck(soundMutex);
@@ -196,7 +194,23 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	return 0;
 }
 
-
+SoundSource* CSound::GetNextBestSource()
+{
+	sourceVecT::iterator bestPos = sources.begin();
+	
+	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+	{
+		if (it->IsPlaying())
+		{
+			return &(*it); //argh
+		}
+		else if (it->GetCurrentPriority() <= bestPos->GetCurrentPriority())
+		{
+			bestPos = it;
+		}
+	}
+	return &(*bestPos);
+}
 
 void CSound::PitchAdjust(const float newPitch)
 {
@@ -294,31 +308,9 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
 	}
 
-	bool found1Free = false;
-	int minPriority = 1;
-	size_t minPos = 0;
-
-	for (size_t pos = 0; pos != sources.size(); ++pos)
-	{
-		if (!sources[pos].IsPlaying())
-		{
-			minPos = pos;
-			found1Free = true;
-			break;
-		}
-		else
-		{
-			if (sources[pos].GetCurrentPriority() < minPriority && sources[pos].GetCurrentPriority() <=  sounds[id].GetPriority())
-			{
-				found1Free = true;
-				minPriority = sources[pos].GetCurrentPriority();
-				minPos = pos;
-			}
-		}
-	}
-
-	if (found1Free)
-		sources[minPos].Play(&sounds[id], p, velocity, volume, relative);
+	SoundSource* best = GetNextBestSource();
+	if (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority()))
+		best->Play(&sounds[id], p, velocity, volume, relative);
 	CheckError("CSound::PlaySample");
 }
 
@@ -526,8 +518,6 @@ boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bo
 {
 	return SoundBuffer::GetById(GetWaveId(path, hardFail));
 }
-
-
 
 void CSound::NewFrame()
 {
