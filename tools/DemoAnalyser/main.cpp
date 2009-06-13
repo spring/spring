@@ -75,7 +75,15 @@ int main (int argc, char* argv[])
 				cout << "LUAMSG length:" << packet->length << endl;
 				break;
 			case NETMSG_TEAM:
-				cout << "TEAMMSG type:" << unsigned(buffer[2]) << " from: " << (int)buffer[1] << endl;
+				cout << "TEAM Playernum:" << (int)buffer[1] << " Action:";
+				switch (buffer[2]) {
+					case TEAMMSG_GIVEAWAY: cout << "GIVEAWAY"; break;
+					case TEAMMSG_RESIGN: cout << "RESIGN"; break;
+					case TEAMMSG_TEAM_DIED: cout << "TEAM_DIED"; break;
+					case TEAMMSG_JOIN_TEAM: cout << "JOIN_TEAM"; break;
+					default: cout << (int)buffer[2];
+				}
+				cout << " Parameter:" << (int)buffer[3] << endl;
 				break;
 			default:
 				cout << "MSG: " << (unsigned)buffer[0] << endl;
