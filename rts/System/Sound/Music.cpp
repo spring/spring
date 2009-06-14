@@ -1,9 +1,9 @@
 #include "Music.h"
 
+#include "Sound.h"
+#include "SoundSource.h"
 
-#include "OggStream.h"
-
-MusicChannel::MusicChannel() : playNext(false), playing(false)
+MusicChannel::MusicChannel() : current(NULL)
 {
 }
 
@@ -14,67 +14,64 @@ MusicChannel::~MusicChannel()
 void MusicChannel::SetVolume(float newvolume)
 {
 	volume = newvolume;
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	oggStream.SetVolume(nextTrack.volume * volume);
+
+	if (current)
+		current->SetVolume(volume); // OpenAL is threadsafe enought so no lock needed
 }
 
 void MusicChannel::Enable(bool newState)
 {
 	enabled = newState;
-	playing = false;
+
+	if (!enabled)
+	{
+		Stop();
+	}
 }
 
-void MusicChannel::Play(const std::string& path, float volume)
+void MusicChannel::Play(const std::string& path, float _volume)
 {
 	if (!enabled)
 	{
 		return;
 	}
 
-	playNext = true;
-	nextTrack.path = path;
-	nextTrack.volume = volume;
+	if (!current)
+		current = sound->GetNextBestSource();
+
+	current->PlayStream(path, volume * _volume);
 }
 
 void MusicChannel::Pause()
 {
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	oggStream.TogglePause();
+	if (current)
+		current->StreamPause();
 }
 
 void MusicChannel::Stop()
 {
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	playing = false;
+	if (current)
+	{
+		current->StreamStop();
+		current = NULL;
+	}
 }
 
 unsigned int MusicChannel::GetTime()
 {
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	return oggStream.GetTotalTime();
+	if (current)
+		return current->GetStreamTime();
+	else
+		return 0;
 }
 
 unsigned int MusicChannel::GetPlayTime()
 {
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	return oggStream.GetPlayTime();
+	if (current)
+		return current->GetStreamPlayTime();
+	else
+		return 0;
 }
-
-void MusicChannel::Update()
-{
-	if (playing || playNext)
-	{
-		boost::mutex::scoped_lock updaterLock(musicMutex);
-		// update buffers
-		if (playNext)
-		{
-			oggStream.Stop(); // just to be sure
-			oggStream.Play(nextTrack.path, nextTrack.volume * volume);
-			playNext = false;
-		}
-		oggStream.Update();
-	}
-};
 
 
 namespace Channels
