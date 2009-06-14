@@ -33,12 +33,6 @@ void ClientSetup::Init(const std::string& setup)
 
 	file.GetDef(myPlayerName, "",                    "GAME\\MyPlayerName");
 
-	if (myPlayerName.empty()) {
-		myPlayerName = "UnnamedPlayer";
-	} else {
-		myPlayerName = StringReplaceInPlace(myPlayerName, ' ', '_');
-	}
-
 	if (!file.GetValue(isHost, "GAME\\IsHost")) {
 		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");
 	}
