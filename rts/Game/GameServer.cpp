@@ -167,6 +167,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
 
 	teams.resize(setup->teamStartingData.size());
+	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
 
 	RestrictedAction("kick");			RestrictedAction("kickbynum");
 	RestrictedAction("setminspeed");	RestrictedAction("setmaxspeed");
@@ -199,7 +200,9 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	for (size_t i = 0; i < setup->numTeams; ++i)
 	{
 		if (setup->GetSkirmishAIDataForTeam(i))
+		{
 			teams[i].active = true;
+		}
 	}
 
 	thread = new boost::thread(boost::bind<void, CGameServer, CGameServer*>(&CGameServer::UpdateLoop, this));
@@ -1141,10 +1144,7 @@ void CGameServer::StartGame()
 	GenerateAndSendGameID();
 	for (int a = 0; a < setup->numTeams; ++a)
 	{
-		if (teams[a].active) // its a player
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
-		else // maybe an AI?
-			Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, setup->teamStartingData[a].startPos.x, setup->teamStartingData[a].startPos.y, setup->teamStartingData[a].startPos.z));
+		Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
 	}
 
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
@@ -1524,24 +1524,14 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 
 	if (!demoReader || setup->demoName.empty()) // gamesetup from demo?
 	{
-		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
-		if (!teams[hisTeam].active) // create new team
+			const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
+		if (!players[hisNewNumber].spectator && !teams[hisTeam].active) // create new team
 		{
 			teams[hisTeam].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
-			teams[hisTeam].teamAllyteam = setup->teamStartingData[hisTeam].teamAllyteam;
-			if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
-				// if the player didn't choose a start position, choose one for him
-				// it should be near the center of his startbox
-				// we let the startscript handle it
-				teams[hisTeam].startPos.x = 0;
-				teams[hisTeam].startPos.y = -500;
-				teams[hisTeam].startPos.z = 0;
-			} else {
-				teams[hisTeam].startPos = setup->teamStartingData[hisTeam].startPos;
-			}
 			teams[hisTeam].active = true;
 		}
-		players[hisNewNumber].team = hisTeam;
+			players[hisNewNumber].team = hisTeam;
+
 		if (!setup->playerStartingData[hisNewNumber].spectator)
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
 		for (size_t a = 0; a < teams.size(); ++a)
