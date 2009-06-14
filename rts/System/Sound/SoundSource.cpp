@@ -217,14 +217,12 @@ unsigned SoundSource::GetStreamTime()
 	{
 		boost::mutex::scoped_lock lock(streamMutex);
 		if (curStream->current)
-		{
 			return curStream->stream.GetTotalTime();
-		}
 		else
 			return 0;
 	}
-	else
-		assert(false);
+	assert(false);
+	return 0;
 }
 
 unsigned SoundSource::GetStreamPlayTime()
@@ -233,14 +231,12 @@ unsigned SoundSource::GetStreamPlayTime()
 	{
 		boost::mutex::scoped_lock lock(streamMutex);
 		if (curStream->current)
-		{
 			return curStream->stream.GetPlayTime();
-		}
 		else
 			return 0;
 	}
-	else
-		assert(false);
+	assert(false);
+	return 0;
 }
 
 void SoundSource::SetPitch(float newPitch)
