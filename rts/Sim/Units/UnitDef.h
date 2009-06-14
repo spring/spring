@@ -98,7 +98,6 @@ struct UnitDef
 	std::string humanName;
 	std::string filename;
 	int id;					// unique id for this type of unit
-	std::string cobFilename;
 
 	CollisionVolume* collisionVolume;
 	const UnitDef* decoyDef;
