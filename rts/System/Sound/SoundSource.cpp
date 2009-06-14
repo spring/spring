@@ -1,7 +1,7 @@
 #include "SoundSource.h"
 
 #include <climits>
-#include <AL/alc.h>
+#include <alc.h>
 #include <SDL_timer.h>
 
 #include "SoundBuffer.h"
