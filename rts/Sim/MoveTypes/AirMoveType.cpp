@@ -164,7 +164,6 @@ void CAirMoveType::Update(void)
 	}
 
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (owner->directControl && !(aircraftState == AIRCRAFT_CRASHING)) {
 		SetState(AIRCRAFT_FLYING);
 		DirectControlStruct* dc = owner->directControl;
@@ -188,7 +187,6 @@ void CAirMoveType::Update(void)
 			goto EndNormalControl; // bad
 		}
 	}
-#endif
 
 
 	if (reservedPad) {
@@ -739,11 +737,7 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	}
 
 
-	if (adjustedGoalDir.dot(frontdir) < -0.1f && goalLength < turnRadius
-#ifdef DIRECT_CONTROL_ALLOWED
-		&& (!owner->directControl || owner->directControl->mouse2)
-#endif
-		)
+	if (adjustedGoalDir.dot(frontdir) < -0.1f && goalLength < turnRadius && (!owner->directControl || owner->directControl->mouse2))
 		goalDotRight = -goalDotRight;
 	if (lastColWarning) {
 		goalDotRight -= otherDir.dot(rightdir) * otherThreat;
@@ -1021,7 +1015,6 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 
 	float gHeight = ground->GetHeight(pos.x, pos.z);
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (owner->directControl) {
 		if ((pos.y - gHeight) > wantedHeight * 1.2f) {
 			engine = std::max(0.0f, std::min(engine, 1 - (pos.y - gHeight - wantedHeight * 1.2f) / wantedHeight));
@@ -1029,7 +1022,6 @@ void CAirMoveType::UpdateAirPhysics(float rudder, float aileron, float elevator,
 		// check next position given current (unadjusted) pos and speed
 		nextPosInBounds = (pos + speed).CheckInBounds();
 	}
-#endif
 
 
 	speed += engineVector * maxAcc * engine;

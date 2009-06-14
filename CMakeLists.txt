@@ -45,11 +45,6 @@ if (SYNCCHECK)
 	ADD_DEFINITIONS(-DSYNCCHECK)
 endif (SYNCCHECK)
 
-SET(DIRECT_CONTROL TRUE CACHE BOOL "Allow controling units in first-person-mode")
-if (DIRECT_CONTROL)
-	ADD_DEFINITIONS(-DDIRECT_CONTROL_ALLOWED)
-endif (DIRECT_CONTROL)
-
 IF (WIN32)
 	SET(NO_AVI FALSE CACHE BOOL "Disable in-game video recording")
 	if (NO_AVI)

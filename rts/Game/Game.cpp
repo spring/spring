@@ -155,12 +155,10 @@
 #  include "Platform/Win/AVIGenerator.h"
 #endif
 
-#ifdef DIRECT_CONTROL_ALLOWED
-#  include "myMath.h"
-#  include "Sim/MoveTypes/MoveType.h"
-#  include "Sim/Weapons/Weapon.h"
-#  include "Sim/Weapons/WeaponDefHandler.h"
-#endif
+#include "myMath.h"
+#include "Sim/MoveTypes/MoveType.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Weapons/WeaponDefHandler.h"
 
 
 #ifdef USE_GML
@@ -233,11 +231,9 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(consumeSpeed),
 //	CR_MEMBER(lastframe),
 //	CR_MEMBER(leastQue),
-//#ifdef DIRECT_CONTROL_ALLOWED // we cant have preprocessor directives here, MSVC chokes on it
 	CR_MEMBER(oldHeading),
 	CR_MEMBER(oldPitch),
 	CR_MEMBER(oldStatus),
-//#endif
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -326,11 +322,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	oldPitch   = 0;
 	oldHeading = 0;
 	oldStatus  = 255;
-#endif
 
 	sound = new CSound();
 	chatSound = sound->GetSoundId("IncomingChat", false);
@@ -1480,7 +1474,6 @@ bool CGame::ActionPressed(const Action& action,
 		net->Send(CBaseNetProtocol::Get().SendUserSpeed(gu->myPlayerNum, speed));
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	else if (cmd == "controlunit") {
 		Command c;
 		c.id=CMD_STOP;
@@ -1488,8 +1481,6 @@ bool CGame::ActionPressed(const Action& action,
 		selectedUnits.GiveCommand(c,false);		//force it to update selection and clear order que
 		net->Send(CBaseNetProtocol::Get().SendDirectControl(gu->myPlayerNum));
 	}
-#endif
-
 	else if (cmd == "showshadowmap") {
 		shadowHandler->showShadowMap = !shadowHandler->showShadowMap;
 	}
@@ -2864,11 +2855,9 @@ bool CGame::Draw() {
 		glLineWidth(1.0f);
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (gu->directControl) {
 		DrawDirectControlHud();
 	}
-#endif
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -3150,7 +3139,6 @@ void CGame::SimFrame() {
 			grouphandlers[a]->Update();
 		}
 		profiler.Update();
-#ifdef DIRECT_CONTROL_ALLOWED
 		if (gu->directControl) {
 			unsigned char status = 0;
 			if (camMove[0]) { status |= (1 << 0); }
@@ -3170,7 +3158,6 @@ void CGame::SimFrame() {
 					                                                status, hp.x, hp.y));
 			}
 		}
-#endif
 	}
 
 	//everything from here is simulation
@@ -3711,9 +3698,7 @@ void CGame::ClientReadNet()
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui){
 						CUnit* unit = uh->units[*ui];
 						if (unit && unit->team==team1 && !unit->beingBuilt) {
-#ifdef DIRECT_CONTROL_ALLOWED
 							if (!unit->directControl)
-#endif
 								unit->ChangeTeam(team2, CUnit::ChangeGiven);
 						}
 					}
@@ -3866,7 +3851,6 @@ void CGame::ClientReadNet()
 				break;
 			}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 			case NETMSG_DIRECT_CONTROL: {
 				int player = inbuf[1];
 
@@ -3943,7 +3927,6 @@ void CGame::ClientReadNet()
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
-#endif // DIRECT_CONTROL_ALLOWED
 
 			case NETMSG_SETPLAYERNUM:
 			case NETMSG_ATTEMPTCONNECT: {
@@ -3966,15 +3949,12 @@ void CGame::ClientReadNet()
 	return;
 }
 
-#ifdef DIRECT_CONTROL_ALLOWED
 float3 lastDCpos;
 float3 *plastDCpos=NULL;
-#endif
 
 void CGame::UpdateUI(bool cam)
 {
 	//move camera if arrow keys pressed
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (gu->directControl && !cam) {
 		CUnit* owner = gu->directControl;
 
@@ -4002,7 +3982,6 @@ void CGame::UpdateUI(bool cam)
 		}
 	}
 	if (!gu->directControl)
-#endif
 	{
 		float cameraSpeed=1;
 		if (camMove[7]){
@@ -4150,7 +4129,6 @@ void CGame::MakeMemDump(void)
 
 void CGame::DrawDirectControlHud(void)
 {
-#ifdef DIRECT_CONTROL_ALLOWED
 	CUnit* unit = gu->directControl;
 	glPushMatrix();
 
@@ -4358,7 +4336,6 @@ void CGame::DrawDirectControlHud(void)
 	glEnable(GL_DEPTH_TEST);
 
 	glPopMatrix();
-#endif
 }
 
 

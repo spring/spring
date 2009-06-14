@@ -239,7 +239,6 @@ public:
 	 */
 	bool dualScreenMiniMapOnLeft;
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	/**
 	 * @brief direct control
 	 *
@@ -247,7 +246,6 @@ public:
 	 * this player
 	 */
 	CUnit* directControl;
-#endif
 
 private:
 	/**

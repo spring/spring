@@ -391,8 +391,6 @@ float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float len
 	return ((hit)? math::sqrt(returnLenSq): (math::sqrt(returnLenSq) - 200.0f));
 }
 
-
-#ifdef DIRECT_CONTROL_ALLOWED
 float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude, int allyteam)
 {
 	float groundLength = ground->LineGroundCol(start, start + dir * length);
@@ -460,7 +458,6 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 
 	return length;
 }
-#endif
 
 
 void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,

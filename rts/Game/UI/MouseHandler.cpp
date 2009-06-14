@@ -329,11 +329,9 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 		return;
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (gu->directControl) {
 		return;
 	}
-#endif
 
 	if ((button == SDL_BUTTON_LEFT) && !buttons[button].chorded) {
 		if (!keys[SDLK_LSHIFT] && !keys[SDLK_LCTRL]) {
@@ -508,11 +506,9 @@ void CMouseHandler::Draw()
 		return;
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (gu->directControl) {
 		return;
 	}
-#endif
 	if (buttons[SDL_BUTTON_LEFT].pressed && !buttons[SDL_BUTTON_LEFT].chorded &&
 	   (buttons[SDL_BUTTON_LEFT].movement > 4) &&
 	   (!inMapDrawer || !inMapDrawer->keyPressed)) {

@@ -10,18 +10,16 @@
 #include "PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#ifdef DIRECT_CONTROL_ALLOWED
-	#include "Game/GameHelper.h"
-	#include "Sim/Units/Unit.h"
-	#include "Sim/Units/UnitHandler.h"
-	#include "Sim/Weapons/Weapon.h"
-	#include "Sim/Units/COB/CobInstance.h"
-	#include "Sim/Units/COB/CobFile.h"
-	#include "UI/MouseHandler.h"
-	#include "CameraHandler.h"
-	#include "Camera.h"
-	#include "myMath.h"
-#endif
+#include "Game/GameHelper.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/CobFile.h"
+#include "UI/MouseHandler.h"
+#include "CameraHandler.h"
+#include "Camera.h"
+#include "myMath.h"
 #include "EventHandler.h"
 #include "GlobalUnsynced.h"
 
@@ -60,7 +58,6 @@ CPlayer::CPlayer()
 	ping = 0;
 
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	playerControlledUnit=0;
 
 	myControl.forward=0;
@@ -75,7 +72,6 @@ CPlayer::CPlayer()
 	myControl.targetDist=1000;
 	myControl.target=0;
 	myControl.myController=this;
-#endif
 }
 
 CPlayer::~CPlayer()
@@ -137,7 +133,6 @@ void CPlayer::StartSpectating()
 
 void CPlayer::GameFrame(int frameNum)
 {
-#ifdef DIRECT_CONTROL_ALLOWED
 	if(!active || !playerControlledUnit)
 		return;
 
@@ -183,10 +178,8 @@ void CPlayer::GameFrame(int frameNum)
 			}
 		}
 	}
-#endif
 }
 
-#ifdef DIRECT_CONTROL_ALLOWED
 void CPlayer::StopControllingUnit()
 {
 	if (gu->directControl == playerControlledUnit) {
@@ -204,4 +197,3 @@ void CPlayer::StopControllingUnit()
 
 	playerControlledUnit = 0;
 }
-#endif

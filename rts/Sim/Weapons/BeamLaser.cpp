@@ -194,11 +194,9 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		rangeMod = 1.3f;
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (owner->directControl) {
 		rangeMod = 0.95f;
 	}
-#endif
 
 	float maxLength = range * rangeMod;
 	float curLength = 0.0f;

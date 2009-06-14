@@ -1270,9 +1270,6 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 
 int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 {
-#ifndef DIRECT_CONTROL_ALLOWED
-	return 0;
-#else
 	const int playerID = luaL_checkint(L, 1);
 	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers())) {
 		return 0;
@@ -1295,7 +1292,6 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 
 	lua_pushnumber(L, unit->id);
 	return 1;
-#endif
 }
 
 int LuaSyncedRead::GetAllyTeamInfo(lua_State* L)
