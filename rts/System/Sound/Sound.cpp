@@ -194,13 +194,13 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	return 0;
 }
 
-SoundSource* CSound::GetNextBestSource()
+SoundSource* CSound::GetNextBestSource(bool lock)
 {
 	sourceVecT::iterator bestPos = sources.begin();
 	
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 	{
-		if (it->IsPlaying())
+		if (!it->IsPlaying())
 		{
 			return &(*it); //argh
 		}
@@ -308,7 +308,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
 	}
 
-	SoundSource* best = GetNextBestSource();
+	SoundSource* best = GetNextBestSource(false);
 	if (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority()))
 		best->Play(&sounds[id], p, velocity, volume, relative);
 	CheckError("CSound::PlaySample");
@@ -356,8 +356,6 @@ void CSound::StartThread(int maxSounds)
 
 void CSound::Update()
 {
-	Channels::BGMusic.Update();
-
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
 		it->Update();
 	CheckError("CSound::Update");
