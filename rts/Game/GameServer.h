@@ -70,6 +70,7 @@ class GameTeam : public TeamBase
 public:
 	GameTeam() : active(false) {};
 	bool active;
+	void operator=(const TeamBase& base) { TeamBase::operator=(base); };
 };
 
 /**
