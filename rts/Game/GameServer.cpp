@@ -822,7 +822,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			Broadcast(packet); //forward data
 			break;
 
-#ifdef DIRECT_CONTROL_ALLOWED
 		case NETMSG_DIRECT_CONTROL:
 			if(inbuf[1]!=a){
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
@@ -840,7 +839,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					Broadcast(CBaseNetProtocol::Get().SendDirectControlUpdate(inbuf[1], inbuf[2], *((short*)&inbuf[3]), *((short*)&inbuf[5])));
 			}
 			break;
-#endif
 
 		case NETMSG_STARTPLAYING:
 		{

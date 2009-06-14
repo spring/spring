@@ -37,9 +37,7 @@ void CPlayerHandler::LoadFromSetup(const CGameSetup* setup)
 	{
 		players[i] = setup->playerStartingData[i];
 		players[i].playerNum = i;
-#ifdef DIRECT_CONTROL_ALLOWED
 		players[i].myControl.myController = &players[i];
-#endif
 	}
 }
 

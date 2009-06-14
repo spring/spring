@@ -30,10 +30,7 @@ struct LocalModelPiece;
 struct UnitDef;
 struct UnitTrackStruct;
 struct CollisionVolume;
-
-#ifdef DIRECT_CONTROL_ALLOWED
-	struct DirectControlStruct;
-#endif
+struct DirectControlStruct;
 
 class CTransportUnit;
 
@@ -481,9 +478,7 @@ public:
 	int curTerrainType;
 
 	int selfDCountdown;
-#ifdef DIRECT_CONTROL_ALLOWED
 	DirectControlStruct* directControl;
-#endif
 
 	UnitTrackStruct* myTrack;
 

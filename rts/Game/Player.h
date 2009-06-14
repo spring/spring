@@ -11,7 +11,6 @@
 
 #include "PlayerBase.h"
 
-#ifdef DIRECT_CONTROL_ALLOWED
 #include "float3.h"
 class CPlayer;
 class CUnit;
@@ -29,7 +28,6 @@ struct DirectControlStruct{
 	CUnit* target;
 	CPlayer* myController;
 };
-#endif
 
 
 class CPlayer : public PlayerBase
@@ -62,13 +60,12 @@ public:
 
 	Statistics currentStats;
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	DirectControlStruct myControl;
 
 	CUnit* playerControlledUnit;
 
 	void StopControllingUnit();
-#endif
+
 private:
 	std::set<int> controlledTeams;
 };

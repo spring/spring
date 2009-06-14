@@ -241,9 +241,7 @@ CUnit::CUnit():
 	, lastDrawFrame(-30)
 #endif
 {
-#ifdef DIRECT_CONTROL_ALLOWED
 	directControl = NULL;
-#endif
 	activated = false;
 	GML_GET_TICKS(lastUnitUpdate);
 }
@@ -273,12 +271,10 @@ CUnit::~CUnit()
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (directControl) {
 		directControl->myController->StopControllingUnit();
 		directControl = NULL;
 	}
-#endif
 
 	if (activated && unitDef->targfac) {
 		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
@@ -1321,13 +1317,11 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		return false;
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	// do not allow old player to keep controlling the unit
 	if (directControl) {
 		directControl->myController->StopControllingUnit();
 		directControl = NULL;
 	}
-#endif
 
 	const int oldteam = team;
 
@@ -2479,9 +2473,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),
 	CR_MEMBER(selfDCountdown),
-//#ifdef DIRECT_CONTROL_ALLOWED
 //	CR_MEMBER(directControl),
-//#endif
 	//CR_MEMBER(myTrack), // unused
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),

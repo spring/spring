@@ -743,7 +743,6 @@ void CTAAirMoveType::Update()
 		wantedSpeed = ZeroVector;
 		UpdateAirPhysics();
 	} else {
-#ifdef DIRECT_CONTROL_ALLOWED
 		if (owner->directControl) {
 			DirectControlStruct* dc = owner->directControl;
 			SetState(AIRCRAFT_FLYING);
@@ -774,7 +773,6 @@ void CTAAirMoveType::Update()
 			UpdateAirPhysics();
 			wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
 		} else
-#endif
 		{
 
 			if (reservedPad) {

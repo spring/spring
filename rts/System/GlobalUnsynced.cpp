@@ -94,9 +94,7 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	teamNanospray = false;
 	autoQuit = false;
 	quitTime = 0;
-#ifdef DIRECT_CONTROL_ALLOWED
 	directControl = 0;
-#endif
 	compressTextures = false;
 	atiHacks = false;
 	supportNPOTs = GLEW_ARB_texture_non_power_of_two;

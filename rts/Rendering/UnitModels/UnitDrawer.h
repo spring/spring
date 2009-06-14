@@ -54,17 +54,11 @@ public:
 
 	volatile bool mt_drawReflection;
 	volatile bool mt_drawRefraction;
-  #ifdef DIRECT_CONTROL_ALLOWED
 	CUnit* volatile mt_excludeUnit;
-  #endif
 
 	static void DoDrawUnitMT(void* c, CUnit* unit) {
 		CUnitDrawer* const ud = (CUnitDrawer*) c;
-		#ifdef DIRECT_CONTROL_ALLOWED
 		ud->DoDrawUnit(unit, ud->mt_drawReflection, ud->mt_drawRefraction, ud->mt_excludeUnit);
-		#else
-		ud->DoDrawUnit(unit, ud->mt_drawReflection, ud->mt_drawRefraction, NULL);
-		#endif
 	}
 
 	static void DoDrawUnitShadowMT(void *c,CUnit *unit) {((CUnitDrawer *)c)->DoDrawUnitShadow(unit);}
@@ -163,9 +157,7 @@ public:
 
 	float3 camNorm;		//used by drawfar
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	CUnit* playerControlledUnit;
-#endif
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
 	void UpdateReflectTex(void);
 	void CreateReflectionFace(unsigned int gltype, float3 camdir);

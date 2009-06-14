@@ -337,10 +337,8 @@ void CWeapon::Update()
 	}
 
 	if ((salvoLeft == 0)
-#ifdef DIRECT_CONTROL_ALLOWED
 	    && (!owner->directControl || owner->directControl->mouse1
 	                              || owner->directControl->mouse2)
-#endif
 	    && (targetType != Target_None)
 	    && angleGood
 	    && subClassReady

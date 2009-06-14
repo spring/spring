@@ -236,7 +236,6 @@ void CGroundMoveType::Update()
 		owner->cob->Call(COBFN_StopMoving);
 		owner->speed = ZeroVector;
 	} else {
-#ifdef DIRECT_CONTROL_ALLOWED
 		if (owner->directControl) {
 			waypoint = owner->pos+owner->frontdir * 100;
 			waypoint.CheckInBounds();
@@ -265,7 +264,6 @@ void CGroundMoveType::Update()
 
 			ChangeHeading(owner->heading + deltaHeading);
 		} else
-#endif
 
 		if (pathId || currentSpeed > 0.0f) {
 			// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
