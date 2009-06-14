@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include <AL/al.h>
+#include <al.h>
 #include <boost/noncopyable.hpp>
 #include <boost/thread/mutex.hpp>
 

@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 #include <cmath>
-#include <AL/alc.h>
+#include <alc.h>
 #include <boost/cstdint.hpp>
 
 #include "SoundSource.h"

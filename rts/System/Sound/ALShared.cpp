@@ -1,6 +1,6 @@
 #include "ALShared.h"
 
-#include <AL/al.h>
+#include <al.h>
 
 const CLogSubsystem LOG_SOUND("Sound", true);
 
