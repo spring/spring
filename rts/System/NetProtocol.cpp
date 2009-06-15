@@ -58,6 +58,11 @@ bool CNetProtocol::Connected() const
 	return (serverConn->GetDataReceived() > 0);
 }
 
+std::string CNetProtocol::ConnectionStr() const
+{
+	return serverConn->GetFullAddress();
+}
+
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const
 {
 	GML_STDMUTEX_LOCK(net); // Peek

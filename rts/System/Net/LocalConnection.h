@@ -44,6 +44,10 @@ public:
 	virtual bool CheckTimeout() const;
 	
 	virtual std::string Statistics() const;
+	virtual std::string GetFullAddress() const
+	{
+		return "shared memory";
+	};
 	virtual bool HasIncomingData() const;
 
 private:

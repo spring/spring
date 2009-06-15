@@ -68,6 +68,7 @@ public:
 
 	/// do we have these address?
 	bool CheckAddress(const boost::asio::ip::udp::endpoint&) const;
+	std::string GetFullAddress() const;
 	
 	void SetMTU(unsigned mtu);
 

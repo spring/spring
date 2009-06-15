@@ -331,6 +331,11 @@ bool UDPConnection::CheckAddress(const boost::asio::ip::udp::endpoint& from) con
 	return (addr == from);
 }
 
+std::string UDPConnection::GetFullAddress() const
+{
+	return str( boost::format("%s:%u") %addr.address().to_string() %addr.port() );
+}
+
 void UDPConnection::SetMTU(unsigned mtu2)
 {
 	if (mtu2 > 20 && mtu2 < UDPMaxPacketSize)

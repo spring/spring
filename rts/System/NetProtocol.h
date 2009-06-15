@@ -40,6 +40,8 @@ public:
 	/// This checks if any data has been already received
 	bool Connected() const;
 
+	std::string ConnectionStr() const;
+
 	/**
 	@brief Take a look at the messages in the recieve buffer (read-only)
 	@return A RawPacket holding the data, or 0 if no data

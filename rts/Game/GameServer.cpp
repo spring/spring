@@ -1529,7 +1529,9 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 		}
 	}
 
-	Message(str(format(NewConnection) %name %hisNewNumber %version));
+	Message(str(format(NewConnection) %name %hisNewNumber));
+	Message(str(format(" -> Address: %s") %link->GetFullAddress()));
+	Message(str(format(" -> Client version: %s") %version));
 
 	link->Flush(true);
 	return hisNewNumber;
