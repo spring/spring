@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include <string.h>
 #include <stdexcept>
 #include "mmgr.h"

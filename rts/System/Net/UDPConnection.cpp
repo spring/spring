@@ -1,3 +1,5 @@
+#include "StdAfx.h"
+#include "UDPConnection.h"
 #include <boost/version.hpp>
 #include <boost/format.hpp>
 #include <boost/ptr_container/ptr_deque.hpp>
@@ -14,7 +16,6 @@
 
 #include "mmgr.h"
 
-#include "UDPConnection.h"
 #include "Socket.h"
 
 #include "ProtocolDef.h"

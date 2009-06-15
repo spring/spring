@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Socket.h"
 
 namespace netcode

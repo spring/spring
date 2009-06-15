@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "UDPListener.h"
 
 #include <boost/weak_ptr.hpp>
