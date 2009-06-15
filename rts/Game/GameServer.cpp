@@ -142,7 +142,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
 	if (!onlyLocal)
-		UDPNet.reset(new netcode::UDPListener(settings->hostport, true));
+		UDPNet.reset(new netcode::UDPListener(settings->hostport));
 
 	if (settings->autohostport > 0) {
 		AddAutohostInterface(settings->autohostport);

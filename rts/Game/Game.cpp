@@ -2534,7 +2534,7 @@ bool CGame::Update()
 	}
 
 	if (!(gs->frameNum & 31)) {
-		//oscStatsSender->Update(gs->frameNum);
+		oscStatsSender->Update(gs->frameNum);
 	}
 
 	return true;

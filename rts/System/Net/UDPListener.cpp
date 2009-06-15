@@ -18,16 +18,19 @@ namespace netcode
 {
 using namespace boost::asio;
 
-UDPListener::UDPListener(int port, bool v6support)
+UDPListener::UDPListener(int port)
 {
 	SocketPtr temp(new ip::udp::socket(netservice));
-	if (v6support)
+
+	boost::system::error_code err;
+	temp->open(ip::udp::v6(), err); // test v6
+	if (!err)
 	{
-		temp->open(ip::udp::v6());
 		temp->bind(ip::udp::endpoint(ip::address_v6::any(), port));
 	}
 	else
 	{
+		// fallback to v4
 		temp->open(ip::udp::v4());
 		temp->bind(ip::udp::endpoint(ip::address_v4::any(), port));
 	}
