@@ -3,10 +3,7 @@
 
 #include <string>
 #include <boost/cstdint.hpp>
-
-namespace netcode {
-	class UDPConnectedSocket;
-}
+#include <boost/asio/ip/udp.hpp>
 
 /**
 @brief Class to communicate with an autohost (or similar) using UDP over loopback
@@ -25,16 +22,16 @@ public:
 	AutohostInterface(int remoteport);
 	virtual ~AutohostInterface();
 	
-	void SendStart() const;
-	void SendQuit() const;
-	void SendStartPlaying() const;
-	void SendGameOver() const;
+	void SendStart();
+	void SendQuit();
+	void SendStartPlaying();
+	void SendGameOver();
 	
-	void SendPlayerJoined(uchar playerNum, const std::string& name) const;
-	void SendPlayerLeft(uchar playerNum, uchar reason) const;
-	void SendPlayerReady(uchar playerNum, uchar readyState) const;
-	void SendPlayerChat(uchar playerNum, uchar destination, const std::string& msg) const;
-	void SendPlayerDefeated(uchar playerNum) const;
+	void SendPlayerJoined(uchar playerNum, const std::string& name);
+	void SendPlayerLeft(uchar playerNum, uchar reason);
+	void SendPlayerReady(uchar playerNum, uchar readyState);
+	void SendPlayerChat(uchar playerNum, uchar destination, const std::string& msg);
+	void SendPlayerDefeated(uchar playerNum);
 	
 	void Message(const std::string& message);
 	void Warning(const std::string& message);
@@ -45,10 +42,10 @@ public:
 	@brief Receive a chat message from the autohost
 	There should be only 1 message per UDP-Packet, and it will use the hosts playernumber to inject this message
 	*/
-	std::string GetChatMessage() const;
+	std::string GetChatMessage();
 	
 private:
-	netcode::UDPConnectedSocket* autohost;
+	boost::asio::ip::udp::socket autohost;
 };
 
 #endif

@@ -81,14 +81,6 @@ std::string CLocalConnection::Statistics() const
 	return msg;
 }
 
-NetAddress CLocalConnection::GetPeerName() const
-{
-	NetAddress addr;
-	addr.port = 0;
-	addr.host = 0;
-	return addr;
-}
-
 bool CLocalConnection::HasIncomingData() const
 {
 	boost::mutex::scoped_lock scoped_lock(Mutex[instance]);
