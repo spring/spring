@@ -55,13 +55,15 @@ std::string GetBinaryPath()
 	char cPath[1024];
 	CFBundleRef mainBundle = CFBundleGetMainBundle();
 	
-	CFURLRef mainBundleURL = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault , CFBundleCopyBundleURL(mainBundle));
+	CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
+	CFURLRef binaryPathURL = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault , mainBundleURL);
 	
-	CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
+	CFStringRef cfStringRef = CFURLCopyFileSystemPath(binaryPathURL, kCFURLPOSIXPathStyle);
 	
 	CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
 	
 	CFRelease(mainBundleURL);
+	CFRelease(binaryPathURL);
 	CFRelease(cfStringRef);
 	
 	return std::string(cPath);
