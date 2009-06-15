@@ -127,7 +127,7 @@ bool CPreGame::Draw()
 		font->glPrint(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server response");
 	}
 
-	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Connecting to: %s", net->ConnectionStr().c_str());
+	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Connecting to:   %s", net->ConnectionStr().c_str());
 
 	font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Using playername: %s", settings->myPlayerName.c_str());
 

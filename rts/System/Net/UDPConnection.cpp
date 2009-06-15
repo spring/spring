@@ -347,7 +347,7 @@ bool UDPConnection::CheckAddress(const boost::asio::ip::udp::endpoint& from) con
 
 std::string UDPConnection::GetFullAddress() const
 {
-	return str( boost::format("%s:%u") %addr.address().to_string() %addr.port() );
+	return str( boost::format("[%s]:%u") %addr.address().to_string() %addr.port() );
 }
 
 void UDPConnection::SetMTU(unsigned mtu2)
