@@ -5,6 +5,8 @@
 
 #include "mmgr.h"
 
+#include "Net/UDPConnection.h"
+#include "Net/LocalConnection.h"
 #include "NetProtocol.h"
 
 #include "Game/GameData.h"
@@ -12,9 +14,6 @@
 #include "DemoRecorder.h"
 #include "ConfigHandler.h"
 #include "GlobalUnsynced.h"
-#include "Net/UDPConnection.h"
-#include "Net/LocalConnection.h"
-#include "Net/UDPSocket.h"
 
 
 CNetProtocol::CNetProtocol()
@@ -30,10 +29,7 @@ CNetProtocol::~CNetProtocol()
 void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myVersion)
 {
 	GML_STDMUTEX_LOCK(net); // InitClient
-
-	boost::shared_ptr<netcode::UDPSocket> sock(new netcode::UDPSocket(sourceport));
-	sock->SetBlocking(false);
-	netcode::UDPConnection* conn = new netcode::UDPConnection(sock, server_addr, portnum);
+	netcode::UDPConnection* conn = new netcode::UDPConnection(sourceport, server_addr, portnum);
 	conn->SetMTU(configHandler->Get("MaximumTransmissionUnit", 0));
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));

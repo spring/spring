@@ -44,7 +44,6 @@ public:
 	virtual bool CheckTimeout() const;
 	
 	virtual std::string Statistics() const;
-	virtual NetAddress GetPeerName() const;
 	virtual bool HasIncomingData() const;
 
 private:

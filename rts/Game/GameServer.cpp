@@ -14,6 +14,9 @@
 #endif
 #include <stdlib.h> // why is this here?
 
+#include "Net/UDPListener.h"
+#include "Net/UDPConnection.h"
+#include "Net/Connection.h"
 #include "mmgr.h"
 #include "ExternalAI/SkirmishAIKey.h"
 
@@ -31,9 +34,6 @@
 #include "CommandMessage.h"
 #include "BaseNetProtocol.h"
 #include "PlayerHandler.h"
-#include "Net/UDPListener.h"
-#include "Net/Connection.h"
-#include "Net/UDPConnection.h"
 #include "Net/LocalConnection.h"
 #include "Net/UnpackPacket.h"
 #include "DemoReader.h"
@@ -142,7 +142,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
 	if (!onlyLocal)
-		UDPNet.reset(new netcode::UDPListener(settings->hostport));
+		UDPNet.reset(new netcode::UDPListener(settings->hostport, true));
 
 	if (settings->autohostport > 0) {
 		AddAutohostInterface(settings->autohostport);
@@ -1411,17 +1411,7 @@ void CGameServer::UpdateLoop()
 {
 	while (!quitServer)
 	{
-		bool hasData = false;
-		if (hasLocalClient || !UDPNet)
-		{
-			spring_sleep(spring_msecs(10));
-			hasData = true;
-		}
-		else
-		{
-			assert(UDPNet);
-			hasData = UDPNet->HasIncomingData(10); // may block up to 10 ms if there is no data (don't need a lock)
-		}
+		spring_sleep(spring_msecs(10));
 
 		if (UDPNet)
 			UDPNet->Update();
