@@ -11,7 +11,6 @@
 namespace netcode
 {
 class UDPConnection;
-class UDPSocket;
 
 /**
 @brief Class for handling Connections on an UDPSocket
@@ -24,7 +23,7 @@ public:
 	/**
 	@brief Open a socket and make it ready for listening
 	*/
-	UDPListener(int port, bool v6support);
+	UDPListener(int port);
 	
 	/**
 	@brief close the socket and DELETE all connections
