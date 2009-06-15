@@ -2513,7 +2513,6 @@ bool CGame::Update()
 	{
 		UpdateUI(false);
 		sound->Update();
-		sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
 	}
 
 	net->Update();
@@ -2708,8 +2707,10 @@ bool CGame::Draw() {
 
 	if(lastSimFrame!=gs->frameNum) {
 		CInputReceiver::CollectGarbage();
-		if(!skipping)
+		if(!skipping) {
 			water->Update();
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+		}
 		lastSimFrame=gs->frameNum;
 	}
 
