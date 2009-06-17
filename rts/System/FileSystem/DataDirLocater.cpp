@@ -139,29 +139,15 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 	// Note: we check for executable bit otherwise we can't browse the directory
 	// Note: we fail to test whether the path actually is a directory
 	// Note: modifying permissions while or after this function runs has undefined behaviour
-#ifndef _WIN32
-	if (access(d->path.c_str(), R_OK | X_OK | F_OK) == 0) {
-		// Note: disallow multiple write directories.
-		// There isn't really a use for it as every thing is written to the first one anyway,
-		// and it may give funny effects on errors, e.g. it probably only gives funny things
-		// like network mounted datadir lost connection and suddenly files end up in some
-		// other random writedir you didn't even remember you had added it.
-		if (!writedir && access(d->path.c_str(), W_OK) == 0) {
+	if (FileSystemHandler::GetInstance().DirExists(d->path))
+	{
+		if (!writedir && FileSystemHandler::GetInstance().DirIsWritable(d->path))
+		{
 			d->writable = true;
 			writedir = &*d;
 		}
 		return true;
 	}
-#else
-	if (_access(d->path.c_str(), 4) == 0
-			&& FileSystemHandler::GetInstance().DirIsWritable(d->path)) {
-		if (!writedir) {
-			d->writable = true;
-			writedir = &*d;
-		}
-		return true;
-	}
-#endif
 	else {
 		if (filesystem.CreateDirectory(d->path)) {
 			// it didn't exist before, now it does and we just created it with rw access,
