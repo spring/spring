@@ -11,6 +11,10 @@
 #include "Exceptions.h"
 #include "float3.h"
 
+/**
+ * Used to parse TDF Config files.
+ * An example of such a file is script.txt.
+ */
 class TdfParser
 {
 public:
@@ -58,20 +62,20 @@ public:
 
 
 	/**
-		*  Retreive a specific value from the file and returns it, returns the specified default value if not found.
-		*  @param defaultvalue
-		*  @param location location of value.
-		*  @return returns the value on success, default otherwise.
-		*/
+	 * Retreive a specific value from the file and returns it, returns the specified default value if not found.
+	 * @param defaultvalue
+	 * @param location location of value.
+	 * @return returns the value on success, default otherwise.
+	 */
 	std::string SGetValueDef(std::string const& defaultvalue, std::string const& location) const;
 
 
 	/**
-		*  Retreive a specific value from the file and returns it.
-		*  @param value string to store value in.
-		*  @param location location of value in the form "section\\section\\ ... \\name".
-		*  @return returns true on success, false otherwise and error message in value.
-		*/
+	 * Retreive a specific value from the file and returns it.
+	 * @param value string to store value in.
+	 * @param location location of value in the form "section\\section\\ ... \\name".
+	 * @return returns true on success, false otherwise and error message in value.
+	 */
 	bool SGetValue(std::string &value, std::string const& location) const;
 	template <typename T>
 	bool GetValue(T& val, const std::string& location) const
@@ -106,11 +110,11 @@ public:
 	};
 
 	/**
-		*  Treat the value as a vector and fill out vec with the items.
-		*  @param location location of value in the form "section\\section\\ ... \\name".
-		*  @param vec reference to a vector to store items in.
-		*  @return returns number of items found.
-		*/
+	 * Treat the value as a vector and fill out vec with the items.
+	 * @param location location of value in the form "section\\section\\ ... \\name".
+	 * @param vec reference to a vector to store items in.
+	 * @return returns number of items found.
+	 */
 	template<typename T>
 	int GetVector(std::vector<T> &vec, std::string const& location) const
 	{
@@ -133,7 +137,6 @@ public:
 	const std::map<std::string, std::string>& GetAllValues(std::string const& location) const;
 	std::vector<std::string> GetSectionList(std::string const& location) const;
 	bool SectionExist(std::string const& location) const;
-//	void Test();
 
 	template<typename T>
 	void ParseArray(std::string const& value, T *array, int length) const
@@ -146,7 +149,6 @@ public:
 			stream >> array[i];
 			//char slask;
 			//stream >> slask;
-
 		}
 	}
 
@@ -164,7 +166,10 @@ public:
 		value = SGetValueDef(defvalue, key);
 	}
 
-	//Retreive a value into value, or use defvalue if it does not exist (templeted defvalue version of GetDef)
+	/**
+	 * Retreive a value into value, or use defvalue if it does not exist
+	 * (templeted defvalue version of GetDef)
+	 */
 	template<typename T>
 	void GetTDef(T& value, const T& defvalue, const std::string& key) const
 	{
@@ -194,4 +199,4 @@ public:
 	float3 GetFloat3(float3 def, std::string const& location) const;
 };
 
-#endif /* SUNPARSER_H */
+#endif /* TDFPARSER_H_INCLUDED */
