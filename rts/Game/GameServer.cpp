@@ -1102,7 +1102,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		{
 			allReady = false;
 			break;
-		} else if (teams[players[a].team].active && !teams[players[a].team].readyToStart && !demoReader)
+		} else if (!players[a].spectator && teams[players[a].team].active && !teams[players[a].team].readyToStart && !demoReader)
 		{
 			allReady = false;
 			break;
