@@ -1,5 +1,5 @@
-#ifndef TDF_GRAMMAR_HPP_INCLUDED
-#define TDF_GRAMMAR_HPP_INCLUDED 
+#ifndef NTAI_TDF_GRAMMAR_HPP_INCLUDED
+#define NTAI_TDF_GRAMMAR_HPP_INCLUDED
 #include <map>
 #include <iostream>
 #include <string>
@@ -15,7 +15,7 @@
 #include <boost/spirit/iterator/position_iterator.hpp>
 #include <boost/spirit/phoenix/binders.hpp>
 #include <boost/spirit/error_handling/exceptions.hpp>
-//#include "TdfParser.h"
+//#include "NTAI_TdfParser.h"
 
 namespace ntai {
 	/**
@@ -144,5 +144,5 @@ namespace ntai {
 	};
 
 }
-#endif
+#endif // NTAI_TDF_GRAMMAR_HPP_INCLUDED
 

@@ -65,7 +65,7 @@ typedef boost::mutex::scoped_lock scoped_lock;
 // helpers
 
 #include "../Helpers/grid/CGridManager.h"					// Grid values/map class
-#include "../Helpers/TdfParser.h"							// Parses TDF files
+#include "../Helpers/NTAI_TdfParser.h"						// Parses TDF files
 #include "../Helpers/mtrand.h"								// random number generator
 
 #include "../Units/CUnitTypeData.h"							// Holder for unit type specific data

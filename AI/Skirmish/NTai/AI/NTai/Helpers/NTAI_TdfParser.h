@@ -1,5 +1,5 @@
-#ifndef TDFPARSER_H_INCLUDED
-#define TDFPARSER_H_INCLUDED
+#ifndef NTAI_TDFPARSER_H_INCLUDED
+#define NTAI_TDFPARSER_H_INCLUDED
 //
 //////////////////////////////////////////////////////////////////////
 
@@ -110,4 +110,4 @@ namespace ntai {
 	};
 }
 
-#endif /* TDFPARSER_H */
+#endif /* NTAI_TDFPARSER_H_INCLUDED */

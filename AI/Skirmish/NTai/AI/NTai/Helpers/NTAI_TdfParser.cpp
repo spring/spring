@@ -13,7 +13,7 @@
 
 #include "../Core/include.h"
 
-#include "tdf_grammar.hpp"
+#include "NTAI_tdf_grammar.hpp"
 
 using boost::spirit::parse;
 using boost::spirit::space_p;
