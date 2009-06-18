@@ -288,8 +288,11 @@ bool FileSystemHandler::FileExists(const std::string& file)
 bool FileSystemHandler::DirExists(const std::string& dir)
 {
 #ifdef _WIN32
+	std::string str = dir; // this _stat seems to require striped backslashes
+	while(str.length()>0 && str[str.length()-1] == '\\')
+		str = str.substr(0, str.length()-1);
 	struct _stat info;
-	return (_stat(dir.c_str(), &info) == 0 && (info.st_mode&_S_IFDIR));
+	return (_stat(str.c_str(), &info) == 0) && (info.st_mode & _S_IFDIR);
 #else
 	struct stat info;
 	return (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode));
