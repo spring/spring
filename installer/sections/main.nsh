@@ -251,5 +251,15 @@ ${EndIf}
 
   ; Demofile file association
   !insertmacro APP_UNASSOCIATE "sdf" "spring.demofile"
+  
+  MessageBox MB_YESNO|MB_ICONQUESTION "Do you want me to completely remove all spring related files?$\n\
+  All maps, mods, screenshots and your settings will be removed. $\n\
+  CAREFULL: ALL CONTENTS OF YOUR SPRING INSTALLATION DIRECTORY WILL BE REMOVED!"
+  ID_YES skip_purge
+  RmDir /r "$INSTDIR"
+  Delete "$LOCALAPPDATA\springsettings.cfg"
+  Delete "$APPDATA\springlobby.conf"
+
+skip_purge:
 
 !endif
