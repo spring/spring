@@ -15,8 +15,17 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "StdAfx.h"
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
 #include <boost/asio.hpp>
+
+#ifndef _MSC_VER
+#include "StdAfx.h"
+#endif
 
 #include "OSCStatsSender.h"
 #include "Sim/Misc/TeamHandler.h"

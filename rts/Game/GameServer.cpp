@@ -1,4 +1,15 @@
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
+#include "Net/UDPListener.h"
+#include "Net/UDPConnection.h"
+
+#ifndef _MSC_VER
 #include "StdAfx.h"
+#endif
 
 #include <stdarg.h>
 #include <ctime>
@@ -14,8 +25,6 @@
 #endif
 #include <stdlib.h> // why is this here?
 
-#include "Net/UDPListener.h"
-#include "Net/UDPConnection.h"
 #include "Net/Connection.h"
 #include "mmgr.h"
 #include "ExternalAI/SkirmishAIKey.h"
