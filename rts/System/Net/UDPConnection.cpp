@@ -1,11 +1,20 @@
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
+#include "Socket.h"
+
+#ifndef _MSC_VER
 #include "StdAfx.h"
+#endif
+
 #include "UDPConnection.h"
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "mmgr.h"
-
-#include "Socket.h"
 
 #include "ProtocolDef.h"
 #include "Exception.h"

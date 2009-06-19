@@ -1,11 +1,20 @@
-#include "StdAfx.h"
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
+#include "Net/Socket.h" 
+
+#ifndef _MSC_VER
+#	include "StdAfx.h"
+#endif
 
 #include "AutohostInterface.h"
 
 #include <string.h>
 #include <vector>
 #include "mmgr.h"
-#include "Net/Socket.h" 
 
 namespace {
 

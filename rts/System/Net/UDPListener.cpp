@@ -1,5 +1,14 @@
-#include "StdAfx.h"
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
 #include "UDPListener.h"
+
+#ifndef _MSC_VER
+#include "StdAfx.h"
+#endif
 
 #include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>

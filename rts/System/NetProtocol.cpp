@@ -1,11 +1,21 @@
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
+#include "Net/UDPConnection.h"
+
+#ifndef _MSC_VER
 #include "StdAfx.h"
+#endif
+
 #include <SDL_timer.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "mmgr.h"
 
-#include "Net/UDPConnection.h"
 #include "Net/LocalConnection.h"
 #include "NetProtocol.h"
 
