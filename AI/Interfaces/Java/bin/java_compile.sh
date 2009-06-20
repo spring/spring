@@ -8,7 +8,7 @@ THIS_DIR=$(dirname ${0})
 HOME_DIR=$(cd ${THIS_DIR}; cd ..; pwd)
 
 JAVA_PKG_FIRST_PART=com
-JAVA_PKG=${JAVA_PKG_FIRST_PART}/clan_sy/spring/ai
+JAVA_PKG=${JAVA_PKG_FIRST_PART}/springrts/ai
 
 ##############################################
 ### do not change anything below this line ###

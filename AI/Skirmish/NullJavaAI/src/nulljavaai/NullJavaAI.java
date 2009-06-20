@@ -18,9 +18,9 @@
 package nulljavaai;
 
 
-import com.clan_sy.spring.ai.*;
-import com.clan_sy.spring.ai.event.*;
-import com.clan_sy.spring.ai.command.*;
+import com.springrts.ai.*;
+import com.springrts.ai.event.*;
+import com.springrts.ai.command.*;
 
 import com.sun.jna.Pointer;
 import java.text.DateFormat;

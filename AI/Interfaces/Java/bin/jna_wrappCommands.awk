@@ -29,7 +29,7 @@ BEGIN {
 	javaSrcRoot = "../java/src";
 	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
-	myPkgA = "com.clan_sy.spring.ai";
+	myPkgA = "com.springrts.ai";
 	#myClass = "AICallback";
 	aiFloat3Class = "AIFloat3";
 	myPkgD = convertJavaNameFormAToD(myPkgA);

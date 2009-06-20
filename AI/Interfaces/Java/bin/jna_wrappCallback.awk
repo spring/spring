@@ -31,7 +31,7 @@ BEGIN {
 	javaSrcRoot = "../java/src";
 	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
-	myPkgA = "com.clan_sy.spring.ai";
+	myPkgA = "com.springrts.ai";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
 	myInterface = "AICallback";
 	myDefaultClass = "DefaultAICallback";

@@ -31,7 +31,7 @@
 	<property name="jar.file.name" value="AIInterface"/>
 	<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
 	<property name="jar.file.name.src" value="${jar.file.name}-src.jar"/>
-	<property name="java.pkg.dir" value="com/clan_sy/spring/ai"/>
+	<property name="java.pkg.dir" value="com/springrts/ai"/>
 
 	<property name="spring.ai.interface.home"
 			location="${spring.home}/rts/ExternalAI/Interface"/>

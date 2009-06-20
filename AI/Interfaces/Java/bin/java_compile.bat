@@ -4,7 +4,7 @@ REM Compiles and packages the Java sources
 REM
 
 SET JAVA_PKG_FIRST_PART=com
-SET JAVA_PKG=%JAVA_PKG_FIRST_PART%/clan_sy/spring/ai
+SET JAVA_PKG=%JAVA_PKG_FIRST_PART%/springrts/ai
 
 ##############################################
 ### do not change anything below this line ###

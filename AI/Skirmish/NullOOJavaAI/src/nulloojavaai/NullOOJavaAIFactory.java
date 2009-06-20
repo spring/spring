@@ -18,7 +18,7 @@
 package nulloojavaai;
 
 
-import com.clan_sy.spring.ai.oo.*;
+import com.springrts.ai.oo.*;
 
 /**
  * Serves as Interface for a Java Skirmish AIs for the Spring engine.
