@@ -1,9 +1,9 @@
-// A minimal client example using the new syntax
+// A minimal client example
 // If spring is started as client, it needs the following information to work properly
 
 [GAME]
 {
-	HostIP=xxx.xxx.xxx.xxx;
+	HostIP=xxx.xxx.xxx.xxx; // can also be IPv6, e.g. HostIP=fe80::1;
 	HostPort=xxx;       // standard is 8452
 	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select and should be prefered
 
@@ -11,7 +11,7 @@
 	IsHost=0;           // tell the engine this is a client
 }
 
-// A host example (or client using the old syntax)
+// A host example
 // note that the same values for clients also need to be set here
 [GAME]
 {
@@ -23,14 +23,14 @@
 	Demofile=demo.sdf;  // if set this game is a multiplayer demo replay
 	Savefile=save.ssf;  // if set this game is a continuation of a saved game
 
-	HostIP=xxx.xxx.xxx.xxx; // you normally won't set this as host
-	HostPort=xxx;       // usually 8452
-	SourcePort=0;       // set this if you want a different source port (as client, no effect for host)
+	HostIP=xxx.xxx.xxx.xxx; // no effect as host
+	HostPort=xxx;       // where clients are going to connet to, usually 8452
+	SourcePort=0;       // no effect for host
 	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
 
 	MyPlayerName=somename; // our ingame-name (needs to match one players Name= field)
 
-	IsHost=x;           // 0: no server will be started in this instance
+	IsHost=1;           // 0: no server will be started in this instance
 	                    // 1: start a server
 	NumPlayers=x;       // not mandatory, but can be used for debugging purposes
 	NumTeams=y;         // same here, set this to check if the script is right
