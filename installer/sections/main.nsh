@@ -5,7 +5,6 @@
 
   ; Main stuff
   File "..\game\spring.exe"
-  ; File "..\game\spring.def"
   File "..\game\unitsync.dll"
   CreateDirectory "$INSTDIR\maps"
   CreateDirectory "$INSTDIR\mods"
@@ -31,8 +30,6 @@
   Delete "$INSTDIR\MSVCP71.dll"
   Delete "$INSTDIR\MSVCR71.dll"
 
-  ; Delete Previous settings.exe
-  Delete "..\game\settings.exe"
   File "..\external\SelectionEditor.exe"
   Delete "$INSTDIR\settingstemplate.xml"
 
@@ -138,6 +135,7 @@ ${EndIf}
   Delete "$INSTDIR\spring.exe"
   Delete "$INSTDIR\spring.def"
   Delete "$INSTDIR\unitsync.dll"
+  Delete "$INSTDIR\TASServer.jar"
   Delete "$INSTDIR\PALETTE.PAL"
   Delete "$INSTDIR\SelectionEditor.exe"
   Delete "$INSTDIR\selectkeys.txt"
@@ -145,7 +143,6 @@ ${EndIf}
   Delete "$INSTDIR\cmdcolors.txt"
   Delete "$INSTDIR\ctrlpanel.txt"
   Delete "$INSTDIR\teamcolors.lua"
-  ;Delete "$INSTDIR\settings.exe"
 
   ;New Settings Program
   Delete "$INSTDIR\springsettings.exe"
@@ -198,7 +195,7 @@ ${EndIf}
   RmDir "$INSTDIR\AI\Skirmish"
 
   RmDir "$INSTDIR\AI\Helper-libs"
-  RmDir "$INSTDIR\AI"
+  RmDir /r "$INSTDIR\AI"
 
   ; AI Interfaces
 !macro DeleteAIInterface aiIntName
@@ -214,15 +211,6 @@ ${EndIf}
   !insertmacro DeleteAIInterface "C"
   !insertmacro DeleteAIInterface "Java"
 
-  ; Startscript
-  Delete "$INSTDIR\startscripts\aistartscripttest.lua"
-  Delete "$INSTDIR\startscripts\cmdrscript.lua"
-  Delete "$INSTDIR\startscripts\missionhelper.lua"
-  Delete "$INSTDIR\startscripts\missiontest.lua"
-  Delete "$INSTDIR\startscripts\ordertroops.lua"
-  Delete "$INSTDIR\startscripts\testscript.lua"
-  RmDir "$INSTDIR\startscripts"
-
   ; base content
   Delete "$INSTDIR\base\spring\bitmaps.sdz"
   Delete "$INSTDIR\base\springcontent.sdz"
@@ -231,22 +219,15 @@ ${EndIf}
   RmDir "$INSTDIR\base\spring"
   RmDir "$INSTDIR\base"
 
-  ; XTA from previous installer
-  Delete "$INSTDIR\mods\XTAPE.sdz"
-
   ; Generated stuff from the installer
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
   Delete "$INSTDIR\uninst.exe"
 
   ; Generated stuff from running spring
-  Delete "$INSTDIR\ArchiveCacheV4.txt"
-  Delete "$INSTDIR\ArchiveCacheV5.txt"
-  Delete "$INSTDIR\ArchiveCacheV6.txt"
   Delete "$INSTDIR\ArchiveCacheV7.lua"
   Delete "$INSTDIR\unitsync.log"
   Delete "$INSTDIR\infolog.txt"
   Delete "$INSTDIR\ext.txt"
-  Delete "$INSTDIR\demos\test.sdf"
   RmDir "$INSTDIR\demos"
 
   ; Demofile file association
