@@ -15,7 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package com.clan_sy.spring.ai;
+package com.springrts.ai;
 
 
 import com.sun.jna.Structure;

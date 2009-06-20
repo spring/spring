@@ -29,7 +29,7 @@ BEGIN {
 	javaSrcRoot = "../java/src";
 	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
-	myPkgA = "com.clan_sy.spring.ai";
+	myPkgA = "com.springrts.ai";
 	aiFloat3Class = "AIFloat3";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
 
@@ -81,8 +81,8 @@ function printOOAIHeader(outFile, clsName) {
 	print("") >> outFile;
 	print("") >> outFile;
 	print("import java.util.Properties;") >> outFile;
-	print("import com.clan_sy.spring.ai.AICommand;") >> outFile;
-	print("import com.clan_sy.spring.ai.AIFloat3;") >> outFile;
+	print("import com.springrts.ai.AICommand;") >> outFile;
+	print("import com.springrts.ai.AIFloat3;") >> outFile;
 	print("") >> outFile;
 	print("/**") >> outFile;
 	print(" *") >> outFile;
@@ -112,11 +112,11 @@ function printOOAIFactoryHeader(outFile) {
 	print("package " myPkgOOA ";") >> outFile;
 	print("") >> outFile;
 	print("") >> outFile;
-	print("import com.clan_sy.spring.ai.AI;") >> outFile;
-	print("import com.clan_sy.spring.ai.AICallback;") >> outFile;
-	print("import com.clan_sy.spring.ai.AICommand;") >> outFile;
-	print("import com.clan_sy.spring.ai.AICommandWrapper;") >> outFile;
-	print("import com.clan_sy.spring.ai.event.*;") >> outFile;
+	print("import com.springrts.ai.AI;") >> outFile;
+	print("import com.springrts.ai.AICallback;") >> outFile;
+	print("import com.springrts.ai.AICommand;") >> outFile;
+	print("import com.springrts.ai.AICommandWrapper;") >> outFile;
+	print("import com.springrts.ai.event.*;") >> outFile;
 	print("import com.sun.jna.Pointer;") >> outFile;
 	print("import java.util.Map;") >> outFile;
 	print("import java.util.HashMap;") >> outFile;

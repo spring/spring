@@ -3,7 +3,7 @@
 # This awk script creates a Java class in OO style to wrapp the C style
 # JNA based AI Callback wrapper.
 # In other words, the output of this file wrapps:
-# com/clan_sy/spring/ai/AICallback.java
+# com/springrts/ai/AICallback.java
 # which wrapps:
 # rts/ExternalAI/Interface/SSkirmishAICallback.h
 #
@@ -36,7 +36,7 @@ BEGIN {
 	javaSrcRoot = "../java/src";
 	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
-	myParentPkgA = "com.clan_sy.spring.ai";
+	myParentPkgA = "com.springrts.ai";
 	myPkgA = myParentPkgA ".oo";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
 	myClass = "OOAICallback";

@@ -1172,9 +1172,9 @@ static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallba
 	if (g_cls_aiCallback == NULL) {
 		// get the AI Callback class
 #ifdef _WIN32
-		static const char* const aiCallbackClassName = "com/clan_sy/spring/ai/Win32AICallback";
+		static const char* const aiCallbackClassName = "com/springrts/ai/Win32AICallback";
 #else
-		static const char* const aiCallbackClassName = "com/clan_sy/spring/ai/DefaultAICallback";
+		static const char* const aiCallbackClassName = "com/springrts/ai/DefaultAICallback";
 #endif
 
 		g_cls_aiCallback = java_findClass(env, aiCallbackClassName);

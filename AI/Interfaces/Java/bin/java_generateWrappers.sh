@@ -11,7 +11,7 @@
 SPRING_SOURCE=../../../../rts
 MY_SOURCE_JAVA=../java/src
 GENERATED_SOURCE_DIR=../java/generated
-JAVA_PKG=com/clan_sy/spring/ai
+JAVA_PKG=com/springrts/ai
 
 # using the default awk flavor of the system
 # you may want to change this to one of the following:
