@@ -897,10 +897,9 @@ int CAICallback::GetMapHeight()
 	return gs->mapy;
 }
 
-extern string stupidGlobalMapname;
 const char* CAICallback::GetMapName ()
 {
-	return stupidGlobalMapname.c_str();
+	return gameSetup->mapName.c_str();
 }
 
 const char* CAICallback::GetModName()

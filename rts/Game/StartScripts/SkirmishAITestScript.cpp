@@ -20,9 +20,6 @@
 #include "Exceptions.h"
 
 
-extern std::string stupidGlobalMapname;
-
-
 CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIKey& k, const std::map<std::string, std::string>& opts):
 	CScript(
 		std::string("Skirmish AI test: ")
@@ -72,7 +69,7 @@ void CSkirmishAITestScript::GameStart(void)
 		throw content_error ("Unable to load a commander for the first side");
 	}
 
-	MapParser mapParser(stupidGlobalMapname);
+	MapParser mapParser(gameSetup->mapName);
 	if (!mapParser.IsValid()) {
 		throw content_error("MapParser: " + mapParser.GetErrorLog());
 	}

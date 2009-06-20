@@ -31,8 +31,6 @@
 #include "GlobalUnsynced.h"
 #include "Exceptions.h"
 
-extern std::string stupidGlobalMapname;
-
 CLoadSaveHandler::CLoadSaveHandler(void)
 {}
 

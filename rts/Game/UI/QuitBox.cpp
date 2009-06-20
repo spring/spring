@@ -9,6 +9,7 @@
 #include "NetProtocol.h"
 #include "QuitBox.h"
 #include "Game/PlayerHandler.h"
+#include "Game/GameSetup.h"
 #include "LoadSaveHandler.h"
 #include "TimeUtil.h"
 #include "FileSystem/FileSystem.h"
@@ -17,7 +18,6 @@
 #include "Rendering/GL/myGL.h"
 
 extern bool globalQuit;
-extern std::string stupidGlobalMapname; // see Game/PreGame.cpp
 
 CQuitBox::CQuitBox(void)
 {
@@ -259,12 +259,12 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		if (InBox(mx,my,box+saveBox)) {
 			if (filesystem.CreateDirectory("Saves")) {
 				std::string timeStr = CTimeUtil::GetCurrentTimeStr();
-				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + stupidGlobalMapname);
+				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + gameSetup->mapName);
 				saveFileName = "Saves/" + saveFileName + ".ssf";
 				if (filesystem.GetFilesize(saveFileName) == 0) {
 					logOutput.Print("Saving game to %s\n", saveFileName.c_str());
 					CLoadSaveHandler ls;
-					ls.mapName = stupidGlobalMapname;
+					ls.mapName = gameSetup->mapName;
 					ls.modName = modInfo.filename;
 					ls.SaveGame(saveFileName);
 				} else {

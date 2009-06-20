@@ -15,6 +15,7 @@
 
 #include "Map/Ground.h"
 #include "Game/SelectedUnits.h"
+#include "Game/GameSetup.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
 
@@ -45,8 +46,6 @@ const unsigned int PATHOPT_OBSOLETE = 128;
 const unsigned int PATHESTIMATOR_VERSION = 41;
 const float PATHCOST_INFINITY = 10000000;
 const int SQUARES_TO_UPDATE = 600;
-
-extern std::string stupidGlobalMapname;
 
 
 /*
@@ -728,7 +727,7 @@ bool CPathEstimator::ReadFile(std::string name)
 	char hashString[50];
 	sprintf(hashString, "%u", hash);
 
-	std::string filename = std::string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
+	std::string filename = std::string("maps/paths/") + gameSetup->mapName.substr(0, gameSetup->mapName.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 
 	// open file for reading from a suitable location (where the file exists)
 	CArchiveZip* pfile = new CArchiveZip(filesystem.LocateFile(filename));
@@ -779,7 +778,7 @@ void CPathEstimator::WriteFile(std::string name) {
 	char hashString[50];
 	sprintf(hashString,"%u",hash);
 
-	std::string filename = std::string("maps/paths/") + stupidGlobalMapname.substr(0, stupidGlobalMapname.find_last_of('.') + 1) + hashString + "." + name + ".zip";
+	std::string filename = std::string("maps/paths/") + gameSetup->mapName.substr(0, gameSetup->mapName.find_last_of('.') + 1) + hashString + "." + name + ".zip";
 	zipFile file;
 
 	// open file for writing in a suitable location

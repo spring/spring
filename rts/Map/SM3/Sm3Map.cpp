@@ -17,6 +17,7 @@
 
 #include "terrain/TerrainNode.h"
 #include "Game/Camera.h"
+#include "Game/GameSetup.h"
 
 #include <stdexcept>
 #include <fstream>
@@ -26,8 +27,7 @@
 // FIXME - temporary, until the LuaParser change is done
 static const TdfParser& GetMapDefParser()
 {
-	extern std::string stupidGlobalMapname;
-	static TdfParser tdf(MapParser::GetMapConfigName(stupidGlobalMapname));
+	static TdfParser tdf(MapParser::GetMapConfigName(gameSetup->mapName));
 	return tdf;
 }
 
