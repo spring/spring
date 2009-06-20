@@ -70,6 +70,7 @@ void COSCStatsSender::SetEnabled(bool enabled) {
 			oscOutputBuffer = new char[OSC_OUTPUT_BUFFER_SIZE];
 			oscPacker = new osc::OutboundPacketStream(oscOutputBuffer,
 					OSC_OUTPUT_BUFFER_SIZE);
+			network = new NetStruct;
 			network->outSocket = new boost::asio::ip::udp::socket(netcode::netservice, boost::asio::ip::udp::endpoint(boost::asio::ip::address_v6::any(), 0));
 			boost::asio::socket_base::broadcast option(true);
 			network->outSocket->set_option(option);
@@ -85,6 +86,7 @@ void COSCStatsSender::SetEnabled(bool enabled) {
 			network->outSocket = NULL;
 			delete network->destination;
 			network->destination = NULL;
+			delete network;
 			delete [] oscOutputBuffer;
 			oscOutputBuffer = NULL;
 		}
@@ -102,7 +104,6 @@ COSCStatsSender* COSCStatsSender::GetInstance() {
 		unsigned int dstPort = configHandler->Get(
 				"OscStatsSenderDestinationPort", (unsigned int) 6447);
 		COSCStatsSender::singleton = new COSCStatsSender(dstAddress, dstPort);
-		COSCStatsSender::singleton->network = new NetStruct;
 	}
 
 	return COSCStatsSender::singleton;

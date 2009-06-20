@@ -90,7 +90,7 @@ private:
 	std::string dstAddress;
 	unsigned int dstPort;
 	struct NetStruct;
-	NetStruct * network;
+	NetStruct* network;
 	char* oscOutputBuffer;
 	osc::OutboundPacketStream* oscPacker;
 };
