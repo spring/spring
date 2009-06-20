@@ -46,8 +46,6 @@ using netcode::RawPacket;
 
 extern boost::uint8_t* keys;
 extern bool globalQuit;
-std::string stupidGlobalMapname;
-
 
 CPreGame::CPreGame(const ClientSetup* setup) :
 		settings(setup),
@@ -415,7 +413,6 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);
 	LogObject() << "Using map " << gameData->GetMap() << "\n";
-	stupidGlobalMapname = gameData->GetMap();
 
 	if (net && net->GetDemoRecorder()) {
 		net->GetDemoRecorder()->SetName(gameData->GetMap());

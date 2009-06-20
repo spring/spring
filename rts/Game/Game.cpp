@@ -169,7 +169,6 @@ extern gmlClientServer<void, int,CUnit*> *gmlProcessor;
 extern boost::uint8_t *keys;
 extern bool globalQuit;
 extern bool fullscreen;
-extern string stupidGlobalMapname;
 
 CGame* game = NULL;
 
@@ -1259,7 +1258,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "savegame"){
 		if (filesystem.CreateDirectory("Saves")) {
 			CLoadSaveHandler ls;
-			ls.mapName = stupidGlobalMapname;
+			ls.mapName = gameSetup->mapName;
 			ls.modName = modInfo.filename;
 			ls.SaveGame("Saves/QuickSave.ssf");
 		}
@@ -1958,7 +1957,7 @@ bool CGame::ActionPressed(const Action& action,
 			if (filesystem.GetFilesize(savename)==0 || saveoverride) {
 				logOutput.Print("Saving game to %s\n",savename.c_str());
 				CLoadSaveHandler ls;
-				ls.mapName = stupidGlobalMapname;
+				ls.mapName = gameSetup->mapName;
 				ls.modName = modInfo.filename;
 				ls.SaveGame(savename);
 			} else {

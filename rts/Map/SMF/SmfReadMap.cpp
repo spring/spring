@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "SmfReadMap.h"
+
 #include "mapfile.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GL/myGL.h"
@@ -13,6 +14,7 @@
 #include "Platform/errorhandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
+#include "Game/GameSetup.h"
 #include "bitops.h"
 #include "mmgr.h"
 #include "Util.h"
@@ -64,8 +66,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	float3::maxzpos=gs->mapy*SQUARE_SIZE-1;
 
 	heightmap=new float[(gs->mapx+1)*(gs->mapy+1)];
-
-	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
 
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;

@@ -34,6 +34,7 @@ using std::fclose;
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Game/GameHelper.h"
+#include "Game/GameSetup.h"
 #include "Map/MapInfo.h"
 #include "Map/MetalMap.h"
 #include "FileSystem/FileSystem.h"
@@ -567,11 +568,10 @@ bool CResourceMapAnalyzer::LoadResourceMap() {
 }
 
 
-extern std::string stupidGlobalMapname; // see Game/PreGame.cpp
 std::string CResourceMapAnalyzer::GetCacheFileName() const {
 
 	const CResource* resource = resourceHandler->GetResource(ResourceId);
-	std::string absFile = CACHE_BASE + stupidGlobalMapname + resource->name;
+	std::string absFile = CACHE_BASE + gameSetup->mapName + resource->name;
 
 	return absFile;
 }
