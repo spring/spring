@@ -126,7 +126,11 @@ const std::vector<int>& PlayerRoster::GetIndices(int* count, bool pathinfo) cons
 		int& c = *count;
 		for (c = 0; c < playerHandler->ActivePlayers(); c++) {
 			const CPlayer* p = playerHandler->Player(players[c]);
-			if ((p == NULL) || !p->active && !(pathinfo && p->ping == PATHING_FLAG && gs->frameNum == 0)) {
+			if ((p == NULL) ||
+				(!p->active &&
+					!(pathinfo &&
+					  p->ping == PATHING_FLAG &&
+					  gs->frameNum == 0))) {
 				break;
 			}
 		}
