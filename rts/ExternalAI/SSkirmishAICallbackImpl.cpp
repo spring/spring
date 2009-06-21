@@ -1362,9 +1362,9 @@ EXPORT(SAIFloat3) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0findClosestBuild
 			.toSAIFloat3();
 }
 
-EXPORT(int) skirmishAiCallback_Map_0MULTI1SIZE0Point(int teamId) {
+EXPORT(int) skirmishAiCallback_Map_0MULTI1SIZE0Point(int teamId, bool includeAllies) {
 	return team_callback[teamId]->GetMapPoints(tmpPointMarkerArr[teamId],
-			TMP_ARR_SIZE);
+			TMP_ARR_SIZE, includeAllies);
 }
 EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Point_getPosition(int teamId, int pointId) {
 	return tmpPointMarkerArr[teamId][pointId].pos.toSAIFloat3();
@@ -1379,9 +1379,9 @@ EXPORT(const char*) skirmishAiCallback_Map_Point_getLabel(int teamId, int pointI
 	return tmpPointMarkerArr[teamId][pointId].label;
 }
 
-EXPORT(int) skirmishAiCallback_Map_0MULTI1SIZE0Line(int teamId) {
+EXPORT(int) skirmishAiCallback_Map_0MULTI1SIZE0Line(int teamId, bool includeAllies) {
 	return team_callback[teamId]->GetMapLines(tmpLineMarkerArr[teamId],
-			TMP_ARR_SIZE);
+			TMP_ARR_SIZE, includeAllies);
 }
 EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Line_getFirstPosition(int teamId, int lineId) {
 	return tmpLineMarkerArr[teamId][lineId].pos.toSAIFloat3();
