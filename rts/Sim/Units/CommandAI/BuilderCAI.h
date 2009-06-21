@@ -32,12 +32,16 @@ public:
 	                                      bool recNonRez,   // reclaims non resurrectable only
 	                                      bool recEnemy);   // reclaims enemy units only
 	bool FindResurrectableFeatureAndResurrect(const float3& pos, float radius,
-	                                          unsigned char options);
+	                                          unsigned char options,
+											  bool freshOnly); // reclaims only corpses that have rez progress or all the metal left
 	void FinishCommand(void);
 	bool FindRepairTargetAndRepair(const float3& pos, float radius,
-	                               unsigned char options, bool attackEnemy);
+	                               unsigned char options, 
+								   bool attackEnemy, 
+								   bool builtOnly); // skips units that are under construction
 	bool FindCaptureTargetAndCapture(const float3& pos, float radius,
-	                                 unsigned char options);
+	                                 unsigned char options,
+									 bool healthyOnly); // only capture units with capture progress or 100% health remaining
 
 	void ExecutePatrol(Command &c);
 	void ExecuteFight(Command &c);
