@@ -680,7 +680,7 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
 
 	/*
 	// this method does not work without a path-owner
-	// todo: add an alternate GPL() callback for this?
+	// TODO: add an alternate GPL() callback for this?
 	bool      haveNextWP = true;
 	float3    currWP     = start;
 	float3    nextWP     = start;
@@ -1596,66 +1596,94 @@ float3 CAICallback::GetMousePos() {
 }
 
 
-int CAICallback::GetMapPoints(PointMarker *pm, int maxPoints)
+int CAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies)
 {
-	int a=0;
+	int pm_size = 0;
+
 	verify();
 
-	if (gu->myAllyTeam != teamHandler->AllyTeam(team)) {
-		return 0;
+	// If the AI is not in the local players ally team,
+	// the draw information for the AIs ally team will not be available
+	// for cheating prevention.
+	/*if (gu->myAllyTeam != teamHandler->AllyTeam(team)) {
+		return pm_size;
+	}*/
+
+	std::list<unsigned char*> includeColors;
+	// include out team color
+	includeColors.push_back(teamHandler->Team(team)->color);
+	// include the team colors of all our allies
+	for (int t=0; t < teamHandler->ActiveTeams(); ++t) {
+		if (teamHandler->AlliedTeams(team, t)) {
+			includeColors.push_back(teamHandler->Team(t)->color);
+		}
 	}
 
-	for (size_t i=0; i < inMapDrawer->numQuads; i++) {
-		if (!inMapDrawer->drawQuads[i].points.empty()) {
-			for (std::list<CInMapDraw::MapPoint>::iterator mp =
-					inMapDrawer->drawQuads[i].points.begin();
-					mp != inMapDrawer->drawQuads[i].points.end(); ++mp) {
-				if (mp->color==teamHandler->Team(team)->color) {
-					// TODO: Maybe add code, so that markers of your
-					// ally team would be found aswell?
-					pm[a].pos=mp->pos;
-					pm[a].color=mp->color;
-					pm[a].label=mp->label.c_str();
-					if (++a == maxPoints) {
-						return a;
-					}
+	std::list<CInMapDraw::MapPoint>* points = NULL;
+	std::list<CInMapDraw::MapPoint>::const_iterator point;
+	std::list<unsigned char*>::const_iterator ic;
+	for (size_t i=0; i < inMapDrawer->numQuads && pm_size < pm_sizeMax; i++) {
+		points = &(inMapDrawer->drawQuads[i].points);
+		for (point = points->begin(); point != points->end()
+				&& pm_size < pm_sizeMax; ++point) {
+			for (ic = includeColors.begin(); ic != includeColors.end(); ++ic) {
+				if (point->color == *ic) {
+					pm[pm_size].pos   = point->pos;
+					pm[pm_size].color = point->color;
+					pm[pm_size].label = point->label.c_str();
+					pm_size++;
+					break;
 				}
 			}
 		}
 	}
 
-	return a;
+	return pm_size;
 }
 
-int CAICallback::GetMapLines(LineMarker *lm, int maxLines)
+int CAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies)
 {
-	int a=0;
+	int lm_size = 0;
+
 	verify();
 
-	if (gu->myAllyTeam != teamHandler->AllyTeam(team)) {
-		return 0;
+	// If the AI is not in the local players ally team,
+	// the draw information for the AIs ally team will not be available
+	// for cheating prevention.
+	/*if (gu->myAllyTeam != teamHandler->AllyTeam(team)) {
+		return lm_size;
+	}*/
+
+	std::list<unsigned char*> includeColors;
+	// include out team color
+	includeColors.push_back(teamHandler->Team(team)->color);
+	// include the team colors of all our allies
+	for (int t=0; t < teamHandler->ActiveTeams(); ++t) {
+		if (teamHandler->AlliedTeams(team, t)) {
+			includeColors.push_back(teamHandler->Team(t)->color);
+		}
 	}
 
-	for (size_t i=0; i < inMapDrawer->numQuads; i++) {
-		if (!inMapDrawer->drawQuads[i].points.empty()) {
-			for (std::list<CInMapDraw::MapLine>::const_iterator ml =
-					inMapDrawer->drawQuads[i].lines.begin();
-					ml != inMapDrawer->drawQuads[i].lines.end(); ++ml) {
-				if (ml->color==teamHandler->Team(team)->color) {
-					// TODO: Maybe add code, so that markers of your
-					// ally team would be found aswell?
-					lm[a].pos=ml->pos;
-					lm[a].color=ml->color;
-					lm[a].pos2=ml->pos2;
-					if (++a == maxLines) {
-						return a;
-					}
+	std::list<CInMapDraw::MapLine>* lines = NULL;
+	std::list<CInMapDraw::MapLine>::const_iterator line;
+	std::list<unsigned char*>::const_iterator ic;
+	for (size_t i=0; i < inMapDrawer->numQuads && lm_size < lm_sizeMax; i++) {
+		lines = &(inMapDrawer->drawQuads[i].lines);
+		for (line = lines->begin(); line != lines->end()
+				&& lm_size < lm_sizeMax; ++line) {
+			for (ic = includeColors.begin(); ic != includeColors.end(); ++ic) {
+				if (line->color == *ic) {
+					lm[lm_size].pos   = line->pos;
+					lm[lm_size].pos2  = line->pos2;
+					lm[lm_size].color = line->color;
+					lm_size++;
+					break;
 				}
 			}
 		}
 	}
 
-	return a;
+	return lm_size;
 }
 
 

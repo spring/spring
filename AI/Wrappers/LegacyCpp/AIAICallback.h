@@ -167,8 +167,8 @@ public:
 
 	virtual int GetSelectedUnits(int* unitIds, int unitIds_max);
 	virtual float3 GetMousePos();
-	virtual int GetMapPoints(PointMarker* pm, int maxPoints);
-	virtual int GetMapLines(LineMarker* lm, int maxLines);
+	virtual int GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies);
+	virtual int GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies);
 
 	virtual float GetMetal();
 	virtual float GetMetalIncome();
