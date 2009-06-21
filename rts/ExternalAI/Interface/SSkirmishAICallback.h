@@ -432,8 +432,8 @@ int (CALLING_CONV *Clb_UnitDef_getArmorType)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMode)(int teamId,
 		int unitDefId);
 /**
- * The unit takes less damage when attacked from this direction
- * -> encourage flanking fire TODO: REVIEW THIS DOC-COMMENT
+ * The unit takes less damage when attacked from this direction.
+ * This encourage flanking fire.
  */
 struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_FlankingBonus_getDir)(int teamId,
 		int unitDefId);
