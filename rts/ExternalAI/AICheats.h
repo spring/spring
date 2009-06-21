@@ -46,6 +46,7 @@ public:
 	bool IsUnitParalyzed(int unitId);
 
 	bool OnlyPassiveCheats();
+	static bool IsPassive();
 	void EnableCheatEvents(bool enable);
 
 	bool GetProperty(int unit, int property, void* dst);
