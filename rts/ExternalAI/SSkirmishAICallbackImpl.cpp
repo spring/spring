@@ -18,6 +18,7 @@
 #include "IGlobalAICallback.h"
 #include "IAICallback.h"
 #include "IAICheats.h"
+#include "AICheats.h" // only for: CAICheats::IsPassive()
 #include "IAILibraryManager.h"
 #include "SSkirmishAICallbackImpl.h"
 #include "SkirmishAILibraryInfo.h"
@@ -853,11 +854,7 @@ EXPORT(bool) skirmishAiCallback_Cheats_setEventsEnabled(int teamId, bool enabled
 }
 
 EXPORT(bool) skirmishAiCallback_Cheats_isOnlyPassive(int teamId) {
-	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->OnlyPassiveCheats();
-	} else {
-		return true; //TODO: is this correct?
-	}
+	return CAICheats::IsPassive();
 }
 
 EXPORT(int) skirmishAiCallback_Game_getAiInterfaceVersion(int teamId) {

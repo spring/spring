@@ -29,6 +29,10 @@ CAICheats::~CAICheats(void)
 
 bool CAICheats::OnlyPassiveCheats()
 {
+	return IsPassive();
+}
+bool CAICheats::IsPassive()
+{
 	if (!gameServer) {
 		// if we are NOT server, cheats will cause desync
 		return true;
