@@ -42,6 +42,7 @@
 #include "FileSystem/FileHandler.h"
 #include "ConfigHandler.h"
 #include "LogOutput.h"
+#include "Exceptions.h"
 #include "Util.h"
 #include "mmgr.h"
 
@@ -365,6 +366,16 @@ bool FileSystemHandler::DirIsWritable(const std::string& dir)
 #endif
 }
 
+void FileSystemHandler::Chdir(const std::string& dir)
+{
+#ifndef _WIN32
+	const int err = chdir(dir.c_str());
+#else
+	const int err = _chdir(StripTrailingSlashes(dir).c_str());
+#endif
+	if (err)
+		throw content_error("Could not chdir into SPRING_DATADIR");
+}
 
 static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, int flags)
 {
