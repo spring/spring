@@ -87,10 +87,16 @@ IF( NOT DEFINED ENV{JDK_HOME} AND
 						IF( java_link_found )
 							# get the file to where the link points to
 							STRING( REGEX REPLACE ".* symbolic link to[^/.]+([^'`´]+).*" "\\1" out_regex "${out_tmp}" )
-							# get the links parent dir
-							STRING( REGEX REPLACE "(.*)\\/[^/]+$" "\\1" java_bin_dir ${java_bin} )
-							# make the link absolute, if it is relative
-							FIND_FILE( out_absolute "${out_regex}" "${java_bin_dir}" )
+							# check if the link is absolute
+							STRING( REGEX REPLACE "^\\/.*$" "true" out_regex_is_absolute "${out_regex}" )
+							IF( "${out_regex_is_absolute}" STREQUAL "true" )
+								SET( out_absolute "${out_regex}" )
+							ELSE( "${out_regex_is_absolute}" STREQUAL "true" )
+								# get the links parent dir
+								STRING( REGEX REPLACE "(.*)\\/[^/]+$" "\\1" java_bin_dir "${java_bin}" )
+								# make the link absolute, if it is relative
+								FIND_FILE( out_absolute NAMES "${out_regex}" PATHS "${java_bin_dir}" )
+							ENDIF( "${out_regex_is_absolute}" STREQUAL "true" )
 							IF( NOT JAVA_FIND_QUIETLY )
 								MESSAGE( STATUS "Java binary ${java_bin} is a symbolic link to ${out_regex}" )
 							ENDIF()
