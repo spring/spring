@@ -50,6 +50,12 @@
 
 FileSystem filesystem;
 
+std::string StripTrailingSlashes(std::string path)
+{
+	while (!path.empty() && (path.at(path.length()-1) == '\\' || path.at(path.length()-1) == '/'))
+		path = path.substr(0, path.length()-1);
+	return path;
+}
 
 ////////////////////////////////////////
 ////////// FileSystemHandler
@@ -191,7 +197,7 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 bool FileSystemHandler::IsReadableFile(const std::string& file) const
 {
 #ifdef WIN32
-	return (_access(file.c_str(), 4) == 0);
+	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
 #else
 	return (access(file.c_str(), R_OK | F_OK) == 0);
 #endif
@@ -237,7 +243,6 @@ bool FileSystemHandler::IsAbsolutePath(const std::string& path)
 #endif
 }
 
-
 /**
  * @brief creates a rwxr-xr-x dir in the writedir
  *
@@ -263,7 +268,7 @@ bool FileSystemHandler::mkdir(const std::string& dir) const
 #ifndef _WIN32
 	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
 #else
-	if (::_mkdir(dir.c_str()) == 0)
+	if (::_mkdir(StripTrailingSlashes(dir).c_str()) == 0)
 #endif
 	{
 		return true;
@@ -294,7 +299,7 @@ bool FileSystemHandler::FileExists(const std::string& file)
 {
 #ifdef _WIN32
 	struct _stat info;
-	const int ret = _stat(file.c_str(), &info);
+	const int ret = _stat(StripTrailingSlashes(file).c_str(), &info);
 	if ((ret == 0 && (info.st_mode & _S_IFREG)))
 #else
 	struct stat info;
@@ -311,11 +316,8 @@ bool FileSystemHandler::FileExists(const std::string& file)
 bool FileSystemHandler::DirExists(const std::string& dir)
 {
 #ifdef _WIN32
-	std::string str = dir; // this _stat seems to require striped backslashes
-	while(str.length()>0 && str[str.length()-1] == '\\')
-		str = str.substr(0, str.length()-1);
 	struct _stat info;
-	const int ret = _stat(str.c_str(), &info);
+	const int ret = _stat(StripTrailingSlashes(dir).c_str(), &info);
 	if ((ret == 0) && (info.st_mode & _S_IFDIR))
 #else
 	struct stat info;
