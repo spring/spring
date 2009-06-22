@@ -270,7 +270,7 @@ bool FileSystemHandler::mkdir(const std::string& dir) const
 	}
 	else
 	{
-		logOutput.Print(std::string(strerror(errno)));
+		logOutput.Print("Could not create directory %s: %s", dir.c_str(), strerror(errno));
 		// Otherwise we return false.
 		return false;
 	}
@@ -284,7 +284,7 @@ bool FileSystemHandler::DeleteFile(const std::string& file)
 	}
 	else
 	{
-		logOutput.Print(std::string(strerror(errno)));
+		logOutput.Print("Could not delete file %s: %s", file.c_str(), strerror(errno));
 		// Otherwise we return false.
 		return false;
 	}
@@ -294,20 +294,24 @@ bool FileSystemHandler::FileExists(const std::string& file)
 {
 #ifdef _WIN32
 	struct _stat info;
-	if ((_stat(file.c_str(), &info) == 0 && (info.st_mode & _S_IFREG)))
+	const int ret = _stat(file.c_str(), &info);
+	if ((ret == 0 && (info.st_mode & _S_IFREG)))
 #else
 	struct stat info;
-	if ((stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode)))
+	const int ret = stat(file.c_str(), &info);
+	if ((ret == 0 && !S_ISDIR(info.st_mode)))
 #endif
 	{
 		return true;
 	}
-	else
+	else if (ret == -1)
 	{
-		logOutput.Print(std::string(strerror(errno)));
+		logOutput.Print("Error statting file %s: %s", file.c_str(), strerror(errno));
 		// Otherwise we return false.
 		return false;
 	}
+	else
+		return false;
 }
 
 bool FileSystemHandler::DirExists(const std::string& dir)
@@ -317,11 +321,24 @@ bool FileSystemHandler::DirExists(const std::string& dir)
 	while(str.length()>0 && str[str.length()-1] == '\\')
 		str = str.substr(0, str.length()-1);
 	struct _stat info;
-	return (_stat(str.c_str(), &info) == 0) && (info.st_mode & _S_IFDIR);
+	const int ret = _stat(str.c_str(), &info);
+	if ((ret == 0) && (info.st_mode & _S_IFDIR))
 #else
 	struct stat info;
-	return (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode));
+	const int ret = stat(dir.c_str(), &info);
+	if ((ret == 0) && S_ISDIR(info.st_mode))
 #endif
+	{
+		return true;
+	}
+	else if (ret == -1)
+	{
+		logOutput.Print("Error statting directory %s: %s", dir.c_str(), strerror(errno));
+		// Otherwise we return false.
+		return false;
+	}
+	else
+		return false;
 }
 
 
