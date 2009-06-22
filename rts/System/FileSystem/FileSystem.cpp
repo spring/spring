@@ -304,12 +304,6 @@ bool FileSystemHandler::FileExists(const std::string& file)
 	{
 		return true;
 	}
-	else if (ret == -1)
-	{
-		logOutput.Print("Error statting file %s: %s", file.c_str(), strerror(errno));
-		// Otherwise we return false.
-		return false;
-	}
 	else
 		return false;
 }
@@ -328,15 +322,7 @@ bool FileSystemHandler::DirExists(const std::string& dir)
 	const int ret = stat(dir.c_str(), &info);
 	if ((ret == 0) && S_ISDIR(info.st_mode))
 #endif
-	{
 		return true;
-	}
-	else if (ret == -1)
-	{
-		logOutput.Print("Error statting directory %s: %s", dir.c_str(), strerror(errno));
-		// Otherwise we return false.
-		return false;
-	}
 	else
 		return false;
 }
