@@ -18,6 +18,8 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string.h>
+#include <errno.h>
 #ifndef _WIN32
 	#include <dirent.h>
 	#include <sstream>
@@ -263,26 +265,49 @@ bool FileSystemHandler::mkdir(const std::string& dir) const
 #else
 	if (::_mkdir(dir.c_str()) == 0)
 #endif
+	{
 		return true;
-
-	// Otherwise we return false.
-	return false;
+	}
+	else
+	{
+		logOutput.Print(std::string(strerror(errno)));
+		// Otherwise we return false.
+		return false;
+	}
 }
 
 bool FileSystemHandler::DeleteFile(const std::string& file)
 {
-	return remove(file.c_str()) == 0;
+	if (remove(file.c_str()) == 0)
+	{
+		return true;
+	}
+	else
+	{
+		logOutput.Print(std::string(strerror(errno)));
+		// Otherwise we return false.
+		return false;
+	}
 }
 
 bool FileSystemHandler::FileExists(const std::string& file)
 {
 #ifdef _WIN32
 	struct _stat info;
-	return (_stat(file.c_str(), &info) == 0 && (info.st_mode & _S_IFREG));
+	if ((_stat(file.c_str(), &info) == 0 && (info.st_mode & _S_IFREG)))
 #else
 	struct stat info;
-	return (stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode));
+	if ((stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode)))
 #endif
+	{
+		return true;
+	}
+	else
+	{
+		logOutput.Print(std::string(strerror(errno)));
+		// Otherwise we return false.
+		return false;
+	}
 }
 
 bool FileSystemHandler::DirExists(const std::string& dir)
