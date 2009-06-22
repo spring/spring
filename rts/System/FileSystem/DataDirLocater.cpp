@@ -346,13 +346,8 @@ void DataDirLocater::LocateDataDirs()
 	// all AIs still just assume it's ok to put their stuff in the current directory after all
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writedir == current working directory
-#ifndef _WIN32
-	int err = chdir(GetWriteDir()->path.c_str());
-	if (err)
-		throw content_error("Could not chdir into SPRING_DATADIR");
-#else
-	_chdir(GetWriteDir()->path.c_str());
-#endif
+	FileSystemHandler::GetInstance().Chdir(GetWriteDir()->path.c_str());
+
 	// Initialize the log. Only after this moment log will be written to file.
 	logOutput.Initialize();
 	// Logging MAY NOT start before the chdir, otherwise the logfile ends up

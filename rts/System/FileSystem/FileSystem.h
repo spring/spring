@@ -46,6 +46,7 @@ public:
 	/// oddly, this is non-trivial on Windows
 	static bool DirIsWritable(const std::string& dir);
 
+	void Chdir(const std::string& dir);
 	/**
 	 * Returns true if path matches regex ...
 	 * on windows:          ^[a-zA-Z]\:[\\/]?$
