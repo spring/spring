@@ -1,5 +1,10 @@
 Spring change log
 
+0.79.1.2:
+Bugfixes:
+ - fix game not starting with AIs, and their wrong startpositions
+ - fix the detection of writable directories on win vista+
+
 0.79.1.1:
 Bugfixes:
  - fix microlags and increased CPU usage for dedicated server
