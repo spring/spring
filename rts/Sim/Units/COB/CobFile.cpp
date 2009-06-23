@@ -12,6 +12,7 @@
 #include "Platform/byteorder.h"
 #include "Util.h"
 
+
 //The following structure is taken from http://visualta.tauniverse.com/Downloads/ta-cob-fmt.txt
 //Information on missing fields from Format_Cob.pas
 typedef struct tagCOBHeader
@@ -31,6 +32,7 @@ typedef struct tagCOBHeader
 	int OffsetToSoundNameArray;		// These two are only found in TA:K scripts
 	int NumberOfSounds;
 } COBHeader;
+
 
 #define READ_COBHEADER(ch,src)						\
 do {									\
@@ -111,7 +113,7 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 
 	for (int i = 0; i < ch.NumberOfScripts; ++i) {
 		int ofs;
-		
+
 		ofs = *(int *)&cobdata[ch.OffsetToScriptNameOffsetArray + i * 4];
 		ofs = swabdword(ofs);
 		const string s = &cobdata[ofs];
@@ -181,70 +183,25 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 		scriptMap[scriptNames[i]] = i;
 	}
 
-	//Map common function names to indicies
-	scriptIndex.resize(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs));
-	scriptIndex[COBFN_Create]        = getFunctionId("Create");
-	scriptIndex[COBFN_StartMoving]   = getFunctionId("StartMoving");
-	scriptIndex[COBFN_StopMoving]    = getFunctionId("StopMoving");
-	scriptIndex[COBFN_Activate]      = getFunctionId("Activate");
-	scriptIndex[COBFN_Killed]        = getFunctionId("Killed");
-	scriptIndex[COBFN_Deactivate]    = getFunctionId("Deactivate");
-	scriptIndex[COBFN_SetDirection]  = getFunctionId("SetDirection");
-	scriptIndex[COBFN_SetSpeed]      = getFunctionId("SetSpeed");
-	scriptIndex[COBFN_RockUnit]      = getFunctionId("RockUnit");
-	scriptIndex[COBFN_HitByWeapon]   = getFunctionId("HitByWeapon");
-	scriptIndex[COBFN_MoveRate0]     = getFunctionId("MoveRate0");
-	scriptIndex[COBFN_MoveRate1]     = getFunctionId("MoveRate1");
-	scriptIndex[COBFN_MoveRate2]     = getFunctionId("MoveRate2");
-	scriptIndex[COBFN_MoveRate3]     = getFunctionId("MoveRate3");
-	scriptIndex[COBFN_SetSFXOccupy]  = getFunctionId("setSFXoccupy");
-	scriptIndex[COBFN_HitByWeaponId] = getFunctionId("HitByWeaponId");
-
-
-	// Also add the weapon aiming stuff
-	for (int i = 0; i < COB_MaxWeapons; ++i) {
-		char buf[15];
-		sprintf(buf, "Weapon%d", i + 1);
-		string weapon(buf);
-		sprintf(buf, "%d", i + 1);
-		string weapnum(buf);
-		scriptIndex[COBFN_QueryPrimary   + i] = getFunctionId("Query"   + weapon);
-		scriptIndex[COBFN_AimPrimary     + i] = getFunctionId("Aim"     + weapon);
-		scriptIndex[COBFN_AimFromPrimary + i] = getFunctionId("AimFrom" + weapon);
-		scriptIndex[COBFN_FirePrimary    + i] = getFunctionId("Fire"    + weapon);
-		scriptIndex[COBFN_EndBurst       + i] = getFunctionId("EndBurst"     + weapnum);
-		scriptIndex[COBFN_Shot           + i] = getFunctionId("Shot"         + weapnum);
-		scriptIndex[COBFN_BlockShot      + i] = getFunctionId("BlockShot"    + weapnum);
-		scriptIndex[COBFN_TargetWeight   + i] = getFunctionId("TargetWeight" + weapnum);
-
-		// If new-naming functions are not found, we need to support the old naming scheme
-		if (i > 2) {
-			continue;
+	//Map common function names to indices
+	const std::map<string, int>& nameMap = CUnitScriptNames::GetScriptMap();
+	scriptIndex.resize(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1);
+	for (std::map<string, int>::const_iterator it = nameMap.begin(); it != nameMap.end(); ++it) {
+		int fn = GetFunctionId(it->first);
+		if (fn >= 0) {
+			scriptIndex[it->second] = fn;
 		}
-		switch (i) {
-			case 0: { weapon = "Primary";   break; }
-			case 1: { weapon = "Secondary"; break; }
-			case 2: { weapon = "Tertiary";  break; }
-		}
-
-		if (scriptIndex[COBFN_QueryPrimary + i] == -1)
-			scriptIndex[COBFN_QueryPrimary + i] = getFunctionId("Query" + weapon);
-		if (scriptIndex[COBFN_AimPrimary + i] == -1)
-			scriptIndex[COBFN_AimPrimary + i] = getFunctionId("Aim" + weapon);
-		if (scriptIndex[COBFN_AimFromPrimary + i] == -1)
-			scriptIndex[COBFN_AimFromPrimary + i] = getFunctionId("AimFrom" + weapon);
-		if (scriptIndex[COBFN_FirePrimary + i] == -1)
-			scriptIndex[COBFN_FirePrimary + i] = getFunctionId("Fire" + weapon);
 	}
 }
 
-CCobFile::~CCobFile(void)
+
+CCobFile::~CCobFile()
 {
-	//test
 	delete[] code;
 }
 
-int CCobFile::getFunctionId(const string &name)
+
+int CCobFile::GetFunctionId(const string &name)
 {
 	std::map<std::string, int>::iterator i;
 	if ((i = scriptMap.find(name)) != scriptMap.end()) {

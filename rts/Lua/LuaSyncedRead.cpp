@@ -4549,16 +4549,13 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CCobInstance* cob = unit->cob;
-	if (cob == NULL) {
-		return 0;
-	}
+	const CUnitScript* script = unit->script;
 
 	if (!lua_isnumber(L, 2)) {
 		// return the whole script->piece map
 		lua_newtable(L);
-		for (size_t sp = 0; sp < cob->pieces.size(); sp++) {
-			const int piece = cob->ScriptToModel(sp);
+		for (size_t sp = 0; sp < script->pieces.size(); sp++) {
+			const int piece = script->ScriptToModel(sp);
 			if (piece != -1) {
 				lua_pushnumber(L, sp);
 				lua_pushnumber(L, piece + 1);
@@ -4569,7 +4566,7 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	}
 
 	const int scriptPiece = lua_toint(L, 2);
-	const int piece = cob->ScriptToModel(scriptPiece);
+	const int piece = script->ScriptToModel(scriptPiece);
 	if (piece < 0) {
 		return 0;
 	}
@@ -4585,10 +4582,7 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
-		return 0;
-	}
-	const vector<LocalModelPiece*>& pieces = unit->cob->pieces;
+	const vector<LocalModelPiece*>& pieces = unit->script->pieces;
 
 	lua_newtable(L);
 	for (size_t sp = 0; sp < pieces.size(); sp++) {
@@ -4610,14 +4604,11 @@ int LuaSyncedRead::GetCOBUnitVar(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
-		return 0;
-	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::UNIT_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::UNIT_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = unit->cob->GetUnitVars()[varID];
+	const int value = unit->script->GetUnitVars()[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4638,10 +4629,10 @@ int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
 		return 0;
 	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::TEAM_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::TEAM_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetTeamVars(teamID)[varID];
+	const int value = CUnitScript::GetTeamVars(teamID)[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4663,10 +4654,10 @@ int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
 		return 0;
 	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::ALLY_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::ALLY_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetAllyVars(allyTeamID)[varID];
+	const int value = CUnitScript::GetAllyVars(allyTeamID)[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4680,10 +4671,10 @@ int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
 int LuaSyncedRead::GetCOBGlobalVar(lua_State* L)
 {
 	const int varID = luaL_checkint(L, 1);
-	if ((varID < 0) || (varID >= CCobInstance::GLOBAL_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::GLOBAL_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetGlobalVars()[varID];
+	const int value = CUnitScript::GetGlobalVars()[varID];
 	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));

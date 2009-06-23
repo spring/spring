@@ -40,6 +40,7 @@
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/LuaUnitScript.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "EventHandler.h"
 #include "LogOutput.h"
@@ -62,10 +63,8 @@ static const LuaHashString unsyncedStr("UNSYNCED");
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order,
-                                   LuaCobCallback callback,
-                                   const string& msgPrefix)
-: CLuaHandle(_name, _order, false, callback),
+CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order, const string& msgPrefix)
+: CLuaHandle(_name, _order, false),
   messagePrefix(msgPrefix),
   allowChanges(false),
   allowUnsafeChanges(false),
@@ -77,6 +76,8 @@ CLuaHandleSynced::CLuaHandleSynced(const string& _name, int _order,
 
 CLuaHandleSynced::~CLuaHandleSynced()
 {
+	// kill all unitscripts running in this handle
+	CLuaUnitScript::HandleFreed(this);
 }
 
 
@@ -673,27 +674,6 @@ string CLuaHandleSynced::GetSyncData()
 	lua_pop(L, 1);
 
 	return syncData;
-}
-
-
-void CLuaHandleSynced::SendCallbacks()
-{
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
-	const int count = (int)cobCallbackEntries.size();
-	for (int cb = 0; cb < count; cb++) {
-		static const LuaHashString cmdStr("CobCallback");
-		if (!cmdStr.GetGlobalFunc(L)) {
-			return;
-		}
-		const CobCallbackData& cbd = cobCallbackEntries[cb];
-		lua_pushnumber(L, cbd.retCode);
-		lua_pushnumber(L, cbd.unitID);
-		lua_pushnumber(L, cbd.floatData);
-		// call the routine
-		RunCallIn(cmdStr, 3, 0);
-	}
-	cobCallbackEntries.clear();
 }
 
 

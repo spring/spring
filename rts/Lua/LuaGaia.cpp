@@ -76,7 +76,7 @@ bool CLuaGaia::SetConfigString(const string& cfg)
 /******************************************************************************/
 
 CLuaGaia::CLuaGaia()
-: CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA, CobCallback, ".luagaia ")
+: CLuaHandleSynced("LuaGaia", LUA_HANDLE_ORDER_GAIA, ".luagaia ")
 {
 	luaGaia = this;
 
@@ -127,17 +127,6 @@ bool CLuaGaia::AddUnsyncedCode()
 	lua_pop(L, 1);
 
 	return true;
-}
-
-
-/******************************************************************************/
-
-void CLuaGaia::CobCallback(int retCode, void* p1, void* p2)
-{
-	if (luaGaia) {
-		CobCallbackData cbd(retCode, *((int*)&p1), *((float*)&p2));
-		luaGaia->cobCallbackEntries.push_back(cbd);
-	}
 }
 
 

@@ -111,6 +111,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/COB/CobEngine.h"
 #include "Sim/Units/COB/CobFile.h"
+#include "Sim/Units/COB/UnitScriptEngine.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -1969,6 +1970,9 @@ bool CGame::ActionPressed(const Action& action,
 		if (action.extra == "sound")
 			sound->PrintDebugInfo();
 	}
+	else if (cmd == "benchmark-script") {
+		CUnitScript::BenchmarkScript(action.extra);
+	}
 	else if (cmd == "atm" ||
 #ifdef DEBUG
 			cmd == "desync" ||
@@ -3177,6 +3181,7 @@ void CGame::SimFrame() {
 	ph->Update();
 	featureHandler->Update();
 	GCobEngine.Tick(33);
+	GUnitScriptEngine.Tick(33);
 	wind.Update();
 	loshandler->Update();
 
@@ -3959,8 +3964,9 @@ void CGame::UpdateUI(bool cam)
 
 		std::vector<int> args;
 		args.push_back(0);
-		owner->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-		float3 relPos = owner->cob->GetPiecePos(args[0]);
+		// FIXME: SYNCED SCRIPT CODE CALLED IN UNSYNCED CONTEXT
+		const int piece = owner->script->AimFromWeapon(0);
+		float3 relPos = owner->script->GetPiecePos(piece);
 		float3 pos = owner->pos + owner->frontdir * relPos.z
 			+ owner->updir    * relPos.y
 			+ owner->rightdir * relPos.x;
@@ -4568,21 +4574,26 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("Unknown unit name");
 		return;
 	}
-	const CCobFile* oldScript = GCobEngine.GetScriptAddr(udef->scriptPath);
+	const CCobFile* oldScript = GCobFileHandler.GetScriptAddr(udef->scriptPath);
 	if (oldScript == NULL) {
 		logOutput.Print("Unknown cob script: %s", udef->scriptPath.c_str());
 		return;
 	}
-	CCobFile* newScript = &GCobEngine.ReloadCobFile(udef->scriptPath);
+	CCobFile* newScript = GCobFileHandler.ReloadCobFile(udef->scriptPath);
+	if (newScript == NULL) {
+		logOutput.Print("Could not load COB script from: %s", udef->scriptPath.c_str());
+		return;
+	}
 	int count = 0;
 	for (size_t i = 0; i < uh->MaxUnits(); i++) {
 		CUnit* unit = uh->units[i];
 		if (unit != NULL) {
-			if (unit->cob->GetScriptAddr() == oldScript) {
+			CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+			if (cob != NULL && cob->GetScriptAddr() == oldScript) {
 				count++;
-				delete unit->cob;
-				unit->cob = new CCobInstance(*newScript, unit);
-				unit->cob->Call("Create");
+				delete unit->script;
+				unit->script = new CCobInstance(*newScript, unit);
+				unit->script->Create();
 			}
 		}
 	}

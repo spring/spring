@@ -13,7 +13,6 @@
 #include "Matrix44f.h"
 #include "Vec2.h"
 
-class CCobInstance;
 class CCommandAI;
 class CGroup;
 class CLoadSaveInterface;
@@ -411,9 +410,8 @@ public:
 #if defined(USE_GML) && GML_ENABLE_SIM
 	unsigned lastUnitUpdate;
 #endif
-	S3DModel *model;
-	LocalModel *localmodel;
-	CCobInstance *cob;
+	S3DModel* model;
+	LocalModel* localmodel;
 	CUnitScript* script;
 
 	std::string tooltip;
@@ -498,9 +496,6 @@ public:
 
 	/// max speed of the unit
 	float maxSpeed;
-
-	/// percentage of weapondamage to use when hit by weapon (set by script callbak
-	float weaponHitMod;
 
 	// unsynced calls
 	void SetLODCount(unsigned int count);

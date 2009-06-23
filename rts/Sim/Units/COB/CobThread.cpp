@@ -220,7 +220,6 @@ int CCobThread::Tick(int deltaTime)
 	}
 
 	state = Run;
-	GCobEngine.SetCurThread(this);
 
 	int r1, r2, r3, r4, r5, r6;
 	vector<int> args;
@@ -259,7 +258,6 @@ int CCobThread::Tick(int deltaTime)
 				wakeTime = GCurrentTime + r1;
 				state = Sleep;
 				GCobEngine.AddThread(this);
-				GCobEngine.SetCurThread(NULL);
 
 #if COB_DEBUG > 0
 				if (COB_DEBUG_FILTER)
@@ -290,7 +288,6 @@ int CCobThread::Tick(int deltaTime)
 #endif
 
 					state = Dead;
-					GCobEngine.SetCurThread(NULL);
 					//callStack.pop_back();
 					//Leave values intact on stack in case caller wants to check them
 					return -1;
@@ -647,9 +644,8 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				//logOutput.Print("Waiting for turn on piece %s around axis %d", script.pieceNames[r1].c_str(), r2);
-				if (owner->AddTurnListener(r1, r2, this)) {
+				if (owner->AddAnimListener(CCobInstance::ATurn, r1, r2, this)) {
 					state = WaitTurn;
-					GCobEngine.SetCurThread(NULL);
 					return 0;
 				}
 				else
@@ -658,9 +654,8 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				r2 = GET_LONG_PC();
 				//logOutput.Print("Waiting for move on piece %s on axis %d", script.pieceNames[r1].c_str(), r2);
-				if (owner->AddMoveListener(r1, r2, this)) {
+				if (owner->AddAnimListener(CCobInstance::AMove, r1, r2, this)) {
 					state = WaitMove;
-					GCobEngine.SetCurThread(NULL);
 					return 0;
 				}
 				break;
@@ -724,7 +719,7 @@ int CCobThread::Tick(int deltaTime)
 				r1 = GET_LONG_PC();
 				int i;
 				for (i = 0; i < COB_MaxWeapons; ++i)
-					if (callStack.back().functionId == script.scriptIndex[COBFN_FirePrimary + i])
+					if (callStack.back().functionId == script.scriptIndex[COBFN_FirePrimary + COBFN_Weapon_Funcs * i])
 						break;
 
 				// If true, we are in a Fire-script and should show a special flare effect
@@ -745,27 +740,23 @@ int CCobThread::Tick(int deltaTime)
 					ei++;
 				}
 				state = Dead;
-				GCobEngine.SetCurThread(NULL);
 				return -1;
-				break;
 		}
-
 	}
 
-	GCobEngine.SetCurThread(NULL);
 	return 0;
 }
 
 // Shows an errormessage which includes the current state of the script interpreter
-void CCobThread::ShowError(const string& msg, bool warning)
+void CCobThread::ShowError(const string& msg)
 {
 	static int spamPrevention = 100;
 	if (spamPrevention < 0) return;
 	--spamPrevention;
 	if (callStack.size() == 0)
-		logOutput.Print("%s: %s outside script execution (?)", warning?"CobWarning":"CobError", msg.c_str());
+		logOutput.Print("CobError: %s outside script execution (?)", msg.c_str());
 	else
-		logOutput.Print("%s: %s (in %s:%s at %x)", warning?"CobWarning":"CobError", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
+		logOutput.Print("CobError: %s (in %s:%s at %x)", msg.c_str(), script.name.c_str(), script.scriptNames[callStack.back().functionId].c_str(), PC - 1);
 }
 
 string CCobThread::GetOpcodeName(int opcode)
@@ -963,3 +954,18 @@ void CCobThread::LuaCall()
 /******************************************************************************/
 /******************************************************************************/
 
+
+void CCobThread::AnimFinished(CUnitScript::AnimType type, int piece, int axis)
+{
+	//Not sure how to do this more cleanly.. Will probably rewrite it
+	if (state == CCobThread::WaitMove || state == CCobThread::WaitTurn) {
+		state = CCobThread::Run;
+		GCobEngine.AddThread(this);
+	}
+	else if (state == CCobThread::Dead) {
+		delete this;
+	}
+	else {
+		logOutput.Print("CobError: Turn/move listenener in strange state %d", state);
+	}
+}

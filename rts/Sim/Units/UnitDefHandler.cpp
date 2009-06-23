@@ -28,7 +28,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
-#include "COB/CobFile.h"
+#include "Sim/Units/COB/UnitScriptNames.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
 #include "Sound/Sound.h"
@@ -867,7 +867,7 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
 	if (!sound->HasSoundItem(fileName))
 	{
 		string soundFile = "sounds/" + fileName;
-	
+
 		if (soundFile.find(".wav") == string::npos) {
 			// .wav extension missing, add it
 			soundFile += ".wav";
