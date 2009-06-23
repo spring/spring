@@ -314,40 +314,44 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 void CSound::StartThread(int maxSounds)
 {
+	try
 	{
-		boost::mutex::scoped_lock lck(soundMutex);
-
-		// Generate sound sources
-		for (int i = 0; i < maxSounds; i++)
 		{
-			SoundSource* thenewone = new SoundSource();
-			if (thenewone->IsValid())
+			boost::mutex::scoped_lock lck(soundMutex);
+
+			// Generate sound sources
+			for (int i = 0; i < maxSounds; i++)
 			{
-				sources.push_back(thenewone);
+				SoundSource* thenewone = new SoundSource();
+				if (thenewone->IsValid())
+				{
+					sources.push_back(thenewone);
+				}
+				else
+				{
+					maxSounds = i-1;
+					LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+					delete thenewone;
+					break;
+				}
 			}
-			else
-			{
-				maxSounds = i-1;
-				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
-				delete thenewone;
-				break;
-			}
+
+			// Set distance model (sound attenuation)
+			alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+			//alDopplerFactor(1.0);
+
+			alListenerf(AL_GAIN, masterVolume);
 		}
 
-		// Set distance model (sound attenuation)
-		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
-		//alDopplerFactor(1.0);
-
-		alListenerf(AL_GAIN, masterVolume);
+		while (true) {
+			boost::this_thread::sleep(boost::posix_time::millisec(50)); // sleep
+			boost::mutex::scoped_lock lck(soundMutex); // lock
+			Update(); // call update
+		}
 	}
-
-	while (true) {
-		boost::this_thread::sleep(boost::posix_time::millisec(50));
-		boost::this_thread::interruption_point();
-
-		boost::mutex::scoped_lock lck(soundMutex);
-
-		Update();
+	catch(boost::thread_interrupted const&)
+	{
+		// do cleanup here
 	}
 }
 
