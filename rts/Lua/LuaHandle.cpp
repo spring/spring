@@ -55,8 +55,7 @@ int CLuaHandle::activeReadAllyTeam = CEventClient::NoAccessTeam;
 /******************************************************************************/
 /******************************************************************************/
 
-CLuaHandle::CLuaHandle(const string& _name, int _order,
-                       bool _userMode, LuaCobCallback callback)
+CLuaHandle::CLuaHandle(const string& _name, int _order, bool _userMode)
 : CEventClient(_name, _order, false), // FIXME
   userMode   (_userMode),
   killMe     (false),
@@ -66,7 +65,6 @@ CLuaHandle::CLuaHandle(const string& _name, int _order,
 #else
   printTracebacks(false),
 #endif
-  cobCallback(callback),
   callinErrors(0)
 {
 	L = lua_open();
@@ -199,7 +197,7 @@ int CLuaHandle::SetupTraceback()
 }
 
 
-bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex)
+int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback)
 {
 	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
@@ -212,16 +210,34 @@ bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int out
 			lua_remove(L, errfuncIndex);
 		}
 	} else {
-		logOutput.Print("%s::RunCallIn: error = %i, %s, %s\n", GetName().c_str(), error,
-		                hs.GetString().c_str(), lua_tostring(L, -1));
+		traceback = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		if (errfuncIndex != 0)
 			lua_remove(L, errfuncIndex);
 		// log only errors that lead to a crash
 		callinErrors += (error == 2);
+	}
+	return error;
+}
+
+
+bool CLuaHandle::RunCallInTraceback(const LuaHashString& hs, int inArgs, int outArgs, int errfuncIndex)
+{
+	std::string traceback;
+	const int error = RunCallInTraceback(inArgs, outArgs, errfuncIndex, traceback);
+
+	if (error != 0) {
+		logOutput.Print("%s::RunCallIn: error = %i, %s, %s\n", GetName().c_str(),
+		                error, hs.GetString().c_str(), traceback.c_str());
 		return false;
 	}
 	return true;
+}
+
+
+int CLuaHandle::RunCallIn(int inArgs, int outArgs, std::string& errormessage)
+{
+	return RunCallInTraceback(inArgs, outArgs, 0, errormessage);
 }
 
 

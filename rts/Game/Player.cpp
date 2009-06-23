@@ -15,7 +15,6 @@
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Units/COB/CobInstance.h"
-#include "Sim/Units/COB/CobFile.h"
 #include "UI/MouseHandler.h"
 #include "CameraHandler.h"
 #include "Camera.h"
@@ -139,10 +138,8 @@ void CPlayer::GameFrame(int frameNum)
 	CUnit* unit = playerControlledUnit;
 	DirectControlStruct* dc = &myControl;
 
-	std::vector<int> args;
-	args.push_back(0);
-	unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-	float3 relPos=unit->cob->GetPiecePos(args[0]);
+	const int piece = unit->script->AimFromWeapon(0);
+	float3 relPos = unit->script->GetPiecePos(piece);
 	float3 pos=unit->pos+unit->frontdir*relPos.z+unit->updir*relPos.y+unit->rightdir*relPos.x;
 	pos+=UpVector*7;
 

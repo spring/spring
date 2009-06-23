@@ -42,9 +42,10 @@ inline short int GetHeadingFromFacing(int facing)
 	}
 }
 
-inline short int GetHeadingFromVector(float dx, float dz)
+inline float GetHeadingFromVectorF(float dx, float dz)
 {
 	float h = 0.0f;
+
 	if (dz != 0.0f) {
 		float d = dx / dz;
 
@@ -68,6 +69,13 @@ inline short int GetHeadingFromVector(float dx, float dz)
 		else
 			h = -PI * 0.5f;
 	}
+
+	return h;
+}
+
+inline short int GetHeadingFromVector(float dx, float dz)
+{
+	float h = GetHeadingFromVectorF(dx, dz);
 
 	h *= SHORTINT_MAXVALUE / PI;
 
@@ -109,6 +117,20 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 	iy %= SHORTINT_MAXVALUE;
 	ret.y = (short int) iy;
 	ret.x = GetHeadingFromVector(vec.x, vec.z);
+	return ret;
+}
+
+// vec should be normalized
+inline float2 GetHAndPFromVectorF(const float3& vec)
+{
+	float2 ret;
+
+	#if defined BUILDING_AI
+	ret.y = std::asin(vec.y);
+	#else
+	ret.y = streflop::asin(vec.y);
+	#endif // defined BUILDING_AI
+	ret.x = GetHeadingFromVectorF(vec.x, vec.z);
 	return ret;
 }
 

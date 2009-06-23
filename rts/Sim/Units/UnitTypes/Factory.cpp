@@ -15,8 +15,7 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/FactoryCAI.h"
 #include "Sim/Units/CommandAI/MobileCAI.h"
@@ -75,10 +74,10 @@ void CFactory::PostLoad()
 {
 	nextBuild = unitDefHandler->GetUnitByName(nextBuildName);
 	if(opening){
-		cob->Call(COBFN_Activate);
+		script->Activate();
 	}
 	if (curBuild) {
-		cob->Call("StartBuilding");
+		script->StartBuilding();
 	}
 }
 
@@ -90,16 +89,13 @@ void CFactory::UnitInit (const UnitDef* def, int team, const float3& position)
 
 int CFactory::GetBuildPiece()
 {
-	std::vector<int> args;
-	args.push_back(0);
-	cob->Call("QueryBuildInfo", args);
-	return args[0];
+	return script->QueryBuildInfo();
 }
 
 // GetBuildPiece() is called if piece < 0
 float3 CFactory::CalcBuildPos(int buildPiece)
 {
-	float3 relBuildPos = cob->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
+	float3 relBuildPos = script->GetPiecePos(buildPiece < 0 ? GetBuildPiece() : buildPiece);
 	float3 buildPos = pos + frontdir * relBuildPos.z + updir * relBuildPos.y + rightdir * relBuildPos.x;
 	return buildPos;
 }
@@ -113,7 +109,7 @@ void CFactory::Update()
 	}
 
 	if (quedBuild && !opening && !stunned) {
-		cob->Call(COBFN_Activate);
+		script->Activate();
 		groundBlockingObjectMap->OpenBlockingYard(this, yardMap);
 		opening = true;
 	}
@@ -137,7 +133,7 @@ void CFactory::Update()
 			AddDeathDependence(b);
 			curBuild = b;
 
-			cob->Call("StartBuilding");
+			script->StartBuilding();
 
 			int soundIdx = unitDef->sounds.build.getRandomIdx();
 			if (soundIdx >= 0) {
@@ -159,7 +155,7 @@ void CFactory::Update()
 
 			// buildPiece is the rotating platform
 			const int buildPiece = GetBuildPiece();
-			const CMatrix44f& mat = cob->GetPieceMatrix(buildPiece);
+			const CMatrix44f& mat = script->GetPieceMatrix(buildPiece);
 			const int h = GetHeadingFromVector(mat[2], mat[10]);
 
 			// rotate unit nanoframe with platform
@@ -234,7 +230,7 @@ void CFactory::Update()
 		// close the factory after inactivity
 		groundBlockingObjectMap->CloseBlockingYard(this, yardMap);
 		opening = false;
-		cob->Call(COBFN_Deactivate);
+		script->Deactivate();
 	}
 
 	CBuilding::Update();
@@ -258,7 +254,7 @@ void CFactory::StartBuild(const UnitDef* ud)
 	nextBuildName = ud->name;
 
 	if (!opening && !stunned) {
-		cob->Call(COBFN_Activate);
+		script->Activate();
 		groundBlockingObjectMap->OpenBlockingYard(this, yardMap);
 		opening = true;
 	}
@@ -267,7 +263,7 @@ void CFactory::StartBuild(const UnitDef* ud)
 void CFactory::StopBuild()
 {
 	// cancel a build-in-progress
-	cob->Call("StopBuilding");
+	script->StopBuilding();
 	if (curBuild) {
 		if (curBuild->beingBuilt) {
 			AddMetal(curBuild->metalCost * curBuild->buildProgress, false);
@@ -332,15 +328,15 @@ bool CFactory::ChangeTeam(int newTeam, ChangeType type)
 
 void CFactory::CreateNanoParticle(void)
 {
-	std::vector<int> args(1, 0);
-	cob->Call("QueryNanoPiece", args);
+	const int piece = script->QueryNanoPiece();
 
 #ifdef USE_GML
 	if (gs->frameNum - lastDrawFrame > 20)
 		return;
 #endif
+
 	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
-		const float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
+		const float3 relWeaponFirePos = script->GetPiecePos(piece);
 		const float3 weaponPos = pos + (frontdir * relWeaponFirePos.z)
 			+ (updir    * relWeaponFirePos.y)
 			+ (rightdir * relWeaponFirePos.x);
@@ -349,7 +345,7 @@ void CFactory::CreateNanoParticle(void)
 		dif /= l;
 		dif += gu->usRandVector() * 0.15f;
 		float3 color = unitDef->nanoColor;
-	
+
 		if (gu->teamNanospray) {
 			unsigned char* tcol = teamHandler->Team(team)->color;
 			color = float3(tcol[0] * (1.0f / 255.0f), tcol[1] * (1.0f / 255.0f), tcol[2] * (1.0f / 255.0f));

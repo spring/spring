@@ -517,7 +517,7 @@ void CBuilder::StopBuild(bool callScript)
 	curCapture=0;
 	terraforming=false;
 	if(callScript)
-		cob->Call("StopBuilding");
+		script->StopBuilding();
 	ReleaseTempHoldFire();
 //	logOutput.Print("stop build");
 }
@@ -663,15 +663,17 @@ void CBuilder::DependentDied(CObject *o)
 
 void CBuilder::SetBuildStanceToward(float3 pos)
 {
-	float3 wantedDir=(pos-this->midPos).Normalize();
-	short int h=GetHeadingFromVector(wantedDir.x,wantedDir.z);
-	short int p=(short int) (asin(wantedDir.dot(updir)) * RAD2TAANG);
-	short int pitch=(short int) (asin(frontdir.dot(updir)) * RAD2TAANG);
+	if (script->HasFunction(COBFN_StartBuilding)) {
+		const float3 wantedDir = (pos - midPos).Normalize();
+		const float h = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
+		const float p = asin(wantedDir.dot(updir));
+		const float pitch = asin(frontdir.dot(updir));
 
-	std::vector<int> args;
-	args.push_back(short(h-heading));
-	args.push_back(short(p-pitch));
-	cob->Call("StartBuilding", args);
+		// clamping p - pitch not needed, range of asin is -PI/2..PI/2,
+		// so max difference between two asin calls is PI.
+		// FIXME: convert CSolidObject::heading to radians too.
+		script->StartBuilding(ClampRad(h - heading * TAANG2RAD), p - pitch);
+	}
 
 	int soundIdx = unitDef->sounds.build.getRandomIdx();
 	if (soundIdx >= 0) {
@@ -698,30 +700,29 @@ void CBuilder::HelpTerraform(CBuilder* unit)
 
 void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 {
-	std::vector<int> args(1, 0);
-	cob->Call("QueryNanoPiece", args);
+	const int piece = script->QueryNanoPiece();
 
 #ifdef USE_GML
 	if (gs->frameNum - lastDrawFrame > 20)
 		return;
 #endif
-	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray)
-	{
-		float3 relWeaponFirePos = cob->GetPiecePos(args[0]);
+
+	if (ph->currentParticles < ph->maxParticles && unitDef->showNanoSpray) {
+		float3 relWeaponFirePos = script->GetPiecePos(piece);
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
-		
+
 		float3 dif = goal - weaponPos;
 		const float l = fastmath::sqrt2(dif.SqLength());
-		
+
 		dif /= l;
 		float3 error = gu->usRandVector() * (radius / l);
 		float3 color = unitDef->nanoColor;
-		
+
 		if (gu->teamNanospray) {
 			unsigned char* tcol = teamHandler->Team(team)->color;
 			color = float3(tcol[0] * (1.f / 255.f), tcol[1] * (1.f / 255.f), tcol[2] * (1.f / 255.f));
 		}
-		
+
 		if (inverse) {
 			new CGfxProjectile(weaponPos + (dif + error) * l, -(dif + error) * 3, int(l / 3), color);
 		} else {

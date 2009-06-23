@@ -87,7 +87,7 @@ void CLuaRules::SetConfigString(const string& cfg)
 /******************************************************************************/
 
 CLuaRules::CLuaRules()
-: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES, CobCallback, ".luarules ")
+: CLuaHandleSynced("LuaRules", LUA_HANDLE_ORDER_RULES, ".luarules ")
 {
 	luaRules = this;
 
@@ -193,15 +193,6 @@ bool CLuaRules::AddUnsyncedCode()
 
 
 /******************************************************************************/
-
-void CLuaRules::CobCallback(int retCode, void* p1, void* p2)
-{
-	if (luaRules) {
-		CobCallbackData cbd(retCode, *((int*)&p1), *((float*)&p2));
-		luaRules->cobCallbackEntries.push_back(cbd);
-	}
-}
-
 
 const vector<float>& CLuaRules::GetGameParams()
 {
