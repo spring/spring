@@ -15,6 +15,8 @@
 
 #ifdef USE_MMGR
 
+/* for size_t */
+#include <cstring>
 
 #ifndef WIN32
 /* for backtrace() function */
@@ -157,7 +159,7 @@ void	operator delete[](void *reportedAddress);
 #define	new		(m_setOwner  (__FILE__,__LINE__,__FUNCTION__),false) ? NULL : new
 #define	delete		(m_setOwner  (__FILE__,__LINE__,__FUNCTION__),false) ? m_setOwner("",0,"") : delete
 #define	malloc(sz)	m_allocator  (__FILE__,__LINE__,__FUNCTION__,m_alloc_malloc,sz)
-#define	calloc(sz)	m_allocator  (__FILE__,__LINE__,__FUNCTION__,m_alloc_calloc,sz)
+#define	calloc(nelem,sz)	m_allocator  (__FILE__,__LINE__,__FUNCTION__,m_alloc_calloc,(sz)*(nelem))
 #define	realloc(ptr,sz)	m_reallocator(__FILE__,__LINE__,__FUNCTION__,m_alloc_realloc,sz,ptr)
 #define	free(ptr)	if (ptr != NULL) m_deallocator(__FILE__,__LINE__,__FUNCTION__,m_alloc_free,ptr)
 

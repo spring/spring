@@ -20,7 +20,10 @@
 
 // This reduces compile-time with precompiled headers on msvc
 // It used to increase compile-time with precompiled headers on gcc, it's different now
-#if defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
+//
+// USE_MMGR needs to include a lot of the standard library because it
+// re#defines new which breaks STL
+#if defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER) || defined(USE_MMGR)
 #include <vector>
 #include <list>
 #include <map>
@@ -35,7 +38,7 @@
 
 // do not include <cmath> or <math.h> before this, it'll cause ambiguous call er
 #include "lib/streflop/streflop_cond.h"
-#endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER)
+#endif // defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER) || defined(USE_MMGR)
 
 
 #if !defined(USE_GML) && (defined(_MSC_VER) || defined(USE_PRECOMPILED_HEADER))
