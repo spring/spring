@@ -454,7 +454,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 			fromUnit = "";
 
 		CFeature* f = new CFeature;
-		f->Initialize(pos, fd, (short int) rot, facing, team, allyteam, fromUnit, speed, fd->smokeTime);
+		f->Initialize(pos, fd, (short int) rot, facing, team, allyteam, fromUnit, speed, emitSmoke ? fd->smokeTime : 0);
 
 		return f;
 	}
