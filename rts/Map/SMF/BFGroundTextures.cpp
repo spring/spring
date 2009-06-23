@@ -208,7 +208,7 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	}
 
 	if (buf == NULL) {
-		buf = (GLint*)new GLubyte[size * size / 2];
+		buf = (GLint*)(new GLubyte[size * size / 2]);
 		usedPBO = false;
 	}
 
