@@ -1,6 +1,6 @@
 /* Author: Tobi Vollebregt */
 
-#define DEBUG_LUA 1
+#define DEBUG_LUA 0
 
 #include "LuaUnitScript.h"
 
@@ -174,7 +174,9 @@ end
 
 
 #if DEBUG_LUA
-#  define LUA_TRACE(m) logOutput.Print("%s: %d: %s", __FUNCTION__, unit->id, m)
+#  define LUA_TRACE(m) do { if (unit) logOutput.Print("%s: %d: %s", __FUNCTION__, unit->id, m); \
+                            else logOutput.Print("%s: %s", __FUNCTION__, m); \
+                       } while (false);
 #else
 #  define LUA_TRACE(m)
 #endif
