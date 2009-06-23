@@ -1,8 +1,11 @@
 /* Author: Tobi Vollebregt */
 
+#include <cstdio>
+
 #include "UnitScriptNames.h"
 #include "LogOutput.h"
 
+using std::sprintf;
 
 using std::map;
 using std::pair;
