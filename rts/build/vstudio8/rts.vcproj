@@ -2449,6 +2449,54 @@
 						RelativePath="..\..\Sim\Units\Cob\CobThread.h"
 						>
 					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\LuaUnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\LuaUnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\NullUnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\NullUnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptEngine.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptEngine.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptFactory.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptFactory.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptNames.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptNames.h"
+						>
+					</File>
 				</Filter>
 				<Filter
 					Name="UnitTypes"
