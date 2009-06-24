@@ -22,6 +22,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/GfxProjectile.h"
 #include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/CommandAI/BuilderCAI.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitHandler.h"
@@ -325,7 +326,20 @@ void CBuilder::Update()
 						}
 						u->health*=0.05f;
 						u->lineage = this->lineage;
-						lastResurrected=u->id;
+
+						CBuilderCAI *cai = (CBuilderCAI *)commandAI;
+						for (CUnitSet::iterator it = cai->resurrecters.begin(); it != cai->resurrecters.end(); ++it) {
+							CBuilder *bld = (CBuilder *)*it;
+							if (bld->commandAI->commandQue.empty())
+								continue;
+							const Command& c = bld->commandAI->commandQue.front();
+							if (c.id != CMD_RESURRECT || c.params.size() != 1)
+								continue;
+							const int cmdFeatureId = (int)c.params[0];
+							if (cmdFeatureId - uh->MaxUnits() == curResurrect->id && teamHandler->Ally(allyteam, bld->allyteam))
+								bld->lastResurrected = u->id; // all units that were rezzing shall assist the repair too
+						}
+
 						curResurrect->resurrectProgress=0;
 						featureHandler->DeleteFeature(curResurrect);
 						StopBuild(true);
