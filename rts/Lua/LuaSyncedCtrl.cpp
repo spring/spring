@@ -1142,6 +1142,7 @@ static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
 		// HACK, this should be set to result of lua_toboolean
 		weapon->angleGood = (value != 0.0f);
 	}
+	return 0;
 }
 
 

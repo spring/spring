@@ -1117,9 +1117,6 @@ bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
 	std::list<CUnit*> rm;
 
 	for (CUnitSet::iterator it = reclaimers.begin(); it != reclaimers.end(); ++it) {
-		// check whether reclaimers are valid
-		assert(*it);
-		assert((*it)->commandAI);
 		if ((*it)->commandAI->commandQue.empty()) {
 			rm.push_back(*it);
 			continue;
@@ -1129,7 +1126,6 @@ bool CBuilderCAI::IsUnitBeingReclaimed(CUnit* unit, CUnit *friendUnit)
 			rm.push_back(*it);
 			continue;
 		}
-
 		const int cmdUnitId = (int)c.params[0];
 		if (cmdUnitId == unit->id && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
 			retval = true;
@@ -1148,9 +1144,6 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 	std::list<CUnit*> rm;
 
 	for (CUnitSet::iterator it = featureReclaimers.begin(); it != featureReclaimers.end(); ++it) {
-		// check whether reclaimers are valid
-		assert(*it);
-		assert((*it)->commandAI);
 		if ((*it)->commandAI->commandQue.empty()) {
 			rm.push_back(*it);
 			continue;
@@ -1160,7 +1153,6 @@ bool CBuilderCAI::IsFeatureBeingReclaimed(int featureId, CUnit *friendUnit)
 			rm.push_back(*it);
 			continue;
 		}
-
 		const int cmdFeatureId = (int)c.params[0];
 		if (cmdFeatureId-uh->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
 			retval = true;
@@ -1179,9 +1171,6 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 	std::list<CUnit*> rm;
 
 	for (CUnitSet::iterator it = resurrecters.begin(); it != resurrecters.end(); ++it) {
-		// check whether reclaimers are valid
-		assert(*it);
-		assert((*it)->commandAI);
 		if ((*it)->commandAI->commandQue.empty()) {
 			rm.push_back(*it);
 			continue;
@@ -1191,7 +1180,6 @@ bool CBuilderCAI::IsFeatureBeingResurrected(int featureId, CUnit *friendUnit)
 			rm.push_back(*it);
 			continue;
 		}
-
 		const int cmdFeatureId = (int)c.params[0];
 		if (cmdFeatureId-uh->MaxUnits() == featureId && (!friendUnit || teamHandler->Ally(friendUnit->allyteam, (*it)->allyteam))) {
 			retval = true;
