@@ -33,7 +33,7 @@ extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectAR
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_FRAGMENT;
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_GEOMETRY_EXT;
 
-#if defined(__GNUC__) && (__GNUC__ >= 4) && (__GNUC_MINOR__ >= 3) && (__GNUC_PATCHLEVEL__ == 0)
+#if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ == 3) && (__GNUC_PATCHLEVEL__ == 0)
 // gcc has issues with attributes in function pointers it seems
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (**)(void)> gmlProgramServer;
 extern gmlSingleItemServer<GLhandleARB, GLhandleARB (**)(void)> gmlProgramObjectARBServer;
