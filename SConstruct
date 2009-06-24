@@ -67,7 +67,7 @@ else:
         env['SHARED_OBJ_EXT'] = '.os'
 
 if env['use_gch']:
-	env['Gch'] = env.Gch(source='rts/System/StdAfx.h', target=os.path.join(env['builddir'], 'rts/System/StdAfx.h.gch'), CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
+	env['Gch'] = env.Gch(source='rts/System/StdAfx.h', target='rts/System/StdAfx.h.gch', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
 else:
 	import os.path
 	if os.path.exists('rts/System/StdAfx.h.gch'):
