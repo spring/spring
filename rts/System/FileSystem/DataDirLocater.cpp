@@ -252,6 +252,12 @@ void DataDirLocater::LocateDataDirs()
 	TCHAR strPath[MAX_PATH];
 	SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);
 	std::string cfg = strPath;
+	// My Documents\My Games seems to be the MS standard even if no official guidelines exist
+	// most if not all new Games For Windows(TM) games use this dir
+	cfg += "\\My Games\\Spring";
+	AddDirs(cfg);
+
+	cfg = strPath;
 	cfg += "\\Spring"; // e.g. F:\Dokumente und Einstellungen\Karl-Robert\Eigene Dateien\Spring
 	AddDirs(cfg);
 	cfg.clear();
