@@ -9,10 +9,8 @@
 
 #ifdef _WIN32
 #include <windows.h>
-#include <shlobj.h>
-#include <direct.h>
-#include <io.h>
 // for creating infolog in my documents if cwd isn't writeable
+#include <shlobj.h>
 #include "FileSystem/FileSystem.h"
 #endif
 
@@ -146,19 +144,10 @@ void CLogOutput::Initialize()
 				szPath))) {
 			// use My Documents\My Games\Spring to not clutter
 			// the user's my docs dir
-			// can't use filesystem.CreateDirectory() because it
-			// uses logOutput
-			string mygames = string(szPath) + "\\My Games";
 			string newdir = string(szPath) + "\\My Games\\Spring";
-			if (_access(mygames.c_str(), 0) != 0)
-				_mkdir(mygames.c_str());
-			if (_access(newdir.c_str(), 0) != 0)
-				_mkdir(newdir.c_str());
-			// make sure we can log stuff
-			if (_access(newdir.c_str(), 0) == 0) {
-				string newfilename = newdir + "\\" + string(filename);
-				SetFilename(newfilename.c_str());
-			}
+			filesystem.CreateDirectory(newdir);
+			string newfilename = newdir + "\\" + string(filename);
+			SetFilename(newfilename.c_str());
 		}
 	}
 #endif
