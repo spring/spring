@@ -123,7 +123,10 @@ public:
 
 protected:
 	void InitializeSubsystems();
-	void Output(const CLogSubsystem& subsystem, const char* str);
+	void Output(const CLogSubsystem& subsystem, const std::string& str);
+
+	void ToStdout(const CLogSubsystem& subsystem, const std::string message);
+	void ToFile(const CLogSubsystem& subsystem, const std::string message);
 };
 
 
