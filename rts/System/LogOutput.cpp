@@ -7,8 +7,11 @@
 #include <string.h>
 #include <boost/thread/recursive_mutex.hpp>
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <windows.h>
+// for creating infolog in my documents if cwd isn't writeable
+#include <shlobj.h>
+#include "FileSystem/FileSystem.h"
 #endif
 
 #include "lib/gml/gml.h"
@@ -18,6 +21,7 @@
 #include "Game/GameVersion.h"
 #include "ConfigHandler.h"
 #include "mmgr.h"
+
 
 using std::string;
 using std::vector;
@@ -61,7 +65,7 @@ static vector<PreInitLogEntry>& preInitLog()
 }
 
 static vector<ILogSubscriber*> subscribers;
-static const char* filename = "infolog.txt";
+static char filename[MAX_PATH] = "infolog.txt";
 static std::ofstream* filelog = 0;
 static bool initialized = false;
 static boost::recursive_mutex tempstrMutex;
@@ -111,7 +115,8 @@ void CLogOutput::SetFilename(const char* fname)
 	GML_STDMUTEX_LOCK(log); // SetFilename
 
 	assert(!initialized);
-	filename = fname;
+
+	strncpy(filename, fname, MAX_PATH-1);
 }
 
 
@@ -125,6 +130,25 @@ void CLogOutput::SetFilename(const char* fname)
 void CLogOutput::Initialize()
 {
 	if (initialized) return;
+
+#ifdef _WIN32
+	// on windows, try to put the infolog in a writable dir
+	if (!FileSystemHandler::DirIsWritable(".")) {
+		char szPath[MAX_PATH];
+		if(SUCCEEDED(SHGetFolderPath(NULL,
+				CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
+				NULL,
+				0,
+				szPath))) {
+			// use My Documents\My Games\Spring to not clutter
+			// the user's my docs dir
+			string newdir = string(szPath) + "\\My Games\\Spring";
+			filesystem.CreateDirectory(newdir);
+			string newfilename = newdir + "\\" + string(filename);
+			SetFilename(newfilename.c_str());
+		}
+	}
+#endif
 
 	filelog = new std::ofstream(filename);
 	if (filelog->bad())
@@ -194,12 +218,12 @@ void CLogOutput::InitializeSubsystems()
 			if (sys->name && *sys->name) {
 				const string name = StringToLower(sys->name);
 				const string::size_type index = subsystems.find("," + name + ",");
-	
+
 				// log subsystems which are enabled by default can not be disabled
 				// ("enabled by default" wouldn't make sense otherwise...)
 				if (!sys->enabled && index != string::npos)
 					sys->enabled = true;
-	
+
 				if (sys->enabled) {
 					lo << sys->name;
 					if (sys->next)
