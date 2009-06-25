@@ -129,12 +129,10 @@ void CLogOutput::SetFilename(const char* fname)
  */
 void CLogOutput::Initialize()
 {
-	if (initialized)
-		return;
+	if (initialized) return;
 
-#if defined(_WIN32) && !defined(UNITSYNC)
+#ifdef _WIN32
 	// on windows, try to put the infolog in a writable dir
-	// unitsync should do this by itself
 	if (!FileSystemHandler::DirIsWritable(".")) {
 		char szPath[MAX_PATH];
 		if(SUCCEEDED(SHGetFolderPath(NULL,
