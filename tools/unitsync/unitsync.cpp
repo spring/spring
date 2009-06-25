@@ -6,6 +6,13 @@
 #include <vector>
 #include <set>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <shlobj.h>
+#include <direct.h>
+#include <io.h>
+#endif
+
 // shared with spring:
 #include "LuaInclude.h"
 #include "FileSystem/ArchiveFactory.h"
@@ -263,7 +270,35 @@ EXPORT(int) Init(bool isServer, int id)
 	try {
 		if (!logOutputInitialised)
 		{
+			// set default
 			logOutput.SetFilename("unitsync.log");
+#if defined(_WIN32)
+			// on windows, try to put the log in a writable dir
+			if (!FileSystemHandler::DirIsWritable(".")) {
+				char szPath[MAX_PATH];
+				if(SUCCEEDED(SHGetFolderPath(NULL,
+						CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
+						NULL,
+						0,
+						szPath))) {
+					// use My Documents\My Games\Spring to not clutter
+					// the user's my docs dir
+					// can't use filesystem.CreateDirectory() because it
+					// uses logOutput
+					string mygames = string(szPath) + "\\My Games";
+					string newdir = string(szPath) + "\\My Games\\Spring";
+					if (_access(mygames.c_str(), 0) != 0)
+						_mkdir(mygames.c_str());
+					if (_access(newdir.c_str(), 0) != 0)
+						_mkdir(newdir.c_str());
+					// make sure we can log stuff
+					if (_access(newdir.c_str(), 0) == 0) {
+						string newfilename = newdir + "\\unitsync.log";
+						logOutput.SetFilename(newfilename.c_str());
+					}
+				}
+			}
+#endif
 			logOutput.Initialize();
 			logOutputInitialised = true;
 		}
