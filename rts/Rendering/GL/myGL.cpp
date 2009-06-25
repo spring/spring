@@ -8,6 +8,7 @@
 #include "Rendering/glFont.h"
 #include "VertexArray.h"
 #include "VertexArrayRange.h"
+#include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "Game/GameVersion.h"
 #include "Rendering/Textures/Bitmap.h"
@@ -133,7 +134,8 @@ void LoadExtensions()
 	for (unsigned int i=0; i<s.length(); i++)
 		if (s[i]==' ') s[i]='\n';
 
-	std::ofstream ofs("ext.txt");
+	std::string filename = FileSystemHandler::GetInstance().GetWriteDir() + "ext.txt";
+	std::ofstream ofs(filename.c_str());
 
 	if (!ofs.bad() && ofs.is_open())
 		ofs.write(s.c_str(), s.length());
