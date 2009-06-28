@@ -365,7 +365,7 @@ inline float CLuaUnitScript::PopNumber(int fn, float def)
 
 inline bool CLuaUnitScript::PopBoolean(int fn, bool def)
 {
-	if (!lua_israwnumber(L, -1)) {
+	if (!lua_isboolean(L, -1)) {
 		const string& fname = CUnitScriptNames::GetScriptName(fn);
 
 		logOutput.Print("%s: bad return value, expected boolean", fname.c_str());
