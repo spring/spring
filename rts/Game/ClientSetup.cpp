@@ -6,7 +6,6 @@
 #include "Util.h"
 
 ClientSetup::ClientSetup() :
-		myPlayerNum(0),
 		hostport(DEFAULT_HOST_PORT),
 		sourceport(0),
 		autohostport(0),

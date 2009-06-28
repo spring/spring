@@ -39,10 +39,6 @@ public:
 		StartPos_Last = 3  // last entry in enum (for user input check)
 	};
 
-	/// the expected amount of players
-	int numPlayers;
-	int numTeams;
-	int numAllyTeams;
 	bool fixedAllies;
 	unsigned int mapHash;
 	unsigned int modHash;

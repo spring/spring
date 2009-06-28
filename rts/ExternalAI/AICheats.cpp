@@ -37,7 +37,7 @@ bool CAICheats::IsPassive()
 		// if we are NOT server, cheats will cause desync
 		return true;
 	}
-	else if (gameSetup && (gameSetup->numPlayers == 1)) {
+	else if (gameSetup && (gameSetup->playerStartingData.size() == 1)) {
 		// assuming AI's dont count on numPlayers
 		return false;
 	}

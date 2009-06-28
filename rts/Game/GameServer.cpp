@@ -206,7 +206,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	delete ret;
 #endif
 	// AIs do not join in here, so jsut set their teams as active
-	for (size_t i = 0; i < setup->numTeams; ++i)
+	for (size_t i = 0; i < setup->teamStartingData.size(); ++i)
 	{
 		if (setup->GetSkirmishAIDataForTeam(i))
 		{
@@ -232,7 +232,7 @@ CGameServer::~CGameServer()
 #ifdef DEDICATED
 	// TODO: move this to a method in CTeamHandler
 	// Figure out who won the game.
-	int numTeams = setup->numTeams;
+	int numTeams = (int)setup->teamStartingData.size();
 	if (setup->useLuaGaia) {
 		--numTeams;
 	}
@@ -1150,7 +1150,7 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
-	for (int a = 0; a < setup->numTeams; ++a)
+	for (int a = 0; a < (int)setup->teamStartingData.size(); ++a)
 	{
 		Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
 	}
@@ -1319,11 +1319,11 @@ void CGameServer::CheckForGameEnd()
 		}
 	}
 #else // !defined DEDICATED
-	for (int a = 0; a < setup->numTeams; ++a)
+	for (size_t a = 0; a < setup->teamStartingData.size(); ++a)
 	{
 		bool hasPlayer = false;
 		for (size_t b = 0; b < players.size(); ++b) {
-			if (!players[b].spectator && players[b].team == a) {
+			if (!players[b].spectator && players[b].team == (int)a) {
 				hasPlayer = true;
 			}
 		}

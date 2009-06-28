@@ -63,7 +63,7 @@ void CGameSetup::LoadStartPositionsFromMap()
 {
 	MapParser mapParser(mapName);
 
-	for(int a = 0; a < numTeams; ++a) {
+	for(size_t a = 0; a < teamStartingData.size(); ++a) {
 		float3 pos(1000.0f, 100.0f, 1000.0f);
 		if (!mapParser.GetStartPos(teamStartingData[a].teamStartNum, pos) && (startPosType == StartPos_Fixed || startPosType == StartPos_Random)) // don't fail when playing with more players than startpositions and we didn't use them anyway
 			throw content_error(mapParser.GetErrorLog());
@@ -88,20 +88,19 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	if (startPosType == StartPos_Random) {
 		// Server syncs these later, so we can use unsynced rng
 		UnsyncedRNG rng;
-		size_t numTeams = teamStartingData.size();
 		rng.Seed(gameSetupText.length());
 		rng.Seed((size_t)gameSetupText.c_str());
-		std::vector<int> teamStartNum(numTeams);
-		for (size_t i = 0; i < numTeams; ++i)
+		std::vector<int> teamStartNum(teamStartingData.size());
+		for (size_t i = 0; i < teamStartingData.size(); ++i)
 			teamStartNum[i] = i;
 		std::random_shuffle(teamStartNum.begin(), teamStartNum.end(), rng);
-		for (size_t i = 0; i < numTeams; ++i)
+		for (size_t i = 0; i < teamStartingData.size(); ++i)
 			teamStartingData[i].teamStartNum = teamStartNum[i];
 	}
 	else
 	{
-		for (int a = 0; a < numTeams; ++a) {
-		teamStartingData[a].teamStartNum = a;
+		for (size_t a = 0; a < teamStartingData.size(); ++a) {
+		teamStartingData[a].teamStartNum = (int)a;
 		}
 	}
 
@@ -110,14 +109,14 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 
 	// Show that we havent selected start pos yet
 	if (startPosType == StartPos_ChooseInGame) {
-		for (int a = 0; a < numTeams; ++a) {
+		for (size_t a = 0; a < teamStartingData.size(); ++a) {
 			teamStartingData[a].startPos.y = -500;
 		}
 	}
 
 	// Load start position from gameSetup script
 	if (startPosType == StartPos_ChooseBeforeGame) {
-		for (int a = 0; a < numTeams; ++a) {
+		for (size_t a = 0; a < teamStartingData.size(); ++a) {
 			char section[50];
 			sprintf(section, "GAME\\TEAM%i\\", a);
 			string s(section);
@@ -177,10 +176,9 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 		++i;
 	}
 
-	numPlayers = playerStartingData.size();
 	unsigned playerCount = 0;
 	if (file.GetValue(playerCount, "GAME\\NumPlayers") && playerStartingData.size() != playerCount)
-		logOutput.Print("Warning: %i players in GameSetup script (NumPlayers says %i)", numPlayers, playerCount);
+		logOutput.Print("Warning: %i players in GameSetup script (NumPlayers says %i)", playerStartingData.size(), playerCount);
 }
 
 /**
@@ -301,10 +299,9 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		++i;
 	}
 
-	numTeams = teamStartingData.size();
 	unsigned teamCount = 0;
 	if (file.GetValue(teamCount, "Game\\NumTeams") && teamStartingData.size() != teamCount)
-		logOutput.Print("Warning: %i teams in GameSetup script (NumTeams: %i)", numTeams, teamCount);
+		logOutput.Print("Warning: %i teams in GameSetup script (NumTeams: %i)", teamStartingData.size(), teamCount);
 }
 
 /**
@@ -355,7 +352,7 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 
 	unsigned allyCount = 0;
 	if (!file.GetValue(allyCount, "GAME\\NumAllyTeams") || allyStartingData.size() == allyCount)
-		numAllyTeams = allyStartingData.size();
+		;
 	else
 		logOutput.Print("Warning: incorrect number of allyteams in GameSetup script");
 }
@@ -364,14 +361,14 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 void CGameSetup::RemapPlayers()
 {
 	// relocate Team.TeamLeader field
-	for (int a = 0; a < numTeams; ++a) {
+	for (size_t a = 0; a < teamStartingData.size(); ++a) {
 		if (playerRemap.find(teamStartingData[a].leader) == playerRemap.end()) {
 			throw content_error("invalid Team.leader in GameSetup script");
 		}
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}
 	// relocate AI.hostPlayerNum field
-	for (unsigned int a = 0; a < skirmishAIStartingData.size(); ++a) {
+	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
 		if (playerRemap.find(skirmishAIStartingData[a].hostPlayerNum) == playerRemap.end()) {
 			throw content_error("invalid AI.hostPlayerNum in GameSetup script");
 		}
@@ -383,7 +380,7 @@ void CGameSetup::RemapPlayers()
 void CGameSetup::RemapTeams()
 {
 	// relocate Player.team field
-	for (int a = 0; a < numPlayers; ++a) {
+	for (size_t a = 0; a < playerStartingData.size(); ++a) {
 		if (playerStartingData[a].spectator)
 			playerStartingData[a].team = 0; // start speccing on team 0
 		else
@@ -394,7 +391,7 @@ void CGameSetup::RemapTeams()
 		}
 	}
 	// relocate AI.team field
-	for (unsigned int a = 0; a < skirmishAIStartingData.size(); ++a) {
+	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
 		if (teamRemap.find(skirmishAIStartingData[a].team) == teamRemap.end())
 			throw content_error("invalid AI.team in GameSetup script");
 		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
@@ -406,7 +403,7 @@ void CGameSetup::RemapTeams()
 void CGameSetup::RemapAllyteams()
 {
 	// relocate Team.Allyteam field
-	for (int a = 0; a < numTeams; ++a) {
+	for (size_t a = 0; a < allyStartingData.size(); ++a) {
 		if (allyteamRemap.find(teamStartingData[a].teamAllyteam) == allyteamRemap.end()) {
 			throw content_error("invalid Team.Allyteam in GameSetup script");
 		}
