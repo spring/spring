@@ -17,7 +17,13 @@ CSkyBox::CSkyBox(std::string texture)
 	CBitmap btex;
 	if (!btex.Load(texture))
 		throw content_error("Could not load skybox texture from file " + texture);
-	tex = btex.CreateTexture(0);
+	tex = btex.CreateTexture(true);
+
+	glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 	cloudDensity = mapInfo->atmosphere.cloudDensity;
 	cloudColor = mapInfo->atmosphere.cloudColor;
@@ -33,53 +39,50 @@ CSkyBox::~CSkyBox(void)
 
 void CSkyBox::Draw()
 {
-	//glTranslatef(camera->pos.x, camera->pos.y, camera->pos.z);
-	//glCallList(displist);
-
-	glDisable(GL_FOG);
 	glColor3f(1,1,1);
-	glDisable(GL_ALPHA_TEST);
+	glDisable(GL_FOG);
 	glDisable(GL_BLEND);
-	glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, tex);
-
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glDepthMask(0);
 	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_TEXTURE_CUBE_MAP);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
 
-	float3 v1 = camera->CalcPixelDir(0,0);
-	float3 v2 = camera->CalcPixelDir(gu->viewSizeX,0);
-	float3 v3 = camera->CalcPixelDir(gu->viewSizeX,gu->viewSizeY);
-	float3 v4 = camera->CalcPixelDir(0,gu->viewSizeY);
+	float3 v1 = -camera->CalcPixelDir(0,0);
+	float3 v2 = -camera->CalcPixelDir(gu->viewSizeX,0);
+	float3 v3 = -camera->CalcPixelDir(gu->viewSizeX,gu->viewSizeY);
+	float3 v4 = -camera->CalcPixelDir(0,gu->viewSizeY);
+
+	glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		glLoadIdentity();
+	glMatrixMode(GL_PROJECTION);
+		glPushMatrix();
+		glLoadIdentity();
+		gluOrtho2D(0,1,0,1);
 
 	glBegin(GL_QUADS);
-			
-			glTexCoord3f(-v1.x,-v1.y,-v1.z);
-			//glNormal3f(0,1,0);
-			glVertexf3(camera->pos + v1*(NEAR_PLANE+100));
+		glTexCoord3f(v1.x,v1.y,v1.z);
+		glVertex2f(0.0f,1.0f);
 
-			glTexCoord3f(-v2.x,-v2.y,-v2.z);
-			//glNormal3f(1,1,0);
-			glVertexf3(camera->pos + v2*(NEAR_PLANE+100));
+		glTexCoord3f(v2.x,v2.y,v2.z);
+		glVertex2f(1.0f,1.0f);
 
-			glTexCoord3f(-v3.x,-v3.y,-v3.z);
-			//glNormal3f(0,1,1);
-			glVertexf3(camera->pos + v3*(NEAR_PLANE+100));
+		glTexCoord3f(v3.x,v3.y,v3.z);
+		glVertex2f(1.0f,0.0f);
 
-			glTexCoord3f(-v4.x,-v4.y,-v4.z);
-			//glNormal3f(1,1,1);
-			glVertexf3(camera->pos + v4*(NEAR_PLANE+100));
-		glEnd();
+		glTexCoord3f(v4.x,v4.y,v4.z);
+		glVertex2f(0.0f,0.0f);
+	glEnd();
+
+	//glMatrixMode(GL_PROJECTION);
+		glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+		glPopMatrix();
 
 	glDisable(GL_TEXTURE_CUBE_MAP_ARB);
-	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
 	glDepthMask(1);
-	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	if (gu->drawFog) {
