@@ -159,7 +159,7 @@ float3 CGlobalUnsyncedStuff::usRandVector()
 void CGlobalUnsyncedStuff::SetMyPlayer(const int mynumber)
 {
 	myPlayerNum = mynumber;
-	if (gameSetup && gameSetup->numPlayers > mynumber)
+	if (gameSetup && gameSetup->playerStartingData.size() > mynumber)
 	{
 		myTeam = gameSetup->playerStartingData[myPlayerNum].team;
 		myAllyTeam = gameSetup->teamStartingData[myTeam].teamAllyteam;

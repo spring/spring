@@ -48,8 +48,8 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 {
 	const bool useLuaGaia = CLuaGaia::SetConfigString(setup->luaGaiaStr);
 
-	assert(setup->numTeams <= MAX_TEAMS);
-	teams.resize(setup->numTeams);
+	assert(setup->teamStartingData.size() <= MAX_TEAMS);
+	teams.resize(setup->teamStartingData.size());
 
 	for (size_t i = 0; i < teams.size(); ++i) {
 		// TODO: this loop body could use some more refactoring
@@ -126,7 +126,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 	}
 
 	allyTeams = setup->allyStartingData;
-	assert(setup->numAllyTeams <= MAX_TEAMS);
+	assert(setup->allyStartingData.size() <= MAX_TEAMS);
 	if (useLuaGaia) {
 		// Gaia adjustments
 		gaiaTeamID = static_cast<int>(teams.size());
