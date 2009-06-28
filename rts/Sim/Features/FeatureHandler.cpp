@@ -617,7 +617,11 @@ void CFeatureHandler::Draw()
 	glDisable(GL_FOG);
 }
 
-void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading) {
+void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading)
+{
+	if (fadeFeatures.empty() && fadeFeaturesS3O.empty())
+		return;
+
 	bool oldAdvShading = unitDrawer->advShading;
 	unitDrawer->advShading = unitDrawer->advShading && !noAdvShading;
 
