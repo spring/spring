@@ -249,9 +249,9 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 		(*lsi)->NotifyLogMsg(subsystem, str.c_str());
 
 #ifdef _MSC_VER
-	int index = strlen(str) - 1;
+	int index = strlen(str.c_str()) - 1;
 	bool newline = ((index < 0) || (str[index] != '\n'));
-	OutputDebugString(str);
+	OutputDebugString(str.c_str());
 	if (newline)
 		OutputDebugString("\n");
 #endif // _MSC_VER

@@ -31,7 +31,11 @@ typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<int, ProjectileMapPair> ProjectileMap;
 typedef ThreadListSimRender<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*> ProjectileContainer;
 typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
+#if defined(USE_GML) && GML_ENABLE_SIM
 typedef ThreadListSimRender<std::set<FlyingPiece *>, std::set<FlyingPiece *, piececmp>, FlyingPiece *> FlyingPieceContainer;
+#else
+typedef ThreadListSimRender<std::set<FlyingPiece *, piececmp>, void, FlyingPiece *> FlyingPieceContainer;
+#endif
 
 struct FlyingPiece{
 #if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
