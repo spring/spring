@@ -683,6 +683,21 @@ void CBumpWater::UpdateWater(CGame* game)
 ///  SHOREWAVES/COASTMAP
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+CBumpWater::CoastAtlasRect::CoastAtlasRect(CBumpWater::CoastUpdateRect& rect)
+{
+	xsize = rect.x2 - rect.x1;
+	ysize = rect.z2 - rect.z1;
+	ix1 = rect.x1;
+	ix2 = rect.x2;
+	iy1 = rect.z1;
+	iy2 = rect.z2;
+	x1 = rect.x1 / (float)gs->mapx;
+	x2 = rect.x2 / (float)gs->mapx;
+	y1 = rect.z1 / (float)gs->mapx;
+	y2 = rect.z2 / (float)gs->mapx;
+	isCoastline = true;
+}
+
 void CBumpWater::HeightmapChanged(const int x1, const int y1, const int x2, const int y2)
 {
 	if (!shoreWaves || readmap->currMinHeight > 0.0f || mapInfo->map.voidWater)
@@ -873,7 +888,6 @@ void CBumpWater::UploadCoastline(const bool forceFull)
 	//! create an texture atlas for the to be updated areas
 	CTextureAtlas atlas(next_power_of_2(gs->mapx+10),next_power_of_2(gs->mapy+10));
 	const float* heightMap = readmap->GetHeightmap();
-	const float3* normalMap = readmap->facenormals;
 
 	for (size_t i = 0; i < coastmapAtlasRects.size(); i++) {
 		CoastAtlasRect& r = coastmapAtlasRects[i];
