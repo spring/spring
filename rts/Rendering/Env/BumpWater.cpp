@@ -33,6 +33,7 @@
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
 #include "Exceptions.h"
+#include "Util.h"
 
 using std::string;
 using std::vector;
