@@ -150,11 +150,12 @@ void main(void) {
       coast = texture2D(coastmap,gl_TexCoord[0].pq).rgb;
       if (coast.r==1.0) discard;
       invwaterdepth = coast.b;
+      waterdepth = 1.0 - invwaterdepth;
 #else
       invwaterdepth = texture2D(heightmap,gl_TexCoord[4].pq).a; //heightmap in alpha channel
+      waterdepth = 1.0 - invwaterdepth;
       if (waterdepth==0.0) discard;
 #endif
-      waterdepth = 1.0 - invwaterdepth;
     }
 
 #ifdef opt_depth
