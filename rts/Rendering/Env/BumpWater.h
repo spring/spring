@@ -66,19 +66,7 @@ private:
 	};
 	std::vector<CoastUpdateRect> coastmapUpdates;
 	struct CoastAtlasRect {
-		CoastAtlasRect(CoastUpdateRect& rect) {
-			xsize = rect.x2 - rect.x1;
-			ysize = rect.z2 - rect.z1;
-			ix1 = rect.x1;
-			ix2 = rect.x2;
-			iy1 = rect.z1;
-			iy2 = rect.z2;
-			x1 = rect.x1 / (float)gs->mapx;
-			x2 = rect.x2 / (float)gs->mapx;
-			y1 = rect.z1 / (float)gs->mapx;
-			y2 = rect.z2 / (float)gs->mapx;
-			isCoastline = true;
-		};
+		CoastAtlasRect(CoastUpdateRect& rect);
 		bool isCoastline; //! if false, then the whole rect is either above water or below water (no coastline -> no need to calc/render distfield)
 		int ix1,iy1;
 		int ix2,iy2;
