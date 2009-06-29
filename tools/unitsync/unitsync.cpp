@@ -698,6 +698,27 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  * @return Zero on error; non-zero on success
  *
  * If version >= 1, then the author field is filled.
+ *
+ * Important: the description and author fields must point to a valid, and sufficiently long buffer
+ * to store their contents.  Description is max 255 chars, and author is max 200 chars. (including
+ * terminating zero byte).
+ *
+ * If an error occurs (return value 0), the description is set to an error message.
+ * However, using GetNextError() is the recommended way to get the error message.
+ *
+ * Example:
+ *		@code
+ *		char description[255];
+ *		char author[200];
+ *		MapInfo mi;
+ *		mi.description = description;
+ *		mi.author = author;
+ *		if (GetMapInfoEx("somemap.smf", &mi, 1)) {
+ *			//now mi is contains map data
+ *		} else {
+ *			//handle the error
+ *		}
+ *		@endcode
  */
 EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 {
