@@ -44,7 +44,9 @@ else
 fi
 echo "Using $branch as source"
 
-CheckFiles=("game/spring.exe" "installer/downloads/springlobby.exe" "installer/downloads/springsettings.exe" "game/unitsync.dll")
+# temp fix for shared libgcc so a proper one can be committed when somebody
+# notices :P
+CheckFiles=("game/spring.exe" "installer/downloads/springlobby.exe" "installer/downloads/springsettings.exe" "game/unitsync.dll" "installer/downloads/libgcc_s_dw2-1.dll")
 for filename in ${CheckFiles[@]}
 do
 	if [ ! -f $filename ]; then
