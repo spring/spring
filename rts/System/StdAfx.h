@@ -31,6 +31,7 @@
 #include <deque>
 #include <string>
 #include <algorithm>
+#include <bitset>
 #include <cstring>
 #include <cstdlib>
 #include <cctype>
