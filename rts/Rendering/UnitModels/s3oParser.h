@@ -16,6 +16,10 @@ struct SS3OVertex {
 };
 
 struct SS3OPiece: public S3DModelPiece {
+	~SS3OPiece() {
+		sTangents.clear();
+		tTangents.clear();
+	}
 	const float3& GetVertexPos(const int& idx) const { return vertices[idx].pos; };
 
 	std::vector<SS3OVertex> vertices;

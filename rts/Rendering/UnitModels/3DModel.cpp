@@ -34,6 +34,7 @@ void S3DModelPiece::DrawStatic() const
 S3DModelPiece::~S3DModelPiece()
 {
 	glDeleteLists(displist, 1);
+	delete colvol;
 }
 
 

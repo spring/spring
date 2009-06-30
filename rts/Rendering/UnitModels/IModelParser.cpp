@@ -120,7 +120,6 @@ void C3DModelParser::Update() {
 void C3DModelParser::DeleteChilds(S3DModelPiece* o)
 {
 	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); di++) {
-		delete (*di)->colvol;
 		delete (*di);
 	}
 	o->childs.clear();
