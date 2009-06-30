@@ -37,10 +37,9 @@ struct S3DModelPiece {
 
 	//todo: add float3 orientation;
 
-	void DrawStatic() const;
-	~S3DModelPiece();
-
+	virtual ~S3DModelPiece();
 	virtual const float3& GetVertexPos(const int& idx) const = 0;
+	void DrawStatic() const;
 };
 
 

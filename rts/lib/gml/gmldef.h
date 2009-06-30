@@ -283,8 +283,9 @@
 #undef glFramebufferTexture1DEXT
 #undef glFramebufferTexture3DEXT
 #undef glClientActiveTexture
+#undef glMultiTexCoord2i
 
-
+// #####################################################################
 
 #define glDisable gmlDisable
 #define glEnable gmlEnable
@@ -563,3 +564,4 @@
 #define glFramebufferTexture1DEXT gmlFramebufferTexture1DEXT
 #define glFramebufferTexture3DEXT gmlFramebufferTexture3DEXT
 #define glClientActiveTexture gmlClientActiveTexture
+#define glMultiTexCoord2i gmlMultiTexCoord2i
