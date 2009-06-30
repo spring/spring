@@ -24,6 +24,9 @@
   ; Use SDL 1.2.10 because SDL 1.2.{9,11,12} break keyboard layout.
   File "..\external\SDL.dll"
 
+  ; shared libgcc compiled with dwarf2 exception support
+  File "..\external\libgcc_s_dw2-1.dll"
+
   ; Old DLLs, not needed anymore
   ; (python upgraded to 25, MSVC*71.dll was only needed by MSVC compiled unitsync.dll)
   Delete "$INSTDIR\python24.dll"
@@ -170,6 +173,8 @@ ${EndIf}
   Delete "$INSTDIR\vorbisfile.dll"
   Delete "$INSTDIR\vorbis.dll"
   Delete "$INSTDIR\ogg.dll"
+
+  Delete "$INSTDIR\libgcc_s_dw2-1.dll"
 
 
   Delete "$INSTDIR\PALETTE.PAL"

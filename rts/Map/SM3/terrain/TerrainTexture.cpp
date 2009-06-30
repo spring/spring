@@ -215,10 +215,8 @@ namespace terrain {
 				hasBumpmaps = true;
 		}
 
-		if (cfg->useBumpMaps && hasBumpmaps)
-		{
-			for (size_t a=0;a<shaderDef.normalMapStages.size();a++)
-			{
+		if (cfg->useBumpMaps && hasBumpmaps) {
+			for (size_t a = 0; a < shaderDef.normalMapStages.size(); a++) {
 				ShaderDef::Stage* st = &shaderDef.normalMapStages [a];
 
 				string name = st->sourceName;
@@ -377,9 +375,8 @@ namespace terrain {
 			uint vda = 0;
 
 			// create a rendersetup for every shader expression
-			for (size_t a=0;a<shaders.size();a++)
-			{
-				RenderSetup *rs = tns->renderSetup [a] = new RenderSetup;
+			for (size_t a = 0; a < shaders.size(); a++) {
+				RenderSetup* rs = tns->renderSetup [a] = new RenderSetup;
 
 				shaders[a]->def.Optimize(&rs->shaderDef);
 				shaderHandler->BuildNodeSetup(&rs->shaderDef, rs);
@@ -480,8 +477,7 @@ namespace terrain {
 	}
 
 
-	bool TerrainTexture::SetupShading (RenderPass *p, int passIndex)
-	{
+	bool TerrainTexture::SetupShading(RenderPass* p, int passIndex) {
 		NodeSetupParams parms;
 		parms.blendmaps = &blendMaps;
 		parms.textures = &textures;
@@ -525,39 +521,38 @@ namespace terrain {
 		return shaderHandler->SetupShader (p->shaderSetup, parms);
 	}
 
-	void TerrainTexture::EndTexturing ()
-	{
+
+	void TerrainTexture::EndTexturing() {
 		currentRenderSetup = 0;
-		glDisable (GL_BLEND);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		shaderHandler->EndTexturing ();
 	}
-	void TerrainTexture::BeginTexturing()
-	{/*
+	void TerrainTexture::BeginTexturing() {
+		/*
 		static bool z_last=false, x_last;
 		if(keys[SDLK_z] && !z_last)
 			DebugEvent("t_prev_shader");
 		if(keys[SDLK_x] && !x_last)
 			DebugEvent("t_next_shader");
 		z_last=!!keys[SDLK_z];
-		x_last=!!keys[SDLK_x];*/
+		x_last=!!keys[SDLK_x];
+		*/
 
 		shaderHandler->BeginTexturing();
 	}
 
-	int TerrainTexture::NumPasses ()
-	{
+	int TerrainTexture::NumPasses() {
 		return maxPasses;
 	}
 
-	void TerrainTexture::EndPass()
-	{
+
+	void TerrainTexture::EndPass() {
 		currentRenderSetup = 0;
 		shaderHandler->EndPass();
 	}
-	void TerrainTexture::BeginPass(int p)
-	{
+	void TerrainTexture::BeginPass(int p) {
 		shaderHandler->BeginPass(blendMaps, textures, p);
 	}
 
@@ -568,8 +563,7 @@ namespace terrain {
 		wsEyePos = eyePos;
 	}
 
-	void TerrainTexture::SetShadowMapParams(const ShadowMapParams *smp)
-	{
+	void TerrainTexture::SetShadowMapParams(const ShadowMapParams* smp) {
 		if (shadowMapParams)
 			*shadowMapParams = *smp;
 	}
@@ -639,8 +633,7 @@ namespace terrain {
 		}
 	}
 
-	void ShaderDef::Parse(const TdfParser& tdf, bool needNormalMap)
-	{
+	void ShaderDef::Parse(const TdfParser& tdf, bool needNormalMap) {
 		string path = "map\\terrain\\";
 
 		int numStages = atoi(tdf.SGetValueDef("0", path + "NumTextureStages").c_str());
@@ -652,15 +645,13 @@ namespace terrain {
 
 		if (needNormalMap) {
 			// generate the bumpmap stages from the texture stages?
-			if (autoBumpMap)
-			{
-				for (uint a=0;a<stages.size();a++)
-				{
+			if (autoBumpMap) {
+				for (uint a = 0; a < stages.size(); a++) {
 					Stage& st = stages[a];
 					if (a && st.operation != Alpha && st.operation != Blend)
 						continue;
 
-					normalMapStages.push_back (Stage());
+					normalMapStages.push_back(Stage());
 
 					Stage& bmst = normalMapStages.back();
 					bmst.operation = st.operation;
