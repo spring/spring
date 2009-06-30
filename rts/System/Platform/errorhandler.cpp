@@ -11,6 +11,9 @@
 #include <StdAfx.h>
 #include "errorhandler.h"
 
+#include "Game/GameServer.h"
+#include "Sound/Sound.h"
+
 #include <SDL.h>
 #ifdef _WIN32
 #include <windows.h>
@@ -25,6 +28,9 @@ void ErrorMessageBox (const char *msg, const char *caption, unsigned int flags)
 {
 	// Platform independent cleanup.
 	SDL_Quit();
+	// not exiting threads causes another exception
+	delete gameServer; gameServer = NULL;
+	delete sound; sound = NULL;
 
 #ifdef _WIN32
 	// Windows implementation, using MessageBox.

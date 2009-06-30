@@ -29,6 +29,7 @@
 #include "Platform/BaseCmd.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
+#include "Platform/CrashHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -52,13 +53,9 @@
 #include "mmgr.h"
 
 #ifdef WIN32
-#if defined(__GNUC__) || defined(_MSC_VER)
-	#include "Platform/Win/CrashHandler.h"
-#endif
 	#include "Platform/Win/win32.h"
 	#include <winreg.h>
 	#include <direct.h>
-	#include "Platform/Win/seh.h"
 	#include "Platform/Win/WinVersion.h"
 #endif // WIN32
 
@@ -164,10 +161,7 @@ bool SpringApp::Initialize()
 	creg::System::InitializeClasses();
 
 	// Initialize crash reporting
-#ifdef _WIN32
 	CrashHandler::Install();
-	InitializeSEH();
-#endif
 
 	ParseCmdLine();
 

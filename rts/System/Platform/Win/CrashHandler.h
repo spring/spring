@@ -3,10 +3,12 @@
 #ifndef CRASHHANDLER_H
 #define CRASHHANDLER_H
 
-// K.I.S.S.
+// don't use directly
 namespace CrashHandler {
-	void Install();
-	void Remove();
+	namespace Win32 {
+		void Install();
+		void Remove();
+	};
 };
 
 #endif // !CRASHHANDLER_H
