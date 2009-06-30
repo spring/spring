@@ -2536,6 +2536,12 @@ static void ParseMapParams(lua_State* L, const char* caller, float& factor,
 		fx2    = luaL_checkfloat(L, 3);
 		fz2    = luaL_checkfloat(L, 4);
 		factor = luaL_checkfloat(L, 5);
+		if (fx1 > fx2) {
+			swap(fx1, fx2);
+		}
+		if (fz1 > fz2) {
+			swap(fz1, fz2);
+		}
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
