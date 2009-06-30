@@ -250,8 +250,10 @@ void AAIExecute::AddUnitToGroup(int unit_id, int def_id, UnitCategory category)
 	// -> create new one
 
 	// get continent for ground assault units, even if they are amphibious (otherwise non amphib ground units will be added no matter which continent they are on)
-	if(category == GROUND_ASSAULT  && continent_id == -1)
-		continent_id = map->GetContinentID(&cb->GetUnitPos(unit_id));
+	if(category == GROUND_ASSAULT  && continent_id == -1) {
+		float3 pos = cb->GetUnitPos(unit_id);
+		continent_id = map->GetContinentID(&pos);
+	}
 
 	AAIGroup *new_group = new AAIGroup(ai, bt->unitList[def_id-1], unit_type, continent_id);
 
