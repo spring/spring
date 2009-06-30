@@ -973,6 +973,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER5(FramebufferTexture1DEXT)
 		GML_MAKEHANDLER6(FramebufferTexture3DEXT)
 		GML_MAKEHANDLER1(ClientActiveTexture)
+		GML_MAKEHANDLER3(MultiTexCoord2i)
 	}
 }
 
