@@ -13,6 +13,7 @@
 #include "Util.h"
 
 namespace CrashHandler {
+	namespace Win32 {
 
 // Set this to the desired printf style output function.
 // Currently we write through the logOutput class to infolog.txt
@@ -190,4 +191,5 @@ void Remove()
 	SetUnhandledExceptionFilter(NULL);
 }
 
+};
 };
