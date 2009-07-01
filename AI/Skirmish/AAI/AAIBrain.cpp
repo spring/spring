@@ -232,6 +232,8 @@ bool AAIBrain::EnergyForConstr(int unit, int wokertime)
 	// check energy
 	int energy =  bt->unitList[unit-1]->buildTime * (cb->GetEnergyIncome()-(cb->GetEnergyUsage()/2));
 
+	// FIXME: add code here
+
 	return true;
 }
 
