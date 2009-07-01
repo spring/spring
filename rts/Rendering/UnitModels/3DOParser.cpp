@@ -121,7 +121,7 @@ C3DOParser::C3DOParser()
 }
 
 
-S3DModel* C3DOParser::Load(string name, const float3& centerOffset)
+S3DModel* C3DOParser::Load(string name)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {
@@ -153,7 +153,6 @@ S3DModel* C3DOParser::Load(string name, const float3& centerOffset)
 
 	rootobj->relMidPos.x = 0; // ?
 	rootobj->relMidPos.z = 0; // ?
-	rootobj->relMidPos += centerOffset;
 	rootobj->relMidPos.y = std::max(rootobj->relMidPos.y, 1.0f); // ?
 
 	model->radius = rootobj->radius;

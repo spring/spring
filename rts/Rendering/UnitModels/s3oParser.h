@@ -45,7 +45,7 @@ enum {S3O_PRIMTYPE_TRIANGLES, S3O_PRIMTYPE_TRIANGLE_STRIP, S3O_PRIMTYPE_QUADS};
 class CS3OParser: public IModelParser
 {
 public:
-	S3DModel* Load(std::string name, const float3& centerOffset);
+	S3DModel* Load(std::string name);
 	void Draw(const S3DModelPiece* o) const;
 
 private:
