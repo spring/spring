@@ -74,5 +74,35 @@ std::string GetBinaryPath()
 #endif
 }
 
+
+std::string GetBinaryFile()
+{
+#ifdef linux
+	char file[256];
+	const int ret = readlink("/proc/self/exe", file, 255);
+	if (ret >= 0)
+	{
+		file[ret] = '\0';
+		return std::string(file);
+	}
+	else
+		return "";
+
+#elif WIN32
+	TCHAR currentDir[MAX_PATH+1];
+	int ret = ::GetModuleFileName(0, currentDir, sizeof(currentDir));
+	if (ret == 0 || ret == sizeof(currentDir))
+		return "";
+	return std::string(currentDir);
+
+#elif MACOSX_BUNDLE
+	//TODO
+	return "";
+#else
+	return "";
+
+#endif
+}
+
 }
 

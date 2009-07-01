@@ -6,6 +6,7 @@
 namespace Platform
 {
 std::string GetBinaryPath();
+std::string GetBinaryFile();
 }
 
 #endif
