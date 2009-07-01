@@ -141,7 +141,7 @@ void AAI::InitAI(IGlobalAICallback* callback, int team)
 	if(!cfg->initialized)
 	{
 		cb->SendTextMsg("Error: Could not load mod and/or general config file, see .../log/AILog.txt for further information",0);
-		return;
+		throw 1;
 	}
 
 	// create buildtable
