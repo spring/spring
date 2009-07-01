@@ -34,6 +34,7 @@ int CAIAI::handleEvent(int topic, const void* data) {
 	if (ai != NULL) {
 		CAIEvent* e = NULL;
 
+		// create the legacy C++ event
 		switch (topic) {
 			case EVENT_NULL: {
 				e = new CAINullEvent();
@@ -149,12 +150,24 @@ int CAIAI::handleEvent(int topic, const void* data) {
 			}
 		}
 
-		/*ret = */e->Run(*ai, wrappedGlobalAICallback);
-		ret = 0;
-		delete e;
-		e = NULL;
+		try {
+			// handle the event
+			e->Run(*ai, wrappedGlobalAICallback);
+			ret = 0;
+			delete e;
+			e = NULL;
+		} catch (int err) {
+			if (err == 0) {
+				// fail even if the error is set to 0,
+				// because we got an exception
+				ret = -3;
+			} else {
+				ret = err;
+			}
+		} catch (...) {
+			ret = -2;
+		}
 	}
 
-	// signal: ok
 	return ret;
 }
