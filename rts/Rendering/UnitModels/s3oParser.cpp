@@ -23,7 +23,7 @@
 #include "LogOutput.h"
 
 
-S3DModel* CS3OParser::Load(std::string name, const float3& centerOffset)
+S3DModel* CS3OParser::Load(std::string name)
 {
 	CFileHandler file(name);
 	if (!file.FileExists()) {
@@ -53,9 +53,9 @@ S3DModel* CS3OParser::Load(std::string name, const float3& centerOffset)
 	model->radius = header.radius;
 	model->height = header.height;
 
-	model->relMidPos.x = header.midx + centerOffset.x;
-	model->relMidPos.y = header.midy + centerOffset.y;
-	model->relMidPos.z = header.midz + centerOffset.z;
+	model->relMidPos.x = header.midx;
+	model->relMidPos.y = header.midy;
+	model->relMidPos.z = header.midz;
 
 	model->relMidPos.y = std::max(model->relMidPos.y, 1.0f); // ?
 

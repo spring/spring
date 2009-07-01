@@ -75,7 +75,7 @@ class C3DOParser : public IModelParser
 public:
 	C3DOParser();
 
-	S3DModel* Load(std::string name, const float3& centerOffset);
+	S3DModel* Load(std::string name);
 	void Draw(const S3DModelPiece *o) const;
 
 private:

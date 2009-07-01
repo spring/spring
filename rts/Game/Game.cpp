@@ -430,7 +430,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	uh = new CUnitHandler();
 	unitDrawer = new CUnitDrawer();
 	fartextureHandler = new CFartextureHandler();
-	modelParser = new C3DModelParser();
+	modelParser = new C3DModelLoader();
 
 	featureHandler->LoadFeaturesFromMap(saveFile || CScriptHandler::Instance().chosenScript->loadGame);
 	pathManager = new CPathManager();
