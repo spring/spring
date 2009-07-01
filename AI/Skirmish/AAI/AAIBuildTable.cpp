@@ -502,7 +502,7 @@ void AAIBuildTable::Init()
 				if(unitList[i-1]->movedata->moveType == MoveData::Ground_Move || unitList[i-1]->movedata->moveType == MoveData::Hover_Move)
 				{
 					// units with weapons
-					if(!unitList[i-1]->weapons.empty() && GetMaxDamage(i) > 1 || IsAttacker(i))
+					if((!unitList[i-1]->weapons.empty() && GetMaxDamage(i) > 1) || IsAttacker(i))
 					{
 						if(IsMissileLauncher(i))
 						{
@@ -606,7 +606,8 @@ void AAIBuildTable::Init()
 			// aircraft
 			else if(unitList[i-1]->canfly)
 			{
-				if(!unitList[i-1]->weapons.empty() && GetMaxDamage(unitList[i-1]->id) > 1 || IsAttacker(i))
+				// units with weapons
+				if((!unitList[i-1]->weapons.empty() && GetMaxDamage(unitList[i-1]->id) > 1) || IsAttacker(i))
 				{
 					if(unitList[i-1]->weapons.begin()->def->stockpile)
 					{
@@ -2644,15 +2645,18 @@ void AAIBuildTable::SaveBuildTable(int game_period, MapType map_type)
 	// file version
 	fprintf(save_file, "%s \n", MOD_LEARN_VERSION);
 
-	float sum = 0;
-
 	// update attacked_by values
+	// FIXME: using t two times as the for-loop-var?
 	for(int t = 0; t < 4; ++t)
 	{
 		for(int cat = 0; cat < combat_categories; ++cat)
 		{
 			for(int t = 0; t < game_period; ++t)
-				attacked_by_category_learned[map_type][t][cat] = 0.75f * attacked_by_category_learned[map_type][t][cat] + 0.25f * attacked_by_category_current[t][cat];
+			{
+				attacked_by_category_learned[map_type][t][cat] =
+						0.75f * attacked_by_category_learned[map_type][t][cat] +
+						0.25f * attacked_by_category_current[t][cat];
+			}
 		}
 	}
 
