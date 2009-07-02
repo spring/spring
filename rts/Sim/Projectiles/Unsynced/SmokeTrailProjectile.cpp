@@ -187,8 +187,14 @@ void CSmokeTrailProjectile::Draw()
 			va->AddVertexQTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 		}
 	}
+#if defined(USE_GML) && GML_ENABLE_SIM
+	CProjectile * callbacker = *(CProjectile * volatile *)&drawCallbacker;
+	if(callbacker)
+		callbacker->DrawCallback();
+#else
 	if(drawCallbacker)
 		drawCallbacker->DrawCallback();
+#endif
 }
 
 void CSmokeTrailProjectile::Update()
