@@ -13,16 +13,6 @@
 
 #include <string>
 
-#ifndef _WIN32
-/**
- * @brief WINAPI define
- *
- * On non-windows, defines the WINAPI modifier used in
- * Windows DLLs to empty, so it'll ignore them
- */
-#define WINAPI
-#endif
-
 /**
  * @brief shared library base
  *
