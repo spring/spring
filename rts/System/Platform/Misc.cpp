@@ -30,16 +30,12 @@ namespace Platform
 std::string GetBinaryPath()
 {
 #ifdef linux
-	char file[256];
-	const int ret = readlink("/proc/self/exe", file, 255);
-	if (ret >= 0)
-	{
-		file[ret] = '\0';
-		std::string path(file);
-		return path.substr(0, path.find_last_of('/'));
-	}
+	std::string path(GetBinaryFile());
+	size_t pathlength = path.find_last_of('/');
+	if (pathlength != std::string::npos)
+		return path.substr(0, pathlength);
 	else
-		return "";
+		return path;
 
 #elif WIN32
 	TCHAR currentDir[MAX_PATH+1];
