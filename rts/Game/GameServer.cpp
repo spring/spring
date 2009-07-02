@@ -56,6 +56,7 @@
 #include "ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
+#include "Server/GameParticipant.h"
 // This undef is needed, as somewhere there is a type interface specified,
 // which we need not!
 // (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
@@ -90,14 +91,6 @@ const unsigned serverKeyframeIntervall = 16;
 
 using boost::format;
 
-GameParticipant::GameParticipant()
-: myState(UNCONNECTED)
-, cpuUsage (0.0f)
-, ping (0)
-, lastKeyframeResponse(0)
-, isLocal(false)
-{
-}
 namespace {
 void SetBoolArg(bool& value, const std::string& str)
 {
@@ -365,9 +358,7 @@ void CGameServer::Broadcast(boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	for (size_t p = 0; p < players.size(); ++p)
 	{
-		if (players[p].link) {
-			players[p].link->SendData(packet);
-		}
+		players[p].SendData(packet);
 	}
 #ifdef DEDICATED
 	if (demoRecorder) {
@@ -1450,9 +1441,7 @@ void CGameServer::KickPlayer(const int playerNum)
 	{
 		Message(str(format(PlayerLeft) %playerNum %"kicked"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
-		players[playerNum].link->SendData(CBaseNetProtocol::Get().SendQuit());
-		players[playerNum].link.reset();
-		players[playerNum].myState = GameParticipant::DISCONNECTED;
+		players[playerNum].Kill();
 		if (hostif)
 		{
 			hostif->SendPlayerLeft(playerNum, 2);
@@ -1507,22 +1496,20 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 		}
 	}
 
-	players[hisNewNumber].link = link;
-	players[hisNewNumber].isLocal = isLocal;
-	players[hisNewNumber].myState = GameParticipant::CONNECTED;
-
-	link->SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
-	link->SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
+	GameParticipant& newGuy = players[hisNewNumber];
+	newGuy.Connected(link, isLocal);
+	newGuy.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
+	newGuy.SendData(CBaseNetProtocol::Get().SendSetPlayerNum((unsigned char)hisNewNumber));
 
 	for (size_t a = 0; a < players.size(); ++a) {
 		if (players[a].myState >= GameParticipant::INGAME) {
-			link->SendData(CBaseNetProtocol::Get().SendPlayerName(a, players[a].name));
+			newGuy.SendData(CBaseNetProtocol::Get().SendPlayerName(a, players[a].name));
 		}
 	}
 
 	if (!demoReader || setup->demoName.empty()) // gamesetup from demo?
 	{
-			const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
+		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!players[hisNewNumber].spectator && !teams[hisTeam].active) // create new team
 		{
 			teams[hisTeam].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
