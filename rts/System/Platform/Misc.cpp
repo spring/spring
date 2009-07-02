@@ -1,21 +1,12 @@
 #include "Misc.h"
 
-#include <sstream>
-
 #ifdef linux
-#include <stdio.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #elif WIN32
 #include <io.h>
-//#include <direct.h>
-//#include <windows.h>
 #include <shlobj.h>
 #include <shlwapi.h>
-//#ifndef SHGFP_TYPE_CURRENT
-//#define SHGFP_TYPE_CURRENT 0
-//#endif
 
 #elif MACOSX_BUNDLE
 #include <CoreFoundation/CoreFoundation.h>
