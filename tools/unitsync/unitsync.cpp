@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "unitsync.h"
+#include "unitsync_api.h"
 
 #include <algorithm>
 #include <string>
@@ -1677,51 +1678,6 @@ static int GetNumberOfLuaAIs()
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
 }
-/**
- * DEPRECATED: LUA AIs are now handled the same way as Skirmish AIs.
- */
-EXPORT(int) GetLuaAICount()
-{
-	return 0;
-}
-
-
-/**
- * @brief Retrieve the name of a LUA AI
- * @return NULL on error; the name of the LUA AI on success
- *
- * Be sure you've made a call to GetLuaAICount() prior to using this.
- *
- * DEPRECATED: LUA AIs are handled the same way as Skirmish AIs.
- */
-EXPORT(const char*) GetLuaAIName(int aiIndex)
-{
-	try {
-		static const char* DEPSTRING = "DEPRECATED_FUNCTION_CALLED";
-		return DEPSTRING;
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
-}
-
-
-/**
- * @brief Retrieve the description of a LUA AI
- * @return NULL on error; the description of the LUA AI on success
- *
- * Be sure you've made a call to GetLuaAICount() prior to using this.
- *
- * DEPRECATED: LUA AIs are handled the same way as Skirmish AIs.
- */
-EXPORT(const char*) GetLuaAIDesc(int aiIndex)
-{
-	try {
-		static const char* DEPSTRING = "DEPRECATED_FUNCTION_CALLED";
-		return DEPSTRING;
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
-}
 
 
 //////////////////////////
@@ -2985,50 +2941,3 @@ class CMessageOnce
 	static CMessageOnce msg; \
 	msg(string(__FUNCTION__) + ": deprecated unitsync function called, please update your lobby client"); \
 	SetLastError("deprecated unitsync function called")
-
-
-// deprecated 2008/10
-EXPORT(const char*) GetCurrentList()
-{
-	DEPRECATED;
-	return NULL;
-}
-
-// deprecated 2008/10
-EXPORT(void) AddClient(int id, const char *unitList)
-{
-	DEPRECATED;
-}
-
-// deprecated 2008/10
-EXPORT(void) RemoveClient(int id)
-{
-	DEPRECATED;
-}
-
-// deprecated 2008/10
-EXPORT(const char*) GetClientDiff(int id)
-{
-	DEPRECATED;
-	return NULL;
-}
-
-// deprecated 2008/10
-EXPORT(void) InstallClientDiff(const char *diff)
-{
-	DEPRECATED;
-}
-
-// deprecated 2008/10
-EXPORT(int) IsUnitDisabled(int unit)
-{
-	DEPRECATED;
-	return 0;
-}
-
-// deprecated 2008/10
-EXPORT(int) IsUnitDisabledByClient(int unit, int clientId)
-{
-	DEPRECATED;
-	return 0;
-}
