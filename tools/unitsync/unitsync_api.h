@@ -32,6 +32,8 @@ EXPORT(int         ) GetMapCount();
 EXPORT(const char* ) GetMapName(int index);
 EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
 EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+EXPORT(float       ) GetMapMinHeight(const char* name);
+EXPORT(float       ) GetMapMaxHeight(const char* name); 
 EXPORT(int         ) GetMapArchiveCount(const char* mapName);
 EXPORT(const char* ) GetMapArchiveName(int index);
 EXPORT(unsigned int) GetMapChecksum(int index);
