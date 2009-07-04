@@ -748,6 +748,71 @@ EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
 }
 
 
+
+/**
+ * @brief return the map's minimum height
+ * @param name name of the map, e.g. "SmallDivide.smf"
+ *
+ * Together with maxHeight, this determines the
+ * range of the map's height values in-game. The
+ * conversion formula for any raw 16-bit height
+ * datum <h> is
+ *
+ *    minHeight + (h * (maxHeight - minHeight) / 65536.0f)
+ */
+EXPORT(float) GetMapMinHeight(const char* name) {
+	try {
+		ScopedMapLoader loader(name);
+		CSmfMapFile file(name);
+		MapParser parser(name);
+
+		const SMFHeader& header = file.GetHeader();
+		const LuaTable rootTable = parser.GetRoot();
+		const LuaTable smfTable = rootTable.SubTable("smf");
+
+		if (smfTable.KeyExists("minHeight")) {
+			// override the header's minHeight value
+			return (smfTable.GetFloat("minHeight", 0.0f));
+		} else {
+			return (header.minHeight);
+		}
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return 0.0f;
+}
+
+/**
+ * @brief return the map's maximum height
+ * @param name name of the map, e.g. "SmallDivide.smf"
+ *
+ * Together with minHeight, this determines the
+ * range of the map's height values in-game. See
+ * GetMapMinHeight() for the conversion formula.
+ */
+EXPORT(float) GetMapMaxHeight(const char* name) {
+	try {
+		ScopedMapLoader loader(name);
+		CSmfMapFile file(name);
+		MapParser parser(name);
+
+		const SMFHeader& header = file.GetHeader();
+		const LuaTable rootTable = parser.GetRoot();
+		const LuaTable smfTable = rootTable.SubTable("smf");
+
+		if (smfTable.KeyExists("maxHeight")) {
+			// override the header's maxHeight value
+			return (smfTable.GetFloat("maxHeight", 0.0f));
+		} else {
+			return (header.maxHeight);
+		}
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return 0.0f;
+}
+
+
+
+
 static vector<string> mapArchives;
 
 
