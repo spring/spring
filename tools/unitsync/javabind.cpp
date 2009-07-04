@@ -29,16 +29,9 @@ EXPORT(const char* ) GetSpringVersion();
 EXPORT(void        ) UnInit();
 EXPORT(int         ) ProcessUnits(void);
 EXPORT(int         ) ProcessUnitsNoChecksum(void);
-EXPORT(const char* ) GetCurrentList();
-EXPORT(void        ) AddClient(int id, const char *unitList);
-EXPORT(void        ) RemoveClient(int id);
-EXPORT(const char* ) GetClientDiff(int id);
-EXPORT(void        ) InstallClientDiff(const char *diff);
 EXPORT(int         ) GetUnitCount();
 EXPORT(const char* ) GetUnitName(int unit);
 EXPORT(const char* ) GetFullUnitName(int unit);
-EXPORT(int         ) IsUnitDisabled(int unit);
-EXPORT(int         ) IsUnitDisabledByClient(int unit, int clientId);
 EXPORT(void        ) AddArchive(const char* name);
 EXPORT(void        ) AddAllArchives(const char* root);
 EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
@@ -204,16 +197,6 @@ extern "C" {
 
 	/*
 	* Class:     aflobby_CUnitSyncJNIBindings
-	* Method:    GetCurrentList
-	* Signature: ()Ljava/lang/String;
-	*/
-	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetCurrentList
-		(JNIEnv *env, jclass myobject){
-			return env->NewStringUTF(GetCurrentList());
-		}
-
-	/*
-	* Class:     aflobby_CUnitSyncJNIBindings
 	* Method:    AddClient
 	* Signature: (ILjava/lang/String;)V
 	*/
@@ -232,28 +215,6 @@ extern "C" {
 	JNIEXPORT void JNICALL Java_aflobby_CUnitSyncJNIBindings_RemoveClient
 		(JNIEnv *env, jclass myobject, jint id){
 			RemoveClient(id);
-		}
-
-	/*
-	* Class:     aflobby_CUnitSyncJNIBindings
-	* Method:    GetClientDiff
-	* Signature: (I)Ljava/lang/String;
-	*/
-	JNIEXPORT jstring JNICALL Java_aflobby_CUnitSyncJNIBindings_GetClientDiff
-		(JNIEnv *env, jclass myobject, jint id){
-			return env->NewStringUTF(GetClientDiff(id));
-		}
-
-	/*
-	* Class:     aflobby_CUnitSyncJNIBindings
-	* Method:    InstallClientDiff
-	* Signature: (Ljava/lang/String;)V
-	*/
-	JNIEXPORT void JNICALL Java_aflobby_CUnitSyncJNIBindings_InstallClientDiff
-		(JNIEnv *env, jclass myobject, jstring diff){
-			const char* c = env->GetStringUTFChars(diff,0);
-			InstallClientDiff(c);
-			env->ReleaseStringUTFChars(diff,c);
 		}
 
 	/*
