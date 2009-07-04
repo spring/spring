@@ -241,19 +241,18 @@ void CReadMap::CalcHeightfieldData()
 }
 
 void CReadMap::UpdateDraw() {
-
 	GML_STDMUTEX_LOCK(map); // UpdateDraw
 
-	for(std::vector<HeightmapUpdate>::iterator i=heightmapUpdates.begin(); i!=heightmapUpdates.end(); ++i)
-		HeightmapUpdatedNow((*i).x1,(*i).x2,(*i).y1,(*i).y2);
+	for (std::vector<HeightmapUpdate>::iterator i = heightmapUpdates.begin(); i != heightmapUpdates.end(); ++i)
+		HeightmapUpdatedNow((*i).x1, (*i).x2, (*i).y1, (*i).y2);
+
 	heightmapUpdates.clear();
 }
 
 void CReadMap::HeightmapUpdated(int x1, int x2, int y1, int y2) {
-
 	GML_STDMUTEX_LOCK(map); // HeightmapUpdated
 
-	heightmapUpdates.push_back(HeightmapUpdate(x1,x2,y1,y2));
+	heightmapUpdates.push_back(HeightmapUpdate(x1, x2, y1, y2));
 }
 
 CReadMap::IQuadDrawer::~IQuadDrawer() {

@@ -150,7 +150,8 @@ private:
 	int scarFieldY;
 
 	unsigned int decalVP;
-	unsigned int decalFP;
+	unsigned int decalFPsmf;
+	unsigned int decalFPsm3;
 
 	void DrawBuildingDecal(BuildingGroundDecal* decal);
 	void DrawGroundScar(Scar* scar, bool fade);

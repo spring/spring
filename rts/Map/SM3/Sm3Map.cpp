@@ -112,7 +112,7 @@ void CSm3ReadMap::Initialize (const char *mapname)
 		lightInfo.staticLights.push_back (light);
 		renderer->Load (GetMapDefParser(), &lightInfo, &loadcb);
 
-		height = width = renderer->GetHeightmapWidth ()-1;
+		height = width = renderer->GetHeightmapWidth() - 1;
 
 		// Set global map info
 		gs->mapx=width;
@@ -156,26 +156,26 @@ CBaseGroundDrawer *CSm3ReadMap::GetGroundDrawer ()
 void CSm3ReadMap::HeightmapUpdatedNow(int x1, int x2, int y1, int y2)
 {
 	// heightmap is [width+1][height+1]
-	x1-=2; x2+=2;
-	y1-=2; y2+=2;
+	x1 -= 2; x2 += 2;
+	y1 -= 2; y2 += 2;
 
-	if (x1<0) x1=0;
-	if (x1>width) x1=width;
-	if (x2<0) x2=0;
-	if (x2>width) x2=width;
+	if (x1 <     0) x1 =     0;
+	if (x1 > width) x1 = width;
+	if (x2 <     0) x2 =     0;
+	if (x2 > width) x2 = width;
 
-	if (y1<0) y1=0;
-	if (y1>width) y1=height;
-	if (y2<0) y2=0;
-	if (y2>width) y2=height;
+	if (y1 <     0) y1 =      0;
+	if (y1 > width) y1 = height;
+	if (y2 <     0) y2 =      0;
+	if (y2 > width) y2 = height;
 
-	renderer->HeightmapUpdated(x1,y1,x2-x1,y2-y1);
+	renderer->HeightmapUpdated(x1, y1, x2 - x1, y2 - y1);
 }
 
 void CSm3ReadMap::Update() {}
-void CSm3ReadMap::Explosion(float x,float y,float strength) {}
-GLuint CSm3ReadMap::GetShadingTexture () { return 0; } // a texture with RGB for shading and A for height
-void CSm3ReadMap::DrawMinimap ()
+void CSm3ReadMap::Explosion(float x, float y, float strength) {}
+GLuint CSm3ReadMap::GetShadingTexture() { return 0; } // a texture with RGB for shading and A for height
+void CSm3ReadMap::DrawMinimap()
 {
 	if (!minimapTexture)
 		return;

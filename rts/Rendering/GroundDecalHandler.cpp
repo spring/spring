@@ -73,20 +73,21 @@ CGroundDecalHandler::CGroundDecalHandler(void)
 
 	delete[] buf;
 
-	if(shadowHandler->canUseShadows){
-		decalVP=LoadVertexProgram("grounddecals.vp");
-		decalFP=LoadFragmentProgram("grounddecals.fp");
+	if (shadowHandler->canUseShadows) {
+		decalVP    = LoadVertexProgram("GroundDecals.vp");
+		decalFPsmf = LoadFragmentProgram("GroundDecalsSMF.fp");
+		decalFPsm3 = LoadFragmentProgram("GroundDecalsSM3.fp");
 	}
 }
 
 
 CGroundDecalHandler::~CGroundDecalHandler(void)
 {
-	for(std::vector<TrackType*>::iterator tti=trackTypes.begin();tti!=trackTypes.end();++tti){
-		for(set<UnitTrackStruct*>::iterator ti=(*tti)->tracks.begin();ti!=(*tti)->tracks.end();++ti){
+	for (std::vector<TrackType*>::iterator tti = trackTypes.begin(); tti != trackTypes.end(); ++tti) {
+		for (set<UnitTrackStruct*>::iterator ti = (*tti)->tracks.begin(); ti != (*tti)->tracks.end(); ++ti) {
 			delete *ti;
 		}
-		glDeleteTextures (1, &(*tti)->texture);
+		glDeleteTextures(1, &(*tti)->texture);
 		delete *tti;
 	}
 	for (std::vector<TrackToAdd>::iterator ti = tracksToBeAdded.begin(); ti != tracksToBeAdded.end(); ++ti) {
@@ -115,14 +116,15 @@ CGroundDecalHandler::~CGroundDecalHandler(void)
 	for(std::vector<Scar*>::iterator si=scarsToBeAdded.begin();si!=scarsToBeAdded.end();++si){
 		delete *si;
 	}
-	if(decalLevel!=0){
+	if (decalLevel != 0) {
 		delete[] scarField;
 
-		glDeleteTextures(1,&scarTex);
+		glDeleteTextures(1, &scarTex);
 	}
-	if(shadowHandler->canUseShadows){
+	if (shadowHandler->canUseShadows) {
 		glSafeDeleteProgram(decalVP);
-		glSafeDeleteProgram(decalFP);
+		glSafeDeleteProgram(decalFPsmf);
+		glSafeDeleteProgram(decalFPsm3);
 	}
 }
 
@@ -424,19 +426,27 @@ void CGroundDecalHandler::Draw(void)
 
 	if (shadowHandler && shadowHandler->drawShadows) {
 		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glEnable(GL_TEXTURE_2D);
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-		glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+			glEnable(GL_TEXTURE_2D);
+			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+			glBindTexture(GL_TEXTURE_2D, shadowHandler->shadowTexture);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 		glActiveTextureARB(GL_TEXTURE0_ARB);
-		glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, decalFP);
-		glEnable(GL_FRAGMENT_PROGRAM_ARB );
+
+		if (readmap->GetShadingTexture() == 0) {
+			glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, decalFPsm3);
+		} else {
+			// also used for SM3 maps with baked lighting
+			glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, decalFPsmf);
+		}
+		glEnable(GL_FRAGMENT_PROGRAM_ARB);
 		glBindProgramARB(GL_VERTEX_PROGRAM_ARB, decalVP);
-		glEnable(GL_VERTEX_PROGRAM_ARB );
+		glEnable(GL_VERTEX_PROGRAM_ARB);
+
+		const float3 ac = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
+
 		glProgramEnvParameter4fARB(GL_VERTEX_PROGRAM_ARB, 10, 1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 1);
-		float3 ac = mapInfo->light.groundAmbientColor * (210.0f / 255.0f);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 10, ac.x, ac.y, ac.z, 1);
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 11, 0, 0, 0, mapInfo->light.groundShadowDensity);
 		glMatrixMode(GL_MATRIX0_ARB);
@@ -492,9 +502,12 @@ void CGroundDecalHandler::Draw(void)
 
 			for(std::vector<BuildingGroundDecal*>::iterator di = decalsToDraw.begin(); di != decalsToDraw.end(); ++di) {
 				BuildingGroundDecal *decal = *di;
-				if(camera->InView(decal->pos, decal->radius))
+				if (camera->InView(decal->pos, decal->radius)) {
 					DrawBuildingDecal(decal);
+				}
 			}
+
+			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
 
@@ -502,12 +515,13 @@ void CGroundDecalHandler::Draw(void)
 	if (shadowHandler && shadowHandler->drawShadows) {
 		glDisable(GL_FRAGMENT_PROGRAM_ARB);
 		glDisable(GL_VERTEX_PROGRAM_ARB);
-		glActiveTextureARB(GL_TEXTURE2_ARB);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
-		glDisable(GL_TEXTURE_2D);
 
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
+			glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
+			glDisable(GL_TEXTURE_2D);
 		glActiveTextureARB(GL_TEXTURE1_ARB);
+
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
 
