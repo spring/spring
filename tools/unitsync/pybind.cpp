@@ -25,16 +25,9 @@ EXPORT(const char* ) GetSpringVersion();
 EXPORT(void        ) UnInit();
 EXPORT(int         ) ProcessUnits(void);
 EXPORT(int         ) ProcessUnitsNoChecksum(void);
-EXPORT(const char* ) GetCurrentList();
-EXPORT(void        ) AddClient(int id, const char *unitList);
-EXPORT(void        ) RemoveClient(int id);
-EXPORT(const char* ) GetClientDiff(int id);
-EXPORT(void        ) InstallClientDiff(const char *diff);
 EXPORT(int         ) GetUnitCount();
 EXPORT(const char* ) GetUnitName(int unit);
 EXPORT(const char* ) GetFullUnitName(int unit);
-EXPORT(int         ) IsUnitDisabled(int unit);
-EXPORT(int         ) IsUnitDisabledByClient(int unit, int clientId);
 EXPORT(void        ) AddArchive(const char* name);
 EXPORT(void        ) AddAllArchives(const char* root);
 EXPORT(unsigned int) GetArchiveChecksum(const char* arname);
@@ -109,49 +102,6 @@ static PyObject *unitsync_ProcessUnitsNoChecksum(PyObject *self, PyObject *args)
 	return Py_BuildValue("i", ProcessUnitsNoChecksum());
 }
 
-static PyObject *unitsync_GetCurrentList(PyObject *self, PyObject *args)
-{
-	if (!PyArg_ParseTuple(args, ""))
-		return NULL;
-	return Py_BuildValue("s", GetCurrentList());
-}
-
-static PyObject *unitsync_AddClient(PyObject *self, PyObject *args)
-{
-	int id;
-	const char* unitList;
-	if (!PyArg_ParseTuple(args, "is", &id, &unitList))
-		return NULL;
-	AddClient(id, unitList);
-	return Py_BuildValue("");
-}
-
-static PyObject *unitsync_RemoveClient(PyObject *self, PyObject *args)
-{
-	int id;
-	if (!PyArg_ParseTuple(args, "i", &id))
-		return NULL;
-	RemoveClient(id);
-	return Py_BuildValue("");
-}
-
-static PyObject *unitsync_GetClientDiff(PyObject *self, PyObject *args)
-{
-	int id;
-	if (!PyArg_ParseTuple(args, "i", &id))
-		return NULL;
-	return Py_BuildValue("s", GetClientDiff(id));
-}
-
-static PyObject *unitsync_InstallClientDiff(PyObject *self, PyObject *args)
-{
-	const char* diff;
-	if (!PyArg_ParseTuple(args, "s", &diff))
-		return NULL;
-	InstallClientDiff(diff);
-	return Py_BuildValue("");
-}
-
 static PyObject *unitsync_GetUnitCount(PyObject *self, PyObject *args)
 {
 	if (!PyArg_ParseTuple(args, ""))
@@ -173,23 +123,6 @@ static PyObject *unitsync_GetFullUnitName(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "i", &unit))
 		return NULL;
 	return Py_BuildValue("s", GetFullUnitName(unit));
-}
-
-static PyObject *unitsync_IsUnitDisabled(PyObject *self, PyObject *args)
-{
-	int unit;
-	if (!PyArg_ParseTuple(args, "i", &unit))
-		return NULL;
-	return Py_BuildValue("i", IsUnitDisabled(unit));
-}
-
-static PyObject *unitsync_IsUnitDisabledByClient(PyObject *self, PyObject *args)
-{
-	int unit;
-	int clientId;
-	if (!PyArg_ParseTuple(args, "ii", &unit, &clientId))
-		return NULL;
-	return Py_BuildValue("i", IsUnitDisabledByClient(unit, clientId));
 }
 
 static PyObject *unitsync_AddArchive(PyObject *self, PyObject *args)
@@ -590,16 +523,9 @@ static PyMethodDef unitsyncMethods[] = {
 	PY( UnInit ),
 	PY( ProcessUnits ),
 	PY( ProcessUnitsNoChecksum ),
-	PY( GetCurrentList ),
-	PY( AddClient ),
-	PY( RemoveClient ),
-	PY( GetClientDiff ),
-	PY( InstallClientDiff ),
 	PY( GetUnitCount ),
 	PY( GetUnitName ),
 	PY( GetFullUnitName ),
-	PY( IsUnitDisabled ),
-	PY( IsUnitDisabledByClient ),
 	PY( AddArchive ),
 	PY( AddAllArchives ),
 	PY( GetArchiveChecksum ),
