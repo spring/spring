@@ -337,12 +337,21 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int ModelHeight(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = ((const FeatureDef*)data);
+	const FeatureDef* fd = ((const FeatureDef*) data);
+	const S3DModel* model = NULL;
 	float height = 0.0f;
+
 	switch (fd->drawType) {
-		case DRAWTYPE_MODEL: { height = LoadModel(fd)->height;  break; }
-		case DRAWTYPE_NONE:  { height = 0.0f;                   break; }
-		default:             {
+		case DRAWTYPE_MODEL: {
+			model = LoadModel(fd);
+			height = model? model->height: 0.0f;
+			break;
+		}
+		case DRAWTYPE_NONE: {
+			height = 0.0f;
+			break;
+		}
+		default: {
 			if (fd->drawType >= DRAWTYPE_TREE) {
 				height = TREE_RADIUS * 2.0f;
 			} else {
@@ -358,12 +367,21 @@ static int ModelHeight(lua_State* L, const void* data)
 
 static int ModelRadius(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = ((const FeatureDef*)data);
+	const FeatureDef* fd = ((const FeatureDef*) data);
+	const S3DModel* model = NULL;
 	float radius = 0.0f;
+
 	switch (fd->drawType) {
-		case DRAWTYPE_MODEL: { radius = LoadModel(fd)->radius;  break; }
-		case DRAWTYPE_NONE:  { radius = 0.0f;                   break; }
-		default:             {
+		case DRAWTYPE_MODEL: {
+			model = LoadModel(fd);
+			radius = model? model->radius: 0.0f;
+			break;
+		}
+		case DRAWTYPE_NONE: {
+			radius = 0.0f;
+			break;
+		}
+		default: {
 			if (fd->drawType >= DRAWTYPE_TREE) {
 				radius = TREE_RADIUS;
 			} else {
@@ -377,20 +395,20 @@ static int ModelRadius(lua_State* L, const void* data)
 }
 
 
-#define TYPE_MODEL_FUNC(name, param)                       \
-	static int Model ## name(lua_State* L, const void* data) \
-	{                                                        \
-		const FeatureDef* fd = ((const FeatureDef*)data);     \
-		if (fd->drawType == DRAWTYPE_MODEL) {                     \
-			const S3DModel* model = LoadModel(fd);            \
-			lua_pushnumber(L, model -> param);                   \
-			return 1;                                            \
-		}                                                      \
-		return 0;                                              \
+#define TYPE_MODEL_FUNC(name, param)                            \
+	static int Model ## name(lua_State* L, const void* data)    \
+	{                                                           \
+		const FeatureDef* fd = ((const FeatureDef*)data);       \
+		if (fd->drawType == DRAWTYPE_MODEL) {                   \
+			const S3DModel* model = LoadModel(fd);              \
+			lua_pushnumber(L, model? model -> param : 0.0f);    \
+			return 1;                                           \
+		}                                                       \
+		return 0;                                               \
 	}
 
-//TYPE_MODEL_FUNC(Height, height);
-//TYPE_MODEL_FUNC(Radius, radius);
+//TYPE_MODEL_FUNC(Height, height); // ::ModelHeight()
+//TYPE_MODEL_FUNC(Radius, radius); // ::ModelRadius()
 TYPE_MODEL_FUNC(Minx,   minx);
 TYPE_MODEL_FUNC(Midx,   relMidPos.x);
 TYPE_MODEL_FUNC(Maxx,   maxx);

@@ -92,8 +92,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 		return model;
 	}
 
-	// throw content_error("couldn't find a model parser for " + name);
-	logOutput.Print("couldn't find a model parser for " + name);
+	logOutput.Print("couldn't find a parser for model named \"" + name + "\"");
 	return NULL;
 }
 
