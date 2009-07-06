@@ -241,17 +241,17 @@ void CFactory::StartBuild(const UnitDef* ud)
 	if (beingBuilt)
 		return;
 
-#ifdef TRACE_SYNC
-	tracefile << "Start build: ";
-	tracefile << type.c_str() << "\n";
-#endif
-
 	if (curBuild)
 		StopBuild();
 
 	quedBuild = true;
 	nextBuild = ud;
 	nextBuildName = ud->name;
+
+#ifdef TRACE_SYNC
+	tracefile << "Start build: ";
+	tracefile << ud->name.c_str() << "\n";
+#endif
 
 	if (!opening && !stunned) {
 		script->Activate();

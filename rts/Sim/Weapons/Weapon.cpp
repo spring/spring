@@ -877,8 +877,8 @@ void CWeapon::Init(void)
 void CWeapon::Fire()
 {
 #ifdef TRACE_SYNC
-	tracefile << weaponDef->name << " fire: ";
-	tracefile << owner->pos.x << " " << owner->dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
+	tracefile << weaponDef->name.c_str() << " fire: ";
+	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
 	FireImpl();
