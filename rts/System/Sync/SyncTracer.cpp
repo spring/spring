@@ -6,6 +6,7 @@
 #include "SyncTracer.h"
 #include <stdio.h>
 #include "LogOutput.h"
+#include "GlobalUnsynced.h"
 #include "mmgr.h"
 
 //////////////////////////////////////////////////////////////////////
