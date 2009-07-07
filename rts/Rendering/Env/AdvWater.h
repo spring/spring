@@ -5,6 +5,7 @@
 #ifndef __ADV_WATER_H__
 #define __ADV_WATER_H__
 
+#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 #include "BaseWater.h"
 
@@ -18,6 +19,10 @@ public:
 	virtual ~CAdvWater();
 	virtual int GetID() const { return 1; }
 
+protected:
+	FBO reflectFBO;
+	FBO bumpFBO;
+
 	GLuint reflectTexture;
 	GLuint bumpTexture;
 	GLuint rawBumpTexture[4];
@@ -27,4 +32,3 @@ public:
 };
 
 #endif // __ADV_WATER_H__
-

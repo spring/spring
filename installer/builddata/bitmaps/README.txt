@@ -67,4 +67,4 @@ tracks/StdTank.bmp	SJ
 wake.tga		Yeha
 waterbump.png		jK
 caustics/*		jK (with GPL app: http://www.lysator.liu.se/~kand/caustics/)
-shorewaverand.bmp	jK
+shorewaverand.png	jK

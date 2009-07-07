@@ -66,14 +66,14 @@ void CWind::Update()
 		uh->UpdateWind(newWind.x, newWind.z, newWind.Length());
 
 		status++;
-	} else if(status<=300) {
-		float mod=status/300.0f;
-		curWind=oldWind*(1-mod)+newWind*mod;
+	} else if(status<=900) {
+		float mod=status/900.0f;
+		curWind=oldWind*(1.0-mod)+newWind*mod;
 		curStrength=curWind.Length();
 		curDir=curWind;
 		curDir.Normalize();
 		status++;
-	} else if(status==900) {
+	} else if(status==901) {
 		status=0;
 	} else {
 		status++;

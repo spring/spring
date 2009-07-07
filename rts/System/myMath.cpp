@@ -123,11 +123,21 @@ float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p)
 	return l1 + dir * (c / length);
 }
 
-float smoothstep(float edge0, float edge1, float value)
+
+float smoothstep(const float edge0, const float edge1, const float value)
 {
 	if (value<=edge0) return 0.0f;
 	if (value>=edge1) return 1.0f;
 	float t = (value - edge0) / (edge1 - edge0);
 	t = std::min(1.0f,std::max(0.0f, t ));
 	return t * t * (3.0f - 2.0f * t);
+}
+
+
+float3 smoothstep(const float edge0, const float edge1, float3 vec)
+{
+	vec.x = smoothstep(edge0, edge1, vec.x);
+	vec.y = smoothstep(edge0, edge1, vec.y);
+	vec.z = smoothstep(edge0, edge1, vec.z);
+	return vec;
 }

@@ -198,17 +198,6 @@ void CAdvSky::Draw()
 
 	glCallList(displist);
 
-	if (gu->drawFog) {
-		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-		glFogf(GL_FOG_START,gu->viewRange*fogStart);
-		glFogf(GL_FOG_END,gu->viewRange);
-		glFogf(GL_FOG_DENSITY,1.0f);
-		glFogi(GL_FOG_MODE,GL_LINEAR);
-	} else {
-		glDisable(GL_FOG);
-	}
-
 	glMatrixMode(GL_TEXTURE);
 	  glActiveTextureARB(GL_TEXTURE2_ARB);
 		glPopMatrix();
@@ -221,6 +210,17 @@ void CAdvSky::Draw()
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
+
+	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
+	glFogf(GL_FOG_START,gu->viewRange*fogStart);
+	glFogf(GL_FOG_END,gu->viewRange);
+	glFogf(GL_FOG_DENSITY,1.0f);
+	glFogi(GL_FOG_MODE,GL_LINEAR);
+	if (gu->drawFog) {
+		glEnable(GL_FOG);
+	} else {
+		glDisable(GL_FOG);
+	}
 }
 
 float3 CAdvSky::GetCoord(int x, int y)

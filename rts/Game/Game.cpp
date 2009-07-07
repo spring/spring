@@ -493,7 +493,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	glFogf(GL_FOG_START, 0.0f);
-	glFogf(GL_FOG_END, gu->viewRange * 0.98f);
+	glFogf(GL_FOG_START,gu->viewRange*mapInfo->atmosphere.fogStart);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
 	glEnable(GL_FOG);
@@ -2555,16 +2555,15 @@ bool CGame::DrawWorld()
 	}
 
 	if (drawGround) {
-		{
-		SCOPED_TIMER("ExtraTexture");
-		gd->UpdateExtraTexture();
-		}
 		gd->Draw();
 		treeDrawer->DrawGrass();
 	}
 
-	if (drawWater) {
-		if (!mapInfo->map.voidWater && water->drawSolid) {
+	if (drawWater && !mapInfo->map.voidWater) {
+		SCOPED_TIMER("Water");
+		water->OcclusionQuery();
+		if (water->drawSolid) {
+			water->UpdateWater(this);
 			water->Draw();
 		}
 	}
@@ -2572,19 +2571,19 @@ bool CGame::DrawWorld()
 	selectedUnits.Draw();
 	eventHandler.DrawWorldPreUnit();
 
+	unitDrawer->Draw(false);
+	featureHandler->Draw();
+
 	if (drawGround) {
 		gd->DrawTrees();
 	}
-
-	unitDrawer->Draw(false);
-	featureHandler->Draw();
 
 #if !defined(USE_GML) || !GML_ENABLE_SIM // Pathmanager is not thread safe
 	if (gu->drawdebug && gs->cheatEnabled) {
 		pathManager->Draw();
 	}
 #endif
-	//transparent stuff
+	//! transparent stuff
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
@@ -2596,13 +2595,16 @@ bool CGame::DrawWorld()
 		glDisable(GL_CLIP_PLANE3);
 	}
 
-	if (drawWater) {
-		if (!mapInfo->map.voidWater && !water->drawSolid) {
+	if (drawWater && !mapInfo->map.voidWater) {
+		SCOPED_TIMER("Water");
+		if (!water->drawSolid) {
+			water->UpdateWater(this);
 			water->Draw();
 		}
 	}
 
-	if(clip) // draw cloaked part above surface
+	//! draw cloaked part above surface
+	if(clip)
 		glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(false);
 	featureHandler->DrawFadeFeatures(false);
@@ -2632,7 +2634,7 @@ bool CGame::DrawWorld()
 		inMapDrawer->Draw();
 	}
 
-	// underwater overlay
+	//! underwater overlay
 	if (camera->pos.y < 0.0f) {
 		const float3& cpos = camera->pos;
 		const float vr = gu->viewRange * 0.5f;
@@ -2706,17 +2708,6 @@ bool CGame::DrawMT() {
 bool CGame::Draw() {
 #endif
 
-	if(lastSimFrame!=gs->frameNum) {
-		CInputReceiver::CollectGarbage();
-		if(!skipping) {
-			water->Update();
-			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
-			ph->UpdateTextures();
-			sky->Update();
-		}
-		lastSimFrame=gs->frameNum;
-	}
-
 	//! timings and frame interpolation
 	thisFps++;
 	const unsigned currentTime = SDL_GetTicks();
@@ -2729,6 +2720,17 @@ bool CGame::Draw() {
 	} else  {
 		gu->timeOffset=0;
 		lastUpdate = SDL_GetTicks();
+	}
+
+	if(lastSimFrame!=gs->frameNum) {
+		CInputReceiver::CollectGarbage();
+		if(!skipping) {
+			sound->UpdateListener(camera->pos, camera->forward, camera->up, gu->lastFrameTime); //TODO call only when camera changed
+			ph->UpdateTextures();
+			water->Update();
+			sky->Update();
+		}
+		lastSimFrame=gs->frameNum;
 	}
 
 	if(!skipping)
@@ -2757,10 +2759,10 @@ bool CGame::Draw() {
 	modelParser->Update();
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
-	fartextureHandler->CreateFarTextures();
-	mouse->EmptyMsgQueUpdate();
 	unitDrawer->Update();
+	mouse->EmptyMsgQueUpdate();
 	lineDrawer.UpdateLineStipple();
+	fartextureHandler->CreateFarTextures();
 
 	LuaUnsyncedCtrl::ClearUnitCommandQueues();
 	eventHandler.Update();
@@ -2771,10 +2773,6 @@ bool CGame::Draw() {
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
-
-	glDisable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glDisable(GL_TEXTURE_2D);
 
 	//set camera
 	camHandler->UpdateCam();
@@ -2788,16 +2786,21 @@ bool CGame::Draw() {
 		script->SetCamera();
 	}
 
-	CBaseGroundDrawer* gd;
-	{
-		SCOPED_TIMER("Ground");
-		gd = readmap->GetGroundDrawer();
-		gd->Update(); // let it update before shadows have to be drawn
-	}
-
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 
 	if (doDrawWorld) {
+		CBaseGroundDrawer* gd;
+		{
+			SCOPED_TIMER("GroundUpdate");
+			gd = readmap->GetGroundDrawer();
+			gd->Update(); // let it update before shadows have to be drawn
+
+			{
+			SCOPED_TIMER("ExtraTexture");
+			gd->UpdateExtraTexture();
+			}
+		}
+
 		SCOPED_TIMER("Shadows/Reflect");
 		if (shadowHandler->drawShadows &&
 		    (gd->drawMode != CBaseGroundDrawer::drawLos)) {
@@ -2809,17 +2812,16 @@ bool CGame::Draw() {
 		if (unitDrawer->advShading) {
 			unitDrawer->UpdateReflectTex();
 		}
+		if (FBO::IsSupported())
+			FBO::Unbind();
+		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	}
 
-	camera->Update(false); //FIXME: after UpdateWater?
+	camera->Update(false);
 
+	glDisable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
-
-	{
-		SCOPED_TIMER("Water");
-		water->UpdateWater(this);
-	}
-
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);	// Clear Screen And Depth&Stencil Buffer
 
 	if (doDrawWorld) {
@@ -2843,7 +2845,9 @@ bool CGame::Draw() {
 
 	glDisable(GL_FOG);
 
-	eventHandler.DrawScreenEffects();
+	if (doDrawWorld) {
+		eventHandler.DrawScreenEffects();
+	}
 
 	if (mouse->locked && (crossSize > 0.0f)) {
 		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
