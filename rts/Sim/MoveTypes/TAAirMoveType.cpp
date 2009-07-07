@@ -353,9 +353,11 @@ void CTAAirMoveType::UpdateFlying()
 	owner->restTime = 0;
 
 	// don't change direction for waypoints we just flew over and missed slightly
-	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() &&
-		(dir.SqLength2D() < 10000) && (float3(dir).Normalize().SqDistance(dir) < 1)) {
-		dir = owner->frontdir;
+	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() && (dir.SqLength2D() < 10000)) {
+		float sqd = dir.SqLength();
+		if (sqd < Square(1.0f+sqd)) { //same as (float3(dir).Normalize().SqDistance(dir) < 1)
+			dir = owner->frontdir;
+		}
 	}
 
 	// are we there yet?
@@ -424,7 +426,7 @@ void CTAAirMoveType::UpdateFlying()
 					if (relPos.x < 0.0001f && relPos.x > -0.0001f)
 						relPos.x = 0.0001f;
 					relPos.y = 0;
-					relPos.Normalize();
+					relPos.ANormalize();
 					CMatrix44f rot;
 					if (gs->randFloat() > 0.5f)
 						rot.RotateY(0.6f + gs->randFloat() * 0.6f);
@@ -447,7 +449,7 @@ void CTAAirMoveType::UpdateFlying()
 	// not there yet, so keep going
 	dir.y = 0;
 	float realMax = maxSpeed;
-	float dist = dir.Length2D();
+	float dist = dir.Length();
 
 	// If we are close to our goal, we should go slow enough to be able to break in time
 	// new additional rule: if in attack mode or if we have more move orders then this is
@@ -458,14 +460,14 @@ void CTAAirMoveType::UpdateFlying()
 		realMax = dist / (speed.Length2D() + 0.01f) * decRate;
 	}
 
-	wantedSpeed = dir.Normalize() * realMax;
+	wantedSpeed = (dir/dist) * realMax;
 	UpdateAirPhysics();
 
 	// Point toward goal or forward - unless we just passed it to get to another goal
 	if ((flyState == FLY_ATTACKING) || (flyState == FLY_CIRCLING)) {
 		dir = circlingPos - pos;
 	} else if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-			   dist < 120) && (goalPos - pos).Normalize().SqDistance(dir) > 1) {
+		dist < 120) && (goalPos - pos).Normalize().SqDistance(dir) > 1) {
 		dir = owner->frontdir;
 	} else {
 		dir = goalPos - pos;
@@ -589,11 +591,11 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 	float wantedBank = 0.0f;
 	if (!noBanking && bankingAllowed) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5f;
 
-	float limit = std::min(1.0f,goalPos.distance2D(owner->pos)*0.15f);
-	if(wantedBank>limit)
-		wantedBank=limit;
-	else if(wantedBank<-limit)
-		wantedBank=-limit;
+	float limit = std::min(1.0f,goalPos.SqDistance2D(owner->pos)*Square(0.15f));
+	if(Square(wantedBank)>limit)
+		wantedBank =  streflop::sqrt(limit);
+	else if(Square(wantedBank)<-limit)
+		wantedBank = -streflop::sqrt(limit);
 
 	//Adjust our banking to the desired value
 	if (currentBank > wantedBank)
@@ -621,25 +623,25 @@ void CTAAirMoveType::UpdateAirPhysics()
 	speed.y = 0.0f;
 
 	float3 delta = wantedSpeed - speed;
-	float dl = delta.Length();
+	float deltaDotSpeed = delta.dot(speed);
 
-	if (delta.dot(speed) > 0.0f) {
+	if (deltaDotSpeed == 0.0f) {
+		// we have the wanted speed
+	} else if (deltaDotSpeed > 0.0f) {
 		// accelerate
-		if (dl < accRate) {
+		float sqdl = delta.Length();
+		if (sqdl < Square(decRate)) {
 			speed = wantedSpeed;
 		} else {
-			if (dl > 0.0f) {
-				speed += delta / dl * accRate;
-			}
+			speed += delta / streflop::sqrt(sqdl) * accRate;
 		}
 	} else {
 		// break
-		if (dl < decRate) {
+		float sqdl = delta.SqLength();
+		if (sqdl < Square(decRate)) {
 			speed = wantedSpeed;
 		} else {
-			if (dl > 0.0f) {
-				speed += delta / dl * decRate;
-			}
+			speed += delta / streflop::sqrt(sqdl) * decRate;
 		}
 	}
 

@@ -82,6 +82,62 @@ void CGround::CheckColSquare(CProjectile* p, int x, int y)
 	return;
 }
 
+inline float LineGroundSquareCol(const float3& from, const float3& to, int xs, int ys)
+{
+	if ((xs < 0) || (ys < 0) || (xs >= gs->mapx - 1) || (ys >= gs->mapy - 1))
+		return -1;
+
+	float3 tri;
+	const float* heightmap = readmap->GetHeightmap();
+
+	// triangle 1
+	tri.x = xs * SQUARE_SIZE;
+	tri.z = ys * SQUARE_SIZE;
+	tri.y = heightmap[ys * (gs->mapx + 1) + xs];
+
+	float3 norm = readmap->facenormals[(ys * gs->mapx + xs) * 2];
+	float side1 = (to - tri).dot(norm);
+
+	if (side1 <= 0) {
+		// linjen passerar triangelns plan?
+		float side2 = (from - tri).dot(norm);
+		float dif = side2 - side1;
+		if (dif != 0) {
+			float frontpart = side2 / dif;
+			float3 col = from + ((to - from) * frontpart);
+
+			if ((col.x >= tri.x) && (col.z >= tri.z) && (col.x + col.z <= tri.x + tri.z + SQUARE_SIZE)) {
+				// kollision inuti triangeln (utnyttja trianglarnas "2d aktighet")
+				return col.distance(from);
+			}
+		}
+	}
+
+	// triangle 2
+	tri.x += SQUARE_SIZE;
+	tri.z += SQUARE_SIZE;
+	tri.y = heightmap[(ys + 1) * (gs->mapx + 1) + xs + 1];
+
+	norm = readmap->facenormals[(ys * gs->mapx + xs) * 2 + 1];
+	side1 = (to - tri).dot(norm);
+
+	if (side1 <= 0) {
+		// linjen passerar triangelns plan?
+		float side2 = (from - tri).dot(norm);
+		float dif = side2 - side1;
+		if (dif != 0) {
+			float frontpart = side2 / dif;
+			float3 col = from + ((to - from) * frontpart);
+
+			if ((col.x <= tri.x) && (col.z <= tri.z) && (col.x + col.z >= tri.x + tri.z - SQUARE_SIZE)) {
+				// kollision inuti triangeln (utntri.ytja trianglarnas "2d aktighet")
+				return col.distance(from);
+			}
+		}
+	}
+	return -2;
+}
+
 float CGround::LineGroundCol(float3 from, float3 to)
 {
 	float savedLength = 0.0f;
@@ -125,32 +181,34 @@ float CGround::LineGroundCol(float3 from, float3 to)
 			return ret;
 		}
 	} else if(floor(from.x/SQUARE_SIZE)==floor(to.x/SQUARE_SIZE)){
-		float zp=from.z;
+		float zp = from.z/SQUARE_SIZE;
+		int xp = (int)floor(from.x/SQUARE_SIZE);
 		while(keepgoing){
-			ret = LineGroundSquareCol(from,to,(int)floor(from.x/SQUARE_SIZE),(int)floor(zp/SQUARE_SIZE));
+			ret = LineGroundSquareCol(from, to, xp, (int)floor(zp));
 			if(ret>=0){
 				return ret+savedLength;
 			}
-			keepgoing=fabs(zp-from.z)<fabs(dz);
+			keepgoing = fabs(zp*SQUARE_SIZE-from.z)<fabs(dz);
 			if(dz>0)
-				zp+=SQUARE_SIZE;
+				zp+=1.0f;
 			else
-				zp-=SQUARE_SIZE;
+				zp-=1.0f;
 		}
 		// if you hit this the collision detection hit an infinite loop
 		assert(!keepgoing);
 	} else if(floor(from.z/SQUARE_SIZE)==floor(to.z/SQUARE_SIZE)){
-		float xp=from.x;
+		float xp=from.x/SQUARE_SIZE;
+		int zp = (int)floor(from.z/SQUARE_SIZE);
 		while(keepgoing){
-			ret = LineGroundSquareCol(from,to,(int)floor(xp/SQUARE_SIZE),(int)floor(from.z/SQUARE_SIZE));
+			ret = LineGroundSquareCol(from,to,(int)floor(xp), zp);
 			if(ret>=0){
 				return ret+savedLength;
 			}
-			keepgoing=fabs(xp-from.x)<fabs(dx);
+			keepgoing=fabs(xp*SQUARE_SIZE-from.x)<fabs(dx);
 			if(dx>0)
-				xp+=SQUARE_SIZE;
+				xp+=1.0f;
 			else
-				xp-=SQUARE_SIZE;
+				xp-=1.0f;
 		}
 		// if you hit this the collision detection hit an infinite loop
 		assert(!keepgoing);
@@ -204,63 +262,6 @@ float CGround::LineGroundCol(float3 from, float3 to)
 		}
 	}
 	return -1;
-}
-
-float CGround::LineGroundSquareCol(const float3& from, const float3& to, int xs, int ys)
-{
-	if ((xs < 0) || (ys < 0) || (xs >= gs->mapx - 1) || (ys >= gs->mapy - 1))
-		return -1;
-
-	float3 dir = to - from;
-	float3 tri;
-
-	// triangle 1
-	tri.x = xs * SQUARE_SIZE;
-	tri.z = ys * SQUARE_SIZE;
-	const float* heightmap = readmap->GetHeightmap();
-	tri.y = heightmap[ys * (gs->mapx + 1) + xs];
-
-	float3 norm = readmap->facenormals[(ys * gs->mapx + xs) * 2];
-	float side1 = (from - tri).dot(norm);
-	float side2 = (to - tri).dot(norm);
-
-	if (side2 <= 0) {
-		// linjen passerar triangelns plan?
-		float dif = side1 - side2;
-		if (dif != 0) {
-			float frontpart = side1 / dif;
-			float3 col = from + (dir * frontpart);
-
-			if ((col.x >= tri.x) && (col.z >= tri.z) && (col.x + col.z <= tri.x + tri.z + SQUARE_SIZE)) {
-				// kollision inuti triangeln (utnyttja trianglarnas "2d aktighet")
-				return col.distance(from);
-			}
-		}
-	}
-
-	// triangle 2
-	tri.x = (xs + 1) * SQUARE_SIZE;
-	tri.z = (ys + 1) * SQUARE_SIZE;
-	tri.y = heightmap[(ys + 1) * (gs->mapx + 1) + xs + 1];
-
-	norm = readmap->facenormals[(ys * gs->mapx + xs) * 2 + 1];
-	side1 = (from - tri).dot(norm);
-	side2 = (to - tri).dot(norm);
-
-	if (side2 <= 0) {
-		// linjen passerar triangelns plan?
-		float dif = side1 - side2;
-		if (dif != 0) {
-			float frontpart = side1 / dif;
-			float3 col = from + (dir * frontpart);
-
-			if ((col.x <= tri.x) && (col.z <= tri.z) && (col.x + col.z >= tri.x + tri.z - SQUARE_SIZE)) {
-				// kollision inuti triangeln (utntri.ytja trianglarnas "2d aktighet")
-				return col.distance(from);
-			}
-		}
-	}
-	return -2;
 }
 
 float CGround::GetApproximateHeight(float x, float y)

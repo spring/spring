@@ -691,16 +691,12 @@ void CAirMoveType::UpdateFlying(float wantedHeight, float engine)
 	float3& speed = owner->speed;
 
 	float speedf = speed.Length();
-	float goalLength = (goalPos - pos).Length2D();
-
-	float3 goalDir =
-		(goalLength > 0.0f)?
-		((goalPos - pos) / goalLength).Normalize():
-		ZeroVector;
+	float3 goalDir = (goalPos - pos);
+	float goalLength = std::max(0.001f, goalDir.Length2D());
+	goalDir /= goalLength;
 
 	float3 adjustedGoalDir = float3(goalPos.x, 0, goalPos.z) - float3(pos.x, 0, pos.z);
-	goalDir.Normalize();
-	adjustedGoalDir.Normalize();
+	adjustedGoalDir.ANormalize();
 
 	float aileron = 0.0f;
 	float rudder = 0.0f;
