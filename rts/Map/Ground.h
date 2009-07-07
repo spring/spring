@@ -36,8 +36,6 @@ public:
 private:
 
 	void CheckColSquare(CProjectile* p,int x,int y);
-
-	float LineGroundSquareCol(const float3 &from,const float3 &to,int xs,int ys);
 };
 
 extern CGround* ground;
