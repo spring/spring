@@ -203,7 +203,9 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 			s = playerHandler->Player(team->leader)->name;
 
 			if (team->isAI) {
-				s += " (AI: " + (team->skirmishAIKey.GetShortName()) + ")";
+				s += " (AI: " +
+					(team->skirmishAIKey.GetShortName() + " " +
+					 team->skirmishAIKey.GetVersion()) + ")";
 			}
 		} else {
 			s = "Uncontrolled";
