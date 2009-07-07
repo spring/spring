@@ -85,12 +85,13 @@ void CSkyBox::Draw()
 	glDepthMask(1);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
+
+	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
+	glFogi(GL_FOG_MODE,GL_LINEAR);
+	glFogf(GL_FOG_START,gu->viewRange*fogStart);
+	glFogf(GL_FOG_END,gu->viewRange);
+	glFogf(GL_FOG_DENSITY,1.00f);
 	if (gu->drawFog) {
-		glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-		glFogi(GL_FOG_MODE,GL_LINEAR);
-		glFogf(GL_FOG_START,gu->viewRange*fogStart);
-		glFogf(GL_FOG_END,gu->viewRange);
-		glFogf(GL_FOG_DENSITY,1.00f);
 		glEnable(GL_FOG);
 	}
 }

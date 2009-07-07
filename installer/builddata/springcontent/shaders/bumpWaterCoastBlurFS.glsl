@@ -22,16 +22,16 @@ const float kernel = 1.0/10.0;
 vec2 texelScissor = vec2(dFdx(gl_TexCoord[0].p),dFdy(gl_TexCoord[0].q));
 vec2 texel0 = vec2(dFdx(gl_TexCoord[0].s),dFdy(gl_TexCoord[0].t));
 
-float tex2D(vec2 offset) {
+vec4 tex2D(vec2 offset) {
   if (renderToAtlas) {
-    return texture2D(tex0, gl_TexCoord[0].st + offset * texel0).g;
+    return texture2D(tex0, gl_TexCoord[0].st + offset * texel0);
   } else {
     vec2 scissor = gl_TexCoord[0].pq + (offset * texelScissor);
     bool outOfAtlasBound = any(greaterThan(scissor,vec2(1.0))) || any(lessThan(scissor,vec2(0.0)));
     if (outOfAtlasBound) {
-      return texture2D(tex1, gl_TexCoord[0].st).g;
+      return texture2D(tex1, gl_TexCoord[0].st);
     } else {
-      return texture2D(tex1, gl_TexCoord[0].st + offset * texel0).g;
+      return texture2D(tex1, gl_TexCoord[0].st + offset * texel0);
     }
   }
 }
@@ -60,17 +60,17 @@ void main(void) {
 
   if (radius > 9.5) {
     //! blur the texture in the final stage
-    vec2 groundSurrounding = texture2D(tex1, gl_TexCoord[0].st + vec2( 1.0, 1.0) * texel0).rb;
-        groundSurrounding += texture2D(tex1, gl_TexCoord[0].st + vec2(-1.0, 1.0) * texel0).rb;
-        groundSurrounding += texture2D(tex1, gl_TexCoord[0].st + vec2(-1.0,-1.0) * texel0).rb;
-        groundSurrounding += texture2D(tex1, gl_TexCoord[0].st + vec2( 1.0,-1.0) * texel0).rb;
+    vec2 groundSurrounding = tex2D(vec2( 1.0, 1.0)).rb;
+        groundSurrounding += tex2D(vec2(-1.0, 1.0)).rb;
+        groundSurrounding += tex2D(vec2(-1.0,-1.0)).rb;
+        groundSurrounding += tex2D(vec2( 1.0,-1.0)).rb;
 
     gl_FragColor = texture2D(tex1, gl_TexCoord[0].st);
 
     if (groundSurrounding.x + gl_FragColor.r == 5.0) {
       gl_FragColor.r = 1.0;
     } else {
-      gl_FragColor.r = 0.95 - (groundSurrounding.y + gl_FragColor.b) / 6.0;
+      gl_FragColor.r = 0.93 - (groundSurrounding.y + gl_FragColor.b) / 5.0;
     }
 
     return;
@@ -109,15 +109,15 @@ void main(void) {
   vec4 v,v2;
 
   for (float i = 1.0; i <= radius; i++) {
-    v.x = tex2D(vec2(-i,radius));
-    v.y = tex2D(vec2(i,radius));
-    v.z = tex2D(vec2(-i,-radius));
-    v.w = tex2D(vec2(i,-radius));
+    v.x = tex2D(vec2(-i,radius)).g;
+    v.y = tex2D(vec2(i,radius)).g;
+    v.z = tex2D(vec2(-i,-radius)).g;
+    v.w = tex2D(vec2(i,-radius)).g;
 
-    v2.x = tex2D(vec2(radius,i));
-    v2.y = tex2D(vec2(radius,-i));
-    v2.z = tex2D(vec2(-radius,i));
-    v2.w = tex2D(vec2(-radius,-i));
+    v2.x = tex2D(vec2(radius,i)).g;
+    v2.y = tex2D(vec2(radius,-i)).g;
+    v2.z = tex2D(vec2(-radius,i)).g;
+    v2.w = tex2D(vec2(-radius,-i)).g;
 
     v    = max(v,v2);
     v.xy = max(v.xy,v.zw);
@@ -133,10 +133,10 @@ void main(void) {
     }
   }
 
-  v.x = tex2D(vec2(radius,radius));
-  v.y = tex2D(vec2(-radius,radius));
-  v.z = tex2D(vec2(-radius,-radius));
-  v.w = tex2D(vec2(radius,-radius));
+  v.x = tex2D(vec2(radius,radius)).g;
+  v.y = tex2D(vec2(-radius,radius)).g;
+  v.z = tex2D(vec2(-radius,-radius)).g;
+  v.w = tex2D(vec2(radius,-radius)).g;
 
   v.xy = max(v.xy,v.zw);
   v.x  = max(v.x,v.y);

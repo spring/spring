@@ -152,8 +152,6 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
-float smoothstep(float edge0, float edge1, float value);
-
 
 
 #ifndef __GNUC__
@@ -164,7 +162,8 @@ float Square(const float x) __attribute__((const));
 
 inline float Square(const float x) { return x * x; }
 
-
+float smoothstep(const float edge0, const float edge1, const float value);
+float3 smoothstep(const float edge0, const float edge1, float3 vec);
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi

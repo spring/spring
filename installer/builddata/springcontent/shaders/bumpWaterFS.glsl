@@ -127,6 +127,20 @@ float waveIntensity(const float x) {
   else
     return front;
 }
+
+vec4 waveIntensity(const vec4 v) {
+  vec4 front = vec4(1.0)-(abs(v - vec4(0.85)))/vec4(1.0-0.85);
+  if (v.x<0.85)
+    front.x = max(front.x,v.x*0.5);
+  if (v.y<0.85)
+    front.y = max(front.y,v.y*0.5);
+  if (v.z<0.85)
+    front.z = max(front.z,v.z*0.5);
+  if (v.w<0.85)
+    front.w = max(front.w,v.w*0.5);
+  return front;
+}
+
 #endif
 
 //////////////////////////////////////////////////
@@ -147,7 +161,7 @@ void main(void) {
 #endif
     {
 #ifdef opt_shorewaves
-      coast = texture2D(coastmap,gl_TexCoord[0].pq).rgb;
+      coast = texture2D(coastmap,gl_TexCoord[0].st).rgb;
       if (coast.r==1.0) discard;
       invwaterdepth = coast.b;
       waterdepth = 1.0 - invwaterdepth;
@@ -227,7 +241,6 @@ void main(void) {
 
   // SHORE WAVES
 #ifdef opt_shorewaves
-    vec3 shorewavesColor = vec3(0.0);
     float coastdist = coast.g + octave3.x*0.1;
     if (coastdist>0.0) {
       vec3 wavefoam  = texture2D(foam, gl_TexCoord[3].st ).rgb;
@@ -235,25 +248,27 @@ void main(void) {
       wavefoam *= 0.5;
 
       if (waterdepth<1.0) {
-        vec2 wrcoord = gl_TexCoord[4].st * 3.0;
-        float fframe = fract(frame) * 50.0;
-        for (float i=0.0; i<1.0; i+=0.25) {
-          float wave  = i + fframe;
-          float wavef = fract(wave);
-                wave -= wavef;
-          float frac  = wavef * 1.4 - 0.2;
-          float f = frac - coastdist;
-          if (abs(f)>WavesLength) continue;
-          float rand = texture2D(waverand, wrcoord + wave * 0.37 + i ).r;
-          float f2   = waveIntensity( clamp((WavesLength - mix(f,rand,0.1)) * InvWavesLength ,0.0,1.0));
-          shorewavesColor += wavefoam * f2 * rand;
-        }
-        shorewavesColor *= coastdist;
+	vec4 waverands = texture2D(waverand, gl_TexCoord[4].pq);
+
+	vec4 f;
+	float fi = 0.0;
+        for (int i=0; i<4; i++) {
+          f[i] = fract(fi + frame * 50.0);
+          fi += 0.25;
+	}
+        f *= 1.4;
+        f -= vec4(coastdist);
+        f  = vec4(1.0) - f * InvWavesLength;
+        f  = clamp( f ,0.0,1.0);
+        f  = waveIntensity(f);
+        vec3 shorewavesColor = wavefoam * dot(f,waverands) * coastdist;
+
         float iwd = smoothlimit(invwaterdepth, 0.8);
         gl_FragColor.rgb += shorewavesColor * iwd * 1.5;
       }
 
-      gl_FragColor.rgb += 3.0 * (wavefoam * wavefoam) * (coast.r * coast.r * coast.r) * (coastdist * coastdist * coastdist * coastdist);
+      //! cliff foam
+      gl_FragColor.rgb += 5.5 * (wavefoam * wavefoam) * (coast.r * coast.r * coast.r) * (coastdist * coastdist * coastdist * coastdist);
     }
 #endif
 

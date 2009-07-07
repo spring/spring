@@ -64,14 +64,15 @@ void main(void)
 	// COMPUTE WAVE TEXTURE COORDS
 	const float fstart = PerlinStartFreq;
 	const float f      = PerlinLacunarity;
-	gl_TexCoord[1].st = (vec2(-1.0,-1.0) + gl_TexCoord[0].pq + 0.75) * fstart       + frame * WindSpeed * gl_MultiTexCoord1.ts;
-	gl_TexCoord[1].pq = (vec2(-1.0, 1.0) + gl_TexCoord[0].pq + 0.50) * fstart*f     - frame * WindSpeed * gl_MultiTexCoord1.ts;
-	gl_TexCoord[2].st = (vec2( 1.0,-1.0) + gl_TexCoord[0].pq + 0.25) * fstart*f*f   + frame * WindSpeed * gl_MultiTexCoord1.ts;
-	gl_TexCoord[2].pq = (vec2( 1.0, 1.0) + gl_TexCoord[0].pq + 0.00) * fstart*f*f*f + frame * WindSpeed * gl_MultiTexCoord1.ts;
+	gl_TexCoord[1].st = (vec2(-1.0,-1.0) + gl_TexCoord[0].pq + 0.75) * fstart       + frame * WindSpeed * gl_MultiTexCoord1.st;
+	gl_TexCoord[1].pq = (vec2(-1.0, 1.0) + gl_TexCoord[0].pq + 0.50) * fstart*f     - frame * WindSpeed * gl_MultiTexCoord1.st;
+	gl_TexCoord[2].st = (vec2( 1.0,-1.0) + gl_TexCoord[0].pq + 0.25) * fstart*f*f   + frame * WindSpeed * gl_MultiTexCoord1.st;
+	gl_TexCoord[2].pq = (vec2( 1.0, 1.0) + gl_TexCoord[0].pq + 0.00) * fstart*f*f*f + frame * WindSpeed * gl_MultiTexCoord1.st;
 
 	gl_TexCoord[3].st = gl_TexCoord[0].pq * 160.0 + frame * 2.5;
 	gl_TexCoord[3].pq = gl_TexCoord[0].pq * 90.0  - frame * 2.0;
 	gl_TexCoord[4].st = gl_TexCoord[0].pq * 2.0;
+	gl_TexCoord[4].pq = gl_TexCoord[0].pq * 6.0 + frame * 0.37;
 
 	// COMPUTE LIGHT VECTORS
 	eyeVec = eyePos - gl_Vertex.xyz;

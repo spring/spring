@@ -275,20 +275,20 @@ void CBasicSky::Draw()
 	glMatrixMode(GL_TEXTURE);						// Select The Projection Matrix
 		glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
-
-	glPopMatrix();
+		glPopMatrix();
 
 	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
+
+	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
+	glFogi(GL_FOG_MODE,GL_LINEAR);
+	glFogf(GL_FOG_START,gu->viewRange*fogStart);
+	glFogf(GL_FOG_END,gu->viewRange);
+	glFogf(GL_FOG_DENSITY,1.00f);
 	if (gu->drawFog) {
 		glEnable(GL_FOG);
-		glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
-		glFogi(GL_FOG_MODE,GL_LINEAR);
-		glFogf(GL_FOG_START,gu->viewRange*fogStart);
-		glFogf(GL_FOG_END,gu->viewRange);
-		glFogf(GL_FOG_DENSITY,1.00f);
 	} else {
 		glDisable(GL_FOG);
 	}

@@ -16,7 +16,9 @@ class CBumpWater : public CBaseWater
 {
 public:
 	void Update();
+	void Update_();
 	void UpdateWater(CGame* game);
+	void OcclusionQuery();
 	void HeightmapChanged(const int x1, const int y1, const int x2, const int y2);
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);
@@ -112,7 +114,15 @@ private:
 
 	GLuint uniforms[20]; //! see useUniforms
 
-	float3 windir;
+	bool wasLastFrameVisible;
+	GLuint occlusionQuery;
+	GLuint occlusionQueryResult;
+
+	float3 windVec;
+	float3 windndir;
+	float  windStrength;
+
+	unsigned int lastFrame;
 };
 
 #endif // __BUMP_WATER_H__

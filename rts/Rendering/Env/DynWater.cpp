@@ -48,7 +48,7 @@ CDynWater::CDynWater(void)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,512, 512, 0,GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8 ,512, 512, 0,GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 	glGenTextures(1, &refractTexture);
 	glBindTexture(GL_TEXTURE_2D, refractTexture);
@@ -56,7 +56,7 @@ CDynWater::CDynWater(void)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,refractSize, refractSize, 0,GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8 ,refractSize, refractSize, 0,GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
 	glGenTextures(1, &detailNormalTex);
 	glBindTexture(GL_TEXTURE_2D, detailNormalTex);
@@ -227,6 +227,17 @@ CDynWater::CDynWater(void)
 
 	delete[] temp;
 	glGenFramebuffersEXT(1,&frameBuffer);
+
+	reflectFBO.Bind();
+	reflectFBO.AttachTexture(reflectTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+	reflectFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT32, 512, 512);
+	refractFBO.Bind();
+	refractFBO.AttachTexture(refractTexture, GL_TEXTURE_2D, GL_COLOR_ATTACHMENT0_EXT);
+	refractFBO.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT32, refractSize, refractSize);
+	FBO::Unbind();
+
+	if (!reflectFBO.IsValid() || !refractFBO.IsValid())
+		throw content_error("DynWater Error: Invalid FBO");
 }
 
 CDynWater::~CDynWater(void)
@@ -375,8 +386,11 @@ void CDynWater::UpdateWater(CGame* game)
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(1);
 
+	glPushAttrib(GL_FOG_BIT);
 	DrawRefraction(game);
 	DrawReflection(game);
+	FBO::Unbind();
+	glPopAttrib();
 }
 
 void CDynWater::Update()
@@ -425,6 +439,7 @@ void CDynWater::DrawReflection(CGame* game)
 	reflectUp=camera->up;
 	reflectForward=camera->forward;
 
+	reflectFBO.Bind();
 	glViewport(0,0,512,512);
 
 	glClearColor(0.5f,0.6f,0.8f,0);
@@ -466,10 +481,6 @@ void CDynWater::DrawReflection(CGame* game)
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
 
-	glColorMask(1,1,1,1);
-	glBindTexture(GL_TEXTURE_2D, reflectTexture);
-	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,512,512);
-
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
 
@@ -490,6 +501,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	refractUp=camera->up;
 	refractForward=camera->forward;
 
+	refractFBO.Bind();
 	glViewport(0,0,refractSize,refractSize);
 
 	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);
@@ -523,8 +535,6 @@ void CDynWater::DrawRefraction(CGame* game)
 
 	drawRefraction=false;
 
-	glBindTexture(GL_TEXTURE_2D, refractTexture);
-	glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,refractSize,refractSize);
 
 	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glClearColor(mapInfo->atmosphere.fogColor[0],mapInfo->atmosphere.fogColor[1],mapInfo->atmosphere.fogColor[2],1);

@@ -27,6 +27,7 @@
 #include "Sim/Misc/Wind.h"
 #include "FileSystem/FileHandler.h"
 #include "FastMath.h"
+#include "myMath.h"
 #include "EventHandler.h"
 #include "ConfigHandler.h"
 #include "TimeProfiler.h"
@@ -136,7 +137,7 @@ static GLuint LoadTexture(const string& filename, const float anisotropy = 0.0f,
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 	if (anisotropy > 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
@@ -198,15 +199,14 @@ CBumpWater::CBumpWater()
 	depthCopy    = !!configHandler->Get("BumpWaterUseDepthTexture", 1);
 	depthBits    = configHandler->Get("BumpWaterDepthBits", (gu->atiHacks)?16:24);
 	blurRefl     = !!configHandler->Get("BumpWaterBlurReflection", 0);
-	shoreWaves   = (!!configHandler->Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
+	shoreWaves   = (!!configHandler->Get("", 1)) && mapInfo->water.shoreWaves;
 	endlessOcean = (!!configHandler->Get("BumpWaterEndlessOcean", 1)) && mapInfo->water.hasWaterPlane
 	               && ((readmap->minheight <= 0.0f) || (mapInfo->water.forceRendering));
 	dynWaves     = (!!configHandler->Get("BumpWaterDynamicWaves", 1)) && (mapInfo->water.numTiles>1);
 	useUniforms  = (!!configHandler->Get("BumpWaterUseUniforms", 0));
 
-	if (refraction>1)
-		drawSolid = true;
-
+	refractTexture = 0;
+	reflectTexture = 0;
 
 	/** CHECK HARDWARE **/
 	if (!GL_ARB_shading_language_100)
@@ -244,7 +244,7 @@ CBumpWater::CBumpWater()
 
 	/** SHOREWAVES **/
 	if (shoreWaves) {
-		waveRandTexture = LoadTexture( "bitmaps/shorewaverand.bmp" );
+		waveRandTexture = LoadTexture( "bitmaps/shorewaverand.png" );
 
 		glGenTextures(1, &coastTexture);
 		glBindTexture(GL_TEXTURE_2D, coastTexture);
@@ -399,6 +399,13 @@ CBumpWater::CBumpWater()
 			refractFBO.AttachTexture(refractTexture,target);
 		}
 
+		if (!reflectFBO.CheckStatus("BUMPWATER(reflection)")) {
+			reflection = false;
+		}
+		if (!refractFBO.CheckStatus("BUMPWATER(refraction)")) {
+			refraction = 0;
+		}
+
 		if (dynWaves) {
 			dynWavesFBO.reloadOnAltTab = true;
 			dynWavesFBO.Bind();
@@ -447,7 +454,7 @@ CBumpWater::CBumpWater()
 		GLSLDefineConstf1(definitions, "PerlinStartFreq",  mapInfo->water.perlinStartFreq);
 		GLSLDefineConstf1(definitions, "PerlinLacunarity", mapInfo->water.perlinLacunarity);
 		GLSLDefineConstf1(definitions, "PerlinAmp",        mapInfo->water.perlinAmplitude);
-		GLSLDefineConstf1(definitions, "WindSpeed",        mapInfo->water.windSpeed * 0.3f);
+		GLSLDefineConstf1(definitions, "WindSpeed",        mapInfo->water.windSpeed);
 	}
 
 	{
@@ -530,12 +537,6 @@ CBumpWater::CBumpWater()
 	}else{
 		const int mapX = readmap->width  * SQUARE_SIZE;
 		const int mapZ = readmap->height * SQUARE_SIZE;
-		/*glBegin(GL_QUADS);
-		glVertex3i(   0, 0, 0);
-		glVertex3i(   0, 0, mapZ);
-		glVertex3i(mapX, 0, mapZ);
-		glVertex3i(mapX, 0, 0);
-		glEnd();*/
 		CVertexArray *va = GetVertexArray();
 		va->Initialize();
 		for (int z = 0; z < 9; z++) {
@@ -550,15 +551,30 @@ CBumpWater::CBumpWater()
 	}
 	glEndList();
 
-	windir = float3(1.0f,1.0f,1.0f);
+	windndir = wind.GetCurrentDirection();
+	windStrength = (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f);
+	windVec = windndir * windStrength;
+
+	occlusionQuery = 0;
+	occlusionQueryResult = GL_TRUE;
+	wasLastFrameVisible = false;
+	if (GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a seperate refraction pass, there isn't enough time for a occlusion query
+		GLint bitsSupported;
+		glGetQueryiv(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
+		if (bitsSupported > 0)
+			glGenQueries(1,&occlusionQuery);
+	}
+
+	if (refraction>1)
+		drawSolid = true;
 }
 
 
 CBumpWater::~CBumpWater()
 {
-	if (reflection)
+	if (reflectTexture)
 		glDeleteTextures(1, &reflectTexture);
-	if (refraction>0)
+	if (refractTexture)
 		glDeleteTextures(1, &refractTexture);
 	if (depthCopy)
 		glDeleteTextures(1, &depthTexture);
@@ -587,6 +603,9 @@ CBumpWater::~CBumpWater()
 		glDeleteTextures(1, &normalTexture2);
 		delete[] tileOffsets;
 	}
+
+	if (occlusionQuery)
+		glDeleteQueries(1,&occlusionQuery);
 }
 
 
@@ -643,12 +662,20 @@ void CBumpWater::GetUniformLocations( GLuint& program )
 
 void CBumpWater::Update()
 {
+	if (!occlusionQuery)
+		Update_();
+}
+
+void CBumpWater::Update_()
+{
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
 		return;
 
-	float3 w = wind.GetCurrentWind();
-	windir *= 0.9999f;
-	windir += w*0.0001f;
+	windndir *= 0.995f;
+	windndir -= wind.GetCurrentDirection() * 0.005f;
+	windStrength *= 0.9999f;
+	windStrength += (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f) * 0.0001f;
+	windVec   = windndir * windStrength;
 
 	if (dynWaves)
 		UpdateDynWaves();
@@ -675,8 +702,28 @@ void CBumpWater::UpdateWater(CGame* game)
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
 		return;
 
+	if (occlusionQuery && !wasLastFrameVisible) {
+		SCOPED_TIMER("Water Occlcheck");
+
+		//glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT_AVAILABLE,&occlusionQueryResult);
+		//if (!occlusionQueryResult)
+		//	logOutput.Print("OcclusionQuery didn't finished yet!");
+		glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT,&occlusionQueryResult);
+
+		wasLastFrameVisible = !!occlusionQueryResult;
+
+		if (!occlusionQueryResult)
+			return;
+	}
+
+	glPushAttrib(GL_FOG_BIT);
 	if (refraction>1) DrawRefraction(game);
 	if (reflection)   DrawReflection(game);
+	if (reflection || refraction) {
+		FBO::Unbind();
+		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	}
+	glPopAttrib();
 }
 
 
@@ -694,8 +741,8 @@ CBumpWater::CoastAtlasRect::CoastAtlasRect(CBumpWater::CoastUpdateRect& rect)
 	iy2 = rect.z2;
 	x1 = rect.x1 / (float)gs->mapx;
 	x2 = rect.x2 / (float)gs->mapx;
-	y1 = rect.z1 / (float)gs->mapx;
-	y2 = rect.z2 / (float)gs->mapx;
+	y1 = rect.z1 / (float)gs->mapy;
+	y2 = rect.z2 / (float)gs->mapy;
 	isCoastline = true;
 }
 
@@ -1011,6 +1058,7 @@ void CBumpWater::UpdateCoastmap()
 		glEnd();
 	}
 
+
 	//glMatrixMode(GL_PROJECTION);
 		glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -1130,14 +1178,17 @@ void CBumpWater::SetUniforms()
 	glUniform1f(uniforms[15], mapInfo->water.perlinStartFreq);
 	glUniform1f(uniforms[16], mapInfo->water.perlinLacunarity);
 	glUniform1f(uniforms[17], mapInfo->water.perlinAmplitude);
-	glUniform1f(uniforms[18], mapInfo->water.windSpeed * 0.3f);
+	glUniform1f(uniforms[18], mapInfo->water.windSpeed);
 }
 
 
 void CBumpWater::Draw()
 {
-	if (!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f)
+	if (!occlusionQueryResult || (!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f))
 		return;
+
+	if (occlusionQuery)
+		glBeginQuery(GL_SAMPLES_PASSED,occlusionQuery);
 
 	if (refraction == 1) {
 		//! _SCREENCOPY_ REFRACT TEXTURE
@@ -1169,11 +1220,11 @@ void CBumpWater::Draw()
 	glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, normalTexture);
 
 	glUseProgram(waterShader);
-	glUniform1f(frameLoc,  gs->frameNum / 15000.0f);
+	glUniform1f(frameLoc,  (gs->frameNum+gu->timeOffset) / 15000.0f);
 	glUniformf3(eyePosLoc, camera->pos);
 	if (useUniforms) SetUniforms();
 
-	glMultiTexCoord2f(GL_TEXTURE1, -windir.x, windir.z);
+	glMultiTexCoord2f(GL_TEXTURE1, windVec.x, windVec.z);
 
 	glCallList(displayList);
 
@@ -1183,14 +1234,16 @@ void CBumpWater::Draw()
 		glDepthMask(1);
 	if (refraction>0)
 		glEnable(GL_BLEND);
+
+	if (occlusionQuery)
+		glEndQuery(GL_SAMPLES_PASSED);
 }
 
 
 void CBumpWater::DrawRefraction(CGame* game)
 {
 	//! _RENDER_ REFRACTION TEXTURE
-	if (refractFBO.IsValid())
-		refractFBO.Bind();
+	refractFBO.Bind();
 
 	camera->Update(false);
 	glViewport(0,0,gu->viewSizeX,gu->viewSizeY);
@@ -1223,14 +1276,6 @@ void CBumpWater::DrawRefraction(CGame* game)
 	game->SetDrawMode(CGame::normalDraw);
 	drawRefraction=false;
 
-	if (refractFBO.IsValid()) {
-		refractFBO.Unbind();
-	}else{
-		glBindTexture(target, refractTexture);
-		glCopyTexSubImage2D(target,0,0,0,0,0,gu->viewSizeX,gu->viewSizeY);
-	}
-
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	glEnable(GL_FOG);
 
 	unitDrawer->unitSunColor=oldsun;
@@ -1241,8 +1286,7 @@ void CBumpWater::DrawRefraction(CGame* game)
 void CBumpWater::DrawReflection(CGame* game)
 {
 	//! CREATE REFLECTION TEXTURE
-	if (reflectFBO.IsValid())
-		reflectFBO.Bind();
+	reflectFBO.Bind();
 
 //	CCamera *realCam = camera;
 //	camera = new CCamera(*realCam);
@@ -1279,19 +1323,45 @@ void CBumpWater::DrawReflection(CGame* game)
 	drawReflection=false;
 	glDisable(GL_CLIP_PLANE2);
 
-	if (reflectFBO.IsValid()) {
-		reflectFBO.Unbind();
-	}else{
-		glBindTexture(GL_TEXTURE_2D, reflectTexture);
-		glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,reflTexSize, reflTexSize);
-	}
-
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
-
 //	delete camera;
 //	camera = realCam;
 	camera->~CCamera();
 	new (camera) CCamera(*(CCamera *)realCam);
-
 	camera->Update(false);
+}
+
+
+void CBumpWater::OcclusionQuery()
+{
+	if (!occlusionQuery || (!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f))
+		return;
+
+	glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT_AVAILABLE,&occlusionQueryResult);
+	if (occlusionQueryResult || !wasLastFrameVisible) {
+		glGetQueryObjectuiv(occlusionQuery,GL_QUERY_RESULT,&occlusionQueryResult);
+		wasLastFrameVisible = !!occlusionQueryResult;
+	} else {
+		occlusionQueryResult = true;
+		wasLastFrameVisible = true;
+	}
+
+	if (!wasLastFrameVisible) {
+		glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+		glDepthMask(GL_FALSE);
+
+		glPushMatrix();
+			glTranslatef(0.0,10.0,0.0);
+			glBeginQuery(GL_SAMPLES_PASSED,occlusionQuery);
+				glCallList(displayList);
+			glEndQuery(GL_SAMPLES_PASSED);
+		glPopMatrix();
+
+		glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+		glDepthMask(GL_TRUE);
+	}
+
+	if (gs->frameNum != lastFrame) {
+		Update_();
+		lastFrame = gs->frameNum;
+	}
 }
