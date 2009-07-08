@@ -19,6 +19,7 @@
 #include "GlobalUnsynced.h"
 #include "EventHandler.h"
 #include "Map/MapInfo.h"
+#include "Exceptions.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
