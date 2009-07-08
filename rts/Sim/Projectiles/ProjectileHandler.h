@@ -39,8 +39,8 @@ typedef ThreadListSimRender<std::set<FlyingPiece *, piececmp>, void, FlyingPiece
 
 struct FlyingPiece{
 #if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
-	inline void* operator new(size_t size){return mempool.Alloc(size);};
-	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
+	inline void* operator new(size_t size) { return mempool.Alloc(size); }
+	inline void operator delete(void* p, size_t size) { mempool.Free(p,size); }
 #endif
 	FlyingPiece() {}
 	~FlyingPiece();
@@ -87,32 +87,40 @@ public:
 
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
+	void CheckUnitFeatureCollisions(ProjectileContainer&);
+	void CheckGroundCollisions(ProjectileContainer&);
 	void CheckCollisions();
 
 	void SetMaxParticles(int value) { maxParticles = value; }
 	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
+	void DrawProjectiles(const ProjectileContainer&, bool, bool);
+	void DrawProjectilesShadow(const ProjectileContainer&);
+	void DrawProjectilesMiniMap(const ProjectileContainer&);
+	void DrawProjectilesMiniMap();
 	void DrawShadowPass(void);
 	void DrawGroundFlashes(void);
 
 	void Update();
 	void UpdateTextures();
-
+	void UpdateProjectileContainer(ProjectileContainer&, bool);
+	
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
 	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
-	ProjectileContainer projectiles;	// contains both synced and unsynced projectiles
+	ProjectileContainer syncedProjectiles;    //! contains only projectiles that can change simulation state
+	ProjectileContainer unsyncedProjectiles;  //! contains only projectiles that cannot change simulation state
 	FlyingPieceContainer flyingPieces;
 	GroundFlashContainer groundFlashes;
 
 	int maxUsedID;
-	std::list<int> freeIDs;
-	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
+	std::list<int> freeIDs;                   // unused synced weapon projectile ID's
+	ProjectileMap weaponProjectileIDs;        // ID ==> <projectile, allyteam> map for weapon projectiles
 
-	std::set<CProjectile*,distcmp> distset;
+	std::set<CProjectile*, distcmp> distset;
 
 	unsigned int projectileShadowVP;
 

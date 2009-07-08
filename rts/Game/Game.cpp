@@ -2892,11 +2892,11 @@ bool CGame::Draw() {
 		//print some infos (fps,gameframe,particles)
 		glColor4f(1,1,0.5f,0.8f);
 		font->glFormat(0.03f, 0.02f, 1.0f, FONT_SCALE | FONT_NORM, "FPS: %d Frame: %d Particles: %d (%d)",
-		                 fps, gs->frameNum, ph->projectiles.size(), ph->currentParticles);
+		    fps, gs->frameNum, ph->syncedProjectiles.size() + ph->unsyncedProjectiles.size(), ph->currentParticles);
 
 		if (playing) {
 			font->glFormat(0.03f, 0.07f, 0.7f, FONT_SCALE | FONT_NORM, "xpos: %5.0f ypos: %5.0f zpos: %5.0f speed %2.2f",
-			                 camera->pos.x, camera->pos.y, camera->pos.z, gs->speedFactor);
+			    camera->pos.x, camera->pos.y, camera->pos.z, gs->speedFactor);
 		}
 	}
 
@@ -3179,7 +3179,6 @@ void CGame::SimFrame() {
 	{
 		SCOPED_TIMER("Collisions");
 		ph->CheckCollisions();
-		ground->CheckCol(ph);
 	}
 
 	ph->Update();
@@ -4109,24 +4108,25 @@ void CGame::MakeMemDump(void)
 
 	file << "Frame " << gs->frameNum <<"\n";
 	for (std::list<CUnit*>::iterator usi = uh->activeUnits.begin(); usi != uh->activeUnits.end(); usi++) {
-		CUnit* u=*usi;
+		CUnit* u = *usi;
 		file << "Unit " << u->id << "\n";
 		file << "  xpos " << u->pos.x << " ypos " << u->pos.y << " zpos " << u->pos.z << "\n";
 		file << "  heading " << u->heading << " power " << u->power << " experience " << u->experience << "\n";
 		file << " health " << u->health << "\n";
 	}
-	for(ProjectileContainer::iterator psi=ph->projectiles.begin(); psi != ph->projectiles.end();++psi){
-		CProjectile* p=*psi;
+	//! we only care about the synced projectile data here
+	for (ProjectileContainer::iterator psi = ph->syncedProjectiles.begin(); psi != ph->syncedProjectiles.end(); ++psi) {
+		CProjectile* p = *psi;
 		file << "Projectile " << p->radius << "\n";
 		file << "  xpos " << p->pos.x << " ypos " << p->pos.y << " zpos " << p->pos.z << "\n";
 		file << "  xspeed " << p->speed.x << " yspeed " << p->speed.y << " zspeed " << p->speed.z << "\n";
 	}
 	for(int a=0;a<teamHandler->ActiveTeams();++a){
-		file << "Losmap for team " << a << "\n";
-		for(int y=0;y<gs->mapy>>modInfo.losMipLevel;++y){
+		file << "LOS-map for team " << a << "\n";
+		for (int y = 0; y < gs->mapy>>modInfo.losMipLevel; ++y) {
 			file << " ";
-			for(int x=0;x<gs->mapx>>modInfo.losMipLevel;++x){
-				file << loshandler->losMap[a][y*(gs->mapx>>modInfo.losMipLevel)+x] << " ";
+			for (int x = 0; x < gs->mapx>>modInfo.losMipLevel; ++x) {
+				file << loshandler->losMap[a][y * (gs->mapx>>modInfo.losMipLevel) + x] << " ";
 			}
 			file << "\n";
 		}
