@@ -1351,5 +1351,6 @@ GML_MAKEFUN5(FramebufferTexture1DEXT,GLenum,GLenum,GLenum,GLuint,GLint)
 GML_MAKEFUN6(FramebufferTexture3DEXT,GLenum,GLenum,GLenum,GLuint,GLint,GLint)
 GML_MAKEFUN1(ClientActiveTexture,GLenum)
 GML_MAKEFUN3(MultiTexCoord2i,GLenum,GLint,GLint,)
+GML_MAKEFUN3(GetQueryiv,GLenum,GLenum,GLint *,,GML_SYNC())
 
 #endif

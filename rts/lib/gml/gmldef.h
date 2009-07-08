@@ -284,6 +284,7 @@
 #undef glFramebufferTexture3DEXT
 #undef glClientActiveTexture
 #undef glMultiTexCoord2i
+#undef glGetQueryiv
 
 // #####################################################################
 
@@ -565,3 +566,4 @@
 #define glFramebufferTexture3DEXT gmlFramebufferTexture3DEXT
 #define glClientActiveTexture gmlClientActiveTexture
 #define glMultiTexCoord2i gmlMultiTexCoord2i
+#define glGetQueryiv gmlGetQueryiv
