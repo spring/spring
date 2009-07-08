@@ -443,7 +443,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 				}
 			}
 
-			//! push _back this projectile for deletion
+			//! push_back this projectile for deletion
 			pci = pc.erase_delete_synced(pci);
 		} else {
 			p->Update();
