@@ -167,6 +167,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UseUnitResource);
 
 	REGISTER_LUA_CFUNC(RemoveBuildingDecal);
+	REGISTER_LUA_CFUNC(AddGrass);
+	REGISTER_LUA_CFUNC(RemoveGrass);
 
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
@@ -2035,6 +2037,26 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::AddGrass(lua_State* L)
+{
+	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
+	pos.CheckInBounds();
+
+	treeDrawer->AddGrass(pos);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::RemoveGrass(lua_State* L)
+{
+	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
+	pos.CheckInBounds();
+
+	treeDrawer->RemoveGrass((int)pos.x,(int)pos.z);
+	return 0;
+}
+
+
 /******************************************************************************/
 
 int LuaSyncedCtrl::CreateFeature(lua_State* L)
@@ -2768,11 +2790,11 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {
 	const string name = luaL_checkstring(L, 1);
 	const float3 pos(luaL_optfloat(L, 2, 0.0f),
-									 luaL_optfloat(L, 3, 0.0f),
-									 luaL_optfloat(L, 4, 0.0f));
+		luaL_optfloat(L, 3, 0.0f),
+		luaL_optfloat(L, 4, 0.0f));
 	const float3 dir(luaL_optfloat(L, 5, 0.0f),
-									 luaL_optfloat(L, 6, 0.0f),
-									 luaL_optfloat(L, 7, 0.0f));
+		luaL_optfloat(L, 6, 0.0f),
+		luaL_optfloat(L, 7, 0.0f));
 	const float rad = luaL_optfloat(L, 8, 0.0f);
 	const float dmg = luaL_optfloat(L, 9, 0.0f);
 	const float dmgMod = 1.0f;
