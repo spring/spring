@@ -89,6 +89,8 @@ class LuaSyncedCtrl {
 		static int UseUnitResource(lua_State* L);
 
 		static int RemoveBuildingDecal(lua_State* L);
+		static int AddGrass(lua_State* L);
+		static int RemoveGrass(lua_State* L);
 
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
