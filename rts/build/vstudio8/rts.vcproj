@@ -1783,6 +1783,14 @@
 				Name="Server"
 				>
 				<File
+					RelativePath="..\..\Game\Server\GameParticipant.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Server\GameParticipant.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\Server\MsgStrings.h"
 					>
 				</File>
