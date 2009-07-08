@@ -63,7 +63,7 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 }
 
 
-CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon GML_PARG_C)
+CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool weapon GML_PARG_C)
 :	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
@@ -74,7 +74,7 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	weapon(weapon),
 	speed(speed)
 {
-	synced = synced;
+	synced = isSynced;
 
 	if (owner) {
 		ownerId = owner->id;

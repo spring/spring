@@ -8,7 +8,6 @@
 #include "Ground.h"
 #include "ReadMap.h"
 #include "Game/Camera.h"
-#include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "LogOutput.h"
 #include "Sim/Misc/GeometricObjects.h"
@@ -26,22 +25,6 @@ CGround::CGround()
 CGround::~CGround()
 {
 	delete readmap;
-}
-
-void CGround::CheckCol(CProjectileHandler* ph)
-{
-	ProjectileContainer::iterator psi;
-
-	for (psi = ph->projectiles.begin(); psi != ph->projectiles.end(); ++psi) {
-		CProjectile* p = *psi;
-		if (p->checkCol) {
-			if (GetHeight(p->pos.x, p->pos.z) > p->pos.y /* - p->radius*/) {
-				// too many projectiles seem to hit the ground before hitting
-				// so remove the radius till a better fix is done
-				p->Collision();
-			}
-		}
-	}
 }
 
 void CGround::CheckColSquare(CProjectile* p, int x, int y)

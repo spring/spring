@@ -1107,25 +1107,7 @@ void CMiniMap::DrawForReal()
 	if (drawProjectiles) {
 		GML_STDMUTEX_LOCK(proj); // DrawForReal
 
-		if(ph->projectiles.render_size()>0) {
-			CVertexArray* lines=GetVertexArray();
-			CVertexArray* points=GetVertexArray();
-			lines->Initialize();
-			lines->EnlargeArrays(ph->projectiles.render_size()*2,0,VA_SIZE_C);
-			points->Initialize();
-			points->EnlargeArrays(ph->projectiles.render_size(),0,VA_SIZE_C);
-
-			for(ProjectileContainer::render_iterator psi = ph->projectiles.render_begin(); psi != ph->projectiles.render_end(); ++psi) {
-				CProjectile* p = *psi;
-
-				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
-					gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
-					p->DrawOnMinimap(*lines, *points);
-				}
-			}
-			lines->DrawArrayC(GL_LINES);
-			points->DrawArrayC(GL_POINTS);
-		}
+		ph->DrawProjectilesMiniMap();
 	}
 
 	// draw the queued commands
