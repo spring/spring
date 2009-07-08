@@ -629,7 +629,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 		// we have the wanted speed
 	} else if (deltaDotSpeed > 0.0f) {
 		// accelerate
-		float sqdl = delta.Length();
+		float sqdl = delta.SqLength();
 		if (sqdl < Square(decRate)) {
 			speed = wantedSpeed;
 		} else {
