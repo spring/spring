@@ -40,7 +40,7 @@ typedef ThreadListSimRender<std::set<FlyingPiece *, piececmp>, void, FlyingPiece
 struct FlyingPiece{
 #if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
 	inline void* operator new(size_t size) { return mempool.Alloc(size); }
-	inline void operator delete(void* p, size_t size) { mempool.Free(p,size); }
+	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
 #endif
 	FlyingPiece() {}
 	~FlyingPiece();
@@ -78,8 +78,8 @@ public:
 	void PostLoad();
 
 	inline const ProjectileMapPair* GetMapPairByID(int id) const {
-		ProjectileMap::const_iterator it = weaponProjectileIDs.find(id);
-		if (it == weaponProjectileIDs.end()) {
+		ProjectileMap::const_iterator it = syncedProjectileIDs.find(id);
+		if (it == syncedProjectileIDs.end()) {
 			return NULL;
 		}
 		return &(it->second);
@@ -117,8 +117,8 @@ public:
 	GroundFlashContainer groundFlashes;
 
 	int maxUsedID;
-	std::list<int> freeIDs;                   // unused synced weapon projectile ID's
-	ProjectileMap weaponProjectileIDs;        // ID ==> <projectile, allyteam> map for weapon projectiles
+	std::list<int> freeIDs;                   //! available synced (weapon, piece) projectile ID's
+	ProjectileMap syncedProjectileIDs;        //! ID ==> <projectile, allyteam> map for synced (weapon, piece) projectiles
 
 	std::set<CProjectile*, distcmp> distset;
 

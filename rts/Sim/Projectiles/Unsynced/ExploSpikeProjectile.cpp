@@ -25,24 +25,23 @@ CR_REG_METADATA(CExploSpikeProjectile,
 
 CExploSpikeProjectile::CExploSpikeProjectile()
 {
-	synced=false;
 }
 
-CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos,const float3& speed,float length,float width,float alpha,float alphaDecay,CUnit* owner GML_PARG_C)
-:	CProjectile(pos,speed,owner, false, false GML_PARG_P),
+CExploSpikeProjectile::CExploSpikeProjectile(const float3& pos, const float3& speed, float length, float width, float alpha, float alphaDecay, CUnit* owner GML_PARG_C):
+	CProjectile(pos, speed, owner, false, false, false GML_PARG_P),
 	length(length),
 	width(width),
 	alpha(alpha),
 	alphaDecay(alphaDecay),
 	dir(speed),
-	color(1.0f,0.8f,0.5f)
+	color(1.0f, 0.8f, 0.5f)
 {
-	lengthGrowth=dir.Length()*(0.5f+gu->usRandFloat()*0.4f);
-	dir/=lengthGrowth;
+	lengthGrowth = dir.Length() * (0.5f + gu->usRandFloat() * 0.4f);
+	dir /= lengthGrowth;
 
-	checkCol=false;
-	useAirLos=true;
-	SetRadius(length+lengthGrowth*alpha/alphaDecay);
+	checkCol  = false;
+	useAirLos = true;
+	SetRadius(length + lengthGrowth * alpha / alphaDecay);
 }
 
 CExploSpikeProjectile::~CExploSpikeProjectile(void)

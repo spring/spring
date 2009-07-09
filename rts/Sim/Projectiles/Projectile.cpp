@@ -1,17 +1,17 @@
-#include "StdAfx.h"
 // Projectile.cpp: implementation of the CProjectile class.
 //
 //////////////////////////////////////////////////////////////////////
+#include "StdAfx.h"
 #include "mmgr.h"
 
-#include "Rendering/GL/myGL.h"			// Header File For The OpenGL32 Library
+#include "Map/MapInfo.h"
+#include "Rendering/GL/myGL.h"
 #include "Projectile.h"
 #include "ProjectileHandler.h"
 #include "Game/Camera.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "LogOutput.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/Colors.h"
 #include "Map/MapInfo.h"
@@ -27,6 +27,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(synced),
 //	CR_MEMBER(drawPos),
 //	CR_RESERVED(4),
+	CR_MEMBER(gravity),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(speed),
 	CR_MEMBER_ENDFLAG(CM_Config),
@@ -45,7 +46,12 @@ CProjectile::CProjectile():
 	castShadow(false),
 	collisionFlags(0),
 	s3domodel(0),
-	ownerId(0)
+	ownerId(0),
+	synced(false),
+	weapon(false),
+	piece(false),
+	speed(ZeroVector),
+	gravity(mapInfo? mapInfo->map.gravity: 0.0f)
 {
 	GML_GET_TICKS(lastProjUpdate);
 }
@@ -63,19 +69,20 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 }
 
 
-CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool weapon GML_PARG_C)
-:	checkCol(true),
+CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece GML_PARG_C):
+	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
 	collisionFlags(0),
 	s3domodel(0),
 	ownerId(0),
 	CExpGenSpawnable(pos),
-	weapon(weapon),
-	speed(speed)
+	synced(isSynced),
+	weapon(isWeapon),
+	piece(isPiece),
+	speed(speed),
+	gravity(mapInfo? mapInfo->map.gravity: 0.0f)
 {
-	synced = isSynced;
-
 	if (owner) {
 		ownerId = owner->id;
 	}
@@ -92,9 +99,10 @@ CProjectile::~CProjectile()
 
 void CProjectile::Update()
 {
-	speed.y += mapInfo->map.gravity;
+	speed.y += gravity;
 	pos += speed;
 }
+
 
 void CProjectile::Collision()
 {
@@ -103,7 +111,7 @@ void CProjectile::Collision()
 	pos.y = MAX_WORLD_SIZE;
 }
 
-void CProjectile::Collision(CUnit *unit)
+void CProjectile::Collision(CUnit* unit)
 {
 	deleteMe = true;
 	checkCol = false;
@@ -115,18 +123,19 @@ void CProjectile::Collision(CFeature* feature)
 	Collision();
 }
 
+
 void CProjectile::Draw()
 {
-	inArray=true;
+	inArray = true;
 	unsigned char col[4];
-	col[0]=1*255;
-	col[1]=(unsigned char) (0.5f*255);
-	col[2]=0*255;
-	col[3]=10;
-	va->AddVertexTC(drawPos-camera->right*drawRadius-camera->up*drawRadius,ph->projectiletex.xstart,ph->projectiletex.ystart,col);
-	va->AddVertexTC(drawPos+camera->right*drawRadius-camera->up*drawRadius,ph->projectiletex.xend,ph->projectiletex.ystart,col);
-	va->AddVertexTC(drawPos+camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xend,ph->projectiletex.yend,col);
-	va->AddVertexTC(drawPos-camera->right*drawRadius+camera->up*drawRadius,ph->projectiletex.xstart,ph->projectiletex.yend,col);
+	col[0] = 255;
+	col[1] = 127;
+	col[2] =   0;
+	col[3] =  10;
+	va->AddVertexTC(drawPos - camera->right * drawRadius - camera->up * drawRadius, ph->projectiletex.xstart, ph->projectiletex.ystart, col);
+	va->AddVertexTC(drawPos + camera->right * drawRadius - camera->up * drawRadius, ph->projectiletex.xend,   ph->projectiletex.ystart, col);
+	va->AddVertexTC(drawPos + camera->right * drawRadius + camera->up * drawRadius, ph->projectiletex.xend,   ph->projectiletex.yend,   col);
+	va->AddVertexTC(drawPos - camera->right * drawRadius + camera->up * drawRadius, ph->projectiletex.xstart, ph->projectiletex.yend,   col);
 }
 
 void CProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)

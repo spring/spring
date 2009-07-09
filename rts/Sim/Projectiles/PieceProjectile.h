@@ -29,9 +29,10 @@ class CPieceProjectile: public CProjectile
 	int dispList;
 	S3DOPiece* piece3do;
 	SS3OPiece* pieces3o;
+	LocalModelPiece* lmp;
 	float3 spinVec;
 	float spinSpeed;
-	float spinPos;
+	float spinAngle;
 	float alphaThreshold;
 
 	float3 oldSmoke, oldSmokeDir;

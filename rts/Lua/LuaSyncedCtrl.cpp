@@ -42,6 +42,7 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/PieceProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -178,9 +179,16 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
+
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
+
+	REGISTER_LUA_CFUNC(SetProjectileGravity);
+	REGISTER_LUA_CFUNC(SetProjectileSpinAngle);
+	REGISTER_LUA_CFUNC(SetProjectileSpinSpeed);
+	REGISTER_LUA_CFUNC(SetProjectileSpinVec);
+
 
 	REGISTER_LUA_CFUNC(CallCOBScript);
 	REGISTER_LUA_CFUNC(GetCOBScriptID);
@@ -2280,7 +2288,6 @@ int LuaSyncedCtrl::SetProjectilePosition(lua_State* L)
 	return 0;
 }
 
-
 int LuaSyncedCtrl::SetProjectileVelocity(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
@@ -2303,9 +2310,59 @@ int LuaSyncedCtrl::SetProjectileCollision(lua_State* L)
 	}
 
 	proj->Collision();
-
 	return 0;
 }
+
+
+int LuaSyncedCtrl::SetProjectileGravity(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
+		return 0;
+	}
+
+	proj->gravity = luaL_optfloat(L, 2, 0.0f);
+	return 0;
+}
+
+int LuaSyncedCtrl::SetProjectileSpinAngle(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL || !proj->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	pproj->spinAngle = luaL_optfloat(L, 2, 0.0f);
+	return 0;
+}
+
+int LuaSyncedCtrl::SetProjectileSpinSpeed(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL || !proj->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	pproj->spinSpeed = luaL_optfloat(L, 2, 0.0f);
+	return 0;
+}
+
+int LuaSyncedCtrl::SetProjectileSpinVec(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL || !proj->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	pproj->spinVec.x = luaL_optfloat(L, 2, 0.0f);
+	pproj->spinVec.y = luaL_optfloat(L, 3, 0.0f);
+	pproj->spinVec.z = luaL_optfloat(L, 4, 0.0f);
+	return 0;
+}
+
 
 /******************************************************************************/
 /******************************************************************************/

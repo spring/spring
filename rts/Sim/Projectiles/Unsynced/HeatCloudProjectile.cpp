@@ -40,8 +40,8 @@ CHeatCloudProjectile::CHeatCloudProjectile()
 	texture = &ph->heatcloudtex;
 }
 
-CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos,const float3 speed,const  float temperature,const float size, CUnit* owner GML_PARG_C)
-: CProjectile(pos,speed,owner, false, false GML_PARG_P),
+CHeatCloudProjectile::CHeatCloudProjectile(const float3 pos, const float3 speed, const  float temperature, const float size, CUnit* owner GML_PARG_C)
+: CProjectile(pos, speed, owner, false, false, false GML_PARG_P),
 	heat(temperature),
 	maxheat(temperature),
 	heatFalloff(1),

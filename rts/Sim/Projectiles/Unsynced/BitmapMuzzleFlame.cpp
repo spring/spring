@@ -30,10 +30,9 @@ CR_REG_METADATA(CBitmapMuzzleFlame,
 CBitmapMuzzleFlame::CBitmapMuzzleFlame(void) :
 	CProjectile()
 {
-	deleteMe=false;
-	checkCol=false;
-	useAirLos=true;
-	synced = false;
+	deleteMe  = false;
+	checkCol  = false;
+	useAirLos = true;
 }
 
 CBitmapMuzzleFlame::~CBitmapMuzzleFlame(void)

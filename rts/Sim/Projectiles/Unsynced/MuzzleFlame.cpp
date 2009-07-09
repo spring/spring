@@ -26,22 +26,22 @@ void CMuzzleFlame::creg_Serialize(creg::ISerializer& s)
 //	s.Serialize(randSmokeDir, numSmoke*sizeof(float3));
 }
 
-CMuzzleFlame::CMuzzleFlame(const float3& pos,const float3& speed,const float3& dir,float size GML_PARG_C):
-	CProjectile(pos,speed,0, false, false GML_PARG_P),
+CMuzzleFlame::CMuzzleFlame(const float3& pos, const float3& speed, const float3& dir, float size GML_PARG_C):
+	CProjectile(pos, speed, 0, false, false, false GML_PARG_P),
 	dir(dir),
 	size(size),
 	age(0)
 {
-	this->pos-=dir*size*0.2f;
-	checkCol=false;
-	castShadow=true;
-	numFlame=1+(int)(size*3);
-	numSmoke=1+(int)(size*5);
+	this->pos -= dir * size * 0.2f;
+	checkCol = false;
+	castShadow = true;
+	numFlame = 1 + (int)(size * 3);
+	numSmoke = 1 + (int)(size * 5);
 //	randSmokeDir=new float3[numSmoke];
 	randSmokeDir.resize(numSmoke);
 
-	for(int a=0;a<numSmoke;++a){
-		randSmokeDir[a]=dir+gu->usRandFloat()*0.4f;
+	for (int a = 0; a < numSmoke; ++a) {
+		randSmokeDir[a] = dir + gu->usRandFloat() * 0.4f;
 	}
 }
 
