@@ -15,6 +15,7 @@ const int PF_NoCEGTrail = (1 << 6); // 64
 const int PF_NoHeatCloud= (1 << 7); // 128
 
 class CSmokeTrailProjectile;
+struct S3DModelPiece;
 struct LocalModelPiece;
 struct S3DOPiece;
 struct SS3OPiece;
@@ -29,7 +30,7 @@ class CPieceProjectile: public CProjectile
 	int dispList;
 	S3DOPiece* piece3do;
 	SS3OPiece* pieces3o;
-	LocalModelPiece* lmp;
+	S3DModelPiece* omp;
 	float3 spinVec;
 	float spinSpeed;
 	float spinAngle;

@@ -4034,7 +4034,7 @@ int LuaSyncedRead::GetProjectileName(lua_State* L)
 	assert(pro->weapon || pro->piece);
 
 	if (pro->weapon) {
-		const CWeaponProjectile* wpro = dynamic_cast<CWeaponProjectile*>(pro);
+		const CWeaponProjectile* wpro = dynamic_cast<const CWeaponProjectile*>(pro);
 
 		if (wpro != NULL && wpro->weaponDef != NULL) {
 			// maybe CWeaponProjectile derivatives
@@ -4044,13 +4044,10 @@ int LuaSyncedRead::GetProjectileName(lua_State* L)
 		}
 	}
 	if (pro->piece) {
-		const CPieceProjectile* ppro = dynamic_cast<CPieceProjectile*>(pro);
+		const CPieceProjectile* ppro = dynamic_cast<const CPieceProjectile*>(pro);
 
-		if (ppro != NULL && ppro->lmp != NULL) {
-			const LocalModelPiece* lmp = ppro->lmp;
-			const S3DModelPiece* omp = lmp->original;
-
-			lua_pushstring(L, omp->name.c_str());
+		if (ppro != NULL && ppro->omp != NULL) {
+			lua_pushstring(L, ppro->omp->name.c_str());
 			return 1;
 		}
 	}

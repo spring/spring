@@ -33,7 +33,7 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_MEMBER(flags),
 	CR_MEMBER(dispList),
 	// TODO what to do with the next three fields
-	// CR_MEMBER(lmp),
+	// CR_MEMBER(omp),
 	// CR_MEMBER(piece3do),
 	// CR_MEMBER(pieces3o),
 	CR_MEMBER(spinVec),
@@ -63,7 +63,7 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	CProjectile(pos, speed, owner, true, false, true GML_PARG_P),
 	flags(f),
 	dispList(piece? piece->displist: 0),
-	lmp(piece),
+	omp(NULL),
 	spinAngle(0.0f),
 	alphaThreshold(0.1f),
 	oldSmoke(pos),
@@ -119,12 +119,13 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	   */
 	if (piece) {
 		if (piece->type == MODELTYPE_3DO) {
-			piece3do = (S3DOPiece*)piece->original;
+			piece3do = (S3DOPiece*) piece->original;
 			pieces3o = NULL;
 		} else if (piece->type == MODELTYPE_S3O) {
 			piece3do = NULL;
-			pieces3o = (SS3OPiece*)piece->original;
+			pieces3o = (SS3OPiece*) piece->original;
 		}
+		omp = piece->original;
 	} else {
 		piece3do = NULL;
 		pieces3o = NULL;
