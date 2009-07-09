@@ -62,10 +62,12 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 	if (owner) {
 		ownerId = owner->id;
 	}
+	if (!(weapon || piece)) {
+		ph->AddProjectile(this);
+	}
 
 	pos += explosionPos;
 	SetRadius(1.7f);
-	ph->AddProjectile(this);
 }
 
 
@@ -86,9 +88,13 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	if (owner) {
 		ownerId = owner->id;
 	}
+	if (!(isWeapon || isPiece)) {
+		//! we need to be able to dynacast to derived
+		//! types, but this throws away too much RTTI
+		ph->AddProjectile(this);
+	}
 
 	SetRadius(1.7f);
-	ph->AddProjectile(this);
 
 	GML_GET_TICKS(lastProjUpdate);
 }
