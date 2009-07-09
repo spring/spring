@@ -63,7 +63,7 @@ CR_BIND(CProjectileHandler, );
 CR_REG_METADATA(CProjectileHandler, (
 	CR_MEMBER(syncedProjectiles),
 	CR_MEMBER(unsyncedProjectiles),
-	CR_MEMBER(weaponProjectileIDs),
+	CR_MEMBER(syncedProjectileIDs),
 	CR_MEMBER(freeIDs),
 	CR_MEMBER(maxUsedID),
 	CR_MEMBER(groundFlashes),
@@ -428,15 +428,15 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		CProjectile* p = *pci;
 
 		if (p->deleteMe) {
-			if (p->synced && p->weapon) {
+			if (p->synced && (p->weapon || p->piece)) {
 				assert(synced);
 
 				//! iterator is always valid
-				const ProjectileMap::iterator it = weaponProjectileIDs.find(p->id);
+				const ProjectileMap::iterator it = syncedProjectileIDs.find(p->id);
 				const ProjectileMapPair& pp = it->second;
 
 				eventHandler.ProjectileDestroyed(pp.first, pp.second);
-				weaponProjectileIDs.erase(it);
+				syncedProjectileIDs.erase(it);
 
 				if (p->id != 0) {
 					freeIDs.push_back(p->id);
@@ -512,7 +512,7 @@ void CProjectileHandler::Update()
 		FlyingPiece* p = *pti;
 		p->pos     += p->speed;
 		p->speed   *= 0.996f;
-		p->speed.y += mapInfo->map.gravity;
+		p->speed.y += mapInfo->map.gravity; //! fp's are not projectiles
 		p->rot     += p->rotSpeed;
 
 		if (p->pos.y < ground->GetApproximateHeight(p->pos.x, p->pos.z - 10))
@@ -842,7 +842,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		unsyncedProjectiles.push(p);
 	}
 
-	if (p->synced && p->weapon) {
+	if (p->synced && (p->weapon || p->piece)) {
 		// only keep track of synced projectile IDs for Lua
 		int newID = 1;
 
@@ -862,7 +862,7 @@ void CProjectileHandler::AddProjectile(CProjectile* p)
 		// projectile owner can die before projectile itself
 		// does, so copy the allyteam at projectile creation
 		ProjectileMapPair pp(p, p->owner() ? p->owner()->allyteam : -1);
-		weaponProjectileIDs[p->id] = pp;
+		syncedProjectileIDs[p->id] = pp;
 		eventHandler.ProjectileCreated(pp.first, pp.second);
 	}
 }
@@ -1064,17 +1064,17 @@ void CProjectileHandler::DrawGroundFlashes(void)
 
 void CProjectileHandler::AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece)
 {
-	FlyingPiece* fp=new FlyingPiece;
-	fp->pos=pos;
-	fp->speed=speed;
-	fp->prim=piece;
-	fp->object=object;
-	fp->verts=NULL;
+	FlyingPiece* fp = new FlyingPiece;
+	fp->pos = pos;
+	fp->speed = speed;
+	fp->prim = piece;
+	fp->object = object;
+	fp->verts = NULL;
 
-	fp->rotAxis=gu->usRandVector();
+	fp->rotAxis = gu->usRandVector();
 	fp->rotAxis.ANormalize();
-	fp->rotSpeed=gu->usRandFloat()*0.1f;
-	fp->rot=0;
+	fp->rotSpeed = gu->usRandFloat() * 0.1f;
+	fp->rot = 0;
 
 	fp->team = 0;
 	fp->texture = 0;
@@ -1083,23 +1083,23 @@ void CProjectileHandler::AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* obj
 }
 
 
-void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex * verts)
+void CProjectileHandler::AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts)
 {
-	if(textureType <= 0)
+	if (textureType <= 0)
 		return; // texture 0 means 3do
 
-	FlyingPiece* fp=new FlyingPiece;
-	fp->pos=pos;
-	fp->speed=speed;
-	fp->prim=NULL;
-	fp->object=NULL;
-	fp->verts=verts;
+	FlyingPiece* fp = new FlyingPiece;
+	fp->pos = pos;
+	fp->speed = speed;
+	fp->prim = NULL;
+	fp->object = NULL;
+	fp->verts = verts;
 
 	/* Duplicated with AddFlyingPiece. */
-	fp->rotAxis=gu->usRandVector();
+	fp->rotAxis = gu->usRandVector();
 	fp->rotAxis.ANormalize();
-	fp->rotSpeed=gu->usRandFloat()*0.1f;
-	fp->rot=0;
+	fp->rotSpeed = gu->usRandFloat() * 0.1f;
+	fp->rot = 0;
 
 	fp->team = team;
 	fp->texture = textureType;

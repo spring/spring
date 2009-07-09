@@ -7,7 +7,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Matrix44f.h"
 #include "myMath.h"
 #include "PieceProjectile.h"
@@ -33,12 +32,13 @@ CR_REG_METADATA(CPieceProjectile,(
 	CR_SERIALIZER(creg_Serialize), // numCallback, oldInfos
 	CR_MEMBER(flags),
 	CR_MEMBER(dispList),
-	// TODO what to do with the next two fields
+	// TODO what to do with the next three fields
+	// CR_MEMBER(lmp),
 	// CR_MEMBER(piece3do),
 	// CR_MEMBER(pieces3o),
 	CR_MEMBER(spinVec),
 	CR_MEMBER(spinSpeed),
-	CR_MEMBER(spinPos),
+	CR_MEMBER(spinAngle),
 	CR_MEMBER(oldSmoke),
 	CR_MEMBER(oldSmokeDir),
 	CR_MEMBER(alphaThreshold),
@@ -60,10 +60,11 @@ void CPieceProjectile::creg_Serialize(creg::ISerializer& s)
 }
 
 CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, LocalModelPiece* piece, int f, CUnit* owner, float radius GML_PARG_C):
-	CProjectile(pos, speed, owner, true, false GML_PARG_P),
+	CProjectile(pos, speed, owner, true, false, true GML_PARG_P),
 	flags(f),
 	dispList(piece? piece->displist: 0),
-	spinPos(0),
+	lmp(piece),
+	spinAngle(0.0f),
 	alphaThreshold(0.1f),
 	oldSmoke(pos),
 	drawTrail(true),
@@ -145,9 +146,14 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 		drawTrail = false;
 	}
 
-	spinVec = gu->usRandVector();
+	//! neither spinVec nor spinSpeed technically
+	//! needs to be synced, but since instances of
+	//! this class are themselves synced and have
+	//! LuaSynced{Ctrl, Read} exposure we treat
+	//! them that way for consistency
+	spinVec = gs->randVector();
 	spinVec.Normalize();
-	spinSpeed = gu->usRandFloat() * 20;
+	spinSpeed = gs->randFloat() * 20;
 
 	for (int a = 0; a < 8; ++a) {
 		oldInfos[a] = new OldInfo;
@@ -266,20 +272,21 @@ float3 CPieceProjectile::RandomVertexPos(void)
 void CPieceProjectile::Update()
 {
 	if (flags & PF_Fall) {
-		speed.y += mapInfo->map.gravity;
+		speed.y += gravity;
 	}
 
 	speed *= 0.997f;
 	pos += speed;
-	spinPos += spinSpeed;
+	spinAngle += spinSpeed;
 
 	if (flags & PF_Fire && HasVertices()) {
 		OldInfo* tempOldInfo = oldInfos[7];
 		for (int a = 6; a >= 0; --a) {
 			oldInfos[a + 1] = oldInfos[a];
 		}
+
 		CMatrix44f m(pos);
-		m.Rotate(spinPos * PI / 180.0f, spinVec);
+		m.Rotate(spinAngle * PI / 180.0f, spinVec);
 		float3 pos = RandomVertexPos();
 		m.Translate(pos.x, pos.y, pos.z);
 
@@ -414,7 +421,7 @@ void CPieceProjectile::DrawOnMinimap(CVertexArray& lines, CVertexArray& points)
 
 void CPieceProjectile::DrawCallback(void)
 {
-	if(*numCallback != gu->drawFrame) {
+	if (*numCallback != gu->drawFrame) {
 		*numCallback = gu->drawFrame;
 		return;
 	}
@@ -456,7 +463,7 @@ void CPieceProjectile::DrawUnitPart(void)
 	}
 	glPushMatrix();
 	glTranslatef(pos.x, pos.y, pos.z);
-	glRotatef(spinPos, spinVec.x, spinVec.y, spinVec.z);
+	glRotatef(spinAngle, spinVec.x, spinVec.y, spinVec.z);
 	glCallList(dispList);
 	glPopMatrix();
 

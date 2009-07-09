@@ -37,7 +37,7 @@ public:
 	virtual void Draw();
 	virtual void DrawOnMinimap(CVertexArray& lines, CVertexArray& points);
 	CProjectile(); // default constructor is needed for creg
-	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool synced, bool weapon GML_PARG_H);
+	CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece GML_PARG_H);
 	virtual void Collision();
 	virtual void Collision(CUnit* unit);
 	virtual void Collision(CFeature* feature);
@@ -45,8 +45,10 @@ public:
 	virtual void Update();
 	virtual void Init(const float3& pos, CUnit* owner GML_PARG_H);
 
-	bool synced;
-	bool weapon;
+	bool synced; //! is this projectile part of the simulation?
+	bool weapon; //! is this a weapon projectile? (true implies synced true)
+	bool piece;  //! is this a piece projectile? (true implies synced true)
+
 	bool checkCol;
 	bool deleteMe;
 	bool castShadow;
@@ -58,12 +60,13 @@ public:
 	unsigned lastProjUpdate;
 #endif
 
-	inline CUnit* owner() const
-	{
+	inline CUnit* owner() const {
 		return uh->units[ownerId];
 	}
 
 	float3 speed;
+	float gravity;
+
 	virtual void DrawCallback(void);
 	virtual void DrawUnitPart(void);
 	virtual void DrawS3O() { DrawUnitPart(); }

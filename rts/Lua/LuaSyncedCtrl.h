@@ -103,6 +103,10 @@ class LuaSyncedCtrl {
 		static int SetProjectilePosition(lua_State* L);
 		static int SetProjectileVelocity(lua_State* L);
 		static int SetProjectileCollision(lua_State* L);
+		static int SetProjectileGravity(lua_State* L);
+		static int SetProjectileSpinAngle(lua_State* L);
+		static int SetProjectileSpinSpeed(lua_State* L);
+		static int SetProjectileSpinVec(lua_State* L);
 
 		static int LevelHeightMap(lua_State* L);
 		static int AdjustHeightMap(lua_State* L);

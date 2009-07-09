@@ -17,7 +17,7 @@ CR_REG_METADATA(CSimpleParticleSystem,
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(emitVector),
 		CR_MEMBER(emitMul),
-		CR_MEMBER(gravity),
+		CR_MEMBER(gravity3),
 		CR_MEMBER(colorMap),
 		CR_MEMBER(texture),
 		CR_MEMBER(airdrag),
@@ -122,17 +122,14 @@ void CSimpleParticleSystem::Update()
 {
 	deleteMe = true;
 
-	for(int i=0; i<numParticles; i++)
-	{
-		if(particles[i].life<1.0f)
-		{
+	for (int i = 0; i < numParticles; i++) {
+		if (particles[i].life < 1.0f) {
 			particles[i].pos += particles[i].speed;
 			particles[i].life += particles[i].decayrate;
-			particles[i].speed += gravity;
-
+			particles[i].speed += gravity3;
 			particles[i].speed *= airdrag;
 
-			particles[i].size = particles[i].size*sizeMod + sizeGrowth;
+			particles[i].size = particles[i].size * sizeMod + sizeGrowth;
 
 			deleteMe = false;
 		}
@@ -185,25 +182,23 @@ CSphereParticleSpawner::~CSphereParticleSpawner()
 {
 }
 
-void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit *owner GML_PARG_C)
+void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 {
 	float3 up = emitVector;
-	float3 right = up.cross(float3(up.y,up.z,-up.x));
+	float3 right = up.cross(float3(up.y, up.z, -up.x));
 	float3 forward = up.cross(right);
 
-	for(int i=0; i<numParticles; i++)
-	{
-
-		float az = gu->usRandFloat()*2*PI;
-		float ay = (emitRot + emitRotSpread*gu->usRandFloat())*(PI/180.0);
+	for (int i = 0; i < numParticles; i++) {
+		float az = gu->usRandFloat() * 2 * PI;
+		float ay = (emitRot + emitRotSpread*gu->usRandFloat()) * (PI / 180.0);
 
 		float3 pspeed = ((up*emitMul.y)*cos(ay)-((right*emitMul.x)*cos(az)-(forward*emitMul.z)*sin(az))*sin(ay)) * (particleSpeed + gu->usRandFloat()*particleSpeedSpread);
 
-		CGenericParticleProjectile *particle = new CGenericParticleProjectile(pos+explosionPos, pspeed, owner);
+		CGenericParticleProjectile* particle = new CGenericParticleProjectile(pos + explosionPos, pspeed, owner);
 
-		particle->decayrate = 1.0f/(particleLife + gu->usRandFloat()*particleLifeSpread);
+		particle->decayrate = 1.0f / (particleLife + gu->usRandFloat() * particleLifeSpread);
 		particle->life = 0;
-		particle->size = particleSize + gu->usRandFloat()*particleSizeSpread;
+		particle->size = particleSize + gu->usRandFloat() * particleSizeSpread;
 
 		particle->texture = texture;
 		particle->colorMap = colorMap;
@@ -212,9 +207,9 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit *owner GML_P
 		particle->sizeGrowth = sizeGrowth;
 		particle->sizeMod = sizeMod;
 
-		particle->gravity = gravity;
+		particle->gravity3 = gravity3;
 		particle->directional = directional;
-		particle->SetRadius(particle->size + sizeGrowth*particleLife);
+		particle->SetRadius(particle->size + sizeGrowth * particleLife);
 	}
 
 	deleteMe = true;

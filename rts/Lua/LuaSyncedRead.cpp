@@ -47,6 +47,8 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/PieceProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -260,6 +262,12 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetProjectilePosition);
 	REGISTER_LUA_CFUNC(GetProjectileVelocity);
+	REGISTER_LUA_CFUNC(GetProjectileGravity);
+	REGISTER_LUA_CFUNC(GetProjectileSpinAngle);
+	REGISTER_LUA_CFUNC(GetProjectileSpinSpeed);
+	REGISTER_LUA_CFUNC(GetProjectileSpinVec);
+	REGISTER_LUA_CFUNC(GetProjectileType);
+	REGISTER_LUA_CFUNC(GetProjectileName);
 
 	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(GetGroundOrigHeight);
@@ -3699,10 +3707,10 @@ static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int proID = (int) lua_tonumber(L, index);
-	ProjectileMap::iterator it = ph->weaponProjectileIDs.find(proID);
+	ProjectileMap::iterator it = ph->syncedProjectileIDs.find(proID);
 
-	if (it == ph->weaponProjectileIDs.end()) {
-		// not an assigned weapon projectile ID
+	if (it == ph->syncedProjectileIDs.end()) {
+		// not an assigned synced projectile ID
 		return NULL;
 	}
 
@@ -3944,6 +3952,110 @@ int LuaSyncedRead::GetProjectileVelocity(lua_State* L)
 	lua_pushnumber(L, pro->speed.y);
 	lua_pushnumber(L, pro->speed.z);
 	return 3;
+}
+
+
+int LuaSyncedRead::GetProjectileGravity(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL) {
+		return 0;
+	}
+
+	lua_pushnumber(L, pro->gravity);
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileSpinAngle(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* ppro = dynamic_cast<CPieceProjectile*>(pro);
+	lua_pushnumber(L, ppro->spinAngle);
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileSpinSpeed(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* ppro = dynamic_cast<CPieceProjectile*>(pro);
+	lua_pushnumber(L, ppro->spinSpeed);
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileSpinVec(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* ppro = dynamic_cast<CPieceProjectile*>(pro);
+
+	lua_pushnumber(L, ppro->spinVec.x);
+	lua_pushnumber(L, ppro->spinVec.y);
+	lua_pushnumber(L, ppro->spinVec.z);
+	return 3;
+}
+
+
+int LuaSyncedRead::GetProjectileType(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL) {
+		return 0;
+	}
+
+	lua_pushboolean(L, pro->weapon);
+	lua_pushboolean(L, pro->piece);
+	return 2;
+}
+
+int LuaSyncedRead::GetProjectileName(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL) {
+		return 0;
+	}
+
+	assert(pro->weapon || pro->piece);
+
+	if (pro->weapon) {
+		const CWeaponProjectile* wpro = dynamic_cast<CWeaponProjectile*>(pro);
+
+		if (wpro != NULL && wpro->weaponDef != NULL) {
+			// maybe CWeaponProjectile derivatives
+			// should have actual names themselves?
+			lua_pushstring(L, wpro->weaponDef->name.c_str());
+			return 1;
+		}
+	}
+	if (pro->piece) {
+		const CPieceProjectile* ppro = dynamic_cast<CPieceProjectile*>(pro);
+
+		if (ppro != NULL && ppro->lmp != NULL) {
+			const LocalModelPiece* lmp = ppro->lmp;
+			const S3DModelPiece* omp = lmp->original;
+
+			lua_pushstring(L, omp->name.c_str());
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 

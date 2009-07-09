@@ -4,7 +4,6 @@
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "myMath.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -93,7 +92,7 @@ void CTorpedoProjectile::Update(void)
 {
 	if (!(weaponDef->submissile) && pos.y > -3) {
 		// tracking etc only works when we are underwater
-		speed.y += mapInfo->map.gravity;
+		speed.y += gravity;
 		if (dir.y > 0)
 			dir.y = 0;
 		dir = speed;
@@ -141,7 +140,7 @@ void CTorpedoProjectile::Update(void)
 			}
 		} else {
 			speed *= 0.98f;
-			speed.y += mapInfo->map.gravity;
+			speed.y += gravity;
 			dir = speed;
 			dir.Normalize();
 		}

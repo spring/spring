@@ -5,7 +5,6 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
-#include "Map/MapInfo.h"
 #include "ProjectileHandler.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
@@ -28,16 +27,18 @@ CR_REG_METADATA(CFlareProjectile,(
 				CR_RESERVED(8)
 				));
 
-CFlareProjectile::CFlareProjectile(const float3& pos,const float3& speed,CUnit* owner,int activateFrame GML_PARG_C)
-:	CProjectile(pos,speed,owner, true, false GML_PARG_P),
+CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit* owner, int activateFrame GML_PARG_C):
+	//! these are synced, but neither weapon nor piece
+	//! (only created by units that can drop flares)
+	CProjectile(pos, speed, owner, true, false, false GML_PARG_P),
 	activateFrame(activateFrame),
-	deathFrame(activateFrame+(owner?owner->unitDef->flareTime:1)),
+	deathFrame(activateFrame + (owner? owner->unitDef->flareTime: 1)),
 	numSub(0),
 	lastSub(0)
 {
-	alphaFalloff=owner?1.0f/owner->unitDef->flareTime:1.0;
-	checkCol=false;
-	useAirLos=true;
+	alphaFalloff = owner? 1.0f / owner->unitDef->flareTime: 1.0f;
+	checkCol = false;
+	useAirLos = true;
 	SetRadius(45);
 	subPos.resize(owner->unitDef->flareSalvoSize);
 	subSpeed.resize(owner->unitDef->flareSalvoSize);
@@ -50,21 +51,21 @@ CFlareProjectile::~CFlareProjectile(void)
 void CFlareProjectile::Update(void)
 {
 	CUnit* owner = CProjectile::owner();
-	if(gs->frameNum==activateFrame){
-		if(owner){
-			pos=owner->pos;
-			speed=owner->speed;
-			speed+=owner->rightdir*owner->unitDef->flareDropVector.x;
-			speed+=owner->updir*owner->unitDef->flareDropVector.y;
-			speed+=owner->frontdir*owner->unitDef->flareDropVector.z;
+	if (gs->frameNum == activateFrame) {
+		if (owner) {
+			pos    = owner->pos;
+			speed  = owner->speed;
+			speed += owner->rightdir * owner->unitDef->flareDropVector.x;
+			speed += owner->updir    * owner->unitDef->flareDropVector.y;
+			speed += owner->frontdir * owner->unitDef->flareDropVector.z;
 		} else {
-			deleteMe=true;
+			deleteMe = true;
 		}
 	}
-	if(gs->frameNum>=activateFrame){
-		pos+=speed;
-		speed*=0.95f;
-		speed.y+=mapInfo->map.gravity*0.3f;
+	if (gs->frameNum >= activateFrame) {
+		pos += speed;
+		speed *= 0.95f;
+		speed.y += gravity * 0.3f;
 
 		//FIXME: just spawn new flares, if new missiles incoming?
 		if(owner && lastSub<(gs->frameNum - owner->unitDef->flareSalvoDelay) && numSub<owner->unitDef->flareSalvoSize){
@@ -85,10 +86,10 @@ void CFlareProjectile::Update(void)
 				}
 			}
 		}
-		for(int a=0;a<numSub;++a){
-			subPos[a]+=subSpeed[a];
-			subSpeed[a]*=0.95f;
-			subSpeed[a].y+=mapInfo->map.gravity*0.3f;
+		for (int a = 0; a < numSub; ++a) {
+			subPos[a] += subSpeed[a];
+			subSpeed[a] *= 0.95f;
+			subSpeed[a].y += gravity * 0.3f;
 		}
 	}
 

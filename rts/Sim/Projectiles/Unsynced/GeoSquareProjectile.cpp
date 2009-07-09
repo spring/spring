@@ -24,7 +24,7 @@ CR_REG_METADATA(CGeoSquareProjectile,(
 	));
 
 CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,const float3& v1,const float3& v2,float w1,float w2 GML_PARG_C)
-: CProjectile((p1+p2)*0.5f,ZeroVector,0, false, false GML_PARG_P),
+: CProjectile((p1+p2)*0.5f,ZeroVector,0, false, false, false GML_PARG_P),
 	p1(p1),
 	p2(p2),
 	v1(v1),
@@ -36,9 +36,9 @@ CGeoSquareProjectile::CGeoSquareProjectile(const float3& p1,const float3& p2,con
 	b(0.5f),
 	a(0.5f)
 {
-	checkCol=false;
-	alwaysVisible=true;
-	SetRadius(p1.distance(p2)*0.55f);
+	checkCol = false;
+	alwaysVisible = true;
+	SetRadius(p1.distance(p2) * 0.55f);
 }
 
 CGeoSquareProjectile::~CGeoSquareProjectile(void)
