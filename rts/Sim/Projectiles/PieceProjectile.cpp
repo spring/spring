@@ -7,10 +7,11 @@
 #include "Sim/Misc/GlobalSynced.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-#include "Matrix44f.h"
-#include "myMath.h"
-#include "PieceProjectile.h"
-#include "ProjectileHandler.h"
+#include "System/Matrix44f.h"
+#include "System/myMath.h"
+#include "Sim/Projectiles/PieceProjectile.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Colors.h"
@@ -20,9 +21,6 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
 #include "Sync/SyncTracer.h"
-#include "Unsynced/SmokeProjectile.h"
-#include "Unsynced/SmokeTrailProjectile.h"
-#include "Util.h"
 
 static const float Smoke_Time = 40;
 
@@ -166,9 +164,11 @@ CPieceProjectile::CPieceProjectile(const float3& pos, const float3& speed, Local
 	drawRadius = 32;
 
 #ifdef TRACE_SYNC
-	tracefile << "New pieceexplosive: ";
+	tracefile << "New CPieceProjectile: ";
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << speed.x << " " << speed.y << " " << speed.z << "\n";
 #endif
+
+	ph->AddProjectile(this);
 }
 
 
