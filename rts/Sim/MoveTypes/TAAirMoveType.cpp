@@ -336,7 +336,7 @@ void CTAAirMoveType::UpdateHovering()
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5
 	randomWind = float3(randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f, 0,
-		            randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
+                        randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
 	wantedSpeed += randomWind * driftSpeed * 0.5f;
 
 	UpdateAirPhysics();
@@ -353,9 +353,10 @@ void CTAAirMoveType::UpdateFlying()
 	owner->restTime = 0;
 
 	// don't change direction for waypoints we just flew over and missed slightly
-	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() && (dir.SqLength2D() < 10000)) {
-		float sqd = dir.SqLength();
-		if (sqd < Square(1.0f+sqd)) { //same as (float3(dir).Normalize().SqDistance(dir) < 1)
+	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() && dir.SqLength2D() < 10000.0f) {
+		float3 ndir = dir; ndir = ndir.ANormalize();
+
+		if (ndir.SqDistance(dir) < 1.0f) {
 			dir = owner->frontdir;
 		}
 	}
@@ -623,7 +624,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 	speed.y = 0.0f;
 
 	float3 delta = wantedSpeed - speed;
-	float deltaDotSpeed = delta.dot(speed);
+	float deltaDotSpeed = (speed != ZeroVector)? delta.dot(speed): 1.0f;
 
 	if (deltaDotSpeed == 0.0f) {
 		// we have the wanted speed
