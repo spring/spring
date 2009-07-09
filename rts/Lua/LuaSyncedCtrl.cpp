@@ -43,6 +43,7 @@
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Projectiles/PieceProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -188,6 +189,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetProjectileSpinAngle);
 	REGISTER_LUA_CFUNC(SetProjectileSpinSpeed);
 	REGISTER_LUA_CFUNC(SetProjectileSpinVec);
+
+	REGISTER_LUA_CFUNC(SetProjectileCEG);
 
 
 	REGISTER_LUA_CFUNC(CallCOBScript);
@@ -2360,6 +2363,32 @@ int LuaSyncedCtrl::SetProjectileSpinVec(lua_State* L)
 	pproj->spinVec.x = luaL_optfloat(L, 2, 0.0f);
 	pproj->spinVec.y = luaL_optfloat(L, 3, 0.0f);
 	pproj->spinVec.z = luaL_optfloat(L, 4, 0.0f);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
+		return 0;
+	}
+
+	assert(proj->weapon || proj->piece);
+
+	if (proj->weapon) {
+		CWeaponProjectile* wproj = dynamic_cast<CWeaponProjectile*>(proj);
+		if (wproj != NULL) {
+			wproj->ceg.Load(explGenHandler, luaL_checkstring(L, 2));
+		}
+	}
+	if (proj->piece) {
+		CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+		if (pproj != NULL) {
+			pproj->ceg.Load(explGenHandler, luaL_checkstring(L, 2));
+		}
+	}
+
 	return 0;
 }
 
