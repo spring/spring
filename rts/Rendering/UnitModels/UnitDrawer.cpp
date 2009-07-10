@@ -144,7 +144,7 @@ CUnitDrawer::CUnitDrawer(void)
 
 		glGenTextures(1,&specularTex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -1399,6 +1399,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 		}
 	}
 	glTexImage2D(gltype, 0, GL_RGBA8, size, size, 0, GL_RGBA,GL_UNSIGNED_BYTE, buf);
+	glGenerateMipmapEXT(gltype);
 	delete[] buf;
 }
 
@@ -1408,21 +1409,21 @@ void CUnitDrawer::UpdateReflectTex(void)
 	switch(updateFace++){
 	case 0:
 		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, float3(1, 0, 0));
+		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1, 0, 0));
 		break;
 	case 1:
-		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1, 0, 0));
 		break;
 	case 2:
 		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, float3(0, 1, 0));
+		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, float3(0, -1, 0));
 		break;
 	case 3:
-		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, float3(0, -1, 0));
 		break;
 	case 4:
 		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, float3(0, 0, 1));
+		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0, 0, -1));
 		break;
 	case 5:
-		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0, 0, -1));
 		updateFace=0;
 		break;
 	default:
@@ -1434,12 +1435,12 @@ void CUnitDrawer::UpdateReflectTex(void)
 
 void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 {
-	glPushAttrib(GL_FOG_BIT);
-
 	unitReflectFBO.Bind();
 	unitReflectFBO.AttachTexture(boxtex, gltype);
 
+	glPushAttrib(GL_FOG_BIT);
 	glViewport(0, 0, reflTexSize, reflTexSize);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 //	CCamera *realCam = camera;
 //	camera = new CCamera(*realCam);
@@ -1457,21 +1458,8 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	camera->pos.y = ground->GetHeight(camera->pos.x, camera->pos.z) + 50;
 	camera->Update(false);
 
-	glClear(GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
-		glPushMatrix();
-	glMatrixMode(GL_PROJECTION);
-		glPushMatrix();
-		glLoadIdentity();
-		gluPerspective(90, 1, NEAR_PLANE, gu->viewRange);
-
 	sky->Draw();
 	readmap->GetGroundDrawer()->Draw(false, true);
-
-	glMatrixMode(GL_PROJECTION);
-		glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-		glPopMatrix();
 
 	//! we do this later to save render context switches (this is one of the slowest opengl operations!)
 	//unitReflectFBO.Unbind();

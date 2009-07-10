@@ -2733,6 +2733,15 @@ bool CGame::Draw() {
 		lastSimFrame=gs->frameNum;
 	}
 
+	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
+
+	CBaseGroundDrawer* gd;
+	if (doDrawWorld) {
+		SCOPED_TIMER("GroundUpdate");
+		gd = readmap->GetGroundDrawer();
+		gd->Update(); // let it update before shadows have to be drawn
+	}
+
 	if(!skipping)
 		UpdateUI(true);
 
@@ -2786,19 +2795,10 @@ bool CGame::Draw() {
 		script->SetCamera();
 	}
 
-	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
-
 	if (doDrawWorld) {
-		CBaseGroundDrawer* gd;
 		{
-			SCOPED_TIMER("GroundUpdate");
-			gd = readmap->GetGroundDrawer();
-			gd->Update(); // let it update before shadows have to be drawn
-
-			{
 			SCOPED_TIMER("ExtraTexture");
 			gd->UpdateExtraTexture();
-			}
 		}
 
 		SCOPED_TIMER("Shadows/Reflect");
