@@ -337,7 +337,6 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canRestore = udTable.GetBool("canRestore", ud.builder);
 	ud.canRepair  = udTable.GetBool("canRepair",  ud.builder);
 	ud.canReclaim = udTable.GetBool("canReclaim", ud.builder);
-	ud.canBuild   = udTable.GetBool("canBuild",   ud.builder);
 	ud.canAssist  = udTable.GetBool("canAssist",  ud.builder);
 
 	ud.canBeAssisted = udTable.GetBool("canBeAssisted", true);

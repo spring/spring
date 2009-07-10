@@ -274,7 +274,6 @@ struct UnitDef
 	bool canPatrol;
 	bool canFight;
 	bool canGuard;
-	bool canBuild;
 	bool canAssist;
 	bool canBeAssisted;
 	bool canRepeat;

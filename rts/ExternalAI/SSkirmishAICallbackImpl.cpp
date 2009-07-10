@@ -1902,7 +1902,6 @@ EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToAttack(int teamId, int unitDefId
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToPatrol(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canPatrol;}
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToFight(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canFight;}
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToGuard(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canGuard;}
-EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToBuild(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBuild;}
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToAssist(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canAssist;}
 EXPORT(bool) skirmishAiCallback_UnitDef_isAssistable(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canBeAssisted;}
 EXPORT(bool) skirmishAiCallback_UnitDef_isAbleToRepeat(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->canRepeat;}
@@ -3363,7 +3362,6 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_UnitDef_isAbleToPatrol = &skirmishAiCallback_UnitDef_isAbleToPatrol;
 	callback->Clb_UnitDef_isAbleToFight = &skirmishAiCallback_UnitDef_isAbleToFight;
 	callback->Clb_UnitDef_isAbleToGuard = &skirmishAiCallback_UnitDef_isAbleToGuard;
-	callback->Clb_UnitDef_isAbleToBuild = &skirmishAiCallback_UnitDef_isAbleToBuild;
 	callback->Clb_UnitDef_isAbleToAssist = &skirmishAiCallback_UnitDef_isAbleToAssist;
 	callback->Clb_UnitDef_isAssistable = &skirmishAiCallback_UnitDef_isAssistable;
 	callback->Clb_UnitDef_isAbleToRepeat = &skirmishAiCallback_UnitDef_isAbleToRepeat;
