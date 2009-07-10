@@ -250,6 +250,33 @@ bool SpringApp::Initialize()
 	// Initialize Lua GL
 	LuaOpenGL::Init();
 
+#ifdef WIN32
+	int affinity = configHandler->Get("SetCoreAffinity", 0);
+
+	if (affinity>0) {
+		//! Get the available cores
+		DWORD curMask;
+		DWORD cores;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cores);
+
+		DWORD wantedCore = 0xff;
+
+		//! Find an useable core
+		cores /= 0x1;
+		while( (wantedCore & cores) == 0x0 ) {
+			wantedCore >>= 0x1;
+		}
+
+		//! Set the affinity
+		HANDLE thread = GetCurrentThread();
+		if (affinity==1) {
+			SetThreadIdealProcessor(thread,wantedCore);
+		} else if (affinity>=2) {
+			SetThreadAffinityMask(thread,wantedCore);
+		}
+	}
+#endif // WIN32
+
 	// Create CGameSetup and CPreGame objects
 	Startup();
 
