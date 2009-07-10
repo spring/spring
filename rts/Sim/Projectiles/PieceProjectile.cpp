@@ -21,6 +21,7 @@
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Units/Unit.h"
 #include "Sync/SyncTracer.h"
+#include "Util.h"
 
 static const float Smoke_Time = 40;
 
