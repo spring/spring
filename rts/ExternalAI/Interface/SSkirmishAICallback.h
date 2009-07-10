@@ -676,40 +676,35 @@ void (CALLING_CONV *Clb_UnitDef_0MAP1KEYS0getCustomParams)(int teamId,
 		int unitDefId, const char* keys[]);
 void (CALLING_CONV *Clb_UnitDef_0MAP1VALS0getCustomParams)(int teamId,
 		int unitDefId, const char* values[]);
+
+
+
 bool (CALLING_CONV *Clb_UnitDef_0AVAILABLE0MoveData)(int teamId, int unitDefId);
-/** enum MoveType { Ground_Move, Hover_Move, Ship_Move }; */
-int (CALLING_CONV *Clb_UnitDef_MoveData_getMoveType)(int teamId, int unitDefId);
-/**
- * @return  0: tank
- *          1: kbot
- *          2: hover
- *          3: ship
- */
-int (CALLING_CONV *Clb_UnitDef_MoveData_getMoveFamily)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_MoveData_getMaxAcceleration)(int teamId, int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_MoveData_getMaxBreaking)(int teamId, int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_MoveData_getMaxSpeed)(int teamId, int unitDefId);
+short (CALLING_CONV *Clb_UnitDef_MoveData_getMaxTurnRate)(int teamId, int unitDefId);
+
 int (CALLING_CONV *Clb_UnitDef_MoveData_getSize)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_MoveData_getDepth)(int teamId, int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_MoveData_getMaxSlope)(int teamId,
-		int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_MoveData_getSlopeMod)(int teamId,
-		int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_MoveData_getDepthMod)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_MoveData_getMaxSlope)(int teamId, int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_MoveData_getSlopeMod)(int teamId, int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_MoveData_getDepthMod)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_MoveData_getPathType)(int teamId, int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_MoveData_getCrushStrength)(int teamId,
-		int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_MoveData_getMaxSpeed)(int teamId,
-		int unitDefId);
-short (CALLING_CONV *Clb_UnitDef_MoveData_getMaxTurnRate)(int teamId,
-		int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_MoveData_getMaxAcceleration)(int teamId,
-		int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_MoveData_getMaxBreaking)(int teamId,
-		int unitDefId);
-bool (CALLING_CONV *Clb_UnitDef_MoveData_isSubMarine)(int teamId,
-		int unitDefId);
-int (CALLING_CONV *Clb_UnitDef_0MULTI1SIZE0WeaponMount)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_MoveData_getCrushStrength)(int teamId, int unitDefId);
+/** enum MoveType { Ground_Move=0, Hover_Move=1, Ship_Move=2 }; */
+int (CALLING_CONV *Clb_UnitDef_MoveData_getMoveType)(int teamId, int unitDefId);
+/** enum MoveFamily { Tank=0, KBot=1, Hover=2, Ship=3 }; */
+int (CALLING_CONV *Clb_UnitDef_MoveData_getMoveFamily)(int teamId, int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_MoveData_getTerrainClass)(int teamId, int unitDefId);
+
+bool (CALLING_CONV *Clb_UnitDef_MoveData_getFollowGround)(int teamId, int unitDefId);
+bool (CALLING_CONV *Clb_UnitDef_MoveData_isSubMarine)(int teamId, int unitDefId);
+const char* (CALLING_CONV *Clb_UnitDef_MoveData_getName)(int teamId, int unitDefId);
+
+
+
+int (CALLING_CONV *Clb_UnitDef_0MULTI1SIZE0WeaponMount)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_WeaponMount_getName)(int teamId,
 		int unitDefId, int weaponMountId);
 int (CALLING_CONV *Clb_UnitDef_WeaponMount_0SINGLE1FETCH2WeaponDef0getWeaponDef)(
