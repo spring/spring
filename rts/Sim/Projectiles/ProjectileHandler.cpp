@@ -428,23 +428,28 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 		CProjectile* p = *pci;
 
 		if (p->deleteMe) {
-			if (p->synced && (p->weapon || p->piece)) {
+			if (p->synced) {
 				assert(synced);
+				if(p->weapon || p->piece) {
 
-				//! iterator is always valid
-				const ProjectileMap::iterator it = syncedProjectileIDs.find(p->id);
-				const ProjectileMapPair& pp = it->second;
+					//! iterator is always valid
+					const ProjectileMap::iterator it = syncedProjectileIDs.find(p->id);
+					const ProjectileMapPair& pp = it->second;
 
-				eventHandler.ProjectileDestroyed(pp.first, pp.second);
-				syncedProjectileIDs.erase(it);
+					eventHandler.ProjectileDestroyed(pp.first, pp.second);
+					syncedProjectileIDs.erase(it);
 
-				if (p->id != 0) {
-					freeIDs.push_back(p->id);
+					if (p->id != 0) {
+						freeIDs.push_back(p->id);
+					}
 				}
+				//! push_back this projectile for deletion
+				pci = pc.erase_delete_synced(pci);
 			}
-
-			//! push_back this projectile for deletion
-			pci = pc.erase_delete_synced(pci);
+			else {
+				assert(!synced);
+				pci = pc.erase_delete(pci);
+			}
 		} else {
 			p->Update();
 			GML_GET_TICKS(p->lastProjUpdate);
@@ -475,17 +480,12 @@ void CProjectileHandler::Update()
 			//! queued (push_back'ed) for deletion
 			syncedProjectiles.delete_erased_synced();
 		}
-		if (unsyncedProjectiles.can_delete_synced()) {
-			GML_STDMUTEX_LOCK(proj); // Update
-
-			//! delete all projectiles that were
-			//! queued (push_back'ed) for deletion
-			unsyncedProjectiles.delete_erased_synced();
-		}
 
 		//! prepare projectile batches for
 		//! addition into the render queue
 		syncedProjectiles.delay_add();
+
+		unsyncedProjectiles.delay_delete();
 		unsyncedProjectiles.delay_add();
 	}
 
@@ -735,15 +735,15 @@ void CProjectileHandler::Draw(bool drawReflection, bool drawRefraction) {
 
 	distset.clear();
 
-
 	{
 		GML_STDMUTEX_LOCK(rproj); // Draw
 
 		//! batch-insert projectiles into render queue
 		syncedProjectiles.add_delayed();
+
+		unsyncedProjectiles.delete_delayed();
 		unsyncedProjectiles.add_delayed();
 	}
-
 
 	{
 		GML_STDMUTEX_LOCK(proj); // Draw
