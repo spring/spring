@@ -671,7 +671,7 @@ cRAIUnitDefHandler::cRAIUnitDefHandler(IAICallback* cb, GlobalResourceMap *RM, G
 		const UnitDef* ud=udList[iud];
 		fMetalCostTotal+=ud->metalCost;
 		fEnergyCostTotal+=ud->energyCost;
-		if( ud->canBuild )
+		if (ud->builder)
 		{
 			AverageConstructSpeed+=ud->buildSpeed;
 			Constructs++;

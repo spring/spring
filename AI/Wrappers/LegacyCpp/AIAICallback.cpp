@@ -465,7 +465,6 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->canPatrol = sAICallback->Clb_UnitDef_isAbleToPatrol(teamId, unitDefId);
 		unitDef->canFight = sAICallback->Clb_UnitDef_isAbleToFight(teamId, unitDefId);
 		unitDef->canGuard = sAICallback->Clb_UnitDef_isAbleToGuard(teamId, unitDefId);
-		unitDef->canBuild = sAICallback->Clb_UnitDef_isAbleToBuild(teamId, unitDefId);
 		unitDef->canAssist = sAICallback->Clb_UnitDef_isAbleToAssist(teamId, unitDefId);
 		unitDef->canBeAssisted = sAICallback->Clb_UnitDef_isAssistable(teamId, unitDefId);
 		unitDef->canRepeat = sAICallback->Clb_UnitDef_isAbleToRepeat(teamId, unitDefId);

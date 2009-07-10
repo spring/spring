@@ -268,7 +268,6 @@ EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToAttack(int teamId, 
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToPatrol(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToFight(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToGuard(int teamId, int unitDefId);
-EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToBuild(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToAssist(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAssistable(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToRepeat(int teamId, int unitDefId);
