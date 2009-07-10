@@ -1398,8 +1398,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 			buf[(y * size + x) * 4 + 3] = 255;
 		}
 	}
-	glTexImage2D(gltype, 0, GL_RGBA8, size, size, 0, GL_RGBA,GL_UNSIGNED_BYTE, buf);
-	glGenerateMipmapEXT(gltype);
+	glBuildMipmaps(gltype, GL_RGBA8, size, size, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	delete[] buf;
 }
 
