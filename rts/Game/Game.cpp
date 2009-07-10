@@ -2735,6 +2735,10 @@ bool CGame::Draw() {
 
 	const bool doDrawWorld = hideInterface || !minimap->GetMaximized() || minimap->GetMinimized();
 
+	//set camera
+	camHandler->UpdateCam();
+	camera->Update(false);
+
 	CBaseGroundDrawer* gd;
 	if (doDrawWorld) {
 		SCOPED_TIMER("GroundUpdate");
@@ -2769,6 +2773,7 @@ bool CGame::Draw() {
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
 	unitDrawer->Update();
+	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	lineDrawer.UpdateLineStipple();
 	fartextureHandler->CreateFarTextures();
@@ -2782,10 +2787,6 @@ bool CGame::Draw() {
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
-
-	//set camera
-	camHandler->UpdateCam();
-	mouse->UpdateCursors();
 
 	if (unitTracker.Enabled()) {
 		unitTracker.SetCam();
@@ -2817,12 +2818,11 @@ bool CGame::Draw() {
 		glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 	}
 
-	camera->Update(false);
-
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glClearColor(mapInfo->atmosphere.fogColor[0], mapInfo->atmosphere.fogColor[1], mapInfo->atmosphere.fogColor[2], 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);	// Clear Screen And Depth&Stencil Buffer
+	camera->Update(false);
 
 	if (doDrawWorld) {
 		DrawWorld();
