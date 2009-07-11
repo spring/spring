@@ -15,8 +15,8 @@ set(SKIRMISH_DATA "${AIDIR}/AI/Skirmish")
 set(C_AIINTERFACE_TARGET    "C-AI-Interface")
 set(Java_AIINTERFACE_TARGET "Java-AI-Interface")
 if (BUILD_Java_AIINTERFACE)
-	set(JAVA_FIND_QUIETLY ${AIINTERFACE_FIND_QUIETLY})
-	FIND_PACKAGE(JavaExtended) # Note: this is not the CMake builtin FindJava
+	set(JAVA_FIND_QUIETLY TRUE)
+	FIND_PACKAGE(JavaExtended) # Note: this is not the CMake built-in FindJava
 endif (BUILD_Java_AIINTERFACE)
 
 
@@ -31,13 +31,12 @@ macro    (AddSkirmishAI sourceDir)
 	endif (EXISTS "${SKIRMISH_SRC}/${sourceDir}")
 endmacro (AddSkirmishAI sourceDir)
 
-AddSkirmishAI(KAIK)
-AddSkirmishAI(RAI)
-AddSkirmishAI(AAI)
-AddSkirmishAI(NTai)
 
-AddSkirmishAI(NullLegacyCppAI)
-AddSkirmishAI(NullAI)
+GetListOfSubModules(SKIRMISH_AI_DIRS)
+# Make the list available in the parent dir
+set(SKIRMISH_AI_DIRS ${SKIRMISH_AI_DIRS} PARENT_SCOPE)
 
-AddSkirmishAI(NullJavaAI)
-AddSkirmishAI(NullOOJavaAI)
+# Add each of these subdirs as a Skirmish AI submodule
+foreach    (skirmishAIDir ${SKIRMISH_AI_DIRS})
+	AddSkirmishAI(${skirmishAIDir})
+endforeach (skirmishAIDir)

@@ -17,7 +17,16 @@ macro    (AddAIInterface sourceDir)
 	set(BUILD_${sourceDir}_AIINTERFACE ${BUILD_${sourceDir}_AIINTERFACE} PARENT_SCOPE)
 endmacro (AddAIInterface sourceDir)
 
-AddAIInterface(C)
-AddAIInterface(Java)
-set(CLASSPATH_Java_AIINTERFACE ${CLASSPATH_Java_AIINTERFACE} PARENT_SCOPE)
 
+GetListOfSubModules(AI_INTERFACE_DIRS)
+# Make the list available in the parent dir
+set(AI_INTERFACE_DIRS ${AI_INTERFACE_DIRS} PARENT_SCOPE)
+
+# Add each of these subdirs as an AI Interface submodule
+foreach    (aiInterfaceDir ${AI_INTERFACE_DIRS})
+	AddAIInterface(${aiInterfaceDir})
+endforeach (aiInterfaceDir)
+
+
+# ugly special treatment, but the only way known to work
+set(CLASSPATH_Java_AIINTERFACE ${CLASSPATH_Java_AIINTERFACE} PARENT_SCOPE)
