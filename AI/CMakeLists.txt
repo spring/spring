@@ -39,5 +39,16 @@ set_target_properties(legacycpp-creg PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils cutilsenv)
 
+
+macro    (GetListOfSubModules list_var)
+	# Find all CMakeLists.txt files in sub-directories
+	file(GLOB ${list_var} RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" FOLLOW_SYMLINKS "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt")
+
+	# Strip away the "/CMakeLists.txt" parts, so we end up with just a list of dirs,
+	# for example: AAI;RAI;KAIK
+	string(REPLACE "//CMakeLists.txt" ";" ${list_var} ${${list_var}})
+endmacro (GetListOfSubModules list_var)
+
+
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)
