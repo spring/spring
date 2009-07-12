@@ -30,9 +30,6 @@ int	VorbisClose(void* datasource)
 {
 	return 0; // nothing to be done here
 };
-
-
-
 }
 
 SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
@@ -141,11 +138,6 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 //		logOutput.Print("OpenAL: AvgBytesPerSec %d\n", header->AvgBytesPerSec);
 
 		header->datalen = boost::uint32_t(buffer.size() - sizeof(WAVHeader))&(~boost::uint32_t((header->BitsPerSample*header->channels)/8 -1));
-		// FIXME: setting datalen to size - sizeof(WAVHeader) only
-		// works for some files that have a garbage datalen field
-		// in their header, others cause SEGV's inside alBufferData()
-		// header->datalen = size - sizeof(WAVHeader);
-		//header->datalen = 1;
 	}
 
 	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec))
