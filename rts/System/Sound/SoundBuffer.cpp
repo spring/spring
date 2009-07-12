@@ -221,7 +221,7 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 		pos += read;
 	} while (read > 0); // read == 0 indicated EOF, read < 0 is error
 
-	AlGenBuffer(file, format, &decodeBuffer[0], decodeBuffer.size(), vorbisInfo->rate);
+	AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate);
 	return true;
 }
 
