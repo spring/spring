@@ -290,10 +290,8 @@ CUnit::~CUnit()
 	// but we always want to call this for ourselves
 	UnBlock();
 
-	if (group) {
-		group->RemoveUnit(this);
-	}
-	group = NULL;
+	// Remove us from our group, if we were in one
+	SetGroup(NULL);
 
 	std::vector<CWeapon*>::iterator wi;
 	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
@@ -1311,7 +1309,7 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	const int oldteam = team;
 
 	selectedUnits.RemoveUnit(this);
-	SetGroup(0);
+	SetGroup(NULL);
 
 	eventHandler.UnitTaken(this, newteam);
 	eoh->UnitCaptured(*this, newteam);
@@ -1666,21 +1664,22 @@ void CUnit::CalculateTerrainType()
 
 bool CUnit::SetGroup(CGroup* newGroup)
 {
-	if (group != 0) {
+	if (group != NULL) {
 		group->RemoveUnit(this);
 	}
-	group=newGroup;
+	group = newGroup;
 
-	if(group){
-		if(!group->AddUnit(this)){
-			group=0;									//group ai didnt accept us
+	if (group) {
+		if (!group->AddUnit(this)){
+			group = NULL; // group ai did not accept us
 			return false;
-		} else { // add us to selected units if group is selected
+		} else { // add us to selected units, if group is selected
 
 			GML_RECMUTEX_LOCK(sel); // SetGroup
 
-			if(selectedUnits.selectedGroup == group->id)
+			if (selectedUnits.selectedGroup == group->id) {
 				selectedUnits.AddUnit(this);
+			}
 		}
 	}
 	return true;
@@ -1884,6 +1883,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	eventHandler.UnitDestroyed(this, attacker);
 	eoh->UnitDestroyed(*this, attacker);
+	// Will be called in the destructor again, but this can not hurt
+	this->SetGroup(NULL);
 
 	blockHeightChanges = false;
 	if (unitDef->isCommander) {
