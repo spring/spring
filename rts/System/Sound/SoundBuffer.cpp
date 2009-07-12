@@ -30,6 +30,9 @@ int	VorbisClose(void* datasource)
 {
 	return 0; // nothing to be done here
 };
+
+
+
 }
 
 SoundBuffer::bufferMapT SoundBuffer::bufferMap; // filename, index into Buffers
@@ -192,21 +195,34 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 		return false;
 	}
 
-	const ogg_int64_t length = ov_raw_total(&oggStream, -1);
-	if (length == OV_EINVAL)
+	size_t pos = 0;
+	std::vector<boost::uint8_t> decodeBuffer(512*1024); // 512kb read buffer
+	int section = 0;
+	long read = 0;
+	do
 	{
-		LogObject(LOG_SOUND) << "File  " << file << ": unknown error";
-		return false;
-	}
-	else
-	{
-		std::vector<boost::uint8_t> decodeBuffer(length);
-		int section = 0;
-		long read = ov_read(&oggStream, (char*)&decodeBuffer[0], decodeBuffer.size(), 0, 2, 1, &section);
+		if (4*pos > 3*decodeBuffer.size()) // enlarge buffer so ov_read has enough space
+			decodeBuffer.resize(decodeBuffer.size()*2);
+		read = ov_read(&oggStream, (char*)&decodeBuffer[pos], decodeBuffer.size() - pos, 0, 2, 1, &section);
+		switch(read)
+		{
+			case OV_HOLE:
+				LogObject(LOG_SOUND) << file << ": garbage or corrupt page in stream (non-fatal)";
+				continue; // read next
+			case OV_EBADLINK:
+				LogObject(LOG_SOUND) << file << ": corrupted stream";
+				return false; // abort
+			case OV_EINVAL:
+				LogObject(LOG_SOUND) << file << ": corrupted headers";
+				return false; // abort
+			default:
+				break; // all good
+		};
+		pos += read;
+	} while (read > 0); // read == 0 indicated EOF, read < 0 is error
 
-		AlGenBuffer(file, format, &decodeBuffer[0], decodeBuffer.size(), vorbisInfo->rate);
-		return true;
-	}
+	AlGenBuffer(file, format, &decodeBuffer[0], decodeBuffer.size(), vorbisInfo->rate);
+	return true;
 }
 
 int SoundBuffer::BufferSize() const
