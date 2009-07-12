@@ -867,7 +867,7 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
 	{
 		string soundFile = "sounds/" + fileName;
 
-		if (soundFile.find(".wav") == string::npos) {
+		if (soundFile.find(".wav") == string::npos && soundFile.find(".ogg") == string::npos) {
 			// .wav extension missing, add it
 			soundFile += ".wav";
 		}
