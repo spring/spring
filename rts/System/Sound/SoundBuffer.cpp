@@ -175,50 +175,38 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 	// vorbis_comment* vorbisComment = ov_comment(&oggStream, -1);
 
 	ALenum format;
-	if (vorbisInfo->channels == 1) {
-		if (vorbisInfo->rate == 8)
-			format = AL_FORMAT_MONO8;
-		else if (vorbisInfo->rate == 16)
-			format = AL_FORMAT_MONO16;
-		else
-		{
-			if (strict)
-				ErrorMessageBox("SoundBuffer::LoadVorbis: invalid number of bits per sample (mono).", file, 0);
-			else
-				LogObject(LOG_SOUND) << "File  " << file << ": invalid number of bits per sample (mono)";
-			return false;
-		}
+	if (vorbisInfo->channels == 1)
+	{
+		format = AL_FORMAT_MONO16;
 	}
 	else if (vorbisInfo->channels == 2)
 	{
-		if (vorbisInfo->rate == 8)
-			format = AL_FORMAT_STEREO8;
-		else if (vorbisInfo->rate == 16)
-			format = AL_FORMAT_STEREO16;
-		else
-		{
-			if (strict)
-				ErrorMessageBox("SoundBuffer::LoadVorbis: invalid number of bits per sample (stereo).", file, 0);
-			else
-				LogObject(LOG_SOUND) << "File  " << file << ": invalid number of bits per sample (stereo)";
-			return false;
-		}
+		format = AL_FORMAT_STEREO16;
 	}
 	else
 	{
 		if (strict)
 			ErrorMessageBox("SoundBuffer::LoadVorbis (%s): invalid number of channels.", file, 0);
 		else
-			LogObject(LOG_SOUND) << "File  " << file << ": invalid number of channels";
+			LogObject(LOG_SOUND) << "File  " << file << ": invalid number of channels: " << vorbisInfo->channels;
 		return false;
 	}
 
-	std::vector<boost::uint8_t> decodeBuffer(ov_pcm_total(&oggStream, -1));
-	int section = 0;
-	long read = ov_read(&oggStream, (char*)&decodeBuffer[0], decodeBuffer.size(), 0, 2, 1, &section);
+	const ogg_int64_t length = ov_raw_total(&oggStream, -1);
+	if (length == OV_EINVAL)
+	{
+		LogObject(LOG_SOUND) << "File  " << file << ": unknown error";
+		return false;
+	}
+	else
+	{
+		std::vector<boost::uint8_t> decodeBuffer(length);
+		int section = 0;
+		long read = ov_read(&oggStream, (char*)&decodeBuffer[0], decodeBuffer.size(), 0, 2, 1, &section);
 
-	AlGenBuffer(file, format, &decodeBuffer[0], decodeBuffer.size(), vorbisInfo->rate);
-	return true;
+		AlGenBuffer(file, format, &decodeBuffer[0], decodeBuffer.size(), vorbisInfo->rate);
+		return true;
+	}
 }
 
 int SoundBuffer::BufferSize() const
