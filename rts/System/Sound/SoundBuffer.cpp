@@ -184,6 +184,8 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 		{
 			if (strict)
 				ErrorMessageBox("SoundBuffer::LoadVorbis: invalid number of bits per sample (mono).", file, 0);
+			else
+				LogObject(LOG_SOUND) << "File  " << file << ": invalid number of bits per sample (mono)";
 			return false;
 		}
 	}
@@ -197,6 +199,8 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 		{
 			if (strict)
 				ErrorMessageBox("SoundBuffer::LoadVorbis: invalid number of bits per sample (stereo).", file, 0);
+			else
+				LogObject(LOG_SOUND) << "File  " << file << ": invalid number of bits per sample (stereo)";
 			return false;
 		}
 	}
@@ -204,13 +208,14 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 	{
 		if (strict)
 			ErrorMessageBox("SoundBuffer::LoadVorbis (%s): invalid number of channels.", file, 0);
+		else
+			LogObject(LOG_SOUND) << "File  " << file << ": invalid number of channels";
 		return false;
 	}
 
 	std::vector<boost::uint8_t> decodeBuffer(ov_pcm_total(&oggStream, -1));
 	int section = 0;
 	long read = ov_read(&oggStream, (char*)&decodeBuffer[0], decodeBuffer.size(), 0, 2, 1, &section);
-	LogObject() << "Read " << read << " bytes from vorbis sample";
 
 	AlGenBuffer(file, format, &decodeBuffer[0], decodeBuffer.size(), vorbisInfo->rate);
 	return true;
