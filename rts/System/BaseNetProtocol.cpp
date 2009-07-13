@@ -5,6 +5,7 @@
 #include "mmgr.h"
 
 #include "Game/PlayerBase.h"
+#include "Sim/Misc/Team.h"
 #include "Net/RawPacket.h"
 #include "Rendering/InMapDraw.h"
 #include "Net/PackPacket.h"
@@ -392,6 +393,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEDATA, -2);
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
+	proto->AddType(NETMSG_TEAMSTAT, 2 + sizeof(CTeam::Statistics));
 	
 #ifdef SYNCDEBUG
 	proto->AddType(NETMSG_SD_CHKREQUEST, 5);

@@ -37,6 +37,7 @@ public:
 	void Warning(const std::string& message);
 	
 	void SendLuaMsg(const boost::uint8_t* msg, size_t msgSize);
+	void Send(const boost::uint8_t* msg, size_t msgSize);
 	
 	/**
 	@brief Receive a chat message from the autohost

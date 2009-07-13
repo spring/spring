@@ -68,7 +68,13 @@ enum EVENT
 	 * 
 	 * (uchar playernumber, uint16_t script, uint8_t mode, uint8_t[X] data) (X = space left in packet)
 	 * */
-	GAME_LUAMSG = 20
+	GAME_LUAMSG = 20,
+	
+	/// team statistics, see CTeam::Statistics for reference how to read them
+	/**
+	* (uchar teamnumber), CTeam::Statistics(in binary form)
+	*/
+	GAME_TEAMSTAT = 60
 };
 }
 
@@ -168,6 +174,13 @@ void AutohostInterface::SendLuaMsg(const boost::uint8_t* msg, size_t msgSize)
 	std::vector<boost::uint8_t> buffer(msgSize+1);
 	buffer[0] = GAME_LUAMSG;
 	std::copy(msg, msg+msgSize, buffer.begin()+1);
+	autohost.send(boost::asio::buffer(buffer));
+}
+
+void AutohostInterface::Send(const boost::uint8_t* msg, size_t msgSize)
+{
+	std::vector<boost::uint8_t> buffer(msgSize);
+	std::copy(msg, msg+msgSize, buffer.begin());
 	autohost.send(boost::asio::buffer(buffer));
 }
 
