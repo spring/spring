@@ -974,6 +974,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 
+		case NETMSG_TEAMSTAT: {
+			if (hostif)
+				hostif->Send(packet->data, packet->length);
+			break;
+		}
 #ifdef SYNCDEBUG
 		case NETMSG_SD_CHKRESPONSE:
 		case NETMSG_SD_BLKRESPONSE:

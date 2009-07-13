@@ -129,6 +129,7 @@
 #include "Sound/Music.h"
 #include "FileSystem/SimpleParser.h"
 #include "Net/RawPacket.h"
+#include "Net/PackPacket.h"
 #include "Net/UnpackPacket.h"
 #include "UI/CommandColors.h"
 #include "UI/CursorIcons.h"
@@ -2521,8 +2522,6 @@ bool CGame::Update()
 
 	if (!net->Active() && !gameOver) {
 		logOutput.Print("Lost connection to gameserver");
-		gameOver = true;
-		eventHandler.GameOver();
 		GameEnd();
 	}
 
@@ -3265,8 +3264,6 @@ void CGame::ClientReadNet()
 				logOutput.Print("Server shutdown");
 				if (!gameOver)
 				{
-					gameOver=true;
-					eventHandler.GameOver();
 					GameEnd();
 				}
 				AddTraffic(-1, packetCode, dataLength);
@@ -3305,8 +3302,6 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_GAMEOVER: {
-				gameOver=true;
-				eventHandler.GameOver();
 				if (gu->autoQuit) {
 					logOutput.Print("Automatical quit enforced from commandline");
 					globalQuit = true;
@@ -4350,6 +4345,8 @@ void CGame::DrawDirectControlHud(void)
 
 void CGame::GameEnd()
 {
+	gameOver=true;
+	eventHandler.GameOver();
 	new CEndGameBox();
 	CDemoRecorder* record = net->GetDemoRecorder();
 	if (record != NULL) {
@@ -4377,6 +4374,9 @@ void CGame::GameEnd()
 		}
 		for (int i = 0; i < numTeams; ++i) {
 			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
+			*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
+			net->Send(buf);
 		}
 	}
 }

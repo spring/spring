@@ -83,6 +83,7 @@ enum NETMSG {
 	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
+	NETMSG_TEAMSTAT			= 60,
 };
 
 // action to do with NETMSG_TEAM 
