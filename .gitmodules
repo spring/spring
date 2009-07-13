@@ -1,0 +1,3 @@
+[submodule "AI/Skirmish/E323AI"]
+	path = AI/Skirmish/E323AI
+	url = git://github.com/Error323/E323AI.git
