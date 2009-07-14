@@ -110,9 +110,7 @@ protected:
 	int lastRequiredDraw;
 
 private:
-	static void SigAbrtHandler(int unused);
 };
-
 
 /**
  * @brief current active controller

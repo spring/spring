@@ -86,16 +86,6 @@ const int XRES_DEFAULT = 1024;
  */
 const int YRES_DEFAULT = 768;
 
-void SpringApp::SigAbrtHandler(int unused)
-{
-	// cause an exception if on windows
-	// TODO FIXME do a proper stacktrace dump here
-	#ifdef WIN32
-	*((int*)(0)) = 0;
-	#endif
-}
-
-
 
 /**
  * Initializes SpringApp variables
@@ -106,8 +96,6 @@ SpringApp::SpringApp()
 	screenWidth = screenHeight = 0;
 	FSAA = false;
 	lastRequiredDraw=0;
-
-	signal(SIGABRT, SigAbrtHandler);
 }
 
 /**

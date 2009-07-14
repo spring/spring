@@ -48,6 +48,8 @@ namespace CrashHandler {
 				error = "Broken pipe (SIGPIPE)";
 			else if (signal == SIGIO)
 				error = "IO-Error (SIGIO)";
+			else if (signal == SIGABRT)
+				error = "Aborted (SIGABRT)";
 			log << error << " in spring " << SpringVersion::GetFull() << "\nStacktrace:\n";
 
 			std::vector<void*> buffer(128);
@@ -96,6 +98,7 @@ namespace CrashHandler {
 		signal(SIGILL, HandleSignal); // illegal instruction
 		signal(SIGPIPE, HandleSignal); // sigpipe, maybe some network error
 		signal(SIGIO, HandleSignal); // who knows?
+		signal(SIGABRT, HandleSignal);
 	};
 	
 	void Remove()
@@ -104,6 +107,7 @@ namespace CrashHandler {
 		signal(SIGILL, SIG_DFL);
 		signal(SIGPIPE, SIG_DFL);
 		signal(SIGIO, SIG_DFL);
+		signal(SIGABRT, SIG_DFL);
 	}
 };
 

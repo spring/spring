@@ -15,6 +15,14 @@
 namespace CrashHandler {
 	namespace Win32 {
 
+		
+void SigAbrtHandler(int signal)
+{
+	// cause an exception if on windows
+	// TODO FIXME do a proper stacktrace dump here
+	*((int*)(0)) = 0;
+}
+
 // Set this to the desired printf style output function.
 // Currently we write through the logOutput class to infolog.txt
 #define PRINT logOutput.Print
@@ -183,12 +191,14 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 void Install()
 {
 	SetUnhandledExceptionFilter(ExceptionHandler);
+	signal(SIGABRT, SigAbrtHandler);
 }
 
 /** Uninstall crash handler. */
 void Remove()
 {
 	SetUnhandledExceptionFilter(NULL);
+	signal(SIGABRT, SIG_DFL);
 }
 
 };
