@@ -27,6 +27,7 @@
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
+#include "Platform/Misc.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
 #include "Platform/CrashHandler.h"
@@ -109,36 +110,6 @@ SpringApp::~SpringApp()
 	creg::System::FreeClasses ();
 }
 
-
-
-#ifdef WIN32
-typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
-
-LPFN_ISWOW64PROCESS fnIsWow64Process;
-
-/** @brief checks if the current process is running in 32bit emulation mode
-    @return FALSE, TRUE, -1 on error (usually no permissions) */
-static int GetWow64Status()
-{
-	BOOL bIsWow64 = FALSE;
-
-	fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
-		GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
-
-	if (NULL != fnIsWow64Process)
-	{
-		if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
-		{
-			return -1;
-		}
-	}
-	return bIsWow64;
-}
-
-
-#endif
-
-
 /**
  * @brief Initializes the SpringApp instance
  * @return whether initialization was successful
@@ -155,21 +126,13 @@ bool SpringApp::Initialize()
 
 	// log OS version
 	// TODO: improve version logging of non-Windows OSes
-#if defined(WIN32)
-	logOutput.Print("OS: %s\n", GetOSDisplayString().c_str());
-	if (GetWow64Status() == TRUE) {
-		logOutput.Print("OS: WOW64 detected\n");
-	}
-	logOutput.Print("Hardware: %s\n", GetHardwareInfoString().c_str());
-#elif defined(__linux__)
-	logOutput.Print("OS: Linux\n");
-#elif defined(__FreeBSD__)
-	logOutput.Print("OS: FreeBSD\n");
-#elif defined(__APPLE__)
-	logOutput.Print("OS: Mac OS X\n");
-#else
-	logOutput.Print("OS: unknown\n");
-#endif
+	logOutput.Print("OS: %s", Platform::GetOS().c_str());
+	if (Platform::Is64Bit())
+		logOutput.Print("OS: 64bit native mode");
+	else if (Platform::Is32BitEmulation())
+		logOutput.Print("OS: emulated 32bit mode");
+	else
+		logOutput.Print("OS: 32bit native mode");
 
 	FileSystemHandler::Initialize(true);
 
