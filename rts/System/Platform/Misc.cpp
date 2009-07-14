@@ -91,5 +91,56 @@ std::string GetBinaryFile()
 #endif
 }
 
+std::string GetOS()
+{
+#if defined(WIN32)
+	return "Microsoft Windows";
+#elif defined(__linux__)
+	return "Linux";
+#elif defined(__FreeBSD__)
+	return "FreeBSD";
+#elif defined(__APPLE__)
+	return "Mac OS X";
+#else
+	return "unknown OS";
+#endif
+}
+
+bool Is64Bit()
+{
+	return (sizeof(void*) == 8);
+}
+
+#ifdef WIN32
+typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
+
+LPFN_ISWOW64PROCESS fnIsWow64Process;
+
+/** @brief checks if the current process is running in 32bit emulation mode
+    @return FALSE, TRUE, -1 on error (usually no permissions) */
+bool Is32BitEmulation()
+{
+	BOOL bIsWow64 = FALSE;
+
+	fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
+		GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
+
+	if (NULL != fnIsWow64Process)
+	{
+		if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
+		{
+			return false;
+		}
+	}
+	return bIsWow64;
+}
+#else
+// simply assume other OS doesn't need 32bit emulation
+bool Is32BitEmulation()
+{
+	return false;
+}
+#endif
+
 }
 
