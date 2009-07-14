@@ -1311,13 +1311,13 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 	selectedUnits.RemoveUnit(this);
 	SetGroup(NULL);
 
-	eventHandler.UnitTaken(this, newteam);
-	eoh->UnitCaptured(*this, newteam);
-
 	// reset states and clear the queues
 	if (!teamHandler->AlliedTeams(oldteam, newteam)) {
 		ChangeTeamReset();
 	}
+
+	eventHandler.UnitTaken(this, newteam);
+	eoh->UnitCaptured(*this, newteam);
 
 	qf->RemoveUnit(this);
 	quads.clear();
