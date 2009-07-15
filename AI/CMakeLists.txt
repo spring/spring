@@ -25,6 +25,8 @@ if (WIN32)
 	SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--kill-at -Wl,--add-stdcall-alias")
 endif (WIN32)
 
+set(AI_FIND_QUIETLY FALSE)
+
 list (APPEND ai_common ${CMAKE_SOURCE_DIR}/rts/Game/GameVersion)
 
 aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/LegacyCpp legacycppaifiles)
@@ -37,7 +39,7 @@ aux_source_directory(${CMAKE_SOURCE_DIR}/rts/System/creg creg)
 add_library(legacycpp-creg STATIC ${legacycppaifiles} ${creg})
 set_target_properties(legacycpp-creg PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 
-aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils cutilsenv)
+aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils CUtils_SRC)
 
 
 macro    (GetListOfSubModules list_var)
@@ -48,6 +50,15 @@ macro    (GetListOfSubModules list_var)
 	# for example: AAI;RAI;KAIK
 	string(REPLACE "//CMakeLists.txt" ";" ${list_var} ${${list_var}})
 endmacro (GetListOfSubModules list_var)
+
+
+macro    (GetVersionFromFile vers_var file_var)
+	if    (EXISTS ${file_var})
+		file(STRINGS "${file_var}" ${vers_var} LIMIT_COUNT 1)
+	else  (EXISTS ${file_var})
+		set(${vers_var} "UNKNOWN_VERSION")
+	endif (EXISTS ${file_var})
+endmacro (GetVersionFromFile vers_var file_var)
 
 
 Add_Subdirectory(Interfaces)

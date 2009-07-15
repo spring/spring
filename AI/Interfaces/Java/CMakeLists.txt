@@ -62,9 +62,7 @@ if    (BUILD_Java_AIINTERFACE)
 	set(Java_AIINTERFACE_DATA_DIR ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS})
 	set(Java_AIINTERFACE_PKG "com/springrts/ai")
 	set(PKG_FIRST_PART "com")
-	if (NOT AIINTERFACE_FIND_QUIETLY)
-		message(STATUS "Found: ${Java_AIINTERFACE_TARGET} ${Java_AIINTERFACE_VERS}")
-	endif (NOT AIINTERFACE_FIND_QUIETLY)
+	AIInterfaceMessage(STATUS "Found: ${Java_AIINTERFACE_TARGET} ${Java_AIINTERFACE_VERS}")
 
 	# install data files
 	install(DIRECTORY "${Java_AIINTERFACE_SRC}/data/"
