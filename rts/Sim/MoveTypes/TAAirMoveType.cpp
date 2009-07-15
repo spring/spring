@@ -695,7 +695,8 @@ void CTAAirMoveType::UpdateAirPhysics()
 		speed.y = speed.y * 0.95;
 	}
 
-	pos += speed;
+	if ((pos+speed).CheckInBounds())
+		pos += speed;
 }
 
 
