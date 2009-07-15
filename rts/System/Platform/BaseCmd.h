@@ -1,8 +1,6 @@
 /**
  * @file BaseCmd.h
- * @brief Abstract commandline base
- * @author Christopher Han <xiphux@gmail.com>
- *
+ * 
  * Base structure for commandline parser class definition
  * Copyright (C) 2005.  Licensed under the terms of the
  * GNU GPL, v2 or later.
@@ -15,24 +13,13 @@
 #include <boost/program_options.hpp>
 
 /**
- * @brief Abstract Base Command Class
- *
- * Every platform-specific commandline handler should be
- * derived from this abstract interface, so that they can
- * be used polymorphically.
+ * @brief Commandline parser
  */
 class BaseCmd
 {
 
 public:
-	/**
-	 * @brief Constructor
-	 */
 	BaseCmd(int argc, char* argv[]);
-
-	/**
-	 * @brief virtual Destructor
-	 */
 	~BaseCmd();
 
 	/// Get the script, or demofile given on cmdline
@@ -46,12 +33,10 @@ public:
 	void PrintUsage(std::string program, std::string version);
 
 	/**
-	 * @brief add option
-	 * @param shortopt the short (single character) to use
-	 * @param longopt the long (full string) to use
-	 * @param parmtype the type of parameter (one of the OPTPARM defines)
-	 * @param parmname the formal name for this parameter
-	 * @param desc a short description of this parameter
+	 * @brief add options
+	 * @param shortopt the short (single character) to use (0 for none)
+	 * @param longopt the long (full string) to use (required)
+	 * @param desc a short, human-readable description of this parameter
 	 */
 	void AddSwitch(const char shortopt, std::string longopt, std::string desc);
 	void AddString(const char shortopt, std::string longopt, std::string desc);
@@ -61,13 +46,25 @@ public:
 	 * @brief parse
 	 *
 	 * This will read the parameters and search for recognized strings.
-	 * As flags are specified differently on each platform, this method
-	 * is abstract and must be implemented.
 	 */
 	void Parse();
 
+	/**
+	 * @brief check if commandline flag was set
+	 * @param var the longopt-name of the config flag
+	 */
 	bool IsSet(const std::string& var) const;
+
+	/**
+	 * @brief Commandline argument as string
+	 * @param var the longopt-name of the config flag
+	 */
 	std::string GetString(const std::string& var) const;
+
+	/**
+	 * @brief Commandline argument as int
+	 * @param var the longopt-name of the config flag
+	 */
 	int GetInt(const std::string& var) const;
 
 protected:
