@@ -88,8 +88,9 @@ CFeature::~CFeature(void)
 
 	qf->RemoveFeature(this);
 
-	if (def->drawType == DRAWTYPE_TREE)
+	if (def->drawType >= DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
+	}
 
 	if (myFire) {
 		myFire->StopFire();
@@ -111,15 +112,15 @@ void CFeature::PostLoad()
 		height = model->height;
 		SetRadius(model->radius);
 		midPos = pos + model->relMidPos;
-	} else if (def->drawType == DRAWTYPE_TREE) {
+	} else if (def->drawType >= DRAWTYPE_TREE) {
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
 	} else {
 		midPos = pos;
 	}
 
-	if (def->drawType == DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->modelType, pos, 1);
+	if (def->drawType >= DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->drawType - 1, pos, 1);
 	}
 }
 
@@ -137,7 +138,7 @@ void CFeature::ChangeTeam(int newTeam)
 
 
 void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int _heading,
-	int facing, int _team, std::string fromUnit, const float3& speed)
+	int facing, int _team, int _allyteam, std::string fromUnit, const float3& speed, int _smokeTime)
 {
 	pos = _pos;
 	def = _def;
@@ -145,16 +146,18 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 	heading = _heading;
 	buildFacing = facing;
 	team = _team;
+	allyteam = _allyteam;
+	emitSmokeTime = _smokeTime;
 	createdFromUnit = fromUnit;
 
-	ChangeTeam(team);
+	ChangeTeam(team); // maybe should not be here, but it prevents crashes caused by team = -1
 
 	pos.CheckInBounds();
 
 	health   = def->maxHealth;
 	blocking = def->blocking;
-	xsize    = def->xsize;
-	zsize    = def->zsize;
+	xsize    = ((facing & 1) == 0) ? def->xsize : def->zsize;
+	zsize    = ((facing & 1) == 1) ? def->xsize : def->zsize;
 	mass     = def->mass;
 	noSelect = def->noSelect;
 
@@ -167,7 +170,7 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 		collisionVolume = new CollisionVolume(def->collisionVolume, model->radius);
 	}
-	else if (def->drawType == DRAWTYPE_TREE) {
+	else if (def->drawType >= DRAWTYPE_TREE) {
 		SetRadius(TREE_RADIUS);
 		midPos = pos + (UpVector * TREE_RADIUS);
 		height = 2 * TREE_RADIUS;
@@ -196,8 +199,8 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 		finalHeight = ground->GetHeight2(pos.x, pos.z);
 	}
 
-	if (def->drawType == DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->modelType, pos, 1);
+	if (def->drawType >= DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->drawType - 1, pos, 1);
 	}
 
 
@@ -381,9 +384,9 @@ void CFeature::DoDamage(const DamageArray& damages, CUnit* attacker,const float3
 		featureHandler->DeleteFeature(this);
 		blockHeightChanges = false;
 
-		if (def->drawType == DRAWTYPE_TREE) {
+		if (def->drawType >= DRAWTYPE_TREE) {
 			if (impulse.SqLength2D() > 0.25f) {
-				treeDrawer->AddFallingTree(pos, impulse, def->modelType);
+				treeDrawer->AddFallingTree(pos, impulse, def->drawType - 1);
 			}
 		}
 	}
@@ -415,7 +418,7 @@ void CFeature::ForcedMove(const float3& newPos)
 
 	// remove from managers
 	qf->RemoveFeature(this);
-	if (def->drawType == DRAWTYPE_TREE) {
+	if (def->drawType >= DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
 	}
 
@@ -431,7 +434,7 @@ void CFeature::ForcedMove(const float3& newPos)
 	// setup midPos
 	if (def->drawType == DRAWTYPE_MODEL) {
 		midPos = pos + model->relMidPos;
-	} else if (def->drawType == DRAWTYPE_TREE) {
+	} else if (def->drawType >= DRAWTYPE_TREE) {
 		midPos = pos + (UpVector * TREE_RADIUS);
 	} else {
 		midPos = pos;
@@ -442,8 +445,8 @@ void CFeature::ForcedMove(const float3& newPos)
 
 	// insert into managers
 	qf->AddFeature(this);
-	if (def->drawType == DRAWTYPE_TREE) {
-		treeDrawer->AddTree(def->modelType, pos, 1.0f);
+	if (def->drawType >= DRAWTYPE_TREE) {
+		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 	}
 
 	if (blocking) {
@@ -457,9 +460,9 @@ void CFeature::ForcedSpin(const float3& newDir)
 /*
 	heading = GetHeadingFromVector(newDir.x, newDir.z);
 	CalculateTransform();
-	if (def->drawType == DRAWTYPE_TREE) {
+	if (def->drawType >= DRAWTYPE_TREE) {
 		treeDrawer->DeleteTree(pos);
-		treeDrawer->AddTree(def->modelType, pos, 1.0f);
+		treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 	}
 */
 
@@ -477,7 +480,9 @@ void CFeature::ForcedSpin(const float3& newDir)
 
 bool CFeature::UpdatePosition()
 {
-	if (createdFromUnit.size() > 0) {
+	bool finishedUpdate = true;
+
+	if (!createdFromUnit.empty()) {
 		// we are a wreck of a dead unit
 		if (!reachedFinalPos) {
 			bool haveForwardSpeed = false;
@@ -542,28 +547,30 @@ bool CFeature::UpdatePosition()
 			featureHandler->UpdateDrawQuad(this, pos);
 			CalculateTransform();
 		}
-	} else {
-		if (pos.y > finalHeight) {
-			if (def->drawType == DRAWTYPE_TREE)
-				treeDrawer->DeleteTree(pos);
 
-			if (pos.y > 0) {
-				speed.y += mapInfo->map.gravity;
-			} else {
-				speed.y += mapInfo->map.gravity * 0.5;
-			}
-			pos.y += speed.y;
-			midPos.y += speed.y;
-			transMatrix[13] += speed.y;
-
-			if (def->drawType == DRAWTYPE_TREE)
-				treeDrawer->AddTree(def->modelType, pos, 1.0f);
-		}
+		if (!reachedFinalPos)
+			finishedUpdate = false;
 	}
 
-	// if ground is restored, make sure feature does not get buried
-	if(pos.y < finalHeight) {
-		if (def->drawType == DRAWTYPE_TREE)
+	if (pos.y > finalHeight) {
+		//! feature is falling
+		if (def->drawType >= DRAWTYPE_TREE)
+			treeDrawer->DeleteTree(pos);
+
+		if (pos.y > 0.0f) {
+			speed.y += mapInfo->map.gravity; //! gravity is negative
+		} else { //! fall slower in water
+			speed.y += mapInfo->map.gravity * 0.5;
+		}
+		pos.y += speed.y;
+		midPos.y += speed.y;
+		transMatrix[13] += speed.y;
+
+		if (def->drawType >= DRAWTYPE_TREE)
+			treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
+	} else if (pos.y < finalHeight) {
+		//! if ground is restored, make sure feature does not get buried
+		if (def->drawType >= DRAWTYPE_TREE)
 			treeDrawer->DeleteTree(pos);
 
 		float diff = finalHeight - pos.y;
@@ -572,17 +579,21 @@ bool CFeature::UpdatePosition()
 		transMatrix[13] += diff;
 		speed.y = 0.0f;
 
-		if (def->drawType == DRAWTYPE_TREE)
-			treeDrawer->AddTree(def->modelType, pos, 1.0f);
+		if (def->drawType >= DRAWTYPE_TREE)
+			treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 	}
 
+	if (pos.y != finalHeight)
+		finishedUpdate = false;
+
 	isUnderWater = ((pos.y + height) < 0.0f);
-	return true;
+	return finishedUpdate;
 }
 
 bool CFeature::Update(void)
 {
-	bool retValue = UpdatePosition();
+	bool finishedUpdate = true;
+	finishedUpdate = UpdatePosition();
 
 	if (emitSmokeTime != 0) {
 		--emitSmokeTime;
@@ -590,14 +601,15 @@ bool CFeature::Update(void)
 			new CSmokeProjectile(midPos + gu->usRandVector() * radius * 0.3f,
 				gu->usRandVector() * 0.3f + UpVector, emitSmokeTime / 6 + 20, 6, 0.4f, 0, 0.5f);
 		}
-		retValue = true;
+		if (emitSmokeTime > 0)
+			finishedUpdate = false;
 	}
 
 	if (fireTime > 0) {
 		fireTime--;
 		if (fireTime == 1)
 			featureHandler->DeleteFeature(this);
-		retValue = true;
+		finishedUpdate = false;
 	}
 
 	if (def->geoThermal) {
@@ -636,10 +648,10 @@ bool CFeature::Update(void)
 			}
 		}
 
-		retValue = true;
+		finishedUpdate = false;
 	}
 
-	return retValue;
+	return !finishedUpdate;
 }
 
 

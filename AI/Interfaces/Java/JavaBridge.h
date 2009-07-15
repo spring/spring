@@ -28,9 +28,9 @@
 #endif // defined DEBUG
 
 
-#define PKG_MAIN	"com/clan_sy/spring/ai/"
-#define PKG_EVENT	"com/clan_sy/spring/ai/event/"
-#define PKG_COMMAND	"com/clan_sy/spring/ai/command/"
+#define PKG_MAIN	"com/springrts/ai/"
+#define PKG_EVENT	"com/springrts/ai/event/"
+#define PKG_COMMAND	"com/springrts/ai/command/"
 #define CLS_AI			PKG_MAIN"AI"
 #define CLS_AI_EVENT	PKG_MAIN"AIEvent"
 #define CLS_AI_CALLBACK	PKG_MAIN"AICallback"
@@ -40,7 +40,7 @@
 
 #define MTH_INDEX_SKIRMISH_AI_INIT          0
 #define MTH_SKIRMISH_AI_INIT "init"
-#define SIG_SKIRMISH_AI_INIT "(ILcom/clan_sy/spring/ai/AICallback;)I"
+#define SIG_SKIRMISH_AI_INIT "(ILcom/springrts/ai/AICallback;)I"
 
 #define MTH_INDEX_SKIRMISH_AI_RELEASE       1
 #define MTH_SKIRMISH_AI_RELEASE "release"
@@ -94,7 +94,7 @@ bool java_releaseStatic();
  * @param  shortName  further specifies the the AI to load
  * @param  version  further specifies the the AI to load
  * @param  className  fully qualified name of a Java class that implements
- *                    interface com.clan_sy.spring.ai.AI, eg:
+ *                    interface com.springrts.ai.AI, eg:
  *                    "com.myai.AI"
  * @param  teamI   The team that will be using this AI.
  *                 Multiple teams may use the same AI implementation.
@@ -109,7 +109,7 @@ bool java_initSkirmishAIClass(
  * Release the loaded AI specified through a class name.
  *
  * @param  className  fully qualified name of a Java class that implements
- *                    interface com.clan_sy.spring.ai.AI, eg:
+ *                    interface com.springrts.ai.AI, eg:
  *                    "com.myai.AI"
  * @return  true, if the AI implementation was loaded and is now
  *          successfully unloaded

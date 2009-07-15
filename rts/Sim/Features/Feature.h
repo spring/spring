@@ -30,7 +30,7 @@ public:
 
 	/** Pos of quad must not change after this. */
 	void Initialize(const float3& pos, const FeatureDef* def, short int heading, int facing,
-		int allyteam, std::string fromUnit, const float3& speed = ZeroVector);
+		int team, int allyteam, std::string fromUnit, const float3& speed = ZeroVector, int smokeTime = 0);
 	int GetBlockingMapID() const { return id + (10 * uh->MaxUnits()); }
 
 	/** Negative amount = reclaim

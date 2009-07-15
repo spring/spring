@@ -2,6 +2,7 @@
 #define UNITSYNC_API_H
 
 #include "unitsync.h"
+#include "System/exportdefines.h"
 
 
 // from unitsync.cpp:
@@ -31,6 +32,8 @@ EXPORT(int         ) GetMapCount();
 EXPORT(const char* ) GetMapName(int index);
 EXPORT(int         ) GetMapInfoEx(const char* name, MapInfo* outInfo, int version);
 EXPORT(int         ) GetMapInfo(const char* name, MapInfo* outInfo);
+EXPORT(float       ) GetMapMinHeight(const char* name);
+EXPORT(float       ) GetMapMaxHeight(const char* name); 
 EXPORT(int         ) GetMapArchiveCount(const char* mapName);
 EXPORT(const char* ) GetMapArchiveName(int index);
 EXPORT(unsigned int) GetMapChecksum(int index);
@@ -65,12 +68,6 @@ EXPORT(int         ) GetSideCount();
 EXPORT(const char* ) GetSideName(int side);
 EXPORT(const char* ) GetSideStartUnit(int side);
 
-// The following three are DEPRECATED
-// Lua AIs are integrated into the Skirmish AI system
-EXPORT(int         ) GetLuaAICount();
-EXPORT(const char* ) GetLuaAIName(int aiIndex);
-EXPORT(const char* ) GetLuaAIDesc(int aiIndex);
-
 EXPORT(int         ) GetMapOptionCount(const char* name);
 EXPORT(int         ) GetModOptionCount();
 EXPORT(const char* ) GetOptionKey(int optIndex);
@@ -98,7 +95,7 @@ EXPORT(const char* ) GetModValidMap(int index);
 
 EXPORT(int         ) OpenFileVFS(const char* name);
 EXPORT(void        ) CloseFileVFS(int handle);
-EXPORT(void        ) ReadFileVFS(int handle, void* buf, int length);
+EXPORT(int        ) ReadFileVFS(int handle, void* buf, int length);
 EXPORT(int         ) FileSizeVFS(int handle);
 
 EXPORT(int         ) InitFindVFS(const char* pattern);

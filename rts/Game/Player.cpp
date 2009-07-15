@@ -10,18 +10,15 @@
 #include "PlayerHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#ifdef DIRECT_CONTROL_ALLOWED
-	#include "Game/GameHelper.h"
-	#include "Sim/Units/Unit.h"
-	#include "Sim/Units/UnitHandler.h"
-	#include "Sim/Weapons/Weapon.h"
-	#include "Sim/Units/COB/CobInstance.h"
-	#include "Sim/Units/COB/CobFile.h"
-	#include "UI/MouseHandler.h"
-	#include "CameraHandler.h"
-	#include "Camera.h"
-	#include "myMath.h"
-#endif
+#include "Game/GameHelper.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Sim/Weapons/Weapon.h"
+#include "Sim/Units/COB/CobInstance.h"
+#include "UI/MouseHandler.h"
+#include "CameraHandler.h"
+#include "Camera.h"
+#include "myMath.h"
 #include "EventHandler.h"
 #include "GlobalUnsynced.h"
 
@@ -60,7 +57,6 @@ CPlayer::CPlayer()
 	ping = 0;
 
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	playerControlledUnit=0;
 
 	myControl.forward=0;
@@ -75,7 +71,6 @@ CPlayer::CPlayer()
 	myControl.targetDist=1000;
 	myControl.target=0;
 	myControl.myController=this;
-#endif
 }
 
 CPlayer::~CPlayer()
@@ -137,17 +132,14 @@ void CPlayer::StartSpectating()
 
 void CPlayer::GameFrame(int frameNum)
 {
-#ifdef DIRECT_CONTROL_ALLOWED
 	if(!active || !playerControlledUnit)
 		return;
 
 	CUnit* unit = playerControlledUnit;
 	DirectControlStruct* dc = &myControl;
 
-	std::vector<int> args;
-	args.push_back(0);
-	unit->cob->Call(COBFN_AimFromPrimary/*/COBFN_QueryPrimary+weaponNum/ **/,args);
-	float3 relPos=unit->cob->GetPiecePos(args[0]);
+	const int piece = unit->script->AimFromWeapon(0);
+	float3 relPos = unit->script->GetPiecePos(piece);
 	float3 pos=unit->pos+unit->frontdir*relPos.z+unit->updir*relPos.y+unit->rightdir*relPos.x;
 	pos+=UpVector*7;
 
@@ -183,10 +175,8 @@ void CPlayer::GameFrame(int frameNum)
 			}
 		}
 	}
-#endif
 }
 
-#ifdef DIRECT_CONTROL_ALLOWED
 void CPlayer::StopControllingUnit()
 {
 	if (gu->directControl == playerControlledUnit) {
@@ -204,4 +194,3 @@ void CPlayer::StopControllingUnit()
 
 	playerControlledUnit = 0;
 }
-#endif

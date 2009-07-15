@@ -430,7 +430,7 @@ AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 	return fittingKey;
 }
 
-std::vector<std::string> split(const std::string& str, const char sep) {
+static std::vector<std::string> split(const std::string& str, const char sep) {
 
 	std::vector<std::string> tokens;
 	std::string delimitters = ".";
@@ -454,19 +454,21 @@ std::vector<std::string> split(const std::string& str, const char sep) {
 }
 int CAILibraryManager::versionCompare(
 		const std::string& version1,
-		const std::string& version2) {/*TODO: test this function!*/
+		const std::string& version2) {
 
 	std::vector<std::string> parts1 = split(version1, '.');
 	std::vector<std::string> parts2 = split(version2, '.');
 	unsigned int maxParts = parts1.size() > parts2.size() ? parts1.size() : parts2.size();
 
 	int diff = 0;
-	int mult = maxParts;
 	for (unsigned int i=0; i < maxParts; ++i) {
-		const std::string& v1p = i < parts1.size() ? parts1.at(i) : "";
-		const std::string& v2p = i < parts2.size() ? parts2.at(i) : "";
-		diff += (10^(mult*mult)) * v1p.compare(v2p);
+		const std::string& v1p = i < parts1.size() ? parts1.at(i) : "0";
+		const std::string& v2p = i < parts2.size() ? parts2.at(i) : "0";
+		diff += (1<<((maxParts-i)*2)) * v1p.compare(v2p);
 	}
 
-	return diff;
+	// computed the sing of diff -> 1, 0 or -1
+	int sign = (diff != 0) | -(int)((unsigned int)((int)diff) >> (sizeof(int) * CHAR_BIT - 1));
+
+	return sign;
 }

@@ -3,8 +3,19 @@
 
 #include <string>
 
-namespace music
+#include "AudioChannel.h"
+
+class SoundSource;
+
+class MusicChannel : public AudioChannel
 {
+public:
+	MusicChannel();
+	~MusicChannel();
+
+	void SetVolume(float volume);
+	void Enable(bool newState);
+
 	/**
 	 * @brief Start playing an ogg-file
 	 * 
@@ -23,7 +34,14 @@ namespace music
 	void Stop();
 	unsigned int GetTime();
 	unsigned int GetPlayTime();
-	void SetVolume(float volume);
+
+private:
+	SoundSource* current;
+};
+
+namespace Channels
+{
+	extern MusicChannel BGMusic;
 };
 
 #endif

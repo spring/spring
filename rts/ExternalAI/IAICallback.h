@@ -377,8 +377,18 @@ public:
 	// added by alik
 	virtual int GetSelectedUnits(int* unitIds, int unitIds_max = MAX_UNITS) = 0;
 	virtual float3 GetMousePos() = 0;
-	virtual int GetMapPoints(PointMarker* pm, int maxPoints) = 0;
-	virtual int GetMapLines(LineMarker* lm, int maxLines) = 0;
+	/**
+	 * Returns all points drawn with this AIs team color,
+	 * and additionally the ones drawn with allied team colors,
+	 * if <code>includeAllies</code> is true.
+	 */
+	virtual int GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies) = 0;
+	/**
+	 * Returns all lines drawn with this AIs team color,
+	 * and additionally the ones drawn with allied team colors,
+	 * if <code>includeAllies</code> is true.
+	 */
+	virtual int GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies) = 0;
 
 	virtual float GetMetal() = 0;					// current metal level for team
 	virtual float GetMetalIncome() = 0;				// current metal income for team

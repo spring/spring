@@ -10,10 +10,15 @@
 class CCobFile;
 class CCobInstance;
 
-class CCobThread : public CObject
+class CCobThread : public CObject, public CUnitScript::IAnimListener
 {
 protected:
+	string GetOpcodeName(int opcode);
+	void ForceCommitAnim(int type, int piece, int axis);
+	void ForceCommitAllAnims();
 	void LuaCall();
+	// implementation of IAnimListener
+	void AnimFinished(CUnitScript::AnimType type, int piece, int axis);
 
 protected:
 	CCobFile &script;
@@ -60,16 +65,13 @@ public:
 	int Tick(int deltaTime);
 	void Start(int functionId, const vector<int> &args, bool schedule);
 	void SetCallback(CBCobThreadFinish cb, void *p1, void *p2);
-	string GetOpcodeName(int opcode);
 	void DependentDied(CObject* o);
 	int CheckStack(int size);
 	int GetStackVal(int pos);
 	const string &GetName();
 	int GetWakeTime() const;
-	void ForceCommitAnim(int type, int piece, int axis);
-	void ForceCommitAllAnims();
 	void CommitAnims(int deltaTime);
-	void ShowError(const string& msg, bool warning = false);
+	void ShowError(const string& msg);
 };
 
 #endif // __COB_THREAD_H__

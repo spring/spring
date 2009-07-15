@@ -11,9 +11,9 @@
 
 using std::min;
 
-CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (float3(0,0,0),0,0,0.0,0.0,0,NULL,float3(0,0,0)));
+CR_BIND_DERIVED(CSpherePartProjectile, CProjectile, (float3(0, 0, 0), 0, 0, 0.0, 0.0, 0, NULL, float3(0, 0, 0)));
 
-CR_REG_METADATA(CSpherePartProjectile,(
+CR_REG_METADATA(CSpherePartProjectile, (
 	CR_MEMBER(centerPos),
 	CR_MEMBER(vectors),
 	CR_MEMBER(color),
@@ -29,8 +29,8 @@ CR_REG_METADATA(CSpherePartProjectile,(
 	CR_RESERVED(16)
 	));
 
-CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos,int xpart,int ypart,float expansionSpeed,float alpha,int ttl,CUnit* owner,const float3 &color GML_PARG_C):
-	CProjectile(centerPos,ZeroVector,owner, false, false GML_PARG_P),
+CSpherePartProjectile::CSpherePartProjectile(const float3& centerPos, int xpart, int ypart, float expansionSpeed, float alpha, int ttl, CUnit* owner, const float3& color GML_PARG_C):
+	CProjectile(centerPos, ZeroVector, owner, false, false, false GML_PARG_P),
 	centerPos(centerPos),
 	color(color),
 	sphereSize(expansionSpeed),

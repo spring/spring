@@ -34,6 +34,16 @@ public:
 		return volume;
 	};
 
+protected:
+	float volume;
+	bool enabled;
+};
+
+class EffectChannel : public AudioChannel
+{
+public:
+	EffectChannel();
+
 	void PlaySample(size_t id, float volume = 1.0f);
 	void PlaySample(size_t id, const float3& p, float volume = 1.0f);
 	void PlaySample(size_t id, const float3& p, const float3& velocity, float volume = 1.0f);
@@ -51,8 +61,6 @@ public:
 	};
 
 private:
-	float volume;
-	bool enabled;
 	unsigned emmitsPerFrame;
 	unsigned emmitsThisFrame;
 };
@@ -62,10 +70,10 @@ private:
  */
 namespace Channels
 {
-	extern AudioChannel General;
-	extern AudioChannel Battle;
-	extern AudioChannel UnitReply;
-	extern AudioChannel UserInterface;
+	extern EffectChannel General;
+	extern EffectChannel Battle;
+	extern EffectChannel UnitReply;
+	extern EffectChannel UserInterface;
 }
 
 #endif

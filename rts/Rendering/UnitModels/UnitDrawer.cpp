@@ -117,6 +117,13 @@ CUnitDrawer::CUnitDrawer(void)
 
 	advFade = false;
 
+	boxtex = 0;
+	specularTex = 0;
+	unitVP = 0;
+	unitFP = 0;
+	unitShadowFP    = 0;
+	unitShadowGenVP = 0;
+
 	if (advShading) {
 		if(GLEW_NV_vertex_program2) {
 			unitVP = LoadVertexProgram("units3o2.vp");
@@ -134,6 +141,20 @@ CUnitDrawer::CUnitDrawer(void)
 			unitShadowFP    = 0;
 			unitShadowGenVP = 0;
 		}
+
+		glGenTextures(1,&specularTex);
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,specTexSize,float3( 1, 1, 1),float3( 0, 0,-2),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,specTexSize,float3(-1, 1,-1),float3( 0, 0, 2),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,specTexSize,float3(-1 ,1,-1),float3( 2, 0, 0),float3(0, 0, 2),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,specTexSize,float3(-1,-1, 1),float3( 2, 0, 0),float3(0, 0,-2),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,specTexSize,float3(-1, 1, 1),float3( 2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
+		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
 
 		glGenTextures(1, &boxtex);
 		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
@@ -155,19 +176,10 @@ CUnitDrawer::CUnitDrawer(void)
 			unitReflectFBO.Unbind();
 		}
 
-		glGenTextures(1,&specularTex);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, specularTex);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_EXT, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_CUBE_MAP_ARB, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB,specTexSize,float3( 1, 1, 1),float3( 0, 0,-2),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB,specTexSize,float3(-1, 1,-1),float3( 0, 0, 2),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB,specTexSize,float3(-1 ,1,-1),float3( 2, 0, 0),float3(0, 0, 2),mapInfo->light.sunDir,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB,specTexSize,float3(-1,-1, 1),float3( 2, 0, 0),float3(0, 0,-2),mapInfo->light.sunDir,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB,specTexSize,float3(-1, 1, 1),float3( 2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
-		CreateSpecularFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB,specTexSize,float3( 1, 1,-1),float3(-2, 0, 0),float3(0,-2, 0),mapInfo->light.sunDir,100,specularSunColor);
+		if (!unitReflectFBO.IsValid()) {
+			advShading = false;
+			advFade = false;
+		}
 	}
 
 #ifdef USE_GML
@@ -181,15 +193,18 @@ CUnitDrawer::~CUnitDrawer(void)
 {
 	glDeleteTextures(1, &whiteTex);
 
-	if (advShading) {
+	if (unitVP)
 		glSafeDeleteProgram(unitVP);
+	if (unitFP)
 		glSafeDeleteProgram(unitFP);
+	if (unitShadowFP)
 		glSafeDeleteProgram(unitShadowFP);
+	if (unitShadowGenVP)
 		glSafeDeleteProgram(unitShadowGenVP);
-
+	if (boxtex)
 		glDeleteTextures(1, &boxtex);
+	if (specularTex)
 		glDeleteTextures(1, &specularTex);
-	}
 
 	std::list<GhostBuilding*>::iterator gbi;
 
@@ -244,7 +259,7 @@ void CUnitDrawer::Update(void)
 	}
 
 	{
-		GML_STDMUTEX_LOCK(render); // Update
+		GML_STDMUTEX_LOCK(runit); // Update
 
 		for(std::set<CUnit *>::iterator ui=uh->toBeAdded.begin(); ui!=uh->toBeAdded.end(); ++ui)
 			uh->renderUnits.push_back(*ui);
@@ -325,12 +340,11 @@ inline void CUnitDrawer::DrawUnit(CUnit* unit)
 }
 
 
-inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit) {
-#ifdef DIRECT_CONTROL_ALLOWED
+inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit)
+{
 	if (unit == excludeUnit) {
 		return;
 	}
-#endif
 	if (unit->noDraw) {
 		return;
 	}
@@ -445,9 +459,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	SetupForUnitDrawing();
 	SetupFor3DO();
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	CUnit* excludeUnit = drawReflection ? NULL : gu->directControl;
-#endif
 
 	GML_RECMUTEX_LOCK(unit); // Draw
 
@@ -458,9 +470,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	if(multiThreadDrawUnit) {
 		mt_drawReflection=drawReflection; // these member vars will be accessed by DoDrawUnitMT
 		mt_drawRefraction=drawRefraction;
-	#ifdef DIRECT_CONTROL_ALLOWED
 		mt_excludeUnit=excludeUnit;
-	#endif
 		gmlProcessor->Work(NULL,NULL,&CUnitDrawer::DoDrawUnitMT,this,gmlThreadCount,FALSE,&uh->renderUnits,uh->renderUnits.size(),50,100,TRUE);
 	}
 	else
@@ -468,13 +478,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	{
 		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			CUnit* unit = *usi;
-			DoDrawUnit(unit,drawReflection,drawRefraction,
-		#ifdef DIRECT_CONTROL_ALLOWED
-									excludeUnit
-		#else
-									NULL
-		#endif
-								);
+			DoDrawUnit(unit,drawReflection,drawRefraction, excludeUnit);
 		}
 	}
 
@@ -483,8 +487,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 		GML_STDMUTEX_LOCK(temp); // Draw
 
-		std::multimap<int, TempDrawUnit>::iterator ti;
-		for (ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
+		for (std::multimap<int, TempDrawUnit>::iterator ti = tempDrawUnits.begin(); ti != tempDrawUnits.end(); ++ti) {
 			if (camera->InView(ti->second.pos, 100)) {
 				glPushMatrix();
 				glTranslatef3(ti->second.pos);
@@ -752,8 +755,7 @@ void CUnitDrawer::DrawShadowPass(void)
 	else
 #endif
 	{
-		std::list<CUnit*>::iterator usi;
-		for (usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
+		for (std::list<CUnit*>::iterator usi = uh->renderUnits.begin(); usi != uh->renderUnits.end(); ++usi) {
 			CUnit* unit = *usi;
 			DoDrawUnitShadow(unit);
 		}
@@ -891,8 +893,6 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 
 void CUnitDrawer::DrawCloakedUnits(bool submerged, bool noAdvShading)
 {
-	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
-
 	bool oldAdvShading = advShading;
 	advShading = advShading && !noAdvShading;
 	if(advShading) {
@@ -908,6 +908,8 @@ void CUnitDrawer::DrawCloakedUnits(bool submerged, bool noAdvShading)
 	SetupFor3DO();
 
 	glColor4f(1, 1, 1, cloakAlpha);
+
+	GML_RECMUTEX_LOCK(unit); // DrawCloakedUnits
 
 	{
 		//FIXME: doesn't support s3o's nor does it set teamcolor
@@ -1396,7 +1398,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 			buf[(y * size + x) * 4 + 3] = 255;
 		}
 	}
-	glTexImage2D(gltype, 0, GL_RGBA8, size, size, 0, GL_RGBA,GL_UNSIGNED_BYTE, buf);
+	glBuildMipmaps(gltype, GL_RGBA8, size, size, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	delete[] buf;
 }
 
@@ -1406,21 +1408,21 @@ void CUnitDrawer::UpdateReflectTex(void)
 	switch(updateFace++){
 	case 0:
 		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB, float3(1, 0, 0));
+		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1, 0, 0));
 		break;
 	case 1:
-		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB, float3(-1, 0, 0));
 		break;
 	case 2:
 		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB, float3(0, 1, 0));
+		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, float3(0, -1, 0));
 		break;
 	case 3:
-		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB, float3(0, -1, 0));
 		break;
 	case 4:
 		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB, float3(0, 0, 1));
+		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0, 0, -1));
 		break;
 	case 5:
-		CreateReflectionFace(GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB, float3(0, 0, -1));
 		updateFace=0;
 		break;
 	default:
@@ -1432,12 +1434,12 @@ void CUnitDrawer::UpdateReflectTex(void)
 
 void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 {
-	if (unitReflectFBO.IsValid()) {
-		unitReflectFBO.Bind();
-		unitReflectFBO.AttachTexture(boxtex, gltype);
-	}
+	unitReflectFBO.Bind();
+	unitReflectFBO.AttachTexture(boxtex, gltype);
 
+	glPushAttrib(GL_FOG_BIT);
 	glViewport(0, 0, reflTexSize, reflTexSize);
+	glClear(GL_DEPTH_BUFFER_BIT);
 
 //	CCamera *realCam = camera;
 //	camera = new CCamera(*realCam);
@@ -1452,33 +1454,22 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 		camera->up = float3(0, 0, 1);
 	if (camera->forward.y == -1)
 		camera->up = float3(0, 0, -1);
-
-//	if (camera->pos.y < ground->GetHeight(camera->pos.x, camera->pos.z) + 50)
-		camera->pos.y = ground->GetHeight(camera->pos.x, camera->pos.z) + 50;
+	camera->pos.y = ground->GetHeight(camera->pos.x, camera->pos.z) + 50;
 	camera->Update(false);
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(90, 1, NEAR_PLANE, gu->viewRange);
-	glMatrixMode(GL_MODELVIEW);
-	glClear(GL_DEPTH_BUFFER_BIT);
 
 	sky->Draw();
 	readmap->GetGroundDrawer()->Draw(false, true);
 
-	if (unitReflectFBO.IsValid()) {
-		unitReflectFBO.Unbind();
-	}else{
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, boxtex);
-		glCopyTexSubImage2D(gltype, 0, 0, 0, 0, 0,reflTexSize, reflTexSize);
-	}
-
-	glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	//! we do this later to save render context switches (this is one of the slowest opengl operations!)
+	//unitReflectFBO.Unbind();
+	//glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
+	glPopAttrib();
 
 //	delete camera;
 //	camera = realCam;
 	camera->~CCamera();
-	new (camera) CCamera(*(CCamera *)realCam);
+	new (camera) CCamera(*(CCamera*)realCam);
+	camera->Update(false);
 }
 
 void CUnitDrawer::QueS3ODraw(CWorldObject* object, int textureType)

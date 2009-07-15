@@ -60,8 +60,10 @@ static void ShowInfoLog(GLhandleARB handle)
 	delete[] infoLog;
 }
 
-struct Shader
-{
+
+
+
+struct Shader {
 	list<string> texts;
 	GLhandleARB handle;
 
@@ -133,6 +135,9 @@ struct Shader
 	}
 };
 
+
+
+
 static int closest_pot(int i)
 {
 	int next = next_power_of_2(i);
@@ -190,7 +195,7 @@ struct ShaderBuilder
 	RenderSetup *renderSetup;
 	TextureUsage texUsage;
 	BufferTexture* buffer;
-	bool ShadowMapping () { return renderSetup->shaderDef.useShadowMapping; }
+	bool ShadowMapping() { return renderSetup->shaderDef.useShadowMapping; }
 	Shader lastFragmentShader, lastVertexShader; // for debugging
 
 	ShaderBuilder(RenderSetup *rs);
@@ -202,8 +207,7 @@ struct ShaderBuilder
 	void Build(ShaderDef* shaderDef);
 	void AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex);
 
-	enum ShadingMethod
-	{
+	enum ShadingMethod {
 		SM_DiffuseSP, // lit diffuse single pass
 		SM_DiffuseBumpmapSP, // full diffuse + bumpmapping in single pass
 		SM_DiffuseBumpmapMP, // diffuse pass + bumpmap pass
@@ -211,21 +215,19 @@ struct ShaderBuilder
 	};
 
 	ShadingMethod shadingMethod;
+	ShadingMethod CalculateShadingMethod(ShaderDef* sd) const;
 
-	ShadingMethod CalculateShadingMethod(ShaderDef *sd) const;
-
-	struct TexReq
-	{
-		TexReq() { coords=units=0; }
+	struct TexReq {
+		TexReq() { coords = units = 0; }
 		GLint coords, units;
 		void GetFromGL();
 		bool Fits(TexReq maxrq) {
-			return coords <= maxrq.coords && units <= maxrq.units;
+			return ((coords <= maxrq.coords) && (units <= maxrq.units));
 		}
-		TexReq operator+(const TexReq& rq) {
+		TexReq operator + (const TexReq& rq) {
 			TexReq r;
-			r.coords = coords+rq.coords;
-			r.units = units+rq.units;
+			r.coords = coords + rq.coords;
+			r.units = units + rq.units;
 			return r;
 		}
 	};
@@ -233,67 +235,93 @@ struct ShaderBuilder
 	TexReq CalcStagesTexReq (const vector<ShaderDef::Stage>& stages, uint startIndex) const;
 };
 
+
+
 // Decide how to organise the shading, ie: in how many passes
-ShaderBuilder::ShadingMethod ShaderBuilder::CalculateShadingMethod(ShaderDef *sd) const
-{
+// depending on maximum number of hardware texture units and
+// coordinates
+ShaderBuilder::ShadingMethod  ShaderBuilder::CalculateShadingMethod(ShaderDef* sd) const {
 	TexReq diffuseRQ = CalcStagesTexReq(sd->stages, 0);
 	TexReq bumpmapRQ;
+	TexReq special;
+
 	TexReq hwmax;
 	hwmax.GetFromGL();
 
-	if (!sd->normalMapStages.empty())
-		bumpmapRQ = CalcStagesTexReq(sd->normalMapStages, 0);
 
-	TexReq special;
-
-	if (sd->useShadowMapping)
-	{
+	if (sd->useShadowMapping) {
 		// add shadow buffer + shadow texture coord
-		special.coords ++;
-		special.units ++;
+		special.coords++;
+		special.units++;
 	}
 
-	if (sd->normalMapStages.empty())
-	{
-		if ( (diffuseRQ + special).Fits (hwmax) )
+	d_trace("[ShaderBuilder::CalculateShadingMethod]\n");
+	d_trace("\t    hwmax.units=%2d,     hwmax.coords=%2d\n",     hwmax.units,     hwmax.coords);
+	d_trace("\tdiffuseRQ.units=%2d, diffuseRQ.coords=%2d\n", diffuseRQ.units, diffuseRQ.coords);
+	d_trace("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d\n", bumpmapRQ.units, bumpmapRQ.coords);
+	d_trace("\t  special.units=%2d,   special.coords=%2d\n",   special.units,   special.coords);
+
+	if (sd->normalMapStages.empty()) {
+		if ((diffuseRQ + special).Fits(hwmax)) {
+			d_trace("\tno normal-map stages, SM_DiffuseSP\n");
 			return SM_DiffuseSP;
-		else
+		} else {
+			d_trace("\tno normal-map stages, SM_Impossible\n");
 			return SM_Impossible;
+		}
+	} else {
+		bumpmapRQ = CalcStagesTexReq(sd->normalMapStages, 0);
+		// bumpmapping needs two extra indexable TC's for
+		// lightdir + tsEyeDir or for lightdir + wsEyeDir
+		special.coords += 2;
 	}
 
-	special.coords += 2; // lightdir + tsEyeDir or lightdir + wsEyeDir
+	TexReq total = diffuseRQ + bumpmapRQ + special;
 
-	TexReq total = special + bumpmapRQ + diffuseRQ;
+	d_trace("\t*****************************************\n");
+	d_trace("\tbumpmapRQ.units=%2d, bumpmapRQ.coords=%2d\n", bumpmapRQ.units, bumpmapRQ.coords);
+	d_trace("\t  special.units=%2d,   special.coords=%2d\n",   special.units,   special.coords);
+	d_trace("\t    total.units=%2d,     total.coords=%2d\n",     total.units,     total.coords);
 
 	// diffuse + bumpmap in one pass?
-	if (total.Fits (hwmax))
+	if (total.Fits(hwmax)) {
+		d_trace("\tnormalMapStages.size()=%d, SM_DiffuseBumpmapSP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapSP;
+	}
+
 
 	// for multipass, one extra texture read is required for the diffuse input
-	special.units ++;
+	special.units++;
+
+	d_trace("\t*****************************************\n");
+	d_trace("\t  special.units=%2d,   special.coords=%2d\n", special.units, special.coords);
+	d_trace("\t    total.units=%2d,     total.coords=%2d\n",   total.units,   total.coords);
 
 	// is multipass possible?
-	if (diffuseRQ.Fits (hwmax) && (bumpmapRQ + special).Fits (hwmax))
+	if (diffuseRQ.Fits(hwmax) && (bumpmapRQ + special).Fits(hwmax)) {
+		d_trace("\tnormalMapStages.size()=%d, SM_DiffuseBumpmapMP", sd->normalMapStages.size());
 		return SM_DiffuseBumpmapMP;
+	}
 
 	// no options left
+	d_trace("\tSM_Impossible\n");
 	return SM_Impossible;
 }
 
-ShaderBuilder::TexReq ShaderBuilder::CalcStagesTexReq (const vector<ShaderDef::Stage>& stages, uint index) const
-{
+
+
+ShaderBuilder::TexReq  ShaderBuilder::CalcStagesTexReq(const vector<ShaderDef::Stage>& stages, uint index) const {
 	TextureUsage usage;
 
-	while(index < stages.size())
-	{
+	while (index < stages.size()) {
 		const ShaderDef::Stage& stage = stages[index];
-		BaseTexture *texture = stage.source;
+		BaseTexture* texture = stage.source;
 		TextureUsage tmpUsage;
 
-		usage.AddTextureRead (-1, texture);
-		usage.AddTextureCoordRead (-1, texture);
+		usage.AddTextureRead(-1, texture);
+		usage.AddTextureCoordRead(-1, texture);
 
-		if(stage.operation == ShaderDef::Alpha) {
+		if (stage.operation == ShaderDef::Alpha) {
 			// next operation is blend (alpha is autoinserted before blend)
 			assert (index < stages.size()-1 && stages[index+1].operation == ShaderDef::Blend);
 			const ShaderDef::Stage& blendStage = stages[index+1];
@@ -307,29 +335,27 @@ ShaderBuilder::TexReq ShaderBuilder::CalcStagesTexReq (const vector<ShaderDef::S
 	}
 
 	TexReq rq;
-	rq.coords = usage.coordUnits.size();
-	rq.units = usage.texUnits.size();
+		rq.coords = usage.coordUnits.size();
+		rq.units = usage.texUnits.size();
 	return rq;
 }
 
-void ShaderBuilder::TexReq::GetFromGL()
-{
-	glGetIntegerv (GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &units);
-	glGetIntegerv (GL_MAX_TEXTURE_COORDS_ARB, &coords);
+void ShaderBuilder::TexReq::GetFromGL() {
+	glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &units);
+	glGetIntegerv(GL_MAX_TEXTURE_COORDS_ARB, &coords);
 }
 
-ShaderBuilder::ShaderBuilder(RenderSetup *rs) :
-	renderSetup(rs)
-{
+ShaderBuilder::ShaderBuilder(RenderSetup* rs): renderSetup(rs) {
 	buffer = 0;
 }
 
-std::string ShaderBuilder::GenTextureRead (int tu, int tc)
-{
+std::string ShaderBuilder::GenTextureRead(int tu, int tc) {
 	char tcstr[6];
-	sprintf (tcstr,"%d", tc);
+	sprintf(tcstr,"%d", tc);
 	return "texture2D(" + texUsage.texUnits[tu]->name + ", gl_TexCoord[" + tcstr + "].st)";
 }
+
+
 
 NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operations, uint passIndex)
 {
@@ -354,8 +380,8 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 	glLinkProgramARB(nodeShader->program);
 	GLint isLinked;
 	glGetObjectParameterivARB(nodeShader->program, GL_OBJECT_LINK_STATUS_ARB, &isLinked);
-	if (!isLinked)
-	{
+
+	if (!isLinked) {
 		d_trace ("Failed to link shaders. Showing info log:\n");
 		lastFragmentShader.WriteToFile("sm3_fragmentshader.txt");
 		lastVertexShader.WriteToFile("sm3_vertexshader.txt");
@@ -366,68 +392,66 @@ NodeGLSLShader* ShaderBuilder::EndPass(ShaderDef* sd, const std::string &operati
 	glUseProgramObjectARB(nodeShader->program);
 
 	// set texture image units to texture samplers in the shader
-	for (size_t a=0;a<nodeShader->texUnits.size();a++)
-	{
-		BaseTexture *tex = nodeShader->texUnits[a];
+	for (size_t a = 0; a < nodeShader->texUnits.size(); a++) {
+		BaseTexture* tex = nodeShader->texUnits[a];
 		GLint location = glGetUniformLocationARB(nodeShader->program, tex->name.c_str());
 		glUniform1iARB(location, (int)a);
 	}
 
 	// have bumpmapping?
 	if (shadingMethod != SM_DiffuseSP &&
-		!(shadingMethod == SM_DiffuseBumpmapMP && passIndex==0))
+		!(shadingMethod == SM_DiffuseBumpmapMP && passIndex == 0))
 	{
-		nodeShader->tsmAttrib = glGetAttribLocationARB(nodeShader->program,"TangentSpaceMatrix");
+		nodeShader->tsmAttrib = glGetAttribLocationARB(nodeShader->program, "TangentSpaceMatrix");
 		nodeShader->wsLightDirLocation = glGetUniformLocationARB(nodeShader->program, "wsLightDir");
 		nodeShader->wsEyePosLocation = glGetUniformLocationARB(nodeShader->program, "wsEyePos");
 	}
 
-	if (ShadowMapping())
-	{
+	if (ShadowMapping()) {
 		nodeShader->shadowMapLocation = glGetUniformLocationARB(nodeShader->program, "shadowMap");
 		nodeShader->shadowParamsLocation = glGetUniformLocationARB(nodeShader->program, "shadowParams");
 		nodeShader->shadowMatrixLocation = glGetUniformLocationARB(nodeShader->program, "shadowMatrix");
 	}
 
-	if (passIndex == 1)
-	{
+	if (passIndex == 1) {
 		// set up uniform to read bumpmap
 		GLint invScreenDim = glGetUniformLocationARB(nodeShader->program, "invScreenDim");
-		glUniform2fARB(invScreenDim, 1.0f/gu->viewSizeX, 1.0f/gu->viewSizeY);
+		glUniform2fARB(invScreenDim, 1.0f / gu->viewSizeX, 1.0f / gu->viewSizeY);
 	}
 
 	glUseProgramObjectARB(0);
 
-	renderSetup->passes.push_back (RenderPass());
+	renderSetup->passes.push_back(RenderPass());
 	RenderPass& rp = renderSetup->passes.back();
-	rp.shaderSetup = nodeShader;
-	rp.operation = Pass_Replace;
-	rp.depthWrite = true;
+		rp.shaderSetup = nodeShader;
+		rp.operation = Pass_Replace;
+		rp.depthWrite = true;
 	nodeShader->debugstr = operations;
-	NodeGLSLShader *ns = nodeShader;
+	NodeGLSLShader* ns = nodeShader;
 	nodeShader = 0;
 	texUsage = TextureUsage();
 	return ns;
 }
 
 
-void ShaderBuilder::AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex)
+void ShaderBuilder::AddPPDefines(ShaderDef* sd, Shader& shader, uint passIndex)
 {
 	bool bumpmapping = (shadingMethod != SM_DiffuseSP &&
-		!(shadingMethod == SM_DiffuseBumpmapMP && passIndex==0));
+		!(shadingMethod == SM_DiffuseBumpmapMP && passIndex == 0));
 
-	if (bumpmapping)
-	{
+	if (bumpmapping) {
 		shader.texts.push_back("#define UseBumpMapping\n");
 
 		if (passIndex == 1) {
 			shader.texts.push_back("#define DiffuseFromBuffer\n");
-			if (GLEW_ARB_texture_rectangle) shader.texts.push_back("#define UseTextureRECT\n");
+
+			if (GLEW_ARB_texture_rectangle)
+				shader.texts.push_back("#define UseTextureRECT\n");
 		}
 	}
 
 	if (ShadowMapping())
-		shader.texts.push_back ("#define UseShadowMapping\n");
+		shader.texts.push_back("#define UseShadowMapping\n");
 
 	shader.AddFile("shaders/terrainCommon.glsl");
 	char specularExponentStr[20];
@@ -436,15 +460,14 @@ void ShaderBuilder::AddPPDefines(ShaderDef *sd, Shader& shader, uint passIndex)
 }
 
 
-void ShaderBuilder::BuildFragmentShader(NodeGLSLShader *ns, uint passIndex, const std::string& operations, ShaderDef* sd)
+void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, const std::string& operations, ShaderDef* sd)
 {
 	lastFragmentShader = Shader();
 	Shader& fragmentShader = lastFragmentShader;
 
 	// insert texture samplers
 	string textureSamplers;
-	for (size_t a=0;a<ns->texUnits.size();a++)
-	{
+	for (size_t a = 0; a < ns->texUnits.size(); a++) {
 		BaseTexture *tex = ns->texUnits[a];
 		if (tex->IsRect())
 			textureSamplers += "uniform sampler2DRect " + tex->name + ";\n";
@@ -459,30 +482,34 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader *ns, uint passIndex, cons
 
 	string gentxt = "vec4 CalculateColor()  { vec4 color; float curalpha; \n" + operations;
 
-	switch (shadingMethod)
-	{
-	case SM_DiffuseSP:
-		gentxt += "return Light(color); }\n";
-		break;
-	case SM_DiffuseBumpmapSP:
-		gentxt += "return Light(diffuse, color);}\n";
-		break;
-	case SM_DiffuseBumpmapMP:
-		if (passIndex == 0)
-			gentxt += "return color; }\n";
-		else // passIndex=1
-			gentxt += "return Light(ReadDiffuseColor(), color);}\n";
-		break;
-	case SM_Impossible:
-		break;
+	switch (shadingMethod) {
+		case SM_DiffuseSP:
+			gentxt += "return Light(color); }\n";
+			break;
+		case SM_DiffuseBumpmapSP:
+			gentxt += "return Light(diffuse, color);}\n";
+			break;
+		case SM_DiffuseBumpmapMP:
+			if (passIndex == 0) {
+				gentxt += "return color; }\n";
+			} else { // passIndex=1
+				// ReadDiffuseColor() is #defined conditionally in
+				// terrainFragmentShader.glsl if bumpmapping enabled
+				gentxt += "return Light(ReadDiffuseColor(), color);}\n";
+			}
+			break;
+		case SM_Impossible:
+			break;
 	}
 
-	fragmentShader.texts.push_back (gentxt);
+	fragmentShader.texts.push_back(gentxt);
 	fragmentShader.Build(GL_FRAGMENT_SHADER_ARB);
 	ns->fragmentShader = fragmentShader.handle;
+
+	d_trace("Fragment shader built succesfully.");
 }
 
-void ShaderBuilder::BuildVertexShader(NodeGLSLShader *ns, uint passIndex, ShaderDef *sd)
+void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, ShaderDef* sd)
 {
 	lastVertexShader = Shader();
 	Shader& vertexShader = lastVertexShader;
@@ -492,21 +519,21 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader *ns, uint passIndex, Shader
 	// generate texture coords
 	std::string tcgen = "void CalculateTexCoords() {\n";
 	static const size_t buf_sizeMax = 160;
-	for (size_t a=0;a<ns->texCoordGen.size();a++)
-	{
+	for (size_t a = 0; a < ns->texCoordGen.size(); a++) {
 		char buf[buf_sizeMax];
 		SNPRINTF(buf, buf_sizeMax, "gl_TexCoord[%lu].st = vec2(dot(gl_Vertex, gl_ObjectPlaneS[%lu]), dot(gl_Vertex,gl_ObjectPlaneT[%lu]));\n", a, a, a);
 		tcgen += buf;
 	}
 	tcgen += "}\n";
-	vertexShader.texts.push_back (tcgen);
+	vertexShader.texts.push_back(tcgen);
 
 	vertexShader.AddFile("shaders/terrainVertexShader.glsl");
 	vertexShader.Build(GL_VERTEX_SHADER_ARB);
-	d_trace("Vertex shader build succesfully.");
+	d_trace("Vertex shader built succesfully.");
 
 	ns->vertexShader = vertexShader.handle;
 }
+
 
 
 bool ShaderBuilder::ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, std::string& opstr)
@@ -518,8 +545,8 @@ bool ShaderBuilder::ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, 
 	hwmax.GetFromGL();
 
 	TextureUsage tmpUsage = texUsage;
-	int tu = tmpUsage.AddTextureRead (hwmax.units, texture);
-	int tc = tmpUsage.AddTextureCoordRead (hwmax.coords, texture);
+	int tu = tmpUsage.AddTextureRead(hwmax.units, texture);
+	int tc = tmpUsage.AddTextureCoordRead(hwmax.coords, texture);
 
 	assert (tu >= 0 && tc >= 0);
 
@@ -554,22 +581,23 @@ bool ShaderBuilder::ProcessStage(vector<ShaderDef::Stage>& stages, uint &index, 
 	return true;
 }
 
-void ShaderBuilder::Build(ShaderDef* shaderDef)
-{
-	texUsage = TextureUsage();
 
+void ShaderBuilder::Build(ShaderDef* shaderDef) {
+	texUsage = TextureUsage();
 	shadingMethod = CalculateShadingMethod(shaderDef);
 
 	switch (shadingMethod) {
-		case SM_DiffuseSP:{
+		case SM_DiffuseSP: {
 			string opstr;
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, opstr);
 			EndPass(shaderDef, opstr);
-			break;}
+			break;
+		}
 
-		case SM_DiffuseBumpmapSP:{
+		case SM_DiffuseBumpmapSP: {
 			string diffusecode, bumpmapcode;
+
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, diffusecode);
 
@@ -577,30 +605,35 @@ void ShaderBuilder::Build(ShaderDef* shaderDef)
 				ProcessStage(shaderDef->normalMapStages, stage, bumpmapcode);
 
 			EndPass(shaderDef, diffusecode + "vec4 diffuse = color;\n" + bumpmapcode);
-			break;}
+			break;
+		}
 
-		case SM_DiffuseBumpmapMP:{
-			string diffusecode;
+		case SM_DiffuseBumpmapMP: {
+			string diffusecode, bumpmapcode;
 
 			for (uint stage = 0; stage < shaderDef->stages.size(); )
 				ProcessStage(shaderDef->stages, stage, diffusecode);
 
-			NodeGLSLShader *diffusePass = EndPass(shaderDef, diffusecode, 0);
+
+			NodeGLSLShader* diffusePass = EndPass(shaderDef, diffusecode, 0);
 
 			// multipass: let the diffuse pass render to the buffer
 			// at this point nodeShader=0 and texUsage is empty
-			if (!buffer) buffer = new BufferTexture;
+			if (!buffer) {
+				buffer = new BufferTexture;
+			}
 			diffusePass->renderBuffer = buffer;
 			// add texture read operation to second pass
 			texUsage.AddTextureRead(-1, buffer);
 
-			string bumpmapcode;
+
 			for (uint stage = 0; stage < shaderDef->normalMapStages.size(); )
 				ProcessStage(shaderDef->normalMapStages, stage, bumpmapcode);
 
 			EndPass(shaderDef, bumpmapcode, 1);
 
-			break;}
+			break;
+		}
 
 		case SM_Impossible:
 			throw content_error("Map has too many layers for bumpmapping on this hardware");
@@ -661,27 +694,33 @@ void NodeGLSLShader::UnbindTSM ()
 	}
 }
 
-void NodeGLSLShader::Setup (NodeSetupParams& params)
-{/*
+
+
+void NodeGLSLShader::Setup(NodeSetupParams& params) {
+	/*
 	if (renderBuffer) { // use a offscreen rendering buffer
 		renderBuffer->framebuffer.Bind();
 		glViewport(0, 0, renderBuffer->width, renderBuffer->height);
-	}*/
+	}
+	*/
 
 	glUseProgramObjectARB(program);
-	for (size_t a=0;a<texUnits.size();a++) {
-		glActiveTextureARB( GL_TEXTURE0_ARB+a);
+	for (size_t a = 0; a < texUnits.size(); a++) {
+		glActiveTextureARB(GL_TEXTURE0_ARB + a);
 
 		GLenum target;
-		if (texUnits[a]->IsRect()) target = GL_TEXTURE_RECTANGLE_ARB;
-		else target = GL_TEXTURE_2D;
+		if (texUnits[a]->IsRect())
+			target = GL_TEXTURE_RECTANGLE_ARB;
+		else
+			target = GL_TEXTURE_2D;
 
-		if (texUnits[a]->id) glBindTexture(target, texUnits[a]->id);
-		glEnable (target);
+		if (texUnits[a]->id)
+			glBindTexture(target, texUnits[a]->id);
+		glEnable(target);
 	}
-	for (size_t a=0;a<texCoordGen.size();a++) {
-		glActiveTextureARB(GL_TEXTURE0_ARB+a);
-		texCoordGen[a]->SetupTexGen ();
+	for (size_t a = 0; a < texCoordGen.size(); a++) {
+		glActiveTextureARB(GL_TEXTURE0_ARB + a);
+		texCoordGen[a]->SetupTexGen();
 	}
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 
@@ -690,11 +729,10 @@ void NodeGLSLShader::Setup (NodeSetupParams& params)
 	if (wsEyePosLocation >= 0 && params.wsEyePos)
 		glUniform3fARB(wsEyePosLocation, params.wsEyePos->x, params.wsEyePos->y, params.wsEyePos->z);
 
-	if (params.shadowMapParams)
-	{
-		if (shadowMapLocation>=0) {
+	if (params.shadowMapParams) {
+		if (shadowMapLocation >= 0) {
 			glUniform1i(shadowMapLocation, texUnits.size());
-			glActiveTextureARB(GL_TEXTURE0_ARB+texUnits.size());
+			glActiveTextureARB(GL_TEXTURE0_ARB + texUnits.size());
 			glBindTexture(GL_TEXTURE_2D, params.shadowMapParams->shadowMap);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
@@ -702,21 +740,24 @@ void NodeGLSLShader::Setup (NodeSetupParams& params)
 		}
 
 		ShadowMapParams& smp = *params.shadowMapParams;
-		if (shadowMatrixLocation>=0) glUniformMatrix4fvARB(shadowMatrixLocation, 1, GL_TRUE, smp.shadowMatrix);
-		if (shadowParamsLocation>=0) glUniform4fARB(shadowParamsLocation, smp.f_a, smp.f_b, smp.mid[0], smp.mid[1]);
+		if (shadowMatrixLocation >= 0) glUniformMatrix4fvARB(shadowMatrixLocation, 1, GL_TRUE, smp.shadowMatrix);
+		if (shadowParamsLocation >= 0) glUniform4fARB(shadowParamsLocation, smp.f_a, smp.f_b, smp.mid[0], smp.mid[1]);
 	}
 }
 
-void NodeGLSLShader::Cleanup()
-{
-	for (size_t a=0;a<texUnits.size();a++) {
-		glActiveTextureARB( GL_TEXTURE0_ARB+a);
-		glDisable(texUnits[a]->IsRect() ? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D);
+void NodeGLSLShader::Cleanup() {
+	for (size_t a = 0; a < texUnits.size(); a++) {
+		glActiveTextureARB(GL_TEXTURE0_ARB + a);
+		glBindTexture(texUnits[a]->IsRect()? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D, 0);
+		glDisable(texUnits[a]->IsRect()? GL_TEXTURE_RECTANGLE_ARB : GL_TEXTURE_2D);
 	}
-	glActiveTextureARB(GL_TEXTURE0_ARB);
 
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glUseProgramObjectARB(0);
 }
+
+
+
 
 std::string NodeGLSLShader::GetDebugDesc ()
 {
@@ -744,8 +785,9 @@ GLSLShaderHandler::~GLSLShaderHandler()
 	delete scShader;
 }
 
-void GLSLShaderHandler::EndTexturing ()
-{
+
+
+void GLSLShaderHandler::EndTexturing() {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_TEXTURE_GEN_S);
 	glDisable(GL_TEXTURE_GEN_T);
@@ -756,9 +798,10 @@ void GLSLShaderHandler::EndTexturing ()
 	}
 }
 
-void GLSLShaderHandler::BeginTexturing()
-{
+void GLSLShaderHandler::BeginTexturing() {
 }
+
+
 
 void GLSLShaderHandler::BeginPass(const std::vector<Blendmap*>& blendmaps, const std::vector<TiledTexture*>& textures, int pass)
 {
@@ -768,28 +811,27 @@ void GLSLShaderHandler::BeginPass(const std::vector<Blendmap*>& blendmaps, const
 			buffer = new BufferTexture;
 		}
 	}
-	if (buffer)
-	{
+	if (buffer) {
 		if (pass == 0) {
 			buffer->framebuffer.Bind();
 			glViewport(0, 0, buffer->width, buffer->height);
-			glClear(GL_DEPTH_BUFFER_BIT|GL_COLOR_BUFFER_BIT);
+			glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 		}
-		else if (pass==1) {
+		else if (pass == 1) {
 			buffer->framebuffer.Unbind();
 			glViewport(gu->viewPosX, gu->viewPosY, gu->viewSizeX, gu->viewSizeY);
 		}
 	}
 }
 
-bool GLSLShaderHandler::SetupShader (IShaderSetup *ps, NodeSetupParams& params)
+bool GLSLShaderHandler::SetupShader(IShaderSetup* ps, NodeSetupParams& params)
 {
 	if (curShader) {
 		curShader->Cleanup();
 		curShader = 0;
 	}
 
-	GLSLBaseShader* bs=static_cast<GLSLBaseShader*>(ps);
+	GLSLBaseShader* bs = static_cast<GLSLBaseShader*>(ps);
 	bs->Setup(params);
 	curShader = bs;
 	return true;
@@ -811,13 +853,12 @@ void GLSLShaderHandler::EndBuild()
 	scShader = new SimpleCopyShader(buffer);
 
 	// make sure all rendersetups have 2 passes
-	for (size_t a=0;a<renderSetups.size();a++)
-	{
-		if (renderSetups[a]->passes.size()==2)
+	for (size_t a = 0; a < renderSetups.size(); a++) {
+		if (renderSetups[a]->passes.size() == 2)
 			continue;
 
 		// add a simple pass to add
-		renderSetups[a]->passes.push_back (RenderPass());
+		renderSetups[a]->passes.push_back(RenderPass());
 		RenderPass& pass = renderSetups[a]->passes.back();
 		pass.depthWrite = true;
 		pass.operation = Pass_Replace;
@@ -825,30 +866,34 @@ void GLSLShaderHandler::EndBuild()
 	}
 }
 
-void GLSLShaderHandler::BuildNodeSetup (ShaderDef *shaderDef, RenderSetup *renderSetup)
+void GLSLShaderHandler::BuildNodeSetup(ShaderDef* shaderDef, RenderSetup* renderSetup)
 {
-	ShaderBuilder shaderBuilder (renderSetup);
+	ShaderBuilder shaderBuilder(renderSetup);
 
 	shaderBuilder.buffer = buffer;
 	shaderBuilder.Build(shaderDef);
+
+	// Build() might have changed buffer
 	buffer = shaderBuilder.buffer;
 
-	renderSetups.push_back (renderSetup);
+	renderSetups.push_back(renderSetup);
 }
 
-int GLSLShaderHandler::MaxTextureUnits ()
-{
+
+
+int GLSLShaderHandler::MaxTextureUnits() {
 	GLint n;
 	glGetIntegerv (GL_MAX_TEXTURE_IMAGE_UNITS_ARB, &n);
 	return n;
 }
 
-int GLSLShaderHandler::MaxTextureCoords ()
-{
+int GLSLShaderHandler::MaxTextureCoords() {
 	GLint n;
 	glGetIntegerv (GL_MAX_TEXTURE_COORDS_ARB, &n);
 	return n;
 }
+
+
 
 SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
 {
@@ -874,8 +919,8 @@ SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
 	glGetObjectParameterivARB(program, GL_OBJECT_LINK_STATUS_ARB, &isLinked);
 	if (!isLinked)
 	{
-		d_trace ("Failed to link shaders. Showing info log:\n");
-		ShowInfoLog (program);
+		d_trace("Failed to link shaders. Showing info log:\n");
+		ShowInfoLog(program);
 		throw std::runtime_error("Failed to link shaders");
 	}
 
@@ -893,8 +938,8 @@ SimpleCopyShader::SimpleCopyShader(BufferTexture *buf)
 
 SimpleCopyShader::~SimpleCopyShader()
 {
-	glDetachObjectARB(program,vertexShader);
-	glDetachObjectARB(program,fragmentShader);
+	glDetachObjectARB(program, vertexShader);
+	glDetachObjectARB(program, fragmentShader);
 	glDeleteObjectARB(program);
 	glDeleteObjectARB(fragmentShader);
 	glDeleteObjectARB(vertexShader);
@@ -903,12 +948,14 @@ SimpleCopyShader::~SimpleCopyShader()
 void SimpleCopyShader::Setup()
 {
 	GLenum target;
-	if (source->IsRect()) target = GL_TEXTURE_RECTANGLE_ARB;
-	else target = GL_TEXTURE_2D;
+	if (source->IsRect())
+		target = GL_TEXTURE_RECTANGLE_ARB;
+	else
+		target = GL_TEXTURE_2D;
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(target, source->id);
-	glEnable (target);
+	glEnable(target);
 
 	glUseProgramObjectARB(program);
 }
@@ -916,11 +963,12 @@ void SimpleCopyShader::Setup()
 void SimpleCopyShader::Cleanup()
 {
 	glActiveTextureARB(GL_TEXTURE0_ARB);
-	if (source->IsRect()) glDisable(GL_TEXTURE_RECTANGLE_ARB);
-	else glDisable(GL_TEXTURE_2D);
+	if (source->IsRect())
+		glDisable(GL_TEXTURE_RECTANGLE_ARB);
+	else
+		glDisable(GL_TEXTURE_2D);
 	glUseProgramObjectARB(0);
 }
 
 
 };
-

@@ -1,7 +1,7 @@
 #ifndef OGGSTREAM_H
 #define OGGSTREAM_H
 
-#include <AL/al.h>
+#include <al.h>
 #include <ogg/ogg.h>
 #include <vorbis/vorbisfile.h>
 
@@ -10,15 +10,15 @@
 class COggStream
 {
 public:
-	COggStream();
+	COggStream(ALuint source);
+	~COggStream();
 
 	void Play(const std::string& path, float volume);
 	void Stop();
-	void TogglePause();
+	bool TogglePause();
 	void Update();
 	float GetPlayTime();
 	float GetTotalTime();
-	void SetVolume(float, bool b = false);
 
 private:
 	void DisplayInfo();
@@ -28,6 +28,11 @@ private:
 	bool DecodeStream(ALuint buffer);
 	void EmptyBuffers();
 	void ReleaseBuffers();
+	
+	/**
+	@brief Decode next part of the stream and queu it for playing
+	@return wheter it is the end of the stream (check for IsPlaying() wheter the complete stream was played)
+	*/
 	bool UpdateBuffers();
 
 	OggVorbis_File oggStream;

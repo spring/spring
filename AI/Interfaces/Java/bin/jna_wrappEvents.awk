@@ -29,7 +29,7 @@ BEGIN {
 	javaSrcRoot = "../java/src";
 	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
-	myPkgA = "com.clan_sy.spring.ai";
+	myPkgA = "com.springrts.ai";
 	aiFloat3Class = "AIFloat3";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
 
@@ -81,8 +81,8 @@ function printOOAIHeader(outFile, clsName) {
 	print("") >> outFile;
 	print("") >> outFile;
 	print("import java.util.Properties;") >> outFile;
-	print("import com.clan_sy.spring.ai.AICommand;") >> outFile;
-	print("import com.clan_sy.spring.ai.AIFloat3;") >> outFile;
+	print("import com.springrts.ai.AICommand;") >> outFile;
+	print("import com.springrts.ai.AIFloat3;") >> outFile;
 	print("") >> outFile;
 	print("/**") >> outFile;
 	print(" *") >> outFile;
@@ -112,11 +112,11 @@ function printOOAIFactoryHeader(outFile) {
 	print("package " myPkgOOA ";") >> outFile;
 	print("") >> outFile;
 	print("") >> outFile;
-	print("import com.clan_sy.spring.ai.AI;") >> outFile;
-	print("import com.clan_sy.spring.ai.AICallback;") >> outFile;
-	print("import com.clan_sy.spring.ai.AICommand;") >> outFile;
-	print("import com.clan_sy.spring.ai.AICommandWrapper;") >> outFile;
-	print("import com.clan_sy.spring.ai.event.*;") >> outFile;
+	print("import com.springrts.ai.AI;") >> outFile;
+	print("import com.springrts.ai.AICallback;") >> outFile;
+	print("import com.springrts.ai.AICommand;") >> outFile;
+	print("import com.springrts.ai.AICommandWrapper;") >> outFile;
+	print("import com.springrts.ai.event.*;") >> outFile;
 	print("import com.sun.jna.Pointer;") >> outFile;
 	print("import java.util.Map;") >> outFile;
 	print("import java.util.HashMap;") >> outFile;
@@ -201,6 +201,11 @@ function printEventOO(evtIndex) {
 		type_jna = convertCToJNAType(type_c);
 		
 		paramsTypes = paramsTypes ", " type_jna " " name;
+		if (type_jna == "int[]") {
+			# Pointer.getIntArray(int offset, int arraySize)
+			# we assume that the next param contians the array size
+			name = name ".getIntArray(0, " evtsMembers_name[evtIndex, m+1]; ")";
+		}
 		paramsEvt = paramsEvt ", evt." name;
 	}
 	sub(/^\, /, "", paramsTypes);
@@ -248,7 +253,7 @@ function printEventOO(evtIndex) {
 	} else if (eNameLowerized == "playerCommand") {
 		print("\t\t\t\t\t\t\t" "java.util.ArrayList<Unit> units = new java.util.ArrayList<Unit>(evt.numUnitIds);") >> myOOAIFactoryFile;
 		print("\t\t\t\t\t\t\t" "for (int i=0; i < evt.numUnitIds; i++) {") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t\t" "units.add(Unit.getInstance(ooClb, evt.unitIds[i]));") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t\t\t" "units.add(Unit.getInstance(ooClb, evt.unitIds.getInt(i)));") >> myOOAIFactoryFile;
 		print("\t\t\t\t\t\t\t" "}") >> myOOAIFactoryFile;
 		print("\t\t\t\t\t\t\t" "AICommand command = AICommandWrapper.wrapp(evt.commandTopic, evt.commandData);") >> myOOAIFactoryFile;
 	}
@@ -375,6 +380,9 @@ function printEventJavaCls(evtIndex) {
 			} else if (className == "DefaultInitAIEvent") {
 				type_jna = "DefaultAICallback";
 			}
+		}
+		if (type_jna == "int[]") {
+			type_jna = "Pointer";
 		}
 		print("	" memMods type_jna " " name ";") >> javaFile;
 	}

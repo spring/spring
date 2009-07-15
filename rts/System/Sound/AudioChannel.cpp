@@ -5,17 +5,21 @@
 
 namespace Channels
 {
-	AudioChannel General;
-	AudioChannel Battle;
-	AudioChannel UnitReply;
-	AudioChannel UserInterface;
+	EffectChannel General;
+	EffectChannel Battle;
+	EffectChannel UnitReply;
+	EffectChannel UserInterface;
 }
 
-AudioChannel::AudioChannel() : volume(1.0f), enabled(true), emmitsPerFrame(32)
+AudioChannel::AudioChannel() : volume(1.0f), enabled(true)
 {
 };
 
-void AudioChannel::PlaySample(size_t id, float ovolume)
+EffectChannel::EffectChannel() : emmitsPerFrame(32)
+{
+};
+
+void EffectChannel::PlaySample(size_t id, float ovolume)
 {
 	if (enabled && emmitsThisFrame < emmitsPerFrame)
 	{
@@ -24,7 +28,7 @@ void AudioChannel::PlaySample(size_t id, float ovolume)
 	}
 }
 
-void AudioChannel::PlaySample(size_t id, const float3& p, float ovolume)
+void EffectChannel::PlaySample(size_t id, const float3& p, float ovolume)
 {
 	if (enabled && emmitsThisFrame < emmitsPerFrame)
 	{
@@ -33,7 +37,7 @@ void AudioChannel::PlaySample(size_t id, const float3& p, float ovolume)
 	}
 }
 
-void AudioChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float ovolume)
+void EffectChannel::PlaySample(size_t id, const float3& p, const float3& velocity, float ovolume)
 {
 	if (enabled && emmitsThisFrame < emmitsPerFrame)
 	{
@@ -42,7 +46,7 @@ void AudioChannel::PlaySample(size_t id, const float3& p, const float3& velocity
 	}
 }
 
-void AudioChannel::PlaySample(size_t id, CUnit* u,float ovolume)
+void EffectChannel::PlaySample(size_t id, CUnit* u,float ovolume)
 {
 	if (enabled && emmitsThisFrame < emmitsPerFrame)
 	{
@@ -51,7 +55,7 @@ void AudioChannel::PlaySample(size_t id, CUnit* u,float ovolume)
 	}
 }
 
-void AudioChannel::PlaySample(size_t id, CWorldObject* p,float ovolume)
+void EffectChannel::PlaySample(size_t id, CWorldObject* p,float ovolume)
 {
 	if (enabled && emmitsThisFrame < emmitsPerFrame)
 	{

@@ -27,8 +27,10 @@
 #include "Game/UI/MouseHandler.h"
 #include "Lua/LuaOpenGL.h"
 #include "Platform/BaseCmd.h"
+#include "Platform/Misc.h"
 #include "ConfigHandler.h"
 #include "Platform/errorhandler.h"
+#include "Platform/CrashHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -52,13 +54,9 @@
 #include "mmgr.h"
 
 #ifdef WIN32
-#if defined(__GNUC__) || defined(_MSC_VER)
-	#include "Platform/Win/CrashHandler.h"
-#endif
 	#include "Platform/Win/win32.h"
 	#include <winreg.h>
 	#include <direct.h>
-	#include "Platform/Win/seh.h"
 	#include "Platform/Win/WinVersion.h"
 #endif // WIN32
 
@@ -89,16 +87,6 @@ const int XRES_DEFAULT = 1024;
  */
 const int YRES_DEFAULT = 768;
 
-void SpringApp::SigAbrtHandler(int unused)
-{
-	// cause an exception if on windows
-	// TODO FIXME do a proper stacktrace dump here
-	#ifdef WIN32
-	*((int*)(0)) = 0;
-	#endif
-}
-
-
 
 /**
  * Initializes SpringApp variables
@@ -109,8 +97,6 @@ SpringApp::SpringApp()
 	screenWidth = screenHeight = 0;
 	FSAA = false;
 	lastRequiredDraw=0;
-
-	signal(SIGABRT, SigAbrtHandler);
 }
 
 /**
@@ -124,36 +110,6 @@ SpringApp::~SpringApp()
 	creg::System::FreeClasses ();
 }
 
-
-
-#ifdef WIN32
-typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
-
-LPFN_ISWOW64PROCESS fnIsWow64Process;
-
-/** @brief checks if the current process is running in 32bit emulation mode
-    @return FALSE, TRUE, -1 on error (usually no permissions) */
-static int GetWow64Status()
-{
-	BOOL bIsWow64 = FALSE;
-
-	fnIsWow64Process = (LPFN_ISWOW64PROCESS)GetProcAddress(
-		GetModuleHandle(TEXT("kernel32")),"IsWow64Process");
-
-	if (NULL != fnIsWow64Process)
-	{
-		if (!fnIsWow64Process(GetCurrentProcess(),&bIsWow64))
-		{
-			return -1;
-		}
-	}
-	return bIsWow64;
-}
-
-
-#endif
-
-
 /**
  * @brief Initializes the SpringApp instance
  * @return whether initialization was successful
@@ -164,30 +120,19 @@ bool SpringApp::Initialize()
 	creg::System::InitializeClasses();
 
 	// Initialize crash reporting
-#ifdef _WIN32
 	CrashHandler::Install();
-	InitializeSEH();
-#endif
 
 	ParseCmdLine();
 
 	// log OS version
 	// TODO: improve version logging of non-Windows OSes
-#if defined(WIN32)
-	logOutput.Print("OS: %s\n", GetOSDisplayString().c_str());
-	if (GetWow64Status() == TRUE) {
-		logOutput.Print("OS: WOW64 detected\n");
-	}
-	logOutput.Print("Hardware: %s\n", GetHardwareInfoString().c_str());
-#elif defined(__linux__)
-	logOutput.Print("OS: Linux\n");
-#elif defined(__FreeBSD__)
-	logOutput.Print("OS: FreeBSD\n");
-#elif defined(MACOS_X)
-	logOutput.Print("OS: MacOS X\n");
-#else
-	logOutput.Print("OS: unknown\n");
-#endif
+	logOutput.Print("OS: %s", Platform::GetOS().c_str());
+	if (Platform::Is64Bit())
+		logOutput.Print("OS: 64bit native mode");
+	else if (Platform::Is32BitEmulation())
+		logOutput.Print("OS: emulated 32bit mode");
+	else
+		logOutput.Print("OS: 32bit native mode");
 
 	FileSystemHandler::Initialize(true);
 
@@ -255,6 +200,33 @@ bool SpringApp::Initialize()
 
 	// Initialize Lua GL
 	LuaOpenGL::Init();
+
+#ifdef WIN32
+	int affinity = configHandler->Get("SetCoreAffinity", 0);
+
+	if (affinity>0) {
+		//! Get the available cores
+		DWORD curMask;
+		DWORD cores;
+		GetProcessAffinityMask(GetCurrentProcess(), &curMask, &cores);
+
+		DWORD wantedCore = 0xff;
+
+		//! Find an useable core
+		cores /= 0x1;
+		while( (wantedCore & cores) == 0x0 ) {
+			wantedCore >>= 0x1;
+		}
+
+		//! Set the affinity
+		HANDLE thread = GetCurrentThread();
+		if (affinity==1) {
+			SetThreadIdealProcessor(thread,wantedCore);
+		} else if (affinity>=2) {
+			SetThreadAffinityMask(thread,wantedCore);
+		}
+	}
+#endif // WIN32
 
 	// Create CGameSetup and CPreGame objects
 	Startup();

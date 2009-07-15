@@ -171,8 +171,7 @@ CUnitHandler::CUnitHandler(bool serializing)
 
 CUnitHandler::~CUnitHandler()
 {
-	std::list<CUnit*>::iterator usi;
-	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
+	for (std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		(*usi)->delayedWreckLevel = -1; // dont create wreckages since featureHandler may be destroyed already
 		delete (*usi);
 	}
@@ -208,7 +207,7 @@ int CUnitHandler::AddUnit(CUnit *unit)
 
 	maxUnitRadius = max(unit->radius, maxUnitRadius);
 
-	GML_STDMUTEX_LOCK(render); // AddUnit
+	GML_STDMUTEX_LOCK(runit); // AddUnit
 
 	toBeAdded.insert(unit);
 
@@ -251,6 +250,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 			unitsByDefs[delTeam][delType].erase(delUnit);
 
 			delete delUnit;
+
 			break;
 		}
 	}
@@ -264,7 +264,7 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 		}
 	}
 
-	GML_STDMUTEX_LOCK(render); // DeleteUnitNow
+	GML_STDMUTEX_LOCK(runit); // DeleteUnitNow
 
 	for(usi=renderUnits.begin(); usi!=renderUnits.end(); ++usi) {
 		if(*usi==delUnit) {
@@ -296,6 +296,7 @@ void CUnitHandler::Update()
 		GML_RECMUTEX_LOCK(unit); // Update - for anti-deadlock purposes.
 		GML_RECMUTEX_LOCK(sel); // Update - unit is removed from selectedUnits in ~CObject, which is too late.
 		GML_RECMUTEX_LOCK(quad); // Update - make sure unit does not get partially deleted before before being removed from the quadfield
+		GML_STDMUTEX_LOCK(proj); // Update - projectile drawing may access owner() and lead to crash
 
 		while (!toBeRemoved.empty()) {
 			CUnit* delUnit = toBeRemoved.back();
@@ -308,7 +309,7 @@ void CUnitHandler::Update()
 	GML_UPDATE_TICKS();
 
 	std::list<CUnit*>::iterator usi;
-	for (usi = activeUnits.begin(); usi != activeUnits.end(); usi++) {
+	for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		(*usi)->Update();
 	}
 
@@ -612,9 +613,7 @@ int CUnitHandler::ShowUnitBuildSquare(const BuildInfo& buildInfo, const std::vec
 void CUnitHandler::UpdateWind(float x, float z, float strength)
 {
 	//todo: save windgens in list (would be a little faster)
-	std::list<CUnit*>::iterator usi;
-	for(usi=activeUnits.begin();usi!=activeUnits.end();usi++)
-	{
+	for(std::list<CUnit*>::iterator usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 		if((*usi)->unitDef->windGenerator)
 			(*usi)->UpdateWind(x,z,strength);
 	}
@@ -651,12 +650,11 @@ void CUnitHandler::LoadSaveUnits(CLoadSaveInterface* file, bool loading)
 
 Command CUnitHandler::GetBuildCommand(float3 pos, float3 dir){
 	float3 tempF1 = pos;
-	std::list<CUnit*>::iterator ui = this->activeUnits.begin();
 
 	GML_STDMUTEX_LOCK(cai); // GetBuildCommand
 
 	CCommandQueue::iterator ci;
-	for(; ui != this->activeUnits.end(); ui++){
+	for(std::list<CUnit*>::iterator ui = this->activeUnits.begin(); ui != this->activeUnits.end(); ++ui){
 		if((*ui)->team == gu->myTeam){
 			ci = (*ui)->commandAI->commandQue.begin();
 			for(; ci != (*ui)->commandAI->commandQue.end(); ci++){

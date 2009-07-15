@@ -4,14 +4,13 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
+#include <boost/asio/ip/udp.hpp>
 #include <list>
 #include <queue>
-
 
 namespace netcode
 {
 class UDPConnection;
-class UDPSocket;
 
 /**
 @brief Class for handling Connections on an UDPSocket
@@ -50,7 +49,6 @@ public:
 	bool Listen() const;
 	
 	bool HasIncomingConnections() const;
-	bool HasIncomingData(int timeout);
 	boost::weak_ptr<UDPConnection> PreviewConnection();
 	boost::shared_ptr<UDPConnection> AcceptConnection();
 	void RejectConnection();
@@ -63,7 +61,8 @@ private:
 	bool acceptNewConnections;
 	
 	/// Our socket
-	boost::shared_ptr<UDPSocket> mySocket;
+	typedef boost::shared_ptr<boost::asio::ip::udp::socket> SocketPtr;
+	SocketPtr mySocket;
 	
 	/// all connections
 	std::list< boost::weak_ptr< UDPConnection> > conn;

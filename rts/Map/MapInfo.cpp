@@ -183,6 +183,7 @@ void CMapInfo::ReadWater()
 	water.perlinStartFreq  = wt.GetFloat("perlinStartFreq",  8.0f);
 	water.perlinLacunarity = wt.GetFloat("perlinLacunarity", 3.0f);
 	water.perlinAmplitude  = wt.GetFloat("perlinAmplitude",  0.9f);
+	water.windSpeed        = wt.GetFloat("windSpeed", 1.0f);
 
 	water.texture       = wt.GetString("texture",       "");
 	water.foamTexture   = wt.GetString("foamTexture",   "");

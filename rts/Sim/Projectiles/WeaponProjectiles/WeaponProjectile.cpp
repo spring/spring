@@ -1,9 +1,13 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "WeaponProjectile.h"
+#include "Game/GameHelper.h"
+#include "Sim/Projectiles/ProjectileHandler.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
-#include "Sound/AudioChannel.h"
+#include "Sim/Features/Feature.h"
+#include "Sim/Units/Unit.h"
+#include "Sim/Misc/InterceptHandler.h"
 #include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/UnitModels/s3oParser.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -11,22 +15,16 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Rendering/Colors.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
-#include "Game/GameHelper.h"
 #include "Map/Ground.h"
-#include "LaserProjectile.h"
-#include "FireBallProjectile.h"
-#include "Matrix44f.h"
-#include "Sim/Features/Feature.h"
-#include "Sim/Units/Unit.h"
-#include "Sim/Misc/InterceptHandler.h"
-#include "GlobalUnsynced.h"
+#include "System/Matrix44f.h"
+#include "System/GlobalUnsynced.h"
+#include "System/Sound/AudioChannel.h"
 #include "LogOutput.h"
 #ifdef TRACE_SYNC
 	#include "Sync/SyncTracer.h"
 #endif
 
 
-#include "Sim/Weapons/WeaponDefHandler.h"
 
 CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
 
@@ -66,8 +64,8 @@ CWeaponProjectile::CWeaponProjectile()
 CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, CUnit* target, const float3 &targetPos,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
-		bool synced, int ttl GML_PARG_C)
-:	CProjectile(pos, speed, owner, synced, true GML_PARG_P),
+		bool, int ttl GML_PARG_C):
+	CProjectile(pos, speed, owner, true, true, false GML_PARG_P),
 	targeted(false),
 	weaponDef(weaponDef),
 	weaponDefName(weaponDef? weaponDef->name: std::string("")),
@@ -104,6 +102,8 @@ CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 
 		collisionFlags = weaponDef->collisionFlags;
 	}
+
+	ph->AddProjectile(this);
 }
 
 CWeaponProjectile::~CWeaponProjectile(void)

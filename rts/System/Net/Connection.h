@@ -9,13 +9,6 @@
 namespace netcode
 {
 
-struct NetAddress
-{
-	unsigned host;
-	unsigned short port;
-};
-
-
 /**
 @brief Base class for connecting to various recievers / senders
 */
@@ -49,7 +42,7 @@ public:
 	unsigned GetDataReceived() const;
 	
 	virtual std::string Statistics() const = 0;
-	virtual NetAddress GetPeerName() const = 0;
+	virtual std::string GetFullAddress() const = 0;
 	virtual void Update() {};
 
 protected:

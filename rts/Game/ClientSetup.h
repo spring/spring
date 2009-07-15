@@ -12,7 +12,6 @@ public:
 
 	void Init(const std::string& setup);
 
-	int myPlayerNum;
 	std::string myPlayerName;
 
 	std::string hostip;

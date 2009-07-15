@@ -21,7 +21,6 @@
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
-#include "Sim/Units/COB/CobFile.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/Unit.h"
@@ -110,13 +109,6 @@ CR_REG_METADATA(CWeapon,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-static void ScriptCallback(int retCode,void* p1,void* p2)
-{
-	if (retCode==1) {
-		((CWeapon*)p1)->ScriptReady();
-	}
-}
-
 CWeapon::CWeapon(CUnit* owner):
 	owner(owner),
 	weaponDef(0),
@@ -199,8 +191,9 @@ void CWeapon::SetWeaponNum(int num)
 {
 	weaponNum = num;
 
-	cobHasBlockShot = owner->cob->FunctionExist(COBFN_BlockShot + weaponNum);
-	hasTargetWeight = owner->cob->FunctionExist(COBFN_TargetWeight + weaponNum);
+	const int n = COBFN_Weapon_Funcs * weaponNum;
+	cobHasBlockShot = owner->script->HasFunction(COBFN_BlockShot + n);
+	hasTargetWeight = owner->script->HasFunction(COBFN_TargetWeight + n);
 }
 
 
@@ -210,35 +203,13 @@ inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
 		return false;
 	}
 
-
-	const int unitID = targetUnit ? targetUnit->id : 0;
-
-	std::vector<int> args;
-
-	args.push_back(unitID);
-	args.push_back(0); // arg[1], for the return value
-	                   // the default is to not block the shot
-	args.push_back(haveUserTarget);
-
-	owner->cob->Call(COBFN_BlockShot + weaponNum, args);
-
-	return !!args[1];
+	return owner->script->BlockShot(weaponNum, targetUnit, haveUserTarget);
 }
 
 
 float CWeapon::TargetWeight(const CUnit* targetUnit) const
 {
-	const int unitID = targetUnit ? targetUnit->id : 0;
-
-	std::vector<int> args;
-
-	args.push_back(unitID);
-	args.push_back(COBSCALE); // arg[1], for the return value
-	                          // the default is 1.0
-
-	owner->cob->Call(COBFN_TargetWeight + weaponNum, args);
-
-	return (float)args[1] / (float)COBSCALE;
+	return owner->script->TargetWeight(weaponNum, targetUnit);
 }
 
 
@@ -251,18 +222,21 @@ static inline bool isBeingServicedOnPad(CUnit* u)
 
 void CWeapon::Update()
 {
-	if(hasCloseTarget){
-		std::vector<int> args;
-		args.push_back(0);
-		if(useWeaponPosForAim){ //if we couldn't get a line of fire from the muzzle try if we can get it from the aim piece
-			owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
+	if (hasCloseTarget) {
+		int piece;
+		// if we couldn't get a line of fire from the muzzle try if we can get it from the aim piece
+		if (useWeaponPosForAim) {
+			piece = owner->script->QueryWeapon(weaponNum);
 		} else {
-			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
+			piece = owner->script->AimFromWeapon(weaponNum);
 		}
-		relWeaponMuzzlePos=owner->cob->GetPiecePos(args[0]);
+		relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
 
-		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-		relWeaponPos=owner->cob->GetPiecePos(args[0]);
+		//FIXME: this might be potential speedup?
+		// (AimFromWeapon may have been called already 3 lines ago)
+		//if (useWeaponPosForAim)
+		piece = owner->script->AimFromWeapon(weaponNum);
+		relWeaponPos = owner->script->GetPiecePos(piece);
 	}
 
 	if(targetType==Target_Unit){
@@ -307,12 +281,12 @@ void CWeapon::Update()
 			lastRequestedDir=wantedDir;
 			lastRequest=gs->frameNum;
 
-			short int heading=GetHeadingFromVector(wantedDir.x,wantedDir.z);
-			short int pitch=(short int) (asin(wantedDir.dot(owner->updir))*RAD2TAANG);
-			std::vector<int> args;
-			args.push_back(short(heading - owner->heading));
-			args.push_back(pitch);
-			owner->cob->Call(COBFN_AimPrimary+weaponNum,args,ScriptCallback,this,0);
+			const float heading = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
+			const float pitch = asin(wantedDir.dot(owner->updir));
+			// for COB, this sets anglegood to return value of aim script when it finished,
+			// for Lua, there exists a callout to set the anglegood member.
+			// FIXME: convert CSolidObject::heading to radians too.
+			owner->script->AimWeapon(weaponNum, ClampRad(heading - owner->heading * TAANG2RAD), pitch);
 		}
 	}
 	if(weaponDef->stockpile && numStockpileQued){
@@ -337,10 +311,8 @@ void CWeapon::Update()
 	}
 
 	if ((salvoLeft == 0)
-#ifdef DIRECT_CONTROL_ALLOWED
 	    && (!owner->directControl || owner->directControl->mouse1
 	                              || owner->directControl->mouse2)
-#endif
 	    && (targetType != Target_None)
 	    && angleGood
 	    && subClassReady
@@ -355,10 +327,8 @@ void CWeapon::Update()
 		     (teamHandler->Team(owner->team)->metal >= metalFireCost &&
 		      teamHandler->Team(owner->team)->energy >= energyFireCost)))
 		{
-			std::vector<int> args;
-			args.push_back(0);
-			owner->cob->Call(COBFN_QueryPrimary + weaponNum, args);
-			owner->cob->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			const int piece = owner->script->QueryWeapon(weaponNum);
+			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
 			weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z +
 			                               owner->updir    * relWeaponMuzzlePos.y +
 			                               owner->rightdir * relWeaponMuzzlePos.x;
@@ -389,7 +359,7 @@ void CWeapon::Update()
 
 				owner->lastMuzzleFlameSize=muzzleFlareSize;
 				owner->lastMuzzleFlameDir=wantedDir;
-				owner->cob->Call(COBFN_FirePrimary+weaponNum);
+				owner->script->FireWeapon(weaponNum);
 			}
 		} else {
 			// FIXME  -- never reached?
@@ -421,16 +391,13 @@ void CWeapon::Update()
 				owner->commandShotCount++;
 			}
 
-			std::vector<int> args;
-			args.push_back(0);
+			owner->script->Shot(weaponNum);
 
-			owner->cob->Call(COBFN_Shot+weaponNum,0);
+			int piece = owner->script->AimFromWeapon(weaponNum);
+			relWeaponPos = owner->script->GetPiecePos(piece);
 
-			owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-			relWeaponPos=owner->cob->GetPiecePos(args[0]);
-
-			owner->cob->Call(/*COBFN_AimFromPrimary+weaponNum*/COBFN_QueryPrimary+weaponNum/**/,args);
-			owner->cob->GetEmitDirPos(args[0], relWeaponMuzzlePos, weaponDir);
+			piece = owner->script->/*AimFromWeapon*/QueryWeapon(weaponNum);
+			owner->script->GetEmitDirPos(piece, relWeaponMuzzlePos, weaponDir);
 
 			weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
@@ -452,18 +419,17 @@ void CWeapon::Update()
 		}
 
 		//Rock the unit in the direction of the fireing
-		float3 rockDir = wantedDir;
-		rockDir.y = 0;
-		rockDir = -rockDir.Normalize();
-		std::vector<int> rockAngles;
-		rockAngles.push_back((int)(500 * rockDir.z));
-		rockAngles.push_back((int)(500 * rockDir.x));
-		owner->cob->Call(COBFN_RockUnit,  rockAngles);
+		if (owner->script->HasFunction(COBFN_RockUnit)) {
+			float3 rockDir = wantedDir;
+			rockDir.y = 0;
+			rockDir = -rockDir.Normalize();
+			owner->script->RockUnit(rockDir);
+		}
 
 		owner->commandAI->WeaponFired(this);
 
 		if(salvoLeft==0){
-			owner->cob->Call(COBFN_EndBurst+weaponNum);
+			owner->script->EndBurst(weaponNum);
 		}
 #ifdef TRACE_SYNC
 	tracefile << "Weapon fire: ";
@@ -592,20 +558,24 @@ void CWeapon::SlowUpdate(bool noAutoTargetOverride)
 	tracefile << "Weapon slow update: ";
 	tracefile << owner->id << " " << weaponNum <<  "\n";
 #endif
-	std::vector<int> args;
-	args.push_back(0);
-	if(useWeaponPosForAim){ //If we can't get a line of fire from the muzzle try the aim piece instead since the weapon may just be turned in a wrong way
-		owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-		if(useWeaponPosForAim>1)
+	//If we can't get a line of fire from the muzzle try the aim piece instead since the weapon may just be turned in a wrong way
+	int piece;
+	if (useWeaponPosForAim) {
+		piece = owner->script->QueryWeapon(weaponNum);
+		if (useWeaponPosForAim > 1)
 			useWeaponPosForAim--;
 	} else {
-		owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
+		piece = owner->script->AimFromWeapon(weaponNum);
 	}
-	relWeaponMuzzlePos=owner->cob->GetPiecePos(args[0]);
+	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
 	weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 
-	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-	relWeaponPos=owner->cob->GetPiecePos(args[0]);
+	//FIXME: this might be potential speedup?
+	// (AimFromWeapon may have been called already 5 lines ago)
+	//if (useWeaponPosForAim)
+	piece = owner->script->AimFromWeapon(weaponNum);
+	relWeaponPos = owner->script->GetPiecePos(piece);
+
 	weaponPos=owner->pos+owner->frontdir*relWeaponPos.z+owner->updir*relWeaponPos.y+owner->rightdir*relWeaponPos.x;
 
 	if(weaponMuzzlePos.y<ground->GetHeight2(weaponMuzzlePos.x,weaponMuzzlePos.z))
@@ -875,13 +845,11 @@ bool CWeapon::TryTargetHeading(short heading, float3 pos, bool userTarget, CUnit
 
 void CWeapon::Init(void)
 {
-	std::vector<int> args;
-	args.push_back(0);
-	owner->cob->Call(COBFN_AimFromPrimary+weaponNum,args);
-	relWeaponPos = owner->cob->GetPiecePos(args[0]);
+	int piece = owner->script->AimFromWeapon(weaponNum);
+	relWeaponPos = owner->script->GetPiecePos(piece);
 	weaponPos = owner->pos + owner->frontdir * relWeaponPos.z + owner->updir * relWeaponPos.y + owner->rightdir * relWeaponPos.x;
-	owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-	relWeaponMuzzlePos = owner->cob->GetPiecePos(args[0]);
+	piece = owner->script->QueryWeapon(weaponNum);
+	relWeaponMuzzlePos = owner->script->GetPiecePos(piece);
 	weaponMuzzlePos = owner->pos + owner->frontdir * relWeaponMuzzlePos.z + owner->updir * relWeaponMuzzlePos.y + owner->rightdir * relWeaponMuzzlePos.x;
 
 	if (range > owner->maxRange) {
@@ -909,18 +877,13 @@ void CWeapon::Init(void)
 void CWeapon::Fire()
 {
 #ifdef TRACE_SYNC
-	tracefile << weaponDef->name << " fire: ";
-	tracefile << owner->pos.x << " " << owner->dir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
+	tracefile << weaponDef->name.c_str() << " fire: ";
+	tracefile << owner->pos.x << " " << owner->frontdir.x << " " << targetPos.x << " " << targetPos.y << " " << targetPos.z;
 	tracefile << sprayAngle << " " <<  " " << salvoError.x << " " << salvoError.z << " " << owner->limExperience << " " << projectileSpeed << "\n";
 #endif
 	FireImpl();
 	if(fireSoundId && (!weaponDef->soundTrigger || salvoLeft==salvoSize-1))
 		Channels::Battle.PlaySample(fireSoundId, owner, fireSoundVolume);
-}
-
-void CWeapon::ScriptReady(void)
-{
-	angleGood=true;
 }
 
 void CWeapon::CheckIntercept(void)

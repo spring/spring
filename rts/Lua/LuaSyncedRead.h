@@ -165,6 +165,12 @@ class LuaSyncedRead {
 
 		static int GetProjectilePosition(lua_State* L);
 		static int GetProjectileVelocity(lua_State* L);
+		static int GetProjectileGravity(lua_State* L);
+		static int GetProjectileSpinAngle(lua_State* L);
+		static int GetProjectileSpinSpeed(lua_State* L);
+		static int GetProjectileSpinVec(lua_State* L);
+		static int GetProjectileType(lua_State* L);
+		static int GetProjectileName(lua_State* L);
 
 		static int GetGroundHeight(lua_State* L);
 		static int GetGroundOrigHeight(lua_State* L);

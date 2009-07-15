@@ -54,9 +54,7 @@ void CFPSController::MouseWheelMove(float move)
 
 float3 CFPSController::GetPos()
 {
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (!gu->directControl)
-#endif
 	{
 		const float margin = 0.01f;
 		const float xMin = margin;
@@ -92,9 +90,7 @@ void CFPSController::SetPos(const float3& newPos)
 {
 	CCameraController::SetPos(newPos);
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (!gu->directControl)
-#endif
 	{
 		pos.y = ground->GetHeight(pos.x, pos.z) + oldHeight;
 	}

@@ -1045,16 +1045,17 @@ void CMiniMap::DrawForReal()
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.0f);
 
-	GML_RECMUTEX_LOCK(unit); // DrawForReal
-	// draw the units
-	std::list<CUnit*>::iterator ui;
-	for (ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ui++) {
-		DrawUnit(*ui);
-	}
-	// highlight the selected unit
-	CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
-	if (unit != NULL) {
-		DrawUnitHighlight(unit);
+	{
+		GML_RECMUTEX_LOCK(unit); // DrawForReal
+		// draw the units
+		for (std::list<CUnit*>::iterator ui = uh->renderUnits.begin(); ui != uh->renderUnits.end(); ++ui) {
+			DrawUnit(*ui);
+		}
+		// highlight the selected unit
+		CUnit* unit = GetSelectUnit(GetMapPosition(mouse->lastx, mouse->lasty));
+		if (unit != NULL) {
+			DrawUnitHighlight(unit);
+		}
 	}
 
 	glDisable(GL_ALPHA_TEST);
@@ -1104,27 +1105,9 @@ void CMiniMap::DrawForReal()
 
 	// draw the projectiles
 	if (drawProjectiles) {
-		GML_RECMUTEX_LOCK(proj); // DrawForReal
+		GML_STDMUTEX_LOCK(proj); // DrawForReal
 
-		if(ph->projectiles.render_size()>0) {
-			CVertexArray* lines=GetVertexArray();
-			CVertexArray* points=GetVertexArray();
-			lines->Initialize();
-			lines->EnlargeArrays(ph->projectiles.render_size()*2,0,VA_SIZE_C);
-			points->Initialize();
-			points->EnlargeArrays(ph->projectiles.render_size(),0,VA_SIZE_C);
-
-			for(ThreadListSimRender<CProjectile*>::render_iterator psi = ph->projectiles.render_begin(); psi != ph->projectiles.render_end(); ++psi) {
-				CProjectile* p = *psi;
-
-				if ((p->owner() && (p->owner()->allyteam == gu->myAllyTeam)) ||
-					gu->spectatingFullView || loshandler->InLos(p, gu->myAllyTeam)) {
-					p->DrawOnMinimap(*lines, *points);
-				}
-			}
-			lines->DrawArrayC(GL_LINES);
-			points->DrawArrayC(GL_POINTS);
-		}
+		ph->DrawProjectilesMiniMap();
 	}
 
 	// draw the queued commands
@@ -1132,10 +1115,16 @@ void CMiniMap::DrawForReal()
 	// NOTE: this needlessly adds to the CursorIcons list, but at least
 	//       they are not drawn  (because the input receivers are drawn
 	//       after the command queues)
-	LuaUnsyncedCtrl::DrawUnitCommandQueues();
-	if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
-		selectedUnits.DrawCommands();
+
+	{
+		GML_RECMUTEX_LOCK(unit); // DrawForReal
+
+		LuaUnsyncedCtrl::DrawUnitCommandQueues();
+		if ((drawCommands > 0) && guihandler->GetQueueKeystate()) {
+			selectedUnits.DrawCommands();
+		}
 	}
+
 	glDisable(GL_DEPTH_TEST);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1144,33 +1133,35 @@ void CMiniMap::DrawForReal()
 		guihandler->DrawMapStuff(!!drawCommands);
 	}
 
-	GML_RECMUTEX_LOCK(sel); // DrawForReal
-	// draw unit ranges
-	const float radarSquare = radarhandler->radarDiv;
-	CUnitSet& selUnits = selectedUnits.selectedUnits;
-	for(CUnitSet::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
-		CUnit* unit = *si;
-		if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeRadar);
-			DrawCircle(unit->pos, (unit->radarRadius * radarSquare));
-		}
-		if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeSonar);
-			DrawCircle(unit->pos, (unit->sonarRadius * radarSquare));
-		}
-		if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
-			glColor3fv(cmdColors.rangeJammer);
-			DrawCircle(unit->pos, (unit->jammerRadius * radarSquare));
-		}
-		// change if someone someday create a non stockpiled interceptor
-		const CWeapon* w = unit->stockpileWeapon;
-		if((w != NULL) && w->weaponDef->interceptor) {
-			if (w->numStockpiled) {
-				glColor3fv(cmdColors.rangeInterceptorOn);
-			} else {
-				glColor3fv(cmdColors.rangeInterceptorOff);
+	{
+		GML_RECMUTEX_LOCK(sel); // DrawForReal
+		// draw unit ranges
+		const float radarSquare = radarhandler->radarDiv;
+		CUnitSet& selUnits = selectedUnits.selectedUnits;
+		for(CUnitSet::iterator si = selUnits.begin(); si != selUnits.end(); ++si) {
+			CUnit* unit = *si;
+			if (unit->radarRadius && !unit->beingBuilt && unit->activated) {
+				glColor3fv(cmdColors.rangeRadar);
+				DrawCircle(unit->pos, (unit->radarRadius * radarSquare));
 			}
-			DrawCircle(unit->pos, w->weaponDef->coverageRange);
+			if (unit->sonarRadius && !unit->beingBuilt && unit->activated) {
+				glColor3fv(cmdColors.rangeSonar);
+				DrawCircle(unit->pos, (unit->sonarRadius * radarSquare));
+			}
+			if (unit->jammerRadius && !unit->beingBuilt && unit->activated) {
+				glColor3fv(cmdColors.rangeJammer);
+				DrawCircle(unit->pos, (unit->jammerRadius * radarSquare));
+			}
+			// change if someone someday create a non stockpiled interceptor
+			const CWeapon* w = unit->stockpileWeapon;
+			if((w != NULL) && w->weaponDef->interceptor) {
+				if (w->numStockpiled) {
+					glColor3fv(cmdColors.rangeInterceptorOn);
+				} else {
+					glColor3fv(cmdColors.rangeInterceptorOff);
+				}
+				DrawCircle(unit->pos, w->weaponDef->coverageRange);
+			}
 		}
 	}
 

@@ -19,26 +19,27 @@ CR_REG_METADATA(CRepulseGfx,(
 	CR_RESERVED(8)
 	));
 
-CRepulseGfx::CRepulseGfx(CUnit* owner,CProjectile* repulsed,float maxDist,float3 color GML_PARG_C)
-	: CProjectile(repulsed?repulsed->pos:float3(0,0,0),repulsed?repulsed->speed:float3(0,0,0),owner, false, false GML_PARG_P),
+CRepulseGfx::CRepulseGfx(CUnit* owner, CProjectile* repulsed, float maxDist, float3 color GML_PARG_C):
+	CProjectile(repulsed? repulsed->pos: ZeroVector, repulsed? repulsed->speed: ZeroVector, owner, false, false, false GML_PARG_P),
 	repulsed(repulsed),
-	sqMaxDist((maxDist*maxDist)+100),
+	sqMaxDist((maxDist * maxDist) + 100),
 	age(0),
 	color(color)
 {
 	if (repulsed)
 		AddDeathDependence(repulsed);
 
-	checkCol=false;
-	useAirLos=true;
+	checkCol = false;
+	useAirLos = true;
 	SetRadius(maxDist);
 
-	for(int y=0;y<5;++y){
-		float yp=(y/4.0f-0.5f);
-		for(int x=0;x<5;++x){
-			float xp=(x/4.0f-0.5f);
-			float d=fastmath::sqrt2(xp*xp+yp*yp);
-			difs[y*5+x]=(1-fastmath::cos(d*2))*20;
+	for (int y = 0; y < 5; ++y) {
+		float yp = (y / 4.0f - 0.5f);
+
+		for (int x = 0; x < 5; ++x) {
+			float xp = (x / 4.0f - 0.5f);
+			float d = fastmath::sqrt2(xp * xp + yp * yp);
+			difs[y * 5 + x] = (1 - fastmath::cos(d * 2)) * 20;
 		}
 	}
 }

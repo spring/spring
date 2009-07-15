@@ -1,41 +1,65 @@
-#include <boost/version.hpp>
-#include <boost/format.hpp>
-#include <boost/ptr_container/ptr_deque.hpp>
-#include <boost/ptr_container/ptr_map.hpp>
-#include <boost/shared_ptr.hpp>
-#include <deque>
-
-#ifdef _WIN32
- #include "Platform/Win/win32.h"
-#else
- #include <arpa/inet.h>
- #include <sys/socket.h>
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
 #endif
 
-#include "mmgr.h"
+#include "Socket.h"
+
+#ifndef _MSC_VER
+#include "StdAfx.h"
+#endif
 
 #include "UDPConnection.h"
+#include <boost/format.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include "mmgr.h"
 
 #include "ProtocolDef.h"
 #include "Exception.h"
 #include <boost/cstdint.hpp>
 
 namespace netcode {
+using namespace boost::asio;
 
 const unsigned UDPConnection::hsize = 9;
 const unsigned UDPMaxPacketSize = 4096;
 
-UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr) : mySocket(NetSocket)
+UDPConnection::UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> NetSocket, const boost::asio::ip::udp::endpoint& MyAddr) : mySocket(NetSocket)
 {
 	sharedSocket = true;
 	addr = MyAddr;
 	Init();
 }
 
-UDPConnection::UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port) : mySocket(NetSocket)
+UDPConnection::UDPConnection(int sourceport, const std::string& address, const unsigned port)
 {
+	boost::system::error_code err;
+	ip::address tempAddr = ip::address::from_string(address, err);
+	if (err)
+	{
+		// error, maybe a hostname?
+		ip::udp::resolver resolver(netcode::netservice);
+		std::ostringstream portbuf;
+		portbuf << port;
+		ip::udp::resolver::query query(address, portbuf.str());
+		ip::udp::resolver::iterator iter = resolver.resolve(query);
+		tempAddr = iter->endpoint().address();
+	}
+
+	addr = ip::udp::endpoint(tempAddr, port);
+	if (addr.address().is_v6())
+	{
+		boost::shared_ptr<ip::udp::socket> temp(new ip::udp::socket(netcode::netservice, ip::udp::endpoint(ip::address_v6::any(), sourceport)));
+		mySocket = temp;
+	}
+	else
+	{
+		boost::shared_ptr<ip::udp::socket> temp(new ip::udp::socket(netcode::netservice, ip::udp::endpoint(ip::address_v4::any(), sourceport)));
+		mySocket = temp;
+	}
 	sharedSocket = false;
-	addr = mySocket->ResolveHost(address, port);
 	Init();
 }
 
@@ -86,16 +110,23 @@ void UDPConnection::Update()
 {
 	if (!sharedSocket)
 	{
-		unsigned recv = 0;
-		unsigned char buffer[UDPMaxPacketSize];
-		sockaddr_in fromAddr;
-		while ((recv = mySocket->RecvFrom(buffer, UDPMaxPacketSize, &fromAddr)) >= hsize)
+		// duplicated code with UDPListener
+		netservice.poll();
+		size_t bytes_avail = 0;
+		while ((bytes_avail = mySocket->available()) > 0)
 		{
-			RawPacket* data = new RawPacket(buffer, recv);
-			if (CheckAddress(fromAddr))
+			std::vector<uint8_t> buffer(bytes_avail);
+			ip::udp::endpoint sender_endpoint;
+			size_t bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint);
+
+			if (bytesReceived < UDPConnection::hsize)
+				continue;
+			RawPacket* data = new RawPacket(&buffer[0], bytesReceived);
+			if (CheckAddress(sender_endpoint))
+			{
 				ProcessRawPacket(data);
-			else
-				; // silently drop
+				data = 0; // UDPConnection takes ownership of packet
+			}
 		}
 	}
 	
@@ -308,27 +339,14 @@ std::string UDPConnection::Statistics() const
 	return msg;
 }
 
-NetAddress UDPConnection::GetPeerName() const
+bool UDPConnection::CheckAddress(const boost::asio::ip::udp::endpoint& from) const
 {
-	NetAddress otherAddr;
-	otherAddr.port = ntohs(addr.sin_port);
-	otherAddr.host = ntohl(addr.sin_addr.s_addr);
-	return otherAddr;
+	return (addr == from);
 }
 
-bool UDPConnection::CheckAddress(const sockaddr_in& from) const
+std::string UDPConnection::GetFullAddress() const
 {
-	if(
-#ifdef _WIN32
-		addr.sin_addr.S_un.S_addr==from.sin_addr.S_un.S_addr
-#else
-		addr.sin_addr.s_addr==from.sin_addr.s_addr
-#endif
-		&& addr.sin_port==from.sin_port){
-		return true;
-	}
-	else
-		return false;
+	return str( boost::format("[%s]:%u") %addr.address().to_string() %addr.port() );
 }
 
 void UDPConnection::SetMTU(unsigned mtu2)
@@ -383,7 +401,7 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 	}
 
 	memcpy(tempbuf+hsize, data, length);
-	mySocket->SendTo(tempbuf, length+hsize, &addr);
+	mySocket->send_to(buffer(tempbuf, length+hsize), addr);
 	delete[] tempbuf;
 
 	dataSent += length;

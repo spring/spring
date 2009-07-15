@@ -215,6 +215,7 @@ FBO::FBO() : fboId(0), reloadOnAltTab(false)
 
 	// we need to bind it once, else it isn't valid
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
 	fboList.push_back(this);
 }

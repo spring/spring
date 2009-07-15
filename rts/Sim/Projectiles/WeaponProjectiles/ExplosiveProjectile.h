@@ -25,7 +25,6 @@ public:
 	float areaOfEffect;
 	float invttl;
 	float curTime;
-	float gravity;
 };
 
 #endif // __EXPLOSIVE_PROJECTILE_H__

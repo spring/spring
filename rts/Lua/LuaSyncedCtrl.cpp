@@ -42,6 +42,8 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/PieceProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -49,6 +51,7 @@
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/LuaUnitScript.h"
 #include "Sim/Units/UnitTypes/Builder.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -166,6 +169,8 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(UseUnitResource);
 
 	REGISTER_LUA_CFUNC(RemoveBuildingDecal);
+	REGISTER_LUA_CFUNC(AddGrass);
+	REGISTER_LUA_CFUNC(RemoveGrass);
 
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
@@ -175,15 +180,23 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetFeatureNoSelect);
 	REGISTER_LUA_CFUNC(SetFeatureCollisionVolumeData);
 
+
 	REGISTER_LUA_CFUNC(SetProjectilePosition);
 	REGISTER_LUA_CFUNC(SetProjectileVelocity);
 	REGISTER_LUA_CFUNC(SetProjectileCollision);
 
+	REGISTER_LUA_CFUNC(SetProjectileGravity);
+	REGISTER_LUA_CFUNC(SetProjectileSpinAngle);
+	REGISTER_LUA_CFUNC(SetProjectileSpinSpeed);
+	REGISTER_LUA_CFUNC(SetProjectileSpinVec);
+
+	REGISTER_LUA_CFUNC(SetProjectileCEG);
+
+
 	REGISTER_LUA_CFUNC(CallCOBScript);
-	REGISTER_LUA_CFUNC(CallCOBScriptCB);
 	REGISTER_LUA_CFUNC(GetCOBScriptID);
-	REGISTER_LUA_CFUNC(GetUnitCOBValue);
-	REGISTER_LUA_CFUNC(SetUnitCOBValue);
+	//FIXME: REGISTER_LUA_CFUNC(GetUnitCOBValue);
+	//FIXME: REGISTER_LUA_CFUNC(SetUnitCOBValue);
 
 	REGISTER_LUA_CFUNC(GiveOrderToUnit);
 	REGISTER_LUA_CFUNC(GiveOrderToUnitMap);
@@ -210,6 +223,10 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetExperienceGrade);
 
 	if (!LuaSyncedMoveCtrl::PushMoveCtrl(L)) {
+		return false;
+	}
+
+	if (!CLuaUnitScript::PushEntries(L)) {
 		return false;
 	}
 
@@ -679,8 +696,9 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
-		return 0;
+	CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+	if (cob == NULL) {
+		luaL_error(L, "CallCOBScript(): unit is not running a COB script");
 	}
 
 	// collect the arguments
@@ -692,69 +710,14 @@ int LuaSyncedCtrl::CallCOBScript(lua_State* L)
 	int retval;
 	if (lua_israwnumber(L, 2)) {
 		const int funcId = lua_toint(L, 2);
-		retval = unit->cob->RawCall(funcId, cobArgs);
+		retval = cob->RawCall(funcId, cobArgs);
 	}
 	else if (lua_israwstring(L, 2)) {
 		const string funcName = lua_tostring(L, 2);
-		retval = unit->cob->Call(funcName, cobArgs);
+		retval = cob->Call(funcName, cobArgs);
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to CallCOBScript()");
-		retval = 0;
-	}
-
-	lua_settop(L, 0); // FIXME - ok?
-	lua_pushnumber(L, retval);
-	for (int i = 0; i < retParams; i++) {
-		lua_pushnumber(L, cobArgs[i]);
-	}
-	return 1 + retParams;
-}
-
-
-int LuaSyncedCtrl::CallCOBScriptCB(lua_State* L)
-{
-//FIXME?	CheckAllowGameChanges(L);
-	const int args = lua_gettop(L); // number of arguments
-	if ((args < 4) ||
-	    !lua_isnumber(L, 1) || // unitID
-	    !lua_isnumber(L, 3) || // number of returned parameters
-	    !lua_isnumber(L, 4)) { // callback data (float)
-		luaL_error(L, "Incorrect arguments to CallCOBScriptCB()");
-	}
-
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if (unit == NULL) {
-		return 0;
-	}
-	if (unit->cob == NULL) {
-		return 0;
-	}
-
-	// collect the arguments
-	vector<int> cobArgs;
-	ParseCobArgs(L, 5, args, cobArgs);
-	const int retParams = min(lua_toint(L, 3),
-	                          min(MAX_LUA_COB_ARGS, (int)cobArgs.size()));
-
-	// callback data
-	float cbData = lua_tofloat(L, 4);
-
-	int retval;
-	if (lua_israwnumber(L, 2)) {
-		const int funcId = lua_toint(L, 2);
-		retval = unit->cob->RawCall(funcId, cobArgs,
-		                            CLuaHandle::GetActiveCallback(),
-		                            (void*) unit->id, (void*) *((int*)&cbData));
-	}
-	else if (lua_israwstring(L, 2)) {
-		const string funcName = lua_tostring(L, 2);
-		retval = unit->cob->Call(funcName, cobArgs,
-		                         CLuaHandle::GetActiveCallback(),
-			                       (void*) unit->id, (void*) *((int*)&cbData));
-	}
-	else {
-		luaL_error(L, "Incorrect arguments to CallCOBScriptCB()");
 		retval = 0;
 	}
 
@@ -778,13 +741,14 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
-		return 0;
+	CCobInstance* cob = dynamic_cast<CCobInstance*>(unit->script);
+	if (cob == NULL) {
+		luaL_error(L, "GetCOBScriptID(): unit is not running a COB script");
 	}
 
 	const string funcName = lua_tostring(L, 2);
 
-	const int funcID = unit->cob->GetFunctionId(funcName);
+	const int funcID = cob->GetFunctionId(funcName);
 	if (funcID >= 0) {
 		lua_pushnumber(L, funcID);
 		return 1;
@@ -792,69 +756,6 @@ int LuaSyncedCtrl::GetCOBScriptID(lua_State* L)
 
 	return 0;
 }
-
-
-int LuaSyncedCtrl::GetUnitCOBValue(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->cob == NULL)) {
-		return 0;
-	}
-
-	int arg = 2;
-	bool splitData = false;
-	if (lua_isboolean(L, arg)) {
-		splitData = lua_toboolean(L, arg);
-		arg++;
-	}
-
-	const int val = luaL_checkint(L, arg); arg++;
-
-	int p[4];
-	for (int a = 0; a < 4; a++, arg++) {
-		if (lua_istable(L, arg)) {
-			int x, z;
-			lua_rawgeti(L, arg, 1); x = luaL_checkint(L, -1); lua_pop(L, 1);
-			lua_rawgeti(L, arg, 2); z = luaL_checkint(L, -1); lua_pop(L, 1);
-			p[a] = PACKXZ(x, z);
-		}
-		else {
-			p[a] = (int)luaL_optnumber(L, arg, 0);
-		}
-	}
-
-	const int result = unit->cob->GetUnitVal(val, p[0], p[1], p[2], p[3]);
-	if (!splitData) {
-		lua_pushnumber(L, result);
-		return 1;
-	}
-	lua_pushnumber(L, UNPACKX(result));
-	lua_pushnumber(L, UNPACKZ(result));
-	return 2;
-}
-
-
-int LuaSyncedCtrl::SetUnitCOBValue(lua_State* L)
-{
-	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
-	if ((unit == NULL) || (unit->cob == NULL)) {
-		return 0;
-	}
-	const int args = lua_gettop(L); // number of arguments
-	const int val = luaL_checkint(L, 2);
-	int param;
-	if (args == 3) {
-		param = luaL_checkint(L, 3);
-	}
-	else {
-		const int x = luaL_checkint(L, 3);
-		const int z = luaL_checkint(L, 4);
-		param = PACKXZ(x, z);
-	}
-	unit->cob->SetUnitVal(val, param);
-	return 0;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -1218,6 +1119,46 @@ int LuaSyncedCtrl::SetUnitStockpile(lua_State* L)
 }
 
 
+static int SetSingleUnitWeaponState(lua_State* L, CWeapon* weapon, int index)
+{
+	const string key = lua_tostring(L, index);
+	const float value = lua_tofloat(L, index + 1);
+	// FIXME: KDR -- missing checks and updates?
+	if (key == "reloadState") {
+		weapon->reloadStatus = (int)value;
+	}
+	else if (key == "reloadTime") {
+		weapon->reloadTime = (int)(value * GAME_SPEED);
+	}
+	else if (key == "accuracy") {
+		weapon->accuracy = value;
+	}
+	else if (key == "sprayAngle") {
+		weapon->sprayAngle = value;
+	}
+	else if (key == "range") {
+		weapon->range = value;
+	}
+	else if (key == "projectileSpeed") {
+		weapon->projectileSpeed = value;
+	}
+	else if (key == "burst") {
+		weapon->salvoSize = (int)value;
+	}
+	else if (key == "burstRate") {
+		weapon->salvoDelay = (int)(value * GAME_SPEED);
+	}
+	else if (key == "projectiles") {
+		weapon->projectilesPerShot = (int)value;
+	}
+	else if (key == "aimReady") {
+		// HACK, this should be set to result of lua_toboolean
+		weapon->angleGood = (value != 0.0f);
+	}
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
@@ -1235,38 +1176,12 @@ int LuaSyncedCtrl::SetUnitWeaponState(lua_State* L)
 		const int table = 3;
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isnumber(L, -1)) {
-				const string key = lua_tostring(L, -2);
-				const float value = lua_tofloat(L, -1);
-				// FIXME: KDR -- missing checks and updates?
-				if (key == "reloadState") {
-					weapon->reloadStatus = (int)value;
-				}
-				else if (key == "reloadTime") {
-					weapon->reloadTime = (int)(value * GAME_SPEED);
-				}
-				else if (key == "accuracy") {
-					weapon->accuracy = value;
-				}
-				else if (key == "sprayAngle") {
-					weapon->sprayAngle = value;
-				}
-				else if (key == "range") {
-					weapon->range = value;
-				}
-				else if (key == "projectileSpeed") {
-					weapon->projectileSpeed = value;
-				}
-				else if (key == "burst") {
-					weapon->salvoSize = (int)value;
-				}
-				else if (key == "burstRate") {
-					weapon->salvoDelay = (int)(value * GAME_SPEED);
-				}
-				else if (key == "projectiles") {
-					weapon->projectilesPerShot = (int)value;
-				}
+				SetSingleUnitWeaponState(L, weapon, -2);
 			}
 		}
+	}
+	else if (lua_israwstring(L, 3) && lua_isnumber(L, 4)) {
+		SetSingleUnitWeaponState(L, weapon, 3);
 	}
 
 	return 0;
@@ -2133,6 +2048,26 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 }
 
 
+int LuaSyncedCtrl::AddGrass(lua_State* L)
+{
+	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
+	pos.CheckInBounds();
+
+	treeDrawer->AddGrass(pos);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::RemoveGrass(lua_State* L)
+{
+	float3 pos(luaL_checkfloat(L, 1), 0.0f, luaL_checkfloat(L, 2));
+	pos.CheckInBounds();
+
+	treeDrawer->RemoveGrass((int)pos.x,(int)pos.z);
+	return 0;
+}
+
+
 /******************************************************************************/
 
 int LuaSyncedCtrl::CreateFeature(lua_State* L)
@@ -2186,7 +2121,7 @@ int LuaSyncedCtrl::CreateFeature(lua_State* L)
 	// use SetFeatureResurrect() to fill in the missing bits
 	inCreateFeature = true;
 	CFeature* feature = new CFeature();
-	feature->Initialize(pos, featureDef, heading, 0, team, "");
+	feature->Initialize(pos, featureDef, heading, 0, team, allyTeam, "");
 	inCreateFeature = false;
 
 	lua_pushnumber(L, feature->id);
@@ -2356,7 +2291,6 @@ int LuaSyncedCtrl::SetProjectilePosition(lua_State* L)
 	return 0;
 }
 
-
 int LuaSyncedCtrl::SetProjectileVelocity(lua_State* L)
 {
 	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
@@ -2379,9 +2313,85 @@ int LuaSyncedCtrl::SetProjectileCollision(lua_State* L)
 	}
 
 	proj->Collision();
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetProjectileGravity(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
+		return 0;
+	}
+
+	proj->gravity = luaL_optfloat(L, 2, 0.0f);
+	return 0;
+}
+
+int LuaSyncedCtrl::SetProjectileSpinAngle(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL || !proj->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	pproj->spinAngle = luaL_optfloat(L, 2, 0.0f);
+	return 0;
+}
+
+int LuaSyncedCtrl::SetProjectileSpinSpeed(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL || !proj->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	pproj->spinSpeed = luaL_optfloat(L, 2, 0.0f);
+	return 0;
+}
+
+int LuaSyncedCtrl::SetProjectileSpinVec(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL || !proj->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+	pproj->spinVec.x = luaL_optfloat(L, 2, 0.0f);
+	pproj->spinVec.y = luaL_optfloat(L, 3, 0.0f);
+	pproj->spinVec.z = luaL_optfloat(L, 4, 0.0f);
+	return 0;
+}
+
+
+int LuaSyncedCtrl::SetProjectileCEG(lua_State* L)
+{
+	CProjectile* proj = ParseProjectile(L, __FUNCTION__, 1);
+	if (proj == NULL) {
+		return 0;
+	}
+
+	assert(proj->weapon || proj->piece);
+
+	if (proj->weapon) {
+		CWeaponProjectile* wproj = dynamic_cast<CWeaponProjectile*>(proj);
+		if (wproj != NULL) {
+			wproj->ceg.Load(explGenHandler, luaL_checkstring(L, 2));
+		}
+	}
+	if (proj->piece) {
+		CPieceProjectile* pproj = dynamic_cast<CPieceProjectile*>(proj);
+		if (pproj != NULL) {
+			pproj->ceg.Load(explGenHandler, luaL_checkstring(L, 2));
+		}
+	}
 
 	return 0;
 }
+
 
 /******************************************************************************/
 /******************************************************************************/
@@ -2634,6 +2644,12 @@ static void ParseMapParams(lua_State* L, const char* caller, float& factor,
 		fx2    = luaL_checkfloat(L, 3);
 		fz2    = luaL_checkfloat(L, 4);
 		factor = luaL_checkfloat(L, 5);
+		if (fx1 > fx2) {
+			swap(fx1, fx2);
+		}
+		if (fz1 > fz2) {
+			swap(fz1, fz2);
+		}
 	}
 	else {
 		luaL_error(L, "Incorrect arguments to %s()", caller);
@@ -2860,11 +2876,11 @@ int LuaSyncedCtrl::SpawnCEG(lua_State* L)
 {
 	const string name = luaL_checkstring(L, 1);
 	const float3 pos(luaL_optfloat(L, 2, 0.0f),
-									 luaL_optfloat(L, 3, 0.0f),
-									 luaL_optfloat(L, 4, 0.0f));
+		luaL_optfloat(L, 3, 0.0f),
+		luaL_optfloat(L, 4, 0.0f));
 	const float3 dir(luaL_optfloat(L, 5, 0.0f),
-									 luaL_optfloat(L, 6, 0.0f),
-									 luaL_optfloat(L, 7, 0.0f));
+		luaL_optfloat(L, 6, 0.0f),
+		luaL_optfloat(L, 7, 0.0f));
 	const float rad = luaL_optfloat(L, 8, 0.0f);
 	const float dmg = luaL_optfloat(L, 9, 0.0f);
 	const float dmgMod = 1.0f;

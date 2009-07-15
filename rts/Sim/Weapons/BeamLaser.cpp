@@ -9,8 +9,7 @@
 #include "Sim/Projectiles/WeaponProjectiles/BeamLaserProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/LargeBeamLaserProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/LaserProjectile.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitTypes/Building.h"
 #include "PlasmaRepulser.h"
@@ -72,10 +71,8 @@ void CBeamLaser::Update(void)
 			owner->UseEnergy(energyFireCost / salvoSize);
 			owner->UseMetal(metalFireCost / salvoSize);
 
-			std::vector<int> args;
-			args.push_back(0);
-			owner->cob->Call(COBFN_QueryPrimary + weaponNum, args);
-			CMatrix44f weaponMat = owner->cob->GetPieceMatrix(args[0]);
+			const int piece = owner->script->QueryWeapon(weaponNum);
+			CMatrix44f weaponMat = owner->script->GetPieceMatrix(piece);
 
 			const float3 relWeaponPos = weaponMat.GetPos();
 			const float3 dir =
@@ -194,11 +191,9 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		rangeMod = 1.3f;
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (owner->directControl) {
 		rangeMod = 0.95f;
 	}
-#endif
 
 	float maxLength = range * rangeMod;
 	float curLength = 0.0f;

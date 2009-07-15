@@ -9,13 +9,13 @@ class CGenericParticleProjectile : public CProjectile
 {
 	CR_DECLARE(CGenericParticleProjectile);
 public:
-	CGenericParticleProjectile(const float3& pos,const float3& speed,CUnit* owner GML_PARG_H);
+	CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner GML_PARG_H);
 	~CGenericParticleProjectile(void);
 
 	virtual void Update();
 	virtual void Draw();
 
-	float3 gravity;
+	float3 gravity3;
 
 	AtlasedTexture *texture;
 	CColorMap *colorMap;

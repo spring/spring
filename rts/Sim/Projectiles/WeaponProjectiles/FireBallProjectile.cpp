@@ -5,7 +5,6 @@
 #include "FireBallProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
@@ -68,18 +67,19 @@ void CFireBallProjectile::Draw()
 	}
 
 	int maxCol=numFire;
-	if(checkCol)
-		maxCol=10;
-	for(int i=0; i<numFire; i++) //! CAUTION: loop count must match EnlargeArrays above
+	if (checkCol)
+		maxCol = 10;
+
+	for (int i = 0; i < numFire; i++) //! CAUTION: loop count must match EnlargeArrays above
 	{
-		col[0]=(maxCol-i)*25;
-		col[1]=(maxCol-i)*15;
-		col[2]=(maxCol-i)*10;
-		va->AddVertexQTC(interPos-camera->right*size-camera->up*size,ph->dguntex.xstart ,ph->dguntex.ystart ,col);
-		va->AddVertexQTC(interPos+camera->right*size-camera->up*size,ph->dguntex.xend ,ph->dguntex.ystart ,col);
-		va->AddVertexQTC(interPos+camera->right*size+camera->up*size,ph->dguntex.xend ,ph->dguntex.yend ,col);
-		va->AddVertexQTC(interPos-camera->right*size+camera->up*size,ph->dguntex.xstart ,ph->dguntex.yend ,col);
-		interPos = interPos-speed*0.5f;
+		col[0] = (maxCol - i) * 25;
+		col[1] = (maxCol - i) * 15;
+		col[2] = (maxCol - i) * 10;
+		va->AddVertexQTC(interPos - camera->right * size - camera->up * size, ph->dguntex.xstart, ph->dguntex.ystart, col);
+		va->AddVertexQTC(interPos + camera->right * size - camera->up * size, ph->dguntex.xend ,  ph->dguntex.ystart, col);
+		va->AddVertexQTC(interPos + camera->right * size + camera->up * size, ph->dguntex.xend ,  ph->dguntex.yend,   col);
+		va->AddVertexQTC(interPos  -camera->right * size + camera->up * size, ph->dguntex.xstart, ph->dguntex.yend,   col);
+		interPos = interPos - speed * 0.5f;
 	}
 }
 
@@ -89,9 +89,8 @@ void CFireBallProjectile::Update()
 		pos += speed;
 
 		if (weaponDef->gravityAffected)
-			speed.y += mapInfo->map.gravity;
+			speed.y += gravity;
 
-		// g�ra om till ttl sedan kanske
 		if (weaponDef->noExplode) {
 			if (TraveledRange())
 				checkCol = false;

@@ -138,11 +138,6 @@ bool SoundBuffer::LoadWAV(const std::string& file, std::vector<boost::uint8_t> b
 //		logOutput.Print("OpenAL: AvgBytesPerSec %d\n", header->AvgBytesPerSec);
 
 		header->datalen = boost::uint32_t(buffer.size() - sizeof(WAVHeader))&(~boost::uint32_t((header->BitsPerSample*header->channels)/8 -1));
-		// FIXME: setting datalen to size - sizeof(WAVHeader) only
-		// works for some files that have a garbage datalen field
-		// in their header, others cause SEGV's inside alBufferData()
-		// header->datalen = size - sizeof(WAVHeader);
-		//header->datalen = 1;
 	}
 
 	if (!AlGenBuffer(file, format, &buffer[sizeof(WAVHeader)], header->datalen, header->SamplesPerSec))
@@ -175,44 +170,50 @@ bool SoundBuffer::LoadVorbis(const std::string& file, std::vector<boost::uint8_t
 	// vorbis_comment* vorbisComment = ov_comment(&oggStream, -1);
 
 	ALenum format;
-	if (vorbisInfo->channels == 1) {
-		if (vorbisInfo->rate == 8)
-			format = AL_FORMAT_MONO8;
-		else if (vorbisInfo->rate == 16)
-			format = AL_FORMAT_MONO16;
-		else
-		{
-			if (strict)
-				ErrorMessageBox("SoundBuffer::LoadVorbis: invalid number of bits per sample (mono).", file, 0);
-			return false;
-		}
+	if (vorbisInfo->channels == 1)
+	{
+		format = AL_FORMAT_MONO16;
 	}
 	else if (vorbisInfo->channels == 2)
 	{
-		if (vorbisInfo->rate == 8)
-			format = AL_FORMAT_STEREO8;
-		else if (vorbisInfo->rate == 16)
-			format = AL_FORMAT_STEREO16;
-		else
-		{
-			if (strict)
-				ErrorMessageBox("SoundBuffer::LoadVorbis: invalid number of bits per sample (stereo).", file, 0);
-			return false;
-		}
+		format = AL_FORMAT_STEREO16;
 	}
 	else
 	{
 		if (strict)
 			ErrorMessageBox("SoundBuffer::LoadVorbis (%s): invalid number of channels.", file, 0);
+		else
+			LogObject(LOG_SOUND) << "File  " << file << ": invalid number of channels: " << vorbisInfo->channels;
 		return false;
 	}
 
-	std::vector<boost::uint8_t> decodeBuffer(ov_pcm_total(&oggStream, -1));
+	size_t pos = 0;
+	std::vector<boost::uint8_t> decodeBuffer(512*1024); // 512kb read buffer
 	int section = 0;
-	long read = ov_read(&oggStream, (char*)&decodeBuffer[0], decodeBuffer.size(), 0, 2, 1, &section);
-	LogObject() << "Read " << read << " bytes from vorbis sample";
+	long read = 0;
+	do
+	{
+		if (4*pos > 3*decodeBuffer.size()) // enlarge buffer so ov_read has enough space
+			decodeBuffer.resize(decodeBuffer.size()*2);
+		read = ov_read(&oggStream, (char*)&decodeBuffer[pos], decodeBuffer.size() - pos, 0, 2, 1, &section);
+		switch(read)
+		{
+			case OV_HOLE:
+				LogObject(LOG_SOUND) << file << ": garbage or corrupt page in stream (non-fatal)";
+				continue; // read next
+			case OV_EBADLINK:
+				LogObject(LOG_SOUND) << file << ": corrupted stream";
+				return false; // abort
+			case OV_EINVAL:
+				LogObject(LOG_SOUND) << file << ": corrupted headers";
+				return false; // abort
+			default:
+				break; // all good
+		};
+		pos += read;
+	} while (read > 0); // read == 0 indicated EOF, read < 0 is error
 
-	AlGenBuffer(file, format, &decodeBuffer[0], decodeBuffer.size(), vorbisInfo->rate);
+	AlGenBuffer(file, format, &decodeBuffer[0], pos, vorbisInfo->rate);
 	return true;
 }
 

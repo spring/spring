@@ -39,21 +39,23 @@ CR_REG_METADATA_SUB(CFireProjectile, SubParticle, (
 	));
 
 
-CFireProjectile::CFireProjectile(const float3& pos,const float3& speed,CUnit* owner,int emitTtl,float emitRadius,int particleTtl,float particleSize GML_PARG_C)
-: CProjectile(pos,speed,owner, true, false GML_PARG_P),
+CFireProjectile::CFireProjectile(const float3& pos, const float3& speed, CUnit* owner, int emitTtl, float emitRadius, int particleTtl, float particleSize GML_PARG_C):
+	//! these are synced, but neither weapon nor piece
+	//! (only burning features create instances of them)
+	CProjectile(pos, speed, owner, true, false, false GML_PARG_P),
 	ttl(emitTtl),
 	emitPos(pos),
 	emitRadius(emitRadius),
 	particleTime(particleTtl),
 	particleSize(particleSize)
 {
-	drawRadius=emitRadius+particleTime*speed.Length();
-	checkCol=false;
-	this->pos.y+=particleTime*speed.Length()*0.5f;
-	ageSpeed=1.0f/particleTime;
+	drawRadius = emitRadius + particleTime * speed.Length();
+	checkCol = false;
+	this->pos.y += particleTime * speed.Length() * 0.5f;
+	ageSpeed = 1.0f / particleTime;
 
-	alwaysVisible=true;
-	castShadow=true;
+	alwaysVisible = true;
+	castShadow = true;
 }
 
 CFireProjectile::~CFireProjectile(void)

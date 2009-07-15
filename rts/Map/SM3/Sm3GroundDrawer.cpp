@@ -68,53 +68,59 @@ void CSm3GroundDrawer::Update()
 	tr->CacheTextures();
 }
 
-void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,unsigned int overrideVP)
+void CSm3GroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, unsigned int overrideVP)
 {
 	if (wireframe) {
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	}
 
-	terrain::RenderContext *currc = rc;
+	terrain::RenderContext* currc = rc;
 
 	tr->SetShaderParams(mapInfo->light.sunDir, currc->cam->pos);
 
-	if (shadowHandler->drawShadows)
-	{
+	if (shadowHandler->drawShadows) {
 		terrain::ShadowMapParams params;
 
-		shadowHandler->GetShadowMapSizeFactors (params.f_a, params.f_b);
+		shadowHandler->GetShadowMapSizeFactors(params.f_a, params.f_b);
 		params.mid [0] = shadowHandler->xmid;
 		params.mid [1] = shadowHandler->ymid;
 		params.shadowMap = shadowHandler->shadowTexture;
-		for (int a=0;a<16;a++) 
+
+		for (int a = 0; a < 16; a++)
 			params.shadowMatrix[a] = shadowHandler->shadowMatrix[a];
 
-		tr->SetShadowParams (&params);
+		tr->SetShadowParams(&params);
 	}
 
-	tr->SetActiveContext (currc);
+	tr->SetActiveContext(currc);
 
 	glEnable(GL_CULL_FACE);
 	glFrontFace(GL_CW);
 
-	glColor4f(1.0f,1.0f,1.0f,1.0f);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glEnable(GL_LIGHTING);
 	glLightfv(GL_LIGHT0, GL_POSITION, mapInfo->light.sunDir);
-	float d[4]={0.0f,0.0f,0.0f,1.0f};
-	for (int a=0;a<3;a++)
-		d[a]=mapInfo->light.groundSunColor[a];
+
+	float d[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+	const float z[] = {0.0f, 0.0f, 0.0f, 1.0f};
+
+	for (int a = 0; a < 3; a++)
+		d[a] = mapInfo->light.groundSunColor[a];
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, d);
-	for (int a=0;a<3;a++)
-		d[a]=mapInfo->light.groundAmbientColor[a];
+
+	for (int a = 0; a < 3; a++)
+		d[a] = mapInfo->light.groundAmbientColor[a];
 	glLightfv(GL_LIGHT0, GL_AMBIENT, d);
-	for (int a=0;a<3;a++)
-		d[a]=mapInfo->light.groundSpecularColor[a];
-	glLightfv (GL_LIGHT0, GL_SPECULAR, d);
-	for (int a=0;a<4;a++)
-		d[a]=0.0f;
+
+	for (int a = 0; a < 3; a++)
+		d[a] = mapInfo->light.groundSpecularColor[a];
+	glLightfv(GL_LIGHT0, GL_SPECULAR, d);
+
+	for (int a = 0; a < 4; a++)
+		d[a] = 0.0f;
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, d);
-	const float zero[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	glLightModelfv (GL_LIGHT_MODEL_AMBIENT, zero);
+
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, z);
 	glDisable(GL_LIGHT1);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_RESCALE_NORMAL);
@@ -134,7 +140,7 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 	glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, 10.0f);*/
 	/////////////////////
 
-	tr->Draw ();
+	tr->Draw();
 	glDisable(GL_LIGHT0);
 	glDisable(GL_LIGHTING);
 
@@ -142,24 +148,25 @@ void CSm3GroundDrawer::Draw(bool drawWaterReflection,bool drawUnitReflection,uns
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	if (drawMode != drawNormal)
-	{
+	if (drawMode != drawNormal) {
 		glEnable(GL_BLEND);
 		glDepthMask(GL_FALSE);
+
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glEnable(GL_POLYGON_OFFSET_FILL);
-		glPolygonOffset(0.0f,- 10.0f);
-		glColor4f(1.0f,1.0f,1.0f,0.5f);
-		tr->DrawOverlayTexture (infoTex);
+		glPolygonOffset(0.0f, -10.0f);
+		glColor4f(1.0f, 1.0f, 1.0f, 0.5f);
+		tr->DrawOverlayTexture(infoTex);
 		glDisable(GL_POLYGON_OFFSET_FILL);
-		glDepthMask(GL_FALSE);
+
+		glDepthMask(GL_TRUE);
 		glDisable(GL_BLEND);
 	}
 
 	glFrontFace(GL_CCW);
 	glDisable(GL_CULL_FACE);
 
-	glColor3ub(255,255,255);
+	glColor3ub(255, 255, 255);
 
 	DrawObjects(drawWaterReflection, drawUnitReflection);
 

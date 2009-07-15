@@ -58,7 +58,6 @@ CR_REG_METADATA(FeatureDef, (
 		CR_MEMBER(drawType),
 		//CR_MEMBER(model), FIXME
 		CR_MEMBER(modelname),
-		CR_MEMBER(modelType),
 		CR_MEMBER(resurrectable),
 		CR_MEMBER(destructable),
 		CR_MEMBER(blocking),
@@ -232,7 +231,7 @@ const FeatureDef* CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable,
 	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
 	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy)*6.f);
 
-	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
+	fd->smokeTime = fdTable.GetInt("smokeTime", (fd->blocking) ? 300 : 0);
 
 	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_MODEL);
 	fd->modelname = fdTable.GetString("object", "");
@@ -319,15 +318,14 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 	for (int a = 0; a < numType; ++a) {
 		const string name = StringToLower(readmap->GetFeatureType(a));
 
-		if (GetFeatureDef(name) == NULL) {
+		if (GetFeatureDef(name, false) == NULL) {
 			if (name.find("treetype") != string::npos) {
 				FeatureDef* fd = new FeatureDef;
 				fd->blocking = 1;
 				fd->burnable = true;
 				fd->destructable = 1;
 				fd->reclaimable = true;
-				fd->drawType = DRAWTYPE_TREE;
-				fd->modelType = atoi(name.substr(8).c_str());
+				fd->drawType = DRAWTYPE_TREE + atoi(name.substr(8).c_str());
 				fd->energy = 250;
 				fd->metal = 0;
 				fd->reclaimTime = 1500;
@@ -349,7 +347,6 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 				fd->geoThermal = true;
 				// geos are drawn into the ground texture and emit smoke to be visible
 				fd->drawType = DRAWTYPE_NONE;
-				fd->modelType = 0;
 				fd->energy = 0;
 				fd->metal = 0;
 				fd->reclaimTime = 0;
@@ -383,10 +380,13 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 			}
 
 			const float ypos = ground->GetHeight2(mfi[a].pos.x, mfi[a].pos.z);
-			(new CFeature)->Initialize (float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
-			                                 def->second, (short int)mfi[a].rotation,
-			                                 0, -1, "");
+			(new CFeature)->Initialize(
+				float3(mfi[a].pos.x, ypos, mfi[a].pos.z),
+				def->second, (short int) mfi[a].rotation,
+				0, -1, -1, ""
+			);
 		}
+
 		delete[] mfi;
 	}
 }
@@ -440,7 +440,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 
 	int i = iter;
 	do {
-		if (name.empty()) return NULL;
+		if (defname->empty()) return NULL;
 		fd = GetFeatureDef(*defname);
 		if (!fd) return NULL;
 		defname = &(fd->deathFeature);
@@ -454,12 +454,7 @@ CFeature* CFeatureHandler::CreateWreckage(const float3& pos, const std::string& 
 			fromUnit = "";
 
 		CFeature* f = new CFeature;
-		f->Initialize(pos, fd, (short int) rot, facing, team, fromUnit, speed);
-
-		// allow area-reclaiming wrecks of all units, including your own (they set allyteam = -1)
-		f->allyteam = allyteam;
-		if (emitSmoke && fd->blocking)
-			f->emitSmokeTime = fd->smokeTime;
+		f->Initialize(pos, fd, (short int) rot, facing, team, allyteam, fromUnit, speed, emitSmoke ? fd->smokeTime : 0);
 
 		return f;
 	}
@@ -576,11 +571,8 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 			if(feature->def->floating)
 				wh = ground->GetHeight(fpos.x, fpos.z);
 			if (fpos.y > wh || fpos.y < gh) {
-				SetFeatureUpdateable(feature);
-
 				feature->finalHeight = wh;
-
-				feature->CalculateTransform ();
+				SetFeatureUpdateable(feature);
 			}
 		}
 	}
@@ -614,7 +606,7 @@ void CFeatureHandler::Draw()
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
 		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
-		for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
+		for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); ++usi) {
 			DrawFar(*usi, va);
 		}
 		va->DrawArrayTN(GL_QUADS);
@@ -625,7 +617,11 @@ void CFeatureHandler::Draw()
 	glDisable(GL_FOG);
 }
 
-void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading) {
+void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading)
+{
+	if (fadeFeatures.empty() && fadeFeaturesS3O.empty())
+		return;
+
 	bool oldAdvShading = unitDrawer->advShading;
 	unitDrawer->advShading = unitDrawer->advShading && !noAdvShading;
 
@@ -713,8 +709,8 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 		CFeature* f = (*fi);
 		const FeatureDef* def = f->def;
 
-		if ((f->allyteam == -1 || f->allyteam == gu->myAllyTeam || gu->spectatingFullView ||
-			loshandler->InLos(f->pos, gu->myAllyTeam)) && def->drawType == DRAWTYPE_MODEL) {
+		if (def->drawType == DRAWTYPE_MODEL && (f->allyteam == -1 || f->allyteam == gu->myAllyTeam ||
+			gu->spectatingFullView || loshandler->InLos(f->pos, gu->myAllyTeam)) ) {
 
 			if (drawReflection) {
 				float3 zeroPos;
@@ -736,31 +732,38 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 			float sqDist = (f->pos - camera->pos).SqLength2D();
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
-			float sqFadeDistE;
-			float sqFadeDistB;
-			if(farLength < sqFadeDistEnd) {
-				sqFadeDistE = farLength;
-				sqFadeDistB = farLength * 0.75f * 0.75f;
-			} else {
-				sqFadeDistE = sqFadeDistEnd;
-				sqFadeDistB = sqFadeDistBegin;
-			}
-
 			if (sqDist < farLength) {
-				if((!unitDrawer->advFade && unitDrawer->advShading) || sqDist < sqFadeDistB) {
+				if(unitDrawer->advFade && unitDrawer->advShading) {
+					float sqFadeDistE;
+					float sqFadeDistB;
+					if(farLength < sqFadeDistEnd) {
+						sqFadeDistE = farLength;
+						sqFadeDistB = farLength * 0.75f * 0.75f;
+					} else {
+						sqFadeDistE = sqFadeDistEnd;
+						sqFadeDistB = sqFadeDistBegin;
+					}
+					if(sqDist < sqFadeDistB) {
+						f->tempalpha = 1.0f;
+						if (f->model->type == MODELTYPE_3DO) {
+							unitDrawer->DrawFeatureStatic(f);
+						} else {
+							unitDrawer->QueS3ODraw(f, f->model->textureType);
+						}
+					} else if(sqDist < sqFadeDistE) {
+						f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+						if (f->model->type == MODELTYPE_3DO) {
+							featureHandler->fadeFeatures.insert(f);
+						} else {
+							featureHandler->fadeFeaturesS3O.insert(f);
+						}
+					}
+				} else {
 					f->tempalpha = 1.0f;
 					if (f->model->type == MODELTYPE_3DO) {
 						unitDrawer->DrawFeatureStatic(f);
 					} else {
 						unitDrawer->QueS3ODraw(f, f->model->textureType);
-					}
-				}
-				else if(sqDist < sqFadeDistE) {
-					f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
-					if (f->model->type == MODELTYPE_3DO) {
-						featureHandler->fadeFeatures.insert(f);
-					} else {
-						featureHandler->fadeFeaturesS3O.insert(f);
 					}
 				}
 			} else {

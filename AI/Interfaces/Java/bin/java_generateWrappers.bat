@@ -6,7 +6,7 @@ REM
 SET SPRING_SOURCE=../../../../rts
 SET MY_SOURCE_JAVA=../java/src/
 SET GENERATED_SOURCE_DIR=../java/generated
-SET JAVA_PKG=com/clan_sy/spring/ai
+SET JAVA_PKG=com/springrts/ai
 
 SET AWK=gawk.exe
 

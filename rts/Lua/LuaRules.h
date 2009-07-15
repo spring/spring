@@ -107,9 +107,6 @@ class CLuaRules : public CLuaHandleSynced
 		static int SetGameRulesParam(lua_State* L);
 		static int CreateGameRulesParams(lua_State* L);
 
-	protected:
-		static void CobCallback(int retCode, void* p1, void* p2);
-
 	private:
 		bool haveCommandFallback;
 		bool haveAllowCommand;

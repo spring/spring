@@ -9,11 +9,16 @@
 #include "Rendering/GL/myGL.h"
 #include "BaseWater.h"
 
+#include <bitset>
+
+
 class CBumpWater : public CBaseWater
 {
 public:
 	void Update();
+	void Update_();
 	void UpdateWater(CGame* game);
+	void OcclusionQuery();
 	void HeightmapChanged(const int x1, const int y1, const int x2, const int y2);
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);
@@ -23,10 +28,6 @@ public:
 	int GetID() const { return 4; }
 
 private:
-	void UploadCoastline(const int x1, const int y1, const int x2, const int y2);
-	void UpdateCoastmap(const int x1, const int y1, const int x2, const int y2);
-	void UpdateDynWaves(const bool initialize = false);
-
 	void SetUniforms(); //! see useUniforms
 	void SetupUniforms( std::string& definitions );
 	void GetUniformLocations( GLuint& program );
@@ -60,11 +61,34 @@ private:
 	GLuint displayList;
 
 	//! coastmap
-	bool coastmapNeedUpload;
-	bool coastmapNeedUpdate;
-	int  coastUploadX1,coastUploadX2,coastUploadZ1,coastUploadZ2;
-	int  coastUpdateX1,coastUpdateX2,coastUpdateZ1,coastUpdateZ2;
-	GLuint pboID;
+	struct CoastUpdateRect {
+		CoastUpdateRect(int x1_,int z1_,int x2_,int z2_) : x1(x1_),z1(z1_),x2(x2_),z2(z2_) {};
+		int x1,z1;
+		int x2,z2;
+	};
+	std::vector<CoastUpdateRect> coastmapUpdates;
+	struct CoastAtlasRect {
+		CoastAtlasRect(CoastUpdateRect& rect);
+		bool isCoastline; //! if false, then the whole rect is either above water or below water (no coastline -> no need to calc/render distfield)
+		int ix1,iy1;
+		int ix2,iy2;
+		int xsize,ysize;
+		float x1,y1;
+		float x2,y2;
+		float tx1,ty1;
+		float tx2,ty2;
+	};
+	std::vector<CoastAtlasRect> coastmapAtlasRects;
+
+	std::bitset<4> GetEdgesInRect(CoastUpdateRect& rect1, CoastUpdateRect& rect2);
+	std::bitset<4> GetSharedEdges(CoastUpdateRect& rect1, CoastUpdateRect& rect2);
+	void HandleOverlapping(size_t i, size_t& j);
+
+	void UploadCoastline(const bool forceFull = false);
+	void UpdateCoastmap();
+	void UpdateDynWaves(const bool initialize = false);
+
+	int atlasX,atlasY;
 
 	GLuint refractTexture;
 	GLuint reflectTexture;
@@ -73,7 +97,8 @@ private:
 	GLuint foamTexture;
 	GLuint normalTexture;  //! final used
 	GLuint normalTexture2; //! updates normalTexture with dynamic waves turned on
-	GLuint coastTexture[2];
+	GLuint coastTexture;
+	GLuint coastUpdateTexture;
 	std::vector<GLuint> caustTextures;
 
 	GLuint waterFP;
@@ -82,8 +107,6 @@ private:
 
 	GLuint blurFP;
 	GLuint blurShader;
-	GLuint blurDirLoc;
-	GLuint blurTexLoc;
 
 	GLuint frameLoc;
 	GLuint midPosLoc;
@@ -91,7 +114,15 @@ private:
 
 	GLuint uniforms[20]; //! see useUniforms
 
-	float3 texcoord1;
+	bool wasLastFrameVisible;
+	GLuint occlusionQuery;
+	GLuint occlusionQueryResult;
+
+	float3 windVec;
+	float3 windndir;
+	float  windStrength;
+
+	unsigned int lastFrame;
 };
 
 #endif // __BUMP_WATER_H__

@@ -11,8 +11,7 @@
 #include "Sim/Projectiles/Unsynced/RepulseGfx.h"
 #include "Sim/Projectiles/Unsynced/ShieldPartProjectile.h"
 #include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "Sim/Units/COB/CobInstance.h"
+#include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/Unit.h"
 #include "WeaponDefHandler.h"
 #include "Weapon.h"
@@ -34,12 +33,6 @@ CR_REG_METADATA(CPlasmaRepulser, (
 	CR_MEMBER(visibleShieldParts),
 	CR_RESERVED(8)
 	));
-
-
-static void ShieldScriptCallback(int retCode, void* p1, void* p2)
-{
-	((CPlasmaRepulser*)p1)->isEnabled = !!retCode;
-}
 
 
 CPlasmaRepulser::CPlasmaRepulser(CUnit* owner)
@@ -231,17 +224,12 @@ void CPlasmaRepulser::Update(void)
 
 void CPlasmaRepulser::SlowUpdate(void)
 {
-	std::vector<int> args;
-	args.push_back(0);
-	owner->cob->Call(COBFN_QueryPrimary+weaponNum,args);
-	relWeaponPos=owner->cob->GetPiecePos(args[0]);
+	const int piece = owner->script->QueryWeapon(weaponNum);
+	relWeaponPos = owner->script->GetPiecePos(piece);
 	weaponPos = owner->pos + (owner->frontdir * relWeaponPos.z)
 	                       + (owner->updir    * relWeaponPos.y)
 	                       + (owner->rightdir * relWeaponPos.x);
-	std::vector<int> args2;
-	args2.push_back(0);
-	args2.push_back(0);
-	owner->cob->Call(COBFN_AimPrimary + weaponNum, args2, ShieldScriptCallback, this, 0);
+	owner->script->AimShieldWeapon(this);
 }
 
 

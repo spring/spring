@@ -45,12 +45,18 @@ void sharedLib_createFullLibName(const char* libBaseName,
 }
 
 sharedLib_t sharedLib_load(const char* libFilePath) {
+	sharedLib_t lib = NULL;
 
 #if defined _WIN32
-	return LoadLibrary(libFilePath);
+	if ((lib = LoadLibrary(libFilePath)) == NULL) {
+		fprintf(stderr, "[SharedLibrary.c::sharedLib_load(%s)] LoadLibrary() error %d\n", libFilePath, GetLastError());
+	}
 #else // defined _WIN32
-	return dlopen(libFilePath, RTLD_LAZY);
+	if ((lib = dlopen(libFilePath, RTLD_LAZY)) == NULL) {
+		fprintf(stderr, "[SharedLibrary.c::sharedLib_load(%s)] dlopen() error %s\n", libFilePath, dlerror());
+	}
 #endif // else defined _WIN32
+	return lib;
 }
 
 void sharedLib_unload(sharedLib_t sharedLib) {

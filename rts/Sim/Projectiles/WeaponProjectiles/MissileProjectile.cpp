@@ -5,7 +5,6 @@
 #include "Game/GameHelper.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Matrix44f.h"
 #include "MissileProjectile.h"
 #include "myMath.h"
@@ -276,10 +275,10 @@ void CMissileProjectile::Update(void)
 		if (weaponDef->selfExplode) {
 			Collision();
 		} else {
-			// only when TTL <= 0 do projectiles
+			// only when TTL <= 0 do we (missiles)
 			// get influenced by gravity and drag
 			speed *= 0.98f;
-			speed.y += mapInfo->map.gravity;
+			speed.y += gravity;
 			dir = speed;
 			dir.Normalize();
 		}

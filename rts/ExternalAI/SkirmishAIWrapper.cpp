@@ -71,10 +71,19 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 
 /// used only by creg
 CSkirmishAIWrapper::CSkirmishAIWrapper():
-		teamId(-1), cheatEvents(false), ai(NULL), c_callback(NULL) {}
+		teamId(-1),
+		cheatEvents(false),
+		ai(NULL),
+		initialized(false),
+		c_callback(NULL) {}
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key):
-		teamId(teamId), cheatEvents(false), ai(NULL), c_callback(NULL), key(key) {
+		teamId(teamId),
+		cheatEvents(false),
+		ai(NULL),
+		initialized(false),
+		c_callback(NULL),
+		key(key) {
 	CreateCallback();
 }
 
@@ -93,7 +102,9 @@ void CSkirmishAIWrapper::PreDestroy() {
 CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 
 	if (ai) {
-		Release();
+		if (initialized) {
+			Release();
+		}
 
 		delete ai;
 		ai = NULL;
@@ -186,7 +197,15 @@ void CSkirmishAIWrapper::Init() {
 	}
 
 	SInitEvent evtData = {teamId, GetCallback()};
-	ai->HandleEvent(EVENT_INIT, &evtData);
+	int error = ai->HandleEvent(EVENT_INIT, &evtData);
+	if (error != 0) {
+		// init failed
+		logOutput.Print("Failed to handle init event: AI for team %d, error %d",
+				teamId, error);
+		eoh->DestroySkirmishAI(teamId);
+	} else {
+		initialized = true;
+	}
 }
 
 void CSkirmishAIWrapper::Release() {

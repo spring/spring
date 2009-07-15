@@ -64,8 +64,8 @@ void AAISector::Init(AAI *ai, int x, int y, int left, int right, int top, int bo
 	if(map->ySectors - y < map_border_dist)
 		map_border_dist = map->ySectors - y;
 
-
-	continent = map->GetContinentID(&GetCenter());
+	float3 center = GetCenter();
+	continent = map->GetContinentID(&center);
 
 	// init all kind of stuff
 	freeMetalSpots = false;

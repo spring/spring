@@ -792,7 +792,6 @@ ADD_BOOL("canAttackWater",  canAttackWater); // CUSTOM
 	ADD_BOOL("canPatrol",             ud.canPatrol);
 	ADD_BOOL("canFight",              ud.canFight);
 	ADD_BOOL("canGuard",              ud.canGuard);
-	ADD_BOOL("canBuild",              ud.canBuild);
 	ADD_BOOL("canAssist",             ud.canAssist);
 	ADD_BOOL("canBeAssisted",         ud.canBeAssisted);
 	ADD_BOOL("canRepeat",             ud.canRepeat);

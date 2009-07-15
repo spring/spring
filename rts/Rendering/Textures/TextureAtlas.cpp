@@ -24,20 +24,38 @@ CTextureAtlas::CTextureAtlas(int maxxsize, int maxysize)
 	this->maxysize = maxysize;
 	xsize = 4;
 	ysize = 4;
-	usedPixels=0;
-	initialized=false;
+	usedPixels = 0;
+	initialized = false;
+	freeTexture = true;
 }
 
 CTextureAtlas::~CTextureAtlas(void)
 {
-	if(initialized)
+	if(initialized && freeTexture)
 		glDeleteTextures(1, &gltex);
+}
+
+void* CTextureAtlas::AddTex(std::string name, int xsize, int ysize, TextureType texType)
+{
+	int gpp = GetBPP(texType);
+	MemTex* memtex = new MemTex;
+	memtex->xsize = xsize;
+	memtex->ysize = ysize;
+	memtex->xpos = 0;
+	memtex->ypos = 0;
+	memtex->texType = texType;
+	memtex->data = new char[xsize*ysize*gpp/8];
+	StringToLowerInPlace(name);
+	memtex->names.push_back(name);
+	memtextures.push_back(memtex);
+
+	return memtex->data;
 }
 
 int CTextureAtlas::AddTexFromMem(std::string name, int xsize, int ysize, TextureType texType, void  *data)
 {
 	int gpp = GetBPP(texType);
-	MemTex *memtex = new MemTex;
+	MemTex* memtex = new MemTex;
 	memtex->xsize = xsize;
 	memtex->ysize = ysize;
 	memtex->xpos = 0;
@@ -95,14 +113,14 @@ bool CTextureAtlas::Finalize()
 	std::list<int2> thisSub;
 	bool recalc=false;
 	for(int a=0;a<static_cast<int>(memtextures.size());++a){
-		MemTex *curtex = memtextures[a];
+		MemTex* curtex = memtextures[a];
 
 		bool done=false;
 		while(!done){
 			if(thisSub.empty()){
 				if(nextSub.empty()){
 					cury=maxy;
-					maxy+=curtex->ysize;
+					maxy+=curtex->ysize+TEXMARGIN;
 					if(maxy>ysize){
 						if(IncreaseSize())
 						{
@@ -158,25 +176,23 @@ bool CTextureAtlas::Finalize()
 	}
 
 	CreateTexture();
-	for(size_t i=0; i<memtextures.size(); i++)
+	for(std::vector<MemTex*>::iterator it = memtextures.begin(); it != memtextures.end(); it++)
 	{
 		AtlasedTexture tex;
-		//adjust texture coordinates by half a pixel to avoid filtering artifacts
-		float halfx = 1/((float)xsize*2);
-		float halfy = 1/((float)ysize*2);
-		tex.xstart = memtextures[i]->xpos/(float)xsize + halfx;
-		tex.xend = (memtextures[i]->xpos+memtextures[i]->xsize)/(float)xsize - halfx;
-		tex.ystart = memtextures[i]->ypos/(float)ysize + halfy;
-		tex.yend = (memtextures[i]->ypos+memtextures[i]->ysize)/(float)ysize - halfy;
-		tex.ixstart = memtextures[i]->xpos;
-		tex.iystart = memtextures[i]->ypos;
-		for(size_t n=0; n<memtextures[i]->names.size(); n++) {
-			textures[memtextures[i]->names[n]] = tex;
+		//adjust texture coordinates by half a pixel (in opengl pixel centers are centeriods)
+		tex.xstart =                  (*it)->xpos / (float)xsize;
+		tex.xend   = ((*it)->xpos + (*it)->xsize) / (float)xsize;
+		tex.ystart =                  (*it)->ypos / (float)ysize;
+		tex.yend   = ((*it)->ypos + (*it)->ysize) / (float)ysize;
+		tex.ixstart = (*it)->xpos;
+		tex.iystart = (*it)->ypos;
+		for(size_t n=0; n<(*it)->names.size(); n++) {
+			textures[(*it)->names[n]] = tex;
 		}
 
-		usedPixels += memtextures[i]->xpos*memtextures[i]->ypos;
-		delete [] (char*)memtextures[i]->data;
-		delete memtextures[i];
+		usedPixels += (*it)->xpos * (*it)->ypos;
+		delete[] (char*)(*it)->data;
+		delete (*it);
 	}
 	memtextures.clear();
 
@@ -223,7 +239,7 @@ void CTextureAtlas::CreateTexture()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 
 	//glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,xsize, ysize, GL_RGBA, GL_UNSIGNED_BYTE, data);
-      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, xsize, ysize, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 
 	delete [] data;
 

@@ -7,6 +7,7 @@ SET(build_files ${fsfiles} ${platformfiles}
 	../../rts/Game/GameSetup
 	../../rts/Game/PlayerBase
 	../../rts/Game/GameVersion
+	../../rts/System/Platform/Misc
 	../../rts/System/TdfParser
 	../../rts/System/ConfigHandler
 	../../rts/System/Net/RawPacket

@@ -12,7 +12,6 @@
 
 #include "Console.h"
 #include "GameData.h"
-#include "PlayerBase.h"
 #include "Sim/Misc/TeamBase.h"
 #include "UnsyncedRNG.h"
 #include "float3.h"
@@ -30,6 +29,7 @@ class AutohostInterface;
 class CGameSetup;
 class ClientSetup;
 class ChatMessage;
+class GameParticipant;
 
 /**
  * When the Server generates a message,
@@ -37,39 +37,12 @@ class ChatMessage;
  */
 const unsigned SERVER_PLAYER = 255;
 
-class GameParticipant : public PlayerBase
-{
-public:
-	GameParticipant();
-	
-	void operator=(const PlayerBase& base) { PlayerBase::operator=(base); };
-
-	enum State
-	{
-		UNCONNECTED,
-		CONNECTED,
-		INGAME,
-		DISCONNECTED
-	};
-	State myState;
-	
-	float cpuUsage;
-	int ping;
-	int lastKeyframeResponse;
-
-	bool isLocal;
-	boost::shared_ptr<netcode::CConnection> link;
-	PlayerStatistics lastStats;
-#ifdef SYNCCHECK
-	std::map<int, unsigned> syncResponse; // syncResponse[frameNum] = checksum
-#endif
-};
-
 class GameTeam : public TeamBase
 {
 public:
 	GameTeam() : active(false) {};
 	bool active;
+	void operator=(const TeamBase& base) { TeamBase::operator=(base); };
 };
 
 /**

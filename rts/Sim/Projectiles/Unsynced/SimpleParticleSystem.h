@@ -16,19 +16,19 @@ public:
 
 	CSimpleParticleSystem(void);
 	virtual ~CSimpleParticleSystem(void);
-	virtual void Init(const float3& explosionPos, CUnit *owner GML_PARG_H);
+	virtual void Init(const float3& explosionPos, CUnit* owner GML_PARG_H);
 
 	float3 emitVector;
 	float3 emitMul;
-	float3 gravity;
+	float3 gravity3;
 	float particleSpeed;
 	float particleSpeedSpread;
 
 	float emitRot;
 	float emitRotSpread;
 
-	AtlasedTexture *texture;
-	CColorMap *colorMap;
+	AtlasedTexture* texture;
+	CColorMap* colorMap;
 	bool directional;
 
 	float particleLife;

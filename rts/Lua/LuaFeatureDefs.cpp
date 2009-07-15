@@ -307,9 +307,15 @@ static int DrawTypeString(lua_State* L, const void* data)
 	const int drawType = *((const int*)data);
 	switch (drawType) {
 		case DRAWTYPE_MODEL: { HSTR_PUSH(L,   "model"); break; }
-		case DRAWTYPE_TREE:  { HSTR_PUSH(L,    "tree"); break; }
 		case DRAWTYPE_NONE:  { HSTR_PUSH(L,    "none"); break; }
-		default:             { HSTR_PUSH(L, "unknown"); break; }
+		default:             {
+			if (drawType >= DRAWTYPE_TREE) {
+				HSTR_PUSH(L,    "tree");
+			} else {
+				HSTR_PUSH(L, "unknown");
+			}
+			break;
+		}
 	}
 	return 1;
 }
@@ -331,13 +337,28 @@ static int CustomParamsTable(lua_State* L, const void* data)
 
 static int ModelHeight(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = ((const FeatureDef*)data);
+	const FeatureDef* fd = ((const FeatureDef*) data);
+	const S3DModel* model = NULL;
 	float height = 0.0f;
+
 	switch (fd->drawType) {
-		case DRAWTYPE_MODEL:  { height = LoadModel(fd)->height;  break; }
-		case DRAWTYPE_TREE: { height = TREE_RADIUS * 2.0f;     break; }
-		case DRAWTYPE_NONE: { height = 0.0f;                   break; }
-		default:            { height = 0.0f;                   break; }
+		case DRAWTYPE_MODEL: {
+			model = LoadModel(fd);
+			height = model? model->height: 0.0f;
+			break;
+		}
+		case DRAWTYPE_NONE: {
+			height = 0.0f;
+			break;
+		}
+		default: {
+			if (fd->drawType >= DRAWTYPE_TREE) {
+				height = TREE_RADIUS * 2.0f;
+			} else {
+				height = 0.0f;
+			}
+			break;
+		}
 	}
 	lua_pushnumber(L, height);
 	return 1;
@@ -346,33 +367,48 @@ static int ModelHeight(lua_State* L, const void* data)
 
 static int ModelRadius(lua_State* L, const void* data)
 {
-	const FeatureDef* fd = ((const FeatureDef*)data);
+	const FeatureDef* fd = ((const FeatureDef*) data);
+	const S3DModel* model = NULL;
 	float radius = 0.0f;
+
 	switch (fd->drawType) {
-		case DRAWTYPE_MODEL:  { radius = LoadModel(fd)->radius;  break; }
-		case DRAWTYPE_TREE: { radius = TREE_RADIUS;            break; }
-		case DRAWTYPE_NONE: { radius = 0.0f;                   break; }
-		default:            { radius = 0.0f;                   break; }
+		case DRAWTYPE_MODEL: {
+			model = LoadModel(fd);
+			radius = model? model->radius: 0.0f;
+			break;
+		}
+		case DRAWTYPE_NONE: {
+			radius = 0.0f;
+			break;
+		}
+		default: {
+			if (fd->drawType >= DRAWTYPE_TREE) {
+				radius = TREE_RADIUS;
+			} else {
+				radius = 0.0f;
+			}
+			break;
+		}
 	}
 	lua_pushnumber(L, radius);
 	return 1;
 }
 
 
-#define TYPE_MODEL_FUNC(name, param)                       \
-	static int Model ## name(lua_State* L, const void* data) \
-	{                                                        \
-		const FeatureDef* fd = ((const FeatureDef*)data);     \
-		if (fd->drawType == DRAWTYPE_MODEL) {                     \
-			const S3DModel* model = LoadModel(fd);            \
-			lua_pushnumber(L, model -> param);                   \
-			return 1;                                            \
-		}                                                      \
-		return 0;                                              \
+#define TYPE_MODEL_FUNC(name, param)                            \
+	static int Model ## name(lua_State* L, const void* data)    \
+	{                                                           \
+		const FeatureDef* fd = ((const FeatureDef*)data);       \
+		if (fd->drawType == DRAWTYPE_MODEL) {                   \
+			const S3DModel* model = LoadModel(fd);              \
+			lua_pushnumber(L, model? model -> param : 0.0f);    \
+			return 1;                                           \
+		}                                                       \
+		return 0;                                               \
 	}
 
-//TYPE_MODEL_FUNC(Height, height);
-//TYPE_MODEL_FUNC(Radius, radius);
+//TYPE_MODEL_FUNC(Height, height); // ::ModelHeight()
+//TYPE_MODEL_FUNC(Radius, radius); // ::ModelRadius()
 TYPE_MODEL_FUNC(Minx,   minx);
 TYPE_MODEL_FUNC(Midx,   relMidPos.x);
 TYPE_MODEL_FUNC(Maxx,   maxx);
@@ -437,7 +473,6 @@ static bool InitParamMap()
 	*/
 
 	ADD_INT("drawType",     fd.drawType);
-	ADD_INT("modelType",    fd.modelType);
 	ADD_STRING("modelname", fd.modelname);
 
 	ADD_BOOL("upright",      fd.upright);

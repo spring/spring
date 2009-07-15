@@ -62,7 +62,7 @@
 		<!-- use the projects root dir name as project name -->
 		<basename property="skirmish.ai.name"     file="."/>
 		<property name="spring.home"              location="../../.."/>
-		<property name="build.home"               location="${spring.home}/build"/>
+		<property name="build.home"               location="${spring.home}"/>
 		<property name="build.dir"                location="${build.home}/AI/Skirmish/${skirmish.ai.name}"/>
 		<property name="build.classes.dir"        location="${build.dir}/classes"/>
 		<property name="dist.home"                location="${spring.home}/game"/>

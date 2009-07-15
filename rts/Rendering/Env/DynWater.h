@@ -3,10 +3,10 @@
 
 #include "BaseWater.h"
 #include <vector>
+#include "Rendering/GL/FBO.h"
 #include "Rendering/GL/myGL.h"
 
-class CDynWater :
-	public CBaseWater
+class CDynWater : public CBaseWater
 {
 public:
 	CDynWater(void);
@@ -18,6 +18,7 @@ public:
 	virtual void AddExplosion(const float3& pos, float strength, float size);
 	int GetID() const { return 2; }
 
+private:
 	void DrawReflection(CGame* game);
 	void DrawRefraction(CGame* game);
 	void DrawWaves(void);
@@ -70,6 +71,9 @@ public:
 
 	unsigned int waterFP;
 	unsigned int waterVP;
+
+	FBO reflectFBO;
+	FBO refractFBO;
 
 	float3 reflectForward;
 	float3 reflectRight;

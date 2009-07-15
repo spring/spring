@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/vmg /MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
 				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -131,7 +131,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
 				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;NO_CATCH_EXCEPTIONS;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -226,7 +226,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
 				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK"
 				StringPooling="true"
 				ExceptionHandling="2"
@@ -324,7 +324,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
 				PreprocessorDefinitions="SYNCDEBUG;_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87"
 				StringPooling="true"
 				RuntimeLibrary="2"
@@ -418,7 +418,7 @@
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
 				PreprocessorDefinitions="_CMATH_;_WIN32;WIN32;NDEBUG;_WINDOWS;ZLIB_WINAPI;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;SYNCCHECK;USE_GML;USE_GML_SIM;NO_AVI"
 				StringPooling="true"
 				ExceptionHandling="2"
@@ -513,7 +513,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/vmg /MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
+				AdditionalIncludeDirectories="../../;../../System;../../lib/streflop;../../lib/crashrpt/include;../../../vclibs/freetype/include;../../../vclibs/DevIL/include;../../../vclibs/boost/Include;../../../vclibs/OpenAL/include/AL;../../../vclibs/glew/include;../../../vclibs/zlibwapi/include;../../../vclibs/SDL/include;&quot;../../../vclibs/libjpeg/libjpeg-include&quot;;../../lib/lua/include;../../lib/luabind;../../../vclibs/ogg_vorbis/include"
 				PreprocessorDefinitions="_CMATH_;NO_CATCH_EXCEPTIONS;_WIN32;WIN32;_DEBUG;_WINDOWS;ZLIB_WINAPI;_SZ_ONE_DIRECTORY;DIRECT_CONTROL_ALLOWED;BUILDING_SPRING;STREFLOP_X87;USE_GML;USE_GML_SIM"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -1783,6 +1783,14 @@
 				Name="Server"
 				>
 				<File
+					RelativePath="..\..\Game\Server\GameParticipant.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Game\Server\GameParticipant.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Game\Server\MsgStrings.h"
 					>
 				</File>
@@ -2447,6 +2455,54 @@
 					</File>
 					<File
 						RelativePath="..\..\Sim\Units\Cob\CobThread.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\LuaUnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\LuaUnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\NullUnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\NullUnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScript.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScript.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptEngine.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptEngine.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptFactory.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptFactory.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptNames.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\UnitScriptNames.h"
 						>
 					</File>
 				</Filter>
@@ -5477,6 +5533,68 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\System\Platform\CrashHandler.cpp"
+					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="No debug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Syncdebug|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release+MT with error catching|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug+MT|Win32"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+							ObjectFile="$(IntDir)\$(InputName)1.obj"
+							XMLDocumentationFileName="$(IntDir)\$(InputName)1.xdc"
+						/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath="..\..\System\Platform\CrashHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\System\Platform\errorhandler.cpp"
 					>
 				</File>
@@ -6446,62 +6564,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\System\Net\UDPConnectedSocket.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\Net\UDPConnectedSocket.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\System\Net\UDPConnection.cpp"
 					>
 					<FileConfiguration
@@ -6611,62 +6673,6 @@
 				</File>
 				<File
 					RelativePath="..\..\System\Net\UDPListener.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\System\Net\UDPSocket.cpp"
-					>
-					<FileConfiguration
-						Name="Debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="No debug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Syncdebug|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release+MT with error catching|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Debug+MT|Win32"
-						>
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="0"
-						/>
-					</FileConfiguration>
-				</File>
-				<File
-					RelativePath="..\..\System\Net\UDPSocket.h"
 					>
 				</File>
 				<File
@@ -13213,6 +13219,14 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\gml\gmlsrv.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\ThreadSafeContainers.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\gml\ThreadSafeContainers.h"
 					>
 				</File>
 			</Filter>
