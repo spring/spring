@@ -233,7 +233,10 @@ void CWeaponDefHandler::ParseWeapon(const LuaTable& wdTable, WeaponDef& wd)
 	wd.cameraShake = wdTable.GetFloat("cameraShake", defShake);
 	wd.cameraShake = max(0.0f, wd.cameraShake);
 
-	wd.soundTrigger = wdTable.GetBool("soundTrigger", false);
+	// 0.78.2.1 backwards compatibility
+	bool defaultSoundTrigger = (wd.type == "BeamLaser" && !wd.beamburst) || 
+								wd.type == "Melee"  || wd.type == "Rifle";
+	wd.soundTrigger = wdTable.GetBool("soundTrigger", defaultSoundTrigger);
 
 	//sunparser->GetDef(wd.highTrajectory, "0", weaponname + "minbarrelangle");
 	wd.stockpile     = wdTable.GetBool("stockpile", false);

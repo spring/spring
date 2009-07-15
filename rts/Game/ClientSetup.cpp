@@ -6,7 +6,6 @@
 #include "Util.h"
 
 ClientSetup::ClientSetup() :
-		myPlayerNum(0),
 		hostport(DEFAULT_HOST_PORT),
 		sourceport(0),
 		autohostport(0),
@@ -32,12 +31,6 @@ void ClientSetup::Init(const std::string& setup)
 	file.GetDef(autohostport, "0",                   "GAME\\AutohostPort");
 
 	file.GetDef(myPlayerName, "",                    "GAME\\MyPlayerName");
-
-	if (myPlayerName.empty()) {
-		myPlayerName = "UnnamedPlayer";
-	} else {
-		myPlayerName = StringReplaceInPlace(myPlayerName, ' ', '_');
-	}
 
 	if (!file.GetValue(isHost, "GAME\\IsHost")) {
 		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");

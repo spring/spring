@@ -167,12 +167,17 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 
 	// create mipmapped texture
 
-/*	if (!gu->atiHacks && glGenerateMipmapEXT_NONGML) { // broken on ATIs and NVs (wait for their OpenGL3.0 drivers :/)
+	if (glGenerateMipmapEXT_NONGML) { // broken on ATIs and NVs (wait for their OpenGL3.0 drivers :/)
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
-		glGenerateMipmapEXT(target);
-	}else*/
-	if (GLEW_VERSION_1_4) {
+		if (gu->atiHacks) {
+			glEnable(target);
+			glGenerateMipmapEXT(target);
+			glDisable(target);
+		}else{
+			glGenerateMipmapEXT(target);
+		}
+	}else if (GLEW_VERSION_1_4) {
 		// This required GL-1.4
 		// instead of using glu, we rely on glTexImage2D to create the Mipmaps.
 		glTexParameteri(target, GL_GENERATE_MIPMAP, GL_TRUE);

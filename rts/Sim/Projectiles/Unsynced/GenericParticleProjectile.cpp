@@ -11,7 +11,7 @@
 CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL));
 
 CR_REG_METADATA(CGenericParticleProjectile,(
-	CR_MEMBER(gravity),
+	CR_MEMBER(gravity3),
 	CR_MEMBER(texture),
 	CR_MEMBER(colorMap),
 	CR_MEMBER(directional),
@@ -24,12 +24,12 @@ CR_REG_METADATA(CGenericParticleProjectile,(
 	CR_RESERVED(8)
 	));
 
-CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos,const float3& speed,CUnit* owner GML_PARG_C) :
-	CProjectile(pos, speed, owner, false, false GML_PARG_P)
+CGenericParticleProjectile::CGenericParticleProjectile(const float3& pos, const float3& speed, CUnit* owner GML_PARG_C) :
+	CProjectile(pos, speed, owner, false, false, false GML_PARG_P)
 {
-	deleteMe=false;
-	checkCol=false;
-	useAirLos=true;
+	deleteMe  = false;
+	checkCol  = false;
+	useAirLos = true;
 }
 
 CGenericParticleProjectile::~CGenericParticleProjectile(void)
@@ -40,12 +40,11 @@ void CGenericParticleProjectile::Update()
 {
 	pos += speed;
 	life +=decayrate;
-	speed += gravity;
+	speed += gravity3;
 	speed *= airdrag;
-	size = size*sizeMod + sizeGrowth;
+	size = size * sizeMod + sizeGrowth;
 
-	if(life>1.0f)
-	{
+	if (life > 1.0f) {
 		deleteMe = true;
 	}
 }

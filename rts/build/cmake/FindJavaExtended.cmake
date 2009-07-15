@@ -86,11 +86,21 @@ IF( NOT DEFINED ENV{JDK_HOME} AND
 						STRING( REGEX MATCH " symbolic link to " java_link_found "${out_tmp}" )
 						IF( java_link_found )
 							# get the file to where the link points to
-							STRING( REGEX REPLACE ".* symbolic link to[^/]+([^'`´]+).*" "\\1" out_regex "${out_tmp}" )
+							STRING( REGEX REPLACE ".* symbolic link to[^/.]+([^'`´]+).*" "\\1" out_regex "${out_tmp}" )
+							# check if the link is absolute
+							STRING( REGEX REPLACE "^\\/.*$" "true" out_regex_is_absolute "${out_regex}" )
+							IF( "${out_regex_is_absolute}" STREQUAL "true" )
+								SET( out_absolute "${out_regex}" )
+							ELSE( "${out_regex_is_absolute}" STREQUAL "true" )
+								# get the links parent dir
+								STRING( REGEX REPLACE "(.*)\\/[^/]+$" "\\1" java_bin_dir "${java_bin}" )
+								# make the link absolute, if it is relative
+								FIND_FILE( out_absolute NAMES "${out_regex}" PATHS "${java_bin_dir}" )
+							ENDIF( "${out_regex_is_absolute}" STREQUAL "true" )
 							IF( NOT JAVA_FIND_QUIETLY )
 								MESSAGE( STATUS "Java binary ${java_bin} is a symbolic link to ${out_regex}" )
 							ENDIF()
-							SET( java_bin "${out_regex}" )
+							SET( java_bin "${out_absolute}" )
 						ENDIF()
 					ENDIF()
 				ENDWHILE()
@@ -103,10 +113,27 @@ IF( NOT DEFINED ENV{JDK_HOME} AND
 			ENDIF()
 		ENDIF( CMAKE_HOST_UNIX AND NOT CMAKE_HOST_APPLE )
 
-		# extract java home path out of full path to java runtime
-		STRING( REGEX REPLACE "(.*)\\/[^/]+\\/java$" "\\1" JAVA_HOME ${JAVA_RUNTIME} )
+		IF( NOT JDK_HOME )
+			# extract java home dir name out of full path to java runtime
+			STRING( REGEX REPLACE ".*\\/([^/]+)\\/[^/]+\\/java$" "\\1" java_home_dir_name ${JAVA_RUNTIME} )
+			# check if we are in a child jre
+			STRING( COMPARE EQUAL "${java_home_dir_name}" "jre" java_child_jre )
+			IF( ${java_child_jre} )
+				# extract jdk home path out of full path to java runtime
+				STRING( REGEX REPLACE "(.*)\\/[^/]+\\/[^/]+\\/java$" "\\1" JDK_HOME ${JAVA_RUNTIME} )
+			ENDIF( ${java_child_jre} )
+		ENDIF( NOT JDK_HOME )
+		IF( NOT JAVA_HOME )
+			IF( JDK_HOME )
+				SET( JAVA_HOME "${JDK_HOME}" )
+			ELSE( JDK_HOME )
+				# extract java home path out of full path to java runtime
+				STRING( REGEX REPLACE "(.*)\\/[^/]+\\/java$" "\\1" JAVA_HOME ${JAVA_RUNTIME} )
+			ENDIF( JDK_HOME )
+		ENDIF( NOT JAVA_HOME )
 		# extract java bin path out of full path to java runtime
 		STRING( REGEX REPLACE "(.*)\\/java$" "\\1" JAVA_BIN_PATH ${JAVA_RUNTIME} )
+		#SET( JAVA_BIN_PATH "${JAVA_HOME}/bin" )
 	ELSE()
 		IF( NOT JAVA_FIND_QUIETLY )
 			MESSAGE( STATUS "Failed to autodetect Java!!" )

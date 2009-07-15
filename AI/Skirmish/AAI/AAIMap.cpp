@@ -373,7 +373,7 @@ void AAIMap::ReadMapCacheFile()
 		const char *temp_buffer = GetMapTypeString(map_type);
 
 		// save map type
-		fprintf(file, "%s\n", GetMapTypeString(map_type));
+		fprintf(file, "%s\n", temp_buffer);
 
 		// save water ratio
 		fprintf(file, "%f\n", water_ratio);
@@ -937,7 +937,7 @@ float3 AAIMap::GetRadarArtyBuildsite(const UnitDef *def, int xStart, int xEnd, i
 	range /= 8.0f;
 
 	// get required cell-size of the building
-	int xSize, ySize, xPos, yPos, x, y;
+	int xSize, ySize, xPos, yPos;
 	GetSize(def, &xSize, &ySize);
 
 	// go through rect

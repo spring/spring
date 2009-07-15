@@ -46,8 +46,6 @@ using netcode::RawPacket;
 
 extern boost::uint8_t* keys;
 extern bool globalQuit;
-std::string stupidGlobalMapname;
-
 
 CPreGame::CPreGame(const ClientSetup* setup) :
 		settings(setup),
@@ -127,13 +125,9 @@ bool CPreGame::Draw()
 		font->glPrint(0.5f, 0.48f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Waiting for server response");
 	}
 
-	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Server: %s:%d", settings->hostip.c_str(), settings->hostport);
-	if (!settings->isHost)
-		font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Local endpoint: port %d UDP%s", settings->sourceport, (settings->sourceport == 0) ? " (autoselect)" : "");
-	else
-		font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Local endpoint: shared memory");
+	font->glFormat(0.60f, 0.40f, 1.0f, FONT_SCALE | FONT_NORM, "Connecting to:   %s", net->ConnectionStr().c_str());
 
-	font->glFormat(0.60f, 0.30f, 1.0f, FONT_SCALE | FONT_NORM, "Using playername: %s", settings->myPlayerName.c_str());
+	font->glFormat(0.60f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Using playername: %s", settings->myPlayerName.c_str());
 
 	// credits
 	font->glFormat(0.5f,0.06f,1.0f,FONT_CENTER | FONT_SCALE | FONT_NORM, "Spring %s", SpringVersion::GetFull().c_str());
@@ -419,7 +413,6 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);
 	LogObject() << "Using map " << gameData->GetMap() << "\n";
-	stupidGlobalMapname = gameData->GetMap();
 
 	if (net && net->GetDemoRecorder()) {
 		net->GetDemoRecorder()->SetName(gameData->GetMap());

@@ -18,16 +18,24 @@
 #define SCOPED_TIMER(a) {}
 #endif
 
+
 CCobEngine GCobEngine;
+CCobFileHandler GCobFileHandler;
 int GCurrentTime;
 
-CCobEngine::CCobEngine(void) :
-	curThread(NULL)
+
+/******************************************************************************/
+/******************************************************************************/
+
+
+CCobEngine::CCobEngine()
+	: curThread(NULL)
 {
 	GCurrentTime = 0;
 }
 
-CCobEngine::~CCobEngine(void)
+
+CCobEngine::~CCobEngine()
 {
 	//Should delete all things that the scheduler knows
 	for (std::list<CCobThread *>::iterator i = running.begin(); i != running.end(); ++i) {
@@ -42,12 +50,17 @@ CCobEngine::~CCobEngine(void)
 		sleeping.pop();
 		delete tmp;
 	}
+}
 
+
+CCobFileHandler::~CCobFileHandler()
+{
 	//Free all cobfiles
 	for (std::map<std::string, CCobFile *>::iterator i = cobFiles.begin(); i != cobFiles.end(); ++i) {
 		delete i->second;
 	}
 }
+
 
 //A thread wants to continue running at a later time, and adds itself to the scheduler
 void CCobEngine::AddThread(CCobThread *thread)
@@ -65,36 +78,20 @@ void CCobEngine::AddThread(CCobThread *thread)
 	}
 }
 
-void CCobEngine::AddInstance(CCobInstance *instance)
+
+void CCobEngine::TickThread(int deltaTime, CCobThread* thread)
 {
-	// Error checking
-/*	int found = 0;
-	for (list<CCobInstance *>::iterator i = animating.begin(); i != animating.end(); ++i) {
-		if (*i == instance)
-			found++;		
-	}
+	curThread = thread; // for error messages originating in CUnitScript
 
-	if (found > 0)
-		logOutput.Print("Warning: Addinstance already found %d", found); */
+	int res = thread->Tick(deltaTime);
+	thread->CommitAnims(deltaTime);
 
-	animating.push_front(instance);
+	if (res == -1)
+		delete thread;
+
+	curThread = NULL;
 }
 
-void CCobEngine::RemoveInstance(CCobInstance *instance)
-{
-	// Error checking
-/*	int found = 0;
-	for (list<CCobInstance *>::iterator i = animating.begin(); i != animating.end(); ++i) {
-		if (*i == instance)
-			found++;
-	} 
-
-	if (found > 1)
-		logOutput.Print("Warning: Removeinstance found duplicates %d", found); */
-
-	//This is slow. would be better if instance was a hashlist perhaps
-	animating.remove(instance);
-}
 
 void CCobEngine::Tick(int deltaTime)
 {
@@ -112,12 +109,7 @@ void CCobEngine::Tick(int deltaTime)
 #ifdef _CONSOLE
 		printf("----\n");
 #endif
-		int res = (*i)->Tick(deltaTime);
-		(*i)->CommitAnims(deltaTime);
-
-		if (res == -1) {
-			delete *i;
-		}
+		TickThread(deltaTime, *i);
 	}
 
 	// A thread can never go from running->running, so clear the list
@@ -135,7 +127,7 @@ void CCobEngine::Tick(int deltaTime)
 	//Check on the sleeping threads
 	if (sleeping.size() > 0) {
 		CCobThread *cur = sleeping.top();
-		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {	
+		while ((cur != NULL) && (cur->GetWakeTime() < GCurrentTime)) {
 
 			// Start with removing the executing thread from the queue
 			sleeping.pop();
@@ -148,45 +140,20 @@ void CCobEngine::Tick(int deltaTime)
 #endif
 			if (cur->state == CCobThread::Sleep) {
 				cur->state = CCobThread::Run;
-				int res = cur->Tick(deltaTime);
-				cur->CommitAnims(deltaTime);
-				if (res == -1)
-					delete cur;
+				TickThread(deltaTime, cur);
 			} else if (cur->state == CCobThread::Dead) {
 				delete cur;
 			} else {
 				logOutput.Print("CobError: Sleeping thread strange state %d", cur->state);
 			}
-			if (sleeping.size() > 0) 
+			if (sleeping.size() > 0)
 				cur = sleeping.top();
 			else
 				cur = NULL;
 		}
 	}
-
-	// Tick all instances that have registered themselves as animating
-	std::list<CCobInstance *>::iterator it = animating.begin();
-	std::list<CCobInstance *>::iterator curit;
-	while (it != animating.end()) {
-		curit = it++;
-		if ((*curit)->Tick(deltaTime) == -1)
-			animating.erase(curit);
-	}
 }
 
-// Threads call this when they start executing in Tick
-void CCobEngine::SetCurThread(CCobThread *cur)
-{
-	curThread = cur;
-}
-
-void CCobEngine::ShowScriptWarning(const string& msg)
-{
-	if (curThread)
-		curThread->ShowError(msg,true);
-	else
-		logOutput.Print("ScriptWarning: %s outside script execution", msg.c_str());
-}
 
 void CCobEngine::ShowScriptError(const string& msg)
 {
@@ -196,27 +163,30 @@ void CCobEngine::ShowScriptError(const string& msg)
 		logOutput.Print("ScriptError: %s outside script execution", msg.c_str());
 }
 
-CCobFile& CCobEngine::GetCobFile(const string& name)
+
+/******************************************************************************/
+/******************************************************************************/
+
+CCobFile* CCobFileHandler::GetCobFile(const string& name)
 {
 	//Already known?
 	map<string, CCobFile *>::iterator i;
 	if ((i = cobFiles.find(name)) != cobFiles.end()) {
-		return *(i->second);
+		return i->second;
 	}
 
 	CFileHandler f(name);
 	if (!f.FileExists()) {
-		handleerror(0,"No cob-file",name.c_str(),0);		
-		//Need to return something maybe.. this is pretty fatal though
+		return NULL;
 	}
 	CCobFile *cf = new CCobFile(f, name);
 
 	cobFiles[name] = cf;
-	return *cf;
+	return cf;
 }
 
 
-CCobFile& CCobEngine::ReloadCobFile(const string& name)
+CCobFile* CCobFileHandler::ReloadCobFile(const string& name)
 {
 	map<string, CCobFile *>::iterator it = cobFiles.find(name);
 	if (it == cobFiles.end()) {
@@ -230,7 +200,7 @@ CCobFile& CCobEngine::ReloadCobFile(const string& name)
 }
 
 
-const CCobFile* CCobEngine::GetScriptAddr(const string& name) const
+const CCobFile* CCobFileHandler::GetScriptAddr(const string& name) const
 {
 	map<string, CCobFile *>::const_iterator it = cobFiles.find(name);
 	if (it != cobFiles.end()) {
@@ -238,3 +208,7 @@ const CCobFile* CCobEngine::GetScriptAddr(const string& name) const
 	}
 	return NULL;
 }
+
+
+/******************************************************************************/
+/******************************************************************************/

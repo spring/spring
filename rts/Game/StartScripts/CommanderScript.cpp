@@ -24,10 +24,6 @@
 #include "Exceptions.h"
 
 
-
-extern std::string stupidGlobalMapname;
-
-
 CCommanderScript::CCommanderScript(): CScript(std::string("Commanders"))
 {
 }

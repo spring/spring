@@ -12,7 +12,6 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/FileSystem.h"
 
-extern std::string stupidGlobalMapname;
 
 CLoadScript::CLoadScript(const std::string& file):
 	CScript(std::string("Load ") + filesystem.GetFilename(file)),

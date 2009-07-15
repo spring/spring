@@ -30,10 +30,7 @@ class LuaSyncedCtrl {
 		static int SetTeamShareLevel(lua_State* L);
 
 		static int CallCOBScript(lua_State* L);
-		static int CallCOBScriptCB(lua_State* L);
 		static int GetCOBScriptID(lua_State* L);
-		static int GetUnitCOBValue(lua_State* L);
-		static int SetUnitCOBValue(lua_State* L);
 
 		static int GiveOrderToUnit(lua_State* L);
 		static int GiveOrderToUnitMap(lua_State* L);
@@ -92,6 +89,8 @@ class LuaSyncedCtrl {
 		static int UseUnitResource(lua_State* L);
 
 		static int RemoveBuildingDecal(lua_State* L);
+		static int AddGrass(lua_State* L);
+		static int RemoveGrass(lua_State* L);
 
 		static int SetFeatureHealth(lua_State* L);
 		static int SetFeatureReclaim(lua_State* L);
@@ -104,6 +103,11 @@ class LuaSyncedCtrl {
 		static int SetProjectilePosition(lua_State* L);
 		static int SetProjectileVelocity(lua_State* L);
 		static int SetProjectileCollision(lua_State* L);
+		static int SetProjectileGravity(lua_State* L);
+		static int SetProjectileSpinAngle(lua_State* L);
+		static int SetProjectileSpinSpeed(lua_State* L);
+		static int SetProjectileSpinVec(lua_State* L);
+		static int SetProjectileCEG(lua_State* L);
 
 		static int LevelHeightMap(lua_State* L);
 		static int AdjustHeightMap(lua_State* L);

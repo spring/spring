@@ -8,10 +8,9 @@
 #include "StdAfx.h"
 #include <typeinfo>
 #include "ExtractorBuilding.h"
+#include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Map/ReadMap.h"
-#include "Sim/Units/COB/CobInstance.h"
-#include "Sim/Units/COB/CobFile.h"
 #include "LogOutput.h"
 #include "Sim/Units/UnitDef.h"
 #include "Map/MetalMap.h"
@@ -59,7 +58,7 @@ CExtractorBuilding::~CExtractorBuilding()
 /* CReg PostLoad */
 void CExtractorBuilding::PostLoad()
 {
-	cob->Call(COBFN_SetSpeed, int(metalExtract * 5 * 100.0f));
+	script->SetSpeed(metalExtract, 500.0f);
 }
 
 /* resets the metalMap and notifies the neighbours */
@@ -180,9 +179,9 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	}
 
 	// set the COB animation speed
-	cob->Call(COBFN_SetSpeed, (int)(metalExtract * 5 * 100.0f));
+	script->SetSpeed(metalExtract, 500.0f);
 	if (activated) {
-		cob->Call("Go");
+		script->Go();
 	}
 }
 
@@ -221,9 +220,9 @@ void CExtractorBuilding::ReCalculateMetalExtraction()
 	}
 
 	// set the new rotation-speed
-	cob->Call(COBFN_SetSpeed, int(metalExtract * 5 * 100.0f));
+	script->SetSpeed(metalExtract, 500.0f);
 	if (activated) {
-		cob->Call("Go");
+		script->Go();
 	}
 }
 

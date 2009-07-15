@@ -9,6 +9,7 @@
 #include "NetProtocol.h"
 #include "QuitBox.h"
 #include "Game/PlayerHandler.h"
+#include "Game/GameSetup.h"
 #include "LoadSaveHandler.h"
 #include "TimeUtil.h"
 #include "FileSystem/FileSystem.h"
@@ -17,7 +18,6 @@
 #include "Rendering/GL/myGL.h"
 
 extern bool globalQuit;
-extern std::string stupidGlobalMapname; // see Game/PreGame.cpp
 
 CQuitBox::CQuitBox(void)
 {
@@ -242,7 +242,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	   || (InBox(mx,my,box+saveBox) && !teamHandler->Team(gu->myTeam)->isDead)
 	   || (InBox(mx,my,box+giveAwayBox) && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead)) {
 		// give away all units (and resources)
-		if(InBox(mx,my,box+giveAwayBox)) {
+		if(InBox(mx,my,box+giveAwayBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {
 			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam));
 			// inform other users of the giving away of units
 			char givenAwayMsg[200];
@@ -252,19 +252,19 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 			net->Send(CBaseNetProtocol::Get().SendSystemMessage(gu->myPlayerNum, givenAwayMsg));
 		}
 		// resign, so self-d all units
-		if (InBox(mx,my,box+resignBox)) {
+		if (InBox(mx,my,box+resignBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {
 			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 		}
 		// save current game state
 		if (InBox(mx,my,box+saveBox)) {
 			if (filesystem.CreateDirectory("Saves")) {
 				std::string timeStr = CTimeUtil::GetCurrentTimeStr();
-				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + stupidGlobalMapname);
+				std::string saveFileName(timeStr + "_" + modInfo.filename + "_" + gameSetup->mapName);
 				saveFileName = "Saves/" + saveFileName + ".ssf";
 				if (filesystem.GetFilesize(saveFileName) == 0) {
 					logOutput.Print("Saving game to %s\n", saveFileName.c_str());
 					CLoadSaveHandler ls;
-					ls.mapName = stupidGlobalMapname;
+					ls.mapName = gameSetup->mapName;
 					ls.modName = modInfo.filename;
 					ls.SaveGame(saveFileName);
 				} else {

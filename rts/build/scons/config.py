@@ -288,16 +288,17 @@ def CheckHeadersAndLibraries(env, conf):
 	boost_regex  = Dependency(['boost_regex'],   ['boost/regex.hpp'])
 	boost_serial = Dependency([], ['boost/serialization/split_member.hpp'])
 	boost_po     = Dependency(['boost_program_options'], ['boost/program_options.hpp'])
+	boost_system  = Dependency(['boost_system'],   ['boost/system/error_code.hpp'])
 
 	if env.Dictionary('CC').find('gcc') != -1: gcc = True
 	else: gcc = False
 
-	for boost in (boost_thread, boost_regex, boost_po):
+	for boost in (boost_thread, boost_regex, boost_po, boost_system):
 		l = boost.libraries[0]
 		if gcc: boost.libraries = [l+'-gcc-mt', l+'-mt', l+'-gcc', l]
 		else:   boost.libraries = [l+'-mt', l]
 
-	d = [boost_common, boost_regex, boost_serial, boost_thread, boost_po]
+	d = [boost_common, boost_regex, boost_serial, boost_thread, boost_po, boost_system]
 
 	d += [Dependency(['GL', 'opengl32'], ['GL/gl.h'])]
 	d += [Dependency(['GLU', 'glu32'], ['GL/glu.h'])]
@@ -316,6 +317,7 @@ def CheckHeadersAndLibraries(env, conf):
 		d += [Dependency(['ole32'],    [])]
 		d += [Dependency(['mingw32'],  [])]
 		d += [Dependency(['SDLmain'],  [])]
+		d += [Dependency(['ws2_32'],  [])]
 	else:
 		d += [Dependency(['Xcursor'], ['X11/Xcursor/Xcursor.h'])]
 		d += [Dependency(['X11'], ['X11/X.h'])]
@@ -355,8 +357,7 @@ def configure(env, conf_dir):
 	check_freetype2(env, conf)
 	check_sdl(env, conf)
 
-	if env['platform'] != 'windows':
-		check_openal(env, conf)
+	check_openal(env, conf)
 
 	check_ogg(env, conf)
 	check_vorbis(env, conf)

@@ -13,9 +13,8 @@
 #include "UnitTypes/ExtractorBuilding.h"
 #include "UnitTypes/Factory.h"
 #include "UnitTypes/TransportUnit.h"
-#include "COB/CobEngine.h"
-#include "COB/CobFile.h"
-#include "COB/CobInstance.h"
+#include "COB/UnitScript.h"
+#include "COB/UnitScriptFactory.h"
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -73,7 +72,7 @@ CUnitLoader::~CUnitLoader()
 }
 
 
-CUnit* CUnitLoader::LoadUnit(const string& name, float3 pos, int team,
+CUnit* CUnitLoader::LoadUnit(const std::string& name, float3 pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitByName(name);
@@ -95,7 +94,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 
 	CUnit* unit;
 
-	string type = ud->type;
+	std::string type = ud->type;
 
 	// clamp to map
 	if (pos.x < 0)
@@ -351,33 +350,15 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		unit->pos.y = ground->GetHeight2(unit->pos.x, unit->pos.z);
 	}
 
-	unit->cob = new CCobInstance(GCobEngine.GetCobFile(ud->scriptPath), unit);
+	unit->script = CUnitScriptFactory::CreateScript(ud->scriptPath, unit);
 
 	unit->weapons.reserve(ud->weapons.size());
 	for (unsigned int i = 0; i < ud->weapons.size(); i++) {
 		unit->weapons.push_back(LoadWeapon(ud->weapons[i].def, unit, &ud->weapons[i]));
 	}
 
-	// Calculate the max() of the available weapon reloadtimes
-	int relMax = 0;
-	for (vector<CWeapon*>::iterator i = unit->weapons.begin(); i != unit->weapons.end(); ++i) {
-		if ((*i)->reloadTime > relMax)
-			relMax = (*i)->reloadTime;
-		if (dynamic_cast<CBeamLaser*>(*i))
-			relMax = 150;
-	}
-
-	// convert ticks to milliseconds
-	relMax *= 30;
-
-	// TA does some special handling depending on weapon count
-	if (unit->weapons.size() > 1) {
-		relMax = std::max(relMax, 3000);
-	}
-
 	// Call initializing script functions
-	unit->cob->Call(COBFN_Create);
-	unit->cob->Call("SetMaxReloadTime", relMax);
+	unit->script->Create();
 
 	unit->heading = GetHeadingFromFacing(facing);
 	unit->frontdir = GetVectorFromHeading(unit->heading);

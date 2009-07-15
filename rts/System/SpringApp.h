@@ -22,7 +22,6 @@ public:
 
 protected:
 	bool Initialize();                              //!< Initialize app
-	void CheckCmdLineFile (int argc,char *argv[]);  //!< Check command line for files
 	void ParseCmdLine();                            //!< Parse command line
 	void Startup();                                 //!< Parses startup data (script etc.) and starts SelectMenu or PreGame
 	bool InitWindow(const char* title);             //!< Initializes window
@@ -110,9 +109,7 @@ protected:
 	int lastRequiredDraw;
 
 private:
-	static void SigAbrtHandler(int unused);
 };
-
 
 /**
  * @brief current active controller

@@ -1,103 +1,80 @@
 #include "Music.h"
 
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
+#include "Sound.h"
+#include "SoundSource.h"
 
-#include "OggStream.h"
-
-namespace music
+MusicChannel::MusicChannel() : current(NULL)
 {
+}
 
-struct TrackItem
+MusicChannel::~MusicChannel()
 {
-	std::string path;
-	float volume;
-};
+}
 
-boost::thread* musicThread = NULL;
-volatile bool playing = false;
-
-COggStream oggStream; // not threadsafe, only used from musicThread
-
-boost::mutex musicMutex;
-TrackItem nextTrack; // protected by musicMutex
-volatile bool playNext = false; // protected by musicMutex
-
-void UpdateMusicStream()
+void MusicChannel::SetVolume(float newvolume)
 {
-	while (playing)
+	volume = newvolume;
+
+	if (current)
+		current->SetVolume(volume); // OpenAL is threadsafe enought so no lock needed
+}
+
+void MusicChannel::Enable(bool newState)
+{
+	enabled = newState;
+
+	if (!enabled)
 	{
-		boost::this_thread::sleep(boost::posix_time::milliseconds(200));
-		{ // update buffers
-			boost::mutex::scoped_lock updaterLock(musicMutex);
-			if (playNext)
-			{
-				oggStream.Stop(); // just to be sure
-				oggStream.Play(nextTrack.path, nextTrack.volume);
-				playNext = false;
-			}
-			oggStream.Update();
-		}
+		Stop();
 	}
-	
-	{
-		boost::mutex::scoped_lock updaterLock(musicMutex);
-		oggStream.Stop();
-	}
-};
+}
 
-void Play(const std::string& path, float volume)
+void MusicChannel::Play(const std::string& path, float _volume)
 {
-	if (!playing)
+	if (!enabled)
 	{
-		if (musicThread)
-		{
-			musicThread->join();
-			delete musicThread;
-		}
-		// no thread running, no lock needed
-		playing = true;
-		playNext = true;
-		nextTrack.path = path;
-		nextTrack.volume = volume;
-		musicThread = new boost::thread(UpdateMusicStream);
+		return;
 	}
+
+	if (!current)
+		current = sound->GetNextBestSource();
+
+	current->PlayStream(path, volume * _volume);
+}
+
+void MusicChannel::Pause()
+{
+	if (current)
+		current->StreamPause();
+}
+
+void MusicChannel::Stop()
+{
+	if (current)
+	{
+		current->StreamStop();
+		current = NULL;
+	}
+}
+
+unsigned int MusicChannel::GetTime()
+{
+	if (current)
+		return current->GetStreamTime();
 	else
-	{
-		boost::mutex::scoped_lock updaterLock(musicMutex);
-		playNext = true;
-		nextTrack.path = path;
-		nextTrack.volume = volume;
-	}
+		return 0;
 }
 
-void Stop()
+unsigned int MusicChannel::GetPlayTime()
 {
-	playing = false;
+	if (current)
+		return current->GetStreamPlayTime();
+	else
+		return 0;
 }
 
-void Pause()
+
+namespace Channels
 {
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	oggStream.TogglePause();
-}
-
-unsigned int GetTime()
-{
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	return oggStream.GetTotalTime();
-}
-
-unsigned int GetPlayTime()
-{
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	return oggStream.GetPlayTime();
-}
-
-void SetVolume(float v)
-{
-	boost::mutex::scoped_lock controlLock(musicMutex);
-	oggStream.SetVolume(v);
-}
-
+	MusicChannel BGMusic;
 }

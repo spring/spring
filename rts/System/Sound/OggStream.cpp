@@ -24,14 +24,21 @@ int	VorbisStreamClose(void* datasource)
 }
 }
 
-COggStream::COggStream()
+COggStream::COggStream(ALuint _source)
 {
-	source = 0;
+	source = _source;
 	vorbisInfo = 0x0;
 	vorbisComment = 0x0;
 
 	stopped = true;
 	paused = false;
+}
+
+COggStream::~COggStream()
+{
+	if (!stopped) {
+		ReleaseBuffers();
+	}
 }
 
 // open an Ogg stream from a given file and start playing it
@@ -67,15 +74,6 @@ void COggStream::Play(const std::string& path, float volume)
 	}
 
 	alGenBuffers(2, buffers); CheckError("COggStream");
-	alGenSources(1, &source); CheckError("COggStream");
-
-	SetVolume(volume, true);
-
-	alSource3f(source, AL_POSITION,        0.0, 0.0, 0.0);
-	alSource3f(source, AL_VELOCITY,        0.0f,  0.0f,  0.0f );
-	alSource3f(source, AL_DIRECTION,       0.0f,  0.0f,  0.0f );
-	alSourcef( source, AL_ROLLOFF_FACTOR,  0.0f               );
-	alSourcei( source, AL_SOURCE_RELATIVE, false              );
 
 	if (!StartPlaying()) {
 		ReleaseBuffers();
@@ -83,16 +81,7 @@ void COggStream::Play(const std::string& path, float volume)
 		stopped = false;
 		paused = false;
 	}
-}
-
-
-void COggStream::SetVolume(float volume, bool b)
-{
-	if (!stopped || b) {
-		volume = std::max(0.0f, std::min(volume, 1.0f));
-
-		alSourcef(source, AL_GAIN, volume);
-	}
+	CheckError("COggStream");
 }
 
 float COggStream::GetPlayTime()
@@ -131,10 +120,9 @@ void COggStream::ReleaseBuffers()
 	stopped = true;
 	paused = false;
 
-	alSourceStop(source); EmptyBuffers();
+	EmptyBuffers();
 
 	alDeleteBuffers(2, buffers); CheckError("COggStream");
-	alDeleteSources(1, &source); CheckError("COggStream");
 
 	ov_clear(&oggStream);
 }
@@ -150,8 +138,8 @@ bool COggStream::StartPlaying()
 	if (!DecodeStream(buffers[1]))
 		return false;
 
-	alSourceQueueBuffers(source, 2, buffers);
-	alSourcePlay(source);
+	alSourceQueueBuffers(source, 2, buffers); CheckError("COggStream");
+	alSourcePlay(source); CheckError("COggStream");
 
 	return true;
 }
@@ -174,17 +162,12 @@ void COggStream::Stop()
 	}
 }
 
-void COggStream::TogglePause()
+bool COggStream::TogglePause()
 {
 	if (!stopped) {
 		paused = !paused;
-
-		if (paused) {
-			alSourcePause(source);
-		} else {
-			alSourcePlay(source);
-		}
 	}
+	return paused;
 }
 
 
@@ -226,8 +209,8 @@ void COggStream::Update()
 						ReleaseBuffers();
 					}
 				}
-			} else {
-				// EOS, nothing left to do
+			} else if (!IsPlaying()) {
+				// EOS and all chunks processed by OpenALs
 				ReleaseBuffers();
 			}
 		}
@@ -272,11 +255,10 @@ bool COggStream::DecodeStream(ALuint buffer)
 void COggStream::EmptyBuffers()
 {
 	int queued = 0;
-	alGetSourcei(source, AL_BUFFERS_QUEUED, &queued);
+	alGetSourcei(source, AL_BUFFERS_QUEUED, &queued); CheckError("COggStream");
 
 	while (queued-- > 0) {
 		ALuint buffer;
-		alSourceUnqueueBuffers(source, 1, &buffer);
-		CheckError("COggStream");
+		alSourceUnqueueBuffers(source, 1, &buffer); CheckError("COggStream");
 	}
 }

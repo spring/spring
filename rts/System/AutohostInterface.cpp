@@ -1,11 +1,20 @@
-#include "StdAfx.h"
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
+#include "Net/Socket.h" 
+
+#ifndef _MSC_VER
+#	include "StdAfx.h"
+#endif
 
 #include "AutohostInterface.h"
 
 #include <string.h>
 #include <vector>
 #include "mmgr.h"
-#include "Net/UDPConnectedSocket.h" 
 
 namespace {
 
@@ -59,103 +68,105 @@ enum EVENT
 	 * 
 	 * (uchar playernumber, uint16_t script, uint8_t mode, uint8_t[X] data) (X = space left in packet)
 	 * */
-	GAME_LUAMSG = 20
+	GAME_LUAMSG = 20,
+	
+	/// team statistics, see CTeam::Statistics for reference how to read them
+	/**
+	* (uchar teamnumber), CTeam::Statistics(in binary form)
+	*/
+	GAME_TEAMSTAT = 60
 };
 }
 
-AutohostInterface::AutohostInterface(int remoteport)
+AutohostInterface::AutohostInterface(int remoteport) : autohost(netcode::netservice)
 {
-	autohost = new netcode::UDPConnectedSocket("127.0.0.1", remoteport);
+	autohost.bind(boost::asio::ip::udp::endpoint(boost::asio::ip::address_v6::loopback(), 0));
+	autohost.connect(boost::asio::ip::udp::endpoint(boost::asio::ip::address_v6::loopback(), remoteport));
 }
 
 AutohostInterface::~AutohostInterface()
 {
-	delete autohost;
 }
 
-void AutohostInterface::SendStart() const
+void AutohostInterface::SendStart()
 {
 	uchar msg = SERVER_STARTED;
-	autohost->Send(&msg, sizeof(uchar));
+	autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
-void AutohostInterface::SendQuit() const
+void AutohostInterface::SendQuit()
 {
 	uchar msg = SERVER_QUIT;
-	autohost->Send(&msg, sizeof(uchar));
+	autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
-void AutohostInterface::SendStartPlaying() const
+void AutohostInterface::SendStartPlaying()
 {
 	uchar msg = SERVER_STARTPLAYING;
-	autohost->Send(&msg, sizeof(uchar));
+	autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
-void AutohostInterface::SendGameOver() const
+void AutohostInterface::SendGameOver()
 {
 	uchar msg = SERVER_GAMEOVER;
-	autohost->Send(&msg, sizeof(uchar));
+	autohost.send(boost::asio::buffer(&msg, sizeof(uchar)));
 }
 
-void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& name) const
+void AutohostInterface::SendPlayerJoined(uchar playerNum, const std::string& name)
 {
 	unsigned msgsize = 2*sizeof(uchar)+name.size();
-	uchar* msg = new uchar[msgsize];
-	msg[0] = PLAYER_JOINED;
-	msg[1] = playerNum;
-	strncpy((char*)msg+2, name.c_str(), name.size());
-	autohost->Send(msg, msgsize);
-	delete[] msg;
+	std::vector<boost::uint8_t> buffer(msgsize);
+	buffer[0] = PLAYER_JOINED;
+	buffer[1] = playerNum;
+	strncpy((char*)(&buffer[2]), name.c_str(), name.size());
+	autohost.send(boost::asio::buffer(buffer));
 }
 
-void AutohostInterface::SendPlayerLeft(uchar playerNum, uchar reason) const
+void AutohostInterface::SendPlayerLeft(uchar playerNum, uchar reason)
 {
 	uchar msg[3] = {PLAYER_LEFT, playerNum, reason};
-	autohost->Send(msg, 3);
+	autohost.send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
 }
 
-void AutohostInterface::SendPlayerReady(uchar playerNum, uchar readyState) const
+void AutohostInterface::SendPlayerReady(uchar playerNum, uchar readyState)
 {
 	uchar msg[3] = {PLAYER_READY, playerNum, readyState};
-	autohost->Send(msg, 3);
+	autohost.send(boost::asio::buffer(&msg, 3 * sizeof(uchar)));
 }
 
-void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const std::string& chatmsg) const
+void AutohostInterface::SendPlayerChat(uchar playerNum, uchar destination, const std::string& chatmsg)
 {
 	unsigned msgsize = 3*sizeof(uchar)+chatmsg.size();
-	uchar* msg = new uchar[msgsize];
-	msg[0] = PLAYER_CHAT;
-	msg[1] = playerNum;
-	msg[2] = destination;
-	strncpy((char*)msg+3, chatmsg.c_str(), chatmsg.size());
-	autohost->Send(msg, msgsize);
-	delete[] msg;
+	std::vector<boost::uint8_t> buffer(msgsize);
+	buffer[0] = PLAYER_CHAT;
+	buffer[1] = playerNum;
+	buffer[2] = destination;
+	strncpy((char*)(&buffer[3]), chatmsg.c_str(), chatmsg.size());
+	autohost.send(boost::asio::buffer(buffer));
 }
 
-void AutohostInterface::SendPlayerDefeated(uchar playerNum) const
+void AutohostInterface::SendPlayerDefeated(uchar playerNum)
 {
 	uchar msg[2] = {PLAYER_DEFEATED, playerNum};
-	autohost->Send(msg, 2);
+	autohost.send(boost::asio::buffer(&msg, 2 * sizeof(uchar)));
 }
 
 void AutohostInterface::Message(const std::string& message)
 {
 	unsigned msgsize = sizeof(uchar) + message.size();
-	uchar* msg = new uchar[msgsize];
-	msg[0] = SERVER_MESSAGE;
-	strncpy((char*)msg+1, message.c_str(), message.size());
-	autohost->Send(msg, msgsize);
-	delete[] msg;
+	std::vector<boost::uint8_t> buffer(msgsize);
+	buffer[0] = SERVER_MESSAGE;
+	strncpy((char*)(&buffer[1]), message.c_str(), message.size());
+	autohost.send(boost::asio::buffer(buffer));
 }
 
 void AutohostInterface::Warning(const std::string& message)
 {
 	unsigned msgsize = sizeof(uchar) + message.size();
-	uchar* msg = new uchar[msgsize];
-	msg[0] = SERVER_WARNING;
-	strncpy((char*)msg+1, message.c_str(), message.size());
-	autohost->Send(msg, msgsize);
-	delete[] msg;
+	std::vector<boost::uint8_t> buffer(msgsize);
+	buffer[0] = SERVER_WARNING;
+	strncpy((char*)(&buffer[1]), message.c_str(), message.size());
+	autohost.send(boost::asio::buffer(buffer));
 }
 
 void AutohostInterface::SendLuaMsg(const boost::uint8_t* msg, size_t msgSize)
@@ -163,16 +174,26 @@ void AutohostInterface::SendLuaMsg(const boost::uint8_t* msg, size_t msgSize)
 	std::vector<boost::uint8_t> buffer(msgSize+1);
 	buffer[0] = GAME_LUAMSG;
 	std::copy(msg, msg+msgSize, buffer.begin()+1);
-	autohost->Send(&buffer[0], buffer.size());
+	autohost.send(boost::asio::buffer(buffer));
 }
 
-std::string AutohostInterface::GetChatMessage() const
+void AutohostInterface::Send(const boost::uint8_t* msg, size_t msgSize)
 {
-	uchar buffer[4096];
-	unsigned length = autohost->Recv(buffer, 4096);
-	buffer[std::min(length, (unsigned)250)] = '\0';
-	
-	std::string msg((char*)buffer);
-	return msg;
+	std::vector<boost::uint8_t> buffer(msgSize);
+	std::copy(msg, msg+msgSize, buffer.begin());
+	autohost.send(boost::asio::buffer(buffer));
+}
+
+std::string AutohostInterface::GetChatMessage()
+{
+	size_t bytes_avail = 0;
+	if ((bytes_avail = autohost.available()) > 0)
+	{
+		std::vector<boost::uint8_t> buffer(bytes_avail+1, 0);
+		size_t bytesReceived = autohost.receive(boost::asio::buffer(buffer));
+		return std::string((char*)(&buffer[0]));
+	}
+	else
+		return "";
 }
 

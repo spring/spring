@@ -1,5 +1,14 @@
 Spring change log
 
+0.79.1.1:
+Bugfixes:
+ - fix microlags and increased CPU usage for dedicated server
+ - fix the game ending when playign with AIs
+ - various AI-interface and AI-related fixes
+ - fallback to Lua for unhandled actions
+ - fixed exploit where spectator could make Team 0 resign
+ - fix certain soundeffects
+
 0.79.1:
 Bugfixes:
  - fix crash when a direct-controlled unit dies

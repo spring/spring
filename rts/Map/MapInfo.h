@@ -118,6 +118,7 @@ public:
 		float  perlinStartFreq;
 		float  perlinLacunarity;
 		float  perlinAmplitude;
+		float  windSpeed;
 		bool   shoreWaves;
 		bool   forceRendering; ///< if false the renderers will render it only if currentMinMapHeight<0
 		bool   hasWaterPlane;  ///< true if "MAP\WATER\WaterPlaneColor" is set

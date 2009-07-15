@@ -22,22 +22,6 @@ else (PYTHONLIBS_FOUND)
 	message ("No python libraries found, python bindings disabled")
 endif (PYTHONLIBS_FOUND)
 
-IF (MINGW)
-	set (JAVA_FOUND TRUE)
-	INCLUDE_DIRECTORIES(${MINGWLIBS}/include/java)
-ELSE (MINGW)
-	list (APPEND unitsync_libs util) # sometimes this is needed (and I have no clue why)
-	
-	FIND_PACKAGE(JNI)
-	if (JAVA_INCLUDE_PATH)
-		include_directories(${JAVA_INCLUDE_PATH} ${JAVA_INCLUDE_PATH2} ${JNI_INCLUDE_DIRS})
-		set (JAVA_FOUND TRUE)
-	else (JAVA_INCLUDE_PATH)
-		message ("No Java includes found, java bindings disabled")
-	endif (JAVA_INCLUDE_PATH)
-	
-ENDIF (MINGW)
-
 ADD_DEFINITIONS( -DUNITSYNC -DBITMAP_NO_OPENGL ${PIC_FLAG})
 
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/lib/lua/include)
@@ -64,9 +48,6 @@ set(unitsync_files
 if (PYTHONLIBS_FOUND)
 	list(APPEND unitsync_files pybind)
 endif (PYTHONLIBS_FOUND)
-if (JAVA_FOUND)
-	list(APPEND unitsync_files javabind)
-endif (JAVA_FOUND)
 ADD_LIBRARY(unitsync SHARED ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
 TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
 if (MINGW)

@@ -2,6 +2,7 @@
 #include "mmgr.h"
 
 #include "CommanderScript2.h"
+#include "Game/GameSetup.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
@@ -10,9 +11,6 @@
 #include "Sim/Units/UnitLoader.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
-
-
-extern std::string stupidGlobalMapname;
 
 
 CCommanderScript2::CCommanderScript2()
@@ -49,7 +47,7 @@ void CCommanderScript2::GameStart()
 		throw content_error ("Unable to load a startUnit for the first side");
 	}
 
-	MapParser mapParser(stupidGlobalMapname);
+	MapParser mapParser(gameSetup->mapName);
 	if (!mapParser.IsValid()) {
 		throw content_error("MapParser: " + mapParser.GetErrorLog());
 	}

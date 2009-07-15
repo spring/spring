@@ -5,6 +5,7 @@
 #include "mmgr.h"
 
 #include "SpawnScript.h"
+#include "Game/GameSetup.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
@@ -18,8 +19,6 @@
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
 
-
-extern std::string stupidGlobalMapname;
 
 CSpawnScript::CSpawnScript(bool _autonomous) :
 		CScript(std::string(_autonomous ? "Random enemies 2" : "Random enemies")),
@@ -44,7 +43,7 @@ void CSpawnScript::Update()
 			throw content_error ("Unable to load a startUnit for the first side");
 		}
 
-		MapParser mapParser(stupidGlobalMapname);
+		MapParser mapParser(gameSetup->mapName);
 		if (!mapParser.IsValid()) {
 			throw content_error("MapParser: " + mapParser.GetErrorLog());
 		}

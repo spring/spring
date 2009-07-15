@@ -4,11 +4,11 @@
 #include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/asio/ip/udp.hpp>
 #include <deque>
 #include <list>
 
 #include "Connection.h"
-#include "UDPSocket.h"
 #include "System/myTime.h"
 
 namespace netcode {
@@ -27,8 +27,8 @@ How Spring protocolheader looks like (size in bytes):
 class UDPConnection : public CConnection
 {
 public:
-	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const sockaddr_in& MyAddr);
-	UDPConnection(boost::shared_ptr<UDPSocket> NetSocket, const std::string& address, const unsigned port);
+	UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> NetSocket, const boost::asio::ip::udp::endpoint& MyAddr);
+	UDPConnection(int sourceport, const std::string& address, const unsigned port);
 	virtual ~UDPConnection();
 
 	/**
@@ -65,10 +65,10 @@ public:
 	virtual bool CheckTimeout() const;
 	
 	virtual std::string Statistics() const;
-	virtual NetAddress GetPeerName() const;
 
 	/// do we have these address?
-	bool CheckAddress(const sockaddr_in&) const;
+	bool CheckAddress(const boost::asio::ip::udp::endpoint&) const;
+	std::string GetFullAddress() const;
 	
 	void SetMTU(unsigned mtu);
 
@@ -88,7 +88,7 @@ private:
 	/// add header to data and send it
 	void SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum);
 	/// address of the other end
-	sockaddr_in addr;
+	boost::asio::ip::udp::endpoint addr;
 
 	/// maximum size of packets to send
 	unsigned mtu;
@@ -112,7 +112,7 @@ private:
 
 	/** Our socket.
 	*/
-	boost::shared_ptr<UDPSocket> const mySocket;
+	boost::shared_ptr<boost::asio::ip::udp::socket> mySocket;
 	
 	RawPacket* fragmentBuffer;
 

@@ -36,7 +36,7 @@ CR_REG_METADATA(CSmokeProjectile2,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CSmokeProjectile2::CSmokeProjectile2() :
+CSmokeProjectile2::CSmokeProjectile2():
 	CProjectile(),
 	color(0.5f),
 	age(0.0f),
@@ -47,20 +47,19 @@ CSmokeProjectile2::CSmokeProjectile2() :
 	textureNum(0),
 	glowFalloff(0.0f)
 {
-	deleteMe=false;
-	checkCol=false;
-	synced=false;
+	deleteMe = false;
+	checkCol = false;
 }
 
-void CSmokeProjectile2::Init(const float3& pos, CUnit *owner GML_PARG_C)
+void CSmokeProjectile2::Init(const float3& pos, CUnit* owner GML_PARG_C)
 {
-	textureNum=(int)(gu->usRandInt() % ph->smoketex.size());
+	textureNum = (int) (gu->usRandInt() % ph->smoketex.size());
 
-	if(pos.y-ground->GetApproximateHeight(pos.x,pos.z)>10)
-		useAirLos=true;
+	if (pos.y - ground->GetApproximateHeight(pos.x, pos.z) > 10)
+		useAirLos = true;
 
-	if(!owner)
-		alwaysVisible=true;
+	if (!owner)
+		alwaysVisible = true;
 
 	wantedPos += pos;
 
@@ -68,7 +67,7 @@ void CSmokeProjectile2::Init(const float3& pos, CUnit *owner GML_PARG_C)
 }
 
 CSmokeProjectile2::CSmokeProjectile2(float3 pos,float3 wantedPos,float3 speed,float ttl,float startSize,float sizeExpansion, CUnit* owner, float color GML_PARG_C)
-: CProjectile(pos,speed,owner, false, false GML_PARG_P),
+: CProjectile(pos,speed,owner, false, false, false GML_PARG_P),
 	color(color),
 	age(0),
 	size(0),

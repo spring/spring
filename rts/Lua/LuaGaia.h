@@ -31,9 +31,6 @@ class CLuaGaia : public CLuaHandleSynced
 		static int GetConfigString(lua_State* L);
 
 	private:
-		static void CobCallback(int retCode, void* p1, void* p2);
-
-	private:
 		static string configString;
 };
 

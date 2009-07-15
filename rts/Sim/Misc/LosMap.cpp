@@ -275,6 +275,12 @@ void CLosAlgorithm::UnsafeLosAdd(int2 pos, int radius, float baseHeight, std::ve
 
 	baseHeight += heightmap[mapSquare];
 
+	size_t neededSpace = squares.size() + 1;
+	for(LosTable::const_iterator li = table.begin(); li != table.end(); ++li) {
+		neededSpace += li->size() * 4;
+	}
+	squares.reserve(neededSpace);
+
 	squares.push_back(mapSquare);
 
 	for(LosTable::const_iterator li = table.begin(); li != table.end(); ++li) {

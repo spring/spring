@@ -4,7 +4,7 @@
 
 #include <cstdlib>
 #include <cmath>
-#include <AL/alc.h>
+#include <alc.h>
 #include <boost/cstdint.hpp>
 
 #include "SoundSource.h"
@@ -12,6 +12,7 @@
 #include "SoundItem.h"
 #include "AudioChannel.h"
 #include "ALShared.h"
+#include "Music.h"
 
 #include "LogOutput.h"
 #include "ConfigHandler.h"
@@ -23,11 +24,11 @@
 
 CSound* sound = NULL;
 
-CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateCounter(0)
+CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundThread(NULL)
 {
 	mute = false;
 	appIsIconified = false;
-	int maxSounds = configHandler->Get("MaxSounds", 64) - 1; // 1 source is occupied by eventual music (handled by OggStream)
+	int maxSounds = configHandler->Get("MaxSounds", 128);
 	pitchAdjust = configHandler->Get("PitchAdjust", true);
 
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
@@ -36,6 +37,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
+	Channels::UserInterface.SetVolume(configHandler->Get("snd_volmusic", 100 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{
@@ -87,24 +89,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 					;
 			}
 		}
-
-		// Generate sound sources
-		for (int i = 0; i < maxSounds; i++) {
-			sources.push_back(new SoundSource());
-			if (!sources[i].IsValid())
-			{
-				sources.pop_back();
-				maxSounds = i-1;
-				LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
-				break;
-			}
-		}
-
-		// Set distance model (sound attenuation)
-		alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
-		//alDopplerFactor(1.0);
-
-		alListenerf(AL_GAIN, masterVolume);
 	}
 
 	SoundBuffer::Initialise();
@@ -115,6 +99,9 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), updateC
 
 	LoadSoundDefs("gamedata/sounds.lua");
 
+	if (maxSounds > 0)
+		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
+
 	configHandler->NotifyOnChange(this);
 }
 
@@ -122,6 +109,11 @@ CSound::~CSound()
 {
 	if (!sources.empty())
 	{
+		soundThread->interrupt();
+		soundThread->join();
+		delete soundThread;
+		soundThread = 0;
+
 		sources.clear(); // delete all sources
 		sounds.clear();
 		SoundBuffer::Deinitialise();
@@ -152,7 +144,7 @@ bool CSound::HasSoundItem(const std::string& name)
 
 size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 {
-	GML_RECMUTEX_LOCK(sound); // GetSoundId
+	boost::mutex::scoped_lock lck(soundMutex);
 
 	if (sources.empty())
 		return 0;
@@ -201,14 +193,34 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	return 0;
 }
 
+SoundSource* CSound::GetNextBestSource(bool lock)
+{
+	sourceVecT::iterator bestPos = sources.begin();
+	
+	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+	{
+		if (!it->IsPlaying())
+		{
+			return &(*it); //argh
+		}
+		else if (it->GetCurrentPriority() <= bestPos->GetCurrentPriority())
+		{
+			bestPos = it;
+		}
+	}
+	return &(*bestPos);
+}
+
 void CSound::PitchAdjust(const float newPitch)
 {
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (pitchAdjust)
 		SoundSource::SetPitch(newPitch);
 }
 
 void CSound::ConfigNotify(const std::string& key, const std::string& value)
 {
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (key == "snd_volmaster")
 	{
 		masterVolume = std::atoi(value.c_str()) * 0.01f;
@@ -231,6 +243,10 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 	{
 		Channels::UserInterface.SetVolume(std::atoi(value.c_str()) * 0.01f);
 	}
+	else if (key == "snd_volmusic")
+	{
+		Channels::BGMusic.SetVolume(std::atoi(value.c_str()) * 0.01f);
+	}
 	else if (key == "PitchAdjust")
 	{
 		bool tempPitchAdjust = (std::atoi(value.c_str()) != 0);
@@ -242,6 +258,7 @@ void CSound::ConfigNotify(const std::string& key, const std::string& value)
 
 bool CSound::Mute()
 {
+	boost::mutex::scoped_lock lck(soundMutex);
 	mute = !mute;
 	if (mute)
 		alListenerf(AL_GAIN, 0.0);
@@ -257,6 +274,7 @@ bool CSound::IsMuted() const
 
 void CSound::Iconified(bool state)
 {
+	boost::mutex::scoped_lock lck(soundMutex);
 	if (appIsIconified != state && !mute)
 	{
 		if (state == false)
@@ -269,7 +287,7 @@ void CSound::Iconified(bool state)
 
 void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, float volume, bool relative)
 {
-	GML_RECMUTEX_LOCK(sound); // PlaySample
+	boost::mutex::scoped_lock lck(soundMutex);
 
 	if (sources.empty() || volume == 0.0f)
 		return;
@@ -288,59 +306,66 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 			LogObject(LOG_SOUND) << "CSound::PlaySample: maxdist ignored for relative payback: " << sounds[id].Name();
 	}
 
-	bool found1Free = false;
-	int minPriority = 1;
-	size_t minPos = 0;
+	SoundSource* best = GetNextBestSource(false);
+	if (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority()))
+		best->Play(&sounds[id], p, velocity, volume, relative);
+	CheckError("CSound::PlaySample");
+}
 
-	for (size_t pos = 0; pos != sources.size(); ++pos)
+void CSound::StartThread(int maxSounds)
+{
+	try
 	{
-		if (!sources[pos].IsPlaying())
 		{
-			minPos = pos;
-			found1Free = true;
-			break;
-		}
-		else
-		{
-			if (sources[pos].GetCurrentPriority() < minPriority && sources[pos].GetCurrentPriority() <=  sounds[id].GetPriority())
+			boost::mutex::scoped_lock lck(soundMutex);
+
+			// Generate sound sources
+			for (int i = 0; i < maxSounds; i++)
 			{
-				found1Free = true;
-				minPriority = sources[pos].GetCurrentPriority();
-				minPos = pos;
+				SoundSource* thenewone = new SoundSource();
+				if (thenewone->IsValid())
+				{
+					sources.push_back(thenewone);
+				}
+				else
+				{
+					maxSounds = i-1;
+					configHandler->Set("MaxSounds", maxSounds);
+					LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
+					delete thenewone;
+					break;
+				}
 			}
+
+			// Set distance model (sound attenuation)
+			alDistanceModel(AL_INVERSE_DISTANCE_CLAMPED);
+			//alDopplerFactor(1.0);
+
+			alListenerf(AL_GAIN, masterVolume);
+		}
+
+		while (true) {
+			boost::this_thread::sleep(boost::posix_time::millisec(50)); // sleep
+			boost::mutex::scoped_lock lck(soundMutex); // lock
+			Update(); // call update
 		}
 	}
-
-	if (found1Free)
-		sources[minPos].Play(&sounds[id], p, velocity, volume, relative);
-	CheckError("CSound::PlaySample");
+	catch(boost::thread_interrupted const&)
+	{
+		// do cleanup here
+	}
 }
 
 void CSound::Update()
 {
-	updateCounter++;
-
-	GML_RECMUTEX_LOCK(sound); // Update
-
-	if (sources.empty())
-		return;
-
-	Channels::General.UpdateFrame();
-	Channels::Battle.UpdateFrame();
-	Channels::UnitReply.UpdateFrame();
-	Channels::UserInterface.UpdateFrame();
-
-	if (updateCounter % 2)
-	{
-		for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
-			it->Update();
-	}
+	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
+		it->Update();
 	CheckError("CSound::Update");
 }
 
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
-	GML_RECMUTEX_LOCK(sound); // UpdateListener
+	boost::mutex::scoped_lock lck(soundMutex);
 
 	if (sources.empty())
 		return;
@@ -349,7 +374,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 
 	SoundSource::SetHeightRolloffModifer(std::min(5.*600./campos.y, 5.0));
-	//TODO: reactivate when it does nto go crazy on camera "teleportation" or fast movement,
+	//TODO: reactivate when it does not go crazy on camera "teleportation" or fast movement,
 	// like when clicked on minimap
 	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
 	//const float3 velocityAvg = (velocity+prevVelocity)/2;
@@ -363,6 +388,8 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 
 void CSound::PrintDebugInfo()
 {
+	boost::mutex::scoped_lock lck(soundMutex);
+
 	LogObject(LOG_SOUND) << "OpenAL Sound System:";
 	LogObject(LOG_SOUND) << "# SoundSources: " << sources.size();
 	LogObject(LOG_SOUND) << "# SoundBuffers: " << SoundBuffer::Count();
@@ -374,6 +401,9 @@ void CSound::PrintDebugInfo()
 
 bool CSound::LoadSoundDefs(const std::string& filename)
 {
+	//! can be called from LuaUnsyncedCtrl too
+	boost::mutex::scoped_lock lck(soundMutex);
+
 	LuaParser parser(filename, SPRING_VFS_MOD, SPRING_VFS_ZIP);
 	parser.SetLowerKeys(false);
 	parser.SetLowerCppKeys(false);
@@ -427,6 +457,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 	return true;
 }
 
+
 size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 {
 	assert(path.length() > 3);
@@ -470,10 +501,10 @@ size_t CSound::LoadALBuffer(const std::string& path, bool strict)
 }
 
 
+
+//! only used internally, locked in caller's scope
 size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 {
-	GML_RECMUTEX_LOCK(sound); // GetWaveId
-
 	if (sources.empty())
 		return 0;
 
@@ -481,6 +512,7 @@ size_t CSound::GetWaveId(const std::string& path, bool hardFail)
 	return (id == 0) ? LoadALBuffer(path, hardFail) : id;
 }
 
+//! only used internally, locked in caller's scope
 boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bool hardFail)
 {
 	return SoundBuffer::GetById(GetWaveId(path, hardFail));
@@ -488,4 +520,8 @@ boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bo
 
 void CSound::NewFrame()
 {
+	Channels::General.UpdateFrame();
+	Channels::Battle.UpdateFrame();
+	Channels::UnitReply.UpdateFrame();
+	Channels::UserInterface.UpdateFrame();
 }

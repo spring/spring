@@ -18,6 +18,8 @@
 #include <fstream>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <string.h>
+#include <errno.h>
 #ifndef _WIN32
 	#include <dirent.h>
 	#include <sstream>
@@ -40,6 +42,7 @@
 #include "FileSystem/FileHandler.h"
 #include "ConfigHandler.h"
 #include "LogOutput.h"
+#include "Exceptions.h"
 #include "Util.h"
 #include "mmgr.h"
 
@@ -48,6 +51,12 @@
 
 FileSystem filesystem;
 
+std::string StripTrailingSlashes(std::string path)
+{
+	while (!path.empty() && (path.at(path.length()-1) == '\\' || path.at(path.length()-1) == '/'))
+		path = path.substr(0, path.length()-1);
+	return path;
+}
 
 ////////////////////////////////////////
 ////////// FileSystemHandler
@@ -189,7 +198,7 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 bool FileSystemHandler::IsReadableFile(const std::string& file) const
 {
 #ifdef WIN32
-	return (_access(file.c_str(), 4) == 0);
+	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);
 #else
 	return (access(file.c_str(), R_OK | F_OK) == 0);
 #endif
@@ -235,7 +244,6 @@ bool FileSystemHandler::IsAbsolutePath(const std::string& path)
 #endif
 }
 
-
 /**
  * @brief creates a rwxr-xr-x dir in the writedir
  *
@@ -261,39 +269,65 @@ bool FileSystemHandler::mkdir(const std::string& dir) const
 #ifndef _WIN32
 	if (::mkdir(dir.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0)
 #else
-	if (::_mkdir(dir.c_str()) == 0)
+	if (::_mkdir(StripTrailingSlashes(dir).c_str()) == 0)
 #endif
+	{
 		return true;
-
-	// Otherwise we return false.
-	return false;
+	}
+	else
+	{
+		logOutput.Print("Could not create directory %s: %s", dir.c_str(), strerror(errno));
+		// Otherwise we return false.
+		return false;
+	}
 }
 
 bool FileSystemHandler::DeleteFile(const std::string& file)
 {
-	return remove(file.c_str()) == 0;
+	if (remove(file.c_str()) == 0)
+	{
+		return true;
+	}
+	else
+	{
+		logOutput.Print("Could not delete file %s: %s", file.c_str(), strerror(errno));
+		// Otherwise we return false.
+		return false;
+	}
 }
 
 bool FileSystemHandler::FileExists(const std::string& file)
 {
 #ifdef _WIN32
 	struct _stat info;
-	return (_stat(file.c_str(), &info) == 0 && (info.st_mode & _S_IFREG));
+	const int ret = _stat(StripTrailingSlashes(file).c_str(), &info);
+	if ((ret == 0 && (info.st_mode & _S_IFREG)))
 #else
 	struct stat info;
-	return (stat(file.c_str(), &info) == 0 && !S_ISDIR(info.st_mode));
+	const int ret = stat(file.c_str(), &info);
+	if ((ret == 0 && !S_ISDIR(info.st_mode)))
 #endif
+	{
+		return true;
+	}
+	else
+		return false;
 }
 
 bool FileSystemHandler::DirExists(const std::string& dir)
 {
 #ifdef _WIN32
 	struct _stat info;
-	return (_stat(dir.c_str(), &info) == 0 && (info.st_mode&_S_IFDIR));
+	const int ret = _stat(StripTrailingSlashes(dir).c_str(), &info);
+	if ((ret == 0) && (info.st_mode & _S_IFDIR))
 #else
 	struct stat info;
-	return (stat(dir.c_str(), &info) == 0 && S_ISDIR(info.st_mode));
+	const int ret = stat(dir.c_str(), &info);
+	if ((ret == 0) && S_ISDIR(info.st_mode))
 #endif
+		return true;
+	else
+		return false;
 }
 
 
@@ -332,6 +366,16 @@ bool FileSystemHandler::DirIsWritable(const std::string& dir)
 #endif
 }
 
+void FileSystemHandler::Chdir(const std::string& dir)
+{
+#ifndef _WIN32
+	const int err = chdir(dir.c_str());
+#else
+	const int err = _chdir(StripTrailingSlashes(dir).c_str());
+#endif
+	if (err)
+		throw content_error("Could not chdir into SPRING_DATADIR");
+}
 
 static void FindFiles(std::vector<std::string>& matches, const std::string& dir, const boost::regex &regexpattern, int flags)
 {

@@ -193,10 +193,20 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 		return "Enemy unit";
 	}
 
+
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
-		if (teamHandler->Team(unit->team)->leader >= 0) {
-			s = playerHandler->Player(teamHandler->Team(unit->team)->leader)->name.c_str();
+		const int teamIdx = unit->team;
+		const CTeam* team = teamHandler->Team(teamIdx);
+
+		if (team->leader >= 0) {
+			s = playerHandler->Player(team->leader)->name;
+
+			if (team->isAI) {
+				s += " (AI: " +
+					(team->skirmishAIKey.GetShortName() + " " +
+					 team->skirmishAIKey.GetVersion()) + ")";
+			}
 		} else {
 			s = "Uncontrolled";
 		}
@@ -207,6 +217,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 			s = decoyDef->humanName + " - " + decoyDef->tooltip;
 		}
 	}
+
 
 	// don't show the unit health and other info if it has
 	// the FBI tag hideDamage and is not on our ally team or

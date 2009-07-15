@@ -16,14 +16,14 @@
 #include "Exceptions.h"
 
 
-C3DModelParser* modelParser = NULL;
+C3DModelLoader* modelParser = NULL;
 
 
 //////////////////////////////////////////////////////////////////////
-// C3DModelParser
+// C3DModelLoader
 //
 
-C3DModelParser::C3DModelParser(void)
+C3DModelLoader::C3DModelLoader(void)
 {
 	C3DOParser* unit3doparser = new C3DOParser();
 	CS3OParser* units3oparser = new CS3OParser();
@@ -33,7 +33,7 @@ C3DModelParser::C3DModelParser(void)
 }
 
 
-C3DModelParser::~C3DModelParser(void)
+C3DModelLoader::~C3DModelLoader(void)
 {
 	// delete model cache
 	std::map<std::string, S3DModel*>::iterator ci;
@@ -58,13 +58,13 @@ C3DModelParser::~C3DModelParser(void)
 }
 
 
-void C3DModelParser::AddParser(const std::string ext, IModelParser* parser)
+void C3DModelLoader::AddParser(const std::string ext, IModelParser* parser)
 {
 	parsers[ext] = parser;
 }
 
 
-S3DModel* C3DModelParser::Load3DModel(std::string name, const float3& centerOffset)
+S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffset)
 {
 	GML_STDMUTEX_LOCK(model); // Load3DModel
 
@@ -81,7 +81,9 @@ S3DModel* C3DModelParser::Load3DModel(std::string name, const float3& centerOffs
 	std::map<std::string, IModelParser*>::iterator pi;
 	if ((pi = parsers.find(fileExt)) != parsers.end()) {
 		IModelParser* p = pi->second;
-		S3DModel* model = p->Load(name, centerOffset);
+		S3DModel* model = p->Load(name);
+
+		model->relMidPos += centerOffset;
 
 		CreateLists(p, model->rootobject);
 		fartextureHandler->CreateFarTexture(model);
@@ -90,12 +92,11 @@ S3DModel* C3DModelParser::Load3DModel(std::string name, const float3& centerOffs
 		return model;
 	}
 
-	// throw content_error("couldn't find a model parser for " + name);
-	logOutput.Print("couldn't find a model parser for " + name);
+	logOutput.Print("couldn't find a parser for model named \"" + name + "\"");
 	return NULL;
 }
 
-void C3DModelParser::Update() {
+void C3DModelLoader::Update() {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // Update
 
@@ -117,10 +118,9 @@ void C3DModelParser::Update() {
 }
 
 
-void C3DModelParser::DeleteChilds(S3DModelPiece* o)
+void C3DModelLoader::DeleteChilds(S3DModelPiece* o)
 {
 	for (std::vector<S3DModelPiece*>::iterator di = o->childs.begin(); di != o->childs.end(); di++) {
-		delete (*di)->colvol;
 		delete (*di);
 	}
 	o->childs.clear();
@@ -128,7 +128,7 @@ void C3DModelParser::DeleteChilds(S3DModelPiece* o)
 }
 
 
-void C3DModelParser::DeleteLocalModel(CUnit* unit)
+void C3DModelLoader::DeleteLocalModel(CUnit* unit)
 {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // DeleteLocalModel
@@ -141,7 +141,7 @@ void C3DModelParser::DeleteLocalModel(CUnit* unit)
 }
 
 
-void C3DModelParser::CreateLocalModel(CUnit* unit)
+void C3DModelLoader::CreateLocalModel(CUnit* unit)
 {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	GML_STDMUTEX_LOCK(model); // CreateLocalModel
@@ -155,7 +155,7 @@ void C3DModelParser::CreateLocalModel(CUnit* unit)
 }
 
 
-LocalModel* C3DModelParser::CreateLocalModel(S3DModel* model)
+LocalModel* C3DModelLoader::CreateLocalModel(S3DModel* model)
 {
 	LocalModel* lmodel = new LocalModel;
 	lmodel->type = model->type;
@@ -172,7 +172,7 @@ LocalModel* C3DModelParser::CreateLocalModel(S3DModel* model)
 }
 
 
-void C3DModelParser::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
+void C3DModelLoader::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lmodel, int* piecenum)
 {
 	LocalModelPiece& lmp = *lmodel->pieces[*piecenum];
 	lmp.original  =  piece;
@@ -195,14 +195,14 @@ void C3DModelParser::CreateLocalModelPieces(S3DModelPiece* piece, LocalModel* lm
 }
 
 
-void C3DModelParser::FixLocalModel(CUnit* unit)
+void C3DModelLoader::FixLocalModel(CUnit* unit)
 {
 	int piecenum = 0;
 	FixLocalModel(unit->model->rootobject, unit->localmodel, &piecenum);
 }
 
 
-void C3DModelParser::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
+void C3DModelLoader::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int* piecenum)
 {
 	lmodel->pieces[*piecenum]->displist = model->displist;
 
@@ -213,7 +213,7 @@ void C3DModelParser::FixLocalModel(S3DModelPiece* model, LocalModel* lmodel, int
 }
 
 
-void C3DModelParser::CreateListsNow(IModelParser* parser, S3DModelPiece* o)
+void C3DModelLoader::CreateListsNow(IModelParser* parser, S3DModelPiece* o)
 {
 	o->displist = glGenLists(1);
 	glNewList(o->displist, GL_COMPILE);
@@ -226,7 +226,7 @@ void C3DModelParser::CreateListsNow(IModelParser* parser, S3DModelPiece* o)
 }
 
 
-void C3DModelParser::CreateLists(IModelParser* parser, S3DModelPiece* o) {
+void C3DModelLoader::CreateLists(IModelParser* parser, S3DModelPiece* o) {
 #if defined(USE_GML) && GML_ENABLE_SIM
 	createLists.push_back(ModelParserPair(o, parser));
 #else

@@ -5,8 +5,6 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "COB/CobFile.h"
-#include "COB/CobInstance.h"
 #include "CommandAI/CommandAI.h"
 #include "CommandAI/FactoryCAI.h"
 #include "creg/STL_List.h"
@@ -63,7 +61,8 @@
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
 
-#include "COB/CobEngine.h"
+#include "COB/UnitScript.h"
+#include "COB/UnitScriptFactory.h"
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -195,7 +194,6 @@ CUnit::CUnit():
 	fireState(2),
 	dontFire(false),
 	moveState(0),
-	cob(NULL),
 	script(NULL),
 	crashing(false),
 	isDead(false),
@@ -241,9 +239,7 @@ CUnit::CUnit():
 	, lastDrawFrame(-30)
 #endif
 {
-#ifdef DIRECT_CONTROL_ALLOWED
 	directControl = NULL;
-#endif
 	activated = false;
 	GML_GET_TICKS(lastUnitUpdate);
 }
@@ -273,12 +269,10 @@ CUnit::~CUnit()
 	tracefile << pos.x << " " << pos.y << " " << pos.z << " " << id << "\n";
 #endif
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	if (directControl) {
 		directControl->myController->StopControllingUnit();
 		directControl = NULL;
 	}
-#endif
 
 	if (activated && unitDef->targfac) {
 		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
@@ -296,10 +290,8 @@ CUnit::~CUnit()
 	// but we always want to call this for ourselves
 	UnBlock();
 
-	if (group) {
-		group->RemoveUnit(this);
-	}
-	group = NULL;
+	// Remove us from our group, if we were in one
+	SetGroup(NULL);
 
 	std::vector<CWeapon*>::iterator wi;
 	for (wi = weapons.begin(); wi != weapons.end(); ++wi) {
@@ -314,8 +306,7 @@ CUnit::~CUnit()
 		radarhandler->RemoveUnit(this);
 	}
 
-	delete cob;
-	//FIXME delete script;
+	delete script;
 	modelParser->DeleteLocalModel(this);
 }
 
@@ -998,24 +989,12 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	float3 hitDir = impulse;
 	hitDir.y = 0.0f;
 	hitDir = -hitDir.Normalize();
-	std::vector<int> cobargs;
 
-	cobargs.push_back((int)(500 * hitDir.z));
-	cobargs.push_back((int)(500 * hitDir.x));
-
-	if (cob->FunctionExist(COBFN_HitByWeaponId)) {
-		if (weaponId != -1) {
-			cobargs.push_back(weaponDefHandler->weaponDefs[weaponId].tdfId);
-		} else {
-			cobargs.push_back(-1);
-		}
-		cobargs.push_back((int)(100 * damage));
-		weaponHitMod = 1.0f;
-		cob->Call(COBFN_HitByWeaponId, cobargs, hitByWeaponIdCallback, this, NULL);
-		damage = damage * weaponHitMod; // weaponHitMod gets set in callback function
+	if (script->HasFunction(COBFN_HitByWeaponId)) {
+		script->HitByWeaponId(hitDir, weaponId, /*inout*/ damage);
 	}
 	else {
-		cob->Call(COBFN_HitByWeapon, cobargs);
+		script->HitByWeapon(hitDir);
 	}
 
 	float experienceMod = expMultiplier;
@@ -1321,26 +1300,24 @@ bool CUnit::ChangeTeam(int newteam, ChangeType type)
 		return false;
 	}
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	// do not allow old player to keep controlling the unit
 	if (directControl) {
 		directControl->myController->StopControllingUnit();
 		directControl = NULL;
 	}
-#endif
 
 	const int oldteam = team;
 
 	selectedUnits.RemoveUnit(this);
-	SetGroup(0);
-
-	eventHandler.UnitTaken(this, newteam);
-	eoh->UnitCaptured(*this, newteam);
+	SetGroup(NULL);
 
 	// reset states and clear the queues
 	if (!teamHandler->AlliedTeams(oldteam, newteam)) {
 		ChangeTeamReset();
 	}
+
+	eventHandler.UnitTaken(this, newteam);
+	eoh->UnitCaptured(*this, newteam);
 
 	qf->RemoveUnit(this);
 	quads.clear();
@@ -1647,7 +1624,7 @@ void CUnit::Init(const CUnit* builder)
 void CUnit::UpdateTerrainType()
 {
 	if (curTerrainType != lastTerrainType) {
-		cob->Call(COBFN_SetSFXOccupy, curTerrainType);
+		script->SetSFXOccupy(curTerrainType);
 		lastTerrainType = curTerrainType;
 	}
 }
@@ -1656,7 +1633,7 @@ void CUnit::UpdateTerrainType()
 void CUnit::CalculateTerrainType()
 {
 	//Optimization: there's only about one unit that actually needs this information
-	if (!cob->HasScriptFunction(COBFN_SetSFXOccupy))
+	if (!script->HasFunction(COBFN_SetSFXOccupy))
 		return;
 
 	if (transporter) {
@@ -1687,21 +1664,22 @@ void CUnit::CalculateTerrainType()
 
 bool CUnit::SetGroup(CGroup* newGroup)
 {
-	if (group != 0) {
+	if (group != NULL) {
 		group->RemoveUnit(this);
 	}
-	group=newGroup;
+	group = newGroup;
 
-	if(group){
-		if(!group->AddUnit(this)){
-			group=0;									//group ai didnt accept us
+	if (group) {
+		if (!group->AddUnit(this)){
+			group = NULL; // group ai did not accept us
 			return false;
-		} else { // add us to selected units if group is selected
+		} else { // add us to selected units, if group is selected
 
 			GML_RECMUTEX_LOCK(sel); // SetGroup
 
-			if(selectedUnits.selectedGroup == group->id)
+			if (selectedUnits.selectedGroup == group->id) {
 				selectedUnits.AddUnit(this);
+			}
 		}
 	}
 	return true;
@@ -1844,13 +1822,11 @@ void CUnit::FinishedBuilding(void)
 	if (unitDef->windGenerator > 0.0f) {
 		// start pointing in direction of wind
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
+			script->SetSpeed(unitDef->windGenerator, 3000.0f);
 		} else {
-			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
+			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
 		}
-		cob->Call(COBFN_SetDirection,
-		          (int)GetHeadingFromVector(-wind.GetCurrentDirection().x,
-		                                    -wind.GetCurrentDirection().z));
+		script->SetDirection(GetHeadingFromVectorF(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -1887,15 +1863,6 @@ void CUnit::FinishedBuilding(void)
 }
 
 
-// Called when a unit's Killed script finishes executing
-static void CUnitKilledCB(int retCode, void* p1, void* p2)
-{
-	CUnit* self = (CUnit*) p1;
-	self->deathScriptFinished = true;
-	self->delayedWreckLevel = retCode;
-}
-
-
 void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool showDeathSequence)
 {
 	if (isDead) {
@@ -1916,6 +1883,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 	eventHandler.UnitDestroyed(this, attacker);
 	eoh->UnitDestroyed(*this, attacker);
+	// Will be called in the destructor again, but this can not hurt
+	this->SetGroup(NULL);
 
 	blockHeightChanges = false;
 	if (unitDef->isCommander) {
@@ -1954,13 +1923,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 			recentDamage += maxHealth * 2;
 		}
 
-		vector<int> args;
-		args.push_back((int) (recentDamage / maxHealth * 100));
-		args.push_back(0);
 		// start running the unit's kill-script
-		cob->Call(COBFN_Killed, args, &CUnitKilledCB, this, NULL);
-
-		delayedWreckLevel = args[1];
+		script->Killed();
 	} else {
 		deathScriptFinished = true;
 	}
@@ -2047,13 +2011,13 @@ void CUnit::AddEnergy(float energy, bool handicap)
 void CUnit::Activate()
 {
 	//if(unitDef->tidalGenerator>0)
-	//	cob->Call(COBFN_SetSpeed, (int)(readmap->tidalStrength*3000.0f*unitDef->tidalGenerator));
+	//	script->SetSpeed(readmap->tidalStrength * unitDef->tidalGenerator, 3000.0f);
 
 	if (activated)
 		return;
 
 	activated = true;
-	cob->Call(COBFN_Activate);
+	script->Activate();
 
 	if (unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam] /= radarhandler->targFacEffect;
@@ -2076,7 +2040,7 @@ void CUnit::Deactivate()
 		return;
 
 	activated = false;
-	cob->Call(COBFN_Deactivate);
+	script->Deactivate();
 
 	if (unitDef->targfac){
 		radarhandler->radarErrorSize[allyteam] *= radarhandler->targFacEffect;
@@ -2096,13 +2060,13 @@ void CUnit::Deactivate()
 void CUnit::UpdateWind(float x, float z, float strength)
 {
 	if (strength > unitDef->windGenerator) {
-		cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator*3000.0f));
+		script->SetSpeed(unitDef->windGenerator, 3000.0f);
 	}
 	else {
-		cob->Call(COBFN_SetSpeed, (int)(strength*3000.0f));
+		script->SetSpeed(strength, 3000.0f);
 	}
 
-	cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-x, -z));
+	script->SetDirection(GetHeadingFromVectorF(-x, -z));
 }
 
 
@@ -2150,12 +2114,6 @@ void CUnit::TempHoldFire(void)
 void CUnit::ReleaseTempHoldFire(void)
 {
 	dontFire = false;
-}
-
-
-void CUnit::hitByWeaponIdCallback(int retCode, void *p1, void *p2)
-{
-	((CUnit*)p1)->weaponHitMod = retCode*0.01f;
 }
 
 
@@ -2243,42 +2201,29 @@ void CUnit::PostLoad()
 	SetRadius(model->radius);
 
 	modelParser->CreateLocalModel(this);
-	cob = new CCobInstance(GCobEngine.GetCobFile(unitDef->scriptPath), this);
-
-	// Calculate the max() of the available weapon reloadtimes
-	int relMax = 0;
-	for (vector<CWeapon*>::iterator i = weapons.begin(); i != weapons.end(); ++i) {
-		if ((*i)->reloadTime > relMax)
-			relMax = (*i)->reloadTime;
-		if(dynamic_cast<CBeamLaser*>(*i))
-			relMax=150;
-	}
-	relMax *= 30;		// convert ticks to milliseconds
-
-	// TA does some special handling depending on weapon count
-	if (weapons.size() > 1)
-		relMax = std::max(relMax, 3000);
+	// FIXME: how to handle other script types (e.g. Lua) here?
+	script = CUnitScriptFactory::CreateScript(unitDef->scriptPath, this);
 
 	// Call initializing script functions
-	cob->Call(COBFN_Create);
-	cob->Call("SetMaxReloadTime", relMax);
+	script->Create();
+
 	for (vector<CWeapon*>::iterator i = weapons.begin(); i != weapons.end(); ++i) {
 		(*i)->weaponDef = unitDef->weapons[(*i)->weaponNum].def;
 	}
 
-	cob->Call(COBFN_SetSFXOccupy, curTerrainType);
+	script->SetSFXOccupy(curTerrainType);
 
 	if (unitDef->windGenerator>0) {
 		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			cob->Call(COBFN_SetSpeed, (int)(unitDef->windGenerator * 3000.0f));
+			script->SetSpeed(unitDef->windGenerator, 3000.0f);
 		} else {
-			cob->Call(COBFN_SetSpeed, (int)(wind.GetCurrentStrength() * 3000.0f));
+			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
 		}
-		cob->Call(COBFN_SetDirection, (int)GetHeadingFromVector(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+		script->SetDirection(GetHeadingFromVectorF(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
 	}
 
 	if (activated) {
-		cob->Call(COBFN_Activate);
+		script->Activate();
 	}
 }
 
@@ -2479,9 +2424,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),
 	CR_MEMBER(selfDCountdown),
-//#ifdef DIRECT_CONTROL_ALLOWED
 //	CR_MEMBER(directControl),
-//#endif
 	//CR_MEMBER(myTrack), // unused
 	CR_MEMBER(incomingMissiles),
 	CR_MEMBER(lastFlareDrop),
@@ -2493,7 +2436,7 @@ CR_REG_METADATA(CUnit, (
 //	CR_MEMBER(isIcon),
 //	CR_MEMBER(iconRadius),
 	CR_MEMBER(maxSpeed),
-	CR_MEMBER(weaponHitMod),
+//	CR_MEMBER(weaponHitMod),
 //	CR_MEMBER(lodCount),
 //	CR_MEMBER(currentLOD),
 //	CR_MEMBER(lodLengths),

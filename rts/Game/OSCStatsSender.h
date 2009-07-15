@@ -28,8 +28,6 @@ const char* const OSC_MSG_TOPIC_TEAM_VALUES  = "/spring/stats/team/values";
 
 #include <string>
 
-struct sockaddr_in;
-namespace netcode { class UDPSocket; }
 namespace osc { class OutboundPacketStream; }
 
 class COSCStatsSender
@@ -85,18 +83,14 @@ private:
 
 private:
 	static const unsigned int OSC_OUTPUT_BUFFER_SIZE = 16318; // 16KB
-	// We do not want to receive data on our socket,
-	// only send, but we still have to define an in-port,
-	// as a socket can not be constructed without one. (?)
-	static const unsigned int OSC_IN_PORT = 10101;
 	static COSCStatsSender* singleton;
 
 private:
 	bool sendingEnabled;
 	std::string dstAddress;
 	unsigned int dstPort;
-	struct sockaddr_in* destination;
-	netcode::UDPSocket* outSocket;
+	struct NetStruct;
+	NetStruct* network;
 	char* oscOutputBuffer;
 	osc::OutboundPacketStream* oscPacker;
 };

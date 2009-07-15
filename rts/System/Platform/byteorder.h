@@ -75,6 +75,14 @@ static inline float swabfloat(float w) {
 	return *(float*)&l;
 }
 
+#elif defined(__APPLE__) && defined(_BIG_ENDIAN)
+
+#include <CoreFoundation/CFByteOrder.h>
+
+#define swabword(w)	CFSwapInt32(w)
+#define swabdword(w)	CFSwapInt64(w)
+#define swabfloat(w)	(w)
+
 #else
 
 // empty versions for win32

@@ -189,10 +189,8 @@ private:
 	float consumeSpeed; ///< How fast we should eat NETMSG_NEWFRAMEs.
 	unsigned lastframe; ///< SDL_GetTicks() in previous ClientReadNet() call.
 
-#ifdef DIRECT_CONTROL_ALLOWED
 	short oldHeading,oldPitch;
 	unsigned char oldStatus;
-#endif
 };
 
 

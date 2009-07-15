@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "SmfReadMap.h"
+
 #include "mapfile.h"
 #include "Map/MapInfo.h"
 #include "Rendering/GL/myGL.h"
@@ -13,6 +14,7 @@
 #include "Platform/errorhandler.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Game/Camera.h"
+#include "Game/GameSetup.h"
 #include "bitops.h"
 #include "mmgr.h"
 #include "Util.h"
@@ -65,8 +67,6 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	heightmap=new float[(gs->mapx+1)*(gs->mapy+1)];
 
-	//CFileHandler ifs((string("maps/")+stupidGlobalMapname).c_str());
-
 	const CMapInfo::smf_t& smf = mapInfo->smf;
 	const float minH = smf.minHeightOverride ? smf.minHeight : header.minHeight;
 	const float maxH = smf.maxHeightOverride ? smf.maxHeight : header.maxHeight;
@@ -95,7 +95,7 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	glBindTexture(GL_TEXTURE_2D, detailTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bm.xsize, bm.ysize, GL_RGBA, GL_UNSIGNED_BYTE, bm.mem);
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
@@ -108,8 +108,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	glGenTextures(1, &minimapTex);
 	glBindTexture(GL_TEXTURE_2D, minimapTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-	//glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);
 	int offset=0;
 	for (unsigned int i = 0; i < MINIMAP_NUM_MIPMAP; i++) {
 		int mipsize = 1024>>i;
@@ -126,9 +126,12 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 
 	PrintLoadMsg("Creating ground shading");
 
+	unsigned char* bufZero = new unsigned char[gs->pwr2mapx * gs->pwr2mapy * 4];
+	memset(bufZero, 0, gs->pwr2mapx * gs->pwr2mapy * 4);
+
 	glGenTextures(1, &shadowTex);
 	glBindTexture(GL_TEXTURE_2D, shadowTex);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8 ,gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, gs->pwr2mapx, gs->pwr2mapy, 0, GL_RGBA, GL_UNSIGNED_BYTE, bufZero);
 
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -137,6 +140,8 @@ CSmfReadMap::CSmfReadMap(std::string mapname)
 	if (anisotropy != 0.0f) {
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, anisotropy);
 	}
+
+	delete[] bufZero;
 
 	HeightmapUpdated(0, gs->mapx, 0, gs->mapy);
 

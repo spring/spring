@@ -55,7 +55,6 @@ public:
 	bool ShouldCheckForNewTarget() const;
 
 	void Fire();
-	void ScriptReady(void);
 
 	void StopAttackingAllyTeam(int ally);
 

@@ -238,8 +238,8 @@ function extractCType(cTypeAndName__common) {
 ################################################################################
 ### BEGIN: Java functions
 
-# Awaits this format:	com.clan_sy.spring.ai
-# Returns this format:	com/clan_sy/spring/ai
+# Awaits this format:	com.springrts.ai
+# Returns this format:	com/springrts/ai
 function convertJavaNameFormAToD(javaNameFormA__common) {
 
 	javaNameFormD__common = javaNameFormA__common;

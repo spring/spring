@@ -34,6 +34,7 @@ int main (int argc, char* argv[])
 	CDemoReader reader(string(argv[1]), 0.0f);
 	DemoFileHeader header = reader.GetFileHeader();
 	std::vector<unsigned> trafficCounter(55, 0);
+	int frame = 0;
 	while (!reader.ReachedEnd())
 	{
 		RawPacket* packet;
@@ -42,6 +43,9 @@ int main (int argc, char* argv[])
 			continue;
 		trafficCounter[packet->data[0]] += packet->length;
 		const unsigned char* buffer = packet->data;
+		char buf[16]; // FIXME: cba to look up how to format numbers with iostreams
+		sprintf(buf, "%06d ", frame);
+		cout << buf;
 		switch ((unsigned char)buffer[0])
 		{
 			case NETMSG_PLAYERNAME:
@@ -67,12 +71,28 @@ int main (int argc, char* argv[])
 				break;
 			case NETMSG_KEYFRAME:
 				cout << "KEYFRAME: " << *(int*)(buffer+1) << endl;
+				++frame;
+				if (*(int*)(buffer+1) != frame) {
+					cout << "keyframe mismatch!" << endl;
+				}
 				break;
 			case NETMSG_NEWFRAME:
 				cout << "NEWFRAME" << endl;
+				++frame;
 				break;
 			case NETMSG_LUAMSG:
 				cout << "LUAMSG length:" << packet->length << endl;
+				break;
+			case NETMSG_TEAM:
+				cout << "TEAM Playernum:" << (int)buffer[1] << " Action:";
+				switch (buffer[2]) {
+					case TEAMMSG_GIVEAWAY: cout << "GIVEAWAY"; break;
+					case TEAMMSG_RESIGN: cout << "RESIGN"; break;
+					case TEAMMSG_TEAM_DIED: cout << "TEAM_DIED"; break;
+					case TEAMMSG_JOIN_TEAM: cout << "JOIN_TEAM"; break;
+					default: cout << (int)buffer[2];
+				}
+				cout << " Parameter:" << (int)buffer[3] << endl;
 				break;
 			default:
 				cout << "MSG: " << (unsigned)buffer[0] << endl;

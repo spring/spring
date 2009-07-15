@@ -45,19 +45,9 @@ unsigned int CCategoryHandler::GetCategory(std::string name)
 		return 0;
 	// Remove some categories that we don't think we need since we have too few of them.
 	if (categories.find(name) == categories.end()) {
-		if (name.find("ctrl") != std::string::npos
-		 || name.find("arm") != std::string::npos
-		 || name.find("core") != std::string::npos
-		 || name.find("level") != std::string::npos
-		 || name.find("energy") != std::string::npos
-		 || name.find("storage") != std::string::npos
-		 || name.find("defensive") != std::string::npos
-		 || name.find("extractor") != std::string::npos
-		 || name.find("metal") != std::string::npos
-		 || name.find("torp") != std::string::npos)
-			return 0;
 		if(firstUnused > 31) {
-			logOutput.Print("WARNING: too many unit categories %i missed %s", firstUnused + 1, name.c_str());
+			logOutput.Print("WARNING: too many unit categories %i missed %s", ++firstUnused, name.c_str());
+			categories[name] = 0; // suppress further warnings about this category
 			return 0;
 		}
 		categories[name] = (1 << (firstUnused++));

@@ -244,8 +244,9 @@ void CShadowHandler::CreateShadows(void)
 	glShadeModel(GL_SMOOTH);
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
-	fb.Unbind();
-	glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
+	//we do this later to save render context switches (this is one of the slowest opengl operations!)
+	//fb.Unbind();
+	//glViewport(gu->viewPosX,0,gu->viewSizeX,gu->viewSizeY);
 }
 
 

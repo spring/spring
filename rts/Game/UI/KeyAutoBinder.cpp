@@ -54,7 +54,7 @@ static const string endlStr = "\r\n";
 /******************************************************************************/
 
 CKeyAutoBinder::CKeyAutoBinder()
-: CLuaHandle("KeyAutoBinder", 1234, false, NULL)
+: CLuaHandle("KeyAutoBinder", 1234, false)
 {
 	if (L == NULL) {
 		return;

@@ -838,7 +838,7 @@ void CCommandAI::ExecuteInsert(const Command& c, bool fromSynced)
 		targetDied = false;
 		unimportantMove = false;
 		orderTarget = NULL;
-		const Command& cmd = commandQue.front();
+		const Command& cmd = queue->front();
 		eoh->CommandFinished(*owner, cmd);
 		eventHandler.UnitCmdDone(owner, cmd.id, cmd.tag);
 	}

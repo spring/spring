@@ -7,7 +7,6 @@
 #include "DirtProjectile.h"
 #include "Game/Camera.h"
 #include "Map/Ground.h"
-#include "Map/MapInfo.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "GlobalUnsynced.h"
@@ -32,16 +31,16 @@ CR_REG_METADATA(CDirtProjectile,
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CDirtProjectile::CDirtProjectile(const float3 pos,const float3 speed,const float ttl,const float size,const float expansion,float slowdown,CUnit* owner,const float3& color GML_PARG_C)
-: CProjectile(pos,speed,owner, false, false GML_PARG_P),
+CDirtProjectile::CDirtProjectile(const float3 pos, const float3 speed, const float ttl, const float size, const float expansion, float slowdown, CUnit* owner, const float3& color GML_PARG_C):
+	CProjectile(pos, speed, owner, false, false, false GML_PARG_P),
 	alpha(255),
 	size(size),
 	sizeExpansion(expansion),
 	slowdown(slowdown),
 	color(color)
 {
-	checkCol=false;
-	alphaFalloff=255/ttl;
+	checkCol = false;
+	alphaFalloff = 255 / ttl;
 	texture = &ph->randdotstex;
 }
 
@@ -53,8 +52,7 @@ CDirtProjectile::CDirtProjectile() :
 	sizeExpansion(0.0f),
 	slowdown(1.0f)
 {
-	checkCol=false;
-	synced=false;
+	checkCol = false;
 	texture = &ph->randdotstex;
 }
 
@@ -63,17 +61,18 @@ CDirtProjectile::~CDirtProjectile()
 
 void CDirtProjectile::Update()
 {
-	speed*=slowdown;
-	speed.y+=mapInfo->map.gravity;
-	pos+=speed;
-	alpha-=alphaFalloff;
-	size+=sizeExpansion;
-	if(ground->GetApproximateHeight(pos.x,pos.z)-40>pos.y){
-		deleteMe=true;
+	speed *= slowdown;
+	speed.y += gravity;
+	pos += speed;
+	alpha -= alphaFalloff;
+	size += sizeExpansion;
+
+	if (ground->GetApproximateHeight(pos.x, pos.z) - 40 > pos.y) {
+		deleteMe = true;
 	}
-	if(alpha<=0){
-		deleteMe=true;
-		alpha=0;
+	if (alpha <= 0) {
+		deleteMe = true;
+		alpha = 0;
 	}
 }
 

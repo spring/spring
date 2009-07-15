@@ -99,9 +99,10 @@ void GameSetupDrawer::Draw()
 		state = "Waiting for players";
 	}
 
+	int numPlayers = (int)playerHandler->ActivePlayers();
 	//! not the most efficent way to do this, but who cares?
 	std::map<int, std::string> playerStates;
-	for (int a = 0; a < gameSetup->numPlayers; a++) {
+	for (int a = 0; a < numPlayers; a++) {
 		if (!playerHandler->Player(a)->readyToStart) {
 			playerStates[a] = "missing";
 		} else if (!teamHandler->Team(playerHandler->Player(a)->team)->IsReadyToStart()) {
@@ -130,7 +131,7 @@ void GameSetupDrawer::Draw()
 	font->SetColors(); //! default
 	font->glPrint(0.3f, 0.7f, 1.0f, FONT_OUTLINE | FONT_SCALE | FONT_NORM, state);
 
-	for (int a = 0; a <= gameSetup->numPlayers; a++) {
+	for (int a = 0; a <= numPlayers; a++) {
 		const float4* color;
 		static const float4      red(1.0f, 0.2f, 0.2f, 1.0f);
 		static const float4    green(0.2f, 1.0f, 0.2f, 1.0f);
@@ -138,7 +139,7 @@ void GameSetupDrawer::Draw()
 		static const float4    white(1.0f, 1.0f, 1.0f, 1.0f);
 		static const float4     cyan(0.0f, 0.9f, 0.9f, 1.0f);
 		static const float4 lightred(1.0f, 0.5f, 0.5f, 1.0f);
-		if (a == gameSetup->numPlayers) {
+		if (a == numPlayers) {
 			color = &white;
 		} else if (playerHandler->Player(a)->spectator) {
 			if (!playerHandler->Player(a)->readyToStart) {
@@ -155,13 +156,13 @@ void GameSetupDrawer::Draw()
 		}
 
 		std::string name = "Players:";
-		if (a != gameSetup->numPlayers) {
+		if (a != numPlayers) {
 			name = playerHandler->Player(a)->name;
 		}
 		const float fontScale = 1.0f;
 		const float fontSize  = fontScale * font->GetSize();
 		const float yScale = fontSize * font->GetLineHeight() * gu->pixelY;
-		const float yPos = 0.5f - (0.5f * yScale * gameSetup->numPlayers) + (yScale * (float)a);
+		const float yPos = 0.5f - (0.5f * yScale * numPlayers) + (yScale * (float)a);
 		const float xPos = 10.0f * gu->pixelX;
 		font->SetColors(color, NULL);
 		font->glPrint(xPos, yPos, fontSize, FONT_OUTLINE | FONT_NORM, name);

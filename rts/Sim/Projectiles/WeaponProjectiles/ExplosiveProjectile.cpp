@@ -19,13 +19,12 @@
 	#include "Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,NULL,1,0));
+CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0, 0, 0), float3(0, 0, 0), NULL, NULL, 1, 0));
 
 CR_REG_METADATA(CExplosiveProjectile, (
 	CR_MEMBER(areaOfEffect),
-	CR_MEMBER(gravity),
 	CR_RESERVED(16)
-	));
+));
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -33,12 +32,13 @@ CR_REG_METADATA(CExplosiveProjectile, (
 
 CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
 		const float3& speed, CUnit* owner, const WeaponDef *weaponDef, int ttl,
-		float areaOfEffect, float gravity GML_PARG_C):
+		float areaOfEffect, float g GML_PARG_C):
 	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
 	areaOfEffect(areaOfEffect),
-	curTime(0),
-	gravity(gravity)
+	curTime(0)
 {
+	//! either map or weaponDef gravity
+	gravity = g;
 	useAirLos = true;
 
 	if (weaponDef) {

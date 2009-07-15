@@ -45,8 +45,23 @@ CR_REG_METADATA(CSmokeTrailProjectile,(
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CSmokeTrailProjectile::CSmokeTrailProjectile(const float3& pos1,const float3& pos2,const float3& dir1,const float3& dir2, CUnit* owner,bool firstSegment,bool lastSegment,float size,float time,float color,bool drawTrail,CProjectile* drawCallback,AtlasedTexture* texture GML_PARG_C)
-: CProjectile((pos1+pos2)*0.5f,ZeroVector,owner, false, false GML_PARG_P),
+CSmokeTrailProjectile::CSmokeTrailProjectile(
+	const float3& pos1,
+	const float3& pos2,
+	const float3& dir1,
+	const float3& dir2,
+	CUnit* owner,
+	bool firstSegment,
+	bool lastSegment,
+	float size,
+	float time,
+	float color,
+	bool drawTrail,
+	CProjectile* drawCallback,
+	AtlasedTexture* texture
+	GML_PARG_C):
+
+	CProjectile((pos1 + pos2) * 0.5f, ZeroVector, owner, false, false, false GML_PARG_P),
 	pos1(pos1),
 	pos2(pos2),
 	orgSize(size),
@@ -187,8 +202,14 @@ void CSmokeTrailProjectile::Draw()
 			va->AddVertexQTC(pos1+(-camera->up+camera->right)*size, ph->smoketex[0].xstart, ph->smoketex[0].ystart, col);
 		}
 	}
+#if defined(USE_GML) && GML_ENABLE_SIM
+	CProjectile * callbacker = *(CProjectile * volatile *)&drawCallbacker;
+	if(callbacker)
+		callbacker->DrawCallback();
+#else
 	if(drawCallbacker)
 		drawCallbacker->DrawCallback();
+#endif
 }
 
 void CSmokeTrailProjectile::Update()

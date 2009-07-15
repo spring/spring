@@ -139,29 +139,15 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 	// Note: we check for executable bit otherwise we can't browse the directory
 	// Note: we fail to test whether the path actually is a directory
 	// Note: modifying permissions while or after this function runs has undefined behaviour
-#ifndef _WIN32
-	if (access(d->path.c_str(), R_OK | X_OK | F_OK) == 0) {
-		// Note: disallow multiple write directories.
-		// There isn't really a use for it as every thing is written to the first one anyway,
-		// and it may give funny effects on errors, e.g. it probably only gives funny things
-		// like network mounted datadir lost connection and suddenly files end up in some
-		// other random writedir you didn't even remember you had added it.
-		if (!writedir && access(d->path.c_str(), W_OK) == 0) {
+	if (FileSystemHandler::GetInstance().DirExists(d->path))
+	{
+		if (!writedir && FileSystemHandler::GetInstance().DirIsWritable(d->path))
+		{
 			d->writable = true;
 			writedir = &*d;
 		}
 		return true;
 	}
-#else
-	if (_access(d->path.c_str(), 4) == 0
-			&& FileSystemHandler::GetInstance().DirIsWritable(d->path)) {
-		if (!writedir) {
-			d->writable = true;
-			writedir = &*d;
-		}
-		return true;
-	}
-#endif
 	else {
 		if (filesystem.CreateDirectory(d->path)) {
 			// it didn't exist before, now it does and we just created it with rw access,
@@ -266,6 +252,12 @@ void DataDirLocater::LocateDataDirs()
 	TCHAR strPath[MAX_PATH];
 	SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);
 	std::string cfg = strPath;
+	// My Documents\My Games seems to be the MS standard even if no official guidelines exist
+	// most if not all new Games For Windows(TM) games use this dir
+	cfg += "\\My Games\\Spring";
+	AddDirs(cfg);
+
+	cfg = strPath;
 	cfg += "\\Spring"; // e.g. F:\Dokumente und Einstellungen\Karl-Robert\Eigene Dateien\Spring
 	AddDirs(cfg);
 	cfg.clear();
@@ -275,43 +267,17 @@ void DataDirLocater::LocateDataDirs()
 	cfg = strPath;
 	cfg += "\\Spring"; // e.g. F:\Dokumente und Einstellungen\All Users\Anwendungsdaten\Spring
 	AddDirs(cfg);
-// TODO: enable Mac OS X specific bundle code again
-// #elif defined(__APPLE__)
-	// // copied from old MacFileSystemHandler, won't compile here, but would not compile in its old location either
-	// // needs fixing for new DataDirLocater-structure
-	// // Get the path to the application bundle we are running:
-	// char cPath[1024];
-	// CFBundleRef mainBundle = CFBundleGetMainBundle();
-	// if(!mainBundle)
-		// throw content_error("Could not determine bundle path");
-
-	// CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
-	// if(!mainBundleURL)
-		// throw content_error("Could not determine bundle path");
-
-	// CFStringRef cfStringRef = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
-	// if(!cfStringRef)
-		// throw content_error("Could not determine bundle path");
-
-	// CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
-
-	// CFRelease(mainBundleURL);
-	// CFRelease(cfStringRef);
-	// std::string path(cPath);
-
-	// datadirs.clear();
-	// writedir = NULL;
-
-	// // Add bundle resources:
-	// datadirs.push_back(path + "/Contents/Resources/");
-	// datadirs.rbegin()->readable = true;
-	// // Add the directory surrounding the bundle, for users to add mods and maps in:
-	// datadirs.push_back(filesystem.GetDirectory(path));
-	// // Use surrounding directory as writedir for now, should propably
-	// // change this to something inside the home directory:
-	// datadirs.rbegin()->writable = true;
-	// datadirs.rbegin()->readable = true;
-	// writedir = &*datadirs.rbegin();
+#elif defined(MACOSX_BUNDLE)
+	// Maps and mods are supposed to be located in spring's executable location on Mac, but unitsync
+	// cannot find them since it does not know spring binary path. I have no idea but to force users 
+	// to locate lobby executables in the same as spring's dir and add its location to search dirs.
+#ifdef UNITSYNC
+	AddDirs(Platform::GetBinaryPath());
+#endif
+	// libs and data are are supposed to be located in subdirectories of spring executable, so they
+	// sould be added instead of SPRING_DATADIR definition.
+	AddDirs(Platform::GetBinaryPath() + "/" + SubstEnvVars(DATADIR));
+	AddDirs(Platform::GetBinaryPath() + "/" + SubstEnvVars(LIBDIR));
 #else
 	// home
 	AddDirs(SubstEnvVars("$HOME/.spring"));
@@ -362,13 +328,8 @@ void DataDirLocater::LocateDataDirs()
 	// all AIs still just assume it's ok to put their stuff in the current directory after all
 	// Not only safety anymore, it's just easier if other code can safely assume that
 	// writedir == current working directory
-#ifndef _WIN32
-	int err = chdir(GetWriteDir()->path.c_str());
-	if (err)
-		throw content_error("Could not chdir into SPRING_DATADIR");
-#else
-	_chdir(GetWriteDir()->path.c_str());
-#endif
+	FileSystemHandler::GetInstance().Chdir(GetWriteDir()->path.c_str());
+
 	// Initialize the log. Only after this moment log will be written to file.
 	logOutput.Initialize();
 	// Logging MAY NOT start before the chdir, otherwise the logfile ends up

@@ -11,11 +11,10 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
-#include "Sim/Units/COB/CobFile.h"
-#include "Sim/Units/COB/CobInstance.h"
 #include "LogOutput.h"
 #include "myMath.h"
 #include "Matrix44f.h"
@@ -116,9 +115,9 @@ void CTAAirMoveType::SetState(AircraftState newState)
 
 	// Perform cob animation
 	if (aircraftState == AIRCRAFT_LANDED)
-		owner->cob->Call(COBFN_StartMoving);
+		owner->script->StartMoving();
 	if (newState == AIRCRAFT_LANDED)
-		owner->cob->Call(COBFN_StopMoving);
+		owner->script->StopMoving();
 
 	if (newState == AIRCRAFT_LANDED) {
 		owner->dontUseWeapons = true;
@@ -337,7 +336,7 @@ void CTAAirMoveType::UpdateHovering()
 	// random movement (a sort of fake wind effect)
 	// random drift values are in range -0.5 ... 0.5
 	randomWind = float3(randomWind.x * 0.9f + (gs->randFloat() - 0.5f) * 0.5f, 0,
-		            randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
+                        randomWind.z * 0.9f + (gs->randFloat() - 0.5f) * 0.5f);
 	wantedSpeed += randomWind * driftSpeed * 0.5f;
 
 	UpdateAirPhysics();
@@ -354,9 +353,12 @@ void CTAAirMoveType::UpdateFlying()
 	owner->restTime = 0;
 
 	// don't change direction for waypoints we just flew over and missed slightly
-	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() &&
-		(dir.SqLength2D() < 10000) && (float3(dir).Normalize().SqDistance(dir) < 1)) {
-		dir = owner->frontdir;
+	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() && dir.SqLength2D() < 10000.0f) {
+		float3 ndir = dir; ndir = ndir.ANormalize();
+
+		if (ndir.SqDistance(dir) < 1.0f) {
+			dir = owner->frontdir;
+		}
 	}
 
 	// are we there yet?
@@ -425,7 +427,7 @@ void CTAAirMoveType::UpdateFlying()
 					if (relPos.x < 0.0001f && relPos.x > -0.0001f)
 						relPos.x = 0.0001f;
 					relPos.y = 0;
-					relPos.Normalize();
+					relPos.ANormalize();
 					CMatrix44f rot;
 					if (gs->randFloat() > 0.5f)
 						rot.RotateY(0.6f + gs->randFloat() * 0.6f);
@@ -448,7 +450,7 @@ void CTAAirMoveType::UpdateFlying()
 	// not there yet, so keep going
 	dir.y = 0;
 	float realMax = maxSpeed;
-	float dist = dir.Length2D();
+	float dist = dir.Length();
 
 	// If we are close to our goal, we should go slow enough to be able to break in time
 	// new additional rule: if in attack mode or if we have more move orders then this is
@@ -459,14 +461,14 @@ void CTAAirMoveType::UpdateFlying()
 		realMax = dist / (speed.Length2D() + 0.01f) * decRate;
 	}
 
-	wantedSpeed = dir.Normalize() * realMax;
+	wantedSpeed = (dir/dist) * realMax;
 	UpdateAirPhysics();
 
 	// Point toward goal or forward - unless we just passed it to get to another goal
 	if ((flyState == FLY_ATTACKING) || (flyState == FLY_CIRCLING)) {
 		dir = circlingPos - pos;
 	} else if (flyState != FLY_LANDING && (owner->commandAI->HasMoreMoveCommands() &&
-			   dist < 120) && (goalPos - pos).Normalize().SqDistance(dir) > 1) {
+		dist < 120) && (goalPos - pos).Normalize().SqDistance(dir) > 1) {
 		dir = owner->frontdir;
 	} else {
 		dir = goalPos - pos;
@@ -505,7 +507,7 @@ void CTAAirMoveType::UpdateLanding()
 			owner->Block();
 			owner->physicalState = CSolidObject::Flying;
 			owner->Deactivate();
-			owner->cob->Call(COBFN_StopMoving);
+			owner->script->StopMoving();
 		} else {
 			if (goalPos.SqDistance2D(pos) < 900) {
 				goalPos = goalPos + gs->randVector() * 300;
@@ -590,11 +592,11 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 	float wantedBank = 0.0f;
 	if (!noBanking && bankingAllowed) wantedBank = rightdir.dot(deltaSpeed)/accRate*0.5f;
 
-	float limit = std::min(1.0f,goalPos.distance2D(owner->pos)*0.15f);
-	if(wantedBank>limit)
-		wantedBank=limit;
-	else if(wantedBank<-limit)
-		wantedBank=-limit;
+	float limit = std::min(1.0f,goalPos.SqDistance2D(owner->pos)*Square(0.15f));
+	if(Square(wantedBank)>limit)
+		wantedBank =  streflop::sqrt(limit);
+	else if(Square(wantedBank)<-limit)
+		wantedBank = -streflop::sqrt(limit);
 
 	//Adjust our banking to the desired value
 	if (currentBank > wantedBank)
@@ -622,25 +624,25 @@ void CTAAirMoveType::UpdateAirPhysics()
 	speed.y = 0.0f;
 
 	float3 delta = wantedSpeed - speed;
-	float dl = delta.Length();
+	float deltaDotSpeed = (speed != ZeroVector)? delta.dot(speed): 1.0f;
 
-	if (delta.dot(speed) > 0.0f) {
+	if (deltaDotSpeed == 0.0f) {
+		// we have the wanted speed
+	} else if (deltaDotSpeed > 0.0f) {
 		// accelerate
-		if (dl < accRate) {
+		float sqdl = delta.SqLength();
+		if (sqdl < Square(accRate)) {
 			speed = wantedSpeed;
 		} else {
-			if (dl > 0.0f) {
-				speed += delta / dl * accRate;
-			}
+			speed += delta / streflop::sqrt(sqdl) * accRate;
 		}
 	} else {
 		// break
-		if (dl < decRate) {
+		float sqdl = delta.SqLength();
+		if (sqdl < Square(decRate)) {
 			speed = wantedSpeed;
 		} else {
-			if (dl > 0.0f) {
-				speed += delta / dl * decRate;
-			}
+			speed += delta / streflop::sqrt(sqdl) * decRate;
 		}
 	}
 
@@ -716,7 +718,7 @@ void CTAAirMoveType::UpdateMoveRate()
 	}
 
 	if (curRate != lastMoveRate) {
-		owner->cob->Call(COBFN_MoveRate0 + curRate);
+		owner->script->MoveRate(curRate);
 		lastMoveRate = curRate;
 	}
 }
@@ -743,7 +745,6 @@ void CTAAirMoveType::Update()
 		wantedSpeed = ZeroVector;
 		UpdateAirPhysics();
 	} else {
-#ifdef DIRECT_CONTROL_ALLOWED
 		if (owner->directControl) {
 			DirectControlStruct* dc = owner->directControl;
 			SetState(AIRCRAFT_FLYING);
@@ -774,12 +775,11 @@ void CTAAirMoveType::Update()
 			UpdateAirPhysics();
 			wantedHeading = GetHeadingFromVector(flatForward.x, flatForward.z);
 		} else
-#endif
 		{
 
 			if (reservedPad) {
 				CUnit* unit = reservedPad->GetUnit();
-				float3 relPos = unit->cob->GetPiecePos(reservedPad->GetPiece());
+				float3 relPos = unit->script->GetPiecePos(reservedPad->GetPiece());
 				float3 pos = unit->pos + unit->frontdir * relPos.z
 						+ unit->updir * relPos.y + unit->rightdir * relPos.x;
 

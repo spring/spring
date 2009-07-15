@@ -47,6 +47,8 @@
 #include "Sim/MoveTypes/TAAirMoveType.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Projectiles/Projectile.h"
+#include "Sim/Projectiles/PieceProjectile.h"
+#include "Sim/Projectiles/WeaponProjectiles/WeaponProjectile.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDef.h"
@@ -260,6 +262,12 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetProjectilePosition);
 	REGISTER_LUA_CFUNC(GetProjectileVelocity);
+	REGISTER_LUA_CFUNC(GetProjectileGravity);
+	REGISTER_LUA_CFUNC(GetProjectileSpinAngle);
+	REGISTER_LUA_CFUNC(GetProjectileSpinSpeed);
+	REGISTER_LUA_CFUNC(GetProjectileSpinVec);
+	REGISTER_LUA_CFUNC(GetProjectileType);
+	REGISTER_LUA_CFUNC(GetProjectileName);
 
 	REGISTER_LUA_CFUNC(GetGroundHeight);
 	REGISTER_LUA_CFUNC(GetGroundOrigHeight);
@@ -1270,9 +1278,6 @@ int LuaSyncedRead::GetPlayerInfo(lua_State* L)
 
 int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 {
-#ifndef DIRECT_CONTROL_ALLOWED
-	return 0;
-#else
 	const int playerID = luaL_checkint(L, 1);
 	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers())) {
 		return 0;
@@ -1295,7 +1300,6 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 
 	lua_pushnumber(L, unit->id);
 	return 1;
-#endif
 }
 
 int LuaSyncedRead::GetAllyTeamInfo(lua_State* L)
@@ -3703,10 +3707,10 @@ static CProjectile* ParseProjectile(lua_State* L, const char* caller, int index)
 		}
 	}
 	const int proID = (int) lua_tonumber(L, index);
-	ProjectileMap::iterator it = ph->weaponProjectileIDs.find(proID);
+	ProjectileMap::iterator it = ph->syncedProjectileIDs.find(proID);
 
-	if (it == ph->weaponProjectileIDs.end()) {
-		// not an assigned weapon projectile ID
+	if (it == ph->syncedProjectileIDs.end()) {
+		// not an assigned synced projectile ID
 		return NULL;
 	}
 
@@ -3948,6 +3952,107 @@ int LuaSyncedRead::GetProjectileVelocity(lua_State* L)
 	lua_pushnumber(L, pro->speed.y);
 	lua_pushnumber(L, pro->speed.z);
 	return 3;
+}
+
+
+int LuaSyncedRead::GetProjectileGravity(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL) {
+		return 0;
+	}
+
+	lua_pushnumber(L, pro->gravity);
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileSpinAngle(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* ppro = dynamic_cast<CPieceProjectile*>(pro);
+	lua_pushnumber(L, ppro->spinAngle);
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileSpinSpeed(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* ppro = dynamic_cast<CPieceProjectile*>(pro);
+	lua_pushnumber(L, ppro->spinSpeed);
+	return 1;
+}
+
+int LuaSyncedRead::GetProjectileSpinVec(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL || !pro->piece) {
+		return 0;
+	}
+
+	CPieceProjectile* ppro = dynamic_cast<CPieceProjectile*>(pro);
+
+	lua_pushnumber(L, ppro->spinVec.x);
+	lua_pushnumber(L, ppro->spinVec.y);
+	lua_pushnumber(L, ppro->spinVec.z);
+	return 3;
+}
+
+
+int LuaSyncedRead::GetProjectileType(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL) {
+		return 0;
+	}
+
+	lua_pushboolean(L, pro->weapon);
+	lua_pushboolean(L, pro->piece);
+	return 2;
+}
+
+int LuaSyncedRead::GetProjectileName(lua_State* L)
+{
+	CProjectile* pro = ParseProjectile(L, __FUNCTION__, 1);
+
+	if (pro == NULL) {
+		return 0;
+	}
+
+	assert(pro->weapon || pro->piece);
+
+	if (pro->weapon) {
+		const CWeaponProjectile* wpro = dynamic_cast<const CWeaponProjectile*>(pro);
+
+		if (wpro != NULL && wpro->weaponDef != NULL) {
+			// maybe CWeaponProjectile derivatives
+			// should have actual names themselves?
+			lua_pushstring(L, wpro->weaponDef->name.c_str());
+			return 1;
+		}
+	}
+	if (pro->piece) {
+		const CPieceProjectile* ppro = dynamic_cast<const CPieceProjectile*>(pro);
+
+		if (ppro != NULL && ppro->omp != NULL) {
+			lua_pushstring(L, ppro->omp->name.c_str());
+			return 1;
+		}
+	}
+
+	return 0;
 }
 
 
@@ -4553,16 +4658,13 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	const CCobInstance* cob = unit->cob;
-	if (cob == NULL) {
-		return 0;
-	}
+	const CUnitScript* script = unit->script;
 
 	if (!lua_isnumber(L, 2)) {
 		// return the whole script->piece map
 		lua_newtable(L);
-		for (size_t sp = 0; sp < cob->pieces.size(); sp++) {
-			const int piece = cob->ScriptToModel(sp);
+		for (size_t sp = 0; sp < script->pieces.size(); sp++) {
+			const int piece = script->ScriptToModel(sp);
 			if (piece != -1) {
 				lua_pushnumber(L, sp);
 				lua_pushnumber(L, piece + 1);
@@ -4573,7 +4675,7 @@ int LuaSyncedRead::GetUnitScriptPiece(lua_State* L)
 	}
 
 	const int scriptPiece = lua_toint(L, 2);
-	const int piece = cob->ScriptToModel(scriptPiece);
+	const int piece = script->ScriptToModel(scriptPiece);
 	if (piece < 0) {
 		return 0;
 	}
@@ -4589,10 +4691,7 @@ int LuaSyncedRead::GetUnitScriptNames(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
-		return 0;
-	}
-	const vector<LocalModelPiece*>& pieces = unit->cob->pieces;
+	const vector<LocalModelPiece*>& pieces = unit->script->pieces;
 
 	lua_newtable(L);
 	for (size_t sp = 0; sp < pieces.size(); sp++) {
@@ -4614,14 +4713,11 @@ int LuaSyncedRead::GetCOBUnitVar(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	if (unit->cob == NULL) {
-		return 0;
-	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::UNIT_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::UNIT_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = unit->cob->GetUnitVars()[varID];
+	const int value = unit->script->GetUnitVars()[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4642,10 +4738,10 @@ int LuaSyncedRead::GetCOBTeamVar(lua_State* L)
 		return 0;
 	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::TEAM_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::TEAM_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetTeamVars(teamID)[varID];
+	const int value = CUnitScript::GetTeamVars(teamID)[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4667,10 +4763,10 @@ int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
 		return 0;
 	}
 	const int varID = luaL_checkint(L, 2);
-	if ((varID < 0) || (varID >= CCobInstance::ALLY_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::ALLY_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetAllyVars(allyTeamID)[varID];
+	const int value = CUnitScript::GetAllyVars(allyTeamID)[varID];
 	if (lua_isboolean(L, 3) && lua_toboolean(L, 3)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));
@@ -4684,10 +4780,10 @@ int LuaSyncedRead::GetCOBAllyTeamVar(lua_State* L)
 int LuaSyncedRead::GetCOBGlobalVar(lua_State* L)
 {
 	const int varID = luaL_checkint(L, 1);
-	if ((varID < 0) || (varID >= CCobInstance::GLOBAL_VAR_COUNT)) {
+	if ((varID < 0) || (varID >= CUnitScript::GLOBAL_VAR_COUNT)) {
 		return 0;
 	}
-	const int value = CCobInstance::GetGlobalVars()[varID];
+	const int value = CUnitScript::GetGlobalVars()[varID];
 	if (lua_isboolean(L, 2) && lua_toboolean(L, 2)) {
 		lua_pushnumber(L, UNPACKX(value));
 		lua_pushnumber(L, UNPACKZ(value));

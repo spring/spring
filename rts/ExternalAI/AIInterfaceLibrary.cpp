@@ -129,23 +129,22 @@ static int CALLING_CONV handleEvent_empty(int teamId, int receiver, const void* 
 }
 
 // Skirmish AI methods
-const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(
-		const CSkirmishAILibraryInfo& aiInfo) {
+const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo) {
 
 	ISkirmishAILibrary* ai = NULL;
 
 	const SkirmishAIKey& skirmishAIKey = aiInfo.GetKey();
+
 	if (skirmishAILoadCount[skirmishAIKey] == 0) {
-		const SSkirmishAILibrary* sLib =
-				sAIInterfaceLibrary.loadSkirmishAILibrary(
-				aiInfo.GetShortName().c_str(), aiInfo.GetVersion().c_str());
+		const SSkirmishAILibrary* sLib = sAIInterfaceLibrary.loadSkirmishAILibrary(aiInfo.GetShortName().c_str(), aiInfo.GetVersion().c_str());
+
 		if (sLib == NULL) {
 			logOutput.Print(
 					"ERROR: Skirmish AI %s-%s not found!\n"
 					"The game will go on without it.\n"
-					"This usually indicates a problem in the used"
+					"This usually indicates a problem in the used "
 					"AI Interface library (%s-%s),\n"
-					"or the Skirmish AI library is not in the same"
+					"or the Skirmish AI library is not in the same "
 					"place as its AIInfo.lua.",
 					skirmishAIKey.GetShortName().c_str(),
 					skirmishAIKey.GetVersion().c_str(),

@@ -1,10 +1,22 @@
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
+#include "Net/UDPConnection.h"
+
+#ifndef _MSC_VER
 #include "StdAfx.h"
+#endif
+
 #include <SDL_timer.h>
 #include <boost/scoped_ptr.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "mmgr.h"
 
+#include "Net/LocalConnection.h"
 #include "NetProtocol.h"
 
 #include "Game/GameData.h"
@@ -12,9 +24,6 @@
 #include "DemoRecorder.h"
 #include "ConfigHandler.h"
 #include "GlobalUnsynced.h"
-#include "Net/UDPConnection.h"
-#include "Net/LocalConnection.h"
-#include "Net/UDPSocket.h"
 
 
 CNetProtocol::CNetProtocol()
@@ -30,10 +39,7 @@ CNetProtocol::~CNetProtocol()
 void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myVersion)
 {
 	GML_STDMUTEX_LOCK(net); // InitClient
-
-	boost::shared_ptr<netcode::UDPSocket> sock(new netcode::UDPSocket(sourceport));
-	sock->SetBlocking(false);
-	netcode::UDPConnection* conn = new netcode::UDPConnection(sock, server_addr, portnum);
+	netcode::UDPConnection* conn = new netcode::UDPConnection(sourceport, server_addr, portnum);
 	conn->SetMTU(configHandler->Get("MaximumTransmissionUnit", 0));
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
@@ -60,6 +66,11 @@ bool CNetProtocol::Active() const
 bool CNetProtocol::Connected() const
 {
 	return (serverConn->GetDataReceived() > 0);
+}
+
+std::string CNetProtocol::ConnectionStr() const
+{
+	return serverConn->GetFullAddress();
 }
 
 boost::shared_ptr<const netcode::RawPacket> CNetProtocol::Peek(unsigned ahead) const

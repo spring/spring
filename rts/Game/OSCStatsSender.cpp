@@ -15,28 +15,42 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifdef _MSC_VER
+#	include "StdAfx.h"
+#elif defined(_WIN32)
+#	include <windows.h>
+#endif
+
+#include <boost/asio.hpp>
+
+#ifndef _MSC_VER
+#include "StdAfx.h"
+#endif
+
 #include "OSCStatsSender.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Game/Game.h"
 #include "lib/oscpack/OscOutboundPacketStream.h"
-#include "Net/UDPSocket.h"
+#include "System/Net/Socket.h"
 #include "Game/GameVersion.h"
 #include "Game/PlayerHandler.h"
 #include "GlobalUnsynced.h"
 #include "ConfigHandler.h"
 #include "LogOutput.h"
 
-#ifndef _WIN32
-#include <arpa/inet.h>
-#endif
-
 COSCStatsSender* COSCStatsSender::singleton = NULL;
 
+struct COSCStatsSender::NetStruct
+{
+	NetStruct() : outSocket(NULL), destination(NULL) {};
+	boost::asio::ip::udp::socket* outSocket;
+	boost::asio::ip::udp::endpoint* destination;
+};
 
 COSCStatsSender::COSCStatsSender(const std::string& dstAddress,
 		unsigned int dstPort)
 		: sendingEnabled(false), dstAddress(dstAddress), dstPort(dstPort),
-		destination(NULL), outSocket(NULL),
+		network(NULL),
 		oscOutputBuffer(NULL), oscPacker(NULL)
 {
 	SetEnabled(configHandler->Get("OscStatsSenderEnabled", false));
@@ -56,8 +70,10 @@ void COSCStatsSender::SetEnabled(bool enabled) {
 			oscOutputBuffer = new char[OSC_OUTPUT_BUFFER_SIZE];
 			oscPacker = new osc::OutboundPacketStream(oscOutputBuffer,
 					OSC_OUTPUT_BUFFER_SIZE);
-			outSocket = new netcode::UDPSocket(OSC_IN_PORT);
-			outSocket->SetBroadcasting(true);
+			network = new NetStruct;
+			network->outSocket = new boost::asio::ip::udp::socket(netcode::netservice, boost::asio::ip::udp::endpoint(boost::asio::ip::address_v6::any(), 0));
+			boost::asio::socket_base::broadcast option(true);
+			network->outSocket->set_option(option);
 			UpdateDestination();
 			logOutput.Print("Sending spring Statistics over OSC to: %s:%u",
 					dstAddress.c_str(), dstPort);
@@ -66,10 +82,11 @@ void COSCStatsSender::SetEnabled(bool enabled) {
 		} else {
 			delete oscPacker;
 			oscPacker = NULL;
-			delete outSocket;
-			outSocket = NULL;
-			delete destination;
-			destination = NULL;
+			delete network->outSocket;
+			network->outSocket = NULL;
+			delete network->destination;
+			network->destination = NULL;
+			delete network;
 			delete [] oscOutputBuffer;
 			oscOutputBuffer = NULL;
 		}
@@ -164,12 +181,11 @@ bool COSCStatsSender::SendPropertiesInfo(const char* oscAdress, const char* fmt,
 
 void COSCStatsSender::UpdateDestination() {
 
-	if (destination == NULL) {
-		destination = new sockaddr_in();
+	if (network->destination == NULL) {
+		network->destination = new boost::asio::ip::udp::endpoint();
 	}
-	destination->sin_family = AF_INET;
-	destination->sin_addr.s_addr = inet_addr(dstAddress.c_str());
-	destination->sin_port = htons(dstPort);
+	network->destination->address(boost::asio::ip::address::from_string(dstAddress));
+	network->destination->port(dstPort);
 }
 
 bool COSCStatsSender::IsTimeToSend(int frameNum) {
@@ -186,8 +202,7 @@ bool COSCStatsSender::SendOscBuffer() {
 	bool success = false;
 
 	if (oscPacker->IsReady()) {
-		outSocket->SendTo((const unsigned char*) oscPacker->Data(),
-				oscPacker->Size(), destination);
+		network->outSocket->send_to(boost::asio::buffer((const unsigned char*) oscPacker->Data(), oscPacker->Size()), *network->destination);
 		oscPacker->Clear();
 
 		success = true;

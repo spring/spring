@@ -26,7 +26,7 @@ local infos = {
 	{
 		key    = 'className',
 		value  = 'nulloojavaai.NullOOJavaAIFactory',
-		desc   = 'fully qualified name of a class that implements interface com.clan_sy.spring.ai.AI',
+		desc   = 'fully qualified name of a class that implements interface com.springrts.ai.AI',
 	},
 	{
 		key    = 'name',

@@ -21,16 +21,51 @@ class CProjectile;
 class CUnit;
 class CFeature;
 class CGroundFlash;
+struct FlyingPiece;
 struct S3DOPrimitive;
 struct S3DOPiece;
 struct SS3OVertex;
+struct piececmp;
 
 typedef std::pair<CProjectile*, int> ProjectileMapPair;
 typedef std::map<int, ProjectileMapPair> ProjectileMap;
+typedef ThreadListSimRender<std::list<CProjectile*>, std::set<CProjectile*>, CProjectile*> ProjectileContainer;
+typedef ThreadListSimRender<std::list<CGroundFlash*>, std::set<CGroundFlash*>, CGroundFlash*> GroundFlashContainer;
+#if defined(USE_GML) && GML_ENABLE_SIM
+typedef ThreadListSimRender<std::set<FlyingPiece *>, std::set<FlyingPiece *, piececmp>, FlyingPiece *> FlyingPieceContainer;
+#else
+typedef ThreadListSimRender<std::set<FlyingPiece *, piececmp>, void, FlyingPiece *> FlyingPieceContainer;
+#endif
 
-class CProjectile;
+struct FlyingPiece{
+#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
+	inline void* operator new(size_t size) { return mempool.Alloc(size); }
+	inline void operator delete(void* p, size_t size) { mempool.Free(p, size); }
+#endif
+	FlyingPiece() {}
+	~FlyingPiece();
+
+	S3DOPrimitive* prim;
+	S3DOPiece* object;
+
+	SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
+
+	float3 pos;
+	float3 speed;
+
+	float3 rotAxis;
+	float rot;
+	float rotSpeed;
+	size_t texture;
+	size_t team;
+};
+
 struct distcmp {
-	bool operator()(CProjectile *arg1, CProjectile *arg2);
+	bool operator()(const CProjectile *arg1, const CProjectile *arg2) const;
+};
+
+struct piececmp {
+	bool operator()(const FlyingPiece *fp1, const FlyingPiece *fp2) const;
 };
 
 class CProjectileHandler
@@ -43,8 +78,8 @@ public:
 	void PostLoad();
 
 	inline const ProjectileMapPair* GetMapPairByID(int id) const {
-		ProjectileMap::const_iterator it = weaponProjectileIDs.find(id);
-		if (it == weaponProjectileIDs.end()) {
+		ProjectileMap::const_iterator it = syncedProjectileIDs.find(id);
+		if (it == syncedProjectileIDs.end()) {
 			return NULL;
 		}
 		return &(it->second);
@@ -52,36 +87,40 @@ public:
 
 	void CheckUnitCollisions(CProjectile*, std::vector<CUnit*>&, CUnit**, const float3&, const float3&);
 	void CheckFeatureCollisions(CProjectile*, std::vector<CFeature*>&, CFeature**, const float3&, const float3&);
+	void CheckUnitFeatureCollisions(ProjectileContainer&);
+	void CheckGroundCollisions(ProjectileContainer&);
 	void CheckCollisions();
 
 	void SetMaxParticles(int value) { maxParticles = value; }
 	void SetMaxNanoParticles(int value) { maxNanoParticles = value; }
 
 	void Draw(bool drawReflection, bool drawRefraction = false);
+	void DrawProjectiles(const ProjectileContainer&, bool, bool);
+	void DrawProjectilesShadow(const ProjectileContainer&);
+	void DrawProjectilesMiniMap(const ProjectileContainer&);
+	void DrawProjectilesMiniMap();
 	void DrawShadowPass(void);
 	void DrawGroundFlashes(void);
 
 	void Update();
 	void UpdateTextures();
-
+	void UpdateProjectileContainer(ProjectileContainer&, bool);
+	
 	void AddProjectile(CProjectile* p);
 	void AddGroundFlash(CGroundFlash* flash);
 	void AddFlyingPiece(float3 pos, float3 speed, S3DOPiece* object, S3DOPrimitive* piece);
 	void AddFlyingPiece(int textureType, int team, float3 pos, float3 speed, SS3OVertex* verts);
 
-	void AddRenderObjects();
+	ProjectileContainer syncedProjectiles;    //! contains only projectiles that can change simulation state
+	ProjectileContainer unsyncedProjectiles;  //! contains only projectiles that cannot change simulation state
+	FlyingPieceContainer flyingPieces;
+	GroundFlashContainer groundFlashes;
 
-	struct projdist {
-		float dist;
-		CProjectile* proj;
-	};
-
-	ThreadListSimRender<CProjectile*> projectiles;	// contains both synced and unsynced projectiles
 	int maxUsedID;
-	std::list<int> freeIDs;
-	ProjectileMap weaponProjectileIDs;		// ID ==> <projectile, allyteam> map for weapon projectiles
+	std::list<int> freeIDs;                   //! available synced (weapon, piece) projectile ID's
+	ProjectileMap syncedProjectileIDs;        //! ID ==> <projectile, allyteam> map for synced (weapon, piece) projectiles
 
-	std::set<CProjectile*,distcmp> distset;
+	std::set<CProjectile*, distcmp> distset;
 
 	unsigned int projectileShadowVP;
 
@@ -138,43 +177,6 @@ public:
 private:
 	void UpdatePerlin();
 	void GenerateNoiseTex(unsigned int tex,int size);
-	struct FlyingPiece{
-#if !defined(USE_MMGR) && !(defined(USE_GML) && GML_ENABLE_SIM)
-		inline void* operator new(size_t size){return mempool.Alloc(size);};
-		inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
-#endif
-
-		S3DOPrimitive* prim;
-		S3DOPiece* object;
-
-		SS3OVertex* verts; /* SS3OVertex[4], our deletion. */
-
-		float3 pos;
-		float3 speed;
-
-		float3 rotAxis;
-		float rot;
-		float rotSpeed;
-	};
-	typedef std::set<FlyingPiece*> FlyingPiece_Set;
-	std::list<FlyingPiece_Set*> flyingPieces;
-	FlyingPiece_Set* flying3doPieces;
-	std::vector< std::vector<FlyingPiece_Set*> > flyings3oPieces;
-
-	struct FlyingPieceToAdd {
-		FlyingPieceToAdd() {}
-		FlyingPieceToAdd(FlyingPiece *fpi, int tex, int tm): fp(fpi), texture(tex), team(tm) {}
-		FlyingPiece *fp;
-		int texture;
-		int team;
-	};
-	std::vector<FlyingPiece *> tempFlying3doPiecesToAdd;
-	std::vector<FlyingPieceToAdd> tempFlyings3oPiecesToAdd;
-	std::vector<FlyingPiece *> flying3doPiecesToAdd;
-	std::vector<FlyingPieceToAdd> flyings3oPiecesToAdd;
-	std::map<FlyingPiece *, FlyingPiece_Set *> flyingPiecesToRemove;
-
-	ThreadListSimRender<CGroundFlash*> groundFlashes;
 
 	GLuint perlinTex[8];
 	float perlinBlend[4];
@@ -184,6 +186,5 @@ private:
 
 
 extern CProjectileHandler* ph;
-
 
 #endif /* PROJECTILEHANDLER_H */

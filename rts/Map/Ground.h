@@ -8,7 +8,6 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "Sim/Misc/GlobalSynced.h"
 
-class CProjectileHandler;
 class CProjectile;
 
 
@@ -25,8 +24,7 @@ public:
 	float GetOrigHeight(float x,float y);
 	float3& GetNormal(float x,float y);
 	float3 GetSmoothNormal(float x,float y);
-	float LineGroundCol(float3 from,float3 to);
-	void CheckCol(CProjectileHandler* ph);
+	float LineGroundCol(float3 from, float3 to);
 	float TrajectoryGroundCol(float3 from, float3 flatdir, float length, float linear, float quadratic);
 
 	inline int GetSquare(const float3& pos) {
@@ -36,8 +34,6 @@ public:
 private:
 
 	void CheckColSquare(CProjectile* p,int x,int y);
-
-	float LineGroundSquareCol(const float3 &from,const float3 &to,int xs,int ys);
 };
 
 extern CGround* ground;

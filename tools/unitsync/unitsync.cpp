@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "unitsync.h"
+#include "unitsync_api.h"
 
 #include <algorithm>
 #include <string>
@@ -698,6 +699,27 @@ static int _GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
  * @return Zero on error; non-zero on success
  *
  * If version >= 1, then the author field is filled.
+ *
+ * Important: the description and author fields must point to a valid, and sufficiently long buffer
+ * to store their contents.  Description is max 255 chars, and author is max 200 chars. (including
+ * terminating zero byte).
+ *
+ * If an error occurs (return value 0), the description is set to an error message.
+ * However, using GetNextError() is the recommended way to get the error message.
+ *
+ * Example:
+ *		@code
+ *		char description[255];
+ *		char author[200];
+ *		MapInfo mi;
+ *		mi.description = description;
+ *		mi.author = author;
+ *		if (GetMapInfoEx("somemap.smf", &mi, 1)) {
+ *			//now mi is contains map data
+ *		} else {
+ *			//handle the error
+ *		}
+ *		@endcode
  */
 EXPORT(int) GetMapInfoEx(const char* name, MapInfo* outInfo, int version)
 {
@@ -724,6 +746,71 @@ EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
 }
+
+
+
+/**
+ * @brief return the map's minimum height
+ * @param name name of the map, e.g. "SmallDivide.smf"
+ *
+ * Together with maxHeight, this determines the
+ * range of the map's height values in-game. The
+ * conversion formula for any raw 16-bit height
+ * datum <h> is
+ *
+ *    minHeight + (h * (maxHeight - minHeight) / 65536.0f)
+ */
+EXPORT(float) GetMapMinHeight(const char* name) {
+	try {
+		ScopedMapLoader loader(name);
+		CSmfMapFile file(name);
+		MapParser parser(name);
+
+		const SMFHeader& header = file.GetHeader();
+		const LuaTable rootTable = parser.GetRoot();
+		const LuaTable smfTable = rootTable.SubTable("smf");
+
+		if (smfTable.KeyExists("minHeight")) {
+			// override the header's minHeight value
+			return (smfTable.GetFloat("minHeight", 0.0f));
+		} else {
+			return (header.minHeight);
+		}
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return 0.0f;
+}
+
+/**
+ * @brief return the map's maximum height
+ * @param name name of the map, e.g. "SmallDivide.smf"
+ *
+ * Together with minHeight, this determines the
+ * range of the map's height values in-game. See
+ * GetMapMinHeight() for the conversion formula.
+ */
+EXPORT(float) GetMapMaxHeight(const char* name) {
+	try {
+		ScopedMapLoader loader(name);
+		CSmfMapFile file(name);
+		MapParser parser(name);
+
+		const SMFHeader& header = file.GetHeader();
+		const LuaTable rootTable = parser.GetRoot();
+		const LuaTable smfTable = rootTable.SubTable("smf");
+
+		if (smfTable.KeyExists("maxHeight")) {
+			// override the header's maxHeight value
+			return (smfTable.GetFloat("maxHeight", 0.0f));
+		} else {
+			return (header.maxHeight);
+		}
+	}
+	UNITSYNC_CATCH_BLOCKS;
+	return 0.0f;
+}
+
+
 
 
 static vector<string> mapArchives;
@@ -1655,51 +1742,6 @@ static int GetNumberOfLuaAIs()
 	}
 	UNITSYNC_CATCH_BLOCKS;
 	return 0;
-}
-/**
- * DEPRECATED: LUA AIs are now handled the same way as Skirmish AIs.
- */
-EXPORT(int) GetLuaAICount()
-{
-	return 0;
-}
-
-
-/**
- * @brief Retrieve the name of a LUA AI
- * @return NULL on error; the name of the LUA AI on success
- *
- * Be sure you've made a call to GetLuaAICount() prior to using this.
- *
- * DEPRECATED: LUA AIs are handled the same way as Skirmish AIs.
- */
-EXPORT(const char*) GetLuaAIName(int aiIndex)
-{
-	try {
-		static const char* DEPSTRING = "DEPRECATED_FUNCTION_CALLED";
-		return DEPSTRING;
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
-}
-
-
-/**
- * @brief Retrieve the description of a LUA AI
- * @return NULL on error; the description of the LUA AI on success
- *
- * Be sure you've made a call to GetLuaAICount() prior to using this.
- *
- * DEPRECATED: LUA AIs are handled the same way as Skirmish AIs.
- */
-EXPORT(const char*) GetLuaAIDesc(int aiIndex)
-{
-	try {
-		static const char* DEPSTRING = "DEPRECATED_FUNCTION_CALLED";
-		return DEPSTRING;
-	}
-	UNITSYNC_CATCH_BLOCKS;
-	return NULL;
 }
 
 
@@ -2964,50 +3006,3 @@ class CMessageOnce
 	static CMessageOnce msg; \
 	msg(string(__FUNCTION__) + ": deprecated unitsync function called, please update your lobby client"); \
 	SetLastError("deprecated unitsync function called")
-
-
-// deprecated 2008/10
-EXPORT(const char*) GetCurrentList()
-{
-	DEPRECATED;
-	return NULL;
-}
-
-// deprecated 2008/10
-EXPORT(void) AddClient(int id, const char *unitList)
-{
-	DEPRECATED;
-}
-
-// deprecated 2008/10
-EXPORT(void) RemoveClient(int id)
-{
-	DEPRECATED;
-}
-
-// deprecated 2008/10
-EXPORT(const char*) GetClientDiff(int id)
-{
-	DEPRECATED;
-	return NULL;
-}
-
-// deprecated 2008/10
-EXPORT(void) InstallClientDiff(const char *diff)
-{
-	DEPRECATED;
-}
-
-// deprecated 2008/10
-EXPORT(int) IsUnitDisabled(int unit)
-{
-	DEPRECATED;
-	return 0;
-}
-
-// deprecated 2008/10
-EXPORT(int) IsUnitDisabledByClient(int unit, int clientId)
-{
-	DEPRECATED;
-	return 0;
-}

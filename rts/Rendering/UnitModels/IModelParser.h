@@ -11,23 +11,23 @@
 
 class C3DOParser;
 class CS3OParser;
-class C3DModelParser;
-extern C3DModelParser* modelParser;
+class C3DModelLoader;
+extern C3DModelLoader* modelParser;
 
 
 class IModelParser
 {
 public:
-	virtual S3DModel* Load(std::string name, const float3& centerOffset) = 0;
+	virtual S3DModel* Load(std::string name) = 0;
 	virtual void Draw(const S3DModelPiece* o) const = 0;
 };
 
 
-class C3DModelParser
+class C3DModelLoader
 {
 public:
-	C3DModelParser(void);
-	~C3DModelParser(void);
+	C3DModelLoader(void);
+	~C3DModelLoader(void);
 
 	void Update();
 	S3DModel* Load3DModel(std::string name, const float3& centerOffset = ZeroVector);
@@ -40,12 +40,12 @@ public:
 
 private:
 //FIXME make some static?
-	std::map<std::string,S3DModel*> cache;
-	std::map<std::string,IModelParser*> parsers;
+	std::map<std::string, S3DModel*> cache;
+	std::map<std::string, IModelParser*> parsers;
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	struct ModelParserPair {
-		ModelParserPair(S3DModelPiece* o,IModelParser* p) : model(o),parser(p) {};
+		ModelParserPair(S3DModelPiece* o, IModelParser* p) : model(o), parser(p) {};
 		S3DModelPiece* model;
 		IModelParser* parser;
 	};

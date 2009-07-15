@@ -89,8 +89,8 @@ const std::string& CSkirmishAILibraryInfo::GetDescriptionAt(size_t index) const 
 
 SkirmishAIKey CSkirmishAILibraryInfo::GetKey() const {
 
-	const std::string& sn = GetInfo(SKIRMISH_AI_PROPERTY_SHORT_NAME);
-	const std::string& v = GetInfo(SKIRMISH_AI_PROPERTY_VERSION);
+	const std::string& sn = GetShortName();
+	const std::string& v = GetVersion();
 	SkirmishAIKey key = SkirmishAIKey(sn, v);
 
 	return key;

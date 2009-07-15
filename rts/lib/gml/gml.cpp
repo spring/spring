@@ -168,28 +168,41 @@ gmlQueue gmlQueues[GML_MAX_NUM_THREADS];
 
 boost::thread *gmlThreads[GML_MAX_NUM_THREADS];
 
-// Item server instances
-gmlSingleItemServer<GLhandleARB, PFNGLCREATEPROGRAMPROC *> gmlProgramServer(&glCreateProgram, 2, 0);
-gmlSingleItemServer<GLhandleARB, PFNGLCREATEPROGRAMOBJECTARBPROC *> gmlProgramObjectARBServer(&glCreateProgramObjectARB, 2, 0);
-
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_VERTEX(&glCreateShader_VERTEX, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_FRAGMENT(&glCreateShader_FRAGMENT, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderServer_GEOMETRY_EXT(&glCreateShader_GEOMETRY_EXT, 2, 0);
-
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_VERTEX(&glCreateShaderObjectARB_VERTEX, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_FRAGMENT(&glCreateShaderObjectARB_FRAGMENT, 2, 0);
 gmlSingleItemServer<GLhandleARB, GLhandleARB (*)(void)> gmlShaderObjectARBServer_GEOMETRY_EXT(&glCreateShaderObjectARB_GEOMETRY_EXT, 2, 0);
 gmlSingleItemServer<GLUquadric *, GLUquadric *(GML_GLAPIENTRY *)(void)> gmlQuadricServer(&gluNewQuadric, 100, 25);
 
-gmlMultiItemServer<GLuint, GLsizei, void (GML_GLAPIENTRY *)(GLsizei,GLuint *)> gmlTextureServer(&glGenTextures, 100, 25);
+// Item server instances
+#if defined(__GNUC__) && (__GNUC__ == 4) && (__GNUC_MINOR__ == 3) && (__GNUC_PATCHLEVEL__ == 0)
+// gcc has issues with attributes in function pointers it seems
+gmlSingleItemServer<GLhandleARB, GLhandleARB (**)(void)> gmlProgramServer(&glCreateProgram, 2, 0);
+gmlSingleItemServer<GLhandleARB, GLhandleARB (**)(void)> gmlProgramObjectARBServer(&glCreateProgramObjectARB, 2, 0);
+
+gmlMultiItemServer<GLuint, GLsizei, void (**)(GLsizei, GLuint *)> gmlBufferARBServer(&glGenBuffersARB, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (**)(GLsizei, GLuint *)> gmlFencesNVServer(&glGenFencesNV, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (**)(GLsizei, GLuint *)> gmlProgramsARBServer(&glGenProgramsARB, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (**)(GLsizei, GLuint *)> gmlRenderbuffersEXTServer(&glGenRenderbuffersEXT, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (**)(GLsizei, GLuint *)> gmlFramebuffersEXTServer(&glGenFramebuffersEXT, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (**)(GLsizei, GLuint *)> gmlQueryServer(&glGenQueries, 2, 0);
+gmlMultiItemServer<GLuint, GLsizei, void (**)(GLsizei, GLuint *)> gmlBufferServer(&glGenBuffers, 2, 0);
+#else
+gmlSingleItemServer<GLhandleARB, PFNGLCREATEPROGRAMPROC *> gmlProgramServer(&glCreateProgram, 2, 0);
+gmlSingleItemServer<GLhandleARB, PFNGLCREATEPROGRAMOBJECTARBPROC *> gmlProgramObjectARBServer(&glCreateProgramObjectARB, 2, 0);
+
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENBUFFERSARBPROC *> gmlBufferARBServer(&glGenBuffersARB, 2, 0);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENFENCESNVPROC *> gmlFencesNVServer(&glGenFencesNV, 2, 0);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENPROGRAMSARBPROC *> gmlProgramsARBServer(&glGenProgramsARB, 2, 0);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENRENDERBUFFERSEXTPROC *> gmlRenderbuffersEXTServer(&glGenRenderbuffersEXT, 2, 0);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENFRAMEBUFFERSEXTPROC *> gmlFramebuffersEXTServer(&glGenFramebuffersEXT, 2, 0);
-gmlMultiItemServer<GLuint, GLsizei, PFNGLGENQUERIESPROC *> gmlQueryServer(&glGenQueries, 20, 5);
+gmlMultiItemServer<GLuint, GLsizei, PFNGLGENQUERIESPROC *> gmlQueryServer(&glGenQueries, 2, 0);
 gmlMultiItemServer<GLuint, GLsizei, PFNGLGENBUFFERSPROC *> gmlBufferServer(&glGenBuffers, 2, 0);
+#endif
 
+gmlMultiItemServer<GLuint, GLsizei, void (GML_GLAPIENTRY *)(GLsizei, GLuint *)> gmlTextureServer(&glGenTextures, 100, 25);
 
 #if GML_ENABLE_SIM
 #include <boost/thread/mutex.hpp>
@@ -202,7 +215,7 @@ boost::mutex mapmutex;
 boost::mutex inmapmutex;
 boost::mutex tempmutex;
 boost::mutex posmutex;
-boost::mutex rendermutex;
+boost::mutex runitmutex;
 boost::mutex simmutex;
 boost::mutex netmutex;
 boost::mutex histmutex;
@@ -212,8 +225,10 @@ boost::mutex watermutex;
 boost::mutex dquemutex;
 boost::mutex scarmutex;
 boost::mutex trackmutex;
+boost::mutex projmutex;
 boost::mutex rprojmutex;
 boost::mutex rflashmutex;
+boost::mutex rpiecemutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;
@@ -221,15 +236,11 @@ boost::recursive_mutex selmutex;
 boost::recursive_mutex &luamutex=selmutex;
 boost::recursive_mutex quadmutex;
 boost::recursive_mutex featmutex;
-boost::recursive_mutex projmutex;
 boost::recursive_mutex grassmutex;
 boost::recursive_mutex &guimutex=selmutex;
 boost::recursive_mutex filemutex;
 boost::recursive_mutex &qnummutex=quadmutex;
-boost::recursive_mutex soundmutex;
 boost::recursive_mutex groupmutex;
-boost::recursive_mutex flashmutex;
-boost::recursive_mutex piecemutex;
 #endif
 
 // GMLqueue implementation
@@ -961,6 +972,8 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER5(FramebufferTexture1DEXT)
 		GML_MAKEHANDLER6(FramebufferTexture3DEXT)
 		GML_MAKEHANDLER1(ClientActiveTexture)
+		GML_MAKEHANDLER3(MultiTexCoord2i)
+		GML_MAKEHANDLER3(GetQueryiv)
 	}
 }
 

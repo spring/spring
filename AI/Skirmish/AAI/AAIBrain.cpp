@@ -232,6 +232,8 @@ bool AAIBrain::EnergyForConstr(int unit, int wokertime)
 	// check energy
 	int energy =  bt->unitList[unit-1]->buildTime * (cb->GetEnergyIncome()-(cb->GetEnergyUsage()/2));
 
+	// FIXME: add code here
+
 	return true;
 }
 
@@ -487,10 +489,12 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 				// minmize distance between sectors
 				dist = 0.1f;
 
-				for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); ++sector)
+				for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); ++sector) {
 					dist += fastmath::sqrt( ((*t)->x - (*sector)->x) * ((*t)->x - (*sector)->x) + ((*t)->y - (*sector)->y) * ((*t)->y - (*sector)->y) );
+				}
 
-				my_rating /= (dist * fastmath::sqrt(map->GetEdgeDistance( &(*t)->GetCenter() )) );
+				float3 center = (*t)->GetCenter();
+				my_rating /= (dist * fastmath::sqrt(map->GetEdgeDistance( &center )) );
 
 				// choose higher rated sector
 				if(my_rating > best_rating)

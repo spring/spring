@@ -42,9 +42,10 @@ inline short int GetHeadingFromFacing(int facing)
 	}
 }
 
-inline short int GetHeadingFromVector(float dx, float dz)
+inline float GetHeadingFromVectorF(float dx, float dz)
 {
 	float h = 0.0f;
+
 	if (dz != 0.0f) {
 		float d = dx / dz;
 
@@ -68,6 +69,13 @@ inline short int GetHeadingFromVector(float dx, float dz)
 		else
 			h = -PI * 0.5f;
 	}
+
+	return h;
+}
+
+inline short int GetHeadingFromVector(float dx, float dz)
+{
+	float h = GetHeadingFromVectorF(dx, dz);
 
 	h *= SHORTINT_MAXVALUE / PI;
 
@@ -112,6 +120,20 @@ inline shortint2 GetHAndPFromVector(const float3& vec)
 	return ret;
 }
 
+// vec should be normalized
+inline float2 GetHAndPFromVectorF(const float3& vec)
+{
+	float2 ret;
+
+	#if defined BUILDING_AI
+	ret.y = std::asin(vec.y);
+	#else
+	ret.y = streflop::asin(vec.y);
+	#endif // defined BUILDING_AI
+	ret.x = GetHeadingFromVectorF(vec.x, vec.z);
+	return ret;
+}
+
 inline float3 GetVectorFromHeading(short int heading)
 {
 	float2 v = CMyMath::headingToVectorTable[heading / ((SHORTINT_MAXVALUE/NUM_HEADINGS) * 2) + NUM_HEADINGS/2];
@@ -130,8 +152,6 @@ inline float3 CalcBeizer(float i, const float3& p1, const float3& p2, const floa
 
 float LinePointDist(const float3& l1, const float3& l2, const float3& p);
 float3 ClosestPointOnLine(const float3& l1, const float3& l2, const float3& p);
-float smoothstep(float edge0, float edge1, float value);
-
 
 
 #ifndef __GNUC__
@@ -142,7 +162,8 @@ float Square(const float x) __attribute__((const));
 
 inline float Square(const float x) { return x * x; }
 
-
+float smoothstep(const float edge0, const float edge1, const float value);
+float3 smoothstep(const float edge0, const float edge1, float3 vec);
 
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi

@@ -119,7 +119,7 @@ void AAIAttackManager::LaunchAttack()
 	for(list<AAIGroup*>::iterator group = available_combat_groups_global.begin(); group != available_combat_groups_global.end(); ++group)
 		(*group)->GetCombatPower( &attack_power_global );
 
-	for(int continent = 0; continent < available_combat_groups_continent.size(); ++continent)
+	for(size_t continent = 0; continent < available_combat_groups_continent.size(); ++continent)
 	{
 		fill(attack_power_continent[continent].begin(), attack_power_continent[continent].end(), 0.0f);
 
