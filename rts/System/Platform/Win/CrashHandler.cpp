@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <process.h>
 #include <imagehlp.h>
+#include <signal.h>
 #include <SDL.h> // for SDL_Quit
 #include "CrashHandler.h"
 #include "Game/GameVersion.h"
