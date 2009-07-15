@@ -20,17 +20,23 @@ if (BUILD_Java_AIINTERFACE)
 endif (BUILD_Java_AIINTERFACE)
 
 
-#set(SKIRMISHAI_FIND_QUIETLY True)
+set(SKIRMISHAI_FIND_QUIETLY ${AI_FIND_QUIETLY})
 
 
+# Add the sub-module only if its base source dir exists.
+# This is usefull when using git submodules for example.
 macro    (AddSkirmishAI sourceDir)
-	# Add the sub-module only if its base source dir exists.
-	# This is usefull when using git submodules for example.
 	if    (EXISTS "${SKIRMISH_SRC}/${sourceDir}")
 		Add_Subdirectory(${sourceDir})
 	endif (EXISTS "${SKIRMISH_SRC}/${sourceDir}")
 endmacro (AddSkirmishAI sourceDir)
 
+# Print a message, but only if are allowed to speak.
+macro    (SkirmishAIMessage type msg)
+	if    (NOT SKIRMISHAI_FIND_QUIETLY)
+		message(STATUS "${msg}")
+	endif (NOT SKIRMISHAI_FIND_QUIETLY)
+endmacro (SkirmishAIMessage typemsg)
 
 GetListOfSubModules(SKIRMISH_AI_DIRS)
 # Make the list available in the parent dir

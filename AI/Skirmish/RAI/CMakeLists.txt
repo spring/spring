@@ -3,36 +3,41 @@
 # BUILD_C_AIINTERFACE is set in ../../Interfaces/C/CMakeLists.txt
 #
 
-#set(RAI_SRC "${SKIRMISH_SRC}/RAI")
-set(RAI_SRC "${CMAKE_CURRENT_SOURCE_DIR}")
+# AI specific properties
+set(myName                   "RAI")
+set(mySourceDir              ${CMAKE_CURRENT_SOURCE_DIR})
+set(myAdditionalSources      ${CUtils_SRC})
+set(myAdditionalCompileFlags "")
+set(myAdditionalLibraries    legacycpp)
 
-if (BUILD_C_AIINTERFACE)
-	set(BUILD_RAI TRUE)
-else (BUILD_C_AIINTERFACE)
-	set(BUILD_RAI FALSE)
-	message ("warning: RAI Skirmish AI will not be built!")
+aux_source_directory(${mySourceDir} mySources)
+
+
+# Check if the user wants to compile the AI
+if    (BUILD_C_AIINTERFACE)
+	set(BUILD_THIS_SKIRMISHAI TRUE)
+else  (BUILD_C_AIINTERFACE)
+	set(BUILD_THIS_SKIRMISHAI FALSE)
+	message("warning: ${myName} Skirmish AI will not be built!")
 endif (BUILD_C_AIINTERFACE)
 
-if (BUILD_RAI)
-	set(RAI_VERS "UNKNOWN_VERSION")
-	if (EXISTS ${RAI_SRC}/VERSION)
-		file(STRINGS "${RAI_SRC}/VERSION" RAI_VERS LIMIT_COUNT 1)
-	endif (EXISTS ${RAI_SRC}/VERSION)
-	set(RAI_TARGET "RAI")
-	set(RAI_DATA_DIR ${SKIRMISH_DATA}/RAI/${RAI_VERS})
-	if (NOT SKIRMISHAI_FIND_QUIETLY)
-		message(STATUS "Found Skirmish AI: RAI ${RAI_VERS}")
-	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
-	# install data files
-	install(DIRECTORY "${RAI_SRC}/data/"
-			DESTINATION "${RAI_DATA_DIR}")
+# Compile and install
+if    (BUILD_THIS_SKIRMISHAI)
+	# Assemble meta data
+	GetVersionFromFile(myVersion "${mySourceDir}/VERSION")
+	set(myTarget "${myName}")
+	set(myDataDir ${SKIRMISH_DATA}/${myName}/${myVersion})
+	SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
-	aux_source_directory(${RAI_SRC} rai)
-	add_library(${RAI_TARGET} MODULE ${rai} ${cutilsenv})
-	target_link_libraries(${RAI_TARGET} legacycpp)
-	set_target_properties(${RAI_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
-	#set_target_properties(${RAI_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "RAI")
-	install (TARGETS ${RAI_TARGET} DESTINATION ${RAI_DATA_DIR})
-endif (BUILD_RAI)
+	# Compile the library
+	add_library(${myTarget} MODULE ${mySources} ${myAdditionalSources})
+	target_link_libraries(${myTarget} ${myAdditionalLibraries})
+	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${myAdditionalCompileFlags}")
+	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "SkirmishAI")
 
+	# Install the data files
+	install(DIRECTORY "${mySourceDir}/data/" DESTINATION "${myDataDir}")
+	# Install the library
+	install(TARGETS ${myTarget} DESTINATION ${myDataDir})
+endif (BUILD_THIS_SKIRMISHAI)

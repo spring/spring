@@ -5,6 +5,7 @@ add_definitions(-DBUILDING_AI_INTERFACE)
 
 set(AI_INTERFACES_SRC "${CMAKE_CURRENT_SOURCE_DIR}")
 set(AI_INTERFACES_DATA "${AIDIR}/AI/Interfaces")
+set(AIINTERFACE_FIND_QUIETLY ${AI_FIND_QUIETLY})
 
 macro    (AddAIInterface sourceDir)
 	# Add the sub-module only if its base source dir exists.
@@ -16,6 +17,14 @@ macro    (AddAIInterface sourceDir)
 	# so it is accessible under ../Skirmish/
 	set(BUILD_${sourceDir}_AIINTERFACE ${BUILD_${sourceDir}_AIINTERFACE} PARENT_SCOPE)
 endmacro (AddAIInterface sourceDir)
+
+
+# Print a message, but only if are allowed to speak.
+macro    (AIInterfaceMessage type msg)
+	if    (NOT AIINTERFACE_FIND_QUIETLY)
+		message(${type} "${msg}")
+	endif (NOT AIINTERFACE_FIND_QUIETLY)
+endmacro (AIInterfaceMessage type msg)
 
 
 GetListOfSubModules(AI_INTERFACE_DIRS)

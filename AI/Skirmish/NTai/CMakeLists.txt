@@ -3,47 +3,51 @@
 # BUILD_C_AIINTERFACE is set in ../../Interfaces/C/CMakeLists.txt
 #
 
-#set(NTai_SRC "${SKIRMISH_SRC}/NTai")
-set(NTai_SRC "${CMAKE_CURRENT_SOURCE_DIR}")
+# AI specific properties
+set(myName                   "NTai")
+set(mySourceDir              ${CMAKE_CURRENT_SOURCE_DIR})
+set(myAdditionalSources      ${CUtils_SRC})
+set(myAdditionalCompileFlags "")
+set(myAdditionalLibraries    legacycpp ${Boost_THREAD_LIBRARY})
 
-if (BUILD_C_AIINTERFACE)
-	set(BUILD_NTai TRUE)
-else (BUILD_C_AIINTERFACE)
-	set(BUILD_NTai FALSE)
-	message ("warning: NTai Skirmish AI will not be built!")
+aux_source_directory(${mySourceDir}                          mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Units            mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Units/Behaviours mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Tasks            mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Helpers          mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Helpers/grid     mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Helpers/Terrain  mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Helpers/Units    mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Engine           mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Core             mySources)
+aux_source_directory(${mySourceDir}/AI/NTai/Agents           mySources)
+
+
+# Check if the user wants to compile the AI
+if    (BUILD_C_AIINTERFACE)
+	set(BUILD_THIS_SKIRMISHAI TRUE)
+else  (BUILD_C_AIINTERFACE)
+	set(BUILD_THIS_SKIRMISHAI FALSE)
+	message("warning: ${myName} Skirmish AI will not be built!")
 endif (BUILD_C_AIINTERFACE)
 
-if (BUILD_NTai)
-	set(NTai_VERS "UNKNOWN_VERSION")
-	if (EXISTS ${NTai_SRC}/VERSION)
-		file(STRINGS "${NTai_SRC}/VERSION" NTai_VERS LIMIT_COUNT 1)
-	endif (EXISTS ${NTai_SRC}/VERSION)
-	#set(NTai_TARGET "NTai-${NTai_VERS}")
-	set(NTai_TARGET "NTai")
-	set(NTai_DATA_DIR ${SKIRMISH_DATA}/NTai/${NTai_VERS})
-	if (NOT SKIRMISHAI_FIND_QUIETLY)
-		message(STATUS "Found Skirmish AI: NTai ${NTai_VERS}")
-	endif (NOT SKIRMISHAI_FIND_QUIETLY)
 
-	# install data files
-	install(DIRECTORY "${NTai_SRC}/data/"
-			DESTINATION "${NTai_DATA_DIR}")
+# Compile and install
+if    (BUILD_THIS_SKIRMISHAI)
+	# Assemble meta data
+	GetVersionFromFile(myVersion "${mySourceDir}/VERSION")
+	set(myTarget "${myName}")
+	set(myDataDir ${SKIRMISH_DATA}/${myName}/${myVersion})
+	SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
-	aux_source_directory(${NTai_SRC} ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Units ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Units/Behaviours ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Tasks ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Helpers ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Helpers/grid ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Helpers/Terrain ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Helpers/Units ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Engine ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Core ntai)
-	aux_source_directory(${NTai_SRC}/AI/NTai/Agents ntai)
-	add_library(${NTai_TARGET} MODULE ${ntai} ${cutilsenv})
-	target_link_libraries(${NTai_TARGET} ${Boost_THREAD_LIBRARY} legacycpp)
-	set_target_properties(${NTai_TARGET} PROPERTIES OUTPUT_NAME "SkirmishAI")
-	#set_target_properties(${NTai_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "NTai")
-	install (TARGETS ${NTai_TARGET} DESTINATION ${NTai_DATA_DIR})
-endif (BUILD_NTai)
+	# Compile the library
+	add_library(${myTarget} MODULE ${mySources} ${myAdditionalSources})
+	target_link_libraries(${myTarget} ${myAdditionalLibraries})
+	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${myAdditionalCompileFlags}")
+	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "SkirmishAI")
 
+	# Install the data files
+	install(DIRECTORY "${mySourceDir}/data/" DESTINATION "${myDataDir}")
+	# Install the library
+	install(TARGETS ${myTarget} DESTINATION ${myDataDir})
+endif (BUILD_THIS_SKIRMISHAI)
