@@ -4,10 +4,14 @@
 # and used in ../../Skirmish/*/CMakeLists.txt
 #
 
+# Check if the user wants to compile the interface
 if    ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
-	set(AIINTERFACES_JAVA "TRUE")
+	set(AIINTERFACES_JAVA TRUE)
+else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
+	set(AIINTERFACES_JAVA FALSE)
 endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
 
+# Look for dependencies, if the user wants to build the interface
 if    (AIINTERFACES_JAVA)
 	if    (NOT JAVA_FOUND)
 		set(JAVA_FIND_QUIETLY TRUE)
@@ -31,19 +35,20 @@ if    (AIINTERFACES_JAVA)
 		endif (JAVA_INCLUDE_PATH)
 	endif (MINGW)
 
-	#set(Java_AIINTERFACE_SRC "${AI_INTERFACES_SRC}/Java")
 	set(Java_AIINTERFACE_SRC "${CMAKE_CURRENT_SOURCE_DIR}")
 endif (AIINTERFACES_JAVA)
 
-if (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin AND AIINTERFACES_JAVA)
+# Check dependencies of the interface are met
+if    (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 	set(BUILD_Java_AIINTERFACE TRUE)
-else (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin AND AIINTERFACES_JAVA)
+else  (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 	set(BUILD_Java_AIINTERFACE FALSE)
-	message ("warning: Java AI Interface will not be built!")
-endif (JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin AND AIINTERFACES_JAVA)
+	message("warning: Java AI Interface will not be built!")
+endif (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
 set(BUILD_Java_AIINTERFACE ${BUILD_Java_AIINTERFACE} PARENT_SCOPE)
 
-if (BUILD_Java_AIINTERFACE)
+# Build
+if    (BUILD_Java_AIINTERFACE)
 	set(Java_AIINTERFACE_VERS "UNKNOWN_VERSION")
 	if (EXISTS ${Java_AIINTERFACE_SRC}/VERSION)
 		file(STRINGS "${Java_AIINTERFACE_SRC}/VERSION" Java_AIINTERFACE_VERS LIMIT_COUNT 1)
@@ -67,26 +72,25 @@ if (BUILD_Java_AIINTERFACE)
 
 	# build the native part
 	aux_source_directory(${Java_AIINTERFACE_SRC} javaAIInterface)
-	IF (MINGW)
+	if    (MINGW)
 		# It is important that this is used instead of the one
 		# from the installed JDK, as the jni_md.h is in here too,
 		# and this file contians OS (win32) specific information.
 		INCLUDE_DIRECTORIES(BEFORE ${MINGWLIBS}/include/java)
-	ENDIF(MINGW)
+	endif (MINGW)
 	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
 	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${ai_common} ${cutilsenv})
 	install(TARGETS ${Java_AIINTERFACE_TARGET} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
 	TARGET_LINK_LIBRARIES(${Java_AIINTERFACE_TARGET} streflop)
 	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
 	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES OUTPUT_NAME "AIInterface")
-	#set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "Java")
 
 	# build the Java part
-	IF (CMAKE_HOST_WIN32)
+	if    (CMAKE_HOST_WIN32)
 		set(AWK_COMMAND "${MINGWLIBS}/bin/awk.exe")
-	ELSE (CMAKE_HOST_WIN32)
+	else  (CMAKE_HOST_WIN32)
 		set(AWK_COMMAND "awk")
-	ENDIF(CMAKE_HOST_WIN32)
+	endif (CMAKE_HOST_WIN32)
 	set(AWK_SCRIPTS_DIR "${Java_AIINTERFACE_SRC}/bin")
 	set(AWK_COMMON_SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils/bin")
 	set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/Java")
