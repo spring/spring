@@ -45,9 +45,9 @@ list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
 
 # Assemble the Legacy C++ AI sources
 aux_source_directory("Wrappers/LegacyCpp"          legacyCppAiSrcFiles)
-aux_source_directory("${ai_common_SRC}"            legacyCppAiSrcFiles)
-aux_source_directory("${rts}/System/float3"        legacyCppAiSrcFiles)
-aux_source_directory("${rts}/Sim/Misc/DamageArray" legacyCppAiSrcFiles)
+list(APPEND legacyCppAiSrcFiles ${ai_common_SRC})
+list(APPEND legacyCppAiSrcFiles ${rts}/System/float3)
+list(APPEND legacyCppAiSrcFiles ${rts}/Sim/Misc/DamageArray)
 
 # Assemble the creg sources
 aux_source_directory("${rts}/System/creg"          creg)
