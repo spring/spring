@@ -4,8 +4,9 @@
 #
 
 # AI specific properties
-set(myName                   "NullAI")
-set(myDir                    ${CMAKE_CURRENT_SOURCE_DIR})
+set(myDir                    "${CMAKE_CURRENT_SOURCE_DIR}")
+GetLastPathPart(dirName ${myDir})
+set(myName                   "${dirName}")
 set(mySourceDir              ${myDir}/src)
 set(myAdditionalSources      "")
 set(myAdditionalCompileFlags "")

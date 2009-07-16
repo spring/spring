@@ -4,8 +4,9 @@
 #
 
 # AI specific properties
-set(myName                   "NTai")
-set(myDir                    ${CMAKE_CURRENT_SOURCE_DIR})
+set(myDir                    "${CMAKE_CURRENT_SOURCE_DIR}")
+GetLastPathPart(dirName ${myDir})
+set(myName                   "${dirName}")
 set(mySourceDir             ${myDir}/AI/NTai)
 set(myAdditionalSources      ${CUtils_SRC})
 set(myAdditionalCompileFlags "")
