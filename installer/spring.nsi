@@ -193,7 +193,7 @@ SectionGroup "Multiplayer battlerooms"
   !undef INSTALL
   SectionEnd
   
-  Section "TASClient (only Multiplayer)" SEC_TASCLIENT
+  Section "TASClient" SEC_TASCLIENT
   !define INSTALL
   !include "sections\tasclient.nsh"
   !undef INSTALL
