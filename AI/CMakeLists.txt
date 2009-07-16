@@ -30,11 +30,11 @@ endif (WIN32)
 set(AI_FIND_QUIETLY FALSE)
 
 # Assemble common additional native AI sources
-list(APPEND ai_common ${rts}/Game/GameVersion)
+list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
 
 # Assemble the Legacy C++ AI sources
 aux_source_directory("Wrappers/LegacyCpp"          legacyCppAiSrcFiles)
-aux_source_directory("${ai_common}"                legacyCppAiSrcFiles)
+aux_source_directory("${ai_common_SRC}"            legacyCppAiSrcFiles)
 aux_source_directory("${rts}/System/float3"        legacyCppAiSrcFiles)
 aux_source_directory("${rts}/Sim/Misc/DamageArray" legacyCppAiSrcFiles)
 
@@ -63,14 +63,33 @@ endmacro (GetListOfSubModules list_var)
 
 # Gets the version from a text file.
 # (actually just reads the text file content into a variable)
-macro    (GetVersionFromFile vers_var file_var)
-	if    (EXISTS ${file_var})
-		file(STRINGS "${file_var}" ${vers_var} LIMIT_COUNT 1)
-	else  (EXISTS ${file_var})
+macro    (GetVersionFromFile vers_var vers_file)
+	if    (EXISTS ${vers_file})
+		file(STRINGS "${vers_file}" ${vers_var} LIMIT_COUNT 1)
+	else  (EXISTS ${vers_file})
 		set(${vers_var} "UNKNOWN_VERSION")
-	endif (EXISTS ${file_var})
-endmacro (GetVersionFromFile vers_var file_var)
+	endif (EXISTS ${vers_file})
+endmacro (GetVersionFromFile vers_var vers_file)
 
+
+# Returns the name of the dir or file specified by a path.
+# example: "/A/B/C" -> "C"
+macro    (GetLastPathPart part_var dir)
+	string(REGEX REPLACE ".*[\\/]" "" ${part_var} ${dir})
+endmacro (GetLastPathPart part_var dir)
+
+
+# Returns the name of the first sub-dir (in alphabetical descending order)
+# under dir.
+macro    (GetFirstSubDirName name_var dir)
+	file(GLOB dirContent RELATIVE "${dir}" FOLLOW_SYMLINKS "${dir}/*")
+	foreach    (dirPart ${dirContent})
+		if    (IS_DIRECTORY "${dir}/${dirPart}")
+			set(${name_var} ${dirPart})
+			break()
+		endif (IS_DIRECTORY "${dir}/${dirPart}")
+	endforeach (dirPart)
+endmacro (GetFirstSubDirName name_var dir)
 
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)

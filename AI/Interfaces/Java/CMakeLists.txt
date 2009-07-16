@@ -4,12 +4,21 @@
 # and used in ../../Skirmish/*/CMakeLists.txt
 #
 
+set(myName            "Java")
+set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
+set(myNativeSourceDir "${myDir}")
+set(myJavaSourceDir   "${myDir}/java/src")
+set(myPkgFirstPart    "com")
+set(myPkg             "${myPkgFirstPart}/springrts/ai")
+
+
 # Check if the user wants to compile the interface
 if    ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
 	set(AIINTERFACES_JAVA TRUE)
 else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
 	set(AIINTERFACES_JAVA FALSE)
 endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
+
 
 # Look for dependencies, if the user wants to build the interface
 if    (AIINTERFACES_JAVA)
@@ -34,54 +43,43 @@ if    (AIINTERFACES_JAVA)
 			message ("warning: No Java includes found!")
 		endif (JAVA_INCLUDE_PATH)
 	endif (MINGW)
-
-	set(Java_AIINTERFACE_SRC "${CMAKE_CURRENT_SOURCE_DIR}")
 endif (AIINTERFACES_JAVA)
 
 # Check dependencies of the interface are met
-if    (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
-	set(BUILD_Java_AIINTERFACE TRUE)
-else  (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
-	set(BUILD_Java_AIINTERFACE FALSE)
+if    (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+	set(BUILD_${myName}_AIINTERFACE TRUE)
+else  (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+	set(BUILD_${myName}_AIINTERFACE FALSE)
 	message("warning: Java AI Interface will not be built!")
-endif (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${Java_AIINTERFACE_SRC} AND EXISTS ${Java_AIINTERFACE_SRC}/bin)
-set(BUILD_Java_AIINTERFACE ${BUILD_Java_AIINTERFACE} PARENT_SCOPE)
+endif (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+set(BUILD_${myName}_AIINTERFACE ${BUILD_${myName}_AIINTERFACE} PARENT_SCOPE)
 
 # Build
-if    (BUILD_Java_AIINTERFACE)
-	set(Java_AIINTERFACE_VERS "UNKNOWN_VERSION")
-	if (EXISTS ${Java_AIINTERFACE_SRC}/VERSION)
-		file(STRINGS "${Java_AIINTERFACE_SRC}/VERSION" Java_AIINTERFACE_VERS LIMIT_COUNT 1)
-	endif (EXISTS ${Java_AIINTERFACE_SRC}/VERSION)
-	# The target has to be set in ../../Skirmish/CMakeLists.txt, aswell,
-	# as compilation fails otherwise with multiple threads,
+if    (BUILD_${myName}_AIINTERFACE)
+	GetVersionFromFile(myVersion ${myDir}/VERSION)
+	#set(${myName}_AIINTERFACE_VERS ${myVersion} PARENT_SCOPE)
+	# The target has to be set in ../../Skirmish/CMakeLists.txt as well,
+	# as compilation fails otherwise with multiple threads;
 	# using PARENT_SCOPE seems not to work.
-	#set(Java_AIINTERFACE_TARGET "Java-${Java_AIINTERFACE_VERS}")
-	set(Java_AIINTERFACE_TARGET "Java-AI-Interface")
-	#set(Java_AIINTERFACE_TARGET ${Java_AIINTERFACE_TARGET} PARENT_SCOPE)
-	set(Java_AIINTERFACE_DATA_DIR ${AI_INTERFACES_DATA}/Java/${Java_AIINTERFACE_VERS})
-	set(Java_AIINTERFACE_PKG "com/springrts/ai")
-	set(PKG_FIRST_PART "com")
-	AIInterfaceMessage(STATUS "Found: ${Java_AIINTERFACE_TARGET} ${Java_AIINTERFACE_VERS}")
-
-	# install data files
-	install(DIRECTORY "${Java_AIINTERFACE_SRC}/data/"
-			DESTINATION "${Java_AIINTERFACE_DATA_DIR}")
+	set(myTarget "${myName}-AI-Interface")
+	#set(${myName}_AIINTERFACE_TARGET ${myTarget} PARENT_SCOPE)
+	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	AIInterfaceMessage(STATUS "Found: ${myTarget} ${myVersion}")
 
 	# build the native part
-	aux_source_directory(${Java_AIINTERFACE_SRC} javaAIInterface)
+	aux_source_directory(${myNativeSourceDir} myNativeSources)
 	if    (MINGW)
 		# It is important that this is used instead of the one
 		# from the installed JDK, as the jni_md.h is in here too,
 		# and this file contians OS (win32) specific information.
-		INCLUDE_DIRECTORIES(BEFORE ${MINGWLIBS}/include/java)
+		include_directories(BEFORE ${MINGWLIBS}/include/java)
 	endif (MINGW)
-	INCLUDE_DIRECTORIES(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
-	add_library(${Java_AIINTERFACE_TARGET} MODULE ${javaAIInterface} ${ai_common} ${cutilsenv})
-	install(TARGETS ${Java_AIINTERFACE_TARGET} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
-	TARGET_LINK_LIBRARIES(${Java_AIINTERFACE_TARGET} streflop)
-	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
-	set_target_properties(${Java_AIINTERFACE_TARGET} PROPERTIES OUTPUT_NAME "AIInterface")
+	include_directories(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
+	add_library(${myTarget} MODULE ${myNativeSources} ${ai_common_SRC} ${CUtils_SRC})
+	install(TARGETS ${myTarget} DESTINATION ${myDataDir})
+	target_link_libraries(${myTarget} streflop)
+	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
+	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
 
 	# build the Java part
 	if    (CMAKE_HOST_WIN32)
@@ -89,85 +87,84 @@ if    (BUILD_Java_AIINTERFACE)
 	else  (CMAKE_HOST_WIN32)
 		set(AWK_COMMAND "awk")
 	endif (CMAKE_HOST_WIN32)
-	set(AWK_SCRIPTS_DIR "${Java_AIINTERFACE_SRC}/bin")
-	set(AWK_COMMON_SCRIPTS_DIR "${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils/bin")
-	set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/Java")
-	set(SPRING_SOURCE_DIR "${PROJECT_SOURCE_DIR}")
-	set(SPRING_AIINTERFACE_SOURCE_DIR "${SPRING_SOURCE_DIR}/rts/ExternalAI/Interface")
-	set(JAVA_BUILD_DIR "${BUILD_DIR}/classes")
-	set(JAR_FILE "AIInterface")
-	set(JAR_FILE_BIN "${JAR_FILE}.jar")
-	set(JAR_FILE_SRC "${JAR_FILE}-src.jar")
-	set(JAVA_SRC_DIR "${Java_AIINTERFACE_SRC}/java/src")
-	set(JAVA_GENERATED_SRC_DIR "${BUILD_DIR}/generated-java-src")
-	set(JLIB_DIR "${Java_AIINTERFACE_SRC}/data/jlib")
-	set(CLASSPATH_LIBS "${JLIB_DIR}/jna/jna.jar${PATH_DELIM}${JLIB_DIR}/vecmath.jar")
-	set(CLASSPATH_INTERNAL ".${PATH_DELIM}${CLASSPATH_LIBS}${PATH_DELIM}${JAVA_SRC_DIR}")
+	set(myAwkScriptsDir            "${myDir}/bin")
+	set(commonAwkScriptsDir        "${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils/bin")
+	set(myBuildDir                 "${CMAKE_CURRENT_BINARY_DIR}")
+	set(springSourceDir            "${PROJECT_SOURCE_DIR}")
+	set(springAIInterfaceSourceDir "${springSourceDir}/rts/ExternalAI/Interface")
+	set(myJavaBuildDir             "${myBuildDir}/classes")
+	set(myJarFile                  "AIInterface")
+	set(myBinJarFile               "${myJarFile}.jar")
+	set(mySrcJarFile               "${myJarFile}-src.jar")
+	set(myJavaGeneratedSourceDir   "${myBuildDir}/generated-java-src")
+	set(myJLibDir                  "${myDir}/data/jlib")
+	#set(myJavaLibs                 "${myJLibDir}/jna/jna.jar${PATH_DELIM}${myJLibDir}/vecmath.jar")
+	file(GLOB_RECURSE myJavaLibs FOLLOW_SYMLINKS "${myJLibDir}/*.jar")
+	set(myClassPath                ".${PATH_DELIM}${myJavaLibs}${PATH_DELIM}${myJavaSourceDir}")
 
 	# Used by Java Skirmish AIs
-	set(CLASSPATH_Java_AIINTERFACE "${CLASSPATH_LIBS}${PATH_DELIM}${BUILD_DIR}/${JAR_FILE_BIN}" PARENT_SCOPE)
-	#set(JAR_FILE_BIN_AIINTERFACE "${BUILD_DIR}/${JAR_FILE_BIN}" PARENT_SCOPE)
+	set(CLASSPATH_${myName}_AIINTERFACE "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}" PARENT_SCOPE)
 
 	# We have to create these directories, cause otherwise the AWK scripts
 	# for generating the source code will not work
-	file(MAKE_DIRECTORY "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event")
-	file(MAKE_DIRECTORY "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command")
-	file(MAKE_DIRECTORY "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo")
+	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/event")
+	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/command")
+	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/oo")
 	# needed by javac
-	file(MAKE_DIRECTORY "${JAVA_BUILD_DIR}")
+	file(MAKE_DIRECTORY "${myJavaBuildDir}")
 
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		#OUTPUT "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event/*.java"
+	add_custom_command(TARGET ${myTarget} POST_BUILD
+		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
-		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
-		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
-		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappEvents.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
-		"${SPRING_AIINTERFACE_SOURCE_DIR}/AISEvents.h"
-		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
+		"-v" "springSourceDir=${springSourceDir}"
+		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-f" "${myAwkScriptsDir}/jna_wrappEvents.awk"
+		"-f" "${commonAwkScriptsDir}/common.awk"
+		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
+		"${springAIInterfaceSourceDir}/AISEvents.h"
+		WORKING_DIRECTORY "${myAwkScriptsDir}"
 		COMMENT "  Generating Java AI Event source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		#OUTPUT "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command/*.java"
+	add_custom_command(TARGET ${myTarget} POST_BUILD
+		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/command/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
-		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
-		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
-		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappCommands.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
-		"${SPRING_AIINTERFACE_SOURCE_DIR}/AISCommands.h"
-		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
+		"-v" "springSourceDir=${springSourceDir}"
+		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-f" "${myAwkScriptsDir}/jna_wrappCommands.awk"
+		"-f" "${commonAwkScriptsDir}/common.awk"
+		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
+		"${springAIInterfaceSourceDir}/AISCommands.h"
+		WORKING_DIRECTORY "${myAwkScriptsDir}"
 		COMMENT "  Generating Java AI Command source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		#OUTPUT "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/AICallback.java"
+	add_custom_command(TARGET ${myTarget} POST_BUILD
+		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
 		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
-		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
-		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
-		"-f" "${AWK_SCRIPTS_DIR}/jna_wrappCallback.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
-		"${SPRING_AIINTERFACE_SOURCE_DIR}/SSkirmishAICallback.h"
-		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
+		"-v" "springSourceDir=${springSourceDir}"
+		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-f" "${myAwkScriptsDir}/jna_wrappCallback.awk"
+		"-f" "${commonAwkScriptsDir}/common.awk"
+		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
+		"${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
+		WORKING_DIRECTORY "${myAwkScriptsDir}"
 		COMMENT "  Generating Java AI Callback source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		#DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/AICallback.java"
-		#OUTPUT "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/*.java"
+	add_custom_command(TARGET ${myTarget} POST_BUILD
+		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
+		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "SPRING_SOURCE_DIR=${SPRING_SOURCE_DIR}"
-		"-v" "INTERFACE_SOURCE_DIR=${JAVA_SRC_DIR}"
-		"-v" "GENERATED_SOURCE_DIR=${JAVA_GENERATED_SRC_DIR}"
-		"-f" "${AWK_SCRIPTS_DIR}/java_wrappCallbackOO.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/common.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonDoc.awk"
-		"-f" "${AWK_COMMON_SCRIPTS_DIR}/commonOOCallback.awk"
-		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/AICallback.java"
-		WORKING_DIRECTORY "${AWK_SCRIPTS_DIR}"
+		"-v" "springSourceDir=${springSourceDir}"
+		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-f" "${myAwkScriptsDir}/java_wrappCallbackOO.awk"
+		"-f" "${commonAwkScriptsDir}/common.awk"
+		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
+		"-f" "${commonAwkScriptsDir}/commonOOCallback.awk"
+		"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
+		WORKING_DIRECTORY "${myAwkScriptsDir}"
 		COMMENT "  Generating Java AI OO Callback source files ..." VERBATIM)
 
 	# We can not auto generate this list,
@@ -175,49 +172,52 @@ if    (BUILD_Java_AIINTERFACE)
 	# The files in this list have to depend on all other hand-written
 	# and generated source files of the Java interface
 	set(JAVA_GENERATED_SOURCES
-		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/OOAICallback.java"
-		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/OOAIFactory.java"
-		"${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/AbstractOOAI.java")
+		"${myJavaGeneratedSourceDir}/${myPkg}/oo/OOAICallback.java"
+		"${myJavaGeneratedSourceDir}/${myPkg}/oo/OOAIFactory.java"
+		"${myJavaGeneratedSourceDir}/${myPkg}/oo/AbstractOOAI.java")
 
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		#OUTPUT "${JAVA_BUILD_DIR}/*.class"
-		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/*.java"
-		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event/*.java"
-		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command/*.java"
-		DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/*.java"
+	add_custom_command(TARGET ${myTarget} POST_BUILD
+		#OUTPUT "${myJavaBuildDir}/*.class"
+		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/*.java"
+		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
+		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/command/*.java"
+		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
 		COMMAND "${JAVA_COMPILE}" ARGS
 		"${JAVA_COMPILE_FLAG_CONDITIONAL}"
-		"-cp" "${CLASSPATH_INTERNAL}"
-		"-d" "${JAVA_BUILD_DIR}"
+		"-cp" "${myClassPath}"
+		"-d" "${myJavaBuildDir}"
 		${JAVA_GENERATED_SOURCES}
-		WORKING_DIRECTORY "${JAVA_GENERATED_SRC_DIR}"
+		WORKING_DIRECTORY "${myJavaGeneratedSourceDir}"
 		COMMENT "  Compiling Java sources ..." VERBATIM)
 
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		#DEPENDS "${JAVA_BUILD_DIR}/*.class"
+	add_custom_command(TARGET ${myTarget} POST_BUILD
+		#DEPENDS "${myJavaBuildDir}/*.class"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-		"cmf" "${JAVA_SRC_DIR}/manifest.mf" "${BUILD_DIR}/${JAR_FILE_BIN}"
-		"-C" "${JAVA_BUILD_DIR}" "${PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${BUILD_DIR}"
-		COMMENT "  Creating Java interface library ${JAR_FILE_BIN} ..." VERBATIM)
+		"cmf" "${myJavaSourceDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
+		"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
+		WORKING_DIRECTORY "${myBuildDir}"
+		COMMENT "  Creating Java interface library ${myBinJarFile} ..." VERBATIM)
 
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
+	add_custom_command(TARGET ${myTarget} POST_BUILD
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-		"cf" "${BUILD_DIR}/${JAR_FILE_SRC}"
-		"-C" "${JAVA_SRC_DIR}" "${PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${BUILD_DIR}"
-		COMMENT "  Creating Java interface source archive ${JAR_FILE_SRC} ..." VERBATIM)
-	add_custom_command(TARGET ${Java_AIINTERFACE_TARGET} POST_BUILD
-		#DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/event/*.java"
-		#DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/command/*.java"
-		#DEPENDS "${JAVA_GENERATED_SRC_DIR}/${Java_AIINTERFACE_PKG}/oo/*.java"
+		"cf" "${myBuildDir}/${mySrcJarFile}"
+		"-C" "${myJavaSourceDir}" "${myPkgFirstPart}"
+		WORKING_DIRECTORY "${myBuildDir}"
+		COMMENT "  Creating Java interface source archive ${mySrcJarFile} ..." VERBATIM)
+	add_custom_command(TARGET ${myTarget} POST_BUILD
+		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
+		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/command/*.java"
+		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-		"uf" "${BUILD_DIR}/${JAR_FILE_SRC}"
-		"-C" "${JAVA_GENERATED_SRC_DIR}" "${PKG_FIRST_PART}"
-		WORKING_DIRECTORY "${BUILD_DIR}"
-		COMMENT "  Updating Java interface source archive ${JAR_FILE_SRC} with generated sources ..." VERBATIM)
+		"uf" "${myBuildDir}/${mySrcJarFile}"
+		"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
+		WORKING_DIRECTORY "${myBuildDir}"
+		COMMENT "  Updating Java interface source archive ${mySrcJarFile} with generated sources ..." VERBATIM)
 
-	install(FILES ${BUILD_DIR}/${JAR_FILE_BIN} DESTINATION ${Java_AIINTERFACE_DATA_DIR})
-	install(FILES ${BUILD_DIR}/${JAR_FILE_SRC} DESTINATION ${Java_AIINTERFACE_DATA_DIR}/jlib)
-endif (BUILD_Java_AIINTERFACE)
-
+	# Install the data files
+	install(DIRECTORY "${myDir}/data/" DESTINATION ${myDataDir})
+	# Install the library
+	install(FILES     "${myBuildDir}/${myBinJarFile}"  DESTINATION ${myDataDir})
+	# Install the sources archive
+	install(FILES     "${myBuildDir}/${mySrcJarFile}"  DESTINATION ${myDataDir}/jlib)
+endif (BUILD_${myName}_AIINTERFACE)
