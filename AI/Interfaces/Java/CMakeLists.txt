@@ -6,8 +6,8 @@
 
 set(myName            "Java")
 set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
-set(myNativeSourceDir "${myDir}")
-set(myJavaSourceDir   "${myDir}/java/src")
+set(myNativeSourceDir "${myDir}/src/native")
+set(myJavaSourceDir   "${myDir}/src/java")
 set(myPkgFirstPart    "com")
 set(myPkg             "${myPkgFirstPart}/springrts/ai")
 

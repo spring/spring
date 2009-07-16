@@ -26,7 +26,7 @@
 				location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}"/>
 	<property name="doc.dir"
 				location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}/doc/jdoc"/>
-	<property name="src.generated" location="${build.dir}/generated-java-src"/>
+	<property name="src.java.generated" location="${build.dir}/generated-java-src"/>
 
 	<property name="jar.file.name" value="AIInterface"/>
 	<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
@@ -35,11 +35,11 @@
 
 	<property name="spring.ai.interface.home"
 			location="${spring.home}/rts/ExternalAI/Interface"/>
-	<property name="src" location="java/src"/>
+	<property name="src.java" location="src/java"/>
 	<property name="bin.dir" location="bin"/>
 	<path id="source.path.id">
-		<pathelement path="${src}"/>
-		<pathelement path="${src.generated}"/>
+		<pathelement path="${src.java}"/>
+		<pathelement path="${src.java.generated}"/>
 	</path>
 	<path id="class.path.id">
 		<fileset dir="data">
@@ -59,18 +59,18 @@
 
 
 	<target name="generate-init" depends="init">
-		<mkdir dir="${src.generated}/${java.pkg.dir}"/>
-		<mkdir dir="${src.generated}/${java.pkg.dir}/event"/>
-		<mkdir dir="${src.generated}/${java.pkg.dir}/command"/>
-		<mkdir dir="${src.generated}/${java.pkg.dir}/oo"/>
+		<mkdir dir="${src.java.generated}/${java.pkg.dir}"/>
+		<mkdir dir="${src.java.generated}/${java.pkg.dir}/event"/>
+		<mkdir dir="${src.java.generated}/${java.pkg.dir}/command"/>
+		<mkdir dir="${src.java.generated}/${java.pkg.dir}/oo"/>
 	</target>
 
 	<target name="generate-src-events" depends="generate-init">
 		<exec dir="${bin.dir}" executable="${awk.bin}"
 				failonerror="true" resolveexecutable="true" searchpath="true">
 			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
-			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
-			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.java.generated}"/>
 			<arg value="-f"/><arg value="jna_wrappEvents.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
@@ -82,8 +82,8 @@
 		<exec dir="${bin.dir}" executable="${awk.bin}"
 				failonerror="true" resolveexecutable="true" searchpath="true">
 			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
-			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
-			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.java.generated}"/>
 			<arg value="-f"/><arg value="jna_wrappCommands.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
@@ -95,8 +95,8 @@
 		<exec dir="${bin.dir}" executable="${awk.bin}"
 				failonerror="true" resolveexecutable="true" searchpath="true">
 			<arg value="-v"/><arg value="SPRING_SOURCE_DIR=${spring.home}"/>
-			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
-			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.java.generated}"/>
 			<arg value="-f"/><arg value="jna_wrappCallback.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
@@ -107,13 +107,13 @@
 	<target name="generate-src-callback-oo" depends="generate-src-callback">
 		<exec dir="${bin.dir}" executable="${awk.bin}"
 				failonerror="true" resolveexecutable="true" searchpath="true">
-			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src}"/>
-			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.generated}"/>
+			<arg value="-v"/><arg value="INTERFACE_SOURCE_DIR=${src.java}"/>
+			<arg value="-v"/><arg value="GENERATED_SOURCE_DIR=${src.java.generated}"/>
 			<arg value="-f"/><arg value="java_wrappCallbackOO.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/common.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonDoc.awk"/>
 			<arg value="-f"/><arg value="${awk.common.scripts.dir}/commonOOCallback.awk"/>
-			<arg value="${src.generated}/${java.pkg.dir}/AICallback.java"/>
+			<arg value="${src.java.generated}/${java.pkg.dir}/AICallback.java"/>
 		</exec>
 	</target>
 
@@ -149,10 +149,10 @@
 
 	<target name="pack-src" depends="init">
 		<jar destfile="${build.dir}/${jar.file.name.src}">
-			<fileset dir="${src}">
+			<fileset dir="${src.java}">
 				<include name="**/*.java"/>
 			</fileset>
-			<fileset dir="${src.generated}">
+			<fileset dir="${src.java.generated}">
 				<include name="**/*.java"/>
 			</fileset>
 		</jar>
@@ -172,7 +172,7 @@
 	</target>
 
 	<target name="clean">
-		<delete dir="${src.generated}"/>
+		<delete dir="${src.java.generated}"/>
 		<delete dir="${build.dir}"/>
 	</target>
 
