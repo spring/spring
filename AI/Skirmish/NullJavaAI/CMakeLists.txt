@@ -5,11 +5,12 @@
 
 # AI specific properties
 set(myName                   "NullJavaAI")
-set(mySourceDir              ${CMAKE_CURRENT_SOURCE_DIR})
+set(myDir                    "${CMAKE_CURRENT_SOURCE_DIR}")
+set(mySourceDir              "${myDir}/src")
 set(myJavaPkgFirstPart       "nulljavaai")
-set(myAdditionalClassPath     "")
-#set(myJLibDir "${mySourceDir}/data/jlib")
-#set(myAdditionalClassPath      "${PATH_DELIM}${myJLibDir}/myOwnLib.jar")
+set(myAdditionalClassPath    "")
+#set(myJLibDir                "${myDir}/data/jlib")
+#set(myAdditionalClassPath    "${PATH_DELIM}${myJLibDir}/myOwnLib.jar")
 
 
 # Check if the user wants to compile the AI
@@ -24,7 +25,7 @@ endif (BUILD_Java_AIINTERFACE)
 # Compile and install
 if    (BUILD_THIS_SKIRMISHAI)
 	# Assemble meta data
-	GetVersionFromFile(myVersion "${mySourceDir}/VERSION")
+	GetVersionFromFile(myVersion "${myDir}/VERSION")
 	set(myTarget        "${myName}")
 	set(mySourceTarget  "${myTarget}-SRC")
 	set(myDataDir       "${SKIRMISH_DATA}/${myName}/${myVersion}")
@@ -34,11 +35,10 @@ if    (BUILD_THIS_SKIRMISHAI)
 	set(myJarFile       "SkirmishAI")
 	set(myBinJarFile    "${myJarFile}.jar")
 	set(mySrcJarFile    "${myJarFile}-src.jar")
-	set(myJavaSourceDir "${mySourceDir}/src")
 	SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
 	# Create a list of all the AIs source files
-	file(GLOB_RECURSE mySources RELATIVE "${myJavaSourceDir}" FOLLOW_SYMLINKS "${myJavaSourceDir}/*.java")
+	file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
 
 	# Compile the library
 	# needed by javac
@@ -53,21 +53,21 @@ if    (BUILD_THIS_SKIRMISHAI)
 			"-d" "${myJavaBuildDir}"
 			${mySources}
 		COMMAND "${JAVA_ARCHIVE}"
-			"cmf" "${mySourceDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
+			"cmf" "${myDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
 			"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
-		WORKING_DIRECTORY "${myJavaSourceDir}"
+		WORKING_DIRECTORY "${mySourceDir}"
 		COMMENT "  Creating library ${myBinJarFile}" VERBATIM)
 
 	# Pack the sources
 	add_custom_target(${mySourceTarget} ALL
 		COMMAND "${JAVA_ARCHIVE}"
 			"cf" "${myBuildDir}/${mySrcJarFile}"
-			"-C" "${myJavaSourceDir}" "${myJavaPkgFirstPart}"
-		WORKING_DIRECTORY "${myJavaSourceDir}"
+			"-C" "${mySourceDir}" "${myJavaPkgFirstPart}"
+		WORKING_DIRECTORY "${mySourceDir}"
 		COMMENT "  Creating sources archive ${mySrcJarFile}" VERBATIM)
 
 	# Install the data files
-	install(DIRECTORY "${mySourceDir}/data/" DESTINATION "${myDataDir}")
+	install(DIRECTORY "${myDir}/data/" DESTINATION "${myDataDir}")
 	# Install the library
 	install (FILES ${myBuildDir}/${myBinJarFile} DESTINATION ${myDataDir})
 	# Install the sources archive
