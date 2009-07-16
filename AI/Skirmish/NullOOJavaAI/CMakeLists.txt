@@ -1,13 +1,16 @@
-### NullOOJavaAI Skirmish AI
+### Generic Java Skirmish AI config
 #
 # BUILD_Java_AIINTERFACE is set in ../../Interfaces/Java/CMakeLists.txt
 #
 
 # AI specific properties
-set(myName                   "NullOOJavaAI")
 set(myDir                    "${CMAKE_CURRENT_SOURCE_DIR}")
+GetLastPathPart(dirName ${myDir})
+set(myName                   "${dirName}")
 set(mySourceDir              "${myDir}/src")
-set(myJavaPkgFirstPart       "nulloojavaai")
+# If main Java package is "my.ai.pkg", this has to be set to "my".
+GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
+set(myJavaPkgFirstPart       "${firstSrcSubDir}")
 set(myAdditionalClassPath    "")
 #set(myJLibDir                "${myDir}/data/jlib")
 #set(myAdditionalClassPath    "${PATH_DELIM}${myJLibDir}/myOwnLib.jar")
@@ -43,8 +46,6 @@ if    (BUILD_THIS_SKIRMISHAI)
 	# Compile the library
 	# needed by javac
 	file(MAKE_DIRECTORY "${myJavaBuildDir}")
-	#add_custom_command(OUTPUT "${myDataDir}/${myBinJarFile}"
-	#add_custom_command(TARGET ${myTarget}
 	add_custom_target(${myTarget} ALL
 		DEPENDS ${Java_AIINTERFACE_TARGET}
 		COMMAND "${JAVA_COMPILE}"
@@ -67,9 +68,9 @@ if    (BUILD_THIS_SKIRMISHAI)
 		COMMENT "  Creating sources archive ${mySrcJarFile}" VERBATIM)
 
 	# Install the data files
-	install(DIRECTORY "${myDir}/data/" DESTINATION "${myDataDir}")
+	install(DIRECTORY "${myDir}/data/"               DESTINATION ${myDataDir})
 	# Install the library
-	install (FILES ${myBuildDir}/${myBinJarFile} DESTINATION ${myDataDir})
+	install (FILES    "${myBuildDir}/${myBinJarFile} DESTINATION ${myDataDir})
 	# Install the sources archive
-	install (FILES ${myBuildDir}/${mySrcJarFile} DESTINATION ${myDataDir}/jlib)
+	install (FILES    "${myBuildDir}/${mySrcJarFile} DESTINATION ${myDataDir}/jlib)
 endif (BUILD_THIS_SKIRMISHAI)
