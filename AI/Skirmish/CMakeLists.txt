@@ -6,7 +6,7 @@
 
 add_definitions(-DBUILDING_SKIRMISH_AI)
 
-set(SKIRMISH_SRC "${CMAKE_SOURCE_DIR}/AI/Skirmish")
+set(SKIRMISH_SRC  "${CMAKE_CURRENT_SOURCE_DIR}")
 set(SKIRMISH_DATA "${AIDIR}/AI/Skirmish")
 
 # These seem to be needed when compiling with multiple threads.
@@ -31,7 +31,7 @@ macro    (AddSkirmishAI sourceDir)
 	endif (EXISTS "${SKIRMISH_SRC}/${sourceDir}")
 endmacro (AddSkirmishAI sourceDir)
 
-# Print a message, but only if are allowed to speak.
+# Print a message, but only if we are allowed to speak.
 macro    (SkirmishAIMessage type msg)
 	if    (NOT SKIRMISHAI_FIND_QUIETLY)
 		message(STATUS "${msg}")
