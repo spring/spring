@@ -58,7 +58,7 @@ macro    (GetListOfSubModules list_var)
 
 	# Strip away the "/CMakeLists.txt" parts, so we end up with just a list of dirs,
 	# for example: AAI;RAI;KAIK
-	string(REPLACE "//CMakeLists.txt" ";" ${list_var} ${${list_var}})
+	string(REPLACE "//CMakeLists.txt" "" ${list_var} "${${list_var}}")
 endmacro (GetListOfSubModules list_var)
 
 # Gets the version from a text file.
@@ -90,6 +90,26 @@ macro    (GetFirstSubDirName name_var dir)
 		endif (IS_DIRECTORY "${dir}/${dirPart}")
 	endforeach (dirPart)
 endmacro (GetFirstSubDirName name_var dir)
+
+
+# Recursively lists all JAR files in a given directory
+# and concatenates them in a Java Classpath compatible way into a single string.
+macro    (CreateClasspath classPath_var dir)
+	file(GLOB_RECURSE ${classPath_var} FOLLOW_SYMLINKS "${dir}/*.jar")
+	# Make sure we use the correct path delimitter for the compiling system
+	string(REPLACE ";" "${PATH_DELIM}" ${classPath_var} "${${classPath_var}}")
+endmacro (CreateClasspath classPath_var dir)
+
+# Concatenates an arbritrary number of Java ClassPaths (may be empty).
+function    (ConcatClasspaths resultingCP_var)
+	set(${resultingCP_var} "")
+	foreach    (cpPart ${ARGN})
+		set(${resultingCP_var} "${${resultingCP_var}}${cpPart}${PATH_DELIM}")
+	endforeach (cpPart)
+	string(REGEX REPLACE "${PATH_DELIM}\$" "" ${resultingCP_var} "${${resultingCP_var}}")
+	set(${resultingCP_var} "${${resultingCP_var}}" PARENT_SCOPE)
+endfunction (ConcatClasspaths)
+
 
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)

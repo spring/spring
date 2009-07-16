@@ -99,7 +99,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myJavaGeneratedSourceDir   "${myBuildDir}/generated-java-src")
 	set(myJLibDir                  "${myDir}/data/jlib")
 	#set(myJavaLibs                 "${myJLibDir}/jna/jna.jar${PATH_DELIM}${myJLibDir}/vecmath.jar")
-	file(GLOB_RECURSE myJavaLibs FOLLOW_SYMLINKS "${myJLibDir}/*.jar")
+	CreateClasspath(myJavaLibs ${myJLibDir})
 	set(myClassPath                ".${PATH_DELIM}${myJavaLibs}${PATH_DELIM}${myJavaSourceDir}")
 
 	# Used by Java Skirmish AIs
