@@ -1,8 +1,56 @@
 ### Java AI Interface
 #
-# BUILD_Java_AIINTERFACE is set in this file (PARENT_SCOPE),
-# and used in ../../Skirmish/*/CMakeLists.txt
+# Global variables set in this file:
+# * BUILD_Java_AIINTERFACE
+# * Java_AIINTERFACE_VERS
+# * Java_AIINTERFACE_TARGET
 #
+# Functions and macros defined in this file:
+# * GetFirstSubDirName
+# * CreateClasspath
+# * ConcatClasspaths
+#
+
+
+################################################################################
+### BEGINN: MACROS_AND_FUNCTIONS
+# Define macros and functions to be used in this file and by Java Skirmish AIs
+
+# Returns the name of the first sub-dir (in alphabetical descending order)
+# under dir.
+macro    (GetFirstSubDirName name_var dir)
+	file(GLOB dirContent RELATIVE "${dir}" FOLLOW_SYMLINKS "${dir}/*")
+	foreach    (dirPart ${dirContent})
+		if    (IS_DIRECTORY "${dir}/${dirPart}")
+			set(${name_var} ${dirPart})
+			break()
+		endif (IS_DIRECTORY "${dir}/${dirPart}")
+	endforeach (dirPart)
+endmacro (GetFirstSubDirName name_var dir)
+
+
+# Recursively lists all JAR files in a given directory
+# and concatenates them in a Java Classpath compatible way into a single string.
+macro    (CreateClasspath classPath_var dir)
+	file(GLOB_RECURSE ${classPath_var} FOLLOW_SYMLINKS "${dir}/*.jar")
+	# Make sure we use the correct path delimitter for the compiling system
+	string(REPLACE ";" "${PATH_DELIM}" ${classPath_var} "${${classPath_var}}")
+endmacro (CreateClasspath classPath_var dir)
+
+
+# Concatenates an arbritrary number of Java ClassPaths (may be empty).
+function    (ConcatClasspaths resultingCP_var)
+	set(${resultingCP_var} "")
+	foreach    (cpPart ${ARGN})
+		set(${resultingCP_var} "${${resultingCP_var}}${cpPart}${PATH_DELIM}")
+	endforeach (cpPart)
+	string(REGEX REPLACE "${PATH_DELIM}\$" "" ${resultingCP_var} "${${resultingCP_var}}")
+	set(${resultingCP_var} "${${resultingCP_var}}" PARENT_SCOPE)
+endfunction (ConcatClasspaths)
+
+### END: MACROS_AND_FUNCTIONS
+################################################################################
+
 
 set(myName            "Java")
 set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -20,7 +68,7 @@ else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
 endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
 
 
-# Look for dependencies, if the user wants to build the interface
+# Look for dependencies, but only if the user wants to build the interface
 if    (AIINTERFACES_JAVA)
 	if    (NOT JAVA_FOUND)
 		set(JAVA_FIND_QUIETLY TRUE)
@@ -45,26 +93,24 @@ if    (AIINTERFACES_JAVA)
 	endif (MINGW)
 endif (AIINTERFACES_JAVA)
 
-# Check dependencies of the interface are met
+# Check if dependencies of the interface are met
 if    (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
-	set(BUILD_${myName}_AIINTERFACE TRUE)
+	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
 else  (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
-	set(BUILD_${myName}_AIINTERFACE FALSE)
+	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
 	message("warning: Java AI Interface will not be built!")
 endif (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
-set(BUILD_${myName}_AIINTERFACE ${BUILD_${myName}_AIINTERFACE} PARENT_SCOPE)
 
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
-	#set(${myName}_AIINTERFACE_VERS ${myVersion} PARENT_SCOPE)
-	# The target has to be set in ../../Skirmish/CMakeLists.txt as well,
-	# as compilation fails otherwise with multiple threads;
-	# using PARENT_SCOPE seems not to work.
-	set(myTarget "${myName}-AI-Interface")
-	#set(${myName}_AIINTERFACE_TARGET ${myTarget} PARENT_SCOPE)
+	set(myTarget  "${myName}-AI-Interface")
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+
 	AIInterfaceMessage(STATUS "Found ${myTarget} ${myVersion}")
+
+	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
+	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
 
 	# build the native part
 	aux_source_directory(${myNativeSourceDir} myNativeSources)
@@ -74,7 +120,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		# and this file contians OS (win32) specific information.
 		include_directories(BEFORE ${MINGWLIBS}/include/java)
 	endif (MINGW)
-	include_directories(BEFORE ${CMAKE_SOURCE_DIR}/rts/lib/streflop)
+	include_directories(BEFORE ${rts}/lib/streflop)
 	add_library(${myTarget} MODULE ${myNativeSources} ${ai_common_SRC} ${CUtils_SRC})
 	install(TARGETS ${myTarget} DESTINATION ${myDataDir})
 	target_link_libraries(${myTarget} streflop)
@@ -103,7 +149,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myClassPath                ".${PATH_DELIM}${myJavaLibs}${PATH_DELIM}${myJavaSourceDir}")
 
 	# Used by Java Skirmish AIs
-	set(CLASSPATH_${myName}_AIINTERFACE "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}" PARENT_SCOPE)
+	SetGlobal(CLASSPATH_${myName}_AIINTERFACE "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}")
 
 	# We have to create these directories, cause otherwise the AWK scripts
 	# for generating the source code will not work
