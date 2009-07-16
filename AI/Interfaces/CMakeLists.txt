@@ -16,6 +16,7 @@ macro    (AddAIInterface sourceDir)
 		Add_Subdirectory(${sourceDir})
 	endif (EXISTS "${AI_INTERFACES_SRC}/${sourceDir}")
 	set(BUILD_${sourceDir}_AIINTERFACE ${BUILD_${sourceDir}_AIINTERFACE} PARENT_SCOPE)
+	set(${sourceDir}_AIINTERFACE_VERS  ${${sourceDir}_AIINTERFACE_VERS}  PARENT_SCOPE)
 endmacro (AddAIInterface sourceDir)
 
 
