@@ -1,45 +1,9 @@
-### KAIK Skirmish AI
-#
-# BUILD_C_AIINTERFACE is set in ../../Interfaces/C/CMakeLists.txt
+### Generic native Skirmish AI config
 #
 
-# AI specific properties
-set(myDir                    "${CMAKE_CURRENT_SOURCE_DIR}")
-GetLastPathPart(dirName ${myDir})
-set(myName                   "${dirName}")
-set(mySourceDir              ${myDir})
-set(myAdditionalSources      ${CUtils_SRC})
-set(myAdditionalCompileFlags "-DUSING_CREG")
-set(myAdditionalLibraries    legacycpp-creg)
+set(mySourceDirRel         "") # Common values are "" or "src"
+set(additionalSources      "${CUtils_SRC}")
+set(additionalCompileFlags "-DUSING_CREG")
+set(additionalLibraries    legacycpp-creg)
 
-aux_source_directory(${mySourceDir} mySources)
-
-
-# Check if the user wants to compile the AI
-if    (BUILD_C_AIINTERFACE)
-	set(BUILD_THIS_SKIRMISHAI TRUE)
-else  (BUILD_C_AIINTERFACE)
-	set(BUILD_THIS_SKIRMISHAI FALSE)
-	message("warning: ${myName} Skirmish AI will not be built!")
-endif (BUILD_C_AIINTERFACE)
-
-
-# Compile and install
-if    (BUILD_THIS_SKIRMISHAI)
-	# Assemble meta data
-	GetVersionFromFile(myVersion "${myDir}/VERSION")
-	set(myTarget  "${myName}")
-	set(myDataDir "${SKIRMISH_DATA}/${myName}/${myVersion}")
-	SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
-
-	# Compile the library
-	add_library(${myTarget} MODULE ${mySources} ${myAdditionalSources})
-	target_link_libraries(${myTarget} ${myAdditionalLibraries})
-	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${myAdditionalCompileFlags}")
-	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
-
-	# Install the data files
-	install(DIRECTORY "${myDir}/data/" DESTINATION "${myDataDir}")
-	# Install the library
-	install(TARGETS   ${myTarget}      DESTINATION "${myDataDir}")
-endif (BUILD_THIS_SKIRMISHAI)
+ConfigureNativeSkirmishAI(mySourceDirRel additionalSources additionalCompileFlags additionalLibraries)

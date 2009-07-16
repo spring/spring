@@ -6,6 +6,67 @@
 # * C_AIINTERFACE_TARGET
 #
 
+
+################################################################################
+### BEGINN: MACROS_AND_FUNCTIONS
+# Define macros and functions to be used in this file and by Skirmish AIs
+
+
+# Native Skirmish AI configuration macro
+# This will be called from native AIs at AI/Skirmish/*/CMakeLists.txt.
+macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
+	set(myDir                  "${CMAKE_CURRENT_SOURCE_DIR}")
+	GetLastPathPart(dirName ${myDir})
+	set(myName                 "${dirName}")
+	set(mySourceDirRel         "${${mySourceDirRel_var}}") # Common values are "" or "src"
+	set(additionalSources      "${${additionalSources_var}}")
+	set(additionalCompileFlags "${${additionalCompileFlags_var}}")
+	set(additionalLibraries    "${${additionalLibraries_var}}")
+
+
+	# Check if the user wants to compile the AI
+	if    (BUILD_C_AIINTERFACE)
+		set(BUILD_THIS_SKIRMISHAI TRUE)
+	else  (BUILD_C_AIINTERFACE)
+		set(BUILD_THIS_SKIRMISHAI FALSE)
+		message("warning: ${myName} Skirmish AI will not be built!")
+	endif (BUILD_C_AIINTERFACE)
+
+
+	# Compile and install
+	if    (BUILD_THIS_SKIRMISHAI)
+		# Assemble meta data
+		GetVersionFromFile(myVersion "${myDir}/VERSION")
+		set(myTarget    "${myName}")
+		set(myDataDir   "${SKIRMISH_DATA}/${myName}/${myVersion}")
+		set(mySourceDir "${myDir}")
+		if    (NOT "${mySourceDirRel}" STREQUAL "")
+			set(mySourceDir "${mySourceDir}/${mySourceDirRel}")
+		endif (NOT "${mySourceDirRel}" STREQUAL "")
+
+		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
+
+		# Create a list of all the AIs own source files
+		file(GLOB_RECURSE mySources RELATIVE "${myDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.c*")
+
+		# Compile the library
+		add_library(${myTarget} MODULE ${mySources} ${additionalSources})
+		target_link_libraries(${myTarget} ${additionalLibraries})
+		set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${additionalCompileFlags}")
+		set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
+
+		# Install the data files
+		install(DIRECTORY "${myDir}/data/" DESTINATION "${myDataDir}")
+		# Install the library
+		install(TARGETS   ${myTarget}      DESTINATION "${myDataDir}")
+	endif (BUILD_THIS_SKIRMISHAI)
+endmacro (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
+
+
+### END: MACROS_AND_FUNCTIONS
+################################################################################
+
+
 set(myName            "C")
 set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
 set(mySourceDir       "${myDir}/src")
