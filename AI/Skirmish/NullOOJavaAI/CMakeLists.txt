@@ -11,9 +11,6 @@ set(mySourceDir              "${myDir}/src")
 # If main Java package is "my.ai.pkg", this has to be set to "my".
 GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
 set(myJavaPkgFirstPart       "${firstSrcSubDir}")
-set(myAdditionalClassPath    "")
-#set(myJLibDir                "${myDir}/data/jlib")
-#set(myAdditionalClassPath    "${PATH_DELIM}${myJLibDir}/myOwnLib.jar")
 
 
 # Check if the user wants to compile the AI
@@ -38,7 +35,12 @@ if    (BUILD_THIS_SKIRMISHAI)
 	set(myJarFile       "SkirmishAI")
 	set(myBinJarFile    "${myJarFile}.jar")
 	set(mySrcJarFile    "${myJarFile}-src.jar")
+	set(myJLibDir       "${myDir}/data/jlib")
 	SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
+
+	# Create our full Java class-path
+	CreateClasspath(myJavaLibs ${myJLibDir})
+	ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
 
 	# Create a list of all the AIs source files
 	file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
@@ -50,7 +52,7 @@ if    (BUILD_THIS_SKIRMISHAI)
 		DEPENDS ${Java_AIINTERFACE_TARGET}
 		COMMAND "${JAVA_COMPILE}"
 			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
-			"-cp" "${CLASSPATH_Java_AIINTERFACE}${myAdditionalClassPath}"
+			"-cp" "${myClassPath}"
 			"-d" "${myJavaBuildDir}"
 			${mySources}
 		COMMAND "${JAVA_ARCHIVE}"
