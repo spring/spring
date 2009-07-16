@@ -37,7 +37,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myTarget "${myName}-AI-Interface")
 	#set(${myName}_AIINTERFACE_TARGET ${myTarget} PARENT_SCOPE)
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
-	AIInterfaceMessage(STATUS "Found: ${myTarget} ${myVersion}")
+	AIInterfaceMessage(STATUS "Found ${myTarget} ${myVersion}")
 
 	aux_source_directory(${mySourceDir} mySources)
 	list(APPEND mySources ${CMAKE_SOURCE_DIR}/rts/System/Platform/SharedLib)
