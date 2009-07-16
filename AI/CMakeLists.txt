@@ -1,8 +1,20 @@
-set(AIDIR ${DATADIR} CACHE STRING "Where AIs are installed")
+### AI
+#
+# Global variables set in this file:
+# * AIDIR
+#
+# Functions and macros defined in this file:
+# * SetGlobal
+# * GetListOfSubModules
+# * GetVersionFromFile
+# * GetLastPathPart
+#
 
 add_definitions(-DBUILDING_AI)
 
-set(rts "${CMAKE_SOURCE_DIR}/rts")
+set(AIDIR           ${DATADIR} CACHE STRING "Where AIs are installed")
+set(rts             "${CMAKE_SOURCE_DIR}/rts")
+set(AI_FIND_QUIETLY FALSE)
 
 include_directories(
 	${rts}
@@ -27,7 +39,6 @@ if    (WIN32)
 	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -Wl,--kill-at -Wl,--add-stdcall-alias")
 endif (WIN32)
 
-set(AI_FIND_QUIETLY FALSE)
 
 # Assemble common additional native AI sources
 list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
@@ -52,6 +63,16 @@ set_target_properties(legacycpp-creg PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
 aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils CUtils_SRC)
 
 
+################################################################################
+### BEGINN: MACROS_AND_FUNCTIONS
+# Define macros and functions to be used in this file and by Java Skirmish AIs
+
+# Sets a variable in global scope
+function    (SetGlobal var value)
+	set(${var} "${value}" CACHE INTERNAL "" FORCE)
+endfunction (SetGlobal)
+
+
 # Find all CMakeLists.txt files in sub-directories
 macro    (GetListOfSubModules list_var)
 	file(GLOB ${list_var} RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" FOLLOW_SYMLINKS "${CMAKE_CURRENT_SOURCE_DIR}/*/CMakeLists.txt")
@@ -60,6 +81,7 @@ macro    (GetListOfSubModules list_var)
 	# for example: AAI;RAI;KAIK
 	string(REPLACE "//CMakeLists.txt" "" ${list_var} "${${list_var}}")
 endmacro (GetListOfSubModules list_var)
+
 
 # Gets the version from a text file.
 # (actually just reads the text file content into a variable)
@@ -78,37 +100,8 @@ macro    (GetLastPathPart part_var dir)
 	string(REGEX REPLACE ".*[\\/]" "" ${part_var} ${dir})
 endmacro (GetLastPathPart part_var dir)
 
-
-# Returns the name of the first sub-dir (in alphabetical descending order)
-# under dir.
-macro    (GetFirstSubDirName name_var dir)
-	file(GLOB dirContent RELATIVE "${dir}" FOLLOW_SYMLINKS "${dir}/*")
-	foreach    (dirPart ${dirContent})
-		if    (IS_DIRECTORY "${dir}/${dirPart}")
-			set(${name_var} ${dirPart})
-			break()
-		endif (IS_DIRECTORY "${dir}/${dirPart}")
-	endforeach (dirPart)
-endmacro (GetFirstSubDirName name_var dir)
-
-
-# Recursively lists all JAR files in a given directory
-# and concatenates them in a Java Classpath compatible way into a single string.
-macro    (CreateClasspath classPath_var dir)
-	file(GLOB_RECURSE ${classPath_var} FOLLOW_SYMLINKS "${dir}/*.jar")
-	# Make sure we use the correct path delimitter for the compiling system
-	string(REPLACE ";" "${PATH_DELIM}" ${classPath_var} "${${classPath_var}}")
-endmacro (CreateClasspath classPath_var dir)
-
-# Concatenates an arbritrary number of Java ClassPaths (may be empty).
-function    (ConcatClasspaths resultingCP_var)
-	set(${resultingCP_var} "")
-	foreach    (cpPart ${ARGN})
-		set(${resultingCP_var} "${${resultingCP_var}}${cpPart}${PATH_DELIM}")
-	endforeach (cpPart)
-	string(REGEX REPLACE "${PATH_DELIM}\$" "" ${resultingCP_var} "${${resultingCP_var}}")
-	set(${resultingCP_var} "${${resultingCP_var}}" PARENT_SCOPE)
-endfunction (ConcatClasspaths)
+### END: MACROS_AND_FUNCTIONS
+################################################################################
 
 
 Add_Subdirectory(Interfaces)
