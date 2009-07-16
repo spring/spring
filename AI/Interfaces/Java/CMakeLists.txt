@@ -50,6 +50,7 @@ endfunction (ConcatClasspaths)
 
 
 # Java Skirmish AI configuration macro
+# This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
 macro    (ConfigureJavaSkirmishAI)
 	set(myDir                    "${CMAKE_CURRENT_SOURCE_DIR}")
 	GetLastPathPart(dirName ${myDir})
@@ -116,11 +117,11 @@ macro    (ConfigureJavaSkirmishAI)
 			COMMENT "  Creating sources archive ${mySrcJarFile}" VERBATIM)
 
 		# Install the data files
-		install(DIRECTORY "${myDir}/data/"               DESTINATION ${myDataDir})
+		install(DIRECTORY "${myDir}/data/"                DESTINATION ${myDataDir})
 		# Install the library
-		install (FILES    "${myBuildDir}/${myBinJarFile} DESTINATION ${myDataDir})
+		install (FILES    "${myBuildDir}/${myBinJarFile}" DESTINATION ${myDataDir})
 		# Install the sources archive
-		install (FILES    "${myBuildDir}/${mySrcJarFile} DESTINATION ${myDataDir}/jlib)
+		install (FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myDataDir}/jlib)
 	endif (BUILD_THIS_SKIRMISHAI)
 endmacro (ConfigureJavaSkirmishAI)
 
