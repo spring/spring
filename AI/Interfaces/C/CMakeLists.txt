@@ -6,7 +6,7 @@
 
 set(myName            "C")
 set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
-set(mySourceDir       "${myDir}")
+set(mySourceDir       "${myDir}/src")
 
 
 # Check if the user wants to compile the interface
@@ -39,7 +39,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	AIInterfaceMessage(STATUS "Found: ${myTarget} ${myVersion}")
 
-	aux_source_directory(${myDir} mySources)
+	aux_source_directory(${mySourceDir} mySources)
 	list(APPEND mySources ${CMAKE_SOURCE_DIR}/rts/System/Platform/SharedLib)
 	if    (UNIX)
 		list (APPEND mySources ${CMAKE_SOURCE_DIR}/rts/System/Platform/Linux/SoLib)
