@@ -28,6 +28,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
+#include "Sound/Sound.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
@@ -63,6 +64,7 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 	{
 		net->InitLocalClient();
 	}
+	sound = new CSound(); // should have finished until server response arrives
 }
 
 
@@ -405,6 +407,7 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 
 		gameSetup = const_cast<const CGameSetup*>(temp);
 		gs->LoadFromSetup(gameSetup);
+		CPlayer::UpdateControlledTeams();
 	}
 	else
 	{
