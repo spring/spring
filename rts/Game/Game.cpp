@@ -2101,6 +2101,11 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 		logOutput.Print("LuaUI control is %s", gs->noHelperAIs ? "disabled" : "enabled");
 	}
+	else if (action.command == "nospecdraw") {
+		bool buf;
+		SetBoolArg(buf, action.extra);
+		inMapDrawer->SetSpecDraw(buf);
+	}
 	else if (action.command == "godmode") {
 		if (!gs->cheatEnabled)
 			logOutput.Print("godmode requires /cheat");
