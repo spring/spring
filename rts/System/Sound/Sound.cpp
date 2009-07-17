@@ -97,8 +97,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
 	sounds.push_back(empty);
 
-	LoadSoundDefs("gamedata/sounds.lua");
-
 	if (maxSounds > 0)
 		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
 

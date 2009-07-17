@@ -278,8 +278,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	game = this;
 	boost::thread thread(boost::bind<void, CNetProtocol, CNetProtocol*>(&CNetProtocol::UpdateLoop, net));
 
-	CPlayer::UpdateControlledTeams();
-
 	memset(gameID, 0, sizeof(gameID));
 
 	infoConsole = new CInfoConsole();
@@ -327,7 +325,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	oldHeading = 0;
 	oldStatus  = 255;
 
-	sound = new CSound();
+	sound->LoadSoundDefs("gamedata/sounds.lua");
 	chatSound = sound->GetSoundId("IncomingChat", false);
 
 	moveWarnings = !!configHandler->Get("MoveWarnings", 1);
@@ -458,7 +456,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
 
-	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	GameSetupDrawer::Enable();
 
 	PrintLoadMsg("Loading LuaRules");
@@ -525,6 +522,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 #endif
 	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
 	//sending your playername to the server indicates that you are finished loading
+	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
 
 	lastCpuUsageTime = gu->gameTime + 10;
