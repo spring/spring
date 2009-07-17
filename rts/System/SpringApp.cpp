@@ -149,16 +149,15 @@ bool SpringApp::Initialize()
 	gs = new CGlobalSyncedStuff();
 	gu = new CGlobalUnsyncedStuff();
 
-	if (cmdline->result("minimise")) {
+	if (cmdline->IsSet("minimise")) {
 		gu->active = false;
 		SDL_WM_IconifyWindow();
 	}
 
 	// Enable auto quit?
-	int quit_time;
-	if (cmdline->result("quit", quit_time)) {
+	if (cmdline->IsSet("quit")) {
 		gu->autoQuit = true;
-		gu->quitTime = quit_time;
+		gu->quitTime = cmdline->GetInt("quit");
 	}
 
 	InitOpenGL();
@@ -606,93 +605,89 @@ void SpringApp::LoadFonts()
  */
 void SpringApp::ParseCmdLine()
 {
-	cmdline->addoption('f', "fullscreen",         OPTPARM_NONE,   "",  "Run in fullscreen mode");
-	cmdline->addoption('w', "window",             OPTPARM_NONE,   "",  "Run in windowed mode");
-	cmdline->addoption('x', "xresolution",        OPTPARM_INT,    "",  "Set X resolution");
-	cmdline->addoption('y', "yresolution",        OPTPARM_INT,    "",  "Set Y resolution");
-	cmdline->addoption('m', "minimise",           OPTPARM_NONE,   "",  "Start minimised");
-	cmdline->addoption('s', "server",             OPTPARM_NONE,   "",  "Run as a server");
-	cmdline->addoption('c', "client",             OPTPARM_NONE,   "",  "Run as a client");
-	cmdline->addoption('p', "projectiledump",     OPTPARM_NONE,   "",  "Dump projectile class info in projectiles.txt");
-	cmdline->addoption('t', "textureatlas",       OPTPARM_NONE,   "",  "Dump each finalized textureatlas in textureatlasN.tga");
-	cmdline->addoption('q', "quit",               OPTPARM_INT,    "T", "Quit immediately on game over or after T seconds");
-	cmdline->addoption('n', "name",               OPTPARM_STRING, "",  "Set your player name");
-	cmdline->addoption('C', "config",             OPTPARM_STRING, "",  "Configuration file");
-	cmdline->addoption(0,   "list-ai-interfaces", OPTPARM_NONE,   "",  "Dump a list of available AI Interfaces to stdout");
-	cmdline->addoption(0,   "list-skirmish-ais",  OPTPARM_NONE,   "",  "Dump a list of available Skirmish AIs to stdout");
-//	cmdline->addoption(0,   "list-group-ais",     OPTPARM_NONE,   "",  "Dump a list of available Group AIs to stdout");
+	cmdline->AddSwitch('f', "fullscreen",        "Run in fullscreen mode");
+	cmdline->AddSwitch('w', "window",            "Run in windowed mode");
+	cmdline->AddInt('x', "xresolution",          "Set X resolution");
+	cmdline->AddInt('y', "yresolution",          "Set Y resolution");
+	cmdline->AddSwitch('m', "minimise",          "Start minimised");
+	cmdline->AddSwitch('s', "server",            "Run as a server");
+	cmdline->AddSwitch('c', "client",            "Run as a client");
+	cmdline->AddSwitch('p', "projectiledump",    "Dump projectile class info in projectiles.txt");
+	cmdline->AddSwitch('t', "textureatlas",      "Dump each finalized textureatlas in textureatlasN.tga");
+	cmdline->AddInt('q', "quit",                 "Quit immediately on game over or after T seconds");
+	cmdline->AddString('n', "name",              "Set your player name");
+	cmdline->AddString('C', "config",            "Configuration file");
+	cmdline->AddSwitch(0,   "list-ai-interfaces","Dump a list of available AI Interfaces to stdout");
+	cmdline->AddSwitch(0,   "list-skirmish-ais", "Dump a list of available Skirmish AIs to stdout");
+
 	try
 	{
-		cmdline->parse();
+		cmdline->Parse();
 	}
 	catch (const std::exception& err)
 	{
 		std::cerr << err.what() << std::endl << std::endl;
-		cmdline->usage("Spring", SpringVersion::GetFull());
+		cmdline->PrintUsage("Spring", SpringVersion::GetFull());
 		exit(1);
 	}
 
-	string configSource;
-	cmdline->result("config", configSource);
-	// it is not allowed to use configHandler before this line runs.
-	logOutput.Print("using configuration source \"" + ConfigHandler::Instantiate(configSource) + "\"");
+	if (cmdline->IsSet("config"))
+	{
+		string configSource = cmdline->GetString("config");
+		logOutput.Print("using configuration source \"" + ConfigHandler::Instantiate(configSource) + "\"");
+	}
+	else
+		logOutput.Print("using default configuration source \"" + ConfigHandler::Instantiate("") + "\"");
 
 #ifdef _DEBUG
 	fullscreen = false;
 #else
 	fullscreen = !!configHandler->Get("Fullscreen", 1);
 #endif
+	// flags
+	if (cmdline->IsSet("window")) {
+		fullscreen = false;
+	} else if (cmdline->IsSet("fullscreen")) {
+		fullscreen = true;
+	}
 
 	// mutually exclusive options that cause spring to quit immediately
-	if (cmdline->result("help")) {
-		cmdline->usage("Spring",SpringVersion::GetFull());
+	if (cmdline->IsSet("help")) {
+		cmdline->PrintUsage("Spring",SpringVersion::GetFull());
 		exit(0);
-	} else if (cmdline->result("version")) {
+	} else if (cmdline->IsSet("version")) {
 		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
 		exit(0);
-	} else if (cmdline->result("projectiledump")) {
+	} else if (cmdline->IsSet("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
 		exit(0);
-	} else if (cmdline->result("list-ai-interfaces")) {
+	} else if (cmdline->IsSet("list-ai-interfaces")) {
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
-	} else if (cmdline->result("list-skirmish-ais")) {
+	} else if (cmdline->IsSet("list-skirmish-ais")) {
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
 	}
 
-	// flags
-	if (cmdline->result("window")) {
-		fullscreen = false;
-	} else if (cmdline->result("fullscreen")) {
-		fullscreen = true;
-	}
 
-	if (cmdline->result("textureatlas")) {
+	if (cmdline->IsSet("textureatlas")) {
 		CTextureAtlas::debug = true;
 	}
 
-	string name;
-	if (cmdline->result("name", name)) {
-		if (name.empty()) {
-			configHandler->SetString("name", "UnnamedPlayer");
-		} else {
-			configHandler->SetString("name", StringReplaceInPlace(name, ' ', '_'));
+	if (cmdline->IsSet("name")) {
+		const string name = cmdline->GetString("name");
+		if (!name.empty()) {
+			configHandler->SetString("name", StringReplace(name, " ", "_"));
 		}
 	}
 
+	screenWidth = configHandler->Get("XResolution", XRES_DEFAULT);
+	if (cmdline->IsSet("xresolution"))
+		screenWidth = std::max(cmdline->GetInt("xresolution"), 640);
 
-	if (!cmdline->result("xresolution", screenWidth)) {
-		screenWidth = configHandler->Get("XResolution", XRES_DEFAULT);
-	} else {
-		screenWidth = std::max(screenWidth, 1);
-	}
-
-	if (!cmdline->result("yresolution", screenHeight)) {
-		screenHeight = configHandler->Get("YResolution", YRES_DEFAULT);
-	} else {
-		screenHeight = std::max(screenHeight, 1);
-	}
+	screenHeight = configHandler->Get("YResolution", YRES_DEFAULT);
+	if (cmdline->IsSet("yresolution"))
+		screenWidth = std::max(cmdline->GetInt("yresolution"), 480);
 
 	windowPosX  = configHandler->Get("WindowPosX", 32);
 	windowPosY  = configHandler->Get("WindowPosY", 32);
@@ -717,7 +712,7 @@ void SpringApp::Startup()
 	std::string inputFile = cmdline->GetInputFile();
 	if (inputFile.empty())
 	{
-		bool server = !cmdline->result("client") || cmdline->result("server");
+		bool server = !cmdline->IsSet("client") || cmdline->IsSet("server");
 #ifdef SYNCDEBUG
 		CSyncDebugger::GetInstance()->Initialize(server, 64);
 #endif
@@ -773,9 +768,9 @@ void SpringApp::Startup()
 		startsetup->Init(buf);
 
 		// commandline parameters overwrite setup
-		if (cmdline->result("client"))
+		if (cmdline->IsSet("client"))
 			startsetup->isHost = false;
-		else if (cmdline->result("server"))
+		else if (cmdline->IsSet("server"))
 			startsetup->isHost = true;
 
 #ifdef SYNCDEBUG

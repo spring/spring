@@ -28,7 +28,6 @@
 ################################################################################
 
 SET( JAVA_FOUND FALSE )
-MARK_AS_ADVANCED( JAVA_FOUND )
 
 IF ("${CMAKE_BUILD_TYPE}" STREQUAL "RELEASE")
 	set(JAVA_COMPILE_FLAG_CONDITIONAL "-g:lines,source")
@@ -58,7 +57,6 @@ IF( NOT DEFINED ENV{JDK_HOME} AND
 				/usr/local/bin
 				/sbin
 			)
-			MARK_AS_ADVANCED( FILE_BIN )
 
 			IF( FILE_BIN )
 
@@ -66,7 +64,6 @@ IF( NOT DEFINED ENV{JDK_HOME} AND
 				SET( java_bin "${JAVA_RUNTIME}" )
 				SET( java_link_found TRUE )
 				SET( java_link_error FALSE )
-				MARK_AS_ADVANCED( java_bin java_link_found java_link_error )
 
 				# dereference links
 				WHILE( java_link_found AND NOT java_link_error )
@@ -264,3 +261,18 @@ ELSE()
 	ENDIF()
 ENDIF()
 
+# Show these variables only in the advanced view in the GUI, and make them global
+MARK_AS_ADVANCED(
+	JAVA_FOUND
+	JAVA_HOME
+	JAVA_BIN_PATH
+	JAVA_RUNTIME
+	JAVA_COMPILE
+	JAVA_ARCHIVE
+	JAVA_DOC
+	JAVA_COMPILE_FLAG_CONDITIONAL
+	JAVA_MAJOR_VERSION
+	JAVA_MINOR_VERSION
+	JAVA_PATCH_LEVEL
+	JAVA_VERSION
+	)

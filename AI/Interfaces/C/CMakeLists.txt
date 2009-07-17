@@ -1,54 +1,137 @@
 ### C & C++ AI Interface
 #
-# BUILD_C_AIINTERFACE is set in this file (PARENT_SCOPE),
-# and used in ../../Skirmish/*/CMakeLists.txt
+# Global variables set in this file:
+# * BUILD_C_AIINTERFACE
+# * C_AIINTERFACE_VERS
+# * C_AIINTERFACE_TARGET
 #
 
-if ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
-	set(AIINTERFACES_NATIVE "TRUE")
+
+################################################################################
+### BEGINN: MACROS_AND_FUNCTIONS
+# Define macros and functions to be used in this file and by Skirmish AIs
+
+
+# Recursively lists all native source files in a given directory.
+macro    (GetSourcesRecursive _var _dir _relDir)
+	set(NATIVE_SOURCE_EXTENSIONS ".c;.cpp;.c++;.cxx")
+	foreach    (_ext ${NATIVE_SOURCE_EXTENSIONS})
+		# Recursively get sources for source extension _ext
+		if    ("${_relDir}" STREQUAL "")
+			file(GLOB_RECURSE _sources FOLLOW_SYMLINKS "${_dir}/*${_ext}")
+		else  ("${_relDir}" STREQUAL "")
+			file(GLOB_RECURSE _sources RELATIVE "${_relDir}" FOLLOW_SYMLINKS "${_dir}/*${_ext}")
+		endif ("${_relDir}" STREQUAL "")
+		# Concatenate to previous results
+		if    ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+			set(${_var} "${${_var}}${_sources}")
+		else  ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+			set(${_var} "${${_var}};${_sources}")
+		endif ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+	endforeach (_ext)
+endmacro (GetSourcesRecursive _var _dir _relDir)
+
+
+# Native Skirmish AI configuration macro
+# This will be called from native AIs at AI/Skirmish/*/CMakeLists.txt.
+macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
+	set(myDir                  "${CMAKE_CURRENT_SOURCE_DIR}")
+	GetLastPathPart(dirName ${myDir})
+	set(myName                 "${dirName}")
+	set(mySourceDirRel         "${${mySourceDirRel_var}}") # Common values are "" or "src"
+	set(additionalSources      ${${additionalSources_var}})
+	set(additionalCompileFlags ${${additionalCompileFlags_var}})
+	set(additionalLibraries    ${${additionalLibraries_var}})
+
+
+	# Check if the user wants to compile the AI
+	if    (BUILD_C_AIINTERFACE)
+		set(BUILD_THIS_SKIRMISHAI TRUE)
+	else  (BUILD_C_AIINTERFACE)
+		set(BUILD_THIS_SKIRMISHAI FALSE)
+		message("warning: ${myName} Skirmish AI will not be built!")
+	endif (BUILD_C_AIINTERFACE)
+
+
+	# Compile and install
+	if    (BUILD_THIS_SKIRMISHAI)
+		# Assemble meta data
+		GetVersionFromFile(myVersion "${myDir}/VERSION")
+		set(myTarget    "${myName}")
+		set(myDataDir   "${SKIRMISH_DATA}/${myName}/${myVersion}")
+		set(mySourceDir "${myDir}")
+		if    (NOT "${mySourceDirRel}" STREQUAL "")
+			set(mySourceDir "${mySourceDir}/${mySourceDirRel}")
+		endif (NOT "${mySourceDirRel}" STREQUAL "")
+
+		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
+
+		# Create a list of all the AIs own source files
+		GetSourcesRecursive(mySources "${mySourceDir}" "${myDir}")
+
+		# Compile the library
+		add_library(${myTarget} MODULE ${mySources} ${additionalSources})
+		target_link_libraries(${myTarget} ${additionalLibraries})
+		set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "${additionalCompileFlags}")
+		set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
+
+		# Install the data files
+		install(DIRECTORY "${myDir}/data/" DESTINATION "${myDataDir}")
+		# Install the library
+		install(TARGETS   ${myTarget}      DESTINATION "${myDataDir}")
+	endif (BUILD_THIS_SKIRMISHAI)
+endmacro (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
+
+
+### END: MACROS_AND_FUNCTIONS
+################################################################################
+
+
+set(myName            "C")
+set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
+set(mySourceDir       "${myDir}/src")
+
+
+# Check if the user wants to compile the interface
+if    ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
+	set(AIINTERFACES_NATIVE TRUE)
+else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
+	set(AIINTERFACES_NATIVE FALSE)
 endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
 
-#set(C_AIINTERFACE_SRC "${AI_INTERFACES_SRC}/C")
-set(C_AIINTERFACE_SRC "${CMAKE_CURRENT_SOURCE_DIR}")
+set(myDir "${CMAKE_CURRENT_SOURCE_DIR}")
 
-if (EXISTS ${C_AIINTERFACE_SRC} AND AIINTERFACES_NATIVE)
-	set(BUILD_C_AIINTERFACE TRUE)
-else (EXISTS ${C_AIINTERFACE_SRC} AND AIINTERFACES_NATIVE)
-	set(BUILD_C_AIINTERFACE FALSE)
+# Check dependencies of the interface are met
+if    (AIINTERFACES_NATIVE)
+	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
+else  (AIINTERFACES_NATIVE)
+	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
 	message ("warning: C & C++ AI Interface will not be built!")
-endif (EXISTS ${C_AIINTERFACE_SRC} AND AIINTERFACES_NATIVE)
-set(BUILD_C_AIINTERFACE ${BUILD_C_AIINTERFACE} PARENT_SCOPE)
+endif (AIINTERFACES_NATIVE)
 
-if (BUILD_C_AIINTERFACE)
-	set(C_AIINTERFACE_VERS "UNKNOWN_VERSION")
-	if (EXISTS ${C_AIINTERFACE_SRC}/VERSION)
-		file(STRINGS "${C_AIINTERFACE_SRC}/VERSION" C_AIINTERFACE_VERS LIMIT_COUNT 1)
-	endif (EXISTS ${C_AIINTERFACE_SRC}/VERSION)
-	# The target has to be set in ../../Skirmish/CMakeLists.txt, aswell,
-	# as compilation fails otherwise with multiple threads,
-	# using PARENT_SCOPE seems not to work.
-	set(C_AIINTERFACE_TARGET "C-AI-Interface")
-	#set(C_AIINTERFACE_TARGET ${C_AIINTERFACE_TARGET} PARENT_SCOPE)
-	set(C_AIINTERFACE_DATA_DIR ${AI_INTERFACES_DATA}/C/${C_AIINTERFACE_VERS})
-	if (NOT AIINTERFACE_FIND_QUIETLY)
-		message(STATUS "Found: ${C_AIINTERFACE_TARGET} ${C_AIINTERFACE_VERS}")
-	endif (NOT AIINTERFACE_FIND_QUIETLY)
+# Build
+if    (BUILD_${myName}_AIINTERFACE)
+	GetVersionFromFile(myVersion ${myDir}/VERSION)
+	set(myTarget  "${myName}-AI-Interface")
+	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 
-	# install data files
-	install(DIRECTORY "${C_AIINTERFACE_SRC}/data/"
-			DESTINATION "${C_AIINTERFACE_DATA_DIR}")
+	AIInterfaceMessage(STATUS "Found ${myTarget} ${myVersion}")
 
-	aux_source_directory(${C_AIINTERFACE_SRC} cAIInterface)
-	list (APPEND cAIInterface ${CMAKE_SOURCE_DIR}/rts/System/Platform/SharedLib)
-	if (UNIX)
-		list (APPEND cAIInterface ${CMAKE_SOURCE_DIR}/rts/System/Platform/Linux/SoLib)
-	else (UNIX)
-		list (APPEND cAIInterface ${CMAKE_SOURCE_DIR}/rts/System/Platform/Win/DllLib)
+	SetGlobal(${myName}_AIINTERFACE_VERS ${myVersion})
+	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
+
+	aux_source_directory(${mySourceDir} mySources)
+	list(APPEND mySources ${rts}/System/Platform/SharedLib)
+	if    (UNIX)
+		list (APPEND mySources ${rts}/System/Platform/Linux/SoLib)
+	else  (UNIX)
+		list (APPEND mySources ${rts}/System/Platform/Win/DllLib)
 	endif (UNIX)
-	add_library(${C_AIINTERFACE_TARGET} MODULE ${cAIInterface} ${ai_common} ${cutilsenv})
-	set_target_properties(${C_AIINTERFACE_TARGET} PROPERTIES OUTPUT_NAME "AIInterface")
-	#set_target_properties(${C_AIINTERFACE_TARGET} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "C")
-	install(TARGETS ${C_AIINTERFACE_TARGET} DESTINATION ${C_AIINTERFACE_DATA_DIR})
-endif (BUILD_C_AIINTERFACE)
-set(BUILD_C_AIINTERFACE ${BUILD_C_AIINTERFACE} PARENT_SCOPE)
+	add_library(${myTarget} MODULE ${mySources} ${ai_common_SRC} ${CUtils_SRC})
+	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "AIInterface")
 
+	# Install the data files
+	install(DIRECTORY "${myDir}/data/" DESTINATION "${myDataDir}")
+	# Install the library
+	install(TARGETS   ${myTarget}      DESTINATION "${myDataDir}")
+endif (BUILD_${myName}_AIINTERFACE)
