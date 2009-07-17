@@ -98,6 +98,11 @@ public:
 	static void InMapDrawVisCallback(int x, int y, void* userData);
 
 	void PromptLabel(const float3& pos);
+	
+	void SetSpecDraw(bool state);
+
+protected:
+	bool allowSpecDraw;
 };
 
 extern CInMapDraw* inMapDrawer;

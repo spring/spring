@@ -159,6 +159,7 @@ private:
 	float minUserSpeed;
 
 	bool noHelperAIs;
+	bool allowSpecDraw;
 	bool allowAdditionalPlayers;
 
 	/////////////////// sync stuff ///////////////////

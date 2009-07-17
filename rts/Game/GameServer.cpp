@@ -130,6 +130,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	internalSpeed = 1.0f;
 	gamePausable = true;
 	noHelperAIs = false;
+	allowSpecDraw = true;
 	cheating = false;
 	sentGameOverMsg = false;
 
@@ -181,6 +182,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	RestrictedAction("nocost");
 	RestrictedAction("forcestart");
 	RestrictedAction("nospectatorchat");
+	RestrictedAction("nospecdraw");
 	if (demoReader)
 		RegisterAction("skip");
 	commandBlacklist.insert("skip");
@@ -822,7 +824,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_MAPDRAW:
-			Broadcast(packet); //forward data
+			if (!players[inbuf[0]].spectator || allowSpecDraw)
+				Broadcast(packet); //forward data
 			break;
 
 		case NETMSG_DIRECT_CONTROL:
@@ -1202,6 +1205,13 @@ void CGameServer::PushAction(const Action& action)
 	else if (action.command == "nohelp")
 	{
 		SetBoolArg(noHelperAIs, action.extra);
+		// sent it because clients have to do stuff when this changes
+		CommandMessage msg(action, SERVER_PLAYER);
+		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+	}
+	else if (action.command == "nospecdraw")
+	{
+		SetBoolArg(allowSpecDraw, action.extra);
 		// sent it because clients have to do stuff when this changes
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));

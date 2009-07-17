@@ -73,6 +73,7 @@ CInMapDraw::CInMapDraw(void)
 	keyPressed = false;
 	wantLabel = false;
 	drawAll = false;
+	allowSpecDraw = true;
 	lastLineTime = 0;
 	lastLeftClickTime = 0;
 	lastPos = float3(1, 1, 1);
@@ -603,19 +604,22 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 
 void CInMapDraw::SendErase(const float3& pos)
 {
-	net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
+	if (!gu->spectating || allowSpecDraw)
+		net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
 }
 
 
 void CInMapDraw::SendPoint(const float3& pos, const std::string& label)
 {
-	net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label));
+	if (!gu->spectating || allowSpecDraw)
+		net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label));
 }
 
 
 void CInMapDraw::SendLine(const float3& pos, const float3& pos2)
 {
-	net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z));
+	if (!gu->spectating || allowSpecDraw)
+		net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z));
 }
 
 
@@ -629,5 +633,10 @@ void CInMapDraw::PromptLabel(const float3& pos)
 }
 
 
+void CInMapDraw::SetSpecDraw(bool state)
+{
+	allowSpecDraw = state;
+	logOutput.Print("Spectator drawing is %s", allowSpecDraw ? "disabled" : "enabled");
+}
 
 
