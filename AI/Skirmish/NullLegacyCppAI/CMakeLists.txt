@@ -2,7 +2,7 @@
 #
 
 set(mySourceDirRel         "src") # Common values are "" or "src"
-set(additionalSources      "${CUtils_SRC}")
+set(additionalSources      ${CUtils_SRC})
 set(additionalCompileFlags "")
 set(additionalLibraries    legacycpp)
 

@@ -12,6 +12,26 @@
 # Define macros and functions to be used in this file and by Skirmish AIs
 
 
+# Recursively lists all native source files in a given directory.
+macro    (GetSourcesRecursive _var _dir _relDir)
+	set(NATIVE_SOURCE_EXTENSIONS ".c;.cpp;.c++;.cxx")
+	foreach    (_ext ${NATIVE_SOURCE_EXTENSIONS})
+		# Recursively get sources for source extension _ext
+		if    ("${_relDir}" STREQUAL "")
+			file(GLOB_RECURSE _sources FOLLOW_SYMLINKS "${_dir}/*${_ext}")
+		else  ("${_relDir}" STREQUAL "")
+			file(GLOB_RECURSE _sources RELATIVE "${_relDir}" FOLLOW_SYMLINKS "${_dir}/*${_ext}")
+		endif ("${_relDir}" STREQUAL "")
+		# Concatenate to previous results
+		if    ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+			set(${_var} "${${_var}}${_sources}")
+		else  ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+			set(${_var} "${${_var}};${_sources}")
+		endif ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+	endforeach (_ext)
+endmacro (GetSourcesRecursive _var _dir _relDir)
+
+
 # Native Skirmish AI configuration macro
 # This will be called from native AIs at AI/Skirmish/*/CMakeLists.txt.
 macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
@@ -19,9 +39,9 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 	GetLastPathPart(dirName ${myDir})
 	set(myName                 "${dirName}")
 	set(mySourceDirRel         "${${mySourceDirRel_var}}") # Common values are "" or "src"
-	set(additionalSources      "${${additionalSources_var}}")
-	set(additionalCompileFlags "${${additionalCompileFlags_var}}")
-	set(additionalLibraries    "${${additionalLibraries_var}}")
+	set(additionalSources      ${${additionalSources_var}})
+	set(additionalCompileFlags ${${additionalCompileFlags_var}})
+	set(additionalLibraries    ${${additionalLibraries_var}})
 
 
 	# Check if the user wants to compile the AI
@@ -47,7 +67,7 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
 		# Create a list of all the AIs own source files
-		file(GLOB_RECURSE mySources RELATIVE "${myDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.c*")
+		GetSourcesRecursive(mySources "${mySourceDir}" "${myDir}")
 
 		# Compile the library
 		add_library(${myTarget} MODULE ${mySources} ${additionalSources})
