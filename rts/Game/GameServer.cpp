@@ -7,10 +7,6 @@
 #include "Net/UDPListener.h"
 #include "Net/UDPConnection.h"
 
-#ifndef _MSC_VER
-#include "StdAfx.h"
-#endif
-
 #include <stdarg.h>
 #include <ctime>
 #include <boost/bind.hpp>
@@ -1307,24 +1303,6 @@ void CGameServer::CheckForGameEnd()
 	int numActiveAllyTeams = 0;
 	std::vector<int> numActiveTeams(teams.size(), 0); // active teams per ally team
 
-#if !defined DEDICATED
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
-	{
-		bool hasPlayer = false;
-		for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
-			if (playerHandler->Player(b)->active && playerHandler->Player(b)->team == static_cast<int>(a) && !playerHandler->Player(b)->spectator) {
-				hasPlayer = true;
-			}
-		}
-		if (teamHandler->Team(a)->isAI) {
-			hasPlayer = true;
-		}
-
-		if (!teamHandler->Team(a)->isDead && !teamHandler->Team(a)->gaia && hasPlayer) {
-			++numActiveTeams[teamHandler->AllyTeam(a)];
-		}
-	}
-#else // !defined DEDICATED
 	for (size_t a = 0; a < setup->teamStartingData.size(); ++a)
 	{
 		bool hasPlayer = false;
@@ -1342,7 +1320,7 @@ void CGameServer::CheckForGameEnd()
 			++numActiveTeams[teams[a].teamAllyteam];
 		}
 	}
-#endif // !defined DEDICATED
+
 	for (size_t a = 0; a < numActiveTeams.size(); ++a) {
 		if (numActiveTeams[a] != 0) {
 			++numActiveAllyTeams;
@@ -1360,14 +1338,10 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
 	if (!demoReader) // use NEWFRAME_MSGes from demo otherwise
 	{
-#if (BOOST_VERSION >= 103500)
 		if (!fromServerThread)
 			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
 		else
 			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
-#else
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
-#endif
 		CheckSync();
 		int newFrames = 1;
 
