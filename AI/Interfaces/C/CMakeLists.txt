@@ -107,7 +107,7 @@ endif (AIINTERFACES_NATIVE)
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
-	set(myTarget  "${myName}-AI-Interface")
+	set(myTarget  "${myName}-AIInterface")
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
