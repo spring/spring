@@ -197,7 +197,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
 
 	# build the native part
-	aux_source_directory(${myNativeSourceDir} myNativeSources)
+	GetNativeSourcesRecursive(myNativeSources ${myNativeSourceDir} "")
 	if    (MINGW)
 		# It is important that this is used instead of the one
 		# from the installed JDK, as the jni_md.h is in here too,

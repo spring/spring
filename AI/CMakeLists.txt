@@ -94,6 +94,27 @@ function    (MakeAbsolute absDir_var baseDir relDir)
 	set(${absDir_var} ${_absDir} PARENT_SCOPE)
 endfunction (MakeAbsolute)
 
+
+# Recursively lists all native source files in a given directory,
+# relative to _relDir, or absolut, if _relDir == "".
+macro    (GetNativeSourcesRecursive _var _dir _relDir)
+	set(NATIVE_SOURCE_EXTENSIONS ".c;.cpp;.c++;.cxx")
+	foreach    (_ext ${NATIVE_SOURCE_EXTENSIONS})
+		# Recursively get sources for source extension _ext
+		if    ("${_relDir}" STREQUAL "")
+			file(GLOB_RECURSE _sources FOLLOW_SYMLINKS "${_dir}/*${_ext}")
+		else  ("${_relDir}" STREQUAL "")
+			file(GLOB_RECURSE _sources RELATIVE "${_relDir}" FOLLOW_SYMLINKS "${_dir}/*${_ext}")
+		endif ("${_relDir}" STREQUAL "")
+		# Concatenate to previous results
+		if    ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+			set(${_var} "${${_var}}${_sources}")
+		else  ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+			set(${_var} "${${_var}};${_sources}")
+		endif ("${_sources}" STREQUAL "" OR "${${_var}}" STREQUAL "")
+	endforeach (_ext)
+endmacro (GetNativeSourcesRecursive _var _dir _relDir)
+
 ### END: MACROS_AND_FUNCTIONS
 ################################################################################
 

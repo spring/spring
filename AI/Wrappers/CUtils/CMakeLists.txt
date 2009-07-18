@@ -7,7 +7,7 @@
 set(myName            "CUtils")
 
 # Assemble the sources
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} mySources)
+GetNativeSourcesRecursive(mySources ${CMAKE_CURRENT_SOURCE_DIR} "")
 SetGlobal(${myName}_SRC ${mySources})
 
 AIWrapperMessage(STATUS "Found AI Wrapper: ${myName} (sources only wrapper)")
