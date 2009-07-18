@@ -1,5 +1,8 @@
 ### AI Interfaces
 #
+# Functions and macros defined in this file:
+# * AIInterfaceMessage
+#
 
 add_definitions(-DBUILDING_AI_INTERFACE)
 
