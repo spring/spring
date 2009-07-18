@@ -2334,7 +2334,7 @@ EXPORT(float) skirmishAiCallback_Unit_getMaxHealth(int teamId, int unitId) {
 /**
  * Returns a units command queue.
  * The return value may be <code>NULL</code> in some cases,
- * eg when cheats are disabled and we try to fetch from an enemy unit.
+ * eg. when cheats are disabled and we try to fetch from an enemy unit.
  * For internal use only.
  */
 static inline const CCommandQueue* _intern_Unit_getCurrentCommandQueue(int teamId, int unitId) {
@@ -2349,21 +2349,13 @@ static inline const CCommandQueue* _intern_Unit_getCurrentCommandQueue(int teamI
 	return q;
 }
 /**
- * Returns a untis command at a specific position in its command queue.
- * The return value may be <code>NULL</code> in some cases,
- * eg when cheats are disabled and we try to fetch from an enemy unit.
+ * Checks if a given commandId is valid for a commandQueue.
  * For internal use only.
  */
-static inline const Command* _intern_Unit_getCurrentCommandAt(int teamId, int unitId, int commandId) {
-	const Command* c = NULL;
-
-	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(teamId, unitId);
-	if (q != NULL && commandId > 0 && static_cast<unsigned int>(commandId) < q->size()) {
-		c = &(q->at(commandId));
-	}
-
-	return c;
-}
+#define CHECK_COMMAND_ID(commandQueue, commandId) \
+		(commandQueue != NULL && \
+			commandId >= 0 && \
+			static_cast<unsigned int>(commandId) < commandQueue->size())
 
 EXPORT(int) skirmishAiCallback_Unit_0MULTI1SIZE1Command0CurrentCommand(int teamId, int unitId) {
 	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(teamId, unitId);
@@ -2376,53 +2368,57 @@ EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_0STATIC0getType(int teamId, i
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getId(int teamId, int unitId, int commandId) {
-	const Command* c = _intern_Unit_getCurrentCommandAt(teamId, unitId, commandId);
-	return (c? c->id: 0);
+
+	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(teamId, unitId);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).id : 0);
 }
 
 EXPORT(unsigned char) skirmishAiCallback_Unit_CurrentCommand_getOptions(int teamId, int unitId, int commandId) {
-	const Command* c = _intern_Unit_getCurrentCommandAt(teamId, unitId, commandId);
-	return (c? c->options: 0);
+
+	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(teamId, unitId);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).options : 0);
 }
 
 EXPORT(unsigned int) skirmishAiCallback_Unit_CurrentCommand_getTag(int teamId, int unitId, int commandId) {
-	const Command* c = _intern_Unit_getCurrentCommandAt(teamId, unitId, commandId);
-	return (c? c->tag: 0);
+
+	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(teamId, unitId);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).tag : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_getTimeOut(int teamId, int unitId, int commandId) {
-	const Command* c = _intern_Unit_getCurrentCommandAt(teamId, unitId, commandId);
-	return (c? c->timeOut: 0);
+
+	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(teamId, unitId);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).timeOut : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_0ARRAY1SIZE0getParams(int teamId, int unitId, int commandId) {
-	const Command* c = _intern_Unit_getCurrentCommandAt(teamId, unitId, commandId);
-	return (c? c->params.size(): 0);
+
+	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(teamId, unitId);
+	return (CHECK_COMMAND_ID(q, commandId) ? q->at(commandId).params.size() : 0);
 }
 
 EXPORT(int) skirmishAiCallback_Unit_CurrentCommand_0ARRAY1VALS0getParams(int teamId,
 		int unitId, int commandId, float* params, int params_sizeMax) {
 
-	const Command* c = _intern_Unit_getCurrentCommandAt(teamId, unitId, commandId);
+	const CCommandQueue* q = _intern_Unit_getCurrentCommandQueue(teamId, unitId);
 
-	if (c == NULL) {
+	if (!CHECK_COMMAND_ID(q, commandId)) {
 		return -1;
 	}
 
-	const std::vector<float>& ps = c->params;
-	int params_size = ps.size();
-	if (params_sizeMax < params_size ) {
-		params_size = params_sizeMax;
+	const std::vector<float>& ps = q->at(commandId).params;
+	size_t params_size = (params_sizeMax > 0) ? params_sizeMax : 0;
+	if (ps.size() < params_size) {
+		params_size = ps.size();
 	}
 
-	int p;
-	for (p=0; p < params_size; p++) {
+	for (size_t p=0; p < params_size; p++) {
 		params[p] = ps.at(p);
 	}
 
 	return params_size;
 }
-
+#undef CHECK_COMMAND_ID
 
 
 
