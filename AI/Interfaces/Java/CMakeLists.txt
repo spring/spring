@@ -151,6 +151,7 @@ if    (AIINTERFACES_JAVA)
 	if    (NOT JAVA_FOUND)
 		set(JAVA_FIND_QUIETLY TRUE)
 		FIND_PACKAGE(JavaExtended) # Note: this is not the CMake built-in FindJava
+		SetGlobal(JAVA_COMPILE_FLAG_CONDITIONAL ${JAVA_COMPILE_FLAG_CONDITIONAL})
 	endif (NOT JAVA_FOUND)
 	if    (MINGW)
 		set (JNI_FOUND TRUE)
