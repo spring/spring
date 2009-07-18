@@ -134,14 +134,14 @@ CEngineOutHandler::~CEngineOutHandler() {
 
 
 
-#define DO_FOR_SKIRMISH_AIS(FUNC)							\
-		try {												\
-			for (unsigned int t=0; t < activeTeams; ++t) {	\
-				if (skirmishAIs[t]) {						\
-					skirmishAIs[t]->FUNC;					\
-				}											\
-			}												\
-		} HANDLE_EXCEPTION;
+#define DO_FOR_SKIRMISH_AIS(FUNC)						\
+		for (unsigned int t=0; t < activeTeams; ++t) {	\
+			if (skirmishAIs[t]) {						\
+				try {									\
+					skirmishAIs[t]->FUNC;				\
+				} HANDLE_EXCEPTION;						\
+			}											\
+		}												\
 
 
 void CEngineOutHandler::PostLoad() {}
@@ -179,16 +179,16 @@ void CEngineOutHandler::Update() {
 
 
 
-#define DO_FOR_ALLIED_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)		\
-	if (!teamHandler->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)) {					\
-		for (unsigned int t=0; t < activeTeams; ++t) {							\
-			if (skirmishAIs[t] && teamHandler->AllyTeam(t) == ALLY_TEAM_ID) {	\
-				try {															\
-					skirmishAIs[t]->FUNC;										\
-				} HANDLE_EXCEPTION;												\
-			}																	\
-		}																		\
-	}
+#define DO_FOR_ALLIED_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)			\
+		if (!teamHandler->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)) {					\
+			for (unsigned int t=0; t < activeTeams; ++t) {							\
+				if (skirmishAIs[t] && teamHandler->AllyTeam(t) == ALLY_TEAM_ID) {	\
+					try {															\
+						skirmishAIs[t]->FUNC;										\
+					} HANDLE_EXCEPTION;												\
+				}																	\
+			}																		\
+		}
 
 
 void CEngineOutHandler::UnitEnteredLos(const CUnit& unit, int allyTeamId) {
@@ -233,12 +233,12 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 
 
 
-#define DO_FOR_TEAM_SKIRMISH_AIS(FUNC, TEAM_ID)		\
-	if (skirmishAIs[TEAM_ID]) {						\
-		try {										\
-			skirmishAIs[TEAM_ID]->FUNC;				\
-		} HANDLE_EXCEPTION;							\
-	}
+#define DO_FOR_TEAM_SKIRMISH_AIS(FUNC, TEAM_ID)			\
+		if (skirmishAIs[TEAM_ID]) {						\
+			try {										\
+				skirmishAIs[TEAM_ID]->FUNC;				\
+			} HANDLE_EXCEPTION;							\
+		}
 
 
 void CEngineOutHandler::UnitIdle(const CUnit& unit) {
@@ -312,19 +312,21 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 	int destroyedId = destroyed.id;
 	int attackerId  = attacker ? attacker->id : 0;
 
-	try {
-		for (unsigned int t=0; t < activeTeams; ++t) {
-			if (skirmishAIs[t]
-					&& !teamHandler->Ally(teamHandler->AllyTeam(t), destroyed.allyteam)
-					&& (skirmishAIs[t]->IsCheatEventsEnabled()
-						|| (destroyed.losStatus[t] & (LOS_INLOS | LOS_INRADAR)))) {
+	for (unsigned int t=0; t < activeTeams; ++t) {
+		if (skirmishAIs[t]
+				&& !teamHandler->Ally(teamHandler->AllyTeam(t), destroyed.allyteam)
+				&& (skirmishAIs[t]->IsCheatEventsEnabled()
+					|| (destroyed.losStatus[t] & (LOS_INLOS | LOS_INRADAR)))) {
+			try {
 				skirmishAIs[t]->EnemyDestroyed(destroyedId, attackerId);
-			}
+			} HANDLE_EXCEPTION;
 		}
-		if (skirmishAIs[destroyed.team]) {
+	}
+	if (skirmishAIs[destroyed.team]) {
+		try {
 			skirmishAIs[destroyed.team]->UnitDestroyed(destroyedId, attackerId);
-		}
-	} HANDLE_EXCEPTION;
+		} HANDLE_EXCEPTION;
+	}
 }
 
 
@@ -354,22 +356,24 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 	int dt = damaged.team;
 	int at = attacker ? attacker->team : -1;
 
-	try {
-		if (skirmishAIs[dt]) {
+	if (skirmishAIs[dt]) {
+		try {
 			skirmishAIs[dt]->UnitDamaged(damagedUnitId,
 					attackerUnitId, damage, attackDir_damagedsView);
-		}
+		} HANDLE_EXCEPTION;
+	}
 
-		if (attacker) {
-			if (skirmishAIs[at]
-					&& !teamHandler->Ally(teamHandler->AllyTeam(at), damaged.allyteam)
-					&& (skirmishAIs[at]->IsCheatEventsEnabled()
-						|| (damaged.losStatus[at] & (LOS_INLOS | LOS_INRADAR)))) {
+	if (attacker) {
+		if (skirmishAIs[at]
+				&& !teamHandler->Ally(teamHandler->AllyTeam(at), damaged.allyteam)
+				&& (skirmishAIs[at]->IsCheatEventsEnabled()
+					|| (damaged.losStatus[at] & (LOS_INLOS | LOS_INRADAR)))) {
+			try {
 				skirmishAIs[at]->EnemyDamaged(damagedUnitId, attackerUnitId,
 						damage, attackDir_attackersView);
-			}
+			} HANDLE_EXCEPTION;
 		}
-	} HANDLE_EXCEPTION;
+	}
 }
 
 
