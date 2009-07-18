@@ -171,6 +171,7 @@ if    (AIINTERFACES_JAVA)
 	endif (MINGW)
 endif (AIINTERFACES_JAVA)
 
+
 # Check if dependencies of the interface are met
 if    (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
 	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
@@ -179,13 +180,14 @@ else  (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EX
 	message("warning: Java AI Interface will not be built!")
 endif (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
 
+
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
 	set(myTarget  "${myName}-AI-Interface")
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 
-	AIInterfaceMessage(STATUS "Found ${myTarget} ${myVersion}")
+	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
 
 	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})

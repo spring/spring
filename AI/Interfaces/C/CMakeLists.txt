@@ -43,7 +43,6 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 	set(additionalCompileFlags ${${additionalCompileFlags_var}})
 	set(additionalLibraries    ${${additionalLibraries_var}})
 
-
 	# Check if the user wants to compile the AI
 	if    (BUILD_C_AIINTERFACE)
 		set(BUILD_THIS_SKIRMISHAI TRUE)
@@ -52,17 +51,13 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 		message("warning: ${myName} Skirmish AI will not be built!")
 	endif (BUILD_C_AIINTERFACE)
 
-
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
 		# Assemble meta data
 		GetVersionFromFile(myVersion "${myDir}/VERSION")
 		set(myTarget    "${myName}")
 		set(myDataDir   "${SKIRMISH_DATA}/${myName}/${myVersion}")
-		set(mySourceDir "${myDir}")
-		if    (NOT "${mySourceDirRel}" STREQUAL "")
-			set(mySourceDir "${mySourceDir}/${mySourceDirRel}")
-		endif (NOT "${mySourceDirRel}" STREQUAL "")
+		MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
@@ -89,7 +84,7 @@ endmacro (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 
 set(myName            "C")
 set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
-set(mySourceDir       "${myDir}/src")
+set(mySourceDirRel    "src")
 
 
 # Check if the user wants to compile the interface
@@ -99,7 +94,6 @@ else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
 	set(AIINTERFACES_NATIVE FALSE)
 endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
 
-set(myDir "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Check dependencies of the interface are met
 if    (AIINTERFACES_NATIVE)
@@ -109,15 +103,17 @@ else  (AIINTERFACES_NATIVE)
 	message ("warning: C & C++ AI Interface will not be built!")
 endif (AIINTERFACES_NATIVE)
 
+
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
 	set(myTarget  "${myName}-AI-Interface")
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
-	AIInterfaceMessage(STATUS "Found ${myTarget} ${myVersion}")
+	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
 
-	SetGlobal(${myName}_AIINTERFACE_VERS ${myVersion})
+	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
 
 	aux_source_directory(${mySourceDir} mySources)
