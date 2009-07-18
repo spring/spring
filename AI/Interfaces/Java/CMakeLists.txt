@@ -184,7 +184,7 @@ endif (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EX
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
-	set(myTarget  "${myName}-AI-Interface")
+	set(myTarget  "${myName}-AIInterface")
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 
 	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
