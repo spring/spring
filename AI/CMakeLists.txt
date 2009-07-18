@@ -44,10 +44,7 @@ endif (WIN32)
 list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
 
 # Assemble the creg sources
-aux_source_directory("${rts}/System/creg"          creg_SRC)
-
-# Assemble the CUtils sources
-aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils CUtils_SRC)
+aux_source_directory("${rts}/System/creg" creg_SRC)
 
 
 ################################################################################
@@ -101,6 +98,6 @@ endfunction (MakeAbsolute)
 ################################################################################
 
 
-Add_Subdirectory(Interfaces)
 Add_Subdirectory(Wrappers)
+Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)
