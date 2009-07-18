@@ -43,21 +43,8 @@ endif (WIN32)
 # Assemble common additional native AI sources
 list(APPEND ai_common_SRC ${rts}/Game/GameVersion)
 
-# Assemble the Legacy C++ AI sources
-aux_source_directory("Wrappers/LegacyCpp"          legacyCppAiSrcFiles)
-list(APPEND legacyCppAiSrcFiles ${ai_common_SRC})
-list(APPEND legacyCppAiSrcFiles ${rts}/System/float3)
-list(APPEND legacyCppAiSrcFiles ${rts}/Sim/Misc/DamageArray)
-
 # Assemble the creg sources
-aux_source_directory("${rts}/System/creg"          creg)
-
-# Compile the Legacy C++ AI wrapper static library
-add_library(legacycpp      STATIC ${legacyCppAiSrcFiles})
-
-# Compile the Legacy C++ AI wrapper static library with creg support
-add_library(legacycpp-creg STATIC ${legacyCppAiSrcFiles} ${creg})
-set_target_properties(legacycpp-creg PROPERTIES COMPILE_FLAGS "-DUSING_CREG")
+aux_source_directory("${rts}/System/creg"          creg_SRC)
 
 # Assemble the CUtils sources
 aux_source_directory(${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils CUtils_SRC)
@@ -100,9 +87,20 @@ macro    (GetLastPathPart part_var dir)
 	string(REGEX REPLACE ".*[\\/]" "" ${part_var} ${dir})
 endmacro (GetLastPathPart part_var dir)
 
+
+# Create an absolute directory from a base- and a relative-dir
+function    (MakeAbsolute absDir_var baseDir relDir)
+	set(_absDir "${baseDir}")
+	if    (NOT "${relDir}" STREQUAL "")
+		set(_absDir "${_absDir}/${relDir}")
+	endif (NOT "${relDir}" STREQUAL "")
+	set(${absDir_var} ${_absDir} PARENT_SCOPE)
+endfunction (MakeAbsolute)
+
 ### END: MACROS_AND_FUNCTIONS
 ################################################################################
 
 
 Add_Subdirectory(Interfaces)
+Add_Subdirectory(Wrappers)
 Add_Subdirectory(Skirmish)
