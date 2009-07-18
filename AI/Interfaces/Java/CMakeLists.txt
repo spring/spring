@@ -83,6 +83,7 @@ macro    (ConfigureJavaSkirmishAI)
 		set(myBinJarFile    "${myJarFile}.jar")
 		set(mySrcJarFile    "${myJarFile}-src.jar")
 		set(myJLibDir       "${myDir}/data/jlib")
+
 		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
 		# Create our full Java class-path
@@ -130,12 +131,12 @@ endmacro (ConfigureJavaSkirmishAI)
 ################################################################################
 
 
-set(myName            "Java")
-set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
-set(myNativeSourceDir "${myDir}/src/native")
-set(myJavaSourceDir   "${myDir}/src/java")
-set(myPkgFirstPart    "com")
-set(myPkg             "${myPkgFirstPart}/springrts/ai")
+set(myName               "Java")
+set(myDir                "${CMAKE_CURRENT_SOURCE_DIR}")
+set(myNativeSourceDirRel "src/native")
+set(myJavaSourceDirRel   "src/java")
+set(myPkgFirstPart       "com")
+set(myPkg                "${myPkgFirstPart}/springrts/ai")
 
 
 # Check if the user wants to compile the interface
@@ -187,6 +188,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
 	set(myTarget  "${myName}-AIInterface")
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	MakeAbsolute(myNativeSourceDir "${myDir}" "${myNativeSourceDirRel}")
+	MakeAbsolute(myJavaSourceDir   "${myDir}" "${myJavaSourceDirRel}")
 
 	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
 
