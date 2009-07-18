@@ -698,7 +698,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			{
 				unsigned team = (unsigned)inbuf[2];
 				if (team >= teams.size())
-					Message(str( boost::format("Invalid teamID in startPos-message from palyer %d") %team ));
+					Message(str( boost::format("Invalid teamID in startPos-message from player %d") %team ));
 				else
 				{
 					teams[team].startPos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
@@ -960,17 +960,17 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			{
 				if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a].isLocal)
 				{
-								// command is restricted to server but player is allowed to execute it
+					// command is restricted to server but player is allowed to execute it
 					PushAction(msg.action);
 				}
 				else if (commandBlacklist.find(msg.action.command) == commandBlacklist.end())
 				{
-								// command is save
+					// command is save
 					Broadcast(packet);
 				}
 				else
 				{
-								// hack!
+					// hack!
 					Message(str(boost::format(CommandNotAllowed) %msg.player %msg.action.command.c_str()));
 				}
 			}
