@@ -811,6 +811,9 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			print(indent_m "}") >> outFile_m;
 			print("") >> outFile_m;
 		}
+		if (memName == "handleCommand") {
+			print(indent_m "command.read();") >> outFile_m;
+		}
 		if (!isVoid_m) {
 			print(indent_m "return _ret;") >> outFile_m;
 		}
