@@ -53,9 +53,9 @@ public final class AIFloat3 extends Structure implements Structure.ByValue {
 	}
 	public AIFloat3(final Color color) {
 
-		this.x = color.getRed();
-		this.y = color.getGreen();
-		this.z = color.getBlue();
+		this.x = color.getRed()   / 255.0F;
+		this.y = color.getGreen() / 255.0F;
+		this.z = color.getBlue()  / 255.0F;
 	}
 	public AIFloat3(final Vector3f vec3f) {
 
