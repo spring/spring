@@ -21,6 +21,7 @@ public:
 	bool CommandsChanged();
 	void NetOrder(Command& c,int player);
 	void NetSelect(vector<int>& s,int player);
+	void ClearNetSelect(int player);
 	void DependentDied(CObject* o);
 	void Draw();
 	CSelectedUnits();
