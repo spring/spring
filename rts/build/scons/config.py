@@ -186,7 +186,7 @@ def check_openal(env, conf):
 		env.ParseConfig(openalcfg+" --cflags --libs")
 	else:
 		print "not found"
-		guess_include_path(env, conf, 'OpenAL', 'AL')
+	guess_include_path(env, conf, 'OpenAL', 'AL')
 
 
 def check_ogg(env, conf):
