@@ -3763,6 +3763,7 @@ void CGame::ClientReadNet()
 						} else {
 							playerHandler->Player(player)->StartSpectating();
 						}
+						selectedUnits.ClearNetSelect(player);
 						CPlayer::UpdateControlledTeams();
 						break;
 					}
@@ -3777,6 +3778,7 @@ void CGame::ClientReadNet()
 							teamHandler->Team(fromTeam)->leader = -1;
 						}
 						logOutput.Print("Player %i resigned and is now spectating!", player);
+						selectedUnits.ClearNetSelect(player);
 						CPlayer::UpdateControlledTeams();
 						break;
 					}
