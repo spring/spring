@@ -1014,6 +1014,7 @@ bool CGame::ActionPressed(const Action& action,
 			}
 		}
 	}
+
 	else if (!isRepeat && cmd == "mouse1") {
 		mouse->MousePress (mouse->lastx, mouse->lasty, 1);
 	}
@@ -1045,6 +1046,7 @@ bool CGame::ActionPressed(const Action& action,
 			camHandler->CameraTransition(0.6f);
 		}
 	}
+
 	else if (cmd == "moveforward") {
 		camMove[0]=true;
 	}
@@ -1069,6 +1071,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "moveslow") {
 		camMove[7]=true;
 	}
+
 	else if (cmd == "team"){
 		if (gs->cheatEnabled)
 		{
@@ -1121,6 +1124,7 @@ bool CGame::ActionPressed(const Action& action,
 			}
 		}
 	}
+
 	else if (cmd == "group") {
 		const char* c = action.extra.c_str();
 		const int t = c[0];
@@ -1160,6 +1164,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "group9") {
 		grouphandlers[gu->myTeam]->GroupCommand(9);
 	}
+
 	else if (cmd == "lastmsgpos") {
 		// cycle through the positions
 		camHandler->GetCurrentController().SetPos(infoConsole->GetMsgPos());
@@ -1739,6 +1744,7 @@ bool CGame::ActionPressed(const Action& action,
 		logOutput.Print(string("movewarnings ") +
 		                (moveWarnings ? "enabled" : "disabled"));
 	}
+
 	else if (cmd == "mapmarks") {
 		if (action.extra.empty()) {
 			drawMapMarks = !drawMapMarks;
@@ -1755,6 +1761,14 @@ bool CGame::ActionPressed(const Action& action,
 			}
 		}
 	}
+	else if (cmd == "noluadraw") {
+		if (action.extra.empty()) {
+			inMapDrawer->SetLuaMapDrawingAllowed(!inMapDrawer->GetLuaMapDrawingAllowed());
+		} else {
+			inMapDrawer->SetLuaMapDrawingAllowed(!!atoi(action.extra.c_str()));
+		}
+	}
+
 	else if (cmd == "luaui") {
 		if (guihandler != NULL) {
 
@@ -2104,7 +2118,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 	else if (action.command == "nospecdraw") {
 		bool buf;
 		SetBoolArg(buf, action.extra);
-		inMapDrawer->SetSpecDraw(buf);
+		inMapDrawer->SetSpecMapDrawingAllowed(buf);
 	}
 	else if (action.command == "godmode") {
 		if (!gs->cheatEnabled)
@@ -4088,7 +4102,7 @@ void CGame::UpdateUI(bool cam)
 				userInput = userInput.substr(0, 200);
 				writingPos = (int)userInput.length();
 			}
-			inMapDrawer->SendPoint(inMapDrawer->waitingPoint, userInput);
+			inMapDrawer->SendPoint(inMapDrawer->waitingPoint, userInput, false);
 			inMapDrawer->wantLabel = false;
 			userInput = "";
 			writingPos = 0;

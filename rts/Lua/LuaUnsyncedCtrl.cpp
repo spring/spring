@@ -2192,7 +2192,7 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	  text = lua_tostring(L, 4);
 	}
 
-	inMapDrawer->SendPoint(pos, text);
+	inMapDrawer->SendPoint(pos, text, true);
 
 	return 0;
 }
@@ -2221,7 +2221,7 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	                  lua_tofloat(L, 5),
 	                  lua_tofloat(L, 6));
 
-	inMapDrawer->SendLine(pos1, pos2);
+	inMapDrawer->SendLine(pos1, pos2, true);
 
 	return 0;
 }
