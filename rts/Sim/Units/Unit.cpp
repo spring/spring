@@ -528,8 +528,8 @@ void CUnit::Update()
 	moveType->Update();
 	GML_GET_TICKS(lastUnitUpdate);
 
-	inAir   = ((pos.y + height) >= 0.0f);
-	inWater =  (pos.y           <= 0.0f);
+	inAir   = ((pos.y - ground->GetHeight(pos.x,pos.z)) > 0.0f);
+	inWater =  (pos.y <= 0.0f);
 
 	if (inAir != oldInAir) {
 		if (inAir) {
