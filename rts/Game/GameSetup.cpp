@@ -403,7 +403,7 @@ void CGameSetup::RemapTeams()
 void CGameSetup::RemapAllyteams()
 {
 	// relocate Team.Allyteam field
-	for (size_t a = 0; a < allyStartingData.size(); ++a) {
+	for (size_t a = 0; a < teamStartingData.size(); ++a) {
 		if (allyteamRemap.find(teamStartingData[a].teamAllyteam) == allyteamRemap.end()) {
 			throw content_error("invalid Team.Allyteam in GameSetup script");
 		}
