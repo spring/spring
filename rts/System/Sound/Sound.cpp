@@ -6,6 +6,9 @@
 #include <cmath>
 #include <alc.h>
 #include <boost/cstdint.hpp>
+#if BOOST_VERSION < 103500
+#include <SDL_timer.h>
+#endif
 
 #include "SoundSource.h"
 #include "SoundBuffer.h"
@@ -107,7 +110,11 @@ CSound::~CSound()
 {
 	if (!sources.empty())
 	{
+#if BOOST_VERSION >= 103500
 		soundThread->interrupt();
+#else
+		soundThreadRunning = false;
+#endif
 		soundThread->join();
 		delete soundThread;
 		soundThread = 0;
@@ -312,8 +319,10 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 void CSound::StartThread(int maxSounds)
 {
+#if BOOST_VERSION >= 103500
 	try
 	{
+#endif
 		{
 			boost::mutex::scoped_lock lck(soundMutex);
 
@@ -342,16 +351,23 @@ void CSound::StartThread(int maxSounds)
 			alListenerf(AL_GAIN, masterVolume);
 		}
 
-		while (true) {
+		soundThreadRunning = true;
+		while (soundThreadRunning) {
+#if BOOST_VERSION >= 103500
 			boost::this_thread::sleep(boost::posix_time::millisec(50)); // sleep
+#else
+			SDL_Delay(50);
+#endif
 			boost::mutex::scoped_lock lck(soundMutex); // lock
 			Update(); // call update
 		}
+#if BOOST_VERSION >= 103500
 	}
 	catch(boost::thread_interrupted const&)
 	{
 		// do cleanup here
 	}
+#endif
 }
 
 void CSound::Update()
