@@ -7,6 +7,7 @@
 #include <io.h>
 #include <shlobj.h>
 #include <shlwapi.h>
+#include "System/Platform/Win/WinVersion.h"
 
 #elif MACOSX_BUNDLE
 #include <CoreFoundation/CoreFoundation.h>
@@ -41,18 +42,18 @@ std::string GetBinaryPath()
 #elif MACOSX_BUNDLE
 	char cPath[1024];
 	CFBundleRef mainBundle = CFBundleGetMainBundle();
-	
+
 	CFURLRef mainBundleURL = CFBundleCopyBundleURL(mainBundle);
 	CFURLRef binaryPathURL = CFURLCreateCopyDeletingLastPathComponent(kCFAllocatorDefault , mainBundleURL);
-	
+
 	CFStringRef cfStringRef = CFURLCopyFileSystemPath(binaryPathURL, kCFURLPOSIXPathStyle);
-	
+
 	CFStringGetCString(cfStringRef, cPath, 1024, kCFStringEncodingASCII);
-	
+
 	CFRelease(mainBundleURL);
 	CFRelease(binaryPathURL);
 	CFRelease(cfStringRef);
-	
+
 	return std::string(cPath);
 
 #else
@@ -94,7 +95,9 @@ std::string GetBinaryFile()
 std::string GetOS()
 {
 #if defined(WIN32)
-	return "Microsoft Windows";
+	return "Microsoft Windows\n" +
+		GetOSDisplayString() + "\n" +
+		GetHardwareInfoString();
 #elif defined(__linux__)
 	return "Linux";
 #elif defined(__FreeBSD__)
