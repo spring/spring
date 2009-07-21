@@ -80,7 +80,7 @@ private:
 
 	boost::thread* soundThread;
 	boost::mutex soundMutex;
-	bool soundThreadRunning;
+	volatile bool soundThreadRunning;
 };
 
 extern CSound* sound;
