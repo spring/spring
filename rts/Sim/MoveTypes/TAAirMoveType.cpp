@@ -11,6 +11,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/QuadField.h"
+#include "Sim/Misc/ModInfo.h"
 #include "Sim/Units/COB/UnitScript.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -695,7 +696,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 		speed.y = speed.y * 0.95;
 	}
 
-	if ((pos+speed).CheckInBounds())
+	if (modInfo.allowAirPlanesToLeaveMap || (pos+speed).CheckInBounds())
 		pos += speed;
 }
 
