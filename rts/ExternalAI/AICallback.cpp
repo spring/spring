@@ -1365,12 +1365,16 @@ int CAICallback::HandleCommand(int commandId, void* data)
 	switch (commandId) {
 		case AIHCQuerySubVersionId:
 			return 1; // current version of Handle Command interface
-		case AIHCAddMapPointId:
-			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)((AIHCAddMapPoint *)data)->pos.x, (short)((AIHCAddMapPoint *)data)->pos.z, std::string(((AIHCAddMapPoint *)data)->label)));
+		case AIHCAddMapPointId: {
+			const AIHCAddMapPoint* pnt = (AIHCAddMapPoint*) data;
+			net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(team, (short)pnt->pos.x, (short)pnt->pos.z, std::string(pnt->label), false));
 			return 1;
-		case AIHCAddMapLineId:
-			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)((AIHCAddMapLine *)data)->posfrom.x, (short)((AIHCAddMapLine *)data)->posfrom.z, (short)((AIHCAddMapLine *)data)->posto.x, (short)((AIHCAddMapLine *)data)->posto.z));
+		}
+		case AIHCAddMapLineId: {
+			const AIHCAddMapLine* line = (AIHCAddMapLine*) data;
+			net->Send(CBaseNetProtocol::Get().SendMapDrawLine(team, (short)line->posfrom.x, (short)line->posfrom.z, (short)line->posto.x, (short)line->posto.z, false));
 			return 1;
+		}
 		case AIHCRemoveMapPointId:
 			net->Send(CBaseNetProtocol::Get().SendMapErase(team, (short)((AIHCRemoveMapPoint *)data)->pos.x, (short)((AIHCRemoveMapPoint *)data)->pos.z));
 			return 1;
