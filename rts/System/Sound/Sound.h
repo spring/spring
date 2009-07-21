@@ -80,8 +80,9 @@ private:
 
 	boost::thread* soundThread;
 	boost::mutex soundMutex;
+	bool soundThreadRunning;
 };
 
 extern CSound* sound;
 
-#endif
+#endif // SOUNDSYSTEM_INTERFACE_H

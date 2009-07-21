@@ -1338,10 +1338,14 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
 	if (!demoReader) // use NEWFRAME_MSGes from demo otherwise
 	{
+#if BOOST_VERSION >= 103500
 		if (!fromServerThread)
 			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
 		else
 			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
+#else
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, !fromServerThread);
+#endif
 		CheckSync();
 		int newFrames = 1;
 
