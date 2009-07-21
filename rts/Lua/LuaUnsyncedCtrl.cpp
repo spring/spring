@@ -2182,17 +2182,19 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	if ((args < 3) ||
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2)  || !lua_isnumber(L, 3) ||
 	    ((args >= 4) && !lua_isstring(L, 4))) {
-		luaL_error(L, "Incorrect arguments to MarkerAddPoint(x, y, z[, text])");
+		luaL_error(L, "Incorrect arguments to MarkerAddPoint(x, y, z[, text, local ])");
 	}
 	const float3 pos(lua_tofloat(L, 1),
 	                 lua_tofloat(L, 2),
 	                 lua_tofloat(L, 3));
-	string text = "";
-	if (args >= 4) {
-	  text = lua_tostring(L, 4);
-	}
+	const string text = luaL_optstring(L, 4, "");
+	const bool onlyLocal = bool(luaL_optnumber(L, 5, 0));
 
-	inMapDrawer->SendPoint(pos, text, true);
+	if (onlyLocal) {
+		inMapDrawer->LocalPoint(pos, text, gu->myPlayerNum);
+	} else {
+		inMapDrawer->SendPoint(pos, text, true);
+	}
 
 	return 0;
 }
@@ -2212,7 +2214,7 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
 	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
 		luaL_error(L,
-			"Incorrect arguments to MarkerAddLine(x1, y1, z1, x2, y2, z2)");
+			"Incorrect arguments to MarkerAddLine(x1, y1, z1, x2, y2, z2[, local ])");
 	}
 	const float3 pos1(lua_tofloat(L, 1),
 	                  lua_tofloat(L, 2),
@@ -2220,8 +2222,13 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	const float3 pos2(lua_tofloat(L, 4),
 	                  lua_tofloat(L, 5),
 	                  lua_tofloat(L, 6));
+	const bool onlyLocal = bool(luaL_optnumber(L, 7, 0));
 
-	inMapDrawer->SendLine(pos1, pos2, true);
+	if (onlyLocal) {
+		inMapDrawer->LocalLine(pos1, pos2, gu->myPlayerNum);
+	} else {
+		inMapDrawer->SendLine(pos1, pos2, true);
+	}
 
 	return 0;
 }
