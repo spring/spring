@@ -17,6 +17,7 @@
 #include "SyncTracer.h"
 #include "Logger.h"
 
+#include <string.h>
 #include <map>
 #ifndef WIN32
 /* for backtrace() function */
