@@ -27,6 +27,9 @@
 
 CAdvWater::CAdvWater(bool loadShader)
 {
+	if (!FBO::IsSupported())
+		throw content_error("Water Error: missing FBO support");
+
 	glGenTextures(1, &reflectTexture);
 	unsigned char* scrap=new unsigned char[512*512*4];
 

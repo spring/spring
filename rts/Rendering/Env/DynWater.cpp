@@ -35,6 +35,9 @@
 */
 CDynWater::CDynWater(void)
 {
+	if (!FBO::IsSupported())
+		throw content_error("DynWater Error: missing FBO support");
+
 	lastWaveFrame=0;
 	noWakeProjectiles=true;
 	firstDraw=true;
