@@ -92,7 +92,7 @@ if    (SDL_FOUND)
 else  (SDL_FOUND)
 	message("SDL not found on your system, disabling:")
 	message("* spring (engine)")
-	message("* AIs")
+	message("* spring-dedicated")
 endif (SDL_FOUND)
 
 FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex program_options system REQUIRED)
