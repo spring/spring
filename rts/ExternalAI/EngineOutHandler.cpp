@@ -316,7 +316,7 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 		if (skirmishAIs[t]
 				&& !teamHandler->Ally(teamHandler->AllyTeam(t), destroyed.allyteam)
 				&& (skirmishAIs[t]->IsCheatEventsEnabled()
-					|| (destroyed.losStatus[t] & (LOS_INLOS | LOS_INRADAR)))) {
+					|| (destroyed.losStatus[teamHandler->AllyTeam(t)] & (LOS_INLOS | LOS_INRADAR)))) {
 			try {
 				skirmishAIs[t]->EnemyDestroyed(destroyedId, attackerId);
 			} HANDLE_EXCEPTION;
@@ -367,7 +367,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 		if (skirmishAIs[at]
 				&& !teamHandler->Ally(teamHandler->AllyTeam(at), damaged.allyteam)
 				&& (skirmishAIs[at]->IsCheatEventsEnabled()
-					|| (damaged.losStatus[at] & (LOS_INLOS | LOS_INRADAR)))) {
+					|| (damaged.losStatus[teamHandler->AllyTeam(at)] & (LOS_INLOS | LOS_INRADAR)))) {
 			try {
 				skirmishAIs[at]->EnemyDamaged(damagedUnitId, attackerUnitId,
 						damage, attackDir_attackersView);
