@@ -20,6 +20,7 @@
 #include "Sim/Misc/RadarHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
+#include "Sim/MoveTypes/GroundMoveType.h"
 #include "Sim/MoveTypes/MoveType.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/PieceProjectile.h"
@@ -118,6 +119,7 @@
 #define SET_WEAPON_UNIT_TARGET   106 // get (fake set)
 #define SET_WEAPON_GROUND_TARGET 107 // get (fake set)
 #define SONAR_STEALTH            108 // set or get
+#define REVERSING                109 // get
 
 // NOTE: [LUA0 - LUA9] are defined in CobThread.cpp as [110 - 119]
 
@@ -1049,20 +1051,29 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 		return uh->MaxUnits()-1;
 	case MY_ID:
 		return unit->id;
-	case UNIT_TEAM:{
+	case UNIT_TEAM: {
 		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
-		return u ? unit->team : 0; }
-	case UNIT_ALLIED:{
+		return u ? unit->team : 0;
+	}
+	case UNIT_ALLIED: {
 		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u) return teamHandler->Ally (unit->allyteam, u->allyteam) ? 1 : 0;
-		return 0;}
-	case UNIT_BUILD_PERCENT_LEFT:{
+		return 0;
+	}
+	case UNIT_BUILD_PERCENT_LEFT: {
 		CUnit *u = (p1 >= 0 && p1 < uh->MaxUnits()) ? uh->units[p1] : NULL;
 		if (u) return (int)((1 - u->buildProgress) * 100);
-		return 0;}
+		return 0;
+	}
 	case MAX_SPEED:
-		if(unit->moveType){
-			return int(unit->moveType->maxSpeed*COBSCALE);
+		if (unit->moveType) {
+			return int(unit->moveType->maxSpeed * COBSCALE);
+		}
+		break;
+	case REVERSING:
+		if (unit->moveType) {
+			CGroundMoveType* gmt = dynamic_cast<CGroundMoveType*>(unit->moveType);
+			return ((gmt != NULL)? int(gmt->IsReversing()): 0);
 		}
 		break;
 	case CLOAKED:
