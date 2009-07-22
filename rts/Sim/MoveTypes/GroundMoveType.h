@@ -148,6 +148,10 @@ public:
 
 	void StartSkidding(void);
 	void StartFlying(void);
+
+	bool IsSkidding() const { return skidding; }
+	bool IsFlying() const { return flying; }
+	bool IsReversing() const { return reversing; }
 };
 
 

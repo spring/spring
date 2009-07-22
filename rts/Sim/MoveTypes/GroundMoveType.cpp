@@ -293,7 +293,6 @@ void CGroundMoveType::Update()
 						const float turnAngleSpr   = (turnAngleDeg / 360.0f) * 65536.0f;
 						const float turnAngleTime  = (turnAngleSpr / owner->unitDef->turnRate) / GAME_SPEED;  // in secs
 
-						// todo: notify the unit script (just expose ::reversing)
 						wantReverse = ((turnAngleTime + waypointFETA) > (waypointRETA));
 					}
 				}
@@ -520,7 +519,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 
 		wSpeed *= groundMod;
 
-		const float3 goalDifFwd  = waypoint - owner->pos;
+		const float3 goalDifFwd = waypoint - owner->pos;
 		const float3 goalDifRev = -goalDifFwd;
 		const float3 goalPosTmp = owner->pos + goalDifRev;
 
@@ -540,11 +539,11 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 				// GetNextWaypoint() often is sufficient prevention
 				// If current waypoint is the last one and it's near,
 				// hit the brakes a bit more.
-				float finalGoalSqDist = owner->pos.SqDistance2D(goalPos);
-				float tipSqDist = owner->unitDef->turnInPlaceDistance*owner->unitDef->turnInPlaceDistance;
-				bool unitdefInPlace = (owner->unitDef->turnInPlace
+				const float finalGoalSqDist = owner->pos.SqDistance2D(goalPos);
+				const float tipSqDist = owner->unitDef->turnInPlaceDistance*owner->unitDef->turnInPlaceDistance;
+				const bool unitdefInPlace = (owner->unitDef->turnInPlace
 						&& (tipSqDist > finalGoalSqDist
-						|| owner->unitDef->turnInPlaceDistance <= 0));
+						|| owner->unitDef->turnInPlaceDistance <= 0.0f));
 
 				if (unitdefInPlace || currentSpeed < owner->unitDef->turnInPlaceSpeedLimit/GAME_SPEED) {
 					// keep the turn mostly in-place
@@ -1985,19 +1984,20 @@ void CGroundMoveType::SetMainHeading(){
 #ifdef TRACE_SYNC
 				tracefile << "Start moving; Test heading: " << heading << ",  Real heading: " << owner->heading << "\n";
 #endif
-			} else {
-				//logOutput.Print("No set main headding");
 			}
-		} else {
-			//logOutput.Print("Zero Vector");
 		}
 	}
 }
 
 void CGroundMoveType::SetMaxSpeed(float speed)
 {
-	if (requestedSpeed == maxSpeed * 2)
-		requestedSpeed = speed * 2;	//why the *2 everywhere?
+	if (reversing) {
+		if (speed >= (owner->unitDef->speed / GAME_SPEED)) {
+			speed = (owner->unitDef->rSpeed / GAME_SPEED);
+		}
+	}
+
+	requestedSpeed = speed * 2.0f;
 	maxSpeed = speed;
 }
 
@@ -2076,13 +2076,6 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 		currentSpeed += deltaSpeed;
 		owner->pos += (flatFrontDir * currentSpeed * (reversing? -1.0f: 1.0f));
-
-		if ( reversing && (currentSpeed < -(owner->unitDef->rSpeed / GAME_SPEED))) {
-			currentSpeed = -(owner->unitDef->rSpeed / GAME_SPEED);
-		}
-		if (!reversing && (currentSpeed >  (owner->unitDef->speed  / GAME_SPEED))) {
-			currentSpeed =  (owner->unitDef->speed  / GAME_SPEED);
-		}
 
 		AdjustPosToWaterLine();
 	}
