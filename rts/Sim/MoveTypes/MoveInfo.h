@@ -96,7 +96,7 @@ public:
 
 	std::vector<MoveData*> moveData;
 	std::map<std::string, int> name2moveData;
-	MoveData* GetMoveDataFromName(const std::string& name, bool exactMatch = false);
+	MoveData* GetMoveDataFromName(const std::string& name);
 	unsigned int moveInfoChecksum;
 
 	float terrainType2MoveFamilySpeed[256][4];

@@ -125,9 +125,9 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 			unitDefs[id].yardmaps[ym] = 0;
 		}
 
-		// parse the TDF data (but don't load buildpics, etc...)
+		// parse the unitdef data (but don't load buildpics, etc...)
 		LuaTable udTable = rootTable.SubTable(unitName);
-		ParseUnit(udTable, unitName, id);
+		ParseUnitDef(udTable, unitName, id);
 
 		// Increase index for next unit
 		id++;
@@ -237,7 +237,7 @@ void CUnitDefHandler::FindStartUnits()
 }
 
 
-void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitName, int id)
+void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& unitName, int id)
 {
 	UnitDef& ud = unitDefs[id];
 
@@ -645,6 +645,10 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	if (ud.canmove && !ud.canfly && (ud.type != "Factory")) {
 		string moveclass = udTable.GetString("movementClass", "");
 		ud.movedata = moveinfo->GetMoveDataFromName(moveclass);
+		if (!ud.movedata) {
+			const string errmsg = "Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
+			throw content_error(errmsg);
+		}
 		if ((ud.movedata->moveType == MoveData::Hover_Move) ||
 		    (ud.movedata->moveType == MoveData::Ship_Move)) {
 			ud.upright = true;
@@ -889,14 +893,14 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
 }
 
 
-void CUnitDefHandler::ParseUnit(const LuaTable& udTable, const string& unitName, int id)
+void CUnitDefHandler::ParseUnitDef(const LuaTable& udTable, const string& unitName, int id)
 {
-  try {
-    ParseTAUnit(udTable, unitName, id);
-  } catch (content_error const& e) {
-    std::cout << e.what() << std::endl;
-    return;
-  }
+	try {
+		ParseUnitDefTable(udTable, unitName, id);
+	} catch (content_error const& e) {
+		logOutput.Print(e.what());
+		return;
+	}
 
 	unitDefs[id].valid = true;
 
@@ -1086,50 +1090,6 @@ void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 			AssignTechLevel(unitDefs[ud_it->second], level);
 		}
 	}
-}
-
-
-bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
-                                     const std::string& modname)
-{
-	FILE* f;
-	if (filename.empty()) {
-		f = stdout;
-	} else {
-		f = fopen(filename.c_str(), "wt");
-		if (f == NULL) {
-			return false;
-		}
-	}
-
-	fprintf(f, "\nTech Levels for \"%s\"\n", modname.c_str());
-	std::multimap<int, std::string> entries;
-	std::map<std::string, int>::const_iterator uit;
-	for (uit = unitID.begin(); uit != unitID.end(); uit++) {
-		const string& unitName = uit->first;
-		const UnitDef* ud = GetUnitByName(unitName);
-		if (ud) {
-			char buf[256];
-			SNPRINTF(buf, sizeof(buf), " %3i:  %-15s  // %s :: %s\n",
-							 ud->techLevel, unitName.c_str(),
-							 ud->humanName.c_str(), ud->tooltip.c_str());
-			entries.insert(std::pair<int, string>(ud->techLevel, buf));
-		}
-	}
-	int prevLevel = -2;
-	std::multimap<int, std::string>::iterator eit;
-	for (eit = entries.begin(); eit != entries.end(); ++eit) {
-		if (eit->first != prevLevel) {
-			fprintf(f, "\n");
-			prevLevel = eit->first;
-		}
-		fprintf(f, "%s", eit->second.c_str());
-	}
-
-	if (f != stdout) {
-		fclose(f);
-	}
-	return true;
 }
 
 
