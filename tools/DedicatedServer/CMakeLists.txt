@@ -20,6 +20,11 @@ SET(system_files
 	../../rts/System/DemoRecorder
 	../../rts/System/AutohostInterface
 	../../rts/System/UnsyncedRNG)
+IF (WIN32)
+	SET(system_files
+		${system_files}
+		../../rts/System/Platform/Win/WinVersion)
+ENDIF (WIN32)
 
 AUX_SOURCE_DIRECTORY(../../rts/Game/Server serverfiles)
 ADD_LIBRARY(springserver SHARED
