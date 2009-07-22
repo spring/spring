@@ -187,11 +187,11 @@ void CPreGame::StartServer(const std::string& setupscript)
 	std::string scriptWantedMod;
 	scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
 	if (!scriptWantedMod.empty()) {
-		setup->baseMod = archiveScanner->ModArchiveToModName(scriptWantedMod);
+		setup->modName = archiveScanner->ModArchiveToModName(scriptWantedMod);
 	}
-	LoadMod(setup->baseMod);
+	LoadMod(setup->modName);
 
-	std::string modArchive = archiveScanner->ModNameToModArchive(setup->baseMod);
+	std::string modArchive = archiveScanner->ModNameToModArchive(setup->modName);
 	startupData->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
 
 	std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
@@ -280,7 +280,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 
 			tgame->AddPair("ScriptName", demoScript->scriptName);
 			tgame->AddPair("MapName", demoScript->mapName);
-			tgame->AddPair("Gametype", demoScript->baseMod);
+			tgame->AddPair("Gametype", demoScript->modName);
 			tgame->AddPair("Demofile", demoName);
 
 			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it)
@@ -422,9 +422,9 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	LogObject() << "Using script " << gameSetup->scriptName << "\n";
 	CScriptHandler::SelectScript(gameSetup->scriptName);
 
-	LogObject() << "Using mod " << gameSetup->baseMod << "\n";
-	LoadMod(gameSetup->baseMod);
-	modArchive = archiveScanner->ModNameToModArchive(gameSetup->baseMod);
+	LogObject() << "Using mod " << gameSetup->modName << "\n";
+	LoadMod(gameSetup->modName);
+	modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
 	LogObject() << "Using mod archive " << modArchive << "\n";
 	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
 }
