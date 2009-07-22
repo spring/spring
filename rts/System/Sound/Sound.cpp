@@ -336,7 +336,7 @@ void CSound::StartThread(int maxSounds)
 				}
 				else
 				{
-					maxSounds = i-1;
+					maxSounds = std::max(i-1,0);
 					configHandler->Set("MaxSounds", maxSounds);
 					LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
 					delete thenewone;
