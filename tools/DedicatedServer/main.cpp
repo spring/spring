@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 		if (gameSetup->modHash != 0) {
 			data->SetModChecksum(gameSetup->modHash);
 		} else {
-			const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->baseMod);
+			const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
 			data->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
 		}
 

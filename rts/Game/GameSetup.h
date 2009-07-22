@@ -43,7 +43,7 @@ public:
 	unsigned int mapHash;
 	unsigned int modHash;
 	std::string mapName;
-	std::string baseMod;
+	std::string modName;
 	std::string scriptName;
 	bool useLuaGaia;
 	std::string luaGaiaStr;

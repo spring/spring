@@ -429,7 +429,7 @@ bool CGameSetup::Init(const std::string& buf)
 	file.GetTDef(mapHash, unsigned(0), "GAME\\MapHash");
 	file.GetTDef(modHash, unsigned(0), "GAME\\ModHash");
 
-	baseMod     = file.SGetValueDef("",  "GAME\\Gametype");
+	modName     = file.SGetValueDef("",  "GAME\\Gametype");
 	mapName     = file.SGetValueDef("",  "GAME\\MapName");
 	luaGaiaStr  = file.SGetValueDef("1", "GAME\\ModOptions\\LuaGaia");
 	if (luaGaiaStr == "0")
@@ -486,7 +486,7 @@ bool CGameSetup::Init(const std::string& buf)
 	LoadUnitRestrictions(file);
 
 	// Postprocessing
-	baseMod = archiveScanner->ModArchiveToModName(baseMod);
+	modName = archiveScanner->ModArchiveToModName(modName);
 
 	return true;
 }
