@@ -285,8 +285,8 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.energyMake   = udTable.GetFloat("energyMake", 0.0f);
 
 	ud.health       = udTable.GetFloat("maxDamage",  0.0f);
-	ud.autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (16.0f / 30.0f);
-	ud.idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (16.0f / 30.0f);
+	ud.autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (16.0f / GAME_SPEED);
+	ud.idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (16.0f / GAME_SPEED);
 	ud.idleTime     = udTable.GetInt("idleTime", 600);
 
 	ud.buildangle = udTable.GetInt("buildAngle", 0);
@@ -367,16 +367,20 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.canSelfD = udTable.GetBool("canSelfDestruct", true);
 	ud.selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
-	ud.speed    = udTable.GetFloat("maxVelocity",  0.0f) * 30.0f;
-	ud.maxAcc   = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	ud.maxDec   = fabs(udTable.GetFloat("brakeRate",    3.0f * ud.maxAcc)) * (ud.canfly? 0.1f: 1.0f); // no negative values
+	ud.speed  = udTable.GetFloat("maxVelocity",  0.0f) * GAME_SPEED;
+	ud.rSpeed = udTable.GetFloat("maxReverseVelocity", 0.0f) * GAME_SPEED;
+	ud.speed  = fabs(ud.speed);
+	ud.rSpeed = fabs(ud.rSpeed);
+
+	ud.maxAcc = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
+	ud.maxDec = fabs(udTable.GetFloat("brakeRate",    3.0f * ud.maxAcc)) * (ud.canfly? 0.1f: 1.0f); // no negative values
 
 	ud.turnRate    = udTable.GetFloat("turnRate",     0.0f);
 	ud.turnInPlace = udTable.GetBool( "turnInPlace",  true);
 	ud.turnInPlaceDistance = udTable.GetFloat("turnInPlaceDistance", 350.f);
 	ud.turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", 15.f);
 
-	bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
+	const bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	ud.canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
 	ud.fireState = udTable.GetInt("fireState", ud.canFireControl ? -1 : 2);
 	ud.fireState = std::min(ud.fireState,2);
@@ -747,9 +751,9 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.flareDelay      = udTable.GetFloat("flareDelay",      0.3f);
 	ud.flareEfficiency = udTable.GetFloat("flareEfficiency", 0.5f);
 	ud.flareDropVector = udTable.GetFloat3("flareDropVector", ZeroVector);
-	ud.flareTime       = udTable.GetInt("flareTime", 3) * 30;
+	ud.flareTime       = udTable.GetInt("flareTime", 3) * GAME_SPEED;
 	ud.flareSalvoSize  = udTable.GetInt("flareSalvoSize",  4);
-	ud.flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * 30;
+	ud.flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * GAME_SPEED;
 
 	ud.smoothAnim = udTable.GetBool("smoothAnim", false);
 	ud.canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
