@@ -4,6 +4,7 @@
 #include "UnitDrawer.h"
 #include "myMath.h"
 #include "LogOutput.h"
+#include "Game/Game.h"
 #include "Game/Camera.h"
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
@@ -1446,6 +1447,8 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
+	game->SetDrawMode(CGame::reflectionDraw);
+
 	camera->SetFov(90);
 	camera->forward = camdir;
 	camera->up = -UpVector;
@@ -1464,6 +1467,8 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	//unitReflectFBO.Unbind();
 	//glViewport(gu->viewPosX, 0, gu->viewSizeX, gu->viewSizeY);
 	glPopAttrib();
+
+	game->SetDrawMode(CGame::normalDraw);
 
 //	delete camera;
 //	camera = realCam;

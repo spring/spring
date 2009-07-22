@@ -30,7 +30,7 @@ protected:
 	struct GroundSquare {
 		int texLevel;
 		GLuint texture;
-		int lastUsed;
+		unsigned int lastUsed;
 	};
 
 	GroundSquare* squares;
