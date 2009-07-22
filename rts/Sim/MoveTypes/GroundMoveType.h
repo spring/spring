@@ -19,8 +19,7 @@ public:
 	void Update();
 	void SlowUpdate();
 
-	void SetDeltaSpeed(void);
-	bool TestNewPathGoal(const float3& newgoal);
+	void SetDeltaSpeed(bool);
 
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
@@ -115,8 +114,13 @@ protected:
 	float GetFlyTime(float3 pos, float3 speed);
 	void CalcSkidRot(void);
 
+	void AdjustPosToWaterLine();
+	void UpdateDirectControl();
+	void UpdateOwnerPos(bool);
+
 	bool skidding;
 	bool flying;
+	bool reversing;
 	float skidRotSpeed;
 	float dropSpeed;
 	float dropHeight;
