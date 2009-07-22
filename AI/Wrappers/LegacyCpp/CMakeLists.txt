@@ -47,9 +47,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 	list(APPEND mySources ${ai_common_SRC})
 	list(APPEND mySources ${rts}/System/float3)
 	list(APPEND mySources ${rts}/Sim/Misc/DamageArray)
-	if    (WIN32)
-		list(APPEND mySources ${rts}/System/Platform/Win/WinVersion)
-	endif (WIN32)
 
 	# Compile the Legacy C++ AI wrapper static library
 	add_library(${myTarget}     STATIC ${mySources})
