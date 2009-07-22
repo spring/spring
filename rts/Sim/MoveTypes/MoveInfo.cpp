@@ -210,16 +210,11 @@ CMoveInfo::~CMoveInfo()
 }
 
 
-MoveData* CMoveInfo::GetMoveDataFromName(const std::string& name, bool exactMatch)
+MoveData* CMoveInfo::GetMoveDataFromName(const std::string& name)
 {
-	if (!exactMatch) {
-		return moveData[name2moveData[name]];
-	} else {
-		map<string, int>::const_iterator it = name2moveData.find(name);
-		if (it == name2moveData.end()) {
-			return NULL;
-		}
-		return moveData[it->second];
+	map<string, int>::const_iterator it = name2moveData.find(name);
+	if (it == name2moveData.end()) {
+		return NULL;
 	}
-	return moveData[name2moveData[name]];
+	return moveData[it->second];
 }

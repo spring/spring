@@ -38,13 +38,11 @@ public:
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     unsigned int texID, int sizex, int sizey);
 
-	bool SaveTechLevels(const std::string& filename, const std::string& modname);
-
 	bool noCost;
 
 protected:
-	void ParseUnit(const LuaTable&, const std::string& name, int id);
-	void ParseTAUnit(const LuaTable&, const std::string& name, int id);
+	void ParseUnitDef(const LuaTable&, const std::string& name, int id);
+	void ParseUnitDefTable(const LuaTable&, const std::string& name, int id);
 
 	void LoadSounds(const LuaTable&, GuiSoundSet&, const std::string& soundName);
 	void LoadSound(GuiSoundSet&, const std::string& fileName, const float volume);

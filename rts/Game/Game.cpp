@@ -1630,11 +1630,6 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		configHandler->Set("ShowPlayerInfo", (int)playerRoster.GetSortType());
 	}
-	else if (cmd == "techlevels") {
-		unitDefHandler->SaveTechLevels("", modInfo.filename); // stdout
-		unitDefHandler->SaveTechLevels("techlevels.txt", modInfo.filename);
-		logOutput.Print("saved techlevels.txt");
-	}
 	else if (cmd == "cmdcolors") {
 		const string name = action.extra.empty() ? "cmdcolors.txt" : action.extra;
 		cmdColors.LoadConfig(name);
