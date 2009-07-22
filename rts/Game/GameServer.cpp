@@ -190,7 +190,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 
 #ifdef DEDICATED
 	demoRecorder.reset(new CDemoRecorder());
-	demoRecorder->SetName(gameData->GetMap());
+	demoRecorder->SetName(setup->mapName);
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
 	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
