@@ -1994,6 +1994,8 @@ void CGroundMoveType::SetMaxSpeed(float speed)
 	if (reversing) {
 		if (speed >= (owner->unitDef->speed / GAME_SPEED)) {
 			speed = (owner->unitDef->rSpeed / GAME_SPEED);
+		} else if (speed > (owner->unitDef->rSpeed / GAME_SPEED)) {
+			speed = (owner->unitDef->rSpeed / GAME_SPEED);
 		}
 	}
 
