@@ -235,7 +235,7 @@ public:
 		SDL_WarpMouse(pos.x, pos.y);
 	}
 
-	void HandleSDLMouseEvent (SDL_Event& event)
+	void HandleSDLMouseEvent (const SDL_Event& event)
 	{
 		switch (event.type) {
 			case SDL_MOUSEMOTION: {
