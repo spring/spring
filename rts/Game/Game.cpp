@@ -994,7 +994,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "echo") {
 		logOutput.Print(action.extra);
 	}
-	else if (cmd == "set" || cmd == "sets" || cmd == "seti" || cmd == "setf") { // the set[s|i|f] should be removed sometimes
+	else if (cmd == "set") {
 		const std::string::size_type pos = action.extra.find_first_of(" ");
 		if (pos != std::string::npos) {
 			const std::string varName = action.extra.substr(0, pos);
@@ -1503,15 +1503,6 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "showpathmap") {
 		gd->SetPathMapTexture();
 	}
-	else if (cmd == "yardmap4") {
-		//		groundDrawer->SetExtraTexture(readmap->yardmapLevels[3],readmap->yardmapPal,true);
-	}
-	/*	if (cmd == "showsupply"){
-		groundDrawer->SetExtraTexture(supplyhandler->supplyLevel[gu->myTeam],supplyhandler->supplyPal);
-		}*/
-	/*	if (cmd == "showteam"){
-		groundDrawer->SetExtraTexture(readmap->teammap,cityhandler->teampal);
-		}*/
 	else if (cmd == "togglelos") {
 		gd->ToggleLosTexture();
 	}
@@ -1666,12 +1657,6 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Loaded font: %s\n", action.extra.c_str());
 			configHandler->SetString("FontFile", action.extra);
 			configHandler->SetString("SmallFontFile", action.extra);
-		}
-	}
-	else if (cmd == "aiselect") {
-		if (gs->noHelperAIs) {
-			logOutput.Print("GroupAI controll is not available anymore, and LuaUI control is disabled");
-			return true;
 		}
 	}
 	else if (cmd == "vsync") {
