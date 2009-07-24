@@ -2102,4 +2102,8 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 
 		AdjustPosToWaterLine();
 	}
+
+	if (!wantReverse && currentSpeed == 0.0f) {
+		reversing = false;
+	}
 }
