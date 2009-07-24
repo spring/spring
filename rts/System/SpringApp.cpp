@@ -44,6 +44,7 @@
 #include "Sim/Misc/GlobalConstants.h"
 #include "LogOutput.h"
 #include "MouseInput.h"
+#include "InputHandler.h"
 #include "bitops.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
@@ -168,6 +169,7 @@ bool SpringApp::Initialize()
 	SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
 	SDL_SetModState (KMOD_NONE);
 
+	input.AddHandler(boost::bind(&SpringApp::MainEventHandler, this, _1));
 	keys = new boost::uint8_t[SDLK_LAST];
 	memset (keys,0,sizeof(boost::uint8_t)*SDLK_LAST);
 
@@ -936,10 +938,8 @@ int SpringApp::Run(int argc, char *argv[])
 	gmlProcessor->AuxWork(&SpringApp::Simcb,this); // start sim thread
 #	endif
 #endif
-	SDL_Event event;
-	bool done = false;
-
-	while (!done) {
+	while (true) // end is handled by globalQuit
+	{
 #ifdef WIN32
 		static unsigned lastreset = 0;
 		unsigned curreset = SDL_GetTicks();
@@ -950,135 +950,9 @@ int SpringApp::Run(int argc, char *argv[])
 				SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
 		}
 #endif
+		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
-			switch (event.type) {
-				case SDL_VIDEORESIZE: {
-
-					GML_STDMUTEX_LOCK(sim); // Run
-
-					screenWidth = event.resize.w;
-					screenHeight = event.resize.h;
-#ifndef WIN32
-					// HACK   We don't want to break resizing on windows (again?),
-					//        so someone should test this very well before enabling it.
-					SetSDLVideoMode();
-#endif
-					InitOpenGL();
-					activeController->ResizeEvent();
-					break;
-				}
-				case SDL_VIDEOEXPOSE: {
-
-					GML_STDMUTEX_LOCK(sim); // Run
-
-					// re-initialize the stencil
-					glClearStencil(0);
-					glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-					glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
-					SetupViewportGeometry();
-					break;
-				}
-				case SDL_QUIT: {
-					done = true;
-					break;
-				}
-				case SDL_ACTIVEEVENT: {
-					if (event.active.state & SDL_APPACTIVE) {
-						gu->active = !!event.active.gain;
-						if (sound)
-							sound->Iconified(!event.active.gain);
-					}
-
-					if (mouse && mouse->locked) {
-						mouse->ToggleState();
-					}
-					break;
-				}
-
-				case SDL_MOUSEMOTION:
-				case SDL_MOUSEBUTTONDOWN:
-				case SDL_MOUSEBUTTONUP:
-				case SDL_SYSWMEVENT: {
-					mouseInput->HandleSDLMouseEvent (event);
-					break;
-				}
-				case SDL_KEYDOWN: {
-					int i = event.key.keysym.sym;
-					currentUnicode = event.key.keysym.unicode;
-
-					const bool isRepeat = !!keys[i];
-
-					UpdateSDLKeys ();
-
-					if (activeController) {
-						if (i <= SDLK_DELETE) {
-							i = tolower(i);
-						}
-						else if (i == SDLK_RSHIFT) { i = SDLK_LSHIFT; }
-						else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
-						else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
-						else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
-
-						if (keyBindings) {
-							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
-							if (fakeMetaKey >= 0) {
-								keys[SDLK_LMETA] |= keys[fakeMetaKey];
-							}
-						}
-
-						activeController->KeyPressed(i, isRepeat);
-
-						if (activeController->userWriting){
-							// use unicode for printed characters
-							i = event.key.keysym.unicode;
-							if ((i >= SDLK_SPACE) && (i <= SDLK_DELETE)) {
-								CGameController* ac = activeController;
-								if (ac->ignoreNextChar || ac->ignoreChar == char(i)) {
-									ac->ignoreNextChar = false;
-								} else {
-									if (i < SDLK_DELETE && (!isRepeat || ac->userInput.length()>0)) {
-										const int len = (int)ac->userInput.length();
-										ac->writingPos = std::max(0, std::min(len, ac->writingPos));
-										char str[2] = { char(i), 0 };
-										ac->userInput.insert(ac->writingPos, str);
-										ac->writingPos++;
-									}
-								}
-							}
-						}
-					}
-					activeController->ignoreNextChar = false;
-					break;
-				}
-				case SDL_KEYUP: {
-					int i = event.key.keysym.sym;
-					currentUnicode = event.key.keysym.unicode;
-
-					UpdateSDLKeys();
-
-					if (activeController) {
-						if (i <= SDLK_DELETE) {
-							i = tolower(i);
-						}
-						else if (i == SDLK_RSHIFT) { i = SDLK_LSHIFT; }
-						else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
-						else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
-						else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
-
-						if (keyBindings) {
-							const int fakeMetaKey = keyBindings->GetFakeMetaKey();
-							if (fakeMetaKey >= 0) {
-								keys[SDLK_LMETA] |= keys[fakeMetaKey];
-							}
-						}
-
-						activeController->KeyReleased(i);
-					}
-					break;
-				}
-				default:
-					break;
-			}
+			input.PushEvent(event);
 		}
 		if (globalQuit)
 			break;
@@ -1224,4 +1098,137 @@ void SpringApp::Shutdown()
 #ifdef USE_MMGR
 	m_dumpMemoryReport();
 #endif
+}
+
+bool SpringApp::MainEventHandler(const SDL_Event& event)
+{
+	switch (event.type) {
+		case SDL_VIDEORESIZE: {
+
+			GML_STDMUTEX_LOCK(sim); // Run
+
+			screenWidth = event.resize.w;
+			screenHeight = event.resize.h;
+#ifndef WIN32
+			// HACK   We don't want to break resizing on windows (again?),
+			//        so someone should test this very well before enabling it.
+			SetSDLVideoMode();
+#endif
+			InitOpenGL();
+			activeController->ResizeEvent();
+			break;
+		}
+		case SDL_VIDEOEXPOSE: {
+
+			GML_STDMUTEX_LOCK(sim); // Run
+
+			// re-initialize the stencil
+			glClearStencil(0);
+			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
+			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
+			SetupViewportGeometry();
+			break;
+		}
+		case SDL_QUIT: {
+			globalQuit = true;
+			break;
+		}
+		case SDL_ACTIVEEVENT: {
+			if (event.active.state & SDL_APPACTIVE) {
+				gu->active = !!event.active.gain;
+				if (sound)
+					sound->Iconified(!event.active.gain);
+			}
+
+			if (mouse && mouse->locked) {
+				mouse->ToggleState();
+			}
+			break;
+		}
+
+		case SDL_MOUSEMOTION:
+		case SDL_MOUSEBUTTONDOWN:
+		case SDL_MOUSEBUTTONUP:
+		case SDL_SYSWMEVENT: {
+			mouseInput->HandleSDLMouseEvent (event);
+			break;
+		}
+		case SDL_KEYDOWN: {
+			int i = event.key.keysym.sym;
+			currentUnicode = event.key.keysym.unicode;
+
+			const bool isRepeat = !!keys[i];
+
+			UpdateSDLKeys ();
+
+			if (activeController) {
+				if (i <= SDLK_DELETE) {
+					i = tolower(i);
+				}
+				else if (i == SDLK_RSHIFT) { i = SDLK_LSHIFT; }
+				else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
+				else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
+				else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
+
+				if (keyBindings) {
+					const int fakeMetaKey = keyBindings->GetFakeMetaKey();
+					if (fakeMetaKey >= 0) {
+						keys[SDLK_LMETA] |= keys[fakeMetaKey];
+					}
+				}
+
+				activeController->KeyPressed(i, isRepeat);
+
+				if (activeController->userWriting){
+					// use unicode for printed characters
+					i = event.key.keysym.unicode;
+					if ((i >= SDLK_SPACE) && (i <= SDLK_DELETE)) {
+						CGameController* ac = activeController;
+						if (ac->ignoreNextChar || ac->ignoreChar == char(i)) {
+							ac->ignoreNextChar = false;
+						} else {
+							if (i < SDLK_DELETE && (!isRepeat || ac->userInput.length()>0)) {
+								const int len = (int)ac->userInput.length();
+								ac->writingPos = std::max(0, std::min(len, ac->writingPos));
+								char str[2] = { char(i), 0 };
+								ac->userInput.insert(ac->writingPos, str);
+								ac->writingPos++;
+							}
+						}
+					}
+				}
+			}
+			activeController->ignoreNextChar = false;
+			break;
+		}
+		case SDL_KEYUP: {
+			int i = event.key.keysym.sym;
+			currentUnicode = event.key.keysym.unicode;
+
+			UpdateSDLKeys();
+
+			if (activeController) {
+				if (i <= SDLK_DELETE) {
+					i = tolower(i);
+				}
+				else if (i == SDLK_RSHIFT) { i = SDLK_LSHIFT; }
+				else if (i == SDLK_RCTRL)  { i = SDLK_LCTRL;  }
+				else if (i == SDLK_RMETA)  { i = SDLK_LMETA;  }
+				else if (i == SDLK_RALT)   { i = SDLK_LALT;   }
+
+				if (keyBindings) {
+					const int fakeMetaKey = keyBindings->GetFakeMetaKey();
+					if (fakeMetaKey >= 0) {
+						keys[SDLK_LMETA] |= keys[fakeMetaKey];
+					}
+				}
+
+				activeController->KeyReleased(i);
+			}
+			break;
+		}
+		default:
+			break;
+	}
+	return false;
 }
