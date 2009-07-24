@@ -20,6 +20,7 @@
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "ConfigHandler.h"
+#include "InputHandler.h"
 #include "StartScripts/ScriptHandler.h"
 #include <boost/cstdint.hpp>
 
@@ -96,6 +97,10 @@ SelectMenu::SelectMenu(bool server): showList(NULL)
 	}
 }
 
+SelectMenu::~SelectMenu()
+{
+	input.RemoveHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
+}
 
 int SelectMenu::KeyPressed(unsigned short k,bool isRepeat)
 {
@@ -248,6 +253,7 @@ void SelectMenu::ShowScriptList()
 /** Create a CglList for selecting the mod. */
 void SelectMenu::ShowModList()
 {
+	input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
 	CglList* list = new CglList("Select mod", boost::bind(&SelectMenu::SelectMod, this, _1), 3);
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
 	if (found.empty()) {
@@ -318,3 +324,19 @@ void SelectMenu::SelectMod(const std::string& s)
 	ShowScriptList();
 }
 
+bool SelectMenu::HandleEvent(const SDL_Event& ev)
+{
+	switch (ev.type) {
+		case SDL_MOUSEBUTTONDOWN: {
+			if (showList)
+				showList->MousePress(ev.button.x, ev.button.y, ev.button.button);
+			break;
+		}
+		case SDL_MOUSEBUTTONUP: {
+			if (showList)
+				showList->MouseRelease(ev.button.x, ev.button.y, ev.button.button);
+			break;
+		}
+	}
+	return false;
+}

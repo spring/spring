@@ -5,6 +5,7 @@
 
 class ClientSetup;
 class CglList;
+union SDL_Event;
 
 /**
 @brief User prompt for options when no script is given
@@ -17,6 +18,7 @@ class SelectMenu : public CGameController
 {
 public:
 	SelectMenu(bool server);
+	~SelectMenu();
 
 	bool Draw();
 	int KeyPressed(unsigned short k, bool isRepeat);
@@ -32,6 +34,7 @@ public:
 	void SelectMod(const std::string& s);
 
 private:
+	bool HandleEvent(const SDL_Event& ev);
 	std::string userScript;
 	std::string userMap;
 	std::string userMod;
