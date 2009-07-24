@@ -5,6 +5,8 @@
 
 #include "Vec2.h"
 
+class int2;
+
 class IMouseInput
 {
 public:
@@ -13,14 +15,20 @@ public:
 	IMouseInput ();
 	virtual ~IMouseInput();
 
-	virtual int2 GetPos () = 0;
+	virtual int2 GetPos ()
+	{
+		return mousepos;
+	};
 	virtual void SetPos (int2 pos) = 0;
 
 	virtual void Update () {}
 
-	virtual void HandleSDLMouseEvent (const SDL_Event& event) = 0;
+	bool HandleSDLMouseEvent (const SDL_Event& event);
 
 	virtual void SetWMMouseCursor (void* wmcursor) {}
+	
+protected:
+	int2 mousepos;
 };
 
 
