@@ -357,14 +357,7 @@ function printEventJavaCls(evtIndex) {
 		}
 		print("		}") >> javaFile;
 	} else {
-		if (evtsNumMembers[evtIndex] == 0) {
-			print("		// JNA thinks a 0 size struct is an error,") >> javaFile;
-			print("		// when it evaluates the size,") >> javaFile;
-			print("		// so we set it manually to 1,.") >> javaFile;
-			print("		// because 0 would fail.") >> javaFile;
-			print("		super(1);") >> javaFile;
-		}
-		print("		useMemory(memory);") >> javaFile;
+		print("		super(memory);") >> javaFile;
 		print("		read();") >> javaFile;
 	}
 	print("	}") >> javaFile;
