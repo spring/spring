@@ -424,6 +424,8 @@ EXPORT(const char*) GetFullUnitName(int unit)
  *
  * After this, the contents of the archive are available to other unitsync functions,
  * for example: ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
+ *
+ * Don't forget to call RemoveAllArchives() before proceeding with other archives.
  */
 EXPORT(void) AddArchive(const char* name)
 {
