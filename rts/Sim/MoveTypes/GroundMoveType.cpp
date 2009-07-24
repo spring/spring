@@ -296,13 +296,25 @@ void CGroundMoveType::Update()
 						const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));          // prevent NaN's
 						const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                    // in degrees
 						const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                      // in "headings"
-						const float turnAngleTime = (turnAngleSpr / owner->unitDef->turnRate);               // in frames 
+						const float revAngleSpr   = 32768.0f - turnAngleSpr;  // 180 deg - angle
+						// units start accelerating before finishing the turn, so subtract something
+						const float turnTimeMod   = 5.0f;
+						const float turnAngleTime = std::max(0.f, (turnAngleSpr / owner->unitDef->turnRate) - turnTimeMod); // in frames
+						const float revAngleTime  = std::max(0.f, (revAngleSpr / owner->unitDef->turnRate) - turnTimeMod);
 
-						const float decTime       = (currentSpeed / (decRate * 10.0f));                      // in frames
-						const float accTime       = (minRevSpeed / accRate);                                 // in frames
-						const float accDecTime    = (decTime + accTime);                                     // in frames
+						const float apxSpeedAfterTurn = std::max(0.f, currentSpeed-0.125f*(turnAngleTime*decRate));
+						const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed-0.125f*(revAngleTime*decRate));
+						const float decTime       = (reversing*apxSpeedAfterTurn) / decRate;                      // in frames
+						const float accTime       = (minFwdSpeed - !reversing*apxSpeedAfterTurn)  / accRate;
+						const float revDecTime    = (!reversing*apxRevSpdAfterTurn) / decRate;
+						const float revAccTime    = (minRevSpeed - reversing*apxRevSpdAfterTurn) / accRate;
+						const float revAccDecTime = revDecTime + revAccTime;
 
-						wantReverse = ((turnAngleTime + waypointFETA + (minFwdSpeed / accRate)) > (waypointRETA + accDecTime));
+
+						const float fwdETA = waypointFETA + turnAngleTime + accTime + decTime;
+						const float revETA = waypointRETA + revAngleTime + revAccDecTime;
+
+						wantReverse = fwdETA > revETA;
 					}
 				}
 
