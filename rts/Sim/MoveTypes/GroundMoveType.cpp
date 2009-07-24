@@ -285,22 +285,24 @@ void CGroundMoveType::Update()
 					Arrived();
 				} else {
 					if (wpBehind && (owner->unitDef->rSpeed > 0.0f)) {
-						const float reqSpeed      = requestedSpeed * 0.5f + 0.01f;
-						const float minFwdSpeed   = std::min(reqSpeed, owner->unitDef->speed  / GAME_SPEED);
-						const float minRevSpeed   = std::min(reqSpeed, owner->unitDef->rSpeed / GAME_SPEED);
+						const float minFwdSpeed   = std::min(maxSpeed, owner->unitDef->speed  / GAME_SPEED); // in elmos/frame
+						const float minRevSpeed   = std::min(maxSpeed, owner->unitDef->rSpeed / GAME_SPEED); // in elmos/frame
 
-						const float3 waypointDif  = goalPos - owner->pos;                                      // use final WP for ETA
-						const float waypointDist  = waypointDif.Length();
-						const float waypointFETA  = waypointDist / minFwdSpeed;                                // in secs (simplistic)
-						const float waypointRETA  = waypointDist / minRevSpeed;                                // in secs (simplistic)
-						const float turnAngleDeg  = acosf(waypointDir.dot(owner->frontdir)) * (180.0f / PI);   // in degrees
-						const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                        // in "headings"
-						const float turnAngleTime = (turnAngleSpr / owner->unitDef->turnRate) / GAME_SPEED;    // in secs
-						const float decTime       = (currentSpeed / (decRate * 10.0f));                        // in frames
-						const float accTime       = (minRevSpeed / accRate);                                   // in frames
-						const float accDecTime    = (decTime + accTime) / GAME_SPEED;                          // in secs
+						const float3 waypointDif  = goalPos - owner->pos;                                    // use final WP for ETA
+						const float waypointDist  = waypointDif.Length();                                    // in elmos
+						const float waypointFETA  = (waypointDist / minFwdSpeed);                            // in frames (simplistic)
+						const float waypointRETA  = (waypointDist / minRevSpeed);                            // in frames (simplistic)
+						const float waypointDirDP = waypointDir.dot(owner->frontdir);
+						const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));          // prevent NaN's
+						const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                    // in degrees
+						const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                      // in "headings"
+						const float turnAngleTime = (turnAngleSpr / owner->unitDef->turnRate);               // in frames 
 
-						wantReverse = ((turnAngleTime + waypointFETA) > (waypointRETA + accDecTime));
+						const float decTime       = (currentSpeed / (decRate * 10.0f));                      // in frames
+						const float accTime       = (minRevSpeed / accRate);                                 // in frames
+						const float accDecTime    = (decTime + accTime);                                     // in frames
+
+						wantReverse = ((turnAngleTime + waypointFETA + (minFwdSpeed / accRate)) > (waypointRETA + accDecTime));
 					}
 				}
 
