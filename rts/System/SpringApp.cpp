@@ -1145,14 +1145,6 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			}
 			break;
 		}
-
-		case SDL_MOUSEMOTION:
-		case SDL_MOUSEBUTTONDOWN:
-		case SDL_MOUSEBUTTONUP:
-		case SDL_SYSWMEVENT: {
-			mouseInput->HandleSDLMouseEvent (event);
-			break;
-		}
 		case SDL_KEYDOWN: {
 			int i = event.key.keysym.sym;
 			currentUnicode = event.key.keysym.unicode;
