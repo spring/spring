@@ -5,6 +5,7 @@
 #include <SDL_timer.h>
 #include <boost/bind.hpp>
 #include <sstream>
+#include <unistd.h>
 #include <stack>
 #include <boost/cstdint.hpp>
 
@@ -78,7 +79,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server): showList(NULL)
+SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
 {
 	mySettings = new ClientSetup();
 	mySettings->isHost = server;
@@ -101,8 +102,21 @@ SelectMenu::SelectMenu(bool server): showList(NULL)
 		menu->SetSize(0.4, 0.4);
 		gui->AddElement(menu);
 		Button* single = new Button("Singleplayer", menu);
+		single->SetCallback(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Multiplayer", menu);
+		multi->SetCallback(boost::bind(&SelectMenu::Multi, this));
 		Button* quit = new Button("Quit", menu);
+		quit->SetCallback(boost::bind(&SelectMenu::Quit, this));
+	}
+}
+
+SelectMenu::~SelectMenu()
+{
+	if (menu)
+	{
+		gui->RmElement(menu);
+		delete menu;
+		menu = NULL;
 	}
 }
 
@@ -195,7 +209,14 @@ bool SelectMenu::Draw()
 		font->glPrint(xStart, yStart, fontSize, FONT_NORM, tempstring);
 	}
 
-	if (showList) {
+	if (showList) {	
+		if (menu)
+		{
+			gui->RmElement(menu);
+			delete menu;
+			menu = NULL;
+			LogObject() << "Removing GUI elements";
+		}
 		showList->Draw();
 	}
 
@@ -327,6 +348,21 @@ void SelectMenu::SelectMod(const std::string& s)
 	showList = NULL;
 
 	ShowScriptList();
+}
+
+void SelectMenu::Single()
+{
+	ShowModList();
+}
+
+void SelectMenu::Multi()
+{
+	execlp("springlobby", "");
+}
+
+void SelectMenu::Quit()
+{
+	globalQuit = true;
 }
 
 bool SelectMenu::HandleEvent(const SDL_Event& ev)

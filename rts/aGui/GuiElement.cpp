@@ -29,12 +29,13 @@ void GuiElement::Draw()
 
 bool GuiElement::HandleEvent(const SDL_Event& ev)
 {
-	HandleEventSelf(ev);
+	const bool ret = HandleEventSelf(ev);
 	for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
 	{
-		(*it)->HandleEvent(ev);
+		if ((*it)->HandleEvent(ev))
+			return true;
 	}
-	return false;
+	return ret;
 }
 
 bool GuiElement::MouseOver(int x, int y)
