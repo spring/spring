@@ -102,7 +102,6 @@ private:
 	bool cheatEvents;
 
 	ISkirmishAI* ai;
-	bool initialized;
 	CGlobalAICallback* callback;
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;
