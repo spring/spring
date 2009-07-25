@@ -9,6 +9,7 @@
 #include <sstream>
 #include <boost/system/system_error.hpp>
 #include <boost/asio.hpp>
+#include <boost/version.hpp>
 
 #include "Platform/errorhandler.h"
 #include "StdAfx.h"
@@ -69,7 +70,7 @@ int Run(int argc, char* argv[])
 		return -1;
 	}
 	catch (const boost::system::system_error& e) {
-		logOutput.Print("Fatal system error: %d: %s", e.code(), e.what());
+		logOutput.Print("Fatal system error: %d: %s", e.code().value(), e.what());
 	#ifdef _MSC_VER
 		throw;
 	#else
@@ -80,6 +81,8 @@ int Run(int argc, char* argv[])
 		return -1;
 	#endif
 	}
+	// TODO: add other boost versions that don't have boost::asio::system_error.
+	#if (BOOST_VERSION != 103700)
 	catch (const boost::asio::system_error& e) {
 		logOutput.Print("Fatal system error: %d: %s", e.code(), e.what());
 	#ifdef _MSC_VER
@@ -92,6 +95,7 @@ int Run(int argc, char* argv[])
 		return -1;
 	#endif
 	}
+	#endif
 	catch (const std::exception& e) {
 		SDL_Quit();
 	#ifdef _MSC_VER
