@@ -6,6 +6,7 @@
 #include <boost/bind.hpp>
 #include <sstream>
 #include <stack>
+#include <boost/cstdint.hpp>
 
 #include "ClientSetup.h"
 #include "PreGame.h"
@@ -22,7 +23,9 @@
 #include "ConfigHandler.h"
 #include "InputHandler.h"
 #include "StartScripts/ScriptHandler.h"
-#include <boost/cstdint.hpp>
+#include "aGui/Gui.h"
+#include "aGui/VerticalLayout.h"
+#include "aGui/Button.h"
 
 using std::string;
 
@@ -93,7 +96,14 @@ SelectMenu::SelectMenu(bool server): showList(NULL)
 		userPrompt = "Enter server address: ";
 		userWriting = true;
 	} else {
-		ShowModList();
+		InitGui();
+		menu = new VerticalLayout();
+		menu->SetPos(0.3, 0.3);
+		menu->SetSize(0.4, 0.4);
+		gui->AddElement(menu);
+		Button* single = new Button("Singleplayer", menu);
+		Button* multi = new Button("Multiplayer", menu);
+		Button* quit = new Button("Quit", menu);
 	}
 }
 
@@ -157,6 +167,7 @@ bool SelectMenu::Draw()
 {
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
+	gui->Draw();
 
 	if (userWriting) {
 		const std::string tempstring = userPrompt + userInput;

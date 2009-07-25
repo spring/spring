@@ -108,6 +108,8 @@ AUX_SOURCE_DIRECTORY(Rendering/GL renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/Textures renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/UnitModels renderfiles)
 
+AUX_SOURCE_DIRECTORY(aGui renderfiles)
+
 AUX_SOURCE_DIRECTORY(Sim simfiles)
 AUX_SOURCE_DIRECTORY(Sim/Features simfiles)
 AUX_SOURCE_DIRECTORY(Sim/Misc simfiles)
