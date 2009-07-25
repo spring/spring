@@ -8,6 +8,7 @@
 class ClientSetup;
 class CglList;
 union SDL_Event;
+class VerticalLayout;
 
 /**
 @brief User prompt for options when no script is given
@@ -45,6 +46,7 @@ private:
 	CglList* showList;
 
 	boost::signals::scoped_connection inputCon;
+	VerticalLayout* menu;
 };
 
 #endif
