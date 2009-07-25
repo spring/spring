@@ -32,6 +32,7 @@ protected:
 	typedef std::list<GuiElement*> ChildList;
 	ChildList children;
 	
+	void DrawBox(int how);
 	virtual void DrawSelf() {};
 	virtual bool HandleEventSelf(const SDL_Event& ev)
 	{

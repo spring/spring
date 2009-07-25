@@ -1,5 +1,6 @@
 #include "GuiElement.h"
 
+#include "Rendering/GL/myGL.h"
 
 int GuiElement::screensize[2];
 
@@ -55,7 +56,7 @@ float GuiElement::PixelToGlX(int x)
 
 float GuiElement::PixelToGlY(int y)
 {
-	return float(y)/float(screensize[1]);
+	return 1.0f - float(y)/float(screensize[1]);
 }
 
 void GuiElement::SetPos(float x, float y)
@@ -68,4 +69,14 @@ void GuiElement::SetSize(float x, float y)
 {
 	size[0] = x;
 	size[1] = y;
+}
+
+void GuiElement::DrawBox(int how)
+{
+	glBegin(how);
+	glVertex2f(pos[0], pos[1]);
+	glVertex2f(pos[0], pos[1]+size[1]);
+	glVertex2f(pos[0]+size[0], pos[1]+size[1]);
+	glVertex2f(pos[0]+size[0], pos[1]);
+	glEnd();
 }

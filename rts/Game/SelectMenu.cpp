@@ -96,7 +96,6 @@ SelectMenu::SelectMenu(bool server): showList(NULL)
 		userPrompt = "Enter server address: ";
 		userWriting = true;
 	} else {
-		InitGui();
 		menu = new VerticalLayout();
 		menu->SetPos(0.3, 0.3);
 		menu->SetSize(0.4, 0.4);
