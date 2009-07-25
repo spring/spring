@@ -108,8 +108,8 @@ void CglList::MouseRelease(int x, int y, int button)
 
 bool CglList::MouseUpdate(int x, int y)
 {
-	float mx = MouseX(x);
-	float my = MouseY(y);
+	mx = MouseX(x);
+	my = MouseY(y);
 
 	int nCurIndex = 0; // The item we're on
 	int nDrawOffset = 0; // The offset to the first draw item
@@ -146,10 +146,6 @@ bool CglList::IsAbove(int x, int y)
 
 void CglList::Draw()
 {
-	// dont call Mouse[XY] if we're being used in CPreGame (when gu or mouse is still NULL)
-	float mx = (gu && mouse) ? MouseX(mouse->lastx) : 0;
-	float my = (gu && mouse) ? MouseY(mouse->lasty) : 0;
-
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);

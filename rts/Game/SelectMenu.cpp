@@ -332,6 +332,11 @@ bool SelectMenu::HandleEvent(const SDL_Event& ev)
 				showList->MouseRelease(ev.button.x, ev.button.y, ev.button.button);
 			break;
 		}
+		case SDL_MOUSEMOTION: {
+			if (showList)
+				showList->MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
+			break;
+		}
 	}
 	return false;
 }
