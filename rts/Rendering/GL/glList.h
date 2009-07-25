@@ -58,6 +58,9 @@ private:
 	// used to save default to configHandler
 	int id;
 
+	float mx;
+	float my;
+
 	// for filtering
 	std::string query;
 	std::vector<std::string>* filteredItems;
