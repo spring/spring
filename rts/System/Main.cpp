@@ -81,21 +81,6 @@ int Run(int argc, char* argv[])
 		return -1;
 	#endif
 	}
-	// TODO: add other boost versions that don't have boost::asio::system_error.
-	#if (BOOST_VERSION != 103700)
-	catch (const boost::asio::system_error& e) {
-		logOutput.Print("Fatal system error: %d: %s", e.code(), e.what());
-	#ifdef _MSC_VER
-		throw;
-	#else
-		std::stringstream ss;
-		ss << e.code().value() << ": " << e.what();
-		std::string tmp = ss.str();
-		handleerror(NULL, tmp.c_str(), "Fatal Error", MBF_OK | MBF_EXCL);
-		return -1;
-	#endif
-	}
-	#endif
 	catch (const std::exception& e) {
 		SDL_Quit();
 	#ifdef _MSC_VER
