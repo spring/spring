@@ -1,9 +1,6 @@
 #include "InputHandler.h"
 
-#include "LogOutput.h"
-
 InputHandler input;
-
 
 InputHandler::InputHandler()
 {

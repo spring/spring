@@ -1,7 +1,7 @@
 #include "Button.h"
 
-#include "Rendering/glFont.h"
 #include "LogOutput.h"
+#include "Rendering/glFont.h"
 
 Button::Button(const std::string& _label, GuiElement* _parent) : GuiElement(_parent)
 {
@@ -57,10 +57,8 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_MOUSEBUTTONDOWN: {
-			LogObject() << "mousbutton down";
 			if (MouseOver(ev.button.x, ev.button.y))
 			{
-				LogObject() << "clicked";
 				clicked = true;
 			};
 			break;
@@ -68,7 +66,10 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 		case SDL_MOUSEBUTTONUP: {
 			if (MouseOver(ev.button.x, ev.button.y) && clicked)
 			{
-				// do stuff
+				if (!click.empty())
+					click();
+				else
+					LogObject() << "Button " << label << " clicked without callback";
 			}
 			break;
 		}
