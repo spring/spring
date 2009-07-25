@@ -2,6 +2,7 @@
 #define MOUSE_INPUT_H
 
 #include <SDL_events.h>
+#include <boost/signals/connection.hpp>
 
 #include "Vec2.h"
 
@@ -29,6 +30,7 @@ public:
 	
 protected:
 	int2 mousepos;
+	boost::signals::connection inputCon;
 };
 
 

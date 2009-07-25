@@ -95,7 +95,7 @@ else  (SDL_FOUND)
 	message("* spring-dedicated")
 endif (SDL_FOUND)
 
-FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex program_options system REQUIRED)
+FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex program_options system signals REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 FIND_PACKAGE(Devil REQUIRED)

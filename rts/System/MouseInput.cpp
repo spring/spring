@@ -31,7 +31,7 @@ IMouseInput* mouseInput = NULL;
 
 IMouseInput::IMouseInput()
 {
-	input.AddHandler(boost::bind(&IMouseInput::HandleSDLMouseEvent, this, _1));
+	inputCon = input.AddHandler(boost::bind(&IMouseInput::HandleSDLMouseEvent, this, _1));
 }
 
 
