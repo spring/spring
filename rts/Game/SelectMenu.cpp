@@ -97,11 +97,6 @@ SelectMenu::SelectMenu(bool server): showList(NULL)
 	}
 }
 
-SelectMenu::~SelectMenu()
-{
-	input.RemoveHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
-}
-
 int SelectMenu::KeyPressed(unsigned short k,bool isRepeat)
 {
 	if (k == SDLK_ESCAPE){
@@ -253,7 +248,7 @@ void SelectMenu::ShowScriptList()
 /** Create a CglList for selecting the mod. */
 void SelectMenu::ShowModList()
 {
-	input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
+	inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
 	CglList* list = new CglList("Select mod", boost::bind(&SelectMenu::SelectMod, this, _1), 3);
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
 	if (found.empty()) {

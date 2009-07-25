@@ -1,6 +1,8 @@
 #ifndef SELECT_MENU
 #define SELECT_MENU
 
+#include <boost/signals/connection.hpp>
+
 #include "GameController.h"
 
 class ClientSetup;
@@ -18,7 +20,6 @@ class SelectMenu : public CGameController
 {
 public:
 	SelectMenu(bool server);
-	~SelectMenu();
 
 	bool Draw();
 	int KeyPressed(unsigned short k, bool isRepeat);
@@ -42,6 +43,8 @@ private:
 	bool addressKnown;
 	ClientSetup* mySettings;
 	CglList* showList;
+
+	boost::signals::scoped_connection inputCon;
 };
 
 #endif
