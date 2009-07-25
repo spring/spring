@@ -2087,13 +2087,10 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir) const
 		return false;
 	}
 
-	const float minFwdSpeed   = std::min(maxSpeed,        owner->unitDef->speed  / GAME_SPEED); // in elmos/frame
-	const float minRevSpeed   = std::min(maxReverseSpeed, owner->unitDef->rSpeed / GAME_SPEED); // in elmos/frame
-
 	const float3 waypointDif  = goalPos - owner->pos;                                           // use final WP for ETA
 	const float waypointDist  = waypointDif.Length();                                           // in elmos
-	const float waypointFETA  = (waypointDist / minFwdSpeed);                                   // in frames (simplistic)
-	const float waypointRETA  = (waypointDist / minRevSpeed);                                   // in frames (simplistic)
+	const float waypointFETA  = (waypointDist / maxSpeed);                                      // in frames (simplistic)
+	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
 	const float waypointDirDP = waypointDir.dot(owner->frontdir);
 	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));                 // prevent NaN's
 	const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                           // in degrees
@@ -2107,10 +2104,10 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir) const
 
 	const float apxSpeedAfterTurn  = std::max(0.f, currentSpeed - 0.125f * (turnAngleTime * decRate));
 	const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed - 0.125f * (revAngleTime  * decRate));
-	const float decTime       = (reversing * apxSpeedAfterTurn) / decRate;                               // in frames
-	const float accTime       = (minFwdSpeed - !reversing*apxSpeedAfterTurn)  / accRate;
-	const float revDecTime    = (!reversing*apxRevSpdAfterTurn) / decRate;
-	const float revAccTime    = (minRevSpeed - reversing*apxRevSpdAfterTurn) / accRate;
+	const float decTime       = ( reversing * apxSpeedAfterTurn)  / decRate;
+	const float revDecTime    = (!reversing * apxRevSpdAfterTurn) / decRate;
+	const float accTime       = (maxSpeed        - !reversing * apxSpeedAfterTurn)  / accRate;
+	const float revAccTime    = (maxReverseSpeed -  reversing * apxRevSpdAfterTurn) / accRate;
 	const float revAccDecTime = revDecTime + revAccTime;
 
 	const float fwdETA = waypointFETA + turnAngleTime + accTime + decTime;
