@@ -21,6 +21,7 @@ class SelectMenu : public CGameController
 {
 public:
 	SelectMenu(bool server);
+	~SelectMenu();
 
 	bool Draw();
 	int KeyPressed(unsigned short k, bool isRepeat);
@@ -36,6 +37,10 @@ public:
 	void SelectMod(const std::string& s);
 
 private:
+	void Single();
+	void Multi();
+	void Quit();
+
 	bool HandleEvent(const SDL_Event& ev);
 	std::string userScript;
 	std::string userMap;
