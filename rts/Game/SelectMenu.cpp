@@ -357,7 +357,7 @@ void SelectMenu::Single()
 
 void SelectMenu::Multi()
 {
-	execlp("springlobby", "");
+	execlp("springlobby", "springlobby", NULL);
 }
 
 void SelectMenu::Quit()

@@ -74,6 +74,7 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 				{
 					LogObject() << "Button " << label << " clicked without callback";
 				}
+				clicked = false;
 				return true;
 			}
 		}
