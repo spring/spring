@@ -39,6 +39,7 @@ public:
 	float accRate;
 	float decRate;
 
+	float maxReverseSpeed;
 	float wantedSpeed;
 	float currentSpeed;
 	float deltaSpeed;
