@@ -39,6 +39,7 @@ public:
 	float accRate;
 	float decRate;
 
+	float maxReverseSpeed;
 	float wantedSpeed;
 	float currentSpeed;
 	float deltaSpeed;
@@ -117,6 +118,7 @@ protected:
 	void AdjustPosToWaterLine();
 	void UpdateDirectControl();
 	void UpdateOwnerPos(bool);
+	bool WantReverse(const float3&) const;
 
 	bool skidding;
 	bool flying;

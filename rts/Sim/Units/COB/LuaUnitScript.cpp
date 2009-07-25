@@ -231,6 +231,8 @@ CLuaUnitScript::~CLuaUnitScript()
 {
 	// if L is NULL then the lua_State is closed/closing (see HandleFreed)
 	if (L != NULL) {
+		// notify Lua the script is going down
+		Destroy();
 		for (map<string, int>::iterator it = scriptNames.begin(); it != scriptNames.end(); ++it) {
 			luaL_unref(L, LUA_REGISTRYINDEX, it->second);
 		}

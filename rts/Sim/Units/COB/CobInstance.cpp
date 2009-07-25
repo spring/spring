@@ -67,6 +67,9 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 
 CCobInstance::~CCobInstance()
 {
+	//this may be dangerous, is it really desired?
+	//Destroy();
+
 	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
 		//All threads blocking on animations can be killed safely from here since the scheduler does not
 		//know about them

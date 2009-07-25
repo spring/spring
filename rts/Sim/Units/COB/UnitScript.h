@@ -218,7 +218,8 @@ public:
 
 	// inlined callins, un-inline and make virtual when different behaviour is
 	// desired between the different unit script implementations (COB, Lua).
-    void Call(int id)    { RawCall(scriptIndex[id]); }
+	void Call(int id)    { RawCall(scriptIndex[id]); }
+	void Destroy()       { Call(COBFN_Destroy); }
 	void StartMoving()   { Call(COBFN_StartMoving); }
 	void StopMoving()    { Call(COBFN_StopMoving); }
 	void StartUnload()   { Call(COBFN_StartUnload); }
