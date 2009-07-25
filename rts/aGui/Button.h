@@ -16,6 +16,9 @@ private:
 	virtual void DrawSelf();
 	virtual bool HandleEventSelf(const SDL_Event& ev);
 	
+	bool hovered;
+	bool clicked;
+
 	std::string label;
 };
 

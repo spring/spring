@@ -40,6 +40,7 @@
 #include "Rendering/Textures/TAPalette.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/TextureAtlas.h"
+#include "aGui/Gui.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "LogOutput.h"
@@ -162,6 +163,7 @@ bool SpringApp::Initialize()
 	}
 
 	InitOpenGL();
+	InitGui();
 	palette.Init();
 
 	// Initialize keyboard
@@ -514,6 +516,7 @@ void SpringApp::SetupViewportGeometry()
 		}
 	}
 
+	gui->UpdateScreenGeometry(gu->viewSizeX, gu->viewSizeY);
 	gu->pixelX = 1.0f / (float)gu->viewSizeX;
 	gu->pixelY = 1.0f / (float)gu->viewSizeY;
 
