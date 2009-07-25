@@ -65,12 +65,25 @@ void CglList::AddItem(const std::string& name,const std::string& description)
 
 bool CglList::MousePress(int x, int y, int button)
 {
-	if (button != SDL_BUTTON_LEFT || !IsAbove(x, y))
-		return false;
+	switch (button)
+	{
+		case SDL_BUTTON_LEFT:
+		{
+			if (!IsAbove(x, y))
+				break;
 
-	activeMousePress = true;
-	MouseUpdate(x, y); // make sure place is up to date
-	return true;
+			activeMousePress = true;
+			MouseUpdate(x, y); // make sure place is up to date
+			break;
+		}
+		case SDL_BUTTON_WHEELDOWN:
+			DownOne();
+			break;
+			
+		case SDL_BUTTON_WHEELUP:
+			UpOne();
+			break;
+	}
 }
 
 void CglList::MouseMove(int x, int y, int dx,int dy, int button)
