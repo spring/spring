@@ -284,37 +284,8 @@ void CGroundMoveType::Update()
 					// pathId and set wantedSpeed to 0
 					Arrived();
 				} else {
-					if (wpBehind && (owner->unitDef->rSpeed > 0.0f)) {
-						const float minFwdSpeed   = std::min(maxSpeed, owner->unitDef->speed  / GAME_SPEED); // in elmos/frame
-						const float minRevSpeed   = std::min(maxSpeed, owner->unitDef->rSpeed / GAME_SPEED); // in elmos/frame
-
-						const float3 waypointDif  = goalPos - owner->pos;                                    // use final WP for ETA
-						const float waypointDist  = waypointDif.Length();                                    // in elmos
-						const float waypointFETA  = (waypointDist / minFwdSpeed);                            // in frames (simplistic)
-						const float waypointRETA  = (waypointDist / minRevSpeed);                            // in frames (simplistic)
-						const float waypointDirDP = waypointDir.dot(owner->frontdir);
-						const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));          // prevent NaN's
-						const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                    // in degrees
-						const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                      // in "headings"
-						const float revAngleSpr   = 32768.0f - turnAngleSpr;  // 180 deg - angle
-						// units start accelerating before finishing the turn, so subtract something
-						const float turnTimeMod   = 5.0f;
-						const float turnAngleTime = std::max(0.f, (turnAngleSpr / owner->unitDef->turnRate) - turnTimeMod); // in frames
-						const float revAngleTime  = std::max(0.f, (revAngleSpr / owner->unitDef->turnRate) - turnTimeMod);
-
-						const float apxSpeedAfterTurn = std::max(0.f, currentSpeed-0.125f*(turnAngleTime*decRate));
-						const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed-0.125f*(revAngleTime*decRate));
-						const float decTime       = (reversing*apxSpeedAfterTurn) / decRate;                      // in frames
-						const float accTime       = (minFwdSpeed - !reversing*apxSpeedAfterTurn)  / accRate;
-						const float revDecTime    = (!reversing*apxRevSpdAfterTurn) / decRate;
-						const float revAccTime    = (minRevSpeed - reversing*apxRevSpdAfterTurn) / accRate;
-						const float revAccDecTime = revDecTime + revAccTime;
-
-
-						const float fwdETA = waypointFETA + turnAngleTime + accTime + decTime;
-						const float revETA = waypointRETA + revAngleTime + revAccDecTime;
-
-						wantReverse = fwdETA > revETA;
+					if (wpBehind) {
+						wantReverse = WantReverse(waypointDir);
 					}
 				}
 
@@ -393,7 +364,7 @@ void CGroundMoveType::SlowUpdate()
 
 	// if we've strayed too far away from path, then need to reconsider
 	if (progressState == Active && etaFailures > 8) {
-		if (owner->pos.SqDistance2D(goalPos) > (200*200) || CheckGoalFeasability()) {
+		if (owner->pos.SqDistance2D(goalPos) > (200 * 200) || CheckGoalFeasability()) {
 			if (DEBUG_CONTROLLER)
 				logOutput.Print("ETA failure for unit %i", owner->id);
 
@@ -495,6 +466,8 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	}
 
 	StartEngine();
+	//! overridden by the next CMD_SET_WANTED_MAX_SPEED
+	SetMaxSpeed(std::max(owner->unitDef->speed / GAME_SPEED, owner->unitDef->rSpeed / GAME_SPEED));
 
 	if (owner->team == gu->myTeam) {
 		// Play "activate" sound.
@@ -2106,4 +2079,42 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 	if (!wantReverse && currentSpeed == 0.0f) {
 		reversing = false;
 	}
+}
+
+bool CGroundMoveType::WantReverse(const float3& waypointDir) const
+{
+	if (owner->unitDef->rSpeed <= 0.0f) {
+		return false;
+	}
+
+	const float minFwdSpeed   = std::min(maxSpeed, owner->unitDef->speed  / GAME_SPEED); // in elmos/frame
+	const float minRevSpeed   = std::min(maxSpeed, owner->unitDef->rSpeed / GAME_SPEED); // in elmos/frame
+
+	const float3 waypointDif  = goalPos - owner->pos;                                    // use final WP for ETA
+	const float waypointDist  = waypointDif.Length();                                    // in elmos
+	const float waypointFETA  = (waypointDist / minFwdSpeed);                            // in frames (simplistic)
+	const float waypointRETA  = (waypointDist / minRevSpeed);                            // in frames (simplistic)
+	const float waypointDirDP = waypointDir.dot(owner->frontdir);
+	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));          // prevent NaN's
+	const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                    // in degrees
+	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                      // in "headings"
+	const float revAngleSpr   = 32768.0f - turnAngleSpr;                                 // 180 deg - angle
+
+	// units start accelerating before finishing the turn, so subtract something
+	const float turnTimeMod   = 5.0f;
+	const float turnAngleTime = std::max(0.0f, (turnAngleSpr / owner->unitDef->turnRate) - turnTimeMod); // in frames
+	const float revAngleTime  = std::max(0.0f, (revAngleSpr  / owner->unitDef->turnRate) - turnTimeMod);
+
+	const float apxSpeedAfterTurn  = std::max(0.f, currentSpeed - 0.125f * (turnAngleTime * decRate));
+	const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed - 0.125f * (revAngleTime  * decRate));
+	const float decTime       = (reversing * apxSpeedAfterTurn) / decRate;                // in frames
+	const float accTime       = (minFwdSpeed - !reversing*apxSpeedAfterTurn)  / accRate;
+	const float revDecTime    = (!reversing*apxRevSpdAfterTurn) / decRate;
+	const float revAccTime    = (minRevSpeed - reversing*apxRevSpdAfterTurn) / accRate;
+	const float revAccDecTime = revDecTime + revAccTime;
+
+	const float fwdETA = waypointFETA + turnAngleTime + accTime + decTime;
+	const float revETA = waypointRETA + revAngleTime + revAccDecTime;
+
+	return (fwdETA > revETA);
 }

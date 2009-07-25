@@ -117,6 +117,7 @@ protected:
 	void AdjustPosToWaterLine();
 	void UpdateDirectControl();
 	void UpdateOwnerPos(bool);
+	bool WantReverse(const float3&) const;
 
 	bool skidding;
 	bool flying;
