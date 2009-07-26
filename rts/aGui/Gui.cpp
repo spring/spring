@@ -3,6 +3,7 @@
 #include <boost/bind.hpp>
 #include <SDL_events.h>
 
+#include "Rendering/GL/myGL.h"
 #include "System/InputHandler.h"
 #include "GuiElement.h"
 
@@ -13,6 +14,10 @@ Gui::Gui()
 
 void Gui::Draw()
 {
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_ALPHA_TEST);
+	glEnable(GL_BLEND);
+	glLoadIdentity();
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
 		(*it)->Draw();
 }
