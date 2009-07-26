@@ -27,6 +27,7 @@
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/Button.h"
+#include "aGui/TextElement.h"
 
 using std::string;
 
@@ -101,6 +102,7 @@ SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
 		menu->SetPos(0.3, 0.3);
 		menu->SetSize(0.4, 0.4);
 		gui->AddElement(menu);
+		TextElement* name = new TextElement("Spring", menu);
 		Button* single = new Button("Singleplayer", menu);
 		single->SetCallback(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Multiplayer", menu);
