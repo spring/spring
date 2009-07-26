@@ -4,7 +4,7 @@
 
 VerticalLayout::VerticalLayout(GuiElement* parent) : GuiElement(parent)
 {
-	spacing = 0.02f;
+	spacing = 0.005f;
 	borderWidth = 1.0f;
 }
 
