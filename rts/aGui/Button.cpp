@@ -17,10 +17,6 @@ void Button::Label(const std::string& _label)
 
 void Button::DrawSelf()
 {
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_BLEND);
-	glLoadIdentity();
 	glColor4f(0.8f,0.8f,0.8f, 0.8f);
 	
 	DrawBox(GL_QUADS);

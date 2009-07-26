@@ -25,17 +25,7 @@ void VerticalLayout::DrawSelf()
 {
 	if (borderWidth > 0)
 	{
-		glDisable(GL_TEXTURE_2D);
-		glDisable(GL_ALPHA_TEST);
-		glEnable(GL_BLEND);
-		glLoadIdentity();
-		glColor4f(1.f,1.f,1.f, 1.f);
-		
-		glBegin(GL_LINE_LOOP);
-		glVertex2f(pos[0], pos[1]);
-		glVertex2f(pos[0], pos[1]+size[1]);
-		glVertex2f(pos[0]+size[0], pos[1]+size[1]);
-		glVertex2f(pos[0]+size[0], pos[1]);
-		glEnd();
+		glColor4f(1.f,1.f,1.f, 1.f);	
+		DrawBox(GL_LINE_LOOP);
 	}
 }
