@@ -187,7 +187,7 @@ namespace terrain {
 		int vertexSize = GetVertexSize();
 
 		// Bind the vertex buffer components
-		Vector3 *vbuf = (Vector3 *)renderData->vertexBuffer.Bind();
+		Vector3* vbuf = (Vector3*) renderData->vertexBuffer.Bind();
 		glEnableClientState (GL_VERTEX_ARRAY);
 		glVertexPointer (3, GL_FLOAT, vertexSize, vbuf ++);
 		if (vda & VRT_Normal)
@@ -1101,6 +1101,9 @@ namespace terrain {
 
 		// update heightmap mipmap chain
 		heightmap->UpdateLower(sx,sy,w,h);
+
+		Update();
+		CacheTextures();
 	}
 
 	void Terrain::GetHeightmap (int sx,int sy,int w,int h, float *dest)
