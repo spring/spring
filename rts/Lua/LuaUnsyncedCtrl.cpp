@@ -65,6 +65,7 @@
 #include "ConfigHandler.h"
 
 #include <boost/cstdint.hpp>
+#include <Platform/Misc.h>
 
 using namespace std;
 
@@ -177,6 +178,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
 	REGISTER_LUA_CFUNC(SetLosViewColors);
+
+	REGISTER_LUA_CFUNC(Restart);
 
 	REGISTER_LUA_CFUNC(SetUnitDefIcon);
 	REGISTER_LUA_CFUNC(SetUnitDefImage);
@@ -1653,6 +1656,28 @@ int LuaUnsyncedCtrl::MakeFont(lua_State* L)
 	return 1;
 }
 
+int LuaUnsyncedCtrl::Restart(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+		luaL_error(L,
+			"Incorrect arguments to Restart(arguments, script)");
+	}
+
+	const string arguments = luaL_checkstring(L, 1);
+	const string script = luaL_checkstring(L, 2);
+
+	if (!script.empty())
+	{
+		std::ofstream scriptfile((FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str());
+		scriptfile << script;
+	}
+
+	execlp(Platform::GetBinaryFile().c_str(), arguments.c_str(), (FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str(), NULL);
+	LogObject() << "Error in Restart: " << strerror(errno);
+	lua_pushboolean(L, false);
+	return 1;
+}
 
 /******************************************************************************/
 
