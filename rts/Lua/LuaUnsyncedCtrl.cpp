@@ -6,6 +6,7 @@
 #include <set>
 #include <list>
 #include <cctype>
+#include <unistd.h>
 
 #include <fstream>
 
