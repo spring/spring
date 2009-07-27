@@ -359,7 +359,8 @@ void SelectMenu::Single()
 
 void SelectMenu::Multi()
 {
-	execlp("springlobby", "springlobby", NULL);
+	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby");
+	execlp(defLobby.c_str(), defLobby.c_str(), NULL);
 }
 
 void SelectMenu::Quit()
