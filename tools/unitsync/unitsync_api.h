@@ -70,7 +70,7 @@ EXPORT(const char* ) GetSideStartUnit(int side);
 
 EXPORT(int         ) GetMapOptionCount(const char* name);
 EXPORT(int         ) GetModOptionCount();
-EXPORT(int		   ) GetXXXOptionCount(const char* filename);
+EXPORT(int         ) GetCustomOptionCount(const char* filename);
 EXPORT(const char* ) GetOptionKey(int optIndex);
 EXPORT(const char* ) GetOptionScope(int optIndex);
 EXPORT(const char* ) GetOptionName(int optIndex);
