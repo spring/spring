@@ -3,6 +3,9 @@
 
 #include "GuiElement.h"
 
+namespace agui
+{
+
 class HorizontalLayout : public GuiElement
 {
 public:
@@ -19,4 +22,5 @@ private:
 	void UpdateChildGeo();
 };
 
+}
 #endif

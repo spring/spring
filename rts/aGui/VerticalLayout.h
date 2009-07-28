@@ -3,6 +3,9 @@
 
 #include "GuiElement.h"
 
+namespace agui
+{
+
 class VerticalLayout : public GuiElement
 {
 public:
@@ -15,5 +18,7 @@ private:
 	float borderWidth;
 	virtual void DrawSelf();
 };
+
+}
 
 #endif

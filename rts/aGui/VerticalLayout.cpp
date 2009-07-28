@@ -2,6 +2,9 @@
 
 #include "Rendering/GL/myGL.h"
 
+namespace agui
+{
+
 VerticalLayout::VerticalLayout(GuiElement* parent) : GuiElement(parent)
 {
 	spacing = 0.005f;
@@ -28,4 +31,6 @@ void VerticalLayout::DrawSelf()
 		glColor4f(1.f,1.f,1.f, 1.f);	
 		DrawBox(GL_LINE_LOOP);
 	}
+}
+
 }

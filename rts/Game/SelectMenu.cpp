@@ -30,8 +30,11 @@
 #include "aGui/Button.h"
 #include "aGui/LineEdit.h"
 #include "aGui/TextElement.h"
+#include "aGui/Window.h"
 
 using std::string;
+using agui::Button;
+using agui::HorizontalLayout;
 
 extern boost::uint8_t* keys;
 extern bool globalQuit;
@@ -85,6 +88,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
 {
 	wantConnect = false;
+	connectWnd = NULL;
 	mySettings = new ClientSetup();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
@@ -95,42 +99,33 @@ SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
 		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
 	}
 
-	if (!mySettings->isHost) {
-		menu = new VerticalLayout();
-		menu->SetPos(0.3, 0.3);
-		menu->SetSize(0.4, 0.3);
-		gui->AddElement(menu);
-		TextElement* name = new TextElement("Spring", menu);
-		HorizontalLayout* input = new HorizontalLayout(menu);
-		TextElement* label = new TextElement("Address:", input);
-		address = new LineEdit(input);
-		Button* connect = new Button("Connect", menu);
-		connect->SetCallback(boost::bind(&SelectMenu::DirectConnect, this));
-		Button* quit = new Button("Quit", menu);
-		quit->SetCallback(boost::bind(&SelectMenu::Quit, this));
-		userWriting = true;
-	} else {
-		menu = new VerticalLayout();
+	{
+		menu = new agui::VerticalLayout();
 		menu->SetPos(0.3, 0.3);
 		menu->SetSize(0.4, 0.4);
-		gui->AddElement(menu);
-		TextElement* name = new TextElement("Spring", menu);
+		agui::gui->AddElement(menu);
+		agui::TextElement* name = new agui::TextElement("Spring", menu);
 		Button* single = new Button("Singleplayer", menu);
-		single->SetCallback(boost::bind(&SelectMenu::Single, this));
-		Button* multi = new Button("Multiplayer", menu);
-		multi->SetCallback(boost::bind(&SelectMenu::Multi, this));
+		single->ClickHandler(boost::bind(&SelectMenu::Single, this));
+		Button* multi = new Button("Online Play", menu);
+		multi->ClickHandler(boost::bind(&SelectMenu::Multi, this));
+		Button* direct = new Button("Direct connect", menu);
+		direct->ClickHandler(boost::bind(&SelectMenu::ConnectWindow, this, true));
 		Button* quit = new Button("Quit", menu);
-		quit->SetCallback(boost::bind(&SelectMenu::Quit, this));
+		quit->ClickHandler(boost::bind(&SelectMenu::Quit, this));
+	}
+	
+	if (!mySettings->isHost) {
+		ConnectWindow(true);
 	}
 }
 
 SelectMenu::~SelectMenu()
 {
+	ConnectWindow(false);
 	if (menu)
 	{
-		gui->RmElement(menu);
-		delete menu;
-		menu = NULL;
+		agui::gui->RmElement(menu);
 	}
 }
 
@@ -156,16 +151,9 @@ bool SelectMenu::Draw()
 {
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
-	gui->Draw();
+	agui::gui->Draw();
 
-	if (showList) {	
-		if (menu)
-		{
-			gui->RmElement(menu);
-			delete menu;
-			menu = NULL;
-			LogObject() << "Removing GUI elements";
-		}
+	if (showList) {
 		showList->Draw();
 	}
 
@@ -313,6 +301,32 @@ void SelectMenu::Multi()
 void SelectMenu::Quit()
 {
 	globalQuit = true;
+}
+
+void SelectMenu::ConnectWindow(bool show)
+{
+	if (show && !connectWnd)
+	{
+		connectWnd = new agui::Window("Connect to server");
+		connectWnd->SetPos(0.5, 0.5);
+		connectWnd->SetSize(0.4, 0.3);
+		agui::gui->AddElement(connectWnd);
+		menu = new agui::VerticalLayout(connectWnd);
+		agui::TextElement* name = new agui::TextElement("Spring", menu);
+		HorizontalLayout* input = new HorizontalLayout(menu);
+		agui::TextElement* label = new agui::TextElement("Address:", input);
+		address = new agui::LineEdit(input);
+		HorizontalLayout* buttons = new HorizontalLayout(menu);
+		Button* close = new Button("Close", buttons);
+		close->ClickHandler(boost::bind(&SelectMenu::ConnectWindow, this, false));
+		Button* connect = new Button("Connect", buttons);
+		connect->ClickHandler(boost::bind(&SelectMenu::DirectConnect, this));
+	}
+	else if (!show && connectWnd)
+	{
+		agui::gui->RmElement(connectWnd);
+		connectWnd = NULL;
+	}
 }
 
 void SelectMenu::DirectConnect()
