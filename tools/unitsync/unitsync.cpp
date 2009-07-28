@@ -1652,7 +1652,31 @@ EXPORT(int) GetModOptionCount()
 	return 0;
 }
 
+EXPORT(int) GetXXXOptionCount(const char* filename)
+{
+	try {
+		CheckInit();
 
+		options.clear();
+		optionsSet.clear();
+
+		try {
+			ParseOptions(filename, SPRING_VFS_MOD, SPRING_VFS_MOD);
+		}
+		UNITSYNC_CATCH_BLOCKS;
+
+		optionsSet.clear();
+
+		return options.size();
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	// Failed to load engineoptions
+	options.clear();
+	optionsSet.clear();
+
+	return 0;
+}
 
 //////////////////////////
 //////////////////////////
