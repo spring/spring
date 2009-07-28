@@ -66,25 +66,37 @@ namespace fastmath {
 	/**
 	* @brief Calculates square root with less accuracy
 	*
-	* These square root functions use the inverse square
-	* root routines to obtain the answer. This one uses
-	* the less accurate, but faster isqrt().
-	*
+	* Force using SSE instruction set.
 	*/
-	inline float sqrt(float x) {
-		return (isqrt(x) * x);
+#ifdef __GNUC__
+	typedef float v4sf __attribute__ ((vector_size (16)));
+#endif
+
+	inline float sqrt(float x)
+	{
+			union
+			{
+					v4sf vec;
+					float x;
+			}
+			tmp;
+
+			tmp.x = x;
+#ifdef __GNUC__
+			tmp.vec = __builtin_ia32_sqrtss (tmp.vec);
+#else
+#	error "implement me please"
+#endif
+			return tmp.x;
 	}
 
 	/**
 	* @brief Calculates square root with more accuracy
 	*
-	* These square root functions use the inverse square
-	* root routines to obtain the answer. This one uses
-	* the more accurate, but slower isqrt2().
-	*
+	* Deprecated. Do not use.
 	*/
 	inline float sqrt2(float x) {
-		return (isqrt2(x) * x);
+		return fastmath::sqrt(x);
 	}
 
 
