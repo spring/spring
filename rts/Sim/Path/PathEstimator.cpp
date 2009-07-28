@@ -835,6 +835,9 @@ void CPathEstimator::Draw(void)
 	GML_RECMUTEX_LOCK(sel); // Draw
 
 	MoveData* md = moveinfo->GetMoveDataFromName("TANKSH2");
+	if (!md)
+		md = moveinfo->moveData[0];
+
 	if (!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata)
 		md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
 
