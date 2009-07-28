@@ -8,7 +8,7 @@ namespace agui
 VerticalLayout::VerticalLayout(GuiElement* parent) : GuiElement(parent)
 {
 	spacing = 0.005f;
-	borderWidth = 1.0f;
+	borderWidth = 0.0f;
 }
 
 void VerticalLayout::AddChild(GuiElement* elem)
@@ -24,10 +24,16 @@ void VerticalLayout::AddChild(GuiElement* elem)
 	}
 }
 
+void VerticalLayout::SetBorder(float thickness)
+{
+	borderWidth = thickness;
+}
+
 void VerticalLayout::DrawSelf()
 {
 	if (borderWidth > 0)
 	{
+		glLineWidth(borderWidth);
 		glColor4f(1.f,1.f,1.f, 1.f);	
 		DrawBox(GL_LINE_LOOP);
 	}

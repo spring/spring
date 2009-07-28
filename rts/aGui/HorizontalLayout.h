@@ -15,6 +15,8 @@ public:
 
 	virtual void SetPos(float x, float y);
 	virtual void SetSize(float x, float y);
+	void SetBorder(float thickness);
+
 private:
 	float spacing;
 	float borderWidth;
