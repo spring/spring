@@ -1652,7 +1652,7 @@ EXPORT(int) GetModOptionCount()
 	return 0;
 }
 
-EXPORT(int) GetXXXOptionCount(const char* filename)
+EXPORT(int) GetCustomOptionCount(const char* filename)
 {
 	try {
 		CheckInit();
@@ -1671,7 +1671,7 @@ EXPORT(int) GetXXXOptionCount(const char* filename)
 	}
 	UNITSYNC_CATCH_BLOCKS;
 
-	// Failed to load engineoptions
+	// Failed to load custom options file
 	options.clear();
 	optionsSet.clear();
 
