@@ -1068,11 +1068,15 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				// basic blocking-check (test if the obstacle cannot be overrun)
 				if (o != owner && moveMath->CrushResistant(*moveData, o) && desiredDir.dot(o->pos - owner->pos) > 0) {
 					float3 objectToUnit = (owner->pos - o->pos - o->speed * 30);
-					float distanceToObject = objectToUnit.Length();
+					float distanceToObjectSq = objectToUnit.SqLength();
 					float radiusSum = (owner->xsize + o->xsize) * SQUARE_SIZE / 2;
+					float distanceLimit = speedf * 35 + 10 + radiusSum;
+					float distanceLimitSq = distanceLimit * distanceLimit;
+					float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
 
 					// if object is close enough
-					if (distanceToObject < speedf * 35 + 10 + radiusSum && distanceToObject < currentDistanceToGoal && distanceToObject > 0.001f) {
+					if (distanceToObjectSq < distanceLimitSq && distanceToObjectSq < currentDistanceToGoalSq
+							&& distanceToObjectSq > 0.0001f) {
 						// Don't divide by zero. (TODO: figure out why this can
 						// actually happen.) Positive value means "to the right".
 						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfAvoid);
@@ -1081,23 +1085,25 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						// (or not yet fully apart), then the object is on the path of the unit
 						// and they are not collided.
 						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
-							fabs(objectDistToAvoidDirCenter) < radiusSum &&
-							(o->mobility || Distance2D(owner, o) >= 0)) {
+								fabs(objectDistToAvoidDirCenter) < radiusSum &&
+								(o->mobility || Distance2D(owner, o) >= 0)) {
 							// Avoid collision by turning the heading to left or right.
 							// Using the object thats needs the most adjustment.
-#if DEBUG_CONTROLLER
+#if D_DEBUG_CONTROLLER
 							GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
 
 							if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
 								geometricObjects->AddLine(owner->pos + UpVector * 20, o->pos + UpVector * 20, 3, 1, 4);
 #endif
 							if (objectDistToAvoidDirCenter > 0.0f) {
-								avoidRight += (radiusSum - objectDistToAvoidDirCenter) * AVOIDANCE_STRENGTH / distanceToObject;
+								avoidRight += (radiusSum - objectDistToAvoidDirCenter)
+										* AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir += (rightOfAvoid * avoidRight);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
 							} else {
-								avoidLeft += (radiusSum - fabs(objectDistToAvoidDirCenter)) * AVOIDANCE_STRENGTH / distanceToObject;
+								avoidLeft += (radiusSum - fabs(objectDistToAvoidDirCenter))
+										* AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
@@ -1114,7 +1120,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			// Sum up avoidance.
 			avoidanceVec = (desiredDir.cross(float3(0.0f, 1.0f, 0.0f)) * (avoidRight - avoidLeft));
 
-#if DEBUG_CONTROLLER
+#if D_DEBUG_CONTROLLER
 			GML_RECMUTEX_LOCK(sel); //ObstacleAvoidance
 
 			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
