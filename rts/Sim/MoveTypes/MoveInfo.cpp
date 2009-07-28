@@ -19,7 +19,7 @@
 using std::min;
 using std::max;
 
-CR_BIND(MoveData, (0x0, 0));
+CR_BIND(MoveData, (0));
 CR_BIND(CMoveInfo, );
 
 CR_REG_METADATA(MoveData, (
@@ -87,9 +87,9 @@ CMoveInfo::CMoveInfo()
 			break;
 		}
 
-		MoveData* md = new MoveData(0x0, 0);
+		MoveData* md = new MoveData(NULL);
 
-		md->name     = moveTable.GetString("name", "");
+		md->name     = StringToLower(moveTable.GetString("name", ""));
 		md->pathType = (num - 1);
 		md->maxSlope = 1.0f;
 		md->depth    = 0.0f;

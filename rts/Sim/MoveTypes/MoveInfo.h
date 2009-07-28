@@ -5,16 +5,17 @@
 #include <map>
 #include <string>
 #include "creg/creg_cond.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 class CMoveMath;
 
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
-	MoveData(const MoveData* udefMD, int gs) {
+	MoveData(const MoveData* udefMD) {
 		maxAcceleration = udefMD? udefMD->maxAcceleration:         0.0f;
 		maxBreaking     = udefMD? udefMD->maxAcceleration * -3.0f: 0.0f;
-		maxSpeed        = udefMD? udefMD->maxSpeed / gs:           0.0f;
+		maxSpeed        = udefMD? udefMD->maxSpeed / GAME_SPEED:   0.0f;
 		maxTurnRate     = udefMD? (short int) udefMD->maxTurnRate: 0;
 
 		size            = udefMD? udefMD->size:                    0;
