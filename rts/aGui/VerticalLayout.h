@@ -12,6 +12,7 @@ public:
 	VerticalLayout(GuiElement* parent = NULL);
 
 	virtual void AddChild(GuiElement* elem);
+	void SetBorder(float thickness);
 
 private:
 	float spacing;

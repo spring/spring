@@ -53,7 +53,6 @@ private:
 	std::string userMap;
 	std::string userMod;
 
-	bool addressKnown;
 	ClientSetup* mySettings;
 	CglList* showList;
 
@@ -61,7 +60,6 @@ private:
 	agui::VerticalLayout* menu;
 	agui::LineEdit* address;
 	agui::Window* connectWnd;
-	bool wantConnect;
 };
 
 #endif

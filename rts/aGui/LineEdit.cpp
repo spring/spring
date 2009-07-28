@@ -14,6 +14,18 @@ LineEdit::LineEdit(GuiElement* parent) : GuiElement(parent)
 	cursorPos = 0;
 }
 
+void LineEdit::SetFocus(bool focus)
+{
+	hasFocus = focus;
+}
+
+void LineEdit::SetContent(const std::string& line, bool moveCursor)
+{
+	content = line;
+	if (moveCursor)
+		cursorPos = content.size();
+}
+
 void LineEdit::DrawSelf()
 {
 	glColor4f(1.0f,1.0f,1.0f, 1.0f);

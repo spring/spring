@@ -87,7 +87,6 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 
 SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
 {
-	wantConnect = false;
 	connectWnd = NULL;
 	mySettings = new ClientSetup();
 	mySettings->isHost = server;
@@ -103,6 +102,7 @@ SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
 		menu = new agui::VerticalLayout();
 		menu->SetPos(0.3, 0.3);
 		menu->SetSize(0.4, 0.4);
+		menu->SetBorder(1.2f);
 		agui::gui->AddElement(menu);
 		agui::TextElement* name = new agui::TextElement("Spring", menu);
 		Button* single = new Button("Singleplayer", menu);
@@ -162,18 +162,6 @@ bool SelectMenu::Draw()
 
 bool SelectMenu::Update()
 {
-	if (!mySettings->isHost)
-	{
-		// we are a client, wait for user to type address
-		if (wantConnect && address)
-		{
-			configHandler->SetString("address",address->GetContent());
-			mySettings->hostip = address->GetContent();
-			pregame = new CPreGame(mySettings);
-			delete this;
-		}
-	}
-
 	return true;
 }
 
@@ -216,6 +204,11 @@ void SelectMenu::ShowScriptList()
 /** Create a CglList for selecting the mod. */
 void SelectMenu::ShowModList()
 {
+	if (menu)
+	{
+		agui::gui->RmElement(menu);
+		menu = NULL;
+	}
 	inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
 	CglList* list = new CglList("Select mod", boost::bind(&SelectMenu::SelectMod, this, _1), 3);
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
@@ -315,6 +308,8 @@ void SelectMenu::ConnectWindow(bool show)
 		HorizontalLayout* input = new HorizontalLayout(menu);
 		agui::TextElement* label = new agui::TextElement("Address:", input);
 		address = new agui::LineEdit(input);
+		address->SetFocus(true);
+		address->SetContent(configHandler->GetString("address", ""));
 		HorizontalLayout* buttons = new HorizontalLayout(menu);
 		Button* close = new Button("Close", buttons);
 		close->ClickHandler(boost::bind(&SelectMenu::ConnectWindow, this, false));
@@ -330,7 +325,11 @@ void SelectMenu::ConnectWindow(bool show)
 
 void SelectMenu::DirectConnect()
 {
-	wantConnect = true;
+	configHandler->SetString("address",address->GetContent());
+	mySettings->hostip = address->GetContent();
+	mySettings->isHost = false;
+	pregame = new CPreGame(mySettings);
+	delete this;
 }
 
 bool SelectMenu::HandleEvent(const SDL_Event& ev)

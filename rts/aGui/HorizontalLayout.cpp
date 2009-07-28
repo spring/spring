@@ -8,7 +8,7 @@ namespace agui
 HorizontalLayout::HorizontalLayout(GuiElement* parent) : GuiElement(parent)
 {
 	spacing = 0.005f;
-	borderWidth = 1.0f;
+	borderWidth = 0.0f;
 }
 
 void HorizontalLayout::SetPos(float x, float y)
@@ -23,6 +23,11 @@ void HorizontalLayout::SetSize(float x, float y)
 	UpdateChildGeo();
 }
 
+void HorizontalLayout::SetBorder(float thickness)
+{
+	borderWidth = thickness;
+}
+
 void HorizontalLayout::AddChild(GuiElement* elem)
 {
 	children.push_back(elem);
@@ -33,6 +38,7 @@ void HorizontalLayout::DrawSelf()
 {
 	if (borderWidth > 0)
 	{
+		glLineWidth(borderWidth);
 		glColor4f(1.f,1.f,1.f, 1.f);	
 		DrawBox(GL_LINE_LOOP);
 	}
