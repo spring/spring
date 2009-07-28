@@ -1661,7 +1661,7 @@ EXPORT(int) GetCustomOptionCount(const char* filename)
 		optionsSet.clear();
 
 		try {
-			ParseOptions(filename, SPRING_VFS_MOD, SPRING_VFS_MOD);
+			ParseOptions(filename, SPRING_VFS_ZIP, SPRING_VFS_ZIP);
 		}
 		UNITSYNC_CATCH_BLOCKS;
 
