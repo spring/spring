@@ -120,7 +120,7 @@ CMoveInfo::CMoveInfo()
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
 			md->moveMath = groundMoveMath;
 
-			if (md->name.find("TANK") != string::npos) {
+			if (md->name.find("tank") != string::npos) {
 				md->moveFamily = MoveData::Tank;
 			} else {
 				md->moveFamily = MoveData::KBot;

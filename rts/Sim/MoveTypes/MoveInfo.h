@@ -31,7 +31,7 @@ struct MoveData {
 		terrainClass    = udefMD? udefMD->terrainClass:            MoveData::Mixed;
 		followGround    = udefMD? udefMD->followGround:            true;
 		subMarine       = udefMD? udefMD->subMarine:               false;
-		name            = udefMD? udefMD->name:                    "TANK";
+		name            = udefMD? udefMD->name:                    "tank";
 	}
 
 	enum MoveType {
