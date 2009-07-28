@@ -4,6 +4,9 @@
 #include <list>
 #include <SDL_events.h>
 
+namespace agui
+{
+
 class GuiElement
 {
 public:
@@ -18,13 +21,12 @@ public:
 	static float PixelToGlX(int x);
 	static float PixelToGlY(int y);
 	
-	virtual void AddChild(GuiElement* elem)
-	{
-		children.push_back(elem);
-	};
+	virtual void AddChild(GuiElement* elem);
 	
 	virtual void SetPos(float x, float y);
 	virtual void SetSize(float x, float y);
+
+	void Move(float x, float y);
 
 protected:
 	GuiElement* parent;
@@ -43,5 +45,7 @@ protected:
 	float pos[2];
 	float size[2];
 };
+
+}
 
 #endif

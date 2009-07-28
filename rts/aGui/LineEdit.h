@@ -5,6 +5,9 @@
 
 #include "GuiElement.h"
 
+namespace agui
+{
+
 class LineEdit : public GuiElement
 {
 public:
@@ -23,4 +26,5 @@ private:
 	unsigned cursorPos;
 };
 
+}
 #endif

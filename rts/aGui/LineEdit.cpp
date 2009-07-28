@@ -5,6 +5,9 @@
 #include "LogOutput.h"
 #include "SDL_timer.h"
 
+namespace agui
+{
+
 LineEdit::LineEdit(GuiElement* parent) : GuiElement(parent)
 {
 	hasFocus = false;
@@ -122,4 +125,6 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 		}
 	}
 	return false;
+}
+
 }

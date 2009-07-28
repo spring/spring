@@ -8,8 +8,12 @@
 class ClientSetup;
 class CglList;
 union SDL_Event;
+namespace agui
+{
+class Window;
 class VerticalLayout;
 class LineEdit;
+}
 
 /**
 @brief User prompt for options when no script is given
@@ -41,6 +45,7 @@ private:
 	void Single();
 	void Multi();
 	void Quit();
+	void ConnectWindow(bool show);
 	void DirectConnect();
 
 	bool HandleEvent(const SDL_Event& ev);
@@ -53,8 +58,9 @@ private:
 	CglList* showList;
 
 	boost::signals::scoped_connection inputCon;
-	VerticalLayout* menu;
-	LineEdit* address;
+	agui::VerticalLayout* menu;
+	agui::LineEdit* address;
+	agui::Window* connectWnd;
 	bool wantConnect;
 };
 

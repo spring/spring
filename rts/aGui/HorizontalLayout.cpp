@@ -2,6 +2,9 @@
 
 #include "Rendering/GL/myGL.h"
 
+namespace agui
+{
+
 HorizontalLayout::HorizontalLayout(GuiElement* parent) : GuiElement(parent)
 {
 	spacing = 0.005f;
@@ -45,4 +48,6 @@ void HorizontalLayout::UpdateChildGeo()
 		(*i)->SetSize(hspacePerObject - 2.0f * spacing, size[1] - 2.0f*spacing);
 		++num;
 	}
+}
+
 }

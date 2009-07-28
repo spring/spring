@@ -6,6 +6,10 @@
 #include "Rendering/GL/myGL.h"
 #include "System/InputHandler.h"
 #include "GuiElement.h"
+#include "LogOutput.h"
+
+namespace agui
+{
 
 Gui::Gui()
 {
@@ -14,22 +18,42 @@ Gui::Gui()
 
 void Gui::Draw()
 {
+	for (ElList::iterator it = toBeRemoved.begin(); it != toBeRemoved.end(); ++it)
+	{
+		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt)
+		{
+			if (*elIt == *it)
+			{
+				elements.erase(elIt);
+				delete (*it);
+				break;
+			}
+		}
+	}
+	toBeRemoved.clear();
+
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
 	glLoadIdentity();
-	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
+	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it)
 		(*it)->Draw();
 }
 
-void Gui::AddElement(GuiElement* elem)
+void Gui::AddElement(GuiElement* elem, bool front)
 {
 	for (ElList::const_iterator it = elements.begin(); it != elements.end(); ++it)
 	{
 		if (*it == elem)
+		{
+			LogObject() << "Gui::AddElement: skipping duplicated object";
 			return;
+		}
 	}
-	elements.push_back(elem);
+	if (front)
+		elements.push_front(elem);
+	else
+		elements.push_back(elem);
 }
 
 void Gui::RmElement(GuiElement* elem)
@@ -38,7 +62,7 @@ void Gui::RmElement(GuiElement* elem)
 	{
 		if (*it == elem)
 		{
-			elements.erase(it);
+			toBeRemoved.push_back(elem);
 			return;
 		}
 	}
@@ -51,8 +75,14 @@ void Gui::UpdateScreenGeometry(int screenx, int screeny)
 
 bool Gui::HandleEvent(const SDL_Event& ev)
 {
+	bool mouseEvent = false;
+	if  (ev.type == SDL_MOUSEMOTION || ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP)
+		mouseEvent = true;
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
-		(*it)->HandleEvent(ev);
+	{
+		if ((*it)->HandleEvent(ev) || (mouseEvent && (*it)->MouseOver(ev.motion.x, ev.motion.y)))
+			return true;
+	}
 	return false;
 }
 
@@ -62,3 +92,5 @@ void InitGui()
 	if (!gui)
 		gui = new Gui();
 };
+
+}

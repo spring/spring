@@ -163,7 +163,7 @@ bool SpringApp::Initialize()
 	}
 
 	InitOpenGL();
-	InitGui();
+	agui::InitGui();
 	palette.Init();
 
 	// Initialize keyboard
@@ -516,7 +516,7 @@ void SpringApp::SetupViewportGeometry()
 		}
 	}
 
-	gui->UpdateScreenGeometry(gu->viewSizeX, gu->viewSizeY);
+	agui::gui->UpdateScreenGeometry(gu->viewSizeX, gu->viewSizeY);
 	gu->pixelX = 1.0f / (float)gu->viewSizeX;
 	gu->pixelY = 1.0f / (float)gu->viewSizeY;
 

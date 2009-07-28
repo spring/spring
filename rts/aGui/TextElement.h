@@ -5,6 +5,9 @@
 
 #include "GuiElement.h"
 
+namespace agui
+{
+
 class TextElement : public GuiElement
 {
 public:
@@ -15,5 +18,5 @@ private:
 
 	std::string text;
 };
-
+}
 #endif // TEXTELEMENT_H

@@ -3,6 +3,9 @@
 #include "LogOutput.h"
 #include "Rendering/glFont.h"
 
+namespace agui
+{
+
 Button::Button(const std::string& _label, GuiElement* _parent) : GuiElement(_parent)
 {
 	Label(_label);
@@ -13,6 +16,11 @@ void Button::Label(const std::string& _label)
 	label = _label;
 	clicked = false;
 	hovered = false;
+}
+
+boost::signals::connection Button::ClickHandler(SignalType::slot_function_type handler)
+{
+	return sig.connect(handler);
 }
 
 void Button::DrawSelf()
@@ -62,9 +70,9 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 		case SDL_MOUSEBUTTONUP: {
 			if (MouseOver(ev.button.x, ev.button.y) && clicked)
 			{
-				if (!click.empty())
+				if (!sig.empty())
 				{
-					click();
+					sig();
 				}
 				else
 				{
@@ -88,4 +96,6 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 		}
 	}
 	return false;
+}
+
 }
