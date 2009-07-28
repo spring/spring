@@ -23,8 +23,8 @@ public:
 		children.push_back(elem);
 	};
 	
-	void SetPos(float x, float y);
-	void SetSize(float x, float y);
+	virtual void SetPos(float x, float y);
+	virtual void SetSize(float x, float y);
 
 protected:
 	GuiElement* parent;

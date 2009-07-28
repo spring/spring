@@ -26,7 +26,9 @@
 #include "StartScripts/ScriptHandler.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
+#include "aGui/HorizontalLayout.h"
 #include "aGui/Button.h"
+#include "aGui/LineEdit.h"
 #include "aGui/TextElement.h"
 
 using std::string;
@@ -82,6 +84,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 
 SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
 {
+	wantConnect = false;
 	mySettings = new ClientSetup();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
@@ -93,9 +96,18 @@ SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
 	}
 
 	if (!mySettings->isHost) {
-		userInput = configHandler->GetString("address", "");
-		writingPos = userInput.length();
-		userPrompt = "Enter server address: ";
+		menu = new VerticalLayout();
+		menu->SetPos(0.3, 0.3);
+		menu->SetSize(0.4, 0.3);
+		gui->AddElement(menu);
+		TextElement* name = new TextElement("Spring", menu);
+		HorizontalLayout* input = new HorizontalLayout(menu);
+		TextElement* label = new TextElement("Address:", input);
+		address = new LineEdit(input);
+		Button* connect = new Button("Connect", menu);
+		connect->SetCallback(boost::bind(&SelectMenu::DirectConnect, this));
+		Button* quit = new Button("Quit", menu);
+		quit->SetCallback(boost::bind(&SelectMenu::Quit, this));
 		userWriting = true;
 	} else {
 		menu = new VerticalLayout();
@@ -137,44 +149,6 @@ int SelectMenu::KeyPressed(unsigned short k,bool isRepeat)
 		return 0;
 	}
 
-	if (userWriting) {
-		keys[k] = true;
-		if (k == SDLK_v && keys[SDLK_LCTRL]){
-			PasteClipboard();
-			return 0;
-		}
-		if(k == SDLK_BACKSPACE){
-			if (!userInput.empty() && (writingPos > 0)) {
-				userInput.erase(writingPos - 1, 1);
-				writingPos--;
-			}
-			return 0;
-		}
-		if (k == SDLK_DELETE) {
-			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-				userInput.erase(writingPos, 1);
-			}
-			return 0;
-		}
-		else if (k == SDLK_LEFT) {
-			writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
-		}
-		else if (k == SDLK_RIGHT) {
-			writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
-		}
-		else if (k == SDLK_HOME) {
-			writingPos = 0;
-		}
-		else if (k == SDLK_END) {
-			writingPos = (int)userInput.length();
-		}
-		if (k == SDLK_RETURN){
-			userWriting = false;
-			return 0;
-		}
-		return 0;
-	}
-
 	return 0;
 }
 
@@ -183,33 +157,6 @@ bool SelectMenu::Draw()
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
 	gui->Draw();
-
-	if (userWriting) {
-		const std::string tempstring = userPrompt + userInput;
-
-		const float xStart = 0.10f;
-		const float yStart = 0.75f;
-
-		const float fontScale = 1.0f;
-		const float fontSize  = fontScale * font->GetSize();
-
-		// draw the caret
-		const int caretPos = userPrompt.length() + writingPos;
-		const string caretStr = tempstring.substr(0, caretPos);
-		const float caretWidth = fontSize * font->GetTextWidth(caretStr) * gu->pixelX;
-		char c = userInput[writingPos];
-		if (c == 0) { c = ' '; }
-		const float cw = fontSize * font->GetCharacterWidth(c) * gu->pixelX;
-		const float csx = xStart + caretWidth;
-		glDisable(GL_TEXTURE_2D);
-		const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
-		glColor4f(f, f, f, 0.75f);
-		glRectf(csx, yStart, csx + cw, yStart + fontSize * font->GetLineHeight() * gu->pixelY);
-		glEnable(GL_TEXTURE_2D);
-
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		font->glPrint(xStart, yStart, fontSize, FONT_NORM, tempstring);
-	}
 
 	if (showList) {	
 		if (menu)
@@ -230,10 +177,10 @@ bool SelectMenu::Update()
 	if (!mySettings->isHost)
 	{
 		// we are a client, wait for user to type address
-		if (!userWriting)
+		if (wantConnect && address)
 		{
-			configHandler->SetString("address",userInput);
-			mySettings->hostip = userInput;
+			configHandler->SetString("address",address->GetContent());
+			mySettings->hostip = address->GetContent();
 			pregame = new CPreGame(mySettings);
 			delete this;
 		}
@@ -366,6 +313,11 @@ void SelectMenu::Multi()
 void SelectMenu::Quit()
 {
 	globalQuit = true;
+}
+
+void SelectMenu::DirectConnect()
+{
+	wantConnect = true;
 }
 
 bool SelectMenu::HandleEvent(const SDL_Event& ev)
