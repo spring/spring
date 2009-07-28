@@ -120,5 +120,14 @@ inline void LuaPushNamedCFunc(lua_State* L,
 }
 
 
-#endif // LUA_UTILS_H
+inline void LuaInsertDualMapPair(lua_State* L, const string& name, int number)
+{
+	lua_pushstring(L, name.c_str());
+	lua_pushnumber(L, number);
+	lua_rawset(L, -3);
+	lua_pushnumber(L, number);
+	lua_pushstring(L, name.c_str());
+	lua_rawset(L, -3);
+}
 
+#endif // LUA_UTILS_H
