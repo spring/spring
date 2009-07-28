@@ -58,6 +58,7 @@ void Gui::AddElement(GuiElement* elem, bool front)
 
 void Gui::RmElement(GuiElement* elem)
 {
+	// has to be delayed, otherwise deleting a button during a callback would segfault
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
 	{
 		if (*it == elem)
@@ -73,6 +74,21 @@ void Gui::UpdateScreenGeometry(int screenx, int screeny)
 	GuiElement::UpdateDisplayGeo(screenx, screeny);
 }
 
+bool Gui::MouseOverElement(const GuiElement* elem, int x, int y) const
+{
+	for (ElList::const_iterator it = elements.begin(); it != elements.end(); ++it)
+	{
+		if ((*it)->MouseOver(x, y))
+		{
+			if ((*it) == elem)
+				return true;
+			else
+				return false;
+		}
+	}
+	return false;
+}
+
 bool Gui::HandleEvent(const SDL_Event& ev)
 {
 	bool mouseEvent = false;
@@ -80,8 +96,7 @@ bool Gui::HandleEvent(const SDL_Event& ev)
 		mouseEvent = true;
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
 	{
-		if ((*it)->HandleEvent(ev) || (mouseEvent && (*it)->MouseOver(ev.motion.x, ev.motion.y)))
-			return true;
+		(*it)->HandleEvent(ev);
 	}
 	return false;
 }

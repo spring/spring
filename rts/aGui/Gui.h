@@ -22,7 +22,9 @@ public:
 	void RmElement(GuiElement*);
 	
 	void UpdateScreenGeometry(int screenx, int screeny);
-	
+
+	bool MouseOverElement(const GuiElement*, int x, int y) const;
+
 private:
 	bool HandleEvent(const SDL_Event& ev);
 	boost::signals::scoped_connection inputCon;
