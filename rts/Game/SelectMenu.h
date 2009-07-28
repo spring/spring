@@ -9,6 +9,7 @@ class ClientSetup;
 class CglList;
 union SDL_Event;
 class VerticalLayout;
+class LineEdit;
 
 /**
 @brief User prompt for options when no script is given
@@ -40,6 +41,7 @@ private:
 	void Single();
 	void Multi();
 	void Quit();
+	void DirectConnect();
 
 	bool HandleEvent(const SDL_Event& ev);
 	std::string userScript;
@@ -52,6 +54,8 @@ private:
 
 	boost::signals::scoped_connection inputCon;
 	VerticalLayout* menu;
+	LineEdit* address;
+	bool wantConnect;
 };
 
 #endif
