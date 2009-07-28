@@ -27,6 +27,13 @@ public:
 	virtual void SetSize(float x, float y);
 
 	void Move(float x, float y);
+	GuiElement* GetRoot()
+	{
+		if (parent)
+			return parent->GetRoot();
+		else
+			return this;
+	};
 
 protected:
 	GuiElement* parent;

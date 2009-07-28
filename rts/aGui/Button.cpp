@@ -1,5 +1,6 @@
 #include "Button.h"
 
+#include "Gui.h"
 #include "LogOutput.h"
 #include "Rendering/glFont.h"
 
@@ -61,7 +62,7 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_MOUSEBUTTONDOWN: {
-			if (MouseOver(ev.button.x, ev.button.y))
+			if (MouseOver(ev.button.x, ev.button.y) && gui->MouseOverElement(GetRoot(), ev.motion.x, ev.motion.y))
 			{
 				clicked = true;
 			};
@@ -83,7 +84,7 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 			}
 		}
 		case SDL_MOUSEMOTION: {
-			if (MouseOver(ev.motion.x, ev.motion.y))
+			if (MouseOver(ev.motion.x, ev.motion.y) && gui->MouseOverElement(GetRoot(), ev.motion.x, ev.motion.y))
 			{
 				hovered = true;
 			}

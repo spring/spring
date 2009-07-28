@@ -309,10 +309,9 @@ void SelectMenu::ConnectWindow(bool show)
 	{
 		connectWnd = new agui::Window("Connect to server");
 		connectWnd->SetPos(0.5, 0.5);
-		connectWnd->SetSize(0.4, 0.3);
+		connectWnd->SetSize(0.4, 0.2);
 		agui::gui->AddElement(connectWnd);
 		menu = new agui::VerticalLayout(connectWnd);
-		agui::TextElement* name = new agui::TextElement("Spring", menu);
 		HorizontalLayout* input = new HorizontalLayout(menu);
 		agui::TextElement* label = new agui::TextElement("Address:", input);
 		address = new agui::LineEdit(input);
