@@ -258,11 +258,11 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		unit->moveType = mt;
 
 		// Ground-mobility
-		unit->mobility = new MoveData(ud->movedata, GAME_SPEED);
+		unit->mobility = new MoveData(ud->movedata);
 
 	} else if (ud->canfly) {
 		// Air-mobility
-		unit->mobility = new MoveData(ud->movedata, GAME_SPEED);
+		unit->mobility = new MoveData(ud->movedata);
 
 		if (!unit->beingBuilt) {
 			// otherwise set this when finished building instead
