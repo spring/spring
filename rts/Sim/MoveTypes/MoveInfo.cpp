@@ -99,15 +99,15 @@ CMoveInfo::CMoveInfo()
 		const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
 		const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth", 0.0f);
 
-		if ((md->name.find("BOAT") != string::npos) ||
-		    (md->name.find("SHIP") != string::npos)) {
+		if ((md->name.find("boat") != string::npos) ||
+		    (md->name.find("ship") != string::npos)) {
 			md->moveType   = MoveData::Ship_Move;
 			md->depth      = minWaterDepth;
 			md->moveFamily = MoveData::Ship;
 			md->moveMath   = seaMoveMath;
 			md->subMarine  = moveTable.GetBool("subMarine", 0);
 		}
-		else if (md->name.find("HOVER") != string::npos) {
+		else if (md->name.find("hover") != string::npos) {
 			md->moveType   = MoveData::Hover_Move;
 			md->maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 			md->moveFamily = MoveData::Hover;
