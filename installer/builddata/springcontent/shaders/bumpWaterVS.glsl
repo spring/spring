@@ -59,7 +59,7 @@ void main(void)
 {
 	// COMPUTE TEXCOORDS
 	gl_TexCoord[0] = TexGenPlane*gl_Vertex.xzxz;
-	gl_TexCoord[4].pq = ShadingPlane.xy*gl_Vertex.xz;
+	gl_TexCoord[5].st = ShadingPlane.xy*gl_Vertex.xz;
 
 	// COMPUTE WAVE TEXTURE COORDS
 	const float fstart = PerlinStartFreq;
