@@ -1,6 +1,7 @@
 #ifndef FASTMATH_H
 #define FASTMATH_H
 
+#include <xmmintrin.h>
 #include <boost/cstdint.hpp>
 #include "lib/streflop/streflop_cond.h"
 
@@ -16,9 +17,6 @@
  */
 
 namespace fastmath {
-#ifdef __GNUC__
-	typedef float v4sf __attribute__ ((vector_size (16)));
-#endif
 
 	/****************** Square root functions ******************/
 
@@ -30,21 +28,15 @@ namespace fastmath {
 	*/
 	inline float isqrt_sse(float x)
 	{
-			union
-			{
-					v4sf vec;
-					float x;
-			}
-			tmp;
+		union
+		{
+			__m128 vec;
+			float x;
+		} tmp;
 
-
-			tmp.x = x;
-#ifdef __GNUC__
-			tmp.vec = __builtin_ia32_rsqrtss (tmp.vec);
-#else
-#	error "implement me please"
-#endif
-			return tmp.x;
+		tmp.x = x;
+		tmp.vec = _mm_rsqrt_ss(tmp.vec);
+		return tmp.x;
 	}
 
 
@@ -105,20 +97,15 @@ namespace fastmath {
 
 	inline float sqrt_sse(float x)
 	{
-			union
-			{
-					v4sf vec;
-					float x;
-			}
-			tmp;
+		union
+		{
+			__m128 vec;
+			float x;
+		} tmp;
 
-			tmp.x = x;
-#ifdef __GNUC__
-			tmp.vec = __builtin_ia32_sqrtss (tmp.vec);
-#else
-#	error "implement me please"
-#endif
-			return tmp.x;
+		tmp.x = x;
+		tmp.vec = _mm_sqrt_ss(tmp.vec);
+		return tmp.x;
 	}
 
 	/** Calculate sqrt using builtin sqrtf. */
