@@ -427,7 +427,7 @@ bool CCollisionHandler::IntersectEllipsoid(const CollisionVolume* v, const float
 			return b0;
 		} else {
 			// two solutions for t
-			const float rD = fastmath::sqrt(D);
+			const float rD = fastmath::apxsqrt(D);
 			const float t0 = (-B - rD) * 0.5f;
 			const float t1 = (-B + rD) * 0.5f;
 			// const float t0 = (-B + rD) / (2.0f * A);
@@ -580,7 +580,7 @@ bool CCollisionHandler::IntersectCylinder(const CollisionVolume* v, const float3
 			s0 = (p0 - pi0).SqLength();
 			b0 = (s0 < segLenSq && (p0[pAx] > -ahs[pAx] && p0[pAx] < ahs[pAx]));
 		} else {
-			rd = fastmath::sqrt(d);
+			rd = fastmath::apxsqrt(d);
 			t0 = (-b - rd) / (2.0f * a);
 			t1 = (-b + rd) / (2.0f * a);
 			p0 = (pii0 + (diir * t0)) * inv;

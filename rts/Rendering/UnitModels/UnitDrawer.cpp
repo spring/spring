@@ -496,7 +496,7 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 				const UnitDef* udef = ti->second.unitdef;
 				S3DModel* model = udef->LoadModel();
-				
+
 				model->DrawStatic();
 				glPopMatrix();
 			}
@@ -865,7 +865,7 @@ void CUnitDrawer::SetupForGhostDrawing() const
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glEnable(GL_TEXTURE_2D);
 
-	glPushAttrib(GL_COLOR_BUFFER_BIT || GL_DEPTH_BUFFER_BIT);	
+	glPushAttrib(GL_COLOR_BUFFER_BIT || GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_ALPHA_TEST);
