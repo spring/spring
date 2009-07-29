@@ -490,11 +490,11 @@ bool AAIBrain::ExpandBase(SectorType sectorType)
 				dist = 0.1f;
 
 				for(list<AAISector*>::iterator sector = sectors[0].begin(); sector != sectors[0].end(); ++sector) {
-					dist += fastmath::sqrt( ((*t)->x - (*sector)->x) * ((*t)->x - (*sector)->x) + ((*t)->y - (*sector)->y) * ((*t)->y - (*sector)->y) );
+					dist += fastmath::apxsqrt( ((*t)->x - (*sector)->x) * ((*t)->x - (*sector)->x) + ((*t)->y - (*sector)->y) * ((*t)->y - (*sector)->y) );
 				}
 
 				float3 center = (*t)->GetCenter();
-				my_rating /= (dist * fastmath::sqrt(map->GetEdgeDistance( &center )) );
+				my_rating /= (dist * fastmath::apxsqrt(map->GetEdgeDistance( &center )) );
 
 				// choose higher rated sector
 				if(my_rating > best_rating)
