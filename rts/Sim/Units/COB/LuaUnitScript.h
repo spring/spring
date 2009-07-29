@@ -96,8 +96,8 @@ private:
 	static int UpdateCallIn(lua_State* L);
 
 	// Lua COB replacement support funcs (+SpawnCEG, PlaySoundFile, etc.)
-	static int GetUnitCOBValue(lua_State* L);
-	static int SetUnitCOBValue(lua_State* L);
+	static int GetUnitValue(lua_State* L);
+	static int SetUnitValue(lua_State* L);
 	static int SetPieceVisibility(lua_State* L);
 	static int EmitSfx(lua_State* L);       // TODO: better names?
 	static int AttachUnit(lua_State* L);

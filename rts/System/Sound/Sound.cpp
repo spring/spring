@@ -32,7 +32,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 128);
-	pitchAdjust = configHandler->Get("PitchAdjust", true);
+	pitchAdjust = configHandler->Get("PitchAdjust", false);
 
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
@@ -337,7 +337,6 @@ void CSound::StartThread(int maxSounds)
 				else
 				{
 					maxSounds = std::max(i-1,0);
-					configHandler->Set("MaxSounds", maxSounds);
 					LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
 					delete thenewone;
 					break;
@@ -350,6 +349,7 @@ void CSound::StartThread(int maxSounds)
 
 			alListenerf(AL_GAIN, masterVolume);
 		}
+		configHandler->Set("MaxSounds", maxSounds);
 
 		soundThreadRunning = true;
 		while (soundThreadRunning) {

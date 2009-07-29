@@ -91,6 +91,7 @@ void VertexBuffer::UnlockData ()
 	if (id) {
 		glBindBufferARB(type, id);
 		glBufferDataARB(type, size, data, GL_STATIC_DRAW_ARB);
+		glBindBufferARB(type, 0);
 		delete[] data;
 	}
 }

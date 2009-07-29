@@ -1047,7 +1047,8 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 		lua_pushstring(L, it->second.c_str());
 		lua_rawset(L, -3);
 	}
-	return 7;
+	lua_pushnumber(L, team->handicap);
+	return 8;
 }
 
 

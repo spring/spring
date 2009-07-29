@@ -15,16 +15,6 @@
 /******************************************************************************/
 /******************************************************************************/
 
-static void InsertDualMapPair(lua_State* L, const string& name, int number)
-{
-	lua_pushstring(L, name.c_str());
-	lua_pushnumber(L, number);
-	lua_rawset(L, -3);
-	lua_pushnumber(L, number);
-	lua_pushstring(L, name.c_str());
-	lua_rawset(L, -3);
-}
-
 
 bool LuaConstCMD::PushEntries(lua_State* L)
 {
@@ -40,7 +30,7 @@ bool LuaConstCMD::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "WAITCODE_SQUAD",  CMD_WAITCODE_SQUADWAIT);
 	LuaPushNamedNumber(L, "WAITCODE_GATHER", CMD_WAITCODE_GATHERWAIT);
 
-#define PUSH_CMD(cmd) InsertDualMapPair(L, #cmd, CMD_ ## cmd);
+#define PUSH_CMD(cmd) LuaInsertDualMapPair(L, #cmd, CMD_ ## cmd);
 
 	PUSH_CMD(STOP);
 	PUSH_CMD(INSERT);
@@ -84,7 +74,7 @@ bool LuaConstCMD::PushEntries(lua_State* L)
 	PUSH_CMD(AUTOREPAIRLEVEL);
 	PUSH_CMD(LOOPBACKATTACK);
 	PUSH_CMD(IDLEMODE);
-	
+
 	return true;
 }
 
