@@ -371,7 +371,7 @@ AAIConstructor* AAIUnitTable::FindClosestBuilder(int building, float3 *pos, bool
 				// filter out commander
 				if(suitable && ( commander || !bt->IsCommander(builder->def_id) ) )
 				{
-					my_dist = fastmath::sqrt( (builder_pos.x - pos->x) * (builder_pos.x - pos->x) + (builder_pos.z - pos->z) * (builder_pos.z - pos->z) );
+					my_dist = fastmath::apxsqrt( (builder_pos.x - pos->x) * (builder_pos.x - pos->x) + (builder_pos.z - pos->z) * (builder_pos.z - pos->z) );
 
 					if(bt->unitList[builder->def_id-1]->speed > 0)
 						my_dist /= bt->unitList[builder->def_id-1]->speed;
@@ -428,7 +428,7 @@ AAIConstructor* AAIUnitTable::FindClosestAssistant(float3 pos, int importance, b
 					dist = (pos.x - assistant_pos.x) * (pos.x - assistant_pos.x) + (pos.z - assistant_pos.z) * (pos.z - assistant_pos.z);
 
 					if(dist > 0)
-						my_rating = assistant->buildspeed / fastmath::sqrt(dist);
+						my_rating = assistant->buildspeed / fastmath::apxsqrt(dist);
 					else
 						my_rating = 1;
 
