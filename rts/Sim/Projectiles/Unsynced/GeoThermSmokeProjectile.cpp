@@ -31,7 +31,7 @@ void CGeoThermSmokeProjectile::Update()
 
 			if(d.y < o->radius*0.4f)
 			{
-				float speedlen = fastmath::sqrt(speed.SqLength());
+				float speedlen = fastmath::apxsqrt(speed.SqLength());
 				float3 right(d.z, 0.0f, -d.x);
 				speed = d.cross(right);
 				speed.ANormalize();
@@ -39,7 +39,7 @@ void CGeoThermSmokeProjectile::Update()
 			}
 		}
 	}
-	float l = fastmath::sqrt(speed.SqLength());
+	float l = fastmath::apxsqrt(speed.SqLength());
 	speed.y += 1.0f;
 	speed *= l * fastmath::isqrt(speed.SqLength());
 

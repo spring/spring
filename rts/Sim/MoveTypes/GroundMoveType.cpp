@@ -320,7 +320,7 @@ void CGroundMoveType::Update()
 
 					// If arriving at waypoint, then need to slow down, or may pass it.
 					if (!moreCommands && currentDistanceToWaypoint < BreakingDistance(currentSpeed) + SQUARE_SIZE) {
-						wantedSpeed = std::min(wantedSpeed, fastmath::sqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
+						wantedSpeed = std::min(wantedSpeed, fastmath::apxsqrt(currentDistanceToWaypoint * -owner->mobility->maxBreaking));
 					}
 
 					if (owner->unitDef->turnInPlace) {
