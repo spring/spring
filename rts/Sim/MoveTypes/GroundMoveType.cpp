@@ -46,6 +46,7 @@ CR_REG_METADATA(CGroundMoveType, (
 		CR_MEMBER(accRate),
 		CR_MEMBER(decRate),
 
+		CR_MEMBER(maxReverseSpeed),
 		CR_MEMBER(wantedSpeed),
 		CR_MEMBER(currentSpeed),
 		CR_MEMBER(deltaSpeed),
@@ -124,37 +125,44 @@ std::vector<int2> (*CGroundMoveType::lineTable)[11] = 0;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CGroundMoveType::CGroundMoveType(CUnit* owner) :
+CGroundMoveType::CGroundMoveType(CUnit* owner):
 	AMoveType(owner),
+
 	baseTurnRate(0.1f),
 	turnRate(0.1f),
 	accRate(0.01f),
 	decRate(0.01f),
-	wantedSpeed(0),
+
+	maxReverseSpeed(0.0f),
+	wantedSpeed(0.0f),
 	currentSpeed(0.0f),
-	deltaSpeed(0),
+	deltaSpeed(0.0f),
 	deltaHeading(0),
-	oldPos(owner?owner->pos:float3(0,0,0)),
+
+	oldPos(owner? owner->pos: float3(0.0f, 0.0f, 0.0f)),
 	oldSlowUpdatePos(oldPos),
-	flatFrontDir(1,0,0),
+	flatFrontDir(1, 0, 0),
 	pathId(0),
 	goalRadius(0),
-	waypoint(0,0,0),
-	nextWaypoint(0,0,0),
-	etaWaypoint(0),
-	etaWaypoint2(0),
+
+	waypoint(0.0f, 0.0f, 0.0f),
+	nextWaypoint(0.0f, 0.0f, 0.0f),
+	etaWaypoint(0.0f),
+	etaWaypoint2(0.0f),
 	atGoal(false),
 	haveFinalWaypoint(false),
-	terrainSpeed(1),
-	requestedSpeed(0),
+
+	terrainSpeed(1.0f),
+	requestedSpeed(0.0f),
 	requestedTurnRate(0),
 	currentDistanceToWaypoint(0),
-	avoidanceVec(0,0,0),
+	avoidanceVec(0.0f, 0.0f, 0.0f),
 	restartDelay(0),
-	lastGetPathPos(0,0,0),
+	lastGetPathPos(0.0f, 0.0f, 0.0f),
 	pathFailures(0),
 	etaFailures(0),
 	nonMovingFailures(0),
+
 	floatOnWater(false),
 
 	nextDeltaSpeedUpdate(0),
@@ -164,14 +172,14 @@ CGroundMoveType::CGroundMoveType(CUnit* owner) :
 	skidding(false),
 	flying(false),
 	reversing(false),
-	skidRotSpeed(0),
+	skidRotSpeed(0.0f),
 
-	dropHeight(0),
+	dropHeight(0.0f),
 	skidRotVector(UpVector),
-	skidRotSpeed2(0),
-	skidRotPos2(0),
+	skidRotSpeed2(0.0f),
+	skidRotPos2(0.0f),
 	oldPhysState(CSolidObject::OnGround),
-	mainHeadingPos(0,0,0),
+	mainHeadingPos(0.0f, 0.0f, 0.0f),
 	useMainHeading(false)
 {
 	if (owner) {
@@ -206,7 +214,7 @@ void CGroundMoveType::Update()
 	ASSERT_SYNCED_FLOAT3(owner->pos);
 
 	// Update mobility.
-	owner->mobility->maxSpeed = maxSpeed;
+	owner->mobility->maxSpeed = reversing? maxReverseSpeed: maxSpeed;
 
 	if (owner->transporter) {
 		return;
@@ -284,37 +292,8 @@ void CGroundMoveType::Update()
 					// pathId and set wantedSpeed to 0
 					Arrived();
 				} else {
-					if (wpBehind && (owner->unitDef->rSpeed > 0.0f)) {
-						const float minFwdSpeed   = std::min(maxSpeed, owner->unitDef->speed  / GAME_SPEED); // in elmos/frame
-						const float minRevSpeed   = std::min(maxSpeed, owner->unitDef->rSpeed / GAME_SPEED); // in elmos/frame
-
-						const float3 waypointDif  = goalPos - owner->pos;                                    // use final WP for ETA
-						const float waypointDist  = waypointDif.Length();                                    // in elmos
-						const float waypointFETA  = (waypointDist / minFwdSpeed);                            // in frames (simplistic)
-						const float waypointRETA  = (waypointDist / minRevSpeed);                            // in frames (simplistic)
-						const float waypointDirDP = waypointDir.dot(owner->frontdir);
-						const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));          // prevent NaN's
-						const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                    // in degrees
-						const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                      // in "headings"
-						const float revAngleSpr   = 32768.0f - turnAngleSpr;  // 180 deg - angle
-						// units start accelerating before finishing the turn, so subtract something
-						const float turnTimeMod   = 5.0f;
-						const float turnAngleTime = std::max(0.f, (turnAngleSpr / owner->unitDef->turnRate) - turnTimeMod); // in frames
-						const float revAngleTime  = std::max(0.f, (revAngleSpr / owner->unitDef->turnRate) - turnTimeMod);
-
-						const float apxSpeedAfterTurn = std::max(0.f, currentSpeed-0.125f*(turnAngleTime*decRate));
-						const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed-0.125f*(revAngleTime*decRate));
-						const float decTime       = (reversing*apxSpeedAfterTurn) / decRate;                      // in frames
-						const float accTime       = (minFwdSpeed - !reversing*apxSpeedAfterTurn)  / accRate;
-						const float revDecTime    = (!reversing*apxRevSpdAfterTurn) / decRate;
-						const float revAccTime    = (minRevSpeed - reversing*apxRevSpdAfterTurn) / accRate;
-						const float revAccDecTime = revDecTime + revAccTime;
-
-
-						const float fwdETA = waypointFETA + turnAngleTime + accTime + decTime;
-						const float revETA = waypointRETA + revAngleTime + revAccDecTime;
-
-						wantReverse = fwdETA > revETA;
+					if (wpBehind) {
+						wantReverse = WantReverse(waypointDir);
 					}
 				}
 
@@ -393,7 +372,7 @@ void CGroundMoveType::SlowUpdate()
 
 	// if we've strayed too far away from path, then need to reconsider
 	if (progressState == Active && etaFailures > 8) {
-		if (owner->pos.SqDistance2D(goalPos) > (200*200) || CheckGoalFeasability()) {
+		if (owner->pos.SqDistance2D(goalPos) > (200 * 200) || CheckGoalFeasability()) {
 			if (DEBUG_CONTROLLER)
 				logOutput.Print("ETA failure for unit %i", owner->id);
 
@@ -463,7 +442,7 @@ void CGroundMoveType::SlowUpdate()
 Sets unit to start moving against given position with max speed.
 */
 void CGroundMoveType::StartMoving(float3 pos, float goalRadius) {
-	StartMoving(pos, goalRadius, maxSpeed * 2);
+	StartMoving(pos, goalRadius, (reversing? maxReverseSpeed * 2: maxSpeed * 2));
 }
 
 
@@ -484,7 +463,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 	// set the new goal
 	goalPos = moveGoalPos;
 	goalRadius = goalRadius;
-	requestedSpeed = std::min(speed, maxSpeed * 2.0f);
+	requestedSpeed = speed;
 	requestedTurnRate = owner->mobility->maxTurnRate;
 	atGoal = false;
 	useMainHeading = false;
@@ -498,7 +477,7 @@ void CGroundMoveType::StartMoving(float3 moveGoalPos, float goalRadius, float sp
 
 	if (owner->team == gu->myTeam) {
 		// Play "activate" sound.
-		int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
+		const int soundIdx = owner->unitDef->sounds.activate.getRandomIdx();
 		if (soundIdx >= 0) {
 			Channels::UnitReply.PlaySample(
 				owner->unitDef->sounds.activate.getID(soundIdx), owner,
@@ -512,7 +491,7 @@ void CGroundMoveType::StopMoving() {
 	tracefile << "Stop moving called: ";
 	tracefile << owner->pos.x << " " << owner->pos.y << " " << owner->pos.z << " " << owner->id << "\n";
 #endif
-	if(DEBUG_CONTROLLER)
+	if (DEBUG_CONTROLLER)
 		LogObject() << "SMove: Action stopped." << " " << int(owner->id) << "\n";
 
 	StopEngine();
@@ -532,7 +511,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 	}
 
 	// wanted speed and acceleration
-	float wSpeed = maxSpeed;
+	float wSpeed = reversing? maxReverseSpeed: maxSpeed;
 
 	// limit speed and acceleration
 	if (wantedSpeed > 0.0f) {
@@ -570,7 +549,7 @@ void CGroundMoveType::SetDeltaSpeed(bool wantReverse)
 					// keep the turn mostly in-place
 					wSpeed = turnSpeed;
 				} else {
-					if (haveFinalWaypoint && goalLength < (maxSpeed * GAME_SPEED)) {
+					if (haveFinalWaypoint && goalLength < ((reversing? maxReverseSpeed * GAME_SPEED: maxSpeed * GAME_SPEED))) {
 						// hit the brakes if this is the last waypoint of the path
 						wSpeed = std::max(turnSpeed, (turnSpeed + wSpeed) * 0.2f);
 					} else {
@@ -1089,11 +1068,15 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 				// basic blocking-check (test if the obstacle cannot be overrun)
 				if (o != owner && moveMath->CrushResistant(*moveData, o) && desiredDir.dot(o->pos - owner->pos) > 0) {
 					float3 objectToUnit = (owner->pos - o->pos - o->speed * 30);
-					float distanceToObject = objectToUnit.Length();
+					float distanceToObjectSq = objectToUnit.SqLength();
 					float radiusSum = (owner->xsize + o->xsize) * SQUARE_SIZE / 2;
+					float distanceLimit = speedf * 35 + 10 + radiusSum;
+					float distanceLimitSq = distanceLimit * distanceLimit;
+					float currentDistanceToGoalSq = currentDistanceToGoal * currentDistanceToGoal;
 
 					// if object is close enough
-					if (distanceToObject < speedf * 35 + 10 + radiusSum && distanceToObject < currentDistanceToGoal && distanceToObject > 0.001f) {
+					if (distanceToObjectSq < distanceLimitSq && distanceToObjectSq < currentDistanceToGoalSq
+							&& distanceToObjectSq > 0.0001f) {
 						// Don't divide by zero. (TODO: figure out why this can
 						// actually happen.) Positive value means "to the right".
 						float objectDistToAvoidDirCenter = objectToUnit.dot(rightOfAvoid);
@@ -1102,23 +1085,25 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 						// (or not yet fully apart), then the object is on the path of the unit
 						// and they are not collided.
 						if (objectToUnit.dot(avoidanceDir) < radiusSum &&
-							fabs(objectDistToAvoidDirCenter) < radiusSum &&
-							(o->mobility || Distance2D(owner, o) >= 0)) {
+								fabs(objectDistToAvoidDirCenter) < radiusSum &&
+								(o->mobility || Distance2D(owner, o) >= 0)) {
 							// Avoid collision by turning the heading to left or right.
 							// Using the object thats needs the most adjustment.
-#if DEBUG_CONTROLLER
+#if D_DEBUG_CONTROLLER
 							GML_RECMUTEX_LOCK(sel); // ObstacleAvoidance
 
 							if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end())
 								geometricObjects->AddLine(owner->pos + UpVector * 20, o->pos + UpVector * 20, 3, 1, 4);
 #endif
 							if (objectDistToAvoidDirCenter > 0.0f) {
-								avoidRight += (radiusSum - objectDistToAvoidDirCenter) * AVOIDANCE_STRENGTH / distanceToObject;
+								avoidRight += (radiusSum - objectDistToAvoidDirCenter)
+										* AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir += (rightOfAvoid * avoidRight);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
 							} else {
-								avoidLeft += (radiusSum - fabs(objectDistToAvoidDirCenter)) * AVOIDANCE_STRENGTH / distanceToObject;
+								avoidLeft += (radiusSum - fabs(objectDistToAvoidDirCenter))
+										* AVOIDANCE_STRENGTH * fastmath::isqrt2(distanceToObjectSq);
 								avoidanceDir -= (rightOfAvoid * avoidLeft);
 								avoidanceDir.Normalize();
 								rightOfAvoid = avoidanceDir.cross(float3(0.0f, 1.0f, 0.0f));
@@ -1135,7 +1120,7 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 			// Sum up avoidance.
 			avoidanceVec = (desiredDir.cross(float3(0.0f, 1.0f, 0.0f)) * (avoidRight - avoidLeft));
 
-#if DEBUG_CONTROLLER
+#if D_DEBUG_CONTROLLER
 			GML_RECMUTEX_LOCK(sel); //ObstacleAvoidance
 
 			if (selectedUnits.selectedUnits.find(owner) != selectedUnits.selectedUnits.end()) {
@@ -1381,7 +1366,7 @@ void CGroundMoveType::Arrived()
 		StopEngine();
 
 		if (owner->team == gu->myTeam) {
-			int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
+			const int soundIdx = owner->unitDef->sounds.arrived.getRandomIdx();
 			if (soundIdx >= 0) {
 				Channels::UnitReply.PlaySample(
 					owner->unitDef->sounds.arrived.getID(soundIdx), owner,
@@ -1419,7 +1404,7 @@ void CGroundMoveType::Fail()
 	// sends a message to user.
 	if (game->moveWarnings && (owner->team == gu->myTeam)) {
 		// playing "cant" sound.
-		int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
+		const int soundIdx = owner->unitDef->sounds.cant.getRandomIdx();
 		if (soundIdx >= 0) {
 			Channels::UnitReply.PlaySample(
 				owner->unitDef->sounds.cant.getID(soundIdx), owner,
@@ -2012,16 +1997,10 @@ void CGroundMoveType::SetMainHeading(){
 
 void CGroundMoveType::SetMaxSpeed(float speed)
 {
-	if (reversing) {
-		if (speed >= (owner->unitDef->speed / GAME_SPEED)) {
-			speed = (owner->unitDef->rSpeed / GAME_SPEED);
-		} else if (speed > (owner->unitDef->rSpeed / GAME_SPEED)) {
-			speed = (owner->unitDef->rSpeed / GAME_SPEED);
-		}
-	}
+	maxSpeed        = std::min(speed, owner->unitDef->speed  / GAME_SPEED);
+	maxReverseSpeed = std::min(speed, owner->unitDef->rSpeed / GAME_SPEED);
 
 	requestedSpeed = speed * 2.0f;
-	maxSpeed = speed;
 }
 
 bool CGroundMoveType::OnSlope(){
@@ -2062,7 +2041,7 @@ void CGroundMoveType::UpdateDirectControl()
 	waypoint.CheckInBounds();
 
 	if (owner->directControl->forward) {
-		wantedSpeed = maxSpeed * 2;
+		wantedSpeed = reversing? maxReverseSpeed * 2.0f: maxSpeed * 2.0f;
 		SetDeltaSpeed(false);
 		owner->isMoving = true;
 		owner->script->StartMoving();
@@ -2106,4 +2085,39 @@ void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
 	if (!wantReverse && currentSpeed == 0.0f) {
 		reversing = false;
 	}
+}
+
+bool CGroundMoveType::WantReverse(const float3& waypointDir) const
+{
+	if (owner->unitDef->rSpeed <= 0.0f) {
+		return false;
+	}
+
+	const float3 waypointDif  = goalPos - owner->pos;                                           // use final WP for ETA
+	const float waypointDist  = waypointDif.Length();                                           // in elmos
+	const float waypointFETA  = (waypointDist / maxSpeed);                                      // in frames (simplistic)
+	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
+	const float waypointDirDP = waypointDir.dot(owner->frontdir);
+	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));                 // prevent NaN's
+	const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                           // in degrees
+	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                             // in "headings"
+	const float revAngleSpr   = 32768.0f - turnAngleSpr;                                        // 180 deg - angle
+
+	// units start accelerating before finishing the turn, so subtract something
+	const float turnTimeMod   = 5.0f;
+	const float turnAngleTime = std::max(0.0f, (turnAngleSpr / owner->unitDef->turnRate) - turnTimeMod); // in frames
+	const float revAngleTime  = std::max(0.0f, (revAngleSpr  / owner->unitDef->turnRate) - turnTimeMod);
+
+	const float apxSpeedAfterTurn  = std::max(0.f, currentSpeed - 0.125f * (turnAngleTime * decRate));
+	const float apxRevSpdAfterTurn = std::max(0.f, currentSpeed - 0.125f * (revAngleTime  * decRate));
+	const float decTime       = ( reversing * apxSpeedAfterTurn)  / decRate;
+	const float revDecTime    = (!reversing * apxRevSpdAfterTurn) / decRate;
+	const float accTime       = (maxSpeed        - !reversing * apxSpeedAfterTurn)  / accRate;
+	const float revAccTime    = (maxReverseSpeed -  reversing * apxRevSpdAfterTurn) / accRate;
+	const float revAccDecTime = revDecTime + revAccTime;
+
+	const float fwdETA = waypointFETA + turnAngleTime + accTime + decTime;
+	const float revETA = waypointRETA + revAngleTime + revAccDecTime;
+
+	return (fwdETA > revETA);
 }

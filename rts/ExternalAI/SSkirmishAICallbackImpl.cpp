@@ -1529,15 +1529,18 @@ EXPORT(int) skirmishAiCallback_0MULTI1VALS0UnitDef(int teamId, int unitDefIds[],
 		int unitDefIds_max) {
 
 	IAICallback* clb = team_callback[teamId];
-	int size = clb->GetNumUnitDefs();
+
+	const int size = min(clb->GetNumUnitDefs(), unitDefIds_max);
 	const UnitDef** defList = (const UnitDef**) new UnitDef*[size];
+
 	clb->GetUnitDefList(defList);
 
-	size = min(size, unitDefIds_max);
 	int i;
-	for (i=0; i < size; ++i) {
-		unitDefIds[i] = defList[i]->id;
+	for (i = 0; i < size; ++i) {
+		// AI's should double-check for this
+		unitDefIds[i] = (defList[i] != NULL)? defList[i]->id: -1;
 	}
+
 	delete [] defList;
 	defList = NULL;
 

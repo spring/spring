@@ -904,6 +904,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						{
 							Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
 							players[player].team = newTeam;
+							players[player].spectator = false;
 						}
 						else
 						{

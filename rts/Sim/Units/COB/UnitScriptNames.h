@@ -13,6 +13,7 @@
 // TODO: check scales of non-ratio arguments
 enum {
 	COBFN_Create,               // -
+	COBFN_Destroy,              // -
 	COBFN_StartMoving,          // -
 	COBFN_StopMoving,           // -
 	COBFN_Activate,             // -

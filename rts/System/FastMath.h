@@ -15,6 +15,45 @@
  */
 
 namespace fastmath {
+#ifdef __GNUC__
+	typedef float v4sf __attribute__ ((vector_size (16)));
+#endif
+
+	/**
+	* @brief Calculates 1/sqrt(x) using SSE instructions
+	*
+	*/
+	inline float isqrt(float x)
+	{
+			union
+			{
+					v4sf vec;
+					float x;
+			}
+			tmp;
+
+
+			tmp.x = x;
+#ifdef __GNUC__
+			tmp.vec = __builtin_ia32_rsqrtss (tmp.vec);
+#else
+#	error "implement me please"
+#endif
+			return tmp.x;
+	}
+
+
+	/**
+	* @brief Calculates 1/sqrt(x)
+	*
+	* Deprecated. Do not use.
+	*/
+	inline float isqrt2(float x)
+	{
+		return isqrt(x);
+	}
+
+
 	/****************** Square root functions ******************/
 
 	/**
@@ -30,7 +69,7 @@ namespace fastmath {
 	* method (or Chris Lomont's 2003 "Fast Inverse Square Root" paper)
 	*
 	*/
-	inline float isqrt(float x) {
+	inline float isqrt_nosse(float x) {
 		float xh = 0.5f * x;
 		int i = *(int*) &x;
 		// "magic number" which makes a very good first guess
@@ -50,7 +89,7 @@ namespace fastmath {
 	* Highest relative error: 0.00047%
 	*
 	*/
-	inline float isqrt2(float x) {
+	inline float isqrt2_nosse(float x) {
 		float xh = 0.5f * x;
 		int i = *(int*) &x;
 		// "magic number" which makes a very good first guess
@@ -66,25 +105,35 @@ namespace fastmath {
 	/**
 	* @brief Calculates square root with less accuracy
 	*
-	* These square root functions use the inverse square
-	* root routines to obtain the answer. This one uses
-	* the less accurate, but faster isqrt().
-	*
+	* Force using SSE instruction set.
 	*/
-	inline float sqrt(float x) {
-		return (isqrt(x) * x);
+
+
+	inline float sqrt(float x)
+	{
+			union
+			{
+					v4sf vec;
+					float x;
+			}
+			tmp;
+
+			tmp.x = x;
+#ifdef __GNUC__
+			tmp.vec = __builtin_ia32_sqrtss (tmp.vec);
+#else
+#	error "implement me please"
+#endif
+			return tmp.x;
 	}
 
 	/**
 	* @brief Calculates square root with more accuracy
 	*
-	* These square root functions use the inverse square
-	* root routines to obtain the answer. This one uses
-	* the more accurate, but slower isqrt2().
-	*
+	* Deprecated. Do not use.
 	*/
 	inline float sqrt2(float x) {
-		return (isqrt2(x) * x);
+		return fastmath::sqrt(x);
 	}
 
 

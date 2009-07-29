@@ -34,9 +34,6 @@
 #include "Sound/Sound.h"
 #include "Exceptions.h"
 
-const char YARDMAP_CHAR = 'c';		//Need to be low case.
-
-
 CUnitDefHandler* unitDefHandler;
 
 
@@ -647,36 +644,36 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	ud.movedata = 0;
 	if (ud.canmove && !ud.canfly && (ud.type != "Factory")) {
-		string moveclass = udTable.GetString("movementClass", "");
+		string moveclass = StringToLower(udTable.GetString("movementClass", ""));
 		ud.movedata = moveinfo->GetMoveDataFromName(moveclass);
+
 		if (!ud.movedata) {
-			const string errmsg = "Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
+			const string errmsg = "WARNING: Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
+			logOutput.Print(errmsg);
+			// remove the UnitDef
 			throw content_error(errmsg);
 		}
+
 		if ((ud.movedata->moveType == MoveData::Hover_Move) ||
 		    (ud.movedata->moveType == MoveData::Ship_Move)) {
 			ud.upright = true;
 		}
 		if (ud.canhover) {
 			if (ud.movedata->moveType != MoveData::Hover_Move) {
-				logOutput.Print("Inconsistant move data hover %i %s %s",
-				                ud.movedata->pathType, ud.humanName.c_str(),
-				                moveclass.c_str());
+				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): canhover, but not a hovercraft movetype",
+				     ud.movedata->pathType, ud.name.c_str(), moveclass.c_str());
 			}
 		} else if (ud.floater) {
 			if (ud.movedata->moveType != MoveData::Ship_Move) {
-				logOutput.Print("Inconsistant move data ship %i %s %s",
-				                ud.movedata->pathType, ud.humanName.c_str(),
-				                moveclass.c_str());
+				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): floater, but not a ship movetype",
+				     ud.movedata->pathType, ud.name.c_str(), moveclass.c_str());
 			}
 		} else {
 			if (ud.movedata->moveType != MoveData::Ground_Move) {
-				logOutput.Print("Inconsistant move data ground %i %s %s",
-				                 ud.movedata->pathType, ud.humanName.c_str(),
-				                 moveclass.c_str());
+				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): neither canhover nor floater, but not a ground movetype",
+				     ud.movedata->pathType, ud.name.c_str(), moveclass.c_str());
 			}
 		}
-//		logOutput.Print("%s uses movetype %i",ud.humanName.c_str(),ud.movedata->pathType);
 	}
 
 	if ((ud.maxAcc != 0) && (ud.speed != 0)) {
@@ -950,51 +947,68 @@ const UnitDef* CUnitDefHandler::GetUnitByID(int id)
 }
 
 
-/*
-Creates a open ground blocking map, called yardmap.
-When sat != 0, is used instead of normal all-over-blocking.
-*/
-void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
-	//Force string to lower case.
+
+void CUnitDefHandler::CreateYardMap(UnitDef* def, std::string yardmapStr)
+{
 	StringToLowerInPlace(yardmapStr);
+ 
+	const int mw = def->xsize;
+	const int mh = def->zsize;
+	const int maxIdx = mw * mh;
+ 
+	// create the yardmaps for each build-facing
+	for (int u = 0; u < 4; u++) {
+		def->yardmaps[u] = new unsigned char[maxIdx];
+	}
+ 
+	// Spring resolution's is double that of TA's (so 4 times as much area)
+	unsigned char* originalMap = new unsigned char[maxIdx / 4];
 
-	//Creates the map.
-	for (int u=0;u<4;u++)
-		def->yardmaps[u] = new unsigned char[def->xsize * def->zsize];
+	memset(originalMap, 255, maxIdx / 4);
 
-	unsigned char *originalMap = new unsigned char[def->xsize * def->zsize / 4];		//TAS resolution is double of TA resolution.
-	memset(originalMap, 255, def->xsize * def->zsize / 4);
-
-	if(!yardmapStr.empty()){
+	if (!yardmapStr.empty()) {
 		std::string::iterator si = yardmapStr.begin();
-		int x, y;
-		for(y = 0; y < def->zsize / 2; y++) {
-			for(x = 0; x < def->xsize / 2; x++) {
-				if(*si == 'g')
-					def->needGeo=true;
-				else if(*si == YARDMAP_CHAR)
-					originalMap[x + y*def->xsize/2] = 1;
-				else if(*si == 'y')
-					originalMap[x + y*def->xsize/2] = 0;
+
+		for (int y = 0; y < mh / 2; y++) {
+			for (int x = 0; x < mw / 2; x++) {
+
+					 if (*si == 'g') def->needGeo = true;
+				else if (*si == 'c') originalMap[x + y * mw / 2] = 1; // blocking
+				else if (*si == 'y') originalMap[x + y * mw / 2] = 0; // non-blocking
+
+				// advance one non-space character (matching the column
+				// <x> we have just advanced) in this row, and skip any
+				// spaces
 				do {
 					si++;
-				} while(si != yardmapStr.end() && *si == ' ');
-				if(si == yardmapStr.end())
+				} while (si != yardmapStr.end() && *si == ' ');
+
+				if (si == yardmapStr.end()) {
+					// no more chars for remaining colums in this row
 					break;
+				}
 			}
-			if(si == yardmapStr.end())
-				break;
+
+			if (si == yardmapStr.end()) {
+				// no more chars for any remaining rows
+ 				break;
+			}
+ 		}
+ 	}
+
+	for (int y = 0; y < mh; y++) {
+		for (int x = 0; x < mw; x++) {
+			int orgIdx = x / 2 + y / 2 * mw / 2;
+			char orgMapChar = originalMap[orgIdx];
+
+			def->yardmaps[0][         (x + y * mw)                ] = orgMapChar;
+			def->yardmaps[1][maxIdx - (mh * (x + 1) - (y + 1) + 1)] = orgMapChar;
+			def->yardmaps[2][maxIdx - (x + y * mw + 1)            ] = orgMapChar;
+			def->yardmaps[3][          mh * (x + 1) - (y + 1)     ] = orgMapChar;
 		}
 	}
-	for(int y = 0; y < def->zsize; y++)
-		for(int x = 0; x < def->xsize; x++){
-			def->yardmaps[0][x + y*def->xsize] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[1][(def->zsize*def->xsize)-(def->zsize*(x+1)-(y+1)+1)] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[2][(def->zsize*def->xsize)-(x + y*def->xsize+1)] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[3][def->zsize*(x+1)-(y+1)] = originalMap[x/2 + y/2*def->xsize/2];
-		}
-	delete[] originalMap;
 }
+
 
 
 static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
