@@ -120,6 +120,7 @@ void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 
 		glEnable(GL_STENCIL_TEST);
 		glStencilMask(0x1);
+		glStencilFunc(GL_ALWAYS, 0, 0x1);
 		glStencilOp(GL_KEEP, GL_INCR, GL_KEEP);
 		drawFunc(data); // draw
 
