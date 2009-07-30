@@ -103,6 +103,7 @@ CBFGroundDrawer::~CBFGroundDrawer(void)
 
 void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
 	glDisable(GL_TEXTURE_2D);
+	glDepthMask(GL_FALSE);
 
 	const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
 	const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
@@ -153,6 +154,8 @@ void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
 		}
 	}
 	va->DrawArrayC(GL_TRIANGLE_STRIP);
+
+	glDepthMask(GL_TRUE);
 }
 
 inline void CBFGroundDrawer::DrawWaterPlane(bool drawWaterReflection) {
@@ -700,8 +703,6 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	if (!overrideVP)
 		glEnable(GL_CULL_FACE);
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 	SetupTextureUnits(drawWaterReflection);
 
 	if (mapInfo->map.voidWater && !waterDrawn) {
@@ -753,8 +754,6 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	}
 
 //	sky->SetCloudShadow(1);
-//	if (drawWaterReflection)
-//		treeDistance *= 0.5f;
 
 	viewRadius = baseViewRadius;
 	overrideVP = NULL;
@@ -1162,11 +1161,11 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 			glMultiTexCoord1f(GL_TEXTURE2_ARB,0); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			//SetTexGen(0.02f,0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
-			GLfloat plan[]={0.02f,0.5f,0,0};
+			GLfloat plan[]={0.02f,0,0,0};
 			glTexGeni(GL_S,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
 			glTexGenfv(GL_S,GL_EYE_PLANE,plan);
 			glEnable(GL_TEXTURE_GEN_S);
-			GLfloat plan2[]={0,0.5f,0.02f,0};
+			GLfloat plan2[]={0,0,0.02f,0};
 			glTexGeni(GL_T,GL_TEXTURE_GEN_MODE,GL_OBJECT_LINEAR);
 			glTexGenfv(GL_T,GL_EYE_PLANE,plan2);
 			glEnable(GL_TEXTURE_GEN_T);
@@ -1336,10 +1335,9 @@ void CBFGroundDrawer::ResetTextureUnits(bool drawReflection)
 void CBFGroundDrawer::AddFrustumRestraint(const float3& side)
 {
 	fline temp;
-	static const float3 up(0, 1, 0);
 
 	// get vector for collision between frustum and horizontal plane
-	float3 b = up.cross(side);
+	float3 b = UpVector.cross(side);
 
 	if (fabs(b.z) < 0.0001f)
 		b.z = 0.0001f;
@@ -1378,13 +1376,12 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 
 	// add restraint for maximum view distance
 	fline temp;
-	static const float3 up(0, 1, 0);
 	float3 side = cam2->forward;
 	float3 camHorizontal = cam2->forward;
 	camHorizontal.y = 0;
 	camHorizontal.ANormalize();
 	// get vector for collision between frustum and horizontal plane
-	float3 b = up.cross(camHorizontal);
+	float3 b = UpVector.cross(camHorizontal);
 
 	if (fabs(b.z) > 0.0001f) {
 		temp.dir = b.x / b.z;               // set direction to that
