@@ -141,12 +141,17 @@ void CShadowHandler::DrawShadowPasses(void)
 {
 	inShadowPass = true;
 
-	ph->DrawShadowPass();
-	unitDrawer->DrawShadowPass();
-	featureHandler->DrawShadowPass();
-	readmap->GetGroundDrawer()->DrawShadowPass();
-	treeDrawer->DrawShadowPass();
-	eventHandler.DrawWorldShadow();
+	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
+		glEnable(GL_CULL_FACE);
+		glCullFace(GL_FRONT);
+
+		ph->DrawShadowPass();
+		unitDrawer->DrawShadowPass();
+		featureHandler->DrawShadowPass();
+		readmap->GetGroundDrawer()->DrawShadowPass();
+		treeDrawer->DrawShadowPass();
+		eventHandler.DrawWorldShadow();
+	glPopAttrib();
 
 	inShadowPass = false;
 }
