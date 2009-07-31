@@ -194,9 +194,9 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 			return ((oy - oh) > gy);
 		} else {
 			if (iss) {
-				return ((oy + oh) > 0.0f);
+				return (((oy + oh) >  0.0f) && !oss);
 			} else {
-				return (((oy + oh) <= 0.0f) || oss);
+				return (((oy + oh) <= 0.0f) ||  oss);
 			}
 		}
 	}

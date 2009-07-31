@@ -145,7 +145,7 @@ inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
 	static const int heightDataX = gs->mapx + 1;
 	static const int bigTexW = (gs->mapx << 3) / numBigTexX;
 	static const int bigTexH = (gs->mapy << 3) / numBigTexY;
-	static const float bigTexSquareRadius = fastmath::sqrt(float(bigTexW * bigTexW + bigTexH * bigTexH));
+	static const float bigTexSquareRadius = fastmath::apxsqrt(float(bigTexW * bigTexW + bigTexH * bigTexH));
 
 	const int x = btx * bigTexW + (bigTexW >> 1);
 	const int y = bty * bigTexH + (bigTexH >> 1);
@@ -176,7 +176,7 @@ void CBFGroundTextures::DrawUpdate(void)
 
 			float dx = cam2->pos.x - x * bigSquareSize * SQUARE_SIZE - (SQUARE_SIZE << 6);
 			dx = max(0.0f, float(fabs(dx) - (SQUARE_SIZE << 6)));
-			float dist = fastmath::sqrt(dx * dx + dy * dy);
+			float dist = fastmath::apxsqrt(dx * dx + dy * dy);
 
 			float wantedLevel = dist / 1000;
 

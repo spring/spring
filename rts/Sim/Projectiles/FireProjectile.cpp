@@ -174,7 +174,7 @@ void CFireProjectile::Draw(void)
 		AtlasedTexture *at = &ph->smoketex[pi->smokeType];
 #endif
 		float age=pi->age+ageSpeed*gu->timeOffset;
-		float size=pi->maxSize*fastmath::sqrt(age);
+		float size=pi->maxSize*fastmath::apxsqrt(age);
 		float rot=pi->rotSpeed*age;
 
 		float sinRot=fastmath::sin(rot);

@@ -80,10 +80,10 @@ MoveFinished(number unitID, number piece, number axis)
 
 docs for callouts defined in this file:
 
-Spring.UnitScript.SetUnitCOBValue(...)
-	see wiki for Spring.GetUnitCOBValue (unchanged)
+Spring.UnitScript.SetUnitValue(...)
+	see wiki for Spring.SetUnitCOBValue (unchanged)
 
-Spring.UnitScript.GetUnitCOBValue(...)
+Spring.UnitScript.GetUnitValue(...)
 	see wiki for Spring.GetUnitCOBValue (unchanged)
 
 Spring.UnitScript.SetPieceVisibility(number unitID, number piece, boolean visible) -> nil
@@ -107,7 +107,7 @@ Spring.UnitScript.ShowFlare(number unitID, number piece) -> nil
 Spring.UnitScript.Spin(number unitID, number piece, number axis, number speed[, number accel]) -> nil
 	Same as COB's spin.  If accel isn't given spinning starts at the desired speed.
 
-Spring.UnitScript.StopSpinning(number unitID, number piece, number axis[, number decel]) -> nil
+Spring.UnitScript.StopSpin(number unitID, number piece, number axis[, number decel]) -> nil
 	Same as COB's stop-spin.  If decel isn't given spinning stops immediately.
 
 Spring.UnitScript.Turn(number unitID, number piece, number axis, number destination[, number speed]) -> nil
@@ -852,15 +852,12 @@ static void PushEntry(lua_State* L, const char* name, lua_CFunction fun)
 {
 	lua_pushstring(L, name);
 	lua_pushcfunction(L, fun);
-	//lua_pushvalue(L, -5);      // push the environment table
-	//if (lua_setfenv(L, -2) != 1) { assert(false); }
 	lua_rawset(L, -3);
 }
 
 
 bool CLuaUnitScript::PushEntries(lua_State* L)
 {
-	//lua_newtable(L);   // environment table for all C functions in this file
 	lua_pushstring(L, "UnitScript");
 	lua_newtable(L);
 
@@ -870,8 +867,8 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(CreateScript);
 	REGISTER_LUA_CFUNC(UpdateCallIn);
 
-	REGISTER_LUA_CFUNC(GetUnitCOBValue);
-	REGISTER_LUA_CFUNC(SetUnitCOBValue);
+	REGISTER_LUA_CFUNC(GetUnitValue);
+	REGISTER_LUA_CFUNC(SetUnitValue);
 	REGISTER_LUA_CFUNC(SetPieceVisibility);
 	REGISTER_LUA_CFUNC(EmitSfx);
 	REGISTER_LUA_CFUNC(AttachUnit);
@@ -892,7 +889,11 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetDeathScriptFinished);
 
 	lua_rawset(L, -3);
-	//lua_pop(L, 1);     // pop the environment table
+
+	// backwards compatibility
+	PushEntry(L, "GetUnitCOBValue", GetUnitValue);
+	PushEntry(L, "SetUnitCOBValue", SetUnitValue);
+
 	return true;
 }
 
@@ -1029,7 +1030,7 @@ int CLuaUnitScript::UpdateCallIn(lua_State* L)
 
 // moved from LuaSyncedCtrl
 
-int CLuaUnitScript::GetUnitCOBValue(lua_State* L)
+int CLuaUnitScript::GetUnitValue(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {
@@ -1071,7 +1072,7 @@ int CLuaUnitScript::GetUnitCOBValue(lua_State* L)
 
 // moved from LuaSyncedCtrl
 
-int CLuaUnitScript::SetUnitCOBValue(lua_State* L)
+int CLuaUnitScript::SetUnitValue(lua_State* L)
 {
 	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
 	if (unit == NULL) {

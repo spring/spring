@@ -587,7 +587,7 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		}
 
 		if (sAICallback->Clb_UnitDef_0AVAILABLE0MoveData(teamId, unitDefId)) {
-			unitDef->movedata = new MoveData(NULL, 0);
+			unitDef->movedata = new MoveData(NULL);
 			unitDef->movedata->maxAcceleration = sAICallback->Clb_UnitDef_MoveData_getMaxAcceleration(teamId, unitDefId);
 			unitDef->movedata->maxBreaking = sAICallback->Clb_UnitDef_MoveData_getMaxBreaking(teamId, unitDefId);
 			unitDef->movedata->maxSpeed = sAICallback->Clb_UnitDef_MoveData_getMaxSpeed(teamId, unitDefId);

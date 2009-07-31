@@ -61,7 +61,7 @@ public:
 	 * a const context
 	 */
 	inline float3& operator= (const SAIFloat3& sAIFloat3) {
-		
+
 		x = sAIFloat3.x;
 		y = sAIFloat3.y;
 		z = sAIFloat3.z;
@@ -431,13 +431,13 @@ public:
 	}
 
 	/**
-	 * @brief normalizes the vector
+	 * @brief normalizes the vector precisely
 	 * @return pointer to self
 	 *
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
-	inline float3& Normalize() {
+	inline float3& PrecNormalize() {
 		const float L = math::sqrt(x * x + y * y + z * z);
 		if (L != 0.f) {
 			const float invL = (float) 1.f / L;
@@ -447,6 +447,18 @@ public:
 		}
 		return *this;
 	}
+
+	/**
+	 * @brief normalizes the vector using one of Normalize implementations
+	 * @return pointer to self
+	 *
+	 * Normalizes the vector by dividing each
+	 * x/y/z component by the vector's length.
+	 */
+	inline float3& Normalize() {
+		return ANormalize();
+	}
+
 
 	/**
 	 * @brief length squared
@@ -519,7 +531,7 @@ public:
 
 	bool IsInBounds() const; //!< Check if this vector is in bounds without clamping x and z
 	bool CheckInBounds(); //!< Check if this vector is in bounds and clamp x and z if not
-	
+
 	SAIFloat3 toSAIFloat3() const;
 
 	float x; ///< x component

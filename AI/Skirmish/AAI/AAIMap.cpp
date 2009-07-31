@@ -2498,7 +2498,7 @@ void AAIMap::AddDefence(float3 *pos, int defence)
 	for(int y = yStart; y < yEnd; ++y)
 	{
 		// determine x-range
-		xRange = (int) floor( fastmath::sqrt2( (float) ( range * range - (y - yPos) * (y - yPos) ) ) + 0.5f );
+		xRange = (int) floor( fastmath::apxsqrt2( (float) ( range * range - (y - yPos) * (y - yPos) ) ) + 0.5f );
 
 		xStart = xPos - xRange;
 		xEnd = xPos + xRange;
@@ -2644,7 +2644,7 @@ void AAIMap::RemoveDefence(float3 *pos, int defence)
 	for(int y = yStart; y < yEnd; ++y)
 	{
 		// determine x-range
-		xRange = (int) floor( fastmath::sqrt2( (float) ( range * range - (y - yPos) * (y - yPos) ) ) + 0.5f );
+		xRange = (int) floor( fastmath::apxsqrt2( (float) ( range * range - (y - yPos) * (y - yPos) ) ) + 0.5f );
 
 		xStart = xPos - xRange;
 		xEnd = xPos + xRange;
