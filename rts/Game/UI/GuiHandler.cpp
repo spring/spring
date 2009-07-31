@@ -1973,13 +1973,6 @@ bool CGuiHandler::KeyReleased(unsigned short key)
 	return false;
 }
 
-
-void CGuiHandler::MenuSelection(std::string s)
-{
-	guihandler->MenuChoice(s);
-}
-
-
 void CGuiHandler::FinishCommand(int button)
 {
 	GML_RECMUTEX_LOCK(gui); // FinishCommand - updates inCommand
