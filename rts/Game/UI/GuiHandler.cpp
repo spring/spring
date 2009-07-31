@@ -33,7 +33,6 @@
 #include "Rendering/glFont.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/GL/glExtra.h"
-#include "Rendering/GL/glList.h"
 #include "Rendering/Textures/Bitmap.h"
 #include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -1209,29 +1208,6 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			activeMousePress = false;
 			break;
 		}
-		case CMDTYPE_COMBO_BOX: {
-			if (GetInputReceivers().empty() ||
-			    dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
-				inCommand = cmdIndex;
-				SetShowingMetal(false);
-				list = new CglList(cd.name.c_str(), MenuSelection);
-				list->cancelPlace = 0;
-				list->tooltip =
-					"Choose the AI you want to assign to this group.\n"
-					"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
-					"assigned.";
-				std::vector<std::string>::const_iterator pi;
-				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
-					list->AddItem(*pi,"");
-				}
-				list->place=atoi(cd.params[0].c_str());
-			} else {
-				inCommand = -1;
-				SetShowingMetal(false);
-			}
-			activeMousePress = false;
-			break;
-		}
 		case CMDTYPE_NEXT: {
 			++activePage;
 			if (activePage > maxPage) {
@@ -1961,39 +1937,6 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 				inCommand = a;
 				break;
 			}
-			case CMDTYPE_COMBO_BOX:
-			if (GetInputReceivers().empty() || dynamic_cast<CglList*>(GetInputReceivers().front()) == NULL) {
-				CommandDescription& cd = cmdDesc;
-				std::vector<std::string>::iterator pi;
-				// check for an action bound to a specific entry
-				if (!action.extra.empty() && (iconCmd < 0)) {
-					int p = 0;
-					for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
-						if (action.extra == *pi) {
-							Command c;
-							c.options = 0;
-							c.id = cd.id;
-							c.params.push_back(p);
-							GiveCommand(c);
-							return true;
-						}
-						p++;
-					}
-				}
-				inCommand = a;
-				list = new CglList(cd.name.c_str(), MenuSelection);
-				list->cancelPlace = 0;
-				list->tooltip = "Choose the AI you want to assign to this group.\n"
-						"Select \"None\" to cancel or \"default\" to create a group without an AI\n"
-						"assigned.";
-				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
-					list->AddItem(*pi, "");
-				}
-				list->place = atoi(cd.params[0].c_str());
-				lastKeySet.Reset();
-				SetShowingMetal(false);
-				break;
-			}
 			case CMDTYPE_NEXT: {
 				++activePage;
 				if(activePage > maxPage)
@@ -2034,43 +1977,6 @@ bool CGuiHandler::KeyReleased(unsigned short key)
 void CGuiHandler::MenuSelection(std::string s)
 {
 	guihandler->MenuChoice(s);
-}
-
-
-void CGuiHandler::MenuChoice(std::string s)
-{
-	GML_RECMUTEX_LOCK(gui); // MenuChoice - updates inCommand
-
-	if (activeReceiver == list) {
-		activeReceiver = NULL;
-	}
-
-	delete list;
-
-	if (inCommand >= 0 && (size_t)inCommand < commands.size()) {
-		CommandDescription& cd = commands[inCommand];
-		switch (cd.type) {
-			case CMDTYPE_COMBO_BOX: {
-				inCommand = -1;
-				std::vector<std::string>::iterator pi;
-				int a = 0;
-				for (pi = ++cd.params.begin(); pi != cd.params.end(); ++pi) {
-					if (*pi == s) {
-						Command c;
-						c.id = cd.id;
-						c.params.push_back(a);
-						CreateOptions(c, 0);
-						GiveCommand(c);
-						break;
-					}
-					++a;
-				}
-				break;
-			}
-			default:
-				break;
-		}
-	}
 }
 
 
