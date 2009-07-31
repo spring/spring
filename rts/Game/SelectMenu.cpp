@@ -12,7 +12,6 @@
 #include "ClientSetup.h"
 #include "PreGame.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GL/glList.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
 #include "TdfParser.h"
@@ -31,6 +30,7 @@
 #include "aGui/LineEdit.h"
 #include "aGui/TextElement.h"
 #include "aGui/Window.h"
+#include "aGui/glList.h"
 
 using std::string;
 using agui::Button;
@@ -85,9 +85,10 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server): showList(NULL), menu(NULL)
+SelectMenu::SelectMenu(bool server): menu(NULL)
 {
 	connectWnd = NULL;
+	list = NULL;
 	mySettings = new ClientSetup();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
@@ -139,11 +140,6 @@ int SelectMenu::KeyPressed(unsigned short k,bool isRepeat)
 			logOutput.Print("Use shift-esc to quit");
 	}
 
-	if (showList) { //are we currently showing a list?
-		showList->KeyPressed(k, isRepeat);
-		return 0;
-	}
-
 	return 0;
 }
 
@@ -152,10 +148,6 @@ bool SelectMenu::Draw()
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
 	agui::gui->Draw();
-
-	if (showList) {
-		showList->Draw();
-	}
 
 	return true;
 }
@@ -168,7 +160,7 @@ bool SelectMenu::Update()
 /** Create a CglList for selecting the map. */
 void SelectMenu::ShowMapList()
 {
-	CglList* list = new CglList("Select map", boost::bind(&SelectMenu::SelectMap, this, _1), 2);
+	/*list = new agui::CglList();
 	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
 	if (found.begin() == found.end() && arFound.begin() == arFound.end()) {
@@ -188,29 +180,30 @@ void SelectMenu::ShowMapList()
 	list->AddItem("Random map", "Random map"); // always first
 	for (std::set<std::string>::iterator sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
 		list->AddItem(*sit, *sit);
-	}
-	showList = list;
+	}*/
 }
 
 
 /** Create a CglList for selecting the script. */
 void SelectMenu::ShowScriptList()
 {
-	CglList* list = CScriptHandler::Instance().GenList(boost::bind(&SelectMenu::SelectScript, this, _1));
-	showList = list;
+	//CglList* list = CScriptHandler::Instance().GenList(boost::bind(&SelectMenu::SelectScript, this, _1));
 }
 
 
 /** Create a CglList for selecting the mod. */
 void SelectMenu::ShowModList()
 {
-	if (menu)
+	if (connectWnd)
 	{
-		agui::gui->RmElement(menu);
-		menu = NULL;
+		agui::gui->RmElement(connectWnd);
+		delete connectWnd;
 	}
-	inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
-	CglList* list = new CglList("Select mod", boost::bind(&SelectMenu::SelectMod, this, _1), 3);
+	connectWnd = new agui::Window("Select mod");
+	agui::gui->AddElement(connectWnd);
+	connectWnd->SetPos(0.5, 0.2);
+	connectWnd->SetSize(0.4, 0.7);
+	list = new agui::CglList(connectWnd);
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
 	if (found.empty()) {
 		throw content_error("PreGame couldn't find any mod files");
@@ -227,20 +220,16 @@ void SelectMenu::ShowModList()
 	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {
 		list->AddItem(mit->first, mit->second);
 	}
-	showList = list;
 }
 
 
 void SelectMenu::SelectMap(const std::string& s)
 {
 	if (s == "Random map") {
-		userMap = showList->items[1 + gu->usRandInt() % (showList->items.size() - 1)];
+		//userMap = showList->items[1 + gu->usRandInt() % (showList->items.size() - 1)];
 	}
 	else
 		userMap = s;
-
-	delete showList;
-	showList = NULL;
 
 	int gamemode = 3;
 	if (userScript.find("GlobalAI test") != std::string::npos)
@@ -258,9 +247,6 @@ void SelectMenu::SelectScript(const std::string& s)
 {
 	userScript = s;
 
-	delete showList;
-	showList = NULL;
-
 	ShowMapList();
 }
 
@@ -268,14 +254,11 @@ void SelectMenu::SelectScript(const std::string& s)
 void SelectMenu::SelectMod(const std::string& s)
 {
 	if (s == "Random mod") {
-		const int index = 1 + (gu->usRandInt() % (showList->items.size() - 1));
-		userMod = showList->items[index];
+		//const int index = 1 + (gu->usRandInt() % (showList->items.size() - 1));
+		//userMod = showList->items[index];
 	}
 	else
 		userMod = s;
-
-	delete showList;
-	showList = NULL;
 
 	ShowScriptList();
 }
@@ -336,18 +319,12 @@ bool SelectMenu::HandleEvent(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_MOUSEBUTTONDOWN: {
-			if (showList)
-				showList->MousePress(ev.button.x, ev.button.y, ev.button.button);
 			break;
 		}
 		case SDL_MOUSEBUTTONUP: {
-			if (showList)
-				showList->MouseRelease(ev.button.x, ev.button.y, ev.button.button);
 			break;
 		}
 		case SDL_MOUSEMOTION: {
-			if (showList)
-				showList->MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
 			break;
 		}
 	}

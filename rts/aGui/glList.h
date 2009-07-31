@@ -8,28 +8,27 @@
 #include <vector>
 #include <boost/function.hpp>
 
-#include "Game/UI/InputReceiver.h"
+#include "GuiElement.h"
 
-typedef boost::function<void(const std::string&)> ListSelectCallback;
+namespace agui
+{
 
-class CglList : public CInputReceiver
+class CglList : public GuiElement
 {
 public:
+	CglList(GuiElement* parent = NULL);
+	virtual ~CglList();
 
 	// CInputReceiver implementation
 	bool KeyPressed(unsigned short k, bool isRepeat);
 	bool MousePress(int x, int y, int button);
 	void MouseMove(int x, int y, int dx,int dy, int button);
 	void MouseRelease(int x, int y, int button);
-	bool IsAbove(int x, int y);
-	void Draw();
+	virtual void DrawSelf();
+	virtual bool HandleEventSelf(const SDL_Event& ev);
 	std::string GetTooltip(int x,int y) { return tooltip; }
 
-	// CglList functions
-	void Select();
 	void AddItem(const std::string& name,const std::string& description);
-	CglList(const std::string& name, ListSelectCallback callback, int id = 0);
-	virtual ~CglList();
 	int place;
 	std::vector<std::string> items;
 	std::string name;
@@ -37,7 +36,6 @@ public:
 	std::string GetCurrentItem() const;
 
 	std::string lastChoosen;
-	ListSelectCallback callback;
 	// when attempting to cancel (by pressing escape, clicking outside a button)
 	// place is set to cancelPlace (if it's positive) and Select is called.
 	int cancelPlace;
@@ -51,15 +49,13 @@ private:
 	void DownPage();
 	bool MouseUpdate(int x, int y);
 
-	// GUI
-	ContainerBox box;
 	bool activeMousePress;
-
-	// used to save default to configHandler
-	int id;
 
 	float mx;
 	float my;
+	float borderSpacing;
+	float itemSpacing;
+	float itemHeight;
 
 	// for filtering
 	std::string query;
@@ -67,5 +63,7 @@ private:
 	std::vector<std::string> temp1;
 	std::vector<std::string> temp2;
 };
+
+}
 
 #endif /* GLLIST_H */

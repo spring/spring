@@ -6,13 +6,13 @@
 #include "GameController.h"
 
 class ClientSetup;
-class CglList;
 union SDL_Event;
 namespace agui
 {
 class Window;
 class VerticalLayout;
 class LineEdit;
+class CglList;
 }
 
 /**
@@ -54,12 +54,12 @@ private:
 	std::string userMod;
 
 	ClientSetup* mySettings;
-	CglList* showList;
 
 	boost::signals::scoped_connection inputCon;
 	agui::VerticalLayout* menu;
 	agui::LineEdit* address;
 	agui::Window* connectWnd;
+	agui::CglList* list;
 };
 
 #endif
