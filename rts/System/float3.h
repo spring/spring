@@ -411,6 +411,23 @@ public:
 	}
 
 	/**
+	 * @brief normalizes the vector using one of Normalize implementations
+	 * @return pointer to self
+	 *
+	 * Normalizes the vector by dividing each
+	 * x/y/z component by the vector's length.
+	 */
+	inline float3& Normalize() {
+		float invL = fastmath::isqrt2(SqLength());
+		if (invL != 0.f) {
+			x *= invL;
+			y *= invL;
+			z *= invL;
+		}
+		return *this;
+	}
+
+	/**
 	 * @brief normalizes the vector approximately
 	 * @return pointer to self
 	 *
@@ -438,25 +455,13 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& PrecNormalize() {
-		const float L = math::sqrt(x * x + y * y + z * z);
-		if (L != 0.f) {
-			const float invL = (float) 1.f / L;
+		const float invL = math::isqrt(SqLength());
+		if (invL != 0.f) {
 			x *= invL;
 			y *= invL;
 			z *= invL;
 		}
 		return *this;
-	}
-
-	/**
-	 * @brief normalizes the vector using one of Normalize implementations
-	 * @return pointer to self
-	 *
-	 * Normalizes the vector by dividing each
-	 * x/y/z component by the vector's length.
-	 */
-	inline float3& Normalize() {
-		return ANormalize();
 	}
 
 
