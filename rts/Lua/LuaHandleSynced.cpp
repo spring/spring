@@ -17,6 +17,7 @@
 #include "LuaConstGL.h"
 #include "LuaConstCMD.h"
 #include "LuaConstCMDTYPE.h"
+#include "LuaConstCOB.h"
 #include "LuaConstGame.h"
 #include "LuaSyncedCall.h"
 #include "LuaSyncedCtrl.h"
@@ -211,7 +212,8 @@ bool CLuaHandleSynced::SetupSynced(const string& code, const string& filename)
 	    !AddEntriesToTable(L, "Spring",      LuaSyncedRead::PushEntries)   ||
 	    !AddEntriesToTable(L, "Game",        LuaConstGame::PushEntries)    ||
 	    !AddEntriesToTable(L, "CMD",         LuaConstCMD::PushEntries)     ||
-	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries)) {
+	    !AddEntriesToTable(L, "CMDTYPE",     LuaConstCMDTYPE::PushEntries) ||
+	    !AddEntriesToTable(L, "COB",         LuaConstCOB::PushEntries)) {
 		KillLua();
 		return false;
 	}

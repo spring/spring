@@ -834,13 +834,20 @@ void CPathEstimator::Draw(void)
 {
 	GML_RECMUTEX_LOCK(sel); // Draw
 
-	MoveData* md = moveinfo->GetMoveDataFromName("TANKSH2");
-	if (!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata)
+	MoveData* md = NULL;
+
+	if (!moveinfo->moveData.empty()) {
+		md = moveinfo->moveData[0];
+	} else {
+		return;
+	}
+
+	if (!selectedUnits.selectedUnits.empty() && (*selectedUnits.selectedUnits.begin())->unitDef->movedata) {
 		md = (*selectedUnits.selectedUnits.begin())->unitDef->movedata;
+	}
 
 	glDisable(GL_TEXTURE_2D);
 	glColor3f(1, 1, 0);
-
 
 /*
 	float blue = BLOCK_SIZE == 32? 1: 0;

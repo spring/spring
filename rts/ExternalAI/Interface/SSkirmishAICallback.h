@@ -229,8 +229,8 @@ int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId
  * Returns the current game time measured in frames (the
  * simulation runs at 30 frames per second at normal speed)
  *
- * DEPRECATED: this should not be used, as we get the frame from the
- * SUpdateEvent
+ * This should not be used, as we get the frame from the SUpdateEvent.
+ * @deprecated
  */
 int (CALLING_CONV *Clb_Game_getCurrentFrame)(int teamId);
 int (CALLING_CONV *Clb_Game_getAiInterfaceVersion)(int teamId);

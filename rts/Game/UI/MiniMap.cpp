@@ -595,7 +595,7 @@ void CMiniMap::UpdateGeometry()
 
 	unitSizeX = dpr * (mapx / w);
 	unitSizeY = dpr * (mapy / h);
-	unitSelectRadius = fastmath::sqrt(unitSizeX * unitSizeY);
+	unitSelectRadius = fastmath::apxsqrt(unitSizeX * unitSizeY);
 
 	// in mouse coordinates
 	mapBox.xmin = xpos;

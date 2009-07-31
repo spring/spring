@@ -3091,7 +3091,7 @@ float AAIBuildTable::GetFactoryRating(int def_id)
 	if(combat_units > 0)
 	{
 		rating /= (combat_units * units_static[def_id].cost);
-		rating *= fastmath::sqrt((float) (4 + combat_units) );
+		rating *= fastmath::apxsqrt((float) (4 + combat_units) );
 
 		if(scout)
 			rating += 8.0f;

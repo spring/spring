@@ -15,11 +15,12 @@
 #include "creg/STL_Deque.h"
 #include "creg/STL_Map.h"
 #include "Exceptions.h"
+#include "System/Util.h"
 
 using std::min;
 using std::max;
 
-CR_BIND(MoveData, (0x0, 0));
+CR_BIND(MoveData, (0));
 CR_BIND(CMoveInfo, );
 
 CR_REG_METADATA(MoveData, (
@@ -87,9 +88,9 @@ CMoveInfo::CMoveInfo()
 			break;
 		}
 
-		MoveData* md = new MoveData(0x0, 0);
+		MoveData* md = new MoveData(NULL);
 
-		md->name     = moveTable.GetString("name", "");
+		md->name     = StringToLower(moveTable.GetString("name", ""));
 		md->pathType = (num - 1);
 		md->maxSlope = 1.0f;
 		md->depth    = 0.0f;
@@ -99,15 +100,15 @@ CMoveInfo::CMoveInfo()
 		const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
 		const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth", 0.0f);
 
-		if ((md->name.find("BOAT") != string::npos) ||
-		    (md->name.find("SHIP") != string::npos)) {
+		if ((md->name.find("boat") != string::npos) ||
+		    (md->name.find("ship") != string::npos)) {
 			md->moveType   = MoveData::Ship_Move;
 			md->depth      = minWaterDepth;
 			md->moveFamily = MoveData::Ship;
 			md->moveMath   = seaMoveMath;
 			md->subMarine  = moveTable.GetBool("subMarine", 0);
 		}
-		else if (md->name.find("HOVER") != string::npos) {
+		else if (md->name.find("hover") != string::npos) {
 			md->moveType   = MoveData::Hover_Move;
 			md->maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 			md->moveFamily = MoveData::Hover;
@@ -120,7 +121,7 @@ CMoveInfo::CMoveInfo()
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
 			md->moveMath = groundMoveMath;
 
-			if (md->name.find("TANK") != string::npos) {
+			if (md->name.find("tank") != string::npos) {
 				md->moveFamily = MoveData::Tank;
 			} else {
 				md->moveFamily = MoveData::KBot;

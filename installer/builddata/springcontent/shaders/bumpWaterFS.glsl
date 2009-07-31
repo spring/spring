@@ -151,8 +151,8 @@ void main(void) {
     vec3 coast = vec3(0.0,0.0,1.0);
     float waterdepth,invwaterdepth;
 #ifdef opt_endlessocean
-    if ( any(greaterThanEqual(gl_TexCoord[4].pq,ShadingPlane.pq)) ||
-         any(lessThanEqual(gl_TexCoord[4].pq,vec2(0.0,0.0)))
+    if ( any(greaterThanEqual(gl_TexCoord[5].st,ShadingPlane.pq)) ||
+         any(lessThanEqual(gl_TexCoord[5].st,vec2(0.0,0.0)))
        )
     {
       waterdepth = 1.0;
@@ -166,7 +166,7 @@ void main(void) {
       invwaterdepth = coast.b;
       waterdepth = 1.0 - invwaterdepth;
 #else
-      invwaterdepth = texture2D(heightmap,gl_TexCoord[4].pq).a; //heightmap in alpha channel
+      invwaterdepth = texture2D(heightmap,gl_TexCoord[5].st).a; //heightmap in alpha channel
       waterdepth = 1.0 - invwaterdepth;
       if (waterdepth==0.0) discard;
 #endif

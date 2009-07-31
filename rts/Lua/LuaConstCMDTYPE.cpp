@@ -15,20 +15,10 @@
 /******************************************************************************/
 /******************************************************************************/
 
-static void InsertDualMapPair(lua_State* L, const string& name, int number)
-{
-	lua_pushstring(L, name.c_str());
-	lua_pushnumber(L, number);
-	lua_rawset(L, -3);
-	lua_pushnumber(L, number);
-	lua_pushstring(L, name.c_str());
-	lua_rawset(L, -3);
-}
-
 
 bool LuaConstCMDTYPE::PushEntries(lua_State* L)
 {
-#define PUSH_CMDTYPE(cmd) InsertDualMapPair(L, #cmd, CMDTYPE_ ## cmd)
+#define PUSH_CMDTYPE(cmd) LuaInsertDualMapPair(L, #cmd, CMDTYPE_ ## cmd)
 
 	PUSH_CMDTYPE(ICON);
 	PUSH_CMDTYPE(ICON_MODE);
@@ -46,7 +36,7 @@ bool LuaConstCMDTYPE::PushEntries(lua_State* L)
 	PUSH_CMDTYPE(CUSTOM);
 	PUSH_CMDTYPE(ICON_UNIT_OR_RECTANGLE);
 	PUSH_CMDTYPE(NUMBER);
-	
+
 	return true;
 }
 
