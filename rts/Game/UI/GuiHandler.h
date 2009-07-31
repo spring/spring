@@ -15,7 +15,6 @@
 #include "MouseHandler.h"
 
 class CUnit;
-class CglList;
 struct UnitDef;
 struct BuildInfo;
 
@@ -164,7 +163,6 @@ class CGuiHandler : public CInputReceiver {
 		int defaultCmdMemory;
 		int explicitCommand;
 		//int fadein;
-		CglList* list;
 
 		int actionOffset;
 		CKeySet lastKeySet;
