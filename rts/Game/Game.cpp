@@ -74,7 +74,6 @@
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GL/glList.h"
 #include "Rendering/GroundDecalHandler.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
