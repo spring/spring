@@ -39,12 +39,18 @@ bool GuiElement::HandleEvent(const SDL_Event& ev)
 		if ((*it)->HandleEvent(ev))
 			return true;
 	}
+	return false;
 }
 
-bool GuiElement::MouseOver(int x, int y)
+bool GuiElement::MouseOver(int x, int y) const
 {
 	float mouse[2] = {PixelToGlX(x), PixelToGlY(y)};
 	return (mouse[0] >= pos[0] && mouse[0] <= pos[0]+size[0]) && (mouse[1] >= pos[1] && mouse[1] <= pos[1]+size[1]);
+}
+
+bool GuiElement::MouseOver(float x, float y) const
+{
+	return (x >= pos[0] && x <= pos[0]+size[0]) && (y >= pos[1] && y <= pos[1]+size[1]);
 }
 
 void GuiElement::UpdateDisplayGeo(int x, int y)

@@ -1,65 +1,52 @@
-#include "StdAfx.h"
-// glList.cpp: implementation of the CglList class.
-//
-//////////////////////////////////////////////////////////////////////
-
 #include "glList.h"
+
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
-#include "mmgr.h"
 
-#include "myGL.h"
+#include "Rendering/GL/myGL.h"
 #include "Game/UI/MouseHandler.h"
+#include "Gui.h"
 #include "Rendering/glFont.h"
-#include "ConfigHandler.h"
 #include "Util.h"
 
-const float itemFontScale = 1.5f;
-const float itemXMargin = 0.02f;
+namespace agui
+{
+
+const float itemFontScale = 1.0f;
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CglList::~CglList()
-{
-	if (place != cancelPlace) {
-		char buf[50];
-		sprintf(buf, "LastListChoice%i", id);
-		configHandler->SetString(buf, (*filteredItems)[place]);
-	}
-}
-
-CglList::CglList(const std::string& name, ListSelectCallback callback, int id) :
+CglList::CglList(GuiElement* parent) :
+		GuiElement(parent),
 		place(0),
-		name(name),
-		callback(callback),
 		cancelPlace(-1),
 		tooltip("No tooltip defined"),
 		activeMousePress(false),
-		id(id),
 		filteredItems(&items)
 {
-	char buf[50];
-	sprintf(buf, "LastListChoice%i", id);
-	lastChoosen=configHandler->GetString(buf, "");
-	box.x1 = 0.3f;
-	box.y1 = 0.1f;
-	box.x2 = 0.7f;
-	box.y2 = 0.9f;
+	borderSpacing = 0.005f;
+	itemSpacing = 0.02f;
+	itemHeight = 0.05f;
 }
 
-void CglList::AddItem(const std::string& name,const std::string& description)
+CglList::~CglList()
+{
+}
+
+void CglList::AddItem(const std::string& name, const std::string& description)
 {
 	if (lastChoosen == name)
 		place = items.size();
 	items.push_back(name);
 
 	// calculate width of text and resize box if necessary
-	float w = itemFontScale * font->GetSize() * font->GetTextWidth(name) * gu->pixelX + 2 * itemXMargin;
-	if (w > (box.x2 - box.x1)) {
-		box.x1 = 0.5f - 0.5f * w;
-		box.x2 = 0.5f + 0.5f * w;
+	const float w = itemFontScale * font->GetSize() * font->GetTextWidth(name) * screensize[0] + 2 * itemSpacing;
+	if (w > (size[0]))
+	{
+		//box.x1 = 0.5f - 0.5f * w;
+		//box.x2 = 0.5f + 0.5f * w;
 	}
 }
 
@@ -69,9 +56,6 @@ bool CglList::MousePress(int x, int y, int button)
 	{
 		case SDL_BUTTON_LEFT:
 		{
-			if (!IsAbove(x, y))
-				break;
-
 			activeMousePress = true;
 			MouseUpdate(x, y); // make sure place is up to date
 			break;
@@ -84,6 +68,7 @@ bool CglList::MousePress(int x, int y, int button)
 			UpOne();
 			break;
 	}
+	return false;
 }
 
 void CglList::MouseMove(int x, int y, int dx,int dy, int button)
@@ -103,153 +88,132 @@ void CglList::MouseRelease(int x, int y, int button)
 	if (!MouseUpdate(x, y) && cancelPlace >= 0) { // make sure place is up to date
 		place = cancelPlace;
 	}
-	Select(); // watch out, the callback may delete this
 }
 
 bool CglList::MouseUpdate(int x, int y)
 {
-	mx = MouseX(x);
-	my = MouseY(y);
+	mx = PixelToGlX(x);
+	my = PixelToGlY(y);
 
 	int nCurIndex = 0; // The item we're on
 	int nDrawOffset = 0; // The offset to the first draw item
-	ContainerBox b = box;
 
+	GuiElement b;
+	b.SetPos(pos[0] + borderSpacing, pos[1] + borderSpacing);
+	b.SetSize(size[0] - 2.0f * borderSpacing, 0.06f);
+	
 	// Get list started up here
 	std::vector<std::string>::iterator ii = filteredItems->begin();
-	// Skip to current selection - 3; ie: scroll
-	while ((nCurIndex + 7) <= place && nCurIndex+13 <= filteredItems->size()) { ii++; nCurIndex++; }
-
-	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < 12; ii++)
+	const int numDisplay = (size[1]-2.0f*borderSpacing)/(itemHeight+itemSpacing);
+	assert(numDisplay >= 0);
+	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()) { ii++; nCurIndex++; }
+	
+	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
 	{
-		b.y2 = box.y2 - 0.06f - (nDrawOffset * 0.06f);
-		b.y1 = b.y2 - 0.05f;
-
-		if (InBox(mx, my, b)) {
+		if (b.MouseOver(mx, my))
+		{
 			place = nCurIndex;
 			return true;
 		}
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;
+		b.Move(0.0, itemHeight + itemSpacing);
 	}
 	return false;
 }
 
-bool CglList::IsAbove(int x, int y)
-{
-// 	return InBox(MouseX(x), MouseY(y), box);
-	// always take focus for now, otherwise weird behaviour results
-	// in GroupAI choose menu
-	return true;
-}
-
-void CglList::Draw()
+void CglList::DrawSelf()
 {
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
 	glLoadIdentity();
-	glColor4f(0.2f,0.2f,0.2f,guiAlpha);
-	DrawBox(box);
+	glColor4f(0.2f,0.2f,0.2f,1.0f);
+	DrawBox(GL_QUADS);
 
 	font->Begin();
 
 	font->SetTextColor(1,1,0.4f,0.8f);
-	font->glPrint(box.x1 + 0.01f, box.y2 - 0.05f, itemFontScale*0.7f, FONT_SCALE | FONT_NORM, name);
-
-	/****************************************
-	* Insert Robert Diamond's section here *
-	* <deadram@gmail.com> *
-	****************************************/
-
-	/****************************************
-	* TODO: *
-	* *
-	* This part of the code will need some *
-	* math, and it's been a while since I *
-	* did any 3D coding... the idea is to *
-	* keep the selected item in the middle *
-	* 60% of the screen, but don't scroll *
-	* till we reach one end, or the other *
-	* of that boundary. We'd also need the *
-	* "oldPlace" variable to do this *
-	* properly. *
-	* *
-	****************************************
-	// Get screen res, so that the selected item is always within the middle 60% of screen
-	const int iResX = gu->viewSizeX;
-	const int iResY = gu->viewSizeY;
-
-	// Keep tabs on the last place. change this ONLY AFTER a scroll
-	static int siOldPlace = place;
-
-	if (we're scrolling up) siOldPlace = place;
-	if (we're scrolling down) siOldPlace = place;
-	if (we're not scrolling) siOldPlace = siOldPlace;
-
-	**************************************
-	* Hey remove me when TODO is done XD *
-	**************************************/
 
 	int nCurIndex = 0; // The item we're on
 	int nDrawOffset = 0; // The offset to the first draw item
-	ContainerBox b = box;
 
-	b.x1 += 0.01f;
-	b.x2 -= 0.01f;
+	GuiElement b;
+	b.SetPos(pos[0] + borderSpacing, pos[1] + borderSpacing);
+	b.SetSize(size[0] - 2.0f * borderSpacing, 0.06f);
 
 	// Get list started up here
 	std::vector<std::string>::iterator ii = filteredItems->begin();
 	// Skip to current selection - 3; ie: scroll
-	while ((nCurIndex + 7) <= place && nCurIndex+13 <= filteredItems->size()) { ii++; nCurIndex++; }
+	const int numDisplay = (size[1]-2.0f*borderSpacing)/(itemHeight+itemSpacing);
+	assert(numDisplay >= 0);
+	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()) { ii++; nCurIndex++; }
 
 	font->SetTextColor(); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
-	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < 12; ii++)
+	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
 	{
-		b.y2 = box.y2 - 0.06f - (nDrawOffset * 0.06f);
-		b.y1 = b.y2 - 0.05f;
-
-		// TODO lots of this should really be merged with GuiHandler.cpp
-		// (as in, factor out the common code...)
-
 		glColor4f(1,1,1,0.1f);
-		DrawBox(b, GL_LINE_LOOP);
+		b.DrawBox(GL_LINE_LOOP);
 
 		if (nCurIndex == place) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
 			glColor4f(0.2f,0,0,1);
-			DrawBox(b);
+			b.DrawBox(GL_QUADS);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glColor4f(1,0,0,0.5f);
 			glLineWidth(1.49f);
-			DrawBox(b, GL_LINE_LOOP);
+			b.DrawBox(GL_LINE_LOOP);
 			glLineWidth(1.0f);
-		} else if (InBox(mx, my, b)) {
+		} else if (b.MouseOver(mx, my)) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
 			glColor4f(0,0,0.2f,1);
-			DrawBox(b);
+			b.DrawBox(GL_QUADS);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 			glColor4f(1,1,1,0.5f);
 			glLineWidth(1.49f);
-			DrawBox(b, GL_LINE_LOOP);
+			b.DrawBox(GL_LINE_LOOP);
 			glLineWidth(1.0f);
 		}
 
-		const float xStart = box.x1 + itemXMargin;
-		const float yStart = (b.y1 + b.y2) * 0.5f;
-
-		font->glPrint(xStart, yStart, itemFontScale, FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
+		font->glPrint(pos[0]+borderSpacing+0.001f, b.GetMidY(), itemFontScale, FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;
+		b.Move(0.0, itemHeight + itemSpacing);
 	}
 	/**************
 	* End insert *
 	**************/
 
 	font->End();
+}
+
+bool CglList::HandleEventSelf(const SDL_Event& ev)
+{
+	if (MouseOver(ev.button.x, ev.button.y))
+	{
+		switch (ev.type) {
+			case SDL_MOUSEBUTTONDOWN: {
+				MousePress(ev.button.x, ev.button.y, ev.button.button);
+				break;
+			}
+			case SDL_MOUSEBUTTONUP: {
+				MouseRelease(ev.button.x, ev.button.y, ev.button.button);
+				break;
+			}
+			case SDL_MOUSEMOTION: {
+				MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
+				break;
+			}
+		}
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void CglList::UpOne()
@@ -284,12 +248,6 @@ void CglList::DownPage()
 		place=0;
 }
 
-void CglList::Select()
-{
-	if (!filteredItems->empty())
-		callback((*filteredItems)[place]);
-}
-
 std::string CglList::GetCurrentItem() const
 {
 	if (!filteredItems->empty()) {
@@ -303,7 +261,6 @@ bool CglList::KeyPressed(unsigned short k, bool isRepeat)
 	if (k == SDLK_ESCAPE) {
 		if (cancelPlace >= 0) {
 			place = cancelPlace;
-			Select();
 			return true;
 		}
 	} else if (k == SDLK_UP) {
@@ -317,9 +274,6 @@ bool CglList::KeyPressed(unsigned short k, bool isRepeat)
 		return true;
 	} else if (k == SDLK_PAGEDOWN) {
 		DownPage();
-		return true;
-	} else if (k == SDLK_RETURN) {
-		Select();
 		return true;
 	} else if (k == SDLK_BACKSPACE) {
 		query = query.substr(0, query.length() - 1);
@@ -360,4 +314,6 @@ bool CglList::Filter(bool reset)
 			place=0;
 		return true;
 	}
+}
+
 }

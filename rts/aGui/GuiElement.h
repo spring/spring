@@ -15,7 +15,8 @@ public:
 	
 	void Draw();
 	bool HandleEvent(const SDL_Event& ev);
-	bool MouseOver(int x, int y);
+	bool MouseOver(int x, int y) const;
+	bool MouseOver(float x, float y) const;
 	
 	static void UpdateDisplayGeo(int x, int y);
 	static float PixelToGlX(int x);
@@ -26,6 +27,11 @@ public:
 	virtual void SetPos(float x, float y);
 	virtual void SetSize(float x, float y);
 
+	float GetMidY() const
+	{
+		return pos[1] + (size[1] / 2.0f);
+	};
+
 	void Move(float x, float y);
 	GuiElement* GetRoot()
 	{
@@ -35,13 +41,14 @@ public:
 			return this;
 	};
 
+	void DrawBox(int how);
+
 protected:
 	GuiElement* parent;
 	
 	typedef std::list<GuiElement*> ChildList;
 	ChildList children;
 	
-	void DrawBox(int how);
 	virtual void DrawSelf() {};
 	virtual bool HandleEventSelf(const SDL_Event& ev)
 	{
