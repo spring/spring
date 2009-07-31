@@ -86,10 +86,6 @@ class CGuiHandler : public CInputReceiver {
 
 	private:
 		void GiveCommand(const Command& cmd, bool fromUser = true) const;
-
-		void MenuChoice(std::string s);
-		static void MenuSelection(std::string s);
-
 		void LayoutIcons(bool useSelectionPage);
 		bool LayoutCustomIcons(bool useSelectionPage);
 		void ResizeIconArray(unsigned int size);
