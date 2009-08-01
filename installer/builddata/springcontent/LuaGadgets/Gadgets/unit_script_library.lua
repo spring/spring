@@ -40,9 +40,30 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
+local scriptHeader = VFS.LoadFile("gamedata/unit_script_library_header.lua", VFSMODE)
+
+-- Newlines (and comments) are stripped to not change line numbers in stacktraces.
+scriptHeader = scriptHeader:gsub("%-%-[^\r\n]*", ""):gsub("[\r\n]", " ")
+
+
 local function LoadScript(filename)
 	local basename = filename:match("[^\\/:]*$") or filename
-	VFS.Include(filename, nil, VFSMODE)
+	local text = VFS.LoadFile(filename, VFSMODE)
+	if (text == nil) then
+		Spring.Echo("Failed to load: " .. filename)
+		return nil
+	end
+	local chunk, err = loadstring(scriptHeader .. text, filename)
+	if (chunk == nil) then
+		Spring.Echo("Failed to load: " .. basename .. "  (" .. err .. ")")
+		return nil
+	end
+	local good, err = xpcall(chunk, debug.traceback)
+	if (not good) then
+		Spring.Echo("Failed to load: " .. basename .. "  (" .. err .. ")")
+		return nil
+	end
+	return true
 end
 
 
