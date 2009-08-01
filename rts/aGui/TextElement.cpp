@@ -9,6 +9,11 @@ TextElement::TextElement(const std::string& _text, GuiElement* parent) : GuiElem
 {
 }
 
+void TextElement::SetText(const std::string& str)
+{
+	text = str;
+}
+
 void TextElement::DrawSelf()
 {
 	font->SetTextColor(); //default

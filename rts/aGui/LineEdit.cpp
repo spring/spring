@@ -56,11 +56,9 @@ void LineEdit::DrawSelf()
 		const float cursorHeight = font->GetSize() * font->GetLineHeight() / float(screensize[1]);
 		const float cw = font->GetSize() * font->GetCharacterWidth(c) /float(screensize[0]);
 		const float csx = pos[0]+0.01 + caretWidth;
-		glDisable(GL_TEXTURE_2D);
 		const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
 		glColor4f(f, f, f, 0.75f);
 		glRectf(csx, textCenter + cursorHeight/2, csx + cw, textCenter - cursorHeight/2);
-		glEnable(GL_TEXTURE_2D);
 		glColor4f(0.0f,0.0f,0.0f, 1.0f); // black
 	}
 

@@ -94,9 +94,19 @@ bool Gui::HandleEvent(const SDL_Event& ev)
 	bool mouseEvent = false;
 	if  (ev.type == SDL_MOUSEMOTION || ev.type == SDL_MOUSEBUTTONDOWN || ev.type == SDL_MOUSEBUTTONUP)
 		mouseEvent = true;
+	ElList::iterator handler = elements.end();
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
 	{
-		(*it)->HandleEvent(ev);
+		if ((*it)->HandleEvent(ev))
+		{
+			handler = it;
+			break;
+		}
+	}
+	if (handler != elements.end())
+	{
+		elements.push_front(*handler);
+		elements.erase(handler);
 	}
 	return false;
 }

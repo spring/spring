@@ -10,6 +10,7 @@
 #include <boost/cstdint.hpp>
 
 #include "ClientSetup.h"
+#include "SelectionWidget.h"
 #include "PreGame.h"
 #include "Rendering/glFont.h"
 #include "LogOutput.h"
@@ -90,6 +91,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 	connectWnd = NULL;
 	list = NULL;
 	mySettings = new ClientSetup();
+	selw = new SelectionWidget();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
 
@@ -101,7 +103,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 
 	{
 		menu = new agui::VerticalLayout();
-		menu->SetPos(0.3, 0.3);
+		menu->SetPos(0.1, 0.5);
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
 		agui::gui->AddElement(menu);
@@ -124,6 +126,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 SelectMenu::~SelectMenu()
 {
 	ConnectWindow(false);
+	delete selw;
 	if (menu)
 	{
 		agui::gui->RmElement(menu);
@@ -157,115 +160,10 @@ bool SelectMenu::Update()
 	return true;
 }
 
-/** Create a CglList for selecting the map. */
-void SelectMenu::ShowMapList()
-{
-	/*list = new agui::CglList();
-	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
-	std::vector<std::string> arFound = archiveScanner->GetMaps();
-	if (found.begin() == found.end() && arFound.begin() == arFound.end()) {
-		throw content_error("PreGame couldn't find any map files");
-		return;
-	}
-
-	std::set<std::string> mapSet; // use a set to sort them
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
-		std::string fn(filesystem.GetFilename(*it));
-		mapSet.insert(fn.c_str());
-	}
-	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++) {
-		mapSet.insert((*it).c_str());
-	}
-
-	list->AddItem("Random map", "Random map"); // always first
-	for (std::set<std::string>::iterator sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
-		list->AddItem(*sit, *sit);
-	}*/
-}
-
-
-/** Create a CglList for selecting the script. */
-void SelectMenu::ShowScriptList()
-{
-	//CglList* list = CScriptHandler::Instance().GenList(boost::bind(&SelectMenu::SelectScript, this, _1));
-}
-
-
-/** Create a CglList for selecting the mod. */
-void SelectMenu::ShowModList()
-{
-	if (connectWnd)
-	{
-		agui::gui->RmElement(connectWnd);
-		delete connectWnd;
-	}
-	connectWnd = new agui::Window("Select mod");
-	agui::gui->AddElement(connectWnd);
-	connectWnd->SetPos(0.5, 0.2);
-	connectWnd->SetSize(0.4, 0.7);
-	list = new agui::CglList(connectWnd);
-	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
-	if (found.empty()) {
-		throw content_error("PreGame couldn't find any mod files");
-		return;
-	}
-
-	std::map<std::string, std::string> modMap; // name, desc  (using a map to sort)
-	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it) {
-		modMap[it->name] = it->description;
-	}
-
-	list->AddItem("Random mod", "Random mod"); // always first
-	std::map<std::string, std::string>::iterator mit;
-	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {
-		list->AddItem(mit->first, mit->second);
-	}
-}
-
-
-void SelectMenu::SelectMap(const std::string& s)
-{
-	if (s == "Random map") {
-		//userMap = showList->items[1 + gu->usRandInt() % (showList->items.size() - 1)];
-	}
-	else
-		userMap = s;
-
-	int gamemode = 3;
-	if (userScript.find("GlobalAI test") != std::string::npos)
-		gamemode = 0;
-	else
-		logOutput.Print("Testing mode enabled; game over disabled.\n");
-
-	pregame = new CPreGame(mySettings);
-	pregame->LoadSetupscript(CreateDefaultSetup(userMap, userMod, userScript, mySettings->myPlayerName, gamemode));
-	delete this;
-}
-
-
-void SelectMenu::SelectScript(const std::string& s)
-{
-	userScript = s;
-
-	ShowMapList();
-}
-
-
-void SelectMenu::SelectMod(const std::string& s)
-{
-	if (s == "Random mod") {
-		//const int index = 1 + (gu->usRandInt() % (showList->items.size() - 1));
-		//userMod = showList->items[index];
-	}
-	else
-		userMod = s;
-
-	ShowScriptList();
-}
-
 void SelectMenu::Single()
 {
-	ShowModList();
+	pregame = new CPreGame(mySettings);
+	pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName, 1));
 }
 
 void SelectMenu::Multi()

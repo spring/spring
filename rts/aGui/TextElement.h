@@ -12,6 +12,7 @@ class TextElement : public GuiElement
 {
 public:
 	TextElement(const std::string& text, GuiElement* parent = NULL);
+	void SetText(const std::string& str);
 
 private:
 	virtual void DrawSelf();

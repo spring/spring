@@ -12,6 +12,7 @@
 class CScriptHandler
 {
 public:
+	std::list<std::string> ScriptList();
 	static void SelectScript(std::string s);
 
 	void AddScript(std::string name,CScript* s);
