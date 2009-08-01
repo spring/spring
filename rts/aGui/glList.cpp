@@ -27,7 +27,7 @@ CglList::CglList(GuiElement* parent) :
 		filteredItems(&items)
 {
 	borderSpacing = 0.005f;
-	itemSpacing = 0.002f;
+	itemSpacing = 0.003f;
 	itemHeight = 0.04f;
 }
 
@@ -99,8 +99,8 @@ bool CglList::MouseUpdate(int x, int y)
 	int nDrawOffset = 0; // The offset to the first draw item
 
 	GuiElement b;
-	b.SetPos(pos[0] + borderSpacing, pos[1] + borderSpacing);
-	b.SetSize(size[0] - 2.0f * borderSpacing, 0.06f);
+	b.SetPos(pos[0] + borderSpacing, pos[1] + size[1] - borderSpacing - itemHeight);
+	b.SetSize(size[0] - 2.0f * borderSpacing, itemHeight);
 	
 	// Get list started up here
 	std::vector<std::string>::iterator ii = filteredItems->begin();
@@ -118,7 +118,7 @@ bool CglList::MouseUpdate(int x, int y)
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;
-		b.Move(0.0, itemHeight + itemSpacing);
+		b.Move(0.0,  - (itemHeight + itemSpacing));
 	}
 	return false;
 }
