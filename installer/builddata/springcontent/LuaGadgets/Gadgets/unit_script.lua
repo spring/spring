@@ -337,46 +337,8 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- This is prepended before the actual unitscript, so certain functions and
--- variables can be made available in what seems to be the global scope,
--- without reducing performance. (due to real global var accesses)
-local scriptHeader = [[
-local UnitScript = Spring.UnitScript
+local scriptHeader = VFS.LoadFile("gamedata/unit_script_header.lua", VFSMODE)
 
-local EmitSfx = UnitScript.EmitSfx
-local Explode = UnitScript.Explode
-local GetUnitValue = UnitScript.GetUnitValue
-local SetUnitValue = UnitScript.SetUnitValue
-local Hide = UnitScript.Hide
-local Show = UnitScript.Show
-
-local Move = UnitScript.Move
-local Turn = UnitScript.Turn
-local Spin = UnitScript.Spin
-local StopSpin = UnitScript.StopSpin
-
-local StartThread = UnitScript.StartThread
-local Signal = UnitScript.Signal
-local SetSignalMask = UnitScript.SetSignalMask
-local Sleep = UnitScript.Sleep
-local WaitForMove = UnitScript.WaitForMove
-local WaitForTurn = UnitScript.WaitForTurn
-
-local x_axis = 1
-local y_axis = 2
-local z_axis = 3
-
-local piece
-do
-	local pieces = Spring.GetUnitPieceMap(unitID)
-	piece = function(name)
-		if not pieces[name] then
-			error("piece not found: " .. tostring(name), 2)
-		end
-		return pieces[name]
-	end
-end
-]]
 -- Newlines (and comments) are stripped to not change line numbers in stacktraces.
 scriptHeader = scriptHeader:gsub("%-%-[^\r\n]*", ""):gsub("[\r\n]", " ")
 
