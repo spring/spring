@@ -32,20 +32,22 @@ SelectionWidget::SelectionWidget()
 	agui::HorizontalLayout* modL = new agui::HorizontalLayout(vl);
 	mod = new agui::Button("Select", modL);
 	mod->ClickHandler(boost::bind(&SelectionWidget::ShowModList, this));
+	mod->SetSize(0.1f, 0.00f, true);
 	userMod = configHandler->GetString("LastSelectedMod", "No mod selected");
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
 	map = new agui::Button("Select", mapL);
 	map->ClickHandler(boost::bind(&SelectionWidget::ShowMapList, this));
+	map->SetSize(0.1f, 0.00f, true);
 	userMap = configHandler->GetString("LastSelectedMap", "No map selected");
 	mapT = new agui::TextElement(userMap, mapL);
 	userMap = configHandler->GetString("LastSelectedMap", "No map selected");
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
 	script = new agui::Button("Select", scriptL);
 	script->ClickHandler(boost::bind(&SelectionWidget::ShowScriptList, this));
+	script->SetSize(0.1f, 0.00f, true);
 	userScript = configHandler->GetString("LastSelectedScript", "No script selected");
 	scriptT = new agui::TextElement(userScript, scriptL);
-	
 }
 
 SelectionWidget::~SelectionWidget()

@@ -16,6 +16,16 @@ void VerticalLayout::SetBorder(float thickness)
 	borderWidth = thickness;
 }
 
+void VerticalLayout::DrawSelf()
+{
+	if (borderWidth > 0)
+	{
+		glLineWidth(borderWidth);
+		glColor4f(1.f,1.f,1.f, 1.f);
+		DrawBox(GL_LINE_LOOP);
+	}
+}
+
 void VerticalLayout::GeometryChangeSelf()
 {
 	unsigned numFixed = 0;
@@ -36,7 +46,7 @@ void VerticalLayout::GeometryChangeSelf()
 		(*i)->SetPos(pos[0]+spacing, startY);
 		if ((*i)->SizeFixed())
 		{
-			(*i)->SetSize(size[0]- 2.0f*spacing, (*i)->GetSize()[1]);
+			(*i)->SetSize(size[0]- 2.0f*spacing, (*i)->GetSize()[1], true);
 			startY += (*i)->GetSize()[1] + spacing;
 		}
 		else
@@ -44,16 +54,6 @@ void VerticalLayout::GeometryChangeSelf()
 			(*i)->SetSize(size[0]- 2.0f*spacing, vspacePerObject);
 			startY += vspacePerObject + spacing;
 		}
-	}
-}
-
-void VerticalLayout::DrawSelf()
-{
-	if (borderWidth > 0)
-	{
-		glLineWidth(borderWidth);
-		glColor4f(1.f,1.f,1.f, 1.f);	
-		DrawBox(GL_LINE_LOOP);
 	}
 }
 

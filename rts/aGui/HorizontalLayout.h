@@ -13,11 +13,11 @@ public:
 	void SetBorder(float thickness);
 
 private:
+	virtual void DrawSelf();
 	virtual void GeometryChangeSelf();
 
 	float spacing;
 	float borderWidth;
-	virtual void DrawSelf();
 };
 
 }
