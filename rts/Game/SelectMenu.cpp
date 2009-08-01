@@ -168,7 +168,11 @@ void SelectMenu::Single()
 
 void SelectMenu::Multi()
 {
+#ifdef __unix__
 	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby");
+#else
+	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby.exe");
+#endif
 	execlp(defLobby.c_str(), defLobby.c_str(), NULL);
 }
 
