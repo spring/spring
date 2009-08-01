@@ -47,6 +47,7 @@ zip -qu ${BUILD_DIR}/springcontent.sdz bitmaps/*/*
 zip -qu ${BUILD_DIR}/springcontent.sdz anims/*
 zip -qu ${BUILD_DIR}/springcontent.sdz shaders/*
 zip -qu ${BUILD_DIR}/springcontent.sdz LuaGadgets/*
+zip -qu ${BUILD_DIR}/springcontent.sdz LuaGadgets/*/*
 cd ..
 
 echo Updating maphelper.sdz
