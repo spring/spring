@@ -7,7 +7,7 @@ namespace agui
 
 int GuiElement::screensize[2];
 
-GuiElement::GuiElement(GuiElement* _parent) : parent(_parent)
+GuiElement::GuiElement(GuiElement* _parent) : parent(_parent), fixedSize(false)
 {
 	if (parent)
 		parent->AddChild(this);
@@ -84,10 +84,11 @@ void GuiElement::SetPos(float x, float y)
 	GeometryChange();
 }
 
-void GuiElement::SetSize(float x, float y)
+void GuiElement::SetSize(float x, float y, bool fixed)
 {
 	size[0] = x;
 	size[1] = y;
+	fixedSize = fixed;
 	GeometryChange();
 }
 
