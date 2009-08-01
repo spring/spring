@@ -10,11 +10,11 @@ class VerticalLayout : public GuiElement
 {
 public:
 	VerticalLayout(GuiElement* parent = NULL);
-
-	virtual void AddChild(GuiElement* elem);
 	void SetBorder(float thickness);
 
 private:
+	virtual void GeometryChangeSelf();
+
 	float spacing;
 	float borderWidth;
 	virtual void DrawSelf();
