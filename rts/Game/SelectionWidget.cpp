@@ -80,7 +80,6 @@ void SelectionWidget::ShowModList()
 		modMap[it->name] = it->description;
 	}
 
-	curSelectList->AddItem("Random mod", "Random mod"); // always first
 	std::map<std::string, std::string>::iterator mit;
 	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {
 		curSelectList->AddItem(mit->first, mit->second);
@@ -119,7 +118,6 @@ void SelectionWidget::ShowMapList()
 		mapSet.insert((*it).c_str());
 	}
 
-	curSelectList->AddItem("Random map", "Random map"); // always first
 	for (std::set<std::string>::iterator sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
 		curSelectList->AddItem(*sit, *sit);
 	}
