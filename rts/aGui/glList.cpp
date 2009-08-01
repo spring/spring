@@ -189,28 +189,36 @@ void CglList::DrawSelf()
 
 bool CglList::HandleEventSelf(const SDL_Event& ev)
 {
-	if (MouseOver(ev.button.x, ev.button.y))
-	{
-		switch (ev.type) {
-			case SDL_MOUSEBUTTONDOWN: {
+	switch (ev.type) {
+		case SDL_MOUSEBUTTONDOWN: {
+			if (MouseOver(ev.button.x, ev.button.y))
+			{
 				MousePress(ev.button.x, ev.button.y, ev.button.button);
-				break;
+				return true;
 			}
-			case SDL_MOUSEBUTTONUP: {
-				MouseRelease(ev.button.x, ev.button.y, ev.button.button);
-				break;
-			}
-			case SDL_MOUSEMOTION: {
-				MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
-				break;
-			}
+			break;
 		}
-		return true;
+		case SDL_MOUSEBUTTONUP: {
+			if (MouseOver(ev.button.x, ev.button.y))
+			{
+				MouseRelease(ev.button.x, ev.button.y, ev.button.button);
+				return true;
+			}
+			break;
+		}
+		case SDL_MOUSEMOTION: {
+			if (MouseOver(ev.button.x, ev.button.y))
+			{
+				MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
+				return true;
+			}
+			break;
+		}
+		case SDL_KEYDOWN: {
+			return KeyPressed(ev.key.keysym.sym, false);
+		}
 	}
-	else
-	{
-		return false;
-	}
+	return false;
 }
 
 void CglList::UpOne()
