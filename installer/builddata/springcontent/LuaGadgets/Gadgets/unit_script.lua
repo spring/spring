@@ -467,8 +467,9 @@ local function Wrap_AimWeapon(callins, weaponNum, isShield)
 		end
 	else
 		local function AimWeaponThread(unitID, heading, pitch)
-			local ready = fun(unitID, heading, pitch) and 1 or 0
-			return sp_SetUnitWeaponState(unitID, weaponNum, "aimReady", ready)
+			if fun(unitID, heading, pitch) then
+				return sp_SetUnitWeaponState(unitID, weaponNum, "aimReady", 1)
+			end
 		end
 
 		callins[name] = function(unitID, heading, pitch)
