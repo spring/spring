@@ -7,13 +7,6 @@ namespace agui
 
 VerticalLayout::VerticalLayout(GuiElement* parent) : GuiElement(parent)
 {
-	spacing = 0.005f;
-	borderWidth = 0.0f;
-}
-
-void VerticalLayout::SetBorder(float thickness)
-{
-	borderWidth = thickness;
 }
 
 void VerticalLayout::DrawSelf()
@@ -28,6 +21,8 @@ void VerticalLayout::DrawSelf()
 
 void VerticalLayout::GeometryChangeSelf()
 {
+	if (children.empty())
+		return;
 	unsigned numFixed = 0;
 	float totalFixedSize = 0.0;
 	for (ChildList::const_iterator it = children.begin(); it != children.end(); ++it)
@@ -39,20 +34,20 @@ void VerticalLayout::GeometryChangeSelf()
 		}
 	}
 
-	const float vspacePerObject = (size[1]-(float(children.size()+1)*spacing)-totalFixedSize)/float(children.size()-numFixed);
-	float startY = pos[1] + spacing;
+	const float vspacePerObject = (size[1]-float(children.size()-1)*itemSpacing - 2*borderSpacing-totalFixedSize)/float(children.size()-numFixed);
+	float startY = pos[1] + borderSpacing;
 	for (ChildList::reverse_iterator i = children.rbegin(); i != children.rend(); ++i)
 	{
-		(*i)->SetPos(pos[0]+spacing, startY);
+		(*i)->SetPos(pos[0]+borderSpacing, startY);
 		if ((*i)->SizeFixed())
 		{
-			(*i)->SetSize(size[0]- 2.0f*spacing, (*i)->GetSize()[1], true);
-			startY += (*i)->GetSize()[1] + spacing;
+			(*i)->SetSize(size[0]- 2.0f*borderSpacing, (*i)->GetSize()[1], true);
+			startY += (*i)->GetSize()[1] + itemSpacing;
 		}
 		else
 		{
-			(*i)->SetSize(size[0]- 2.0f*spacing, vspacePerObject);
-			startY += vspacePerObject + spacing;
+			(*i)->SetSize(size[0]- 2.0f*borderSpacing, vspacePerObject);
+			startY += vspacePerObject + itemSpacing;
 		}
 	}
 }

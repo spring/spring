@@ -2,22 +2,19 @@
 #define HORIZONTALLAYOUT_H
 
 #include "GuiElement.h"
+#include "Layout.h"
 
 namespace agui
 {
 
-class HorizontalLayout : public GuiElement
+class HorizontalLayout : public GuiElement, public Layout
 {
 public:
 	HorizontalLayout(GuiElement* parent = NULL);
-	void SetBorder(float thickness);
 
 private:
 	virtual void DrawSelf();
 	virtual void GeometryChangeSelf();
-
-	float spacing;
-	float borderWidth;
 };
 
 }
