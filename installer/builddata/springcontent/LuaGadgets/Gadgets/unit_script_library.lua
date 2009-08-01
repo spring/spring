@@ -18,9 +18,14 @@ function gadget:GetInfo()
 		author    = "Tobi Vollebregt",
 		date      = "1 August 2009",
 		license   = "GPL v2",
-		layer     = -1,   --  must come before unit_script.lua
-		enabled   = false --  loaded by default?
+		layer     = -1,  --  must come before unit_script.lua
+		enabled   = true --  loaded by default?
 	}
+end
+
+
+if (not gadgetHandler:IsSyncedCode()) then
+	return false
 end
 
 --------------------------------------------------------------------------------
