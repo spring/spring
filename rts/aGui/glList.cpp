@@ -106,7 +106,7 @@ bool CglList::MouseUpdate(int x, int y)
 	std::vector<std::string>::iterator ii = filteredItems->begin();
 	const int numDisplay = (size[1]-2.0f*borderSpacing)/(itemHeight+itemSpacing);
 	assert(numDisplay >= 0);
-	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()) { ii++; nCurIndex++; }
+	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()-1) { ii++; nCurIndex++; }
 	
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
 	{
@@ -145,7 +145,7 @@ void CglList::DrawSelf()
 	// Skip to current selection - 3; ie: scroll
 	const int numDisplay = (size[1]-2.0f*borderSpacing)/(itemHeight+itemSpacing);
 	assert(numDisplay >= 0);
-	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()) { ii++; nCurIndex++; }
+	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()-1) { ii++; nCurIndex++; }
 
 	font->SetTextColor(); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
