@@ -50,7 +50,6 @@ SelectionWidget::SelectionWidget()
 
 SelectionWidget::~SelectionWidget()
 {
-	agui::gui->RmElement(this);
 }
 
 void SelectionWidget::ShowModList()

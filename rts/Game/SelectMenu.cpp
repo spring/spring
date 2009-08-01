@@ -126,7 +126,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 SelectMenu::~SelectMenu()
 {
 	ConnectWindow(false);
-	delete selw;
+	agui::gui->RmElement(selw);
 	if (menu)
 	{
 		agui::gui->RmElement(menu);
