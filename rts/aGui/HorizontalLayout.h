@@ -10,7 +10,6 @@ class HorizontalLayout : public GuiElement
 {
 public:
 	HorizontalLayout(GuiElement* parent = NULL);
-
 	void SetBorder(float thickness);
 
 private:
@@ -22,4 +21,5 @@ private:
 };
 
 }
+
 #endif

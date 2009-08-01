@@ -66,6 +66,8 @@ void SelectionWidget::ShowModList()
 	curSelectList = new agui::CglList(modWindowLayout);
 	agui::Button* select = new agui::Button("Select", modWindowLayout);
 	select->ClickHandler(boost::bind(&SelectionWidget::SelectMod, this));
+	select->SetSize(0.0f, 0.04f, true);
+	curSelect->GeometryChange();
 	
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
 	if (found.empty()) {

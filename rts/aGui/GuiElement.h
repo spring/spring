@@ -25,7 +25,15 @@ public:
 	virtual void AddChild(GuiElement* elem);
 	
 	void SetPos(float x, float y);
-	void SetSize(float x, float y);
+	void SetSize(float x, float y, bool fixed = false);
+	bool SizeFixed() const
+	{
+		return fixedSize;
+	};
+	float* GetSize()
+	{
+		return size;
+	};
 	
 	void GeometryChange();
 
@@ -59,6 +67,8 @@ protected:
 	virtual void GeometryChangeSelf() {};
 	
 	static int screensize[2];
+	
+	bool fixedSize;
 	float pos[2];
 	float size[2];
 };

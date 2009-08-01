@@ -18,13 +18,32 @@ void VerticalLayout::SetBorder(float thickness)
 
 void VerticalLayout::GeometryChangeSelf()
 {
-	const float vspacePerObject = (size[1]-(float(children.size()-1)*spacing))/float(children.size());
-	size_t num = 0;
+	unsigned numFixed = 0;
+	float totalFixedSize = 0.0;
+	for (ChildList::const_iterator it = children.begin(); it != children.end(); ++it)
+	{
+		if ((*it)->SizeFixed())
+		{
+			numFixed++;
+			totalFixedSize += (*it)->GetSize()[1];
+		}
+	}
+
+	const float vspacePerObject = (size[1]-(float(children.size()+1)*spacing)-totalFixedSize)/float(children.size()-numFixed);
+	float startY = pos[1] + spacing;
 	for (ChildList::reverse_iterator i = children.rbegin(); i != children.rend(); ++i)
 	{
-		(*i)->SetPos(pos[0]+spacing, pos[1] + num*vspacePerObject + (num+1)*spacing);
-		(*i)->SetSize(size[0]- 2.0f*spacing, vspacePerObject - 2.0f * spacing);
-		++num;
+		(*i)->SetPos(pos[0]+spacing, startY);
+		if ((*i)->SizeFixed())
+		{
+			(*i)->SetSize(size[0]- 2.0f*spacing, (*i)->GetSize()[1]);
+			startY += (*i)->GetSize()[1] + spacing;
+		}
+		else
+		{
+			(*i)->SetSize(size[0]- 2.0f*spacing, vspacePerObject);
+			startY += vspacePerObject + spacing;
+		}
 	}
 }
 

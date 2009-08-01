@@ -125,9 +125,6 @@ bool CglList::MouseUpdate(int x, int y)
 
 void CglList::DrawSelf()
 {
-	glDisable(GL_TEXTURE_2D);
-	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_BLEND);
 	glLoadIdentity();
 	glColor4f(0.2f,0.2f,0.2f,1.0f);
 	DrawBox(GL_QUADS);

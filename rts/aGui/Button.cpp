@@ -62,14 +62,14 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_MOUSEBUTTONDOWN: {
-			if (MouseOver(ev.button.x, ev.button.y) && gui->MouseOverElement(GetRoot(), ev.motion.x, ev.motion.y))
+			if ((ev.button.button == SDL_BUTTON_LEFT) && MouseOver(ev.button.x, ev.button.y) && gui->MouseOverElement(GetRoot(), ev.motion.x, ev.motion.y))
 			{
 				clicked = true;
 			};
 			break;
 		}
 		case SDL_MOUSEBUTTONUP: {
-			if (MouseOver(ev.button.x, ev.button.y) && clicked)
+			if ((ev.button.button == SDL_BUTTON_LEFT) && MouseOver(ev.button.x, ev.button.y) && clicked)
 			{
 				if (!sig.empty())
 				{
