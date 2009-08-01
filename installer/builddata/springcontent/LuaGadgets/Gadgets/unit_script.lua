@@ -115,7 +115,7 @@ local sp_SetPieceVisibility = Spring.UnitScript.SetPieceVisibility
 local sp_SetDeathScriptFinished = Spring.UnitScript.SetDeathScriptFinished
 
 
-local UNITSCRIPT_DIR = "scripts/"
+local UNITSCRIPT_DIR = (UNITSCRIPT_DIR or "scripts/")
 local VFSMODE = VFS.ZIP_ONLY
 if (Spring.IsDevLuaEnabled()) then
 	VFSMODE = VFS.RAW_ONLY
