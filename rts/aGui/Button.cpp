@@ -55,7 +55,7 @@ void Button::DrawSelf()
 		
 	font->SetTextColor(); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
-	font->glPrint(pos[0]+0.05, pos[1]+size[1]/2, 1.0, FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, label);
+	font->glPrint(pos[0]+size[0]/2, pos[1]+size[1]/2, 1.0, FONT_CENTER | FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, label);
 }
 
 bool Button::HandleEventSelf(const SDL_Event& ev)
