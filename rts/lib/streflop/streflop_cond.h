@@ -20,7 +20,7 @@ namespace math {
 #include <cmath>
 namespace math {
 	using std::fabs;
-	using std::sqrt;
+	//using std::sqrt;
 	using std::sin;
 	using std::cos;
 }

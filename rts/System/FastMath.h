@@ -17,14 +17,13 @@
  */
 
 namespace fastmath {
-
 	/****************** Square root functions ******************/
 
 	/**
 	* @brief DO NOT USE IN SYNCED CODE. Calculates 1/sqrt(x) using SSE instructions.
 	*
-	* This is much slower than isqrt_nosse and additionally gives different results
-	* on Intel and AMD processors.
+	* This is much slower than isqrt_nosse (extremely slow on AMDs) and
+	* additionally gives different results on Intel and AMD processors.
 	*/
 	inline float isqrt_sse(float x)
 	{
@@ -36,6 +35,25 @@ namespace fastmath {
 
 		tmp.x = x;
 		tmp.vec = _mm_rsqrt_ss(tmp.vec);
+		return tmp.x;
+	}
+
+	/**
+	* @brief Sync-safe. Calculates square root with using SSE instructions.
+	*
+	* Slower than std::sqrtf, faster than streflop
+	*/
+
+	inline float sqrt_sse(float x)
+	{
+		union
+		{
+			__m128 vec;
+			float x;
+		} tmp;
+
+		tmp.x = x;
+		tmp.vec = _mm_sqrt_ss(tmp.vec);
 		return tmp.x;
 	}
 
@@ -88,25 +106,9 @@ namespace fastmath {
 
 	}
 
-	/**
-	* @brief Calculates square root with less accuracy
-	*
-	* Force using SSE instruction set.
-	*/
 
+	/****************** Square root ******************/
 
-	inline float sqrt_sse(float x)
-	{
-		union
-		{
-			__m128 vec;
-			float x;
-		} tmp;
-
-		tmp.x = x;
-		tmp.vec = _mm_sqrt_ss(tmp.vec);
-		return tmp.x;
-	}
 
 	/** Calculate sqrt using builtin sqrtf. */
 	inline float sqrt(float x)
@@ -126,7 +128,7 @@ namespace fastmath {
 	* Use with care.
 	*/
 	inline float apxsqrt(float x) {
-		return x*isqrt_nosse(x);
+		return x * isqrt_nosse(x);
 	}
 
 	/**
@@ -135,7 +137,7 @@ namespace fastmath {
 	* Use with care. This should be a little bit better, albeit slower, than fastmath::sqrt.
 	*/
 	inline float apxsqrt2(float x) {
-		return x*isqrt2_nosse(x);
+		return x * isqrt2_nosse(x);
 	}
 
 	/**
@@ -143,7 +145,7 @@ namespace fastmath {
 	*
 	*/
 	inline float isqrt(float x) {
-		return isqrt_nosse(x);
+		return isqrt2_nosse(x);
 	}
 
 	/**
@@ -242,6 +244,11 @@ namespace fastmath {
 
 using fastmath::PI;
 namespace math {
+	//! override streflop with faster sqrt!
+	inline float sqrt(float x) {
+		return fastmath::sqrt_sse(x);
+	}
+
 	using fastmath::isqrt;
 	using fastmath::isqrt2;
 }

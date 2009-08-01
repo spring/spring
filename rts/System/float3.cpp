@@ -7,7 +7,7 @@
 
 #include "float3.h"
 #include "Vec2.h"
-#include "FastMath.h"
+
 
 // TODO: this should go in Vec2.cpp if that is ever created
 CR_BIND(int2, );

@@ -115,7 +115,7 @@ local sp_SetPieceVisibility = Spring.UnitScript.SetPieceVisibility
 local sp_SetDeathScriptFinished = Spring.UnitScript.SetDeathScriptFinished
 
 
-local UNITSCRIPT_DIR = "scripts/"
+local UNITSCRIPT_DIR = (UNITSCRIPT_DIR or "scripts/")
 local VFSMODE = VFS.ZIP_ONLY
 if (Spring.IsDevLuaEnabled()) then
 	VFSMODE = VFS.RAW_ONLY
@@ -337,52 +337,11 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
--- This is prepended before the actual unitscript, so certain functions and
--- variables can be made available in what seems to be the global scope,
--- without reducing performance. (due to real global var accesses)
-local scriptHeader = [[
-local UnitScript = Spring.UnitScript
+local scriptHeader = VFS.LoadFile("gamedata/unit_script_header.lua", VFSMODE)
 
-local EmitSfx = UnitScript.EmitSfx
-local Explode = UnitScript.Explode
-local GetUnitValue = UnitScript.GetUnitValue
-local SetUnitValue = UnitScript.SetUnitValue
-local Hide = UnitScript.Hide
-local Show = UnitScript.Show
-
-local Move = UnitScript.Move
-local Turn = UnitScript.Turn
-local Spin = UnitScript.Spin
-local StopSpin = UnitScript.StopSpin
-
-local StartThread = UnitScript.StartThread
-local Signal = UnitScript.Signal
-local SetSignalMask = UnitScript.SetSignalMask
-local Sleep = UnitScript.Sleep
-local WaitForMove = UnitScript.WaitForMove
-local WaitForTurn = UnitScript.WaitForTurn
-
-local x_axis = 1
-local y_axis = 2
-local z_axis = 3
-
-local piece
-do
-	local pieces = Spring.GetUnitPieceMap(unitID)
-	piece = function(name)
-		if not pieces[name] then
-			error("piece not found: " .. tostring(name), 2)
-		end
-		return pieces[name]
-	end
-end
-]]
 -- Newlines (and comments) are stripped to not change line numbers in stacktraces.
 scriptHeader = scriptHeader:gsub("%-%-[^\r\n]*", ""):gsub("[\r\n]", " ")
 
-local scriptFooter = [[
-return script
-]]
 
 --[[
 Dictionary mapping script name (without path or extension) to a Lua chunk which
@@ -417,7 +376,7 @@ local function LoadScript(filename)
 		Spring.Echo("Failed to load: " .. filename)
 		return nil
 	end
-	local chunk, err = loadstring(scriptHeader .. text .. scriptFooter, filename)
+	local chunk, err = loadstring(scriptHeader .. text, filename)
 	if (chunk == nil) then
 		Spring.Echo("Failed to load: " .. basename .. "  (" .. err .. ")")
 		return nil
@@ -467,8 +426,9 @@ local function Wrap_AimWeapon(callins, weaponNum, isShield)
 		end
 	else
 		local function AimWeaponThread(unitID, heading, pitch)
-			local ready = fun(unitID, heading, pitch) and 1 or 0
-			return sp_SetUnitWeaponState(unitID, weaponNum, "aimReady", ready)
+			if fun(unitID, heading, pitch) then
+				return sp_SetUnitWeaponState(unitID, weaponNum, "aimReady", 1)
+			end
 		end
 
 		callins[name] = function(unitID, heading, pitch)
@@ -529,16 +489,9 @@ function gadget:UnitCreated(unitID, unitDefID)
 	setmetatable(env, { __index = script.env })
 	setfenv(script.chunk, env)
 
-	-- Execute the chunk. Should return table with callins.
-	local callins, err = script.chunk(unitID)
-	if (type(callins) ~= "table") then
-		if err then
-			Spring.Echo("Failed to instantiate unit script for " .. ud.name .. ": " .. tostring(err))
-		else
-			Spring.Echo("Failed to instantiate unit script for " .. ud.name)
-		end
-		return
-	end
+	-- Execute the chunk. This puts the callins in env.script
+	script.chunk(unitID)
+	local callins = env.script
 
 	-- Remove Create(), Spring calls this too early to be useful to us.
 	-- (framework hasn't had chance to set up units[unitID] entry at that point.)
@@ -574,6 +527,7 @@ function gadget:UnitCreated(unitID, unitDefID)
 	}
 
 	-- Now it's safe to start a thread which will run Create().
+	callins.Create = Create
 	StartThread(unitID, Create)
 end
 
