@@ -74,18 +74,30 @@ void GuiElement::AddChild(GuiElement* elem)
 	children.push_back(elem);
 	elem->SetPos(pos[0], pos[1]);
 	elem->SetSize(size[0], size[1]);
+	GeometryChange();
 }
 
 void GuiElement::SetPos(float x, float y)
 {
 	pos[0] = x;
 	pos[1] = y;
+	GeometryChange();
 }
 
 void GuiElement::SetSize(float x, float y)
 {
 	size[0] = x;
 	size[1] = y;
+	GeometryChange();
+}
+
+void GuiElement::GeometryChange()
+{
+	GeometryChangeSelf();
+	for (ChildList::iterator it = children.begin(); it != children.end(); ++it)
+	{
+		(*it)->GeometryChange();
+	}
 }
 
 void GuiElement::Move(float x, float y)

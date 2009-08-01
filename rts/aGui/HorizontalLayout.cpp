@@ -11,27 +11,9 @@ HorizontalLayout::HorizontalLayout(GuiElement* parent) : GuiElement(parent)
 	borderWidth = 0.0f;
 }
 
-void HorizontalLayout::SetPos(float x, float y)
-{
-	GuiElement::SetPos(x, y);
-	UpdateChildGeo();
-}
-
-void HorizontalLayout::SetSize(float x, float y)
-{
-	GuiElement::SetSize(x, y);
-	UpdateChildGeo();
-}
-
 void HorizontalLayout::SetBorder(float thickness)
 {
 	borderWidth = thickness;
-}
-
-void HorizontalLayout::AddChild(GuiElement* elem)
-{
-	children.push_back(elem);
-	UpdateChildGeo();
 }
 
 void HorizontalLayout::DrawSelf()
@@ -44,7 +26,7 @@ void HorizontalLayout::DrawSelf()
 	}
 }
 
-void HorizontalLayout::UpdateChildGeo()
+void HorizontalLayout::GeometryChangeSelf()
 {
 	const float hspacePerObject = (size[0]-(float(children.size()-1)*spacing))/float(children.size());
 	size_t num = 0;

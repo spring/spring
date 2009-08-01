@@ -24,8 +24,10 @@ public:
 	
 	virtual void AddChild(GuiElement* elem);
 	
-	virtual void SetPos(float x, float y);
-	virtual void SetSize(float x, float y);
+	void SetPos(float x, float y);
+	void SetSize(float x, float y);
+	
+	void GeometryChange();
 
 	float GetMidY() const
 	{
@@ -54,6 +56,7 @@ protected:
 	{
 		return false;
 	};
+	virtual void GeometryChangeSelf() {};
 	
 	static int screensize[2];
 	float pos[2];
