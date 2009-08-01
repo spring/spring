@@ -100,6 +100,8 @@ void SelectionWidget::ShowMapList()
 	curSelectList = new agui::CglList(mapWindowLayout);
 	agui::Button* select = new agui::Button("Select", mapWindowLayout);
 	select->ClickHandler(boost::bind(&SelectionWidget::SelectMap, this));
+	select->SetSize(0.0f, 0.04f, true);
+	curSelect->GeometryChange();
 
 	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
@@ -136,6 +138,8 @@ void SelectionWidget::ShowScriptList()
 	curSelectList = new agui::CglList(scriptWindowLayout);
 	agui::Button* select = new agui::Button("Select", scriptWindowLayout);
 	select->ClickHandler(boost::bind(&SelectionWidget::SelectScript, this));
+	select->SetSize(0.0f, 0.04f, true);
+	curSelect->GeometryChange();
 	
 	std::list<std::string> scriptList = CScriptHandler::Instance().ScriptList();
 	for (std::list<std::string>::iterator it = scriptList.begin(); it != scriptList.end(); ++it)
