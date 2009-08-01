@@ -380,9 +380,6 @@ end
 -- Newlines (and comments) are stripped to not change line numbers in stacktraces.
 scriptHeader = scriptHeader:gsub("%-%-[^\r\n]*", ""):gsub("[\r\n]", " ")
 
-local scriptFooter = [[
-return script
-]]
 
 --[[
 Dictionary mapping script name (without path or extension) to a Lua chunk which
@@ -417,7 +414,7 @@ local function LoadScript(filename)
 		Spring.Echo("Failed to load: " .. filename)
 		return nil
 	end
-	local chunk, err = loadstring(scriptHeader .. text .. scriptFooter, filename)
+	local chunk, err = loadstring(scriptHeader .. text, filename)
 	if (chunk == nil) then
 		Spring.Echo("Failed to load: " .. basename .. "  (" .. err .. ")")
 		return nil
@@ -530,16 +527,9 @@ function gadget:UnitCreated(unitID, unitDefID)
 	setmetatable(env, { __index = script.env })
 	setfenv(script.chunk, env)
 
-	-- Execute the chunk. Should return table with callins.
-	local callins, err = script.chunk(unitID)
-	if (type(callins) ~= "table") then
-		if err then
-			Spring.Echo("Failed to instantiate unit script for " .. ud.name .. ": " .. tostring(err))
-		else
-			Spring.Echo("Failed to instantiate unit script for " .. ud.name)
-		end
-		return
-	end
+	-- Execute the chunk. This puts the callins in env.script
+	script.chunk(unitID)
+	local callins = env.script
 
 	-- Remove Create(), Spring calls this too early to be useful to us.
 	-- (framework hasn't had chance to set up units[unitID] entry at that point.)
@@ -575,6 +565,7 @@ function gadget:UnitCreated(unitID, unitDefID)
 	}
 
 	-- Now it's safe to start a thread which will run Create().
+	callins.Create = Create
 	StartThread(unitID, Create)
 end
 
