@@ -7,13 +7,6 @@ namespace agui
 
 HorizontalLayout::HorizontalLayout(GuiElement* parent) : GuiElement(parent)
 {
-	spacing = 0.005f;
-	borderWidth = 0.0f;
-}
-
-void HorizontalLayout::SetBorder(float thickness)
-{
-	borderWidth = thickness;
 }
 
 void HorizontalLayout::DrawSelf()
@@ -28,6 +21,8 @@ void HorizontalLayout::DrawSelf()
 
 void HorizontalLayout::GeometryChangeSelf()
 {
+	if (children.empty())
+		return;
 	unsigned numFixed = 0;
 	float totalFixedSize = 0.0;
 	for (ChildList::const_iterator it = children.begin(); it != children.end(); ++it)
@@ -39,20 +34,20 @@ void HorizontalLayout::GeometryChangeSelf()
 		}
 	}
 
-	const float hspacePerObject = (size[0]-(float(children.size()+1)*spacing)-totalFixedSize)/float(children.size()-numFixed);
-	float startX = pos[0] + spacing;
+	const float hspacePerObject = (size[0]-float(children.size()-1)*itemSpacing - 2*borderSpacing-totalFixedSize)/float(children.size()-numFixed);
+	float startX = pos[0] + borderSpacing;
 	for (ChildList::iterator i = children.begin(); i != children.end(); ++i)
 	{
-		(*i)->SetPos(startX, pos[1] + spacing);
+		(*i)->SetPos(startX, pos[1] + borderSpacing);
 		if ((*i)->SizeFixed())
 		{
-			(*i)->SetSize((*i)->GetSize()[0], size[1] - 2.0f*spacing, true);
-			startX += (*i)->GetSize()[0] + spacing;
+			(*i)->SetSize((*i)->GetSize()[0], size[1] - 2.0f*borderSpacing, true);
+			startX += (*i)->GetSize()[0] + itemSpacing;
 		}
 		else
 		{
-			(*i)->SetSize(hspacePerObject, size[1]- 2.0f*spacing);
-			startX += hspacePerObject + spacing;
+			(*i)->SetSize(hspacePerObject, size[1]- 2.0f*borderSpacing);
+			startX += hspacePerObject + itemSpacing;
 		}
 	}
 }

@@ -2,22 +2,19 @@
 #define VERTICALLAYOUT_H
 
 #include "GuiElement.h"
+#include "Layout.h"
 
 namespace agui
 {
 
-class VerticalLayout : public GuiElement
+class VerticalLayout : public GuiElement, public Layout
 {
 public:
 	VerticalLayout(GuiElement* parent = NULL);
-	void SetBorder(float thickness);
 
 private:
 	virtual void DrawSelf();
 	virtual void GeometryChangeSelf();
-
-	float spacing;
-	float borderWidth;
 };
 
 }
