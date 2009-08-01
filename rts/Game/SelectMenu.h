@@ -7,6 +7,7 @@
 
 class ClientSetup;
 union SDL_Event;
+class SelectionWidget;
 namespace agui
 {
 class Window;
@@ -32,15 +33,6 @@ public:
 	int KeyPressed(unsigned short k, bool isRepeat);
 	bool Update();
 
-	void ShowMapList();
-	void ShowScriptList();
-	void ShowModList();
-
-	/// Callback functions for CglList
-	void SelectScript(const std::string& s);
-	void SelectMap(const std::string& s);
-	void SelectMod(const std::string& s);
-
 private:
 	void Single();
 	void Multi();
@@ -49,9 +41,10 @@ private:
 	void DirectConnect();
 
 	bool HandleEvent(const SDL_Event& ev);
-	std::string userScript;
-	std::string userMap;
-	std::string userMod;
+
+	void SelectScript(const std::string& s);
+	void SelectMap(const std::string& s);
+	void SelectMod(const std::string& s);
 
 	ClientSetup* mySettings;
 
@@ -60,6 +53,7 @@ private:
 	agui::LineEdit* address;
 	agui::Window* connectWnd;
 	agui::CglList* list;
+	SelectionWidget* selw;
 };
 
 #endif
