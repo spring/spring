@@ -4,19 +4,11 @@
 #include "ArchiveBuffered.h"
 
 extern "C" {
-#include "lib/7zip/7zCrc.h"
-#include "lib/7zip/7zIn.h"
-#include "lib/7zip/7zExtract.h"
+#include "lib/7z/7zFile.h"
+#include "lib/7z/Archive/7z/7zIn.h"
 };
 
-typedef struct _CFileInStream
-{
-	ISzInStream InStream;
-	FILE *File;
-} CFileInStream;
-
-class CArchive7Zip :
-	public CArchiveBuffered
+class CArchive7Zip : public CArchiveBuffered
 {
 protected:
 	struct FileData {
@@ -31,13 +23,14 @@ protected:
 	std::map<int, std::map<std::string, FileData>::iterator> searchHandles;
 
 	CFileInStream archiveStream;
-	CArchiveDatabaseEx db;
+	CSzArEx db;
+	CLookToRead lookStream;
 	ISzAlloc allocImp;
 	ISzAlloc allocTempImp;
 
 	bool isOpen;
 	virtual ABOpenFile_t* GetEntireFile(const std::string& fName);
-	void SetSlashesForwardToBack(std::string& name);
+
 public:
 	CArchive7Zip(const std::string& name);
 	virtual ~CArchive7Zip(void);
