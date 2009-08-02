@@ -12,7 +12,11 @@
 
 namespace netcode
 {
+#if BOOST_VERSION < 103600
+using namespace boost::system::posix_error;
+#else
 using namespace boost::system::errc;
+#endif
 
 boost::asio::io_service netservice;
 
