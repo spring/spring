@@ -77,7 +77,7 @@ widgetHandler = {
   customCommands = {},
   inCommandsChanged = false,
 
-  autoUserWidgets = false,
+  autoUserWidgets = true,
 
   actionHandler = include("actions.lua"),
   
@@ -313,7 +313,7 @@ end
 function widgetHandler:Initialize()
   self:LoadConfigData()
 
-  local autoUserWidgets = Spring.GetConfigInt('LuaAutoEnableUserWidgets', 0)
+  local autoUserWidgets = Spring.GetConfigInt('LuaAutoEnableUserWidgets', 1)
   self.autoUserWidgets = (autoUserWidgets ~= 0)
 
   -- create the "LuaUI/Config" directory
