@@ -274,7 +274,7 @@ uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync'
 unitsync_files          = usync_get_source('tools/unitsync')
 unitsync_fs_files       = usync_get_source('rts/System/FileSystem/', exclude_list=('rts/System/FileSystem/DataDirLocater.cpp'));
 unitsync_lua_files      = usync_get_source('rts/lib/lua/src');
-unitsync_7zip_files     = usync_get_source('rts/lib/7zip');
+unitsync_7zip_files     = usync_get_source('rts/lib/7z') + usync_get_source('rts/lib/7z/Archive/7z');
 unitsync_minizip_files  = usync_get_source('rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
 unitsync_hpiutil2_files = usync_get_source('rts/lib/hpiutil2');
 unitsync_extra_files = [
