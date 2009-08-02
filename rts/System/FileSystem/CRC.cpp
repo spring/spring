@@ -31,7 +31,7 @@ unsigned int CRC::GetDigest() const
 /** @brief Update CRC over the data. */
 CRC& CRC::Update(const void* data, unsigned int size)
 {
-	CrcUpdate(crc, data, size);
+	crc = CrcUpdate(crc, data, size);
 	return *this;
 }
 
@@ -39,6 +39,6 @@ CRC& CRC::Update(const void* data, unsigned int size)
 /** @brief Update CRC over the 4 bytes of data. */
 CRC& CRC::Update(unsigned int data)
 {
-	CrcUpdate(crc, &data, sizeof(unsigned));
+	crc = CrcUpdate(crc, &data, sizeof(unsigned));
 	return *this;
 }
