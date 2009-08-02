@@ -11,9 +11,9 @@ static bool crcTableInitialized;
 /** @brief Construct a new CRC object. */
 CRC::CRC()
 {
+	crc = CRC_INIT_VAL;
 	if (!crcTableInitialized) {
 		crcTableInitialized = true;
-		crc = CRC_INIT_VAL;
 		CrcGenerateTable();
 	}
 }
