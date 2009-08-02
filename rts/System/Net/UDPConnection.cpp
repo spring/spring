@@ -117,7 +117,21 @@ void UDPConnection::Update()
 		{
 			std::vector<uint8_t> buffer(bytes_avail);
 			ip::udp::endpoint sender_endpoint;
-			size_t bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint);
+			size_t bytesReceived;
+			try {
+				 bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint);
+			} catch (const boost::system::system_error& e) {
+#ifdef _WIN32
+				// on Windows, WSA 10054 'Connection refused' is thrown if ICMP Port Unreachable arrives.
+				// ignore it.
+				if (e.code().value() != WSAECONNRESET)
+					throw;
+				bytesReceived = 0;
+#else
+				// on other platforms, rethrow.
+				throw;
+#endif
+			}
 
 			if (bytesReceived < UDPConnection::hsize)
 				continue;
@@ -129,7 +143,7 @@ void UDPConnection::Update()
 			}
 		}
 	}
-	
+
 	const spring_time curTime = spring_gettime();
 	bool force = false;	// should we force to send a packet?
 
