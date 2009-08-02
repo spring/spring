@@ -37,6 +37,10 @@ public:
 	virtual bool IsOpen();
 	virtual int FindFiles(int cur, std::string* name, int* size);
 	virtual unsigned int GetCrc32 (const std::string& fileName);
+
+	UInt32 blockIndex;
+	Byte *outBuffer;
+	size_t outBufferSize;
 };
 
 #endif

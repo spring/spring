@@ -20,6 +20,10 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	curSearchHandle(1),
 	isOpen(false)
 {
+	blockIndex = 0xFFFFFFFF;
+	outBuffer = NULL;
+	outBufferSize = 0;
+
 	if (InFile_Open(&archiveStream.file, name.c_str()))
 	{
 		//error
@@ -100,6 +104,7 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 
 CArchive7Zip::~CArchive7Zip(void)
 {
+	IAlloc_Free(&allocImp, outBuffer);
 	if (isOpen)
 	{
 		File_Close(&archiveStream.file);
@@ -133,11 +138,6 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 
 	SRes res;
 
-	// We don't really support solid archives anyway, so these can be reset for each file
-	UInt32 blockIndex = 0xFFFFFFFF; // it can have any value before first call (if outBuffer = 0)
-	Byte *outBuffer = 0; // it must be 0 before first call for each new archive.
-	size_t outBufferSize = 0;  // it can have any value before first call (if outBuffer = 0)
-
 	res = SzAr_Extract(&db, &lookStream.s, fd.fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
 
 	ABOpenFile_t* of = NULL;
@@ -149,7 +149,6 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 
 		memcpy(of->data, outBuffer + offset, outSizeProcessed);
 	}
-	IAlloc_Free(&allocImp, outBuffer);
 
 	if (res != SZ_OK)
 		return NULL;
