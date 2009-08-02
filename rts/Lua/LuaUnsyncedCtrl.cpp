@@ -1673,11 +1673,11 @@ int LuaUnsyncedCtrl::Restart(lua_State* L)
 		std::ofstream scriptfile((FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str());
 		scriptfile << script;
 		scriptfile.close();
-		execlp(Platform::GetBinaryFile().c_str(), arguments.c_str(), (FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str(), NULL);
+		execlp(Platform::GetBinaryFile().c_str(), Platform::GetBinaryFile().c_str(), arguments.c_str(), (FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str(), NULL);
 	}
 	else
 	{
-		execlp(Platform::GetBinaryFile().c_str(), arguments.c_str(), NULL);
+		execlp(Platform::GetBinaryFile().c_str(), Platform::GetBinaryFile().c_str(), arguments.c_str(), NULL);
 	}
 	LogObject() << "Error in Restart: " << strerror(errno);
 	lua_pushboolean(L, false);
