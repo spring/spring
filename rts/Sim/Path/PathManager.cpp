@@ -373,7 +373,7 @@ void CPathManager::Draw() {
 	std::map<unsigned int, MultiPath*>::iterator pi;
 	for(pi = pathMap.begin(); pi != pathMap.end(); pi++) {
 		MultiPath* path = pi->second;
-		std::list<float3>::iterator pvi;
+		IPath::path_list_type::iterator pvi;
 
 		//Start drawing a line.
 		glBegin(GL_LINE_STRIP);
@@ -430,22 +430,22 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 	}
 	const MultiPath* path = pi->second;
 
-	std::list<float3>::const_reverse_iterator pvi;
+	IPath::path_list_type::const_reverse_iterator pvi;
 
 	starts.push_back(points.size());
-	const std::list<float3>& dtlPoints = path->detailedPath.path;
+	const IPath::path_list_type& dtlPoints = path->detailedPath.path;
 	for (pvi = dtlPoints.rbegin(); pvi != dtlPoints.rend(); pvi++) {
 		points.push_back(*pvi);
 	}
 
 	starts.push_back(points.size());
-	const std::list<float3>& estPoints = path->estimatedPath.path;
+	const IPath::path_list_type& estPoints = path->estimatedPath.path;
 	for (pvi = estPoints.rbegin(); pvi != estPoints.rend(); pvi++) {
 		points.push_back(*pvi);
 	}
 
 	starts.push_back(points.size());
-	const std::list<float3>& est2Points = path->estimatedPath2.path;
+	const IPath::path_list_type& est2Points = path->estimatedPath2.path;
 	for (pvi = est2Points.rbegin(); pvi != est2Points.rend(); pvi++) {
 		points.push_back(*pvi);
 	}

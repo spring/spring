@@ -156,12 +156,6 @@ bool SpringApp::Initialize()
 		SDL_WM_IconifyWindow();
 	}
 
-	// Enable auto quit?
-	if (cmdline->IsSet("quit")) {
-		gu->autoQuit = true;
-		gu->quitTime = cmdline->GetInt("quit");
-	}
-
 	InitOpenGL();
 	agui::InitGui();
 	palette.Init();
@@ -610,20 +604,19 @@ void SpringApp::LoadFonts()
  */
 void SpringApp::ParseCmdLine()
 {
-	cmdline->AddSwitch('f', "fullscreen",        "Run in fullscreen mode");
-	cmdline->AddSwitch('w', "window",            "Run in windowed mode");
-	cmdline->AddInt('x', "xresolution",          "Set X resolution");
-	cmdline->AddInt('y', "yresolution",          "Set Y resolution");
-	cmdline->AddSwitch('m', "minimise",          "Start minimised");
-	cmdline->AddSwitch('s', "server",            "Run as a server");
-	cmdline->AddSwitch('c', "client",            "Run as a client");
-	cmdline->AddSwitch('p', "projectiledump",    "Dump projectile class info in projectiles.txt");
-	cmdline->AddSwitch('t', "textureatlas",      "Dump each finalized textureatlas in textureatlasN.tga");
-	cmdline->AddInt('q', "quit",                 "Quit immediately on game over or after T seconds");
-	cmdline->AddString('n', "name",              "Set your player name");
-	cmdline->AddString('C', "config",            "Configuration file");
-	cmdline->AddSwitch(0,   "list-ai-interfaces","Dump a list of available AI Interfaces to stdout");
-	cmdline->AddSwitch(0,   "list-skirmish-ais", "Dump a list of available Skirmish AIs to stdout");
+	cmdline->AddSwitch('f', "fullscreen",         "Run in fullscreen mode");
+	cmdline->AddSwitch('w', "window",             "Run in windowed mode");
+	cmdline->AddInt(   'x', "xresolution",        "Set X resolution");
+	cmdline->AddInt(   'y', "yresolution",        "Set Y resolution");
+	cmdline->AddSwitch('m', "minimise",           "Start minimised");
+	cmdline->AddSwitch('s', "server",             "Run as a server");
+	cmdline->AddSwitch('c', "client",             "Run as a client");
+	cmdline->AddSwitch('p', "projectiledump",     "Dump projectile class info in projectiles.txt");
+	cmdline->AddSwitch('t', "textureatlas",       "Dump each finalized textureatlas in textureatlasN.tga");
+	cmdline->AddString('n', "name",               "Set your player name");
+	cmdline->AddString('C', "config",             "Configuration file");
+	cmdline->AddSwitch(0,   "list-ai-interfaces", "Dump a list of available AI Interfaces to stdout");
+	cmdline->AddSwitch(0,   "list-skirmish-ais",  "Dump a list of available Skirmish AIs to stdout");
 
 	try
 	{

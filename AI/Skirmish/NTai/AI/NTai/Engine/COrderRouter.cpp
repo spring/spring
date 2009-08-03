@@ -200,7 +200,7 @@ namespace ntai {
 	}
 
 	bool COrderRouter::SubjectiveCommand(TCommand& cmd){
-		if(cmd.type = B_CMD){
+		if(cmd.type == B_CMD){
 			if(cmd.c.params.empty()){
 				return false;
 			}else{

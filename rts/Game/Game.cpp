@@ -450,8 +450,9 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	keyBindings->Load("uikeys.txt");
 
 	water=CBaseWater::GetWater(NULL);
-	for(int a = 0; a < teamHandler->ActiveTeams(); ++a)
-		grouphandlers.push_back(new CGroupHandler(a));
+	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {
+		grouphandlers.push_back(new CGroupHandler(t));
+	}
 	CCobInstance::InitVars(teamHandler->ActiveTeams(), teamHandler->ActiveAllyTeams());
 	CEngineOutHandler::Initialize();
 
@@ -563,6 +564,10 @@ CGame::~CGame()
 	eoh->PreDestroy();
 	CEngineOutHandler::Destroy();
 
+	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {
+		delete grouphandlers[t];
+		grouphandlers[t] = NULL;
+	}
 	grouphandlers.clear();
 
 	SafeDelete(water);
@@ -2477,14 +2482,9 @@ bool CGame::Update()
 	}
 	lastModGameTimeMeasure = timeNow;
 
-	if (gameServer && gu->autoQuit && (gu->gameTime > gu->quitTime)) {
-		logOutput.Print("Automatical quit enforced from commandline");
-		return false;
-	}
-
 	time(&fpstimer);
 
-	if (difftime(fpstimer, starttime) != 0) {		//do once every second
+	if (difftime(fpstimer, starttime) != 0) { // do once every second
 		fps = thisFps;
 		thisFps = 0;
 
@@ -3298,12 +3298,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_GAMEOVER: {
-				if (gu->autoQuit) {
-					logOutput.Print("Automatical quit enforced from commandline");
-					globalQuit = true;
-				} else {
-					GameEnd();
-				}
+				GameEnd();
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
