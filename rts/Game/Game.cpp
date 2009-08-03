@@ -2482,14 +2482,9 @@ bool CGame::Update()
 	}
 	lastModGameTimeMeasure = timeNow;
 
-	if (gameServer && gu->autoQuit && (gu->gameTime > gu->quitTime)) {
-		logOutput.Print("Automatical quit enforced from commandline");
-		return false;
-	}
-
 	time(&fpstimer);
 
-	if (difftime(fpstimer, starttime) != 0) {		//do once every second
+	if (difftime(fpstimer, starttime) != 0) { // do once every second
 		fps = thisFps;
 		thisFps = 0;
 
@@ -3303,12 +3298,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_GAMEOVER: {
-				if (gu->autoQuit) {
-					logOutput.Print("Automatical quit enforced from commandline");
-					globalQuit = true;
-				} else {
-					GameEnd();
-				}
+				GameEnd();
 				AddTraffic(-1, packetCode, dataLength);
 				break;
 			}
