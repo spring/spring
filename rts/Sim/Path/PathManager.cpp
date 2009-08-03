@@ -31,6 +31,9 @@ CPathManager::CPathManager() {
 
 	// Reset id-counter.
 	nextPathId = 0;
+
+	// Enable heat mapping
+	pf->SetHeatMapState(true);
 }
 
 CPathManager::~CPathManager() {
@@ -358,6 +361,7 @@ Runned every 1/30sec during runtime.
 void CPathManager::Update()
 {
 	SCOPED_TIMER("AI:PFS:Update");
+	pf->UpdateHeatMap();
 	pe->Update();
 	pe2->Update();
 }

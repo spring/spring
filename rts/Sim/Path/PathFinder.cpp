@@ -51,6 +51,8 @@ Building tables and precalculating data.
 CPathFinder::CPathFinder()
 : openSquareBufferPointer(openSquareBuffer)
 {
+	heatMapping = false;
+
 	//Creates and init all square states.
 	squareState = new SquareState[gs->mapSquares];
 	for(int a = 0; a < gs->mapSquares; ++a){
@@ -413,8 +415,13 @@ bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 		else
 			squareSpeedMod *= 0.10f;
 	}
+	// Include heatmap cost adjustment.
+	float heatCostMod = 1.0f;
+	if (heatMapping && moveData.heatMapping) {
+		heatCostMod += moveData.heatMod * heatmap[square.x][square.y];
+	}
 
-	float squareCost = moveCost[enterDirection] / squareSpeedMod;
+	float squareCost = heatCostMod * moveCost[enterDirection] / squareSpeedMod;
 	float heuristicCost = pfDef.Heuristic(square.x, square.y);
 
 	// Summarize cost.
@@ -465,7 +472,11 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 		square.x = goalSquare % gs->mapx;
 		square.y = goalSquare / gs->mapx;
 
+		// for path adjustment (cutting corners)
 		std::deque<int2> previous;
+		// for heat mapping
+		std::vector<int2> squarepath;
+
 		// make sure we don't match anything
 		previous.push_back(int2(-100, -100));
 		previous.push_back(int2(-100, -100));
@@ -485,6 +496,8 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 			foundPath.path.push_back(cs);
 			previous.pop_front();
 			previous.push_back(square);
+			if (heatMapping && moveData.heatMapping)
+				squarepath.push_back(square);
 
 			int2 oldSquare;
 			oldSquare.x = square.x;
@@ -495,6 +508,13 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 
 		if (foundPath.path.size() > 0) {
 			foundPath.pathGoal = foundPath.path.front();
+
+			if (heatMapping && moveData.heatMapping) {
+				for (int i = 0; i < squarepath.size(); ++i) {
+					const int2& tmp = squarepath[i];
+					heatmap[tmp.x][tmp.y] = std::max(heatmap[tmp.x][tmp.y], moveData.heatProduced);
+				}
+			}
 		}
 	}
 	//Adds the cost of the path.
@@ -645,6 +665,38 @@ void CPathFinder::ResetSearch()
 	testedNodes = 0;
 }
 
+
+/////////////////
+// heat mapping
+
+void CPathFinder::SetHeatMapState(bool enabled)
+{
+	heatMapping = enabled;
+
+	if (enabled) {
+		heatmap.resize(gs->mapx);
+		for (int i = 0; i<gs->mapx; ++i) {
+			heatmap[i].resize(gs->mapy);
+		}
+	} else {
+		heatmap.clear();
+	}
+}
+
+
+void CPathFinder::UpdateHeatMap()
+{
+	// run every 4 frames
+	if (gs->frameNum & 3 != 0)
+		return;
+
+	for (int x = 0; x<gs->mapx; x += 2) {
+		for (int y = 0; y<gs->mapy; y += 2) {
+			if (heatmap[x][y] > 0)
+				--heatmap[x][y];
+		}
+	}
+}
 
 
 ////////////////////

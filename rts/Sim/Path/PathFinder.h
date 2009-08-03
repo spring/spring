@@ -69,6 +69,15 @@ public:
 	//Minimum distance between two waypoints.
 	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
 
+	/** Enable/disable heat mapping.
+
+	Heat mapping makes the pathfinder value unused paths more. Less path overlap should
+	make units behave more intelligently.
+
+	*/
+	void SetHeatMapState(bool enabled);
+	void UpdateHeatMap();
+
 private:
 	enum { MAX_SEARCHED_SQUARES = 10000 };
 
@@ -187,6 +196,11 @@ private:
 
 	OpenSquare *openSquareBufferPointer;
 	OpenSquare openSquareBuffer[MAX_SEARCHED_SQUARES];
+
+	// Heat mapping
+	bool heatMapping;
+	std::vector<std::vector<int> > heatmap;
+
 public:
 	void Draw(void);
 };
