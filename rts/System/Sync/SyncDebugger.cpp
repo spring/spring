@@ -333,10 +333,6 @@ bool CSyncDebugger::ClientReceived(const unsigned char* inbuf)
 			logOutput.Print("[SD] Client: Done!");
 // 			disable_history = false;
 			may_enable_history = true;
-			if (gu->autoQuit) {
-				logOutput.Print("[SD] Client: Automatical quit enforced from commandline");
-				globalQuit = true;
-			}
 			syncDebugPacket = true;
 			break;
 	}

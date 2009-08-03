@@ -210,22 +210,6 @@ public:
 	bool supportNPOTs;
 
 	/**
-	 * @brief quit automatically?
-	 *
-	 * If set, quit immediately on game over or if gameTime > quitTime,
-	 * whichever comes first.
-	 */
-	bool autoQuit;
-
-	/**
-	 * @brief quit time
-	 *
-	 * If autoQuit is set, the host quits if gameTime > quitTime.
-	 * (This automatically causes all other clients to quit too.)
-	 */
-	float quitTime;
-
-	/**
 	 * @brief dual screen mode
 	 * In dual screen mode, the screen is split up between a game screen and a minimap screen.
 	 * In this case viewSizeX is half of the actual GL viewport width,
