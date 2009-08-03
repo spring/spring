@@ -32,6 +32,7 @@ private:
 	typedef std::list<GuiElement*> ElList;
 	ElList elements;
 	ElList toBeRemoved;
+	ElList toBeAdded;
 };
 
 extern Gui* gui;

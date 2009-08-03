@@ -18,6 +18,25 @@ Gui::Gui()
 
 void Gui::Draw()
 {
+	for (ElList::iterator it = toBeAdded.begin(); it != toBeAdded.end(); ++it)
+	{
+		bool duplicate = false;
+		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt)
+		{
+			if (*it == *elIt)
+			{
+				LogObject() << "Gui::AddElement: skipping duplicated object";
+				duplicate = true;
+				break;
+			}
+		}
+		if (!duplicate)
+		{
+			elements.push_front(*it);
+		}
+	}
+	toBeAdded.clear();
+
 	for (ElList::iterator it = toBeRemoved.begin(); it != toBeRemoved.end(); ++it)
 	{
 		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt)
@@ -42,18 +61,7 @@ void Gui::Draw()
 
 void Gui::AddElement(GuiElement* elem, bool front)
 {
-	for (ElList::const_iterator it = elements.begin(); it != elements.end(); ++it)
-	{
-		if (*it == elem)
-		{
-			LogObject() << "Gui::AddElement: skipping duplicated object";
-			return;
-		}
-	}
-	if (front)
-		elements.push_front(elem);
-	else
-		elements.push_back(elem);
+	toBeAdded.push_back(elem);
 }
 
 void Gui::RmElement(GuiElement* elem)
