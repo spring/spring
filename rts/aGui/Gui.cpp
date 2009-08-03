@@ -54,6 +54,10 @@ void Gui::Draw()
 	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_BLEND);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluOrtho2D(0,1,0,1);
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it)
 		(*it)->Draw();
