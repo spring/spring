@@ -899,7 +899,7 @@ void CUnitDefHandler::ParseUnitDef(const LuaTable& udTable, const string& unitNa
 	try {
 		ParseUnitDefTable(udTable, unitName, id);
 	} catch (content_error const& e) {
-		logOutput.Print(e.what());
+		logOutput.Print("%s", e.what());
 		return;
 	}
 
