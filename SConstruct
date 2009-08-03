@@ -128,7 +128,7 @@ if senv['fpmath'] == 'sse':
 	senv['CPPDEFINES'] = ['STREFLOP_SSE=1']
 else:
 	senv['CPPDEFINES'] = ['STREFLOP_X87=1']
-senv['CXXFLAGS'] = ['-Wall', '-O3', '-pipe', '-g', '-mno-tls-direct-seg-refs', '-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-fno-strict-aliasing', '-mieee-fp']
+senv['CXXFLAGS'] = ['-Wall', '-Wno-sign-compare', '-O3', '-pipe', '-g', '-mno-tls-direct-seg-refs', '-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-fno-strict-aliasing', '-mieee-fp']
 senv.AppendUnique(CXXFLAGS = senv['streflop_extra'])
 
 # create the libm sub-part build environment
