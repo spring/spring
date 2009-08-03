@@ -945,7 +945,7 @@ void CUnit::DoWaterDamage()
 	}
 }
 
-void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponId)
+void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponDefId)
 {
 	if (isDead) {
 		return;
@@ -992,7 +992,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		hitDir = -hitDir.Normalize();
 
 	if (script->HasFunction(COBFN_HitByWeaponId)) {
-		script->HitByWeaponId(hitDir, weaponId, /*inout*/ damage);
+		script->HitByWeaponId(hitDir, weaponDefId, /*inout*/ damage);
 	}
 	else {
 		script->HitByWeapon(hitDir);
@@ -1003,7 +1003,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	const int paralyzeTime = damages.paralyzeDamageTime;
 	float newDamage = damage;
 
-	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponId,
+	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefId,
 			!!damages.paralyzeDamageTime, &newDamage))
 		damage = newDamage;
 
@@ -1091,8 +1091,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		}
 	}
 
-	eventHandler.UnitDamaged(this, attacker, damage, weaponId, !!damages.paralyzeDamageTime);
-	eoh->UnitDamaged(*this, attacker, damage);
+	eventHandler.UnitDamaged(this, attacker, damage, weaponDefId, !!damages.paralyzeDamageTime);
+	eoh->UnitDamaged(*this, attacker, damage, weaponDefId, !!damages.paralyzeDamageTime);
 
 	if (health <= 0.0f) {
 		KillUnit(false, false, attacker);

@@ -331,7 +331,7 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 
 
 void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
-		float damage) {
+		float damage, int weaponDefId, bool paralyzer) {
 
 	if (!hasSkirmishAIs) return;
 
@@ -359,7 +359,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 	if (skirmishAIs[dt]) {
 		try {
 			skirmishAIs[dt]->UnitDamaged(damagedUnitId,
-					attackerUnitId, damage, attackDir_damagedsView);
+					attackerUnitId, damage, attackDir_damagedsView, weaponDefId, paralyzer);
 		} HANDLE_EXCEPTION;
 	}
 
@@ -370,7 +370,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 					|| (damaged.losStatus[teamHandler->AllyTeam(at)] & (LOS_INLOS | LOS_INRADAR)))) {
 			try {
 				skirmishAIs[at]->EnemyDamaged(damagedUnitId, attackerUnitId,
-						damage, attackDir_attackersView);
+						damage, attackDir_attackersView, weaponDefId, paralyzer);
 			} HANDLE_EXCEPTION;
 		}
 	}

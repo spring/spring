@@ -299,10 +299,10 @@ void CSkirmishAIWrapper::UnitDestroyed(int unitId, int attackerUnitId) {
 }
 
 void CSkirmishAIWrapper::UnitDamaged(int unitId, int attackerUnitId,
-		float damage, const float3& dir) {
+		float damage, const float3& dir, int weaponDefId, bool paralyzer) {
 
 	SUnitDamagedEvent evtData = {unitId, attackerUnitId, damage,
-			dir.toSAIFloat3()};
+			dir.toSAIFloat3(), weaponDefId, paralyzer};
 	ai->HandleEvent(EVENT_UNIT_DAMAGED, &evtData);
 }
 
@@ -355,10 +355,10 @@ void CSkirmishAIWrapper::EnemyDestroyed(int enemyUnitId, int attackerUnitId) {
 }
 
 void CSkirmishAIWrapper::EnemyDamaged(int enemyUnitId, int attackerUnitId,
-		float damage, const float3& dir) {
+		float damage, const float3& dir, int weaponDefId, bool paralyzer) {
 
 	SEnemyDamagedEvent evtData = {enemyUnitId, attackerUnitId, damage,
-			dir.toSAIFloat3()};
+			dir.toSAIFloat3(), weaponDefId, paralyzer};
 	ai->HandleEvent(EVENT_ENEMY_DAMAGED, &evtData);
 }
 
