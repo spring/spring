@@ -7,6 +7,7 @@
 #include <list>
 #include <cctype>
 #include <unistd.h>
+#include <errno.h>
 
 #include <fstream>
 
