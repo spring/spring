@@ -158,6 +158,8 @@ private:
 	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef);
 	bool TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection);
 	void FinishSearch(const MoveData& moveData, Path& path);
+	void AdjustFoundPath(const MoveData& moveData, Path& path, float3& nextPoint,
+			std::deque<int2>& previous, int2 square);
 
 	unsigned int maxNodesToBeSearched;
 	myPQ openSquares;

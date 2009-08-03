@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include <ostream>
+#include <deque>
 #include "mmgr.h"
 
 #include "PathFinder.h"
@@ -9,6 +10,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "Map/Ground.h"
+#include "Sim/Misc/GeometricObjects.h"
 
 #define PATHDEBUG false
 
@@ -449,47 +451,188 @@ bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 }
 
 
+
 /**
 Recreates the path found by pathfinder.
 Starting at goalSquare and tracking backwards.
+
+Perform adjustment of waypoints so not all turns are 90 or 45 degrees.
 */
 void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 	//Backtracking the path.
-	if(needPath)
-		{
+	if(needPath) {
 		int2 square;
 		square.x = goalSquare % gs->mapx;
 		square.y = goalSquare / gs->mapx;
+
+		std::deque<int2> previous;
+		// make sure we don't match anything
+		previous.push_back(int2(-100, -100));
+		previous.push_back(int2(-100, -100));
+		previous.push_back(int2(-100, -100));
+
 		do {
 			int sqr = square.x + square.y * gs->mapx;
 			if(squareState[sqr].status & PATHOPT_START)
 				break;
 			float3 cs;
-				cs.x = (square.x/2/* + 0.5f*/) * SQUARE_SIZE*2+SQUARE_SIZE;
-				cs.z = (square.y/2/* + 0.5f*/) * SQUARE_SIZE*2+SQUARE_SIZE;
+			cs.x = (square.x/2/* + 0.5f*/) * SQUARE_SIZE*2+SQUARE_SIZE;
+			cs.z = (square.y/2/* + 0.5f*/) * SQUARE_SIZE*2+SQUARE_SIZE;
 			cs.y = moveData.moveMath->yLevel(square.x, square.y);
+			// try to cut corners
+			AdjustFoundPath(moveData, foundPath, /* inout */ cs, previous, square);
+
 			foundPath.path.push_back(cs);
+			previous.pop_front();
+			previous.push_back(square);
+
 			int2 oldSquare;
 			oldSquare.x = square.x;
 			oldSquare.y = square.y;
 			square.x -= directionVector[squareState[sqr].status & PATHOPT_DIRECTION].x;
 			square.y -= directionVector[squareState[sqr].status & PATHOPT_DIRECTION].y;
-			} 
-		while(true);
-		if (foundPath.path.size() > 0)
-			{
+		} while(true);
+
+		if (foundPath.path.size() > 0) {
 			foundPath.pathGoal = foundPath.path.front();
-			}
 		}
+	}
 	//Adds the cost of the path.
 	foundPath.pathCost = squareState[goalSquare].cost;
+}
+
+/** Helper function for AdjustFoundPath */
+static inline void FixupPath3Pts(const MoveData& moveData, float3& p1, float3& p2, float3& p3, int2 testsquare)
+{
+	float3 old = p2;
+	old.y += 10;
+	p2.x = 0.5f * (p1.x + p3.x);
+	p2.z = 0.5f * (p1.z + p3.z);
+	p2.y = moveData.moveMath->yLevel(testsquare.x, testsquare.y);
+#if PATHDEBUG
+	geometricObjects->AddLine(p3+float3(0, 5, 0), p2+float3(0, 10, 0), 5, 10, 600, 0);
+	geometricObjects->AddLine(p3+float3(0, 5, 0), old, 5, 10, 600, 0);
+#endif
+}
+
+
+/** Adjusts the found path to cut corners where possible.
+ *
+ */
+void CPathFinder::AdjustFoundPath(const MoveData& moveData, Path& foundPath, float3& nextPoint,
+	std::deque<int2>& previous, int2 square)
+{
+#define COSTMOD 1.39f	// (sqrt(2) + 1)/sqrt(3)
+#define TRYFIX3POINTS(dxtest, dytest) \
+	do { \
+		int testsqr = square.x + (dxtest) + (square.y + (dytest)) * gs->mapx; \
+		int p2sqr = previous[2].x + previous[2].y * gs->mapx; \
+		if (!(squareState[testsqr].status & (PATHOPT_BLOCKED | PATHOPT_FORBIDDEN)) \
+				&& squareState[testsqr].cost <= (COSTMOD) * squareState[p2sqr].cost) { \
+			float3& p2 = foundPath.path[foundPath.path.size() - 2]; \
+			float3& p1 = foundPath.path.back(); \
+			float3& p0 = nextPoint; \
+			FixupPath3Pts(moveData, p0, p1, p2, int2(square.x + (dxtest), square.y + (dytest))); \
+		} \
+	} while (false)
+
+	if (previous[2].x == square.x) {
+		if (previous[2].y == square.y-2) {
+			if (previous[1].x == square.x-2 && previous[1].y == square.y-4) {
+				if (PATHDEBUG) logOutput.Print("case N, NW");
+				TRYFIX3POINTS(-2, -2);
+			}
+			else if (previous[1].x == square.x+2 && previous[1].y == square.y-4) {
+				if (PATHDEBUG) logOutput.Print("case N, NE");
+				TRYFIX3POINTS(2, -2);
+			}
+		}
+		else if (previous[2].y == square.y+2) {
+			if (previous[1].x == square.x+2 && previous[1].y == square.y+4) {
+				if (PATHDEBUG) logOutput.Print("case S, SE");
+				TRYFIX3POINTS(2, 2);
+			}
+			else if (previous[1].x == square.x-2 && previous[1].y == square.y+4) {
+				if (PATHDEBUG) logOutput.Print("case S, SW");
+				TRYFIX3POINTS(-2, 2);
+			}
+		}
+	}
+	else if (previous[2].x == square.x-2) {
+		if (previous[2].y == square.y) {
+			if (previous[1].x == square.x-4 && previous[1].y == square.y-2) {
+				if (PATHDEBUG) logOutput.Print("case W, NW");
+				TRYFIX3POINTS(-2, -2);
+			}
+			else if (previous[1].x == square.x-4 && previous[1].y == square.y+2) {
+				if (PATHDEBUG) logOutput.Print("case W, SW");
+				TRYFIX3POINTS(-2, 2);
+			}
+		}
+		else if (previous[2].y == square.y-2) {
+			if (previous[1].x == square.x-2 && previous[1].y == square.y-4) {
+				if (PATHDEBUG) logOutput.Print("case NW, N");
+				TRYFIX3POINTS(0, -2);
+			}
+			else if (previous[1].x == square.x-4 && previous[1].y == square.y-2) {
+				if (PATHDEBUG) logOutput.Print("case NW, W");
+				TRYFIX3POINTS(-2, 0);
+			}
+		}
+		else if (previous[2].y == square.y+2) {
+			if (previous[1].x == square.x-2 && previous[1].y == square.y+4) {
+				if (PATHDEBUG) logOutput.Print("case SW, S");
+				TRYFIX3POINTS(0, 2);
+			}
+			else if (previous[1].x == square.x-4 && previous[1].y == square.y+2) {
+				if (PATHDEBUG) logOutput.Print("case SW, W");
+				TRYFIX3POINTS(-2, 0);
+			}
+		}
+	}
+	else if (previous[2].x == square.x+2) {
+		if (previous[2].y == square.y) {
+			if (previous[1].x == square.x+4 && previous[1].y == square.y-2) {
+				if (PATHDEBUG) logOutput.Print("case NE, E");
+				TRYFIX3POINTS(2, -2);
+			}
+			else if (previous[1].x == square.x+4 && previous[1].y == square.y+2) {
+				if (PATHDEBUG) logOutput.Print("case SE, E");
+				TRYFIX3POINTS(2, 2);
+			}
+		}
+		if (previous[2].y == square.y+2) {
+			if (previous[1].x == square.x+2 && previous[1].y == square.y+4) {
+				if (PATHDEBUG) logOutput.Print("case SE, S");
+				TRYFIX3POINTS(0, 2);
+			}
+			else if (previous[1].x == square.x+4 && previous[1].y == square.y+2) {
+				if (PATHDEBUG) logOutput.Print("case SE, E");
+				TRYFIX3POINTS(2, 0);
+			}
+
+		}
+		else if (previous[2].y == square.y-2) {
+			if (previous[1].x == square.x+2 && previous[1].y == square.y-4) {
+				if (PATHDEBUG) logOutput.Print("case NE, N");
+				TRYFIX3POINTS(0, -2);
+			}
+			else if (previous[1].x == square.x+4 && previous[1].y == square.y-2) {
+				if (PATHDEBUG) logOutput.Print("case NE, E");
+				TRYFIX3POINTS(0, -2);
+			}
+		}
+	}
+#undef TRYFIX3POINTS
+#undef COSTMOD
 }
 
 
 /**
 Clear things up from last search.
 */
-void CPathFinder::ResetSearch() {
+void CPathFinder::ResetSearch()
+{
 	openSquares.DeleteAll();
 //	while(!openSquares.empty())
 //		openSquares.pop();
