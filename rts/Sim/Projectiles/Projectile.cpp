@@ -41,17 +41,17 @@ bool CProjectile::inArray = false;
 CVertexArray* CProjectile::va = 0;
 
 CProjectile::CProjectile():
+	synced(false),
+	weapon(false),
+	piece(false),
 	checkCol(true),
 	deleteMe(false),
 	castShadow(false),
 	collisionFlags(0),
-	s3domodel(0),
-	ownerId(0),
-	synced(false),
-	weapon(false),
-	piece(false),
 	speed(ZeroVector),
-	gravity(mapInfo? mapInfo->map.gravity: 0.0f)
+	gravity(mapInfo? mapInfo->map.gravity: 0.0f),
+	s3domodel(0),
+	ownerId(0)
 {
 	GML_GET_TICKS(lastProjUpdate);
 }
@@ -72,18 +72,18 @@ void CProjectile::Init(const float3& explosionPos, CUnit* owner GML_PARG_C)
 
 
 CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, bool isSynced, bool isWeapon, bool isPiece GML_PARG_C):
-	checkCol(true),
-	deleteMe(false),
-	castShadow(false),
-	collisionFlags(0),
-	s3domodel(0),
-	ownerId(0),
 	CExpGenSpawnable(pos),
 	synced(isSynced),
 	weapon(isWeapon),
 	piece(isPiece),
+	checkCol(true),
+	deleteMe(false),
+	castShadow(false),
+	collisionFlags(0),
 	speed(speed),
-	gravity(mapInfo? mapInfo->map.gravity: 0.0f)
+	gravity(mapInfo? mapInfo->map.gravity: 0.0f),
+	s3domodel(0),
+	ownerId(0)
 {
 	if (owner) {
 		ownerId = owner->id;
