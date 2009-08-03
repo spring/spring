@@ -223,7 +223,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	}
 
 	@Override
-	public int unitDamaged(Unit unit, Unit attacker, float damage, AIFloat3 dir) {
+	public int unitDamaged(Unit unit, Unit attacker, float damage, AIFloat3 dir, WeaponDef weaponDef, boolean paralyzed) {
 		return 0; // signaling: OK
 	}
 
@@ -263,7 +263,7 @@ public class NullOOJavaAI extends AbstractOOAI implements OOAI {
 	}
 
 	@Override
-	public int enemyDamaged(Unit enemy, Unit attacker, float damage, AIFloat3 dir) {
+	public int enemyDamaged(Unit enemy, Unit attacker, float damage, AIFloat3 dir, WeaponDef weaponDef, boolean paralyzed) {
 		return 0; // signaling: OK
 	}
 
