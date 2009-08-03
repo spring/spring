@@ -165,6 +165,7 @@ void SelectMenu::Single()
 	mySettings->isHost = true;
 	pregame = new CPreGame(mySettings);
 	pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName, 1));
+	delete this;
 }
 
 void SelectMenu::Multi()
