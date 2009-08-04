@@ -1380,6 +1380,8 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 	float3 side = cam2->forward;
 	float3 camHorizontal = cam2->forward;
 	camHorizontal.y = 0;
+	if (camHorizontal.x == 0 && camHorizontal.z == 0)
+		return;
 	camHorizontal.ANormalize();
 	// get vector for collision between frustum and horizontal plane
 	float3 b = UpVector.cross(camHorizontal);
