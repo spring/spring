@@ -92,41 +92,23 @@ public:
 	{
 		if (mouse) {
 			switch (msg) {
-				case WM_LBUTTONDOWN:
-					mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
-					return TRUE;
-				case WM_RBUTTONDOWN:
-					mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 3);
-					return TRUE;
-				case WM_MBUTTONDOWN:
-					mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 2);
-					return TRUE;
-				case WM_LBUTTONUP:
-					mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
-					return TRUE;
-				case WM_RBUTTONUP:
-					mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 3);
-					return TRUE;
-				case WM_MBUTTONUP:
-					mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 2);
-					return TRUE;
 				case WM_MOUSEWHEEL: {
 					float delta = (((short)HIWORD(wparam))/120.0f);
 					mouse->MouseWheel(delta);
-					return TRUE;
+					break;
 				}
 				case WM_XBUTTONDOWN:
 					if ((short)LOWORD(wparam) & MK_XBUTTON1)
 						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
 					if ((short)LOWORD(wparam) & MK_XBUTTON2)
 						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
-					return TRUE;
+					break;
 				case WM_XBUTTONUP:
 					if ((short)LOWORD(wparam) & MK_XBUTTON1)
 						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
 					if ((short)LOWORD(wparam) & MK_XBUTTON2)
 						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
-					return TRUE;
+					break;
 				}
 
 		}
@@ -136,7 +118,7 @@ public:
 				// cast to short to preserve sign
 				inst->mousepos = int2((short)LOWORD(lparam),(short)HIWORD(lparam));
 				inst->mousemoved = true;
-				return FALSE;
+				break;
 			case WM_SETCURSOR:
 				if (inst->hCursor!=NULL) {
 					Uint16 hittest = LOWORD(lparam);
