@@ -19,11 +19,6 @@ void Button::Label(const std::string& _label)
 	hovered = false;
 }
 
-boost::signals::connection Button::ClickHandler(SignalType::slot_function_type handler)
-{
-	return sig.connect(handler);
-}
-
 void Button::DrawSelf()
 {
 	glColor4f(0.8f,0.8f,0.8f, 0.8f);
@@ -71,9 +66,9 @@ bool Button::HandleEventSelf(const SDL_Event& ev)
 		case SDL_MOUSEBUTTONUP: {
 			if ((ev.button.button == SDL_BUTTON_LEFT) && MouseOver(ev.button.x, ev.button.y) && clicked)
 			{
-				if (!sig.empty())
+				if (!Clicked.empty())
 				{
-					sig();
+					Clicked();
 				}
 				else
 				{

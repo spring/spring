@@ -109,13 +109,13 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 		agui::gui->AddElement(menu);
 		agui::TextElement* name = new agui::TextElement("Spring", menu);
 		Button* single = new Button("Singleplayer", menu);
-		single->ClickHandler(boost::bind(&SelectMenu::Single, this));
+		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Online Play", menu);
-		multi->ClickHandler(boost::bind(&SelectMenu::Multi, this));
+		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
 		Button* direct = new Button("Direct connect", menu);
-		direct->ClickHandler(boost::bind(&SelectMenu::ConnectWindow, this, true));
+		direct->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, true));
 		Button* quit = new Button("Quit", menu);
-		quit->ClickHandler(boost::bind(&SelectMenu::Quit, this));
+		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
 	}
 	
 	if (!mySettings->isHost) {
@@ -199,9 +199,9 @@ void SelectMenu::ConnectWindow(bool show)
 		address->SetContent(configHandler->GetString("address", ""));
 		HorizontalLayout* buttons = new HorizontalLayout(menu);
 		Button* close = new Button("Close", buttons);
-		close->ClickHandler(boost::bind(&SelectMenu::ConnectWindow, this, false));
+		close->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, false));
 		Button* connect = new Button("Connect", buttons);
-		connect->ClickHandler(boost::bind(&SelectMenu::DirectConnect, this));
+		connect->Clicked.connect(boost::bind(&SelectMenu::DirectConnect, this));
 	}
 	else if (!show && connectWnd)
 	{
