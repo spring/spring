@@ -261,7 +261,7 @@ std::string CglList::GetCurrentItem() const
 
 bool CglList::SetCurrentItem(const std::string& newCurrent)
 {
-	for (unsigned i = 0; i <= items.size(); ++i)
+	for (unsigned i = 0; i < items.size(); ++i)
 	{
 		if (newCurrent == items[i])
 		{

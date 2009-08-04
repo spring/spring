@@ -18,33 +18,58 @@
 #include "aGui/Window.h"
 #include "aGui/glList.h"
 
+class ListSelectWnd : public agui::Window
+{
+public:
+	ListSelectWnd(const std::string& title) : agui::Window(title)
+	{
+		agui::gui->AddElement(this);
+		SetPos(0.5, 0.2);
+		SetSize(0.4, 0.7);
+		
+		agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(this);
+		list = new agui::CglList(modWindowLayout);
+		agui::Button* select = new agui::Button("Select", modWindowLayout);
+		select->Clicked.connect(boost::bind(&ListSelectWnd::SelectButton, this));
+		select->SetSize(0.0f, 0.04f, true);
+		GeometryChange();
+	}
+
+	boost::signal<void (std::string)> Selected;
+	agui::CglList* list;
+
+private:
+	void SelectButton()
+	{
+		Selected(list->GetCurrentItem());
+	}
+};
 
 SelectionWidget::SelectionWidget()
 {
 	SetPos(0.5f, 0.2f);
 	SetSize(0.4f, 0.2f);
 	curSelect = NULL;
-	curSelectList = NULL;
 	
 	agui::gui->AddElement(this);
 	agui::VerticalLayout* vl = new agui::VerticalLayout(this);
 	vl->SetBorder(1.2f);
 	agui::HorizontalLayout* modL = new agui::HorizontalLayout(vl);
 	mod = new agui::Button("Select", modL);
-	mod->ClickHandler(boost::bind(&SelectionWidget::ShowModList, this));
+	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
 	userMod = configHandler->GetString("LastSelectedMod", "No mod selected");
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
 	map = new agui::Button("Select", mapL);
-	map->ClickHandler(boost::bind(&SelectionWidget::ShowMapList, this));
+	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
 	userMap = configHandler->GetString("LastSelectedMap", "No map selected");
 	mapT = new agui::TextElement(userMap, mapL);
 	userMap = configHandler->GetString("LastSelectedMap", "No map selected");
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
 	script = new agui::Button("Select", scriptL);
-	script->ClickHandler(boost::bind(&SelectionWidget::ShowScriptList, this));
+	script->Clicked.connect(boost::bind(&SelectionWidget::ShowScriptList, this));
 	script->SetSize(0.1f, 0.00f, true);
 	userScript = configHandler->GetString("LastSelectedScript", "No script selected");
 	scriptT = new agui::TextElement(userScript, scriptL);
@@ -58,17 +83,9 @@ void SelectionWidget::ShowModList()
 {
 	if (curSelect)
 		return;
-	curSelect = new agui::Window("Select mod");
-	agui::gui->AddElement(curSelect);
-	curSelect->SetPos(0.5, 0.2);
-	curSelect->SetSize(0.4, 0.7);
-	
-	agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(curSelect);
-	curSelectList = new agui::CglList(modWindowLayout);
-	agui::Button* select = new agui::Button("Select", modWindowLayout);
-	select->ClickHandler(boost::bind(&SelectionWidget::SelectMod, this));
-	select->SetSize(0.0f, 0.04f, true);
-	curSelect->GeometryChange();
+	curSelect = new ListSelectWnd("Select mod");
+	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMod, this, _1));
+	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 	
 	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
 	if (found.empty()) {
@@ -83,26 +100,18 @@ void SelectionWidget::ShowModList()
 
 	std::map<std::string, std::string>::iterator mit;
 	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {
-		curSelectList->AddItem(mit->first, mit->second);
+		curSelect->list->AddItem(mit->first, mit->second);
 	}
-	curSelectList->SetCurrentItem(userMod);
+	curSelect->list->SetCurrentItem(userMod);
 }
 
 void SelectionWidget::ShowMapList()
 {
 	if (curSelect)
 		return;
-	curSelect = new agui::Window("Select map");
-	agui::gui->AddElement(curSelect);
-	curSelect->SetPos(0.5, 0.2);
-	curSelect->SetSize(0.4, 0.7);
-	
-	agui::VerticalLayout* mapWindowLayout = new agui::VerticalLayout(curSelect);
-	curSelectList = new agui::CglList(mapWindowLayout);
-	agui::Button* select = new agui::Button("Select", mapWindowLayout);
-	select->ClickHandler(boost::bind(&SelectionWidget::SelectMap, this));
-	select->SetSize(0.0f, 0.04f, true);
-	curSelect->GeometryChange();
+	curSelect = new ListSelectWnd("Select map");
+	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectMap, this, _1));
+	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 
 	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
 	std::vector<std::string> arFound = archiveScanner->GetMaps();
@@ -121,65 +130,51 @@ void SelectionWidget::ShowMapList()
 	}
 
 	for (std::set<std::string>::iterator sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
-		curSelectList->AddItem(*sit, *sit);
+		curSelect->list->AddItem(*sit, *sit);
 	}
-	curSelectList->SetCurrentItem(userMap);
+	curSelect->list->SetCurrentItem(userMap);
 }
 
 void SelectionWidget::ShowScriptList()
 {
 	if (curSelect)
 		return;
-	curSelect = new agui::Window("Select script");
-	agui::gui->AddElement(curSelect);
-	curSelect->SetPos(0.5, 0.2);
-	curSelect->SetSize(0.4, 0.7);
-	
-	agui::VerticalLayout* scriptWindowLayout = new agui::VerticalLayout(curSelect);
-	curSelectList = new agui::CglList(scriptWindowLayout);
-	agui::Button* select = new agui::Button("Select", scriptWindowLayout);
-	select->ClickHandler(boost::bind(&SelectionWidget::SelectScript, this));
-	select->SetSize(0.0f, 0.04f, true);
-	curSelect->GeometryChange();
+	curSelect = new ListSelectWnd("Select script");
+	curSelect->Selected.connect(boost::bind(&SelectionWidget::SelectScript, this, _1));
+	curSelect->WantClose.connect(boost::bind(&SelectionWidget::CleanWindow, this));
 	
 	std::list<std::string> scriptList = CScriptHandler::Instance().ScriptList();
 	for (std::list<std::string>::iterator it = scriptList.begin(); it != scriptList.end(); ++it)
 	{
-		curSelectList->AddItem(*it, "");
+		curSelect->list->AddItem(*it, "");
 	}
-	curSelectList->SetCurrentItem(userScript);
+	curSelect->list->SetCurrentItem(userScript);
 }
 
-void SelectionWidget::SelectMod()
+void SelectionWidget::SelectMod(std::string mod)
 {
-	if (curSelectList)
-	{
-		userMod = curSelectList->GetCurrentItem();
-		configHandler->SetString("LastSelectedMod", userMod);
-		modT->SetText(userMod);
-	}
+	userMod = mod;
+	configHandler->SetString("LastSelectedMod", userMod);
+	modT->SetText(userMod);
+
 	CleanWindow();
 }
 
-void SelectionWidget::SelectScript()
+void SelectionWidget::SelectScript(std::string map)
 {
-	if (curSelectList)
-	{
-		userScript = curSelectList->GetCurrentItem();
-		configHandler->SetString("LastSelectedScript", userScript);
-		scriptT->SetText(userScript);
-	}
+	userScript = map;
+	configHandler->SetString("LastSelectedScript", userScript);
+	scriptT->SetText(userScript);
+
 	CleanWindow();
 }
 
-void SelectionWidget::SelectMap()
+void SelectionWidget::SelectMap(std::string script)
 {
-	if (curSelectList)
-	{
-		userMap = curSelectList->GetCurrentItem();
-		configHandler->SetString("LastSelectedMap", userMap);
-		mapT->SetText(userMap);
-	}
+	userMap = script;
+	configHandler->SetString("LastSelectedMap", userMap);
+	mapT->SetText(userMap);
+
 	CleanWindow();
 }
 
@@ -189,6 +184,5 @@ void SelectionWidget::CleanWindow()
 	{
 		agui::gui->RmElement(curSelect);
 		curSelect = NULL;
-		curSelectList = NULL;
 	}
 }

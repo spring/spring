@@ -8,10 +8,9 @@
 namespace agui
 {
 class Button;
-class CglList;
-class Window;
 class TextElement;
 }
+class ListSelectWnd;
 
 class SelectionWidget : public agui::GuiElement
 {
@@ -23,9 +22,9 @@ public:
 	void ShowMapList();
 	void ShowScriptList();
 
-	void SelectMod();
-	void SelectScript();
-	void SelectMap();
+	void SelectMod(std::string);
+	void SelectScript(std::string);
+	void SelectMap(std::string);
 
 	std::string userScript;
 	std::string userMap;
@@ -40,8 +39,7 @@ private:
 	agui::TextElement* mapT;
 	agui::Button* script;
 	agui::TextElement* scriptT;
-	agui::Window* curSelect;
-	agui::CglList* curSelectList;
+	ListSelectWnd* curSelect;
 };
 
 #endif

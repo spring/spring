@@ -2,7 +2,7 @@
 #define BUTTON_H
 
 #include <string>
-#include <boost/signals.hpp>
+#include <boost/signal.hpp>
 
 #include "GuiElement.h"
 
@@ -11,13 +11,12 @@ namespace agui
 
 class Button : public GuiElement
 {
-	typedef boost::signal<void (void)> SignalType;
 public:
 	Button(const std::string& label = "", GuiElement* parent = NULL);
 	
 	void Label(const std::string& label);
 	
-	boost::signals::connection ClickHandler(SignalType::slot_function_type);
+	boost::signal<void (void)> Clicked;
 
 private:
 	virtual void DrawSelf();
@@ -28,7 +27,6 @@ private:
 
 	std::string label;
 
-	SignalType sig;
 };
 
 }
