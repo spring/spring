@@ -7,6 +7,8 @@
 #ifndef FLOAT3_H
 #define FLOAT3_H
 
+#include <cassert>
+
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg_cond.h"
 #include "ExternalAI/Interface/SAIFloat3.h"
@@ -418,6 +420,7 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& Normalize() {
+		assert(x != 0 || y != 0 || z != 0);
 		float invL = fastmath::isqrt2(SqLength());
 		if (invL != 0.f) {
 			x *= invL;
@@ -438,6 +441,7 @@ public:
 	 * Measured compile time hit: statistically insignificant (1%)
 	 */
 	inline float3& ANormalize() {
+		assert(x != 0 || y != 0 || z != 0);
 		float invL = fastmath::isqrt(SqLength());
 		if (invL != 0.f) {
 			x *= invL;
@@ -455,6 +459,7 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& PrecNormalize() {
+		assert(x != 0 || y != 0 || z != 0);
 		const float invL = math::isqrt(SqLength());
 		if (invL != 0.f) {
 			x *= invL;
