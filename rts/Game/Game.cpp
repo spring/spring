@@ -1311,9 +1311,6 @@ bool CGame::ActionPressed(const Action& action,
 			//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
 			//Setting it back to default state.
 			streflop_init<streflop::Simple>();
-			#if defined(__SUPPORT_SNAN__)
-			feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-			#endif
 		}
 	}
 #endif
