@@ -34,7 +34,7 @@ else  (UNIX AND NOT MINGW)
 	#set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 	set (CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 	set (CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-	set (STABS_DEBUG_SYMBOLS TRUE CACHE BOOL "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version).")
+	set (STABS_DEBUG_SYMBOLS FALSE CACHE BOOL "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version).")
 endif (UNIX AND NOT MINGW)
 
 ### Usr-definable build options
