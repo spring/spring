@@ -85,6 +85,7 @@ void SelectionWidget::ShowModList()
 	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {
 		curSelectList->AddItem(mit->first, mit->second);
 	}
+	curSelectList->SetCurrentItem(userMod);
 }
 
 void SelectionWidget::ShowMapList()
@@ -122,6 +123,7 @@ void SelectionWidget::ShowMapList()
 	for (std::set<std::string>::iterator sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
 		curSelectList->AddItem(*sit, *sit);
 	}
+	curSelectList->SetCurrentItem(userMap);
 }
 
 void SelectionWidget::ShowScriptList()
@@ -145,6 +147,7 @@ void SelectionWidget::ShowScriptList()
 	{
 		curSelectList->AddItem(*it, "");
 	}
+	curSelectList->SetCurrentItem(userScript);
 }
 
 void SelectionWidget::SelectMod()
