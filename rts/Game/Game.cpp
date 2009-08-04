@@ -1311,6 +1311,9 @@ bool CGame::ActionPressed(const Action& action,
 			//aviGenerator->InitEngine() (avicap32.dll)? modifies the FPU control word.
 			//Setting it back to default state.
 			streflop_init<streflop::Simple>();
+			#if defined(__SUPPORT_SNAN__)
+			feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+			#endif
 		}
 	}
 #endif
@@ -2757,7 +2760,7 @@ bool CGame::Draw() {
 		}
 
 		GML_STDMUTEX_LOCK(sim); // Draw
-		
+
 		guihandler->RunLayoutCommand("disable");
 		LogObject() << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
