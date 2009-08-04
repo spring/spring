@@ -212,6 +212,9 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	// maybe the threading, or something in CNet::InitServer() ??
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
+	#if defined(__SUPPORT_SNAN__)
+	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+	#endif
 #endif
 }
 

@@ -42,6 +42,10 @@ void CMyMath::Init()
 
 	// Set single precision floating point math.
 	streflop_init<streflop::Simple>();
+	// Enable signaling nans if compiled with this option.
+	#if defined(__SUPPORT_SNAN__)
+	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+	#endif
 #else
 	// probably should check if SSE was enabled during
 	// compilation and issue a warning about illegal
