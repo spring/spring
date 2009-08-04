@@ -397,7 +397,8 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length() const{
-		return (float) math::sqrt(x*x+y*y+z*z);
+		//assert(x!=0.f || y!=0.f || z!=0.f);
+		return (float) math::sqrt(SqLength());
 	}
 
 	/**
@@ -409,7 +410,8 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length2D() const {
-		return (float) math::sqrt(x * x + z * z);
+		//assert(x!=0.f || y!=0.f || z!=0.f);
+		return (float) math::sqrt(SqLength2D());
 	}
 
 	/**
@@ -420,13 +422,8 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& Normalize() {
-		assert(x != 0 || y != 0 || z != 0);
-		float invL = fastmath::isqrt2(SqLength());
-		if (invL != 0.f) {
-			x *= invL;
-			y *= invL;
-			z *= invL;
-		}
+		assert(x!=0.f || y!=0.f || z!=0.f);
+		*this *= fastmath::isqrt2(SqLength());
 		return *this;
 	}
 
@@ -441,13 +438,8 @@ public:
 	 * Measured compile time hit: statistically insignificant (1%)
 	 */
 	inline float3& ANormalize() {
-		assert(x != 0 || y != 0 || z != 0);
-		float invL = fastmath::isqrt(SqLength());
-		if (invL != 0.f) {
-			x *= invL;
-			y *= invL;
-			z *= invL;
-		}
+		assert(x!=0.f || y!=0.f || z!=0.f);
+		*this *= fastmath::isqrt(SqLength());
 		return *this;
 	}
 
@@ -459,13 +451,8 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& PrecNormalize() {
-		assert(x != 0 || y != 0 || z != 0);
-		const float invL = math::isqrt(SqLength());
-		if (invL != 0.f) {
-			x *= invL;
-			y *= invL;
-			z *= invL;
-		}
+		assert(x!=0.f || y!=0.f || z!=0.f);
+		*this *= math::isqrt(SqLength());
 		return *this;
 	}
 
