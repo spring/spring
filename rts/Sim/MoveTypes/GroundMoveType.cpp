@@ -281,7 +281,8 @@ void CGroundMoveType::Update()
 				ASSERT_SYNCED_FLOAT3(waypointDir);
 
 				waypointDir.y = 0;
-				waypointDir.Normalize();
+				if (waypointDir.x != 0 || waypointDir.z != 0)
+					waypointDir.Normalize();
 
 				const float3 wpDirInv = -waypointDir;
 				const float3 wpPosTmp = owner->pos + wpDirInv;
