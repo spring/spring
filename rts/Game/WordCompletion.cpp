@@ -89,6 +89,7 @@ void CWordCompletion::Reset()
 	// remote commands
 	//TODO those commans are registered in Console, get the list from there
 	words["/atm"] = sl;
+	words["/aikill"] = sl;
 	words["/cheat "] = sl;
 	words["/devlua "] = sl;
 	words["/editdefs "] = sl;

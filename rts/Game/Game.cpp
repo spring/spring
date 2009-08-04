@@ -968,6 +968,27 @@ bool CGame::ActionPressed(const Action& action,
 			                unitDrawer->advShading ? "enabled" : "disabled");
 		}
 	}
+	else if (cmd == "aikill") {
+		if (action.extra.size() > 0) {
+			const int team = atoi(action.extra.c_str());
+			if ((team >= 0) && (team < teamHandler->ActiveTeams())) {
+				if (eoh->IsSkirmishAI(team)) {
+					eoh->DestroySkirmishAI(team);
+					if (!eoh->IsSkirmishAI(team)) {
+						logOutput.Print("Successfully removed Skirmish AI from team %i.", team);
+					}
+				} else {
+					logOutput.Print("No Skirmish AI team: %i", team);
+				}
+			} else {
+				logOutput.Print("Team number invalid: %i", team);
+			}
+		} else {
+			logOutput.Print("Kill a Skirmish AI controlling a team.");
+			logOutput.Print("The team itsself will remain alive.");
+			logOutput.Print("usage:   /aikill [teamId]");
+		}
+	}
 	else if (cmd == "say") {
 		SendNetChat(action.extra);
 	}
