@@ -678,11 +678,11 @@ void CTAAirMoveType::UpdateAirPhysics()
 
 	if (h < wh) {
 		ws = altitudeRate;
-		if (speed.y > 0.0f && (wh - h) / speed.y * accRate * 1.5f < speed.y)
+		if (speed.y > 0.0001f && (wh - h) / speed.y * accRate * 1.5f < speed.y)
 			ws = 0.0f;
 	} else {
 		ws = -altitudeRate;
-		if (speed.y < 0.0f && (wh - h) / speed.y * accRate * 0.7f < -speed.y)
+		if (speed.y < -0.0001f && (wh - h) / speed.y * accRate * 0.7f < -speed.y)
 			ws = 0.0f;
 	}
 
