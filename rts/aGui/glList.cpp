@@ -37,8 +37,6 @@ CglList::~CglList()
 
 void CglList::AddItem(const std::string& name, const std::string& description)
 {
-	if (lastChoosen == name)
-		place = items.size();
 	items.push_back(name);
 
 	// calculate width of text and resize box if necessary
@@ -259,6 +257,19 @@ std::string CglList::GetCurrentItem() const
 		return ((*filteredItems)[place]);
 	}
 	return "";
+}
+
+bool CglList::SetCurrentItem(const std::string& newCurrent)
+{
+	for (unsigned i = 0; i <= items.size(); ++i)
+	{
+		if (newCurrent == items[i])
+		{
+			place = i;
+			return true;
+		}
+	}
+	return false;
 }
 
 bool CglList::KeyPressed(unsigned short k, bool isRepeat)
