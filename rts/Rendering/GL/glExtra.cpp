@@ -132,7 +132,7 @@ void glDrawVolume(DrawVolumeFunc drawFunc, const void* data)
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
 	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	glCullFace(GL_FRONT);
 
 	drawFunc(data);   // draw
 

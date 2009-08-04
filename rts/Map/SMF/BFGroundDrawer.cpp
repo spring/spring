@@ -699,6 +699,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
+	glCullFace(GL_BACK);
 
 	if (!overrideVP)
 		glEnable(GL_CULL_FACE);
