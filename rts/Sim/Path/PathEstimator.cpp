@@ -201,9 +201,6 @@ void CPathEstimator::InitBlocks() {
 
 void CPathEstimator::CalcOffsetsAndPathCosts(int thread) {
 	streflop_init<streflop::Simple>();
-#if defined(__SUPPORT_SNAN__)
-	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
-#endif
 	// NOTE: EstimatePathCosts() [B] is temporally dependent on CalculateBlockOffsets() [A],
 	// A must be completely finished before B_i can be safely called. This means we cannot
 	// let thread i execute (A_i, B_i), but instead have to split the work such that every
