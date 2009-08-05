@@ -57,7 +57,8 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare, co
 
 	float3 flatNorm = readmap->facenormals[(xSquare + zSquare * gs->mapx) * 2];
 	flatNorm.y = 0;
-	flatNorm.Normalize();
+	if (flatNorm.x != 0 || flatNorm.y != 0)
+		flatNorm.Normalize();
 	float moveSlope = -moveDir.dot(flatNorm);
 	float typemod = moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
 

@@ -199,6 +199,11 @@ int CLuaHandle::SetupTraceback()
 
 int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback)
 {
+#if defined(__SUPPORT_SNAN__)
+	// do not signal floating point exceptions in user Lua code
+	feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+#endif
+
 	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
@@ -217,6 +222,10 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 		// log only errors that lead to a crash
 		callinErrors += (error == 2);
 	}
+
+#if defined(__SUPPORT_SNAN__)
+	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+#endif
 	return error;
 }
 

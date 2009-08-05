@@ -32,6 +32,9 @@ struct MoveData {
 		followGround    = udefMD? udefMD->followGround:            true;
 		subMarine       = udefMD? udefMD->subMarine:               false;
 		name            = udefMD? udefMD->name:                    "tank";
+		heatMapping     = udefMD? udefMD->heatMapping:             true;
+		heatMod	        = udefMD? udefMD->heatMod:                 0.05f;
+		heatProduced    = udefMD? udefMD->heatProduced:            30;
 	}
 
 	enum MoveType {
@@ -85,6 +88,13 @@ struct MoveData {
 
 	/// are we supposed to be a purely sub-surface ship?
 	bool subMarine;
+
+	/// heatmap this unit
+	bool heatMapping;
+	/// heatmap path cost modifier
+	float heatMod;
+	/// heat produced by a path
+	int heatProduced;
 };
 
 

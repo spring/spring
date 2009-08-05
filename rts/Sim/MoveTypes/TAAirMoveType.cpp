@@ -354,7 +354,8 @@ void CTAAirMoveType::UpdateFlying()
 	owner->restTime = 0;
 
 	// don't change direction for waypoints we just flew over and missed slightly
-	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands() && dir.SqLength2D() < 10000.0f) {
+	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands()
+			&& dir != ZeroVector && dir.SqLength2D() < 10000.0f) {
 		float3 ndir = dir; ndir = ndir.ANormalize();
 
 		if (ndir.SqDistance(dir) < 1.0f) {
@@ -451,7 +452,7 @@ void CTAAirMoveType::UpdateFlying()
 	// not there yet, so keep going
 	dir.y = 0;
 	float realMax = maxSpeed;
-	float dist = dir.Length();
+	float dist = dir.Length() + 0.1f;
 
 	// If we are close to our goal, we should go slow enough to be able to break in time
 	// new additional rule: if in attack mode or if we have more move orders then this is
@@ -677,11 +678,11 @@ void CTAAirMoveType::UpdateAirPhysics()
 
 	if (h < wh) {
 		ws = altitudeRate;
-		if (speed.y > 0.0f && (wh - h) / speed.y * accRate * 1.5f < speed.y)
+		if (speed.y > 0.0001f && (wh - h) / speed.y * accRate * 1.5f < speed.y)
 			ws = 0.0f;
 	} else {
 		ws = -altitudeRate;
-		if (speed.y < 0.0f && (wh - h) / speed.y * accRate * 0.7f < -speed.y)
+		if (speed.y < -0.0001f && (wh - h) / speed.y * accRate * 0.7f < -speed.y)
 			ws = 0.0f;
 	}
 
