@@ -570,7 +570,9 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		const unsigned int slaveTo = wTable.GetInt("slaveTo", 0);
 
 		float3 mainDir = wTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
-		mainDir.Normalize();
+		if (mainDir != ZeroVector) {
+			mainDir.Normalize();
+		}
 
 		const float angleDif = cos(wTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
 
