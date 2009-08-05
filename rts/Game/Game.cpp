@@ -969,24 +969,65 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "aikill") {
+		bool badArgs = false;
+
 		if (action.extra.size() > 0) {
-			const int team = atoi(action.extra.c_str());
-			if ((team >= 0) && (team < teamHandler->ActiveTeams())) {
-				if (eoh->IsSkirmishAI(team)) {
-					eoh->DestroySkirmishAI(team);
-					if (!eoh->IsSkirmishAI(team)) {
-						logOutput.Print("Successfully removed Skirmish AI from team %i.", team);
-					}
-				} else {
-					logOutput.Print("No Skirmish AI team: %i", team);
-				}
+			const std::string::size_type pos = action.extra.find_first_of(" ");
+			bool share;
+			int teamToKill         = -1;
+			int teamToReceiveUnits = -1;
+			if (pos != std::string::npos) {
+				// two (or more) arguemtns given
+				share = true;
+				teamToKill = atoi(action.extra.substr(0, pos).c_str());
+				teamToReceiveUnits = atoi(action.extra.substr(pos+1).c_str());
 			} else {
-				logOutput.Print("Team number invalid: %i", team);
+				// only one argument given
+				share = false;
+				teamToKill = atoi(action.extra.c_str());
+			}
+
+			if (!teamHandler->IsActiveTeam(teamToKill)) {
+				logOutput.Print("Team to kill: invalid team number: %i", teamToKill);
+				badArgs = true;
+			}
+			if (share && !teamHandler->IsActiveTeam(teamToReceiveUnits)) {
+				logOutput.Print("Team to receive units: invalid team number: %i", teamToReceiveUnits);
+				badArgs = true;
+			}
+			if (!(eoh->IsSkirmishAI(teamToKill))) {
+				logOutput.Print("Team to kill: not a local Skirmish AI team: %i", teamToKill);
+				badArgs = true;
+			}
+
+			if (!badArgs) {
+				if (share) {
+					// give all units from teamToKill to teamToReceiveUnits
+					teamHandler->Team(teamToKill)->GiveEverythingTo(teamToReceiveUnits);
+					// when the AIs team has no units left,
+					// the AI will be destroyed automatically
+				} else {
+					eoh->DestroySkirmishAI(teamToKill);
+				}
+
+				if (!eoh->IsSkirmishAI(teamToKill)) {
+					logOutput.Print("Successfully removed Skirmish AI from team %i.", teamToKill);
+				} else {
+					logOutput.Print("Failed to remove Skirmish AI from team %i.", teamToKill);
+				}
 			}
 		} else {
+			badArgs = true;
+		}
+
+		if (badArgs) {
+			logOutput.Print("------------------------------------------------");
 			logOutput.Print("Kill a Skirmish AI controlling a team.");
-			logOutput.Print("The team itsself will remain alive.");
-			logOutput.Print("usage:   /aikill [teamId]");
+			logOutput.Print("The team itsself will remain alive,");
+			logOutput.Print("unless a second argument is given,");
+			logOutput.Print("which specifies an active team");
+			logOutput.Print("that will receive all the units of the AI team.");
+			logOutput.Print("usage:   /aikill teamToKill [teamToReceiveUnits]");
 		}
 	}
 	else if (cmd == "say") {
