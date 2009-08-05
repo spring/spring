@@ -186,14 +186,6 @@ public:
 		else
 			SDL_WarpMouse(pos.x, pos.y);
 	}
-
-	void Update()
-	{
-		if (mousemoved) {
-			if (mouse) mouse->MouseMove(mousepos.x, mousepos.y);
-			mousemoved = false;
-		}
-	}
 };
 CWin32MouseInput* CWin32MouseInput::inst = 0;
 #endif
