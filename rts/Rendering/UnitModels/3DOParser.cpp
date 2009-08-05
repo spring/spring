@@ -247,9 +247,13 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,
 			sp.texture=texturehandler3DO->Get3DOTexture(t);
 		}
 		float3 n=-(obj->vertices[sp.vertices[1]].pos-obj->vertices[sp.vertices[0]].pos).cross(obj->vertices[sp.vertices[2]].pos-obj->vertices[sp.vertices[0]].pos);
-		n.Normalize();
-		sp.normal=n;
-		sp.normals.insert(sp.normals.begin(), sp.numVertex, n);
+		if (n == ZeroVector) {
+			sp.normals.insert(sp.normals.begin(), sp.numVertex, UpVector);
+		} else {
+			n.Normalize();
+			sp.normal=n;
+			sp.normals.insert(sp.normals.begin(), sp.numVertex, n);
+		}
 
 		//sometimes there are more than one selection primitive (??)
 		if(n.dot(DownVector)>0.99f){
@@ -311,8 +315,12 @@ void C3DOParser::CalcNormals(S3DOPiece* o) const
 				}
 			}
 
-			vnormal.Normalize();
-			ps->normals[a] = vnormal;
+			if (vnormal == ZeroVector) {
+				ps->normals[a] = UpVector;
+			} else {
+				vnormal.Normalize();
+				ps->normals[a] = vnormal;
+			}
 		}
 	}
 }

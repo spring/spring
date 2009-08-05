@@ -4156,11 +4156,11 @@ struct CylinderData {
 static void DrawCylinderShape(const void* data)
 {
 	const CylinderData& cyl = *((const CylinderData*)data);
+	const float step = fastmath::PI2 / (float)cyl.divs;
 	int i;
 	glBegin(GL_QUAD_STRIP); // the sides
 	for (i = 0; i <= cyl.divs; i++) {
-		const float radians =
-		  float(2.0 * PI) * float(i % cyl.divs) / (float)cyl.divs;
+		const float radians = step * float(i % cyl.divs);
 		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
 		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yp, z);
@@ -4169,7 +4169,7 @@ static void DrawCylinderShape(const void* data)
 	glEnd();
 	glBegin(GL_TRIANGLE_FAN); // the top
 	for (i = 0; i < cyl.divs; i++) {
-		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
+		const float radians = step * float(i);
 		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
 		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yp, z);
@@ -4177,7 +4177,7 @@ static void DrawCylinderShape(const void* data)
 	glEnd();
 	glBegin(GL_TRIANGLE_FAN); // the bottom
 	for (i = (cyl.divs - 1); i >= 0; i--) {
-		const float radians = float(2.0 * PI) * float(i) / (float)cyl.divs;
+		const float radians = step * float(i);
 		const float x = cyl.xc + (cyl.radius * fastmath::sin(radians));
 		const float z = cyl.zc + (cyl.radius * fastmath::cos(radians));
 		glVertex3f(x, cyl.yn, z);

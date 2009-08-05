@@ -128,6 +128,10 @@ CMoveInfo::CMoveInfo()
 			}
 		}
 
+		md->heatMapping = moveTable.GetBool("heatMapping", true);
+		md->heatMod = moveTable.GetFloat("heatMod", 0.05f);
+		md->heatProduced = moveTable.GetInt("heatProduced", 30);
+
 		// ground units hug the ocean floor when in water,
 		// ships stay at a "fixed" level (their waterline)
 		md->followGround =
