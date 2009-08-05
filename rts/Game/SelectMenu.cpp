@@ -111,7 +111,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Start the Lobby", menu);
-		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
+		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
 		Button* settings = new Button("Edit settings", menu);
 		settings->Clicked.connect(boost::bind(&SelectMenu::Settings, this));
 		Button* direct = new Button("Direct connect", menu);
