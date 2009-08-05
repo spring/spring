@@ -946,9 +946,12 @@ int SpringApp::Run(int argc, char *argv[])
 				SystemParametersInfo(SPI_SETSCREENSAVETIMEOUT, timeout, NULL, 0);
 		}
 #endif
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-			input.PushEvent(event);
+		{
+			SCOPED_TIMER("Input");
+			SDL_Event event;
+			while (SDL_PollEvent(&event)) {
+				input.PushEvent(event);
+			}
 		}
 		if (globalQuit)
 			break;
