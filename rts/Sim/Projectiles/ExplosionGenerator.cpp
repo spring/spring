@@ -170,58 +170,87 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
                                        float radius, CUnit *owner,float gfxMod,
                                        CUnit *hit, const float3 &dir)
 {
-	float h2=ground->GetHeight2(pos.x,pos.z);
+	float h2 = ground->GetHeight2(pos.x, pos.z);
+	float height = pos.y - h2;
 
-	float height=pos.y-h2;
 	if (height < 0.0f) {
 		height = 0.0f;
 	}
 
-	bool waterExplosion = h2 < -3;
-	bool uwExplosion = pos.y < -15;
-	bool airExplosion = pos.y - max((float)0, h2) > 20;
+	bool waterExplosion = (h2 < -3.0f);
+	bool uwExplosion = (pos.y < -15.0f);
+	bool airExplosion = (pos.y - max(0.0f, h2) > 20.0f);
 
-	damage=damage/20;
-	if (damage>radius*1.5f) //limit the visual effects based on the radius
-		damage=radius*1.5f;
-	damage*=gfxMod;
-	for (int a=0;a<1;++a) {
-//		float3 speed((gs->randFloat()-0.5f)*(radius*0.04f),0.05f+(gs->randFloat())*(radius*0.007f),(gs->randFloat()-0.5f)*(radius*0.04f));
-		float3 speed(0,0.3f,0);
-		float3 camVect=camera->pos-pos;
-		float camLength=camVect.Length();
-		camVect/=camLength;
-		float moveLength=radius*0.03f;
-		if (camLength<moveLength+2)
-			moveLength=camLength-2;
-		float3 npos=pos+camVect*moveLength;
+	damage = damage / 20.0f;
 
-		new CHeatCloudProjectile(npos,speed,8+sqrt(damage)*0.5f,7+damage*2.8f,owner);
-	}
-	if (ph->particleSaturation<1) {		//turn off lots of graphic only particles when we have more particles than we want
-		float smokeDamage=damage;
+	// limit the visual effects based on the radius
+	if (damage > radius * 1.5f)
+		damage = radius * 1.5f;
+
+	damage *= gfxMod;
+
+
+	float3 camVect = camera->pos - pos;
+	float camLength = camVect.Length();
+	float moveLength = radius * 0.03f;
+
+	if (camLength > 0.0f) { camVect /= camLength; }
+	if (camLength < moveLength + 2) { moveLength = camLength - 2; }
+
+	const float3 npos = pos + camVect * moveLength;
+
+	new CHeatCloudProjectile(npos, float3(0.0f, 0.3f, 0.0f), 8 + sqrt(damage) * 0.5f, 7 + damage * 2.8f, owner);
+
+	if (ph->particleSaturation < 1.0f) {
+		// turn off lots of graphic only particles when we have more particles than we want
+		float smokeDamage = damage;
+
 		if (uwExplosion)
-			smokeDamage*=0.3f;
+			smokeDamage *= 0.3f;
 		if (airExplosion || waterExplosion)
-			smokeDamage*=0.6f;
-		float invSqrtsmokeDamage=1/(sqrt(smokeDamage)*0.35f);
-		for (int a=0;a<smokeDamage*0.6f;++a) {
-			float3 speed(-0.1f+gu->usRandFloat()*0.2f,(0.1f+gu->usRandFloat()*0.3f)*invSqrtsmokeDamage,-0.1f+gu->usRandFloat()*0.2f);
-			float3 npos(pos+gu->usRandVector()*(smokeDamage*1.0f));
-			float h=ground->GetApproximateHeight(npos.x,npos.z);
-			if (npos.y<h)
-				npos.y=h;
-			float time=(40+sqrt(smokeDamage)*15)*(0.8f+gu->usRandFloat()*0.7f);
-			new CSmokeProjectile2(pos,npos,speed,time,sqrt(smokeDamage)*4,0.4f,owner,0.6f);
+			smokeDamage *= 0.6f;
+
+		float invSqrtsmokeDamage = 1.0f;
+		if (smokeDamage > 0.0f) {
+			invSqrtsmokeDamage /= (sqrt(smokeDamage) * 0.35f);
 		}
+
+		for (int a = 0; a < smokeDamage * 0.6f; ++a) {
+			const float3 speed(
+				(-0.1f + gu->usRandFloat() * 0.2f),
+				( 0.1f + gu->usRandFloat() * 0.3f) * invSqrtsmokeDamage,
+				(-0.1f + gu->usRandFloat() * 0.2f)
+			);
+
+			const float h = ground->GetApproximateHeight(npos.x, npos.z);
+			const float time = (40 + sqrt(smokeDamage) * 15) * (0.8f + gu->usRandFloat() * 0.7f);
+
+			float3 npos(pos + gu->usRandVector() * (smokeDamage * 1.0f));
+			if (npos.y < h)
+				npos.y = h;
+
+			new CSmokeProjectile2(pos, npos, speed, time, sqrt(smokeDamage) *4, 0.4f, owner, 0.6f);
+		}
+
 		if (!airExplosion && !uwExplosion && !waterExplosion) {
-			int numDirt=(int)min(20.f,damage*0.8f);
-			float3 color(0.15f,0.1f,0.05f);
-			for (int a=0;a<numDirt;++a) {
-				float3 speed((0.5f-gu->usRandFloat())*1.5f,1.7f+gu->usRandFloat()*1.6f,(0.5f-gu->usRandFloat())*1.5f);
-				speed*=0.7f+min((float)30,damage)/30;
-				float3 npos(pos.x-(0.5f-gu->usRandFloat())*(radius*0.6f),pos.y-2.0f-damage*0.2f,pos.z-(0.5f-gu->usRandFloat())*(radius*0.6f));
-				new CDirtProjectile(npos,speed,90+damage*2,2.0f+sqrt(damage)*1.5f,0.4f,0.999f,owner,color);
+			const int numDirt = (int) min(20.0f, damage * 0.8f);
+			const float3 color(0.15f, 0.1f, 0.05f);
+
+			for (int a = 0; a < numDirt; ++a) {
+				float3 speed(
+					(0.5f - gu->usRandFloat()) * 1.5f,
+					 1.7f + gu->usRandFloat()  * 1.6f,
+					(0.5f - gu->usRandFloat()) * 1.5f
+				);
+				speed *= (0.7f + min(30.0f, damage) / 30.0f);
+
+				const float3 npos(
+					pos.x - (0.5f - gu->usRandFloat()) * (radius * 0.6f),
+					pos.y -  2.0f - damage * 0.2f,
+					pos.z - (0.5f - gu->usRandFloat()) * (radius * 0.6f)
+				);
+
+				new CDirtProjectile(npos, speed, 90 + damage * 2, 2.0f + sqrt(damage) * 1.5f, 0.4f, 0.999f, owner, color);
 			}
 		}
 		if (!airExplosion && !uwExplosion && waterExplosion) {
