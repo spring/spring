@@ -108,9 +108,9 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 		menu->SetBorder(1.2f);
 		agui::gui->AddElement(menu);
 		agui::TextElement* name = new agui::TextElement("Spring", menu);
-		Button* single = new Button("Singleplayer", menu);
+		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
-		Button* multi = new Button("Online Play", menu);
+		Button* multi = new Button("Start the Lobby", menu);
 		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
 		Button* direct = new Button("Direct connect", menu);
 		direct->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, true));
