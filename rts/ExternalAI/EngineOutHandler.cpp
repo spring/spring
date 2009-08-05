@@ -442,7 +442,7 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key) {
 	try {
 		// Pause the game for letting the AI initialzie,
 		// as this can take quite some time.
-	    	bool weDoPause = !gs->paused;
+		bool weDoPause = !gs->paused;
 		if (weDoPause) {
 			const std::string& myPlayerName = playerHandler->Player(gu->myPlayerNum)->name;
 			logOutput.Print(
