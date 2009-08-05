@@ -35,6 +35,7 @@ public:
 
 private:
 	void Single();
+	void Settings();
 	void Multi();
 	void Quit();
 	void ConnectWindow(bool show);

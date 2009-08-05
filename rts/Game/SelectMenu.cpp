@@ -111,7 +111,9 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Start the Lobby", menu);
-		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
+		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
+		Button* settings = new Button("Edit settings", menu);
+		settings->Clicked.connect(boost::bind(&SelectMenu::Settings, this));
 		Button* direct = new Button("Direct connect", menu);
 		direct->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, true));
 		Button* quit = new Button("Quit", menu);
@@ -166,6 +168,16 @@ void SelectMenu::Single()
 	pregame = new CPreGame(mySettings);
 	pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName, 1));
 	delete this;
+}
+
+void SelectMenu::Settings()
+{
+#ifdef __unix__
+	const std::string settingsProgram = "springsettings";
+#else
+	const std::string settingsProgram = "springsettings.exe";
+#endif
+	execlp(settingsProgram.c_str(), settingsProgram.c_str(), NULL);
 }
 
 void SelectMenu::Multi()
