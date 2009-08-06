@@ -247,7 +247,6 @@ void LoadStartPicture(const std::string& sidePref)
 	startupTexture = bm.CreateTexture(false);
 }
 
-
 void UnloadStartPicture()
 {
 	if (startupTexture) {

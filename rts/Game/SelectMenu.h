@@ -14,6 +14,7 @@ class Window;
 class VerticalLayout;
 class LineEdit;
 class CglList;
+class Picture;
 }
 
 /**
@@ -53,6 +54,7 @@ private:
 	agui::LineEdit* address;
 	agui::Window* connectWnd;
 	agui::CglList* list;
+	agui::Picture* background;
 	SelectionWidget* selw;
 };
 

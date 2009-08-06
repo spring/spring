@@ -32,6 +32,7 @@
 #include "aGui/TextElement.h"
 #include "aGui/Window.h"
 #include "aGui/glList.h"
+#include "aGui/Picture.h"
 
 using std::string;
 using agui::Button;
@@ -39,6 +40,30 @@ using agui::HorizontalLayout;
 
 extern boost::uint8_t* keys;
 extern bool globalQuit;
+
+class ScopedLoader
+{
+public:
+	ScopedLoader(const string& mapName) : oldHandler(vfsHandler)
+	{
+		vfsHandler = new CVFSHandler();
+		std::string archive = archiveScanner->ModNameToModArchive(mapName);
+		std::string archivePath = archiveScanner->GetArchivePath(archive);
+		if (!vfsHandler->AddArchive(archivePath+archive, false))
+			LogObject() << "Failed to load: " << mapName;
+	}
+
+	~ScopedLoader()
+	{
+		if (vfsHandler != oldHandler) {
+			delete vfsHandler;
+			vfsHandler = oldHandler;
+		}
+	}
+
+private:
+	CVFSHandler* oldHandler;
+};
 
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
 			const std::string& playername)
@@ -91,6 +116,16 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 	connectWnd = NULL;
 	list = NULL;
 	mySettings = new ClientSetup();
+
+	{
+		ScopedLoader loader("Spring Bitmaps");
+		background = new agui::Picture();
+		background->SetPos(0.5,0.5);
+		background->SetSize(1,1);
+		background->Load("bitmaps/ui/background.jpg");
+		agui::gui->AddElement(background);
+	}
+
 	selw = new SelectionWidget();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
@@ -129,6 +164,7 @@ SelectMenu::~SelectMenu()
 {
 	ConnectWindow(false);
 	agui::gui->RmElement(selw);
+	agui::gui->RmElement(background);
 	if (menu)
 	{
 		agui::gui->RmElement(menu);
