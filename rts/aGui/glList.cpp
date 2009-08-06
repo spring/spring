@@ -123,13 +123,14 @@ bool CglList::MouseUpdate(int x, int y)
 
 void CglList::DrawSelf()
 {
+	const float opacity = Opacity();
 	glLoadIdentity();
-	glColor4f(0.2f,0.2f,0.2f,1.0f);
+	glColor4f(0.2f,0.2f,0.2f,opacity);
 	DrawBox(GL_QUADS);
 
 	font->Begin();
 
-	font->SetTextColor(1,1,0.4f,0.8f);
+	font->SetTextColor(1,1,0.4f,opacity);
 
 	int nCurIndex = 0; // The item we're on
 	int nDrawOffset = 0; // The offset to the first draw item
@@ -145,28 +146,28 @@ void CglList::DrawSelf()
 	assert(numDisplay >= 0);
 	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()-1) { ii++; nCurIndex++; }
 
-	font->SetTextColor(); //default
-	font->SetOutlineColor(0.0f, 0.0f, 0.0f, 1.0f);
+	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity); //default
+	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
 	{
-		glColor4f(1,1,1,0.1f);
+		glColor4f(1,1,1,opacity/4.f);
 		b.DrawBox(GL_LINE_LOOP);
 
 		if (nCurIndex == place) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
-			glColor4f(0.2f,0,0,1);
+			glColor4f(0.2f,0,0,opacity);
 			b.DrawBox(GL_QUADS);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1,0,0,0.5f);
+			glColor4f(1,0,0,opacity/2.f);
 			glLineWidth(1.49f);
 			b.DrawBox(GL_LINE_LOOP);
 			glLineWidth(1.0f);
 		} else if (b.MouseOver(mx, my)) {
 			glBlendFunc(GL_ONE, GL_ONE); // additive blending
-			glColor4f(0,0,0.2f,1);
+			glColor4f(0,0,0.2f,opacity);
 			b.DrawBox(GL_QUADS);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-			glColor4f(1,1,1,0.5f);
+			glColor4f(1,1,1,opacity/2.f);
 			glLineWidth(1.49f);
 			b.DrawBox(GL_LINE_LOOP);
 			glLineWidth(1.0f);
