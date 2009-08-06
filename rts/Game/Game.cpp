@@ -890,6 +890,28 @@ int CGame::KeyReleased(unsigned short k)
 	return 0;
 }
 
+static std::vector<std::string> _local_strSpaceTokenize(const std::string& text) {
+
+	std::vector<std::string> tokens;
+
+#define SPACE_DELIMS " \t"
+	// Skip delimiters at beginning.
+	std::string::size_type lastPos = text.find_first_not_of(SPACE_DELIMS, 0);
+	// Find first "non-delimiter".
+	std::string::size_type pos     = text.find_first_of(SPACE_DELIMS, lastPos);
+
+	while (std::string::npos != pos || std::string::npos != lastPos) {
+		// Found a token, add it to the vector.
+		tokens.push_back(text.substr(lastPos, pos - lastPos));
+		// Skip delimiters.  Note the "not_of"
+		lastPos = text.find_first_not_of(SPACE_DELIMS, pos);
+		// Find next "non-delimiter"
+		pos = text.find_first_of(SPACE_DELIMS, lastPos);
+	}
+#undef SPACE_DELIMS
+
+	return tokens;
+}
 
 // FOR UNSYNCED MESSAGES
 bool CGame::ActionPressed(const Action& action,
@@ -973,20 +995,17 @@ bool CGame::ActionPressed(const Action& action,
 		bool badArgs = false;
 
 		if (action.extra.size() > 0) {
-			bool share;
+			bool share = false;
 			int teamToKill         = -1;
 			int teamToReceiveUnits = -1;
 
-			const std::string::size_type pos = action.extra.find_first_of(" ");
-			if (pos != std::string::npos) {
-				// two (or more) arguments given
+			std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+			if (args.size() >= 1) {
+				teamToKill = atoi(args[0].c_str());
+			}
+			if (args.size() >= 2) {
+				teamToReceiveUnits = atoi(args[1].c_str());
 				share = true;
-				teamToKill = atoi(action.extra.substr(0, pos).c_str());
-				teamToReceiveUnits = atoi(action.extra.substr(pos+1).c_str());
-			} else {
-				// only one argument given
-				share = false;
-				teamToKill = atoi(action.extra.c_str());
 			}
 
 			if (!teamHandler->IsActiveTeam(teamToKill)) {
@@ -1039,34 +1058,21 @@ bool CGame::ActionPressed(const Action& action,
 			int         teamToControl = -1;
 			std::string aiShortName   = "";
 			std::string aiVersion     = "";
+			std::string aiName        = "";
+			std::map<std::string, std::string> aiOptions;
 
-			const std::string::size_type pos = action.extra.find_first_of(" ");
-			if (pos == std::string::npos) {
-				// only one argument given
-				teamToControl = atoi(action.extra.c_str());
-			} else {
-				// two (or more) arguments given
-				teamToControl = atoi(action.extra.substr(0, pos).c_str());
-
-				const std::string rest = action.extra.substr(pos+1);
-				const std::string::size_type pos2 = rest.find_first_of(" ");
-				if (pos2 == std::string::npos) {
-					// two arguments given
-					aiShortName = rest;
-				} else {
-					// three (or more) arguments given
-					aiShortName = rest.substr(0, pos2);
-
-					const std::string rest2 = rest.substr(pos2+1);
-					const std::string::size_type pos3 = rest2.find_first_of(" ");
-					if (pos3 == std::string::npos) {
-						// three arguments given
-						aiVersion = rest2;
-					} else {
-						// four (or more) arguments given
-						aiVersion = rest2.substr(0, pos3);
-					}
-				}
+			std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+			if (args.size() >= 1) {
+				teamToControl = atoi(args[0].c_str());
+			}
+			if (args.size() >= 2) {
+				aiShortName = args[1];
+			}
+			if (args.size() >= 3) {
+				aiVersion = args[2];
+			}
+			if (args.size() >= 4) {
+				aiName = args[3];
 			}
 
 			if (!teamHandler->IsValidTeam(teamToControl)) {
@@ -1079,19 +1085,24 @@ bool CGame::ActionPressed(const Action& action,
 			}
 			SkirmishAIKey aiKey(aiShortName, aiVersion);
 			aiKey = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(aiKey);
-			if (aiKey.GetShortName() == "") {
-				logOutput.Print("Skirmish AI: not a valid skirmish AI (Lua AIs are not supported (yet)): %s %s",
+			if (aiKey.IsUnspecified()) {
+				logOutput.Print("Skirmish AI: not a valid Skirmish AI (Lua AIs are not supported (yet)): %s %s",
 						aiShortName.c_str(), aiVersion.c_str());
 				badArgs = true;
 			}
 
 			if (!badArgs) {
 				SkirmishAIData aiData;
-				aiData.name = aiShortName;
+				aiData.name = (aiName != "") ? aiName : aiShortName;
 				aiData.team = teamToControl;
 				aiData.hostPlayerNum = gu->myPlayerNum;
 				aiData.shortName = aiShortName;
 				aiData.version = aiVersion;
+				std::map<std::string, std::string>::const_iterator o;
+				for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
+					aiData.optionKeys.push_back(o->first);
+				}
+				aiData.options = aiOptions;
 
 				eoh->CreateSkirmishAI(teamToControl, aiKey, aiData);
 
@@ -1108,7 +1119,8 @@ bool CGame::ActionPressed(const Action& action,
 		if (badArgs) {
 			logOutput.Print("------------------------------------------------");
 			logOutput.Print("Let a Skirmish AI take over control of a team.");
-			logOutput.Print("usage:   /aitake teamToControl aiShortName [aiVersion]");
+			logOutput.Print("usage:   /aitake teamToControl aiShortName [aiVersion] [name] [options...]");
+			logOutput.Print("example: /aitake 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3");
 		}
 	}
 	else if (cmd == "say") {
