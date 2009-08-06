@@ -116,6 +116,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 	connectWnd = NULL;
 	list = NULL;
 	mySettings = new ClientSetup();
+	inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
 
 	{
 		ScopedLoader loader("Spring Bitmaps");

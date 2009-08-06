@@ -17,7 +17,6 @@ public:
 
 private:
 	virtual void DrawSelf();
-	virtual void GeometryChangeSelf();
 	
 	unsigned texture;
 	std::string file;
