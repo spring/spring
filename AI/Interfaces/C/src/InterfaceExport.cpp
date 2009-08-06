@@ -22,9 +22,7 @@
 
 static CInterface* myInterface = NULL;
 
-EXPORT(int) initStatic(int interfaceId,
-		const struct SAIInterfaceCallback* callback) {
-
+EXPORT(int) initStatic(int interfaceId, const struct SAIInterfaceCallback* callback) {
 	if (myInterface == NULL) {
 		myInterface = new CInterface(interfaceId, callback);
 	}
@@ -33,7 +31,6 @@ EXPORT(int) initStatic(int interfaceId,
 }
 
 EXPORT(int) releaseStatic() {
-
 	delete myInterface;
 	myInterface = NULL;
 
@@ -45,16 +42,22 @@ EXPORT(int) releaseStatic() {
 //	return myInterface->GetLevelOfSupportFor(engineVersion, engineAIInterfaceGeneratedVersion);
 //}
 
+
+
 EXPORT(const struct SSkirmishAILibrary*) loadSkirmishAILibrary(
-		const char* const shortName,
-		const char* const version) {
+	const char* const shortName,
+	const char* const version
+) {
 	return myInterface->LoadSkirmishAILibrary(shortName, version);
 }
+
 EXPORT(int) unloadSkirmishAILibrary(
-		const char* const shortName,
-		const char* const version) {
+	const char* const shortName,
+	const char* const version
+) {
 	return myInterface->UnloadSkirmishAILibrary(shortName, version);
 }
+
 EXPORT(int) unloadAllSkirmishAILibraries() {
 	return myInterface->UnloadAllSkirmishAILibraries();
 }
