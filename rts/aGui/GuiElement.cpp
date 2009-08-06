@@ -101,6 +101,11 @@ void GuiElement::GeometryChange()
 	}
 }
 
+float GuiElement::DefaultOpacity() const
+{
+	return 0.8f;
+}
+
 void GuiElement::Move(float x, float y)
 {
 	pos[0] += x;

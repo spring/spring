@@ -22,10 +22,11 @@ void Window::AddChild(GuiElement* elem)
 
 void Window::DrawSelf()
 {
-	glColor4f(0.0f,0.0f,0.0f, 1.0f);
+	const float opacity = Opacity();
+	glColor4f(0.0f,0.0f,0.0f, opacity);
 	DrawBox(GL_QUADS);
 	
-	glColor4f(0.7f,0.7f,0.7f, 1.0f);
+	glColor4f(0.7f,0.7f,0.7f, opacity);
 	glBegin(GL_QUADS);
 	glVertex2f(pos[0], pos[1]+size[1]-titleHeight);
 	glVertex2f(pos[0], pos[1]+size[1]);
@@ -34,7 +35,7 @@ void Window::DrawSelf()
 	glEnd();
 	
 	glLineWidth(2.0f);
-	glColor4f(1.0f,1.0f,1.0f, 1.0f);
+	glColor4f(1.0f,1.0f,1.0f, opacity);
 	DrawBox(GL_LINE_LOOP);
 	/*
 	glBegin(GL_LINE);
@@ -42,8 +43,11 @@ void Window::DrawSelf()
 	glVertex2f(pos[0]+size[1], pos[1]-titleHeight);
 	glEnd();*/
 	
-	glColor4f(0.0f,0.0f,0.0f, 1.0f);
-	font->glPrint(pos[0]+0.01, pos[1]+size[1]-titleHeight/2, 1.0, FONT_VCENTER | FONT_SCALE | FONT_NORM, title);
+	font->Begin();
+	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity);
+	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
+	font->glPrint(pos[0]+0.01, pos[1]+size[1]-titleHeight/2, 1.0, FONT_VCENTER | FONT_SCALE | FONT_SHADOW | FONT_NORM, title);
+	font->End();
 }
 
 bool Window::HandleEventSelf(const SDL_Event& ev)
@@ -85,6 +89,14 @@ bool Window::HandleEventSelf(const SDL_Event& ev)
 		}
 	}
 	return false;
+}
+
+float Window::Opacity() const
+{
+	if (dragging)
+		return GuiElement::Opacity()/2.f;
+	else
+		return GuiElement::Opacity();
 }
 
 }

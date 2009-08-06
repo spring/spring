@@ -42,6 +42,15 @@ public:
 		return pos[1] + (size[1] / 2.0f);
 	};
 
+	float DefaultOpacity() const;
+	virtual float Opacity() const
+	{
+		if (parent)
+			return parent->Opacity();
+		else
+			return DefaultOpacity();
+	};
+
 	void Move(float x, float y);
 	GuiElement* GetRoot()
 	{
