@@ -58,7 +58,14 @@ void CSkirmishAITestScript::GameStart(void)
 	// do not instantiate an AI when watching a
 	// demo recorded from a SkirmishAI test-script
 	if (!gameSetup->hostDemo && !key.IsUnspecified()) {
-		eoh->CreateSkirmishAI(skirmishAI_teamId, key);
+		SkirmishAIData aiData;
+		aiData.name = key.GetShortName() + "_" + key.GetVersion();
+		aiData.team = skirmishAI_teamId;
+		aiData.hostPlayerNum = 0;
+		aiData.shortName = key.GetShortName();
+		aiData.version = key.GetVersion();
+
+		eoh->CreateSkirmishAI(skirmishAI_teamId, key, aiData);
 	}
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");

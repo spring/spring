@@ -20,6 +20,7 @@
 
 #include "Object.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "SkirmishAIData.h"
 
 #include <map>
 #include <vector>
@@ -87,11 +88,12 @@ public:
 
 
 	// Skirmish AI stuff
-	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key);
+	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key, const SkirmishAIData& data);
 	const SkirmishAIKey* GetSkirmishAIKey(int teamId) const;
 	bool IsSkirmishAI(int teamId) const;
 	const SSkirmishAICallback* GetSkirmishAICallback(int teamId) const;
 	void DestroySkirmishAI(int teamId);
+	const SkirmishAIData* GetSkirmishAIData(int teamId) const;
 
 
 	void SetCheating(bool enable);
@@ -111,6 +113,7 @@ private:
 	static const size_t skirmishAIs_size = MAX_TEAMS;
 	CSkirmishAIWrapper* skirmishAIs[skirmishAIs_size];
 	bool hasSkirmishAIs;
+	std::map<int, SkirmishAIData> team_skirmishAI;
 };
 
 #define eoh CEngineOutHandler::GetInstance()

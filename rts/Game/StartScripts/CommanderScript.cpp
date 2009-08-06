@@ -55,7 +55,14 @@ void CCommanderScript::GameStart()
 
 		// create a Skirmish AI if required
 		if (!gameSetup->hostDemo && !team->skirmishAIKey.IsUnspecified() && (gu->myPlayerNum == team->leader)) {
-			eoh->CreateSkirmishAI(a, team->skirmishAIKey);
+			SkirmishAIData aiData;
+			aiData.name = team->skirmishAIKey.GetShortName() + "_" + team->skirmishAIKey.GetVersion();
+			aiData.team = a;
+			aiData.hostPlayerNum = gu->myPlayerNum;
+			aiData.shortName = team->skirmishAIKey.GetShortName();
+			aiData.version = team->skirmishAIKey.GetVersion();
+
+			eoh->CreateSkirmishAI(a, team->skirmishAIKey, aiData);
 		}
 
 		if (team->side.empty()) {
