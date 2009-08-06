@@ -20,6 +20,7 @@
 #include "Interface/AISCommands.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Game/GameHelper.h"
+#include "Game/GameSetup.h"
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
@@ -125,6 +126,13 @@ CEngineOutHandler::CEngineOutHandler()
 		skirmishAIs[t] = NULL;
 	}
 	hasSkirmishAIs = false;
+
+	for (size_t t=0; t < activeTeams; ++t) {
+		const SkirmishAIData* data = gameSetup->GetSkirmishAIDataForTeam(t);
+		if (data != NULL) {
+			team_skirmishAI[t] = *data;
+		}
+	}
 }
 
 CEngineOutHandler::~CEngineOutHandler() {
@@ -432,7 +440,7 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 
 
 
-bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key) {
+bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, const SkirmishAIData& data) {
 
 #define UNPAUSE_AFTER_AI_INIT false
 	if (!teamHandler->IsValidTeam(teamId)) {
@@ -459,6 +467,7 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key) {
 			DestroySkirmishAI(teamId);
 		}
 
+		team_skirmishAI[teamId] = data;
 		skirmishAIs[teamId] = new CSkirmishAIWrapper(teamId, key);
 		skirmishAIs[teamId]->Init();
 		hasSkirmishAIs = true;
@@ -514,6 +523,18 @@ void CEngineOutHandler::DestroySkirmishAI(int teamId) {
 		if (IsSkirmishAI(teamId)) {
 			delete skirmishAIs[teamId];
 			skirmishAIs[teamId] = NULL;
+			team_skirmishAI.erase(teamId);
 		}
 	} HANDLE_EXCEPTION;
+}
+
+const SkirmishAIData* CEngineOutHandler::GetSkirmishAIData(int teamId) const {
+
+	std::map<int, SkirmishAIData>::const_iterator sad;
+	sad = team_skirmishAI.find(teamId);
+	if (sad == team_skirmishAI.end()) {
+		return NULL;
+	} else {
+		return &(sad->second);
+	}
 }

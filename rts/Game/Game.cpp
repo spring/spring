@@ -1086,7 +1086,14 @@ bool CGame::ActionPressed(const Action& action,
 			}
 
 			if (!badArgs) {
-				eoh->CreateSkirmishAI(teamToControl, aiKey);
+				SkirmishAIData aiData;
+				aiData.name = aiShortName;
+				aiData.team = teamToControl;
+				aiData.hostPlayerNum = gu->myPlayerNum;
+				aiData.shortName = aiShortName;
+				aiData.version = aiVersion;
+
+				eoh->CreateSkirmishAI(teamToControl, aiKey, aiData);
 
 				if (eoh->IsSkirmishAI(teamToControl)) {
 					logOutput.Print("Skirmish AI now controlling team %i.", teamToControl);
