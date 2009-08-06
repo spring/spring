@@ -960,7 +960,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 		if (attacker) {
 			SetLastAttacker(attacker);
 			if (flankingBonusMode) {
-				const float3 adir = (attacker->pos - pos).Normalize(); // FIXME -- not the impulse direction?
+				const float3 adir = (attacker->pos - pos).SafeNormalize(); // FIXME -- not the impulse direction?
+
 				if (flankingBonusMode == 1) {		// mode 1 = global coordinates, mobile
 					flankingBonusDir += adir * flankingBonusMobility;
 					flankingBonusDir.Normalize();
