@@ -20,15 +20,12 @@
 #include "IAILibraryManager.h"
 #include "ISkirmishAILibrary.h"
 
-CSkirmishAI::CSkirmishAI(int teamId, const SkirmishAIKey& key)
-		: teamId(teamId), key(key) {
-
+CSkirmishAI::CSkirmishAI(int teamId, const SkirmishAIKey& key): teamId(teamId), key(key) {
 	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
 	library->Init(teamId);
 }
 
 CSkirmishAI::~CSkirmishAI() {
-
 	library->Release(teamId);
 	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
 }

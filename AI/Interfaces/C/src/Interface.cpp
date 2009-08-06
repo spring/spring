@@ -120,17 +120,16 @@ const SSkirmishAILibrary* CInterface::LoadSkirmishAILibrary(
 	return ai;
 }
 int CInterface::UnloadSkirmishAILibrary(
-		const char* const shortName,
-		const char* const version) {
-
+	const char* const shortName,
+	const char* const version
+) {
 	SSkirmishAISpecifier spec;
 	spec.shortName = shortName;
 	spec.version = version;
 
-	T_skirmishAIs::iterator skirmishAI =
-			myLoadedSkirmishAIs.find(spec);
-	T_skirmishAILibs::iterator skirmishAILib =
-			myLoadedSkirmishAILibs.find(spec);
+	T_skirmishAIs::iterator skirmishAI = myLoadedSkirmishAIs.find(spec);
+	T_skirmishAILibs::iterator skirmishAILib = myLoadedSkirmishAILibs.find(spec);
+
 	if (skirmishAI == myLoadedSkirmishAIs.end()) {
 		// to unload AI is not loaded -> no problem, do nothing
 	} else {

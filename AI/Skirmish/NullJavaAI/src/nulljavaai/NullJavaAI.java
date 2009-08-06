@@ -40,6 +40,7 @@ public class NullJavaAI implements AI {
 	private AICallback clb = null;
 	private String myLogFile = null;
 	private Logger log = null;
+	private int frame = -1;
 
 	private static class MyCustomLogFormatter extends Formatter {
 
@@ -189,11 +190,11 @@ public class NullJavaAI implements AI {
 			} else if (topic == UpdateAIEvent.TOPIC) {
 				UpdateAIEvent evt = new UpdateAIEvent(event);
 				log.finer("handleEvent UpdateAIEvent event ...");
-				log.finer("frame: " + evt.frame);
+				this.frame = evt.frame;
+				log.finer("frame: " + frame);
 			} else {
 				if (clb != null) {
 					log.finer("handleEvent UNKNOWN event: fetching frame...");
-					int frame = clb.Clb_Game_getCurrentFrame(teamId);
 					log.finer("handleEvent UNKNOWN event: frame is: " + frame);
 					log.finer("handleEvent UNKNOWN event: sending chat msg...");
 					SendTextMessageAICommand cmd = new SendTextMessageAICommand();

@@ -28,14 +28,10 @@ class IGlobalAICallback;
 
 class CAIGlobalAI : public CAIAI {
 public:
-	CAIGlobalAI();
-	CAIGlobalAI(int teamId, IGlobalAI* gai);
+	CAIGlobalAI(int, IGlobalAI*);
 	~CAIGlobalAI();
 
-	void InitAI(IGlobalAICallback* globalAICallback, int teamId);
-
-private:
-	IGlobalAI* gai;
+	void InitAI(IGlobalAICallback*, int);
 };
 
 #endif // _AIGLOBALAI_H

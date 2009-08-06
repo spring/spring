@@ -53,6 +53,7 @@
 #  include "winerror.h"
 #endif
 #include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/IAILibraryManager.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "FileSystem/ArchiveScanner.h"
@@ -966,6 +967,141 @@ bool CGame::ActionPressed(const Action& action,
 			}
 			logOutput.Print("Advanced shading %s",
 			                unitDrawer->advShading ? "enabled" : "disabled");
+		}
+	}
+	else if (cmd == "aikill") {
+		bool badArgs = false;
+
+		if (action.extra.size() > 0) {
+			bool share;
+			int teamToKill         = -1;
+			int teamToReceiveUnits = -1;
+
+			const std::string::size_type pos = action.extra.find_first_of(" ");
+			if (pos != std::string::npos) {
+				// two (or more) arguments given
+				share = true;
+				teamToKill = atoi(action.extra.substr(0, pos).c_str());
+				teamToReceiveUnits = atoi(action.extra.substr(pos+1).c_str());
+			} else {
+				// only one argument given
+				share = false;
+				teamToKill = atoi(action.extra.c_str());
+			}
+
+			if (!teamHandler->IsActiveTeam(teamToKill)) {
+				logOutput.Print("Team to kill: invalid team number: %i", teamToKill);
+				badArgs = true;
+			}
+			if (share && !teamHandler->IsActiveTeam(teamToReceiveUnits)) {
+				logOutput.Print("Team to receive units: invalid team number: %i", teamToReceiveUnits);
+				badArgs = true;
+			}
+			if (!(eoh->IsSkirmishAI(teamToKill))) {
+				logOutput.Print("Team to kill: not a local Skirmish AI team: %i", teamToKill);
+				badArgs = true;
+			}
+
+			if (!badArgs) {
+				if (share) {
+					// give all units from teamToKill to teamToReceiveUnits
+					teamHandler->Team(teamToKill)->GiveEverythingTo(teamToReceiveUnits);
+					// when the AIs team has no units left,
+					// the AI will be destroyed automatically
+				} else {
+					eoh->DestroySkirmishAI(teamToKill);
+				}
+
+				if (!eoh->IsSkirmishAI(teamToKill)) {
+					logOutput.Print("Successfully removed Skirmish AI from team %i.", teamToKill);
+				} else {
+					logOutput.Print("Failed to remove Skirmish AI from team %i.", teamToKill);
+				}
+			}
+		} else {
+			badArgs = true;
+		}
+
+		if (badArgs) {
+			logOutput.Print("------------------------------------------------");
+			logOutput.Print("Kill a Skirmish AI controlling a team.");
+			logOutput.Print("The team itsself will remain alive,");
+			logOutput.Print("unless a second argument is given,");
+			logOutput.Print("which specifies an active team");
+			logOutput.Print("that will receive all the units of the AI team.");
+			logOutput.Print("usage:   /aikill teamToKill [teamToReceiveUnits]");
+		}
+	}
+	else if (cmd == "aitake") {
+		bool badArgs = false;
+
+		if (action.extra.size() > 0) {
+			int         teamToControl = -1;
+			std::string aiShortName   = "";
+			std::string aiVersion     = "";
+
+			const std::string::size_type pos = action.extra.find_first_of(" ");
+			if (pos == std::string::npos) {
+				// only one argument given
+				teamToControl = atoi(action.extra.c_str());
+			} else {
+				// two (or more) arguments given
+				teamToControl = atoi(action.extra.substr(0, pos).c_str());
+
+				const std::string rest = action.extra.substr(pos+1);
+				const std::string::size_type pos2 = rest.find_first_of(" ");
+				if (pos2 == std::string::npos) {
+					// two arguments given
+					aiShortName = rest;
+				} else {
+					// three (or more) arguments given
+					aiShortName = rest.substr(0, pos2);
+
+					const std::string rest2 = rest.substr(pos2+1);
+					const std::string::size_type pos3 = rest2.find_first_of(" ");
+					if (pos3 == std::string::npos) {
+						// three arguments given
+						aiVersion = rest2;
+					} else {
+						// four (or more) arguments given
+						aiVersion = rest2.substr(0, pos3);
+					}
+				}
+			}
+
+			if (!teamHandler->IsValidTeam(teamToControl)) {
+				logOutput.Print("Team to control: invalid team number: %i", teamToControl);
+				badArgs = true;
+			}
+			if (eoh->IsSkirmishAI(teamToControl)) {
+				logOutput.Print("Team to control: is already controlled by a Skirmish AI: %i", teamToControl);
+				badArgs = true;
+			}
+			SkirmishAIKey aiKey(aiShortName, aiVersion);
+			aiKey = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(aiKey);
+			if (aiKey.GetShortName() == "") {
+				logOutput.Print("Skirmish AI: not a valid skirmish AI (Lua AIs are not supported (yet)): %s %s",
+						aiShortName.c_str(), aiVersion.c_str());
+				badArgs = true;
+			}
+
+			if (!badArgs) {
+				eoh->CreateSkirmishAI(teamToControl, aiKey);
+
+				if (eoh->IsSkirmishAI(teamToControl)) {
+					logOutput.Print("Skirmish AI now controlling team %i.", teamToControl);
+				} else {
+					logOutput.Print("Failed to let a Skirmish AI control team %i.", teamToControl);
+				}
+			}
+		} else {
+			badArgs = true;
+		}
+
+		if (badArgs) {
+			logOutput.Print("------------------------------------------------");
+			logOutput.Print("Let a Skirmish AI take over control of a team.");
+			logOutput.Print("usage:   /aitake teamToControl aiShortName [aiVersion]");
 		}
 	}
 	else if (cmd == "say") {
