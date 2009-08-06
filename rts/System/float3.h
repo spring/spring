@@ -422,7 +422,11 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& Normalize() {
+#if defined(__SUPPORT_SNAN__)
 		assert(x!=0.f || y!=0.f || z!=0.f);
+#else
+		if (*this != ZeroVector)
+#endif
 		*this *= fastmath::isqrt2(SqLength());
 		return *this;
 	}
@@ -438,7 +442,11 @@ public:
 	 * Measured compile time hit: statistically insignificant (1%)
 	 */
 	inline float3& ANormalize() {
+#if defined(__SUPPORT_SNAN__)
 		assert(x!=0.f || y!=0.f || z!=0.f);
+#else
+		if (*this != ZeroVector)
+#endif
 		*this *= fastmath::isqrt(SqLength());
 		return *this;
 	}
@@ -451,7 +459,11 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& PrecNormalize() {
+#if defined(__SUPPORT_SNAN__)
 		assert(x!=0.f || y!=0.f || z!=0.f);
+#else
+		if (*this != ZeroVector)
+#endif
 		*this *= math::isqrt(SqLength());
 		return *this;
 	}
