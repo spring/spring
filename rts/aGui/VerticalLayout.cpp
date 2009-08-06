@@ -14,7 +14,7 @@ void VerticalLayout::DrawSelf()
 	if (borderWidth > 0)
 	{
 		glLineWidth(borderWidth);
-		glColor4f(1.f,1.f,1.f, 1.f);
+		glColor4f(1.f,1.f,1.f, Opacity());
 		DrawBox(GL_LINE_LOOP);
 	}
 }

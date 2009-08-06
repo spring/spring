@@ -20,6 +20,7 @@ private:
 	virtual void DrawSelf();
 	virtual bool HandleEventSelf(const SDL_Event& ev);
 
+	virtual float Opacity() const;
 	bool dragging;
 	float dragPos[2];
 	std::string title;
