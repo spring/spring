@@ -151,6 +151,7 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(GetPlayerInfo);
 	REGISTER_LUA_CFUNC(GetPlayerControlledUnit);
+	REGISTER_LUA_CFUNC(GetAIInfo);
 
 	REGISTER_LUA_CFUNC(GetTeamInfo);
 	REGISTER_LUA_CFUNC(GetTeamResources);
@@ -1301,6 +1302,43 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 
 	lua_pushnumber(L, unit->id);
 	return 1;
+}
+
+int LuaSyncedRead::GetAIInfo(lua_State* L)
+{
+	int numVals = 0;
+
+	const int teamId = luaL_checkint(L, 1);
+	if (!teamHandler->IsValidTeam(teamId) || !eoh->IsSkirmishAI(teamId)) {
+		return numVals;
+	}
+
+	const SkirmishAIData* aiData = eoh->GetSkirmishAIData(teamId);
+	if (aiData == NULL) {
+		return numVals;
+	}
+
+	// no ai info for synchronized scripts
+	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
+		HSTR_PUSH(L, "SYNCED_NONAME");
+		numVals++;
+	} else {
+		lua_pushstring(L, aiData->name.c_str());
+		lua_pushstring(L, aiData->shortName.c_str());
+		lua_pushstring(L, aiData->version.c_str());
+		numVals += 3;
+	}
+
+	lua_newtable(L);
+	std::map<std::string, std::string>::const_iterator o;
+	for (o = aiData->options.begin(); o != aiData->options.end(); ++o) {
+		lua_pushstring(L, o->first.c_str());
+		lua_pushstring(L, o->second.c_str());
+		lua_rawset(L, -3);
+	}
+	numVals++;
+
+	return numVals;
 }
 
 int LuaSyncedRead::GetAllyTeamInfo(lua_State* L)
