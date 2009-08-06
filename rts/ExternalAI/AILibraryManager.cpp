@@ -343,13 +343,20 @@ std::vector<SkirmishAIKey> CAILibraryManager::FittingSkirmishAIKeys(
 	return applyingKeys;
 }
 
-const ISkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) {
 
+
+const ISkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) {
 	T_skirmishAIInfos::const_iterator aiInfo = skirmishAIInfos.find(skirmishAIKey);
+
 	if (aiInfo == skirmishAIInfos.end()) {
-		logOutput.Print("Aborting the game, unknown skirmish AI specified: %s %s", skirmishAIKey.GetShortName().c_str(), skirmishAIKey.GetVersion().c_str());
+		logOutput.Print(
+			"Aborting the game, unknown skirmish AI specified: %s %s",
+			skirmishAIKey.GetShortName().c_str(),
+			skirmishAIKey.GetVersion().c_str()
+		);
 		return NULL;
 	}
+
 	return FetchInterface(skirmishAIKey.GetInterface())->FetchSkirmishAILibrary(*(aiInfo->second));
 }
 
@@ -359,13 +366,14 @@ void CAILibraryManager::ReleaseSkirmishAILibrary(const SkirmishAIKey& skirmishAI
 }
 
 void CAILibraryManager::ReleaseAllSkirmishAILibraries() {
-
 	T_loadedInterfaces::const_iterator lil;
-	for (lil=loadedAIInterfaceLibraries.begin(); lil!=loadedAIInterfaceLibraries.end(); lil++) {
+
+	for (lil = loadedAIInterfaceLibraries.begin(); lil != loadedAIInterfaceLibraries.end(); lil++) {
 		FetchInterface(lil->first)->ReleaseAllSkirmishAILibraries();
 		ReleaseInterface(lil->first); // only releases the library if its load count is 0
 	}
 }
+
 
 
 IAIInterfaceLibrary* CAILibraryManager::FetchInterface(const AIInterfaceKey& interfaceKey) {

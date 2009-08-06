@@ -128,6 +128,8 @@ static int CALLING_CONV handleEvent_empty(int teamId, int receiver, const void* 
 	return 0; // signaling: OK
 }
 
+
+
 // Skirmish AI methods
 const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo) {
 
@@ -140,16 +142,17 @@ const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSki
 
 		if (sLib == NULL) {
 			logOutput.Print(
-					"ERROR: Skirmish AI %s-%s not found!\n"
-					"The game will go on without it.\n"
-					"This usually indicates a problem in the used "
-					"AI Interface library (%s-%s),\n"
-					"or the Skirmish AI library is not in the same "
-					"place as its AIInfo.lua.",
-					skirmishAIKey.GetShortName().c_str(),
-					skirmishAIKey.GetVersion().c_str(),
-					skirmishAIKey.GetInterface().GetShortName().c_str(),
-					skirmishAIKey.GetInterface().GetVersion().c_str());
+				"ERROR: Skirmish AI %s-%s not found!\n"
+				"The game will go on without it.\n"
+				"This usually indicates a problem in the used "
+				"AI Interface library (%s-%s),\n"
+				"or the Skirmish AI library is not in the same "
+				"place as its AIInfo.lua.",
+				skirmishAIKey.GetShortName().c_str(),
+				skirmishAIKey.GetVersion().c_str(),
+				skirmishAIKey.GetInterface().GetShortName().c_str(),
+				skirmishAIKey.GetInterface().GetVersion().c_str()
+			);
 			struct SSkirmishAILibrary* sLib_empty = new SSkirmishAILibrary();
 			sLib_empty->getLevelOfSupportFor = NULL;
 			sLib_empty->init = NULL;
@@ -170,11 +173,11 @@ const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSki
 
 	return ai;
 }
+
 int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SkirmishAIKey& key) {
 
 	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-	const CSkirmishAILibraryInfo* aiInfo =
-			libMan->GetSkirmishAIInfos().find(key)->second;
+	const CSkirmishAILibraryInfo* aiInfo = libMan->GetSkirmishAIInfos().find(key)->second;
 
 	if (skirmishAILoadCount[key] == 0) {
 		return 0;
@@ -184,16 +187,18 @@ int CAIInterfaceLibrary::ReleaseSkirmishAILibrary(const SkirmishAIKey& key) {
 
 	if (skirmishAILoadCount[key] == 0) {
 		loadedSkirmishAILibraries.erase(key);
-		sAIInterfaceLibrary.unloadSkirmishAILibrary(
-				aiInfo->GetShortName().c_str(), aiInfo->GetVersion().c_str());
+		sAIInterfaceLibrary.unloadSkirmishAILibrary(aiInfo->GetShortName().c_str(), aiInfo->GetVersion().c_str());
 	}
 
 	return skirmishAILoadCount[key];
 }
-int CAIInterfaceLibrary::GetSkirmishAILibraryLoadCount(const SkirmishAIKey& key)
-		const {
+
+
+
+int CAIInterfaceLibrary::GetSkirmishAILibraryLoadCount(const SkirmishAIKey& key) const {
 	return *&skirmishAILoadCount.find(key)->second;
 }
+
 int CAIInterfaceLibrary::ReleaseAllSkirmishAILibraries() {
 
 	int releasedAIs = sAIInterfaceLibrary.unloadAllSkirmishAILibraries();
