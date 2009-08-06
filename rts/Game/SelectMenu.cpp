@@ -135,19 +135,6 @@ SelectMenu::~SelectMenu()
 	}
 }
 
-int SelectMenu::KeyPressed(unsigned short k,bool isRepeat)
-{
-	if (k == SDLK_ESCAPE){
-		if(keys[SDLK_LSHIFT]){
-			logOutput.Print("User exited");
-			globalQuit=true;
-		} else
-			logOutput.Print("Use shift-esc to quit");
-	}
-
-	return 0;
-}
-
 bool SelectMenu::Draw()
 {
 	SDL_Delay(10); // milliseconds
@@ -241,6 +228,21 @@ bool SelectMenu::HandleEvent(const SDL_Event& ev)
 			break;
 		}
 		case SDL_MOUSEMOTION: {
+			break;
+		}
+		case SDL_KEYDOWN: {
+			if (ev.key.keysym.sym == SDLK_ESCAPE)
+			{
+				if(keys[SDLK_LSHIFT])
+				{
+					logOutput.Print("User exited");
+					globalQuit=true;
+				}
+				else
+				{
+					logOutput.Print("Use shift-esc to quit");
+				}
+			}
 			break;
 		}
 	}

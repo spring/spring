@@ -30,7 +30,6 @@ public:
 	~SelectMenu();
 
 	bool Draw();
-	int KeyPressed(unsigned short k, bool isRepeat);
 	bool Update();
 
 private:
