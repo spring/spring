@@ -23,8 +23,11 @@
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
+#include "NetProtocol.h"
+#include "GlobalUnsynced.h"
 #include "ConfigHandler.h"
 #include "LogOutput.h"
 #include "Util.h"
@@ -331,7 +334,7 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 
 
 void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
-		float damage) {
+		float damage, int weaponDefId, bool paralyzer) {
 
 	if (!hasSkirmishAIs) return;
 
@@ -359,7 +362,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 	if (skirmishAIs[dt]) {
 		try {
 			skirmishAIs[dt]->UnitDamaged(damagedUnitId,
-					attackerUnitId, damage, attackDir_damagedsView);
+					attackerUnitId, damage, attackDir_damagedsView, weaponDefId, paralyzer);
 		} HANDLE_EXCEPTION;
 	}
 
@@ -370,7 +373,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 					|| (damaged.losStatus[teamHandler->AllyTeam(at)] & (LOS_INLOS | LOS_INRADAR)))) {
 			try {
 				skirmishAIs[at]->EnemyDamaged(damagedUnitId, attackerUnitId,
-						damage, attackDir_attackersView);
+						damage, attackDir_attackersView, weaponDefId, paralyzer);
 			} HANDLE_EXCEPTION;
 		}
 	}
@@ -431,19 +434,51 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 
 bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key) {
 
-	if ((teamId < 0) || (teamId >= (int)activeTeams)) {
+#define UNPAUSE_AFTER_AI_INIT false
+	if (!teamHandler->IsValidTeam(teamId)) {
 		return false;
 	}
 
 	try {
+		// Pause the game for letting the AI initialzie,
+		// as this can take quite some time.
+		bool weDoPause = !gs->paused;
+		if (weDoPause) {
+			const std::string& myPlayerName = playerHandler->Player(gu->myPlayerNum)->name;
+			logOutput.Print(
+					"Player %s (auto)-paused the game for letting Skirmish AI"
+					" %s initialize for controlling team %i.%s",
+					myPlayerName.c_str(), key.GetShortName().c_str(), teamId,
+					(UNPAUSE_AFTER_AI_INIT ?
+					 " The game is auto-unpaused as soon as the AI is ready." :
+					 ""));
+			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+		}
+
 		if (skirmishAIs[teamId]) {
-			delete skirmishAIs[teamId];
-			skirmishAIs[teamId] = NULL;
+			DestroySkirmishAI(teamId);
 		}
 
 		skirmishAIs[teamId] = new CSkirmishAIWrapper(teamId, key);
 		skirmishAIs[teamId]->Init();
 		hasSkirmishAIs = true;
+
+		// Send a UnitCreated event for each unit of the team.
+		// This will only do something if the AI is created mid-game.
+		CTeam* team = teamHandler->Team(teamId);
+		CUnitSet::iterator u, uNext;
+		for (u = team->units.begin(); u != team->units.end(); ) {
+			uNext = u; ++uNext;
+			skirmishAIs[teamId]->UnitFinished((*u)->id);
+			u = uNext;
+		}
+
+#if defined UNPAUSE_AFTER_AI_INIT
+		// Unpause the game again, if we paused it, and it is still paused.
+		if (gs->paused && weDoPause) {
+			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
+		}
+#endif // defined UNPAUSE_AFTER_AI_INIT
 
 		return true;
 	} HANDLE_EXCEPTION;

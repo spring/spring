@@ -182,13 +182,15 @@ struct SUnitMoveFailedEvent {
  * directly from the attacker to the attacked unit, while with artillery it will
  * rather be from somewhere up in the sky to the attacked unit.
  * See also the unit-destroyed event.
- * attacker may be 0, which means no attacker was directly involveld.
+ * attacker may be 0, which means no attacker was directly involved.
  */
 struct SUnitDamagedEvent {
 	int unit;
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
+	int weaponDefId;
+	bool paralyzer;
 }; // EVENT_UNIT_DAMAGED
 
 /**
@@ -259,7 +261,7 @@ struct SEnemyLeaveRadarEvent {
  * direction will point directly from the attacker to the attacked unit, while
  * with artillery it will rather be from somewhere up in the sky to the attacked
  * unit.
- * attacker may be 0, which means no attacker was directly involveld.
+ * attacker may be 0, which means no attacker was directly involved.
  * See also the enemy-destroyed event.
  */
 struct SEnemyDamagedEvent {
@@ -267,6 +269,8 @@ struct SEnemyDamagedEvent {
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
+	int weaponDefId;
+	bool paralyzer;
 }; // EVENT_ENEMY_DAMAGED
 
 /**

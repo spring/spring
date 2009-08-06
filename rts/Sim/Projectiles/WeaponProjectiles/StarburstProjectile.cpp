@@ -408,7 +408,8 @@ void CStarburstProjectile::DrawUnitPart(void)
 		rightdir=dir.cross(UpVector);
 	else
 		rightdir=float3(1,0,0);
-	rightdir.Normalize();
+	if (rightdir != ZeroVector)
+		rightdir.Normalize();
 	float3 updir=rightdir.cross(dir);
 
 	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);

@@ -20,13 +20,11 @@
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAIAI::CAIAI() : team(-1), ai(NULL) {}
-
-CAIAI::CAIAI(int team, IGlobalAI* ai) : team(team), ai(ai) {}
+CAIAI::CAIAI(int teamId, IGlobalAI* gAI): team(teamId), ai(gAI) {}
+CAIAI::~CAIAI() { }
 
 
 int CAIAI::handleEvent(int topic, const void* data) {
-
 	static IGlobalAICallback* wrappedGlobalAICallback = NULL;
 
 	int ret = -1; // if this values remains, something went wrong
