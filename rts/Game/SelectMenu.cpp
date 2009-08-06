@@ -41,7 +41,7 @@ extern boost::uint8_t* keys;
 extern bool globalQuit;
 
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
-			const std::string& playername, int gameMode)
+			const std::string& playername)
 {
 	TdfParser::TdfSection setup;
 	TdfParser::TdfSection* game = setup.construct_subsection("GAME");
@@ -49,7 +49,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	game->add_name_value("Gametype", mod);
 
 	TdfParser::TdfSection* modopts = game->construct_subsection("MODOPTIONS");
-	modopts->AddPair("GameMode", gameMode);
+	modopts->AddPair("GameMode", 3);
 	modopts->AddPair("MaxSpeed", 20);
 	modopts->add_name_value("Scriptname", script);
 
@@ -151,10 +151,25 @@ bool SelectMenu::Update()
 
 void SelectMenu::Single()
 {
-	mySettings->isHost = true;
-	pregame = new CPreGame(mySettings);
-	pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName, 1));
-	delete this;
+	if (selw->userMod == "No mod selected")
+	{
+		selw->ShowModList();
+	}
+	else if (selw->userMap == "No map selected")
+	{
+		selw->ShowMapList();
+	}
+	else if (selw->userScript == "No script selected")
+	{
+		selw->ShowScriptList();
+	}
+	else
+	{
+		mySettings->isHost = true;
+		pregame = new CPreGame(mySettings);
+		pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
+		delete this;
+	}
 }
 
 void SelectMenu::Settings()
