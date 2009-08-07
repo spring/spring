@@ -43,8 +43,8 @@ void Gui::Draw()
 		{
 			if (*elIt == *it)
 			{
+				delete (*elIt);
 				elements.erase(elIt);
-				delete (*it);
 				break;
 			}
 		}
