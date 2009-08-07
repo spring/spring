@@ -196,7 +196,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
 	delete ret;
 #endif
-	// AIs do not join in here, so jsut set their teams as active
+	// AIs do not join in here, so just set their teams as active
 	for (size_t i = 0; i < setup->teamStartingData.size(); ++i)
 	{
 		if (setup->GetSkirmishAIDataForTeam(i))
