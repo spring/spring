@@ -349,7 +349,8 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		if (t == ZeroVector) { t = float3(0.0f, 1.0f, 0.0f); }
 
 		h = ((n.cross(s)).dot(t) < 0.0f)? -1: 1;
-		s = (s - n * n.dot(s)).ANormalize();
+		s = (s - n * n.dot(s));
+		s = (s == ZeroVector)? s: s.ANormalize();
 		t = (s.cross(n)) * h;
 
 		// t = (s.cross(n));
