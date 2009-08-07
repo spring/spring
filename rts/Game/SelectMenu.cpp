@@ -121,7 +121,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 	{
 		ScopedLoader loader("Spring Bitmaps");
 		background = new agui::Picture();
-		background->SetPos(0.5,0.5);
+		background->SetPos(0,0);
 		background->SetSize(1,1);
 		background->Load("bitmaps/ui/background.jpg");
 		agui::gui->AddElement(background);
