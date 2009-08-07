@@ -166,10 +166,7 @@ SelectMenu::~SelectMenu()
 	ConnectWindow(false);
 	agui::gui->RmElement(selw);
 	agui::gui->RmElement(background);
-	if (menu)
-	{
-		agui::gui->RmElement(menu);
-	}
+	agui::gui->RmElement(menu);
 }
 
 bool SelectMenu::Draw()
@@ -242,13 +239,13 @@ void SelectMenu::ConnectWindow(bool show)
 		connectWnd->SetPos(0.5, 0.5);
 		connectWnd->SetSize(0.4, 0.2);
 		agui::gui->AddElement(connectWnd);
-		menu = new agui::VerticalLayout(connectWnd);
-		HorizontalLayout* input = new HorizontalLayout(menu);
+		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(connectWnd);
+		HorizontalLayout* input = new HorizontalLayout(wndLayout);
 		agui::TextElement* label = new agui::TextElement("Address:", input);
 		address = new agui::LineEdit(input);
 		address->SetFocus(true);
 		address->SetContent(configHandler->GetString("address", ""));
-		HorizontalLayout* buttons = new HorizontalLayout(menu);
+		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
 		Button* close = new Button("Close", buttons);
 		close->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, false));
 		Button* connect = new Button("Connect", buttons);
