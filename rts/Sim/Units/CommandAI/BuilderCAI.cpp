@@ -827,12 +827,11 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		// area reclaim
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float radius = c.params[3];
-		const bool recAnyTeam = ((c.options & CONTROL_KEY) != 0);
 		const bool recUnits = ((c.options & META_KEY) != 0);
 		RemoveUnitFromReclaimers(owner);
 		RemoveUnitFromFeatureReclaimers(owner);
 		fac->StopBuild();
-		if (FindReclaimTargetAndReclaim(pos, radius, c.options, true, recAnyTeam, recUnits, false, false)) {
+		if (FindReclaimTargetAndReclaim(pos, radius, c.options, true, true, recUnits, false, false)) {
 			inCommand=false;
 			SlowUpdate();
 			return;
