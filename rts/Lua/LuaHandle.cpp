@@ -146,12 +146,20 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 {
 	lua_settop(L, 0);
 
+#if defined(__SUPPORT_SNAN__)
+	// do not signal floating point exceptions in user Lua code
+	feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+#endif
+
 	int error;
 	error = luaL_loadbuffer(L, code.c_str(), code.size(), debug.c_str());
 	if (error != 0) {
 		logOutput.Print("Lua LoadCode loadbuffer error = %i, %s, %s\n",
 		                error, debug.c_str(), lua_tostring(L, -1));
 		lua_pop(L, 1);
+#if defined(__SUPPORT_SNAN__)
+		feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+#endif
 		return false;
 	}
 
@@ -159,6 +167,10 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 	SetActiveHandle();
 	error = lua_pcall(L, 0, 0, 0);
 	SetActiveHandle(orig);
+
+#if defined(__SUPPORT_SNAN__)
+	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
+#endif
 
 	if (error != 0) {
 		logOutput.Print("Lua LoadCode pcall error = %i, %s, %s\n",
