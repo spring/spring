@@ -39,6 +39,7 @@
 #include "Rendering/Textures/TAPalette.h"
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
+#include "aGui/Gui.h"
 #include "Exceptions.h"
 
 
@@ -71,6 +72,7 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 CPreGame::~CPreGame()
 {
 	// don't delete infoconsole, its beeing reused by CGame
+	agui::gui->Draw(); // delete leftover gui elements (remove once the gui is drawn ingame)
 }
 
 void CPreGame::LoadSetupscript(const std::string& script)
@@ -110,6 +112,7 @@ bool CPreGame::Draw()
 {
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
+	agui::gui->Draw();
 
 	font->Begin();
 

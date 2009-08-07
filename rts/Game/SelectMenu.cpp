@@ -5,12 +5,14 @@
 #include <SDL_timer.h>
 #include <boost/bind.hpp>
 #include <sstream>
+#include <unistd.h>
 #include <stack>
+#include <boost/cstdint.hpp>
 
 #include "ClientSetup.h"
+#include "SelectionWidget.h"
 #include "PreGame.h"
 #include "Rendering/glFont.h"
-#include "Rendering/GL/glList.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
 #include "TdfParser.h"
@@ -20,16 +22,51 @@
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "ConfigHandler.h"
+#include "InputHandler.h"
 #include "StartScripts/ScriptHandler.h"
-#include <boost/cstdint.hpp>
+#include "aGui/Gui.h"
+#include "aGui/VerticalLayout.h"
+#include "aGui/HorizontalLayout.h"
+#include "aGui/Button.h"
+#include "aGui/LineEdit.h"
+#include "aGui/TextElement.h"
+#include "aGui/Window.h"
+#include "aGui/glList.h"
+#include "aGui/Picture.h"
 
 using std::string;
+using agui::Button;
+using agui::HorizontalLayout;
 
 extern boost::uint8_t* keys;
 extern bool globalQuit;
 
+class ScopedLoader
+{
+public:
+	ScopedLoader(const string& mapName) : oldHandler(vfsHandler)
+	{
+		vfsHandler = new CVFSHandler();
+		std::string archive = archiveScanner->ModNameToModArchive(mapName);
+		std::string archivePath = archiveScanner->GetArchivePath(archive);
+		if (!vfsHandler->AddArchive(archivePath+archive, false))
+			LogObject() << "Failed to load: " << mapName;
+	}
+
+	~ScopedLoader()
+	{
+		if (vfsHandler != oldHandler) {
+			delete vfsHandler;
+			vfsHandler = oldHandler;
+		}
+	}
+
+private:
+	CVFSHandler* oldHandler;
+};
+
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
-			const std::string& playername, int gameMode)
+			const std::string& playername)
 {
 	TdfParser::TdfSection setup;
 	TdfParser::TdfSection* game = setup.construct_subsection("GAME");
@@ -37,7 +74,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	game->add_name_value("Gametype", mod);
 
 	TdfParser::TdfSection* modopts = game->construct_subsection("MODOPTIONS");
-	modopts->AddPair("GameMode", gameMode);
+	modopts->AddPair("GameMode", 3);
 	modopts->AddPair("MaxSpeed", 20);
 	modopts->add_name_value("Scriptname", script);
 
@@ -74,9 +111,23 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server): showList(NULL)
+SelectMenu::SelectMenu(bool server): menu(NULL)
 {
+	connectWnd = NULL;
+	list = NULL;
 	mySettings = new ClientSetup();
+	inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
+
+	{
+		ScopedLoader loader("Spring Bitmaps");
+		background = new agui::Picture();
+		background->SetPos(0,0);
+		background->SetSize(1,1);
+		background->Load("bitmaps/ui/background.jpg");
+		agui::gui->AddElement(background);
+	}
+
+	selw = new SelectionWidget();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
 
@@ -86,235 +137,163 @@ SelectMenu::SelectMenu(bool server): showList(NULL)
 		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
 	}
 
+	{
+		menu = new agui::VerticalLayout();
+		menu->SetPos(0.1, 0.5);
+		menu->SetSize(0.4, 0.4);
+		menu->SetBorder(1.2f);
+		agui::gui->AddElement(menu);
+		agui::TextElement* name = new agui::TextElement("Spring", menu);
+		Button* single = new Button("Test the Game", menu);
+		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
+		Button* multi = new Button("Start the Lobby", menu);
+		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
+		Button* settings = new Button("Edit settings", menu);
+		settings->Clicked.connect(boost::bind(&SelectMenu::Settings, this));
+		Button* direct = new Button("Direct connect", menu);
+		direct->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, true));
+		Button* quit = new Button("Quit", menu);
+		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
+	}
+	
 	if (!mySettings->isHost) {
-		userInput = configHandler->GetString("address", "");
-		writingPos = userInput.length();
-		userPrompt = "Enter server address: ";
-		userWriting = true;
-	} else {
-		ShowModList();
+		ConnectWindow(true);
 	}
 }
 
-
-int SelectMenu::KeyPressed(unsigned short k,bool isRepeat)
+SelectMenu::~SelectMenu()
 {
-	if (k == SDLK_ESCAPE){
-		if(keys[SDLK_LSHIFT]){
-			logOutput.Print("User exited");
-			globalQuit=true;
-		} else
-			logOutput.Print("Use shift-esc to quit");
-	}
-
-	if (showList) { //are we currently showing a list?
-		showList->KeyPressed(k, isRepeat);
-		return 0;
-	}
-
-	if (userWriting) {
-		keys[k] = true;
-		if (k == SDLK_v && keys[SDLK_LCTRL]){
-			PasteClipboard();
-			return 0;
-		}
-		if(k == SDLK_BACKSPACE){
-			if (!userInput.empty() && (writingPos > 0)) {
-				userInput.erase(writingPos - 1, 1);
-				writingPos--;
-			}
-			return 0;
-		}
-		if (k == SDLK_DELETE) {
-			if (!userInput.empty() && (writingPos < (int)userInput.size())) {
-				userInput.erase(writingPos, 1);
-			}
-			return 0;
-		}
-		else if (k == SDLK_LEFT) {
-			writingPos = std::max(0, std::min((int)userInput.length(), writingPos - 1));
-		}
-		else if (k == SDLK_RIGHT) {
-			writingPos = std::max(0, std::min((int)userInput.length(), writingPos + 1));
-		}
-		else if (k == SDLK_HOME) {
-			writingPos = 0;
-		}
-		else if (k == SDLK_END) {
-			writingPos = (int)userInput.length();
-		}
-		if (k == SDLK_RETURN){
-			userWriting = false;
-			return 0;
-		}
-		return 0;
-	}
-
-	return 0;
+	ConnectWindow(false);
+	agui::gui->RmElement(selw);
+	agui::gui->RmElement(background);
+	agui::gui->RmElement(menu);
 }
 
 bool SelectMenu::Draw()
 {
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
-
-	if (userWriting) {
-		const std::string tempstring = userPrompt + userInput;
-
-		const float xStart = 0.10f;
-		const float yStart = 0.75f;
-
-		const float fontScale = 1.0f;
-		const float fontSize  = fontScale * font->GetSize();
-
-		// draw the caret
-		const int caretPos = userPrompt.length() + writingPos;
-		const string caretStr = tempstring.substr(0, caretPos);
-		const float caretWidth = fontSize * font->GetTextWidth(caretStr) * gu->pixelX;
-		char c = userInput[writingPos];
-		if (c == 0) { c = ' '; }
-		const float cw = fontSize * font->GetCharacterWidth(c) * gu->pixelX;
-		const float csx = xStart + caretWidth;
-		glDisable(GL_TEXTURE_2D);
-		const float f = 0.5f * (1.0f + fastmath::sin((float)SDL_GetTicks() * 0.015f));
-		glColor4f(f, f, f, 0.75f);
-		glRectf(csx, yStart, csx + cw, yStart + fontSize * font->GetLineHeight() * gu->pixelY);
-		glEnable(GL_TEXTURE_2D);
-
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		font->glPrint(xStart, yStart, fontSize, FONT_NORM, tempstring);
-	}
-
-	if (showList) {
-		showList->Draw();
-	}
+	agui::gui->Draw();
 
 	return true;
 }
 
 bool SelectMenu::Update()
 {
-	if (!mySettings->isHost)
-	{
-		// we are a client, wait for user to type address
-		if (!userWriting)
-		{
-			configHandler->SetString("address",userInput);
-			mySettings->hostip = userInput;
-			pregame = new CPreGame(mySettings);
-			delete this;
-		}
-	}
-
 	return true;
 }
 
-/** Create a CglList for selecting the map. */
-void SelectMenu::ShowMapList()
+void SelectMenu::Single()
 {
-	CglList* list = new CglList("Select map", boost::bind(&SelectMenu::SelectMap, this, _1), 2);
-	std::vector<std::string> found = filesystem.FindFiles("maps/","{*.sm3,*.smf}");
-	std::vector<std::string> arFound = archiveScanner->GetMaps();
-	if (found.begin() == found.end() && arFound.begin() == arFound.end()) {
-		throw content_error("PreGame couldn't find any map files");
-		return;
+	if (selw->userMod == "No mod selected")
+	{
+		selw->ShowModList();
 	}
-
-	std::set<std::string> mapSet; // use a set to sort them
-	for (std::vector<std::string>::iterator it = found.begin(); it != found.end(); it++) {
-		std::string fn(filesystem.GetFilename(*it));
-		mapSet.insert(fn.c_str());
+	else if (selw->userMap == "No map selected")
+	{
+		selw->ShowMapList();
 	}
-	for (std::vector<std::string>::iterator it = arFound.begin(); it != arFound.end(); it++) {
-		mapSet.insert((*it).c_str());
-	}
-
-	list->AddItem("Random map", "Random map"); // always first
-	for (std::set<std::string>::iterator sit = mapSet.begin(); sit != mapSet.end(); ++sit) {
-		list->AddItem(*sit, *sit);
-	}
-	showList = list;
-}
-
-
-/** Create a CglList for selecting the script. */
-void SelectMenu::ShowScriptList()
-{
-	CglList* list = CScriptHandler::Instance().GenList(boost::bind(&SelectMenu::SelectScript, this, _1));
-	showList = list;
-}
-
-
-/** Create a CglList for selecting the mod. */
-void SelectMenu::ShowModList()
-{
-	CglList* list = new CglList("Select mod", boost::bind(&SelectMenu::SelectMod, this, _1), 3);
-	std::vector<CArchiveScanner::ModData> found = archiveScanner->GetPrimaryMods();
-	if (found.empty()) {
-		throw content_error("PreGame couldn't find any mod files");
-		return;
-	}
-
-	std::map<std::string, std::string> modMap; // name, desc  (using a map to sort)
-	for (std::vector<CArchiveScanner::ModData>::iterator it = found.begin(); it != found.end(); ++it) {
-		modMap[it->name] = it->description;
-	}
-
-	list->AddItem("Random mod", "Random mod"); // always first
-	std::map<std::string, std::string>::iterator mit;
-	for (mit = modMap.begin(); mit != modMap.end(); ++mit) {
-		list->AddItem(mit->first, mit->second);
-	}
-	showList = list;
-}
-
-
-void SelectMenu::SelectMap(const std::string& s)
-{
-	if (s == "Random map") {
-		userMap = showList->items[1 + gu->usRandInt() % (showList->items.size() - 1)];
+	else if (selw->userScript == "No script selected")
+	{
+		selw->ShowScriptList();
 	}
 	else
-		userMap = s;
+	{
+		mySettings->isHost = true;
+		pregame = new CPreGame(mySettings);
+		pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
+		delete this;
+	}
+}
 
-	delete showList;
-	showList = NULL;
+void SelectMenu::Settings()
+{
+#ifdef __unix__
+	const std::string settingsProgram = "springsettings";
+#else
+	const std::string settingsProgram = "springsettings.exe";
+#endif
+	execlp(settingsProgram.c_str(), settingsProgram.c_str(), NULL);
+}
 
-	int gamemode = 3;
-	if (userScript.find("GlobalAI test") != std::string::npos)
-		gamemode = 0;
-	else
-		logOutput.Print("Testing mode enabled; game over disabled.\n");
+void SelectMenu::Multi()
+{
+#ifdef __unix__
+	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby");
+#else
+	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby.exe");
+#endif
+	execlp(defLobby.c_str(), defLobby.c_str(), NULL);
+}
 
+void SelectMenu::Quit()
+{
+	globalQuit = true;
+}
+
+void SelectMenu::ConnectWindow(bool show)
+{
+	if (show && !connectWnd)
+	{
+		connectWnd = new agui::Window("Connect to server");
+		connectWnd->SetPos(0.5, 0.5);
+		connectWnd->SetSize(0.4, 0.2);
+		agui::gui->AddElement(connectWnd);
+		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(connectWnd);
+		HorizontalLayout* input = new HorizontalLayout(wndLayout);
+		agui::TextElement* label = new agui::TextElement("Address:", input);
+		address = new agui::LineEdit(input);
+		address->SetFocus(true);
+		address->SetContent(configHandler->GetString("address", ""));
+		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
+		Button* close = new Button("Close", buttons);
+		close->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, false));
+		Button* connect = new Button("Connect", buttons);
+		connect->Clicked.connect(boost::bind(&SelectMenu::DirectConnect, this));
+	}
+	else if (!show && connectWnd)
+	{
+		agui::gui->RmElement(connectWnd);
+		connectWnd = NULL;
+	}
+}
+
+void SelectMenu::DirectConnect()
+{
+	configHandler->SetString("address",address->GetContent());
+	mySettings->hostip = address->GetContent();
+	mySettings->isHost = false;
 	pregame = new CPreGame(mySettings);
-	pregame->LoadSetupscript(CreateDefaultSetup(userMap, userMod, userScript, mySettings->myPlayerName, gamemode));
 	delete this;
 }
 
-
-void SelectMenu::SelectScript(const std::string& s)
+bool SelectMenu::HandleEvent(const SDL_Event& ev)
 {
-	userScript = s;
-
-	delete showList;
-	showList = NULL;
-
-	ShowMapList();
-}
-
-
-void SelectMenu::SelectMod(const std::string& s)
-{
-	if (s == "Random mod") {
-		const int index = 1 + (gu->usRandInt() % (showList->items.size() - 1));
-		userMod = showList->items[index];
+	switch (ev.type) {
+		case SDL_MOUSEBUTTONDOWN: {
+			break;
+		}
+		case SDL_MOUSEBUTTONUP: {
+			break;
+		}
+		case SDL_MOUSEMOTION: {
+			break;
+		}
+		case SDL_KEYDOWN: {
+			if (ev.key.keysym.sym == SDLK_ESCAPE)
+			{
+				if(keys[SDLK_LSHIFT])
+				{
+					logOutput.Print("User exited");
+					globalQuit=true;
+				}
+				else
+				{
+					logOutput.Print("Use shift-esc to quit");
+				}
+			}
+			break;
+		}
 	}
-	else
-		userMod = s;
-
-	delete showList;
-	showList = NULL;
-
-	ShowScriptList();
+	return false;
 }
-

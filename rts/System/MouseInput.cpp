@@ -14,12 +14,14 @@
 
 #include "Game/UI/MouseHandler.h"
 
+#include <boost/bind.hpp>
 #include <SDL_events.h>
 #include <SDL_syswm.h>
 #include "Rendering/GL/FBO.h"
 #include "GlobalUnsynced.h"
 #include "Platform/Win/win32.h"
 #include "MouseInput.h"
+#include "InputHandler.h"
 #include "LogOutput.h"
 
 
@@ -28,12 +30,47 @@ IMouseInput* mouseInput = NULL;
 
 
 IMouseInput::IMouseInput()
-{}
+{
+	inputCon = input.AddHandler(boost::bind(&IMouseInput::HandleSDLMouseEvent, this, _1));
+}
 
 
 IMouseInput::~IMouseInput()
 {}
 
+bool IMouseInput::HandleSDLMouseEvent (const SDL_Event& event)
+{
+	switch (event.type) {
+		case SDL_MOUSEMOTION: {
+			mousepos = int2(event.motion.x, event.motion.y);
+			if (mouse) {
+				mouse->MouseMove(mousepos.x, mousepos.y);
+			}
+			break;
+		}
+		case SDL_MOUSEBUTTONDOWN: {
+			mousepos = int2(event.button.x, event.button.y);
+			if (mouse) {
+				if (event.button.button == SDL_BUTTON_WHEELUP) {
+					mouse->MouseWheel(1.0f);
+				} else if (event.button.button == SDL_BUTTON_WHEELDOWN) {
+					mouse->MouseWheel(-1.0f);
+				} else {
+					mouse->MousePress(event.button.x, event.button.y, event.button.button);
+				}
+			}
+			break;
+		}
+		case SDL_MOUSEBUTTONUP: {
+			mousepos = int2(event.button.x, event.button.y);
+			if (mouse) {
+				mouse->MouseRelease(event.button.x, event.button.y, event.button.button);
+			}
+			break;
+		}
+	}
+	return false;
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -55,41 +92,23 @@ public:
 	{
 		if (mouse) {
 			switch (msg) {
-				case WM_LBUTTONDOWN:
-					mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
-					return TRUE;
-				case WM_RBUTTONDOWN:
-					mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 3);
-					return TRUE;
-				case WM_MBUTTONDOWN:
-					mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 2);
-					return TRUE;
-				case WM_LBUTTONUP:
-					mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 1);
-					return TRUE;
-				case WM_RBUTTONUP:
-					mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 3);
-					return TRUE;
-				case WM_MBUTTONUP:
-					mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 2);
-					return TRUE;
 				case WM_MOUSEWHEEL: {
 					float delta = (((short)HIWORD(wparam))/120.0f);
 					mouse->MouseWheel(delta);
-					return TRUE;
+					break;
 				}
 				case WM_XBUTTONDOWN:
 					if ((short)LOWORD(wparam) & MK_XBUTTON1)
 						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
 					if ((short)LOWORD(wparam) & MK_XBUTTON2)
 						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
-					return TRUE;
+					break;
 				case WM_XBUTTONUP:
 					if ((short)LOWORD(wparam) & MK_XBUTTON1)
 						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
 					if ((short)LOWORD(wparam) & MK_XBUTTON2)
 						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
-					return TRUE;
+					break;
 				}
 
 		}
@@ -99,7 +118,7 @@ public:
 				// cast to short to preserve sign
 				inst->mousepos = int2((short)LOWORD(lparam),(short)HIWORD(lparam));
 				inst->mousemoved = true;
-				return FALSE;
+				break;
 			case WM_SETCURSOR:
 				if (inst->hCursor!=NULL) {
 					Uint16 hittest = LOWORD(lparam);
@@ -159,10 +178,6 @@ public:
 		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
 	}
 
-	int2 GetPos()
-	{
-		return mousepos;
-	}
 	void SetPos(int2 pos)
 	{
 		mousepos = pos;
@@ -171,50 +186,6 @@ public:
 		else
 			SDL_WarpMouse(pos.x, pos.y);
 	}
-
-	void Update()
-	{
-		if (mousemoved) {
-			if (mouse) mouse->MouseMove(mousepos.x, mousepos.y);
-			mousemoved = false;
-		}
-	}
-
-	void HandleSDLMouseEvent (SDL_Event& event)
-	{
-		/*if (!mouse)
-			return;
-
-		switch (event.type) {
-		case SDL_SYSWMEVENT:{
-			SDL_SysWMmsg *msg = event.syswm.msg;
-			if (msg->msg == 0x020B) { // WM_XBUTTONDOWN, beats me why it isn't defined by default
-				if (msg->wParam & 0x20) // MK_XBUTTON1
-					mouse->MousePress (mousepos.x, mousepos.y, 4);
-				if (msg->wParam & 0x40) // MK_XBUTTON2
-					mouse->MousePress (mousepos.x, mousepos.y, 5);
-			}
-
-			break;}
-		case SDL_MOUSEMOTION: // the normal SDL method works fine in windowed mode
-			if(!fullscreen) {
-				mousepos = int2(event.motion.x, event.motion.y);
-				mouse->MouseMove(mousepos.x, mousepos.y);
-			}
-			break;
-		case SDL_MOUSEBUTTONDOWN:
-			if (event.button.button == SDL_BUTTON_WHEELUP)
-				mouse->MouseWheel(1.0f);
-			else if (event.button.button == SDL_BUTTON_WHEELDOWN)
-				mouse->MouseWheel(-1.0f);
-			else
-				mouse->MousePress(mousepos.x, mousepos.y,event.button.button);
-			break;
-		case SDL_MOUSEBUTTONUP:
-			mouse->MouseRelease(mousepos.x, mousepos.y,event.button.button);
-			break;
-		}*/
-	}
 };
 CWin32MouseInput* CWin32MouseInput::inst = 0;
 #endif
@@ -222,50 +193,10 @@ CWin32MouseInput* CWin32MouseInput::inst = 0;
 class CDefaultMouseInput : public IMouseInput
 {
 public:
-	int2 mousepos;
-
-	int2 GetPos()
-	{
-		return mousepos;
-	}
-
 	void SetPos(int2 pos)
 	{
 		mousepos = pos;
 		SDL_WarpMouse(pos.x, pos.y);
-	}
-
-	void HandleSDLMouseEvent (SDL_Event& event)
-	{
-		switch (event.type) {
-			case SDL_MOUSEMOTION: {
-				mousepos = int2(event.motion.x, event.motion.y);
-				if (mouse) {
-					mouse->MouseMove(mousepos.x, mousepos.y);
-				}
-				break;
-			}
-			case SDL_MOUSEBUTTONDOWN: {
-				mousepos = int2(event.button.x, event.button.y);
-				if (mouse) {
-					if (event.button.button == SDL_BUTTON_WHEELUP) {
-						mouse->MouseWheel(1.0f);
-					} else if (event.button.button == SDL_BUTTON_WHEELDOWN) {
-						mouse->MouseWheel(-1.0f);
-					} else {
-						mouse->MousePress(event.button.x, event.button.y, event.button.button);
-					}
-				}
-				break;
-			}
-			case SDL_MOUSEBUTTONUP: {
-				mousepos = int2(event.button.x, event.button.y);
-				if (mouse) {
-					mouse->MouseRelease(event.button.x, event.button.y, event.button.button);
-				}
-				break;
-			}
-		}
 	}
 };
 
