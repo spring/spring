@@ -343,8 +343,10 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		int h = 1;
 
 		if (isnan(n.x) || isnan(n.y) || isnan(n.z)) {
-			n = float3(0.0f, 1.0f, 0.0f);
+			n = float3(0.0f, 0.0f, 1.0f);
 		}
+		if (s == ZeroVector) { s = float3(1.0f, 0.0f, 0.0f); }
+		if (t == ZeroVector) { t = float3(0.0f, 1.0f, 0.0f); }
 
 		h = ((n.cross(s)).dot(t) < 0.0f)? -1: 1;
 		s = (s - n * n.dot(s)).ANormalize();
