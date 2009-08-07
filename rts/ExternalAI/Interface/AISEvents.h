@@ -183,6 +183,8 @@ struct SUnitMoveFailedEvent {
  * rather be from somewhere up in the sky to the attacked unit.
  * See also the unit-destroyed event.
  * attacker may be 0, which means no attacker was directly involved.
+ * If paralyzer is true, then damage is paralyzation damage,
+ * otherwise it is real damage.
  */
 struct SUnitDamagedEvent {
 	int unit;
