@@ -64,6 +64,11 @@ void CSkirmishAITestScript::GameStart(void)
 		aiData.hostPlayerNum = 0;
 		aiData.shortName = key.GetShortName();
 		aiData.version = key.GetVersion();
+		std::map<std::string, std::string>::const_iterator o;
+		for (o = options.begin(); o != options.end(); ++o) {
+			aiData.optionKeys.push_back(o->first);
+		}
+		aiData.options = options;
 
 		eoh->CreateSkirmishAI(skirmishAI_teamId, key, aiData);
 	}
