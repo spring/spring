@@ -72,7 +72,7 @@ ELSE (MINGW)
 	LIST(APPEND spring_libraries ${X11_X11_LIB} ${X11_Xcursor_LIB})
 ENDIF (MINGW)
 
-LIST(APPEND spring_libraries ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY})
+LIST(APPEND spring_libraries ${SDL_LIBRARY} ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 
 ### build all libraries in lib (has its own CMakeLists.txt)
 ADD_SUBDIRECTORY(lib)
@@ -107,6 +107,8 @@ AUX_SOURCE_DIRECTORY(Rendering/Env renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/GL renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/Textures renderfiles)
 AUX_SOURCE_DIRECTORY(Rendering/UnitModels renderfiles)
+
+AUX_SOURCE_DIRECTORY(aGui renderfiles)
 
 AUX_SOURCE_DIRECTORY(Sim simfiles)
 AUX_SOURCE_DIRECTORY(Sim/Features simfiles)

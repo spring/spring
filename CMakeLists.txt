@@ -95,7 +95,7 @@ else  (SDL_FOUND)
 	message("* spring-dedicated")
 endif (SDL_FOUND)
 
-FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex program_options system REQUIRED)
+FIND_PACKAGE(Boost 1.34.0 COMPONENTS thread regex program_options system signals REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 FIND_PACKAGE(Devil REQUIRED)
@@ -139,14 +139,19 @@ else  ($ENV{CXX} MATCHES "icpc")
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "")
 endif ($ENV{CXX} MATCHES "icpc")
 
+set(SIGNAL_NANS FALSE CACHE BOOL "Enable NaN-Signalling")
+if (SIGNAL_NANS)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsignaling-nans")
+endif(SIGNAL_NANS)
+
 # This would produce the maximum on warnings
 #set(DEBUG_WARNINGS "-Wall -Wconversion")
 # This should produce a sane ammount of warnings
 set(DEBUG_WARNINGS "-Wall -Wno-sign-compare")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math -fsignaling-nans")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsingle-precision-constant -frounding-math")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mieee-fp -pipe -fno-strict-aliasing ${VISIBILITY_HIDDEN} ${VISIBILITY_INLINES_HIDDEN}")
 add_definitions(-DSTREFLOP_SSE) # would break AI compiling, but is undefined in ./AI/CMakeLists.txt
-if    (UNIX)
+if (UNIX)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif (UNIX)
 set(CMAKE_CXX_FLAGS_DEBUG          "${CXX_FLAGS_DEBUG_ADDITIONAL} -O1 ${DEBUG_WARNINGS} -DDEBUG -D_DEBUG -DNO_CATCH_EXCEPTIONS")
@@ -155,7 +160,7 @@ set(CMAKE_CXX_FLAGS_DEBUG3         "${CXX_FLAGS_DEBUG_ADDITIONAL} -O0 ${DEBUG_WA
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CXX_FLAGS_DEBUG_ADDITIONAL} -O2 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE        "-O2 -DNDEBUG")
 set(CMAKE_CXX_FLAGS_PROFILE        "-O2 -pg ${DEBUG_WARNINGS} -DNDEBUG")
-if    (STABS_DEBUG_SYMBOLS)
+if (STABS_DEBUG_SYMBOLS)
 	set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG}  -gstabs")
 	set(CMAKE_CXX_FLAGS_DEBUG2         "${CMAKE_CXX_FLAGS_DEBUG2} -gstabs")
 	set(CMAKE_CXX_FLAGS_DEBUG3         "${CMAKE_CXX_FLAGS_DEBUG3} -gstabs")
@@ -167,7 +172,7 @@ else  (STABS_DEBUG_SYMBOLS)
 	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -g")
 endif (STABS_DEBUG_SYMBOLS)
 
-if     (NOT MINGW AND NOT APPLE)
+if (NOT MINGW AND NOT APPLE)
 	set (PIC_FLAG "-fpic")
 elseif (APPLE)
 	set (PIC_FLAG "-fPIC")
