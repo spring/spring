@@ -270,76 +270,78 @@ float CUnitTable::GetDPS(const UnitDef* unit) {
 
 
 
-float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
-	if (unit->weapons.size() > 0) {
+float CUnitTable::GetDPSvsUnit(const UnitDef* unitDef, const UnitDef* victim) {
+	if (!unitDef->weapons.empty()) {
 		ai->math->TimerStart();
 
 		float dps = 0.0f;
-		bool canhit = false;
 		int armortype = victim->armorType;
 		int numDamages = 0;
 		ai->cb->GetValue(AIVAL_NUMDAMAGETYPES, &numDamages);
 
-		for (unsigned int i = 0; i != unit->weapons.size(); i++) {
-			if (!unit->weapons[i].def->paralyzer) {
+		for (unsigned int i = 0; i != unitDef->weapons.size(); i++) {
+			const UnitDef::UnitDefWeapon* uwDef = &unitDef->weapons[i];
+
+			if (!uwDef->def->paralyzer) {
 				unsigned int a = victim->category;
-				unsigned int b = unit->weapons[i].def->onlyTargetCategory;	// what the weapon can target
-				unsigned int c = unit->weapons[i].onlyTargetCat;			// what the unit accepts as this weapons target
-//				unsigned int d = unit->weapons[i].badTargetCat;				// what the unit thinks this weapon must be used for (?)
+				unsigned int b = uwDef->def->onlyTargetCategory;   // what the weapon can target
+				unsigned int c = uwDef->onlyTargetCat;             // what the unit accepts as this weapons target
+//				unsigned int d = uwDef->badTargetCat;              // what the unit thinks this weapon must be used for (?)
 				bool canWeaponTarget = (a & b) > 0;
-				bool canUnitTarget = (a & c) > 0;							// how is this used?
-//				bool badUnitTarget = (a & d) > 0;							// probably means that it has low priority
+				bool canUnitTarget = (a & c) > 0;                  // how is this used?
+//				bool badUnitTarget = (a & d) > 0;                  // probably means that it has low priority
 
-				canhit = (canWeaponTarget && canUnitTarget);
+				bool canhit = (canWeaponTarget && canUnitTarget);
 
-				if (!unit->weapons[i].def->waterweapon && ai->cb->GetUnitDefHeight(victim->id) - victim->waterline < 0) {
+				if (!uwDef->def->waterweapon && ai->cb->GetUnitDefHeight(victim->id) - victim->waterline < 0) {
 					// weapon cannot hit this sub
 					canhit = false;
 				}
 
-				if (unit->weapons[i].def->waterweapon && victim->minWaterDepth == 0) {
+				if (uwDef->def->waterweapon && victim->minWaterDepth == 0) {
 					// anti-sub weapon cannot kill this unit
 					canhit = false;
 				}
 
 				// bombers are useless against air
-				if (unit->weapons[i].def->dropped && victim->canfly && unit->canfly && unit->wantedHeight <= victim->wantedHeight) {
+				if (uwDef->def->dropped && victim->canfly && unitDef->canfly && unitDef->wantedHeight <= victim->wantedHeight) {
 					canhit = false;
 				}
 
 				if (canhit) {
-					float accuracy = unit->weapons[i].def->accuracy * 2.8;
+					float accuracy = uwDef->def->accuracy * 2.8;
 
 					if (victim->speed != 0) {
-						accuracy *= 1 - (unit->weapons[i].def->targetMoveError);
+						accuracy *= 1 - (uwDef->def->targetMoveError);
 					}
 
-					float basedamage = unit->weapons[i].def->damages[armortype] * unit->weapons[i].def->salvosize / unit->weapons[i].def->reload;
-					float AOE = unit->weapons[i].def->areaOfEffect * 0.7;
+					float basedamage = uwDef->def->damages[armortype] * uwDef->def->salvosize / uwDef->def->reload;
+					float AOE = uwDef->def->areaOfEffect * 0.7;
 					float tohitprobability = 0.0f;
 					float impactarea = 0.0f;
 					float targetarea = 0.0f;
-					float distancetravelled = 0.7f * unit->weapons[i].def->range;
+					float distancetravelled = 0.7f * uwDef->def->range;
 					float firingangle = 0.0f;
 					float gravity = -(ai->cb->GetGravity() * 900);
 					float timetoarrive = 0.0f;
-					float u = unit->weapons[i].def->projectilespeed * 30;
+					float u = std::max(uwDef->def->projectilespeed * 30, 1.0f);
 
-					if (unit->weapons[i].def->type == std::string("Cannon")) {
+					if (uwDef->def->type == std::string("Cannon")) {
 						float sinoid = (distancetravelled * gravity) / (u * u);
 						sinoid = std::min(sinoid, 1.0f);
 						firingangle = asin(sinoid) / 2;
 
-						if (unit->highTrajectoryType == 1) {
+						if (unitDef->highTrajectoryType == 1) {
 							firingangle = (PI / 2) - firingangle;
 						}
 
 						float heightreached = pow(u * sin(firingangle), 2) / (2 * gravity);
 						float halfd = distancetravelled / 2;
+
 						distancetravelled = 2 * sqrt(halfd * halfd + heightreached * heightreached) * 1.1;
 					}
 
-					if ((victim->canfly && unit->weapons[i].def->selfExplode) || !victim->canfly) {
+					if ((victim->canfly && uwDef->def->selfExplode) || !victim->canfly) {
 						impactarea = pow((accuracy * distancetravelled) + AOE, 2);
 						targetarea = ((victim->xsize * 16) + AOE) * ((victim->zsize * 16) + AOE);
 					} else {
@@ -353,11 +355,11 @@ float CUnitTable::GetDPSvsUnit(const UnitDef* unit, const UnitDef* victim) {
 						tohitprobability = 1;
 					}
 
-					if (unit->weapons[i].def->turnrate == 0.0f && unit->weapons[i].def->projectilespeed != 0 && victim->speed != 0 && unit->weapons[i].def->beamtime == 1) {
-						if (unit->weapons[i].def->type == std::string("Cannon")) {
+					if (uwDef->def->turnrate == 0.0f && uwDef->def->projectilespeed != 0 && victim->speed != 0 && uwDef->def->beamtime == 1) {
+						if (uwDef->def->type == std::string("Cannon")) {
 							timetoarrive = (2 * u * sin(firingangle)) / gravity;
 						} else {
-							timetoarrive = distancetravelled / (unit->weapons[i].def->projectilespeed * 30);
+							timetoarrive = distancetravelled / (uwDef->def->projectilespeed * 30);
 						}
 
 						float shotwindow = sqrt(targetarea) / victim->speed * 1.3;
