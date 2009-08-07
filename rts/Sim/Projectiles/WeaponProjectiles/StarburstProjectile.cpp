@@ -201,9 +201,9 @@ void CStarburstProjectile::Update(void)
 		} else {
 			dif = dif - dir;
 			dif -= dir * (dif.dot(dir));
-			dif.Normalize();
+			dif.SafeNormalize();
 			dir += dif * tracking;
-			dir.Normalize();
+			dir.SafeNormalize();
 		}
 		speed = dir * curSpeed;
 		if (distanceToTravel != MAX_WORLD_SIZE)
