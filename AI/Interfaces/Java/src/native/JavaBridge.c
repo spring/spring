@@ -1429,8 +1429,8 @@ bool java_releaseSkirmishAIClass(const char* className) {
 		establishSpringEnv();
 
 		if (success) {
-			FREE(skirmishAiImpl_classLoader[sai]);
-			FREE(skirmishAiImpl_instance[sai]);
+			skirmishAiImpl_classLoader[sai] = NULL;
+			skirmishAiImpl_instance[sai] = NULL;
 			FREE(skirmishAiImpl_methods[sai]);
 			FREE(skirmishAiImpl_className[sai]);
 		}
