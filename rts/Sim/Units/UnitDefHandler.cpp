@@ -570,9 +570,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		const unsigned int slaveTo = wTable.GetInt("slaveTo", 0);
 
 		float3 mainDir = wTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
-		if (mainDir != ZeroVector) {
-			mainDir.Normalize();
-		}
+		mainDir.SafeNormalize();
 
 		const float angleDif = cos(wTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
 
@@ -953,16 +951,16 @@ const UnitDef* CUnitDefHandler::GetUnitByID(int id)
 void CUnitDefHandler::CreateYardMap(UnitDef* def, std::string yardmapStr)
 {
 	StringToLowerInPlace(yardmapStr);
- 
+
 	const int mw = def->xsize;
 	const int mh = def->zsize;
 	const int maxIdx = mw * mh;
- 
+
 	// create the yardmaps for each build-facing
 	for (int u = 0; u < 4; u++) {
 		def->yardmaps[u] = new unsigned char[maxIdx];
 	}
- 
+
 	// Spring resolution's is double that of TA's (so 4 times as much area)
 	unsigned char* originalMap = new unsigned char[maxIdx / 4];
 

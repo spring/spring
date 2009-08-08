@@ -281,8 +281,7 @@ void CGroundMoveType::Update()
 				ASSERT_SYNCED_FLOAT3(waypointDir);
 
 				waypointDir.y = 0;
-				if (waypointDir.x != 0 || waypointDir.z != 0)
-					waypointDir.Normalize();
+				waypointDir.SafeNormalize();
 
 				const float3 wpDirInv = -waypointDir;
 				const float3 wpPosTmp = owner->pos + wpDirInv;
@@ -1275,7 +1274,7 @@ from current velocity.
 float3 CGroundMoveType::Here()
 {
 	float3 motionDir = owner->speed;
-	if (motionDir.SqLength2D() == 0) {
+	if (motionDir.SqLength2D() < float3::NORMALIZE_EPS) {
 		return owner->midPos;
 	} else {
 		motionDir.Normalize();

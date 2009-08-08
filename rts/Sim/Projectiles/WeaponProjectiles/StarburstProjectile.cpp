@@ -404,12 +404,12 @@ void CStarburstProjectile::DrawUnitPart(void)
 {
 	glPushMatrix();
 	float3 rightdir;
-	if(dir.y!=1)
+	if(dir.y!=1) {
 		rightdir=dir.cross(UpVector);
+		rightdir.SafeNormalize();
+	}
 	else
 		rightdir=float3(1,0,0);
-	if (rightdir != ZeroVector)
-		rightdir.Normalize();
 	float3 updir=rightdir.cross(dir);
 
 	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);

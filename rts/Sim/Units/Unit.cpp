@@ -989,8 +989,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	float3 hitDir = impulse;
 	hitDir.y = 0.0f;
-	if (hitDir.x != 0 || hitDir.z != 0)
-		hitDir = -hitDir.Normalize();
+	hitDir = -hitDir.SafeNormalize();
 
 	if (script->HasFunction(COBFN_HitByWeaponId)) {
 		script->HitByWeaponId(hitDir, weaponDefId, /*inout*/ damage);

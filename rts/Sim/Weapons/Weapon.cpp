@@ -337,8 +337,7 @@ void CWeapon::Update()
 			            owner->updir    * weaponDir.y +
 			            owner->rightdir * weaponDir.x;
 
-			if (weaponDir != ZeroVector)
-				weaponDir.Normalize();
+			weaponDir.SafeNormalize();
 
 			if (TryTarget(targetPos,haveUserTarget,targetUnit) && !CobBlockShot(targetUnit)) {
 				if(weaponDef->stockpile){
@@ -405,8 +404,7 @@ void CWeapon::Update()
 
 			weaponMuzzlePos=owner->pos+owner->frontdir*relWeaponMuzzlePos.z+owner->updir*relWeaponMuzzlePos.y+owner->rightdir*relWeaponMuzzlePos.x;
 			weaponDir = owner->frontdir * weaponDir.z + owner->updir * weaponDir.y + owner->rightdir * weaponDir.x;
-			if (weaponDir != ZeroVector)
-				weaponDir.Normalize();
+			weaponDir.SafeNormalize();
 
 	//		logOutput.Print("RelPosFire %f %f %f",relWeaponPos.x,relWeaponPos.y,relWeaponPos.z);
 

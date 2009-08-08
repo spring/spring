@@ -356,7 +356,7 @@ void CTAAirMoveType::UpdateFlying()
 	// don't change direction for waypoints we just flew over and missed slightly
 	if (flyState != FLY_LANDING && owner->commandAI->HasMoreMoveCommands()
 			&& dir != ZeroVector && dir.SqLength2D() < 10000.0f) {
-		float3 ndir = dir; ndir = ndir.ANormalize();
+		float3 ndir = dir; ndir = ndir.UnsafeANormalize();
 
 		if (ndir.SqDistance(dir) < 1.0f) {
 			dir = owner->frontdir;

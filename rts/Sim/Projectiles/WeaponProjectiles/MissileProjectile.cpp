@@ -260,11 +260,9 @@ void CMissileProjectile::Update(void)
 			dir = dif;
 		} else {
 			dif2 -= (dir * (dif2.dot(dir)));
-			if (dif2 != ZeroVector)
-				dif2.Normalize();
+			dif2.SafeNormalize();
 			dir += (dif2 * tracking);
-			if (dir != ZeroVector)
-				dir.Normalize();
+			dir.SafeNormalize();
 		}
 
 		speed = dir * curSpeed;
@@ -435,7 +433,7 @@ void CMissileProjectile::DrawUnitPart(void)
 		rightdir = float3(1, 0, 0);
 	}
 
-	rightdir.Normalize();
+	rightdir.SafeNormalize();
 	float3 updir = rightdir.cross(dir);
 
 	CMatrix44f transMatrix(drawPos + dir * radius * 0.9f,-rightdir,updir,dir);
