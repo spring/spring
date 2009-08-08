@@ -65,12 +65,12 @@ void CRepulseGfx::Draw(void)
 		return;
 
 	float3 dir=repulsed->pos-owner->pos;
-	dir.ANormalize();
+	dir.SafeANormalize();
 
 	pos=repulsed->pos-dir*10+repulsed->speed*gu->timeOffset;
 
 	float3 dir1=dir.cross(UpVector);
-	dir1.ANormalize();
+	dir1.SafeANormalize();
 	float3 dir2=dir1.cross(dir);
 
 	inArray=true;
@@ -88,13 +88,15 @@ void CRepulseGfx::Draw(void)
 	float txs=et.xend-et.xstart;
 	float tys=et.yend-et.ystart;
 
-	va->EnlargeArrays(4*4*4+16,0,VA_SIZE_TC);
-	for(int y=0;y<4;++y){ //! CAUTION: loop count must match EnlargeArrays above
-		float dy=y-2;
-		float ry=y*0.25f;
-		for(int x=0;x<4;++x){
-			float dx=x-2;
-			float rx=x*0.25f;
+	const int loopCountY = 4;
+	const int loopCountX = 4;
+	va->EnlargeArrays(loopCountY * loopCountX * 4 + 16, 0, VA_SIZE_TC);
+	for(int y = 0; y < loopCountY; ++y) { //! CAUTION: loop count must match EnlargeArrays above
+		float dy = y - 2;
+		float ry = y * 0.25f;
+		for(int x = 0; x < loopCountX; ++x){
+			float dx = x - 2;
+			float rx = x * 0.25f;
 			va->AddVertexQTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+0)+dir*difs[y*5+x]			 ,txo+ry*txs				,tyo+(rx)*tys			,col);
 			va->AddVertexQTC(pos+dir1*drawsize*(dx+0)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x]  ,txo+(ry+0.25f)*txs	,tyo+(rx)*tys			,col);
 			va->AddVertexQTC(pos+dir1*drawsize*(dx+1)+dir2*drawsize*(dy+1)+dir*difs[(y+1)*5+x+1],txo+(ry+0.25f)*txs	,tyo+(rx+0.25f)*tys,col);

@@ -30,23 +30,23 @@ CCamera::CCamera() :
 	modelview[ 7] =  0.0f;
 	modelview[11] =  0.0f;
 	modelview[15] =  1.0f;
-	
+
 	projection[ 1] = 0.0f;
 	projection[ 2] = 0.0f;
 	projection[ 3] = 0.0f;
-	
+
 	projection[ 4] = 0.0f;
 	projection[ 6] = 0.0f;
 	projection[ 7] = 0.0f;
-	
+
 	projection[12] = 0.0f;
-	projection[13] = 0.0f;	
+	projection[13] = 0.0f;
 	projection[15] = 0.0f;
-	
+
 	billboard[3]  = billboard[7]  = billboard[11] = 0.0;
 	billboard[12] = billboard[13] = billboard[14] = 0.0;
 	billboard[15] = 1.0;
-	
+
 	SetFov(45.0f);
 
 	up      = UpVector;
@@ -83,7 +83,7 @@ static double Calculate4x4Cofactor(const double m[4][4], int ei, int ej)
 	    (m[ai][aj] * ((m[bi][bj] * m[ci][cj]) - (m[ci][bj] * m[bi][cj])))
 		- (m[ai][bj] * ((m[bi][aj] * m[ci][cj]) - (m[ci][aj] * m[bi][cj])))
 		+ (m[ai][cj] * ((m[bi][aj] * m[ci][bj]) - (m[ci][aj] * m[bi][bj])));
-	
+
 	if (((ei + ej) % 2) == 0) {
 		return +val;
 	} else {
@@ -130,13 +130,13 @@ static bool CalculateInverse4x4(const double m[4][4], double inv[4][4])
 void CCamera::Update(bool freeze)
 {
 	pos2 = pos;
-	up.ANormalize();
+	up.UnsafeANormalize();
 
 	right = forward.cross(up);
-	right.ANormalize();
-	
+	right.UnsafeANormalize();
+
 	up = right.cross(forward);
-	up.ANormalize();
+	up.UnsafeANormalize();
 
 	const float aspect = (float) gu->viewSizeX / (float) gu->viewSizeY;
 	const float viewx = tan(aspect * halfFov);
@@ -152,15 +152,15 @@ void CCamera::Update(bool freeze)
 
 	const float3 forwardy = (-forward * viewy);
 	top    = forwardy + up;
-	top.ANormalize();
+	top.UnsafeANormalize();
 	bottom = forwardy - up;
-	bottom.ANormalize();
-	
+	bottom.UnsafeANormalize();
+
 	const float3 forwardx = (-forward * viewx);
 	rightside = forwardx + right;
-	rightside.ANormalize();
+	rightside.UnsafeANormalize();
 	leftside  = forwardx - right;
-	leftside.ANormalize();
+	leftside.UnsafeANormalize();
 
 	if (!freeze) {
 		cam2->bottom    = bottom;
@@ -224,7 +224,7 @@ void CCamera::Update(bool freeze)
 	glNewList(billboardList, GL_COMPILE);
 	glMultMatrixd(billboard);
 	glEndList();
-	
+
 	viewport[0] = 0;
 	viewport[1] = 0;
 	viewport[2] = gu->viewSizeX;
@@ -266,7 +266,7 @@ bool CCamera::InView(const float3 &p, float radius)
 	else if (lsq > Square(gu->viewRange)) {
 		return false;
 	}
-	
+
 	if ((t.dot(rightside) > radius) ||
 	    (t.dot(leftside)  > radius) ||
 	    (t.dot(bottom)    > radius) ||
@@ -334,7 +334,7 @@ inline void CCamera::myGluLookAt(const float3& eye, const float3& center, const 
 	modelview[ 0] =  s.x;
 	modelview[ 1] =  u.x;
 	modelview[ 2] = -f.x;
-	
+
 
 	modelview[ 4] =  s.y;
 	modelview[ 5] =  u.y;
