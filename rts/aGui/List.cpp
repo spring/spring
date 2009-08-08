@@ -1,4 +1,4 @@
-#include "glList.h"
+#include "List.h"
 
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
@@ -18,7 +18,7 @@ const float itemFontScale = 1.0f;
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
-CglList::CglList(GuiElement* parent) :
+List::List(GuiElement* parent) :
 		GuiElement(parent),
 		place(0),
 		cancelPlace(-1),
@@ -31,11 +31,11 @@ CglList::CglList(GuiElement* parent) :
 	itemHeight = 0.04f;
 }
 
-CglList::~CglList()
+List::~List()
 {
 }
 
-void CglList::AddItem(const std::string& name, const std::string& description)
+void List::AddItem(const std::string& name, const std::string& description)
 {
 	items.push_back(name);
 
@@ -48,7 +48,7 @@ void CglList::AddItem(const std::string& name, const std::string& description)
 	}
 }
 
-bool CglList::MousePress(int x, int y, int button)
+bool List::MousePress(int x, int y, int button)
 {
 	switch (button)
 	{
@@ -69,7 +69,7 @@ bool CglList::MousePress(int x, int y, int button)
 	return false;
 }
 
-void CglList::MouseMove(int x, int y, int dx,int dy, int button)
+void List::MouseMove(int x, int y, int dx,int dy, int button)
 {
 	if (button != SDL_BUTTON_LEFT || !activeMousePress)
 		return;
@@ -77,7 +77,7 @@ void CglList::MouseMove(int x, int y, int dx,int dy, int button)
 	MouseUpdate(x, y);
 }
 
-void CglList::MouseRelease(int x, int y, int button)
+void List::MouseRelease(int x, int y, int button)
 {
 	if (button != SDL_BUTTON_LEFT || !activeMousePress)
 		return;
@@ -88,7 +88,7 @@ void CglList::MouseRelease(int x, int y, int button)
 	}
 }
 
-bool CglList::MouseUpdate(int x, int y)
+bool List::MouseUpdate(int x, int y)
 {
 	mx = PixelToGlX(x);
 	my = PixelToGlY(y);
@@ -121,7 +121,7 @@ bool CglList::MouseUpdate(int x, int y)
 	return false;
 }
 
-void CglList::DrawSelf()
+void List::DrawSelf()
 {
 	const float opacity = Opacity();
 	glLoadIdentity();
@@ -186,7 +186,7 @@ void CglList::DrawSelf()
 	font->End();
 }
 
-bool CglList::HandleEventSelf(const SDL_Event& ev)
+bool List::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_MOUSEBUTTONDOWN: {
@@ -220,14 +220,14 @@ bool CglList::HandleEventSelf(const SDL_Event& ev)
 	return false;
 }
 
-void CglList::UpOne()
+void List::UpOne()
 {
 	place--;
 	if(place<0)
 		place=0;
 }
 
-void CglList::DownOne()
+void List::DownOne()
 {
 	place++;
 	if(place>=(int)filteredItems->size())
@@ -236,14 +236,14 @@ void CglList::DownOne()
 		place=0;
 }
 
-void CglList::UpPage()
+void List::UpPage()
 {
 	place -= 12;
 	if(place<0)
 		place=0;
 }
 
-void CglList::DownPage()
+void List::DownPage()
 {
 	place += 12;
 	if(place>=(int)filteredItems->size())
@@ -252,7 +252,7 @@ void CglList::DownPage()
 		place=0;
 }
 
-std::string CglList::GetCurrentItem() const
+std::string List::GetCurrentItem() const
 {
 	if (!filteredItems->empty()) {
 		return ((*filteredItems)[place]);
@@ -260,7 +260,7 @@ std::string CglList::GetCurrentItem() const
 	return "";
 }
 
-bool CglList::SetCurrentItem(const std::string& newCurrent)
+bool List::SetCurrentItem(const std::string& newCurrent)
 {
 	for (unsigned i = 0; i < items.size(); ++i)
 	{
@@ -273,7 +273,7 @@ bool CglList::SetCurrentItem(const std::string& newCurrent)
 	return false;
 }
 
-bool CglList::KeyPressed(unsigned short k, bool isRepeat)
+bool List::KeyPressed(unsigned short k, bool isRepeat)
 {
 	if (k == SDLK_ESCAPE) {
 		if (cancelPlace >= 0) {
@@ -305,7 +305,7 @@ bool CglList::KeyPressed(unsigned short k, bool isRepeat)
 	return false;
 }
 
-bool CglList::Filter(bool reset)
+bool List::Filter(bool reset)
 {
 	std::string current = (*filteredItems)[place];
 	std::vector<std::string>* destination = filteredItems == &temp1 ? &temp2 : &temp1;

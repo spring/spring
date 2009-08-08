@@ -1,8 +1,5 @@
-#ifndef GLLIST_H
-#define GLLIST_H
-// glList.h: interface for the CglList class.
-//
-//////////////////////////////////////////////////////////////////////
+#ifndef LIST_H
+#define LIST_H
 
 #include <string>
 #include <vector>
@@ -13,11 +10,11 @@
 namespace agui
 {
 
-class CglList : public GuiElement
+class List : public GuiElement
 {
 public:
-	CglList(GuiElement* parent = NULL);
-	virtual ~CglList();
+	List(GuiElement* parent = NULL);
+	virtual ~List();
 
 	// CInputReceiver implementation
 	bool KeyPressed(unsigned short k, bool isRepeat);

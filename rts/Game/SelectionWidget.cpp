@@ -16,7 +16,7 @@
 #include "aGui/LineEdit.h"
 #include "aGui/TextElement.h"
 #include "aGui/Window.h"
-#include "aGui/glList.h"
+#include "aGui/List.h"
 
 class ListSelectWnd : public agui::Window
 {
@@ -28,7 +28,7 @@ public:
 		SetSize(0.4, 0.7);
 		
 		agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(this);
-		list = new agui::CglList(modWindowLayout);
+		list = new agui::List(modWindowLayout);
 		agui::Button* select = new agui::Button("Select", modWindowLayout);
 		select->Clicked.connect(boost::bind(&ListSelectWnd::SelectButton, this));
 		select->SetSize(0.0f, 0.04f, true);
@@ -36,7 +36,7 @@ public:
 	}
 
 	boost::signal<void (std::string)> Selected;
-	agui::CglList* list;
+	agui::List* list;
 
 private:
 	void SelectButton()
