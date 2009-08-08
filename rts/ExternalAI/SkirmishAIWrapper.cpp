@@ -75,6 +75,7 @@ CSkirmishAIWrapper::CSkirmishAIWrapper():
 		cheatEvents(false),
 		ai(NULL),
 		initialized(false),
+		released(false),
 		c_callback(NULL) {}
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key):
@@ -82,6 +83,7 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key):
 		cheatEvents(false),
 		ai(NULL),
 		initialized(false),
+		released(false),
 		c_callback(NULL),
 		key(key) {
 	CreateCallback();
@@ -101,7 +103,7 @@ void CSkirmishAIWrapper::PreDestroy() {
 
 CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 	if (ai) {
-		if (initialized) {
+		if (initialized && !released) {
 			Release();
 		}
 
@@ -205,11 +207,16 @@ void CSkirmishAIWrapper::Init() {
 	}
 }
 
-void CSkirmishAIWrapper::Release() {
-	SReleaseEvent evtData = {};
-	ai->HandleEvent(EVENT_RELEASE, &evtData);
+void CSkirmishAIWrapper::Release(int reason) {
 
-	// further cleanup is done in the destructor
+	if (initialized && !released) {
+		SReleaseEvent evtData = {reason};
+		ai->HandleEvent(EVENT_RELEASE, &evtData);
+
+		released = true;
+
+		// further cleanup is done in the destructor
+	}
 }
 
 static void streamCopy(std::istream* in, std::ostream* out)

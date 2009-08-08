@@ -278,7 +278,7 @@ void CTeam::Died()
 		}
 	}
 	if (eoh->IsSkirmishAI(teamNum)) {
-		eoh->DestroySkirmishAI(teamNum);
+		eoh->DestroySkirmishAI(teamNum, 2 /* = team died */);
 	}
 
 	CLuaUI::UpdateTeams();

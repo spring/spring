@@ -114,8 +114,18 @@ struct SInitEvent {
  * This AI event tells a Skirmish AI instance, that it is no longer needed. It
  * can be used to free memory or do other cleanup work.
  * It is sent only once per AI instance and game, as the very last event.
+ * Values description for reason:
+ * 0: unspecified
+ * 1: game ended
+ * 2: team died
+ * 3: AI killed
+ * 4: AI crashed
+ * 5: AI failed to init
+ * 6: connection lost
+ * 7: other reason
  */
 struct SReleaseEvent {
+	int reason;
 }; // EVENT_RELEASE
 
 /**

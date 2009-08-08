@@ -516,10 +516,11 @@ const SSkirmishAICallback* CEngineOutHandler::GetSkirmishAICallback(int teamId) 
 	}
 }
 
-void CEngineOutHandler::DestroySkirmishAI(int teamId) {
+void CEngineOutHandler::DestroySkirmishAI(int teamId, int reason) {
 
 	try {
 		if (IsSkirmishAI(teamId)) {
+			skirmishAIs[teamId]->Release(reason);
 			delete skirmishAIs[teamId];
 			skirmishAIs[teamId] = NULL;
 			team_skirmishAI.erase(teamId);

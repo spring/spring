@@ -723,7 +723,7 @@ EXPORT(void) skirmishAiCallback_Log_exception(int teamId, const char* const msg,
 			info->GetName().c_str(), info->GetVersion().c_str(), severety,
 			(die ? "AI shutting down" : "AI still running"), msg);
 	if (die) {
-		eoh->DestroySkirmishAI(teamId);
+		eoh->DestroySkirmishAI(teamId, 4 /* = AI crashed */);
 	}
 }
 
