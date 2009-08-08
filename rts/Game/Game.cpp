@@ -1995,7 +1995,7 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "atm" ||
 			cmd == "aikill" ||
-			cmd == "aitake" ||
+			cmd == "aicontrol" ||
 #ifdef DEBUG
 			cmd == "desync" ||
 #endif
@@ -2185,7 +2185,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		} else {
 			if (isFromLocalPlayer) {
-				logOutput.Print("/aikill: missing mandatory argument \"teamToKill\"");
+				logOutput.Print("/%s: missing mandatory argument \"teamToKill\"", action.command.c_str());
 			}
 			badArgs = true;
 		}
@@ -2197,10 +2197,10 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			logOutput.Print("unless a second argument is given,");
 			logOutput.Print("which specifies an active team");
 			logOutput.Print("that will receive all the units of the AI team.");
-			logOutput.Print("usage:   /aikill teamToKill [teamToReceiveUnits]");
+			logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
 		}
 	}
-	else if (action.command == "aitake") {
+	else if (action.command == "aicontrol") {
 		bool badArgs = false;
 
 		const CPlayer* fromPlayer     = playerHandler->Player(playernum);
@@ -2228,7 +2228,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				aiShortName = args[1];
 			} else {
 				if (isFromLocalPlayer) {
-					logOutput.Print("/aitake: missing mandatory argument \"aiShortName\"");
+					logOutput.Print("/%s: missing mandatory argument \"aiShortName\"", action.command.c_str());
 				}
 			}
 			if (args.size() >= 3) {
@@ -2303,7 +2303,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			}
 		} else {
 			if (isFromLocalPlayer) {
-				logOutput.Print("/aitake: missing mandatory arguments \"teamToControl\" and \"aiShortName\"");
+				logOutput.Print("/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", action.command.c_str());
 			}
 			badArgs = true;
 		}
@@ -2311,8 +2311,8 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		if (badArgs && isFromLocalPlayer) {
 			logOutput.Print("------------------------------------------------");
 			logOutput.Print("Let a Skirmish AI take over control of a team.");
-			logOutput.Print("usage:   /aitake teamToControl aiShortName [aiVersion] [name] [options...]");
-			logOutput.Print("example: /aitake 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3");
+			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", action.command.c_str());
+			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", action.command.c_str());
 		}
 	}
 	else if (action.command == "cheat") {
