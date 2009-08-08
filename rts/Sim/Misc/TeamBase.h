@@ -36,4 +36,4 @@ private:
 	customOpts customValues;
 };
 
-#endif
+#endif // TEAM_BASE_H

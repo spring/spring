@@ -105,7 +105,6 @@ float3 CResourceMapAnalyzer::GetNearestSpot(int builderUnitId, const UnitDef* ex
 	return GetNearestSpot(builder->midPos, builder->team, extractor);
 }
 
-// KLOOTNOTE: this needs to ignore spots already taken by allies
 float3 CResourceMapAnalyzer::GetNearestSpot(float3 fromPos, int team, const UnitDef* extractor) const {
 	float TempScore = 0.0f;
 	float MaxDivergence = 16.0f;

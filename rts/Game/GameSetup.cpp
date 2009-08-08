@@ -100,7 +100,7 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	else
 	{
 		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-		teamStartingData[a].teamStartNum = (int)a;
+			teamStartingData[a].teamStartNum = (int)a;
 		}
 	}
 
