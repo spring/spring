@@ -204,7 +204,7 @@ void CLoadSaveHandler::LoadGame()
 	delete ifs;
 	for (int a=0; a < teamHandler->ActiveTeams();a++) { // For old savegames
 		if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
-			eoh->DestroySkirmishAI(a);
+			eoh->DestroySkirmishAI(a, 2 /* = team died */);
 		}
 	}
 	gs->paused = false;

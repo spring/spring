@@ -92,7 +92,8 @@ public:
 	const SkirmishAIKey* GetSkirmishAIKey(int teamId) const;
 	bool IsSkirmishAI(int teamId) const;
 	const SSkirmishAICallback* GetSkirmishAICallback(int teamId) const;
-	void DestroySkirmishAI(int teamId);
+	/// For a list of values for reason, see SReleaseEvent in Interface/AISEvents.h
+	void DestroySkirmishAI(int teamId, int reason = 0 /* = unspecified */);
 	const SkirmishAIData* GetSkirmishAIData(int teamId) const;
 
 

@@ -94,15 +94,15 @@ public:
 	virtual int HandleEvent(int topic, const void* data) const;
 
 	virtual void Init();
-private:
-	virtual void Release();
+	/// @see SReleaseEvent in Interface/AISEvents.h
+	virtual void Release(int reason = 0 /* = unspecified */);
 
 private:
 	int teamId;
 	bool cheatEvents;
 
 	ISkirmishAI* ai;
-	bool initialized;
+	bool initialized, released;
 	CGlobalAICallback* callback;
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;

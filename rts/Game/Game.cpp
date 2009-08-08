@@ -2169,7 +2169,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 					// the AI will be destroyed automatically
 				} else {
 					if (isLocalSkirmishAI) {
-						eoh->DestroySkirmishAI(teamToKillId);
+						eoh->DestroySkirmishAI(teamToKillId, 3 /* = AI killed */);
 					}
 					// this is sync relevant, so it has to be set whether the AI got killed or not
 					teamToKill->isAI = false;
