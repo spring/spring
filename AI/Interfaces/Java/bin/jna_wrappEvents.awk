@@ -357,8 +357,18 @@ function printEventJavaCls(evtIndex) {
 		}
 		print("		}") >> javaFile;
 	} else {
-		print("		super(memory);") >> javaFile;
-		print("		read();") >> javaFile;
+		if (evtsNumMembers[evtIndex] == 0) {
+			print("		// JNA thinks a 0 size struct is an error,") >> javaFile;
+			print("		// when it evaluates the size,") >> javaFile;
+			print("		// so we set it manually to 1,") >> javaFile;
+			print("		// because 0 would fail.") >> javaFile;
+			print("		// This workaround is no longer possible sinze JNA 3.2.") >> javaFile;
+			print("		// Therefore we require all structs to be non empty,") >> javaFile;
+			print("		throw new RuntimeException(\"" className " error:.AI event structs have to be of size > 0 (ie. no empty stucts/ no structs with 0 members)\");") >> javaFile;
+		} else {
+			print("		super(memory);") >> javaFile;
+			print("		read();") >> javaFile;
+		}
 	}
 	print("	}") >> javaFile;
 	print("") >> javaFile;
