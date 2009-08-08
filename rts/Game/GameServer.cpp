@@ -60,7 +60,7 @@
 	#undef interface
 #endif
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/TeamHandler.h"
+//#include "Sim/Misc/TeamHandler.h"
 #include "Server/MsgStrings.h"
 
 
