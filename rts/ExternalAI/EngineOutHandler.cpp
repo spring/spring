@@ -442,13 +442,14 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 
 bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, const SkirmishAIData& data) {
 
-#define UNPAUSE_AFTER_AI_INIT false
+	const bool unpauseAfterAIInit = configHandler->Get("AI_UnpauseAfterInit", true);
+
 	if (!teamHandler->IsValidTeam(teamId)) {
 		return false;
 	}
 
 	try {
-		// Pause the game for letting the AI initialzie,
+		// Pause the game for letting the AI initialize,
 		// as this can take quite some time.
 		bool weDoPause = !gs->paused;
 		if (weDoPause) {
@@ -457,7 +458,7 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, c
 					"Player %s (auto)-paused the game for letting Skirmish AI"
 					" %s initialize for controlling team %i.%s",
 					myPlayerName.c_str(), key.GetShortName().c_str(), teamId,
-					(UNPAUSE_AFTER_AI_INIT ?
+					(unpauseAfterAIInit ?
 					 " The game is auto-unpaused as soon as the AI is ready." :
 					 ""));
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
@@ -482,12 +483,10 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, c
 			u = uNext;
 		}
 
-#if defined UNPAUSE_AFTER_AI_INIT
-		// Unpause the game again, if we paused it, and it is still paused.
-		if (gs->paused && weDoPause) {
+		// Unpause the game again, if we paused it and it is still paused.
+		if (unpauseAfterAIInit && gs->paused && weDoPause) {
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
-#endif // defined UNPAUSE_AFTER_AI_INIT
 
 		return true;
 	} HANDLE_EXCEPTION;
