@@ -246,7 +246,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "springSourceDir=${springSourceDir}"
+		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
 		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
 		"-f" "${myAwkScriptsDir}/jna_wrappEvents.awk"
@@ -259,7 +259,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/command/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "springSourceDir=${springSourceDir}"
+		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
 		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
 		"-f" "${myAwkScriptsDir}/jna_wrappCommands.awk"
@@ -272,7 +272,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
 		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "springSourceDir=${springSourceDir}"
+		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
 		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
 		"-f" "${myAwkScriptsDir}/jna_wrappCallback.awk"
@@ -286,7 +286,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "springSourceDir=${springSourceDir}"
+		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
 		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
 		"-f" "${myAwkScriptsDir}/java_wrappCallbackOO.awk"
