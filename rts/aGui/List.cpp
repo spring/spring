@@ -2,6 +2,7 @@
 
 #include <SDL_keysym.h>
 #include <SDL_mouse.h>
+#include <SDL_timer.h>
 
 #include "Rendering/GL/myGL.h"
 #include "Game/UI/MouseHandler.h"
@@ -82,7 +83,6 @@ void List::MouseRelease(int x, int y, int button)
 
 bool List::MouseUpdate(int x, int y)
 {
-
 	int nCurIndex = 0; // The item we're on
 	int nDrawOffset = 0; // The offset to the first draw item
 
@@ -100,6 +100,11 @@ bool List::MouseUpdate(int x, int y)
 	{
 		if (b.MouseOver(mx, my))
 		{
+			if (nCurIndex == place && clickedTime + 250 > SDL_GetTicks())
+			{
+				FinishSelection();
+			}
+			clickedTime = SDL_GetTicks();
 			place = nCurIndex;
 			return true;
 		}
@@ -285,6 +290,9 @@ bool List::KeyPressed(unsigned short k, bool isRepeat)
 	} else if (k == SDLK_BACKSPACE) {
 		query = query.substr(0, query.length() - 1);
 		return Filter(true);
+	} else if (k == SDLK_RETURN) {
+		FinishSelection();
+		return true;
 	} else if ((k & ~0xFF) != 0) {
 		// This prevents isalnum from asserting on msvc debug crt
 		// We don't actually need to process the key tho;)
