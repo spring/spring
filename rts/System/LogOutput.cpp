@@ -3,6 +3,7 @@
 #include "LogOutput.h"
 
 #include <assert.h>
+#include <iostream>
 #include <fstream>
 #include <string.h>
 #include <boost/thread/recursive_mutex.hpp>
@@ -18,6 +19,9 @@
 #include "Game/GameVersion.h"
 #include "ConfigHandler.h"
 #include "mmgr.h"
+
+#include <string>
+#include <vector>
 
 using std::string;
 using std::vector;

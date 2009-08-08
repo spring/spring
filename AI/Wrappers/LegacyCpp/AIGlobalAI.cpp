@@ -23,17 +23,15 @@
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
 
-CAIGlobalAI::CAIGlobalAI() : CAIAI(), gai(NULL) {}
-
-CAIGlobalAI::CAIGlobalAI(int teamId, IGlobalAI* gai)
-		: CAIAI(teamId, gai), gai(gai) {}
+CAIGlobalAI::CAIGlobalAI(int teamId, IGlobalAI* gai): CAIAI(teamId, gai) {
+}
 
 CAIGlobalAI::~CAIGlobalAI() {
 	// TODO: check: should this really be done here?
-	delete gai;
-	gai = NULL;
+	delete ai;
+	ai = NULL;
 }
 
 void CAIGlobalAI::InitAI(IGlobalAICallback* globalAICallback, int teamId) {
-	gai->InitAI(globalAICallback, teamId);
+	ai->InitAI(globalAICallback, teamId);
 }

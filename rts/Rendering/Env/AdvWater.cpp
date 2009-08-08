@@ -27,6 +27,9 @@
 
 CAdvWater::CAdvWater(bool loadShader)
 {
+	if (!FBO::IsSupported())
+		throw content_error("Water Error: missing FBO support");
+
 	glGenTextures(1, &reflectTexture);
 	unsigned char* scrap=new unsigned char[512*512*4];
 
@@ -318,7 +321,7 @@ void CAdvWater::UpdateWater(CGame* game)
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
-	unitDrawer->DrawCloakedUnits(false,true);
+	unitDrawer->DrawCloakedUnits(false);
 	featureHandler->DrawFadeFeatures(false,true);
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();

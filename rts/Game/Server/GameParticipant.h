@@ -1,5 +1,5 @@
-#ifndef GAMEPARTICIPANT
-#define GAMEPARTICIPANT
+#ifndef GAMEPARTICIPANT_H
+#define GAMEPARTICIPANT_H
 
 #include <boost/shared_ptr.hpp>
 
@@ -43,4 +43,4 @@ public:
 #endif
 };
 
-#endif
+#endif // GAMEPARTICIPANT_H

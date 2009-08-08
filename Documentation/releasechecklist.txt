@@ -3,6 +3,7 @@ not necessarily in the optimal order, but I tried to make it pretty much right.
 
 Spring engine:
 Before you start:
+- if necessary, increase PATHESTIMATOR_VERSION to force repathing
 - make sure changelog is up to date (including version number!)
 - talk to people to fix their apps which get included in the installer (Lobby, Downloader...)
 

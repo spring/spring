@@ -83,6 +83,7 @@ macro    (ConfigureJavaSkirmishAI)
 		set(myBinJarFile    "${myJarFile}.jar")
 		set(mySrcJarFile    "${myJarFile}-src.jar")
 		set(myJLibDir       "${myDir}/data/jlib")
+
 		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
 
 		# Create our full Java class-path
@@ -130,12 +131,12 @@ endmacro (ConfigureJavaSkirmishAI)
 ################################################################################
 
 
-set(myName            "Java")
-set(myDir             "${CMAKE_CURRENT_SOURCE_DIR}")
-set(myNativeSourceDir "${myDir}/src/native")
-set(myJavaSourceDir   "${myDir}/src/java")
-set(myPkgFirstPart    "com")
-set(myPkg             "${myPkgFirstPart}/springrts/ai")
+set(myName               "Java")
+set(myDir                "${CMAKE_CURRENT_SOURCE_DIR}")
+set(myNativeSourceDirRel "src/native")
+set(myJavaSourceDirRel   "src/java")
+set(myPkgFirstPart       "com")
+set(myPkg                "${myPkgFirstPart}/springrts/ai")
 
 
 # Check if the user wants to compile the interface
@@ -151,6 +152,7 @@ if    (AIINTERFACES_JAVA)
 	if    (NOT JAVA_FOUND)
 		set(JAVA_FIND_QUIETLY TRUE)
 		FIND_PACKAGE(JavaExtended) # Note: this is not the CMake built-in FindJava
+		SetGlobal(JAVA_COMPILE_FLAG_CONDITIONAL ${JAVA_COMPILE_FLAG_CONDITIONAL})
 	endif (NOT JAVA_FOUND)
 	if    (MINGW)
 		set (JNI_FOUND TRUE)
@@ -171,6 +173,7 @@ if    (AIINTERFACES_JAVA)
 	endif (MINGW)
 endif (AIINTERFACES_JAVA)
 
+
 # Check if dependencies of the interface are met
 if    (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
 	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
@@ -179,19 +182,22 @@ else  (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EX
 	message("warning: Java AI Interface will not be built!")
 endif (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
 
+
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
-	set(myTarget  "${myName}-AI-Interface")
+	set(myTarget  "${myName}-AIInterface")
 	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	MakeAbsolute(myNativeSourceDir "${myDir}" "${myNativeSourceDirRel}")
+	MakeAbsolute(myJavaSourceDir   "${myDir}" "${myJavaSourceDirRel}")
 
-	AIInterfaceMessage(STATUS "Found ${myTarget} ${myVersion}")
+	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
 
 	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
 
 	# build the native part
-	aux_source_directory(${myNativeSourceDir} myNativeSources)
+	GetNativeSourcesRecursive(myNativeSources ${myNativeSourceDir} "")
 	if    (MINGW)
 		# It is important that this is used instead of the one
 		# from the installed JDK, as the jni_md.h is in here too,

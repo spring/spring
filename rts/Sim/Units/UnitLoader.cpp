@@ -180,7 +180,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->floatOnWater =
 		ud->floater || (ud->movedata && ((ud->movedata->moveType == MoveData::Hover_Move) ||
 		                                 (ud->movedata->moveType == MoveData::Ship_Move)));
-	unit->maxSpeed = ud->speed / 30.0f;
+	unit->maxSpeed = ud->speed / GAME_SPEED;
 	unit->decloakDistance = ud->decloakDistance;
 
 	unit->flankingBonusMode        = ud->flankingBonusMode;
@@ -241,8 +241,9 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		mt->turnRate = ud->turnRate;
 		mt->baseTurnRate = ud->turnRate;
 
-		if (!mt->accRate) {
-			LogObject() << "acceleration of " << ud->name.c_str() << " is zero!!\n";
+		if (mt->accRate <= 0.0f) {
+			LogObject() << "acceleration of unit-type " << ud->name.c_str() << " is zero or negative!\n";
+			mt->accRate = 0.01f;
 		}
 
 		mt->accRate = ud->maxAcc;
@@ -257,11 +258,11 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		unit->moveType = mt;
 
 		// Ground-mobility
-		unit->mobility = new MoveData(ud->movedata, GAME_SPEED);
+		unit->mobility = new MoveData(ud->movedata);
 
 	} else if (ud->canfly) {
 		// Air-mobility
-		unit->mobility = new MoveData(ud->movedata, GAME_SPEED);
+		unit->mobility = new MoveData(ud->movedata);
 
 		if (!unit->beingBuilt) {
 			// otherwise set this when finished building instead

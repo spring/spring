@@ -4,6 +4,8 @@
 // SJ's SunParser class by Tobi. Slightly modified by AF for AI usage.
 // Uses the GPL V2 licence
 
+#include <limits.h>
+
 #include <boost/spirit.hpp>
 #include <boost/spirit/error_handling.hpp>
 #include <boost/scoped_array.hpp>

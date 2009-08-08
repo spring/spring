@@ -45,6 +45,10 @@ void CModInfo::Init(const char* modname)
 	}
 	const LuaTable root = parser.GetRoot();
 
+	// determine if bombers are allowed to leave map boundaries
+	const LuaTable movementTbl = root.SubTable("movement");
+	allowAirPlanesToLeaveMap = movementTbl.GetBool("allowAirPlanesToLeaveMap", true);
+
 	// determine whether the modder allows the user to use team coloured nanospray
 	const LuaTable nanosprayTbl = root.SubTable("nanospray");
 	allowTeamColors = nanosprayTbl.GetBool("allow_team_colors", true);

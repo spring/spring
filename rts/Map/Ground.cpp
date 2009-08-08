@@ -128,7 +128,10 @@ float CGround::LineGroundCol(float3 from, float3 to)
 	if (from.z > float3::maxzpos && to.z < float3::maxzpos) {
 		// a special case since the camera in overhead mode can often do this
 		float3 dir = to - from;
-		dir.Normalize();
+
+		if (dir != ZeroVector) {
+			dir.Normalize();
+		}
 
 		savedLength = -(from.z - float3::maxzpos) / dir.z;
 		from += dir * savedLength;

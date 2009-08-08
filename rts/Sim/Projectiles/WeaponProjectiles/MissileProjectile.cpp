@@ -260,9 +260,11 @@ void CMissileProjectile::Update(void)
 			dir = dif;
 		} else {
 			dif2 -= (dir * (dif2.dot(dir)));
-			dif2.Normalize();
+			if (dif2 != ZeroVector)
+				dif2.Normalize();
 			dir += (dif2 * tracking);
-			dir.Normalize();
+			if (dir != ZeroVector)
+				dir.Normalize();
 		}
 
 		speed = dir * curSpeed;

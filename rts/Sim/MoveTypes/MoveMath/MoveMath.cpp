@@ -57,7 +57,8 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare, co
 
 	float3 flatNorm = readmap->facenormals[(xSquare + zSquare * gs->mapx) * 2];
 	flatNorm.y = 0;
-	flatNorm.Normalize();
+	if (flatNorm.x != 0 || flatNorm.y != 0)
+		flatNorm.Normalize();
 	float moveSlope = -moveDir.dot(flatNorm);
 	float typemod = moveinfo->terrainType2MoveFamilySpeed[readmap->typemap[square]][moveData.moveFamily];
 
@@ -194,9 +195,9 @@ bool CMoveMath::IsNonBlocking(const MoveData& moveData, const CSolidObject* obst
 			return ((oy - oh) > gy);
 		} else {
 			if (iss) {
-				return ((oy + oh) > 0.0f);
+				return (((oy + oh) >  0.0f) && !oss);
 			} else {
-				return (((oy + oh) <= 0.0f) || oss);
+				return (((oy + oh) <= 0.0f) ||  oss);
 			}
 		}
 	}

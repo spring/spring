@@ -3110,7 +3110,7 @@ AAIGroup* AAIExecute::GetClosestGroupForDefence(UnitType group_type, float3 *pos
 					{
 						group_pos = (*group)->GetGroupPos();
 
-						my_rating = (*group)->avg_speed / ( 1.0 + fastmath::sqrt((pos->x - group_pos.x) * (pos->x - group_pos.x)  + (pos->z - group_pos.z) * (pos->z - group_pos.z) ));
+						my_rating = (*group)->avg_speed / ( 1.0 + fastmath::apxsqrt((pos->x - group_pos.x) * (pos->x - group_pos.x)  + (pos->z - group_pos.z) * (pos->z - group_pos.z) ));
 
 						if(my_rating > best_rating)
 						{
@@ -3301,7 +3301,7 @@ void AAIExecute::GetFallBackPos(float3 *pos, int unit_id, float range)
 			// get distance to enemy
 			temp_pos = cb->GetUnitPos(map->units_in_los[k]);
 
-			dist = fastmath::sqrt( (temp_pos.x - unit_pos.x) * (temp_pos.x - unit_pos.x) - (temp_pos.z - unit_pos.z) * (temp_pos.z - unit_pos.z) );
+			dist = fastmath::apxsqrt( (temp_pos.x - unit_pos.x) * (temp_pos.x - unit_pos.x) - (temp_pos.z - unit_pos.z) * (temp_pos.z - unit_pos.z) );
 
 			// get dir from unit to enemy
 			temp_pos.x -= unit_pos.x;

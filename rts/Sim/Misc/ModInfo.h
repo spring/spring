@@ -21,6 +21,9 @@ public:
 
 	bool allowTeamColors;
 
+	// Movement behaviour
+	bool allowAirPlanesToLeaveMap;
+
 	// Build behaviour
 	/// Should constructions without builders decay?
 	bool constructionDecay;

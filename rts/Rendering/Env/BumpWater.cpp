@@ -1314,7 +1314,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
-	unitDrawer->DrawCloakedUnits(false,true);
+	unitDrawer->DrawCloakedUnits(false);
 	featureHandler->DrawFadeFeatures(false,true);
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();

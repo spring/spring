@@ -25,8 +25,8 @@ class IGlobalAI;
 
 class CAIAI {
 public:
-	CAIAI();
-	CAIAI(int team, IGlobalAI* ai);
+	CAIAI(int, IGlobalAI*);
+	virtual ~CAIAI();
 
 	/**
 	 * Through this function, the AI receives events from the engine.
@@ -41,7 +41,7 @@ public:
 	 */
 	virtual int handleEvent(int topic, const void* data);
 
-private:
+protected:
 	int team;
 	IGlobalAI* ai;
 };

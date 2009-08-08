@@ -35,6 +35,9 @@
 */
 CDynWater::CDynWater(void)
 {
+	if (!FBO::IsSupported())
+		throw content_error("DynWater Error: missing FBO support");
+
 	lastWaveFrame=0;
 	noWakeProjectiles=true;
 	firstDraw=true;
@@ -468,7 +471,7 @@ void CDynWater::DrawReflection(CGame* game)
 
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
-	unitDrawer->DrawCloakedUnits(false,true);
+	unitDrawer->DrawCloakedUnits(false);
 	featureHandler->DrawFadeFeatures(false,true);
 
 	ph->Draw(true);
@@ -524,7 +527,7 @@ void CDynWater::DrawRefraction(CGame* game)
 	drawReflection=true;
 	unitDrawer->Draw(false,true);
 	featureHandler->Draw();
-	unitDrawer->DrawCloakedUnits(true,true);
+	unitDrawer->DrawCloakedUnits(true);
 	featureHandler->DrawFadeFeatures(true,true); // FIXME: Make it fade out correctly without "noAdvShading"
 	drawReflection=false;
 	ph->Draw(false,true);

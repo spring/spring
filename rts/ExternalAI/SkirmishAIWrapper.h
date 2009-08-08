@@ -60,7 +60,7 @@ public:
 	virtual void UnitCreated(int unitId, int builderId);
 	virtual void UnitFinished(int unitId);
 	virtual void UnitDestroyed(int unitId, int attackerUnitId);
-	virtual void UnitDamaged(int unitId, int attackerUnitId, float damage, const float3& dir);
+	virtual void UnitDamaged(int unitId, int attackerUnitId, float damage, const float3& dir, int weaponDefId, bool paralyzer);
 	virtual void UnitMoveFailed(int unitId);
 	virtual void UnitGiven(int unitId, int oldTeam, int newTeam);
 	virtual void UnitCaptured(int unitId, int oldTeam, int newTeam);
@@ -69,7 +69,7 @@ public:
 	virtual void EnemyEnterRadar(int unitId);
 	virtual void EnemyLeaveRadar(int unitId);
 	virtual void EnemyDestroyed(int enemyUnitId, int attackerUnitId);
-	virtual void EnemyDamaged(int enemyUnitId, int attackerUnitId, float damage, const float3& dir);
+	virtual void EnemyDamaged(int enemyUnitId, int attackerUnitId, float damage, const float3& dir, int weaponDefId, bool paralyzer);
 	virtual void Update(int frame);
 	virtual void GotChatMsg(const char* msg, int fromPlayerId);
 	virtual void WeaponFired(int unitId, int weaponDefId);
@@ -94,15 +94,15 @@ public:
 	virtual int HandleEvent(int topic, const void* data) const;
 
 	virtual void Init();
-private:
-	virtual void Release();
+	/// @see SReleaseEvent in Interface/AISEvents.h
+	virtual void Release(int reason = 0 /* = unspecified */);
 
 private:
 	int teamId;
 	bool cheatEvents;
 
 	ISkirmishAI* ai;
-	bool initialized;
+	bool initialized, released;
 	CGlobalAICallback* callback;
 	SSkirmishAICallback* c_callback;
 	SkirmishAIKey key;

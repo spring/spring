@@ -7,6 +7,8 @@
 #ifndef FLOAT3_H
 #define FLOAT3_H
 
+#include <cassert>
+
 #include "lib/streflop/streflop_cond.h"
 #include "creg/creg_cond.h"
 #include "ExternalAI/Interface/SAIFloat3.h"
@@ -61,7 +63,7 @@ public:
 	 * a const context
 	 */
 	inline float3& operator= (const SAIFloat3& sAIFloat3) {
-		
+
 		x = sAIFloat3.x;
 		y = sAIFloat3.y;
 		z = sAIFloat3.z;
@@ -395,7 +397,8 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length() const{
-		return (float) math::sqrt(x*x+y*y+z*z);
+		//assert(x!=0.f || y!=0.f || z!=0.f);
+		return (float) math::sqrt(SqLength());
 	}
 
 	/**
@@ -407,7 +410,25 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length2D() const {
-		return (float) math::sqrt(x * x + z * z);
+		//assert(x!=0.f || y!=0.f || z!=0.f);
+		return (float) math::sqrt(SqLength2D());
+	}
+
+	/**
+	 * @brief normalizes the vector using one of Normalize implementations
+	 * @return pointer to self
+	 *
+	 * Normalizes the vector by dividing each
+	 * x/y/z component by the vector's length.
+	 */
+	inline float3& Normalize() {
+#if defined(__SUPPORT_SNAN__)
+		assert(x!=0.f || y!=0.f || z!=0.f);
+#else
+		if (x != 0 || y != 0 || z != 0)
+#endif
+		*this *= fastmath::isqrt2(SqLength());
+		return *this;
 	}
 
 	/**
@@ -421,32 +442,46 @@ public:
 	 * Measured compile time hit: statistically insignificant (1%)
 	 */
 	inline float3& ANormalize() {
-		float invL = fastmath::isqrt(SqLength());
-		if (invL != 0.f) {
-			x *= invL;
-			y *= invL;
-			z *= invL;
-		}
+#if defined(__SUPPORT_SNAN__)
+		assert(x!=0.f || y!=0.f || z!=0.f);
+#else
+		if (x != 0 || y != 0 || z != 0)
+#endif
+		*this *= fastmath::isqrt(SqLength());
 		return *this;
 	}
 
 	/**
-	 * @brief normalizes the vector
+	 * @brief normalizes the vector precisely
 	 * @return pointer to self
 	 *
 	 * Normalizes the vector by dividing each
 	 * x/y/z component by the vector's length.
 	 */
-	inline float3& Normalize() {
-		const float L = math::sqrt(x * x + y * y + z * z);
-		if (L != 0.f) {
-			const float invL = (float) 1.f / L;
-			x *= invL;
-			y *= invL;
-			z *= invL;
-		}
+	inline float3& PrecNormalize() {
+#if defined(__SUPPORT_SNAN__)
+		assert(x!=0.f || y!=0.f || z!=0.f);
+#else
+		if (x != 0 || y != 0 || z != 0)
+#endif
+		*this *= math::isqrt(SqLength());
 		return *this;
 	}
+
+
+	/**
+	 * @brief normalizes the vector safely (check for *this == ZeroVector)
+	 * @return pointer to self
+	 *
+	 * Normalizes the vector by dividing each
+	 * x/y/z component by the vector's length.
+	 */
+	inline float3& SafeNormalize() {
+		if (x != 0 || y != 0 || z != 0)
+			*this *= math::isqrt(SqLength());
+		return *this;
+	}
+
 
 	/**
 	 * @brief length squared
@@ -519,7 +554,7 @@ public:
 
 	bool IsInBounds() const; //!< Check if this vector is in bounds without clamping x and z
 	bool CheckInBounds(); //!< Check if this vector is in bounds and clamp x and z if not
-	
+
 	SAIFloat3 toSAIFloat3() const;
 
 	float x; ///< x component

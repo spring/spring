@@ -1,45 +1,40 @@
-#include "StdAfx.h"
 #include "Archive7Zip.h"
+
 #include <algorithm>
 #include <stdexcept>
 #include <string.h>
+
+extern "C" {
+#include "lib/7z/Types.h"
+#include "lib/7z/Archive/7z/7zAlloc.h"
+#include "lib/7z/Archive/7z/7zExtract.h"
+#include "lib/7z/7zCrc.h"
+}
+
 #include "Util.h"
 #include "mmgr.h"
+#include "LogOutput.h"
 
-
-// Most of this code is taken from 7zMain.c
-
-SZ_RESULT SzFileReadImp(void *object, void *buffer, size_t size, size_t *processedSize)
-{
-	CFileInStream *s = (CFileInStream *)object;
-	size_t processedSizeLoc = fread(buffer, 1, size, s->File);
-	if (processedSize != 0)
-		*processedSize = processedSizeLoc;
-	return SZ_OK;
-}
-
-SZ_RESULT SzFileSeekImp(void *object, CFileSize pos)
-{
-	CFileInStream *s = (CFileInStream *)object;
-	int res = fseek(s->File, (long)pos, SEEK_SET);
-	if (res == 0)
-		return SZ_OK;
-	return SZE_FAIL;
-}
-
-CArchive7Zip::CArchive7Zip(const std::string& name):
+CArchive7Zip::CArchive7Zip(const std::string& name) :
 	CArchiveBuffered(name),
 	curSearchHandle(1),
 	isOpen(false)
 {
-	SZ_RESULT res;
+	blockIndex = 0xFFFFFFFF;
+	outBuffer = NULL;
+	outBufferSize = 0;
 
-	archiveStream.File = fopen(name.c_str(), "rb");
-	if (archiveStream.File == 0)
+	if (InFile_Open(&archiveStream.file, name.c_str()))
+	{
+		//error
 		return;
+	}
 
-	archiveStream.InStream.Read = SzFileReadImp;
-	archiveStream.InStream.Seek = SzFileSeekImp;
+	FileInStream_CreateVTable(&archiveStream);
+	LookToRead_CreateVTable(&lookStream, False);
+
+	lookStream.realStream = &archiveStream.s;
+	LookToRead_Init(&lookStream);
 
 	allocImp.Alloc = SzAlloc;
 	allocImp.Free = SzFree;
@@ -47,26 +42,59 @@ CArchive7Zip::CArchive7Zip(const std::string& name):
 	allocTempImp.Alloc = SzAllocTemp;
 	allocTempImp.Free = SzFreeTemp;
 
-	InitCrcTable();
-	SzArDbExInit(&db);
-	res = SzArchiveOpen(&archiveStream.InStream, &db, &allocImp, &allocTempImp);
-	if (res != SZ_OK)
-		return;
+	CrcGenerateTable();
 
-	isOpen = true;
+	SzArEx_Init(&db);
+	SRes res;
+	res = SzArEx_Open(&db, &lookStream.s, &allocImp, &allocTempImp);
+	if (res == SZ_OK)
+	{
+		isOpen = true;
+	}
+	else
+	{
+		isOpen = false;
+		std::string error;
+		switch (res)
+		{
+			case SZ_ERROR_FAIL:
+				error = "Extracting faield";
+				break;
+			case SZ_ERROR_CRC:
+				error = "CRC error (archive corrupted?)";
+				break;
+			case SZ_ERROR_INPUT_EOF:
+				error = "Unexpected end of file (trunkated?)";
+				break;
+			case SZ_ERROR_MEM:
+				error = "Out of memory";
+				break;
+			case SZ_ERROR_UNSUPPORTED:
+				error = "Unsupported archive";
+				break;
+			case SZ_ERROR_NO_ARCHIVE:
+				error = "Archive not found";
+				break;
+			default:
+				error = "Unknown error";
+				break;
+		}
+		LogObject() << "Error opening " << name << ": " << error;
+		return;
+	}
 
 	// Get contents of archive and store name->int mapping
-	for (unsigned i = 0; i < db.Database.NumFiles; ++i) {
-		CFileItem* fi = db.Database.Files + i;
-		if ((fi->Size >= 0) && !fi->IsDirectory) {
-			std::string name = fi->Name;
-			//SetSlashesForwardToBack(name);
+	for (unsigned i = 0; i < db.db.NumFiles; ++i)
+	{
+		CSzFileItem *f = db.db.Files + i;
+		if ((f->Size >= 0) && !f->IsDir) {
+			std::string name = f->Name;
 
 			FileData fd;
 			fd.origName = name;
 			fd.fp = i;
-			fd.size = fi->Size;
-			fd.crc = (fi->Size > 0) ? fi->FileCRC : 0;
+			fd.size = f->Size;
+			fd.crc = (f->Size > 0) ? f->FileCRC : 0;
 
 			StringToLowerInPlace(name);
 			fileData[name] = fd;
@@ -76,10 +104,12 @@ CArchive7Zip::CArchive7Zip(const std::string& name):
 
 CArchive7Zip::~CArchive7Zip(void)
 {
-	if (archiveStream.File) {
-		SzArDbExFree(&db, allocImp.Free);
-		fclose(archiveStream.File);
+	IAlloc_Free(&allocImp, outBuffer);
+	if (isOpen)
+	{
+		File_Close(&archiveStream.file);
 	}
+	SzArEx_Free(&db, &allocImp);
 }
 
 unsigned int CArchive7Zip::GetCrc32 (const std::string& fileName)
@@ -106,14 +136,9 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 	size_t offset;
 	size_t outSizeProcessed;
 
-	SZ_RESULT res;
+	SRes res;
 
-	// We don't really support solid archives anyway, so these can be reset for each file
-	UInt32 blockIndex = 0xFFFFFFFF; // it can have any value before first call (if outBuffer = 0)
-	Byte *outBuffer = 0; // it must be 0 before first call for each new archive.
-	size_t outBufferSize = 0;  // it can have any value before first call (if outBuffer = 0)
-
-	res = SzExtract(&archiveStream.InStream, &db, fd.fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
+	res = SzAr_Extract(&db, &lookStream.s, fd.fp, &blockIndex, &outBuffer, &outBufferSize, &offset, &outSizeProcessed, &allocImp, &allocTempImp);
 
 	ABOpenFile_t* of = NULL;
 	if (res == SZ_OK) {
@@ -125,20 +150,10 @@ ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
 		memcpy(of->data, outBuffer + offset, outSizeProcessed);
 	}
 
-	allocImp.Free(outBuffer);
-
 	if (res != SZ_OK)
 		return NULL;
 
 	return of;
-}
-
-void CArchive7Zip::SetSlashesForwardToBack(std::string& name)
-{
-	for (unsigned int i = 0; i < name.length(); ++i) {
-		if (name[i] == '/')
-			name[i] = '\\';
-	}
 }
 
 int CArchive7Zip::FindFiles(int cur, std::string* name, int* size)

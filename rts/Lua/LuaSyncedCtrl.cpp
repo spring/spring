@@ -808,17 +808,19 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 		return 0;
 	}
 
-
 	if (!FullCtrl() && (CtrlTeam() != teamID)) {
 		luaL_error(L, "CreateUnit(): bad team %d", teamID);
 		return 0;
 	}
 
+
+	const bool build = lua_toboolean(L, 7);
+
 	if (!uh->CanBuildUnit(unitDef, teamID)) {
 		return 0; // unit limit reached
 	}
 
-	// FIXME -- allow specifying the 'build' and 'builder' parameters?
+	// FIXME -- allow specifying the 'builder' parameter?
 
 	if (inCreateUnit) {
 		luaL_error(L, "CreateUnit(): recursion is not permitted");
@@ -827,8 +829,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	inCreateUnit = true;
 	ASSERT_SYNCED_FLOAT3(pos);
 	ASSERT_SYNCED_PRIMITIVE((int)facing);
-	CUnit* unit = unitLoader.LoadUnit(unitDef, pos, teamID,
-	                                  false, facing, NULL);
+	CUnit* unit = unitLoader.LoadUnit(unitDef, pos, teamID, build, facing, NULL);
 	inCreateUnit = false;
 
 	if (unit) {

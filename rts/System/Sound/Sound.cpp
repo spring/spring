@@ -6,6 +6,9 @@
 #include <cmath>
 #include <alc.h>
 #include <boost/cstdint.hpp>
+#if BOOST_VERSION < 103500
+#include <SDL_timer.h>
+#endif
 
 #include "SoundSource.h"
 #include "SoundBuffer.h"
@@ -29,7 +32,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 128);
-	pitchAdjust = configHandler->Get("PitchAdjust", true);
+	pitchAdjust = configHandler->Get("PitchAdjust", false);
 
 	masterVolume = configHandler->Get("snd_volmaster", 60) * 0.01f;
 	Channels::General.SetVolume(configHandler->Get("snd_volgeneral", 100 ) * 0.01f);
@@ -97,8 +100,6 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
 	sounds.push_back(empty);
 
-	LoadSoundDefs("gamedata/sounds.lua");
-
 	if (maxSounds > 0)
 		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
 
@@ -109,7 +110,11 @@ CSound::~CSound()
 {
 	if (!sources.empty())
 	{
+#if BOOST_VERSION >= 103500
 		soundThread->interrupt();
+#else
+		soundThreadRunning = false;
+#endif
 		soundThread->join();
 		delete soundThread;
 		soundThread = 0;
@@ -314,8 +319,10 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 void CSound::StartThread(int maxSounds)
 {
+#if BOOST_VERSION >= 103500
 	try
 	{
+#endif
 		{
 			boost::mutex::scoped_lock lck(soundMutex);
 
@@ -329,8 +336,7 @@ void CSound::StartThread(int maxSounds)
 				}
 				else
 				{
-					maxSounds = i-1;
-					configHandler->Set("MaxSounds", maxSounds);
+					maxSounds = std::max(i-1,0);
 					LogObject(LOG_SOUND) << "Your hardware/driver can not handle more than " << maxSounds << " soundsources";
 					delete thenewone;
 					break;
@@ -343,17 +349,25 @@ void CSound::StartThread(int maxSounds)
 
 			alListenerf(AL_GAIN, masterVolume);
 		}
+		configHandler->Set("MaxSounds", maxSounds);
 
-		while (true) {
+		soundThreadRunning = true;
+		while (soundThreadRunning) {
+#if BOOST_VERSION >= 103500
 			boost::this_thread::sleep(boost::posix_time::millisec(50)); // sleep
+#else
+			SDL_Delay(50);
+#endif
 			boost::mutex::scoped_lock lck(soundMutex); // lock
 			Update(); // call update
 		}
+#if BOOST_VERSION >= 103500
 	}
 	catch(boost::thread_interrupted const&)
 	{
 		// do cleanup here
 	}
+#endif
 }
 
 void CSound::Update()

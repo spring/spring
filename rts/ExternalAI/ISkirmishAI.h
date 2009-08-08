@@ -26,8 +26,8 @@
  */
 class ISkirmishAI {
 public:
+	virtual ~ISkirmishAI() {}
 	/**
-	 * Inherited form ISkirmishAILibrary.
 	 * CAUTION: takes C AI Interface events, not engine C++ ones!
 	 */
 	virtual int HandleEvent(int topic, const void* data) const = 0;

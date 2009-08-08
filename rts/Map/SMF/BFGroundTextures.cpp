@@ -4,7 +4,9 @@
 
 #include "BFGroundTextures.h"
 #include "FileSystem/FileHandler.h"
+#include "GlobalUnsynced.h"
 #include "Game/Camera.h"
+#include "Game/Game.h"
 #include "LogOutput.h"
 #include "mapfile.h"
 #include "Platform/errorhandler.h"
@@ -107,9 +109,8 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	for (int y = 0; y < numBigTexY; ++y) {
 		for (int x = 0; x < numBigTexX; ++x) {
 			GroundSquare* square = &squares[y * numBigTexX + x];
-			square->texLevel = 2;
-			square->lastUsed = -100;
-			LoadSquare(x, y, 2);
+			square->lastUsed = 1;
+			LoadSquare(x, y, 3);
 		}
 	}
 }
@@ -134,7 +135,9 @@ void CBFGroundTextures::SetTexture(int x, int y)
 {
 	GroundSquare* square = &squares[y * numBigTexX + x];
 	glBindTexture(GL_TEXTURE_2D, square->texture);
-	square->lastUsed = gs->frameNum;
+	if (game->GetDrawMode() == CGame::normalDraw) {
+		square->lastUsed = gu->drawFrame;
+	}
 }
 
 inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
@@ -142,7 +145,7 @@ inline bool CBFGroundTextures::TexSquareInView(int btx, int bty) {
 	static const int heightDataX = gs->mapx + 1;
 	static const int bigTexW = (gs->mapx << 3) / numBigTexX;
 	static const int bigTexH = (gs->mapy << 3) / numBigTexY;
-	static const float bigTexSquareRadius = fastmath::sqrt(float(bigTexW * bigTexW + bigTexH * bigTexH));
+	static const float bigTexSquareRadius = fastmath::apxsqrt(float(bigTexW * bigTexW + bigTexH * bigTexH));
 
 	const int x = btx * bigTexW + (bigTexW >> 1);
 	const int y = bty * bigTexH + (bigTexH >> 1);
@@ -162,18 +165,18 @@ void CBFGroundTextures::DrawUpdate(void)
 			GroundSquare* square = &squares[y * numBigTexX + x];
 
 			if (!TexSquareInView(x, y)) {
-				if (square->texLevel != 2 && square->lastUsed < gs->frameNum - 120) {
+				if ((square->texLevel < 3) && (gu->drawFrame - square->lastUsed > 120)) {
 					// `unload` texture (= load lowest mipmap)
-					// if the square wasn't visible for 4sec
+					// if the square wasn't visible for 120 vframes
 					glDeleteTextures(1, &square->texture);
-					LoadSquare(x, y, 2);
+					LoadSquare(x, y, 3);
 				}
 				continue;
 			}
 
 			float dx = cam2->pos.x - x * bigSquareSize * SQUARE_SIZE - (SQUARE_SIZE << 6);
 			dx = max(0.0f, float(fabs(dx) - (SQUARE_SIZE << 6)));
-			float dist = fastmath::sqrt(dx * dx + dy * dy);
+			float dist = fastmath::apxsqrt(dx * dx + dy * dy);
 
 			float wantedLevel = dist / 1000;
 
@@ -231,7 +234,6 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 
 	glGenTextures(1, &square->texture);
 	glBindTexture(GL_TEXTURE_2D, square->texture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	if (GLEW_EXT_texture_edge_clamp) {
@@ -240,6 +242,11 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	}
 	if (map->anisotropy != 0.0f)
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, map->anisotropy);
+	if (level<2) {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1);
+	} else {
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 0.5f);
+	}
 
 	if (usedPBO) {
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);

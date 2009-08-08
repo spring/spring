@@ -104,7 +104,9 @@ IF( NOT DEFINED ENV{JDK_HOME} AND
 
 				# check if something went wrong
 				IF( NOT java_link_error )
-					# if not set JAVA_RUNTIME to the dereferenced link
+					# if we found the JRE, switch to the JDK
+					STRING( REGEX REPLACE "jre/bin/java$" "bin/java" java_bin "${java_bin}" )
+					# if not, set JAVA_RUNTIME to the dereferenced link
 					SET( JAVA_RUNTIME "${java_bin}" )
 				ENDIF()
 			ENDIF()

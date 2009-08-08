@@ -70,8 +70,13 @@ void CWind::Update()
 		float mod=status/900.0f;
 		curWind=oldWind*(1.0-mod)+newWind*mod;
 		curStrength=curWind.Length();
-		curDir=curWind;
-		curDir.Normalize();
+
+		if (curWind == ZeroVector) {
+			curDir = UpVector;
+		} else {
+			curDir=curWind;
+			curDir.Normalize();
+		}
 		status++;
 	} else if(status==901) {
 		status=0;

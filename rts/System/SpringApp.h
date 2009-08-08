@@ -6,7 +6,7 @@
 
 class BaseCmd;
 class CGameController;
-
+union SDL_Event;
 /**
  * @brief Spring App
  *
@@ -109,6 +109,7 @@ protected:
 	int lastRequiredDraw;
 
 private:
+	bool MainEventHandler(const SDL_Event& ev);
 };
 
 /**
