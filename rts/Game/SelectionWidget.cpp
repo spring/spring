@@ -29,6 +29,7 @@ public:
 		
 		agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(this);
 		list = new agui::List(modWindowLayout);
+		list->FinishSelection.connect(boost::bind(&ListSelectWnd::SelectButton, this));
 		agui::Button* select = new agui::Button("Select", modWindowLayout);
 		select->Clicked.connect(boost::bind(&ListSelectWnd::SelectButton, this));
 		select->SetSize(0.0f, 0.04f, true);

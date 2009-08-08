@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include <boost/function.hpp>
+#include <boost/signal.hpp>
 
 #include "GuiElement.h"
 
@@ -26,7 +26,6 @@ public:
 	std::string GetTooltip(int x,int y) { return tooltip; }
 
 	void AddItem(const std::string& name,const std::string& description);
-	int place;
 	std::vector<std::string> items;
 	std::string name;
 
@@ -38,6 +37,8 @@ public:
 	int cancelPlace;
 	std::string tooltip;
 
+	boost::signal<void (void)> FinishSelection; // Return or Double-Click
+
 private:
 	bool Filter(bool reset);
 	void UpOne();
@@ -45,6 +46,9 @@ private:
 	void UpPage();
 	void DownPage();
 	bool MouseUpdate(int x, int y);
+
+	unsigned clickedTime;
+	int place;
 
 	bool activeMousePress;
 
