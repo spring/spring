@@ -31,7 +31,7 @@
 #include "aGui/LineEdit.h"
 #include "aGui/TextElement.h"
 #include "aGui/Window.h"
-#include "aGui/glList.h"
+#include "aGui/List.h"
 #include "aGui/Picture.h"
 
 using std::string;
@@ -155,7 +155,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 		Button* quit = new Button("Quit", menu);
 		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
 	}
-	
+
 	if (!mySettings->isHost) {
 		ConnectWindow(true);
 	}
