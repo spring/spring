@@ -11,6 +11,7 @@ class CSkirmishAITestScript : public CScript
 {
 	SkirmishAIKey key;
 	std::map<std::string, std::string> options;
+	static const int player_Id = 0;
 	static const int player_teamId = 0;
 	static const int skirmishAI_teamId = 1;
 public:
