@@ -401,14 +401,19 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	gameData.reset(new GameData(packet));
 
 	CGameSetup* temp = new CGameSetup();
-	if (temp->Init(gameData->GetSetup()))
-	{
+
+	if (temp->Init(gameData->GetSetup())) {
+		if (settings->isHost) {
+			const std::string& setupTextStr = gameData->GetSetup();
+			std::fstream setupTextFile("_script.txt", std::ios::out);
+
+			setupTextFile.write(setupTextStr.c_str(), setupTextStr.size());
+			setupTextFile.close();
+		}
 		gameSetup = const_cast<const CGameSetup*>(temp);
 		gs->LoadFromSetup(gameSetup);
 		CPlayer::UpdateControlledTeams();
-	}
-	else
-	{
+	} else {
 		throw content_error("Server sent us incorrect script");
 	}
 
