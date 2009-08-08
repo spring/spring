@@ -397,7 +397,6 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length() const{
-		//assert(x!=0.f || y!=0.f || z!=0.f);
 		return (float) math::sqrt(SqLength());
 	}
 
@@ -410,7 +409,6 @@ public:
 	 * square root for pythagorean theorem)
 	 */
 	inline float Length2D() const {
-		//assert(x!=0.f || y!=0.f || z!=0.f);
 		return (float) math::sqrt(SqLength2D());
 	}
 
@@ -422,12 +420,13 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& Normalize() {
+		const float sqLength = SqLength();
 #if defined(__SUPPORT_SNAN__)
-		assert(x!=0.f || y!=0.f || z!=0.f);
+		assert(sqLength != 0.f);
 #else
-		if (x != 0 || y != 0 || z != 0)
+		if (sqLength != 0)
 #endif
-		*this *= fastmath::isqrt2(SqLength());
+		*this *= fastmath::isqrt2(sqLength);
 		return *this;
 	}
 
@@ -442,12 +441,13 @@ public:
 	 * Measured compile time hit: statistically insignificant (1%)
 	 */
 	inline float3& ANormalize() {
+		const float sqLength = SqLength();
 #if defined(__SUPPORT_SNAN__)
-		assert(x!=0.f || y!=0.f || z!=0.f);
+		assert(sqLength != 0.f);
 #else
-		if (x != 0 || y != 0 || z != 0)
+		if (sqLength != 0)
 #endif
-		*this *= fastmath::isqrt(SqLength());
+		*this *= fastmath::isqrt(sqLength);
 		return *this;
 	}
 
@@ -459,12 +459,13 @@ public:
 	 * x/y/z component by the vector's length.
 	 */
 	inline float3& PrecNormalize() {
+		const float sqLength = SqLength();
 #if defined(__SUPPORT_SNAN__)
-		assert(x!=0.f || y!=0.f || z!=0.f);
+		assert(sqLength != 0.f);
 #else
-		if (x != 0 || y != 0 || z != 0)
+		if (sqLength != 0)
 #endif
-		*this *= math::isqrt(SqLength());
+		*this *= math::isqrt(sqLength);
 		return *this;
 	}
 
