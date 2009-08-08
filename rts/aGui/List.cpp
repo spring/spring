@@ -71,27 +71,17 @@ bool List::MousePress(int x, int y, int button)
 
 void List::MouseMove(int x, int y, int dx,int dy, int button)
 {
-	if (button != SDL_BUTTON_LEFT || !activeMousePress)
-		return;
-
-	MouseUpdate(x, y);
+	mx = PixelToGlX(x);
+	my = PixelToGlY(y);
 }
 
 void List::MouseRelease(int x, int y, int button)
 {
-	if (button != SDL_BUTTON_LEFT || !activeMousePress)
-		return;
-
 	activeMousePress = false;
-	if (!MouseUpdate(x, y) && cancelPlace >= 0) { // make sure place is up to date
-		place = cancelPlace;
-	}
 }
 
 bool List::MouseUpdate(int x, int y)
 {
-	mx = PixelToGlX(x);
-	my = PixelToGlY(y);
 
 	int nCurIndex = 0; // The item we're on
 	int nDrawOffset = 0; // The offset to the first draw item
