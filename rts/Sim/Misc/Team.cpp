@@ -123,7 +123,6 @@ CTeam::CTeam()
 : isDead(false),
   gaia(false),
   lineageRoot(-1),
-  isAI(false),
   luaAI(""),
 //  skirmishAISpecifier(SSAIKey()),
   metal(200000),

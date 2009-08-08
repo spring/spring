@@ -202,6 +202,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 		if (setup->GetSkirmishAIDataForTeam(i))
 		{
 			teams[i].active = true;
+			teams[i].isAI = true;
 		}
 	}
 
@@ -1304,7 +1305,7 @@ void CGameServer::CheckForGameEnd()
 	int numActiveAllyTeams = 0;
 	std::vector<int> numActiveTeams(teams.size(), 0); // active teams per ally team
 
-	for (size_t a = 0; a < setup->teamStartingData.size(); ++a)
+	for (size_t a = 0; a < teams.size(); ++a)
 	{
 		bool hasPlayer = false;
 		for (size_t b = 0; b < players.size(); ++b) {
@@ -1312,8 +1313,8 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(a);
-		if (sad) {
+
+		if (teams[a].isAI) {
 			hasPlayer = true;
 		}
 

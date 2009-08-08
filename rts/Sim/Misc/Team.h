@@ -64,7 +64,6 @@ public:
 	bool gaia;
 	int lineageRoot;
 
-	bool isAI;
 	std::string luaAI;
 	SkirmishAIKey skirmishAIKey;
 	std::map<std::string, std::string> skirmishAIOptions;
