@@ -13,7 +13,7 @@ namespace agui
 class Window;
 class VerticalLayout;
 class LineEdit;
-class CglList;
+class List;
 class Picture;
 }
 
@@ -53,7 +53,7 @@ private:
 	agui::VerticalLayout* menu;
 	agui::LineEdit* address;
 	agui::Window* connectWnd;
-	agui::CglList* list;
+	agui::List* list;
 	agui::Picture* background;
 	SelectionWidget* selw;
 };
