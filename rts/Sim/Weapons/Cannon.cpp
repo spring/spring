@@ -242,7 +242,8 @@ float3 CCannon::GetWantedDir(const float3& diff)
 	dir.Normalize();
 	dir *= Vxz;
 	dir.y = Vy;
-	dir.Normalize();
+	if (dir != ZeroVector)
+		dir.Normalize();
 	lastDiff = diff;
 	lastDir = dir;
 	return dir;

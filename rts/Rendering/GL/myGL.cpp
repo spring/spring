@@ -167,7 +167,7 @@ void glBuildMipmaps(const GLenum target,GLint internalFormat,const GLsizei width
 
 	// create mipmapped texture
 
-	if (glGenerateMipmapEXT_NONGML) { // broken on ATIs and NVs (wait for their OpenGL3.0 drivers :/)
+	if (glGenerateMipmapEXT_NONGML && !gu->atiHacks) {
 		// newest method
 		glTexImage2D(target, 0, internalFormat, width, height, 0, format, type, data);
 		if (gu->atiHacks) {
@@ -246,7 +246,6 @@ void LoadStartPicture(const std::string& sidePref)
 
 	startupTexture = bm.CreateTexture(false);
 }
-
 
 void UnloadStartPicture()
 {

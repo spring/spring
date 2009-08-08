@@ -10,6 +10,7 @@ leader(-1),
 handicap(1),
 startPos(100,100,100),
 teamAllyteam(-1),
+isAI(false),
 startMetal(-1.0),
 startEnergy(-1.0),
 readyToStart(false)

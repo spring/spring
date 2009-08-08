@@ -6,6 +6,11 @@
  * everything else
  */
 
+#include <sstream>
+#include <boost/system/system_error.hpp>
+#include <boost/asio.hpp>
+#include <boost/version.hpp>
+
 #include "Platform/errorhandler.h"
 #include "StdAfx.h"
 #include "lib/gml/gml.h"
@@ -63,6 +68,18 @@ int Run(int argc, char* argv[])
 		logOutput.Print("Content error: %s\n", e.what());
 		handleerror(NULL, e.what(), "Incorrect/Missing content:", MBF_OK | MBF_EXCL);
 		return -1;
+	}
+	catch (const boost::system::system_error& e) {
+		logOutput.Print("Fatal system error: %d: %s", e.code().value(), e.what());
+	#ifdef _MSC_VER
+		throw;
+	#else
+		std::stringstream ss;
+		ss << e.code().value() << ": " << e.what();
+		std::string tmp = ss.str();
+		handleerror(NULL, tmp.c_str(), "Fatal Error", MBF_OK | MBF_EXCL);
+		return -1;
+	#endif
 	}
 	catch (const std::exception& e) {
 		SDL_Quit();

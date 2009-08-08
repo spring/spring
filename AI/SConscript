@@ -645,9 +645,9 @@ skirmishaiobjs_CUtils = create_shared_objects(skirmishai_env, filelist.get_share
 
 # Build
 skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
-skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
+skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI']
 skirmishai_isCpp_list=['CppTestAI']
-skirmishai_needCUtils_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai']
+skirmishai_needCUtils_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI']
 skirmishai_needCreg_list=['KAIK', 'KAI']
 skirmishai_needBoost_list=['NTai']
 skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
@@ -752,7 +752,7 @@ for baseName in skirmishais_toBuild:
 		if env['platform'] != 'windows':
 			targetName = 'lib' + targetName
 		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), myObjs)
-		
+
 		buildList += [lib]
 		instList += [myEnv.Install(myEnv['installprefix'], lib)]
 		if myEnv['strip']:

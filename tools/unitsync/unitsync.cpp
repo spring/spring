@@ -424,6 +424,8 @@ EXPORT(const char*) GetFullUnitName(int unit)
  *
  * After this, the contents of the archive are available to other unitsync functions,
  * for example: ProcessUnits(), OpenFileVFS(), ReadFileVFS(), FileSizeVFS(), etc.
+ *
+ * Don't forget to call RemoveAllArchives() before proceeding with other archives.
  */
 EXPORT(void) AddArchive(const char* name)
 {
@@ -756,9 +758,9 @@ EXPORT(int) GetMapInfo(const char* name, MapInfo* outInfo)
  * Together with maxHeight, this determines the
  * range of the map's height values in-game. The
  * conversion formula for any raw 16-bit height
- * datum <h> is
+ * datum <code>h</code> is
  *
- *    minHeight + (h * (maxHeight - minHeight) / 65536.0f)
+ *    <code>minHeight + (h * (maxHeight - minHeight) / 65536.0f)</code>
  */
 EXPORT(float) GetMapMinHeight(const char* name) {
 	try {
@@ -1404,7 +1406,7 @@ EXPORT(int) GetPrimaryModArchiveCount(int index)
 
 /**
  * @brief Retrieves the name of the current mod's archive.
- * @param arnr The archive's index/id.
+ * @param archiveNr The archive's index/id.
  * @return NULL on error; the name of the archive on success
  * @see GetPrimaryModArchiveCount
  */
@@ -1650,7 +1652,31 @@ EXPORT(int) GetModOptionCount()
 	return 0;
 }
 
+EXPORT(int) GetCustomOptionCount(const char* filename)
+{
+	try {
+		CheckInit();
 
+		options.clear();
+		optionsSet.clear();
+
+		try {
+			ParseOptions(filename, SPRING_VFS_ZIP, SPRING_VFS_ZIP);
+		}
+		UNITSYNC_CATCH_BLOCKS;
+
+		optionsSet.clear();
+
+		return options.size();
+	}
+	UNITSYNC_CATCH_BLOCKS;
+
+	// Failed to load custom options file
+	options.clear();
+	optionsSet.clear();
+
+	return 0;
+}
 
 //////////////////////////
 //////////////////////////
@@ -2889,7 +2915,7 @@ static void CheckConfigHandler()
 /**
  * @brief get string from Spring configuration
  * @param name name of key to get
- * @param defvalue default string value to use if key is not found, may not be NULL
+ * @param defValue default string value to use if key is not found, may not be NULL
  * @return string value
  */
 EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue)
@@ -2906,7 +2932,7 @@ EXPORT(const char*) GetSpringConfigString(const char* name, const char* defValue
 /**
  * @brief get integer from Spring configuration
  * @param name name of key to get
- * @param defvalue default integer value to use if key is not found
+ * @param defValue default integer value to use if key is not found
  * @return integer value
  */
 EXPORT(int) GetSpringConfigInt(const char* name, const int defValue)
@@ -2922,7 +2948,7 @@ EXPORT(int) GetSpringConfigInt(const char* name, const int defValue)
 /**
  * @brief get float from Spring configuration
  * @param name name of key to get
- * @param defvalue default float value to use if key is not found
+ * @param defValue default float value to use if key is not found
  * @return float value
  */
 EXPORT(float) GetSpringConfigFloat(const char* name, const float defValue)

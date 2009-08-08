@@ -44,6 +44,11 @@ set(unitsync_files
 	../../rts/Map/SMF/SmfMapFile
 	../../rts/Rendering/Textures/Bitmap
 	../../rts/Rendering/Textures/nv_dds)
+if (WIN32)
+	set(unitsync_files
+		${unitsync_files}
+		../../rts/System/Platform/Win/WinVersion)
+endif (WIN32)
 
 if (PYTHONLIBS_FOUND)
 	list(APPEND unitsync_files pybind)

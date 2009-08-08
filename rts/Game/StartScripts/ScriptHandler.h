@@ -8,13 +8,12 @@
 #include <map>
 #include <list>
 #include "Script.h"
-#include "Rendering/GL/glList.h"
 
 class CScriptHandler
 {
 public:
+	std::list<std::string> ScriptList();
 	static void SelectScript(std::string s);
-	CglList* GenList(ListSelectCallback callb);
 
 	void AddScript(std::string name,CScript* s);
 	void LoadScriptFile(const std::string& file);
@@ -26,7 +25,6 @@ public:
 private:
 	std::map<std::string,CScript*> scripts; ///< Maps script names to CScript pointers.
 	std::list<CScript*> loaded_scripts;     ///< Scripts loaded and owned by CScriptHandler
-	static ListSelectCallback callback;
 	CScriptHandler();
 	CScriptHandler(CScriptHandler const&);
 	CScriptHandler& operator=(CScriptHandler const&);

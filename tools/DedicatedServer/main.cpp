@@ -60,12 +60,12 @@ int main(int argc, char *argv[])
 		//  Use script provided hashes if they exist
 		if (gameSetup->mapHash != 0)
 		{
-			data->SetMap(gameSetup->mapName, gameSetup->mapHash);
+			data->SetMapChecksum(gameSetup->mapHash);
 			gameSetup->LoadStartPositions(false); // reduced mode
 		}
 		else
 		{
-			data->SetMap(gameSetup->mapName, archiveScanner->GetMapChecksum(gameSetup->mapName));
+			data->SetMapChecksum(archiveScanner->GetMapChecksum(gameSetup->mapName));
 
 			CFileHandler* f = new CFileHandler("maps/" + gameSetup->mapName);
 			if (!f->FileExists()) {
@@ -84,13 +84,12 @@ int main(int argc, char *argv[])
 		}
 
 		if (gameSetup->modHash != 0) {
-			data->SetMod(gameSetup->baseMod, gameSetup->modHash);
+			data->SetModChecksum(gameSetup->modHash);
 		} else {
-			const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->baseMod);
-			data->SetMod(gameSetup->baseMod, archiveScanner->GetModChecksum(modArchive));
+			const std::string modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
+			data->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
 		}
 
-		data->SetScript(gameSetup->scriptName);
 		data->SetSetup(gameSetup->gameSetupText);
 		server = new CGameServer(&settings, false, data, gameSetup);
 
@@ -112,6 +111,7 @@ int main(int argc, char *argv[])
 	catch (const std::exception& err)
 	{
 		std::cout << "Exception raised: " << err.what() << std::endl;
+		return 1;
 	}
 	return 0;
 }

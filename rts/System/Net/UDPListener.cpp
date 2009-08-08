@@ -72,7 +72,11 @@ void UDPListener::Update()
 	{
 		std::vector<uint8_t> buffer(bytes_avail);
 		ip::udp::endpoint sender_endpoint;
-		size_t bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint);
+		boost::asio::ip::udp::socket::message_flags flags = 0;
+		boost::system::error_code err;
+		size_t bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint, flags, err);
+		if (CheckErrorCode(err))
+			break;
 
 		if (bytesReceived < UDPConnection::hsize)
 			continue;

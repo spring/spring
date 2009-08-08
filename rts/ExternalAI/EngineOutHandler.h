@@ -20,6 +20,7 @@
 
 #include "Object.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "SkirmishAIData.h"
 
 #include <map>
 #include <vector>
@@ -70,7 +71,7 @@ public:
 	void UnitCreated(const CUnit& unit, const CUnit* builder);
 	void UnitFinished(const CUnit& unit);
 	void UnitDestroyed(const CUnit& destroyed, const CUnit* attacker);
-	void UnitDamaged(const CUnit& damaged, const CUnit* attacker, float damage);
+	void UnitDamaged(const CUnit& damaged, const CUnit* attacker, float damage, int weaponId, bool paralyzer);
 	void UnitMoveFailed(const CUnit& unit);
 	void UnitCaptured(const CUnit& unit, int newTeamId);
 	void UnitGiven(const CUnit& unit, int oldTeamId);
@@ -87,11 +88,13 @@ public:
 
 
 	// Skirmish AI stuff
-	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key);
+	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key, const SkirmishAIData& data);
 	const SkirmishAIKey* GetSkirmishAIKey(int teamId) const;
 	bool IsSkirmishAI(int teamId) const;
 	const SSkirmishAICallback* GetSkirmishAICallback(int teamId) const;
-	void DestroySkirmishAI(int teamId);
+	/// For a list of values for reason, see SReleaseEvent in Interface/AISEvents.h
+	void DestroySkirmishAI(int teamId, int reason = 0 /* = unspecified */);
+	const SkirmishAIData* GetSkirmishAIData(int teamId) const;
 
 
 	void SetCheating(bool enable);
@@ -111,6 +114,7 @@ private:
 	static const size_t skirmishAIs_size = MAX_TEAMS;
 	CSkirmishAIWrapper* skirmishAIs[skirmishAIs_size];
 	bool hasSkirmishAIs;
+	std::map<int, SkirmishAIData> team_skirmishAI;
 };
 
 #define eoh CEngineOutHandler::GetInstance()

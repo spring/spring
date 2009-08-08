@@ -28,6 +28,7 @@
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
+#include "Sound/Sound.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
@@ -38,6 +39,7 @@
 #include "Rendering/Textures/TAPalette.h"
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
+#include "aGui/Gui.h"
 #include "Exceptions.h"
 
 
@@ -63,12 +65,14 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 	{
 		net->InitLocalClient();
 	}
+	sound = new CSound(); // should have finished until server response arrives
 }
 
 
 CPreGame::~CPreGame()
 {
 	// don't delete infoconsole, its beeing reused by CGame
+	agui::gui->Draw(); // delete leftover gui elements (remove once the gui is drawn ingame)
 }
 
 void CPreGame::LoadSetupscript(const std::string& script)
@@ -108,6 +112,7 @@ bool CPreGame::Draw()
 {
 	SDL_Delay(10); // milliseconds
 	ClearScreen();
+	agui::gui->Draw();
 
 	font->Begin();
 
@@ -155,57 +160,50 @@ void CPreGame::StartServer(const std::string& setupscript)
 	GameData* startupData = new GameData();
 	CGameSetup* setup = new CGameSetup();
 	setup->Init(setupscript);
-	std::string map = setup->mapName;
-	std::string mod = setup->baseMod;
-	std::string script = setup->scriptName;
 
 	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
-	if (!map.empty())
+	if (! setup->mapName.empty())
 	{
 		// would be better to use MapInfo here, but this doesn't work
-		LoadMap(map); // map into VFS
+		LoadMap(setup->mapName); // map into VFS
 		std::string mapDefFile;
-		const std::string extension = map.substr(map.length()-3);
+		const std::string extension = setup->mapName.substr(setup->mapName.length()-3);
 		if (extension == "smf")
-			mapDefFile = std::string("maps/")+map.substr(0,map.find_last_of('.'))+".smd";
+			mapDefFile = std::string("maps/")+setup->mapName.substr(0,setup->mapName.find_last_of('.'))+".smd";
 		else if(extension == "sm3")
-			mapDefFile = string("maps/")+map;
+			mapDefFile = string("maps/")+setup->mapName;
 		else
 			throw std::runtime_error("CPreGame::StartServer(): Unknown extension: " + extension);
 
-		MapParser mp(map);
+		MapParser mp(setup->mapName);
 		LuaTable mapRoot = mp.GetRoot();
 		const std::string mapWantedScript = mapRoot.GetString("script",     "");
 		const std::string scriptFile      = mapRoot.GetString("scriptFile", "");
 
 		if (!mapWantedScript.empty()) {
-			script = mapWantedScript;
+			setup->scriptName = mapWantedScript;
 		}
 	}
-	startupData->SetScript(script);
 	// here we now the name of the script to use
 
-	CScriptHandler::SelectScript(script);
+	CScriptHandler::SelectScript(setup->scriptName);
 	std::string scriptWantedMod;
 	scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
 	if (!scriptWantedMod.empty()) {
-		mod = scriptWantedMod;
+		setup->modName = archiveScanner->ModArchiveToModName(scriptWantedMod);
 	}
-	LoadMod(mod);
+	LoadMod(setup->modName);
 
-	// make sure s is a modname (because the same mod can be in different archives on different computers)
-	mod = archiveScanner->ModArchiveToModName(mod);
-	setup->baseMod = mod;
-	std::string modArchive = archiveScanner->ModNameToModArchive(mod);
-	startupData->SetMod(mod, archiveScanner->GetModChecksum(modArchive));
+	std::string modArchive = archiveScanner->ModNameToModArchive(setup->modName);
+	startupData->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
 
 	std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
-	if (!mapFromScript.empty() && map != mapFromScript) {
+	if (!mapFromScript.empty() &&  setup->mapName != mapFromScript) {
 		//TODO unload old map
 		LoadMap(mapFromScript, true);
 	}
 
-	startupData->SetMap(map, archiveScanner->GetMapChecksum(map));
+	startupData->SetMapChecksum(archiveScanner->GetMapChecksum(setup->mapName));
 	setup->LoadStartPositions();
 
 	good_fpu_control_registers("before CGameServer creation");
@@ -242,7 +240,7 @@ void CPreGame::UpdateClientNet()
 				assert(team);
 				LoadStartPicture(team->side);
 
-				game = new CGame(gameData->GetMap(), modArchive, savefile);
+				game = new CGame(gameSetup->mapName, modArchive, savefile);
 
 				if (savefile) {
 					savefile->LoadGame();
@@ -273,13 +271,19 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 		{
 			GameData *data = new GameData(boost::shared_ptr<const RawPacket>(buf));
 
+			CGameSetup* demoScript = new CGameSetup();
+			if (!demoScript->Init(data->GetSetup()))
+			{
+				throw content_error("Demo contains incorrect script");
+			}
+
 			// modify the startscriptscript so it can be used to watch the demo
 			TdfParser script(data->GetSetup().c_str(), data->GetSetup().size());
 			TdfParser::TdfSection* tgame = script.GetRootSection()->sections["game"];
 
-			tgame->AddPair("ScriptName", data->GetScript());
-			tgame->AddPair("MapName", data->GetMap());
-			tgame->AddPair("Gametype", data->GetMod());
+			tgame->AddPair("ScriptName", demoScript->scriptName);
+			tgame->AddPair("MapName", demoScript->mapName);
+			tgame->AddPair("Gametype", demoScript->modName);
 			tgame->AddPair("Demofile", demoName);
 
 			for (std::map<std::string, TdfParser::TdfSection*>::iterator it = tgame->sections.begin(); it != tgame->sections.end(); ++it)
@@ -397,36 +401,38 @@ void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> pack
 	gameData.reset(new GameData(packet));
 
 	CGameSetup* temp = new CGameSetup();
-	if (temp->Init(gameData->GetSetup()))
-	{
-		temp->scriptName = gameData->GetScript();
-		temp->mapName = gameData->GetMap();
-		temp->baseMod = gameData->GetMod();
 
+	if (temp->Init(gameData->GetSetup())) {
+		if (settings->isHost) {
+			const std::string& setupTextStr = gameData->GetSetup();
+			std::fstream setupTextFile("_script.txt", std::ios::out);
+
+			setupTextFile.write(setupTextStr.c_str(), setupTextStr.size());
+			setupTextFile.close();
+		}
 		gameSetup = const_cast<const CGameSetup*>(temp);
 		gs->LoadFromSetup(gameSetup);
-	}
-	else
-	{
+		CPlayer::UpdateControlledTeams();
+	} else {
 		throw content_error("Server sent us incorrect script");
 	}
 
 	gs->SetRandSeed(gameData->GetRandomSeed(), true);
-	LogObject() << "Using map " << gameData->GetMap() << "\n";
+	LogObject() << "Using map " << gameSetup->mapName << "\n";
 
 	if (net && net->GetDemoRecorder()) {
-		net->GetDemoRecorder()->SetName(gameData->GetMap());
+		net->GetDemoRecorder()->SetName(gameSetup->mapName);
 		LogObject() << "Recording demo " << net->GetDemoRecorder()->GetName() << "\n";
 	}
-	LoadMap(gameData->GetMap());
-	archiveScanner->CheckMap(gameData->GetMap(), gameData->GetMapChecksum());
+	LoadMap(gameSetup->mapName);
+	archiveScanner->CheckMap(gameSetup->mapName, gameData->GetMapChecksum());
 
-	LogObject() << "Using script " << gameData->GetScript() << "\n";
-	CScriptHandler::SelectScript(gameData->GetScript());
+	LogObject() << "Using script " << gameSetup->scriptName << "\n";
+	CScriptHandler::SelectScript(gameSetup->scriptName);
 
-	LogObject() << "Using mod " << gameData->GetMod() << "\n";
-	LoadMod(gameData->GetMod());
-	modArchive = archiveScanner->ModNameToModArchive(gameData->GetMod());
+	LogObject() << "Using mod " << gameSetup->modName << "\n";
+	LoadMod(gameSetup->modName);
+	modArchive = archiveScanner->ModNameToModArchive(gameSetup->modName);
 	LogObject() << "Using mod archive " << modArchive << "\n";
 	archiveScanner->CheckMod(modArchive, gameData->GetModChecksum());
 }

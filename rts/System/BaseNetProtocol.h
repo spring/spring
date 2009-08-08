@@ -138,8 +138,8 @@ public:
 	PacketType SendPlayerStat(uchar myPlayerNum, const PlayerStatistics& currentStats);
 	PacketType SendGameOver();
 	PacketType SendMapErase(uchar myPlayerNum, short x, short z);
-	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2);
-	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label);
+	PacketType SendMapDrawLine(uchar myPlayerNum, short x1, short z1, short x2, short z2, bool);
+	PacketType SendMapDrawPoint(uchar myPlayerNum, short x, short z, const std::string& label, bool);
 	PacketType SendSyncResponse(int frameNum, uint checksum);
 	PacketType SendSystemMessage(uchar myPlayerNum, const std::string& message);
 	PacketType SendStartPos(uchar myPlayerNum, uchar teamNum, uchar ready, float x, float y, float z);

@@ -6,6 +6,8 @@
 #include <set>
 #include <list>
 #include <cctype>
+#include <unistd.h>
+#include <errno.h>
 
 #include <fstream>
 
@@ -65,6 +67,7 @@
 #include "ConfigHandler.h"
 
 #include <boost/cstdint.hpp>
+#include <Platform/Misc.h>
 
 using namespace std;
 
@@ -177,6 +180,8 @@ bool LuaUnsyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(SetCameraOffset);
 
 	REGISTER_LUA_CFUNC(SetLosViewColors);
+
+	REGISTER_LUA_CFUNC(Restart);
 
 	REGISTER_LUA_CFUNC(SetUnitDefIcon);
 	REGISTER_LUA_CFUNC(SetUnitDefImage);
@@ -1653,6 +1658,32 @@ int LuaUnsyncedCtrl::MakeFont(lua_State* L)
 	return 1;
 }
 
+int LuaUnsyncedCtrl::Restart(lua_State* L)
+{
+	const int args = lua_gettop(L); // number of arguments
+	if ((args != 2) || !lua_isstring(L, 1) || !lua_isstring(L, 2)) {
+		luaL_error(L,
+			"Incorrect arguments to Restart(arguments, script)");
+	}
+
+	const string arguments = luaL_checkstring(L, 1);
+	const string script = luaL_checkstring(L, 2);
+
+	if (!script.empty())
+	{
+		std::ofstream scriptfile((FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str());
+		scriptfile << script;
+		scriptfile.close();
+		execlp(Platform::GetBinaryFile().c_str(), Platform::GetBinaryFile().c_str(), arguments.c_str(), (FileSystemHandler::GetInstance().GetWriteDir()+"/script.txt").c_str(), NULL);
+	}
+	else
+	{
+		execlp(Platform::GetBinaryFile().c_str(), Platform::GetBinaryFile().c_str(), arguments.c_str(), NULL);
+	}
+	LogObject() << "Error in Restart: " << strerror(errno);
+	lua_pushboolean(L, false);
+	return 1;
+}
 
 /******************************************************************************/
 
@@ -2182,17 +2213,19 @@ int LuaUnsyncedCtrl::MarkerAddPoint(lua_State* L)
 	if ((args < 3) ||
 	    !lua_isnumber(L, 1) || !lua_isnumber(L, 2)  || !lua_isnumber(L, 3) ||
 	    ((args >= 4) && !lua_isstring(L, 4))) {
-		luaL_error(L, "Incorrect arguments to MarkerAddPoint(x, y, z[, text])");
+		luaL_error(L, "Incorrect arguments to MarkerAddPoint(x, y, z[, text, local ])");
 	}
 	const float3 pos(lua_tofloat(L, 1),
 	                 lua_tofloat(L, 2),
 	                 lua_tofloat(L, 3));
-	string text = "";
-	if (args >= 4) {
-	  text = lua_tostring(L, 4);
-	}
+	const string text = luaL_optstring(L, 4, "");
+	const bool onlyLocal = bool(luaL_optnumber(L, 5, 0));
 
-	inMapDrawer->SendPoint(pos, text);
+	if (onlyLocal) {
+		inMapDrawer->LocalPoint(pos, text, gu->myPlayerNum);
+	} else {
+		inMapDrawer->SendPoint(pos, text, true);
+	}
 
 	return 0;
 }
@@ -2212,7 +2245,7 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	    !lua_isnumber(L, 3) || !lua_isnumber(L, 4) ||
 	    !lua_isnumber(L, 5) || !lua_isnumber(L, 6)) {
 		luaL_error(L,
-			"Incorrect arguments to MarkerAddLine(x1, y1, z1, x2, y2, z2)");
+			"Incorrect arguments to MarkerAddLine(x1, y1, z1, x2, y2, z2[, local ])");
 	}
 	const float3 pos1(lua_tofloat(L, 1),
 	                  lua_tofloat(L, 2),
@@ -2220,8 +2253,13 @@ int LuaUnsyncedCtrl::MarkerAddLine(lua_State* L)
 	const float3 pos2(lua_tofloat(L, 4),
 	                  lua_tofloat(L, 5),
 	                  lua_tofloat(L, 6));
+	const bool onlyLocal = bool(luaL_optnumber(L, 7, 0));
 
-	inMapDrawer->SendLine(pos1, pos2);
+	if (onlyLocal) {
+		inMapDrawer->LocalLine(pos1, pos2, gu->myPlayerNum);
+	} else {
+		inMapDrawer->SendLine(pos1, pos2, true);
+	}
 
 	return 0;
 }

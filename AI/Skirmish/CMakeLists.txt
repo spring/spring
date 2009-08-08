@@ -1,5 +1,8 @@
 ### Skirmish AIs
 #
+# Functions and macros defined in this file:
+# * SkirmishAIMessage
+#
 
 add_definitions(-DBUILDING_SKIRMISH_AI)
 

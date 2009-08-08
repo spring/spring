@@ -24,6 +24,7 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 	scriptNames.resize(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs));
 
 	scriptNames[COBFN_Create]        = "Create";
+	scriptNames[COBFN_Destroy]       = "Destroy";
 	scriptNames[COBFN_StartMoving]   = "StartMoving";
 	scriptNames[COBFN_StopMoving]    = "StopMoving";
 	scriptNames[COBFN_Activate]      = "Activate";

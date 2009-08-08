@@ -19,8 +19,7 @@ public:
 	void Update();
 	void SlowUpdate();
 
-	void SetDeltaSpeed(void);
-	bool TestNewPathGoal(const float3& newgoal);
+	void SetDeltaSpeed(bool);
 
 	void StartMoving(float3 pos, float goalRadius);
 	void StartMoving(float3 pos, float goalRadius, float speed);
@@ -40,6 +39,7 @@ public:
 	float accRate;
 	float decRate;
 
+	float maxReverseSpeed;
 	float wantedSpeed;
 	float currentSpeed;
 	float deltaSpeed;
@@ -115,8 +115,14 @@ protected:
 	float GetFlyTime(float3 pos, float3 speed);
 	void CalcSkidRot(void);
 
+	void AdjustPosToWaterLine();
+	void UpdateDirectControl();
+	void UpdateOwnerPos(bool);
+	bool WantReverse(const float3&) const;
+
 	bool skidding;
 	bool flying;
+	bool reversing;
 	float skidRotSpeed;
 	float dropSpeed;
 	float dropHeight;
@@ -144,6 +150,10 @@ public:
 
 	void StartSkidding(void);
 	void StartFlying(void);
+
+	bool IsSkidding() const { return skidding; }
+	bool IsFlying() const { return flying; }
+	bool IsReversing() const { return reversing; }
 };
 
 

@@ -1,10 +1,20 @@
 #ifndef SELECT_MENU
 #define SELECT_MENU
 
+#include <boost/signals/connection.hpp>
+
 #include "GameController.h"
 
 class ClientSetup;
-class CglList;
+union SDL_Event;
+class SelectionWidget;
+namespace agui
+{
+class Window;
+class VerticalLayout;
+class LineEdit;
+class Picture;
+}
 
 /**
 @brief User prompt for options when no script is given
@@ -17,28 +27,33 @@ class SelectMenu : public CGameController
 {
 public:
 	SelectMenu(bool server);
+	~SelectMenu();
 
 	bool Draw();
-	int KeyPressed(unsigned short k, bool isRepeat);
 	bool Update();
 
-	void ShowMapList();
-	void ShowScriptList();
-	void ShowModList();
+private:
+	void Single();
+	void Settings();
+	void Multi();
+	void Quit();
+	void ConnectWindow(bool show);
+	void DirectConnect();
 
-	/// Callback functions for CglList
+	bool HandleEvent(const SDL_Event& ev);
+
 	void SelectScript(const std::string& s);
 	void SelectMap(const std::string& s);
 	void SelectMod(const std::string& s);
 
-private:
-	std::string userScript;
-	std::string userMap;
-	std::string userMod;
-
-	bool addressKnown;
 	ClientSetup* mySettings;
-	CglList* showList;
+
+	boost::signals::scoped_connection inputCon;
+	agui::VerticalLayout* menu;
+	agui::LineEdit* address;
+	agui::Window* connectWnd;
+	agui::Picture* background;
+	SelectionWidget* selw;
 };
 
 #endif

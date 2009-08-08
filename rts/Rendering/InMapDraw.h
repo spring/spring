@@ -36,8 +36,8 @@ public:
 	void LocalLine(const float3& pos1, const float3& pos2, int playerID);
 	void LocalErase(const float3& pos, int playerID);
 
-	void SendPoint(const float3& pos, const std::string& label);
-	void SendLine(const float3& pos1, const float3& pos2);
+	void SendPoint(const float3& pos, const std::string& label, bool fromLua);
+	void SendLine(const float3& pos1, const float3& pos2, bool fromLua);
 	void SendErase(const float3& pos);
 
 	bool keyPressed;
@@ -98,6 +98,15 @@ public:
 	static void InMapDrawVisCallback(int x, int y, void* userData);
 
 	void PromptLabel(const float3& pos);
+	
+	void SetSpecMapDrawingAllowed(bool state);
+	void SetLuaMapDrawingAllowed(bool state);
+	bool GetSpecMapDrawingAllowed() const { return allowSpecMapDrawing; }
+	bool GetLuaMapDrawingAllowed() const { return allowLuaMapDrawing; }
+
+protected:
+	bool allowSpecMapDrawing; //! if true, spectators can send out MAPDRAW net-messages (synced)
+	bool allowLuaMapDrawing;  //! if true, client ignores incoming Lua MAPDRAW net-messages (unsynced)
 };
 
 extern CInMapDraw* inMapDrawer;

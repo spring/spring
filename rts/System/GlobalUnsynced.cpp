@@ -57,8 +57,6 @@ CR_REG_METADATA(CGlobalUnsyncedStuff, (
 				CR_MEMBER(timeOffset),
 //				CR_MEMBER(compressTextures),
 				CR_MEMBER(drawFog),
-				CR_MEMBER(autoQuit),
-				CR_MEMBER(quitTime),
 				CR_MEMBER(usRandSeed),
 				CR_RESERVED(64)
 				));
@@ -92,8 +90,6 @@ CGlobalUnsyncedStuff::CGlobalUnsyncedStuff()
 	timeOffset = 0;
 	drawFog = true;
 	teamNanospray = false;
-	autoQuit = false;
-	quitTime = 0;
 	directControl = 0;
 	compressTextures = false;
 	atiHacks = false;

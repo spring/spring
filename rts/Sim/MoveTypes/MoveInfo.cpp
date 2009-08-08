@@ -15,11 +15,12 @@
 #include "creg/STL_Deque.h"
 #include "creg/STL_Map.h"
 #include "Exceptions.h"
+#include "System/Util.h"
 
 using std::min;
 using std::max;
 
-CR_BIND(MoveData, (0x0, 0));
+CR_BIND(MoveData, (0));
 CR_BIND(CMoveInfo, );
 
 CR_REG_METADATA(MoveData, (
@@ -87,9 +88,9 @@ CMoveInfo::CMoveInfo()
 			break;
 		}
 
-		MoveData* md = new MoveData(0x0, 0);
+		MoveData* md = new MoveData(NULL);
 
-		md->name     = moveTable.GetString("name", "");
+		md->name     = StringToLower(moveTable.GetString("name", ""));
 		md->pathType = (num - 1);
 		md->maxSlope = 1.0f;
 		md->depth    = 0.0f;
@@ -99,15 +100,15 @@ CMoveInfo::CMoveInfo()
 		const float minWaterDepth = moveTable.GetFloat("minWaterDepth", 10.0f);
 		const float maxWaterDepth = moveTable.GetFloat("maxWaterDepth", 0.0f);
 
-		if ((md->name.find("BOAT") != string::npos) ||
-		    (md->name.find("SHIP") != string::npos)) {
+		if ((md->name.find("boat") != string::npos) ||
+		    (md->name.find("ship") != string::npos)) {
 			md->moveType   = MoveData::Ship_Move;
 			md->depth      = minWaterDepth;
 			md->moveFamily = MoveData::Ship;
 			md->moveMath   = seaMoveMath;
 			md->subMarine  = moveTable.GetBool("subMarine", 0);
 		}
-		else if (md->name.find("HOVER") != string::npos) {
+		else if (md->name.find("hover") != string::npos) {
 			md->moveType   = MoveData::Hover_Move;
 			md->maxSlope   = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 15.0f));
 			md->moveFamily = MoveData::Hover;
@@ -120,12 +121,16 @@ CMoveInfo::CMoveInfo()
 			md->maxSlope = DegreesToMaxSlope(moveTable.GetFloat("maxSlope", 60.0f));
 			md->moveMath = groundMoveMath;
 
-			if (md->name.find("TANK") != string::npos) {
+			if (md->name.find("tank") != string::npos) {
 				md->moveFamily = MoveData::Tank;
 			} else {
 				md->moveFamily = MoveData::KBot;
 			}
 		}
+
+		md->heatMapping = moveTable.GetBool("heatMapping", true);
+		md->heatMod = moveTable.GetFloat("heatMod", 0.05f);
+		md->heatProduced = moveTable.GetInt("heatProduced", 30);
 
 		// ground units hug the ocean floor when in water,
 		// ships stay at a "fixed" level (their waterline)
@@ -210,16 +215,11 @@ CMoveInfo::~CMoveInfo()
 }
 
 
-MoveData* CMoveInfo::GetMoveDataFromName(const std::string& name, bool exactMatch)
+MoveData* CMoveInfo::GetMoveDataFromName(const std::string& name)
 {
-	if (!exactMatch) {
-		return moveData[name2moveData[name]];
-	} else {
-		map<string, int>::const_iterator it = name2moveData.find(name);
-		if (it == name2moveData.end()) {
-			return NULL;
-		}
-		return moveData[it->second];
+	map<string, int>::const_iterator it = name2moveData.find(name);
+	if (it == name2moveData.end()) {
+		return NULL;
 	}
-	return moveData[name2moveData[name]];
+	return moveData[it->second];
 }

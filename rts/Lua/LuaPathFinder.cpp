@@ -175,7 +175,7 @@ int LuaPathFinder::RequestPath(lua_State* L)
 	
 	if (lua_israwstring(L, 1)) {
 		const string moveName = lua_tostring(L, 1);
-		moveData = moveinfo->GetMoveDataFromName(moveName, true);
+		moveData = moveinfo->GetMoveDataFromName(moveName);
 	}
 	else {
 		const int moveID = luaL_checkint(L, 1);

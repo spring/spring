@@ -18,6 +18,7 @@
 package com.springrts.ai;
 
 
+import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
 
 /**
@@ -29,8 +30,8 @@ import com.sun.jna.Structure;
 public abstract class AIEvent extends Structure/* implements Structure.ByReference*/ {
 
 	protected AIEvent() {};
-	protected AIEvent(int size) {
-		super(size);
+	protected AIEvent(Pointer memory) {
+		super(memory);
 	}
 
 	public abstract int getTopic();

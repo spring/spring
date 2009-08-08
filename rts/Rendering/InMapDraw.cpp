@@ -73,6 +73,8 @@ CInMapDraw::CInMapDraw(void)
 	keyPressed = false;
 	wantLabel = false;
 	drawAll = false;
+	allowSpecMapDrawing = true;
+	allowLuaMapDrawing = true;
 	lastLineTime = 0;
 	lastLeftClickTime = 0;
 	lastPos = float3(1, 1, 1);
@@ -379,7 +381,7 @@ void CInMapDraw::MousePress(int x, int y, int button)
 			break;
 		}
 		case SDL_BUTTON_MIDDLE:{
-			SendPoint(pos, "");
+			SendPoint(pos, "", false);
 			break;
 		}
 	}
@@ -400,7 +402,7 @@ void CInMapDraw::MouseMove(int x, int y, int dx,int dy, int button)
 		return;
 	}
 	if (mouse->buttons[SDL_BUTTON_LEFT].pressed && lastLineTime < gu->gameTime - 0.05f) {
-		SendLine(pos, lastPos);
+		SendLine(pos, lastPos, false);
 		lastLineTime = gu->gameTime;
 		lastPos = pos;
 	}
@@ -455,15 +457,21 @@ void CInMapDraw::GotNetMsg(const unsigned char* msg)
 
 	switch (msg[3]) {
 		case NET_POINT: {
-			float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			const string label = (char*) &msg[8];
-			LocalPoint(pos, label, playerID);
+			const float3 pos(*(short*) &msg[4], 0, *(short*) &msg[6]);
+			const bool fromLua = msg[8];
+			const string label = (char*) &msg[9];
+			if (!fromLua || allowLuaMapDrawing) {
+				LocalPoint(pos, label, playerID);
+			}
 			break;
 		}
 		case NET_LINE: {
-			float3 pos1(*(short*) &msg[4], 0, *(short*) &msg[6]);
-			float3 pos2(*(short*) &msg[8], 0, *(short*) &msg[10]);
-			LocalLine(pos1, pos2, playerID);
+			const float3 pos1(*(short*) &msg[4], 0, *(short*) &msg[6]);
+			const float3 pos2(*(short*) &msg[8], 0, *(short*) &msg[10]);
+			const bool fromLua = msg[12];
+			if (!fromLua || allowLuaMapDrawing) {
+				LocalLine(pos1, pos2, playerID);
+			}
 			break;
 		}
 		case NET_ERASE: {
@@ -603,19 +611,22 @@ void CInMapDraw::LocalErase(const float3& constPos, int playerID)
 
 void CInMapDraw::SendErase(const float3& pos)
 {
-	net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
+	if (!gu->spectating || allowSpecMapDrawing)
+		net->Send(CBaseNetProtocol::Get().SendMapErase(gu->myPlayerNum, (short)pos.x, (short)pos.z));
 }
 
 
-void CInMapDraw::SendPoint(const float3& pos, const std::string& label)
+void CInMapDraw::SendPoint(const float3& pos, const std::string& label, bool fromLua)
 {
-	net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label));
+	if (!gu->spectating || allowSpecMapDrawing)
+		net->Send(CBaseNetProtocol::Get().SendMapDrawPoint(gu->myPlayerNum, (short)pos.x, (short)pos.z, label, fromLua));
 }
 
 
-void CInMapDraw::SendLine(const float3& pos, const float3& pos2)
+void CInMapDraw::SendLine(const float3& pos, const float3& pos2, bool fromLua)
 {
-	net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z));
+	if (!gu->spectating || allowSpecMapDrawing)
+		net->Send(CBaseNetProtocol::Get().SendMapDrawLine(gu->myPlayerNum, (short)pos.x, (short)pos.z, (short)pos2.x, (short)pos2.z, fromLua));
 }
 
 
@@ -625,9 +636,18 @@ void CInMapDraw::PromptLabel(const float3& pos)
 	game->userWriting = true;
 	wantLabel = true;
 	game->userPrompt = "Label: ";
-	game->ignoreChar = '\xA7';		//should do something better here
+	game->ignoreChar = '\xA7'; // should do something better here
 }
 
 
+void CInMapDraw::SetSpecMapDrawingAllowed(bool state)
+{
+	allowSpecMapDrawing = state;
+	logOutput.Print("Spectator map drawing is %s", allowSpecMapDrawing? "disabled": "enabled");
+}
 
-
+void CInMapDraw::SetLuaMapDrawingAllowed(bool state)
+{
+	allowLuaMapDrawing = state;
+	logOutput.Print("Lua map drawing is %s", allowLuaMapDrawing? "disabled": "enabled");
+}

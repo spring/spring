@@ -8,6 +8,7 @@ namespace netcode
 {
 
 extern boost::asio::io_service netservice;
+bool CheckErrorCode(boost::system::error_code&);
 
 } // namespace netcode
 

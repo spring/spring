@@ -15,7 +15,6 @@
 #include "MouseHandler.h"
 
 class CUnit;
-class CglList;
 struct UnitDef;
 struct BuildInfo;
 
@@ -87,10 +86,6 @@ class CGuiHandler : public CInputReceiver {
 
 	private:
 		void GiveCommand(const Command& cmd, bool fromUser = true) const;
-
-		void MenuChoice(std::string s);
-		static void MenuSelection(std::string s);
-
 		void LayoutIcons(bool useSelectionPage);
 		bool LayoutCustomIcons(bool useSelectionPage);
 		void ResizeIconArray(unsigned int size);
@@ -164,7 +159,6 @@ class CGuiHandler : public CInputReceiver {
 		int defaultCmdMemory;
 		int explicitCommand;
 		//int fadein;
-		CglList* list;
 
 		int actionOffset;
 		CKeySet lastKeySet;

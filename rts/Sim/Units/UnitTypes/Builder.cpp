@@ -144,7 +144,10 @@ void CBuilder::Update()
 			switch (terraformType) {
 				case Terraform_Building:
 					if (curBuild) {
-						terraformScale = (terraformSpeed + terraformHelp) / curBuild->terraformLeft;
+						if (curBuild->terraformLeft <= 0)
+							terraformScale = 0.0f;
+						else
+							terraformScale = (terraformSpeed + terraformHelp) / curBuild->terraformLeft;
 						curBuild->terraformLeft -= (terraformSpeed + terraformHelp);
 						terraformHelp = 0;
 
@@ -174,7 +177,10 @@ void CBuilder::Update()
 					}
 					break;
 				case Terraform_Restore:
-					terraformScale = (terraformSpeed + terraformHelp) / myTerraformLeft;
+					if (myTerraformLeft <= 0)
+						terraformScale = 0.0f;
+					else
+						terraformScale = (terraformSpeed + terraformHelp) / myTerraformLeft;
 					myTerraformLeft -= (terraformSpeed + terraformHelp);
 					terraformHelp = 0;
 
@@ -726,7 +732,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 
 		float3 dif = goal - weaponPos;
-		const float l = fastmath::sqrt2(dif.SqLength());
+		const float l = fastmath::apxsqrt2(dif.SqLength());
 
 		dif /= l;
 		float3 error = gu->usRandVector() * (radius / l);

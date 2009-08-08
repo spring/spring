@@ -5,16 +5,17 @@
 #include <map>
 #include <string>
 #include "creg/creg_cond.h"
+#include "Sim/Misc/GlobalConstants.h"
 
 class CMoveMath;
 
 struct MoveData {
 	CR_DECLARE_STRUCT(MoveData);
 
-	MoveData(const MoveData* udefMD, int gs) {
+	MoveData(const MoveData* udefMD) {
 		maxAcceleration = udefMD? udefMD->maxAcceleration:         0.0f;
 		maxBreaking     = udefMD? udefMD->maxAcceleration * -3.0f: 0.0f;
-		maxSpeed        = udefMD? udefMD->maxSpeed / gs:           0.0f;
+		maxSpeed        = udefMD? udefMD->maxSpeed / GAME_SPEED:   0.0f;
 		maxTurnRate     = udefMD? (short int) udefMD->maxTurnRate: 0;
 
 		size            = udefMD? udefMD->size:                    0;
@@ -30,7 +31,10 @@ struct MoveData {
 		terrainClass    = udefMD? udefMD->terrainClass:            MoveData::Mixed;
 		followGround    = udefMD? udefMD->followGround:            true;
 		subMarine       = udefMD? udefMD->subMarine:               false;
-		name            = udefMD? udefMD->name:                    "TANK";
+		name            = udefMD? udefMD->name:                    "tank";
+		heatMapping     = udefMD? udefMD->heatMapping:             true;
+		heatMod	        = udefMD? udefMD->heatMod:                 0.05f;
+		heatProduced    = udefMD? udefMD->heatProduced:            30;
 	}
 
 	enum MoveType {
@@ -84,6 +88,13 @@ struct MoveData {
 
 	/// are we supposed to be a purely sub-surface ship?
 	bool subMarine;
+
+	/// heatmap this unit
+	bool heatMapping;
+	/// heatmap path cost modifier
+	float heatMod;
+	/// heat produced by a path
+	int heatProduced;
 };
 
 
@@ -96,7 +107,7 @@ public:
 
 	std::vector<MoveData*> moveData;
 	std::map<std::string, int> name2moveData;
-	MoveData* GetMoveDataFromName(const std::string& name, bool exactMatch = false);
+	MoveData* GetMoveDataFromName(const std::string& name);
 	unsigned int moveInfoChecksum;
 
 	float terrainType2MoveFamilySpeed[256][4];

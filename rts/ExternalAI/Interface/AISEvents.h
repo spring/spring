@@ -114,8 +114,18 @@ struct SInitEvent {
  * This AI event tells a Skirmish AI instance, that it is no longer needed. It
  * can be used to free memory or do other cleanup work.
  * It is sent only once per AI instance and game, as the very last event.
+ * Values description for reason:
+ * 0: unspecified
+ * 1: game ended
+ * 2: team died
+ * 3: AI killed
+ * 4: AI crashed
+ * 5: AI failed to init
+ * 6: connection lost
+ * 7: other reason
  */
 struct SReleaseEvent {
+	int reason;
 }; // EVENT_RELEASE
 
 /**
@@ -182,13 +192,17 @@ struct SUnitMoveFailedEvent {
  * directly from the attacker to the attacked unit, while with artillery it will
  * rather be from somewhere up in the sky to the attacked unit.
  * See also the unit-destroyed event.
- * attacker may be 0, which means no attacker was directly involveld.
+ * attacker may be 0, which means no attacker was directly involved.
+ * If paralyzer is true, then damage is paralyzation damage,
+ * otherwise it is real damage.
  */
 struct SUnitDamagedEvent {
 	int unit;
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
+	int weaponDefId;
+	bool paralyzer;
 }; // EVENT_UNIT_DAMAGED
 
 /**
@@ -259,7 +273,7 @@ struct SEnemyLeaveRadarEvent {
  * direction will point directly from the attacker to the attacked unit, while
  * with artillery it will rather be from somewhere up in the sky to the attacked
  * unit.
- * attacker may be 0, which means no attacker was directly involveld.
+ * attacker may be 0, which means no attacker was directly involved.
  * See also the enemy-destroyed event.
  */
 struct SEnemyDamagedEvent {
@@ -267,6 +281,8 @@ struct SEnemyDamagedEvent {
 	int attacker;
 	float damage;
 	struct SAIFloat3 dir;
+	int weaponDefId;
+	bool paralyzer;
 }; // EVENT_ENEMY_DAMAGED
 
 /**

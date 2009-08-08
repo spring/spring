@@ -7,10 +7,6 @@
 #include "Net/UDPListener.h"
 #include "Net/UDPConnection.h"
 
-#ifndef _MSC_VER
-#include "StdAfx.h"
-#endif
-
 #include <stdarg.h>
 #include <ctime>
 #include <boost/bind.hpp>
@@ -64,7 +60,7 @@
 	#undef interface
 #endif
 #include "Sim/Misc/GlobalSynced.h"
-#include "Sim/Misc/TeamHandler.h"
+//#include "Sim/Misc/TeamHandler.h"
 #include "Server/MsgStrings.h"
 
 
@@ -130,6 +126,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	internalSpeed = 1.0f;
 	gamePausable = true;
 	noHelperAIs = false;
+	allowSpecDraw = true;
 	cheating = false;
 	sentGameOverMsg = false;
 
@@ -181,6 +178,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	RestrictedAction("nocost");
 	RestrictedAction("forcestart");
 	RestrictedAction("nospectatorchat");
+	RestrictedAction("nospecdraw");
 	if (demoReader)
 		RegisterAction("skip");
 	commandBlacklist.insert("skip");
@@ -192,18 +190,19 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 
 #ifdef DEDICATED
 	demoRecorder.reset(new CDemoRecorder());
-	demoRecorder->SetName(gameData->GetMap());
+	demoRecorder->SetName(setup->mapName);
 	demoRecorder->WriteSetupText(gameData->GetSetup());
 	const netcode::RawPacket* ret = gameData->Pack();
 	demoRecorder->SaveToDemo(ret->data, ret->length, modGameTime);
 	delete ret;
 #endif
-	// AIs do not join in here, so jsut set their teams as active
+	// AIs do not join in here, so just set their teams as active
 	for (size_t i = 0; i < setup->teamStartingData.size(); ++i)
 	{
 		if (setup->GetSkirmishAIDataForTeam(i))
 		{
 			teams[i].active = true;
+			teams[i].isAI = true;
 		}
 	}
 
@@ -696,7 +695,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			{
 				unsigned team = (unsigned)inbuf[2];
 				if (team >= teams.size())
-					Message(str( boost::format("Invalid teamID in startPos-message from palyer %d") %team ));
+					Message(str( boost::format("Invalid teamID in startPos-message from player %d") %team ));
 				else
 				{
 					teams[team].startPos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
@@ -822,7 +821,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_MAPDRAW:
-			Broadcast(packet); //forward data
+			if (!players[inbuf[0]].spectator || allowSpecDraw)
+				Broadcast(packet); //forward data
 			break;
 
 		case NETMSG_DIRECT_CONTROL:
@@ -905,6 +905,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						{
 							Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
 							players[player].team = newTeam;
+							players[player].spectator = false;
 						}
 						else
 						{
@@ -957,17 +958,17 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			{
 				if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a].isLocal)
 				{
-								// command is restricted to server but player is allowed to execute it
+					// command is restricted to server but player is allowed to execute it
 					PushAction(msg.action);
 				}
 				else if (commandBlacklist.find(msg.action.command) == commandBlacklist.end())
 				{
-								// command is save
+					// command is save
 					Broadcast(packet);
 				}
 				else
 				{
-								// hack!
+					// hack!
 					Message(str(boost::format(CommandNotAllowed) %msg.player %msg.action.command.c_str()));
 				}
 			}
@@ -1206,6 +1207,13 @@ void CGameServer::PushAction(const Action& action)
 		CommandMessage msg(action, SERVER_PLAYER);
 		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
 	}
+	else if (action.command == "nospecdraw")
+	{
+		SetBoolArg(allowSpecDraw, action.extra);
+		// sent it because clients have to do stuff when this changes
+		CommandMessage msg(action, SERVER_PLAYER);
+		Broadcast(boost::shared_ptr<const RawPacket>(msg.Pack()));
+	}
 	else if (action.command == "setmaxspeed" && !action.extra.empty())
 	{
 		float newUserSpeed = std::max(static_cast<float>(atof(action.extra.c_str())), minUserSpeed);
@@ -1297,25 +1305,7 @@ void CGameServer::CheckForGameEnd()
 	int numActiveAllyTeams = 0;
 	std::vector<int> numActiveTeams(teams.size(), 0); // active teams per ally team
 
-#if !defined DEDICATED
-	for (int a = 0; a < teamHandler->ActiveTeams(); ++a)
-	{
-		bool hasPlayer = false;
-		for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
-			if (playerHandler->Player(b)->active && playerHandler->Player(b)->team == static_cast<int>(a) && !playerHandler->Player(b)->spectator) {
-				hasPlayer = true;
-			}
-		}
-		if (teamHandler->Team(a)->isAI) {
-			hasPlayer = true;
-		}
-
-		if (!teamHandler->Team(a)->isDead && !teamHandler->Team(a)->gaia && hasPlayer) {
-			++numActiveTeams[teamHandler->AllyTeam(a)];
-		}
-	}
-#else // !defined DEDICATED
-	for (size_t a = 0; a < setup->teamStartingData.size(); ++a)
+	for (size_t a = 0; a < teams.size(); ++a)
 	{
 		bool hasPlayer = false;
 		for (size_t b = 0; b < players.size(); ++b) {
@@ -1323,8 +1313,8 @@ void CGameServer::CheckForGameEnd()
 				hasPlayer = true;
 			}
 		}
-		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(a);
-		if (sad) {
+
+		if (teams[a].isAI) {
 			hasPlayer = true;
 		}
 
@@ -1332,7 +1322,7 @@ void CGameServer::CheckForGameEnd()
 			++numActiveTeams[teams[a].teamAllyteam];
 		}
 	}
-#endif // !defined DEDICATED
+
 	for (size_t a = 0; a < numActiveTeams.size(); ++a) {
 		if (numActiveTeams[a] != 0) {
 			++numActiveAllyTeams;
@@ -1350,13 +1340,13 @@ void CGameServer::CreateNewFrame(bool fromServerThread, bool fixedFrameTime)
 {
 	if (!demoReader) // use NEWFRAME_MSGes from demo otherwise
 	{
-#if (BOOST_VERSION >= 103500)
+#if BOOST_VERSION >= 103500
 		if (!fromServerThread)
 			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, boost::defer_lock);
 		else
 			boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 #else
-		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex,!fromServerThread);
+		boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex, !fromServerThread);
 #endif
 		CheckSync();
 		int newFrames = 1;

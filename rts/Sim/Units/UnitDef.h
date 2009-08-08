@@ -126,15 +126,16 @@ struct UnitDef
 	bool extractSquare;
 	bool isMetalMaker;
 
-	float autoHeal;		//amount autohealed
-	float idleAutoHeal;	//amount autohealed only during idling
-	int idleTime;		//time a unit needs to idle before its considered idling
+	float autoHeal;     // amount autohealed
+	float idleAutoHeal; // amount autohealed only during idling
+	int idleTime;       // time a unit needs to idle before its considered idling
 
 	float power;
 	float health;
 	unsigned int category;
 
-	float speed;
+	float speed;        // maximum forward speed the unit can attain (elmos/sec)
+	float rSpeed;       // maximum reverse speed the unit can attain (elmos/sec)
 	float turnRate;
 	bool turnInPlace;
 	float turnInPlaceDistance; //!< units above this distance to goal will try to turn while keeping

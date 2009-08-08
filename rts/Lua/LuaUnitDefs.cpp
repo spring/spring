@@ -532,6 +532,10 @@ static int MoveDataTable(lua_State* L, const void* data)
 	HSTR_PUSH_NUMBER(L, "depthMod",      md->depthMod);
 	HSTR_PUSH_NUMBER(L, "crushStrength", md->crushStrength);
 
+	HSTR_PUSH_BOOL(L, "heatMapping",     md->heatMapping);
+	HSTR_PUSH_NUMBER(L, "heatMod",       md->heatMod);
+	HSTR_PUSH_NUMBER(L, "heatProduced",  md->heatProduced);
+
 	HSTR_PUSH_STRING(L, "name", md->name);
 
 	return 1;

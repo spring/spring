@@ -466,6 +466,10 @@ void CSelectedUnits::NetOrder(Command &c, int playerID)
 	}
 }
 
+void CSelectedUnits::ClearNetSelect(int player)
+{
+	netSelected[player].clear();
+}
 
 void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerID)
 {

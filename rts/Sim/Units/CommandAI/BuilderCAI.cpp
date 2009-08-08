@@ -827,12 +827,11 @@ void CBuilderCAI::ExecuteReclaim(Command& c)
 		// area reclaim
 		const float3 pos(c.params[0], c.params[1], c.params[2]);
 		const float radius = c.params[3];
-		const bool recAnyTeam = ((c.options & CONTROL_KEY) != 0);
 		const bool recUnits = ((c.options & META_KEY) != 0);
 		RemoveUnitFromReclaimers(owner);
 		RemoveUnitFromFeatureReclaimers(owner);
 		fac->StopBuild();
-		if (FindReclaimTargetAndReclaim(pos, radius, c.options, true, recAnyTeam, recUnits, false, false)) {
+		if (FindReclaimTargetAndReclaim(pos, radius, c.options, true, true, recUnits, false, false)) {
 			inCommand=false;
 			SlowUpdate();
 			return;
@@ -1576,6 +1575,37 @@ void CBuilderCAI::DrawCommands(void)
 
 	CCommandQueue::iterator ci;
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
+		if (ci->id < 0) {
+			map<int, string>::const_iterator boi = buildOptions.find(ci->id);
+			if (boi != buildOptions.end()) {
+				BuildInfo bi;
+				bi.def = unitDefHandler->GetUnitByID(-(ci->id));
+				if (ci->params.size() == 4) {
+					bi.buildFacing = int(ci->params[3]);
+				}
+				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
+				bi.pos = helper->Pos2BuildPos(bi);
+
+				cursorIcons.AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
+				lineDrawer.DrawLine(bi.pos, cmdColors.build);
+
+				// draw metal extraction range
+				if (bi.def->extractRange > 0) {
+					lineDrawer.Break(bi.pos, cmdColors.build);
+					glColor4fv(cmdColors.rangeExtract);
+
+					if (bi.def->extractSquare) {
+						glSurfaceSquare(bi.pos, bi.def->extractRange, bi.def->extractRange);
+					} else {
+						glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
+					}
+
+					lineDrawer.Restart();
+				}
+			}
+			continue;
+		}
+
 		switch(ci->id) {
 			case CMD_MOVE: {
 				const float3 endPos(ci->params[0], ci->params[1], ci->params[2]);
@@ -1710,35 +1740,6 @@ void CBuilderCAI::DrawCommands(void)
 			}
 		}
 
-		if (ci->id < 0) {
-			map<int, string>::const_iterator boi = buildOptions.find(ci->id);
-			if (boi != buildOptions.end()) {
-				BuildInfo bi;
-				bi.def = unitDefHandler->GetUnitByID(-(ci->id));
-				if (ci->params.size() == 4) {
-					bi.buildFacing = int(ci->params[3]);
-				}
-				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
-				bi.pos = helper->Pos2BuildPos(bi);
-
-				cursorIcons.AddBuildIcon(ci->id, bi.pos, owner->team, bi.buildFacing);
-				lineDrawer.DrawLine(bi.pos, cmdColors.build);
-
-				// draw metal extraction range
-				if (bi.def->extractRange > 0) {
-					lineDrawer.Break(bi.pos, cmdColors.build);
-					glColor4fv(cmdColors.rangeExtract);
-
-					if (bi.def->extractSquare) {
-						glSurfaceSquare(bi.pos, bi.def->extractRange, bi.def->extractRange);
-					} else {
-						glSurfaceCircle(bi.pos, bi.def->extractRange, 40);
-					}
-
-					lineDrawer.Restart();
-				}
-			}
-		}
 	}
 	lineDrawer.FinishPath();
 }

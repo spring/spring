@@ -97,15 +97,24 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 		// five sim-frames have passed since selecting target, attack
 		const UnitDef* udef = ai->cb->GetUnitDef(state.targetID);
 
-		const float3 curTargetPos = ai->cb->GetUnitPos(state.targetID);						// current target position
-		const float3 commanderPos = ai->cb->GetUnitPos(commanderID);						// current commander position
+		const float3 curTargetPos = ai->cb->GetUnitPos(state.targetID);              // current target position
+		const float3 commanderPos = ai->cb->GetUnitPos(commanderID);                 // current commander position
 
-		const float  targetDist   = (commanderPos - curTargetPos).Length();					// distance to target
-		const float3 targetDir    = (curTargetPos - state.oldTargetPos).Normalize();		// target direction of movement
-		const float  targetSpeed  = (curTargetPos - state.oldTargetPos).Length() / 5;		// target speed per sim-frame during tracking interval
+		const float3 targetDif    = (commanderPos - curTargetPos);
+		const float  targetDist   = targetDif.Length();                              // distance to target
+		const float3 targetVel    = (curTargetPos - state.oldTargetPos);
 
-		const float  dgunDelay    = targetDist / commanderWD->projectilespeed;				// sim-frames needed for dgun to reach target position
-		const float3 dgunPos      = curTargetPos + targetDir * (targetSpeed * dgunDelay);	// position where target will be in <dgunDelay> frames
+		float3 targetMoveDir   = targetVel;
+		float  targetMoveSpeed = 0.0f;
+
+		if (targetVel != ZeroVector) {
+			targetMoveSpeed = targetVel.Length() / 5.0f;                             // target speed per sim-frame during tracking interval
+			targetMoveDir   = targetVel / (targetMoveSpeed * 5.0f);                  // target direction of movement
+		}
+
+		const float  dgunDelay    = targetDist / commanderWD->projectilespeed;       // sim-frames needed for dgun to reach target position
+		const float3 leadPos      = targetMoveDir * (targetMoveSpeed * dgunDelay);
+		const float3 dgunPos      = curTargetPos + leadPos;                          // position where target will be in <dgunDelay> frames
 		const float  maxRange     = ai->cb->GetUnitMaxRange(commanderID);
 
 		bool haveClearShot = true;
@@ -113,7 +122,7 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 
 		AIHCTraceRay rayData = {
 			commanderPos,
-			targetDir,
+			targetDif / targetDist,
 			maxRange,
 			commanderID,
 			-1,

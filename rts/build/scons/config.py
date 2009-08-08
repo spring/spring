@@ -186,7 +186,7 @@ def check_openal(env, conf):
 		env.ParseConfig(openalcfg+" --cflags --libs")
 	else:
 		print "not found"
-		guess_include_path(env, conf, 'OpenAL', 'AL')
+	guess_include_path(env, conf, 'OpenAL', 'AL')
 
 
 def check_ogg(env, conf):
@@ -289,16 +289,17 @@ def CheckHeadersAndLibraries(env, conf):
 	boost_serial = Dependency([], ['boost/serialization/split_member.hpp'])
 	boost_po     = Dependency(['boost_program_options'], ['boost/program_options.hpp'])
 	boost_system  = Dependency(['boost_system'],   ['boost/system/error_code.hpp'])
+	boost_signals = Dependency(['boost_signals'], ['boost/signal.hpp'])
 
 	if env.Dictionary('CC').find('gcc') != -1: gcc = True
 	else: gcc = False
 
-	for boost in (boost_thread, boost_regex, boost_po, boost_system):
+	for boost in (boost_thread, boost_regex, boost_po, boost_system, boost_signals):
 		l = boost.libraries[0]
 		if gcc: boost.libraries = [l+'-gcc-mt', l+'-mt', l+'-gcc', l]
 		else:   boost.libraries = [l+'-mt', l]
 
-	d = [boost_common, boost_regex, boost_serial, boost_thread, boost_po, boost_system]
+	d = [boost_common, boost_regex, boost_serial, boost_thread, boost_po, boost_system, boost_signals]
 
 	d += [Dependency(['GL', 'opengl32'], ['GL/gl.h'])]
 	d += [Dependency(['GLU', 'glu32'], ['GL/glu.h'])]
@@ -321,7 +322,6 @@ def CheckHeadersAndLibraries(env, conf):
 	else:
 		d += [Dependency(['Xcursor'], ['X11/Xcursor/Xcursor.h'])]
 		d += [Dependency(['X11'], ['X11/X.h'])]
-		#d += [Dependency(['jvm'],     ['jni.h'])]
 
 	d += [Dependency(['vorbisfile'], ['vorbis/vorbisfile.h'])]
 	d += [Dependency(['vorbis'], [])]

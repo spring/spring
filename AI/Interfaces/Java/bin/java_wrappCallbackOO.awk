@@ -290,18 +290,21 @@ function printClass(ancestors_c, clsName_c) {
 		}
 		print("\t" "static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
 		print("") >> outFile_c;
+		lastParamName = ctorParamsNoTypes;
+		sub(/^.*,[ \t]*/, "", lastParamName);
 		if (clsNameExternal_c == "Unit") {
 			# the first valid unit id is 1
 			print("\t\t" "if (unitId <= 0) {") >> outFile_c;
 			print("\t\t\t" "return null;") >> outFile_c;
 			print("\t\t" "}") >> outFile_c;
-		} else if (match(ctorParams, /^[^ \t]+Id$/)) {
+			print("") >> outFile_c;
+		} else if (match(lastParamName, /^[^ \t]+Id$/)) {
 			# ... for all other *Id's, the first valid one is 0
-			print("\t\t" "if (" ctorParams " < 0) {") >> outFile_c;
+			print("\t\t" "if (" lastParamName " < 0) {") >> outFile_c;
 			print("\t\t\t" "return null;") >> outFile_c;
 			print("\t\t" "}") >> outFile_c;
+			print("") >> outFile_c;
 		}
-		print("") >> outFile_c;
 		print("\t\t" clsNameExternal_c " _ret = null;") >> outFile_c;
 		if (fullNameAvailable_c == "") {
 			print("\t\t" "_ret = new " clsNameExternal_c "(" ctorParamsNoTypes ");") >> outFile_c;
@@ -810,6 +813,9 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_m;
 			print("") >> outFile_m;
+		}
+		if (memName == "handleCommand") {
+			print(indent_m "command.read();") >> outFile_m;
 		}
 		if (!isVoid_m) {
 			print(indent_m "return _ret;") >> outFile_m;

@@ -271,8 +271,6 @@ bool FBO::IsValid()
  */
 void FBO::Bind(void)
 {
-	if (!IsSupported()) return;
-
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
 }
 
@@ -282,8 +280,6 @@ void FBO::Bind(void)
  */
 void FBO::Unbind()
 {
-	if (!IsSupported()) return;
-
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
 
@@ -341,8 +337,6 @@ GLenum FBO::GetStatus()
  */
 void FBO::AttachTexture(const GLuint texId, const GLenum texTarget, const GLenum attachment, const int mipLevel, const int zSlice )
 {
-	if (!IsSupported()) return;
-
 	if (texTarget == GL_TEXTURE_1D) {
 		glFramebufferTexture1DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_1D, texId, mipLevel);
 	} else if (texTarget == GL_TEXTURE_3D) {
@@ -358,8 +352,6 @@ void FBO::AttachTexture(const GLuint texId, const GLenum texTarget, const GLenum
  */
 void FBO::AttachRenderBuffer(const GLuint rboId, const GLenum attachment)
 {
-	if (!IsSupported()) return;
-
 	glFramebufferRenderbufferEXT(GL_FRAMEBUFFER_EXT, attachment, GL_RENDERBUFFER_EXT, rboId);
 }
 
@@ -369,8 +361,6 @@ void FBO::AttachRenderBuffer(const GLuint rboId, const GLenum attachment)
  */
 void FBO::Unattach(const GLenum attachment)
 {
-	if (!IsSupported()) return;
-
 	glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, attachment, GL_TEXTURE_2D, 0, 0);
 }
 
@@ -380,8 +370,6 @@ void FBO::Unattach(const GLenum attachment)
  */
 void FBO::UnattachAll()
 {
-	if (!IsSupported()) return;
-
 	for(int i = 0; i < 15; ++i) {
 		Unattach(GL_COLOR_ATTACHMENT0_EXT + i);
 	}
@@ -395,8 +383,6 @@ void FBO::UnattachAll()
  */
 void FBO::CreateRenderBuffer(const GLenum attachment, const GLenum format, const GLsizei width, const GLsizei height)
 {
-	if (!IsSupported()) return;
-
 	GLuint rbo;
 	glGenRenderbuffersEXT(1, &rbo);
 	glBindRenderbufferEXT(GL_RENDERBUFFER_EXT, rbo);

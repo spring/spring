@@ -117,7 +117,12 @@ void UDPConnection::Update()
 		{
 			std::vector<uint8_t> buffer(bytes_avail);
 			ip::udp::endpoint sender_endpoint;
-			size_t bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint);
+			size_t bytesReceived;
+			boost::asio::ip::udp::socket::message_flags flags = 0;
+			boost::system::error_code err;
+			bytesReceived = mySocket->receive_from(boost::asio::buffer(buffer), sender_endpoint, flags, err);
+			if (CheckErrorCode(err))
+				break;
 
 			if (bytesReceived < UDPConnection::hsize)
 				continue;
@@ -129,7 +134,7 @@ void UDPConnection::Update()
 			}
 		}
 	}
-	
+
 	const spring_time curTime = spring_gettime();
 	bool force = false;	// should we force to send a packet?
 
@@ -401,8 +406,12 @@ void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned leng
 	}
 
 	memcpy(tempbuf+hsize, data, length);
-	mySocket->send_to(buffer(tempbuf, length+hsize), addr);
+	boost::asio::ip::udp::socket::message_flags flags = 0;
+	boost::system::error_code err;
+	mySocket->send_to(buffer(tempbuf, length+hsize), addr, flags, err);
 	delete[] tempbuf;
+	if (CheckErrorCode(err))
+		return;
 
 	dataSent += length;
 	sentOverhead += hsize;

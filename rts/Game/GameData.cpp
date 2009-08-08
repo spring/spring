@@ -32,10 +32,7 @@ GameData::GameData(boost::shared_ptr<const RawPacket> pckt)
 	const int error = uncompress(&buffer[0], &size, &compressed[0], compressed.size());
 	assert(error == Z_OK);
 	setupText = reinterpret_cast<char*>(&buffer[0]);
-	packet >> script;
-	packet >> map;
 	packet >> mapChecksum;
-	packet >> mod;
 	packet >> modChecksum;
 	packet >> randomSeed;
 }
@@ -51,15 +48,12 @@ const netcode::RawPacket* GameData::Pack() const
 		assert(error == Z_OK);
 	}
 
-	unsigned short size = 3 + 2*sizeof(unsigned) + compressed.size()+2 + map.size() + mod.size() + script.size() + 4 + 3;
+	unsigned short size = 3 + 2*sizeof(unsigned) + compressed.size()+2 + 4;
 	PackPacket* buffer = new PackPacket(size, NETMSG_GAMEDATA);
 	*buffer << size;
 	*buffer << boost::uint16_t(compressed.size());
 	*buffer << compressed;
-	*buffer << script;
-	*buffer << map;
 	*buffer << mapChecksum;
-	*buffer << mod;
 	*buffer << modChecksum;
 	*buffer << randomSeed;
 	return buffer;
@@ -71,20 +65,13 @@ void GameData::SetSetup(const std::string& newSetup)
 	compressed.clear();
 }
 
-void GameData::SetScript(const std::string& newScript)
+void GameData::SetMapChecksum(const unsigned checksum)
 {
-	script = newScript;
-}
-
-void GameData::SetMap(const std::string& newMap, const unsigned checksum)
-{
-	map = newMap;
 	mapChecksum = checksum;
 }
 
-void GameData::SetMod(const std::string& newMod, const unsigned checksum)
+void GameData::SetModChecksum(const unsigned checksum)
 {
-	mod = newMod;
 	modChecksum = checksum;
 }
 

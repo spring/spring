@@ -34,9 +34,6 @@
 #include "Sound/Sound.h"
 #include "Exceptions.h"
 
-const char YARDMAP_CHAR = 'c';		//Need to be low case.
-
-
 CUnitDefHandler* unitDefHandler;
 
 
@@ -125,9 +122,9 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 			unitDefs[id].yardmaps[ym] = 0;
 		}
 
-		// parse the TDF data (but don't load buildpics, etc...)
+		// parse the unitdef data (but don't load buildpics, etc...)
 		LuaTable udTable = rootTable.SubTable(unitName);
-		ParseUnit(udTable, unitName, id);
+		ParseUnitDef(udTable, unitName, id);
 
 		// Increase index for next unit
 		id++;
@@ -237,7 +234,7 @@ void CUnitDefHandler::FindStartUnits()
 }
 
 
-void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitName, int id)
+void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& unitName, int id)
 {
 	UnitDef& ud = unitDefs[id];
 
@@ -285,8 +282,8 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.energyMake   = udTable.GetFloat("energyMake", 0.0f);
 
 	ud.health       = udTable.GetFloat("maxDamage",  0.0f);
-	ud.autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (16.0f / 30.0f);
-	ud.idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (16.0f / 30.0f);
+	ud.autoHeal     = udTable.GetFloat("autoHeal",      0.0f) * (16.0f / GAME_SPEED);
+	ud.idleAutoHeal = udTable.GetFloat("idleAutoHeal", 10.0f) * (16.0f / GAME_SPEED);
 	ud.idleTime     = udTable.GetInt("idleTime", 600);
 
 	ud.buildangle = udTable.GetInt("buildAngle", 0);
@@ -367,16 +364,20 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.canSelfD = udTable.GetBool("canSelfDestruct", true);
 	ud.selfDCountdown = udTable.GetInt("selfDestructCountdown", 5);
 
-	ud.speed    = udTable.GetFloat("maxVelocity",  0.0f) * 30.0f;
-	ud.maxAcc   = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
-	ud.maxDec   = fabs(udTable.GetFloat("brakeRate",    3.0f * ud.maxAcc)) * (ud.canfly? 0.1f: 1.0f); // no negative values
+	ud.speed  = udTable.GetFloat("maxVelocity",  0.0f) * GAME_SPEED;
+	ud.rSpeed = udTable.GetFloat("maxReverseVelocity", 0.0f) * GAME_SPEED;
+	ud.speed  = fabs(ud.speed);
+	ud.rSpeed = fabs(ud.rSpeed);
+
+	ud.maxAcc = fabs(udTable.GetFloat("acceleration", 0.5f)); // no negative values
+	ud.maxDec = fabs(udTable.GetFloat("brakeRate",    3.0f * ud.maxAcc)) * (ud.canfly? 0.1f: 1.0f); // no negative values
 
 	ud.turnRate    = udTable.GetFloat("turnRate",     0.0f);
 	ud.turnInPlace = udTable.GetBool( "turnInPlace",  true);
 	ud.turnInPlaceDistance = udTable.GetFloat("turnInPlaceDistance", 350.f);
 	ud.turnInPlaceSpeedLimit = udTable.GetFloat("turnInPlaceSpeedLimit", 15.f);
 
-	bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
+	const bool noAutoFire  = udTable.GetBool("noAutoFire",  false);
 	ud.canFireControl = udTable.GetBool("canFireControl", !noAutoFire);
 	ud.fireState = udTable.GetInt("fireState", ud.canFireControl ? -1 : 2);
 	ud.fireState = std::min(ud.fireState,2);
@@ -569,7 +570,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 		const unsigned int slaveTo = wTable.GetInt("slaveTo", 0);
 
 		float3 mainDir = wTable.GetFloat3("mainDir", float3(1.0f, 0.0f, 0.0f));
-		mainDir.Normalize();
+		if (mainDir != ZeroVector) {
+			mainDir.Normalize();
+		}
 
 		const float angleDif = cos(wTable.GetFloat("maxAngleDif", 360.0f) * (PI / 360.0f));
 
@@ -643,32 +646,36 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 
 	ud.movedata = 0;
 	if (ud.canmove && !ud.canfly && (ud.type != "Factory")) {
-		string moveclass = udTable.GetString("movementClass", "");
+		string moveclass = StringToLower(udTable.GetString("movementClass", ""));
 		ud.movedata = moveinfo->GetMoveDataFromName(moveclass);
+
+		if (!ud.movedata) {
+			const string errmsg = "WARNING: Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
+			logOutput.Print(errmsg);
+			// remove the UnitDef
+			throw content_error(errmsg);
+		}
+
 		if ((ud.movedata->moveType == MoveData::Hover_Move) ||
 		    (ud.movedata->moveType == MoveData::Ship_Move)) {
 			ud.upright = true;
 		}
 		if (ud.canhover) {
 			if (ud.movedata->moveType != MoveData::Hover_Move) {
-				logOutput.Print("Inconsistant move data hover %i %s %s",
-				                ud.movedata->pathType, ud.humanName.c_str(),
-				                moveclass.c_str());
+				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): canhover, but not a hovercraft movetype",
+				     ud.movedata->pathType, ud.name.c_str(), moveclass.c_str());
 			}
 		} else if (ud.floater) {
 			if (ud.movedata->moveType != MoveData::Ship_Move) {
-				logOutput.Print("Inconsistant move data ship %i %s %s",
-				                ud.movedata->pathType, ud.humanName.c_str(),
-				                moveclass.c_str());
+				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): floater, but not a ship movetype",
+				     ud.movedata->pathType, ud.name.c_str(), moveclass.c_str());
 			}
 		} else {
 			if (ud.movedata->moveType != MoveData::Ground_Move) {
-				logOutput.Print("Inconsistant move data ground %i %s %s",
-				                 ud.movedata->pathType, ud.humanName.c_str(),
-				                 moveclass.c_str());
+				logOutput.Print("Inconsistent movedata %i for %s (moveclass %s): neither canhover nor floater, but not a ground movetype",
+				     ud.movedata->pathType, ud.name.c_str(), moveclass.c_str());
 			}
 		}
-//		logOutput.Print("%s uses movetype %i",ud.humanName.c_str(),ud.movedata->pathType);
 	}
 
 	if ((ud.maxAcc != 0) && (ud.speed != 0)) {
@@ -743,9 +750,9 @@ void CUnitDefHandler::ParseTAUnit(const LuaTable& udTable, const string& unitNam
 	ud.flareDelay      = udTable.GetFloat("flareDelay",      0.3f);
 	ud.flareEfficiency = udTable.GetFloat("flareEfficiency", 0.5f);
 	ud.flareDropVector = udTable.GetFloat3("flareDropVector", ZeroVector);
-	ud.flareTime       = udTable.GetInt("flareTime", 3) * 30;
+	ud.flareTime       = udTable.GetInt("flareTime", 3) * GAME_SPEED;
 	ud.flareSalvoSize  = udTable.GetInt("flareSalvoSize",  4);
-	ud.flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * 30;
+	ud.flareSalvoDelay = udTable.GetInt("flareSalvoDelay", 0) * GAME_SPEED;
 
 	ud.smoothAnim = udTable.GetBool("smoothAnim", false);
 	ud.canLoopbackAttack = udTable.GetBool("canLoopbackAttack", false);
@@ -889,14 +896,14 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
 }
 
 
-void CUnitDefHandler::ParseUnit(const LuaTable& udTable, const string& unitName, int id)
+void CUnitDefHandler::ParseUnitDef(const LuaTable& udTable, const string& unitName, int id)
 {
-  try {
-    ParseTAUnit(udTable, unitName, id);
-  } catch (content_error const& e) {
-    std::cout << e.what() << std::endl;
-    return;
-  }
+	try {
+		ParseUnitDefTable(udTable, unitName, id);
+	} catch (content_error const& e) {
+		logOutput.Print("%s", e.what());
+		return;
+	}
 
 	unitDefs[id].valid = true;
 
@@ -942,51 +949,68 @@ const UnitDef* CUnitDefHandler::GetUnitByID(int id)
 }
 
 
-/*
-Creates a open ground blocking map, called yardmap.
-When sat != 0, is used instead of normal all-over-blocking.
-*/
-void CUnitDefHandler::CreateYardMap(UnitDef *def, std::string yardmapStr) {
-	//Force string to lower case.
+
+void CUnitDefHandler::CreateYardMap(UnitDef* def, std::string yardmapStr)
+{
 	StringToLowerInPlace(yardmapStr);
+ 
+	const int mw = def->xsize;
+	const int mh = def->zsize;
+	const int maxIdx = mw * mh;
+ 
+	// create the yardmaps for each build-facing
+	for (int u = 0; u < 4; u++) {
+		def->yardmaps[u] = new unsigned char[maxIdx];
+	}
+ 
+	// Spring resolution's is double that of TA's (so 4 times as much area)
+	unsigned char* originalMap = new unsigned char[maxIdx / 4];
 
-	//Creates the map.
-	for (int u=0;u<4;u++)
-		def->yardmaps[u] = new unsigned char[def->xsize * def->zsize];
+	memset(originalMap, 255, maxIdx / 4);
 
-	unsigned char *originalMap = new unsigned char[def->xsize * def->zsize / 4];		//TAS resolution is double of TA resolution.
-	memset(originalMap, 255, def->xsize * def->zsize / 4);
-
-	if(!yardmapStr.empty()){
+	if (!yardmapStr.empty()) {
 		std::string::iterator si = yardmapStr.begin();
-		int x, y;
-		for(y = 0; y < def->zsize / 2; y++) {
-			for(x = 0; x < def->xsize / 2; x++) {
-				if(*si == 'g')
-					def->needGeo=true;
-				else if(*si == YARDMAP_CHAR)
-					originalMap[x + y*def->xsize/2] = 1;
-				else if(*si == 'y')
-					originalMap[x + y*def->xsize/2] = 0;
+
+		for (int y = 0; y < mh / 2; y++) {
+			for (int x = 0; x < mw / 2; x++) {
+
+					 if (*si == 'g') def->needGeo = true;
+				else if (*si == 'c') originalMap[x + y * mw / 2] = 1; // blocking
+				else if (*si == 'y') originalMap[x + y * mw / 2] = 0; // non-blocking
+
+				// advance one non-space character (matching the column
+				// <x> we have just advanced) in this row, and skip any
+				// spaces
 				do {
 					si++;
-				} while(si != yardmapStr.end() && *si == ' ');
-				if(si == yardmapStr.end())
+				} while (si != yardmapStr.end() && *si == ' ');
+
+				if (si == yardmapStr.end()) {
+					// no more chars for remaining colums in this row
 					break;
+				}
 			}
-			if(si == yardmapStr.end())
-				break;
+
+			if (si == yardmapStr.end()) {
+				// no more chars for any remaining rows
+ 				break;
+			}
+ 		}
+ 	}
+
+	for (int y = 0; y < mh; y++) {
+		for (int x = 0; x < mw; x++) {
+			int orgIdx = x / 2 + y / 2 * mw / 2;
+			char orgMapChar = originalMap[orgIdx];
+
+			def->yardmaps[0][         (x + y * mw)                ] = orgMapChar;
+			def->yardmaps[1][maxIdx - (mh * (x + 1) - (y + 1) + 1)] = orgMapChar;
+			def->yardmaps[2][maxIdx - (x + y * mw + 1)            ] = orgMapChar;
+			def->yardmaps[3][          mh * (x + 1) - (y + 1)     ] = orgMapChar;
 		}
 	}
-	for(int y = 0; y < def->zsize; y++)
-		for(int x = 0; x < def->xsize; x++){
-			def->yardmaps[0][x + y*def->xsize] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[1][(def->zsize*def->xsize)-(def->zsize*(x+1)-(y+1)+1)] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[2][(def->zsize*def->xsize)-(x + y*def->xsize+1)] = originalMap[x/2 + y/2*def->xsize/2];
-			def->yardmaps[3][def->zsize*(x+1)-(y+1)] = originalMap[x/2 + y/2*def->xsize/2];
-		}
-	delete[] originalMap;
 }
+
 
 
 static bool LoadBuildPic(const string& filename, CBitmap& bitmap)
@@ -1086,50 +1110,6 @@ void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 			AssignTechLevel(unitDefs[ud_it->second], level);
 		}
 	}
-}
-
-
-bool CUnitDefHandler::SaveTechLevels(const std::string& filename,
-                                     const std::string& modname)
-{
-	FILE* f;
-	if (filename.empty()) {
-		f = stdout;
-	} else {
-		f = fopen(filename.c_str(), "wt");
-		if (f == NULL) {
-			return false;
-		}
-	}
-
-	fprintf(f, "\nTech Levels for \"%s\"\n", modname.c_str());
-	std::multimap<int, std::string> entries;
-	std::map<std::string, int>::const_iterator uit;
-	for (uit = unitID.begin(); uit != unitID.end(); uit++) {
-		const string& unitName = uit->first;
-		const UnitDef* ud = GetUnitByName(unitName);
-		if (ud) {
-			char buf[256];
-			SNPRINTF(buf, sizeof(buf), " %3i:  %-15s  // %s :: %s\n",
-							 ud->techLevel, unitName.c_str(),
-							 ud->humanName.c_str(), ud->tooltip.c_str());
-			entries.insert(std::pair<int, string>(ud->techLevel, buf));
-		}
-	}
-	int prevLevel = -2;
-	std::multimap<int, std::string>::iterator eit;
-	for (eit = entries.begin(); eit != entries.end(); ++eit) {
-		if (eit->first != prevLevel) {
-			fprintf(f, "\n");
-			prevLevel = eit->first;
-		}
-		fprintf(f, "%s", eit->second.c_str());
-	}
-
-	if (f != stdout) {
-		fclose(f);
-	}
-	return true;
 }
 
 
