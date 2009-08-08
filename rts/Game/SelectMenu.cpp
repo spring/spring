@@ -31,7 +31,6 @@
 #include "aGui/LineEdit.h"
 #include "aGui/TextElement.h"
 #include "aGui/Window.h"
-#include "aGui/List.h"
 #include "aGui/Picture.h"
 
 using std::string;
@@ -114,7 +113,6 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 SelectMenu::SelectMenu(bool server): menu(NULL)
 {
 	connectWnd = NULL;
-	list = NULL;
 	mySettings = new ClientSetup();
 	inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
 
