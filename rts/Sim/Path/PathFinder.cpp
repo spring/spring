@@ -687,7 +687,7 @@ void CPathFinder::SetHeatMapState(bool enabled)
 void CPathFinder::UpdateHeatMap()
 {
 	// run every 4 frames
-	if (gs->frameNum & 3 != 0)
+	if ((gs->frameNum & 3) != 0)
 		return;
 
 	for (int x = 0; x<gs->mapx; x += 2) {
