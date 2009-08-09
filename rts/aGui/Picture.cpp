@@ -32,6 +32,7 @@ void Picture::DrawSelf()
 {
 	if (texture)
 	{
+		glColor3f(1,1,1);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texture);
 		glBegin(GL_QUADS);

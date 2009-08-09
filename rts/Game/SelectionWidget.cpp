@@ -46,13 +46,12 @@ private:
 	}
 };
 
-SelectionWidget::SelectionWidget()
+SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {
 	SetPos(0.5f, 0.2f);
 	SetSize(0.4f, 0.2f);
 	curSelect = NULL;
 	
-	agui::gui->AddElement(this);
 	agui::VerticalLayout* vl = new agui::VerticalLayout(this);
 	vl->SetBorder(1.2f);
 	agui::HorizontalLayout* modL = new agui::HorizontalLayout(vl);
@@ -78,6 +77,7 @@ SelectionWidget::SelectionWidget()
 
 SelectionWidget::~SelectionWidget()
 {
+	CleanWindow();
 }
 
 void SelectionWidget::ShowModList()

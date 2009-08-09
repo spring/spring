@@ -11,7 +11,6 @@ class SelectionWidget;
 namespace agui
 {
 class Window;
-class VerticalLayout;
 class LineEdit;
 class Picture;
 }
@@ -49,7 +48,6 @@ private:
 	ClientSetup* mySettings;
 
 	boost::signals::scoped_connection inputCon;
-	agui::VerticalLayout* menu;
 	agui::LineEdit* address;
 	agui::Window* connectWnd;
 	agui::Picture* background;
