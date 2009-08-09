@@ -1,7 +1,7 @@
 #ifndef FASTMATH_H
 #define FASTMATH_H
 
-#ifndef DEDICATED
+#ifndef DEDICATED_NOSSE
 #include <xmmintrin.h>
 #endif
 #include <boost/cstdint.hpp>
@@ -30,7 +30,7 @@ namespace fastmath {
 	*/
 	inline float isqrt_sse(float x)
 	{
-#ifndef DEDICATED
+#ifndef DEDICATED_NOSSE
 		union
 		{
 			__m128 vec;
@@ -53,7 +53,7 @@ namespace fastmath {
 
 	inline float sqrt_sse(float x)
 	{
-#ifndef DEDICATED
+#ifndef DEDICATED_NOSSE
 		union
 		{
 			__m128 vec;
