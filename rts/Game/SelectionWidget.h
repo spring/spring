@@ -15,6 +15,10 @@ class ListSelectWnd;
 class SelectionWidget : public agui::GuiElement
 {
 public:
+	static const std::string NoModSelect;
+	static const std::string NoMapSelect;
+	static const std::string NoScriptSelect;
+
 	SelectionWidget(agui::GuiElement* parent);
 	~SelectionWidget();
 	
