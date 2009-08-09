@@ -15,6 +15,7 @@
 #include "LogOutput.h"
 #include "FileSystem/FileSystem.h"
 #include "Game/GameSetup.h"
+#include "Game/GameServer.h"
 #include "Game/PlayerHandler.h"
 #include "mmgr.h"
 #include "Exceptions.h"
@@ -42,6 +43,8 @@ void CSkirmishAITestScript::GameStart(void)
 	teamHandler->Team(skirmishAI_teamId)->skirmishAIKey = key;
 	teamHandler->Team(skirmishAI_teamId)->skirmishAIOptions = options;
 	teamHandler->Team(skirmishAI_teamId)->leader = player_Id;
+	gameServer->teams[skirmishAI_teamId].isAI = true;
+	gameServer->teams[skirmishAI_teamId].leader = player_Id;
 
 	playerHandler->Player(player_Id)->SetControlledTeams();
 
