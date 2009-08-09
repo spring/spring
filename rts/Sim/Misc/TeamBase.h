@@ -18,9 +18,17 @@ public:
 		return customValues;
 	};
 
+	/**
+	 * Player ID of the player in charge of this team.
+	 * The player either controlls this team directly,
+	 * or an AI running on his computer does so.
+	 */
 	int leader;
 	unsigned char color[4];
 	float handicap;
+	/**
+	 * Side/Factions name, eg. "ARM" or "CORE".
+	 */
 	std::string side;
 	float3 startPos;
 	int teamStartNum;
