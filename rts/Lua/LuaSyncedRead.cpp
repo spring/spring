@@ -2425,6 +2425,9 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	const UnitDef* effectiveDef = EffectiveUnitDef(unit);
 	if (effectiveDef->showPlayerName) {
 		tooltip = playerHandler->Player(teamHandler->Team(unit->team)->leader)->name;
+		if (teamHandler->Team(unit->team)->isAI) {
+			tooltip = std::string("AI@") + tooltip;
+		}
 	} else {
 		if (!decoyDef) {
 			tooltip = unit->tooltip;
