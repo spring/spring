@@ -1098,7 +1098,195 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "moveslow") {
 		camMove[7]=true;
 	}
+	else if (cmd == "aikill") {
+		bool badArgs = false;
 
+		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
+		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
+		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
+		//const bool isFromHost         = (playernum == 0);
+		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
+		const bool isCheatingEnabled  = gs->cheatEnabled;
+		const bool hasArgs  = (action.extra.size() > 0);
+		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+
+		if (hasArgs) {
+			bool share = false;
+			int teamToKillId         = -1;
+			int teamToReceiveUnitsId = -1;
+
+			if (args.size() >= 1) {
+				teamToKillId = atoi(args[0].c_str());
+			}
+			if (args.size() >= 2) {
+				teamToReceiveUnitsId = atoi(args[1].c_str());
+				share = true;
+			}
+
+			CTeam* teamToKill = teamHandler->IsActiveTeam(teamToKillId) ?
+			                          teamHandler->Team(teamToKillId) : NULL;
+			const CTeam* teamToReceiveUnits = teamHandler->Team(teamToReceiveUnitsId) ?
+			                                  teamHandler->Team(teamToReceiveUnitsId) : NULL;
+
+			if (teamToKill == NULL) {
+				logOutput.Print("Team to kill: not a valid team number: \"%s\"", args[0].c_str());
+				badArgs = true;
+			}
+			if (share && teamToReceiveUnits == NULL) {
+				logOutput.Print("Team to receive units: not a valid team number: \"%s\"", args[1].c_str());
+				badArgs = true;
+			}
+			if (!badArgs && !(teamToKill->isAI)) {
+				logOutput.Print("Team to kill: not a Skirmish AI team: %i", teamToKillId);
+				badArgs = true;
+			}
+			if (!badArgs && !(fromPlayer->CanControlTeam(teamToKillId) && teamHandler->AlliedTeams(fromTeamId, teamToKillId)) && !isCheatingEnabled) {
+				logOutput.Print("Team to kill: player %s is not allowed to kill Skirmish AI controlling team %i (try with /cheat)",
+						fromPlayer->name.c_str(), teamToKillId);
+				badArgs = true;
+			}
+			if (!badArgs && teamToKill->isDead) {
+				logOutput.Print("Team to kill: is a dead team already: %i", teamToKillId);
+				badArgs = true;
+			}
+
+			const bool isLocalSkirmishAI = eoh->IsSkirmishAI(teamToKillId);
+
+			if (!badArgs) {
+				if (share) {
+					net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
+					// when the AIs team has no units left,
+					// the AI will be destroyed automatically
+				} else {
+					if (isLocalSkirmishAI) {
+						eoh->DestroySkirmishAI(teamToKillId, 3 /* = AI killed */);
+					}
+				}
+
+				if (isLocalSkirmishAI) {
+					if (!eoh->IsSkirmishAI(teamToKillId)) {
+						logOutput.Print("Successfully removed Skirmish AI from team %i.", teamToKillId);
+					} else {
+						logOutput.Print("Failed to remove Skirmish AI from team %i.", teamToKillId);
+					}
+				}
+			}
+		} else {
+			logOutput.Print("/%s: missing mandatory argument \"teamToKill\"", action.command.c_str());
+			badArgs = true;
+		}
+
+		if (badArgs) {
+			logOutput.Print("------------------------------------------------");
+			logOutput.Print("Kill a Skirmish AI controlling a team.");
+			logOutput.Print("The team itsself will remain alive,");
+			logOutput.Print("unless a second argument is given,");
+			logOutput.Print("which specifies an active team");
+			logOutput.Print("that will receive all the units of the AI team.");
+			logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
+		}
+	}
+	else if (cmd == "aicontrol") {
+		bool badArgs = false;
+
+		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
+		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
+		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
+		//const bool isFromHost         = (playernum == 0);
+		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
+		const bool isCheatingEnabled  = gs->cheatEnabled;
+		const bool hasArgs  = (action.extra.size() > 0);
+		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+
+		if (hasArgs) {
+			int         teamToControlId = -1;
+			std::string aiShortName     = "";
+			std::string aiVersion       = "";
+			std::string aiName          = "";
+			std::map<std::string, std::string> aiOptions;
+
+			std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+			if (args.size() >= 1) {
+				teamToControlId = atoi(args[0].c_str());
+			}
+			if (args.size() >= 2) {
+				aiShortName = args[1];
+			} else {
+				logOutput.Print("/%s: missing mandatory argument \"aiShortName\"", action.command.c_str());
+			}
+			if (args.size() >= 3) {
+				aiVersion = args[2];
+			}
+			if (args.size() >= 4) {
+				aiName = args[3];
+			}
+
+			CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
+			                             teamHandler->Team(teamToControlId) : NULL;
+
+			if (teamToControl == NULL) {
+				logOutput.Print("Team to control: not a valid team number: \"%s\"", args[0].c_str());
+				badArgs = true;
+			}
+			if (!badArgs && !(fromPlayer->CanControlTeam(teamToControlId) && teamHandler->AlliedTeams(fromTeamId, teamToControlId)) && !isCheatingEnabled) {
+				logOutput.Print("Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
+						fromPlayer->name.c_str(), teamToControlId);
+				badArgs = true;
+			}
+			if (!badArgs && teamToControl->isDead) {
+				logOutput.Print("Team to control: is a dead team: %i", teamToControlId);
+				badArgs = true;
+			}
+			/*
+			// It should be allowed to let two Skirmish AIs control a single team.
+			// Though, it will fail heavily most likely with AIs not designed for this.
+			if (!badArgs && eoh->IsSkirmishAI(teamToControlId)) {
+				logOutput.Print("Team to control: is already controlled by a Skirmish AI: %i", teamToControlId);
+				badArgs = true;
+			}
+			*/
+
+			if (!badArgs) {
+				SkirmishAIKey aiKey(aiShortName, aiVersion);
+				aiKey = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(aiKey);
+				if (aiKey.IsUnspecified()) {
+					logOutput.Print("Skirmish AI: not a valid Skirmish AI (Lua AIs are not supported (yet)): %s %s",
+							aiShortName.c_str(), aiVersion.c_str());
+					badArgs = true;
+				}
+
+				SkirmishAIData aiData;
+				aiData.name = (aiName != "") ? aiName : aiShortName;
+				aiData.team = teamToControlId;
+				aiData.hostPlayerNum = gu->myPlayerNum;
+				aiData.shortName = aiShortName;
+				aiData.version = aiVersion;
+				std::map<std::string, std::string>::const_iterator o;
+				for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
+					aiData.optionKeys.push_back(o->first);
+				}
+				aiData.options = aiOptions;
+
+				eoh->CreateSkirmishAI(teamToControlId, aiKey, aiData);
+
+				if (eoh->IsSkirmishAI(teamToControlId)) {
+					logOutput.Print("Skirmish AI now controlling team %i.", teamToControlId);
+				} else {
+					logOutput.Print("Failed to let a Skirmish AI control team %i.", teamToControlId);
+				}
+			}
+		} else {
+			logOutput.Print("/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", action.command.c_str());
+			badArgs = true;
+		}
+
+		if (badArgs) {
+			logOutput.Print("------------------------------------------------");
+			logOutput.Print("Let a Skirmish AI take over control of a team.");
+			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", action.command.c_str());
+			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", action.command.c_str());
+		}
+	}
 	else if (cmd == "team"){
 		if (gs->cheatEnabled)
 		{
@@ -1994,8 +2182,6 @@ bool CGame::ActionPressed(const Action& action,
 		CUnitScript::BenchmarkScript(action.extra);
 	}
 	else if (cmd == "atm" ||
-			cmd == "aikill" ||
-			cmd == "aicontrol" ||
 #ifdef DEBUG
 			cmd == "desync" ||
 #endif
@@ -2100,222 +2286,7 @@ void SetBoolArg(bool& value, const std::string& str)
 // FOR SYNCED MESSAGES
 void CGame::ActionReceived(const Action& action, int playernum)
 {
-	if (action.command == "aikill") {
-		bool badArgs = false;
-
-		const CPlayer* fromPlayer     = playerHandler->Player(playernum);
-		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
-		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
-		//const bool isFromHost         = (playernum == 0);
-		const bool isFromLocalPlayer  = (playernum == gu->myPlayerNum);
-		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
-		const bool isCheatingEnabled  = gs->cheatEnabled;
-		const bool hasArgs  = (action.extra.size() > 0);
-		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
-
-		if (hasArgs) {
-			bool share = false;
-			int teamToKillId         = -1;
-			int teamToReceiveUnitsId = -1;
-
-			if (args.size() >= 1) {
-				teamToKillId = atoi(args[0].c_str());
-			}
-			if (args.size() >= 2) {
-				teamToReceiveUnitsId = atoi(args[1].c_str());
-				share = true;
-			}
-
-			CTeam* teamToKill = teamHandler->IsActiveTeam(teamToKillId) ?
-			                          teamHandler->Team(teamToKillId) : NULL;
-			const CTeam* teamToReceiveUnits = teamHandler->Team(teamToReceiveUnitsId) ?
-			                                  teamHandler->Team(teamToReceiveUnitsId) : NULL;
-
-			if (teamToKill == NULL) {
-				if (isFromLocalPlayer) {
-					logOutput.Print("Team to kill: not a valid team number: \"%s\"", args[0].c_str());
-				}
-				badArgs = true;
-			}
-			if (share && teamToReceiveUnits == NULL) {
-				if (isFromLocalPlayer) {
-					logOutput.Print("Team to receive units: not a valid team number: \"%s\"", args[1].c_str());
-				}
-				badArgs = true;
-			}
-			if (!badArgs && !(teamHandler->Team(teamToKillId)->isAI)) {
-				if (isFromLocalPlayer) {
-					logOutput.Print("Team to kill: not a Skirmish AI team: %i", teamToKillId);
-				}
-				badArgs = true;
-			}
-			if (!badArgs && !(fromPlayer->CanControlTeam(teamToKillId) && teamHandler->AlliedTeams(fromTeamId, teamToKillId)) && !isCheatingEnabled) {
-				logOutput.Print("Team to kill: player %s is not allowed to kill Skirmish AI controlling team %i (try with /cheat)",
-						fromPlayer->name.c_str(), teamToKillId);
-				badArgs = true;
-			}
-			if (!badArgs && teamToKill->isDead) {
-				logOutput.Print("Team to kill: is a dead team already: %i", teamToKillId);
-				badArgs = true;
-			}
-
-			const bool isLocalSkirmishAI = eoh->IsSkirmishAI(teamToKillId);
-
-			if (!badArgs) {
-				if (share) {
-					// give all units from teamToKillId to teamToReceiveUnitsId
-					teamToKill->GiveEverythingTo(teamToReceiveUnitsId);
-					// when the AIs team has no units left,
-					// the AI will be destroyed automatically
-				} else {
-					if (isLocalSkirmishAI) {
-						eoh->DestroySkirmishAI(teamToKillId, 3 /* = AI killed */);
-					}
-					// this is sync relevant, so it has to be set whether the AI got killed or not
-					teamToKill->isAI = false;
-				}
-
-				if (isLocalSkirmishAI) {
-					if (!eoh->IsSkirmishAI(teamToKillId)) {
-						logOutput.Print("Successfully removed Skirmish AI from team %i.", teamToKillId);
-					} else {
-						logOutput.Print("Failed to remove Skirmish AI from team %i.", teamToKillId);
-					}
-				}
-			}
-		} else {
-			if (isFromLocalPlayer) {
-				logOutput.Print("/%s: missing mandatory argument \"teamToKill\"", action.command.c_str());
-			}
-			badArgs = true;
-		}
-
-		if (badArgs && isFromLocalPlayer) {
-			logOutput.Print("------------------------------------------------");
-			logOutput.Print("Kill a Skirmish AI controlling a team.");
-			logOutput.Print("The team itsself will remain alive,");
-			logOutput.Print("unless a second argument is given,");
-			logOutput.Print("which specifies an active team");
-			logOutput.Print("that will receive all the units of the AI team.");
-			logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
-		}
-	}
-	else if (action.command == "aicontrol") {
-		bool badArgs = false;
-
-		const CPlayer* fromPlayer     = playerHandler->Player(playernum);
-		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
-		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
-		//const bool isFromHost         = (playernum == 0);
-		const bool isFromLocalPlayer  = (playernum == gu->myPlayerNum);
-		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
-		const bool isCheatingEnabled  = gs->cheatEnabled;
-		const bool hasArgs  = (action.extra.size() > 0);
-		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
-
-		if (hasArgs) {
-			int         teamToControlId = -1;
-			std::string aiShortName     = "";
-			std::string aiVersion       = "";
-			std::string aiName          = "";
-			std::map<std::string, std::string> aiOptions;
-
-			std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
-			if (args.size() >= 1) {
-				teamToControlId = atoi(args[0].c_str());
-			}
-			if (args.size() >= 2) {
-				aiShortName = args[1];
-			} else {
-				if (isFromLocalPlayer) {
-					logOutput.Print("/%s: missing mandatory argument \"aiShortName\"", action.command.c_str());
-				}
-			}
-			if (args.size() >= 3) {
-				aiVersion = args[2];
-			}
-			if (args.size() >= 4) {
-				aiName = args[3];
-			}
-
-			CTeam* teamToControl = teamHandler->IsActiveTeam(teamToControlId) ?
-			                             teamHandler->Team(teamToControlId) : NULL;
-
-			if (teamToControl == NULL) {
-				if (isFromLocalPlayer) {
-					logOutput.Print("Team to control: not a valid team number: \"%s\"", args[0].c_str());
-				}
-				badArgs = true;
-			}
-			if (!badArgs && !(fromPlayer->CanControlTeam(teamToControlId) && teamHandler->AlliedTeams(fromTeamId, teamToControlId)) && !isCheatingEnabled) {
-				logOutput.Print("Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
-						fromPlayer->name.c_str(), teamToControlId);
-				badArgs = true;
-			}
-			if (!badArgs && teamToControl->isDead) {
-				logOutput.Print("Team to control: is a dead team: %i", teamToControlId);
-				badArgs = true;
-			}
-			/*
-			// It should be allowed to let two Skirmish AIs control a single team.
-			// Though, it will fail heavily most likely with AIs not designed for this.
-			if (!badArgs && eoh->IsSkirmishAI(teamToControlId)) {
-				logOutput.Print("Team to control: is already controlled by a Skirmish AI: %i", teamToControlId);
-				badArgs = true;
-			}
-			*/
-
-			if (!badArgs) {
-				if (isFromLocalPlayer) {
-					SkirmishAIKey aiKey(aiShortName, aiVersion);
-					aiKey = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(aiKey);
-					if (aiKey.IsUnspecified()) {
-						logOutput.Print("Skirmish AI: not a valid Skirmish AI (Lua AIs are not supported (yet)): %s %s",
-								aiShortName.c_str(), aiVersion.c_str());
-						badArgs = true;
-					}
-
-					SkirmishAIData aiData;
-					aiData.name = (aiName != "") ? aiName : aiShortName;
-					aiData.team = teamToControlId;
-					aiData.hostPlayerNum = gu->myPlayerNum;
-					aiData.shortName = aiShortName;
-					aiData.version = aiVersion;
-					std::map<std::string, std::string>::const_iterator o;
-					for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
-						aiData.optionKeys.push_back(o->first);
-					}
-					aiData.options = aiOptions;
-
-					eoh->CreateSkirmishAI(teamToControlId, aiKey, aiData);
-				}
-
-				// this is sync relevant, so it has to be set whether the AI got constructed or not
-				teamToControl->isAI = true;
-
-				if (isFromLocalPlayer) {
-					if (eoh->IsSkirmishAI(teamToControlId)) {
-						logOutput.Print("Skirmish AI now controlling team %i.", teamToControlId);
-					} else {
-						logOutput.Print("Failed to let a Skirmish AI control team %i.", teamToControlId);
-					}
-				}
-			}
-		} else {
-			if (isFromLocalPlayer) {
-				logOutput.Print("/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", action.command.c_str());
-			}
-			badArgs = true;
-		}
-
-		if (badArgs && isFromLocalPlayer) {
-			logOutput.Print("------------------------------------------------");
-			logOutput.Print("Let a Skirmish AI take over control of a team.");
-			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", action.command.c_str());
-			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", action.command.c_str());
-		}
-	}
-	else if (action.command == "cheat") {
+	if (action.command == "cheat") {
 		SetBoolArg(gs->cheatEnabled, action.extra);
 		if (gs->cheatEnabled)
 			logOutput.Print("Cheating!");
@@ -3970,28 +3941,36 @@ void CGame::ClientReadNet()
 				const unsigned char action = inbuf[2];
 				const int fromTeam = playerHandler->Player(player)->team;
 
-				unsigned numPlayersInTeam = 0;
-				for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-					CPlayer* playah = playerHandler->Player(a);
-
-					// do not count spectators or demos will desync
-					if (playah->active && !playah->spectator && playah->team == fromTeam) {
-						++numPlayersInTeam;
-					}
-				}
-
 				switch (action)
 				{
 					case TEAMMSG_GIVEAWAY: {
 						const int toTeam = inbuf[3];
-
-						if (numPlayersInTeam == 1) {
-							teamHandler->Team(fromTeam)->GiveEverythingTo(toTeam);
-							teamHandler->Team(fromTeam)->leader = -1;
-						} else {
-							playerHandler->Player(player)->StartSpectating();
+						const int fromTeam_g = inbuf[4];
+						unsigned numPlayersInTeam_g = 0;
+						for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
+							CPlayer* playah = playerHandler->Player(a);
+							// do not count spectators or demos will desync
+							if (playah->active && !playah->spectator && playah->team == fromTeam_g) {
+								++numPlayersInTeam_g;
+							}
 						}
-						selectedUnits.ClearNetSelect(player);
+
+						if (fromTeam_g == fromTeam) {
+							// player is giving stuff from his own team
+							if (numPlayersInTeam_g == 1) {
+								teamHandler->Team(fromTeam_g)->GiveEverythingTo(toTeam);
+								teamHandler->Team(fromTeam_g)->leader = -1;
+							} else {
+								playerHandler->Player(player)->StartSpectating();
+							}
+							selectedUnits.ClearNetSelect(player);
+						} else {
+							// player is giving stuff from one of his AI teams
+							if (numPlayersInTeam_g == 0) {
+								teamHandler->Team(fromTeam_g)->GiveEverythingTo(toTeam);
+								teamHandler->Team(fromTeam_g)->leader = -1;
+							}
+						}
 						CPlayer::UpdateControlledTeams();
 						break;
 					}
@@ -4001,6 +3980,14 @@ void CGame::ClientReadNet()
 							selectedUnits.ClearSelected();
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
+						}
+						unsigned numPlayersInTeam = 0;
+						for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
+							CPlayer* playah = playerHandler->Player(a);
+							// do not count spectators or demos will desync
+							if (playah->active && !playah->spectator && playah->team == fromTeam) {
+								++numPlayersInTeam;
+							}
 						}
 						if (numPlayersInTeam == 1) {
 							teamHandler->Team(fromTeam)->leader = -1;

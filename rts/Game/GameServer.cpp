@@ -199,8 +199,10 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	// AIs do not join in here, so just set their teams as active
 	for (size_t i = 0; i < setup->teamStartingData.size(); ++i)
 	{
-		if (setup->GetSkirmishAIDataForTeam(i))
+		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(i);
+		if (sad != NULL)
 		{
+			teams[i].leader = sad->hostPlayerNum;
 			teams[i].active = true;
 			teams[i].isAI = true;
 		}
@@ -861,30 +863,44 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			{
 				const unsigned action = inbuf[2];
 				const unsigned fromTeam = players[player].team;
-				unsigned numPlayersInTeam = 0;
-				for (size_t a = 0; a < players.size(); ++a) {
-					if (players[a].team >= 0 && static_cast<unsigned>(players[a].team) == fromTeam) {
-						++numPlayersInTeam;
-					}
-				}
 
 				switch (action)
 				{
 					case TEAMMSG_GIVEAWAY: {
-						if (players[player].spectator)
+						const unsigned toTeam = inbuf[3];
+						const unsigned fromTeam_g = inbuf[4];
+						if (players[player].spectator || teams[fromTeam_g].leader != player ||
+						    (teams[fromTeam_g].isAI && ((teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam) && !cheating)))
 						{
 							Message(str( boost::format("Spectator %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %players[player].name), true);
 							break;
 						}
-						const unsigned toTeam = inbuf[3];
-						Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam));
-						if (numPlayersInTeam <= 1)
-						{
-							teams[fromTeam].active = false;
+						Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam, fromTeam_g));
+						unsigned numPlayersInTeam_g = 0;
+						for (size_t a = 0; a < players.size(); ++a) {
+							if (players[a].team >= 0 && static_cast<unsigned>(players[a].team) == fromTeam_g) {
+								++numPlayersInTeam_g;
+							}
 						}
-						players[player].team = 0;
-						players[player].spectator = true;
-						if (hostif) hostif->SendPlayerDefeated(player);
+
+						if (fromTeam_g == fromTeam) {
+							// player is giving stuff from his own team
+							if (numPlayersInTeam_g <= 1) {
+								teams[fromTeam_g].active = false;
+								teams[fromTeam_g].leader = -1;
+							}
+							players[player].team = 0;
+							players[player].spectator = true;
+							if (hostif) hostif->SendPlayerDefeated(player);
+						} else {
+							// player is giving stuff from one of his AI teams
+							if (numPlayersInTeam_g == 0) {
+								teams[fromTeam_g].active = false;
+								teams[fromTeam_g].leader = -1;
+							} else {
+								Message(str( boost::format("Player %s can not give away stuff of team %i (still has human players left)") %players[player].name %fromTeam_g), true);
+							}
+						}
 						break;
 					}
 					case TEAMMSG_RESIGN: {
@@ -936,7 +952,14 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						const unsigned aiTeam = inbuf[3];
 						GameTeam* tf = &teams[fromTeam];
 						GameTeam* tai = &teams[aiTeam];
-						if ((tai->active && ((tai->leader == player) || (tai->leader == -1)) && (tf->teamAllyteam == tai->teamAllyteam)) || cheating) {
+						unsigned numPlayersInAITeam = 0;
+						for (size_t a = 0; a < players.size(); ++a) {
+							if (players[a].team >= 0 && static_cast<unsigned>(players[a].team) == aiTeam) {
+								++numPlayersInAITeam;
+							}
+						}
+
+						if ((numPlayersInAITeam == 0) || (tai->leader == player) || (tai->leader == -1) || (cheating && (tf->teamAllyteam == tai->teamAllyteam))) {
 							Broadcast(CBaseNetProtocol::Get().SendAICreated(player, aiTeam));
 							tai->leader = player;
 							tai->isAI = true;
@@ -947,9 +970,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					}
 					case TEAMMSG_AI_DESTROYED: {
 						const unsigned aiTeam = inbuf[3];
-						GameTeam* tf = &teams[fromTeam];
 						GameTeam* tai = &teams[aiTeam];
-						if ((tai->active && ((tai->leader == player) || (tai->leader == -1)) && (tf->teamAllyteam == tai->teamAllyteam)) || cheating) {
+						if (tai->isAI && (tai->leader == player)) {
 							Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, aiTeam));
 							tai->isAI = false;
 						} else {

@@ -282,45 +282,45 @@ PacketType CBaseNetProtocol::SendLuaMsg(uchar myPlayerNum, unsigned short script
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo)
+PacketType CBaseNetProtocol::SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam, uchar takeFromTeam)
 {
-	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_GIVEAWAY) << giveTo;
+	PackPacket* packet = new PackPacket(5, NETMSG_TEAM);
+	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_GIVEAWAY) << giveToTeam << takeFromTeam;
 	return PacketType(packet);
 }
 
 PacketType CBaseNetProtocol::SendResign(uchar myPlayerNum)
 {
-	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_RESIGN) << static_cast<uchar>(0);
+	PackPacket* packet = new PackPacket(5, NETMSG_TEAM);
+	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_RESIGN) << static_cast<uchar>(0) << static_cast<uchar>(0);
 	return PacketType(packet);
 }
 
 PacketType CBaseNetProtocol::SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum)
 {
-	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_JOIN_TEAM) << wantedTeamNum;
+	PackPacket* packet = new PackPacket(5, NETMSG_TEAM);
+	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_JOIN_TEAM) << wantedTeamNum << static_cast<uchar>(0);
 	return PacketType(packet);
 }
 
 PacketType CBaseNetProtocol::SendTeamDied(uchar myPlayerNum, uchar whichTeam)
 {
-	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_TEAM_DIED) << whichTeam;
+	PackPacket* packet = new PackPacket(5, NETMSG_TEAM);
+	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_TEAM_DIED) << whichTeam << static_cast<uchar>(0);
 	return PacketType(packet);
 }
 
 PacketType CBaseNetProtocol::SendAICreated(uchar myPlayerNum, uchar whichTeam)
 {
-	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_AI_CREATED) << whichTeam;
+	PackPacket* packet = new PackPacket(5, NETMSG_TEAM);
+	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_AI_CREATED) << whichTeam << static_cast<uchar>(0);
 	return PacketType(packet);
 }
 
 PacketType CBaseNetProtocol::SendAIDestroyed(uchar myPlayerNum, uchar whichTeam)
 {
-	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_AI_DESTROYED) << whichTeam;
+	PackPacket* packet = new PackPacket(5, NETMSG_TEAM);
+	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_AI_DESTROYED) << whichTeam << static_cast<uchar>(0);
 	return PacketType(packet);
 }
 
@@ -379,9 +379,9 @@ PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<
 CBaseNetProtocol::CBaseNetProtocol()
 {
 	netcode::ProtocolDef* proto = netcode::ProtocolDef::instance();
-  // proto->AddType() length parameter:
-  //   > 0:  if its fixed length
-  //   < 0:  means the next x bytes represent the length
+	// proto->AddType() length parameter:
+	//   > 0:  if its fixed length
+	//   < 0:  means the next x bytes represent the length
 
 	proto->AddType(NETMSG_KEYFRAME, 5);
 	proto->AddType(NETMSG_NEWFRAME, 1);
@@ -418,19 +418,19 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_PLAYERINFO, 8);
 	proto->AddType(NETMSG_PLAYERLEFT, 3);
 	proto->AddType(NETMSG_LUAMSG, -2);
-	proto->AddType(NETMSG_TEAM, 4);
+	proto->AddType(NETMSG_TEAM, 5);
 	proto->AddType(NETMSG_GAMEDATA, -2);
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
 	proto->AddType(NETMSG_TEAMSTAT, 2 + sizeof(CTeam::Statistics));
-	
+
 #ifdef SYNCDEBUG
 	proto->AddType(NETMSG_SD_CHKREQUEST, 5);
 	proto->AddType(NETMSG_SD_CHKRESPONSE, -2);
 	proto->AddType(NETMSG_SD_RESET, 1);
 	proto->AddType(NETMSG_SD_BLKREQUEST, 7);
 	proto->AddType(NETMSG_SD_BLKRESPONSE, -2);
-#endif
+#endif // SYNCDEBUG
 }
 
 CBaseNetProtocol::~CBaseNetProtocol()
