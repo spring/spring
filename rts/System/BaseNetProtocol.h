@@ -93,6 +93,8 @@ enum TEAMMSG {
 	TEAMMSG_RESIGN          = 2,     // not used
 	TEAMMSG_JOIN_TEAM       = 3,     // team to join
 	TEAMMSG_TEAM_DIED       = 4,     // team which had died special note: this is sent by all players to prevent cheating
+	TEAMMSG_AI_CREATED      = 5,     // team now controlled by a Skirmish AI
+	TEAMMSG_AI_DESTROYED    = 6,     // team whichs controlling Skirmish AI got destroyed
 //TODO: changing teams (to spectator, from spectator to specific team)
 //TODO: in-game allyteams
 };
@@ -153,6 +155,8 @@ public:
 	// currently only used to inform the server about its death
 	// it may have some problems when desync because the team may not die on every client
 	PacketType SendTeamDied(uchar myPlayerNum, uchar whichTeam);
+	PacketType SendAICreated(uchar myPlayerNum, uchar whichTeam);
+	PacketType SendAIDestroyed(uchar myPlayerNum, uchar whichTeam);
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
 	
