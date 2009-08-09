@@ -92,11 +92,6 @@ public:
 	{
 		if (mouse) {
 			switch (msg) {
-				case WM_MOUSEWHEEL: {
-					float delta = (((short)HIWORD(wparam))/120.0f);
-					mouse->MouseWheel(delta);
-					break;
-				}
 				case WM_XBUTTONDOWN:
 					if ((short)LOWORD(wparam) & MK_XBUTTON1)
 						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
@@ -181,16 +176,11 @@ public:
 CWin32MouseInput* CWin32MouseInput::inst = 0;
 #endif
 
-class CDefaultMouseInput : public IMouseInput
+void IMouseInput::SetPos(int2 pos)
 {
-public:
-	void SetPos(int2 pos)
-	{
-		mousepos = pos;
-		SDL_WarpMouse(pos.x, pos.y);
-	}
-};
-
+	mousepos = pos;
+	SDL_WarpMouse(pos.x, pos.y);
+}
 
 IMouseInput *IMouseInput::Get ()
 {
@@ -198,7 +188,7 @@ IMouseInput *IMouseInput::Get ()
 #ifdef WIN32
 		mouseInput = new CWin32MouseInput;
 #else
-		mouseInput = new CDefaultMouseInput;
+		mouseInput = new IMouseInput;
 #endif
 	}
 	return mouseInput;
