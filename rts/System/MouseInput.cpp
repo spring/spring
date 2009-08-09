@@ -177,15 +177,6 @@ public:
 		// reinstall the SDL window proc
 		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
 	}
-
-	void SetPos(int2 pos)
-	{
-		mousepos = pos;
-		if (fullscreen)
-			SetCursorPos(pos.x, pos.y);
-		else
-			SDL_WarpMouse(pos.x, pos.y);
-	}
 };
 CWin32MouseInput* CWin32MouseInput::inst = 0;
 #endif
