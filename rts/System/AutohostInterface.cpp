@@ -95,12 +95,7 @@ AutohostInterface::AutohostInterface(int remoteport) : autohost(netcode::netserv
 		autohost.bind(ip::udp::endpoint(ip::address_v4::loopback(), 0));
 	}
 	
-	autohost.connect(ip::udp::endpoint(ip::address_v6::loopback(), remoteport), err);
-	if (err)
-	{
-		LogObject() << "Connection to autohost interface port refused, trying IPv4 instead of v6";
-		autohost.connect(ip::udp::endpoint(ip::address_v4::loopback(), remoteport), err);
-	}
+	autohost.connect(ip::udp::endpoint(ip::address_v4::loopback(), remoteport), err);
 }
 
 AutohostInterface::~AutohostInterface()
