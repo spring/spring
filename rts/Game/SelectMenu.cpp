@@ -178,15 +178,15 @@ bool SelectMenu::Update()
 
 void SelectMenu::Single()
 {
-	if (selw->userMod == "No mod selected")
+	if (selw->userMod == SelectionWidget::NoModSelect)
 	{
 		selw->ShowModList();
 	}
-	else if (selw->userMap == "No map selected")
+	else if (selw->userMap == SelectionWidget::NoMapSelect)
 	{
 		selw->ShowMapList();
 	}
-	else if (selw->userScript == "No script selected")
+	else if (selw->userScript == SelectionWidget::NoScriptSelect)
 	{
 		selw->ShowScriptList();
 	}

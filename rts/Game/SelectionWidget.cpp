@@ -46,6 +46,10 @@ private:
 	}
 };
 
+const std::string SelectionWidget::NoModSelect = "No mod selected";
+const std::string SelectionWidget::NoMapSelect = "No map selected";
+const std::string SelectionWidget::NoScriptSelect = "No script selected";
+
 SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(parent)
 {
 	SetPos(0.5f, 0.2f);
@@ -58,20 +62,19 @@ SelectionWidget::SelectionWidget(agui::GuiElement* parent) : agui::GuiElement(pa
 	mod = new agui::Button("Select", modL);
 	mod->Clicked.connect(boost::bind(&SelectionWidget::ShowModList, this));
 	mod->SetSize(0.1f, 0.00f, true);
-	userMod = configHandler->GetString("LastSelectedMod", "No mod selected");
+	userMod = configHandler->GetString("LastSelectedMod", NoModSelect);
 	modT = new agui::TextElement(userMod, modL);
 	agui::HorizontalLayout* mapL = new agui::HorizontalLayout(vl);
 	map = new agui::Button("Select", mapL);
 	map->Clicked.connect(boost::bind(&SelectionWidget::ShowMapList, this));
 	map->SetSize(0.1f, 0.00f, true);
-	userMap = configHandler->GetString("LastSelectedMap", "No map selected");
+	userMap = configHandler->GetString("LastSelectedMap", NoMapSelect);
 	mapT = new agui::TextElement(userMap, mapL);
-	userMap = configHandler->GetString("LastSelectedMap", "No map selected");
 	agui::HorizontalLayout* scriptL = new agui::HorizontalLayout(vl);
 	script = new agui::Button("Select", scriptL);
 	script->Clicked.connect(boost::bind(&SelectionWidget::ShowScriptList, this));
 	script->SetSize(0.1f, 0.00f, true);
-	userScript = configHandler->GetString("LastSelectedScript", "No script selected");
+	userScript = configHandler->GetString("LastSelectedScript", NoScriptSelect);
 	scriptT = new agui::TextElement(userScript, scriptL);
 }
 
