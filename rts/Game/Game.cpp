@@ -4011,7 +4011,7 @@ void CGame::ClientReadNet()
 						break;
 					}
 					case TEAMMSG_JOIN_TEAM: {
-						int newTeam = int(inbuf[3]);
+						const int newTeam = int(inbuf[3]);
 						playerHandler->Player(player)->team = newTeam;
 						playerHandler->Player(player)->spectator = false;
 						if (player == gu->myPlayerNum) {
@@ -4027,6 +4027,21 @@ void CGame::ClientReadNet()
 						if (teamHandler->Team(newTeam)->leader == -1) {
 							teamHandler->Team(newTeam)->leader = player;
 						}
+						CPlayer::UpdateControlledTeams();
+						eventHandler.PlayerChanged(player);
+						break;
+					}
+					case TEAMMSG_AI_CREATED: {
+						const int aiTeam = int(inbuf[3]);
+						teamHandler->Team(aiTeam)->leader = player;
+						teamHandler->Team(aiTeam)->isAI = true;
+						CPlayer::UpdateControlledTeams();
+						eventHandler.PlayerChanged(player);
+						break;
+					}
+					case TEAMMSG_AI_DESTROYED: {
+						const int aiTeam = int(inbuf[3]);
+						teamHandler->Team(aiTeam)->isAI = false;
 						CPlayer::UpdateControlledTeams();
 						eventHandler.PlayerChanged(player);
 						break;

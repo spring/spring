@@ -932,6 +932,31 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						}
 						break;
 					}
+					case TEAMMSG_AI_CREATED: {
+						const unsigned aiTeam = inbuf[3];
+						GameTeam* tf = &teams[fromTeam];
+						GameTeam* tai = &teams[aiTeam];
+						if ((tai->active && ((tai->leader == player) || (tai->leader == -1)) && (tf->teamAllyteam == tai->teamAllyteam)) || cheating) {
+							Broadcast(CBaseNetProtocol::Get().SendAICreated(player, aiTeam));
+							tai->leader = player;
+							tai->isAI = true;
+						} else {
+							Message(str(format(NoAICreated) %players[player].name %player %aiTeam));
+						}
+						break;
+					}
+					case TEAMMSG_AI_DESTROYED: {
+						const unsigned aiTeam = inbuf[3];
+						GameTeam* tf = &teams[fromTeam];
+						GameTeam* tai = &teams[aiTeam];
+						if ((tai->active && ((tai->leader == player) || (tai->leader == -1)) && (tf->teamAllyteam == tai->teamAllyteam)) || cheating) {
+							Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, aiTeam));
+							tai->isAI = false;
+						} else {
+							Message(str(format(NoAIDestroyed) %players[player].name %player %aiTeam));
+						}
+						break;
+					}
 					default: {
 						Message(str(format(UnknownTeammsg) %action %player));
 					}

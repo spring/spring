@@ -310,6 +310,20 @@ PacketType CBaseNetProtocol::SendTeamDied(uchar myPlayerNum, uchar whichTeam)
 	return PacketType(packet);
 }
 
+PacketType CBaseNetProtocol::SendAICreated(uchar myPlayerNum, uchar whichTeam)
+{
+	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
+	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_AI_CREATED) << whichTeam;
+	return PacketType(packet);
+}
+
+PacketType CBaseNetProtocol::SendAIDestroyed(uchar myPlayerNum, uchar whichTeam)
+{
+	PackPacket* packet = new PackPacket(4, NETMSG_TEAM);
+	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_AI_DESTROYED) << whichTeam;
+	return PacketType(packet);
+}
+
 PacketType CBaseNetProtocol::SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state)
 {
 	PackPacket* packet = new PackPacket(4, NETMSG_ALLIANCE);
@@ -353,7 +367,7 @@ PacketType CBaseNetProtocol::SendSdBlockresponse(uchar myPlayerNum, std::vector<
 	*packet << static_cast<boost::uint16_t>(size) << myPlayerNum << checksums;
 	return PacketType(packet);
 }
-#endif
+#endif // SYNCDEBUG
 /* FIXME: add these:
  NETMSG_SD_CHKREQUEST    = 41,
  NETMSG_SD_CHKRESPONSE   = 42,
