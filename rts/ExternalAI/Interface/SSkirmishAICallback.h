@@ -407,6 +407,10 @@ bool (CALLING_CONV *Clb_UnitDef_isStrafeToAttack)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMinCollisionSpeed)(int teamId,
 		int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getSlideTolerance)(int teamId, int unitDefId);
+/**
+ * Build location relevant maximum steepness of the underlaying terrain.
+ * Used to calculate the maxHeightDif.
+ */
 float (CALLING_CONV *Clb_UnitDef_getMaxSlope)(int teamId, int unitDefId);
 /**
  * Maximum terra-form height this building allows.
