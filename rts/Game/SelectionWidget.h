@@ -15,7 +15,7 @@ class ListSelectWnd;
 class SelectionWidget : public agui::GuiElement
 {
 public:
-	SelectionWidget();
+	SelectionWidget(agui::GuiElement* parent);
 	~SelectionWidget();
 	
 	void ShowModList();

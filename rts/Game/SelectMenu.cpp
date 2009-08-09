@@ -110,37 +110,33 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server): menu(NULL)
+SelectMenu::SelectMenu(bool server) : connectWnd(NULL)
 {
-	connectWnd = NULL;
 	mySettings = new ClientSetup();
-	inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
 
-	{
-		ScopedLoader loader("Spring Bitmaps");
-		background = new agui::Picture();
-		background->SetPos(0,0);
-		background->SetSize(1,1);
-		background->Load("bitmaps/ui/background.jpg");
-		agui::gui->AddElement(background);
-	}
-
-	selw = new SelectionWidget();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
-
 	if (mySettings->myPlayerName.empty()) {
 		mySettings->myPlayerName = "UnnamedPlayer";
 	} else {
 		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
 	}
 
-	{
-		menu = new agui::VerticalLayout();
+	{ // GUI stuff
+		inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
+		{
+			ScopedLoader loader("Spring Bitmaps");
+			background = new agui::Picture();
+			background->SetPos(0,0);
+			background->SetSize(1,1);
+			background->Load("bitmaps/ui/background.jpg");
+			agui::gui->AddElement(background);
+		}
+		selw = new SelectionWidget(background);
+		agui::VerticalLayout* menu = new agui::VerticalLayout(background);
 		menu->SetPos(0.1, 0.5);
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
-		agui::gui->AddElement(menu);
 		agui::TextElement* name = new agui::TextElement("Spring", menu);
 		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
@@ -152,6 +148,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 		direct->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, true));
 		Button* quit = new Button("Quit", menu);
 		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
+		background->GeometryChange();
 	}
 
 	if (!mySettings->isHost) {
@@ -162,9 +159,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 SelectMenu::~SelectMenu()
 {
 	ConnectWindow(false);
-	agui::gui->RmElement(selw);
 	agui::gui->RmElement(background);
-	agui::gui->RmElement(menu);
 }
 
 bool SelectMenu::Draw()
