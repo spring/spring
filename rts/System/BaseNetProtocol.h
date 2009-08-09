@@ -88,8 +88,8 @@ enum NETMSG {
 
 // action to do with NETMSG_TEAM 
 enum TEAMMSG {
-//	TEAMMSG_NAME            = number    parameter1
-	TEAMMSG_GIVEAWAY        = 1,     // team to give stuff to
+//	TEAMMSG_NAME            = number    parameter1, ...
+	TEAMMSG_GIVEAWAY        = 1,     // team to give stuff to, team to take stuff from (player has to be leader of the team)
 	TEAMMSG_RESIGN          = 2,     // not used
 	TEAMMSG_JOIN_TEAM       = 3,     // team to join
 	TEAMMSG_TEAM_DIED       = 4,     // team which had died special note: this is sent by all players to prevent cheating
@@ -148,18 +148,26 @@ public:
 	PacketType SendPlayerInfo(uchar myPlayerNum, float cpuUsage, int ping);
 	PacketType SendPlayerLeft(uchar myPlayerNum, uchar bIntended);
 	PacketType SendLuaMsg(uchar myPlayerNum, unsigned short script, uchar mode, const std::vector<boost::uint8_t>& msg);
-	
-	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveTo);
+
+	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam);
+	/**
+	 * Gives everything from one team to an other.
+	 * The player issuing this command has to be leader of the takeFromTeam.
+	 */
+	PacketType SendGiveAwayEverything(uchar myPlayerNum, uchar giveToTeam, uchar takeFromTeam);
 	PacketType SendResign(uchar myPlayerNum);
 	PacketType SendJoinTeam(uchar myPlayerNum, uchar wantedTeamNum);
-	// currently only used to inform the server about its death
-	// it may have some problems when desync because the team may not die on every client
+	/**
+	 * This is currently only used to inform the server about its death.
+	 * It may have some problems when desync, because the team may not die
+	 * on every client.
+	 */
 	PacketType SendTeamDied(uchar myPlayerNum, uchar whichTeam);
 	PacketType SendAICreated(uchar myPlayerNum, uchar whichTeam);
 	PacketType SendAIDestroyed(uchar myPlayerNum, uchar whichTeam);
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
-	
+
 #ifdef SYNCDEBUG
 	PacketType SendSdCheckrequest(int frameNum);
 	PacketType SendSdCheckresponse(uchar myPlayerNum, uint64_t flop, std::vector<unsigned> checksums);
@@ -172,5 +180,4 @@ private:
 	~CBaseNetProtocol();
 };
 
-#endif
-
+#endif // BASENETPROTOCOL_H
