@@ -7,6 +7,9 @@
 	new:
 	It also workarounds a issue with SDL+windows and hardware cursors (->it has to block WM_SETCURSOR),
 	so it is used now always even in window mode!
+
+	newer:
+	SDL_Event struct is used for new input handling. Several people confirmed its working.
 */
 
 #include "StdAfx.h"
@@ -83,7 +86,6 @@ public:
 
 	LONG_PTR sdl_wndproc;
 	int2 mousepos;
-	bool mousemoved;
 	HWND wnd;
 	HCURSOR hCursor;
 
@@ -105,15 +107,9 @@ public:
 						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
 					break;
 				}
-
 		}
 
 		switch (msg) {
-			case WM_MOUSEMOVE:
-				// cast to short to preserve sign
-				inst->mousepos = int2((short)LOWORD(lparam),(short)HIWORD(lparam));
-				inst->mousemoved = true;
-				break;
 			case WM_SETCURSOR:
 				if (inst->hCursor!=NULL) {
 					Uint16 hittest = LOWORD(lparam);
@@ -155,7 +151,6 @@ public:
 
 		hCursor = NULL;
 
-		mousemoved = false;
 		sdl_wndproc = 0;
 
 		SDL_SysWMinfo info;
