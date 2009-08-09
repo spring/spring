@@ -13,6 +13,7 @@ public:
 	void Init(const std::string& setup);
 
 	std::string myPlayerName;
+	std::string myPasswd;
 
 	std::string hostip;
 	int hostport;

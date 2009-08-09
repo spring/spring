@@ -252,7 +252,7 @@ void CGameServer::AddLocalClient(const std::string& myName, const std::string& m
 	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	assert(!hasLocalClient);
 	hasLocalClient = true;
-	localClientNumber = BindConnection(myName, myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
+	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
 }
 
 void CGameServer::AddAutohostInterface(const int remotePort)
@@ -1016,10 +1016,11 @@ void CGameServer::ServerReadNet()
 		if (packet && packet->length >= 3 && packet->data[0] == NETMSG_ATTEMPTCONNECT)
 		{
 			netcode::UnpackPacket msg(packet, 3);
-			std::string name, version;
+			std::string name, passwd, version;
 			msg >> name;
+			msg >> passwd;
 			msg >> version;
-			BindConnection(name, version, false, UDPNet->AcceptConnection());
+			BindConnection(name, passwd, version, false, UDPNet->AcceptConnection());
 		}
 		else
 		{
@@ -1446,7 +1447,7 @@ void CGameServer::KickPlayer(const int playerNum)
 		Message(str( format("Attempt to kick player %d who is not connected") %playerNum ));
 }
 
-unsigned CGameServer::BindConnection(std::string name, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
+unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
 	size_t hisNewNumber = players.size();
 
@@ -1491,6 +1492,15 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& versio
 		}
 	}
 
+	GameParticipant::customOpts::const_iterator it = players[hisNewNumber].GetAllValues().find("Password");
+	if (it != players[hisNewNumber].GetAllValues().end() && !isLocal)
+	{
+		if (passwd != it->second)
+		{
+			Message(str(format("Connection attempt from %s (%s) rejected because of wrong password") %name %link->GetFullAddress()));
+			return 0;
+		};
+	}
 	GameParticipant& newGuy = players[hisNewNumber];
 	newGuy.Connected(link, isLocal);
 	newGuy.SendData(boost::shared_ptr<const RawPacket>(gameData->Pack()));
