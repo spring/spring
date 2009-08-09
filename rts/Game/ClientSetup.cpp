@@ -31,6 +31,7 @@ void ClientSetup::Init(const std::string& setup)
 	file.GetDef(autohostport, "0",                   "GAME\\AutohostPort");
 
 	file.GetDef(myPlayerName, "",                    "GAME\\MyPlayerName");
+	file.GetDef(myPasswd, "",                    "GAME\\MyPasswd");
 
 	if (!file.GetValue(isHost, "GAME\\IsHost")) {
 		logOutput.Print("Warning: The script.txt is missing the IsHost-entry. Assuming this is a client.");
