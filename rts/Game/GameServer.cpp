@@ -414,7 +414,6 @@ void CGameServer::CheckSync()
 		}
 
 		if (!noSyncResponse.empty()) {
-			size_t mss = noSyncResponse.size();
 			if (!syncWarningFrame || (*f - syncWarningFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncWarningFrame = *f;
 

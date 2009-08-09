@@ -182,31 +182,6 @@ end
 #endif
 
 
-// TODO: move this (LuaUtils?)
-// debugging, pretty much copied from Lua book
-static void StackDump(lua_State* L)
-{
-	int top = lua_gettop(L);
-	for (int i = 1; i <= top; ++i) {
-		int t = lua_type(L, i);
-		switch (t) {
-			case LUA_TSTRING:
-				logOutput.Print("%2d/%3d: '%s'", i, i - top - 1, lua_tostring(L, i));
-				break;
-			case LUA_TBOOLEAN:
-				logOutput.Print("%2d/%3d: %s", i, i - top - 1, lua_toboolean(L, i) ? "true" : "false");
-				break;
-			case LUA_TNUMBER:
-				logOutput.Print("%2d/%3d: %g", i, i - top - 1, lua_tonumber(L, i));
-				break;
-			default:
-				logOutput.Print("%2d/%3d: %s", i, i - top - 1, lua_typename(L, t));
-				break;
-		}
-	}
-}
-
-
 /******************************************************************************/
 /******************************************************************************/
 
