@@ -73,11 +73,11 @@ void CKAIK::ReleaseAI() {
 
 
 void CKAIK::UnitCreated(int unitID, int builderID) {
-	ai->uh->UnitCreated(unitID);
 	ai->econTracker->UnitCreated(unitID);
 }
 
 void CKAIK::UnitFinished(int unit) {
+	ai->uh->UnitFinished(unit);
 	ai->econTracker->UnitFinished(unit);
 
 	const int      frame = ai->cb->GetCurrentFrame();
