@@ -829,8 +829,6 @@ int SpringApp::Update()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
-	mouseInput->Update();
-
 	int ret = 1;
 	if (activeController) {
 #if !defined(USE_GML) || !GML_ENABLE_SIM
@@ -947,6 +945,7 @@ int SpringApp::Run(int argc, char *argv[])
 		}
 #endif
 		{
+			mouseInput->Update();
 			SCOPED_TIMER("Input");
 			SDL_Event event;
 			while (SDL_PollEvent(&event)) {

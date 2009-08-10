@@ -32,14 +32,6 @@
 namespace wsdl
 {
 
-// in fullscreen mode, i.e. not windowed.
-// video mode will be restored when app is deactivated.
-static bool fullscreen;
-
-// the app is shutting down.
-// if set, ignore further Windows messages for clean shutdown.
-static bool is_quitting;
-
 static HWND g_hWnd = (HWND)INVALID_HANDLE_VALUE;
 
 void SetHandle(HWND hWnd)
