@@ -33,8 +33,14 @@ public:
 	inline void operator delete(void* p,size_t size){mempool.Free(p,size);};
 */
 
+#ifdef _MSC_VER
 	static const float CMP_EPS;
 	static const float NORMALIZE_EPS;
+#else
+	static const float CMP_EPS = 1e-4f;
+	static const float NORMALIZE_EPS = 1e-6f;
+#endif
+
 
 	/**
 	 * @brief Constructor
