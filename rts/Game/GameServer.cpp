@@ -1495,6 +1495,8 @@ void CGameServer::KickPlayer(const int playerNum)
 
 unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
+	Message(str(format("Connection attempt from %s") %name));
+	Message(str(format(" -> Address: %s") %link->GetFullAddress()));
 	size_t hisNewNumber = players.size();
 
 	for (size_t i = 0; i < players.size(); ++i)
@@ -1508,13 +1510,13 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 			}
 			else
 			{
-				Message(str(format("Player %s is already ingame") %name));
+				Message(str(format(" -> %s is already ingame") %name));
 				name += "_";
 			}
 		}
 		else if (name == players[i].name)
 		{
-			Message(str(format("Player %s (%i) duplicated in the demo") %name %i));
+			Message(str(format(" -> %s (%i) duplicated in the demo") %name %i));
 			name += "_";
 		}
 	}
@@ -1533,7 +1535,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		else
 		{
 			// player not found
-			Message(str(format("Player %s not found in script, rejecting connection attempt") %name));
+			Message(str(format(" -> %s not found in script, rejecting connection attempt") %name));
 			return 0;
 		}
 	}
@@ -1543,7 +1545,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 	{
 		if (passwd != it->second)
 		{
-			Message(str(format("Connection attempt from %s (%s) rejected because of wrong password") %name %link->GetFullAddress()));
+			Message(str(format(" -> rejected because of wrong password")));
 			return 0;
 		};
 	}
@@ -1576,9 +1578,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		}
 	}
 
-	Message(str(format(NewConnection) %name %hisNewNumber));
-	Message(str(format(" -> Address: %s") %link->GetFullAddress()));
-	Message(str(format(" -> Client version: %s") %version));
+	Message(str(format(" -> connection established (given id %i)") %hisNewNumber));
 
 	link->Flush(true);
 	return hisNewNumber;
