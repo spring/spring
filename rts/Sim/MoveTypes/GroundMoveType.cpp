@@ -2100,7 +2100,7 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir) const
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
 	const float waypointDirDP = waypointDir.dot(owner->frontdir);
 	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));                 // prevent NaN's
-	const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                           // in degrees
+	const float turnAngleDeg  = streflop::acosf(waypointAngle) * (180.0f / PI);                           // in degrees
 	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                             // in "headings"
 	const float revAngleSpr   = 32768.0f - turnAngleSpr;                                        // 180 deg - angle
 
