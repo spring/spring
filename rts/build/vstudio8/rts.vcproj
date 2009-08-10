@@ -5137,6 +5137,14 @@
 						RelativePath="..\..\System\Platform\Win\WinVersion.h"
 						>
 					</File>
+					<File
+						RelativePath="..\..\System\Platform\Win\wsdl.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\System\Platform\Win\wsdl.h"
+						>
+					</File>
 				</Filter>
 			</Filter>
 			<Filter
