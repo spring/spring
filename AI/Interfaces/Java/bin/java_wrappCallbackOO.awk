@@ -552,7 +552,9 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 
 		indent_mf = "\t";
 
-		isBuffered_mf = isBufferedFunc(clsFull_mf "_" memberClsName_mf);
+		print("") >> outFile_mf;
+
+		isBuffered_mf = isBufferedFunc(clsFull_mf "_" memberClsName_mf) && (params == "");
 		if (!isInterface_mf && isBuffered_mf) {
 			print(indent_mf "private " retType " _buffer_" fn ";") >> outFile_mf;
 			print(indent_mf "private boolean _buffer_isInitialized_" fn " = false;") >> outFile_mf;
@@ -620,7 +622,6 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 	memName = extractNormalPart(fullName_m);
 	sub(/^.*_/, "", memName);
 	isVoid_m = (retType == "void");
-	isBuffered_m = !isVoid_m && isBufferedFunc(fullName_m);
 
 	if (memName == "handleCommand") {
 		sub(/int commandTopic\, Pointer commandData/, "AICommand command", params);
@@ -739,6 +740,9 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		retTypeInterface = retType;
 	}
 
+	print("") >> outFile_m;
+
+	isBuffered_m = !isVoid_m && isBufferedFunc(fullName_m) && (params == "");
 	if (!isInterface_m && isBuffered_m) {
 		print(indent_m retType " _buffer_" memName ";") >> outFile_m;
 		print(indent_m "boolean _buffer_isInitialized_" memName " = false;") >> outFile_m;
