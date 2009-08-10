@@ -12,7 +12,7 @@
 #include "Map/Ground.h"
 #include "Sim/Misc/GeometricObjects.h"
 
-#define PATHDEBUG false
+#define PATHDEBUG 0
 
 
 //Option constants.

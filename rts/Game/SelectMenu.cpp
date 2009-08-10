@@ -5,7 +5,13 @@
 #include <SDL_timer.h>
 #include <boost/bind.hpp>
 #include <sstream>
-#include <unistd.h>
+#ifndef _WIN32
+	#include <unistd.h>
+	#define EXECLP execlp
+#else
+	#include <process.h>
+	#define EXECLP _execlp
+#endif
 #include <stack>
 #include <boost/cstdint.hpp>
 
@@ -206,7 +212,7 @@ void SelectMenu::Settings()
 #else
 	const std::string settingsProgram = "springsettings.exe";
 #endif
-	execlp(settingsProgram.c_str(), settingsProgram.c_str(), NULL);
+	EXECLP(settingsProgram.c_str(), settingsProgram.c_str(), NULL);
 }
 
 void SelectMenu::Multi()
@@ -216,7 +222,7 @@ void SelectMenu::Multi()
 #else
 	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby.exe");
 #endif
-	execlp(defLobby.c_str(), defLobby.c_str(), NULL);
+	EXECLP(defLobby.c_str(), defLobby.c_str(), NULL);
 }
 
 void SelectMenu::Quit()

@@ -7,6 +7,10 @@
 #include <boost/cstdint.hpp>
 #include "lib/streflop/streflop_cond.h"
 
+#ifdef _MSC_VER
+#define __builtin_sqrtf sqrtf
+#endif
+
 /**
  * @file FastMath.cpp
  * @brief Fast math routines
@@ -86,7 +90,7 @@ namespace fastmath {
 	*/
 	inline float isqrt_nosse(float x) {
 		float xh = 0.5f * x;
-		int32_t i = *(int32_t*) &x;
+		boost::int32_t i = *(boost::int32_t*) &x;
 		// "magic number" which makes a very good first guess
 		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;
@@ -106,7 +110,7 @@ namespace fastmath {
 	*/
 	inline float isqrt2_nosse(float x) {
 		float xh = 0.5f * x;
-		int32_t i = *(int32_t*) &x;
+		boost::int32_t i = *(boost::int32_t*) &x;
 		// "magic number" which makes a very good first guess
 		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;

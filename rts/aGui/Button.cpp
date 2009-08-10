@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Button.h"
 
 #include "Gui.h"

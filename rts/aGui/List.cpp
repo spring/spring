@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "List.h"
 
 #include <SDL_keysym.h>
