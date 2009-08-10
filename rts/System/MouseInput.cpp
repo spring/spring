@@ -22,7 +22,11 @@
 #include <SDL_syswm.h>
 #include "Rendering/GL/FBO.h"
 #include "GlobalUnsynced.h"
+#ifdef _WIN32
 #include "Platform/Win/win32.h"
+#include "Platform/Win/wsdl.h"
+#include "WindowsX.h"
+#endif
 #include "MouseInput.h"
 #include "InputHandler.h"
 #include "LogOutput.h"
@@ -90,29 +94,46 @@ public:
 	HCURSOR hCursor;
 
 	// SDL runs the window in a different thread, hence the indirectness of the mouse pos handling
-	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (mouse) {
 			switch (msg) {
 				case WM_XBUTTONDOWN:
-					if ((short)LOWORD(wparam) & MK_XBUTTON1)
-						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
-					if ((short)LOWORD(wparam) & MK_XBUTTON2)
-						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
+					if ((short)LOWORD(wParam) & MK_XBUTTON1)
+						mouse->MousePress((short)LOWORD(lParam), (short)HIWORD(lParam), 4);
+					if ((short)LOWORD(wParam) & MK_XBUTTON2)
+						mouse->MousePress((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
 					break;
 				case WM_XBUTTONUP:
-					if ((short)LOWORD(wparam) & MK_XBUTTON1)
-						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
-					if ((short)LOWORD(wparam) & MK_XBUTTON2)
-						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
+					if ((short)LOWORD(wParam) & MK_XBUTTON1)
+						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 4);
+					if ((short)LOWORD(wParam) & MK_XBUTTON2)
+						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
 					break;
 				}
 		}
 
 		switch (msg) {
+			HANDLE_MSG(wnd, WM_MOUSEWHEEL, wsdl::OnMouseWheel);
+				return TRUE;
+			case WM_MOUSEMOVE:
+			{
+				// is polled, prevent doubled messages
+				return TRUE;
+			}
+			// (can't use message crackers: they do not provide for passing uMsg)
+			case WM_LBUTTONDOWN:
+			case WM_LBUTTONUP:
+			case WM_RBUTTONDOWN:
+			case WM_RBUTTONUP:
+			case WM_MBUTTONDOWN:
+			case WM_MBUTTONUP:
+			{
+				return wsdl::OnMouseButton(wnd, msg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), (UINT)wParam);
+			}
 			case WM_SETCURSOR:
 				if (inst->hCursor!=NULL) {
-					Uint16 hittest = LOWORD(lparam);
+					Uint16 hittest = LOWORD(lParam);
 					if ( hittest == HTCLIENT ) {
 						SetCursor(inst->hCursor);
 						return TRUE;
@@ -120,18 +141,18 @@ public:
 				}
 				break;
 			case WM_ACTIVATE:
+				// wsdl::OnActivate();
 				// FIXME: move to SpringApp somehow and use GLContext.h instead!
 				if(fullscreen) {
-					if (wparam == WA_INACTIVE) {
+					if (wParam == WA_INACTIVE) {
 						FBO::GLContextLost();
-					}else if (wparam == WA_ACTIVE) {
+					}else if (wParam == WA_ACTIVE) {
 						FBO::GLContextReinit();
 					}
 				}
 				break;
 		}
-
-		return CallWindowProc((WNDPROC)inst->sdl_wndproc, wnd, msg, wparam, lparam);
+		return CallWindowProc((WNDPROC)inst->sdl_wndproc, wnd, msg, wParam, lParam);
 	}
 
 	void SetWMMouseCursor(void* wmcursor)
@@ -159,6 +180,7 @@ public:
 			return;
 
 		wnd = info.window;
+		wsdl::SetHandle(wnd);
 
 		InstallWndCallback();
 	}
@@ -167,6 +189,11 @@ public:
 		// reinstall the SDL window proc
 		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
 	}
+	virtual void Update()
+	{
+		// according to the docs, WM_MOUSEMOVE is laggy, so use special poll aproach
+		wsdl::mouse_update();
+	};
 };
 CWin32MouseInput* CWin32MouseInput::inst = 0;
 #endif
@@ -174,7 +201,11 @@ CWin32MouseInput* CWin32MouseInput::inst = 0;
 void IMouseInput::SetPos(int2 pos)
 {
 	mousepos = pos;
+#ifdef WIN32
+	wsdl::SDL_WarpMouse(pos.x, pos.y);
+#else
 	SDL_WarpMouse(pos.x, pos.y);
+#endif
 }
 
 IMouseInput *IMouseInput::Get ()
