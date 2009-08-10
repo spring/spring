@@ -2794,10 +2794,11 @@ bool CGame::DrawWorld()
 	glDepthFunc(GL_LEQUAL);
 
 	bool clip = unitDrawer->advFade || !unitDrawer->advShading;
+	bool noAdvShading = shadowHandler->drawShadows;
 	if(clip) { // draw cloaked part below surface
 		glEnable(GL_CLIP_PLANE3);
-		unitDrawer->DrawCloakedUnits(true);
-		featureHandler->DrawFadeFeatures(true);
+		unitDrawer->DrawCloakedUnits(true,noAdvShading);
+		featureHandler->DrawFadeFeatures(true,noAdvShading);
 		glDisable(GL_CLIP_PLANE3);
 	}
 
@@ -2812,8 +2813,8 @@ bool CGame::DrawWorld()
 	//! draw cloaked part above surface
 	if(clip)
 		glEnable(GL_CLIP_PLANE3);
-	unitDrawer->DrawCloakedUnits(false);
-	featureHandler->DrawFadeFeatures(false);
+	unitDrawer->DrawCloakedUnits(false,noAdvShading);
+	featureHandler->DrawFadeFeatures(false,noAdvShading);
 	if(clip)
 		glDisable(GL_CLIP_PLANE3);
 
