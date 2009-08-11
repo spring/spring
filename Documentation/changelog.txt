@@ -9,6 +9,7 @@ Engine / Simulation:
  - pathfinding improvements for close groups of units
  - reclaim / ressurection now correctly exported to LuaAI
  - make better use of SSE functions for speed improvements
+ - now compatible with Boost 1.34 again (was 1.35 for spring 0.79) 
 
 Engine / GUI, System:
  - IPv6 support for all parts of the engine
