@@ -2805,16 +2805,21 @@ bool CGame::DrawWorld()
 	if (drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
+			// Water rendering may overwrite cloaked objects, so save them
+			StoreCloaked(true);
 			water->UpdateWater(this);
 			water->Draw();
+			StoreCloaked(false);
 		}
 	}
 
 	//! draw cloaked part above surface
 	if(clip)
 		glEnable(GL_CLIP_PLANE3);
+
 	unitDrawer->DrawCloakedUnits(false,noAdvShading);
 	featureHandler->DrawFadeFeatures(false,noAdvShading);
+
 	if(clip)
 		glDisable(GL_CLIP_PLANE3);
 
@@ -2895,6 +2900,21 @@ bool CGame::DrawWorld()
 	}
 
 	return true;
+}
+
+void CGame::StoreCloaked(bool save) {
+	if(save) {
+		drawCloakedSave = unitDrawer->drawCloaked;
+		drawCloakedS3OSave = unitDrawer->drawCloakedS3O;
+		fadeFeaturesSave = featureHandler->fadeFeatures;
+		fadeFeaturesS3OSave = featureHandler->fadeFeaturesS3O;
+	}
+	else {
+		unitDrawer->drawCloaked = drawCloakedSave;
+		unitDrawer->drawCloakedS3O = drawCloakedS3OSave;
+		featureHandler->fadeFeatures = fadeFeaturesSave;
+		featureHandler->fadeFeaturesS3O = fadeFeaturesS3OSave;
+	}
 }
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
