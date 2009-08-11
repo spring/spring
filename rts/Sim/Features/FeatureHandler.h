@@ -51,14 +51,15 @@ public:
 	const CFeatureSet& GetActiveFeatures() const { return activeFeatures; }
 
 	void DrawFadeFeatures(bool submerged, bool noAdvShading = false);
+
+	std::set<CFeature *> fadeFeatures;
+	std::set<CFeature *> fadeFeaturesS3O;
+
 private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
 	const FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const std::string& name);
 
 private:
-
-	std::set<CFeature *> fadeFeatures;
-	std::set<CFeature *> fadeFeaturesS3O;
 
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;

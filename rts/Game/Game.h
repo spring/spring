@@ -12,6 +12,8 @@
 #include "GameController.h"
 #include "creg/creg_cond.h"
 
+#include "lib/gml/gml.h"
+
 class CScript;
 class CBaseWater;
 class CAVIGenerator;
@@ -24,6 +26,8 @@ class LuaInputReceiver;
 class CLoadSaveHandler;
 class Action;
 class ChatMessage;
+class CUnit;
+class CFeature;
 
 const int MAX_CONSECUTIVE_SIMFRAMES = 15;
 
@@ -191,6 +195,12 @@ private:
 
 	short oldHeading,oldPitch;
 	unsigned char oldStatus;
+
+	void StoreCloaked(bool save);
+	GML_VECTOR<CUnit*> drawCloakedSave;
+	GML_VECTOR<CUnit*> drawCloakedS3OSave;
+	std::set<CFeature *> fadeFeaturesSave;
+	std::set<CFeature *> fadeFeaturesS3OSave;
 };
 
 
