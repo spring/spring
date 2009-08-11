@@ -1151,7 +1151,7 @@ bool CGame::ActionPressed(const Action& action,
 			}
 #ifndef DEBUG
 			// TODO: FIXME: remove this, if desync bug fixed
-			if (playerHanlder->Players() > 1) {
+			if (playerHandler->Players() > 1) {
 				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
 				badArgs = true;
 			}
@@ -1246,7 +1246,7 @@ bool CGame::ActionPressed(const Action& action,
 			}
 #ifndef DEBUG
 			// TODO: FIXME: remove this, if desync bug fixed
-			if (playerHanlder->Players() > 1) {
+			if (playerHandler->Players() > 1) {
 				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
 				badArgs = true;
 			}
