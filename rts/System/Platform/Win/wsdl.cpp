@@ -133,12 +133,14 @@ static void queue_quit_event()
 // - "idealized" coords are what the app sees. these range from 0 to
 //   windowDimensions-1. they are returned by GetCoords and have no prefix.
 
-void queue_mouse_event(int x, int y)
+void queue_mouse_event(int x, int y, int relx, int rely)
 {
 	SDL_Event ev;
 	ev.type = SDL_MOUSEMOTION;
 	ev.motion.x = (Uint16)x;
 	ev.motion.y = (Uint16)y;
+	ev.motion.xrel = (Sint16)relx;
+	ev.motion.yrel = (Sint16)rely;
 	queue_event(ev);
 }
 
@@ -167,9 +169,9 @@ static void mouse_moved(int x, int y)
 	if(mouse_x == x && mouse_y == y)
 		return;
 
+	queue_mouse_event(x, y, x-mouse_x, y-mouse_y);
 	mouse_x = x;
 	mouse_y = y;
-	queue_mouse_event(x, y);
 }
 
 static POINT ScreenFromClient(int client_x, int client_y)
