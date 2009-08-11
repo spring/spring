@@ -945,8 +945,8 @@ int SpringApp::Run(int argc, char *argv[])
 		}
 #endif
 		{
-			mouseInput->Update();
 			SCOPED_TIMER("Input");
+			mouseInput->Update();
 			SDL_Event event;
 			while (SDL_PollEvent(&event)) {
 				input.PushEvent(event);
