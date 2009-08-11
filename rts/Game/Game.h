@@ -8,6 +8,7 @@
 #include <time.h>
 #include <string>
 #include <map>
+#include <set>
 
 #include "GameController.h"
 #include "creg/creg_cond.h"
