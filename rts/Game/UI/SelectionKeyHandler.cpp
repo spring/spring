@@ -180,18 +180,30 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 				}
 			}
 		}
-	} else if(s=="FromMouse"){
+	} else if(s=="FromMouse" || s=="FromMouseZ"){
+		// FromMouse uses distance from a point on the ground,
+		// so essentially a selection sphere.
+		// FromMouseZ uses a zylinder shaped volume for selection,
+		// so the heights of the units do not matter.
+		const bool zylindrical = (s == "FromMouseZ");
 		ReadDelimiter(selectString);
 		float maxDist=atof(ReadToken(selectString).c_str());
 
 		float dist=ground->LineGroundCol(camera->pos,camera->pos+mouse->dir*8000);
 		float3 mp=camera->pos+mouse->dir*dist;
+		if (zylindrical) {
+			mp.y = 0;
+		}
 
 		if (!gu->spectatingFullSelect) {
 		  // team units in mouse range
 			CUnitSet* tu=&teamHandler->Team(gu->myTeam)->units;
 			for(CUnitSet::iterator ui=tu->begin();ui!=tu->end();++ui){
-				if(mp.SqDistance((*ui)->pos)<Square(maxDist)){
+				float3 up = (*ui)->pos;
+				if (zylindrical) {
+					up.y = 0;
+				}
+				if(mp.SqDistance(up) < Square(maxDist)){
 					selection.push_back(*ui);
 				}
 			}
@@ -199,7 +211,11 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 		  // all units in mouse range
 			std::list<CUnit*>* au=&uh->activeUnits;
 			for(std::list<CUnit*>::iterator ui=au->begin();ui!=au->end();++ui){
-				if(mp.SqDistance((*ui)->pos)<Square(maxDist)){
+				float3 up = (*ui)->pos;
+				if (zylindrical) {
+					up.y = 0;
+				}
+				if(mp.SqDistance(up)<Square(maxDist)){
 					selection.push_back(*ui);
 				}
 			}
