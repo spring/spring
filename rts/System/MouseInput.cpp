@@ -25,7 +25,6 @@
 #ifdef _WIN32
 #include "Platform/Win/win32.h"
 #include "Platform/Win/wsdl.h"
-#include "WindowsX.h"
 #endif
 #include "MouseInput.h"
 #include "InputHandler.h"
@@ -89,7 +88,6 @@ public:
 	static CWin32MouseInput *inst;
 
 	LONG_PTR sdl_wndproc;
-	int2 mousepos;
 	HWND wnd;
 	HCURSOR hCursor;
 
@@ -114,8 +112,8 @@ public:
 		}
 
 		switch (msg) {
-			HANDLE_MSG(wnd, WM_MOUSEWHEEL, wsdl::OnMouseWheel);
-				return TRUE;
+			case WM_MOUSEWHEEL:
+				return wsdl::OnMouseWheel(wnd, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (int)(short)HIWORD(wParam), (UINT)(short)LOWORD(wParam));
 			case WM_MOUSEMOVE:
 			{
 				// is polled, prevent doubled messages
@@ -129,7 +127,7 @@ public:
 			case WM_MBUTTONDOWN:
 			case WM_MBUTTONUP:
 			{
-				return wsdl::OnMouseButton(wnd, msg, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), (UINT)wParam);
+				return wsdl::OnMouseButton(wnd, msg, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);
 			}
 			case WM_SETCURSOR:
 				if (inst->hCursor!=NULL) {

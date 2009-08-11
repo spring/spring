@@ -26,8 +26,6 @@
 #include <queue>
 #include <algorithm>
 
-#include "WindowsX.h"
-
 
 namespace wsdl
 {
@@ -322,6 +320,7 @@ LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwK
 
 void SDL_WarpMouse(int x, int y)
 {
+	mouse_update();
 	// SDL interface provides for int, but the values should be
 	// idealized client coords (>= 0)
 	//mouse_moved(x, y);
