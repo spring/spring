@@ -1,5 +1,34 @@
 Spring change log
 
+0.80.0.0:
+Engine / Simulation:
+ - units can now move backwards
+ - notable speed improvement of feature handling (unit wrecks, tress...)
+ - LuaCOB: make it possible to make units with Lua instead of bos/cob
+ - some fixes for sm3 map-format
+ - pathfinding improvements for close groups of units
+ - reclaim / ressurection now correctly exported to LuaAI
+ - make better use of SSE functions for speed improvements
+
+Engine / GUI, System:
+ - IPv6 support for all parts of the engine
+ - caching for 7z archives: speed improvements at high compression levels (solid archives now usable)
+ - rudimentary menu when starting spring executable directly
+ - BumpWater got a major speed increase, and shorewaves look better
+ - various improvements for the sound system (multithreading, fixes for music, ogg-effects...)
+
+AIs:
+ - Added /aikill and /aicontrol commands (only works in singleplayer in this version)
+ - AIs won't crash the game anymore on startup
+ - some AIs play better now (especially KAIK)
+ - a lot of minor bugs
+
+Dedicated Server:
+ - ingame stats exported to the autohost on game end
+ - always print IPs of players, even if connection fails
+ - allow password-protecting client slots to prevent name spoofing (needs lobby support)
+
+
 0.79.1.1:
 Bugfixes:
  - fix microlags and increased CPU usage for dedicated server
