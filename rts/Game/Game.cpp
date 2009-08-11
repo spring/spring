@@ -1149,6 +1149,13 @@ bool CGame::ActionPressed(const Action& action,
 				logOutput.Print("Team to kill: is a dead team already: %i", teamToKillId);
 				badArgs = true;
 			}
+#ifndef DEBUG
+			// TODO: FIXME: remove this, if desync bug fixed
+			if (playerHanlder->Players() > 1) {
+				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
+				badArgs = true;
+			}
+#endif // DEBUG
 
 			const bool isLocalSkirmishAI = eoh->IsSkirmishAI(teamToKillId);
 
@@ -1237,6 +1244,13 @@ bool CGame::ActionPressed(const Action& action,
 				logOutput.Print("Team to control: is a dead team: %i", teamToControlId);
 				badArgs = true;
 			}
+#ifndef DEBUG
+			// TODO: FIXME: remove this, if desync bug fixed
+			if (playerHanlder->Players() > 1) {
+				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
+				badArgs = true;
+			}
+#endif // DEBUG
 			/*
 			// It should be allowed to let two Skirmish AIs control a single team.
 			// Though, it will fail heavily most likely with AIs not designed for this.
