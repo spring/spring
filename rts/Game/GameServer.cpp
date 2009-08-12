@@ -1496,7 +1496,7 @@ void CGameServer::KickPlayer(const int playerNum)
 unsigned CGameServer::BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link)
 {
 	Message(str(format("Connection attempt from %s") %name));
-	Message(str(format(" -> Address: %s") %link->GetFullAddress()));
+	Message(str(format(" -> Address: %s") %link->GetFullAddress()), false);
 	size_t hisNewNumber = players.size();
 
 	for (size_t i = 0; i < players.size(); ++i)
