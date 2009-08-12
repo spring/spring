@@ -272,20 +272,37 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 		break;
 	}
 
+	const POINT screen_pt = ScreenFromClient(client_x, client_y);
+
 	// mouse capture
-	static int outstanding_press_events;
+	static int outstanding_press_events = 0;
+	static SDL_GrabMode oldMode;
+	static bool saveMode = false;
 	if(state == SDL_PRESSED)
 	{
 		// grab mouse to ensure we get up events
 		if(++outstanding_press_events > 0)
-			SetCapture(g_hWnd);
+		{
+			if (!saveMode)
+			{
+				oldMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
+				saveMode = true;
+			}
+			SDL_WM_GrabInput(SDL_GRAB_ON);
+			SetCursorPos(screen_pt.x, screen_pt.y);
+		}
 	}
 	else
 	{
 		// release after all up events received
 		if(--outstanding_press_events <= 0)
 		{
-			ReleaseCapture();
+			if (saveMode)
+			{
+				SDL_WM_GrabInput(oldMode);
+				SetCursorPos(screen_pt.x, screen_pt.y);
+				saveMode = false;
+			}
 			outstanding_press_events = 0;
 		}
 	}
@@ -296,7 +313,6 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 	else
 		mouse_buttons &= ~SDL_BUTTON(button);
 
-	const POINT screen_pt = ScreenFromClient(client_x, client_y);
 	int x, y;
 	if(GetCoords(screen_pt.x, screen_pt.y, x, y))
 		queue_button_event(button, state, x, y);
