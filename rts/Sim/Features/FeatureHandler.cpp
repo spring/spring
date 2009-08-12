@@ -504,6 +504,8 @@ void CFeatureHandler::Update()
 				}
 				fadeFeatures.erase(feature);
 				fadeFeaturesS3O.erase(feature);
+				fadeFeaturesSave.erase(feature);
+				fadeFeaturesS3OSave.erase(feature);
 
 				delete feature;
 			}

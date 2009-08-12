@@ -54,6 +54,8 @@ public:
 
 	std::set<CFeature *> fadeFeatures;
 	std::set<CFeature *> fadeFeaturesS3O;
+	std::set<CFeature *> fadeFeaturesSave;
+	std::set<CFeature *> fadeFeaturesS3OSave;
 
 private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
