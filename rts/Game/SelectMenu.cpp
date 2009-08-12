@@ -166,6 +166,7 @@ SelectMenu::~SelectMenu()
 {
 	ConnectWindow(false);
 	agui::gui->RmElement(background);
+	background = NULL;
 }
 
 bool SelectMenu::Draw()
@@ -196,7 +197,7 @@ void SelectMenu::Single()
 	{
 		selw->ShowScriptList();
 	}
-	else
+	else if (background) // in case of double-click
 	{
 		mySettings->isHost = true;
 		pregame = new CPreGame(mySettings);
