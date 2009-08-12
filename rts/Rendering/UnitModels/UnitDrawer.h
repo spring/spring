@@ -85,6 +85,8 @@ public:
 
 	GML_VECTOR<CUnit*> drawCloaked;
 	GML_VECTOR<CUnit*> drawCloakedS3O;
+	GML_VECTOR<CUnit*> drawCloakedSave;
+	GML_VECTOR<CUnit*> drawCloakedS3OSave;
 
 	GML_VECTOR<CUnit*> drawFar;
 	GML_VECTOR<CUnit*> drawStat;

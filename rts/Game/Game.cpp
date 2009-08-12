@@ -2830,10 +2830,8 @@ bool CGame::DrawWorld()
 	//! draw cloaked part above surface
 	if(clip)
 		glEnable(GL_CLIP_PLANE3);
-
 	unitDrawer->DrawCloakedUnits(false,noAdvShading);
 	featureHandler->DrawFadeFeatures(false,noAdvShading);
-
 	if(clip)
 		glDisable(GL_CLIP_PLANE3);
 
@@ -2918,16 +2916,32 @@ bool CGame::DrawWorld()
 
 void CGame::StoreCloaked(bool save) {
 	if(save) {
-		drawCloakedSave = unitDrawer->drawCloaked;
-		drawCloakedS3OSave = unitDrawer->drawCloakedS3O;
-		fadeFeaturesSave = featureHandler->fadeFeatures;
-		fadeFeaturesS3OSave = featureHandler->fadeFeaturesS3O;
+		{
+			GML_RECMUTEX_LOCK(unit); // StoreCloaked
+
+			unitDrawer->drawCloakedSave = unitDrawer->drawCloaked;
+			unitDrawer->drawCloakedS3OSave = unitDrawer->drawCloakedS3O;
+		}
+		{
+			GML_RECMUTEX_LOCK(feat); // StoreCloaked
+
+			featureHandler->fadeFeaturesSave = featureHandler->fadeFeatures;
+			featureHandler->fadeFeaturesS3OSave = featureHandler->fadeFeaturesS3O;
+		}
 	}
 	else {
-		unitDrawer->drawCloaked = drawCloakedSave;
-		unitDrawer->drawCloakedS3O = drawCloakedS3OSave;
-		featureHandler->fadeFeatures = fadeFeaturesSave;
-		featureHandler->fadeFeaturesS3O = fadeFeaturesS3OSave;
+		{
+			GML_RECMUTEX_LOCK(unit); // StoreCloaked
+
+			unitDrawer->drawCloaked = unitDrawer->drawCloakedSave;
+			unitDrawer->drawCloakedS3O = unitDrawer->drawCloakedS3OSave;
+		}
+		{
+			GML_RECMUTEX_LOCK(feat); // StoreCloaked
+
+			featureHandler->fadeFeatures = featureHandler->fadeFeaturesSave;
+			featureHandler->fadeFeaturesS3O = featureHandler->fadeFeaturesS3OSave;
+		}
 	}
 }
 

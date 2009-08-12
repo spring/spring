@@ -277,10 +277,15 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 	for(int i=0, dcs=unitDrawer->drawCloaked.size(); i<dcs; ++i)
 		if(unitDrawer->drawCloaked[i]==delUnit)
 			unitDrawer->drawCloaked[i]=NULL;
-
 	for(int i=0, dcs=unitDrawer->drawCloakedS3O.size(); i<dcs; ++i)
 		if(unitDrawer->drawCloakedS3O[i]==delUnit)
 			unitDrawer->drawCloakedS3O[i]=NULL;
+	for(int i=0, dcs=unitDrawer->drawCloakedSave.size(); i<dcs; ++i)
+		if(unitDrawer->drawCloakedSave[i]==delUnit)
+			unitDrawer->drawCloakedSave[i]=NULL;
+	for(int i=0, dcs=unitDrawer->drawCloakedS3OSave.size(); i<dcs; ++i)
+		if(unitDrawer->drawCloakedS3OSave[i]==delUnit)
+			unitDrawer->drawCloakedS3OSave[i]=NULL;
 #endif
 
 	toBeAdded.erase(delUnit);
