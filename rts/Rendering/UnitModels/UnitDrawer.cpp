@@ -1353,6 +1353,9 @@ void CUnitDrawer::UnitDrawingTexturesOff(S3DModel *model)
  */
 void CUnitDrawer::UnitDrawingTexturesOn(S3DModel *model)
 {
+	// XXX FIXME GL_VERTEX_PROGRAM_ARB is very slow on ATIs here for some reason
+	// if clip planes are enabled
+	// check later after driver updates
 	if(advShading && !water->drawReflection){
 		glEnable(GL_VERTEX_PROGRAM_ARB);
 		glEnable(GL_FRAGMENT_PROGRAM_ARB);
@@ -1902,18 +1905,30 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glDisable(GL_CLIP_PLANE1);
 	unitDrawer->UnitDrawingTexturesOn(unit->model);
 
+	// XXX FIXME
+	// ATI has issues with textures, clip planes and shader programs at once - very low performance
 	if (unit->buildProgress > 0.66f) {
-		const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
-		glClipPlane(GL_CLIP_PLANE0, plane0);
+		if (gu->atiHacks) {
+			glDisable(GL_CLIP_PLANE0);
 
-		glPolygonOffset(1.0f, 1.0f);
-		glEnable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(1.0f, 1.0f);
+			glEnable(GL_POLYGON_OFFSET_FILL);
 
-		DrawUnitModel(unit);
+			DrawUnitModel(unit);
 
-		glDisable(GL_POLYGON_OFFSET_FILL);
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		} else {
+			const double plane0[4] = {0, -1, 0 , start + height * (unit->buildProgress * 3 - 2)};
+			glClipPlane(GL_CLIP_PLANE0, plane0);
+
+			glPolygonOffset(1.0f, 1.0f);
+			glEnable(GL_POLYGON_OFFSET_FILL);
+
+			DrawUnitModel(unit);
+
+			glDisable(GL_POLYGON_OFFSET_FILL);
+		}
 	}
-
 	glDisable(GL_CLIP_PLANE0);
 }
 
