@@ -122,8 +122,9 @@ void CUnitHandler::UnitMoveFailed(int unit) {
 	unit = unit;
 }
 
-// called when unit is ready to do work
-void CUnitHandler::UnitFinished(int unitID) {
+// called when unit nanoframe first created
+// (CEconomyTracker deals with UnitFinished())
+void CUnitHandler::UnitCreated(int unitID) {
 	UnitCategory ucat = ai->ut->GetCategory(unitID);
 	const UnitDef* udef = ai->cb->GetUnitDef(unitID);
 
