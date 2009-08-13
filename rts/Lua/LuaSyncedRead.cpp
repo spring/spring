@@ -1029,8 +1029,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	}
 
 	bool isAiTeam = false;
-	if (!team->luaAI.empty() ||
-	    (eoh->IsSkirmishAI(teamID))) {
+	if (!team->luaAI.empty() || team->isAI) {
 		isAiTeam = true;
 	}
 
