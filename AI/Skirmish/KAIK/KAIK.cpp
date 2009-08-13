@@ -73,11 +73,19 @@ void CKAIK::ReleaseAI() {
 
 
 void CKAIK::UnitCreated(int unitID, int builderID) {
+
 	ai->uh->UnitCreated(unitID);
 	ai->econTracker->UnitCreated(unitID);
+	unfinishedUnits.insert(unitID);
 }
 
 void CKAIK::UnitFinished(int unit) {
+
+	if (unfinishedUnits.find(unit) == unfinishedUnits.end()) {
+		UnitCreated(unit, -1);
+	}
+	unfinishedUnits.erase(unit);
+
 	ai->econTracker->UnitFinished(unit);
 
 	const int      frame = ai->cb->GetCurrentFrame();
@@ -98,6 +106,7 @@ void CKAIK::UnitFinished(int unit) {
 void CKAIK::UnitDestroyed(int unit, int attacker) {
 	attacker = attacker;
 	ai->econTracker->UnitDestroyed(unit);
+	unfinishedUnits.erase(unit);
 
 	if (GUG(unit) != -1) {
 		ai->ah->UnitDestroyed(unit);
@@ -182,7 +191,6 @@ int CKAIK::HandleEvent(int msg, const void* data) {
 
 			if ((cte->newteam) == (ai->cb->GetMyTeam())) {
 				// got a unit
-				UnitCreated(cte->unit, -1);
 				UnitFinished(cte->unit);
 				ai->uh->IdleUnitAdd(cte->unit, ai->cb->GetCurrentFrame());
 			}
