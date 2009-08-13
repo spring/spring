@@ -1,15 +1,18 @@
 #include "LogFile.h"
 
+#include "ExternalAI/IAICallback.h"
+
+#include <string>
 //#include <fstream>
 //#include <stdlib.h>
 //#include <iostream>
 #include <stdio.h>
 
-using namespace std;
+using std::string;
 
-cLogFile::cLogFile(string sFilename, bool bAppend)
+cLogFile::cLogFile(IAICallback* cb, string sFilename, bool bAppend)
 {
-	logFileName = cLogFile::GetDir() + sFilename;
+	logFileName = cLogFile::GetDir(cb) + sFilename;
 	if( bAppend )
 		logFile = fopen(logFileName.c_str(),"a");
 //		logFile = new ofstream();
@@ -84,6 +87,27 @@ void cLogFile::Write(int message)
 }
 */
 
-std::string cLogFile::GetDir(bool writeableAndCreate, std::string relPath) {
-	return aiexport_getDataDir(writeableAndCreate, relPath.c_str());
+std::string cLogFile::GetDir(IAICallback* cb, bool writeableAndCreate, std::string relPath) {
+
+	std::string returnedPath = "";
+
+	AIHCGetDataDir cmdData = {
+		relPath.c_str(),
+		writeableAndCreate,
+		writeableAndCreate,
+		true,
+		false,
+		NULL
+	};
+
+	int ret = cb->HandleCommand(AIHCGetDataDirId, &cmdData);
+
+	if (ret == 1 && cmdData.ret_path != NULL) {
+		// nothing failed
+		std::string returnedPath = std::string(cmdData.ret_path);
+		free(cmdData.ret_path);
+		cmdData.ret_path = NULL;
+	}
+
+	return returnedPath;
 }

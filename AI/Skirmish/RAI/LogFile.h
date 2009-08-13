@@ -7,24 +7,26 @@
 #ifndef RAI_LOGFILE_H
 #define RAI_LOGFILE_H
 
-#include "ExternalAI/IAICallback.h"
-#include "AIExport.h"
+#include <string>
+
 using std::string;
+class IAICallback;
+
 
 class cLogFile
 {
 public:
-	cLogFile(string sFilename, bool bAppend=true);
+	cLogFile(IAICallback* cb, string sFilename, bool bAppend=true);
 	~cLogFile();
 
 	cLogFile& operator<<(float message);
 	cLogFile& operator<<(string message);
 
-	static std::string GetDir(bool writeableAndCreate = true, std::string relPath = "");
+	static std::string GetDir(IAICallback* cb, bool writeableAndCreate = true, string relPath = "");
 
 private:
 	string logFileName;
 	FILE *logFile;
 };
 
-#endif
+#endif // RAI_LOGFILE_H
