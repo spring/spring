@@ -685,7 +685,7 @@ void SpringApp::ParseCmdLine()
 
 	screenHeight = configHandler->Get("YResolution", YRES_DEFAULT);
 	if (cmdline->IsSet("yresolution"))
-		screenWidth = std::max(cmdline->GetInt("yresolution"), 480);
+		screenHeight = std::max(cmdline->GetInt("yresolution"), 480);
 
 	windowPosX  = configHandler->Get("WindowPosX", 32);
 	windowPosY  = configHandler->Get("WindowPosY", 32);
