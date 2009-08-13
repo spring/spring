@@ -596,6 +596,22 @@ void CGameServer::Update()
 	}
 }
 
+// duplicates functionality of CPlayerHandler::ActivePlayersInTeam(int teamId)
+// as paherHandler is not available on the server
+static int countNumPlayersInTeam(const std::vector<GameParticipant>& players, int teamId) {
+
+	size_t numPlayersInTeam = 0;
+
+	for (size_t p = 0; p < players.size(); ++p) {
+		// do not count spectators, or demos will desync
+		if (!players[p].spectator && (players[p].team == teamId)) {
+			++numPlayersInTeam;
+		}
+	}
+
+	return numPlayersInTeam;
+}
+
 void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<const netcode::RawPacket> packet)
 {
 	const boost::uint8_t* inbuf = packet->data;
@@ -875,16 +891,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							break;
 						}
 						Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam, fromTeam_g));
-						unsigned numPlayersInTeam_g = 0;
-						for (size_t a = 0; a < players.size(); ++a) {
-							if (players[a].team >= 0 && static_cast<unsigned>(players[a].team) == fromTeam_g) {
-								++numPlayersInTeam_g;
-							}
-						}
+						const int numPlayersInTeam_g = countNumPlayersInTeam(players, fromTeam_g);
 
 						if (fromTeam_g == fromTeam) {
 							// player is giving stuff from his own team
-							if (numPlayersInTeam_g <= 1) {
+							if (numPlayersInTeam_g == 1 && !(teams[fromTeam_g].isAI)) {
 								teams[fromTeam_g].active = false;
 								teams[fromTeam_g].leader = -1;
 							}
@@ -911,6 +922,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						Broadcast(CBaseNetProtocol::Get().SendResign(player));
 						players[player].team = 0;
 						players[player].spectator = true;
+						const int numPlayersInTeam = countNumPlayersInTeam(players, fromTeam);
+						if (numPlayersInTeam == 0 && !(teams[fromTeam].isAI)) {
+							teams[fromTeam].active = false;
+							teams[fromTeam].leader = -1;
+						}
 						if (hostif) hostif->SendPlayerDefeated(player);
 						break;
 					}
@@ -921,6 +937,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
 							players[player].team = newTeam;
 							players[player].spectator = false;
+							if (teams[newTeam].leader == -1) {
+								teams[newTeam].leader = player;
+							}
 						}
 						else
 						{
@@ -935,13 +954,17 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 #endif
 						{
 							teams[team].active = false;
-							for (unsigned i = 0; i < players.size(); ++i)
+							const int numPlayersInTeam = countNumPlayersInTeam(players, team);
+							for (unsigned p = 0; p < players.size(); ++p)
 							{
-								if (players[i].team == team)
+								if (players[p].team == team)
 								{
-									players[i].team = 0;
-									players[i].spectator = true;
-									if (hostif) hostif->SendPlayerDefeated(i);
+									players[p].team = 0;
+									players[p].spectator = true;
+									if (numPlayersInTeam == 0 && !(teams[team].isAI)) {
+										teams[team].leader = -1;
+									}
+									if (hostif) hostif->SendPlayerDefeated(p);
 								}
 							}
 						}
@@ -951,17 +974,14 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						const unsigned aiTeam = inbuf[3];
 						GameTeam* tf = &teams[fromTeam];
 						GameTeam* tai = &teams[aiTeam];
-						unsigned numPlayersInAITeam = 0;
-						for (size_t a = 0; a < players.size(); ++a) {
-							if (players[a].team >= 0 && static_cast<unsigned>(players[a].team) == aiTeam) {
-								++numPlayersInAITeam;
-							}
-						}
+						const int numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
 
 						if ((numPlayersInAITeam == 0) || (tai->leader == player) || (tai->leader == -1) || (cheating && (tf->teamAllyteam == tai->teamAllyteam))) {
 							Broadcast(CBaseNetProtocol::Get().SendAICreated(player, aiTeam));
-							tai->leader = player;
 							tai->isAI = true;
+							if (tai->leader == -1) {
+								tai->leader = player;
+							}
 						} else {
 							Message(str(format(NoAICreated) %players[player].name %player %aiTeam));
 						}

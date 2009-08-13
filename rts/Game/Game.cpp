@@ -3995,14 +3995,7 @@ void CGame::ClientReadNet()
 					case TEAMMSG_GIVEAWAY: {
 						const int toTeam = inbuf[3];
 						const int fromTeam_g = inbuf[4];
-						unsigned numPlayersInTeam_g = 0;
-						for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-							CPlayer* playah = playerHandler->Player(a);
-							// do not count spectators or demos will desync
-							if (playah->active && !playah->spectator && playah->team == fromTeam_g) {
-								++numPlayersInTeam_g;
-							}
-						}
+						const int numPlayersInTeam_g = playerHandler->ActivePlayersInTeam(fromTeam_g);
 
 						if (fromTeam_g == fromTeam) {
 							// player is giving stuff from his own team
@@ -4030,15 +4023,8 @@ void CGame::ClientReadNet()
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
 						}
-						unsigned numPlayersInTeam = 0;
-						for (int a = 0; a < playerHandler->ActivePlayers(); ++a) {
-							CPlayer* playah = playerHandler->Player(a);
-							// do not count spectators or demos will desync
-							if (playah->active && !playah->spectator && playah->team == fromTeam) {
-								++numPlayersInTeam;
-							}
-						}
-						if (numPlayersInTeam == 1) {
+						const int numPlayersInTeam = playerHandler->ActivePlayersInTeam(fromTeam);
+						if (numPlayersInTeam == 1 && !(teamHandler->Team(fromTeam)->isAI)) {
 							teamHandler->Team(fromTeam)->leader = -1;
 						}
 						logOutput.Print("Player %i resigned and is now spectating!", player);
