@@ -571,9 +571,9 @@ static ArchiveType read_archive_content_sd7(const Path& filename){
 
 	for (unsigned int i = 0; i < db.db.NumFiles; ++i) {
 		CSzFileItem* fi = db.db.Files + i;
-		//if(fi->IsDirectory){
-		//	continue;
-		//}
+		if(fi->IsDir){
+			continue;
+		}
 
 		const std::string& filename = string_to_lower(fi->Name);
 		if(!is_map_or_mod(filename, content)){
