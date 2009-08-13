@@ -134,7 +134,7 @@ void cRAI::InitAI(IGlobalAICallback* callback, int team)
 		ClearLogFiles();
 	char c[3];
 	SNPRINTF(c, 3, "%i", cb->GetMyTeam());
-	l = new cLogFile("RAI"+string(c)+"_LastGame.log",false);
+	l = new cLogFile(cb, "RAI"+string(c)+"_LastGame.log", false);
 
 /*	string test = (char*)cb->GetMyTeam(); // Crashes Spring?  Spring-Version(v0.76b1)
 	*l<<"cb->GetMyTeam()="<<test<<"\n";
@@ -1087,7 +1087,7 @@ void cRAI::DebugDrawShape(float3 CenterPos, float linelength, float width, int a
 
 void cRAI::ClearLogFiles()
 {
-	string logDir = cLogFile::GetDir();
+	string logDir = cLogFile::GetDir(cb);
 
 	string logFileName;
 	for( int i=0; i<16; i++ )

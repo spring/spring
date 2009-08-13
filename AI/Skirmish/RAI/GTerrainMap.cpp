@@ -11,7 +11,7 @@ GlobalTerrainMap::GlobalTerrainMap(IAICallback* cb, cLogFile* l)
 //	l = logfile;
 	*l<<"\n Loading the Terrain-Map ...";
 
-	string cacheDirectory = cLogFile::GetDir(true, "cache");
+	string cacheDirectory = cLogFile::GetDir(cb, true, "cache");
 
 	if (cacheDirectory.empty()) {
 		*l<<"\nERROR: Could not create the cache dir: "<<cacheDirectory;
