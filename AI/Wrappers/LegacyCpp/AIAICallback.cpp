@@ -1556,6 +1556,19 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PAUSE, &cCmdData);
 			break;
 		}
+
+		case AIHCGetDataDirId: {
+			AIHCGetDataDir* cppCmdData = (AIHCGetDataDir*) data;
+			cppCmdData->ret_path = sAICallback->Clb_DataDirs_allocatePath(
+					teamId,
+					cppCmdData->relPath,
+					cppCmdData->writeable,
+					cppCmdData->create,
+					cppCmdData->dir,
+					cppCmdData->common);
+			ret = (cppCmdData->ret_path == NULL) ? 0 : 1;
+			break;
+		}
 	}
 
 	return ret;

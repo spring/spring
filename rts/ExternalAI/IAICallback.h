@@ -73,6 +73,7 @@ struct LineMarker {
 #define AIHCGetFeatureDefByIdId 7
 #define AIHCTraceRayId          8
 #define AIHCPauseId             9
+#define AIHCGetDataDirId        10
 
 struct AIHCAddMapPoint ///< result of HandleCommand is 1 - ok supported
 {
@@ -129,6 +130,20 @@ struct AIHCPause
 {
 	bool        enable;
 	const char* reason;
+};
+
+/**
+ * See Clb_DataDirs_allocatePath in rts/ExternalAI/Interface/SSkirmishAICallback.h
+ * ret_path has to be freed by the AI, if it is not NULL.
+ */
+struct AIHCGetDataDir ///< result of HandleCommand is 1 for if path fetched, 0 for fail
+{
+	const char* relPath;
+	bool writeable;
+	bool create;
+	bool dir;
+	bool common;
+	char* ret_path;
 };
 
 /// Generalized callback interface, used by Global AIs
