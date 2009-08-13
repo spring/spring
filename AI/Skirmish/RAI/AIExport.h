@@ -54,12 +54,4 @@ EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback);
 EXPORT(int) release(int teamId);
 EXPORT(int) handleEvent(int teamId, int topic, const void* data);
 
-/*
-// methods from here on are for AI internal use only
-const char* aiexport_getMyInfo(int teamId, const char* key);
-const char* aiexport_getDataDir(int teamId, bool writeableAndCreate, const char* const relPath);
-const char* aiexport_getVersion(int teamId);
-const char* aiexport_getMyOption(int teamId, const char* key);
-*/
-
 #endif // _AIEXPORT_H

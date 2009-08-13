@@ -99,29 +99,3 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 	// no AI for that team, so return error.
 	return -1;
 }
-
-/*
-// methods from here on are for AI internal use only
-
-const char* aiexport_getMyInfo(int teamId, const char* key) {
-	return teamId_callback[teamId]->Clb_SkirmishAI_Info_getValueByKey(teamId, key);
-}
-const char* aiexport_getDataDir(int teamId, bool writeableAndCreate, const char* const relPath) {
-
-	char* absPath = teamId_callback[teamId]->Clb_DataDirs_allocatePath(teamId, relPath, writeableAndCreate, writeableAndCreate, true, false);
-
-	if (absPath == NULL) {
-		absPath = NULL;
-	}
-
-	return absPath;
-}
-
-const char* aiexport_getVersion(int teamId) {
-	return teamId_callback[teamId]->Clb_SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_VERSION);
-}
-
-const char* aiexport_getMyOption(int teamId, const char* key) {
-	return teamId_callback[teamId]->Clb_SkirmishAI_OptionValues_getValueByKey(teamId, key);
-}
-*/
