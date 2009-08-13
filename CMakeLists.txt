@@ -190,6 +190,10 @@ endif (NOT "${AIINTERFACES}" STREQUAL "NONE")
 if    (SDL_FOUND)
 	Add_Subdirectory(tools/DedicatedServer)
 endif (SDL_FOUND)
+if (WIN32)
+	Add_Subdirectory(tools/ArchiveMover)
+endif (WIN32)
+	
 Add_Subdirectory(tools/unitsync)
 
 ### make the basefiles (aka sdz's)
