@@ -1434,6 +1434,16 @@ int CAICallback::HandleCommand(int commandId, void* data)
 			return 1;
 		}
 
+		case AIHCGetDataDirId: {
+
+			// do nothing
+			// this event will never end up here,
+			// as it is handled in the C layer directly
+			// see Clb_DataDirs_allocatePath in rts/ExternalAI/Interface/SSkirmishAICallback.h
+
+			return 0;
+		}
+
 		default:
 			return 0;
 	}
