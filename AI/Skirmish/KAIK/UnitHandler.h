@@ -17,7 +17,7 @@ class CUnitHandler {
 		CUnitHandler(AIClasses* ai);
 		~CUnitHandler();
 
-		void UnitFinished(int unit);
+		void UnitCreated(int unit);
 		void UnitDestroyed(int unit);
 
 		void IdleUnitUpdate(int);
