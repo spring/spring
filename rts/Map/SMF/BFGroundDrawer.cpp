@@ -715,8 +715,9 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 	if(multiThreadDrawGround) {
 		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundRowMT,NULL,this,gmlThreadCount,FALSE,NULL,numBigTexY,50,100,TRUE,NULL);
 	}
-	else {
+	else
 #endif
+	{
 		int camBty = (int)math::floor(cam2->pos.z / (bigSquareSize * SQUARE_SIZE));
 		camBty = std::max(0,std::min(numBigTexY-1, camBty ));
 
@@ -727,9 +728,7 @@ void CBFGroundDrawer::Draw(bool drawWaterReflection, bool drawUnitReflection, un
 		for (int bty = camBty+1; bty < numBigTexY; ++bty) {
 			DoDrawGroundRow(bty);
 		}
-#ifdef USE_GML
 	}
-#endif
 
 	ResetTextureUnits(drawWaterReflection);
 	glDisable(GL_CULL_FACE);
@@ -1110,14 +1109,13 @@ void CBFGroundDrawer::DrawShadowPass(void)
 	if(multiThreadDrawGroundShadow) {
 		gmlProcessor->Work(NULL,&CBFGroundDrawer::DoDrawGroundShadowLODMT,NULL,this,gmlThreadCount,FALSE,NULL,NUM_LODS+1,50,100,TRUE,NULL);
 	}
-	else {
+	else
 #endif
+	{
 		for (int nlod = 0; nlod < NUM_LODS+1; ++nlod) {
 			DoDrawGroundShadowLOD(nlod);
 		}
-#ifdef USE_GML
 	}
-#endif
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_CULL_FACE);
