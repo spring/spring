@@ -97,6 +97,30 @@ public:
 	static IAILibraryManager* GetInstance();
 	static void OutputAIInterfacesInfo();
 	static void OutputSkirmishAIInfo();
+
+protected:
+	/**
+	 * Compares two version strings.
+	 * Splits the version strings at the '.' signs, and compares the parts.
+	 * If the number of parts do not match, then the string with less parts
+	 * is filled up with '.0' parts at its right, eg:
+	 * version 1: 0.1.2   -> 0.1.2.0
+	 * version 2: 0.1.2.3 -> 0.1.2.3
+	 * The left most part has the highest significance.
+	 * Comparison of the individual parts is done with std::string::compare(),
+	 * which implies for example that letters > numbers.
+	 * examples:
+	 * ("2", "1") -> 1
+	 * ("1", "1") -> 0
+	 * ("1", "2") -> -1
+	 * ("0.1.1", "0.1") -> 1
+	 * ("1.a", "1.9") -> 1
+	 * ("1.a", "1.A") -> 1
+	 */
+	static int VersionCompare(
+			const std::string& version1,
+			const std::string& version2);
+
 private:
 	static IAILibraryManager* myAILibraryManager;
 };
