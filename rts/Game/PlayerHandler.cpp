@@ -72,6 +72,20 @@ void CPlayerHandler::PlayerLeft(int player, unsigned char reason)
 	Player(player)->ping = 0;
 }
 
+int CPlayerHandler::ActivePlayersInTeam(int teamId) const
+{
+	size_t numPlayersInTeam = 0;
+
+	for (playerVec::const_iterator pi = players.begin(); pi != players.end(); ++pi) {
+		// do not count spectators, or demos will desync
+		if (pi->active && !pi->spectator && (pi->team == teamId)) {
+			++numPlayersInTeam;
+		}
+	}
+
+	return numPlayersInTeam;
+}
+
 void CPlayerHandler::GameFrame(int frameNum)
 {
 	for(playerVec::iterator it = players.begin(); it != players.end(); ++it)
