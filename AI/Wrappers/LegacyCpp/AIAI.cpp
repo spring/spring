@@ -20,12 +20,20 @@
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAIAI::CAIAI(int teamId, IGlobalAI* gAI): team(teamId), ai(gAI) {}
-CAIAI::~CAIAI() { }
+CAIAI::CAIAI(int teamId, IGlobalAI* gAI):
+	team(teamId),
+	ai(gAI),
+	globalAICallback(NULL) {
+}
+
+CAIAI::~CAIAI() {
+
+	delete globalAICallback;
+	globalAICallback = NULL;
+}
 
 
 int CAIAI::handleEvent(int topic, const void* data) {
-	static IGlobalAICallback* wrappedGlobalAICallback = NULL;
 
 	int ret = -1; // if this values remains, something went wrong
 
@@ -43,15 +51,13 @@ int CAIAI::handleEvent(int topic, const void* data) {
 						new CAIInitEvent(*((const SInitEvent*) data));
 				// The following two lines should not ever be needed,
 				// but they do not hurt either.
-				delete wrappedGlobalAICallback;
-				wrappedGlobalAICallback = NULL;
-				wrappedGlobalAICallback = initE->GetWrappedGlobalAICallback();
+				delete globalAICallback;
+				globalAICallback = NULL;
+				globalAICallback = initE->GetWrappedGlobalAICallback();
 				e = initE;
 				break;
 			}
 			case EVENT_RELEASE: {
-				delete wrappedGlobalAICallback;
-				wrappedGlobalAICallback = NULL;
 				e = new CAIReleaseEvent(*((const SReleaseEvent*) data));
 				break;
 			}
@@ -150,7 +156,7 @@ int CAIAI::handleEvent(int topic, const void* data) {
 
 		try {
 			// handle the event
-			e->Run(*ai, wrappedGlobalAICallback);
+			e->Run(*ai, globalAICallback);
 			ret = 0;
 			delete e;
 			e = NULL;

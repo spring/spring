@@ -22,6 +22,7 @@
 #define _AIAI_H
 
 class IGlobalAI;
+class IGlobalAICallback;
 
 class CAIAI {
 public:
@@ -44,6 +45,7 @@ public:
 protected:
 	int team;
 	IGlobalAI* ai;
+	IGlobalAICallback* globalAICallback;
 };
 
 #endif // _AIAI_H
