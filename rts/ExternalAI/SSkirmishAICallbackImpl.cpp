@@ -620,15 +620,19 @@ EXPORT(int) skirmishAiCallback_SkirmishAIs_getMax(int teamId) {
 
 static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int teamId) {
 
+	const CSkirmishAILibraryInfo* info = NULL;
+
 	const SkirmishAIKey* key = eoh->GetSkirmishAIKey(teamId);
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-	IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
-	IAILibraryManager::T_skirmishAIInfos::const_iterator inf = infs.find(*key);
-	if (key != NULL && inf != infs.end()) {
-		return inf->second;
-	} else {
-		return NULL;
+	if (key != NULL) {
+		const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
+		IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
+		IAILibraryManager::T_skirmishAIInfos::const_iterator inf = infs.find(*key);
+		if (inf != infs.end()) {
+			info = (const CSkirmishAILibraryInfo*) inf->second;
+		}
 	}
+
+	return info;
 }
 
 EXPORT(int) skirmishAiCallback_SkirmishAI_Info_getSize(int teamId) {
