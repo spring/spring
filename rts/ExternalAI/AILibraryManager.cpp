@@ -38,9 +38,7 @@
 #include <string>
 #include <set>
 #include <sstream>
-
 #include <limits.h>
-#include <string.h>
 
 
 void CAILibraryManager::reportError(const char* topic, const char* msg) {
@@ -427,7 +425,7 @@ AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 	AIInterfaceKey fittingKey = AIInterfaceKey(); // unspecified key
 	for (key=keys.begin(); key!=keys.end(); key++) {
 		if (shortName == key->GetShortName()) {
-			int diff = versionCompare(key->GetVersion(), minVersion);
+			int diff = IAILibraryManager::VersionCompare(key->GetVersion(), minVersion);
 			if (diff >= 0 && diff < minDiff) {
 				fittingKey = *key;
 				minDiff = diff;
@@ -436,47 +434,4 @@ AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 	}
 
 	return fittingKey;
-}
-
-static std::vector<std::string> split(const std::string& str, const char sep) {
-
-	std::vector<std::string> tokens;
-	std::string delimitters = ".";
-
-	// Skip delimiters at beginning.
-	std::string::size_type lastPos = str.find_first_not_of(delimitters, 0);
-	// Find first "non-delimiter".
-	std::string::size_type pos     = str.find_first_of(delimitters, lastPos);
-
-	while (std::string::npos != pos || std::string::npos != lastPos)
-	{
-		// Found a token, add it to the vector.
-		tokens.push_back(str.substr(lastPos, pos - lastPos));
-		// Skip delimiters.  Note the "not_of"
-		lastPos = str.find_first_not_of(sep, pos);
-		// Find next "non-delimiter"
-		pos = str.find_first_of(delimitters, lastPos);
-	}
-
-	return tokens;
-}
-int CAILibraryManager::versionCompare(
-		const std::string& version1,
-		const std::string& version2) {
-
-	std::vector<std::string> parts1 = split(version1, '.');
-	std::vector<std::string> parts2 = split(version2, '.');
-	unsigned int maxParts = parts1.size() > parts2.size() ? parts1.size() : parts2.size();
-
-	int diff = 0;
-	for (unsigned int i=0; i < maxParts; ++i) {
-		const std::string& v1p = i < parts1.size() ? parts1.at(i) : "0";
-		const std::string& v2p = i < parts2.size() ? parts2.at(i) : "0";
-		diff += (1<<((maxParts-i)*2)) * v1p.compare(v2p);
-	}
-
-	// computed the sing of diff -> 1, 0 or -1
-	int sign = (diff != 0) | -(int)((unsigned int)((int)diff) >> (sizeof(int) * CHAR_BIT - 1));
-
-	return sign;
 }
