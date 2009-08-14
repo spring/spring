@@ -3,7 +3,7 @@ ADD_DEFINITIONS(-DDEDICATED)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/lib/7zip ../../rts/lib/lua/include ../../rts/System)
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
-SET(build_files ${fsfiles} ${platformfiles}
+SET(build_files ${fsfiles}
 	../../rts/Game/GameSetup
 	../../rts/Game/PlayerBase
 	../../rts/Game/GameVersion
@@ -22,6 +22,10 @@ SET(build_files ${fsfiles} ${platformfiles}
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
 	../../rts/Lua/LuaIO)
+IF (WIN32)
+	SET(build_files ${build_files}
+		../../rts/System/Platform/Win/WinVersion)
+ENDIF (WIN32)
 
 ADD_EXECUTABLE(demoanalyser EXCLUDE_FROM_ALL main ${build_files})
 TARGET_LINK_LIBRARIES(demoanalyser ${SDL_LIBRARY} hpiutil2 7zip lua minizip ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
