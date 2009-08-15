@@ -64,7 +64,7 @@ void CSkirmishAITestScript::GameStart(void)
 		SkirmishAIData aiData;
 		aiData.name = key.GetShortName() + "_" + key.GetVersion();
 		aiData.team = skirmishAI_teamId;
-		aiData.hostPlayerNum = 0;
+		aiData.hostPlayer = player_Id;
 		aiData.shortName = key.GetShortName();
 		aiData.version = key.GetVersion();
 		std::map<std::string, std::string>::const_iterator o;

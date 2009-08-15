@@ -23,7 +23,6 @@
 
 #include "Net/Connection.h"
 #include "mmgr.h"
-#include "ExternalAI/SkirmishAIKey.h"
 
 #include "GameServer.h"
 
@@ -54,6 +53,7 @@
 #include "FileSystem/CRC.h"
 #include "Player.h"
 #include "Server/GameParticipant.h"
+#include "Server/GameSkirmishAI.h"
 // This undef is needed, as somewhere there is a type interface specified,
 // which we need not!
 // (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
@@ -180,6 +180,9 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	players.resize(setup->playerStartingData.size());
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
 
+	ais.resize(setup->GetSkirmishAIs().size());
+	std::copy(setup->GetSkirmishAIs().begin(), setup->GetSkirmishAIs().end(), ais.begin());
+
 	teams.resize(setup->teamStartingData.size());
 	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
 
@@ -217,7 +220,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(i);
 		if (sad != NULL)
 		{
-			teams[i].leader = sad->hostPlayerNum;
+			teams[i].leader = sad->hostPlayer;
 			teams[i].active = true;
 			teams[i].isAI = true;
 		}
@@ -258,10 +261,13 @@ CGameServer::~CGameServer()
 	for (size_t i = 0; i < players.size(); ++i) {
 		demoRecorder->SetPlayerStats(i, players[i].lastStats);
 	}
+	/*for (size_t i = 0; i < ais.size(); ++i) {
+		demoRecorder->SetSkirmishAIStats(i, ais[i].lastStats);
+	}*/
 	/*for (int i = 0; i < numTeams; ++i) {
 		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
 	}*/ //TODO add
-#endif
+#endif // DEDICATED
 }
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)

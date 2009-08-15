@@ -111,7 +111,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 					} else {
 						// a missing AI lib is only a problem for
 						// the player who is supposed to load it
-						if (gu->myPlayerNum == skirmishAIData->hostPlayerNum) {
+						if (skirmishAIData->hostPlayer == gu->myPlayerNum) {
 							const int MAX_MSG_LENGTH = 511;
 							char s_msg[MAX_MSG_LENGTH + 1];
 							SNPRINTF(s_msg, MAX_MSG_LENGTH,

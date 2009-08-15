@@ -54,8 +54,9 @@ public:
 	StartPosType startPosType;
 
 	std::vector<PlayerBase> playerStartingData;
+
+	const std::vector<SkirmishAIData>& GetSkirmishAIs() const;
 	const SkirmishAIData* GetSkirmishAIDataForTeam(int teamId) const;
-	size_t GetSkirmishAIs() const;
 
 	std::vector<TeamBase> teamStartingData;
 	std::vector<AllyTeam> allyStartingData;

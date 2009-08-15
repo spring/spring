@@ -30,6 +30,7 @@ class CGameSetup;
 class ClientSetup;
 class ChatMessage;
 class GameParticipant;
+class GameSkirmishAI;
 
 /**
  * When the Server generates a message,
@@ -143,6 +144,7 @@ private:
 	// Ugly hax for letting the script define initial team->isAI and team->leader for AI teams
 	friend class CSkirmishAITestScript;
 	std::vector<GameParticipant> players;
+	std::vector<GameSkirmishAI> ais;
 	std::vector<GameTeam> teams;
 
 	float medianCpu;
