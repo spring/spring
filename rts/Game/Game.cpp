@@ -2461,7 +2461,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				return;
 			}
 
-		// make sure team unit-limit not exceeded
+			// make sure team unit-limit is not exceeded
 			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
 				numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
 			}
