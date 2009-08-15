@@ -26,9 +26,7 @@
 /game/maps
 /game/mods
 /game/demos
-/game/AI/Bot-libs
-/game/AI/Helper-libs
-/game/AI/*
+/game/AI
 /game/ArchiveCacheV7.lua
 /game/ext.txt
 /game/LuaUI/Config/widget_data.lua
