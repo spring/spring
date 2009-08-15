@@ -13,33 +13,24 @@
 
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-	@author	Robin Vobruba <hoijui.quaero@gmail.com>
 */
 
-#ifndef __SKIRMISH_AI_DATA_H
-#define __SKIRMISH_AI_DATA_H
+#include "ExternalAI/SkirmishAIData.h"
 
-#include "ExternalAI/SkirmishAIBase.h"
+#include "creg/STL_Map.h"
 
-#include "creg/creg_cond.h"
+CR_BIND(SkirmishAIData,);
 
-#include <string>
-#include <vector>
-#include <map>
-
-/**
- * Contains everything needed to initialize a Skirmish AI instance.
- * @see Game/GameSetup
- */
-class SkirmishAIData : public SkirmishAIBase {
-private:
-	CR_DECLARE(SkirmishAIData);
-public:
-	std::string shortName;
-	std::string version;
-	std::vector<std::string> optionKeys;
-	std::map<std::string, std::string> options;
-};
-
-#endif // __SKIRMISH_AI_DATA_H
+CR_REG_METADATA(SkirmishAIData, (
+	// from TeamController
+	CR_MEMBER(name),
+	CR_MEMBER(team),
+	// from SkirmishAIBase
+	CR_MEMBER(hostPlayer),
+	// from SkirmishAIData
+	CR_MEMBER(shortName),
+	CR_MEMBER(version),
+	CR_MEMBER(optionKeys),
+	CR_MEMBER(options),
+	CR_RESERVED(32)
+));
