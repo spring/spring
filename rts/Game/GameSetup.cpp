@@ -203,8 +203,8 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		if (data.team == -1) {
 			throw content_error("missing AI.Team in GameSetup script");
 		}
-		data.hostPlayerNum = atoi(file.SGetValueDef("-1", s + "Host").c_str());
-		if (data.hostPlayerNum == -1) {
+		data.hostPlayer = atoi(file.SGetValueDef("-1", s + "Host").c_str());
+		if (data.hostPlayer == -1) {
 			throw content_error("missing AI.Host in GameSetup script");
 		}
 
@@ -256,8 +256,8 @@ const SkirmishAIData* CGameSetup::GetSkirmishAIDataForTeam(int teamId) const {
 	}
 }
 
-size_t CGameSetup::GetSkirmishAIs() const {
-	return team_skirmishAI.size();
+const std::vector<SkirmishAIData>& CGameSetup::GetSkirmishAIs() const {
+	return skirmishAIStartingData;
 }
 
 /**
@@ -369,10 +369,10 @@ void CGameSetup::RemapPlayers()
 	}
 	// relocate AI.hostPlayerNum field
 	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
-		if (playerRemap.find(skirmishAIStartingData[a].hostPlayerNum) == playerRemap.end()) {
+		if (playerRemap.find(skirmishAIStartingData[a].hostPlayer) == playerRemap.end()) {
 			throw content_error("invalid AI.hostPlayerNum in GameSetup script");
 		}
-		skirmishAIStartingData[a].hostPlayerNum = playerRemap[skirmishAIStartingData[a].hostPlayerNum];
+		skirmishAIStartingData[a].hostPlayer = playerRemap[skirmishAIStartingData[a].hostPlayer];
 	}
 }
 

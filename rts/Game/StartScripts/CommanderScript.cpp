@@ -58,7 +58,7 @@ void CCommanderScript::GameStart()
 			SkirmishAIData aiData;
 			aiData.name = team->skirmishAIKey.GetShortName() + "_" + team->skirmishAIKey.GetVersion();
 			aiData.team = a;
-			aiData.hostPlayerNum = gu->myPlayerNum;
+			aiData.hostPlayer = gu->myPlayerNum;
 			aiData.shortName = team->skirmishAIKey.GetShortName();
 			aiData.version = team->skirmishAIKey.GetVersion();
 

@@ -1283,7 +1283,7 @@ bool CGame::ActionPressed(const Action& action,
 				SkirmishAIData aiData;
 				aiData.name = (aiName != "") ? aiName : aiShortName;
 				aiData.team = teamToControlId;
-				aiData.hostPlayerNum = gu->myPlayerNum;
+				aiData.hostPlayer = gu->myPlayerNum;
 				aiData.shortName = aiShortName;
 				aiData.version = aiVersion;
 				std::map<std::string, std::string>::const_iterator o;

@@ -130,7 +130,8 @@ EXPORT(int) aiInterfaceCallback_Teams_getSize(int UNUSED_interfaceId) {
 }
 
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getSize(int UNUSED_interfaceId) {
-	return gameSetup->GetSkirmishAIs();
+//TODO: FIXME: do not use starting data, only current one -> we need a SkirmishAIHandler
+	return gameSetup->GetSkirmishAIs().size();
 }
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getMax(int UNUSED_interfaceId) {
 	return MAX_TEAMS;

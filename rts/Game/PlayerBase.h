@@ -1,5 +1,7 @@
-#ifndef PLAYERBASE_H
-#define PLAYERBASE_H
+#ifndef __PLAYER_BASE_H
+#define __PLAYER_BASE_H
+
+#include "Game/TeamController.h"
 
 #include <string>
 #include <map>
@@ -7,7 +9,7 @@
 /**
  * @brief Acts as a base class for the various player-representing classes
  */
-class PlayerBase
+class PlayerBase : public TeamController
 {
 public:
 	typedef std::map<std::string, std::string> customOpts;
@@ -17,37 +19,33 @@ public:
 	 */
 	PlayerBase();
 
-	int team;
 	int rank;
-	std::string name;
 	std::string countryCode;
 	bool spectator;
 	bool isFromDemo;
 	
 	void SetValue(const std::string& key, const std::string& value);
-	const customOpts& GetAllValues() const
-	{
+	const customOpts& GetAllValues() const {
 		return customValues;
-	};
+	}
 
 private:
 	customOpts customValues;
 };
 
-struct PlayerStatistics
+/**
+ * @brief Contains statistical data about a player concerning a single game.
+ */
+class PlayerStatistics : public TeamControllerStatistics
 {
+public:
 	/// how many pixels the mouse has traversed in total
 	int mousePixels;
 	int mouseClicks;
 	int keyPresses;
 
-	int numCommands;
-	/// total amount of units affected by commands
-	/// (divide by numCommands for average units/command)
-	int unitCommands;
-
 	/// Change structure from host endian to little endian or vice versa.
 	void swab();
 };
 
-#endif // PLAYERBASE_H
+#endif // __PLAYER_BASE_H

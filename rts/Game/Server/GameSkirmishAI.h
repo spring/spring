@@ -13,29 +13,36 @@
 
 	You should have received a copy of the GNU General Public License
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
-	@author	Robin Vobruba <hoijui.quaero@gmail.com>
- */
-
-#ifndef __SKIRMISH_AI_DATA_H
-#define __SKIRMISH_AI_DATA_H
+#ifndef __GAME_SKIRMISH_AI_H
+#define __GAME_SKIRMISH_AI_H
 
 #include "ExternalAI/SkirmishAIBase.h"
 
-#include <string>
-#include <vector>
-#include <map>
-
-/**
- * Contains everything needed to initialize a Skirmish AI instance.
- * @see Game/GameSetup
- */
-class SkirmishAIData : public SkirmishAIBase {
+class GameSkirmishAI : public SkirmishAIBase
+{
 public:
-	std::string shortName;
-	std::string version;
-	std::vector<std::string> optionKeys;
-	std::map<std::string, std::string> options;
+	GameSkirmishAI() :
+		SkirmishAIBase()
+		//, cpuUsage (0.0f)
+		{}
+
+	void operator=(const SkirmishAIBase& base) { SkirmishAIBase::operator=(base); };
+
+	/*enum State
+	{
+		UNCONNECTED,
+		CONNECTED,
+		INGAME,
+		DISCONNECTED
+	};
+	State myState;*/
+
+	//float cpuUsage;
+
+	//bool isLocal;
+	SkirmishAIStatistics lastStats;
 };
 
-#endif // __SKIRMISH_AI_DATA_H
+#endif // __GAME_SKIRMISH_AI_H
