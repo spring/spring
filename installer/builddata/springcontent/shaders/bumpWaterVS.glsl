@@ -74,13 +74,18 @@ void main(void)
 	gl_TexCoord[4].st = gl_TexCoord[0].pq * 2.0;
 	gl_TexCoord[4].pq = gl_TexCoord[0].pq * 6.0 + frame * 0.37;
 
+	// SIMULATE WAVES
+	vec4 myVertex;
+	myVertex.xzw = gl_Vertex.xzw;
+	myVertex.y = 3.0 * (cos(frame * 500.0 + gl_Vertex.z) * sin(frame * 500.0 + gl_Vertex.x / 1000.0));
+
 	// COMPUTE LIGHT VECTORS
 	eyeVec = eyePos - gl_Vertex.xyz;
-	ligVec = normalize(SunDir*20000.0 + MapMid - gl_Vertex.xyz);
+	ligVec = normalize(SunDir*20000.0 + MapMid - myVertex.xyz);
 
 	// FOG
 	gl_FogFragCoord = (gl_ModelViewMatrix*gl_Vertex).z;
 
-	gl_Vertex.y = 3.0 * (cos(frame * 500.0 + gl_Vertex.z) * sin(frame * 500.0 + gl_Vertex.x / 1000.0));
-	gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+	// POSITION
+	gl_Position = gl_ModelViewProjectionMatrix * myVertex;
 }
