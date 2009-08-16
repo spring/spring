@@ -314,11 +314,16 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		if (c.params.size() < 3) {
 			return;
 		}
+
 		BuildInfo bi;
-		bi.pos = float3(c.params[0],c.params[1],c.params[2]);
-		if(c.params.size()==4) bi.buildFacing=int(c.params[3]);
+		bi.pos = float3(c.params[0], c.params[1], c.params[2]);
+
+		if (c.params.size() == 4)
+			bi.buildFacing = int(abs(c.params[3])) % 4;
+
 		bi.def = unitDefHandler->GetUnitByName(boi->second);
-		bi.pos=helper->Pos2BuildPos(bi);
+		bi.pos = helper->Pos2BuildPos(bi);
+
 		if (!owner->unitDef->canmove) {
 			const CBuilder* builder = (CBuilder*)owner;
 			const float dist = f3Len(builder->pos - bi.pos);
@@ -449,15 +454,18 @@ void CBuilderCAI::SlowUpdate()
 			}
 		} else {		//!inCommand
 			BuildInfo bi;
-			bi.pos.x=floor(c.params[0]/SQUARE_SIZE+0.5f)*SQUARE_SIZE;
-			bi.pos.z=floor(c.params[2]/SQUARE_SIZE+0.5f)*SQUARE_SIZE;
-			bi.pos.y=c.params[1];
-			CFeature* f=0;
-			if (c.params.size()==4)
-				bi.buildFacing = int(c.params[3]);
+			bi.pos.x = floor(c.params[0] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+			bi.pos.z = floor(c.params[2] / SQUARE_SIZE + 0.5f) * SQUARE_SIZE;
+			bi.pos.y = c.params[1];
+
+			if (c.params.size() == 4)
+				bi.buildFacing = int(abs(c.params[3])) % 4;
+
 			bi.def = unitDefHandler->GetUnitByName(boi->second);
 
-			uh->TestUnitBuildSquare(bi,f,owner->allyteam);
+			CFeature* f = 0;
+			uh->TestUnitBuildSquare(bi, f, owner->allyteam);
+
 			if (f) {
 				if (!owner->unitDef->canReclaim || !f->def->reclaimable) {
 					// FIXME user shouldn't be able to queue buildings on top of features
@@ -1562,7 +1570,7 @@ bool CBuilderCAI::FindRepairTargetAndRepair(const float3& pos, float radius,
 
 void CBuilderCAI::DrawCommands(void)
 {
-	if(uh->limitDgun && owner->unitDef->isCommander) {
+	if (uh->limitDgun && owner->unitDef->isCommander) {
 		glColor4f(1.0f, 1.0f, 1.0f, 0.6f);
 		glSurfaceCircle(teamHandler->Team(owner->team)->startPos, uh->dgunRadius, 40);
 	}
@@ -1577,12 +1585,15 @@ void CBuilderCAI::DrawCommands(void)
 	for (ci = commandQue.begin(); ci != commandQue.end(); ++ci) {
 		if (ci->id < 0) {
 			map<int, string>::const_iterator boi = buildOptions.find(ci->id);
+
 			if (boi != buildOptions.end()) {
 				BuildInfo bi;
 				bi.def = unitDefHandler->GetUnitByID(-(ci->id));
+
 				if (ci->params.size() == 4) {
-					bi.buildFacing = int(ci->params[3]);
+					bi.buildFacing = int(abs(ci->params[3])) % 4;
 				}
+
 				bi.pos = float3(ci->params[0], ci->params[1], ci->params[2]);
 				bi.pos = helper->Pos2BuildPos(bi);
 
