@@ -68,8 +68,6 @@ static vector<ILogSubscriber*> subscribers;
 static const char* filename = "infolog.txt";
 static std::ofstream* filelog = 0;
 static bool initialized = false;
-static boost::recursive_mutex tempstrMutex;
-static string tempstr;
 
 static const int BUFFER_SIZE = 2048;
 
@@ -206,12 +204,12 @@ void CLogOutput::InitializeSubsystems()
 			if (sys->name && *sys->name) {
 				const string name = StringToLower(sys->name);
 				const string::size_type index = subsystems.find("," + name + ",");
-	
+
 				// log subsystems which are enabled by default can not be disabled
 				// ("enabled by default" wouldn't make sense otherwise...)
 				if (!sys->enabled && index != string::npos)
 					sys->enabled = true;
-	
+
 				if (sys->enabled) {
 					lo << sys->name;
 					if (sys->next)
@@ -260,7 +258,7 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 		OutputDebugString("\n");
 #endif // _MSC_VER
 
-	
+
 	if (filelog) {
 		ToFile(subsystem, str);
 	}
@@ -364,7 +362,7 @@ void CLogOutput::ToStdout(const CLogSubsystem& subsystem, const std::string mess
 	if (message.empty())
 		return;
 	const bool newline = (message.at(message.size() -1) != '\n');
-	
+
 	if (subsystem.name && *subsystem.name) {
 		std::cout << subsystem.name << ": ";
 	}
@@ -380,7 +378,7 @@ void CLogOutput::ToFile(const CLogSubsystem& subsystem, const std::string messag
 	if (message.empty())
 		return;
 	const bool newline = (message.at(message.size() -1) != '\n');
-	
+
 #if !defined UNITSYNC && !defined DEDICATED
 	if (gs) {
 		(*filelog) << IntToString(gs->frameNum, "[%7d] ");
