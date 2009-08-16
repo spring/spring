@@ -551,9 +551,12 @@ CBumpWater::CBumpWater()
 	}
 	glEndList();
 
+/*
 	windndir = wind.GetCurrentDirection();
 	windStrength = (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f);
 	windVec = windndir * windStrength;
+*/
+	windVec = float3(1.0,0.0,1.0);
 
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
@@ -663,19 +666,21 @@ void CBumpWater::GetUniformLocations( GLuint& program )
 void CBumpWater::Update()
 {
 	if (!occlusionQuery)
-		Update_();
+		DoUpdate();
 }
 
-void CBumpWater::Update_()
+void CBumpWater::DoUpdate()
 {
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
 		return;
 
+/*
 	windndir *= 0.995f;
 	windndir -= wind.GetCurrentDirection() * 0.005f;
 	windStrength *= 0.9999f;
 	windStrength += (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f) * 0.0001f;
 	windVec   = windndir * windStrength;
+*/
 
 	if (dynWaves)
 		UpdateDynWaves();
@@ -1361,7 +1366,7 @@ void CBumpWater::OcclusionQuery()
 	}
 
 	if (gs->frameNum != lastFrame) {
-		Update_();
+		DoUpdate();
 		lastFrame = gs->frameNum;
 	}
 }
