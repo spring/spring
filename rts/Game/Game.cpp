@@ -1333,11 +1333,9 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		CLuaUI::UpdateTeams();
 	}
-	else if (cmd == "ally" && !gu->spectating){
-		if (action.extra.size() > 0)
-		{
-			if (!gameSetup->fixedAllies)
-			{
+	else if (cmd == "ally" && !gu->spectating) {
+		if (action.extra.size() > 0) {
+			if (!gameSetup->fixedAllies) {
 				std::istringstream is(action.extra);
 				int otherAllyTeam = -1;
 				is >> otherAllyTeam;
@@ -1348,8 +1346,7 @@ bool CGame::ActionPressed(const Action& action,
 				else
 					logOutput.Print("/ally: wrong parameters (usage: /ally <other team> [0|1])");
 			}
-			else
-			{
+			else {
 				logOutput.Print("No ingame alliances are allowed");
 			}
 		}
