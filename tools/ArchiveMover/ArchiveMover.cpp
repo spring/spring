@@ -393,6 +393,19 @@ static int run(int argc, const Char* const* argv){
 			return 1;
 		}
 
+		String srcdir = source_file.parent_path().string();
+		String destdir = target_dir.string();
+		#ifdef _WIN32
+		// paths on win32 are case insensitive
+		std::transform(srcdir.begin(), srcdir.end(), srcdir.begin(), toupper);
+		std::transform(destdir.begin(), destdir.end(), destdir.begin(), toupper);
+		#endif
+
+		if (srcdir == destdir) {
+			message << _("Refusing to install a file onto itself.") << endl;
+			return 1;
+		}
+
 		// stash existing files away
 		if (fs::exists(target_dir / source_file.leaf())) {
 			int i = 0;
