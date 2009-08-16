@@ -345,6 +345,16 @@ static int run(int argc, const Char* const* argv){
 			return 1;
 		}
 
+		String source_basename = source_file.leaf();
+		if (source_basename == _("springcontent.sdz")
+				|| source_basename == _("mapcontent.sdz")
+				|| source_basename == _("maphelper.sdz")
+				|| source_basename == _("cursors.sdz")
+				|| source_basename == _("bitmaps.sdz")) {
+			message << _("'")<<source_basename<<_("' is a Spring base file and should not be installed manually.\n")
+				<< _("If you're missing this file and/or were told to download it, please reinstall Spring.") << endl;
+			return 1;
+		}
 
 		ArchiveType content = read_archive_content_sd7(source_file);
 		if(content == R_OTHER){
