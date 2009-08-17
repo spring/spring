@@ -483,6 +483,9 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, c
 			CUnitSet::iterator u, uNext;
 			for (u = team->units.begin(); u != team->units.end(); ) {
 				uNext = u; ++uNext;
+				// Send both of these events as the logically can only appear
+				// together, and some AIs will depend on this.
+				skirmishAIs[teamId]->UnitCreated((*u)->id, -1);
 				skirmishAIs[teamId]->UnitFinished((*u)->id);
 				u = uNext;
 			}
