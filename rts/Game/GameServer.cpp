@@ -373,6 +373,16 @@ void CGameServer::Message(const std::string& message, bool broadcast)
 	if (broadcast) {
 		Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
 	}
+	else
+	{
+		// host should see
+		for (size_t p = 0; p < players.size(); ++p)
+		{
+			if (players[p].isLocal)
+					players[p].SendData(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
+		}
+	}
+
 	if (hostif) {
 		hostif->Message(message);
 	}
