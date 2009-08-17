@@ -235,14 +235,6 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(SubstEnvVars(userDef));
 	}
 
-#ifdef WIN32
-	// try current directory first, exe dir later
-	TCHAR currentDir[MAX_PATH];
-	::GetCurrentDirectory(sizeof(currentDir) - 1, currentDir);
-	std::string curPath = currentDir;
-	AddDirs(std::string(currentDir));
-#endif
-
 #ifndef UNITSYNC
 	AddDirs(Platform::GetBinaryPath());
 #endif
