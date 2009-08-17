@@ -67,7 +67,7 @@ class CUnitHandler {
 		void UpdateUpgradeTasks(int frame);
 
 		// use this to tell the tracker that the builder is on a reclaim job
-		void BuilderReclaimOrder(int builderId, float3 pos);
+		void BuilderReclaimOrder(int builderId, const float3&);
 
 		bool VerifyOrder(BuilderTracker* builderTracker);
 		void ClearOrder(BuilderTracker* builderTracker, bool reportError);

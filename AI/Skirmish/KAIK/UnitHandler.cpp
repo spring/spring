@@ -1346,8 +1346,7 @@ void CUnitHandler::FactoryBuilderRemove(BuilderTracker* builderTracker) {
 
 
 
-void CUnitHandler::BuilderReclaimOrder(int builderId, float3 pos) {
-	pos = pos;
+void CUnitHandler::BuilderReclaimOrder(int builderId, const float3&) {
 	BuilderTracker* builderTracker = GetBuilderTracker(builderId);
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId == 0);
