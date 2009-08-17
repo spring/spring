@@ -40,6 +40,10 @@ public:
 	std::string version;
 	std::vector<std::string> optionKeys;
 	std::map<std::string, std::string> options;
+
+	bool isLuaAI;
+
+	SkirmishAIStatistics currentStats;
 };
 
 #endif // __SKIRMISH_AI_DATA_H

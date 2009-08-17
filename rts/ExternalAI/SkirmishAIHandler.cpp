@@ -45,7 +45,6 @@ CSkirmishAIHandler& CSkirmishAIHandler::GetInstance() {
 	return *mySingleton;
 }
 
-
 CSkirmishAIHandler::CSkirmishAIHandler():
 	nextId(0)
 	//, usedSkirmishAIInfos_initialized(false)
@@ -58,16 +57,17 @@ CSkirmishAIHandler::~CSkirmishAIHandler()
 
 void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
 
-	for (size_t a = 0; a < setup.GetSkirmishAIs().size(); ++a) {
+	/*for (size_t a = 0; a < setup.GetSkirmishAIs().size(); ++a) {
 		AddSkirmishAI(setup.GetSkirmishAIs()[a]);
-	}
+		// TODO: complete the SkirmishAIData before adding
+	}*/
 }
 
 SkirmishAIData* CSkirmishAIHandler::GetSkirmishAI(const size_t skirmishAiId) {
 
 	id_ai_t::iterator ai = id_ai.find(skirmishAiId);
 	assert(ai != id_ai.end());
-	
+
 	return &(ai->second);
 }
 
@@ -87,6 +87,43 @@ size_t CSkirmishAIHandler::GetSkirmishAI(const std::string& name) const
 	return skirmishAiId;
 }
 
+CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId)
+{
+	ids_t skirmishAIs;
+
+	for (id_ai_t::iterator ai = id_ai.begin(); ai != id_ai.end(); ++ai) {
+		if ((ai->second.team == teamId) && ((hostPlayerId < 0) || (ai->second.hostPlayer == hostPlayerId))) {
+			skirmishAIs.push_back(ai->first);
+		}
+	}
+
+	return skirmishAIs;
+}
+
+CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int hostPlayerId)
+{
+	ids_t skirmishAIs;
+
+	for (id_ai_t::iterator ai = id_ai.begin(); ai != id_ai.end(); ++ai) {
+		if (ai->second.hostPlayer == hostPlayerId) {
+			skirmishAIs.push_back(ai->first);
+		}
+	}
+
+	return skirmishAIs;
+}
+
+CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetAllSkirmishAIs()
+{
+	ids_t skirmishAIs;
+
+	for (id_ai_t::iterator ai = id_ai.begin(); ai != id_ai.end(); ++ai) {
+		skirmishAIs.push_back(ai->first);
+	}
+
+	return skirmishAIs;
+}
+
 size_t CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data) {
 
 	const size_t myId = nextId;
@@ -102,19 +139,6 @@ bool CSkirmishAIHandler::RemoveSkirmishAI(const size_t skirmishAiId) {
 
 size_t CSkirmishAIHandler::GetNumSkirmishAIs() const {
 	return id_ai.size();
-}
-
-std::vector<SkirmishAIData*> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId)
-{
-	std::vector<SkirmishAIData*> skirmishAIsInTeam;
-
-	for (id_ai_t::iterator ai = id_ai.begin(); ai != id_ai.end(); ++ai) {
-		if (ai->second.team == teamId) {
-			skirmishAIsInTeam.push_back(&(ai->second));
-		}
-	}
-
-	return skirmishAIsInTeam;
 }
 
 /*

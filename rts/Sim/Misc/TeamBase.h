@@ -34,8 +34,6 @@ public:
 	int teamStartNum;
 	int teamAllyteam;
 
-	bool isAI;
-
 	float startMetal;
 	float startEnergy;
 	bool readyToStart;

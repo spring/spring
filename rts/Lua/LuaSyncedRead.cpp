@@ -19,7 +19,8 @@
 #include "LuaPathFinder.h"
 #include "LuaRules.h"
 #include "LuaUtils.h"
-#include "ExternalAI/EngineOutHandler.h"
+//#include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/Camera.h"
@@ -1038,15 +1039,12 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 		return 0;
 	}
 
-	bool isAiTeam = false;
-	if (!team->luaAI.empty() || team->isAI) {
-		isAiTeam = true;
-	}
+	const bool hasAIs = (skirmishAIHandler.GetSkirmishAIsInTeam(teamID).size() > 0);
 
 	lua_pushnumber(L,  team->teamNum);
 	lua_pushnumber(L,  team->leader);
 	lua_pushboolean(L, team->isDead);
-	lua_pushboolean(L, isAiTeam);
+	lua_pushboolean(L, hasAIs);
 	lua_pushstring(L,  team->side.c_str());
 	lua_pushnumber(L,  teamHandler->AllyTeam(team->teamNum));
 
@@ -1240,7 +1238,26 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
-	lua_pushstring(L, team->luaAI.c_str());
+
+	// Ugly hax: evaluate the teams id
+	// TODO: FIXME: why not supplying teamId from lua??
+	int teamId = -1;
+	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
+		if (teamHandler->Team(t) == team) {
+			teamId = t;
+			break;
+		}
+	}
+
+	std::string luaAIName = "";
+	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
+	for (CSkirmishAIHandler::ids_t::const_iterator ai = saids.begin(); ai != saids.end(); ++ai) {
+		const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
+		if (aiData->isLuaAI) {
+			luaAIName = aiData->shortName;
+		}
+	}
+	lua_pushstring(L, luaAIName.c_str());
 	return 1;
 }
 
@@ -1318,14 +1335,15 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	int numVals = 0;
 
 	const int teamId = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamId) || !eoh->IsSkirmishAI(teamId)) {
+	if (!teamHandler->IsValidTeam(teamId)) {
 		return numVals;
 	}
 
-	const SkirmishAIData* aiData = eoh->GetSkirmishAIData(teamId);
-	if (aiData == NULL) {
+	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
+	if (saids.size() == 0) {
 		return numVals;
 	}
+	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*(saids.begin()));
 
 	// no ai info for synchronized scripts
 	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
@@ -2432,7 +2450,8 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	const UnitDef* effectiveDef = EffectiveUnitDef(unit);
 	if (effectiveDef->showPlayerName) {
 		tooltip = playerHandler->Player(teamHandler->Team(unit->team)->leader)->name;
-		if (teamHandler->Team(unit->team)->isAI) {
+		CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
+		if (saids.size() > 0) {
 			tooltip = std::string("AI@") + tooltip;
 		}
 	} else {

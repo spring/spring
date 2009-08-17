@@ -5,6 +5,7 @@
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
@@ -370,7 +371,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	const UnitDef* ud = owner->unitDef;
 	int maxHeightDiff = SQUARE_SIZE;
 	// AI's may do as they like
-	bool aiOrder = (teamHandler->Team(owner->team) && teamHandler->Team(owner->team)->isAI);
+	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
+	const bool aiOrder = (saids.size() > 0);
 
 	switch (c.id) {
 		case CMD_DGUN:

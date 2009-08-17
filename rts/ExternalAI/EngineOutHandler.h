@@ -88,7 +88,7 @@ public:
 
 
 	// Skirmish AI stuff
-	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key, const SkirmishAIData& data);
+	bool CreateSkirmishAI(const size_t skirmishAIId);
 	const SkirmishAIKey* GetSkirmishAIKey(int teamId) const;
 	bool IsSkirmishAI(int teamId) const;
 	const SSkirmishAICallback* GetSkirmishAICallback(int teamId) const;
@@ -109,9 +109,8 @@ private:
 	static CEngineOutHandler* singleton;
 
 private:
-	const unsigned int activeTeams;
-
 	static const size_t skirmishAIs_size = MAX_TEAMS;
+
 	CSkirmishAIWrapper* skirmishAIs[skirmishAIs_size];
 	bool team_isSkirmishAIInitialized[skirmishAIs_size];
 	size_t localSkirmishAIs_size;

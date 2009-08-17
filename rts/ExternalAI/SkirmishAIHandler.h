@@ -30,7 +30,6 @@
 
 class CGameSetup;
 
-
 /**
  * Handles all Skirmish AI instance relevant data, which includes,
  * but is not limited to all sync relevant Skirmish AI stuff.
@@ -44,6 +43,9 @@ private:
 	~CSkirmishAIHandler();
 
 public:
+	//typedef std::vector<SkirmishAIData*> ais_t;
+	typedef std::vector<size_t> ids_t;
+
 	/**
 	 * Fetcher for the singleton.
 	 */
@@ -74,7 +76,21 @@ public:
 	 * 
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	std::vector<SkirmishAIData*> GetSkirmishAIsInTeam(const int teamId);
+	ids_t GetSkirmishAIsInTeam(const int teamId, const int playerId = -1);
+
+	/**
+	 * @brief Skirmish AIs hosted by a player
+	 * 
+	 * Will change during runtime (Connection lost, died, killed, created, ...).
+	 */
+	ids_t GetSkirmishAIsByPlayer(const int playerId);
+
+	/**
+	 * @brief All active Skirmish AIs
+	 * 
+	 * Will change during runtime (Connection lost, died, killed, created, ...).
+	 */
+	ids_t GetAllSkirmishAIs();
 
 	/**
 	 * @brief Adds a Skirmish AI

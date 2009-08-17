@@ -23,6 +23,15 @@
 #include <string>
 #include <map>
 
+/**
+ * Possible live-cycle stati of a Skirmish AI instance.
+ */
+enum ESkirmishAIStatus {
+	CONSTRUCTED = 2,
+	INITIALIZING = 4,
+	ALIVE = 6,
+	DIEING = 8
+};
 
 /**
  * Stores all sync relevant data about a Skirmish AI instance,
@@ -41,9 +50,11 @@ public:
 	SkirmishAIBase() :
 		  TeamController()
 		, hostPlayer(-1)
+		, status(CONSTRUCTED)
 		{}
 
 	int hostPlayer;
+	ESkirmishAIStatus status;
 };
 
 /**
