@@ -120,7 +120,6 @@ void CEngineOutHandler::Destroy() {
 }
 
 CEngineOutHandler::CEngineOutHandler() :
-		activeTeams(teamHandler->ActiveTeams()),
 		localSkirmishAIs_size(0) {
 
 	for (size_t t=0; t < skirmishAIs_size; ++t) {
@@ -128,8 +127,8 @@ CEngineOutHandler::CEngineOutHandler() :
 		team_isSkirmishAIInitialized[t] = false;
 	}
 
-	for (size_t t=0; t < activeTeams; ++t) {
-		const SkirmishAIData* data = gameSetup->GetSkirmishAIDataForTeam(t);
+	for (size_t t=0; t < teamHandler->ActiveTeams(); ++t) {
+		const SkirmishAIData* data = NULL;//gameSetup->GetSkirmishAIDataForTeam(t);
 		if (data != NULL) {
 			team_skirmishAI[t] = *data;
 		}
@@ -147,7 +146,7 @@ CEngineOutHandler::~CEngineOutHandler() {
 
 
 #define DO_FOR_SKIRMISH_AIS(FUNC)						\
-		for (unsigned int t=0; t < activeTeams; ++t) {	\
+		for (unsigned int t=0; t < teamHandler->ActiveTeams(); ++t) {	\
 			if (skirmishAIs[t]) {						\
 				try {									\
 					skirmishAIs[t]->FUNC;				\
@@ -193,7 +192,7 @@ void CEngineOutHandler::Update() {
 
 #define DO_FOR_ALLIED_SKIRMISH_AIS(FUNC, ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)			\
 		if (!teamHandler->Ally(ALLY_TEAM_ID, UNIT_ALLY_TEAM_ID)) {					\
-			for (unsigned int t=0; t < activeTeams; ++t) {							\
+			for (unsigned int t=0; t < teamHandler->ActiveTeams(); ++t) {							\
 				if (skirmishAIs[t] && teamHandler->AllyTeam(t) == ALLY_TEAM_ID) {	\
 					try {															\
 						skirmishAIs[t]->FUNC;										\
@@ -324,7 +323,7 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 	int destroyedId = destroyed.id;
 	int attackerId  = attacker ? attacker->id : 0;
 
-	for (unsigned int t=0; t < activeTeams; ++t) {
+	for (unsigned int t=0; t < teamHandler->ActiveTeams(); ++t) {
 		if (skirmishAIs[t]
 				&& !teamHandler->Ally(teamHandler->AllyTeam(t), destroyed.allyteam)
 				&& (skirmishAIs[t]->IsCheatEventsEnabled()
@@ -441,9 +440,9 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 
 
 
-bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, const SkirmishAIData& data) {
+bool CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 
-	const bool unpauseAfterAIInit = configHandler->Get("AI_UnpauseAfterInit", true);
+	/*const bool unpauseAfterAIInit = configHandler->Get("AI_UnpauseAfterInit", true);
 
 	if (!teamHandler->IsValidTeam(teamId)) {
 		return false;
@@ -500,7 +499,7 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, c
 		}
 
 		return !crashOnInit;
-	} HANDLE_EXCEPTION;
+	} HANDLE_EXCEPTION;*/
 
 	return false;
 }

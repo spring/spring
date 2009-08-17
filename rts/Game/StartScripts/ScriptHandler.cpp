@@ -20,6 +20,8 @@
 #include "Platform/SharedLib.h"
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/SkirmishAIKey.h"
+#include "ExternalAI/SkirmishAIData.h"
 #include "Exceptions.h"
 
 
@@ -48,7 +50,10 @@ void CScriptHandler::LoadScripts() {
 	
 	IAILibraryManager::T_skirmishAIKeys::const_iterator ai, e;
 	for(ai=skirmishAIKeys.begin(), e=skirmishAIKeys.end(); ai != e; ++ai) {
-		loaded_scripts.push_back(new CSkirmishAITestScript(*ai));
+		SkirmishAIData aiData;
+		aiData.shortName = ai->GetShortName();
+		aiData.version   = ai->GetVersion();
+		loaded_scripts.push_back(new CSkirmishAITestScript(aiData));
 	}
 
 	std::vector<std::string> f = CFileHandler::FindFiles("Saves/", "*.ssf");

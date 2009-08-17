@@ -27,15 +27,16 @@ using std::sprintf;
 //#include "FileSystem/DataDirectories.h"
 #include "Sim/Misc/GlobalConstants.h" // for MAX_TEAMS
 #include "Sim/Misc/TeamHandler.h" // ActiveTeams()
-#include "IAILibraryManager.h"
-#include "AIInterfaceLibraryInfo.h"
+#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/AIInterfaceLibraryInfo.h"
+#include "ExternalAI/SkirmishAIHandler.h"
+#include "ExternalAI/Interface/ELevelOfSupport.h"     // for ABI version
+#include "ExternalAI/Interface/SAIFloat3.h"           // for ABI version
+#include "ExternalAI/Interface/AISEvents.h"           // for ABI version
+#include "ExternalAI/Interface/AISCommands.h"         // for ABI version
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"  // for ABI version
+#include "ExternalAI/Interface/SAIInterfaceLibrary.h" // for ABI version and AI_INTERFACE_PROPERTY_*
 #include "LogOutput.h"
-#include "Interface/ELevelOfSupport.h"     // for ABI version
-#include "Interface/SAIFloat3.h"           // for ABI version
-#include "Interface/AISEvents.h"           // for ABI version
-#include "Interface/AISCommands.h"         // for ABI version
-#include "Interface/SSkirmishAILibrary.h"  // for ABI version
-#include "Interface/SAIInterfaceLibrary.h" // for ABI version and AI_INTERFACE_PROPERTY_*
 
 #include <vector>
 #include <stdlib.h> // malloc(), calloc(), free()
@@ -130,10 +131,10 @@ EXPORT(int) aiInterfaceCallback_Teams_getSize(int UNUSED_interfaceId) {
 }
 
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getSize(int UNUSED_interfaceId) {
-//TODO: FIXME: do not use starting data, only current one -> we need a SkirmishAIHandler
-	return gameSetup->GetSkirmishAIs().size();
+	return skirmishAIHandler.GetNumSkirmishAIs();
 }
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getMax(int UNUSED_interfaceId) {
+	// TODO: FIXME: should rather be something like (maxPlayers - numPlayers)
 	return MAX_TEAMS;
 }
 EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key) {

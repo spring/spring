@@ -7,7 +7,7 @@
 
 #include "CommanderScript.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/SkirmishAIKey.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/UI/MiniMap.h"
@@ -54,15 +54,14 @@ void CCommanderScript::GameStart()
 		team->energyStorage = 20;
 
 		// create a Skirmish AI if required
-		if (!gameSetup->hostDemo && !team->skirmishAIKey.IsUnspecified() && (gu->myPlayerNum == team->leader)) {
-			SkirmishAIData aiData;
-			aiData.name = team->skirmishAIKey.GetShortName() + "_" + team->skirmishAIKey.GetVersion();
-			aiData.team = a;
-			aiData.hostPlayer = gu->myPlayerNum;
-			aiData.shortName = team->skirmishAIKey.GetShortName();
-			aiData.version = team->skirmishAIKey.GetVersion();
-
-			eoh->CreateSkirmishAI(a, team->skirmishAIKey, aiData);
+		if (!gameSetup->hostDemo) {
+			const CSkirmishAIHandler::ids_t localSkirmAIs = skirmishAIHandler.GetSkirmishAIsInTeam(a, gu->myPlayerNum);
+			for (CSkirmishAIHandler::ids_t::const_iterator ai = localSkirmAIs.begin(); ai != localSkirmAIs.end(); ++ai) {
+				const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
+				if (aiData->hostPlayer == gu->myPlayerNum) {
+					eoh->CreateSkirmishAI(*ai);
+				}
+			}
 		}
 
 		if (team->side.empty()) {

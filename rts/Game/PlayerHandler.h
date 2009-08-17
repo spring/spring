@@ -58,7 +58,7 @@ public:
 	 * Will change during runtime (Connection lost, died, ...).
 	 * This excludes spectators and AIs.
 	 */
-	int ActivePlayersInTeam(int teamId) const;
+	std::vector<int> ActivePlayersInTeam(int teamId) const;
 
 	void GameFrame(int frameNum);
 

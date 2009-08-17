@@ -27,10 +27,13 @@ CR_REG_METADATA(SkirmishAIData, (
 	CR_MEMBER(team),
 	// from SkirmishAIBase
 	CR_MEMBER(hostPlayer),
+	CR_ENUM_MEMBER(status),
 	// from SkirmishAIData
 	CR_MEMBER(shortName),
 	CR_MEMBER(version),
 	CR_MEMBER(optionKeys),
 	CR_MEMBER(options),
+	CR_MEMBER(isLuaAI),
+//	CR_MEMBER(currentStats),
 	CR_RESERVED(32)
 ));

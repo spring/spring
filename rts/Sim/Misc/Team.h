@@ -64,9 +64,9 @@ public:
 	bool gaia;
 	int lineageRoot;
 
-	std::string luaAI;
-	SkirmishAIKey skirmishAIKey;
-	std::map<std::string, std::string> skirmishAIOptions;
+	//std::string luaAI;
+	//SkirmishAIKey skirmishAIKey;
+	//std::map<std::string, std::string> skirmishAIOptions;
 
 	/// color info is unsynced
 	unsigned char origColor[4];

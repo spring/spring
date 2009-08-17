@@ -15,8 +15,8 @@
 #include "LogOutput.h"
 #include "GlobalUnsynced.h"
 #include "Platform/errorhandler.h"
-#include "ExternalAI/SkirmishAIData.h"
-#include "ExternalAI/IAILibraryManager.h"
+//#include "ExternalAI/SkirmishAIData.h"
+//#include "ExternalAI/IAILibraryManager.h"
 
 CR_BIND(CTeamHandler, );
 
@@ -62,7 +62,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 		SetAllyTeam(i, team->teamAllyteam);
 
-		const SkirmishAIData* skirmishAIData = setup->GetSkirmishAIDataForTeam(i);
+		/*const SkirmishAIData* skirmishAIData = setup->GetSkirmishAIDataForTeam(i);
 
 		if (skirmishAIData != NULL) {
 			bool isLuaAI = true;
@@ -122,7 +122,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 					}
 				}
 			}
-		}
+		}*/
 	}
 
 	allyTeams = setup->allyStartingData;

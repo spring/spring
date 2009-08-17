@@ -6,7 +6,7 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "Game/PlayerHandler.h"
-#include "Sim/Misc/TeamHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -15,6 +15,7 @@
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureDef.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
@@ -188,11 +189,14 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 
 		if (team->leader >= 0) {
 			s = playerHandler->Player(team->leader)->name;
+			if (playerHandler->Player(team->leader)->team != teamIdx) {
+				s = " (passive Leader)";
+			}
 
-			if (team->isAI) {
-				s += " (AI: " +
-					(team->skirmishAIKey.GetShortName() + " " +
-					 team->skirmishAIKey.GetVersion()) + ")";
+			CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamIdx);
+			for (CSkirmishAIHandler::ids_t::const_iterator ai = saids.begin(); ai != saids.end(); ++ai) {
+				SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
+				s += " & AI: " + aiData->name;
 			}
 		} else {
 			s = "Uncontrolled";

@@ -25,8 +25,8 @@
 #include "ExternalAI/SAIInterfaceCallbackImpl.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "Interface/AISCommands.h"
-#include "Interface/SSkirmishAILibrary.h"
+#include "ExternalAI/Interface/AISCommands.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -587,25 +587,25 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getMajor(int teamId) {
-	return SpringVersion::Major;
+	return aiInterfaceCallback_Engine_Version_getMajor(-1);
 }
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getMinor(int teamId) {
-	return SpringVersion::Minor;
+	return aiInterfaceCallback_Engine_Version_getMinor(-1);
 }
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getPatchset(int teamId) {
-	return SpringVersion::Patchset;
+	return aiInterfaceCallback_Engine_Version_getPatchset(-1);
 }
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getAdditional(int teamId) {
-	return SpringVersion::Additional;
+	return aiInterfaceCallback_Engine_Version_getAdditional(-1);
 }
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getBuildTime(int teamId) {
-	return SpringVersion::BuildTime;
+	return aiInterfaceCallback_Engine_Version_getBuildTime(-1);
 }
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getNormal(int teamId) {
-	return SpringVersion::Get().c_str();
+	return aiInterfaceCallback_Engine_Version_getNormal(-1);
 }
 EXPORT(const char*) skirmishAiCallback_Engine_Version_getFull(int teamId) {
-	return SpringVersion::GetFull().c_str();
+	return aiInterfaceCallback_Engine_Version_getFull(-1);
 }
 
 EXPORT(int) skirmishAiCallback_Teams_getSize(int teamId) {
@@ -613,11 +613,10 @@ EXPORT(int) skirmishAiCallback_Teams_getSize(int teamId) {
 }
 
 EXPORT(int) skirmishAiCallback_SkirmishAIs_getSize(int teamId) {
-//TODO: FIXME: do not use starting data, only current one -> we need a SkirmishAIHandler
-	return gameSetup->GetSkirmishAIs().size();
+	return aiInterfaceCallback_SkirmishAIs_getSize(-1);
 }
 EXPORT(int) skirmishAiCallback_SkirmishAIs_getMax(int teamId) {
-	return MAX_TEAMS;
+	return aiInterfaceCallback_SkirmishAIs_getMax(-1);
 }
 
 static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int teamId) {
@@ -666,12 +665,17 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getValueByKey(int teamId,
 static inline bool checkOptionIndex(int optionIndex, const std::vector<std::string>& optionKeys) {
 	return ((optionIndex < 0) || ((size_t)optionIndex >= optionKeys.size()));
 }
+static inline const SkirmishAIData* getFirstSkirmishAIDataForTeam(int teamId) {
+
+	const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
+	return skirmishAIHandler.GetSkirmishAI(skirmishAIIds[0]);
+}
 EXPORT(int) skirmishAiCallback_SkirmishAI_OptionValues_getSize(int teamId) {
-	return (int)skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->options.size();
+	return (int)getFirstSkirmishAIDataForTeam(teamId)->options.size();
 }
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int teamId, int optionIndex) {
 
-	const std::vector<std::string>& optionKeys = skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->optionKeys;
+	const std::vector<std::string>& optionKeys = getFirstSkirmishAIDataForTeam(teamId)->optionKeys;
 	if (checkOptionIndex(optionIndex, optionKeys)) {
 		return NULL;
 	} else {
@@ -681,11 +685,11 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int teamId
 }
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int teamId, int optionIndex) {
 
-	const std::vector<std::string>& optionKeys = skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->optionKeys;
+	const std::vector<std::string>& optionKeys = getFirstSkirmishAIDataForTeam(teamId)->optionKeys;
 	if (checkOptionIndex(optionIndex, optionKeys)) {
 		return NULL;
 	} else {
-		const std::map<std::string, std::string>& options = skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->options;
+		const std::map<std::string, std::string>& options = getFirstSkirmishAIDataForTeam(teamId)->options;
 		const std::string& key = *(optionKeys.begin() + optionIndex);
 		const std::map<std::string, std::string>::const_iterator op = options.find(key);
 		if (op == options.end()) {
@@ -697,7 +701,7 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int team
 }
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int teamId, const char* const key) {
 
-	const std::map<std::string, std::string>& options = skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->options;
+	const std::map<std::string, std::string>& options = getFirstSkirmishAIDataForTeam(teamId)->options;
 	const std::map<std::string, std::string>::const_iterator op = options.find(key);
 	if (op == options.end()) {
 		return NULL;

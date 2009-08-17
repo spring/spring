@@ -5,6 +5,7 @@
 #include <cctype>
 #include "StdAfx.h"
 #include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaParser.h"
 #include "Map/MapParser.h"
@@ -17,18 +18,17 @@
 #include "Game/GameSetup.h"
 #include "Game/GameServer.h"
 #include "Game/PlayerHandler.h"
+#include "Game/Server/GameSkirmishAI.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 
 
-CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIKey& k, const std::map<std::string, std::string>& opts):
+CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIData& aiData):
 	CScript(
 		std::string("Skirmish AI test: ")
-		+ std::string(k.GetShortName()) + std::string(" ")
-		+ std::string(k.GetVersion())
-	),
-	key(k),
-	options(opts)
+		+ aiData.shortName + std::string(" ") + aiData.version
+	)
+	, aiData(aiData)
 {
 }
 
@@ -39,12 +39,8 @@ void CSkirmishAITestScript::GameStart(void)
 {
 	// make sure CSelectedUnits::AiOrder()
 	// still works without a setup script
-	teamHandler->Team(skirmishAI_teamId)->isAI = true;
-	teamHandler->Team(skirmishAI_teamId)->skirmishAIKey = key;
-	teamHandler->Team(skirmishAI_teamId)->skirmishAIOptions = options;
 	teamHandler->Team(skirmishAI_teamId)->leader = player_Id;
-	gameServer->teams[skirmishAI_teamId].isAI = true;
-	gameServer->teams[skirmishAI_teamId].leader = player_Id;
+	gameServer->teams[skirmishAI_teamId].leader  = player_Id;
 
 	playerHandler->Player(player_Id)->SetControlledTeams();
 
@@ -60,20 +56,15 @@ void CSkirmishAITestScript::GameStart(void)
 
 	// do not instantiate an AI when watching a
 	// demo recorded from a SkirmishAI test-script
-	if (!gameSetup->hostDemo && !key.IsUnspecified()) {
-		SkirmishAIData aiData;
-		aiData.name = key.GetShortName() + "_" + key.GetVersion();
-		aiData.team = skirmishAI_teamId;
+	if (!gameSetup->hostDemo) {
+		aiData.name       = aiData.shortName + "_" + aiData.version;
+		aiData.team       = skirmishAI_teamId;
 		aiData.hostPlayer = player_Id;
-		aiData.shortName = key.GetShortName();
-		aiData.version = key.GetVersion();
-		std::map<std::string, std::string>::const_iterator o;
-		for (o = options.begin(); o != options.end(); ++o) {
-			aiData.optionKeys.push_back(o->first);
-		}
-		aiData.options = options;
 
-		eoh->CreateSkirmishAI(skirmishAI_teamId, key, aiData);
+		gameServer->ais[gameServer->nextSkirmishAIId++] = aiData;
+		const size_t skirmishAIId = skirmishAIHandler.AddSkirmishAI(aiData);
+
+		eoh->CreateSkirmishAI(skirmishAIId);
 	}
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");

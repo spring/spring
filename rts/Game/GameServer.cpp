@@ -134,6 +134,8 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	spring_notime(gameEndTime);
 	spring_notime(readyTime);
 
+	nextSkirmishAIId = 0;
+
 	medianCpu=0.0f;
 	medianPing=0;
 	enforceSpeed=!setup->hostDemo && configHandler->Get("EnforceGameSpeed", false);
@@ -180,8 +182,9 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	players.resize(setup->playerStartingData.size());
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
 
-	//ais.resize(setup->GetSkirmishAIs().size());
-	//std::copy(setup->GetSkirmishAIs().begin(), setup->GetSkirmishAIs().end(), ais.begin());
+	//for (size_t a = 0; a < setup.GetSkirmishAIs().size(); ++a) {
+	//	ais[a] = setup.GetSkirmishAIs()[a];
+	//}
 
 	teams.resize(setup->teamStartingData.size());
 	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
@@ -215,14 +218,11 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	delete ret;
 #endif
 	// AIs do not join in here, so just set their teams as active
-	for (size_t i = 0; i < setup->teamStartingData.size(); ++i)
-	{
-		const SkirmishAIData* sad = NULL;//setup->GetSkirmishAIDataForTeam(i);
-		if (sad != NULL)
-		{
-			teams[i].leader = sad->hostPlayer;
-			teams[i].active = true;
-			teams[i].isAI = true;
+	for (std::map<size_t, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end(); ++ai) {
+		const int t = ai->second.team;
+		teams[t].active = true;
+		if (teams[t].leader < 0) { // CAUTION, default value is 0, not -1
+			teams[t].leader = ai->second.hostPlayer;
 		}
 	}
 
@@ -623,20 +623,50 @@ void CGameServer::Update()
 	}
 }
 
-// duplicates functionality of CPlayerHandler::ActivePlayersInTeam(int teamId)
-// as paherHandler is not available on the server
-static int countNumPlayersInTeam(const std::vector<GameParticipant>& players, int teamId) {
 
-	size_t numPlayersInTeam = 0;
+/// has to be consistent with Game.cpp/CPlayerHandler
+static std::vector<int> getPlayersInTeam(const std::vector<GameParticipant>& players, const int teamId) {
+
+	std::vector<int> playersInTeam;
 
 	for (size_t p = 0; p < players.size(); ++p) {
 		// do not count spectators, or demos will desync
 		if (!players[p].spectator && (players[p].team == teamId)) {
-			++numPlayersInTeam;
+			playersInTeam.push_back(p);
 		}
 	}
 
-	return numPlayersInTeam;
+	return playersInTeam;
+}
+
+/**
+ * Duplicates functionality of CPlayerHandler::ActivePlayersInTeam(int teamId)
+ * as playerHandler is not available on the server
+ */
+static int countNumPlayersInTeam(const std::vector<GameParticipant>& players, const int teamId) {
+	return getPlayersInTeam(players, teamId).size();
+}
+
+/// has to be consistent with Game.cpp/CSkirmishAIHandler
+static std::vector<size_t> getSkirmishAIIds(const std::map<size_t, GameSkirmishAI>& ais, const int teamId, const int hostPlayer = -2) {
+
+	std::vector<size_t> skirmishAIIds;
+
+	for (std::map<size_t, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end(); ++ai) {
+		if ((ai->second.team == teamId) && ((hostPlayer == -2) || (ai->second.hostPlayer == hostPlayer))) {
+			skirmishAIIds.push_back(ai->first);
+		}
+	}
+
+	return skirmishAIIds;
+}
+
+/**
+ * Duplicates functionality of CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId)
+ * as skirmishAIHandler is not available on the server
+ */
+static int countNumSkirmishAIsInTeam(const std::map<size_t, GameSkirmishAI>& ais, const int teamId) {
+	return getSkirmishAIIds(ais, teamId).size();
 }
 
 void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<const netcode::RawPacket> packet)
@@ -909,36 +939,50 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				switch (action)
 				{
 					case TEAMMSG_GIVEAWAY: {
-						const unsigned toTeam = inbuf[3];
+						const unsigned toTeam                    = inbuf[3];
 						// may be the players team or a team controlled by one of his AIs
-						const unsigned fromTeam_g = inbuf[4];
-						const int numPlayersInTeam_g = countNumPlayersInTeam(players, fromTeam_g);
+						const unsigned fromTeam_g                = inbuf[4];
+						const int numPlayersInTeam_g             = countNumPlayersInTeam(players, fromTeam_g);
+						const std::vector<size_t> totAIsInTeam_g = getSkirmishAIIds(ais, fromTeam_g);
+						const std::vector<size_t> myAIsInTeam_g  = getSkirmishAIIds(ais, fromTeam_g, player);
+						const size_t numControllersInTeam_g      = numPlayersInTeam_g + totAIsInTeam_g.size();
+						const bool isLeader_g                    = (teams[fromTeam_g].leader != player);
+						const bool isOwnTeam_g                   = (fromTeam_g != fromTeam);
+						const bool isSpec                        = players[player].spectator;
+						const bool hasAIs_g                      = (myAIsInTeam_g.size() > 0);
+						const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam);
+						const char* playerType                   = (isSpec ? "Spectator" : "Player");
 
-						if (players[player].spectator || teams[fromTeam_g].leader != player ||
-						    (teams[fromTeam_g].isAI && ((teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam) && !cheating)))
+						if (isSpec ||
+						    (!isOwnTeam_g && !isLeader_g) ||
+						    (hasAIs_g && (isAllied_g && !cheating)))
 						{
-							Message(str( boost::format("Spectator %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %players[player].name), true);
+							Message(str( boost::format("%s %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %playerType %players[player].name), true);
 							break;
 						}
 						Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam, fromTeam_g));
 
-						if (fromTeam_g == fromTeam) {
+						bool giveAwayOk = false;
+						if (isOwnTeam_g) {
 							// player is giving stuff from his own team
-							if (numPlayersInTeam_g == 1 && !(teams[fromTeam_g].isAI)) {
-								teams[fromTeam_g].active = false;
-								teams[fromTeam_g].leader = -1;
-							}
+							giveAwayOk = true;
 							//players[player].team = 0;
 							players[player].spectator = true;
 							if (hostif) hostif->SendPlayerDefeated(player);
 						} else {
 							// player is giving stuff from one of his AI teams
 							if (numPlayersInTeam_g == 0) {
-								teams[fromTeam_g].active = false;
-								teams[fromTeam_g].leader = -1;
+								// kill the first AI
+								ais.erase(myAIsInTeam_g[0]);
+								giveAwayOk = true;
 							} else {
-								Message(str( boost::format("Player %s can not give away stuff of team %i (still has human players left)") %players[player].name %fromTeam_g), true);
+								Message(str( boost::format("%s %s can not give away stuff of team %i (still has human players left)") %playerType %players[player].name %fromTeam_g), true);
 							}
+						}
+						if (giveAwayOk && (numControllersInTeam_g == 1)) {
+							// team has no controller left now
+							teams[fromTeam_g].active = false;
+							teams[fromTeam_g].leader = -1;
 						}
 						break;
 					}
@@ -949,81 +993,126 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							break;
 						}
 						Broadcast(CBaseNetProtocol::Get().SendResign(player));
+
 						//players[player].team = 0;
 						players[player].spectator = true;
-						const int numPlayersInTeam = countNumPlayersInTeam(players, fromTeam);
-						if (numPlayersInTeam == 0 && !(teams[fromTeam].isAI)) {
-							teams[fromTeam].active = false;
-							teams[fromTeam].leader = -1;
+						// actualize all teams of which the player is leader
+						for (size_t t = 0; t < teams.size(); ++t) {
+							if (teams[t].leader == player) {
+								const std::vector<int> teamPlayers = getPlayersInTeam(players, t);
+								const std::vector<size_t> teamAIs  = getSkirmishAIIds(ais, t);
+								if ((teamPlayers.size() + teamAIs.size()) == 0) {
+									// no controllers left in team
+									teams[t].active = false;
+									teams[t].leader = -1;
+								} else if (teamPlayers.size() == 0) {
+									// no human player left in team
+									teams[t].leader = ais[teamAIs[0]].hostPlayer;
+								} else {
+									// still human controllers left in team
+									teams[t].leader = teamPlayers[0];
+								}
+							}
 						}
 						if (hostif) hostif->SendPlayerDefeated(player);
 						break;
 					}
 					case TEAMMSG_JOIN_TEAM: {
-						unsigned newTeam = inbuf[3];
-						if (cheating && newTeam < teams.size())
-						{
-							Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
-							players[player].team = newTeam;
-							players[player].spectator = false;
-							if (teams[newTeam].leader == -1) {
-								teams[newTeam].leader = player;
-							}
-						}
-						else
-						{
+						const unsigned newTeam    = inbuf[3];
+						const bool isNewTeamValid = (newTeam < teams.size());
+
+						if (!cheating || !isNewTeamValid) {
 							Message(str(format(NoTeamChange) %players[player].name %player));
+							break;
+						}
+						Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
+
+						players[player].team      = newTeam;
+						players[player].spectator = false;
+						if (teams[newTeam].leader == -1) {
+							teams[newTeam].leader = player;
 						}
 						break;
 					}
 					case TEAMMSG_TEAM_DIED: { // don't send to clients, they don't need it
-						unsigned char team = inbuf[3];
+						const unsigned team = inbuf[3];
 #ifndef DEDICATED
 						if (players[player].isLocal) // currently only host is allowed
 #endif
 						{
 							teams[team].active = false;
-							const int numPlayersInTeam = countNumPlayersInTeam(players, team);
-							for (unsigned p = 0; p < players.size(); ++p)
-							{
-								if (players[p].team == team)
-								{
+							teams[team].leader = -1;
+							// convert all the teams players to spectators
+							for (size_t p = 0; p < players.size(); ++p) {
+								if ((players[p].team == team) && !(players[p].spectator)) {
+									// are now spectating if this was their team
 									//players[p].team = 0;
 									players[p].spectator = true;
-									if (numPlayersInTeam == 0 && !(teams[team].isAI)) {
-										teams[team].leader = -1;
-									}
 									if (hostif) hostif->SendPlayerDefeated(p);
+								}
+							}
+							// kill all the teams AIs
+							for (size_t a = 0; a < ais.size(); ++a) {
+								if (ais[a].team == team) {
+									ais.erase(a);
 								}
 							}
 						}
 						break;
 					}
 					case TEAMMSG_AI_CREATED: {
-						const unsigned aiTeam = inbuf[3];
-						GameTeam* tf = &teams[fromTeam];
-						GameTeam* tai = &teams[aiTeam];
-						const int numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
+						const unsigned aiTeam        = inbuf[3];
+						//const size_t skirmishAIId    = inbuf[3];
+						//const char* aiName           = inbuf[4];
+						GameTeam* tf                 = &teams[fromTeam];
+						GameTeam* tai                = &teams[aiTeam];
+						//const int numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
+						//const int numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeam);
+						const bool weAreLeader       = (tai->leader == player);
+						const bool weAreAllied       = (tf->teamAllyteam == tai->teamAllyteam);
 
-						if ((numPlayersInAITeam == 0) || (tai->leader == player) || (tai->leader == -1) || (cheating && (tf->teamAllyteam == tai->teamAllyteam))) {
-							Broadcast(CBaseNetProtocol::Get().SendAICreated(player, aiTeam));
-							tai->isAI = true;
-							if (tai->leader == -1) {
-								tai->leader = player;
-							}
+						if (weAreLeader || (weAreAllied && (cheating || !(tai->active)))) {
+							// creating the AI is ok
 						} else {
 							Message(str(format(NoAICreated) %players[player].name %player %aiTeam));
+							break;
+						}
+						Broadcast(CBaseNetProtocol::Get().SendAICreated(player, aiTeam));
+						//Broadcast(CBaseNetProtocol::Get().SendAICreated(player, skirmishAIId, aiName));
+
+						const size_t myId = nextSkirmishAIId++;
+						ais[myId].team = aiTeam;
+						//ais[myId].name = aiName;
+						ais[myId].hostPlayer = player;
+						if (tai->leader == -1) {
+							tai->leader = ais[myId].hostPlayer;
+							tai->active = true;
 						}
 						break;
 					}
 					case TEAMMSG_AI_DESTROYED: {
-						const unsigned aiTeam = inbuf[3];
-						GameTeam* tai = &teams[aiTeam];
-						if (tai->isAI && (tai->leader == player)) {
-							Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, aiTeam));
-							tai->isAI = false;
+						const unsigned aiTeam           = inbuf[3];
+						//const size_t skirmishAIId       = inbuf[3];
+						const size_t skirmishAIId       = getSkirmishAIIds(ais, aiTeam, player)[0];
+						//const int reason                = inbuf[4];
+						const size_t numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
+						const size_t numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeam);
+						GameTeam* tai                   = &teams[aiTeam];
+
+						if ((ais.find(skirmishAIId) != ais.end()) && (ais[skirmishAIId].hostPlayer == player)) {
+							// destroying the AI is ok
 						} else {
 							Message(str(format(NoAIDestroyed) %players[player].name %player %aiTeam));
+							break;
+						}
+						Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, aiTeam));
+						//Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, skirmishAIId, reason));
+
+						ais.erase(skirmishAIId);
+						if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
+							// team has no controller left now
+							tai->active = false;
+							tai->leader = -1;
 						}
 						break;
 					}
@@ -1403,18 +1492,20 @@ void CGameServer::CheckForGameEnd()
 
 	for (size_t a = 0; a < teams.size(); ++a)
 	{
-		bool hasPlayer = false;
-		for (size_t b = 0; b < players.size(); ++b) {
+		bool hasController = false;
+		for (size_t b = 0; b < players.size() && !hasController; ++b) {
 			if (!players[b].spectator && players[b].team == (int)a) {
-				hasPlayer = true;
+				hasController = true;
 			}
 		}
 
-		if (teams[a].isAI) {
-			hasPlayer = true;
+		for (std::map<size_t, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end() && !hasController; ++ai) {
+			if (ai->second.team == a) {
+				hasController = true;
+			}
 		}
 
-		if (teams[a].active && hasPlayer) {
+		if (teams[a].active && hasController) {
 			++numActiveTeams[teams[a].teamAllyteam];
 		}
 	}
