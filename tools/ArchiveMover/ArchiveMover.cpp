@@ -212,7 +212,8 @@ struct ScopedMessage : public StringStream{
 
 static bool is_map(const std::string& filename){
 	if (filename.substr(0, 4) == "maps") {
-		const std::string ext = filename.substr(filename.size() - 4);
+		std::string ext = filename.substr(filename.size() - 4);
+		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
 		if ((ext == ".sm3") || (ext == ".smf")) {
 			return true;
 		}
@@ -221,7 +222,9 @@ static bool is_map(const std::string& filename){
 }
 
 static bool is_mod(const std::string& filename){
-	if ((filename == "modinfo.tdf") || (filename == "modinfo.lua")) {
+	std::string fn = filename;
+	std::transform(fn.begin(), fn.end(), fn.begin(), tolower);
+	if ((fn == "modinfo.tdf") || (fn == "modinfo.lua")) {
 		return true;
 	}
 	return false;
@@ -256,6 +259,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	int argc = 0;
 	wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
 	if(argv == 0){
 		return 0;
 	}
@@ -546,7 +550,7 @@ static ArchiveType read_archive_content_sd7(const Path& filename){
 
 	CFileInStream stream;
 	CLookToRead lookStream;
-	String fn = filename.filename();
+	String fn = filename.string();
 	int len   = 2*fn.size();
 	char tmpfn[len];
 
