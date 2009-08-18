@@ -35,20 +35,7 @@ UDPConnection::UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> Net
 
 UDPConnection::UDPConnection(int sourceport, const std::string& address, const unsigned port)
 {
-	boost::system::error_code err;
-	ip::address tempAddr = ip::address::from_string(address, err);
-	if (err)
-	{
-		// error, maybe a hostname?
-		ip::udp::resolver resolver(netcode::netservice);
-		std::ostringstream portbuf;
-		portbuf << port;
-		ip::udp::resolver::query query(address, portbuf.str());
-		ip::udp::resolver::iterator iter = resolver.resolve(query);
-		tempAddr = iter->endpoint().address();
-	}
-
-	addr = ip::udp::endpoint(tempAddr, port);
+	addr = ResolveAddr(address, port);
 	if (addr.address().is_v6())
 	{
 		boost::shared_ptr<ip::udp::socket> temp(new ip::udp::socket(netcode::netservice, ip::udp::endpoint(ip::address_v6::any(), sourceport)));
