@@ -970,7 +970,11 @@ int LuaSyncedCtrl::SetUnitTooltip(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->tooltip = luaL_checkstring(L, 2);
+	const char *tmp = luaL_checkstring(L, 2);
+	if (tmp)
+		unit->tooltip = string(tmp, lua_strlen(L, 2));
+	else
+		unit->tooltip = "";
 	return 0;
 }
 
