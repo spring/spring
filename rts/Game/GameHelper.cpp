@@ -516,7 +516,7 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 							if (unit == lastTarget) {
 								value *= weapon->avoidTarget ? 10.0f : 0.4f;
 							}
-							if (paralyzer && unit->health - unit->paralyzeDamage < unit->maxHealth * 0.09f) {
+							if (paralyzer && unit->paralyzeDamage > unit->maxHealth) {
 								value *= 4.0f;
 							}
 							if (weapon->hasTargetWeight) {
