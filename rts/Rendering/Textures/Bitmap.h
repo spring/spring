@@ -27,8 +27,8 @@ public:
 	bool LoadGrayscale(string const& filename);
 	bool Save(string const& filename, bool opaque = true);
 
-	unsigned int CreateTexture(bool mipmaps=false);
-	unsigned int CreateDDSTexture();
+	const GLuint CreateTexture(bool mipmaps=false);
+	const GLuint CreateDDSTexture(GLuint texID = 0);
 
 	void CreateAlpha(unsigned char red,unsigned char green,unsigned char blue);
 	void SetTransparent(unsigned char red, unsigned char green, unsigned char blue);

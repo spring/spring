@@ -81,6 +81,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -3023,6 +3024,7 @@ bool CGame::Draw() {
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
+	CNamedTextures::Update();
 	texturehandlerS3O->Update();
 	modelParser->Update();
 	treeDrawer->UpdateDraw();
