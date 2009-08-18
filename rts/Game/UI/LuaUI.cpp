@@ -558,7 +558,7 @@ bool CLuaUI::LayoutButtons(int& xButtons, int& yButtons,
 		lua_settop(L, top);
 		return false;
 	}
-	menuName = lua_tostring(L, 1);
+	menuName = string(lua_tostring(L, 1), lua_strlen(L, 1));
 
 	if (!lua_isnumber(L, 2) || !lua_isnumber(L, 3)) {
 		logOutput.Print("LayoutButtons() bad xButtons or yButtons values\n");
@@ -741,7 +741,7 @@ bool CLuaUI::GetLuaReParamsList(lua_State* L, int index,
 				return false;
 			}
 			const int paramIndex = lua_toint(L, -2);
-			const string paramValue = lua_tostring(L, -1);
+			const string paramValue = string(lua_tostring(L, -1), lua_strlen(L, -1));
 			paramsPair.params[paramIndex] = paramValue;
 		}
 		reParamsCmds.push_back(paramsPair);
@@ -768,8 +768,8 @@ bool CLuaUI::GetLuaCmdDescList(lua_State* L, int index,
 		const int cmdDescTable = lua_gettop(L);
 		for (lua_pushnil(L); lua_next(L, cmdDescTable) != 0; lua_pop(L, 1)) {
 			if (lua_israwstring(L, -2) && lua_isstring(L, -1)) {
-				const string key = StringToLower(lua_tostring(L, -2));
-				const string value = lua_tostring(L, -1);
+				const string key = StringToLower(string(lua_tostring(L, -2), lua_strlen(L, -2)));
+				const string value(lua_tostring(L, -1), lua_strlen(L, -1));
 				if (key == "id") {
 					cd.id = atoi(value.c_str());
 				} else if (key == "type") {
