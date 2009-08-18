@@ -198,19 +198,6 @@ def check_vorbis(env, conf):
 	guess_include_path(env, conf, 'vorbisfile', 'vorbis')
 
 
-
-def check_python(env, conf):
-	print "Checking for Python 2.6...",
-	print
-	guess_include_path(env, conf, 'Python', 'python2.6')
-	print "Checking for Python 2.5...",
-	print
-	guess_include_path(env, conf, 'Python', 'python2.5')
-	print "Checking for Python 2.4...",
-	print
-	guess_include_path(env, conf, 'Python', 'python2.4')
-
-
 def check_java(env, conf):
 	print "Checking for Java includes ...",
 	if env.has_key('javapath') and env['javapath']:
@@ -328,8 +315,6 @@ def CheckHeadersAndLibraries(env, conf):
 	d += [Dependency(['ogg'], ['ogg/ogg.h'])]
 
 	d += [Dependency(['SDL', 'SDL-1.1'], ['SDL/SDL.h', 'SDL11/SDL.h'])]
-	d += [Dependency(['python2.6', 'python26', 'python2.5', 'python25',
-		'python2.4', 'python24'], ['Python.h'])]
 	d += [Dependency([], ['jni.h'])]
 
 	if env['use_tcmalloc']:
@@ -362,7 +347,6 @@ def configure(env, conf_dir):
 	check_ogg(env, conf)
 	check_vorbis(env, conf)
 
-	check_python(env, conf)
 	check_java(env, conf)
 	check_java_bin(env, conf)
 	CheckHeadersAndLibraries(env, conf)
