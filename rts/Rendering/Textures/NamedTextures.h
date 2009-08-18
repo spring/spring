@@ -5,7 +5,11 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <map>
+#include <vector>
 #include <string>
+
+#include "Rendering/GL/myGL.h"
+
 using std::map;
 using std::string;
 using std::vector;
