@@ -89,6 +89,8 @@ bool CNamedTextures::Load(const string& texName, GLuint texID)
 	bool greyed  = false;
 	bool tint    = false;
 	float tintColor[3];
+	bool resize  = false;
+	int2 resizeDimensions;
 
 	if (filename[0] == ':') {
 		int p;
@@ -120,6 +122,20 @@ bool CNamedTextures::Load(const string& texName, GLuint texID)
 					}
 				}
 			}
+			else if (ch == 'r') {
+				const char* cstr = filename.c_str() + p + 1;
+				const char* start = cstr;
+				char* endptr;
+				resizeDimensions.x = (int)strtoul(start, &endptr, 10);
+				if ((start != endptr) && (*endptr == ',')) {
+					start = endptr + 1;
+					resizeDimensions.y = (int)strtoul(start, &endptr, 10);
+					if (start != endptr) {
+						resize = true;
+						p += (endptr - cstr);
+					}
+				}
+			}
 		}
 		if (p < (int)filename.size()) {
 			filename = filename.substr(p + 1);
@@ -141,6 +157,9 @@ bool CNamedTextures::Load(const string& texName, GLuint texID)
 	if (bitmap.type == CBitmap::BitmapTypeDDS) {
 		texID = bitmap.CreateDDSTexture(texID);
 	} else {
+		if (resize) {
+			bitmap = bitmap.CreateRescaled(resizeDimensions.x,resizeDimensions.y);
+		}
 		if (invert) {
 			bitmap.InvertColors();
 		}
