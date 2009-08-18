@@ -556,12 +556,13 @@ CBumpWater::CBumpWater()
 	windStrength = (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f);
 	windVec = windndir * windStrength;
 */
-	windVec = float3(1.0,0.0,1.0);
+	windVec = float3(20.0,0.0,20.0);
 
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
 	wasLastFrameVisible = false;
-	if (GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a seperate refraction pass, there isn't enough time for a occlusion query
+	bool useOcclQuery  = (!!configHandler->Get("BumpWaterOcclusionQuery", 1));
+	if (useOcclQuery && GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
 		glGetQueryiv(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
 		if (bitsSupported > 0)
