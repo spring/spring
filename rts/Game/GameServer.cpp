@@ -144,7 +144,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 		UDPNet.reset(new netcode::UDPListener(settings->hostport));
 
 	if (settings->autohostport > 0) {
-		AddAutohostInterface(settings->autohostport);
+		AddAutohostInterface(settings->autohostip, settings->autohostport);
 	}
 	rng.Seed(newGameData->GetSetup().length());
 	Message(str( format(ServerStart) %settings->hostport));
@@ -257,11 +257,11 @@ void CGameServer::AddLocalClient(const std::string& myName, const std::string& m
 	localClientNumber = BindConnection(myName, "", myVersion, true, boost::shared_ptr<netcode::CConnection>(new netcode::CLocalConnection()));
 }
 
-void CGameServer::AddAutohostInterface(const int remotePort)
+void CGameServer::AddAutohostInterface(const std::string& autohostip, const int remotePort)
 {
 	if (!hostif)
 	{
-		hostif.reset(new AutohostInterface(remotePort));
+		hostif.reset(new AutohostInterface(autohostip, remotePort));
 		hostif->SendStart();
 		Message(str(format(ConnectAutohost) %remotePort));
 	}
