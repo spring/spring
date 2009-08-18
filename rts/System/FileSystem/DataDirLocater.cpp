@@ -235,7 +235,9 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(SubstEnvVars(userDef));
 	}
 
-#ifndef UNITSYNC
+#ifdef UNITSYNC
+	AddDirs(Platform::GetLibraryPath());
+#else
 	AddDirs(Platform::GetBinaryPath());
 #endif
 
@@ -264,8 +266,6 @@ void DataDirLocater::LocateDataDirs()
 	// cannot find them since it does not know spring binary path. I have no idea but to force users 
 	// to locate lobby executables in the same as spring's dir and add its location to search dirs.
 #ifdef UNITSYNC
-	AddDirs(Platform::GetLibraryPath());
-#else
 	AddDirs(Platform::GetBinaryPath());
 #endif
 	// libs and data are are supposed to be located in subdirectories of spring executable, so they
