@@ -30,6 +30,7 @@
 #include "ConfigHandler.h"
 #include "InputHandler.h"
 #include "StartScripts/ScriptHandler.h"
+#include "StartScripts/SkirmishAITestScript.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -104,16 +105,25 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	player0->add_name_value("Name", playername);
 	player0->AddPair("Team", 0);
 
-	TdfParser::TdfSection* player1 = game->construct_subsection("PLAYER1");
-	player1->add_name_value("Name", "Enemy");
-	player1->AddPair("Team", 1);
+	const bool isSkirmishAITestScript =
+			(script.substr(0, CSkirmishAITestScript::SCRIPT_NAME_PRELUDE.size())
+			== CSkirmishAITestScript::SCRIPT_NAME_PRELUDE);
+	if (!isSkirmishAITestScript) {
+		TdfParser::TdfSection* player1 = game->construct_subsection("PLAYER1");
+		player1->add_name_value("Name", "Enemy");
+		player1->AddPair("Team", 1);
+	}
 
 	TdfParser::TdfSection* team0 = game->construct_subsection("TEAM0");
 	team0->AddPair("TeamLeader", 0);
 	team0->AddPair("AllyTeam", 0);
 
 	TdfParser::TdfSection* team1 = game->construct_subsection("TEAM1");
-	team1->AddPair("TeamLeader", 1);
+	if (isSkirmishAITestScript) {
+		team1->AddPair("TeamLeader", 0);
+	} else {
+		team1->AddPair("TeamLeader", 1);
+	}
 	team1->AddPair("AllyTeam", 1);
 
 	TdfParser::TdfSection* ally0 = game->construct_subsection("ALLYTEAM0");

@@ -22,20 +22,18 @@
 #include "mmgr.h"
 #include "Exceptions.h"
 
+const std::string CSkirmishAITestScript::SCRIPT_NAME_PRELUDE = "Skirmish AI test: ";
 
 CSkirmishAITestScript::CSkirmishAITestScript(const SkirmishAIData& aiData):
-	CScript(
-		std::string("Skirmish AI test: ")
-		+ aiData.shortName + std::string(" ") + aiData.version
-	)
+	CScript(SCRIPT_NAME_PRELUDE + aiData.shortName + std::string(" ") + aiData.version)
 	, aiData(aiData)
 {
 }
 
 
-CSkirmishAITestScript::~CSkirmishAITestScript(void) {}
+CSkirmishAITestScript::~CSkirmishAITestScript() {}
 
-void CSkirmishAITestScript::GameStart(void)
+void CSkirmishAITestScript::GameStart()
 {
 	// make sure CSelectedUnits::AiOrder()
 	// still works without a setup script
