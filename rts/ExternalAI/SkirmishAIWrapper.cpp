@@ -145,7 +145,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 	ai = new CSkirmishAI(teamId, key, GetCallback());
 
 	// check if initialization went ok
-	if (skirmishAIHandler.IsSkirmishAIDieing(skirmishAIId)) {
+	if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId)) {
 		return false;
 	}
 
@@ -214,7 +214,7 @@ void CSkirmishAIWrapper::Init() {
 		// init failed
 		logOutput.Print("Failed to handle init event: AI for team %d, error %d",
 				teamId, error);
-		skirmishAIHandler.SetSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
+		skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
 	} else {
 		initialized = true;
 	}

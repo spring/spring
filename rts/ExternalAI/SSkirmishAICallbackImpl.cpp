@@ -634,7 +634,7 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int teamId)
 
 	const CSkirmishAILibraryInfo* info = NULL;
 
-	const SkirmishAIKey* key = skirmishAIHandler.GetSkirmishAILibraryKey(getFirstSkirmishAIIdForTeam(teamId));
+	const SkirmishAIKey* key = skirmishAIHandler.GetLocalSkirmishAILibraryKey(getFirstSkirmishAIIdForTeam(teamId));
 	if (key != NULL) {
 		const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 		IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
@@ -734,7 +734,7 @@ EXPORT(void) skirmishAiCallback_Log_exception(int teamId, const char* const msg,
 			(die ? "AI shutting down" : "AI still running"), msg);
 	if (die) {
 		const size_t skirmishAIId = getFirstSkirmishAIIdForTeam(teamId);
-		skirmishAIHandler.SetSkirmishAIDieing(skirmishAIId, 4 /* = AI crashed */);
+		skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 4 /* = AI crashed */);
 	}
 }
 

@@ -197,8 +197,6 @@ private:
 	unsigned char oldStatus;
 
 	void StoreCloaked(bool save);
-
-	std::map<int, SkirmishAIData*> team_localAIsInCreation;
 };
 
 

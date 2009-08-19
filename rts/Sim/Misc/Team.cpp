@@ -270,7 +270,7 @@ void CTeam::Died()
 
 	CSkirmishAIHandler::ids_t localTeamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum);
 	for (CSkirmishAIHandler::ids_t::const_iterator ai = localTeamAIs.begin(); ai != localTeamAIs.end(); ++ai) {
-		skirmishAIHandler.SetSkirmishAIDieing(*ai, 2 /* = team died */);
+		skirmishAIHandler.SetLocalSkirmishAIDieing(*ai, 2 /* = team died */);
 	}
 
 	// this message is not relayed to clients, it's only for the server
