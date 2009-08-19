@@ -25,6 +25,7 @@
 #include <vector>
 
 class AIInterfaceKey;
+struct SSkirmishAICallback;
 
 /**
  * Default implementation of ISkirmishAILibrary.
@@ -44,7 +45,7 @@ public:
 			const std::string& engineVersionString, int engineVersionNumber,
 			const AIInterfaceKey& interfaceKey) const;
 
-	virtual void Init(int teamId) const;
+	virtual void Init(int teamId, const SSkirmishAICallback* c_callback) const;
 	virtual void Release(int teamId) const;
 	virtual int HandleEvent(int teamId, int topic, const void* data) const;
 

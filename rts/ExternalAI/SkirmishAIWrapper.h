@@ -46,7 +46,7 @@ private:
 	void CreateCallback();
 
 public:
-	CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key);
+	CSkirmishAIWrapper(const size_t skirmishAIId);
 	~CSkirmishAIWrapper();
 
 	void Serialize(creg::ISerializer *s);
@@ -98,6 +98,7 @@ public:
 	virtual void Release(int reason = 0 /* = unspecified */);
 
 private:
+	size_t skirmishAIId;
 	int teamId;
 	bool cheatEvents;
 

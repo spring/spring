@@ -17,10 +17,11 @@
 
 #include "SkirmishAILibrary.h"
 
-#include "LogOutput.h"
-#include "IAILibraryManager.h"
-#include "EngineOutHandler.h"
-#include "AIInterfaceKey.h"
+#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/SkirmishAIHandler.h"
+#include "ExternalAI/AIInterfaceKey.h"
+#include "System/LogOutput.h"
+
 #include <string>
 
 CSkirmishAILibrary::CSkirmishAILibrary(const SSkirmishAILibrary& ai,
@@ -58,16 +59,17 @@ LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(int teamId,
 	}
 }
 
-void CSkirmishAILibrary::Init(int teamId) const
+void CSkirmishAILibrary::Init(int teamId, const SSkirmishAICallback* c_callback) const
 {
 	if (sSAI.init != NULL) {
-		const SSkirmishAICallback* c_callback = eoh->GetSkirmishAICallback(teamId);
+		//const SSkirmishAICallback* c_callback = eoh->GetSkirmishAICallback(teamId);
 		int error = sSAI.init(teamId, c_callback);
 
 		if (error != 0) {
 			// init failed
 			logOutput.Print("Failed to initialize an AI for team %d, error: %d", teamId, error);
-			eoh->DestroySkirmishAI(teamId, 5 /* = AI failed to init */);
+			// TODO: FIXME: uncomment this line & convert the whole class to skirmishAIId based, instead of teamId based
+			//skirmishAIHandler.SetSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
 		}
 	}
 }

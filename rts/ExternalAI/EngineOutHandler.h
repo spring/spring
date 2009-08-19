@@ -20,7 +20,6 @@
 
 #include "Object.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "SkirmishAIData.h"
 
 #include <map>
 #include <vector>
@@ -88,13 +87,26 @@ public:
 
 
 	// Skirmish AI stuff
-	bool CreateSkirmishAI(const size_t skirmishAIId);
-	const SkirmishAIKey* GetSkirmishAIKey(int teamId) const;
-	bool IsSkirmishAI(int teamId) const;
-	const SSkirmishAICallback* GetSkirmishAICallback(int teamId) const;
-	/// For a list of values for reason, see SReleaseEvent in Interface/AISEvents.h
-	void DestroySkirmishAI(int teamId, int reason = 0 /* = unspecified */);
-	const SkirmishAIData* GetSkirmishAIData(int teamId) const;
+	void CreateSkirmishAI(const size_t skirmishAIId);
+	//bool HasSkirmishAI(const int teamId) const;
+	//const SSkirmishAICallback* GetSkirmishAICallback(const size_t skirmishAIId) const;
+	/**
+	 * Requests destruction of a Skirmish AI.
+	 * This only sends a message to the server, and real destruction happens
+	 * when receiving the answer.
+	 * @param skirmishAIId index of the AI to destroy
+	 * @param reason or a list of values for reason, see SReleaseEvent in Interface/AISEvents.h
+	 * @see DecomposeSkirmishAI()
+	 */
+	//void DestroySkirmishAI(const size_t skirmishAIId, const int reason = 0 /* = unspecified */);
+	/**
+	 * Destructs a local Skirmish AI for real.
+	 * Do not cal this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @param skirmishAIId index of the AI to destroy
+	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
+	 */
+	void DestroySkirmishAI(const size_t skirmishAIId);
 
 
 	void SetCheating(bool enable);
@@ -109,12 +121,25 @@ private:
 	static CEngineOutHandler* singleton;
 
 private:
-	static const size_t skirmishAIs_size = MAX_TEAMS;
+	//static const size_t teams_size = MAX_TEAMS;
 
-	CSkirmishAIWrapper* skirmishAIs[skirmishAIs_size];
-	bool team_isSkirmishAIInitialized[skirmishAIs_size];
-	size_t localSkirmishAIs_size;
-	std::map<int, SkirmishAIData> team_skirmishAI;
+	/// Total number of local Skirmish AI instances
+	//size_t localSkirmishAIs_size;
+
+	typedef std::vector<CSkirmishAIWrapper*> ais_t;
+	/// Contains all local Skirmish AIs in no particular order
+	//ais_t skirmishAIs;
+
+	typedef std::map<size_t, CSkirmishAIWrapper*> id_ai_t;
+	/// Contains all local Skirmish AIs, indexed by their ID
+	id_ai_t id_skirmishAI;
+
+	typedef std::map<int, ais_t> team_ais_t;
+	/**
+	 * Array mapping team IDs to local Skirmish AI instances.
+	 * There can be multiple Skirmish AIs per team.
+	 */
+	team_ais_t team_skirmishAIs;
 };
 
 #define eoh CEngineOutHandler::GetInstance()

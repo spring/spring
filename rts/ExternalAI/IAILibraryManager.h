@@ -120,4 +120,6 @@ private:
 	static IAILibraryManager* myAILibraryManager;
 };
 
+#define aiLibManager IAILibraryManager::GetInstance()
+
 #endif // _IAILIBRARYMANAGER_H

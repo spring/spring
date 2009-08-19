@@ -61,8 +61,9 @@ void CSkirmishAITestScript::GameStart(void)
 		aiData.team       = skirmishAI_teamId;
 		aiData.hostPlayer = player_Id;
 
-		gameServer->ais[gameServer->nextSkirmishAIId++] = aiData;
-		const size_t skirmishAIId = skirmishAIHandler.AddSkirmishAI(aiData);
+		const size_t skirmishAIId = gameServer->nextSkirmishAIId++;
+		gameServer->ais[skirmishAIId] = aiData;
+		skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
 
 		eoh->CreateSkirmishAI(skirmishAIId);
 	}

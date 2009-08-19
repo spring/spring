@@ -202,11 +202,11 @@ void CLoadSaveHandler::LoadGame()
 		grouphandlers[a]->Load(ifs);
 	eoh->Load(ifs);
 	delete ifs;
-	for (int a=0; a < teamHandler->ActiveTeams();a++) { // For old savegames
-		if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
-			eoh->DestroySkirmishAI(a, 2 /* = team died */);
-		}
-	}
+	//for (int a=0; a < teamHandler->ActiveTeams(); a++) { // For old savegames
+	//	if (teamHandler->Team(a)->isDead && eoh->IsSkirmishAI(a)) {
+	//		eoh->DestroySkirmishAI(skirmishAIId(a), 2 /* = team died */);
+	//	}
+	//}
 	gs->paused = false;
 	if (gameServer) {
 		gameServer->isPaused = false;

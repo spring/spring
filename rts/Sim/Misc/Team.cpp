@@ -19,7 +19,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
-#include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "EventHandler.h"
 #include "GlobalUnsynced.h"
 #include "creg/STL_List.h"
@@ -268,6 +268,11 @@ void CTeam::Died()
 	}
 	isDead = true;
 
+	CSkirmishAIHandler::ids_t localTeamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum);
+	for (CSkirmishAIHandler::ids_t::const_iterator ai = localTeamAIs.begin(); ai != localTeamAIs.end(); ++ai) {
+		skirmishAIHandler.SetSkirmishAIDieing(*ai, 2 /* = team died */);
+	}
+
 	// this message is not relayed to clients, it's only for the server
 	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 
@@ -275,9 +280,6 @@ void CTeam::Died()
 		if (playerHandler->Player(a)->active && (playerHandler->Player(a)->team == teamNum)) {
 			playerHandler->Player(a)->StartSpectating();
 		}
-	}
-	if (eoh->IsSkirmishAI(teamNum)) {
-		eoh->DestroySkirmishAI(teamNum, 2 /* = team died */);
 	}
 
 	CLuaUI::UpdateTeams();

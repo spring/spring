@@ -27,10 +27,11 @@
  * Possible live-cycle stati of a Skirmish AI instance.
  */
 enum ESkirmishAIStatus {
-	CONSTRUCTED = 2,
-	INITIALIZING = 4,
-	ALIVE = 6,
-	DIEING = 8
+	SKIRMAISTATE_CONSTRUCTED = 2,
+	SKIRMAISTATE_INITIALIZING = 4,
+	SKIRMAISTATE_ALIVE = 6,
+	SKIRMAISTATE_DIEING = 8,
+	SKIRMAISTATE_DEAD = 10
 };
 
 /**
@@ -50,7 +51,7 @@ public:
 	SkirmishAIBase() :
 		  TeamController()
 		, hostPlayer(-1)
-		, status(CONSTRUCTED)
+		, status(SKIRMAISTATE_CONSTRUCTED)
 		{}
 
 	int hostPlayer;
