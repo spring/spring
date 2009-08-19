@@ -24,7 +24,7 @@
 #include "ExternalAI/SkirmishAILibraryInfo.h"
 #include "ExternalAI/SAIInterfaceCallbackImpl.h"
 #include "ExternalAI/SkirmishAIHandler.h"
-#include "ExternalAI/EngineOutHandler.h"
+//#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/Interface/AISCommands.h"
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"
 #include "Sim/Units/UnitDef.h"
@@ -206,6 +206,17 @@ static const FeatureDef* getFeatureDefById(int teamId, int featureDefId) {
 	} else {
 		return NULL;
 	}
+}
+
+// TODO: FIXME: this function should not be needed anymore, after a clean move from teamId to skirmishAIId
+static inline size_t getFirstSkirmishAIIdForTeam(int teamId) {
+
+	const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
+	return skirmishAIIds[0];
+}
+// TODO: FIXME: this function should not be needed anymore, after a clean move from teamId to skirmishAIId
+static inline const SkirmishAIData* getFirstSkirmishAIDataForTeam(int teamId) {
+	return skirmishAIHandler.GetSkirmishAI(getFirstSkirmishAIIdForTeam(teamId));
 }
 
 static int wrapper_HandleCommand(IAICallback* clb, IAICheats* clbCheat,
@@ -623,7 +634,7 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int teamId)
 
 	const CSkirmishAILibraryInfo* info = NULL;
 
-	const SkirmishAIKey* key = eoh->GetSkirmishAIKey(teamId);
+	const SkirmishAIKey* key = skirmishAIHandler.GetSkirmishAILibraryKey(getFirstSkirmishAIIdForTeam(teamId));
 	if (key != NULL) {
 		const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
 		IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
@@ -664,11 +675,6 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_Info_getValueByKey(int teamId,
 
 static inline bool checkOptionIndex(int optionIndex, const std::vector<std::string>& optionKeys) {
 	return ((optionIndex < 0) || ((size_t)optionIndex >= optionKeys.size()));
-}
-static inline const SkirmishAIData* getFirstSkirmishAIDataForTeam(int teamId) {
-
-	const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
-	return skirmishAIHandler.GetSkirmishAI(skirmishAIIds[0]);
 }
 EXPORT(int) skirmishAiCallback_SkirmishAI_OptionValues_getSize(int teamId) {
 	return (int)getFirstSkirmishAIDataForTeam(teamId)->options.size();
@@ -727,7 +733,8 @@ EXPORT(void) skirmishAiCallback_Log_exception(int teamId, const char* const msg,
 			info->GetName().c_str(), info->GetVersion().c_str(), severety,
 			(die ? "AI shutting down" : "AI still running"), msg);
 	if (die) {
-		eoh->DestroySkirmishAI(teamId, 4 /* = AI crashed */);
+		const size_t skirmishAIId = getFirstSkirmishAIIdForTeam(teamId);
+		skirmishAIHandler.SetSkirmishAIDieing(skirmishAIId, 4 /* = AI crashed */);
 	}
 }
 

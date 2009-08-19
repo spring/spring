@@ -100,7 +100,8 @@ void CPlayer::SetControlledTeams()
 	const CSkirmishAIHandler::ids_t aiIds = skirmishAIHandler.GetAllSkirmishAIs();
 	for (CSkirmishAIHandler::ids_t::const_iterator ai = aiIds.begin(); ai != aiIds.end(); ++ai) {
 		const SkirmishAIData* sad = skirmishAIHandler.GetSkirmishAI(*ai);
-		const bool isHostedByUs = (playerHandler->Player(sad->hostPlayer) == this); // TODO: FIXME: bad hack
+		const bool isHostedByUs = (sad->hostPlayer == playerNum);
+		//const bool isHostedByUs = skirmishAIHandler.IsLocalSkirmishAI(*sad);
 		if (isHostedByUs) {
 			controlledTeams.insert(sad->team);
 		}

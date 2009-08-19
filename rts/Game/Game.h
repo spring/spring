@@ -27,6 +27,7 @@ class LuaInputReceiver;
 class CLoadSaveHandler;
 class Action;
 class ChatMessage;
+class SkirmishAIData;
 
 const int MAX_CONSECUTIVE_SIMFRAMES = 15;
 
@@ -196,6 +197,8 @@ private:
 	unsigned char oldStatus;
 
 	void StoreCloaked(bool save);
+
+	std::map<int, SkirmishAIData*> team_localAIsInCreation;
 };
 
 

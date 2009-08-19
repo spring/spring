@@ -22,14 +22,19 @@
 
 #include "Game/GameSetup.h"
 #include "creg/STL_Map.h"
+#include "System/NetProtocol.h"
+#include "System/GlobalUnsynced.h"
+#include "ExternalAI/SkirmishAIKey.h"
+#include "ExternalAI/IAILibraryManager.h"
 
 #include <assert.h>
 
 CR_BIND(CSkirmishAIHandler,);
 
 CR_REG_METADATA(CSkirmishAIHandler, (
-	CR_MEMBER(nextId),
+//	CR_MEMBER(nextId),
 	CR_MEMBER(id_ai),
+	CR_MEMBER(id_dieReason),
 	CR_RESERVED(64)
 ));
 
@@ -45,9 +50,9 @@ CSkirmishAIHandler& CSkirmishAIHandler::GetInstance() {
 	return *mySingleton;
 }
 
-CSkirmishAIHandler::CSkirmishAIHandler():
-	nextId(0)
-	//, usedSkirmishAIInfos_initialized(false)
+CSkirmishAIHandler::CSkirmishAIHandler()
+//	nextId(0)
+//	, usedSkirmishAIInfos_initialized(false)
 {
 }
 
@@ -63,9 +68,9 @@ void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
 	}*/
 }
 
-SkirmishAIData* CSkirmishAIHandler::GetSkirmishAI(const size_t skirmishAiId) {
+SkirmishAIData* CSkirmishAIHandler::GetSkirmishAI(const size_t skirmishAIId) {
 
-	id_ai_t::iterator ai = id_ai.find(skirmishAiId);
+	id_ai_t::iterator ai = id_ai.find(skirmishAIId);
 	assert(ai != id_ai.end());
 
 	return &(ai->second);
@@ -73,18 +78,18 @@ SkirmishAIData* CSkirmishAIHandler::GetSkirmishAI(const size_t skirmishAiId) {
 
 size_t CSkirmishAIHandler::GetSkirmishAI(const std::string& name) const
 {
-	size_t skirmishAiId = 0;
+	size_t skirmishAIId = 0;
 
 	bool found = false;
 	for (id_ai_t::const_iterator ai = id_ai.begin(); ai != id_ai.end() && !found; ++ai) {
 		if (ai->second.name == name) {
-			skirmishAiId = ai->first;
+			skirmishAIId = ai->first;
 			found = true;
 		}
 	}
 	assert(found);
 
-	return skirmishAiId;
+	return skirmishAIId;
 }
 
 CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId, const int hostPlayerId)
@@ -124,21 +129,81 @@ CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetAllSkirmishAIs()
 	return skirmishAIs;
 }
 
-size_t CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data) {
+void CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data, const size_t skirmishAIId) {
+
+	// if the ID is already taken, something went very wrong
+	assert(id_ai.find(skirmishAIId) == id_ai.end());
+
+	id_ai[skirmishAIId] = data;
+	if (CSkirmishAIHandler::IsLocalSkirmishAI(data)) {
+		SkirmishAIKey tmpKey(data.shortName, data.version);
+		id_libKey[skirmishAIId] = aiLibManager->ResolveSkirmishAIKey(tmpKey);
+	}
+}
+/*size_t CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data) {
 
 	const size_t myId = nextId;
 	id_ai[myId] = data;
 	nextId++;
 
 	return myId;
-}
+}*/
 
-bool CSkirmishAIHandler::RemoveSkirmishAI(const size_t skirmishAiId) {
-	return id_ai.erase(skirmishAiId);
+bool CSkirmishAIHandler::RemoveSkirmishAI(const size_t skirmishAIId) {
+
+	id_dieReason.erase(skirmishAIId);
+	return id_ai.erase(skirmishAIId);
 }
 
 size_t CSkirmishAIHandler::GetNumSkirmishAIs() const {
 	return id_ai.size();
+}
+
+void CSkirmishAIHandler::SetSkirmishAIDieing(const size_t skirmishAIId, const int reason) {
+
+	id_ai_t::iterator ai = id_ai.find(skirmishAIId);
+	assert(ai != id_ai.end()); // is valid id?
+	assert(CSkirmishAIHandler::IsLocalSkirmishAI(ai->second)); // is local AI?
+
+	id_dieReason[skirmishAIId] = reason;
+
+	net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DIEING));
+}
+
+int CSkirmishAIHandler::GetSkirmishAIDieReason(const size_t skirmishAIId) const {
+	return (id_dieReason.find(skirmishAIId) != id_dieReason.end()) ? id_dieReason.find(skirmishAIId)->second : -1;
+}
+
+bool CSkirmishAIHandler::IsSkirmishAIDieing(const size_t skirmishAIId) const {
+	return (id_dieReason.find(skirmishAIId) != id_dieReason.end());
+}
+
+const SkirmishAIKey* CSkirmishAIHandler::GetSkirmishAILibraryKey(const size_t skirmishAIId) const {
+
+	const SkirmishAIKey* key = NULL;
+
+	id_libKey_t::const_iterator libKey = id_libKey.find(skirmishAIId);
+	if (libKey != id_libKey.end()) {
+		key = &(libKey->second);
+	}
+
+	return key;
+}
+
+bool CSkirmishAIHandler::IsLocalSkirmishAI(const size_t skirmishAIId) const {
+
+	bool isLocal = false;
+
+	id_ai_t::const_iterator ai = id_ai.find(skirmishAIId);
+	if (ai != id_ai.end()) {
+		 CSkirmishAIHandler::IsLocalSkirmishAI(ai->second);
+	}
+
+	return isLocal;
+}
+
+bool CSkirmishAIHandler::IsLocalSkirmishAI(const SkirmishAIData& aiData) {
+	return (aiData.hostPlayer == gu->myPlayerNum);
 }
 
 /*

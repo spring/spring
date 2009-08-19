@@ -25,6 +25,7 @@
 
 class SkirmishAIKey;
 class AIInterfaceKey;
+struct SSkirmishAICallback;
 
 /**
  * The interface for a Skirmish AI library.
@@ -43,7 +44,7 @@ public:
 			const std::string& engineVersionString, int engineVersionNumber,
 			const AIInterfaceKey& interfaceKey) const = 0;
 
-    virtual void Init(int teamId) const = 0;
+    virtual void Init(int teamId, const SSkirmishAICallback* c_callback) const = 0;
     virtual void Release(int teamId) const = 0;
     virtual int HandleEvent(int teamId, int topic, const void* data) const = 0;
 };

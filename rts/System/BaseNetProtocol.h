@@ -10,7 +10,7 @@ namespace netcode
 {
 	class RawPacket;
 }
-struct PlayerStatistics;
+class PlayerStatistics;
 
 const unsigned char NETWORK_VERSION = 1;
 
@@ -83,7 +83,9 @@ enum NETMSG {
 	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
-	NETMSG_TEAMSTAT			= 60,
+	NETMSG_TEAMSTAT         = 60,
+	NETMSG_AI_CREATED       = 61, // see SendAICreated
+	NETMSG_AI_STATE_CHANGED = 62, // see SendAIStateChanged
 };
 
 // action to do with NETMSG_TEAM 
@@ -93,8 +95,6 @@ enum TEAMMSG {
 	TEAMMSG_RESIGN          = 2,     // not used
 	TEAMMSG_JOIN_TEAM       = 3,     // team to join
 	TEAMMSG_TEAM_DIED       = 4,     // team which had died special note: this is sent by all players to prevent cheating
-	TEAMMSG_AI_CREATED      = 5,     // team now controlled by a Skirmish AI
-	TEAMMSG_AI_DESTROYED    = 6,     // team whichs controlling Skirmish AI got destroyed
 //TODO: changing teams (to spectator, from spectator to specific team)
 //TODO: in-game allyteams
 };
@@ -163,8 +163,14 @@ public:
 	 * on every client.
 	 */
 	PacketType SendTeamDied(uchar myPlayerNum, uchar whichTeam);
-	PacketType SendAICreated(uchar myPlayerNum, uchar whichTeam);
-	PacketType SendAIDestroyed(uchar myPlayerNum, uchar whichTeam);
+
+	PacketType SendAICreated(const uchar myPlayerNum,
+	                         const uchar whichSkirmishAI,
+	                         const uchar team,
+	                         const std::string& name);
+	PacketType SendAIStateChanged(const uchar myPlayerNum,
+	                              const uchar whichSkirmishAI,
+	                              const uchar newState);
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);
 

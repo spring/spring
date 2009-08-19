@@ -17,24 +17,26 @@
 
 #include "SkirmishAIWrapper.h"
 
-#include "StdAfx.h"
-#include "IGlobalAI.h"
-#include "SkirmishAI.h"
-#include "GlobalAICallback.h"
-#include "EngineOutHandler.h"
-#include "IAILibraryManager.h"
-#include "Platform/errorhandler.h"
-#include "FileSystem/FileSystem.h"
-#include "LogOutput.h"
-#include "mmgr.h"
+#include "System/StdAfx.h"
+#include "System/Platform/errorhandler.h"
+#include "System/FileSystem/FileSystem.h"
+#include "System/LogOutput.h"
+#include "System/mmgr.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Interface/AISEvents.h"
-#include "Interface/AISCommands.h"
-#include "Interface/SSkirmishAILibrary.h"
-#include "SkirmishAILibraryInfo.h"
-#include "SSkirmishAICallbackImpl.h"
+#include "ExternalAI/IGlobalAI.h"
+#include "ExternalAI/SkirmishAI.h"
+#include "ExternalAI/GlobalAICallback.h"
+#include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
+#include "ExternalAI/SkirmishAILibraryInfo.h"
+#include "ExternalAI/SkirmishAIData.h"
+#include "ExternalAI/SSkirmishAICallbackImpl.h"
+#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/Interface/AISEvents.h"
+#include "ExternalAI/Interface/AISCommands.h"
+#include "ExternalAI/Interface/SSkirmishAILibrary.h"
 
 #include <sstream>
 #include <iostream>
@@ -42,6 +44,7 @@
 
 CR_BIND_DERIVED(CSkirmishAIWrapper, CObject, )
 CR_REG_METADATA(CSkirmishAIWrapper, (
+	CR_MEMBER(skirmishAIId),
 	CR_MEMBER(teamId),
 	CR_MEMBER(cheatEvents),
 	CR_MEMBER(key),
@@ -71,6 +74,7 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 
 /// used only by creg
 CSkirmishAIWrapper::CSkirmishAIWrapper():
+		skirmishAIId((size_t) -1),
 		teamId(-1),
 		cheatEvents(false),
 		ai(NULL),
@@ -78,14 +82,22 @@ CSkirmishAIWrapper::CSkirmishAIWrapper():
 		released(false),
 		c_callback(NULL) {}
 
-CSkirmishAIWrapper::CSkirmishAIWrapper(int teamId, const SkirmishAIKey& key):
-		teamId(teamId),
+CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
+		skirmishAIId(skirmishAIId),
+//		teamId(teamId),
 		cheatEvents(false),
 		ai(NULL),
 		initialized(false),
 		released(false),
-		c_callback(NULL),
-		key(key) {
+		c_callback(NULL)
+//		key(key)
+{
+	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+
+	teamId = aiData->team;
+	SkirmishAIKey keyTmp(aiData->shortName, aiData->version);
+	key    = aiLibManager->ResolveSkirmishAIKey(keyTmp);
+
 	CreateCallback();
 }
 
@@ -122,17 +134,18 @@ void CSkirmishAIWrapper::Serialize(creg::ISerializer* s) {
 }
 
 void CSkirmishAIWrapper::PostLoad() {
-	CreateCallback();
+	//CreateCallback();
 	LoadSkirmishAI(true);
 }
 
 
 
 bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
-	ai = new CSkirmishAI(teamId, key);
+
+	ai = new CSkirmishAI(teamId, key, GetCallback());
 
 	// check if initialization went ok
-	if (!eoh->IsSkirmishAI(teamId)) {
+	if (skirmishAIHandler.IsSkirmishAIDieing(skirmishAIId)) {
 		return false;
 	}
 
@@ -201,7 +214,7 @@ void CSkirmishAIWrapper::Init() {
 		// init failed
 		logOutput.Print("Failed to handle init event: AI for team %d, error %d",
 				teamId, error);
-		eoh->DestroySkirmishAI(teamId);
+		skirmishAIHandler.SetSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
 	} else {
 		initialized = true;
 	}

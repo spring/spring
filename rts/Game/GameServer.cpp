@@ -1060,68 +1060,84 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						}
 						break;
 					}
-					case TEAMMSG_AI_CREATED: {
-						const unsigned aiTeam        = inbuf[3];
-						//const size_t skirmishAIId    = inbuf[3];
-						//const char* aiName           = inbuf[4];
-						GameTeam* tf                 = &teams[fromTeam];
-						GameTeam* tai                = &teams[aiTeam];
-						//const int numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
-						//const int numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeam);
-						const bool weAreLeader       = (tai->leader == player);
-						const bool weAreAllied       = (tf->teamAllyteam == tai->teamAllyteam);
-
-						if (weAreLeader || (weAreAllied && (cheating || !(tai->active)))) {
-							// creating the AI is ok
-						} else {
-							Message(str(format(NoAICreated) %players[player].name %player %aiTeam));
-							break;
-						}
-						Broadcast(CBaseNetProtocol::Get().SendAICreated(player, aiTeam));
-						//Broadcast(CBaseNetProtocol::Get().SendAICreated(player, skirmishAIId, aiName));
-
-						const size_t myId = nextSkirmishAIId++;
-						ais[myId].team = aiTeam;
-						//ais[myId].name = aiName;
-						ais[myId].hostPlayer = player;
-						if (tai->leader == -1) {
-							tai->leader = ais[myId].hostPlayer;
-							tai->active = true;
-						}
-						break;
-					}
-					case TEAMMSG_AI_DESTROYED: {
-						const unsigned aiTeam           = inbuf[3];
-						//const size_t skirmishAIId       = inbuf[3];
-						const size_t skirmishAIId       = getSkirmishAIIds(ais, aiTeam, player)[0];
-						//const int reason                = inbuf[4];
-						const size_t numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
-						const size_t numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeam);
-						GameTeam* tai                   = &teams[aiTeam];
-
-						if ((ais.find(skirmishAIId) != ais.end()) && (ais[skirmishAIId].hostPlayer == player)) {
-							// destroying the AI is ok
-						} else {
-							Message(str(format(NoAIDestroyed) %players[player].name %player %aiTeam));
-							break;
-						}
-						Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, aiTeam));
-						//Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, skirmishAIId, reason));
-
-						ais.erase(skirmishAIId);
-						if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
-							// team has no controller left now
-							tai->active = false;
-							tai->leader = -1;
-						}
-						break;
-					}
 					default: {
 						Message(str(format(UnknownTeammsg) %action %player));
 					}
 				}
 				break;
 			}
+		}
+		case NETMSG_AI_CREATED: {
+			const unsigned playerId     = inbuf[2];
+			const unsigned skirmishAIId = inbuf[3];
+			const unsigned aiTeamId     = inbuf[4];
+			const char* aiName          = (const char*) (&inbuf[5]);
+			const unsigned playerTeamId = players[playerId].team;
+			GameTeam* tpl                = &teams[playerTeamId];
+			GameTeam* tai                = &teams[aiTeamId];
+			//const int numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
+			//const int numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeam);
+			const bool weAreLeader       = (tai->leader == playerId);
+			const bool weAreAllied       = (tpl->teamAllyteam == tai->teamAllyteam);
+
+			if (weAreLeader || (weAreAllied && (cheating || !(tai->active)))) {
+				// creating the AI is ok
+			} else {
+				Message(str(format(NoAICreated) %players[playerId].name %playerId %aiTeamId));
+				break;
+			}
+			//Broadcast(CBaseNetProtocol::Get().SendAICreated(player, skirmishAIId, aiName));
+			Broadcast(packet); //forward data
+
+			const size_t myId = nextSkirmishAIId++;
+#ifdef SYNCDEBUG
+			if (myId != skirmishAIId) {
+				Message(str(format("Sync Error, Skirmish AI ID from player %s (%i) does not match the one on the server (%i).") %players[playerId].name %skirmishAIId %myId));
+			}
+#endif // SYNCDEBUG
+			ais[myId].team = aiTeamId;
+			ais[myId].name = aiName;
+			ais[myId].hostPlayer = playerId;
+			if (tai->leader == -1) {
+				tai->leader = ais[myId].hostPlayer;
+				tai->active = true;
+			}
+			break;
+		}
+		case NETMSG_AI_STATE_CHANGED: {
+			const unsigned playerId          = inbuf[1];
+			const unsigned skirmishAIId      = inbuf[2];
+			const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[3];
+
+			const bool skirmishAIId_valid    = (ais.find(skirmishAIId) != ais.end());
+			if (!skirmishAIId_valid) {
+				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %(-1)));
+				break;
+			}
+
+			const bool isOwner               = (ais[skirmishAIId].hostPlayer == playerId);
+			const unsigned aiTeamId          = ais[skirmishAIId].team;
+			const size_t numPlayersInAITeam  = countNumPlayersInTeam(players, aiTeamId);
+			const size_t numAIsInAITeam      = countNumSkirmishAIsInTeam(ais, aiTeamId);
+			GameTeam* tai                    = &teams[aiTeamId];
+
+			if (!isOwner) {
+				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %aiTeamId));
+				break;
+			}
+			//Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, skirmishAIId, reason));
+			Broadcast(packet); //forward data
+
+			ais[skirmishAIId].status = newState;
+			if (newState == SKIRMAISTATE_DEAD) { 
+				ais.erase(skirmishAIId);
+				if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
+					// team has no controller left now
+					tai->active = false;
+					tai->leader = -1;
+				}
+			}
+			break;
 		}
 		case NETMSG_ALLIANCE: {
 			const unsigned char player = inbuf[1];

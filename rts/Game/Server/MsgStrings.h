@@ -28,7 +28,7 @@ const std::string NoStartposChange = "%s tried to change his startposition illeg
 const std::string NoHelperAI = "%s (%d) is using a helper AI illegally";
 const std::string NoTeamChange = "%s (%d) tried to change his team illegally";
 const std::string NoAICreated = "%s (%d) tried to control team %i with an AI illegally";
-const std::string NoAIDestroyed = "%s (%d) tried to kill the AI controlling team %i illegally";
+const std::string NoAIChangeState = "%s (%d) tried to change the state of an AI (%i) controlling team %i illegally";
 
 const std::string UnknownTeammsg = "Unknown action in NETMSG_TEAM (%d) from player %d";
 const std::string UnknownNetmsg = "Unhandled net msg (%d) in server from %d";
