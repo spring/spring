@@ -53,11 +53,6 @@ public:
 	virtual const T_interfaceInfos& GetInterfaceInfos() const = 0;
 	virtual const T_skirmishAIInfos& GetSkirmishAIInfos() const = 0;
 
-	virtual const std::vector<std::string>& GetSkirmishAIOptionValueKeys(int teamId) const = 0;
-	virtual const std::map<std::string, std::string>& GetSkirmishAIOptionValues(int teamId) const = 0;
-
-	virtual const T_skirmishAIInfos& GetUsedSkirmishAIInfos() = 0;
-
 	typedef std::map<const AIInterfaceKey, std::set<std::string> > T_dupInt;
 	typedef std::map<const SkirmishAIKey, std::set<std::string> >
 			T_dupSkirm;

@@ -83,7 +83,7 @@ static std::string noSlashAtEnd(const std::string& dir) {
 	return resDir;
 }
 
-CAILibraryManager::CAILibraryManager() : usedSkirmishAIInfos_initialized(false) {
+CAILibraryManager::CAILibraryManager() {
 
 	GetAllInfosFromCache();
 }
@@ -233,27 +233,6 @@ void CAILibraryManager::ClearAllInfos() {
 	skirmishAIKeys.clear();
 }
 
-const std::vector<std::string> CAILibraryManager::EMPTY_OPTION_VALUE_KEYS;
-const std::vector<std::string>& CAILibraryManager::GetSkirmishAIOptionValueKeys(int teamId) const {
-
-	const SkirmishAIData* aiData = gameSetup->GetSkirmishAIDataForTeam(teamId);
-	if (aiData != NULL) {
-		return aiData->optionKeys;
-	} else {
-		return EMPTY_OPTION_VALUE_KEYS;
-	}
-}
-const std::map<std::string, std::string> CAILibraryManager::EMPTY_OPTION_VALUES;
-const std::map<std::string, std::string>& CAILibraryManager::GetSkirmishAIOptionValues(int teamId) const {
-
-	const SkirmishAIData* aiData = gameSetup->GetSkirmishAIDataForTeam(teamId);
-	if (aiData != NULL) {
-		return aiData->options;
-	} else {
-		return EMPTY_OPTION_VALUES;
-	}
-}
-
 CAILibraryManager::~CAILibraryManager() {
 
 	ReleaseEverything();
@@ -271,32 +250,6 @@ const IAILibraryManager::T_interfaceInfos& CAILibraryManager::GetInterfaceInfos(
 }
 const IAILibraryManager::T_skirmishAIInfos& CAILibraryManager::GetSkirmishAIInfos() const {
 	return skirmishAIInfos;
-}
-
-const IAILibraryManager::T_skirmishAIInfos& CAILibraryManager::GetUsedSkirmishAIInfos() {
-
-	if (!usedSkirmishAIInfos_initialized) {
-		const CTeam* team = NULL;
-		for (unsigned int t = 0; t < (unsigned int)teamHandler->ActiveTeams(); ++t) {
-			team = teamHandler->Team(t);
-			if (team != NULL && team->isAI) {
-				const std::string& t_sn = team->skirmishAIKey.GetShortName();
-				const std::string& t_v = team->skirmishAIKey.GetVersion();
-
-				IAILibraryManager::T_skirmishAIInfos::const_iterator aiInfo;
-				for (aiInfo = skirmishAIInfos.begin(); aiInfo != skirmishAIInfos.end(); ++aiInfo) {
-					const std::string& ai_sn = aiInfo->second->GetShortName();
-					const std::string& ai_v = aiInfo->second->GetVersion();
-					// add this AI info if it is used in the current game
-					if (ai_sn == t_sn && (t_sn.empty() || ai_v == t_v)) {
-						usedSkirmishAIInfos[aiInfo->first] = aiInfo->second;
-					}
-				}
-			}
-		}
-	}
-
-	return usedSkirmishAIInfos;
 }
 
 const IAILibraryManager::T_dupInt& CAILibraryManager::GetDuplicateInterfaceInfos() const {

@@ -6,6 +6,7 @@
 
 #include "Game/GameSetup.h"
 #include "Game/PlayerHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Team.h"
@@ -94,6 +95,8 @@ void CGlobalSyncedStuff::LoadFromSetup(const CGameSetup* setup)
 
 	// TODO: this call is unsynced, technically
 	playerHandler->LoadFromSetup(setup);
+
+	skirmishAIHandler.LoadFromSetup(*setup);
 
 	teamHandler->LoadFromSetup(setup);
 }
