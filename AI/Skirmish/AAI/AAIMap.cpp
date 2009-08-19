@@ -14,7 +14,6 @@
 
 // all the static vars
 int AAIMap::aai_instances = 0;
-char AAIMap::map_filename[500];
 int AAIMap::xSize;
 int AAIMap::ySize;
 int AAIMap::xMapSize;
@@ -84,8 +83,10 @@ AAIMap::~AAIMap(void)
 	{
 		Learn();
 
+		const std::string mapLearn_filename = LocateMapLearnFile(true);
+
 		// save map data
-		FILE *save_file = fopen(map_filename, "w+");
+		FILE *save_file = fopen(mapLearn_filename.c_str(), "w+");
 
 		fprintf(save_file, "%s \n", MAP_LEARN_VERSION);
 
@@ -256,20 +257,14 @@ void AAIMap::ReadMapCacheFile()
 	// try to read cache file
 	bool loaded = false;
 
-	static const size_t buffer_sizeMax = 500;
+	const size_t buffer_sizeMax = 512;
 	char buffer[buffer_sizeMax];
-	STRCPY(buffer, MAIN_PATH);
-	STRCAT(buffer, MAP_CACHE_PATH);
-	STRCAT(buffer, cb->GetMapName());
-	ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".dat");
 
-	// as we will have to write to the file later on anyway,
-	// we want it writeable
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_W, map_filename);
+	const std::string mapCache_filename = LocateMapCacheFile(false);
 
 	FILE *file;
 
-	if((file = fopen(map_filename, "r")) != NULL)
+	if((file = fopen(mapCache_filename.c_str(), "r")) != NULL)
 	{
 		// check if correct version
 		fscanf(file, "%s ", buffer);
@@ -356,14 +351,9 @@ void AAIMap::ReadMapCacheFile()
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////
 		// save mod independent map data
-		STRCPY(buffer, MAIN_PATH);
-		STRCAT(buffer, MAP_CACHE_PATH);
-		STRCAT(buffer, cb->GetMapName());
-		ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".dat");
+		const std::string mapCache_filename = LocateMapCacheFile(true);
 
-		ai->cb->GetValue(AIVAL_LOCATE_FILE_W, map_filename);
-
-		file = fopen(map_filename, "w+");
+		file = fopen(mapCache_filename.c_str(), "w+");
 
 		fprintf(file, "%s\n", MAP_CACHE_VERSION);
 
@@ -648,24 +638,58 @@ void AAIMap::ReadContinentFile()
 	fclose(file);
 }
 
-void AAIMap::ReadMapLearnFile(bool auto_set)
-{
-	// get filename
-	static const size_t buffer_sizeMax = 500;
+std::string AAIMap::LocateMapLearnFile(const bool forWriting) const {
+
+	const size_t buffer_sizeMax = 512;
 	char buffer[buffer_sizeMax];
+	char buffer2[buffer_sizeMax];
 
 	STRCPY(buffer, MAIN_PATH);
 	STRCAT(buffer, MAP_LEARN_PATH);
 	STRCAT(buffer, cb->GetMapName());
-	ReplaceExtension(buffer, map_filename, sizeof(map_filename), "_");
-	STRCPY(buffer, map_filename);
+	ReplaceExtension(buffer, buffer2, buffer_sizeMax, "_");
+	STRCPY(buffer, buffer2);
 	STRCAT(buffer, cb->GetModName());
-	ReplaceExtension(buffer, map_filename, sizeof(map_filename), ".dat");
+	ReplaceExtension(buffer, buffer2, buffer_sizeMax, ".dat");
 
-	ai->cb->GetValue(AIVAL_LOCATE_FILE_R, map_filename);
+	if (forWriting) {
+		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer2);
+	} else {
+		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer2);
+	}
+	
+	return std::string(buffer2);
+}
+
+std::string AAIMap::LocateMapCacheFile(const bool forWriting) const {
+
+	const size_t buffer_sizeMax = 512;
+	char buffer[buffer_sizeMax];
+	char buffer2[buffer_sizeMax];
+
+	STRCPY(buffer, MAIN_PATH);
+	STRCAT(buffer, MAP_CACHE_PATH);
+	STRCAT(buffer, cb->GetMapName());
+	ReplaceExtension(buffer, buffer2, buffer_sizeMax, ".dat");
+
+	if (forWriting) {
+		cb->GetValue(AIVAL_LOCATE_FILE_W, buffer2);
+	} else {
+		cb->GetValue(AIVAL_LOCATE_FILE_R, buffer2);
+	}
+	
+	return std::string(buffer2);
+}
+
+void AAIMap::ReadMapLearnFile(bool auto_set)
+{
+	const std::string mapLearn_filename = LocateMapLearnFile(false);
+
+	const size_t buffer_sizeMax = 512;
+	char buffer[buffer_sizeMax];
 
 	// open learning files
-	FILE *load_file = fopen(map_filename, "r");
+	FILE *load_file = fopen(mapLearn_filename.c_str(), "r");
 
 	// check if correct map file version
 	if(load_file)
