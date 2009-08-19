@@ -30,14 +30,7 @@ public:
 
 	void operator=(const SkirmishAIBase& base) { SkirmishAIBase::operator=(base); };
 
-	/*enum State
-	{
-		UNCONNECTED,
-		CONNECTED,
-		INGAME,
-		DISCONNECTED
-	};
-	State myState;*/
+	//State myState;
 
 	//float cpuUsage;
 

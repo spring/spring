@@ -1138,7 +1138,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			Broadcast(packet); //forward data
 
 			ais[skirmishAIId].status = newState;
-			if (newState == SKIRMAISTATE_DEAD) { 
+			if (newState == SKIRMAISTATE_DEAD) {
 				ais.erase(skirmishAIId);
 				if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
 					// team has no controller left now

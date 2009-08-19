@@ -88,17 +88,6 @@ public:
 
 	// Skirmish AI stuff
 	void CreateSkirmishAI(const size_t skirmishAIId);
-	//bool HasSkirmishAI(const int teamId) const;
-	//const SSkirmishAICallback* GetSkirmishAICallback(const size_t skirmishAIId) const;
-	/**
-	 * Requests destruction of a Skirmish AI.
-	 * This only sends a message to the server, and real destruction happens
-	 * when receiving the answer.
-	 * @param skirmishAIId index of the AI to destroy
-	 * @param reason or a list of values for reason, see SReleaseEvent in Interface/AISEvents.h
-	 * @see DecomposeSkirmishAI()
-	 */
-	//void DestroySkirmishAI(const size_t skirmishAIId, const int reason = 0 /* = unspecified */);
 	/**
 	 * Destructs a local Skirmish AI for real.
 	 * Do not cal this if you want to kill a local AI, but use
@@ -121,15 +110,8 @@ private:
 	static CEngineOutHandler* singleton;
 
 private:
-	//static const size_t teams_size = MAX_TEAMS;
-
-	/// Total number of local Skirmish AI instances
-	//size_t localSkirmishAIs_size;
-
 	typedef std::vector<size_t> ids_t;
 	typedef std::vector<CSkirmishAIWrapper*> ais_t;
-	/// Contains all local Skirmish AIs in no particular order
-	//ais_t skirmishAIs;
 
 	typedef std::map<size_t, CSkirmishAIWrapper*> id_ai_t;
 	/// Contains all local Skirmish AIs, indexed by their ID

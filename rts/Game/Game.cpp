@@ -1115,9 +1115,6 @@ bool CGame::ActionPressed(const Action& action,
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
-		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
-		//const bool isFromHost         = (playernum == 0);
-		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
 		const bool cheating  = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
 		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
@@ -1195,13 +1192,7 @@ bool CGame::ActionPressed(const Action& action,
 					}
 				}
 
-				/*if (isLocalSkirmishAI) {
-					if (!eoh->IsSkirmishAI(teamToKillId)) {
-						logOutput.Print("Successfully removed Skirmish AI from team %i.", teamToKillId);
-					} else {
-						logOutput.Print("Failed to remove Skirmish AI from team %i.", teamToKillId);
-					}
-				}*/
+				logOutput.Print("Skirmish AI controlling for team %i is beeing killed ...", teamToKillId);
 			}
 		} else {
 			logOutput.Print("/%s: missing mandatory argument \"teamToKill\"", action.command.c_str());
@@ -1223,9 +1214,6 @@ bool CGame::ActionPressed(const Action& action,
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
-		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
-		//const bool isFromHost         = (playernum == 0);
-		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
 		const bool cheating           = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
 		const bool singlePlayer = (playerHandler->ActivePlayers() <= 1);
@@ -1293,7 +1281,7 @@ bool CGame::ActionPressed(const Action& action,
 #endif // DEBUG
 			/*
 			// It should be allowed to let two Skirmish AIs control a single team.
-			// Though, it will fail heavily most likely with AIs not designed for this.
+			// Though, it will fail heavily with AIs not designed for this.
 			if (!badArgs && eoh->IsSkirmishAI(teamToControlId)) {
 				logOutput.Print("Team to control: is already controlled by a Skirmish AI: %i", teamToControlId);
 				badArgs = true;
@@ -1323,11 +1311,7 @@ bool CGame::ActionPressed(const Action& action,
 
 				skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 
-				/*if (eoh->IsSkirmishAI(teamToControlId)) {
-					logOutput.Print("Skirmish AI now controlling team %i.", teamToControlId);
-				} else {
-					logOutput.Print("Failed to let a Skirmish AI control team %i.", teamToControlId);
-				}*/
+				logOutput.Print("Skirmish AI being created for team %i ...", teamToControlId);
 			}
 		} else {
 			logOutput.Print("/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", action.command.c_str());
@@ -4030,10 +4014,8 @@ void CGame::ClientReadNet()
 						const int fromTeam_g                = inbuf[4];
 						const int numPlayersInTeam_g        = playerHandler->ActivePlayersInTeam(fromTeam_g).size();
 						const size_t numTotAIsInTeam_g      = skirmishAIHandler.GetSkirmishAIsInTeam(fromTeam_g).size();
-						//const size_t numMyAIsInTeam_g       = skirmishAIHandler.GetSkirmishAIsInTeam(fromTeam_g, gu->myPlayerNum).size();
 						const size_t numControllersInTeam_g = numPlayersInTeam_g + numTotAIsInTeam_g;
 						const bool isOwnTeam_g              = (fromTeam_g != fromTeam);
-						//const bool hasAIs_g                 = (numMyAIsInTeam_g > 0);
 
 						bool giveAwayOk = false;
 						if (isOwnTeam_g) {
@@ -4170,7 +4152,6 @@ void CGame::ClientReadNet()
 					eoh->DestroySkirmishAI(skirmishAIId);
 				} else if (newState == SKIRMAISTATE_DEAD) {
 					skirmishAIHandler.RemoveSkirmishAI(skirmishAIId);
-					//skirmishAIHandler.RemoveSkirmishAI(skirmishAIId, reason);
 					// this could be done in the above function as well
 					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
 						// team has no controller left now
@@ -4178,6 +4159,9 @@ void CGame::ClientReadNet()
 					}
 					CPlayer::UpdateControlledTeams();
 					eventHandler.PlayerChanged(playerId);
+					logOutput.Print("Skirmish AI %s, which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
+				} else if (newState == SKIRMAISTATE_ALIVE) {
+					logOutput.Print("Skirmish AI %s took over controll of team %i", aiData->name.c_str(), aiTeamId);
 				}
 				break;
 			}

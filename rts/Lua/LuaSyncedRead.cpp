@@ -19,7 +19,6 @@
 #include "LuaPathFinder.h"
 #include "LuaRules.h"
 #include "LuaUtils.h"
-//#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
@@ -1343,27 +1342,36 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	if (saids.size() == 0) {
 		return numVals;
 	}
-	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*(saids.begin()));
+	const size_t skirmishAIId    = *(saids.begin());
+	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	const bool isLocal           = skirmishAIHandler.IsLocalSkirmishAI(skirmishAIId);
 
 	// no ai info for synchronized scripts
 	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
 		HSTR_PUSH(L, "SYNCED_NONAME");
 		numVals++;
 	} else {
+		lua_pushnumber(L, skirmishAIId);
 		lua_pushstring(L, aiData->name.c_str());
-		lua_pushstring(L, aiData->shortName.c_str());
-		lua_pushstring(L, aiData->version.c_str());
-		numVals += 3;
+		lua_pushnumber(L, aiData->hostPlayer);
+		lua_pushnumber(L, isLocal);
+		numVals += 4;
 	}
 
-	lua_newtable(L);
-	std::map<std::string, std::string>::const_iterator o;
-	for (o = aiData->options.begin(); o != aiData->options.end(); ++o) {
-		lua_pushstring(L, o->first.c_str());
-		lua_pushstring(L, o->second.c_str());
-		lua_rawset(L, -3);
+	if (isLocal) {
+		lua_pushstring(L, aiData->shortName.c_str());
+		lua_pushstring(L, aiData->version.c_str());
+		numVals += 2;
+
+		lua_newtable(L);
+		std::map<std::string, std::string>::const_iterator o;
+		for (o = aiData->options.begin(); o != aiData->options.end(); ++o) {
+			lua_pushstring(L, o->first.c_str());
+			lua_pushstring(L, o->second.c_str());
+			lua_rawset(L, -3);
+		}
+		numVals++;
 	}
-	numVals++;
 
 	return numVals;
 }

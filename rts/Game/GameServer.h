@@ -47,9 +47,11 @@ public:
 };
 
 /**
-@brief Server class for game handling
-This class represents a gameserver. It is responsible for recieving, checking and forwarding gamedata to the clients. It keeps track of the sync, cpu and other stats and informs all clients about events.
-*/
+ * @brief Server class for game handling
+ * This class represents a gameserver. It is responsible for recieving,
+ * checking and forwarding gamedata to the clients. It keeps track of the sync,
+ * cpu and other stats and informs all clients about events.
+ */
 class CGameServer : public CommandReceiver
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
@@ -62,9 +64,9 @@ public:
 	void AddAutohostInterface(const std::string& autohostip, const int remotePort);
 
 	/**
-	@brief Set frame after loading
-	WARNING! No checks are done, so be carefull
-	*/
+	 * @brief Set frame after loading
+	 * WARNING! No checks are done, so be carefull
+	 */
 	void PostLoad(unsigned lastTick, int serverframenum);
 
 	void CreateNewFrame(bool fromServerThread, bool fixedFrameTime);
@@ -82,13 +84,13 @@ public:
 
 private:
 	/**
-	@brief relay chat messages to players / autohost
-	*/
+	 * @brief relay chat messages to players / autohost
+	 */
 	void GotChatMessage(const ChatMessage& msg);
 
 	/**
-	@brief kick the specified player from the battle
-	*/
+	 * @brief kick the specified player from the battle
+	 */
 	void KickPlayer(const int playerNum);
 
 	unsigned BindConnection(std::string name, const std::string& passwd, const std::string& version, bool isLocal, boost::shared_ptr<netcode::CConnection> link);
@@ -112,10 +114,11 @@ private:
 	void Broadcast(boost::shared_ptr<const netcode::RawPacket> packet);
 
 	/**
-	@brief skip frames
-
-	If you are watching a demo, this will push out all data until targetframe to all clients
-	*/
+	 * @brief skip frames
+	 *
+	 * If you are watching a demo, this will push out all data until
+	 * targetframe to all clients
+	 */
 	void SkipTo(int targetframe);
 
 	void Message(const std::string& message, bool broadcast=true);
@@ -128,7 +131,7 @@ private:
 	spring_time serverStartTime;
 	spring_time readyTime;
 	spring_time gameStartTime;
-	spring_time gameEndTime;	//Tick when game end was detected
+	spring_time gameEndTime;	///< Tick when game end was detected
 	bool sentGameOverMsg;
 	spring_time lastTick;
 	float timeLeft;

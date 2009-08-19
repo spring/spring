@@ -28,6 +28,15 @@ public:
 	CGameSetup();
 	~CGameSetup();
 	bool Init(const std::string& script);
+	/**
+	 * @brief Load startpositions from map/script
+	 * @pre numTeams and startPosType initialized
+	 * @post readyTeams, teamStartNum and team start positions initialized
+	 *
+	 * Unlike the other functions, this is not called on Init(),
+	 * instead we wait for CPreGame to call this. The reason is that the map
+	 * is not known before CPreGame recieves the gamedata from the server.
+	 */
 	void LoadStartPositions(bool withoutMap = false);
 
 	enum StartPosType
@@ -91,15 +100,44 @@ public:
 	int noHelperAIs;
 
 private:
+	/**
+	 * @brief Load startpositions from map
+	 * @pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
+	 */
 	void LoadStartPositionsFromMap();
+	/**
+	 * @brief Load unit restrictions
+	 * @post restrictedUnits initialized
+	 */
 	void LoadUnitRestrictions(const TdfParser& file);
+	/**
+	 * @brief Load players and remove gaps in the player numbering.
+	 * @pre numPlayers initialized
+	 * @post players loaded, numDemoPlayers initialized
+	 */
 	void LoadPlayers(const TdfParser& file, std::set<std::string>& nameList);
+	/**
+	 * @brief Load LUA and Skirmish AIs.
+	 */
 	void LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList);
+	/**
+	 * @brief Load teams and remove gaps in the team numbering.
+	 * @pre numTeams, hostDemo initialized
+	 * @post teams loaded
+	 */
 	void LoadTeams(const TdfParser& file);
+	/**
+	 * @brief Load allyteams and remove gaps in the allyteam numbering.
+	 * @pre numAllyTeams initialized
+	 * @post allyteams loaded, alliances initialised (no remapping needed here)
+	 */
 	void LoadAllyTeams(const TdfParser& file);
 
+	/** @brief Update all player indices to refer to the right player. */
 	void RemapPlayers();
+	/** @brief Update all team indices to refer to the right team. */
 	void RemapTeams();
+	/** @brief Update all allyteam indices to refer to the right allyteams. (except allies) */
 	void RemapAllyteams();
 
 	std::map<int, int> playerRemap;
