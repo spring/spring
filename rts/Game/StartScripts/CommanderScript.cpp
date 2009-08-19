@@ -59,9 +59,7 @@ void CCommanderScript::GameStart()
 		if (!gameSetup->hostDemo) {
 			const CSkirmishAIHandler::ids_t localSkirmAIs = skirmishAIHandler.GetSkirmishAIsInTeam(a, gu->myPlayerNum);
 			for (CSkirmishAIHandler::ids_t::const_iterator ai = localSkirmAIs.begin(); ai != localSkirmAIs.end(); ++ai) {
-				const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
-				//net->Send(CBaseNetProtocol::Get().SendAICreated(aiData->hostPlayer, (size_t)-1, aiData->team, aiData->name));
-				skirmishAIHandler.CreateLocalSkirmishAI(*aiData);
+				skirmishAIHandler.CreateLocalSkirmishAI(*ai);
 			}
 		}
 

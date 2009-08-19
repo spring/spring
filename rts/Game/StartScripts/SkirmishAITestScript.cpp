@@ -41,8 +41,9 @@ void CSkirmishAITestScript::GameStart(void)
 	// still works without a setup script
 	teamHandler->Team(skirmishAI_teamId)->leader = player_Id;
 	gameServer->teams[skirmishAI_teamId].leader  = player_Id;
-
-	playerHandler->Player(player_Id)->SetControlledTeams();
+	gameServer->teams[skirmishAI_teamId].active  = true;
+	gameServer->teams[player_teamId].leader  = player_Id;
+	gameServer->teams[player_teamId].active  = true;
 
 	teamHandler->Team(player_teamId)->energy        = 1000;
 	teamHandler->Team(player_teamId)->energyStorage = 1000;
@@ -54,19 +55,20 @@ void CSkirmishAITestScript::GameStart(void)
 	teamHandler->Team(skirmishAI_teamId)->metal         = 1000;
 	teamHandler->Team(skirmishAI_teamId)->metalStorage  = 1000;
 
+	aiData.name       = aiData.shortName + "_" + aiData.version;
+	aiData.team       = skirmishAI_teamId;
+	aiData.hostPlayer = player_Id;
+
+	const size_t skirmishAIId = gameServer->nextSkirmishAIId++;
+	gameServer->ais[skirmishAIId] = aiData;
+	skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
+
+	playerHandler->Player(player_Id)->SetControlledTeams();
+
 	// do not instantiate an AI when watching a
 	// demo recorded from a SkirmishAI test-script
 	if (!gameSetup->hostDemo) {
-		aiData.name       = aiData.shortName + "_" + aiData.version;
-		aiData.team       = skirmishAI_teamId;
-		aiData.hostPlayer = player_Id;
-
-		const size_t skirmishAIId = gameServer->nextSkirmishAIId++;
-		gameServer->ais[skirmishAIId] = aiData;
-		skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
-
-		//net->Send(CBaseNetProtocol::Get().SendAICreated(aiData.hostPlayer, (size_t)-1, aiData.team, aiData.name));
-		skirmishAIHandler.CreateLocalSkirmishAI(aiData);
+		skirmishAIHandler.CreateLocalSkirmishAI(skirmishAIId);
 	}
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");

@@ -132,6 +132,16 @@ public:
 	//void SkirmishAILeft(int skirmishAIId, unsigned char reason);
 
 	/**
+	 * Starts the initialization process of a locally running Skirmish AI,
+	 * which was defined in the start script.
+	 * Do NOT use for creating AIs not defined in the start script,
+	 * as it will cuase desyncs.
+	 * Stores detailed info locally real creation happens right here.
+	 * @param skirmishAIId Skirmish AI index
+	 * @see EngineOutHandler::CreateSkirmishAI()
+	 */
+	void CreateLocalSkirmishAI(const size_t skirmishAIId);
+	/**
 	 * Starts the synced initialization process of a locally running Skirmish AI.
 	 * Stores detailed info locally and sends synced stuff in a message
 	 * to the server, and real creation will happen when receiving the answer.
