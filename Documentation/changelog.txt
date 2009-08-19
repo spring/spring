@@ -5,6 +5,8 @@ Bugifxes:
  - don't write spring-files where they don't belong
  - some rendering fixes (ATI errors, bumpwater)
  - IPs of players not broadcasted
+ - area reclaim doesn't know of features not in los anymore
+ - slightly better paralyzeDamage handling
  - fixed several issues with ArchiveMover - it now moves files to
    My Documents\My Games\Spring and should be more reliable
 
