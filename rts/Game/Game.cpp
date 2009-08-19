@@ -3029,6 +3029,7 @@ bool CGame::Draw() {
 	unitDrawer->Update();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
+	guihandler->Update();
 	lineDrawer.UpdateLineStipple();
 	fartextureHandler->CreateFarTextures();
 
@@ -3037,7 +3038,6 @@ bool CGame::Draw() {
 	eventHandler.DrawGenesis();
 
 	if (!gu->active) {
-		guihandler->Update();
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
@@ -3125,7 +3125,6 @@ bool CGame::Draw() {
 	{
 		SCOPED_TIMER("Interface draw");
 		if (hideInterface) {
-			guihandler->Update();
 			//luaInputReceiver->Draw();
 		}
 		else {
