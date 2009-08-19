@@ -4357,6 +4357,7 @@ void CGame::UpdateUI(bool cam)
 			userInput = "";
 			writingPos = 0;
 			ignoreChar = 0;
+			inMapDrawer->keyPressed = false;
 		}
 	}
 }
