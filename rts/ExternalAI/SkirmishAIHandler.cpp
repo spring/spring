@@ -48,6 +48,7 @@ CSkirmishAIHandler& CSkirmishAIHandler::GetInstance() {
 
 CSkirmishAIHandler::CSkirmishAIHandler():
 	nextId(0)
+	//, usedSkirmishAIInfos_initialized(false)
 {
 }
 
@@ -103,15 +104,64 @@ size_t CSkirmishAIHandler::GetNumSkirmishAIs() const {
 	return id_ai.size();
 }
 
-std::set<SkirmishAIData*> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId)
+std::vector<SkirmishAIData*> CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId)
 {
-	std::set<SkirmishAIData*> skirmishAIsInTeam;
+	std::vector<SkirmishAIData*> skirmishAIsInTeam;
 
 	for (id_ai_t::iterator ai = id_ai.begin(); ai != id_ai.end(); ++ai) {
 		if (ai->second.team == teamId) {
-			skirmishAIsInTeam.insert(&(ai->second));
+			skirmishAIsInTeam.push_back(&(ai->second));
 		}
 	}
 
 	return skirmishAIsInTeam;
 }
+
+/*
+const std::vector<std::string> CSkirmishAIHandler::EMPTY_OPTION_VALUE_KEYS;
+const std::vector<std::string>& CSkirmishAIHandler::GetSkirmishAIOptionValueKeys(int teamId) const {
+
+	const SkirmishAIData* aiData = gameSetup->GetSkirmishAIDataForTeam(teamId);
+	if (aiData != NULL) {
+		return aiData->optionKeys;
+	} else {
+		return EMPTY_OPTION_VALUE_KEYS;
+	}
+}
+const std::map<std::string, std::string> CSkirmishAIHandler::EMPTY_OPTION_VALUES;
+const std::map<std::string, std::string>& CSkirmishAIHandler::GetSkirmishAIOptionValues(int teamId) const {
+
+	const SkirmishAIData* aiData = gameSetup->GetSkirmishAIDataForTeam(teamId);
+	if (aiData != NULL) {
+		return aiData->options;
+	} else {
+		return EMPTY_OPTION_VALUES;
+	}
+}
+
+const CSkirmishAIHandler::T_skirmishAIInfos& CAILibraryManager::GetUsedSkirmishAIInfos() {
+
+	if (!usedSkirmishAIInfos_initialized) {
+		const CTeam* team = NULL;
+		for (unsigned int t = 0; t < (unsigned int)teamHandler->ActiveTeams(); ++t) {
+			team = teamHandler->Team(t);
+			if (team != NULL && team->isAI) {
+				const std::string& t_sn = team->skirmishAIKey.GetShortName();
+				const std::string& t_v = team->skirmishAIKey.GetVersion();
+
+				IAILibraryManager::T_skirmishAIInfos::const_iterator aiInfo;
+				for (aiInfo = skirmishAIInfos.begin(); aiInfo != skirmishAIInfos.end(); ++aiInfo) {
+					const std::string& ai_sn = aiInfo->second->GetShortName();
+					const std::string& ai_v = aiInfo->second->GetVersion();
+					// add this AI info if it is used in the current game
+					if (ai_sn == t_sn && (t_sn.empty() || ai_v == t_v)) {
+						usedSkirmishAIInfos[aiInfo->first] = aiInfo->second;
+					}
+				}
+			}
+		}
+	}
+
+	return usedSkirmishAIInfos;
+}
+*/

@@ -55,8 +55,10 @@ public:
 
 	std::vector<PlayerBase> playerStartingData;
 
+private:
 	const std::vector<SkirmishAIData>& GetSkirmishAIs() const;
 	const SkirmishAIData* GetSkirmishAIDataForTeam(int teamId) const;
+public:
 
 	std::vector<TeamBase> teamStartingData;
 	std::vector<AllyTeam> allyStartingData;

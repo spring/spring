@@ -15,15 +15,16 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "IGlobalAICallback.h"
-#include "IAICallback.h"
-#include "IAICheats.h"
-#include "AICheats.h" // only for: CAICheats::IsPassive()
-#include "IAILibraryManager.h"
-#include "SSkirmishAICallbackImpl.h"
-#include "SkirmishAILibraryInfo.h"
-#include "SAIInterfaceCallbackImpl.h"
-#include "EngineOutHandler.h"
+#include "ExternalAI/IGlobalAICallback.h"
+#include "ExternalAI/IAICallback.h"
+#include "ExternalAI/IAICheats.h"
+#include "ExternalAI/AICheats.h" // only for: CAICheats::IsPassive()
+#include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/SSkirmishAICallbackImpl.h"
+#include "ExternalAI/SkirmishAILibraryInfo.h"
+#include "ExternalAI/SAIInterfaceCallbackImpl.h"
+#include "ExternalAI/SkirmishAIHandler.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "Interface/AISCommands.h"
 #include "Interface/SSkirmishAILibrary.h"
 #include "Sim/Units/UnitDef.h"
@@ -666,15 +667,11 @@ static inline bool checkOptionIndex(int optionIndex, const std::vector<std::stri
 	return ((optionIndex < 0) || ((size_t)optionIndex >= optionKeys.size()));
 }
 EXPORT(int) skirmishAiCallback_SkirmishAI_OptionValues_getSize(int teamId) {
-
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-	const std::map<std::string, std::string>& options = libMan->GetSkirmishAIOptionValues(teamId);
-	return (int)options.size();
+	return (int)skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->options.size();
 }
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int teamId, int optionIndex) {
 
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-	const std::vector<std::string>& optionKeys = libMan->GetSkirmishAIOptionValueKeys(teamId);
+	const std::vector<std::string>& optionKeys = skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->optionKeys;
 	if (checkOptionIndex(optionIndex, optionKeys)) {
 		return NULL;
 	} else {
@@ -684,12 +681,11 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getKey(int teamId
 }
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int teamId, int optionIndex) {
 
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-	const std::vector<std::string>& optionKeys = libMan->GetSkirmishAIOptionValueKeys(teamId);
+	const std::vector<std::string>& optionKeys = skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->optionKeys;
 	if (checkOptionIndex(optionIndex, optionKeys)) {
 		return NULL;
 	} else {
-		const std::map<std::string, std::string>& options = libMan->GetSkirmishAIOptionValues(teamId);
+		const std::map<std::string, std::string>& options = skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->options;
 		const std::string& key = *(optionKeys.begin() + optionIndex);
 		const std::map<std::string, std::string>::const_iterator op = options.find(key);
 		if (op == options.end()) {
@@ -701,8 +697,7 @@ EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValue(int team
 }
 EXPORT(const char*) skirmishAiCallback_SkirmishAI_OptionValues_getValueByKey(int teamId, const char* const key) {
 
-	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-	const std::map<std::string, std::string>& options = libMan->GetSkirmishAIOptionValues(teamId);
+	const std::map<std::string, std::string>& options = skirmishAIHandler.GetSkirmishAIsInTeam(teamId)[0]->options;
 	const std::map<std::string, std::string>::const_iterator op = options.find(key);
 	if (op == options.end()) {
 		return NULL;

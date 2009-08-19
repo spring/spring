@@ -180,8 +180,8 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	players.resize(setup->playerStartingData.size());
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
 
-	ais.resize(setup->GetSkirmishAIs().size());
-	std::copy(setup->GetSkirmishAIs().begin(), setup->GetSkirmishAIs().end(), ais.begin());
+	//ais.resize(setup->GetSkirmishAIs().size());
+	//std::copy(setup->GetSkirmishAIs().begin(), setup->GetSkirmishAIs().end(), ais.begin());
 
 	teams.resize(setup->teamStartingData.size());
 	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
@@ -217,7 +217,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	// AIs do not join in here, so just set their teams as active
 	for (size_t i = 0; i < setup->teamStartingData.size(); ++i)
 	{
-		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(i);
+		const SkirmishAIData* sad = NULL;//setup->GetSkirmishAIDataForTeam(i);
 		if (sad != NULL)
 		{
 			teams[i].leader = sad->hostPlayer;

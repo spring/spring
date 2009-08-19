@@ -26,7 +26,6 @@
 
 #include <map>
 #include <set>
-#include <vector>
 
 
 class CGameSetup;
@@ -75,7 +74,7 @@ public:
 	 * 
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	std::set<SkirmishAIData*> GetSkirmishAIsInTeam(const int teamId);
+	std::vector<SkirmishAIData*> GetSkirmishAIsInTeam(const int teamId);
 
 	/**
 	 * @brief Adds a Skirmish AI
@@ -105,6 +104,12 @@ public:
 	 * Constant at runtime
 	 */
 	size_t GetNumSkirmishAIs() const;
+	
+
+	//const std::vector<std::string>& GetSkirmishAIOptionValueKeys(int teamId) const;
+	//const std::map<std::string, std::string>& GetSkirmishAIOptionValues(int teamId) const;
+
+	//const T_skirmishAIInfos& GetUsedSkirmishAIInfos();
 
 private:
 	/// The Id reserved of for the next AI that will be added.
@@ -114,7 +119,17 @@ private:
 	/// Id -> AI instance
 	id_ai_t id_ai;
 
+	/*std::map<int, std::vector<std::string> > teamId_skirmishAIOptionValueKeys;
+	static const std::vector<std::string> EMPTY_OPTION_VALUE_KEYS;
+	std::map<int, std::map<std::string, std::string> > teamId_skirmishAIOptionValues;
+	static const std::map<std::string, std::string> EMPTY_OPTION_VALUES;
+
+	T_skirmishAIInfos usedSkirmishAIInfos;
+	bool usedSkirmishAIInfos_initialized;*/
+
 	static CSkirmishAIHandler* mySingleton;
 };
+
+#define skirmishAIHandler CSkirmishAIHandler::GetInstance()
 
 #endif // __SKIRMISH_AI_HANDLER_H
