@@ -301,9 +301,14 @@ public:
 	/// readmap->maxHeight
 	virtual float GetMaxHeight() = 0;
 	/**
-	 * FIXME
-	 * Returns the slope-map, half the resolution of the standard map
-	 * (values are 1 minus the y-component of the (average) facenormal of the square)
+	 * @brief the slope map
+	 * The values are 1 minus the y-component of the (average) facenormal of the square.
+	 *
+	 * - do NOT modify or delete the height-map (native code relevant only)
+	 * - index 0 is top left
+	 * - each data position is 2*2 in size
+	 * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
+	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
 	 */
 	virtual const float* GetSlopeMap() = 0;
 	/**

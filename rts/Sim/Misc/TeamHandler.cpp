@@ -62,6 +62,7 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 
 		SetAllyTeam(i, team->teamAllyteam);
 
+		// TODO: FIXME: remove
 		/*const SkirmishAIData* skirmishAIData = setup->GetSkirmishAIDataForTeam(i);
 
 		if (skirmishAIData != NULL) {

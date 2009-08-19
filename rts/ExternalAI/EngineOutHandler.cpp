@@ -43,7 +43,6 @@
 CR_BIND_DERIVED(CEngineOutHandler, CObject, )
 
 CR_REG_METADATA(CEngineOutHandler, (
-//				CR_MEMBER(localSkirmishAIs_size),
 				CR_MEMBER(id_skirmishAI),
 				CR_MEMBER(team_skirmishAIs),
 				CR_RESERVED(128)
@@ -127,28 +126,15 @@ void CEngineOutHandler::Destroy() {
 }
 
 CEngineOutHandler::CEngineOutHandler()
-//		: localSkirmishAIs_size(0)
 {
-	/*for (size_t t=0; t < teams_size; ++t) {
-		team_skirmishAIs[t] = NULL;
-		team_skirmishAIs[t] = ais_t;
-	}*/
-
-	/*for (size_t t=0; t < teamHandler->ActiveTeams(); ++t) {
-		// TODO: FIXME: uncomment last part of following line
-		const SkirmishAIData* data = NULL;//gameSetup->GetSkirmishAIDataForTeam(t);
-		if (data != NULL) {
-			team_skirmishAI[t] = *data;
-		}
-	}*/
 }
 
 CEngineOutHandler::~CEngineOutHandler() {
 
-	/*for (size_t t=0; t < skirmishAIs_size; ++t) {
-		delete skirmishAIs[t];
-		skirmishAIs[t] = NULL;
-	}*/
+	// id_skirmishAI should be empty already, but this can not hurt
+	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
+		delete ai->second;
+	}
 }
 
 
@@ -165,21 +151,21 @@ void CEngineOutHandler::PostLoad() {}
 
 void CEngineOutHandler::PreDestroy() {
 
-	//if (id_skirmishAI.size() == 0) return;
+	if (id_skirmishAI.size() == 0) return;
 
 	DO_FOR_SKIRMISH_AIS(PreDestroy())
 }
 
 void CEngineOutHandler::Load(std::istream* s) {
 
-	//if (id_skirmishAI.size() == 0) return;
+	if (id_skirmishAI.size() == 0) return;
 
 	DO_FOR_SKIRMISH_AIS(Load(s))
 }
 
 void CEngineOutHandler::Save(std::ostream* s) {
 
-	//if (id_skirmishAI.size() == 0) return;
+	if (id_skirmishAI.size() == 0) return;
 
 	DO_FOR_SKIRMISH_AIS(Save(s))
 }
@@ -457,10 +443,6 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 
 	//const bool unpauseAfterAIInit = configHandler->Get("AI_UnpauseAfterInit", true);
 
-	/*if (!teamHandler->IsValidTeam(teamId)) {
-		return false;
-	}*/
-
 	try {
 		// Pause the game for letting the AI initialize,
 		// as this can take quite some time.
@@ -477,16 +459,10 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
 		}*/
 
-		// TODO: remove this if we finnally support multiple AIs per team
-		/*if (team_skirmishAIs[teamId] != NULL) {
-			DestroySkirmishAI(teamId);
-		}*/
-
 		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
 
 		CSkirmishAIWrapper* aiWrapper = new CSkirmishAIWrapper(skirmishAIId);
 
-		//skirmishAIs.push_back(aiWrapper);
 		id_skirmishAI[skirmishAIId] = aiWrapper;
 		team_skirmishAIs[aiWrapper->GetTeamId()].push_back(skirmishAIId);
 
@@ -505,34 +481,10 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 				u = uNext;
 			}
 
-			//localSkirmishAIs_size++;
-
 			net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 		}
-
-		// Unpause the game again, if we paused it and it is still paused.
-		/*if (unpauseAfterAIInit && weDoPause) {
-			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
-		}*/
-
-		//return !isDieing;
 	} HANDLE_EXCEPTION;
-
-	//return false;
 }
-
-/*bool CEngineOutHandler::HasSkirmishAI(const int teamId) const {
-	return bla * (skirmishAIs[teamId] != NULL);
-}*/
-
-/*const SSkirmishAICallback* CEngineOutHandler::GetSkirmishAICallback(const size_t skirmishAIId) const {
-
-	if (skirmishAIs.find(skirmishAIId) != skirmishAIs.end()) {
-		return skirmishAIs[skirmishAIId]->GetCallback();
-	} else {
-		return NULL;
-	}
-}*/
 
 static void internal_aiErase(std::vector<size_t>& ais, const size_t skirmishAIId) {
 
@@ -546,39 +498,19 @@ static void internal_aiErase(std::vector<size_t>& ais, const size_t skirmishAIId
 	assert(false);
 }
 
-//TODO: move this whole function to SkirmishAIHandler
-/*void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId, const int reason) {
-
-	id_dieReason[skirmishAIId] = reason;
-
-	skirmishAIHandler.SetDieing(skirmishAIId, reason);
-	net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DIEING));
-}*/
-
 void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 
 	try {
-		//net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DIEING));
-
 		CSkirmishAIWrapper* aiWrapper = id_skirmishAI[skirmishAIId];
 		const int reason = skirmishAIHandler.GetLocalSkirmishAIDieReason(skirmishAIId);
 
 		aiWrapper->Release(reason);
 
-		//internal_aiErase(skirmishAIs, aiWrapper);
 		id_skirmishAI.erase(skirmishAIId);
 		internal_aiErase(team_skirmishAIs[aiWrapper->GetTeamId()], skirmishAIId);
 
 		delete aiWrapper;
 		aiWrapper = NULL;
-		//localSkirmishAIs_size--;
-
-		/*if (team_isSkirmishAIInitialized[teamId]) {
-			localSkirmishAIs_size--;
-			team_isSkirmishAIInitialized[teamId] = false;
-
-			net->Send(CBaseNetProtocol::Get().SendAIDestroyed(gu->myPlayerNum, teamId));
-		}*/
 
 		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DEAD));
 	} HANDLE_EXCEPTION;

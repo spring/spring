@@ -16,11 +16,15 @@
 
 class CTeam : public TeamBase
 {
-public:
 	CR_DECLARE(CTeam);
 	CR_DECLARE_SUB(Statistics);
+public:
 	CTeam();
 	~CTeam();
+	/**
+	 * This has to be called for every team before SlowUpdates start,
+	 * otherwise values get overwritten.
+	 */
 	void ResetFrameVariables();
 	void SlowUpdate();
 
@@ -64,10 +68,6 @@ public:
 	bool gaia;
 	int lineageRoot;
 
-	//std::string luaAI;
-	//SkirmishAIKey skirmishAIKey;
-	//std::map<std::string, std::string> skirmishAIOptions;
-
 	/// color info is unsynced
 	unsigned char origColor[4];
 
@@ -102,10 +102,10 @@ public:
 		float metalUsed,     energyUsed;
 		float metalProduced, energyProduced;
 		float metalExcess,   energyExcess;
-		float metalReceived, energyReceived; // received from allies
-		float metalSent,     energySent;     // sent to allies
+		float metalReceived, energyReceived; ///< received from allies
+		float metalSent,     energySent;     ///< sent to allies
 
-		float damageDealt,   damageReceived; // Damage taken and dealt to enemy units
+		float damageDealt,   damageReceived; ///< Damage taken and dealt to enemy units
 
 		int unitsProduced;
 		int unitsDied;

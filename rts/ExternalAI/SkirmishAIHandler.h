@@ -44,7 +44,6 @@ private:
 	~CSkirmishAIHandler();
 
 public:
-	//typedef std::vector<SkirmishAIData*> ais_t;
 	typedef std::vector<size_t> ids_t;
 
 	/**
@@ -124,14 +123,6 @@ public:
 	size_t GetNumSkirmishAIs() const;
 
 	/**
-	 * Called when a Skirmish AI left the scene.
-	 *
-	 * @param skirmishAIId Skirmish AI index
-	 * @param reason see ...?
-	 */
-	//void SkirmishAILeft(int skirmishAIId, unsigned char reason);
-
-	/**
 	 * Starts the initialization process of a locally running Skirmish AI,
 	 * which was defined in the start script.
 	 * Do NOT use for creating AIs not defined in the start script,
@@ -188,31 +179,15 @@ public:
 	 */
 	const SkirmishAIKey* GetLocalSkirmishAILibraryKey(const size_t skirmishAIId) const;
 
-	//const std::vector<std::string>& GetSkirmishAIOptionValueKeys(int teamId) const;
-	//const std::map<std::string, std::string>& GetSkirmishAIOptionValues(int teamId) const;
-
-	//const T_skirmishAIInfos& GetUsedSkirmishAIInfos();
-
 	bool IsLocalSkirmishAI(const size_t skirmishAIId) const;
 
 private:
 	static bool IsLocalSkirmishAI(const SkirmishAIData& aiData);
 
 private:
-	/// The Id reserved of for the next AI that will be added.
-	//size_t nextId;
-
 	typedef std::map<size_t, SkirmishAIData> id_ai_t;
 	/// Id -> AI instance
 	id_ai_t id_ai;
-
-	/*std::map<int, std::vector<std::string> > teamId_skirmishAIOptionValueKeys;
-	static const std::vector<std::string> EMPTY_OPTION_VALUE_KEYS;
-	std::map<int, std::map<std::string, std::string> > teamId_skirmishAIOptionValues;
-	static const std::map<std::string, std::string> EMPTY_OPTION_VALUES;
-
-	T_skirmishAIInfos usedSkirmishAIInfos;
-	bool usedSkirmishAIInfos_initialized;*/
 
 	/// Temporarly stores detailed info of local Skirmish AIs waiting for initialization
 	std::map<int, SkirmishAIData> team_localAIsInCreation;

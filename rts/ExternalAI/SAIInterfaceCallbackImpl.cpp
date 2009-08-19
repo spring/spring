@@ -134,7 +134,7 @@ EXPORT(int) aiInterfaceCallback_SkirmishAIs_getSize(int UNUSED_interfaceId) {
 	return skirmishAIHandler.GetNumSkirmishAIs();
 }
 EXPORT(int) aiInterfaceCallback_SkirmishAIs_getMax(int UNUSED_interfaceId) {
-	// TODO: FIXME: should rather be something like (maxPlayers - numPlayers)
+	// TODO: should rather be something like (maxPlayers - numPlayers)
 	return MAX_TEAMS;
 }
 EXPORT(const char*) aiInterfaceCallback_SkirmishAIs_Info_getValueByKey(int UNUSED_interfaceId, const char* const shortName, const char* const version, const char* const key) {

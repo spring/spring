@@ -84,13 +84,11 @@ CSkirmishAIWrapper::CSkirmishAIWrapper():
 
 CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
 		skirmishAIId(skirmishAIId),
-//		teamId(teamId),
 		cheatEvents(false),
 		ai(NULL),
 		initialized(false),
 		released(false),
 		c_callback(NULL)
-//		key(key)
 {
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 

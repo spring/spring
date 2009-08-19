@@ -47,10 +47,6 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(isDead),
 				CR_MEMBER(gaia),
 				CR_MEMBER(lineageRoot),
-				//CR_MEMBER(isAI),
-				//CR_MEMBER(luaAI),
-				//CR_MEMBER(skirmishAIKey),
-				//CR_MEMBER(skirmishAIOptions),
 				CR_MEMBER(origColor),
 				CR_MEMBER(units),
 				CR_MEMBER(metal),
@@ -123,7 +119,6 @@ CTeam::CTeam()
 : isDead(false),
   gaia(false),
   lineageRoot(-1),
-//  skirmishAISpecifier(SSAIKey()),
   metal(200000),
   energy(900000),
   metalPull(0),     prevMetalPull(0),
@@ -298,8 +293,6 @@ void CTeam::StartposMessage(const float3& pos)
 	startPos = pos;
 }
 
-/** This has to be called for every team before SlowUpdates start,
-	otherwise values get overwritten. */
 void CTeam::ResetFrameVariables()
 {
 	prevMetalPull     = metalPull;
