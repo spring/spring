@@ -1316,6 +1316,9 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 					(noResCheck ||
 					((f->def->metal  > 0.0f) && (team->metal  < team->metalStorage)) ||
 					((f->def->energy > 0.0f) && (team->energy < team->energyStorage)))) {
+					if (!f->IsInLosForAllyTeam(owner->allyteam)) {
+						continue;
+					}
 					if (!owner->unitDef->canmove && !ObjInBuildRange(f)) {
 						continue;
 					}
