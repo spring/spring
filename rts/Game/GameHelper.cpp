@@ -340,6 +340,10 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 
 float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude)
 {
+	if (dir == ZeroVector) {
+		return -1.0f;
+	}
+
 	// distance from start to ground intersection point + fudge
 	float groundLen   = ground->LineGroundCol(start, start + dir * length);
 	float returnLenSq = Square( (groundLen > 0.0f)? groundLen + 200.0f: length );

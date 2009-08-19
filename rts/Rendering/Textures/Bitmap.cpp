@@ -392,7 +392,7 @@ const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 {
 	glPushAttrib(GL_TEXTURE_BIT);
 
-	if (texID=0)
+	if (texID == 0)
 		glGenTextures(1, &texID);
 
 	switch(ddsimage->get_type())

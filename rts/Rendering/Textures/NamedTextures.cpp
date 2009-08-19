@@ -72,7 +72,7 @@ bool CNamedTextures::Bind(const string& texName)
 
 	GLuint texID = 0;
 	glGenTextures(1, &texID);
-	return Load(texName,texID);
+	return Load(texName, texID);
 }
 
 
