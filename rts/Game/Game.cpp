@@ -1118,10 +1118,11 @@ bool CGame::ActionPressed(const Action& action,
 		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
 		//const bool isFromHost         = (playernum == 0);
 		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
-		const bool isCheatingEnabled  = gs->cheatEnabled;
+		const bool cheating  = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
 		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
 		size_t skirmishAIId           = 0; // will only be used if !badArgs
+		const bool singlePlayer = (playerHandler->ActivePlayers() <= 1);
 
 		if (hasArgs) {
 			bool share = false;
@@ -1158,10 +1159,15 @@ bool CGame::ActionPressed(const Action& action,
 					skirmishAIId = skirmishAIIds[0];
 				}
 			}
-			if (!badArgs && !(fromPlayer->CanControlTeam(teamToKillId) && teamHandler->AlliedTeams(fromTeamId, teamToKillId)) && !isCheatingEnabled) {
-				logOutput.Print("Team to kill: player %s is not allowed to kill Skirmish AI controlling team %i (try with /cheat)",
-						fromPlayer->name.c_str(), teamToKillId);
-				badArgs = true;
+			if (!badArgs) {
+				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToKillId);
+				const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
+				const bool weAreLeader  = (teamToKill->leader == gu->myPlayerNum);
+				if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
+					logOutput.Print("Team to kill: player %s is not allowed to kill Skirmish AI controlling team %i (try with /cheat)",
+							fromPlayer->name.c_str(), teamToKillId);
+					badArgs = true;
+				}
 			}
 			if (!badArgs && teamToKill->isDead) {
 				logOutput.Print("Team to kill: is a dead team already: %i", teamToKillId);
@@ -1169,7 +1175,7 @@ bool CGame::ActionPressed(const Action& action,
 			}
 #ifndef DEBUG
 			// TODO: FIXME: remove this, if desync bug fixed
-			if (playerHandler->ActivePlayers() > 1) {
+			if (!singlePlayer) {
 				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
 				badArgs = true;
 			}
@@ -1220,8 +1226,9 @@ bool CGame::ActionPressed(const Action& action,
 		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
 		//const bool isFromHost         = (playernum == 0);
 		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
-		const bool isCheatingEnabled  = gs->cheatEnabled;
-		const bool hasArgs  = (action.extra.size() > 0);
+		const bool cheating           = gs->cheatEnabled;
+		const bool hasArgs            = (action.extra.size() > 0);
+		const bool singlePlayer = (playerHandler->ActivePlayers() <= 1);
 		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
 
 		if (hasArgs) {
@@ -1254,13 +1261,23 @@ bool CGame::ActionPressed(const Action& action,
 				logOutput.Print("Team to control: not a valid team number: \"%s\"", args[0].c_str());
 				badArgs = true;
 			}
-			if (!badArgs && !(fromPlayer->CanControlTeam(teamToControlId) && teamHandler->AlliedTeams(fromTeamId, teamToControlId)) && !isCheatingEnabled) {
-				logOutput.Print("Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
-						fromPlayer->name.c_str(), teamToControlId);
-				badArgs = true;
+			if (!badArgs) {
+				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToControlId);
+				const bool weAreLeader  = (teamToControl->leader == gu->myPlayerNum);
+				const bool noLeader     = (teamToControl->leader == -1);
+				if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader)))) {
+					logOutput.Print("Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
+							fromPlayer->name.c_str(), teamToControlId);
+					badArgs = true;
+				}
 			}
 			if (!badArgs && teamToControl->isDead) {
 				logOutput.Print("Team to control: is a dead team: %i", teamToControlId);
+				badArgs = true;
+			}
+			// TODO: FIXME: remove this, if support for multiple Skirmish AIs per team is in place
+			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).size() > 0)) {
+				logOutput.Print("Team to control: there is already an AI in controlling this team: %i", teamToControlId);
 				badArgs = true;
 			}
 			if (!badArgs && (skirmishAIHandler.GetLocalSkirmishAIInCreation(teamToControlId) != NULL)) {
@@ -1269,7 +1286,7 @@ bool CGame::ActionPressed(const Action& action,
 			}
 #ifndef DEBUG
 			// TODO: FIXME: remove this, if desync bug fixed
-			if (playerHandler->ActivePlayers() > 1) {
+			if (!singlePlayer) {
 				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
 				badArgs = true;
 			}
@@ -1292,19 +1309,19 @@ bool CGame::ActionPressed(const Action& action,
 					badArgs = true;
 				}
 
-				SkirmishAIData* aiData = new SkirmishAIData();
-				aiData->name = (aiName != "") ? aiName : aiShortName;
-				aiData->team = teamToControlId;
-				aiData->hostPlayer = gu->myPlayerNum;
-				aiData->shortName = aiShortName;
-				aiData->version = aiVersion;
+				SkirmishAIData aiData;
+				aiData.name       = (aiName != "") ? aiName : aiShortName;
+				aiData.team       = teamToControlId;
+				aiData.hostPlayer = gu->myPlayerNum;
+				aiData.shortName  = aiShortName;
+				aiData.version    = aiVersion;
 				std::map<std::string, std::string>::const_iterator o;
 				for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
-					aiData->optionKeys.push_back(o->first);
+					aiData.optionKeys.push_back(o->first);
 				}
-				aiData->options = aiOptions;
+				aiData.options = aiOptions;
 
-				skirmishAIHandler.CreateLocalSkirmishAI(*aiData);
+				skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 
 				/*if (eoh->IsSkirmishAI(teamToControlId)) {
 					logOutput.Print("Skirmish AI now controlling team %i.", teamToControlId);

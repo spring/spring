@@ -182,9 +182,9 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	players.resize(setup->playerStartingData.size());
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
 
-	//for (size_t a = 0; a < setup.GetSkirmishAIs().size(); ++a) {
-	//	ais[a] = setup.GetSkirmishAIs()[a];
-	//}
+	for (size_t a = 0; a < setup->GetSkirmishAIs().size(); ++a) {
+		ais[nextSkirmishAIId++] = setup->GetSkirmishAIs()[a];
+	}
 
 	teams.resize(setup->teamStartingData.size());
 	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
@@ -1079,8 +1079,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			//const int numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeam);
 			const bool weAreLeader       = (tai->leader == playerId);
 			const bool weAreAllied       = (tpl->teamAllyteam == tai->teamAllyteam);
+			const bool singlePlayer      = (players.size() <= 1);
+			const bool noLeader          = (tai->leader == -1);
 
-			if (weAreLeader || (weAreAllied && (cheating || !(tai->active)))) {
+			if (weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader))) {
 				// creating the AI is ok
 			} else {
 				Message(str(format(NoAICreated) %players[playerId].name %playerId %aiTeamId));
@@ -1117,13 +1119,18 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				break;
 			}
 
-			const bool isOwner               = (ais[skirmishAIId].hostPlayer == playerId);
-			const unsigned aiTeamId          = ais[skirmishAIId].team;
-			const size_t numPlayersInAITeam  = countNumPlayersInTeam(players, aiTeamId);
-			const size_t numAIsInAITeam      = countNumSkirmishAIsInTeam(ais, aiTeamId);
-			GameTeam* tai                    = &teams[aiTeamId];
+			const unsigned aiTeamId         = ais[skirmishAIId].team;
+			const unsigned playerTeamId     = players[playerId].team;
+			const size_t numPlayersInAITeam = countNumPlayersInTeam(players, aiTeamId);
+			const size_t numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeamId);
+			GameTeam* tpl                   = &teams[playerTeamId];
+			GameTeam* tai                   = &teams[aiTeamId];
+			const bool weAreAIHost          = (ais[skirmishAIId].hostPlayer == playerId);
+			const bool weAreLeader          = (tai->leader == playerId);
+			const bool weAreAllied          = (tpl->teamAllyteam == tai->teamAllyteam);
+			const bool singlePlayer         = (players.size() <= 1);
 
-			if (!isOwner) {
+			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
 				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %aiTeamId));
 				break;
 			}

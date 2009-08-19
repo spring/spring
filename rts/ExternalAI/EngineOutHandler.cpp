@@ -564,7 +564,7 @@ void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 
 		//internal_aiErase(skirmishAIs, aiWrapper);
 		id_skirmishAI.erase(skirmishAIId);
-		internal_aiErase(team_skirmishAIs[id_skirmishAI[skirmishAIId]->GetTeamId()], aiWrapper);
+		internal_aiErase(team_skirmishAIs[aiWrapper->GetTeamId()], aiWrapper);
 
 		delete aiWrapper;
 		aiWrapper = NULL;
