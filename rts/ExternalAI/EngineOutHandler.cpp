@@ -254,9 +254,9 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 
 #define DO_FOR_TEAM_SKIRMISH_AIS(FUNC, TEAM_ID)							\
 		if (team_skirmishAIs.find(TEAM_ID) != team_skirmishAIs.end()) {	\
-			for (ais_t::iterator ai = team_skirmishAIs[TEAM_ID].begin(); ai != team_skirmishAIs[TEAM_ID].end(); ++ai) {	\
+			for (ids_t::iterator ai = team_skirmishAIs[TEAM_ID].begin(); ai != team_skirmishAIs[TEAM_ID].end(); ++ai) {	\
 				try {													\
-					(*ai)->FUNC;										\
+					id_skirmishAI[*ai]->FUNC;							\
 				} HANDLE_EXCEPTION;										\
 			}															\
 		}
@@ -385,13 +385,14 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 				&& (team_skirmishAIs.find(at) != team_skirmishAIs.end()))
 		{
 			const bool inLosOrRadar = (damaged.losStatus[teamHandler->AllyTeam(at)] & (LOS_INLOS | LOS_INRADAR));
-			for (ais_t::iterator ai = team_skirmishAIs[at].begin(); ai != team_skirmishAIs[at].end(); ++ai)
+			for (ids_t::iterator ai = team_skirmishAIs[at].begin(); ai != team_skirmishAIs[at].end(); ++ai)
 			{
-				if (inLosOrRadar || (*ai)->IsCheatEventsEnabled())
+				CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
+				if (inLosOrRadar || saw->IsCheatEventsEnabled())
 				{
 					try {
-						(*ai)->EnemyDamaged(damagedUnitId, attackerUnitId,
-								damage, attackDir_attackersView, weaponDefId, paralyzer);
+						saw->EnemyDamaged(damagedUnitId, attackerUnitId, damage,
+								attackDir_attackersView, weaponDefId, paralyzer);
 					} HANDLE_EXCEPTION;
 				}
 			}
@@ -487,7 +488,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 
 		//skirmishAIs.push_back(aiWrapper);
 		id_skirmishAI[skirmishAIId] = aiWrapper;
-		team_skirmishAIs[aiWrapper->GetTeamId()].push_back(aiWrapper);
+		team_skirmishAIs[aiWrapper->GetTeamId()].push_back(skirmishAIId);
 
 		aiWrapper->Init();
 
@@ -533,14 +534,16 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 	}
 }*/
 
-static void internal_aiErase(std::vector<CSkirmishAIWrapper*> ais, const CSkirmishAIWrapper* ai) {
+static void internal_aiErase(std::vector<size_t>& ais, const size_t skirmishAIId) {
 
-	for (size_t a = 0; a < ais.size(); ++a) {
-		if (ais[a] == ai) {
-			ais.erase(ais.begin() + a);
-			break;
+	for (std::vector<size_t>::iterator ai = ais.begin(); ai != ais.end(); ++ai) {
+		if (*ai == skirmishAIId) {
+			ais.erase(ai);
+			return;
 		}
 	}
+	// failed to remove Skirmish AI ID
+	assert(false);
 }
 
 //TODO: move this whole function to SkirmishAIHandler
@@ -564,7 +567,7 @@ void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 
 		//internal_aiErase(skirmishAIs, aiWrapper);
 		id_skirmishAI.erase(skirmishAIId);
-		internal_aiErase(team_skirmishAIs[aiWrapper->GetTeamId()], aiWrapper);
+		internal_aiErase(team_skirmishAIs[aiWrapper->GetTeamId()], skirmishAIId);
 
 		delete aiWrapper;
 		aiWrapper = NULL;

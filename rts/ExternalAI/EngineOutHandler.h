@@ -126,6 +126,7 @@ private:
 	/// Total number of local Skirmish AI instances
 	//size_t localSkirmishAIs_size;
 
+	typedef std::vector<size_t> ids_t;
 	typedef std::vector<CSkirmishAIWrapper*> ais_t;
 	/// Contains all local Skirmish AIs in no particular order
 	//ais_t skirmishAIs;
@@ -134,7 +135,7 @@ private:
 	/// Contains all local Skirmish AIs, indexed by their ID
 	id_ai_t id_skirmishAI;
 
-	typedef std::map<int, ais_t> team_ais_t;
+	typedef std::map<int, ids_t> team_ais_t;
 	/**
 	 * Array mapping team IDs to local Skirmish AI instances.
 	 * There can be multiple Skirmish AIs per team.
