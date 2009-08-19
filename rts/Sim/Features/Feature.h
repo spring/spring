@@ -1,14 +1,16 @@
 #ifndef __FEATURE_H__
 #define __FEATURE_H__
 
-#include "Sim/Objects/SolidObject.h"
-#include "Sim/Units/UnitHandler.h"
-#include "Rendering/UnitModels/3DModel.h"
-#include "Matrix44f.h"
 #include <vector>
 #include <list>
 #include <string>
 #include <boost/noncopyable.hpp>
+
+#include "Sim/Objects/SolidObject.h"
+#include "Sim/Units/UnitHandler.h"
+#include "Rendering/UnitModels/3DModel.h"
+#include "Matrix44f.h"
+#include "Sim/Misc/LosHandler.h"
 
 #define TREE_RADIUS 20
 
@@ -50,6 +52,12 @@ public:
 	void CalculateTransform();
 	void DependentDied(CObject *o);
 	void ChangeTeam(int newTeam);
+
+	bool IsInLosForAllyTeam(int allyteam) const
+	{
+		return (this->allyteam == -1 || this->allyteam == allyteam
+			|| loshandler->InLos(this->pos, allyteam));
+	}
 
 	// should not be here
 	void DrawS3O();

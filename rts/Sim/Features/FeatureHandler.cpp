@@ -711,9 +711,8 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 		CFeature* f = (*fi);
 		const FeatureDef* def = f->def;
 
-		if (def->drawType == DRAWTYPE_MODEL && (f->allyteam == -1 || f->allyteam == gu->myAllyTeam ||
-			gu->spectatingFullView || loshandler->InLos(f->pos, gu->myAllyTeam)) ) {
-
+		if (def->drawType == DRAWTYPE_MODEL
+				&& (gu->spectatingFullView || f->IsInLosForAllyTeam(gu->myAllyTeam))) {
 			if (drawReflection) {
 				float3 zeroPos;
 				if (f->midPos.y < 0) {
