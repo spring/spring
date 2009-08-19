@@ -161,6 +161,9 @@ public:
 	vector<unsigned short> enemy_combat_units_spotted;
 
 private:
+	std::string LocateMapLearnFile(const bool forWriting) const;
+	std::string LocateMapCacheFile(const bool forWriting) const;
+
 	AAI *ai;
 	IAICallback *cb;
 	AAIBuildTable *bt;
@@ -170,8 +173,7 @@ private:
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
-	static int aai_instances;	// how many aai instances have been initialized
-	static char map_filename[500];
+	static int aai_instances;	// how many AAI instances have been initialized
 
 	static int xSize, ySize;					// x and y size of the map (unit coordinates)
 	static int xMapSize, yMapSize;				// x and y size of the map (map coordinates)
