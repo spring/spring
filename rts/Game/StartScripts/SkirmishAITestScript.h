@@ -15,9 +15,11 @@ class CSkirmishAITestScript : public CScript
 	static const int skirmishAI_teamId = 1;
 public:
 	CSkirmishAITestScript(const SkirmishAIData& aiData);
-	~CSkirmishAITestScript(void);
+	~CSkirmishAITestScript();
 
-	void GameStart(void);
+	void GameStart();
+
+	static const std::string SCRIPT_NAME_PRELUDE;
 };
 
 #endif // _SKIRMISHAITESTSCRIPT_H
