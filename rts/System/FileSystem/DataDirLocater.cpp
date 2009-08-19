@@ -109,16 +109,24 @@ void DataDirLocater::AddDirs(const std::string& in)
 #else
 	while ((colon = in.find(';', prev_colon)) != std::string::npos) {
 #endif
-		datadirs.push_back(in.substr(prev_colon, colon - prev_colon));
+		const std::string newPath = in.substr(prev_colon, colon - prev_colon);
+		if (!newPath.empty())
+		{
+			datadirs.push_back(newPath);
 #ifdef DEBUG
-		logOutput.Print("Adding %s to directories" , in.substr(prev_colon, colon - prev_colon).c_str());
+			logOutput.Print("Adding %s to directories" , newPath.c_str());
 #endif
+		}
 		prev_colon = colon + 1;
 	}
+	const std::string newPath = in.substr(prev_colon);
+	if (!newPath.empty())
+	{
+		datadirs.push_back(newPath);
 #ifdef DEBUG
-	logOutput.Print("Adding %s to directories" , in.substr(prev_colon).c_str());
+		logOutput.Print("Adding %s to directories" , newPath.c_str());
 #endif
-	datadirs.push_back(in.substr(prev_colon));
+	}
 }
 
 /**
