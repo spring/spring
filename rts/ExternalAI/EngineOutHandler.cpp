@@ -491,7 +491,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 
 		aiWrapper->Init();
 
-		const bool isDieing = skirmishAIHandler.IsSkirmishAIDieing(skirmishAIId);
+		const bool isDieing = skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId);
 		if (!isDieing) {
 			// Send a UnitCreated event for each unit of the team.
 			// This will only do something if the AI is created mid-game.
@@ -558,7 +558,7 @@ void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
 		//net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DIEING));
 
 		CSkirmishAIWrapper* aiWrapper = id_skirmishAI[skirmishAIId];
-		const int reason = skirmishAIHandler.GetSkirmishAIDieReason(skirmishAIId);
+		const int reason = skirmishAIHandler.GetLocalSkirmishAIDieReason(skirmishAIId);
 
 		aiWrapper->Release(reason);
 

@@ -1068,11 +1068,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 		}
 		case NETMSG_AI_CREATED: {
-			const unsigned playerId     = inbuf[2];
-			const unsigned skirmishAIId = inbuf[3];
-			const unsigned aiTeamId     = inbuf[4];
-			const char* aiName          = (const char*) (&inbuf[5]);
-			const unsigned playerTeamId = players[playerId].team;
+			const unsigned playerId      = inbuf[2];
+			//const unsigned skirmAIId_rec = inbuf[3]; // should be -1, as we have to create the real one
+			const unsigned aiTeamId      = inbuf[4];
+			const char* aiName           = (const char*) (&inbuf[5]);
+			const unsigned playerTeamId  = players[playerId].team;
 			GameTeam* tpl                = &teams[playerTeamId];
 			GameTeam* tai                = &teams[aiTeamId];
 			//const int numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
@@ -1086,20 +1086,22 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				Message(str(format(NoAICreated) %players[playerId].name %playerId %aiTeamId));
 				break;
 			}
-			//Broadcast(CBaseNetProtocol::Get().SendAICreated(player, skirmishAIId, aiName));
-			Broadcast(packet); //forward data
+			const size_t skirmishAIId = nextSkirmishAIId++;
+			Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
+			//Broadcast(packet); //forward data
 
-			const size_t myId = nextSkirmishAIId++;
+/*
 #ifdef SYNCDEBUG
 			if (myId != skirmishAIId) {
 				Message(str(format("Sync Error, Skirmish AI ID from player %s (%i) does not match the one on the server (%i).") %players[playerId].name %skirmishAIId %myId));
 			}
 #endif // SYNCDEBUG
-			ais[myId].team = aiTeamId;
-			ais[myId].name = aiName;
-			ais[myId].hostPlayer = playerId;
+*/
+			ais[skirmishAIId].team = aiTeamId;
+			ais[skirmishAIId].name = aiName;
+			ais[skirmishAIId].hostPlayer = playerId;
 			if (tai->leader == -1) {
-				tai->leader = ais[myId].hostPlayer;
+				tai->leader = ais[skirmishAIId].hostPlayer;
 				tai->active = true;
 			}
 			break;

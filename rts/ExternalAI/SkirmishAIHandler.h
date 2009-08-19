@@ -55,6 +55,14 @@ public:
 	void LoadFromSetup(const CGameSetup& setup);
 
 	/**
+	 * @param skirmishAIId index to check
+	 * @return true if is active Skirmish AI
+	 *
+	 * Returns true if data for a Skirmish AI with the specified id is stored.
+	 */
+	bool IsActiveSkirmishAI(const size_t skirmishAIId) const;
+
+	/**
 	 * @brief SkirmishAIData
 	 * @param skirmishAIId index to fetch
 	 * @return SkirmishAIData pointer
@@ -124,14 +132,32 @@ public:
 	//void SkirmishAILeft(int skirmishAIId, unsigned char reason);
 
 	/**
+	 * Starts the synced initialization process of a locally running Skirmish AI.
+	 * Stores detailed info locally and sends synced stuff in a message
+	 * to the server, and real creation will happen when receiving the answer.
+	 * @param aiData detailed info of the AI to create
+	 * @see EngineOutHandler::CreateSkirmishAI()
+	 */
+	void CreateLocalSkirmishAI(const SkirmishAIData& aiData);
+	/**
+	 * Returns detailed (including unsynced) data for a Skirmish AI to be
+	 * running on the local machine.
+	 * @param teamId index of the team the AI shall be created for.
+	 *               only one AI per player can be in creation
+	 * @return detailed (including unsynced) data for a Skirmish AI
+	 * @see CreateLocalSkirmishAI()
+	 */
+	const SkirmishAIData* GetLocalSkirmishAIInCreation(const int teamId) const;
+
+	/**
 	 * This may only be called for local AIs.
-	 * This only sends a message to the server, and real destruction happens
+	 * Sends a message to the server, while real destruction will happen
 	 * when receiving the answer.
 	 * @param skirmishAIId index of the AI to destroy
 	 * @param reason for a list of values, see SReleaseEvent in ExternalAI/Interface/AISEvents.h
 	 * @see EngineOutHandler::DestroySkirmishAI()
 	 */
-	void SetSkirmishAIDieing(const size_t skirmishAIId, const int reason);
+	void SetLocalSkirmishAIDieing(const size_t skirmishAIId, const int reason);
 	/**
 	 * Returns a value explaining why a Skirmish AI is diein, or a value < 0
 	 * if it is not dieing.
@@ -139,18 +165,18 @@ public:
 	 * @return for a list of values, see SReleaseEvent in ExternalAI/Interface/AISEvents.h
 	 * @see IsSkirmishAIDieing()
 	 */
-	int GetSkirmishAIDieReason(const size_t skirmishAIId) const;
+	int GetLocalSkirmishAIDieReason(const size_t skirmishAIId) const;
 	/**
 	 * Reports true even before the DIEING state was received
 	 * from the server, but only for local AIs.
 	 * @param skirmishAIId index of the AI in question
 	 */
-	bool IsSkirmishAIDieing(const size_t skirmishAIId) const;
+	bool IsLocalSkirmishAIDieing(const size_t skirmishAIId) const;
 
 	/**
 	 * Returns the library key for a local Skirmish AI, or NULL.
 	 */
-	const SkirmishAIKey* GetSkirmishAILibraryKey(const size_t skirmishAIId) const;
+	const SkirmishAIKey* GetLocalSkirmishAILibraryKey(const size_t skirmishAIId) const;
 
 	//const std::vector<std::string>& GetSkirmishAIOptionValueKeys(int teamId) const;
 	//const std::map<std::string, std::string>& GetSkirmishAIOptionValues(int teamId) const;
@@ -177,6 +203,9 @@ private:
 
 	T_skirmishAIInfos usedSkirmishAIInfos;
 	bool usedSkirmishAIInfos_initialized;*/
+
+	/// Temporarly stores detailed info of local Skirmish AIs waiting for initialization
+	std::map<int, SkirmishAIData> team_localAIsInCreation;
 
 	/// Temporarly stores reason for killing a Skirmish AI
 	std::map<size_t, int> id_dieReason;

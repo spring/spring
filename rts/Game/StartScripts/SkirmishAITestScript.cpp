@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cctype>
 #include "StdAfx.h"
-#include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Lua/LuaParser.h"
@@ -19,6 +18,7 @@
 #include "Game/GameServer.h"
 #include "Game/PlayerHandler.h"
 #include "Game/Server/GameSkirmishAI.h"
+#include "NetProtocol.h"
 #include "mmgr.h"
 #include "Exceptions.h"
 
@@ -65,7 +65,8 @@ void CSkirmishAITestScript::GameStart(void)
 		gameServer->ais[skirmishAIId] = aiData;
 		skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
 
-		eoh->CreateSkirmishAI(skirmishAIId);
+		//net->Send(CBaseNetProtocol::Get().SendAICreated(aiData.hostPlayer, (size_t)-1, aiData.team, aiData.name));
+		skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 	}
 
 	const std::string startUnit0 = sideParser.GetStartUnit(0, "");
