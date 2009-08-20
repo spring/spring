@@ -180,7 +180,7 @@ public:
 	void DrawIndividual(CUnit * unit);
 
 private:
-	void SetBasicTeamColour(int team) const;
+	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
 	void SetupBasicS3OTexture0(void) const;
 	void SetupBasicS3OTexture1(void) const;
 	void CleanupBasicS3OTexture1(void) const;

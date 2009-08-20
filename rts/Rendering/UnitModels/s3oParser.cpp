@@ -213,6 +213,10 @@ void CS3OParser::Draw(const S3DModelPiece* o) const
 		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->tTangents[0].x);
 	}
 
+	glClientActiveTextureARB(GL_TEXTURE1_ARB);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
+
 	glClientActiveTexture(GL_TEXTURE0);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
@@ -242,6 +246,9 @@ void CS3OParser::Draw(const S3DModelPiece* o) const
 		glClientActiveTexture(GL_TEXTURE5);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
+
+	glClientActiveTextureARB(GL_TEXTURE1_ARB);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glClientActiveTexture(GL_TEXTURE0);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
