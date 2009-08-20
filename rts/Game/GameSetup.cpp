@@ -333,10 +333,10 @@ void CGameSetup::RemapPlayers()
 		}
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}
-	// relocate AI.hostPlayerNum field
+	// relocate AI.hostPlayer field
 	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
 		if (playerRemap.find(skirmishAIStartingData[a].hostPlayer) == playerRemap.end()) {
-			throw content_error("invalid AI.hostPlayerNum in GameSetup script");
+			throw content_error("invalid AI.Host in GameSetup script");
 		}
 		skirmishAIStartingData[a].hostPlayer = playerRemap[skirmishAIStartingData[a].hostPlayer];
 	}
@@ -358,7 +358,7 @@ void CGameSetup::RemapTeams()
 	// relocate AI.team field
 	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
 		if (teamRemap.find(skirmishAIStartingData[a].team) == teamRemap.end())
-			throw content_error("invalid AI.team in GameSetup script");
+			throw content_error("invalid AI.Team in GameSetup script");
 		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
 		team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
 	}
