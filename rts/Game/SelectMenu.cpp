@@ -292,6 +292,10 @@ bool SelectMenu::HandleEvent(const SDL_Event& ev)
 					logOutput.Print("Use shift-esc to quit");
 				}
 			}
+			else if (ev.key.keysym.sym == SDLK_RETURN)
+			{
+				Single();
+			}
 			break;
 		}
 	}
