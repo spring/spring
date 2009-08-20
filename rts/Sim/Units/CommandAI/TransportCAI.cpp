@@ -113,10 +113,6 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 {
 	CTransportUnit* transport=(CTransportUnit*)owner;
 	if(c.params.size()==1){		//load single unit
-		if(transport->transportCapacityUsed >= owner->unitDef->transportCapacity){
-			FinishCommand();
-			return;
-		}
 		CUnit* unit=uh->units[(int)c.params[0]];
 		if (!unit) {
 			FinishCommand();
@@ -150,15 +146,12 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 		if(unit && CanTransport(unit) && UpdateTargetLostTimer(int(c.params[0]))){
 			toBeTransportedUnitId=unit->id;
 			unit->toBeTransported=true;
-			if(unit->mass+transport->transportMassUsed > owner->unitDef->transportMass){
-				FinishCommand();
-				return;
+			// subtracting 1 square to account for pathfinder/groundmovetype inaccuracy
+			if (goalPos.SqDistance2D(unit->pos) > Square(owner->unitDef->loadingRadius - SQUARE_SIZE)) {
+				SetGoal(unit->pos, owner->pos, std::min(64.0f, owner->unitDef->loadingRadius));
 			}
-			if(goalPos.SqDistance2D(unit->pos)>100){
-				float3 fix = unit->pos;
-				SetGoal(fix,owner->pos,64);
-			}
-			if(unit->pos.SqDistance2D(owner->pos)<Square(owner->unitDef->loadingRadius*0.9f)){
+			const float sqDist = unit->pos.SqDistance2D(owner->pos);
+			if (sqDist <= Square(owner->unitDef->loadingRadius)) {
 				if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){		//handle air transports differently
 					float3 wantedPos=unit->pos+UpVector*unit->model->height;
 					SetGoal(wantedPos,owner->pos);
@@ -183,6 +176,12 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 					owner->script->TransportPickup(unit);
 				}
 			}
+			else if (owner->moveType->progressState == AMoveType::Failed && sqDist < (200 * 200)) {
+				// if we're pretty close already but CGroundMoveType fails because it considers
+				// the goal clogged (with the future passenger...), just try to move to the
+				// point halfway between the transport and the passenger.
+				SetGoal((unit->pos + owner->pos) * 0.5f, owner->pos);
+			}
 		} else {
 			FinishCommand();
 		}
@@ -193,7 +192,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 		float3 pos(c.params[0],c.params[1],c.params[2]);
 		float radius=c.params[3];
 		CUnit* unit=FindUnitToTransport(pos,radius);
-		if(unit && ((CTransportUnit*)owner)->transportCapacityUsed < owner->unitDef->transportCapacity){
+		if (unit && CanTransport(unit)) {
 			Command c2;
 			c2.id=CMD_LOAD_UNITS;
 			c2.params.push_back(unit->id);
@@ -257,6 +256,8 @@ bool CTransportCAI::CanTransport(CUnit* unit)
 {
 	CTransportUnit* transport=(CTransportUnit*)owner;
 
+	if (transport->transportCapacityUsed >= owner->unitDef->transportCapacity)
+		return false;
 	if (unit->unitDef->cantBeTransported)
 		return false;
 	if(unit->mass>=100000 || unit->beingBuilt)
