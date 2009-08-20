@@ -31,7 +31,7 @@ rem make sure the destination exists
 if not exist "%BUILD_DIR%\spring" mkdir "%BUILD_DIR%\spring"
 
 echo Creating bitmaps.sdz
-if exist "%BUILD_DIR%\spring\bitmaps.sdz" del /Q "%BUILD_DIR%\spring\bitmaps.sdz"
+if exist "%BUILD_DIR%\spring\bitmaps.sdz" del "%BUILD_DIR%\spring\bitmaps.sdz"
 cd bitmaps
 %ZIP_EXEC% -add -dir=current ..\..\_temp.zip bitmaps\*
 cd ..\..
@@ -41,21 +41,22 @@ move /Y bitmaps.sdz "%BUILD_DIR%\spring"
 cd builddata
 
 echo Creating springcontent.sdz
-if exist "%BUILD_DIR%\springcontent.sdz" del /Q "%BUILD_DIR%\springcontent.sdz"
+if exist "%BUILD_DIR%\springcontent.sdz" del "%BUILD_DIR%\springcontent.sdz"
 cd springcontent
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip shaders\*
 %ZIP_EXEC% -add -dir=current ..\..\_temp.zip gamedata\*
 %ZIP_EXEC% -add -dir=current ..\..\_temp.zip bitmaps\*
 %ZIP_EXEC% -add -dir=current ..\..\_temp.zip anims\*
+%ZIP_EXEC% -add -dir=current ..\..\_temp.zip shaders\*
 %ZIP_EXEC% -add -dir=current ..\..\_temp.zip LuaGadgets\*
 cd ..\..
 %ZIP_EXEC% -add _temp.zip builddata\springcontent\modinfo.lua
+%ZIP_EXEC% -add _temp.zip builddata\springcontent\EngineOptions.lua
 rename _temp.zip springcontent.sdz
 move /Y springcontent.sdz "%BUILD_DIR%"
 cd builddata
 
 echo Creating maphelper.sdz
-if exist "%BUILD_DIR%\maphelper.sdz" del /Q "%BUILD_DIR%\maphelper.sdz"
+if exist "%BUILD_DIR%\maphelper.sdz" del "%BUILD_DIR%\maphelper.sdz"
 cd maphelper
 %ZIP_EXEC% -add -dir=current ..\..\_temp.zip maphelper\*
 cd ..\..
@@ -66,7 +67,7 @@ move /Y maphelper.sdz "%BUILD_DIR%"
 cd builddata
 
 echo Creating cursors.sdz
-if exist "%BUILD_DIR%\cursors.sdz" del /Q "%BUILD_DIR%\cursors.sdz"
+if exist "%BUILD_DIR%\cursors.sdz" del "%BUILD_DIR%\cursors.sdz"
 cd cursors
 %ZIP_EXEC% -add -dir=current ..\..\_temp.zip anims\*
 cd ..\..
