@@ -23,6 +23,8 @@ class LuaUnsyncedCtrl {
 
 	private:
 		static int Echo(lua_State* L);
+		static int ZlibCompress(lua_State* L);
+		static int ZlibDecompress(lua_State* L);
 
 		static int SendMessage(lua_State* L);
 		static int SendMessageToPlayer(lua_State* L);
