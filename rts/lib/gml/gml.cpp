@@ -974,6 +974,7 @@ inline void QueueHandler(BYTE *&p, BYTE *&ptr) {
 		GML_MAKEHANDLER1(ClientActiveTexture)
 		GML_MAKEHANDLER3(MultiTexCoord2i)
 		GML_MAKEHANDLER3(GetQueryiv)
+		GML_MAKEHANDLER2(GetBooleanv)
 	}
 }
 

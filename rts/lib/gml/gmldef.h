@@ -285,6 +285,7 @@
 #undef glClientActiveTexture
 #undef glMultiTexCoord2i
 #undef glGetQueryiv
+#undef glGetBooleanv
 
 // #####################################################################
 
@@ -567,3 +568,4 @@
 #define glClientActiveTexture gmlClientActiveTexture
 #define glMultiTexCoord2i gmlMultiTexCoord2i
 #define glGetQueryiv gmlGetQueryiv
+#define glGetBooleanv gmlGetBooleanv
