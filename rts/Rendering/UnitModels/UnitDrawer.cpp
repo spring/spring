@@ -855,17 +855,21 @@ void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)
 
 void CUnitDrawer::SetupForGhostDrawing() const
 {
-	SetupBasicS3OTexture0();
+	glEnable(GL_LIGHTING); // Give faded objects same appearance as regular
+	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
+	glEnable(GL_LIGHT1);
+
+	SetupBasicS3OTexture0(); // This also sets up the transparency
 	SetupBasicS3OTexture1();
-	// use the alpha given by glColor for the outgoing alpha.
-	// (might need to change this if we ever have transparent bits on units?)
-	glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA_ARB, GL_REPLACE);
-	glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
+
+	float cols[]={1,1,1,1};
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);
+	glColor3f(1,1,1);
 
 	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glEnable(GL_TEXTURE_2D);
 
-	glPushAttrib(GL_COLOR_BUFFER_BIT || GL_DEPTH_BUFFER_BIT);
+	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_ALPHA_TEST);
@@ -883,12 +887,11 @@ void CUnitDrawer::CleanUpGhostDrawing() const
 	// reset texture1 state
 	CleanupBasicS3OTexture1();
 
-	// also reset the alpha generation
-	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
-	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
-
 	// reset texture0 state
 	CleanupBasicS3OTexture0();
+
+	glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHT1);
 }
 
 
@@ -1201,19 +1204,21 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 		unsigned char* col = teamHandler->Team(team)->color;
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, alpha);
 		if (luaDrawing) { // FIXME?
-			SetBasicTeamColour(team);
+			SetBasicTeamColour(team, alpha);
 		}
 	} else {
-		SetBasicTeamColour(team);
+		SetBasicTeamColour(team, alpha);
 	}
 }
 
 
-void CUnitDrawer::SetBasicTeamColour(int team) const
+void CUnitDrawer::SetBasicTeamColour(int team, float alpha) const
 {
 	unsigned char* col = teamHandler->Team(team)->color;
-	float texConstant[] = {col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, 1};
+	float texConstant[] = {col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, alpha};
 	glTexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, texConstant);
+	float matConstant[] = {1, 1, 1, alpha};
+	glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,matConstant);
 }
 
 
@@ -1255,6 +1260,14 @@ void CUnitDrawer::SetupBasicS3OTexture0(void) const
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE2_RGB_ARB, GL_TEXTURE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_ONE_MINUS_SRC_ALPHA);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+
+	// ALPHA = Current alpha * Alpha mask
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB, GL_TEXTURE1_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
+
 	glEnable(GL_TEXTURE_2D);
 }
 
@@ -1278,6 +1291,10 @@ void CUnitDrawer::SetupBasicS3OTexture1(void) const
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_PREVIOUS_ARB);
 
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_REPLACE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_PREVIOUS_ARB);
+	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
+
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, whiteTex);
 }
@@ -1288,6 +1305,10 @@ void CUnitDrawer::CleanupBasicS3OTexture1(void) const
 	// reset texture1 state
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glDisable(GL_TEXTURE_2D);
+
+	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB, GL_MODULATE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
+
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 }
@@ -1302,6 +1323,10 @@ void CUnitDrawer::CleanupBasicS3OTexture0(void) const
 	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND2_RGB_ARB, GL_SRC_ALPHA);
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_ALPHA_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB, GL_PREVIOUS_ARB);
+
 }
 
 
