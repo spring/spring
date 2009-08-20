@@ -136,6 +136,7 @@ void LuaParser::SetupEnv()
 
 	GetTable("VFS");
 	AddFunc("DirList",    DirList);
+	AddFunc("SubDirs",    SubDirs);
 	AddFunc("Include",    Include);
 	AddFunc("LoadFile",   LoadFile);
 	AddFunc("FileExists", FileExists);
@@ -461,6 +462,24 @@ int LuaParser::DirList(lua_State* L)
 	return 1;
 }
 
+
+int LuaParser::SubDirs(lua_State* L)
+{
+	if (currentParser == NULL) {
+		luaL_error(L, "invalid call to SubDirs() after execution");
+	}
+
+	const string dir = luaL_checkstring(L, 1);
+	if (!LuaIO::IsSimplePath(dir)) {
+		return 0;
+	}
+	const string pat = luaL_optstring(L, 2, "*");
+	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
+	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
+
+	LuaUtils::PushStringVector(L, CFileHandler::SubDirs(dir, pat, modes));
+	return 1;
+}
 
 /******************************************************************************/
 
