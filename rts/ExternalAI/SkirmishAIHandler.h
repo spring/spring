@@ -177,7 +177,7 @@ public:
 	/**
 	 * Returns the library key for a local Skirmish AI, or NULL.
 	 */
-	const SkirmishAIKey* GetLocalSkirmishAILibraryKey(const size_t skirmishAIId) const;
+	const SkirmishAIKey* GetLocalSkirmishAILibraryKey(const size_t skirmishAIId);
 
 	bool IsLocalSkirmishAI(const size_t skirmishAIId) const;
 
