@@ -1068,19 +1068,19 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 		}
 		case NETMSG_AI_CREATED: {
-			const unsigned playerId      = inbuf[2];
-			//const unsigned skirmAIId_rec = inbuf[3]; // should be -1, as we have to create the real one
-			const unsigned aiTeamId      = inbuf[4];
-			const char* aiName           = (const char*) (&inbuf[5]);
-			const unsigned playerTeamId  = players[playerId].team;
-			GameTeam* tpl                = &teams[playerTeamId];
-			GameTeam* tai                = &teams[aiTeamId];
-			//const int numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
-			//const int numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeam);
-			const bool weAreLeader       = (tai->leader == playerId);
-			const bool weAreAllied       = (tpl->teamAllyteam == tai->teamAllyteam);
-			const bool singlePlayer      = (players.size() <= 1);
-			const bool noLeader          = (tai->leader == -1);
+			const unsigned char playerId     = inbuf[2];
+			//const unsigned skirmAIId_rec     = *((unsigned int*)&inbuf[3]); // 4 bytes; should be -1, as we have to create the real one
+			const unsigned char aiTeamId     = inbuf[7];
+			const char* aiName               = (const char*) (&inbuf[8]);
+			const unsigned char playerTeamId = players[playerId].team;
+			GameTeam* tpl                    = &teams[playerTeamId];
+			GameTeam* tai                    = &teams[aiTeamId];
+			//const int numPlayersInAITeam     = countNumPlayersInTeam(players, aiTeam);
+			//const int numAIsInAITeam         = countNumSkirmishAIsInTeam(ais, aiTeam);
+			const bool weAreLeader           = (tai->leader == playerId);
+			const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
+			const bool singlePlayer          = (players.size() <= 1);
+			const bool noLeader              = (tai->leader == -1);
 
 			if (weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader))) {
 				// creating the AI is ok
@@ -1090,7 +1090,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 			const size_t skirmishAIId = nextSkirmishAIId++;
 			Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
-			//Broadcast(packet); //forward data
 
 /*
 #ifdef SYNCDEBUG
@@ -1109,9 +1108,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 		case NETMSG_AI_STATE_CHANGED: {
-			const unsigned playerId          = inbuf[1];
-			const unsigned skirmishAIId      = inbuf[2];
-			const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[3];
+			const unsigned char playerId     = inbuf[1];
+			const unsigned int skirmishAIId  = *((unsigned int*)&inbuf[2]); // 4 bytes
+			const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[6];
 
 			const bool skirmishAIId_valid    = (ais.find(skirmishAIId) != ais.end());
 			if (!skirmishAIId_valid) {
@@ -1134,7 +1133,6 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %aiTeamId));
 				break;
 			}
-			//Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, skirmishAIId, reason));
 			Broadcast(packet); //forward data
 
 			ais[skirmishAIId].status = newState;
