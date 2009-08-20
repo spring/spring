@@ -155,7 +155,6 @@ void LuaUtils::PushCurrentFuncEnv(lua_State* L, const char* caller)
 	lua_remove(L, -2); // remove the function
 }
 
-
 /******************************************************************************/
 /******************************************************************************/
 
@@ -657,6 +656,21 @@ int LuaUtils::PushDebugTraceback(lua_State *L)
 	return lua_gettop(L);
 }
 
+/******************************************************************************/
+/******************************************************************************/
+
+void LuaUtils::PushStringVector(lua_State* L, const vector<string>& vec)
+{
+	lua_newtable(L);
+	for (size_t i = 0; i < vec.size(); i++) {
+		lua_pushnumber(L, (int) (i + 1));
+		lua_pushstring(L, vec[i].c_str());
+		lua_rawset(L, -3);
+	}
+	lua_pushstring(L, "n");
+	lua_pushnumber(L, vec.size());
+	lua_rawset(L, -3);
+}
 
 /******************************************************************************/
 /******************************************************************************/

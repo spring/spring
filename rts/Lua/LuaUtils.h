@@ -81,6 +81,7 @@ class LuaUtils {
 		static int ParseStringVector(lua_State* L, int tableIndex,
 		                             vector<string>& vec);
 
+		static void PushStringVector(lua_State* L, const vector<string>& vec);
 };
 
 
