@@ -153,7 +153,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 	}
 
 	const string modes = GetModes(L, 3, synced);
-	
+
 	string code;
 	if (!LoadFileWithModes(filename, code, modes)) {
 		char buf[1024];
@@ -184,7 +184,7 @@ int LuaVFS::Include(lua_State* L, bool synced)
 		luaL_error(L, "Include(): error with setfenv");
 	}
 
-	const int paramTop = lua_gettop(L) - 1;	
+	const int paramTop = lua_gettop(L) - 1;
 
 	error = lua_pcall(L, 0, LUA_MULTRET, 0);
 
@@ -304,29 +304,7 @@ int LuaVFS::DirList(lua_State* L, bool synced)
 	const string pattern = luaL_optstring(L, 2, "*");
 	const string modes = GetModes(L, 3, synced);
 
-	int options = 0;
-	if (args >= 4) {
-		const string optstr = lua_tostring(L, 4);
-		if (strstr(optstr.c_str(), "r") != NULL) {
-			options |= FileSystem::RECURSE;
-		}
-		if (strstr(optstr.c_str(), "d") != NULL) {
-			options |= FileSystem::INCLUDE_DIRS;
-		}
-	}
-
-	const vector<string> filenames = CFileHandler::DirList(dir, pattern, modes);
-
-	lua_newtable(L);
-	for (size_t i = 0; i < filenames.size(); i++) {
-		lua_pushnumber(L, (int) (i + 1));
-		lua_pushstring(L, filenames[i].c_str());
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, filenames.size());
-	lua_rawset(L, -3);
-
+	LuaUtils::PushStringVector(L, CFileHandler::DirList(dir, pattern, modes));
 	return 1;
 }
 
@@ -362,29 +340,7 @@ int LuaVFS::SubDirs(lua_State* L, bool synced)
 	const string pattern = luaL_optstring(L, 2, "*");
 	const string modes = GetModes(L, 3, synced);
 
-	int options = 0;
-	if (args >= 4) {
-		const string optstr = lua_tostring(L, 4);
-		if (strstr(optstr.c_str(), "r") != NULL) {
-			options |= FileSystem::RECURSE;
-		}
-		if (strstr(optstr.c_str(), "d") != NULL) {
-			options |= FileSystem::INCLUDE_DIRS;
-		}
-	}
-
-	const vector<string> filenames = CFileHandler::SubDirs(dir, pattern, modes);
-
-	lua_newtable(L);
-	for (size_t i = 0; i < filenames.size(); i++) {
-		lua_pushnumber(L, (int) (i + 1));
-		lua_pushstring(L, filenames[i].c_str());
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, filenames.size());
-	lua_rawset(L, -3);
-
+	LuaUtils::PushStringVector(L, CFileHandler::SubDirs(dir, pattern, modes));
 	return 1;
 }
 
@@ -424,7 +380,7 @@ int LuaVFS::UseArchive(lua_State* L)
 
 	if (!lua_isfunction(L, funcIndex)) {
 		return 0;
-	}		
+	}
 
 	string fileData;
 	CFileHandler f(filename, SPRING_VFS_RAW);
@@ -488,7 +444,7 @@ int PackType(lua_State* L)
 	}
 	lua_pushlstring(L, buf, bufSize);
 	delete[] buf;
-	
+
 	return 1;
 }
 
@@ -522,7 +478,7 @@ int UnpackType(lua_State* L)
 		str += offset;
 		len -= offset;
 	}
-	
+
 	const size_t eSize = sizeof(T);
 	if (len < eSize) {
 		return 0;
@@ -550,7 +506,7 @@ int UnpackType(lua_State* L)
 		lua_pushnumber(L, tableCount);
 		lua_rawset(L, -3);
 		return 1;
-	}			
+	}
 
 	return 0;
 }

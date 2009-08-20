@@ -457,21 +457,7 @@ int LuaParser::DirList(lua_State* L)
 	string modes = luaL_optstring(L, 3, currentParser->accessModes.c_str());
 	modes = CFileHandler::AllowModes(modes, currentParser->accessModes);
 
-	const vector<string> files = CFileHandler::DirList(dir, pat, modes);
-
-	lua_newtable(L);
-	int count = 0;
-	vector<string>::const_iterator fi;
-	for (fi = files.begin(); fi != files.end(); ++fi) {
-		count++;
-		lua_pushnumber(L, count);
-		lua_pushstring(L, fi->c_str());
-		lua_rawset(L, -3);
-	}
-	lua_pushstring(L, "n");
-	lua_pushnumber(L, count);
-	lua_rawset(L, -3);
-
+	LuaUtils::PushStringVector(L, CFileHandler::DirList(dir, pat, modes));
 	return 1;
 }
 
@@ -734,7 +720,7 @@ LuaTable LuaTable::SubTable(int key) const
 
 LuaTable LuaTable::SubTable(const string& mixedKey) const
 {
-	
+
 	const string key = !(parser ? parser->lowerCppKeys : true) ? mixedKey : StringToLower(mixedKey);
 
 	LuaTable subTable;
