@@ -9,7 +9,7 @@
 
 /** Singleton object to read and store messages. It essentially behaves like a
 one-to-many translator: you pass a message to it, and according to the content
-of messages.tdf, it picks a random 'translation' and returns that. In the
+of messages.lua, it picks a random 'translation' and returns that. In the
 future this could be extended to support proper internationalisation too.
 Currently this is only the "player is no more" message. */
 class CMessages

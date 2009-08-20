@@ -252,7 +252,7 @@ int LuaFonts::Print(lua_State* L)
 				case 'c': { options |= FONT_CENTER;        break; }
 				case 'r': { options |= FONT_RIGHT;         break; }
 
-				//case 'd': { options |= FONT_BASELINE;      break; }
+				case 'd': { options |= FONT_BASELINE;      break; }
 				case 't': { options |= FONT_TOP;           break; }
 				case 'v': { options |= FONT_VCENTER;       break; }
 				case 'b': { options |= FONT_BOTTOM;        break; }
@@ -348,11 +348,13 @@ int LuaFonts::GetTextHeight(lua_State* L)
 
 	const string text(lua_tostring(L, 2),lua_strlen(L, 2));
 	float descender;
+	int lines;
 
-	const float height = font->GetTextHeight(text,&descender);
+	const float height = font->GetTextHeight(text,&descender,&lines);
 	lua_pushnumber(L, height);
 	lua_pushnumber(L, descender);
-	return 2;
+	lua_pushnumber(L, lines);
+	return 3;
 }
 
 

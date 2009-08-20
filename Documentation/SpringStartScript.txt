@@ -26,6 +26,7 @@
 	HostIP=xxx.xxx.xxx.xxx; // no effect as host
 	HostPort=xxx;       // where clients are going to connet to, usually 8452
 	SourcePort=0;       // no effect for host
+	AutohostIP=xxx;     // communicate with spring, specify the ip you are listening (as host)
 	AutohostPort=X;     // communicate with spring, specify the port you are listening (as host)
 
 	MyPlayerName=somename; // our ingame-name (needs to match one players Name= field)

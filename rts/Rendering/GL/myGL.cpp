@@ -94,21 +94,24 @@ void LoadExtensions()
 	}
 */
 
+	std::string s = (char*)glGetString(GL_EXTENSIONS);
+	for (unsigned int i=0; i<s.length(); i++)
+		if (s[i]==' ') s[i]='\n';
+
+	std::ofstream ofs("ext.txt");
+
+	if (!ofs.bad() && ofs.is_open())
+		ofs.write(s.c_str(), s.length());
+
 	std::string missingExts = "";
-	if(!GL_ARB_fragment_program_shadow) {
-		// used by the ground shadow shaders
-		// if this is not found, the installed graphic drivers most likely
-		// have no OpenGL support at all, eg. VESA
-		missingExts += " GL_ARB_fragment_program_shadow";
-	}
 	if(!GLEW_ARB_multitexture) {
-		missingExts += " GLEW_ARB_multitexture";
+		missingExts += " GL_ARB_multitexture";
 	}
 	if(!GLEW_ARB_texture_env_combine) {
-		missingExts += " GLEW_ARB_texture_env_combine";
+		missingExts += " GL_ARB_texture_env_combine";
 	}
 	if(!GLEW_ARB_texture_compression) {
-		missingExts += " GLEW_ARB_texture_compression";
+		missingExts += " GL_ARB_texture_compression";
 	}
 
 	if(!missingExts.empty()) {
@@ -128,15 +131,6 @@ void LoadExtensions()
 
 	vertexArray1=new CVertexArray;
 	vertexArray2=new CVertexArray;
-
-	std::string s= (char*)glGetString(GL_EXTENSIONS);
-	for (unsigned int i=0; i<s.length(); i++)
-		if (s[i]==' ') s[i]='\n';
-
-	std::ofstream ofs("ext.txt");
-
-	if (!ofs.bad() && ofs.is_open())
-		ofs.write(s.c_str(), s.length());
 }
 
 

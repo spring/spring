@@ -8,6 +8,7 @@
 ClientSetup::ClientSetup() :
 		hostport(DEFAULT_HOST_PORT),
 		sourceport(0),
+		autohostip("localhost"),
 		autohostport(0),
 		isHost(false)
 {
@@ -28,6 +29,7 @@ void ClientSetup::Init(const std::string& setup)
 	file.GetDef(hostip,       "localhost",           "GAME\\HostIP");
 	file.GetDef(hostport,     DEFAULT_HOST_PORT_STR, "GAME\\HostPort");
 	file.GetDef(sourceport,   "0",                   "GAME\\SourcePort");
+	file.GetDef(autohostip,   "localhost",           "GAME\\AutohostIP");
 	file.GetDef(autohostport, "0",                   "GAME\\AutohostPort");
 
 	file.GetDef(myPlayerName, "",                    "GAME\\MyPlayerName");

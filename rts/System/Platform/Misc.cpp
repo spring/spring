@@ -62,6 +62,28 @@ std::string GetBinaryPath()
 #endif
 }
 
+std::string GetLibraryPath()
+{
+#ifdef linux
+	//TODO
+	return "";
+#elif WIN32
+	TCHAR currentDir[MAX_PATH+1];
+	int ret = ::GetModuleFileName(GetModuleHandle("unitsync.dll"), currentDir, sizeof(currentDir));
+	if (ret == 0 || ret == sizeof(currentDir))
+		return "";
+	char drive[MAX_PATH], dir[MAX_PATH], file[MAX_PATH], ext[MAX_PATH];
+	_splitpath(currentDir, drive, dir, file, ext);
+	_makepath(currentDir, drive, dir, NULL, NULL);
+	return std::string(currentDir);
+#elif MACOSX_BUNDLE
+	//TODO
+	return "";
+#else
+	return "";
+
+#endif
+}
 
 std::string GetBinaryFile()
 {

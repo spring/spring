@@ -340,6 +340,10 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 
 float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude)
 {
+	if (dir == ZeroVector) {
+		return -1.0f;
+	}
+
 	// distance from start to ground intersection point + fudge
 	float groundLen   = ground->LineGroundCol(start, start + dir * length);
 	float returnLenSq = Square( (groundLen > 0.0f)? groundLen + 200.0f: length );
@@ -516,7 +520,7 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 							if (unit == lastTarget) {
 								value *= weapon->avoidTarget ? 10.0f : 0.4f;
 							}
-							if (paralyzer && unit->health - unit->paralyzeDamage < unit->maxHealth * 0.09f) {
+							if (paralyzer && unit->paralyzeDamage > unit->maxHealth) {
 								value *= 4.0f;
 							}
 							if (weapon->hasTargetWeight) {

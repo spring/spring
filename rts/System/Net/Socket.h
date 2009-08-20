@@ -2,6 +2,7 @@
 #define SOCKET_H
 
 #include <boost/asio/io_service.hpp>
+#include <boost/asio/ip/udp.hpp>
 
 
 namespace netcode
@@ -9,6 +10,7 @@ namespace netcode
 
 extern boost::asio::io_service netservice;
 bool CheckErrorCode(boost::system::error_code&);
+boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port);
 
 } // namespace netcode
 

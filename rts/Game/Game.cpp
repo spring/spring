@@ -81,6 +81,7 @@
 #include "Rendering/ShadowHandler.h"
 #include "Rendering/VerticalSync.h"
 #include "Rendering/Textures/Bitmap.h"
+#include "Rendering/Textures/NamedTextures.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
@@ -1332,11 +1333,9 @@ bool CGame::ActionPressed(const Action& action,
 		}
 		CLuaUI::UpdateTeams();
 	}
-	else if (cmd == "ally" && !gu->spectating){
-		if (action.extra.size() > 0)
-		{
-			if (!gameSetup->fixedAllies)
-			{
+	else if (cmd == "ally" && !gu->spectating) {
+		if (action.extra.size() > 0) {
+			if (!gameSetup->fixedAllies) {
 				std::istringstream is(action.extra);
 				int otherAllyTeam = -1;
 				is >> otherAllyTeam;
@@ -1347,8 +1346,7 @@ bool CGame::ActionPressed(const Action& action,
 				else
 					logOutput.Print("/ally: wrong parameters (usage: /ally <other team> [0|1])");
 			}
-			else
-			{
+			else {
 				logOutput.Print("No ingame alliances are allowed");
 			}
 		}
@@ -2461,7 +2459,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				return;
 			}
 
-		// make sure team unit-limit not exceeded
+			// make sure team unit-limit is not exceeded
 			if ((currentNumUnits + numRequestedUnits) > uh->MaxUnitsPerTeam()) {
 				numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
 			}
@@ -3023,6 +3021,7 @@ bool CGame::Draw() {
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
+	CNamedTextures::Update();
 	texturehandlerS3O->Update();
 	modelParser->Update();
 	treeDrawer->UpdateDraw();
@@ -3030,6 +3029,7 @@ bool CGame::Draw() {
 	unitDrawer->Update();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
+	guihandler->Update();
 	lineDrawer.UpdateLineStipple();
 	fartextureHandler->CreateFarTextures();
 
@@ -3038,7 +3038,6 @@ bool CGame::Draw() {
 	eventHandler.DrawGenesis();
 
 	if (!gu->active) {
-		guihandler->Update();
 		SDL_Delay(10); // milliseconds
 		return true;
 	}
@@ -3126,7 +3125,6 @@ bool CGame::Draw() {
 	{
 		SCOPED_TIMER("Interface draw");
 		if (hideInterface) {
-			guihandler->Update();
 			//luaInputReceiver->Draw();
 		}
 		else {
@@ -4358,6 +4356,7 @@ void CGame::UpdateUI(bool cam)
 			userInput = "";
 			writingPos = 0;
 			ignoreChar = 0;
+			inMapDrawer->keyPressed = false;
 		}
 	}
 }

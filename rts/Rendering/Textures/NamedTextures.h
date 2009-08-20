@@ -5,15 +5,23 @@
 //////////////////////////////////////////////////////////////////////
 
 #include <map>
+#include <vector>
 #include <string>
+
+#include "Rendering/GL/myGL.h"
+
 using std::map;
 using std::string;
-
+using std::vector;
 
 class CNamedTextures {
 	public:
 		static void Init();
 		static void Kill();
+
+		//! reload textures we couldn't load cause Bind() was called when compiling a DList
+		//! (else it would reupload the texturedata each call of the dlist, so we delay it and load them here)
+		static void Update();
 
 		static bool Bind(const string& texName);
 		static bool Free(const string& texName);
@@ -31,7 +39,10 @@ class CNamedTextures {
 		static const TexInfo* GetInfo(const string& texName);
 
 	private:
+		static bool Load(const string& texName, GLuint texID);
+
 		static map<string, TexInfo> texMap;
+		static vector<string> texWaiting;
 };
 
 
