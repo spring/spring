@@ -34,5 +34,24 @@ bool CheckErrorCode(boost::system::error_code& err)
 	}
 }
 
+boost::asio::ip::udp::endpoint ResolveAddr(const std::string& ip, int port)
+{
+	using namespace boost::asio;
+	boost::system::error_code err;
+	ip::address tempAddr = ip::address::from_string(ip, err);
+	if (err)
+	{
+		// error, maybe a hostname?
+		ip::udp::resolver resolver(netcode::netservice);
+		std::ostringstream portbuf;
+		portbuf << port;
+		ip::udp::resolver::query query(ip, portbuf.str());
+		ip::udp::resolver::iterator iter = resolver.resolve(query);
+		tempAddr = iter->endpoint().address();
+	}
+
+	return ip::udp::endpoint(tempAddr, port);
+}
+
 } // namespace netcode
 

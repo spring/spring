@@ -12,7 +12,6 @@ import intopts
 
 # Compile a list of source files.
 unitsync_files = [
-	'tools/unitsync/pybind.cpp',
 	'tools/unitsync/Syncer.cpp',
 	'tools/unitsync/SyncServer.cpp',
 	'tools/unitsync/unitsync.cpp',

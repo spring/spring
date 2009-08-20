@@ -2,7 +2,6 @@
 #define KAIK_GLOBALAI_HDR
 
 #include <fstream>
-#include <set>
 
 #include "System/float3.h"
 #include "IncExternAI.h"
@@ -47,7 +46,6 @@ class CKAIK: public IGlobalAI {
 
 	private:
 		AIClasses* ai;
-		std::set<int> unfinishedUnits;
 };
 
 #endif

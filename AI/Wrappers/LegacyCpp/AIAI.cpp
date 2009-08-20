@@ -28,6 +28,9 @@ CAIAI::CAIAI(int teamId, IGlobalAI* gAI):
 
 CAIAI::~CAIAI() {
 
+	delete ai;
+	ai = NULL;
+
 	delete globalAICallback;
 	globalAICallback = NULL;
 }

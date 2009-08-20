@@ -970,7 +970,11 @@ int LuaSyncedCtrl::SetUnitTooltip(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->tooltip = luaL_checkstring(L, 2);
+	const char *tmp = luaL_checkstring(L, 2);
+	if (tmp)
+		unit->tooltip = string(tmp, lua_strlen(L, 2));
+	else
+		unit->tooltip = "";
 	return 0;
 }
 
@@ -1001,7 +1005,7 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 				}
 				else if (key == "paralyze") {
 					unit->paralyzeDamage = max(0.0f, value);
-					if (unit->paralyzeDamage >= unit->health) {
+					if (unit->paralyzeDamage > unit->maxHealth) {
 						unit->stunned = true;
 					} else if (value < 0.0f) {
 						unit->stunned = false;

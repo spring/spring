@@ -1186,7 +1186,7 @@ int CAICallback::GetFeatures (int *features, int features_max)
 		CFeature *f = *it;
 		assert(f);
 
-		if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
+		if (!f->IsInLosForAllyTeam(allyteam))
 			continue;
 
 		assert(i < features_max);
@@ -1211,7 +1211,7 @@ int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, floa
 		assert(ft[a]);
 		CFeature *f = ft[a];
 
-		if (f->allyteam >= 0 && f->allyteam!=allyteam && !loshandler->InLos(f->pos,allyteam))
+		if (!f->IsInLosForAllyTeam(allyteam))
 			continue;
 
 		assert(n < maxids);
@@ -1233,7 +1233,7 @@ const FeatureDef* CAICallback::GetFeatureDef (int feature)
 	if (it != fset.end()) {
 		const CFeature *f = *it;
 		int allyteam = teamHandler->AllyTeam(team);
-		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
+		if (f->IsInLosForAllyTeam(allyteam))
 			return f->def;
 	}
 
@@ -1254,7 +1254,7 @@ float CAICallback::GetFeatureHealth (int feature)
 	if (it != fset.end()) {
 		const CFeature *f = *it;
 		int allyteam = teamHandler->AllyTeam(team);
-		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
+		if (f->IsInLosForAllyTeam(allyteam))
 			return f->health;
 	}
 	return 0.0f;
@@ -1270,7 +1270,7 @@ float CAICallback::GetFeatureReclaimLeft (int feature)
 	if (it != fset.end()) {
 		const CFeature *f = *it;
 		int allyteam = teamHandler->AllyTeam(team);
-		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
+		if (f->IsInLosForAllyTeam(allyteam))
 			return f->reclaimLeft;
 	}
 	return 0.0f;
@@ -1286,7 +1286,7 @@ float3 CAICallback::GetFeaturePos (int feature)
 	if (it != fset.end()) {
 		const CFeature *f = *it;
 		int allyteam = teamHandler->AllyTeam(team);
-		if (f->allyteam < 0 || f->allyteam == allyteam || loshandler->InLos(f->pos,allyteam))
+		if (f->IsInLosForAllyTeam(allyteam))
 			return f->pos;
 	}
 	return ZeroVector;

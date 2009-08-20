@@ -38,7 +38,7 @@ public:
 	static const float NORMALIZE_EPS;
 #else
 	static const float CMP_EPS = 1e-4f;
-	static const float NORMALIZE_EPS = 1e-6f;
+	static const float NORMALIZE_EPS = 1e-12f;
 #endif
 
 

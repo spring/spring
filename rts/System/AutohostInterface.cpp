@@ -79,23 +79,10 @@ enum EVENT
 };
 }
 
-AutohostInterface::AutohostInterface(int remoteport) : autohost(netcode::netservice)
+using namespace boost::asio;
+AutohostInterface::AutohostInterface(const std::string& autohostip, int remoteport) : autohost(netcode::netservice, ip::udp::endpoint(ip::address_v6::any(), 0))
 {
-	using namespace boost::asio;
-	boost::system::error_code err;
-	autohost.open(ip::udp::v6(), err); // test v6
-	if (!err)
-	{
-		autohost.bind(ip::udp::endpoint(ip::address_v6::loopback(), 0));
-	}
-	else
-	{
-		// fallback to v4
-		autohost.open(ip::udp::v4());
-		autohost.bind(ip::udp::endpoint(ip::address_v4::loopback(), 0));
-	}
-	
-	autohost.connect(ip::udp::endpoint(ip::address_v4::loopback(), remoteport), err);
+	autohost.connect(netcode::ResolveAddr(autohostip, remoteport));
 }
 
 AutohostInterface::~AutohostInterface()

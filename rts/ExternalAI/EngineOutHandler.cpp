@@ -469,6 +469,8 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, c
 			DestroySkirmishAI(teamId);
 		}
 
+		net->Send(CBaseNetProtocol::Get().SendAICreated(gu->myPlayerNum, teamId));
+
 		team_skirmishAI[teamId] = data;
 		skirmishAIs[teamId] = new CSkirmishAIWrapper(teamId, key);
 		skirmishAIs[teamId]->Init();
@@ -481,14 +483,15 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, c
 			CUnitSet::iterator u, uNext;
 			for (u = team->units.begin(); u != team->units.end(); ) {
 				uNext = u; ++uNext;
+				// Send both of these events as the logically can only appear
+				// together, and some AIs will depend on this.
+				skirmishAIs[teamId]->UnitCreated((*u)->id, -1);
 				skirmishAIs[teamId]->UnitFinished((*u)->id);
 				u = uNext;
 			}
 
 			localSkirmishAIs_size++;
 			team_isSkirmishAIInitialized[teamId] = true;
-
-			net->Send(CBaseNetProtocol::Get().SendAICreated(gu->myPlayerNum, teamId));
 		}
 
 		// Unpause the game again, if we paused it and it is still paused.
@@ -533,11 +536,11 @@ void CEngineOutHandler::DestroySkirmishAI(int teamId, int reason) {
 			skirmishAIs[teamId] = NULL;
 			team_skirmishAI.erase(teamId);
 
+			net->Send(CBaseNetProtocol::Get().SendAIDestroyed(gu->myPlayerNum, teamId));
+
 			if (team_isSkirmishAIInitialized[teamId]) {
 				localSkirmishAIs_size--;
 				team_isSkirmishAIInitialized[teamId] = false;
-
-				net->Send(CBaseNetProtocol::Get().SendAIDestroyed(gu->myPlayerNum, teamId));
 			}
 		}
 	} HANDLE_EXCEPTION;

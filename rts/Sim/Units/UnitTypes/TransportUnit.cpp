@@ -155,7 +155,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 				mt->StartFlying();
 			}
 
-			u->stunned = (u->paralyzeDamage > u->health);
+			u->stunned = (u->paralyzeDamage > u->maxHealth);
 			u->moveType->LeaveTransport();
 			u->speed = speed*(0.5f + 0.5f*gs->randFloat());
 
@@ -244,7 +244,7 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 			if (dynamic_cast<CTAAirMoveType*>(moveType)) {
 				unit->moveType->useHeading = true;
 			}
-			unit->stunned = (unit->paralyzeDamage > unit->health);
+			unit->stunned = (unit->paralyzeDamage > unit->maxHealth);
 			unit->Block();
 			loshandler->MoveUnit(unit, false);
 			unit->moveType->LeaveTransport();

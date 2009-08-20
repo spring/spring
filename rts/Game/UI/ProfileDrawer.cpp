@@ -30,7 +30,7 @@ void ProfileDrawer::Draw()
 {
 	GML_STDMUTEX_LOCK_NOPROF(time); // Draw
 
-	glPushMatrix();
+
 	glDisable(GL_TEXTURE_2D);
 	glColor4f(0,0,0.5f,0.5f);
 	if(!profiler.profile.empty()){
@@ -50,13 +50,13 @@ void ProfileDrawer::Draw()
 #if GML_MUTEX_PROFILER
 		if(pi->first.size()<5 || pi->first.substr(pi->first.size()-5,5).compare("Mutex")!=0) { --y; continue; }
 #endif
-		font->glFormat(0.655f, 0.960f - y * 0.024f, 1.0f, FONT_SCALE | FONT_NORM, "%20s %6.2fs %5.2f%%", pi->first.c_str(), ((float)pi->second.total) / 1000.f, pi->second.percent * 100);
+		font->glFormat(0.655f, 0.965f - y * 0.024f, 1.0f, FONT_BASELINE | FONT_SCALE | FONT_NORM, "%20s %6.2fs %5.2f%%", pi->first.c_str(), ((float)pi->second.total) / 1000.f, pi->second.percent * 100);
 	}
 	font->End();
+
+	glPushMatrix();
 	glTranslatef(0.655f,0.965f,0);
 	glScalef(0.015f,0.02f,0.02f);
-
-	glDisable(GL_TEXTURE_2D);
 	for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi){
 		glColorf3((float3)pi->second.color);
 		glBegin(GL_QUADS);
