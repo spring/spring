@@ -141,11 +141,7 @@ void CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data, const size_t 
 	assert(id_ai.find(skirmishAIId) == id_ai.end());
 
 	id_ai[skirmishAIId] = data;
-	if (CSkirmishAIHandler::IsLocalSkirmishAI(data)) {
-		SkirmishAIKey tmpKey(data.shortName, data.version);
-		id_libKey[skirmishAIId] = aiLibManager->ResolveSkirmishAIKey(tmpKey);
-		team_localAIsInCreation.erase(data.team);
-	}
+	team_localAIsInCreation.erase(data.team);
 }
 
 bool CSkirmishAIHandler::RemoveSkirmishAI(const size_t skirmishAIId) {
@@ -164,8 +160,10 @@ void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId) {
 
 	SkirmishAIData* aiData = GetSkirmishAI(skirmishAIId);
 
-	// fail if a local AI is already in line for this team
+	// fail, if a local AI is already in line for this team
 	assert(team_localAIsInCreation.find(aiData->team) == team_localAIsInCreation.end());
+	// fail, if the specified AI is not a local one
+	assert(CSkirmishAIHandler::IsLocalSkirmishAI(*aiData));
 
 	team_localAIsInCreation[aiData->team] = *aiData;
 
@@ -176,6 +174,8 @@ void CSkirmishAIHandler::CreateLocalSkirmishAI(const SkirmishAIData& aiData) {
 
 	// fail if a local AI is already in line for this team
 	assert(team_localAIsInCreation.find(aiData.team) == team_localAIsInCreation.end());
+	// fail, if the specified AI is not a local one
+	assert(CSkirmishAIHandler::IsLocalSkirmishAI(aiData));
 
 	team_localAIsInCreation[aiData.team] = aiData;
 
@@ -207,13 +207,25 @@ bool CSkirmishAIHandler::IsLocalSkirmishAIDieing(const size_t skirmishAIId) cons
 	return (id_dieReason.find(skirmishAIId) != id_dieReason.end());
 }
 
-const SkirmishAIKey* CSkirmishAIHandler::GetLocalSkirmishAILibraryKey(const size_t skirmishAIId) const {
+const SkirmishAIKey* CSkirmishAIHandler::GetLocalSkirmishAILibraryKey(const size_t skirmishAIId) {
 
 	const SkirmishAIKey* key = NULL;
 
+	// fail, if the specified AI is not a local one
+	assert(CSkirmishAIHandler::IsLocalSkirmishAI(skirmishAIId));
+
 	id_libKey_t::const_iterator libKey = id_libKey.find(skirmishAIId);
 	if (libKey != id_libKey.end()) {
+		// already resolved
 		key = &(libKey->second);
+	} else {
+		// resolve it
+		const SkirmishAIData* aiData = GetSkirmishAI(skirmishAIId);
+		SkirmishAIKey tmpKey(aiData->shortName, aiData->version);
+		const SkirmishAIKey& resKey = aiLibManager->ResolveSkirmishAIKey(tmpKey);
+		assert(!resKey.IsUnspecified());
+		id_libKey[skirmishAIId] = resKey;
+		key = &(id_libKey[skirmishAIId]);
 	}
 
 	return key;
@@ -225,7 +237,7 @@ bool CSkirmishAIHandler::IsLocalSkirmishAI(const size_t skirmishAIId) const {
 
 	id_ai_t::const_iterator ai = id_ai.find(skirmishAIId);
 	if (ai != id_ai.end()) {
-		 CSkirmishAIHandler::IsLocalSkirmishAI(ai->second);
+		isLocal = CSkirmishAIHandler::IsLocalSkirmishAI(ai->second);
 	}
 
 	return isLocal;

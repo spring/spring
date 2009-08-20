@@ -212,6 +212,7 @@ static const FeatureDef* getFeatureDefById(int teamId, int featureDefId) {
 static inline size_t getFirstSkirmishAIIdForTeam(int teamId) {
 
 	const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
+	assert(skirmishAIIds.size() > 0);
 	return skirmishAIIds[0];
 }
 // TODO: FIXME: this function should not be needed anymore, after a clean move from teamId to skirmishAIId
@@ -635,13 +636,12 @@ static inline const CSkirmishAILibraryInfo* getSkirmishAILibraryInfo(int teamId)
 	const CSkirmishAILibraryInfo* info = NULL;
 
 	const SkirmishAIKey* key = skirmishAIHandler.GetLocalSkirmishAILibraryKey(getFirstSkirmishAIIdForTeam(teamId));
-	if (key != NULL) {
-		const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
-		IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
-		IAILibraryManager::T_skirmishAIInfos::const_iterator inf = infs.find(*key);
-		if (inf != infs.end()) {
-			info = (const CSkirmishAILibraryInfo*) inf->second;
-		}
+	assert(key != NULL);
+	const IAILibraryManager* libMan = IAILibraryManager::GetInstance();
+	IAILibraryManager::T_skirmishAIInfos infs = libMan->GetSkirmishAIInfos();
+	IAILibraryManager::T_skirmishAIInfos::const_iterator inf = infs.find(*key);
+	if (inf != infs.end()) {
+		info = (const CSkirmishAILibraryInfo*) inf->second;
 	}
 
 	return info;
