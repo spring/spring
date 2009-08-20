@@ -84,8 +84,9 @@ enum NETMSG {
 	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
 	NETMSG_TEAMSTAT         = 60,
-	NETMSG_AI_CREATED       = 61, // see SendAICreated
-	NETMSG_AI_STATE_CHANGED = 62, // see SendAIStateChanged
+
+	NETMSG_AI_CREATED       = 70, // /* uchar messageSize */, uchar myPlayerNum, uint whichSkirmishAI, uchar team, std::string name (ends with \0)
+	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
 };
 
 // action to do with NETMSG_TEAM 
@@ -165,11 +166,11 @@ public:
 	PacketType SendTeamDied(uchar myPlayerNum, uchar whichTeam);
 
 	PacketType SendAICreated(const uchar myPlayerNum,
-	                         const uchar whichSkirmishAI,
+	                         const uint  whichSkirmishAI,
 	                         const uchar team,
 	                         const std::string& name);
 	PacketType SendAIStateChanged(const uchar myPlayerNum,
-	                              const uchar whichSkirmishAI,
+	                              const uint  whichSkirmishAI,
 	                              const uchar newState);
 
 	PacketType SendSetAllied(uchar myPlayerNum, uchar whichAllyTeam, uchar state);

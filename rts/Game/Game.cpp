@@ -4101,12 +4101,13 @@ void CGame::ClientReadNet()
 				break;
 			}
 			case NETMSG_AI_CREATED: {
-				const unsigned playerId     = inbuf[2];
-				const unsigned skirmishAIId = inbuf[3];
-				const unsigned aiTeamId     = inbuf[4];
-				const char* aiName          = (const char*) (&inbuf[5]);
-				CTeam* tai = teamHandler->Team(aiTeamId);
-				const unsigned isLocal      = (playerId == gu->myPlayerNum);
+				// inbuf[1] contains the message size
+				const unsigned char playerId = inbuf[2];
+				const unsigned skirmishAIId  = *((unsigned int*)&inbuf[3]); // 4 bytes
+				const unsigned char aiTeamId = inbuf[7];
+				const char* aiName           = (const char*) (&inbuf[8]);
+				CTeam* tai                   = teamHandler->Team(aiTeamId);
+				const unsigned isLocal       = (playerId == gu->myPlayerNum);
 
 				if (isLocal) {
 					const SkirmishAIData& aiData = *(skirmishAIHandler.GetLocalSkirmishAIInCreation(aiTeamId));
@@ -4137,9 +4138,9 @@ void CGame::ClientReadNet()
 				break;
 			}
 			case NETMSG_AI_STATE_CHANGED: {
-				const unsigned playerId          = inbuf[1];
-				const unsigned skirmishAIId      = inbuf[2];
-				const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[3];
+				const unsigned char playerId     = inbuf[1];
+				const unsigned int skirmishAIId  = *((unsigned int*)&inbuf[2]); // 4 bytes
+				const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[6];
 				SkirmishAIData* aiData           = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 				const unsigned aiTeamId          = aiData->team;
 				const unsigned isLocal           = (aiData->hostPlayer == gu->myPlayerNum);
