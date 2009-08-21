@@ -117,6 +117,23 @@ const std::string& CSkirmishAILibraryInfo::GetDescription() const {
 const std::string& CSkirmishAILibraryInfo::GetURL() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_URL);
 }
+bool CSkirmishAILibraryInfo::IsLuaAI() const {
+
+	bool isLua = false;
+
+	const std::string& isLuaStr = GetInfo("isLuaAI");
+	if ((isLuaStr == "yes") ||
+		(isLuaStr == "Yes") ||
+		(isLuaStr == "YES") ||
+		(isLuaStr == "1") ||
+		(isLuaStr == "true") ||
+		(isLuaStr == "True") ||
+		(isLuaStr == "TRUE")) {
+		isLua = true;
+	}
+
+	return isLua;
+}
 const std::string& CSkirmishAILibraryInfo::GetInterfaceShortName() const {
 	return GetInfo(SKIRMISH_AI_PROPERTY_INTERFACE_SHORT_NAME);
 }
@@ -167,6 +184,12 @@ void CSkirmishAILibraryInfo::SetDescription(const std::string& description) {
 }
 void CSkirmishAILibraryInfo::SetURL(const std::string& url) {
 	SetInfo(SKIRMISH_AI_PROPERTY_URL, url);
+}
+void CSkirmishAILibraryInfo::SetLuaAI(const std::string& isLua) {
+	SetInfo("isLuaAI", isLua);
+}
+void CSkirmishAILibraryInfo::SetLuaAI(const bool isLua) {
+	SetLuaAI(isLua ? "yes" : "no");
 }
 void CSkirmishAILibraryInfo::SetInterfaceShortName(
 		const std::string& interfaceShortName) {
