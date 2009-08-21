@@ -1369,8 +1369,12 @@ bool CBuilderCAI::FindResurrectableFeatureAndResurrect(const float3& pos,
 	for (fi = features.begin(); fi != features.end(); ++fi) {
 		const CFeature* f = *fi;
 		if (f->def->destructable && f->createdFromUnit != "") {
-			if(freshOnly && f->reclaimLeft < 1.0f && f->resurrectProgress <= 0.0f)
+			if (!f->IsInLosForAllyTeam(owner->allyteam)) {
 				continue;
+			}
+			if (freshOnly && f->reclaimLeft < 1.0f && f->resurrectProgress <= 0.0f) {
+				continue;
+			}
 			float dist = f3SqLen(f->pos - owner->pos);
 			if (dist < bestDist) {
 				// dont lock-on to units outside of our reach (for immobile builders)
