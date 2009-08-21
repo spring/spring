@@ -433,7 +433,10 @@ int LuaUnsyncedCtrl::Echo(lua_State* L)
 
 int LuaUnsyncedCtrl::ZlibCompress(lua_State* L)
 {
-	return LuaUtils::ZlibCompress(L);
+	if (CLuaHandle::GetActiveHandle()->GetUserMode()) {
+		return LuaUtils::ZlibCompress(L);
+	}
+	return 0;
 }
 
 int LuaUnsyncedCtrl::ZlibDecompress(lua_State* L)
