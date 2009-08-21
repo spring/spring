@@ -163,12 +163,16 @@ void CFeature::Initialize(const float3& _pos, const FeatureDef* _def, short int 
 
 	if (def->drawType == DRAWTYPE_MODEL) {
 		model = LoadModel(def);
-		height = model->height;
-		SetRadius(model->radius);
-
-		midPos = pos + model->relMidPos;
-
-		collisionVolume = new CollisionVolume(def->collisionVolume, model->radius);
+		if (!model) {
+			logOutput.Print("Features: Couldn't load model for " + defName);
+			SetRadius(0.0f);
+			midPos = pos;
+		} else {
+			height = model->height;
+			SetRadius(model->radius);
+			midPos = pos + model->relMidPos;
+			collisionVolume = new CollisionVolume(def->collisionVolume, model->radius);
+		}
 	}
 	else if (def->drawType >= DRAWTYPE_TREE) {
 		SetRadius(TREE_RADIUS);
@@ -466,12 +470,11 @@ void CFeature::ForcedSpin(const float3& newDir)
 	}
 */
 
-	CMatrix44f tmp;
-	tmp.Translate(pos);
-	tmp.RotateZ(newDir.z);
-	tmp.RotateX(newDir.x);
-	tmp.RotateY(newDir.y);
-	transMatrix = tmp;
+	transMatrix.LoadIdentity();
+	transMatrix.Translate(pos);
+	transMatrix.RotateZ(newDir.z);
+	transMatrix.RotateX(newDir.x);
+	transMatrix.RotateY(newDir.y);
 
 	// const float clamped = fmod(newDir.y, PI * 2.0);
 	// heading = (short int)(clamped * 65536);
