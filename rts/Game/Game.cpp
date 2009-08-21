@@ -324,6 +324,19 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
 		  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 		}
+		// add the Skirmish AIs instance names to word completion,
+		// for various things, eg chatting
+		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
+		CSkirmishAIHandler::id_ai_t::const_iterator ai;
+		for (ai = ais.begin(); ai != ais.end(); ++ai) {
+			wordCompletion->AddWord(ai->second.name + " ", false, false, false);
+		}
+		// add the available Skirmish AI libraries to word completion, for /aicontrol
+		const IAILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
+		IAILibraryManager::T_skirmishAIKeys::const_iterator aiLib;
+		for (aiLib = aiLibs.begin(); aiLib != aiLibs.end(); ++aiLib) {
+			wordCompletion->AddWord(aiLib->GetShortName() + " " + aiLib->GetVersion() + " ", false, false, false);
+		}
 	}
 
 	{
@@ -4116,8 +4129,10 @@ void CGame::ClientReadNet()
 						const SkirmishAIData* curAIData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 						assert((aiData.team == curAIData->team) && (aiData.name == curAIData->name) && (aiData.hostPlayer == curAIData->hostPlayer));
 					} else {
-						// we will end up here for AIs defined mid-game, eg. with /aicontrol
+						// we will end up here for local AIs defined mid-game,
+						// eg. with /aicontrol
 						skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
+						wordCompletion->AddWord(aiData.name + " ", false, false, false);
 					}
 				} else {
 					SkirmishAIData aiData;
@@ -4125,6 +4140,7 @@ void CGame::ClientReadNet()
 					aiData.name       = aiName;
 					aiData.hostPlayer = playerId;
 					skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
+					wordCompletion->AddWord(aiData.name + " ", false, false, false);
 				}
 
 				if (tai->leader == -1) {
@@ -4152,6 +4168,7 @@ void CGame::ClientReadNet()
 				if ((newState == SKIRMAISTATE_DIEING) && isLocal) {
 					eoh->DestroySkirmishAI(skirmishAIId);
 				} else if (newState == SKIRMAISTATE_DEAD) {
+					wordCompletion->RemoveWord(aiData->name + " ");
 					skirmishAIHandler.RemoveSkirmishAI(skirmishAIId);
 					// this could be done in the above function as well
 					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {

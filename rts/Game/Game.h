@@ -183,10 +183,10 @@ private:
 	void ClientReadNet();
 	void UpdateUI(bool cam);
 	bool DrawWorld();
-	
+
 	void SimFrame();
 	void StartPlaying();
-	
+
 	// to smooth out SimFrame calls
 	int leastQue;       ///< Lowest value of que in the past second.
 	float timeLeft;     ///< How many SimFrame() calls we still may do.
