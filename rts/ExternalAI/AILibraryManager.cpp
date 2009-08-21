@@ -173,6 +173,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 			skirmishAIInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
 			skirmishAIInfo->SetDataDirCommon(
 					std::string(possibleDataDir) + "common");
+			skirmishAIInfo->SetLuaAI(false);
 
 			SkirmishAIKey aiKey = skirmishAIInfo->GetKey();
 			AIInterfaceKey interfaceKey =
