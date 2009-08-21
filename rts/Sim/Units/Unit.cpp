@@ -1897,15 +1897,15 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	teamHandler->Team(this->lineage)->LeftLineage(this);
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
-		string exp;
+		const std::string* exp;
 		if (selfDestruct) {
-			exp = unitDef->selfDExplosion;
+			exp = &unitDef->selfDExplosion;
 		} else {
-			exp = unitDef->deathExplosion;
+			exp = &unitDef->deathExplosion;
 		}
 
-		if (!exp.empty()) {
-			const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
+		if (!exp->empty()) {
+			const WeaponDef* wd = weaponDefHandler->GetWeapon(*exp);
 			if (wd) {
 				helper->Explosion(
 					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
