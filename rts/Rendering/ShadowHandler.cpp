@@ -145,10 +145,10 @@ void CShadowHandler::DrawShadowPasses(void)
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_FRONT);
 
+		readmap->GetGroundDrawer()->DrawShadowPass();
 		ph->DrawShadowPass();
 		unitDrawer->DrawShadowPass();
 		featureHandler->DrawShadowPass();
-		readmap->GetGroundDrawer()->DrawShadowPass();
 		treeDrawer->DrawShadowPass();
 		eventHandler.DrawWorldShadow();
 	glPopAttrib();
