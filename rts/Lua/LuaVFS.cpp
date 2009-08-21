@@ -57,6 +57,8 @@ bool LuaVFS::PushCommon(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "UnpackS32", UnpackS32);
 	HSTR_PUSH_CFUNC(L, "UnpackF32", UnpackF32);
 
+	HSTR_PUSH_CFUNC(L, "ZlibDecompress", ZlibDecompress);
+
 	return true;
 }
 
@@ -85,6 +87,8 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "DirList",    UnsyncDirList);
 	HSTR_PUSH_CFUNC(L, "SubDirs",    UnsyncSubDirs);
 	HSTR_PUSH_CFUNC(L, "UseArchive", UseArchive);
+
+	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
 
 	return true;
 }
@@ -402,6 +406,22 @@ int LuaVFS::UseArchive(lua_State* L)
 	}
 
 	return lua_gettop(L) - funcIndex + 1;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+//
+//  Zlib compression
+//
+
+int LuaVFS::ZlibCompress(lua_State* L)
+{
+	return LuaUtils::ZlibCompress(L);
+}
+
+int LuaVFS::ZlibDecompress(lua_State* L)
+{
+	return LuaUtils::ZlibDecompress(L);
 }
 
 
