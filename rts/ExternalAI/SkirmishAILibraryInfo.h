@@ -49,6 +49,7 @@ public:
 	virtual const std::string& GetName() const;
 	virtual const std::string& GetDescription() const;
 	virtual const std::string& GetURL() const;
+	virtual bool IsLuaAI() const;
 	virtual const std::string& GetInterfaceShortName() const;
 	virtual const std::string& GetInterfaceVersion() const;
 	virtual const std::string& GetInfo(const std::string& key) const;
@@ -62,6 +63,8 @@ public:
 	virtual void SetName(const std::string& name);
 	virtual void SetDescription(const std::string& description);
 	virtual void SetURL(const std::string& url);
+	virtual void SetLuaAI(const std::string& isLua);
+	virtual void SetLuaAI(const bool isLua);
 	virtual void SetInterfaceShortName(const std::string& interfaceShortName);
 	virtual void SetInterfaceVersion(const std::string& interfaceVersion);
 	virtual bool SetInfo(const std::string& key, const std::string& value,
