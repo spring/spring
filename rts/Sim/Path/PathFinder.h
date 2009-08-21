@@ -28,8 +28,8 @@ public:
 	whenever any such are available.
 	If no complete path was found, any path leading as "close" to target as possible will be
 	created, and SearchResult::OutOfRange will be returned.
-	Only when no "closer" position than the	given starting location could be found no path
-	is created, and SearchResult::CantGetCloser	is returned.
+	Only when no "closer" position than the given starting location could be found no path
+	is created, and SearchResult::CantGetCloser is returned.
 	Path resolution: 2*SQUARE_SIZE
 	Params:
 		moveData
@@ -173,25 +173,25 @@ private:
 	unsigned int maxNodesToBeSearched;
 	myPQ openSquares;
 
-	SquareState* squareState;			// Map of all squares on map.
-	// std::list<int> dirtySquares;		// Squares tested by search.
+	SquareState* squareState;			///< Map of all squares on map.
+	// std::list<int> dirtySquares;		///< Squares tested by search.
 	std::vector<int> dirtySquares;
 
-	int2 directionVector[16];		//Unit square-movement in given direction.
-	float moveCost[16];				//The cost of moving in given direction.
+	int2 directionVector[16];		///< Unit square-movement in given direction.
+	float moveCost[16];				///< The cost of moving in given direction.
 
 	float3 start;
 	int startxSqr, startzSqr;
 	int startSquare;
 
-	int goalSquare;					//Is sat during the search as the square closest to the goal.
-	float goalHeuristic;			//The heuristic value of goalSquare.
+	int goalSquare;					///< Is sat during the search as the square closest to the goal.
+	float goalHeuristic;			///< The heuristic value of goalSquare.
 
 	bool exactPath;
 	bool testMobile;
 	bool needPath;
 
-	//Statistic
+	// Statistic
 	unsigned int testedNodes;
 
 	OpenSquare *openSquareBufferPointer;
@@ -234,6 +234,4 @@ private:
 	int searchRadiusSq;
 };
 
-
-#endif
-
+#endif // PATHFINDER_H
