@@ -87,7 +87,8 @@ void CWordCompletion::Reset()
 	words["maxspect "] = mm;
 	
 	// remote commands
-	//TODO those commans are registered in Console, get the list from there
+	// TODO those commans are registered in Console, get the list from there
+	// This is best done with a new command class (eg. ConsoleCommand)
 	words["/atm"] = sl;
 	words["/aikill"] = sl;
 	words["/aicontrol"] = sl;
@@ -126,6 +127,11 @@ void CWordCompletion::AddWord(const std::string& word,
 	return;
 }
 
+void CWordCompletion::RemoveWord(const std::string& word)
+{
+	words.erase(word);
+}
+
 
 std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 {
@@ -133,7 +139,7 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 
 	const bool unitName = (msg.find("/give ") == 0);
 	const bool minimap = (msg.find("/minimap ") == 0);
-	  
+
 	// strip "a:" and "s:" prefixes
 	std::string prefix, rawmsg;
 	if ((msg.find_first_of("aAsS") == 0) && (msg[1] == ':')) {

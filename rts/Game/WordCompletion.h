@@ -16,7 +16,9 @@ class CWordCompletion
 		void Reset();
 		void AddWord(const std::string& word,
 		             bool startOfLine, bool unitName, bool minimap);
-		std::vector<std::string> Complete(std::string& msg) const; // returns partial matches
+		void RemoveWord(const std::string& word);
+		/// Returns partial matches
+		std::vector<std::string> Complete(std::string& msg) const;
 
 	protected:
 		class WordProperties {
