@@ -827,7 +827,7 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 	    (fullName.find_first_of('/')  == string::npos)) {
 		fullName = string("bitmaps/tracks/") + fullName;
 	}
-	bool isBitmap = (filesystem.GetExtensions(fullName) == "bmp");
+	bool isBitmap = (filesystem.GetExtension(fullName) == "bmp");
 
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
