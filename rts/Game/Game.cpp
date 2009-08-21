@@ -1309,6 +1309,8 @@ bool CGame::ActionPressed(const Action& action,
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
 				} else {
+					const CSkirmishAILibraryInfo* aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
+
 					SkirmishAIData aiData;
 					aiData.name       = (aiName != "") ? aiName : aiShortName;
 					aiData.team       = teamToControlId;
@@ -1320,6 +1322,7 @@ bool CGame::ActionPressed(const Action& action,
 						aiData.optionKeys.push_back(o->first);
 					}
 					aiData.options    = aiOptions;
+					aiData.isLuaAI    = aiLibInfo->IsLuaAI();
 
 					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 
