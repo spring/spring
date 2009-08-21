@@ -717,10 +717,20 @@ std::string FileSystem::GetBasename(const std::string& path) const
  */
 std::string FileSystem::GetExtension(const std::string& path) const
 {
-	std::string fn = GetFilename(path);
-	size_t dot = fn.find_last_of('.');
+	size_t l = path.length();
+//#ifdef WIN32
+	//! windows eats dots and spaces at the end of filenames
+	while (l > 0) {
+		if (path[l-1]=='.') {
+			l--;
+		} else if (path[l-1]==' ') {
+			l--;
+		} else break;
+	}
+//#endif
+	size_t dot = path.rfind('.', l);
 	if (dot != std::string::npos) {
-		return fn.substr(dot + 1);
+		return StringToLower(path.substr(dot+1));
 	}
 	return "";
 }

@@ -15,7 +15,7 @@
 // Returns true if the indicated file is in fact an archive
 bool CArchiveFactory::IsScanArchive(const std::string& fileName)
 {
-	std::string ext = StringToLower(filesystem.GetExtension(fileName));
+	std::string ext = filesystem.GetExtension(fileName);
 
 	return  (ext == "sd7") || (ext == "sdz") || (ext == "sdd") ||
 		(ext == "ccx") || (ext == "hpi") || (ext == "ufo") ||
@@ -30,7 +30,7 @@ CArchiveBase* CArchiveFactory::OpenArchive(const std::string& fileName,
 {
 	std::string ext = type;
 	if (type.empty()) {
-		ext = StringToLower(filesystem.GetExtension(fileName));
+		ext = filesystem.GetExtension(fileName);
 	}
 
 	     if (ext == "sd7") { ext = "7z";  }

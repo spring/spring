@@ -82,7 +82,7 @@ bool LuaIO::SafeWritePath(const string& path)
 #endif // !defined UNITSYNC && !defined DEDICATED && !defined BUILDING_AI
 	const size_t numExtensions = 5;
 	const char* exeFiles[numExtensions] = {"exe", "dll", "so", "bat", "com"};
-	const string ext = GetFileExt(path);
+	const string ext = filesystem.GetExtension(path);
 	for (size_t i = 0; i < numExtensions; ++i)
 	{
 		if (ext == exeFiles[i])
