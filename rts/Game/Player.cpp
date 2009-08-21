@@ -97,12 +97,11 @@ void CPlayer::SetControlledTeams()
 	}
 
 	// AI teams
-	const CSkirmishAIHandler::ids_t aiIds = skirmishAIHandler.GetAllSkirmishAIs();
-	for (CSkirmishAIHandler::ids_t::const_iterator ai = aiIds.begin(); ai != aiIds.end(); ++ai) {
-		const SkirmishAIData* sad = skirmishAIHandler.GetSkirmishAI(*ai);
-		const bool isHostedByUs   = (sad->hostPlayer == playerNum);
+	const CSkirmishAIHandler::id_ai_t aiIds = skirmishAIHandler.GetAllSkirmishAIs();
+	for (CSkirmishAIHandler::id_ai_t::const_iterator ai = aiIds.begin(); ai != aiIds.end(); ++ai) {
+		const bool isHostedByUs   = (ai->second.hostPlayer == playerNum);
 		if (isHostedByUs) {
-			controlledTeams.insert(sad->team);
+			controlledTeams.insert(ai->second.team);
 		}
 	}
 }

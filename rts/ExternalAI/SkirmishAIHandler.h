@@ -45,6 +45,7 @@ private:
 
 public:
 	typedef std::vector<size_t> ids_t;
+	typedef std::map<size_t, SkirmishAIData> id_ai_t;
 
 	/**
 	 * Fetcher for the singleton.
@@ -98,7 +99,7 @@ public:
 	 * 
 	 * Will change during runtime (Connection lost, died, killed, created, ...).
 	 */
-	ids_t GetAllSkirmishAIs();
+	const id_ai_t& GetAllSkirmishAIs() const;
 
 	/**
 	 * @brief Adds a Skirmish AI
@@ -185,7 +186,6 @@ private:
 	static bool IsLocalSkirmishAI(const SkirmishAIData& aiData);
 
 private:
-	typedef std::map<size_t, SkirmishAIData> id_ai_t;
 	/// Id -> AI instance
 	id_ai_t id_ai;
 

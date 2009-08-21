@@ -21,12 +21,13 @@
 #include "SkirmishAIHandler.h"
 
 #include "Game/GameSetup.h"
-#include "creg/STL_Map.h"
 #include "System/NetProtocol.h"
 #include "System/GlobalUnsynced.h"
 #include "ExternalAI/SkirmishAIKey.h"
 #include "ExternalAI/IAILibraryManager.h"
 #include "ExternalAI/EngineOutHandler.h"
+
+#include "creg/STL_Map.h"
 
 #include <assert.h>
 
@@ -124,15 +125,8 @@ CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetSkirmishAIsByPlayer(const int h
 	return skirmishAIs;
 }
 
-CSkirmishAIHandler::ids_t CSkirmishAIHandler::GetAllSkirmishAIs()
-{
-	ids_t skirmishAIs;
-
-	for (id_ai_t::iterator ai = id_ai.begin(); ai != id_ai.end(); ++ai) {
-		skirmishAIs.push_back(ai->first);
-	}
-
-	return skirmishAIs;
+const CSkirmishAIHandler::id_ai_t& CSkirmishAIHandler::GetAllSkirmishAIs() const {
+	return id_ai;
 }
 
 void CSkirmishAIHandler::AddSkirmishAI(const SkirmishAIData& data, const size_t skirmishAIId) {
