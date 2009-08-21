@@ -1128,11 +1128,11 @@ bool CGame::ActionPressed(const Action& action,
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
-		const bool cheating  = gs->cheatEnabled;
+		const bool cheating           = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
 		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
 		size_t skirmishAIId           = 0; // will only be used if !badArgs
-		const bool singlePlayer = (playerHandler->ActivePlayers() <= 1);
+		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
 
 		if (hasArgs) {
 			bool share = false;
@@ -1229,7 +1229,7 @@ bool CGame::ActionPressed(const Action& action,
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
 		const bool cheating           = gs->cheatEnabled;
 		const bool hasArgs            = (action.extra.size() > 0);
-		const bool singlePlayer = (playerHandler->ActivePlayers() <= 1);
+		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
 		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
 
 		if (hasArgs) {
@@ -1336,6 +1336,31 @@ bool CGame::ActionPressed(const Action& action,
 			logOutput.Print("Let a Skirmish AI take over control of a team.");
 			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", action.command.c_str());
 			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", action.command.c_str());
+		}
+	}
+	else if (cmd == "ailist") {
+		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
+		if (ais.size() > 0) {
+			CSkirmishAIHandler::id_ai_t::const_iterator ai;
+			logOutput.Print("ID | Team | Local | Lua | Name | (Hosting player name) or (Short name & Version)");
+			for (ai = ais.begin(); ai != ais.end(); ++ai) {
+				const bool isLocal = (ai->second.hostPlayer == gu->myPlayerNum);
+				std::string lastPart;
+				if (isLocal) {
+					lastPart = "(Key:)  " + ai->second.shortName + " " + ai->second.version;
+				} else {
+					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
+				}
+				logOutput.Print("%d | %i | %s | %s | %s | %s",
+						ai->first,
+						ai->second.team,
+						(isLocal ? "yes" : "no "),
+						(ai->second.isLuaAI ? "yes" : "no "),
+						ai->second.name.c_str(),
+						lastPart.c_str());
+			}
+		} else {
+			logOutput.Print("<There are no active Skirmish AIs in this game>");
 		}
 	}
 	else if (cmd == "team"){

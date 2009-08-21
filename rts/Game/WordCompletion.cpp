@@ -31,6 +31,9 @@ void CWordCompletion::Reset()
 	WordProperties sl(true, false, false);
 
 	// local commands
+	words["/aikill "] = sl;
+	words["/aicontrol "] = sl;
+	words["/ailist"] = sl;
 	words["/advshading "] = sl;
 	words["/hardwarecursor "] = sl;
 	words["/clock"] = sl;
@@ -90,8 +93,6 @@ void CWordCompletion::Reset()
 	// TODO those commans are registered in Console, get the list from there
 	// This is best done with a new command class (eg. ConsoleCommand)
 	words["/atm"] = sl;
-	words["/aikill"] = sl;
-	words["/aicontrol"] = sl;
 	words["/cheat "] = sl;
 	words["/devlua "] = sl;
 	words["/editdefs "] = sl;
