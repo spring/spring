@@ -1303,28 +1303,28 @@ bool CGame::ActionPressed(const Action& action,
 
 			if (!badArgs) {
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
-				aiKey = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(aiKey);
+				aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
 				if (aiKey.IsUnspecified()) {
 					logOutput.Print("Skirmish AI: not a valid Skirmish AI (Lua AIs are not supported (yet)): %s %s",
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
+				} else {
+					SkirmishAIData aiData;
+					aiData.name       = (aiName != "") ? aiName : aiShortName;
+					aiData.team       = teamToControlId;
+					aiData.hostPlayer = gu->myPlayerNum;
+					aiData.shortName  = aiShortName;
+					aiData.version    = aiVersion;
+					std::map<std::string, std::string>::const_iterator o;
+					for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
+						aiData.optionKeys.push_back(o->first);
+					}
+					aiData.options    = aiOptions;
+
+					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
+
+					logOutput.Print("Skirmish AI being created for team %i ...", teamToControlId);
 				}
-
-				SkirmishAIData aiData;
-				aiData.name       = (aiName != "") ? aiName : aiShortName;
-				aiData.team       = teamToControlId;
-				aiData.hostPlayer = gu->myPlayerNum;
-				aiData.shortName  = aiShortName;
-				aiData.version    = aiVersion;
-				std::map<std::string, std::string>::const_iterator o;
-				for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
-					aiData.optionKeys.push_back(o->first);
-				}
-				aiData.options = aiOptions;
-
-				skirmishAIHandler.CreateLocalSkirmishAI(aiData);
-
-				logOutput.Print("Skirmish AI being created for team %i ...", teamToControlId);
 			}
 		} else {
 			logOutput.Print("/%s: missing mandatory arguments \"teamToControl\" and \"aiShortName\"", action.command.c_str());
