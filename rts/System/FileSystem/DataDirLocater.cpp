@@ -156,14 +156,14 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 		}
 		return true;
 	}
-	else {
-		if (filesystem.CreateDirectory(d->path)) {
+	else if (!writedir) // if there is already a rw data directory, do not create new folder for read-only locations
+	{
+		if (filesystem.CreateDirectory(d->path))
+		{
 			// it didn't exist before, now it does and we just created it with rw access,
 			// so we just assume we still have read-write acces...
-			if (!writedir) {
-				d->writable = true;
-				writedir = d;
-			}
+			d->writable = true;
+			writedir = d;
 			return true;
 		}
 	}
