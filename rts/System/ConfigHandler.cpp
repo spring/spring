@@ -14,9 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdexcept>
-#ifndef WIN32
-#include <unistd.h>
-#endif
 
 #ifdef __APPLE__
 #include <sys/stat.h>
@@ -41,63 +38,11 @@ using std::string;
 
 ConfigHandler* configHandler = NULL;
 
-/**
- * @brief POSIX file locking class
- */
-class ScopedFileLock
-{
-public:
-	ScopedFileLock(int fd, bool write);
-	~ScopedFileLock();
-private:
-	int filedes;
-};
-
-/**
- * @brief lock fd
- *
- * Lock file descriptor fd for reading (write == false) or writing
- * (write == true).
- */
-ScopedFileLock::ScopedFileLock(int fd, bool write) : filedes(fd)
-{
-#ifndef _WIN32
-	struct flock lock;
-	lock.l_type = write ? F_WRLCK : F_RDLCK;
-	lock.l_whence = SEEK_SET;
-	lock.l_start = 0;
-	lock.l_len = 0;
-	if (fcntl(filedes, F_SETLKW, &lock)) {
-		// not a fatal error
-		//handleerror(0, "Could not lock config file", "DotfileHandler", 0);
-	}
-#endif
-}
-
-/**
- * @brief unlock fd
- */
-ScopedFileLock::~ScopedFileLock()
-{
-#ifndef _WIN32
-	struct flock lock;
-	lock.l_type = F_UNLCK;
-	lock.l_whence = SEEK_SET;
-	lock.l_start = 0;
-	lock.l_len = 0;
-	if (fcntl(filedes, F_SETLKW, &lock)) {
-		// not a fatal error
-		//handleerror(0, "Could not unlock config file", "DotfileHandler", 0);
-	}
-#endif
-}
-
 void ConfigHandler::Delete(const std::string& name)
 {
 	FILE* file = fopen(filename.c_str(), "r+");
 	if (file)
 	{
-		ScopedFileLock scoped_lock(fileno(file), true);
 		Read(file);
 		std::map<std::string, std::string>::iterator pos = data.find(name);
 		if (pos != data.end())
@@ -148,7 +93,6 @@ ConfigHandler::ConfigHandler(const std::string& configFile)
 	FILE* file;
 
 	if ((file = fopen(filename.c_str(), "r"))) {
-		ScopedFileLock scoped_lock(fileno(file), false);
 		Read(file);
 	} else {
 		if (!(file = fopen(filename.c_str(), "a")))
@@ -207,7 +151,6 @@ void ConfigHandler::SetString(const string name, const string value)
 	FILE* file = fopen(filename.c_str(), "r+");
 
 	if (file) {
-		ScopedFileLock scoped_lock(fileno(file), true);
 		Read(file);
 		data[name] = value;
 		Write(file);
