@@ -14,6 +14,7 @@
 #include "SoundBuffer.h"
 #include "SoundItem.h"
 #include "AudioChannel.h"
+#include "Music.h"
 #include "ALShared.h"
 #include "Music.h"
 
@@ -40,7 +41,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	Channels::UnitReply.SetMaxEmmits(1);
 	Channels::Battle.SetVolume(configHandler->Get("snd_volbattle", 100 ) * 0.01f);
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
-	Channels::UserInterface.SetVolume(configHandler->Get("snd_volmusic", 100 ) * 0.01f);
+	Channels::BGMusic.SetVolume(configHandler->Get("snd_volmusic", 100 ) * 0.01f);
 
 	if (maxSounds <= 0)
 	{
