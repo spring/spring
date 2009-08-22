@@ -245,12 +245,11 @@ void CGroundMoveType::Update()
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {
+		bool wantReverse = false;
 		if (owner->directControl) {
 			UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
-			bool wantReverse = false;
-
 			if (pathId || (currentSpeed != 0.0f)) {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
 				// Initial calculations.
@@ -337,9 +336,9 @@ void CGroundMoveType::Update()
 			} else {
 				SetMainHeading();
 			}
-
-			UpdateOwnerPos(wantReverse);
 		}
+
+		UpdateOwnerPos(wantReverse);
 	}
 
 	if (owner->pos != oldPos) {
@@ -2052,7 +2051,7 @@ void CGroundMoveType::UpdateDirectControl()
 		owner->isMoving = false;
 		owner->script->StopMoving();
 	}
-	short deltaHeading = 0;
+	deltaHeading = 0;
 	if (owner->directControl->left) {
 		deltaHeading += (short) turnRate;
 	}
