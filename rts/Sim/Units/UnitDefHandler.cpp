@@ -718,13 +718,16 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.zsize = udTable.GetInt("footprintZ", 1) * 2;
 
 	ud.needGeo = false;
-	if (!ud.canmove) {
-		CreateYardMap(&ud, udTable.GetString("yardMap", "c"));
+
+
+	if (ud.speed <= 0.0f) {
+		CreateYardMap(&ud, udTable.GetString("yardMap", ""));
 	} else {
 		for (int u = 0; u < 4; u++) {
 			ud.yardmaps[u] = 0;
 		}
 	}
+
 
 	ud.leaveTracks   = udTable.GetBool("leaveTracks", false);
 	ud.trackWidth    = udTable.GetFloat("trackWidth",   32.0f);
