@@ -95,8 +95,7 @@ ScopedFileLock::~ScopedFileLock()
 void ConfigHandler::Delete(const std::string& name)
 {
 	FILE* file = fopen(filename.c_str(), "r+");
-	if (file)
-	{
+	if (file) {
 		ScopedFileLock scoped_lock(fileno(file), true);
 		Read(file);
 		std::map<std::string, std::string>::iterator pos = data.find(name);
@@ -104,8 +103,7 @@ void ConfigHandler::Delete(const std::string& name)
 			data.erase(pos);
 		Write(file);
 	}
-	else
-	{
+	else {
 		std::map<std::string, std::string>::iterator pos = data.find(name);
 		if (pos != data.end())
 			data.erase(pos);
@@ -200,8 +198,14 @@ string ConfigHandler::GetString(const string name, const string def)
  */
 void ConfigHandler::SetString(const string name, const string value)
 {
-	for (std::list<ConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it)
-	{
+	// Don't do anything if value didn't change.
+	// Can't use GetString because of risk for infinite loop.
+	// (GetString writes default value if key isn't present.)
+	std::map<string,string>::iterator pos = data.find(name);
+	if (pos != data.end() && pos->second == value)
+		return;
+
+	for (std::list<ConfigNotifyCallback>::iterator it = observers.begin(); it != observers.end(); ++it) {
 		(*it)(name, value);
 	}
 	FILE* file = fopen(filename.c_str(), "r+");
@@ -215,8 +219,8 @@ void ConfigHandler::SetString(const string name, const string value)
 		data[name] = value;
 
 	// must be outside above 'if (file)' block because of the lock.
-		if (file)
-			fclose(file);
+	if (file)
+		fclose(file);
 }
 
 /**
@@ -226,8 +230,7 @@ string ConfigHandler::GetDefaultConfig()
 {
 	string binaryPath = Platform::GetBinaryPath() + "/";
 	std::string portableConfPath = binaryPath + "springsettings.cfg";
-	if (access(portableConfPath.c_str(), 6) != -1)
-	{
+	if (access(portableConfPath.c_str(), 6) != -1) {
 		return portableConfPath;
 	}
 
