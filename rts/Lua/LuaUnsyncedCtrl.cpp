@@ -1235,17 +1235,25 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 
 	const string path = luaL_checkstring(L, 1);
 
-	CFileHandler fh(path, SPRING_VFS_MOD);
+	CFileHandler fhVFS(path, SPRING_VFS_MOD);
+	CFileHandler fhRAW(path, SPRING_VFS_RAW);
 
-	if (!fh.FileExists()) {
-		luaL_error(L, "Path \"%s\" not found in mod archive", path.c_str());
+	if (!fhVFS.FileExists()) {
+		luaL_error(L, "file \"%s\" not found in mod archive", path.c_str());
+		return 0;
 	}
+
+	if (fhRAW.FileExists()) {
+		luaL_error(L, "cannot extract file \"%s\": already exists", path.c_str());
+		return 0;
+	}
+
 
 	string dname = filesystem.GetDirectory(path);
 	string fname = filesystem.GetFilename(path);
 
 #ifdef WIN32
-	const int s = dname.size();
+	const size_t s = dname.size();
 	// get rid of any trailing slashes (CreateDirectory()
 	// fails on at least XP and Vista if they are present,
 	// ie. it creates the dir but actually returns false)
@@ -1259,10 +1267,10 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 		           dname.c_str(), fname.c_str());
 	}
 
-	const int numBytes = fh.FileSize();
+	const int numBytes = fhVFS.FileSize();
 	char* buffer = new char[numBytes];
 
-	fh.Read(buffer, numBytes);
+	fhVFS.Read(buffer, numBytes);
 
 	fstream fstr(path.c_str(), ios::out | ios::binary);
 	fstr.write((const char*) buffer, numBytes);
@@ -1278,7 +1286,6 @@ int LuaUnsyncedCtrl::ExtractModArchiveFile(lua_State* L)
 	delete[] buffer;
 
 	lua_pushboolean(L, true);
-
 	return 1;
 }
 
