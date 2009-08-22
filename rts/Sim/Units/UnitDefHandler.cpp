@@ -718,7 +718,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	ud.zsize = udTable.GetInt("footprintZ", 1) * 2;
 
 	ud.needGeo = false;
-	if ((ud.type == "Building") || (ud.type == "Factory")) {
+	if (!ud.canmove) {
 		CreateYardMap(&ud, udTable.GetString("yardMap", "c"));
 	} else {
 		for (int u = 0; u < 4; u++) {
