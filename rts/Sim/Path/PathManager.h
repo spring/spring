@@ -117,6 +117,10 @@ public:
 
 	boost::uint32_t GetPathChecksum();
 
+	/** Enable/disable heat mapping */
+	void SetHeatMappingEnabled(bool enabled);
+	bool GetHeatMappingEnabled();
+
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION;
 

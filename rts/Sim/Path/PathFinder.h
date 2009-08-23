@@ -76,6 +76,7 @@ public:
 
 	*/
 	void SetHeatMapState(bool enabled);
+	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
 
 private:

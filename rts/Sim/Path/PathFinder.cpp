@@ -673,13 +673,11 @@ void CPathFinder::SetHeatMapState(bool enabled)
 {
 	heatMapping = enabled;
 
-	if (enabled) {
+	if (enabled && heatmap.empty()) {
 		heatmap.resize(gs->mapx);
 		for (int i = 0; i<gs->mapx; ++i) {
 			heatmap[i].resize(gs->mapy);
 		}
-	} else {
-		heatmap.clear();
 	}
 }
 
@@ -688,6 +686,9 @@ void CPathFinder::UpdateHeatMap()
 {
 	// run every 4 frames
 	if ((gs->frameNum & 3) != 0)
+		return;
+
+	if (heatmap.empty())
 		return;
 
 	for (int x = 0; x<gs->mapx; x += 2) {

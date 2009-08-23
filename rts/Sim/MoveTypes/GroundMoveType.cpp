@@ -1147,6 +1147,17 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 }
 
 
+unsigned int CGroundMoveType::RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos,
+		float goalRadius)
+{
+	bool heatmap = pathManager->GetHeatMappingEnabled();
+	pathManager->SetHeatMappingEnabled(true);
+	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+	pathManager->SetHeatMappingEnabled(heatmap);
+	return pathId;
+}
+
+
 
 // Calculates an aproximation of the physical 2D-distance between given two objects.
 float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal)
@@ -1201,7 +1212,9 @@ void CGroundMoveType::GetNewPath()
 	}
 
 	pathManager->DeletePath(pathId);
-	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+
+	RequestPath(owner->mobility, owner->pos, goalPos, goalRadius);
+
 	nextWaypoint = owner->pos;
 
 	// if new path received, can't be at waypoint
