@@ -189,7 +189,7 @@ void CSkirmishAILibraryInfo::SetLuaAI(const std::string& isLua) {
 	SetInfo("isLuaAI", isLua);
 }
 void CSkirmishAILibraryInfo::SetLuaAI(const bool isLua) {
-	SetLuaAI(isLua ? "yes" : "no");
+	SetLuaAI(std::string(isLua ? "yes" : "no"));
 }
 void CSkirmishAILibraryInfo::SetInterfaceShortName(
 		const std::string& interfaceShortName) {
