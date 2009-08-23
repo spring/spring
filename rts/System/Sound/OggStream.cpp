@@ -118,14 +118,12 @@ void COggStream::Play(const std::string& path, float volume)
 float COggStream::GetPlayTime()
 {
 	float time = float(msecsPlayed)/1000.0f;
-	LogObject() << "PlayTime: " << time;
 	return time;
 }
 
 float COggStream::GetTotalTime()
 {
 	double time = ov_time_total(&oggStream,-1);
-	LogObject() << "TotalTime: " << time;
 	return time;
 }
 
@@ -226,8 +224,8 @@ bool COggStream::UpdateBuffers()
 
 		// false if we've reached end of stream
 		active = DecodeStream(buffer);
-
-		alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream");
+		if (active)
+			alSourceQueueBuffers(source, 1, &buffer); CheckError("COggStream");
 	}
 
 	return active;
