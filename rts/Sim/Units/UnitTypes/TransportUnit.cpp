@@ -170,15 +170,39 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 
 bool CTransportUnit::CanTransport(CUnit *unit)
 {
-	if (unit->transporter) {
+	if (unit->transporter)
 		return false;
-	}
 
-	if (!unit->unitDef->transportByEnemy && !teamHandler->AlliedTeams(unit->team, team)) {
+	if (!unit->unitDef->transportByEnemy && !teamHandler->AlliedTeams(unit->team, team))
 		return false;
-	}
 
-	CTransportUnit* u=this;
+	if (transportCapacityUsed >= unitDef->transportCapacity)
+		return false;
+
+	if (unit->unitDef->cantBeTransported)
+		return false;
+
+	if (unit->mass >= 100000 || unit->beingBuilt)
+		return false;
+
+	// don't transport cloaked enemies
+	if (unit->isCloaked && !teamHandler->AlliedTeams(unit->team, team))
+		return false;
+
+	if (unit->xsize > unitDef->transportSize*2)
+		return false;
+
+	if (unit->xsize < unitDef->minTransportSize*2)
+		return false;
+
+	if (unit->mass < unitDef->minTransportMass)
+		return false;
+
+	if (unit->mass + transportMassUsed > unitDef->transportMass)
+		return false;
+
+	// is unit already (in)directly transporting this?
+	CTransportUnit* u = this;
 	while (u) {
 		if (u == unit) {
 			return false;
@@ -229,10 +253,11 @@ void CTransportUnit::AttachUnit(CUnit* unit, int piece)
 	eventHandler.UnitLoaded(unit, this);
 }
 
-void CTransportUnit::DetachUnit(CUnit* unit)
+
+bool CTransportUnit::DetachUnitCore(CUnit* unit)
 {
 	if (unit->transporter != this) {
-		return;
+		return false;
 	}
 
 	std::list<TransportedUnit>::iterator ti;
@@ -240,105 +265,61 @@ void CTransportUnit::DetachUnit(CUnit* unit)
 		if (ti->unit == unit) {
 			this->DeleteDeathDependence(unit);
 			unit->DeleteDeathDependence(this);
-			unit->transporter = 0;
+			unit->transporter = NULL;
+
 			if (dynamic_cast<CTAAirMoveType*>(moveType)) {
 				unit->moveType->useHeading = true;
 			}
+
+			// de-stun in case it isFirePlatform=0
 			unit->stunned = (unit->paralyzeDamage > unit->maxHealth);
-			unit->Block();
 			loshandler->MoveUnit(unit, false);
-			unit->moveType->LeaveTransport();
-			const CCommandQueue& queue = unit->commandAI->commandQue;
-			if (queue.empty() || (queue.front().id != CMD_WAIT)) {
-				Command c;
-				c.id=CMD_STOP;
-				unit->commandAI->GiveCommand(c);
-			}
+
 			transportCapacityUsed -= ti->size;
 			transportMassUsed -= ti->mass;
 			transported.erase(ti);
 
-			unit->CalculateTerrainType();
-			unit->UpdateTerrainType();
-
-			eventHandler.UnitUnloaded(unit, this);
-
-			break;
-		}
-	}
-}
-
-void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos) {
-	if (unit->transporter != this)
-		return;
-
-	for (std::list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
-		if (ti->unit==unit) {
-			this->DeleteDeathDependence(unit);
-			unit->DeleteDeathDependence(this);
-			unit->transporter = 0;
-			if (dynamic_cast<CTAAirMoveType*>(moveType))
-				unit->moveType->useHeading=true;
-
-			unit->stunned=false; // de-stun in case it isFirePlatform=0
-			loshandler->MoveUnit(unit,false);
-
-			//add an additional move command for after we land
-			Command c;
-			c.id=CMD_MOVE;
-			c.params.push_back(pos.x);
-			c.params.push_back(pos.y);
-			c.params.push_back(pos.z);
-			unit->commandAI->GiveCommand(c);
-
-			transportCapacityUsed-=ti->size;
-			transportMassUsed-=ti->mass;
-			transported.erase(ti);
-
-			unit->Drop(this->pos,this->frontdir,this);
 			unit->moveType->LeaveTransport();
+
 			unit->CalculateTerrainType();
 			unit->UpdateTerrainType();
+
 			eventHandler.UnitUnloaded(unit, this);
 
-			break;
+			return true;
 		}
 	}
-
+	return false;
 }
 
-void CTransportUnit::DetachUnitFromAir(CUnit* unit)
+
+void CTransportUnit::DetachUnit(CUnit* unit)
 {
-	if (unit->transporter != this)
-		return;
+	if (DetachUnitCore(unit)) {
+		unit->Block();
 
-	for (std::list<TransportedUnit>::iterator ti=transported.begin();ti!=transported.end();++ti){
-		if (ti->unit == unit) {
-			this->DeleteDeathDependence(unit);
-			unit->DeleteDeathDependence(this);
-			unit->transporter = 0;
-			if (dynamic_cast<CTAAirMoveType*>(moveType))
-				unit->moveType->useHeading=true;
-			unit->stunned=false; // de-stun in case it isFirePlatform=0
-			unit->Block();
-
-			loshandler->MoveUnit(unit,false);
-
+		// erase command queue unless it's a wait command
+		const CCommandQueue& queue = unit->commandAI->commandQue;
+		if (queue.empty() || (queue.front().id != CMD_WAIT)) {
 			Command c;
-			c.id=CMD_STOP;
+			c.id = CMD_STOP;
 			unit->commandAI->GiveCommand(c);
-
-			transportCapacityUsed-=ti->size;
-			transportMassUsed-=ti->mass;
-			transported.erase(ti);
-
-			unit->Drop(this->pos,this->frontdir,this);
-			unit->moveType->LeaveTransport();
-			unit->CalculateTerrainType();
-			unit->UpdateTerrainType();
-			eventHandler.UnitUnloaded(unit, this);
-
-			break;
 		}
+	}
+}
+
+
+void CTransportUnit::DetachUnitFromAir(CUnit* unit, float3 pos)
+{
+	if (DetachUnitCore(unit)) {
+		unit->Drop(this->pos, this->frontdir, this);
+
+		//add an additional move command for after we land
+		Command c;
+		c.id = CMD_MOVE;
+		c.params.push_back(pos.x);
+		c.params.push_back(pos.y);
+		c.params.push_back(pos.z);
+		unit->commandAI->GiveCommand(c);
 	}
 }
