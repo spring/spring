@@ -844,7 +844,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_MAPDRAW:
-			if (!players[inbuf[0]].spectator || allowSpecDraw)
+			if (!players[playernum].spectator || allowSpecDraw)
 				Broadcast(packet); //forward data
 			break;
 
