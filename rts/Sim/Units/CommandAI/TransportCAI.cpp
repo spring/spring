@@ -80,6 +80,7 @@ CTransportCAI::CTransportCAI(CUnit* owner):
 	possibleCommands.push_back(c);
 }
 
+
 CTransportCAI::~CTransportCAI(void)
 {
 	// if uh == NULL then all pointers to units should be considered dangling pointers
@@ -89,6 +90,7 @@ CTransportCAI::~CTransportCAI(void)
 		toBeTransportedUnitId = -1;
 	}
 }
+
 
 void CTransportCAI::SlowUpdate(void)
 {
@@ -108,6 +110,7 @@ void CTransportCAI::SlowUpdate(void)
 		}
 	}
 }
+
 
 void CTransportCAI::ExecuteLoadUnits(Command &c)
 {
@@ -212,6 +215,7 @@ void CTransportCAI::ExecuteLoadUnits(Command &c)
 	return;
 }
 
+
 void CTransportCAI::ExecuteUnloadUnits(Command &c)
 {
 	//new Methods
@@ -233,6 +237,7 @@ void CTransportCAI::ExecuteUnloadUnits(Command &c)
 	}
 }
 
+
 void CTransportCAI::ExecuteUnloadUnit(Command &c)
 {
 	//new methods
@@ -252,32 +257,14 @@ void CTransportCAI::ExecuteUnloadUnit(Command &c)
 	}
 }
 
+
 bool CTransportCAI::CanTransport(CUnit* unit)
 {
-	CTransportUnit* transport=(CTransportUnit*)owner;
+	CTransportUnit* transport = (CTransportUnit*)owner;
 
-	if (transport->transportCapacityUsed >= owner->unitDef->transportCapacity)
-		return false;
-	if (unit->unitDef->cantBeTransported)
-		return false;
-	if(unit->mass>=100000 || unit->beingBuilt)
-		return false;
-	// don't transport cloaked enemies
-	if (unit->isCloaked && !teamHandler->AlliedTeams(unit->team, owner->team))
-		return false;
-	if(unit->xsize > owner->unitDef->transportSize*2)
-		return false;
-	if(unit->xsize < owner->unitDef->minTransportSize*2)
-		return false;
-	if(unit->mass < owner->unitDef->minTransportMass)
-		return false;
-	if(!transport->CanTransport(unit))
-		return false;
-	if(unit->mass+transport->transportMassUsed > owner->unitDef->transportMass)
-		return false;
-
-	return true;
+	return transport->CanTransport(unit);
 }
+
 
 // FindEmptySpot(pos, max(16.0f, radius), spread, found, u);
 bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius, float3& found, CUnit* unitToUnload)
@@ -364,7 +351,9 @@ bool CTransportCAI::FindEmptySpot(float3 center, float radius, float emptyRadius
 	return false;
 }
 
-bool CTransportCAI::SpotIsClear(float3 pos,CUnit* unitToUnload) {
+
+bool CTransportCAI::SpotIsClear(float3 pos,CUnit* unitToUnload)
+{
 	float unloadPosHeight=ground->GetApproximateHeight(pos.x,pos.z);
 
 	if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
@@ -379,9 +368,11 @@ bool CTransportCAI::SpotIsClear(float3 pos,CUnit* unitToUnload) {
 	return true;
 }
 
+
 /** this is a version of SpotIsClear that ignores the tranport and all
 	units it carries. */
-bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos,CUnit* unitToUnload) {
+bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos,CUnit* unitToUnload)
+{
 	float unloadPosHeight=ground->GetApproximateHeight(pos.x,pos.z);
 
 	if(unloadPosHeight<(0-unitToUnload->unitDef->maxWaterDepth))
@@ -396,8 +387,8 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos,CUnit* unitToUnload) {
 	for (vector<CUnit*>::iterator it = units.begin(); it != units.end(); ++it) {
 		// check if the units are in the transport
 		bool found = false;
-		for (std::list<CTransportUnit::TransportedUnit>::iterator it2 = me->transported.begin();
-				it2 != me->transported.end(); ++it2) {
+		for (std::list<CTransportUnit::TransportedUnit>::const_iterator it2 = me->GetTransportedUnits().begin();
+				it2 != me->GetTransportedUnits().end(); ++it2) {
 			if (it2->unit == *it) {
 				found = true;
 				break;
@@ -410,7 +401,9 @@ bool CTransportCAI::SpotIsClearIgnoreSelf(float3 pos,CUnit* unitToUnload) {
 	return true;
 }
 
-bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots) {
+
+bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots)
+{
 	//should only be used by air
 
 	CTransportUnit* transport = (CTransportUnit*)owner;
@@ -422,18 +415,18 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 	float3 nextPos = startpos;
 	float3 pos;
 
-	std::list<CTransportUnit::TransportedUnit>::iterator ti = transport->transported.begin();
+	std::list<CTransportUnit::TransportedUnit>::const_iterator ti = transport->GetTransportedUnits().begin();
 	dropSpots.push_front(nextPos);
 
 	// first spot
-	if (ti!=transport->transported.end()) {
+	if (ti!=transport->GetTransportedUnits().end()) {
 		nextPos += dir*(gap + ti->unit->radius);
 		ti++;
 	}
 
 	// remaining spots
 	if (dynamic_cast<CTAAirMoveType*>(owner->moveType)) {
-		while (ti != transport->transported.end() && startpos.SqDistance(nextPos) < startpos.SqDistance(endpos)) {
+		while (ti != transport->GetTransportedUnits().end() && startpos.SqDistance(nextPos) < startpos.SqDistance(endpos)) {
 			nextPos += dir*(ti->unit->radius);
 			nextPos.y = ground->GetHeight(nextPos.x, nextPos.z);
 
@@ -450,12 +443,16 @@ bool CTransportCAI::FindEmptyDropSpots(float3 startpos, float3 endpos, std::list
 	return false;
 }
 
-bool CTransportCAI::FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs) {
+
+bool CTransportCAI::FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs)
+{
 	// TODO: select suitable spots according to directions we are allowed to exit transport from
 	return false;
 }
 
-void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport) {
+
+void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport)
+{
 	if (lastCall == gs->frameNum) {
 		// avoid infinite loops
 		return;
@@ -463,12 +460,12 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport) {
 
 	lastCall = gs->frameNum;
 
-	if (((CTransportUnit*) owner)->transported.empty()) {
+	if (((CTransportUnit*) owner)->GetTransportedUnits().empty()) {
 		FinishCommand();
 		return;
 	}
 
-	CUnit* u = ((CTransportUnit*) owner)->transported.front().unit;
+	CUnit* u = ((CTransportUnit*) owner)->GetTransportedUnits().front().unit;
 	float3 pos(c.params[0],c.params[1],c.params[2]);
 	float radius = c.params[3];
 	float spread = u->radius * ((CTransportUnit*) owner)->unitDef->unloadSpread;
@@ -490,73 +487,81 @@ void CTransportCAI::UnloadUnits_Land(Command& c, CTransportUnit* transport) {
 		FinishCommand();
 	}
 	return;
-
 }
-void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport) {
+
+
+void CTransportCAI::UnloadUnits_Drop(Command& c, CTransportUnit* transport)
+{
 	//called repeatedly for each unit till units are unloaded
-		if(lastCall==gs->frameNum)	//avoid infinite loops
-			return;
-		lastCall=gs->frameNum;
-
-		if(((CTransportUnit*)owner)->transported.empty() ){
-			FinishCommand();
-			return;
-		}
-
-		float3 pos(c.params[0],c.params[1],c.params[2]);
-		float radius=c.params[3];
-		bool canUnload = false;
-
-		//at the start of each user command
-		if (isFirstIteration )	{
-			dropSpots.clear();
-			startingDropPos = pos;
-
-			approachVector = startingDropPos-owner->pos;
-			approachVector.Normalize();
-			canUnload = FindEmptyDropSpots(pos, pos + approachVector * std::max(16.0f,radius), dropSpots);
-
-		} else if (!dropSpots.empty() ) {
-			//make sure we check current spot infront of us each unload
-			pos = dropSpots.back(); //take last landing pos as new start spot
-			canUnload = dropSpots.size() > 0;
-		}
-
-		if( canUnload ){
-			if(SpotIsClear(dropSpots.back(),((CTransportUnit*)owner)->transported.front().unit)) {
-				float3 pos = dropSpots.back();
-				Command c2;
-				c2.id=CMD_UNLOAD_UNIT;
-				c2.params.push_back(pos.x);
-				c2.params.push_back(pos.y);
-				c2.params.push_back(pos.z);
-				c2.options=c.options | INTERNAL_ORDER;
-				commandQue.push_front(c2);
-
-				SlowUpdate();
-				isFirstIteration = false;
-				return;
-			} else {
-				dropSpots.pop_back();
-			}
-		} else {
-
-			startingDropPos = float3(-1,-1,-1);
-			isFirstIteration=true;
-			dropSpots.clear();
-			FinishCommand();
-		}
-}
-void CTransportCAI::UnloadUnits_CrashFlood(Command& c, CTransportUnit* transport) {
-	//TODO - fly into the ground, doing damage to units at landing pos, then unload.
-	//needs heavy modification of TAAirMoveType
-}
-void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport) {
 	if(lastCall==gs->frameNum)	//avoid infinite loops
 		return;
 	lastCall=gs->frameNum;
-	if(((CTransportUnit*)owner)->transported.empty()){
-	FinishCommand();
+
+	if(((CTransportUnit*)owner)->GetTransportedUnits().empty() ){
+		FinishCommand();
+		return;
+	}
+
+	float3 pos(c.params[0],c.params[1],c.params[2]);
+	float radius=c.params[3];
+	bool canUnload = false;
+
+	//at the start of each user command
+	if (isFirstIteration )	{
+		dropSpots.clear();
+		startingDropPos = pos;
+
+		approachVector = startingDropPos-owner->pos;
+		approachVector.Normalize();
+		canUnload = FindEmptyDropSpots(pos, pos + approachVector * std::max(16.0f,radius), dropSpots);
+
+	} else if (!dropSpots.empty() ) {
+		//make sure we check current spot infront of us each unload
+		pos = dropSpots.back(); //take last landing pos as new start spot
+		canUnload = dropSpots.size() > 0;
+	}
+
+	if( canUnload ){
+		if(SpotIsClear(dropSpots.back(),((CTransportUnit*)owner)->GetTransportedUnits().front().unit)) {
+			float3 pos = dropSpots.back();
+			Command c2;
+			c2.id=CMD_UNLOAD_UNIT;
+			c2.params.push_back(pos.x);
+			c2.params.push_back(pos.y);
+			c2.params.push_back(pos.z);
+			c2.options=c.options | INTERNAL_ORDER;
+			commandQue.push_front(c2);
+
+			SlowUpdate();
+			isFirstIteration = false;
+			return;
+		} else {
+			dropSpots.pop_back();
+		}
+	} else {
+
+		startingDropPos = float3(-1,-1,-1);
+		isFirstIteration=true;
+		dropSpots.clear();
+		FinishCommand();
+	}
+}
+
+
+void CTransportCAI::UnloadUnits_CrashFlood(Command& c, CTransportUnit* transport)
+{
+	//TODO - fly into the ground, doing damage to units at landing pos, then unload.
+	//needs heavy modification of TAAirMoveType
+}
+
+
+void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
+{
+	if(lastCall==gs->frameNum)	//avoid infinite loops
+		return;
+	lastCall=gs->frameNum;
+	if (((CTransportUnit*)owner)->GetTransportedUnits().empty()) {
+		FinishCommand();
 		return;
 	}
 	float3 pos(c.params[0],c.params[1],c.params[2]);
@@ -564,8 +569,8 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 	float3 found;
 	//((CTransportUnit*)owner)->transported
 
-	bool canUnload=FindEmptySpot(pos, std::max(16.0f,radius),((CTransportUnit*)owner)->transported.front().unit->radius  * ((CTransportUnit*)owner)->unitDef->unloadSpread,
-								found,((CTransportUnit*)owner)->transported.front().unit);
+	bool canUnload=FindEmptySpot(pos, std::max(16.0f,radius),((CTransportUnit*)owner)->GetTransportedUnits().front().unit->radius  * ((CTransportUnit*)owner)->unitDef->unloadSpread,
+								found,((CTransportUnit*)owner)->GetTransportedUnits().front().unit);
 	if(canUnload){
 
 		Command c2;
@@ -597,17 +602,16 @@ void CTransportCAI::UnloadUnits_LandFlood(Command& c, CTransportUnit* transport)
 }
 
 
-//
-void CTransportCAI::UnloadLand(Command& c) {
+void CTransportCAI::UnloadLand(Command& c)
+{
 	//default unload
 	CTransportUnit* transport = (CTransportUnit*)owner;
 	if (inCommand) {
-			if (!owner->script->IsBusy()) {
-				FinishCommand();
-			}
+		if (!owner->script->IsBusy()) {
+			FinishCommand();
+		}
 	} else {
-		const std::list<CTransportUnit::TransportedUnit>& transList =
-		  transport->transported;
+		const std::list<CTransportUnit::TransportedUnit>& transList = transport->GetTransportedUnits();
 
 		if (transList.empty()) {
 			FinishCommand();
@@ -663,7 +667,7 @@ void CTransportCAI::UnloadLand(Command& c) {
 						}
 					} else {
 						transport->DetachUnit(unit);
-						if (transport->transported.empty()) {
+						if (transport->GetTransportedUnits().empty()) {
 							am->dontLand = false;
 							owner->script->EndTransport();
 						}
@@ -680,16 +684,17 @@ void CTransportCAI::UnloadLand(Command& c) {
 		}
 	}
 	return;
-
 }
-void CTransportCAI::UnloadDrop(Command& c) {
 
+
+void CTransportCAI::UnloadDrop(Command& c)
+{
 	//fly over and drop unit
 	if(inCommand){
 		if(!owner->script->IsBusy())
 			FinishCommand();
 	} else {
-		if(((CTransportUnit*)owner)->transported.empty()){
+		if(((CTransportUnit*)owner)->GetTransportedUnits().empty()){
 			FinishCommand();
 			return;
 		}
@@ -705,7 +710,7 @@ void CTransportCAI::UnloadDrop(Command& c) {
 		if(CTAAirMoveType* am=dynamic_cast<CTAAirMoveType*>(owner->moveType)){
 
 			pos.y=ground->GetHeight(pos.x,pos.z);
-			CUnit* unit=((CTransportUnit*)owner)->transported.front().unit;
+			CUnit* unit=((CTransportUnit*)owner)->GetTransportedUnits().front().unit;
 			am->maxDrift=1;
 
 			//if near target or have past it accidentally- drop unit
@@ -724,23 +729,28 @@ void CTransportCAI::UnloadDrop(Command& c) {
 		} else {
 			inCommand=true;
 			StopMove();
-			owner->script->TransportDrop(((CTransportUnit*)owner)->transported.front().unit, pos);
+			owner->script->TransportDrop(((CTransportUnit*)owner)->GetTransportedUnits().front().unit, pos);
 		}
 	}
 }
-void CTransportCAI::UnloadCrashFlood(Command& c) {
+
+
+void CTransportCAI::UnloadCrashFlood(Command& c)
+{
 	//TODO - will require heavy modification of TAAirMoveType.cpp
 }
-void CTransportCAI::UnloadLandFlood(Command& c) {
+
+
+void CTransportCAI::UnloadLandFlood(Command& c)
+{
 	//land, then release all units at once
 	CTransportUnit* transport = (CTransportUnit*)owner;
 	if (inCommand) {
-			if (!owner->script->IsBusy()) {
-				FinishCommand();
-			}
+		if (!owner->script->IsBusy()) {
+			FinishCommand();
+		}
 	} else {
-		const std::list<CTransportUnit::TransportedUnit>& transList =
-		  transport->transported;
+		const std::list<CTransportUnit::TransportedUnit>& transList = transport->GetTransportedUnits();
 
 		if (transList.empty()) {
 			FinishCommand();
@@ -805,7 +815,7 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 					transport->DetachUnitFromAir(unit,pos);
 
 					FinishCommand();
-					if (transport->transported.empty()) {
+					if (transport->GetTransportedUnits().empty()) {
 						am->dontLand = false;
 						owner->script->EndTransport();
 						am->UpdateLanded();
@@ -820,13 +830,15 @@ void CTransportCAI::UnloadLandFlood(Command& c) {
 				transport->DetachUnitFromAir(unit,pos);
 				isFirstIteration = false;
 				FinishCommand();
-				if (transport->transported.empty())
+				if (transport->GetTransportedUnits().empty())
 					owner->script->EndTransport();
 			}
 		}
 	}
 	return;
 }
+
+
 CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 {
 	CUnit* best=0;
@@ -843,6 +855,7 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 	}
 	return best;
 }
+
 
 int CTransportCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 {
@@ -870,6 +883,7 @@ int CTransportCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
 //	else
 //		return CMD_UNLOAD_UNITS;
 }
+
 
 void CTransportCAI::DrawCommands(void)
 {
@@ -984,7 +998,9 @@ void CTransportCAI::FinishCommand(void)
 	CMobileCAI::FinishCommand();
 }
 
-bool CTransportCAI::LoadStillValid(CUnit* unit){
+
+bool CTransportCAI::LoadStillValid(CUnit* unit)
+{
 	if(commandQue.size() < 2){
 		return false;
 	}
@@ -993,6 +1009,7 @@ bool CTransportCAI::LoadStillValid(CUnit* unit){
 		&& unit->pos.SqDistance2D(
 		float3(cmd.params[0], cmd.params[1], cmd.params[2])) > Square(cmd.params[3]*2));
 }
+
 
 bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 {
@@ -1005,8 +1022,8 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 			CTransportUnit* transport = (CTransportUnit*) owner;
 
 			// allow unloading empty transports for easier setup of transport bridges
-			if (!transport->transported.empty()) {
-				CUnit* u = transport->transported.front().unit;
+			if (!transport->GetTransportedUnits().empty()) {
+				CUnit* u = transport->GetTransportedUnits().front().unit;
 				float3 pos(c.params[0],c.params[1],c.params[2]);
 				float radius = c.params[3];
 				float spread = u->radius * transport->unitDef->unloadSpread;
@@ -1017,6 +1034,5 @@ bool CTransportCAI::AllowedCommand(const Command& c, bool fromSynced)
 			break;
 		}
 	}
-
 	return true;
 }
