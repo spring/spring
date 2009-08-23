@@ -2014,9 +2014,6 @@ void CUnit::AddEnergy(float energy, bool handicap)
 
 void CUnit::Activate()
 {
-	//if(unitDef->tidalGenerator>0)
-	//	script->SetSpeed(readmap->tidalStrength * unitDef->tidalGenerator, 3000.0f);
-
 	if (activated)
 		return;
 

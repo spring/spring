@@ -35,4 +35,5 @@ int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 		const int id = sound->GetSoundId(fileName);
 		return id;
 	}
+	return 0;
 }
