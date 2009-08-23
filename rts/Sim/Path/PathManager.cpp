@@ -31,15 +31,24 @@ CPathManager::CPathManager() {
 
 	// Reset id-counter.
 	nextPathId = 0;
-
-	// Enable heat mapping
-	pf->SetHeatMapState(true);
 }
 
 CPathManager::~CPathManager() {
 	delete pe2;
 	delete pe;
 	delete pf;
+}
+
+
+
+void CPathManager::SetHeatMappingEnabled(bool enabled)
+{
+	pf->SetHeatMapState(enabled);
+};
+
+bool CPathManager::GetHeatMappingEnabled()
+{
+	return pf->GetHeatMapState();
 }
 
 
