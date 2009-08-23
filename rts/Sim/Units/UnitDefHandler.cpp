@@ -31,6 +31,7 @@
 #include "Sim/Units/COB/UnitScriptNames.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
+#include "FileSystem/FileSystem.h"
 #include "Sound/Sound.h"
 #include "Exceptions.h"
 
@@ -871,13 +872,21 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
                                 const string& fileName, const float volume)
 {
-	CFileHandler raw(fileName);
-	if (!sound->HasSoundItem(fileName) && !raw.FileExists())
+	const std::string extension = filesystem.GetExtension(fileName);
+	bool hasFile = false;
+	if (extension == "wav" || extension == "ogg")
+	{
+		CFileHandler raw(fileName);
+		if (raw.FileExists())
+			hasFile = true;
+	}
+
+	if (!sound->HasSoundItem(fileName) && !hasFile)
 	{
 		string soundFile = "sounds/" + fileName;
 
-		if (soundFile.find(".wav") == string::npos && soundFile.find(".ogg") == string::npos) {
-			// .wav extension missing, add it
+		if (extension.empty()) {
+			// extension missing, try wav
 			soundFile += ".wav";
 		}
 		CFileHandler fh(soundFile);
