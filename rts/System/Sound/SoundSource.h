@@ -36,8 +36,8 @@ public:
 	void StreamStop();
 
 	void StreamPause();
-	unsigned GetStreamTime();
-	unsigned GetStreamPlayTime();
+	float GetStreamTime();
+	float GetStreamPlayTime();
 
 	static void SetPitch(float newPitch);
 	void SetVolume(float newVol);

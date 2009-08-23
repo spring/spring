@@ -1,5 +1,7 @@
 #include "OggStream.h"
 
+#include <SDL.h>
+
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
 #include "ALShared.h"
@@ -22,6 +24,32 @@ int	VorbisStreamClose(void* datasource)
 	delete buffer;
 	return 0;
 }
+
+int VorbisStreamSeek(void* datasource, ogg_int64_t offset, int whence)
+{
+	CFileHandler* buffer = (CFileHandler*)datasource;
+	if (whence == SEEK_SET)
+	{
+		buffer->Seek(offset);
+	}
+	else if (whence == SEEK_CUR)
+	{
+		buffer->Seek(buffer->GetPos() + offset);
+	}
+	else if (whence == SEEK_END)
+	{
+		buffer->Seek(buffer->FileSize() + offset);
+	}
+
+	return 0;
+}
+
+long VorbisStreamTell(void* datasource)
+{
+	CFileHandler* buffer = (CFileHandler*)datasource;
+	return buffer->GetPos();
+}
+
 }
 
 COggStream::COggStream(ALuint _source)
@@ -32,6 +60,9 @@ COggStream::COggStream(ALuint _source)
 
 	stopped = true;
 	paused = false;
+	
+	msecsPlayed = 0;
+	lastTick = 0;
 }
 
 COggStream::~COggStream()
@@ -54,8 +85,8 @@ void COggStream::Play(const std::string& path, float volume)
 	ov_callbacks vorbisCallbacks;
 	vorbisCallbacks.read_func  = VorbisStreamRead;
 	vorbisCallbacks.close_func = VorbisStreamClose;
-	vorbisCallbacks.seek_func  = NULL;
-	vorbisCallbacks.tell_func  = NULL;
+	vorbisCallbacks.seek_func  = VorbisStreamSeek;
+	vorbisCallbacks.tell_func  = VorbisStreamTell;
 
 	CFileHandler* buf = new CFileHandler(path);
 	if ((result = ov_open_callbacks(buf, &oggStream, NULL, 0, vorbisCallbacks)) < 0) {
@@ -86,12 +117,16 @@ void COggStream::Play(const std::string& path, float volume)
 
 float COggStream::GetPlayTime()
 {
-	return ((stopped)? 0.0 : ov_time_tell(&oggStream));
+	float time = float(msecsPlayed)/1000.0f;
+	LogObject() << "PlayTime: " << time;
+	return time;
 }
 
 float COggStream::GetTotalTime()
 {
-	return ov_time_total(&oggStream,-1);
+	double time = ov_time_total(&oggStream,-1);
+	LogObject() << "TotalTime: " << time;
+	return time;
 }
 
 
@@ -132,6 +167,9 @@ void COggStream::ReleaseBuffers()
 // filled with data from the stream
 bool COggStream::StartPlaying()
 {
+	msecsPlayed = 0;
+	lastTick = SDL_GetTicks();
+
 	if (!DecodeStream(buffers[0]))
 		return false;
 
@@ -159,6 +197,8 @@ void COggStream::Stop()
 {
 	if (!stopped) {
 		ReleaseBuffers();
+		msecsPlayed = 0;
+		lastTick = SDL_GetTicks();
 	}
 }
 
@@ -196,8 +236,11 @@ bool COggStream::UpdateBuffers()
 
 void COggStream::Update()
 {
-	if (!stopped) {
-		if (!paused) {
+	if (!stopped)
+	{
+		unsigned tick = SDL_GetTicks();
+		if (!paused)
+		{
 			if (UpdateBuffers()) {
 				if (!IsPlaying()) {
 					// source state changed
@@ -213,7 +256,9 @@ void COggStream::Update()
 				// EOS and all chunks processed by OpenALs
 				ReleaseBuffers();
 			}
+			msecsPlayed += (tick - lastTick);
 		}
+		lastTick = tick;
 	}
 }
 

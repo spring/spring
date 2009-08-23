@@ -32,8 +32,8 @@ public:
 	 * Don't call this if you just want to play another file (for performance).
 	 */
 	void Stop();
-	unsigned int GetTime();
-	unsigned int GetPlayTime();
+	float GetTime();
+	float GetPlayTime();
 
 private:
 	SoundSource* current;
