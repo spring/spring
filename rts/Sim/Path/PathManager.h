@@ -41,8 +41,10 @@ public:
 			Use goalRadius to define a goal area within any square could be accepted as path target.
 			If a singular goal position is wanted, then use goalRadius = 0.
 	*/
-	unsigned int RequestPath(const MoveData* moveData, float3 startPos, CPathFinderDef* peDef,float3 goalPos,CSolidObject* caller);
-	unsigned int RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos, float goalRadius = 8, CSolidObject* caller=0);
+	unsigned int RequestPath(const MoveData* moveData, float3 startPos,
+			CPathFinderDef* peDef,float3 goalPos, CSolidObject* caller, int ownerId = 0);
+	unsigned int RequestPath(const MoveData* moveData, float3 startPos,
+			float3 goalPos, float goalRadius = 8, CSolidObject* caller = 0, int ownerId = 0);
 
 
 	/*
@@ -63,7 +65,32 @@ public:
 			Dont set this, used internally
 
 	*/
-	float3 NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance = 0, int numRetries=0) const;
+	float3 NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance = 0,
+			int numRetries=0, int ownerId = 0) const;
+
+
+	/**
+	Returns current detail path waypoints. For the full path, @see GetEstimatedPath.
+
+	Param:
+		pathId
+			The path-id returned by RequestPath.
+		points
+			The list of detail waypoints.
+	*/
+	void GetDetailedPath(unsigned pathId, std::vector<float3>& points) const;
+
+
+	/**
+	Returns current detail path waypoints as a square list. For the full path, @see GetEstimatedPath.
+
+	Param:
+		pathId
+			The path-id returned by RequestPath.
+		points
+			The list of detail waypoints.
+	*/
+	void GetDetailedPathSquares(unsigned pathId, std::vector<int2>& points) const;
 
 
 	/*
@@ -121,6 +148,9 @@ public:
 	void SetHeatMappingEnabled(bool enabled);
 	bool GetHeatMappingEnabled();
 
+	void SetHeatOnSquare(int x, int y, int value, int ownerId);
+	void SetHeatOnPos(float3, int value, int ownerId);
+
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION;
 
@@ -146,8 +176,8 @@ private:
 
 
 	unsigned int Store(MultiPath* path);
-	void Estimate2ToEstimate(MultiPath& path, float3 startPos) const;
-	void EstimateToDetailed(MultiPath& path, float3 startPos) const;
+	void Estimate2ToEstimate(MultiPath& path, float3 startPos, int ownerId) const;
+	void EstimateToDetailed(MultiPath& path, float3 startPos, int ownerId) const;
 
 
 	CPathFinder* pf;

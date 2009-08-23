@@ -120,7 +120,9 @@ protected:
 	void UpdateOwnerPos(bool);
 	bool WantReverse(const float3&) const;
 
-	unsigned int RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos, float goalRadius = 8);
+	unsigned int lastHeatRequestFrame;
+	unsigned int RequestPath(float3 startPos, float3 goalPos, float goalRadius = 8);
+	void UpdateHeatMap();
 
 	bool skidding;
 	bool flying;

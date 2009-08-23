@@ -52,6 +52,7 @@ CPathFinder::CPathFinder()
 : openSquareBufferPointer(openSquareBuffer)
 {
 	heatMapping = false;
+	InitHeatMap();
 
 	// Creates and init all square states.
 	squareState = new SquareState[gs->mapSquares];
@@ -126,9 +127,11 @@ CPathFinder::~CPathFinder()
 /**
  * Search with several start positions
  */
-IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::vector<float3>& startPos, const CPathFinderDef& pfDef, Path& path) {
+IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
+		const CPathFinderDef& pfDef, Path& path, int ownerId) {
 	// Clear the given path.
 	path.path.clear();
+	path.squares.clear();
 	path.pathCost = PATHCOST_INFINITY;
 
 	// Store som basic data.
@@ -172,7 +175,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::ve
 	}
 
 	// Performs the search.
-	SearchResult result = DoSearch(moveData, pfDef);
+	SearchResult result = DoSearch(moveData, pfDef, ownerId);
 
 	// Respond to the success of the search.
 	if(result == Ok) {
@@ -197,9 +200,12 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const std::ve
 /**
  * Store som data and doing some basic top-administration.
  */
-IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 startPos, const CPathFinderDef& pfDef, Path& path, bool testMobile, bool exactPath, unsigned int maxNodes,bool needPath) {
+IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 startPos,
+		const CPathFinderDef& pfDef, Path& path, bool testMobile, bool exactPath,
+		unsigned int maxNodes, bool needPath, int ownerId) {
 	// Clear the given path.
 	path.path.clear();
+	path.squares.clear();
 	path.pathCost = PATHCOST_INFINITY;
 
 	// Store som basic data.
@@ -220,7 +226,7 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 	startSquare = startxSqr + startzSqr * gs->mapx;
 
 	// Start up the search.
-	SearchResult result = InitSearch(moveData, pfDef);
+	SearchResult result = InitSearch(moveData, pfDef, ownerId);
 
 	// Respond to the success of the search.
 	if(result == Ok || result == GoalOutOfRange) {
@@ -246,7 +252,8 @@ IPath::SearchResult CPathFinder::GetPath(const MoveData& moveData, const float3 
 /**
  * Setting up the starting point of the search.
  */
-IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef) {
+IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef,
+		int ownerId) {
 	// If exact path is reqired and the goal is blocked, then no search is needed.
 	if (exactPath && pfDef.GoalIsBlocked(moveData, (CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN)))
 		return CantGetCloser;
@@ -284,7 +291,7 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 	openSquares.push(os);
 
 	// Performs the search.
-	SearchResult result = DoSearch(moveData, pfDef);
+	SearchResult result = DoSearch(moveData, pfDef, ownerId);
 
 	// If no improvement has been found then return CantGetCloser instead.
 	if(goalSquare == startSquare || goalSquare == 0) {
@@ -297,7 +304,8 @@ IPath::SearchResult CPathFinder::InitSearch(const MoveData& moveData, const CPat
 /**
  * Performs the actual search.
  */
-IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef) {
+IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef,
+		int ownerId) {
 	bool foundGoal = false;
 	while (!openSquares.empty() && openSquareBufferPointer - openSquareBuffer < (maxNodesToBeSearched - 8)) {
 		// Get the open square with lowest expected path-cost.
@@ -317,24 +325,24 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
 		}
 
 		// Test the 8 surrounding squares.
-		bool right = TestSquare(moveData, pfDef, os, PATHOPT_RIGHT);
-		bool left = TestSquare(moveData, pfDef, os, PATHOPT_LEFT);
-		bool up = TestSquare(moveData, pfDef, os, PATHOPT_UP);
-		bool down = TestSquare(moveData, pfDef, os, PATHOPT_DOWN);
+		bool right = TestSquare(moveData, pfDef, os, PATHOPT_RIGHT, ownerId);
+		bool left = TestSquare(moveData, pfDef, os, PATHOPT_LEFT, ownerId);
+		bool up = TestSquare(moveData, pfDef, os, PATHOPT_UP, ownerId);
+		bool down = TestSquare(moveData, pfDef, os, PATHOPT_DOWN, ownerId);
 
 		if (up) {
 			// we dont want to search diagonally if there is a blocking object
 			// (not blocking terrain) in one of the two side squares
 			if (right)
-				TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_UP));
+				TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_UP), ownerId);
 			if (left)
-				TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_UP));
+				TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_UP), ownerId);
 		}
 		if (down) {
 			if (right)
-				TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_DOWN));
+				TestSquare(moveData, pfDef, os, (PATHOPT_RIGHT | PATHOPT_DOWN), ownerId);
 			if (left)
-				TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_DOWN));
+				TestSquare(moveData, pfDef, os, (PATHOPT_LEFT | PATHOPT_DOWN), ownerId);
 		}
 
 		// Mark this square as closed.
@@ -363,7 +371,8 @@ IPath::SearchResult CPathFinder::DoSearch(const MoveData& moveData, const CPathF
  * Test the availability and value of a square,
  * and possibly add it to the queue of open squares.
  */
-bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection) {
+bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef,
+		OpenSquare* parentOpenSquare, unsigned int enterDirection, int ownerId) {
 	testedNodes++;
 
 	// Calculate the new square.
@@ -417,8 +426,9 @@ bool CPathFinder::TestSquare(const MoveData& moveData, const CPathFinderDef& pfD
 	}
 	// Include heatmap cost adjustment.
 	float heatCostMod = 1.0f;
-	if (heatMapping && moveData.heatMapping) {
-		heatCostMod += moveData.heatMod * heatmap[square.x][square.y];
+	if (heatMapping && moveData.heatMapping
+			&& heatmap[square.x][square.y].ownerId != ownerId) {
+		heatCostMod += moveData.heatMod * heatmap[square.x][square.y].value;
 	}
 
 	float squareCost = heatCostMod * moveCost[enterDirection] / squareSpeedMod;
@@ -474,8 +484,6 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 
 		// for path adjustment (cutting corners)
 		std::deque<int2> previous;
-		// for heat mapping
-		std::vector<int2> squarepath;
 
 		// make sure we don't match anything
 		previous.push_back(int2(-100, -100));
@@ -494,10 +502,10 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 			AdjustFoundPath(moveData, foundPath, /* inout */ cs, previous, square);
 
 			foundPath.path.push_back(cs);
+			foundPath.squares.push_back(square);
+
 			previous.pop_front();
 			previous.push_back(square);
-			if (heatMapping && moveData.heatMapping)
-				squarepath.push_back(square);
 
 			int2 oldSquare;
 			oldSquare.x = square.x;
@@ -509,10 +517,10 @@ void CPathFinder::FinishSearch(const MoveData& moveData, Path& foundPath) {
 		if (foundPath.path.size() > 0) {
 			foundPath.pathGoal = foundPath.path.front();
 
-			if (heatMapping && moveData.heatMapping) {
-				for (int i = 0; i < squarepath.size(); ++i) {
-					const int2& tmp = squarepath[i];
-					heatmap[tmp.x][tmp.y] = std::max(heatmap[tmp.x][tmp.y], moveData.heatProduced);
+			if (false && heatMapping && moveData.heatMapping) {
+				for (int i = 0; i < foundPath.squares.size(); ++i) {
+					const int2& tmp = foundPath.squares[i];
+					heatmap[tmp.x][tmp.y].value = std::max(heatmap[tmp.x][tmp.y].value, moveData.heatProduced);
 				}
 			}
 		}
@@ -672,29 +680,26 @@ void CPathFinder::ResetSearch()
 void CPathFinder::SetHeatMapState(bool enabled)
 {
 	heatMapping = enabled;
+}
 
-	if (enabled && heatmap.empty()) {
-		heatmap.resize(gs->mapx);
-		for (int i = 0; i<gs->mapx; ++i) {
-			heatmap[i].resize(gs->mapy);
-		}
+void CPathFinder::InitHeatMap()
+{
+	heatmap.resize(gs->mapx);
+	for (int i = 0; i<gs->mapx; ++i) {
+		heatmap[i].resize(gs->mapy);
 	}
 }
 
 
 void CPathFinder::UpdateHeatMap()
 {
-	// run every 4 frames
-	if ((gs->frameNum & 3) != 0)
-		return;
-
 	if (heatmap.empty())
 		return;
 
 	for (int x = 0; x<gs->mapx; x += 2) {
 		for (int y = 0; y<gs->mapy; y += 2) {
-			if (heatmap[x][y] > 0)
-				--heatmap[x][y];
+			if (heatmap[x][y].value > 0)
+				--heatmap[x][y].value;
 		}
 	}
 }
