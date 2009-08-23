@@ -3,6 +3,8 @@
 
 #include <string>
 #include <map>
+
+#include "Sim/Misc/CommonDefHandler.h"
 #include "Sim/Misc/DamageArray.h"
 #include "Sim/Units/UnitDef.h"
 
@@ -236,7 +238,8 @@ struct WeaponDef
 class CExplosionGeneratorHandler;
 
 
-class CWeaponDefHandler {
+class CWeaponDefHandler : CommonDefHandler
+{
 	public:
 		CWeaponDefHandler();
 		~CWeaponDefHandler();
