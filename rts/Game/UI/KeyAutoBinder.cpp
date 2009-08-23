@@ -23,7 +23,6 @@
 #include "Sim/Projectiles/Projectile.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
 #include "Util.h"

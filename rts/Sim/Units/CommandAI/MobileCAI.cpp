@@ -461,7 +461,7 @@ void CMobileCAI::ExecuteLoadUnits(Command &c) {
 	}
 
 	if (!inCommand) {
-		inCommand ^= true; // ?
+		inCommand = true;
 		Command newCommand;
 		newCommand.id = CMD_LOAD_UNITS;
 		newCommand.params.push_back(owner->id);

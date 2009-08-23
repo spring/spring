@@ -80,8 +80,23 @@ enum EVENT
 }
 
 using namespace boost::asio;
-AutohostInterface::AutohostInterface(const std::string& autohostip, int remoteport) : autohost(netcode::netservice, ip::udp::endpoint(ip::address_v6::any(), 0))
+AutohostInterface::AutohostInterface(const std::string& autohostip, int remoteport) : autohost(netcode::netservice)
 {
+	boost::system::error_code err;
+	autohost.open(ip::udp::v6(), err); // test v6
+	if (!err)
+	{
+		autohost.bind(ip::udp::endpoint(ip::address_v6::any(), 0));
+	}
+	else
+	{
+		LogObject() << "IPv6 not supported, falling back to v4";
+		autohost.open(ip::udp::v4());
+		autohost.bind(ip::udp::endpoint(ip::address_v4::any(), 0));
+	}
+	boost::asio::socket_base::non_blocking_io command(true);
+	autohost.io_control(command);
+
 	autohost.connect(netcode::ResolveAddr(autohostip, remoteport));
 }
 

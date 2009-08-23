@@ -86,25 +86,33 @@ bool LuaConstGame::PushEntries(lua_State* L)
 	LuaPushNamedNumber(L, "mapSizeZ",            readmap->height * SQUARE_SIZE);
 	LuaPushNamedNumber(L, "extractorRadius",     mi->map.extractorRadius);
 	LuaPushNamedNumber(L, "tidal",               mi->map.tidalStrength);
+
 	LuaPushNamedNumber(L, "waterDamage",         mi->water.damage);
 	LuaPushNamedString(L, "waterTexture",        mi->water.texture);
 	LuaPushNamedNumber(L, "waterRepeatX",        mi->water.repeatX);
 	LuaPushNamedNumber(L, "waterRepeatY",        mi->water.repeatY);
 	LuaPushNamedString(L, "waterFoamTexture",    mi->water.foamTexture);
 	LuaPushNamedString(L, "waterNormalTexture",  mi->water.normalTexture);
+	LuaPushNamedNumber(L, "waterNumTiles",       mi->water.numTiles);
 	LuaPushNamedBool(L,   "waterVoid",           mi->map.voidWater);
-	LuaPushNamedBool(L,   "waterPlane",          mi->water.hasWaterPlane);
+	LuaPushNamedBool(L,   "waterHasWaterPlane",  mi->water.hasWaterPlane);
+	LuaPushNamedBool(L,   "waterForceRendering", mi->water.forceRendering);
 	LuaPushNamedColor(L,  "waterAbsorb",         mi->water.absorb);
 	LuaPushNamedColor(L,  "waterBaseColor",      mi->water.baseColor);
 	LuaPushNamedColor(L,  "waterMinColor",       mi->water.minColor);
 	LuaPushNamedColor(L,  "waterSurfaceColor",   mi->water.surfaceColor);
 	LuaPushNamedNumber(L, "waterSurfaceAlpha",   mi->water.surfaceAlpha);
+	LuaPushNamedColor(L,  "waterDiffuseColor",   mi->water.diffuseColor);
+	LuaPushNamedNumber(L, "waterDiffuseFactor",  mi->water.diffuseFactor);
 	LuaPushNamedColor(L,  "waterSpecularColor",  mi->water.specularColor);
 	LuaPushNamedNumber(L, "waterSpecularFactor", mi->water.specularFactor);
+	LuaPushNamedNumber(L, "waterAmbientFactor",  mi->water.ambientFactor);
 	LuaPushNamedColor(L,  "waterPlaneColor",     mi->water.planeColor);
 	LuaPushNamedNumber(L, "waterFresnelMin",     mi->water.fresnelMin);
 	LuaPushNamedNumber(L, "waterFresnelMax",     mi->water.fresnelMax);
 	LuaPushNamedNumber(L, "waterFresnelPower",   mi->water.fresnelPower);
+	LuaPushNamedNumber(L, "waterReflectionDistortion", mi->water.reflDistortion);
+
 	LuaPushNamedColor(L,  "fogColor",            mi->atmosphere.fogColor);
 	LuaPushNamedColor(L,  "groundAmbientColor",  mi->light.groundAmbientColor);
 	LuaPushNamedColor(L,  "groundSpecularColor", mi->light.groundSpecularColor);

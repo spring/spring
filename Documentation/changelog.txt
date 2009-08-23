@@ -1,7 +1,18 @@
 Spring change log
 
+0.80.2.0:
+Bugfixes:
+ - fix creation of DDS textures
+ - Unbreak transports when loadingRadius <= some magic number
+ 
+Lua:
+ - fix Zlib-compression and decompression for lua
+ - Added VFS.SubDirs(dir, pattern, modes) callout to LuaParser
+ - added some more map water configs to Game. table
+
+
 0.80.1.0:
-Bugifxes:
+Bugfixes:
  - don't write spring-files where they don't belong
  - some rendering fixes (ATI errors, bumpwater)
  - IPs of players not broadcasted
@@ -9,6 +20,7 @@ Bugifxes:
  - slightly better paralyzeDamage handling
  - fixed several issues with ArchiveMover - it now moves files to
    My Documents\My Games\Spring and should be more reliable
+
 
 0.80.0.0:
 Engine / Simulation:

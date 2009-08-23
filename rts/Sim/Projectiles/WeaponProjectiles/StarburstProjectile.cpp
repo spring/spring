@@ -13,7 +13,7 @@
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "StarburstProjectile.h"
 #include "Sync/SyncTracer.h"
 #include "Rendering/UnitModels/s3oParser.h"

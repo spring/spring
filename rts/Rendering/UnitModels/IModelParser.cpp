@@ -11,6 +11,7 @@
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Units/COB/CobInstance.h"
 #include "Rendering/FartextureHandler.h"
+#include "FileSystem/FileSystem.h"
 #include "Util.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
@@ -76,7 +77,7 @@ S3DModel* C3DModelLoader::Load3DModel(std::string name, const float3& centerOffs
 		return ci->second;
 	}
 
-	std::string fileExt = GetFileExt(name);
+	std::string fileExt = filesystem.GetExtension(name);
 
 	std::map<std::string, IModelParser*>::iterator pi;
 	if ((pi = parsers.find(fileExt)) != parsers.end()) {

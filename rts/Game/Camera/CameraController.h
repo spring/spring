@@ -39,14 +39,22 @@ public:
 	// return the position to send to new controllers SetPos
 	virtual float3 SwitchFrom() const = 0;
 	virtual void SwitchTo(bool showText = true) = 0;
-	
+
 	virtual void GetState(StateMap& sm) const = 0;
 	virtual bool SetState(const StateMap& sm) = 0;
 	virtual void SetTrackingInfo(const float3& pos, float radius) { SetPos(pos); }
 
+	/**
+	 * Whether the camera's distance to the ground or to the units
+	 * should be used to determine whether to show them as icons or normal.
+	 * This is called every frame, so it can be dynamically,
+	 * eg depend on the current position/angle.
+	 */
+	virtual bool GetUseDistToGroundForIcons();
+
 	/// should this mode appear when we toggle the camera controller?
 	bool enabled;
-	
+
 protected:
 	bool SetStateBool(const StateMap& sm, const std::string& name, bool& var);
 	bool SetStateFloat(const StateMap& sm, const std::string& name, float& var);
@@ -55,7 +63,7 @@ protected:
 	float fov;
 	float mouseScale;
 	float scrollSpeed;
-	
+
 	float3 pos;
 };
 

@@ -130,7 +130,7 @@ class LuaParser {
 		}
 
 		const string& GetErrorLog() const { return errorLog; }
-	
+
 		const set<string>& GetAccessedFiles() const { return accessedFiles; }
 
 		// for setting up the initial params table
@@ -177,7 +177,7 @@ class LuaParser {
 		bool lowerKeys; // convert all returned keys to lower case
 		bool lowerCppKeys; // convert strings in arguments keys to lower case
 
-		string errorLog;	
+		string errorLog;
 		set<string> accessedFiles;
 
 	private:
@@ -190,6 +190,7 @@ class LuaParser {
 
 		// VFS call-outs
 		static int DirList(lua_State* L);
+		static int SubDirs(lua_State* L);
 		static int Include(lua_State* L);
 		static int LoadFile(lua_State* L);
 		static int FileExists(lua_State* L);
