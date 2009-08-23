@@ -201,6 +201,8 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 
 SoundSource* CSound::GetNextBestSource(bool lock)
 {
+	if (sources.empty())
+		return NULL;
 	sourceVecT::iterator bestPos = sources.begin();
 	
 	for (sourceVecT::iterator it = sources.begin(); it != sources.end(); ++it)
@@ -313,7 +315,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	}
 
 	SoundSource* best = GetNextBestSource(false);
-	if (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority()))
+	if (best && !best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority()))
 		best->Play(&sounds[id], p, velocity, volume, relative);
 	CheckError("CSound::PlaySample");
 }
