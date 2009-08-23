@@ -58,7 +58,7 @@ void MusicChannel::Stop()
 	}
 }
 
-unsigned int MusicChannel::GetTime()
+float MusicChannel::GetTime()
 {
 	if (current)
 		return current->GetStreamTime();
@@ -66,7 +66,7 @@ unsigned int MusicChannel::GetTime()
 		return 0;
 }
 
-unsigned int MusicChannel::GetPlayTime()
+float MusicChannel::GetPlayTime()
 {
 	if (current)
 		return current->GetStreamPlayTime();
