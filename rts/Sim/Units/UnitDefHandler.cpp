@@ -31,7 +31,6 @@
 #include "Sim/Units/COB/UnitScriptNames.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "LogOutput.h"
-#include "FileSystem/FileSystem.h"
 #include "Sound/Sound.h"
 #include "Exceptions.h"
 
@@ -869,39 +868,17 @@ void CUnitDefHandler::LoadSounds(const LuaTable& soundsTable,
 }
 
 
-void CUnitDefHandler::LoadSound(GuiSoundSet& gsound,
-                                const string& fileName, const float volume)
+void CUnitDefHandler::LoadSound(GuiSoundSet& gsound, const string& fileName, const float volume)
 {
-	const std::string extension = filesystem.GetExtension(fileName);
-	bool hasFile = false;
-	if (extension == "wav" || extension == "ogg")
+	const int id = LoadSoundFile(fileName);
+	if (id > 0)
 	{
-		CFileHandler raw(fileName);
-		if (raw.FileExists())
-			hasFile = true;
-	}
-
-	if (!sound->HasSoundItem(fileName) && !hasFile)
-	{
-		string soundFile = "sounds/" + fileName;
-
-		if (extension.empty()) {
-			// extension missing, try wav
-			soundFile += ".wav";
-		}
-		CFileHandler fh(soundFile);
-		if (fh.FileExists()) {
-			// we have a valid soundfile: store name, ID, and default volume
-			const int id = sound->GetSoundId(soundFile);
-			GuiSoundSet::Data soundData(fileName, id, volume);
-			gsound.sounds.push_back(soundData);
-		}
+		GuiSoundSet::Data soundData(fileName, id, volume);
+		gsound.sounds.push_back(soundData);
 	}
 	else
 	{
-		const int id = sound->GetSoundId(fileName);
-		GuiSoundSet::Data soundData(fileName, id, volume);
-		gsound.sounds.push_back(soundData);
+		LogObject() << "Could not load sound from unit def: " << fileName;
 	}
 }
 

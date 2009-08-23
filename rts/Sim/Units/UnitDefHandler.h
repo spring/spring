@@ -5,6 +5,8 @@
 #include <vector>
 #include <map>
 #include <set>
+
+#include "Sim/Misc/CommonDefHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
 #include "UnitDef.h"
 
@@ -15,7 +17,7 @@ class LuaTable;
 
 
 //this class takes care of all the unit definitions
-class CUnitDefHandler
+class CUnitDefHandler : CommonDefHandler
 {
 public:
 	UnitDef* unitDefs;
