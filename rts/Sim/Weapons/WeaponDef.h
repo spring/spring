@@ -1,11 +1,16 @@
 #ifndef WEAPONDEF_H
 #define WEAPONDEF_H
 
-#include "Sim/Units/UnitDef.h"
+#include <map>
+
+#include "float3.h"
 #include "Sim/Misc/DamageArray.h"
+#include "Sim/Misc/GuiSoundSet.h"
 
 struct AtlasedTexture;
 class CColorMap;
+class CExplosionGenerator;
+class S3DModel;
 
 struct WeaponDef
 {
