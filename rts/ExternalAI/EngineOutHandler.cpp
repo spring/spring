@@ -26,7 +26,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "NetProtocol.h"
 #include "GlobalUnsynced.h"
 #include "ConfigHandler.h"

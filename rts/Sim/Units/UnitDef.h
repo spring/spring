@@ -1,12 +1,10 @@
 #ifndef UNITDEF_H
 #define UNITDEF_H
 
-#include <cstdlib>
 #include <string>
 #include <vector>
 #include <map>
 
-#include "creg/creg_cond.h"
 #include "float3.h"
 #include "Rendering/Icon.h"
 #include "Sim/Misc/GuiSoundSet.h"

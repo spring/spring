@@ -6,7 +6,7 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "Sync/SyncTracer.h"
 #include "GlobalUnsynced.h"
 

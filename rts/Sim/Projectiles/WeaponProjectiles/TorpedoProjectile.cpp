@@ -10,7 +10,7 @@
 #include "Sim/Projectiles/Unsynced/BubbleProjectile.h"
 #include "Sim/Projectiles/Unsynced/SmokeTrailProjectile.h"
 #include "Sim/Units/Unit.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "TorpedoProjectile.h"
 #include "GlobalUnsynced.h"
 
