@@ -288,7 +288,9 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 				oldMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
 				saveMode = true;
 			}
+#ifndef DEBUG
 			SDL_WM_GrabInput(SDL_GRAB_ON);
+#endif
 			SetCursorPos(screen_pt.x, screen_pt.y);
 		}
 	}
