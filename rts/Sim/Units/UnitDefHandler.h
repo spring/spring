@@ -2,7 +2,6 @@
 #define UNITDEFHANDLER_H
 
 #include <string>
-#include <vector>
 #include <map>
 #include <set>
 
@@ -12,7 +11,6 @@
 
 
 struct WeaponDef;
-
 class LuaTable;
 
 
