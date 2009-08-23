@@ -5,6 +5,8 @@
 
 #include "ConfigHandler.h"
 
+#include <math.h> // for fabs()
+
 
 CCameraController::CCameraController() : pos(2000, 70, 1800)
 {
@@ -43,4 +45,23 @@ bool CCameraController::SetStateFloat(const StateMap& sm,
 		return true;
 	}
 	return false;
+}
+
+// Uses distance to ground for large angles (near 90 degree),
+// and distance to unit for flat angles (near 0 degree),
+// when comparing the camera direction to the map surface,
+// assuming the map is flat.
+bool CCameraController::GetUseDistToGroundForIcons() {
+
+	const float3& dir  = GetDir().UnsafeANormalize();
+	const float dot    = fabs(dir.dot(UpVector));
+
+	// dot: 1.0=overview, 0.0=first person
+	if (dot < 0.8) {
+		// flat angle (typical for first person camera)
+		return false;
+	} else {
+		// steep angle (typical for overhead camera)
+		return true;
+	}
 }
