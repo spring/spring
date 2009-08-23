@@ -237,6 +237,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	if (ud->canmove && !ud->canfly && (type != "Factory")) {
 		CGroundMoveType* mt = new CGroundMoveType(unit);
 		mt->maxSpeed = ud->speed / GAME_SPEED;
+		mt->maxReverseSpeed = ud->rSpeed / GAME_SPEED;
 		mt->maxWantedSpeed = ud->speed / GAME_SPEED;
 		mt->turnRate = ud->turnRate;
 		mt->baseTurnRate = ud->turnRate;
