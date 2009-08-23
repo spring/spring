@@ -704,8 +704,6 @@ void CFeatureHandler::DrawShadowPass()
 	// Need the alpha mask for transparent features
 	glEnable(GL_TEXTURE_2D);
 	glPushAttrib(GL_COLOR_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER,0.5f);
 
