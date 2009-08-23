@@ -116,7 +116,7 @@ protected:
 	void CalcSkidRot(void);
 
 	void AdjustPosToWaterLine();
-	void UpdateDirectControl();
+	bool UpdateDirectControl();
 	void UpdateOwnerPos(bool);
 	bool WantReverse(const float3&) const;
 

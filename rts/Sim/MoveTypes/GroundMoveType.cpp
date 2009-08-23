@@ -247,7 +247,7 @@ void CGroundMoveType::Update()
 	} else {
 		bool wantReverse = false;
 		if (owner->directControl) {
-			UpdateDirectControl();
+			wantReverse = UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
 			if (pathId || (currentSpeed != 0.0f)) {
@@ -2035,14 +2035,23 @@ void CGroundMoveType::AdjustPosToWaterLine()
 	}
 }
 
-void CGroundMoveType::UpdateDirectControl()
+bool CGroundMoveType::UpdateDirectControl()
 {
-	waypoint = owner->pos + owner->frontdir * 100;
+	bool wantReverse = (owner->directControl->back && !owner->directControl->forward);
+	waypoint = owner->pos;
+	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
 	waypoint.CheckInBounds();
 
 	if (owner->directControl->forward) {
-		wantedSpeed = reversing? maxReverseSpeed * 2.0f: maxSpeed * 2.0f;
-		SetDeltaSpeed(false);
+		assert(!wantReverse);
+		wantedSpeed = maxSpeed * 2.0f;
+		SetDeltaSpeed(wantReverse);
+		owner->isMoving = true;
+		owner->script->StartMoving();
+	} else if (owner->directControl->back) {
+		assert(wantReverse);
+		wantedSpeed = maxReverseSpeed * 2.0f;
+		SetDeltaSpeed(wantReverse);
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else {
@@ -2061,6 +2070,7 @@ void CGroundMoveType::UpdateDirectControl()
 
 	if (gu->directControl == owner)
 		camera->rot.y += deltaHeading * TAANG2RAD;
+	return wantReverse;
 }
 
 void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
