@@ -23,7 +23,7 @@ float float3::maxzpos = 2048.0f; /**< Maximum z position is 2048 */
 
 #ifdef _MSC_VER
 const float float3::CMP_EPS = 1e-4f;
-const float float3::NORMALIZE_EPS = 1e-6f;
+const float float3::NORMALIZE_EPS = 1e-12f;
 #endif
 
 bool float3::IsInBounds() const
