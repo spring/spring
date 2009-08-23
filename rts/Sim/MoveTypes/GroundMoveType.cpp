@@ -37,6 +37,7 @@
 #include "Sound/AudioChannel.h"
 #include "FastMath.h"
 #include "myMath.h"
+#include "Vec2.h"
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
@@ -169,6 +170,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	nextObstacleAvoidanceUpdate(0),
 	lastTrackUpdate(0),
 
+	lastHeatRequestFrame(0),
+
 	skidding(false),
 	flying(false),
 	reversing(false),
@@ -205,7 +208,7 @@ void CGroundMoveType::PostLoad()
 {
 	// FIXME: HACK: re-initialize path after load
 	if (pathId) {
-		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+		RequestPath(owner->pos, goalPos, goalRadius);
 	}
 }
 
@@ -1147,14 +1150,31 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 }
 
 
-unsigned int CGroundMoveType::RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos,
+unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos,
 		float goalRadius)
 {
-	bool heatmap = pathManager->GetHeatMappingEnabled();
-	pathManager->SetHeatMappingEnabled(true);
-	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
-	pathManager->SetHeatMappingEnabled(heatmap);
+	if (lastHeatRequestFrame + 60 < gs->frameNum) {
+		pathManager->SetHeatMappingEnabled(true);
+		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner, owner->id);
+		pathManager->SetHeatMappingEnabled(false);
+		lastHeatRequestFrame = gs->frameNum;
+	} else {
+		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner, owner->id);
+	}
 	return pathId;
+}
+
+
+void CGroundMoveType::UpdateHeatMap()
+{
+	if (!pathId)
+		return;
+
+	std::vector<int2> points;
+	pathManager->GetDetailedPathSquares(pathId, points);
+	for (std::vector<int2>::iterator it = points.begin(); it != points.end(); ++it) {
+		pathManager->SetHeatOnSquare(it->x, it->y, owner->mobility->heatProduced, owner->id);
+	}
 }
 
 
@@ -1213,7 +1233,7 @@ void CGroundMoveType::GetNewPath()
 
 	pathManager->DeletePath(pathId);
 
-	RequestPath(owner->mobility, owner->pos, goalPos, goalRadius);
+	RequestPath(owner->pos, goalPos, goalRadius);
 
 	nextWaypoint = owner->pos;
 
@@ -1238,7 +1258,7 @@ void CGroundMoveType::GetNextWaypoint()
 {
 	if (pathId) {
 		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f*SQUARE_SIZE);
+		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f*SQUARE_SIZE, 0, owner->id);
 
 		if (nextWaypoint.x != -1) {
 			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;
@@ -1324,6 +1344,7 @@ void CGroundMoveType::StartEngine() {
 
 		// activate "engine" only if a path was found
 		if (pathId) {
+			UpdateHeatMap();
 			pathFailures = 0;
 			etaFailures = 0;
 			owner->isMoving = true;

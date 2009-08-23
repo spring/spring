@@ -61,10 +61,11 @@ public:
 	SearchResult GetPath(const MoveData& moveData, const float3 startPos,
 	                     const CPathFinderDef& pfDef, Path& path,
 	                     bool testMobile, bool exactPath = false,
-	                     unsigned int maxSearchedNodes = 10000, bool needPath = true);
+	                     unsigned int maxSearchedNodes = 10000, bool needPath = true,
+	                     int ownerId = 0);
 
 	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
-	                     const CPathFinderDef& pfDef, Path& path);
+	                     const CPathFinderDef& pfDef, Path& path, int ownerId = 0);
 
 	//Minimum distance between two waypoints.
 	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
@@ -75,9 +76,26 @@ public:
 	make units behave more intelligently.
 
 	*/
+	void InitHeatMap();
 	void SetHeatMapState(bool enabled);
 	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
+
+	struct HeatMapValue {
+		boost::int32_t value;
+		boost::int32_t ownerId;
+	};
+
+	void UpdateHeatValue(int x, int y, boost::int32_t value, boost::int32_t ownerId)
+	{
+		assert(!heatmap.empty());
+
+		if (heatmap[x][y].value < value) {
+			heatmap[x][y].value = value;
+			heatmap[x][y].ownerId = ownerId;
+		}
+	}
+
 
 private:
 	enum { MAX_SEARCHED_SQUARES = 10000 };
@@ -164,9 +182,10 @@ private:
 		void DeleteAll();
   };
 	void ResetSearch();
-	SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef);
-	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef);
-	bool TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection);
+	SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
+	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
+	bool TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare,
+			unsigned int enterDirection, int ownerId);
 	void FinishSearch(const MoveData& moveData, Path& path);
 	void AdjustFoundPath(const MoveData& moveData, Path& path, float3& nextPoint,
 			std::deque<int2>& previous, int2 square);
@@ -200,7 +219,7 @@ private:
 
 	// Heat mapping
 	bool heatMapping;
-	std::vector<std::vector<int> > heatmap;
+	std::vector<std::vector<HeatMapValue> > heatmap;
 
 public:
 	void Draw(void);

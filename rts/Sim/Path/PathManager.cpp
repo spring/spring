@@ -56,7 +56,8 @@ bool CPathManager::GetHeatMappingEnabled()
 Help-function.
 Turns a start->goal-request into a will defined request.
 */
-unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos, float goalRadius, CSolidObject* caller) {
+unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos,
+		float3 goalPos, float goalRadius, CSolidObject* caller, int ownerId) {
 	startPos.CheckInBounds();
 	goalPos.CheckInBounds();
 
@@ -67,14 +68,15 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 	CRangedGoalWithCircularConstraint* rangedGoalPED = new CRangedGoalWithCircularConstraint(startPos,goalPos, goalRadius, 3, 2000);
 
 	// Make request.
-	return RequestPath(moveData, startPos, rangedGoalPED, goalPos, caller);
+	return RequestPath(moveData, startPos, rangedGoalPED, goalPos, caller, ownerId);
 }
 
 
 /*
 Request a new multipath, store the result and return an handle-id to it.
 */
-unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos, CPathFinderDef* peDef, float3 goalPos, CSolidObject* caller) {
+unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos,
+		CPathFinderDef* peDef, float3 goalPos, CSolidObject* caller, int ownerId) {
 	SCOPED_TIMER("AI:PFS");
 
 	// Creates a new multipath.
@@ -92,7 +94,8 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 
 	if (distanceToGoal < DETAILED_DISTANCE) {
 		// Get a detailed path.
-		IPath::SearchResult result = pf->GetPath(*moveData, startPos, *peDef, newPath->detailedPath, true);
+		IPath::SearchResult result = pf->GetPath(*moveData, startPos, *peDef,
+				newPath->detailedPath, true, false, 10000, true, caller->id);
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			retValue = Store(newPath);
@@ -101,11 +104,11 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 		}
 	} else if (distanceToGoal < ESTIMATE_DISTANCE) {
 		// Get an estimate path.
-		IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath);
+		IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath, ownerId);
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			// Turn a part of it into detailed path.
-			EstimateToDetailed(*newPath, startPos);
+			EstimateToDetailed(*newPath, startPos, ownerId);
 			// Store the path.
 			retValue = Store(newPath);
 		} else {
@@ -118,7 +121,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 				IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath);
 
 				if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-					EstimateToDetailed(*newPath, startPos);
+					EstimateToDetailed(*newPath, startPos, ownerId);
 					retValue = Store(newPath);
 				} else {
 					delete newPath;
@@ -133,9 +136,9 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			// Turn a part of it into hi-res. estimate path.
-			Estimate2ToEstimate(*newPath, startPos);
+			Estimate2ToEstimate(*newPath, startPos, ownerId);
 			// And estimate into detailed.
-			EstimateToDetailed(*newPath, startPos);
+			EstimateToDetailed(*newPath, startPos, ownerId);
 			// Store the path.
 			retValue = Store(newPath);
 		} else {
@@ -143,7 +146,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 			IPath::SearchResult result = pe->GetPath(*moveData, startPos, *peDef, newPath->estimatedPath);
 
 			if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-				EstimateToDetailed(*newPath, startPos);
+				EstimateToDetailed(*newPath, startPos, ownerId);
 				retValue = Store(newPath);
 			} else {
 				// 8*8 can also fail rarely, so see if we can find a better 8*8 to start from
@@ -155,7 +158,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 					IPath::SearchResult result = pe->GetPath(*moveData, sp, *peDef, newPath->estimatedPath);
 
 					if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
-						EstimateToDetailed(*newPath, startPos);
+						EstimateToDetailed(*newPath, startPos, ownerId);
 						retValue = Store(newPath);
 					} else {
 						delete newPath;
@@ -187,7 +190,7 @@ unsigned int CPathManager::Store(MultiPath* path)
 /*
 Turns a part of the estimate path into detailed path.
 */
-void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) const
+void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos, int ownerId) const
 {
 	//If there is no estimate path, nothing could be done.
 	if(path.estimatedPath.path.empty())
@@ -214,9 +217,9 @@ void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) const
 	//If this is the final improvement of the path, then use the original goal.
 	IPath::SearchResult result;
 	if(path.estimatedPath.path.empty() && path.estimatedPath2.path.empty())
-		result = pf->GetPath(*path.moveData, startPos, *path.peDef, path.detailedPath, true);
+		result = pf->GetPath(*path.moveData, startPos, *path.peDef, path.detailedPath, true, false, 10000, true, ownerId);
 	else
-		result = pf->GetPath(*path.moveData, startPos, rangedGoalPFD, path.detailedPath, true);
+		result = pf->GetPath(*path.moveData, startPos, rangedGoalPFD, path.detailedPath, true, false, 10000, true, ownerId);
 
 	//If no refined path could be found, set goal as desired goal.
 	if(result == IPath::CantGetCloser || result == IPath::Error) {
@@ -228,7 +231,7 @@ void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) const
 /*
 Turns a part of the estimate2 path into estimate path.
 */
-void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) const
+void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos, int ownerId) const
 {
 	//If there is no estimate2 path, nothing could be done.
 	if(path.estimatedPath2.path.empty())
@@ -270,7 +273,8 @@ void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) const
 /*
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
-float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance, int numRetries) const
+float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance,
+		int numRetries, int ownerId) const
 {
 	SCOPED_TIMER("AI:PFS");
 
@@ -300,12 +304,12 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 		if(!multiPath->estimatedPath2.path.empty()		//if so check if estimated path also need bettering
 			&& (multiPath->estimatedPath2.path.back().SqDistance2D(callerPos) < Square(MIN_ESTIMATE_DISTANCE * SQUARE_SIZE)
 			|| multiPath->estimatedPath.path.size() <= 2)){
-				Estimate2ToEstimate(*multiPath, callerPos);
+				Estimate2ToEstimate(*multiPath, callerPos, ownerId);
 		}
 
 		if(multiPath->caller)
 			multiPath->caller->UnBlock();
-		EstimateToDetailed(*multiPath, callerPos);
+		EstimateToDetailed(*multiPath, callerPos, ownerId);
 		if(multiPath->caller)
 			multiPath->caller->Block();
 	}
@@ -318,7 +322,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 			if(multiPath->estimatedPath2.path.empty() && multiPath->estimatedPath.path.empty())
 				return multiPath->finalGoal;
 			else
-				return NextWaypoint(pathId,callerPos,minDistance,numRetries+1);
+				return NextWaypoint(pathId,callerPos,minDistance,numRetries+1,ownerId);
 		} else {
 			waypoint = multiPath->detailedPath.path.back();
 			multiPath->detailedPath.path.pop_back();
@@ -433,6 +437,48 @@ void CPathManager::Draw() {
 }
 
 
+void CPathManager::GetDetailedPath(unsigned pathId, std::vector<float3>& points) const
+{
+	points.clear();
+
+	std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
+	if (pi == pathMap.end()) {
+		return;
+	}
+
+	const MultiPath* path = pi->second;
+	points.reserve(path->detailedPath.path.size());
+
+	IPath::path_list_type::const_reverse_iterator pvi;
+
+	const IPath::path_list_type& dtlPoints = path->detailedPath.path;
+	for (pvi = dtlPoints.rbegin(); pvi != dtlPoints.rend(); pvi++) {
+		points.push_back(*pvi);
+	}
+}
+
+
+void CPathManager::GetDetailedPathSquares(unsigned pathId, std::vector<int2>& points) const
+{
+	points.clear();
+
+	std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
+	if (pi == pathMap.end()) {
+		return;
+	}
+
+	const MultiPath* path = pi->second;
+	points.reserve(path->detailedPath.path.size());
+
+	IPath::square_list_type::const_reverse_iterator pvi;
+
+	const IPath::square_list_type& dtlPoints = path->detailedPath.squares;
+	for (pvi = dtlPoints.rbegin(); pvi != dtlPoints.rend(); pvi++) {
+		points.push_back(*pvi);
+	}
+}
+
+
 void CPathManager::GetEstimatedPath(unsigned int pathId,
 	std::vector<float3>& points,
 	std::vector<int>& starts) const
@@ -445,6 +491,10 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 		return;
 	}
 	const MultiPath* path = pi->second;
+	points.reserve(path->detailedPath.path.size()
+			+ path->estimatedPath.path.size()
+			+ path->estimatedPath2.path.size());
+	starts.reserve(3);
 
 	IPath::path_list_type::const_reverse_iterator pvi;
 
@@ -465,8 +515,19 @@ void CPathManager::GetEstimatedPath(unsigned int pathId,
 	for (pvi = est2Points.rbegin(); pvi != est2Points.rend(); pvi++) {
 		points.push_back(*pvi);
 	}
+}
 
-	return;
+
+void CPathManager::SetHeatOnPos(float3 pos, int value, int ownerId)
+{
+	int x = (int)pos.x/SQUARE_SIZE;
+	int y = (int)pos.z/SQUARE_SIZE;
+	SetHeatOnSquare(x, y, value, ownerId);
+}
+
+void CPathManager::SetHeatOnSquare(int x, int y, int value, int ownerId)
+{
+	pf->UpdateHeatValue(x, y, value, ownerId);
 }
 
 
