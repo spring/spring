@@ -37,9 +37,10 @@ void MusicChannel::Play(const std::string& path, float _volume)
 	}
 
 	if (!current)
-		current = sound->GetNextBestSource();
+		current = sound->GetNextBestSource(); // may return 0 if no sources available
 
-	current->PlayStream(path, volume * _volume);
+	if (current)
+		current->PlayStream(path, volume * _volume);
 }
 
 void MusicChannel::Pause()
