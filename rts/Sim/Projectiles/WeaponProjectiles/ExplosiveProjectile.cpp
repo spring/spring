@@ -12,7 +12,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "GlobalUnsynced.h"
 
 #ifdef TRACE_SYNC
