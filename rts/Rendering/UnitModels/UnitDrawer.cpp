@@ -9,6 +9,7 @@
 #include "Game/GameHelper.h"
 #include "Game/GameSetup.h"
 #include "Game/SelectedUnits.h"
+#include "Game/CameraHandler.h"
 #include "Lua/LuaMaterial.h"
 #include "Lua/LuaUnitMaterial.h"
 #include "Lua/LuaRules.h"
@@ -274,6 +275,16 @@ void CUnitDrawer::Update(void)
 			(*usi)->UpdateDrawPos();
 		}
 	}
+
+	distToGroundForIcons_useMethod = camHandler->GetCurrentController().GetUseDistToGroundForIcons();
+	const float3& camPos    = camHandler->GetCurrentController().GetPos();
+	// use the height at the current camera position
+	//const float groundHeight = ground->GetHeight(camPos.x, camPos.z);
+	// use the middle between the highest and lowest position on the map as average
+	const float groundHeight = (readmap->currMinHeight + readmap->currMaxHeight) / 2;
+	const float overGround = camPos.y - groundHeight;
+	//distToGroundForIcons_areIcons = (overGround > unitIconDist * 30);
+	distToGroundForIcons_areIcons = (overGround*overGround > iconLength);
 }
 
 
@@ -375,10 +386,8 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 			else
 				unit->lastDrawFrame = gs->frameNum;
 #endif
-			float sqDist = (unit->pos-camera->pos).SqLength();
-			float iconDistMult = unit->unitDef->iconType->GetDistance();
-			float realIconLength = iconLength * (iconDistMult * iconDistMult);
-			if (sqDist>realIconLength) {
+			const float sqDist = (unit->pos-camera->pos).SqLength();
+			if (DrawAsIcon(*unit, sqDist)) {
 				drawIcon.push_back(unit);
 				unit->isIcon = true;
 			}
@@ -404,11 +413,9 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 			if ((!gameSetup || gameSetup->ghostedBuildings) && !(unit->mobility)) {
 				// it's a building we've had LOS on once,
 				// add it to the vector of cloaked units
-				float sqDist = (unit->pos-camera->pos).SqLength();
-				float iconDistMult = unit->unitDef->iconType->GetDistance();
-				float realIconLength = iconLength * (iconDistMult * iconDistMult);
+				const float sqDist = (unit->pos-camera->pos).SqLength();
 
-				if (sqDist < realIconLength) {
+				if (DrawAsIcon(*unit, sqDist)) {
 					S3DModel* model = unit->model;
 					if (unit->unitDef->decoyDef) {
 						model = unit->unitDef->decoyDef->LoadModel();
@@ -704,14 +711,11 @@ inline void CUnitDrawer::DoDrawUnitShadow(CUnit *unit) {
 		camera->InView(unit->drawMidPos, unit->radius + 700)) {
 
 		// FIXME: test against the shadow projection intersection
-		float sqDist = (unit->pos-camera->pos).SqLength();
-		float farLength = unit->sqRadius * unitDrawDistSqr;
+		const float sqDist = (unit->pos-camera->pos).SqLength();
+		const float farLength = unit->sqRadius * unitDrawDistSqr;
 
 		if (sqDist < farLength) {
-			float iconDistMult = unit->unitDef->iconType->GetDistance();
-			float realIconLength = iconLength * (iconDistMult * iconDistMult);
-
-			if (sqDist < realIconLength) {
+			if (DrawAsIcon(*unit, sqDist)) {
 				if (!unit->isCloaked) {
 					if (unit->lodCount <= 0) {
 						DrawUnitNow(unit);
@@ -2151,4 +2155,19 @@ void CUnitDrawer::DrawFeatureStatic(CFeature* feature)
 
 	feature->model->DrawStatic();
 	glPopMatrix();
+}
+
+bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const {
+
+	bool asIcon = false;
+
+	if (distToGroundForIcons_useMethod) {
+		asIcon = distToGroundForIcons_areIcons;
+	} else {
+		const float iconDistMult = unit.unitDef->iconType->GetDistance();
+		const float realIconLength = iconLength * (iconDistMult * iconDistMult);
+		asIcon = (sqUnitCamDist > realIconLength);
+	}
+
+	return asIcon;
 }

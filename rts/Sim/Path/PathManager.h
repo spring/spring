@@ -63,7 +63,7 @@ public:
 			Dont set this, used internally
 
 	*/
-	float3 NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance = 0, int numRetries=0);
+	float3 NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance = 0, int numRetries=0) const;
 
 
 	/*
@@ -117,6 +117,10 @@ public:
 
 	boost::uint32_t GetPathChecksum();
 
+	/** Enable/disable heat mapping */
+	void SetHeatMappingEnabled(bool enabled);
+	bool GetHeatMappingEnabled();
+
 	//Minimum distance between two waypoints.
 	static const unsigned int PATH_RESOLUTION;
 
@@ -142,8 +146,8 @@ private:
 
 
 	unsigned int Store(MultiPath* path);
-	void Estimate2ToEstimate(MultiPath& path, float3 startPos);
-	void EstimateToDetailed(MultiPath& path, float3 startPos);
+	void Estimate2ToEstimate(MultiPath& path, float3 startPos) const;
+	void EstimateToDetailed(MultiPath& path, float3 startPos) const;
 
 
 	CPathFinder* pf;

@@ -2765,7 +2765,7 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 	lua_newtable(L);
 	list<CTransportUnit::TransportedUnit>::const_iterator it;
 	int count = 0;
-	for (it = tu->transported.begin(); it != tu->transported.end(); ++it) {
+	for (it = tu->GetTransportedUnits().begin(); it != tu->GetTransportedUnits().end(); ++it) {
 		const CUnit* carried = it->unit;
 		count++;
 		lua_pushnumber(L, count);

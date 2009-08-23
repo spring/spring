@@ -837,11 +837,3 @@ void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 	va->AddVertexQTN(interPos+(curad+offset)-crrad,tx+(1.0f/64.0f),ty+(1.0f/64.0f),unitDrawer->camNorm);
 	va->AddVertexQTN(interPos-(curad-offset)-crrad,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
 }
-
-
-S3DModel* FeatureDef::LoadModel()
-{
-	if (model==NULL)
-		model = modelParser->Load3DModel(modelname);
-	return model;
-}

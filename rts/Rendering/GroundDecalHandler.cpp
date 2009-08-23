@@ -3,6 +3,7 @@
 #include <cctype>
 #include "mmgr.h"
 
+#include "FileSystem/FileSystem.h"
 #include "GroundDecalHandler.h"
 #include "Game/Camera.h"
 #include "Lua/LuaParser.h"
@@ -826,7 +827,7 @@ unsigned int CGroundDecalHandler::LoadTexture(const std::string& name)
 	    (fullName.find_first_of('/')  == string::npos)) {
 		fullName = string("bitmaps/tracks/") + fullName;
 	}
-	bool isBitmap = (GetFileExt(fullName) == "bmp");
+	bool isBitmap = (filesystem.GetExtension(fullName) == "bmp");
 
 	CBitmap bm;
 	if (!bm.Load(fullName)) {
@@ -911,7 +912,7 @@ void CGroundDecalHandler::LoadScar(const std::string& file, unsigned char* buf,
 	if (!bm.Load(file)) {
 		throw content_error("Could not load scar from file " + file);
 	}
-	bool isBitmap = (GetFileExt(file) == "bmp");
+	bool isBitmap = (filesystem.GetExtension(file) == "bmp");
 	if (isBitmap) {
 		//! bitmaps don't have an alpha channel
 		//! so use: red := brightness & green := alpha

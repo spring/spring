@@ -40,6 +40,9 @@ class LuaVFS {
 
 		static int UseArchive(lua_State* L);
 
+		static int ZlibCompress(lua_State* L);
+		static int ZlibDecompress(lua_State* L);
+
 		// string packing utilities
 		static int PackU8(lua_State* L);
 		static int PackU16(lua_State* L);

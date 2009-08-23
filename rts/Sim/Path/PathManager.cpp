@@ -31,15 +31,24 @@ CPathManager::CPathManager() {
 
 	// Reset id-counter.
 	nextPathId = 0;
-
-	// Enable heat mapping
-	pf->SetHeatMapState(true);
 }
 
 CPathManager::~CPathManager() {
 	delete pe2;
 	delete pe;
 	delete pf;
+}
+
+
+
+void CPathManager::SetHeatMappingEnabled(bool enabled)
+{
+	pf->SetHeatMapState(enabled);
+};
+
+bool CPathManager::GetHeatMappingEnabled()
+{
+	return pf->GetHeatMapState();
 }
 
 
@@ -178,7 +187,8 @@ unsigned int CPathManager::Store(MultiPath* path)
 /*
 Turns a part of the estimate path into detailed path.
 */
-void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) {
+void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) const
+{
 	//If there is no estimate path, nothing could be done.
 	if(path.estimatedPath.path.empty())
 		return;
@@ -218,7 +228,8 @@ void CPathManager::EstimateToDetailed(MultiPath& path, float3 startPos) {
 /*
 Turns a part of the estimate2 path into estimate path.
 */
-void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) {
+void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) const
+{
 	//If there is no estimate2 path, nothing could be done.
 	if(path.estimatedPath2.path.empty())
 		return;
@@ -259,7 +270,8 @@ void CPathManager::Estimate2ToEstimate(MultiPath& path, float3 startPos) {
 /*
 Removes and return the next waypoint in the multipath corresponding to given id.
 */
-float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance, int numRetries) {
+float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance, int numRetries) const
+{
 	SCOPED_TIMER("AI:PFS");
 
 	//0 indicate a no-path id.
@@ -270,7 +282,7 @@ float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float m
 		return float3(-1,-1,-1);
 
 	//Find corresponding multipath.
-	std::map<unsigned int, MultiPath*>::iterator pi = pathMap.find(pathId);
+	std::map<unsigned int, MultiPath*>::const_iterator pi = pathMap.find(pathId);
 	if(pi == pathMap.end())
 		return float3(-1,-1,-1);
 	MultiPath* multiPath = pi->second;

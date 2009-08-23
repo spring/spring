@@ -21,6 +21,7 @@ local postProcFile = 'gamedata/featuredefs_post.lua'
 local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 
 local system = VFS.Include('gamedata/system.lua')
+VFS.Include('gamedata/VFSUtils.lua')
 
 
 --------------------------------------------------------------------------------
@@ -44,14 +45,7 @@ end
 --  Load the TDF featuredef files
 --
 
-local tdfFiles = {}
-do
-  tdfFiles      = VFS.DirList('features/all worlds/', '*.tdf')
-  local corpses = VFS.DirList('features/corpses/',    '*.tdf')
-  for _, f in ipairs(corpses) do
-    table.insert(tdfFiles, f)
-  end
-end
+local tdfFiles = RecursiveFileSearch('features/', '*.tdf') 
 
 for _, filename in ipairs(tdfFiles) do
   local fds, err = TDF.Parse(filename)
@@ -73,14 +67,7 @@ end
 --  (these will override the TDF versions)
 --
 
-local luaFiles = {}
-do
-  luaFiles      = VFS.DirList('features/all worlds/', '*.lua')
-  local corpses = VFS.DirList('features/corpses/',    '*.lua')
-  for _, f in ipairs(corpses) do
-    table.insert(luaFiles, f)
-  end
-end
+local luaFiles = RecursiveFileSearch('features/', '*.lua')
 
 for _, filename in ipairs(luaFiles) do
   local fdEnv = {}
@@ -90,7 +77,7 @@ for _, filename in ipairs(luaFiles) do
   setmetatable(fdEnv, { __index = system })
   local success, fds = pcall(VFS.Include, filename, fdEnv)
   if (not success) then
-    Spring.Echo('Error parsing ' .. filename .. ': ' .. fds)
+    Spring.Echo('Error parsing ' .. filename .. ': ' .. fd)
   elseif (fds == nil) then
     Spring.Echo('Missing return table from: ' .. filename)
   else
@@ -125,4 +112,4 @@ end
 return featureDefs
 
 --------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------- 

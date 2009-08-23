@@ -6,7 +6,7 @@
 #include "Rendering/GL/VertexArray.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "Sim/Misc/GlobalSynced.h"
 
 #ifdef TRACE_SYNC

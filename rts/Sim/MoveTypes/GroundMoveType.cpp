@@ -245,12 +245,11 @@ void CGroundMoveType::Update()
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {
+		bool wantReverse = false;
 		if (owner->directControl) {
-			UpdateDirectControl();
+			wantReverse = UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
-			bool wantReverse = false;
-
 			if (pathId || (currentSpeed != 0.0f)) {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
 				// Initial calculations.
@@ -337,9 +336,9 @@ void CGroundMoveType::Update()
 			} else {
 				SetMainHeading();
 			}
-
-			UpdateOwnerPos(wantReverse);
 		}
+
+		UpdateOwnerPos(wantReverse);
 	}
 
 	if (owner->pos != oldPos) {
@@ -1148,6 +1147,17 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 }
 
 
+unsigned int CGroundMoveType::RequestPath(const MoveData* moveData, float3 startPos, float3 goalPos,
+		float goalRadius)
+{
+	bool heatmap = pathManager->GetHeatMappingEnabled();
+	pathManager->SetHeatMappingEnabled(true);
+	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+	pathManager->SetHeatMappingEnabled(heatmap);
+	return pathId;
+}
+
+
 
 // Calculates an aproximation of the physical 2D-distance between given two objects.
 float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal)
@@ -1202,7 +1212,9 @@ void CGroundMoveType::GetNewPath()
 	}
 
 	pathManager->DeletePath(pathId);
-	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+
+	RequestPath(owner->mobility, owner->pos, goalPos, goalRadius);
+
 	nextWaypoint = owner->pos;
 
 	// if new path received, can't be at waypoint
@@ -2036,14 +2048,23 @@ void CGroundMoveType::AdjustPosToWaterLine()
 	}
 }
 
-void CGroundMoveType::UpdateDirectControl()
+bool CGroundMoveType::UpdateDirectControl()
 {
-	waypoint = owner->pos + owner->frontdir * 100;
+	bool wantReverse = (owner->directControl->back && !owner->directControl->forward);
+	waypoint = owner->pos;
+	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
 	waypoint.CheckInBounds();
 
 	if (owner->directControl->forward) {
-		wantedSpeed = reversing? maxReverseSpeed * 2.0f: maxSpeed * 2.0f;
-		SetDeltaSpeed(false);
+		assert(!wantReverse);
+		wantedSpeed = maxSpeed * 2.0f;
+		SetDeltaSpeed(wantReverse);
+		owner->isMoving = true;
+		owner->script->StartMoving();
+	} else if (owner->directControl->back) {
+		assert(wantReverse);
+		wantedSpeed = maxReverseSpeed * 2.0f;
+		SetDeltaSpeed(wantReverse);
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else {
@@ -2052,7 +2073,7 @@ void CGroundMoveType::UpdateDirectControl()
 		owner->isMoving = false;
 		owner->script->StopMoving();
 	}
-	short deltaHeading = 0;
+	deltaHeading = 0;
 	if (owner->directControl->left) {
 		deltaHeading += (short) turnRate;
 	}
@@ -2062,6 +2083,7 @@ void CGroundMoveType::UpdateDirectControl()
 
 	if (gu->directControl == owner)
 		camera->rot.y += deltaHeading * TAANG2RAD;
+	return wantReverse;
 }
 
 void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
