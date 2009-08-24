@@ -5,8 +5,6 @@
 
 #include "ConfigHandler.h"
 
-#include <math.h> // for fabs()
-
 
 CCameraController::CCameraController() : pos(2000, 70, 1800)
 {
