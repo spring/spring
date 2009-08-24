@@ -54,10 +54,10 @@ bool CPathManager::GetHeatMappingEnabled()
 
 /*
 Help-function.
-Turns a start->goal-request into a will defined request.
+Turns a start->goal-request into a well-defined request.
 */
 unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos,
-		float3 goalPos, float goalRadius, CSolidObject* caller, int ownerId) {
+		float3 goalPos, float goalRadius, CSolidObject* caller) {
 	startPos.CheckInBounds();
 	goalPos.CheckInBounds();
 
@@ -68,15 +68,15 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 	CRangedGoalWithCircularConstraint* rangedGoalPED = new CRangedGoalWithCircularConstraint(startPos,goalPos, goalRadius, 3, 2000);
 
 	// Make request.
-	return RequestPath(moveData, startPos, rangedGoalPED, goalPos, caller, ownerId);
+	return RequestPath(moveData, startPos, rangedGoalPED, goalPos, caller);
 }
 
 
 /*
-Request a new multipath, store the result and return an handle-id to it.
+Request a new multipath, store the result and return a handle-id to it.
 */
 unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos,
-		CPathFinderDef* peDef, float3 goalPos, CSolidObject* caller, int ownerId) {
+		CPathFinderDef* peDef, float3 goalPos, CSolidObject* caller) {
 	SCOPED_TIMER("AI:PFS");
 
 	// Creates a new multipath.
@@ -88,6 +88,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 		caller->UnBlock();
 	}
 
+	const int ownerId = caller? caller->id: 0;
 	unsigned int retValue = 0;
 	// Choose finder dependent on distance to goal.
 	float distanceToGoal = peDef->Heuristic(int(startPos.x / SQUARE_SIZE), int(startPos.z / SQUARE_SIZE));
@@ -95,7 +96,7 @@ unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos
 	if (distanceToGoal < DETAILED_DISTANCE) {
 		// Get a detailed path.
 		IPath::SearchResult result = pf->GetPath(*moveData, startPos, *peDef,
-				newPath->detailedPath, true, false, 10000, true, caller->id);
+				newPath->detailedPath, true, false, 10000, true, ownerId);
 
 		if (result == IPath::Ok || result == IPath::GoalOutOfRange) {
 			retValue = Store(newPath);
