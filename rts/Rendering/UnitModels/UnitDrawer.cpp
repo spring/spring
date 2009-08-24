@@ -277,14 +277,16 @@ void CUnitDrawer::Update(void)
 	}
 
 	distToGroundForIcons_useMethod = camHandler->GetCurrentController().GetUseDistToGroundForIcons();
-	const float3& camPos    = camHandler->GetCurrentController().GetPos();
-	// use the height at the current camera position
-	//const float groundHeight = ground->GetHeight(camPos.x, camPos.z);
-	// use the middle between the highest and lowest position on the map as average
-	const float groundHeight = (readmap->currMinHeight + readmap->currMaxHeight) / 2;
-	const float overGround = camPos.y - groundHeight;
-	//distToGroundForIcons_areIcons = (overGround > unitIconDist * 30);
-	distToGroundForIcons_areIcons = (overGround*overGround > iconLength);
+	if (distToGroundForIcons_useMethod) {
+		const float3& camPos    = camHandler->GetCurrentController().GetPos();
+		// use the height at the current camera position
+		//const float groundHeight = ground->GetHeight(camPos.x, camPos.z);
+		// use the middle between the highest and lowest position on the map as average
+		const float groundHeight = (readmap->currMinHeight + readmap->currMaxHeight) / 2;
+		const float overGround = camPos.y - groundHeight;
+		//distToGroundForIcons_areIcons = (overGround > unitIconDist * 30);
+		distToGroundForIcons_areIcons = (overGround*overGround > iconLength);
+	}
 }
 
 
