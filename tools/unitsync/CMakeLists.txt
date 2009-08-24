@@ -29,6 +29,7 @@ set(unitsync_files
 	../../rts/System/Option
 	../../rts/Sim/Misc/SideParser
 	../../rts/Game/GameVersion
+	../../rts/ExternalAI/LuaAIImplHandler
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
 	../../rts/Lua/LuaIO
