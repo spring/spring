@@ -1719,7 +1719,8 @@ void CUnitDrawer::DrawUnitDef(const UnitDef* unitDef, int team)
 
 
 
-void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q) {
+void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q)
+{
 	switch (vol->GetVolumeType()) {
 		case COLVOL_TYPE_FOOTPRINT:
 			// fall through, this is too hard to render correctly so just render sphere :)
@@ -1768,11 +1769,13 @@ void DrawCollisionVolume(const CollisionVolume* vol, GLUquadricObj* q) {
 	}
 }
 
-void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, CMatrix44f mat, GLUquadricObj* q) {
+
+void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap, CMatrix44f mat, GLUquadricObj* q)
+{
 	mat.Translate(p->pos.x, p->pos.y, p->pos.z);
 	mat.RotateY(-p->rot[1]);
 	mat.RotateX(-p->rot[0]);
-	mat.RotateZ( p->rot[2]);
+	mat.RotateZ(-p->rot[2]);
 
 	glPushMatrix();
 		glMultMatrixf(mat.m);
@@ -1796,6 +1799,7 @@ void DrawUnitDebugPieceTree(const LocalModelPiece* p, const LocalModelPiece* lap
 		DrawUnitDebugPieceTree(p->childs[i], lap, mat, q);
 	}
 }
+
 
 inline void CUnitDrawer::DrawUnitDebug(CUnit* unit)
 {

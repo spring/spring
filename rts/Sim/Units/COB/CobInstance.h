@@ -72,12 +72,18 @@ public:
 
 	// translate cob piece coords into worldcoordinates
 	void Spin(int piece, int axis, int speed, int accel) {
+		// COBWTF
+		if (axis == 2)
+			speed = -speed;
 		CUnitScript::Spin(piece, axis, speed * TAANG2RAD, accel * TAANG2RAD);
 	}
 	void StopSpin(int piece, int axis, int decel) {
 		CUnitScript::StopSpin(piece, axis, decel * TAANG2RAD);
 	}
 	void Turn(int piece, int axis, int speed, int destination, bool interpolated = false) {
+		// COBWTF
+		if (axis == 2)
+			destination = -destination;
 		CUnitScript::Turn(piece, axis, speed * TAANG2RAD, destination * TAANG2RAD, interpolated);
 	}
 	void Move(int piece, int axis, int speed, int destination, bool interpolated = false) {
@@ -93,6 +99,9 @@ public:
 		CUnitScript::MoveNow(piece, axis, destination * CORDDIV);
 	}
 	void TurnNow(int piece, int axis, int destination) {
+		// COBWTF
+		if (axis == 2)
+			destination = -destination;
 		CUnitScript::TurnNow(piece, axis, destination * TAANG2RAD);
 	}
 	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime) {

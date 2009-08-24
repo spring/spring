@@ -116,9 +116,9 @@ void LocalModelPiece::Draw() const
 	glPushMatrix();
 
 	if (pos.x || pos.y || pos.z) { glTranslatef(pos.x, pos.y, pos.z); }
-	if (rot[1]) { glRotatef( rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
-	if (rot[0]) { glRotatef( rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
-	if (rot[2]) { glRotatef(-rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
+	if (rot[1]) { glRotatef(rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
+	if (rot[0]) { glRotatef(rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
+	if (rot[2]) { glRotatef(rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
 
 	if (visible)
 		glCallList(displist);
@@ -139,9 +139,9 @@ void LocalModelPiece::DrawLOD(unsigned int lod) const
 	glPushMatrix();
 
 	if (pos.x || pos.y || pos.z) { glTranslatef(pos.x, pos.y, pos.z); }
-	if (rot[1]) { glRotatef( rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
-	if (rot[0]) { glRotatef( rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
-	if (rot[2]) { glRotatef(-rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
+	if (rot[1]) { glRotatef(rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
+	if (rot[0]) { glRotatef(rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
+	if (rot[2]) { glRotatef(rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
 
 	if (visible)
 		glCallList(lodDispLists[lod]);
@@ -161,9 +161,9 @@ void LocalModelPiece::ApplyTransform() const
 	}
 
 	if (pos.x || pos.y || pos.z) { glTranslatef(pos.x, pos.y, pos.z); }
-	if (rot[1]) { glRotatef( rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
-	if (rot[0]) { glRotatef( rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
-	if (rot[2]) { glRotatef(-rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
+	if (rot[1]) { glRotatef(rot[1] * RADTOANG, 0.0f, 1.0f, 0.0f); }
+	if (rot[0]) { glRotatef(rot[0] * RADTOANG, 1.0f, 0.0f, 0.0f); }
+	if (rot[2]) { glRotatef(rot[2] * RADTOANG, 0.0f, 0.0f, 1.0f); }
 }
 
 
@@ -176,7 +176,7 @@ void LocalModelPiece::GetPiecePosIter(CMatrix44f* mat) const
 	if (pos.x || pos.y || pos.z) { mat->Translate(pos.x, pos.y, -pos.z); }
 	if (rot[1]) { mat->RotateY(rot[1]); }
 	if (rot[0]) { mat->RotateX(rot[0]); }
-	if (rot[2]) { mat->RotateZ(rot[2]); }
+	if (rot[2]) { mat->RotateZ(-rot[2]); }
 }
 
 
