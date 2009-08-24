@@ -51,11 +51,14 @@ bool CCameraController::SetStateFloat(const StateMap& sm,
 // assuming the map is flat.
 bool CCameraController::GetUseDistToGroundForIcons() {
 
-	const float3& dir  = GetDir().UnsafeANormalize();
-	const float dot    = fabs(dir.dot(UpVector));
+	const float3& dir     = GetDir().UnsafeNormalize();
+	const float dot       = std::min(1.0f, std::max(0.0f, fabs(dir.dot(UpVector))));
+	const float switchVal = configHandler->Get("UseDistToGroundForIcons", 0.8f);
 
-	// dot: 1.0=overview, 0.0=first person
-	if (dot < 0.8) {
+	// switchVal:
+	// * 1.0 = 0 degree  = overview
+	// * 0.0 = 90 degree = first person
+	if (dot < switchVal) {
 		// flat angle (typical for first person camera)
 		return false;
 	} else {
