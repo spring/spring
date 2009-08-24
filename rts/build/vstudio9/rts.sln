@@ -1,0 +1,37 @@
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rts", "rts.vcproj", "{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}"
+EndProject
+Global
+	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
+	EndGlobalSection
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug+MT|Win32 = Debug+MT|Win32
+		Final release|Win32 = Final release|Win32
+		No debug|Win32 = No debug|Win32
+		Release with error catching|Win32 = Release with error catching|Win32
+		Release+MT with error catching|Win32 = Release+MT with error catching|Win32
+		Syncdebug|Win32 = Syncdebug|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug|Win32.Build.0 = Debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug+MT|Win32.ActiveCfg = Debug+MT|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Debug+MT|Win32.Build.0 = Debug+MT|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Final release|Win32.ActiveCfg = No debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Final release|Win32.Build.0 = No debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.No debug|Win32.ActiveCfg = No debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.No debug|Win32.Build.0 = No debug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release with error catching|Win32.ActiveCfg = Release with error catching|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release with error catching|Win32.Build.0 = Release with error catching|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release+MT with error catching|Win32.ActiveCfg = Release+MT with error catching|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Release+MT with error catching|Win32.Build.0 = Release+MT with error catching|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Syncdebug|Win32.ActiveCfg = Syncdebug|Win32
+		{A0F70264-A7B7-4FE7-A5BE-298CD3A0758F}.Syncdebug|Win32.Build.0 = Syncdebug|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
