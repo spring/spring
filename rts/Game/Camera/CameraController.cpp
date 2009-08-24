@@ -53,7 +53,7 @@ bool CCameraController::GetUseDistToGroundForIcons() {
 
 	const float3& dir     = GetDir().UnsafeNormalize();
 	const float dot       = std::min(1.0f, std::max(0.0f, fabs(dir.dot(UpVector))));
-	const float switchVal = configHandler->Get("UseDistToGroundForIcons", 0.8f);
+	const float switchVal = configHandler->Get("UseDistToGroundForIcons", 0.95f);
 
 	// switchVal:
 	// * 1.0 = 0 degree  = overview
