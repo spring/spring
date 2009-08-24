@@ -717,7 +717,7 @@ inline void CUnitDrawer::DoDrawUnitShadow(CUnit *unit) {
 		const float farLength = unit->sqRadius * unitDrawDistSqr;
 
 		if (sqDist < farLength) {
-			if (DrawAsIcon(*unit, sqDist)) {
+			if (!DrawAsIcon(*unit, sqDist)) {
 				if (!unit->isCloaked) {
 					if (unit->lodCount <= 0) {
 						DrawUnitNow(unit);
