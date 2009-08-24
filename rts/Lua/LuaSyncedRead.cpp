@@ -1238,18 +1238,8 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 		return 0;
 	}
 
-	// Ugly hax: evaluate the teams id
-	// TODO: FIXME: why not supplying teamId from lua??
-	int teamId = -1;
-	for (int t = 0; t < teamHandler->ActiveTeams(); ++t) {
-		if (teamHandler->Team(t) == team) {
-			teamId = t;
-			break;
-		}
-	}
-
 	std::string luaAIName = "";
-	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
+	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(team->teamNum);
 	for (CSkirmishAIHandler::ids_t::const_iterator ai = saids.begin(); ai != saids.end(); ++ai) {
 		const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
 		if (aiData->isLuaAI) {

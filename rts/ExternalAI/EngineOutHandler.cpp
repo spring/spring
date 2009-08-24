@@ -443,30 +443,38 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 
 	//const bool unpauseAfterAIInit = configHandler->Get("AI_UnpauseAfterInit", true);
 
-	try {
-		// Pause the game for letting the AI initialize,
-		// as this can take quite some time.
-		/*bool weDoPause = !gs->paused;
-		if (weDoPause) {
-			const std::string& myPlayerName = playerHandler->Player(gu->myPlayerNum)->name;
-			logOutput.Print(
-					"Player %s (auto)-paused the game for letting Skirmish AI"
-					" %s initialize for controlling team %i.%s",
-					myPlayerName.c_str(), key.GetShortName().c_str(), teamId,
-					(unpauseAfterAIInit ?
-					 " The game is auto-unpaused as soon as the AI is ready." :
-					 ""));
-			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
-		}*/
+	// Pause the game for letting the AI initialize,
+	// as this can take quite some time.
+	/*bool weDoPause = !gs->paused;
+	if (weDoPause) {
+		const std::string& myPlayerName = playerHandler->Player(gu->myPlayerNum)->name;
+		logOutput.Print(
+				"Player %s (auto)-paused the game for letting Skirmish AI"
+				" %s initialize for controlling team %i.%s",
+				myPlayerName.c_str(), key.GetShortName().c_str(), teamId,
+				(unpauseAfterAIInit ?
+				 " The game is auto-unpaused as soon as the AI is ready." :
+				 ""));
+		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
+	}*/
 
-		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
+	net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
 
-		CSkirmishAIWrapper* aiWrapper = new CSkirmishAIWrapper(skirmishAIId);
+	if (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->isLuaAI) {
+		// currently, we need doing nothing for Lua AIs
+		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
+	} else {
+		CSkirmishAIWrapper* aiWrapper = NULL;
+		try {
+			CSkirmishAIWrapper* aiWrapper_tmp = new CSkirmishAIWrapper(skirmishAIId);
 
-		id_skirmishAI[skirmishAIId] = aiWrapper;
-		team_skirmishAIs[aiWrapper->GetTeamId()].push_back(skirmishAIId);
+			id_skirmishAI[skirmishAIId] = aiWrapper_tmp;
+			team_skirmishAIs[aiWrapper_tmp->GetTeamId()].push_back(skirmishAIId);
 
-		aiWrapper->Init();
+			aiWrapper->Init();
+
+			aiWrapper = aiWrapper_tmp;
+		} HANDLE_EXCEPTION;
 
 		const bool isDieing = skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId);
 		if (!isDieing) {
@@ -476,14 +484,16 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 			CUnitSet::iterator u, uNext;
 			for (u = team->units.begin(); u != team->units.end(); ) {
 				uNext = u; ++uNext;
-				aiWrapper->UnitCreated((*u)->id, -1);
-				aiWrapper->UnitFinished((*u)->id);
+				try {
+					aiWrapper->UnitCreated((*u)->id, -1);
+					aiWrapper->UnitFinished((*u)->id);
+				} HANDLE_EXCEPTION;
 				u = uNext;
 			}
 
 			net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 		}
-	} HANDLE_EXCEPTION;
+	}
 }
 
 static void internal_aiErase(std::vector<size_t>& ais, const size_t skirmishAIId) {
