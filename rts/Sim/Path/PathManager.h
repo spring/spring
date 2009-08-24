@@ -42,9 +42,10 @@ public:
 			If a singular goal position is wanted, then use goalRadius = 0.
 	*/
 	unsigned int RequestPath(const MoveData* moveData, float3 startPos,
-			CPathFinderDef* peDef,float3 goalPos, CSolidObject* caller, int ownerId = 0);
+			float3 goalPos, float goalRadius = 8, CSolidObject* caller = 0);
+
 	unsigned int RequestPath(const MoveData* moveData, float3 startPos,
-			float3 goalPos, float goalRadius = 8, CSolidObject* caller = 0, int ownerId = 0);
+			CPathFinderDef* peDef,float3 goalPos, CSolidObject* caller);
 
 
 	/*
