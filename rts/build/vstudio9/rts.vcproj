@@ -2958,6 +2958,14 @@
 				Name="Weapons"
 				>
 				<File
+					RelativePath="..\..\Sim\Weapons\WeaponDef.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Weapons\WeaponDef.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Weapons\WeaponDefHandler.cpp"
 					>
 				</File>
@@ -3350,6 +3358,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Misc\CommonDefHandler.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Misc\CommonDefHandler.h"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Misc\DamageArray.cpp"
 					>
 				</File>
@@ -3563,6 +3579,10 @@
 				</File>
 				<File
 					RelativePath="..\..\Sim\Features\Feature.h"
+					>
+				</File>
+				<File
+					RelativePath="..\..\Sim\Features\FeatureDef.cpp"
 					>
 				</File>
 				<File
