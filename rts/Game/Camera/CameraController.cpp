@@ -45,17 +45,6 @@ bool CCameraController::SetStateFloat(const StateMap& sm,
 	return false;
 }
 
-static inline float fCropTo(const float& val, const float& min, const float& max) {
-
-	if (val < min) {
-		return min;
-	} else if (val > max) {
-		return max;
-	} else {
-		return val;
-	}
-}
-
 // Uses distance to ground for large angles (near 90 degree),
 // and distance to unit for flat angles (near 0 degree),
 // when comparing the camera direction to the map surface,
@@ -63,7 +52,7 @@ static inline float fCropTo(const float& val, const float& min, const float& max
 bool CCameraController::GetUseDistToGroundForIcons() {
 
 	const float3& dir     = GetDir().UnsafeNormalize();
-	const float dot       = fCropTo(fabs(dir.dot(UpVector)), 0.0f, 1.0f);
+	const float dot       = std::min(1.0f, std::max(0.0f, fabs(dir.dot(UpVector))));
 	const float switchVal = configHandler->Get("UseDistToGroundForIcons", 0.8f);
 
 	// switchVal:
