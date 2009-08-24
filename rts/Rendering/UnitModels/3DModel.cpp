@@ -173,9 +173,9 @@ void LocalModelPiece::GetPiecePosIter(CMatrix44f* mat) const
 		parent->GetPiecePosIter(mat);
 	}
 
-	if (pos.x || pos.y || pos.z) { mat->Translate(pos.x, pos.y, -pos.z); }
-	if (rot[1]) { mat->RotateY(rot[1]); }
-	if (rot[0]) { mat->RotateX(rot[0]); }
+	if (pos.x || pos.y || pos.z) { mat->Translate(pos.x, pos.y, pos.z); }
+	if (rot[1]) { mat->RotateY(-rot[1]); }
+	if (rot[0]) { mat->RotateX(-rot[0]); }
 	if (rot[2]) { mat->RotateZ(-rot[2]); }
 }
 
@@ -213,10 +213,9 @@ float3 LocalModelPiece::GetPos() const
 		}
 	}
 
+	// we use a 'right' vector, and the positive x axis points to the left
 	float3 pos = mat.GetPos();
-	pos.z *= -1.0f;
-	pos.x *= -1.0f;
-
+	pos.x = -pos.x;
 	return pos;
 }
 
@@ -248,31 +247,32 @@ bool LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
 	CMatrix44f mat;
 	GetPiecePosIter(&mat);
 
-	//hm...
-	static const float3 invAxis(-1, 1, -1);
-	static const float3 invVertAxis(1, 1, -1);
-
 	const S3DModelPiece* piece = original;
 	if (!piece)
 		return false;
 
 	if (piece->vertexCount == 0) {
-		pos = mat.GetPos()*invAxis;
-		dir = mat.Mul(float3(0,0,-1))*invAxis - pos;
+		pos = mat.GetPos();
+		dir = mat.Mul(float3(0,0,-1)) - pos;
 	}
 	else if(piece->vertexCount == 1) {
-		pos = mat.GetPos()*invAxis;
-		dir = mat.Mul(piece->GetVertexPos(0)*invVertAxis)*invAxis - pos;
+		pos = mat.GetPos();
+		dir = mat.Mul(piece->GetVertexPos(0)) - pos;
 	}
 	else if(piece->vertexCount >= 2) {
-		float3 p1 = mat.Mul(piece->GetVertexPos(0) * invVertAxis) * invAxis;
-		float3 p2 = mat.Mul(piece->GetVertexPos(1) * invVertAxis) * invAxis;
+		float3 p1 = mat.Mul(piece->GetVertexPos(0));
+		float3 p2 = mat.Mul(piece->GetVertexPos(1));
 
 		pos = p1;
 		dir = p2 - p1;
 	} else {
 		return false;
 	}
+
+	// we use a 'right' vector, and the positive x axis points to the left
+	pos.x = -pos.x;
+	dir.x = -dir.x;
+
 	return true;
 }
 
