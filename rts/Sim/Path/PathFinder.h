@@ -82,11 +82,11 @@ public:
 	void UpdateHeatMap();
 
 	struct HeatMapValue {
-		boost::int32_t value;
-		boost::int32_t ownerId;
+		int value;
+		int ownerId;
 	};
 
-	void UpdateHeatValue(int x, int y, boost::int32_t value, boost::int32_t ownerId)
+	void UpdateHeatValue(int x, int y, int value, int ownerId)
 	{
 		assert(!heatmap.empty());
 
