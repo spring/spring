@@ -802,9 +802,6 @@ void CUnitScript::MoveSmooth(int piece, int axis, float destination, int delta, 
 	}
 
 	float cur = pieces[piece]->pos[axis] - pieces[piece]->original->offset[axis];
-	if (axis == 0) {
-		cur = -cur;
-	}
 	float dist = streflop::fabsf(destination - cur);
 	int timeFactor = (1000 * 1000) / (deltaTime * deltaTime);
 	float speed = (dist * timeFactor) / delta;
