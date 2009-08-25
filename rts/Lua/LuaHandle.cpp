@@ -146,7 +146,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 {
 	lua_settop(L, 0);
 
-#if defined(__SUPPORT_SNAN__)
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	// do not signal floating point exceptions in user Lua code
 	feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
@@ -157,7 +157,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 		logOutput.Print("Lua LoadCode loadbuffer error = %i, %s, %s\n",
 		                error, debug.c_str(), lua_tostring(L, -1));
 		lua_pop(L, 1);
-#if defined(__SUPPORT_SNAN__)
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 		feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 		return false;
@@ -168,7 +168,7 @@ bool CLuaHandle::LoadCode(const string& code, const string& debug)
 	error = lua_pcall(L, 0, 0, 0);
 	SetActiveHandle(orig);
 
-#if defined(__SUPPORT_SNAN__)
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 
@@ -211,7 +211,7 @@ int CLuaHandle::SetupTraceback()
 
 int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, std::string& traceback)
 {
-#if defined(__SUPPORT_SNAN__)
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	// do not signal floating point exceptions in user Lua code
 	feclearexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
@@ -235,7 +235,7 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 		callinErrors += (error == 2);
 	}
 
-#if defined(__SUPPORT_SNAN__)
+#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 #endif
 	return error;
