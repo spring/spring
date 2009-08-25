@@ -340,7 +340,7 @@ bool CBitmap::Save(string const& filename, bool opaque)
 
 #ifndef BITMAP_NO_OPENGL
 
-unsigned int CBitmap::CreateTexture(bool mipmaps)
+const GLuint CBitmap::CreateTexture(bool mipmaps)
 {
 	if(type == BitmapTypeDDS)
 	{
@@ -388,42 +388,42 @@ unsigned int CBitmap::CreateTexture(bool mipmaps)
 }
 
 
-unsigned int CBitmap::CreateDDSTexture()
+const GLuint CBitmap::CreateDDSTexture(GLuint texID)
 {
-	GLuint texobj;
 	glPushAttrib(GL_TEXTURE_BIT);
 
-	glGenTextures(1, &texobj);
+	if (texID == 0)
+		glGenTextures(1, &texID);
 
 	switch(ddsimage->get_type())
 	{
 	case nv_dds::TextureNone:
-		glDeleteTextures(1, &texobj);
-		texobj = 0;
+		glDeleteTextures(1, &texID);
+		texID = 0;
 		break;
 	case nv_dds::TextureFlat:    // 1D, 2D, and rectangle textures
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texobj);
+		glBindTexture(GL_TEXTURE_2D, texID);
 		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
 		if(!ddsimage->upload_texture2D()) {
-			glDeleteTextures(1, &texobj);
-			texobj = 0;
+			glDeleteTextures(1, &texID);
+			texID = 0;
 		}
 		break;
 	case nv_dds::Texture3D:
 		glEnable(GL_TEXTURE_3D);
-		glBindTexture(GL_TEXTURE_3D, texobj);
+		glBindTexture(GL_TEXTURE_3D, texID);
 		if(!ddsimage->upload_texture3D()) {
-			glDeleteTextures(1, &texobj);
-			texobj = 0;
+			glDeleteTextures(1, &texID);
+			texID = 0;
 		}
 		break;
 	case nv_dds::TextureCubemap:
 		glEnable(GL_TEXTURE_CUBE_MAP_ARB);
-		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texobj);
+		glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, texID);
 		if(!ddsimage->upload_textureCubemap()) {
-			glDeleteTextures(1, &texobj);
-			texobj = 0;
+			glDeleteTextures(1, &texID);
+			texID = 0;
 		}
 		break;
 	default:
@@ -432,7 +432,7 @@ unsigned int CBitmap::CreateDDSTexture()
 	}
 
 	glPopAttrib();
-	return texobj;
+	return texID;
 }
 
 #endif // !BITMAP_NO_OPENGL

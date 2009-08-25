@@ -45,6 +45,9 @@ private:
 
 	bool stopped;
 	bool paused;
+
+	unsigned msecsPlayed;
+	unsigned lastTick;
 };
 
 

@@ -12,7 +12,7 @@
 #include "Rendering/Textures/ColorMap.h"
 #include "Sim/Misc/InterceptHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "GlobalUnsynced.h"
 
 #ifdef TRACE_SYNC
@@ -46,7 +46,10 @@ CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
 		drawRadius = weaponDef->size;
 	}
 
-	invttl = 1.0f / ttl;
+	if (ttl <= 0)
+		invttl = 1;
+	else
+		invttl = 1.0f / ttl;
 
 #ifdef TRACE_SYNC
 	tracefile << "New explosive: ";

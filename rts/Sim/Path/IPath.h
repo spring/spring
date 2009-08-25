@@ -1,8 +1,9 @@
 #ifndef IPATH_H
 #define IPATH_H
 
-#include "float3.h"
 #include <vector>
+#include "float3.h"
+#include "Vec2.h"
 
 class IPath {
 public:
@@ -14,6 +15,7 @@ public:
 	};
 
 	typedef std::vector<float3> path_list_type;
+	typedef std::vector<int2> square_list_type;
 
 	struct Path {
 		//Information about the requested path.
@@ -22,6 +24,7 @@ public:
 		//Information about the generated path.
 		float3 pathGoal;
 		path_list_type path;
+		square_list_type squares;
 		float pathCost;
 	};
 };

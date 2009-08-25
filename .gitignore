@@ -26,8 +26,7 @@
 /game/maps
 /game/mods
 /game/demos
-/game/AI/Bot-libs
-/game/AI/Helper-libs
+/game/AI
 /game/ArchiveCacheV7.lua
 /game/ext.txt
 /game/LuaUI/Config/widget_data.lua
@@ -44,15 +43,20 @@
 
 # Scons related
 /build
+*.pyc
 
 # CMake related
 # though it is cleaner to not build directly in the repository root
-/CMakeFiles
+CMakeFiles
 /CMakeCache.txt
+*.sdz
+Makefile
+# user scripts use .cmake extension
+#*.cmake
 
 # Visual Studio related
-/rts/build/vstudio8/rts.ncb
-/rts/build/vstudio8/rts.suo
+*.ncb
+*.suo
 /rts/build/vstudio8/Release
 /rts/build/vstudio8/Debug
 /rts/build/vstudio8/Debug+MT
@@ -78,6 +82,7 @@
 /external
 /installer/SpringLobby
 /installer/TASClient
+/installer/downloads
 
 # Java AI related
 /AI/Interfaces/Java/build
@@ -91,6 +96,8 @@
 *.a
 *.gch
 *.dir
+*.class
+*.orig
 
 # ???
 progress.make

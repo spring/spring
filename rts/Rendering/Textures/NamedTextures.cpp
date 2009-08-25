@@ -10,9 +10,11 @@
 #include "Rendering/GL/myGL.h"
 #include "Bitmap.h"
 #include "GlobalUnsynced.h"
+#include "Vec2.h"
 
 
 map<string, CNamedTextures::TexInfo> CNamedTextures::texMap;
+std::vector<string> CNamedTextures::texWaiting;
 
 
 /******************************************************************************/
@@ -52,6 +54,30 @@ bool CNamedTextures::Bind(const string& texName)
 		}
 	}
 
+	GLboolean inListCompile;
+	glGetBooleanv(GL_LIST_INDEX, &inListCompile);
+	if (inListCompile) {
+		GLuint texID = 0;
+		glGenTextures(1, &texID);
+
+		TexInfo texInfo;
+		texInfo.id = texID;
+		texMap[texName] = texInfo;
+
+		glBindTexture(GL_TEXTURE_2D, texID);
+
+		texWaiting.push_back(texName);
+		return true;
+	}
+
+	GLuint texID = 0;
+	glGenTextures(1, &texID);
+	return Load(texName, texID);
+}
+
+
+bool CNamedTextures::Load(const string& texName, GLuint texID)
+{
 	//! strip off the qualifiers
 	string filename = texName;
 	bool border  = false;
@@ -63,6 +89,8 @@ bool CNamedTextures::Bind(const string& texName)
 	bool greyed  = false;
 	bool tint    = false;
 	float tintColor[3];
+	bool resize  = false;
+	int2 resizeDimensions;
 
 	if (filename[0] == ':') {
 		int p;
@@ -94,6 +122,20 @@ bool CNamedTextures::Bind(const string& texName)
 					}
 				}
 			}
+			else if (ch == 'r') {
+				const char* cstr = filename.c_str() + p + 1;
+				const char* start = cstr;
+				char* endptr;
+				resizeDimensions.x = (int)strtoul(start, &endptr, 10);
+				if ((start != endptr) && (*endptr == ',')) {
+					start = endptr + 1;
+					resizeDimensions.y = (int)strtoul(start, &endptr, 10);
+					if (start != endptr) {
+						resize = true;
+						p += (endptr - cstr);
+					}
+				}
+			}
 		}
 		if (p < (int)filename.size()) {
 			filename = filename.substr(p + 1);
@@ -105,7 +147,6 @@ bool CNamedTextures::Bind(const string& texName)
 	//! get the image
 	CBitmap bitmap;
 	TexInfo texInfo;
-	GLuint texID = 0;
 
 	if (!bitmap.Load(filename)) {
 		texMap[texName] = texInfo;
@@ -114,8 +155,11 @@ bool CNamedTextures::Bind(const string& texName)
 	}
 
 	if (bitmap.type == CBitmap::BitmapTypeDDS) {
-		texID = bitmap.CreateDDSTexture();
+		texID = bitmap.CreateDDSTexture(texID);
 	} else {
+		if (resize) {
+			bitmap = bitmap.CreateRescaled(resizeDimensions.x,resizeDimensions.y);
+		}
 		if (invert) {
 			bitmap.InvertColors();
 		}
@@ -126,8 +170,8 @@ bool CNamedTextures::Bind(const string& texName)
 			bitmap.Tint(tintColor);
 		}
 
+
 		//! make the texture
-		glGenTextures(1, &texID);
 		glBindTexture(GL_TEXTURE_2D, texID);
 
 		if (clamped) {
@@ -170,6 +214,7 @@ bool CNamedTextures::Bind(const string& texName)
 				glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
 							GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 			} else {
+				//! glu auto resizes to next POT
 				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, bitmap.xsize, bitmap.ysize,
 								GL_RGBA, GL_UNSIGNED_BYTE, bitmap.mem);
 			}
@@ -192,6 +237,23 @@ bool CNamedTextures::Bind(const string& texName)
 	texMap[texName] = texInfo;
 
 	return true;
+}
+
+
+void CNamedTextures::Update()
+{
+	if (texWaiting.empty()) {
+		return;
+	}
+	glPushAttrib(GL_TEXTURE_BIT);
+	for (std::vector<string>::iterator it = texWaiting.begin(); it != texWaiting.end(); it++) {
+		map<string, TexInfo>::iterator mit = texMap.find(*it);
+		if (mit != texMap.end()) {
+			Load(*it,mit->second.id);
+		}
+	}
+	glPopAttrib();
+	texWaiting.clear();
 }
 
 

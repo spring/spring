@@ -206,20 +206,14 @@ CSeismicGroundFlash::CSeismicGroundFlash(const float3& p, AtlasedTexture texture
 	p4.y=ground->GetApproximateHeight(p4.x,p4.z);
 	p4 += fw;
 	float3 n1((p3-p1).cross(p4-p1));
-	if (n1 != ZeroVector) {
-		n1.ANormalize();
-	}
+	n1.SafeANormalize();
 	float3 n2((p4-p2).cross(p3-p2));
-	if (n2 != ZeroVector) {
-		n2.ANormalize();
-	}
+	n2.SafeANormalize();
 
 	float3 normal=n1+n2;
-	if (normal != ZeroVector)
-		normal.ANormalize();
+	normal.SafeANormalize();
 	side1=normal.cross(float3(1,0,0));
-	if (side1 != ZeroVector)
-		side1.ANormalize();
+	side1.SafeANormalize();
 	side2=side1.cross(normal);
 	ph->AddGroundFlash(this);
 }

@@ -16,7 +16,7 @@ class CBumpWater : public CBaseWater
 {
 public:
 	void Update();
-	void Update_();
+	void DoUpdate();
 	void UpdateWater(CGame* game);
 	void OcclusionQuery();
 	void HeightmapChanged(const int x1, const int y1, const int x2, const int y2);

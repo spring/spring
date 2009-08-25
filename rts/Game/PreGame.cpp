@@ -58,7 +58,7 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 
 	if(!settings->isHost)
 	{
-		net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, SpringVersion::GetFull());
+		net->InitClient(settings->hostip.c_str(), settings->hostport, settings->sourceport, settings->myPlayerName, settings->myPasswd, SpringVersion::GetFull());
 		timer = SDL_GetTicks();
 	}
 	else

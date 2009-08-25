@@ -566,8 +566,7 @@ float CUnitTable::GetScore(const UnitDef* udef, UnitCategory cat) {
 			benefit = pow(udef->extractsMetal, 4.0f);
 		} break;
 		case CAT_MMAKER: {
-			// benefit = ((udef->metalMake - udef->metalUpkeep) / udef->energyUpkeep) + 0.01f;
-			benefit = (udef->metalMake - udef->metalUpkeep) / (udef->energyUpkeep + 0.01f);
+			benefit = (udef->makesMetal - udef->metalUpkeep) / (udef->energyUpkeep + 0.01f);
 		} break;
 
 		case CAT_G_ATTACK: {

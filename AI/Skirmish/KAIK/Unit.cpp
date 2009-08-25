@@ -399,6 +399,7 @@ bool CUNIT::Reclaim(int target) const {
 
 	if (c.id != 0) {
 		ai->ct->GiveOrder(myid, &c);
+		ai->uh->BuilderReclaimOrder(myid, ai->cb->GetUnitPos(target));
 		return true;
 	}
 
@@ -425,19 +426,6 @@ bool CUNIT::Ressurect(int target) const {
 
 	return false;
 }
-
-/*
-bool CUNIT::Upgrade(int target, const UnitDef* newTarget) const {
-	int facing = ai->cb->GetBuildingFacing(target);
-	float3 pos = ai->cb->GetUnitPos(target) + float3(60.0f, 0.0f, 60.0f);
-
-	pos = ai->cb->ClosestBuildSite(newTarget, pos, 60.0f, 2, facing);
-
-	bool b1 = Reclaim(target);
-	bool b2 = BuildShift(pos, newTarget, facing);
-	return (b1 && b2);
-}
-*/
 
 
 

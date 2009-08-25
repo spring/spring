@@ -8,9 +8,12 @@
 #include <time.h>
 #include <string>
 #include <map>
+#include <set>
 
 #include "GameController.h"
 #include "creg/creg_cond.h"
+
+#include "lib/gml/gml.h"
 
 class CScript;
 class CBaseWater;
@@ -191,6 +194,8 @@ private:
 
 	short oldHeading,oldPitch;
 	unsigned char oldStatus;
+
+	void StoreCloaked(bool save);
 };
 
 

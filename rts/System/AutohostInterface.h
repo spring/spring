@@ -19,7 +19,7 @@ public:
 	@param localport port to use by this class
 	@param remoteport the port of the autohost
 	*/
-	AutohostInterface(int remoteport);
+	AutohostInterface(const std::string& autohostip, int remoteport);
 	virtual ~AutohostInterface();
 	
 	void SendStart();

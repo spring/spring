@@ -365,7 +365,8 @@ function widgetHandler:Initialize()
 
     local name = w.whInfo.name
     local basename = w.whInfo.basename
-    Spring.Echo(string.format("Loaded widget:  %-18s  <%s>", name, basename))
+    local source = self.knownWidgets[name].fromZip and "mod: " or "user:"
+    Spring.Echo(string.format("Loaded widget from %s  %-18s  <%s>", source, name, basename))
   end
 
   -- save the active widgets, and their ordering

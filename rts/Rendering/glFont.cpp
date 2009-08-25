@@ -406,6 +406,7 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 		size = 14;
 
 	const float invSize = 1.0f / size;
+	const float normScale = invSize / 64.0f;
 
 	FT_Library library;
 	FT_Face face;
@@ -470,7 +471,7 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 	fontStyle  = face->style_name;
 
 	//! font's descender & height (in pixels)
-	fontDescender = invSize * (FT_MulFix(face->descender, face->size->metrics.y_scale) / 64.0f);
+	fontDescender = normScale * FT_MulFix(face->descender, face->size->metrics.y_scale);
 	//lineHeight    = invSize * (FT_MulFix(face->height, face->size->metrics.y_scale) / 64.0f);
 	//lineHeight    = invSize * math::ceil(FT_MulFix(face->height, face->size->metrics.y_scale) / 64.0f);
 	lineHeight = face->height / face->units_per_EM;
@@ -497,16 +498,16 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 		FT_GlyphSlot slot = face->glyph;
 
 		//! Keep sign!
-		const float ybearing = slot->metrics.horiBearingY / 64.0f;
-		const float xbearing = slot->metrics.horiBearingX / 64.0f;
+		const float ybearing = slot->metrics.horiBearingY * normScale;
+		const float xbearing = slot->metrics.horiBearingX * normScale;
 
-		g->advance   = invSize * (slot->advance.x / 64.0f);
-		g->height    = invSize * (slot->metrics.height / 64.0f);
-		g->descender = invSize * (ybearing - (slot->metrics.height / 64.0f));
+		g->advance   = slot->advance.x * normScale;
+		g->height    = slot->metrics.height * normScale;
+		g->descender = ybearing - g->height;
 
-		g->x0 = invSize * xbearing;
-		g->y0 = invSize * ybearing - fontDescender;
-		g->x1 = invSize * (xbearing + (slot->metrics.width / 64.0f));
+		g->x0 = xbearing;
+		g->y0 = ybearing - fontDescender;
+		g->x1 = (xbearing + slot->metrics.width * normScale);
 		g->y1 = g->y0 - g->height;
 
 		texRenderer.AddGlyph(i, slot->bitmap.width, slot->bitmap.rows, slot->bitmap.buffer, slot->bitmap.pitch);
@@ -533,7 +534,7 @@ CglFont::CglFont(const std::string& fontfile, int size, int _outlinewidth, float
 			FT_Vector kerning;
 			kerning.x = kerning.y = 0.0f;
 			FT_Get_Kerning(face, left_glyph, right_glyph, FT_KERNING_DEFAULT, &kerning);
-			g.kerning[j] = g.advance + invSize * (static_cast<float>(kerning.x) / 64.0f);
+			g.kerning[j] = g.advance + normScale * static_cast<float>(kerning.x);
 		}
 	}
 
@@ -755,6 +756,7 @@ float CglFont::GetTextWidth(const std::string& text) const
 				if (pos+1 < text.length() && text[pos+1] == '\x0a')
 					pos++;
 			case '\x0a':
+				w += glyphs[*prv_char].kerning[0];
 				if (w > maxw)
 					maxw = w;
 				w = 0.0f;
@@ -777,12 +779,13 @@ float CglFont::GetTextWidth(const std::string& text) const
 
 float CglFont::GetTextHeight(const std::string& text, float* descender, int* numLines) const
 {
-	float h = 0.0f, d = 0.0f;
-	unsigned int multiLine = 0;
+	float h = 0.0f, d = lineHeight + fontDescender;
+	unsigned int multiLine = 1;
 
 	for (int pos = 0 ; pos < text.length(); pos++) {
 		const char& c = text[pos];
 		switch(c) {
+			//! inline colorcodes
 			case ColorCodeIndicator:
 				{
 					pos = SkipColorCodesOld(text, pos);
@@ -792,23 +795,29 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 						pos--;
 					}
 				} break;
+
+			//! newline
 			case '\x0d':
 				if (pos+1 < text.length() && text[pos+1] == '\x0a')
 					pos++;
 			case '\x0a':
 				multiLine++;
-				d = 0.0f;
+				d = lineHeight + fontDescender;
 				break;
+
+			//! normal char
 			default:
 				const unsigned char* uc = reinterpret_cast<const unsigned char*>(&c);
 				const GlyphInfo* g = &glyphs[ *uc ];
 				if (g->descender < d) d = g->descender;
-				if (multiLine < 1 && g->height > h) h = g->height;
+				if (multiLine < 2 && g->height > h) h = g->height; //! only calc height for the first line
 		}
 	}
 
+	if (multiLine>1) d -= (multiLine-1) * lineHeight;
 	if (descender) *descender = d;
 	if (numLines) *numLines = multiLine;
+
 	return h;
 }
 
@@ -1680,11 +1689,11 @@ void CglFont::glWorldPrint(const float3 p, const float size, const std::string& 
 {
 
 	glPushMatrix();
-	glTranslatef(p.x, p.y, p.z);
-	glCallList(CCamera::billboardList);
-	Begin(false,false);
-	glPrint(0.0f, 0.0f, size, FONT_CENTER | FONT_OUTLINE, str);
-	End();
+		glTranslatef(p.x, p.y, p.z);
+		glCallList(CCamera::billboardList);
+		Begin(false,false);
+			glPrint(0.0f, 0.0f, size, FONT_CENTER | FONT_OUTLINE, str);
+		End();
 	glPopMatrix();
 }
 
@@ -1711,30 +1720,26 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 		x -= sizeX * GetTextWidth(text);
 	}
 
+
 	//! vertical alignment
+	y += sizeY * fontDescender; //! move to baseline (note: descender is negative)
 	if (options & FONT_BASELINE) {
-		y += sizeY * fontDescender; //!note: descender is negative
-	} else if (options & FONT_DESCENDER) {
 		//! nothing
+	} else if (options & FONT_DESCENDER) {
+		y -= sizeY * fontDescender;
 	} else if (options & FONT_VCENTER) {
-		int numLines;
 		float textDescender;
-		y -= sizeY * 0.5f * GetTextHeight(text,&textDescender,&numLines);
-		y += sizeY * 0.5f * (numLines * lineHeight);
-		y -= sizeY * 0.125f * textDescender; //!note: it is 0.125 and not 0.5 -> more harmonic layout (only 25% of the descender is taken into account)
-		y += sizeY * fontDescender; //!note: descender is negative
+		y -= sizeY * 0.5f * GetTextHeight(text,&textDescender);
+		y -= sizeY * 0.5f * textDescender;
 	} else if (options & FONT_TOP) {
 		y -= sizeY * GetTextHeight(text);
-		y += sizeY * fontDescender; //!note: descender is negative
 	} else if (options & FONT_ASCENDER) {
+		y -= sizeY * fontDescender;
 		y -= sizeY;
 	} else if (options & FONT_BOTTOM) {
-		int numLines;
 		float textDescender;
-		GetTextHeight(text,&textDescender,&numLines);
-		y += sizeY * (numLines * lineHeight);
+		GetTextHeight(text,&textDescender);
 		y -= sizeY * textDescender;
-		y += sizeY * fontDescender; //!note: descender is negative
 	}
 
 	float4 oldTextColor, oldOultineColor;

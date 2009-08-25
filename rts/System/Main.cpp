@@ -6,13 +6,18 @@
  * everything else
  */
 
+#ifdef _MSC_VER
+#include "StdAfx.h"
+#endif
 #include <sstream>
 #include <boost/system/system_error.hpp>
 #include <boost/asio.hpp>
 #include <boost/version.hpp>
 
 #include "Platform/errorhandler.h"
+#ifndef _MSC_VER
 #include "StdAfx.h"
+#endif
 #include "lib/gml/gml.h"
 #include "FPUCheck.h"
 #include "LogOutput.h"

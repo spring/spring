@@ -8,12 +8,10 @@
 #include "Game/Game.h"
 #include "Lua/LuaParser.h"
 #include "FileSystem/FileHandler.h"
-#include "Rendering/UnitModels/IModelParser.h"
 #include "Rendering/Textures/ColorMap.h"
 #include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/DamageArrayHandler.h"
 #include "Sim/Misc/CategoryHandler.h"
-#include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
 #include "Sim/Projectiles/Projectile.h"
 #include "LogOutput.h"
@@ -563,28 +561,16 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 	}
 
 	if (name != "") {
-		if (!sound->HasSoundItem(name))
-		{
-			if (name.find(".wav") == string::npos) {
-				// .wav extension missing, add it
-				name += ".wav";
-			}
-			const string soundPath = "sounds/" + name;
-			CFileHandler sfile(soundPath);
-			if (sfile.FileExists()) {
-				// only push data if we extracted a valid name
-				GuiSoundSet::Data soundData(name, 0, volume);
-				gsound.sounds.push_back(soundData);
-				int id = sound->GetSoundId(soundPath);
-				gsound.setID(0, id);
-			}
-		}
-		else
+		const int id = LoadSoundFile(name);
+		if (id > 0)
 		{
 			GuiSoundSet::Data soundData(name, 0, volume);
 			gsound.sounds.push_back(soundData);
-			int id = sound->GetSoundId(name);
 			gsound.setID(0, id);
+		}
+		else
+		{
+			LogObject() << "Could not load sound from weapon def: " << name;
 		}
 	}
 }
@@ -689,23 +675,4 @@ DamageArray CWeaponDefHandler::DynamicDamages(DamageArray damages, float3 startP
 		}
 	}
 	return dynDamages;
-}
-
-
-WeaponDef::~WeaponDef()
-{
-	delete explosionGenerator; explosionGenerator = 0;
-}
-
-
-S3DModel* WeaponDef::LoadModel()
-{
-	if ((visuals.model==NULL) && (!visuals.modelName.empty())) {
-		std::string modelname = string("objects3d/") + visuals.modelName;
-		if (modelname.find(".") == std::string::npos) {
-			modelname += ".3do";
-		}
-		visuals.model = modelParser->Load3DModel(modelname);
-	}
-	return visuals.model;
 }

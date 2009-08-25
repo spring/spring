@@ -211,7 +211,7 @@ void SoundSource::StreamPause()
 		assert(false);
 }
 
-unsigned SoundSource::GetStreamTime()
+float SoundSource::GetStreamTime()
 {
 	if (curStream)
 	{
@@ -225,7 +225,7 @@ unsigned SoundSource::GetStreamTime()
 	return 0;
 }
 
-unsigned SoundSource::GetStreamPlayTime()
+float SoundSource::GetStreamPlayTime()
 {
 	if (curStream)
 	{

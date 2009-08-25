@@ -5,7 +5,13 @@
 #include <SDL_timer.h>
 #include <boost/bind.hpp>
 #include <sstream>
-#include <unistd.h>
+#ifndef _WIN32
+	#include <unistd.h>
+	#define EXECLP execlp
+#else
+	#include <process.h>
+	#define EXECLP _execlp
+#endif
 #include <stack>
 #include <boost/cstdint.hpp>
 
@@ -110,37 +116,33 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server): menu(NULL)
+SelectMenu::SelectMenu(bool server) : connectWnd(NULL)
 {
-	connectWnd = NULL;
 	mySettings = new ClientSetup();
-	inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
 
-	{
-		ScopedLoader loader("Spring Bitmaps");
-		background = new agui::Picture();
-		background->SetPos(0,0);
-		background->SetSize(1,1);
-		background->Load("bitmaps/ui/background.jpg");
-		agui::gui->AddElement(background);
-	}
-
-	selw = new SelectionWidget();
 	mySettings->isHost = server;
 	mySettings->myPlayerName = configHandler->GetString("name", "UnnamedPlayer");
-
 	if (mySettings->myPlayerName.empty()) {
 		mySettings->myPlayerName = "UnnamedPlayer";
 	} else {
 		mySettings->myPlayerName = StringReplaceInPlace(mySettings->myPlayerName, ' ', '_');
 	}
 
-	{
-		menu = new agui::VerticalLayout();
+	{ // GUI stuff
+		inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
+		{
+			ScopedLoader loader("Spring Bitmaps");
+			background = new agui::Picture();
+			background->SetPos(0,0);
+			background->SetSize(1,1);
+			background->Load("bitmaps/ui/background.jpg");
+			agui::gui->AddElement(background);
+		}
+		selw = new SelectionWidget(background);
+		agui::VerticalLayout* menu = new agui::VerticalLayout(background);
 		menu->SetPos(0.1, 0.5);
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
-		agui::gui->AddElement(menu);
 		agui::TextElement* name = new agui::TextElement("Spring", menu);
 		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
@@ -152,6 +154,7 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 		direct->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, true));
 		Button* quit = new Button("Quit", menu);
 		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
+		background->GeometryChange();
 	}
 
 	if (!mySettings->isHost) {
@@ -162,9 +165,8 @@ SelectMenu::SelectMenu(bool server): menu(NULL)
 SelectMenu::~SelectMenu()
 {
 	ConnectWindow(false);
-	agui::gui->RmElement(selw);
 	agui::gui->RmElement(background);
-	agui::gui->RmElement(menu);
+	background = NULL;
 }
 
 bool SelectMenu::Draw()
@@ -183,19 +185,19 @@ bool SelectMenu::Update()
 
 void SelectMenu::Single()
 {
-	if (selw->userMod == "No mod selected")
+	if (selw->userMod == SelectionWidget::NoModSelect)
 	{
 		selw->ShowModList();
 	}
-	else if (selw->userMap == "No map selected")
+	else if (selw->userMap == SelectionWidget::NoMapSelect)
 	{
 		selw->ShowMapList();
 	}
-	else if (selw->userScript == "No script selected")
+	else if (selw->userScript == SelectionWidget::NoScriptSelect)
 	{
 		selw->ShowScriptList();
 	}
-	else
+	else if (background) // in case of double-click
 	{
 		mySettings->isHost = true;
 		pregame = new CPreGame(mySettings);
@@ -211,7 +213,7 @@ void SelectMenu::Settings()
 #else
 	const std::string settingsProgram = "springsettings.exe";
 #endif
-	execlp(settingsProgram.c_str(), settingsProgram.c_str(), NULL);
+	EXECLP(settingsProgram.c_str(), settingsProgram.c_str(), NULL);
 }
 
 void SelectMenu::Multi()
@@ -221,7 +223,7 @@ void SelectMenu::Multi()
 #else
 	const std::string defLobby = configHandler->GetString("DefaultLobby", "springlobby.exe");
 #endif
-	execlp(defLobby.c_str(), defLobby.c_str(), NULL);
+	EXECLP(defLobby.c_str(), defLobby.c_str(), NULL);
 }
 
 void SelectMenu::Quit()
@@ -289,6 +291,10 @@ bool SelectMenu::HandleEvent(const SDL_Event& ev)
 				{
 					logOutput.Print("Use shift-esc to quit");
 				}
+			}
+			else if (ev.key.keysym.sym == SDLK_RETURN)
+			{
+				Single();
 			}
 			break;
 		}

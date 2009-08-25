@@ -35,6 +35,7 @@
 #	error SYNCIFY should not be defined when building Skirmish AIs
 #endif
 
+
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"
 
@@ -54,9 +55,6 @@ EXPORT(int) release(int teamId);
 EXPORT(int) handleEvent(int teamId, int topic, const void* data);
 
 // methods from here on are for AI internal use only
-const char* aiexport_getMyInfo(const char* key);
-const char* aiexport_getDataDir(bool absoluteAndWriteable);
-const char* aiexport_getVersion();
-const char* aiexport_getMyOption(int teamId, const char* key);
+const char* aiexport_getVersion(int teamId);
 
 #endif // _AIEXPORT_H

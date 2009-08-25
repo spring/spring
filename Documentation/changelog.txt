@@ -1,5 +1,57 @@
 Spring change log
 
+0.80.2.0:
+Bugfixes:
+ - fix creation of DDS textures
+ - Unbreak transports when loadingRadius <= some magic number
+ 
+Lua:
+ - fix Zlib-compression and decompression for lua
+ - Added VFS.SubDirs(dir, pattern, modes) callout to LuaParser
+ - added some more map water configs to Game. table
+
+
+0.80.1.0:
+Bugfixes:
+ - don't write spring-files where they don't belong
+ - some rendering fixes (ATI errors, bumpwater)
+ - IPs of players not broadcasted
+ - area reclaim doesn't know of features not in los anymore
+ - slightly better paralyzeDamage handling
+ - fixed several issues with ArchiveMover - it now moves files to
+   My Documents\My Games\Spring and should be more reliable
+
+
+0.80.0.0:
+Engine / Simulation:
+ - units can now move backwards
+ - notable speed improvement of feature handling (unit wrecks, tress...)
+ - LuaCOB: make it possible to make units with Lua instead of bos/cob
+ - some fixes for sm3 map-format
+ - pathfinding improvements for close groups of units
+ - reclaim / ressurection now correctly exported to LuaAI
+ - make better use of SSE functions for speed improvements
+ - now compatible with Boost 1.34 again (was 1.35 for spring 0.79) 
+
+Engine / GUI, System:
+ - IPv6 support for all parts of the engine
+ - caching for 7z archives: speed improvements at high compression levels (solid archives now usable)
+ - rudimentary menu when starting spring executable directly
+ - BumpWater got a major speed increase, and shorewaves look better
+ - various improvements for the sound system (multithreading, fixes for music, ogg-effects...)
+
+AIs:
+ - Added /aikill and /aicontrol commands (only works in singleplayer in this version)
+ - AIs won't crash the game anymore on startup
+ - some AIs play better now (especially KAIK)
+ - a lot of minor bugs
+
+Dedicated Server:
+ - ingame stats exported to the autohost on game end
+ - always print IPs of players, even if connection fails
+ - allow password-protecting client slots to prevent name spoofing (needs lobby support)
+
+
 0.79.1.1:
 Bugfixes:
  - fix microlags and increased CPU usage for dedicated server

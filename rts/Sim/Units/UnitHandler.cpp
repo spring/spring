@@ -48,18 +48,18 @@ BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
 {
 	def = unitDefHandler->GetUnitByName(name);
 	pos = p;
-	buildFacing = facing;
+	buildFacing = abs(facing) % 4;
 }
 
 
 void BuildInfo::FillCmd(Command& c) const
 {
-	c.id=-def->id;
+	c.id = -def->id;
 	c.params.resize(4);
-	c.params[0]=pos.x;
-	c.params[1]=pos.y;
-	c.params[2]=pos.z;
-	c.params[3]=(float)buildFacing;
+	c.params[0] = pos.x;
+	c.params[1] = pos.y;
+	c.params[2] = pos.z;
+	c.params[3] = (float) buildFacing;
 }
 
 
@@ -70,10 +70,10 @@ bool BuildInfo::Parse(const Command& c)
 
 		if(c.id < 0) {
 			def = unitDefHandler->GetUnitByID(-c.id);
-
 			buildFacing = 0;
-			if (c.params.size()==4)
-				buildFacing = int(c.params[3]);
+
+			if (c.params.size() == 4)
+				buildFacing = int(abs(c.params[3])) % 4;
 
 			return true;
 		}
@@ -277,10 +277,15 @@ void CUnitHandler::DeleteUnitNow(CUnit* delUnit)
 	for(int i=0, dcs=unitDrawer->drawCloaked.size(); i<dcs; ++i)
 		if(unitDrawer->drawCloaked[i]==delUnit)
 			unitDrawer->drawCloaked[i]=NULL;
-
 	for(int i=0, dcs=unitDrawer->drawCloakedS3O.size(); i<dcs; ++i)
 		if(unitDrawer->drawCloakedS3O[i]==delUnit)
 			unitDrawer->drawCloakedS3O[i]=NULL;
+	for(int i=0, dcs=unitDrawer->drawCloakedSave.size(); i<dcs; ++i)
+		if(unitDrawer->drawCloakedSave[i]==delUnit)
+			unitDrawer->drawCloakedSave[i]=NULL;
+	for(int i=0, dcs=unitDrawer->drawCloakedS3OSave.size(); i<dcs; ++i)
+		if(unitDrawer->drawCloakedS3OSave[i]==delUnit)
+			unitDrawer->drawCloakedS3OSave[i]=NULL;
 #endif
 
 	toBeAdded.erase(delUnit);

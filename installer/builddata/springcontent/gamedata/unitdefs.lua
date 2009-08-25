@@ -23,6 +23,7 @@ local TDF = TDFparser or VFS.Include('gamedata/parse_tdf.lua')
 local DownloadBuilds = VFS.Include('gamedata/download_builds.lua')
 
 local system = VFS.Include('gamedata/system.lua')
+VFS.Include('gamedata/VFSUtils.lua')
 
 
 --------------------------------------------------------------------------------
@@ -43,18 +44,11 @@ end
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 --
---  Load the FBI/SWU unitdef files
+--  Load the FBI unitdef files
 --
 
-local fbiFiles = {}
+local fbiFiles = RecursiveFileSearch('units/', '*.fbi') 
 
-do
-  fbiFiles = VFS.DirList('units/', '*.fbi')
-  local swus = VFS.DirList('units/', '*.swu')
-  for _, f in ipairs(swus) do
-    table.insert(fbiFiles, f)
-  end
-end
 
 for _, filename in ipairs(fbiFiles) do
   local ud, err = FBI.Parse(filename)
@@ -77,7 +71,8 @@ end
 --  (these will override the FBI/SWU versions)
 --
 
-local luaFiles = VFS.DirList('units/', '*.lua')
+
+local luaFiles = RecursiveFileSearch('units/', '*.lua')
 
 for _, filename in ipairs(luaFiles) do
   local udEnv = {}
@@ -135,10 +130,6 @@ end
 
 for name, def in pairs(unitDefs) do
   local cob = 'scripts/'   .. name .. '.cob'
-  if (not VFS.FileExists(cob)) then
-    unitDefs[name] = nil
-    Spring.Echo('WARNING: removed ' .. name .. ' unitDef, missing cob script')
-  end
 
   local obj = def.objectName or def.objectname
   if (obj == nil) then
@@ -187,4 +178,4 @@ end
 return unitDefs
 
 --------------------------------------------------------------------------------
---------------------------------------------------------------------------------
+-------------------------------------------------------------------------------- 

@@ -35,12 +35,6 @@
 // teamId -> AI map
 static std::map<int, CAIGlobalAI*> myAIs;
 
-// filled with the teamId for the first team handled by this Skirmish AI
-static int firstTeamId = -1;
-// filled with the callback for the first team handled by this Skirmish AI
-// this can be used for calling functions that
-static const struct SSkirmishAICallback* firstCallback = NULL;
-
 // callbacks for all the teams controlled by this Skirmish AI
 static std::map<int, const struct SSkirmishAICallback*> teamId_callback;
 
@@ -66,10 +60,6 @@ EXPORT(int) init(int teamId, const struct SSkirmishAICallback* callback) {
 		return -1;
 	}
 
-	if (firstTeamId == -1) {
-		firstTeamId = teamId;
-		firstCallback = callback;
-	}
 	teamId_callback[teamId] = callback;
 
 	// CAIGlobalAI is the Legacy C++ wrapper, cRAI is RAI
@@ -108,25 +98,4 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 
 	// no AI for that team, so return error.
 	return -1;
-}
-
-
-// methods from here on are for AI internal use only
-
-const char* aiexport_getDataDir(bool writeableAndCreate, const char* const relPath) {
-
-	char* absPath = firstCallback->Clb_DataDirs_allocatePath(firstTeamId, relPath, writeableAndCreate, writeableAndCreate, true, false);
-
-	if (absPath == NULL) {
-		absPath = NULL;
-	}
-
-	return absPath;
-}
-const char* aiexport_getVersion() {
-	return firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_VERSION);
-}
-
-const char* aiexport_getMyOption(int teamId, const char* key) {
-	return teamId_callback[teamId]->Clb_SkirmishAI_OptionValues_getValueByKey(teamId, key);
 }

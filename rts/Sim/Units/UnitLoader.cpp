@@ -76,7 +76,7 @@ CUnit* CUnitLoader::LoadUnit(const std::string& name, float3 pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
 	const UnitDef* ud = unitDefHandler->GetUnitByName(name);
-	if (ud==NULL) {
+	if (ud == NULL) {
 		throw content_error("Couldn't find unittype " +  name);
 	}
 
@@ -140,12 +140,12 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	}
 
 	unit->UnitInit(ud, team, pos);
-
 	unit->beingBuilt = build;
 
-	unit->xsize = ((facing & 1) == 0) ? ud->xsize : ud->zsize;
-	unit->zsize = ((facing & 1) == 1) ? ud->xsize : ud->zsize;
-	unit->buildFacing = facing;
+	unit->buildFacing = abs(facing) % 4;
+	unit->xsize = ((unit->buildFacing & 1) == 0) ? ud->xsize : ud->zsize;
+	unit->zsize = ((unit->buildFacing & 1) == 1) ? ud->xsize : ud->zsize;
+
 	unit->power = ud->power;
 	unit->maxHealth = ud->health;
 	unit->health = ud->health;
@@ -237,6 +237,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	if (ud->canmove && !ud->canfly && (type != "Factory")) {
 		CGroundMoveType* mt = new CGroundMoveType(unit);
 		mt->maxSpeed = ud->speed / GAME_SPEED;
+		mt->maxReverseSpeed = ud->rSpeed / GAME_SPEED;
 		mt->maxWantedSpeed = ud->speed / GAME_SPEED;
 		mt->turnRate = ud->turnRate;
 		mt->baseTurnRate = ud->turnRate;

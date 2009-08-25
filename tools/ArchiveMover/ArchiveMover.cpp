@@ -23,7 +23,7 @@
 using std::endl;
 
 
-//#define ARCHIVE_MOVER_USE_WIN_API
+#define ARCHIVE_MOVER_USE_WIN_API
 
 #ifdef ARCHIVE_MOVER_USE_WIN_API
   #ifndef NOMINMAX
@@ -49,23 +49,44 @@ using std::endl;
 
 BOOST_STATIC_ASSERT(BOOST_VERSION >= 103400);
 #include <boost/filesystem.hpp>
-#include <boost/filesystem/cerrno.hpp>
 #include <boost/filesystem/fstream.hpp>
+
+#if BOOST_VERSION < 103500
+#include <boost/filesystem/cerrno.hpp>
+#elif 0
+#include <boost/system/error_code.hpp>
+#endif
+
+#if defined(WIN32)
+#include <shlobj.h>
+#include <shlwapi.h>
+#ifndef SHGFP_TYPE_CURRENT
+	#define SHGFP_TYPE_CURRENT 0
+#endif
+#endif
+
 namespace fs = boost::filesystem;
 
 
 #include "lib/minizip/unzip.h"
 extern "C" {
-#include "lib/7zip/7zIn.h"
-#include "lib/7zip/7zCrc.h"
-#include "lib/7zip/7zExtract.h"
+#include "lib/7z/Types.h"
+#include "lib/7z/Archive/7z/7zAlloc.h"
+#include "lib/7z/Archive/7z/7zIn.h"
+#include "lib/7z/Archive/7z/7zExtract.h"
+#include "lib/7z/7zCrc.h"
+#include "lib/7z/7zFile.h"
 }
 
 
 #if defined(WIN32) && (defined(UNICODE) || defined(_UNICODE))
 
 	typedef fs::wpath Path;
+#if BOOST_VERSION >= 103500
+	typedef fs::wfilesystem_error FilesystemPathError;
+#else
 	typedef fs::filesystem_wpath_error FilesystemPathError;
+#endif
 
 	typedef wchar_t Char;
 	typedef std::wstring String;
@@ -82,7 +103,11 @@ extern "C" {
 	//		Path p = fs::current_path<Path>();
 	// (this is used by fs::system_complete() and others ...)
 	typedef fs::path Path;
+#if BOOST_VERSION >= 103500
+	typedef fs::filesystem_error FilesystemPathError;
+#else
 	typedef fs::filesystem_path_error FilesystemPathError;
+#endif
 
 	// And converting stuff back and forth between wide chars and narrow chars
 	// is a PITA so we just define String to normal string too.
@@ -132,21 +157,9 @@ unzFile_ptr unzOpen2_p(zlib_filefunc_def* pzlib_filefunc_def){
 
 
 
-NEW_LIFETIME_MANAGER(CArchiveDatabaseEx){
-	SzArDbExFree(ptr, SzFree);
-}
-
-CArchiveDatabaseEx_ptr SzArDbExInit_p(){
-	CArchiveDatabaseEx_ptr local_ptr(new CArchiveDatabaseEx, CArchiveDatabaseEx_del());
-	SzArDbExInit(local_ptr.get());
-	return local_ptr;
-}
-
-
-
 NEW_LIFETIME_MANAGER_NAME(unsigned char*, SzOutBuffer){
 	if(*ptr){
-		SzFree(*ptr);
+		delete (*ptr);
 	}
 }
 
@@ -185,7 +198,11 @@ struct ScopedMessage : public StringStream{
 		String str = this->str();
 		if (!str.empty()) {
 #ifdef ARCHIVE_MOVER_USE_WIN_API
+#	ifdef UNICODE
 			MessageBoxW(NULL, str.c_str(), _("Spring - ArchiveMover"), MB_APPLMODAL);
+#	else
+			MessageBoxA(NULL, str.c_str(), _("Spring - ArchiveMover"), MB_APPLMODAL);
+#	endif
 #else
 			cout<<str<<endl;
 #endif
@@ -195,7 +212,8 @@ struct ScopedMessage : public StringStream{
 
 static bool is_map(const std::string& filename){
 	if (filename.substr(0, 4) == "maps") {
-		const std::string ext = filename.substr(filename.size() - 4);
+		std::string ext = filename.substr(filename.size() - 4);
+		std::transform(ext.begin(), ext.end(), ext.begin(), tolower);
 		if ((ext == ".sm3") || (ext == ".smf")) {
 			return true;
 		}
@@ -204,7 +222,9 @@ static bool is_map(const std::string& filename){
 }
 
 static bool is_mod(const std::string& filename){
-	if ((filename == "modinfo.tdf") || (filename == "modinfo.lua")) {
+	std::string fn = filename;
+	std::transform(fn.begin(), fn.end(), fn.begin(), tolower);
+	if ((fn == "modinfo.tdf") || (fn == "modinfo.lua")) {
 		return true;
 	}
 	return false;
@@ -239,6 +259,7 @@ int APIENTRY WinMain(HINSTANCE hInstance,
 
 	int argc = 0;
 	wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+
 	if(argv == 0){
 		return 0;
 	}
@@ -316,13 +337,28 @@ static int run(int argc, const Char* const* argv){
 		}
 
 		const Path source_file = fs::system_complete(source_file_arg);
-		Path target_dir = fs::system_complete(argv[0]).branch_path();
+
+		// destination: My Documents/My Games/Spring
+		TCHAR strPath[MAX_PATH];
+		SHGetFolderPath( NULL, CSIDL_PERSONAL, NULL, SHGFP_TYPE_CURRENT, strPath);
+
+		Path target_dir = fs::system_complete(strPath) / _("My Games") / _("Spring");
 
 		if(!fs::exists(source_file)){
 			message<<source_file<<endl<<_("File not found.")<<endl;
 			return 1;
 		}
 
+		String source_basename = source_file.leaf();
+		if (source_basename == _("springcontent.sdz")
+				|| source_basename == _("mapcontent.sdz")
+				|| source_basename == _("maphelper.sdz")
+				|| source_basename == _("cursors.sdz")
+				|| source_basename == _("bitmaps.sdz")) {
+			message << _("'")<<source_basename<<_("' is a Spring base file and should not be installed manually.\n")
+				<< _("If you're missing this file and/or were told to download it, please reinstall Spring.") << endl;
+			return 1;
+		}
 
 		ArchiveType content = read_archive_content_sd7(source_file);
 		if(content == R_OTHER){
@@ -355,8 +391,22 @@ static int run(int argc, const Char* const* argv){
 			assert(false);
 		}
 
+		fs::create_directories(target_dir);
 		if(!fs::exists(target_dir)){
 			message<<_("The target directory '")<<target_dir<<_("' doesn't exist.")<<endl;
+			return 1;
+		}
+
+		String srcdir = source_file.parent_path().string();
+		String destdir = target_dir.string();
+		#ifdef _WIN32
+		// paths on win32 are case insensitive
+		std::transform(srcdir.begin(), srcdir.end(), srcdir.begin(), toupper);
+		std::transform(destdir.begin(), destdir.end(), destdir.begin(), toupper);
+		#endif
+
+		if (srcdir == destdir) {
+			message << _("Refusing to install a file onto itself.") << endl;
 			return 1;
 		}
 
@@ -390,40 +440,10 @@ static int run(int argc, const Char* const* argv){
 
 	}
 	catch(FilesystemPathError& error) {
-		fs::errno_type error_nr = fs::lookup_errno(error.system_error());
-		message<<_("Cannot move file: ");
-		switch(error_nr){
-			case EPERM:
-			case EACCES:{
-				message<<_("Permission denied.");
-				break;
-			}
-			case ENOSPC:{
-				message<<_("Not enough free disk space.");
-				break;
-			}
-			case ENOENT:{
-				message<<_("Invalid path.");
-				break;
-			}
-			case EROFS:{
-				message<<_("Target path is read only.");
-				break;
-			}
-			case EEXIST:{
-				message<<_("Target folder already contains a file named '")<<error.path1().leaf()<<_("'.");
-				break;
-			}
-			default:{
-				message<<strerror(error_nr)<<_(".");
-			}
-		}
+		message<<_("Cannot move file: ") << error.what() << ".";
 		message<<endl<<endl;
-		message<<_("Source file: ")<<error.path1()<<endl; 
+		message<<_("Source file: ")<<error.path1()<<endl;
 		message<<_("Target folder: ")<<error.path2().branch_path()<<endl;
-	}
-	catch(fs::filesystem_error& error) {
-		message<<_("Filesystem error in: ")<<error.what()<<endl;
 	}
 	catch(std::exception& error) {
 		message<<_("Found an exception with: ")<<error.what()<<endl;
@@ -525,48 +545,36 @@ static ArchiveType read_archive_content_sdz(const Path& filename){
 
 /******************************************************************************/
 
-struct SD7Stream {
-	ISzInStream funcs;
-	fs::ifstream file;
-};
-
-
-static SZ_RESULT sd7_read_file(void *object, void *buffer, size_t size, size_t *processedSize){
-
-	fs::ifstream& file = static_cast<SD7Stream*>(object)->file;
-	file.read((char*)buffer, (std::streamsize)size);
-	if(processedSize != 0){
-		*processedSize = file.gcount();
-	}
-	return SZ_OK;
-}
-
-
-static SZ_RESULT sd7_seek_file(void *object, CFileSize pos){
-
-	fs::ifstream& file = static_cast<SD7Stream*>(object)->file;
-	file.seekg(pos, std::ios_base::beg);
-	if(file.fail()){
-		return SZE_FAIL;
-	}
-	return SZ_OK;
-}
-
 
 static ArchiveType read_archive_content_sd7(const Path& filename){
 
-	SD7Stream stream;
-	stream.funcs.Read = sd7_read_file;
-	stream.funcs.Seek = sd7_seek_file;
-	stream.file.open(filename, std::ios_base::binary);
+	CFileInStream stream;
+	CLookToRead lookStream;
+	String fn = filename.string();
+	int len   = 2*fn.size();
+	char tmpfn[len];
 
-	if(!stream.file.good() || !stream.file.is_open()){
+#if defined(UNICODE) || defined(_UNICODE)
+	WideCharToMultiByte(CP_ACP, 0, fn.c_str(), -1, tmpfn, len, NULL, NULL);
+#else
+	strcpy(tmpfn, fn.c_str());
+#endif
+
+	if (InFile_Open(&stream.file, tmpfn))
+	{
+		//error
 		return R_OTHER;
 	}
 
+	FileInStream_CreateVTable(&stream);
+	LookToRead_CreateVTable(&lookStream, False);
 
-	InitCrcTable();
-	CArchiveDatabaseEx_ptr db = SzArDbExInit_p();
+	lookStream.realStream = &stream.s;
+	LookToRead_Init(&lookStream);
+
+	CrcGenerateTable();
+	CSzArEx db;
+	SzArEx_Init(&db);
 
 	ISzAlloc alloc_main;
 	ISzAlloc alloc_temp;
@@ -576,38 +584,42 @@ static ArchiveType read_archive_content_sd7(const Path& filename){
 	alloc_temp.Alloc = SzAllocTemp;
 
 
-	BOOST_STATIC_ASSERT(offsetof(SD7Stream, funcs) == 0);
-	int retval = SzArchiveOpen(&stream.funcs, db.get(), &alloc_main, &alloc_temp);
+	int retval = SzArEx_Open(&db, &lookStream.s, &alloc_main, &alloc_temp);
 	if (retval != SZ_OK) {
+		File_Close(&stream.file);
 		return R_OTHER;
 	}
 
 
-	unsigned int block_index = 0;
-	SzOutBuffer_ptr out_buffer = SzOutBuffer_p(0);
+	unsigned int block_index = 0xFFFFFFFF;
+	unsigned char* out_buffer = 0;
 	size_t out_buffer_size = 0;
 	ArchiveType content = R_OTHER;
 
-	for (unsigned int i = 0; i < db->Database.NumFiles; ++i) {
-		CFileItem* fi = db->Database.Files + i;
-		if(fi->IsDirectory){
+	for (unsigned int i = 0; i < db.db.NumFiles; ++i) {
+		CSzFileItem* fi = db.db.Files + i;
+		if(fi->IsDir){
 			continue;
 		}
 
 		const std::string& filename = string_to_lower(fi->Name);
 		if(!is_map_or_mod(filename, content)){
-			return R_OTHER;
+			content = R_OTHER;
+			break;
 		}
 
 		size_t offset = 0;
 		size_t out_size_processed = 0;
-		if(SzExtract(&stream.funcs, db.get(), i, &block_index,
-					out_buffer.get(), &out_buffer_size, &offset, &out_size_processed,
-					&alloc_main, &alloc_temp) != SZ_OK){
-
-			return R_OTHER;
+		SRes res = SzAr_Extract(&db, &lookStream.s, i, &block_index,
+					&out_buffer, &out_buffer_size,
+					&offset, &out_size_processed,
+					&alloc_main, &alloc_temp);
+		if(res != SZ_OK){
+			content = R_OTHER;
+			break;
 		}
 	}
 
+	File_Close(&stream.file);
 	return content;
 }

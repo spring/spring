@@ -413,6 +413,7 @@ public:
 #else
 				postDelRender.erase(it++);
 #endif
+				delete s;
 			}
 			else
 				++it;

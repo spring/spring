@@ -36,13 +36,13 @@ CNetProtocol::~CNetProtocol()
 	logOutput.Print(serverConn->Statistics());
 }
 
-void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myVersion)
+void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned sourceport, const std::string& myName, const std::string& myPasswd, const std::string& myVersion)
 {
 	GML_STDMUTEX_LOCK(net); // InitClient
 	netcode::UDPConnection* conn = new netcode::UDPConnection(sourceport, server_addr, portnum);
 	conn->SetMTU(configHandler->Get("MaximumTransmissionUnit", 0));
 	serverConn.reset(conn);
-	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myVersion));
+	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);
 	
 	logOutput.Print("Connecting to %s:%i using name %s", server_addr, portnum, myName.c_str());

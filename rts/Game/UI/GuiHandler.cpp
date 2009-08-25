@@ -2474,8 +2474,6 @@ void CGuiHandler::ProcessFrontPositions(float3& pos0, float3& pos1)
 
 void CGuiHandler::Draw()
 {
-	Update();
-
 	if ((iconsCount <= 0) && (luaUI == NULL)) {
 		return;
 	}

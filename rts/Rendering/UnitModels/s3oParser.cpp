@@ -120,7 +120,7 @@ SS3OPiece* CS3OParser::LoadPiece(unsigned char* buf, int offset, S3DModel* model
 		}
 	}
 
-	piece->isEmpty = piece->vertexDrawOrder.empty(); 
+	piece->isEmpty = piece->vertexDrawOrder.empty();
 	piece->vertexCount = piece->vertices.size();
 
 	SetVertexTangents(piece);
@@ -213,6 +213,10 @@ void CS3OParser::Draw(const S3DModelPiece* o) const
 		glTexCoordPointer(3, GL_FLOAT, sizeof(float3), &so->tTangents[0].x);
 	}
 
+	glClientActiveTextureARB(GL_TEXTURE1_ARB);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
+
 	glClientActiveTexture(GL_TEXTURE0);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(2, GL_FLOAT, sizeof(SS3OVertex), &s3ov->textureX);
@@ -242,6 +246,9 @@ void CS3OParser::Draw(const S3DModelPiece* o) const
 		glClientActiveTexture(GL_TEXTURE5);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	}
+
+	glClientActiveTextureARB(GL_TEXTURE1_ARB);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	glClientActiveTexture(GL_TEXTURE0);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -284,7 +291,7 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 		bool flipWinding = false;
 
 		if (p->primitiveType == S3O_PRIMTYPE_TRIANGLE_STRIP) {
-			flipWinding = ((vrtNr & 1) == 1); 
+			flipWinding = ((vrtNr & 1) == 1);
 		}
 
 		const int v0idx = p->vertexDrawOrder[vrtNr                      ];
@@ -350,7 +357,7 @@ void CS3OParser::SetVertexTangents(SS3OPiece* p)
 
 		h = ((n.cross(s)).dot(t) < 0.0f)? -1: 1;
 		s = (s - n * n.dot(s));
-		s = (s == ZeroVector)? s: s.ANormalize();
+		s = s.SafeANormalize();
 		t = (s.cross(n)) * h;
 
 		// t = (s.cross(n));

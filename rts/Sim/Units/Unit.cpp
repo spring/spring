@@ -698,7 +698,7 @@ void CUnit::SlowUpdate()
 
 	if (stunned) {
 		// de-stun only if we are not (still) inside a non-firebase transport
-		if (paralyzeDamage < health && !(transporter && !transporter->unitDef->isFirePlatform) ) {
+		if (paralyzeDamage <= maxHealth && !(transporter && !transporter->unitDef->isFirePlatform) ) {
 			stunned = false;
 		}
 		const bool oldCloak = isCloaked;
@@ -989,8 +989,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	float3 hitDir = impulse;
 	hitDir.y = 0.0f;
-	if (hitDir.x != 0 || hitDir.z != 0)
-		hitDir = -hitDir.Normalize();
+	hitDir = -hitDir.SafeNormalize();
 
 	if (script->HasFunction(COBFN_HitByWeaponId)) {
 		script->HitByWeaponId(hitDir, weaponDefId, /*inout*/ damage);
@@ -1000,14 +999,12 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	}
 
 	float experienceMod = expMultiplier;
-
 	const int paralyzeTime = damages.paralyzeDamageTime;
 	float newDamage = damage;
 
 	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefId,
 			!!damages.paralyzeDamageTime, &newDamage))
 		damage = newDamage;
-
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
@@ -1024,32 +1021,37 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			if (health > maxHealth) {
 				health = maxHealth;
 			}
-			if (health > paralyzeDamage) {
-				stunned = false;
-			}
 		}
 	}
 	else { // paralyzation
 		experienceMod *= 0.1f; // reduced experience
 		if (damage > 0.0f) {
-			const float maxParaDmg = health + (maxHealth * 0.025f * (float)paralyzeTime);
-			if (paralyzeDamage >= maxParaDmg || stunned) {
+			// paralyzeDamage may not get higher than maxHealth * (paralyzeTime + 1),
+			// which means the unit will be destunned after paralyzeTime seconds.
+			// (maximum paralyzeTime of all paralyzer weapons which recently hit it ofc)
+			const float maxParaDmg = maxHealth + 0.025f * maxHealth * float(paralyzeTime) - paralyzeDamage;
+			if (damage > maxParaDmg) {
+				if (maxParaDmg > 0.0f) {
+					damage = maxParaDmg;
+				}
+				else {
+					damage = 0.0f;
+				}
+			}
+			if (stunned) {
 				experienceMod = 0.0f;
 			}
-
 			paralyzeDamage += damage;
-			if (paralyzeDamage > health) {
+			if (paralyzeDamage > maxHealth) {
 				stunned = true;
 			}
-			paralyzeDamage = std::min(paralyzeDamage, maxParaDmg);
-
 		}
 		else { // paralyzation healing
 			if (paralyzeDamage <= 0.0f) {
 				experienceMod = 0.0f;
 			}
 			paralyzeDamage += damage;
-			if (paralyzeDamage < health) {
+			if (paralyzeDamage < maxHealth) {
 				stunned = false;
 				if (paralyzeDamage < 0.0f) {
 					paralyzeDamage = 0.0f;
@@ -1895,15 +1897,15 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	teamHandler->Team(this->lineage)->LeftLineage(this);
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
-		string exp;
+		const std::string* exp;
 		if (selfDestruct) {
-			exp = unitDef->selfDExplosion;
+			exp = &unitDef->selfDExplosion;
 		} else {
-			exp = unitDef->deathExplosion;
+			exp = &unitDef->deathExplosion;
 		}
 
-		if (!exp.empty()) {
-			const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
+		if (!exp->empty()) {
+			const WeaponDef* wd = weaponDefHandler->GetWeapon(*exp);
 			if (wd) {
 				helper->Explosion(
 					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
@@ -1939,7 +1941,7 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 		// permanently deleting this unit obj
 		deathCountdown = 5;
 		stunned = true;
-		paralyzeDamage = 1000000;
+		paralyzeDamage = 100.0f * maxHealth;
 		if (health < 0.0f) {
 			health = 0.0f;
 		}
@@ -2012,9 +2014,6 @@ void CUnit::AddEnergy(float energy, bool handicap)
 
 void CUnit::Activate()
 {
-	//if(unitDef->tidalGenerator>0)
-	//	script->SetSpeed(readmap->tidalStrength * unitDef->tidalGenerator, 3000.0f);
-
 	if (activated)
 		return;
 

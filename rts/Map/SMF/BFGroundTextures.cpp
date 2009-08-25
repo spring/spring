@@ -251,7 +251,8 @@ void CBFGroundTextures::LoadSquare(int x, int y, int level)
 	if (usedPBO) {
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, 0);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, 0, 0, GL_STREAM_DRAW); //discard old content
+		if (!gu->atiHacks)
+			glBufferData(GL_PIXEL_UNPACK_BUFFER, 0, 0, GL_STREAM_DRAW); //discard old content
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	} else {
 		glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT1_EXT, size, size, 0, size * size / 2, buf);

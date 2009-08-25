@@ -113,7 +113,8 @@ private:
 
 	static const size_t skirmishAIs_size = MAX_TEAMS;
 	CSkirmishAIWrapper* skirmishAIs[skirmishAIs_size];
-	bool hasSkirmishAIs;
+	bool team_isSkirmishAIInitialized[skirmishAIs_size];
+	size_t localSkirmishAIs_size;
 	std::map<int, SkirmishAIData> team_skirmishAI;
 };
 

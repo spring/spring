@@ -504,6 +504,8 @@ void CFeatureHandler::Update()
 				}
 				fadeFeatures.erase(feature);
 				fadeFeaturesS3O.erase(feature);
+				fadeFeaturesSave.erase(feature);
+				fadeFeaturesS3OSave.erase(feature);
 
 				delete feature;
 			}
@@ -594,7 +596,18 @@ void CFeatureHandler::Draw()
 	unitDrawer->SetupFor3DO();
 	DrawRaw(0, &drawFar);
 	unitDrawer->CleanUp3DO();
+
+	// S3O features can have transparent bits
+	glPushAttrib(GL_COLOR_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER,0.5f);
+
 	unitDrawer->DrawQuedS3O();
+
+	glPopAttrib();
+
 	unitDrawer->CleanUpUnitDrawing();
 
 	if (drawFar.size()>0) {
@@ -630,7 +643,10 @@ void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading)
 	else
 		unitDrawer->SetupForGhostDrawing();
 
-	glDisable(GL_ALPHA_TEST);
+	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDepthMask(GL_TRUE);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER,0.5f);
 
 	glEnable(GL_FOG);
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
@@ -651,14 +667,19 @@ void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading)
 		unitDrawer->CleanUp3DO();
 
 		for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
-			glColor4f(1,1,1,(*i)->tempalpha);
+			float cols[]={1,1,1,(*i)->tempalpha};
+			glColor4fv(cols);
+			glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);
+			glAlphaFunc(GL_GREATER,(*i)->tempalpha/2.0f); // a hack, sorting objects by distance would look better
+
 			texturehandlerS3O->SetS3oTexture((*i)->model->textureType);
 			(*i)->DrawS3O();
 		}
 	}
 
 	glDisable(GL_FOG);
-	glEnable(GL_ALPHA_TEST);
+
+	glPopAttrib();
 
 	if(unitDrawer->advShading)
 		unitDrawer->CleanUpUnitDrawing();
@@ -679,7 +700,20 @@ void CFeatureHandler::DrawShadowPass()
 	GML_RECMUTEX_LOCK(feat); // DrawShadowPass
 
 	DrawRaw(1, NULL);
+
+	if(unitDrawer->advFade) { // FIXME: Why does texture alpha not work with shadows on ATI?
+		glEnable(GL_TEXTURE_2D); // Need the alpha mask for transparent features
+		glPushAttrib(GL_COLOR_BUFFER_BIT);
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER,0.5f);
+	}
+
 	unitDrawer->DrawQuedS3O();
+
+	if(unitDrawer->advFade) {
+		glPopAttrib();
+		glDisable(GL_TEXTURE_2D);
+	}
 
 	glDisable(GL_POLYGON_OFFSET_FILL);
 	glDisable(GL_VERTEX_PROGRAM_ARB);
@@ -709,9 +743,8 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 		CFeature* f = (*fi);
 		const FeatureDef* def = f->def;
 
-		if (def->drawType == DRAWTYPE_MODEL && (f->allyteam == -1 || f->allyteam == gu->myAllyTeam ||
-			gu->spectatingFullView || loshandler->InLos(f->pos, gu->myAllyTeam)) ) {
-
+		if (def->drawType == DRAWTYPE_MODEL
+				&& (gu->spectatingFullView || f->IsInLosForAllyTeam(gu->myAllyTeam))) {
 			if (drawReflection) {
 				float3 zeroPos;
 				if (f->midPos.y < 0) {
@@ -733,37 +766,28 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
 
 			if (sqDist < farLength) {
-				if(unitDrawer->advFade && unitDrawer->advShading) {
-					float sqFadeDistE;
-					float sqFadeDistB;
-					if(farLength < sqFadeDistEnd) {
-						sqFadeDistE = farLength;
-						sqFadeDistB = farLength * 0.75f * 0.75f;
-					} else {
-						sqFadeDistE = sqFadeDistEnd;
-						sqFadeDistB = sqFadeDistBegin;
-					}
-					if(sqDist < sqFadeDistB) {
-						f->tempalpha = 1.0f;
-						if (f->model->type == MODELTYPE_3DO) {
-							unitDrawer->DrawFeatureStatic(f);
-						} else {
-							unitDrawer->QueS3ODraw(f, f->model->textureType);
-						}
-					} else if(sqDist < sqFadeDistE) {
-						f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
-						if (f->model->type == MODELTYPE_3DO) {
-							featureHandler->fadeFeatures.insert(f);
-						} else {
-							featureHandler->fadeFeaturesS3O.insert(f);
-						}
-					}
+				float sqFadeDistE;
+				float sqFadeDistB;
+				if(farLength < sqFadeDistEnd) {
+					sqFadeDistE = farLength;
+					sqFadeDistB = farLength * 0.75f * 0.75f;
 				} else {
-					f->tempalpha = 1.0f;
+					sqFadeDistE = sqFadeDistEnd;
+					sqFadeDistB = sqFadeDistBegin;
+				}
+				if(sqDist < sqFadeDistB) {
+					f->tempalpha = 0.99f;
 					if (f->model->type == MODELTYPE_3DO) {
 						unitDrawer->DrawFeatureStatic(f);
 					} else {
 						unitDrawer->QueS3ODraw(f, f->model->textureType);
+					}
+				} else if(sqDist < sqFadeDistE) {
+					f->tempalpha = 1.0f - (sqDist - sqFadeDistB) / (sqFadeDistE - sqFadeDistB);
+					if (f->model->type == MODELTYPE_3DO) {
+						featureHandler->fadeFeatures.insert(f);
+					} else {
+						featureHandler->fadeFeaturesS3O.insert(f);
 					}
 				}
 			} else {
@@ -815,12 +839,4 @@ void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 	va->AddVertexQTN(interPos+(curad+offset)+crrad,tx,ty+(1.0f/64.0f),unitDrawer->camNorm);
 	va->AddVertexQTN(interPos+(curad+offset)-crrad,tx+(1.0f/64.0f),ty+(1.0f/64.0f),unitDrawer->camNorm);
 	va->AddVertexQTN(interPos-(curad-offset)-crrad,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
-}
-
-
-S3DModel* FeatureDef::LoadModel()
-{
-	if (model==NULL)
-		model = modelParser->Load3DModel(modelname);
-	return model;
 }

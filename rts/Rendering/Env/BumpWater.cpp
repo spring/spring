@@ -551,14 +551,18 @@ CBumpWater::CBumpWater()
 	}
 	glEndList();
 
+/*
 	windndir = wind.GetCurrentDirection();
 	windStrength = (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f);
 	windVec = windndir * windStrength;
+*/
+	windVec = float3(20.0,0.0,20.0);
 
 	occlusionQuery = 0;
 	occlusionQueryResult = GL_TRUE;
 	wasLastFrameVisible = false;
-	if (GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a seperate refraction pass, there isn't enough time for a occlusion query
+	bool useOcclQuery  = (!!configHandler->Get("BumpWaterOcclusionQuery", 1));
+	if (useOcclQuery && GLEW_ARB_occlusion_query && refraction<2) { //! in the case of a separate refraction pass, there isn't enough time for a occlusion query
 		GLint bitsSupported;
 		glGetQueryiv(GL_SAMPLES_PASSED, GL_QUERY_COUNTER_BITS, &bitsSupported);
 		if (bitsSupported > 0)
@@ -663,19 +667,21 @@ void CBumpWater::GetUniformLocations( GLuint& program )
 void CBumpWater::Update()
 {
 	if (!occlusionQuery)
-		Update_();
+		DoUpdate();
 }
 
-void CBumpWater::Update_()
+void CBumpWater::DoUpdate()
 {
 	if ((!mapInfo->water.forceRendering && readmap->currMinHeight > 0.0f) || mapInfo->map.voidWater)
 		return;
 
+/*
 	windndir *= 0.995f;
 	windndir -= wind.GetCurrentDirection() * 0.005f;
 	windStrength *= 0.9999f;
 	windStrength += (smoothstep(0.0f, 12.0f, wind.GetCurrentStrength()) * 0.5f + 4.0f) * 0.0001f;
 	windVec   = windndir * windStrength;
+*/
 
 	if (dynWaves)
 		UpdateDynWaves();
@@ -1314,7 +1320,7 @@ void CBumpWater::DrawReflection(CGame* game)
 	readmap->GetGroundDrawer()->Draw(true);
 	unitDrawer->Draw(true);
 	featureHandler->Draw();
-	unitDrawer->DrawCloakedUnits(false);
+	unitDrawer->DrawCloakedUnits(false,true);
 	featureHandler->DrawFadeFeatures(false,true);
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
@@ -1361,7 +1367,7 @@ void CBumpWater::OcclusionQuery()
 	}
 
 	if (gs->frameNum != lastFrame) {
-		Update_();
+		DoUpdate();
 		lastFrame = gs->frameNum;
 	}
 }
