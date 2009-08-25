@@ -105,9 +105,15 @@ public:
 		CUnitScript::TurnNow(piece, axis, destination * TAANG2RAD);
 	}
 	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime) {
+		// COBWTF
+		if (axis == 0)
+			destination = -destination;
 		CUnitScript::MoveSmooth(piece, axis, destination * CORDDIV, delta, deltaTime);
 	}
 	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime) {
+		// COBWTF
+		if (axis == 2)
+			destination = -destination;
 		CUnitScript::TurnSmooth(piece, axis, destination * TAANG2RAD, delta, deltaTime);
 	}
 
