@@ -1,4 +1,7 @@
 #include "CrashHandler.h"
+#ifdef __APPLE__
+#include <AvailabilityMacros.h>
+#endif
 
 #ifdef _WIN32
 #include "Win/CrashHandler.h"
@@ -17,7 +20,7 @@ namespace CrashHandler {
 	}
 };
 
-#else
+#elif !defined(__APPLE__) || (MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4)
 
 #include <string>
 #include <vector>
@@ -109,6 +112,14 @@ namespace CrashHandler {
 		signal(SIGIO, SIG_DFL);
 		signal(SIGABRT, SIG_DFL);
 	}
+};
+
+#else
+
+namespace CrashHandler {
+	void HandleSignal(int signal){};
+	void Install(){};
+	void Remove(){}
 };
 
 #endif
