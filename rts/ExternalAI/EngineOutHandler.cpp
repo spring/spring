@@ -26,7 +26,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
-#include "Sim/Weapons/WeaponDefHandler.h"
+#include "Sim/Weapons/WeaponDef.h"
 #include "NetProtocol.h"
 #include "GlobalUnsynced.h"
 #include "ConfigHandler.h"
@@ -39,7 +39,7 @@ CR_BIND_DERIVED(CEngineOutHandler,CObject, )
 
 CR_REG_METADATA(CEngineOutHandler, (
 				CR_MEMBER(skirmishAIs),
-				CR_MEMBER(hasSkirmishAIs)
+				CR_MEMBER(localSkirmishAIs_size)
 				));
 
 /////////////////////////////
@@ -119,13 +119,14 @@ void CEngineOutHandler::Destroy() {
 	}
 }
 
-CEngineOutHandler::CEngineOutHandler()
-		: activeTeams(teamHandler->ActiveTeams()) {
+CEngineOutHandler::CEngineOutHandler() :
+		activeTeams(teamHandler->ActiveTeams()),
+		localSkirmishAIs_size(0) {
 
 	for (size_t t=0; t < skirmishAIs_size; ++t) {
 		skirmishAIs[t] = NULL;
+		team_isSkirmishAIInitialized[t] = false;
 	}
-	hasSkirmishAIs = false;
 
 	for (size_t t=0; t < activeTeams; ++t) {
 		const SkirmishAIData* data = gameSetup->GetSkirmishAIDataForTeam(t);
@@ -159,21 +160,21 @@ void CEngineOutHandler::PostLoad() {}
 
 void CEngineOutHandler::PreDestroy() {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	DO_FOR_SKIRMISH_AIS(PreDestroy())
 }
 
 void CEngineOutHandler::Load(std::istream* s) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	DO_FOR_SKIRMISH_AIS(Load(s))
 }
 
 void CEngineOutHandler::Save(std::ostream* s) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	DO_FOR_SKIRMISH_AIS(Save(s))
 }
@@ -181,7 +182,7 @@ void CEngineOutHandler::Save(std::ostream* s) {
 
 void CEngineOutHandler::Update() {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	SCOPED_TIMER("AI")
 	int frame = gs->frameNum;
@@ -204,7 +205,7 @@ void CEngineOutHandler::Update() {
 
 void CEngineOutHandler::UnitEnteredLos(const CUnit& unit, int allyTeamId) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int unitId         = unit.id;
 	int unitAllyTeamId = unit.allyteam;
@@ -214,7 +215,7 @@ void CEngineOutHandler::UnitEnteredLos(const CUnit& unit, int allyTeamId) {
 
 void CEngineOutHandler::UnitLeftLos(const CUnit& unit, int allyTeamId) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int unitId         = unit.id;
 	int unitAllyTeamId = unit.allyteam;
@@ -224,7 +225,7 @@ void CEngineOutHandler::UnitLeftLos(const CUnit& unit, int allyTeamId) {
 
 void CEngineOutHandler::UnitEnteredRadar(const CUnit& unit, int allyTeamId) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int unitId         = unit.id;
 	int unitAllyTeamId = unit.allyteam;
@@ -234,7 +235,7 @@ void CEngineOutHandler::UnitEnteredRadar(const CUnit& unit, int allyTeamId) {
 
 void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int unitId         = unit.id;
 	int unitAllyTeamId = unit.allyteam;
@@ -254,7 +255,7 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 
 void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int teamId = unit.team;
 	int unitId = unit.id;
@@ -264,7 +265,7 @@ void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 
 void CEngineOutHandler::UnitCreated(const CUnit& unit, const CUnit* builder) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int teamId    = unit.team;
 	int unitId    = unit.id;
@@ -275,7 +276,7 @@ void CEngineOutHandler::UnitCreated(const CUnit& unit, const CUnit* builder) {
 
 void CEngineOutHandler::UnitFinished(const CUnit& unit) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int teamId = unit.team;
 	int unitId = unit.id;
@@ -286,7 +287,7 @@ void CEngineOutHandler::UnitFinished(const CUnit& unit) {
 
 void CEngineOutHandler::UnitMoveFailed(const CUnit& unit) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int teamId = unit.team;
 	int unitId = unit.id;
@@ -296,7 +297,7 @@ void CEngineOutHandler::UnitMoveFailed(const CUnit& unit) {
 
 void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int newTeam = unit.team;
 	int unitId = unit.id;
@@ -306,7 +307,7 @@ void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
 
 void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int oldTeam = unit.team;
 	int unitId = unit.id;
@@ -318,7 +319,7 @@ void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
 void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 		const CUnit* attacker) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int destroyedId = destroyed.id;
 	int attackerId  = attacker ? attacker->id : 0;
@@ -344,7 +345,7 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 		float damage, int weaponDefId, bool paralyzer) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int damagedUnitId  = damaged.id;
 	int attackerUnitId = attacker ? attacker->id : -1;
@@ -391,7 +392,7 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 void CEngineOutHandler::SeismicPing(int allyTeamId, const CUnit& unit,
 		const float3& pos, float strength) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int unitId         = unit.id;
 	int unitAllyTeamId = unit.allyteam;
@@ -401,7 +402,7 @@ void CEngineOutHandler::SeismicPing(int allyTeamId, const CUnit& unit,
 
 void CEngineOutHandler::WeaponFired(const CUnit& unit, const WeaponDef& def) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int teamId = unit.team;
 	int unitId = unit.id;
@@ -413,7 +414,7 @@ void CEngineOutHandler::WeaponFired(const CUnit& unit, const WeaponDef& def) {
 void CEngineOutHandler::PlayerCommandGiven(
 		const std::vector<int>& selectedUnitIds, const Command& c, int playerId)
 {
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int teamId = playerHandler->Player(playerId)->team;
 
@@ -422,7 +423,7 @@ void CEngineOutHandler::PlayerCommandGiven(
 
 void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& command) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	int teamId           = unit.team;
 	int unitId           = unit.id;
@@ -433,7 +434,7 @@ void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& comman
 
 void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 
-	if (!hasSkirmishAIs) return;
+	if (localSkirmishAIs_size == 0) return;
 
 	DO_FOR_SKIRMISH_AIS(GotChatMsg(msg, fromPlayerId))
 }
@@ -468,27 +469,37 @@ bool CEngineOutHandler::CreateSkirmishAI(int teamId, const SkirmishAIKey& key, c
 			DestroySkirmishAI(teamId);
 		}
 
+		net->Send(CBaseNetProtocol::Get().SendAICreated(gu->myPlayerNum, teamId));
+
 		team_skirmishAI[teamId] = data;
 		skirmishAIs[teamId] = new CSkirmishAIWrapper(teamId, key);
 		skirmishAIs[teamId]->Init();
-		hasSkirmishAIs = true;
 
-		// Send a UnitCreated event for each unit of the team.
-		// This will only do something if the AI is created mid-game.
-		CTeam* team = teamHandler->Team(teamId);
-		CUnitSet::iterator u, uNext;
-		for (u = team->units.begin(); u != team->units.end(); ) {
-			uNext = u; ++uNext;
-			skirmishAIs[teamId]->UnitFinished((*u)->id);
-			u = uNext;
+		const bool crashOnInit = !IsSkirmishAI(teamId);
+		if (!crashOnInit) {
+			// Send a UnitCreated event for each unit of the team.
+			// This will only do something if the AI is created mid-game.
+			CTeam* team = teamHandler->Team(teamId);
+			CUnitSet::iterator u, uNext;
+			for (u = team->units.begin(); u != team->units.end(); ) {
+				uNext = u; ++uNext;
+				// Send both of these events as the logically can only appear
+				// together, and some AIs will depend on this.
+				skirmishAIs[teamId]->UnitCreated((*u)->id, -1);
+				skirmishAIs[teamId]->UnitFinished((*u)->id);
+				u = uNext;
+			}
+
+			localSkirmishAIs_size++;
+			team_isSkirmishAIInitialized[teamId] = true;
 		}
 
 		// Unpause the game again, if we paused it and it is still paused.
-		if (unpauseAfterAIInit && gs->paused && weDoPause) {
+		if (unpauseAfterAIInit && weDoPause) {
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
 
-		return true;
+		return !crashOnInit;
 	} HANDLE_EXCEPTION;
 
 	return false;
@@ -504,7 +515,7 @@ const SkirmishAIKey* CEngineOutHandler::GetSkirmishAIKey(int teamId) const {
 }
 
 bool CEngineOutHandler::IsSkirmishAI(int teamId) const {
-	return skirmishAIs[teamId] != NULL;
+	return (skirmishAIs[teamId] != NULL);
 }
 
 const SSkirmishAICallback* CEngineOutHandler::GetSkirmishAICallback(int teamId) const {
@@ -524,6 +535,13 @@ void CEngineOutHandler::DestroySkirmishAI(int teamId, int reason) {
 			delete skirmishAIs[teamId];
 			skirmishAIs[teamId] = NULL;
 			team_skirmishAI.erase(teamId);
+
+			net->Send(CBaseNetProtocol::Get().SendAIDestroyed(gu->myPlayerNum, teamId));
+
+			if (team_isSkirmishAIInitialized[teamId]) {
+				localSkirmishAIs_size--;
+				team_isSkirmishAIInitialized[teamId] = false;
+			}
 		}
 	} HANDLE_EXCEPTION;
 }

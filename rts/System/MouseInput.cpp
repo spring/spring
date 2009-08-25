@@ -7,6 +7,9 @@
 	new:
 	It also workarounds a issue with SDL+windows and hardware cursors (->it has to block WM_SETCURSOR),
 	so it is used now always even in window mode!
+
+	newer:
+	SDL_Event struct is used for new input handling. Several people confirmed its working.
 */
 
 #include "StdAfx.h"
@@ -19,7 +22,10 @@
 #include <SDL_syswm.h>
 #include "Rendering/GL/FBO.h"
 #include "GlobalUnsynced.h"
+#ifdef _WIN32
 #include "Platform/Win/win32.h"
+#include "Platform/Win/wsdl.h"
+#endif
 #include "MouseInput.h"
 #include "InputHandler.h"
 #include "LogOutput.h"
@@ -82,46 +88,50 @@ public:
 	static CWin32MouseInput *inst;
 
 	LONG_PTR sdl_wndproc;
-	int2 mousepos;
-	bool mousemoved;
 	HWND wnd;
 	HCURSOR hCursor;
 
 	// SDL runs the window in a different thread, hence the indirectness of the mouse pos handling
-	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wparam, LPARAM lparam)
+	static LRESULT CALLBACK SpringWndProc(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	{
 		if (mouse) {
 			switch (msg) {
-				case WM_MOUSEWHEEL: {
-					float delta = (((short)HIWORD(wparam))/120.0f);
-					mouse->MouseWheel(delta);
-					break;
-				}
 				case WM_XBUTTONDOWN:
-					if ((short)LOWORD(wparam) & MK_XBUTTON1)
-						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
-					if ((short)LOWORD(wparam) & MK_XBUTTON2)
-						mouse->MousePress((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
+					if ((short)LOWORD(wParam) & MK_XBUTTON1)
+						mouse->MousePress((short)LOWORD(lParam), (short)HIWORD(lParam), 4);
+					if ((short)LOWORD(wParam) & MK_XBUTTON2)
+						mouse->MousePress((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
 					break;
 				case WM_XBUTTONUP:
-					if ((short)LOWORD(wparam) & MK_XBUTTON1)
-						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 4);
-					if ((short)LOWORD(wparam) & MK_XBUTTON2)
-						mouse->MouseRelease((short)LOWORD(lparam), (short)HIWORD(lparam), 5);
+					if ((short)LOWORD(wParam) & MK_XBUTTON1)
+						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 4);
+					if ((short)LOWORD(wParam) & MK_XBUTTON2)
+						mouse->MouseRelease((short)LOWORD(lParam), (short)HIWORD(lParam), 5);
 					break;
 				}
-
 		}
 
 		switch (msg) {
+			case WM_MOUSEWHEEL:
+				return wsdl::OnMouseWheel(wnd, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (int)(short)HIWORD(wParam), (UINT)(short)LOWORD(wParam));
 			case WM_MOUSEMOVE:
-				// cast to short to preserve sign
-				inst->mousepos = int2((short)LOWORD(lparam),(short)HIWORD(lparam));
-				inst->mousemoved = true;
-				break;
+			{
+				// is polled, prevent doubled messages
+				return TRUE;
+			}
+			// (can't use message crackers: they do not provide for passing uMsg)
+			case WM_LBUTTONDOWN:
+			case WM_LBUTTONUP:
+			case WM_RBUTTONDOWN:
+			case WM_RBUTTONUP:
+			case WM_MBUTTONDOWN:
+			case WM_MBUTTONUP:
+			{
+				return wsdl::OnMouseButton(wnd, msg, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), (UINT)wParam);
+			}
 			case WM_SETCURSOR:
 				if (inst->hCursor!=NULL) {
-					Uint16 hittest = LOWORD(lparam);
+					Uint16 hittest = LOWORD(lParam);
 					if ( hittest == HTCLIENT ) {
 						SetCursor(inst->hCursor);
 						return TRUE;
@@ -129,18 +139,18 @@ public:
 				}
 				break;
 			case WM_ACTIVATE:
+				// wsdl::OnActivate();
 				// FIXME: move to SpringApp somehow and use GLContext.h instead!
 				if(fullscreen) {
-					if (wparam == WA_INACTIVE) {
+					if (wParam == WA_INACTIVE) {
 						FBO::GLContextLost();
-					}else if (wparam == WA_ACTIVE) {
+					}else if (wParam == WA_ACTIVE) {
 						FBO::GLContextReinit();
 					}
 				}
 				break;
 		}
-
-		return CallWindowProc((WNDPROC)inst->sdl_wndproc, wnd, msg, wparam, lparam);
+		return CallWindowProc((WNDPROC)inst->sdl_wndproc, wnd, msg, wParam, lParam);
 	}
 
 	void SetWMMouseCursor(void* wmcursor)
@@ -160,7 +170,6 @@ public:
 
 		hCursor = NULL;
 
-		mousemoved = false;
 		sdl_wndproc = 0;
 
 		SDL_SysWMinfo info;
@@ -169,6 +178,7 @@ public:
 			return;
 
 		wnd = info.window;
+		wsdl::SetHandle(wnd);
 
 		InstallWndCallback();
 	}
@@ -177,29 +187,24 @@ public:
 		// reinstall the SDL window proc
 		SetWindowLongPtr(wnd, GWLP_WNDPROC, sdl_wndproc);
 	}
-
-	void SetPos(int2 pos)
+	virtual void Update()
 	{
-		mousepos = pos;
-		if (fullscreen)
-			SetCursorPos(pos.x, pos.y);
-		else
-			SDL_WarpMouse(pos.x, pos.y);
-	}
+		// according to the docs, WM_MOUSEMOVE is laggy, so use special poll aproach
+		wsdl::mouse_update();
+	};
 };
 CWin32MouseInput* CWin32MouseInput::inst = 0;
 #endif
 
-class CDefaultMouseInput : public IMouseInput
+void IMouseInput::SetPos(int2 pos)
 {
-public:
-	void SetPos(int2 pos)
-	{
-		mousepos = pos;
-		SDL_WarpMouse(pos.x, pos.y);
-	}
-};
-
+	mousepos = pos;
+#ifdef WIN32
+	wsdl::SDL_WarpMouse(pos.x, pos.y);
+#else
+	SDL_WarpMouse(pos.x, pos.y);
+#endif
+}
 
 IMouseInput *IMouseInput::Get ()
 {
@@ -207,7 +212,7 @@ IMouseInput *IMouseInput::Get ()
 #ifdef WIN32
 		mouseInput = new CWin32MouseInput;
 #else
-		mouseInput = new CDefaultMouseInput;
+		mouseInput = new IMouseInput;
 #endif
 	}
 	return mouseInput;

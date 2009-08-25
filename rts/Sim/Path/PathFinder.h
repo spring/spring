@@ -28,8 +28,8 @@ public:
 	whenever any such are available.
 	If no complete path was found, any path leading as "close" to target as possible will be
 	created, and SearchResult::OutOfRange will be returned.
-	Only when no "closer" position than the	given starting location could be found no path
-	is created, and SearchResult::CantGetCloser	is returned.
+	Only when no "closer" position than the given starting location could be found no path
+	is created, and SearchResult::CantGetCloser is returned.
 	Path resolution: 2*SQUARE_SIZE
 	Params:
 		moveData
@@ -61,10 +61,11 @@ public:
 	SearchResult GetPath(const MoveData& moveData, const float3 startPos,
 	                     const CPathFinderDef& pfDef, Path& path,
 	                     bool testMobile, bool exactPath = false,
-	                     unsigned int maxSearchedNodes = 10000, bool needPath = true);
+	                     unsigned int maxSearchedNodes = 10000, bool needPath = true,
+	                     int ownerId = 0);
 
 	SearchResult GetPath(const MoveData& moveData, const std::vector<float3>& startPos,
-	                     const CPathFinderDef& pfDef, Path& path);
+	                     const CPathFinderDef& pfDef, Path& path, int ownerId = 0);
 
 	//Minimum distance between two waypoints.
 	enum { PATH_RESOLUTION = 2 * SQUARE_SIZE };
@@ -75,8 +76,26 @@ public:
 	make units behave more intelligently.
 
 	*/
+	void InitHeatMap();
 	void SetHeatMapState(bool enabled);
+	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
+
+	struct HeatMapValue {
+		int value;
+		int ownerId;
+	};
+
+	void UpdateHeatValue(int x, int y, int value, int ownerId)
+	{
+		assert(!heatmap.empty());
+
+		if (heatmap[x][y].value < value) {
+			heatmap[x][y].value = value;
+			heatmap[x][y].ownerId = ownerId;
+		}
+	}
+
 
 private:
 	enum { MAX_SEARCHED_SQUARES = 10000 };
@@ -163,9 +182,10 @@ private:
 		void DeleteAll();
   };
 	void ResetSearch();
-	SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef);
-	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef);
-	bool TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare, unsigned int enterDirection);
+	SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
+	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
+	bool TestSquare(const MoveData& moveData, const CPathFinderDef& pfDef, OpenSquare* parentOpenSquare,
+			unsigned int enterDirection, int ownerId);
 	void FinishSearch(const MoveData& moveData, Path& path);
 	void AdjustFoundPath(const MoveData& moveData, Path& path, float3& nextPoint,
 			std::deque<int2>& previous, int2 square);
@@ -173,25 +193,25 @@ private:
 	unsigned int maxNodesToBeSearched;
 	myPQ openSquares;
 
-	SquareState* squareState;			// Map of all squares on map.
-	// std::list<int> dirtySquares;		// Squares tested by search.
+	SquareState* squareState;			///< Map of all squares on map.
+	// std::list<int> dirtySquares;		///< Squares tested by search.
 	std::vector<int> dirtySquares;
 
-	int2 directionVector[16];		//Unit square-movement in given direction.
-	float moveCost[16];				//The cost of moving in given direction.
+	int2 directionVector[16];		///< Unit square-movement in given direction.
+	float moveCost[16];				///< The cost of moving in given direction.
 
 	float3 start;
 	int startxSqr, startzSqr;
 	int startSquare;
 
-	int goalSquare;					//Is sat during the search as the square closest to the goal.
-	float goalHeuristic;			//The heuristic value of goalSquare.
+	int goalSquare;					///< Is sat during the search as the square closest to the goal.
+	float goalHeuristic;			///< The heuristic value of goalSquare.
 
 	bool exactPath;
 	bool testMobile;
 	bool needPath;
 
-	//Statistic
+	// Statistic
 	unsigned int testedNodes;
 
 	OpenSquare *openSquareBufferPointer;
@@ -199,7 +219,7 @@ private:
 
 	// Heat mapping
 	bool heatMapping;
-	std::vector<std::vector<int> > heatmap;
+	std::vector<std::vector<HeatMapValue> > heatmap;
 
 public:
 	void Draw(void);
@@ -234,6 +254,4 @@ private:
 	int searchRadiusSq;
 };
 
-
-#endif
-
+#endif // PATHFINDER_H

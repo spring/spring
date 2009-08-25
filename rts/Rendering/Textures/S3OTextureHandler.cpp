@@ -109,10 +109,8 @@ void CS3OTextureHandler::SetS3oTexture(int num)
 		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
 	} else {
 		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex1);
-		if(unitDrawer->advShading){
-			glActiveTextureARB(GL_TEXTURE1_ARB);
-			glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-		}
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 }

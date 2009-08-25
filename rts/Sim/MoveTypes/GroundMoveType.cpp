@@ -37,6 +37,7 @@
 #include "Sound/AudioChannel.h"
 #include "FastMath.h"
 #include "myMath.h"
+#include "Vec2.h"
 
 CR_BIND_DERIVED(CGroundMoveType, AMoveType, (NULL));
 
@@ -169,6 +170,8 @@ CGroundMoveType::CGroundMoveType(CUnit* owner):
 	nextObstacleAvoidanceUpdate(0),
 	lastTrackUpdate(0),
 
+	lastHeatRequestFrame(0),
+
 	skidding(false),
 	flying(false),
 	reversing(false),
@@ -205,7 +208,7 @@ void CGroundMoveType::PostLoad()
 {
 	// FIXME: HACK: re-initialize path after load
 	if (pathId) {
-		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+		RequestPath(owner->pos, goalPos, goalRadius);
 	}
 }
 
@@ -245,12 +248,11 @@ void CGroundMoveType::Update()
 		owner->script->StopMoving();
 		owner->speed = ZeroVector;
 	} else {
+		bool wantReverse = false;
 		if (owner->directControl) {
-			UpdateDirectControl();
+			wantReverse = UpdateDirectControl();
 			ChangeHeading(owner->heading + deltaHeading);
 		} else {
-			bool wantReverse = false;
-
 			if (pathId || (currentSpeed != 0.0f)) {
 				// TODO: Stop the unit from moving as a reaction on collision/explosion physics.
 				// Initial calculations.
@@ -281,8 +283,7 @@ void CGroundMoveType::Update()
 				ASSERT_SYNCED_FLOAT3(waypointDir);
 
 				waypointDir.y = 0;
-				if (waypointDir.x != 0 || waypointDir.z != 0)
-					waypointDir.Normalize();
+				waypointDir.SafeNormalize();
 
 				const float3 wpDirInv = -waypointDir;
 				const float3 wpPosTmp = owner->pos + wpDirInv;
@@ -338,9 +339,9 @@ void CGroundMoveType::Update()
 			} else {
 				SetMainHeading();
 			}
-
-			UpdateOwnerPos(wantReverse);
 		}
+
+		UpdateOwnerPos(wantReverse);
 	}
 
 	if (owner->pos != oldPos) {
@@ -1149,6 +1150,34 @@ float3 CGroundMoveType::ObstacleAvoidance(float3 desiredDir) {
 }
 
 
+unsigned int CGroundMoveType::RequestPath(float3 startPos, float3 goalPos,
+		float goalRadius)
+{
+	if (lastHeatRequestFrame + 60 < gs->frameNum) {
+		pathManager->SetHeatMappingEnabled(true);
+		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+		pathManager->SetHeatMappingEnabled(false);
+		lastHeatRequestFrame = gs->frameNum;
+	} else {
+		pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+	}
+	return pathId;
+}
+
+
+void CGroundMoveType::UpdateHeatMap()
+{
+	if (!pathId)
+		return;
+
+	std::vector<int2> points;
+	pathManager->GetDetailedPathSquares(pathId, points);
+	for (std::vector<int2>::iterator it = points.begin(); it != points.end(); ++it) {
+		pathManager->SetHeatOnSquare(it->x, it->y, owner->mobility->heatProduced, owner->id);
+	}
+}
+
+
 
 // Calculates an aproximation of the physical 2D-distance between given two objects.
 float CGroundMoveType::Distance2D(CSolidObject* object1, CSolidObject* object2, float marginal)
@@ -1203,7 +1232,9 @@ void CGroundMoveType::GetNewPath()
 	}
 
 	pathManager->DeletePath(pathId);
-	pathId = pathManager->RequestPath(owner->mobility, owner->pos, goalPos, goalRadius, owner);
+
+	RequestPath(owner->pos, goalPos, goalRadius);
+
 	nextWaypoint = owner->pos;
 
 	// if new path received, can't be at waypoint
@@ -1227,7 +1258,7 @@ void CGroundMoveType::GetNextWaypoint()
 {
 	if (pathId) {
 		waypoint = nextWaypoint;
-		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f*SQUARE_SIZE);
+		nextWaypoint = pathManager->NextWaypoint(pathId, waypoint, 1.25f*SQUARE_SIZE, 0, owner->id);
 
 		if (nextWaypoint.x != -1) {
 			etaWaypoint = int(30.0f / (requestedSpeed * terrainSpeed + 0.001f)) + gs->frameNum + 50;
@@ -1275,7 +1306,7 @@ from current velocity.
 float3 CGroundMoveType::Here()
 {
 	float3 motionDir = owner->speed;
-	if (motionDir.SqLength2D() == 0) {
+	if (motionDir.SqLength2D() < float3::NORMALIZE_EPS) {
 		return owner->midPos;
 	} else {
 		motionDir.Normalize();
@@ -1313,6 +1344,7 @@ void CGroundMoveType::StartEngine() {
 
 		// activate "engine" only if a path was found
 		if (pathId) {
+			UpdateHeatMap();
 			pathFailures = 0;
 			etaFailures = 0;
 			owner->isMoving = true;
@@ -2037,14 +2069,23 @@ void CGroundMoveType::AdjustPosToWaterLine()
 	}
 }
 
-void CGroundMoveType::UpdateDirectControl()
+bool CGroundMoveType::UpdateDirectControl()
 {
-	waypoint = owner->pos + owner->frontdir * 100;
+	bool wantReverse = (owner->directControl->back && !owner->directControl->forward);
+	waypoint = owner->pos;
+	waypoint += wantReverse ? -owner->frontdir * 100 : owner->frontdir * 100;
 	waypoint.CheckInBounds();
 
 	if (owner->directControl->forward) {
-		wantedSpeed = reversing? maxReverseSpeed * 2.0f: maxSpeed * 2.0f;
-		SetDeltaSpeed(false);
+		assert(!wantReverse);
+		wantedSpeed = maxSpeed * 2.0f;
+		SetDeltaSpeed(wantReverse);
+		owner->isMoving = true;
+		owner->script->StartMoving();
+	} else if (owner->directControl->back) {
+		assert(wantReverse);
+		wantedSpeed = maxReverseSpeed * 2.0f;
+		SetDeltaSpeed(wantReverse);
 		owner->isMoving = true;
 		owner->script->StartMoving();
 	} else {
@@ -2053,7 +2094,7 @@ void CGroundMoveType::UpdateDirectControl()
 		owner->isMoving = false;
 		owner->script->StopMoving();
 	}
-	short deltaHeading = 0;
+	deltaHeading = 0;
 	if (owner->directControl->left) {
 		deltaHeading += (short) turnRate;
 	}
@@ -2063,6 +2104,7 @@ void CGroundMoveType::UpdateDirectControl()
 
 	if (gu->directControl == owner)
 		camera->rot.y += deltaHeading * TAANG2RAD;
+	return wantReverse;
 }
 
 void CGroundMoveType::UpdateOwnerPos(bool wantReverse)
@@ -2101,7 +2143,7 @@ bool CGroundMoveType::WantReverse(const float3& waypointDir) const
 	const float waypointRETA  = (waypointDist / maxReverseSpeed);                               // in frames (simplistic)
 	const float waypointDirDP = waypointDir.dot(owner->frontdir);
 	const float waypointAngle = std::max(-1.0f, std::min(1.0f, waypointDirDP));                 // prevent NaN's
-	const float turnAngleDeg  = acosf(waypointAngle) * (180.0f / PI);                           // in degrees
+	const float turnAngleDeg  = streflop::acosf(waypointAngle) * (180.0f / PI);                           // in degrees
 	const float turnAngleSpr  = (turnAngleDeg / 360.0f) * 65536.0f;                             // in "headings"
 	const float revAngleSpr   = 32768.0f - turnAngleSpr;                                        // 180 deg - angle
 

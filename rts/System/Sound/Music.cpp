@@ -37,9 +37,10 @@ void MusicChannel::Play(const std::string& path, float _volume)
 	}
 
 	if (!current)
-		current = sound->GetNextBestSource();
+		current = sound->GetNextBestSource(); // may return 0 if no sources available
 
-	current->PlayStream(path, volume * _volume);
+	if (current)
+		current->PlayStream(path, volume * _volume);
 }
 
 void MusicChannel::Pause()
@@ -57,7 +58,7 @@ void MusicChannel::Stop()
 	}
 }
 
-unsigned int MusicChannel::GetTime()
+float MusicChannel::GetTime()
 {
 	if (current)
 		return current->GetStreamTime();
@@ -65,7 +66,7 @@ unsigned int MusicChannel::GetTime()
 		return 0;
 }
 
-unsigned int MusicChannel::GetPlayTime()
+float MusicChannel::GetPlayTime()
 {
 	if (current)
 		return current->GetStreamPlayTime();

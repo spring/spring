@@ -168,6 +168,15 @@ void CMouseHandler::MouseMove(int x, int y)
 	if(hide) {
 		lastx = x;
 		lasty = y;
+
+		int dx = lastx - (gu->viewSizeX / 2 + gu->viewPosX);
+		int dy = lasty - (gu->viewSizeY / 2 + gu->viewPosY);
+
+		float3 move;
+		move.x = dx;
+		move.y = dy;
+		move.z = invertMouse? -1.0f : 1.0f;
+		camHandler->GetCurrentController().MouseMove(move);
 		return;
 	}
 
@@ -636,22 +645,14 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 }
 
 
-void CMouseHandler::EmptyMsgQueUpdate(void)
+void CMouseHandler::EmptyMsgQueUpdate()
 {
 	if (!hide) {
 		return;
 	}
 
-	int dx = lastx - (gu->viewSizeX / 2 + gu->viewPosX);
-	int dy = lasty - (gu->viewSizeY / 2 + gu->viewPosY);
 	lastx = gu->viewSizeX / 2 + gu->viewPosX;
 	lasty = gu->viewSizeY / 2 + gu->viewPosY;
-
-	float3 move;
-	move.x = dx;
-	move.y = dy;
-	move.z = invertMouse? -1.0f : 1.0f;
-	camHandler->GetCurrentController().MouseMove(move);
 
 	if (gu->active) {
 		mouseInput->SetPos(int2(lastx, lasty));

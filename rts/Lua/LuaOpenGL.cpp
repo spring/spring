@@ -1240,7 +1240,8 @@ int LuaOpenGL::Text(lua_State* L)
 				case 'r': { options |= FONT_RIGHT;            break; }
 
 				case 'v': { options |= FONT_VCENTER;          break; }
-				case 'b': { options |= FONT_BASELINE;         break; }
+				case 'd': { options |= FONT_BASELINE;         break; }
+				case 'b': { options |= FONT_BOTTOM;           break; }
 				case 't': { options |= FONT_TOP;              break; }
 				case 'a': { options |= FONT_ASCENDER;         break; }
 
@@ -1289,10 +1290,13 @@ int LuaOpenGL::GetTextHeight(lua_State* L)
 
 	const string text(lua_tostring(L, 1),lua_strlen(L, 1));
 	float descender;
-	const float height = font->GetTextHeight(text,&descender);
+	int lines;
+
+	const float height = font->GetTextHeight(text,&descender,&lines);
 	lua_pushnumber(L, height);
 	lua_pushnumber(L, descender);
-	return 2;
+	lua_pushnumber(L, lines);
+	return 3;
 }
 
 

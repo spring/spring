@@ -277,7 +277,7 @@ bool CWeaponProjectile::TraveledRange()
 void CWeaponProjectile::DrawUnitPart()
 {
 	float3 dir(speed);
-	dir.Normalize();
+	dir.SafeANormalize();
 	glPushMatrix();
 	float3 rightdir;
 
@@ -286,7 +286,7 @@ void CWeaponProjectile::DrawUnitPart()
 	else
 		rightdir = float3(1, 0, 0);
 
-	rightdir.Normalize();
+	rightdir.SafeANormalize();
 	float3 updir(rightdir.cross(dir));
 
 	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);

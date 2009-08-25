@@ -30,7 +30,7 @@
  */
 struct SkirmishAIData {
 	/**
-	 * This name is purely inforamtive.
+	 * This name is purely informative.
 	 * It will be shown in statistics eg.,
 	 * and everywhere else where normal players
 	 * have their name displayed.

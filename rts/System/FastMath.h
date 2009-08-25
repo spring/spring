@@ -1,9 +1,15 @@
 #ifndef FASTMATH_H
 #define FASTMATH_H
 
+#ifndef DEDICATED_NOSSE
 #include <xmmintrin.h>
+#endif
 #include <boost/cstdint.hpp>
 #include "lib/streflop/streflop_cond.h"
+
+#ifdef _MSC_VER
+#define __builtin_sqrtf sqrtf
+#endif
 
 /**
  * @file FastMath.cpp
@@ -17,6 +23,7 @@
  */
 
 namespace fastmath {
+	float isqrt_nosse(float);
 	/****************** Square root functions ******************/
 
 	/**
@@ -27,6 +34,7 @@ namespace fastmath {
 	*/
 	inline float isqrt_sse(float x)
 	{
+#ifndef DEDICATED_NOSSE
 		union
 		{
 			__m128 vec;
@@ -36,6 +44,9 @@ namespace fastmath {
 		tmp.x = x;
 		tmp.vec = _mm_rsqrt_ss(tmp.vec);
 		return tmp.x;
+#else
+		return isqrt_nosse(x);
+#endif
 	}
 
 	/**
@@ -46,6 +57,7 @@ namespace fastmath {
 
 	inline float sqrt_sse(float x)
 	{
+#ifndef DEDICATED_NOSSE
 		union
 		{
 			__m128 vec;
@@ -55,6 +67,9 @@ namespace fastmath {
 		tmp.x = x;
 		tmp.vec = _mm_sqrt_ss(tmp.vec);
 		return tmp.x;
+#else
+		return sqrt(x);
+#endif
 	}
 
 
@@ -75,7 +90,7 @@ namespace fastmath {
 	*/
 	inline float isqrt_nosse(float x) {
 		float xh = 0.5f * x;
-		int32_t i = *(int32_t*) &x;
+		boost::int32_t i = *(boost::int32_t*) &x;
 		// "magic number" which makes a very good first guess
 		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;
@@ -95,7 +110,7 @@ namespace fastmath {
 	*/
 	inline float isqrt2_nosse(float x) {
 		float xh = 0.5f * x;
-		int32_t i = *(int32_t*) &x;
+		boost::int32_t i = *(boost::int32_t*) &x;
 		// "magic number" which makes a very good first guess
 		i = 0x5f375a86 - (i >> 1);
 		x = *(float*) &i;

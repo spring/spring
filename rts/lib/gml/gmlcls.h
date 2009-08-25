@@ -556,10 +556,20 @@ public:
 	}
 	
 	gmlVector<T> &operator=(const GML_TYPENAME gmlVector<T> &vec) {
-		free(data);
-		memcpy(this,&vec,sizeof(GML_TYPENAME gmlVector<T>));
-		data=(T *)malloc(vec.maxsize*sizeof(T));
-		memcpy(data,vec.data,vec.maxsize*sizeof(T));
+#if GML_ORDERED_VOLATILE
+		count%=vec.count;
+#endif
+		added=vec.added;
+		if(added>=maxsize) {
+			maxsize=vec.maxsize;
+			data=(T *)realloc(data, maxsize*sizeof(T));
+			shrinksize=vec.shrinksize;
+		}
+		memcpy(data,vec.data,added*sizeof(T));
+		if(added>=shrinksize)
+			doshrink=0;
+		else if(++doshrink>=10)
+			Shrink();
 		return *this;
 	}
 	

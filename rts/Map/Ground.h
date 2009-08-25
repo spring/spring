@@ -19,7 +19,9 @@ public:
 
 	float GetApproximateHeight(float x,float y);
 	float GetSlope(float x,float y);
+	/// Returns the height at the specified position, cropped to a non-negative value
 	float GetHeight(float x,float y);
+	/// Returns the real height at the specified position, can be below 0
 	float GetHeight2(float x,float y);
 	float GetOrigHeight(float x,float y);
 	float3& GetNormal(float x,float y);

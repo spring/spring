@@ -685,7 +685,7 @@ void SpringApp::ParseCmdLine()
 
 	screenHeight = configHandler->Get("YResolution", YRES_DEFAULT);
 	if (cmdline->IsSet("yresolution"))
-		screenWidth = std::max(cmdline->GetInt("yresolution"), 480);
+		screenHeight = std::max(cmdline->GetInt("yresolution"), 480);
 
 	windowPosX  = configHandler->Get("WindowPosX", 32);
 	windowPosY  = configHandler->Get("WindowPosY", 32);
@@ -829,8 +829,6 @@ int SpringApp::Update()
 	if (FSAA)
 		glEnable(GL_MULTISAMPLE_ARB);
 
-	mouseInput->Update();
-
 	int ret = 1;
 	if (activeController) {
 #if !defined(USE_GML) || !GML_ENABLE_SIM
@@ -948,6 +946,7 @@ int SpringApp::Run(int argc, char *argv[])
 #endif
 		{
 			SCOPED_TIMER("Input");
+			mouseInput->Update();
 			SDL_Event event;
 			while (SDL_PollEvent(&event)) {
 				input.PushEvent(event);

@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "InputHandler.h"
 
 InputHandler input;

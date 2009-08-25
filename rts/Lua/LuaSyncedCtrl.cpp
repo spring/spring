@@ -415,58 +415,6 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 }
 
 
-static CUnit* CheckUnitID(lua_State* L, int index)
-{
-	luaL_checknumber(L, index);
-	const int unitID = lua_toint(L, index);
-	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
-		luaL_error(L, "Bad unitID: %d\n", unitID);
-	}
-	CUnit* unit = uh->units[unitID];
-	if (unit == NULL) {
-		luaL_error(L, "Bad unitID: %d\n", unitID);
-	}
-	return unit;
-}
-
-
-static CPlayer* CheckPlayerID(lua_State* L, int index)
-{
-	luaL_checknumber(L, index);
-	const int playerID = lua_toint(L, index);
-	if ((playerID < 0) || (playerID >= playerHandler->ActivePlayers())) {
-		luaL_error(L, "Bad playerID: %d\n", playerID);
-	}
-	CPlayer* player = playerHandler->Player(playerID);
-	if (player == NULL) {
-		luaL_error(L, "Bad playerID: %d\n", playerID);
-	}
-	return player;
-}
-
-
-static int ParseFloatArray(lua_State* L, float* array, int size)
-{
-	if (!lua_istable(L, -1)) {
-		return -1;
-	}
-	int index = 0;
-	const int table = lua_gettop(L);
-	for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
-		if (!lua_isnumber(L, -1)) {
-			logOutput.Print("LUA: error parsing numeric array\n");
-			lua_pop(L, 2); // pop the value and the key
-			return -1;
-		}
-		if (index < size) {
-			array[index] = lua_tofloat(L, -1);
-			index++;
-		}
-	}
-	return index;
-}
-
-
 static int ParseFacing(lua_State* L, const char* caller, int index)
 {
 	if (lua_israwnumber(L, index)) {
@@ -1022,7 +970,11 @@ int LuaSyncedCtrl::SetUnitTooltip(lua_State* L)
 	if (unit == NULL) {
 		return 0;
 	}
-	unit->tooltip = luaL_checkstring(L, 2);
+	const char *tmp = luaL_checkstring(L, 2);
+	if (tmp)
+		unit->tooltip = string(tmp, lua_strlen(L, 2));
+	else
+		unit->tooltip = "";
 	return 0;
 }
 
@@ -1053,7 +1005,7 @@ int LuaSyncedCtrl::SetUnitHealth(lua_State* L)
 				}
 				else if (key == "paralyze") {
 					unit->paralyzeDamage = max(0.0f, value);
-					if (unit->paralyzeDamage >= unit->health) {
+					if (unit->paralyzeDamage > unit->maxHealth) {
 						unit->stunned = true;
 					} else if (value < 0.0f) {
 						unit->stunned = false;
@@ -3008,42 +2960,6 @@ static int ParseStringVector(lua_State* L, int index, vector<string>& strvec)
 		lua_rawgeti(L, index, i);
 		if (lua_isstring(L, -1)) {
 			strvec.push_back(lua_tostring(L, -1));
-			lua_pop(L, 1);
-			i++;
-		} else {
-			lua_pop(L, 1);
-			return (i - 1);
-		}
-	}
-}
-
-
-static int ParseFloatVector(lua_State* L, int index, vector<float>& floatvec)
-{
-	floatvec.clear();
-	int i = 1;
-	while (true) {
-		lua_rawgeti(L, index, i);
-		if (lua_isnumber(L, -1)) {
-			floatvec.push_back(lua_tofloat(L, -1));
-			lua_pop(L, 1);
-			i++;
-		} else {
-			lua_pop(L, 1);
-			return (i - 1);
-		}
-	}
-}
-
-
-static int ParseIntVector(lua_State* L, int index, vector<float>& intvec)
-{
-	intvec.clear();
-	int i = 1;
-	while (true) {
-		lua_rawgeti(L, index, i);
-		if (lua_isnumber(L, -1)) {
-			intvec.push_back(lua_toint(L, -1));
 			lua_pop(L, 1);
 			i++;
 		} else {

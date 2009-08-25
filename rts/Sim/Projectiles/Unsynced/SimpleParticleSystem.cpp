@@ -79,18 +79,14 @@ void CSimpleParticleSystem::Draw()
 			if (p->life < 1.0f) {
 				float3 dif(p->pos - camera->pos);
 
-				if (dif != ZeroVector) {
-					dif.ANormalize();
-				}
+				dif.SafeANormalize();
 
 				float3 dir1 =
 					(p->speed.SqLength() > 0.001f)?
 					(dif.cross(p->speed)):
 					ZeroVector;
 
-				if (dir1 != ZeroVector) {
-					dir1.ANormalize();
-				}
+				dir1.SafeANormalize();
 
 				const float3 dir2(dif.cross(dir1));
 				const float3 interPos = p->pos + p->speed * gu->timeOffset;

@@ -13,10 +13,12 @@ public:
 	void Init(const std::string& setup);
 
 	std::string myPlayerName;
+	std::string myPasswd;
 
 	std::string hostip;
 	int hostport;
 	int sourceport; ///< the port clients will try to connect from
+	std::string autohostip;
 	int autohostport;
 
 	bool isHost;

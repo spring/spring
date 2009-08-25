@@ -243,7 +243,7 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 	   || (InBox(mx,my,box+giveAwayBox) && !teamHandler->Team(shareTeam)->isDead && !teamHandler->Team(gu->myTeam)->isDead)) {
 		// give away all units (and resources)
 		if(InBox(mx,my,box+giveAwayBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {
-			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam));
+			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam, playerHandler->Player(gu->myPlayerNum)->team));
 			// inform other users of the giving away of units
 			char givenAwayMsg[200];
 			sprintf(givenAwayMsg,"%s gave everything to %s.",

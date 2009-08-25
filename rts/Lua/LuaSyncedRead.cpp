@@ -1029,8 +1029,7 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 	}
 
 	bool isAiTeam = false;
-	if (!team->luaAI.empty() ||
-	    (eoh->IsSkirmishAI(teamID))) {
+	if (!team->luaAI.empty() || team->isAI) {
 		isAiTeam = true;
 	}
 
@@ -2425,6 +2424,9 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	const UnitDef* effectiveDef = EffectiveUnitDef(unit);
 	if (effectiveDef->showPlayerName) {
 		tooltip = playerHandler->Player(teamHandler->Team(unit->team)->leader)->name;
+		if (teamHandler->Team(unit->team)->isAI) {
+			tooltip = std::string("AI@") + tooltip;
+		}
 	} else {
 		if (!decoyDef) {
 			tooltip = unit->tooltip;
@@ -2763,7 +2765,7 @@ int LuaSyncedRead::GetUnitIsTransporting(lua_State* L)
 	lua_newtable(L);
 	list<CTransportUnit::TransportedUnit>::const_iterator it;
 	int count = 0;
-	for (it = tu->transported.begin(); it != tu->transported.end(); ++it) {
+	for (it = tu->GetTransportedUnits().begin(); it != tu->GetTransportedUnits().end(); ++it) {
 		const CUnit* carried = it->unit;
 		count++;
 		lua_pushnumber(L, count);

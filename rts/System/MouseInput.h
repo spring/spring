@@ -20,7 +20,7 @@ public:
 	{
 		return mousepos;
 	};
-	virtual void SetPos (int2 pos) = 0;
+	void SetPos (int2 pos);
 
 	virtual void Update () {}
 

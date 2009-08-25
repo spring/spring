@@ -17,6 +17,10 @@ Usage:
 Start with the full! path to the demofile as the only argument
 
 Please note that not all NETMSG's are implemented, expand if needed.
+
+When compiling for windows with MinGW, make sure to use the
+-Wl,-subsystem,console flag when linking, as otherwise there will be
+no console output (you still could use this.exe > z.tzt though).
 */
 
 int main (int argc, char* argv[])

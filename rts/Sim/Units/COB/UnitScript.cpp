@@ -524,8 +524,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 				}
 				//float3 relDir = -GetPieceDirection(piece) * 0.2f;
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-				if (dir != ZeroVector)
-					dir.Normalize();
+				dir.SafeNormalize();
 				unit->unitDef->sfxExplGens[index]->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, dir);
 			}
 			else if (type & 2048)  //make a weapon fire from the piece
@@ -538,8 +537,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 				//this is very hackish and probably has a lot of side effects, but might be usefull for something
 				//float3 relDir =-GetPieceDirection(piece);
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
-				if (dir != ZeroVector)
-					dir.Normalize();
+				dir.SafeNormalize();
 
 				float3 targetPos = unit->weapons[index]->targetPos;
 				float3 weaponMuzzlePos = unit->weapons[index]->weaponMuzzlePos;

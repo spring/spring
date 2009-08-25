@@ -44,3 +44,25 @@ bool CCameraController::SetStateFloat(const StateMap& sm,
 	}
 	return false;
 }
+
+// Uses distance to ground for large angles (near 90 degree),
+// and distance to unit for flat angles (near 0 degree),
+// when comparing the camera direction to the map surface,
+// assuming the map is flat.
+bool CCameraController::GetUseDistToGroundForIcons() {
+
+	const float3& dir     = GetDir().UnsafeNormalize();
+	const float dot       = std::min(1.0f, std::max(0.0f, fabs(dir.dot(UpVector))));
+	const float switchVal = configHandler->Get("UseDistToGroundForIcons", 0.95f);
+
+	// switchVal:
+	// * 1.0 = 0 degree  = overview
+	// * 0.0 = 90 degree = first person
+	if (dot < switchVal) {
+		// flat angle (typical for first person camera)
+		return false;
+	} else {
+		// steep angle (typical for overhead camera)
+		return true;
+	}
+}

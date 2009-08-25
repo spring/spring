@@ -47,25 +47,6 @@ std::string StringReplace(const std::string& text,
                           const std::string& from,
                           const std::string& to);
 
-static inline std::string GetFileExt(const std::string& s)
-{
-	size_t l = s.length();
-#ifdef WIN32
-	//! windows eats dots and spaces at the end of filenames
-	while (l > 0) {
-		if (s[l-1]=='.') {
-			l--;
-		} else if (s[l-1]==' ') {
-			l--;
-		} else break;
-	}
-#endif
-	size_t i = s.rfind('.', l);
-	if (i != std::string::npos) {
-		return StringToLower(s.substr(i+1, l - i));
-	}
-	return "";
-}
 
 static inline std::string IntToString(int i, const std::string& format = "%i")
 {

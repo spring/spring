@@ -33,4 +33,4 @@ private:
 	bool minimizeMinimap;
 };
 
-#endif
+#endif // __OV_CONTROLLER_H__

@@ -32,7 +32,7 @@ public:
 	void DoDrawUnit(CUnit *unit, bool drawReflection, bool drawRefraction, CUnit *excludeUnit);
 	void DrawUnitLOD(CUnit* unit);
 
-	void DrawCloakedUnits(bool submerged);     // cloaked units must be drawn after all others
+	void DrawCloakedUnits(bool submerged, bool noAdvShading = false);     // cloaked units must be drawn after all others
 	void DrawShadowPass(void);
 	void DoDrawUnitShadow(CUnit *unit);
 
@@ -85,6 +85,8 @@ public:
 
 	GML_VECTOR<CUnit*> drawCloaked;
 	GML_VECTOR<CUnit*> drawCloakedS3O;
+	GML_VECTOR<CUnit*> drawCloakedSave;
+	GML_VECTOR<CUnit*> drawCloakedS3OSave;
 
 	GML_VECTOR<CUnit*> drawFar;
 	GML_VECTOR<CUnit*> drawStat;
@@ -178,13 +180,18 @@ public:
 	void DrawIndividual(CUnit * unit);
 
 private:
-	void SetBasicTeamColour(int team) const;
+	void SetBasicTeamColour(int team, float alpha = 1.0f) const;
 	void SetupBasicS3OTexture0(void) const;
 	void SetupBasicS3OTexture1(void) const;
 	void CleanupBasicS3OTexture1(void) const;
 	void CleanupBasicS3OTexture0(void) const;
 	void DrawIcon(CUnit* unit, bool asRadarBlip);
 	void DrawCloakedUnitsHelper(GML_VECTOR<CUnit*>& units, std::list<GhostBuilding*>& ghostedBuildings, bool is_s3o);
+
+	/// Returns true if the given unit should be drawn as icon in the current frame.
+	bool DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const;
+	bool distToGroundForIcons_useMethod;
+	bool distToGroundForIcons_areIcons;
 };
 
 extern CUnitDrawer* unitDrawer;

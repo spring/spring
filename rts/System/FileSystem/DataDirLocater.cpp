@@ -109,16 +109,24 @@ void DataDirLocater::AddDirs(const std::string& in)
 #else
 	while ((colon = in.find(';', prev_colon)) != std::string::npos) {
 #endif
-		datadirs.push_back(in.substr(prev_colon, colon - prev_colon));
+		const std::string newPath = in.substr(prev_colon, colon - prev_colon);
+		if (!newPath.empty())
+		{
+			datadirs.push_back(newPath);
 #ifdef DEBUG
-		logOutput.Print("Adding %s to directories" , in.substr(prev_colon, colon - prev_colon).c_str());
+			logOutput.Print("Adding %s to directories" , newPath.c_str());
 #endif
+		}
 		prev_colon = colon + 1;
 	}
+	const std::string newPath = in.substr(prev_colon);
+	if (!newPath.empty())
+	{
+		datadirs.push_back(newPath);
 #ifdef DEBUG
-	logOutput.Print("Adding %s to directories" , in.substr(prev_colon).c_str());
+		logOutput.Print("Adding %s to directories" , newPath.c_str());
 #endif
-	datadirs.push_back(in.substr(prev_colon));
+	}
 }
 
 /**
@@ -148,14 +156,14 @@ bool DataDirLocater::DeterminePermissions(DataDir* d)
 		}
 		return true;
 	}
-	else {
-		if (filesystem.CreateDirectory(d->path)) {
+	else if (!writedir) // if there is already a rw data directory, do not create new folder for read-only locations
+	{
+		if (filesystem.CreateDirectory(d->path))
+		{
 			// it didn't exist before, now it does and we just created it with rw access,
 			// so we just assume we still have read-write acces...
-			if (!writedir) {
-				d->writable = true;
-				writedir = d;
-			}
+			d->writable = true;
+			writedir = d;
 			return true;
 		}
 	}
@@ -235,15 +243,9 @@ void DataDirLocater::LocateDataDirs()
 		AddDirs(SubstEnvVars(userDef));
 	}
 
-#ifdef WIN32
-	// try current directory first, exe dir later
-	TCHAR currentDir[MAX_PATH];
-	::GetCurrentDirectory(sizeof(currentDir) - 1, currentDir);
-	std::string curPath = currentDir;
-	AddDirs(std::string(currentDir));
-#endif
-
-#ifndef UNITSYNC
+#ifdef UNITSYNC
+	AddDirs(Platform::GetLibraryPath());
+#else
 	AddDirs(Platform::GetBinaryPath());
 #endif
 

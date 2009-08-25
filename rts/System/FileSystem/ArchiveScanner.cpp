@@ -942,10 +942,10 @@ void CArchiveScanner::CheckMod(const string& root, unsigned checksum)
 		char msg[1024];
 		sprintf(
 			msg,
-			"Your mod (checksum 0x%x) differs from the host's mod (checksum 0x%x).\n"
-			"This may be caused by a missing archive, a corrupted download, or there may even\n"
-			"be 2 different versions in circulation. Make sure you and the host have installed\n"
-			"the chosen mod and its dependencies and consider redownloading the mod.\n",
+			"Your mod (checksum 0x%x) differs from the host's mod (checksum 0x%x). "
+			"This may be caused by a missing archive, a corrupted download, or there may even "
+			"be 2 different versions in circulation. Make sure you and the host have installed "
+			"the chosen mod and its dependencies and consider redownloading the mod.",
 			localChecksum, checksum);
 
 		throw content_error(msg);
@@ -961,9 +961,9 @@ void CArchiveScanner::CheckMap(const string& mapName, unsigned checksum)
 		char msg[1024];
 		sprintf(
 			msg,
-			"Your map (checksum 0x%x) differs from the host's map (checksum 0x%x).\n"
-			"This may be caused by a missing archive, a corrupted download, or there may even\n"
-			"be 2 different versions in circulation. Make sure you and the host have installed\n"
+			"Your map (checksum 0x%x) differs from the host's map (checksum 0x%x). "
+			"This may be caused by a missing archive, a corrupted download, or there may even "
+			"be 2 different versions in circulation. Make sure you and the host have installed "
 			"the chosen map and its dependencies and consider redownloading the mod.\n",
 			localChecksum, checksum);
 

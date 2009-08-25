@@ -5,16 +5,18 @@
 #include <map>
 
 /**
-@brief Acts as a base class for the various player-representing classes
-*/
+ * @brief Acts as a base class for the various player-representing classes
+ */
 class PlayerBase
 {
 public:
 	typedef std::map<std::string, std::string> customOpts;
+
 	/**
-	@brief Constructor assigning standard values
-	*/
+	 * @brief Constructor assigning standard values
+	 */
 	PlayerBase();
+
 	int team;
 	int rank;
 	std::string name;
@@ -27,7 +29,7 @@ public:
 	{
 		return customValues;
 	};
-	
+
 private:
 	customOpts customValues;
 };
@@ -48,4 +50,4 @@ struct PlayerStatistics
 	void swab();
 };
 
-#endif
+#endif // PLAYERBASE_H

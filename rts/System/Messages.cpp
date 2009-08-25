@@ -32,7 +32,7 @@ CMessages* CMessages::GetInstance()
 }
 
 
-/** Load the messages from gamedata/messages.tdf into memory. */
+/** Load the messages from gamedata/messages.lua into memory. */
 void CMessages::Load()
 {
 	LuaParser luaParser("gamedata/messages.lua",

@@ -19,7 +19,9 @@
 
 int main(int argc, char *argv[])
 {
+#ifdef _WIN32
 	try {
+#endif
 	std::cout << "If you find any errors, report them to mantis or the forums." << std::endl << std::endl;
 	ConfigHandler::Instantiate("");
 	FileSystemHandler::Cleanup();
@@ -107,11 +109,14 @@ int main(int argc, char *argv[])
 	}
 	
 	FileSystemHandler::Cleanup();
+
+#ifdef _WIN32
 	}
 	catch (const std::exception& err)
 	{
 		std::cout << "Exception raised: " << err.what() << std::endl;
 		return 1;
 	}
+#endif
 	return 0;
 }
