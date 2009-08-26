@@ -166,18 +166,18 @@ void CResourceBar::Draw(void)
 	smallFont->glPrint(energyx - 0.018f, (box.y1+box.y2)*0.5, headerFontSize, FONT_VCENTER | fontOptions, "Energy");
 
 	smallFont->SetTextColor(1.0f, 0.3f, 0.3f, 1.0f); // Expenses
-	smallFont->glFormat(metalx + 0.044f, metaly - 0.005f, labelsFontSize, fontOptions, "-%s(-%s)",
+	smallFont->glFormat(metalx + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
 	                FloatToSmallString(fabs(myTeam->prevMetalPull)).c_str(),
 	                FloatToSmallString(fabs(myTeam->metalSent)).c_str());
-	smallFont->glFormat(energyx + 0.044f, energyy - 0.005f, labelsFontSize, fontOptions, "-%s(-%s)",
+	smallFont->glFormat(energyx + 0.044f, box.y1, labelsFontSize, FONT_DESCENDER | fontOptions, "-%s(-%s)",
 	                FloatToSmallString(fabs(myTeam->prevEnergyPull)).c_str(),
 	                FloatToSmallString(fabs(myTeam->energySent)).c_str());
 
 	smallFont->SetTextColor(0.4f, 1.0f, 0.4f, 0.95f); // Income
-	smallFont->glFormat(metalx + 0.044f, metaly + 0.008f, labelsFontSize, fontOptions, "+%s",
+	smallFont->glFormat(metalx + 0.044f, box.y2-2*gu->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
 	                FloatToSmallString(myTeam->prevMetalIncome).c_str());
 	                // FloatToSmallString(myTeam->metalReceived).c_str());
-	smallFont->glFormat(energyx + 0.044f, energyy + 0.008f, labelsFontSize, fontOptions, "+%s",
+	smallFont->glFormat(energyx + 0.044f, box.y2-2*gu->pixelY, labelsFontSize, FONT_ASCENDER | fontOptions, "+%s",
 	                FloatToSmallString(myTeam->prevEnergyIncome).c_str());
 	                // FloatToSmallString(myTeam->energyReceived).c_str());
 
