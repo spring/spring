@@ -24,7 +24,6 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 
 	scriptNames.resize(LUAFN_Last + (MAX_WEAPONS_PER_UNIT * LUAFN_Weapon_Funcs));
 
-	scriptNames[LUAFN_Create]        = "Create";
 	scriptNames[LUAFN_Destroy]       = "Destroy";
 	scriptNames[LUAFN_StartMoving]   = "StartMoving";
 	scriptNames[LUAFN_StopMoving]    = "StopMoving";
@@ -42,8 +41,7 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_SetSFXOccupy]  = "setSFXoccupy";
 	scriptNames[LUAFN_HitByWeaponId] = "HitByWeaponId";
 
-	scriptNames[LUAFN_QueryLandingPadCount] = "QueryLandingPadCount";
-	scriptNames[LUAFN_QueryLandingPad]      = "QueryLandingPad";
+	scriptNames[LUAFN_QueryLandingPads]     = "QueryLandingPads";
 	scriptNames[LUAFN_Falling]              = "Falling";
 	scriptNames[LUAFN_Landed]               = "Landed";
 	scriptNames[LUAFN_BeginTransport]       = "BeginTransport";
@@ -52,7 +50,6 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_StartUnload]          = "StartUnload";
 	scriptNames[LUAFN_EndTransport]         = "EndTransport";
 	scriptNames[LUAFN_TransportDrop]        = "TransportDrop";
-	scriptNames[LUAFN_SetMaxReloadTime]     = "SetMaxReloadTime";
 	scriptNames[LUAFN_StartBuilding]        = "StartBuilding";
 	scriptNames[LUAFN_StopBuilding]         = "StopBuilding";
 	scriptNames[LUAFN_QueryNanoPiece]       = "QueryNanoPiece";
@@ -100,19 +97,6 @@ const std::map<std::string, int>& CLuaUnitScriptNames::GetScriptMap()
 	for (size_t i = 0; i < n.size(); ++i) {
 		scriptMap.insert(pair<string, int>(n[i], i));
 	}
-	// support the old naming scheme
-	scriptMap.insert(pair<string, int>("QueryPrimary",     LUAFN_QueryPrimary));
-	scriptMap.insert(pair<string, int>("QuerySecondary",   LUAFN_QueryPrimary + LUAFN_Weapon_Funcs * 1));
-	scriptMap.insert(pair<string, int>("QueryTertiary",    LUAFN_QueryPrimary + LUAFN_Weapon_Funcs * 2));
-	scriptMap.insert(pair<string, int>("AimPrimary",       LUAFN_AimPrimary));
-	scriptMap.insert(pair<string, int>("AimSecondary",     LUAFN_AimPrimary + LUAFN_Weapon_Funcs * 1));
-	scriptMap.insert(pair<string, int>("AimTertiary",      LUAFN_AimPrimary + LUAFN_Weapon_Funcs * 2));
-	scriptMap.insert(pair<string, int>("AimFromPrimary",   LUAFN_AimFromPrimary));
-	scriptMap.insert(pair<string, int>("AimFromSecondary", LUAFN_AimFromPrimary + LUAFN_Weapon_Funcs * 1));
-	scriptMap.insert(pair<string, int>("AimFromTertiary",  LUAFN_AimFromPrimary + LUAFN_Weapon_Funcs * 2));
-	scriptMap.insert(pair<string, int>("FirePrimary",      LUAFN_FirePrimary));
-	scriptMap.insert(pair<string, int>("FireSecondary",    LUAFN_FirePrimary + LUAFN_Weapon_Funcs * 1));
-	scriptMap.insert(pair<string, int>("FireTertiary",     LUAFN_FirePrimary + LUAFN_Weapon_Funcs * 2));
 
 	//for (std::map<string, int>::const_iterator it = scriptMap.begin(); it != scriptMap.end(); ++it) {
 	//	logOutput.Print("LUAFN: %s -> %3d", it->first.c_str(), it->second);
@@ -132,7 +116,6 @@ int CLuaUnitScriptNames::GetScriptNumber(const std::string& fname)
 	}
 	return -1;
 }
-
 
 
 const string& CLuaUnitScriptNames::GetScriptName(int num)

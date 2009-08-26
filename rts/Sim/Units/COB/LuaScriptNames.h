@@ -9,55 +9,56 @@
 #include <vector>
 
 
-//These are mapped by the CCobFile at startup to make common function calls faster
-// TODO: check scales of non-ratio arguments
+// These are indices into an array of 'refs' (lua_ref / lua_unref)
+// maintained by each CLuaUnitScript.
+
+// All call-ins also get as first argument the unitID.
+// This is left out of the comments below for brevity.
+
 enum {
-	LUAFN_Create,               // -
-	LUAFN_Destroy,              // -
-	LUAFN_StartMoving,          // -
-	LUAFN_StopMoving,           // -
-	LUAFN_Activate,             // -
-	LUAFN_Killed,               // in: recentDamage / maxHealth * 100, out: delayedWreckLevel
-	LUAFN_Deactivate,           // -
-	LUAFN_SetDirection,         // in: heading
-	LUAFN_SetSpeed,             // in: windStrength * 3000  OR  in: metalExtract * 500
-	LUAFN_RockUnit,             // in: 500 * rockDir.z, in: 500 * rockDir.x
-	LUAFN_HitByWeapon,          // in: 500 * hitDir.z, in: 500 * hitDir.x
-	LUAFN_MoveRate0,            // -
-	LUAFN_MoveRate1,            // -
-	LUAFN_MoveRate2,            // -
+	LUAFN_Destroy,              // ( ) -> nil
+	LUAFN_StartMoving,          // ( ) -> nil
+	LUAFN_StopMoving,           // ( ) -> nil
+	LUAFN_Activate,             // ( ) -> nil
+	LUAFN_Killed,               // ( recentDamage, maxHealth ) -> number delayedWreckLevel | nil
+	LUAFN_Deactivate,           // ( ) -> nil
+	LUAFN_SetDirection,         // ( heading ) -> nil
+	LUAFN_SetSpeed,             // ( windStrength ) -> nil  OR  ( metalExtract ) -> nil
+	LUAFN_RockUnit,             // ( rockDir_x, rockDir_z ) -> nil
+	LUAFN_HitByWeapon,          // ( hitDir_x, hitDir_z ) -> nil
+	LUAFN_MoveRate0,            // ( ) -> nil
+	LUAFN_MoveRate1,            // ( ) -> nil
+	LUAFN_MoveRate2,            // ( ) -> nil
 	LUAFN_MoveRate3,            // FIXME: unused (see CTAAirMoveType::UpdateMoveRate)
-	LUAFN_SetSFXOccupy,         // in: curTerrainType
-	LUAFN_HitByWeaponId,        // in: 500 * hitDir.z, in: 500 * hitDir.x, in: weaponDefs[weaponId].tdfId, in: 100 * damage, return value: 100 * weaponHitMod
-	LUAFN_QueryLandingPadCount, // out: landingPadCount (default 16)
-	LUAFN_QueryLandingPad,      // landingPadCount times (out: piecenum)
-	LUAFN_Falling,              // -
-	LUAFN_Landed,               // -
-	LUAFN_BeginTransport,       // in: unit->model->height*65536
-	LUAFN_QueryTransport,       // out: piecenum, in: unit->model->height*65536
-	LUAFN_TransportPickup,      // in: unit->id
-	LUAFN_StartUnload,          // -
-	LUAFN_EndTransport,         // -
-	LUAFN_TransportDrop,        // in: unit->id, in: PACKXZ(pos.x, pos.z)
-	LUAFN_SetMaxReloadTime,     // in: maxReloadTime
-	LUAFN_StartBuilding,        // BUILDER: in: h-heading, in: p-pitch; FACTORY: -
-	LUAFN_StopBuilding,         // -
-	LUAFN_QueryNanoPiece,       // out: piecenum
-	LUAFN_QueryBuildInfo,       // out: piecenum
-	LUAFN_Go,                   // -
-	LUAFN_MoveFinished,         // special callin, only used for Lua unit scripts
-	LUAFN_TurnFinished,         // idem
+	LUAFN_SetSFXOccupy,         // ( curTerrainType ) -> nil
+	LUAFN_HitByWeaponId,        // ( hitDir_x, hitDir_z, weaponDefID, damage ) -> number newDamage
+	LUAFN_QueryLandingPads,     // ( ) -> table piecenums
+	LUAFN_Falling,              // ( ) -> nil
+	LUAFN_Landed,               // ( ) -> nil
+	LUAFN_BeginTransport,       // ( passengerID ) -> nil
+	LUAFN_QueryTransport,       // ( passengerID ) -> number piece
+	LUAFN_TransportPickup,      // ( passengerID ) -> nil
+	LUAFN_StartUnload,          // ( ) -> nil
+	LUAFN_EndTransport,         // ( ) -> nil
+	LUAFN_TransportDrop,        // ( passengerID, x, y, z ) -> nil
+	LUAFN_StartBuilding,        // BUILDER: ( h-heading, p-pitch ) -> nil ; FACTORY: ( ) -> nil
+	LUAFN_StopBuilding,         // ( ) -> nil
+	LUAFN_QueryNanoPiece,       // ( ) -> number piece
+	LUAFN_QueryBuildInfo,       // ( ) -> number piece
+	LUAFN_Go,                   // ( ) -> nil
+	LUAFN_MoveFinished,         // ( piece, axis ) -> nil
+	LUAFN_TurnFinished,         // ( piece, axis ) -> nil
 	LUAFN_Last,
 
 	// These are special (this set of functions is repeated MAX_WEAPONS_PER_UNIT times)
-	LUAFN_QueryPrimary = LUAFN_Last, // out: piecenum
-	LUAFN_AimPrimary,                // in: heading - owner->heading, in: pitch (both 0 for plasma repulser)
-	LUAFN_AimFromPrimary,            // out: piecenum
-	LUAFN_FirePrimary,               // -
-	LUAFN_EndBurst,                  // -
-	LUAFN_Shot,                      // in: 0
-	LUAFN_BlockShot,                 // in: targetUnit->id or 0, out: blockShot, in: haveUserTarget
-	LUAFN_TargetWeight,              // in: targetUnit->id or 0, out: targetWeight*65536
+	LUAFN_QueryPrimary = LUAFN_Last, // ( ) -> number piece
+	LUAFN_AimPrimary,                // ( heading - owner->heading,  pitch ) -> nil   (both args 0 for plasma repulser)
+	LUAFN_AimFromPrimary,            // ( ) -> number piece
+	LUAFN_FirePrimary,               // ( ) -> nil
+	LUAFN_EndBurst,                  // ( ) -> nil
+	LUAFN_Shot,                      // ( ) -> nil
+	LUAFN_BlockShot,                 // ( targetUnitID, haveUserTarget ) -> boolean
+	LUAFN_TargetWeight,              // ( targetUnitID ) -> number targetWeight
 	LUAFN_Weapon_Last,
 	LUAFN_Weapon_Funcs = LUAFN_Weapon_Last - LUAFN_Last,
 };

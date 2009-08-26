@@ -572,7 +572,7 @@ void CLuaUnitScript::SetSFXOccupy(int curTerrainType)
 
 void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 {
-	const int fn = LUAFN_QueryLandingPad;
+	const int fn = LUAFN_QueryLandingPads;
 
 	if (!HasFunction(fn)) {
 		return;
