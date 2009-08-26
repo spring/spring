@@ -144,32 +144,6 @@ Spring.UnitScript.UpdateCallIn(number unitID, string fname[, function callIn]) -
 	new functionID is returned.  If callIn isn't given or is nil, the callIn is
 	nilled, returns true if it was removed, or false if the callin didn't exist.
 	See also Spring.UnitScript.CreateScript.
-
-
-random prototype snippets of Lua framework code:
-
-function WaitForTurn(unitID, piece, axis)
-	--the code which resumed the coroutine is responsible for processing
-	--this result and putting the "thread" in the 'waitForTurn' queue.
-	coroutine.yield(unitID, "turn", piece, axis)
-end
-
-function WaitForMove(unitID, piece, axis)
-	--idem
-	coroutine.yield(unitID, "move", piece, axis)
-end
-
-function Sleep(unitID, delay)
-	--needs check for sleep smaller then a single frame
-	coroutine.yield(unitID, "sleep", math.floor(delay / 33))
-end
-
-function gagdet:GameFrame(f)
-	if (sleepQue[f] ~= nil) then
-		--resume all coroutines scheduled to run in this frame and process results
-	end
-end
-
 */
 
 
@@ -459,7 +433,6 @@ void CLuaUnitScript::Killed()
 
 	if (!HasFunction(fn)) {
 		unit->deathScriptFinished = true;
-		//FIXME: unit->delayedWreckLevel = ???
 		return;
 	}
 
@@ -491,7 +464,6 @@ void CLuaUnitScript::Killed()
 
 		// without this we would end up with zombie units
 		unit->deathScriptFinished = true;
-		//FIXME: unit->delayedWreckLevel = ???
 	}
 
 	lua_pop(L, 1);
