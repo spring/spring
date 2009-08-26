@@ -1932,7 +1932,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 		// start running the unit's kill-script
 		script->Killed();
-	} else {
+	}
+	else {
 		deathScriptFinished = true;
 	}
 
