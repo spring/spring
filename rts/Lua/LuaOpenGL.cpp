@@ -1236,16 +1236,17 @@ int LuaOpenGL::Text(lua_State* L)
 		const char* c = lua_tostring(L, 5);
 		while (*c != 0) {
 	  		switch (*c) {
-				case 'c': { options |= FONT_CENTER;           break; }
-				case 'r': { options |= FONT_RIGHT;            break; }
+				case 'c': { options |= FONT_CENTER;       break; }
+				case 'r': { options |= FONT_RIGHT;        break; }
 
-				case 'v': { options |= FONT_VCENTER;          break; }
-				case 'd': { options |= FONT_BASELINE;         break; }
-				case 'b': { options |= FONT_BOTTOM;           break; }
-				case 't': { options |= FONT_TOP;              break; }
-				case 'a': { options |= FONT_ASCENDER;         break; }
+				case 'a': { options |= FONT_ASCENDER;     break; }
+				case 't': { options |= FONT_TOP;          break; }
+				case 'v': { options |= FONT_VCENTER;      break; }
+				case 'x': { options |= FONT_BASELINE;     break; }
+				case 'b': { options |= FONT_BOTTOM;       break; }
+				case 'd': { options |= FONT_DESCENDER;    break; }
 
-				case 's': { options |= FONT_SHADOW;           break; }
+				case 's': { options |= FONT_SHADOW;       break; }
 				case 'o': { options |= FONT_OUTLINE; outline = true; lightOut = false;     break; }
 				case 'O': { options |= FONT_OUTLINE; outline = true; lightOut = true;     break; }
 			}
