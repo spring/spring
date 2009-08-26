@@ -531,8 +531,9 @@ void CUnit::Update()
 	moveType->Update();
 	GML_GET_TICKS(lastUnitUpdate);
 
-	inAir   = ((pos.y - ground->GetHeight(pos.x,pos.z)) > 0.0f);
-	inWater =  (pos.y <= 0.0f);
+	inWater = (pos.y <= 0.0f);
+	inAir   = (!inWater) && ((pos.y - ground->GetHeight(pos.x,pos.z)) > 1.0f);
+
 
 	if (inAir != oldInAir) {
 		if (inAir) {
@@ -1900,15 +1901,10 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	teamHandler->Team(this->lineage)->LeftLineage(this);
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
-		const std::string* exp;
-		if (selfDestruct) {
-			exp = &unitDef->selfDExplosion;
-		} else {
-			exp = &unitDef->deathExplosion;
-		}
+		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
 
-		if (!exp->empty()) {
-			const WeaponDef* wd = weaponDefHandler->GetWeapon(*exp);
+		if (!exp.empty()) {
+			const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
 			if (wd) {
 				helper->Explosion(
 					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
