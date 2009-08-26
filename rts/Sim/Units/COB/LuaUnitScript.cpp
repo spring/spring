@@ -137,7 +137,7 @@ Spring.UnitScript.CreateScript(number unitID, table callIns) -> nil
 	Replaces the current unit script (independent of type, also replaces COB)
 	with the unit script given by a table of callins for the unit.
 	Callins are similar to COB functions, e.g. a number of predefined names are
-	called by the engine if they exist in the table. (Create, FireWeapon1, etc.)
+	called by the engine if they exist in the table.
 
 Spring.UnitScript.UpdateCallIn(number unitID, string fname[, function callIn]) -> number|boolean
 	Iff callIn is a function, a single callIn is replaced or added, and the
@@ -423,7 +423,8 @@ void CLuaUnitScript::Call(int fn, float arg1, float arg2)
 
 void CLuaUnitScript::Create()
 {
-	Call(COBFN_Create);
+	// There is no use for Create
+	// (Lua code can just call it after Spring.UnitScript.CreateScript(...))
 }
 
 
@@ -965,10 +966,6 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	unit->script = newScript;
 
 	LUA_TRACE("script replaced with CLuaUnitScript");
-
-	// Since we can only be created from Lua,
-	// Create would never be called otherwise
-	unit->script->Create();
 
 	return 0;
 }
