@@ -61,7 +61,7 @@
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
 
-#include "COB/UnitScript.h"
+#include "COB/NullUnitScript.h"
 #include "COB/UnitScriptFactory.h"
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
@@ -306,7 +306,10 @@ CUnit::~CUnit()
 		radarhandler->RemoveUnit(this);
 	}
 
-	delete script;
+	if (script != &CNullUnitScript::value) {
+		delete script;
+	}
+
 	modelParser->DeleteLocalModel(this);
 }
 

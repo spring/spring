@@ -4,9 +4,14 @@
 #include "LogOutput.h"
 
 
-CNullUnitScript::CNullUnitScript(CUnit* unit)
-	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces)
-	, scriptIndex(COBFN_Last + (unit->weapons.size() * COBFN_Weapon_Funcs), -1)
+// keep one global copy so we don't need to allocate a lot of
+// near empty objects for mods that use Lua unit scripts.
+CNullUnitScript CNullUnitScript::value;
+
+
+CNullUnitScript::CNullUnitScript()
+	: CUnitScript(NULL, scriptIndex, pieces)
+	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1)
 {
 }
 

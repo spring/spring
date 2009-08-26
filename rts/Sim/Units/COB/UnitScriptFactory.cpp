@@ -31,7 +31,7 @@ CUnitScript* CUnitScriptFactory::CreateScript(const std::string& name, CUnit* un
 	}
 
 	if (!script) {
-		script = new CNullUnitScript(unit);
+		script = &CNullUnitScript::value;
 	}
 
 	return script;
