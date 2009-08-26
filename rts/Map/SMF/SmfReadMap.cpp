@@ -310,14 +310,15 @@ void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CRe
 
 	int drawSquare=int(maxdist/(SQUARE_SIZE*quadSize))+1;
 
-	int drawQuadsX = header.mapx / quadSize;
+	int drawQuadsX = (int)(gs->mapx / quadSize);
+	int drawQuadsY = (int)(gs->mapy / quadSize);
 
 	int sy=cy-drawSquare;
 	if(sy<0)
 		sy=0;
 	int ey=cy+drawSquare;
-	if(ey>=header.mapy/quadSize)
-		ey=header.mapy/quadSize-1;
+	if(ey>drawQuadsY-1)
+		ey=drawQuadsY-1;
 
 	int sxi=cx-drawSquare;
 	if(sxi<0)
@@ -338,7 +339,7 @@ void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CRe
 			if (xtest > xtest2)
 				xtest = xtest2;
 
-			xtest = xtest / quadSize;
+			xtest /= quadSize;
 
 			if (xtest - extraSize > sx)
 				sx = ((int) xtest) - extraSize;
@@ -350,7 +351,7 @@ void CSmfReadMap::GridVisibility (CCamera *cam, int quadSize, float maxdist, CRe
 			if (xtest < xtest2)
 				xtest = xtest2;
 
-			xtest = xtest / quadSize;
+			xtest /= quadSize;
 
 			if (xtest + extraSize < ex)
 				ex = ((int) xtest) + extraSize;

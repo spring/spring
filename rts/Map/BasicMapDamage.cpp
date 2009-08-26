@@ -234,10 +234,10 @@ void CBasicMapDamage::RecalcArea(int x1, int x2, int y1, int y2)
 		}
 	}
 
-	decy = std::max(                     0, (y1 * SQUARE_SIZE - QUAD_SIZE / 2) / QUAD_SIZE);
-	incy = std::min(qf->GetNumQuadsZ() - 1, (y2 * SQUARE_SIZE + QUAD_SIZE / 2) / QUAD_SIZE);
-	decx = std::max(                     0, (x1 * SQUARE_SIZE - QUAD_SIZE / 2) / QUAD_SIZE);
-	incx = std::min(qf->GetNumQuadsX() - 1, (x2 * SQUARE_SIZE + QUAD_SIZE / 2) / QUAD_SIZE);
+	decy = std::max(                     0, (y1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	incy = std::min(qf->GetNumQuadsZ() - 1, (y2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	decx = std::max(                     0, (x1 * SQUARE_SIZE - CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
+	incx = std::min(qf->GetNumQuadsX() - 1, (x2 * SQUARE_SIZE + CQuadField::QUAD_SIZE / 2) / CQuadField::QUAD_SIZE);
 
 	const int numQuadsX = qf->GetNumQuadsX();
 	const int frameNum  = gs->frameNum;
