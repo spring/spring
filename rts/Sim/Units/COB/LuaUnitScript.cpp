@@ -819,6 +819,23 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 }
 
 
+void CLuaUnitScript::Destroy()       { Call(COBFN_Destroy); }
+void CLuaUnitScript::StartMoving()   { Call(COBFN_StartMoving); }
+void CLuaUnitScript::StopMoving()    { Call(COBFN_StopMoving); }
+void CLuaUnitScript::StartUnload()   { Call(COBFN_StartUnload); }
+void CLuaUnitScript::EndTransport()  { Call(COBFN_EndTransport); }
+void CLuaUnitScript::StartBuilding() { Call(COBFN_StartBuilding); }
+void CLuaUnitScript::StopBuilding()  { Call(COBFN_StopBuilding); }
+void CLuaUnitScript::Falling()       { Call(COBFN_Falling); }
+void CLuaUnitScript::Landed()        { Call(COBFN_Landed); }
+void CLuaUnitScript::Activate()      { Call(COBFN_Activate); }
+void CLuaUnitScript::Deactivate()    { Call(COBFN_Deactivate); }
+void CLuaUnitScript::Go()            { Call(COBFN_Go); }
+void CLuaUnitScript::MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
+void CLuaUnitScript::FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + COBFN_Weapon_Funcs * weaponNum); }
+void CLuaUnitScript::EndBurst(int weaponNum)   { Call(COBFN_EndBurst + COBFN_Weapon_Funcs * weaponNum); }
+
+
 /******************************************************************************/
 /******************************************************************************/
 
