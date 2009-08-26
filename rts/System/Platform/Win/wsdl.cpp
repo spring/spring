@@ -338,7 +338,7 @@ LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwK
 
 void SDL_WarpMouse(int x, int y)
 {
-	mouse_update();
+	//mouse_update();
 	// SDL interface provides for int, but the values should be
 	// idealized client coords (>= 0)
 	//mouse_moved(x, y);
@@ -346,5 +346,7 @@ void SDL_WarpMouse(int x, int y)
 	const int client_x = x, client_y = y;
 	const POINT screen_pt = ScreenFromClient(client_x, client_y);
 	SetCursorPos(screen_pt.x, screen_pt.y);
+	mouse_x = screen_pt.x;
+	mouse_y = screen_pt.y;
 }
 }
