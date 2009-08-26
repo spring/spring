@@ -22,8 +22,8 @@ enum {
 	LUAFN_Activate,             // ( ) -> nil
 	LUAFN_Killed,               // ( recentDamage, maxHealth ) -> number delayedWreckLevel | nil
 	LUAFN_Deactivate,           // ( ) -> nil
-	LUAFN_SetDirection,         // ( heading ) -> nil
-	LUAFN_SetSpeed,             // ( windStrength ) -> nil  OR  ( metalExtract ) -> nil
+	LUAFN_WindChanged,          // ( heading, strength ) -> nil
+	LUAFN_ExtractionRateChanged,// ( newRate ) -> nil
 	LUAFN_RockUnit,             // ( rockDir_x, rockDir_z ) -> nil
 	LUAFN_HitByWeapon,          // ( hitDir_x, hitDir_z ) -> nil
 	LUAFN_MoveRate0,            // ( ) -> nil
@@ -45,7 +45,6 @@ enum {
 	LUAFN_StopBuilding,         // ( ) -> nil
 	LUAFN_QueryNanoPiece,       // ( ) -> number piece
 	LUAFN_QueryBuildInfo,       // ( ) -> number piece
-	LUAFN_Go,                   // ( ) -> nil
 	LUAFN_MoveFinished,         // ( piece, axis ) -> nil
 	LUAFN_TurnFinished,         // ( piece, axis ) -> nil
 	LUAFN_Last,

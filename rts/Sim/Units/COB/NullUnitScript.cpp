@@ -25,8 +25,8 @@ void CNullUnitScript::ShowScriptError(const std::string& msg)
 void CNullUnitScript::RawCall(int functionId) {}
 void CNullUnitScript::Create() {}
 void CNullUnitScript::Killed() {}
-void CNullUnitScript::SetDirection(float heading) {}
-void CNullUnitScript::SetSpeed(float speed, float cob_mult) {}
+void CNullUnitScript::WindChanged(float heading, float speed) {}
+void CNullUnitScript::ExtractionRateChanged(float speed) {}
 void CNullUnitScript::RockUnit(const float3& rockDir) {}
 void CNullUnitScript::HitByWeapon(const float3& hitDir) {}
 void CNullUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage) {}
@@ -58,7 +58,6 @@ void CNullUnitScript::Falling()       {}
 void CNullUnitScript::Landed()        {}
 void CNullUnitScript::Activate()      {}
 void CNullUnitScript::Deactivate()    {}
-void CNullUnitScript::Go()            {}
 void CNullUnitScript::MoveRate(int curRate)     {}
 void CNullUnitScript::FireWeapon(int weaponNum) {}
 void CNullUnitScript::EndBurst(int weaponNum)   {}
