@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "Sim/Misc/GlobalConstants.h"
 #include "LuaScriptNames.h"
 #include "LogOutput.h"
 
@@ -21,7 +22,7 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 		return scriptNames;
 	}
 
-	scriptNames.resize(LUAFN_Last + (LUA_MaxWeapons * LUAFN_Weapon_Funcs));
+	scriptNames.resize(LUAFN_Last + (MAX_WEAPONS_PER_UNIT * LUAFN_Weapon_Funcs));
 
 	scriptNames[LUAFN_Create]        = "Create";
 	scriptNames[LUAFN_Destroy]       = "Destroy";
@@ -62,7 +63,7 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_TurnFinished] = "TurnFinished";
 
 	// Also add the weapon aiming stuff
-	for (int i = 0; i < LUA_MaxWeapons; ++i) {
+	for (int i = 0; i < MAX_WEAPONS_PER_UNIT; ++i) {
 		char buf[15];
 		sprintf(buf, "Weapon%d", i + 1);
 		string weapon(buf);
