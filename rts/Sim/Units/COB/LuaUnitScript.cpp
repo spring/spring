@@ -8,7 +8,7 @@
 #include "LogOutput.h"
 #include "LuaInclude.h"
 #include "NullUnitScript.h"
-#include "UnitScriptNames.h"
+#include "LuaScriptNames.h"
 #include "Lua/LuaCallInCheck.h"
 #include "Lua/LuaHandleSynced.h"
 #include "Sim/Units/UnitHandler.h"
@@ -161,9 +161,9 @@ Spring.UnitScript.UpdateCallIn(number unitID, string fname[, function callIn]) -
 
 
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
-	: CUnitScript(unit, scriptIndex, unit->localmodel->pieces)
+	: CUnitScript(unit, unit->localmodel->pieces)
 	, handle(CLuaHandle::activeHandle), L(L)
-	, scriptIndex(COBFN_Last + (unit->weapons.size() * COBFN_Weapon_Funcs), LUA_NOREF)
+	, scriptIndex(LUAFN_Last + (unit->weapons.size() * LUAFN_Weapon_Funcs), LUA_NOREF)
 	, inKilled(false)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
@@ -254,12 +254,19 @@ int CLuaUnitScript::UpdateCallIn()
 void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 {
 	// Map common function names to indices
-	int num = CUnitScriptNames::GetScriptNumber(fname);
+	int num = CLuaUnitScriptNames::GetScriptNumber(fname);
 
 	// Check upper bound too in case user calls UpdateCallIn with nonexisting weapon.
 	// (we only allocate slots in scriptIndex for the number of weapons the unit has)
 	if (num >= 0 && num < int(scriptIndex.size())) {
 		scriptIndex[num] = ref;
+	}
+
+	switch (num) {
+		case LUAFN_HitByWeaponId: hasHitByWeaponId = (ref != LUA_NOREF); break;
+		case LUAFN_SetSFXOccupy:  hasSetSFXOccupy  = (ref != LUA_NOREF); break;
+		case LUAFN_RockUnit:      hasRockUnit      = (ref != LUA_NOREF); break;
+		case LUAFN_StartBuilding: hasStartBuilding = (ref != LUA_NOREF); break;
 	}
 
 	LUA_TRACE(fname.c_str());
@@ -292,6 +299,18 @@ void CLuaUnitScript::ShowScriptError(const string& msg)
 }
 
 
+bool CLuaUnitScript::HasBlockShot(int weaponNum) const
+{
+	return HasFunction(LUAFN_BlockShot + LUAFN_Weapon_Funcs * weaponNum);
+}
+
+
+bool CLuaUnitScript::HasTargetWeight(int weaponNum) const
+{
+	return HasFunction(LUAFN_TargetWeight + LUAFN_Weapon_Funcs * weaponNum);
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -299,7 +318,7 @@ void CLuaUnitScript::ShowScriptError(const string& msg)
 inline float CLuaUnitScript::PopNumber(int fn, float def)
 {
 	if (!lua_israwnumber(L, -1)) {
-		const string& fname = CUnitScriptNames::GetScriptName(fn);
+		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		logOutput.Print("%s: bad return value, expected number", fname.c_str());
 		RemoveCallIn(fname);
@@ -317,7 +336,7 @@ inline float CLuaUnitScript::PopNumber(int fn, float def)
 inline bool CLuaUnitScript::PopBoolean(int fn, bool def)
 {
 	if (!lua_isboolean(L, -1)) {
-		const string& fname = CUnitScriptNames::GetScriptName(fn);
+		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		logOutput.Print("%s: bad return value, expected boolean", fname.c_str());
 		RemoveCallIn(fname);
@@ -430,7 +449,7 @@ void CLuaUnitScript::Create()
 
 void CLuaUnitScript::Killed()
 {
-	const int fn = COBFN_Killed;
+	const int fn = LUAFN_Killed;
 
 	if (!HasFunction(fn)) {
 		unit->deathScriptFinished = true;
@@ -458,7 +477,7 @@ void CLuaUnitScript::Killed()
 		unit->delayedWreckLevel = lua_toint(L, -1);
 	}
 	else if (!lua_isnoneornil(L, -1)) {
-		const string& fname = CUnitScriptNames::GetScriptName(fn);
+		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		logOutput.Print("%s: bad return value, expected number or nil", fname.c_str());
 		RemoveCallIn(fname);
@@ -473,33 +492,33 @@ void CLuaUnitScript::Killed()
 
 void CLuaUnitScript::SetDirection(float heading)
 {
-	Call(COBFN_SetDirection, heading);
+	Call(LUAFN_SetDirection, heading);
 }
 
 
 void CLuaUnitScript::SetSpeed(float speed, float)
 {
-	Call(COBFN_SetSpeed, speed);
+	Call(LUAFN_SetSpeed, speed);
 }
 
 
 void CLuaUnitScript::RockUnit(const float3& rockDir)
 {
 	//FIXME: maybe we want rockDir.y too to be future proof?
-	Call(COBFN_RockUnit, rockDir.x, rockDir.z);
+	Call(LUAFN_RockUnit, rockDir.x, rockDir.z);
 }
 
 
 void CLuaUnitScript::HitByWeapon(const float3& hitDir)
 {
 	//FIXME: maybe we want hitDir.y too to be future proof?
-	Call(COBFN_HitByWeapon, hitDir.x, hitDir.z);
+	Call(LUAFN_HitByWeapon, hitDir.x, hitDir.z);
 }
 
 
 void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage)
 {
-	const int fn = COBFN_HitByWeaponId;
+	const int fn = LUAFN_HitByWeaponId;
 
 	if (!HasFunction(fn)) {
 		return;
@@ -523,7 +542,7 @@ void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float&
 		inout_damage = lua_tonumber(L, -1);
 	}
 	else if (!lua_isnoneornil(L, -1)) {
-		const string& fname = CUnitScriptNames::GetScriptName(fn);
+		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		logOutput.Print("%s: bad return value, expected number or nil", fname.c_str());
 		RemoveCallIn(fname);
@@ -535,7 +554,7 @@ void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float&
 
 void CLuaUnitScript::SetSFXOccupy(int curTerrainType)
 {
-	const int fn = COBFN_SetSFXOccupy;
+	const int fn = LUAFN_SetSFXOccupy;
 
 	if (!HasFunction(fn)) {
 		return;
@@ -553,7 +572,7 @@ void CLuaUnitScript::SetSFXOccupy(int curTerrainType)
 
 void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 {
-	const int fn = COBFN_QueryLandingPad;
+	const int fn = LUAFN_QueryLandingPad;
 
 	if (!HasFunction(fn)) {
 		return;
@@ -579,7 +598,7 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 		lua_pop(L, 1);
 	}
 	else {
-		const string& fname = CUnitScriptNames::GetScriptName(fn);
+		const string& fname = CLuaUnitScriptNames::GetScriptName(fn);
 
 		logOutput.Print("%s: bad return value, expected table", fname.c_str());
 		RemoveCallIn(fname);
@@ -591,13 +610,13 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 
 void CLuaUnitScript::BeginTransport(const CUnit* unit)
 {
-	Call(COBFN_BeginTransport, unit->id);
+	Call(LUAFN_BeginTransport, unit->id);
 }
 
 
 int CLuaUnitScript::QueryTransport(const CUnit* unit)
 {
-	const int fn = COBFN_QueryTransport;
+	const int fn = LUAFN_QueryTransport;
 
 	if (!HasFunction(fn)) {
 		return -1;
@@ -619,13 +638,13 @@ int CLuaUnitScript::QueryTransport(const CUnit* unit)
 
 void CLuaUnitScript::TransportPickup(const CUnit* unit)
 {
-	Call(COBFN_TransportPickup, unit->id);
+	Call(LUAFN_TransportPickup, unit->id);
 }
 
 
 void CLuaUnitScript::TransportDrop(const CUnit* unit, const float3& pos)
 {
-	const int fn = COBFN_TransportDrop;
+	const int fn = LUAFN_TransportDrop;
 
 	if (!HasFunction(fn)) {
 		return;
@@ -646,56 +665,56 @@ void CLuaUnitScript::TransportDrop(const CUnit* unit, const float3& pos)
 
 void CLuaUnitScript::StartBuilding(float heading, float pitch)
 {
-	Call(COBFN_StartBuilding, heading, pitch);
+	Call(LUAFN_StartBuilding, heading, pitch);
 }
 
 
 int CLuaUnitScript::QueryNanoPiece()
 {
-	return RunQueryCallIn(COBFN_QueryNanoPiece);
+	return RunQueryCallIn(LUAFN_QueryNanoPiece);
 }
 
 
 int CLuaUnitScript::QueryBuildInfo()
 {
-	return RunQueryCallIn(COBFN_QueryBuildInfo);
+	return RunQueryCallIn(LUAFN_QueryBuildInfo);
 }
 
 
 int CLuaUnitScript::QueryWeapon(int weaponNum)
 {
-	return RunQueryCallIn(COBFN_QueryPrimary + COBFN_Weapon_Funcs * weaponNum);
+	return RunQueryCallIn(LUAFN_QueryPrimary + LUAFN_Weapon_Funcs * weaponNum);
 }
 
 
 void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
 {
-	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weaponNum, heading, pitch);
+	Call(LUAFN_AimPrimary + LUAFN_Weapon_Funcs * weaponNum, heading, pitch);
 }
 
 
 void  CLuaUnitScript::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
-	Call(COBFN_AimPrimary + COBFN_Weapon_Funcs * weapon->weaponNum);
+	Call(LUAFN_AimPrimary + LUAFN_Weapon_Funcs * weapon->weaponNum);
 }
 
 
 int CLuaUnitScript::AimFromWeapon(int weaponNum)
 {
-	return RunQueryCallIn(COBFN_AimFromPrimary + COBFN_Weapon_Funcs * weaponNum);
+	return RunQueryCallIn(LUAFN_AimFromPrimary + LUAFN_Weapon_Funcs * weaponNum);
 }
 
 
 void CLuaUnitScript::Shot(int weaponNum)
 {
 	// FIXME: pass projectileID?
-	Call(COBFN_Shot + COBFN_Weapon_Funcs * weaponNum);
+	Call(LUAFN_Shot + LUAFN_Weapon_Funcs * weaponNum);
 }
 
 
 bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget)
 {
-	const int fn = COBFN_BlockShot + COBFN_Weapon_Funcs * weaponNum;
+	const int fn = LUAFN_BlockShot + LUAFN_Weapon_Funcs * weaponNum;
 
 	if (!HasFunction(fn)) {
 		return false;
@@ -718,7 +737,7 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 
 float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 {
-	const int fn = COBFN_TargetWeight + COBFN_Weapon_Funcs * weaponNum;
+	const int fn = LUAFN_TargetWeight + LUAFN_Weapon_Funcs * weaponNum;
 
 	if (!HasFunction(fn)) {
 		return 1.0f;
@@ -740,7 +759,7 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 
 void CLuaUnitScript::AnimFinished(AnimType type, int piece, int axis)
 {
-	const int fn = (type == AMove ? COBFN_MoveFinished : COBFN_TurnFinished);
+	const int fn = (type == AMove ? LUAFN_MoveFinished : LUAFN_TurnFinished);
 
 	Call(fn, piece + 1, axis + 1);
 }
@@ -792,21 +811,21 @@ bool CLuaUnitScript::RawRunCallIn(int functionId, int inArgs, int outArgs)
 }
 
 
-void CLuaUnitScript::Destroy()       { Call(COBFN_Destroy); }
-void CLuaUnitScript::StartMoving()   { Call(COBFN_StartMoving); }
-void CLuaUnitScript::StopMoving()    { Call(COBFN_StopMoving); }
-void CLuaUnitScript::StartUnload()   { Call(COBFN_StartUnload); }
-void CLuaUnitScript::EndTransport()  { Call(COBFN_EndTransport); }
-void CLuaUnitScript::StartBuilding() { Call(COBFN_StartBuilding); }
-void CLuaUnitScript::StopBuilding()  { Call(COBFN_StopBuilding); }
-void CLuaUnitScript::Falling()       { Call(COBFN_Falling); }
-void CLuaUnitScript::Landed()        { Call(COBFN_Landed); }
-void CLuaUnitScript::Activate()      { Call(COBFN_Activate); }
-void CLuaUnitScript::Deactivate()    { Call(COBFN_Deactivate); }
-void CLuaUnitScript::Go()            { Call(COBFN_Go); }
-void CLuaUnitScript::MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
-void CLuaUnitScript::FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + COBFN_Weapon_Funcs * weaponNum); }
-void CLuaUnitScript::EndBurst(int weaponNum)   { Call(COBFN_EndBurst + COBFN_Weapon_Funcs * weaponNum); }
+void CLuaUnitScript::Destroy()       { Call(LUAFN_Destroy); }
+void CLuaUnitScript::StartMoving()   { Call(LUAFN_StartMoving); }
+void CLuaUnitScript::StopMoving()    { Call(LUAFN_StopMoving); }
+void CLuaUnitScript::StartUnload()   { Call(LUAFN_StartUnload); }
+void CLuaUnitScript::EndTransport()  { Call(LUAFN_EndTransport); }
+void CLuaUnitScript::StartBuilding() { Call(LUAFN_StartBuilding); }
+void CLuaUnitScript::StopBuilding()  { Call(LUAFN_StopBuilding); }
+void CLuaUnitScript::Falling()       { Call(LUAFN_Falling); }
+void CLuaUnitScript::Landed()        { Call(LUAFN_Landed); }
+void CLuaUnitScript::Activate()      { Call(LUAFN_Activate); }
+void CLuaUnitScript::Deactivate()    { Call(LUAFN_Deactivate); }
+void CLuaUnitScript::Go()            { Call(LUAFN_Go); }
+void CLuaUnitScript::MoveRate(int curRate)     { Call(LUAFN_MoveRate0 + curRate); }
+void CLuaUnitScript::FireWeapon(int weaponNum) { Call(LUAFN_FirePrimary + LUAFN_Weapon_Funcs * weaponNum); }
+void CLuaUnitScript::EndBurst(int weaponNum)   { Call(LUAFN_EndBurst + LUAFN_Weapon_Funcs * weaponNum); }
 
 
 /******************************************************************************/

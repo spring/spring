@@ -994,7 +994,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	hitDir.y = 0.0f;
 	hitDir = -hitDir.SafeNormalize();
 
-	if (script->HasFunction(COBFN_HitByWeaponId)) {
+	if (script->HasHitByWeaponId()) {
 		script->HitByWeaponId(hitDir, weaponDefId, /*inout*/ damage);
 	}
 	else {
@@ -1640,7 +1640,7 @@ void CUnit::UpdateTerrainType()
 void CUnit::CalculateTerrainType()
 {
 	//Optimization: there's only about one unit that actually needs this information
-	if (!script->HasFunction(COBFN_SetSFXOccupy))
+	if (!script->HasSetSFXOccupy())
 		return;
 
 	if (transporter) {

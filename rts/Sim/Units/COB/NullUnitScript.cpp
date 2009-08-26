@@ -10,8 +10,7 @@ CNullUnitScript CNullUnitScript::value;
 
 
 CNullUnitScript::CNullUnitScript()
-	: CUnitScript(NULL, scriptIndex, pieces)
-	, scriptIndex(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1)
+	: CUnitScript(NULL, pieces)
 {
 }
 

@@ -49,6 +49,12 @@ public:
 	CCobInstance(CCobFile &script, CUnit *unit);
 	virtual ~CCobInstance();
 
+	// takes COBFN_* constant as argument
+	bool HasFunction(int id) const;
+
+	virtual bool HasBlockShot(int weaponNum) const;
+	virtual bool HasTargetWeight(int weaponNum) const;
+
 	// call overloads, they all call RealCall
 	int Call(const std::string &fname);
 	int Call(const std::string &fname, int p1);

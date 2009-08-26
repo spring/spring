@@ -66,11 +66,14 @@ void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 }
 
 
-CUnitScript::CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex, const std::vector<LocalModelPiece*>& pieces)
+CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces)
 	: unit(unit)
 	, yardOpen(false)
 	, busy(false)
-	, scriptIndex(scriptIndex)
+	, hasHitByWeaponId(false)
+	, hasSetSFXOccupy(false)
+	, hasRockUnit(false)
+	, hasStartBuilding(false)
 	, pieces(pieces)
 {
 	memset(unitVars, int(0), UNIT_VAR_COUNT);
@@ -1598,6 +1601,9 @@ void CUnitScript::SetUnitVal(int val, int param)
 
 void CUnitScript::BenchmarkScript(CUnitScript* script)
 {
+	/*
+	FIXME
+
 	const int duration = 10000; // millisecs
 	const int fn = COBFN_QueryPrimary + COBFN_Weapon_Funcs * 0;
 	const string fname = CUnitScriptNames::GetScriptName(fn);
@@ -1619,11 +1625,15 @@ void CUnitScript::BenchmarkScript(CUnitScript* script)
 
 	logOutput.Print("%s: %d calls in %u ms -> %d calls/second", fname.c_str(),
 	                count, end - start, count / (duration / 1000));
+	*/
 }
 
 
 void CUnitScript::BenchmarkScript(const string& unitname)
 {
+	/*
+	FIXME
+
 	std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
 	for (; ui != uh->activeUnits.end(); ++ui) {
 		CUnit* unit = *ui;
@@ -1632,6 +1642,7 @@ void CUnitScript::BenchmarkScript(const string& unitname)
 			return;
 		}
 	}
+	*/
 }
 
 #endif

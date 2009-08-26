@@ -6,9 +6,7 @@
 #include <map>
 
 #include "Lua/LuaHashString.h"
-// TODO: use this include in rest of engine directly,
-// instead of including it through #include "CobFile.h"
-#include "UnitScriptNames.h"
+#include "CobScriptNames.h"
 
 //0 = none
 //1 = script calls

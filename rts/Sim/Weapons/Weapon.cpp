@@ -53,7 +53,7 @@ CR_REG_METADATA(CWeapon,(
 	CR_MEMBER(targetPos),
 	CR_MEMBER(fireSoundId),
 	CR_MEMBER(fireSoundVolume),
-	CR_MEMBER(cobHasBlockShot),
+	CR_MEMBER(hasBlockShot),
 	CR_MEMBER(hasTargetWeight),
 	CR_MEMBER(angleGood),
 	CR_MEMBER(avoidTarget),
@@ -144,7 +144,7 @@ CWeapon::CWeapon(CUnit* owner):
 	energyFireCost(0),
 	fireSoundId(0),
 	fireSoundVolume(0),
-	cobHasBlockShot(false),
+	hasBlockShot(false),
 	hasTargetWeight(false),
 	angleGood(false),
 	avoidTarget(false),
@@ -191,15 +191,14 @@ void CWeapon::SetWeaponNum(int num)
 {
 	weaponNum = num;
 
-	const int n = COBFN_Weapon_Funcs * weaponNum;
-	cobHasBlockShot = owner->script->HasFunction(COBFN_BlockShot + n);
-	hasTargetWeight = owner->script->HasFunction(COBFN_TargetWeight + n);
+	hasBlockShot = owner->script->HasBlockShot(weaponNum);
+	hasTargetWeight = owner->script->HasTargetWeight(weaponNum);
 }
 
 
 inline bool CWeapon::CobBlockShot(const CUnit* targetUnit)
 {
-	if (!cobHasBlockShot) {
+	if (!hasBlockShot) {
 		return false;
 	}
 
@@ -420,7 +419,7 @@ void CWeapon::Update()
 		}
 
 		//Rock the unit in the direction of the fireing
-		if (owner->script->HasFunction(COBFN_RockUnit)) {
+		if (owner->script->HasRockUnit()) {
 			float3 rockDir = wantedDir;
 			rockDir.y = 0;
 			rockDir = -rockDir.Normalize();

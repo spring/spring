@@ -51,8 +51,14 @@
 /******************************************************************************/
 
 
+inline bool CCobInstance::HasFunction(int id) const
+{
+	return script.scriptIndex[id] >= 0;
+}
+
+
 CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
-	: CUnitScript(_unit, _script.scriptIndex, pieces)
+	: CUnitScript(_unit, pieces)
 	, script(_script)
 	, smoothAnim(unit->unitDef->smoothAnim)
 {
@@ -62,6 +68,11 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 	}
 
 	MapScriptToModelPieces(unit->localmodel);
+
+	hasHitByWeaponId = HasFunction(COBFN_HitByWeaponId);
+	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
+	hasRockUnit      = HasFunction(COBFN_RockUnit);
+	hasStartBuilding = HasFunction(COBFN_StartBuilding);
 }
 
 
@@ -134,6 +145,16 @@ int CCobInstance::GetFunctionId(const std::string& fname) const
 }
 
 
+bool CCobInstance::HasBlockShot(int weaponNum) const
+{
+	return HasFunction(COBFN_BlockShot + COBFN_Weapon_Funcs * weaponNum);
+}
+
+
+bool CCobInstance::HasTargetWeight(int weaponNum) const
+{
+	return HasFunction(COBFN_TargetWeight + COBFN_Weapon_Funcs * weaponNum);
+}
 
 
 /******************************************************************************/
@@ -539,7 +560,7 @@ int CCobInstance::Call(int id, vector<int> &args)
 
 int CCobInstance::Call(int id, vector<int> &args, CBCobThreadFinish cb, void *p1, void *p2)
 {
-	return RealCall(scriptIndex[id], args, cb, p1, p2);
+	return RealCall(script.scriptIndex[id], args, cb, p1, p2);
 }
 
 

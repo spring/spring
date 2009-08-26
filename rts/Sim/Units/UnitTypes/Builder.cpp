@@ -683,7 +683,7 @@ void CBuilder::DependentDied(CObject *o)
 
 void CBuilder::SetBuildStanceToward(float3 pos)
 {
-	if (script->HasFunction(COBFN_StartBuilding)) {
+	if (script->HasStartBuilding()) {
 		const float3 wantedDir = (pos - midPos).Normalize();
 		const float h = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 		const float p = asin(wantedDir.dot(updir));
