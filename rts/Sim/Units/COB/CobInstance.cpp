@@ -409,6 +409,26 @@ float CCobInstance::TargetWeight(int weaponNum, const CUnit* targetUnit)
 }
 
 
+void CCobInstance::Destroy()       { Call(COBFN_Destroy); }
+void CCobInstance::StartMoving()   { Call(COBFN_StartMoving); }
+void CCobInstance::StopMoving()    { Call(COBFN_StopMoving); }
+void CCobInstance::StartUnload()   { Call(COBFN_StartUnload); }
+void CCobInstance::EndTransport()  { Call(COBFN_EndTransport); }
+void CCobInstance::StartBuilding() { Call(COBFN_StartBuilding); }
+void CCobInstance::StopBuilding()  { Call(COBFN_StopBuilding); }
+void CCobInstance::Falling()       { Call(COBFN_Falling); }
+void CCobInstance::Landed()        { Call(COBFN_Landed); }
+void CCobInstance::Activate()      { Call(COBFN_Activate); }
+void CCobInstance::Deactivate()    { Call(COBFN_Deactivate); }
+void CCobInstance::Go()            { Call(COBFN_Go); }
+void CCobInstance::MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
+void CCobInstance::FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + COBFN_Weapon_Funcs * weaponNum); }
+void CCobInstance::EndBurst(int weaponNum)   { Call(COBFN_EndBurst + COBFN_Weapon_Funcs * weaponNum); }
+
+
+/******************************************************************************/
+
+
 /**
  * @brief Calls a cob script function
  * @param functionId int cob script function id

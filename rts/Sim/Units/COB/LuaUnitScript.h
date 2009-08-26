@@ -75,6 +75,22 @@ public:
 	virtual int  QueryNanoPiece();
 	virtual int  QueryBuildInfo();
 
+	virtual void Destroy();
+	virtual void StartMoving();
+	virtual void StopMoving();
+	virtual void StartUnload();
+	virtual void EndTransport();
+	virtual void StartBuilding();
+	virtual void StopBuilding();
+	virtual void Falling();
+	virtual void Landed();
+	virtual void Activate();
+	virtual void Deactivate();
+	virtual void Go();
+	virtual void MoveRate(int curRate);
+	virtual void FireWeapon(int weaponNum);
+	virtual void EndBurst(int weaponNum);
+
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum);
 	virtual void  AimWeapon(int weaponNum, float heading, float pitch);
