@@ -225,7 +225,7 @@ void CLuaUnitScript::HandleFreed(CLuaHandle* handle)
 		if (script != NULL && script->handle == handle) {
 
 			// we don't have anything better ...
-			(*ui)->script = new CNullUnitScript(*ui);
+			(*ui)->script = &CNullUnitScript::value;
 
 			// signal the destructor it shouldn't unref refs
 			script->L = NULL;
@@ -985,8 +985,12 @@ int CLuaUnitScript::CreateScript(lua_State* L)
 	}
 
 	// replace the unit's script (ctor parses callIn table)
-	delete unit->script;
-	unit->script = new CLuaUnitScript(L, unit);
+	CLuaUnitScript* newScript = new CLuaUnitScript(L, unit);
+
+	if (unit->script != &CNullUnitScript::value) {
+		delete unit->script;
+	}
+	unit->script = newScript;
 
 	LUA_TRACE("script replaced with CLuaUnitScript");
 

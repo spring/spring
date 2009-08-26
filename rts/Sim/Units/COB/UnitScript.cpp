@@ -840,6 +840,12 @@ void CUnitScript::TurnSmooth(int piece, int axis, float destination, int delta, 
 
 int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 {
+	// may happen in case one uses Spring.GetUnitCOBValue (Lua) on a unit with CNullUnitScript
+	if (!unit) {
+		ShowScriptError("Error: no unit (in GetUnitVal)");
+		return 0;
+	}
+
 #ifndef _CONSOLE
 	switch(val)
 	{
@@ -1311,6 +1317,12 @@ int CUnitScript::GetUnitVal(int val, int p1, int p2, int p3, int p4)
 
 void CUnitScript::SetUnitVal(int val, int param)
 {
+	// may happen in case one uses Spring.SetUnitCOBValue (Lua) on a unit with CNullUnitScript
+	if (!unit) {
+		ShowScriptError("Error: no unit (in SetUnitVal)");
+		return;
+	}
+
 #ifndef _CONSOLE
 	switch(val) {
 		case ACTIVATION: {

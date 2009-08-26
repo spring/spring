@@ -10,12 +10,15 @@ class CNullUnitScript : public CUnitScript
 {
 private:
 	std::vector<int> scriptIndex;
+	std::vector<LocalModelPiece*> pieces;
 
 protected:
+	CNullUnitScript();
+
 	virtual void ShowScriptError(const std::string& msg);
 
 public:
-	CNullUnitScript(CUnit* unit);
+	static CNullUnitScript value;
 
 	// callins
 	virtual void RawCall(int functionId);
