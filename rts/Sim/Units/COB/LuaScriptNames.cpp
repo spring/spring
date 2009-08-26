@@ -30,8 +30,8 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_Activate]      = "Activate";
 	scriptNames[LUAFN_Killed]        = "Killed";
 	scriptNames[LUAFN_Deactivate]    = "Deactivate";
-	scriptNames[LUAFN_SetDirection]  = "SetDirection";
-	scriptNames[LUAFN_SetSpeed]      = "SetSpeed";
+	scriptNames[LUAFN_WindChanged]   = "WindChanged";
+	scriptNames[LUAFN_ExtractionRateChanged] = "ExtractionRateChanged";
 	scriptNames[LUAFN_RockUnit]      = "RockUnit";
 	scriptNames[LUAFN_HitByWeapon]   = "HitByWeapon";
 	scriptNames[LUAFN_MoveRate0]     = "MoveRate0";
@@ -54,7 +54,6 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_StopBuilding]         = "StopBuilding";
 	scriptNames[LUAFN_QueryNanoPiece]       = "QueryNanoPiece";
 	scriptNames[LUAFN_QueryBuildInfo]       = "QueryBuildInfo";
-	scriptNames[LUAFN_Go]                   = "Go";
 
 	scriptNames[LUAFN_MoveFinished] = "MoveFinished";
 	scriptNames[LUAFN_TurnFinished] = "TurnFinished";

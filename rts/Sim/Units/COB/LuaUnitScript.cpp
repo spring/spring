@@ -490,15 +490,15 @@ void CLuaUnitScript::Killed()
 }
 
 
-void CLuaUnitScript::SetDirection(float heading)
+void CLuaUnitScript::WindChanged(float heading, float speed)
 {
-	Call(LUAFN_SetDirection, heading);
+	Call(LUAFN_WindChanged, heading, speed);
 }
 
 
-void CLuaUnitScript::SetSpeed(float speed, float)
+void CLuaUnitScript::ExtractionRateChanged(float speed)
 {
-	Call(LUAFN_SetSpeed, speed);
+	Call(LUAFN_ExtractionRateChanged, speed);
 }
 
 
@@ -822,7 +822,6 @@ void CLuaUnitScript::Falling()       { Call(LUAFN_Falling); }
 void CLuaUnitScript::Landed()        { Call(LUAFN_Landed); }
 void CLuaUnitScript::Activate()      { Call(LUAFN_Activate); }
 void CLuaUnitScript::Deactivate()    { Call(LUAFN_Deactivate); }
-void CLuaUnitScript::Go()            { Call(LUAFN_Go); }
 void CLuaUnitScript::MoveRate(int curRate)     { Call(LUAFN_MoveRate0 + curRate); }
 void CLuaUnitScript::FireWeapon(int weaponNum) { Call(LUAFN_FirePrimary + LUAFN_Weapon_Funcs * weaponNum); }
 void CLuaUnitScript::EndBurst(int weaponNum)   { Call(LUAFN_EndBurst + LUAFN_Weapon_Funcs * weaponNum); }

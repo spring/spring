@@ -1829,12 +1829,7 @@ void CUnit::FinishedBuilding(void)
 
 	if (unitDef->windGenerator > 0.0f) {
 		// start pointing in direction of wind
-		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			script->SetSpeed(unitDef->windGenerator, 3000.0f);
-		} else {
-			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
-		}
-		script->SetDirection(GetHeadingFromVectorF(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -2060,14 +2055,10 @@ void CUnit::Deactivate()
 
 void CUnit::UpdateWind(float x, float z, float strength)
 {
-	if (strength > unitDef->windGenerator) {
-		script->SetSpeed(unitDef->windGenerator, 3000.0f);
-	}
-	else {
-		script->SetSpeed(strength, 3000.0f);
-	}
+	const float heading = GetHeadingFromVectorF(-x, -z);
+	strength = std::min(strength, unitDef->windGenerator);
 
-	script->SetDirection(GetHeadingFromVectorF(-x, -z));
+	script->WindChanged(heading, strength);
 }
 
 
@@ -2214,13 +2205,8 @@ void CUnit::PostLoad()
 
 	script->SetSFXOccupy(curTerrainType);
 
-	if (unitDef->windGenerator>0) {
-		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			script->SetSpeed(unitDef->windGenerator, 3000.0f);
-		} else {
-			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
-		}
-		script->SetDirection(GetHeadingFromVectorF(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+	if (unitDef->windGenerator > 0.0f) {
+		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
 	}
 
 	if (activated) {

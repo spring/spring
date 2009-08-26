@@ -204,15 +204,19 @@ void CCobInstance::Killed()
 }
 
 
-void CCobInstance::SetDirection(float heading)
+void CCobInstance::WindChanged(float heading, float speed)
 {
+	Call(COBFN_SetSpeed, (int)(speed * 3000.0f));
 	Call(COBFN_SetDirection, short(heading * RAD2TAANG));
 }
 
 
-void CCobInstance::SetSpeed(float speed, float cob_mult)
+void CCobInstance::ExtractionRateChanged(float speed)
 {
-	Call(COBFN_SetSpeed, (int)(speed * cob_mult));
+	Call(COBFN_SetSpeed, (int)(speed * 500.0f));
+	if (unit->activated) {
+		Call(COBFN_Go);
+	}
 }
 
 
@@ -441,7 +445,6 @@ void CCobInstance::Falling()       { Call(COBFN_Falling); }
 void CCobInstance::Landed()        { Call(COBFN_Landed); }
 void CCobInstance::Activate()      { Call(COBFN_Activate); }
 void CCobInstance::Deactivate()    { Call(COBFN_Deactivate); }
-void CCobInstance::Go()            { Call(COBFN_Go); }
 void CCobInstance::MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
 void CCobInstance::FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + COBFN_Weapon_Funcs * weaponNum); }
 void CCobInstance::EndBurst(int weaponNum)   { Call(COBFN_EndBurst + COBFN_Weapon_Funcs * weaponNum); }
