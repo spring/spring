@@ -253,7 +253,7 @@ bool LocalModelPiece::GetEmitDirPos(float3 &pos, float3 &dir) const
 
 	if (piece->vertexCount == 0) {
 		pos = mat.GetPos();
-		dir = mat.Mul(float3(0,0,-1)) - pos;
+		dir = mat.Mul(float3(0,0,1)) - pos;
 	}
 	else if(piece->vertexCount == 1) {
 		pos = mat.GetPos();
