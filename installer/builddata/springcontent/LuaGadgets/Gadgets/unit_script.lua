@@ -493,11 +493,6 @@ function gadget:UnitCreated(unitID, unitDefID)
 	script.chunk(unitID)
 	local callins = env.script
 
-	-- Remove Create(), Spring calls this too early to be useful to us.
-	-- (framework hasn't had chance to set up units[unitID] entry at that point.)
-	local Create = callins.Create
-	callins.Create = nil
-
 	-- Add framework callins.
 	callins.MoveFinished = MoveFinished
 	callins.TurnFinished = TurnFinished
@@ -527,8 +522,8 @@ function gadget:UnitCreated(unitID, unitDefID)
 	}
 
 	-- Now it's safe to start a thread which will run Create().
-	callins.Create = Create
-	StartThread(unitID, Create)
+	-- (Spring doesn't run it, and if it did, it would do so too early to be useful.)
+	StartThread(unitID, callins.Create)
 end
 
 
