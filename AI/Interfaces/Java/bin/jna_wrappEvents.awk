@@ -204,7 +204,7 @@ function printEventOO(evtIndex) {
 		if (type_jna == "int[]") {
 			# Pointer.getIntArray(int offset, int arraySize)
 			# we assume that the next param contians the array size
-			name = name ".getIntArray(0, " evtsMembers_name[evtIndex, m+1]; ")";
+			name = name ".getIntArray(0, " evtsMembers_name[evtIndex, m+1] ")";
 		}
 		paramsEvt = paramsEvt ", evt." name;
 	}
