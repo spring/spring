@@ -54,6 +54,11 @@ const int MAX_PLAYERS = 251;
 const int MAX_UNITS = 32000;
 
 /**
+ * @brief max weapons per unit
+ */
+const int MAX_WEAPONS_PER_UNIT = 32;
+
+/**
  * @brief near plane
  *
  * Defines the near plane as 2.8f

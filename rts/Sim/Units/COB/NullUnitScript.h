@@ -9,7 +9,6 @@
 class CNullUnitScript : public CUnitScript
 {
 private:
-	std::vector<int> scriptIndex;
 	std::vector<LocalModelPiece*> pieces;
 
 protected:

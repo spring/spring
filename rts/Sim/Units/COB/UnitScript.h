@@ -10,7 +10,6 @@
 
 #include "Object.h"
 #include "Rendering/UnitModels/3DModel.h"
-#include "UnitScriptNames.h"
 
 
 class CUnit;
@@ -76,7 +75,11 @@ protected:
 	};
 
 	std::list<AnimInfo*> anims;
-	const std::vector<int>& scriptIndex;
+
+	bool hasHitByWeaponId;
+	bool hasSetSFXOccupy;
+	bool hasRockUnit;
+	bool hasStartBuilding;
 
 	void UnblockAll(struct AnimInfo * anim);
 
@@ -141,16 +144,13 @@ public:
 	};
 
 public:
-	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex, const std::vector<LocalModelPiece*>& pieces);
+	CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces);
 	virtual ~CUnitScript();
 
 	bool IsBusy() const { return busy; }
 
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
-
-	// takes COBFN_* constant as argument
-	bool HasFunction(int id) const { return scriptIndex[id] >= 0; }
 
 	int Tick(int deltaTime);
 
@@ -183,6 +183,14 @@ public:
 		const AnimInfo* ai = FindAnim(type, piece, axis);
 		return ai && !ai->interpolated;
 	}
+
+	// checks for callin existence
+	bool HasHitByWeaponId() const { return hasHitByWeaponId; }
+	bool HasSetSFXOccupy () const { return hasSetSFXOccupy; }
+	bool HasRockUnit     () const { return hasRockUnit; }
+	bool HasStartBuilding() const { return hasStartBuilding; }
+	virtual bool HasBlockShot   (int weaponNum) const { return false; }
+	virtual bool HasTargetWeight(int weaponNum) const { return false; }
 
 	// callins, called throughout sim
 	virtual void RawCall(int functionId) = 0;

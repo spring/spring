@@ -20,7 +20,7 @@ private:
 	lua_State* L;
 
 	// contrary to COB the list of functions may differ per unit,
-	// so the COBFN_* -> function mapping can differ per unit too.
+	// so the LUAFN_* -> function mapping can differ per unit too.
 	std::vector<int> scriptIndex;
 	std::map<std::string, int> scriptNames;
 
@@ -55,6 +55,12 @@ protected:
 	bool RawRunCallIn(int functionId, int inArgs, int outArgs);
 
 public:
+
+	// takes LUAFN_* constant as argument
+	bool HasFunction(int id) const { return scriptIndex[id] >= 0; }
+
+	virtual bool HasBlockShot(int weaponNum) const;
+	virtual bool HasTargetWeight(int weaponNum) const;
 
 	// callins, called throughout sim
 	virtual void RawCall(int functionId);
