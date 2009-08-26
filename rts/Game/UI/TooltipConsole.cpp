@@ -37,7 +37,7 @@ CTooltipConsole::CTooltipConsole(void) : disabled(false)
 		h = 0.10f;
 	}
 
-	outFont = !!configHandler->Get("TooltipOutlineFont", 0);
+	outFont = !!configHandler->Get("TooltipOutlineFont", 1);
 }
 
 
@@ -52,7 +52,7 @@ void CTooltipConsole::Draw(void)
 		return;
 	}
 
-	const std::string s = mouse->GetCurrentTooltip();
+	const std::string& s = mouse->GetCurrentTooltip();
 
 	glDisable(GL_TEXTURE_2D);
 	glEnable(GL_BLEND);
@@ -63,32 +63,19 @@ void CTooltipConsole::Draw(void)
 		glRectf(x, y, (x + w), (y + h));
 	}
 
-	const float fontScale  = 1.0f;
-	const float fontSize   = fontScale * smallFont->GetSize();
-	const float fontHeight = fontSize * smallFont->GetLineHeight() * gu->pixelY;
+	const float fontSize   = (h * gu->viewSizeY) * (smallFont->GetLineHeight() / 5.75f);
 
 	float curX = x + 0.01f;
-	float curY = y + 0.07f;
+	float curY = y + h - 0.5f * fontSize * smallFont->GetLineHeight() / gu->viewSizeY;
 	glColor4f(1.0f, 1.0f, 1.0f, 0.8f);
 
 	smallFont->Begin();
 	smallFont->SetColors(); //default
 
-	unsigned int p = 0;
-	while (p < s.size()) {
-		std::string s2;
-		for (int a = 0; a < 420; ++a) {
-			s2 += s[p];
-			if ((s[p++] == '\n') || (p >= s.size())) {
-				break;
-			}
-		}
-		if (!outFont) {
-			smallFont->glPrint(curX, curY, fontSize, FONT_NORM, s2);
-		} else {
-			smallFont->glPrint(curX, curY, fontSize, FONT_OUTLINE | FONT_NORM, s2);
-		}
-		curY -= fontHeight;
+	if (outFont) {
+		smallFont->glPrint(curX, curY, fontSize, FONT_ASCENDER | FONT_OUTLINE | FONT_NORM, s);
+	} else {
+		smallFont->glPrint(curX, curY, fontSize, FONT_ASCENDER | FONT_NORM, s);
 	}
 
 	smallFont->End();
