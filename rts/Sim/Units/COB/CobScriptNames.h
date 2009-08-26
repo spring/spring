@@ -10,7 +10,6 @@
 
 
 //These are mapped by the CCobFile at startup to make common function calls faster
-// TODO: check scales of non-ratio arguments
 enum {
 	COBFN_Create,               // -
 	COBFN_Destroy,              // -
@@ -45,8 +44,6 @@ enum {
 	COBFN_QueryNanoPiece,       // out: piecenum
 	COBFN_QueryBuildInfo,       // out: piecenum
 	COBFN_Go,                   // -
-	COBFN_MoveFinished,         // special callin, only used for Lua unit scripts
-	COBFN_TurnFinished,         // idem
 	COBFN_Last,
 
 	// These are special (this set of functions is repeated MAX_WEAPONS_PER_UNIT times)
