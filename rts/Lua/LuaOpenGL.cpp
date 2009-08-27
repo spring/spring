@@ -3589,8 +3589,8 @@ static bool ParseUnitTexture(const string& texture)
 
 	S3DModel* model;
 
-	if (static_cast<size_t>(id) >= uh->MaxUnits()) {
-		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - uh->MaxUnits());
+	if (id < 0) {
+		const FeatureDef* fd = featureHandler->GetFeatureDefByID(-id);
 		if (fd == NULL) {
 			return false;
 		}
@@ -3601,6 +3601,10 @@ static bool ParseUnitTexture(const string& texture)
 			return false;
 		}
 		model = ud->LoadModel();
+	}
+
+	if (model == NULL) {
+		return false;
 	}
 
 	const unsigned int texType = model->textureType;
@@ -3633,8 +3637,8 @@ int LuaOpenGL::Texture(lua_State* L)
 	// NOTE: current formats:
 	//
 	// #12          --  unitDef 12 buildpic
-	// %34:1        --  unitDef 34 s3o tex2
-	// %5034:1      --  featureDef 34+uh->MaxUnits() s3o tex2
+	// %34:0        --  unitDef 34 s3o tex1
+	// %-34:1       --  featureDef 34 s3o tex2
 	// !56          --  lua generated texture 56
 	// $shadow      --  shadowmap
 	// $specular    --  specular cube map

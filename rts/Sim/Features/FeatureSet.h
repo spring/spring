@@ -10,9 +10,11 @@
 #ifndef FEATURESET_H
 #define FEATURESET_H
 
+#include <iterator>
+
 #include "Feature.h"
 
-class CFeatureSetIterator
+class CFeatureSetIterator : public std::iterator<std::input_iterator_tag, CFeature*>
 {
 	private:
 
@@ -36,7 +38,7 @@ class CFeatureSetIterator
 		bool operator!=(const CFeatureSetIterator& other) const { return !(*this == other); }
 };
 
-class CFeatureSetConstIterator
+class CFeatureSetConstIterator : public std::iterator<std::input_iterator_tag, const CFeature*>
 {
 	private:
 
