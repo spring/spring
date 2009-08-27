@@ -453,6 +453,8 @@ void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent)
 	frontdir = parentDir;
 	frontdir.y = 0;
 	speed.y = 0;
+
+	script->Falling(); //start parachute animation
 }
 
 

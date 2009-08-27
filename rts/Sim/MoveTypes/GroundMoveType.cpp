@@ -810,9 +810,6 @@ void CGroundMoveType::UpdateControlledDrop(void)
 	SyncedFloat3& midPos = owner->midPos;
 
 	if (owner->falling) {
-		//set us upright
-		owner->script->Falling(); //start/continue parachute animation
-
 		speed.y += mapInfo->map.gravity * owner->fallSpeed;
 
 		if (owner->speed.y > 0) //sometimes the dropped unit gets an upward force, still unsure where its coming from
