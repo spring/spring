@@ -1205,7 +1205,7 @@ bool CGame::ActionPressed(const Action& action,
 					}
 				}
 
-				logOutput.Print("Skirmish AI controlling for team %i is beeing killed ...", teamToKillId);
+				logOutput.Print("Skirmish AI controlling team %i is beeing killed ...", teamToKillId);
 			}
 		} else {
 			logOutput.Print("/%s: missing mandatory argument \"teamToKill\"", action.command.c_str());
@@ -1325,8 +1325,6 @@ bool CGame::ActionPressed(const Action& action,
 					aiData.isLuaAI    = aiLibInfo->IsLuaAI();
 
 					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
-
-					logOutput.Print("Skirmish AI being created for team %i ...", teamToControlId);
 				}
 			}
 		} else {
@@ -4177,6 +4175,7 @@ void CGame::ClientReadNet()
 				CPlayer::UpdateControlledTeams();
 				eventHandler.PlayerChanged(playerId);
 				if (isLocal) {
+					logOutput.Print("Skirmish AI being created for team %i ...", aiTeamId);
 					eoh->CreateSkirmishAI(skirmishAIId);
 				}
 				break;
@@ -4186,6 +4185,7 @@ void CGame::ClientReadNet()
 				const unsigned int skirmishAIId  = *((unsigned int*)&inbuf[2]); // 4 bytes
 				const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[6];
 				SkirmishAIData* aiData           = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+				const ESkirmishAIStatus oldState = aiData->status;
 				const unsigned aiTeamId          = aiData->team;
 				const unsigned isLocal           = (aiData->hostPlayer == gu->myPlayerNum);
 				const size_t numPlayersInAITeam  = playerHandler->ActivePlayersInTeam(aiTeamId).size();
@@ -4193,19 +4193,26 @@ void CGame::ClientReadNet()
 				CTeam* tai                       = teamHandler->Team(aiTeamId);
 
 				aiData->status = newState;
-				if ((newState == SKIRMAISTATE_DIEING) && isLocal) {
+				if (isLocal && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
 					eoh->DestroySkirmishAI(skirmishAIId);
 				} else if (newState == SKIRMAISTATE_DEAD) {
-					wordCompletion->RemoveWord(aiData->name + " ");
-					skirmishAIHandler.RemoveSkirmishAI(skirmishAIId);
-					// this could be done in the above function as well
-					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
-						// team has no controller left now
-						tai->leader = -1;
+					if (oldState == SKIRMAISTATE_RELOADING) {
+						if (isLocal) {
+							logOutput.Print("Skirmish AI being reloaded for team %i ...", aiTeamId);
+							eoh->CreateSkirmishAI(skirmishAIId);
+						}
+					} else {
+						wordCompletion->RemoveWord(aiData->name + " ");
+						skirmishAIHandler.RemoveSkirmishAI(skirmishAIId);
+						// this could be done in the above function as well
+						if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
+							// team has no controller left now
+							tai->leader = -1;
+						}
+						CPlayer::UpdateControlledTeams();
+						eventHandler.PlayerChanged(playerId);
+						logOutput.Print("Skirmish AI %s, which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
 					}
-					CPlayer::UpdateControlledTeams();
-					eventHandler.PlayerChanged(playerId);
-					logOutput.Print("Skirmish AI %s, which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
 				} else if (newState == SKIRMAISTATE_ALIVE) {
 					logOutput.Print("Skirmish AI %s took over controll of team %i", aiData->name.c_str(), aiTeamId);
 				}
