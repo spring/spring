@@ -11,6 +11,7 @@
 #include "Rendering/UnitModels/3DModel.h"
 #include "Matrix44f.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 
 #define TREE_RADIUS 20
 
@@ -55,8 +56,18 @@ public:
 
 	bool IsInLosForAllyTeam(int allyteam) const
 	{
-		return (this->allyteam == -1 || this->allyteam == allyteam
-			|| loshandler->InLos(this->pos, allyteam));
+		switch (modInfo.featureVisibility) {
+			case CModInfo::FEATURELOS_NONE:
+			default:
+				return loshandler->InLos(this->pos, allyteam);
+			case CModInfo::FEATURELOS_GAIAONLY:
+				return (this->allyteam == -1 || loshandler->InLos(this->pos, allyteam));
+			case CModInfo::FEATURELOS_GAIAALLIED:
+				return (this->allyteam == -1 || this->allyteam == allyteam
+					|| loshandler->InLos(this->pos, allyteam));
+			case CModInfo::FEATURELOS_ALL:
+				return true;
+		}
 	}
 
 	// should not be here
