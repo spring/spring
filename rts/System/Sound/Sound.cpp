@@ -168,10 +168,15 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 		soundItemDefMap::iterator itemDefIt = soundItemDefs.find(name);
 		if (itemDefIt != soundItemDefs.end())
 		{
-			//logOutput.Print("CSound::GetSoundId: %s points to %s", name.c_str(), it->second.c_str());
-			sounds.push_back(new SoundItem(GetWaveBuffer(itemDefIt->second["file"], hardFail), itemDefIt->second));
-			soundMap[name] = newid;
-			return newid;
+			boost::shared_ptr<SoundBuffer> buffer = GetWaveBuffer(itemDefIt->second["file"], hardFail);
+			if (buffer)
+			{
+				sounds.push_back(new SoundItem(buffer, itemDefIt->second));
+				soundMap[name] = newid;
+				return newid;
+			}
+			else
+				return 0;
 		}
 		else
 		{
@@ -464,8 +469,15 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 				{
 					LogObject(LOG_SOUND) << "CSound(): preloading " << name;
 					const size_t newid = sounds.size();
-					sounds.push_back(new SoundItem(GetWaveBuffer(bufmap["file"], true), bufmap));
-					soundMap[name] = newid;
+					boost::shared_ptr<SoundBuffer> buffer = GetWaveBuffer(bufmap["file"], true);
+					if (buffer)
+					{
+						sounds.push_back(new SoundItem(buffer, bufmap));
+						soundMap[name] = newid;
+						return newid;
+					}
+					else
+						return 0;
 				}
 			}
 			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems from " << filename;
