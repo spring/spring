@@ -199,7 +199,7 @@ CBumpWater::CBumpWater()
 	depthCopy    = !!configHandler->Get("BumpWaterUseDepthTexture", 1);
 	depthBits    = configHandler->Get("BumpWaterDepthBits", (gu->atiHacks)?16:24);
 	blurRefl     = !!configHandler->Get("BumpWaterBlurReflection", 0);
-	shoreWaves   = (!!configHandler->Get("", 1)) && mapInfo->water.shoreWaves;
+	shoreWaves   = (!!configHandler->Get("BumpWaterShoreWaves", 1)) && mapInfo->water.shoreWaves;
 	endlessOcean = (!!configHandler->Get("BumpWaterEndlessOcean", 1)) && mapInfo->water.hasWaterPlane
 	               && ((readmap->minheight <= 0.0f) || (mapInfo->water.forceRendering));
 	dynWaves     = (!!configHandler->Get("BumpWaterDynamicWaves", 1)) && (mapInfo->water.numTiles>1);
