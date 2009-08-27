@@ -5,6 +5,7 @@
 #include <stdexcept>
 #include "Util.h"
 #include "mmgr.h"
+#include "LogOutput.h"
 
 #include <sstream>
 #include <string>
@@ -44,7 +45,10 @@ CArchivePool::CArchivePool(const std::string& name):
 	unsigned char c_size[4];
 
 	gzFile in = gzopen (name.c_str(), "rb");
-	if (in == NULL) return;
+	if (in == NULL) {
+		LogObject() << "Error opening " << name;
+		return;
+	}
 
 	while (true) {
 		if (gzeof(in)) {
@@ -54,7 +58,7 @@ CArchivePool::CArchivePool(const std::string& name):
 
 		int length = gzgetc(in);
 		if (length == -1) break;
-		
+
 		if (!gz_really_read(in, &c_name, length)) break;
 		if (!gz_really_read(in, &c_md5, 16)) break;
 		if (!gz_really_read(in, &c_crc32, 4)) break;
@@ -136,7 +140,7 @@ ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
 		}
 		i += j;
 	}
-	
+
 	gzclose(in);
 	return of;
 }

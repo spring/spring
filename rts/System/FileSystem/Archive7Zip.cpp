@@ -1,6 +1,7 @@
 #include "Archive7Zip.h"
 
 #include <algorithm>
+#include <boost/system/error_code.hpp>
 #include <stdexcept>
 #include <string.h>
 
@@ -24,9 +25,18 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	outBuffer = NULL;
 	outBufferSize = 0;
 
-	if (InFile_Open(&archiveStream.file, name.c_str()))
-	{
-		//error
+	allocImp.Alloc = SzAlloc;
+	allocImp.Free = SzFree;
+
+	allocTempImp.Alloc = SzAllocTemp;
+	allocTempImp.Free = SzFreeTemp;
+
+	SzArEx_Init(&db);
+
+	WRes wres = InFile_Open(&archiveStream.file, name.c_str());
+	if (wres) {
+		boost::system::error_code e(wres, boost::system::get_system_category());
+		LogObject() << "Error opening " << name << ": " << e.message() << " (" << e.value() << ")";
 		return;
 	}
 
@@ -36,35 +46,24 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	lookStream.realStream = &archiveStream.s;
 	LookToRead_Init(&lookStream);
 
-	allocImp.Alloc = SzAlloc;
-	allocImp.Free = SzFree;
-
-	allocTempImp.Alloc = SzAllocTemp;
-	allocTempImp.Free = SzFreeTemp;
-
 	CrcGenerateTable();
 
-	SzArEx_Init(&db);
-	SRes res;
-	res = SzArEx_Open(&db, &lookStream.s, &allocImp, &allocTempImp);
-	if (res == SZ_OK)
-	{
+	SRes res = SzArEx_Open(&db, &lookStream.s, &allocImp, &allocTempImp);
+	if (res == SZ_OK) {
 		isOpen = true;
 	}
-	else
-	{
+	else {
 		isOpen = false;
 		std::string error;
-		switch (res)
-		{
+		switch (res) {
 			case SZ_ERROR_FAIL:
-				error = "Extracting faield";
+				error = "Extracting failed";
 				break;
 			case SZ_ERROR_CRC:
 				error = "CRC error (archive corrupted?)";
 				break;
 			case SZ_ERROR_INPUT_EOF:
-				error = "Unexpected end of file (trunkated?)";
+				error = "Unexpected end of file (truncated?)";
 				break;
 			case SZ_ERROR_MEM:
 				error = "Out of memory";
@@ -84,8 +83,7 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 	}
 
 	// Get contents of archive and store name->int mapping
-	for (unsigned i = 0; i < db.db.NumFiles; ++i)
-	{
+	for (unsigned i = 0; i < db.db.NumFiles; ++i) {
 		CSzFileItem *f = db.db.Files + i;
 		if ((f->Size >= 0) && !f->IsDir) {
 			std::string name = f->Name;
@@ -104,9 +102,10 @@ CArchive7Zip::CArchive7Zip(const std::string& name) :
 
 CArchive7Zip::~CArchive7Zip(void)
 {
-	IAlloc_Free(&allocImp, outBuffer);
-	if (isOpen)
-	{
+	if (outBuffer) {
+		IAlloc_Free(&allocImp, outBuffer);
+	}
+	if (isOpen) {
 		File_Close(&archiveStream.file);
 	}
 	SzArEx_Free(&db, &allocImp);
