@@ -396,9 +396,8 @@ static inline const UnitDef* EffectiveUnitDef(const CUnit* unit)
 
 static inline bool IsFeatureVisible(const CFeature* feature)
 {
-	if (feature->allyteam < 0) {
-		return true; // global feature has allyteam -1
-	}
+	if (fullRead)
+		return true;
 	if (readAllyTeam < 0) {
 		return fullRead;
 	}

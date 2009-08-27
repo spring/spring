@@ -1822,6 +1822,9 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 static inline bool IsFeatureVisible(const CFeature* feature)
 {
+	if (CLuaHandle::GetActiveFullRead())
+		return true;
+
 	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
 	const int readAllyTeam = lh->GetReadAllyTeam();
 	if (readAllyTeam < 0) {
