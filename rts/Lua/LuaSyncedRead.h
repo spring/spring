@@ -148,7 +148,6 @@ class LuaSyncedRead {
 		static int GetUnitDefDimensions(lua_State* L);
 
 		static int GetAllFeatures(lua_State* L);
-		static int GetFeatureList(lua_State* L);
 
 		static int ValidFeatureID(lua_State* L);
 		static int GetFeatureDefID(lua_State* L);

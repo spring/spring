@@ -247,7 +247,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitRulesParams);
 
 	REGISTER_LUA_CFUNC(GetAllFeatures);
-	REGISTER_LUA_CFUNC(GetFeatureList);
 	REGISTER_LUA_CFUNC(GetFeatureDefID);
 	REGISTER_LUA_CFUNC(GetFeatureTeam);
 	REGISTER_LUA_CFUNC(GetFeatureAllyTeam);
@@ -3797,21 +3796,6 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 		}
 	}
 	hs_n.PushNumber(L, count);
-	return 1;
-}
-
-
-int LuaSyncedRead::GetFeatureList(lua_State* L)
-{
-	// NOTE: this is not really required now the all FeatureDefs are pre-loaded
-	CheckNoArgs(L, __FUNCTION__);
-	lua_newtable(L); {
-		const map<string, const FeatureDef*>& defs = featureHandler->GetFeatureDefs();
-		map<string, const FeatureDef*>::const_iterator it;
-		for (it = defs.begin(); it != defs.end(); ++it) {
-			LuaPushNamedNumber(L, it->first, it->second->id);
-		}
-	}
 	return 1;
 }
 
