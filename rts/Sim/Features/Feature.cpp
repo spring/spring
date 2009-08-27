@@ -492,6 +492,10 @@ bool CFeature::UpdatePosition()
 			bool haveVerticalSpeed = false;
 			bool inBounds = false;
 
+			// NOTE: apply more drag if we were a tank or bot?
+			// (would require passing extra data to Initialize())
+			deathSpeed *= 0.95f;
+
 			if (deathSpeed.SqLength2D() > 0.01f) {
 				UnBlock();
 				qf->RemoveFeature(this);
@@ -500,9 +504,6 @@ bool CFeature::UpdatePosition()
 				// position) if it's still greater than 0
 				pos += deathSpeed;
 				midPos += deathSpeed;
-				// NOTE: apply more drag if we were a tank or bot?
-				// (would require passing extra data to Initialize())
-				deathSpeed *= 0.95f;
 
 				haveForwardSpeed = true;
 
@@ -534,6 +535,7 @@ bool CFeature::UpdatePosition()
 				// larger than ground height, correct
 				pos.y = realGroundHeight;
 				midPos.y = pos.y + model->relMidPos.y;
+				deathSpeed.y = 0.0f;
 			}
 
 			inBounds = pos.CheckInBounds();
@@ -553,41 +555,41 @@ bool CFeature::UpdatePosition()
 
 		if (!reachedFinalPos)
 			finishedUpdate = false;
-	}
+	}else{
+		if (pos.y > finalHeight) {
+			//! feature is falling
+			if (def->drawType >= DRAWTYPE_TREE)
+				treeDrawer->DeleteTree(pos);
 
-	if (pos.y > finalHeight) {
-		//! feature is falling
-		if (def->drawType >= DRAWTYPE_TREE)
-			treeDrawer->DeleteTree(pos);
+			if (pos.y > 0.0f) {
+				speed.y += mapInfo->map.gravity; //! gravity is negative
+			} else { //! fall slower in water
+				speed.y += mapInfo->map.gravity * 0.5;
+			}
+			pos.y += speed.y;
+			midPos.y += speed.y;
+			transMatrix[13] += speed.y;
 
-		if (pos.y > 0.0f) {
-			speed.y += mapInfo->map.gravity; //! gravity is negative
-		} else { //! fall slower in water
-			speed.y += mapInfo->map.gravity * 0.5;
+			if (def->drawType >= DRAWTYPE_TREE)
+				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
+		} else if (pos.y < finalHeight) {
+			//! if ground is restored, make sure feature does not get buried
+			if (def->drawType >= DRAWTYPE_TREE)
+				treeDrawer->DeleteTree(pos);
+
+			float diff = finalHeight - pos.y;
+			pos.y = finalHeight;
+			midPos.y += diff;
+			transMatrix[13] += diff;
+			speed.y = 0.0f;
+
+			if (def->drawType >= DRAWTYPE_TREE)
+				treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
 		}
-		pos.y += speed.y;
-		midPos.y += speed.y;
-		transMatrix[13] += speed.y;
 
-		if (def->drawType >= DRAWTYPE_TREE)
-			treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
-	} else if (pos.y < finalHeight) {
-		//! if ground is restored, make sure feature does not get buried
-		if (def->drawType >= DRAWTYPE_TREE)
-			treeDrawer->DeleteTree(pos);
-
-		float diff = finalHeight - pos.y;
-		pos.y = finalHeight;
-		midPos.y += diff;
-		transMatrix[13] += diff;
-		speed.y = 0.0f;
-
-		if (def->drawType >= DRAWTYPE_TREE)
-			treeDrawer->AddTree(def->drawType - 1, pos, 1.0f);
+		if (pos.y != finalHeight)
+			finishedUpdate = false;
 	}
-
-	if (pos.y != finalHeight)
-		finishedUpdate = false;
 
 	isUnderWater = ((pos.y + height) < 0.0f);
 	return finishedUpdate;
