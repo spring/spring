@@ -156,6 +156,10 @@ void CFileHandler::Seek(int length, ios_base::seekdir where)
 
 	if (ifs)
 	{
+#ifdef WIN32
+		// on mingw, EOF bit does not get reset when seeking to another pos
+		ifs->clear();
+#endif
 		ifs->seekg(length, where);
 	}
 	else if (hpiFileBuffer)
