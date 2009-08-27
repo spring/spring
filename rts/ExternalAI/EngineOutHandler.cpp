@@ -475,7 +475,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 			id_skirmishAI[skirmishAIId] = aiWrapper_tmp;
 			team_skirmishAIs[aiWrapper_tmp->GetTeamId()].push_back(skirmishAIId);
 
-			aiWrapper->Init();
+			aiWrapper_tmp->Init();
 
 			aiWrapper = aiWrapper_tmp;
 		} HANDLE_EXCEPTION;
