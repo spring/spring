@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "Util.h"
 #include "mmgr.h"
+#include "LogOutput.h"
 using namespace hpiutil;
 
 
@@ -12,8 +13,10 @@ CArchiveHPI::CArchiveHPI(const std::string& name):
 	curSearchHandle(1)
 {
 	hpi = HPIOpen(name.c_str());
-	if (hpi == NULL)
+	if (hpi == NULL) {
+		LogObject() << "Error opening " << name;
 		return;
+	}
 
 	std::vector<hpientry_ptr> ret = HPIGetFiles(*hpi);
 	for (std::vector<hpientry_ptr>::iterator it = ret.begin(); it != ret.end(); it++) {

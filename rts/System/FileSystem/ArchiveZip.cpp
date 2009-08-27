@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include "Util.h"
 #include "mmgr.h"
+#include "LogOutput.h"
 
 
 CArchiveZip::CArchiveZip(const std::string& name):
@@ -17,8 +18,10 @@ CArchiveZip::CArchiveZip(const std::string& name):
 #else
 	zip = unzOpen(name.c_str());
 #endif
-	if (!zip)
+	if (!zip) {
+		LogObject() << "Error opening " << name;
 		return;
+	}
 
 	// We need to map file positions to speed up opening later
 	for (int ret = unzGoToFirstFile(zip); ret == UNZ_OK; ret = unzGoToNextFile(zip)) {
