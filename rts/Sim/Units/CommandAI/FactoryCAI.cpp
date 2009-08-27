@@ -109,7 +109,7 @@ CFactoryCAI::CFactoryCAI(CUnit* owner)
 	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
 		const string name = bi->second;
 
-		const UnitDef* ud = unitDefHandler->GetUnitByName(name);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
 		if (ud == NULL) {
 		  string errmsg = "MOD ERROR: loading ";
 		  errmsg += name.c_str();
@@ -354,7 +354,7 @@ void CFactoryCAI::SlowUpdate()
 		oldSize = commandQue.size();
 		map<int,BuildOption>::iterator boi;
 		if ((boi=buildOptions.find(c.id))!=buildOptions.end()) {
-			const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
+			const UnitDef *def = unitDefHandler->GetUnitDefByName(boi->second.name);
 			if (building) {
 				if (!fac->curBuild && !fac->quedBuild) {
 					building=false;
@@ -373,7 +373,7 @@ void CFactoryCAI::SlowUpdate()
 					CancelRestrictedUnit(c, boi->second);
 				}
 			} else {
-				const UnitDef *def = unitDefHandler->GetUnitByName(boi->second.name);
+				const UnitDef *def = unitDefHandler->GetUnitDefByName(boi->second.name);
 				if(luaRules && !luaRules->AllowUnitCreation(def, owner, NULL)) {
 					if(!repeatOrders || c.options & DONT_REPEAT){
 						boi->second.numQued--;
@@ -517,7 +517,7 @@ void CFactoryCAI::DrawCommands(void)
 
 		if ((ci->id < 0) && (ci->params.size() >= 3)) {
 			BuildInfo bi;
-			bi.def = unitDefHandler->GetUnitByID(-(ci->id));
+			bi.def = unitDefHandler->GetUnitDefByID(-(ci->id));
 			if (ci->params.size() == 4) {
 				bi.buildFacing = int(ci->params[3]);
 			}

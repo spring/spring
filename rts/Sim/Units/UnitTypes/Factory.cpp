@@ -72,7 +72,7 @@ CFactory::~CFactory()
 
 void CFactory::PostLoad()
 {
-	nextBuild = unitDefHandler->GetUnitByName(nextBuildName);
+	nextBuild = unitDefHandler->GetUnitDefByName(nextBuildName);
 	if(opening){
 		script->Activate();
 	}

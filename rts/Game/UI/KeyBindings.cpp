@@ -819,7 +819,7 @@ bool CKeyBindings::FileSave(FILE* out) const
 			string comment;
 			if (unitDefHandler && (action.command.find("buildunit_") == 0)) {
 				const string unitName = action.command.substr(10);
-				const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+				const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
 				if (unitDef) {
 					comment = "  // " + unitDef->humanName + " - " + unitDef->tooltip;
 				}

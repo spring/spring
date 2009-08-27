@@ -291,7 +291,7 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 							if (!loshandler->InLos(float3(x*16+8, 0, y*16+8), gu->myAllyTeam)) {
 								m = 0.25f;
 							} else {
-								const UnitDef* unitdef = unitDefHandler->GetUnitByID(-guihandler->commands[guihandler->inCommand].id);
+								const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-guihandler->commands[guihandler->inCommand].id);
 								CFeature* f;
 
 								GML_RECMUTEX_LOCK(quad); // UpdateExtraTexture - testunitbuildsquare accesses features in the quadfield

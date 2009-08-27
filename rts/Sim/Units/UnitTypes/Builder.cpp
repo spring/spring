@@ -309,7 +309,7 @@ void CBuilder::Update()
 			}
 		}
 		else if(curResurrect && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance){
-			const UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
+			const UnitDef* ud=unitDefHandler->GetUnitDefByName(curResurrect->createdFromUnit);
 			if(ud){
 				if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 					// This corpse has been reclaimed a little, need to restore the resources

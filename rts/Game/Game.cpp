@@ -421,10 +421,10 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	inMapDrawer = new CInMapDraw();
 	cmdColors.LoadConfig("cmdcolors.txt");
 
-	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
+	const std::map<std::string, int>& unitMap = unitDefHandler->unitDefIDsByName;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
-	  wordCompletion->AddWord(uit->first + " ", false, true, false);
+		wordCompletion->AddWord(uit->first + " ", false, true, false);
 	}
 
 	geometricObjects = new CGeometricObjects();
@@ -2474,7 +2474,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
 			}
 
-			const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+			const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
 
 			if (unitDef != NULL) {
 				int xsize = unitDef->xsize;
@@ -4852,7 +4852,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("Missing unit name");
 		return;
 	}
-	const UnitDef* udef = unitDefHandler->GetUnitByName(unitName);
+	const UnitDef* udef = unitDefHandler->GetUnitDefByName(unitName);
 	if (udef==NULL) {
 		logOutput.Print("Unknown unit name");
 		return;

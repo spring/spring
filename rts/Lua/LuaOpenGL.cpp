@@ -1724,7 +1724,7 @@ int LuaOpenGL::UnitShape(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.UnitShape(unitDefID, team)");
 	}
 	const int unitDefID = lua_toint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -3600,7 +3600,7 @@ static bool ParseUnitTexture(const string& texture)
 		}
 		model = LoadModel(fd);
 	} else {
-		const UnitDef* ud = unitDefHandler->GetUnitByID(id);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(id);
 		if (ud == NULL) {
 			return false;
 		}
@@ -3703,7 +3703,7 @@ int LuaOpenGL::Texture(lua_State* L)
 		if (endPtr == startPtr) {
 			lua_pushboolean(L, false);
 		} else {
-			const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 			if (ud != NULL) {
 				glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitDefImage(ud));
 				glEnable(GL_TEXTURE_2D);
@@ -3721,7 +3721,7 @@ int LuaOpenGL::Texture(lua_State* L)
 		if (endPtr == startPtr) {
 			lua_pushboolean(L, false);
 		} else {
-			const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 			if (ud != NULL) {
 				ud->iconType->BindTexture();
 				glEnable(GL_TEXTURE_2D);
@@ -3922,7 +3922,7 @@ static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 	if ((endPtr == startPtr) || (*endPtr != ':')) {
 		return 0;
 	}
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -3971,7 +3971,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (endPtr == startPtr) {
 			return 0;
 		}
-		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 		if (ud == NULL) {
 			return 0;
 		}
@@ -3987,7 +3987,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (endPtr == startPtr) {
 			return 0;
 		}
-		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 		if (ud == NULL) {
 			return 0;
 		}
