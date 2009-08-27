@@ -30,15 +30,15 @@ int VorbisStreamSeek(void* datasource, ogg_int64_t offset, int whence)
 	CFileHandler* buffer = (CFileHandler*)datasource;
 	if (whence == SEEK_SET)
 	{
-		buffer->Seek(offset);
+		buffer->Seek(offset, std::ios_base::beg);
 	}
 	else if (whence == SEEK_CUR)
 	{
-		buffer->Seek(buffer->GetPos() + offset);
+		buffer->Seek(offset, std::ios_base::cur);
 	}
 	else if (whence == SEEK_END)
 	{
-		buffer->Seek(buffer->FileSize() + offset);
+		buffer->Seek(offset, std::ios_base::end);
 	}
 
 	return 0;

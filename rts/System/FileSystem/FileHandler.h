@@ -4,6 +4,7 @@
 #include <set>
 #include <vector>
 #include <string>
+#include <ios>
 
 #include "VFSModes.h"
 
@@ -24,7 +25,7 @@ class CFileHandler {
 		~CFileHandler(void);
 
 		int Read(void* buf,int length);
-		void Seek(int pos);
+		void Seek(int pos, std::ios_base::seekdir where = std::ios_base::beg);
 
 		bool FileExists() const;
 		bool Eof() const;
