@@ -10,11 +10,11 @@ set(mySourceDirRel    "")
 
 
 # Check if the user wants to compile the wrapper
-if    ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
+if    ("${AITYPES}" STREQUAL "ALL" OR "${AITYPES}" STREQUAL "NATIVE")
 	set(AIWRAPPERS_NATIVE TRUE)
-else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
+else  ("${AITYPES}" STREQUAL "ALL" OR "${AITYPES}" STREQUAL "NATIVE")
 	set(AIWRAPPERS_NATIVE FALSE)
-endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
+endif ("${AITYPES}" STREQUAL "ALL" OR "${AITYPES}" STREQUAL "NATIVE")
 
 
 # Check dependencies of the wrapper are met
