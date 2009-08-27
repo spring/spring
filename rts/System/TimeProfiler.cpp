@@ -8,6 +8,7 @@
 
 #include "mmgr.h"
 #include "lib/gml/gml.h"
+#include "LogOutput.h"
 #include "UnsyncedRNG.h"
 
 
