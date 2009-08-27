@@ -394,6 +394,18 @@ static inline const UnitDef* EffectiveUnitDef(const CUnit* unit)
 }
 
 
+static inline bool IsFeatureVisible(const CFeature* feature)
+{
+	if (feature->allyteam < 0) {
+		return true; // global feature has allyteam -1
+	}
+	if (readAllyTeam < 0) {
+		return fullRead;
+	}
+	return feature->IsInLosForAllyTeam(readAllyTeam);
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 //
@@ -2254,9 +2266,7 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	else {
 		for (int i = 0; i < rectFeatureCount; i++) {
 			const CFeature* feature = rectFeatures[i];
-			if ((feature->allyteam != -1) &&
-			    (feature->allyteam != readAllyTeam) &&
-			    !loshandler->InLos(feature->pos, readAllyTeam)) {
+			if (!IsFeatureVisible(feature)) {
 				continue;
 			}
 			count++;
@@ -3678,22 +3688,6 @@ int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static inline bool IsFeatureVisible(const CFeature* feature)
-{
-	if (feature->allyteam < 0) {
-		return true; // global feature has allyteam -1
-	}
-	if (readAllyTeam < 0) {
-		return fullRead;
-	}
-	if ((readAllyTeam != feature->allyteam) &&
-	    (!loshandler->InLos(feature->pos, readAllyTeam))) {
-		return false;
-	}
-	return true;
-}
-
-
 static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
@@ -3803,7 +3797,7 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 int LuaSyncedRead::GetFeatureDefID(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->def->id);
@@ -3814,7 +3808,7 @@ int LuaSyncedRead::GetFeatureDefID(lua_State* L)
 int LuaSyncedRead::GetFeatureTeam(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	if (feature->allyteam < 0) {
@@ -3829,7 +3823,7 @@ int LuaSyncedRead::GetFeatureTeam(lua_State* L)
 int LuaSyncedRead::GetFeatureAllyTeam(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->allyteam);
@@ -3840,7 +3834,7 @@ int LuaSyncedRead::GetFeatureAllyTeam(lua_State* L)
 int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->health);
@@ -3853,7 +3847,7 @@ int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 int LuaSyncedRead::GetFeatureHeight(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->height);
@@ -3864,7 +3858,7 @@ int LuaSyncedRead::GetFeatureHeight(lua_State* L)
 int LuaSyncedRead::GetFeatureRadius(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->radius);
@@ -3875,7 +3869,7 @@ int LuaSyncedRead::GetFeatureRadius(lua_State* L)
 int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->pos.x);
@@ -3888,7 +3882,7 @@ int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	const float3 dir = ::GetVectorFromHeading(feature->heading);
@@ -3902,7 +3896,7 @@ int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 int LuaSyncedRead::GetFeatureHeading(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->heading);
@@ -3913,7 +3907,7 @@ int LuaSyncedRead::GetFeatureHeading(lua_State* L)
 int LuaSyncedRead::GetFeatureResources(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L,  feature->RemainingMetal());
@@ -3928,7 +3922,7 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 int LuaSyncedRead::GetFeatureNoSelect(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushboolean(L, feature->noSelect);
@@ -4188,7 +4182,7 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 			const CFeature* feature = dynamic_cast<const CFeature*>(s);
 			if (feature) {
-				if (fullRead || loshandler->InLos(feature, readAllyTeam)) {
+				if (IsFeatureVisible(feature)) {
 					HSTR_PUSH(L, "feature");
 					lua_pushnumber(L, feature->id);
 					return 2;
@@ -4280,11 +4274,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	// 1 - mobile unit in the way
 	// 2 - free  (or if feature is != 0 then with a
 	//            blocking feature that can be reclaimed)
-	if ((feature == NULL) ||
-	    (!fullRead &&
-	     (feature->allyteam >= 0) &&
-	     (feature->allyteam != readAllyTeam) &&
-	     !loshandler->InLos(feature->pos, readAllyTeam))) {
+	if ((feature == NULL) || !IsFeatureVisible(feature)) {
 		lua_pushnumber(L, retval);
 		return 1;
 	}

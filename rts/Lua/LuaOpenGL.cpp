@@ -1822,19 +1822,12 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 static inline bool IsFeatureVisible(const CFeature* feature)
 {
-	if (feature->allyteam < 0) {
-		return true; // global feature has allyteam -1
-	}
 	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
 	const int readAllyTeam = lh->GetReadAllyTeam();
 	if (readAllyTeam < 0) {
 		return (readAllyTeam == CEventClient::AllAccessTeam);
 	}
-	if ((readAllyTeam != feature->allyteam) &&
-	    (!loshandler->InLos(feature->pos, readAllyTeam))) {
-		return false;
-	}
-	return true;
+	return feature->IsInLosForAllyTeam(readAllyTeam);
 }
 
 
