@@ -11,7 +11,11 @@
 #include "UnsyncedRNG.h"
 
 
-ScopedTimer::ScopedTimer(const char* const myname) : name(myname), starttime(SDL_GetTicks())
+BasicTimer::BasicTimer(const char* const myname) : name(myname), starttime(SDL_GetTicks())
+{
+}
+
+ScopedTimer::ScopedTimer(const char* const myname) : BasicTimer(myname)
 {
 }
 
@@ -21,6 +25,15 @@ ScopedTimer::~ScopedTimer()
 	profiler.AddTime(name, stoptime - starttime);
 }
 
+ScopedOnceTimer::ScopedOnceTimer(const char* const myname) : BasicTimer(myname)
+{
+}
+
+ScopedOnceTimer::~ScopedOnceTimer()
+{
+	const unsigned stoptime = SDL_GetTicks();
+	LogObject() << name << ": " << stoptime - starttime << " ms";
+}
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction

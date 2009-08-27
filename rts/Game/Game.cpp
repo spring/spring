@@ -316,25 +316,33 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
 
-	consoleHistory = new CConsoleHistory;
-	wordCompletion = new CWordCompletion;
-	for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
-	  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
+	{
+		ScopedOnceTimer timer("Loading console");
+		consoleHistory = new CConsoleHistory;
+		wordCompletion = new CWordCompletion;
+		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
+		  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
+		}
 	}
 
-	oldPitch   = 0;
-	oldHeading = 0;
-	oldStatus  = 255;
+	{
+		ScopedOnceTimer timer("Loading sounds");
+		oldPitch   = 0;
+		oldHeading = 0;
+		oldStatus  = 255;
 
-	sound->LoadSoundDefs("gamedata/sounds.lua");
-	chatSound = sound->GetSoundId("IncomingChat", false);
-
+		sound->LoadSoundDefs("gamedata/sounds.lua");
+		chatSound = sound->GetSoundId("IncomingChat", false);
+	}
 	moveWarnings = !!configHandler->Get("MoveWarnings", 1);
 
-	camera = new CCamera();
-	cam2 = new CCamera();
-	mouse = new CMouseHandler();
-	camHandler = new CCameraHandler();
+	{
+		ScopedOnceTimer timer("Camera and mouse");
+		camera = new CCamera();
+		cam2 = new CCamera();
+		mouse = new CMouseHandler();
+		camHandler = new CCameraHandler();
+	}
 	selectionKeys = new CSelectionKeyHandler();
 	tooltip = new CTooltipConsole();
 	iconHandler = new CIconHandler();
@@ -349,41 +357,43 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		throw content_error(sideParser.GetErrorLog());
 	}
 
-	PrintLoadMsg("Parsing definitions");
+	{
+		ScopedOnceTimer timer("Loading defs");
+		PrintLoadMsg("Parsing definitions");
 
-	defsParser = new LuaParser("gamedata/defs.lua",
-	                                SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	// customize the defs environment
-	defsParser->GetTable("Spring");
-	defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
-	defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
-	defsParser->EndTable();
-	// run the parser
-	if (!defsParser->Execute()) {
-		throw content_error(defsParser->GetErrorLog());
+		defsParser = new LuaParser("gamedata/defs.lua",
+										SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		// customize the defs environment
+		defsParser->GetTable("Spring");
+		defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+		defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
+		defsParser->EndTable();
+		// run the parser
+		if (!defsParser->Execute()) {
+			throw content_error(defsParser->GetErrorLog());
+		}
+		const LuaTable root = defsParser->GetRoot();
+		if (!root.IsValid()) {
+			throw content_error("Error loading definitions");
+		}
+		// bail now if any of these tables in invalid
+		// (makes searching for errors that much easier
+		if (!root.SubTable("UnitDefs").IsValid()) {
+			throw content_error("Error loading UnitDefs");
+		}
+		if (!root.SubTable("FeatureDefs").IsValid()) {
+			throw content_error("Error loading FeatureDefs");
+		}
+		if (!root.SubTable("WeaponDefs").IsValid()) {
+			throw content_error("Error loading WeaponDefs");
+		}
+		if (!root.SubTable("ArmorDefs").IsValid()) {
+			throw content_error("Error loading ArmorDefs");
+		}
+		if (!root.SubTable("MoveDefs").IsValid()) {
+			throw content_error("Error loading MoveDefs");
+		}
 	}
-	const LuaTable root = defsParser->GetRoot();
-	if (!root.IsValid()) {
-		throw content_error("Error loading definitions");
-	}
-	// bail now if any of these tables in invalid
-	// (makes searching for errors that much easier
-	if (!root.SubTable("UnitDefs").IsValid()) {
-		throw content_error("Error loading UnitDefs");
-	}
-	if (!root.SubTable("FeatureDefs").IsValid()) {
-		throw content_error("Error loading FeatureDefs");
-	}
-	if (!root.SubTable("WeaponDefs").IsValid()) {
-		throw content_error("Error loading WeaponDefs");
-	}
-	if (!root.SubTable("ArmorDefs").IsValid()) {
-		throw content_error("Error loading ArmorDefs");
-	}
-	if (!root.SubTable("MoveDefs").IsValid()) {
-		throw content_error("Error loading MoveDefs");
-	}
-
 	explGenHandler = new CExplosionGeneratorHandler();
 
 	shadowHandler = new CShadowHandler();

@@ -41,7 +41,7 @@
 #include "UI/InfoConsole.h"
 #include "aGui/Gui.h"
 #include "Exceptions.h"
-
+#include "TimeProfiler.h"
 
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
@@ -53,6 +53,7 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 		settings(setup),
 		savefile(NULL)
 {
+	ScopedOnceTimer timeProfile("CPreGame()");
 	net = new CNetProtocol();
 	activeController=this;
 
