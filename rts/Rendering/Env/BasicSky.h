@@ -13,6 +13,15 @@
 class CBasicSky : public CBaseSky
 {
 public:
+	CBasicSky();
+	virtual ~CBasicSky();
+
+	void Update();
+	void DrawSun();
+	void Draw();
+
+private:
+	void UpdatePart(int ast, int aed, int a3cstart, int a4cstart);
 	void CreateCover(int baseX,int baseY,float* buf);
 	void InitSun();
 	void CreateTransformVectors();
@@ -21,14 +30,10 @@ public:
 	void ResetCloudShadow(int texunit);
 	void SetCloudShadow(int texunit);
 	void CreateClouds();
-	void UpdatePart(int ast, int aed, int a3cstart, int a4cstart);
-	void Update();
-	void DrawSun();
-	void Draw();
+
 	float3 GetCoord(int x,int y);
-	float3 GetTexCoord(int x,int y);
-	CBasicSky();
-	virtual ~CBasicSky();
+	float3 GetDirFromTexCoord(float x, float y);
+	float GetTexCoordFromDir(float3 dir);
 
 	GLuint skyTex;
 	GLuint skyDot3Tex;
@@ -64,9 +69,6 @@ public:
 
 	float domeheight;
 	float domeWidth;
-
-	float3 GetDirFromTexCoord(float x, float y);
-	float GetTexCoordFromDir(float3 dir);
 
 	float sunTexCoordX,sunTexCoordY;
 
