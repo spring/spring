@@ -88,6 +88,18 @@ TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection(const std::st
 	}
 }
 
+bool TdfParser::TdfSection::remove(const std::string& key)
+{
+	valueMap::iterator it = values.find(key);
+	if (it != values.end())
+	{
+		values.erase(it);
+		return true;
+	}
+	else
+		return false;
+}
+
 void TdfParser::TdfSection::add_name_value(const std::string& name, const std::string& value )
 {
 	std::string lowerd_name = StringToLower(name);

@@ -47,6 +47,7 @@
 #endif
 #include "AutohostInterface.h"
 #include "Util.h"
+#include "TdfParser.h"
 #include "GlobalUnsynced.h" // for syncdebug
 #include "Sim/Misc/GlobalConstants.h"
 #include "ConfigHandler.h"
@@ -60,7 +61,6 @@
 	#undef interface
 #endif
 #include "Sim/Misc/GlobalSynced.h"
-//#include "Sim/Misc/TeamHandler.h"
 #include "Server/MsgStrings.h"
 
 
@@ -155,7 +155,22 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	minUserSpeed = setup->minSpeed;
 	noHelperAIs = (bool)setup->noHelperAIs;
 
-	gameData.reset(newGameData);
+	{ // modify and save GameSetup text (remove passwords)
+		TdfParser parser(newGameData->GetSetup().c_str(), newGameData->GetSetup().length());
+		TdfParser::TdfSection* root = parser.GetRootSection();
+		for (TdfParser::TdfSection::sectionsMap::iterator it = root->sections.begin(); it != root->sections.end(); ++it)
+		{
+			if (it->first.substr(0, 6) == "PLAYER")
+				it->second->remove("Password");
+		}
+		std::ostringstream strbuf;
+		parser.print(strbuf);
+		std::string cleanedSetupText = strbuf.str();
+		GameData* newData = new GameData(*newGameData);
+		newData->SetSetup(cleanedSetupText);
+		gameData.reset(newData);
+	}
+
 	if (setup->hostDemo)
 	{
 		Message(str( format(PlayingDemo) %setup->demoName ));

@@ -210,6 +210,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	good_fpu_control_registers("before CGameServer creation");
 	startupData->SetSetup(setup->gameSetupText);
 	gameServer = new CGameServer(settings.get(), false, startupData, setup);
+	delete startupData;
 	gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
 	good_fpu_control_registers("after CGameServer creation");
 }
@@ -337,6 +338,7 @@ void CPreGame::ReadDataFromDemo(const std::string& demoName)
 			good_fpu_control_registers("before CGameServer creation");
 			gameServer = new CGameServer(settings.get(), true, data, tempSetup);
 			gameServer->AddLocalClient(settings->myPlayerName, SpringVersion::GetFull());
+			delete data;
 			good_fpu_control_registers("after CGameServer creation");
 			logOutput.Print("GameServer started");
 			break;
