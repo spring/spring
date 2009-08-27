@@ -59,10 +59,9 @@ public:
 
 private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
-	const FeatureDef* CreateFeatureDef(const LuaTable& luaTable, const std::string& name);
+	void CreateFeatureDef(const LuaTable& luaTable, const std::string& name);
 
 private:
-
 	std::map<std::string, const FeatureDef*> featureDefs;
 	std::vector<const FeatureDef*> featureDefsVector;
 

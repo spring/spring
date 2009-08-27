@@ -285,8 +285,8 @@ static GLuint ParseUnitTexture(const string& texture)
 
 	S3DModel* model;
 
-	if (static_cast<size_t>(id) >= uh->MaxUnits()) {
-		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - uh->MaxUnits());
+	if (id < 0) {
+		const FeatureDef* fd = featureHandler->GetFeatureDefByID(-id);
 		if (fd == NULL) {
 			return 0;
 		}
@@ -297,6 +297,10 @@ static GLuint ParseUnitTexture(const string& texture)
 			return 0;
 		}
 		model = ud->LoadModel();
+	}
+
+	if (model == NULL) {
+		return 0;
 	}
 
 	const unsigned int texType = model->textureType;
