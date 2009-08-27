@@ -170,10 +170,9 @@ void CFileHandler::Seek(int length, ios_base::seekdir where)
 		}
 		else if (where == std::ios_base::end)
 		{
-			hpiOffset += hpiLength;
+			hpiOffset = hpiLength + length;
 		}
 	}
-
 }
 
 
