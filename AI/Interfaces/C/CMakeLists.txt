@@ -66,20 +66,20 @@ set(mySourceDirRel    "src")
 
 
 # Check if the user wants to compile the interface
-if    ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
-	set(AIINTERFACES_NATIVE TRUE)
-else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
-	set(AIINTERFACES_NATIVE FALSE)
-endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
+if    ("${AITYPES}" STREQUAL "ALL" OR "${AITYPES}" STREQUAL "NATIVE")
+	set(AITYPES_NATIVE TRUE)
+else  ("${AITYPES}" STREQUAL "ALL" OR "${AITYPES}" STREQUAL "NATIVE")
+	set(AITYPES_NATIVE FALSE)
+endif ("${AITYPES}" STREQUAL "ALL" OR "${AITYPES}" STREQUAL "NATIVE")
 
 
 # Check dependencies of the interface are met
-if    (AIINTERFACES_NATIVE)
+if    (AITYPES_NATIVE)
 	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
-else  (AIINTERFACES_NATIVE)
+else  (AITYPES_NATIVE)
 	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
 	message ("warning: C & C++ AI Interface will not be built!")
-endif (AIINTERFACES_NATIVE)
+endif (AITYPES_NATIVE)
 
 
 # Build
