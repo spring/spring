@@ -46,7 +46,7 @@ using std::max;
 
 BuildInfo::BuildInfo(const std::string& name, const float3& p, int facing)
 {
-	def = unitDefHandler->GetUnitByName(name);
+	def = unitDefHandler->GetUnitDefByName(name);
 	pos = p;
 	buildFacing = abs(facing) % 4;
 }
@@ -69,7 +69,7 @@ bool BuildInfo::Parse(const Command& c)
 		pos = float3(c.params[0],c.params[1],c.params[2]);
 
 		if(c.id < 0) {
-			def = unitDefHandler->GetUnitByID(-c.id);
+			def = unitDefHandler->GetUnitDefByID(-c.id);
 			buildFacing = 0;
 
 			if (c.params.size() == 4)

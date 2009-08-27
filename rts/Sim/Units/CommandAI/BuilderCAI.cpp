@@ -157,7 +157,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 	map<int, string>::const_iterator bi;
 	for (bi = fac->unitDef->buildOptions.begin(); bi != fac->unitDef->buildOptions.end(); ++bi) {
 		const string name = bi->second;
-		const UnitDef* ud = unitDefHandler->GetUnitByName(name);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
 		if (ud == NULL) {
 		  string errmsg = "MOD ERROR: loading ";
 		  errmsg += name.c_str();
@@ -321,7 +321,7 @@ void CBuilderCAI::GiveCommandReal(const Command& c, bool fromSynced)
 		if (c.params.size() == 4)
 			bi.buildFacing = int(abs(c.params[3])) % 4;
 
-		bi.def = unitDefHandler->GetUnitByName(boi->second);
+		bi.def = unitDefHandler->GetUnitDefByName(boi->second);
 		bi.pos = helper->Pos2BuildPos(bi);
 
 		if (!owner->unitDef->canmove) {
@@ -379,7 +379,7 @@ void CBuilderCAI::SlowUpdate()
 
 	map<int, string>::iterator boi = buildOptions.find(c.id);
 	if (!owner->beingBuilt && boi != buildOptions.end()) {
-		const UnitDef* ud = unitDefHandler->GetUnitByName(boi->second);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByName(boi->second);
 		const float radius = GetUnitDefRadius(ud, c.id);
 		if (inCommand) {
 			if (building) {
@@ -461,7 +461,7 @@ void CBuilderCAI::SlowUpdate()
 			if (c.params.size() == 4)
 				bi.buildFacing = int(abs(c.params[3])) % 4;
 
-			bi.def = unitDefHandler->GetUnitByName(boi->second);
+			bi.def = unitDefHandler->GetUnitDefByName(boi->second);
 
 			CFeature* f = 0;
 			uh->TestUnitBuildSquare(bi, f, owner->allyteam);
@@ -1595,7 +1595,7 @@ void CBuilderCAI::DrawCommands(void)
 
 			if (boi != buildOptions.end()) {
 				BuildInfo bi;
-				bi.def = unitDefHandler->GetUnitByID(-(ci->id));
+				bi.def = unitDefHandler->GetUnitDefByID(-(ci->id));
 
 				if (ci->params.size() == 4) {
 					bi.buildFacing = int(abs(ci->params[3])) % 4;

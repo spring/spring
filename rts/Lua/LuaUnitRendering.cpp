@@ -292,7 +292,7 @@ static GLuint ParseUnitTexture(const string& texture)
 		}
 		model = LoadModel(fd);
 	} else {
-		const UnitDef* ud = unitDefHandler->GetUnitByID(id);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(id);
 		if (ud == NULL) {
 			return 0;
 		}
@@ -335,7 +335,7 @@ static void ParseTextureImage(LuaMatTexture& texUnit, const string& image)
 		if (endPtr == startPtr) {
 			return;
 		}
-		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 		if (ud == NULL) {
 			return;
 		}

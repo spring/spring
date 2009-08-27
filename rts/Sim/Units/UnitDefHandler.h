@@ -20,7 +20,7 @@ class CUnitDefHandler : CommonDefHandler
 public:
 	UnitDef* unitDefs;
 	int numUnitDefs;
-	std::map<std::string, int> unitID;
+	std::map<std::string, int> unitDefIDsByName;
 	std::map<int, std::set<int> > decoyMap;
 	std::set<int> startUnitIDs;
 
@@ -29,8 +29,8 @@ public:
 	void Init();
 	void ProcessDecoys();
 	void AssignTechLevels();
-	const UnitDef* GetUnitByName(std::string name);
-	const UnitDef* GetUnitByID(int id);
+	const UnitDef* GetUnitDefByName(std::string name);
+	const UnitDef* GetUnitDefByID(int id);
 
 	unsigned int GetUnitDefImage(const UnitDef* unitDef);
 	void SetUnitDefImage(const UnitDef* unitDef,

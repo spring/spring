@@ -570,11 +570,11 @@ const UnitDef* CAICallback::GetUnitDef(int unitId)
 
 const UnitDef* CAICallback::GetUnitDef(const char* unitName)
 {
-	return unitDefHandler->GetUnitByName(unitName);
+	return unitDefHandler->GetUnitDefByName(unitName);
 }
 const UnitDef* CAICallback::GetUnitDefById (int unitDefId)
 {
-	return unitDefHandler->GetUnitByID(unitDefId);
+	return unitDefHandler->GetUnitDefByID(unitDefId);
 }
 
 float3 CAICallback::GetUnitPos(int unitId)
@@ -1062,7 +1062,7 @@ void CAICallback::DeleteFigureGroup(int group)
 void CAICallback::DrawUnit(const char* unitName,float3 pos,float rotation,int lifetime,int teamId,bool transparent,bool drawBorder,int facing)
 {
 	CUnitDrawer::TempDrawUnit tdu;
-	tdu.unitdef=unitDefHandler->GetUnitByName(unitName);
+	tdu.unitdef=unitDefHandler->GetUnitDefByName(unitName);
 	if(!tdu.unitdef){
 		logOutput.Print("Unknown unit in CAICallback::DrawUnit %s",unitName);
 		return;
@@ -1457,7 +1457,7 @@ int CAICallback::GetNumUnitDefs ()
 void CAICallback::GetUnitDefList (const UnitDef** list)
 {
 	for (int a=0;a<unitDefHandler->numUnitDefs;a++)
-		list [a] = unitDefHandler->GetUnitByID (a+1);
+		list [a] = unitDefHandler->GetUnitDefByID (a+1);
 }
 
 
@@ -1713,7 +1713,7 @@ const WeaponDef* CAICallback::GetWeaponDefById(int weaponDefId)
 
 bool CAICallback::CanBuildUnit(int unitDefID)
 {
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return false;
 	}

@@ -715,14 +715,14 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	const UnitDef* unitDef = NULL;
 	if (lua_israwstring(L, 1)) {
 		const string defName = lua_tostring(L, 1);
-		unitDef = unitDefHandler->GetUnitByName(defName);
+		unitDef = unitDefHandler->GetUnitDefByName(defName);
 		if (unitDef == NULL) {
 			luaL_error(L, "CreateUnit(): bad unitDef name: %s", defName.c_str());
 			return 0;
 		}
 	} else if (lua_israwnumber(L, 1)) {
 		const int defID = lua_toint(L, 1);
-		unitDef = unitDefHandler->GetUnitByID(defID);
+		unitDef = unitDefHandler->GetUnitDefByID(defID);
 		if (unitDef == NULL) {
 			luaL_error(L, "CreateUnit(): bad unitDef ID: %i", defID);
 			return 0;

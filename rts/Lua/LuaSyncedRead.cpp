@@ -1651,7 +1651,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	set<int> defs;
 	if (lua_isnumber(L, 2)) {
 		const int unitDefID = lua_toint(L, 2);
-		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 		InsertSearchUnitDefs(ud, allied, defs);
 	}
 	else if (lua_istable(L, 2)) {
@@ -1659,7 +1659,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_isnumber(L, -1)) {
 				const int unitDefID = lua_toint(L, -1);
-				const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+				const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 				InsertSearchUnitDefs(ud, allied, defs);
 			}
 		}
@@ -1706,7 +1706,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 
 	// parse the unitDef
 	const int unitDefID = luaL_checkint(L, 2);
-	const UnitDef* unitDef = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (unitDef == NULL) {
 		luaL_error(L, "Bad unitDefID in GetTeamUnitDefCount()");
 	}
@@ -3184,7 +3184,7 @@ int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -3495,7 +3495,7 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 
 			if (canBuild) {
 				// skip build orders that this unit can not start
-				const UnitDef* order_ud = unitDefHandler->GetUnitByID(unitDefID);
+				const UnitDef* order_ud = unitDefHandler->GetUnitDefByID(unitDefID);
 				const UnitDef* builder_ud = unit->unitDef;
 				if ((order_ud == NULL) || (builder_ud == NULL)) {
 					continue; // something is wrong, bail
@@ -4273,7 +4273,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 		lua_pushboolean(L, 0);
 		return 1;
 	}
-	const UnitDef* unitDef = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (unitDef == NULL) {
 		lua_pushboolean(L, 0);
 		return 1;
@@ -4313,7 +4313,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}

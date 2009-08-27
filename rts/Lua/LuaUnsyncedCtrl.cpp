@@ -1718,7 +1718,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 			"Incorrect arguments to SetUnitDefIcon(unitDefID, \"icon\")");
 	}
 	const int unitDefID = lua_toint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -1738,7 +1738,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 		const set<int>& decoySet = fit->second;
 		set<int>::const_iterator dit;
 		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
-  		const UnitDef* decoyDef = unitDefHandler->GetUnitByID(*dit);
+  		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(*dit);
 			decoyDef->iconType = ud->iconType;
 		}
 	}
@@ -1754,7 +1754,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 	}
 
 	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}

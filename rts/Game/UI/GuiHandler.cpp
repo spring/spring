@@ -474,7 +474,7 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 			}
 			inCommand = a;
 			if (commands[a].type == CMDTYPE_ICON_BUILDING) {
-				const UnitDef* ud = unitDefHandler->GetUnitByID(-commands[a].id);
+				const UnitDef* ud = unitDefHandler->GetUnitDefByID(-commands[a].id);
 				SetShowingMetal(ud->extractsMetal > 0);
 			} else {
 				SetShowingMetal(false);
@@ -991,7 +991,7 @@ void CGuiHandler::SetCursorIcon() const
 			BuildInfo bi;
 			bi.pos = minimap->GetMapPosition(mouse->lastx, mouse->lasty);
 			bi.buildFacing = bi.buildFacing;
-			bi.def = unitDefHandler->GetUnitByID(-cmdDesc.id);
+			bi.def = unitDefHandler->GetUnitDefByID(-cmdDesc.id);
 			bi.pos = helper->Pos2BuildPos(bi);
 			// if an unit (enemy), is not in LOS, then TestUnitBuildSquare()
 			// does not consider it when checking for position blocking
@@ -1202,7 +1202,7 @@ bool CGuiHandler::SetActiveCommand(int cmdIndex, bool rmb)
 			break;
 		}
 		case CMDTYPE_ICON_BUILDING: {
-			const UnitDef* ud = unitDefHandler->GetUnitByID(-cd.id);
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(-cd.id);
 			inCommand = cmdIndex;
 			SetShowingMetal(ud->extractsMetal > 0);
 			activeMousePress = false;
@@ -1930,7 +1930,7 @@ bool CGuiHandler::SetActiveCommand(const Action& action,
 				break;
 			}
 			case CMDTYPE_ICON_BUILDING: {
-				const UnitDef* ud=unitDefHandler->GetUnitByID(-cmdDesc.id);
+				const UnitDef* ud=unitDefHandler->GetUnitDefByID(-cmdDesc.id);
 				SetShowingMetal(ud->extractsMetal > 0);
 				actionOffset = actionIndex;
 				lastKeySet = ks;
@@ -2111,7 +2111,7 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			if(dist<0){
 				return defaultRet;
 			}
-			const UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
+			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 
 			if(!unitdef){
 				return defaultRet;
@@ -2385,7 +2385,7 @@ std::vector<BuildInfo> CGuiHandler::GetBuildPos(const BuildInfo& startInfo, cons
 			if(c.id < 0){
 				assert(c.params.size()==4);
 				other.pos = float3(c.params[0],c.params[1],c.params[2]);
-				other.def = unitDefHandler->GetUnitByID(-c.id);
+				other.def = unitDefHandler->GetUnitDefByID(-c.id);
 				other.buildFacing = int(c.params[3]);
 			}
 		}
@@ -2542,7 +2542,7 @@ bool CGuiHandler::DrawUnitBuildIcon(const IconInfo& icon, int unitDefID)
 		return false;
 	}
 
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud != NULL) {
 		const Box& b = icon.visual;
 		glEnable(GL_TEXTURE_2D);
@@ -2600,7 +2600,7 @@ static inline bool BindUnitTexByString(const std::string& str)
 	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
 		return false;
 	}
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return false;
 	}
@@ -2623,7 +2623,7 @@ static inline bool BindIconTexByString(const std::string& str)
 	if ((unitDefID <= 0) || (unitDefID > unitDefHandler->numUnitDefs)) {
 		return false;
 	}
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return false;
 	}
@@ -2925,7 +2925,7 @@ void CGuiHandler::DrawButtons() // Only called by Draw
 			// unit buildpic
 			if (!usedTexture) {
 				if (cmdDesc.id < 0) {
-					const UnitDef* ud = unitDefHandler->GetUnitByID(-cmdDesc.id);
+					const UnitDef* ud = unitDefHandler->GetUnitDefByID(-cmdDesc.id);
 					if (ud != NULL) {
 						DrawUnitBuildIcon(icon, -cmdDesc.id);
 						usedTexture = true;
@@ -3601,7 +3601,7 @@ void CGuiHandler::DrawMapStuff(int onMinimap)
 
 		float dist = ground->LineGroundCol(camerapos,camerapos+mousedir*gu->viewRange*1.4f);
 		if (dist > 0) {
-			const UnitDef* unitdef = unitDefHandler->GetUnitByID(-commands[inCommand].id);
+			const UnitDef* unitdef = unitDefHandler->GetUnitDefByID(-commands[inCommand].id);
 			if (unitdef) {
 				// get the build information
 				float3 pos = camerapos+mousedir*dist;

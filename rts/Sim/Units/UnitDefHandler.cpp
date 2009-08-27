@@ -97,7 +97,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		/*
 		// Restrictions may tell us not to use this unit at all
 		// FIXME: causes mod errors when a unit is restricted to
-		// 0, since GetUnitByName() will return NULL if its UnitDef
+		// 0, since GetUnitDefByName() will return NULL if its UnitDef
 		// has not been loaded -- Kloot
 		const std::map<std::string, int>& resUnits = gameSetup->restrictedUnits;
 
@@ -116,7 +116,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		unitDefs[id].decoyDef   = NULL;
 		unitDefs[id].techLevel  = -1;
 		unitDefs[id].collisionVolume = NULL;
-		unitID[unitName] = id;
+		unitDefIDsByName[unitName] = id;
 		for (int ym = 0; ym < 4; ym++) {
 			unitDefs[id].yardmaps[ym] = 0;
 		}
@@ -175,7 +175,7 @@ void CUnitDefHandler::CleanBuildOptions()
 		while (it != bo.end()) {
 			bool erase = false;
 
-			const UnitDef* bd = GetUnitByName(it->second);
+			const UnitDef* bd = GetUnitDefByName(it->second);
 			if (bd == NULL) {
 				logOutput.Print("WARNING: removed the \"" + it->second +
 				                "\" entry from the \"" + ud.name + "\" build menu");
@@ -206,9 +206,9 @@ void CUnitDefHandler::ProcessDecoys()
 	map<string, string>::const_iterator mit;
 	for (mit = decoyNameMap.begin(); mit != decoyNameMap.end(); ++mit) {
 		map<string, int>::iterator fakeIt, realIt;
-		fakeIt = unitID.find(mit->first);
-		realIt = unitID.find(mit->second);
-		if ((fakeIt != unitID.end()) && (realIt != unitID.end())) {
+		fakeIt = unitDefIDsByName.find(mit->first);
+		realIt = unitDefIDsByName.find(mit->second);
+		if ((fakeIt != unitDefIDsByName.end()) && (realIt != unitDefIDsByName.end())) {
 			UnitDef* fake = &unitDefs[fakeIt->second];
 			UnitDef* real = &unitDefs[realIt->second];
 			fake->decoyDef = real;
@@ -224,8 +224,8 @@ void CUnitDefHandler::FindStartUnits()
 	for (unsigned int i = 0; i < sideParser.GetCount(); i++) {
 		const std::string& startUnit = sideParser.GetStartUnit(i);
 		if (!startUnit.empty()) {
-			std::map<std::string, int>::iterator it = unitID.find(startUnit);
-			if (it != unitID.end()) {
+			std::map<std::string, int>::iterator it = unitDefIDsByName.find(startUnit);
+			if (it != unitDefIDsByName.end()) {
 				startUnitIDs.insert(it->second);
 			}
 		}
@@ -648,9 +648,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 		if (!ud.movedata) {
 			const string errmsg = "WARNING: Couldn't find a MoveClass named " + moveclass + " (used in UnitDef: " + unitName + ")";
-			logOutput.Print(errmsg);
-			// remove the UnitDef
-			throw content_error(errmsg);
+			throw content_error(errmsg); //! invalidate unitDef (this gets catched in ParseUnitDef!)
 		}
 
 		if ((ud.movedata->moveType == MoveData::Hover_Move) ||
@@ -904,12 +902,12 @@ void CUnitDefHandler::ParseUnitDef(const LuaTable& udTable, const string& unitNa
 
 
 
-const UnitDef* CUnitDefHandler::GetUnitByName(std::string name)
+const UnitDef* CUnitDefHandler::GetUnitDefByName(std::string name)
 {
 	StringToLowerInPlace(name);
 
-	std::map<std::string, int>::iterator it = unitID.find(name);
-	if (it == unitID.end()) {
+	std::map<std::string, int>::iterator it = unitDefIDsByName.find(name);
+	if (it == unitDefIDsByName.end()) {
 		return NULL;
 	}
 
@@ -922,7 +920,7 @@ const UnitDef* CUnitDefHandler::GetUnitByName(std::string name)
 }
 
 
-const UnitDef* CUnitDefHandler::GetUnitByID(int id)
+const UnitDef* CUnitDefHandler::GetUnitDefByID(int id)
 {
 	if ((id <= 0) || (id > numUnitDefs)) {
 		return NULL;
@@ -1091,8 +1089,8 @@ void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 
 	map<int, std::string>::const_iterator bo_it;
 	for (bo_it = ud.buildOptions.begin(); bo_it != ud.buildOptions.end(); ++bo_it) {
-		std::map<std::string, int>::const_iterator ud_it = unitID.find(bo_it->second);
-		if (ud_it != unitID.end()) {
+		std::map<std::string, int>::const_iterator ud_it = unitDefIDsByName.find(bo_it->second);
+		if (ud_it != unitDefIDsByName.end()) {
 			AssignTechLevel(unitDefs[ud_it->second], level);
 		}
 	}
