@@ -1123,7 +1123,7 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "moveslow") {
 		camMove[7]=true;
 	}
-	else if (cmd == "aikill") {
+	else if ((cmd == "aikill") || (cmd == "aireload")) {
 		bool badArgs = false;
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
@@ -1133,6 +1133,7 @@ bool CGame::ActionPressed(const Action& action,
 		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
 		size_t skirmishAIId           = 0; // will only be used if !badArgs
 		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
+		const std::string actionName  = cmd.substr(2);
 
 		if (hasArgs) {
 			bool share = false;
@@ -1142,7 +1143,7 @@ bool CGame::ActionPressed(const Action& action,
 			if (args.size() >= 1) {
 				teamToKillId = atoi(args[0].c_str());
 			}
-			if (args.size() >= 2) {
+			if ((args.size() >= 2) && (actionName == "kill")) {
 				teamToReceiveUnitsId = atoi(args[1].c_str());
 				share = true;
 			}
@@ -1153,7 +1154,7 @@ bool CGame::ActionPressed(const Action& action,
 			                                  teamHandler->Team(teamToReceiveUnitsId) : NULL;
 
 			if (teamToKill == NULL) {
-				logOutput.Print("Team to kill: not a valid team number: \"%s\"", args[0].c_str());
+				logOutput.Print("Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
 				badArgs = true;
 			}
 			if (share && teamToReceiveUnits == NULL) {
@@ -1161,7 +1162,7 @@ bool CGame::ActionPressed(const Action& action,
 				badArgs = true;
 			}
 			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId).size() == 0)) {
-				logOutput.Print("Team to kill: not a Skirmish AI team: %i", teamToKillId);
+				logOutput.Print("Team to %s: not a Skirmish AI team: %i", actionName.c_str(), teamToKillId);
 				badArgs = true;
 			} else {
 				const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
@@ -1174,13 +1175,13 @@ bool CGame::ActionPressed(const Action& action,
 				const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
 				const bool weAreLeader  = (teamToKill->leader == gu->myPlayerNum);
 				if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
-					logOutput.Print("Team to kill: player %s is not allowed to kill Skirmish AI controlling team %i (try with /cheat)",
-							fromPlayer->name.c_str(), teamToKillId);
+					logOutput.Print("Team to %s: player %s is not allowed to %s Skirmish AI controlling team %i (try with /cheat)",
+							actionName.c_str(), fromPlayer->name.c_str(), actionName.c_str(), teamToKillId);
 					badArgs = true;
 				}
 			}
 			if (!badArgs && teamToKill->isDead) {
-				logOutput.Print("Team to kill: is a dead team already: %i", teamToKillId);
+				logOutput.Print("Team to %s: is a dead team already: %i", actionName.c_str(), teamToKillId);
 				badArgs = true;
 			}
 #ifndef DEBUG
@@ -1192,34 +1193,44 @@ bool CGame::ActionPressed(const Action& action,
 #endif // DEBUG
 
 			if (!badArgs) {
-				SkirmishAIData* sai = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
-				const bool isLocalSkirmishAI = (sai->hostPlayer == gu->myPlayerNum);
 
-				if (share) {
-					net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
-					// when the AIs team has no units left,
-					// the AI will be destroyed automatically
-				} else {
-					if (isLocalSkirmishAI) {
-						skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 3 /* = AI killed */);
+				if (actionName == "kill") {
+					if (share) {
+						net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
+						// when the AIs team has no units left,
+						// the AI will be destroyed automatically
+					} else {
+						const SkirmishAIData* sai = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+						const bool isLocalSkirmishAI = (sai->hostPlayer == gu->myPlayerNum);
+						if (isLocalSkirmishAI) {
+							skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 3 /* = AI killed */);
+						}
 					}
+				} else if (actionName == "reload") {
+					net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
 				}
 
-				logOutput.Print("Skirmish AI controlling team %i is beeing killed ...", teamToKillId);
+				logOutput.Print("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
 			}
 		} else {
-			logOutput.Print("/%s: missing mandatory argument \"teamToKill\"", action.command.c_str());
+			logOutput.Print("/%s: missing mandatory argument \"teamTo%s\"", action.command.c_str(), actionName.c_str());
 			badArgs = true;
 		}
 
 		if (badArgs) {
 			logOutput.Print("------------------------------------------------");
-			logOutput.Print("Kill a Skirmish AI controlling a team.");
-			logOutput.Print("The team itsself will remain alive,");
-			logOutput.Print("unless a second argument is given,");
-			logOutput.Print("which specifies an active team");
-			logOutput.Print("that will receive all the units of the AI team.");
-			logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
+			if (actionName == "kill") {
+				logOutput.Print("Kill a Skirmish AI controlling a team.");
+				logOutput.Print("The team itsself will remain alive,");
+				logOutput.Print("unless a second argument is given,");
+				logOutput.Print("which specifies an active team");
+				logOutput.Print("that will receive all the units of the AI team.");
+				logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
+			} else if (actionName == "reload") {
+				logOutput.Print("Reload a Skirmish AI controlling a team.");
+				logOutput.Print("The team itsself will remain alive during the process.");
+				logOutput.Print("usage:   /%s teamToReload", action.command.c_str());
+			}
 		}
 	}
 	else if (cmd == "aicontrol") {
