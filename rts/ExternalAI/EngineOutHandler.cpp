@@ -458,9 +458,13 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 		net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, true));
 	}*/
 
-	net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
+	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 
-	if (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->isLuaAI) {
+	if (aiData->status != SKIRMAISTATE_RELOADING) {
+		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_INITIALIZING));
+	}
+
+	if (aiData->isLuaAI) {
 		// currently, we need doing nothing for Lua AIs
 		net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_ALIVE));
 	} else {

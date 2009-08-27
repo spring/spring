@@ -1118,30 +1118,36 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				break;
 			}
 
-			const unsigned aiTeamId         = ais[skirmishAIId].team;
-			const unsigned playerTeamId     = players[playerId].team;
-			const size_t numPlayersInAITeam = countNumPlayersInTeam(players, aiTeamId);
-			const size_t numAIsInAITeam     = countNumSkirmishAIsInTeam(ais, aiTeamId);
-			GameTeam* tpl                   = &teams[playerTeamId];
-			GameTeam* tai                   = &teams[aiTeamId];
-			const bool weAreAIHost          = (ais[skirmishAIId].hostPlayer == playerId);
-			const bool weAreLeader          = (tai->leader == playerId);
-			const bool weAreAllied          = (tpl->teamAllyteam == tai->teamAllyteam);
-			const bool singlePlayer         = (players.size() <= 1);
+			const unsigned aiTeamId          = ais[skirmishAIId].team;
+			const unsigned playerTeamId      = players[playerId].team;
+			const size_t numPlayersInAITeam  = countNumPlayersInTeam(players, aiTeamId);
+			const size_t numAIsInAITeam      = countNumSkirmishAIsInTeam(ais, aiTeamId);
+			GameTeam* tpl                    = &teams[playerTeamId];
+			GameTeam* tai                    = &teams[aiTeamId];
+			const bool weAreAIHost           = (ais[skirmishAIId].hostPlayer == playerId);
+			const bool weAreLeader           = (tai->leader == playerId);
+			const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
+			const bool singlePlayer          = (players.size() <= 1);
+			const ESkirmishAIStatus oldState = ais[skirmishAIId].status;
 
 			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
 				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %aiTeamId));
 				break;
 			}
-			Broadcast(packet); //forward data
+			Broadcast(packet); // forward data
 
 			ais[skirmishAIId].status = newState;
 			if (newState == SKIRMAISTATE_DEAD) {
-				ais.erase(skirmishAIId);
-				if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
-					// team has no controller left now
-					tai->active = false;
-					tai->leader = -1;
+				if (oldState == SKIRMAISTATE_RELOADING) {
+					// skip resetting this AIs management state,
+					// as it will be reinitialized instantly
+				} else {
+					ais.erase(skirmishAIId);
+					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
+						// team has no controller left now
+						tai->active = false;
+						tai->leader = -1;
+					}
 				}
 			}
 			break;
