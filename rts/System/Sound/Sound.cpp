@@ -315,7 +315,7 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 	}
 
 	SoundSource* best = GetNextBestSource(false);
-	if (best && !best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority()))
+	if (best && (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority())))
 		best->Play(&sounds[id], p, velocity, volume, relative);
 	CheckError("CSound::PlaySample");
 }
