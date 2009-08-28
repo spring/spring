@@ -8,50 +8,50 @@
 			* doc:           generate javadoc
 			* pack:          pack java classes and sources into jar files
 			* dist:          install these two jar files
+			* sdk:           create the Java AI SDK in a dir specified through a parameter
 	-->
 
 	<loadfile property="interface.version" srcFile="VERSION"/>
 	<property name="interface.name" value="${ant.project.name}"/>
 
-	<!-- The following values may be overriden in a properties file
-	     which may be specified to ant on the command line like this:
-	     ant -propertyfile ant.properties -->
-	<property name="spring.home" location="../../.."/>
-	<property name="awk.common.scripts.dir" location="${spring.home}/AI/Wrappers/CUtils/bin"/>
-	<property name="build.home" location="${spring.home}/build"/>
-	<property name="build.dir"
-			location="${build.home}/AI/Interfaces/${interface.name}"/>
-	<property name="dist.home" location="${spring.home}/game"/>
-	<property name="dist.dir"
-				location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}"/>
-	<property name="doc.dir"
-				location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}/doc/jdoc"/>
-	<property name="src.java.generated" location="${build.dir}/generated-java-src"/>
-
-	<property name="jar.file.name" value="AIInterface"/>
-	<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
-	<property name="jar.file.name.src" value="${jar.file.name}-src.jar"/>
-	<property name="java.pkg.dir" value="com/springrts/ai"/>
-
-	<property name="spring.ai.interface.home"
-			location="${spring.home}/rts/ExternalAI/Interface"/>
-	<property name="src.java" location="src/java"/>
-	<property name="bin.dir" location="bin"/>
-	<path id="source.path.id">
-		<pathelement path="${src.java}"/>
-		<pathelement path="${src.java.generated}"/>
-	</path>
-	<path id="class.path.id">
-		<fileset dir="data">
-			<include name="jlib/**/*.jar"/>
-		</fileset>
-	</path>
-
-
 
 	<target name="init">
+		<!-- The following values may be overriden in a properties file
+			 which may be specified to ant on the command line like this:
+			 ant -propertyfile ant.properties -->
+		<property name="spring.home" location="../../.."/>
+		<property name="awk.common.scripts.dir" location="${spring.home}/AI/Wrappers/CUtils/bin"/>
+		<property name="build.home" location="${spring.home}/build"/>
+		<property name="build.dir"
+				location="${build.home}/AI/Interfaces/${interface.name}"/>
+		<property name="dist.home" location="${spring.home}/game"/>
+		<property name="dist.dir"
+					location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}"/>
+		<property name="doc.dir"
+					location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}/doc/jdoc"/>
+		<property name="src.java.generated" location="${build.dir}/generated-java-src"/>
+
+		<property name="jar.file.name" value="AIInterface"/>
+		<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
+		<property name="jar.file.name.src" value="${jar.file.name}-src.jar"/>
+		<property name="java.pkg.dir" value="com/springrts/ai"/>
+
+		<property name="spring.ai.interface.home"
+				location="${spring.home}/rts/ExternalAI/Interface"/>
+		<property name="src.java" location="src/java"/>
+		<property name="bin.dir" location="bin"/>
+		<path id="source.path.id">
+			<pathelement path="${src.java}"/>
+			<pathelement path="${src.java.generated}"/>
+		</path>
+		<path id="class.path.id">
+			<fileset dir="data">
+				<include name="jlib/**/*.jar"/>
+			</fileset>
+		</path>
+
 		<mkdir dir="${build.dir}"/>
-		
+
 		<condition property="awk.bin" value="awk.exe" else="awk">
 			<os family="windows" />
 		</condition>
@@ -174,6 +174,28 @@
 	<target name="clean">
 		<delete dir="${src.java.generated}"/>
 		<delete dir="${build.dir}"/>
+	</target>
+
+
+	<target name="sdk-init">
+		<fail message="No valid SDK root set. Please specify like this: -Dsdk.home=/tmp/mySpringJavaAISDK">
+			<condition>
+				<not>
+					<isset property="sdk.home"/>
+				</not>
+			</condition>
+		</fail>
+
+		<property name="build.home" location="${sdk.home}/build"/>
+		<property name="build.dir"  location="${build.home}"/>
+		<property name="dist.home"  location="${sdk.home}"/>
+		<property name="dist.dir"   location="${dist.home}"/>
+		<property name="doc.dir"    location="${dist.home}/doc/jdoc"/>
+		<property name="src.java.generated" location="${build.dir}/generated-java-src"/>
+	</target>
+
+	<target name="sdk" depends="sdk-init, init, dist, doc">
+		<delete dir="${build.dir}" quiet="true"/>
 	</target>
 
 </project>
