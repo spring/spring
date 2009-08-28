@@ -29,6 +29,17 @@ public:
 	void Init();
 	void ProcessDecoys();
 	void AssignTechLevels();
+
+	bool ToggleNoCost() {
+		noCost = !noCost;
+
+		for (int i = 0; i < numUnitDefs; ++i) {
+			unitDefs[i].SetNoCost(noCost);
+		}
+
+		return noCost;
+	}
+
 	const UnitDef* GetUnitDefByName(std::string name);
 	const UnitDef* GetUnitDefByID(int id);
 
@@ -37,8 +48,6 @@ public:
 	                     const std::string& texName);
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     unsigned int texID, int sizex, int sizey);
-
-	bool noCost;
 
 protected:
 	void ParseUnitDef(const LuaTable&, const std::string& name, int id);
@@ -53,12 +62,11 @@ protected:
 
 	void AssignTechLevel(UnitDef& ud, int level);
 
-public:
-//	void CreateBlockingLevels(UnitDef *def,std::string yardmap);
-
 private:
 	void CreateYardMap(UnitDef *def, std::string yardmap);
 	std::map<std::string, std::string> decoyNameMap;
+
+	bool noCost;
 };
 
 extern CUnitDefHandler* unitDefHandler;

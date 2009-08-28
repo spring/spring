@@ -27,6 +27,7 @@ struct UnitModelDef
 
 struct UnitDef
 {
+public:
 	UnitDef() : valid(false) {}
 	~UnitDef();
 	S3DModel* LoadModel() const;
@@ -238,7 +239,7 @@ struct UnitDef
 	bool hoverAttack;
 	bool airStrafe;
 	float dlHoverFactor; // < 0 means it can land, >= 0 indicates how much the unit will move during hovering on the spot
-	bool DontLand () const { return dlHoverFactor >= 0.0f; }
+	bool DontLand() const { return dlHoverFactor >= 0.0f; }
 	bool bankingAllowed;
 
 	float maxAcc;
@@ -354,6 +355,33 @@ struct UnitDef
 	int maxThisUnit;								// number of units of this type allowed simultaneously in the game
 
 	std::map<std::string, std::string> customParams;
+
+	void SetNoCost(bool noCost) {
+		if (noCost) {
+			realMetalCost    = metalCost;
+			realEnergyCost   = energyCost;
+			realMetalUpkeep  = metalUpkeep;
+			realEnergyUpkeep = energyUpkeep;
+			realBuildTime    = buildTime;
+
+			metalCost    =  1.0f;
+			energyCost   =  1.0f;
+			buildTime    = 10.0f;
+			metalUpkeep  =  0.0f;
+			energyUpkeep =  0.0f;
+		} else {
+			metalCost    = realMetalCost;
+			energyCost   = realEnergyCost;
+			buildTime    = realBuildTime;
+			metalUpkeep  = realMetalUpkeep;
+			energyUpkeep = realEnergyUpkeep;
+		}
+	}
+
+private:
+	float realMetalCost,   realEnergyCost;
+	float realMetalUpkeep, realEnergyUpkeep;
+	float realBuildTime;
 };
 
 
