@@ -280,8 +280,9 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 			float size = 6;
 			float3 pos1 = pos;
+			pos1.y += 5.0f;
 			float3 pos2 = pos1;
-			pos2.y += 100;
+			pos2.y += 100.0f;
 
 			va->AddVertexQTC(pos1 - dir1 * size,               0.25f, 0, col);
 			va->AddVertexQTC(pos1 + dir1 * size,               0.25f, 1, col);
@@ -300,7 +301,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 
 			if (pi->label.size() > 0) {
 				font->SetTextColor(pi->color[0]/255.0f, pi->color[1]/255.0f, pi->color[2]/255.0f, 1.0f); //FIXME (overload!)
-				font->glWorldPrint(pi->pos + UpVector * 105, 26.0f, pi->label);
+				font->glWorldPrint(pos2 + UpVector * 6, 26.0f, pi->label);
 			}
 		}
 	}
