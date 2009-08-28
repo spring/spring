@@ -98,6 +98,9 @@ int main (int argc, char* argv[])
 				}
 				cout << " Parameter:" << (int)buffer[3] << endl;
 				break;
+			case NETMSG_COMMAND:
+				cout << "COMMAND Playernum:" << (int)buffer[3] << " Size: " << *(unsigned short*)(buffer+1) << endl;
+				break;
 			default:
 				cout << "MSG: " << (unsigned)buffer[0] << endl;
 		}
