@@ -3722,9 +3722,9 @@ void CGame::ClientReadNet()
 				int serverframenum = *(int*)(inbuf+1);
 				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum-1));
 				if (gs->frameNum == (serverframenum - 1)) {
-					// everything ok, fall through
 				} else {
-					break; // error
+					// error
+					LogObject() << "Error: Keyframe difference: " << gs->frameNum - (serverframenum - 1);
 				}
 			}
 			case NETMSG_NEWFRAME: {
