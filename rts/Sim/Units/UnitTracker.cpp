@@ -203,7 +203,7 @@ float3 CUnitTracker::CalcAveragePos() const
 	float3 p(0,0,0);
 	std::set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
-		p += uh->units[*it]->midPos;
+		p += uh->units[*it]->drawPos;
 	}
 	p /= (float)trackGroup.size();
 	return p;
@@ -216,7 +216,7 @@ float3 CUnitTracker::CalcExtentsPos() const
 	float3 maxPos(-1e9f, -1e9f, -1e9f);
 	std::set<int>::const_iterator it;
 	for (it = trackGroup.begin(); it != trackGroup.end(); ++it) {
-		const float3& p = uh->units[*it]->midPos;
+		const float3& p = uh->units[*it]->drawPos;
 		if (p.x < minPos.x) { minPos.x = p.x; }
 		if (p.y < minPos.y) { minPos.y = p.y; }
 		if (p.z < minPos.z) { minPos.z = p.z; }
@@ -277,7 +277,7 @@ void CUnitTracker::SetCam()
 				break;
 			}
 			default: {
-				pos = u->midPos + (u->speed * gu->timeOffset);
+				pos = u->drawPos;
 				break;
 			}
 		}
@@ -288,10 +288,10 @@ void CUnitTracker::SetCam()
 	float deltaTime = gs->frameNum + gu->timeOffset - lastUpdateTime;
 	lastUpdateTime = gs->frameNum + gu->timeOffset;
 
-	float3 modPlanePos = u->midPos - (u->frontdir * u->radius * 3) + (u->speed * gu->timeOffset);
+	float3 modPlanePos = u->drawPos - (u->frontdir * u->radius * 3);
 	float minHeight = ground->GetHeight2(modPlanePos.x,modPlanePos.z) + (u->radius * 2);
 	if(modPlanePos.y < minHeight) {
-  	modPlanePos.y = minHeight;
+  		modPlanePos.y = minHeight;
 	}
 
 	trackPos += (modPlanePos - trackPos) * (1 - pow(0.95f, deltaTime));
