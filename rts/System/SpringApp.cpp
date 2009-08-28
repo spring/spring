@@ -49,6 +49,8 @@
 #include "bitops.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
+#include "myMath.h"
+#include "FPUCheck.h"
 #include "Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/Sound/Sound.h"
@@ -125,6 +127,8 @@ bool SpringApp::Initialize()
 	CrashHandler::Install();
 
 	ParseCmdLine();
+	CMyMath::Init();
+	good_fpu_control_registers("::Run");
 
 	// log OS version
 	// TODO: improve version logging of non-Windows OSes
@@ -631,6 +635,24 @@ void SpringApp::ParseCmdLine()
 		exit(1);
 	}
 
+	// mutually exclusive options that cause spring to quit immediately
+	if (cmdline->IsSet("help")) {
+		cmdline->PrintUsage("Spring",SpringVersion::GetFull());
+		exit(0);
+	} else if (cmdline->IsSet("version")) {
+		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
+		exit(0);
+	} else if (cmdline->IsSet("projectiledump")) {
+		CCustomExplosionGenerator::OutputProjectileClassInfo();
+		exit(0);
+	} else if (cmdline->IsSet("list-ai-interfaces")) {
+		IAILibraryManager::OutputAIInterfacesInfo();
+		exit(0);
+	} else if (cmdline->IsSet("list-skirmish-ais")) {
+		IAILibraryManager::OutputSkirmishAIInfo();
+		exit(0);
+	}
+
 	if (cmdline->IsSet("config"))
 	{
 		string configSource = cmdline->GetString("config");
@@ -650,25 +672,6 @@ void SpringApp::ParseCmdLine()
 	} else if (cmdline->IsSet("fullscreen")) {
 		fullscreen = true;
 	}
-
-	// mutually exclusive options that cause spring to quit immediately
-	if (cmdline->IsSet("help")) {
-		cmdline->PrintUsage("Spring",SpringVersion::GetFull());
-		exit(0);
-	} else if (cmdline->IsSet("version")) {
-		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
-		exit(0);
-	} else if (cmdline->IsSet("projectiledump")) {
-		CCustomExplosionGenerator::OutputProjectileClassInfo();
-		exit(0);
-	} else if (cmdline->IsSet("list-ai-interfaces")) {
-		IAILibraryManager::OutputAIInterfacesInfo();
-		exit(0);
-	} else if (cmdline->IsSet("list-skirmish-ais")) {
-		IAILibraryManager::OutputSkirmishAIInfo();
-		exit(0);
-	}
-
 
 	if (cmdline->IsSet("textureatlas")) {
 		CTextureAtlas::debug = true;
