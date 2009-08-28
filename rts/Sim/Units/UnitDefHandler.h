@@ -6,10 +6,8 @@
 #include <set>
 
 #include "Sim/Misc/CommonDefHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
 
 
-struct WeaponDef;
 class LuaTable;
 class UnitDef;
 class GuiSoundSet;
