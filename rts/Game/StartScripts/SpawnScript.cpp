@@ -14,6 +14,7 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
+#include "Sim/Units/UnitDef.h"
 #include "Sim/Units/CommandAI/Command.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "LogOutput.h"

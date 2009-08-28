@@ -1,6 +1,7 @@
-
 #ifndef MOD_INFO_H
 #define MOD_INFO_H
+
+#include <string>
 
 class CModInfo
 {

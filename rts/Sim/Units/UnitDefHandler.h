@@ -7,12 +7,12 @@
 
 #include "Sim/Misc/CommonDefHandler.h"
 #include "Sim/MoveTypes/MoveInfo.h"
-#include "UnitDef.h"
 
 
 struct WeaponDef;
 class LuaTable;
-
+class UnitDef;
+class GuiSoundSet;
 
 //this class takes care of all the unit definitions
 class CUnitDefHandler : CommonDefHandler

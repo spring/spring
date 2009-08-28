@@ -36,6 +36,7 @@
 CUnitDefHandler* unitDefHandler;
 
 
+<<<<<<< HEAD
 UnitDef::UnitDefWeapon::UnitDefWeapon()
 : name("NOWEAPON")
 , def(NULL)
@@ -63,7 +64,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon(
 {}
 
 
-CUnitDefHandler::CUnitDefHandler(void): noCost(false)
+CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
 	weaponDefHandler = new CWeaponDefHandler();
 
@@ -1090,26 +1091,4 @@ void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 			AssignTechLevel(unitDefs[ud_it->second], level);
 		}
 	}
-}
-
-
-
-
-
-
-UnitDef::~UnitDef() {
-	for (std::vector<CExplosionGenerator*>::iterator it = sfxExplGens.begin(); it != sfxExplGens.end(); ++it) {
-		delete *it;
-	}
-}
-
-S3DModel* UnitDef::LoadModel() const {
-	// not exactly kosher, but...
-	UnitDef* udef = const_cast<UnitDef*>(this);
-
-	if (udef->modelDef.model == NULL) {
-		udef->modelDef.model = modelParser->Load3DModel(udef->modelDef.modelpath, udef->modelCenterOffset);
-	}
-
-	return (udef->modelDef.model);
 }
