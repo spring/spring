@@ -36,34 +36,6 @@
 CUnitDefHandler* unitDefHandler;
 
 
-<<<<<<< HEAD
-UnitDef::UnitDefWeapon::UnitDefWeapon()
-: name("NOWEAPON")
-, def(NULL)
-, slavedTo(0)
-, mainDir(0, 0, 1)
-, maxAngleDif(-1)
-, fuelUsage(0)
-, badTargetCat(0)
-, onlyTargetCat(0)
-{
-}
-
-
-UnitDef::UnitDefWeapon::UnitDefWeapon(
-	std::string name, const WeaponDef* def, int slavedTo, float3 mainDir, float maxAngleDif,
-	unsigned int badTargetCat, unsigned int onlyTargetCat, float fuelUse):
-	name(name),
-	def(def),
-	slavedTo(slavedTo),
-	mainDir(mainDir),
-	maxAngleDif(maxAngleDif),
-	fuelUsage(fuelUse),
-	badTargetCat(badTargetCat),
-	onlyTargetCat(onlyTargetCat)
-{}
-
-
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
 	weaponDefHandler = new CWeaponDefHandler();
@@ -1073,6 +1045,16 @@ void CUnitDefHandler::AssignTechLevels()
 	}
 }
 
+bool CUnitDefHandler::ToggleNoCost()
+{
+	noCost = !noCost;
+
+	for (int i = 0; i < numUnitDefs; ++i) {
+		unitDefs[i].SetNoCost(noCost);
+	}
+
+	return noCost;
+}
 
 void CUnitDefHandler::AssignTechLevel(UnitDef& ud, int level)
 {
