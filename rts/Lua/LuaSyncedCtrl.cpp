@@ -2149,7 +2149,15 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
-	feature->ForcedMove(pos);
+
+	if (lua_isboolean(L, 5)) {
+		const bool snapToGround = lua_toboolean(L, 5);
+		feature->ForcedMove(pos, snapToGround);
+	} else {
+		// use default argument
+		feature->ForcedMove(pos);
+	}
+
 	return 0;
 }
 
