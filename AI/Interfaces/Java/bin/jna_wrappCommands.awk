@@ -20,6 +20,9 @@ BEGIN {
 	# define the field splitter(-regex)
 	FS = "[ \t]+";
 
+	# Used by other scripts
+	JAVA_MODE = 1;
+
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
