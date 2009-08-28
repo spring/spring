@@ -30,16 +30,7 @@ public:
 	void ProcessDecoys();
 	void AssignTechLevels();
 
-	bool ToggleNoCost() {
-		noCost = !noCost;
-
-		for (int i = 0; i < numUnitDefs; ++i) {
-			unitDefs[i].SetNoCost(noCost);
-		}
-
-		return noCost;
-	}
-
+	bool ToggleNoCost();
 	const UnitDef* GetUnitDefByName(std::string name);
 	const UnitDef* GetUnitDefByID(int id);
 
