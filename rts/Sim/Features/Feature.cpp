@@ -412,7 +412,7 @@ void CFeature::DependentDied(CObject *o)
 }
 
 
-void CFeature::ForcedMove(const float3& newPos)
+void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 {
 	if (blocking) {
 		UnBlock();
@@ -429,10 +429,14 @@ void CFeature::ForcedMove(const float3& newPos)
 	pos = newPos;
 
 	// setup finalHeight
-	if (def->floating) {
-		finalHeight = ground->GetHeight(pos.x, pos.z);
+	if (snapToGround) {
+		if (def->floating) {
+			finalHeight = ground->GetHeight(pos.x, pos.z);
+		} else {
+			finalHeight = ground->GetHeight2(pos.x, pos.z);
+		}
 	} else {
-		finalHeight = ground->GetHeight2(pos.x, pos.z);
+		finalHeight = newPos.y;
 	}
 
 	// setup midPos
