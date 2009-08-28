@@ -63,7 +63,7 @@ UnitDef::UnitDefWeapon::UnitDefWeapon(
 {}
 
 
-CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
+CUnitDefHandler::CUnitDefHandler(void): noCost(false)
 {
 	weaponDefHandler = new CWeaponDefHandler();
 
@@ -891,13 +891,9 @@ void CUnitDefHandler::ParseUnitDef(const LuaTable& udTable, const string& unitNa
 
 	unitDefs[id].valid = true;
 
-	if (noCost) {
-		unitDefs[id].metalCost    = 1;
-		unitDefs[id].energyCost   = 1;
-		unitDefs[id].buildTime    = 10;
-		unitDefs[id].metalUpkeep  = 0;
-		unitDefs[id].energyUpkeep = 0;
-	}
+	// force-initialize the real* members
+	unitDefs[id].SetNoCost(true);
+	unitDefs[id].SetNoCost(noCost);
 }
 
 

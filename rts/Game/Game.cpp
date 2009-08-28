@@ -2364,15 +2364,11 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 	}
 	else if (action.command == "nocost" && gs->cheatEnabled) {
-		for(int i = 0; i < unitDefHandler->numUnitDefs; ++i) {
-			unitDefHandler->unitDefs[i].metalCost = 1;
-			unitDefHandler->unitDefs[i].energyCost = 1;
-			unitDefHandler->unitDefs[i].buildTime = 10;
-			unitDefHandler->unitDefs[i].metalUpkeep = 0;
-			unitDefHandler->unitDefs[i].energyUpkeep = 0;
+		if (unitDefHandler->ToggleNoCost()) {
+			logOutput.Print("Everything is for free!");
+		} else {
+			logOutput.Print("Everything costs resources again!");
 		}
-		unitDefHandler->noCost = true;
-		logOutput.Print("Everything is for free!");
 	}
 	else if (action.command == "give" && gs->cheatEnabled) {
 		std::string s = "give "; //FIXME lazyness
