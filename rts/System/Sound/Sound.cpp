@@ -480,7 +480,7 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 						return 0;
 				}
 			}
-			LogObject(LOG_SOUND) << "CSound(): Sucessfully parsed " << keys.size() << " SoundItems from " << filename;
+			LogObject(LOG_SOUND) << "CSound(): Successfully parsed " << keys.size() << " SoundItems from " << filename;
 		}
 	}
 	return true;
