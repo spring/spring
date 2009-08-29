@@ -1,5 +1,5 @@
 #!/bin/sh
-# Author: Tobi Vollebregt
+# Author: hoijui
 
 # absolute or relative to spring source root
 # default:
@@ -11,8 +11,8 @@ then
 fi
 
 # Sanity check.
-if ! which zip >/dev/null; then
-	echo "Error: Could not find zip."
+if ! which 7z >/dev/null; then
+	echo "Error: Could not find 7z."
 	exit 1
 fi
 
@@ -31,36 +31,22 @@ cd installer/builddata/
 
 echo Updating bitmaps.sdz
 cd bitmaps/
-zip -qu ${BUILD_DIR}/spring/bitmaps.sdz modinfo.lua
-zip -qu ${BUILD_DIR}/spring/bitmaps.sdz bitmaps/*
-zip -qu ${BUILD_DIR}/spring/bitmaps.sdz bitmaps/*/*
+7z a -tzip -r -x\!README.txt ${BUILD_DIR}/spring/bitmaps.sdz *
 cd ..
 
 echo Updating springcontent.sdz
 cd springcontent/
-zip -qu ${BUILD_DIR}/springcontent.sdz modinfo.lua
-zip -qu ${BUILD_DIR}/springcontent.sdz EngineOptions.lua
-zip -qu ${BUILD_DIR}/springcontent.sdz gamedata/*
-zip -qu ${BUILD_DIR}/springcontent.sdz gamedata/*/*
-zip -qu ${BUILD_DIR}/springcontent.sdz bitmaps/*
-zip -qu ${BUILD_DIR}/springcontent.sdz bitmaps/*/*
-zip -qu ${BUILD_DIR}/springcontent.sdz anims/*
-zip -qu ${BUILD_DIR}/springcontent.sdz shaders/*
-zip -qu ${BUILD_DIR}/springcontent.sdz LuaGadgets/*
-zip -qu ${BUILD_DIR}/springcontent.sdz LuaGadgets/*/*
+7z a -tzip -r ${BUILD_DIR}/springcontent.sdz *
 cd ..
 
 echo Updating maphelper.sdz
 cd maphelper/
-zip -qu ${BUILD_DIR}/maphelper.sdz modinfo.lua
-zip -qu ${BUILD_DIR}/maphelper.sdz MapOptions.lua
-zip -qu ${BUILD_DIR}/maphelper.sdz maphelper/*
+7z a -tzip -r ${BUILD_DIR}/maphelper.sdz *
 cd ..
 
 echo Updating cursors.sdz
 cd cursors/
-zip -qu ${BUILD_DIR}/cursors.sdz modinfo.lua
-zip -qu ${BUILD_DIR}/cursors.sdz anims/*
+7z a -tzip -r ${BUILD_DIR}/cursors.sdz *
 cd ..
 
 cd ../..
