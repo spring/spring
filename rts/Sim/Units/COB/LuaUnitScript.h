@@ -139,8 +139,12 @@ private:
 	static int WaitForTurn(lua_State* L);
 	static int WaitForMove(lua_State* L);
 
-	// Lua COB functions to work around lack of working CBCobThreadFinish
+	// Lua COB function to work around lack of working CBCobThreadFinish
 	static int SetDeathScriptFinished(lua_State* L);
+
+	static int GetPieceTranslation(lua_State* L); // matches Move
+	static int GetPieceRotation(lua_State* L);    // matches Turn
+	static int GetPiecePosDir(lua_State* L);      // EmitDirPos (in unit space)
 };
 
 #endif

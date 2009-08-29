@@ -871,6 +871,10 @@ bool CLuaUnitScript::PushEntries(lua_State* L)
 
 	REGISTER_LUA_CFUNC(SetDeathScriptFinished);
 
+	REGISTER_LUA_CFUNC(GetPieceTranslation);
+	REGISTER_LUA_CFUNC(GetPieceRotation);
+	REGISTER_LUA_CFUNC(GetPiecePosDir);
+
 	lua_rawset(L, -3);
 
 	// backwards compatibility
@@ -920,7 +924,7 @@ static inline CUnit* ParseRawUnit(lua_State* L, const char* caller, int index)
 	}
 	const int unitID = lua_toint(L, index);
 	if ((unitID < 0) || (static_cast<size_t>(unitID) >= uh->MaxUnits())) {
-		luaL_error(L, "%s(): Bad unitID: %d\n", caller, unitID);
+		luaL_error(L, "%s(): Bad unitID: %d", caller, unitID);
 	}
 	return uh->units[unitID];
 }
@@ -1326,6 +1330,65 @@ int CLuaUnitScript::SetDeathScriptFinished(lua_State* L)
 	return 0;
 }
 
+/******************************************************************************/
+
+static inline LocalModelPiece* ParseLocalModelPiece(lua_State* L, const char* caller)
+{
+	CUnit* unit = ParseUnit(L, __FUNCTION__, 1);
+	if (unit == NULL) {
+		return NULL;
+	}
+	const int piece = luaL_checkint(L, 2) - 1;
+	LocalModelPiece* p = unit->script->GetLocalModelPiece(piece);
+	if (p == NULL) {
+		luaL_error(L, "%s(): Invalid piecenumber", caller);
+	}
+	return p;
+}
+
+
+static inline int ToLua(lua_State* L, const float3& v)
+{
+	lua_pushnumber(L, v.x);
+	lua_pushnumber(L, v.y);
+	lua_pushnumber(L, v.z);
+	return 3;
+}
+
+
+int CLuaUnitScript::GetPieceTranslation(lua_State* L)
+{
+	LocalModelPiece* piece = ParseLocalModelPiece(L, __FUNCTION__);
+	if (piece == NULL) {
+		return 0;
+	}
+	return ToLua(L, piece->pos - piece->original->offset);
+}
+
+
+int CLuaUnitScript::GetPieceRotation(lua_State* L)
+{
+	LocalModelPiece* piece = ParseLocalModelPiece(L, __FUNCTION__);
+	if (piece == NULL) {
+		return 0;
+	}
+	return ToLua(L, piece->rot);
+}
+
+
+int CLuaUnitScript::GetPiecePosDir(lua_State* L)
+{
+	LocalModelPiece* piece = ParseLocalModelPiece(L, __FUNCTION__);
+	if (piece == NULL) {
+		return 0;
+	}
+	float3 pos, dir;
+	if (!piece->GetEmitDirPos(pos, dir)) {
+		return 0;
+	}
+	ToLua(L, pos); ToLua(L, dir);
+	return 6;
+}
 
 /******************************************************************************/
 /******************************************************************************/
