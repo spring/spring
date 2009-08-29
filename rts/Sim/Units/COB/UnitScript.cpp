@@ -87,8 +87,10 @@ CUnitScript::~CUnitScript()
 		delete *i;
 	}
 
-	// Remove us from possible animation ticking (should only be needed when !anims.empty()
-	GUnitScriptEngine.RemoveInstance(this);
+	// Remove us from possible animation ticking
+	if (!anims.empty()) {
+		GUnitScriptEngine.RemoveInstance(this);
+	}
 }
 
 
