@@ -111,7 +111,7 @@ bool SoundSource::IsPlaying() const
 	ALint state;
 	alGetSourcei(id, AL_SOURCE_STATE, &state);
 	CheckError("SoundSource::IsPlaying");
-	if (state == AL_PLAYING)
+	if (state == AL_PLAYING || curStream)
 		return true;
 	else
 	{
@@ -184,7 +184,7 @@ void SoundSource::StreamStop()
 {
 	if (curStream)
 	{
-			boost::mutex::scoped_lock lock(streamMutex);
+		boost::mutex::scoped_lock lock(streamMutex);
 		if (curStream->current)
 		{
 			curStream->stopRequest = true;
