@@ -6,10 +6,12 @@
 #include <vorbis/vorbisfile.h>
 
 #include <string>
+#include <vector>
 
 class COggStream
 {
 public:
+	typedef std::vector<std::string> TagVector;
 	COggStream(ALuint source);
 	~COggStream();
 
@@ -19,6 +21,7 @@ public:
 	void Update();
 	float GetPlayTime();
 	float GetTotalTime();
+	const TagVector& VorbisTags();
 
 private:
 	void DisplayInfo();
@@ -37,7 +40,6 @@ private:
 
 	OggVorbis_File oggStream;
 	vorbis_info* vorbisInfo;
-	vorbis_comment* vorbisComment;
 
 	ALuint buffers[2];
 	ALuint source;
@@ -48,6 +50,9 @@ private:
 
 	unsigned msecsPlayed;
 	unsigned lastTick;
+	
+	std::vector<std::string> vorbisTags;
+	std::string vendor;
 };
 
 
