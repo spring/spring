@@ -23,7 +23,11 @@ for %%a in (cd) do set BUILD_DIR=%%~dpa
 rem move to spring source root
 cd %~dp0..
 
-set ZIP_EXEC=%~dp0pkzip -silent
+rem set EXEC_7Z=%~dp07z
+if "%ERRORLEVEL%" == "0" goto ok7z
+echo 7z.exe not found, please make sure it is in your PATH environment variable.
+exit /B 1
+:ok7z
 
 cd %~dp0\builddata
 
@@ -33,48 +37,26 @@ if not exist "%BUILD_DIR%\spring" mkdir "%BUILD_DIR%\spring"
 echo Creating bitmaps.sdz
 if exist "%BUILD_DIR%\spring\bitmaps.sdz" del "%BUILD_DIR%\spring\bitmaps.sdz"
 cd bitmaps
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip bitmaps\*
-cd ..\..
-%ZIP_EXEC% -add _temp.zip builddata\bitmaps\modinfo.lua
-rename _temp.zip bitmaps.sdz
-move /Y bitmaps.sdz "%BUILD_DIR%\spring"
-cd builddata
+%EXEC_7Z% a -tzip -r -x!README.txt %BUILD_DIR%\spring\bitmaps.sdz *
+cd ..
 
 echo Creating springcontent.sdz
 if exist "%BUILD_DIR%\springcontent.sdz" del "%BUILD_DIR%\springcontent.sdz"
 cd springcontent
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip gamedata\*
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip bitmaps\*
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip anims\*
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip shaders\*
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip LuaGadgets\*
-cd ..\..
-%ZIP_EXEC% -add _temp.zip builddata\springcontent\modinfo.lua
-%ZIP_EXEC% -add _temp.zip builddata\springcontent\EngineOptions.lua
-rename _temp.zip springcontent.sdz
-move /Y springcontent.sdz "%BUILD_DIR%"
-cd builddata
+%EXEC_7Z% a -tzip %BUILD_DIR%\springcontent.sdz *
+cd ..
 
 echo Creating maphelper.sdz
 if exist "%BUILD_DIR%\maphelper.sdz" del "%BUILD_DIR%\maphelper.sdz"
 cd maphelper
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip maphelper\*
-cd ..\..
-%ZIP_EXEC% -add _temp.zip builddata\maphelper\modinfo.lua
-%ZIP_EXEC% -add _temp.zip builddata\maphelper\MapOptions.lua
-rename _temp.zip maphelper.sdz
-move /Y maphelper.sdz "%BUILD_DIR%"
-cd builddata
+%EXEC_7Z% a -tzip %BUILD_DIR%\maphelper.sdz *
+cd ..
 
 echo Creating cursors.sdz
 if exist "%BUILD_DIR%\cursors.sdz" del "%BUILD_DIR%\cursors.sdz"
 cd cursors
-%ZIP_EXEC% -add -dir=current ..\..\_temp.zip anims\*
-cd ..\..
-%ZIP_EXEC% -add _temp.zip builddata\cursors\modinfo.lua
-rename _temp.zip cursors.sdz
-move /Y cursors.sdz "%BUILD_DIR%"
-cd builddata
+%EXEC_7Z% a -tzip %BUILD_DIR%\cursors.sdz *
+cd ..
 
 cd ..
 endlocal
