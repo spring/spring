@@ -1,5 +1,25 @@
 Spring change log
 
+0.80.3.0:
+Bugfixes:
+ - fix direct control unit movement (forwards and backwards)
+ - don't spam empty directories everywhere
+ - fix BA crash when doom was installed
+ - fix desync in pathfinder
+ - fix music timing
+ - single units should move in straight lines again
+ - fix shadows on features
+ - fix LocalModelPiece::GetPiecePosIter,GetPos,GetEmitDirPos
+ - fix vertical text aligning of multiple GUI controls
+ - fix jumping in middle click scrolling (windows)
+ - massive speedup in Spring.GetVisibleUnits
+ - added changed font vertical alignment opchars in gl.Text & luaFonts
+ - fix wreckages sinking in the ground
+ - add a modinfo featureLOS.featureVisibility tag
+ - fix BumpWater shorewaves
+ - make /nocost reversible
+
+
 0.80.2.0:
 Bugfixes:
  - fix creation of DDS textures
