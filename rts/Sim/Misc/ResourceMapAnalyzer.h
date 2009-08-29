@@ -36,6 +36,13 @@ class CResourceMapAnalyzer {
 		float3 GetNearestSpot(float3 fromPos, int team, const UnitDef* extractor = NULL) const;
 		float3 GetNearestSpot(int builderUnitId, const UnitDef* extractor = NULL) const;
 		float GetAverageIncome() const;
+		/**
+		 * Returns positions indicating where to place resource extractors on the map.
+		 * Only the x and z values give the location of the spots, while the y values
+		 * represents the actual amount of resource an extractor placed there can make.
+		 * You should only compare the y values to each other, and not try to estimate
+		 * effective output from spots.
+		 */
 		const std::vector<float3>& GetSpots() const;
 
 	private:
