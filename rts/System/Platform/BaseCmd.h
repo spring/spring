@@ -8,6 +8,10 @@
 #ifndef BASECMD_H
 #define BASECMD_H
 
+#ifdef __APPLE__
+#pragma GCC visibility push(default)
+#endif
+
 #include <vector>
 #include <string>
 #include <boost/program_options.hpp>
@@ -87,4 +91,7 @@ protected:
 	boost::program_options::options_description all;
 };
 
+#endif
+#ifdef __APPLE__
+#pragma GCC visibility pop
 #endif
