@@ -56,6 +56,8 @@ public:
 
 	bool IsInLosForAllyTeam(int allyteam) const
 	{
+		if (alwaysVisible)
+			return true;
 		switch (modInfo.featureVisibility) {
 			case CModInfo::FEATURELOS_NONE:
 			default:
