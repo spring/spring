@@ -172,6 +172,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddGrass);
 	REGISTER_LUA_CFUNC(RemoveGrass);
 
+	REGISTER_LUA_CFUNC(SetFeatureAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
@@ -2117,6 +2118,21 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 	feature->ChangeTeam(team);
 	return 0;
 }
+
+
+int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	if (!lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitAlwaysVisible()");
+	}
+	feature->alwaysVisible = lua_toboolean(L, 2);
+	return 0;
+}
+
 
 int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 {
