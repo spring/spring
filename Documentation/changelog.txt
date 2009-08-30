@@ -19,6 +19,16 @@ Bugfixes:
  - fix BumpWater shorewaves
  - make /nocost reversible
 
+Lua:
+ - add snapToGround bool param to SetFeaturePosition (default true)
+ - add SetFeatureAlwaysVisible (analog to SetUnitAlwaysVisible)
+ - added changed font vertical alignment opchars in gl.Text & luaFonts (baseline renamed to 'd'->'x', and use 'd' for descender)
+ - unit script: added GetPieceTranslation, GetPieceRotation, GetPiecePosDir
+ - unit script: SetSpeed/SetDirection/Go changes (see commit
+ b49928454225f19f5c439c908c0a8cad775fb7ed)
+ - unit script: removed Create (framework handles it)
+ - 
+
 
 0.80.2.0:
 Bugfixes:
