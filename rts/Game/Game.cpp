@@ -502,8 +502,8 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	eventHandler.GamePreload();
 
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START, 0.0f);
 	glFogf(GL_FOG_START,gu->viewRange*mapInfo->atmosphere.fogStart);
+	glFogf(GL_FOG_END, gu->viewRange);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
 	glEnable(GL_FOG);

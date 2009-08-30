@@ -559,8 +559,10 @@ void CFeatureHandler::Draw()
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
-	glEnable(GL_FOG);
-	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	if(gu->drawFog) {
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	}
 
 	unitDrawer->SetupForUnitDrawing();
 	unitDrawer->SetupFor3DO();
@@ -618,8 +620,10 @@ void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading)
 	glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER,0.5f);
 
-	glEnable(GL_FOG);
-	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	if(gu->drawFog) {
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	}
 
 	double plane[4]={0,submerged?-1:1,0,0};
 	glClipPlane(GL_CLIP_PLANE3, plane);

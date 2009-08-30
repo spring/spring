@@ -636,6 +636,11 @@ void CProjectileHandler::Draw(bool drawReflection, bool drawRefraction) {
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(1);
 
+	if(gu->drawFog) {
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	}
+
 	CVertexArray* va = GetVertexArray();
 
 	/* Putting in, say, viewport culling will deserve refactoring. */
