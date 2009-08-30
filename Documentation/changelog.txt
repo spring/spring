@@ -1,5 +1,11 @@
 Spring change log
 
+0.80.4.0:
+Bugfixes:
+ - don't reclaim dragonteeth with area-reclaim
+ - lua unit script framework respects script tag
+
+
 0.80.3.0:
 Bugfixes:
  - fix direct control unit movement (forwards and backwards)
