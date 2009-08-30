@@ -12,4 +12,11 @@ class LuaConstCOB
 		static bool PushEntries(lua_State* L);
 };
 
+
+class LuaConstSFX
+{
+	public:
+		static bool PushEntries(lua_State* L);
+};
+
 #endif

@@ -1,6 +1,23 @@
 #ifndef COBDEFINES_H
 #define COBDEFINES_H
 
+/* update LuaConstCOB.cpp anytime this is updated! */
+
+
+// Indices for emit-sfx
+#define SFX_VTOL                 0
+#define SFX_WAKE                 2
+#define SFX_WAKE_2               3  // same as SFX_WAKE
+#define SFX_REVERSE_WAKE         4
+#define SFX_REVERSE_WAKE_2       5  // same as SFX_REVERSE_WAKE
+#define SFX_WHITE_SMOKE        257
+#define SFX_BLACK_SMOKE        258
+#define SFX_BUBBLE             259
+#define SFX_CEG               1024
+#define SFX_FIRE_WEAPON       2048
+#define SFX_DETONATE_WEAPON   4096
+
+
 // Indices for set/get value
 #define ACTIVATION           1  // set or get
 #define STANDINGMOVEORDERS   2  // set or get
