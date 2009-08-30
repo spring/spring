@@ -370,7 +370,6 @@ end
 
 local function LoadScript(filename)
 	local basename = filename:match("[^\\/:]*$") or filename
-	local unitname = basename:sub(1,-5):lower() --assumes 3 letter extension
 	local text = VFS.LoadFile(filename, VFSMODE)
 	if (text == nil) then
 		Spring.Echo("Failed to load: " .. filename)
@@ -383,7 +382,9 @@ local function LoadScript(filename)
 	end
 	local env = NewScript()
 	setfenv(chunk, env)
-	scripts[unitname] = { chunk = chunk, env = env }
+	scripts[basename] = { chunk = chunk, env = env }
+	-- hack to make it work with engine default for ud.scriptName
+	scripts[basename:gsub("%.cob", "%.lua")] = scripts[basename]
 	return chunk, env
 end
 
@@ -473,7 +474,7 @@ end
 
 function gadget:UnitCreated(unitID, unitDefID)
 	local ud = UnitDefs[unitDefID]
-	local script = scripts[ud.name]
+	local script = scripts[ud.scriptName:lower()]
 	if (not script) then return end
 
 	-- Global variables in the script are still per unit.
