@@ -1309,7 +1309,7 @@ bool CBuilderCAI::FindReclaimTargetAndReclaim(const float3& pos,
 		const std::vector<CFeature*> features = qf->GetFeaturesExact(pos, radius);
 		for (std::vector<CFeature*>::const_iterator fi = features.begin(); fi != features.end(); ++fi) {
 			const CFeature* f = *fi;
-			if (f->def->reclaimable && (!recNonRez || !(f->def->destructable && f->createdFromUnit != "")) &&
+			if (f->def->reclaimable && f->def->autoreclaim && (!recNonRez || !(f->def->destructable && f->createdFromUnit != "")) &&
 				(recAnyTeam || (f->allyteam != owner->allyteam))) {
 				float dist = f3SqLen(f->pos - owner->pos);
 				if ((dist < bestDist) &&
