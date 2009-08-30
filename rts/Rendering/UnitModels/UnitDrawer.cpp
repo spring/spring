@@ -452,8 +452,10 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	drawStat.clear();
 
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	glEnable(GL_FOG);
+	if(gu->drawFog) {
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+		glEnable(GL_FOG);
+	}
 
 	drawIcon.clear();
 	drawRadarIcon.clear();
@@ -526,8 +528,11 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	glEnable(GL_ALPHA_TEST);
 	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 	glColor3f(1, 1, 1);
-	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	glEnable(GL_FOG);
+
+	if(gu->drawFog) {
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+		glEnable(GL_FOG);
+	}
 
 	va = GetVertexArray();
 	va->Initialize();
