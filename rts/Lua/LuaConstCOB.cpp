@@ -7,6 +7,7 @@
 #include "LuaInclude.h"
 #include "LuaUtils.h"
 #include "Sim/Units/COB/CobDefines.h"
+#include "Sim/Projectiles/PieceProjectile.h"
 
 
 /******************************************************************************/
@@ -107,6 +108,41 @@ bool LuaConstCOB::PushEntries(lua_State* L)
 	PUSH_COB(GAME_FRAME);
 
 	// NOTE: shared variables use codes [1024 - 5119]
+
+	return true;
+}
+
+
+/******************************************************************************/
+/******************************************************************************/
+
+
+bool LuaConstSFX::PushEntries(lua_State* L)
+{
+	// Piece Flags for Spring.UnitScript.Explode
+	LuaPushNamedNumber(L, "SHATTER", PF_Shatter);
+	LuaPushNamedNumber(L, "EXPLODE", PF_Explode);
+	LuaPushNamedNumber(L, "EXPLODE_ON_HIT", PF_Explode);
+	LuaPushNamedNumber(L, "FALL",  PF_Fall);
+	LuaPushNamedNumber(L, "SMOKE", PF_Smoke);
+	LuaPushNamedNumber(L, "FIRE",  PF_Fire);
+	LuaPushNamedNumber(L, "NONE",  PF_NONE); // BITMAP_ONLY
+	LuaPushNamedNumber(L, "NO_CEG_TRAIL", PF_NoCEGTrail);
+	LuaPushNamedNumber(L, "NO_HEATCLOUD", PF_NoHeatCloud);
+
+	// For Spring.UnitScript.EmitSfx
+	LuaPushNamedNumber(L, "VTOL",            SFX_VTOL);
+	LuaPushNamedNumber(L, "WAKE",            SFX_WAKE);
+	LuaPushNamedNumber(L, "REVERSE_WAKE",    SFX_REVERSE_WAKE);
+	// no need for WAKE_2 and REVERSE_WAKE_2 as they are same as WAKE and REVERSE_WAKE
+	//LuaPushNamedNumber(L, "WAKE_2",          SFX_WAKE_2);
+	//LuaPushNamedNumber(L, "REVERSE_WAKE_2",  SFX_REVERSE_WAKE_2);
+	LuaPushNamedNumber(L, "WHITE_SMOKE",     SFX_WHITE_SMOKE);
+	LuaPushNamedNumber(L, "BLACK_SMOKE",     SFX_BLACK_SMOKE);
+	LuaPushNamedNumber(L, "BUBBLE",          SFX_BUBBLE);
+	LuaPushNamedNumber(L, "CEG",             SFX_CEG);
+	LuaPushNamedNumber(L, "FIRE_WEAPON",     SFX_FIRE_WEAPON);
+	LuaPushNamedNumber(L, "DETONATE_WEAPON", SFX_DETONATE_WEAPON);
 
 	return true;
 }

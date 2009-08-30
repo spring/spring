@@ -486,43 +486,46 @@ void CUnitScript::EmitSfx(int type, int piece)
 	}
 
 	switch (type) {
-		case 4:
-		case 5:		{	//reverse wake
+		case SFX_REVERSE_WAKE:
+		case SFX_REVERSE_WAKE_2: {  //reverse wake
 			//float3 relDir = -GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
-			break;}
-		case 3:			//wake 2, in TA it lives longer..
-		case 2:		{	//regular ship wake
+			break;
+		}
+		case SFX_WAKE_2:  //wake 2, in TA it lives longer..
+		case SFX_WAKE: {  //regular ship wake
 			//float3 relDir = GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
-			break;}
-		case 259:	{	//submarine bubble. does not provide direction through piece vertices..
+			break;
+		}
+		case SFX_BUBBLE: {  //submarine bubble. does not provide direction through piece vertices..
 			float3 pspeed=gu->usRandVector()*0.1f;
 			pspeed.y+=0.2f;
 			new CBubbleProjectile(pos+gu->usRandVector()*2,pspeed,40+gu->usRandFloat()*30,1+gu->usRandFloat()*2,0.01f,unit,0.3f+gu->usRandFloat()*0.3f);
 			break;}
-		case 257:	//damaged unit smoke
+		case SFX_WHITE_SMOKE:  //damaged unit smoke
 			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.5f);
 			// FIXME -- needs a 'break'?
-		case 258:		//damaged unit smoke
+		case SFX_BLACK_SMOKE:  //damaged unit smoke
 			new CSmokeProjectile(pos,gu->usRandVector()*0.5f+UpVector*1.1f,60,4,0.5f,unit,0.6f);
 			break;
-		case 0:{		//vtol
+		case SFX_VTOL: {  //vtol
 			//relDir = GetPieceDirection(piece) * 0.2f;
 			relDir *= 0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * -fabs(relDir.y) + unit->rightdir * relDir.x;
 			CHeatCloudProjectile* hc=new CHeatCloudProjectile(pos, unit->speed*0.7f+dir * 0.5f, 10 + gu->usRandFloat() * 5, 3 + gu->usRandFloat() * 2, unit);
 			hc->size=3;
-			break;}
+			break;
+		}
 		default:
 			//logOutput.Print("Unknown sfx: %d", type);
-			if (type & 1024)	//emit defined explosiongenerator
+			if (type & SFX_CEG)	//emit defined explosiongenerator
 			{
-				unsigned index = type - 1024;
+				const unsigned index = type - SFX_CEG;
 				if (index >= unit->unitDef->sfxExplGens.size() || unit->unitDef->sfxExplGens[index] == NULL) {
 					ShowScriptError("Invalid explosion generator index for emit-sfx");
 					break;
@@ -532,9 +535,9 @@ void CUnitScript::EmitSfx(int type, int piece)
 				dir.SafeNormalize();
 				unit->unitDef->sfxExplGens[index]->Explosion(pos, unit->cegDamage, 1, unit, 0, 0, dir);
 			}
-			else if (type & 2048)  //make a weapon fire from the piece
+			else if (type & SFX_FIRE_WEAPON)  //make a weapon fire from the piece
 			{
-				unsigned index = type - 2048;
+				const unsigned index = type - SFX_FIRE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
 					ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
@@ -544,8 +547,8 @@ void CUnitScript::EmitSfx(int type, int piece)
 				float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 				dir.SafeNormalize();
 
-				float3 targetPos = unit->weapons[index]->targetPos;
-				float3 weaponMuzzlePos = unit->weapons[index]->weaponMuzzlePos;
+				const float3 targetPos = unit->weapons[index]->targetPos;
+				const float3 weaponMuzzlePos = unit->weapons[index]->weaponMuzzlePos;
 
 				unit->weapons[index]->targetPos = pos+dir;
 				unit->weapons[index]->weaponMuzzlePos = pos;
@@ -555,8 +558,8 @@ void CUnitScript::EmitSfx(int type, int piece)
 				unit->weapons[index]->targetPos = targetPos;
 				unit->weapons[index]->weaponMuzzlePos = weaponMuzzlePos;
 			}
-			else if (type & 4096) {
-				unsigned index = type - 4096;
+			else if (type & SFX_DETONATE_WEAPON) {
+				const unsigned index = type - SFX_DETONATE_WEAPON;
 				if (index >= unit->weapons.size() || unit->weapons[index] == NULL) {
 					ShowScriptError("Invalid weapon index for emit-sfx");
 					break;
