@@ -2379,6 +2379,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\..\Sim\Units\UnitDef.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\..\Sim\Units\UnitDef.h"
 					>
 				</File>
@@ -2450,11 +2454,27 @@
 						>
 					</File>
 					<File
+						RelativePath="..\..\Sim\Units\COB\CobScriptNames.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\CobScriptNames.h"
+						>
+					</File>
+					<File
 						RelativePath="..\..\Sim\Units\Cob\CobThread.cpp"
 						>
 					</File>
 					<File
 						RelativePath="..\..\Sim\Units\Cob\CobThread.h"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\LuaScriptNames.cpp"
+						>
+					</File>
+					<File
+						RelativePath="..\..\Sim\Units\COB\LuaScriptNames.h"
 						>
 					</File>
 					<File
