@@ -40,6 +40,18 @@ public:
 
 	void PostLoad() {};
 
+	~ThreadListSimRender() {
+		clear();
+	}
+
+	void clear() {
+		for(ListIT it = cont.begin(); it != cont.end(); ++it) {
+			delete *it;
+		}
+		cont.clear();
+		delete_erased_synced();
+	}
+
 	//! SIMULATION/SYNCED METHODS
 	void push(const T& x) {
 		cont.push_back(x);
@@ -270,10 +282,15 @@ public:
 	CR_DECLARE_STRUCT(ThreadListSimRender);
 
 	~ThreadListSimRender() {
+		clear();
+	}
+
+	void clear() {
 		for(SimIT it = cont.begin(); it != cont.end(); ++it) {
 			delete *it;
 		}
-		delete_erased();
+		cont.clear();
+		delete_erased_synced();
 		delete_delayed();
 	}
 

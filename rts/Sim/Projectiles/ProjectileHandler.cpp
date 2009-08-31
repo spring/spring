@@ -362,6 +362,9 @@ CProjectileHandler::CProjectileHandler()
 
 CProjectileHandler::~CProjectileHandler()
 {
+	unsyncedProjectiles.clear(); // unsynced first, to avoid callback crashes
+	syncedProjectiles.clear();
+
 	for (int a = 0; a < 8; ++a) {
 		glDeleteTextures(1, &perlinTex[a]);
 	}
