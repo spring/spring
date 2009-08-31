@@ -489,7 +489,7 @@ void CUnitScript::EmitSfx(int type, int piece)
 		case SFX_REVERSE_WAKE:
 		case SFX_REVERSE_WAKE_2: {  //reverse wake
 			//float3 relDir = -GetPieceDirection(piece) * 0.2f;
-			relDir *= 0.2f;
+			relDir *= -0.2f;
 			float3 dir = unit->frontdir * relDir.z + unit->updir * relDir.y + unit->rightdir * relDir.x;
 			new CWakeProjectile(pos+gu->usRandVector()*2,dir*0.4f,6+gu->usRandFloat()*4,0.15f+gu->usRandFloat()*0.3f,unit, alpha, alphaFalloff,fadeupTime);
 			break;
