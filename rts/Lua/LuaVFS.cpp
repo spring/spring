@@ -412,7 +412,7 @@ int LuaVFS::MapArchive(lua_State* L)
 	}
 
 	const int args = lua_gettop(L); // number of arguments
-	const string filename = luaL_checkstring(L, 1);
+	const string filename = archiveScanner->ModNameToModArchive(luaL_checkstring(L, 1));
 	if (!LuaIO::IsSimplePath(filename))
 	{
 		//FIXME		return 0;
