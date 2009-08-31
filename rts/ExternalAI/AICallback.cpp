@@ -668,6 +668,10 @@ float CAICallback::GetPathLength(float3 start, float3 end, int pathType)
 
 	pathManager->GetEstimatedPath(pathID, points, lengths);
 
+	if (points.empty()) {
+		return 0.0f;
+	}
+
 	// distance to first intermediate node
 	pathLen = (points[0] - start).Length();
 
