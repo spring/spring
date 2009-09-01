@@ -8,10 +8,10 @@ rem * %BUILD_DIR%\maphelper.sdz
 rem * %BUILD_DIR%\cursors.sdz
 
 rem absolute or relative to spring source root
-set BUILD_DIR="%1"
-IF %BUILD_DIR%=="" (
+set BUILD_DIR=%1
+IF "%BUILD_DIR%" == "" (
 	rem default:
-	set BUILD_DIR="game\base\"
+	set BUILD_DIR=game\base\
 )
 
 cd %~dp0..
@@ -30,35 +30,37 @@ if "%ERRORLEVEL%" == "0" goto ok7z
 echo %EXEC_7Z% not found, please make sure it is in your PATH environment variable.
 exit /B 1
 :ok7z
+set CMD_7Z=%EXEC_7Z% u -tzip -r -x!README.txt
 
-cd %~dp0\builddata
+cd %~dp0builddata
 
 rem make sure the destination exists
 if not exist "%BUILD_DIR%\spring" mkdir "%BUILD_DIR%\spring"
 
-echo Creating bitmaps.sdz
+echo Updating bitmaps.sdz
 if exist "%BUILD_DIR%\spring\bitmaps.sdz" del "%BUILD_DIR%\spring\bitmaps.sdz"
 cd bitmaps
-%EXEC_7Z% a -tzip -r -x!README.txt %BUILD_DIR%\spring\bitmaps.sdz *
+%CMD_7Z% %BUILD_DIR%\spring\bitmaps.sdz * > NUL
 cd ..
 
-echo Creating springcontent.sdz
+echo Updating springcontent.sdz
 if exist "%BUILD_DIR%\springcontent.sdz" del "%BUILD_DIR%\springcontent.sdz"
 cd springcontent
-%EXEC_7Z% a -tzip %BUILD_DIR%\springcontent.sdz *
+%CMD_7Z% %BUILD_DIR%\springcontent.sdz * > NUL
 cd ..
 
-echo Creating maphelper.sdz
+echo Updating maphelper.sdz
 if exist "%BUILD_DIR%\maphelper.sdz" del "%BUILD_DIR%\maphelper.sdz"
 cd maphelper
-%EXEC_7Z% a -tzip %BUILD_DIR%\maphelper.sdz *
+%CMD_7Z% %BUILD_DIR%\maphelper.sdz * > NUL
 cd ..
 
-echo Creating cursors.sdz
+echo Updating cursors.sdz
 if exist "%BUILD_DIR%\cursors.sdz" del "%BUILD_DIR%\cursors.sdz"
 cd cursors
-%EXEC_7Z% a -tzip %BUILD_DIR%\cursors.sdz *
+%CMD_7Z% %BUILD_DIR%\cursors.sdz * > NUL
 cd ..
 
 cd ..
 endlocal
+
