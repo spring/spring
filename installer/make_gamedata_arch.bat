@@ -70,7 +70,6 @@ if not "%USE_TMP_DIR%" == "TRUE" goto tmpDir_no
 	echo          In case you experience deyncs, use build files
 	echo          from the buildbot.
 	goto tmpDir_end
-:tmpDir_end
 
 rem Batch subroutine for converting a files line endings
 rem to unix style, if it is a text file.
@@ -85,7 +84,6 @@ rem to unix style, if it is a text file.
 
 	:isTxtFile
 	%EXEC_D2U% %1 > NUL
-	echo is txt file: "%~x1"
 	goto s_convLineEnds_end
 
 	:isBinFile
@@ -93,6 +91,9 @@ rem to unix style, if it is a text file.
 
 	:s_convLineEnds_end
 	goto :eof
+
+:tmpDir_end
+
 
 rem make sure the destination exists
 if not exist "%BUILD_DIR%\spring" mkdir "%BUILD_DIR%\spring"
