@@ -27,9 +27,9 @@ To do:
 function gadget:GetInfo()
 	return {
 		name      = "Lua unitscript framework",
-		desc      = "Manages Lua unitscripts",
+		desc      = "Manages Lua unit scripts",
 		author    = "Tobi Vollebregt",
-		date      = "30 July 2009",
+		date      = "2 September 2009",
 		license   = "GPL v2",
 		layer     = 0,
 		enabled   = true --  loaded by default?
@@ -50,8 +50,8 @@ local thread_wrap = {
 	--"StopMoving",
 	--"Activate",
 	--"Deactivate",
-	--"SetDirection",
-	--"SetSpeed",
+	--"WindChanged",
+	--"ExtractionRateChanged",
 	"RockUnit",
 	--"HitByWeapon",
 	--"HitByWeaponId",
@@ -73,7 +73,6 @@ local thread_wrap = {
 	"StopBuilding",
 	--"QueryNanoPiece",
 	--"QueryBuildInfo",
-	--"Go",
 }
 
 -- Callins which exist for every weapon.
@@ -115,7 +114,7 @@ local sp_SetPieceVisibility = Spring.UnitScript.SetPieceVisibility
 local sp_SetDeathScriptFinished = Spring.UnitScript.SetDeathScriptFinished
 
 
-local UNITSCRIPT_DIR = (UNITSCRIPT_DIR or "scripts/")
+local UNITSCRIPT_DIR = (UNITSCRIPT_DIR or "scripts/"):lower()
 local VFSMODE = VFS.ZIP_ONLY
 if (Spring.IsDevLuaEnabled()) then
 	VFSMODE = VFS.RAW_ONLY
@@ -123,6 +122,7 @@ end
 
 -- needed here too, and gadget handler doesn't expose it
 VFS.Include('LuaGadgets/system.lua', nil, VFSMODE)
+VFS.Include('gamedata/VFSUtils.lua', nil, VFSMODE)
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
@@ -289,7 +289,12 @@ function Spring.UnitScript.StartThread(unitID, fun, ...)
 		signal_mask = (co_running() and u.threads[co_running()].signal_mask or 0)
 	}
 	u.threads[co] = thread
-	return WakeUp(thread, unitID, ...) -- TODO: compare with COB?
+	-- COB doesn't start thread immediately: it only sets up stack and
+	-- pushes parameters on it for first time the thread is scheduled.
+	-- Here it is easier however to start thread immediately, so we don't need
+	-- to remember the parameters for the first co_resume call somewhere.
+	-- I think in practice the difference in behavior isn't an issue.
+	return WakeUp(thread, unitID, ...)
 end
 
 function Spring.UnitScript.SetSignalMask(unitID, mask)
@@ -368,7 +373,7 @@ local function NewScript()
 end
 
 
-local function LoadScript(filename)
+local function LoadScript(scriptName, filename)
 	local basename = filename:match("[^\\/:]*$") or filename
 	local text = VFS.LoadFile(filename, VFSMODE)
 	if (text == nil) then
@@ -382,19 +387,51 @@ local function LoadScript(filename)
 	end
 	local env = NewScript()
 	setfenv(chunk, env)
-	scripts[basename] = { chunk = chunk, env = env }
-	-- hack to make it work with engine default for ud.scriptName
-	scripts[basename:gsub("%.cob", "%.lua")] = scripts[basename]
+	scripts[scriptName] = { chunk = chunk, env = env }
 	return chunk, env
 end
 
 
 function gadget:Initialize()
-	local scriptFiles = VFS.DirList(UNITSCRIPT_DIR, "*.lua", VFSMODE)
-	for _,filename in ipairs(scriptFiles) do
-		Spring.Echo("Loading unitscript " .. filename)
-		LoadScript(filename)
+	-- This initialization code has following properties:
+	--  * all used scripts are loaded => early syntax error detection
+	--  * unused scripts aren't loaded
+	--  * files can be arbitrarily ordered in subdirs (like defs)
+	--  * exact path doesn't need to be specified
+	--  * exact path can be specified to resolve ambiguous basenames
+	--  * engine default scriptName (with .cob extension) works
+
+	-- Recursively collect files below UNITSCRIPT_DIR.
+	local scriptFiles = {}
+	for _,filename in ipairs(RecursiveFileSearch(UNITSCRIPT_DIR, "*.lua", VFSMODE)) do
+		local basename = filename:match("[^\\/:]*$") or filename
+		scriptFiles[filename] = filename  -- for exact match
+		scriptFiles[basename] = filename  -- for basename match
 	end
+
+	-- Go through all UnitDefs and load scripts.
+	-- Names are tested in following order:
+	--  * exact match
+	--  * basename match
+	--  * exact match where .cob->.lua
+	--  * basename match where .cob->.lua
+	for i=1,#UnitDefs do
+		local unitDef = UnitDefs[i]
+		if (unitDef and not scripts[unitDef.scriptName]) then
+			local fn  = UNITSCRIPT_DIR .. unitDef.scriptName:lower()
+			local bn  = fn:match("[^\\/:]*$") or fn
+			local cfn = fn:gsub("%.cob$", "%.lua")
+			local cbn = bn:gsub("%.cob$", "%.lua")
+			local filename = scriptFiles[fn] or scriptFiles[bn] or
+			                 scriptFiles[cfn] or scriptFiles[cbn]
+			if filename then
+				Spring.Echo("Loading unitscript " .. filename)
+				LoadScript(unitDef.scriptName, filename)
+			end
+		end
+	end
+
+	-- Fake UnitCreated events for existing units. (for '/luarules reload')
 	local allUnits = Spring.GetAllUnits()
 	for i=1,#allUnits do
 		local unitID = allUnits[i]
@@ -474,7 +511,7 @@ end
 
 function gadget:UnitCreated(unitID, unitDefID)
 	local ud = UnitDefs[unitDefID]
-	local script = scripts[ud.scriptName:lower()]
+	local script = scripts[ud.scriptName]
 	if (not script) then return end
 
 	-- Global variables in the script are still per unit.
