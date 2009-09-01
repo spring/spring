@@ -78,6 +78,7 @@ void SoundSource::Update()
 				curStream->next = NULL;
 
 				alSource3f(id, AL_POSITION,        0.0, 0.0, -1.0); // in case of mono streams
+				alSourcef(id, AL_GAIN, curStream->current->volume);
 				alSource3f(id, AL_VELOCITY,        0.0f,  0.0f,  0.0f);
 				alSource3f(id, AL_DIRECTION,       0.0f,  0.0f,  0.0f);
 				alSourcef(id, AL_ROLLOFF_FACTOR,  0.0f);
