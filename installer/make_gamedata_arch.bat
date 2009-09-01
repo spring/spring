@@ -63,7 +63,7 @@ if not "%USE_TMP_DIR%" == "TRUE" goto tmpDir_no
 	echo Converting line endings to unix format ...
 	rem This for takes long, but only for the batch part of it,
 	rem not the actual converting
-	FOR /F "usebackq" %%F IN (`dir /b /s *`) DO call %EXEC_TUC% %%F
+	FOR /F "usebackq" %%F IN (`dir /b /s *`) DO (call :s_convLineEnds "%%F")
 	goto tmpDir_end
 :tmpDir_no
 	echo Caution: Not converting line endings of base files.
@@ -72,6 +72,27 @@ if not "%USE_TMP_DIR%" == "TRUE" goto tmpDir_no
 	goto tmpDir_end
 :tmpDir_end
 
+rem Batch subroutine for converting a files line endings
+rem to unix style, if it is a text file.
+:s_convLineEnds
+	set EXEC_D2U=%~dp0dos2unix.exe
+	if "%~x1" == ".txt" goto isTxtFile
+	if "%~x1" == ".lua" goto isTxtFile
+	if "%~x1" == ".glsl" goto isTxtFile
+	if "%~x1" == ".fp" goto isTxtFile
+	if "%~x1" == ".vp" goto isTxtFile
+	goto isBinFile
+
+	:isTxtFile
+	%EXEC_D2U% %1 > NUL
+	echo is txt file: "%~x1"
+	goto s_convLineEnds_end
+
+	:isBinFile
+	goto s_convLineEnds_end
+
+	:s_convLineEnds_end
+	goto :eof
 
 rem make sure the destination exists
 if not exist "%BUILD_DIR%\spring" mkdir "%BUILD_DIR%\spring"
