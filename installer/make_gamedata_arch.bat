@@ -32,7 +32,7 @@ if "%ERRORLEVEL%" == "0" goto ok7z
 echo %EXEC_7Z% not found, please make sure it is in your PATH environment variable.
 exit /B 1
 :ok7z
-set CMD_7Z=%EXEC_7Z% u -tzip -r -x!README.txt
+set CMD_7Z=%EXEC_7Z% u -tzip -r
 
 
 cd %~dp0builddata
