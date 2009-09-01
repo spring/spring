@@ -13,6 +13,7 @@
 
 float SoundSource::globalPitch = 1.0;
 float SoundSource::heightAdjustedRolloffModifier = 1.0;
+float SoundSource::referenceDistance = 200.0f;
 
 struct SoundSource::StreamControl
 {
@@ -40,7 +41,7 @@ SoundSource::SoundSource() : curPlaying(NULL), curStream(NULL)
 	}
 	else
 	{
-		alSourcef(id, AL_REFERENCE_DISTANCE, 200.0f);
+		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance);
 		CheckError("SoundSource::SoundSource");
 	}
 }
@@ -158,6 +159,23 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * heightAdjustedRolloffModifier);
+#ifdef __APPLE__
+		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
+		// Max distance is too small by default on my Mac...
+		ALfloat gain = item->gain * volume;
+		if (gain > 1.0f) {
+			// OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
+			ALint model = alGetInteger(AL_DISTANCE_MODEL);
+			ALfloat rolloff = item->rolloff * heightAdjustedRolloffModifier, ref = referenceDistance;
+			if ((model == AL_INVERSE_DISTANCE_CLAMPED) || (model == AL_INVERSE_DISTANCE)) {
+				alSourcef(id, AL_REFERENCE_DISTANCE, ((gain - 1.0f) * ref / rolloff) + ref);
+				alSourcef(id, AL_ROLLOFF_FACTOR, (gain + rolloff - 1.0f) / gain);
+				alSourcef(id, AL_GAIN, 1.0f);
+			}
+		} else {
+			alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance);
+		}
+#endif
 	}
 	alSourcePlay(id);
 

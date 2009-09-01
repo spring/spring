@@ -62,6 +62,7 @@ private:
 	boost::mutex streamMutex;
 	unsigned loopStop;
 	static float heightAdjustedRolloffModifier;
+	static float referenceDistance;
 };
 
 #endif
