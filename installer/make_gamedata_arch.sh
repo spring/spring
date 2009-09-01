@@ -15,7 +15,7 @@ if ! which 7z > /dev/null; then
 	echo "Error: Could not find 7z."
 	exit 1
 fi
-CMD_7Z="7z u -tzip -r -x!README.txt"
+CMD_7Z="7z u -tzip -r"
 
 ORIG_DIR=$(pwd)
 
