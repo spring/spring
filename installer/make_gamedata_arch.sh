@@ -11,11 +11,11 @@ then
 fi
 
 # Sanity check.
-if ! which 7z >/dev/null; then
+if ! which 7z > /dev/null; then
 	echo "Error: Could not find 7z."
 	exit 1
 fi
-CMD_7Z=7z u -tzip -r -x\!README.txt
+CMD_7Z="7z u -tzip -r -x!README.txt"
 
 ORIG_DIR=$(pwd)
 
@@ -34,22 +34,22 @@ cd installer/builddata/
 
 echo Updating bitmaps.sdz
 cd bitmaps/
-${CMD_7Z} ${BUILD_DIR}/spring/bitmaps.sdz *
+${CMD_7Z} ${BUILD_DIR}/spring/bitmaps.sdz * > /dev/null
 cd ..
 
 echo Updating springcontent.sdz
 cd springcontent/
-${CMD_7Z} ${BUILD_DIR}/springcontent.sdz *
+${CMD_7Z} ${BUILD_DIR}/springcontent.sdz * > /dev/null
 cd ..
 
 echo Updating maphelper.sdz
 cd maphelper/
-${CMD_7Z} ${BUILD_DIR}/maphelper.sdz *
+${CMD_7Z} ${BUILD_DIR}/maphelper.sdz * > /dev/null
 cd ..
 
 echo Updating cursors.sdz
 cd cursors/
-${CMD_7Z} ${BUILD_DIR}/cursors.sdz *
+${CMD_7Z} ${BUILD_DIR}/cursors.sdz * > /dev/null
 cd ..
 
 cd ../..
