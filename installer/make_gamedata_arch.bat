@@ -32,7 +32,42 @@ exit /B 1
 :ok7z
 set CMD_7Z=%EXEC_7Z% u -tzip -r -x!README.txt
 
+
 cd %~dp0builddata
+
+rem Only copy to a temp for converting line endings if
+rem the git config value core.autocrlf is set to false,
+rem because only in this case line endings will be in
+rem the windows format, and therefore have to be converted.
+rem You may enforce this by setting the following in the
+rem environment this script is executed in:
+rem USE_TMP_DIR=TRUE
+FOR /F "usebackq" %%P IN (`git config --get core.autocrlf`) DO if "%%P" == "false" set USE_TMP_DIR=TRUE
+
+
+if not "%USE_TMP_DIR%" == "TRUE" goto tmpDir_no
+:tmpDir_yes
+	set TMP_DIR=%BUILD_DIR%_tmp
+	set EXEC_TUC=%~dp0toUnixConv.bat
+	echo Copying to temporary directory ...
+	rem rmdir /S /Q %TMP_DIR%
+	mkdir %TMP_DIR% > NUL 2>&1
+	xcopy /E /I /Q /H /Y * %TMP_DIR% > NUL 2>&1
+	cd %TMP_DIR%
+	rem Convert line endings to unix format to not desync
+	rem with linux assembled base files.
+	rem This is only needed cause of quirks in git's line endings
+	rem handling on windows.
+	echo Converting line endings to unix format ...
+	FOR /F "usebackq" %%F IN (`dir /b /s *`) DO call %EXEC_TUC% %%F
+	goto tmpDir_end
+:tmpDir_no
+	echo Caution: Not converting line endings of base files.
+	echo          In case you experience deyncs, use build files
+	echo          from the buildbot.
+	goto tmpDir_end
+:tmpDir_end
+
 
 rem make sure the destination exists
 if not exist "%BUILD_DIR%\spring" mkdir "%BUILD_DIR%\spring"
@@ -60,6 +95,8 @@ if exist "%BUILD_DIR%\cursors.sdz" del "%BUILD_DIR%\cursors.sdz"
 cd cursors
 %CMD_7Z% %BUILD_DIR%\cursors.sdz * > NUL
 cd ..
+
+if "%USE_TMP_DIR%" == "TRUE" rmdir /S /Q %TMP_DIR%
 
 cd ..
 endlocal
