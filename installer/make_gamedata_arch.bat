@@ -15,8 +15,10 @@ IF "%BUILD_DIR%" == "" (
 )
 
 cd %~dp0..
-if not exist %BUILD_DIR% mkdir %BUILD_DIR%
-cd %BUILD_DIR%
+
+if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
+cd "%BUILD_DIR%"
+
 rem make BUILD_DIR absolute, if it is not yet
 for %%a in (cd) do set BUILD_DIR=%%~dpa
 
@@ -59,6 +61,8 @@ if not "%USE_TMP_DIR%" == "TRUE" goto tmpDir_no
 	rem This is only needed cause of quirks in git's line endings
 	rem handling on windows.
 	echo Converting line endings to unix format ...
+	rem This for takes long, but only for the batch part of it,
+	rem not the actual converting
 	FOR /F "usebackq" %%F IN (`dir /b /s *`) DO call %EXEC_TUC% %%F
 	goto tmpDir_end
 :tmpDir_no
@@ -96,8 +100,11 @@ cd cursors
 %CMD_7Z% %BUILD_DIR%\cursors.sdz * > NUL
 cd ..
 
-if "%USE_TMP_DIR%" == "TRUE" rmdir /S /Q %TMP_DIR%
+if not "%USE_TMP_DIR%" == "TRUE" goto theEnd
+cd ..
+rmdir /S /Q %TMP_DIR%
 
+:theEnd
 cd ..
 endlocal
 
