@@ -21,7 +21,7 @@ struct VorbisInputBuffer
 size_t VorbisRead(void* ptr, size_t size, size_t nmemb, void* datasource)
 {
 	VorbisInputBuffer* buffer = (VorbisInputBuffer*)datasource;
-	const size_t maxRead = std::max(size * nmemb, buffer->size - buffer->pos);
+	const size_t maxRead = std::min(size * nmemb, buffer->size - buffer->pos);
 	memcpy(ptr, buffer->data + buffer->pos, maxRead);
 	return maxRead;
 };

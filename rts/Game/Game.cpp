@@ -3720,7 +3720,7 @@ void CGame::ClientReadNet()
 
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
-				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum-1));
+				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
 				if (gs->frameNum == (serverframenum - 1)) {
 				} else {
 					// error
