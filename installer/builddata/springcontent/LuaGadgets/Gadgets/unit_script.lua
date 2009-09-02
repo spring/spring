@@ -44,7 +44,7 @@ end
 
 -- This lists all callins which may be wrapped in a coroutine (thread).
 -- The ones which should not be thread-wrapped are commented out.
--- Create, Killed, and all AimWeapon callins are always wrapped.
+-- Create, Killed, AimWeapon and AimShield callins are always wrapped.
 local thread_wrap = {
 	--"StartMoving",
 	--"StopMoving",
@@ -54,7 +54,6 @@ local thread_wrap = {
 	--"ExtractionRateChanged",
 	"RockUnit",
 	--"HitByWeapon",
-	--"HitByWeaponId",
 	--"MoveRate0",
 	--"MoveRate1",
 	--"MoveRate2",
@@ -73,11 +72,6 @@ local thread_wrap = {
 	"StopBuilding",
 	--"QueryNanoPiece",
 	--"QueryBuildInfo",
-}
-
--- Callins which exist for every weapon.
--- The ones which should not be thread-wrapped are commented out.
-local thread_wrap_weapon = {
 	--"QueryWeapon",
 	--"AimFromWeapon",
 	"FireWeapon",
@@ -443,35 +437,39 @@ end
 local StartThread = Spring.UnitScript.StartThread
 
 
-local function Wrap_AimWeapon(callins, weaponNum, isShield)
-	local name = "AimWeapon" .. weaponNum
-	local fun = callins[name]
+local function Wrap_AimWeapon(callins)
+	local fun = callins["AimWeapon"]
 	if (not fun) then return end
-
-	-- SetUnitWeaponState and SetUnitShieldState count weapons from 0
-	weaponNum = weaponNum - 1
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
-	if isShield then
-		local function AimWeaponThread(unitID)
-			local enabled = fun(unitID) and true or false
-			return sp_SetUnitShieldState(unitID, weaponNum, enabled)
+	local function AimWeaponThread(unitID, weaponNum, heading, pitch)
+		if fun(unitID, weaponNum, heading, pitch) then
+			-- SetUnitWeaponState counts weapons from 0
+			return sp_SetUnitWeaponState(unitID, weaponNum - 1, "aimReady", 1)
 		end
+	end
 
-		callins[name] = function(unitID)
-			return StartThread(unitID, AimWeaponThread)
-		end
-	else
-		local function AimWeaponThread(unitID, heading, pitch)
-			if fun(unitID, heading, pitch) then
-				return sp_SetUnitWeaponState(unitID, weaponNum, "aimReady", 1)
-			end
-		end
+	callins["AimWeapon"] = function(unitID, weaponNum, heading, pitch)
+		return StartThread(unitID, AimWeaponThread, weaponNum, heading, pitch)
+	end
+end
 
-		callins[name] = function(unitID, heading, pitch)
-			return StartThread(unitID, AimWeaponThread, heading, pitch)
-		end
+
+local function Wrap_AimShield(callins)
+	local fun = callins["AimShield"]
+	if (not fun) then return end
+
+	-- SetUnitShieldState wants true or false, while
+	-- SetUnitWeaponState wants 1 or 0, niiice =)
+	local function AimWeaponThread(unitID, weaponNum)
+		local enabled = fun(unitID, weaponNum) and true or false
+		-- SetUnitShieldState counts weapons from 0
+		return sp_SetUnitShieldState(unitID, weaponNum, enabled)
+	end
+
+	callins["AimShield"] = function(unitID, weaponNum)
+		return StartThread(unitID, AimWeaponThread, weaponNum)
 	end
 end
 
@@ -540,12 +538,8 @@ function gadget:UnitCreated(unitID, unitDefID)
 	for i=1,#thread_wrap do
 		Wrap(callins, thread_wrap[i])
 	end
-	for i=1,ud.weapons.n do
-		for j=1,#thread_wrap_weapon do
-			Wrap(callins, thread_wrap_weapon[j] .. i)
-		end
-		Wrap_AimWeapon(callins, i, WeaponDefs[ud.weapons[i].weaponDef].type == "Shield")
-	end
+	Wrap_AimWeapon(callins)
+	Wrap_AimShield(callins)
 	Wrap_Killed(callins)
 
 	-- Register the callins with Spring.
