@@ -182,7 +182,7 @@ static bool isAlliedUnit(int teamId, const CUnit* unit) {
 
 static const UnitDef* getUnitDefById(int teamId, int unitDefId) {
 	AIHCGetUnitDefById cmd = {unitDefId, NULL};
-	int ret = team_callback[teamId]->HandleCommand(AIHCGetUnitDefByIdId, &cmd);
+	const int ret = team_callback[teamId]->HandleCommand(AIHCGetUnitDefByIdId, &cmd);
 	if (ret == 1) {
 		return cmd.ret;
 	} else {
@@ -200,7 +200,7 @@ static const WeaponDef* getWeaponDefById(int teamId, int weaponDefId) {
 }
 static const FeatureDef* getFeatureDefById(int teamId, int featureDefId) {
 	AIHCGetFeatureDefById cmd = {featureDefId, NULL};
-	int ret = team_callback[teamId]->HandleCommand(AIHCGetFeatureDefByIdId, &cmd);
+	const int ret = team_callback[teamId]->HandleCommand(AIHCGetFeatureDefByIdId, &cmd);
 	if (ret == 1) {
 		return cmd.ret;
 	} else {
@@ -247,7 +247,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 		case COMMAND_CHEATS_SET_MY_HANDICAP:
 		{
-			SSetMyHandicapCheatCommand* cmd =
+			const SSetMyHandicapCheatCommand* cmd =
 					(SSetMyHandicapCheatCommand*) commandData;
 			if (clbCheat != NULL) {
 				clbCheat->SetMyHandicap(cmd->handicap);
@@ -259,7 +259,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_CHEATS_GIVE_ME_RESOURCE:
 		{
-			SGiveMeResourceCheatCommand* cmd =
+			const SGiveMeResourceCheatCommand* cmd =
 					(SGiveMeResourceCheatCommand*) commandData;
 			if (clbCheat != NULL) {
 				if (cmd->resourceId == resourceHandler->GetMetalId()) {
@@ -290,6 +290,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 				}
 			} else {
 				ret = -1;
+				cmd->ret_newUnitId = -1;
 			}
 			break;
 		}
@@ -297,21 +298,21 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 		case COMMAND_SEND_START_POS:
 		{
-			SSendStartPosCommand* cmd = (SSendStartPosCommand*) commandData;
+			const SSendStartPosCommand* cmd = (SSendStartPosCommand*) commandData;
 			AIHCSendStartPos data = {cmd->ready, float3(cmd->pos)};
 			wrapper_HandleCommand(clb, clbCheat, AIHCSendStartPosId, &data);
 			break;
 		}
 		case COMMAND_DRAWER_POINT_ADD:
 		{
-			SAddPointDrawCommand* cmd = (SAddPointDrawCommand*) commandData;
+			const SAddPointDrawCommand* cmd = (SAddPointDrawCommand*) commandData;
 			AIHCAddMapPoint data = {float3(cmd->pos), cmd->label};
 			wrapper_HandleCommand(clb, clbCheat, AIHCAddMapPointId, &data);
 			break;
 		}
 		case COMMAND_DRAWER_POINT_REMOVE:
 		{
-			SRemovePointDrawCommand* cmd =
+			const SRemovePointDrawCommand* cmd =
 					(SRemovePointDrawCommand*) commandData;
 			AIHCRemoveMapPoint data = {float3(cmd->pos)};
 			wrapper_HandleCommand(clb, clbCheat, AIHCRemoveMapPointId, &data);
@@ -319,7 +320,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_DRAWER_LINE_ADD:
 		{
-			SAddLineDrawCommand* cmd = (SAddLineDrawCommand*) commandData;
+			const SAddLineDrawCommand* cmd = (SAddLineDrawCommand*) commandData;
 			AIHCAddMapLine data = {float3(cmd->posFrom), float3(cmd->posTo)};
 			wrapper_HandleCommand(clb, clbCheat, AIHCAddMapLineId, &data);
 			break;
@@ -328,14 +329,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 		case COMMAND_SEND_TEXT_MESSAGE:
 		{
-			SSendTextMessageCommand* cmd =
+			const SSendTextMessageCommand* cmd =
 					(SSendTextMessageCommand*) commandData;
 			clb->SendTextMsg(cmd->text, cmd->zone);
 			break;
 		}
 		case COMMAND_SET_LAST_POS_MESSAGE:
 		{
-			SSetLastPosMessageCommand* cmd =
+			const SSetLastPosMessageCommand* cmd =
 					(SSetLastPosMessageCommand*) commandData;
 			clb->SetLastMsgPos(cmd->pos);
 			break;
@@ -369,13 +370,12 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		case COMMAND_GROUP_CREATE:
 		{
 			SCreateGroupCommand* cmd = (SCreateGroupCommand*) commandData;
-			cmd->ret_groupId =
-					clb->CreateGroup();
+			cmd->ret_groupId = clb->CreateGroup();
 			break;
 		}
 		case COMMAND_GROUP_ERASE:
 		{
-			SEraseGroupCommand* cmd = (SEraseGroupCommand*) commandData;
+			const SEraseGroupCommand* cmd = (SEraseGroupCommand*) commandData;
 			clb->EraseGroup(cmd->groupId);
 			break;
 		}
@@ -419,7 +419,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_PATH_FREE:
 		{
-			SFreePathCommand* cmd = (SFreePathCommand*) commandData;
+			const SFreePathCommand* cmd = (SFreePathCommand*) commandData;
 			clb->FreePath(cmd->pathId);
 			break;
 		}
@@ -434,7 +434,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 		case COMMAND_DRAWER_ADD_NOTIFICATION:
 		{
-			SAddNotificationDrawerCommand* cmd =
+			const SAddNotificationDrawerCommand* cmd =
 					(SAddNotificationDrawerCommand*) commandData;
 			clb->AddNotification(float3(cmd->pos), float3(cmd->color),
 					cmd->alpha);
@@ -442,7 +442,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_DRAWER_PATH_START:
 		{
-			SStartPathDrawerCommand* cmd =
+			const SStartPathDrawerCommand* cmd =
 					(SStartPathDrawerCommand*) commandData;
 			float arrColor[4];
 			toFloatArr(&cmd->color, cmd->alpha, arrColor);
@@ -451,14 +451,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_DRAWER_PATH_FINISH:
 		{
-			//SFinishPathDrawerCommand* cmd =
+			//const SFinishPathDrawerCommand* cmd =
 			//		(SFinishPathDrawerCommand*) commandData;
 			clb->LineDrawerFinishPath();
 			break;
 		}
 		case COMMAND_DRAWER_PATH_DRAW_LINE:
 		{
-			SDrawLinePathDrawerCommand* cmd =
+			const SDrawLinePathDrawerCommand* cmd =
 					(SDrawLinePathDrawerCommand*) commandData;
 			float arrColor[4];
 			toFloatArr(&cmd->color, cmd->alpha, arrColor);
@@ -467,7 +467,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON:
 		{
-			SDrawLineAndIconPathDrawerCommand* cmd =
+			const SDrawLineAndIconPathDrawerCommand* cmd =
 					(SDrawLineAndIconPathDrawerCommand*) commandData;
 			float arrColor[4];
 			toFloatArr(&cmd->color, cmd->alpha, arrColor);
@@ -477,14 +477,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS:
 		{
-			SDrawIconAtLastPosPathDrawerCommand* cmd =
+			const SDrawIconAtLastPosPathDrawerCommand* cmd =
 					(SDrawIconAtLastPosPathDrawerCommand*) commandData;
 			clb->LineDrawerDrawIconAtLastPos(cmd->cmdId);
 			break;
 		}
 		case COMMAND_DRAWER_PATH_BREAK:
 		{
-			SBreakPathDrawerCommand* cmd =
+			const SBreakPathDrawerCommand* cmd =
 					(SBreakPathDrawerCommand*) commandData;
 			float arrColor[4];
 			toFloatArr(&cmd->color, cmd->alpha, arrColor);
@@ -493,7 +493,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_DRAWER_PATH_RESTART:
 		{
-			SRestartPathDrawerCommand* cmd =
+			const SRestartPathDrawerCommand* cmd =
 					(SRestartPathDrawerCommand*) commandData;
 			if (cmd->sameColor) {
 				clb->LineDrawerRestartSameColor();
@@ -524,7 +524,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_DRAWER_FIGURE_SET_COLOR:
 		{
-			SSetColorFigureDrawerCommand* cmd =
+			const SSetColorFigureDrawerCommand* cmd =
 					(SSetColorFigureDrawerCommand*) commandData;
 			clb->SetFigureColor(cmd->figureGroupId, cmd->color.x, cmd->color.y,
 					cmd->color.z, cmd->alpha);
@@ -532,14 +532,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		}
 		case COMMAND_DRAWER_FIGURE_DELETE:
 		{
-			SDeleteFigureDrawerCommand* cmd =
+			const SDeleteFigureDrawerCommand* cmd =
 					(SDeleteFigureDrawerCommand*) commandData;
 			clb->DeleteFigureGroup(cmd->figureGroupId);
 			break;
 		}
 		case COMMAND_DRAWER_DRAW_UNIT:
 		{
-			SDrawUnitDrawerCommand* cmd = (SDrawUnitDrawerCommand*) commandData;
+			const SDrawUnitDrawerCommand* cmd = (SDrawUnitDrawerCommand*) commandData;
 			clb->DrawUnit(getUnitDefById(teamId,
 					cmd->toDrawUnitDefId)->name.c_str(), float3(cmd->pos),
 					cmd->rotation, cmd->lifeTime, cmd->teamId, cmd->transparent,
@@ -564,7 +564,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			break;
 		}
 		case COMMAND_PAUSE: {
-			SPauseCommand* cmd = (SPauseCommand*) commandData;
+			const SPauseCommand* cmd = (SPauseCommand*) commandData;
 			AIHCPause cppCmdData = {
 				cmd->enable,
 				cmd->reason
@@ -579,7 +579,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			// check if it is a unit command
 			Command* c = (Command*) newCommand(commandData, commandTopic);
 			if (c != NULL) { // it is a unit command
-				SStopUnitCommand* cmd = (SStopUnitCommand*) commandData;
+				const SStopUnitCommand* cmd = (SStopUnitCommand*) commandData;
 				if (cmd->unitId >= 0) {
 					ret = clb->GiveOrder(cmd->unitId, c);
 				} else {
@@ -764,8 +764,8 @@ EXPORT(bool) skirmishAiCallback_DataDirs_locatePath(int teamId, char* path, int 
 
 	bool exists = false;
 
-	char ps = skirmishAiCallback_DataDirs_getPathSeparator(teamId);
-	std::string aiShortName = skirmishAiCallback_SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
+	const char ps = skirmishAiCallback_DataDirs_getPathSeparator(teamId);
+	const std::string aiShortName = skirmishAiCallback_SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_SHORT_NAME);
 	std::string aiVersion;
 	if (common) {
 		aiVersion = SKIRMISH_AIS_VERSION_COMMON;
@@ -784,7 +784,7 @@ EXPORT(char*) skirmishAiCallback_DataDirs_allocatePath(int teamId, const char* c
 	static const unsigned int path_sizeMax = 2048;
 
 	char* path = (char*) calloc(path_sizeMax, sizeof(char*));
-	bool fetchOk = skirmishAiCallback_DataDirs_locatePath(teamId, path, path_sizeMax, relPath, writeable, create, dir, common);
+	const bool fetchOk = skirmishAiCallback_DataDirs_locatePath(teamId, path, path_sizeMax, relPath, writeable, create, dir, common);
 
 	if (!fetchOk) {
 		FREE(path);
@@ -807,7 +807,7 @@ EXPORT(const char*) skirmishAiCallback_DataDirs_getWriteableDir(int teamId) {
 		static const unsigned int sizeMax = 1024;
 		char tmpRes[sizeMax];
 		static const char* const rootPath = "";
-		bool exists = skirmishAiCallback_DataDirs_locatePath(teamId,
+		const bool exists = skirmishAiCallback_DataDirs_locatePath(teamId,
 				tmpRes, sizeMax, rootPath, true, true, true, false);
 		writeableDataDirs[teamId] = tmpRes;
 		if (!exists) {
@@ -856,12 +856,15 @@ EXPORT(bool) skirmishAiCallback_Cheats_setEnabled(int teamId, bool enabled) {
 }
 
 EXPORT(bool) skirmishAiCallback_Cheats_setEventsEnabled(int teamId, bool enabled) {
+
+	bool success = false;
+
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
 		team_cheatCallback[teamId]->EnableCheatEvents(enabled);
-		return true;
-	} else {
-		return false;
+		success = true;
 	}
+
+	return success;
 }
 
 EXPORT(bool) skirmishAiCallback_Cheats_isOnlyPassive(int teamId) {
@@ -898,38 +901,47 @@ EXPORT(const char*) skirmishAiCallback_Game_getTeamSide(int teamId, int team) {
 
 
 EXPORT(int) skirmishAiCallback_WeaponDef_0STATIC0getNumDamageTypes(int teamId) {
+
 	int numDamageTypes;
+
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_NUMDAMAGETYPES, &numDamageTypes);
+	const bool fetchOk = clb->GetValue(AIVAL_NUMDAMAGETYPES, &numDamageTypes);
 	if (!fetchOk) {
 		numDamageTypes = -1;
 	}
+
 	return numDamageTypes;
 }
 
 EXPORT(bool) skirmishAiCallback_Game_isExceptionHandlingEnabled(int teamId) {
+
 	bool exceptionHandlingEnabled;
+
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_EXCEPTION_HANDLING,
+	const bool fetchOk = clb->GetValue(AIVAL_EXCEPTION_HANDLING,
 			&exceptionHandlingEnabled);
 	if (!fetchOk) {
 		exceptionHandlingEnabled = false;
 	}
+
 	return exceptionHandlingEnabled;
 }
 EXPORT(bool) skirmishAiCallback_Game_isDebugModeEnabled(int teamId) {
+
 	bool debugModeEnabled;
+
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_DEBUG_MODE, &debugModeEnabled);
+	const bool fetchOk = clb->GetValue(AIVAL_DEBUG_MODE, &debugModeEnabled);
 	if (!fetchOk) {
 		debugModeEnabled = false;
 	}
+
 	return debugModeEnabled;
 }
 EXPORT(int) skirmishAiCallback_Game_getMode(int teamId) {
 	int mode;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_GAME_MODE, &mode);
+	const bool fetchOk = clb->GetValue(AIVAL_GAME_MODE, &mode);
 	if (!fetchOk) {
 		mode = -1;
 	}
@@ -938,7 +950,7 @@ EXPORT(int) skirmishAiCallback_Game_getMode(int teamId) {
 EXPORT(bool) skirmishAiCallback_Game_isPaused(int teamId) {
 	bool paused;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_GAME_PAUSED, &paused);
+	const bool fetchOk = clb->GetValue(AIVAL_GAME_PAUSED, &paused);
 	if (!fetchOk) {
 		paused = false;
 	}
@@ -947,7 +959,7 @@ EXPORT(bool) skirmishAiCallback_Game_isPaused(int teamId) {
 EXPORT(float) skirmishAiCallback_Game_getSpeedFactor(int teamId) {
 	float speedFactor;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_GAME_SPEED_FACTOR, &speedFactor);
+	const bool fetchOk = clb->GetValue(AIVAL_GAME_SPEED_FACTOR, &speedFactor);
 	if (!fetchOk) {
 		speedFactor = false;
 	}
@@ -957,7 +969,7 @@ EXPORT(float) skirmishAiCallback_Game_getSpeedFactor(int teamId) {
 EXPORT(float) skirmishAiCallback_Gui_getViewRange(int teamId) {
 	float viewRange;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_GUI_VIEW_RANGE, &viewRange);
+	const bool fetchOk = clb->GetValue(AIVAL_GUI_VIEW_RANGE, &viewRange);
 	if (!fetchOk) {
 		viewRange = false;
 	}
@@ -966,7 +978,7 @@ EXPORT(float) skirmishAiCallback_Gui_getViewRange(int teamId) {
 EXPORT(float) skirmishAiCallback_Gui_getScreenX(int teamId) {
 	float screenX;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENX, &screenX);
+	const bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENX, &screenX);
 	if (!fetchOk) {
 		screenX = false;
 	}
@@ -975,7 +987,7 @@ EXPORT(float) skirmishAiCallback_Gui_getScreenX(int teamId) {
 EXPORT(float) skirmishAiCallback_Gui_getScreenY(int teamId) {
 	float screenY;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENY, &screenY);
+	const bool fetchOk = clb->GetValue(AIVAL_GUI_SCREENY, &screenY);
 	if (!fetchOk) {
 		screenY = false;
 	}
@@ -984,7 +996,7 @@ EXPORT(float) skirmishAiCallback_Gui_getScreenY(int teamId) {
 EXPORT(SAIFloat3) skirmishAiCallback_Gui_Camera_getDirection(int teamId) {
 	float3 cameraDir;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir);
+	const bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir);
 	if (!fetchOk) {
 		cameraDir = float3(1.0f, 0.0f, 0.0f);
 	}
@@ -993,7 +1005,7 @@ EXPORT(SAIFloat3) skirmishAiCallback_Gui_Camera_getDirection(int teamId) {
 EXPORT(SAIFloat3) skirmishAiCallback_Gui_Camera_getPosition(int teamId) {
 	float3 cameraPosition;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition);
+	const bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition);
 	if (!fetchOk) {
 		cameraPosition = float3(1.0f, 0.0f, 0.0f);
 	}
@@ -1136,7 +1148,7 @@ EXPORT(bool) skirmishAiCallback_Map_isPosInCamera(int teamId, SAIFloat3 pos, flo
 EXPORT(unsigned int) skirmishAiCallback_Map_getChecksum(int teamId) {
 	unsigned int checksum;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_MAP_CHECKSUM, &checksum);
+	const bool fetchOk = clb->GetValue(AIVAL_MAP_CHECKSUM, &checksum);
 	if (!fetchOk) {
 		checksum = -1;
 	}
@@ -1383,8 +1395,8 @@ EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Point_getPosition(int teamId, in
 }
 EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Point_getColor(int teamId, int pointId) {
 
-	unsigned char* color = tmpPointMarkerArr[teamId][pointId].color;
-	SAIFloat3 f3color = {color[0], color[1], color[2]};
+	const unsigned char* color = tmpPointMarkerArr[teamId][pointId].color;
+	const SAIFloat3 f3color = {color[0], color[1], color[2]};
 	return f3color;
 }
 EXPORT(const char*) skirmishAiCallback_Map_Point_getLabel(int teamId, int pointId) {
@@ -1403,8 +1415,8 @@ EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Line_getSecondPosition(int teamI
 }
 EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Line_getColor(int teamId, int lineId) {
 
-	unsigned char* color = tmpLineMarkerArr[teamId][lineId].color;
-	SAIFloat3 f3color = {color[0], color[1], color[2]};
+	const unsigned char* color = tmpLineMarkerArr[teamId][lineId].color;
+	const SAIFloat3 f3color = {color[0], color[1], color[2]};
 	return f3color;
 }
 EXPORT(SAIFloat3) skirmishAiCallback_Map_getStartPos(int teamId) {
@@ -1522,7 +1534,7 @@ EXPORT(float) skirmishAiCallback_Economy_0REF1Resource2resourceId0getStorage(int
 EXPORT(const char*) skirmishAiCallback_Game_getSetupScript(int teamId) {
 	const char* setupScript;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_SCRIPT, &setupScript);
+	const bool fetchOk = clb->GetValue(AIVAL_SCRIPT, &setupScript);
 	if (!fetchOk) {
 		return NULL;
 	}
@@ -2164,7 +2176,7 @@ EXPORT(unsigned int) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategor
 EXPORT(int) skirmishAiCallback_Unit_0STATIC0getLimit(int teamId) {
 	int unitLimit;
 	IAICallback* clb = team_callback[teamId];
-	bool fetchOk = clb->GetValue(AIVAL_UNIT_LIMIT, &unitLimit);
+	const bool fetchOk = clb->GetValue(AIVAL_UNIT_LIMIT, &unitLimit);
 	if (!fetchOk) {
 		unitLimit = -1;
 	}
@@ -2300,7 +2312,7 @@ EXPORT(int) skirmishAiCallback_Unit_SupportedCommand_0ARRAY1VALS0getParams(int t
 EXPORT(int) skirmishAiCallback_Unit_getStockpile(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId];
 	int stockpile;
-	bool fetchOk = clb->GetProperty(unitId, AIVAL_STOCKPILED, &stockpile);
+	const bool fetchOk = clb->GetProperty(unitId, AIVAL_STOCKPILED, &stockpile);
 	if (!fetchOk) {
 		stockpile = -1;
 	}
@@ -2309,7 +2321,7 @@ EXPORT(int) skirmishAiCallback_Unit_getStockpile(int teamId, int unitId) {
 EXPORT(int) skirmishAiCallback_Unit_getStockpileQueued(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId];
 	int stockpileQueue;
-	bool fetchOk = clb->GetProperty(unitId, AIVAL_STOCKPILE_QUED, &stockpileQueue);
+	const bool fetchOk = clb->GetProperty(unitId, AIVAL_STOCKPILE_QUED, &stockpileQueue);
 	if (!fetchOk) {
 		stockpileQueue = -1;
 	}
@@ -2318,7 +2330,7 @@ EXPORT(int) skirmishAiCallback_Unit_getStockpileQueued(int teamId, int unitId) {
 EXPORT(float) skirmishAiCallback_Unit_getCurrentFuel(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId];
 	float currentFuel;
-	bool fetchOk = clb->GetProperty(unitId, AIVAL_CURRENT_FUEL, &currentFuel);
+	const bool fetchOk = clb->GetProperty(unitId, AIVAL_CURRENT_FUEL, &currentFuel);
 	if (!fetchOk) {
 		currentFuel = -1.0f;
 	}
@@ -2327,7 +2339,7 @@ EXPORT(float) skirmishAiCallback_Unit_getCurrentFuel(int teamId, int unitId) {
 EXPORT(float) skirmishAiCallback_Unit_getMaxSpeed(int teamId, int unitId) {
 	IAICallback* clb = team_callback[teamId];
 	float maxSpeed;
-	bool fetchOk = clb->GetProperty(unitId, AIVAL_UNIT_MAXSPEED, &maxSpeed);
+	const bool fetchOk = clb->GetProperty(unitId, AIVAL_UNIT_MAXSPEED, &maxSpeed);
 	if (!fetchOk) {
 		maxSpeed = -1.0f;
 	}
@@ -2922,7 +2934,7 @@ EXPORT(int) skirmishAiCallback_WeaponDef_Damage_0ARRAY1SIZE0getTypes(int teamId,
 EXPORT(int) skirmishAiCallback_WeaponDef_Damage_0ARRAY1VALS0getTypes(int teamId, int weaponDefId, float* types, int types_max) {
 
 	const WeaponDef* weaponDef = getWeaponDefById(teamId, weaponDefId);
-	int types_size = min(weaponDef->damages.GetNumTypes(), types_max);
+	const int types_size = min(weaponDef->damages.GetNumTypes(), types_max);
 
 	for (int i=0; i < types_size; ++i) {
 		types[i] = weaponDef->damages[i];
@@ -3180,7 +3192,7 @@ EXPORT(int) skirmishAiCallback_Group_OrderPreview_0ARRAY1VALS0getParams(int team
 
 	//TODO: need to add support for new gui
 	Command tmpCmd = guihandler->GetOrderPreview();
-	int numParams = params_max < (int)(tmpCmd.params.size()) ? params_max
+	const int numParams = params_max < (int)(tmpCmd.params.size()) ? params_max
 			: tmpCmd.params.size();
 
 	int i;
@@ -3845,11 +3857,12 @@ SSkirmishAICallback* skirmishAiCallback_getInstanceFor(int teamId, IGlobalAICall
 	skirmishAiCallback_init(callback);
 
 	team_globalCallback[teamId] = globalAICallback;
-	team_callback[teamId] = globalAICallback->GetAICallback();
-	team_cCallback[teamId] = callback;
+	team_callback[teamId]       = globalAICallback->GetAICallback();
+	team_cCallback[teamId]      = callback;
 
 	return callback;
 }
+
 void skirmishAiCallback_release(int teamId) {
 
 	team_globalCallback.erase(teamId);
