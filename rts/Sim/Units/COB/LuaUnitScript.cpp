@@ -163,7 +163,7 @@ Spring.UnitScript.UpdateCallIn(number unitID, string fname[, function callIn]) -
 CLuaUnitScript::CLuaUnitScript(lua_State* L, CUnit* unit)
 	: CUnitScript(unit, unit->localmodel->pieces)
 	, handle(CLuaHandle::activeHandle), L(L)
-	, scriptIndex(LUAFN_Last + (unit->weapons.size() * LUAFN_Weapon_Funcs), LUA_NOREF)
+	, scriptIndex(LUAFN_Last, LUA_NOREF)
 	, inKilled(false)
 {
 	for (lua_pushnil(L); lua_next(L, 2) != 0; /*lua_pop(L, 1)*/) {
@@ -301,13 +301,13 @@ void CLuaUnitScript::ShowScriptError(const string& msg)
 
 bool CLuaUnitScript::HasBlockShot(int weaponNum) const
 {
-	return HasFunction(LUAFN_BlockShot + LUAFN_Weapon_Funcs * weaponNum);
+	return HasFunction(LUAFN_BlockShot);
 }
 
 
 bool CLuaUnitScript::HasTargetWeight(int weaponNum) const
 {
-	return HasFunction(LUAFN_TargetWeight + LUAFN_Weapon_Funcs * weaponNum);
+	return HasFunction(LUAFN_TargetWeight);
 }
 
 
@@ -403,6 +403,26 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 }
 
 
+int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
+{
+	if (!HasFunction(fn)) {
+		return -1;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 3);
+
+	PushFunction(fn);
+	lua_pushnumber(L, arg1);
+
+	if (!RunCallIn(fn, 2, 1)) {
+		return -1;
+	}
+
+	return int(PopNumber(fn, -1));
+}
+
+
 void CLuaUnitScript::Call(int fn, float arg1)
 {
 	if (!HasFunction(fn)) {
@@ -433,6 +453,24 @@ void CLuaUnitScript::Call(int fn, float arg1, float arg2)
 	lua_pushnumber(L, arg2);
 
 	RunCallIn(fn, 3, 0);
+}
+
+
+void CLuaUnitScript::Call(int fn, float arg1, float arg2, float arg3)
+{
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 5);
+
+	PushFunction(fn);
+	lua_pushnumber(L, arg1);
+	lua_pushnumber(L, arg2);
+	lua_pushnumber(L, arg3);
+
+	RunCallIn(fn, 4, 0);
 }
 
 
@@ -683,51 +721,52 @@ int CLuaUnitScript::QueryBuildInfo()
 
 int CLuaUnitScript::QueryWeapon(int weaponNum)
 {
-	return RunQueryCallIn(LUAFN_QueryPrimary + LUAFN_Weapon_Funcs * weaponNum);
+	return RunQueryCallIn(LUAFN_QueryWeapon, weaponNum + 1);
 }
 
 
 void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
 {
-	Call(LUAFN_AimPrimary + LUAFN_Weapon_Funcs * weaponNum, heading, pitch);
+	Call(LUAFN_AimWeapon, weaponNum + 1, heading, pitch);
 }
 
 
 void  CLuaUnitScript::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
-	Call(LUAFN_AimPrimary + LUAFN_Weapon_Funcs * weapon->weaponNum);
+	Call(LUAFN_AimWeapon, weapon->weaponNum + 1);
 }
 
 
 int CLuaUnitScript::AimFromWeapon(int weaponNum)
 {
-	return RunQueryCallIn(LUAFN_AimFromPrimary + LUAFN_Weapon_Funcs * weaponNum);
+	return RunQueryCallIn(LUAFN_AimFromWeapon, weaponNum + 1);
 }
 
 
 void CLuaUnitScript::Shot(int weaponNum)
 {
 	// FIXME: pass projectileID?
-	Call(LUAFN_Shot + LUAFN_Weapon_Funcs * weaponNum);
+	Call(LUAFN_Shot, weaponNum + 1);
 }
 
 
 bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget)
 {
-	const int fn = LUAFN_BlockShot + LUAFN_Weapon_Funcs * weaponNum;
+	const int fn = LUAFN_BlockShot;
 
 	if (!HasFunction(fn)) {
 		return false;
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	lua_checkstack(L, 5);
 
 	PushFunction(fn);
 	PushUnit(targetUnit);
+	lua_pushnumber(L, weaponNum + 1);
 	lua_pushboolean(L, userTarget);
 
-	if (!RunCallIn(fn, 3, 1)) {
+	if (!RunCallIn(fn, 4, 1)) {
 		return false;
 	}
 
@@ -737,19 +776,20 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 
 float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 {
-	const int fn = LUAFN_TargetWeight + LUAFN_Weapon_Funcs * weaponNum;
+	const int fn = LUAFN_TargetWeight;
 
 	if (!HasFunction(fn)) {
 		return 1.0f;
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	lua_checkstack(L, 4);
 
 	PushFunction(fn);
 	PushUnit(targetUnit);
+	lua_pushnumber(L, weaponNum + 1);
 
-	if (!RunCallIn(fn, 2, 1)) {
+	if (!RunCallIn(fn, 3, 1)) {
 		return 1.0f;
 	}
 
@@ -823,8 +863,8 @@ void CLuaUnitScript::Landed()        { Call(LUAFN_Landed); }
 void CLuaUnitScript::Activate()      { Call(LUAFN_Activate); }
 void CLuaUnitScript::Deactivate()    { Call(LUAFN_Deactivate); }
 void CLuaUnitScript::MoveRate(int curRate)     { Call(LUAFN_MoveRate0 + curRate); }
-void CLuaUnitScript::FireWeapon(int weaponNum) { Call(LUAFN_FirePrimary + LUAFN_Weapon_Funcs * weaponNum); }
-void CLuaUnitScript::EndBurst(int weaponNum)   { Call(LUAFN_EndBurst + LUAFN_Weapon_Funcs * weaponNum); }
+void CLuaUnitScript::FireWeapon(int weaponNum) { Call(LUAFN_FireWeapon, weaponNum + 1); }
+void CLuaUnitScript::EndBurst(int weaponNum)   { Call(LUAFN_EndBurst, weaponNum + 1); }
 
 
 /******************************************************************************/

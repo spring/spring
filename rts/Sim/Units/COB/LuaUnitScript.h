@@ -42,9 +42,11 @@ protected:
 	bool PopBoolean(int fn, bool def);
 
 	int  RunQueryCallIn(int fn);
+	int  RunQueryCallIn(int fn, float arg1);
 	void Call(int fn) { RawCall(scriptIndex[fn]); }
 	void Call(int fn, float arg1);
 	void Call(int fn, float arg1, float arg2);
+	void Call(int fn, float arg1, float arg2, float arg3);
 
 	void RawPushFunction(int functionId);
 	void PushFunction(int id);

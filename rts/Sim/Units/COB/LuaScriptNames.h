@@ -47,19 +47,18 @@ enum {
 	LUAFN_QueryBuildInfo,       // ( ) -> number piece
 	LUAFN_MoveFinished,         // ( piece, axis ) -> nil
 	LUAFN_TurnFinished,         // ( piece, axis ) -> nil
-	LUAFN_Last,
 
-	// These are special (this set of functions is repeated MAX_WEAPONS_PER_UNIT times)
-	LUAFN_QueryPrimary = LUAFN_Last, // ( ) -> number piece
-	LUAFN_AimPrimary,                // ( heading - owner->heading,  pitch ) -> nil   (both args 0 for plasma repulser)
-	LUAFN_AimFromPrimary,            // ( ) -> number piece
-	LUAFN_FirePrimary,               // ( ) -> nil
-	LUAFN_EndBurst,                  // ( ) -> nil
-	LUAFN_Shot,                      // ( ) -> nil
-	LUAFN_BlockShot,                 // ( targetUnitID, haveUserTarget ) -> boolean
-	LUAFN_TargetWeight,              // ( targetUnitID ) -> number targetWeight
-	LUAFN_Weapon_Last,
-	LUAFN_Weapon_Funcs = LUAFN_Weapon_Last - LUAFN_Last,
+	// Weapon functions
+	LUAFN_QueryWeapon,   // ( ) -> number piece
+	LUAFN_AimWeapon,     // ( heading - owner->heading,  pitch ) -> nil   (both args 0 for plasma repulser)
+	LUAFN_AimFromWeapon, // ( ) -> number piece
+	LUAFN_FireWeapon,    // ( ) -> nil
+	LUAFN_EndBurst,      // ( ) -> nil
+	LUAFN_Shot,          // ( ) -> nil
+	LUAFN_BlockShot,     // ( targetUnitID, haveUserTarget ) -> boolean
+	LUAFN_TargetWeight,  // ( targetUnitID ) -> number targetWeight
+
+	LUAFN_Last,
 };
 
 

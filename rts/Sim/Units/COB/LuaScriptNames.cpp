@@ -22,7 +22,7 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 		return scriptNames;
 	}
 
-	scriptNames.resize(LUAFN_Last + (MAX_WEAPONS_PER_UNIT * LUAFN_Weapon_Funcs));
+	scriptNames.resize(LUAFN_Last);
 
 	scriptNames[LUAFN_Destroy]       = "Destroy";
 	scriptNames[LUAFN_StartMoving]   = "StartMoving";
@@ -59,22 +59,14 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_TurnFinished] = "TurnFinished";
 
 	// Also add the weapon aiming stuff
-	for (int i = 0; i < MAX_WEAPONS_PER_UNIT; ++i) {
-		char buf[15];
-		sprintf(buf, "Weapon%d", i + 1);
-		string weapon(buf);
-		sprintf(buf, "%d", i + 1);
-		string weapnum(buf);
-		const int n = LUAFN_Weapon_Funcs * i;
-		scriptNames[LUAFN_QueryPrimary   + n] = "Query"   + weapon;
-		scriptNames[LUAFN_AimPrimary     + n] = "Aim"     + weapon;
-		scriptNames[LUAFN_AimFromPrimary + n] = "AimFrom" + weapon;
-		scriptNames[LUAFN_FirePrimary    + n] = "Fire"    + weapon;
-		scriptNames[LUAFN_EndBurst       + n] = "EndBurst"     + weapnum;
-		scriptNames[LUAFN_Shot           + n] = "Shot"         + weapnum;
-		scriptNames[LUAFN_BlockShot      + n] = "BlockShot"    + weapnum;
-		scriptNames[LUAFN_TargetWeight   + n] = "TargetWeight" + weapnum;
-	}
+	scriptNames[LUAFN_QueryWeapon]   = "QueryWeapon";
+	scriptNames[LUAFN_AimWeapon]     = "AimWeapon";
+	scriptNames[LUAFN_AimFromWeapon] = "AimFromWeapon";
+	scriptNames[LUAFN_FireWeapon]    = "FireWeapon";
+	scriptNames[LUAFN_EndBurst]      = "EndBurst";
+	scriptNames[LUAFN_Shot]          = "Shot";
+	scriptNames[LUAFN_BlockShot]     = "BlockShot";
+	scriptNames[LUAFN_TargetWeight]  = "TargetWeight";
 
 	//for (size_t i = 0; i < scriptNames.size(); ++i) {
 	//	logOutput.Print("LUAFN: %3d %s", i, scriptNames[i].c_str());
