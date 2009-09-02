@@ -951,14 +951,11 @@ void CUnit::DoWaterDamage()
 	}
 }
 
-void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponDefId)
+void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse, int weaponDefId)
 {
 	if (isDead) {
 		return;
 	}
-
-	residualImpulse += impulse / mass;
-	moveType->ImpulseAdded();
 
 	float damage = damages[armorType];
 
@@ -968,7 +965,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			if (flankingBonusMode) {
 				const float3 adir = (attacker->pos - pos).SafeNormalize(); // FIXME -- not the impulse direction?
 
-				if (flankingBonusMode == 1) {		// mode 1 = global coordinates, mobile
+				if (flankingBonusMode == 1) {
+					// mode 1 = global coordinates, mobile
 					flankingBonusDir += adir * flankingBonusMobility;
 					flankingBonusDir.Normalize();
 					flankingBonusMobility = 0.0f;
@@ -999,18 +997,23 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 
 	if (script->HasHitByWeaponId()) {
 		script->HitByWeaponId(hitDir, weaponDefId, /*inout*/ damage);
-	}
-	else {
+	} else {
 		script->HitByWeapon(hitDir);
 	}
 
 	float experienceMod = expMultiplier;
 	const int paralyzeTime = damages.paralyzeDamageTime;
 	float newDamage = damage;
+	float impulseMult = 1.0f;
 
 	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefId,
-			!!damages.paralyzeDamageTime, &newDamage))
+			!!damages.paralyzeDamageTime, &newDamage, &impulseMult)) {
 		damage = newDamage;
+	}
+
+	residualImpulse += ((impulse * impulseMult) / mass);
+	moveType->ImpulseAdded();
+
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
@@ -1039,8 +1042,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			if (damage > maxParaDmg) {
 				if (maxParaDmg > 0.0f) {
 					damage = maxParaDmg;
-				}
-				else {
+				} else {
 					damage = 0.0f;
 				}
 			}
