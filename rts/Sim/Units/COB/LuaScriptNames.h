@@ -50,7 +50,8 @@ enum {
 
 	// Weapon functions
 	LUAFN_QueryWeapon,   // ( ) -> number piece
-	LUAFN_AimWeapon,     // ( heading - owner->heading,  pitch ) -> nil   (both args 0 for plasma repulser)
+	LUAFN_AimWeapon,     // ( heading - owner->heading,  pitch ) -> nil
+	LUAFN_AimShield,     // ( ) -> nil
 	LUAFN_AimFromWeapon, // ( ) -> number piece
 	LUAFN_FireWeapon,    // ( ) -> nil
 	LUAFN_EndBurst,      // ( ) -> nil

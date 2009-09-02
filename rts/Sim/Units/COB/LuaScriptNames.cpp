@@ -61,6 +61,7 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	// Also add the weapon aiming stuff
 	scriptNames[LUAFN_QueryWeapon]   = "QueryWeapon";
 	scriptNames[LUAFN_AimWeapon]     = "AimWeapon";
+	scriptNames[LUAFN_AimShield]     = "AimShield"; // TODO: maybe not the best name?
 	scriptNames[LUAFN_AimFromWeapon] = "AimFromWeapon";
 	scriptNames[LUAFN_FireWeapon]    = "FireWeapon";
 	scriptNames[LUAFN_EndBurst]      = "EndBurst";
