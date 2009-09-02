@@ -25,13 +25,12 @@ enum {
 	LUAFN_WindChanged,          // ( heading, strength ) -> nil
 	LUAFN_ExtractionRateChanged,// ( newRate ) -> nil
 	LUAFN_RockUnit,             // ( rockDir_x, rockDir_z ) -> nil
-	LUAFN_HitByWeapon,          // ( hitDir_x, hitDir_z ) -> nil
 	LUAFN_MoveRate0,            // ( ) -> nil
 	LUAFN_MoveRate1,            // ( ) -> nil
 	LUAFN_MoveRate2,            // ( ) -> nil
 	LUAFN_MoveRate3,            // FIXME: unused (see CTAAirMoveType::UpdateMoveRate)
 	LUAFN_SetSFXOccupy,         // ( curTerrainType ) -> nil
-	LUAFN_HitByWeaponId,        // ( hitDir_x, hitDir_z, weaponDefID, damage ) -> number newDamage
+	LUAFN_HitByWeapon,          // ( hitDir_x, hitDir_z, weaponDefID, damage ) -> number newDamage | nil
 	LUAFN_QueryLandingPads,     // ( ) -> table piecenums
 	LUAFN_Falling,              // ( ) -> nil
 	LUAFN_Landed,               // ( ) -> nil

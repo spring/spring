@@ -263,7 +263,7 @@ void CLuaUnitScript::UpdateCallIn(const string& fname, int ref)
 	}
 
 	switch (num) {
-		case LUAFN_HitByWeaponId: hasHitByWeaponId = (ref != LUA_NOREF); break;
+		case LUAFN_HitByWeapon:   hasHitByWeaponId = (ref != LUA_NOREF); break;
 		case LUAFN_SetSFXOccupy:  hasSetSFXOccupy  = (ref != LUA_NOREF); break;
 		case LUAFN_RockUnit:      hasRockUnit      = (ref != LUA_NOREF); break;
 		case LUAFN_StartBuilding: hasStartBuilding = (ref != LUA_NOREF); break;
@@ -549,14 +549,13 @@ void CLuaUnitScript::RockUnit(const float3& rockDir)
 
 void CLuaUnitScript::HitByWeapon(const float3& hitDir)
 {
-	//FIXME: maybe we want hitDir.y too to be future proof?
-	Call(LUAFN_HitByWeapon, hitDir.x, hitDir.z);
+	// no point to have this as HitByWeaponId offers same functionality (+ more)
 }
 
 
 void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage)
 {
-	const int fn = LUAFN_HitByWeaponId;
+	const int fn = LUAFN_HitByWeapon;
 
 	if (!HasFunction(fn)) {
 		return;

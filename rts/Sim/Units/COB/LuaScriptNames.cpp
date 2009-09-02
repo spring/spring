@@ -33,13 +33,12 @@ const vector<string>& CLuaUnitScriptNames::GetScriptNames()
 	scriptNames[LUAFN_WindChanged]   = "WindChanged";
 	scriptNames[LUAFN_ExtractionRateChanged] = "ExtractionRateChanged";
 	scriptNames[LUAFN_RockUnit]      = "RockUnit";
-	scriptNames[LUAFN_HitByWeapon]   = "HitByWeapon";
 	scriptNames[LUAFN_MoveRate0]     = "MoveRate0";
 	scriptNames[LUAFN_MoveRate1]     = "MoveRate1";
 	scriptNames[LUAFN_MoveRate2]     = "MoveRate2";
 	scriptNames[LUAFN_MoveRate3]     = "MoveRate3";
 	scriptNames[LUAFN_SetSFXOccupy]  = "setSFXoccupy";
-	scriptNames[LUAFN_HitByWeaponId] = "HitByWeaponId";
+	scriptNames[LUAFN_HitByWeapon]   = "HitByWeapon";
 
 	scriptNames[LUAFN_QueryLandingPads]     = "QueryLandingPads";
 	scriptNames[LUAFN_Falling]              = "Falling";
