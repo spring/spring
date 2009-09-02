@@ -733,7 +733,7 @@ void CLuaUnitScript::AimWeapon(int weaponNum, float heading, float pitch)
 
 void  CLuaUnitScript::AimShieldWeapon(CPlasmaRepulser* weapon)
 {
-	Call(LUAFN_AimWeapon, weapon->weaponNum + 1);
+	Call(LUAFN_AimShield, weapon->weaponNum + 1);
 }
 
 
