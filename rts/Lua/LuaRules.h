@@ -68,7 +68,7 @@ class CLuaRules : public CLuaHandleSynced
 
 		bool UnitPreDamaged(const CUnit* unit, const CUnit* attacker,
                              float damage, int weaponID, bool paralyzer,
-                             float* newDamage);
+                             float* newDamage, float* impulseMult);
 
 		// unsynced
 		bool DrawUnit(int unitID);
