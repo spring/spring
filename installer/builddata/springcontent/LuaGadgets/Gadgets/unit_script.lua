@@ -81,6 +81,18 @@ local thread_wrap = {
 	--"TargetWeight",
 }
 
+local weapon_funcs = {
+	"QueryWeapon",
+	"AimFromWeapon",
+	"AimWeapon",
+	"AimShield",
+	"FireWeapon",
+	"Shot",
+	"EndBurst",
+	"BlockShot",
+	"TargetWeight",
+}
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -553,7 +565,8 @@ end
 --------------------------------------------------------------------------------
 
 function gadget:UnitCreated(unitID, unitDefID)
-	local script = scripts[UnitDefs[unitDefID].scriptName]
+	local ud = UnitDefs[unitDefID]
+	local script = scripts[ud.scriptName]
 	if (not script) then return end
 
 	-- Global variables in the script are still per unit.
@@ -593,6 +606,36 @@ function gadget:UnitCreated(unitID, unitDefID)
 	callins.MoveFinished = MoveFinished
 	callins.TurnFinished = TurnFinished
 	callins.Destroy = Destroy
+
+	-- AimWeapon/AimShield is required for a functional weapon/shield,
+	-- so it doesn't hurt to not check other weapons.
+	if ((not callins.AimWeapon and callins.AimWeapon1) or
+	    (not callins.AimShield and callins.AimShield1)) then
+		for j=1,#weapon_funcs do
+			local name = weapon_funcs[j]
+			local dispatch = {}
+			local n = 0
+			for i=1,ud.weapons.n do
+				local fun = callins[name .. i]
+				if fun then
+					dispatch[i] = fun
+					n = n + 1
+				end
+			end
+			if (n == ud.weapons.n) then
+				-- optimized case
+				callins[name] = function(u, w, ...)
+					return dispatch[w](u, ...)
+				end
+			elseif (n > 0) then
+				callins[name] = function(u, w, ...)
+					local fun = dispatch[w]
+					if fun then return fun(u, ...) end
+					return -1  --needed for QueryWeapon / AimFromWeapon
+				end
+			end
+		end
+	end
 
 	-- Wrap certain callins in a thread and/or safety net.
 	for i=1,#thread_wrap do
