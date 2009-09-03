@@ -1639,6 +1639,34 @@ bool CLuaHandle::MouseWheel(bool up, float value)
 	return retval;
 }
 
+bool CLuaHandle::JoystickEvent(const std::string& event, int val1, int val2)
+{
+	if (!CheckModUICtrl()) {
+		return false;
+	}
+	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 4);
+	const LuaHashString cmdStr(event);
+	if (!PushUnsyncedCallIn(cmdStr)) {
+		return false; // the call is not defined, do not take the event
+	}
+
+	lua_pushnumber(L, val1);
+	lua_pushnumber(L, val2);
+
+	// call the function
+	if (!RunCallInUnsynced(cmdStr, 2, 1)) {
+		return false;
+	}
+
+	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
+		return false;
+	}
+	const bool retval = !!lua_toboolean(L, -1);
+	lua_pop(L, 1);
+	return retval;
+}
 
 bool CLuaHandle::IsAbove(int x, int y)
 {
