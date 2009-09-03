@@ -46,6 +46,7 @@
 #include "LogOutput.h"
 #include "MouseInput.h"
 #include "InputHandler.h"
+#include "Joystick.h"
 #include "bitops.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
@@ -229,6 +230,7 @@ bool SpringApp::Initialize()
 	}
 #endif // WIN32
 
+	InitJoystick();
 	// Create CGameSetup and CPreGame objects
 	Startup();
 
