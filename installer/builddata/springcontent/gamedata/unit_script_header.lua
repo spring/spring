@@ -5,6 +5,10 @@
 
 -- Do not overuse this, there is a hard limit of 200 locals per closure in Lua!
 
+local unitID = unitID
+local unitDefID = unitDefID
+local UnitDef = UnitDefs[unitDefID]
+
 local UnitScript = Spring.UnitScript
 
 local EmitSfx = UnitScript.EmitSfx
