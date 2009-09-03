@@ -9,7 +9,7 @@ Joystick* stick = NULL;
 
 void InitJoystick()
 {
-	const bool useJoystick = configHandler->Get("JoystickEnabled", false);
+	const bool useJoystick = configHandler->Get("JoystickEnabled", true);
 	if (useJoystick)
 	{
 		const int err = SDL_InitSubSystem(SDL_INIT_JOYSTICK);
