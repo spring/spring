@@ -1613,13 +1613,15 @@ void CUnitScript::BenchmarkScript(CUnitScript* script)
 	int count = 0;
 
 	while ((end - start) < duration) {
-		script->QueryWeapon(0);
+		for (int i = 0; i < 10000; ++i) {
+			script->QueryWeapon(0);
+		}
 		++count;
 		end = SDL_GetTicks();
 	}
 
-	logOutput.Print("%d calls in %u ms -> %d calls/second",
-	                count, end - start, count / (duration / 1000));
+	logOutput.Print("%d0000 calls in %u ms -> %.0f calls/second",
+	                count, end - start, float(count) * (10000 / (duration / 1000)));
 }
 
 
