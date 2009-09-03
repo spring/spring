@@ -658,7 +658,9 @@ function gadget:UnitCreated(unitID, unitDefID)
 
 	-- Now it's safe to start a thread which will run Create().
 	-- (Spring doesn't run it, and if it did, it would do so too early to be useful.)
-	StartThread(unitID, callins.Create)
+	if callins.Create then
+		StartThread(unitID, callins.Create)
+	end
 end
 
 
