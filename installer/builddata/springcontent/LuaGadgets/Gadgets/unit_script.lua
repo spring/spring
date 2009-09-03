@@ -93,6 +93,15 @@ local weapon_funcs = {
 	"TargetWeight",
 }
 
+local default_return_values = {
+	QueryWeapon = -1,
+	AimFromWeapon = -1,
+	AimWeapon = false,
+	AimShield = false,
+	BlockShot = false,
+	TargetWeight = 1,
+}
+
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
@@ -628,10 +637,13 @@ function gadget:UnitCreated(unitID, unitDefID)
 					return dispatch[w](u, ...)
 				end
 			elseif (n > 0) then
+				-- needed for QueryWeapon / AimFromWeapon to return -1
+				-- while AimWeapon / AimShield should return false, etc.
+				local ret = default_return_values[name]
 				callins[name] = function(u, w, ...)
 					local fun = dispatch[w]
 					if fun then return fun(u, ...) end
-					return -1  --needed for QueryWeapon / AimFromWeapon
+					return ret
 				end
 			end
 		end
