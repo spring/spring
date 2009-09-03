@@ -520,6 +520,31 @@ end
 
 --------------------------------------------------------------------------------
 
+--[[
+Storage for MemoizedInclude.
+Format: { [filename] = chunk }
+--]]
+local include_cache = {}
+
+
+-- core of include() function for unit scripts
+local function ScriptInclude(filename)
+	local chunk = LoadChunk(filename)
+	include_cache[filename] = chunk
+	return chunk
+end
+
+
+-- memoize it so we don't need to decompress and parse the .lua file everytime..
+local function MemoizedInclude(filename, env)
+	local chunk = include_cache[filename] or ScriptInclude(filename)
+	--overwrite environment so it access environment of current unit
+	setfenv(chunk, env)
+	return chunk()
+end
+
+--------------------------------------------------------------------------------
+
 function gadget:UnitCreated(unitID, unitDefID)
 	local script = scripts[UnitDefs[unitDefID].scriptName]
 	if (not script) then return end
@@ -527,12 +552,21 @@ function gadget:UnitCreated(unitID, unitDefID)
 	-- Global variables in the script are still per unit.
 	-- Set up a new environment that is an instance of the prototype
 	-- environment, so we don't need to copy all globals for every unit.
+
 	-- This means of course, that global variable accesses are a bit more
 	-- expensive inside unit scripts, but this can be worked around easily
 	-- by localizing the necessary globals.
+	local pieces = Spring.GetUnitPieceMap(unitID)
 	local env = {
 		unitID = unitID,
 		unitDefID = unitDefID,
+		include = function(f) return MemoizedInclude(f, env) end,
+		piece = function(name)
+					if not pieces[name] then
+						error("piece not found: " .. tostring(name), 2)
+					end
+					return pieces[name]
+				end,
 		script = {},     -- will store the callins
 	}
 	setmetatable(env, { __index = script.env })
