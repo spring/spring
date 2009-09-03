@@ -6,6 +6,7 @@
 #include "mmgr.h"
 
 #include "myMath.h"
+#include "Matrix44f.h"
 #include "GlobalUnsynced.h"
 #include "Camera.h"
 #include "Map/Ground.h"
@@ -61,6 +62,23 @@ CCamera::~CCamera()
 	glDeleteLists(billboardList,1);
 }
 
+void CCamera::Roll(float rad)
+{
+	CMatrix44f rotate;
+	rotate.Rotate(rad, forward);
+	up = rotate.Mul(up);
+}
+
+void CCamera::Pitch(float rad)
+{
+	CMatrix44f rotate;
+	rotate.Rotate(rad, right);
+	forward = rotate.Mul(forward);
+	forward.Normalize();
+	rot.y = atan2(forward.x,forward.z);
+	rot.x = asin(forward.y);
+	UpdateForward();
+}
 
 static double Calculate4x4Cofactor(const double m[4][4], int ei, int ej)
 {

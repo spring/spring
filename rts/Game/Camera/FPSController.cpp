@@ -3,11 +3,14 @@
 
 #include "FPSController.h"
 
+#include <SDL_events.h>
+
 #include "ConfigHandler.h"
 #include "Game/Camera.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
 #include "GlobalUnsynced.h"
+#include "InputHandler.h"
 
 using std::min;
 using std::max;
@@ -18,6 +21,10 @@ CFPSController::CFPSController()
 	scrollSpeed = configHandler->Get("FPSScrollSpeed", 10) * 0.1f;
 	enabled = !!configHandler->Get("FPSEnabled", 1);
 	fov = configHandler->Get("FPSFOV", 45.0f);
+	moveSpeed = 0;
+	roll = 0;
+	pitch = 0;
+	inputCon = input.AddHandler(boost::bind(&CFPSController::HandleEvent, this, _1));
 }
 
 
@@ -32,7 +39,7 @@ void CFPSController::MouseMove(float3 move)
 {
 	camera->rot.y -= mouseScale*move.x;
 	camera->rot.x -= mouseScale*move.y*move.z;
-
+	camera->RestoreUp();
 	if(camera->rot.x>PI*0.4999f)
 		camera->rot.x=PI*0.4999f;
 	if(camera->rot.x<-PI*0.4999f)
@@ -85,6 +92,12 @@ float3 CFPSController::GetDir()
 	return dir;
 }
 
+void CFPSController::Update()
+{
+	pos += camera->forward * static_cast<float>(moveSpeed)/40*gu->lastFrameTime;
+	camera->Roll(static_cast<float>(roll)/3200/8*gu->lastFrameTime);
+	camera->Pitch(static_cast<float>(pitch)/3200/16*gu->lastFrameTime);
+}
 
 void CFPSController::SetPos(const float3& newPos)
 {
@@ -151,7 +164,37 @@ bool CFPSController::SetState(const StateMap& sm)
 
 	SetStateFloat(sm, "oldHeight", oldHeight);
 
+	moveSpeed = 0;
+	roll = 0;
+	pitch = 0;
+
 	return true;
+}
+
+bool CFPSController::HandleEvent(const SDL_Event& event)
+{
+	switch (event.type) {
+		case SDL_JOYAXISMOTION: {
+			switch (event.jaxis.axis)
+			{
+				case 0:
+					roll = event.jaxis.value;
+					break;
+				case 1:
+					pitch = event.jaxis.value;
+					break;
+				case 2:
+					moveSpeed = event.jaxis.value;
+					break;
+				default:
+					break;
+			};
+			return true;
+		}
+		default: {
+			return false;
+		}
+	}
 }
 
  
