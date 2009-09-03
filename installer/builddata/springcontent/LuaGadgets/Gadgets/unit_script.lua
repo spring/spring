@@ -247,7 +247,7 @@ local function WaitForAnim(threads, waitingForAnim, piece, axis)
 	end
 	local thread = threads[co_running() or error("not in a thread", 2)]
 	wthreads[#wthreads+1] = thread
-	thread.container = threads
+	thread.container = wthreads
 	-- yield the running thread:
 	-- it will be resumed once the wait finished (in AnimFinished).
 	co_yield()
@@ -393,7 +393,7 @@ local function LoadChunk(filename)
 	end
 	local chunk, err = loadstring(scriptHeader .. text, filename)
 	if (chunk == nil) then
-		Spring.Echo("Failed to load: " .. Basename(basename) .. "  (" .. err .. ")")
+		Spring.Echo("Failed to load: " .. Basename(filename) .. "  (" .. err .. ")")
 		return nil
 	end
 	return chunk
