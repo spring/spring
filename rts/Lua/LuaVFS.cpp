@@ -430,7 +430,10 @@ int LuaVFS::MapArchive(lua_State* L)
 
 	if (args >= 2)
 	{
-		const int checksum = lua_toint(L, 2);
+		const std::string checksumBuf = lua_tostring(L, 2);
+		int checksum = 0;
+		std::istringstream buf(checksumBuf);
+		buf >> checksum;
 		const int realchecksum = archiveScanner->GetArchiveChecksum(filename);
 		if (checksum != realchecksum)
 		{
