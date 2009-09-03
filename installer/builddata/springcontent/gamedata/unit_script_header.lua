@@ -1,9 +1,10 @@
 -- Author: Tobi Vollebregt
 
--- This is prepended before the actual unitscript, so certain functions and
+-- This is prepended before each actual unitscript, so certain functions and
 -- variables can be localized, without copy pasting this into every file.
 
--- Do not overuse this, there is a hard limit of 200 locals per closure in Lua!
+-- Do not overuse this:
+-- there is a limit of 200 locals and 60 upvalues per Lua function!
 
 local unitID = unitID
 local unitDefID = unitDefID
