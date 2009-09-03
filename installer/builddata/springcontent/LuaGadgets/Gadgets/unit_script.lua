@@ -521,8 +521,7 @@ end
 --------------------------------------------------------------------------------
 
 function gadget:UnitCreated(unitID, unitDefID)
-	local ud = UnitDefs[unitDefID]
-	local script = scripts[ud.scriptName]
+	local script = scripts[UnitDefs[unitDefID].scriptName]
 	if (not script) then return end
 
 	-- Global variables in the script are still per unit.
@@ -533,6 +532,7 @@ function gadget:UnitCreated(unitID, unitDefID)
 	-- by localizing the necessary globals.
 	local env = {
 		unitID = unitID,
+		unitDefID = unitDefID,
 		script = {},     -- will store the callins
 	}
 	setmetatable(env, { __index = script.env })
