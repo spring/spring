@@ -91,6 +91,7 @@ CEventHandler::CEventHandler()
 	SETUP_EVENT(MousePress,     MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MouseRelease,   MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(MouseWheel,     MANAGED_BIT | UNSYNCED_BIT);
+	SETUP_EVENT(JoystickEvent,  MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(IsAbove,        MANAGED_BIT | UNSYNCED_BIT);
 	SETUP_EVENT(GetTooltip,     MANAGED_BIT | UNSYNCED_BIT);
 
@@ -493,6 +494,18 @@ bool CEventHandler::MouseWheel(bool up, float value)
 	return false;
 }
 
+bool CEventHandler::JoystickEvent(const std::string& event, int val1, int val2)
+{
+	// reverse order, user has the override
+	const int count = listMouseWheel.size();
+	for (int i = (count - 1); i >= 0; i--) {
+		CEventClient* ec = listMouseWheel[i];
+		if (ec->JoystickEvent(event, val1, val2)) {
+			return true;
+		}
+	}
+	return false;
+}
 
 bool CEventHandler::IsAbove(int x, int y)
 {
@@ -506,7 +519,6 @@ bool CEventHandler::IsAbove(int x, int y)
 	}
 	return false;
 }
-
 
 string CEventHandler::GetTooltip(int x, int y)
 {

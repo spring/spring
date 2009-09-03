@@ -2,8 +2,10 @@
 
 #include <SDL.h>
 
+#include "InputHandler.h"
 #include "ConfigHandler.h"
 #include "LogOutput.h"
+#include "EventHandler.h"
 
 Joystick* stick = NULL;
 
@@ -36,6 +38,7 @@ Joystick::Joystick()
 	if (myStick)
 	{
 		LogObject() << "Using joystick " << stickNum << ": " << SDL_JoystickName(stickNum);
+		inputCon = input.AddHandler(boost::bind(&Joystick::HandleEvent, this, _1));
 	}
 	else
 	{
@@ -47,4 +50,33 @@ Joystick::~Joystick()
 {
 	if (myStick)
 		SDL_JoystickClose(myStick);
+}
+
+void Joystick::HandleEvent(const SDL_Event& event)
+{
+	switch (event.type) {
+		case SDL_JOYAXISMOTION:
+		{
+			eventHandler.JoystickEvent("JoyAxis", event.jaxis.axis, event.jaxis.value);
+			break;
+		}
+		case SDL_JOYHATMOTION:
+		{
+			eventHandler.JoystickEvent("JoyHat", event.jhat.hat, event.jhat.value);
+			break;
+		}
+		case SDL_JOYBUTTONDOWN:
+		{
+			eventHandler.JoystickEvent("JoyButtonDown", event.jbutton.button, event.jbutton.state);
+			break;
+		}
+		case SDL_JOYBUTTONUP:
+		{
+			eventHandler.JoystickEvent("JoyButtonUp", event.jbutton.button, event.jbutton.state);
+			break;
+		}
+		default:
+		{
+		}
+	}
 }
