@@ -1606,17 +1606,7 @@ void CUnitScript::SetUnitVal(int val, int param)
 
 void CUnitScript::BenchmarkScript(CUnitScript* script)
 {
-	/*
-	FIXME
-
 	const int duration = 10000; // millisecs
-	const int fn = COBFN_QueryPrimary + COBFN_Weapon_Funcs * 0;
-	const string fname = CUnitScriptNames::GetScriptName(fn);
-
-	if (!script->HasFunction(fn)) {
-		logOutput.Print("Script does not have %s", fname.c_str());
-		return;
-	}
 
 	const unsigned start = SDL_GetTicks();
 	unsigned end = start;
@@ -1628,17 +1618,13 @@ void CUnitScript::BenchmarkScript(CUnitScript* script)
 		end = SDL_GetTicks();
 	}
 
-	logOutput.Print("%s: %d calls in %u ms -> %d calls/second", fname.c_str(),
+	logOutput.Print("%d calls in %u ms -> %d calls/second",
 	                count, end - start, count / (duration / 1000));
-	*/
 }
 
 
 void CUnitScript::BenchmarkScript(const string& unitname)
 {
-	/*
-	FIXME
-
 	std::list<CUnit*>::iterator ui = uh->activeUnits.begin();
 	for (; ui != uh->activeUnits.end(); ++ui) {
 		CUnit* unit = *ui;
@@ -1647,7 +1633,6 @@ void CUnitScript::BenchmarkScript(const string& unitname)
 			return;
 		}
 	}
-	*/
 }
 
 #endif
