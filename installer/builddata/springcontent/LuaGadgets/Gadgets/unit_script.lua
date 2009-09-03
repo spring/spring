@@ -26,7 +26,7 @@ To do:
 
 function gadget:GetInfo()
 	return {
-		name      = "Lua unitscript framework",
+		name      = "Lua unit script framework",
 		desc      = "Manages Lua unit scripts",
 		author    = "Tobi Vollebregt",
 		date      = "2 September 2009",
@@ -398,6 +398,8 @@ end
 
 
 function gadget:Initialize()
+	Spring.Echo(string.format("Loading gadget: %-18s  <%s>", ghInfo.name, ghInfo.basename))
+
 	-- This initialization code has following properties:
 	--  * all used scripts are loaded => early syntax error detection
 	--  * unused scripts aren't loaded
@@ -430,7 +432,7 @@ function gadget:Initialize()
 			local filename = scriptFiles[fn] or scriptFiles[bn] or
 			                 scriptFiles[cfn] or scriptFiles[cbn]
 			if filename then
-				Spring.Echo("Loading unitscript " .. filename)
+				Spring.Echo("  Loading unit script: " .. filename)
 				LoadScript(unitDef.scriptName, filename)
 			end
 		end
@@ -529,18 +531,23 @@ local include_cache = {}
 
 -- core of include() function for unit scripts
 local function ScriptInclude(filename)
-	local chunk = LoadChunk(filename)
-	include_cache[filename] = chunk
-	return chunk
+	--Spring.Echo("  Loading include: " .. UNITSCRIPT_DIR .. filename)
+	local chunk = LoadChunk(UNITSCRIPT_DIR .. filename)
+	if chunk then
+		include_cache[filename] = chunk
+		return chunk
+	end
 end
 
 
 -- memoize it so we don't need to decompress and parse the .lua file everytime..
 local function MemoizedInclude(filename, env)
 	local chunk = include_cache[filename] or ScriptInclude(filename)
-	--overwrite environment so it access environment of current unit
-	setfenv(chunk, env)
-	return chunk()
+	if chunk then
+		--overwrite environment so it access environment of current unit
+		setfenv(chunk, env)
+		return chunk()
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -556,24 +563,30 @@ function gadget:UnitCreated(unitID, unitDefID)
 	-- This means of course, that global variable accesses are a bit more
 	-- expensive inside unit scripts, but this can be worked around easily
 	-- by localizing the necessary globals.
+
 	local pieces = Spring.GetUnitPieceMap(unitID)
 	local env = {
 		unitID = unitID,
 		unitDefID = unitDefID,
-		include = function(f) return MemoizedInclude(f, env) end,
-		piece = function(name)
-					if not pieces[name] then
-						error("piece not found: " .. tostring(name), 2)
-					end
-					return pieces[name]
-				end,
 		script = {},     -- will store the callins
 	}
+
+	env.include = function(f)
+		return MemoizedInclude(f, env)
+	end
+
+	env.piece = function(name)
+		if (not pieces[name]) then
+			error("piece not found: " .. tostring(name), 2)
+		end
+		return pieces[name]
+	end
+
 	setmetatable(env, { __index = script.env })
 	setfenv(script.chunk, env)
 
 	-- Execute the chunk. This puts the callins in env.script
-	script.chunk(unitID)
+	script.chunk()
 	local callins = env.script
 
 	-- Add framework callins.
