@@ -356,6 +356,7 @@ local scripts = {}
 
 -- Creates a new environment for a unit script.
 -- This environment is used as prototype for the unit script instances.
+-- (To save on time copying and space for a copy for each and every unit.)
 local function NewScript()
 	local script = {}
 	for k,v in pairs(System) do
@@ -367,8 +368,12 @@ local function NewScript()
 end
 
 
-local function LoadScript(scriptName, filename)
-	local basename = filename:match("[^\\/:]*$") or filename
+local function Basename(filename)
+	return filename:match("[^\\/:]*$") or filename
+end
+
+
+local function LoadChunk(filename)
 	local text = VFS.LoadFile(filename, VFSMODE)
 	if (text == nil) then
 		Spring.Echo("Failed to load: " .. filename)
@@ -376,9 +381,15 @@ local function LoadScript(scriptName, filename)
 	end
 	local chunk, err = loadstring(scriptHeader .. text, filename)
 	if (chunk == nil) then
-		Spring.Echo("Failed to load: " .. basename .. "  (" .. err .. ")")
+		Spring.Echo("Failed to load: " .. Basename(basename) .. "  (" .. err .. ")")
 		return nil
 	end
+	return chunk
+end
+
+
+local function LoadScript(scriptName, filename)
+	local chunk = LoadChunk(filename)
 	local env = NewScript()
 	setfenv(chunk, env)
 	scripts[scriptName] = { chunk = chunk, env = env }
@@ -398,7 +409,7 @@ function gadget:Initialize()
 	-- Recursively collect files below UNITSCRIPT_DIR.
 	local scriptFiles = {}
 	for _,filename in ipairs(RecursiveFileSearch(UNITSCRIPT_DIR, "*.lua", VFSMODE)) do
-		local basename = filename:match("[^\\/:]*$") or filename
+		local basename = Basename(filename)
 		scriptFiles[filename] = filename  -- for exact match
 		scriptFiles[basename] = filename  -- for basename match
 	end
@@ -413,7 +424,7 @@ function gadget:Initialize()
 		local unitDef = UnitDefs[i]
 		if (unitDef and not scripts[unitDef.scriptName]) then
 			local fn  = UNITSCRIPT_DIR .. unitDef.scriptName:lower()
-			local bn  = fn:match("[^\\/:]*$") or fn
+			local bn  = Basename(fn)
 			local cfn = fn:gsub("%.cob$", "%.lua")
 			local cbn = bn:gsub("%.cob$", "%.lua")
 			local filename = scriptFiles[fn] or scriptFiles[bn] or
@@ -433,6 +444,7 @@ function gadget:Initialize()
 	end
 end
 
+--------------------------------------------------------------------------------
 
 local StartThread = Spring.UnitScript.StartThread
 
@@ -506,6 +518,7 @@ local function Wrap(callins, name)
 	end
 end
 
+--------------------------------------------------------------------------------
 
 function gadget:UnitCreated(unitID, unitDefID)
 	local ud = UnitDefs[unitDefID]
@@ -569,3 +582,6 @@ function gadget:GameFrame(n)
 		end
 	end
 end
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
