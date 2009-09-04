@@ -2517,14 +2517,6 @@
 						RelativePath="..\..\Sim\Units\COB\UnitScriptFactory.h"
 						>
 					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\UnitScriptNames.cpp"
-						>
-					</File>
-					<File
-						RelativePath="..\..\Sim\Units\COB\UnitScriptNames.h"
-						>
-					</File>
 				</Filter>
 				<Filter
 					Name="UnitTypes"
@@ -3949,6 +3941,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\InputHandler.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Joystick.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\Joystick.h"
 				>
 			</File>
 			<File

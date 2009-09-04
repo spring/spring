@@ -1,3 +1,4 @@
+#include "StdAfx.h"
 #include "Joystick.h"
 
 #include <SDL.h>
