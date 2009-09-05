@@ -112,6 +112,11 @@ void COverheadController::MouseWheelMove(float move)
 	}
 }
 
+void COverheadController::Update()
+{
+	camera->RestoreUp();
+}
+
 float3 COverheadController::GetPos()
 {
 	maxHeight = 9.5f * std::max(gs->mapx,gs->mapy);		//map not created when constructor run
