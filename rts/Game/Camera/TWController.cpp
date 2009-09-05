@@ -64,6 +64,10 @@ void CTWController::MouseWheelMove(float move)
 	camera->rot.x-=move*0.001f;
 }
 
+void CTWController::Update()
+{
+	camera->RestoreUp();
+}
 
 float3 CTWController::GetPos()
 {
