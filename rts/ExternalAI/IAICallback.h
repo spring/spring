@@ -333,14 +333,17 @@ public:
 	/// Gets the elevation of the map at position (x, z)
 	virtual float GetElevation(float x, float z) = 0;
 
+
 	/// Returns what metal value 255 in the metal map is worth
-	virtual float GetMaxMetal() = 0;
+	virtual float GetMaxMetal() const = 0;
 	/// Returns extraction radius for metal extractors
-	virtual float GetExtractorRadius() = 0;
-	virtual float GetMinWind() = 0;
-	virtual float GetMaxWind() = 0;
-	virtual float GetTidalStrength() = 0;
-	virtual float GetGravity() = 0;
+	virtual float GetExtractorRadius() const = 0;
+	virtual float GetMinWind() const = 0;
+	virtual float GetMaxWind() const = 0;
+	virtual float GetCurWind() const = 0;
+	virtual float GetTidalStrength() const = 0;
+	virtual float GetGravity() const = 0;
+
 
 	// linedrawer interface functions
 	// * these allow you to draw command-like lines and figures
