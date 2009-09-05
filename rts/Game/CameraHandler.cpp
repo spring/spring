@@ -89,6 +89,8 @@ CCameraHandler::~CCameraHandler()
 
 void CCameraHandler::UpdateCam()
 {
+	camera->RestoreUp();
+
 	const float  wantedCamFOV = currCamCtrl->GetFOV();
 	const float3 wantedCamPos = currCamCtrl->GetPos();
 	const float3 wantedCamDir = currCamCtrl->GetDir();
