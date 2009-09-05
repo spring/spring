@@ -30,6 +30,7 @@
 #include "Sim/Misc/LosHandler.h"
 #include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/ModInfo.h"
+#include "Sim/Misc/Wind.h"
 #include "Sim/Path/PathManager.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
 #include "Sim/Units/CommandAI/LineDrawer.h"
@@ -911,45 +912,17 @@ const char* CAICallback::GetModName()
 	return modInfo.filename.c_str();
 }
 
-float CAICallback::GetMaxMetal()
-{
-	return mapInfo->map.maxMetal;
-}
 
-float CAICallback::GetExtractorRadius()
-{
-	return mapInfo->map.extractorRadius;
-}
+float CAICallback::GetMaxMetal() const { return mapInfo->map.maxMetal; }
+float CAICallback::GetExtractorRadius() const { return mapInfo->map.extractorRadius; }
 
-float CAICallback::GetMinWind()
-{
-	return mapInfo->atmosphere.minWind;
-}
+float CAICallback::GetMinWind() const { return wind.GetMinWind(); }
+float CAICallback::GetMaxWind() const { return wind.GetMaxWind(); }
+float CAICallback::GetCurWind() const { return wind.GetCurrentStrength(); }
 
-float CAICallback::GetMaxWind()
-{
-	return mapInfo->atmosphere.maxWind;
-}
+float CAICallback::GetTidalStrength() const { return mapInfo->map.tidalStrength; }
+float CAICallback::GetGravity() const { return mapInfo->map.gravity; }
 
-float CAICallback::GetTidalStrength()
-{
-	return mapInfo->map.tidalStrength;
-}
-
-float CAICallback::GetGravity()
-{
-	return mapInfo->map.gravity;
-}
-
-/*const unsigned char* CAICallback::GetSupplyMap()
-{
-	return supplyhandler->supplyLevel[gu->myTeam];
-}
-
-const unsigned char* CAICallback::GetTeamMap()
-{
-	return readmap->teammap;
-}*/
 
 const float* CAICallback::GetHeightMap()
 {

@@ -102,12 +102,13 @@ public:
 	const char* GetMapName ();
 	const char* GetModName();
 
-	float GetMaxMetal();
-	float GetExtractorRadius();
-	float GetMinWind();
-	float GetMaxWind();
-	float GetTidalStrength();
-	float GetGravity();
+	float GetMaxMetal() const;
+	float GetExtractorRadius() const;
+	float GetMinWind() const;
+	float GetMaxWind() const;
+	float GetCurWind() const;
+	float GetTidalStrength() const;
+	float GetGravity() const;
 
 	float GetElevation(float x, float z);
 

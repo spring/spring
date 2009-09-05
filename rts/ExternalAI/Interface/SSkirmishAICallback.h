@@ -1242,19 +1242,26 @@ float (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMap
  */
 struct SAIFloat3 (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(
 		int teamId, int resourceId, struct SAIFloat3 pos);
+
 const char* (CALLING_CONV *Clb_Map_getName)(int teamId);
 /// Gets the elevation of the map at position (x, z)
 float (CALLING_CONV *Clb_Map_getElevationAt)(int teamId, float x, float z);
+
+
 /// Returns what value 255 in the resource map is worth
 float (CALLING_CONV *Clb_Map_0REF1Resource2resourceId0getMaxResource)(
 		int teamId, int resourceId);
 /// Returns extraction radius for resource extractors
 float (CALLING_CONV *Clb_Map_0REF1Resource2resourceId0getExtractorRadius)(
 		int teamId, int resourceId);
+
 float (CALLING_CONV *Clb_Map_getMinWind)(int teamId);
 float (CALLING_CONV *Clb_Map_getMaxWind)(int teamId);
+float (CALLING_CONV *Clb_Map_getCurWind)(int teamId);
 float (CALLING_CONV *Clb_Map_getTidalStrength)(int teamId);
 float (CALLING_CONV *Clb_Map_getGravity)(int teamId);
+
+
 /**
  * Returns all points drawn with this AIs team color,
  * and additionally the ones drawn with allied team colors,

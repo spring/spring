@@ -1310,21 +1310,22 @@ EXPORT(float) skirmishAiCallback_Map_getElevationAt(int teamId, float x, float z
 	IAICallback* clb = team_callback[teamId]; return clb->GetElevation(x, z);
 }
 
+
+
 EXPORT(float) skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource(int teamId,
 		int resourceId) {
 
-	IAICallback* clb = team_callback[teamId];
+	const IAICallback* clb = team_callback[teamId];
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetMaxMetal();
 	} else {
 		return NULL;
 	}
 }
-
 EXPORT(float) skirmishAiCallback_Map_0REF1Resource2resourceId0getExtractorRadius(int teamId,
 		int resourceId) {
 
-	IAICallback* clb = team_callback[teamId];
+	const IAICallback* clb = team_callback[teamId];
 	if (resourceId == resourceHandler->GetMetalId()) {
 		return clb->GetExtractorRadius();
 	} else {
@@ -1333,20 +1334,23 @@ EXPORT(float) skirmishAiCallback_Map_0REF1Resource2resourceId0getExtractorRadius
 }
 
 EXPORT(float) skirmishAiCallback_Map_getMinWind(int teamId) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetMinWind();
+	const IAICallback* clb = team_callback[teamId]; return clb->GetMinWind();
 }
-
 EXPORT(float) skirmishAiCallback_Map_getMaxWind(int teamId) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetMaxWind();
+	const IAICallback* clb = team_callback[teamId]; return clb->GetMaxWind();
+}
+EXPORT(float) skirmishAiCallback_Map_getCurWind(int teamId) {
+	const IAICallback* clb = team_callback[teamId]; return clb->GetCurWind();
 }
 
 EXPORT(float) skirmishAiCallback_Map_getTidalStrength(int teamId) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetTidalStrength();
+	const IAICallback* clb = team_callback[teamId]; return clb->GetTidalStrength();
+}
+EXPORT(float) skirmishAiCallback_Map_getGravity(int teamId) {
+	const IAICallback* clb = team_callback[teamId]; return clb->GetGravity();
 }
 
-EXPORT(float) skirmishAiCallback_Map_getGravity(int teamId) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetGravity();
-}
+
 
 EXPORT(bool) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(int teamId, int unitDefId,
 		SAIFloat3 pos, int facing) {
