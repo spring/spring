@@ -417,7 +417,7 @@ inline void CUnitDrawer::DoDrawUnit(CUnit *unit, bool drawReflection, bool drawR
 				// add it to the vector of cloaked units
 				const float sqDist = (unit->pos-camera->pos).SqLength();
 
-				if (DrawAsIcon(*unit, sqDist)) {
+				if (!DrawAsIcon(*unit, sqDist)) {
 					S3DModel* model = unit->model;
 					if (unit->unitDef->decoyDef) {
 						model = unit->unitDef->decoyDef->LoadModel();
