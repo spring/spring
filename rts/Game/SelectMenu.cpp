@@ -116,8 +116,11 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server) : connectWnd(NULL)
+SelectMenu::SelectMenu(bool server) : GuiElement(NULL), connectWnd(NULL)
 {
+	SetPos(0,0);
+	SetSize(1,1);
+	agui::gui->AddElement(this);
 	mySettings = new ClientSetup();
 
 	mySettings->isHost = server;
@@ -129,17 +132,15 @@ SelectMenu::SelectMenu(bool server) : connectWnd(NULL)
 	}
 
 	{ // GUI stuff
-		inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
 		{
 			ScopedLoader loader("Spring Bitmaps");
-			background = new agui::Picture();
+			background = new agui::Picture(this);
 			background->SetPos(0,0);
 			background->SetSize(1,1);
 			background->Load("bitmaps/ui/background.jpg");
-			agui::gui->AddElement(background);
 		}
-		selw = new SelectionWidget(background);
-		agui::VerticalLayout* menu = new agui::VerticalLayout(background);
+		selw = new SelectionWidget(this);
+		agui::VerticalLayout* menu = new agui::VerticalLayout(this);
 		menu->SetPos(0.1, 0.5);
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
@@ -165,7 +166,6 @@ SelectMenu::SelectMenu(bool server) : connectWnd(NULL)
 SelectMenu::~SelectMenu()
 {
 	ConnectWindow(false);
-	agui::gui->RmElement(background);
 	background = NULL;
 }
 
@@ -202,7 +202,7 @@ void SelectMenu::Single()
 		mySettings->isHost = true;
 		pregame = new CPreGame(mySettings);
 		pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
-		delete this;
+		agui::gui->RmElement(this);
 	}
 }
 
@@ -267,18 +267,9 @@ void SelectMenu::DirectConnect()
 	delete this;
 }
 
-bool SelectMenu::HandleEvent(const SDL_Event& ev)
+bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
-		case SDL_MOUSEBUTTONDOWN: {
-			break;
-		}
-		case SDL_MOUSEBUTTONUP: {
-			break;
-		}
-		case SDL_MOUSEMOTION: {
-			break;
-		}
 		case SDL_KEYDOWN: {
 			if (ev.key.keysym.sym == SDLK_ESCAPE)
 			{
@@ -295,6 +286,7 @@ bool SelectMenu::HandleEvent(const SDL_Event& ev)
 			else if (ev.key.keysym.sym == SDLK_RETURN)
 			{
 				Single();
+				return true;
 			}
 			break;
 		}

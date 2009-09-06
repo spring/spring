@@ -6,6 +6,10 @@
 namespace agui
 {
 
+Picture::Picture(GuiElement* parent) : GuiElement(parent)
+{
+}
+
 Picture::~Picture()
 {
 	if (texture)
