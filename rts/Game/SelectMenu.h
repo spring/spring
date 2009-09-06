@@ -1,8 +1,7 @@
 #ifndef SELECT_MENU
 #define SELECT_MENU
 
-#include <boost/signals/connection.hpp>
-
+#include "aGui/GuiElement.h"
 #include "GameController.h"
 
 class ClientSetup;
@@ -22,7 +21,7 @@ When no setupscript is given, this will show a menu to select server address (wh
 If in host mode, it will show lists for Map, Mod and Script.
 When everything is selected, it will generate a gamesetup-script and start CPreGame
 */
-class SelectMenu : public CGameController
+class SelectMenu : public CGameController, public agui::GuiElement
 {
 public:
 	SelectMenu(bool server);
@@ -39,7 +38,7 @@ private:
 	void ConnectWindow(bool show);
 	void DirectConnect();
 
-	bool HandleEvent(const SDL_Event& ev);
+	bool HandleEventSelf(const SDL_Event& ev);
 
 	void SelectScript(const std::string& s);
 	void SelectMap(const std::string& s);
@@ -47,7 +46,6 @@ private:
 
 	ClientSetup* mySettings;
 
-	boost::signals::scoped_connection inputCon;
 	agui::LineEdit* address;
 	agui::Window* connectWnd;
 	agui::Picture* background;
