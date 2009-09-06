@@ -916,7 +916,7 @@ int CLuaHandleSynced::SyncedRandom(lua_State* L)
 	else if ((args == 2) && lua_isnumber(L, 1) && lua_isnumber(L, 2)) {
 		const int lower = lua_toint(L, 1);
 		const int upper = lua_toint(L, 2);
-		if (lower >= upper) {
+		if (lower > upper) {
 			luaL_error(L, "Empty interval in math.random() {synced}");
 		}
 		const float diff  = (upper - lower);
