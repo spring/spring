@@ -399,7 +399,14 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 		return -1;
 	}
 
-	return int(PopNumber(fn, -1));
+#if DEBUG_LUA >= 2
+	int ret = PopNumber(fn, 0) - 1;
+	LocalModelPiece* piece = GetLocalModelPiece(ret);
+	logOutput.Print("%s: %d %s", CLuaUnitScriptNames::GetScriptName(fn).c_str(), ret, piece ? piece->name.c_str() : "n/a");
+	return ret;
+#else
+	return int(PopNumber(fn, 0)) - 1;
+#endif
 }
 
 
@@ -419,7 +426,14 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 		return -1;
 	}
 
-	return int(PopNumber(fn, -1));
+#if DEBUG_LUA >= 2
+	int ret = PopNumber(fn, 0) - 1;
+	LocalModelPiece* piece = GetLocalModelPiece(ret);
+	logOutput.Print("%s: %d %s", CLuaUnitScriptNames::GetScriptName(fn).c_str(), ret, piece ? piece->name.c_str() : "n/a");
+	return ret;
+#else
+	return int(PopNumber(fn, 0)) - 1;
+#endif
 }
 
 
@@ -628,7 +642,7 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 		int n = 1;
 		lua_rawgeti(L, -1, n);
 		while (lua_israwnumber(L, -1)) {
-			out_pieces.push_back(lua_toint(L, -1));
+			out_pieces.push_back(lua_toint(L, 0) - 1);
 			lua_pop(L, 1);
 			lua_rawgeti(L, -1, ++n);
 		}
@@ -653,23 +667,7 @@ void CLuaUnitScript::BeginTransport(const CUnit* unit)
 
 int CLuaUnitScript::QueryTransport(const CUnit* unit)
 {
-	const int fn = LUAFN_QueryTransport;
-
-	if (!HasFunction(fn)) {
-		return -1;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
-
-	PushFunction(fn);
-	lua_pushnumber(L, unit->id);
-
-	if (!RunCallIn(fn, 2, 1)) {
-		return -1;
-	}
-
-	return int(PopNumber(fn, -1));
+	return RunQueryCallIn(LUAFN_QueryTransport, unit->id);
 }
 
 
