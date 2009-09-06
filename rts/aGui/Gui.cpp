@@ -23,7 +23,7 @@ void Gui::Draw()
 		bool duplicate = false;
 		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt)
 		{
-			if (*it == *elIt)
+			if (it->element == elIt->element)
 			{
 				LogObject() << "Gui::AddElement: skipping duplicated object";
 				duplicate = true;
@@ -32,7 +32,10 @@ void Gui::Draw()
 		}
 		if (!duplicate)
 		{
-			elements.push_front(*it);
+			if (it->asBackground)
+				elements.push_back(*it);
+			else
+				elements.push_front(*it);
 		}
 	}
 	toBeAdded.clear();
@@ -41,9 +44,9 @@ void Gui::Draw()
 	{
 		for (ElList::iterator elIt = elements.begin(); elIt != elements.end(); ++elIt)
 		{
-			if (*elIt == *it)
+			if (it->element == elIt->element)
 			{
-				delete (*elIt);
+				delete (elIt->element);
 				elements.erase(elIt);
 				break;
 			}
@@ -60,12 +63,12 @@ void Gui::Draw()
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	for (ElList::reverse_iterator it = elements.rbegin(); it != elements.rend(); ++it)
-		(*it)->Draw();
+		(*it).element->Draw();
 }
 
-void Gui::AddElement(GuiElement* elem, bool front)
+void Gui::AddElement(GuiElement* elem, bool asBackground)
 {
-	toBeAdded.push_back(elem);
+	toBeAdded.push_back(GuiItem(elem,asBackground));
 }
 
 void Gui::RmElement(GuiElement* elem)
@@ -73,9 +76,9 @@ void Gui::RmElement(GuiElement* elem)
 	// has to be delayed, otherwise deleting a button during a callback would segfault
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
 	{
-		if (*it == elem)
+		if ((*it).element == elem)
 		{
-			toBeRemoved.push_back(elem);
+			toBeRemoved.push_back(GuiItem(elem,true));
 			return;
 		}
 	}
@@ -90,9 +93,9 @@ bool Gui::MouseOverElement(const GuiElement* elem, int x, int y) const
 {
 	for (ElList::const_iterator it = elements.begin(); it != elements.end(); ++it)
 	{
-		if ((*it)->MouseOver(x, y))
+		if (it->element->MouseOver(x, y))
 		{
-			if ((*it) == elem)
+			if (it->element == elem)
 				return true;
 			else
 				return false;
@@ -109,13 +112,13 @@ bool Gui::HandleEvent(const SDL_Event& ev)
 	ElList::iterator handler = elements.end();
 	for (ElList::iterator it = elements.begin(); it != elements.end(); ++it)
 	{
-		if ((*it)->HandleEvent(ev))
+		if (it->element->HandleEvent(ev))
 		{
 			handler = it;
 			break;
 		}
 	}
-	if (handler != elements.end())
+	if (handler != elements.end() && !handler->asBackground)
 	{
 		elements.push_front(*handler);
 		elements.erase(handler);

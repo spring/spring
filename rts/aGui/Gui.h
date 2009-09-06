@@ -17,7 +17,7 @@ public:
 	Gui();
 	
 	void Draw();
-	void AddElement(GuiElement*, bool front = true);
+	void AddElement(GuiElement*, bool asBackground = false);
 	/// deletes the element on the next draw
 	void RmElement(GuiElement*);
 	
@@ -28,8 +28,14 @@ public:
 private:
 	bool HandleEvent(const SDL_Event& ev);
 	boost::signals::scoped_connection inputCon;
-	
-	typedef std::list<GuiElement*> ElList;
+
+	struct GuiItem
+	{
+		GuiItem(GuiElement* el, bool back) : element(el), asBackground(back) {};
+		GuiElement* element;
+		bool asBackground;
+	};
+	typedef std::list<GuiItem> ElList;
 	ElList elements;
 	ElList toBeRemoved;
 	ElList toBeAdded;
