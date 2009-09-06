@@ -46,30 +46,6 @@ using agui::HorizontalLayout;
 extern boost::uint8_t* keys;
 extern bool globalQuit;
 
-class ScopedLoader
-{
-public:
-	ScopedLoader(const string& mapName) : oldHandler(vfsHandler)
-	{
-		vfsHandler = new CVFSHandler();
-		std::string archive = archiveScanner->ModNameToModArchive(mapName);
-		std::string archivePath = archiveScanner->GetArchivePath(archive);
-		if (!vfsHandler->AddArchive(archivePath+archive, false))
-			LogObject() << "Failed to load: " << mapName;
-	}
-
-	~ScopedLoader()
-	{
-		if (vfsHandler != oldHandler) {
-			delete vfsHandler;
-			vfsHandler = oldHandler;
-		}
-	}
-
-private:
-	CVFSHandler* oldHandler;
-};
-
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
 			const std::string& playername)
 {
@@ -134,8 +110,11 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), connectWnd(NULL)
 	{ // GUI stuff
 		agui::Picture* background = new agui::Picture(this);;
 		{
-			ScopedLoader loader("Spring Bitmaps");
+			std::string archive = archiveScanner->ModNameToModArchive("Spring Bitmaps");
+			std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
+			vfsHandler->AddArchive(archivePath, false);
 			background->Load("bitmaps/ui/background.jpg");
+			vfsHandler->RemoveArchive(archivePath);
 		}
 		selw = new SelectionWidget(this);
 		agui::VerticalLayout* menu = new agui::VerticalLayout(this);
@@ -263,7 +242,7 @@ void SelectMenu::DirectConnect()
 	mySettings->hostip = address->GetContent();
 	mySettings->isHost = false;
 	pregame = new CPreGame(mySettings);
-	delete this;
+	agui::gui->RmElement(this);
 }
 
 bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
