@@ -7,12 +7,7 @@
 class ClientSetup;
 union SDL_Event;
 class SelectionWidget;
-namespace agui
-{
-class Window;
-class LineEdit;
-class Picture;
-}
+class ConnectWindow;
 
 /**
 @brief User prompt for options when no script is given
@@ -35,8 +30,8 @@ private:
 	void Settings();
 	void Multi();
 	void Quit();
-	void ConnectWindow(bool show);
-	void DirectConnect();
+	void ShowConnectWindow(bool show);
+	void DirectConnect(const std::string& addr);
 
 	bool HandleEventSelf(const SDL_Event& ev);
 
@@ -46,8 +41,7 @@ private:
 
 	ClientSetup* mySettings;
 
-	agui::LineEdit* address;
-	agui::Window* connectWnd;
+	ConnectWindow* conWindow;
 	SelectionWidget* selw;
 };
 

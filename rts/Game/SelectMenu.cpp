@@ -46,6 +46,42 @@ using agui::HorizontalLayout;
 extern boost::uint8_t* keys;
 extern bool globalQuit;
 
+class ConnectWindow : public agui::Window
+{
+public:
+	ConnectWindow() : agui::Window("Connect to server")
+	{
+		agui::gui->AddElement(this);
+		SetPos(0.5, 0.5);
+		SetSize(0.4, 0.2);
+		
+		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(this);
+		HorizontalLayout* input = new HorizontalLayout(wndLayout);
+		agui::TextElement* label = new agui::TextElement("Address:", input);
+		address = new agui::LineEdit(input);
+		address->SetFocus(true);
+		address->SetContent(configHandler->GetString("address", ""));
+		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
+		Button* close = new Button("Close", buttons);
+		close->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, false));
+		Button* connect = new Button("Connect", buttons);
+		connect->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, true));
+		GeometryChange();
+	}
+
+	boost::signal<void (std::string)> Connect;
+	agui::LineEdit* address;
+	
+private:
+	void Finish(bool connect)
+	{
+		if (connect)
+			Connect(address->GetContent());
+		else
+			WantClose();
+	};
+};
+
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
 			const std::string& playername)
 {
@@ -92,11 +128,11 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), connectWnd(NULL)
+SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
-	agui::gui->AddElement(this);
+	agui::gui->AddElement(this, true);
 	mySettings = new ClientSetup();
 
 	mySettings->isHost = server;
@@ -129,20 +165,20 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), connectWnd(NULL)
 		Button* settings = new Button("Edit settings", menu);
 		settings->Clicked.connect(boost::bind(&SelectMenu::Settings, this));
 		Button* direct = new Button("Direct connect", menu);
-		direct->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, true));
+		direct->Clicked.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, true));
 		Button* quit = new Button("Quit", menu);
 		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
 		background->GeometryChange();
 	}
 
 	if (!mySettings->isHost) {
-		ConnectWindow(true);
+		ShowConnectWindow(true);
 	}
 }
 
 SelectMenu::~SelectMenu()
 {
-	ConnectWindow(false);
+	ShowConnectWindow(false);
 }
 
 bool SelectMenu::Draw()
@@ -209,37 +245,25 @@ void SelectMenu::Quit()
 	globalQuit = true;
 }
 
-void SelectMenu::ConnectWindow(bool show)
+void SelectMenu::ShowConnectWindow(bool show)
 {
-	if (show && !connectWnd)
+	if (show && !conWindow)
 	{
-		connectWnd = new agui::Window("Connect to server");
-		connectWnd->SetPos(0.5, 0.5);
-		connectWnd->SetSize(0.4, 0.2);
-		agui::gui->AddElement(connectWnd);
-		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(connectWnd);
-		HorizontalLayout* input = new HorizontalLayout(wndLayout);
-		agui::TextElement* label = new agui::TextElement("Address:", input);
-		address = new agui::LineEdit(input);
-		address->SetFocus(true);
-		address->SetContent(configHandler->GetString("address", ""));
-		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
-		Button* close = new Button("Close", buttons);
-		close->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, false));
-		Button* connect = new Button("Connect", buttons);
-		connect->Clicked.connect(boost::bind(&SelectMenu::DirectConnect, this));
+		conWindow = new ConnectWindow();
+		conWindow->Connect.connect(boost::bind(&SelectMenu::DirectConnect, this, _1));
+		conWindow->WantClose.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, false));
 	}
-	else if (!show && connectWnd)
+	else if (!show && conWindow)
 	{
-		agui::gui->RmElement(connectWnd);
-		connectWnd = NULL;
+		agui::gui->RmElement(conWindow);
+		conWindow = NULL;
 	}
 }
 
-void SelectMenu::DirectConnect()
+void SelectMenu::DirectConnect(const std::string& addr)
 {
-	configHandler->SetString("address",address->GetContent());
-	mySettings->hostip = address->GetContent();
+	configHandler->SetString("address", addr);
+	mySettings->hostip = addr;
 	mySettings->isHost = false;
 	pregame = new CPreGame(mySettings);
 	agui::gui->RmElement(this);
