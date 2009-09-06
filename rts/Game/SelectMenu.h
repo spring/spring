@@ -48,7 +48,6 @@ private:
 
 	agui::LineEdit* address;
 	agui::Window* connectWnd;
-	agui::Picture* background;
 	SelectionWidget* selw;
 };
 

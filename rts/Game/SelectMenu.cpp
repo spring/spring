@@ -132,11 +132,9 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), connectWnd(NULL)
 	}
 
 	{ // GUI stuff
+		agui::Picture* background = new agui::Picture(this);;
 		{
 			ScopedLoader loader("Spring Bitmaps");
-			background = new agui::Picture(this);
-			background->SetPos(0,0);
-			background->SetSize(1,1);
 			background->Load("bitmaps/ui/background.jpg");
 		}
 		selw = new SelectionWidget(this);
@@ -166,7 +164,6 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), connectWnd(NULL)
 SelectMenu::~SelectMenu()
 {
 	ConnectWindow(false);
-	background = NULL;
 }
 
 bool SelectMenu::Draw()
@@ -185,6 +182,7 @@ bool SelectMenu::Update()
 
 void SelectMenu::Single()
 {
+	static bool once = false;
 	if (selw->userMod == SelectionWidget::NoModSelect)
 	{
 		selw->ShowModList();
@@ -197,8 +195,9 @@ void SelectMenu::Single()
 	{
 		selw->ShowScriptList();
 	}
-	else if (background) // in case of double-click
+	else if (!once) // in case of double-click
 	{
+		once = true;
 		mySettings->isHost = true;
 		pregame = new CPreGame(mySettings);
 		pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
