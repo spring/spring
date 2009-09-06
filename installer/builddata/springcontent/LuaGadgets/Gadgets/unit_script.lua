@@ -365,27 +365,27 @@ scriptHeader = scriptHeader:gsub("%-%-[^\r\n]*", ""):gsub("[\r\n]", " ")
 
 --[[
 Dictionary mapping script name (without path or extension) to a Lua chunk which
-returns a new closure (read; instance) of this unitscript, and a prototype
-environment for each instance of the unit.
+returns a new closure (read; instance) of this unitscript.
 
 Format: {
-	[unitID] = { chunk = chunk, env = env },
+	[unitID] = chunk,
 }
 --]]
 local scripts = {}
 
 
--- Creates a new environment for a unit script.
+-- Creates a new prototype environment for a unit script.
 -- This environment is used as prototype for the unit script instances.
 -- (To save on time copying and space for a copy for each and every unit.)
-local function NewScript()
+local prototypeEnv
+do
 	local script = {}
 	for k,v in pairs(System) do
 		script[k] = v
 	end
 	script._G = _G  -- the global table
 	script.GG = GG  -- the shared table (shared with gadgets!)
-	return script
+	prototypeEnv = script
 end
 
 
@@ -411,10 +411,8 @@ end
 
 local function LoadScript(scriptName, filename)
 	local chunk = LoadChunk(filename)
-	local env = NewScript()
-	setfenv(chunk, env)
-	scripts[scriptName] = { chunk = chunk, env = env }
-	return chunk, env
+	scripts[scriptName] = chunk
+	return chunk
 end
 
 
@@ -575,8 +573,8 @@ end
 
 function gadget:UnitCreated(unitID, unitDefID)
 	local ud = UnitDefs[unitDefID]
-	local script = scripts[ud.scriptName]
-	if (not script) then return end
+	local chunk = scripts[ud.scriptName]
+	if (not chunk) then return end
 
 	-- Global variables in the script are still per unit.
 	-- Set up a new environment that is an instance of the prototype
@@ -604,11 +602,11 @@ function gadget:UnitCreated(unitID, unitDefID)
 		return pieces[name]
 	end
 
-	setmetatable(env, { __index = script.env })
-	setfenv(script.chunk, env)
+	setmetatable(env, { __index = prototypeEnv })
+	setfenv(chunk, env)
 
 	-- Execute the chunk. This puts the callins in env.script
-	script.chunk()
+	chunk()
 	local callins = env.script
 
 	-- Add framework callins.
