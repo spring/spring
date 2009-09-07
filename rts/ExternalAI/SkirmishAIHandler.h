@@ -53,6 +53,10 @@ public:
 	static CSkirmishAIHandler& GetInstance();
 
 	void LoadFromSetup(const CGameSetup& setup);
+	/**
+	 * Will be called when the Mods archives were loaded into the VFS.
+	 */
+	void LoadPreGame();
 
 	/**
 	 * @param skirmishAIId index to check
@@ -182,8 +186,11 @@ public:
 
 	bool IsLocalSkirmishAI(const size_t skirmishAIId) const;
 
+	const std::set<std::string>& GetLuaAIImplShortNames() const;
+
 private:
 	static bool IsLocalSkirmishAI(const SkirmishAIData& aiData);
+	bool IsLuaAI(const SkirmishAIData& aiData) const;
 
 private:
 	/// Id -> AI instance
@@ -198,6 +205,9 @@ private:
 	typedef std::map<size_t, SkirmishAIKey> id_libKey_t;
 	/// Id -> AI instance library key
 	id_libKey_t id_libKey;
+
+	bool gameInitialized;
+	std::set<std::string> luaAIShortNames;
 
 	static CSkirmishAIHandler* mySingleton;
 };
