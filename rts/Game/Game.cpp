@@ -1197,13 +1197,6 @@ bool CGame::ActionPressed(const Action& action,
 				logOutput.Print("Team to %s: is a dead team already: %i", actionName.c_str(), teamToKillId);
 				badArgs = true;
 			}
-#ifndef DEBUG
-			// TODO: FIXME: remove this, if desync bug fixed
-			if (!singlePlayer) {
-				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
-				badArgs = true;
-			}
-#endif // DEBUG
 
 			if (!badArgs) {
 				if (actionName == "kill") {
@@ -1314,13 +1307,6 @@ bool CGame::ActionPressed(const Action& action,
 					badArgs = true;
 				}
 			}
-#ifndef DEBUG
-			// TODO: FIXME: remove this, if desync bug fixed
-			if (!singlePlayer) {
-				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
-				badArgs = true;
-			}
-#endif // DEBUG
 
 			if (!badArgs) {
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
