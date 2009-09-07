@@ -187,10 +187,8 @@ void CSkirmishAIHandler::CreateLocalSkirmishAI(const size_t skirmishAIId) {
 	assert(CSkirmishAIHandler::IsLocalSkirmishAI(*aiData));
 
 	team_localAIsInCreation[aiData->team] = *aiData;
-	logOutput.Print("CSkirmishAIHandler setting aiData[%d]->isLuaAI: (%s) %d", skirmishAIId, aiData->shortName.c_str(), IsLuaAI(*aiData));
 	aiData->isLuaAI = IsLuaAI(*aiData);
 	team_localAIsInCreation[aiData->team].isLuaAI = aiData->isLuaAI;
-	logOutput.Print("CSkirmishAIHandler set aiData[%d]->isLuaAI: (%s) %d",     skirmishAIId, aiData->shortName.c_str(), team_localAIsInCreation[aiData->team].isLuaAI);
 
 	// create instantly
 	eoh->CreateSkirmishAI(skirmishAIId);
