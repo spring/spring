@@ -337,6 +337,12 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		for (aiLib = aiLibs.begin(); aiLib != aiLibs.end(); ++aiLib) {
 			wordCompletion->AddWord(aiLib->GetShortName() + " " + aiLib->GetVersion() + " ", false, false, false);
 		}
+		// add the available Lua AI implementations to word completion, for /aicontrol
+		const std::set<std::string>& luaAIShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
+		for (std::set<std::string>::const_iterator sn = luaAIShortNames.begin();
+				sn != luaAIShortNames.end(); ++sn) {
+			wordCompletion->AddWord(*sn + " ", false, false, false);
+		}
 	}
 
 	{
