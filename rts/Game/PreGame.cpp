@@ -19,6 +19,7 @@
 #include "GameData.h"
 #include "Sim/Misc/GlobalSynced.h"
 #include "Sim/Misc/GlobalConstants.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "NetProtocol.h"
 #include "Net/RawPacket.h"
 #include "DemoRecorder.h"
@@ -396,6 +397,8 @@ void CPreGame::LoadMod(const std::string& modName)
 			}
 		}
 		alreadyLoaded = true;
+		// This loads the Lua AIs from the mod archives LuaAI.lua
+		skirmishAIHandler.LoadPreGame();
 	}
 }
 
