@@ -51,7 +51,7 @@ void CCommanderScript::GameStart()
 		}
 
 		// remove the pre-existing storage except for a small amount
-		team->metalStorage = 20;
+		team->metalStorage  = 20;
 		team->energyStorage = 20;
 
 		// create a Skirmish AI if required
