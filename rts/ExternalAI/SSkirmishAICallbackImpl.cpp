@@ -3648,6 +3648,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Map_0REF1Resource2resourceId0getExtractorRadius = &skirmishAiCallback_Map_0REF1Resource2resourceId0getExtractorRadius;
 	callback->Clb_Map_getMinWind = &skirmishAiCallback_Map_getMinWind;
 	callback->Clb_Map_getMaxWind = &skirmishAiCallback_Map_getMaxWind;
+	callback->Clb_Map_getCurWind = &skirmishAiCallback_Map_getCurWind;
 	callback->Clb_Map_getTidalStrength = &skirmishAiCallback_Map_getTidalStrength;
 	callback->Clb_Map_getGravity = &skirmishAiCallback_Map_getGravity;
 	callback->Clb_Map_0MULTI1SIZE0Point = &skirmishAiCallback_Map_0MULTI1SIZE0Point;
