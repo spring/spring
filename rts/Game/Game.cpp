@@ -1312,7 +1312,7 @@ bool CGame::ActionPressed(const Action& action,
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
 				aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
 				if (aiKey.IsUnspecified()) {
-					logOutput.Print("Skirmish AI: not a valid Skirmish AI (Lua AIs are not supported (yet)): %s %s",
+					logOutput.Print("Skirmish AI: not a valid Skirmish AI: %s %s",
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
 				} else {

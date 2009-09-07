@@ -32,6 +32,7 @@ void CWordCompletion::Reset()
 
 	// local commands
 	words["/aikill "] = sl;
+	words["/aireload "] = sl;
 	words["/aicontrol "] = sl;
 	words["/ailist"] = sl;
 	words["/advshading "] = sl;
