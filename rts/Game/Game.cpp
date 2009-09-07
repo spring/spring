@@ -1174,7 +1174,14 @@ bool CGame::ActionPressed(const Action& action,
 				const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
 				if (skirmishAIIds.size() > 0) {
 					skirmishAIId = skirmishAIIds[0];
+				} else {
+					logOutput.Print("Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);
+					badArgs = true;
 				}
+			}
+			if (!badArgs && skirmishAIHandler.GetSkirmishAI(skirmishAIId)->isLuaAI) {
+				logOutput.Print("Team to %s: it is not yet supported to %s Lua AIs", actionName.c_str(), actionName.c_str());
+				badArgs = true;
 			}
 			if (!badArgs) {
 				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToKillId);
@@ -1199,7 +1206,6 @@ bool CGame::ActionPressed(const Action& action,
 #endif // DEBUG
 
 			if (!badArgs) {
-
 				if (actionName == "kill") {
 					if (share) {
 						net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
@@ -1224,17 +1230,16 @@ bool CGame::ActionPressed(const Action& action,
 		}
 
 		if (badArgs) {
-			logOutput.Print("------------------------------------------------");
 			if (actionName == "kill") {
-				logOutput.Print("Kill a Skirmish AI controlling a team.");
-				logOutput.Print("The team itsself will remain alive,");
-				logOutput.Print("unless a second argument is given,");
-				logOutput.Print("which specifies an active team");
-				logOutput.Print("that will receive all the units of the AI team.");
+				logOutput.Print("description: "
+				                "Kill a Skirmish AI controlling a team. The team itsself will remain alive, "
+				                "unless a second argument is given, which specifies an active team "
+				                "that will receive all the units of the AI team.");
 				logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
 			} else if (actionName == "reload") {
-				logOutput.Print("Reload a Skirmish AI controlling a team.");
-				logOutput.Print("The team itsself will remain alive during the process.");
+				logOutput.Print("description: "
+				                "Reload a Skirmish AI controlling a team."
+				                "The team itsself will remain alive during the process.");
 				logOutput.Print("usage:   /%s teamToReload", action.command.c_str());
 			}
 		}
@@ -1295,12 +1300,19 @@ bool CGame::ActionPressed(const Action& action,
 			}
 			// TODO: FIXME: remove this, if support for multiple Skirmish AIs per team is in place
 			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).size() > 0)) {
-				logOutput.Print("Team to control: there is already an AI in controlling this team: %i", teamToControlId);
+				logOutput.Print("Team to control: there is already an AI controlling this team: %i", teamToControlId);
 				badArgs = true;
 			}
 			if (!badArgs && (skirmishAIHandler.GetLocalSkirmishAIInCreation(teamToControlId) != NULL)) {
 				logOutput.Print("Team to control: there is already an AI beeing created for team: %i", teamToControlId);
 				badArgs = true;
+			}
+			if (!badArgs) {
+				const std::set<std::string>& luaAIImplShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
+				if (luaAIImplShortNames.find(aiShortName) != luaAIImplShortNames.end()) {
+					logOutput.Print("Team to control: it is currently not supported to initialize Lua AIs mid-game");
+					badArgs = true;
+				}
 			}
 #ifndef DEBUG
 			// TODO: FIXME: remove this, if desync bug fixed
@@ -1309,14 +1321,6 @@ bool CGame::ActionPressed(const Action& action,
 				badArgs = true;
 			}
 #endif // DEBUG
-			/*
-			// It should be allowed to let two Skirmish AIs control a single team.
-			// Though, it will fail heavily with AIs not designed for this.
-			if (!badArgs && eoh->IsSkirmishAI(teamToControlId)) {
-				logOutput.Print("Team to control: is already controlled by a Skirmish AI: %i", teamToControlId);
-				badArgs = true;
-			}
-			*/
 
 			if (!badArgs) {
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
@@ -1350,8 +1354,7 @@ bool CGame::ActionPressed(const Action& action,
 		}
 
 		if (badArgs) {
-			logOutput.Print("------------------------------------------------");
-			logOutput.Print("Let a Skirmish AI take over control of a team.");
+			logOutput.Print("description: Let a Skirmish AI take over control of a team.");
 			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", action.command.c_str());
 			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", action.command.c_str());
 		}
