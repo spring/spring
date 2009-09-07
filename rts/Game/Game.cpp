@@ -303,7 +303,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	crossSize = configHandler->Get("CrossSize", 10.0f);
 
 	playerRoster.SetSortTypeByCode(
-	  (PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
+			(PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
 
 	CInputReceiver::guiAlpha = configHandler->Get("GuiOpacity",  0.8f);
 
@@ -322,7 +322,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		consoleHistory = new CConsoleHistory;
 		wordCompletion = new CWordCompletion;
 		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
-		  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
+			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
 		}
 		// add the Skirmish AIs instance names to word completion,
 		// for various things, eg chatting
