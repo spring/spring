@@ -78,11 +78,17 @@ bool CVFSHandler::RemoveArchive(const std::string& arName)
 	}
 	
 	// remove the files loaded from the archive to remove
-	for (std::map<std::string, FileData>::iterator f = files.begin(); f != files.end(); ++f) {
+	for (std::map<std::string, FileData>::iterator f = files.begin(); f != files.end();) {
 		if (f->second.ar == ar) {
 			logOutput.Print(LOG_VFS_DETAIL, "%s (removing)", f->first.c_str());
-			files.erase(f);
+#ifdef _MSC_VER
+			f = files.erase(f);
+#else
+			files.erase(f++);
+#endif
 		}
+		else
+			 ++f;
 	}
 	delete ar;
 	archives.erase(arName);
