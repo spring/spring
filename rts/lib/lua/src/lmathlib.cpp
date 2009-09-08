@@ -11,12 +11,11 @@
 #include "streflop_cond.h"
 #include "FastMath.h"
 
+
 #define lmathlib_c
 #define LUA_LIB
 
-
 #include "lua.h"
-
 #include "lauxlib.h"
 #include "lualib.h"
 
@@ -100,11 +99,12 @@ static int math_modf (lua_State *L) {
   // FIXME -- streflop does not have modf()
   // double fp = math::modf(luaL_checknumber(L, 1), &ip);
   const float in = (float)luaL_checknumber(L, 1);
-  if (isnan(in)) {
+
+  if (math::isnan(in)) {
     lua_pushnumber(L, in);
     lua_pushnumber(L, in);
   }
-  else if (isinf(in)) {
+  else if (math::isinf(in)) {
     lua_pushnumber(L, in);
     lua_pushnumber(L, 0.0f);
   }
@@ -196,7 +196,6 @@ static int math_max (lua_State *L) {
 
 static int lua_streflop_random_seed = 0;
 
-
 static int math_random (lua_State *L) {
   /* the `%' avoids the (rare) case of r==1, and is needed also because on
      some systems (SunOS!) `rand()' may return a value larger than RAND_MAX */
@@ -207,11 +206,10 @@ static int math_random (lua_State *L) {
 #ifdef STREFLOP_H
   if (lua_streflop_random_seed == 0) {
     lua_streflop_random_seed = 1;
-    streflop::RandomInit(1);
+    math::RandomInit(1); // streflop
   }
 
-  lua_Number r =
-    streflop::Random<true, false, lua_Number>(lua_Number(0.0), lua_Number(1.0));
+  lua_Number r = math::Random<true, false, lua_Number>(lua_Number(0.0), lua_Number(1.0)); // streflop
 #else
   lua_Number r = 0.0f;
 #endif
@@ -244,8 +242,9 @@ static int math_randomseed (lua_State *L) {
   /* SPRING srand(luaL_checkint(L, 1)); */
 
 #ifdef STREFLOP_H
-  streflop::RandomInit(luaL_checkint(L, 1));
+  math::RandomInit(luaL_checkint(L, 1)); // streflop
 #endif
+
   return 0;
 }
 
@@ -290,11 +289,13 @@ LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
   lua_pushnumber(L, PI);
   lua_setfield(L, -2, "pi");
+
 #ifdef STREFLOP_H
-  lua_pushnumber(L, SimplePositiveInfinity);
+  lua_pushnumber(L, math::SimplePositiveInfinity); // streflop
 #else
   lua_pushnumber(L, HUGE_VAL);
 #endif
+
   lua_setfield(L, -2, "huge");
 #if defined(LUA_COMPAT_MOD)
   lua_getfield(L, -1, "fmod");

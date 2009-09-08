@@ -55,7 +55,7 @@ int luaV_tostring (lua_State *L, StkId obj) {
     lua_Number n = nvalue(obj);
     // SPRING -- synced safety change
     //        -- need a custom number formatter?
-    if (isfinite(n)) {
+    if (math::isfinite(n)) {
       lua_number2str(s, n);
     }
     else {
