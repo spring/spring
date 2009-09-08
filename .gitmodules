@@ -5,5 +5,5 @@
 	path = AI/Skirmish/NTai
 	url = git://github.com/Tarendai/ntai.git
 [submodule "HughAI"]
-	path = HughAI
+	path = AI/Skirmish/HughAI
 	url = git://github.com/hughperkins/HughAI.git
