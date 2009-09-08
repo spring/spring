@@ -229,6 +229,7 @@ boost::mutex projmutex;
 boost::mutex rprojmutex;
 boost::mutex rflashmutex;
 boost::mutex rpiecemutex;
+boost::mutex rfeatmutex;
 
 #include <boost/thread/recursive_mutex.hpp>
 boost::recursive_mutex unitmutex;

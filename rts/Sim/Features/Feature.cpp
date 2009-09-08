@@ -68,7 +68,7 @@ CFeature::CFeature():
 	def(0),
 	collisionVolume(0),
 	inUpdateQue(false),
-	drawQuad(-1),
+	drawQuad(-2),
 	finalHeight(0),
 	reachedFinalPos(false),
 	myFire(0),
@@ -418,8 +418,6 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 		UnBlock();
 	}
 
-	featureHandler->UpdateDrawQuad(this, newPos);
-
 	// remove from managers
 	qf->RemoveFeature(this);
 	if (def->drawType >= DRAWTYPE_TREE) {
@@ -427,6 +425,8 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 	}
 
 	pos = newPos;
+
+	featureHandler->UpdateDrawPos(this);
 
 	// setup finalHeight
 	if (snapToGround) {
@@ -553,7 +553,8 @@ bool CFeature::UpdatePosition()
 				deathSpeed = ZeroVector;
 			}
 
-			featureHandler->UpdateDrawQuad(this, pos);
+			featureHandler->UpdateDrawPos(this);
+
 			CalculateTransform();
 		}
 
