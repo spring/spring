@@ -364,8 +364,6 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 
 int CFeatureHandler::AddFeature(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(feat); // AddFeature
-
 	// FIXME -- randomize me, pretty please
 	//          (could be done in blocks, if (empty) { add 5000 freeIDs } ?)
 	if (freeIDs.empty()) {
@@ -378,11 +376,8 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 	SetFeatureUpdateable(feature);
 
 	if (feature->def->drawType == DRAWTYPE_MODEL) {
-		int quad = int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
-		           int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
-		DrawQuad* dq = &drawQuads[quad];
-		dq->features.insert(feature);
-		feature->drawQuad = quad;
+		feature->drawQuad = -1;
+		UpdateDrawPos(feature);
 	}
 
 	eventHandler.FeatureCreated(feature);
@@ -393,8 +388,6 @@ int CFeatureHandler::AddFeature(CFeature* feature)
 
 void CFeatureHandler::DeleteFeature(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(feat); // DeleteFeature - maybe superfluous
-
 	toBeRemoved.push_back(feature->id);
 
 	eventHandler.FeatureDestroyed(feature);
@@ -464,9 +457,15 @@ void CFeatureHandler::Update()
 				toBeFreedIDs.push_back(feature->id);
 				activeFeatures.erase(feature);
 
-				if (feature->drawQuad >= 0) {
-					DrawQuad* dq = &drawQuads[feature->drawQuad];
-					dq->features.erase(feature);
+				{
+					GML_STDMUTEX_LOCK(rfeat); // Update
+
+					if (feature->drawQuad >= 0) {
+						DrawQuad* dq = &drawQuads[feature->drawQuad];
+						dq->features.erase(feature);
+					}
+
+					updateDrawFeatures.erase(feature);
 				}
 
 				if (feature->inUpdateQue) {
@@ -496,25 +495,39 @@ void CFeatureHandler::Update()
 }
 
 
-void CFeatureHandler::UpdateDrawQuad(CFeature* feature, const float3& newPos)
+void CFeatureHandler::UpdateDrawQuad(CFeature* feature)
 {
-	GML_RECMUTEX_LOCK(feat); // UpdateDrawQuad
-
 	const int oldDrawQuad = feature->drawQuad;
-	if (oldDrawQuad >= 0) {
+	if (oldDrawQuad >= -1) {
 		const int newDrawQuad =
-			int(newPos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
-			int(newPos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
+			int(feature->pos.z / DRAW_QUAD_SIZE / SQUARE_SIZE) * drawQuadsX +
+			int(feature->pos.x / DRAW_QUAD_SIZE / SQUARE_SIZE);
 		if (oldDrawQuad != newDrawQuad) {
-			DrawQuad* oldDQ = &drawQuads[oldDrawQuad];
-			oldDQ->features.erase(feature);
-			DrawQuad* newDQ = &drawQuads[newDrawQuad];
-			newDQ->features.insert(feature);
+			if (oldDrawQuad >= 0)
+				drawQuads[oldDrawQuad].features.erase(feature);
+			drawQuads[newDrawQuad].features.insert(feature);
 			feature->drawQuad = newDrawQuad;
 		}
 	}
 }
 
+void CFeatureHandler::UpdateDraw()
+{
+	GML_STDMUTEX_LOCK(rfeat); // UpdateDraw
+
+	for(std::set<CFeature *>::iterator i=updateDrawFeatures.begin(); i!= updateDrawFeatures.end(); ++i) {
+		UpdateDrawQuad(*i);
+	}
+
+	updateDrawFeatures.clear();
+}
+
+void CFeatureHandler::UpdateDrawPos(CFeature* feature)
+{
+	GML_STDMUTEX_LOCK(rfeat); // UpdateDrawPos
+
+	updateDrawFeatures.insert(feature);
+}
 
 void CFeatureHandler::SetFeatureUpdateable(CFeature* feature)
 {
@@ -635,6 +648,7 @@ void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading)
 
 		for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
 			glColor4f(1,1,1,(*i)->tempalpha);
+			glAlphaFunc(GL_GREATER,(*i)->tempalpha/2.0f);
 			unitDrawer->DrawFeatureStatic(*i);
 		}
 

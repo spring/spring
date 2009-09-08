@@ -3091,6 +3091,7 @@ bool CGame::Draw() {
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
 	unitDrawer->Update();
+	featureHandler->UpdateDraw();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();

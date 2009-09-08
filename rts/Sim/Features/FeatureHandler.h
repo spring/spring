@@ -34,7 +34,9 @@ public:
 
 	int AddFeature(CFeature* feature);
 	void DeleteFeature(CFeature* feature);
-	void UpdateDrawQuad(CFeature* feature, const float3& newPos);
+	void UpdateDrawQuad(CFeature* feature);
+	void UpdateDraw();
+	void UpdateDrawPos(CFeature* feature);
 
 	void LoadFeaturesFromMap(bool onlyCreateDefs);
 	const FeatureDef* GetFeatureDef(const std::string name, const bool showError = true);
@@ -72,6 +74,7 @@ private:
 
 	std::list<int> toBeRemoved;
 	CFeatureSet updateFeatures;
+	std::set<CFeature *> updateDrawFeatures;
 
 	struct DrawQuad {
 		CR_DECLARE_STRUCT(DrawQuad);
