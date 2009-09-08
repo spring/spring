@@ -9,13 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-//SPRING#include <math.h>
-#include "streflop_cond.h" // FIXME -- should always be compiled with streflop
-#ifdef UNITSYNC
-using std::isfinite;
-using std::isnan;
-using std::isinf;
-#endif
+// Spring
+#include "streflop_cond.h"
 
 #define lvm_c
 #define LUA_CORE

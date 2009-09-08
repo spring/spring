@@ -52,6 +52,7 @@ import filelist
 
 filelist.setSourceRootDir(os.path.abspath(os.getcwd()))
 
+
 if sys.platform == 'win32':
 	# force to mingw, otherwise picks up msvc
 	myTools = ['mingw']
@@ -59,12 +60,14 @@ else:
 	myTools = ['default']
 myTools += ['rts', 'gch']
 
+
 env = Environment(tools = myTools, toolpath = ['.', tmpBuildScriptsDir])
 #env = Environment(tools = myTools, toolpath = ['.', tmpBuildScriptsDir], ENV = {'PATH' : os.environ['PATH']})
+
 if env['platform'] == 'windows':
-        env['SHARED_OBJ_EXT'] = '.o'
+	env['SHARED_OBJ_EXT'] = '.o'
 else:
-        env['SHARED_OBJ_EXT'] = '.os'
+	env['SHARED_OBJ_EXT'] = '.os'
 
 if env['use_gch']:
 	env['Gch'] = env.Gch(source='rts/System/StdAfx.h', target='rts/System/StdAfx.h.gch', CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])[0]
@@ -72,6 +75,7 @@ else:
 	import os.path
 	if os.path.exists('rts/System/StdAfx.h.gch'):
 		os.unlink('rts/System/StdAfx.h.gch')
+
 
 def createStaticExtLibraryBuilder(env):
 	"""This is a utility function that creates the StaticExtLibrary
@@ -111,50 +115,58 @@ def create_static_objects(env, fileList, suffix, additionalCPPDEFINES = []):
 		fname, fext = fbase.rsplit('.', 1)
 		objsList.append(myEnv.StaticObject(os.path.join(fpath, fname + suffix), f))
 	return objsList
+
+
 	
 ################################################################################
 ### Build streflop
 ################################################################################
 
 # setup build environment
-senv = env.Clone(builddir=os.path.join(env['builddir'], 'streflop'))
-senv['CPPPATH'] = []
-senv.BuildDir(os.path.join(senv['builddir'], 'rts/lib/streflop'), 'rts/lib/streflop', duplicate = False)
-for d in filelist.list_directories(senv, 'rts/lib/streflop', exclude_list=[]):
-	senv.BuildDir(os.path.join(senv['builddir'], d), d, duplicate = False)
+streflopEnv = env.Clone(builddir=os.path.join(env['builddir'], 'streflop'))
+streflopEnv['CPPPATH'] = []
+streflopEnv.BuildDir(os.path.join(streflopEnv['builddir'], 'rts/lib/streflop'), 'rts/lib/streflop', duplicate = False)
+for d in filelist.list_directories(streflopEnv, 'rts/lib/streflop', exclude_list=[]):
+	streflopEnv.BuildDir(os.path.join(streflopEnv['builddir'], d), d, duplicate = False)
 
 # setup flags and defines
-if senv['fpmath'] == 'sse':
-	senv['CPPDEFINES'] = ['STREFLOP_SSE=1']
+if streflopEnv['fpmath'] == 'sse':
+	streflopEnv['CPPDEFINES'] = ['STREFLOP_SSE=1']
 else:
-	senv['CPPDEFINES'] = ['STREFLOP_X87=1']
-senv['CXXFLAGS'] = ['-Wall', '-Wno-sign-compare', '-O3', '-pipe', '-g', '-mno-tls-direct-seg-refs', '-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-fno-strict-aliasing', '-mieee-fp']
-senv.AppendUnique(CXXFLAGS = senv['streflop_extra'])
+	streflopEnv['CPPDEFINES'] = ['STREFLOP_X87=1']
+
+streflopEnv['CXXFLAGS'] = ['-Wall', '-Wno-sign-compare', '-O3', '-pipe', '-g', '-mno-tls-direct-seg-refs', '-fsingle-precision-constant', '-frounding-math', '-fsignaling-nans', '-fno-strict-aliasing', '-mieee-fp']
+streflopEnv.AppendUnique(CXXFLAGS = streflopEnv['streflop_extra'])
 
 # create the libm sub-part build environment
-slibmenv = senv.Clone()
+slibmenv = streflopEnv.Clone()
 slibmenv.AppendUnique(CPPPATH = ['rts/lib/streflop/libm/headers'])
 
 # gather the sources
 sobjs_flt32 = create_static_objects(slibmenv, filelist.get_source(slibmenv, 'rts/lib/streflop/libm/flt-32'), '-streflop-flt32', ['LIBM_COMPILING_FLT32'])
 #sobjs_dbl64 = create_static_objects(slibmenv, filelist.get_source(slibmenv, 'rts/lib/streflop/libm/dbl-64'), '-streflop-dbl64', ['LIBM_COMPILING_DBL64'])
 #sobjs_ldbl96 = create_static_objects(slibmenv, filelist.get_source(slibmenv, 'rts/lib/streflop/libm/ldbl-96'), '-streflop-ldbl96', ['LIBM_COMPILING_LDBL96'])
+
 streflopSource_tmp = [
-		'rts/lib/streflop/SMath.cpp',
-		'rts/lib/streflop/Random.cpp',
-		'rts/lib/streflop/streflopC.cpp'
-		]
+	'rts/lib/streflop/SMath.cpp',
+	'rts/lib/streflop/Random.cpp',
+	'rts/lib/streflop/streflopC.cpp'
+]
 streflopSource = []
-for f in streflopSource_tmp:   streflopSource += [os.path.join(senv['builddir'], f)]
+for f in streflopSource_tmp:
+	streflopSource += [os.path.join(streflopEnv['builddir'], f)]
+
 streflopSource += sobjs_flt32
 # not needed => safer (and faster) to not compile them at all
 #streflopSource += sobjs_flt32 + sobjs_dbl64 + sobjs_ldbl96
 
 # compile
-createStaticExtLibraryBuilder(senv)
-streflop_lib = senv.StaticExtLibrary(senv['builddir'], streflopSource)
-#streflop_lib = senv.StaticLibrary(senv['builddir'], streflopSource)
+createStaticExtLibraryBuilder(streflopEnv)
+streflop_lib = streflopEnv.StaticExtLibrary(streflopEnv['builddir'], streflopSource)
+#streflop_lib = streflopEnv.StaticLibrary(streflopEnv['builddir'], streflopSource)
 Alias('streflop', streflop_lib) # Allow `scons streflop' to compile just streflop
+
+
 
 ################################################################################
 ### Build oscpack
@@ -166,7 +178,7 @@ oscenv['CPPPATH'] = []
 oscenv.BuildDir(os.path.join(oscenv['builddir'], 'rts/lib/oscpack'),
 		'rts/lib/oscpack', duplicate = False)
 
-oscenv['CXXFLAGS'] = senv['CXXFLAGS']
+oscenv['CXXFLAGS'] = streflopEnv['CXXFLAGS']
 
 # setup flags and defines
 if oscenv['platform'] == 'darwin':
@@ -187,6 +199,8 @@ for f in oscpackSource_tmp:
 createStaticExtLibraryBuilder(oscenv)
 oscpack_lib = oscenv.StaticExtLibrary(oscenv['builddir'], oscpackSource)
 Alias('oscpack', oscpack_lib) # Allow `scons oscpack' to compile just oscpack
+
+
 
 ################################################################################
 ### Build spring(.exe)
@@ -222,19 +236,20 @@ if env['use_nedmalloc']:
 	nedmalloc = SConscript('tools/nedmalloc/SConscript', exports='env')
 	spring_files += [nedmalloc]
 
-springenv = env.Clone(CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
+
+springEnv = env.Clone(CPPDEFINES=env['CPPDEFINES']+env['spring_defines'])
 if env['platform'] == 'windows':
 	# create import library and .def file on Windows
 	springDef = os.path.join(env['builddir'], 'spring.def')
 	springA = os.path.join(env['builddir'], 'spring.a')
-	springenv['LINKFLAGS'] = springenv['LINKFLAGS'] + ['-Wl,--output-def,' + springDef]
-	springenv['LINKFLAGS'] = springenv['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias']
-	springenv['LINKFLAGS'] = springenv['LINKFLAGS'] + ['-Wl,--out-implib,' + springA]
+	springEnv['LINKFLAGS'] = springEnv['LINKFLAGS'] + ['-Wl,--output-def,' + springDef]
+	springEnv['LINKFLAGS'] = springEnv['LINKFLAGS'] + ['-Wl,--kill-at', '--add-stdcall-alias']
+	springEnv['LINKFLAGS'] = springEnv['LINKFLAGS'] + ['-Wl,--out-implib,' + springA]
 	instSpringSuppl = [env.Install(os.path.join(env['installprefix'], env['bindir']), springDef)]
 	instSpringSuppl += [env.Install(os.path.join(env['installprefix'], env['bindir']), springA)]
 	Alias('install', instSpringSuppl)
 	Alias('install-spring', instSpringSuppl)
-spring = springenv.Program(os.path.join(springenv['builddir'], 'spring'), spring_files)
+spring = springEnv.Program(os.path.join(springEnv['builddir'], 'spring'), spring_files)
 
 Alias('spring', spring)
 Default(spring)
@@ -247,15 +262,25 @@ if env['strip']:
 	env.AddPostAction(spring, Action([['strip','$TARGET']]))
 
 
+
 ################################################################################
 ### Build unitsync shared object
 ################################################################################
+
 # HACK   we should probably compile libraries from 7zip, hpiutil2 and minizip
 # so we don't need so much bloat here.
 # Need a new env otherwise scons chokes on equal targets built with different flags.
+#
 usync_builddir = os.path.join(env['builddir'], 'unitsync')
-uenv = env.Clone(builddir=usync_builddir)
-uenv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
+unitsyncEnv = env.Clone(builddir=usync_builddir)
+unitsyncEnv.AppendUnique(CPPDEFINES=['UNITSYNC', 'BITMAP_NO_OPENGL'])
+
+## needed because without it lua/lmathlib.cpp only includes cmath
+## via streflop_cond.h (which places everything in std namespace)
+if streflopEnv['fpmath'] == 'sse':
+	unitsyncEnv['CPPDEFINES'] += ['STREFLOP_SSE=1']
+else:
+	unitsyncEnv['CPPDEFINES'] += ['STREFLOP_X87=1']
 
 def remove_precompiled_header(env):
 	while 'USE_PRECOMPILED_HEADER' in env['CPPDEFINES']:
@@ -265,16 +290,16 @@ def remove_precompiled_header(env):
 	while '-DUSE_PRECOMPILED_HEADER' in env['CXXFLAGS']:
 		env['CXXFLAGS'].remove('-DUSE_PRECOMPILED_HEADER')
 
-remove_precompiled_header(uenv)
+remove_precompiled_header(unitsyncEnv)
 
 def usync_get_source(*args, **kwargs):
-	return filelist.get_source(uenv, ignore_builddir=True, *args, **kwargs)
+	return filelist.get_source(unitsyncEnv, ignore_builddir=True, *args, **kwargs)
 
-uenv.BuildDir(os.path.join(uenv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
+unitsyncEnv.BuildDir(os.path.join(unitsyncEnv['builddir'], 'tools/unitsync'), 'tools/unitsync', duplicate = False)
 unitsync_files          = usync_get_source('tools/unitsync')
 unitsync_fs_files       = usync_get_source('rts/System/FileSystem/', exclude_list=('rts/System/FileSystem/DataDirLocater.cpp'));
 unitsync_lua_files      = usync_get_source('rts/lib/lua/src');
-unitsync_7zip_files     = usync_get_source('rts/lib/7z') + usync_get_source('rts/lib/7z/Archive/7z');
+unitsync_7zip_files     = usync_get_source('rts/lib/7z') ##+ usync_get_source('rts/lib/7z/Archive/7z')
 unitsync_minizip_files  = usync_get_source('rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
 unitsync_hpiutil2_files = usync_get_source('rts/lib/hpiutil2');
 unitsync_extra_files = [
@@ -301,20 +326,28 @@ unitsync_files.extend(unitsync_hpiutil2_files)
 unitsync_files.extend(unitsync_extra_files)
 
 unitsync_objects = []
+
 if env['platform'] == 'windows':
 	# crosscompiles on buildbot need this, but native mingw builds fail
 	# during linking
 	if os.name != 'nt':
 		unitsync_files.append('rts/lib/minizip/iowin32.c')
+
 	unitsync_files.append('rts/System/FileSystem/DataDirLocater.cpp')
+
 	# Need the -Wl,--kill-at --add-stdcall-alias because TASClient expects undecorated stdcall functions.
-	uenv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias']
+	unitsyncEnv['LINKFLAGS'] += ['-Wl,--kill-at', '--add-stdcall-alias']
 else:
-	ddlcpp = uenv.SharedObject(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = uenv['CPPDEFINES']+datadir)
+	ddlcpp = unitsyncEnv.SharedObject(os.path.join(env['builddir'], 'rts/System/FileSystem/DataDirLocater.cpp'), CPPDEFINES = unitsyncEnv['CPPDEFINES']+datadir)
 	unitsync_objects += [ ddlcpp ]
-# some scons stupidity
-unitsync_objects += [uenv.SharedObject(source=f, target=os.path.join(uenv['builddir'], f)+uenv['SHARED_OBJ_EXT']) for f in unitsync_files]
-unitsync = uenv.SharedLibrary(os.path.join(uenv['builddir'], 'unitsync'), unitsync_objects)
+
+
+# work around some Scons stupidity
+unitsyncEnv['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME']=1
+unitsync_objects += [unitsyncEnv.SharedObject(source=f, target=os.path.join(unitsyncEnv['builddir'], f) + unitsyncEnv['SHARED_OBJ_EXT']) for f in unitsync_files]
+unitsync_objects += [streflop_lib]
+unitsync = unitsyncEnv.SharedLibrary(os.path.join(unitsyncEnv['builddir'], 'unitsync'), unitsync_objects)
+
 
 Alias('unitsync', unitsync)
 inst = env.Install(os.path.join(env['installprefix'], env['libdir']), unitsync)
@@ -334,19 +367,22 @@ if env['platform'] != 'windows':
 	Default(unitsync)
 
 
+
 #################################################################################
 #### AIs
 #################################################################################
 
 print('AI installprefix: ' + os.path.join(env['installprefix'], env['libdir'], 'AI'))
 ai_env = env.Clone(
-		builddir = os.path.join(env['builddir'], 'AI'),
-		installprefix = os.path.join(env['installprefix'], env['libdir'], 'AI')
-		)
+	builddir = os.path.join(env['builddir'], 'AI'),
+	installprefix = os.path.join(env['installprefix'], env['libdir'], 'AI')
+)
 remove_precompiled_header(ai_env)
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=env['builddir'])
 SConscript(['AI/SConscript'], exports=['env', 'ai_env', 'streflop_lib'])
 #SConscript(['AI/SConscript'], exports=['env', 'ai_env'], variant_dir=ai_env['builddir'])
+
+
 
 ################################################################################
 ### Run Tests
@@ -363,6 +399,7 @@ if 'test' in sys.argv and env['platform'] != 'windows':
 			test = os.path.join(dir, 'test')
 			if os.path.isfile(test):
 				os.system(test)
+
 
 
 ################################################################################
@@ -429,4 +466,3 @@ for f in luaui_files:
 	if not os.path.isdir(f):
 		inst = env.Install(os.path.join(env['installprefix'], env['datadir'], os.path.dirname(f)[5:]), f)
 		Alias('install', inst)
-

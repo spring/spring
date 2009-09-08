@@ -6,14 +6,10 @@
 
 
 #include <stdlib.h>
-//SPRING#include <math.h>
-#include "streflop_cond.h" // FIXME -- should always be compiled with streflop
+
+// Spring
+#include "streflop_cond.h"
 #include "FastMath.h"
-#ifdef UNITSYNC
-using std::isfinite;
-using std::isnan;
-using std::isinf;
-#endif
 
 #define lmathlib_c
 #define LUA_LIB
@@ -208,7 +204,7 @@ static int math_random (lua_State *L) {
   // SPRING
   // respect the original lua code that uses rand,
   // and rand is auto-seeded always with the same value
-#ifdef STREFLOP_H // unitsync is compiled without streflop
+#ifdef STREFLOP_H
   if (lua_streflop_random_seed == 0) {
     lua_streflop_random_seed = 1;
     streflop::RandomInit(1);
@@ -247,7 +243,7 @@ static int math_random (lua_State *L) {
 static int math_randomseed (lua_State *L) {
   /* SPRING srand(luaL_checkint(L, 1)); */
 
-#ifdef STREFLOP_H // unitsync is compiled without streflop
+#ifdef STREFLOP_H
   streflop::RandomInit(luaL_checkint(L, 1));
 #endif
   return 0;
@@ -294,8 +290,8 @@ LUALIB_API int luaopen_math (lua_State *L) {
   luaL_register(L, LUA_MATHLIBNAME, mathlib);
   lua_pushnumber(L, PI);
   lua_setfield(L, -2, "pi");
-#ifdef STREFLOP_H // unitsync is compiled without streflop
-  lua_pushnumber(L, streflop::SimplePositiveInfinity);
+#ifdef STREFLOP_H
+  lua_pushnumber(L, SimplePositiveInfinity);
 #else
   lua_pushnumber(L, HUGE_VAL);
 #endif
