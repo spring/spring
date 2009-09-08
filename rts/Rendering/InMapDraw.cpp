@@ -306,7 +306,7 @@ void InMapDraw_QuadDrawer::DrawQuad(int x, int y)
 		}
 	}
 
-	va->EnlargeArrays(dq->lines.size()*2,0,VA_SIZE_C);
+	lineva->EnlargeArrays(dq->lines.size()*2,0,VA_SIZE_C);
 	//! draw line markers
 	for (std::list<CInMapDraw::MapLine>::iterator li = dq->lines.begin(); li != dq->lines.end(); ++li) {
 		if (li->MaySee(imd)) {
