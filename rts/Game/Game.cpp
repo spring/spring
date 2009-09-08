@@ -3030,6 +3030,7 @@ bool CGame::Draw() {
 	CNamedTextures::Update();
 	texturehandlerS3O->Update();
 	modelParser->Update();
+	treeDrawer->Update();
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
 	unitDrawer->Update();
@@ -3399,7 +3400,6 @@ void CGame::SimFrame() {
 		waitCommandsAI.Update();
 		geometricObjects->Update();
 		sound->NewFrame();
-		treeDrawer->Update();
 		eoh->Update();
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
