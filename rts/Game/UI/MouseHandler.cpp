@@ -153,9 +153,8 @@ void CMouseHandler::LoadCursors()
 	// the default cursor must exist
 	if (cursorCommandMap.find("") == cursorCommandMap.end()) {
 		handleerror(0,
-			"Unable to load default cursor. Check that you have the OTA\n"
-			"content package (\"otacontent.sdz\") installed in your Spring\n"
-			"\"base/\" directory.",
+			"Unable to load default cursor. Check that you have the required\n"
+			"content packages installed in your Spring \"base/\" directory.\n",
 			"Missing Dependency: \"cursornormal\"", 0);
 	}
 }
