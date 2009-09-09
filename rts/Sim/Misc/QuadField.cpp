@@ -119,22 +119,25 @@ void CQuadField::GetQuads(float3 pos,float radius, int*& dst) const
 			}
 }
 
-std::vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
+//! gets all units within <radius> of <pos>;
+//! treats each unit as a 3D point object
+std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnits
 
 	std::vector<CUnit*> units;
 
-	int* endQuad=tempQuads;
-	GetQuads(pos,radius,endQuad);
+	int* endQuad = tempQuads;
+	const int tempNum = gs->tempNum++;
 
-	int tempNum=gs->tempNum++;
+	GetQuads(pos, radius, endQuad);
 
-	for(int* a=tempQuads;a!=endQuad;++a){
+	for (int* a = tempQuads; a != endQuad; ++a) {
 		Quad& quad = baseQuads[*a];
+
 		for (std::list<CUnit*>::iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum!=tempNum){
-				(*ui)->tempNum=tempNum;
+			if ((*ui)->tempNum != tempNum) {
+				(*ui)->tempNum = tempNum;
 				units.push_back(*ui);
 			}
 		}
@@ -143,24 +146,35 @@ std::vector<CUnit*> CQuadField::GetUnits(const float3& pos,float radius)
 	return units;
 }
 
-std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
+//! gets all units within <radius> of <pos>; takes
+//! the 3D model radius of each unit into account
+std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, bool spherical)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
 
 	std::vector<CUnit*> units;
 
-	int* endQuad=tempQuads;
-	GetQuads(pos,radius,endQuad);
+	int* endQuad = tempQuads;
+	const int tempNum = gs->tempNum++;
 
-	int tempNum=gs->tempNum++;
+	GetQuads(pos, radius, endQuad);
 
-	for (int* a=tempQuads;a!=endQuad;++a){
+	for (int* a = tempQuads; a != endQuad; ++a) {
 		Quad& quad = baseQuads[*a];
-		for (std::list<CUnit*>::iterator ui=quad.units.begin();ui!=quad.units.end();++ui){
-			float totRad=radius+(*ui)->radius;
-			if((*ui)->tempNum!=tempNum && (pos-(*ui)->midPos).SqLength()<totRad*totRad){
-				(*ui)->tempNum=tempNum;
-				units.push_back(*ui);
+
+		for (std::list<CUnit*>::iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
+			if ((*ui)->tempNum != tempNum) {
+				const float
+					totRad   = radius + (*ui)->radius,
+					totRadSq = totRad * totRad;
+				const float posUnitDstSq = spherical?
+					(pos - (*ui)->midPos).SqLength():
+					(pos - (*ui)->midPos).SqLength2D();
+
+				if (posUnitDstSq < totRadSq) {
+					(*ui)->tempNum = tempNum;
+					units.push_back(*ui);
+				}
 			}
 		}
 	}
@@ -168,6 +182,9 @@ std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos,float radius)
 	return units;
 }
 
+//! returns all units within the rectangle defined by
+//! mins and maxs, which extends infnitely along the
+//! y-axis
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& mins, const float3& maxs)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact
