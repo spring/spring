@@ -121,8 +121,9 @@ local sp_GetUnitWeaponState = Spring.GetUnitWeaponState
 local sp_SetUnitWeaponState = Spring.SetUnitWeaponState
 local sp_SetUnitShieldState = Spring.SetUnitShieldState
 
--- Keep local reference to engine's WaitForMove/WaitForTurn,
+-- Keep local reference to engine's CallAsUnit/WaitForMove/WaitForTurn,
 -- as we overwrite them with (safer) framework version later on.
+local sp_CallAsUnit  = Spring.UnitScript.CallAsUnit
 local sp_WaitForMove = Spring.UnitScript.WaitForMove
 local sp_WaitForTurn = Spring.UnitScript.WaitForTurn
 local sp_SetPieceVisibility = Spring.UnitScript.SetPieceVisibility
@@ -171,6 +172,10 @@ where ~ refers to the unit table again (allows finding the unit given a thread)
 --]]
 local units = {}
 
+-- Keeps a reference to the currently active unit.
+-- (ie. which is running a script.)
+local activeUnit
+
 --[[
 This is the bed, it stores all the sleeping threads,
 indexed by the frame in which they need to be woken up.
@@ -195,14 +200,15 @@ local function Remove(tab, item)
 end
 
 -- This is put in every script to clean up if the script gets destroyed.
-local function Destroy(unitID)
-	if units[unitID] then
-		for _,thread in pairs(units[unitID].threads) do
+local function Destroy()
+	if activeUnit then
+		for _,thread in pairs(activeUnit.threads) do
 			if thread.container then
 				Remove(thread.container, thread) -- FIXME: performance?
 			end
 		end
-		units[unitID] = nil
+		units[activeUnit.unitID] = nil
+		activeUnit = nil
 	end
 end
 
@@ -233,17 +239,31 @@ end
 -- MoveFinished and TurnFinished are put in every script by the framework.
 -- They resume the threads which were waiting for the move/turn.
 local function MoveFinished(unitID, piece, axis)
-	local u = units[unitID]
-	return AnimFinished(u.threads, u.waitingForMove, piece, axis)
+	return AnimFinished(activeUnit.threads, activeUnit.waitingForMove, piece, axis)
 end
 
 local function TurnFinished(unitID, piece, axis)
-	local u = units[unitID]
-	return AnimFinished(u.threads, u.waitingForTurn, piece, axis)
+	return AnimFinished(activeUnit.threads, activeUnit.waitingForTurn, piece, axis)
 end
 
 --------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
+
+-- overwrites engine's CallAsUnit
+function Spring.UnitScript.CallAsUnit(unitID, fun, ...)
+	local oldActiveUnit = activeUnit
+	activeUnit = units[unitID]
+	local ret = {sp_CallAsUnit(unitID, fun, ...)}
+	activeUnit = oldActiveUnit
+	return unpack(ret)
+end
+
+local function CallAsUnitNoReturn(unitID, fun, ...)
+	local oldActiveUnit = activeUnit
+	activeUnit = units[unitID]
+	sp_CallAsUnit(unitID, fun, ...)
+	activeUnit = oldActiveUnit
+end
 
 -- Helper for WaitForMove and WaitForTurn
 -- Unsafe, because it does not check whether the animation to wait for actually exists.
@@ -263,22 +283,20 @@ local function WaitForAnim(threads, waitingForAnim, piece, axis)
 end
 
 -- overwrites engine's WaitForMove
-function Spring.UnitScript.WaitForMove(unitID, piece, axis)
-	if sp_WaitForMove(unitID, piece, axis) then
-		local u = units[unitID]
-		return WaitForAnim(u.threads, u.waitingForMove, piece, axis)
+function Spring.UnitScript.WaitForMove(piece, axis)
+	if sp_WaitForMove(piece, axis) then
+		return WaitForAnim(activeUnit.threads, activeUnit.waitingForMove, piece, axis)
 	end
 end
 
 -- overwrites engine's WaitForTurn
-function Spring.UnitScript.WaitForTurn(unitID, piece, axis)
-	if sp_WaitForTurn(unitID, piece, axis) then
-		local u = units[unitID]
-		return WaitForAnim(u.threads, u.waitingForTurn, piece, axis)
+function Spring.UnitScript.WaitForTurn(piece, axis)
+	if sp_WaitForTurn(piece, axis) then
+		return WaitForAnim(activeUnit.threads, activeUnit.waitingForTurn, piece, axis)
 	end
 end
 
-function Spring.UnitScript.Sleep(unitID, milliseconds)
+function Spring.UnitScript.Sleep(milliseconds)
 	local n = floor(milliseconds / 33)
 	if (n <= 0) then n = 1 end
 	n = n + sp_GetGameFrame()
@@ -287,7 +305,7 @@ function Spring.UnitScript.Sleep(unitID, milliseconds)
 		zzz = {}
 		sleepers[n] = zzz
 	end
-	local thread = units[unitID].threads[co_running() or error("not in a thread", 2)]
+	local thread = activeUnit.threads[co_running() or error("not in a thread", 2)]
 	zzz[#zzz+1] = thread
 	thread.container = zzz
 	-- yield the running thread:
@@ -295,34 +313,34 @@ function Spring.UnitScript.Sleep(unitID, milliseconds)
 	co_yield()
 end
 
-function Spring.UnitScript.StartThread(unitID, fun, ...)
+function Spring.UnitScript.StartThread(fun, ...)
 	local co = co_create(fun)
-	local u = units[unitID]
 	local thread = {
 		thread = co,
 		-- signal_mask is inherited from current thread, if any
-		signal_mask = (co_running() and u.threads[co_running()].signal_mask or 0)
+		signal_mask = (co_running() and activeUnit.threads[co_running()].signal_mask or 0),
+		unitID = activeUnit.unitID,
 	}
-	u.threads[co] = thread
+	activeUnit.threads[co] = thread
 	-- COB doesn't start thread immediately: it only sets up stack and
 	-- pushes parameters on it for first time the thread is scheduled.
 	-- Here it is easier however to start thread immediately, so we don't need
 	-- to remember the parameters for the first co_resume call somewhere.
 	-- I think in practice the difference in behavior isn't an issue.
-	return WakeUp(thread, unitID, ...)
+	return WakeUp(thread, activeUnit.unitID, ...)
 end
 
-function Spring.UnitScript.SetSignalMask(unitID, mask)
-	local thread = units[unitID].threads[co_running()]
+function Spring.UnitScript.SetSignalMask(mask)
+	local thread = activeUnit.threads[co_running()]
 	if thread then
 		thread.signal_mask = mask
 	end
 end
 
-function Spring.UnitScript.Signal(unitID, mask)
+function Spring.UnitScript.Signal(mask)
 	-- beware, unsynced loop order
 	-- (doesn't matter here as long as all threads get removed)
-	for _,thread in pairs(units[unitID].threads) do
+	for _,thread in pairs(activeUnit.threads) do
 		if (bit_and(thread.signal_mask, mask) ~= 0) then
 			if thread.container then
 				Remove(thread.container, thread) -- FIXME: performance?
@@ -331,12 +349,12 @@ function Spring.UnitScript.Signal(unitID, mask)
 	end
 end
 
-function Spring.UnitScript.Hide(unitID, piece)
-	return sp_SetPieceVisibility(unitID, piece, false)
+function Spring.UnitScript.Hide(piece)
+	return sp_SetPieceVisibility(piece, false)
 end
 
-function Spring.UnitScript.Show(unitID, piece)
-	return sp_SetPieceVisibility(unitID, piece, true)
+function Spring.UnitScript.Show(piece)
+	return sp_SetPieceVisibility(piece, true)
 end
 
 -- may be useful to other gadgets
@@ -484,7 +502,7 @@ local function Wrap_AimWeapon(callins)
 	end
 
 	callins["AimWeapon"] = function(unitID, weaponNum, heading, pitch)
-		return StartThread(unitID, AimWeaponThread, weaponNum, heading, pitch)
+		return StartThread(AimWeaponThread, weaponNum, heading, pitch)
 	end
 end
 
@@ -502,7 +520,7 @@ local function Wrap_AimShield(callins)
 	end
 
 	callins["AimShield"] = function(unitID, weaponNum)
-		return StartThread(unitID, AimWeaponThread, weaponNum)
+		return StartThread(AimWeaponThread, weaponNum)
 	end
 end
 
@@ -524,7 +542,7 @@ local function Wrap_Killed(callins)
 	end
 
 	callins["Killed"] = function(unitID, recentDamage, maxHealth)
-		StartThread(unitID, KilledThread, recentDamage, maxHealth)
+		StartThread(KilledThread, recentDamage, maxHealth)
 		return -- no return value signals Spring to wait for SetDeathScriptFinished call.
 	end
 end
@@ -535,7 +553,7 @@ local function Wrap(callins, name)
 	if (not fun) then return end
 
 	callins[name] = function(unitID, ...)
-		return StartThread(unitID, fun, ...)
+		return StartThread(fun, ...)
 	end
 end
 
@@ -606,7 +624,7 @@ function gadget:UnitCreated(unitID, unitDefID)
 	setfenv(chunk, env)
 
 	-- Execute the chunk. This puts the callins in env.script
-	chunk()
+	CallAsUnitNoReturn(unitID, chunk)
 	local callins = env.script
 
 	-- Add framework callins.
@@ -655,12 +673,22 @@ function gadget:UnitCreated(unitID, unitDefID)
 	Wrap_AimShield(callins)
 	Wrap_Killed(callins)
 
+	-- Wrap everything so activeUnit get's set properly.
+	for k,v in pairs(callins) do
+		local fun = callins[k]
+		callins[k] = function(...)
+			activeUnit = units[unitID]
+			return fun(...)
+		end
+	end
+
 	-- Register the callins with Spring.
 	Spring.UnitScript.CreateScript(unitID, callins)
 
 	-- Register (must be last: it shouldn't be done in case of error.)
 	units[unitID] = {
 		env = env,
+		unitID = unitID,
 		waitingForMove = {},
 		waitingForTurn = {},
 		threads = setmetatable({}, {__mode = "kv"}), -- weak table
@@ -669,7 +697,7 @@ function gadget:UnitCreated(unitID, unitDefID)
 	-- Now it's safe to start a thread which will run Create().
 	-- (Spring doesn't run it, and if it did, it would do so too early to be useful.)
 	if callins.Create then
-		StartThread(unitID, callins.Create)
+		CallAsUnitNoReturn(unitID, StartThread, callins.Create)
 	end
 end
 
@@ -680,7 +708,9 @@ function gadget:GameFrame(n)
 		sleepers[n] = nil
 		-- Wake up the lazy bastards.
 		for i=1,#zzz do
-			WakeUp(zzz[i])
+			local unitID = zzz[i].unitID
+			activeUnit = units[unitID]
+			sp_CallAsUnit(unitID, WakeUp, zzz[i])
 		end
 	end
 end

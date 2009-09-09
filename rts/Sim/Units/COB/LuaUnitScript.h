@@ -13,6 +13,9 @@ struct lua_State;
 class CLuaUnitScript : public CUnitScript, CUnitScript::IAnimListener
 {
 private:
+	static CUnit* activeUnit;
+	static CUnitScript* activeScript;
+
 	// remember whether we are running in LuaRules or LuaGaia
 	CLuaHandle* handle;
 
@@ -118,9 +121,16 @@ private:
 	static int CreateScript(lua_State* L);
 	static int UpdateCallIn(lua_State* L);
 
+	// other call-outs are stateful
+	static int CallAsUnit(lua_State* L);
+
 	// Lua COB replacement support funcs (+SpawnCEG, PlaySoundFile, etc.)
+	static int GetUnitValue(lua_State* L, CUnitScript* script, int arg);
 	static int GetUnitValue(lua_State* L);
+	static int GetUnitCOBValue(lua_State* L); // backward compat
+	static int SetUnitValue(lua_State* L, CUnitScript* script, int arg);
 	static int SetUnitValue(lua_State* L);
+	static int SetUnitCOBValue(lua_State* L); // backward compat
 	static int SetPieceVisibility(lua_State* L);
 	static int EmitSfx(lua_State* L);       // TODO: better names?
 	static int AttachUnit(lua_State* L);
