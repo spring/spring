@@ -23,6 +23,7 @@ public:
 	std::string countryCode;
 	bool spectator;
 	bool isFromDemo;
+	bool readyToStart;
 	
 	void SetValue(const std::string& key, const std::string& value);
 	const customOpts& GetAllValues() const {

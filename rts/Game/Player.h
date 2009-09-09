@@ -51,7 +51,6 @@ public:
 	bool active;
 
 	int playerNum;
-	bool readyToStart;
 
 	float cpuUsage;
 	int ping;

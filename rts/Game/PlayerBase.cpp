@@ -9,7 +9,8 @@ PlayerBase::PlayerBase() :
 	TeamController(),
 	rank(-1),
 	spectator(false),
-	isFromDemo(false)
+	isFromDemo(false),
+	readyToStart(false)
 {
 }
 

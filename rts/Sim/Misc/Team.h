@@ -42,10 +42,8 @@ public:
 
 	void Died();
 
-	void StartposMessage(const float3& pos, const bool isReady);
 	void StartposMessage(const float3& pos);
 
-	inline bool IsReadyToStart() const {return readyToStart;};
 	void operator=(const TeamBase& base) { TeamBase::operator=(base); };
 
 	enum AddType{
