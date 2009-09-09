@@ -67,12 +67,12 @@ docs for callins defined in this file:
 
   TODO: document other callins properly
 
-TurnFinished(number unitID, number piece, number axis)
+TurnFinished(number piece, number axis)
 	Called after a turn finished for this unit/piece/axis (not a turn-now!)
 	Should resume coroutine of the particular thread which called the Lua
 	WaitForTurn function (see below).
 
-MoveFinished(number unitID, number piece, number axis)
+MoveFinished(number piece, number axis)
 	Called after a move finished for this unit/piece/axis (not a move-now!)
 	Should resume coroutine of the particular thread which called the Lua
 	WaitForMove function (see below).
@@ -359,9 +359,6 @@ inline void CLuaUnitScript::RawPushFunction(int functionId)
 {
 	// Push Lua function on the stack
 	lua_rawgeti(L, LUA_REGISTRYINDEX, functionId);
-
-	// Push unitID on the stack (all callIns get this)
-	lua_pushnumber(L, unit->id);
 }
 
 
@@ -395,11 +392,11 @@ int CLuaUnitScript::RunQueryCallIn(int fn)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	lua_checkstack(L, 1);
 
 	PushFunction(fn);
 
-	if (!RunCallIn(fn, 1, 1)) {
+	if (!RunCallIn(fn, 0, 1)) {
 		return -1;
 	}
 
@@ -421,12 +418,12 @@ int CLuaUnitScript::RunQueryCallIn(int fn, float arg1)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	lua_checkstack(L, 2);
 
 	PushFunction(fn);
 	lua_pushnumber(L, arg1);
 
-	if (!RunCallIn(fn, 2, 1)) {
+	if (!RunCallIn(fn, 1, 1)) {
 		return -1;
 	}
 
@@ -448,16 +445,33 @@ void CLuaUnitScript::Call(int fn, float arg1)
 	}
 
 	LUA_CALL_IN_CHECK(L);
+	lua_checkstack(L, 2);
+
+	PushFunction(fn);
+	lua_pushnumber(L, arg1);
+
+	RunCallIn(fn, 1, 0);
+}
+
+
+void CLuaUnitScript::Call(int fn, float arg1, float arg2)
+{
+	if (!HasFunction(fn)) {
+		return;
+	}
+
+	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 3);
 
 	PushFunction(fn);
 	lua_pushnumber(L, arg1);
+	lua_pushnumber(L, arg2);
 
 	RunCallIn(fn, 2, 0);
 }
 
 
-void CLuaUnitScript::Call(int fn, float arg1, float arg2)
+void CLuaUnitScript::Call(int fn, float arg1, float arg2, float arg3)
 {
 	if (!HasFunction(fn)) {
 		return;
@@ -469,26 +483,9 @@ void CLuaUnitScript::Call(int fn, float arg1, float arg2)
 	PushFunction(fn);
 	lua_pushnumber(L, arg1);
 	lua_pushnumber(L, arg2);
-
-	RunCallIn(fn, 3, 0);
-}
-
-
-void CLuaUnitScript::Call(int fn, float arg1, float arg2, float arg3)
-{
-	if (!HasFunction(fn)) {
-		return;
-	}
-
-	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
-
-	PushFunction(fn);
-	lua_pushnumber(L, arg1);
-	lua_pushnumber(L, arg2);
 	lua_pushnumber(L, arg3);
 
-	RunCallIn(fn, 4, 0);
+	RunCallIn(fn, 3, 0);
 }
 
 
@@ -513,7 +510,7 @@ void CLuaUnitScript::Killed()
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	lua_checkstack(L, 3);
 
 	PushFunction(fn);
 	lua_pushnumber(L, unit->recentDamage);
@@ -521,7 +518,7 @@ void CLuaUnitScript::Killed()
 
 	inKilled = true;
 
-	if (!RunCallIn(fn, 3, 1)) {
+	if (!RunCallIn(fn, 2, 1)) {
 		return;
 	}
 
@@ -580,7 +577,7 @@ void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float&
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 6);
+	lua_checkstack(L, 5);
 
 	PushFunction(fn);
 	lua_pushnumber(L, hitDir.x);
@@ -589,7 +586,7 @@ void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float&
 	lua_pushnumber(L, weaponDefId);
 	lua_pushnumber(L, inout_damage);
 
-	if (!RunCallIn(fn, 5, 1)) {
+	if (!RunCallIn(fn, 4, 1)) {
 		return;
 	}
 
@@ -616,12 +613,12 @@ void CLuaUnitScript::SetSFXOccupy(int curTerrainType)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	lua_checkstack(L, 2);
 
 	PushFunction(fn);
 	lua_pushnumber(L, curTerrainType);
 
-	RunCallIn(fn, 2, 0);
+	RunCallIn(fn, 1, 0);
 }
 
 
@@ -634,11 +631,11 @@ void CLuaUnitScript::QueryLandingPads(std::vector<int>& out_pieces)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 3);
+	lua_checkstack(L, 2);
 
 	PushFunction(fn);
 
-	if (!RunCallIn(fn, 1, 1)) {
+	if (!RunCallIn(fn, 0, 1)) {
 		return;
 	}
 
@@ -690,7 +687,7 @@ void CLuaUnitScript::TransportDrop(const CUnit* unit, const float3& pos)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 6);
+	lua_checkstack(L, 5);
 
 	PushFunction(fn);
 	lua_pushnumber(L, unit->id);
@@ -698,7 +695,7 @@ void CLuaUnitScript::TransportDrop(const CUnit* unit, const float3& pos)
 	lua_pushnumber(L, pos.y);
 	lua_pushnumber(L, pos.z);
 
-	RunCallIn(fn, 5, 0);
+	RunCallIn(fn, 4, 0);
 }
 
 
@@ -760,14 +757,14 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 5);
+	lua_checkstack(L, 4);
 
 	PushFunction(fn);
 	PushUnit(targetUnit);
 	lua_pushnumber(L, weaponNum + 1);
 	lua_pushboolean(L, userTarget);
 
-	if (!RunCallIn(fn, 4, 1)) {
+	if (!RunCallIn(fn, 3, 1)) {
 		return false;
 	}
 
@@ -784,13 +781,13 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 4);
+	lua_checkstack(L, 3);
 
 	PushFunction(fn);
 	PushUnit(targetUnit);
 	lua_pushnumber(L, weaponNum + 1);
 
-	if (!RunCallIn(fn, 3, 1)) {
+	if (!RunCallIn(fn, 2, 1)) {
 		return 1.0f;
 	}
 
@@ -813,10 +810,10 @@ void CLuaUnitScript::RawCall(int functionId)
 	}
 
 	LUA_CALL_IN_CHECK(L);
-	lua_checkstack(L, 2);
+	lua_checkstack(L, 1);
 
 	RawPushFunction(functionId);
-	RawRunCallIn(functionId, 1, 0);
+	RawRunCallIn(functionId, 0, 0);
 }
 
 
