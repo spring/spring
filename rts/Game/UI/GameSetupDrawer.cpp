@@ -10,6 +10,8 @@
 
 #include "GameSetupDrawer.h"
 
+#include "Game/GameServer.h"
+
 #include "NetProtocol.h"
 #include "ConfigHandler.h"
 #include "Game/CameraHandler.h"
@@ -91,9 +93,9 @@ void GameSetupDrawer::Draw()
 		char buf[64];
 		sprintf(buf, "Starting in %i", readyCountdown / 1000);
 		state = buf;
-	} else if (!teamHandler->Team(gu->myTeam)->IsReadyToStart()) {
+	} else if (!playerHandler->Player(gu->myPlayerNum)->spectator && !playerHandler->Player(gu->myPlayerNum)->readyToStart) {
 		state = "Choose start pos";
-	} else if (gu->myPlayerNum==0) {
+	} else if (gameServer) {
 		state = "Waiting for players, Ctrl+Return to force start";
 	} else {
 		state = "Waiting for players";
@@ -105,7 +107,7 @@ void GameSetupDrawer::Draw()
 	for (int a = 0; a < numPlayers; a++) {
 		if (!playerHandler->Player(a)->readyToStart) {
 			playerStates[a] = "missing";
-		} else if (!teamHandler->Team(playerHandler->Player(a)->team)->IsReadyToStart()) {
+		} else if (!playerHandler->Player(a)->spectator && !playerHandler->Player(a)->readyToStart) {
 			playerStates[a] = "notready";
 		} else {
 			playerStates[a] = "ready";
@@ -149,7 +151,7 @@ void GameSetupDrawer::Draw()
 			}
 		} else if (!playerHandler->Player(a)->readyToStart) {
 			color = &red;
-		} else if (!teamHandler->Team(playerHandler->Player(a)->team)->IsReadyToStart()) {
+		} else if (!playerHandler->Player(a)->readyToStart) {
 			color = &yellow;
 		} else {
 			color = &green;

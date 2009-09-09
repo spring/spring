@@ -53,7 +53,6 @@ CPlayer::CPlayer()
 	memset(&currentStats, 0, sizeof(Statistics));
 
 	active = false;
-	readyToStart = false;
 	cpuUsage = 0;
 	ping = 0;
 

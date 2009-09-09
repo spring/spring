@@ -11,8 +11,7 @@ handicap(1),
 startPos(100,100,100),
 teamAllyteam(-1),
 startMetal(-1.0),
-startEnergy(-1.0),
-readyToStart(false)
+startEnergy(-1.0)
 {
 }
 

@@ -761,11 +761,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 			break;
 
-		case NETMSG_STARTPOS:
-			if(inbuf[1] != a){
+		case NETMSG_STARTPOS: {
+			const unsigned player = inbuf[1];
+			if(player != a){
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			}
-			else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame)
+			else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame && !players[player].spectator)
 			{
 				unsigned team = (unsigned)inbuf[2];
 				if (team >= teams.size())
@@ -774,7 +775,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				{
 					teams[team].startPos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
 					if (inbuf[3] == 1)
-						teams[team].readyToStart = static_cast<bool>(inbuf[3]);
+						players[player].readyToStart = static_cast<bool>(inbuf[3]);
 
 					Broadcast(CBaseNetProtocol::Get().SendStartPos(inbuf[1],team, inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]))); //forward data
 					if (hostif)
@@ -788,6 +789,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				Message(str(format(NoStartposChange) %a));
 			}
 			break;
+		}
 
 		case NETMSG_COMMAND:
 			if(inbuf[3]!=a){
@@ -1322,7 +1324,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		{
 			allReady = false;
 			break;
-		} else if (!players[a].spectator && teams[players[a].team].active && !teams[players[a].team].readyToStart && !demoReader)
+		} else if (!players[a].spectator && teams[players[a].team].active && !players[a].readyToStart && !demoReader)
 		{
 			allReady = false;
 			break;
@@ -1361,9 +1363,13 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
-	for (int a = 0; a < (int)setup->teamStartingData.size(); ++a)
+	for (size_t a = 0; a < players.size(); ++a)
 	{
-		Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+		if (!players[a].spectator)
+		{
+			const unsigned aTeam = players[a].team;
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
+		}
 	}
 
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
@@ -1735,16 +1741,20 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!players[hisNewNumber].spectator && !teams[hisTeam].active) // create new team
 		{
-			teams[hisTeam].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
+			players[hisNewNumber].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
 			teams[hisTeam].active = true;
 		}
 			players[hisNewNumber].team = hisTeam;
 
 		if (!setup->playerStartingData[hisNewNumber].spectator)
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
-		for (size_t a = 0; a < teams.size(); ++a)
+		for (size_t a = 0; a < players.size(); ++a)
 		{
-			link->SendData(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, (int)a, teams[a].readyToStart, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+			if (!players[a].spectator)
+			{
+				const unsigned aTeam = players[a].team;
+				link->SendData(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
+			}
 		}
 	}
 

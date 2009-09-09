@@ -40,7 +40,6 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(teamAllyteam),
 				CR_MEMBER(startMetal),
 				CR_MEMBER(startEnergy),
-//				CR_MEMBER(readyToStart),
 //				CR_MEMBER(customValues),
 // from CTeam
 				CR_MEMBER(teamNum),
@@ -280,12 +279,6 @@ void CTeam::Died()
 	CLuaUI::UpdateTeams();
 	CPlayer::UpdateControlledTeams();
 	eventHandler.TeamDied(teamNum);
-}
-
-void CTeam::StartposMessage(const float3& pos, const bool isReady)
-{
-	readyToStart = isReady;
-	startPos = pos;
 }
 
 void CTeam::StartposMessage(const float3& pos)

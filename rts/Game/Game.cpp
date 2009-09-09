@@ -3710,7 +3710,7 @@ void CGame::ClientReadNet()
 			case NETMSG_PLAYERNAME: {
 				int player = inbuf[2];
 				playerHandler->Player(player)->name=(char*)(&inbuf[3]);
-				playerHandler->Player(player)->readyToStart=true;
+				playerHandler->Player(player)->readyToStart=(gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
 				playerHandler->Player(player)->active=true;
 				wordCompletion->AddWord(playerHandler->Player(player)->name, false, false, false); // required?
 				AddTraffic(player, packetCode, dataLength);
@@ -3741,11 +3741,10 @@ void CGame::ClientReadNet()
 					           *(float*)&inbuf[8],
 					           *(float*)&inbuf[12]);
 					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
+						teamHandler->Team(team)->StartposMessage(pos);
 						if (inbuf[3] != 2) {
-							teamHandler->Team(team)->StartposMessage(pos, !!inbuf[3]);
+							playerHandler->Player(player)->readyToStart = !!inbuf[3];
 						}
-						else
-							teamHandler->Team(team)->StartposMessage(pos);
 						char label[128];
 						SNPRINTF(label, sizeof(label), "Start %i", team);
 						inMapDrawer->LocalPoint(pos, label, player);

@@ -36,7 +36,6 @@ public:
 
 	float startMetal;
 	float startEnergy;
-	bool readyToStart;
 
 private:
 	customOpts customValues;
