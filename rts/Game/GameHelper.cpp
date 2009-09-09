@@ -872,9 +872,9 @@ float3 CGameHelper::GetUnitErrorPos(const CUnit* unit, int allyteam)
 }
 
 
-void CGameHelper::BuggerOff(float3 pos, float radius, CUnit* exclude)
+void CGameHelper::BuggerOff(float3 pos, float radius, bool spherical, CUnit* exclude)
 {
-	std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius + 8);
+	std::vector<CUnit*> units = qf->GetUnitsExact(pos, radius + 8, spherical);
 
 	for (std::vector<CUnit*>::iterator ui = units.begin(); ui != units.end(); ++ui) {
 		CUnit* u = *ui;
@@ -949,6 +949,8 @@ static const vector<SearchOffset>& GetSearchOffsetTable (int radius)
 
 	return searchOffsets;
 }
+
+//! only used by the AI callback of the same name
 float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing)
 {
 	if (!unitDef) {

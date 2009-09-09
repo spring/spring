@@ -437,7 +437,7 @@ void CBuilderCAI::SlowUpdate()
 									logOutput.Print("%s: Build pos blocked", owner->unitDef->humanName.c_str());
 									logOutput.SetLastMsgPos(owner->pos);
 								}
-								helper->BuggerOff(build.pos, radius);
+								helper->BuggerOff(build.pos, radius, false);
 								NonMoving();
 							}
 						}
