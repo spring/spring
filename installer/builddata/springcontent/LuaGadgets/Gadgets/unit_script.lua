@@ -238,11 +238,11 @@ end
 
 -- MoveFinished and TurnFinished are put in every script by the framework.
 -- They resume the threads which were waiting for the move/turn.
-local function MoveFinished(unitID, piece, axis)
+local function MoveFinished(piece, axis)
 	return AnimFinished(activeUnit.threads, activeUnit.waitingForMove, piece, axis)
 end
 
-local function TurnFinished(unitID, piece, axis)
+local function TurnFinished(piece, axis)
 	return AnimFinished(activeUnit.threads, activeUnit.waitingForTurn, piece, axis)
 end
 
@@ -327,7 +327,7 @@ function Spring.UnitScript.StartThread(fun, ...)
 	-- Here it is easier however to start thread immediately, so we don't need
 	-- to remember the parameters for the first co_resume call somewhere.
 	-- I think in practice the difference in behavior isn't an issue.
-	return WakeUp(thread, activeUnit.unitID, ...)
+	return WakeUp(thread, ...)
 end
 
 function Spring.UnitScript.SetSignalMask(mask)
@@ -488,60 +488,60 @@ end
 local StartThread = Spring.UnitScript.StartThread
 
 
-local function Wrap_AimWeapon(callins)
+local function Wrap_AimWeapon(unitID, callins)
 	local fun = callins["AimWeapon"]
 	if (not fun) then return end
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
-	local function AimWeaponThread(unitID, weaponNum, heading, pitch)
-		if fun(unitID, weaponNum, heading, pitch) then
+	local function AimWeaponThread(weaponNum, heading, pitch)
+		if fun(weaponNum, heading, pitch) then
 			-- SetUnitWeaponState counts weapons from 0
 			return sp_SetUnitWeaponState(unitID, weaponNum - 1, "aimReady", 1)
 		end
 	end
 
-	callins["AimWeapon"] = function(unitID, weaponNum, heading, pitch)
+	callins["AimWeapon"] = function(weaponNum, heading, pitch)
 		return StartThread(AimWeaponThread, weaponNum, heading, pitch)
 	end
 end
 
 
-local function Wrap_AimShield(callins)
+local function Wrap_AimShield(unitID, callins)
 	local fun = callins["AimShield"]
 	if (not fun) then return end
 
 	-- SetUnitShieldState wants true or false, while
 	-- SetUnitWeaponState wants 1 or 0, niiice =)
-	local function AimWeaponThread(unitID, weaponNum)
-		local enabled = fun(unitID, weaponNum) and true or false
+	local function AimWeaponThread(weaponNum)
+		local enabled = fun(weaponNum) and true or false
 		-- SetUnitShieldState counts weapons from 0
 		return sp_SetUnitShieldState(unitID, weaponNum, enabled)
 	end
 
-	callins["AimShield"] = function(unitID, weaponNum)
+	callins["AimShield"] = function(weaponNum)
 		return StartThread(AimWeaponThread, weaponNum)
 	end
 end
 
 
-local function Wrap_Killed(callins)
+local function Wrap_Killed(unitID, callins)
 	local fun = callins["Killed"]
 	if (not fun) then return end
 
-	local function KilledThread(unitID, recentDamage, maxHealth)
+	local function KilledThread(recentDamage, maxHealth)
 		-- It is *very* important the sp_SetDeathScriptFinished is executed, hence pcall.
-		--local good, wreckLevel = xpcall(fun, debug.traceback, unitID, recentDamage, maxHealth)
-		local good, wreckLevel = pcall(fun, unitID, recentDamage, maxHealth)
+		--local good, wreckLevel = xpcall(fun, debug.traceback, recentDamage, maxHealth)
+		local good, wreckLevel = pcall(fun, recentDamage, maxHealth)
 		if (not good) then
 			-- wreckLevel is the error message in this case =)
 			Spring.Echo(wreckLevel)
 			wreckLevel = -1 -- no wreck, no error
 		end
-		sp_SetDeathScriptFinished(unitID, wreckLevel)
+		sp_SetDeathScriptFinished(wreckLevel)
 	end
 
-	callins["Killed"] = function(unitID, recentDamage, maxHealth)
+	callins["Killed"] = function(recentDamage, maxHealth)
 		StartThread(KilledThread, recentDamage, maxHealth)
 		return -- no return value signals Spring to wait for SetDeathScriptFinished call.
 	end
@@ -552,7 +552,7 @@ local function Wrap(callins, name)
 	local fun = callins[name]
 	if (not fun) then return end
 
-	callins[name] = function(unitID, ...)
+	callins[name] = function(...)
 		return StartThread(fun, ...)
 	end
 end
@@ -649,16 +649,16 @@ function gadget:UnitCreated(unitID, unitDefID)
 			end
 			if (n == ud.weapons.n) then
 				-- optimized case
-				callins[name] = function(u, w, ...)
-					return dispatch[w](u, ...)
+				callins[name] = function(w, ...)
+					return dispatch[w](...)
 				end
 			elseif (n > 0) then
 				-- needed for QueryWeapon / AimFromWeapon to return -1
 				-- while AimWeapon / AimShield should return false, etc.
 				local ret = default_return_values[name]
-				callins[name] = function(u, w, ...)
+				callins[name] = function(w, ...)
 					local fun = dispatch[w]
-					if fun then return fun(u, ...) end
+					if fun then return fun(...) end
 					return ret
 				end
 			end
@@ -669,9 +669,9 @@ function gadget:UnitCreated(unitID, unitDefID)
 	for i=1,#thread_wrap do
 		Wrap(callins, thread_wrap[i])
 	end
-	Wrap_AimWeapon(callins)
-	Wrap_AimShield(callins)
-	Wrap_Killed(callins)
+	Wrap_AimWeapon(unitID, callins)
+	Wrap_AimShield(unitID, callins)
+	Wrap_Killed(unitID, callins)
 
 	-- Wrap everything so activeUnit get's set properly.
 	for k,v in pairs(callins) do
