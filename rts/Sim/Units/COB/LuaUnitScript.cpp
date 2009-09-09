@@ -760,8 +760,8 @@ bool CLuaUnitScript::BlockShot(int weaponNum, const CUnit* targetUnit, bool user
 	lua_checkstack(L, 4);
 
 	PushFunction(fn);
-	PushUnit(targetUnit);
 	lua_pushnumber(L, weaponNum + 1);
+	PushUnit(targetUnit);
 	lua_pushboolean(L, userTarget);
 
 	if (!RunCallIn(fn, 3, 1)) {
@@ -784,8 +784,8 @@ float CLuaUnitScript::TargetWeight(int weaponNum, const CUnit* targetUnit)
 	lua_checkstack(L, 3);
 
 	PushFunction(fn);
-	PushUnit(targetUnit);
 	lua_pushnumber(L, weaponNum + 1);
+	PushUnit(targetUnit);
 
 	if (!RunCallIn(fn, 2, 1)) {
 		return 1.0f;
