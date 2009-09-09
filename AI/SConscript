@@ -51,7 +51,7 @@ def create_sub_interface(env_old, subPart):
 			sourcedir = os.path.join(env_old['sourcedir'], subPart),
 			builddir = os.path.join(env_old['builddir'], subPart),
 			installprefix = os.path.join(env_old['installprefix'], subPart)
-			)
+	)
 
 # stores shared objects so newer scons versions don't choke with
 def create_shared_objects(env, fileList, suffix, additionalCPPDEFINES = []):
@@ -118,7 +118,7 @@ def ensureDirExists(toCreateDir):
 			sys.stderr.write('failed creating dir ' + toCreateDir + "\n")
 ensureDirExists_action = SCons.Action.ActionFactory(ensureDirExists, lambda toCreateDir: 'Creating dir "%s"' % toCreateDir)
 
-			
+
 class AWKExecutor:
 	instances = {}
 	awk_bin = 'awk'
@@ -172,6 +172,7 @@ class AWKExecutor:
 import shutil
 import exceptions
 from shutil import copytree
+
 def myCopyTree(src, dst, symlinks=False, ignore=None):
 	names = os.listdir(src)
 	if ignore is not None:
@@ -211,6 +212,9 @@ def myCopyTree(src, dst, symlinks=False, ignore=None):
 		errors.extend((src, dst, str(why)))
 	if errors:
 		raise Error, errors
+
+
+
 
 
 
@@ -414,9 +418,14 @@ def javaProjCallback_packSrc(libName):
 JavaProjCallback_packSrc = SCons.Action.ActionFactory(javaProjCallback_packSrc, lambda name: 'Packing source for "%s"' % name)
 
 
+
+
+
+
 ################################################################################
 ### Setup the envs
 ################################################################################
+
 # Make a copy of the build environment for the AIs, but remove libraries and add include path.
 # TODO: make separate SConstructs for AIs
 #ai_env = env.Clone(builddir=os.path.join(env['builddir'], 'AI'))
@@ -428,6 +437,7 @@ ai_env.AppendUnique(CPPDEFINES = ['BUILDING_AI'])
 # set sourcedir to '', which equals CWD
 ai_env['sourcedir'] = ''
 ai_env['builddir'] = filelist.getAbsDir(env, ai_env['builddir'])
+
 if ai_env['platform'] == 'windows':
 	ai_env.AppendUnique(LINKFLAGS = ['-Wl,--kill-at', '--add-stdcall-alias', '-mno-cygwin'])
 
@@ -443,16 +453,17 @@ skirmishai_env = create_sub_interface(ai_env, 'Skirmish')
 skirmishai_env.AppendUnique(CPPDEFINES = ['BUILDING_SKIRMISH_AI'])
 
 
+
 ################################################################################
 ### Build AI Interface shared objects
 ################################################################################
 
 # Store shared ai-interface objects, so newer SCons versions do not choke with:
 # *** Two environments with different actions were specified for the same target
-aiinterfaceobjs_main = create_shared_objects(aiinterface_env, filelist.get_shared_AIInterface_source(env), '-aiinterface')
-aiinterfaceobjs_SharedLib = create_shared_objects(aiinterface_env, filelist.get_shared_AIInterface_source_SharedLib(env), '-aiinterface')
-aiinterfaceobjs_CUtils = create_shared_objects(aiinterface_env, filelist.get_shared_Wrapper_source(ai_env, 'CUtils'), '-aiinterface')
-aiinterfaceobjs_CUtilsStreflopped = create_shared_objects(aiinterface_env, filelist.get_shared_Wrapper_source(ai_env, 'CUtils'), '-aiinterface_withStreflop', ['USING_STREFLOP'])
+aiinterfaceobjs_main = create_shared_objects(aiinterface_env, filelist.get_shared_AIInterface_sources(env), '-aiinterface')
+aiinterfaceobjs_SharedLib = create_shared_objects(aiinterface_env, filelist.get_shared_AIInterface_sources_SharedLib(env), '-aiinterface')
+aiinterfaceobjs_CUtils = create_shared_objects(aiinterface_env, filelist.get_shared_wrapper_source(ai_env, 'CUtils'), '-aiinterface')
+aiinterfaceobjs_CUtilsStreflopped = create_shared_objects(aiinterface_env, filelist.get_shared_wrapper_source(ai_env, 'CUtils'), '-aiinterface_withStreflop', ['USING_STREFLOP'])
 
 # Build
 aiinterfaces_exclude_list=['build']
@@ -472,6 +483,8 @@ else:
 # These two will be filled here and used by Java Skirmish AIs further down
 javaAiInterfaceProj = None
 
+
+
 for baseName in aiinterfaces_toBuild:
 	aiInterfaceVersion = fetch_aiInterface_version(baseName)
 	print "Found AI Interface: " + baseName + " " + aiInterfaceVersion
@@ -483,24 +496,31 @@ for baseName in aiinterfaces_toBuild:
 	instList = []
 	objs = []
 	objs += aiinterfaceobjs_main
+
 	if needSharedLib:
 		objs += aiinterfaceobjs_SharedLib
+
 	if needCUtils:
 		myEnv.AppendUnique(CPPPATH = ['Wrappers'])
 		if needStreflop:
 			objs += aiinterfaceobjs_CUtilsStreflopped
 		else:
 			objs += aiinterfaceobjs_CUtils
+
 	if needStreflop:
 		myEnv.AppendUnique(CPPDEFINES=['USING_STREFLOP'])
 		myEnv.AppendUnique(CPPPATH = ['#rts/lib/streflop'])
 		myEnv.AppendUnique(LIBS = [streflop_lib])
+
+
+
 	cwdPrev = os.getcwd()
 	os.chdir(myEnv['sourcedir'])
 	mySourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
 	mySourceObjs = [myEnv.SharedObject(source=f, target=os.path.join(env['builddir'], f[0]+myEnv['SHARED_OBJ_EXT'])) for f in mySourceFiles]
 	myObjs = objs + mySourceObjs
 	os.chdir(cwdPrev)
+
 	if baseName == 'Java':
 		# generate class files
 		springSrcDir = filelist.getAbsDir(env, '..')
@@ -627,40 +647,51 @@ for baseName in aiinterfaces_toBuild:
 	Alias('install-AIInterfaces', instList)
 	Alias('install-' + baseName, instList)
 
+
+
 ################################################################################
 ### Build Skirmish AI shared objects
 ################################################################################
+
 install_skirmishai_dir = os.path.join(skirmishai_env['installprefix'], skirmishai_env['datadir'], 'AI', 'Skirmish')
 
-# store shared ai objects so newer scons versions don't choke with
-# *** Two environments with different actions were specified for the same target
-skirmishaiobjs_main = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source(env), '-skirmishai')
-skirmishaiobjs_mainCregged = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source(env), '-skirmishai_creg', ['USING_CREG'])
-skirmishaiobjs_creg = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_Creg(env), '-skirmishai_creg', ['USING_CREG'])
-skirmishaiobjs_LegacyCpp = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_LegacyCpp(env), '-skirmishai')
-skirmishaiobjs_LegacyCppCregged = create_shared_objects(skirmishai_env, filelist.get_shared_skirmishAI_source_LegacyCpp(env), '-skirmishai_creg', ['USING_CREG'])
-skirmishaiobjs_CUtils = create_shared_objects(skirmishai_env, filelist.get_shared_Wrapper_source(ai_env, 'CUtils'), '-skirmishai')
 
-# Build
-skirmishai_exclude_list=['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
-skirmishai_isLegacyCpp_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI']
-skirmishai_needCUtils_list=['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI']
-skirmishai_needCreg_list=['KAIK', 'KAI']
-skirmishai_needBoost_list=['NTai']
-skirmishai_isJava_list=['NullJavaAI', 'NullOOJavaAI']
+# store shared ai objects so newer scons versions don't choke with
+# "*** Two environments with different actions were specified for the same target"
+skirmishAIObjsMain           = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_sources(env), '_SkirmishAI', [])
+skirmishAIObjsMainCREG       = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_sources(env), '_SkirmishAI_CREG', ['USING_CREG'])
+skirmishAIObjsCREG           = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_creg_sources(env), '_SkirmishAI_CREG', ['USING_CREG'])
+skirmishAIObjsLegacyCPP      = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_legacyCPP_sources(env), '_SkirmishAI', [])
+skirmishAIObjsLegacyCPP_CREG = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_legacyCPP_sources(env), '_SkirmishAI_CREG', ['USING_CREG'])
+skirmishAIObjsLua            = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_lua_sources(env), '_SkirmishAI_Lua', [])
+skirmishAIObjsCUtils         = create_shared_objects(skirmishai_env, filelist.get_shared_wrapper_source(ai_env, 'CUtils'), '_SkirmishAI', [])
+
+# which AIs need what to build
+skirmishai_exclude_list       = ['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
+skirmishai_needLegacyCPP_list = ['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI', 'XAI']
+skirmishai_needCUtils_list    = ['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI', 'XAI']
+skirmishai_needCREG_list      = ['KAIK', 'KAI']
+skirmishai_needBoost_list     = ['NTai']
+skirmishai_needLua_list       = ['XAI']
+skirmishai_isJava_list        = ['NullJavaAI', 'NullOOJavaAI']
+
 
 skirmishais_toBuild = filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmishai_exclude_list, include_interfaces = aiinterfaces_toBuild)
 
 for baseName in skirmishais_toBuild:
 	aiVersion = fetch_skirmishAi_version(baseName)
 	print "Found Skirmish AI: " + baseName + " " + aiVersion
-	isLegacyCpp = baseName in skirmishai_isLegacyCpp_list
-	needsCUtils = baseName in skirmishai_needCUtils_list
-	useCreg = baseName in skirmishai_needCreg_list
+
+	needLegacyCPP = baseName in skirmishai_needLegacyCPP_list
+	needCUtils = baseName in skirmishai_needCUtils_list
+	useCreg = baseName in skirmishai_needCREG_list
 	useBoost = baseName in skirmishai_needBoost_list
+	useLua = baseName in skirmishai_needLua_list
 	isJava = baseName in skirmishai_isJava_list
+
 	myEnv = create_sub_interface(skirmishai_env, baseName)
 	myEnv['installprefix'] = os.path.join(myEnv['installprefix'], aiVersion)
+
 	instList = []
 
 	# create the library
@@ -705,36 +736,50 @@ for baseName in skirmishais_toBuild:
 		#		else:   boost = [l+'-mt', l]
 		#		myEnv.AppendUnique(LIBS = boost)
 		#	#myEnv.AppendUnique(LIBS = boost_regex.libraries)
+
+		mySourceFiles = []
+		objs = []
+
 		if useCreg:
 			myEnv.AppendUnique(CPPDEFINES = ['USING_CREG'])
-		objs = []
-		if useCreg:
-			objs += skirmishaiobjs_mainCregged
-			objs += skirmishaiobjs_creg
+
+			objs += skirmishAIObjsMainCREG
+			objs += skirmishAIObjsCREG
 		else:
-			objs += skirmishaiobjs_main
-		if isLegacyCpp:
+			objs += skirmishAIObjsMain
+
+		if needLegacyCPP:
 			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
 			if useCreg:
-				objs += skirmishaiobjs_LegacyCppCregged
+				objs += skirmishAIObjsLegacyCPP_CREG
 			else:
-				objs += skirmishaiobjs_LegacyCpp
-		if needsCUtils:
+				objs += skirmishAIObjsLegacyCPP
+
+		if needCUtils:
 			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
-			objs += skirmishaiobjs_CUtils
+			objs += skirmishAIObjsCUtils
+
+		if useLua:
+			objs += skirmishAIObjsLua
+
+
 		cwdPrev = os.getcwd()
 		os.chdir(myEnv['sourcedir'])
-		mySourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
-		mySourceObjs = [myEnv.SharedObject(source=f, target=os.path.join(env['builddir'], f[0]+myEnv['SHARED_OBJ_EXT'])) for f in mySourceFiles]
-		myObjs = objs + mySourceObjs
+		mySourceFiles += filelist.get_source(myEnv, '.', ignore_builddir=False)
+		myObjs = objs + [myEnv.SharedObject(source=f, target=os.path.join(env['builddir'], f[0] + myEnv['SHARED_OBJ_EXT'])) for f in mySourceFiles]
+
 		os.chdir(cwdPrev)
 		targetName = 'SkirmishAI'
+
 		if env['platform'] != 'windows':
 			targetName = 'lib' + targetName
+
 		lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), myObjs)
+
 		Alias(baseName, lib)     # Allow e.g. `scons JCAI' to compile just a skirmish AI.
 		Alias('SkirmishAI', lib) # Allow `scons SkirmishAI' to compile all skirmishAIs.
 		Default(lib)
+
 		instList += [myEnv.Install(myEnv['installprefix'], lib)]
 		if myEnv['strip']:
 			myEnv.AddPostAction(lib, Action([['strip','$TARGET']]))
@@ -747,4 +792,3 @@ for baseName in skirmishais_toBuild:
 	Alias('install', instList)
 	Alias('install-SkirmishAI', instList)
 	Alias('install-' + baseName, instList)
-
