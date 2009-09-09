@@ -4237,28 +4237,6 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static int ParseFacing(lua_State* L, const char* caller, int index)
-{
-	// FIXME -- duplicate in LuaSyncedCtrl.cpp
-	if (lua_israwnumber(L, index)) {
-		return max(0, min(3, lua_toint(L, index)));
-	}
-	else if (lua_israwstring(L, index)) {
-		const string dir = StringToLower(lua_tostring(L, index));
-		if (dir == "s") { return 0; }
-		if (dir == "e") { return 1; }
-		if (dir == "n") { return 2; }
-		if (dir == "w") { return 3; }
-		if (dir == "south") { return 0; }
-		if (dir == "east")  { return 1; }
-		if (dir == "north") { return 2; }
-		if (dir == "west")  { return 3; }
-		luaL_error(L, "%s(): bad facing string", caller);
-	}
-	luaL_error(L, "%s(): bad facing parameter", caller);
-	return 0;
-}
-
 
 int LuaSyncedRead::TestBuildOrder(lua_State* L)
 {
@@ -4276,7 +4254,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
-	const int facing = ParseFacing(L, __FUNCTION__, 5);
+	const int facing = LuaUtils::ParseFacing(L, __FUNCTION__, 5);
 
 	BuildInfo bi;
 	bi.buildFacing = facing;
