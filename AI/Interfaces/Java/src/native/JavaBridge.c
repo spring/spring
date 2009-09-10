@@ -775,7 +775,7 @@ static JNIEnv* java_getJNIEnv() {
 		JNIEnv* env = NULL;
 		JavaVM* jvm = NULL;
 		struct JavaVMInitArgs vm_args;
-		jint res;
+		jint res = 0;
 
 		if (!java_createJavaVMInitArgs(&vm_args)) {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,

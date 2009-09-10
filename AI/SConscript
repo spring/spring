@@ -585,7 +585,9 @@ for baseName in aiinterfaces_toBuild:
 		awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
 		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
 		awkInputFile = os.path.join(springInterfaceSrcDir, 'SSkirmishAICallback.h')
-		awkOutput = [os.path.join(genSrcPkgDir, 'AICallback.java')]
+		awkOutput =  [os.path.join(genSrcPkgDir, 'AICallback.java')]
+		awkOutput += [os.path.join(interfaceGeneratedNativeSrcDir, 'FunctionPointerBridge.c')]
+		awkOutput += [os.path.join(interfaceGeneratedNativeSrcDir, 'FunctionPointerBridge.h')]
 		wrapp_callback = AWKExecutor(myEnv, 'wrapp_callback', awkScripts, awkVars, awkInputFile, awkOutput, workDir = awkScriptsDir)
 		wrapp_callback_cmd = wrapp_callback.createExecuteCommand()
 		myEnv.AddPreAction(wrapp_callback_cmd, ensureDirExists_action(os.path.join(interfaceGeneratedNativeSrcDir)))
@@ -611,15 +613,11 @@ for baseName in aiinterfaces_toBuild:
 		wrapp_all = [wrapp_events_cmd, wrapp_commands_cmd, wrapp_callback_cmd, wrapp_callbackOO_cmd]
 
 		# Build the generated native sources
-		#cwdPrev = os.getcwd()
-		#ensureDirExists(interfaceGeneratedNativeSrcDir)
-		#os.chdir(interfaceGeneratedNativeSrcDir)
-		#myGeneratedNativeSourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
 		myGeneratedNativeSourceFiles = [os.path.join(interfaceGeneratedNativeSrcDir, 'FunctionPointerBridge')]
 		mySourceFiles += myGeneratedNativeSourceFiles
 		myGeneratedSourceObjs = [myEnv.SharedObject(source=myGeneratedNativeSourceFiles[0], target=os.path.join(env['builddir'], 'generated__' + 'FunctionPointerBridge' + myEnv['SHARED_OBJ_EXT']))]
 		myObjs += myGeneratedSourceObjs
-		#os.chdir(cwdPrev)
+		myEnv['CPPPATH'] += [interfaceGeneratedNativeSrcDir]
 
 		# compile the Java part
 		aiInterfaceProj = JavaProject(myEnv, 'aiInterfaceProj', [interfaceJLibDir], [filelist.getAbsDir(env, interfaceJavaSrcDir)], [filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)], interfaceJavaClassesDir, jarFileBin_build, jarFileSrc_build)
