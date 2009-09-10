@@ -19,6 +19,10 @@
 
 #include "InterfaceDefines.h"
 #include "JavaBridge.h"
+
+// generated at build time
+#include "FunctionPointerBridge.h"
+
 #include "CUtils/Util.h"
 #include "CUtils/SimpleLog.h"
 
@@ -236,6 +240,7 @@ int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallb
 	bool ok = (ret == 0);
 	if (ok) {
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 5);
+		funcPntBrdg_addCallback(teamId, aiCallback);
 		ret = java_skirmishAI_init(teamId, aiCallback);
 	}
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 6);
@@ -244,7 +249,10 @@ int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallb
 }
 
 int CALLING_CONV proxy_skirmishAI_release(int teamId) {
-	return java_skirmishAI_release(teamId);
+
+	int failure = java_skirmishAI_release(teamId);
+	funcPntBrdg_removeCallback(teamId);
+	return failure;
 }
 
 int CALLING_CONV proxy_skirmishAI_handleEvent(
