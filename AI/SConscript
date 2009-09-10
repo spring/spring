@@ -531,7 +531,9 @@ for baseName in aiinterfaces_toBuild:
 		interfaceBinDir = os.path.join('AI', myEnv['sourcedir'], 'bin')
 		awkScriptsDir = interfaceBinDir
 		awkCommonScriptsDir = os.path.join(springSrcDir, 'AI', 'Wrappers', 'CUtils', 'bin')
-		interfaceGeneratedJavaSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'generated-java-src'))
+		interfaceGeneratedSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'src-generated'))
+		interfaceGeneratedJavaSrcDir = os.path.join(interfaceGeneratedSrcDir, 'java')
+		interfaceGeneratedNativeSrcDir = os.path.join(interfaceGeneratedSrcDir, 'native')
 		interfaceTmpAllSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'tmp-all-src'))
 		interfaceJavaClassesDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'classes'))
 		javaPkg = 'com/springrts/ai'
@@ -546,7 +548,7 @@ for baseName in aiinterfaces_toBuild:
 		awkVars = []
 		awkVars += ['SPRING_SOURCE_DIR=' + filelist.getAbsDir(env, springSrcDir)]
 		awkVars += ['INTERFACE_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceJavaSrcDir)]
-		awkVars += ['GENERATED_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)]
+		awkVars += ['GENERATED_SOURCE_DIR=' + filelist.getAbsDir(env, interfaceGeneratedSrcDir)]
 		# gawk doesn't like backslashes on windows
 		if os.name == 'nt':
 			for i, e in enumerate(awkVars):
