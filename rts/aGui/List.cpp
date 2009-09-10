@@ -22,9 +22,9 @@ const float itemFontScale = 1.0f;
 
 List::List(GuiElement* parent) :
 		GuiElement(parent),
-		place(0),
 		cancelPlace(-1),
 		tooltip("No tooltip defined"),
+		place(0),
 		activeMousePress(false),
 		filteredItems(&items)
 {
