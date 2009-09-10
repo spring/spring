@@ -1093,6 +1093,7 @@ bool CLuaHandle::RecvLuaMsg(const string& msg, int playerID)
 	}
 
 	if (!lua_isboolean(L, -1)) {
+		lua_pop(L, 1);
 		return false;
 	}
 	const bool retval = !!lua_toboolean(L, -1);
