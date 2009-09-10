@@ -228,7 +228,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(mySrcJarFile               "${myJarFile}-src.jar")
 	set(myGeneratedSourceDir       "${myBuildDir}/src-generated")
 	set(myJavaGeneratedSourceDir   "${myGeneratedSourceDir}/java")
-	#set(myNativeGeneratedSourceDir "${myGeneratedSourceDir}/native")
+	set(myNativeGeneratedSourceDir "${myGeneratedSourceDir}/native")
 	set(myJLibDir                  "${myDir}/data/jlib")
 	#set(myJavaLibs                 "${myJLibDir}/jna/jna.jar${PATH_DELIM}${myJLibDir}/vecmath.jar")
 	CreateClasspath(myJavaLibs ${myJLibDir})
@@ -239,6 +239,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	# We have to create these directories, cause otherwise the AWK scripts
 	# for generating the source code will not work
+	file(MAKE_DIRECTORY "${myNativeGeneratedSourceDir}")
 	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/event")
 	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/command")
 	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/oo")

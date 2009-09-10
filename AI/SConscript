@@ -587,7 +587,8 @@ for baseName in aiinterfaces_toBuild:
 		awkOutput = [os.path.join(genSrcPkgDir, 'AICallback.java')]
 		wrapp_callback = AWKExecutor(myEnv, 'wrapp_callback', awkScripts, awkVars, awkInputFile, awkOutput, workDir = awkScriptsDir)
 		wrapp_callback_cmd = wrapp_callback.createExecuteCommand()
-		myEnv.AddPreAction(wrapp_commands_cmd, ensureDirExists_action(os.path.join(genSrcPkgDir)))
+		myEnv.AddPreAction(wrapp_callback_cmd, ensureDirExists_action(os.path.join(interfaceGeneratedNativeSrcDir)))
+		myEnv.AddPreAction(wrapp_callback_cmd, ensureDirExists_action(os.path.join(genSrcPkgDir)))
 
 		# wrapp the Callback in an OO layer
 		awkScripts = []
