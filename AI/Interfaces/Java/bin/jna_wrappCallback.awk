@@ -7,12 +7,13 @@
 # This script uses functions from the following files:
 # * common.awk
 # * commonDoc.awk
-# Variables that can be set on th ecommand-line (with -v):
-# * GENERATED_SOURCE_DIR: will contain the generated sources
+# Variables that can be set on the command-line (with -v):
+# * GENERATED_SOURCE_DIR: the generated sources root dir
 #
 # usage:
 # 	awk -f thisScript.awk -f common.awk -f commonDoc.awk
-# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/generated-java-src'
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk \
+#       -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/src-generated'
 #
 
 BEGIN {
@@ -28,11 +29,18 @@ BEGIN {
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
-		GENERATED_SOURCE_DIR = "../java/generated";
+		GENERATED_SOURCE_DIR = "../src-generated";
+	}
+	if (!JAVA_GENERATED_SOURCE_DIR) {
+		JAVA_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/java";
+	}
+	if (!NATIVE_GENERATED_SOURCE_DIR) {
+		NATIVE_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/native";
 	}
 
 	javaSrcRoot = "../java/src";
-	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
+	javaGeneratedSrcRoot = JAVA_GENERATED_SOURCE_DIR;
+	nativeGeneratedSrcRoot = NATIVE_GENERATED_SOURCE_DIR;
 
 	myPkgA = "com.springrts.ai";
 	myPkgD = convertJavaNameFormAToD(myPkgA);

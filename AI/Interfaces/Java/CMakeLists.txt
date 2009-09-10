@@ -226,7 +226,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myJarFile                  "AIInterface")
 	set(myBinJarFile               "${myJarFile}.jar")
 	set(mySrcJarFile               "${myJarFile}-src.jar")
-	set(myJavaGeneratedSourceDir   "${myBuildDir}/generated-java-src")
+	set(myGeneratedSourceDir       "${myBuildDir}/src-generated")
+	set(myJavaGeneratedSourceDir   "${myGeneratedSourceDir}/java")
+	#set(myNativeGeneratedSourceDir "${myGeneratedSourceDir}/native")
 	set(myJLibDir                  "${myDir}/data/jlib")
 	#set(myJavaLibs                 "${myJLibDir}/jna/jna.jar${PATH_DELIM}${myJLibDir}/vecmath.jar")
 	CreateClasspath(myJavaLibs ${myJLibDir})
@@ -248,7 +250,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMAND "${AWK_COMMAND}" ARGS
 		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
 		"-f" "${myAwkScriptsDir}/jna_wrappEvents.awk"
 		"-f" "${commonAwkScriptsDir}/common.awk"
 		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
@@ -261,7 +263,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMAND "${AWK_COMMAND}" ARGS
 		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
 		"-f" "${myAwkScriptsDir}/jna_wrappCommands.awk"
 		"-f" "${commonAwkScriptsDir}/common.awk"
 		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
@@ -274,7 +276,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMAND "${AWK_COMMAND}" ARGS
 		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
 		"-f" "${myAwkScriptsDir}/jna_wrappCallback.awk"
 		"-f" "${commonAwkScriptsDir}/common.awk"
 		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
@@ -288,7 +290,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMAND "${AWK_COMMAND}" ARGS
 		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
 		"-f" "${myAwkScriptsDir}/java_wrappCallbackOO.awk"
 		"-f" "${commonAwkScriptsDir}/common.awk"
 		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
