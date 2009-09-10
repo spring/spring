@@ -19,6 +19,7 @@
 #define	_SKIRMISHAICALLBACK_H
 
 #include "aidefines.h"
+#include "SAIFloat3.h"
 
 #if	defined(__cplusplus)
 extern "C" {
