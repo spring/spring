@@ -42,6 +42,9 @@ BEGIN {
 	javaGeneratedSrcRoot = JAVA_GENERATED_SOURCE_DIR;
 	nativeGeneratedSrcRoot = NATIVE_GENERATED_SOURCE_DIR;
 
+	nativeBridge = "FunctionPointerBridge";
+	bridgePrefix = "bridged__";
+
 	myPkgA = "com.springrts.ai";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
 	myInterface = "AICallback";
@@ -49,6 +52,76 @@ BEGIN {
 	myWin32Class = "Win32AICallback";
 
 	fi = 0;
+}
+
+function createNativeFileName(fileName_fn, isHeader_fn) {
+
+	absFileName_fn = nativeGeneratedSrcRoot "/" fileName_fn;
+	if (isHeader_fn) {
+		absFileName_fn = absFileName_fn ".h";
+	} else {
+		absFileName_fn = absFileName_fn ".c";
+	}
+
+	return absFileName_fn;
+}
+
+function printNativeFP2F() {
+
+	outFile_nh = createNativeFileName(nativeBridge, 1);
+	outFile_nc = createNativeFileName(nativeBridge, 0);
+
+	printCommentsHeader(outFile_nh);
+	printCommentsHeader(outFile_nc);
+
+	print("") >> outFile_nh;
+	print("#include <stdlib.h>  // size_t") >> outFile_nh;
+	print("#include <stdbool.h> // bool, true, false") >> outFile_nh;
+	print("#include \"ExternalAI/Interface/SAIFloat3.h\"") >> outFile_nh;
+	print("") >> outFile_nh;
+	print("#ifdef __cplusplus") >> outFile_nh;
+	print("extern \"C\" {") >> outFile_nh;
+	print("#endif") >> outFile_nh;
+	print("") >> outFile_nh;
+
+	print("") >> outFile_nc;
+	print("#include \"" nativeBridge ".h\"") >> outFile_nc;
+	print("") >> outFile_nc;
+	print("#include \"ExternalAI/Interface/SSkirmishAICallback.h\"") >> outFile_nc;
+	print("") >> outFile_nc;
+	print("") >> outFile_nc;
+	print("static struct SSkirmishAICallback** id_clb = NULL;") >> outFile_nc;
+	print("") >> outFile_nc;
+
+	for (i=0; i < fi; i++) {
+		fullName         = funcFullName[i];
+		retType          = funcRetTypeC[i];
+		paramList        = funcParamListC[i];
+		paramListNoTypes = removeParamTypes(paramList);
+
+		printFunctionComment_Common(outFile_nh, funcDocComment, i, "");
+		print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ");") >> outFile_nh;
+
+		print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ") {") >> outFile_nc;
+		condRet = "return ";
+		if (retType == "void") {
+			condRet = "";
+		}
+		print("\t" condRet "id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+		print("" "}") >> outFile_nc;
+	}
+
+
+	print("") >> outFile_nh;
+	print("#ifdef __cplusplus") >> outFile_nh;
+	print("} // extern \"C\"") >> outFile_nh;
+	print("#endif") >> outFile_nh;
+	print("") >> outFile_nh;
+
+	print("") >> outFile_nc;
+
+	close(outFile_nh);
+	close(outFile_nc);
 }
 
 
@@ -91,8 +164,8 @@ function printInterface() {
 	printHeader(outFile_i, myPkgA, myInterface);
 
 	for (i=0; i < fi; i++) {
-		fullName = funcFullName[i];
-		retType = funcRetType[i];
+		fullName  = funcFullName[i];
+		retType   = funcRetType[i];
 		paramList = funcParamList[i];
 
 		printFunctionComment_Common(outFile_i, funcDocComment, i, "\t");
@@ -169,6 +242,7 @@ function wrappFunction(funcDef) {
 		sub(/\)/, "", fullName);
 
 		# function parameters
+		paramList_c = "";
 		paramList = "";
 
 		for (i=3; i<=size_funcParts && !match(funcParts[i], /.*\/\/.*/); i++) {
@@ -176,15 +250,20 @@ function wrappFunction(funcDef) {
 			type_c = extractParamType(funcParts[i]);
 			type_jna = convertCToJNAType(type_c);
 			if (i == 3) {
-				cond_comma = "";
+				cond_comma   = "";
+				cond_comma_n = "";
 			} else {
-				cond_comma = ", ";
+				cond_comma   = ", ";
+				cond_comma_n = ",";
 			}
-			paramList = paramList cond_comma type_jna " " name;
+			paramList_c = paramList_c cond_comma_n funcParts[i];
+			paramList   = paramList cond_comma type_jna " " name;
 		}
 
 		funcFullName[fi] = fullName;
+		funcRetTypeC[fi] = retType_c;
 		funcRetType[fi] = retType_jna;
+		funcParamListC[fi] = paramList_c;
 		funcParamList[fi] = paramList;
 		storeDocLines(funcDocComment, fi);
 		fi++;
@@ -245,6 +324,7 @@ function canDeleteDocumentation() {
 END {
 	# finalize things
 
+	printNativeFP2F();
 	printInterface();
 	printClass(myDefaultClass);
 	printClass(myWin32Class);
