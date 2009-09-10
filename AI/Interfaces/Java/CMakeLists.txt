@@ -196,22 +196,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 	SetGlobal(${myName}_AIINTERFACE_VERS   ${myVersion})
 	SetGlobal(${myName}_AIINTERFACE_TARGET ${myTarget})
 
-	# build the native part
-	GetNativeSourcesRecursive(myNativeSources ${myNativeSourceDir} "")
-	if    (MINGW)
-		# It is important that this is used instead of the one
-		# from the installed JDK, as the jni_md.h is in here too,
-		# and this file contians OS (win32) specific information.
-		include_directories(BEFORE ${MINGWLIBS}/include/java)
-	endif (MINGW)
-	include_directories(BEFORE ${rts}/lib/streflop)
-	add_library(${myTarget} MODULE ${myNativeSources} ${ai_common_SRC} ${CUtils_SRC})
-	install(TARGETS ${myTarget} DESTINATION ${myDataDir})
-	target_link_libraries(${myTarget} streflop)
-	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
-	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
 
-	# build the Java part
+	# Init some vars
+	# --------------
 	if    (CMAKE_HOST_WIN32)
 		set(AWK_COMMAND "${MINGWLIBS}/bin/awk.exe")
 	else  (CMAKE_HOST_WIN32)
@@ -237,6 +224,10 @@ if    (BUILD_${myName}_AIINTERFACE)
 	# Used by Java Skirmish AIs
 	SetGlobal(CLASSPATH_${myName}_AIINTERFACE "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}")
 
+
+	# Generate sources
+	# ----------------
+
 	# We have to create these directories, cause otherwise the AWK scripts
 	# for generating the source code will not work
 	file(MAKE_DIRECTORY "${myNativeGeneratedSourceDir}")
@@ -245,6 +236,22 @@ if    (BUILD_${myName}_AIINTERFACE)
 	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/oo")
 	# needed by javac
 	file(MAKE_DIRECTORY "${myJavaBuildDir}")
+
+	# This will always be built. from CMake docu:
+	# "add_custom_target is ALWAYS CONSIDERED OUT OF DATE"
+	add_custom_target(${myTarget}-generateClb ALL
+		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
+		COMMAND "${AWK_COMMAND}"
+		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
+		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
+		"-f" "${myAwkScriptsDir}/jna_wrappCallback.awk"
+		"-f" "${commonAwkScriptsDir}/common.awk"
+		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
+		"${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
+		DEPENDS "${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
+		WORKING_DIRECTORY "${myAwkScriptsDir}"
+		COMMENT "  Generating Java AI Callback source files ..." VERBATIM)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
@@ -273,19 +280,6 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT "  Generating Java AI Command source files ..." VERBATIM)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
-		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
-		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
-		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
-		"-f" "${myAwkScriptsDir}/jna_wrappCallback.awk"
-		"-f" "${commonAwkScriptsDir}/common.awk"
-		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
-		"${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
-		WORKING_DIRECTORY "${myAwkScriptsDir}"
-		COMMENT "  Generating Java AI Callback source files ..." VERBATIM)
-
-	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
@@ -308,7 +302,30 @@ if    (BUILD_${myName}_AIINTERFACE)
 		"${myJavaGeneratedSourceDir}/${myPkg}/oo/OOAICallback.java"
 		"${myJavaGeneratedSourceDir}/${myPkg}/oo/OOAIFactory.java"
 		"${myJavaGeneratedSourceDir}/${myPkg}/oo/AbstractOOAI.java")
+	set(NATIVE_GENERATED_SOURCES
+		"${myNativeGeneratedSourceDir}/FunctionPointerBridge")
 
+
+	# Build the native part
+	# ---------------------
+	GetNativeSourcesRecursive(myNativeSources ${myNativeSourceDir} "")
+	if    (MINGW)
+		# It is important that this is used instead of the one
+		# from the installed JDK, as the jni_md.h is in here too,
+		# and this file contians OS (win32) specific information.
+		include_directories(BEFORE ${MINGWLIBS}/include/java)
+	endif (MINGW)
+	include_directories(BEFORE ${rts}/lib/streflop)
+	add_library(${myTarget} MODULE ${myNativeSources} ${NATIVE_GENERATED_SOURCES} ${ai_common_SRC} ${CUtils_SRC})
+	add_dependencies(${myTarget} ${myTarget}-generateClb)
+	install(TARGETS ${myTarget} DESTINATION ${myDataDir})
+	target_link_libraries(${myTarget} streflop)
+	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
+	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
+
+
+	# Build the java part
+	# -------------------
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myJavaBuildDir}/*.class"
 		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/*.java"

@@ -10,8 +10,8 @@ Each target has an equivalent install target. E.g. `NullAI' has
 
 [default]
 AIInterfaces
-	C
-	Java
+	C-AIInterface
+	Java-AIInterface
 SkirmishAI
 	RAI
 	NTAI
@@ -514,6 +514,7 @@ for baseName in aiinterfaces_toBuild:
 
 
 
+	# Build the native sources
 	cwdPrev = os.getcwd()
 	os.chdir(myEnv['sourcedir'])
 	mySourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
@@ -609,6 +610,16 @@ for baseName in aiinterfaces_toBuild:
 
 		wrapp_all = [wrapp_events_cmd, wrapp_commands_cmd, wrapp_callback_cmd, wrapp_callbackOO_cmd]
 
+		# Build the generated native sources
+		#cwdPrev = os.getcwd()
+		#ensureDirExists(interfaceGeneratedNativeSrcDir)
+		#os.chdir(interfaceGeneratedNativeSrcDir)
+		#myGeneratedNativeSourceFiles = filelist.get_source(myEnv, '.', ignore_builddir=False)
+		myGeneratedNativeSourceFiles = [os.path.join(interfaceGeneratedNativeSrcDir, 'FunctionPointerBridge')]
+		mySourceFiles += myGeneratedNativeSourceFiles
+		myGeneratedSourceObjs = [myEnv.SharedObject(source=myGeneratedNativeSourceFiles[0], target=os.path.join(env['builddir'], 'generated__' + 'FunctionPointerBridge' + myEnv['SHARED_OBJ_EXT']))]
+		myObjs += myGeneratedSourceObjs
+		#os.chdir(cwdPrev)
 
 		# compile the Java part
 		aiInterfaceProj = JavaProject(myEnv, 'aiInterfaceProj', [interfaceJLibDir], [filelist.getAbsDir(env, interfaceJavaSrcDir)], [filelist.getAbsDir(env, interfaceGeneratedJavaSrcDir)], interfaceJavaClassesDir, jarFileBin_build, jarFileSrc_build)
@@ -625,7 +636,7 @@ for baseName in aiinterfaces_toBuild:
 		myJarSrc = aiInterfaceProj_packSrc_cmd
 
 		allBuilds = [wrapp_all, myClasses, myJarBin, myJarSrc]
-		Alias(baseName, allBuilds)
+		Alias(baseName + '-AIInterface', allBuilds)
 		Alias('AIInterfaces', allBuilds)
 		Default(allBuilds)
 		instList += [myEnv.Install(myEnv['installprefix'], jarFileBin_build)]
@@ -635,7 +646,7 @@ for baseName in aiinterfaces_toBuild:
 	if env['platform'] != 'windows':
 		targetName = 'lib' + targetName
 	lib = myEnv.SharedLibrary(os.path.join(myEnv['builddir'], targetName), myObjs)
-	Alias(baseName, lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
+	Alias(baseName + '-AIInterface', lib)       # Allow e.g. `scons Java' to compile just that specific AI interface.
 	Alias('AIInterfaces', lib) # Allow `scons AIInterfaces' to compile all AI interfaces.
 	Default(lib)
 	instList += [myEnv.Install(myEnv['installprefix'], lib)]
@@ -648,7 +659,7 @@ for baseName in aiinterfaces_toBuild:
 
 	Alias('install', instList)
 	Alias('install-AIInterfaces', instList)
-	Alias('install-' + baseName, instList)
+	Alias('install-' + baseName + '-AIInterface', instList)
 
 
 
