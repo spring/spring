@@ -206,7 +206,7 @@ static jmethodID java_getMethodID(JNIEnv* env, jclass cls,
 
 	return res;
 }
-static jmethodID java_getStaticMethodID(JNIEnv* env, jclass cls,
+/*static jmethodID java_getStaticMethodID(JNIEnv* env, jclass cls,
 		const char* const name, const char* const signature) {
 
 	jmethodID res = NULL;
@@ -223,7 +223,7 @@ static jmethodID java_getStaticMethodID(JNIEnv* env, jclass cls,
 	}
 
 	return res;
-}
+}*/
 
 /**
  * Creates the AI Interface global Java class path.
@@ -1173,11 +1173,7 @@ static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallba
 	// initialize the AI Callback class, if not yet done
 	if (g_cls_aiCallback == NULL) {
 		// get the AI Callback class
-#ifdef _WIN32
-		static const char* const aiCallbackClassName = "com/springrts/ai/Win32AICallback";
-#else
 		static const char* const aiCallbackClassName = "com/springrts/ai/DefaultAICallback";
-#endif
 
 		g_cls_aiCallback = java_findClass(env, aiCallbackClassName);
 		g_cls_aiCallback = java_makeGlobalRef(env, g_cls_aiCallback,

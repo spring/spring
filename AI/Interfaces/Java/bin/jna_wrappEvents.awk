@@ -307,14 +307,6 @@ function printEventJava(evtIndex) {
 	printJavaEventHeader(javaFile);
 
 	if (eName == "Init") {
-		#clsMods = "public abstract ";
-		printEventJavaCls(evtIndex);
-
-		className = "Win32" eName "AIEvent";
-		javaFile = javaGeneratedSrcRoot "/" myPkgEvtD "/" className ".java";
-		#evtInterface = "InitAIEvent";
-		#clsMods = "public final ";
-		printJavaEventHeader(javaFile);
 		printEventJavaCls(evtIndex);
 
 		className = "Default" eName "AIEvent";
@@ -338,42 +330,19 @@ function printEventJavaCls(evtIndex) {
 	print("		return " className ".TOPIC;") >> javaFile;
 	print("	}") >> javaFile;
 	print("") >> javaFile;
-	if (className == "InitAIEvent") {
-		print("	public static boolean isWin32() {") >> javaFile;
-		print("") >> javaFile;
-		print("		String os = System.getProperty(\"os.name\", \"UNKNOWN\");") >> javaFile;
-		print("		boolean isWindows = os.matches(\"[Ww]in\");") >> javaFile;
-		print("		String archDataModel = System.getProperty(\"sun.arch.data.model\", \"32\");") >> javaFile;
-		print("		boolean is32bit = archDataModel.equals(\"32\");") >> javaFile;
-		print("		return isWindows && is32bit;") >> javaFile;
-		print("	}") >> javaFile;
-		print("") >> javaFile;
-	}
 
 	print("	public " className "(Pointer memory) {") >> javaFile;
 	print("") >> javaFile;
 	if (className == "InitAIEvent") {
-		print("		if (isWin32()) {") >> javaFile;
-		print("			Win32InitAIEvent initEvtImpl = new Win32InitAIEvent(memory);") >> javaFile;
+		print("		DefaultInitAIEvent initEvtImpl =  new DefaultInitAIEvent(memory);") >> javaFile;
 		for (m=0; m < evtsNumMembers[evtIndex]; m++) {
 			name = evtsMembers_name[evtIndex, m];
 			if (name == "callback") {
-				print("			this." name " = new Win32AICallback();") >> javaFile;
+				print("		this." name " = new DefaultAICallback();") >> javaFile;
 			} else {
-				print("			this." name " = initEvtImpl." name ";") >> javaFile;
+				print("		this." name " = initEvtImpl." name ";") >> javaFile;
 			}
 		}
-		print("		} else {") >> javaFile;
-		print("			DefaultInitAIEvent initEvtImpl =  new DefaultInitAIEvent(memory);") >> javaFile;
-		for (m=0; m < evtsNumMembers[evtIndex]; m++) {
-			name = evtsMembers_name[evtIndex, m];
-			if (name == "callback") {
-				print("			this." name " = new DefaultAICallback();") >> javaFile;
-			} else {
-				print("			this." name " = initEvtImpl." name ";") >> javaFile;
-			}
-		}
-		print("		}") >> javaFile;
 	} else {
 		if (evtsNumMembers[evtIndex] == 0) {
 			print("		// JNA thinks a 0 size struct is an error,") >> javaFile;
@@ -382,7 +351,7 @@ function printEventJavaCls(evtIndex) {
 			print("		// because 0 would fail.") >> javaFile;
 			print("		// This workaround is no longer possible sinze JNA 3.2.") >> javaFile;
 			print("		// Therefore we require all structs to be non empty,") >> javaFile;
-			print("		throw new RuntimeException(\"" className " error:.AI event structs have to be of size > 0 (ie. no empty stucts/ no structs with 0 members)\");") >> javaFile;
+			print("		throw new RuntimeException(\"" className " error:.AI event structs have to be of size > 0 (ie. no empty stucts/no structs with 0 members)\");") >> javaFile;
 		} else {
 			print("		super(memory);") >> javaFile;
 			print("		read();") >> javaFile;
@@ -395,7 +364,7 @@ function printEventJavaCls(evtIndex) {
 		type_c = evtsMembers_type_c[evtIndex, m];
 		type_jna = convertCToJNAType(type_c);
 		memMods = "public ";
-		if ((name == "callback") && ((className == "Win32InitAIEvent") || (className == "DefaultInitAIEvent"))) {
+		if ((name == "callback") && (className == "DefaultInitAIEvent")) {
 			type_jna = "Pointer";
 		}
 		if (type_jna == "int[]") {

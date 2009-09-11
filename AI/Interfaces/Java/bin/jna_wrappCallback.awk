@@ -52,7 +52,6 @@ BEGIN {
 	myPkgD = convertJavaNameFormAToD(myPkgA);
 	myInterface = "AICallback";
 	myDefaultClass = "DefaultAICallback";
-	myWin32Class = "Win32AICallback";
 
 	fi = 0;
 }
@@ -195,9 +194,6 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h) {
 	print("") >> outFile_h;
 	print("") >> outFile_h;
 	print("import com.sun.jna.*;") >> outFile_h;
-	if (javaClassName_h == myWin32Class) {
-		print("import com.sun.jna.win32.StdCallLibrary;") >> outFile_h;
-	}
 	print("") >> outFile_h;
 	print("/**") >> outFile_h;
 	print(" * Lets Java Skirmish AIs call back to the Spring engine.") >> outFile_h;
@@ -378,5 +374,4 @@ END {
 	printNativeFP2F();
 	printInterface();
 	printClass(myDefaultClass);
-	printClass(myWin32Class);
 }
