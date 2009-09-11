@@ -73,7 +73,18 @@ BEGIN {
 }
 
 
+function doWrapp(funcFullName_dw) {
 
+	paramListJava_dw  = funcParams[fullName_dw];
+	paramListJava2_dw = paramListJava_dw;
+	sub(/0ARRAY1SIZE0/, "0ARRAY1VALS0", paramListJava2_dw);
+	sub(/0MAP1SIZE0/, "0MAP1KEYS0", paramListJava2_dw);
+	doWrapp_dw =               !match(paramListJava_dw, /String\[\]/);
+	doWrapp_dw = doWrapp_dw && !match(paramListJava_dw, /AIFloat3\[\]/);
+	doWrapp_dw = doWrapp_dw && !match(paramListJava2_dw, /String\[\]/);
+	doWrapp_dw = doWrapp_dw && !match(paramListJava2_dw, /AIFloat3\[\]/);
+	return doWrapp_dw;
+}
 
 function printHeader(outFile_h, javaPkg_h, javaClassName_h, isOrHasInterface_h) {
 
@@ -138,7 +149,9 @@ function printInterface(clsName_i) {
 	size_funcs = interfaceOwnerOfFunc[clsName_i "*"];
 	for (f=0; f < size_funcs; f++) {
 		fullName_i = interfaceOwnerOfFunc[clsName "#" f];
-		printMember(outFile_i, fullName_i, size_addInds, 1);
+		if (doWrapp(fullName_i)) {
+			printMember(outFile_i, fullName_i, size_addInds, 1);
+		}
 	}
 
 	# print member class fetchers (single, multi, multi-fetch-single)
@@ -475,7 +488,9 @@ function printClass(ancestors_c, clsName_c) {
 	size_funcs = ownerOfFunc[clsId_c "*"];
 	for (f=0; f < size_funcs; f++) {
 		fullName_c = ownerOfFunc[clsId_c "#" f];
-		printMember(outFile_c, fullName_c, size_addInds, 0);
+		if (doWrapp(fullName_c)) {
+			printMember(outFile_c, fullName_c, size_addInds, 0);
+		}
 	}
 
 
