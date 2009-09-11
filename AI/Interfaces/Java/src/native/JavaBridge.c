@@ -566,8 +566,40 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: JNI version: %#x", jniVersion);
 	vm_args->version = jniVersion;
 
+	// ### check if debug related JVM options should be used ###
+	// if false, the JVM creation will fail if an
+	// unknown or invalid option was specified
+	bool useDebugOptions = true;
+	const char* useDebugOptionsStr = "auto";
+	if (jvmPropFile != NULL) {
+		const char* useDebugOptionsFromCfg =
+				util_map_getValueByKey(
+				cfgProps_size, cfgProps_keys, cfgProps_values,
+				"jvm.useDebugOptions");
+		if (useDebugOptionsFromCfg != NULL) {
+			useDebugOptionsStr = useDebugOptionsFromCfg;
+		}
+	}
+	{
+		if (strcmp(useDebugOptionsStr, "auto") == 0
+				|| strcmp(useDebugOptionsStr, "Auto") == 0
+				|| strcmp(useDebugOptionsStr, "AUTO") == 0
+				|| strcmp(useDebugOptionsStr, "a") == 0
+				|| strcmp(useDebugOptionsStr, "A") == 0)
+		{
+			// auto
+#if       defined DEBUG
+			useDebugOptions = true;
+#else  // defined DEBUG
+			useDebugOptions = false;
+#endif // defined DEBUG
+		} else {
+			// true or false
+			useDebugOptions = util_strToBool(useDebugOptionsStr);
+		}
+	}
+
 	// ### check if unrecognized JVM options should be ignored ###
-	// set ignore unrecognized
 	// if false, the JVM creation will fail if an
 	// unknown or invalid option was specified
 	bool ignoreUnrecognized = true;
@@ -667,7 +699,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 		// ### add string options from the JVM config file with property name "jvm.option.x" ###
 		int i;
 		for (i=0; i < cfgProps_size; ++i) {
-			if (strcmp(cfgProps_keys[i], "jvm.option.x") == 0) {
+			if ((strcmp(cfgProps_keys[i], "jvm.option.x") == 0) ||
+					(useDebugOptions && (strcmp(cfgProps_keys[i], "jvm.option.debug.x") == 0))) {
 				const char* const val = cfgProps_values[i];
 				const size_t val_size = strlen(val);
 				// ignore "-Djava.class.path=..."
