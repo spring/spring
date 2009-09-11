@@ -16,6 +16,15 @@
 ### BEGINN: MACROS_AND_FUNCTIONS
 # Define macros and functions to be used in this file and by Java Skirmish AIs
 
+# Create empty files
+macro    (CreateEmptyFiles fileList)
+	foreach    (ftc ${fileList})
+		if    (NOT EXISTS "${ftc}")
+			file(WRITE "${ftc}" "")
+		endif (NOT EXISTS "${ftc}")
+	endforeach (ftc)
+endmacro (CreateEmptyFiles fileList)
+
 # Returns the name of the first sub-dir (in alphabetical descending order)
 # under dir.
 macro    (GetFirstSubDirName name_var dir)
@@ -304,12 +313,15 @@ if    (BUILD_${myName}_AIINTERFACE)
 		"${myJavaGeneratedSourceDir}/${myPkg}/oo/OOAIFactory.java"
 		"${myJavaGeneratedSourceDir}/${myPkg}/oo/AbstractOOAI.java")
 	set(NATIVE_GENERATED_SOURCES
-		"${myNativeGeneratedSourceDir}/FunctionPointerBridge")
+		"${myNativeGeneratedSourceDir}/FunctionPointerBridge.c")
 
 
 	# Build the native part
 	# ---------------------
 	GetNativeSourcesRecursive(myNativeSources ${myNativeSourceDir} "")
+	# Create empty generated source files if none are generated yet,
+	# for CMake to find them in add_library().
+	CreateEmptyFiles(${NATIVE_GENERATED_SOURCES})
 	if    (MINGW)
 		# It is important that this is used instead of the one
 		# from the installed JDK, as the jni_md.h is in here too,
