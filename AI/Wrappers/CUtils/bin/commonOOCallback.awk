@@ -322,9 +322,9 @@ function wrappFunction(retType, fullName, params) {
 
 	simpleFullName = extractNormalPart(fullName);
 
-	doWrapp = !match(simpleFullName, /^Clb_File/);
+	doWrapp_wf = !match(simpleFullName, /^Clb_File/);
 
-	if (doWrapp) {
+	if (doWrapp_wf) {
 		params = trim(params);
 		sub(/^int teamId(\, )?/, "", params);
 
