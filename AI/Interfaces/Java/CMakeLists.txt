@@ -204,6 +204,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	else  (CMAKE_HOST_WIN32)
 		set(AWK_COMMAND "awk")
 	endif (CMAKE_HOST_WIN32)
+	set(myGenerateTarget           "${myTarget}-generateClb")
 	set(myAwkScriptsDir            "${myDir}/bin")
 	set(commonAwkScriptsDir        "${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils/bin")
 	set(myBuildDir                 "${CMAKE_CURRENT_BINARY_DIR}")
@@ -239,7 +240,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	# This will always be built. from CMake docu:
 	# "add_custom_target is ALWAYS CONSIDERED OUT OF DATE"
-	add_custom_target(${myTarget}-generateClb ALL
+	add_custom_target(${myGenerateTarget} ALL
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
 		COMMAND "${AWK_COMMAND}"
 		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
@@ -253,7 +254,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY "${myAwkScriptsDir}"
 		COMMENT "  Generating Java AI Callback source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${myTarget} POST_BUILD
+	add_custom_command(TARGET ${myGenerateTarget} POST_BUILD
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
 		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
@@ -266,7 +267,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY "${myAwkScriptsDir}"
 		COMMENT "  Generating Java AI Event source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${myTarget} POST_BUILD
+	add_custom_command(TARGET ${myGenerateTarget} POST_BUILD
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/command/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
 		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
@@ -279,7 +280,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY "${myAwkScriptsDir}"
 		COMMENT "  Generating Java AI Command source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${myTarget} POST_BUILD
+	add_custom_command(TARGET ${myGenerateTarget} POST_BUILD
 		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
 		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
 		COMMAND "${AWK_COMMAND}" ARGS
