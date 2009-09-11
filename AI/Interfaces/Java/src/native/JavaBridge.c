@@ -88,7 +88,7 @@ static jmethodID g_m_jnaPointer_ctor_long = NULL;
 //static jmethodID g_m_intByRef_getPointer = NULL;
 
 static jclass g_cls_aiCallback = NULL;
-static jmethodID g_m_aiCallback_getInstance = NULL;
+static jmethodID g_m_aiCallback_ctor = NULL;
 
 
 // ### General helper functions following ###
@@ -1184,16 +1184,10 @@ static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallba
 				aiCallbackClassName);
 
 		// get no-arg constructor
-		static const size_t signature_sizeMax = 512;
-		char signature[signature_sizeMax];
-		SNPRINTF(signature, signature_sizeMax, "(Lcom/sun/jna/Pointer;)L%s;", aiCallbackClassName);
-		g_m_aiCallback_getInstance = java_getStaticMethodID(env, g_cls_aiCallback, "getInstance", signature);
+		g_m_aiCallback_ctor = java_getMethodID(env, g_cls_aiCallback, "<init>", "()V");
 	}
 
-	// create a Java JNA Pointer to the AI Callback
-	jobject jnaPointerToClb = java_creatJnaPointer(env, aiCallback);
-
-	o_clb = (*env)->CallStaticObjectMethod(env, g_cls_aiCallback, g_m_aiCallback_getInstance, jnaPointerToClb);
+	o_clb = (*env)->NewObject(env, g_cls_aiCallback, g_m_aiCallback_ctor);
 	if (o_clb == NULL || (*env)->ExceptionCheck(env)) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Failed creating Java AI Callback instance");
 		if ((*env)->ExceptionCheck(env)) {

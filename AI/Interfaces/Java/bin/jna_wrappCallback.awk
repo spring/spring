@@ -43,7 +43,10 @@ BEGIN {
 	nativeGeneratedSrcRoot = NATIVE_GENERATED_SOURCE_DIR;
 
 	nativeBridge = "FunctionPointerBridge";
-	bridgePrefix = "bridged__";
+	#bridgePrefix = "bridged__";
+	# This saves us from an additional java method per callback call;
+	# change if it causes problems (should not).
+	bridgePrefix = "";
 
 	myPkgA = "com.springrts.ai";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
@@ -52,6 +55,32 @@ BEGIN {
 	myWin32Class = "Win32AICallback";
 
 	fi = 0;
+}
+
+function doWrapp(funcIndex_dw) {
+
+	paramListJava_dw = funcParamList[funcIndex_dw];
+	doWrapp_dw = !match(paramListJava_dw, /String\[\]/) && !match(paramListJava_dw, /AIFloat3\[\]/);
+
+	if (doWrapp_dw) {
+		fullName_dw = funcFullName[funcIndex_dw];
+
+		fullNameNextArray_dw = funcFullName[funcIndex_dw + 1];
+		sub(/0ARRAY1VALS0/, "0ARRAY1SIZE0", fullNameNextArray_dw);
+		if (fullNameNextArray_dw == fullName_dw) {
+			paramListJavaNext_dw = funcParamList[funcIndex_dw + 1];
+			return doWrapp(funcIndex_dw + 1);
+		}
+
+		fullNameNextMap_dw = funcFullName[funcIndex_dw + 1];
+		sub(/0MAP1KEYS0/, "0MAP1SIZE0", fullNameNextMap_dw);
+		if (fullNameNextMap_dw == fullName_dw) {
+			paramListJavaNext_dw = funcParamList[funcIndex_dw + 1];
+			return doWrapp(funcIndex_dw + 1);
+		}
+	}
+
+	return doWrapp_dw;
 }
 
 function createNativeFileName(fileName_fn, isHeader_fn) {
@@ -122,19 +151,24 @@ function printNativeFP2F() {
 		paramList        = funcParamListC[i];
 		paramListNoTypes = removeParamTypes(paramList);
 
-		printFunctionComment_Common(outFile_nh, funcDocComment, i, "");
-		#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ");") >> outFile_nh;
-		print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ");") >> outFile_nh;
+		if (doWrapp(i)) {
+			printFunctionComment_Common(outFile_nh, funcDocComment, i, "");
+			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ");") >> outFile_nh;
+			print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ");") >> outFile_nh;
+			print("") >> outFile_nh;
 
-		#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ") {") >> outFile_nc;
-		print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ") {") >> outFile_nc;
-		condRet = "return ";
-		if (retType == "void") {
-			condRet = "";
+			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ") {") >> outFile_nc;
+			print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ") {") >> outFile_nc;
+			condRet = "return ";
+			if (retType == "void") {
+				condRet = "";
+			}
+			#print("\t" condRet "id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+			print("\t" condRet "id_clb[teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+			print("" "}") >> outFile_nc;
+		} else {
+			print("Note: The following function is intentionally not wrapped: " fullName);
 		}
-		#print("\t" condRet "id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-		print("\t" condRet "id_clb[teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-		print("" "}") >> outFile_nc;
 	}
 
 
@@ -176,7 +210,7 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h) {
 	if (javaClassName_h == myInterface) {
 		print("public interface " javaClassName_h " {") >> outFile_h;
 	} else {
-		print("public class " javaClassName_h " extends Structure implements Structure.ByReference, " myInterface " {") >> outFile_h;
+		print("public class " javaClassName_h " implements " myInterface " {") >> outFile_h;
 	}
 	print("") >> outFile_h;
 }
@@ -192,12 +226,14 @@ function printInterface() {
 	printHeader(outFile_i, myPkgA, myInterface);
 
 	for (i=0; i < fi; i++) {
-		fullName  = funcFullName[i];
-		retType   = funcRetType[i];
-		paramList = funcParamList[i];
+		if (doWrapp(i)) {
+			fullName  = funcFullName[i];
+			retType   = funcRetType[i];
+			paramList = funcParamList[i];
 
-		printFunctionComment_Common(outFile_i, funcDocComment, i, "\t");
-		print("\t" retType " " fullName "(" paramList ");") >> outFile_i;
+			printFunctionComment_Common(outFile_i, funcDocComment, i, "\t");
+			print("\t" retType " " fullName "(" paramList ");") >> outFile_i;
+		}
 	}
 
 	print("}") >> outFile_i;
@@ -211,39 +247,26 @@ function printClass(clsName_c) {
 
 	printHeader(outFile_c, myPkgA, clsName_c);
 
-	clbType_c = "Callback";
-	if (clsName_c == myWin32Class) {
-		clbType_c = "StdCallLibrary.StdCallCallback";
-	}
-
-	# print the static instantiator method
-	print("\t" "public static " clsName_c " getInstance(Pointer memory) {") >> outFile_c;
-	print("") >> outFile_c;
-	print("\t" "	" clsName_c " _inst = new " clsName_c "();") >> outFile_c;
-	print("\t" "	_inst.useMemory(memory);") >> outFile_c;
-	print("\t" "	_inst.read();") >> outFile_c;
-	print("\t" "	return _inst;") >> outFile_c;
-	print("\t" "}") >> outFile_c;
+	# print the static registrator
+	print("\tstatic {") >> outFile_c;
+	print("\t\tNative.register(\"AIInterface\");") >> outFile_c;
+	print("\t}") >> outFile_c;
 	print("") >> outFile_c;
 
 	for (i=0; i < fi; i++) {
-		fullName = funcFullName[i];
-		retType = funcRetType[i];
-		paramList = funcParamList[i];
+		if (doWrapp(i)) {
+			fullName = funcFullName[i];
+			retType = funcRetType[i];
+			paramList = funcParamList[i];
 
-		isVoid_c = (retType == "void");
-		condRet_c = isVoid_c ? "" : "return ";
-		paramListNoTypes = removeParamTypes(paramList);
+			isVoid_c = (retType == "void");
+			condRet_c = isVoid_c ? "" : "return ";
+			paramListNoTypes = removeParamTypes(paramList);
 
-		print("\t" "public interface _" fullName " extends " clbType_c " {") >> outFile_c;
-		print("\t" "\t" retType " invoke(" paramList ");") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("\t" "public _" fullName " _M_" fullName ";") >> outFile_c;
-		printFunctionComment_Common(outFile_c, funcDocComment, i, "\t");
-		print("\t" "public " retType " " fullName "(" paramList ") {") >> outFile_c;
-		print("\t" "\t" condRet_c "_M_" fullName ".invoke(" paramListNoTypes ");") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
+			printFunctionComment_Common(outFile_c, funcDocComment, i, "\t");
+			print("\t" "public native " retType " " bridgePrefix fullName "(" paramList ");") >> outFile_c;
+			print("") >> outFile_c;
+		}
 	}
 
 	print("}") >> outFile_c;
@@ -256,9 +279,9 @@ function wrappFunction(funcDef) {
 
 	# All function pointers of the struct have to be mirrored,
 	# otherwise, JNA will call the wrong function pointers.
-	doWrapp = 1;
+	doParse = 1;
 
-	if (doWrapp) {
+	if (doParse) {
 		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\)\\;)");
 		# because the empty part after ");" would count as part aswell
 		size_funcParts--;

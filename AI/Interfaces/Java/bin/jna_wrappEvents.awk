@@ -357,13 +357,21 @@ function printEventJavaCls(evtIndex) {
 		print("			Win32InitAIEvent initEvtImpl = new Win32InitAIEvent(memory);") >> javaFile;
 		for (m=0; m < evtsNumMembers[evtIndex]; m++) {
 			name = evtsMembers_name[evtIndex, m];
-			print("			this." name " = initEvtImpl." name ";") >> javaFile;
+			if (name == "callback") {
+				print("			this." name " = new Win32AICallback();") >> javaFile;
+			} else {
+				print("			this." name " = initEvtImpl." name ";") >> javaFile;
+			}
 		}
 		print("		} else {") >> javaFile;
 		print("			DefaultInitAIEvent initEvtImpl =  new DefaultInitAIEvent(memory);") >> javaFile;
 		for (m=0; m < evtsNumMembers[evtIndex]; m++) {
 			name = evtsMembers_name[evtIndex, m];
-			print("			this." name " = initEvtImpl." name ";") >> javaFile;
+			if (name == "callback") {
+				print("			this." name " = new DefaultAICallback();") >> javaFile;
+			} else {
+				print("			this." name " = initEvtImpl." name ";") >> javaFile;
+			}
 		}
 		print("		}") >> javaFile;
 	} else {
@@ -387,12 +395,8 @@ function printEventJavaCls(evtIndex) {
 		type_c = evtsMembers_type_c[evtIndex, m];
 		type_jna = convertCToJNAType(type_c);
 		memMods = "public ";
-		if (name == "callback") {
-			if (className == "Win32InitAIEvent") {
-				type_jna = "Win32AICallback";
-			} else if (className == "DefaultInitAIEvent") {
-				type_jna = "DefaultAICallback";
-			}
+		if ((name == "callback") && ((className == "Win32InitAIEvent") || (className == "DefaultInitAIEvent"))) {
+			type_jna = "Pointer";
 		}
 		if (type_jna == "int[]") {
 			type_jna = "Pointer";
