@@ -47,8 +47,15 @@
 	#define ptr_to_jlong(a) ((jlong)(int)(a))
 #endif
 
+struct Properties {
+	size_t       size;
+	const char** keys;
+	const char** values;
+};
+
 static int interfaceId = -1;
 static const struct SAIInterfaceCallback* callback = NULL;
+static struct Properties* jvmCfgProps = NULL;
 
 static size_t  team_sizeMax = 0;
 static size_t* team_skirmishAiImpl;
@@ -94,19 +101,22 @@ static jmethodID g_m_aiCallback_ctor = NULL;
 // ### General helper functions following ###
 
 /// Sets the FPU state to how spring likes it
-static inline void establishSpringEnv() {
+void java_establishSpringEnv() {
 
 	//(*g_jvm)->DetachCurrentThread(g_jvm);
 	util_resetEngineEnv();
 }
 /// The JVM sets the environment it wants automatically, so this is a no-op
-static inline void establishJavaEnv() {}
+void java_establishJavaEnv() {}
 
 
 static inline size_t minSize(size_t size1, size_t size2) {
 	return (size1 < size2) ? size1 : size2;
 }
 
+static const char* java_getValueByKey(const struct Properties* props, const char* key) {
+	return util_map_getValueByKey(props->size, props->keys, props->values, key);
+}
 
 // /**
 //  * Called when the JVM loads this native library.
@@ -454,6 +464,46 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 }
 
 /**
+ * Load the interfaces JVM properties file.
+ */
+static bool java_readJvmCfgFile(struct Properties* props) {
+
+	bool read = false;
+
+	const size_t props_sizeMax = 256;
+	props->size   = 0;
+	props->keys   = (const char**) calloc(props_sizeMax, sizeof(char*));
+	props->values = (const char**) calloc(props_sizeMax, sizeof(char*));
+
+	// ### read JVM options config file ###
+	char* jvmPropFile = callback->DataDirs_allocatePath(interfaceId,
+			JVM_PROPERTIES_FILE, false, false, false, false);
+	if (jvmPropFile == NULL) {
+		// if the version specific file does not exist,
+		// try to get the common one
+		jvmPropFile = callback->DataDirs_allocatePath(interfaceId,
+			JVM_PROPERTIES_FILE, false, false, false, true);
+	}
+
+	if (jvmPropFile != NULL) {
+		props->size = util_parsePropertiesFile(jvmPropFile,
+				props->keys, props->values, props_sizeMax);
+		read = true;
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"JVM: arguments loaded from: %s", jvmPropFile);
+	} else {
+		props->size = 0;
+		read = false;
+		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
+				"JVM: arguments NOT loaded from: %s", jvmPropFile);
+	}
+
+	FREE(jvmPropFile);
+
+	return read;
+}
+
+/**
  * Creates the Java library path.
  * -> where native shared libraries are searched
  *
@@ -518,42 +568,15 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 
 	return true;
 }
-static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
-
-	static const size_t cfgProps_sizeMax = 64;
-	const char**        cfgProps_keys = (const char**) calloc(cfgProps_sizeMax, sizeof(char*));
-	const char**        cfgProps_values = (const char**) calloc(cfgProps_sizeMax, sizeof(char*));
-	size_t              cfgProps_size = 0;
-
-	// ### read JVM options config file ###
-	char* jvmPropFile = callback->DataDirs_allocatePath(interfaceId,
-			JVM_PROPERTIES_FILE, false, false, false, false);
-	if (jvmPropFile == NULL) {
-		// if the version specific file does not exist,
-		// try to get the common one
-		jvmPropFile = callback->DataDirs_allocatePath(interfaceId,
-			JVM_PROPERTIES_FILE, false, false, false, true);
-	}
-	if (jvmPropFile != NULL) {
-		cfgProps_size = util_parsePropertiesFile(jvmPropFile,
-				cfgProps_keys, cfgProps_values, cfgProps_sizeMax);
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
-				"JVM: arguments loaded from: %s", jvmPropFile);
-	} else {
-		cfgProps_size = 0;
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
-				"JVM: arguments NOT loaded from: %s", jvmPropFile);
-	}
+static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const struct Properties* jvmProps) {
 
 	// ### evaluate JNI version to use ###
 	//jint jniVersion = JNI_VERSION_1_1;
 	//jint jniVersion = JNI_VERSION_1_2;
 	jint jniVersion = JNI_VERSION_1_4;
 	//jint jniVersion = JNI_VERSION_1_6;
-	if (jvmPropFile != NULL) {
-		const char* jniVersionFromCfg =
-				util_map_getValueByKey(
-				cfgProps_size, cfgProps_keys, cfgProps_values,
+	if (jvmProps != NULL) {
+		const char* jniVersionFromCfg = java_getValueByKey(jvmProps,
 				"jvm.jni.version");
 		if (jniVersionFromCfg != NULL) {
 			unsigned long int jniVersion_tmp =
@@ -571,10 +594,8 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	// if false, the JVM creation will fail if an
 	// unknown or invalid option was specified
 	bool ignoreUnrecognized = true;
-	if (jvmPropFile != NULL) {
-		const char* ignoreUnrecognizedFromCfg =
-				util_map_getValueByKey(
-				cfgProps_size, cfgProps_keys, cfgProps_values,
+	if (jvmProps != NULL) {
+		const char* ignoreUnrecognizedFromCfg = java_getValueByKey(jvmProps,
 				"jvm.arguments.ignoreUnrecognized");
 		if (ignoreUnrecognizedFromCfg != NULL
 				&& !util_strToBool(ignoreUnrecognizedFromCfg)) {
@@ -601,12 +622,10 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 				"Failed creating Java class-path.");
 		return false;
 	}
-	if (jvmPropFile != NULL) {
+	if (jvmProps != NULL) {
 		// ..., and append the part from the jvm options properties file,
 		// if it is specified there
-		const char* clsPathFromCfg =
-				util_map_getValueByKey(
-				cfgProps_size, cfgProps_keys, cfgProps_values,
+		const char* clsPathFromCfg = java_getValueByKey(jvmProps,
 				"jvm.option.java.class.path");
 		if (clsPathFromCfg != NULL) {
 			STRCATS(classPath, classPath_sizeMax, ENTRY_DELIM);
@@ -630,12 +649,10 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 				"Failed creating Java library-path.");
 		return false;
 	}
-	if (jvmPropFile != NULL) {
+	if (jvmProps != NULL) {
 		// ..., and append the part from the jvm options properties file,
 		// if it is specified there
-		const char* libPathFromCfg =
-				util_map_getValueByKey(
-				cfgProps_size, cfgProps_keys, cfgProps_values,
+		const char* libPathFromCfg = java_getValueByKey(jvmProps,
 				"jvm.option.java.library.path");
 		if (libPathFromCfg != NULL) {
 			STRCATS(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
@@ -663,18 +680,18 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	const size_t JCPVAL_size = strlen(JCPVAL);
 	static const char* const JLPVAL = "-Djava.library.path=";
 	const size_t JLPVAL_size = strlen(JCPVAL);
-	if (jvmPropFile != NULL) {
+	if (jvmProps != NULL) {
 		// ### add string options from the JVM config file with property name "jvm.option.x" ###
 		int i;
-		for (i=0; i < cfgProps_size; ++i) {
-			if (strcmp(cfgProps_keys[i], "jvm.option.x") == 0) {
-				const char* const val = cfgProps_values[i];
+		for (i=0; i < jvmProps->size; ++i) {
+			if (strcmp(jvmProps->keys[i], "jvm.option.x") == 0) {
+				const char* const val = jvmProps->values[i];
 				const size_t val_size = strlen(val);
 				// ignore "-Djava.class.path=..."
 				// and "-Djava.library.path=..." options
 				if (strncmp(val, JCPVAL, minSize(val_size, JCPVAL_size)) != 0 &&
 					strncmp(val, JLPVAL, minSize(val_size, JLPVAL_size)) != 0) {
-					strOptions[op++] = cfgProps_values[i];
+					strOptions[op++] = val;
 				}
 			}
 		}
@@ -737,11 +754,6 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args) {
 	FREE(libraryPathOpt);
 	simpleLog_logL(SIMPLELOG_LEVEL_FINE, "");
 
-	FREE(jvmPropFile);
-
-	FREE(cfgProps_keys);
-	FREE(cfgProps_values);
-
 	return true;
 }
 
@@ -777,7 +789,7 @@ static JNIEnv* java_getJNIEnv() {
 		struct JavaVMInitArgs vm_args;
 		jint res = 0;
 
-		if (!java_createJavaVMInitArgs(&vm_args)) {
+		if (!java_createJavaVMInitArgs(&vm_args, jvmCfgProps)) {
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 					"Failed initializing JVM init-arguments.");
 			goto end;
@@ -894,7 +906,7 @@ bool java_unloadJNIEnv() {
 		} else {
 			g_jvm = NULL;
 		}
-		establishSpringEnv();
+		java_establishSpringEnv();
 	}
 
 	return true;
@@ -903,9 +915,9 @@ bool java_unloadJNIEnv() {
 
 bool java_preloadJNIEnv() {
 
-	establishJavaEnv();
+	java_establishJavaEnv();
 	JNIEnv* env = java_getJNIEnv();
-	establishSpringEnv();
+	java_establishSpringEnv();
 
 	return env != NULL;
 }
@@ -916,6 +928,10 @@ bool java_initStatic(int _interfaceId,
 
 	interfaceId = _interfaceId;
 	callback = _callback;
+
+	// Read the jvm properties config file
+	jvmCfgProps = (struct Properties*) malloc(sizeof(struct Properties));
+	java_readJvmCfgFile(jvmCfgProps);
 
 	team_sizeMax = callback->Teams_getSize(interfaceId);
 	skirmishAiImpl_sizeMax = team_sizeMax;
@@ -955,10 +971,15 @@ bool java_initStatic(int _interfaceId,
 	FREE(jreLocationFile);
 
 #if defined __arch64__
-	static const char* jvmType = "server";
+	static const char* defJvmType = "server";
 #else
-	static const char* jvmType = "client";
+	static const char* defJvmType = "client";
 #endif
+	const char* jvmType = java_getValueByKey(jvmCfgProps, "jvm.type");
+	if (jvmType == NULL) {
+		jvmType = defJvmType;
+	}
+
 	static const size_t jvmLibPath_sizeMax = 1024;
 	char jvmLibPath[jvmLibPath_sizeMax];
 	bool jvmLibFound = GetJVMPath(jrePath, jvmType, jvmLibPath,
@@ -1217,6 +1238,10 @@ bool java_releaseStatic() {
 	sharedLib_unload(jvmSharedLib);
 	jvmSharedLib = NULL;
 
+	FREE(jvmCfgProps->keys);
+	FREE(jvmCfgProps->values);
+	FREE(jvmCfgProps);
+
 	return true;
 }
 
@@ -1350,7 +1375,7 @@ bool java_initSkirmishAIClass(
 	// instantiate AI (if needed)
 	if (skirmishAiImpl_className[sai] == NULL) {
 		sai = firstFree;
-		establishJavaEnv();
+		java_establishJavaEnv();
 		JNIEnv* env = java_getJNIEnv();
 
 		if (g_cls_url == NULL) {
@@ -1370,7 +1395,7 @@ bool java_initSkirmishAIClass(
 		methods = (jmethodID*) calloc(MTHS_SIZE_SKIRMISH_AI, sizeof(jmethodID));
 		success = java_loadSkirmishAI(env, shortName, version, className,
 				&(instance), methods, &(classLoader));
-		establishSpringEnv();
+		java_establishSpringEnv();
 
 		if (success) {
 			skirmishAiImpl_instance[sai]    = instance;
@@ -1412,7 +1437,7 @@ bool java_releaseSkirmishAIClass(const char* className) {
 
 	// release AI (if needed)
 	if (skirmishAiImpl_className[sai] != NULL) {
-		establishJavaEnv();
+		java_establishJavaEnv();
 		JNIEnv* env = java_getJNIEnv();
 
 		bool successPart;
@@ -1428,7 +1453,7 @@ bool java_releaseSkirmishAIClass(const char* className) {
 		successPart = java_deleteGlobalRef(env, skirmishAiImpl_instance[sai],
 				"AI instance");
 		success = success && successPart;
-		establishSpringEnv();
+		java_establishSpringEnv();
 
 		if (success) {
 			skirmishAiImpl_classLoader[sai] = NULL;
@@ -1481,7 +1506,7 @@ int java_skirmishAI_init(int teamId,
 	if (success) {
 		java_getSkirmishAIAndMethod(teamId, &o_ai, MTH_INDEX_SKIRMISH_AI_INIT,
 				&mth);
-		establishJavaEnv();
+		java_establishJavaEnv();
 		env = java_getJNIEnv();
 	}
 
@@ -1514,7 +1539,7 @@ int java_skirmishAI_init(int teamId,
 	if (success) {
 		success = java_deleteGlobalRef(env, o_aiCallback, "AI callback instance");
 	}
-	establishSpringEnv();
+	java_establishSpringEnv();
 
 	return res;
 }
@@ -1531,7 +1556,7 @@ int java_skirmishAI_release(int teamId) {
 	bool success = true;
 
 	if (success) {
-		establishJavaEnv();
+		java_establishJavaEnv();
 		JNIEnv* env = java_getJNIEnv();
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
 				"calling Java AI method release(teamId)...");
@@ -1539,7 +1564,7 @@ int java_skirmishAI_release(int teamId) {
 		if (checkException(env, "calling Java AI method release(teamId) failed.")) {
 			res = -99;
 		}
-		establishSpringEnv();
+		java_establishSpringEnv();
 	}
 
 	return res;
@@ -1557,7 +1582,7 @@ int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
 	bool success = true;
 
 	if (success) {
-		establishJavaEnv();
+		java_establishJavaEnv();
 		JNIEnv* env = java_getJNIEnv();
 
 		jobject jnaPointerToData = java_creatJnaPointer(env, data);
@@ -1580,7 +1605,7 @@ int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
 			java_deleteGlobalRef(env, jnaPointerToData,
 					"JNA Pointer to handleEvent data");
 		}
-		establishSpringEnv();
+		java_establishSpringEnv();
 	}
 
 	return res;
