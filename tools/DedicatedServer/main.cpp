@@ -12,6 +12,7 @@
 
 #include <string>
 #include <iostream>
+#include <SDL.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -22,6 +23,7 @@ int main(int argc, char *argv[])
 #ifdef _WIN32
 	try {
 #endif
+	SDL_Init(SDL_INIT_TIMER);
 	std::cout << "If you find any errors, report them to mantis or the forums." << std::endl << std::endl;
 	ConfigHandler::Instantiate("");
 	FileSystemHandler::Cleanup();
