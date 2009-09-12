@@ -329,7 +329,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		# and this file contians OS (win32) specific information.
 		include_directories(BEFORE ${MINGWLIBS}/include/java)
 	endif (MINGW)
-	include_directories(BEFORE ${rts}/lib/streflop ${myNativeGeneratedSourceDir})
+	include_directories(BEFORE "${rts}/lib/streflop" "${myNativeSourceDir}" "${myNativeGeneratedSourceDir}")
 	add_library(${myTarget} MODULE ${myNativeSources} ${NATIVE_GENERATED_SOURCES} ${ai_common_SRC} ${CUtils_SRC})
 	add_dependencies(${myTarget} ${myTarget}-generateClb)
 	install(TARGETS ${myTarget} DESTINATION ${myDataDir})
