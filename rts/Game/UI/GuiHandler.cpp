@@ -495,7 +495,7 @@ void CGuiHandler::RevertToCmdDesc(const CommandDescription& cmdDesc,
 
 void CGuiHandler::LayoutIcons(bool useSelectionPage)
 {
-	GML_RECMUTEX_LOCK(gui); // LayoutIcons - updates inCommand. Called from CGame::Draw --> RunLayoutCommand 
+	GML_RECMUTEX_LOCK(gui); // LayoutIcons - updates inCommand. Called from CGame::Draw --> RunLayoutCommand
 
 	const bool defCmd =
 		(mouse->buttons[SDL_BUTTON_RIGHT].pressed &&
@@ -1022,8 +1022,8 @@ void CGuiHandler::SetCursorIcon() const
 	}
 
 	if (gatherMode &&
-	    ((mouse->cursorText == "Move") ||
-	    (mouse->cursorText == "Fight"))) {
+	    ((newCursor == "Move") ||
+	    (newCursor == "Fight"))) {
 		newCursor = "GatherWait";
 	}
 
@@ -1374,7 +1374,7 @@ static bool CheckCustomCmdMods(bool rmb, ModGroup& inMods)
 
 void CGuiHandler::RunCustomCommands(const std::vector<std::string>& cmds, bool rmb)
 {
-	GML_RECMUTEX_LOCK(gui); // RunCustomCommands - called from LuaUnsyncedCtrl::SendCommands 
+	GML_RECMUTEX_LOCK(gui); // RunCustomCommands - called from LuaUnsyncedCtrl::SendCommands
 
 	static int depth = 0;
 	if (depth > 8) {
@@ -2027,7 +2027,7 @@ std::string CGuiHandler::GetTooltip(int x, int y)
 // mousehandler::getcurrenttooltip --> CMiniMap::gettooltip --> GetBuildTooltip
 std::string CGuiHandler::GetBuildTooltip() const
 {
-	GML_RECMUTEX_LOCK(gui); // GetBuildTooltip - called from LuaUnsyncedRead::GetCurrentTooltip --> MouseHandler::GetCurrentTooltip 
+	GML_RECMUTEX_LOCK(gui); // GetBuildTooltip - called from LuaUnsyncedRead::GetCurrentTooltip --> MouseHandler::GetCurrentTooltip
 
 	if ((inCommand >= 0) && ((size_t)inCommand < commands.size()) &&
 	    (commands[inCommand].type == CMDTYPE_ICON_BUILDING)) {
@@ -3065,7 +3065,7 @@ void CGuiHandler::DrawMenuName() // Only called by drawbuttons
 
 void CGuiHandler::DrawSelectionInfo()
 {
-	GML_RECMUTEX_LOCK(sel); // DrawSelectionInfo - called from Draw --> DrawButtons 
+	GML_RECMUTEX_LOCK(sel); // DrawSelectionInfo - called from Draw --> DrawButtons
 
 	if (!selectedUnits.selectedUnits.empty()) {
 		std::ostringstream buf;
