@@ -43,6 +43,7 @@ void CWordCompletion::Reset()
 	words["/echo "] = sl;
 	words["/font "] = sl;
 	words["/gameinfo"] = sl;
+	words["/gathermode"] = sl;
 	words["/grounddecals "] = sl;
 	words["/info "] = sl;
 	words["/luaui "] = sl;
@@ -85,7 +86,7 @@ void CWordCompletion::Reset()
 	words["minimize "] = mm;
 	words["maximize "] = mm;
 	words["maxspect "] = mm;
-	
+
 	// remote commands
 	//TODO those commans are registered in Console, get the list from there
 	words["/atm"] = sl;
