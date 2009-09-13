@@ -1070,7 +1070,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 }
 
 
-int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
+int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
 		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {

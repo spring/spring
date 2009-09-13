@@ -565,7 +565,7 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 // DrawMapStuff --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 // CMouseHandler::DrawCursor --> DrawCentroidCursor --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 // LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
-int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
+int CSelectedUnits::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
 	GML_RECMUTEX_LOCK(group); // GetDefaultCmd

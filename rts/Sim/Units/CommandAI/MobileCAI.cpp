@@ -914,7 +914,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 
 
 
-int CMobileCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
+int CMobileCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
 		if (!teamHandler->Ally(gu->myAllyTeam,pointed->allyteam)) {

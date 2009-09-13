@@ -1243,8 +1243,8 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		return 0;
 	}
 
-	CUnit* unit = NULL;
-	CFeature* feature = NULL;
+	const CUnit* unit = NULL;
+	const CFeature* feature = NULL;
 	const float range = gu->viewRange * 1.4f;
 	const float3& pos = camera->pos;
 	const float3 dir = camera->CalcPixelDir(wx, wy);

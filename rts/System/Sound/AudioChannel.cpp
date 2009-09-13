@@ -46,7 +46,7 @@ void EffectChannel::PlaySample(size_t id, const float3& p, const float3& velocit
 	}
 }
 
-void EffectChannel::PlaySample(size_t id, CUnit* u,float ovolume)
+void EffectChannel::PlaySample(size_t id, const CUnit* u,float ovolume)
 {
 	if (enabled && emmitsThisFrame < emmitsPerFrame)
 	{
@@ -55,7 +55,7 @@ void EffectChannel::PlaySample(size_t id, CUnit* u,float ovolume)
 	}
 }
 
-void EffectChannel::PlaySample(size_t id, CWorldObject* p,float ovolume)
+void EffectChannel::PlaySample(size_t id, const CWorldObject* p,float ovolume)
 {
 	if (enabled && emmitsThisFrame < emmitsPerFrame)
 	{
