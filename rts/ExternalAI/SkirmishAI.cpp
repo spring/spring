@@ -19,21 +19,31 @@
 
 #include "IAILibraryManager.h"
 #include "ISkirmishAILibrary.h"
+#include "TimeProfiler.h"
+#include "Util.h"
 
 CSkirmishAI::CSkirmishAI(int teamId, const SkirmishAIKey& key,
 		const SSkirmishAICallback* c_callback) :
 		teamId(teamId),
-		key(key)
+		key(key),
+		timerName((std::string("SkirmishAI:") +
+		          key.GetShortName() + "-" + key.GetVersion() +
+		          ":" + IntToString(teamId)).c_str())
 {
+	SCOPED_TIMER(timerName);
 	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
 	library->Init(teamId, c_callback);
 }
 
 CSkirmishAI::~CSkirmishAI() {
+
+	SCOPED_TIMER(timerName);
 	library->Release(teamId);
 	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
 }
 
 int CSkirmishAI::HandleEvent(int topic, const void* data) const {
+
+	SCOPED_TIMER(timerName);
 	return library->HandleEvent(teamId, topic, data);
 }
