@@ -381,7 +381,7 @@ const CCommandQueue* CAICallback::GetCurrentUnitCommands(int unitId)
 
 int CAICallback::GetUnitAiHint(int unitId)
 {
-	int aiHint = 0;
+	int aiHint = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
@@ -407,7 +407,7 @@ int CAICallback::GetUnitAiHint(int unitId)
 
 int CAICallback::GetUnitTeam(int unitId)
 {
-	int unitTeam = 0;
+	int unitTeam = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
@@ -422,7 +422,7 @@ int CAICallback::GetUnitTeam(int unitId)
 
 int CAICallback::GetUnitAllyTeam(int unitId)
 {
-	int unitAllyTeam = 0;
+	int unitAllyTeam = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
@@ -437,7 +437,7 @@ int CAICallback::GetUnitAllyTeam(int unitId)
 
 float CAICallback::GetUnitHealth(int unitId)
 {
-	float health = 0;
+	float health = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
@@ -467,7 +467,7 @@ float CAICallback::GetUnitHealth(int unitId)
 
 float CAICallback::GetUnitMaxHealth(int unitId)
 {
-	float maxHealth = 0;
+	float maxHealth = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
@@ -520,7 +520,7 @@ float CAICallback::GetUnitSpeed(int unitId)
 
 float CAICallback::GetUnitPower(int unitId)
 {
-	float power = 0;
+	float power = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
@@ -547,7 +547,7 @@ float CAICallback::GetUnitPower(int unitId)
 
 float CAICallback::GetUnitExperience(int unitId)
 {
-	float experience = 0;
+	float experience = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
@@ -562,7 +562,7 @@ float CAICallback::GetUnitExperience(int unitId)
 
 float CAICallback::GetUnitMaxRange(int unitId)
 {
-	float maxRange = 0;
+	float maxRange = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
@@ -639,7 +639,7 @@ float3 CAICallback::GetUnitPos(int unitId)
 
 int CAICallback::GetBuildingFacing(int unitId) {
 
-	int buildFacing = 0;
+	int buildFacing = -1;
 
 	verify();
 	if (CHECK_UNITID(unitId)) {
