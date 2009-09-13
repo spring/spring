@@ -24,7 +24,6 @@
 namespace netcode {
 using namespace boost::asio;
 
-const unsigned UDPConnection::hsize = 9;
 const unsigned UDPMaxPacketSize = 4096;
 const int MaxChunkSize = 254;
 
@@ -221,7 +220,7 @@ void UDPConnection::Update()
 			if (CheckErrorCode(err))
 				break;
 
-			if (bytesReceived < UDPConnection::hsize)
+			if (bytesReceived < Packet::headerSize)
 				continue;
 			Packet data(&buffer[0], bytesReceived);
 			if (CheckAddress(sender_endpoint))
@@ -238,7 +237,7 @@ void UDPConnection::ProcessRawPacket(Packet& incoming)
 {
 	lastReceiveTime = spring_gettime();
 	dataRecv += incoming.GetSize();
-	recvOverhead += hsize;
+	recvOverhead += Packet::headerSize;
 	++recvPackets;
 
 	AckChunks(incoming.lastContinuous);
