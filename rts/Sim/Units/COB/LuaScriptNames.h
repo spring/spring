@@ -12,9 +12,6 @@
 // These are indices into an array of 'refs' (lua_ref / lua_unref)
 // maintained by each CLuaUnitScript.
 
-// All call-ins also get as first argument the unitID.
-// This is left out of the comments below for brevity.
-
 enum {
 	LUAFN_Destroy,              // ( ) -> nil
 	LUAFN_StartMoving,          // ( ) -> nil
@@ -25,10 +22,7 @@ enum {
 	LUAFN_WindChanged,          // ( heading, strength ) -> nil
 	LUAFN_ExtractionRateChanged,// ( newRate ) -> nil
 	LUAFN_RockUnit,             // ( rockDir_x, rockDir_z ) -> nil
-	LUAFN_MoveRate0,            // ( ) -> nil
-	LUAFN_MoveRate1,            // ( ) -> nil
-	LUAFN_MoveRate2,            // ( ) -> nil
-	LUAFN_MoveRate3,            // FIXME: unused (see CTAAirMoveType::UpdateMoveRate)
+	LUAFN_MoveRate,             // ( curMoveRate ) -> nil
 	LUAFN_SetSFXOccupy,         // ( curTerrainType ) -> nil
 	LUAFN_HitByWeapon,          // ( hitDir_x, hitDir_z, weaponDefID, damage ) -> number newDamage | nil
 	LUAFN_QueryLandingPads,     // ( ) -> table piecenums
