@@ -22,7 +22,6 @@
 #include "Game/GameData.h"
 #include "LogOutput.h"
 #include "DemoRecorder.h"
-#include "ConfigHandler.h"
 #include "GlobalUnsynced.h"
 
 
@@ -40,7 +39,6 @@ void CNetProtocol::InitClient(const char *server_addr, unsigned portnum,unsigned
 {
 	GML_STDMUTEX_LOCK(net); // InitClient
 	netcode::UDPConnection* conn = new netcode::UDPConnection(sourceport, server_addr, portnum);
-	conn->SetMTU(configHandler->Get("MaximumTransmissionUnit", 0));
 	serverConn.reset(conn);
 	serverConn->SendData(CBaseNetProtocol::Get().SendAttemptConnect(myName, myPasswd, myVersion));
 	serverConn->Flush(true);

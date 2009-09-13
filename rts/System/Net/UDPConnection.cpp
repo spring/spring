@@ -4,21 +4,18 @@
 #	include <windows.h>
 #endif
 
-#include "Socket.h"
-
-#ifndef _MSC_VER
-#include "StdAfx.h"
-#endif
-
 #include "UDPConnection.h"
+
+
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "mmgr.h"
 
+#include "Socket.h"
 #include "ProtocolDef.h"
 #include "Exception.h"
-#include "LogOutput.h"
+#include "ConfigHandler.h"
 #include <boost/cstdint.hpp>
 
 namespace netcode {
@@ -385,8 +382,6 @@ void UDPConnection::Flush(const bool forced)
 			} // iterator "it" is now invalid
 			if ((forced || pos > 0) && (pos == MaxChunkSize || outgoingData.empty()))
 			{
-				if (pos == MaxChunkSize)
-					++fragmentedFlushes;
 				CreateChunk(buffer, pos, currentNum++);
 				pos = 0;
 			}
@@ -413,7 +408,6 @@ std::string UDPConnection::Statistics() const
 	msg += str( boost::format("Sent: %1% bytes in %2% packets (%3% bytes/package)\n") %dataSent %sentPackets %((float)dataSent / (float)sentPackets));
 	msg += str( boost::format("Relative protocol overhead: %1% up, %2% down\n") %((float)sentOverhead / (float)dataSent) %((float)recvOverhead / (float)dataRecv) );
 	msg += str( boost::format("%1% incoming chunks had been dropped, %2% outgoing chunks had to be resent\n") %droppedChunks %resentChunks);
-	msg += str( boost::format("%1% packets were splitted due to MTU\n") %fragmentedFlushes);
 	return msg;
 }
 
@@ -447,12 +441,11 @@ void UDPConnection::Init()
 	lastNak=-1;
 	sentOverhead = 0;
 	recvOverhead = 0;
-	fragmentedFlushes = 0;
 	fragmentBuffer = 0;
 	resentChunks = 0;
 	sentPackets = recvPackets = 0;
 	droppedChunks = 0;
-	mtu = 500;
+	mtu = configHandler->Get("MaximumTransmissionUnit", 1400);
 }
 
 void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)
