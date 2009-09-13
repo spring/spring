@@ -153,6 +153,19 @@ void CFeatureHandler::PostLoad()
 			drawQuads[(*it)->drawQuad].features.insert(*it);
 }
 
+
+void CFeatureHandler::BackupFeatures()
+{
+	fadeFeaturesSave    = fadeFeatures;
+	fadeFeaturesS3OSave = fadeFeaturesS3O;
+}
+
+void CFeatureHandler::RestoreFeatures()
+{
+	fadeFeatures    = fadeFeaturesSave;
+	fadeFeaturesS3O = fadeFeaturesS3OSave;
+}
+
 void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
 {
 	std::map<std::string, const FeatureDef*>::const_iterator it = featureDefs.find(name);
@@ -646,7 +659,7 @@ void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading)
 	{
 		GML_RECMUTEX_LOCK(feat); // DrawFadeFeatures
 
-		for(std::set<CFeature *>::iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
+		for(std::set<CFeature *>::const_iterator i = fadeFeatures.begin(); i != fadeFeatures.end(); ++i) {
 			glColor4f(1,1,1,(*i)->tempalpha);
 			glAlphaFunc(GL_GREATER,(*i)->tempalpha/2.0f);
 			unitDrawer->DrawFeatureStatic(*i);
@@ -654,7 +667,7 @@ void CFeatureHandler::DrawFadeFeatures(bool submerged, bool noAdvShading)
 
 		unitDrawer->CleanUp3DO();
 
-		for(std::set<CFeature *>::iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
+		for(std::set<CFeature *>::const_iterator i = fadeFeaturesS3O.begin(); i != fadeFeaturesS3O.end(); ++i) {
 			float cols[]={1,1,1,(*i)->tempalpha};
 			glColor4fv(cols);
 			glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);

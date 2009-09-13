@@ -2987,8 +2987,7 @@ void CGame::StoreCloaked(bool save) {
 		{
 			GML_RECMUTEX_LOCK(feat); // StoreCloaked
 
-			featureHandler->fadeFeaturesSave = featureHandler->fadeFeatures;
-			featureHandler->fadeFeaturesS3OSave = featureHandler->fadeFeaturesS3O;
+			featureHandler->BackupFeatures();
 		}
 	}
 	else {
@@ -3001,8 +3000,7 @@ void CGame::StoreCloaked(bool save) {
 		{
 			GML_RECMUTEX_LOCK(feat); // StoreCloaked
 
-			featureHandler->fadeFeatures = featureHandler->fadeFeaturesSave;
-			featureHandler->fadeFeaturesS3O = featureHandler->fadeFeaturesS3OSave;
+			featureHandler->RestoreFeatures();
 		}
 	}
 }
