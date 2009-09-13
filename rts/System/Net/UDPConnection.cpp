@@ -511,12 +511,15 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		}
 	}
 
-	const bool needsAck = !unackedChunks.empty() && lastUnackResent + spring_msecs(400) < curTime && newChunks.empty();
-	if (needsAck)
+	lastUnackResent = std::max(lastUnackResent, lastChunkCreated);
+	if (!unackedChunks.empty() && lastUnackResent + spring_msecs(400) < curTime)
 	{
-		// resent last packet if we didn't get an ack after 0,4 seconds
-		// and don't plan sending out a new chunk either
-		RequestResend(*(unackedChunks.end()-1));
+		if (newChunks.empty())
+		{
+			// resent last packet if we didn't get an ack after 0,4 seconds
+			// and don't plan sending out a new chunk either
+			RequestResend(*(unackedChunks.end()-1));
+		}
 		lastUnackResent = curTime;
 	}
 
