@@ -2037,7 +2037,7 @@ std::string CGuiHandler::GetBuildTooltip() const
 }
 
 
-Command CGuiHandler::GetOrderPreview(void) // Called from GroupAICallback
+Command CGuiHandler::GetOrderPreview()
 {
 	return GetCommand(mouse->lastx, mouse->lasty, -1, true);
 }
