@@ -110,9 +110,6 @@ public:
 	
 	void SetMTU(unsigned mtu);
 
-	/// The size of the protocol-header (Packets smaller than this get rejected)
-	static const unsigned hsize;
-
 private:
 	void Init();
 	
