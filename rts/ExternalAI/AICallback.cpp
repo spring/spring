@@ -49,17 +49,19 @@
 #include "LogOutput.h"
 #include "mmgr.h"
 
-/* Cast id to unsigned to catch negative ids in the same operations,
-cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning. */
+// Cast id to unsigned to catch negative ids in the same operations,
+// cast MAX_* to unsigned to suppress GCC comparison between signed/unsigned warning.
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
-/* With some hacking you can raise an abort (assert) instead of ignoring the id, */
+// With some hacking you can raise an abort (assert) instead of ignoring the id,
 //#define CHECK_UNITID(id) (assert(id > 0 && id < uh->MaxUnits()), true)
-/* ...or disable the check altogether for release... */
+// ...or disable the check altogether for release.
 //#define CHECK_UNITID(id) true
 
-CAICallback::CAICallback(int Team, CGroupHandler *ghandler)
-: team(Team), noMessages(false), gh(ghandler), group (0)
+CAICallback::CAICallback(int Team, CGroupHandler* ghandler)
+	: team(Team)
+	, noMessages(false)
+	, gh(ghandler)
 {}
 
 CAICallback::~CAICallback(void)
@@ -85,10 +87,7 @@ void CAICallback::SendStartPos(bool ready, float3 startPos)
 
 void CAICallback::SendTextMsg(const char* text, int zone)
 {
-	if (group)
-		logOutput.Print("Group%i: %s", group->id, text);
-	else
-		logOutput.Print("SkirmishAI%i: %s", team, text);
+	logOutput.Print("SkirmishAI%i: %s", team, text);
 }
 
 void CAICallback::SetLastMsgPos(float3 pos)
@@ -300,7 +299,7 @@ int CAICallback::GetUnitGroup(int unitId)
 	if (CHECK_UNITID(unitId)) {
 		const CUnit * unit = uh->units[unitId];
 		if (unit && (unit->team == team)) {
-			const CGroup* g = uh->units[unitId]->group;
+			const CGroup* g = unit->group;
 			if (g) {
 				groupId = g->id;
 			}
@@ -336,10 +335,6 @@ int CAICallback::GiveOrder(int unitId, Command* c)
 
 	if (!unit) {
 		return -3;
-	}
-
-	if (group && unit->group != group) {
-		return -4;
 	}
 
 	if (unit->team != team) {
@@ -1120,7 +1115,7 @@ bool CAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing)
 {
 	CFeature* f;
 	BuildInfo bi(unitDef, pos, facing);
-	bi.pos=helper->Pos2BuildPos (bi);
+	bi.pos = helper->Pos2BuildPos(bi);
 	return !!uh->TestUnitBuildSquare(bi,f,teamHandler->AllyTeam(team));
 }
 
@@ -1173,159 +1168,180 @@ float CAICallback::GetEnergyStorage()
 
 bool CAICallback::GetUnitResourceInfo(int unitId, UnitResourceInfo *i)
 {
+	bool fetchOk = false;
+
+	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS))
-		{
+		const CUnit* unit = uh->units[unitId];
+		if (unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
 			i->energyMake = unit->energyMake;
-			i->energyUse = unit->energyUse;
-			i->metalMake = unit->metalMake;
-			i->metalUse = unit->metalUse;
-			return true;
+			i->energyUse  = unit->energyUse;
+			i->metalMake  = unit->metalMake;
+			i->metalUse   = unit->metalUse;
+			fetchOk = true;
 		}
 	}
-	return false;
+
+	return fetchOk;
 }
 
 bool CAICallback::IsUnitActivated(int unitId)
 {
+	bool activated = false;
+
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
-			return unit->activated;
+		const CUnit* unit = uh->units[unitId];
+		if (unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
+			activated = unit->activated;
 		}
 	}
-	return false;
+
+	return activated;
 }
 
 bool CAICallback::UnitBeingBuilt(int unitId)
 {
+	bool beingBuilt = false;
+
 	verify();
 	if (CHECK_UNITID(unitId)) {
-		const CUnit* unit=uh->units[unitId];
-		if(unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
-			return unit->beingBuilt;
+		const CUnit* unit = uh->units[unitId];
+		if (unit && (unit->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
+			beingBuilt = unit->beingBuilt;
 		}
 	}
-	return false;
+
+	return beingBuilt;
 }
 
-int CAICallback::GetFeatures (int *features, int features_max)
+int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax)
 {
+	int featureIds_size = 0;
+
 	verify();
-	int i = 0;
-	int allyteam = teamHandler->AllyTeam(team);
+	const int allyteam = teamHandler->AllyTeam(team);
 
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	for (CFeatureSet::const_iterator it = fset.begin(); it != fset.end(); ++it) {
-		CFeature *f = *it;
+	for (CFeatureSet::const_iterator it = fset.begin(); (it != fset.end()) && (featureIds_size < featureIds_sizeMax); ++it) {
+		const CFeature* f = *it;
 		assert(f);
 
-		if (!f->IsInLosForAllyTeam(allyteam))
+		if (!f->IsInLosForAllyTeam(allyteam)) {
 			continue;
-
-		assert(i < features_max);
-		features [i++] = f->id;
-
-		if (i >= features_max) {
-			break;
 		}
+
+		featureIds[featureIds_size++] = f->id;
 	}
-	return i;
+
+	return featureIds_size;
 }
 
-int CAICallback::GetFeatures (int *features, int maxids, const float3& pos, float radius)
+int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const float3& pos, float radius)
 {
+	int featureIds_size = 0;
+
 	verify();
-	std::vector<CFeature*> ft = qf->GetFeaturesExact (pos, radius);
-	int allyteam = teamHandler->AllyTeam(team);
-	int n = 0;
+	const std::vector<CFeature*> ft = qf->GetFeaturesExact(pos, radius);
+	const int allyteam = teamHandler->AllyTeam(team);
 
-	for (unsigned int a=0;a<ft.size();a++)
-	{
-		assert(ft[a]);
-		CFeature *f = ft[a];
+	std::vector<CFeature*>::const_iterator it;
+	for (it = ft.begin(); (it != ft.end()) && (featureIds_size < featureIds_sizeMax); ++it) {
+		const CFeature* f = *it;
+		assert(f);
 
-		if (!f->IsInLosForAllyTeam(allyteam))
+		if (!f->IsInLosForAllyTeam(allyteam)) {
 			continue;
+		}
 
-		assert(n < maxids);
-		features [n++] = f->id;
-		if (maxids >= n)
-			break;
+		featureIds[featureIds_size++] = f->id;
 	}
 
-	return n;
+	return featureIds_size;
 }
 
-const FeatureDef* CAICallback::GetFeatureDef (int feature)
+const FeatureDef* CAICallback::GetFeatureDef(int featureId)
 {
+	const FeatureDef* featureDef = NULL;
+
 	verify();
 
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	CFeatureSet::const_iterator it = fset.find(feature);
+	const CFeatureSet::const_iterator it = fset.find(featureId);
 
 	if (it != fset.end()) {
-		const CFeature *f = *it;
-		int allyteam = teamHandler->AllyTeam(team);
-		if (f->IsInLosForAllyTeam(allyteam))
-			return f->def;
+		const CFeature* f = *it;
+		const int allyteam = teamHandler->AllyTeam(team);
+		if (f->IsInLosForAllyTeam(allyteam)) {
+			featureDef = f->def;
+		}
 	}
 
-	return NULL;
+	return featureDef;
 }
 const FeatureDef* CAICallback::GetFeatureDefById(int featureDefId)
 {
 	return featureHandler->GetFeatureDefByID(featureDefId);
 }
 
-float CAICallback::GetFeatureHealth (int feature)
+float CAICallback::GetFeatureHealth(int featureId)
 {
+	float health = 0.0f;
+
 	verify();
 
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	CFeatureSet::const_iterator it = fset.find(feature);
+	const CFeatureSet::const_iterator it = fset.find(featureId);
 
 	if (it != fset.end()) {
 		const CFeature *f = *it;
-		int allyteam = teamHandler->AllyTeam(team);
-		if (f->IsInLosForAllyTeam(allyteam))
-			return f->health;
+		const int allyteam = teamHandler->AllyTeam(team);
+		if (f->IsInLosForAllyTeam(allyteam)) {
+			health = f->health;
+		}
 	}
-	return 0.0f;
+
+	return health;
 }
 
-float CAICallback::GetFeatureReclaimLeft (int feature)
+float CAICallback::GetFeatureReclaimLeft(int featureId)
 {
+	float reclaimLeft = 0.0f;
+
 	verify();
 
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	CFeatureSet::const_iterator it = fset.find(feature);
+	const CFeatureSet::const_iterator it = fset.find(featureId);
 
 	if (it != fset.end()) {
 		const CFeature *f = *it;
-		int allyteam = teamHandler->AllyTeam(team);
-		if (f->IsInLosForAllyTeam(allyteam))
+		const int allyteam = teamHandler->AllyTeam(team);
+		if (f->IsInLosForAllyTeam(allyteam)) {
 			return f->reclaimLeft;
+		}
 	}
-	return 0.0f;
+
+	return reclaimLeft;
 }
 
-float3 CAICallback::GetFeaturePos (int feature)
+float3 CAICallback::GetFeaturePos(int featureId)
 {
+	float3 pos = ZeroVector;
+
 	verify();
 
 	const CFeatureSet& fset = featureHandler->GetActiveFeatures();
-	CFeatureSet::const_iterator it = fset.find(feature);
+	const CFeatureSet::const_iterator it = fset.find(featureId);
 
 	if (it != fset.end()) {
 		const CFeature *f = *it;
-		int allyteam = teamHandler->AllyTeam(team);
-		if (f->IsInLosForAllyTeam(allyteam))
-			return f->pos;
+		const int allyteam = teamHandler->AllyTeam(team);
+		if (f->IsInLosForAllyTeam(allyteam)) {
+			pos = f->pos;
+		}
 	}
-	return ZeroVector;
+
+	return pos;
 }
 
 bool CAICallback::GetValue(int id, void *data)
