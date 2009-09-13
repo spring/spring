@@ -1221,7 +1221,7 @@ void CCommandAI::SlowUpdate()
 }
 
 
-int CCommandAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
+int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
 		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {

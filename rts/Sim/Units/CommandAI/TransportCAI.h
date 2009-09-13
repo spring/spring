@@ -22,12 +22,12 @@ public:
 	void SlowUpdate(void);
 
 	int unloadType;
-	bool CanTransport(CUnit* unit);
+	bool CanTransport(const CUnit* unit);
 	bool FindEmptySpot(float3 center, float radius,float emptyRadius, float3& found, CUnit* unitToUnload);
 	bool FindEmptyDropSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots);
 	bool FindEmptyFloodSpots(float3 startpos, float3 endpos, std::list<float3>& dropSpots, std::vector<float3> exitDirs);
 	CUnit* FindUnitToTransport(float3 center, float radius);
-	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
+	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void DrawCommands(void);
 	void FinishCommand(void);
 	bool LoadStillValid(CUnit* unit);

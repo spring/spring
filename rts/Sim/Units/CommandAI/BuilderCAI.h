@@ -17,7 +17,7 @@ public:
 	CBuilderCAI();
 	~CBuilderCAI(void);
 	void PostLoad();
-	int GetDefaultCmd(CUnit* unit,CFeature* feature);
+	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
 	void SlowUpdate();
 
 	void DrawCommands(void);

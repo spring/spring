@@ -264,7 +264,7 @@ void CGameHelper::Explosion(
 
 
 // called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
-float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/, CUnit* owner, CUnit *&hit, int collisionFlags)
+float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/, const CUnit* owner, const CUnit*& hit, int collisionFlags)
 {
 	float groundLength = ground->LineGroundCol(start, start + dir * length);
 	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);
@@ -306,13 +306,13 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 		}
 	}
 
-	hit = 0;
+	hit = NULL;
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
 		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit* u = *ui;
+			const CUnit* u = *ui;
 
 			if (u == owner)
 				continue;
@@ -338,7 +338,7 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 	return length;
 }
 
-float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude)
+float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, const CUnit*& hit, bool useRadar, const CUnit* exclude)
 {
 	if (dir == ZeroVector) {
 		return -1.0f;
@@ -810,7 +810,7 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 }
 
 
-float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length, CFeature*& feature)
+float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length, const CFeature*& feature)
 {
 	float nearHit = length;
 

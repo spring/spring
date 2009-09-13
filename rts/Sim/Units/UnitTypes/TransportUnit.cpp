@@ -168,7 +168,7 @@ void CTransportUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker
 
 
 
-bool CTransportUnit::CanTransport(CUnit *unit)
+bool CTransportUnit::CanTransport(const CUnit *unit) const
 {
 	if (unit->transporter)
 		return false;
@@ -202,7 +202,7 @@ bool CTransportUnit::CanTransport(CUnit *unit)
 		return false;
 
 	// is unit already (in)directly transporting this?
-	CTransportUnit* u = this;
+	const CTransportUnit* u = this;
 	while (u) {
 		if (u == unit) {
 			return false;
