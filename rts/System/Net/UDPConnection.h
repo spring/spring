@@ -1,7 +1,6 @@
 #ifndef _REMOTE_CONNECTION
 #define _REMOTE_CONNECTION
 
-#include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/asio/ip/udp.hpp>
@@ -159,8 +158,6 @@ private:
 	RawPacket* fragmentBuffer;
 
 	// Traffic statistics and stuff //
-	/// number of calls to Flush() that needed to sent multiple packets because of mtu
-	unsigned fragmentedFlushes;
 	
 	/// packets that are resent
 	unsigned resentChunks;
