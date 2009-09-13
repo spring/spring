@@ -8,16 +8,15 @@ class CGroup;
 
 class CAICallback: public IAICallback
 {
-public:
-	CAICallback(int Team, CGroupHandler* GH);
-	~CAICallback();
-
 	int team;
 	bool noMessages;
 	CGroupHandler* gh;
-	CGroup* group; // only in case it's a group AI
 
 	void verify();
+
+public:
+	CAICallback(int team, CGroupHandler* gh);
+	~CAICallback();
 
 	void SendStartPos(bool ready, float3 pos);
 	void SendTextMsg(const char* text, int zone);
