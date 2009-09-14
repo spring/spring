@@ -85,6 +85,11 @@ const spring_duration serverTimeout = spring_secs(30);
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
 const unsigned serverKeyframeIntervall = 16;
 
+const std::string commands[numCommands] = { "kick", "kickbynum", "setminspeed", "setmaxspeed",
+						"nopause", "nohelp", "cheat", "godmode", "globallos",
+						"nocost", "forcestart", "nospectatorchat", "nospecdraw",
+						"skip", "reloadcob", "devlua", "editdefs", "luagaia",
+						"singlestep" };
 using boost::format;
 
 namespace {
@@ -189,25 +194,7 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	teams.resize(setup->teamStartingData.size());
 	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
 
-	RestrictedAction("kick");			RestrictedAction("kickbynum");
-	RestrictedAction("setminspeed");	RestrictedAction("setmaxspeed");
-	RestrictedAction("nopause");
-	RestrictedAction("nohelp");
-	RestrictedAction("cheat"); //TODO register cheats only after cheating is on
-	RestrictedAction("godmode");
-	RestrictedAction("globallos");
-	RestrictedAction("nocost");
-	RestrictedAction("forcestart");
-	RestrictedAction("nospectatorchat");
-	RestrictedAction("nospecdraw");
-	if (demoReader)
-		RegisterAction("skip");
-	commandBlacklist.insert("skip");
-	RestrictedAction("reloadcob");
-	RestrictedAction("devlua");
-	RestrictedAction("editdefs");
-	RestrictedAction("luagaia");
-	RestrictedAction("singlestep");
+	commandBlacklist = std::set<std::string>(commands, commands+numCommands);
 
 #ifdef DEDICATED
 	demoRecorder.reset(new CDemoRecorder());
@@ -1823,11 +1810,4 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 		userSpeedFactor = newSpeed;
 	}
 }
-
-void CGameServer::RestrictedAction(const std::string& action)
-{
-	RegisterAction(action);
-	commandBlacklist.insert(action);
-}
-
 
