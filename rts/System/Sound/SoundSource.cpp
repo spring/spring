@@ -24,6 +24,7 @@ struct SoundSource::StreamControl
 	{
 		std::string file;
 		float volume;
+		bool enqueue;
 	};
 
 	TrackItem* current;
@@ -68,7 +69,8 @@ void SoundSource::Update()
 		}
 		else
 		{
-			if (curStream->next != NULL)
+			bool finished = curStream->stream.GetPlayTime() >= curStream->stream.GetTotalTime();
+			if (curStream->next != NULL && (finished ||  !curStream->next->enqueue))
 			{
 				Stop();
 				// COggStreams only appends buffers, giving errors when a buffer of another format is still asigned
@@ -184,7 +186,7 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	CheckError("SoundSource::Play");
 }
 
-void SoundSource::PlayStream(const std::string& file, float volume)
+void SoundSource::PlayStream(const std::string& file, float volume, bool enqueue)
 {
 	boost::mutex::scoped_lock lock(streamMutex);
 	if (!curStream)
@@ -197,6 +199,7 @@ void SoundSource::PlayStream(const std::string& file, float volume)
 	curStream->next = new StreamControl::TrackItem;
 	curStream->next->file = file;
 	curStream->next->volume = volume;
+	curStream->next->enqueue = enqueue;
 }
 
 void SoundSource::StreamStop()

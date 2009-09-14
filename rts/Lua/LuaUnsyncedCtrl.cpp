@@ -593,12 +593,15 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 
 int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 {
-	//const int args = lua_gettop(L);
+	const int args = lua_gettop(L);
 
 	const string soundFile = luaL_checkstring(L, 1);
 	const float volume = luaL_optnumber(L, 2, 1.0f);
+	bool enqueue = false;
+	if (args >= 3)
+		enqueue = lua_toboolean(L, 3);
 
-	Channels::BGMusic.Play(soundFile, volume);
+	Channels::BGMusic.Play(soundFile, volume, enqueue);
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
