@@ -2273,6 +2273,13 @@ bool CGame::ActionPressed(const Action& action,
 		net->Send(pckt.Pack());
 	}
 	else {
+		static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
+		if (serverCommands.find(cmd) != serverCommands.end())
+		{
+			CommandMessage pckt(action, gu->myPlayerNum);
+			net->Send(pckt.Pack());
+		}
+
 		if (!Console::Instance().ExecuteAction(action))
 		{
 			if (guihandler != NULL) // maybe a widget is interested?
