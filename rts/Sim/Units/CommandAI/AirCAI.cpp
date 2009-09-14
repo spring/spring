@@ -10,7 +10,6 @@
 #include "Map/Ground.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/GL/myGL.h"
-#include "Sim/Misc/QuadField.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/MoveTypes/AirMoveType.h"
 #include "Sim/Units/UnitDef.h"
@@ -360,50 +359,6 @@ void CAirCAI::ExecuteMove(Command &c){
 	return;
 }*/
 
-class PatrollingAircraftNoEnemiesFoundCache {
-	struct cachedata {
-		cachedata() {}
-		cachedata(float rad, int ally, int exp): radius(rad), allyteam(ally), expiry(exp) {}
-		float radius;
-		int allyteam;
-		int expiry;
-	};
-public:
-	PatrollingAircraftNoEnemiesFoundCache(): cacheExpiry(0), numTests(0), curFrame(-1) {}
-	int cacheExpiry;
-	int numTests;
-	int curFrame;
-	std::map<int, cachedata> aircache;
-	CUnit *GetClosestEnemy(const float3 &pos, float rad, int allyteam, CUnit *(CGameHelper::*fn)(const float3 &, float, int)) {
-		int quad = ((int)pos.z / CQuadField::QUAD_SIZE) * qf->GetNumQuadsX() + ((int)pos.x / CQuadField::QUAD_SIZE);
-		if(GetEmpty(quad, rad, allyteam))
-			return NULL;
-		CUnit *unit = (helper->*fn)(pos, rad, allyteam);
-		if(!unit)
-			SetEmpty(quad, rad, allyteam);
-		return unit;
-	}
-	bool GetEmpty(int quad, float rad, int allyteam) {
-		if(gs->frameNum != curFrame) {
-			cacheExpiry = std::min(30, numTests); // make sure worst case reaction time is ~1 second
-			numTests = 0;
-			curFrame = gs->frameNum;
-		}
-		++numTests;
-		std::map<int, cachedata>::iterator i = aircache.find(quad);
-		if(i == aircache.end())
-			return false;
-		cachedata *c = &(*i).second;
-		return --c->expiry >= gs->frameNum && c->radius >= rad && teamHandler->Ally(c->allyteam, allyteam);
-	}
-	void SetEmpty(int quad, float rad, int allyteam) {
-		aircache[quad] = cachedata(rad, allyteam, gs->frameNum + cacheExpiry);
-	}
-};
-
-PatrollingAircraftNoEnemiesFoundCache noEnemyAirFoundCache;
-PatrollingAircraftNoEnemiesFoundCache noEnemyUnitsFoundCache;
-
 void CAirCAI::ExecuteFight(Command &c)
 {
 	assert((c.options & INTERNAL_ORDER) || owner->unitDef->canFight);
@@ -449,8 +404,8 @@ void CAirCAI::ExecuteFight(Command &c)
 		float testRad = 1000 * owner->moveState;
 		CUnit* enemy = NULL;
 		if(myPlane->IsFighter()) {
-			enemy = noEnemyAirFoundCache.GetClosestEnemy(curPosOnLine, testRad, 
-				owner->allyteam, &CGameHelper::GetClosestEnemyAircraft);
+			enemy = helper->GetClosestEnemyAircraft(curPosOnLine,
+					testRad, owner->allyteam);
 		}
 		if(IsValidTarget(enemy) && (owner->moveState!=1
 				|| LinePointDist(commandPos1, commandPos2, enemy->pos) < 1000))
@@ -471,8 +426,7 @@ void CAirCAI::ExecuteFight(Command &c)
 			float3 curPosOnLine = ClosestPointOnLine(
 				commandPos1, commandPos2, owner->pos + owner->speed * 20);
 			float testRad = 500 * owner->moveState;
-			enemy = noEnemyUnitsFoundCache.GetClosestEnemy(curPosOnLine, testRad, 
-				owner->allyteam, &CGameHelper::GetClosestEnemyUnit);
+			enemy = helper->GetClosestEnemyUnit(curPosOnLine, testRad, owner->allyteam);
 			if(IsValidTarget(enemy)) {
 				Command nc;
 				nc.id = CMD_ATTACK;
