@@ -475,13 +475,13 @@ void CBuilder::SetResurrectTarget(CFeature* target)
 
 void CBuilder::SetCaptureTarget(CUnit* target)
 {
-	if(target==curCapture)
+	if (target == curCapture)
 		return;
 
 	StopBuild(false);
 	TempHoldFire();
 
-	curCapture=target;
+	curCapture = target;
 	AddDeathDependence(curCapture);
 
 	SetBuildStanceToward(target->pos);
