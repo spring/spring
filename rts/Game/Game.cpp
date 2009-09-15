@@ -1322,7 +1322,8 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "spectator"){
-		net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
+		if (!gu->spectating)
+			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 	}
 	else if ((cmd == "specteam") && gu->spectating) {
 		const int team = atoi(action.extra.c_str());
