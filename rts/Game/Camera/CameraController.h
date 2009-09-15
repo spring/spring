@@ -65,6 +65,7 @@ protected:
 	float scrollSpeed;
 
 	float3 pos;
+	float switchVal;
 };
 
 
