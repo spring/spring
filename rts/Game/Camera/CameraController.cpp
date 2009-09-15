@@ -8,6 +8,10 @@
 
 CCameraController::CCameraController() : pos(2000, 70, 1800)
 {
+	// switchVal:
+	// * 1.0 = 0 degree  = overview
+	// * 0.0 = 90 degree = first person
+	switchVal = configHandler->Get("UseDistToGroundForIcons", 0.95f);
 	mouseScale = configHandler->Get("FPSMouseScale", 0.01f);
 	scrollSpeed = 1;
 	fov = 45.0f;
@@ -53,11 +57,7 @@ bool CCameraController::GetUseDistToGroundForIcons() {
 
 	const float3& dir     = GetDir().UnsafeNormalize();
 	const float dot       = std::min(1.0f, std::max(0.0f, fabs(dir.dot(UpVector))));
-	const float switchVal = configHandler->Get("UseDistToGroundForIcons", 0.95f);
 
-	// switchVal:
-	// * 1.0 = 0 degree  = overview
-	// * 0.0 = 90 degree = first person
 	if (dot < switchVal) {
 		// flat angle (typical for first person camera)
 		return false;
