@@ -2256,8 +2256,26 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "debuginfo") {
-		if (action.extra == "sound")
+		if (action.extra == "sound") {
 			sound->PrintDebugInfo();
+		} else if (action.extra == "profiling") {
+			logOutput.Print("%35s|%18s|%s",
+					"Part",
+					"Total Time",
+					"Time of the last 0.5s");
+			std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
+			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi) {
+#if GML_MUTEX_PROFILER
+				if ((pi->first.size() < 5) || pi->first.substr(pi->first.size()-5,5).compare("Mutex")!=0) {
+					continue;
+				}
+#endif // GML_MUTEX_PROFILER
+				logOutput.Print("%35s %16.2fs %5.2f%%",
+						pi->first.c_str(),
+						((float)pi->second.total) / 1000.f,
+						pi->second.percent * 100);
+			}
+		}
 	}
 	else if (cmd == "benchmark-script") {
 		CUnitScript::BenchmarkScript(action.extra);
