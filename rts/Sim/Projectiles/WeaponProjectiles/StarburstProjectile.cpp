@@ -402,20 +402,22 @@ void CStarburstProjectile::DrawCallback(void)
 
 void CStarburstProjectile::DrawUnitPart(void)
 {
-	glPushMatrix();
-	float3 rightdir;
-	if(dir.y!=1) {
-		rightdir=dir.cross(UpVector);
+	float3 rightdir, updir;
+
+	if (fabs(dir.y) < 0.95f) {
+		rightdir = dir.cross(UpVector);
 		rightdir.SafeNormalize();
+	} else {
+		rightdir = float3(1.0f, 0.0f, 0.0f);
 	}
-	else
-		rightdir=float3(1,0,0);
-	float3 updir=rightdir.cross(dir);
 
-	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);
-	glMultMatrixf(&transMatrix[0]);
+	updir = rightdir.cross(dir);
 
-	glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
+	CMatrix44f transMatrix(drawPos, -rightdir, updir, dir);
+
+	glPushMatrix();
+		glMultMatrixf(&transMatrix[0]);
+		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
 	glPopMatrix();
 }
 
