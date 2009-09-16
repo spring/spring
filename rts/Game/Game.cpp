@@ -363,7 +363,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		mouse = new CMouseHandler();
 		camHandler = new CCameraHandler();
 	}
-	selectionKeys = new CSelectionKeyHandler();
 	tooltip = new CTooltipConsole();
 	iconHandler = new CIconHandler();
 
@@ -480,6 +479,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	keyCodes = new CKeyCodes();
 	keyBindings = new CKeyBindings();
 	keyBindings->Load("uikeys.txt");
+	selectionKeys = new CSelectionKeyHandler();
 
 	water=CBaseWater::GetWater(NULL);
 	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {
