@@ -69,7 +69,7 @@ void SoundSource::Update()
 		}
 		else
 		{
-			bool finished = curStream->stream.GetPlayTime() >= curStream->stream.GetTotalTime();
+			bool finished = curStream->stream.Valid() ? curStream->stream.GetPlayTime() >= curStream->stream.GetTotalTime() : true;
 			if (curStream->next != NULL && (finished ||  !curStream->next->enqueue))
 			{
 				Stop();
