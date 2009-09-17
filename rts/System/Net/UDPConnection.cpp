@@ -423,7 +423,7 @@ std::string UDPConnection::GetFullAddress() const
 
 void UDPConnection::SetMTU(unsigned mtu2)
 {
-	if (mtu2 > 100 && mtu2 < UDPMaxPacketSize)
+	if (mtu2 > 300 && mtu2 < UDPMaxPacketSize)
 	{
 		mtu = mtu2;
 	}
