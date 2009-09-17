@@ -30,6 +30,7 @@ CSound* sound = NULL;
 
 CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundThread(NULL)
 {
+	boost::mutex::scoped_lock lck(soundMutex);
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 128);
