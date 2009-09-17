@@ -445,7 +445,7 @@ void UDPConnection::Init()
 	resentChunks = 0;
 	sentPackets = recvPackets = 0;
 	droppedChunks = 0;
-	mtu = configHandler->Get("MaximumTransmissionUnit", 1400);
+	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
 }
 
 void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)
