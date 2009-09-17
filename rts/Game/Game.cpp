@@ -497,7 +497,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
-	if (!!configHandler->Get("LuaUI", 1)) {
+	{
 		PrintLoadMsg("Loading LuaUI");
 		CLuaUI::LoadHandler();
 	}
