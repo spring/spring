@@ -22,6 +22,7 @@ SOURCE describes the set of units that you want to filter and pick a selection f
     * AllMap: obvious
     * Visible: obvious
     * FromMouse_D, where D is some number: all units that are at most a distance of D away from the mouse cursor
+    * FromMouseC_D, same as above, but using a vertical cylinder instead of a sphere -> good for selecting airplanes or ships on deep water
     * PrevSelection: the previous selection; that is, the one active before you hit the selection key 
 
 FILTER is an arbitrarily long list of filters. Every filter can be preceded by Not to negate it. You will still have to use a _ to separate the Not from the filter, as in Not_Commander.
