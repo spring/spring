@@ -192,7 +192,10 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 			else
 			{
 				if (hardFail)
+				{
 					ErrorMessageBox("Couldn't open wav file", name, 0);
+					return 0;
+				}
 				else
 				{
 					LogObject(LOG_SOUND) << "CSound::GetSoundId: could not find sound: " << name;
@@ -201,8 +204,6 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 			}
 		}
 	}
-
-	return 0;
 }
 
 SoundSource* CSound::GetNextBestSource(bool lock)
