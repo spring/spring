@@ -139,8 +139,6 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	spring_notime(gameEndTime);
 	spring_notime(readyTime);
 
-	nextSkirmishAIId = 0;
-
 	medianCpu=0.0f;
 	medianPing=0;
 	enforceSpeed=!setup->hostDemo && configHandler->Get("EnforceGameSpeed", false);
@@ -188,7 +186,8 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
 
 	for (size_t a = 0; a < setup->GetSkirmishAIs().size(); ++a) {
-		ais[nextSkirmishAIId++] = setup->GetSkirmishAIs()[a];
+		const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
+		ais[skirmishAIId] = setup->GetSkirmishAIs()[a];
 	}
 
 	teams.resize(setup->teamStartingData.size());
@@ -1085,7 +1084,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				Message(str(format(NoAICreated) %players[playerId].name %playerId %aiTeamId));
 				break;
 			}
-			const size_t skirmishAIId = nextSkirmishAIId++;
+			const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
 			Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
 
 /*
@@ -1140,6 +1139,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					// as it will be reinitialized instantly
 				} else {
 					ais.erase(skirmishAIId);
+					FreeSkirmishAIId(skirmishAIId);
 					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
 						// team has no controller left now
 						tai->active = false;
@@ -1817,5 +1817,26 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 		Broadcast(CBaseNetProtocol::Get().SendUserSpeed(player, newSpeed));
 		userSpeedFactor = newSpeed;
 	}
+}
+
+size_t CGameServer::ReserveNextAvailableSkirmishAIId() {
+
+	size_t skirmishAIId = 0;
+
+	// find a free id
+	std::list<size_t>::iterator it;
+	for (it = usedSkirmishAIIds.begin(); it != usedSkirmishAIIds.end(); ++it, skirmishAIId++) {
+		if (*it != skirmishAIId) {
+			break;
+		}
+	}
+
+	usedSkirmishAIIds.insert(it, skirmishAIId);
+
+	return skirmishAIId;
+}
+
+void CGameServer::FreeSkirmishAIId(const size_t skirmishAIId) {
+	usedSkirmishAIIds.remove(skirmishAIId);
 }
 

@@ -150,8 +150,12 @@ private:
 	// Ugly hax for letting the script define initial team->isAI and team->leader for AI teams
 	friend class CSkirmishAITestScript;
 	std::vector<GameParticipant> players;
+	size_t ReserveNextAvailableSkirmishAIId();
+private:
 	std::map<size_t, GameSkirmishAI> ais;
-	size_t nextSkirmishAIId;
+	std::list<size_t> usedSkirmishAIIds;
+	void FreeSkirmishAIId(const size_t skirmishAIId);
+public:
 	std::vector<GameTeam> teams;
 
 	float medianCpu;
