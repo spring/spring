@@ -11,6 +11,7 @@
 
 #include "mmgr.h"
 
+#include "float3.h"
 #include "LuaInclude.h"
 
 #include "LuaIO.h"
