@@ -36,15 +36,11 @@ namespace fastmath {
 	inline float isqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
-		union
-		{
-			__m128 vec;
-			float x;
-		} tmp;
-
-		tmp.x = x;
-		tmp.vec = _mm_rsqrt_ss(tmp.vec);
-		return tmp.x;
+		__m128 vec = _mm_load_ss(&x);
+		vec = _mm_rsqrt_ss(vec);
+		_mm_store_ss(&x, vec);
+		
+		return x;
 #else
 		return isqrt_nosse(x);
 #endif
@@ -59,15 +55,11 @@ namespace fastmath {
 	inline float __ALIGN_ARG__ sqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
-		union
-		{
-			__m128 vec;
-			float x;
-		} tmp;
-
-		tmp.x = x;
-		tmp.vec = _mm_sqrt_ss(tmp.vec);
-		return tmp.x;
+		__m128 vec = _mm_load_ss(&x);
+		vec = _mm_sqrt_ss(vec);
+		_mm_store_ss(&x, vec);
+		
+		return x;
 #else
 		return sqrt(x);
 #endif
