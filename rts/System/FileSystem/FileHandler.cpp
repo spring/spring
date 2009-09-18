@@ -106,8 +106,9 @@ bool CFileHandler::TryBaseFS(const string& filename)
 }
 
 
-void CFileHandler::Init(const string& filename, const string& modes)
+void CFileHandler::Init(const string& _filename, const string& modes)
 {
+	filename = _filename;
 	const char* c = modes.c_str();
 	while (c[0] != 0) {
 		if (c[0] == SPRING_VFS_RAW[0])  { if (TryRawFS(filename))  { return; } }
@@ -244,6 +245,10 @@ bool CFileHandler::LoadStringData(string& data)
 	return true;
 }
 
+std::string CFileHandler::GetFileExt() const
+{
+	return filesystem.GetExtension(filename);
+}
 
 /******************************************************************************/
 

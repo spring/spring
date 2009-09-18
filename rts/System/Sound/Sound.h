@@ -48,11 +48,14 @@ private:
 	void StartThread(int maxSounds);
 	void Update();
 
-	size_t LoadALBuffer(const std::string& path, bool strict);
+	typedef std::map<std::string, std::string> soundItemDef;
+	typedef std::map<std::string, soundItemDef> soundItemDefMap;
+
+	size_t MakeItemFromDef(const soundItemDef& itemDef);
+
 	void PlaySample(size_t id, const float3 &p, const float3& velocity, float volume, bool relative);
 
-	size_t GetWaveId(const std::string& path, bool hardFail);
-	boost::shared_ptr<SoundBuffer> GetWaveBuffer(const std::string& path, bool hardFail = true);
+	size_t LoadSoundBuffer(const std::string& filename, bool hardFail);
 
 	float masterVolume;
 	bool mute;
@@ -73,8 +76,6 @@ private:
 
 	unsigned numEmptyPlayRequests;
 
-	typedef std::map<std::string, std::string> soundItemDef;
-	typedef std::map<std::string, soundItemDef> soundItemDefMap;
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
 
