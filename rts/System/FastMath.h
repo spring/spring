@@ -6,6 +6,7 @@
 #endif
 #include <boost/cstdint.hpp>
 #include "lib/streflop/streflop_cond.h"
+#include "System/maindefines.h"
 
 #ifdef _MSC_VER
 #define __builtin_sqrtf sqrtf
@@ -55,7 +56,7 @@ namespace fastmath {
 	* Slower than std::sqrtf, faster than streflop
 	*/
 
-	inline float sqrt_sse(float x)
+	inline float __ALIGN_ARG__ sqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
 		union
