@@ -74,6 +74,12 @@ extern "C" {
 struct SAIInterfaceCallback;
 struct SSkirmishAICallback;
 
+/// Sets the FPU state to how spring likes it
+void java_establishSpringEnv();
+
+/// The JVM sets the environment it wants automatically, so this is a no-op
+void java_establishJavaEnv();
+
 ///**
 // * Returns a JNI environment, which includes a JVM.
 // * Only one will exist at a time.
