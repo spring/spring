@@ -133,7 +133,7 @@ else  ($ENV{CXX} MATCHES "icpc")
 	endif (MARCH_FLAG)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse -mfpmath=sse") # SSE1
 	if    (MINGW)
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads") # SSE1
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mthreads")
 	endif (MINGW)
 
 	set(CXX_FLAGS_DEBUG_ADDITIONAL "")
