@@ -1,7 +1,9 @@
 ### AI
 #
 # Global variables set in this file:
-# * AIDIR
+# * AI_DATADIR
+# * AIINTERFACES
+# * AI_FIND_QUIETLY
 #
 # Functions and macros defined in this file:
 # * SetGlobal
@@ -12,9 +14,21 @@
 
 add_definitions(-DBUILDING_AI)
 
-set(AIDIR           ${DATADIR} CACHE STRING "Where AIs are installed")
+
+### User-definable build options
+set (AI_DATADIR       ${DATADIR} CACHE STRING "Where AIs are installed")
+set (AIINTERFACES     "ALL"      CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
+set (AI_FIND_QUIETLY  FALSE      CACHE BOOL   "Whether to find AI Interfaces and Skirmish AIs quietly")
+
+if    (NOT IS_ABSOLUTE "${AI_DATADIR}")
+	if    (NOT MINGW AND SPRING_DATADIR)
+		set(AI_DATADIR "${AI_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}/${AI_DATADIR}")
+	else  (NOT MINGW AND SPRING_DATADIR)
+		set(AI_DATADIR "${CMAKE_INSTALL_PREFIX}/${AI_DATADIR}")
+	endif (NOT MINGW AND SPRING_DATADIR)
+endif (NOT IS_ABSOLUTE "${AI_DATADIR}")
+
 set(rts             "${CMAKE_SOURCE_DIR}/rts")
-set(AI_FIND_QUIETLY FALSE)
 
 include_directories(
 	${rts}
