@@ -9,7 +9,6 @@ if    (UNIX AND NOT MINGW)
 	set (BINDIR "bin" CACHE STRING "Where to install binaries")
 	set (LIBDIR "lib" CACHE STRING "Where to install libraries")
 	set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
-	set (AIDIR "${LIBDIR}/spring" CACHE STRING "Where AIs are installed")
 
 	set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
 	set (PIXMAPS_DIR "share/pixmaps" CACHE STRING "Where to install icons")
@@ -19,7 +18,6 @@ else  (UNIX AND NOT MINGW)
 	set (BINDIR "." CACHE STRING "Where to install binaries")
 	set (LIBDIR "." CACHE STRING "Where to install libraries")
 	set (DATADIR "." CACHE STRING "Where to install game content")
-	set (AIDIR "." CACHE STRING "Where AIs are installed")
 
 	set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
 	if    (NOT EXISTS "${MINGWLIBS}" OR NOT IS_DIRECTORY "${MINGWLIBS}")
@@ -37,7 +35,7 @@ else  (UNIX AND NOT MINGW)
 	set (STABS_DEBUG_SYMBOLS FALSE CACHE BOOL "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version).")
 endif (UNIX AND NOT MINGW)
 
-### Usr-definable build options
+### User-definable build options
 set (AIINTERFACES "ALL" CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
 
 set(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
