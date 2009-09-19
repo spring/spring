@@ -205,8 +205,6 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 	dir.ANormalize();
 
 	bool tryAgain = true;
-	// unit at the end of the beam
-	CUnit* hit = 0;
 
 	// increase range if targets are searched for in a cylinder
 	if (cylinderTargetting > 0.01f) {
@@ -221,9 +219,11 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		maxLength += targetUnit->radius * targetBorder;
 	}
 
+	// unit at the end of the beam
+	const CUnit* hit = NULL;
 	for (int tries = 0; tries < 5 && tryAgain; ++tries) {
 		tryAgain = false;
-		hit = 0;
+		hit = NULL;
 
 		float length = helper->TraceRay(
 			curPos,
@@ -242,7 +242,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		}
 
 		float3 newDir;
-		CPlasmaRepulser* shieldHit = 0;
+		CPlasmaRepulser* shieldHit = NULL;
 		const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, curPos, dir, length, newDir, shieldHit);
 
 		if (shieldLength < length) {
@@ -281,13 +281,14 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 		curLength += length;
 		dir = newDir;
 	}
+	CUnit* hitM = (hit == NULL) ? NULL : uh->units[hit->id];
 
 	// fix negative damage when hitting big spheres
 	float actualRange = range;
 	if (hit) {
 		if (hit->unitDef->usePieceCollisionVolumes) {
 			// getting the actual piece here is probably overdoing it
-			hit->SetLastAttackedPiece(hit->localmodel->pieces[0], gs->frameNum);
+			hitM->SetLastAttackedPiece(hit->localmodel->pieces[0], gs->frameNum);
 		}
 
 		if (targetBorder > 0) {
@@ -330,7 +331,7 @@ void CBeamLaser::FireInternal(float3 dir, bool sweepFire)
 			weaponDef->noExplode || weaponDef->noSelfDamage, /*false*/
 			weaponDef->impactOnly,                           /*false*/
 			weaponDef->explosionGenerator,
-			hit,
+			hitM,
 			dir,
 			weaponDef->id
 		);

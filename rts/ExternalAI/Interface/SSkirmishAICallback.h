@@ -1291,6 +1291,8 @@ bool (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(
  * Returns the closest position from a given position that a building can be built at.
  * @param minDist the distance in squares that the building must keep to other buildings,
  *                to make it easier to keep free paths through a base
+ * @return actual map position with x, y and z all beeing positive,
+ *         or SAIFloat3(-1, 0, 0) if no suitable position is found.
  */
 struct SAIFloat3 (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId,
 		int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist,

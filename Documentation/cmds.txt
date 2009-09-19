@@ -54,7 +54,7 @@
 
 /commands
 
-/select <select_string>
+/select <select_string> --select all units that matches <select_string> pattern ( see SelectionKeys doc for the syntax of select_string )
 /selectunits ["clear"] [+unitID] [-unitID] ...
 /selectcycle ["restore"]
 /deselect

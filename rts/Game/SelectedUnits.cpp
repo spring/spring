@@ -484,8 +484,12 @@ void CSelectedUnits::AiOrder(int unitid, const Command &c, int playerID)
 		return;
 	}
 	if (!player->CanControlTeam(unit->team)) {
-		logOutput.Print("Invalid order from player %i for (unit %i %s, team %i)",
-		                playerID, unitid, unit->unitDefName.c_str(), unit->team);
+		// Outputting a warning will result in false bug reports due to lag
+		// between time of giving valid orders on units which then change team
+		// due to e.g. LuaRules.
+
+		//logOutput.Print("Invalid order from player %i for (unit %i %s, team %i)",
+		//                playerID, unitid, unit->unitDefName.c_str(), unit->team);
 		return;
 	}
 
@@ -561,7 +565,7 @@ static inline bool IsBetterLeader(const UnitDef* newDef, const UnitDef* oldDef)
 // DrawMapStuff --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 // CMouseHandler::DrawCursor --> DrawCentroidCursor --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
 // LuaUnsyncedRead::GetDefaultCommand --> CGuiHandler::GetDefaultCommand --> GetDefaultCmd
-int CSelectedUnits::GetDefaultCmd(CUnit* unit, CFeature* feature)
+int CSelectedUnits::GetDefaultCmd(const CUnit* unit, const CFeature* feature)
 {
 	GML_RECMUTEX_LOCK(sel); // GetDefaultCmd
 	GML_RECMUTEX_LOCK(group); // GetDefaultCmd
@@ -754,7 +758,7 @@ std::string CSelectedUnits::GetTooltip(void)
 
 void CSelectedUnits::SetCommandPage(int page)
 {
-	GML_RECMUTEX_LOCK(sel); // SetCommandPage - called from CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc 
+	GML_RECMUTEX_LOCK(sel); // SetCommandPage - called from CGame::Draw --> RunLayoutCommand --> LayoutIcons --> RevertToCmdDesc
 	GML_RECMUTEX_LOCK(group); // SetCommandPage
 
 	CUnitSet::iterator ui;

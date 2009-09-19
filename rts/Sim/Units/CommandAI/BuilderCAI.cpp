@@ -609,37 +609,42 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 	assert(owner->unitDef->canCapture);
 	CBuilder* fac = (CBuilder*) owner;
 
-	if (c.params.size() == 1 || c.params.size() == 5) { //capture unit
+	if (c.params.size() == 1 || c.params.size() == 5) {
+		// capture unit
 		CUnit* unit = uh->units[(int)c.params[0]];
-		if(c.params.size() == 5) {
-			float3 pos(c.params[1], c.params[2], c.params[3]);
-			float radius=c.params[4]+100; // do not walk too far outside capture area
-			if(unit && ((pos-unit->pos).SqLength2D()>radius*radius ||
+
+		if (c.params.size() == 5) {
+			const float3 pos(c.params[1], c.params[2], c.params[3]);
+			const float radius = c.params[4] + 100; // do not walk too far outside capture area
+
+			if (unit && ((pos - unit->pos).SqLength2D() > (radius * radius) ||
 				(fac->curCapture == unit && unit->isMoving && !ObjInBuildRange(unit)))) {
 				StopMove();
 				FinishCommand();
 				return;
 			}
 		}
-		if (unit && unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer((int) c.params[0])) {
+		if (unit && unit->unitDef->capturable && unit->team != owner->team && UpdateTargetLostTimer(unit->id)) {
 			if (f3SqDist(unit->pos, fac->pos) < Square(fac->buildDistance + unit->radius - 8)) {
 				StopMove();
 				fac->SetCaptureTarget(unit);
 				owner->moveType->KeepPointingTo(unit->pos, fac->buildDistance * 0.9f + unit->radius, false);
 			} else {
 				if (f3SqDist(goalPos, unit->pos) > 1) {
-					SetGoal(unit->pos,owner->pos, fac->buildDistance * 0.9f + unit->radius);
+					SetGoal(unit->pos, owner->pos, fac->buildDistance * 0.9f + unit->radius);
 				}
 			}
 		} else {
 			StopMove();
 			FinishCommand();
 		}
-	}
-	else { // capture area
-		float3 pos(c.params[0], c.params[1], c.params[2]);
-		float radius = c.params[3];
+	} else if (c.params.size() == 4) {
+		// area capture
+		const float3 pos(c.params[0], c.params[1], c.params[2]);
+		const float radius = c.params[3];
+
 		fac->StopBuild();
+
 		if (FindCaptureTargetAndCapture(pos, radius, c.options, (c.options & META_KEY))) {
 			inCommand = false;
 			SlowUpdate();
@@ -648,6 +653,8 @@ void CBuilderCAI::ExecuteCapture(Command& c)
 		if (!(c.options & ALT_KEY)) {
 			FinishCommand();
 		}
+	} else {
+		FinishCommand();
 	}
 	return;
 }
@@ -1070,7 +1077,7 @@ void CBuilderCAI::ExecuteRestore(Command& c)
 }
 
 
-int CBuilderCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
+int CBuilderCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
 		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {

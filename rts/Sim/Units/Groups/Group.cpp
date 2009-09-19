@@ -78,8 +78,8 @@ void CGroup::RemoveUnit(CUnit *unit)
 
 void CGroup::Update()
 {
-	// last check is a hack so globalai groups dont get erased
-	if(units.empty() && id>=10 && /*handler==grouphandler*/handler->team==gu->myTeam) {
+	// last check is a hack so Global AI groups dont get erased
+	if (units.empty() && (id >= 10) && /*(handler == grouphandler) && */(handler->team == gu->myTeam)) {
 		handler->RemoveGroup(this);
 		return;
 	}
@@ -87,8 +87,8 @@ void CGroup::Update()
 
 void CGroup::DrawCommands()
 {
-	// last check is a hack so globalai groups dont get erased
-	if(units.empty() && id>=10 && /*handler==grouphandler*/handler->team==gu->myTeam) {
+	// last check is a hack so Global AI groups dont get erased
+	if (units.empty() && (id >= 10) && /*(handler == grouphandler) && */(handler->team == gu->myTeam)) {
 		handler->RemoveGroup(this);
 		return;
 	}
@@ -100,12 +100,12 @@ const vector<CommandDescription>& CGroup::GetPossibleCommands()
 
 	myCommands.clear();
 
-	// here, group AI commands were added, when they still existed
+	// here, Group AI commands were added, when they still existed
 
 	return myCommands;
 }
 
-int CGroup::GetDefaultCmd(CUnit *unit,CFeature* feature)
+int CGroup::GetDefaultCmd(const CUnit *unit, const CFeature* feature)
 {
 	return CMD_STOP;
 }
@@ -113,7 +113,7 @@ int CGroup::GetDefaultCmd(CUnit *unit,CFeature* feature)
 void CGroup::GiveCommand(Command c)
 {
 	// There are no commands that a group could receive
-	// TODO: possible FIXME: if commands were passed on to groupAIs and from them to the units in the group, we would have to do that here too
+	// TODO: possible FIXME: give command to all units in the group that can handle it
 }
 
 void CGroup::CommandFinished(int unitId, int commandTopicId)

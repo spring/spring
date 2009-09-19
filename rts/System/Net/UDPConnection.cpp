@@ -4,27 +4,132 @@
 #	include <windows.h>
 #endif
 
-#include "Socket.h"
-
-#ifndef _MSC_VER
-#include "StdAfx.h"
-#endif
-
 #include "UDPConnection.h"
+
+
 #include <boost/format.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "mmgr.h"
 
+#include "Socket.h"
 #include "ProtocolDef.h"
 #include "Exception.h"
+#include "ConfigHandler.h"
 #include <boost/cstdint.hpp>
 
 namespace netcode {
 using namespace boost::asio;
 
-const unsigned UDPConnection::hsize = 9;
 const unsigned UDPMaxPacketSize = 4096;
+const int MaxChunkSize = 254;
+
+class Unpacker
+{
+public:
+	Unpacker(const unsigned char* _data, unsigned _length) : data(_data), length(_length)
+	{
+		pos = 0;
+	};
+	
+	template<typename T>
+	void Unpack(T& t)
+	{
+		assert(length >= pos + sizeof(t));
+		t = *reinterpret_cast<const T*>(data+pos);
+		pos += sizeof(t);
+	};
+	void Unpack(std::vector<uint8_t>& t, unsigned _length)
+	{
+		std::copy(data +pos, data +pos+_length, std::back_inserter(t));
+		pos+= _length;
+	};
+
+	unsigned Remaining() const
+	{
+		return length - pos;
+	};
+private:
+	const unsigned char* data;
+	unsigned length;
+	size_t pos;
+};
+
+class Packer
+{
+public:
+	Packer(std::vector<uint8_t>& _data) : data(_data)
+	{
+		assert(data.size() == 0);
+	};
+	
+	template<typename T>
+	void Pack(T& t)
+	{
+		const size_t pos = data.size();
+		data.resize(pos + sizeof(T));
+		*reinterpret_cast<T*>(&data[pos]) = t;
+	};
+	void Pack(std::vector<uint8_t>& _data)
+	{
+		std::copy(_data.begin(), _data.end(), std::back_inserter(data));
+	};
+
+private:
+	std::vector<uint8_t>& data;
+};
+
+Packet::Packet(const unsigned char* data, unsigned length)
+{
+	Unpacker buf(data, length);
+	buf.Unpack(lastContinuous);
+	buf.Unpack(nakType);
+	
+	if (nakType > 0)
+	{
+		naks.resize(nakType);
+		for (int i = 0; i != nakType; ++i)
+		{
+			buf.Unpack(naks[i]);
+		}
+	}
+
+	while (buf.Remaining() > Chunk::headerSize)
+	{
+		ChunkPtr temp(new Chunk);
+		buf.Unpack(temp->chunkNumber);
+		buf.Unpack(temp->chunkSize);
+		if (buf.Remaining() >= temp->chunkSize)
+		{
+			buf.Unpack(temp->data, temp->chunkSize);
+			chunks.push_back(temp);
+		}
+		else
+		{
+			// defective, ignore
+			break;
+		}
+	}
+}
+
+Packet::Packet(int _lastContinuous, int _nak) : lastContinuous(_lastContinuous), nakType(_nak)
+{
+}
+
+void Packet::Serialize(std::vector<uint8_t>& data)
+{
+	data.reserve(GetSize());
+	Packer buf(data);
+	buf.Pack(lastContinuous);
+	buf.Pack(nakType);
+	buf.Pack(naks);
+	for (std::list<ChunkPtr>::const_iterator it = chunks.begin(); it != chunks.end(); ++it)
+	{
+		buf.Pack((*it)->chunkNumber);
+		buf.Pack((*it)->chunkSize);
+		buf.Pack((*it)->data);
+	}
+}
 
 UDPConnection::UDPConnection(boost::shared_ptr<boost::asio::ip::udp::socket> NetSocket, const boost::asio::ip::udp::endpoint& MyAddr) : mySocket(NetSocket)
 {
@@ -59,6 +164,7 @@ UDPConnection::~UDPConnection()
 
 void UDPConnection::SendData(boost::shared_ptr<const RawPacket> data)
 {
+	assert(data->length > 0);
 	outgoingData.push_back(data);
 }
 
@@ -111,80 +217,56 @@ void UDPConnection::Update()
 			if (CheckErrorCode(err))
 				break;
 
-			if (bytesReceived < UDPConnection::hsize)
+			if (bytesReceived < Packet::headerSize)
 				continue;
-			RawPacket* data = new RawPacket(&buffer[0], bytesReceived);
+			Packet data(&buffer[0], bytesReceived);
 			if (CheckAddress(sender_endpoint))
 			{
 				ProcessRawPacket(data);
-				data = 0; // UDPConnection takes ownership of packet
 			}
 		}
 	}
 
-	const spring_time curTime = spring_gettime();
-	bool force = false;	// should we force to send a packet?
-
-	if((dataRecv == 0) && lastSendTime < curTime-spring_secs(1) && !unackedPackets.empty()){		//server hasnt responded so try to send the connection attempt again
-		SendRawPacket(unackedPackets[0].data,unackedPackets[0].length,0);
-		lastSendTime = curTime;
-		force = true;
-	}
-
-	if (lastSendTime<curTime-spring_secs(5) && !(dataRecv == 0)) { //we havent sent anything for a while so send something to prevent timeout
-		force = true;
-	}
-	else if(lastSendTime<curTime-spring_msecs(200) && !waitingPackets.empty()){	//we have at least one missing incomming packet lying around so send a packet to ensure the other side get a nak
-		force = true;
-	}
-
-	Flush(force);
+	Flush(false);
 }
 
-void UDPConnection::ProcessRawPacket(RawPacket* packet)
+void UDPConnection::ProcessRawPacket(Packet& incoming)
 {
 	lastReceiveTime = spring_gettime();
-	dataRecv += packet->length;
-	recvOverhead += hsize;
+	dataRecv += incoming.GetSize();
+	recvOverhead += Packet::headerSize;
 	++recvPackets;
 
-	int packetNum = *(int*)packet->data;
-	int ack = *(int*)(packet->data+4);
-	unsigned char nak = packet->data[8];
+	AckChunks(incoming.lastContinuous);
 
-	AckPackets(ack);
-
-	if (nak > 0)	// we have lost $nak packets
+	if (!unackedChunks.empty())
 	{
-		int nak_abs = nak + firstUnacked - 1;
-		if (nak_abs >= currentNum)
+		if (incoming.nakType < 0)
 		{
-			// we got a nak for packets which never got sent
-			//TODO give error message
-		}
-		else if (nak_abs != lastNak || lastNakTime < lastReceiveTime-spring_msecs(100))
-		{
-			// resend all packets from firstUnacked till nak_abs
-			lastNak=nak_abs;
-			lastNakTime=lastReceiveTime;
-			for (int b = firstUnacked; b <= nak_abs; ++b)
+			for (int i = 0; i != -incoming.nakType; ++i)
 			{
-				SendRawPacket(unackedPackets[b-firstUnacked].data,unackedPackets[b-firstUnacked].length,b);
-				++resentPackets;
+				if (i < unackedChunks.size())
+					RequestResend(unackedChunks[i]);
+			}
+		}
+		else if (incoming.nakType > 0)
+		{
+			for (int i = 0; i != incoming.naks.size(); ++i)
+			{
+				if (incoming.naks[i] < unackedChunks.size())
+					RequestResend(unackedChunks[incoming.naks[i]]);
 			}
 		}
 	}
-
-	if (lastInOrder >= packetNum || waitingPackets.find(packetNum) != waitingPackets.end())
+	for (std::list<ChunkPtr>::const_iterator it = incoming.chunks.begin(); it != incoming.chunks.end(); ++it)
 	{
-		++droppedPackets;
-		delete packet;
-		return;
+		if (lastInOrder >= (*it)->chunkNumber || waitingPackets.find((*it)->chunkNumber) != waitingPackets.end())
+		{
+			++droppedChunks;
+			continue;
+		}
+		waitingPackets.insert((*it)->chunkNumber, new RawPacket(&(*it)->data[0], (*it)->data.size()));
 	}
-
-	waitingPackets.insert(packetNum, new RawPacket(packet->data + hsize, packet->length - hsize));
-	delete packet;
-	packet = NULL;
 
 	packetMap::iterator wpi;
 	//process all in order packets that we have waiting
@@ -274,10 +356,10 @@ void UDPConnection::Flush(const bool forced)
 	for (packetList::const_iterator it = outgoingData.begin(); it != outgoingData.end(); ++it)
 		outgoingLength += (*it)->length;
 
-	if (forced || (!outgoingData.empty() && (lastSendTime < (curTime - spring_msecs(200) + spring_msecs(outgoingLength * 10)))))
+	// do not create more than 30 chunks per second
+	const bool waitMore = (lastChunkCreated < curTime - spring_msecs(34)) ? false : true;
+	if (forced || (!waitMore && lastChunkCreated + spring_msecs(200) < (curTime + outgoingLength*10)))
 	{
-		lastSendTime = spring_gettime();
-
 		boost::uint8_t buffer[UDPMaxPacketSize];
 		unsigned pos = 0;
 		// Manually fragment packets to respect configured UDP_MTU.
@@ -289,7 +371,8 @@ void UDPConnection::Flush(const bool forced)
 			if (!outgoingData.empty())
 			{
 				packetList::iterator it = outgoingData.begin();
-				unsigned numBytes = std::min(mtu-pos, (*it)->length);
+				unsigned numBytes = std::min((unsigned)MaxChunkSize-pos, (*it)->length);
+				assert((*it)->length > 0);
 				memcpy(buffer+pos, (*it)->data, numBytes);
 				pos+= numBytes;
 				if (numBytes == (*it)->length) // full packet copied
@@ -297,16 +380,14 @@ void UDPConnection::Flush(const bool forced)
 				else // partially transfered
 					(*it).reset(new RawPacket((*it)->data + numBytes, (*it)->length - numBytes));
 			} // iterator "it" is now invalid
-			if ((forced || pos > 0) && (pos == mtu || outgoingData.empty()))
+			if ((forced || pos > 0) && (pos == MaxChunkSize || outgoingData.empty()))
 			{
-				if (pos == mtu)
-					++fragmentedFlushes;
-				SendRawPacket(buffer, pos, currentNum++);
-				unackedPackets.push_back(new RawPacket(buffer, pos));
+				CreateChunk(buffer, pos, currentNum++);
 				pos = 0;
 			}
 		} while (!outgoingData.empty());
 	}
+	SendIfNecessary(forced);
 }
 
 bool UDPConnection::CheckTimeout() const
@@ -326,8 +407,7 @@ std::string UDPConnection::Statistics() const
 	msg += str( boost::format("Received: %1% bytes in %2% packets (%3% bytes/package)\n") %dataRecv %recvPackets %((float)dataRecv / (float)recvPackets));
 	msg += str( boost::format("Sent: %1% bytes in %2% packets (%3% bytes/package)\n") %dataSent %sentPackets %((float)dataSent / (float)sentPackets));
 	msg += str( boost::format("Relative protocol overhead: %1% up, %2% down\n") %((float)sentOverhead / (float)dataSent) %((float)recvOverhead / (float)dataRecv) );
-	msg += str( boost::format("%1% incoming packets had been dropped, %2% outgoing packets had to be resent\n") %droppedPackets %resentPackets);
-	msg += str( boost::format("%1% packets were splitted due to MTU\n") %fragmentedFlushes);
+	msg += str( boost::format("%1% incoming chunks had been dropped, %2% outgoing chunks had to be resent\n") %droppedChunks %resentChunks);
 	return msg;
 }
 
@@ -343,67 +423,188 @@ std::string UDPConnection::GetFullAddress() const
 
 void UDPConnection::SetMTU(unsigned mtu2)
 {
-	if (mtu2 > 20 && mtu2 < UDPMaxPacketSize)
+	if (mtu2 > 300 && mtu2 < UDPMaxPacketSize)
+	{
 		mtu = mtu2;
+	}
 }
 
 void UDPConnection::Init()
 {
 	spring_notime(lastNakTime);
 	spring_notime(lastSendTime);
+	spring_notime(lastUnackResent);
 	lastReceiveTime = spring_gettime();
 	lastInOrder=-1;
 	waitingPackets.clear();
-	firstUnacked=0;
 	currentNum=0;
 	lastNak=-1;
 	sentOverhead = 0;
 	recvOverhead = 0;
-	fragmentedFlushes = 0;
 	fragmentBuffer = 0;
-	resentPackets = 0;
+	resentChunks = 0;
 	sentPackets = recvPackets = 0;
-	droppedPackets = 0;
-	mtu = 500;
+	droppedChunks = 0;
+	mtu = std::max(configHandler->Get("MaximumTransmissionUnit", 1400), 300);
 }
 
-void UDPConnection::AckPackets(const int nextAck)
+void UDPConnection::CreateChunk(const unsigned char* data, const unsigned length, const int packetNum)
 {
-	while (nextAck >= firstUnacked && !unackedPackets.empty()){
-		unackedPackets.pop_front();
-		firstUnacked++;
-	}
+	assert(length > 0 && length < 255);
+	ChunkPtr buf(new Chunk);
+	buf->chunkNumber = packetNum;
+	buf->chunkSize = length;
+	std::copy(data, data+length, std::back_inserter(buf->data));
+	newChunks.push_back(buf);
+	lastChunkCreated = spring_gettime();
 }
 
-void UDPConnection::SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum)
+void UDPConnection::SendIfNecessary(bool flushed)
 {
-	unsigned char* tempbuf = new unsigned char[hsize+length];
-	*(int*)tempbuf = packetNum;
-	*(int*)(tempbuf+4) = lastInOrder;
-	if(!waitingPackets.empty() && waitingPackets.find(lastInOrder+1)==waitingPackets.end()){
-		int nak = (waitingPackets.begin()->first - 1) - lastInOrder;
-		assert(nak >= 0);
-		if (nak <= 255)
-			*(unsigned char*)(tempbuf+8) = (unsigned char)nak;
+	const spring_time curTime = spring_gettime();
+	
+	int nak = 0;
+	std::vector<int> dropped;
+	
+	{
+		int packetNum = lastInOrder+1;
+		for (packetMap::iterator it = waitingPackets.begin(); it != waitingPackets.end(); ++it)
+		{
+			const int diff = it->first - packetNum;
+			if (diff > 0)
+			{
+				for (int i = 0; i < diff; ++i)
+				{
+					dropped.push_back(packetNum);
+					packetNum++;
+				}
+			}
+			packetNum++;
+		}
+		unsigned numContinuous = 0;
+		for (unsigned i = 0; i != dropped.size(); ++i)
+		{
+			if (dropped[i] == lastInOrder+i+1)
+			{
+				numContinuous++;
+			}
+			else
+				break;
+		}
+
+		if (numContinuous < 8 && !(lastNakTime + spring_msecs(200) < spring_gettime()))
+		{
+			nak = std::min(dropped.size(), (size_t)127);
+			lastNakTime = curTime; // needs 1 byte per requested packet, so don't spam to often
+		}
 		else
-			*(unsigned char*)(tempbuf+8) = 255;
-	}
-	else {
-		*(unsigned char*)(tempbuf+8) = 0;
+		{
+			nak = -std::min((unsigned)127, numContinuous);
+		}
 	}
 
-	memcpy(tempbuf+hsize, data, length);
+	lastUnackResent = std::max(lastUnackResent, lastChunkCreated);
+	if (!unackedChunks.empty() && lastUnackResent + spring_msecs(400) < curTime)
+	{
+		if (newChunks.empty())
+		{
+			// resent last packet if we didn't get an ack after 0,4 seconds
+			// and don't plan sending out a new chunk either
+			RequestResend(*(unackedChunks.end()-1));
+		}
+		lastUnackResent = curTime;
+	}
+
+	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak < 0 || lastSendTime + spring_msecs(200) < curTime)
+	{
+		bool todo = true;
+		while (todo)
+		{
+			Packet buf(lastInOrder, nak);
+			if (nak > 0)
+			{
+				buf.naks.resize(nak);
+				for (unsigned i = 0; i != buf.naks.size(); ++i)
+				{
+					buf.naks[i] = dropped[i];
+				}
+				nak = 0; // 1 request is enought
+			}
+			
+			while (true)
+			{
+				if (!newChunks.empty() && buf.GetSize() + newChunks[0]->GetSize() <= mtu)
+				{
+					buf.chunks.push_back(newChunks[0]);
+					unackedChunks.push_back(newChunks[0]);
+					newChunks.pop_front();
+				}
+				else if (!resendRequested.empty() && buf.GetSize() + resendRequested[0]->GetSize() <= mtu)
+				{
+					buf.chunks.push_back(resendRequested[0]);
+					resendRequested.pop_front();
+					++resentChunks;
+				}
+				else
+					break;
+			}
+			
+			SendPacket(buf);
+			if (resendRequested.empty() && newChunks.empty())
+				todo = false;
+		}
+	}
+}
+
+void UDPConnection::SendPacket(Packet& pkt)
+{
+	std::vector<uint8_t> data;
+	pkt.Serialize(data);
+
+	lastSendTime = spring_gettime();
 	boost::asio::ip::udp::socket::message_flags flags = 0;
 	boost::system::error_code err;
-	mySocket->send_to(buffer(tempbuf, length+hsize), addr, flags, err);
-	delete[] tempbuf;
+	mySocket->send_to(buffer(data), addr, flags, err);
 	if (CheckErrorCode(err))
 		return;
 
-	dataSent += length;
-	sentOverhead += hsize;
+	dataSent += data.size();
 	++sentPackets;
 }
 
+void UDPConnection::AckChunks(int lastAck)
+{
+	while (!unackedChunks.empty() && lastAck >= (*unackedChunks.begin())->chunkNumber)
+	{
+		unackedChunks.pop_front();
+	}
+
+	bool done;
+	do
+	{
+		// resend requested and later acked, happens every now and then
+		done = true;
+		for (std::deque<ChunkPtr>::iterator it = resendRequested.begin(); it != resendRequested.end(); ++it)
+		{
+			if ((*it)->chunkNumber <= lastAck)
+			{
+				resendRequested.erase(it);
+				done = false;
+				break;
+			}
+		}
+	} while (!done);
+}
+
+void UDPConnection::RequestResend(ChunkPtr ptr)
+{
+	for (std::deque<ChunkPtr>::const_iterator it = resendRequested.begin(); it != resendRequested.end(); ++it)
+	{
+		// filter out duplicates
+		if (*it == ptr)
+			return;
+	}
+	resendRequested.push_back(ptr);
+}
 
 } // namespace netcode

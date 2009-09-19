@@ -380,8 +380,8 @@ int CAICheats::HandleCommand(int commandId, void *data)
 			AIHCTraceRay* cmdData = (AIHCTraceRay*) data;
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				CUnit* srcUnit = uh->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
+				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+				const CUnit* hitUnit = NULL;
 
 				if (srcUnit != NULL) {
 					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);

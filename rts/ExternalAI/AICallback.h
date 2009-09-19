@@ -8,16 +8,15 @@ class CGroup;
 
 class CAICallback: public IAICallback
 {
-public:
-	CAICallback(int Team, CGroupHandler* GH);
-	~CAICallback();
-
 	int team;
 	bool noMessages;
 	CGroupHandler* gh;
-	CGroup* group; // only in case it's a group AI
 
 	void verify();
+
+public:
+	CAICallback(int team, CGroupHandler* gh);
+	~CAICallback();
 
 	void SendStartPos(bool ready, float3 pos);
 	void SendTextMsg(const char* text, int zone);
@@ -53,10 +52,21 @@ public:
 	int GetUnitTeam(int unitId);
 	int GetUnitAllyTeam(int unitId);
 	float GetUnitHealth(int unitId);
+	/**
+	 * Returns the units max health, which may be higher then that of other
+	 * units of the same UnitDef, eg. because of experience.
+	 */
 	float GetUnitMaxHealth(int unitId);
+	/**
+	 * Returns the units max speed, which may be higher then that of other
+	 * units of the same UnitDef, eg. because of experience.
+	 */
 	float GetUnitSpeed(int unitId);
+	/// Returns a sort of measure for the units overall power
 	float GetUnitPower(int unitId);
+	/// Returns how experienced the unit is (0.0 - 1.0)
 	float GetUnitExperience(int unitId);
+	/// Returns the furthest distance any weapon of the unit can fire
 	float GetUnitMaxRange(int unitId);
 	bool IsUnitActivated (int unitId);
 	bool UnitBeingBuilt(int unitId);

@@ -1,9 +1,12 @@
+#ifndef MYTIME_H
+#define MYTIME_H
+
 #define SPRING_TIME 1 // boost microsec timer SUCKS atm, when it works again, set to 0
 #if SPRING_TIME
 #include <SDL_timer.h>
-#define spring_time unsigned
-#define spring_duration int
-#define spring_gettime() SDL_GetTicks()
+typedef unsigned spring_time;
+typedef int spring_duration;
+inline spring_time spring_gettime() { return SDL_GetTicks(); };
 #define spring_tomsecs(time) (time)
 #define spring_msecs(time) (time)
 #define spring_secs(time) (time*1000)
@@ -14,13 +17,15 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 using namespace boost::posix_time;
-#define spring_time ptime
-#define spring_duration time_duration
-#define spring_gettime() microsec_clock::local_time()
+typedef ptime spring_time;
+typedef time_duration spring_duration;
+inline spring_time spring_gettime() { return microsec_clock::local_time(); };
 #define spring_tomsecs(time) ((time).total_milliseconds())
 #define spring_msecs(time) (milliseconds(time))
 #define spring_secs(time) (seconds(time))
 #define spring_istime(time) (!(time).is_not_a_date_time())
 #define spring_sleep(time) boost::this_thread::sleep(time)
 #define spring_notime(time)
+#endif
+
 #endif

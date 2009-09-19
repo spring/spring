@@ -28,7 +28,7 @@ public:
 	void DependentDied(CObject* o);
 	/// feeds into GiveCommandReal()
 	void GiveCommand(const Command& c, bool fromSynced = true);
-	virtual int GetDefaultCmd(CUnit* pointed,CFeature* feature);
+	virtual int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	virtual void SlowUpdate();
 	virtual void GiveCommandReal(const Command& c, bool fromSynced = true);
 	virtual std::vector<CommandDescription>& GetPossibleCommands();

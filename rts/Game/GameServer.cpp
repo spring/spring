@@ -85,6 +85,11 @@ const spring_duration serverTimeout = spring_secs(30);
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
 const unsigned serverKeyframeIntervall = 16;
 
+const std::string commands[numCommands] = { "kick", "kickbynum", "setminspeed", "setmaxspeed",
+						"nopause", "nohelp", "cheat", "godmode", "globallos",
+						"nocost", "forcestart", "nospectatorchat", "nospecdraw",
+						"skip", "reloadcob", "devlua", "editdefs", "luagaia",
+						"singlestep" };
 using boost::format;
 
 namespace {
@@ -134,8 +139,6 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	spring_notime(gameEndTime);
 	spring_notime(readyTime);
 
-	nextSkirmishAIId = 0;
-
 	medianCpu=0.0f;
 	medianPing=0;
 	enforceSpeed=!setup->hostDemo && configHandler->Get("EnforceGameSpeed", false);
@@ -183,31 +186,14 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
 
 	for (size_t a = 0; a < setup->GetSkirmishAIs().size(); ++a) {
-		ais[nextSkirmishAIId++] = setup->GetSkirmishAIs()[a];
+		const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
+		ais[skirmishAIId] = setup->GetSkirmishAIs()[a];
 	}
 
 	teams.resize(setup->teamStartingData.size());
 	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
 
-	RestrictedAction("kick");			RestrictedAction("kickbynum");
-	RestrictedAction("setminspeed");	RestrictedAction("setmaxspeed");
-	RestrictedAction("nopause");
-	RestrictedAction("nohelp");
-	RestrictedAction("cheat"); //TODO register cheats only after cheating is on
-	RestrictedAction("godmode");
-	RestrictedAction("globallos");
-	RestrictedAction("nocost");
-	RestrictedAction("forcestart");
-	RestrictedAction("nospectatorchat");
-	RestrictedAction("nospecdraw");
-	if (demoReader)
-		RegisterAction("skip");
-	commandBlacklist.insert("skip");
-	RestrictedAction("reloadcob");
-	RestrictedAction("devlua");
-	RestrictedAction("editdefs");
-	RestrictedAction("luagaia");
-	RestrictedAction("singlestep");
+	commandBlacklist = std::set<std::string>(commands, commands+numCommands);
 
 #ifdef DEDICATED
 	demoRecorder.reset(new CDemoRecorder());
@@ -954,10 +940,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						const bool hasAIs_g                      = (myAIsInTeam_g.size() > 0);
 						const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam);
 						const char* playerType                   = (isSpec ? "Spectator" : "Player");
+						const bool isSinglePlayer                = (players.size() <= 1);
 
-						if (isSpec ||
-						    (!isOwnTeam_g && !isLeader_g) ||
-						    (hasAIs_g && (isAllied_g && !cheating)))
+						if (!isSinglePlayer &&
+								(isSpec ||
+								(!isOwnTeam_g && !isLeader_g) ||
+								(hasAIs_g && (isAllied_g && !cheating))))
 						{
 							Message(str( boost::format("%s %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %playerType %players[player].name), true);
 							break;
@@ -989,7 +977,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						break;
 					}
 					case TEAMMSG_RESIGN: {
-						if (players[player].spectator)
+						const bool isSpec         = players[player].spectator;
+						const bool isSinglePlayer = (players.size() <= 1);
+
+						if (isSpec && !isSinglePlayer)
 						{
 							Message(str(boost::format("Spectator %s tried to hack the game (spoofed TEAMMSG_RESIGN)") %players[player].name), true);
 							break;
@@ -1022,8 +1013,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					case TEAMMSG_JOIN_TEAM: {
 						const unsigned newTeam    = inbuf[3];
 						const bool isNewTeamValid = (newTeam < teams.size());
+						const bool isSinglePlayer = (players.size() <= 1);
 
-						if (!cheating || !isNewTeamValid) {
+						if (isNewTeamValid && (isSinglePlayer || cheating)) {
+							// joining the team is ok
+						} else {
 							Message(str(format(NoTeamChange) %players[player].name %player));
 							break;
 						}
@@ -1090,7 +1084,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				Message(str(format(NoAICreated) %players[playerId].name %playerId %aiTeamId));
 				break;
 			}
-			const size_t skirmishAIId = nextSkirmishAIId++;
+			const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
 			Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
 
 /*
@@ -1145,6 +1139,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					// as it will be reinitialized instantly
 				} else {
 					ais.erase(skirmishAIId);
+					FreeSkirmishAIId(skirmishAIId);
 					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
 						// team has no controller left now
 						tai->active = false;
@@ -1748,12 +1743,25 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 
 		if (!setup->playerStartingData[hisNewNumber].spectator)
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
+
+		std::vector<bool> teamStartPosSent(teams.size(), false);
+
+		// send start position for player controlled teams
 		for (size_t a = 0; a < players.size(); ++a)
 		{
 			if (!players[a].spectator)
 			{
 				const unsigned aTeam = players[a].team;
 				link->SendData(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
+				teamStartPosSent[aTeam] = true;
+			}
+		}
+
+		// send start position for all other teams
+		for (size_t a = 0; a < teams.size(); ++a) {
+			if (!teamStartPosSent[a]) {
+				// teams which aren't player controlled are always ready
+				link->SendData(CBaseNetProtocol::Get().SendStartPos(teams[a].leader, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
 			}
 		}
 	}
@@ -1811,10 +1819,24 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 	}
 }
 
-void CGameServer::RestrictedAction(const std::string& action)
-{
-	RegisterAction(action);
-	commandBlacklist.insert(action);
+size_t CGameServer::ReserveNextAvailableSkirmishAIId() {
+
+	size_t skirmishAIId = 0;
+
+	// find a free id
+	std::list<size_t>::iterator it;
+	for (it = usedSkirmishAIIds.begin(); it != usedSkirmishAIIds.end(); ++it, skirmishAIId++) {
+		if (*it != skirmishAIId) {
+			break;
+		}
+	}
+
+	usedSkirmishAIIds.insert(it, skirmishAIId);
+
+	return skirmishAIId;
 }
 
+void CGameServer::FreeSkirmishAIId(const size_t skirmishAIId) {
+	usedSkirmishAIIds.remove(skirmishAIId);
+}
 

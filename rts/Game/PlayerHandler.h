@@ -6,6 +6,7 @@
 #define PLAYERHANDLER_H
 
 #include <assert.h>
+#include <vector>
 
 #include "creg/creg_cond.h"
 #include "Player.h"

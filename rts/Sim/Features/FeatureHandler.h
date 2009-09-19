@@ -54,12 +54,15 @@ public:
 
 	void DrawFadeFeatures(bool submerged, bool noAdvShading = false);
 
+	void BackupFeatures();
+	void RestoreFeatures();
+
+private:
 	std::set<CFeature *> fadeFeatures;
 	std::set<CFeature *> fadeFeaturesS3O;
 	std::set<CFeature *> fadeFeaturesSave;
 	std::set<CFeature *> fadeFeaturesS3OSave;
 
-private:
 	void AddFeatureDef(const std::string& name, FeatureDef* feature);
 	void CreateFeatureDef(const LuaTable& luaTable, const std::string& name);
 

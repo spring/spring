@@ -568,10 +568,6 @@ void CWeaponDefHandler::LoadSound(const LuaTable& wdTable,
 			gsound.sounds.push_back(soundData);
 			gsound.setID(0, id);
 		}
-		else
-		{
-			LogObject() << "Could not load sound from weapon def: " << name;
-		}
 	}
 }
 

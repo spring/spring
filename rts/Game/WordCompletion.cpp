@@ -42,11 +42,14 @@ void CWordCompletion::Reset()
 	words["/ctrlpanel "] = sl;
 	words["/distdraw "] = sl;
 	words["/disticon "] = sl;
+	words["/debuginfo sound"] = sl;
+	words["/debuginfo profiling"] = sl;
 	words["/incguiopacity "] = sl;
 	words["/decguiopacity "] = sl;
 	words["/echo "] = sl;
 	words["/font "] = sl;
 	words["/gameinfo"] = sl;
+	words["/gathermode"] = sl;
 	words["/grounddecals "] = sl;
 	words["/info "] = sl;
 	words["/luaui "] = sl;
@@ -89,7 +92,7 @@ void CWordCompletion::Reset()
 	words["minimize "] = mm;
 	words["maximize "] = mm;
 	words["maxspect "] = mm;
-	
+
 	// remote commands
 	// TODO those commans are registered in Console, get the list from there
 	// This is best done with a new command class (eg. ConsoleCommand)

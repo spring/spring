@@ -65,6 +65,13 @@ protected:
 	float scrollSpeed;
 
 	float3 pos;
+	/**
+	 * Where to switch from Camera-Unit-distance to Camera-Ground-distance
+	 * for deciding whether to draw 3D view or icon of units.
+	 * * 1.0 = 0 degree  = overview
+	 * * 0.0 = 90 degree = first person
+	 */
+	float switchVal;
 };
 
 

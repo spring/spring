@@ -846,10 +846,6 @@ void CUnitDefHandler::LoadSound(GuiSoundSet& gsound, const string& fileName, con
 		GuiSoundSet::Data soundData(fileName, id, volume);
 		gsound.sounds.push_back(soundData);
 	}
-	else
-	{
-		LogObject() << "Could not load sound from unit def: " << fileName;
-	}
 }
 
 

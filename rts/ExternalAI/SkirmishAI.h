@@ -39,6 +39,7 @@ private:
 	int teamId;
 	const SkirmishAIKey key;
 	const ISkirmishAILibrary* library;
+	const char* const timerName;
 };
 
 #endif // _SKIRMISHAI_H

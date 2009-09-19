@@ -363,7 +363,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		mouse = new CMouseHandler();
 		camHandler = new CCameraHandler();
 	}
-	selectionKeys = new CSelectionKeyHandler();
 	tooltip = new CTooltipConsole();
 	iconHandler = new CIconHandler();
 
@@ -480,6 +479,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	keyCodes = new CKeyCodes();
 	keyBindings = new CKeyBindings();
 	keyBindings->Load("uikeys.txt");
+	selectionKeys = new CSelectionKeyHandler();
 
 	water=CBaseWater::GetWater(NULL);
 	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {
@@ -497,7 +497,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
-	if (!!configHandler->Get("LuaUI", 1)) {
+	{
 		PrintLoadMsg("Loading LuaUI");
 		CLuaUI::LoadHandler();
 	}
@@ -1380,7 +1380,8 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "spectator"){
-		net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
+		if (!gu->spectating)
+			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 	}
 	else if ((cmd == "specteam") && gu->spectating) {
 		const int team = atoi(action.extra.c_str());
@@ -2255,8 +2256,26 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "debuginfo") {
-		if (action.extra == "sound")
+		if (action.extra == "sound") {
 			sound->PrintDebugInfo();
+		} else if (action.extra == "profiling") {
+			logOutput.Print("%35s|%18s|%s",
+					"Part",
+					"Total Time",
+					"Time of the last 0.5s");
+			std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
+			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi) {
+#if GML_MUTEX_PROFILER
+				if ((pi->first.size() < 5) || pi->first.substr(pi->first.size()-5,5).compare("Mutex")!=0) {
+					continue;
+				}
+#endif // GML_MUTEX_PROFILER
+				logOutput.Print("%35s %16.2fs %5.2f%%",
+						pi->first.c_str(),
+						((float)pi->second.total) / 1000.f,
+						pi->second.percent * 100);
+			}
+		}
 	}
 	else if (cmd == "benchmark-script") {
 		CUnitScript::BenchmarkScript(action.extra);
@@ -2273,6 +2292,13 @@ bool CGame::ActionPressed(const Action& action,
 		net->Send(pckt.Pack());
 	}
 	else {
+		static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
+		if (serverCommands.find(cmd) != serverCommands.end())
+		{
+			CommandMessage pckt(action, gu->myPlayerNum);
+			net->Send(pckt.Pack());
+		}
+
 		if (!Console::Instance().ExecuteAction(action))
 		{
 			if (guihandler != NULL) // maybe a widget is interested?
@@ -2987,8 +3013,7 @@ void CGame::StoreCloaked(bool save) {
 		{
 			GML_RECMUTEX_LOCK(feat); // StoreCloaked
 
-			featureHandler->fadeFeaturesSave = featureHandler->fadeFeatures;
-			featureHandler->fadeFeaturesS3OSave = featureHandler->fadeFeaturesS3O;
+			featureHandler->BackupFeatures();
 		}
 	}
 	else {
@@ -3001,8 +3026,7 @@ void CGame::StoreCloaked(bool save) {
 		{
 			GML_RECMUTEX_LOCK(feat); // StoreCloaked
 
-			featureHandler->fadeFeatures = featureHandler->fadeFeaturesSave;
-			featureHandler->fadeFeaturesS3O = featureHandler->fadeFeaturesS3OSave;
+			featureHandler->RestoreFeatures();
 		}
 	}
 }

@@ -23,12 +23,12 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 	set(additionalLibraries    ${${additionalLibraries_var}})
 
 	# Check if the user wants to compile the AI
-	if    (BUILD_C_AIINTERFACE)
+	if    (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-	else  (BUILD_C_AIINTERFACE)
+	else  (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI FALSE)
 		message("warning: ${myName} Skirmish AI will not be built!")
-	endif (BUILD_C_AIINTERFACE)
+	endif (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
@@ -66,20 +66,20 @@ set(mySourceDirRel    "src")
 
 
 # Check if the user wants to compile the interface
-if    ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
-	set(AIINTERFACES_NATIVE TRUE)
-else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
-	set(AIINTERFACES_NATIVE FALSE)
-endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "NATIVE")
+if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
+	set(AI_TYPES_NATIVE TRUE)
+else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
+	set(AI_TYPES_NATIVE FALSE)
+endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 
 
 # Check dependencies of the interface are met
-if    (AIINTERFACES_NATIVE)
+if    (AI_TYPES_NATIVE)
 	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
-else  (AIINTERFACES_NATIVE)
+else  (AI_TYPES_NATIVE)
 	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
 	message ("warning: C & C++ AI Interface will not be built!")
-endif (AIINTERFACES_NATIVE)
+endif (AI_TYPES_NATIVE)
 
 
 # Build

@@ -10,7 +10,6 @@
 #include <set>
 #include <vector>
 
-#include "Console.h"
 #include "GameData.h"
 #include "Sim/Misc/TeamBase.h"
 #include "UnsyncedRNG.h"
@@ -24,6 +23,7 @@ namespace netcode
 	class UDPListener;
 }
 class CDemoReader;
+class Action;
 class CDemoRecorder;
 class AutohostInterface;
 class CGameSetup;
@@ -37,6 +37,8 @@ class GameSkirmishAI;
  * this value is used as the sending player-number.
  */
 const unsigned SERVER_PLAYER = 255;
+const unsigned numCommands = 19;
+extern const std::string commands[numCommands];
 
 class GameTeam : public TeamBase
 {
@@ -52,12 +54,12 @@ public:
  * checking and forwarding gamedata to the clients. It keeps track of the sync,
  * cpu and other stats and informs all clients about events.
  */
-class CGameServer : public CommandReceiver
+class CGameServer
 {
 	friend class CLoadSaveHandler;     //For initialize server state after load
 public:
 	CGameServer(const ClientSetup* settings, bool onlyLocal, const GameData* const gameData, const CGameSetup* const setup);
-	virtual ~CGameServer();
+	~CGameServer();
 
 	void AddLocalClient(const std::string& myName, const std::string& myVersion);
 
@@ -76,8 +78,6 @@ public:
 
 	void SetGamePausable(const bool arg);
 
-	virtual void PushAction(const Action& action);
-
 	bool HasDemo() const { return (demoReader != NULL); }
 	/// Is the server still running?
 	bool HasFinished() const;
@@ -87,6 +87,9 @@ private:
 	 * @brief relay chat messages to players / autohost
 	 */
 	void GotChatMessage(const ChatMessage& msg);
+
+	/// Execute textual messages received from clients
+	void PushAction(const Action& action);
 
 	/**
 	 * @brief kick the specified player from the battle
@@ -147,8 +150,12 @@ private:
 	// Ugly hax for letting the script define initial team->isAI and team->leader for AI teams
 	friend class CSkirmishAITestScript;
 	std::vector<GameParticipant> players;
+	size_t ReserveNextAvailableSkirmishAIId();
+private:
 	std::map<size_t, GameSkirmishAI> ais;
-	size_t nextSkirmishAIId;
+	std::list<size_t> usedSkirmishAIIds;
+	void FreeSkirmishAIId(const size_t skirmishAIId);
+public:
 	std::vector<GameTeam> teams;
 
 	float medianCpu;
@@ -184,8 +191,6 @@ private:
 
 	bool hasLocalClient;
 	unsigned localClientNumber;
-
-	void RestrictedAction(const std::string& action);
 
 	/// If the server receives a command, it will forward it to clients if it is not in this set
 	std::set<std::string> commandBlacklist;
