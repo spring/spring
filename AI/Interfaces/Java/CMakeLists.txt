@@ -140,15 +140,15 @@ set(myPkg                "${myPkgFirstPart}/springrts/ai")
 
 
 # Check if the user wants to compile the interface
-if    ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
-	set(AIINTERFACES_JAVA TRUE)
-else  ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
-	set(AIINTERFACES_JAVA FALSE)
-endif ("${AIINTERFACES}" STREQUAL "ALL" OR "${AIINTERFACES}" STREQUAL "JAVA")
+if    ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+	set(AI_TYPES_JAVA TRUE)
+else  ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
+	set(AI_TYPES_JAVA FALSE)
+endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "JAVA")
 
 
 # Look for dependencies, but only if the user wants to build the interface
-if    (AIINTERFACES_JAVA)
+if    (AI_TYPES_JAVA)
 	if    (NOT JAVA_FOUND)
 		set(JAVA_FIND_QUIETLY TRUE)
 		FIND_PACKAGE(JavaExtended) # Note: this is not the CMake built-in FindJava
@@ -171,16 +171,16 @@ if    (AIINTERFACES_JAVA)
 			message ("warning: No Java includes found!")
 		endif (JAVA_INCLUDE_PATH)
 	endif (MINGW)
-endif (AIINTERFACES_JAVA)
+endif (AI_TYPES_JAVA)
 
 
 # Check if dependencies of the interface are met
-if    (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+if    (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
 	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
-else  (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+else  (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
 	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
 	message("warning: Java AI Interface will not be built!")
-endif (AIINTERFACES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
 
 
 # Build
