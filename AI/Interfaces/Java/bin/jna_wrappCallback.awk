@@ -206,7 +206,7 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h) {
 	if (javaClassName_h == myInterface) {
 		print("public interface " javaClassName_h " {") >> outFile_h;
 	} else {
-		print("public class " javaClassName_h " implements " myInterface " {") >> outFile_h;
+		print("public class " javaClassName_h " implements " myInterface ", Library {") >> outFile_h;
 	}
 	print("") >> outFile_h;
 }
@@ -245,8 +245,32 @@ function printClass(clsName_c) {
 
 	# print the static registrator
 	print("\tstatic {") >> outFile_c;
-	print("\t\tNative.register(\"AIInterface\");") >> outFile_c;
+	print("\t\tjava.util.Map<String, Integer> myNativeLibOptions = new java.util.HashMap<String, Integer>();") >> outFile_c;
+	print("\t\tif (isWin32()) {") >> outFile_c;
+	print("\t\t\tmyNativeLibOptions.put(Library.OPTION_CALLING_CONVENTION, com.sun.jna.win32.StdCallLibrary.STDCALL_CONVENTION);") >> outFile_c;
+	# ALIGN_DEFAULT : Use the platform default alignment
+	# ALIGN_GNUC    : validated for 32-bit x86 linux/gcc; align field size, max 4 bytes
+	# ALIGN_MSVC    : validated for w32/msvc; align on field size
+	# ALIGN_NONE    : No alignment, place all fields on nearest 1-byte boundary
+	#print("\t\t\tmyNativeLibOptions.put(Library.OPTION_STRUCTURE_ALIGNMENT, Structure.ALIGN_GNUC);") >> outFile_c;
+	print("\t\t}") >> outFile_c;
+	print("\t\tNativeLibrary myNativeLib = NativeLibrary.getInstance(\"AIInterface\", myNativeLibOptions);") >> outFile_c;
+	print("\t\tNative.register(myNativeLib);") >> outFile_c;
 	print("\t}") >> outFile_c;
+	print("") >> outFile_c;
+
+
+	print("	public static final boolean isWin32() {") >> outFile_c;
+	print("") >> outFile_c;
+	print("		final String osName     = System.getProperty(\"os.name\", \"UNKNOWN\");") >> outFile_c;
+	print("		final boolean isWindows = osName.matches(\"[Ww]in\");") >> outFile_c;
+	print("		final String arch       = System.getProperty(\"sun.arch.data.model\", \"32\");") >> outFile_c;
+	print("		final boolean is32bit   = arch.equals(\"32\");") >> outFile_c;
+	print("		//final String arch       = System.getProperty(\"os.arch\", \"foobar\");") >> outFile_c;
+	print("		//final boolean is32bit   = arch.equals(\"x86\");") >> outFile_c;
+	print("		return (isWindows && is32bit);") >> outFile_c;
+	print("	}") >> outFile_c;
+	print("") >> outFile_c;
 	print("") >> outFile_c;
 
 	for (i=0; i < fi; i++) {
