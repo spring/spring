@@ -610,11 +610,12 @@ function gadget:UnitCreated(unitID, unitDefID)
 		return MemoizedInclude(f, env)
 	end
 
-	env.piece = function(name)
-		if (not pieces[name]) then
-			error("piece not found: " .. tostring(name), 2)
+	env.piece = function(...)
+		local p = {}
+		for _,name in ipairs{...} do
+			p[#p+1] = pieces[name] or error("piece not found: " .. tostring(name), 2)
 		end
-		return pieces[name]
+		return unpack(p)
 	end
 
 	setmetatable(env, { __index = prototypeEnv })
