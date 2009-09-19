@@ -23,12 +23,12 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 	set(additionalLibraries    ${${additionalLibraries_var}})
 
 	# Check if the user wants to compile the AI
-	if    (BUILD_C_AIINTERFACE)
+	if    (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI TRUE)
-	else  (BUILD_C_AIINTERFACE)
+	else  (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 		set(BUILD_THIS_SKIRMISHAI FALSE)
 		message("warning: ${myName} Skirmish AI will not be built!")
-	endif (BUILD_C_AIINTERFACE)
+	endif (BUILD_C_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)

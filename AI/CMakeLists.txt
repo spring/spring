@@ -3,6 +3,7 @@
 # Global variables set in this file:
 # * AI_DATADIR
 # * AIINTERFACES
+# * AI_EXCLUDE_REGEX
 # * AI_FIND_QUIETLY
 #
 # Functions and macros defined in this file:
@@ -18,6 +19,7 @@ add_definitions(-DBUILDING_AI)
 ### User-definable build options
 set (AI_DATADIR       ${DATADIR} CACHE STRING "Where AIs are installed")
 set (AIINTERFACES     "ALL"      CACHE STRING "Which AI Interfaces (and AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
+set (AI_EXCLUDE_REGEX "XXXXXXXX" CACHE STRING "Which Skirmish AIs not to build (none by default, example: \"NTai|Null.*AI\"")
 set (AI_FIND_QUIETLY  FALSE      CACHE BOOL   "Whether to find AI Interfaces and Skirmish AIs quietly")
 
 if    (NOT IS_ABSOLUTE "${AI_DATADIR}")
