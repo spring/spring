@@ -127,8 +127,6 @@ function printNativeFP2F() {
 	print("") >> outFile_nc;
 	print("#include \"ExternalAI/Interface/SSkirmishAICallback.h\"") >> outFile_nc;
 	print("") >> outFile_nc;
-	print("#include \"JavaBridge.h\"") >> outFile_nc;
-	print("") >> outFile_nc;
 	print("") >> outFile_nc;
 	#print("static const size_t id_clb_sizeMax = 8 * 1024;") >> outFile_nc;
 	print("#define id_clb_sizeMax 8192") >> outFile_nc;
@@ -165,14 +163,7 @@ function printNativeFP2F() {
 				condRet = "";
 			}
 			#print("\t" condRet "id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-			isHandleCommand = match(fullName, /handleCommand/);
-			if (isHandleCommand) {
-				print("\t" "java_establishSpringEnv();") >> outFile_nc;
-			}
 			print("\t" condRet "id_clb[teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-			if (isHandleCommand) {
-				print("\t" "java_establishJavaEnv();") >> outFile_nc;
-			}
 			print("" "}") >> outFile_nc;
 		} else {
 			print("Note: The following function is intentionally not wrapped: " fullName);
