@@ -866,7 +866,7 @@ void CLuaUnitScript::Falling()       { Call(LUAFN_Falling); }
 void CLuaUnitScript::Landed()        { Call(LUAFN_Landed); }
 void CLuaUnitScript::Activate()      { Call(LUAFN_Activate); }
 void CLuaUnitScript::Deactivate()    { Call(LUAFN_Deactivate); }
-void CLuaUnitScript::MoveRate(int curRate)     { Call(LUAFN_MoveRate0 + curRate); }
+void CLuaUnitScript::MoveRate(int curRate)     { Call(LUAFN_MoveRate, curRate); }
 void CLuaUnitScript::FireWeapon(int weaponNum) { Call(LUAFN_FireWeapon, weaponNum + 1); }
 void CLuaUnitScript::EndBurst(int weaponNum)   { Call(LUAFN_EndBurst, weaponNum + 1); }
 

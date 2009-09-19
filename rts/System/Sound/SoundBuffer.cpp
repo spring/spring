@@ -245,6 +245,7 @@ size_t SoundBuffer::GetId(const std::string& name)
 
 boost::shared_ptr<SoundBuffer> SoundBuffer::GetById(const size_t id)
 {
+	assert(id < buffers.size());
 	return buffers.at(id);
 };
 

@@ -55,7 +55,7 @@ long VorbisStreamTell(void* datasource)
 COggStream::COggStream(ALuint _source)
 {
 	source = _source;
-	vorbisInfo = 0x0;
+	vorbisInfo = NULL;
 
 	stopped = true;
 	paused = false;
@@ -141,6 +141,11 @@ const COggStream::TagVector& COggStream::VorbisTags()
 	return vorbisTags;
 }
 
+bool COggStream::Valid() const
+{
+	return (vorbisInfo != 0);
+}
+
 // display Ogg info and comments
 void COggStream::DisplayInfo()
 {
@@ -209,6 +214,7 @@ void COggStream::Stop()
 	if (!stopped) {
 		ReleaseBuffers();
 		msecsPlayed = 0;
+		vorbisInfo = NULL;
 		lastTick = SDL_GetTicks();
 	}
 }

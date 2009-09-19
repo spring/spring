@@ -278,21 +278,23 @@ void CWeaponProjectile::DrawUnitPart()
 {
 	float3 dir(speed);
 	dir.SafeANormalize();
-	glPushMatrix();
-	float3 rightdir;
 
-	if (dir.y != 1)
+	float3 rightdir, updir;
+
+	if (fabs(dir.y) < 0.95f) {
 		rightdir = dir.cross(UpVector);
-	else
-		rightdir = float3(1, 0, 0);
+		rightdir.SafeANormalize();
+	} else {
+		rightdir = float3(1.0f, 0.0f, 0.0f);
+	}
 
-	rightdir.SafeANormalize();
-	float3 updir(rightdir.cross(dir));
+	updir = rightdir.cross(dir);
 
-	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);
+	CMatrix44f transMatrix(drawPos, -rightdir, updir, dir);
 
-	glMultMatrixf(&transMatrix[0]);
-	glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
+	glPushMatrix();
+		glMultMatrixf(&transMatrix[0]);
+		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
 	glPopMatrix();
 }
 

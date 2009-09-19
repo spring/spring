@@ -424,23 +424,22 @@ void CMissileProjectile::Draw(void)
 
 void CMissileProjectile::DrawUnitPart(void)
 {
-	glPushMatrix();
-	float3 rightdir;
+	float3 rightdir, updir;
 
-	if (dir.y != 1) {
+	if (fabs(dir.y) < 0.95f) {
 		rightdir = dir.cross(UpVector);
+		rightdir.SafeNormalize();
 	} else {
-		rightdir = float3(1, 0, 0);
+		rightdir = float3(1.0f, 0.0f, 0.0f);
 	}
 
-	rightdir.SafeNormalize();
-	float3 updir = rightdir.cross(dir);
+	updir = rightdir.cross(dir);
 
-	CMatrix44f transMatrix(drawPos + dir * radius * 0.9f,-rightdir,updir,dir);
+	CMatrix44f transMatrix(drawPos + dir * radius * 0.9f, -rightdir, updir, dir);
 
-	glMultMatrixf(&transMatrix[0]);
-	glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading (GML)
-
+	glPushMatrix();
+		glMultMatrixf(&transMatrix[0]);
+		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading (GML)
 	glPopMatrix();
 }
 

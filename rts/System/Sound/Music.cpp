@@ -29,7 +29,7 @@ void MusicChannel::Enable(bool newState)
 	}
 }
 
-void MusicChannel::Play(const std::string& path, float _volume)
+void MusicChannel::Play(const std::string& path, float _volume, bool enqueue)
 {
 	if (!enabled)
 	{
@@ -40,7 +40,7 @@ void MusicChannel::Play(const std::string& path, float _volume)
 		current = sound->GetNextBestSource(); // may return 0 if no sources available
 
 	if (current)
-		current->PlayStream(path, volume * _volume);
+		current->PlayStream(path, volume * _volume, enqueue);
 }
 
 void MusicChannel::Pause()

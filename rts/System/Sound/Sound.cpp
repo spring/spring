@@ -30,6 +30,7 @@ CSound* sound = NULL;
 
 CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundThread(NULL)
 {
+	boost::mutex::scoped_lock lck(soundMutex);
 	mute = false;
 	appIsIconified = false;
 	int maxSounds = configHandler->Get("MaxSounds", 128);
@@ -163,35 +164,26 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 	}
 	else
 	{
-		size_t newid = sounds.size();
-
-		soundItemDefMap::iterator itemDefIt = soundItemDefs.find(name);
+		soundItemDefMap::const_iterator itemDefIt = soundItemDefs.find(name);
 		if (itemDefIt != soundItemDefs.end())
 		{
-			boost::shared_ptr<SoundBuffer> buffer = GetWaveBuffer(itemDefIt->second["file"], hardFail);
-			if (buffer)
-			{
-				sounds.push_back(new SoundItem(buffer, itemDefIt->second));
-				soundMap[name] = newid;
-				return newid;
-			}
-			else
-				return 0;
+			return MakeItemFromDef(itemDefIt->second);
 		}
 		else
 		{
-			if (GetWaveId(name, hardFail) > 0) // maybe raw filename?
+			if (LoadSoundBuffer(name, hardFail) > 0) // maybe raw filename?
 			{
 				soundItemDef temp = defaultItem;
-				temp["name"] = name;
-				sounds.push_back(new SoundItem(GetWaveBuffer(name, hardFail), temp)); // use raw file with default values
-				soundMap[name] = newid;
-				return newid;
+				temp["file"] = name;
+				return MakeItemFromDef(temp);
 			}
 			else
 			{
 				if (hardFail)
+				{
 					ErrorMessageBox("Couldn't open wav file", name, 0);
+					return 0;
+				}
 				else
 				{
 					LogObject(LOG_SOUND) << "CSound::GetSoundId: could not find sound: " << name;
@@ -200,8 +192,6 @@ size_t CSound::GetSoundId(const std::string& name, bool hardFail)
 			}
 		}
 	}
-
-	return 0;
 }
 
 SoundSource* CSound::GetNextBestSource(bool lock)
@@ -385,6 +375,22 @@ void CSound::Update()
 	CheckError("CSound::Update");
 }
 
+size_t CSound::MakeItemFromDef(const soundItemDef& itemDef)
+{
+	const size_t newid = sounds.size();
+	soundItemDef::const_iterator it = itemDef.find("file");
+	boost::shared_ptr<SoundBuffer> buffer = SoundBuffer::GetById(LoadSoundBuffer(it->second, false));
+	if (buffer)
+	{
+		SoundItem* buf = new SoundItem(buffer, itemDef);
+		sounds.push_back(buf);
+		soundMap[buf->Name()] = newid;
+		return newid;
+	}
+	else
+		return 0;
+}
+
 void CSound::UpdateListener(const float3& campos, const float3& camdir, const float3& camup, float lastFrameTime)
 {
 	boost::mutex::scoped_lock lck(soundMutex);
@@ -457,94 +463,78 @@ bool CSound::LoadSoundDefs(const std::string& filename)
 				bufmap["name"] = name;
 				soundItemDefMap::const_iterator sit = soundItemDefs.find(name);
 				if (sit != soundItemDefs.end())
-					LogObject(LOG_SOUND) << "CSound(): two SoundItems have the same name: " << name;
+					LogObject(LOG_SOUND) << "Sound " << name << " gets overwritten by " << filename;
 
 				soundItemDef::const_iterator inspec = bufmap.find("file");
 				if (inspec == bufmap.end())	// no file, drop
-					LogObject(LOG_SOUND) << "CSound(): SoundItem has no file tag: " << name;
+					LogObject(LOG_SOUND) << "Sound " << name << " is missing file tag (ignoring)";
 				else
 					soundItemDefs[name] = bufmap;
 
 				if (buf.KeyExists("preload"))
 				{
-					LogObject(LOG_SOUND) << "CSound(): preloading " << name;
-					const size_t newid = sounds.size();
-					boost::shared_ptr<SoundBuffer> buffer = GetWaveBuffer(bufmap["file"], true);
-					if (buffer)
-					{
-						sounds.push_back(new SoundItem(buffer, bufmap));
-						soundMap[name] = newid;
-						return newid;
-					}
-					else
-						return 0;
+					MakeItemFromDef(bufmap);
 				}
 			}
-			LogObject(LOG_SOUND) << "CSound(): Successfully parsed " << keys.size() << " SoundItems from " << filename;
+			LogObject(LOG_SOUND) << " parsed " << keys.size() << " sounds from " << filename;
 		}
 	}
 	return true;
 }
 
-
-size_t CSound::LoadALBuffer(const std::string& path, bool strict)
+//! only used internally, locked in caller's scope
+size_t CSound::LoadSoundBuffer(const std::string& path, bool hardFail)
 {
-	assert(path.length() > 3);
-	CFileHandler file(path);
+	const size_t id = SoundBuffer::GetId(path);
+	
+	if (id > 0)
+	{
+		return id; // file is loaded already
+	}
+	else
+	{
+		CFileHandler file(path);
 
-	std::vector<boost::uint8_t> buf;
-	if (file.FileExists()) {
-		buf.resize(file.FileSize());
-		file.Read(&buf[0], file.FileSize());
-	} else {
-		if (strict) {
-			handleerror(0, "Couldn't open audio file", path.c_str(),0);
+		if (!file.FileExists())
+		{
+			if (hardFail) {
+				handleerror(0, "Couldn't open audio file", path.c_str(),0);
+			}
+			else
+				LogObject(LOG_SOUND) << "Unable to open audio file: " << path;
+			return 0;
 		}
 		else
-			LogObject(LOG_SOUND) << "Unable to open audio file: " << path;
-		return 0;
+		{
+			
+		}
+
+		std::vector<boost::uint8_t> buf(file.FileSize());
+		file.Read(&buf[0], file.FileSize());
+
+		boost::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
+		bool success = false;
+		const std::string ending = file.GetFileExt();
+		if (ending == "wav")
+			success = buffer->LoadWAV(path, buf, hardFail);
+		else if (ending == "ogg")
+			success = buffer->LoadVorbis(path, buf, hardFail);
+		else
+		{
+			LogObject(LOG_SOUND) << "CSound::LoadALBuffer: unknown audio format: " << ending;
+		}
+
+		CheckError("CSound::LoadALBuffer");
+		if (!success)
+		{
+			LogObject(LOG_SOUND) << "Failed to load file: " << path;
+			return 0;
+		}
+		else
+		{
+			return SoundBuffer::Insert(buffer);
+		}
 	}
-
-	boost::shared_ptr<SoundBuffer> buffer(new SoundBuffer());
-	bool success = false;
-	std::string ending = path.substr(path.length()-3);
-	std::transform(ending.begin(), ending.end(), ending.begin(), (int (*)(int))tolower);
-	if (ending == "wav")
-		success = buffer->LoadWAV(path, buf, strict);
-	else if (ending == "ogg")
-		success = buffer->LoadVorbis(path, buf, strict);
-	else
-	{
-		LogObject(LOG_SOUND) << "CSound::LoadALBuffer: unknown audio format: " << ending;
-	}
-
-	CheckError("CSound::LoadALBuffer");
-	if (!success)
-	{
-		return 0;
-	}
-	else
-	{
-		return SoundBuffer::Insert(buffer);
-	}
-}
-
-
-
-//! only used internally, locked in caller's scope
-size_t CSound::GetWaveId(const std::string& path, bool hardFail)
-{
-	if (sources.empty())
-		return 0;
-
-	const size_t id = SoundBuffer::GetId(path);
-	return (id == 0) ? LoadALBuffer(path, hardFail) : id;
-}
-
-//! only used internally, locked in caller's scope
-boost::shared_ptr<SoundBuffer> CSound::GetWaveBuffer(const std::string& path, bool hardFail)
-{
-	return SoundBuffer::GetById(GetWaveId(path, hardFail));
 }
 
 void CSound::NewFrame()

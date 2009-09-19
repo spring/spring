@@ -66,9 +66,7 @@ void CGroupHandler::Save(std::ostream *s)
 
 void CGroupHandler::Update()
 {
-	SCOPED_TIMER("Group AI");
-	for (std::vector<CGroup*>::iterator g=groups.begin(); g!=groups.end(); ++g)
-	{
+	for (std::vector<CGroup*>::iterator g=groups.begin(); g!=groups.end(); ++g) {
 		if ((*g) != NULL) {
 			(*g)->Update();
 		}

@@ -44,7 +44,7 @@
 #include "myMath.h"
 #include "Sync/SyncTracer.h"
 
-#endif
+#endif // _CONSOLE
 
 
 /******************************************************************************/
@@ -82,17 +82,17 @@ CCobInstance::~CCobInstance()
 	//Destroy();
 
 	for (std::list<struct AnimInfo *>::iterator i = anims.begin(); i != anims.end(); ++i) {
-		//All threads blocking on animations can be killed safely from here since the scheduler does not
-		//know about them
+		// All threads blocking on animations can be killed safely from here since the scheduler does not
+		// know about them
 		for (std::list<IAnimListener *>::iterator j = (*i)->listeners.begin(); j != (*i)->listeners.end(); ++j) {
 			delete *j;
 		}
 		// the anims are deleted in ~CUnitScript
 	}
 
-	//Can't delete the thread here because that would confuse the scheduler to no end
-	//Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
-	//Also unregister all callbacks
+	// Can't delete the thread here because that would confuse the scheduler to no end
+	// Instead, mark it as dead. It is the function calling Tick that is responsible for delete.
+	// Also unregister all callbacks
 	for (std::list<CCobThread *>::iterator i = threads.begin(); i != threads.end(); ++i) {
 		(*i)->state = CCobThread::Dead;
 		(*i)->SetCallback(NULL, NULL, NULL);
@@ -112,14 +112,14 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 
 		unsigned int cur;
 
-		//Map this piecename to an index in the script's pieceinfo
+		// Map this piecename to an index in the script's pieceinfo
 		for (cur=0; cur<lp.size(); cur++) {
 			if (lp[cur]->name.compare(scriptname) == 0) {
 				break;
 			}
 		}
 
-		//Not found? Try lowercase
+		// Not found? Try lowercase
 		if (cur == lp.size()) {
 			for (cur=0; cur<lp.size(); cur++) {
 				if (StringToLower(lp[cur]->name).compare(scriptname) == 0) {
@@ -128,7 +128,7 @@ void CCobInstance::MapScriptToModelPieces(LocalModel* lmodel)
 			}
 		}
 
-		//Did we find it?
+		// Did we find it?
 		if (cur < lp.size()) {
 			pieces.push_back(lp[cur]);
 		} else {
@@ -484,23 +484,23 @@ int CCobInstance::RealCall(int functionId, vector<int> &args, CBCobThreadFinish 
 	int res = t->Tick(30);
 	t->CommitAnims(30);
 
-	//Make sure this is run even if the call terminates instantly
+	// Make sure this is run even if the call terminates instantly
 	if (cb)
 		t->SetCallback(cb, p1, p2);
 
 	if (res == -1) {
 		unsigned int i = 0, argc = t->CheckStack(args.size());
-		//Retrieve parameter values from stack
+		// Retrieve parameter values from stack
 		for (; i < argc; ++i)
 			args[i] = t->GetStackVal(i);
-		//Set erroneous parameters to 0
+		// Set erroneous parameters to 0
 		for (; i < args.size(); ++i)
 			args[i] = 0;
 		delete t;
 		return 0;
 	}
 	else {
-		//It has already added itself to the correct scheduler (global for sleep, or local for anim)
+		// It has already added itself to the correct scheduler (global for sleep, or local for anim)
 		return 1;
 	}
 }

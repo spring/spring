@@ -264,7 +264,7 @@ void CGameHelper::Explosion(
 
 
 // called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
-float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/, CUnit* owner, CUnit *&hit, int collisionFlags)
+float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/, const CUnit* owner, const CUnit*& hit, int collisionFlags)
 {
 	float groundLength = ground->LineGroundCol(start, start + dir * length);
 	const bool ignoreAllies = !!(collisionFlags & COLLISION_NOFRIENDLY);
@@ -306,13 +306,13 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 		}
 	}
 
-	hit = 0;
+	hit = NULL;
 
 	for (int* qi = quads; qi != endQuad; ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
 
 		for (std::list<CUnit*>::const_iterator ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit* u = *ui;
+			const CUnit* u = *ui;
 
 			if (u == owner)
 				continue;
@@ -338,7 +338,7 @@ float CGameHelper::TraceRay(const float3& start, const float3& dir, float length
 	return length;
 }
 
-float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, CUnit*& hit, bool useRadar, CUnit* exclude)
+float CGameHelper::GuiTraceRay(const float3 &start, const float3 &dir, float length, const CUnit*& hit, bool useRadar, const CUnit* exclude)
 {
 	if (dir == ZeroVector) {
 		return -1.0f;
@@ -601,26 +601,31 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3& pos, float searchRadius, i
 	GML_RECMUTEX_LOCK(qnum); // GetClosestEnemyUnit
 
 	float closeDist = searchRadius * searchRadius;
-	CUnit* closeUnit = 0;
+	CUnit* closeUnit = NULL;
 	vector<int> quads = qf->GetQuads(pos, searchRadius);
 
-	int tempNum = gs->tempNum++;
+	const int tempNum = gs->tempNum++;
 	vector<int>::iterator qi;
 
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		std::list<CUnit*>::const_iterator ui;
+		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
+			if (teamHandler->Ally(searchAllyteam, t)) {
+				continue;
+			}
+			std::list<CUnit*>::const_iterator ui;
+			const std::list<CUnit*>& allyTeamUnits = quad.teamUnits[t];
+			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
+				if ((*ui)->tempNum != tempNum &&
+					(((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))) {
 
-		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if ((*ui)->tempNum != tempNum && !teamHandler->Ally(searchAllyteam, (*ui)->allyteam) &&
-				(((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))) {
+					(*ui)->tempNum = tempNum;
+					float sqDist = (pos - (*ui)->midPos).SqLength2D();
 
-				(*ui)->tempNum = tempNum;
-				float sqDist = (pos - (*ui)->midPos).SqLength2D();
-
-				if (sqDist <= closeDist) {
-					closeDist = sqDist;
-					closeUnit = *ui;
+					if (sqDist <= closeDist) {
+						closeDist = sqDist;
+						closeUnit = *ui;
+					}
 				}
 			}
 		}
@@ -726,22 +731,30 @@ CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int 
 {
 	GML_RECMUTEX_LOCK(qnum); // GetClosestEnemyAircraft
 
-	float closeDist=radius*radius;
-	CUnit* closeUnit=0;
-	vector<int> quads=qf->GetQuads(pos,radius);
+	float closeDist = radius*radius;
+	CUnit* closeUnit = NULL;
+	vector<int> quads = qf->GetQuads(pos,radius);
 
-	int tempNum=gs->tempNum++;
-	std::vector<int>::iterator qi;
+	const int tempNum = gs->tempNum++;
+	vector<int>::iterator qi;
+
 	for (qi = quads.begin(); qi != quads.end(); ++qi) {
 		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		std::list<CUnit*>::const_iterator ui;
-		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if((*ui)->unitDef->canfly && (*ui)->tempNum!=tempNum && !teamHandler->Ally(searchAllyteam,(*ui)->allyteam) && !(*ui)->crashing && (((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))){
-				(*ui)->tempNum=tempNum;
-				float sqDist=(pos-(*ui)->midPos).SqLength2D();
-				if(sqDist <= closeDist){
-					closeDist=sqDist;
-					closeUnit=*ui;
+		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
+			if (teamHandler->Ally(searchAllyteam, t)) {
+				continue;
+			}
+			std::list<CUnit*>::const_iterator ui;
+			const std::list<CUnit*>& allyTeamUnits = quad.teamUnits[t];
+			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
+				if ((*ui)->unitDef->canfly && (*ui)->tempNum != tempNum && !(*ui)->crashing &&
+					(((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))) {
+					(*ui)->tempNum = tempNum;
+					float sqDist = (pos - (*ui)->midPos).SqLength2D();
+					if (sqDist <= closeDist) {
+						closeDist = sqDist;
+						closeUnit = *ui;
+					}
 				}
 			}
 		}
@@ -810,7 +823,7 @@ bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float l
 }
 
 
-float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length, CFeature*& feature)
+float CGameHelper::GuiTraceRayFeature(const float3& start, const float3& dir, float length, const CFeature*& feature)
 {
 	float nearHit = length;
 
