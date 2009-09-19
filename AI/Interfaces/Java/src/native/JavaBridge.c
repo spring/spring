@@ -101,13 +101,13 @@ static jmethodID g_m_aiCallback_ctor = NULL;
 // ### General helper functions following ###
 
 /// Sets the FPU state to how spring likes it
-void java_establishSpringEnv() {
+inline void java_establishSpringEnv() {
 
 	//(*g_jvm)->DetachCurrentThread(g_jvm);
 	util_resetEngineEnv();
 }
 /// The JVM sets the environment it wants automatically, so this is a no-op
-void java_establishJavaEnv() {}
+inline void java_establishJavaEnv() {}
 
 
 static inline size_t minSize(size_t size1, size_t size2) {
