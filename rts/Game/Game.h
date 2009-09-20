@@ -151,7 +151,9 @@ private:
 	void ReColorTeams();
 
 	void ReloadCOB(const std::string& msg, int player);
-	void Skip(int toFrame);
+	void StartSkip(int toFrame);
+	void DrawSkip(bool blackscreen = true);
+	void EndSkip();
 
 	std::string hotBinding;
 	float inputTextPosX;
@@ -197,6 +199,15 @@ private:
 	unsigned char oldStatus;
 
 	void StoreCloaked(bool save);
+
+	int skipStartFrame;
+	int skipEndFrame;
+	int skipTotalFrames;
+	float skipSeconds;
+	bool skipSoundmute;
+	float skipOldSpeed;
+	float skipOldUserSpeed;
+	unsigned skipLastDraw;
 };
 
 
