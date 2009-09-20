@@ -2764,10 +2764,10 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			std::istringstream buf(action.extra.substr(6));
 			int targetframe;
 			buf >> targetframe;
-			Skip(targetframe);
+			StartSkip(targetframe);
 		}
 		else if (action.extra == "end") {
-			skipping = false;
+			EndSkip();
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
 	}
@@ -3050,8 +3050,24 @@ bool CGame::Draw() {
 #endif
 
 	//! timings and frame interpolation
-	thisFps++;
 	const unsigned currentTime = SDL_GetTicks();
+
+	if(skipping) {
+		if(skipLastDraw + 500 > currentTime) // render at 2 FPS
+			return true;
+		skipLastDraw = currentTime;
+#if defined(USE_GML) && GML_ENABLE_SIM
+		extern volatile int gmlMultiThreadSim;
+		if(!gmlMultiThreadSim)
+#endif
+		{
+			DrawSkip();
+			return true;
+		}
+	}
+
+	thisFps++;
+
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
 	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
@@ -3339,6 +3355,11 @@ bool CGame::Draw() {
 
 		smallFont->End();
 	}
+
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if(skipping)
+		DrawSkip(false);
+#endif
 
 	mouse->DrawCursor();
 
@@ -4930,79 +4951,74 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 }
 
 
-void CGame::Skip(int toFrame)
-{
+void CGame::StartSkip(int toFrame) {
 	if (skipping) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
 	}
 
-	const int startFrame = gs->frameNum;
-	int endFrame = toFrame;
+	skipStartFrame = gs->frameNum;
+	skipEndFrame = toFrame;
 
-	if (endFrame <= startFrame) {
-		logOutput.Print("Already passed %i (%i)\n", endFrame / GAME_SPEED, endFrame);
+	if (skipEndFrame <= skipStartFrame) {
+		logOutput.Print("Already passed %i (%i)\n", skipEndFrame / GAME_SPEED, skipEndFrame);
 		return;
 	}
 
-	const int totalFrames = endFrame - startFrame;
-	const float seconds = (float)(totalFrames) / (float)GAME_SPEED;
+	skipTotalFrames = skipEndFrame - skipStartFrame;
+	skipSeconds = (float)(skipTotalFrames) / (float)GAME_SPEED;
 
-	bool soundmute = sound->IsMuted();
-	if (!soundmute)
+	skipSoundmute = sound->IsMuted();
+	if (!skipSoundmute)
 		sound->Mute(); // no sounds
 
+	skipOldSpeed     = gs->speedFactor;
+	skipOldUserSpeed = gs->userSpeedFactor;
+	const float speed = 1.0f;
+	gs->speedFactor     = speed;
+	gs->userSpeedFactor = speed;
+
+	skipLastDraw = SDL_GetTicks();
+
 	skipping = true;
-	{
-		const float oldSpeed     = gs->speedFactor;
-		const float oldUserSpeed = gs->userSpeedFactor;
-		const float speed = 1.0f;
-		gs->speedFactor     = speed;
-		gs->userSpeedFactor = speed;
+}
 
-		Uint32 gfxLastTime = SDL_GetTicks() - 10000; // force the first draw
 
-		while (skipping && endFrame >= gs->frameNum) {
-			// FIXME: messes up the how-many-frames-are-left bar
-			Update();
-
-			// draw something so that users don't file bug reports
-			const Uint32 gfxTime = SDL_GetTicks();
-			if ((gfxTime - gfxLastTime) > 100) { // 10fps
-				gfxLastTime = gfxTime;
-
-				const int framesLeft = (endFrame - gs->frameNum);
-				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT);
-				glColor3f(0.5f, 1.0f, 0.5f);
-				font->glFormat(0.5f, 0.55f, 2.5f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Skipping %.1f game seconds", seconds);
-				glColor3f(1.0f, 1.0f, 1.0f);
-				font->glFormat(0.5f, 0.45f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "(%i frames left)", framesLeft);
-
-				const float ff = (float)framesLeft / (float)totalFrames;
-				glDisable(GL_TEXTURE_2D);
-				const float b = 0.004f; // border
-				const float yn = 0.35f;
-				const float yp = 0.38f;
-				glColor3f(0.2f, 0.2f, 1.0f);
-				glRectf(0.25f - b, yn - b, 0.75f + b, yp + b);
-				glColor3f(0.25f + (0.75f * ff), 1.0f - (0.75f * ff), 0.0f);
-				glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
-
-				SDL_GL_SwapBuffers();
-			}
-		}
-
-		gu->gameTime    += seconds;
-		gu->modGameTime += seconds;
-
-		gs->speedFactor     = oldSpeed;
-		gs->userSpeedFactor = oldUserSpeed;
+void CGame::DrawSkip(bool blackscreen) {
+	const int framesLeft = (skipEndFrame - gs->frameNum);
+	if(blackscreen) {
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 	}
+	glColor3f(0.5f, 1.0f, 0.5f);
+	font->glFormat(0.5f, 0.55f, 2.5f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Skipping %.1f game seconds", skipSeconds);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	font->glFormat(0.5f, 0.45f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "(%i frames left)", framesLeft);
 
-	if (!soundmute)
+	const float ff = (float)framesLeft / (float)skipTotalFrames;
+	glDisable(GL_TEXTURE_2D);
+	const float b = 0.004f; // border
+	const float yn = 0.35f;
+	const float yp = 0.38f;
+	glColor3f(0.2f, 0.2f, 1.0f);
+	glRectf(0.25f - b, yn - b, 0.75f + b, yp + b);
+	glColor3f(0.25f + (0.75f * ff), 1.0f - (0.75f * ff), 0.0f);
+	glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
+}
+
+
+void CGame::EndSkip() {
+	skipping = false;
+
+	gu->gameTime    += skipSeconds;
+	gu->modGameTime += skipSeconds;
+
+	gs->speedFactor     = skipOldSpeed;
+	gs->userSpeedFactor = skipOldUserSpeed;
+
+	if (!skipSoundmute)
 		sound->Mute(); // sounds back on
 
-	logOutput.Print("Skipped %.1f seconds\n", seconds);
+	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
 }
 
 
