@@ -63,6 +63,7 @@
 
 #include "COB/NullUnitScript.h"
 #include "COB/UnitScriptFactory.h"
+#include "COB/CobInstance.h" // for TAANG2RAD
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -2059,10 +2060,10 @@ void CUnit::Deactivate()
 
 void CUnit::UpdateWind(float x, float z, float strength)
 {
-	const float heading = GetHeadingFromVectorF(-x, -z);
-	strength = std::min(strength, unitDef->windGenerator);
+	const float windHeading = ClampRad(GetHeadingFromVectorF(-x, -z) - heading * TAANG2RAD);
+	const float windStrength = std::min(strength, unitDef->windGenerator);
 
-	script->WindChanged(heading, strength);
+	script->WindChanged(windHeading, windStrength);
 }
 
 
