@@ -2182,3 +2182,21 @@ bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const
 
 	return asIcon;
 }
+
+
+void CUnitDrawer::BackupUnits()
+{
+	GML_RECMUTEX_LOCK(unit); // BackupUnits
+
+	drawCloakedSave = drawCloaked;
+	drawCloakedS3OSave = drawCloakedS3O;
+}
+
+
+void CUnitDrawer::RestoreUnits()
+{
+	GML_RECMUTEX_LOCK(unit); // RestoreUnits
+
+	drawCloaked = drawCloakedSave;
+	drawCloakedS3O = drawCloakedS3OSave;
+}

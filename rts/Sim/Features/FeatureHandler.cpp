@@ -156,12 +156,16 @@ void CFeatureHandler::PostLoad()
 
 void CFeatureHandler::BackupFeatures()
 {
+	GML_RECMUTEX_LOCK(feat); // BackupFeatures
+
 	fadeFeaturesSave    = fadeFeatures;
 	fadeFeaturesS3OSave = fadeFeaturesS3O;
 }
 
 void CFeatureHandler::RestoreFeatures()
 {
+	GML_RECMUTEX_LOCK(feat); // RestoreFeatures
+
 	fadeFeatures    = fadeFeaturesSave;
 	fadeFeaturesS3O = fadeFeaturesS3OSave;
 }

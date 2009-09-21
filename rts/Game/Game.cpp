@@ -3004,30 +3004,12 @@ bool CGame::DrawWorld()
 
 void CGame::StoreCloaked(bool save) {
 	if(save) {
-		{
-			GML_RECMUTEX_LOCK(unit); // StoreCloaked
-
-			unitDrawer->drawCloakedSave = unitDrawer->drawCloaked;
-			unitDrawer->drawCloakedS3OSave = unitDrawer->drawCloakedS3O;
-		}
-		{
-			GML_RECMUTEX_LOCK(feat); // StoreCloaked
-
-			featureHandler->BackupFeatures();
-		}
+		unitDrawer->BackupUnits();
+		featureHandler->BackupFeatures();
 	}
 	else {
-		{
-			GML_RECMUTEX_LOCK(unit); // StoreCloaked
-
-			unitDrawer->drawCloaked = unitDrawer->drawCloakedSave;
-			unitDrawer->drawCloakedS3O = unitDrawer->drawCloakedS3OSave;
-		}
-		{
-			GML_RECMUTEX_LOCK(feat); // StoreCloaked
-
-			featureHandler->RestoreFeatures();
-		}
+		unitDrawer->RestoreUnits();
+		featureHandler->RestoreFeatures();
 	}
 }
 
