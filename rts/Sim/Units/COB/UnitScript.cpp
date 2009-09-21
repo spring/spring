@@ -70,7 +70,6 @@ CUnitScript::CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& piece
 	: unit(unit)
 	, yardOpen(false)
 	, busy(false)
-	, hasHitByWeaponId(false)
 	, hasSetSFXOccupy(false)
 	, hasRockUnit(false)
 	, hasStartBuilding(false)

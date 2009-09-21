@@ -76,7 +76,6 @@ protected:
 
 	std::list<AnimInfo*> anims;
 
-	bool hasHitByWeaponId;
 	bool hasSetSFXOccupy;
 	bool hasRockUnit;
 	bool hasStartBuilding;
@@ -185,7 +184,6 @@ public:
 	}
 
 	// checks for callin existence
-	bool HasHitByWeaponId() const { return hasHitByWeaponId; }
 	bool HasSetSFXOccupy () const { return hasSetSFXOccupy; }
 	bool HasRockUnit     () const { return hasRockUnit; }
 	bool HasStartBuilding() const { return hasStartBuilding; }
@@ -200,8 +198,7 @@ public:
 	virtual void WindChanged(float heading, float speed) = 0;
 	virtual void ExtractionRateChanged(float speed) = 0;
 	virtual void RockUnit(const float3& rockDir) = 0;
-	virtual void HitByWeapon(const float3& hitDir) = 0;
-	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage) = 0;
+	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage) = 0;
 	virtual void SetSFXOccupy(int curTerrainType) = 0;
 	// doubles as QueryLandingPadCount and QueryLandingPad
 	// in COB, the first one determines the number of arguments to the second one
