@@ -557,8 +557,14 @@ void CLuaUnitScript::ExtractionRateChanged(float speed)
 
 void CLuaUnitScript::RockUnit(const float3& rockDir)
 {
+	//FIXME: change COB to get rockDir in unit space too, instead of world space?
+	const float c = cos(unit->heading * TAANG2RAD);
+	const float s = sin(unit->heading * TAANG2RAD);
+	const float x = c * rockDir.x - s * rockDir.z;
+	const float z = s * rockDir.x + c * rockDir.z;
+
 	//FIXME: maybe we want rockDir.y too to be future proof?
-	Call(LUAFN_RockUnit, rockDir.x, rockDir.z);
+	Call(LUAFN_RockUnit, x, z);
 }
 
 
@@ -576,13 +582,19 @@ void CLuaUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float&
 		return;
 	}
 
+	//FIXME: change COB to get hitDir in unit space too, instead of world space?
+	const float c = cos(unit->heading * TAANG2RAD);
+	const float s = sin(unit->heading * TAANG2RAD);
+	const float x = c * hitDir.x - s * hitDir.z;
+	const float z = s * hitDir.x + c * hitDir.z;
+
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 5);
 
 	PushFunction(fn);
-	lua_pushnumber(L, hitDir.x);
+	lua_pushnumber(L, x);
 	//FIXME: maybe we want hitDir.y too to be future proof?
-	lua_pushnumber(L, hitDir.z);
+	lua_pushnumber(L, z);
 	lua_pushnumber(L, weaponDefId);
 	lua_pushnumber(L, inout_damage);
 
