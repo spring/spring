@@ -996,11 +996,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& 
 	hitDir.y = 0.0f;
 	hitDir = -hitDir.SafeNormalize();
 
-	if (script->HasHitByWeaponId()) {
-		script->HitByWeaponId(hitDir, weaponDefId, /*inout*/ damage);
-	} else {
-		script->HitByWeapon(hitDir);
-	}
+	script->HitByWeapon(hitDir, weaponDefId, /*inout*/ damage);
 
 	float experienceMod = expMultiplier;
 	const int paralyzeTime = damages.paralyzeDamageTime;
