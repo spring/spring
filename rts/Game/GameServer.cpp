@@ -701,7 +701,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_QUIT: {
-			Message(str(format(PlayerLeft) %players[a].name %" normal quit"));
+			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
 			players[a].myState = GameParticipant::DISCONNECTED;
 			players[a].link.reset();
@@ -720,7 +720,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				players[playerNum].name = (std::string)((char*)inbuf+3);
 				players[playerNum].myState = GameParticipant::INGAME;
 				Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset pathing display
-				Message(str(format(PlayerJoined) %players[playerNum].name), false);
+				Message(str(format(PlayerJoined) %players[playerNum].GetType() %players[playerNum].name), false);
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
 				if (hostif)
 				{
@@ -939,7 +939,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						const bool isSpec                        = players[player].spectator;
 						const bool hasAIs_g                      = (myAIsInTeam_g.size() > 0);
 						const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam);
-						const char* playerType                   = (isSpec ? "Spectator" : "Player");
+						const char* playerType                   = players[player].GetType();
 						const bool isSinglePlayer                = (players.size() <= 1);
 
 						if (!isSinglePlayer &&
@@ -1250,7 +1250,7 @@ void CGameServer::ServerReadNet()
 			continue; // player not connected
 		if (players[a].link->CheckTimeout())
 		{
-			Message(str(format(PlayerLeft) %players[a].name %" timeout")); //this must happen BEFORE the reset!
+			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" timeout")); //this must happen BEFORE the reset!
 			players[a].myState = GameParticipant::DISCONNECTED;
 			players[a].link.reset();
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 0));
@@ -1651,7 +1651,7 @@ void CGameServer::KickPlayer(const int playerNum)
 {
 	if (players[playerNum].link) // only kick connected players
 	{
-		Message(str(format(PlayerLeft) %playerNum %"kicked"));
+		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
 		players[playerNum].Kill();
 		if (hostif)
