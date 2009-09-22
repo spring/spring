@@ -188,9 +188,11 @@ local sleepers = {}
 
 -- Helper for Destroy and Signal.
 local function Remove(tab, item)
-	for i=1,#tab do
+	local n = #tab
+	for i = 1,n do
 		if (tab[i] == item) then
-			table.remove(tab, i)
+			tab[i] = tab[n]
+			tab[n] = nil
 			return
 		end
 	end
@@ -201,7 +203,7 @@ local function Destroy()
 	if activeUnit then
 		for _,thread in pairs(activeUnit.threads) do
 			if thread.container then
-				Remove(thread.container, thread) -- FIXME: performance?
+				Remove(thread.container, thread)
 			end
 		end
 		units[activeUnit.unitID] = nil
@@ -340,7 +342,7 @@ function Spring.UnitScript.Signal(mask)
 	for _,thread in pairs(activeUnit.threads) do
 		if (bit_and(thread.signal_mask, mask) ~= 0) then
 			if thread.container then
-				Remove(thread.container, thread) -- FIXME: performance?
+				Remove(thread.container, thread)
 			end
 		end
 	end
