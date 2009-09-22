@@ -362,8 +362,6 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 
 void CUnit::ForcedMove(const float3& newPos)
 {
-	// hack to make mines not block ground
-	const bool blocking = !unitDef->canKamikaze || (unitDef->type == "Building" || unitDef->type == "Factory");
 	if (blocking) {
 		UnBlock();
 	}
@@ -1160,7 +1158,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 	CTransportUnit *trans;
 
 	if (usingScriptMoveType ||
-	    (!beingBuilt && (physicalState == Flying) && unitDef->canmove)) {
+	    (!beingBuilt && (physicalState == CSolidObject::Flying) && unitDef->canmove)) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
 		// note: (CAirMoveType) aircraft under construction should not
 		// use this matrix, or their nanoframes won't spin on pad
@@ -1561,32 +1559,28 @@ void CUnit::Init(const CUnit* builder)
 	// TODO: Improve this. There might be cases when this is not correct.
 	if (unitDef->movedata &&
 	    (unitDef->movedata->moveType == MoveData::Hover_Move)) {
-		physicalState = Hovering;
+		physicalState = CSolidObject::Hovering;
 	} else if (floatOnWater) {
-		physicalState = Floating;
+		physicalState = CSolidObject::Floating;
 	} else {
-		physicalState = OnGround;
+		physicalState = CSolidObject::OnGround;
 	}
 
-	// all units are set as ground-blocking by default,
-	// units that pretend to be "pseudo-buildings" (ie.
-	// hubs, etc) are flagged as immobile so that their
-	// positions are not considered valid for building
-	blocking = true;
+
+	// all units are blocking (ie. register on the blk-map
+	// when not flying) except mines, since their position
+	// would be given away otherwise by the PF, etc.
+	// note: this does mean that mines can be stacked (would
+	// need an extra yardmap character to prevent)
 	immobile = (unitDef->speed < 0.001f || !unitDef->canmove);
+	blocking = !(immobile && unitDef->canKamikaze);
 
-	// some torp launchers etc are exactly in the surface and should be considered uw anyway
-	if ((pos.y + model->height) < 0.0f) {
-		isUnderWater = true;
-	}
-
-	// semi hack to make mines not block ground
-	if (!unitDef->canKamikaze ||
-	    (unitDef->type == "Building") ||
-	    (unitDef->type == "Factory")) {
+	if (blocking) {
 		Block();
 	}
 
+
+	isUnderWater = ((pos.y + model->height) < 0.0f);
 	UpdateTerrainType();
 
 	Command c;
@@ -2188,7 +2182,7 @@ void CUnit::PostLoad()
 	//HACK:Initializing after load
 	unitDef = unitDefHandler->GetUnitDefByName(unitDefName);
 
-	yardMap = unitDef->yardmaps[buildFacing];
+	curYardMap = unitDef->yardmaps[buildFacing];
 
 	model = unitDef->LoadModel();
 	SetRadius(model->radius);

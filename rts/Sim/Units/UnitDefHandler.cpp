@@ -482,6 +482,8 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	}
 
 	ud.categoryString = udTable.GetString("category", "");
+	ud.TEDClassString = udTable.GetString("TEDClass", "0");
+
 	ud.category = CCategoryHandler::Instance()->GetCategories(udTable.GetString("category", ""));
 	ud.noChaseCategory = CCategoryHandler::Instance()->GetCategories(udTable.GetString("noChaseCategory", ""));
 //	logOutput.Print("Unit %s has cat %i",ud.humanName.c_str(),ud.category);
@@ -575,8 +577,6 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 
 	ud.canDGun = udTable.GetBool("canDGun", false);
 
-	string TEDClass = udTable.GetString("TEDClass", "0");
-	ud.TEDClassString = TEDClass;
 
 	ud.extractRange = 0.0f;
 	ud.extractSquare = udTable.GetBool("extractSquare", false);
@@ -589,7 +589,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		ud.type = "Transport";
 	}
 	else if (ud.builder) {
-		if (TEDClass != "PLANT") {
+		if (ud.TEDClassString != "PLANT") {
 			ud.type = "Builder";
 		} else {
 			ud.type = "Factory";
@@ -597,10 +597,11 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 	}
 	else if (ud.canfly && !ud.hoverAttack) {
 		if (!ud.weapons.empty() && (ud.weapons[0].def != 0) &&
-		   (ud.weapons[0].def->type=="AircraftBomb" || ud.weapons[0].def->type=="TorpedoLauncher")) {
+		   (ud.weapons[0].def->type == "AircraftBomb" || ud.weapons[0].def->type == "TorpedoLauncher")) {
 			ud.type = "Bomber";
+
 			if (ud.turnRadius == 500) { // only reset it if user hasnt set it explicitly
-				ud.turnRadius = 1000;     // hint to the ai about how large turn radius this plane needs
+				ud.turnRadius *= 2;   // hint to the ai about how large turn radius this plane needs
 			}
 		} else {
 			ud.type = "Fighter";
@@ -924,8 +925,9 @@ void CUnitDefHandler::CreateYardMap(UnitDef* def, std::string yardmapStr)
 			for (int x = 0; x < mw / 2; x++) {
 
 					 if (*si == 'g') def->needGeo = true;
-				else if (*si == 'c') originalMap[x + y * mw / 2] = 1; // blocking
-				else if (*si == 'y') originalMap[x + y * mw / 2] = 0; // non-blocking
+				else if (*si == 'c') originalMap[x + y * mw / 2] = 1; // blocking (not walkable, not buildable)
+				else if (*si == 'y') originalMap[x + y * mw / 2] = 0; // non-blocking (walkable, buildable)
+			//	else if (*si == 'o') originalMap[x + y * mw / 2] = 2; // walkable, not buildable?
 
 				// advance one non-space character (matching the column
 				// <x> we have just advanced) in this row, and skip any
