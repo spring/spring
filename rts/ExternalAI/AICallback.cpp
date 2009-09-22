@@ -981,6 +981,11 @@ const float* CAICallback::GetHeightMap()
 	return readmap->centerheightmap;
 }
 
+const float* CAICallback::GetCornersHeightMap()
+{
+	return readmap->GetHeightmap();
+}
+
 float CAICallback::GetMinHeight()
 {
 	return readmap->minheight;

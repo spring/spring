@@ -101,6 +101,7 @@ public:
 	int GetMapWidth();
 	int GetMapHeight();
 	const float* GetHeightMap();
+	const float* GetCornersHeightMap();
 	float GetMinHeight();
 	float GetMaxHeight();
 	const float* GetSlopeMap();
