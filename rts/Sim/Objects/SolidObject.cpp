@@ -47,12 +47,12 @@ CSolidObject::CSolidObject():
 	zsize(1),
 	height(1),
 	heading(0),
-	physicalState(Ghost),
+	physicalState(OnGround),
 	midPos(pos),
 	isMoving(false),
 	residualImpulse(0, 0, 0),
 	mobility(0),
-	yardMap(0),
+	curYardMap(0),
 	buildFacing(0),
 	isMarkedOnBlockingMap(false),
 	speed(0, 0, 0)
@@ -95,13 +95,13 @@ void CSolidObject::Block() {
 	if (!blocking) {
 		return;
 	}
-	if (physicalState == Ghost || physicalState == Flying) {
+	if (physicalState == Flying) {
 		return;
 	}
 
-	// use the object's yardmap if available
-	if (yardMap) {
-		groundBlockingObjectMap->AddGroundBlockingObject(this, yardMap);
+	// use the object's current yardmap if available
+	if (curYardMap != 0) {
+		groundBlockingObjectMap->AddGroundBlockingObject(this, curYardMap, 255);
 	} else {
 		groundBlockingObjectMap->AddGroundBlockingObject(this);
 	}

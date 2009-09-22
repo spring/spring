@@ -1416,18 +1416,18 @@ void CUnitScript::SetUnitVal(int val, int param)
 			break;
 		}
 		case YARD_OPEN: {
-			if (unit->yardMap != 0x0) {
+			if (unit->curYardMap != 0) {
 				// note: if this unit is a factory, engine-controlled
 				// OpenYard() and CloseYard() calls can interfere with
 				// the yardOpen state (they probably should be removed
 				// at some point)
 				if (param == 0) {
 					if (groundBlockingObjectMap->CanCloseYard(unit)) {
-						groundBlockingObjectMap->CloseBlockingYard(unit, unit->yardMap);
+						groundBlockingObjectMap->CloseBlockingYard(unit, unit->curYardMap);
 						yardOpen = false;
 					}
 				} else {
-					groundBlockingObjectMap->OpenBlockingYard(unit, unit->yardMap);
+					groundBlockingObjectMap->OpenBlockingYard(unit, unit->curYardMap);
 					yardOpen = true;
 				}
 			}
