@@ -26,24 +26,24 @@ CSkirmishAI::CSkirmishAI(int teamId, const SkirmishAIKey& key,
 		const SSkirmishAICallback* c_callback) :
 		teamId(teamId),
 		key(key),
-		timerName((std::string("SkirmishAI:") +
+		timerName("SkirmishAI:" +
 		          key.GetShortName() + "-" + key.GetVersion() +
-		          ":" + IntToString(teamId)).c_str())
+		          ":" + IntToString(teamId))
 {
-	SCOPED_TIMER(timerName);
+	SCOPED_TIMER(timerName.c_str());
 	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
 	library->Init(teamId, c_callback);
 }
 
 CSkirmishAI::~CSkirmishAI() {
 
-	SCOPED_TIMER(timerName);
+	SCOPED_TIMER(timerName.c_str());
 	library->Release(teamId);
 	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
 }
 
 int CSkirmishAI::HandleEvent(int topic, const void* data) const {
 
-	SCOPED_TIMER(timerName);
+	SCOPED_TIMER(timerName.c_str());
 	return library->HandleEvent(teamId, topic, data);
 }

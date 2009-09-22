@@ -21,6 +21,8 @@
 #include "ISkirmishAI.h"
 #include "SkirmishAIKey.h"
 
+#include <string>
+
 class ISkirmishAILibrary;
 struct SSkirmishAICallback;
 
@@ -39,7 +41,7 @@ private:
 	int teamId;
 	const SkirmishAIKey key;
 	const ISkirmishAILibrary* library;
-	const char* const timerName;
+	const std::string timerName;
 };
 
 #endif // _SKIRMISHAI_H
