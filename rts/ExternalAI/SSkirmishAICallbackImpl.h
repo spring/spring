@@ -624,6 +624,9 @@ EXPORT(int              ) skirmishAiCallback_Map_getHeight(int teamId);
 EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1SIZE0getHeightMap(int teamId);
 EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1VALS0getHeightMap(int teamId,
 		float heights[], int heights_max);
+EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1SIZE0getCornersHeightMap(int teamId);
+EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1VALS0getCornersHeightMap(int teamId,
+		float cornerHeights[], int cornerHeights_max);
 EXPORT(float            ) skirmishAiCallback_Map_getMinHeight(int teamId);
 EXPORT(float            ) skirmishAiCallback_Map_getMaxHeight(int teamId);
 EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1SIZE0getSlopeMap(int teamId);

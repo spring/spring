@@ -293,9 +293,18 @@ public:
 	/**
 	 * This is the height for the center of the squares.
 	 * This differs slightly from the drawn map since
-	 * it uses the height at the corners
+	 * that one uses the height at the corners.
+	 * Use this one if you are unsure whether you need corners or centers.
+	 * @see GetCornerHeightMap()
 	 */
 	virtual const float* GetHeightMap() = 0;
+	/**
+	 * This is the height for the corners of the squares.
+	 * This is the same like the drawn map.
+	 * It is one unit wider and one higher then the centers height map.
+	 * @see GetHeightMap()
+	 */
+	virtual const float* GetCornersHeightMap() = 0;
 	/// readmap->minHeight
 	virtual float GetMinHeight() = 0;
 	/// readmap->maxHeight

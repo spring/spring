@@ -1142,10 +1142,28 @@ int (CALLING_CONV *Clb_Map_getHeight)(int teamId);
  * - each data position is 8*8 in size
  * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+ *
+ * @see getCornersHeightMap()
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getHeightMap)(int teamId);
 int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId,
 		float heights[], int heights_max);
+/**
+ * Returns the height for the corners of the squares.
+ * This is the same like the drawn map.
+ * It is one unit wider and one higher then the centers height map.
+ *
+ * - do NOT modify or delete the height-map (native code relevant only)
+ * - index 0 is top left
+ * - 4 points mark the edges of an area of 8*8 in size
+ * - the value for upper left corner of the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the last value, bottom right, is at index ((width/8+1) * (height/8+1) - 1)
+ *
+ * @see getHeightMap()
+ */
+int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getCornersHeightMap)(int teamId);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getCornersHeightMap)(int teamId,
+		float cornerHeights[], int cornerHeights_max);
 float (CALLING_CONV *Clb_Map_getMinHeight)(int teamId);
 float (CALLING_CONV *Clb_Map_getMaxHeight)(int teamId);
 /**
