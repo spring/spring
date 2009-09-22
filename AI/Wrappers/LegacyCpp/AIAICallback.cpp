@@ -685,6 +685,19 @@ const float* CAIAICallback::GetHeightMap() {
 	return heightMap;
 }
 
+const float* CAIAICallback::GetCornersHeightMap() {
+
+	static float* cornersHeightMap = NULL;
+
+	if (cornersHeightMap == NULL) {
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getCornersHeightMap(teamId);
+		cornersHeightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		sAICallback->Clb_Map_0ARRAY1VALS0getCornersHeightMap(teamId, cornersHeightMap, size);
+	}
+
+	return cornersHeightMap;
+}
+
 float CAIAICallback::GetMinHeight() {
 	return sAICallback->Clb_Map_getMinHeight(teamId);
 }
