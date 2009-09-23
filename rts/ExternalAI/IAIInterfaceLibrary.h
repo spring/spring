@@ -18,9 +18,11 @@
 #ifndef _IAIINTERFACELIBRARY_H
 #define	_IAIINTERFACELIBRARY_H
 
-#include "ISkirmishAILibrary.h"
+#include "ExternalAI/Interface/ELevelOfSupport.h"
+
 #include <string>
 
+class CSkirmishAILibrary;
 class CSkirmishAILibraryInfo;
 class AIInterfaceKey;
 class SkirmishAIKey;
@@ -52,7 +54,7 @@ public:
 	 * For the C and C++ AI interface eg, this will load a shared library.
 	 * Increments the load counter.
 	 */
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(
+	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(
 			const CSkirmishAILibraryInfo& skirmishAIInfo) = 0;
 	/**
 	 * @brief	unloads the Skirmish AI library

@@ -18,8 +18,6 @@
 #ifndef _SKIRMISHAILIBRARY_H
 #define	_SKIRMISHAILIBRARY_H
 
-#include "ISkirmishAILibrary.h"
-
 #include "SkirmishAIKey.h"
 #include "Interface/SSkirmishAILibrary.h"
 #include <vector>
@@ -28,9 +26,11 @@ class AIInterfaceKey;
 struct SSkirmishAICallback;
 
 /**
- * Default implementation of ISkirmishAILibrary.
+ * The engines container for a Skirmish AI library.
+ * An instance of this class may represent RAI or KAIK.
+ * @see CSkirmishAI
  */
-class CSkirmishAILibrary : public ISkirmishAILibrary {
+class CSkirmishAILibrary {
 public:
 	CSkirmishAILibrary(const SSkirmishAILibrary& ai, const SkirmishAIKey& key);
 	virtual ~CSkirmishAILibrary();

@@ -131,9 +131,9 @@ static int CALLING_CONV handleEvent_empty(int teamId, int receiver, const void* 
 
 
 // Skirmish AI methods
-const ISkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo) {
+const CSkirmishAILibrary* CAIInterfaceLibrary::FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo) {
 
-	ISkirmishAILibrary* ai = NULL;
+	CSkirmishAILibrary* ai = NULL;
 
 	const SkirmishAIKey& skirmishAIKey = aiInfo.GetKey();
 
