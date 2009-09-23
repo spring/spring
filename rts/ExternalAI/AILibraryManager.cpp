@@ -297,7 +297,7 @@ std::vector<SkirmishAIKey> CAILibraryManager::FittingSkirmishAIKeys(
 
 
 
-const ISkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) {
+const CSkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) {
 	T_skirmishAIInfos::const_iterator aiInfo = skirmishAIInfos.find(skirmishAIKey);
 
 	if (aiInfo == skirmishAIInfos.end()) {

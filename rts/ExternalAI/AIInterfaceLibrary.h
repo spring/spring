@@ -47,7 +47,7 @@ public:
 	virtual int GetLoadCount() const;
 
 	// Skirmish AI methods
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo);
+	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(const CSkirmishAILibraryInfo& aiInfo);
 	virtual int ReleaseSkirmishAILibrary(const SkirmishAIKey& sAISpecifier);
 	virtual int GetSkirmishAILibraryLoadCount(const SkirmishAIKey& sAISpecifier) const;
 	virtual int ReleaseAllSkirmishAILibraries();
@@ -63,7 +63,7 @@ private:
 	SharedLib* sharedLib;
 	SAIInterfaceLibrary sAIInterfaceLibrary;
 	const CAIInterfaceLibraryInfo& info;
-	std::map<const SkirmishAIKey, ISkirmishAILibrary*> loadedSkirmishAILibraries;
+	std::map<const SkirmishAIKey, CSkirmishAILibrary*> loadedSkirmishAILibraries;
 	std::map<const SkirmishAIKey, int> skirmishAILoadCount;
 
 private:

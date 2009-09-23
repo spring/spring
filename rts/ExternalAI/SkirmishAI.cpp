@@ -18,7 +18,7 @@
 #include "SkirmishAI.h"
 
 #include "IAILibraryManager.h"
-#include "ISkirmishAILibrary.h"
+#include "SkirmishAILibrary.h"
 #include "TimeProfiler.h"
 #include "Util.h"
 

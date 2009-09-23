@@ -22,7 +22,7 @@
 
 #include <string>
 
-class ISkirmishAILibrary;
+class CSkirmishAILibrary;
 struct SSkirmishAICallback;
 
 /**
@@ -45,7 +45,7 @@ public:
 private:
 	int teamId;
 	const SkirmishAIKey key;
-	const ISkirmishAILibrary* library;
+	const CSkirmishAILibrary* library;
 	const std::string timerName;
 };
 

@@ -60,7 +60,7 @@ public:
 	 * A Skirmish AI (its library) is only really loaded
 	 * when it is not yet loaded.
 	 */
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(
+	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(
 			const SkirmishAIKey& skirmishAIKey);
 	/**
 	 * A Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called

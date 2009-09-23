@@ -688,10 +688,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\ISkirmishAILibrary.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\ExternalAI\LuaAIImplHandler.cpp"
 				>
 			</File>
