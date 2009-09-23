@@ -328,9 +328,9 @@ void CAILibraryManager::ReleaseAllSkirmishAILibraries() {
 
 
 
-IAIInterfaceLibrary* CAILibraryManager::FetchInterface(const AIInterfaceKey& interfaceKey) {
+CAIInterfaceLibrary* CAILibraryManager::FetchInterface(const AIInterfaceKey& interfaceKey) {
 
-	IAIInterfaceLibrary* interfaceLib = NULL;
+	CAIInterfaceLibrary* interfaceLib = NULL;
 
 	T_loadedInterfaces::const_iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceKey);
 	if (interfacePos == loadedAIInterfaceLibraries.end()) { // interface not yet loaded
@@ -352,7 +352,7 @@ void CAILibraryManager::ReleaseInterface(const AIInterfaceKey& interfaceKey) {
 
 	T_loadedInterfaces::iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceKey);
 	if (interfacePos != loadedAIInterfaceLibraries.end()) {
-		IAIInterfaceLibrary* interfaceLib = interfacePos->second;
+		CAIInterfaceLibrary* interfaceLib = interfacePos->second;
 		if (interfaceLib->GetLoadCount() == 0) {
 			loadedAIInterfaceLibraries.erase(interfacePos);
 			delete interfaceLib;

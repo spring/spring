@@ -16,9 +16,8 @@
 */
 
 #ifndef _IAILIBRARYMANAGER_H
-#define	_IAILIBRARYMANAGER_H
+#define _IAILIBRARYMANAGER_H
 
-#include "IAIInterfaceLibrary.h"
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
 
