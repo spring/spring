@@ -77,7 +77,7 @@ Request a new multipath, store the result and return a handle-id to it.
 */
 unsigned int CPathManager::RequestPath(const MoveData* moveData, float3 startPos,
 		CPathFinderDef* peDef, float3 goalPos, CSolidObject* caller) {
-	SCOPED_TIMER("AI:PFS");
+	SCOPED_TIMER("PFS");
 
 	// Creates a new multipath.
 	MultiPath* newPath = new MultiPath(startPos, peDef, moveData);
@@ -277,7 +277,7 @@ Removes and return the next waypoint in the multipath corresponding to given id.
 float3 CPathManager::NextWaypoint(unsigned int pathId, float3 callerPos, float minDistance,
 		int numRetries, int ownerId) const
 {
-	SCOPED_TIMER("AI:PFS");
+	SCOPED_TIMER("PFS");
 
 	//0 indicate a no-path id.
 	if(pathId == 0)
@@ -377,7 +377,7 @@ Runned every 1/30sec during runtime.
 */
 void CPathManager::Update()
 {
-	SCOPED_TIMER("AI:PFS:Update");
+	SCOPED_TIMER("PFS:Update");
 	pf->UpdateHeatMap();
 	pe->Update();
 	pe2->Update();
