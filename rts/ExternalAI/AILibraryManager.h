@@ -75,7 +75,7 @@ public:
 	virtual void ReleaseEverything();
 
 private:
-	typedef std::map<const AIInterfaceKey, IAIInterfaceLibrary*>
+	typedef std::map<const AIInterfaceKey, CAIInterfaceLibrary*>
 			T_loadedInterfaces;
 	T_loadedInterfaces loadedAIInterfaceLibraries;
 
@@ -91,7 +91,7 @@ private:
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
 	 */
-	IAIInterfaceLibrary* FetchInterface(const AIInterfaceKey& interfaceKey);
+	CAIInterfaceLibrary* FetchInterface(const AIInterfaceKey& interfaceKey);
 	/**
 	 * Unloads the interface if its load count reaches 0.
 	 */
