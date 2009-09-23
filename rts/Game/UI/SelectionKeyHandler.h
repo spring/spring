@@ -18,6 +18,7 @@ public:
 
 	void DoSelection(std::string selectString);
 
+private:
 	int selectNumber;	//used to go through all possible units when selecting only a few
 };
 
