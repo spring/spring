@@ -18,7 +18,6 @@
 #ifndef _SKIRMISHAI_H
 #define _SKIRMISHAI_H
 
-#include "ISkirmishAI.h"
 #include "SkirmishAIKey.h"
 
 #include <string>
@@ -27,14 +26,20 @@ class ISkirmishAILibrary;
 struct SSkirmishAICallback;
 
 /**
- * The default implementation of ISkirmishAI.
+ * The most basic representation of a Skirmish AI instance from the engines POV.
+ * A Skirmish AI instance can be seen as an instance of the AI,
+ * that is dedicated to control a specific team (eg team 1)).
+ * @see CSkirmishAILibrary
  */
-class CSkirmishAI : public ISkirmishAI {
+class CSkirmishAI {
 public:
 	CSkirmishAI(int teamId, const SkirmishAIKey& skirmishAIKey,
 		const SSkirmishAICallback* c_callback);
 	virtual ~CSkirmishAI();
 
+	/**
+	 * CAUTION: takes C AI Interface events, not engine C++ ones!
+	 */
 	virtual int HandleEvent(int topic, const void* data) const;
 
 private:

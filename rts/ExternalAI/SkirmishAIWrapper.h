@@ -19,7 +19,6 @@
 #define _SKIRMISHAIWRAPPER_H
 
 #include "Object.h"
-#include "ISkirmishAI.h"
 #include "GlobalAICallback.h"
 #include "SkirmishAIKey.h"
 #include "Platform/SharedLib.h"
@@ -29,6 +28,7 @@
 
 class CAICallback;
 struct SSkirmishAICallback;
+struct CSkirmishAI;
 struct Command;
 class float3;
 
@@ -37,7 +37,7 @@ class float3;
  * Basically converts function calls to AIEvents,
  * which are then sent ot the AI.
  */
-class CSkirmishAIWrapper : public CObject, public ISkirmishAI {
+class CSkirmishAIWrapper : public CObject {
 private:
 	CR_DECLARE(CSkirmishAIWrapper);
 	/// used only by creg
@@ -87,12 +87,6 @@ public:
 	virtual void SetCheatEventsEnabled(bool enable);
 	virtual bool IsCheatEventsEnabled() const;
 
-	/**
-	 * inherited from ISkirmishAI.
-	 * CAUTION: takes C AI Interface events, not engine C++ ones!
-	 */
-	virtual int HandleEvent(int topic, const void* data) const;
-
 	virtual void Init();
 	/// @see SReleaseEvent in Interface/AISEvents.h
 	virtual void Release(int reason = 0 /* = unspecified */);
@@ -102,7 +96,7 @@ private:
 	int teamId;
 	bool cheatEvents;
 
-	ISkirmishAI* ai;
+	CSkirmishAI* ai;
 	bool initialized, released;
 	CGlobalAICallback* callback;
 	SSkirmishAICallback* c_callback;

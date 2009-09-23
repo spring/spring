@@ -424,9 +424,3 @@ void CSkirmishAIWrapper::SetCheatEventsEnabled(bool enable) {
 bool CSkirmishAIWrapper::IsCheatEventsEnabled() const {
 	return cheatEvents;
 }
-
-
-int CSkirmishAIWrapper::HandleEvent(int topic, const void* data) const
-{
-	return ai->HandleEvent(topic, data);
-}
