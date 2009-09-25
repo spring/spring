@@ -1167,8 +1167,6 @@ inline bool CLuaHandle::PushUnsyncedCallIn(const LuaHashString& hs)
 
 void CLuaHandle::Update()
 {
-	GML_RECMUTEX_LOCK(unit); // Update - this is called from draw thread
-
 	LUA_CALL_IN_CHECK(L);
 	lua_checkstack(L, 2);
 	static const LuaHashString cmdStr("Update");
