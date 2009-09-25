@@ -1779,14 +1779,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript2.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript2.h"
-					>
-				</File>
-				<File
 					RelativePath="..\..\Game\StartScripts\EmptyScript.cpp"
 					>
 				</File>
