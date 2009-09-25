@@ -40,7 +40,6 @@ CSolidObject::CSolidObject():
 	mass(100000),
 	blocking(false),
 	floatOnWater(false),
-	isUnderWater(false),
 	immobile(false),
 	blockHeightChanges(false),
 	xsize(1),
@@ -48,14 +47,15 @@ CSolidObject::CSolidObject():
 	height(1),
 	heading(0),
 	physicalState(OnGround),
-	midPos(pos),
 	isMoving(false),
+	isUnderWater(false),
+	isMarkedOnBlockingMap(false),
+	speed(0, 0, 0),
 	residualImpulse(0, 0, 0),
 	mobility(0),
+	midPos(pos),
 	curYardMap(0),
-	buildFacing(0),
-	isMarkedOnBlockingMap(false),
-	speed(0, 0, 0)
+	buildFacing(0)
 {
 	mapPos = GetMapPos();
 }
