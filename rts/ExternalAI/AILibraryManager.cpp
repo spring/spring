@@ -372,7 +372,7 @@ void CAILibraryManager::ReleaseEverything() {
 AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 		const std::string& shortName,
 		const std::string& minVersion,
-		const T_interfaceSpecs& keys) {
+		const IAILibraryManager::T_interfaceSpecs& keys) {
 
 	std::set<AIInterfaceKey>::const_iterator key;
 	int minDiff = INT_MAX;

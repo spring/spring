@@ -55,6 +55,16 @@ public:
 	static bool IsFSRoot(const std::string& path);
 
 	// custom functions
+	/**
+	 * @brief find files
+	 * @param dir path in which to start looking (tried relative to each data directory)
+	 * @param pattern pattern to search for
+	 * @param flags possible values: FileSystem::ONLY_DIRS, FileSystem::INCLUDE_DIRS, FileSystem::RECURSE
+	 * @return absolute paths to the files
+	 *
+	 * Will search for a file given a particular pattern.
+	 * Starts from dirpath, descending down if recurse is true.
+	 */
 	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
 	bool IsReadableFile(const std::string& file) const;
 	/**
@@ -73,6 +83,16 @@ public:
 
 protected:
 	void InitVFS() const;
+	/**
+	 * @brief internal find-files-in-a-single-datadir-function
+	 * @param absolute paths to the dirs found will be added to this
+	 * @param dir path in which to start looking
+	 * @param pattern pattern to search for
+	 * @param flags possible values: FileSystem::ONLY_DIRS, FileSystem::INCLUDE_DIRS, FileSystem::RECURSE
+	 *
+	 * Will search for dirs given a particular pattern.
+	 * Starts from dir, descending down if FileSystem::ONLY_DIRS is set in flags.
+	 */
 	void FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const;
 
 	DataDirLocater locater;
