@@ -628,7 +628,17 @@ void CFeatureHandler::Draw()
 
 		glDisable(GL_ALPHA_TEST);
 	}
-
+#ifdef USE_GML
+	if(drawStat.size() > 0) {
+		if(!water->drawReflection) {
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_ALPHA_TEST);
+			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi)
+				DrawFeatureStats(*fi);
+		}
+		drawStat.clear();
+	}
+#endif
 	glDisable(GL_FOG);
 }
 
@@ -737,6 +747,7 @@ public:
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 	std::vector<CFeature*>* farFeatures;
+	std::vector<CFeature*>* statFeatures;
 };
 
 
@@ -769,7 +780,10 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 
 			float sqDist = (f->pos - camera->pos).SqLength2D();
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
-
+#ifdef USE_GML
+			if(statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
+				statFeatures->push_back(f);
+#endif
 			if (sqDist < farLength) {
 				float sqFadeDistE;
 				float sqFadeDistB;
@@ -820,6 +834,7 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = farFeatures;
+	drawer.statFeatures = unitDrawer->showHealthBars ? &drawStat : NULL;
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }
@@ -844,4 +859,41 @@ void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 	va->AddVertexQTN(interPos+(curad+offset)+crrad,tx,ty+(1.0f/64.0f),unitDrawer->camNorm);
 	va->AddVertexQTN(interPos+(curad+offset)-crrad,tx+(1.0f/64.0f),ty+(1.0f/64.0f),unitDrawer->camNorm);
 	va->AddVertexQTN(interPos-(curad-offset)-crrad,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
+}
+
+
+
+
+void CFeatureHandler::DrawFeatureStats(CFeature* feature)
+{
+	float3 interPos = feature->midPos;
+	interPos.y += feature->model->height + 5.0f;
+
+	glPushMatrix();
+	glTranslatef(interPos.x, interPos.y, interPos.z);
+	glCallList(CCamera::billboardList);
+
+	float recl = feature->reclaimLeft;
+	float rezp = feature->resurrectProgress;
+
+	// black background for the bar
+	glColor3f(0.0f, 0.0f, 0.0f);
+	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
+
+	// rez/metalbar
+	float rmin = std::min(recl, rezp) * 10.0f;
+	if(rmin > 0.0f) {
+		glColor3f(1.0f, 0.0f, 1.0f);
+		glRectf(-5.0f, 4.0f, rmin - 5.0f, 6.0f);
+	}
+	if(recl > rezp) {
+		glColor3f(0.6f, 0.6f, 0.6f);
+		glRectf(rmin - 5.0f, 4.0f, recl * 10.0f - 5.0f, 6.0f);
+	}
+	if(recl < rezp) {
+		glColor3f(0.5f, 0.0f, 1.0f);
+		glRectf(rmin - 5.0f, 4.0f, rezp * 10.0f - 5.0f, 6.0f);
+	}
+
+	glPopMatrix();
 }
