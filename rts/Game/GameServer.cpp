@@ -1081,7 +1081,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			if (weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader))) {
 				// creating the AI is ok
 			} else {
-				Message(str(format(NoAICreated) %players[playerId].name %playerId %aiTeamId));
+				Message(str(format(NoAICreated) %players[playerId].name %(int)playerId %(int)aiTeamId));
 				break;
 			}
 			const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
@@ -1110,7 +1110,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 			const bool skirmishAIId_valid    = (ais.find(skirmishAIId) != ais.end());
 			if (!skirmishAIId_valid) {
-				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %(-1)));
+				Message(str(format(NoAIChangeState) %players[playerId].name %(int)playerId %skirmishAIId %(-1) %(int)newState));
 				break;
 			}
 
@@ -1127,7 +1127,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const ESkirmishAIStatus oldState = ais[skirmishAIId].status;
 
 			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
-				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %aiTeamId));
+				Message(str(format(NoAIChangeState) %players[playerId].name %(int)playerId %skirmishAIId %(int)aiTeamId %(int)newState));
 				break;
 			}
 			Broadcast(packet); // forward data
