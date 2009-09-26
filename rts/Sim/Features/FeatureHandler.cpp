@@ -102,6 +102,8 @@ CFeatureHandler::CFeatureHandler() : nextFreeID(0)
 		const LuaTable fdTable = rootTable.SubTable(name);
 		CreateFeatureDef(fdTable, name);
 	}
+
+	showRezBars = !!configHandler->Get("ShowRezBars", 1);
 }
 
 
@@ -834,7 +836,7 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = farFeatures;
-	drawer.statFeatures = unitDrawer->showHealthBars ? &drawStat : NULL;
+	drawer.statFeatures = showRezBars ? &drawStat : NULL;
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }

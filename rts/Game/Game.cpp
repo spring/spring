@@ -1502,6 +1502,13 @@ bool CGame::ActionPressed(const Action& action,
 			unitDrawer->showHealthBars = !!atoi(action.extra.c_str());
 		}
 	}
+	else if (cmd == "showrezbars") {
+		if (action.extra.empty()) {
+			featureHandler->showRezBars = !featureHandler->showRezBars;
+		} else {
+			featureHandler->showRezBars = !!atoi(action.extra.c_str());
+		}
+	}
 	else if (cmd == "pause") {
 		// disallow pausing prior to start of game proper
 		if (playing) {
