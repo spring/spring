@@ -18,7 +18,7 @@
 	#include "Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CTorpedoProjectile, CTorpedoProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
 
 CR_REG_METADATA(CTorpedoProjectile,(
 	CR_MEMBER(tracking),
