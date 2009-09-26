@@ -152,6 +152,11 @@ void Class::EndFlag (ClassMemberFlag flag)
 	currentMemberFlags &= ~(int)flag;
 }
 
+void Class::SetFlag (ClassFlags flag)
+{
+	binder->flags = (ClassFlags) (binder->flags | flag);
+}
+
 void Class::AddMember (const char *name, IType* type, unsigned int offset)
 {
 	Member *member = new Member;
