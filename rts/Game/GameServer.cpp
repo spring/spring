@@ -1047,12 +1047,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 									if (hostif) hostif->SendPlayerDefeated(p);
 								}
 							}
-							// kill all the teams AIs
-							for (size_t a = 0; a < ais.size(); ++a) {
-								if (ais[a].team == team) {
-									ais.erase(a);
-								}
-							}
+							// The teams Skirmish AIs destruction process
+							// is being initialized from the client they
+							// run on. No need to do anything here.
 						}
 						break;
 					}
