@@ -13,6 +13,7 @@
 CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,NULL));
 
 CR_REG_METADATA(CEmgProjectile,(
+	CR_SETFLAG(CF_Synced),
     CR_MEMBER(intensity),
     CR_MEMBER(color),
     CR_RESERVED(8)

@@ -24,6 +24,7 @@ static const float Smoke_Time=70;
 CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,0,0,NULL,NULL,NULL,0,float3(0,0,0)));
 
 CR_REG_METADATA(CStarburstProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
 	CR_MEMBER(maxGoodDif),
 	CR_MEMBER(dir),
