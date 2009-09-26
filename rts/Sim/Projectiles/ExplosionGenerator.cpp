@@ -630,6 +630,21 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 }
 
 
+static unsigned int GetFlagsFromTable(const LuaTable& table)
+{
+	unsigned int flags = 0;
+
+	if (table.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
+	if (table.GetBool("water",      false)) { flags |= SPW_WATER;      }
+	if (table.GetBool("air",        false)) { flags |= SPW_AIR;        }
+	if (table.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
+	if (table.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
+	if (table.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
+
+	return flags;
+}
+
+
 void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string& tag)
 {
 	typedef std::map<string, CEGData> CEGMap;
@@ -660,17 +675,9 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 			}
 
 			const string className = spawnTable.GetString("class", spawnName);
-			unsigned int flags = 0;
-
-			if (spawnTable.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
-			if (spawnTable.GetBool("water",      false)) { flags |= SPW_WATER;      }
-			if (spawnTable.GetBool("air",        false)) { flags |= SPW_AIR;        }
-			if (spawnTable.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
-			if (spawnTable.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
-			if (spawnTable.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
 
 			psi.projectileClass = h->projectileClasses.GetClass(className);
-			psi.flags = flags;
+			psi.flags = GetFlagsFromTable(spawnTable);
 			psi.count = spawnTable.GetInt("count", 1);
 
 			string code;
@@ -701,15 +708,7 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 			cegData.groundFlash.circleGrowth = gndTable.GetFloat("circleGrowth", 0.0f);
 			cegData.groundFlash.color        = gndTable.GetFloat3("color", float3(1.0f, 1.0f, 0.8f));
 
-			unsigned int flags = SPW_GROUND;
-			if (gndTable.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
-			if (gndTable.GetBool("water",      false)) { flags |= SPW_WATER;      }
-			if (gndTable.GetBool("air",        false)) { flags |= SPW_AIR;        }
-			if (gndTable.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
-			if (gndTable.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
-			if (gndTable.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
-
-			cegData.groundFlash.flags = flags;
+			cegData.groundFlash.flags = SPW_GROUND | GetFlagsFromTable(gndTable);
 			cegData.groundFlash.ttl = ttl;
 		}
 
