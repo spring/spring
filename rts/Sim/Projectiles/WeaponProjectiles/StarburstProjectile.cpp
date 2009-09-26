@@ -56,7 +56,7 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, true,  200 GML_PARG_P),
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200 GML_PARG_P),
 	tracking(tracking),
 	dir(speed),
 	maxSpeed(maxSpeed),

@@ -57,7 +57,7 @@ CR_REG_METADATA(CMissileProjectile,(
 CMissileProjectile::CMissileProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		float areaOfEffect, float maxSpeed, int ttl, CUnit* target, const WeaponDef *weaponDef,
 		float3 targetPos GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, true,  ttl GML_PARG_P),
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, 0, ttl GML_PARG_P),
 	dir(speed),
 	maxSpeed(maxSpeed),
 	areaOfEffect(areaOfEffect),

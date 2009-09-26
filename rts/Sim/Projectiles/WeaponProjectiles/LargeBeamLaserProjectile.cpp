@@ -30,7 +30,7 @@ CR_REG_METADATA(CLargeBeamLaserProjectile,(
 
 CLargeBeamLaserProjectile::CLargeBeamLaserProjectile(const float3& startPos, const float3& endPos,
 		const float3& color, const float3& color2, CUnit* owner, const WeaponDef* weaponDef GML_PARG_C)
-:	CWeaponProjectile(startPos + (endPos - startPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false,  1 GML_PARG_P),
+:	CWeaponProjectile(startPos + (endPos - startPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, 1 GML_PARG_P),
 	startPos(startPos),
 	endPos(endPos),
 	decay(1.0f)
@@ -142,7 +142,7 @@ void CLargeBeamLaserProjectile::Draw(void)
 
 	float istart=polylength*(1-starttex);
 	float iend=beamlength-tilelength;
-  va->EnlargeArrays(64+8*((int)((iend-istart)/tilelength)+2),0,VA_SIZE_TC);
+	va->EnlargeArrays(64+8*((int)((iend-istart)/tilelength)+2),0,VA_SIZE_TC);
 	if(istart>beamlength)  //beam short enough to be drawn by one polygon
 	{
 		pos2=endPos;
