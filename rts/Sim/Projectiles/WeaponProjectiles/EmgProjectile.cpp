@@ -21,7 +21,7 @@ CR_REG_METADATA(CEmgProjectile,(
 CEmgProjectile::CEmgProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, const float3& color, float intensity, int ttl,
 		const WeaponDef* weaponDef GML_PARG_C)
-:	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
+:	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
 	intensity(intensity),
 	color(color)
 {
