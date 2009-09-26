@@ -328,12 +328,16 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 
 CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
 
-#define SPW_WATER 1
-#define SPW_GROUND 2
-#define SPW_AIR 4
-#define SPW_UNDERWATER 8
-#define SPW_UNIT 16 // only execute when the explosion hits a unit
-#define SPW_NO_UNIT 32 // only execute when the explosion doesn't hit a unit (environment)
+enum
+{
+	SPW_WATER = 1,
+	SPW_GROUND = 2,
+	SPW_AIR = 4,
+	SPW_UNDERWATER = 8,
+	SPW_UNIT = 16,    // only execute when the explosion hits a unit
+	SPW_NO_UNIT = 32, // only execute when the explosion doesn't hit a unit (environment)
+	SPW_SYNCED = 64,  // spawn this projectile even if particleSaturation > 1
+};
 
 CCustomExplosionGenerator::CCustomExplosionGenerator()
 {
@@ -680,6 +684,10 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 			psi.flags = GetFlagsFromTable(spawnTable);
 			psi.count = spawnTable.GetInt("count", 1);
 
+			if (psi.projectileClass->binder->flags & creg::CF_Synced) {
+				psi.flags |= SPW_SYNCED;
+			}
+
 			string code;
 			map<string, string> props;
 			map<string, string>::const_iterator propIt;
@@ -743,6 +751,12 @@ void CCustomExplosionGenerator::Explosion(const float3& pos, float damage, float
 		ProjectileSpawnInfo& psi = (currentCEG->second).projectileSpawn[a];
 
 		if (!(psi.flags & flags)) {
+			continue;
+		}
+
+		// If we're saturated, spawn only synced projectiles.
+		// Whether a class is synced is determined by the creg::CF_Synced flag.
+		if (ph->particleSaturation > 1 && !(psi.flags & SPW_SYNCED)) {
 			continue;
 		}
 
