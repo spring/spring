@@ -29,6 +29,7 @@
 CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
 
 CR_REG_METADATA(CWeaponProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(targeted),
 //	CR_MEMBER(weaponDef),
 	CR_MEMBER(weaponDefName),

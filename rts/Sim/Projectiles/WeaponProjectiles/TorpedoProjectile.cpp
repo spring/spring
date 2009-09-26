@@ -21,6 +21,7 @@
 CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
 
 CR_REG_METADATA(CTorpedoProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
 	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),

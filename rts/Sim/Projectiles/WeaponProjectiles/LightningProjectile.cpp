@@ -16,6 +16,7 @@
 CR_BIND_DERIVED(CLightningProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),NULL,0,NULL));
 
 CR_REG_METADATA(CLightningProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(color),
 	CR_MEMBER(endPos),
 	CR_MEMBER(weapon),

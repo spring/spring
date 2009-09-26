@@ -12,6 +12,7 @@ CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile,
 		(float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,0,0));
 
 CR_REG_METADATA(CBeamLaserProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(startPos),
 	CR_MEMBER(endPos),
 	CR_MEMBER(corecolstart),

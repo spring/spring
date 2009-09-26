@@ -27,6 +27,7 @@ static const float Smoke_Time=60;
 CR_BIND_DERIVED(CMissileProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,NULL,float3(0,0,0)));
 
 CR_REG_METADATA(CMissileProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
 	CR_MEMBER(curSpeed),

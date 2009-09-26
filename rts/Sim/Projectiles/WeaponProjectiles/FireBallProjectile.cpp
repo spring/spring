@@ -14,6 +14,7 @@ CR_BIND_DERIVED(CFireBallProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,
 CR_BIND(CFireBallProjectile::Spark, );
 
 CR_REG_METADATA(CFireBallProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(sparks),
 	CR_RESERVED(8)
 	));
