@@ -71,8 +71,7 @@ static float GetLODFloat(const string& name, float def)
 
 
 CUnitDrawer::CUnitDrawer(void)
-	: updateFace(0),
-	showHealthBars(true)
+	: updateFace(0)
 {
 	if (texturehandler3DO == 0) {
 		texturehandler3DO = new C3DOTextureHandler;
@@ -183,6 +182,8 @@ CUnitDrawer::CUnitDrawer(void)
 			advFade = false;
 		}
 	}
+
+	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
 
 #ifdef USE_GML
 	multiThreadDrawUnit=configHandler->Get("MultiThreadDrawUnit", 1);

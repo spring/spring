@@ -57,6 +57,8 @@ public:
 	void BackupFeatures();
 	void RestoreFeatures();
 
+	bool showRezBars;
+
 private:
 	std::set<CFeature *> fadeFeatures;
 	std::set<CFeature *> fadeFeaturesS3O;
