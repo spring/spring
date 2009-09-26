@@ -628,7 +628,7 @@ void CFeatureHandler::Draw()
 
 		glDisable(GL_ALPHA_TEST);
 	}
-#ifdef USE_GML
+
 	if(drawStat.size() > 0) {
 		if(!water->drawReflection) {
 			glDisable(GL_TEXTURE_2D);
@@ -638,7 +638,7 @@ void CFeatureHandler::Draw()
 		}
 		drawStat.clear();
 	}
-#endif
+
 	glDisable(GL_FOG);
 }
 
@@ -780,10 +780,10 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 
 			float sqDist = (f->pos - camera->pos).SqLength2D();
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
-#ifdef USE_GML
+
 			if(statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
 				statFeatures->push_back(f);
-#endif
+
 			if (sqDist < farLength) {
 				float sqFadeDistE;
 				float sqFadeDistB;
