@@ -115,7 +115,6 @@ struct LocalModel
 	float3 GetRawPiecePos(int piecenum) const;
 	CMatrix44f GetRawPieceMatrix(int piecenum) const;
 	float3 GetRawPieceDirection(int piecenum) const;
-	int GetRawPieceVertCount(int piecenum) const;
 	void GetRawEmitDirPos(int piecenum, float3 &pos, float3 &dir) const;
 };
 
