@@ -31,6 +31,10 @@ CGeometricObjects::CGeometricObjects(void)
 
 CGeometricObjects::~CGeometricObjects(void)
 {
+	toBeDeleted.clear();
+	while (!geoGroups.empty()) {
+		DeleteGroup(geoGroups.begin()->first);
+	}
 }
 
 int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, float width, int arrow, int lifeTime, int group)
