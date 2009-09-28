@@ -236,7 +236,7 @@ namespace fastmath {
 		}
 		/* approximation */
 		x = (PIU4) * x + (PISUN4) * x * math::fabs(x);
-		x = 0.225f * (x * fabs(x) - x) + x;
+		x = 0.225f * (x * math::fabs(x) - x) + x;
 		return x;
 	}
 
