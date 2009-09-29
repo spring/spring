@@ -311,7 +311,6 @@ function canDeleteDocumentation() {
 
 	cmdsNumMembers[ind_cmdStructs] = ind_cmdMember;
 	cmdsTopicName[ind_cmdStructs] = $3;
-	storeDocLines(cmdsDocComment, ind_cmdStructs);
 
 	if (doWrapp(ind_cmdStructs)) {
 		printCommandJava(ind_cmdStructs);
@@ -349,6 +348,7 @@ function canDeleteDocumentation() {
 
 	cmdsIsUnitCmd[ind_cmdStructs] = isUnitCommand;
 	cmdsName[ind_cmdStructs] = commandName;
+	storeDocLines(cmdsDocComment, ind_cmdStructs);
 }
 
 # find COMMAND_TO_ID_ENGINE id
