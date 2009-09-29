@@ -3963,10 +3963,10 @@ void CGame::ClientReadNet()
 				const int fixedLen = (1 + sizeof(short) + 3 + (2 * sizeof(float)));
 				const int variableLen = numBytes - fixedLen;
 				const int numUnitIDs = variableLen / sizeof(short); // each unitID is two bytes
-				const int srcTeam = *(int*) &inbuf[4];
-				const int dstTeam = *(int*) &inbuf[8];
-				const float metalShare = *(float*) &inbuf[12];
-				const float energyShare = *(float*) &inbuf[16];
+				const int srcTeam = inbuf[4];
+				const int dstTeam = inbuf[5];
+				const float metalShare = *(float*) &inbuf[6];
+				const float energyShare = *(float*) &inbuf[10];
 
 				if (metalShare > 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
