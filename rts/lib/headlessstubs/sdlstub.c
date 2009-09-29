@@ -31,6 +31,10 @@ int SDL_Init(Uint32 flagss){
    return 0;
 }
 
+int SDL_InitSubSystem(Uint32 flags) {
+   return 0;
+}
+
 char *SDL_GetError(){
    return "";
 }
@@ -155,4 +159,18 @@ int SDL_SetGamma(float red, float green, float blue) {
    return 0;
 }
 
+int SDL_NumJoysticks() {
+   return 0;
+}
+
+const char *SDL_JoystickName(int device_index) {
+   return "";
+}
+
+SDL_Joystick *SDL_JoystickOpen(int device_index) {
+   return 0;
+}
+
+void SDL_JoystickClose(SDL_Joystick *joystick) {
+}
 
