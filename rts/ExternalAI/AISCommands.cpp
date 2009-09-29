@@ -1412,7 +1412,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->on);
+			c->params.push_back(cmd->on ? 1 : 0);
 			break;
 		}
 		case COMMAND_UNIT_RECLAIM:
@@ -1445,7 +1445,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->cloak);
+			c->params.push_back(cmd->cloak ? 1 : 0);
 			break;
 		}
 		case COMMAND_UNIT_STOCKPILE:
@@ -1498,7 +1498,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->repeat);
+			c->params.push_back(cmd->repeat ? 1 : 0);
 			break;
 		}
 		case COMMAND_UNIT_SET_TRAJECTORY:
