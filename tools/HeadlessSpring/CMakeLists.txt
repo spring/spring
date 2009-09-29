@@ -14,10 +14,7 @@ set(THISSCRIPTDIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${THISSCRIPTDIR}/../..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-MESSAGE(STATUS "THISSCRIPTDIR ${THISSCRIPTDIR}")
-
 set(SPRINGRTSDIR "${THISSCRIPTDIR}/../../rts")
-MESSAGE(STATUS "SPRINGRTSDIR: ${SPRINGRTSDIR}")
 
 ### Spring defines
 SET(USE_NEDMALLOC FALSE CACHE BOOL "Use nedmalloc memory allocator")
@@ -31,23 +28,21 @@ if (USE_MMGR)
 	ADD_DEFINITIONS(-DUSE_MMGR)
 endif (USE_MMGR)
 
-# Pretty sure  this would be incompatible with headlessness ;-)
-#SET(USE_GML FALSE CACHE BOOL "Use the GML OpenGL threading library?")
-#if (USE_GML)
-#	ADD_DEFINITIONS(-DUSE_GML)
-#	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
-#endif (USE_GML)
+SET(USE_GML FALSE CACHE BOOL "Use the GML OpenGL threading library?")
+if (USE_GML)
+	ADD_DEFINITIONS(-DUSE_GML)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mno-tls-direct-seg-refs")
+endif (USE_GML)
 
 SET(USE_GML_SIM FALSE CACHE BOOL "Use independent Simulation thread?")
 if (USE_GML_SIM)
 	ADD_DEFINITIONS(-DUSE_GML_SIM)
 endif (USE_GML_SIM)
 
-# Pretty sure  this would be incompatible with headlessness ;-)
-#SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
-#if (USE_GML_DEBUG)
-#	ADD_DEFINITIONS(-DUSE_GML_DEBUG)
-#endif (USE_GML_DEBUG)
+SET(USE_GML_DEBUG FALSE CACHE BOOL "Use GML call debugging?")
+if (USE_GML_DEBUG)
+	ADD_DEFINITIONS(-DUSE_GML_DEBUG)
+endif (USE_GML_DEBUG)
 
 SET(TRACE_SYNC FALSE CACHE BOOL "Enable sync tracker")
 if (TRACE_SYNC)
@@ -80,19 +75,12 @@ ENDIF (MINGW)
 
 LIST(APPEND spring_headlessstubs_libraries ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_PROGRAM_OPTIONS_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_SIGNALS_LIBRARY})
 
-message(status "before adding springrtsdir")
-#ADD_SUBDIRECTORY(${SPRINGRTSDIR} ${SPRINGRTSDIR})
-message(status "after adding springrtsdir")
-
-### build all libraries in lib (has its own CMakeLists.txt)
 # headlessstubs is our stubs that replace libGL, libGLU, libSDL( yes really!) and
 # also replaces certain functions in libGLEW (we still link with libGLEW anyway)
 LIST(APPEND spring_headlessstubs_libraries headlessstubs lua 7zip hpiutil2 oscpack minizip streflop)
 #if (USE_GML)
 #	list (APPEND spring_libraries gml)
 #endif (USE_GML)
-
-MESSAGE(STATUS "spring_headlessstubs_libraries ${spring_headlessstubs_libraries}")
 
 # we still need the header files, even if we're not going to link with gl, glu, or glut
 FIND_PACKAGE(OpenGL REQUIRED)
@@ -104,10 +92,11 @@ LIST(APPEND spring_headlessstubs_libraries ${GLEW_LIBRARIES})
 
 LIST(APPEND spring_headlessstubs_libraries ${DEVIL_IL_LIBRARY} ${DEVIL_ILU_LIBRARY})
 
-MESSAGE(STATUS "spring_headlessstubs_libraries ${spring_headlessstubs_libraries}")
-
 ### include directories needed for compiling spring
 INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR}/lib/lua/include)
+
+# need to add this so Main compiles:
+INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR})
 
 ADD_EXECUTABLE(spring-headlessstubs "${SPRINGRTSDIR}/System/Main.cpp")
 TARGET_LINK_LIBRARIES(spring-headlessstubs springaslibrary ${spring_headlessstubs_libraries} )
