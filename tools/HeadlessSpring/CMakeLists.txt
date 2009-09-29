@@ -14,7 +14,7 @@ set(THISSCRIPTDIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${THISSCRIPTDIR}/../..")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 
-set(SPRINGRTSDIR "${THISSCRIPTDIR}/../../rts")
+get_filename_component(SPRINGRTSDIR "${THISSCRIPTDIR}/../../rts" ABSOLUTE )
 
 ### Spring defines
 SET(USE_NEDMALLOC FALSE CACHE BOOL "Use nedmalloc memory allocator")
@@ -92,14 +92,15 @@ LIST(APPEND spring_headlessstubs_libraries ${GLEW_LIBRARIES})
 
 LIST(APPEND spring_headlessstubs_libraries ${DEVIL_IL_LIBRARY} ${DEVIL_ILU_LIBRARY})
 
-### include directories needed for compiling spring
+# include directories needed for compiling spring
 INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR}/lib/lua/include)
 
-# need to add this so Main compiles:
+# need to add this so stuff compiles:
 INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR})
+INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR}/System)
 
-ADD_EXECUTABLE(spring-headlessstubs "${SPRINGRTSDIR}/System/Main.cpp")
-TARGET_LINK_LIBRARIES(spring-headlessstubs springaslibrary ${spring_headlessstubs_libraries} )
+ADD_EXECUTABLE(spring-headlessstubs ${allspringfiles})
+TARGET_LINK_LIBRARIES(spring-headlessstubs ${spring_headlessstubs_libraries} )
 
 IF (MINGW)
 	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
