@@ -142,6 +142,9 @@ AUX_SOURCE_DIRECTORY(System/Sync sysfiles)
 AUX_SOURCE_DIRECTORY(System/Sound sysfiles)
 AUX_SOURCE_DIRECTORY(System/creg sysfiles)
 
+# get rid of main for now, we'll make it the main file for the spring executable
+LIST( REMOVE_ITEM sysfiles "System/Main.cpp" )
+
 ### Add icon and manifest to exe using windres
 IF (MINGW)
 	FIND_PROGRAM(WINDRES NAMES windres i586-mingw32msvc-windres i586-pc-mingw32-windres i686-mingw32-windres DOC "path to mingw's windres executable")
@@ -154,8 +157,16 @@ IF (NOT WIN32)
 	EXECUTE_PROCESS(COMMAND find ${CMAKE_CURRENT_SOURCE_DIR} \( -name *.h -o -name *.hpp \) -printf %p\; OUTPUT_VARIABLE headers)
 ENDIF (NOT WIN32)
 
-ADD_EXECUTABLE(spring ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj} ${headers})
-TARGET_LINK_LIBRARIES(spring ${spring_libraries})
+SET( allspringfiles ${gamefiles} ${luafiles} ${mapfiles} ${fsfiles} ${renderfiles} ${simfiles} ${sysfiles} ${aifiles} ${nedmalloc_obj} ${headers} )
+
+# by building spring as a library first, we can AddDirectory spring
+# from another project (eg a tool), and relink as we wish
+# wihtout needing to include a maintained list of all the spring files itself
+ADD_LIBRARY(springaslibrary STATIC EXCLUDE_FROM_ALL ${allspringfiles})
+
+ADD_EXECUTABLE(spring "System/Main.cpp")
+#SET_TARGET_PROPERTIES(spring PROPERTIES LINKER_LANGUAGE CXX)
+TARGET_LINK_LIBRARIES(spring springaslibrary ${spring_libraries})
 
 IF (MINGW)
 	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
@@ -163,3 +174,4 @@ IF (MINGW)
 ENDIF (MINGW)
 
 install (TARGETS spring DESTINATION ${BINDIR})
+
