@@ -16,6 +16,7 @@
 #include "Game/UI/CursorIcons.h"
 #include "LogOutput.h"
 #include "Map/Ground.h"
+#include "Map/MapDamage.h"
 #include "Rendering/GL/myGL.h"
 #include "Rendering/GL/glExtra.h"
 #include "Rendering/UnitModels/3DModel.h"
@@ -122,7 +123,7 @@ CBuilderCAI::CBuilderCAI(CUnit* owner):
 		possibleCommands.push_back(c);
 	}
 
-	if (owner->unitDef->canRestore) {
+	if (owner->unitDef->canRestore && !mapDamage->disabled) {
 		c.id = CMD_RESTORE;
 		c.action = "restore";
 		c.type = CMDTYPE_ICON_AREA;

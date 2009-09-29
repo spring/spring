@@ -16,6 +16,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
+#include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -398,7 +399,9 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_PATROL:    if (!ud->canPatrol)     return false; break;
 		case CMD_CAPTURE:   if (!ud->canCapture)    return false; break;
 		case CMD_RECLAIM:   if (!ud->canReclaim)    return false; break;
-		case CMD_RESTORE:   if (!ud->canRestore)    return false; break;
+		case CMD_RESTORE: {
+			if (!ud->canRestore || mapDamage->disabled) return false; break;
+		}
 		case CMD_RESURRECT: if (!ud->canResurrect)  return false; break;
 		case CMD_REPAIR: {
 			if (!ud->canRepair && !ud->canAssist)   return false; break;
