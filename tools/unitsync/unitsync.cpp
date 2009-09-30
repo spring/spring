@@ -1118,7 +1118,7 @@ EXPORT(int) GetInfoMapSize(const char* filename, const char* name, int* width, i
  * @param name     Which infomap to extract from the file.
  * @param data     Pointer to memory location with enough room to hold the infomap data.
  * @param typeHint One of bm_grayscale_8 (or 1) and bm_grayscale_16 (or 2).
- * @return Non-zero if the infomap was succesfully extracted (and optionally
+ * @return Non-zero if the infomap was successfully extracted (and optionally
  * converted), or zero on error (map wasn't found, infomap wasn't found, or
  * typeHint could not be honoured.)
  *

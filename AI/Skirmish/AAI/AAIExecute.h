@@ -114,7 +114,7 @@ public:
 	// tries to call support vs air (returns true if succesful)
 	void DefendUnitVS(int unit, unsigned int enemy_movement_type, float3 *enemy_pos, int importance);
 
-	// returns true if succesfully assisting construction
+	// returns true if successfully assisting construction
 	bool AssistConstructionOfCategory(UnitCategory category, int importance = 5);
 
 	// adds a unit to the correct wishlist

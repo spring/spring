@@ -484,7 +484,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 	fragmentShader.Build(GL_FRAGMENT_SHADER_ARB);
 	ns->fragmentShader = fragmentShader.handle;
 
-	d_trace("Fragment shader built succesfully.");
+	d_trace("Fragment shader built successfully.");
 }
 
 void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, ShaderDef* sd)
@@ -507,7 +507,7 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 
 	vertexShader.AddFile("shaders/terrainVertexShader.glsl");
 	vertexShader.Build(GL_VERTEX_SHADER_ARB);
-	d_trace("Vertex shader built succesfully.");
+	d_trace("Vertex shader built successfully.");
 
 	ns->vertexShader = vertexShader.handle;
 }

@@ -3110,7 +3110,7 @@ bool CGame::Draw() {
 		GML_STDMUTEX_LOCK(sim); // Draw
 
 		guihandler->RunLayoutCommand("disable");
-		LogObject() << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
+		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
