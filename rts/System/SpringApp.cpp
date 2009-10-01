@@ -632,11 +632,7 @@ void SpringApp::LoadFixedConfigs() {
    configHandler->SetOverride("Fullscreen", 0 );
    configHandler->SetOverride("GrassDetail", 0 );
    configHandler->SetOverride("GroundDecals", 0 );
-   //configHandler->SetOverride("GroundDetail", 20 );
    configHandler->SetOverride("GroundDetail", 0 );
-   //configHandler->SetOverride("GroundLODScaleReflection", 1 );
-   //configHandler->SetOverride("GroundLODScaleRefraction", 1 );
-   //configHandler->SetOverride("GroundLODScaleUnitReflection", 1 );
    configHandler->SetOverride("GroundLODScaleReflection", 0 );
    configHandler->SetOverride("GroundLODScaleRefraction", 0 );
    configHandler->SetOverride("GroundLODScaleUnitReflection", 0 );
@@ -673,7 +669,7 @@ void SpringApp::LoadFixedConfigs() {
    configHandler->SetOverride("SmoothLines", 0 );
    configHandler->SetOverride("SmoothPoints", 0 );
    configHandler->SetOverride("SmoothTiltSpeed", 0 );
-   // configHandler->SetOverride("TWEnabled", 0 );// not sure about this
+   configHandler->SetOverride("TWEnabled", 0 );//TW = total war camera
    configHandler->SetOverride("TeamNanoSpray", 0 );
    configHandler->SetOverride("TextureLODBias", 0 );
    configHandler->SetOverride("TooltipOutlineFont", 0 );
