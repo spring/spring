@@ -27,6 +27,7 @@ protected:
 	bool InitWindow(const char* title);             //!< Initializes window
 	void InitOpenGL();                              //!< Initializes OpenGL
 	void UpdateOldConfigs();                        //!< Forces an update to new config defaults
+	void LoadFixedConfigs();			//!< forces config under certain compile options, eg HEADLESS
 	void LoadFonts();                               //!< Initialize glFonts (font & smallFont)
 	bool SetSDLVideoMode();                         //!< Sets SDL video mode
 	void Shutdown();                                //!< Shuts down application

@@ -82,6 +82,8 @@ LIST(APPEND spring_headlessstubs_libraries headlessstubs lua 7zip hpiutil2 oscpa
 #	list (APPEND spring_libraries gml)
 #endif (USE_GML)
 
+ADD_SUBDIRECTORY(lib) # contains the headlessstubs library
+
 # we still need the header files, even if we're not going to link with gl, glu, or glut
 FIND_PACKAGE(OpenGL REQUIRED)
 FIND_PACKAGE(GLU REQUIRED)
@@ -99,6 +101,7 @@ INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR}/lib/lua/include)
 INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR})
 INCLUDE_DIRECTORIES(BEFORE ${SPRINGRTSDIR}/System)
 
+ADD_DEFINITIONS(-DHEADLESS)
 ADD_EXECUTABLE(spring-headlessstubs ${allspringfiles})
 TARGET_LINK_LIBRARIES(spring-headlessstubs ${spring_headlessstubs_libraries} )
 

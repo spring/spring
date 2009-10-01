@@ -143,6 +143,7 @@ bool SpringApp::Initialize()
 
 	FileSystemHandler::Initialize(true);
 
+	LoadFixedConfigs();
 	UpdateOldConfigs();
 
 	if (!InitWindow(("Spring " + SpringVersion::Get()).c_str())) {
@@ -605,6 +606,83 @@ void SpringApp::LoadFonts()
 		configHandler->SetString("FontFile", *fi);
 		configHandler->SetString("SmallFontFile", *fi);
 	}
+}
+
+/**
+ * forces certain config values to certain values under certain
+ * circumstances, eg for headless spring, we set all graphics parameters
+ * to low
+ */
+void SpringApp::LoadFixedConfigs() {
+#ifdef HEADLESS
+   configHandler->SetOverride("AdvSky", 0 );
+   configHandler->SetOverride("AdvUnitShading", 0 );
+   configHandler->SetOverride("AtiHacks", 0 );
+   configHandler->SetOverride("BuildIconsFirst", 0 );
+   configHandler->SetOverride("BumpWaterAnisotropy", 0 );
+   configHandler->SetOverride("BumpWaterBlurReflection", 0 );
+   configHandler->SetOverride("BumpWaterReflection", 0 );
+   configHandler->SetOverride("BumpWaterRefraction", 0 );
+   configHandler->SetOverride("BumpWaterShoreWaves", 0 );
+   configHandler->SetOverride("BumpWaterTexSizeReflection", 0 );
+   configHandler->SetOverride("BumpWaterUseDepthTexture", 0 );
+   configHandler->SetOverride("CompressTextures", 0 );
+   configHandler->SetOverride("DualScreenMode", 0 );
+   configHandler->SetOverride("DynamicSky", 0 );
+   configHandler->SetOverride("Fullscreen", 0 );
+   configHandler->SetOverride("GrassDetail", 0 );
+   configHandler->SetOverride("GroundDecals", 0 );
+   //configHandler->SetOverride("GroundDetail", 20 );
+   configHandler->SetOverride("GroundDetail", 0 );
+   //configHandler->SetOverride("GroundLODScaleReflection", 1 );
+   //configHandler->SetOverride("GroundLODScaleRefraction", 1 );
+   //configHandler->SetOverride("GroundLODScaleUnitReflection", 1 );
+   configHandler->SetOverride("GroundLODScaleReflection", 0 );
+   configHandler->SetOverride("GroundLODScaleRefraction", 0 );
+   configHandler->SetOverride("GroundLODScaleUnitReflection", 0 );
+   configHandler->SetOverride("GroundScarAlphaFade", 0 );
+   configHandler->SetOverride("HardwareCursor", 0 );
+   configHandler->SetOverride("LodScale", 1.00 );
+   configHandler->SetOverride("LodScaleReflection", 1.00 );
+   configHandler->SetOverride("LodScaleRefraction", 1.00 );
+   configHandler->SetOverride("LodScaleShadow", 1.00 );
+   configHandler->SetOverride("LuaAutoEnableUserWidgets", 0 ); // not sure about this one?
+   configHandler->SetOverride("LuaModUICtrl", 0 ); // or this one
+   configHandler->SetOverride("LuaShaders", 0 );
+   configHandler->SetOverride("LuaUI", 0 );// or thhis one
+   configHandler->SetOverride("MaxNanoParticles", 0 );
+   configHandler->SetOverride("MaxParticles", 0 );
+   configHandler->SetOverride("MaxSounds", 0 );
+   configHandler->SetOverride("MiniMapDrawProjectiles", 0 );
+   configHandler->SetOverride("MiniMapDrawCommands", 0 );
+   configHandler->SetOverride("MiniMapIcons", 0 );
+   configHandler->SetOverride("MiniMapMarker", 0 );
+   configHandler->SetOverride("NoHelperAIs",1 ); // no sure about this
+   configHandler->SetOverride("OrbitControllerEnabled", 0 );
+   configHandler->SetOverride("OverheadEnabled", 0 );
+   configHandler->SetOverride("ReflectiveWater", 0 );
+   configHandler->SetOverride("RotOverheadEnabled", 0 );
+   configHandler->SetOverride("SMFTexAniso", 0.0 );
+   configHandler->SetOverride("Shadows", 0 );
+   configHandler->SetOverride("ShowClock", 0 );
+   configHandler->SetOverride("ShowFPS", 0 );
+   configHandler->SetOverride("ShowHealthBars", 0 );
+   configHandler->SetOverride("ShowPlayerInfo", 0 );
+   configHandler->SetOverride("ShowRezBars", 0 );
+   configHandler->SetOverride("SmoothEnabled", 0 ); // no sure about this
+   configHandler->SetOverride("SmoothLines", 0 );
+   configHandler->SetOverride("SmoothPoints", 0 );
+   configHandler->SetOverride("SmoothTiltSpeed", 0 );
+   // configHandler->SetOverride("TWEnabled", 0 );// not sure about this
+   configHandler->SetOverride("TeamNanoSpray", 0 );
+   configHandler->SetOverride("TextureLODBias", 0 );
+   configHandler->SetOverride("TooltipOutlineFont", 0 );
+   configHandler->SetOverride("TreeRadius", 600 );
+   configHandler->SetOverride("UnitIconDist", 0 ); //not sure about this
+   configHandler->SetOverride("UnitLodDist", 0 ); // not sure about this
+   configHandler->SetOverride("UsePBO", 0 );
+   configHandler->SetOverride("VSync", 0 );
+#endif // HEADLESS
 }
 
 /**
