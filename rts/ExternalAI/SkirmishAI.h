@@ -47,6 +47,7 @@ private:
 	const SkirmishAIKey key;
 	const CSkirmishAILibrary* library;
 	const std::string timerName;
+	bool initOk;
 };
 
 #endif // _SKIRMISHAI_H
