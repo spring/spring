@@ -60,12 +60,15 @@ LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(int teamId,
 	}
 }
 
-void CSkirmishAILibrary::Init(int teamId, const SSkirmishAICallback* c_callback) const
+bool CSkirmishAILibrary::Init(int teamId, const SSkirmishAICallback* c_callback) const
 {
-	if (sSAI.init != NULL) {
-		int error = sSAI.init(teamId, c_callback);
+	bool ok = true;
 
-		if (error != 0) {
+	if (sSAI.init != NULL) {
+		const int error = sSAI.init(teamId, c_callback);
+		ok = (error == 0);
+
+		if (!ok) {
 			// init failed
 			logOutput.Print("Failed to initialize an AI for team %d, error: %d", teamId, error);
 			// TODO: FIXME: convert the whole class to skirmishAIId based, instead of teamId based
@@ -73,17 +76,25 @@ void CSkirmishAILibrary::Init(int teamId, const SSkirmishAICallback* c_callback)
 			skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 5 /* = AI failed to init */);
 		}
 	}
+
+	return ok;
 }
 
-void CSkirmishAILibrary::Release(int teamId) const
+bool CSkirmishAILibrary::Release(int teamId) const
 {
+	bool ok = true;
+
 	if (sSAI.release != NULL) {
 		int error = sSAI.release(teamId);
-		if (error != 0) {
+		ok = (error == 0);
+
+		if (!ok) {
 			// release failed
-			logOutput.Print("Failed to release the AI for team %d, error: %d", teamId, error);
+			logOutput.Print("Failed to release an AI on team %d, error: %d", teamId, error);
 		}
 	}
+
+	return ok;
 }
 
 int CSkirmishAILibrary::HandleEvent(int teamId, int topic, const void* data) const
