@@ -32,13 +32,15 @@ CSkirmishAI::CSkirmishAI(int teamId, const SkirmishAIKey& key,
 {
 	SCOPED_TIMER(timerName.c_str());
 	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
-	library->Init(teamId, c_callback);
+	initOk = library->Init(teamId, c_callback);
 }
 
 CSkirmishAI::~CSkirmishAI() {
 
 	SCOPED_TIMER(timerName.c_str());
-	library->Release(teamId);
+	if (initOk) {
+		library->Release(teamId);
+	}
 	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
 }
 
