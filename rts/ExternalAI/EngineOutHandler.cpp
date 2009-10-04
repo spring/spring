@@ -176,7 +176,8 @@ void CEngineOutHandler::Save(std::ostream* s) {
 void CEngineOutHandler::Update() {
 	AI_EVT_MTH();
 
-	int frame = gs->frameNum;
+	const int frame = gs->frameNum;
+
 	DO_FOR_SKIRMISH_AIS(Update(frame))
 }
 
@@ -199,8 +200,8 @@ void CEngineOutHandler::Update() {
 void CEngineOutHandler::UnitEnteredLos(const CUnit& unit, int allyTeamId) {
 	AI_EVT_MTH();
 
-	int unitId         = unit.id;
-	int unitAllyTeamId = unit.allyteam;
+	const int unitId         = unit.id;
+	const int unitAllyTeamId = unit.allyteam;
 
 	DO_FOR_ALLIED_SKIRMISH_AIS(EnemyEnterLOS(unitId), allyTeamId, unitAllyTeamId)
 }
@@ -208,8 +209,8 @@ void CEngineOutHandler::UnitEnteredLos(const CUnit& unit, int allyTeamId) {
 void CEngineOutHandler::UnitLeftLos(const CUnit& unit, int allyTeamId) {
 	AI_EVT_MTH();
 
-	int unitId         = unit.id;
-	int unitAllyTeamId = unit.allyteam;
+	const int unitId         = unit.id;
+	const int unitAllyTeamId = unit.allyteam;
 
 	DO_FOR_ALLIED_SKIRMISH_AIS(EnemyLeaveLOS(unitId), allyTeamId, unitAllyTeamId)
 }
@@ -217,8 +218,8 @@ void CEngineOutHandler::UnitLeftLos(const CUnit& unit, int allyTeamId) {
 void CEngineOutHandler::UnitEnteredRadar(const CUnit& unit, int allyTeamId) {
 	AI_EVT_MTH();
 
-	int unitId         = unit.id;
-	int unitAllyTeamId = unit.allyteam;
+	const int unitId         = unit.id;
+	const int unitAllyTeamId = unit.allyteam;
 
 	DO_FOR_ALLIED_SKIRMISH_AIS(EnemyEnterRadar(unitId), allyTeamId, unitAllyTeamId)
 }
@@ -226,8 +227,8 @@ void CEngineOutHandler::UnitEnteredRadar(const CUnit& unit, int allyTeamId) {
 void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 	AI_EVT_MTH();
 
-	int unitId         = unit.id;
-	int unitAllyTeamId = unit.allyteam;
+	const int unitId         = unit.id;
+	const int unitAllyTeamId = unit.allyteam;
 
 	DO_FOR_ALLIED_SKIRMISH_AIS(EnemyLeaveRadar(unitId), allyTeamId, unitAllyTeamId)
 }
@@ -247,8 +248,8 @@ void CEngineOutHandler::UnitLeftRadar(const CUnit& unit, int allyTeamId) {
 void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 	AI_EVT_MTH();
 
-	int teamId = unit.team;
-	int unitId = unit.id;
+	const int teamId = unit.team;
+	const int unitId = unit.id;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitIdle(unitId), teamId);
 }
@@ -256,9 +257,9 @@ void CEngineOutHandler::UnitIdle(const CUnit& unit) {
 void CEngineOutHandler::UnitCreated(const CUnit& unit, const CUnit* builder) {
 	AI_EVT_MTH();
 
-	int teamId    = unit.team;
-	int unitId    = unit.id;
-	int builderId = builder? builder->id: -1;
+	const int teamId    = unit.team;
+	const int unitId    = unit.id;
+	const int builderId = builder? builder->id: -1;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitCreated(unitId, builderId), teamId);
 }
@@ -266,8 +267,8 @@ void CEngineOutHandler::UnitCreated(const CUnit& unit, const CUnit* builder) {
 void CEngineOutHandler::UnitFinished(const CUnit& unit) {
 	AI_EVT_MTH();
 
-	int teamId = unit.team;
-	int unitId = unit.id;
+	const int teamId = unit.team;
+	const int unitId = unit.id;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitFinished(unitId), teamId);
 }
@@ -276,8 +277,8 @@ void CEngineOutHandler::UnitFinished(const CUnit& unit) {
 void CEngineOutHandler::UnitMoveFailed(const CUnit& unit) {
 	AI_EVT_MTH();
 
-	int teamId = unit.team;
-	int unitId = unit.id;
+	const int teamId = unit.team;
+	const int unitId = unit.id;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitMoveFailed(unitId), teamId);
 }
@@ -285,8 +286,8 @@ void CEngineOutHandler::UnitMoveFailed(const CUnit& unit) {
 void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
 	AI_EVT_MTH();
 
-	int newTeam = unit.team;
-	int unitId = unit.id;
+	const int newTeam = unit.team;
+	const int unitId  = unit.id;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitGiven(unitId, oldTeam, newTeam), newTeam);
 }
@@ -294,8 +295,8 @@ void CEngineOutHandler::UnitGiven(const CUnit& unit, int oldTeam) {
 void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
 	AI_EVT_MTH();
 
-	int oldTeam = unit.team;
-	int unitId = unit.id;
+	const int oldTeam = unit.team;
+	const int unitId  = unit.id;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitCaptured(unitId, oldTeam, newTeam), oldTeam);
 }
@@ -308,9 +309,9 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 		const CUnit* attacker) {
 	AI_EVT_MTH();
 
-	int destroyedId = destroyed.id;
-	int attackerId  = attacker ? attacker->id : -1;
-	int dt          = destroyed.team;
+	const int destroyedId = destroyed.id;
+	const int attackerId  = attacker ? attacker->id : -1;
+	const int dt          = destroyed.team;
 
 	// inform destroyed units team (not allies)
 	if (team_skirmishAIs.find(dt) != team_skirmishAIs.end()) {
@@ -348,9 +349,9 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 		float damage, int weaponDefId, bool paralyzer) {
 	AI_EVT_MTH();
 
-	int damagedUnitId  = damaged.id;
-	int dt             = damaged.team;
-	int attackerUnitId = attacker ? attacker->id : -1;
+	const int damagedUnitId  = damaged.id;
+	const int dt             = damaged.team;
+	const int attackerUnitId = attacker ? attacker->id : -1;
 
 	// inform damaged units team (not allies)
 	if (team_skirmishAIs.find(dt) != team_skirmishAIs.end()) {
@@ -403,8 +404,8 @@ void CEngineOutHandler::SeismicPing(int allyTeamId, const CUnit& unit,
 		const float3& pos, float strength) {
 	AI_EVT_MTH();
 
-	int unitId         = unit.id;
-	int unitAllyTeamId = unit.allyteam;
+	const int unitId         = unit.id;
+	const int unitAllyTeamId = unit.allyteam;
 
 	DO_FOR_ALLIED_SKIRMISH_AIS(SeismicPing(allyTeamId, unitId, pos, strength), allyTeamId, unitAllyTeamId)
 }
@@ -412,9 +413,9 @@ void CEngineOutHandler::SeismicPing(int allyTeamId, const CUnit& unit,
 void CEngineOutHandler::WeaponFired(const CUnit& unit, const WeaponDef& def) {
 	AI_EVT_MTH();
 
-	int teamId = unit.team;
-	int unitId = unit.id;
-	int defId  = def.id;
+	const int teamId = unit.team;
+	const int unitId = unit.id;
+	const int defId  = def.id;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(WeaponFired(unitId, defId), teamId);
 }
@@ -424,7 +425,7 @@ void CEngineOutHandler::PlayerCommandGiven(
 {
 	AI_EVT_MTH();
 
-	int teamId = playerHandler->Player(playerId)->team;
+	const int teamId = playerHandler->Player(playerId)->team;
 
 	DO_FOR_TEAM_SKIRMISH_AIS(PlayerCommandGiven(selectedUnitIds, c, playerId), teamId);
 }
@@ -432,9 +433,9 @@ void CEngineOutHandler::PlayerCommandGiven(
 void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& command) {
 	AI_EVT_MTH();
 
-	int teamId           = unit.team;
-	int unitId           = unit.id;
-	int aiCommandTopicId = extractAICommandTopic(&command);
+	const int teamId           = unit.team;
+	const int unitId           = unit.id;
+	const int aiCommandTopicId = extractAICommandTopic(&command);
 
 	DO_FOR_TEAM_SKIRMISH_AIS(CommandFinished(unitId, aiCommandTopicId), teamId);
 }
