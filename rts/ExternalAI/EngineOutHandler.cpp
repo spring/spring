@@ -485,6 +485,14 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 	}
 }
 
+void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
+	SCOPED_TIMER("SkirmishAI");
+
+	try {
+		id_skirmishAI[skirmishAIId]->Dieing();
+	} HANDLE_EXCEPTION;
+}
+
 static void internal_aiErase(std::vector<size_t>& ais, const size_t skirmishAIId) {
 
 	for (std::vector<size_t>::iterator ai = ais.begin(); ai != ais.end(); ++ai) {

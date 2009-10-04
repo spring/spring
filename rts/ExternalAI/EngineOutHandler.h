@@ -89,10 +89,20 @@ public:
 	// Skirmish AI stuff
 	void CreateSkirmishAI(const size_t skirmishAIId);
 	/**
+	 * Sets a local Skirmish AI dieing.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @param skirmishAIId index of the AI to mark as dieing
+	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
+	 * @see DestroySkirmishAI()
+	 */
+	void SetSkirmishAIDieing(const size_t skirmishAIId);
+	/**
 	 * Destructs a local Skirmish AI for real.
-	 * Do not cal this if you want to kill a local AI, but use
+	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
 	 * @param skirmishAIId index of the AI to destroy
+	 * @see SetSkirmishAIDieing()
 	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
 	 */
 	void DestroySkirmishAI(const size_t skirmishAIId);
