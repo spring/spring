@@ -158,7 +158,7 @@ function printOOAIFactoryHeader(outFile) {
 	print("	@Override") >> outFile;
 	print("	public int handleEvent(int teamId, int topic, Pointer event) {") >> outFile;
 	print("") >> outFile;
-	print("		int _ret = -1;") >> outFile;
+	print("		int _ret = 3;") >> outFile;
 	print("") >> outFile;
 	print("		OOAI ai = ais.get(teamId);") >> outFile;
 	print("		OOAICallback ooClb = ooClbs.get(teamId);") >> outFile;
@@ -170,8 +170,9 @@ function printOOAIFactoryHeader(outFile) {
 }
 function printOOAIFactoryEnd(outFile) {
 
-	print("					default:") >> outFile;
+	print("					default: {") >> outFile;
 	print("						_ret = 1;") >> outFile;
+	print("					}") >> outFile;
 	print("				}") >> outFile;
 	print("			} catch (Throwable t) {") >> outFile;
 	print("				_ret = 2;") >> outFile;
@@ -247,22 +248,21 @@ function printEventOO(evtIndex) {
 	print("		return 0; // signaling: OK") >> myOOAIAbstractFile;
 	print("	}") >> myOOAIAbstractFile;
 
-	print("\t\t\t\t\t" "case " eCls ".TOPIC:") >> myOOAIFactoryFile;
-	print("\t\t\t\t\t\t" "{") >> myOOAIFactoryFile;
-	print("\t\t\t\t\t\t\t" eCls " evt = new " eCls "(event);") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t" "case " eCls ".TOPIC: {") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t\t" eCls " evt = new " eCls "(event);") >> myOOAIFactoryFile;
 	if (eNameLowerized == "init") {
-		print("\t\t\t\t\t\t\t" "ooClb = OOAICallback.getInstance(evt.callback, evt.team);") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t" "ooClbs.put(teamId, ooClb);") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "ooClb = OOAICallback.getInstance(evt.callback, evt.team);") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "ooClbs.put(teamId, ooClb);") >> myOOAIFactoryFile;
 	} else if (eNameLowerized == "playerCommand") {
-		print("\t\t\t\t\t\t\t" "java.util.ArrayList<Unit> units = new java.util.ArrayList<Unit>(evt.numUnitIds);") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t" "for (int i=0; i < evt.numUnitIds; i++) {") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t\t" "units.add(Unit.getInstance(ooClb, evt.unitIds.getInt(i)));") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t" "}") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t" "AICommand command = AICommandWrapper.wrapp(evt.commandTopic, evt.commandData);") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "java.util.ArrayList<Unit> units = new java.util.ArrayList<Unit>(evt.numUnitIds);") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "for (int i=0; i < evt.numUnitIds; i++) {") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t\t" "units.add(Unit.getInstance(ooClb, evt.unitIds.getInt(i)));") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "}") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "AICommand command = AICommandWrapper.wrapp(evt.commandTopic, evt.commandData);") >> myOOAIFactoryFile;
 	}
-	print("\t\t\t\t\t\t\t" "_ret = ai." eNameLowerized "(" paramsEvt ");") >> myOOAIFactoryFile;
-	print("\t\t\t\t\t\t\t" "break;") >> myOOAIFactoryFile;
-	print("\t\t\t\t\t\t" "}") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t\t" "_ret = ai." eNameLowerized "(" paramsEvt ");") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t\t" "break;") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t" "}") >> myOOAIFactoryFile;
 }
 
 function printEventOOAIFactory(evtIndex) {
