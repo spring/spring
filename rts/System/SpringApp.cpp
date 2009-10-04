@@ -1187,12 +1187,12 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				if (activeController->userWriting){
 					// use unicode for printed characters
 					i = event.key.keysym.unicode;
-					if ((i >= SDLK_SPACE) && (i <= SDLK_DELETE)) {
+					if ((i >= SDLK_SPACE) && (i <= 255)) {
 						CGameController* ac = activeController;
 						if (ac->ignoreNextChar || ac->ignoreChar == char(i)) {
 							ac->ignoreNextChar = false;
 						} else {
-							if (i < SDLK_DELETE && (!isRepeat || ac->userInput.length()>0)) {
+							if (i < 255 && (!isRepeat || ac->userInput.length()>0)) {
 								const int len = (int)ac->userInput.length();
 								ac->writingPos = std::max(0, std::min(len, ac->writingPos));
 								char str[2] = { char(i), 0 };
