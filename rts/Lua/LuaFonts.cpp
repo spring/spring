@@ -252,11 +252,12 @@ int LuaFonts::Print(lua_State* L)
 				case 'c': { options |= FONT_CENTER;        break; }
 				case 'r': { options |= FONT_RIGHT;         break; }
 
-				case 'd': { options |= FONT_BASELINE;      break; }
+				case 'a': { options |= FONT_ASCENDER;      break; }
 				case 't': { options |= FONT_TOP;           break; }
 				case 'v': { options |= FONT_VCENTER;       break; }
+				case 'x': { options |= FONT_BASELINE;      break; }
 				case 'b': { options |= FONT_BOTTOM;        break; }
-				case 'a': { options |= FONT_ASCENDER;      break; }
+				case 'd': { options |= FONT_DESCENDER;     break; }
 
 				case 's': { options |= FONT_SHADOW;        break; }
 				case 'o':

@@ -153,9 +153,8 @@ void CMouseHandler::LoadCursors()
 	// the default cursor must exist
 	if (cursorCommandMap.find("") == cursorCommandMap.end()) {
 		handleerror(0,
-			"Unable to load default cursor. Check that you have the OTA\n"
-			"content package (\"otacontent.sdz\") installed in your Spring\n"
-			"\"base/\" directory.",
+			"Unable to load default cursor. Check that you have the required\n"
+			"content packages installed in your Spring \"base/\" directory.\n",
 			"Missing Dependency: \"cursornormal\"", 0);
 	}
 }
@@ -447,17 +446,17 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 			else if(addedunits) //more than one unit selected
 				Channels::UserInterface.PlaySample(soundMultiselID);
 		} else {
-			CUnit* unit;
+			const CUnit* unit;
 			helper->GuiTraceRay(camera->pos,dir,gu->viewRange*1.4f,unit,false);
-			if(unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)){
-				if(buttons[button].lastRelease < (gu->gameTime - doubleClickTime)){
+			if (unit && ((unit->team == gu->myTeam) || gu->spectatingFullSelect)) {
+				if (buttons[button].lastRelease < (gu->gameTime - doubleClickTime)) {
+					CUnit* unitM = uh->units[unit->id];
 					if (keys[SDLK_LCTRL] && selectedUnits.selectedUnits.find(unit) != selectedUnits.selectedUnits.end()) {
-						selectedUnits.RemoveUnit(unit);
+						selectedUnits.RemoveUnit(unitM);
 					} else {
-						selectedUnits.AddUnit(unit);
+						selectedUnits.AddUnit(unitM);
 					}
-				}
-				else {
+				} else {
 					//double click
 					if (unit->group && !keys[SDLK_LCTRL]) {
 						//select the current unit's group if it has one
@@ -607,9 +606,9 @@ std::string CMouseHandler::GetCurrentTooltip(void)
 	GML_RECMUTEX_LOCK(quad); // GetCurrentTooltip - called from ToolTipConsole::Draw --> MouseHandler::GetCurrentTooltip
 
 	const float range = (gu->viewRange * 1.4f);
-	CUnit* unit = NULL;
+	const CUnit* unit = NULL;
 	float udist = helper->GuiTraceRay(camera->pos, dir, range, unit, true);
-	CFeature* feature = NULL;
+	const CFeature* feature = NULL;
 	float fdist = helper->GuiTraceRayFeature(camera->pos, dir, range, feature);
 
 	if ((udist > (range - 300.0f)) &&

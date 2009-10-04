@@ -58,7 +58,7 @@ CExtractorBuilding::~CExtractorBuilding()
 /* CReg PostLoad */
 void CExtractorBuilding::PostLoad()
 {
-	script->SetSpeed(metalExtract, 500.0f);
+	script->ExtractionRateChanged(metalExtract);
 }
 
 /* resets the metalMap and notifies the neighbours */
@@ -179,10 +179,7 @@ void CExtractorBuilding::SetExtractionRangeAndDepth(float range, float depth)
 	}
 
 	// set the COB animation speed
-	script->SetSpeed(metalExtract, 500.0f);
-	if (activated) {
-		script->Go();
-	}
+	script->ExtractionRateChanged(metalExtract);
 }
 
 
@@ -220,10 +217,7 @@ void CExtractorBuilding::ReCalculateMetalExtraction()
 	}
 
 	// set the new rotation-speed
-	script->SetSpeed(metalExtract, 500.0f);
-	if (activated) {
-		script->Go();
-	}
+	script->ExtractionRateChanged(metalExtract);
 }
 
 

@@ -21,7 +21,7 @@ struct FeatureDef
 	FeatureDef():
 		metal(0), energy(0), maxHealth(0), reclaimTime(0), mass(0),
 		upright(false), drawType(0), model(NULL),
-		resurrectable(false), smokeTime(0), destructable(false), reclaimable(true), blocking(false),
+		resurrectable(false), smokeTime(0), destructable(false), reclaimable(true), autoreclaim(true), blocking(false),
 		burnable(false), floating(false), noSelect(false), geoThermal(false),
 		xsize(0), zsize(0) {}
 
@@ -59,6 +59,7 @@ struct FeatureDef
 
 	bool destructable;
 	bool reclaimable;
+	bool autoreclaim;
 	bool blocking;
 	bool burnable;
 	bool floating;

@@ -26,11 +26,22 @@ namespace proc {
 	__attribute__((__noinline__))
 	void ExecCPUID(unsigned int* a, unsigned int* b, unsigned int* c, unsigned int* d)
 	{
+	#ifndef __APPLE__
 		__asm__ __volatile__(
 			"cpuid"
 			: "=a" (*a), "=b" (*b), "=c" (*c), "=d" (*d)
 			: "0" (*a)
 		);
+	#else
+		__asm__ __volatile__(
+			"pushl %%ebx\n\t"
+			"cpuid\n\t"
+			"movl %%ebx, %1\n\t"
+			"popl %%ebx"
+			: "=a" (*a), "=r" (*b), "=c" (*c), "=d" (*d)
+			: "0" (*a)
+		);
+	#endif
 	}
 	#else
 	// no-op on other compilers

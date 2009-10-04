@@ -221,7 +221,7 @@ void CCollisionHandler::IntersectPieceTreeHelper(
 	mat.Translate(lmp->pos);
 	mat.RotateY(-lmp->rot[1]);
 	mat.RotateX(-lmp->rot[0]);
-	mat.RotateZ( lmp->rot[2]);
+	mat.RotateZ(-lmp->rot[2]);
 
 	const CollisionVolume* vol = lmp->colvol;
 	const float3& offset = vol->GetOffsets();

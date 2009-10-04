@@ -54,6 +54,7 @@
 #endif
 #include "ExternalAI/EngineOutHandler.h"
 #include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "FileSystem/ArchiveScanner.h"
@@ -302,7 +303,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	crossSize = configHandler->Get("CrossSize", 10.0f);
 
 	playerRoster.SetSortTypeByCode(
-	  (PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
+			(PlayerRoster::SortType)configHandler->Get("ShowPlayerInfo", 1));
 
 	CInputReceiver::guiAlpha = configHandler->Get("GuiOpacity",  0.8f);
 
@@ -316,26 +317,52 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	CLuaHandle::SetModUICtrl(!!configHandler->Get("LuaModUICtrl", 1));
 
-	consoleHistory = new CConsoleHistory;
-	wordCompletion = new CWordCompletion;
-	for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
-	  wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
+	{
+		ScopedOnceTimer timer("Loading console");
+		consoleHistory = new CConsoleHistory;
+		wordCompletion = new CWordCompletion;
+		for (int pp = 0; pp < playerHandler->ActivePlayers(); pp++) {
+			wordCompletion->AddWord(playerHandler->Player(pp)->name, false, false, false);
+		}
+		// add the Skirmish AIs instance names to word completion,
+		// for various things, eg chatting
+		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
+		CSkirmishAIHandler::id_ai_t::const_iterator ai;
+		for (ai = ais.begin(); ai != ais.end(); ++ai) {
+			wordCompletion->AddWord(ai->second.name + " ", false, false, false);
+		}
+		// add the available Skirmish AI libraries to word completion, for /aicontrol
+		const IAILibraryManager::T_skirmishAIKeys& aiLibs = aiLibManager->GetSkirmishAIKeys();
+		IAILibraryManager::T_skirmishAIKeys::const_iterator aiLib;
+		for (aiLib = aiLibs.begin(); aiLib != aiLibs.end(); ++aiLib) {
+			wordCompletion->AddWord(aiLib->GetShortName() + " " + aiLib->GetVersion() + " ", false, false, false);
+		}
+		// add the available Lua AI implementations to word completion, for /aicontrol
+		const std::set<std::string>& luaAIShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
+		for (std::set<std::string>::const_iterator sn = luaAIShortNames.begin();
+				sn != luaAIShortNames.end(); ++sn) {
+			wordCompletion->AddWord(*sn + " ", false, false, false);
+		}
 	}
 
-	oldPitch   = 0;
-	oldHeading = 0;
-	oldStatus  = 255;
+	{
+		ScopedOnceTimer timer("Loading sounds");
+		oldPitch   = 0;
+		oldHeading = 0;
+		oldStatus  = 255;
 
-	sound->LoadSoundDefs("gamedata/sounds.lua");
-	chatSound = sound->GetSoundId("IncomingChat", false);
-
+		sound->LoadSoundDefs("gamedata/sounds.lua");
+		chatSound = sound->GetSoundId("IncomingChat", false);
+	}
 	moveWarnings = !!configHandler->Get("MoveWarnings", 1);
 
-	camera = new CCamera();
-	cam2 = new CCamera();
-	mouse = new CMouseHandler();
-	camHandler = new CCameraHandler();
-	selectionKeys = new CSelectionKeyHandler();
+	{
+		ScopedOnceTimer timer("Camera and mouse");
+		camera = new CCamera();
+		cam2 = new CCamera();
+		mouse = new CMouseHandler();
+		camHandler = new CCameraHandler();
+	}
 	tooltip = new CTooltipConsole();
 	iconHandler = new CIconHandler();
 
@@ -349,41 +376,43 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		throw content_error(sideParser.GetErrorLog());
 	}
 
-	PrintLoadMsg("Parsing definitions");
+	{
+		ScopedOnceTimer timer("Loading defs");
+		PrintLoadMsg("Parsing definitions");
 
-	defsParser = new LuaParser("gamedata/defs.lua",
-	                                SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
-	// customize the defs environment
-	defsParser->GetTable("Spring");
-	defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
-	defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
-	defsParser->EndTable();
-	// run the parser
-	if (!defsParser->Execute()) {
-		throw content_error(defsParser->GetErrorLog());
+		defsParser = new LuaParser("gamedata/defs.lua",
+										SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
+		// customize the defs environment
+		defsParser->GetTable("Spring");
+		defsParser->AddFunc("GetModOptions", LuaSyncedRead::GetModOptions);
+		defsParser->AddFunc("GetMapOptions", LuaSyncedRead::GetMapOptions);
+		defsParser->EndTable();
+		// run the parser
+		if (!defsParser->Execute()) {
+			throw content_error(defsParser->GetErrorLog());
+		}
+		const LuaTable root = defsParser->GetRoot();
+		if (!root.IsValid()) {
+			throw content_error("Error loading definitions");
+		}
+		// bail now if any of these tables in invalid
+		// (makes searching for errors that much easier
+		if (!root.SubTable("UnitDefs").IsValid()) {
+			throw content_error("Error loading UnitDefs");
+		}
+		if (!root.SubTable("FeatureDefs").IsValid()) {
+			throw content_error("Error loading FeatureDefs");
+		}
+		if (!root.SubTable("WeaponDefs").IsValid()) {
+			throw content_error("Error loading WeaponDefs");
+		}
+		if (!root.SubTable("ArmorDefs").IsValid()) {
+			throw content_error("Error loading ArmorDefs");
+		}
+		if (!root.SubTable("MoveDefs").IsValid()) {
+			throw content_error("Error loading MoveDefs");
+		}
 	}
-	const LuaTable root = defsParser->GetRoot();
-	if (!root.IsValid()) {
-		throw content_error("Error loading definitions");
-	}
-	// bail now if any of these tables in invalid
-	// (makes searching for errors that much easier
-	if (!root.SubTable("UnitDefs").IsValid()) {
-		throw content_error("Error loading UnitDefs");
-	}
-	if (!root.SubTable("FeatureDefs").IsValid()) {
-		throw content_error("Error loading FeatureDefs");
-	}
-	if (!root.SubTable("WeaponDefs").IsValid()) {
-		throw content_error("Error loading WeaponDefs");
-	}
-	if (!root.SubTable("ArmorDefs").IsValid()) {
-		throw content_error("Error loading ArmorDefs");
-	}
-	if (!root.SubTable("MoveDefs").IsValid()) {
-		throw content_error("Error loading MoveDefs");
-	}
-
 	explGenHandler = new CExplosionGeneratorHandler();
 
 	shadowHandler = new CShadowHandler();
@@ -411,10 +440,10 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	inMapDrawer = new CInMapDraw();
 	cmdColors.LoadConfig("cmdcolors.txt");
 
-	const std::map<std::string, int>& unitMap = unitDefHandler->unitID;
+	const std::map<std::string, int>& unitMap = unitDefHandler->unitDefIDsByName;
 	std::map<std::string, int>::const_iterator uit;
 	for (uit = unitMap.begin(); uit != unitMap.end(); uit++) {
-	  wordCompletion->AddWord(uit->first + " ", false, true, false);
+		wordCompletion->AddWord(uit->first + " ", false, true, false);
 	}
 
 	geometricObjects = new CGeometricObjects();
@@ -450,6 +479,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	keyCodes = new CKeyCodes();
 	keyBindings = new CKeyBindings();
 	keyBindings->Load("uikeys.txt");
+	selectionKeys = new CSelectionKeyHandler();
 
 	water=CBaseWater::GetWater(NULL);
 	for(int t = 0; t < teamHandler->ActiveTeams(); ++t) {
@@ -467,7 +497,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 		PrintLoadMsg("Loading LuaGaia");
 		CLuaGaia::LoadHandler();
 	}
-	if (!!configHandler->Get("LuaUI", 1)) {
+	{
 		PrintLoadMsg("Loading LuaUI");
 		CLuaUI::LoadHandler();
 	}
@@ -492,8 +522,8 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	eventHandler.GamePreload();
 
 	glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-	glFogf(GL_FOG_START, 0.0f);
 	glFogf(GL_FOG_START,gu->viewRange*mapInfo->atmosphere.fogStart);
+	glFogf(GL_FOG_END, gu->viewRange);
 	glFogf(GL_FOG_DENSITY, 1.0f);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
 	glEnable(GL_FOG);
@@ -1099,17 +1129,17 @@ bool CGame::ActionPressed(const Action& action,
 	else if (cmd == "moveslow") {
 		camMove[7]=true;
 	}
-	else if (cmd == "aikill") {
+	else if ((cmd == "aikill") || (cmd == "aireload")) {
 		bool badArgs = false;
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
-		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
-		//const bool isFromHost         = (playernum == 0);
-		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
-		const bool isCheatingEnabled  = gs->cheatEnabled;
-		const bool hasArgs  = (action.extra.size() > 0);
+		const bool cheating           = gs->cheatEnabled;
+		const bool hasArgs            = (action.extra.size() > 0);
 		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
+		size_t skirmishAIId           = 0; // will only be used if !badArgs
+		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
+		const std::string actionName  = cmd.substr(2);
 
 		if (hasArgs) {
 			bool share = false;
@@ -1119,7 +1149,7 @@ bool CGame::ActionPressed(const Action& action,
 			if (args.size() >= 1) {
 				teamToKillId = atoi(args[0].c_str());
 			}
-			if (args.size() >= 2) {
+			if ((args.size() >= 2) && (actionName == "kill")) {
 				teamToReceiveUnitsId = atoi(args[1].c_str());
 				share = true;
 			}
@@ -1130,68 +1160,81 @@ bool CGame::ActionPressed(const Action& action,
 			                                  teamHandler->Team(teamToReceiveUnitsId) : NULL;
 
 			if (teamToKill == NULL) {
-				logOutput.Print("Team to kill: not a valid team number: \"%s\"", args[0].c_str());
+				logOutput.Print("Team to %s: not a valid team number: \"%s\"", actionName.c_str(), args[0].c_str());
 				badArgs = true;
 			}
 			if (share && teamToReceiveUnits == NULL) {
 				logOutput.Print("Team to receive units: not a valid team number: \"%s\"", args[1].c_str());
 				badArgs = true;
 			}
-			if (!badArgs && !(teamToKill->isAI)) {
-				logOutput.Print("Team to kill: not a Skirmish AI team: %i", teamToKillId);
+			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId).size() == 0)) {
+				logOutput.Print("Team to %s: not a Skirmish AI team: %i", actionName.c_str(), teamToKillId);
+				badArgs = true;
+			} else {
+				const CSkirmishAIHandler::ids_t skirmishAIIds = skirmishAIHandler.GetSkirmishAIsInTeam(teamToKillId, gu->myPlayerNum);
+				if (skirmishAIIds.size() > 0) {
+					skirmishAIId = skirmishAIIds[0];
+				} else {
+					logOutput.Print("Team to %s: not a local Skirmish AI team: %i", actionName.c_str(), teamToKillId);
+					badArgs = true;
+				}
+			}
+			if (!badArgs && skirmishAIHandler.GetSkirmishAI(skirmishAIId)->isLuaAI) {
+				logOutput.Print("Team to %s: it is not yet supported to %s Lua AIs", actionName.c_str(), actionName.c_str());
 				badArgs = true;
 			}
-			if (!badArgs && !(fromPlayer->CanControlTeam(teamToKillId) && teamHandler->AlliedTeams(fromTeamId, teamToKillId)) && !isCheatingEnabled) {
-				logOutput.Print("Team to kill: player %s is not allowed to kill Skirmish AI controlling team %i (try with /cheat)",
-						fromPlayer->name.c_str(), teamToKillId);
-				badArgs = true;
+			if (!badArgs) {
+				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToKillId);
+				const bool weAreAIHost  = (skirmishAIHandler.GetSkirmishAI(skirmishAIId)->hostPlayer == gu->myPlayerNum);
+				const bool weAreLeader  = (teamToKill->leader == gu->myPlayerNum);
+				if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
+					logOutput.Print("Team to %s: player %s is not allowed to %s Skirmish AI controlling team %i (try with /cheat)",
+							actionName.c_str(), fromPlayer->name.c_str(), actionName.c_str(), teamToKillId);
+					badArgs = true;
+				}
 			}
 			if (!badArgs && teamToKill->isDead) {
-				logOutput.Print("Team to kill: is a dead team already: %i", teamToKillId);
+				logOutput.Print("Team to %s: is a dead team already: %i", actionName.c_str(), teamToKillId);
 				badArgs = true;
 			}
-#ifndef DEBUG
-			// TODO: FIXME: remove this, if desync bug fixed
-			if (playerHandler->ActivePlayers() > 1) {
-				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
-				badArgs = true;
-			}
-#endif // DEBUG
-
-			const bool isLocalSkirmishAI = eoh->IsSkirmishAI(teamToKillId);
 
 			if (!badArgs) {
-				if (share) {
-					net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
-					// when the AIs team has no units left,
-					// the AI will be destroyed automatically
-				} else {
-					if (isLocalSkirmishAI) {
-						eoh->DestroySkirmishAI(teamToKillId, 3 /* = AI killed */);
+				if (actionName == "kill") {
+					if (share) {
+						net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, teamToReceiveUnitsId, teamToKillId));
+						// when the AIs team has no units left,
+						// the AI will be destroyed automatically
+					} else {
+						const SkirmishAIData* sai = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+						const bool isLocalSkirmishAI = (sai->hostPlayer == gu->myPlayerNum);
+						if (isLocalSkirmishAI) {
+							skirmishAIHandler.SetLocalSkirmishAIDieing(skirmishAIId, 3 /* = AI killed */);
+						}
 					}
+				} else if (actionName == "reload") {
+					net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_RELOADING));
 				}
 
-				if (isLocalSkirmishAI) {
-					if (!eoh->IsSkirmishAI(teamToKillId)) {
-						logOutput.Print("Successfully removed Skirmish AI from team %i.", teamToKillId);
-					} else {
-						logOutput.Print("Failed to remove Skirmish AI from team %i.", teamToKillId);
-					}
-				}
+				logOutput.Print("Skirmish AI controlling team %i is beeing %sed ...", teamToKillId, actionName.c_str());
 			}
 		} else {
-			logOutput.Print("/%s: missing mandatory argument \"teamToKill\"", action.command.c_str());
+			logOutput.Print("/%s: missing mandatory argument \"teamTo%s\"", action.command.c_str(), actionName.c_str());
 			badArgs = true;
 		}
 
 		if (badArgs) {
-			logOutput.Print("------------------------------------------------");
-			logOutput.Print("Kill a Skirmish AI controlling a team.");
-			logOutput.Print("The team itsself will remain alive,");
-			logOutput.Print("unless a second argument is given,");
-			logOutput.Print("which specifies an active team");
-			logOutput.Print("that will receive all the units of the AI team.");
-			logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
+			if (actionName == "kill") {
+				logOutput.Print("description: "
+				                "Kill a Skirmish AI controlling a team. The team itsself will remain alive, "
+				                "unless a second argument is given, which specifies an active team "
+				                "that will receive all the units of the AI team.");
+				logOutput.Print("usage:   /%s teamToKill [teamToReceiveUnits]", action.command.c_str());
+			} else if (actionName == "reload") {
+				logOutput.Print("description: "
+				                "Reload a Skirmish AI controlling a team."
+				                "The team itsself will remain alive during the process.");
+				logOutput.Print("usage:   /%s teamToReload", action.command.c_str());
+			}
 		}
 	}
 	else if (cmd == "aicontrol") {
@@ -1199,11 +1242,9 @@ bool CGame::ActionPressed(const Action& action,
 
 		const CPlayer* fromPlayer     = playerHandler->Player(gu->myPlayerNum);
 		const int      fromTeamId     = (fromPlayer != NULL) ? fromPlayer->team : -1;
-		//const CTeam*   fromTeam       = (fromTeamId < 0) ? NULL : teamHandler->Team(fromTeamId);
-		//const bool isFromHost         = (playernum == 0);
-		//const bool isFromSpectator    = (fromPlayer != NULL) ? fromPlayer->spectator : true;
-		const bool isCheatingEnabled  = gs->cheatEnabled;
-		const bool hasArgs  = (action.extra.size() > 0);
+		const bool cheating           = gs->cheatEnabled;
+		const bool hasArgs            = (action.extra.size() > 0);
+		const bool singlePlayer       = (playerHandler->ActivePlayers() <= 1);
 		std::vector<std::string> args = _local_strSpaceTokenize(action.extra);
 
 		if (hasArgs) {
@@ -1236,58 +1277,61 @@ bool CGame::ActionPressed(const Action& action,
 				logOutput.Print("Team to control: not a valid team number: \"%s\"", args[0].c_str());
 				badArgs = true;
 			}
-			if (!badArgs && !(fromPlayer->CanControlTeam(teamToControlId) && teamHandler->AlliedTeams(fromTeamId, teamToControlId)) && !isCheatingEnabled) {
-				logOutput.Print("Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
-						fromPlayer->name.c_str(), teamToControlId);
-				badArgs = true;
+			if (!badArgs) {
+				const bool weAreAllied  = teamHandler->AlliedTeams(fromTeamId, teamToControlId);
+				const bool weAreLeader  = (teamToControl->leader == gu->myPlayerNum);
+				const bool noLeader     = (teamToControl->leader == -1);
+				if (!(weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader)))) {
+					logOutput.Print("Team to control: player %s is not allowed to let a Skirmish AI take over control of team %i (try with /cheat)",
+							fromPlayer->name.c_str(), teamToControlId);
+					badArgs = true;
+				}
 			}
 			if (!badArgs && teamToControl->isDead) {
 				logOutput.Print("Team to control: is a dead team: %i", teamToControlId);
 				badArgs = true;
 			}
-#ifndef DEBUG
-			// TODO: FIXME: remove this, if desync bug fixed
-			if (playerHandler->ActivePlayers() > 1) {
-				logOutput.Print("It is not allowed to use this command in a multiplayer game yet.");
+			// TODO: FIXME: remove this, if support for multiple Skirmish AIs per team is in place
+			if (!badArgs && (skirmishAIHandler.GetSkirmishAIsInTeam(teamToControlId).size() > 0)) {
+				logOutput.Print("Team to control: there is already an AI controlling this team: %i", teamToControlId);
 				badArgs = true;
 			}
-#endif // DEBUG
-			/*
-			// It should be allowed to let two Skirmish AIs control a single team.
-			// Though, it will fail heavily most likely with AIs not designed for this.
-			if (!badArgs && eoh->IsSkirmishAI(teamToControlId)) {
-				logOutput.Print("Team to control: is already controlled by a Skirmish AI: %i", teamToControlId);
+			if (!badArgs && (skirmishAIHandler.GetLocalSkirmishAIInCreation(teamToControlId) != NULL)) {
+				logOutput.Print("Team to control: there is already an AI beeing created for team: %i", teamToControlId);
 				badArgs = true;
 			}
-			*/
+			if (!badArgs) {
+				const std::set<std::string>& luaAIImplShortNames = skirmishAIHandler.GetLuaAIImplShortNames();
+				if (luaAIImplShortNames.find(aiShortName) != luaAIImplShortNames.end()) {
+					logOutput.Print("Team to control: it is currently not supported to initialize Lua AIs mid-game");
+					badArgs = true;
+				}
+			}
 
 			if (!badArgs) {
 				SkirmishAIKey aiKey(aiShortName, aiVersion);
-				aiKey = IAILibraryManager::GetInstance()->ResolveSkirmishAIKey(aiKey);
+				aiKey = aiLibManager->ResolveSkirmishAIKey(aiKey);
 				if (aiKey.IsUnspecified()) {
-					logOutput.Print("Skirmish AI: not a valid Skirmish AI (Lua AIs are not supported (yet)): %s %s",
+					logOutput.Print("Skirmish AI: not a valid Skirmish AI: %s %s",
 							aiShortName.c_str(), aiVersion.c_str());
 					badArgs = true;
-				}
-
-				SkirmishAIData aiData;
-				aiData.name = (aiName != "") ? aiName : aiShortName;
-				aiData.team = teamToControlId;
-				aiData.hostPlayerNum = gu->myPlayerNum;
-				aiData.shortName = aiShortName;
-				aiData.version = aiVersion;
-				std::map<std::string, std::string>::const_iterator o;
-				for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
-					aiData.optionKeys.push_back(o->first);
-				}
-				aiData.options = aiOptions;
-
-				eoh->CreateSkirmishAI(teamToControlId, aiKey, aiData);
-
-				if (eoh->IsSkirmishAI(teamToControlId)) {
-					logOutput.Print("Skirmish AI now controlling team %i.", teamToControlId);
 				} else {
-					logOutput.Print("Failed to let a Skirmish AI control team %i.", teamToControlId);
+					const CSkirmishAILibraryInfo* aiLibInfo = aiLibManager->GetSkirmishAIInfos().find(aiKey)->second;
+
+					SkirmishAIData aiData;
+					aiData.name       = (aiName != "") ? aiName : aiShortName;
+					aiData.team       = teamToControlId;
+					aiData.hostPlayer = gu->myPlayerNum;
+					aiData.shortName  = aiShortName;
+					aiData.version    = aiVersion;
+					std::map<std::string, std::string>::const_iterator o;
+					for (o = aiOptions.begin(); o != aiOptions.end(); ++o) {
+						aiData.optionKeys.push_back(o->first);
+					}
+					aiData.options    = aiOptions;
+					aiData.isLuaAI    = aiLibInfo->IsLuaAI();
+
+					skirmishAIHandler.CreateLocalSkirmishAI(aiData);
 				}
 			}
 		} else {
@@ -1296,10 +1340,34 @@ bool CGame::ActionPressed(const Action& action,
 		}
 
 		if (badArgs) {
-			logOutput.Print("------------------------------------------------");
-			logOutput.Print("Let a Skirmish AI take over control of a team.");
+			logOutput.Print("description: Let a Skirmish AI take over control of a team.");
 			logOutput.Print("usage:   /%s teamToControl aiShortName [aiVersion] [name] [options...]", action.command.c_str());
 			logOutput.Print("example: /%s 1 RAI 0.601 my_RAI_Friend difficulty=2 aggressiveness=3", action.command.c_str());
+		}
+	}
+	else if (cmd == "ailist") {
+		const CSkirmishAIHandler::id_ai_t& ais  = skirmishAIHandler.GetAllSkirmishAIs();
+		if (ais.size() > 0) {
+			CSkirmishAIHandler::id_ai_t::const_iterator ai;
+			logOutput.Print("ID | Team | Local | Lua | Name | (Hosting player name) or (Short name & Version)");
+			for (ai = ais.begin(); ai != ais.end(); ++ai) {
+				const bool isLocal = (ai->second.hostPlayer == gu->myPlayerNum);
+				std::string lastPart;
+				if (isLocal) {
+					lastPart = "(Key:)  " + ai->second.shortName + " " + ai->second.version;
+				} else {
+					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
+				}
+				logOutput.Print("%d | %i | %s | %s | %s | %s",
+						ai->first,
+						ai->second.team,
+						(isLocal ? "yes" : "no "),
+						(ai->second.isLuaAI ? "yes" : "no "),
+						ai->second.name.c_str(),
+						lastPart.c_str());
+			}
+		} else {
+			logOutput.Print("<There are no active Skirmish AIs in this game>");
 		}
 	}
 	else if (cmd == "team"){
@@ -1312,7 +1380,8 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "spectator"){
-		net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
+		if (!gu->spectating)
+			net->Send(CBaseNetProtocol::Get().SendResign(gu->myPlayerNum));
 	}
 	else if ((cmd == "specteam") && gu->spectating) {
 		const int team = atoi(action.extra.c_str());
@@ -1431,6 +1500,13 @@ bool CGame::ActionPressed(const Action& action,
 			unitDrawer->showHealthBars = !unitDrawer->showHealthBars;
 		} else {
 			unitDrawer->showHealthBars = !!atoi(action.extra.c_str());
+		}
+	}
+	else if (cmd == "showrezbars") {
+		if (action.extra.empty()) {
+			featureHandler->showRezBars = !featureHandler->showRezBars;
+		} else {
+			featureHandler->showRezBars = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "pause") {
@@ -2187,8 +2263,26 @@ bool CGame::ActionPressed(const Action& action,
 		}
 	}
 	else if (cmd == "debuginfo") {
-		if (action.extra == "sound")
+		if (action.extra == "sound") {
 			sound->PrintDebugInfo();
+		} else if (action.extra == "profiling") {
+			logOutput.Print("%35s|%18s|%s",
+					"Part",
+					"Total Time",
+					"Time of the last 0.5s");
+			std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
+			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi) {
+#if GML_MUTEX_PROFILER
+				if ((pi->first.size() < 5) || pi->first.substr(pi->first.size()-5,5).compare("Mutex")!=0) {
+					continue;
+				}
+#endif // GML_MUTEX_PROFILER
+				logOutput.Print("%35s %16.2fs %5.2f%%",
+						pi->first.c_str(),
+						((float)pi->second.total) / 1000.f,
+						pi->second.percent * 100);
+			}
+		}
 	}
 	else if (cmd == "benchmark-script") {
 		CUnitScript::BenchmarkScript(action.extra);
@@ -2205,6 +2299,13 @@ bool CGame::ActionPressed(const Action& action,
 		net->Send(pckt.Pack());
 	}
 	else {
+		static std::set<std::string> serverCommands = std::set<std::string>(commands, commands+numCommands);
+		if (serverCommands.find(cmd) != serverCommands.end())
+		{
+			CommandMessage pckt(action, gu->myPlayerNum);
+			net->Send(pckt.Pack());
+		}
+
 		if (!Console::Instance().ExecuteAction(action))
 		{
 			if (guihandler != NULL) // maybe a widget is interested?
@@ -2354,15 +2455,11 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		}
 	}
 	else if (action.command == "nocost" && gs->cheatEnabled) {
-		for(int i = 0; i < unitDefHandler->numUnitDefs; ++i) {
-			unitDefHandler->unitDefs[i].metalCost = 1;
-			unitDefHandler->unitDefs[i].energyCost = 1;
-			unitDefHandler->unitDefs[i].buildTime = 10;
-			unitDefHandler->unitDefs[i].metalUpkeep = 0;
-			unitDefHandler->unitDefs[i].energyUpkeep = 0;
+		if (unitDefHandler->ToggleNoCost()) {
+			logOutput.Print("Everything is for free!");
+		} else {
+			logOutput.Print("Everything costs resources again!");
 		}
-		unitDefHandler->noCost = true;
-		logOutput.Print("Everything is for free!");
 	}
 	else if (action.command == "give" && gs->cheatEnabled) {
 		std::string s = "give "; //FIXME lazyness
@@ -2464,7 +2561,7 @@ void CGame::ActionReceived(const Action& action, int playernum)
 				numRequestedUnits = uh->MaxUnitsPerTeam() - currentNumUnits;
 			}
 
-			const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+			const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
 
 			if (unitDef != NULL) {
 				int xsize = unitDef->xsize;
@@ -2674,10 +2771,10 @@ void CGame::ActionReceived(const Action& action, int playernum)
 			std::istringstream buf(action.extra.substr(6));
 			int targetframe;
 			buf >> targetframe;
-			Skip(targetframe);
+			StartSkip(targetframe);
 		}
 		else if (action.extra == "end") {
-			skipping = false;
+			EndSkip();
 			net->Send(CBaseNetProtocol::Get().SendPause(gu->myPlayerNum, false));
 		}
 	}
@@ -2914,32 +3011,12 @@ bool CGame::DrawWorld()
 
 void CGame::StoreCloaked(bool save) {
 	if(save) {
-		{
-			GML_RECMUTEX_LOCK(unit); // StoreCloaked
-
-			unitDrawer->drawCloakedSave = unitDrawer->drawCloaked;
-			unitDrawer->drawCloakedS3OSave = unitDrawer->drawCloakedS3O;
-		}
-		{
-			GML_RECMUTEX_LOCK(feat); // StoreCloaked
-
-			featureHandler->fadeFeaturesSave = featureHandler->fadeFeatures;
-			featureHandler->fadeFeaturesS3OSave = featureHandler->fadeFeaturesS3O;
-		}
+		unitDrawer->BackupUnits();
+		featureHandler->BackupFeatures();
 	}
 	else {
-		{
-			GML_RECMUTEX_LOCK(unit); // StoreCloaked
-
-			unitDrawer->drawCloaked = unitDrawer->drawCloakedSave;
-			unitDrawer->drawCloakedS3O = unitDrawer->drawCloakedS3OSave;
-		}
-		{
-			GML_RECMUTEX_LOCK(feat); // StoreCloaked
-
-			featureHandler->fadeFeatures = featureHandler->fadeFeaturesSave;
-			featureHandler->fadeFeaturesS3O = featureHandler->fadeFeaturesS3OSave;
-		}
+		unitDrawer->RestoreUnits();
+		featureHandler->RestoreFeatures();
 	}
 }
 
@@ -2962,8 +3039,24 @@ bool CGame::Draw() {
 #endif
 
 	//! timings and frame interpolation
-	thisFps++;
 	const unsigned currentTime = SDL_GetTicks();
+
+	if(skipping) {
+		if(skipLastDraw + 500 > currentTime) // render at 2 FPS
+			return true;
+		skipLastDraw = currentTime;
+#if defined(USE_GML) && GML_ENABLE_SIM
+		extern volatile int gmlMultiThreadSim;
+		if(!gmlMultiThreadSim)
+#endif
+		{
+			DrawSkip();
+			return true;
+		}
+	}
+
+	thisFps++;
+
 	updateDeltaSeconds = 0.001f * float(currentTime - lastUpdateRaw);
 	lastUpdateRaw = SDL_GetTicks();
 	if(!gs->paused && !HasLag() && gs->frameNum>1 && !creatingVideo){
@@ -3017,16 +3110,18 @@ bool CGame::Draw() {
 		GML_STDMUTEX_LOCK(sim); // Draw
 
 		guihandler->RunLayoutCommand("disable");
-		LogObject() << "Type '/luaui reload' in the chat to reenable LuaUI.\n";
+		LogObject() << "Type '/luaui reload' in the chat to re-enable LuaUI.\n";
 		LogObject() << "===>>>  Please report this error to the forum or mantis with your infolog.txt\n";
 	}
 
 	CNamedTextures::Update();
 	texturehandlerS3O->Update();
 	modelParser->Update();
+	treeDrawer->Update();
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
 	unitDrawer->Update();
+	featureHandler->UpdateDraw();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();
@@ -3250,6 +3345,11 @@ bool CGame::Draw() {
 		smallFont->End();
 	}
 
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if(skipping)
+		DrawSkip(false);
+#endif
+
 	mouse->DrawCursor();
 
 //	float tf[]={1,1,1,1,1,1,1,1,1};
@@ -3393,7 +3493,6 @@ void CGame::SimFrame() {
 		waitCommandsAI.Update();
 		geometricObjects->Update();
 		sound->NewFrame();
-		treeDrawer->Update();
 		eoh->Update();
 		for (size_t a = 0; a < grouphandlers.size(); a++) {
 			grouphandlers[a]->Update();
@@ -3645,7 +3744,7 @@ void CGame::ClientReadNet()
 			case NETMSG_PLAYERNAME: {
 				int player = inbuf[2];
 				playerHandler->Player(player)->name=(char*)(&inbuf[3]);
-				playerHandler->Player(player)->readyToStart=true;
+				playerHandler->Player(player)->readyToStart=(gameSetup->startPosType != CGameSetup::StartPos_ChooseInGame);
 				playerHandler->Player(player)->active=true;
 				wordCompletion->AddWord(playerHandler->Player(player)->name, false, false, false); // required?
 				AddTraffic(player, packetCode, dataLength);
@@ -3676,11 +3775,10 @@ void CGame::ClientReadNet()
 					           *(float*)&inbuf[8],
 					           *(float*)&inbuf[12]);
 					if (!luaRules || luaRules->AllowStartPosition(player, pos)) {
+						teamHandler->Team(team)->StartposMessage(pos);
 						if (inbuf[3] != 2) {
-							teamHandler->Team(team)->StartposMessage(pos, !!inbuf[3]);
+							playerHandler->Player(player)->readyToStart = !!inbuf[3];
 						}
-						else
-							teamHandler->Team(team)->StartposMessage(pos);
 						char label[128];
 						SNPRINTF(label, sizeof(label), "Start %i", team);
 						inMapDrawer->LocalPoint(pos, label, player);
@@ -3714,11 +3812,11 @@ void CGame::ClientReadNet()
 
 			case NETMSG_KEYFRAME: {
 				int serverframenum = *(int*)(inbuf+1);
-				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum-1));
+				net->Send(CBaseNetProtocol::Get().SendKeyFrame(serverframenum));
 				if (gs->frameNum == (serverframenum - 1)) {
-					// everything ok, fall through
 				} else {
-					break; // error
+					// error
+					LogObject() << "Error: Keyframe difference: " << gs->frameNum - (serverframenum - 1);
 				}
 			}
 			case NETMSG_NEWFRAME: {
@@ -3865,10 +3963,10 @@ void CGame::ClientReadNet()
 				const int fixedLen = (1 + sizeof(short) + 3 + (2 * sizeof(float)));
 				const int variableLen = numBytes - fixedLen;
 				const int numUnitIDs = variableLen / sizeof(short); // each unitID is two bytes
-				const int srcTeam = *(int*) &inbuf[4];
-				const int dstTeam = *(int*) &inbuf[8];
-				const float metalShare = *(float*) &inbuf[12];
-				const float energyShare = *(float*) &inbuf[16];
+				const int srcTeam = inbuf[4];
+				const int dstTeam = inbuf[5];
+				const float metalShare = *(float*) &inbuf[6];
+				const float energyShare = *(float*) &inbuf[10];
 
 				if (metalShare > 0.0f) {
 					if (!luaRules || luaRules->AllowResourceTransfer(srcTeam, dstTeam, "m", metalShare)) {
@@ -3991,15 +4089,19 @@ void CGame::ClientReadNet()
 				switch (action)
 				{
 					case TEAMMSG_GIVEAWAY: {
-						const int toTeam = inbuf[3];
-						const int fromTeam_g = inbuf[4];
-						const int numPlayersInTeam_g = playerHandler->ActivePlayersInTeam(fromTeam_g);
+						const int toTeam                    = inbuf[3];
+						const int fromTeam_g                = inbuf[4];
+						const int numPlayersInTeam_g        = playerHandler->ActivePlayersInTeam(fromTeam_g).size();
+						const size_t numTotAIsInTeam_g      = skirmishAIHandler.GetSkirmishAIsInTeam(fromTeam_g).size();
+						const size_t numControllersInTeam_g = numPlayersInTeam_g + numTotAIsInTeam_g;
+						const bool isOwnTeam_g              = (fromTeam_g != fromTeam);
 
-						if (fromTeam_g == fromTeam) {
+						bool giveAwayOk = false;
+						if (isOwnTeam_g) {
 							// player is giving stuff from his own team
+							giveAwayOk = true;
 							if (numPlayersInTeam_g == 1) {
 								teamHandler->Team(fromTeam_g)->GiveEverythingTo(toTeam);
-								teamHandler->Team(fromTeam_g)->leader = -1;
 							} else {
 								playerHandler->Player(player)->StartSpectating();
 							}
@@ -4007,9 +4109,13 @@ void CGame::ClientReadNet()
 						} else {
 							// player is giving stuff from one of his AI teams
 							if (numPlayersInTeam_g == 0) {
-								teamHandler->Team(fromTeam_g)->GiveEverythingTo(toTeam);
-								teamHandler->Team(fromTeam_g)->leader = -1;
+								giveAwayOk = true;
 							}
+						}
+						if (giveAwayOk && (numControllersInTeam_g == 1)) {
+							// team has no controller left now
+							teamHandler->Team(fromTeam_g)->GiveEverythingTo(toTeam);
+							teamHandler->Team(fromTeam_g)->leader = -1;
 						}
 						CPlayer::UpdateControlledTeams();
 						break;
@@ -4021,9 +4127,24 @@ void CGame::ClientReadNet()
 							unitTracker.Disable();
 							CLuaUI::UpdateTeams();
 						}
-						const int numPlayersInTeam = playerHandler->ActivePlayersInTeam(fromTeam);
-						if (numPlayersInTeam == 1 && !(teamHandler->Team(fromTeam)->isAI)) {
-							teamHandler->Team(fromTeam)->leader = -1;
+						// actualize all teams of which the player is leader
+						for (size_t t = 0; t < teamHandler->ActiveTeams(); ++t) {
+							CTeam* team = teamHandler->Team(t);
+							if (team->leader == player) {
+								const std::vector<int> teamPlayers = playerHandler->ActivePlayersInTeam(t);
+								const std::vector<size_t> teamAIs  = skirmishAIHandler.GetSkirmishAIsInTeam(t);
+								if ((teamPlayers.size() + teamAIs.size()) == 0) {
+									// no controllers left in team
+									//team.active = false;
+									team->leader = -1;
+								} else if (teamPlayers.size() == 0) {
+									// no human player left in team
+									team->leader = skirmishAIHandler.GetSkirmishAI(teamAIs[0])->hostPlayer;
+								} else {
+									// still human controllers left in team
+									team->leader = teamPlayers[0];
+								}
+							}
 						}
 						logOutput.Print("Player %i resigned and is now spectating!", player);
 						selectedUnits.ClearNetSelect(player);
@@ -4032,7 +4153,7 @@ void CGame::ClientReadNet()
 					}
 					case TEAMMSG_JOIN_TEAM: {
 						const int newTeam = int(inbuf[3]);
-						playerHandler->Player(player)->team = newTeam;
+						playerHandler->Player(player)->team      = newTeam;
 						playerHandler->Player(player)->spectator = false;
 						if (player == gu->myPlayerNum) {
 							gu->myTeam = newTeam;
@@ -4051,26 +4172,90 @@ void CGame::ClientReadNet()
 						eventHandler.PlayerChanged(player);
 						break;
 					}
-					case TEAMMSG_AI_CREATED: {
-						const int aiTeam = int(inbuf[3]);
-						teamHandler->Team(aiTeam)->leader = player;
-						teamHandler->Team(aiTeam)->isAI = true;
-						CPlayer::UpdateControlledTeams();
-						eventHandler.PlayerChanged(player);
-						break;
-					}
-					case TEAMMSG_AI_DESTROYED: {
-						const int aiTeam = int(inbuf[3]);
-						teamHandler->Team(aiTeam)->isAI = false;
-						CPlayer::UpdateControlledTeams();
-						eventHandler.PlayerChanged(player);
-						break;
-					}
 					default: {
 						logOutput.Print("Unknown action in NETMSG_TEAM (%i) from player %i", action, player);
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
+				break;
+			}
+			case NETMSG_AI_CREATED: {
+				// inbuf[1] contains the message size
+				const unsigned char playerId = inbuf[2];
+				const unsigned skirmishAIId  = *((unsigned int*)&inbuf[3]); // 4 bytes
+				const unsigned char aiTeamId = inbuf[7];
+				const char* aiName           = (const char*) (&inbuf[8]);
+				CTeam* tai                   = teamHandler->Team(aiTeamId);
+				const unsigned isLocal       = (playerId == gu->myPlayerNum);
+
+				if (isLocal) {
+					const SkirmishAIData& aiData = *(skirmishAIHandler.GetLocalSkirmishAIInCreation(aiTeamId));
+					if (skirmishAIHandler.IsActiveSkirmishAI(skirmishAIId)) {
+						// we will end up here for AIs defined in the start script
+						const SkirmishAIData* curAIData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+						assert((aiData.team == curAIData->team) && (aiData.name == curAIData->name) && (aiData.hostPlayer == curAIData->hostPlayer));
+					} else {
+						// we will end up here for local AIs defined mid-game,
+						// eg. with /aicontrol
+						skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
+						wordCompletion->AddWord(aiData.name + " ", false, false, false);
+					}
+				} else {
+					SkirmishAIData aiData;
+					aiData.team       = aiTeamId;
+					aiData.name       = aiName;
+					aiData.hostPlayer = playerId;
+					skirmishAIHandler.AddSkirmishAI(aiData, skirmishAIId);
+					wordCompletion->AddWord(aiData.name + " ", false, false, false);
+				}
+
+				if (tai->leader == -1) {
+					tai->leader = playerId;
+				}
+				CPlayer::UpdateControlledTeams();
+				eventHandler.PlayerChanged(playerId);
+				if (isLocal) {
+					logOutput.Print("Skirmish AI being created for team %i ...", aiTeamId);
+					eoh->CreateSkirmishAI(skirmishAIId);
+				}
+				break;
+			}
+			case NETMSG_AI_STATE_CHANGED: {
+				const unsigned char playerId     = inbuf[1];
+				const unsigned int skirmishAIId  = *((unsigned int*)&inbuf[2]); // 4 bytes
+				const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[6];
+				SkirmishAIData* aiData           = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+				const ESkirmishAIStatus oldState = aiData->status;
+				const unsigned aiTeamId          = aiData->team;
+				const unsigned isLocal           = (aiData->hostPlayer == gu->myPlayerNum);
+				const size_t numPlayersInAITeam  = playerHandler->ActivePlayersInTeam(aiTeamId).size();
+				const size_t numAIsInAITeam      = skirmishAIHandler.GetSkirmishAIsInTeam(aiTeamId).size();
+				CTeam* tai                       = teamHandler->Team(aiTeamId);
+
+				aiData->status = newState;
+				if (isLocal && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
+					eoh->DestroySkirmishAI(skirmishAIId);
+				} else if (newState == SKIRMAISTATE_DEAD) {
+					if (oldState == SKIRMAISTATE_RELOADING) {
+						if (isLocal) {
+							logOutput.Print("Skirmish AI being reloaded for team %i ...", aiTeamId);
+							eoh->CreateSkirmishAI(skirmishAIId);
+						}
+					} else {
+						wordCompletion->RemoveWord(aiData->name + " ");
+						skirmishAIHandler.RemoveSkirmishAI(skirmishAIId);
+						// this could be done in the above function as well
+						if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
+							// team has no controller left now
+							tai->leader = -1;
+						}
+						CPlayer::UpdateControlledTeams();
+						eventHandler.PlayerChanged(playerId);
+						logOutput.Print("Skirmish AI %s, which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
+					}
+				} else if (newState == SKIRMAISTATE_ALIVE) {
+					logOutput.Print("Skirmish AI %s took over controll of team %i", aiData->name.c_str(), aiTeamId);
+				}
 				break;
 			}
 			case NETMSG_ALLIANCE: {
@@ -4755,79 +4940,74 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 }
 
 
-void CGame::Skip(int toFrame)
-{
+void CGame::StartSkip(int toFrame) {
 	if (skipping) {
 		logOutput.Print("ERROR: skipping appears to be busted (%i)\n", skipping);
 	}
 
-	const int startFrame = gs->frameNum;
-	int endFrame = toFrame;
+	skipStartFrame = gs->frameNum;
+	skipEndFrame = toFrame;
 
-	if (endFrame <= startFrame) {
-		logOutput.Print("Already passed %i (%i)\n", endFrame / GAME_SPEED, endFrame);
+	if (skipEndFrame <= skipStartFrame) {
+		logOutput.Print("Already passed %i (%i)\n", skipEndFrame / GAME_SPEED, skipEndFrame);
 		return;
 	}
 
-	const int totalFrames = endFrame - startFrame;
-	const float seconds = (float)(totalFrames) / (float)GAME_SPEED;
+	skipTotalFrames = skipEndFrame - skipStartFrame;
+	skipSeconds = (float)(skipTotalFrames) / (float)GAME_SPEED;
 
-	bool soundmute = sound->IsMuted();
-	if (!soundmute)
+	skipSoundmute = sound->IsMuted();
+	if (!skipSoundmute)
 		sound->Mute(); // no sounds
 
+	skipOldSpeed     = gs->speedFactor;
+	skipOldUserSpeed = gs->userSpeedFactor;
+	const float speed = 1.0f;
+	gs->speedFactor     = speed;
+	gs->userSpeedFactor = speed;
+
+	skipLastDraw = SDL_GetTicks();
+
 	skipping = true;
-	{
-		const float oldSpeed     = gs->speedFactor;
-		const float oldUserSpeed = gs->userSpeedFactor;
-		const float speed = 1.0f;
-		gs->speedFactor     = speed;
-		gs->userSpeedFactor = speed;
+}
 
-		Uint32 gfxLastTime = SDL_GetTicks() - 10000; // force the first draw
 
-		while (skipping && endFrame >= gs->frameNum) {
-			// FIXME: messes up the how-many-frames-are-left bar
-			Update();
-
-			// draw something so that users don't file bug reports
-			const Uint32 gfxTime = SDL_GetTicks();
-			if ((gfxTime - gfxLastTime) > 100) { // 10fps
-				gfxLastTime = gfxTime;
-
-				const int framesLeft = (endFrame - gs->frameNum);
-				glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-				glClear(GL_COLOR_BUFFER_BIT);
-				glColor3f(0.5f, 1.0f, 0.5f);
-				font->glFormat(0.5f, 0.55f, 2.5f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Skipping %.1f game seconds", seconds);
-				glColor3f(1.0f, 1.0f, 1.0f);
-				font->glFormat(0.5f, 0.45f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "(%i frames left)", framesLeft);
-
-				const float ff = (float)framesLeft / (float)totalFrames;
-				glDisable(GL_TEXTURE_2D);
-				const float b = 0.004f; // border
-				const float yn = 0.35f;
-				const float yp = 0.38f;
-				glColor3f(0.2f, 0.2f, 1.0f);
-				glRectf(0.25f - b, yn - b, 0.75f + b, yp + b);
-				glColor3f(0.25f + (0.75f * ff), 1.0f - (0.75f * ff), 0.0f);
-				glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
-
-				SDL_GL_SwapBuffers();
-			}
-		}
-
-		gu->gameTime    += seconds;
-		gu->modGameTime += seconds;
-
-		gs->speedFactor     = oldSpeed;
-		gs->userSpeedFactor = oldUserSpeed;
+void CGame::DrawSkip(bool blackscreen) {
+	const int framesLeft = (skipEndFrame - gs->frameNum);
+	if(blackscreen) {
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 	}
+	glColor3f(0.5f, 1.0f, 0.5f);
+	font->glFormat(0.5f, 0.55f, 2.5f, FONT_CENTER | FONT_SCALE | FONT_NORM, "Skipping %.1f game seconds", skipSeconds);
+	glColor3f(1.0f, 1.0f, 1.0f);
+	font->glFormat(0.5f, 0.45f, 2.0f, FONT_CENTER | FONT_SCALE | FONT_NORM, "(%i frames left)", framesLeft);
 
-	if (!soundmute)
+	const float ff = (float)framesLeft / (float)skipTotalFrames;
+	glDisable(GL_TEXTURE_2D);
+	const float b = 0.004f; // border
+	const float yn = 0.35f;
+	const float yp = 0.38f;
+	glColor3f(0.2f, 0.2f, 1.0f);
+	glRectf(0.25f - b, yn - b, 0.75f + b, yp + b);
+	glColor3f(0.25f + (0.75f * ff), 1.0f - (0.75f * ff), 0.0f);
+	glRectf(0.5 - (0.25f * ff), yn, 0.5f + (0.25f * ff), yp);
+}
+
+
+void CGame::EndSkip() {
+	skipping = false;
+
+	gu->gameTime    += skipSeconds;
+	gu->modGameTime += skipSeconds;
+
+	gs->speedFactor     = skipOldSpeed;
+	gs->userSpeedFactor = skipOldUserSpeed;
+
+	if (!skipSoundmute)
 		sound->Mute(); // sounds back on
 
-	logOutput.Print("Skipped %.1f seconds\n", seconds);
+	logOutput.Print("Skipped %.1f seconds\n", skipSeconds);
 }
 
 
@@ -4842,7 +5022,7 @@ void CGame::ReloadCOB(const string& msg, int player)
 		logOutput.Print("Missing unit name");
 		return;
 	}
-	const UnitDef* udef = unitDefHandler->GetUnitByName(unitName);
+	const UnitDef* udef = unitDefHandler->GetUnitDefByName(unitName);
 	if (udef==NULL) {
 		logOutput.Print("Unknown unit name");
 		return;

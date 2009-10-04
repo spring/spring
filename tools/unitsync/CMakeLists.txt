@@ -29,6 +29,7 @@ set(unitsync_files
 	../../rts/System/Option
 	../../rts/Sim/Misc/SideParser
 	../../rts/Game/GameVersion
+	../../rts/ExternalAI/LuaAIImplHandler
 	../../rts/Lua/LuaParser
 	../../rts/Lua/LuaUtils
 	../../rts/Lua/LuaIO
@@ -43,7 +44,7 @@ if (WIN32)
 endif (WIN32)
 
 ADD_LIBRARY(unitsync SHARED ${unitsync_files} ${fsfiles} unitsync LuaParserAPI Syncer stdafx)
-TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
+TARGET_LINK_LIBRARIES(unitsync ${unitsync_libs} hpiutil2 7zip minizip lua ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${DEVIL_ILU_LIBRARY} ${SDL_LIBRARY})
 if (MINGW)
 	set_target_properties(unitsync PROPERTIES LINK_FLAGS -Wl,--add-stdcall-alias)
 endif (MINGW)

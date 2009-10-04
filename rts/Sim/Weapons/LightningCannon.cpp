@@ -90,11 +90,12 @@ void CLightningCannon::FireImpl()
 	dir += (gs->randVector() * sprayAngle + salvoError) * (1.0f - owner->limExperience * 0.5f);
 	dir.ANormalize();
 
-	CUnit* u = 0;
-	float r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, owner, u, collisionFlags);
+	const CUnit* cu = NULL;
+	float r = helper->TraceRay(weaponMuzzlePos, dir, range, 0, (const CUnit*)owner, cu, collisionFlags);
+	CUnit* u = (cu == NULL) ? NULL : uh->units[cu->id];
 
 	float3 newDir;
-	CPlasmaRepulser* shieldHit = 0;
+	CPlasmaRepulser* shieldHit = NULL;
 	const float shieldLength = interceptHandler.AddShieldInterceptableBeam(this, weaponMuzzlePos, dir, range, newDir, shieldHit);
 
 	if (shieldLength < r) {

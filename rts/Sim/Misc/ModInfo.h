@@ -1,6 +1,7 @@
-
 #ifndef MOD_INFO_H
 #define MOD_INFO_H
+
+#include <string>
 
 class CModInfo
 {
@@ -92,6 +93,13 @@ public:
 	float airLosMul;
 	/// when underwater, units are not in LOS unless also in sonar
 	bool requireSonarUnderWater;
+
+	enum {
+		FEATURELOS_NONE = 0, FEATURELOS_GAIAONLY, FEATURELOS_GAIAALLIED, FEATURELOS_ALL,
+	};
+	/// feature visibility style: 0 - no LOS for features, 1 - gaia features visible
+	/// 2 - gaia/allied features visible, 3 - all features visible
+	int featureVisibility;
 };
 
 extern CModInfo modInfo;

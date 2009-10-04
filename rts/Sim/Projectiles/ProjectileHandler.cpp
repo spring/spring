@@ -362,6 +362,9 @@ CProjectileHandler::CProjectileHandler()
 
 CProjectileHandler::~CProjectileHandler()
 {
+	syncedProjectiles.clear(); // synced first, to avoid callback crashes
+	unsyncedProjectiles.clear();
+
 	for (int a = 0; a < 8; ++a) {
 		glDeleteTextures(1, &perlinTex[a]);
 	}
@@ -635,6 +638,11 @@ void CProjectileHandler::Draw(bool drawReflection, bool drawRefraction) {
 	glDisable(GL_BLEND);
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(1);
+
+	if(gu->drawFog) {
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+	}
 
 	CVertexArray* va = GetVertexArray();
 

@@ -310,17 +310,30 @@ PacketType CBaseNetProtocol::SendTeamDied(uchar myPlayerNum, uchar whichTeam)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendAICreated(uchar myPlayerNum, uchar whichTeam)
+PacketType CBaseNetProtocol::SendAICreated(const uchar myPlayerNum,
+                                           const uint  whichSkirmishAI,
+                                           const uchar team,
+                                           const std::string& name)
 {
-	PackPacket* packet = new PackPacket(5, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_AI_CREATED) << whichTeam << static_cast<uchar>(0);
+	// do not hand optimize this math; the compiler will do that
+	const uint size = 1 + 1 + 1 + 4 + 1 + (name.size() + 1);
+	PackPacket* packet = new PackPacket(size, NETMSG_AI_CREATED);
+	*packet
+		<< static_cast<uchar>(size)
+		<< myPlayerNum
+		<< whichSkirmishAI
+		<< team
+		<< name;
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendAIDestroyed(uchar myPlayerNum, uchar whichTeam)
+PacketType CBaseNetProtocol::SendAIStateChanged(const uchar myPlayerNum,
+                                                const uint  whichSkirmishAI,
+                                                const uchar newState)
 {
-	PackPacket* packet = new PackPacket(5, NETMSG_TEAM);
-	*packet << myPlayerNum << static_cast<uchar>(TEAMMSG_AI_DESTROYED) << whichTeam << static_cast<uchar>(0);
+	// do not hand optimize this math; the compiler will do that
+	PackPacket* packet = new PackPacket(1 + 1 + 4 + 1, NETMSG_AI_STATE_CHANGED);
+	*packet << myPlayerNum << whichSkirmishAI << newState;
 	return PacketType(packet);
 }
 
@@ -423,6 +436,9 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_ALLIANCE, 4);
 	proto->AddType(NETMSG_CCOMMAND, -2);
 	proto->AddType(NETMSG_TEAMSTAT, 2 + sizeof(CTeam::Statistics));
+
+	proto->AddType(NETMSG_AI_CREATED, -1);
+	proto->AddType(NETMSG_AI_STATE_CHANGED, 7);
 
 #ifdef SYNCDEBUG
 	proto->AddType(NETMSG_SD_CHKREQUEST, 5);

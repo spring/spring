@@ -23,7 +23,7 @@ public:
 	~CFactoryCAI(void);
 	void PostLoad();
 
-	int GetDefaultCmd(CUnit* pointed,CFeature* feature);
+	int GetDefaultCmd(const CUnit* pointed, const CFeature* feature);
 	void SlowUpdate();
 
 	void GiveCommandReal(const Command& c, bool fromSynced = true);

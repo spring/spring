@@ -810,9 +810,6 @@ void CGroundMoveType::UpdateControlledDrop(void)
 	SyncedFloat3& midPos = owner->midPos;
 
 	if (owner->falling) {
-		//set us upright
-		owner->script->Falling(); //start/continue parachute animation
-
 		speed.y += mapInfo->map.gravity * owner->fallSpeed;
 
 		if (owner->speed.y > 0) //sometimes the dropped unit gets an upward force, still unsure where its coming from
@@ -1582,7 +1579,7 @@ bool CGroundMoveType::CheckColH(int x, int y1, int y2, float xmove, int squareTe
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, owner);
 			}
 
 			owner->pos += posDelta;
@@ -1667,7 +1664,7 @@ bool CGroundMoveType::CheckColV(int y, int x1, int x2, float zmove, int squareTe
 
 			if (!((gs->frameNum + owner->id) & 31) && !owner->commandAI->unimportantMove) {
 				// if we are doing something important, tell units around us to bugger off
-				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, owner);
+				helper->BuggerOff(owner->pos + owner->frontdir * owner->radius, owner->radius, true, owner);
 			}
 
 			owner->pos += posDelta;

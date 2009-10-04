@@ -162,6 +162,10 @@ void SmoothController::MouseWheelMove(float move)
 	}
 }
 
+void SmoothController::Update()
+{
+	camera->RestoreUp();
+}
 
 float3 SmoothController::GetPos()
 {

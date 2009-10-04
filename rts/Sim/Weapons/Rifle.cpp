@@ -90,10 +90,11 @@ void CRifle::FireImpl()
 	dir.Normalize();
 	dir+=(gs->randVector()*sprayAngle+salvoError)*(1-owner->limExperience*0.9f);
 	dir.Normalize();
-	CUnit* hit;
+	const CUnit* hit;
 	float length=helper->TraceRay(weaponMuzzlePos, dir, range, weaponDef->damages[0], owner, hit, collisionFlags);
-	if(hit) {
-		hit->DoDamage(weaponDef->damages, owner, ZeroVector, weaponDef->id);
+	if (hit) {
+		CUnit* hitM = uh->units[hit->id];
+		hitM->DoDamage(weaponDef->damages, owner, ZeroVector, weaponDef->id);
 		new CHeatCloudProjectile(weaponMuzzlePos + dir * length, hit->speed*0.9f, 30, 1, owner);
 	}
 	new CTracerProjectile(weaponMuzzlePos,dir*projectileSpeed,length,owner);

@@ -416,6 +416,28 @@ void LuaUtils::ParseCommandArray(lua_State* L, const char* caller,
 }
 
 
+int LuaUtils::ParseFacing(lua_State* L, const char* caller, int index)
+{
+	if (lua_israwnumber(L, index)) {
+		return std::max(0, std::min(3, lua_toint(L, index)));
+	}
+	else if (lua_israwstring(L, index)) {
+		const string dir = StringToLower(lua_tostring(L, index));
+		if (dir == "s") { return 0; }
+		if (dir == "e") { return 1; }
+		if (dir == "n") { return 2; }
+		if (dir == "w") { return 3; }
+		if (dir == "south") { return 0; }
+		if (dir == "east")  { return 1; }
+		if (dir == "north") { return 2; }
+		if (dir == "west")  { return 3; }
+		luaL_error(L, "%s(): bad facing string", caller);
+	}
+	luaL_error(L, "%s(): bad facing parameter", caller);
+	return 0;
+}
+
+
 /******************************************************************************/
 /******************************************************************************/
 
@@ -560,7 +582,7 @@ int LuaUtils::ZlibDecompress(lua_State* L)
 	long unsigned bufsize = 65000;
 	if (args > 1 && lua_isnumber(L, 2))
 		bufsize = std::max(lua_toint(L, 2), 0);
-	
+
 	std::vector<boost::uint8_t> uncompressed(bufsize, 0);
 	const int error = uncompress(&uncompressed[0], &bufsize, (const boost::uint8_t*)inData, inLen);
 	if (error == Z_OK)

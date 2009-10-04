@@ -7,22 +7,11 @@
 #include <cctype>
 #include <limits.h>
 #include <stdexcept>
-#include <boost/scoped_array.hpp>
-#include <boost/lexical_cast.hpp>
+
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/spirit/utility/confix.hpp>
-#include <boost/spirit/core.hpp>
-#include <boost/spirit/symbols.hpp>
-#include <boost/spirit/attribute.hpp>
-#include <boost/spirit/dynamic.hpp>
-#include <boost/spirit/phoenix.hpp>
-#include <boost/spirit/utility/chset.hpp>
-#include <boost/spirit/utility/lists.hpp>
-#include <boost/spirit/iterator/file_iterator.hpp>
-#include <boost/spirit/utility/grammar_def.hpp>
-#include <boost/spirit/iterator/position_iterator.hpp>
-#include <boost/spirit/phoenix/binders.hpp>
-#include <boost/spirit/error_handling/exceptions.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/scoped_array.hpp>
+
 #include "mmgr.h"
 #include "Util.h"
 
@@ -30,11 +19,6 @@
 #include "tdf_grammar.hpp"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
-
-using boost::spirit::parse;
-using boost::spirit::space_p;
-using boost::spirit::comment_p;
-using boost::spirit::parse_info;
 
 TdfParser::parse_error::parse_error( std::size_t l, std::size_t c, std::string const& f) throw()
   : content_error ( "Parse error in " + f + " at line " + boost::lexical_cast<std::string>(l) + " column " + boost::lexical_cast<std::string>(c) +".")
@@ -88,6 +72,18 @@ TdfParser::TdfSection* TdfParser::TdfSection::construct_subsection(const std::st
 	}
 }
 
+bool TdfParser::TdfSection::remove(const std::string& key)
+{
+	valueMap::iterator it = values.find(key);
+	if (it != values.end())
+	{
+		values.erase(it);
+		return true;
+	}
+	else
+		return false;
+}
+
 void TdfParser::TdfSection::add_name_value(const std::string& name, const std::string& value )
 {
 	std::string lowerd_name = StringToLower(name);
@@ -115,13 +111,13 @@ void TdfParser::parse_buffer( char const* buf, std::size_t size){
 
   std::list<std::string> junk_data;
   tdf_grammar grammar( &root_section, &junk_data );
-  boost::spirit::parse_info<char const*> info;
+  parse_info<char const*> info;
   std::string message;
-  typedef boost::spirit::position_iterator2<char const*> iterator_t;
+  typedef position_iterator2<char const*> iterator_t;
   iterator_t error_it( buf, buf + size );
 
   try {
-   info = boost::spirit::parse(
+   info = parse(
       buf
       , buf + size
       , grammar
@@ -130,7 +126,7 @@ void TdfParser::parse_buffer( char const* buf, std::size_t size){
       |  comment_p("//")
       );
   }
-  catch( boost::spirit::parser_error<tdf_grammar::Errors, char const*> & e ) { // thrown by assertion parsers in tdf_grammar
+  catch( parser_error<tdf_grammar::Errors, char const*> & e ) { // thrown by assertion parsers in tdf_grammar
 
     switch(e.descriptor) {
       case tdf_grammar::semicolon_expected: message = "semicolon expected"; break;

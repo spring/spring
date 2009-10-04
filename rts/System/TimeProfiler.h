@@ -14,28 +14,40 @@
 #define SCOPED_TIMER(name) ScopedTimer myScopedTimerFromMakro(name);
 
 
+class BasicTimer : public boost::noncopyable
+{
+public:
+	BasicTimer(const char* const name);
+
+protected:
+	const std::string name;
+	const unsigned starttime;
+};
+
 /**
 @brief Time profiling helper class
 @author Karl-Robert Ernst
 
 Construct an instance of this class where you want to begin time measuring, and destruct it at the end (or let it be autodestructed).
 */
-class ScopedTimer : public boost::noncopyable
+class ScopedTimer : public BasicTimer
 {
 public:
-	/**
-	@brief Initialise and start measuring
-	*/
 	ScopedTimer(const char* const name);
-	
 	/**
 	@brief destruct and add time to profiler
 	*/
 	~ScopedTimer();
-	
-private:
-	const std::string name;
-	const unsigned starttime;
+};
+
+class ScopedOnceTimer : public BasicTimer
+{
+public:
+	ScopedOnceTimer(const char* const name);
+	/**
+	@brief destruct and print needed time to infolog
+	*/
+	~ScopedOnceTimer();
 };
 
 class CTimeProfiler

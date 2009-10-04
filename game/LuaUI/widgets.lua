@@ -166,6 +166,10 @@ local callInLists = {
   'KeyRelease',
   'MousePress',
   'MouseWheel',
+  'JoyAxis',
+  'JoyHat',
+  'JoyButtonDown',
+  'JoyButtonUp',
   'IsAbove',
   'GetTooltip',
   'GroupChanged',
@@ -1414,6 +1418,41 @@ function widgetHandler:MouseWheel(up, value)
   end
 end
 
+function widgetHandler:JoyAxis(axis, value)
+	for _,w in ipairs(self.JoyAxisList) do
+		if (w:JoyAxis(axis, value)) then
+		return true
+		end
+	end
+	return false
+end
+
+function widgetHandler:JoyHat(hat, value)
+	for _,w in ipairs(self.JoyHatList) do
+		if (w:JoyHat(hat, value)) then
+		return true
+		end
+	end
+	return false
+end
+
+function widgetHandler:JoyButtonDown(button, state)
+	for _,w in ipairs(self.JoyButtonDownList) do
+		if (w:JoyButtonDown(button, state)) then
+		return true
+		end
+	end
+	return false
+end
+
+function widgetHandler:JoyButtonUp(button, state)
+	for _,w in ipairs(self.JoyButtonUpList) do
+		if (w:JoyButtonUp(button, state)) then
+		return true
+		end
+	end
+	return false
+end
 
 function widgetHandler:IsAbove(x, y)
   if (self.tweakMode) then

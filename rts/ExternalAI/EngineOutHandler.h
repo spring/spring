@@ -20,7 +20,6 @@
 
 #include "Object.h"
 #include "Sim/Misc/GlobalConstants.h"
-#include "SkirmishAIData.h"
 
 #include <map>
 #include <vector>
@@ -88,13 +87,25 @@ public:
 
 
 	// Skirmish AI stuff
-	bool CreateSkirmishAI(int teamId, const SkirmishAIKey& key, const SkirmishAIData& data);
-	const SkirmishAIKey* GetSkirmishAIKey(int teamId) const;
-	bool IsSkirmishAI(int teamId) const;
-	const SSkirmishAICallback* GetSkirmishAICallback(int teamId) const;
-	/// For a list of values for reason, see SReleaseEvent in Interface/AISEvents.h
-	void DestroySkirmishAI(int teamId, int reason = 0 /* = unspecified */);
-	const SkirmishAIData* GetSkirmishAIData(int teamId) const;
+	void CreateSkirmishAI(const size_t skirmishAIId);
+	/**
+	 * Sets a local Skirmish AI dieing.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @param skirmishAIId index of the AI to mark as dieing
+	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
+	 * @see DestroySkirmishAI()
+	 */
+	void SetSkirmishAIDieing(const size_t skirmishAIId);
+	/**
+	 * Destructs a local Skirmish AI for real.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @param skirmishAIId index of the AI to destroy
+	 * @see SetSkirmishAIDieing()
+	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
+	 */
+	void DestroySkirmishAI(const size_t skirmishAIId);
 
 
 	void SetCheating(bool enable);
@@ -109,13 +120,19 @@ private:
 	static CEngineOutHandler* singleton;
 
 private:
-	const unsigned int activeTeams;
+	typedef std::vector<size_t> ids_t;
+	typedef std::vector<CSkirmishAIWrapper*> ais_t;
 
-	static const size_t skirmishAIs_size = MAX_TEAMS;
-	CSkirmishAIWrapper* skirmishAIs[skirmishAIs_size];
-	bool team_isSkirmishAIInitialized[skirmishAIs_size];
-	size_t localSkirmishAIs_size;
-	std::map<int, SkirmishAIData> team_skirmishAI;
+	typedef std::map<size_t, CSkirmishAIWrapper*> id_ai_t;
+	/// Contains all local Skirmish AIs, indexed by their ID
+	id_ai_t id_skirmishAI;
+
+	typedef std::map<int, ids_t> team_ais_t;
+	/**
+	 * Array mapping team IDs to local Skirmish AI instances.
+	 * There can be multiple Skirmish AIs per team.
+	 */
+	team_ais_t team_skirmishAIs;
 };
 
 #define eoh CEngineOutHandler::GetInstance()

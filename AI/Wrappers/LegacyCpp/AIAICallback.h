@@ -110,6 +110,7 @@ public:
 	virtual int GetMapWidth();
 	virtual int GetMapHeight();
 	virtual const float* GetHeightMap();
+	virtual const float* GetCornersHeightMap();
 	virtual float GetMinHeight();
 	virtual float GetMaxHeight();
 	virtual const float* GetSlopeMap();
@@ -124,12 +125,13 @@ public:
 
 	virtual float GetElevation(float x, float z);
 
-	virtual float GetMaxMetal();
-	virtual float GetExtractorRadius();
-	virtual float GetMinWind();
-	virtual float GetMaxWind();
-	virtual float GetTidalStrength();
-	virtual float GetGravity();
+	virtual float GetMaxMetal() const;
+	virtual float GetExtractorRadius() const;
+	virtual float GetMinWind() const;
+	virtual float GetMaxWind() const;
+	virtual float GetCurWind() const;
+	virtual float GetTidalStrength() const;
+	virtual float GetGravity() const;
 
 	virtual void LineDrawerStartPath(const float3& pos, const float* color);
 	virtual void LineDrawerFinishPath();

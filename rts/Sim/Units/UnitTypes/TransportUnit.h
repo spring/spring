@@ -27,7 +27,7 @@ public:
 	void DependentDied(CObject* object);
 	void KillUnit(bool selfDestruct,bool reclaimed, CUnit *attacker, bool showDeathSeq = false);
 	void AttachUnit(CUnit* unit, int piece);
-	bool CanTransport(CUnit* unit);
+	bool CanTransport(const CUnit* unit) const;
 
 	void DetachUnit(CUnit* unit);
 	void DetachUnitFromAir(CUnit* unit, float3 pos); //moves to position after

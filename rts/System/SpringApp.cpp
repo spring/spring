@@ -46,9 +46,12 @@
 #include "LogOutput.h"
 #include "MouseInput.h"
 #include "InputHandler.h"
+#include "Joystick.h"
 #include "bitops.h"
 #include "GlobalUnsynced.h"
 #include "Util.h"
+#include "myMath.h"
+#include "FPUCheck.h"
 #include "Exceptions.h"
 #include "System/TimeProfiler.h"
 #include "System/Sound/Sound.h"
@@ -125,6 +128,8 @@ bool SpringApp::Initialize()
 	CrashHandler::Install();
 
 	ParseCmdLine();
+	CMyMath::Init();
+	good_fpu_control_registers("::Run");
 
 	// log OS version
 	// TODO: improve version logging of non-Windows OSes
@@ -225,6 +230,7 @@ bool SpringApp::Initialize()
 	}
 #endif // WIN32
 
+	InitJoystick();
 	// Create CGameSetup and CPreGame objects
 	Startup();
 
@@ -280,6 +286,7 @@ static bool MultisampleVerify(void)
  */
 bool SpringApp::InitWindow(const char* title)
 {
+	ScopedOnceTimer timer("SpringApp::InitWindow()");
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
 #ifdef WIN32
 	// the crash reporter should be catching the errors
@@ -412,6 +419,7 @@ bool SpringApp::GetDisplayGeometry()
 	}
 
 #ifdef __APPLE__
+	// todo: enable this function, RestoreWindowPosition() and SaveWindowPosition() on Mac
 	return false;
 
 
@@ -629,6 +637,24 @@ void SpringApp::ParseCmdLine()
 		exit(1);
 	}
 
+	// mutually exclusive options that cause spring to quit immediately
+	if (cmdline->IsSet("help")) {
+		cmdline->PrintUsage("Spring",SpringVersion::GetFull());
+		exit(0);
+	} else if (cmdline->IsSet("version")) {
+		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
+		exit(0);
+	} else if (cmdline->IsSet("projectiledump")) {
+		CCustomExplosionGenerator::OutputProjectileClassInfo();
+		exit(0);
+	} else if (cmdline->IsSet("list-ai-interfaces")) {
+		IAILibraryManager::OutputAIInterfacesInfo();
+		exit(0);
+	} else if (cmdline->IsSet("list-skirmish-ais")) {
+		IAILibraryManager::OutputSkirmishAIInfo();
+		exit(0);
+	}
+
 	if (cmdline->IsSet("config"))
 	{
 		string configSource = cmdline->GetString("config");
@@ -648,25 +674,6 @@ void SpringApp::ParseCmdLine()
 	} else if (cmdline->IsSet("fullscreen")) {
 		fullscreen = true;
 	}
-
-	// mutually exclusive options that cause spring to quit immediately
-	if (cmdline->IsSet("help")) {
-		cmdline->PrintUsage("Spring",SpringVersion::GetFull());
-		exit(0);
-	} else if (cmdline->IsSet("version")) {
-		std::cout << "Spring " << SpringVersion::GetFull() << std::endl;
-		exit(0);
-	} else if (cmdline->IsSet("projectiledump")) {
-		CCustomExplosionGenerator::OutputProjectileClassInfo();
-		exit(0);
-	} else if (cmdline->IsSet("list-ai-interfaces")) {
-		IAILibraryManager::OutputAIInterfacesInfo();
-		exit(0);
-	} else if (cmdline->IsSet("list-skirmish-ais")) {
-		IAILibraryManager::OutputSkirmishAIInfo();
-		exit(0);
-	}
-
 
 	if (cmdline->IsSet("textureatlas")) {
 		CTextureAtlas::debug = true;
@@ -986,6 +993,9 @@ int SpringApp::Run(int argc, char *argv[])
  */
 void SpringApp::RestoreWindowPosition()
 {
+#ifdef __APPLE__
+	return;
+#else
 	if (!fullscreen) {
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
@@ -1033,6 +1043,7 @@ void SpringApp::RestoreWindowPosition()
 #endif
 		}
 	}
+#endif // ifdef __APPLE__
 }
 
 /**
@@ -1040,6 +1051,9 @@ void SpringApp::RestoreWindowPosition()
  */
 void SpringApp::SaveWindowPosition()
 {
+#ifdef __APPLE__
+	return;
+#else
 	if (!fullscreen) {
 #if defined(_WIN32)
 		SDL_SysWMinfo info;
@@ -1066,6 +1080,7 @@ void SpringApp::SaveWindowPosition()
 		configHandler->Set("WindowPosX", windowPosX);
 		configHandler->Set("WindowPosY", windowPosY);
 	}
+#endif
 }
 
 

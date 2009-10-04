@@ -31,6 +31,10 @@ CGeometricObjects::CGeometricObjects(void)
 
 CGeometricObjects::~CGeometricObjects(void)
 {
+	toBeDeleted.clear();
+	while (!geoGroups.empty()) {
+		DeleteGroup(geoGroups.begin()->first);
+	}
 }
 
 int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, float width, int arrow, int lifeTime, int group)
@@ -57,7 +61,7 @@ int CGeometricObjects::AddSpline(float3 b1, float3 b2, float3 b3, float3 b4, flo
 		old1=old2;
 		old2=np;
 	}
-	if(lifeTime>=0)
+	if(lifeTime>0)
 		toBeDeleted.insert(std::pair<int,int>(gs->frameNum+lifeTime,group));
 
 	return group;
@@ -121,7 +125,7 @@ int CGeometricObjects::AddLine(float3 start, float3 end, float width, int arrow,
 		geoGroups[group].squares.push_back(gsp);
 	}
 
-	if(lifetime>=0)
+	if(lifetime>0)
 		toBeDeleted.insert(std::pair<int,int>(gs->frameNum+lifetime,group));
 
 	return group;

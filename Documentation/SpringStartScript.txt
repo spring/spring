@@ -8,6 +8,7 @@
 	SourcePort=0;       // set this if you want a different source port (as client), 0 means OS-select and should be prefered
 
 	MyPlayerName=somename;
+	MyPasswd=secretpassword;
 	IsHost=0;           // tell the engine this is a client
 }
 
@@ -41,6 +42,7 @@
 	[PLAYER0]
 	{
 		Name=name;      // pure info, eg. the account name from the lobby server
+		Password=secretpassword; // player can only connect if he set MyPasswd accordingly
 		Spectator=0;
 		Team=number;    // the team this player controlls
 		IsFromDemo=0;   // use only in combination with Demofile (see above)

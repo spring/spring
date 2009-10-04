@@ -172,6 +172,7 @@ bool LuaSyncedCtrl::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(AddGrass);
 	REGISTER_LUA_CFUNC(RemoveGrass);
 
+	REGISTER_LUA_CFUNC(SetFeatureAlwaysVisible);
 	REGISTER_LUA_CFUNC(SetFeatureHealth);
 	REGISTER_LUA_CFUNC(SetFeatureReclaim);
 	REGISTER_LUA_CFUNC(SetFeatureResurrect);
@@ -413,29 +414,6 @@ static CTeam* ParseTeam(lua_State* L, const char* caller, int index)
 	}
 	return team;
 }
-
-
-static int ParseFacing(lua_State* L, const char* caller, int index)
-{
-	if (lua_israwnumber(L, index)) {
-		return lua_toint(L, index);
-	}
-	else if (lua_israwstring(L, index)) {
-		const string dir = StringToLower(lua_tostring(L, index));
-		if (dir == "s") { return 0; }
-		if (dir == "e") { return 1; }
-		if (dir == "n") { return 2; }
-		if (dir == "w") { return 3; }
-		if (dir == "south") { return 0; }
-		if (dir == "east")  { return 1; }
-		if (dir == "north") { return 2; }
-		if (dir == "west")  { return 3; }
-		luaL_error(L, "%s(): bad facing string", caller);
-	}
-	luaL_error(L, "%s(): bad facing parameter", caller);
-	return 0;
-}
-
 
 /******************************************************************************/
 /******************************************************************************/
@@ -715,14 +693,14 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	const UnitDef* unitDef = NULL;
 	if (lua_israwstring(L, 1)) {
 		const string defName = lua_tostring(L, 1);
-		unitDef = unitDefHandler->GetUnitByName(defName);
+		unitDef = unitDefHandler->GetUnitDefByName(defName);
 		if (unitDef == NULL) {
 			luaL_error(L, "CreateUnit(): bad unitDef name: %s", defName.c_str());
 			return 0;
 		}
 	} else if (lua_israwnumber(L, 1)) {
 		const int defID = lua_toint(L, 1);
-		unitDef = unitDefHandler->GetUnitByID(defID);
+		unitDef = unitDefHandler->GetUnitDefByID(defID);
 		if (unitDef == NULL) {
 			luaL_error(L, "CreateUnit(): bad unitDef ID: %i", defID);
 			return 0;
@@ -738,7 +716,7 @@ int LuaSyncedCtrl::CreateUnit(lua_State* L)
 	//clamps the pos in the map boundings
 	pos.CheckInBounds(); //TODO: fix unit init code to work offmap
 
-	const int facing = ParseFacing(L, __FUNCTION__, 5);
+	const int facing = LuaUtils::ParseFacing(L, __FUNCTION__, 5);
 
 	int teamID = CtrlTeam();
 	if (lua_israwnumber(L, 6)) {
@@ -2118,6 +2096,21 @@ int LuaSyncedCtrl::TransferFeature(lua_State* L)
 	return 0;
 }
 
+
+int LuaSyncedCtrl::SetFeatureAlwaysVisible(lua_State* L)
+{
+	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
+	if (feature == NULL) {
+		return 0;
+	}
+	if (!lua_isboolean(L, 2)) {
+		luaL_error(L, "Incorrect arguments to SetUnitAlwaysVisible()");
+	}
+	feature->alwaysVisible = lua_toboolean(L, 2);
+	return 0;
+}
+
+
 int LuaSyncedCtrl::SetFeatureHealth(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
@@ -2149,7 +2142,15 @@ int LuaSyncedCtrl::SetFeaturePosition(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
-	feature->ForcedMove(pos);
+
+	if (lua_isboolean(L, 5)) {
+		const bool snapToGround = lua_toboolean(L, 5);
+		feature->ForcedMove(pos, snapToGround);
+	} else {
+		// use default argument
+		feature->ForcedMove(pos);
+	}
+
 	return 0;
 }
 
@@ -2179,7 +2180,7 @@ int LuaSyncedCtrl::SetFeatureResurrect(lua_State* L)
 
 	const int args = lua_gettop(L); // number of arguments
 	if (args >= 3) {
-		feature->buildFacing = ParseFacing(L, __FUNCTION__, 3);
+		feature->buildFacing = LuaUtils::ParseFacing(L, __FUNCTION__, 3);
 	}
 	return 0;
 }

@@ -91,10 +91,10 @@ bool LuaUnitDefs::PushEntries(lua_State* L)
 	  InitParamMap();
 	}
 
-	const map<string, int>& udMap = unitDefHandler->unitID;
+	const map<string, int>& udMap = unitDefHandler->unitDefIDsByName;
 	map<string, int>::const_iterator udIt;
 	for (udIt = udMap.begin(); udIt != udMap.end(); udIt++) {
-	  const UnitDef* ud = unitDefHandler->GetUnitByID(udIt->second);
+	  const UnitDef* ud = unitDefHandler->GetUnitDefByID(udIt->second);
 		if (ud == NULL) {
 	  	continue;
 		}
@@ -342,7 +342,7 @@ static int CustomParamsTable(lua_State* L, const void* data)
 static int BuildOptions(lua_State* L, const void* data)
 {
 	const map<int, string>& buildOptions = *((const map<int, string>*)data);
-	const map<string, int>& unitMap = unitDefHandler->unitID;
+	const map<string, int>& unitMap = unitDefHandler->unitDefIDsByName;
 
 	lua_newtable(L);
 	int count = 0;

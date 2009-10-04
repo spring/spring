@@ -138,6 +138,8 @@ def get_spring_source(env):
 	source = get_source(env, 'rts', exclude_list = exclude)
 	return source
 
+
+
 ################################################################################
 ### AI
 ################################################################################
@@ -150,11 +152,17 @@ def get_shared_AI_source(env):
 	return result
 
 # lists source files common for all AI Interfaces
-def get_shared_AIInterface_source(env):
+def get_shared_AIInterface_sources(env):
 	result = get_shared_AI_source(env)
 	return result
+
+# lists source files common for all Skirmish AIs
+def get_shared_AILib_sources(env):
+	result = get_shared_AI_source(env)
+	return result
+
 # list SharedLib source files (used by some AI Interface libraries)
-def get_shared_AIInterface_source_SharedLib(env):
+def get_shared_AIInterface_sources_SharedLib(env):
 	result = []
 	if env.has_key('builddir') and env['builddir']:
 		result += [os.path.join(env['builddir'], 'rts/System/Platform/SharedLib.cpp')]
@@ -164,37 +172,54 @@ def get_shared_AIInterface_source_SharedLib(env):
 			result += [os.path.join(env['builddir'], 'rts/System/Platform/Linux/SoLib.cpp')]
 	return result
 
-# lists source files common for all Skirmish AIs
-def get_shared_skirmishAI_source(env):
-	result = get_shared_AI_source(env)
-	return result
-# list LegacyCpp source files (used by some Skirmish AI libraries)
-def get_shared_skirmishAI_source_LegacyCpp(env):
+# list the LegacyCPP source files (used by some Skirmish AI libraries)
+def get_shared_AILib_legacyCPP_sources(env):
 	result = []
-	if env.has_key('builddir') and env['builddir']:
+
+	if (env.has_key('builddir') and env['builddir']):
 		result += [os.path.join(env['builddir'], 'rts/System/float3.cpp')]
 		result += [os.path.join(env['builddir'], 'rts/Sim/Misc/DamageArray.cpp')]
-		result += get_shared_Wrapper_source(env, 'LegacyCpp', prefix = 'AI')
+		result += get_shared_wrapper_source(env, 'LegacyCpp', prefix = 'AI')
+
 	return result
-# list C and C++ course files of a Wrapper
-def get_shared_Wrapper_source(env, wrapperDir, prefix = ''):
+
+# list the C and C++ source files of a Wrapper
+def get_shared_wrapper_source(env, wrapperDir, prefix = ''):
 	result = []
-	if env.has_key('builddir') and env['builddir']:
+
+	if (env.has_key('builddir') and env['builddir']):
 		fullWrapperDir = os.path.join('Wrappers', wrapperDir)
 		files = list_files_recursive(env, fullWrapperDir, exclude_dirs = True, path_relative = True, include_regexp="\.(c|cpp)$")
 		for f in files:
 			result += [os.path.join(env['builddir'], prefix, fullWrapperDir, f)]
 			#result += [os.path.join(env['builddir'], 'Wrappers/LegacyCpp/AI.cpp')]
+
 	return result
-# list Creg source files (used by some Skirmish AI libraries)
-def get_shared_skirmishAI_source_Creg(env):
+
+# list the creg source files (used by some native SkirmishAI libraries)
+def get_shared_AILib_creg_sources(env):
 	result = []
-	if env.has_key('builddir') and env['builddir']:
-		cwdPrev = os.getcwd()
+	cwdPrev = os.getcwd()
+
+	if (env.has_key('builddir') and env['builddir']):
 		os.chdir('..')
 		result += get_source(env, 'rts/System/creg', ignore_builddir=False)
 		os.chdir(cwdPrev)
+
 	return result
+
+# list the sources of Spring's custom Lua lib (used by some native SkirmishAI libraries)
+def get_shared_AILib_lua_sources(env):
+	result = []
+	cwdPrev = os.getcwd()
+
+	if (env.has_key('builddir') and env['builddir']):
+		os.chdir('..')
+		result += get_source(env, "rts/lib/lua/src", ignore_builddir=False)
+		os.chdir(cwdPrev)
+
+	return result
+
 
 
 # lists source directories for AI Interfaces or Skirmish AIs

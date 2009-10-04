@@ -49,6 +49,12 @@ public:
 	CCobInstance(CCobFile &script, CUnit *unit);
 	virtual ~CCobInstance();
 
+	// takes COBFN_* constant as argument
+	bool HasFunction(int id) const;
+
+	virtual bool HasBlockShot(int weaponNum) const;
+	virtual bool HasTargetWeight(int weaponNum) const;
+
 	// call overloads, they all call RealCall
 	int Call(const std::string &fname);
 	int Call(const std::string &fname, int p1);
@@ -72,12 +78,18 @@ public:
 
 	// translate cob piece coords into worldcoordinates
 	void Spin(int piece, int axis, int speed, int accel) {
+		// COBWTF
+		if (axis == 2)
+			speed = -speed;
 		CUnitScript::Spin(piece, axis, speed * TAANG2RAD, accel * TAANG2RAD);
 	}
 	void StopSpin(int piece, int axis, int decel) {
 		CUnitScript::StopSpin(piece, axis, decel * TAANG2RAD);
 	}
 	void Turn(int piece, int axis, int speed, int destination, bool interpolated = false) {
+		// COBWTF
+		if (axis == 2)
+			destination = -destination;
 		CUnitScript::Turn(piece, axis, speed * TAANG2RAD, destination * TAANG2RAD, interpolated);
 	}
 	void Move(int piece, int axis, int speed, int destination, bool interpolated = false) {
@@ -93,12 +105,21 @@ public:
 		CUnitScript::MoveNow(piece, axis, destination * CORDDIV);
 	}
 	void TurnNow(int piece, int axis, int destination) {
+		// COBWTF
+		if (axis == 2)
+			destination = -destination;
 		CUnitScript::TurnNow(piece, axis, destination * TAANG2RAD);
 	}
 	void MoveSmooth(int piece, int axis, int destination, int delta, int deltaTime) {
+		// COBWTF
+		if (axis == 0)
+			destination = -destination;
 		CUnitScript::MoveSmooth(piece, axis, destination * CORDDIV, delta, deltaTime);
 	}
 	void TurnSmooth(int piece, int axis, int destination, int delta, int deltaTime) {
+		// COBWTF
+		if (axis == 2)
+			destination = -destination;
 		CUnitScript::TurnSmooth(piece, axis, destination * TAANG2RAD, delta, deltaTime);
 	}
 
@@ -106,11 +127,10 @@ public:
 	virtual void RawCall(int functionId);
 	virtual void Create();
 	virtual void Killed();
-	virtual void SetDirection(float heading);
-	virtual void SetSpeed(float speed, float cob_mult);
+	virtual void WindChanged(float heading, float speed);
+	virtual void ExtractionRateChanged(float speed);
 	virtual void RockUnit(const float3& rockDir);
-	virtual void HitByWeapon(const float3& hitDir);
-	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage);
+	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage);
 	virtual void SetSFXOccupy(int curTerrainType);
 	virtual void QueryLandingPads(std::vector<int>& out_pieces);
 	virtual void BeginTransport(const CUnit* unit);
@@ -120,6 +140,21 @@ public:
 	virtual void StartBuilding(float heading, float pitch);
 	virtual int  QueryNanoPiece();
 	virtual int  QueryBuildInfo();
+
+	virtual void Destroy();
+	virtual void StartMoving();
+	virtual void StopMoving();
+	virtual void StartUnload();
+	virtual void EndTransport();
+	virtual void StartBuilding();
+	virtual void StopBuilding();
+	virtual void Falling();
+	virtual void Landed();
+	virtual void Activate();
+	virtual void Deactivate();
+	virtual void MoveRate(int curRate);
+	virtual void FireWeapon(int weaponNum);
+	virtual void EndBurst(int weaponNum);
 
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum);

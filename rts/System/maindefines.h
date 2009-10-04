@@ -35,6 +35,27 @@
 #define __arch32__
 #endif
 
+// define a cross-platform/-compiler compatible "%z" format replacement for
+// printf() style functions.
+// "%z" being the propper way for size_t typed values,
+// but support for it has not yet spread wide enough.
+#if defined __arch64__
+#define __SIZE_T_PRINTF_FORMAT__ "%lu"
+#else
+#define __SIZE_T_PRINTF_FORMAT__ "%u"
+#endif
+// a shorter form
+#define _STPF_ __SIZE_T_PRINTF_FORMAT__
+
+// Define an abreviation for the alignment attribute.
+// This should only be used in case of a known misalignment problem,
+// as it adds a performance hit, even though it is very very small.
+#if defined(__GNUC__) && (__GNUC__ == 4) && !defined(__arch64__) && !defined(DEDICATED_NOSSE)
+#define __ALIGN_ARG__ __attribute__ ((force_align_arg_pointer))
+#else
+#define __ALIGN_ARG__
+#endif
+
 #ifdef _MSC_VER
 	// Microsoft Visual C++ 7.0: MSC_VER = 1300
 	// Microsoft Visual C++ 7.1: MSC_VER = 1310

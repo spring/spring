@@ -31,6 +31,10 @@ void CWordCompletion::Reset()
 	WordProperties sl(true, false, false);
 
 	// local commands
+	words["/aikill "] = sl;
+	words["/aireload "] = sl;
+	words["/aicontrol "] = sl;
+	words["/ailist"] = sl;
 	words["/advshading "] = sl;
 	words["/hardwarecursor "] = sl;
 	words["/clock"] = sl;
@@ -38,11 +42,14 @@ void CWordCompletion::Reset()
 	words["/ctrlpanel "] = sl;
 	words["/distdraw "] = sl;
 	words["/disticon "] = sl;
+	words["/debuginfo sound"] = sl;
+	words["/debuginfo profiling"] = sl;
 	words["/incguiopacity "] = sl;
 	words["/decguiopacity "] = sl;
 	words["/echo "] = sl;
 	words["/font "] = sl;
 	words["/gameinfo"] = sl;
+	words["/gathermode"] = sl;
 	words["/grounddecals "] = sl;
 	words["/info "] = sl;
 	words["/luaui "] = sl;
@@ -85,12 +92,11 @@ void CWordCompletion::Reset()
 	words["minimize "] = mm;
 	words["maximize "] = mm;
 	words["maxspect "] = mm;
-	
+
 	// remote commands
-	//TODO those commans are registered in Console, get the list from there
+	// TODO those commans are registered in Console, get the list from there
+	// This is best done with a new command class (eg. ConsoleCommand)
 	words["/atm"] = sl;
-	words["/aikill"] = sl;
-	words["/aicontrol"] = sl;
 	words["/cheat "] = sl;
 	words["/devlua "] = sl;
 	words["/editdefs "] = sl;
@@ -126,6 +132,11 @@ void CWordCompletion::AddWord(const std::string& word,
 	return;
 }
 
+void CWordCompletion::RemoveWord(const std::string& word)
+{
+	words.erase(word);
+}
+
 
 std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 {
@@ -133,7 +144,7 @@ std::vector<std::string> CWordCompletion::Complete(std::string& msg) const
 
 	const bool unitName = (msg.find("/give ") == 0);
 	const bool minimap = (msg.find("/minimap ") == 0);
-	  
+
 	// strip "a:" and "s:" prefixes
 	std::string prefix, rawmsg;
 	if ((msg.find_first_of("aAsS") == 0) && (msg[1] == ':')) {

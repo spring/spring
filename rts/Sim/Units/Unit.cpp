@@ -61,8 +61,9 @@
 #include "UnitTypes/Building.h"
 #include "UnitTypes/TransportUnit.h"
 
-#include "COB/UnitScript.h"
+#include "COB/NullUnitScript.h"
 #include "COB/UnitScriptFactory.h"
+#include "COB/CobInstance.h" // for TAANG2RAD
 #include "CommandAI/AirCAI.h"
 #include "CommandAI/BuilderCAI.h"
 #include "CommandAI/CommandAI.h"
@@ -306,7 +307,10 @@ CUnit::~CUnit()
 		radarhandler->RemoveUnit(this);
 	}
 
-	delete script;
+	if (script != &CNullUnitScript::value) {
+		delete script;
+	}
+
 	modelParser->DeleteLocalModel(this);
 }
 
@@ -358,8 +362,6 @@ void CUnit::UnitInit(const UnitDef* def, int Team, const float3& position)
 
 void CUnit::ForcedMove(const float3& newPos)
 {
-	// hack to make mines not block ground
-	const bool blocking = !unitDef->canKamikaze || (unitDef->type == "Building" || unitDef->type == "Factory");
 	if (blocking) {
 		UnBlock();
 	}
@@ -450,6 +452,8 @@ void CUnit::Drop(float3 parentPos,float3 parentDir, CUnit* parent)
 	frontdir = parentDir;
 	frontdir.y = 0;
 	speed.y = 0;
+
+	script->Falling(); //start parachute animation
 }
 
 
@@ -528,8 +532,9 @@ void CUnit::Update()
 	moveType->Update();
 	GML_GET_TICKS(lastUnitUpdate);
 
-	inAir   = ((pos.y - ground->GetHeight(pos.x,pos.z)) > 0.0f);
-	inWater =  (pos.y <= 0.0f);
+	inWater = (pos.y <= 0.0f);
+	inAir   = (!inWater) && ((pos.y - ground->GetHeight(pos.x,pos.z)) > 1.0f);
+
 
 	if (inAir != oldInAir) {
 		if (inAir) {
@@ -945,14 +950,11 @@ void CUnit::DoWaterDamage()
 	}
 }
 
-void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& impulse, int weaponDefId)
+void CUnit::DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse, int weaponDefId)
 {
 	if (isDead) {
 		return;
 	}
-
-	residualImpulse += impulse / mass;
-	moveType->ImpulseAdded();
 
 	float damage = damages[armorType];
 
@@ -962,7 +964,8 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			if (flankingBonusMode) {
 				const float3 adir = (attacker->pos - pos).SafeNormalize(); // FIXME -- not the impulse direction?
 
-				if (flankingBonusMode == 1) {		// mode 1 = global coordinates, mobile
+				if (flankingBonusMode == 1) {
+					// mode 1 = global coordinates, mobile
 					flankingBonusDir += adir * flankingBonusMobility;
 					flankingBonusDir.Normalize();
 					flankingBonusMobility = 0.0f;
@@ -991,20 +994,21 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 	hitDir.y = 0.0f;
 	hitDir = -hitDir.SafeNormalize();
 
-	if (script->HasFunction(COBFN_HitByWeaponId)) {
-		script->HitByWeaponId(hitDir, weaponDefId, /*inout*/ damage);
-	}
-	else {
-		script->HitByWeapon(hitDir);
-	}
+	script->HitByWeapon(hitDir, weaponDefId, /*inout*/ damage);
 
 	float experienceMod = expMultiplier;
 	const int paralyzeTime = damages.paralyzeDamageTime;
 	float newDamage = damage;
+	float impulseMult = 1.0f;
 
 	if (luaRules && luaRules->UnitPreDamaged(this, attacker, damage, weaponDefId,
-			!!damages.paralyzeDamageTime, &newDamage))
+			!!damages.paralyzeDamageTime, &newDamage, &impulseMult)) {
 		damage = newDamage;
+	}
+
+	residualImpulse += ((impulse * impulseMult) / mass);
+	moveType->ImpulseAdded();
+
 
 	if (paralyzeTime == 0) { // real damage
 		if (damage > 0.0f) {
@@ -1033,8 +1037,7 @@ void CUnit::DoDamage(const DamageArray& damages, CUnit *attacker,const float3& i
 			if (damage > maxParaDmg) {
 				if (maxParaDmg > 0.0f) {
 					damage = maxParaDmg;
-				}
-				else {
+				} else {
 					damage = 0.0f;
 				}
 			}
@@ -1155,7 +1158,7 @@ CMatrix44f CUnit::GetTransformMatrix(const bool synced, const bool error) const
 	CTransportUnit *trans;
 
 	if (usingScriptMoveType ||
-	    (!beingBuilt && (physicalState == Flying) && unitDef->canmove)) {
+	    (!beingBuilt && (physicalState == CSolidObject::Flying) && unitDef->canmove)) {
 		// aircraft, skidding ground unit, or active ScriptMoveType
 		// note: (CAirMoveType) aircraft under construction should not
 		// use this matrix, or their nanoframes won't spin on pad
@@ -1556,32 +1559,28 @@ void CUnit::Init(const CUnit* builder)
 	// TODO: Improve this. There might be cases when this is not correct.
 	if (unitDef->movedata &&
 	    (unitDef->movedata->moveType == MoveData::Hover_Move)) {
-		physicalState = Hovering;
+		physicalState = CSolidObject::Hovering;
 	} else if (floatOnWater) {
-		physicalState = Floating;
+		physicalState = CSolidObject::Floating;
 	} else {
-		physicalState = OnGround;
+		physicalState = CSolidObject::OnGround;
 	}
 
-	// all units are set as ground-blocking by default,
-	// units that pretend to be "pseudo-buildings" (ie.
-	// hubs, etc) are flagged as immobile so that their
-	// positions are not considered valid for building
-	blocking = true;
+
+	// all units are blocking (ie. register on the blk-map
+	// when not flying) except mines, since their position
+	// would be given away otherwise by the PF, etc.
+	// note: this does mean that mines can be stacked (would
+	// need an extra yardmap character to prevent)
 	immobile = (unitDef->speed < 0.001f || !unitDef->canmove);
+	blocking = !(immobile && unitDef->canKamikaze);
 
-	// some torp launchers etc are exactly in the surface and should be considered uw anyway
-	if ((pos.y + model->height) < 0.0f) {
-		isUnderWater = true;
-	}
-
-	// semi hack to make mines not block ground
-	if (!unitDef->canKamikaze ||
-	    (unitDef->type == "Building") ||
-	    (unitDef->type == "Factory")) {
+	if (blocking) {
 		Block();
 	}
 
+
+	isUnderWater = ((pos.y + model->height) < 0.0f);
 	UpdateTerrainType();
 
 	Command c;
@@ -1637,7 +1636,7 @@ void CUnit::UpdateTerrainType()
 void CUnit::CalculateTerrainType()
 {
 	//Optimization: there's only about one unit that actually needs this information
-	if (!script->HasFunction(COBFN_SetSFXOccupy))
+	if (!script->HasSetSFXOccupy())
 		return;
 
 	if (transporter) {
@@ -1825,12 +1824,7 @@ void CUnit::FinishedBuilding(void)
 
 	if (unitDef->windGenerator > 0.0f) {
 		// start pointing in direction of wind
-		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			script->SetSpeed(unitDef->windGenerator, 3000.0f);
-		} else {
-			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
-		}
-		script->SetDirection(GetHeadingFromVectorF(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
 	}
 
 	if (unitDef->activateWhenBuilt) {
@@ -1897,15 +1891,10 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 	teamHandler->Team(this->lineage)->LeftLineage(this);
 
 	if (showDeathSequence && (!reclaimed && !beingBuilt)) {
-		const std::string* exp;
-		if (selfDestruct) {
-			exp = &unitDef->selfDExplosion;
-		} else {
-			exp = &unitDef->deathExplosion;
-		}
+		const std::string& exp = (selfDestruct) ? unitDef->selfDExplosion : unitDef->deathExplosion;
 
-		if (!exp->empty()) {
-			const WeaponDef* wd = weaponDefHandler->GetWeapon(*exp);
+		if (!exp.empty()) {
+			const WeaponDef* wd = weaponDefHandler->GetWeapon(exp);
 			if (wd) {
 				helper->Explosion(
 					midPos, wd->damages, wd->areaOfEffect, wd->edgeEffectiveness,
@@ -1929,7 +1918,8 @@ void CUnit::KillUnit(bool selfDestruct, bool reclaimed, CUnit* attacker, bool sh
 
 		// start running the unit's kill-script
 		script->Killed();
-	} else {
+	}
+	else {
 		deathScriptFinished = true;
 	}
 
@@ -2060,14 +2050,10 @@ void CUnit::Deactivate()
 
 void CUnit::UpdateWind(float x, float z, float strength)
 {
-	if (strength > unitDef->windGenerator) {
-		script->SetSpeed(unitDef->windGenerator, 3000.0f);
-	}
-	else {
-		script->SetSpeed(strength, 3000.0f);
-	}
+	const float windHeading = ClampRad(GetHeadingFromVectorF(-x, -z) - heading * TAANG2RAD);
+	const float windStrength = std::min(strength, unitDef->windGenerator);
 
-	script->SetDirection(GetHeadingFromVectorF(-x, -z));
+	script->WindChanged(windHeading, windStrength);
 }
 
 
@@ -2194,9 +2180,9 @@ unsigned int CUnit::CalcShadowLOD(unsigned int lastLOD) const
 void CUnit::PostLoad()
 {
 	//HACK:Initializing after load
-	unitDef = unitDefHandler->GetUnitByName(unitDefName);
+	unitDef = unitDefHandler->GetUnitDefByName(unitDefName);
 
-	yardMap = unitDef->yardmaps[buildFacing];
+	curYardMap = unitDef->yardmaps[buildFacing];
 
 	model = unitDef->LoadModel();
 	SetRadius(model->radius);
@@ -2214,13 +2200,8 @@ void CUnit::PostLoad()
 
 	script->SetSFXOccupy(curTerrainType);
 
-	if (unitDef->windGenerator>0) {
-		if (wind.GetCurrentStrength() > unitDef->windGenerator) {
-			script->SetSpeed(unitDef->windGenerator, 3000.0f);
-		} else {
-			script->SetSpeed(wind.GetCurrentStrength(), 3000.0f);
-		}
-		script->SetDirection(GetHeadingFromVectorF(-wind.GetCurrentDirection().x, -wind.GetCurrentDirection().z));
+	if (unitDef->windGenerator > 0.0f) {
+		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
 	}
 
 	if (activated) {

@@ -12,6 +12,7 @@
 
 #include <string>
 #include <iostream>
+#include <SDL.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -22,6 +23,7 @@ int main(int argc, char *argv[])
 #ifdef _WIN32
 	try {
 #endif
+	SDL_Init(SDL_INIT_TIMER);
 	std::cout << "If you find any errors, report them to mantis or the forums." << std::endl << std::endl;
 	ConfigHandler::Instantiate("");
 	FileSystemHandler::Cleanup();
@@ -31,26 +33,26 @@ int main(int argc, char *argv[])
 
 	if (argc > 1)
 	{
-		const std::string script(argv[0]);
+		const std::string script(argv[1]);
 		std::cout << "Loading script from file: " << script << std::endl;
 
 		ClientSetup settings;
 		CFileHandler fh(argv[1]);
 		if (!fh.FileExists())
 			throw content_error("Setupscript doesn't exists in given location: "+script);
-		
+
 		std::string buf;
 		if (!fh.LoadStringData(buf))
 			throw content_error("Setupscript cannot be read: "+script);
 		settings.Init(buf);
-		
+
 		gameSetup = new CGameSetup();	// to store the gamedata inside
 		if (!gameSetup->Init(buf))	// read the script provided by cmdline
 		{
 			std::cout << "Failed to load script" << std::endl;
 			return 1;
 		}
-		
+
 		std::cout << "Starting server..." << std::endl;
 		// Create the server, it will run in a separate thread
 		GameData* data = new GameData();
@@ -107,7 +109,7 @@ int main(int argc, char *argv[])
 	{
 		std::cout << "usage: spring-dedicated <full_path_to_script>" << std::endl;
 	}
-	
+
 	FileSystemHandler::Cleanup();
 
 #ifdef _WIN32

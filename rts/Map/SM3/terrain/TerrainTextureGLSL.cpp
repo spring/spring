@@ -484,7 +484,7 @@ void ShaderBuilder::BuildFragmentShader(NodeGLSLShader* ns, uint passIndex, cons
 	fragmentShader.Build(GL_FRAGMENT_SHADER_ARB);
 	ns->fragmentShader = fragmentShader.handle;
 
-	d_trace("Fragment shader built succesfully.");
+	d_trace("Fragment shader built successfully.");
 }
 
 void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, ShaderDef* sd)
@@ -499,7 +499,7 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 	static const size_t buf_sizeMax = 160;
 	for (size_t a = 0; a < ns->texCoordGen.size(); a++) {
 		char buf[buf_sizeMax];
-		SNPRINTF(buf, buf_sizeMax, "gl_TexCoord[%lu].st = vec2(dot(gl_Vertex, gl_ObjectPlaneS[%lu]), dot(gl_Vertex,gl_ObjectPlaneT[%lu]));\n", a, a, a);
+		SNPRINTF(buf, buf_sizeMax, "gl_TexCoord["_STPF_"].st = vec2(dot(gl_Vertex, gl_ObjectPlaneS["_STPF_"]), dot(gl_Vertex,gl_ObjectPlaneT["_STPF_"]));\n", a, a, a);
 		tcgen += buf;
 	}
 	tcgen += "}\n";
@@ -507,7 +507,7 @@ void ShaderBuilder::BuildVertexShader(NodeGLSLShader* ns, uint passIndex, Shader
 
 	vertexShader.AddFile("shaders/terrainVertexShader.glsl");
 	vertexShader.Build(GL_VERTEX_SHADER_ARB);
-	d_trace("Vertex shader built succesfully.");
+	d_trace("Vertex shader built successfully.");
 
 	ns->vertexShader = vertexShader.handle;
 }

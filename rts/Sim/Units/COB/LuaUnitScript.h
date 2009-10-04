@@ -13,6 +13,9 @@ struct lua_State;
 class CLuaUnitScript : public CUnitScript, CUnitScript::IAnimListener
 {
 private:
+	static CUnit* activeUnit;
+	static CUnitScript* activeScript;
+
 	// remember whether we are running in LuaRules or LuaGaia
 	CLuaHandle* handle;
 
@@ -20,7 +23,7 @@ private:
 	lua_State* L;
 
 	// contrary to COB the list of functions may differ per unit,
-	// so the COBFN_* -> function mapping can differ per unit too.
+	// so the LUAFN_* -> function mapping can differ per unit too.
 	std::vector<int> scriptIndex;
 	std::map<std::string, int> scriptNames;
 
@@ -42,9 +45,11 @@ protected:
 	bool PopBoolean(int fn, bool def);
 
 	int  RunQueryCallIn(int fn);
+	int  RunQueryCallIn(int fn, float arg1);
 	void Call(int fn) { RawCall(scriptIndex[fn]); }
 	void Call(int fn, float arg1);
 	void Call(int fn, float arg1, float arg2);
+	void Call(int fn, float arg1, float arg2, float arg3);
 
 	void RawPushFunction(int functionId);
 	void PushFunction(int id);
@@ -56,15 +61,20 @@ protected:
 
 public:
 
+	// takes LUAFN_* constant as argument
+	bool HasFunction(int id) const { return scriptIndex[id] >= 0; }
+
+	virtual bool HasBlockShot(int weaponNum) const;
+	virtual bool HasTargetWeight(int weaponNum) const;
+
 	// callins, called throughout sim
 	virtual void RawCall(int functionId);
 	virtual void Create();
 	virtual void Killed();
-	virtual void SetDirection(float heading);
-	virtual void SetSpeed(float speed, float);
+	virtual void WindChanged(float heading, float speed);
+	virtual void ExtractionRateChanged(float speed);
 	virtual void RockUnit(const float3& rockDir);
-	virtual void HitByWeapon(const float3& hitDir);
-	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage);
+	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage);
 	virtual void SetSFXOccupy(int curTerrainType);
 	virtual void QueryLandingPads(std::vector<int>& out_pieces);
 	virtual void BeginTransport(const CUnit* unit);
@@ -74,6 +84,21 @@ public:
 	virtual void StartBuilding(float heading, float pitch);
 	virtual int  QueryNanoPiece();
 	virtual int  QueryBuildInfo();
+
+	virtual void Destroy();
+	virtual void StartMoving();
+	virtual void StopMoving();
+	virtual void StartUnload();
+	virtual void EndTransport();
+	virtual void StartBuilding();
+	virtual void StopBuilding();
+	virtual void Falling();
+	virtual void Landed();
+	virtual void Activate();
+	virtual void Deactivate();
+	virtual void MoveRate(int curRate);
+	virtual void FireWeapon(int weaponNum);
+	virtual void EndBurst(int weaponNum);
 
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum);
@@ -95,9 +120,16 @@ private:
 	static int CreateScript(lua_State* L);
 	static int UpdateCallIn(lua_State* L);
 
+	// other call-outs are stateful
+	static int CallAsUnit(lua_State* L);
+
 	// Lua COB replacement support funcs (+SpawnCEG, PlaySoundFile, etc.)
+	static int GetUnitValue(lua_State* L, CUnitScript* script, int arg);
 	static int GetUnitValue(lua_State* L);
+	static int GetUnitCOBValue(lua_State* L); // backward compat
+	static int SetUnitValue(lua_State* L, CUnitScript* script, int arg);
 	static int SetUnitValue(lua_State* L);
+	static int SetUnitCOBValue(lua_State* L); // backward compat
 	static int SetPieceVisibility(lua_State* L);
 	static int EmitSfx(lua_State* L);       // TODO: better names?
 	static int AttachUnit(lua_State* L);
@@ -118,8 +150,12 @@ private:
 	static int WaitForTurn(lua_State* L);
 	static int WaitForMove(lua_State* L);
 
-	// Lua COB functions to work around lack of working CBCobThreadFinish
+	// Lua COB function to work around lack of working CBCobThreadFinish
 	static int SetDeathScriptFinished(lua_State* L);
+
+	static int GetPieceTranslation(lua_State* L); // matches Move
+	static int GetPieceRotation(lua_State* L);    // matches Turn
+	static int GetPiecePosDir(lua_State* L);      // EmitDirPos (in unit space)
 };
 
 #endif

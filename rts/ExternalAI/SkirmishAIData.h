@@ -15,10 +15,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 	@author	Robin Vobruba <hoijui.quaero@gmail.com>
- */
+*/
 
-#ifndef _SKIRMISHAIDATA_H
-#define _SKIRMISHAIDATA_H
+#ifndef __SKIRMISH_AI_DATA_H
+#define __SKIRMISH_AI_DATA_H
+
+#include "ExternalAI/SkirmishAIBase.h"
+
+#include "creg/creg_cond.h"
 
 #include <string>
 #include <vector>
@@ -28,22 +32,18 @@
  * Contains everything needed to initialize a Skirmish AI instance.
  * @see Game/GameSetup
  */
-struct SkirmishAIData {
-	/**
-	 * This name is purely informative.
-	 * It will be shown in statistics eg.,
-	 * and everywhere else where normal players
-	 * have their name displayed.
-	 */
-	std::string name;
-	/** Id of the team this Skirmish AI is controlling. */
-	int team;
-	/** Number of the player whose computer this AI runs on. */
-	int hostPlayerNum;
+class SkirmishAIData : public SkirmishAIBase {
+private:
+	CR_DECLARE(SkirmishAIData);
+public:
 	std::string shortName;
 	std::string version;
 	std::vector<std::string> optionKeys;
 	std::map<std::string, std::string> options;
+
+	bool isLuaAI;
+
+	SkirmishAIStatistics currentStats;
 };
 
-#endif // _SKIRMISHAIDATA_H
+#endif // __SKIRMISH_AI_DATA_H

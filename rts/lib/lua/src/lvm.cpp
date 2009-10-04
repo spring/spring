@@ -9,13 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-//SPRING#include <math.h>
-#include "streflop_cond.h" // FIXME -- should always be compiled with streflop
-#ifdef UNITSYNC
-using std::isfinite;
-using std::isnan;
-using std::isinf;
-#endif
+// Spring
+#include "streflop_cond.h"
 
 #define lvm_c
 #define LUA_CORE
@@ -60,7 +55,7 @@ int luaV_tostring (lua_State *L, StkId obj) {
     lua_Number n = nvalue(obj);
     // SPRING -- synced safety change
     //        -- need a custom number formatter?
-    if (isfinite(n)) {
+    if (math::isfinite(n)) {
       lua_number2str(s, n);
     }
     else {

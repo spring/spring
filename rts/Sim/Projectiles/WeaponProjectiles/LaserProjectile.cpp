@@ -18,6 +18,7 @@
 CR_BIND_DERIVED(CLaserProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,float3(0,0,0),float3(0,0,0),0,NULL,0));
 
 CR_REG_METADATA(CLaserProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(dir),
 	CR_MEMBER(intensity),
 	CR_MEMBER(color),
@@ -34,7 +35,7 @@ CR_REG_METADATA(CLaserProjectile,(
 CLaserProjectile::CLaserProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, float length, const float3& color, const float3& color2,
 		float intensity, const WeaponDef *weaponDef, int ttl GML_PARG_C)
-:	CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, true,  ttl GML_PARG_P),
+:	CWeaponProjectile(pos,speed,owner,0,ZeroVector,weaponDef,0, ttl GML_PARG_P),
 	intensity(intensity),
 	color(color),
 	color2(color2),
@@ -91,7 +92,7 @@ void CLaserProjectile::Update(void)
 			ceg.Explosion(pos, ttl, intensity, 0x0, 0.0f, 0x0, speed);
 		}
 	}
-	
+
 	if (weaponDef->visuals.hardStop) {
 		if (ttl == 0 && checkCol) {
 			checkCol = false;

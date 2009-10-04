@@ -718,12 +718,12 @@ int CCobThread::Tick(int deltaTime)
 			case SHOW:{
 				r1 = GET_LONG_PC();
 				int i;
-				for (i = 0; i < COB_MaxWeapons; ++i)
+				for (i = 0; i < MAX_WEAPONS_PER_UNIT; ++i)
 					if (callStack.back().functionId == script.scriptIndex[COBFN_FirePrimary + COBFN_Weapon_Funcs * i])
 						break;
 
 				// If true, we are in a Fire-script and should show a special flare effect
-				if (i < COB_MaxWeapons) {
+				if (i < MAX_WEAPONS_PER_UNIT) {
 					owner->ShowFlare(r1);
 				}
 				else {

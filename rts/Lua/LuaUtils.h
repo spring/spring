@@ -39,6 +39,7 @@ class LuaUtils {
 		                              int table, Command& cmd);
 		static void ParseCommandArray(lua_State* L, const char* caller,
 		                              int table, vector<Command>& commands);
+		static int ParseFacing(lua_State* L, const char* caller, int index);
 
 		static void* GetUserData(lua_State* L, int index, const string& type);
 

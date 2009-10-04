@@ -2,7 +2,8 @@
 
 #include <cstdio>
 
-#include "UnitScriptNames.h"
+#include "Sim/Misc/GlobalConstants.h"
+#include "CobScriptNames.h"
 #include "LogOutput.h"
 
 using std::sprintf;
@@ -13,7 +14,7 @@ using std::string;
 using std::vector;
 
 
-const vector<string>& CUnitScriptNames::GetScriptNames()
+const vector<string>& CCobUnitScriptNames::GetScriptNames()
 {
 	static vector<string> scriptNames;
 
@@ -21,7 +22,7 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 		return scriptNames;
 	}
 
-	scriptNames.resize(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs));
+	scriptNames.resize(COBFN_Last + (MAX_WEAPONS_PER_UNIT * COBFN_Weapon_Funcs));
 
 	scriptNames[COBFN_Create]        = "Create";
 	scriptNames[COBFN_Destroy]       = "Destroy";
@@ -58,11 +59,8 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 	scriptNames[COBFN_QueryBuildInfo]       = "QueryBuildInfo";
 	scriptNames[COBFN_Go]                   = "Go";
 
-	scriptNames[COBFN_MoveFinished] = "MoveFinished";
-	scriptNames[COBFN_TurnFinished] = "TurnFinished";
-
 	// Also add the weapon aiming stuff
-	for (int i = 0; i < COB_MaxWeapons; ++i) {
+	for (int i = 0; i < MAX_WEAPONS_PER_UNIT; ++i) {
 		char buf[15];
 		sprintf(buf, "Weapon%d", i + 1);
 		string weapon(buf);
@@ -87,7 +85,7 @@ const vector<string>& CUnitScriptNames::GetScriptNames()
 }
 
 
-const std::map<std::string, int>& CUnitScriptNames::GetScriptMap()
+const std::map<std::string, int>& CCobUnitScriptNames::GetScriptMap()
 {
 	static map<string, int> scriptMap;
 
@@ -121,7 +119,7 @@ const std::map<std::string, int>& CUnitScriptNames::GetScriptMap()
 }
 
 
-int CUnitScriptNames::GetScriptNumber(const std::string& fname)
+int CCobUnitScriptNames::GetScriptNumber(const std::string& fname)
 {
 	const map<string, int>& scriptMap = GetScriptMap();
 	map<string, int>::const_iterator it = scriptMap.find(fname);
@@ -134,7 +132,7 @@ int CUnitScriptNames::GetScriptNumber(const std::string& fname)
 
 
 
-const string& CUnitScriptNames::GetScriptName(int num)
+const string& CCobUnitScriptNames::GetScriptName(int num)
 {
 	static string empty;
 	const std::vector<std::string>& n = GetScriptNames();

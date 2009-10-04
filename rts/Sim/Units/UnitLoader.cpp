@@ -75,7 +75,7 @@ CUnitLoader::~CUnitLoader()
 CUnit* CUnitLoader::LoadUnit(const std::string& name, float3 pos, int team,
                              bool build, int facing, const CUnit* builder)
 {
-	const UnitDef* ud = unitDefHandler->GetUnitByName(name);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByName(name);
 	if (ud == NULL) {
 		throw content_error("Couldn't find unittype " +  name);
 	}
@@ -120,7 +120,8 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 			throw content_error("Invalid team and no gaia team to put unit in");
 	}
 
-	if (type == "GroundUnit") {
+
+	if (type == "GroundUnit" || type == "Bomber" || type == "Fighter") {
 		unit = new CUnit;
 	} else if (type == "Transport") {
 		unit = new CTransportUnit;
@@ -130,14 +131,13 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 		unit = new CFactory;
 	} else if (type == "Builder") {
 		unit = new CBuilder;
-	} else if (type == "Bomber" || type == "Fighter") {
-		unit = new CUnit;
 	} else if (type == "MetalExtractor") {
 		unit = new CExtractorBuilding;
 	} else {
 		LogObject() << "Unknown unit type " << type.c_str() << "\n";
 		return NULL;
 	}
+
 
 	unit->UnitInit(ud, team, pos);
 	unit->beingBuilt = build;
@@ -367,7 +367,7 @@ CUnit* CUnitLoader::LoadUnit(const UnitDef* ud, float3 pos, int team,
 	unit->updir = UpVector;
 	unit->rightdir = unit->frontdir.cross(unit->updir);
 
-	unit->yardMap = ud->yardmaps[facing];
+	unit->curYardMap = ud->yardmaps[facing];
 
 	unit->Init(builder);
 

@@ -94,6 +94,8 @@ void CFreeController::SetTrackingInfo(const float3& target, float radius)
 
 void CFreeController::Update()
 {
+	camera->RestoreUp();
+
 	if (!gu->active) {
 		vel  = ZeroVector;
 		avel = ZeroVector;

@@ -16,10 +16,8 @@
 */
 
 #ifndef _IAILIBRARYMANAGER_H
-#define	_IAILIBRARYMANAGER_H
+#define _IAILIBRARYMANAGER_H
 
-#include "IAIInterfaceLibrary.h"
-#include "ISkirmishAILibrary.h"
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
 
@@ -29,6 +27,7 @@
 
 class AIInterfaceKey;
 class SkirmishAIKey;
+class CSkirmishAILibrary;
 
 /**
  * @brief manages AIs and AI interfaces
@@ -53,11 +52,6 @@ public:
 	virtual const T_interfaceInfos& GetInterfaceInfos() const = 0;
 	virtual const T_skirmishAIInfos& GetSkirmishAIInfos() const = 0;
 
-	virtual const std::vector<std::string>& GetSkirmishAIOptionValueKeys(int teamId) const = 0;
-	virtual const std::map<std::string, std::string>& GetSkirmishAIOptionValues(int teamId) const = 0;
-
-	virtual const T_skirmishAIInfos& GetUsedSkirmishAIInfos() = 0;
-
 	typedef std::map<const AIInterfaceKey, std::set<std::string> > T_dupInt;
 	typedef std::map<const SkirmishAIKey, std::set<std::string> >
 			T_dupSkirm;
@@ -77,7 +71,7 @@ public:
 	 * A Skirmish AI (its library) is only really loaded when it is not yet
 	 * loaded.
 	 */
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(
+	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(
 			const SkirmishAIKey& skirmishAIKey) = 0;
 	/**
 	 * A Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
@@ -124,5 +118,7 @@ protected:
 private:
 	static IAILibraryManager* myAILibraryManager;
 };
+
+#define aiLibManager IAILibraryManager::GetInstance()
 
 #endif // _IAILIBRARYMANAGER_H

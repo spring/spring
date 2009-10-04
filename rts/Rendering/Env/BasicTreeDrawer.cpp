@@ -14,6 +14,8 @@
 #include "Rendering/Textures/Bitmap.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
+#include "GlobalUnsynced.h"
+#include "Map/MapInfo.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -380,6 +382,11 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 	glBindTexture(GL_TEXTURE_2D, treetex);
 	glEnable(GL_ALPHA_TEST);
 
+	if(gu->drawFog) {
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+		glEnable(GL_FOG);
+	}
+
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
 	int cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
 
@@ -430,6 +437,9 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 			}
 		}
 	}
+
+	glDisable(GL_FOG);
+
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
 }

@@ -22,6 +22,7 @@ using namespace std;
 #include "LuaUtils.h"
 #include "LogOutput.h"
 #include "FileSystem/FileHandler.h"
+#include <FileSystem/ArchiveScanner.h>
 #include "FileSystem/VFSHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Util.h"
@@ -87,6 +88,7 @@ bool LuaVFS::PushUnsynced(lua_State* L)
 	HSTR_PUSH_CFUNC(L, "DirList",    UnsyncDirList);
 	HSTR_PUSH_CFUNC(L, "SubDirs",    UnsyncSubDirs);
 	HSTR_PUSH_CFUNC(L, "UseArchive", UseArchive);
+	HSTR_PUSH_CFUNC(L, "MapArchive", MapArchive);
 
 	HSTR_PUSH_CFUNC(L, "ZlibCompress", ZlibCompress);
 
@@ -368,18 +370,12 @@ int LuaVFS::UseArchive(lua_State* L)
 {
 	const string filename = luaL_checkstring(L, 1);
 	if (!LuaIO::IsSimplePath(filename)) {
-//FIXME		return 0;
+		//FIXME		return 0;
 	}
 
 	int funcIndex = 2;
-	string modes = SPRING_VFS_ALL;
-	if (lua_israwstring(L, 2)) {
-		modes = lua_tostring(L, 2);
-		funcIndex = 3;
-	}
 	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
 		return 0;
-		modes = CFileHandler::ForbidModes(modes, SPRING_VFS_RAW);
 	}
 
 	if (!lua_isfunction(L, funcIndex)) {
@@ -406,6 +402,60 @@ int LuaVFS::UseArchive(lua_State* L)
 	}
 
 	return lua_gettop(L) - funcIndex + 1;
+}
+
+int LuaVFS::MapArchive(lua_State* L)
+{
+	if (CLuaHandle::GetActiveHandle()->GetSynced()) // only from unsynced
+	{
+		return 0;
+	}
+
+	const int args = lua_gettop(L); // number of arguments
+	const string filename = archiveScanner->ModNameToModArchive(luaL_checkstring(L, 1));
+	if (!LuaIO::IsSimplePath(filename))
+	{
+		//FIXME		return 0;
+	}
+
+	CFileHandler f(filename, SPRING_VFS_RAW);
+	if (!f.FileExists())
+	{
+		std::ostringstream buf;
+		buf << "Achive not found: " << filename;
+		lua_pushboolean(L, false);
+		lua_pushstring(L, buf.str().c_str());
+		return 0;
+	}
+
+	if (args >= 2)
+	{
+		const std::string checksumBuf = lua_tostring(L, 2);
+		int checksum = 0;
+		std::istringstream buf(checksumBuf);
+		buf >> checksum;
+		const int realchecksum = archiveScanner->GetArchiveChecksum(filename);
+		if (checksum != realchecksum)
+		{
+			std::ostringstream buf;
+			buf << "Bad archive checksum, got: " << realchecksum << " expected: " << checksum;
+			lua_pushboolean(L, false);
+			lua_pushstring(L, buf.str().c_str());
+			return 0;
+		}
+	}
+	if (!vfsHandler->AddArchive(filename, false))
+	{
+		std::ostringstream buf;
+		buf << "Failed to load archive: " << filename;
+		lua_pushboolean(L, false);
+		lua_pushstring(L, buf.str().c_str());
+	}
+	else
+	{
+		lua_pushboolean(L, true);
+	}
+	return 0;
 }
 
 /******************************************************************************/

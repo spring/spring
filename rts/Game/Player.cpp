@@ -8,9 +8,10 @@
 
 #include "Player.h"
 #include "PlayerHandler.h"
+#include "Game/GameHelper.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Misc/GlobalSynced.h"
-#include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Weapons/Weapon.h"
@@ -52,7 +53,6 @@ CPlayer::CPlayer()
 	memset(&currentStats, 0, sizeof(Statistics));
 
 	active = false;
-	readyToStart = false;
 	cpuUsage = 0;
 	ping = 0;
 
@@ -96,13 +96,11 @@ void CPlayer::SetControlledTeams()
 	}
 
 	// AI teams
-	for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
-		const CTeam* team = teamHandler->Team(t);
-
-		// don't check if !team->skirmishAIKey.IsUnspecified()
-		// because luaAI does not require client control
-		if (team && team->isAI && (team->leader == playerNum)) {
-			controlledTeams.insert(t);
+	const CSkirmishAIHandler::id_ai_t aiIds = skirmishAIHandler.GetAllSkirmishAIs();
+	for (CSkirmishAIHandler::id_ai_t::const_iterator ai = aiIds.begin(); ai != aiIds.end(); ++ai) {
+		const bool isHostedByUs   = (ai->second.hostPlayer == playerNum);
+		if (isHostedByUs) {
+			controlledTeams.insert(ai->second.team);
 		}
 	}
 }

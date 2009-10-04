@@ -608,7 +608,7 @@ void CAirCAI::ExecuteGuard(Command &c)
 	}
 }
 
-int CAirCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
+int CAirCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
 		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {

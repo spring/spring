@@ -9,6 +9,7 @@
 #import "SDLMain.h"
 #import <sys/param.h> /* for MAXPATHLEN */
 #import <unistd.h>
+#import <Carbon/Carbon.h>
 
 /* Use this flag to determine whether we use SDLMain.nib or not */
 #define		SDL_USE_NIB_FILE	0
@@ -182,6 +183,11 @@ void CustomApplicationMain ()
     /* Create SDLMain and make it the app delegate */
     sdlMain = [[SDLMain alloc] init];
     [NSApp setDelegate:sdlMain];
+	
+    /* Bring the app to foreground */
+    ProcessSerialNumber psn;
+    GetCurrentProcess(&psn);
+    TransformProcessType(&psn,kProcessTransformToForegroundApplication);
     
     /* Start the main event loop */
     [NSApp run];

@@ -4,8 +4,9 @@
 
 CR_BIND_DERIVED(CExpGenSpawner, CProjectile, );
 
-CR_REG_METADATA(CExpGenSpawner, 
+CR_REG_METADATA(CExpGenSpawner,
 (
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(delay),
 		CR_MEMBER(dir),
@@ -21,7 +22,7 @@ CExpGenSpawner::CExpGenSpawner(void) :
 {
 	checkCol=false;
 	deleteMe=false;
-	synced=false;
+	synced=true;
 }
 
 CExpGenSpawner::~CExpGenSpawner(void)

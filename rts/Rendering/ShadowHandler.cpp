@@ -143,7 +143,7 @@ void CShadowHandler::DrawShadowPasses(void)
 
 	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
 		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT);
+	//	glCullFace(GL_FRONT);
 
 		readmap->GetGroundDrawer()->DrawShadowPass();
 		ph->DrawShadowPass();

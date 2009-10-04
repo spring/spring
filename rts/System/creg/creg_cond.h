@@ -1,4 +1,4 @@
-/* 
+/*
  * Author: hoijui (I am giving the copyright to Jelmer Cnossen)
  *
  * Created on October 9, 2008, 7:07 AM
@@ -34,6 +34,7 @@
 #define CR_MEMBER(Member)
 #define CR_ENUM_MEMBER(Member)
 #define CR_RESERVED(Size)
+#define CR_SETFLAG(Flag)
 #define CR_MEMBER_SETFLAG(Member, Flag)
 #define CR_MEMBER_BEGINFLAG(Flag)
 #define CR_MEMBER_ENDFLAG(Flag)

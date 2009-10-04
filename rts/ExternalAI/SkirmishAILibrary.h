@@ -18,18 +18,19 @@
 #ifndef _SKIRMISHAILIBRARY_H
 #define	_SKIRMISHAILIBRARY_H
 
-#include "ISkirmishAILibrary.h"
-
 #include "SkirmishAIKey.h"
 #include "Interface/SSkirmishAILibrary.h"
 #include <vector>
 
 class AIInterfaceKey;
+struct SSkirmishAICallback;
 
 /**
- * Default implementation of ISkirmishAILibrary.
+ * The engines container for a Skirmish AI library.
+ * An instance of this class may represent RAI or KAIK.
+ * @see CSkirmishAI
  */
-class CSkirmishAILibrary : public ISkirmishAILibrary {
+class CSkirmishAILibrary {
 public:
 	CSkirmishAILibrary(const SSkirmishAILibrary& ai, const SkirmishAIKey& key);
 	virtual ~CSkirmishAILibrary();
@@ -44,8 +45,8 @@ public:
 			const std::string& engineVersionString, int engineVersionNumber,
 			const AIInterfaceKey& interfaceKey) const;
 
-	virtual void Init(int teamId) const;
-	virtual void Release(int teamId) const;
+	virtual bool Init(int teamId, const SSkirmishAICallback* c_callback) const;
+	virtual bool Release(int teamId) const;
 	virtual int HandleEvent(int teamId, int topic, const void* data) const;
 
 private:

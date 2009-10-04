@@ -98,6 +98,11 @@ int main (int argc, char* argv[])
 				}
 				cout << " Parameter:" << (int)buffer[3] << endl;
 				break;
+			case NETMSG_COMMAND:
+				cout << "COMMAND Playernum:" << (int)buffer[3] << " Size: " << *(unsigned short*)(buffer+1) << endl;
+				if (*(unsigned short*)(buffer+1) != packet->length)
+					cout << "      packet length error: expected: " <<  *(unsigned short*)(buffer+1) << " got: " << packet->length << endl;
+				break;
 			default:
 				cout << "MSG: " << (unsigned)buffer[0] << endl;
 		}

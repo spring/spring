@@ -25,6 +25,7 @@ if (System == nil) then
     CMD = CMD,
     CMDTYPE = CMDTYPE,
     COB = COB,
+    SFX = SFX,
     VFS = VFS,
 
     UnitDefs        = UnitDefs,
