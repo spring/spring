@@ -300,6 +300,9 @@ void CEngineOutHandler::UnitCaptured(const CUnit& unit, int newTeam) {
 	DO_FOR_TEAM_SKIRMISH_AIS(UnitCaptured(unitId, oldTeam, newTeam), oldTeam);
 }
 
+static inline bool isUnitInLosOrRadarOfAllyTeam(const CUnit& unit, const int allyTeamId) {
+	return unit.losStatus[allyTeamId] & (LOS_INLOS | LOS_INRADAR);
+}
 
 void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 		const CUnit* attacker) {
@@ -307,21 +310,37 @@ void CEngineOutHandler::UnitDestroyed(const CUnit& destroyed,
 
 	int destroyedId = destroyed.id;
 	int attackerId  = attacker ? attacker->id : -1;
+	int dt          = destroyed.team;
 
-	// EnemyDestroyed is sent to all allies of the attacking/destroying team
-	for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
-		const int t = ai->second->GetTeamId();
-		if (!teamHandler->Ally(teamHandler->AllyTeam(t), destroyed.allyteam)
-			&& (ai->second->IsCheatEventsEnabled()
-				|| (destroyed.losStatus[teamHandler->AllyTeam(t)] & (LOS_INLOS | LOS_INRADAR))))
-		{
+	// inform destroyed units team (not allies)
+	if (team_skirmishAIs.find(dt) != team_skirmishAIs.end()) {
+		const bool attackerInLosOrRadar = attacker && isUnitInLosOrRadarOfAllyTeam(*attacker, destroyed.allyteam);
+		for (ids_t::iterator ai = team_skirmishAIs[dt].begin(); ai != team_skirmishAIs[dt].end(); ++ai) {
+			CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
+			int visibleAttackerId = -1;
+			if (attackerInLosOrRadar || saw->IsCheatEventsEnabled()) {
+				visibleAttackerId = attackerId;
+			}
 			try {
-				ai->second->EnemyDestroyed(destroyedId, attackerId);
+				saw->UnitDestroyed(destroyedId, visibleAttackerId);
 			} HANDLE_EXCEPTION;
 		}
 	}
 
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitDestroyed(destroyedId, attackerId), destroyed.team);
+	// inform attacker units team (including allies)
+	if (attacker != NULL && !teamHandler->Ally(attacker->allyteam, destroyed.allyteam)) {
+		for (id_ai_t::iterator ai = id_skirmishAI.begin(); ai != id_skirmishAI.end(); ++ai) {
+			const int t     = ai->second->GetTeamId();
+			const int allyT = teamHandler->AllyTeam(t);
+			if (teamHandler->Ally(allyT, attacker->allyteam)
+				&& (ai->second->IsCheatEventsEnabled() || isUnitInLosOrRadarOfAllyTeam(destroyed, allyT)))
+			{
+				try {
+					ai->second->EnemyDestroyed(destroyedId, attackerId);
+				} HANDLE_EXCEPTION;
+			}
+		}
+	}
 }
 
 
@@ -330,39 +349,44 @@ void CEngineOutHandler::UnitDamaged(const CUnit& damaged, const CUnit* attacker,
 	AI_EVT_MTH();
 
 	int damagedUnitId  = damaged.id;
+	int dt             = damaged.team;
 	int attackerUnitId = attacker ? attacker->id : -1;
 
-	float3 attackDir_damagedsView;
-	float3 attackDir_attackersView;
-	if (attacker) {
-		attackDir_damagedsView =
-				helper->GetUnitErrorPos(attacker, damaged.allyteam)
-				- damaged.pos;
-		attackDir_damagedsView.ANormalize();
-
-		attackDir_attackersView =
-				attacker->pos
-				- helper->GetUnitErrorPos(&damaged, attacker->allyteam);
-		attackDir_attackersView.ANormalize();
-	} else {
-		attackDir_damagedsView = ZeroVector;
+	// inform damaged units team (not allies)
+	if (team_skirmishAIs.find(dt) != team_skirmishAIs.end()) {
+		float3 attackDir_damagedsView = ZeroVector;
+		if (attacker) {
+			attackDir_damagedsView =
+					helper->GetUnitErrorPos(attacker, damaged.allyteam)
+					- damaged.pos;
+			attackDir_damagedsView.ANormalize();
+		}
+		const bool attackerInLosOrRadar = attacker && isUnitInLosOrRadarOfAllyTeam(*attacker, damaged.allyteam);
+		for (ids_t::iterator ai = team_skirmishAIs[dt].begin(); ai != team_skirmishAIs[dt].end(); ++ai) {
+			CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
+			int visibleAttackerUnitId = -1;
+			if (attackerInLosOrRadar || saw->IsCheatEventsEnabled()) {
+				visibleAttackerUnitId = attackerUnitId;
+			}
+			try {
+				id_skirmishAI[*ai]->UnitDamaged(damagedUnitId, visibleAttackerUnitId, damage, attackDir_damagedsView, weaponDefId, paralyzer);
+			} HANDLE_EXCEPTION;
+		}
 	}
-	const int dt = damaged.team;
-	const int at = attacker ? attacker->team : -1;
 
-	DO_FOR_TEAM_SKIRMISH_AIS(UnitDamaged(damagedUnitId, attackerUnitId, damage, attackDir_damagedsView, weaponDefId, paralyzer), dt);
-
+	// inform attacker units team (not allies)
 	if (attacker) {
-		// EnemyDamaged is sent to the attacking team only,
-		// not to its allies
-		if (!teamHandler->Ally(teamHandler->AllyTeam(at), damaged.allyteam)
-				&& (team_skirmishAIs.find(at) != team_skirmishAIs.end()))
-		{
-			const bool inLosOrRadar = (damaged.losStatus[teamHandler->AllyTeam(at)] & (LOS_INLOS | LOS_INRADAR));
+		const int at = attacker ? attacker->team : -1;
+		if (!teamHandler->Ally(attacker->allyteam, damaged.allyteam)
+				&& (team_skirmishAIs.find(at) != team_skirmishAIs.end())) {
+			float3 attackDir_attackersView = attacker->pos
+						- helper->GetUnitErrorPos(&damaged, attacker->allyteam);
+			attackDir_attackersView.ANormalize();
+			const bool damagedInLosOrRadar = isUnitInLosOrRadarOfAllyTeam(damaged, attacker->allyteam);
 			for (ids_t::iterator ai = team_skirmishAIs[at].begin(); ai != team_skirmishAIs[at].end(); ++ai)
 			{
 				CSkirmishAIWrapper* saw = id_skirmishAI[*ai];
-				if (inLosOrRadar || saw->IsCheatEventsEnabled())
+				if (damagedInLosOrRadar || saw->IsCheatEventsEnabled())
 				{
 					try {
 						saw->EnemyDamaged(damagedUnitId, attackerUnitId, damage,
