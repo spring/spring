@@ -88,6 +88,7 @@ public:
 	virtual bool IsCheatEventsEnabled() const;
 
 	virtual void Init();
+	void Dieing();
 	/// @see SReleaseEvent in Interface/AISEvents.h
 	virtual void Release(int reason = 0 /* = unspecified */);
 

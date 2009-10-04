@@ -35,12 +35,18 @@ class CSkirmishAI {
 public:
 	CSkirmishAI(int teamId, const SkirmishAIKey& skirmishAIKey,
 		const SSkirmishAICallback* c_callback);
-	virtual ~CSkirmishAI();
+	~CSkirmishAI();
 
 	/**
 	 * CAUTION: takes C AI Interface events, not engine C++ ones!
 	 */
-	virtual int HandleEvent(int topic, const void* data) const;
+	int HandleEvent(int topic, const void* data) const;
+
+	/**
+	 * No events are forwarded to the Skirmish AI plugin
+	 * after this method has been called.
+	 */
+	void Dieing();
 
 private:
 	int teamId;
@@ -48,6 +54,7 @@ private:
 	const CSkirmishAILibrary* library;
 	const std::string timerName;
 	bool initOk;
+	bool dieing;
 };
 
 #endif // _SKIRMISHAI_H

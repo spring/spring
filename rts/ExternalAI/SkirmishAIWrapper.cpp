@@ -218,6 +218,10 @@ void CSkirmishAIWrapper::Init() {
 	}
 }
 
+void CSkirmishAIWrapper::Dieing() {
+	ai->Dieing();
+}
+
 void CSkirmishAIWrapper::Release(int reason) {
 
 	if (initialized && !released) {
