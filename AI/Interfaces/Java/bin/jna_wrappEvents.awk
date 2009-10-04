@@ -144,7 +144,7 @@ function printOOAIFactoryHeader(outFile) {
 	print("		if (ai != null) {") >> outFile;
 	print("			ais.put(teamId, ai);") >> outFile;
 	print("		}") >> outFile;
-	print("		return (ai == null) ? -1 : 0;") >> outFile;
+	print("		return (ai == null) ? 1 : 0;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
 	print("	@Override") >> outFile;
@@ -152,7 +152,7 @@ function printOOAIFactoryHeader(outFile) {
 	print("") >> outFile;
 	print("		OOAI ai = ais.remove(teamId);") >> outFile;
 	print("		ooClbs.remove(teamId);") >> outFile;
-	print("		return (ai == null) ? -1 : 0;") >> outFile;
+	print("		return (ai == null) ? 1 : 0;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
 	print("	@Override") >> outFile;
