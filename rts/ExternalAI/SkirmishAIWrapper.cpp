@@ -197,6 +197,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 
 void CSkirmishAIWrapper::Init() {
+
 	if (ai == NULL) {
 		bool loadOk = LoadSkirmishAI(false);
 		if (!loadOk) {
@@ -308,6 +309,7 @@ void CSkirmishAIWrapper::UnitFinished(int unitId) {
 }
 
 void CSkirmishAIWrapper::UnitDestroyed(int unitId, int attackerUnitId) {
+
 	SUnitDestroyedEvent evtData = {unitId, attackerUnitId};
 	ai->HandleEvent(EVENT_UNIT_DESTROYED, &evtData);
 }
