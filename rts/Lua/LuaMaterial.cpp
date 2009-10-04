@@ -699,7 +699,7 @@ void LuaMatHandler::PrintBins(const string& indent, LuaMatType type) const
 	const LuaMatBinSet& binSet = binTypes[type];
 	LuaMatBinSet::const_iterator it;
 	int num = 0;
-	LOGPRINTF("%sBINCOUNT = %lu\n", indent.c_str(), binSet.size());
+	LOGPRINTF("%sBINCOUNT = "_STPF_"\n", indent.c_str(), binSet.size());
 	for (it = binSet.begin(); it != binSet.end(); ++it) {
 		LuaMatBin* bin = *it;
 		LOGPRINTF("%sBIN %i:\n", indent.c_str(), num);

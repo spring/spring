@@ -18,18 +18,44 @@
 #include "SkirmishAI.h"
 
 #include "IAILibraryManager.h"
-#include "ISkirmishAILibrary.h"
+#include "SkirmishAILibrary.h"
+#include "TimeProfiler.h"
+#include "Util.h"
 
-CSkirmishAI::CSkirmishAI(int teamId, const SkirmishAIKey& key): teamId(teamId), key(key) {
+CSkirmishAI::CSkirmishAI(int teamId, const SkirmishAIKey& key,
+		const SSkirmishAICallback* c_callback) :
+		teamId(teamId),
+		key(key),
+		timerName("SkirmishAI:" +
+		          key.GetShortName() + "-" + key.GetVersion() +
+		          ":" + IntToString(teamId)),
+		dieing(false)
+{
+	SCOPED_TIMER(timerName.c_str());
 	library = IAILibraryManager::GetInstance()->FetchSkirmishAILibrary(key);
-	library->Init(teamId);
+	initOk = library->Init(teamId, c_callback);
 }
 
 CSkirmishAI::~CSkirmishAI() {
-	library->Release(teamId);
+
+	SCOPED_TIMER(timerName.c_str());
+	if (initOk) {
+		library->Release(teamId);
+	}
 	IAILibraryManager::GetInstance()->ReleaseSkirmishAILibrary(key);
 }
 
+void CSkirmishAI::Dieing() {
+	dieing = true;
+}
+
 int CSkirmishAI::HandleEvent(int topic, const void* data) const {
-	return library->HandleEvent(teamId, topic, data);
+
+	SCOPED_TIMER(timerName.c_str());
+	if (!dieing) {
+		return library->HandleEvent(teamId, topic, data);
+	} else {
+		// to prevent log error spam, signal: OK
+		return 0;
+	}
 }

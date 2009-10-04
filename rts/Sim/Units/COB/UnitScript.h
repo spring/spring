@@ -10,7 +10,6 @@
 
 #include "Object.h"
 #include "Rendering/UnitModels/3DModel.h"
-#include "UnitScriptNames.h"
 
 
 class CUnit;
@@ -76,7 +75,10 @@ protected:
 	};
 
 	std::list<AnimInfo*> anims;
-	const std::vector<int>& scriptIndex;
+
+	bool hasSetSFXOccupy;
+	bool hasRockUnit;
+	bool hasStartBuilding;
 
 	void UnblockAll(struct AnimInfo * anim);
 
@@ -141,16 +143,13 @@ public:
 	};
 
 public:
-	CUnitScript(CUnit* unit, const std::vector<int>& scriptIndex, const std::vector<LocalModelPiece*>& pieces);
+	CUnitScript(CUnit* unit, const std::vector<LocalModelPiece*>& pieces);
 	virtual ~CUnitScript();
 
 	bool IsBusy() const { return busy; }
 
 	      CUnit* GetUnit()       { return unit; }
 	const CUnit* GetUnit() const { return unit; }
-
-	// takes COBFN_* constant as argument
-	bool HasFunction(int id) const { return scriptIndex[id] >= 0; }
 
 	int Tick(int deltaTime);
 
@@ -184,16 +183,22 @@ public:
 		return ai && !ai->interpolated;
 	}
 
+	// checks for callin existence
+	bool HasSetSFXOccupy () const { return hasSetSFXOccupy; }
+	bool HasRockUnit     () const { return hasRockUnit; }
+	bool HasStartBuilding() const { return hasStartBuilding; }
+	virtual bool HasBlockShot   (int weaponNum) const { return false; }
+	virtual bool HasTargetWeight(int weaponNum) const { return false; }
+
 	// callins, called throughout sim
 	virtual void RawCall(int functionId) = 0;
 	virtual void Create() = 0;
 	// Killed must cause unit->deathScriptFinished and unit->delayedWreckLevel to be set!
 	virtual void Killed() = 0;
-	virtual void SetDirection(float heading) = 0;
-	virtual void SetSpeed(float speed, float cob_mult) = 0;
+	virtual void WindChanged(float heading, float speed) = 0;
+	virtual void ExtractionRateChanged(float speed) = 0;
 	virtual void RockUnit(const float3& rockDir) = 0;
-	virtual void HitByWeapon(const float3& hitDir) = 0;
-	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage) = 0;
+	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage) = 0;
 	virtual void SetSFXOccupy(int curTerrainType) = 0;
 	// doubles as QueryLandingPadCount and QueryLandingPad
 	// in COB, the first one determines the number of arguments to the second one
@@ -207,6 +212,21 @@ public:
 	virtual int  QueryNanoPiece() = 0; // returns piece
 	virtual int  QueryBuildInfo() = 0; // returns piece
 
+	virtual void Destroy() = 0;
+	virtual void StartMoving() = 0;
+	virtual void StopMoving() = 0;
+	virtual void StartUnload() = 0;
+	virtual void EndTransport() = 0;
+	virtual void StartBuilding() = 0;
+	virtual void StopBuilding() = 0;
+	virtual void Falling() = 0;
+	virtual void Landed() = 0;
+	virtual void Activate() = 0;
+	virtual void Deactivate() = 0;
+	virtual void MoveRate(int curRate) = 0;
+	virtual void FireWeapon(int weaponNum) = 0;
+	virtual void EndBurst(int weaponNum) = 0;
+
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum) = 0; // returns piece, former QueryPrimary
 	virtual void  AimWeapon(int weaponNum, float heading, float pitch) = 0;
@@ -215,25 +235,6 @@ public:
 	virtual void  Shot(int weaponNum) = 0;
 	virtual bool  BlockShot(int weaponNum, const CUnit* targetUnit, bool userTarget) = 0; // returns whether shot should be blocked
 	virtual float TargetWeight(int weaponNum, const CUnit* targetUnit) = 0; // returns target weight
-
-	// inlined callins, un-inline and make virtual when different behaviour is
-	// desired between the different unit script implementations (COB, Lua).
-	void Call(int id)    { RawCall(scriptIndex[id]); }
-	void Destroy()       { Call(COBFN_Destroy); }
-	void StartMoving()   { Call(COBFN_StartMoving); }
-	void StopMoving()    { Call(COBFN_StopMoving); }
-	void StartUnload()   { Call(COBFN_StartUnload); }
-	void EndTransport()  { Call(COBFN_EndTransport); }
-	void StartBuilding() { Call(COBFN_StartBuilding); }
-	void StopBuilding()  { Call(COBFN_StopBuilding); }
-	void Falling()       { Call(COBFN_Falling); }
-	void Landed()        { Call(COBFN_Landed); }
-	void Activate()      { Call(COBFN_Activate); }
-	void Deactivate()    { Call(COBFN_Deactivate); }
-	void Go()            { Call(COBFN_Go); }
-	void MoveRate(int curRate)     { Call(COBFN_MoveRate0 + curRate); }
-	void FireWeapon(int weaponNum) { Call(COBFN_FirePrimary + COBFN_Weapon_Funcs * weaponNum); }
-	void EndBurst(int weaponNum)   { Call(COBFN_EndBurst + COBFN_Weapon_Funcs * weaponNum); }
 
 	// not necessary for normal operation, useful to measure callin speed
 	static void BenchmarkScript(CUnitScript* script);

@@ -20,6 +20,9 @@ BEGIN {
 	# define the field splitter(-regex)
 	FS = "[ \t]+";
 
+	# Used by other scripts
+	JAVA_MODE = 1;
+
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
@@ -120,6 +123,7 @@ function printCommandJava(cmdIndex) {
 			name = cmdsMembers_name[cmdIndex, m];
 			type_c = cmdsMembers_type_c[cmdIndex, m];
 			type_jna = convertCToJNAType(type_c);
+			# add to typedMemberList
 			typedMemberList = typedMemberList ", " type_jna " " name;
 		}
 		sub(/\, /, "", typedMemberList);
@@ -184,10 +188,12 @@ function printCommandJava(cmdIndex) {
 	}
 
 	print("") >> javaFile;
+	# print out the member declarations
 	for (m=firstMethod; m < cmdsNumMembers[cmdIndex]; m++) {
 		name = cmdsMembers_name[cmdIndex, m];
 		type_c = cmdsMembers_type_c[cmdIndex, m];
 		type_jna = convertCToJNAType(type_c);
+		printFunctionComment_Common(javaFile, cmdMbrsDocComments, cmdIndex*100 + m, "	");
 		print("	public " type_jna " " name ";") >> javaFile;
 	}
 	print("}") >> javaFile;
@@ -308,7 +314,6 @@ function canDeleteDocumentation() {
 
 	cmdsNumMembers[ind_cmdStructs] = ind_cmdMember;
 	cmdsTopicName[ind_cmdStructs] = $3;
-	storeDocLines(cmdsDocComment, ind_cmdStructs);
 
 	if (doWrapp(ind_cmdStructs)) {
 		printCommandJava(ind_cmdStructs);
@@ -328,7 +333,10 @@ function canDeleteDocumentation() {
 			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
 				break;
 			}
-			saveMember(ind_cmdMember++, tmpMembers[i]);
+			# This would bork with more then 100 members in a command
+			storeDocLines(cmdMbrsDocComments, ind_cmdStructs*100 + ind_cmdMember);
+			saveMember(ind_cmdMember, tmpMembers[i]);
+			ind_cmdMember++;
 		}
 	}
 }
@@ -346,6 +354,7 @@ function canDeleteDocumentation() {
 
 	cmdsIsUnitCmd[ind_cmdStructs] = isUnitCommand;
 	cmdsName[ind_cmdStructs] = commandName;
+	storeDocLines(cmdsDocComment, ind_cmdStructs);
 }
 
 # find COMMAND_TO_ID_ENGINE id

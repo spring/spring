@@ -14,7 +14,7 @@ CR_BIND(AtlasedTexture, );
 CR_BIND_DERIVED(GroundFXTexture, AtlasedTexture, );
 
 //texture spacing in the atlas (in pixels)
-#define TEXMARGIN 1
+#define TEXMARGIN 2
 
 bool CTextureAtlas::debug;
 

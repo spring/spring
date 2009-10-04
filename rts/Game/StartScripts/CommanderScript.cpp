@@ -7,7 +7,7 @@
 
 #include "CommanderScript.h"
 #include "ExternalAI/EngineOutHandler.h"
-#include "ExternalAI/SkirmishAIKey.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/UI/MiniMap.h"
@@ -20,6 +20,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitDefHandler.h"
 #include "Sim/Units/UnitLoader.h"
+#include "NetProtocol.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
 
@@ -50,19 +51,16 @@ void CCommanderScript::GameStart()
 		}
 
 		// remove the pre-existing storage except for a small amount
-		team->metalStorage = 20;
+		team->metalStorage  = 20;
 		team->energyStorage = 20;
 
 		// create a Skirmish AI if required
-		if (!gameSetup->hostDemo && !team->skirmishAIKey.IsUnspecified() && (gu->myPlayerNum == team->leader)) {
-			SkirmishAIData aiData;
-			aiData.name = team->skirmishAIKey.GetShortName() + "_" + team->skirmishAIKey.GetVersion();
-			aiData.team = a;
-			aiData.hostPlayerNum = gu->myPlayerNum;
-			aiData.shortName = team->skirmishAIKey.GetShortName();
-			aiData.version = team->skirmishAIKey.GetVersion();
-
-			eoh->CreateSkirmishAI(a, team->skirmishAIKey, aiData);
+		// TODO: is this needed?
+		if (!gameSetup->hostDemo) {
+			const CSkirmishAIHandler::ids_t localSkirmAIs = skirmishAIHandler.GetSkirmishAIsInTeam(a, gu->myPlayerNum);
+			for (CSkirmishAIHandler::ids_t::const_iterator ai = localSkirmAIs.begin(); ai != localSkirmAIs.end(); ++ai) {
+				skirmishAIHandler.CreateLocalSkirmishAI(*ai);
+			}
 		}
 
 		if (team->side.empty()) {

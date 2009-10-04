@@ -1,5 +1,41 @@
 Spring change log
 
+0.80.4.0:
+Bugfixes:
+ - don't reclaim dragonteeth with area-reclaim
+ - lua unit script framework respects script tag
+
+
+0.80.3.0:
+Bugfixes:
+ - fix direct control unit movement (forwards and backwards)
+ - don't spam empty directories everywhere
+ - fix BA crash when doom was installed
+ - fix desync in pathfinder
+ - fix music timing
+ - single units should move in straight lines again
+ - fix shadows on features
+ - fix LocalModelPiece::GetPiecePosIter,GetPos,GetEmitDirPos
+ - fix vertical text aligning of multiple GUI controls
+ - fix jumping in middle click scrolling (windows)
+ - massive speedup in Spring.GetVisibleUnits
+ - added changed font vertical alignment opchars in gl.Text & luaFonts
+ - fix wreckages sinking in the ground
+ - add a modinfo featureLOS.featureVisibility tag
+ - fix BumpWater shorewaves
+ - make /nocost reversible
+
+Lua:
+ - add snapToGround bool param to SetFeaturePosition (default true)
+ - add SetFeatureAlwaysVisible (analog to SetUnitAlwaysVisible)
+ - added changed font vertical alignment opchars in gl.Text & luaFonts (baseline renamed to 'd'->'x', and use 'd' for descender)
+ - unit script: added GetPieceTranslation, GetPieceRotation, GetPiecePosDir
+ - unit script: SetSpeed/SetDirection/Go changes (see commit
+ b49928454225f19f5c439c908c0a8cad775fb7ed)
+ - unit script: removed Create (framework handles it)
+ - 
+
+
 0.80.2.0:
 Bugfixes:
  - fix creation of DDS textures

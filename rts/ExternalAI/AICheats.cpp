@@ -1,9 +1,7 @@
-#include <vector>
-#include <list>
+#include "AICheats.h"
 
 #include "StdAfx.h"
-#include "AICheats.h"
-#include "SkirmishAIWrapper.h"
+#include "ExternalAI/SkirmishAIWrapper.h"
 #include "Game/GameHelper.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/CommandAI/CommandAI.h"
@@ -15,6 +13,9 @@
 #include "Game/GameServer.h"
 #include "Game/GameSetup.h"
 #include "mmgr.h"
+
+#include <vector>
+#include <list>
 
 #define CHECK_UNITID(id) ((unsigned)(id) < (unsigned)uh->MaxUnits())
 #define CHECK_GROUPID(id) ((unsigned)(id) < (unsigned)gh->groups.size())
@@ -379,8 +380,8 @@ int CAICheats::HandleCommand(int commandId, void *data)
 			AIHCTraceRay* cmdData = (AIHCTraceRay*) data;
 
 			if (CHECK_UNITID(cmdData->srcUID)) {
-				CUnit* srcUnit = uh->units[cmdData->srcUID];
-				CUnit* hitUnit = NULL;
+				const CUnit* srcUnit = uh->units[cmdData->srcUID];
+				const CUnit* hitUnit = NULL;
 
 				if (srcUnit != NULL) {
 					cmdData->rayLen = helper->TraceRay(cmdData->rayPos, cmdData->rayDir, cmdData->rayLen, 0.0f, srcUnit, hitUnit, cmdData->flags);

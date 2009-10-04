@@ -44,7 +44,7 @@ CAirScript::~CAirScript()
 static const char* FindUnit(const char** name)
 {
 	for (int i = 0; name[i]; ++i) {
-		if (unitDefHandler->GetUnitByName(name[i]))
+		if (unitDefHandler->GetUnitDefByName(name[i]))
 			return name[i];
 	}
 	return name[0];

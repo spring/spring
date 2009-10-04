@@ -6,13 +6,11 @@
 #include <set>
 
 #include "Sim/Misc/CommonDefHandler.h"
-#include "Sim/MoveTypes/MoveInfo.h"
-#include "UnitDef.h"
 
 
-struct WeaponDef;
 class LuaTable;
-
+class UnitDef;
+class GuiSoundSet;
 
 //this class takes care of all the unit definitions
 class CUnitDefHandler : CommonDefHandler
@@ -20,7 +18,7 @@ class CUnitDefHandler : CommonDefHandler
 public:
 	UnitDef* unitDefs;
 	int numUnitDefs;
-	std::map<std::string, int> unitID;
+	std::map<std::string, int> unitDefIDsByName;
 	std::map<int, std::set<int> > decoyMap;
 	std::set<int> startUnitIDs;
 
@@ -29,16 +27,16 @@ public:
 	void Init();
 	void ProcessDecoys();
 	void AssignTechLevels();
-	const UnitDef* GetUnitByName(std::string name);
-	const UnitDef* GetUnitByID(int id);
+
+	bool ToggleNoCost();
+	const UnitDef* GetUnitDefByName(std::string name);
+	const UnitDef* GetUnitDefByID(int id);
 
 	unsigned int GetUnitDefImage(const UnitDef* unitDef);
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     const std::string& texName);
 	void SetUnitDefImage(const UnitDef* unitDef,
 	                     unsigned int texID, int sizex, int sizey);
-
-	bool noCost;
 
 protected:
 	void ParseUnitDef(const LuaTable&, const std::string& name, int id);
@@ -53,12 +51,11 @@ protected:
 
 	void AssignTechLevel(UnitDef& ud, int level);
 
-public:
-//	void CreateBlockingLevels(UnitDef *def,std::string yardmap);
-
 private:
 	void CreateYardMap(UnitDef *def, std::string yardmap);
 	std::map<std::string, std::string> decoyNameMap;
+
+	bool noCost;
 };
 
 extern CUnitDefHandler* unitDefHandler;

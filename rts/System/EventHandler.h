@@ -107,7 +107,9 @@ class CEventHandler
 		bool MousePress(int x, int y, int button);
 		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
 		bool MouseWheel(bool up, float value);
+		bool JoystickEvent(const std::string& event, int val1, int val2);
 		bool IsAbove(int x, int y);
+
 		std::string GetTooltip(int x, int y);
 
 		bool DefaultCommand(const CUnit* unit, const CFeature* feature, int& cmd);
@@ -246,6 +248,7 @@ class CEventHandler
 		EventClientList listMousePress;
 		EventClientList listMouseRelease;
 		EventClientList listMouseWheel;
+		EventClientList listJoystickEvent;
 		EventClientList listIsAbove;
 		EventClientList listGetTooltip;
 

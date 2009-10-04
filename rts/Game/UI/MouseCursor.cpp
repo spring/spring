@@ -100,7 +100,9 @@ bool CMouseCursor::BuildFromSpecFile(const string& name)
 
 		if ((command == "frame") && (words.size() >= 2)) {
 			const std::string imageName = words[1];
-			const float length = std::max(minFrameLength, (float)atof(words[2].c_str()));
+			float length = minFrameLength;
+			if (words.size() >= 3)
+				length = std::max(length, (float)atof(words[2].c_str()));
 			std::map<std::string, int>::iterator iit = imageIndexMap.find(imageName);
 			if (iit != imageIndexMap.end()) {
 				FrameData frame(images[iit->second], length);

@@ -6,20 +6,21 @@
 #include "mmgr.h"
 
 #include "ScriptHandler.h"
-#include "Game/Game.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
 #include "LoadScript.h"
 #include "CommanderScript.h"
-#include "CommanderScript2.h"
 #include "AirScript.h"
 #include "SkirmishAITestScript.h"
 #include "SpawnScript.h"
 #include "EmptyScript.h"
 #include "TestScript.h"
+#include "Game/Game.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
 #include "Platform/SharedLib.h"
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/IAILibraryManager.h"
+#include "ExternalAI/SkirmishAIKey.h"
+#include "ExternalAI/SkirmishAIData.h"
 #include "Exceptions.h"
 
 
@@ -36,20 +37,24 @@ CScriptHandler::CScriptHandler() : chosenScript(0)
 void CScriptHandler::LoadScripts() {
 
 	loaded_scripts.push_back( new CCommanderScript() );
-	loaded_scripts.push_back( new CCommanderScript2() );
 	loaded_scripts.push_back( new CAirScript() );
 	loaded_scripts.push_back( new CEmptyScript() );
 	loaded_scripts.push_back( new CSpawnScript(false) );
 	loaded_scripts.push_back( new CSpawnScript(true) );
 	loaded_scripts.push_back( new CTestScript() );
 
-	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys =
-			IAILibraryManager::GetInstance()->GetSkirmishAIKeys();
-	
+	// add the C interface Skirmish AIs
 	IAILibraryManager::T_skirmishAIKeys::const_iterator ai, e;
+	const IAILibraryManager::T_skirmishAIKeys& skirmishAIKeys = aiLibManager->GetSkirmishAIKeys();
 	for(ai=skirmishAIKeys.begin(), e=skirmishAIKeys.end(); ai != e; ++ai) {
-		loaded_scripts.push_back(new CSkirmishAITestScript(*ai));
+		SkirmishAIData aiData;
+		aiData.shortName = ai->GetShortName();
+		aiData.version   = ai->GetVersion();
+		aiData.isLuaAI   = false;
+		loaded_scripts.push_back(new CSkirmishAITestScript(aiData));
 	}
+	// Lua AIs can not be added, as the selection would get invalid when
+	// selecting an other mod.
 
 	std::vector<std::string> f = CFileHandler::FindFiles("Saves/", "*.ssf");
 	for(std::vector<std::string>::iterator fi = f.begin(), e = f.end(); fi != e; ++fi) {

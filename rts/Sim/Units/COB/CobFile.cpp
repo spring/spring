@@ -5,6 +5,7 @@
 #include <string.h>
 #include "mmgr.h"
 
+#include "Sim/Misc/GlobalConstants.h"
 #include "CobFile.h"
 #include "FileSystem/FileHandler.h"
 #include "LogOutput.h"
@@ -184,8 +185,8 @@ CCobFile::CCobFile(CFileHandler &in, string name)
 	}
 
 	//Map common function names to indices
-	const std::map<string, int>& nameMap = CUnitScriptNames::GetScriptMap();
-	scriptIndex.resize(COBFN_Last + (COB_MaxWeapons * COBFN_Weapon_Funcs), -1);
+	const std::map<string, int>& nameMap = CCobUnitScriptNames::GetScriptMap();
+	scriptIndex.resize(COBFN_Last + (MAX_WEAPONS_PER_UNIT * COBFN_Weapon_Funcs), -1);
 	for (std::map<string, int>::const_iterator it = nameMap.begin(); it != nameMap.end(); ++it) {
 		int fn = GetFunctionId(it->first);
 		if (fn >= 0) {

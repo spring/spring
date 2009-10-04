@@ -30,15 +30,15 @@ int VorbisStreamSeek(void* datasource, ogg_int64_t offset, int whence)
 	CFileHandler* buffer = (CFileHandler*)datasource;
 	if (whence == SEEK_SET)
 	{
-		buffer->Seek(offset);
+		buffer->Seek(offset, std::ios_base::beg);
 	}
 	else if (whence == SEEK_CUR)
 	{
-		buffer->Seek(buffer->GetPos() + offset);
+		buffer->Seek(offset, std::ios_base::cur);
 	}
 	else if (whence == SEEK_END)
 	{
-		buffer->Seek(buffer->FileSize() + offset);
+		buffer->Seek(offset, std::ios_base::end);
 	}
 
 	return 0;
@@ -55,8 +55,7 @@ long VorbisStreamTell(void* datasource)
 COggStream::COggStream(ALuint _source)
 {
 	source = _source;
-	vorbisInfo = 0x0;
-	vorbisComment = 0x0;
+	vorbisInfo = NULL;
 
 	stopped = true;
 	paused = false;
@@ -80,6 +79,7 @@ void COggStream::Play(const std::string& path, float volume)
 		return;
 	}
 
+	vorbisTags.clear();
 	int result = 0;
 
 	ov_callbacks vorbisCallbacks;
@@ -95,8 +95,17 @@ void COggStream::Play(const std::string& path, float volume)
 	}
 
 	vorbisInfo = ov_info(&oggStream, -1);
-	vorbisComment = ov_comment(&oggStream, -1);
-	// DisplayInfo();
+	{
+		vorbis_comment* vorbisComment;
+		vorbisComment = ov_comment(&oggStream, -1);
+		vorbisTags.resize(vorbisComment->comments);
+		for (unsigned i = 0; i < vorbisComment->comments; ++i)
+		{
+			vorbisTags[i] = std::string(vorbisComment->user_comments[i], vorbisComment->comment_lengths[i]);
+		}
+		vendor = std::string(vorbisComment->vendor);
+		//DisplayInfo();
+	}
 
 	if (vorbisInfo->channels == 1) {
 		format = AL_FORMAT_MONO16;
@@ -127,6 +136,15 @@ float COggStream::GetTotalTime()
 	return time;
 }
 
+const COggStream::TagVector& COggStream::VorbisTags()
+{
+	return vorbisTags;
+}
+
+bool COggStream::Valid() const
+{
+	return (vorbisInfo != 0);
+}
 
 // display Ogg info and comments
 void COggStream::DisplayInfo()
@@ -139,10 +157,10 @@ void COggStream::DisplayInfo()
 	logOutput.Print("bitrate (nominal): %ld", vorbisInfo->bitrate_nominal);
 	logOutput.Print("bitrate (lower):   %ld", vorbisInfo->bitrate_lower);
 	logOutput.Print("bitrate (window):  %ld", vorbisInfo->bitrate_window);
-	logOutput.Print("vendor:            %s", vorbisComment->vendor);
+	logOutput.Print("vendor:            %s", vendor.c_str());
 
-	for (int i = 0; i < vorbisComment->comments; i++) {
-		logOutput.Print("%s", vorbisComment->user_comments[i]);
+	for (TagVector::const_iterator it = vorbisTags.begin(); it != vorbisTags.end(); ++it) {
+		logOutput.Print("%s", it->c_str());
 	}
 }
 
@@ -196,6 +214,7 @@ void COggStream::Stop()
 	if (!stopped) {
 		ReleaseBuffers();
 		msecsPlayed = 0;
+		vorbisInfo = NULL;
 		lastTick = SDL_GetTicks();
 	}
 }

@@ -19,6 +19,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/Building.h"
+#include "KeyBindings.h"
 #include "myMath.h"
 #include <boost/cstdint.hpp>
 
@@ -27,6 +28,15 @@ CSelectionKeyHandler *selectionKeys;
 extern boost::uint8_t *keys;
 
 CSelectionKeyHandler::CSelectionKeyHandler(void)
+{
+	LoadSelectionKeys();
+}
+
+CSelectionKeyHandler::~CSelectionKeyHandler(void)
+{
+}
+
+void CSelectionKeyHandler::LoadSelectionKeys()
 {
 	std::ifstream ifs(filesystem.LocateFile("selectkeys.txt").c_str());
 
@@ -44,58 +54,46 @@ CSelectionKeyHandler::CSelectionKeyHandler(void)
 		ifs >> buf;
 		std::string sel(buf);
 
-		HotKey hk;
-
-		hk.select=sel;
-		hk.shift=false;
-		hk.control=false;
-		hk.alt=false;
+		bool shift=false;
+		bool control=false;
+		bool alt=false;
+		unsigned char keyname;
 
 		while(true){
 			std::string s=ReadToken(key);
 
 			if(s=="Shift"){
-				hk.shift=true;
+				shift=true;
 			} else if (s=="Control"){
-				hk.control=true;
+				control=true;
 			} else if (s=="Alt"){
-				hk.alt=true;
+				alt=true;
 			} else {
 				char c=s[0];
 				if(c>='A' && c<='Z')
-					hk.key=SDLK_a + (c - 'A');
+					keyname=SDLK_a + (c - 'A');
 
 				if(c>='0' && c<='9')
-					hk.key=SDLK_0 + (c -'0');
+					keyname=SDLK_0 + (c -'0');
 
 				break;
 			}
 			ReadDelimiter(key);
 		}
-
-		hotkeys.push_back(hk);
-	}
-}
-
-CSelectionKeyHandler::~CSelectionKeyHandler(void)
-{
-}
-
-bool CSelectionKeyHandler::KeyPressed(unsigned short key, bool isRepeat)
-{
-	// TODO: sort the vector, and do key-based fast lookup
-	for(vector<HotKey>::iterator hi=hotkeys.begin();hi!=hotkeys.end();++hi){
-		if(key==hi->key && hi->shift==!!keys[SDLK_LSHIFT] && hi->control==!!keys[SDLK_LCTRL] && hi->alt==!!keys[SDLK_LALT]){
-			DoSelection(hi->select);
-			return true;
+		std::string keybindstring;
+		if ( alt ) keybindstring += "Alt";
+		if ( control ) {
+			if ( keybindstring.size() != 0 ) keybindstring += "+";
+			keybindstring += "Ctrl";
 		}
+		if ( shift ) {
+			if ( keybindstring.size() != 0 ) keybindstring += "+";
+			keybindstring += "Shift";
+		}
+		if ( keybindstring.size() != 0 ) keybindstring += "+";
+		keybindstring += keyname;
+		keyBindings->Command( "bind " + keybindstring + " select " + sel );
 	}
-	return false;
-}
-
-bool CSelectionKeyHandler::KeyReleased(unsigned short key)
-{
-	return false;
 }
 
 std::string CSelectionKeyHandler::ReadToken(std::string& s)
@@ -137,6 +135,129 @@ std::string CSelectionKeyHandler::ReadDelimiter(std::string& s)
 	}
 	return ret;
 }
+
+
+namespace
+{
+	struct Filter
+	{
+	public:
+		typedef std::map<std::string, Filter*> Map;
+
+		/// Contains all existing filter singletons.
+		static Map& all() {
+			static Map instance;
+			return instance;
+		}
+
+		/// Called immediately before the filter is used.
+		virtual void Prepare() {}
+
+		/// Called immediately before the filter is used for every parameter.
+		virtual void SetParam(int index, const std::string& value) {
+			assert(false);
+		}
+
+		/// Actual filtering, should return false if unit should be removed
+		/// from proposed selection.
+		virtual bool ShouldIncludeUnit(const CUnit* unit) const = 0;
+
+		/// Number of arguments this filter has.
+		const int numArgs;
+
+	protected:
+		Filter(const std::string& name, int args) : numArgs(args) {
+			all().insert(Map::value_type(name, this));
+		}
+	};
+
+	// prototype / factory based approach might be better at some point?
+	// for now these singleton filters seem ok. (they are not reentrant tho!)
+
+#define DECLARE_FILTER_EX(name, args, condition, extra) \
+	struct name ## _Filter : public Filter { \
+		name ## _Filter() : Filter(#name, args) {} \
+		bool ShouldIncludeUnit(const CUnit* unit) const { return condition; } \
+		extra \
+	} name ## _filter_instance; \
+
+#define DECLARE_FILTER(name, condition) \
+	DECLARE_FILTER_EX(name, 0, condition, )
+
+	DECLARE_FILTER(Builder, unit->unitDef->buildSpeed > 0);
+	DECLARE_FILTER(Building, dynamic_cast<const CBuilding*>(unit) != NULL);
+	DECLARE_FILTER(Commander, unit->unitDef->isCommander);
+	DECLARE_FILTER(Transport, unit->unitDef->transportCapacity > 0);
+	DECLARE_FILTER(Aircraft, unit->unitDef->canfly);
+	DECLARE_FILTER(Weapons, !unit->weapons.empty());
+	DECLARE_FILTER(Idle, unit->commandAI->commandQue.empty());
+	DECLARE_FILTER(Waiting, !unit->commandAI->commandQue.empty() &&
+	               (unit->commandAI->commandQue.front().id == CMD_WAIT));
+	DECLARE_FILTER(InHotkeyGroup, unit->group != NULL);
+	DECLARE_FILTER(Radar, unit->radarRadius || unit->sonarRadius || unit->jammerRadius);
+
+	DECLARE_FILTER_EX(WeaponRange, 1, unit->maxRange > minRange,
+		float minRange;
+		void SetParam(int index, const std::string& value) {
+			minRange = atof(value.c_str());
+		}
+	);
+
+	DECLARE_FILTER_EX(AbsoluteHealth, 1, unit->health > minHealth,
+		float minHealth;
+		void SetParam(int index, const std::string& value) {
+			minHealth = atof(value.c_str());
+		}
+	);
+
+	DECLARE_FILTER_EX(RelativeHealth, 1, unit->health / unit->maxHealth > minHealth,
+		float minHealth;
+		void SetParam(int index, const std::string& value) {
+			minHealth = atof(value.c_str()) * 0.01f; // convert from percent
+		}
+	);
+
+	// TODO: should move away from aihint
+	DECLARE_FILTER_EX(InPrevSel, 0, prevTypes.find(unit->aihint) != prevTypes.end(),
+		std::set<int> prevTypes;
+		void Prepare() {
+			const CUnitSet& tu = selectedUnits.selectedUnits;
+			for (CUnitSet::const_iterator si = tu.begin(); si != tu.end(); ++si) {
+				prevTypes.insert((*si)->aihint);
+			}
+		}
+	);
+
+	DECLARE_FILTER_EX(NameContain, 1, unit->unitDef->humanName.find(name) != std::string::npos,
+		std::string name;
+		void SetParam(int index, const std::string& value) {
+			name = value;
+		}
+	);
+
+	DECLARE_FILTER_EX(Category, 1, unit->category == cat,
+		unsigned int cat;
+		void SetParam(int index, const std::string& value) {
+			cat = CCategoryHandler::Instance()->GetCategory(value);
+		}
+	);
+
+	DECLARE_FILTER_EX(RulesParamEquals, 2, unit->modParamsMap.find(param) != unit->modParamsMap.end() &&
+	                  unit->modParams[unit->modParamsMap.find(param)->second] == wantedValue,
+		std::string param;
+		float wantedValue;
+		void SetParam(int index, const std::string& value) {
+			switch (index) {
+				case 0: param = value; break;
+				case 1: wantedValue = atof(value.c_str()); break;
+			}
+		}
+	);
+
+#undef DECLARE_FILTER_EX
+#undef DECLARE_FILTER
+};
+
 
 
 void CSelectionKeyHandler::DoSelection(std::string selectString)
@@ -247,255 +368,27 @@ void CSelectionKeyHandler::DoSelection(std::string selectString)
 			s=ReadToken(selectString);
 		}
 
-		if(s=="Builder"){
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
-				bool filterTrue=false;
-				if((*ui)->unitDef->buildSpeed>0){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="Building"){
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
-				bool filterTrue=false;
-				if(dynamic_cast<CBuilding*>(*ui)){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="Commander"){
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while (ui!=selection.end()) {
-				bool filterTrue=false;
-				if((*ui)->unitDef->isCommander){
-					filterTrue=true;
-				}
-				if (filterTrue ^ _not) {
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="Transport"){
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
-				bool filterTrue=false;
-				if((*ui)->unitDef->transportCapacity>0){
-					filterTrue=true;
-				}
-				if (filterTrue ^ _not) {
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="Aircraft"){
+		Filter::Map& filters = Filter::all();
+		Filter::Map::iterator f = filters.find(s);
 
-			std::list<CUnit*>::iterator ui=selection.begin();
+		if (f != filters.end()) {
+			f->second->Prepare();
+			for (int i = 0; i < f->second->numArgs; ++i) {
+				ReadDelimiter(selectString);
+				f->second->SetParam(i, ReadToken(selectString));
+			}
+			std::list<CUnit*>::iterator ui = selection.begin();
 			while (ui != selection.end()) {
-				bool filterTrue=false;
-				if ((*ui)->unitDef->canfly){
-					filterTrue=true;
-				}
-				if (filterTrue ^ _not) {
+				if (f->second->ShouldIncludeUnit(*ui) ^ _not) {
 					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
+				}
+				else {
+					std::list<CUnit*>::iterator prev = ui++;
 					selection.erase(prev);
 				}
 			}
-		} else if(s=="Weapons"){
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
-				bool filterTrue=false;
-				if(!(*ui)->weapons.empty()){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="WeaponRange"){
-			ReadDelimiter(selectString);
-			float minRange=atof(ReadToken(selectString).c_str());
-
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
-				bool filterTrue=false;
-				if ((*ui)->maxRange>minRange) {
-					filterTrue=true;
-				}
-				if (filterTrue ^ _not) {
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="AbsoluteHealth"){
-			ReadDelimiter(selectString);
-			float minHealth=atof(ReadToken(selectString).c_str());
-
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while (ui != selection.end()) {
-				bool filterTrue=false;
-				if ((*ui)->health>minHealth){
-					filterTrue=true;
-				}
-				if (filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="RelativeHealth"){
-			ReadDelimiter(selectString);
-			float minHealth=atof(ReadToken(selectString).c_str())*0.01f;//convert from percent
-
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
-				bool filterTrue=false;
-				if((*ui)->health/(*ui)->maxHealth > minHealth){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="InPrevSel"){
-			std::set<int> prevTypes;
-			CUnitSet* tu=&selectedUnits.selectedUnits;
-			for (CUnitSet::iterator si=tu->begin();si!=tu->end();++si){
-				prevTypes.insert((*si)->aihint);
-			}
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while (ui != selection.end()) {
-				bool filterTrue=false;
-				if(prevTypes.find((*ui)->aihint)!=prevTypes.end()){		//should move away from aihint
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="NameContain"){
-			ReadDelimiter(selectString);
-			std::string name=ReadToken(selectString);
-
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while (ui != selection.end()) {
-				bool filterTrue=false;
-				if ((*ui)->unitDef->humanName.find(name)!=std::string::npos){
-					filterTrue=true;
-				}
-				if (filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="Idle"){
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while (ui != selection.end()) {
-				bool filterTrue=false;
-				if((*ui)->commandAI->commandQue.empty()){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="Waiting"){
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while (ui != selection.end()) {
-				bool filterTrue=false;
-				if(!(*ui)->commandAI->commandQue.empty() &&
-				   ((*ui)->commandAI->commandQue.front().id == CMD_WAIT)){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="InHotkeyGroup"){
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while (ui != selection.end()) {
-				bool filterTrue=false;
-				if((*ui)->group){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if (s == "Radar") {
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while (ui != selection.end()) {
-				bool filterTrue=false;
-				if((*ui)->radarRadius || (*ui)->sonarRadius || (*ui)->jammerRadius){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-		} else if(s=="Category"){
-			ReadDelimiter(selectString);
-			std::string catname=ReadToken(selectString);
-			unsigned int cat=CCategoryHandler::Instance()->GetCategory(catname);
-
-			std::list<CUnit*>::iterator ui=selection.begin();
-			while(ui!=selection.end()){
-				bool filterTrue=false;
-				if((*ui)->category==cat){
-					filterTrue=true;
-				}
-				if(filterTrue ^ _not){
-					++ui;
-				} else {
-					std::list<CUnit*>::iterator prev=ui++;
-					selection.erase(prev);
-				}
-			}
-
-		} else {
+		}
+		else {
 			logOutput.Print("Unknown token in filter %s",s.c_str());
 			return;
 		}

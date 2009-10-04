@@ -685,6 +685,19 @@ const float* CAIAICallback::GetHeightMap() {
 	return heightMap;
 }
 
+const float* CAIAICallback::GetCornersHeightMap() {
+
+	static float* cornersHeightMap = NULL;
+
+	if (cornersHeightMap == NULL) {
+		int size = sAICallback->Clb_Map_0ARRAY1SIZE0getCornersHeightMap(teamId);
+		cornersHeightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
+		sAICallback->Clb_Map_0ARRAY1VALS0getCornersHeightMap(teamId, cornersHeightMap, size);
+	}
+
+	return cornersHeightMap;
+}
+
 float CAIAICallback::GetMinHeight() {
 	return sAICallback->Clb_Map_getMinHeight(teamId);
 }
@@ -779,31 +792,23 @@ float CAIAICallback::GetElevation(float x, float z) {
 	return sAICallback->Clb_Map_getElevationAt(teamId, x, z);
 }
 
-float CAIAICallback::GetMaxMetal() {
+
+float CAIAICallback::GetMaxMetal() const {
 	static int m = getResourceId_Metal(sAICallback, teamId);
 	return sAICallback->Clb_Map_0REF1Resource2resourceId0getMaxResource(teamId, m);
 }
-
-float CAIAICallback::GetExtractorRadius() {
+float CAIAICallback::GetExtractorRadius() const {
 	static int m = getResourceId_Metal(sAICallback, teamId);
 	return sAICallback->Clb_Map_0REF1Resource2resourceId0getExtractorRadius(teamId, m);
 }
 
-float CAIAICallback::GetMinWind() {
-	return sAICallback->Clb_Map_getMinWind(teamId);
-}
+float CAIAICallback::GetMinWind() const { return sAICallback->Clb_Map_getMinWind(teamId); }
+float CAIAICallback::GetMaxWind() const { return sAICallback->Clb_Map_getMaxWind(teamId); }
+float CAIAICallback::GetCurWind() const { return sAICallback->Clb_Map_getCurWind(teamId); }
 
-float CAIAICallback::GetMaxWind() {
-	return sAICallback->Clb_Map_getMaxWind(teamId);
-}
+float CAIAICallback::GetTidalStrength() const  { return sAICallback->Clb_Map_getTidalStrength(teamId); }
+float CAIAICallback::GetGravity() const { return sAICallback->Clb_Map_getGravity(teamId); }
 
-float CAIAICallback::GetTidalStrength() {
-	return sAICallback->Clb_Map_getTidalStrength(teamId);
-}
-
-float CAIAICallback::GetGravity() {
-	return sAICallback->Clb_Map_getGravity(teamId);
-}
 
 bool CAIAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing) {
 	return sAICallback->Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(teamId, unitDef->id, pos.toSAIFloat3(), facing);

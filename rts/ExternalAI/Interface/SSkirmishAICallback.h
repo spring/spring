@@ -1142,10 +1142,28 @@ int (CALLING_CONV *Clb_Map_getHeight)(int teamId);
  * - each data position is 8*8 in size
  * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
+ *
+ * @see getCornersHeightMap()
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getHeightMap)(int teamId);
 int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId,
 		float heights[], int heights_max);
+/**
+ * Returns the height for the corners of the squares.
+ * This is the same like the drawn map.
+ * It is one unit wider and one higher then the centers height map.
+ *
+ * - do NOT modify or delete the height-map (native code relevant only)
+ * - index 0 is top left
+ * - 4 points mark the edges of an area of 8*8 in size
+ * - the value for upper left corner of the full resolution position (x, z) is at index (x/8 * width + z/8)
+ * - the last value, bottom right, is at index ((width/8+1) * (height/8+1) - 1)
+ *
+ * @see getHeightMap()
+ */
+int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getCornersHeightMap)(int teamId);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getCornersHeightMap)(int teamId,
+		float cornerHeights[], int cornerHeights_max);
 float (CALLING_CONV *Clb_Map_getMinHeight)(int teamId);
 float (CALLING_CONV *Clb_Map_getMaxHeight)(int teamId);
 /**
@@ -1223,6 +1241,10 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapRaw
 		int teamId, int resourceId, unsigned char resources[], int resources_max);
 /**
  * Returns positions indicating where to place resource extractors on the map.
+ * Only the x and z values give the location of the spots, while the y values
+ * represents the actual amount of resource an extractor placed there can make.
+ * You should only compare the y values to each other, and not try to estimate
+ * effective output from spots.
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapSpotsPositions)(
 		int teamId, int resourceId);
@@ -1238,19 +1260,26 @@ float (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMap
  */
 struct SAIFloat3 (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(
 		int teamId, int resourceId, struct SAIFloat3 pos);
+
 const char* (CALLING_CONV *Clb_Map_getName)(int teamId);
 /// Gets the elevation of the map at position (x, z)
 float (CALLING_CONV *Clb_Map_getElevationAt)(int teamId, float x, float z);
+
+
 /// Returns what value 255 in the resource map is worth
 float (CALLING_CONV *Clb_Map_0REF1Resource2resourceId0getMaxResource)(
 		int teamId, int resourceId);
 /// Returns extraction radius for resource extractors
 float (CALLING_CONV *Clb_Map_0REF1Resource2resourceId0getExtractorRadius)(
 		int teamId, int resourceId);
+
 float (CALLING_CONV *Clb_Map_getMinWind)(int teamId);
 float (CALLING_CONV *Clb_Map_getMaxWind)(int teamId);
+float (CALLING_CONV *Clb_Map_getCurWind)(int teamId);
 float (CALLING_CONV *Clb_Map_getTidalStrength)(int teamId);
 float (CALLING_CONV *Clb_Map_getGravity)(int teamId);
+
+
 /**
  * Returns all points drawn with this AIs team color,
  * and additionally the ones drawn with allied team colors,
@@ -1279,6 +1308,8 @@ bool (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(
  * Returns the closest position from a given position that a building can be built at.
  * @param minDist the distance in squares that the building must keep to other buildings,
  *                to make it easier to keep free paths through a base
+ * @return actual map position with x, y and z all beeing positive,
+ *         or SAIFloat3(-1, 0, 0) if no suitable position is found.
  */
 struct SAIFloat3 (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId,
 		int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist,

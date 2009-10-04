@@ -3,6 +3,7 @@
 #include "FileSystem/FileSystem.h"
 #include "FileSystem/FileHandler.h"
 #include "Sound/Sound.h"
+#include "LogOutput.h"
 
 int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 {
@@ -29,11 +30,15 @@ int CommonDefHandler::LoadSoundFile(const std::string& fileName)
 			const int id = sound->GetSoundId(soundFile);
 			return id;
 		}
+		else
+		{
+			LogObject() << "Could not load sound from def: " << fileName;
+			return 0;
+		}
 	}
 	else
 	{
 		const int id = sound->GetSoundId(fileName);
 		return id;
 	}
-	return 0;
 }

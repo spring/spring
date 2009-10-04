@@ -13,10 +13,9 @@ using std::vector;
 using std::map;
 using std::set;
 
-#include "float3.h"
 #include "FileSystem/VFSModes.h"
 
-
+class float3;
 class LuaTable;
 class LuaParser;
 struct lua_State;

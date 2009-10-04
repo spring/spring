@@ -30,6 +30,7 @@
 #include "ConfigHandler.h"
 #include "InputHandler.h"
 #include "StartScripts/ScriptHandler.h"
+#include "StartScripts/SkirmishAITestScript.h"
 #include "aGui/Gui.h"
 #include "aGui/VerticalLayout.h"
 #include "aGui/HorizontalLayout.h"
@@ -46,28 +47,40 @@ using agui::HorizontalLayout;
 extern boost::uint8_t* keys;
 extern bool globalQuit;
 
-class ScopedLoader
+class ConnectWindow : public agui::Window
 {
 public:
-	ScopedLoader(const string& mapName) : oldHandler(vfsHandler)
+	ConnectWindow() : agui::Window("Connect to server")
 	{
-		vfsHandler = new CVFSHandler();
-		std::string archive = archiveScanner->ModNameToModArchive(mapName);
-		std::string archivePath = archiveScanner->GetArchivePath(archive);
-		if (!vfsHandler->AddArchive(archivePath+archive, false))
-			LogObject() << "Failed to load: " << mapName;
+		agui::gui->AddElement(this);
+		SetPos(0.5, 0.5);
+		SetSize(0.4, 0.2);
+		
+		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(this);
+		HorizontalLayout* input = new HorizontalLayout(wndLayout);
+		agui::TextElement* label = new agui::TextElement("Address:", input);
+		address = new agui::LineEdit(input);
+		address->SetFocus(true);
+		address->SetContent(configHandler->GetString("address", ""));
+		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
+		Button* close = new Button("Close", buttons);
+		close->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, false));
+		Button* connect = new Button("Connect", buttons);
+		connect->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, true));
+		GeometryChange();
 	}
 
-	~ScopedLoader()
-	{
-		if (vfsHandler != oldHandler) {
-			delete vfsHandler;
-			vfsHandler = oldHandler;
-		}
-	}
-
+	boost::signal<void (std::string)> Connect;
+	agui::LineEdit* address;
+	
 private:
-	CVFSHandler* oldHandler;
+	void Finish(bool connect)
+	{
+		if (connect)
+			Connect(address->GetContent());
+		else
+			WantClose();
+	};
 };
 
 std::string CreateDefaultSetup(const std::string& map, const std::string& mod, const std::string& script,
@@ -92,16 +105,25 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	player0->add_name_value("Name", playername);
 	player0->AddPair("Team", 0);
 
-	TdfParser::TdfSection* player1 = game->construct_subsection("PLAYER1");
-	player1->add_name_value("Name", "Enemy");
-	player1->AddPair("Team", 1);
+	const bool isSkirmishAITestScript =
+			(script.substr(0, CSkirmishAITestScript::SCRIPT_NAME_PRELUDE.size())
+			== CSkirmishAITestScript::SCRIPT_NAME_PRELUDE);
+	if (!isSkirmishAITestScript) {
+		TdfParser::TdfSection* player1 = game->construct_subsection("PLAYER1");
+		player1->add_name_value("Name", "Enemy");
+		player1->AddPair("Team", 1);
+	}
 
 	TdfParser::TdfSection* team0 = game->construct_subsection("TEAM0");
 	team0->AddPair("TeamLeader", 0);
 	team0->AddPair("AllyTeam", 0);
 
 	TdfParser::TdfSection* team1 = game->construct_subsection("TEAM1");
-	team1->AddPair("TeamLeader", 1);
+	if (isSkirmishAITestScript) {
+		team1->AddPair("TeamLeader", 0);
+	} else {
+		team1->AddPair("TeamLeader", 1);
+	}
 	team1->AddPair("AllyTeam", 1);
 
 	TdfParser::TdfSection* ally0 = game->construct_subsection("ALLYTEAM0");
@@ -116,8 +138,11 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server) : connectWnd(NULL)
+SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL)
 {
+	SetPos(0,0);
+	SetSize(1,1);
+	agui::gui->AddElement(this, true);
 	mySettings = new ClientSetup();
 
 	mySettings->isHost = server;
@@ -129,17 +154,16 @@ SelectMenu::SelectMenu(bool server) : connectWnd(NULL)
 	}
 
 	{ // GUI stuff
-		inputCon = input.AddHandler(boost::bind(&SelectMenu::HandleEvent, this, _1));
+		agui::Picture* background = new agui::Picture(this);;
 		{
-			ScopedLoader loader("Spring Bitmaps");
-			background = new agui::Picture();
-			background->SetPos(0,0);
-			background->SetSize(1,1);
+			std::string archive = archiveScanner->ModNameToModArchive("Spring Bitmaps");
+			std::string archivePath = archiveScanner->GetArchivePath(archive)+archive;
+			vfsHandler->AddArchive(archivePath, false);
 			background->Load("bitmaps/ui/background.jpg");
-			agui::gui->AddElement(background);
+			vfsHandler->RemoveArchive(archivePath);
 		}
-		selw = new SelectionWidget(background);
-		agui::VerticalLayout* menu = new agui::VerticalLayout(background);
+		selw = new SelectionWidget(this);
+		agui::VerticalLayout* menu = new agui::VerticalLayout(this);
 		menu->SetPos(0.1, 0.5);
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
@@ -151,22 +175,20 @@ SelectMenu::SelectMenu(bool server) : connectWnd(NULL)
 		Button* settings = new Button("Edit settings", menu);
 		settings->Clicked.connect(boost::bind(&SelectMenu::Settings, this));
 		Button* direct = new Button("Direct connect", menu);
-		direct->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, true));
+		direct->Clicked.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, true));
 		Button* quit = new Button("Quit", menu);
 		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
 		background->GeometryChange();
 	}
 
 	if (!mySettings->isHost) {
-		ConnectWindow(true);
+		ShowConnectWindow(true);
 	}
 }
 
 SelectMenu::~SelectMenu()
 {
-	ConnectWindow(false);
-	agui::gui->RmElement(background);
-	background = NULL;
+	ShowConnectWindow(false);
 }
 
 bool SelectMenu::Draw()
@@ -185,6 +207,7 @@ bool SelectMenu::Update()
 
 void SelectMenu::Single()
 {
+	static bool once = false;
 	if (selw->userMod == SelectionWidget::NoModSelect)
 	{
 		selw->ShowModList();
@@ -197,12 +220,13 @@ void SelectMenu::Single()
 	{
 		selw->ShowScriptList();
 	}
-	else if (background) // in case of double-click
+	else if (!once) // in case of double-click
 	{
+		once = true;
 		mySettings->isHost = true;
 		pregame = new CPreGame(mySettings);
 		pregame->LoadSetupscript(CreateDefaultSetup(selw->userMap, selw->userMod, selw->userScript, mySettings->myPlayerName));
-		delete this;
+		agui::gui->RmElement(this);
 	}
 }
 
@@ -231,54 +255,33 @@ void SelectMenu::Quit()
 	globalQuit = true;
 }
 
-void SelectMenu::ConnectWindow(bool show)
+void SelectMenu::ShowConnectWindow(bool show)
 {
-	if (show && !connectWnd)
+	if (show && !conWindow)
 	{
-		connectWnd = new agui::Window("Connect to server");
-		connectWnd->SetPos(0.5, 0.5);
-		connectWnd->SetSize(0.4, 0.2);
-		agui::gui->AddElement(connectWnd);
-		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(connectWnd);
-		HorizontalLayout* input = new HorizontalLayout(wndLayout);
-		agui::TextElement* label = new agui::TextElement("Address:", input);
-		address = new agui::LineEdit(input);
-		address->SetFocus(true);
-		address->SetContent(configHandler->GetString("address", ""));
-		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
-		Button* close = new Button("Close", buttons);
-		close->Clicked.connect(boost::bind(&SelectMenu::ConnectWindow, this, false));
-		Button* connect = new Button("Connect", buttons);
-		connect->Clicked.connect(boost::bind(&SelectMenu::DirectConnect, this));
+		conWindow = new ConnectWindow();
+		conWindow->Connect.connect(boost::bind(&SelectMenu::DirectConnect, this, _1));
+		conWindow->WantClose.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, false));
 	}
-	else if (!show && connectWnd)
+	else if (!show && conWindow)
 	{
-		agui::gui->RmElement(connectWnd);
-		connectWnd = NULL;
+		agui::gui->RmElement(conWindow);
+		conWindow = NULL;
 	}
 }
 
-void SelectMenu::DirectConnect()
+void SelectMenu::DirectConnect(const std::string& addr)
 {
-	configHandler->SetString("address",address->GetContent());
-	mySettings->hostip = address->GetContent();
+	configHandler->SetString("address", addr);
+	mySettings->hostip = addr;
 	mySettings->isHost = false;
 	pregame = new CPreGame(mySettings);
-	delete this;
+	agui::gui->RmElement(this);
 }
 
-bool SelectMenu::HandleEvent(const SDL_Event& ev)
+bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
-		case SDL_MOUSEBUTTONDOWN: {
-			break;
-		}
-		case SDL_MOUSEBUTTONUP: {
-			break;
-		}
-		case SDL_MOUSEMOTION: {
-			break;
-		}
 		case SDL_KEYDOWN: {
 			if (ev.key.keysym.sym == SDLK_ESCAPE)
 			{
@@ -295,6 +298,7 @@ bool SelectMenu::HandleEvent(const SDL_Event& ev)
 			else if (ev.key.keysym.sym == SDLK_RETURN)
 			{
 				Single();
+				return true;
 			}
 			break;
 		}

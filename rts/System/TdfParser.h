@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+
 #include "Sync/SyncedPrimitiveIO.h"
 #include "Exceptions.h"
 #include "float3.h"
@@ -34,12 +35,15 @@ public:
 	};
 	struct TdfSection
 	{
+		typedef std::map<std::string, std::string> valueMap;
+		typedef std::map<std::string, TdfSection*> sectionsMap;
 		TdfSection* construct_subsection(const std::string& name );
 		~TdfSection();
 		
-		std::map<std::string, TdfSection*> sections;
-		std::map<std::string, std::string> values;
+		sectionsMap sections;
+		valueMap values;
 		void print( std::ostream & out ) const;
+		bool remove(const std::string& key);
 		void add_name_value(const std::string& name, const std::string& value );
 		template<typename T>
 		void AddPair(const std::string& key, const T& value)

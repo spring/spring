@@ -101,14 +101,20 @@ void CModInfo::Init(const char* modname)
 	// experience
 	const LuaTable experienceTbl = root.SubTable("experience");
 	CUnit::SetExpMultiplier (experienceTbl.GetFloat("experienceMult", 1.0f));
-	CUnit::SetExpPowerScale (experienceTbl.GetFloat("powerScale",  1.0f));		
-	CUnit::SetExpHealthScale(experienceTbl.GetFloat("healthScale", 0.7f));		
+	CUnit::SetExpPowerScale (experienceTbl.GetFloat("powerScale",  1.0f));
+	CUnit::SetExpHealthScale(experienceTbl.GetFloat("healthScale", 0.7f));
 	CUnit::SetExpReloadScale(experienceTbl.GetFloat("reloadScale", 0.4f));
 
 	// flanking bonus
 	const LuaTable flankingBonusTbl = root.SubTable("flankingBonus");
 	flankingBonusModeDefault = flankingBonusTbl.GetInt("defaultMode", 1);
-	
+
+	// feature visibility
+	const LuaTable featureLOS = root.SubTable("featureLOS");
+	featureVisibility = featureLOS.GetInt("featureVisibility", 3);
+	if (featureVisibility < 0 || featureVisibility > 3)
+		throw content_error("invalid modinfo: featureVisibility, valid range is 0..3");
+
 	// sensors
 	const LuaTable sensors = root.SubTable("sensors");
 	requireSonarUnderWater = sensors.GetBool("requireSonarUnderWater", true);

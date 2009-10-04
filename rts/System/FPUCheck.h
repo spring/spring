@@ -73,7 +73,7 @@ static inline void good_fpu_control_registers(const char* text)
 	fenv_t fenv;
 	fegetenv(&fenv);
 
-	#if defined(__SUPPORT_SNAN__)	// -fsignaling-nans
+	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)	// -fsignaling-nans
 	bool ret = ((fenv.sse_mode & 0xFF80) == (0x1937 & 0xFF80) || (fenv.sse_mode & 0xFF80) == (0x1925 & 0xFF80)) &&
 	           ((fenv.x87_mode & 0x1F3F) == (0x0072 & 0x1F3F) || (fenv.x87_mode & 0x1F3F) == 0x003F);
 	#else
@@ -86,14 +86,14 @@ static inline void good_fpu_control_registers(const char* text)
 		logOutput.Print("Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", fenv.x87_mode, text);
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
-	#if defined(__SUPPORT_SNAN__)
+	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 		feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	#endif
 	}
 #elif defined(STREFLOP_X87)
 	fenv_t fenv;
 	fegetenv(&fenv);
-	#if defined(__SUPPORT_SNAN__)
+	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 	bool ret = (fenv & 0x1F3F) == 0x0072 || (fenv & 0x1F3F) == 0x003F;
 	#else
 	bool ret = (fenv & 0x1F3F) == 0x003A || (fenv & 0x1F3F) == 0x003F;
@@ -102,7 +102,7 @@ static inline void good_fpu_control_registers(const char* text)
 		logOutput.Print("Sync warning: FPUCW 0x%04X instead of 0x003A or 0x003F (\"%s\")", fenv, text);
 		// Set single precision floating point math.
 		streflop_init<streflop::Simple>();
-	#if defined(__SUPPORT_SNAN__)
+	#if defined(__SUPPORT_SNAN__) && !defined(USE_GML)
 		feraiseexcept(streflop::FPU_Exceptions(FE_INVALID | FE_DIVBYZERO | FE_OVERFLOW));
 	#endif
 	}

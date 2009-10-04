@@ -23,7 +23,6 @@
 
 #include "Net/Connection.h"
 #include "mmgr.h"
-#include "ExternalAI/SkirmishAIKey.h"
 
 #include "GameServer.h"
 
@@ -47,12 +46,14 @@
 #endif
 #include "AutohostInterface.h"
 #include "Util.h"
+#include "TdfParser.h"
 #include "GlobalUnsynced.h" // for syncdebug
 #include "Sim/Misc/GlobalConstants.h"
 #include "ConfigHandler.h"
 #include "FileSystem/CRC.h"
 #include "Player.h"
 #include "Server/GameParticipant.h"
+#include "Server/GameSkirmishAI.h"
 // This undef is needed, as somewhere there is a type interface specified,
 // which we need not!
 // (would cause problems in ExternalAI/Interface/SAIInterfaceLibrary.h)
@@ -60,7 +61,6 @@
 	#undef interface
 #endif
 #include "Sim/Misc/GlobalSynced.h"
-//#include "Sim/Misc/TeamHandler.h"
 #include "Server/MsgStrings.h"
 
 
@@ -85,6 +85,11 @@ const spring_duration serverTimeout = spring_secs(30);
 /// every n'th frame will be a keyframe (and contain the server's framenumber)
 const unsigned serverKeyframeIntervall = 16;
 
+const std::string commands[numCommands] = { "kick", "kickbynum", "setminspeed", "setmaxspeed",
+						"nopause", "nohelp", "cheat", "godmode", "globallos",
+						"nocost", "forcestart", "nospectatorchat", "nospecdraw",
+						"skip", "reloadcob", "devlua", "editdefs", "luagaia",
+						"singlestep" };
 using boost::format;
 
 namespace {
@@ -155,7 +160,22 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	minUserSpeed = setup->minSpeed;
 	noHelperAIs = (bool)setup->noHelperAIs;
 
-	gameData.reset(newGameData);
+	{ // modify and save GameSetup text (remove passwords)
+		TdfParser parser(newGameData->GetSetup().c_str(), newGameData->GetSetup().length());
+		TdfParser::TdfSection* root = parser.GetRootSection();
+		for (TdfParser::TdfSection::sectionsMap::iterator it = root->sections.begin(); it != root->sections.end(); ++it)
+		{
+			if (it->first.substr(0, 6) == "PLAYER")
+				it->second->remove("Password");
+		}
+		std::ostringstream strbuf;
+		parser.print(strbuf);
+		std::string cleanedSetupText = strbuf.str();
+		GameData* newData = new GameData(*newGameData);
+		newData->SetSetup(cleanedSetupText);
+		gameData.reset(newData);
+	}
+
 	if (setup->hostDemo)
 	{
 		Message(str( format(PlayingDemo) %setup->demoName ));
@@ -165,28 +185,15 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	players.resize(setup->playerStartingData.size());
 	std::copy(setup->playerStartingData.begin(), setup->playerStartingData.end(), players.begin());
 
+	for (size_t a = 0; a < setup->GetSkirmishAIs().size(); ++a) {
+		const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
+		ais[skirmishAIId] = setup->GetSkirmishAIs()[a];
+	}
+
 	teams.resize(setup->teamStartingData.size());
 	std::copy(setup->teamStartingData.begin(), setup->teamStartingData.end(), teams.begin());
 
-	RestrictedAction("kick");			RestrictedAction("kickbynum");
-	RestrictedAction("setminspeed");	RestrictedAction("setmaxspeed");
-	RestrictedAction("nopause");
-	RestrictedAction("nohelp");
-	RestrictedAction("cheat"); //TODO register cheats only after cheating is on
-	RestrictedAction("godmode");
-	RestrictedAction("globallos");
-	RestrictedAction("nocost");
-	RestrictedAction("forcestart");
-	RestrictedAction("nospectatorchat");
-	RestrictedAction("nospecdraw");
-	if (demoReader)
-		RegisterAction("skip");
-	commandBlacklist.insert("skip");
-	RestrictedAction("reloadcob");
-	RestrictedAction("devlua");
-	RestrictedAction("editdefs");
-	RestrictedAction("luagaia");
-	RestrictedAction("singlestep");
+	commandBlacklist = std::set<std::string>(commands, commands+numCommands);
 
 #ifdef DEDICATED
 	demoRecorder.reset(new CDemoRecorder());
@@ -197,14 +204,11 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	delete ret;
 #endif
 	// AIs do not join in here, so just set their teams as active
-	for (size_t i = 0; i < setup->teamStartingData.size(); ++i)
-	{
-		const SkirmishAIData* sad = setup->GetSkirmishAIDataForTeam(i);
-		if (sad != NULL)
-		{
-			teams[i].leader = sad->hostPlayerNum;
-			teams[i].active = true;
-			teams[i].isAI = true;
+	for (std::map<size_t, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end(); ++ai) {
+		const int t = ai->second.team;
+		teams[t].active = true;
+		if (teams[t].leader < 0) { // CAUTION, default value is 0, not -1
+			teams[t].leader = ai->second.hostPlayer;
 		}
 	}
 
@@ -243,10 +247,13 @@ CGameServer::~CGameServer()
 	for (size_t i = 0; i < players.size(); ++i) {
 		demoRecorder->SetPlayerStats(i, players[i].lastStats);
 	}
+	/*for (size_t i = 0; i < ais.size(); ++i) {
+		demoRecorder->SetSkirmishAIStats(i, ais[i].lastStats);
+	}*/
 	/*for (int i = 0; i < numTeams; ++i) {
 		record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
 	}*/ //TODO add
-#endif
+#endif // DEDICATED
 }
 
 void CGameServer::AddLocalClient(const std::string& myName, const std::string& myVersion)
@@ -602,20 +609,50 @@ void CGameServer::Update()
 	}
 }
 
-// duplicates functionality of CPlayerHandler::ActivePlayersInTeam(int teamId)
-// as paherHandler is not available on the server
-static int countNumPlayersInTeam(const std::vector<GameParticipant>& players, int teamId) {
 
-	size_t numPlayersInTeam = 0;
+/// has to be consistent with Game.cpp/CPlayerHandler
+static std::vector<int> getPlayersInTeam(const std::vector<GameParticipant>& players, const int teamId) {
+
+	std::vector<int> playersInTeam;
 
 	for (size_t p = 0; p < players.size(); ++p) {
 		// do not count spectators, or demos will desync
 		if (!players[p].spectator && (players[p].team == teamId)) {
-			++numPlayersInTeam;
+			playersInTeam.push_back(p);
 		}
 	}
 
-	return numPlayersInTeam;
+	return playersInTeam;
+}
+
+/**
+ * Duplicates functionality of CPlayerHandler::ActivePlayersInTeam(int teamId)
+ * as playerHandler is not available on the server
+ */
+static int countNumPlayersInTeam(const std::vector<GameParticipant>& players, const int teamId) {
+	return getPlayersInTeam(players, teamId).size();
+}
+
+/// has to be consistent with Game.cpp/CSkirmishAIHandler
+static std::vector<size_t> getSkirmishAIIds(const std::map<size_t, GameSkirmishAI>& ais, const int teamId, const int hostPlayer = -2) {
+
+	std::vector<size_t> skirmishAIIds;
+
+	for (std::map<size_t, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end(); ++ai) {
+		if ((ai->second.team == teamId) && ((hostPlayer == -2) || (ai->second.hostPlayer == hostPlayer))) {
+			skirmishAIIds.push_back(ai->first);
+		}
+	}
+
+	return skirmishAIIds;
+}
+
+/**
+ * Duplicates functionality of CSkirmishAIHandler::GetSkirmishAIsInTeam(const int teamId)
+ * as skirmishAIHandler is not available on the server
+ */
+static int countNumSkirmishAIsInTeam(const std::map<size_t, GameSkirmishAI>& ais, const int teamId) {
+	return getSkirmishAIIds(ais, teamId).size();
 }
 
 void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<const netcode::RawPacket> packet)
@@ -664,7 +701,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_QUIT: {
-			Message(str(format(PlayerLeft) %players[a].name %" normal quit"));
+			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
 			players[a].myState = GameParticipant::DISCONNECTED;
 			players[a].link.reset();
@@ -683,7 +720,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				players[playerNum].name = (std::string)((char*)inbuf+3);
 				players[playerNum].myState = GameParticipant::INGAME;
 				Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset pathing display
-				Message(str(format(PlayerJoined) %players[playerNum].name), false);
+				Message(str(format(PlayerJoined) %players[playerNum].GetType() %players[playerNum].name), false);
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
 				if (hostif)
 				{
@@ -710,11 +747,12 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			}
 			break;
 
-		case NETMSG_STARTPOS:
-			if(inbuf[1] != a){
+		case NETMSG_STARTPOS: {
+			const unsigned player = inbuf[1];
+			if(player != a){
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
 			}
-			else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame)
+			else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame && !players[player].spectator)
 			{
 				unsigned team = (unsigned)inbuf[2];
 				if (team >= teams.size())
@@ -723,7 +761,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				{
 					teams[team].startPos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
 					if (inbuf[3] == 1)
-						teams[team].readyToStart = static_cast<bool>(inbuf[3]);
+						players[player].readyToStart = static_cast<bool>(inbuf[3]);
 
 					Broadcast(CBaseNetProtocol::Get().SendStartPos(inbuf[1],team, inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]))); //forward data
 					if (hostif)
@@ -737,6 +775,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				Message(str(format(NoStartposChange) %a));
 			}
 			break;
+		}
 
 		case NETMSG_COMMAND:
 			if(inbuf[3]!=a){
@@ -888,121 +927,129 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				switch (action)
 				{
 					case TEAMMSG_GIVEAWAY: {
-						const unsigned toTeam = inbuf[3];
+						const unsigned toTeam                    = inbuf[3];
 						// may be the players team or a team controlled by one of his AIs
-						const unsigned fromTeam_g = inbuf[4];
-						const int numPlayersInTeam_g = countNumPlayersInTeam(players, fromTeam_g);
+						const unsigned fromTeam_g                = inbuf[4];
+						const int numPlayersInTeam_g             = countNumPlayersInTeam(players, fromTeam_g);
+						const std::vector<size_t> totAIsInTeam_g = getSkirmishAIIds(ais, fromTeam_g);
+						const std::vector<size_t> myAIsInTeam_g  = getSkirmishAIIds(ais, fromTeam_g, player);
+						const size_t numControllersInTeam_g      = numPlayersInTeam_g + totAIsInTeam_g.size();
+						const bool isLeader_g                    = (teams[fromTeam_g].leader != player);
+						const bool isOwnTeam_g                   = (fromTeam_g != fromTeam);
+						const bool isSpec                        = players[player].spectator;
+						const bool hasAIs_g                      = (myAIsInTeam_g.size() > 0);
+						const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam);
+						const char* playerType                   = players[player].GetType();
+						const bool isSinglePlayer                = (players.size() <= 1);
 
-						if (players[player].spectator || teams[fromTeam_g].leader != player ||
-						    (teams[fromTeam_g].isAI && ((teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam) && !cheating)))
+						if (!isSinglePlayer &&
+								(isSpec ||
+								(!isOwnTeam_g && !isLeader_g) ||
+								(hasAIs_g && (isAllied_g && !cheating))))
 						{
-							Message(str( boost::format("Spectator %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %players[player].name), true);
+							Message(str( boost::format("%s %s tried to hack the game (spoofed TEAMMSG_GIVEAWAY)") %playerType %players[player].name), true);
 							break;
 						}
 						Broadcast(CBaseNetProtocol::Get().SendGiveAwayEverything(player, toTeam, fromTeam_g));
 
-						if (fromTeam_g == fromTeam) {
+						bool giveAwayOk = false;
+						if (isOwnTeam_g) {
 							// player is giving stuff from his own team
-							if (numPlayersInTeam_g == 1 && !(teams[fromTeam_g].isAI)) {
-								teams[fromTeam_g].active = false;
-								teams[fromTeam_g].leader = -1;
-							}
+							giveAwayOk = true;
 							//players[player].team = 0;
 							players[player].spectator = true;
 							if (hostif) hostif->SendPlayerDefeated(player);
 						} else {
 							// player is giving stuff from one of his AI teams
 							if (numPlayersInTeam_g == 0) {
-								teams[fromTeam_g].active = false;
-								teams[fromTeam_g].leader = -1;
+								// kill the first AI
+								ais.erase(myAIsInTeam_g[0]);
+								giveAwayOk = true;
 							} else {
-								Message(str( boost::format("Player %s can not give away stuff of team %i (still has human players left)") %players[player].name %fromTeam_g), true);
+								Message(str( boost::format("%s %s can not give away stuff of team %i (still has human players left)") %playerType %players[player].name %fromTeam_g), true);
 							}
+						}
+						if (giveAwayOk && (numControllersInTeam_g == 1)) {
+							// team has no controller left now
+							teams[fromTeam_g].active = false;
+							teams[fromTeam_g].leader = -1;
 						}
 						break;
 					}
 					case TEAMMSG_RESIGN: {
-						if (players[player].spectator)
+						const bool isSpec         = players[player].spectator;
+						const bool isSinglePlayer = (players.size() <= 1);
+
+						if (isSpec && !isSinglePlayer)
 						{
 							Message(str(boost::format("Spectator %s tried to hack the game (spoofed TEAMMSG_RESIGN)") %players[player].name), true);
 							break;
 						}
 						Broadcast(CBaseNetProtocol::Get().SendResign(player));
+
 						//players[player].team = 0;
 						players[player].spectator = true;
-						const int numPlayersInTeam = countNumPlayersInTeam(players, fromTeam);
-						if (numPlayersInTeam == 0 && !(teams[fromTeam].isAI)) {
-							teams[fromTeam].active = false;
-							teams[fromTeam].leader = -1;
+						// actualize all teams of which the player is leader
+						for (size_t t = 0; t < teams.size(); ++t) {
+							if (teams[t].leader == player) {
+								const std::vector<int> teamPlayers = getPlayersInTeam(players, t);
+								const std::vector<size_t> teamAIs  = getSkirmishAIIds(ais, t);
+								if ((teamPlayers.size() + teamAIs.size()) == 0) {
+									// no controllers left in team
+									teams[t].active = false;
+									teams[t].leader = -1;
+								} else if (teamPlayers.size() == 0) {
+									// no human player left in team
+									teams[t].leader = ais[teamAIs[0]].hostPlayer;
+								} else {
+									// still human controllers left in team
+									teams[t].leader = teamPlayers[0];
+								}
+							}
 						}
 						if (hostif) hostif->SendPlayerDefeated(player);
 						break;
 					}
 					case TEAMMSG_JOIN_TEAM: {
-						unsigned newTeam = inbuf[3];
-						if (cheating && newTeam < teams.size())
-						{
-							Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
-							players[player].team = newTeam;
-							players[player].spectator = false;
-							if (teams[newTeam].leader == -1) {
-								teams[newTeam].leader = player;
-							}
-						}
-						else
-						{
+						const unsigned newTeam    = inbuf[3];
+						const bool isNewTeamValid = (newTeam < teams.size());
+						const bool isSinglePlayer = (players.size() <= 1);
+
+						if (isNewTeamValid && (isSinglePlayer || cheating)) {
+							// joining the team is ok
+						} else {
 							Message(str(format(NoTeamChange) %players[player].name %player));
+							break;
+						}
+						Broadcast(CBaseNetProtocol::Get().SendJoinTeam(player, newTeam));
+
+						players[player].team      = newTeam;
+						players[player].spectator = false;
+						if (teams[newTeam].leader == -1) {
+							teams[newTeam].leader = player;
 						}
 						break;
 					}
 					case TEAMMSG_TEAM_DIED: { // don't send to clients, they don't need it
-						unsigned char team = inbuf[3];
+						const unsigned team = inbuf[3];
 #ifndef DEDICATED
 						if (players[player].isLocal) // currently only host is allowed
 #endif
 						{
 							teams[team].active = false;
-							const int numPlayersInTeam = countNumPlayersInTeam(players, team);
-							for (unsigned p = 0; p < players.size(); ++p)
-							{
-								if (players[p].team == team)
-								{
+							teams[team].leader = -1;
+							// convert all the teams players to spectators
+							for (size_t p = 0; p < players.size(); ++p) {
+								if ((players[p].team == team) && !(players[p].spectator)) {
+									// are now spectating if this was their team
 									//players[p].team = 0;
 									players[p].spectator = true;
-									if (numPlayersInTeam == 0 && !(teams[team].isAI)) {
-										teams[team].leader = -1;
-									}
 									if (hostif) hostif->SendPlayerDefeated(p);
 								}
 							}
-						}
-						break;
-					}
-					case TEAMMSG_AI_CREATED: {
-						const unsigned aiTeam = inbuf[3];
-						GameTeam* tf = &teams[fromTeam];
-						GameTeam* tai = &teams[aiTeam];
-						const int numPlayersInAITeam = countNumPlayersInTeam(players, aiTeam);
-
-						if ((numPlayersInAITeam == 0) || (tai->leader == player) || (tai->leader == -1) || (cheating && (tf->teamAllyteam == tai->teamAllyteam))) {
-							Broadcast(CBaseNetProtocol::Get().SendAICreated(player, aiTeam));
-							tai->isAI = true;
-							if (tai->leader == -1) {
-								tai->leader = player;
-							}
-						} else {
-							Message(str(format(NoAICreated) %players[player].name %player %aiTeam));
-						}
-						break;
-					}
-					case TEAMMSG_AI_DESTROYED: {
-						const unsigned aiTeam = inbuf[3];
-						GameTeam* tai = &teams[aiTeam];
-						if (tai->isAI && (tai->leader == player)) {
-							Broadcast(CBaseNetProtocol::Get().SendAIDestroyed(player, aiTeam));
-							tai->isAI = false;
-						} else {
-							Message(str(format(NoAIDestroyed) %players[player].name %player %aiTeam));
+							// The teams Skirmish AIs destruction process
+							// is being initialized from the client they
+							// run on. No need to do anything here.
 						}
 						break;
 					}
@@ -1012,6 +1059,92 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				}
 				break;
 			}
+		}
+		case NETMSG_AI_CREATED: {
+			const unsigned char playerId     = inbuf[2];
+			//const unsigned skirmAIId_rec     = *((unsigned int*)&inbuf[3]); // 4 bytes; should be -1, as we have to create the real one
+			const unsigned char aiTeamId     = inbuf[7];
+			const char* aiName               = (const char*) (&inbuf[8]);
+			const unsigned char playerTeamId = players[playerId].team;
+			GameTeam* tpl                    = &teams[playerTeamId];
+			GameTeam* tai                    = &teams[aiTeamId];
+			//const int numPlayersInAITeam     = countNumPlayersInTeam(players, aiTeam);
+			//const int numAIsInAITeam         = countNumSkirmishAIsInTeam(ais, aiTeam);
+			const bool weAreLeader           = (tai->leader == playerId);
+			const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
+			const bool singlePlayer          = (players.size() <= 1);
+			const bool noLeader              = (tai->leader == -1);
+
+			if (weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader))) {
+				// creating the AI is ok
+			} else {
+				Message(str(format(NoAICreated) %players[playerId].name %(int)playerId %(int)aiTeamId));
+				break;
+			}
+			const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
+			Broadcast(CBaseNetProtocol::Get().SendAICreated(playerId, skirmishAIId, aiTeamId, aiName));
+
+/*
+#ifdef SYNCDEBUG
+			if (myId != skirmishAIId) {
+				Message(str(format("Sync Error, Skirmish AI ID from player %s (%i) does not match the one on the server (%i).") %players[playerId].name %skirmishAIId %myId));
+			}
+#endif // SYNCDEBUG
+*/
+			ais[skirmishAIId].team = aiTeamId;
+			ais[skirmishAIId].name = aiName;
+			ais[skirmishAIId].hostPlayer = playerId;
+			if (tai->leader == -1) {
+				tai->leader = ais[skirmishAIId].hostPlayer;
+				tai->active = true;
+			}
+			break;
+		}
+		case NETMSG_AI_STATE_CHANGED: {
+			const unsigned char playerId     = inbuf[1];
+			const unsigned int skirmishAIId  = *((unsigned int*)&inbuf[2]); // 4 bytes
+			const ESkirmishAIStatus newState = (ESkirmishAIStatus) inbuf[6];
+
+			const bool skirmishAIId_valid    = (ais.find(skirmishAIId) != ais.end());
+			if (!skirmishAIId_valid) {
+				Message(str(format(NoAIChangeState) %players[playerId].name %(int)playerId %skirmishAIId %(-1) %(int)newState));
+				break;
+			}
+
+			const unsigned aiTeamId          = ais[skirmishAIId].team;
+			const unsigned playerTeamId      = players[playerId].team;
+			const size_t numPlayersInAITeam  = countNumPlayersInTeam(players, aiTeamId);
+			const size_t numAIsInAITeam      = countNumSkirmishAIsInTeam(ais, aiTeamId);
+			GameTeam* tpl                    = &teams[playerTeamId];
+			GameTeam* tai                    = &teams[aiTeamId];
+			const bool weAreAIHost           = (ais[skirmishAIId].hostPlayer == playerId);
+			const bool weAreLeader           = (tai->leader == playerId);
+			const bool weAreAllied           = (tpl->teamAllyteam == tai->teamAllyteam);
+			const bool singlePlayer          = (players.size() <= 1);
+			const ESkirmishAIStatus oldState = ais[skirmishAIId].status;
+
+			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
+				Message(str(format(NoAIChangeState) %players[playerId].name %(int)playerId %skirmishAIId %(int)aiTeamId %(int)newState));
+				break;
+			}
+			Broadcast(packet); // forward data
+
+			ais[skirmishAIId].status = newState;
+			if (newState == SKIRMAISTATE_DEAD) {
+				if (oldState == SKIRMAISTATE_RELOADING) {
+					// skip resetting this AIs management state,
+					// as it will be reinitialized instantly
+				} else {
+					ais.erase(skirmishAIId);
+					FreeSkirmishAIId(skirmishAIId);
+					if ((numPlayersInAITeam + numAIsInAITeam) == 1) {
+						// team has no controller left now
+						tai->active = false;
+						tai->leader = -1;
+					}
+				}
+			}
+			break;
 		}
 		case NETMSG_ALLIANCE: {
 			const unsigned char player = inbuf[1];
@@ -1114,7 +1247,7 @@ void CGameServer::ServerReadNet()
 			continue; // player not connected
 		if (players[a].link->CheckTimeout())
 		{
-			Message(str(format(PlayerLeft) %players[a].name %" timeout")); //this must happen BEFORE the reset!
+			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" timeout")); //this must happen BEFORE the reset!
 			players[a].myState = GameParticipant::DISCONNECTED;
 			players[a].link.reset();
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 0));
@@ -1183,7 +1316,7 @@ void CGameServer::CheckForGameStart(bool forced)
 		{
 			allReady = false;
 			break;
-		} else if (!players[a].spectator && teams[players[a].team].active && !teams[players[a].team].readyToStart && !demoReader)
+		} else if (!players[a].spectator && teams[players[a].team].active && !players[a].readyToStart && !demoReader)
 		{
 			allReady = false;
 			break;
@@ -1222,9 +1355,13 @@ void CGameServer::StartGame()
 	}
 
 	GenerateAndSendGameID();
-	for (int a = 0; a < (int)setup->teamStartingData.size(); ++a)
+	for (size_t a = 0; a < players.size(); ++a)
 	{
-		Broadcast(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, a, 1, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+		if (!players[a].spectator)
+		{
+			const unsigned aTeam = players[a].team;
+			Broadcast(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
+		}
 	}
 
 	Broadcast(CBaseNetProtocol::Get().SendRandSeed(rng()));
@@ -1382,18 +1519,20 @@ void CGameServer::CheckForGameEnd()
 
 	for (size_t a = 0; a < teams.size(); ++a)
 	{
-		bool hasPlayer = false;
-		for (size_t b = 0; b < players.size(); ++b) {
+		bool hasController = false;
+		for (size_t b = 0; b < players.size() && !hasController; ++b) {
 			if (!players[b].spectator && players[b].team == (int)a) {
-				hasPlayer = true;
+				hasController = true;
 			}
 		}
 
-		if (teams[a].isAI) {
-			hasPlayer = true;
+		for (std::map<size_t, GameSkirmishAI>::const_iterator ai = ais.begin(); ai != ais.end() && !hasController; ++ai) {
+			if (ai->second.team == a) {
+				hasController = true;
+			}
 		}
 
-		if (teams[a].active && hasPlayer) {
+		if (teams[a].active && hasController) {
 			++numActiveTeams[teams[a].teamAllyteam];
 		}
 	}
@@ -1509,7 +1648,7 @@ void CGameServer::KickPlayer(const int playerNum)
 {
 	if (players[playerNum].link) // only kick connected players
 	{
-		Message(str(format(PlayerLeft) %playerNum %"kicked"));
+		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
 		players[playerNum].Kill();
 		if (hostif)
@@ -1594,16 +1733,33 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		const unsigned hisTeam = setup->playerStartingData[hisNewNumber].team;
 		if (!players[hisNewNumber].spectator && !teams[hisTeam].active) // create new team
 		{
-			teams[hisTeam].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
+			players[hisNewNumber].readyToStart = (setup->startPosType != CGameSetup::StartPos_ChooseInGame);
 			teams[hisTeam].active = true;
 		}
 			players[hisNewNumber].team = hisTeam;
 
 		if (!setup->playerStartingData[hisNewNumber].spectator)
 			Broadcast(CBaseNetProtocol::Get().SendJoinTeam(hisNewNumber, hisTeam));
-		for (size_t a = 0; a < teams.size(); ++a)
+
+		std::vector<bool> teamStartPosSent(teams.size(), false);
+
+		// send start position for player controlled teams
+		for (size_t a = 0; a < players.size(); ++a)
 		{
-			link->SendData(CBaseNetProtocol::Get().SendStartPos(SERVER_PLAYER, (int)a, teams[a].readyToStart, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+			if (!players[a].spectator)
+			{
+				const unsigned aTeam = players[a].team;
+				link->SendData(CBaseNetProtocol::Get().SendStartPos(a, (int)aTeam, players[a].readyToStart, teams[aTeam].startPos.x, teams[aTeam].startPos.y, teams[aTeam].startPos.z));
+				teamStartPosSent[aTeam] = true;
+			}
+		}
+
+		// send start position for all other teams
+		for (size_t a = 0; a < teams.size(); ++a) {
+			if (!teamStartPosSent[a]) {
+				// teams which aren't player controlled are always ready
+				link->SendData(CBaseNetProtocol::Get().SendStartPos(teams[a].leader, a, true, teams[a].startPos.x, teams[a].startPos.y, teams[a].startPos.z));
+			}
 		}
 	}
 
@@ -1660,10 +1816,24 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 	}
 }
 
-void CGameServer::RestrictedAction(const std::string& action)
-{
-	RegisterAction(action);
-	commandBlacklist.insert(action);
+size_t CGameServer::ReserveNextAvailableSkirmishAIId() {
+
+	size_t skirmishAIId = 0;
+
+	// find a free id
+	std::list<size_t>::iterator it;
+	for (it = usedSkirmishAIIds.begin(); it != usedSkirmishAIIds.end(); ++it, skirmishAIId++) {
+		if (*it != skirmishAIId) {
+			break;
+		}
+	}
+
+	usedSkirmishAIIds.insert(it, skirmishAIId);
+
+	return skirmishAIId;
 }
 
+void CGameServer::FreeSkirmishAIId(const size_t skirmishAIId) {
+	usedSkirmishAIIds.remove(skirmishAIId);
+}
 

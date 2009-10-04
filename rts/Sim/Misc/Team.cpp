@@ -19,7 +19,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitDef.h"
-#include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "EventHandler.h"
 #include "GlobalUnsynced.h"
 #include "creg/STL_List.h"
@@ -40,17 +40,12 @@ CR_REG_METADATA(CTeam, (
 				CR_MEMBER(teamAllyteam),
 				CR_MEMBER(startMetal),
 				CR_MEMBER(startEnergy),
-//				CR_MEMBER(readyToStart),
 //				CR_MEMBER(customValues),
 // from CTeam
 				CR_MEMBER(teamNum),
 				CR_MEMBER(isDead),
 				CR_MEMBER(gaia),
 				CR_MEMBER(lineageRoot),
-				CR_MEMBER(isAI),
-				CR_MEMBER(luaAI),
-				CR_MEMBER(skirmishAIKey),
-				CR_MEMBER(skirmishAIOptions),
 				CR_MEMBER(origColor),
 				CR_MEMBER(units),
 				CR_MEMBER(metal),
@@ -123,8 +118,6 @@ CTeam::CTeam()
 : isDead(false),
   gaia(false),
   lineageRoot(-1),
-  luaAI(""),
-//  skirmishAISpecifier(SSAIKey()),
   metal(200000),
   energy(900000),
   metalPull(0),     prevMetalPull(0),
@@ -269,6 +262,11 @@ void CTeam::Died()
 	}
 	isDead = true;
 
+	CSkirmishAIHandler::ids_t localTeamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(teamNum, gu->myPlayerNum);
+	for (CSkirmishAIHandler::ids_t::const_iterator ai = localTeamAIs.begin(); ai != localTeamAIs.end(); ++ai) {
+		skirmishAIHandler.SetLocalSkirmishAIDieing(*ai, 2 /* = team died */);
+	}
+
 	// this message is not relayed to clients, it's only for the server
 	net->Send(CBaseNetProtocol::Get().SendTeamDied(gu->myPlayerNum, teamNum));
 
@@ -277,19 +275,10 @@ void CTeam::Died()
 			playerHandler->Player(a)->StartSpectating();
 		}
 	}
-	if (eoh->IsSkirmishAI(teamNum)) {
-		eoh->DestroySkirmishAI(teamNum, 2 /* = team died */);
-	}
 
 	CLuaUI::UpdateTeams();
 	CPlayer::UpdateControlledTeams();
 	eventHandler.TeamDied(teamNum);
-}
-
-void CTeam::StartposMessage(const float3& pos, const bool isReady)
-{
-	readyToStart = isReady;
-	startPos = pos;
 }
 
 void CTeam::StartposMessage(const float3& pos)
@@ -297,8 +286,6 @@ void CTeam::StartposMessage(const float3& pos)
 	startPos = pos;
 }
 
-/** This has to be called for every team before SlowUpdates start,
-	otherwise values get overwritten. */
 void CTeam::ResetFrameVariables()
 {
 	prevMetalPull     = metalPull;

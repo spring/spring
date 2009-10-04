@@ -683,14 +683,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\ISkirmishAI.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\ISkirmishAILibrary.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\ExternalAI\SAIInterfaceCallbackImpl.cpp"
 				>
 			</File>

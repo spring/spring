@@ -593,12 +593,15 @@ int LuaUnsyncedCtrl::PlaySoundFile(lua_State* L)
 
 int LuaUnsyncedCtrl::PlaySoundStream(lua_State* L)
 {
-	//const int args = lua_gettop(L);
+	const int args = lua_gettop(L);
 
 	const string soundFile = luaL_checkstring(L, 1);
 	const float volume = luaL_optnumber(L, 2, 1.0f);
+	bool enqueue = false;
+	if (args >= 3)
+		enqueue = lua_toboolean(L, 3);
 
-	Channels::BGMusic.Play(soundFile, volume);
+	Channels::BGMusic.Play(soundFile, volume, enqueue);
 
 	// .ogg files don't have sound ID's generated
 	// for them (yet), so we always succeed here
@@ -1718,7 +1721,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 			"Incorrect arguments to SetUnitDefIcon(unitDefID, \"icon\")");
 	}
 	const int unitDefID = lua_toint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -1738,7 +1741,7 @@ int LuaUnsyncedCtrl::SetUnitDefIcon(lua_State* L)
 		const set<int>& decoySet = fit->second;
 		set<int>::const_iterator dit;
 		for (dit = decoySet.begin(); dit != decoySet.end(); ++dit) {
-  		const UnitDef* decoyDef = unitDefHandler->GetUnitByID(*dit);
+  		const UnitDef* decoyDef = unitDefHandler->GetUnitDefByID(*dit);
 			decoyDef->iconType = ud->iconType;
 		}
 	}
@@ -1754,7 +1757,7 @@ int LuaUnsyncedCtrl::SetUnitDefImage(lua_State* L)
 	}
 
 	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}

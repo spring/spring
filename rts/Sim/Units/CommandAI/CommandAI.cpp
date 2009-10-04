@@ -5,6 +5,7 @@
 #include "FactoryCAI.h"
 #include "LineDrawer.h"
 #include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Game/GameHelper.h"
 #include "Game/SelectedUnits.h"
@@ -15,6 +16,7 @@
 #include "Rendering/GL/glExtra.h"
 #include "Lua/LuaRules.h"
 #include "Map/Ground.h"
+#include "Map/MapDamage.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -370,7 +372,8 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	const UnitDef* ud = owner->unitDef;
 	int maxHeightDiff = SQUARE_SIZE;
 	// AI's may do as they like
-	bool aiOrder = (teamHandler->Team(owner->team) && teamHandler->Team(owner->team)->isAI);
+	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(owner->team);
+	const bool aiOrder = (saids.size() > 0);
 
 	switch (c.id) {
 		case CMD_DGUN:
@@ -396,7 +399,9 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		case CMD_PATROL:    if (!ud->canPatrol)     return false; break;
 		case CMD_CAPTURE:   if (!ud->canCapture)    return false; break;
 		case CMD_RECLAIM:   if (!ud->canReclaim)    return false; break;
-		case CMD_RESTORE:   if (!ud->canRestore)    return false; break;
+		case CMD_RESTORE: {
+			if (!ud->canRestore || mapDamage->disabled) return false; break;
+		}
 		case CMD_RESURRECT: if (!ud->canResurrect)  return false; break;
 		case CMD_REPAIR: {
 			if (!ud->canRepair && !ud->canAssist)   return false; break;
@@ -434,7 +439,7 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 	{
 		return false;
 	}
-	if (c.id == CMD_REPEAT && (c.params.empty() || !ud->canRepeat))
+	if (c.id == CMD_REPEAT && (c.params.empty() || !ud->canRepeat || ((int)c.params[0] % 2) != (int)c.params[0]/* only 0 or 1 allowed */))
 	{
 		return false;
 	}
@@ -444,11 +449,11 @@ bool CCommandAI::AllowedCommand(const Command& c, bool fromSynced)
 		return false;
 	}
 	if (c.id == CMD_ONOFF
-			&& (c.params.empty() || !ud->onoffable || owner->beingBuilt))
+			&& (c.params.empty() || !ud->onoffable || owner->beingBuilt || ((int)c.params[0] % 2) != (int)c.params[0]/* only 0 or 1 allowed */))
 	{
 		return false;
 	}
-	if (c.id == CMD_CLOAK && (c.params.empty() || !ud->canCloak))
+	if (c.id == CMD_CLOAK && (c.params.empty() || !ud->canCloak || ((int)c.params[0] % 2) != (int)c.params[0]/* only 0 or 1 allowed */))
 	{
 		return false;
 	}
@@ -510,7 +515,15 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 			return true;
 		}
 		case CMD_REPEAT: {
-			repeatOrders = !!c.params[0];
+			if (c.params[0] == 1) {
+				repeatOrders = true;
+			} else if(c.params[0] == 0) {
+				repeatOrders = false;
+			} else {
+				// cause some code parts need it to be either 0 or 1,
+				// we can not accept any other values as valid
+				return false;
+			}
 			SetCommandDescParam0(c);
 			selectedUnits.PossibleCommandChange(owner);
 			return true;
@@ -526,6 +539,10 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 				owner->Activate();
 			} else if (c.params[0] == 0) {
 				owner->Deactivate();
+			} else {
+				// cause some code parts need it to be either 0 or 1,
+				// we can not accept any other values as valid
+				return false;
 			}
 			SetCommandDescParam0(c);
 			selectedUnits.PossibleCommandChange(owner);
@@ -534,9 +551,13 @@ bool CCommandAI::ExecuteStateCommand(const Command& c)
 		case CMD_CLOAK: {
 			if (c.params[0] == 1) {
 				owner->wantCloak = true;
-			} else if(c.params[0]==0) {
+			} else if(c.params[0] == 0) {
 				owner->wantCloak = false;
 				owner->curCloakTimeout = gs->frameNum + owner->cloakTimeout;
+			} else {
+				// cause some code parts need it to be either 0 or 1,
+				// we can not accept any other values as valid
+				return false;
 			}
 			SetCommandDescParam0(c);
 			selectedUnits.PossibleCommandChange(owner);
@@ -1219,7 +1240,7 @@ void CCommandAI::SlowUpdate()
 }
 
 
-int CCommandAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
+int CCommandAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
 		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {

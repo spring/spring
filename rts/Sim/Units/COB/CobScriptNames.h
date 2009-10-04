@@ -1,7 +1,7 @@
 /* Author: Tobi Vollebregt */
 
-#ifndef UNITSCRIPTNAMES_H
-#define UNITSCRIPTNAMES_H
+#ifndef COBSCRIPTNAMES_H
+#define COBSCRIPTNAMES_H
 
 
 #include <map>
@@ -10,7 +10,6 @@
 
 
 //These are mapped by the CCobFile at startup to make common function calls faster
-// TODO: check scales of non-ratio arguments
 enum {
 	COBFN_Create,               // -
 	COBFN_Destroy,              // -
@@ -45,12 +44,9 @@ enum {
 	COBFN_QueryNanoPiece,       // out: piecenum
 	COBFN_QueryBuildInfo,       // out: piecenum
 	COBFN_Go,                   // -
-	COBFN_MoveFinished,         // special callin, only used for Lua unit scripts
-	COBFN_TurnFinished,         // idem
 	COBFN_Last,
 
-	// These are special (this set of functions is repeated MaxWeapons times)
-	COB_MaxWeapons = 32,
+	// These are special (this set of functions is repeated MAX_WEAPONS_PER_UNIT times)
 	COBFN_QueryPrimary = COBFN_Last, // out: piecenum
 	COBFN_AimPrimary,                // in: heading - owner->heading, in: pitch (both 0 for plasma repulser)
 	COBFN_AimFromPrimary,            // out: piecenum
@@ -64,7 +60,7 @@ enum {
 };
 
 
-class CUnitScriptNames
+class CCobUnitScriptNames
 {
 public:
 	static const std::vector<std::string>& GetScriptNames(); // COBFN_* -> string

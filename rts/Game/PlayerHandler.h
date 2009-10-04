@@ -6,6 +6,7 @@
 #define PLAYERHANDLER_H
 
 #include <assert.h>
+#include <vector>
 
 #include "creg/creg_cond.h"
 #include "Player.h"
@@ -58,7 +59,7 @@ public:
 	 * Will change during runtime (Connection lost, died, ...).
 	 * This excludes spectators and AIs.
 	 */
-	int ActivePlayersInTeam(int teamId) const;
+	std::vector<int> ActivePlayersInTeam(int teamId) const;
 
 	void GameFrame(int frameNum);
 

@@ -309,7 +309,7 @@ void CBuilder::Update()
 			}
 		}
 		else if(curResurrect && f3SqDist(curResurrect->pos, pos)<Square(buildDistance+curResurrect->radius) && inBuildStance){
-			const UnitDef* ud=unitDefHandler->GetUnitByName(curResurrect->createdFromUnit);
+			const UnitDef* ud=unitDefHandler->GetUnitDefByName(curResurrect->createdFromUnit);
 			if(ud){
 				if ((modInfo.reclaimMethod != 1) && (curResurrect->reclaimLeft < 1)) {
 					// This corpse has been reclaimed a little, need to restore the resources
@@ -475,13 +475,13 @@ void CBuilder::SetResurrectTarget(CFeature* target)
 
 void CBuilder::SetCaptureTarget(CUnit* target)
 {
-	if(target==curCapture)
+	if (target == curCapture)
 		return;
 
 	StopBuild(false);
 	TempHoldFire();
 
-	curCapture=target;
+	curCapture = target;
 	AddDeathDependence(curCapture);
 
 	SetBuildStanceToward(target->pos);
@@ -683,7 +683,7 @@ void CBuilder::DependentDied(CObject *o)
 
 void CBuilder::SetBuildStanceToward(float3 pos)
 {
-	if (script->HasFunction(COBFN_StartBuilding)) {
+	if (script->HasStartBuilding()) {
 		const float3 wantedDir = (pos - midPos).Normalize();
 		const float h = GetHeadingFromVectorF(wantedDir.x, wantedDir.z);
 		const float p = asin(wantedDir.dot(updir));
@@ -727,7 +727,7 @@ void CBuilder::CreateNanoParticle(float3 goal, float radius, bool inverse)
 		return;
 #endif
 
-	if (ph->currentParticles < ph->maxParticles && unitDef->showNanoSpray) {
+	if (ph->currentNanoParticles < ph->maxNanoParticles && unitDef->showNanoSpray) {
 		float3 relWeaponFirePos = script->GetPiecePos(piece);
 		float3 weaponPos = pos + frontdir * relWeaponFirePos.z + updir * relWeaponFirePos.y + rightdir * relWeaponFirePos.x;
 

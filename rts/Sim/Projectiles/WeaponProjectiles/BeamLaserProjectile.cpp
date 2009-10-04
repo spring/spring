@@ -12,6 +12,7 @@ CR_BIND_DERIVED(CBeamLaserProjectile, CWeaponProjectile,
 		(float3(0,0,0),float3(0,0,0),0,0,float3(0,0,0),float3(0,0,0),NULL,0,0,0,NULL,0,0));
 
 CR_REG_METADATA(CBeamLaserProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(startPos),
 	CR_MEMBER(endPos),
 	CR_MEMBER(corecolstart),
@@ -30,7 +31,7 @@ CBeamLaserProjectile::CBeamLaserProjectile(const float3& startPos, const float3&
 	float startAlpha, float endAlpha, const float3& color, const float3& color2,
 	CUnit* owner, float thickness, float corethickness, float flaresize,
 	const WeaponDef* weaponDef, int ttl, float decay GML_PARG_C)
-:	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, false,  ttl GML_PARG_P),
+:	CWeaponProjectile((startPos + endPos) * 0.5f, ZeroVector, owner, 0, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
 	startPos(startPos),
 	endPos(endPos),
 	thickness(thickness),

@@ -320,7 +320,7 @@ AAI v0.70	- AAI now handles anti air/assault units, bombers and fighters with di
 
 		- Added different sub-groups for air only mods (light, medium, heavy & super heavy air assault)
 
-		- Added a message being displayed from time to time when AAI has not been loaded succesfully
+		- Added a message being displayed from time to time when AAI has not been loaded successfully
 
 		- Completly new combat unit selection (in theory, aai should react more dynamically to its 
 		  opponent's behaviour - requires some learning to work porperly)

@@ -19,10 +19,8 @@
 #include "StdAfx.h"
 #endif
 #include "lib/gml/gml.h"
-#include "FPUCheck.h"
 #include "LogOutput.h"
 #include "Exceptions.h"
-#include "myMath.h"
 
 #include "SpringApp.h"
 
@@ -49,8 +47,6 @@ int Run(int argc, char* argv[])
 		stack_end = (void*) &here;
 	}
 #endif
-
-	good_fpu_control_registers("::Run");
 
 #ifdef USE_GML
 	set_threadnum(0);
@@ -128,7 +124,6 @@ int Run(int argc, char* argv[])
  */
 int main(int argc, char* argv[])
 {
-	CMyMath::Init();
 	return Run(argc, argv);
 }
 
@@ -137,7 +132,6 @@ int main(int argc, char* argv[])
 #ifdef WIN32
 int WINAPI WinMain(HINSTANCE hInstanceIn, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-	CMyMath::Init();
 	return Run(__argc, __argv);
 }
 #endif

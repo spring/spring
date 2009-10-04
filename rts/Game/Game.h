@@ -27,6 +27,7 @@ class LuaInputReceiver;
 class CLoadSaveHandler;
 class Action;
 class ChatMessage;
+class SkirmishAIData;
 
 const int MAX_CONSECUTIVE_SIMFRAMES = 15;
 
@@ -150,7 +151,9 @@ private:
 	void ReColorTeams();
 
 	void ReloadCOB(const std::string& msg, int player);
-	void Skip(int toFrame);
+	void StartSkip(int toFrame);
+	void DrawSkip(bool blackscreen = true);
+	void EndSkip();
 
 	std::string hotBinding;
 	float inputTextPosX;
@@ -182,10 +185,10 @@ private:
 	void ClientReadNet();
 	void UpdateUI(bool cam);
 	bool DrawWorld();
-	
+
 	void SimFrame();
 	void StartPlaying();
-	
+
 	// to smooth out SimFrame calls
 	int leastQue;       ///< Lowest value of que in the past second.
 	float timeLeft;     ///< How many SimFrame() calls we still may do.
@@ -196,6 +199,15 @@ private:
 	unsigned char oldStatus;
 
 	void StoreCloaked(bool save);
+
+	int skipStartFrame;
+	int skipEndFrame;
+	int skipTotalFrames;
+	float skipSeconds;
+	bool skipSoundmute;
+	float skipOldSpeed;
+	float skipOldUserSpeed;
+	unsigned skipLastDraw;
 };
 
 

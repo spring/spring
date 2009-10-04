@@ -19,7 +19,7 @@
 #include "LuaPathFinder.h"
 #include "LuaRules.h"
 #include "LuaUtils.h"
-#include "ExternalAI/EngineOutHandler.h"
+#include "ExternalAI/SkirmishAIHandler.h"
 #include "Game/Game.h"
 #include "Game/GameSetup.h"
 #include "Game/Camera.h"
@@ -247,7 +247,6 @@ bool LuaSyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitRulesParams);
 
 	REGISTER_LUA_CFUNC(GetAllFeatures);
-	REGISTER_LUA_CFUNC(GetFeatureList);
 	REGISTER_LUA_CFUNC(GetFeatureDefID);
 	REGISTER_LUA_CFUNC(GetFeatureTeam);
 	REGISTER_LUA_CFUNC(GetFeatureAllyTeam);
@@ -392,6 +391,17 @@ static inline const UnitDef* EffectiveUnitDef(const CUnit* unit)
 	} else {
 		return ud;
 	}
+}
+
+
+static inline bool IsFeatureVisible(const CFeature* feature)
+{
+	if (fullRead)
+		return true;
+	if (readAllyTeam < 0) {
+		return fullRead;
+	}
+	return feature->IsInLosForAllyTeam(readAllyTeam);
 }
 
 
@@ -1028,15 +1038,12 @@ int LuaSyncedRead::GetTeamInfo(lua_State* L)
 		return 0;
 	}
 
-	bool isAiTeam = false;
-	if (!team->luaAI.empty() || team->isAI) {
-		isAiTeam = true;
-	}
+	const bool hasAIs = (skirmishAIHandler.GetSkirmishAIsInTeam(teamID).size() > 0);
 
 	lua_pushnumber(L,  team->teamNum);
 	lua_pushnumber(L,  team->leader);
 	lua_pushboolean(L, team->isDead);
-	lua_pushboolean(L, isAiTeam);
+	lua_pushboolean(L, hasAIs);
 	lua_pushstring(L,  team->side.c_str());
 	lua_pushnumber(L,  teamHandler->AllyTeam(team->teamNum));
 
@@ -1230,7 +1237,16 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 	if (team == NULL) {
 		return 0;
 	}
-	lua_pushstring(L, team->luaAI.c_str());
+
+	std::string luaAIName = "";
+	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(team->teamNum);
+	for (CSkirmishAIHandler::ids_t::const_iterator ai = saids.begin(); ai != saids.end(); ++ai) {
+		const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
+		if (aiData->isLuaAI) {
+			luaAIName = aiData->shortName;
+		}
+	}
+	lua_pushstring(L, luaAIName.c_str());
 	return 1;
 }
 
@@ -1308,34 +1324,44 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	int numVals = 0;
 
 	const int teamId = luaL_checkint(L, 1);
-	if (!teamHandler->IsValidTeam(teamId) || !eoh->IsSkirmishAI(teamId)) {
+	if (!teamHandler->IsValidTeam(teamId)) {
 		return numVals;
 	}
 
-	const SkirmishAIData* aiData = eoh->GetSkirmishAIData(teamId);
-	if (aiData == NULL) {
+	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamId);
+	if (saids.size() == 0) {
 		return numVals;
 	}
+	const size_t skirmishAIId    = *(saids.begin());
+	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
+	const bool isLocal           = skirmishAIHandler.IsLocalSkirmishAI(skirmishAIId);
 
 	// no ai info for synchronized scripts
 	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
 		HSTR_PUSH(L, "SYNCED_NONAME");
 		numVals++;
 	} else {
+		lua_pushnumber(L, skirmishAIId);
 		lua_pushstring(L, aiData->name.c_str());
-		lua_pushstring(L, aiData->shortName.c_str());
-		lua_pushstring(L, aiData->version.c_str());
-		numVals += 3;
+		lua_pushnumber(L, aiData->hostPlayer);
+		lua_pushnumber(L, isLocal);
+		numVals += 4;
 	}
 
-	lua_newtable(L);
-	std::map<std::string, std::string>::const_iterator o;
-	for (o = aiData->options.begin(); o != aiData->options.end(); ++o) {
-		lua_pushstring(L, o->first.c_str());
-		lua_pushstring(L, o->second.c_str());
-		lua_rawset(L, -3);
+	if (isLocal) {
+		lua_pushstring(L, aiData->shortName.c_str());
+		lua_pushstring(L, aiData->version.c_str());
+		numVals += 2;
+
+		lua_newtable(L);
+		std::map<std::string, std::string>::const_iterator o;
+		for (o = aiData->options.begin(); o != aiData->options.end(); ++o) {
+			lua_pushstring(L, o->first.c_str());
+			lua_pushstring(L, o->second.c_str());
+			lua_rawset(L, -3);
+		}
+		numVals++;
 	}
-	numVals++;
 
 	return numVals;
 }
@@ -1651,7 +1677,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 	set<int> defs;
 	if (lua_isnumber(L, 2)) {
 		const int unitDefID = lua_toint(L, 2);
-		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 		InsertSearchUnitDefs(ud, allied, defs);
 	}
 	else if (lua_istable(L, 2)) {
@@ -1659,7 +1685,7 @@ int LuaSyncedRead::GetTeamUnitsByDefs(lua_State* L)
 		for (lua_pushnil(L); lua_next(L, table) != 0; lua_pop(L, 1)) {
 			if (lua_isnumber(L, -1)) {
 				const int unitDefID = lua_toint(L, -1);
-				const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+				const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 				InsertSearchUnitDefs(ud, allied, defs);
 			}
 		}
@@ -1706,7 +1732,7 @@ int LuaSyncedRead::GetTeamUnitDefCount(lua_State* L)
 
 	// parse the unitDef
 	const int unitDefID = luaL_checkint(L, 2);
-	const UnitDef* unitDef = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (unitDef == NULL) {
 		luaL_error(L, "Bad unitDefID in GetTeamUnitDefCount()");
 	}
@@ -2255,9 +2281,7 @@ int LuaSyncedRead::GetFeaturesInRectangle(lua_State* L)
 	else {
 		for (int i = 0; i < rectFeatureCount; i++) {
 			const CFeature* feature = rectFeatures[i];
-			if ((feature->allyteam != -1) &&
-			    (feature->allyteam != readAllyTeam) &&
-			    !loshandler->InLos(feature->pos, readAllyTeam)) {
+			if (!IsFeatureVisible(feature)) {
 				continue;
 			}
 			count++;
@@ -2424,7 +2448,8 @@ int LuaSyncedRead::GetUnitTooltip(lua_State* L)
 	const UnitDef* effectiveDef = EffectiveUnitDef(unit);
 	if (effectiveDef->showPlayerName) {
 		tooltip = playerHandler->Player(teamHandler->Team(unit->team)->leader)->name;
-		if (teamHandler->Team(unit->team)->isAI) {
+		CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(unit->team);
+		if (saids.size() > 0) {
 			tooltip = std::string("AI@") + tooltip;
 		}
 	} else {
@@ -3184,7 +3209,7 @@ int LuaSyncedRead::GetUnitSeparation(lua_State* L)
 int LuaSyncedRead::GetUnitDefDimensions(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -3495,7 +3520,7 @@ static int PackBuildQueue(lua_State* L, bool canBuild, const char* caller)
 
 			if (canBuild) {
 				// skip build orders that this unit can not start
-				const UnitDef* order_ud = unitDefHandler->GetUnitByID(unitDefID);
+				const UnitDef* order_ud = unitDefHandler->GetUnitDefByID(unitDefID);
 				const UnitDef* builder_ud = unit->unitDef;
 				if ((order_ud == NULL) || (builder_ud == NULL)) {
 					continue; // something is wrong, bail
@@ -3679,22 +3704,6 @@ int LuaSyncedRead::FindUnitCmdDesc(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static inline bool IsFeatureVisible(const CFeature* feature)
-{
-	if (feature->allyteam < 0) {
-		return true; // global feature has allyteam -1
-	}
-	if (readAllyTeam < 0) {
-		return fullRead;
-	}
-	if ((readAllyTeam != feature->allyteam) &&
-	    (!loshandler->InLos(feature->pos, readAllyTeam))) {
-		return false;
-	}
-	return true;
-}
-
-
 static CFeature* ParseFeature(lua_State* L, const char* caller, int index)
 {
 	if (!lua_isnumber(L, index)) {
@@ -3801,25 +3810,10 @@ int LuaSyncedRead::GetAllFeatures(lua_State* L)
 }
 
 
-int LuaSyncedRead::GetFeatureList(lua_State* L)
-{
-	// NOTE: this is not really required now the all FeatureDefs are pre-loaded
-	CheckNoArgs(L, __FUNCTION__);
-	lua_newtable(L); {
-		const map<string, const FeatureDef*>& defs = featureHandler->GetFeatureDefs();
-		map<string, const FeatureDef*>::const_iterator it;
-		for (it = defs.begin(); it != defs.end(); ++it) {
-			LuaPushNamedNumber(L, it->first, it->second->id);
-		}
-	}
-	return 1;
-}
-
-
 int LuaSyncedRead::GetFeatureDefID(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->def->id);
@@ -3830,7 +3824,7 @@ int LuaSyncedRead::GetFeatureDefID(lua_State* L)
 int LuaSyncedRead::GetFeatureTeam(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	if (feature->allyteam < 0) {
@@ -3845,7 +3839,7 @@ int LuaSyncedRead::GetFeatureTeam(lua_State* L)
 int LuaSyncedRead::GetFeatureAllyTeam(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->allyteam);
@@ -3856,7 +3850,7 @@ int LuaSyncedRead::GetFeatureAllyTeam(lua_State* L)
 int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->health);
@@ -3869,7 +3863,7 @@ int LuaSyncedRead::GetFeatureHealth(lua_State* L)
 int LuaSyncedRead::GetFeatureHeight(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->height);
@@ -3880,7 +3874,7 @@ int LuaSyncedRead::GetFeatureHeight(lua_State* L)
 int LuaSyncedRead::GetFeatureRadius(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->radius);
@@ -3891,7 +3885,7 @@ int LuaSyncedRead::GetFeatureRadius(lua_State* L)
 int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->pos.x);
@@ -3904,7 +3898,7 @@ int LuaSyncedRead::GetFeaturePosition(lua_State* L)
 int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	const float3 dir = ::GetVectorFromHeading(feature->heading);
@@ -3918,7 +3912,7 @@ int LuaSyncedRead::GetFeatureDirection(lua_State* L)
 int LuaSyncedRead::GetFeatureHeading(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L, feature->heading);
@@ -3929,7 +3923,7 @@ int LuaSyncedRead::GetFeatureHeading(lua_State* L)
 int LuaSyncedRead::GetFeatureResources(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushnumber(L,  feature->RemainingMetal());
@@ -3944,7 +3938,7 @@ int LuaSyncedRead::GetFeatureResources(lua_State* L)
 int LuaSyncedRead::GetFeatureNoSelect(lua_State* L)
 {
 	CFeature* feature = ParseFeature(L, __FUNCTION__, 1);
-	if (feature == NULL) {
+	if (feature == NULL || !IsFeatureVisible(feature)) {
 		return 0;
 	}
 	lua_pushboolean(L, feature->noSelect);
@@ -4204,7 +4198,7 @@ int LuaSyncedRead::GetGroundBlocked(lua_State* L)
 
 			const CFeature* feature = dynamic_cast<const CFeature*>(s);
 			if (feature) {
-				if (fullRead || loshandler->InLos(feature, readAllyTeam)) {
+				if (IsFeatureVisible(feature)) {
 					HSTR_PUSH(L, "feature");
 					lua_pushnumber(L, feature->id);
 					return 2;
@@ -4243,28 +4237,6 @@ int LuaSyncedRead::GetGroundExtremes(lua_State* L)
 /******************************************************************************/
 /******************************************************************************/
 
-static int ParseFacing(lua_State* L, const char* caller, int index)
-{
-	// FIXME -- duplicate in LuaSyncedCtrl.cpp
-	if (lua_israwnumber(L, index)) {
-		return max(0, min(3, lua_toint(L, index)));
-	}
-	else if (lua_israwstring(L, index)) {
-		const string dir = StringToLower(lua_tostring(L, index));
-		if (dir == "s") { return 0; }
-		if (dir == "e") { return 1; }
-		if (dir == "n") { return 2; }
-		if (dir == "w") { return 3; }
-		if (dir == "south") { return 0; }
-		if (dir == "east")  { return 1; }
-		if (dir == "north") { return 2; }
-		if (dir == "west")  { return 3; }
-		luaL_error(L, "%s(): bad facing string", caller);
-	}
-	luaL_error(L, "%s(): bad facing parameter", caller);
-	return 0;
-}
-
 
 int LuaSyncedRead::TestBuildOrder(lua_State* L)
 {
@@ -4273,7 +4245,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 		lua_pushboolean(L, 0);
 		return 1;
 	}
-	const UnitDef* unitDef = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (unitDef == NULL) {
 		lua_pushboolean(L, 0);
 		return 1;
@@ -4282,7 +4254,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	const float3 pos(luaL_checkfloat(L, 2),
 	                 luaL_checkfloat(L, 3),
 	                 luaL_checkfloat(L, 4));
-	const int facing = ParseFacing(L, __FUNCTION__, 5);
+	const int facing = LuaUtils::ParseFacing(L, __FUNCTION__, 5);
 
 	BuildInfo bi;
 	bi.buildFacing = facing;
@@ -4296,11 +4268,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 	// 1 - mobile unit in the way
 	// 2 - free  (or if feature is != 0 then with a
 	//            blocking feature that can be reclaimed)
-	if ((feature == NULL) ||
-	    (!fullRead &&
-	     (feature->allyteam >= 0) &&
-	     (feature->allyteam != readAllyTeam) &&
-	     !loshandler->InLos(feature->pos, readAllyTeam))) {
+	if ((feature == NULL) || !IsFeatureVisible(feature)) {
 		lua_pushnumber(L, retval);
 		return 1;
 	}
@@ -4313,7 +4281,7 @@ int LuaSyncedRead::TestBuildOrder(lua_State* L)
 int LuaSyncedRead::Pos2BuildPos(lua_State* L)
 {
 	const int unitDefID = luaL_checkint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}

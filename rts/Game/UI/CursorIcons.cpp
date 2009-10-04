@@ -159,7 +159,7 @@ void CCursorIcons::DrawBuilds()
 	
 	std::set<BuildIcon>::iterator it;
 	for (it = buildIcons.begin() ; it != buildIcons.end(); ++it) {
-		const UnitDef* unitDef = unitDefHandler->GetUnitByID(-(it->cmd));
+		const UnitDef* unitDef = unitDefHandler->GetUnitDefByID(-(it->cmd));
 		unitDrawer->DrawBuildingSample(unitDef, it->team, it->pos, it->facing);
 	}
 

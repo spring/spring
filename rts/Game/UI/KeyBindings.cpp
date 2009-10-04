@@ -13,6 +13,7 @@
 #include "SDL_keysym.h"
 #include "KeyCodes.h"
 #include "KeySet.h"
+#include "SelectionKeyHandler.h"
 #include "KeyAutoBinder.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/UnitDefHandler.h"
@@ -557,12 +558,15 @@ void CKeyBindings::LoadDefaults()
 
 void CKeyBindings::PushAction(const Action& action)
 {
-	if (action.command == "keyload")
+	if (action.command == "keyload") {
 		Load("uikeys.txt");
+		selectionKeys->LoadSelectionKeys();
+	}
 	else if (action.command == "keyreload") {
 		Command("unbindall");
 		Command("unbind enter chat");
 		Load("uikeys.txt");
+		selectionKeys->LoadSelectionKeys();
 	}
 	else if (action.command == "keysave") {
 		if (Save("uikeys.tmp")) {  // tmp, not txt
@@ -819,7 +823,7 @@ bool CKeyBindings::FileSave(FILE* out) const
 			string comment;
 			if (unitDefHandler && (action.command.find("buildunit_") == 0)) {
 				const string unitName = action.command.substr(10);
-				const UnitDef* unitDef = unitDefHandler->GetUnitByName(unitName);
+				const UnitDef* unitDef = unitDefHandler->GetUnitDefByName(unitName);
 				if (unitDef) {
 					comment = "  // " + unitDef->humanName + " - " + unitDef->tooltip;
 				}

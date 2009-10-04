@@ -96,7 +96,7 @@ bool java_releaseStatic();
  * @param  className  fully qualified name of a Java class that implements
  *                    interface com.springrts.ai.AI, eg:
  *                    "com.myai.AI"
- * @param  teamI   The team that will be using this AI.
+ * @param  teamId  The team that will be using this AI.
  *                 Multiple teams may use the same AI implementation.
  * @return  true, if the AI implementation is now loaded
  */

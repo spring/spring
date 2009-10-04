@@ -1,10 +1,11 @@
 /**
- * @file GlobalStuff.h
- * @brief Globally accessible stuff
+ * @file GlobalUnsynced.h
+ * @brief Globally accessible unsynced stuff
  *
- * Contains the synced and unsynced global
- * data accessed by the program
+ * Contains globally accessible
+ * stuff that does not remain synced
  */
+
 #ifndef GLOBALSTUFF_H
 #define GLOBALSTUFF_H
 
@@ -24,8 +25,8 @@ class CGlobalUnsyncedStuff
 	CR_DECLARE(CGlobalUnsyncedStuff);
 
 public:
-	CGlobalUnsyncedStuff();  //!< Constructor
-	~CGlobalUnsyncedStuff(); //!< Destructor
+	CGlobalUnsyncedStuff();
+	~CGlobalUnsyncedStuff();
 
 	int    usRandInt();    //!< Unsynced random int
 	float  usRandFloat();  //!< Unsynced random float

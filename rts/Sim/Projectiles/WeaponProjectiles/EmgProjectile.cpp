@@ -13,6 +13,7 @@
 CR_BIND_DERIVED(CEmgProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,NULL));
 
 CR_REG_METADATA(CEmgProjectile,(
+	CR_SETFLAG(CF_Synced),
     CR_MEMBER(intensity),
     CR_MEMBER(color),
     CR_RESERVED(8)
@@ -21,7 +22,7 @@ CR_REG_METADATA(CEmgProjectile,(
 CEmgProjectile::CEmgProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, const float3& color, float intensity, int ttl,
 		const WeaponDef* weaponDef GML_PARG_C)
-:	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
+:	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
 	intensity(intensity),
 	color(color)
 {

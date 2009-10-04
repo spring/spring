@@ -34,10 +34,6 @@ CGameSetup::~CGameSetup()
 {
 }
 
-/**
-@brief Load unit restrictions
-@post restrictedUnits initialized
- */
 void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
 {
 	int numRestrictions;
@@ -55,10 +51,6 @@ void CGameSetup::LoadUnitRestrictions(const TdfParser& file)
 	}
 }
 
-/**
-@brief Load startpositions from map
-@pre mapName, numTeams, teamStartNum initialized and the map loaded (LoadMap())
- */
 void CGameSetup::LoadStartPositionsFromMap()
 {
 	MapParser mapParser(mapName);
@@ -71,13 +63,6 @@ void CGameSetup::LoadStartPositionsFromMap()
 	}
 }
 
-/**
-@brief Load startpositions from map/script
-@pre numTeams and startPosType initialized
-@post readyTeams, teamStartNum and team start positions initialized
-
-Unlike the other functions, this is not called on Init() , instead we wait for CPreGame to call this. The reason is that the map is not known before CPreGame recieves the gamedata from the server.
- */
 void CGameSetup::LoadStartPositions(bool withoutMap)
 {
 	TdfParser file(gameSetupText.c_str(), gameSetupText.length());
@@ -135,11 +120,6 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 }
 
 
-/**
-@brief Load players and remove gaps in the player numbering.
-@pre numPlayers initialized
-@post players loaded, numDemoPlayers initialized
- */
 void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameList)
 {
 	numDemoPlayers = 0;
@@ -181,9 +161,6 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 		logOutput.Print("Warning: %i players in GameSetup script (NumPlayers says %i)", playerStartingData.size(), playerCount);
 }
 
-/**
- * @brief Load LUA and Skirmish AIs.
- */
 void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& nameList)
 {
 	// i = AI index in game (no gaps), a = AI index in script
@@ -203,8 +180,8 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 		if (data.team == -1) {
 			throw content_error("missing AI.Team in GameSetup script");
 		}
-		data.hostPlayerNum = atoi(file.SGetValueDef("-1", s + "Host").c_str());
-		if (data.hostPlayerNum == -1) {
+		data.hostPlayer = atoi(file.SGetValueDef("-1", s + "Host").c_str());
+		if (data.hostPlayer == -1) {
 			throw content_error("missing AI.Host in GameSetup script");
 		}
 
@@ -256,15 +233,10 @@ const SkirmishAIData* CGameSetup::GetSkirmishAIDataForTeam(int teamId) const {
 	}
 }
 
-size_t CGameSetup::GetSkirmishAIs() const {
-	return team_skirmishAI.size();
+const std::vector<SkirmishAIData>& CGameSetup::GetSkirmishAIs() const {
+	return skirmishAIStartingData;
 }
 
-/**
-@brief Load teams and remove gaps in the team numbering.
-@pre numTeams, hostDemo initialized
-@post teams loaded
- */
 void CGameSetup::LoadTeams(const TdfParser& file)
 {
 	// i = team index in game (no gaps), a = team index in script
@@ -304,11 +276,6 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		logOutput.Print("Warning: %i teams in GameSetup script (NumTeams: %i)", teamStartingData.size(), teamCount);
 }
 
-/**
-@brief Load allyteams and remove gaps in the allyteam numbering.
-@pre numAllyTeams initialized
-@post allyteams loaded, alliances initialised (no remapping needed here)
-*/
 void CGameSetup::LoadAllyTeams(const TdfParser& file)
 {
 	// i = allyteam index in game (no gaps), a = allyteam index in script
@@ -357,7 +324,6 @@ void CGameSetup::LoadAllyTeams(const TdfParser& file)
 		logOutput.Print("Warning: incorrect number of allyteams in GameSetup script");
 }
 
-/** @brief Update all player indices to refer to the right player. */
 void CGameSetup::RemapPlayers()
 {
 	// relocate Team.TeamLeader field
@@ -367,16 +333,15 @@ void CGameSetup::RemapPlayers()
 		}
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}
-	// relocate AI.hostPlayerNum field
+	// relocate AI.hostPlayer field
 	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
-		if (playerRemap.find(skirmishAIStartingData[a].hostPlayerNum) == playerRemap.end()) {
-			throw content_error("invalid AI.hostPlayerNum in GameSetup script");
+		if (playerRemap.find(skirmishAIStartingData[a].hostPlayer) == playerRemap.end()) {
+			throw content_error("invalid AI.Host in GameSetup script");
 		}
-		skirmishAIStartingData[a].hostPlayerNum = playerRemap[skirmishAIStartingData[a].hostPlayerNum];
+		skirmishAIStartingData[a].hostPlayer = playerRemap[skirmishAIStartingData[a].hostPlayer];
 	}
 }
 
-/** @brief Update all team indices to refer to the right team. */
 void CGameSetup::RemapTeams()
 {
 	// relocate Player.team field
@@ -393,13 +358,12 @@ void CGameSetup::RemapTeams()
 	// relocate AI.team field
 	for (size_t a = 0; a < skirmishAIStartingData.size(); ++a) {
 		if (teamRemap.find(skirmishAIStartingData[a].team) == teamRemap.end())
-			throw content_error("invalid AI.team in GameSetup script");
+			throw content_error("invalid AI.Team in GameSetup script");
 		skirmishAIStartingData[a].team = teamRemap[skirmishAIStartingData[a].team];
 		team_skirmishAI[skirmishAIStartingData[a].team] = &(skirmishAIStartingData[a]);
 	}
 }
 
-/** @brief Update all allyteam indices to refer to the right allyteams. (except allies) */
 void CGameSetup::RemapAllyteams()
 {
 	// relocate Team.Allyteam field
@@ -410,6 +374,8 @@ void CGameSetup::RemapAllyteams()
 		teamStartingData[a].teamAllyteam = allyteamRemap[teamStartingData[a].teamAllyteam];
 	}
 }
+
+// TODO: RemapSkirmishAIs()
 
 bool CGameSetup::Init(const std::string& buf)
 {
@@ -490,4 +456,3 @@ bool CGameSetup::Init(const std::string& buf)
 
 	return true;
 }
-

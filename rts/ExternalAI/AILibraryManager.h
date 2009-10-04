@@ -51,11 +51,6 @@ public:
 	virtual const T_interfaceInfos& GetInterfaceInfos() const;
 	virtual const T_skirmishAIInfos& GetSkirmishAIInfos() const;
 
-	virtual const std::vector<std::string>& GetSkirmishAIOptionValueKeys(int teamId) const;
-	virtual const std::map<std::string, std::string>& GetSkirmishAIOptionValues(int teamId) const;
-
-	virtual const T_skirmishAIInfos& GetUsedSkirmishAIInfos();
-
 	virtual const T_dupInt& GetDuplicateInterfaceInfos() const;
 	virtual const T_dupSkirm& GetDuplicateSkirmishAIInfos() const;
 
@@ -65,7 +60,7 @@ public:
 	 * A Skirmish AI (its library) is only really loaded
 	 * when it is not yet loaded.
 	 */
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(
+	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(
 			const SkirmishAIKey& skirmishAIKey);
 	/**
 	 * A Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
@@ -80,7 +75,7 @@ public:
 	virtual void ReleaseEverything();
 
 private:
-	typedef std::map<const AIInterfaceKey, IAIInterfaceLibrary*>
+	typedef std::map<const AIInterfaceKey, CAIInterfaceLibrary*>
 			T_loadedInterfaces;
 	T_loadedInterfaces loadedAIInterfaceLibraries;
 
@@ -89,14 +84,6 @@ private:
 	T_interfaceInfos interfaceInfos;
 	T_skirmishAIInfos skirmishAIInfos;
 
-	std::map<int, std::vector<std::string> > teamId_skirmishAIOptionValueKeys;
-	static const std::vector<std::string> EMPTY_OPTION_VALUE_KEYS;
-	std::map<int, std::map<std::string, std::string> > teamId_skirmishAIOptionValues;
-	static const std::map<std::string, std::string> EMPTY_OPTION_VALUES;
-
-	T_skirmishAIInfos usedSkirmishAIInfos;
-	bool usedSkirmishAIInfos_initialized;
-
 	T_dupInt duplicateInterfaceInfos;
 	T_dupSkirm duplicateSkirmishAIInfos;
 
@@ -104,7 +91,7 @@ private:
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
 	 */
-	IAIInterfaceLibrary* FetchInterface(const AIInterfaceKey& interfaceKey);
+	CAIInterfaceLibrary* FetchInterface(const AIInterfaceKey& interfaceKey);
 	/**
 	 * Unloads the interface if its load count reaches 0.
 	 */

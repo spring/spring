@@ -11,6 +11,7 @@
 #include "Rendering/UnitModels/3DModel.h"
 #include "Matrix44f.h"
 #include "Sim/Misc/LosHandler.h"
+#include "Sim/Misc/ModInfo.h"
 
 #define TREE_RADIUS 20
 
@@ -40,7 +41,7 @@ public:
 	bool AddBuildPower(float amount, CUnit* builder);
 	void DoDamage(const DamageArray& damages, CUnit* attacker, const float3& impulse);
 	void Kill(float3& impulse);
-	void ForcedMove(const float3& newPos);
+	void ForcedMove(const float3& newPos, bool snapToGround = true);
 	void ForcedSpin(const float3& newDir);
 	virtual bool Update(void);
 	bool UpdatePosition(void);
@@ -55,8 +56,20 @@ public:
 
 	bool IsInLosForAllyTeam(int allyteam) const
 	{
-		return (this->allyteam == -1 || this->allyteam == allyteam
-			|| loshandler->InLos(this->pos, allyteam));
+		if (alwaysVisible)
+			return true;
+		switch (modInfo.featureVisibility) {
+			case CModInfo::FEATURELOS_NONE:
+			default:
+				return loshandler->InLos(this->pos, allyteam);
+			case CModInfo::FEATURELOS_GAIAONLY:
+				return (this->allyteam == -1 || loshandler->InLos(this->pos, allyteam));
+			case CModInfo::FEATURELOS_GAIAALLIED:
+				return (this->allyteam == -1 || this->allyteam == allyteam
+					|| loshandler->InLos(this->pos, allyteam));
+			case CModInfo::FEATURELOS_ALL:
+				return true;
+		}
 	}
 
 	// should not be here

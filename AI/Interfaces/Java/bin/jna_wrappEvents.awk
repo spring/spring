@@ -20,6 +20,9 @@ BEGIN {
 	# define the field splitter(-regex)
 	FS = "[ \t]+";
 
+	# Used by other scripts
+	JAVA_MODE = 1;
+
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
@@ -128,34 +131,47 @@ function printOOAIFactoryHeader(outFile) {
 	print(" * @author	hoijui") >> outFile;
 	print(" * @version	GENERATED") >> outFile;
 	print(" */") >> outFile;
-	print("public abstract class OOAIFactory implements AI {") >> outFile;
+	print("public abstract class " myOOAIFactoryClass " implements AI {") >> outFile;
 	print("") >> outFile;
 	print("	private Map<Integer, OOAI> ais = new HashMap<Integer, OOAI>();") >> outFile;
 	print("	private Map<Integer, OOAICallback> ooClbs = new HashMap<Integer, OOAICallback>();") >> outFile;
 	print("") >> outFile;
 	print("	@Override") >> outFile;
-	print("	public final int init(int teamId, AICallback callback) {") >> outFile;
+	print("	public int init(int teamId, AICallback callback) {") >> outFile;
+	print("") >> outFile;
+	print("		int ret = 0;") >> outFile;
 	print("") >> outFile;
 	print("		OOAICallback ooCallback = OOAICallback.getInstance(callback, teamId);") >> outFile;
-	print("		OOAI ai = createAI(teamId, ooCallback);") >> outFile;
-	print("		if (ai != null) {") >> outFile;
+	print("		OOAI ai = null;") >> outFile;
+	print("		try {") >> outFile;
+	print("			ai = createAI(teamId, ooCallback);") >> outFile;
+	print("			if (ai == null) {") >> outFile;
+	print("				ret = 1;") >> outFile;
+	print("			}") >> outFile;
+	print("		} catch (Throwable t) {") >> outFile;
+	print("			ret = 2;") >> outFile;
+	print("			t.printStackTrace();") >> outFile;
+	print("		}") >> outFile;
+	print("") >> outFile;
+	print("		if (ret == 0) {") >> outFile;
 	print("			ais.put(teamId, ai);") >> outFile;
 	print("		}") >> outFile;
-	print("		return (ai == null) ? -1 : 0;") >> outFile;
+	print("") >> outFile;
+	print("		return ret;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
 	print("	@Override") >> outFile;
-	print("	public final int release(int teamId) {") >> outFile;
+	print("	public int release(int teamId) {") >> outFile;
 	print("") >> outFile;
 	print("		OOAI ai = ais.remove(teamId);") >> outFile;
 	print("		ooClbs.remove(teamId);") >> outFile;
-	print("		return (ai == null) ? -1 : 0;") >> outFile;
+	print("		return (ai == null) ? 1 : 0;") >> outFile;
 	print("	}") >> outFile;
 	print("") >> outFile;
 	print("	@Override") >> outFile;
-	print("	public final int handleEvent(int teamId, int topic, Pointer event) {") >> outFile;
+	print("	public int handleEvent(int teamId, int topic, Pointer event) {") >> outFile;
 	print("") >> outFile;
-	print("		int _ret = -1;") >> outFile;
+	print("		int _ret = 3;") >> outFile;
 	print("") >> outFile;
 	print("		OOAI ai = ais.get(teamId);") >> outFile;
 	print("		OOAICallback ooClb = ooClbs.get(teamId);") >> outFile;
@@ -167,8 +183,9 @@ function printOOAIFactoryHeader(outFile) {
 }
 function printOOAIFactoryEnd(outFile) {
 
-	print("					default:") >> outFile;
+	print("					default: {") >> outFile;
 	print("						_ret = 1;") >> outFile;
+	print("					}") >> outFile;
 	print("				}") >> outFile;
 	print("			} catch (Throwable t) {") >> outFile;
 	print("				_ret = 2;") >> outFile;
@@ -204,7 +221,7 @@ function printEventOO(evtIndex) {
 		if (type_jna == "int[]") {
 			# Pointer.getIntArray(int offset, int arraySize)
 			# we assume that the next param contians the array size
-			name = name ".getIntArray(0, " evtsMembers_name[evtIndex, m+1]; ")";
+			name = name ".getIntArray(0, " evtsMembers_name[evtIndex, m+1] ")";
 		}
 		paramsEvt = paramsEvt ", evt." name;
 	}
@@ -244,22 +261,21 @@ function printEventOO(evtIndex) {
 	print("		return 0; // signaling: OK") >> myOOAIAbstractFile;
 	print("	}") >> myOOAIAbstractFile;
 
-	print("\t\t\t\t\t" "case " eCls ".TOPIC:") >> myOOAIFactoryFile;
-	print("\t\t\t\t\t\t" "{") >> myOOAIFactoryFile;
-	print("\t\t\t\t\t\t\t" eCls " evt = new " eCls "(event);") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t" "case " eCls ".TOPIC: {") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t\t" eCls " evt = new " eCls "(event);") >> myOOAIFactoryFile;
 	if (eNameLowerized == "init") {
-		print("\t\t\t\t\t\t\t" "ooClb = OOAICallback.getInstance(evt.callback, evt.team);") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t" "ooClbs.put(teamId, ooClb);") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "ooClb = OOAICallback.getInstance(evt.callback, evt.team);") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "ooClbs.put(teamId, ooClb);") >> myOOAIFactoryFile;
 	} else if (eNameLowerized == "playerCommand") {
-		print("\t\t\t\t\t\t\t" "java.util.ArrayList<Unit> units = new java.util.ArrayList<Unit>(evt.numUnitIds);") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t" "for (int i=0; i < evt.numUnitIds; i++) {") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t\t" "units.add(Unit.getInstance(ooClb, evt.unitIds.getInt(i)));") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t" "}") >> myOOAIFactoryFile;
-		print("\t\t\t\t\t\t\t" "AICommand command = AICommandWrapper.wrapp(evt.commandTopic, evt.commandData);") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "java.util.ArrayList<Unit> units = new java.util.ArrayList<Unit>(evt.numUnitIds);") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "for (int i=0; i < evt.numUnitIds; i++) {") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t\t" "units.add(Unit.getInstance(ooClb, evt.unitIds.getInt(i)));") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "}") >> myOOAIFactoryFile;
+		print("\t\t\t\t\t\t" "AICommand command = AICommandWrapper.wrapp(evt.commandTopic, evt.commandData);") >> myOOAIFactoryFile;
 	}
-	print("\t\t\t\t\t\t\t" "_ret = ai." eNameLowerized "(" paramsEvt ");") >> myOOAIFactoryFile;
-	print("\t\t\t\t\t\t\t" "break;") >> myOOAIFactoryFile;
-	print("\t\t\t\t\t\t" "}") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t\t" "_ret = ai." eNameLowerized "(" paramsEvt ");") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t\t" "break;") >> myOOAIFactoryFile;
+	print("\t\t\t\t\t" "}") >> myOOAIFactoryFile;
 }
 
 function printEventOOAIFactory(evtIndex) {

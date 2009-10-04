@@ -59,6 +59,10 @@ void CRotOverheadController::MouseWheelMove(float move)
 	pos.y = height + gheight;
 }
 
+void CRotOverheadController::Update()
+{
+	camera->RestoreUp();
+}
 
 float3 CRotOverheadController::GetPos()
 {

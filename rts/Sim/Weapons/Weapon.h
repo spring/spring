@@ -110,7 +110,7 @@ public:
 	int fireSoundId;
 	float fireSoundVolume;
 
-	bool cobHasBlockShot;					// set when the script has a BlockShot() function for this weapon
+	bool hasBlockShot;						// set when the script has a BlockShot() function for this weapon
 	bool hasTargetWeight;					// set when there's a TargetWeight() function for this weapon
 	bool angleGood;							// set when script indicated ready to fire
 	bool avoidTarget;						// set when the script wants the weapon to pick a new target, reset once one has been chosen

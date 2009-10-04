@@ -21,6 +21,16 @@ public:
 	CCamera();
 	~CCamera();
 	
+	void Roll(float rad);
+	void Pitch(float rad);
+
+	void RestoreUp()
+	{
+		up.x = 0.0f;
+		up.y = 1.0f;
+		up.z = 0.0f;
+	};
+
 	float3 pos;
 	float3 pos2;		//use this for calculating orthodirections (might differ from pos when calcing shadows)
 	float3 rot;			//varning inte alltid uppdaterad

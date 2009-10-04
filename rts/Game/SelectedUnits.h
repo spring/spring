@@ -17,7 +17,7 @@ public:
 	void Init(unsigned numPlayers);
 	void SelectGroup(int num);
 	void AiOrder(int unitid, const Command& c, int playerID);
-	int GetDefaultCmd(CUnit* unit,CFeature* feature);
+	int GetDefaultCmd(const CUnit* unit, const CFeature* feature);
 	bool CommandsChanged();
 	void NetOrder(Command& c,int player);
 	void NetSelect(vector<int>& s,int player);

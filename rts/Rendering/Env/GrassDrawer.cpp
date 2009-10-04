@@ -411,8 +411,11 @@ void CGrassDrawer::Draw(void)
 	}
 	glDisable(GL_BLEND);
 	glDisable(GL_ALPHA_TEST);
-	glEnable(GL_FOG);
-	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
+
+	if(gu->drawFog) {
+		glEnable(GL_FOG);
+		glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
+	}
 
 	CGrassBlockDrawer drawer;
 
@@ -535,7 +538,10 @@ void CGrassDrawer::Draw(void)
 	//cleanup stuff
 	glDisable( GL_VERTEX_PROGRAM_ARB );
 	glDepthMask(true);
-	glEnable(GL_FOG);
+
+	if(gu->drawFog)
+		glEnable(GL_FOG);
+
 	glDisable(GL_ALPHA_TEST);
 
 	if(shadowHandler->drawShadows && !gd->DrawExtraTex()){

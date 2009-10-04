@@ -1236,16 +1236,17 @@ int LuaOpenGL::Text(lua_State* L)
 		const char* c = lua_tostring(L, 5);
 		while (*c != 0) {
 	  		switch (*c) {
-				case 'c': { options |= FONT_CENTER;           break; }
-				case 'r': { options |= FONT_RIGHT;            break; }
+				case 'c': { options |= FONT_CENTER;       break; }
+				case 'r': { options |= FONT_RIGHT;        break; }
 
-				case 'v': { options |= FONT_VCENTER;          break; }
-				case 'd': { options |= FONT_BASELINE;         break; }
-				case 'b': { options |= FONT_BOTTOM;           break; }
-				case 't': { options |= FONT_TOP;              break; }
-				case 'a': { options |= FONT_ASCENDER;         break; }
+				case 'a': { options |= FONT_ASCENDER;     break; }
+				case 't': { options |= FONT_TOP;          break; }
+				case 'v': { options |= FONT_VCENTER;      break; }
+				case 'x': { options |= FONT_BASELINE;     break; }
+				case 'b': { options |= FONT_BOTTOM;       break; }
+				case 'd': { options |= FONT_DESCENDER;    break; }
 
-				case 's': { options |= FONT_SHADOW;           break; }
+				case 's': { options |= FONT_SHADOW;       break; }
 				case 'o': { options |= FONT_OUTLINE; outline = true; lightOut = false;     break; }
 				case 'O': { options |= FONT_OUTLINE; outline = true; lightOut = true;     break; }
 			}
@@ -1723,7 +1724,7 @@ int LuaOpenGL::UnitShape(lua_State* L)
 		luaL_error(L, "Incorrect arguments to gl.UnitShape(unitDefID, team)");
 	}
 	const int unitDefID = lua_toint(L, 1);
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -1821,19 +1822,15 @@ int LuaOpenGL::UnitPieceMultMatrix(lua_State* L)
 
 static inline bool IsFeatureVisible(const CFeature* feature)
 {
-	if (feature->allyteam < 0) {
-		return true; // global feature has allyteam -1
-	}
+	if (CLuaHandle::GetActiveFullRead())
+		return true;
+
 	const CLuaHandle* lh = CLuaHandle::GetActiveHandle();
 	const int readAllyTeam = lh->GetReadAllyTeam();
 	if (readAllyTeam < 0) {
 		return (readAllyTeam == CEventClient::AllAccessTeam);
 	}
-	if ((readAllyTeam != feature->allyteam) &&
-	    (!loshandler->InLos(feature->pos, readAllyTeam))) {
-		return false;
-	}
-	return true;
+	return feature->IsInLosForAllyTeam(readAllyTeam);
 }
 
 
@@ -3592,18 +3589,22 @@ static bool ParseUnitTexture(const string& texture)
 
 	S3DModel* model;
 
-	if (static_cast<size_t>(id) >= uh->MaxUnits()) {
-		const FeatureDef* fd = featureHandler->GetFeatureDefByID(id - uh->MaxUnits());
+	if (id < 0) {
+		const FeatureDef* fd = featureHandler->GetFeatureDefByID(-id);
 		if (fd == NULL) {
 			return false;
 		}
 		model = LoadModel(fd);
 	} else {
-		const UnitDef* ud = unitDefHandler->GetUnitByID(id);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(id);
 		if (ud == NULL) {
 			return false;
 		}
 		model = ud->LoadModel();
+	}
+
+	if (model == NULL) {
+		return false;
 	}
 
 	const unsigned int texType = model->textureType;
@@ -3636,8 +3637,8 @@ int LuaOpenGL::Texture(lua_State* L)
 	// NOTE: current formats:
 	//
 	// #12          --  unitDef 12 buildpic
-	// %34:1        --  unitDef 34 s3o tex2
-	// %5034:1      --  featureDef 34+uh->MaxUnits() s3o tex2
+	// %34:0        --  unitDef 34 s3o tex1
+	// %-34:1       --  featureDef 34 s3o tex2
 	// !56          --  lua generated texture 56
 	// $shadow      --  shadowmap
 	// $specular    --  specular cube map
@@ -3702,7 +3703,7 @@ int LuaOpenGL::Texture(lua_State* L)
 		if (endPtr == startPtr) {
 			lua_pushboolean(L, false);
 		} else {
-			const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 			if (ud != NULL) {
 				glBindTexture(GL_TEXTURE_2D, unitDefHandler->GetUnitDefImage(ud));
 				glEnable(GL_TEXTURE_2D);
@@ -3720,7 +3721,7 @@ int LuaOpenGL::Texture(lua_State* L)
 		if (endPtr == startPtr) {
 			lua_pushboolean(L, false);
 		} else {
-			const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+			const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 			if (ud != NULL) {
 				ud->iconType->BindTexture();
 				glEnable(GL_TEXTURE_2D);
@@ -3921,7 +3922,7 @@ static bool PushUnitTextureInfo(lua_State* L, const string& texture)
 	if ((endPtr == startPtr) || (*endPtr != ':')) {
 		return 0;
 	}
-	const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+	const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 	if (ud == NULL) {
 		return 0;
 	}
@@ -3970,7 +3971,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (endPtr == startPtr) {
 			return 0;
 		}
-		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 		if (ud == NULL) {
 			return 0;
 		}
@@ -3986,7 +3987,7 @@ int LuaOpenGL::TextureInfo(lua_State* L)
 		if (endPtr == startPtr) {
 			return 0;
 		}
-		const UnitDef* ud = unitDefHandler->GetUnitByID(unitDefID);
+		const UnitDef* ud = unitDefHandler->GetUnitDefByID(unitDefID);
 		if (ud == NULL) {
 			return 0;
 		}

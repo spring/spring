@@ -53,7 +53,7 @@ int CPlayerHandler::Player(const std::string& name) const
 
 void CPlayerHandler::PlayerLeft(int player, unsigned char reason)
 {
-	const char *type = Player(player)->spectator ? "Spectator" : "Player";
+	const char *type = Player(player)->GetType();
 	switch (reason) {
 		case 1: {
 			logOutput.Print("%s %s left", type, Player(player)->name.c_str());
@@ -72,18 +72,19 @@ void CPlayerHandler::PlayerLeft(int player, unsigned char reason)
 	Player(player)->ping = 0;
 }
 
-int CPlayerHandler::ActivePlayersInTeam(int teamId) const
+std::vector<int> CPlayerHandler::ActivePlayersInTeam(int teamId) const
 {
-	size_t numPlayersInTeam = 0;
+	std::vector<int> playersInTeam;
 
-	for (playerVec::const_iterator pi = players.begin(); pi != players.end(); ++pi) {
+	size_t p = 0;
+	for(playerVec::const_iterator pi = players.begin(); pi != players.end(); ++pi, ++p) {
 		// do not count spectators, or demos will desync
 		if (pi->active && !pi->spectator && (pi->team == teamId)) {
-			++numPlayersInTeam;
+			playersInTeam.push_back(p);
 		}
 	}
 
-	return numPlayersInTeam;
+	return playersInTeam;
 }
 
 void CPlayerHandler::GameFrame(int frameNum)

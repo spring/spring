@@ -106,8 +106,9 @@ bool CFileHandler::TryBaseFS(const string& filename)
 }
 
 
-void CFileHandler::Init(const string& filename, const string& modes)
+void CFileHandler::Init(const string& _filename, const string& modes)
 {
+	filename = _filename;
 	const char* c = modes.c_str();
 	while (c[0] != 0) {
 		if (c[0] == SPRING_VFS_RAW[0])  { if (TryRawFS(filename))  { return; } }
@@ -150,14 +151,32 @@ int CFileHandler::Read(void* buf,int length)
 }
 
 
-void CFileHandler::Seek(int length)
+void CFileHandler::Seek(int length, ios_base::seekdir where)
 {
 	GML_RECMUTEX_LOCK(file); // Seek
 
-	if (ifs) {
-		ifs->seekg(length);
-	} else if (hpiFileBuffer){
-		hpiOffset = length;
+	if (ifs)
+	{
+#ifdef WIN32
+		// on mingw, EOF bit does not get reset when seeking to another pos
+		ifs->clear();
+#endif
+		ifs->seekg(length, where);
+	}
+	else if (hpiFileBuffer)
+	{
+		if (where == std::ios_base::beg)
+		{
+			hpiOffset = length;
+		}
+		else if (where == std::ios_base::cur)
+		{
+			hpiOffset += length;
+		}
+		else if (where == std::ios_base::end)
+		{
+			hpiOffset = hpiLength + length;
+		}
 	}
 }
 
@@ -226,6 +245,10 @@ bool CFileHandler::LoadStringData(string& data)
 	return true;
 }
 
+std::string CFileHandler::GetFileExt() const
+{
+	return filesystem.GetExtension(filename);
+}
 
 /******************************************************************************/
 

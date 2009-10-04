@@ -9,23 +9,24 @@
 class CNullUnitScript : public CUnitScript
 {
 private:
-	std::vector<int> scriptIndex;
+	std::vector<LocalModelPiece*> pieces;
 
 protected:
+	CNullUnitScript();
+
 	virtual void ShowScriptError(const std::string& msg);
 
 public:
-	CNullUnitScript(CUnit* unit);
+	static CNullUnitScript value;
 
 	// callins
 	virtual void RawCall(int functionId);
 	virtual void Create();
 	virtual void Killed();
-	virtual void SetDirection(float heading);
-	virtual void SetSpeed(float speed, float cob_mult);
+	virtual void WindChanged(float heading, float speed);
+	virtual void ExtractionRateChanged(float speed);
 	virtual void RockUnit(const float3& rockDir);
-	virtual void HitByWeapon(const float3& hitDir);
-	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage);
+	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage);
 	virtual void SetSFXOccupy(int curTerrainType);
 	virtual void QueryLandingPads(std::vector<int>& out_pieces);
 	virtual void BeginTransport(const CUnit* unit);
@@ -35,6 +36,21 @@ public:
 	virtual void StartBuilding(float heading, float pitch);
 	virtual int  QueryNanoPiece();
 	virtual int  QueryBuildInfo();
+
+	virtual void Destroy();
+	virtual void StartMoving();
+	virtual void StopMoving();
+	virtual void StartUnload();
+	virtual void EndTransport();
+	virtual void StartBuilding();
+	virtual void StopBuilding();
+	virtual void Falling();
+	virtual void Landed();
+	virtual void Activate();
+	virtual void Deactivate();
+	virtual void MoveRate(int curRate);
+	virtual void FireWeapon(int weaponNum);
+	virtual void EndBurst(int weaponNum);
 
 	// weapon callins
 	virtual int   QueryWeapon(int weaponNum);

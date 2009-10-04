@@ -42,6 +42,17 @@ function hasStoredDoc() {
 #function getStoredDocLines() {
 #	return docComLines_num__doc;
 #}
+function refineTextOfDocLine(rawText__doc) {
+
+	refinedText__doc = rawText__doc;
+
+	# filter out the @brief tag, as it is not supported by JavaDoc
+	if (JAVA_MODE) {
+		sub(/@brief[ \t]*/, "", refinedText__doc);
+	}
+
+	return refinedText__doc;
+}
 
 function printStoredDoc(indent__doc) {
 
@@ -62,7 +73,7 @@ function storeDocLines(container__doc, index__doc) {
 
 	container__doc[index__doc, "*"] = docComLines_num__doc;
 	for (l__doc=0; l__doc < docComLines_num__doc; l__doc++) {
-		container__doc[index__doc, l__doc] = docComLines__doc[l__doc];
+		container__doc[index__doc, l__doc] = refineTextOfDocLine(docComLines__doc[l__doc]);
 	}
 	docComLines_num__doc = 0;
 }

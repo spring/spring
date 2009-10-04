@@ -43,7 +43,7 @@ CBasicSky::CBasicSky()
 	updatecounter=0;
 
 	domeheight=cos(PI/16)*1.01f;
-	domeWidth=sin(2*PI/32)*400*1.7f;
+	domeWidth=sin(PI/16)*400*1.7f;
 
 	sundir2=mapInfo->light.sunDir;
 	sundir2.y=0;
@@ -94,49 +94,45 @@ CBasicSky::CBasicSky()
 	glEnable(GL_FOG);
 	glColor4f(1,1,1,1);
 
-	glDisable(GL_TEXTURE_2D);
 
+	//! Draw dome
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glDisable(GL_TEXTURE_2D); //! texture0 uses a texture matrix for cloud movement!
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, skyTex);
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	for(y=0;y<Y_PART;y++){
 		for(int x=0;x<X_PART;x++){
 			glBegin(GL_TRIANGLE_STRIP);
-			float3 c=GetCoord(x,y);
+				float3 c=GetCoord(x,y);
+				glMultiTexCoord2f(GL_TEXTURE1, c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
+				glVertex3f(c.x,c.y,c.z);
 
-//			glTexCoord2f(c.x*0.025f,c.z*0.025f);
-			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
-			glVertex3f(c.x,c.y,c.z);
+				c=GetCoord(x,y+1);
+				glMultiTexCoord2f(GL_TEXTURE1, c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
+				glVertex3f(c.x,c.y,c.z);
 
-			c=GetCoord(x,y+1);
+				c=GetCoord(x+1,y);
+				glMultiTexCoord2f(GL_TEXTURE1, c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
+				glVertex3f(c.x,c.y,c.z);
 
-//			glTexCoord2f(c.x*0.025f,c.z*0.025f);
-			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
-			glVertex3f(c.x,c.y,c.z);
-
-			c=GetCoord(x+1,y);
-
-//			glTexCoord2f(c.x*0.025f,c.z*0.025f);
-			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
-			glVertex3f(c.x,c.y,c.z);
-
-			c=GetCoord(x+1,y+1);
-
-//			glTexCoord2f(c.x*0.025f,c.z*0.025f);
-			glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
-			glVertex3f(c.x,c.y,c.z);
-
+				c=GetCoord(x+1,y+1);
+				glMultiTexCoord2f(GL_TEXTURE1, c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
+				glVertex3f(c.x,c.y,c.z);
 			glEnd();
 		}
-	}/**/
+	}
+
+	glDisable(GL_TEXTURE_2D);
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
 /*
-  glActiveTextureARB(GL_TEXTURE1_ARB);
+	//! Draw sun
+	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,sunTex);
 	float3 sundir(0,0.5f,1);
@@ -146,32 +142,31 @@ CBasicSky::CBasicSky()
 	float3 udir=sundir.cross(ldir);
 
 	glDisable(GL_FOG);
-	glColor4f(1,1,1,1);
 	glBegin(GL_QUADS);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,0);
-	glVertexf3(sundir*5+ldir*0.15f+udir*0.15f);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB,0,1);
-	glVertexf3(sundir*5+ldir*0.15f-udir*0.15f);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,1);
-	glVertexf3(sundir*5-ldir*0.15f-udir*0.15f);
-	glMultiTexCoord2fARB(GL_TEXTURE1_ARB,1,0);
-	glVertexf3(sundir*5-ldir*0.15f+udir*0.15f);
+		glMultiTexCoord2f(GL_TEXTURE1, 0,0);
+		glVertexf3(sundir*5+ldir*0.15f+udir*0.15f);
+		glMultiTexCoord2f(GL_TEXTURE1, 0,1);
+		glVertexf3(sundir*5+ldir*0.15f-udir*0.15f);
+		glMultiTexCoord2f(GL_TEXTURE1, 1,1);
+		glVertexf3(sundir*5-ldir*0.15f-udir*0.15f);
+		glMultiTexCoord2f(GL_TEXTURE1, 1,0);
+		glVertexf3(sundir*5-ldir*0.15f+udir*0.15f);
 	glEnd();
-*/  glActiveTextureARB(GL_TEXTURE0_ARB);
-	glColor4f(1,1,1,1);
-//	glEnable(GL_FOG);  Why not, glDisable is commented out above -- this text is so people don't accidentally uncomment just one
+	glEnable(GL_FOG);
 
+	glDisable(GL_TEXTURE_2D);
+	glActiveTextureARB(GL_TEXTURE0_ARB);
+*/
+
+	//! draw dot3 clouds
 	if(GLEW_ARB_texture_env_dot3){
-		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-		glEnable(GL_BLEND);
-
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, skyDot3Tex);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB,GL_PREVIOUS_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB,GL_TEXTURE);
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_DOT3_RGB_ARB);
@@ -181,54 +176,41 @@ CBasicSky::CBasicSky()
 		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_ALPHA_ARB,GL_MODULATE);
 		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_ARB,GL_ONE_MINUS_SRC_ALPHA);
 
-		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
-
 		for(y=0;y<Y_PART;y++){
 			for(int x=0;x<X_PART;x++){
 				glBegin(GL_TRIANGLE_STRIP);
-				float3 c=GetCoord(x,y);
 
+				float3 c=GetCoord(x,y);
 				glTexCoord2f(c.x*0.025f,c.z*0.025f);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
-//				glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x,c.z);
 				glVertex3f(c.x,c.y,c.z);
 
 				c=GetCoord(x,y+1);
-
 				glTexCoord2f(c.x*0.025f,c.z*0.025f);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
-	//			glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x,c.z);
 				glVertex3f(c.x,c.y,c.z);
 
 				c=GetCoord(x+1,y);
-
 				glTexCoord2f(c.x*0.025f,c.z*0.025f);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
-		//		glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x,c.z);
 				glVertex3f(c.x,c.y,c.z);
 
 				c=GetCoord(x+1,y+1);
-
 				glTexCoord2f(c.x*0.025f,c.z*0.025f);
 				glMultiTexCoord2fARB(GL_TEXTURE1_ARB,c.x/domeWidth+0.5f,c.z/domeWidth+0.5f);
-			//	glMultiTexCoord2fARB(GL_TEXTURE2_ARB,c.x,c.z);
 				glVertex3f(c.x,c.y,c.z);
 
 				glEnd();
 			}
 		}
-//		glDisable(GL_TEXTURE_SHADER_NV);
 
+		glActiveTextureARB(GL_TEXTURE1_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_ARB,GL_SRC_ALPHA);
+		glDisable(GL_TEXTURE_2D);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+		glDisable(GL_TEXTURE_2D);
 	}
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-
-	glActiveTextureARB(GL_TEXTURE1_ARB);
-	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_ARB,GL_SRC_ALPHA);
-	glDisable(GL_TEXTURE_2D);
-  glActiveTextureARB(GL_TEXTURE2_ARB);
-	glDisable(GL_TEXTURE_2D);
-  glActiveTextureARB(GL_TEXTURE0_ARB);
 
 	glEndList();
 }
@@ -254,14 +236,8 @@ CBasicSky::~CBasicSky()
 void CBasicSky::Draw()
 {
 	glDisable(GL_DEPTH_TEST);
-	glEnable(GL_BLEND);
 
 	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-	glPushMatrix();
-//	glTranslatef(camera->pos.x,camera->pos.y,camera->pos.z);
-	CMatrix44f m(camera->pos,sundir1,UpVector,sundir2);
-	glMultMatrixf(m.m);
 
 	float3 modCamera=sundir1*camera->pos.x+sundir2*camera->pos.z;
 
@@ -269,18 +245,20 @@ void CBasicSky::Draw()
 		glPushMatrix();
 		glTranslatef((gs->frameNum%20000)*0.00005f+modCamera.x*0.000025f,modCamera.z*0.000025f,0);
 	glMatrixMode(GL_MODELVIEW);
+		glPushMatrix();
+		CMatrix44f m(camera->pos,sundir1,UpVector,sundir2);
+		glMultMatrixf(m.m);
 
 	glCallList(displist);
 
-	glMatrixMode(GL_TEXTURE);						// Select The Projection Matrix
+	glMatrixMode(GL_TEXTURE);
 		glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
+	glMatrixMode(GL_MODELVIEW);
 		glPopMatrix();
 
 	if (wireframe) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_BLEND);
 
 	glFogfv(GL_FOG_COLOR,mapInfo->atmosphere.fogColor);
 	glFogi(GL_FOG_MODE,GL_LINEAR);
@@ -292,16 +270,6 @@ void CBasicSky::Draw()
 	} else {
 		glDisable(GL_FOG);
 	}
-}
-
-float3 CBasicSky::GetTexCoord(int x, int y)
-{
-	float3 c;
-	float a=((float)y/Y_PART)*0.5f;
-	float b=((float)x/X_PART)*2*PI;
-	c.x=0.5f+sin(b)*a;
-	c.y=0.5f+cos(b)*a;
-	return c;
 }
 
 float3 CBasicSky::GetCoord(int x, int y)
@@ -350,7 +318,7 @@ void CBasicSky::CreateClouds()
 	glBindTexture(GL_TEXTURE_2D, skyTex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
+	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8, 512, 512, GL_RGBA, GL_UNSIGNED_BYTE, skytex[0][0]);
 	delete [] skytex;
 
 	unsigned char (* skytex2)[256][4]=new unsigned char[256][256][4];
@@ -383,8 +351,8 @@ void CBasicSky::CreateClouds()
 	char* scrap=new char[CLOUD_SIZE*CLOUD_SIZE*4];
 	glBindTexture(GL_TEXTURE_2D, cloudDot3Tex);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-	glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE,0,GL_RGBA, GL_UNSIGNED_BYTE, scrap);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
+	glBuildMipmaps(GL_TEXTURE_2D, GL_RGBA8, CLOUD_SIZE, CLOUD_SIZE, GL_RGBA, GL_UNSIGNED_BYTE, scrap);
 	delete [] scrap;
 
 	CreateTransformVectors();
@@ -591,7 +559,6 @@ void CBasicSky::CreateTransformVectors()
 void CBasicSky::DrawSun()
 {
 	glPushMatrix();
-//	glTranslatef(camera->pos.x,camera->pos.y,camera->pos.z);
 	CMatrix44f m(camera->pos,sundir1,UpVector,sundir2);
 	glMultMatrixf(m.m);
 	glDisable(GL_DEPTH_TEST);

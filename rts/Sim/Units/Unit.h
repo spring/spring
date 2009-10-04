@@ -86,7 +86,7 @@ public:
 
 	void ChangeLos(int l, int airlos);
 	void ChangeSensorRadius(int* valuePtr, int newValue);
-	/// negative amount=reclaim, return= true -> build power was succesfully applied
+	/// negative amount=reclaim, return= true -> build power was successfully applied
 	bool AddBuildPower(float amount,CUnit* builder);
 	/// turn the unit on
 	void Activate();

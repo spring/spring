@@ -328,12 +328,16 @@ void CStdExplosionGenerator::Explosion(const float3 &pos, float damage,
 
 CR_BIND_DERIVED(CCustomExplosionGenerator, CStdExplosionGenerator, );
 
-#define SPW_WATER 1
-#define SPW_GROUND 2
-#define SPW_AIR 4
-#define SPW_UNDERWATER 8
-#define SPW_UNIT 16 // only execute when the explosion hits a unit
-#define SPW_NO_UNIT 32 // only execute when the explosion doesn't hit a unit (environment)
+enum
+{
+	SPW_WATER = 1,
+	SPW_GROUND = 2,
+	SPW_AIR = 4,
+	SPW_UNDERWATER = 8,
+	SPW_UNIT = 16,    // only execute when the explosion hits a unit
+	SPW_NO_UNIT = 32, // only execute when the explosion doesn't hit a unit (environment)
+	SPW_SYNCED = 64,  // spawn this projectile even if particleSaturation > 1
+};
 
 CCustomExplosionGenerator::CCustomExplosionGenerator()
 {
@@ -630,6 +634,21 @@ void CCustomExplosionGenerator::ParseExplosionCode(
 }
 
 
+static unsigned int GetFlagsFromTable(const LuaTable& table)
+{
+	unsigned int flags = 0;
+
+	if (table.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
+	if (table.GetBool("water",      false)) { flags |= SPW_WATER;      }
+	if (table.GetBool("air",        false)) { flags |= SPW_AIR;        }
+	if (table.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
+	if (table.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
+	if (table.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
+
+	return flags;
+}
+
+
 void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string& tag)
 {
 	typedef std::map<string, CEGData> CEGMap;
@@ -660,18 +679,14 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 			}
 
 			const string className = spawnTable.GetString("class", spawnName);
-			unsigned int flags = 0;
-
-			if (spawnTable.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
-			if (spawnTable.GetBool("water",      false)) { flags |= SPW_WATER;      }
-			if (spawnTable.GetBool("air",        false)) { flags |= SPW_AIR;        }
-			if (spawnTable.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
-			if (spawnTable.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
-			if (spawnTable.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
 
 			psi.projectileClass = h->projectileClasses.GetClass(className);
-			psi.flags = flags;
+			psi.flags = GetFlagsFromTable(spawnTable);
 			psi.count = spawnTable.GetInt("count", 1);
+
+			if (psi.projectileClass->binder->flags & creg::CF_Synced) {
+				psi.flags |= SPW_SYNCED;
+			}
 
 			string code;
 			map<string, string> props;
@@ -701,15 +716,7 @@ void CCustomExplosionGenerator::Load(CExplosionGeneratorHandler* h, const string
 			cegData.groundFlash.circleGrowth = gndTable.GetFloat("circleGrowth", 0.0f);
 			cegData.groundFlash.color        = gndTable.GetFloat3("color", float3(1.0f, 1.0f, 0.8f));
 
-			unsigned int flags = SPW_GROUND;
-			if (gndTable.GetBool("ground",     false)) { flags |= SPW_GROUND;     }
-			if (gndTable.GetBool("water",      false)) { flags |= SPW_WATER;      }
-			if (gndTable.GetBool("air",        false)) { flags |= SPW_AIR;        }
-			if (gndTable.GetBool("underwater", false)) { flags |= SPW_UNDERWATER; }
-			if (gndTable.GetBool("unit",       false)) { flags |= SPW_UNIT;       }
-			if (gndTable.GetBool("nounit",     false)) { flags |= SPW_NO_UNIT;    }
-
-			cegData.groundFlash.flags = flags;
+			cegData.groundFlash.flags = SPW_GROUND | GetFlagsFromTable(gndTable);
 			cegData.groundFlash.ttl = ttl;
 		}
 
@@ -744,6 +751,12 @@ void CCustomExplosionGenerator::Explosion(const float3& pos, float damage, float
 		ProjectileSpawnInfo& psi = (currentCEG->second).projectileSpawn[a];
 
 		if (!(psi.flags & flags)) {
+			continue;
+		}
+
+		// If we're saturated, spawn only synced projectiles.
+		// Whether a class is synced is determined by the creg::CF_Synced flag.
+		if (ph->particleSaturation > 1 && !(psi.flags & SPW_SYNCED)) {
 			continue;
 		}
 

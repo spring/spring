@@ -18,6 +18,7 @@
 #include "GrassDrawer.h"
 #include "Matrix44f.h"
 #include "Rendering/ShadowHandler.h"
+#include "GlobalUnsynced.h"
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -277,6 +278,11 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 
 	glEnable(GL_ALPHA_TEST);
 
+	if(gu->drawFog) {
+		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+		glEnable(GL_FOG);
+	}
+
 	if(shadowHandler->drawShadows && !gd->DrawExtraTex()){
 		glBindProgramARB( GL_VERTEX_PROGRAM_ARB, treeGen->treeFarVP );
 		glEnable(GL_VERTEX_PROGRAM_ARB);
@@ -491,6 +497,9 @@ void CAdvTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
 		glTexParameteri(GL_TEXTURE_2D, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
 	}
+
+	glDisable(GL_FOG);
+
 	glDisable(GL_ALPHA_TEST);
 
 	//clean out squares from memory that are no longer visible

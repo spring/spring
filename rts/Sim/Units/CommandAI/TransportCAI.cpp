@@ -258,9 +258,9 @@ void CTransportCAI::ExecuteUnloadUnit(Command &c)
 }
 
 
-bool CTransportCAI::CanTransport(CUnit* unit)
+bool CTransportCAI::CanTransport(const CUnit* unit)
 {
-	CTransportUnit* transport = (CTransportUnit*)owner;
+	const CTransportUnit* transport = (CTransportUnit*)owner;
 
 	return transport->CanTransport(unit);
 }
@@ -857,7 +857,7 @@ CUnit* CTransportCAI::FindUnitToTransport(float3 center, float radius)
 }
 
 
-int CTransportCAI::GetDefaultCmd(CUnit* pointed, CFeature* feature)
+int CTransportCAI::GetDefaultCmd(const CUnit* pointed, const CFeature* feature)
 {
 	if (pointed) {
 		if (!teamHandler->Ally(gu->myAllyTeam, pointed->allyteam)) {

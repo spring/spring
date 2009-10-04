@@ -6,6 +6,7 @@
 #endif
 #include <boost/cstdint.hpp>
 #include "lib/streflop/streflop_cond.h"
+#include "System/maindefines.h"
 
 #ifdef _MSC_VER
 #define __builtin_sqrtf sqrtf
@@ -35,15 +36,11 @@ namespace fastmath {
 	inline float isqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
-		union
-		{
-			__m128 vec;
-			float x;
-		} tmp;
-
-		tmp.x = x;
-		tmp.vec = _mm_rsqrt_ss(tmp.vec);
-		return tmp.x;
+		__m128 vec = _mm_load_ss(&x);
+		vec = _mm_rsqrt_ss(vec);
+		_mm_store_ss(&x, vec);
+		
+		return x;
 #else
 		return isqrt_nosse(x);
 #endif
@@ -55,18 +52,14 @@ namespace fastmath {
 	* Slower than std::sqrtf, faster than streflop
 	*/
 
-	inline float sqrt_sse(float x)
+	inline float __ALIGN_ARG__ sqrt_sse(float x)
 	{
 #ifndef DEDICATED_NOSSE
-		union
-		{
-			__m128 vec;
-			float x;
-		} tmp;
-
-		tmp.x = x;
-		tmp.vec = _mm_sqrt_ss(tmp.vec);
-		return tmp.x;
+		__m128 vec = _mm_load_ss(&x);
+		vec = _mm_sqrt_ss(vec);
+		_mm_store_ss(&x, vec);
+		
+		return x;
 #else
 		return sqrt(x);
 #endif
@@ -243,7 +236,7 @@ namespace fastmath {
 		}
 		/* approximation */
 		x = (PIU4) * x + (PISUN4) * x * math::fabs(x);
-		x = 0.225f * (x * fabs(x) - x) + x;
+		x = 0.225f * (x * math::fabs(x) - x) + x;
 		return x;
 	}
 

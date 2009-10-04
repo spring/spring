@@ -24,6 +24,7 @@ static const float Smoke_Time=70;
 CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,0,0,NULL,NULL,NULL,0,float3(0,0,0)));
 
 CR_REG_METADATA(CStarburstProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
 	CR_MEMBER(maxGoodDif),
 	CR_MEMBER(dir),
@@ -56,7 +57,7 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, true,  200 GML_PARG_P),
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200 GML_PARG_P),
 	tracking(tracking),
 	dir(speed),
 	maxSpeed(maxSpeed),
@@ -402,20 +403,22 @@ void CStarburstProjectile::DrawCallback(void)
 
 void CStarburstProjectile::DrawUnitPart(void)
 {
-	glPushMatrix();
-	float3 rightdir;
-	if(dir.y!=1) {
-		rightdir=dir.cross(UpVector);
+	float3 rightdir, updir;
+
+	if (fabs(dir.y) < 0.95f) {
+		rightdir = dir.cross(UpVector);
 		rightdir.SafeNormalize();
+	} else {
+		rightdir = float3(1.0f, 0.0f, 0.0f);
 	}
-	else
-		rightdir=float3(1,0,0);
-	float3 updir=rightdir.cross(dir);
 
-	CMatrix44f transMatrix(drawPos,-rightdir,updir,dir);
-	glMultMatrixf(&transMatrix[0]);
+	updir = rightdir.cross(dir);
 
-	glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
+	CMatrix44f transMatrix(drawPos, -rightdir, updir, dir);
+
+	glPushMatrix();
+		glMultMatrixf(&transMatrix[0]);
+		glCallList(s3domodel->rootobject->displist); // dont cache displists because of delayed loading
 	glPopMatrix();
 }
 

@@ -192,9 +192,11 @@ void CStartPosSelecter::Draw()
 	const float xSize = (readyBox.x2 - readyBox.x1);
 
 	const float fontScale = 0.9f * std::min(xSize/unitWidth, ySize/unitHeight);
-	const float yPos = readyBox.y1 + (0.1f * ySize);
+	const float yPos = 0.5f * (readyBox.y1 + readyBox.y2);
 	const float xPos = 0.5f * (readyBox.x1 + readyBox.x2);
 
+	font->Begin(); 
 	font->SetColors(); // default
-	font->glPrint(xPos, yPos, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_SCALE | FONT_NORM, "Ready");
+	font->glPrint(xPos, yPos, fontScale, FONT_OUTLINE | FONT_CENTER | FONT_VCENTER | FONT_SCALE | FONT_NORM, "Ready");
+	font->End(); 
 }

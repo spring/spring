@@ -48,6 +48,9 @@ public:
 	void SetupForGhostDrawing() const;
 	void CleanUpGhostDrawing() const;
 
+	void BackupUnits();
+	void RestoreUnits();
+
 #ifdef USE_GML
 	int multiThreadDrawUnit;
 	int multiThreadDrawUnitShadow;

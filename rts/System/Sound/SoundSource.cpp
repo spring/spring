@@ -13,6 +13,7 @@
 
 float SoundSource::globalPitch = 1.0;
 float SoundSource::heightAdjustedRolloffModifier = 1.0;
+float SoundSource::referenceDistance = 200.0f;
 
 struct SoundSource::StreamControl
 {
@@ -23,6 +24,7 @@ struct SoundSource::StreamControl
 	{
 		std::string file;
 		float volume;
+		bool enqueue;
 	};
 
 	TrackItem* current;
@@ -40,7 +42,7 @@ SoundSource::SoundSource() : curPlaying(NULL), curStream(NULL)
 	}
 	else
 	{
-		alSourcef(id, AL_REFERENCE_DISTANCE, 200.0f);
+		alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance);
 		CheckError("SoundSource::SoundSource");
 	}
 }
@@ -67,7 +69,8 @@ void SoundSource::Update()
 		}
 		else
 		{
-			if (curStream->next != NULL)
+			bool finished = curStream->stream.Valid() ? curStream->stream.GetPlayTime() >= curStream->stream.GetTotalTime() : true;
+			if (curStream->next != NULL && (finished ||  !curStream->next->enqueue))
 			{
 				Stop();
 				// COggStreams only appends buffers, giving errors when a buffer of another format is still asigned
@@ -78,6 +81,7 @@ void SoundSource::Update()
 				curStream->next = NULL;
 
 				alSource3f(id, AL_POSITION,        0.0, 0.0, -1.0); // in case of mono streams
+				alSourcef(id, AL_GAIN, curStream->current->volume);
 				alSource3f(id, AL_VELOCITY,        0.0f,  0.0f,  0.0f);
 				alSource3f(id, AL_DIRECTION,       0.0f,  0.0f,  0.0f);
 				alSourcef(id, AL_ROLLOFF_FACTOR,  0.0f);
@@ -111,7 +115,7 @@ bool SoundSource::IsPlaying() const
 	ALint state;
 	alGetSourcei(id, AL_SOURCE_STATE, &state);
 	CheckError("SoundSource::IsPlaying");
-	if (state == AL_PLAYING)
+	if (state == AL_PLAYING || curStream)
 		return true;
 	else
 	{
@@ -157,6 +161,23 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 		alSourcei(id, AL_SOURCE_RELATIVE, AL_FALSE);
 		alSource3f(id, AL_POSITION, pos.x, pos.y, pos.z);
 		alSourcef(id, AL_ROLLOFF_FACTOR, item->rolloff * heightAdjustedRolloffModifier);
+#ifdef __APPLE__
+		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
+		// Max distance is too small by default on my Mac...
+		ALfloat gain = item->gain * volume;
+		if (gain > 1.0f) {
+			// OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
+			ALint model = alGetInteger(AL_DISTANCE_MODEL);
+			ALfloat rolloff = item->rolloff * heightAdjustedRolloffModifier, ref = referenceDistance;
+			if ((model == AL_INVERSE_DISTANCE_CLAMPED) || (model == AL_INVERSE_DISTANCE)) {
+				alSourcef(id, AL_REFERENCE_DISTANCE, ((gain - 1.0f) * ref / rolloff) + ref);
+				alSourcef(id, AL_ROLLOFF_FACTOR, (gain + rolloff - 1.0f) / gain);
+				alSourcef(id, AL_GAIN, 1.0f);
+			}
+		} else {
+			alSourcef(id, AL_REFERENCE_DISTANCE, referenceDistance);
+		}
+#endif
 	}
 	alSourcePlay(id);
 
@@ -165,7 +186,7 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	CheckError("SoundSource::Play");
 }
 
-void SoundSource::PlayStream(const std::string& file, float volume)
+void SoundSource::PlayStream(const std::string& file, float volume, bool enqueue)
 {
 	boost::mutex::scoped_lock lock(streamMutex);
 	if (!curStream)
@@ -178,13 +199,14 @@ void SoundSource::PlayStream(const std::string& file, float volume)
 	curStream->next = new StreamControl::TrackItem;
 	curStream->next->file = file;
 	curStream->next->volume = volume;
+	curStream->next->enqueue = enqueue;
 }
 
 void SoundSource::StreamStop()
 {
 	if (curStream)
 	{
-			boost::mutex::scoped_lock lock(streamMutex);
+		boost::mutex::scoped_lock lock(streamMutex);
 		if (curStream->current)
 		{
 			curStream->stopRequest = true;

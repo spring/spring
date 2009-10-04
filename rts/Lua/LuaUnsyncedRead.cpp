@@ -45,7 +45,10 @@ using namespace std;
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Features/Feature.h"
+#include "Sim/Features/FeatureDef.h"
+#include "Sim/Features/FeatureHandler.h"
 #include "Sim/Misc/TeamHandler.h"
+#include "Sim/Misc/QuadField.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Units/UnitTypes/TransportUnit.h"
@@ -113,6 +116,7 @@ bool LuaUnsyncedRead::PushEntries(lua_State* L)
 	REGISTER_LUA_CFUNC(GetUnitViewPosition);
 
 	REGISTER_LUA_CFUNC(GetVisibleUnits);
+	REGISTER_LUA_CFUNC(GetVisibleFeatures);
 
 	REGISTER_LUA_CFUNC(GetPlayerRoster);
 
@@ -620,9 +624,45 @@ enum UnitAllegiance {
 };
 
 
+class CUnitQuads : public CReadMap::IQuadDrawer
+{
+public:
+	CUnitQuads() : count(0) {};
+
+	int count;
+	std::vector<const std::list<CUnit*>*> visunits;
+
+	void DrawQuad(int x, int y)
+	{
+		const CQuadField::Quad& q = qf->GetQuadAt(x,y);
+		if (!q.units.empty())
+			visunits.push_back(&q.units);
+		count += q.units.size();
+	}
+};
+
+
+class CFeatureQuads : public CReadMap::IQuadDrawer
+{
+public:
+	CFeatureQuads() : count(0) {};
+
+	int count;
+	std::vector<const std::list<CFeature*>*> visfeatures;
+
+	void DrawQuad(int x, int y)
+	{
+		const CQuadField::Quad& q = qf->GetQuadAt(x,y);
+		if (!q.features.empty())
+			visfeatures.push_back(&q.features);
+		count += q.features.size();
+	}
+};
+
+
 int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 {
-	// arg 1 - teamID
+	//! arg 1 - teamID
 	int teamID = luaL_optint(L, 1, -1);
 	if (teamID == MyUnits) {
 		const int scriptTeamID = CLuaHandle::GetActiveHandle()->GetReadTeam();
@@ -642,7 +682,127 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 		}
 	}
 
-	// arg 2 - unit radius
+	//! arg 2 - unit radius
+	bool fixedRadius = false;
+	float radius = 30.0f; // value from UnitDrawer.cpp
+	if (lua_israwnumber(L, 2)) {
+		radius = lua_tofloat(L, 2);
+		if (radius < 0.0f) {
+			fixedRadius = true;
+			radius = -radius;
+		}
+	}
+
+	//! arg 3 - noIcons
+	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
+
+
+	vector<const CUnitSet*> unitSets;
+	static CUnitSet visQuadUnits;
+
+	CUnitQuads quadIter;
+	readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, 1e9, &quadIter);
+
+	int count = 0;
+	lua_createtable(L, quadIter.count, 0);
+
+	//! setup the list of unit sets
+	if (quadIter.count > uh->activeUnits.size()/3) {
+		//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
+		if (teamID >= 0) {
+			unitSets.push_back(&teamHandler->Team(teamID)->units);
+		}
+		else {
+			for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
+				if ((teamID == AllUnits) ||
+				    ((teamID == AllyUnits)  && (allyTeamID == teamHandler->AllyTeam(t))) ||
+				    ((teamID == EnemyUnits) && (allyTeamID != teamHandler->AllyTeam(t))))
+				{
+					unitSets.push_back(&teamHandler->Team(t)->units);
+				}
+			}
+		}
+	} else {
+		//! features can exist in multiple quads, so we need to do a duplication check
+		visQuadUnits.clear();
+		std::vector<const std::list<CUnit*>*>::iterator sit;
+		for (sit = quadIter.visunits.begin(); sit != quadIter.visunits.end(); ++sit) {
+			std::list<CUnit*>::const_iterator unitIt;
+			for (unitIt = (*sit)->begin(); unitIt != (*sit)->end(); ++unitIt) {
+				CUnit* unit = *unitIt;
+				if ((teamID == AllUnits) ||
+				    ((teamID >= 0) && (teamID == unit->team)) ||
+				    ((teamID == AllyUnits)  && (allyTeamID == unit->allyteam)) ||
+				    ((teamID == EnemyUnits) && (allyTeamID != unit->allyteam)))
+				{
+					visQuadUnits.insert(unit);
+				}
+			}
+		}
+		unitSets.push_back(&visQuadUnits);
+	}
+
+	const float iconLength = unitDrawer->iconLength;
+
+	vector<const CUnitSet*>::const_iterator setIt;
+	for (setIt = unitSets.begin(); setIt != unitSets.end(); ++setIt) {
+		const CUnitSet* unitSet = *setIt;
+
+		CUnitSet::const_iterator unitIt;
+		for (unitIt = unitSet->begin(); unitIt != unitSet->end(); ++unitIt) {
+			const CUnit& unit = **unitIt;
+
+			if (unit.noDraw) {
+				continue;
+			}
+
+			if (allyTeamID >= 0) {
+				if (!(unit.losStatus[allyTeamID] & LOS_INLOS)) {
+					continue;
+				}
+			}
+
+			if (noIcons) {
+				const float sqDist = (unit.pos - camera->pos).SqLength();
+				const float iconDistSqrMult = unit.unitDef->iconType->GetDistanceSqr();
+				const float realIconLength = iconLength * iconDistSqrMult;
+				if (sqDist > realIconLength) {
+					continue;
+				}
+			}
+
+			const float testRadius = fixedRadius ? radius : (unit.radius + radius);
+			if (!camera->InView(unit.midPos, testRadius)) {
+				continue;
+			}
+
+			//! add the unit
+			count++;
+			lua_pushnumber(L, count);
+			lua_pushnumber(L, unit.id);
+			lua_rawset(L, -3);
+		}
+	}
+
+	return 1;
+}
+
+
+int LuaUnsyncedRead::GetVisibleFeatures(lua_State* L)
+{
+	// arg 1 - allyTeamID
+	int allyTeamID = luaL_optint(L, 1, -1);
+	if (allyTeamID >= 0 && !teamHandler->ValidAllyTeam(allyTeamID)) {
+		return 0;
+	}
+	if (allyTeamID < 0) {
+		allyTeamID = -1;
+		if (!fullRead) {
+			allyTeamID = CLuaHandle::GetActiveHandle()->GetReadAllyTeam();
+		}
+	}
+
+	// arg 2 - feature radius
 	bool fixedRadius = false;
 	float radius = 30.0f; // value from UnitDrawer.cpp
 	if (lua_israwnumber(L, 2)) {
@@ -656,64 +816,69 @@ int LuaUnsyncedRead::GetVisibleUnits(lua_State* L)
 	// arg 3 - noIcons
 	const bool noIcons = lua_isboolean(L, 3) && !lua_toboolean(L, 3);
 
-	// setup the list of unit sets
-	vector<const CUnitSet*> unitSets;
-	if (teamID >= 0) {
-		unitSets.push_back(&teamHandler->Team(teamID)->units);
-	}
-	else {
-		for (int t = 0; t < teamHandler->ActiveTeams(); t++) {
-			if ((teamID == AllUnits) ||
-			    ((teamID == AllyUnits)  && (allyTeamID == teamHandler->AllyTeam(t))) ||
-			    ((teamID == EnemyUnits) && (allyTeamID != teamHandler->AllyTeam(t)))) {
-				unitSets.push_back(&teamHandler->Team(t)->units);
-			}
-		}
-	}
+	// arg 4 - noGeos
+	const bool noGeos = lua_isboolean(L, 4) && !lua_toboolean(L, 4);
 
-	const float iconLength = unitDrawer->iconLength;
+
+	const float maxDist = 6000.0f; //from FeatureHandler.cpp
+
+	CFeatureQuads quadIter;
+	readmap->GridVisibility(camera, CQuadField::QUAD_SIZE / SQUARE_SIZE, maxDist, &quadIter);
 
 	int count = 0;
-	lua_newtable(L);
+	lua_createtable(L, quadIter.count, 0);
 
-	vector<const CUnitSet*>::const_iterator setIt;
-	for (setIt = unitSets.begin(); setIt != unitSets.end(); ++setIt) {
-		const CUnitSet* unitSet = *setIt;
+	static CFeatureSet visQuadFeatures;
+	bool scanAll = false;
 
-		CUnitSet::const_iterator unitIt;
-		for (unitIt = unitSet->begin(); unitIt != unitSet->end(); ++unitIt) {
-			const CUnit* unit = *unitIt;
-
-			if (unit->noDraw) {
-				continue;
+	//! setup the list of features
+	if (quadIter.count > featureHandler->GetActiveFeatures().size()/3) {
+		//! if we see nearly all features, it is just faster to check them all, instead of doing slow duplication checks
+		scanAll = true;
+	} else {
+		//! features can exist in multiple quads, so we need to do a duplication check
+		visQuadFeatures.clear();
+		std::vector<const std::list<CFeature*>*>::iterator it;
+		for (it = quadIter.visfeatures.begin(); it != quadIter.visfeatures.end(); ++it) {
+			std::list<CFeature*>::const_iterator featureIt;
+			for (featureIt = (*it)->begin(); featureIt != (*it)->end(); ++featureIt) {
+				visQuadFeatures.insert(*featureIt);
 			}
-
-			if (allyTeamID >= 0) {
-				if (!(unit->losStatus[allyTeamID] & LOS_INLOS)) {
-					continue;
-				}
-			}
-
-			if (noIcons) {
-				const float sqDist = (unit->pos - camera->pos).SqLength();
-				const float iconDistSqrMult = unit->unitDef->iconType->GetDistanceSqr();
-				const float realIconLength = iconLength * iconDistSqrMult;
-				if (sqDist > realIconLength) {
-					continue;
-				}
-			}
-
-			const float testRadius = fixedRadius ? radius : (unit->radius + radius);
-			if (!camera->InView(unit->midPos, testRadius)) {
-				continue;
-			}
-
-			// add the unit
-			count++;
-			lua_pushnumber(L, count);
-			lua_pushnumber(L, unit->id);
-			lua_rawset(L, -3);
 		}
+	}
+	const CFeatureSet& featureSet = (scanAll) ? featureHandler->GetActiveFeatures() : visQuadFeatures;
+
+	for (CFeatureSet::const_iterator featureIt = featureSet.begin(); featureIt != featureSet.end(); ++featureIt) {
+		const CFeature& f = **featureIt;
+
+		if (noGeos) {
+			if (f.def->drawType <= DRAWTYPE_NONE) {
+				continue;
+			}
+		}
+
+		if (noIcons) {
+			float sqDist = (f.pos - camera->pos).SqLength2D();
+			float farLength = f.sqRadius * unitDrawer->unitDrawDist * unitDrawer->unitDrawDist;
+			if (sqDist >= farLength) {
+				continue;
+			}
+		}
+
+		if (!gu->spectatingFullView && !f.IsInLosForAllyTeam(allyTeamID)) {
+			continue;
+		}
+
+		const float testRadius = fixedRadius ? radius : (f.radius + radius);
+		if (!camera->InView(f.midPos, testRadius)) {
+			continue;
+		}
+
+		// add the unit
+		count++;
+		lua_pushnumber(L, count);
+		lua_pushnumber(L, f.id);
+		lua_rawset(L, -3);
 	}
 
 	return 1;
@@ -1078,8 +1243,8 @@ int LuaUnsyncedRead::TraceScreenRay(lua_State* L)
 		return 0;
 	}
 
-	CUnit* unit = NULL;
-	CFeature* feature = NULL;
+	const CUnit* unit = NULL;
+	const CFeature* feature = NULL;
 	const float range = gu->viewRange * 1.4f;
 	const float3& pos = camera->pos;
 	const float3 dir = camera->CalcPixelDir(wx, wy);

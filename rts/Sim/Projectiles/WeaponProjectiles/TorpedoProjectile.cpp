@@ -18,9 +18,10 @@
 	#include "Sync/SyncTracer.h"
 #endif
 
-CR_BIND_DERIVED(CTorpedoProjectile, CTorpedoProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
+CR_BIND_DERIVED(CTorpedoProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,0,0,0,0,NULL,NULL));
 
 CR_REG_METADATA(CTorpedoProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
 	CR_MEMBER(dir),
 	CR_MEMBER(maxSpeed),
@@ -36,7 +37,7 @@ CR_REG_METADATA(CTorpedoProjectile,(
 CTorpedoProjectile::CTorpedoProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		float areaOfEffect, float maxSpeed, float tracking, int ttl, CUnit* target,
 		const WeaponDef *weaponDef GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
+	CWeaponProjectile(pos, speed, owner, target, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
 	tracking(tracking),
 	dir(speed),
 	maxSpeed(maxSpeed),

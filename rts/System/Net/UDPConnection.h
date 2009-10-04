@@ -1,7 +1,6 @@
 #ifndef _REMOTE_CONNECTION
 #define _REMOTE_CONNECTION
 
-#include <boost/ptr_container/ptr_deque.hpp>
 #include <boost/ptr_container/ptr_map.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/asio/ip/udp.hpp>
@@ -12,6 +11,44 @@
 #include "System/myTime.h"
 
 namespace netcode {
+
+class Chunk
+{
+public:
+	unsigned GetSize() const
+	{
+		return data.size() + headerSize;
+	};
+	static const unsigned maxSize = 254;
+	static const unsigned headerSize = 5;
+	int32_t chunkNumber;
+	uint8_t chunkSize;
+	std::vector<uint8_t> data;
+};
+typedef boost::shared_ptr<Chunk> ChunkPtr;
+
+class Packet
+{
+public:
+	static const unsigned headerSize = 5;
+	Packet(const unsigned char* data, unsigned length);
+	Packet(int lastContinuous, int nak);
+
+	unsigned GetSize() const
+	{
+		unsigned size = headerSize + naks.size();
+		for (std::list<ChunkPtr>::const_iterator it = chunks.begin(); it != chunks.end(); ++it)
+			size += (*it)->GetSize();
+		return size;
+	};
+	
+	void Serialize(std::vector<uint8_t>& data);
+
+	int32_t lastContinuous;
+	int8_t nakType; // if < 0, we lost -x packets since lastContinuous, if >0, x = size of naks
+	std::vector<uint8_t> naks;
+	std::list<ChunkPtr> chunks;
+};
 
 /**
 How Spring protocolheader looks like (size in bytes):
@@ -57,7 +94,7 @@ public:
 	@brief strip and parse header data and add data to waitingPackets
 	UDPConnection takes the ownership of the packet and will delete it in this func
 	*/
-	void ProcessRawPacket(RawPacket* packet);
+	void ProcessRawPacket(Packet& packet);
 
 	/// send all data waiting in char outgoingData[]
 	virtual void Flush(const bool forced = false);
@@ -72,21 +109,18 @@ public:
 	
 	void SetMTU(unsigned mtu);
 
-	/// The size of the protocol-header (Packets smaller than this get rejected)
-	static const unsigned hsize;
-
 private:
 	void Init();
 	
-	spring_time lastSendTime;
+	spring_time lastChunkCreated;
 	spring_time lastReceiveTime;
+	spring_time lastSendTime;
 	
 	typedef boost::ptr_map<int,RawPacket> packetMap;
 	typedef std::list< boost::shared_ptr<const RawPacket> > packetList;
-	/// all packets with number <= nextAck arrived at the other end
-	void AckPackets(const int nextAck);
 	/// add header to data and send it
-	void SendRawPacket(const unsigned char* data, const unsigned length, const int packetNum);
+	void CreateChunk(const unsigned char* data, const unsigned length, const int packetNum);
+	void SendIfNecessary(bool flushed);
 	/// address of the other end
 	boost::asio::ip::udp::endpoint addr;
 
@@ -98,11 +132,18 @@ private:
 	///outgoing stuff (pure data without header) waiting to be sended
 	packetList outgoingData;
 
+	/// Newly created and not yet sent
+	std::deque<ChunkPtr> newChunks;
 	/// packets the other side didn't ack'ed until now
-	boost::ptr_deque<RawPacket> unackedPackets;
-	int firstUnacked;
+	std::deque<ChunkPtr> unackedChunks;
+	void AckChunks(int lastAck);
+	spring_time lastUnackResent;
+	/// Packets the other side missed
+	void RequestResend(ChunkPtr);
+	std::deque<ChunkPtr> resendRequested;
 	int currentNum;
 
+	void SendPacket(Packet& pkt);
 	/// packets we have recieved but not yet read
 	packetMap waitingPackets;
 	int lastInOrder;
@@ -117,13 +158,10 @@ private:
 	RawPacket* fragmentBuffer;
 
 	// Traffic statistics and stuff //
-	/// number of calls to Flush() that needed to sent multiple packets because of mtu
-	unsigned fragmentedFlushes;
 	
 	/// packets that are resent
-	unsigned resentPackets;
-	
-	unsigned droppedPackets;
+	unsigned resentChunks;
+	unsigned droppedChunks;
 	
 	unsigned sentOverhead, recvOverhead;
 	unsigned sentPackets, recvPackets;

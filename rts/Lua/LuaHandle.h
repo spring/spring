@@ -158,6 +158,7 @@ class CLuaHandle : public CEventClient
 		bool MousePress(int x, int y, int button);
 		int  MouseRelease(int x, int y, int button); // return a cmd index, or -1
 		bool MouseWheel(bool up, float value);
+		bool JoystickEvent(const std::string& event, int val1, int val2);
 		bool IsAbove(int x, int y);
 		string GetTooltip(int x, int y);
 

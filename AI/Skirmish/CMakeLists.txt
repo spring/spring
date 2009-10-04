@@ -7,7 +7,7 @@
 add_definitions(-DBUILDING_SKIRMISH_AI)
 
 set(SKIRMISH_SRC            "${CMAKE_CURRENT_SOURCE_DIR}")
-set(SKIRMISH_DATA           "${AIDIR}/AI/Skirmish")
+set(SKIRMISH_DATA           "${AI_DATADIR}/AI/Skirmish")
 set(SKIRMISHAI_FIND_QUIETLY ${AI_FIND_QUIETLY})
 
 

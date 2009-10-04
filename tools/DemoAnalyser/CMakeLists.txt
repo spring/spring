@@ -32,5 +32,5 @@ IF (MINGW)
 	# To enable console output/force a console window to open
 	SET_TARGET_PROPERTIES(demoanalyser PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 ENDIF (MINGW)
-TARGET_LINK_LIBRARIES(demoanalyser ${SDL_LIBRARY} hpiutil2 7zip lua minizip ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY})
+TARGET_LINK_LIBRARIES(demoanalyser ${SDL_LIBRARY} hpiutil2 7zip lua minizip ${Boost_REGEX_LIBRARY} ${Boost_THREAD_LIBRARY} ${Boost_SYSTEM_LIBRARY})
 
