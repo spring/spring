@@ -1148,14 +1148,21 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_ALLIANCE: {
 			const unsigned char player = inbuf[1];
-			const unsigned char whichAllyTeam = inbuf[2];
-			const unsigned char allied = inbuf[3];
-			if (!setup->fixedAllies)
+			if (player != a)
 			{
-				Broadcast(CBaseNetProtocol::Get().SendSetAllied(player, whichAllyTeam, allied));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)player));
 			}
 			else
-			{ // not allowed
+			{
+				const unsigned char whichAllyTeam = inbuf[2];
+				const unsigned char allied = inbuf[3];
+				if (!setup->fixedAllies)
+				{
+					Broadcast(CBaseNetProtocol::Get().SendSetAllied(player, whichAllyTeam, allied));
+				}
+				else
+				{ // not allowed
+				}
 			}
 			break;
 		}
