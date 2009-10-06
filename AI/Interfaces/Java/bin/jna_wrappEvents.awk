@@ -62,7 +62,7 @@ BEGIN {
 
 # Checks if a field is available and is no comment
 function isFieldUsable(f) {
-	
+
 	valid = 0;
 
 	if (f && !match(f, /.*\/\/.*/)) {
@@ -84,8 +84,8 @@ function printOOAIHeader(outFile, clsName) {
 	print("") >> outFile;
 	print("") >> outFile;
 	print("import java.util.Properties;") >> outFile;
-	print("import com.springrts.ai.AICommand;") >> outFile;
-	print("import com.springrts.ai.AIFloat3;") >> outFile;
+	print("import " myPkgA ".AICommand;") >> outFile;
+	print("import " myPkgA ".AIFloat3;") >> outFile;
 	print("") >> outFile;
 	print("/**") >> outFile;
 	print(" *") >> outFile;
@@ -115,18 +115,18 @@ function printOOAIFactoryHeader(outFile) {
 	print("package " myPkgOOA ";") >> outFile;
 	print("") >> outFile;
 	print("") >> outFile;
-	print("import com.springrts.ai.AI;") >> outFile;
-	print("import com.springrts.ai.AICallback;") >> outFile;
-	print("import com.springrts.ai.AICommand;") >> outFile;
-	print("import com.springrts.ai.AICommandWrapper;") >> outFile;
-	print("import com.springrts.ai.event.*;") >> outFile;
+	print("import " myPkgA ".AI;") >> outFile;
+	print("import " myPkgA ".AICallback;") >> outFile;
+	print("import " myPkgA ".AICommand;") >> outFile;
+	print("import " myPkgA ".AICommandWrapper;") >> outFile;
+	print("import " myPkgA ".event.*;") >> outFile;
 	print("import com.sun.jna.Pointer;") >> outFile;
 	print("import java.util.Map;") >> outFile;
 	print("import java.util.HashMap;") >> outFile;
 	print("import java.util.Properties;") >> outFile;
 	print("") >> outFile;
 	print("/**") >> outFile;
-	print(" *") >> outFile;
+	print(" * TODO: Add description here") >> outFile;
 	print(" *") >> outFile;
 	print(" * @author	hoijui") >> outFile;
 	print(" * @version	GENERATED") >> outFile;
@@ -216,11 +216,11 @@ function printEventOO(evtIndex) {
 		name = evtsMembers_name[evtIndex, m];
 		type_c = evtsMembers_type_c[evtIndex, m];
 		type_jna = convertCToJNAType(type_c);
-		
+
 		paramsTypes = paramsTypes ", " type_jna " " name;
 		if (type_jna == "int[]") {
 			# Pointer.getIntArray(int offset, int arraySize)
-			# we assume that the next param contians the array size
+			# we assume that the next param contains the array size
 			name = name ".getIntArray(0, " evtsMembers_name[evtIndex, m+1] ")";
 		}
 		paramsEvt = paramsEvt ", evt." name;
