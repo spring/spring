@@ -12,9 +12,29 @@
 #include "LogOutput.h"
 #include "NetProtocol.h"
 #include "Util.h"
+#include "ConfigHandler.h"
+#include <boost/thread/thread.hpp>
+
+#ifdef USE_GML
+#if GML_ENABLE_SIM
+extern volatile int gmlMultiThreadSim;
+#endif
+#define DEFAULT_HANG_TIMEOUT 10
+#else
+#define DEFAULT_HANG_TIMEOUT 0
+#endif
+
+HANDLE simthread = INVALID_HANDLE_VALUE;
+HANDLE drawthread = INVALID_HANDLE_VALUE;
 
 namespace CrashHandler {
 	namespace Win32 {
+
+boost::thread* hangdetectorthread = NULL;
+volatile int keepRunning = 1;
+// watchdog timers
+unsigned volatile simwdt = 0, drawwdt = 0;
+int hangTimeout = 0;
 
 		
 void SigAbrtHandler(int signal)
@@ -59,7 +79,7 @@ static const char *ExceptionName(DWORD exceptionCode)
 }
 
 /** Print out a stacktrace. */
-static void Stacktrace(LPEXCEPTION_POINTERS e) {
+static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_VALUE) {
 	PIMAGEHLP_SYMBOL pSym;
 	STACKFRAME sf;
 	HANDLE process, thread;
@@ -70,16 +90,35 @@ static void Stacktrace(LPEXCEPTION_POINTERS e) {
 
 	pSym = (PIMAGEHLP_SYMBOL)GlobalAlloc(GMEM_FIXED, 16384);
 
+	BOOL suspended = FALSE;
+	CONTEXT c;
+	if(e) {
+		c = *e->ContextRecord;
+		thread = GetCurrentThread();
+	}
+	else {
+		// FIXME: The current thread may deadlock with the suspended thread during stack dumping
+		SuspendThread(hThread);
+		suspended = TRUE;
+		memset(&c, 0, sizeof(CONTEXT));
+		c.ContextFlags = CONTEXT_FULL;
+		// FIXME: This does not work if you want to dump the current thread's stack
+		if (!GetThreadContext(hThread, &c)) {
+			ResumeThread(hThread);
+			return;
+		}
+		thread = hThread;
+	}
+
 	ZeroMemory(&sf, sizeof(sf));
-	sf.AddrPC.Offset = e->ContextRecord->Eip;
-	sf.AddrStack.Offset = e->ContextRecord->Esp;
-	sf.AddrFrame.Offset = e->ContextRecord->Ebp;
+	sf.AddrPC.Offset = c.Eip;
+	sf.AddrStack.Offset = c.Esp;
+	sf.AddrFrame.Offset = c.Ebp;
 	sf.AddrPC.Mode = AddrModeFlat;
 	sf.AddrStack.Mode = AddrModeFlat;
 	sf.AddrFrame.Mode = AddrModeFlat;
 
 	process = GetCurrentProcess();
-	thread = GetCurrentThread();
 
 	while(1) {
 		more = StackWalk(
@@ -87,7 +126,7 @@ static void Stacktrace(LPEXCEPTION_POINTERS e) {
 			process,
 			thread,
 			&sf,
-			e->ContextRecord,
+			&c,
 			NULL,
 			SymFunctionTableAccess,
 			SymGetModuleBase,
@@ -117,6 +156,10 @@ static void Stacktrace(LPEXCEPTION_POINTERS e) {
 		}
 		++count;
 	}
+
+	if(suspended)
+		ResumeThread(hThread);
+
 	GlobalFree(pSym);
 }
 
@@ -186,6 +229,90 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	// in practice, 100% CPU usage but no continuation of execution
 	// (tested segmentation fault and division by zero)
 	//return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+/** Print stack traces for relevant threads. */
+void HangHandler()
+{
+#ifdef USE_GML
+	PRINT("Hang detection triggered for Spring %s MT (%d threads).", SpringVersion::GetFull().c_str(), gmlThreadCount);
+#else
+	PRINT("Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
+#endif
+	// Initialize IMAGEHLP.DLL.
+	SymInitialize(GetCurrentProcess(), ".", TRUE);
+
+	// Record list of loaded DLLs.
+	PRINT("DLL information:\n");
+	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
+
+
+	if(drawthread != INVALID_HANDLE_VALUE) {
+		// Record stacktrace.
+		PRINT("Stacktrace:\n");
+		Stacktrace(NULL, drawthread);
+	}
+
+#if defined(USE_GML) && GML_ENABLE_SIM
+	if(gmlMultiThreadSim && simthread != INVALID_HANDLE_VALUE) {
+		PRINT("Stacktrace (sim):\n");
+		Stacktrace(NULL, simthread);
+	}
+#endif
+
+	// Unintialize IMAGEHLP.DLL
+	SymCleanup(GetCurrentProcess());
+
+	logOutput.Flush();
+}
+
+void HangDetector() {
+	while(keepRunning) {
+		unsigned curwdt = SDL_GetTicks();
+#if defined(USE_GML) && GML_ENABLE_SIM
+		if(gmlMultiThreadSim) {
+			unsigned cursimwdt = simwdt;
+			if(cursimwdt && (curwdt - cursimwdt) > hangTimeout * 1000) {
+				HangHandler();
+				simwdt = cursimwdt;
+			}
+		}
+#endif
+		unsigned curdrawwdt = drawwdt;
+		if(curdrawwdt && (curwdt - curdrawwdt) > hangTimeout * 1000) {
+			HangHandler();
+			drawwdt = curdrawwdt;
+		}
+		SDL_Delay(1000);
+	}
+}
+
+void InstallHangHandler() {
+	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
+					&drawthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
+	hangTimeout = configHandler->Get("HangTimeout", DEFAULT_HANG_TIMEOUT);
+	if(hangTimeout > 0)
+		hangdetectorthread = new boost::thread(&HangDetector);
+}
+
+void ClearDrawWDT(bool disable) {
+	drawwdt = disable ? 0 : SDL_GetTicks();
+}
+
+void ClearSimWDT(bool disable) {
+	simwdt = disable ? 0 : SDL_GetTicks();
+}
+
+void UninstallHangHandler() {
+	keepRunning = 0;
+	if(hangdetectorthread) {
+		hangdetectorthread->join();
+		delete hangdetectorthread;
+	}
+	if(drawthread != INVALID_HANDLE_VALUE)
+		CloseHandle(drawthread);
+	if(simthread != INVALID_HANDLE_VALUE)
+		CloseHandle(simthread);
 }
 
 /** Install crash handler. */

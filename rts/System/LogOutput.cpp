@@ -107,6 +107,12 @@ void CLogOutput::End()
 	SafeDelete(filelog);
 }
 
+void CLogOutput::Flush()
+{
+	GML_STDMUTEX_LOCK_NOPROF(log); // End
+
+	filelog->flush();
+}
 
 void CLogOutput::SetFilename(const char* fname)
 {
