@@ -1849,11 +1849,14 @@ bool CGame::ActionPressed(const Action& action,
 			b.ReverseYAxis();
 
 			char t[50];
-			for (int a = 0; a < 9999; ++a) {
+			for (int a = configHandler->Get("ScreenshotCounter", 0); a < 9999; ++a) {
 				sprintf(t, "screenshots/screen%03i.%s", a, ext);
 				CFileHandler ifs(t);
 				if (!ifs.FileExists())
+				{
+					configHandler->Set("ScreenshotCounter", a+1);
 					break;
+				}
 			}
 			b.Save(t);
 			logOutput.Print("Saved: %s", t);
