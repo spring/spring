@@ -685,15 +685,15 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					if (isPaused != !!inbuf[2]) {
 						isPaused = !isPaused;
 					}
-					Broadcast(CBaseNetProtocol::Get().SendPause(inbuf[1],inbuf[2]));
+					Broadcast(CBaseNetProtocol::Get().SendPause(a, inbuf[2]));
 				}
 			}
 			break;
 
 		case NETMSG_USER_SPEED: {
-			unsigned char playerNum = inbuf[1];
+			//unsigned char playerNum = inbuf[1];
 			float speed = *((float*) &inbuf[2]);
-			UserSpeedChange(speed, playerNum);
+			UserSpeedChange(speed, a);
 		} break;
 
 		case NETMSG_CPU_USAGE:
@@ -883,8 +883,13 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_MAPDRAW:
-			if (!players[playernum].spectator || allowSpecDraw)
+			if(inbuf[2] != a){
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]));
+			}
+			else if (!players[playernum].spectator || allowSpecDraw)
+			{
 				Broadcast(packet); //forward data
+			}
 			break;
 
 		case NETMSG_DIRECT_CONTROL:
@@ -1148,14 +1153,18 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_ALLIANCE: {
 			const unsigned char player = inbuf[1];
+			const int whichAllyTeam = inbuf[2];
+			const unsigned char allied = inbuf[3];
 			if (player != a)
 			{
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)player));
 			}
+			else if (whichAllyTeam == teams[players[a].team].teamAllyteam)
+			{
+				Message(str(format("Player %s tried to send spoofed alliance message") %players[a].name));
+			}
 			else
 			{
-				const unsigned char whichAllyTeam = inbuf[2];
-				const unsigned char allied = inbuf[3];
 				if (!setup->fixedAllies)
 				{
 					Broadcast(CBaseNetProtocol::Get().SendSetAllied(player, whichAllyTeam, allied));
@@ -1168,7 +1177,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_CCOMMAND: {
 			CommandMessage msg(packet);
-			if (msg.player >= 0 && static_cast<unsigned>(msg.player) == a)
+			if (static_cast<unsigned>(msg.player) == a)
 			{
 				if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a].isLocal)
 				{
