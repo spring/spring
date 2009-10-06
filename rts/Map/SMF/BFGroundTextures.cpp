@@ -6,6 +6,7 @@
 #include "Map/SMF/mapfile.h"
 #include "Map/SMF/SmfReadMap.h"
 #include "Map/MapInfo.h"
+#include "Game/Camera.h"
 #include "Game/Game.h"
 #include "System/FileSystem/FileHandler.h"
 #include "System/Platform/errorhandler.h"
