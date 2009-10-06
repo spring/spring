@@ -798,12 +798,15 @@ int SpringApp::Sim()
 {
 	while(gmlKeepRunning && !gmlStartSim)
 		SDL_Delay(100);
+
 	while(gmlKeepRunning) {
 		if(!gmlMultiThreadSim) {
+			CrashHandler::ClearSimWDT(true);
 			while(!gmlMultiThreadSim && gmlKeepRunning)
 				SDL_Delay(200);
 		}
 		else if (activeController) {
+			CrashHandler::ClearSimWDT();
 			gmlProcessor->ExpandAuxQueue();
 
 			{
@@ -860,6 +863,9 @@ int SpringApp::Update()
 				activeController->Update();
 			}
 #endif
+			if(game)
+				CrashHandler::ClearDrawWDT();
+
 			gu->drawFrame++;
 			if (gu->drawFrame == 0) {
 				gu->drawFrame++;
@@ -930,9 +936,10 @@ int SpringApp::Run(int argc, char *argv[])
 #ifdef WIN32
 	//SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
 #endif
+	CrashHandler::InstallHangHandler();
 
 #ifdef USE_GML
-	gmlProcessor=new gmlClientServer<void, int,CUnit*>;
+	gmlProcessor=new gmlClientServer<void, int, CUnit*>;
 #	if GML_ENABLE_SIM
 	gmlKeepRunning=1;
 	gmlStartSim=0;
@@ -980,6 +987,8 @@ int SpringApp::Run(int argc, char *argv[])
 	if(gmlProcessor)
 		delete gmlProcessor;
 #endif
+
+	CrashHandler::UninstallHangHandler();
 
 	// Shutdown
 	Shutdown();

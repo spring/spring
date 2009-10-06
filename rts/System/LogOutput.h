@@ -120,6 +120,7 @@ public:
 
 	void SetFilename(const char* filename);
 	void Initialize();
+	void Flush();
 
 protected:
 	void InitializeSubsystems();

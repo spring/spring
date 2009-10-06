@@ -18,6 +18,24 @@ namespace CrashHandler {
 	{
 		Win32::Remove();
 	}
+
+	void InstallHangHandler()
+	{
+		Win32::InstallHangHandler();
+	}
+
+	void UninstallHangHandler()
+	{
+		Win32::UninstallHangHandler();
+	}
+
+	void ClearDrawWDT(bool disable) {
+		Win32::ClearDrawWDT(disable);
+	}
+
+	void ClearSimWDT(bool disable) {
+		Win32::ClearSimWDT(disable);
+	}
 };
 
 #elif !defined(__APPLE__) || (MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4)
@@ -112,6 +130,18 @@ namespace CrashHandler {
 		signal(SIGIO, SIG_DFL);
 		signal(SIGABRT, SIG_DFL);
 	}
+
+	void InstallHangHandler() {
+	}
+	
+	void UninstallHangHandler() {
+	}
+
+	void ClearDrawWDT(bool disable) {
+	}
+
+	void ClearSimWDT(bool disable) {
+	}
 };
 
 #else
@@ -120,6 +150,10 @@ namespace CrashHandler {
 	void HandleSignal(int signal){};
 	void Install(){};
 	void Remove(){}
+	void InstallHangHandler() {}	
+	void UninstallHangHandler() {}
+	void ClearDrawWDT(bool disable) {}
+	void ClearSimWDT(bool disable) {}
 };
 
 #endif
