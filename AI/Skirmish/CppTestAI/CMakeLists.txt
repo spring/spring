@@ -1,7 +1,7 @@
 ### Generic native Skirmish AI config
 #
 
-set(mySourceDirRel         "") # Common values are "" or "src"
+set(mySourceDirRel         "src") # Common values are "" or "src"
 set(additionalSources      ${CUtils_SRC})
 set(additionalCompileFlags "")
 set(additionalLibraries    ${Cpp_AIWRAPPER_TARGET})
