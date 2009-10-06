@@ -2,17 +2,17 @@
 #include <cstdlib>
 #include <cstdio>
 
-#include "BFGroundTextures.h"
-#include "FileSystem/FileHandler.h"
-#include "GlobalUnsynced.h"
-#include "Game/Camera.h"
+#include "Map/SMF/BFGroundTextures.h"
+#include "Map/SMF/mapfile.h"
+#include "Map/SMF/SmfReadMap.h"
+#include "Map/MapInfo.h"
 #include "Game/Game.h"
-#include "LogOutput.h"
-#include "mapfile.h"
-#include "Platform/errorhandler.h"
-#include "SmfReadMap.h"
-#include "mmgr.h"
-#include "FastMath.h"
+#include "System/FileSystem/FileHandler.h"
+#include "System/Platform/errorhandler.h"
+#include "System/GlobalUnsynced.h"
+#include "System/LogOutput.h"
+#include "System/mmgr.h"
+#include "System/FastMath.h"
 
 using std::sprintf;
 using std::string;
@@ -26,17 +26,16 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	usePBO = false;
 	if (GLEW_EXT_pixel_buffer_object && rm->usePBO) {
 		glGenBuffers(10, pboIDs);
-		currentPBO=0;
+		currentPBO = 0;
 		usePBO = true;
 	}
 
 	// todo: refactor: put reading code in CSmfFile and keep errorhandling/progress reporting here..
-	CFileHandler* ifs = rm->GetFile().GetFileHandler();
 	map = rm;
-
+	CFileHandler* ifs = rm->GetFile().GetFileHandler();
 	const SMFHeader* header = &map->GetFile().GetHeader();
-	ifs->Seek(header->tilesPtr);
 
+	ifs->Seek(header->tilesPtr);
 	tileSize = header->tilesize;
 
 	MapTileHeader tileHeader;
@@ -46,33 +45,72 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 	tiles = new char[tileHeader.numTiles * SMALL_TILE_SIZE];
 	int curTile = 0;
 
+
+	char loadMsg[128] = {0};
+	const CMapInfo::smf_t& smf = mapInfo->smf;
+	bool smtHeaderOverride = false;
+
+	if (!smf.smtFileNames.empty()) {
+		if (smf.smtFileNames.size() != tileHeader.numTileFiles) {
+			logOutput.Print(
+				"[CBFGroundTextures] mismatched number of .smt file "
+				"references between map's .smd (%d) and header (%d);"
+				" ignoring .smd overrides",
+				smf.smtFileNames.size(), tileHeader.numTileFiles
+			);
+		} else {
+			smtHeaderOverride = true;
+		}
+	}
+
+
 	for (int a = 0; a < tileHeader.numTileFiles; ++a) {
-		PrintLoadMsg("Loading tile file");
+		int numSmallTiles;
+		ifs->Read(&numSmallTiles, 4);
+		numSmallTiles = swabdword(numSmallTiles);
 
-		int size;
-		ifs->Read(&size, 4);
-		size = swabdword(size);
-		string name;
 
+		std::string tileFileName, smtFileName;
+
+		// eat the zero-terminated name
 		while (true) {
-			char ch;
+			char ch = 0;
 			ifs->Read(&ch, 1);
-			/* char, no swab */
-			if (ch == 0)
-				break;
 
-			name += ch;
+			if (ch == 0) {
+				break;
+			}
+
+			smtFileName += ch;
 		}
 
-		name = string("maps/") + name;
-		CFileHandler tileFile(name);
+		if (!smtHeaderOverride) {
+			tileFileName = "maps/" + smtFileName;
+		} else {
+			tileFileName = "maps/" + smf.smtFileNames[a];
+		}
+
+
+		SNPRINTF(
+			loadMsg, 127, "Loading .smt tile-file \"%s\" (%d/%d, %d tiles)",
+			tileFileName.c_str(), a, tileHeader.numTileFiles, numSmallTiles
+		);
+		PrintLoadMsg(loadMsg);
+
+
+		CFileHandler tileFile(tileFileName);
 
 		if (!tileFile.FileExists()) {
-			logOutput.Print("Couldnt find tile file %s", name.c_str());
-			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, size * SMALL_TILE_SIZE);
-			curTile += size;
+			logOutput.Print(
+				"[CBFGroundTextures] could not find .smt tile-file "
+				"\"%s\" (all %d missing tiles will be colored red)",
+				tileFileName.c_str(), numSmallTiles
+			);
+			memset(&tiles[curTile * SMALL_TILE_SIZE], 0xaa, numSmallTiles * SMALL_TILE_SIZE);
+			curTile += numSmallTiles;
 			continue;
 		}
+
 
 		PrintLoadMsg("Reading tiles");
 
@@ -81,12 +119,12 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 
 		if (strcmp(tfh.magic, "spring tilefile") != 0 || tfh.version != 1 || tfh.tileSize != 32 || tfh.compressionType != 1) {
 			char t[500];
-			sprintf(t,"Error couldnt open tile file %s", name.c_str());
-			handleerror(0, t, "Error when reading tile file", 0);
+			sprintf(t, "[CBFGroundTextures] file \"%s\" does not match .smt format", tileFileName.c_str());
+			handleerror(0, t, "Error reading tile-file", 0);
 			exit(0);
 		}
 
-		for (int b = 0; b < size; ++b) {
+		for (int b = 0; b < numSmallTiles; ++b) {
 			tileFile.Read(&tiles[curTile * SMALL_TILE_SIZE], SMALL_TILE_SIZE);
 			curTile++;
 		}
