@@ -15,13 +15,8 @@
 #include "ConfigHandler.h"
 #include <boost/thread/thread.hpp>
 
-#ifdef USE_GML
-#if GML_ENABLE_SIM
+#if defined(USE_GML) && GML_ENABLE_SIM
 extern volatile int gmlMultiThreadSim;
-#endif
-#define DEFAULT_HANG_TIMEOUT 10
-#else
-#define DEFAULT_HANG_TIMEOUT 0
 #endif
 
 HANDLE simthread = INVALID_HANDLE_VALUE;
@@ -290,7 +285,11 @@ void HangDetector() {
 void InstallHangHandler() {
 	DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
 					&drawthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
-	hangTimeout = configHandler->Get("HangTimeout", DEFAULT_HANG_TIMEOUT);
+	hangTimeout = configHandler->Get("HangTimeout", 0);
+#ifdef USE_GML
+	if(hangTimeout == 0) // HangTimeout = -1 to force disable hang detection in MT build
+		hangTimeout = 15;
+#endif
 	if(hangTimeout > 0)
 		hangdetectorthread = new boost::thread(&HangDetector);
 }
@@ -304,8 +303,8 @@ void ClearSimWDT(bool disable) {
 }
 
 void UninstallHangHandler() {
-	keepRunning = 0;
 	if(hangdetectorthread) {
+		keepRunning = 0;
 		hangdetectorthread->join();
 		delete hangdetectorthread;
 	}
