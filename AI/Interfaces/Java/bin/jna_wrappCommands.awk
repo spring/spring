@@ -6,7 +6,7 @@
 # This script uses functions from the following files:
 # * common.awk
 # * commonDoc.awk
-# Variables that can be set on th ecommand-line (with -v):
+# Variables that can be set on the command-line (with -v):
 # * GENERATED_SOURCE_DIR: will contain the generated sources
 #
 # usage:
@@ -51,10 +51,9 @@ BEGIN {
 }
 
 
-
 # Checks if a field is available and is no comment
 function isFieldUsable(f) {
-	
+
 	valid = 0;
 
 	if (f && !match(f, /.*\/\/.*/)) {
@@ -309,7 +308,7 @@ function canDeleteDocumentation() {
 ################################################################################
 ### BEGINN: parsing and saving the command structs
 
-# end of struct S*Command 
+# end of struct S*Command
 /^}; \/\/ COMMAND_.*$/ {
 
 	cmdsNumMembers[ind_cmdStructs] = ind_cmdMember;
@@ -324,7 +323,7 @@ function canDeleteDocumentation() {
 }
 
 
-# inside of struct S*Command 
+# inside of struct S*Command
 {
 	if (isInsideCmdStruct == 1) {
 		size_tmpMembers = split($0, tmpMembers, ";");
@@ -349,7 +348,7 @@ function canDeleteDocumentation() {
 	commandName = $2;
 	sub(/^S/, "", commandName);
 	sub(/Command$/, "", commandName);
-	
+
 	isUnitCommand = match(commandName, /.*Unit$/);
 
 	cmdsIsUnitCmd[ind_cmdStructs] = isUnitCommand;
