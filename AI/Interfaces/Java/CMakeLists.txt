@@ -48,17 +48,48 @@ function    (ConcatClasspaths resultingCP_var)
 	set(${resultingCP_var} "${${resultingCP_var}}" PARENT_SCOPE)
 endfunction (ConcatClasspaths)
 
+# Checks if maven is installed by executing "mvn --version"
+# and checking the return value (0 == "is installed").
+# The result variable will be set to TRUE or FALSE
+function    (IsMavenInstalled result_var)
+	set(${result_var} FALSE)
+	execute_process(COMMAND "mvn" "--version"
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+			RESULT_VARIABLE MVN_RET
+			OUTPUT_QUIET ERROR_QUIET)
+	if    ("${MVN_RET}" MATCHES "0")
+		set(${result_var} TRUE)
+	endif ("${MVN_RET}" MATCHES "0")
+	set(${result_var} "${${result_var}}" PARENT_SCOPE)
+endfunction (IsMavenInstalled)
 
-# Java Skirmish AI configuration macro
+# Checks if a given directory is the root of a Maven project.
+# The result variable will be set to TRUE or FALSE
+function    (IsMavenProject dirToCheck result_var)
+	set(${result_var} FALSE)
+	if    (EXISTS "${dirToCheck}/pom.xml")
+		set(${result_var} TRUE)
+	endif (EXISTS "${dirToCheck}/pom.xml")
+	set(${result_var} "${${result_var}}" PARENT_SCOPE)
+endfunction (IsMavenProject)
+
+# Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
+# If Maven is installed, and
 macro    (ConfigureJavaSkirmishAI)
-	set(myDir                    "${CMAKE_CURRENT_SOURCE_DIR}")
+	# Assemble meta data
+	set(myDir            "${CMAKE_CURRENT_SOURCE_DIR}")
 	GetLastPathPart(dirName ${myDir})
-	set(myName                   "${dirName}")
-	set(mySourceDir              "${myDir}/src")
-	# If main Java package is "my.ai.pkg", this has to be set to "my".
-	GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
-	set(myJavaPkgFirstPart       "${firstSrcSubDir}")
+	set(myName          "${dirName}")
+	set(myJarFile       "SkirmishAI")
+	set(myBinJarFile    "${myJarFile}.jar")
+	set(mySrcJarFile    "${myJarFile}-src.jar")
+	set(myJLibDir       "${myDir}/data/jlib")
+	GetVersionFromFile(myVersion "${myDir}/VERSION")
+	set(myTarget        "${myName}")
+	set(myDataDir       "${SKIRMISH_DATA}/${myName}/${myVersion}")
+	# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Skirmish/${myName}
+	set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Check if the user wants to compile the AI
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
@@ -68,61 +99,85 @@ macro    (ConfigureJavaSkirmishAI)
 		message("warning: ${myName} Skirmish AI will not be built!")
 	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
-
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
-		# Assemble meta data
-		GetVersionFromFile(myVersion "${myDir}/VERSION")
-		set(myTarget        "${myName}")
-		set(mySourceTarget  "${myTarget}-SRC")
-		set(myDataDir       "${SKIRMISH_DATA}/${myName}/${myVersion}")
-		# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Skirmish/${myName}
-		set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
-		set(myJavaBuildDir  "${myBuildDir}/classes")
-		set(myJarFile       "SkirmishAI")
-		set(myBinJarFile    "${myJarFile}.jar")
-		set(mySrcJarFile    "${myJarFile}-src.jar")
-		set(myJLibDir       "${myDir}/data/jlib")
+		IsMavenInstalled(isMavenInstalled)
+		IsMavenProject(${myDir} isMavenProject)
+		set(configureMavenProject FALSE)
+		if    (isMavenProject)
+			if    (isMavenInstalled)
+				set(configureMavenProject TRUE)
+			else  (isMavenInstalled)
+				message("Warning: Java AI with Maven Project file found, but Maven 2 not installed: Using default configuration.")
+			endif (isMavenInstalled)
+		endif (isMavenProject)
 
-		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
+		set(configString "default")
+		if    (configureMavenProject)
+			set(configString "Maven")
+		endif (configureMavenProject)
+		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion} (config: ${configString})")
 
-		# Create our full Java class-path
-		CreateClasspath(myJavaLibs ${myJLibDir})
-		ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
+		if    (configureMavenProject)
+			# The Maven Project has to make sure these files get created:
+			# ${my.build.dir}/SkirmishAI.jar
+			# ${my.build.dir}/SkirmishAI-src.jar (optional)
+			add_custom_target(${myTarget} ALL
+					DEPENDS ${Java_AIINTERFACE_TARGET}
+					COMMAND "mvn" "package"
+						"-Dmy.build.dir=\"${CMAKE_CURRENT_BINARY_DIR}\""
+						"--batch-mode"
+						"--errors"
+					WORKING_DIRECTORY "${myDir}"
+					COMMENT "  Running package phase of ${myName} Maven Project" VERBATIM)
+		else  (configureMavenProject)
+			set(mySourceDir              "${myDir}/src")
+			# If main Java package is "my.ai.pkg", this has to be set to "my".
+			GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
+			set(myJavaPkgFirstPart       "${firstSrcSubDir}")
 
-		# Create a list of all the AIs source files
-		file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
+			# Assemble additional meta data
+			set(mySourceTarget  "${myTarget}-SRC")
+			set(myJavaBuildDir  "${myBuildDir}/classes")
 
-		# Compile the library
-		# needed by javac
-		file(MAKE_DIRECTORY "${myJavaBuildDir}")
-		add_custom_target(${myTarget} ALL
-			DEPENDS ${Java_AIINTERFACE_TARGET}
-			COMMAND "${JAVA_COMPILE}"
-				"${JAVA_COMPILE_FLAG_CONDITIONAL}"
-				"-cp" "${myClassPath}"
-				"-d" "${myJavaBuildDir}"
-				${mySources}
-			COMMAND "${JAVA_ARCHIVE}"
-				"cmf" "${myDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
-				"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
-			WORKING_DIRECTORY "${mySourceDir}"
-			COMMENT "  Creating library ${myBinJarFile}" VERBATIM)
+			# Create our full Java class-path
+			CreateClasspath(myJavaLibs ${myJLibDir})
+			ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
 
-		# Pack the sources
-		add_custom_target(${mySourceTarget} ALL
-			COMMAND "${JAVA_ARCHIVE}"
-				"cf" "${myBuildDir}/${mySrcJarFile}"
-				"-C" "${mySourceDir}" "${myJavaPkgFirstPart}"
-			WORKING_DIRECTORY "${mySourceDir}"
-			COMMENT "  Creating sources archive ${mySrcJarFile}" VERBATIM)
+			# Create a list of all the AIs source files
+			file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
+
+			# Compile the library
+			# needed by javac
+			file(MAKE_DIRECTORY "${myJavaBuildDir}")
+			add_custom_target(${myTarget} ALL
+				DEPENDS ${Java_AIINTERFACE_TARGET}
+				COMMAND "${JAVA_COMPILE}"
+					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+					"-cp" "${myClassPath}"
+					"-d" "${myJavaBuildDir}"
+					${mySources}
+				COMMAND "${JAVA_ARCHIVE}"
+					"cmf" "${myDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
+					"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
+				WORKING_DIRECTORY "${mySourceDir}"
+				COMMENT "  Creating library ${myBinJarFile}" VERBATIM)
+
+			# Pack the sources
+			add_custom_target(${mySourceTarget} ALL
+				COMMAND "${JAVA_ARCHIVE}"
+					"cf" "${myBuildDir}/${mySrcJarFile}"
+					"-C" "${mySourceDir}" "${myJavaPkgFirstPart}"
+				WORKING_DIRECTORY "${mySourceDir}"
+				COMMENT "  Creating sources archive ${mySrcJarFile}" VERBATIM)
+		endif (configureMavenProject)
 
 		# Install the data files
 		install(DIRECTORY "${myDir}/data/"                DESTINATION ${myDataDir})
 		# Install the library
 		install (FILES    "${myBuildDir}/${myBinJarFile}" DESTINATION ${myDataDir})
-		# Install the sources archive
-		install (FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myDataDir}/jlib)
+		# Install the sources archive (optional)
+		install (FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myDataDir}/jlib OPTIONAL)
 	endif (BUILD_THIS_SKIRMISHAI)
 endmacro (ConfigureJavaSkirmishAI)
 
