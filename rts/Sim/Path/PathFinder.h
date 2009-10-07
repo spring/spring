@@ -81,17 +81,12 @@ public:
 	bool GetHeatMapState() { return heatMapping; }
 	void UpdateHeatMap();
 
-	struct HeatMapValue {
-		int value;
-		int ownerId;
-	};
-
 	void UpdateHeatValue(int x, int y, int value, int ownerId)
 	{
 		assert(!heatmap.empty());
 
-		if (heatmap[x][y].value < value) {
-			heatmap[x][y].value = value;
+		if (heatmap[x][y].value < value + heatMapOffset) {
+			heatmap[x][y].value = value + heatMapOffset;
 			heatmap[x][y].ownerId = ownerId;
 		}
 	}
@@ -121,6 +116,7 @@ private:
 		unsigned int status;
 		float cost;
 	};
+
 	class myVector{
 	public:
 		typedef OpenSquare* value_type;
@@ -177,10 +173,11 @@ private:
 		inline void clear()			{bufPos=-1;}
 	};
 
-  class myPQ : public std::priority_queue<OpenSquare*,myVector,lessCost>{
+	class myPQ : public std::priority_queue<OpenSquare*,myVector,lessCost>{
 	public:
 		void DeleteAll();
-  };
+	};
+
 	void ResetSearch();
 	SearchResult InitSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
 	SearchResult DoSearch(const MoveData& moveData, const CPathFinderDef& pfDef, int ownerId);
@@ -218,8 +215,14 @@ private:
 	OpenSquare openSquareBuffer[MAX_SEARCHED_SQUARES];
 
 	// Heat mapping
+	struct HeatMapValue {
+		int value;
+		int ownerId;
+	};
+
 	bool heatMapping;
 	std::vector<std::vector<HeatMapValue> > heatmap;
+	int heatMapOffset;  // heatmap values are relative to this
 
 public:
 	void Draw(void);

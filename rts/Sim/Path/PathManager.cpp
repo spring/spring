@@ -44,7 +44,7 @@ CPathManager::~CPathManager() {
 void CPathManager::SetHeatMappingEnabled(bool enabled)
 {
 	pf->SetHeatMapState(enabled);
-};
+}
 
 bool CPathManager::GetHeatMappingEnabled()
 {
