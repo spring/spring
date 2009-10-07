@@ -532,8 +532,7 @@ for baseName in aiinterfaces_toBuild:
 		interfaceBinDir = os.path.join('AI', myEnv['sourcedir'], 'bin')
 		awkScriptsDir = interfaceBinDir
 		awkCommonScriptsDir = os.path.join(springSrcDir, 'AI', 'Wrappers', 'CUtils', 'bin')
-		interfaceGeneratedJavaSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'generated-java-src'))
-		interfaceTmpAllSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'tmp-all-src'))
+		interfaceGeneratedJavaSrcDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'src-generated', 'main', 'java'))
 		interfaceJavaClassesDir = filelist.getAbsDir(env, os.path.join(myEnv['builddir'], 'classes'))
 		javaPkg = 'com/springrts/ai'
 		jarFileBase = 'AIInterface'
