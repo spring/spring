@@ -8,6 +8,10 @@ namespace CrashHandler {
 	namespace Win32 {
 		void Install();
 		void Remove();
+		void InstallHangHandler();
+		void UninstallHangHandler();
+		void ClearDrawWDT(bool disable);
+		void ClearSimWDT(bool disable);
 	};
 };
 

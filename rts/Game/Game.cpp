@@ -1849,11 +1849,14 @@ bool CGame::ActionPressed(const Action& action,
 			b.ReverseYAxis();
 
 			char t[50];
-			for (int a = 0; a < 9999; ++a) {
+			for (int a = configHandler->Get("ScreenshotCounter", 0); a <= 9999; ++a) {
 				sprintf(t, "screenshots/screen%03i.%s", a, ext);
 				CFileHandler ifs(t);
 				if (!ifs.FileExists())
+				{
+					configHandler->Set("ScreenshotCounter", a < 9999 ? a+1 : 0);
 					break;
+				}
 			}
 			b.Save(t);
 			logOutput.Print("Saved: %s", t);
@@ -4263,7 +4266,7 @@ void CGame::ClientReadNet()
 				const int whichAllyTeam = inbuf[2];
 				const bool allied = static_cast<bool>(inbuf[3]);
 				const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
-				if (whichAllyTeam < teamHandler->ActiveAllyTeams() && whichAllyTeam >= 0) {
+				if (whichAllyTeam < teamHandler->ActiveAllyTeams() && whichAllyTeam >= 0 && fromAllyTeam != whichAllyTeam) {
 					// FIXME - need to reset unit allyTeams
 					//       - need to reset unit texture for 3do
 					//       - need a call-in for AIs

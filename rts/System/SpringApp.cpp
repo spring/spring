@@ -798,12 +798,15 @@ int SpringApp::Sim()
 {
 	while(gmlKeepRunning && !gmlStartSim)
 		SDL_Delay(100);
+
 	while(gmlKeepRunning) {
 		if(!gmlMultiThreadSim) {
+			CrashHandler::ClearSimWDT(true);
 			while(!gmlMultiThreadSim && gmlKeepRunning)
 				SDL_Delay(200);
 		}
 		else if (activeController) {
+			CrashHandler::ClearSimWDT();
 			gmlProcessor->ExpandAuxQueue();
 
 			{
@@ -860,6 +863,9 @@ int SpringApp::Update()
 				activeController->Update();
 			}
 #endif
+			if(game)
+				CrashHandler::ClearDrawWDT();
+
 			gu->drawFrame++;
 			if (gu->drawFrame == 0) {
 				gu->drawFrame++;
@@ -930,9 +936,10 @@ int SpringApp::Run(int argc, char *argv[])
 #ifdef WIN32
 	//SDL_EventState (SDL_SYSWMEVENT, SDL_ENABLE);
 #endif
+	CrashHandler::InstallHangHandler();
 
 #ifdef USE_GML
-	gmlProcessor=new gmlClientServer<void, int,CUnit*>;
+	gmlProcessor=new gmlClientServer<void, int, CUnit*>;
 #	if GML_ENABLE_SIM
 	gmlKeepRunning=1;
 	gmlStartSim=0;
@@ -980,6 +987,8 @@ int SpringApp::Run(int argc, char *argv[])
 	if(gmlProcessor)
 		delete gmlProcessor;
 #endif
+
+	CrashHandler::UninstallHangHandler();
 
 	// Shutdown
 	Shutdown();
@@ -1187,12 +1196,12 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 				if (activeController->userWriting){
 					// use unicode for printed characters
 					i = event.key.keysym.unicode;
-					if ((i >= SDLK_SPACE) && (i <= SDLK_DELETE)) {
+					if ((i >= SDLK_SPACE) && (i <= 255)) {
 						CGameController* ac = activeController;
 						if (ac->ignoreNextChar || ac->ignoreChar == char(i)) {
 							ac->ignoreNextChar = false;
 						} else {
-							if (i < SDLK_DELETE && (!isRepeat || ac->userInput.length()>0)) {
+							if (i < 255 && (!isRepeat || ac->userInput.length()>0)) {
 								const int len = (int)ac->userInput.length();
 								ac->writingPos = std::max(0, std::min(len, ac->writingPos));
 								char str[2] = { char(i), 0 };
