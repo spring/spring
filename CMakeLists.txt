@@ -193,7 +193,7 @@ Add_Subdirectory(tools/unitsync)
 ### make the basefiles (aka sdz's)
 file (TO_NATIVE_PATH "${CMAKE_BINARY_DIR}/base" BASE_BUILD_DIR)
 if    (CMAKE_HOST_WIN32)
-	# As TO_NATIVE_PATH fail on windows, we need to do it manually
+	# As TO_NATIVE_PATH fails on windows, we need to do it manually
 	string (REPLACE "/" "\\" BASE_BUILD_DIR "${BASE_BUILD_DIR}")
 	add_custom_target(gamedata ALL COMMAND call make_gamedata_arch.bat ${BASE_BUILD_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/installer)
 else  (CMAKE_HOST_WIN32)
