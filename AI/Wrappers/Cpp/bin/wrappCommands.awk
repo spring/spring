@@ -3,16 +3,29 @@
 # This awk script creates the C++ wrapper classes for the C command structs in:
 # rts/ExternalAI/Interface/AISCommands.h
 #
+# This script uses functions from the following files:
+# * common.awk
+# * commonDoc.awk
+# Variables that can be set on the command-line (with -v):
+# * GENERATED_SOURCE_DIR: will contain the generated sources
+#
+# usage:
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Wrappers/Cpp/src-generated'
+#
 
 BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	FS="[ \t]+"
+	FS = "[ \t]+";
 
-	javaSrcRoot = "../java/src";
+	# These vars can be assigned externally, see file header.
+	# Set the default values if they were not supplied on the command line.
+	if (!GENERATED_SOURCE_DIR) {
+		GENERATED_SOURCE_DIR = "../src-generated/native";
+	}
 
-	myPkgA = "com.clan_sy.spring.ai";
 	#myClass = "AICallback";
 	aiFloat3Class = "AIFloat3";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
@@ -21,105 +34,13 @@ BEGIN {
 	myPkgCmdD = convertJavaNameFormAToD(myPkgCmdA);
 
 	myPointerCmdWrapperClass = "AICommandWrapper";
-	myPointerCmdWrapperFile = javaSrcRoot "/" myPkgD "/" myPointerCmdWrapperClass ".java";
+	myPointerCmdWrapperFile = GENERATED_SOURCE_DIR "/" myPkgD "/" myPointerCmdWrapperClass ".java";
 
-	# Print a warning header
 	indent = "	";
 
 	ind_cmdTopics = 0;
 	ind_cmdStructs = 0;
 	insideCmdStruct = 0;
-}
-
-function printGeneratedWarningHeader(outFile) {
-
-	print("// WARNING: This file is machine generated,") > outFile;
-	print("// please do not edit directly!") >> outFile;
-}
-
-function printGPLHeader(outFile) {
-
-	print("/*") >> outFile;
-	print("	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>") >> outFile;
-	print("") >> outFile;
-	print("	This program is free software; you can redistribute it and/or modify") >> outFile;
-	print("	it under the terms of the GNU General Public License as published by") >> outFile;
-	print("	the Free Software Foundation; either version 2 of the License, or") >> outFile;
-	print("	(at your option) any later version.") >> outFile;
-	print("") >> outFile;
-	print("	This program is distributed in the hope that it will be useful,") >> outFile;
-	print("	but WITHOUT ANY WARRANTY; without even the implied warranty of") >> outFile;
-	print("	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the") >> outFile;
-	print("	GNU General Public License for more details.") >> outFile;
-	print("") >> outFile;
-	print("	You should have received a copy of the GNU General Public License") >> outFile;
-	print("	along with this program.  If not, see <http://www.gnu.org/licenses/>.") >> outFile;
-	print("*/") >> outFile;
-}
-
-
-# Some utility functions
-
-function ltrim(s) { sub(/^[ \t]+/, "", s); return s; }
-function rtrim(s) { sub(/[ \t]+$/, "", s); return s; }
-function trim(s)  { return rtrim(ltrim(s)); }
-
-function noSpaces(s)  { gsub(/[ \t]/, "", s); return s; }
-
-function capFirst(s)  { return toupper(substr(s, 1, 1)) substr(s, 2); }
-
-function capitalize(s)  { return toupper(substr(s, 1, 1)) substr(s, 2); }
-function lowerize(s)  { return tolower(substr(s, 1, 1)) substr(s, 2); }
-
-function startsWithCapital(s) { return match(s, /^[ABCDEFGHIJKLMNOPQRDTUVWXYZ]/); }
-function startsWithLower(s) { return match(s, /^[abcdefghijklmnopqrdtuvwxyz]/); }
-
-
-# Awaits this format:	com.clan_sy.spring.ai
-# Returns this format:	com/clan_sy/spring/ai
-function convertJavaNameFormAToD(javaNameFormA) {
-
-	javaNameFormD = javaNameFormA;
-
-	gsub(/\./, "/", javaNameFormD);
-
-	return javaNameFormD;
-}
-
-
-# Awaits this format:	unsinged const char* varName[]
-# Returns this format:	varName
-function extractParamName(typeAndName) {
-
-	name = trim(typeAndName);
-	gsub(/ \*/, "* ", name);
-
-	# Remove the type
-	sub(/(const )?(unsigned )?(void|int|float|char|byte|bool|struct SAIFloat3)(\*)* /, "", name);
-
-	# Remove possible array length specifiers ("[]" or "[2]")
-	gsub(/\[.*\]/, "", name);
-
-	name = trim(name);
-
-	return name;
-}
-
-
-# Awaits this format:	const char* varName[]
-# Returns this format:	const char* []
-function extractCType(cTypeAndName) {
-
-	cType = trim(cTypeAndName);
-
-	gsub(/ \*/, "* ", cType);
-
-	# Remove the name
-	gsub(" " extractParamName(cTypeAndName), "", cType);
-
-	gsub(/\[[^\]]*\]/, "*", cType);
-
-	return cType;
 }
 
 
@@ -137,19 +58,6 @@ function isFieldUsable(f) {
 
 
 
-function printJavaCommandComment(jc_outFile, jc_cmdIndex, jc_indent) {
-
-	# print the documentation comment
-	if (cmdsDocComment[jc_cmdIndex, "*"] > 0) {
-		print(jc_indent "/**") >> jc_outFile;
-		numLines = cmdsDocComment[jc_cmdIndex, "*"];
-		for (l=0; l < numLines; l++) {
-			docLine = cmdsDocComment[jc_cmdIndex, l];
-			print(jc_indent " * " docLine) >> jc_outFile;
-		}
-		print(jc_indent " */") >> jc_outFile;
-	}
-}
 
 function printJavaCommandHeader(javaFile) {
 
@@ -288,46 +196,6 @@ function printCommandJava(cmdIndex) {
 	}
 	print("}") >> javaFile;
 	print("") >> javaFile;
-}
-
-# Awaits this format:	const char*[]
-# Returns this format:	String[]
-function convertCToJNAType(cType) {
-
-	jnaType = trim(cType);
-
-	sub(/const/, "", jnaType);
-	sub(/unsigned/, "", jnaType);
-	gsub(/ \*/, "* ", jnaType);
-
-	isComplex = 0;
-	isComplex += sub(/char\*\*/, "Pointer", jnaType);
-	isComplex += sub(/char\*/, "String", jnaType);
-	isComplex += sub(/struct SAIFloat3(\*)?/, "AIFloat3", jnaType);
-	isComplex += sub(/struct SAICallback(\*)?/, "AICallback", jnaType);
-	isComplex += sub(/struct [0-9a-zA-Z_]*/, "Structure", jnaType);
-
-	isPrimitive = 0;
-	isPrimitive += sub(/bool/, "boolean", jnaType);
-	isPrimitive += sub(/char/, "byte", jnaType);
-	#isPrimitive += sub(/wchar_t/, "char", jnaType);
-	isPrimitive += sub(/short/, "short", jnaType);
-	isPrimitive += sub(/int/, "int", jnaType);
-	isPrimitive += sub(/float/, "float", jnaType);
-	isPrimitive += sub(/double/, "double", jnaType);
-
-	isPointer = 0;
-	if (isComplex <= 0 && isPrimitive <= 0) {
-		isPointer += sub(/.*\*/, "Pointer", jnaType);
-	}
-
-	# convert possible array length specifiers ("[]" or "[2]")
-	gsub(/\*/, "[]", jnaType);
-	arrDims = gsub(/\[[^\]]*\]/, "[]", jnaType);
-
-	jnaType = noSpaces(jnaType);
-
-	return jnaType;
 }
 
 function saveMember(ind_mem, member) {
