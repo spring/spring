@@ -9,6 +9,10 @@
 # * GetFirstSubDirName
 # * CreateClasspath
 # * ConcatClasspaths
+# * IsMavenInstalled
+# * IsMavenProject
+# * FindManifestFile
+# * ConfigureJavaSkirmishAI
 #
 
 
@@ -72,6 +76,33 @@ function    (IsMavenProject dirToCheck result_var)
 	endif (EXISTS "${dirToCheck}/pom.xml")
 	set(${result_var} "${${result_var}}" PARENT_SCOPE)
 endfunction (IsMavenProject)
+
+# Look for a manifest.mf file in a few specific sub-dirs.
+# This could be done with a simple find_file call,
+# but that strangely does not find the file under win32,
+# so we use this workaround
+function    (FindManifestFile srcDir result_var)
+	set(manifestSubdirs
+		"/src/main/resources/META-INF/"
+		"/src/"
+		"/")
+	set(${result_var} "${result_var}-NOTFOUND")
+	if     (CMAKE_HOST_WIN32)
+		foreach(subDir_var ${manifestSubdirs})
+			if     (EXISTS "${srcDir}${subDir_var}manifest.mf")
+				set(${result_var} "${srcDir}${subDir_var}manifest.mf")
+				break()
+			endif  (EXISTS "${srcDir}${subDir_var}manifest.mf")
+		endforeach(subDir_var)
+	else   (CMAKE_HOST_WIN32)
+		find_file(${result_var}
+			NAMES "manifest.mf" "MANIFEST.MF"
+			PATHS "${srcDir}"
+			PATH_SUFFIXES ${manifestSubdirs}
+			NO_DEFAULT_PATH)
+	endif  (CMAKE_HOST_WIN32)
+	set(${result_var} ${${result_var}} PARENT_SCOPE)
+endfunction (FindManifestFile)
 
 # Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
@@ -163,23 +194,12 @@ macro    (ConfigureJavaSkirmishAI)
 			file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
 
 			# Locate the manifest file
-			find_file(myManifestFile NAMES "manifest.mf" "MANIFEST.MF" PATHS
-					"${myDir}/src/main/resources/META-INF/"
-					"${myDir}/"
-					"${myDir}/src/"
-					"${myDir}/data/"
-					"${myDir}/data/jconfig/"
-					NO_DEFAULT_PATH
-					NO_CMAKE_ENVIRONMENT_PATH
-					NO_CMAKE_PATH
-					NO_SYSTEM_ENVIRONMENT_PATH
-					NO_CMAKE_SYSTEM_PATH
-					)
-			if    (myManifestFile-NOTFOUND)
-				set(myBinJarArgs "cf")
-			else  (myManifestFile-NOTFOUND)
+			FindManifestFile("${myDir}" myManifestFile)
+			if    (myManifestFile)
 				set(myBinJarArgs "cmf" "${myManifestFile}")
-			endif (myManifestFile-NOTFOUND)
+			else  (myManifestFile)
+				set(myBinJarArgs "cf")
+			endif (myManifestFile)
 
 			# Compile and pack the library
 			# needed by javac
