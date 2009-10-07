@@ -122,16 +122,31 @@ macro    (ConfigureJavaSkirmishAI)
 			# The Maven Project has to make sure these files get created:
 			# ${my.build.dir}/SkirmishAI.jar
 			# ${my.build.dir}/SkirmishAI-src.jar (optional)
+			set(MVN_ATTRIBUTES
+				"-Dmy.build.dir=\"${CMAKE_CURRENT_BINARY_DIR}\""
+				"-Dmy.version=\"${myVersion}\""
+				"--batch-mode" # Run in non-interactive (batch) mode
+				)
+			if    (NOT CMAKE_VERBOSE_MAKEFILE)
+				set(MVN_ATTRIBUTES ${MVN_ATTRIBUTES}
+					"--quiet"  # Quiet output - only show errors
+					)
+			endif (NOT CMAKE_VERBOSE_MAKEFILE)
 			add_custom_target(${myTarget} ALL
 					DEPENDS ${Java_AIINTERFACE_TARGET}
-					COMMAND "mvn" "package"
-						"-Dmy.build.dir=\"${CMAKE_CURRENT_BINARY_DIR}\""
-						"--batch-mode"
-						"--errors"
+					COMMAND "mvn" "package" ${MVN_ATTRIBUTES}
 					WORKING_DIRECTORY "${myDir}"
 					COMMENT "  Running package phase of ${myName} Maven Project" VERBATIM)
 		else  (configureMavenProject)
-			set(mySourceDir              "${myDir}/src")
+			if     (EXISTS "${myDir}/src/main/java")
+				# default Maven java source dir path
+				set(mySourceDir          "${myDir}/src/main/java")
+			elseif (EXISTS "${myDir}/src")
+				# simple java source dir path
+				set(mySourceDir          "${myDir}/src")
+			else   (EXISTS "${myDir}/src/main/java")
+				message(SEND_ERROR "No sources dir found for Skirmish AI: ${myName}")
+			endif  (EXISTS "${myDir}/src/main/java")
 			# If main Java package is "my.ai.pkg", this has to be set to "my".
 			GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
 			set(myJavaPkgFirstPart       "${firstSrcSubDir}")
@@ -178,6 +193,10 @@ macro    (ConfigureJavaSkirmishAI)
 		install (FILES    "${myBuildDir}/${myBinJarFile}" DESTINATION ${myDataDir})
 		# Install the sources archive (optional)
 		install (FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myDataDir}/jlib OPTIONAL)
+		if     (EXISTS "${myBuildDir}/jlib")
+			# Install libraries generated/downloaded during buildtime
+			install(DIRECTORY "${myBuildDir}/jlib/"       DESTINATION ${myDataDir}/jlib)
+		endif  (EXISTS "${myBuildDir}/jlib")
 	endif (BUILD_THIS_SKIRMISHAI)
 endmacro (ConfigureJavaSkirmishAI)
 
