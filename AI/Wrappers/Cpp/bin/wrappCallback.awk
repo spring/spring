@@ -20,8 +20,7 @@ BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	#FS="[ \t]+";
-	FS="(\\()|(\\)\\;)";
+	FS = "(\\()|(\\)\\;)";
 	IGNORECASE = 0;
 
 	# These vars can be assigned externally, see file header.
@@ -56,10 +55,8 @@ BEGIN {
 
 function printHeader(outFile_h, className_h, isOrHasInterface_h, isH_h) {
 
-	#classOrInterface = "class";
 	implementedInterfacePart = "";
 	if (isOrHasInterface_h == 1) {
-		#classOrInterface = "interface";
 	} else if (isOrHasInterface_h != 0) {
 		implementedInterfacePart = " : public " isOrHasInterface_h;
 	}
@@ -79,6 +76,8 @@ function printHeader(outFile_h, className_h, isOrHasInterface_h, isH_h) {
 		print("namespace " myNameSpace " {") >> outFile_h;
 		print("") >> outFile_h;
 		print("/**") >> outFile_h;
+		print(" * Lets C++ Skirmish AIs call back to the Spring engine.") >> outFile_h;
+		print(" *") >> outFile_h;
 		print(" * @author	AWK wrapper script") >> outFile_h;
 		print(" * @version	GENERATED") >> outFile_h;
 		print(" */") >> outFile_h;
@@ -246,6 +245,7 @@ function printInterface(clsName_i) {
 	print("#endif // " hg_i) >> out_h_i;
 	print("") >> out_h_i;
 
+	close(out_h_i);
 }
 
 
@@ -427,87 +427,83 @@ function printClass(ancestors_c, clsName_c) {
 
 	# print compareTo(other) method
 	if (1 == 0) {
-		print("\t" "public int compareTo(" clsNameExternal_c " other) {") >> outFile_c;
-		print("\t\t" "final int BEFORE = -1;") >> outFile_c;
-		print("\t\t" "final int EQUAL  =  0;") >> outFile_c;
-		print("\t\t" "final int AFTER  =  1;") >> outFile_c;
-		print("") >> outFile_c;
-		print("\t\t" "if (this == other) return EQUAL;") >> outFile_c;
-		print("") >> outFile_c;
+		print("\t" "public int compareTo(" clsNameExternal_c " other) {") >> out_s_c;
+		print("\t\t" "final int BEFORE = -1;") >> out_s_c;
+		print("\t\t" "final int EQUAL  =  0;") >> out_s_c;
+		print("\t\t" "final int AFTER  =  1;") >> out_s_c;
+		print("") >> out_s_c;
+		print("\t\t" "if (this == other) return EQUAL;") >> out_s_c;
+		print("") >> out_s_c;
 
 		if (isClbRootCls) {
-			print("\t\t" "if (this->teamId < other.teamId) return BEFORE;") >> outFile_c;
-			print("\t\t" "if (this->teamId > other.teamId) return AFTER;") >> outFile_c;
-			print("\t\t" "return EQUAL;") >> outFile_c;
+			print("\t\t" "if (this->teamId < other.teamId) return BEFORE;") >> out_s_c;
+			print("\t\t" "if (this->teamId > other.teamId) return AFTER;") >> out_s_c;
+			print("\t\t" "return EQUAL;") >> out_s_c;
 		} else {
 			for (ai=0; ai < size_addInds; ai++) {
 				addIndName = additionalClsIndices[clsId_c "#" ai];
-				print("\t\t" "if (this->get" capitalize(addIndName) "() < other.get" capitalize(addIndName) "()) return BEFORE;") >> outFile_c;
-				print("\t\t" "if (this->get" capitalize(addIndName) "() > other.get" capitalize(addIndName) "()) return AFTER;") >> outFile_c;
+				print("\t\t" "if (this->get" capitalize(addIndName) "() < other.get" capitalize(addIndName) "()) return BEFORE;") >> out_s_c;
+				print("\t\t" "if (this->get" capitalize(addIndName) "() > other.get" capitalize(addIndName) "()) return AFTER;") >> out_s_c;
 			}
-			print("\t\t" "return this->" myClassVar "->compareTo(other." myClassVar ");") >> outFile_c;
+			print("\t\t" "return this->" myClassVar "->compareTo(other." myClassVar ");") >> out_s_c;
 		}
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
+		print("\t" "}") >> out_s_c;
+		print("") >> out_s_c;
 	}
 
 
 	# print equals(other) method
 	if (1 == 0 && !isClbRootCls) {
-		print("\t" "@Override") >> outFile_c;
-		print("\t" "public boolean equals(Object otherObject) {") >> outFile_c;
-		print("") >> outFile_c;
-		print("\t\t" "if (this == otherObject) return true;") >> outFile_c;
-		print("\t\t" "if (!(otherObject instanceof " clsNameExternal_c ")) return false;") >> outFile_c;
-		print("\t\t" clsNameExternal_c " other = (" clsNameExternal_c ") otherObject;") >> outFile_c;
-		print("") >> outFile_c;
+		print("\t" "@Override") >> out_s_c;
+		print("\t" "public boolean equals(Object otherObject) {") >> out_s_c;
+		print("") >> out_s_c;
+		print("\t\t" "if (this == otherObject) return true;") >> out_s_c;
+		print("\t\t" "if (!(otherObject instanceof " clsNameExternal_c ")) return false;") >> out_s_c;
+		print("\t\t" clsNameExternal_c " other = (" clsNameExternal_c ") otherObject;") >> out_s_c;
+		print("") >> out_s_c;
 
 		if (isClbRootCls) {
-			print("\t\t" "if (this->teamId != other.teamId) return false;") >> outFile_c;
-			print("\t\t" "return true;") >> outFile_c;
+			print("\t\t" "if (this->teamId != other.teamId) return false;") >> out_s_c;
+			print("\t\t" "return true;") >> out_s_c;
 		} else {
 			for (ai=0; ai < size_addInds; ai++) {
 				addIndName = additionalClsIndices[clsId_c "#" ai];
-				print("\t\t" "if (this->get" capitalize(addIndName) "() != other.get" capitalize(addIndName) "()) return false;") >> outFile_c;
+				print("\t\t" "if (this->get" capitalize(addIndName) "() != other.get" capitalize(addIndName) "()) return false;") >> out_s_c;
 			}
-			print("\t\t" "return this->" myClassVar "->equals(other." myClassVar ");") >> outFile_c;
+			print("\t\t" "return this->" myClassVar "->equals(other." myClassVar ");") >> out_s_c;
 		}
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
+		print("\t" "}") >> out_s_c;
+		print("") >> out_s_c;
 	}
 
 
 	# print hashCode() method
 	if (1 == 0 && !isClbRootCls) {
-		print("\t" "@Override") >> outFile_c;
-		print("\t" "public int hashCode() {") >> outFile_c;
-		print("") >> outFile_c;
-		print("\t\t" "int _res = 23;") >> outFile_c;
-		print("") >> outFile_c;
+		print("\t" "@Override") >> out_s_c;
+		print("\t" "public int hashCode() {") >> out_s_c;
+		print("") >> out_s_c;
+		print("\t\t" "int _res = 23;") >> out_s_c;
+		print("") >> out_s_c;
 
 		if (isClbRootCls) {
-			print("\t\t" "_res += this->teamId * 10E8;") >> outFile_c;
+			print("\t\t" "_res += this->teamId * 10E8;") >> out_s_c;
 		} else {
 			# NOTE: This could go wrong if we have more then 7 additional indices
 			# see 10E" (7-ai) below
 			for (ai=0; ai < size_addInds; ai++) {
 				addIndName = additionalClsIndices[clsId_c "#" ai];
-				print("\t\t" "_res += this->get" capitalize(addIndName) "() * 10E" (7-ai) ";") >> outFile_c;
+				print("\t\t" "_res += this->get" capitalize(addIndName) "() * 10E" (7-ai) ";") >> out_s_c;
 			}
-			print("\t\t" "_res += this->" myClassVar "->hashCode();") >> outFile_c;
+			print("\t\t" "_res += this->" myClassVar "->hashCode();") >> out_s_c;
 		}
-		print("") >> outFile_c;
-		print("\t\t" "return _res;") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
+		print("") >> out_s_c;
+		print("\t\t" "return _res;") >> out_s_c;
+		print("\t" "}") >> out_s_c;
+		print("") >> out_s_c;
 	}
 
 	# print member functions
 	size_funcs = ownerOfFunc[clsId_c "*"];
-#print("");
-#print(clsId_c);
-#print(size_funcs);
-#print("out_h_c: " out_h_c);
 	for (f=0; f < size_funcs; f++) {
 		fullName_c = ownerOfFunc[clsId_c "#" f];
 		printMember(out_h_c, out_s_c, clsNameExternal_c, fullName_c, size_addInds, 0);
@@ -516,11 +512,8 @@ function printClass(ancestors_c, clsName_c) {
 
 	# print member class fetchers (single, multi, multi-fetch-single)
 	size_memCls = split(ancestors_class[clsFull_c], memCls, ",");
-#if (match(clsFull_c, /Clb$/)) { print("Clb ancestors: " ancestors_class[clsFull_c]); }
-#print("printClass size_memCls: " clsFull_c " / " size_memCls);
 	for (mc=0; mc < size_memCls; mc++) {
 		memberClass_c = memCls[mc+1];
-#if (match(clsFull_c, /Clb$/)) { print("cls/mem: " clsFull_c " / " memberClass_c); }
 		printMemberClassFetchers(out_h_c, out_s_c, clsNameExternal_c, clsFull_c, clsId_c, memberClass_c, isInterface_c);
 	}
 
@@ -531,6 +524,9 @@ function printClass(ancestors_c, clsName_c) {
 	hg_c = createHeaderGuard(clsNameExternal_c);
 	print("#endif // " hg_c) >> out_h_c;
 	print("") >> out_h_c;
+
+	close(out_s_c);
+	close(out_h_c);
 }
 
 function printMemberClassFetchers(out_h_mc, out_s_mc, clsNameExternal_mc, clsFull_mc, clsId_mc, memberClsName_mc, isInterface_mc) {
