@@ -38,7 +38,7 @@
 
 		<property name="spring.ai.interface.home"
 				location="${spring.home}/rts/ExternalAI/Interface"/>
-		<property name="src.java" location="src/java"/>
+		<property name="src.java" location="src/main/java"/>
 		<property name="bin.dir" location="bin"/>
 		<path id="source.path.id">
 			<pathelement path="${src.java}"/>

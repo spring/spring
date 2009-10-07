@@ -31,7 +31,7 @@ BEGIN {
 		GENERATED_SOURCE_DIR = "../src-generated/main/java";
 	}
 
-	javaSrcRoot = "../src/java";
+	javaSrcRoot = "../src/main/java";
 	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
 	myPkgA = "com.springrts.ai";

@@ -527,7 +527,7 @@ for baseName in aiinterfaces_toBuild:
 		springSrcDir = filelist.getAbsDir(env, '..')
 		springInterfaceSrcDir = os.path.join(springSrcDir, 'rts', 'ExternalAI', 'Interface')
 		interfaceJLibDir = os.path.join(myEnv['sourcedir'], 'data', 'jlib')
-		interfaceJavaSrcDir = os.path.join(myEnv['sourcedir'], 'src', 'java')
+		interfaceJavaSrcDir = os.path.join(myEnv['sourcedir'], 'src', 'main', 'java')
 		interfaceManifestFile = filelist.getAbsDir(env, os.path.join(interfaceJavaSrcDir, 'manifest.mf'))
 		interfaceBinDir = os.path.join('AI', myEnv['sourcedir'], 'bin')
 		awkScriptsDir = interfaceBinDir
