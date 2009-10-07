@@ -718,6 +718,12 @@ for baseName in skirmishais_toBuild:
 			myClassPathDirs += [myJLibDir]
 		manifestFile = filelist.getAbsDir(env, os.path.join(myEnv['sourcedir'], 'manifest.mf'))
 		if (not os.path.exists(manifestFile)):
+			manifestFile = filelist.getAbsDir(env, javaSrc, 'manifest.mf'))
+		if (not os.path.exists(manifestFile)):
+			manifestFile = filelist.getAbsDir(env, os.path.join(myEnv['sourcedir'], 'src', 'main', 'resources', 'META-INF', 'MANIFEST.MF'))
+		if (not os.path.exists(manifestFile)):
+			manifestFile = filelist.getAbsDir(env, os.path.join(myEnv['sourcedir'], 'src', 'main', 'resources', 'META-INF', 'manifest.mf'))
+		if (not os.path.exists(manifestFile)):
 			manifestFile = None
 		jarFileBase = 'SkirmishAI'
 		jarFileBin = jarFileBase + '.jar'

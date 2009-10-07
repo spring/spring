@@ -162,7 +162,26 @@ macro    (ConfigureJavaSkirmishAI)
 			# Create a list of all the AIs source files
 			file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
 
-			# Compile the library
+			# Locate the manifest file
+			find_file(myManifestFile NAMES "manifest.mf" "MANIFEST.MF" PATHS
+					"${myDir}/src/main/resources/META-INF/"
+					"${myDir}/"
+					"${myDir}/src/"
+					"${myDir}/data/"
+					"${myDir}/data/jconfig/"
+					NO_DEFAULT_PATH
+					NO_CMAKE_ENVIRONMENT_PATH
+					NO_CMAKE_PATH
+					NO_SYSTEM_ENVIRONMENT_PATH
+					NO_CMAKE_SYSTEM_PATH
+					)
+			if    (myManifestFile-NOTFOUND)
+				set(myBinJarArgs "cf")
+			else  (myManifestFile-NOTFOUND)
+				set(myBinJarArgs "cmf" "${myManifestFile}")
+			endif (myManifestFile-NOTFOUND)
+
+			# Compile and pack the library
 			# needed by javac
 			file(MAKE_DIRECTORY "${myJavaBuildDir}")
 			add_custom_target(${myTarget} ALL
@@ -173,7 +192,7 @@ macro    (ConfigureJavaSkirmishAI)
 					"-d" "${myJavaBuildDir}"
 					${mySources}
 				COMMAND "${JAVA_ARCHIVE}"
-					"cmf" "${myDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
+					${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 					"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
 				WORKING_DIRECTORY "${mySourceDir}"
 				COMMENT "  Creating library ${myBinJarFile}" VERBATIM)
