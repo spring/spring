@@ -647,21 +647,24 @@ void SpringApp::ParseCmdLine()
 	} else if (cmdline->IsSet("projectiledump")) {
 		CCustomExplosionGenerator::OutputProjectileClassInfo();
 		exit(0);
-	} else if (cmdline->IsSet("list-ai-interfaces")) {
+	}
+
+	if (cmdline->IsSet("config")) {
+		string configSource = cmdline->GetString("config");
+		logOutput.Print("using configuration source \"" + ConfigHandler::Instantiate(configSource) + "\"");
+	} else {
+		logOutput.Print("using default configuration source \"" + ConfigHandler::Instantiate("") + "\"");
+	}
+
+	// mutually exclusive options that cause spring to quit immediately
+	// and require the configHandler
+	if (cmdline->IsSet("list-ai-interfaces")) {
 		IAILibraryManager::OutputAIInterfacesInfo();
 		exit(0);
 	} else if (cmdline->IsSet("list-skirmish-ais")) {
 		IAILibraryManager::OutputSkirmishAIInfo();
 		exit(0);
 	}
-
-	if (cmdline->IsSet("config"))
-	{
-		string configSource = cmdline->GetString("config");
-		logOutput.Print("using configuration source \"" + ConfigHandler::Instantiate(configSource) + "\"");
-	}
-	else
-		logOutput.Print("using default configuration source \"" + ConfigHandler::Instantiate("") + "\"");
 
 #ifdef _DEBUG
 	fullscreen = false;
