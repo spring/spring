@@ -189,7 +189,7 @@ endmacro (ConfigureJavaSkirmishAI)
 set(myName               "Java")
 set(myDir                "${CMAKE_CURRENT_SOURCE_DIR}")
 set(myNativeSourceDirRel "src/native")
-set(myJavaSourceDirRel   "src/java")
+set(myJavaSourceDirRel   "src/main/java")
 set(myPkgFirstPart       "com")
 set(myPkg                "${myPkgFirstPart}/springrts/ai")
 

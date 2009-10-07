@@ -11,7 +11,7 @@ SET JAVA_PKG=%JAVA_PKG_FIRST_PART%/springrts/ai
 
 SET JAVA_SRC_FILES=%JAVA_PKG%/*.java %JAVA_PKG%/command/*.java %JAVA_PKG%/event/*.java %JAVA_PKG%/oo/*.java
 
-SOURCE_MAIN_DIR=${HOME_DIR}/src/java
+SOURCE_MAIN_DIR=${HOME_DIR}/src/main/java
 if [ -z "${BUILD_DIR}" ]; then
 	BUILD_DIR=${HOME_DIR}/build
 fi
