@@ -28,10 +28,10 @@ BEGIN {
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
-		GENERATED_SOURCE_DIR = "../java/generated";
+		GENERATED_SOURCE_DIR = "../src-generated/main/java";
 	}
 
-	javaSrcRoot = "../java/src";
+	javaSrcRoot = "../src/java";
 	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
 
 	myPkgA = "com.springrts.ai";
