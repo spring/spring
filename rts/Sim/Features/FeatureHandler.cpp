@@ -889,7 +889,8 @@ void CFeatureHandler::DrawFeatureStats(CFeature* feature)
 		glRectf(-5.0f, 4.0f, rmin - 5.0f, 6.0f);
 	}
 	if(recl > rezp) {
-		glColor3f(0.6f, 0.6f, 0.6f);
+		float col = 0.8 - 0.3 * recl;
+		glColor3f(col, col, col);
 		glRectf(rmin - 5.0f, 4.0f, recl * 10.0f - 5.0f, 6.0f);
 	}
 	if(recl < rezp) {

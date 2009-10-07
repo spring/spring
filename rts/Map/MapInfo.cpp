@@ -24,7 +24,7 @@ static CLogSubsystem LOG_MAPINFO("mapinfo");
 const CMapInfo* mapInfo;
 
 
-CMapInfo::CMapInfo(const string& mapName, bool onlyBasics)
+CMapInfo::CMapInfo(const string& mapName)
 {
 	map.name = mapName;
 
@@ -45,15 +45,13 @@ CMapInfo::CMapInfo(const string& mapName, bool onlyBasics)
 	resRoot = &resTbl;
 
 	ReadGlobal();
-	if (!onlyBasics) {
-		ReadAtmosphere();
-		ReadGui();
-		ReadLight();
-		ReadWater();
-		ReadSmf();
-		ReadSm3();
-		ReadTerrainTypes();
-	}
+	ReadAtmosphere();
+	ReadGui();
+	ReadLight();
+	ReadWater();
+	ReadSmf();
+	ReadSm3();
+	ReadTerrainTypes();
 }
 
 
@@ -264,10 +262,25 @@ void CMapInfo::ReadSmf()
 
 	// height overrides
 	const LuaTable smfTable = mapRoot->SubTable("smf");
+
 	smf.minHeightOverride = smfTable.KeyExists("minHeight");
 	smf.maxHeightOverride = smfTable.KeyExists("maxHeight");
 	smf.minHeight = smfTable.GetFloat("minHeight", 0.0f);
 	smf.maxHeight = smfTable.GetFloat("maxHeight", 0.0f);
+
+
+	std::stringstream ss;
+
+	for (int i = 0; /* no test */; i++) {
+		ss.str("");
+		ss << "smtFileName" << i;
+
+		if (smfTable.KeyExists(ss.str())) {
+			smf.smtFileNames.push_back(smfTable.GetString(ss.str(), ".smt"));
+		} else {
+			break;
+		}
+	}
 }
 
 
