@@ -1,6 +1,6 @@
 #!/bin/awk
 #
-# This awk script creates the JNA wrapper classes for the C command structs in:
+# This awk script creates the C++ wrapper classes for the C command structs in:
 # rts/ExternalAI/Interface/AISCommands.h
 #
 # This script uses functions from the following files:
@@ -11,7 +11,7 @@
 #
 # usage:
 # 	awk -f thisScript.awk -f common.awk -f commonDoc.awk
-# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/generated-java-src'
+# 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Wrappers/Cpp/src-generated'
 #
 
 BEGIN {
@@ -20,19 +20,12 @@ BEGIN {
 	# define the field splitter(-regex)
 	FS = "[ \t]+";
 
-	# Used by other scripts
-	JAVA_MODE = 1;
-
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
-		GENERATED_SOURCE_DIR = "../java/generated";
+		GENERATED_SOURCE_DIR = "../src-generated/native";
 	}
 
-	javaSrcRoot = "../java/src";
-	javaGeneratedSrcRoot = GENERATED_SOURCE_DIR;
-
-	myPkgA = "com.springrts.ai";
 	#myClass = "AICallback";
 	aiFloat3Class = "AIFloat3";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
@@ -41,7 +34,7 @@ BEGIN {
 	myPkgCmdD = convertJavaNameFormAToD(myPkgCmdA);
 
 	myPointerCmdWrapperClass = "AICommandWrapper";
-	myPointerCmdWrapperFile = javaGeneratedSrcRoot "/" myPkgD "/" myPointerCmdWrapperClass ".java";
+	myPointerCmdWrapperFile = GENERATED_SOURCE_DIR "/" myPkgD "/" myPointerCmdWrapperClass ".java";
 
 	indent = "	";
 
@@ -87,9 +80,10 @@ function printCommandJava(cmdIndex) {
 	topicName = cmdsTopicName[cmdIndex];
 	topicValue = cmdsTopicNameValue[topicName];
 	name = cmdsName[cmdIndex];
+	#isUnitCmd = cmdsIsUnitCmd[cmdIndex];
 	isUnitCmd = 0;
 
-	javaFile = javaGeneratedSrcRoot "/" myPkgCmdD "/" name "AICommand.java";
+	javaFile = javaSrcRoot "/" myPkgCmdD "/" name "AICommand.java";
 	className = name "AICommand";
 	cmdInterface = "AICommand";
 	firstMethod = 0;
@@ -98,8 +92,13 @@ function printCommandJava(cmdIndex) {
 		firstMethod = 4;
 	}
 
+	#print("########################################################");
+	#print("creating file " javaFile);
+	#print("### topic name: " topicName);
+	#print("### topic value: " topicValue);
+	#print("########################################################");
 	printJavaCommandHeader(javaFile);
-	printFunctionComment_Common(javaFile, cmdsDocComment, cmdIndex, "");
+	printJavaCommandComment(javaFile, cmdIndex, "");
 	print("public final class " className " extends " cmdInterface " {") >> javaFile;
 	print("") >> javaFile;
 	print("	public final static int TOPIC = " topicValue ";") >> javaFile;
@@ -122,7 +121,6 @@ function printCommandJava(cmdIndex) {
 			name = cmdsMembers_name[cmdIndex, m];
 			type_c = cmdsMembers_type_c[cmdIndex, m];
 			type_jna = convertCToJNAType(type_c);
-			# add to typedMemberList
 			typedMemberList = typedMemberList ", " type_jna " " name;
 		}
 		sub(/\, /, "", typedMemberList);
@@ -187,17 +185,17 @@ function printCommandJava(cmdIndex) {
 	}
 
 	print("") >> javaFile;
-	# print out the member declarations
+#print("//name: " name) >> javaFile;
+#print("//topicName: " topicName) >> javaFile;
+#print("//evtIndex: " evtIndex) >> javaFile;
 	for (m=firstMethod; m < cmdsNumMembers[cmdIndex]; m++) {
 		name = cmdsMembers_name[cmdIndex, m];
 		type_c = cmdsMembers_type_c[cmdIndex, m];
 		type_jna = convertCToJNAType(type_c);
-		printFunctionComment_Common(javaFile, cmdMbrsDocComments, cmdIndex*100 + m, "	");
 		print("	public " type_jna " " name ";") >> javaFile;
 	}
 	print("}") >> javaFile;
 	print("") >> javaFile;
-	close(javaFile);
 }
 
 function saveMember(ind_mem, member) {
@@ -293,17 +291,64 @@ function printPointerAICommandWrapperEnd(outFile_wh) {
 	cmdsTopicNameValue[$2] = $4;
 }
 
+################################################################################
+### BEGINN: parsing and saving the command struct documentation comments
 
+# end of doc comment
+/\*\// {
 
-# This function has to return true (1) if a doc comment (eg: /** foo bar */)
-# can be deleted.
-# If there is no special condition you want to apply,
-# it should always return true (1),
-# cause there are additional mechanism to prevent accidential deleting.
-# see: commonDoc.awk
-function canDeleteDocumentation() {
-	return isInsideCmdStruct != 1;
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/\*\/.*/, "", usefullLinePart);
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		if (usefullLinePart != "") {
+			docComLines[docComLines_num++] = usefullLinePart;
+		}
+	}
+	isInsideDocComment = 0;
 }
+
+
+# inside of doc comment
+{
+	if (isInsideDocComment == 1) {
+		usefullLinePart = $0;
+		sub(/^[ \t]*(\*)?/, "", usefullLinePart);
+		usefullLinePart = trim(usefullLinePart);
+		docComLines[docComLines_num++] = usefullLinePart;
+	} else {
+		if (trim($0) != "") {
+			linesWithNoDocComment++;
+		}
+		# delete the last stored doc comment if it is not applicable to anything
+		if (linesWithNoDocComment > 2 && isInsideCmdStruct != 1) {
+			docComLines_num = 0;
+		}
+	}
+}
+
+# beginn of doc comment
+/^[ \t]*\/\*\*/ {
+
+	isInsideDocComment = 1;
+	docComLines_num = 0;
+	linesWithNoDocComment = 0;
+
+	usefullLinePart = $0;
+	sub(/^[ \t]*\/\*\*/, "", usefullLinePart);
+	if (sub(/\*\/.*/, "", usefullLinePart)) {
+		isInsideDocComment = 0;
+	}
+	usefullLinePart = trim(usefullLinePart);
+	if (usefullLinePart != "") {
+		docComLines[docComLines_num++] = usefullLinePart;
+	}
+}
+
+### END: parsing and saving the command struct documentation comments
+################################################################################
+
 
 ################################################################################
 ### BEGINN: parsing and saving the command structs
@@ -313,6 +358,10 @@ function canDeleteDocumentation() {
 
 	cmdsNumMembers[ind_cmdStructs] = ind_cmdMember;
 	cmdsTopicName[ind_cmdStructs] = $3;
+	cmdsDocComment[ind_cmdStructs, "*"] = docComLines_num;
+	for (l=0; l < docComLines_num; l++) {
+		cmdsDocComment[ind_cmdStructs, l] = docComLines[l];
+	}
 
 	if (doWrapp(ind_cmdStructs)) {
 		printCommandJava(ind_cmdStructs);
@@ -332,10 +381,7 @@ function canDeleteDocumentation() {
 			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
 				break;
 			}
-			# This would bork with more then 100 members in a command
-			storeDocLines(cmdMbrsDocComments, ind_cmdStructs*100 + ind_cmdMember);
-			saveMember(ind_cmdMember, tmpMembers[i]);
-			ind_cmdMember++;
+			saveMember(ind_cmdMember++, tmpMembers[i]);
 		}
 	}
 }
@@ -353,7 +399,6 @@ function canDeleteDocumentation() {
 
 	cmdsIsUnitCmd[ind_cmdStructs] = isUnitCommand;
 	cmdsName[ind_cmdStructs] = commandName;
-	storeDocLines(cmdsDocComment, ind_cmdStructs);
 }
 
 # find COMMAND_TO_ID_ENGINE id
@@ -378,5 +423,4 @@ END {
 		}
 	}
 	printPointerAICommandWrapperEnd(myPointerCmdWrapperFile);
-	close(myPointerCmdWrapperFile);
 }
