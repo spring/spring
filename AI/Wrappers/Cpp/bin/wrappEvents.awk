@@ -23,7 +23,7 @@ BEGIN {
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
-		GENERATED_SOURCE_DIR = "..";
+		GENERATED_SOURCE_DIR = "../src-generated/main/native";
 	}
 
 	mySrc = GENERATED_SOURCE_DIR;
@@ -126,7 +126,7 @@ function printAIFactoryHeader(outFile) {
 	print("#include <map>") >> outFile;
 	print("") >> outFile;
 	print("/**") >> outFile;
-	print(" *") >> outFile;
+	print(" * TODO: Add description here") >> outFile;
 	print(" *") >> outFile;
 	print(" * @author	hoijui") >> outFile;
 	print(" * @version	GENERATED") >> outFile;
@@ -205,10 +205,11 @@ function printAIFactoryHeader(outFile) {
 }
 function printAIFactoryEnd(outFile) {
 
-	print("					default:") >> outFile;
+	print("					default: {") >> outFile;
 	print("						_ret = 1;") >> outFile;
+	print("					}") >> outFile;
 	print("				}") >> outFile;
-	print("			} catch (Throwable t) {") >> outFile;
+	print("			} catch (Throwable t) { // TODO: this works?") >> outFile;
 	print("				_ret = 2;") >> outFile;
 	print("			}") >> outFile;
 	print("		}") >> outFile;
@@ -245,6 +246,7 @@ function printEventOO(evtIndex) {
 	sub(/^\, /, "", paramsEvt);
 
 	sub(/int unit(Id)?/, "Unit unit", paramsTypes);
+	sub(/int builder(Id)?/, "Unit builder", paramsTypes);
 	sub(/int attacker(Id)?/, "Unit attacker", paramsTypes);
 	sub(/int enemy(Id)?/, "Unit enemy", paramsTypes);
 	sub(/int weaponDef(Id)?/, "WeaponDef weaponDef", paramsTypes);
@@ -253,6 +255,7 @@ function printEventOO(evtIndex) {
 	if (unitRepls == 0) {
 		sub(/evt.unit/, "Unit.getInstance(ooClb, evt.unit)", paramsEvt);
 	}
+	sub(/evt.builder/, "Unit.getInstance(ooClb, evt.builder)", paramsEvt);
 	sub(/evt.attacker/, "Unit.getInstance(ooClb, evt.attacker)", paramsEvt);
 	sub(/evt.enemy/, "Unit.getInstance(ooClb, evt.enemy)", paramsEvt);
 	sub(/evt.weaponDefId/, "WeaponDef.getInstance(ooClb, evt.weaponDefId)", paramsEvt);
@@ -275,22 +278,21 @@ function printEventOO(evtIndex) {
 	print("		return 0; // signaling: OK") >> myAbstractAIFile_h;
 	print("	}") >> myAbstractAIFile_h;
 
-	print("\t\t\t\t\t" "case " eCls ":") >> myAIFactoryFile_h;
-	print("\t\t\t\t\t\t" "{") >> myAIFactoryFile_h;
-	print("\t\t\t\t\t\t\t" eCls " evt = (" eCls ") event;") >> myAIFactoryFile_h;
+	print("\t\t\t\t\t" "case " eCls ": {") >> myAIFactoryFile_h;
+	print("\t\t\t\t\t\t" eCls " evt = (" eCls ") event;") >> myAIFactoryFile_h;
 	if (eName == "Init") {
-		print("\t\t\t\t\t\t\t" "clb = AICallback.getInstance(evt.callback, evt.team);") >> myAIFactoryFile_h;
-		print("\t\t\t\t\t\t\t" "clbs.put(teamId, clb);") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t" "clb = AICallback.getInstance(evt.callback, evt.team);") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t" "clbs.put(teamId, clb);") >> myAIFactoryFile_h;
 	} else if (eName == "PlayerCommand") {
-		print("\t\t\t\t\t\t\t" "std::vector<Unit> units;") >> myAIFactoryFile_h;
-		print("\t\t\t\t\t\t\t" "for (int i=0; i < evt.numUnitIds; i++) {") >> myAIFactoryFile_h;
-		print("\t\t\t\t\t\t\t\t" "units.push_back(Unit.getInstance(clb, evt.unitIds[i]));") >> myAIFactoryFile_h;
-		print("\t\t\t\t\t\t\t" "}") >> myAIFactoryFile_h;
-		print("\t\t\t\t\t\t\t" "AICommand command = AICommandWrapper.wrapp(evt.commandTopic, evt.commandData);") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t" "std::vector<Unit> units;") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t" "for (int i=0; i < evt.numUnitIds; i++) {") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t\t" "units.push_back(Unit.getInstance(clb, evt.unitIds[i]));") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t" "}") >> myAIFactoryFile_h;
+		print("\t\t\t\t\t\t" "AICommand command = AICommandWrapper.wrapp(evt.commandTopic, evt.commandData);") >> myAIFactoryFile_h;
 	}
-	print("\t\t\t\t\t\t\t" "_ret = ai." eName "(" paramsEvt ");") >> myAIFactoryFile_h;
-	print("\t\t\t\t\t\t\t" "break;") >> myAIFactoryFile_h;
-	print("\t\t\t\t\t\t" "}") >> myAIFactoryFile_h;
+	print("\t\t\t\t\t\t" "_ret = ai." eName "(" paramsEvt ");") >> myAIFactoryFile_h;
+	print("\t\t\t\t\t\t" "break;") >> myAIFactoryFile_h;
+	print("\t\t\t\t\t" "}") >> myAIFactoryFile_h;
 }
 
 function printEventOOAIFactory(evtIndex) {
@@ -298,21 +300,6 @@ function printEventOOAIFactory(evtIndex) {
 	topicName = evtsTopicName[evtIndex];
 	topicValue = evtsTopicNameValue[topicName];
 	eName = evtsName[evtIndex];
-}
-
-
-function printEventJavaComment(jc_outFile, jc_evtIndex, jc_indent) {
-
-	# print the documentation comment
-	if (evtsDocComment[jc_evtIndex, "*"] > 0) {
-		print(jc_indent "/**") >> jc_outFile;
-		numLines = evtsDocComment[jc_evtIndex, "*"];
-		for (l=0; l < numLines; l++) {
-			docLine = evtsDocComment[jc_evtIndex, l];
-			print(jc_indent " * " docLine) >> jc_outFile;
-		}
-		print(jc_indent " */") >> jc_outFile;
-	}
 }
 
 
@@ -357,7 +344,6 @@ function canDeleteDocumentation() {
 	evtsTopicName[ind_evtStructs] = $3;
 	storeDocLines(evtsDocComment, ind_evtStructs);
 
-	#printEventJava(ind_evtStructs);
 	printEventOO(ind_evtStructs);
 
 	ind_evtStructs++;
@@ -374,11 +360,6 @@ function canDeleteDocumentation() {
 			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
 				break;
 			}
-#print("eventName: " eventName);
-#print("ind_evtStructs: " ind_evtStructs);
-#print("ind_evtMember: " ind_evtMember);
-#print("tmpMembers[i]: " tmpMembers[i]);
-#print("");
 			saveMember(ind_evtMember++, tmpMembers[i]);
 		}
 	}
@@ -408,4 +389,8 @@ END {
 	printAIEnd(myAIFile_h);
 	printAIEnd(myAbstractAIFile_h);
 	printAIFactoryEnd(myAIFactoryFile_h);
+
+	close(myAIFile_h);
+	close(myAbstractAIFile_h);
+	close(myAIFactoryFile_h);
 }
