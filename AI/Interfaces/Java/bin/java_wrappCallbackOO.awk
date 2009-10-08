@@ -23,8 +23,7 @@ BEGIN {
 	# initialize things
 
 	# define the field splitter(-regex)
-	#FS="[ \t]+";
-	FS="(\\()|(\\)\\;)";
+	FS = "(\\()|(\\)\\;)";
 	IGNORECASE = 0;
 
 	# Used by other scripts
@@ -57,12 +56,6 @@ BEGIN {
 	size_funcs = 0;
 	size_classes = 0;
 	size_interfaces = 0;
-	# initialize all arrays
-	#funcFullName[""] = 0;
-	#funcRetType[""] = 0;
-	#funcParams[""] = 0;
-	#funcInnerParams[""] = 0;
-	#class_ancestors[""] = 0;
 }
 
 
@@ -173,16 +166,6 @@ function printClasses() {
 	for (clsName in class_ancestors) {
 		size_ancestorParts = split(class_ancestors[clsName], ancestorParts, ",");
 
-		# check if an interface is used/available
-		#hasInterface = 0;
-		#if (clsName in interfaces) {
-		#	hasInterface = 1;
-		#}
-#if (match(clsName, /Clb/)) {
-#print("clsName: " clsName);
-#print("size_ancestorParts: " size_ancestorParts);
-#print("class_ancestors[clsName]: " class_ancestors[clsName]);
-#}
 		if (size_ancestorParts == 0) {
 			printClass("", clsName);
 		}
@@ -295,15 +278,14 @@ function printClass(ancestors_c, clsName_c) {
 		print("") >> outFile_c;
 		lastParamName = ctorParamsNoTypes;
 		sub(/^.*,[ \t]*/, "", lastParamName);
-		if (clsNameExternal_c == "Unit") {
-			# the first valid unit id is 1
-			print("\t\t" "if (unitId <= 0) {") >> outFile_c;
-			print("\t\t\t" "return null;") >> outFile_c;
-			print("\t\t" "}") >> outFile_c;
-			print("") >> outFile_c;
-		} else if (match(lastParamName, /^[^ \t]+Id$/)) {
-			# ... for all other *Id's, the first valid one is 0
-			print("\t\t" "if (" lastParamName " < 0) {") >> outFile_c;
+		if (match(lastParamName, /^[^ \t]+Id$/)) {
+			if (clsNameExternal_c == "Unit") {
+				# the first valid unit ID is 1
+				print("\t\t" "if (" lastParamName " <= 0) {") >> outFile_c;
+			} else {
+				# ... for all other IDs, the first valid one is 0
+				print("\t\t" "if (" lastParamName " < 0) {") >> outFile_c;
+			}
 			print("\t\t\t" "return null;") >> outFile_c;
 			print("\t\t" "}") >> outFile_c;
 			print("") >> outFile_c;
@@ -702,9 +684,7 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 
 	refObjsFullName_m = fullName_m;
 	hasReferenceObject_m = part_hasReferenceObject(refObjsFullName_m);
-#print("hasRef: " hasReferenceObject_m " / " fullName_m);
 	while (hasReferenceObject_m) {
-#0REF1Resource2resourceId0
 		refObj_m = refObjsFullName_m;
 		sub(/^.*0REF/, "", refObj_m); # remove everything before ref type
 		sub(/0.*$/, "", refObj_m); # remove everything after ref type
@@ -716,7 +696,6 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		refParamName_m = refObj_m;
 		sub(/^[^2]*2/, "", refParamName_m); # remove everything before ref param name
 		sub(/[123].*$/, "", refParamName_m); # remove everything after ref param name
-#print("Ref: " refCls_m " / " refParamName_m " / " refObj_m " / " fullName_m);
 
 		#refParamNameClass_m[refParamName_m] = refCls_m; # eg: refParamNameClass_m["resourceId"] = "Resource"
 		sub("int " refParamName_m, refCls_m " c_" refParamName_m, params); # remove everything before ref param name
@@ -862,7 +841,6 @@ function canDeleteDocumentation() {
 	}
 }
 # 1st line of a function definition
-#/^\t[^ ]+ Clb_[^ ]+\(int teamId.*\)\;$/ {
 /Clb_/ {
 
 	funcStartLine = $0;
