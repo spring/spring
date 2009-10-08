@@ -768,14 +768,9 @@ function printMember(out_h_m, out_s_m, clsNameExternal_m, fullName_m, additional
 		instanceInnerParams = "";
 	}
 
-#if (match(innerParams, /teamId/)) {
-#	print("wrappC:innerParams: " innerParams);
-#}
 	refObjsFullName_m = fullName_m;
 	hasReferenceObject_m = part_hasReferenceObject(refObjsFullName_m);
-#print("hasRef: " hasReferenceObject_m " / " fullName_m);
 	while (hasReferenceObject_m) {
-#0REF1Resource2resourceId0
 		refObj_m = refObjsFullName_m;
 		sub(/^.*0REF/, "", refObj_m); # remove everything before ref type
 		sub(/0.*$/, "", refObj_m); # remove everything after ref type
@@ -787,8 +782,6 @@ function printMember(out_h_m, out_s_m, clsNameExternal_m, fullName_m, additional
 		refParamName_m = refObj_m;
 		sub(/^[^2]*2/, "", refParamName_m); # remove everything before ref param name
 		sub(/[123].*$/, "", refParamName_m); # remove everything after ref param name
-#print("Ref: " refCls_m " / " refParamName_m " / " refObj_m " / " fullName_m);
-#print("Ref: innerParams: " innerParams);
 
 		#refParamNameClass_m[refParamName_m] = refCls_m; # eg: refParamNameClass_m["resourceId"] = "Resource"
 		sub("int " refParamName_m, refCls_m " c_" refParamName_m, params); # remove everything before ref param name
