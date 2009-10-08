@@ -56,10 +56,6 @@ void CTeamHandler::LoadFromSetup(const CGameSetup* setup)
 		CTeam* team = Team(i);
 		*team = setup->teamStartingData[i];
 		team->teamNum = i;
-		team->metalIncome = team->metal; // for the endgame statistics
-
-		team->energyIncome = setup->startEnergy;
-
 		SetAllyTeam(i, team->teamAllyteam);
 	}
 
