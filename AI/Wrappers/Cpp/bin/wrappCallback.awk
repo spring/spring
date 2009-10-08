@@ -381,16 +381,15 @@ function printClass(ancestors_c, clsName_c) {
 		if (match(lastParamName, /^[^ \t]+Id$/)) {
 			if (clsNameExternal_c == "Unit") {
 				# the first valid unit ID is 1
-				print("\t\t" "if (" lastParamName " <= 0) {") >> out_s_c;
+				print("\t" "if (" lastParamName " <= 0) {") >> out_s_c;
 			} else {
 				# ... for all other IDs, the first valid one is 0
-				print("\t\t" "if (" lastParamName " < 0) {") >> out_s_c;
+				print("\t" "if (" lastParamName " < 0) {") >> out_s_c;
 			}
-			print("\t\t\t" "return NULL;") >> out_s_c;
-			print("\t\t" "}") >> out_s_c;
+			print("\t\t" "return NULL;") >> out_s_c;
+			print("\t" "}") >> out_s_c;
 			print("") >> out_s_c;
 		}
-		print("") >> out_s_c;
 		print("\t" clsNameExternal_c "* _ret = NULL;") >> out_s_c;
 		if (fullNameAvailable_c == "") {
 			print("\t" "_ret = new " clsNameExternal_c "(" ctorParamsNoTypes ");") >> out_s_c;
