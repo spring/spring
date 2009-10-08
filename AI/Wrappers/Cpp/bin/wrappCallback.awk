@@ -376,10 +376,19 @@ function printClass(ancestors_c, clsName_c) {
 		print("\t" "static " clsNameExternal_c "* GetInstance(" ctorParams ");") >> out_h_c;
 		print(myNameSpace "::" clsNameExternal_c "* " myNameSpace "::" clsNameExternal_c "::GetInstance(" ctorParams ") {") >> out_s_c;
 		print("") >> out_s_c;
-		if (clsNameExternal_c == "Unit") {
-			print("\t\t" "if (unitId == 0) {") >> out_s_c;
+		lastParamName = ctorParamsNoTypes;
+		sub(/^.*,[ \t]*/, "", lastParamName);
+		if (match(lastParamName, /^[^ \t]+Id$/)) {
+			if (clsNameExternal_c == "Unit") {
+				# the first valid unit ID is 1
+				print("\t\t" "if (" lastParamName " <= 0) {") >> out_s_c;
+			} else {
+				# ... for all other IDs, the first valid one is 0
+				print("\t\t" "if (" lastParamName " < 0) {") >> out_s_c;
+			}
 			print("\t\t\t" "return NULL;") >> out_s_c;
 			print("\t\t" "}") >> out_s_c;
+			print("") >> out_s_c;
 		}
 		print("") >> out_s_c;
 		print("\t" clsNameExternal_c "* _ret = NULL;") >> out_s_c;
