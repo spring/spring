@@ -150,7 +150,7 @@ void CLogOutput::Initialize()
 
 		// Output to subscribers
 		for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
-			(*lsi)->NotifyLogMsg(*(it->subsystem), it->text.c_str());
+			(*lsi)->NotifyLogMsg(*(it->subsystem), it->text);
 		if (filelog)
 			ToFile(*it->subsystem, it->text);
 	}
@@ -254,7 +254,7 @@ void CLogOutput::Output(const CLogSubsystem& subsystem, const std::string& str)
 
 	// Output to subscribers
 	for(vector<ILogSubscriber*>::iterator lsi = subscribers.begin(); lsi != subscribers.end(); ++lsi)
-		(*lsi)->NotifyLogMsg(subsystem, str.c_str());
+		(*lsi)->NotifyLogMsg(subsystem, str);
 
 #ifdef _MSC_VER
 	int index = strlen(str.c_str()) - 1;

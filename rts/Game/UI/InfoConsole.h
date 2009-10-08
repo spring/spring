@@ -23,25 +23,11 @@ public:
 	void Draw();
 
 	// ILogSubscriber interface implementation
-	void NotifyLogMsg(const CLogSubsystem& subsystem, const char* txt);
+	void NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& txt);
 
 
 	void SetLastMsgPos(const float3& pos);
-	const float3& GetMsgPos() {
-		if (lastMsgPositions.empty()) {
-			return ZeroVector;
-		}
-
-		// advance the position
-		const float3& p = *(lastMsgIter++);
-
-		// wrap around
-		if (lastMsgIter == lastMsgPositions.end()) {
-			lastMsgIter = lastMsgPositions.begin();
-		}
-
-		return p;
-	}
+	const float3& GetMsgPos();
 	int GetMsgPosCount() const{
 		return lastMsgPositions.size();
 	}
@@ -86,10 +72,6 @@ private:
 	int lastTime;
 	std::deque<InfoLine> data;
 
-	std::string tempstring;
-	int verboseLevel;
-
-	void AddLineHelper (int zone, const char *text);
 	mutable boost::recursive_mutex infoConsoleMutex;
 };
 
