@@ -69,7 +69,6 @@ CCobInstance::CCobInstance(CCobFile& _script, CUnit* _unit)
 
 	MapScriptToModelPieces(unit->localmodel);
 
-	hasHitByWeaponId = HasFunction(COBFN_HitByWeaponId);
 	hasSetSFXOccupy  = HasFunction(COBFN_SetSFXOccupy);
 	hasRockUnit      = HasFunction(COBFN_RockUnit);
 	hasStartBuilding = HasFunction(COBFN_StartBuilding);
@@ -229,38 +228,34 @@ void CCobInstance::RockUnit(const float3& rockDir)
 }
 
 
-void CCobInstance::HitByWeapon(const float3& hitDir)
-{
-	vector<int> args;
-	args.push_back((int)(500 * hitDir.z));
-	args.push_back((int)(500 * hitDir.x));
-	Call(COBFN_HitByWeapon, args);
-}
-
-
 // ugly hack to get return value of HitByWeaponId script
 static float weaponHitMod; //fraction of weapondamage to use when hit by weapon
 static void hitByWeaponIdCallback(int retCode, void *p1, void *p2) { weaponHitMod = retCode*0.01f; }
 
 
-void CCobInstance::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage)
+void CCobInstance::HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage)
 {
 	vector<int> args;
 
 	args.push_back((int)(500 * hitDir.z));
 	args.push_back((int)(500 * hitDir.x));
 
-	if (weaponDefId != -1) {
-		args.push_back(weaponDefHandler->weaponDefs[weaponDefId].tdfId);
-	} else {
-		args.push_back(-1);
+	if (HasFunction(COBFN_HitByWeaponId)) {
+		if (weaponDefId != -1) {
+			args.push_back(weaponDefHandler->weaponDefs[weaponDefId].tdfId);
+		} else {
+			args.push_back(-1);
+		}
+
+		args.push_back((int)(100 * inout_damage));
+
+		weaponHitMod = 1.0f;
+		Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, NULL, NULL);
+		inout_damage *= weaponHitMod; // weaponHitMod gets set in callback function
 	}
-
-	args.push_back((int)(100 * inout_damage));
-
-	weaponHitMod = 1.0f;
-	Call(COBFN_HitByWeaponId, args, hitByWeaponIdCallback, NULL, NULL);
-	inout_damage *= weaponHitMod; // weaponHitMod gets set in callback function
+	else {
+		Call(COBFN_HitByWeapon, args);
+	}
 }
 
 

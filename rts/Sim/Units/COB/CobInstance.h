@@ -130,8 +130,7 @@ public:
 	virtual void WindChanged(float heading, float speed);
 	virtual void ExtractionRateChanged(float speed);
 	virtual void RockUnit(const float3& rockDir);
-	virtual void HitByWeapon(const float3& hitDir);
-	virtual void HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage);
+	virtual void HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage);
 	virtual void SetSFXOccupy(int curTerrainType);
 	virtual void QueryLandingPads(std::vector<int>& out_pieces);
 	virtual void BeginTransport(const CUnit* unit);

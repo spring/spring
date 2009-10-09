@@ -10,7 +10,7 @@
 struct AtlasedTexture;
 class CColorMap;
 class CExplosionGenerator;
-class S3DModel;
+struct S3DModel;
 
 struct WeaponDef
 {

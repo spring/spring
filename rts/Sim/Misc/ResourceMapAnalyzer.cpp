@@ -63,8 +63,8 @@ CResourceMapAnalyzer::CResourceMapAnalyzer(int ResourceId):
 	ExtractorRadius = resource->extractorRadius;
 
 	// resource-map has 1/2 resolution of normal map
-	MapHeight = resourceHandler->GetResourceMapWidth(ResourceId);
-	MapWidth = resourceHandler->GetResourceMapHeight(ResourceId);
+	MapWidth = resourceHandler->GetResourceMapWidth(ResourceId);
+	MapHeight = resourceHandler->GetResourceMapHeight(ResourceId);
 
 	TotalCells = MapHeight * MapWidth;
 	XtractorRadius = static_cast<int>(ExtractorRadius / 16);

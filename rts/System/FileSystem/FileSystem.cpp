@@ -165,17 +165,6 @@ bool FileSystemHandler::IsFSRoot(const std::string& p)
 	return false;
 }
 
-/**
- * @brief find files
- * @param dir path in which to start looking (tried relative to each data directory)
- * @param pattern pattern to search for
- * @param recurse whether or not to recursively search
- * @param include_dirs whether or not to include directory names in the result
- * @return vector of std::strings containing absolute paths to the files
- *
- * Will search for a file given a particular pattern.
- * Starts from dirpath, descending down if recurse is true.
- */
 std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, const std::string& pattern, int flags) const
 {
 	std::vector<std::string> matches;
@@ -447,17 +436,6 @@ static void FindFiles(std::vector<std::string>& matches, const std::string& dir,
 }
 
 
-/**
- * @brief internal find-files-in-a-single-datadir-function
- * @param dir path in which to start looking
- * @param pattern pattern to search for
- * @param recurse whether or not to recursively search
- * @param include_dirs whether or not to include directory names in the result
- * @return vector of std::strings
- *
- * Will search for a file given a particular pattern.
- * Starts from dirpath, descending down if recurse is true.
- */
 void FileSystemHandler::FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const
 {
 	assert(!dir.empty() && dir[dir.length() - 1] == native_path_separator);

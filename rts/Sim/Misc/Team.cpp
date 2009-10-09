@@ -118,8 +118,8 @@ CTeam::CTeam()
 : isDead(false),
   gaia(false),
   lineageRoot(-1),
-  metal(200000),
-  energy(900000),
+  metal(0),
+  energy(0),
   metalPull(0),     prevMetalPull(0),
   metalIncome(0),   prevMetalIncome(0),
   metalExpense(0),  prevMetalExpense(0),
@@ -286,6 +286,14 @@ void CTeam::StartposMessage(const float3& pos)
 	startPos = pos;
 }
 
+void CTeam::operator=(const TeamBase& base)
+{
+	TeamBase::operator=(base);
+	energy = base.startEnergy;
+	energyIncome = base.startEnergy; // should that count as income?
+	metal = base.startMetal;
+	metalIncome = base.startMetal;
+}
 void CTeam::ResetFrameVariables()
 {
 	prevMetalPull     = metalPull;

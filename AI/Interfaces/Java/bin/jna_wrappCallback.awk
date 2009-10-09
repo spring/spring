@@ -29,7 +29,7 @@ BEGIN {
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
-		GENERATED_SOURCE_DIR = "../src-generated";
+		GENERATED_SOURCE_DIR = "../src-generated/main";
 	}
 	if (!JAVA_GENERATED_SOURCE_DIR) {
 		JAVA_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/java";
@@ -38,7 +38,7 @@ BEGIN {
 		NATIVE_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/native";
 	}
 
-	javaSrcRoot = "../java/src";
+	javaSrcRoot = "../src/main/java";
 	javaGeneratedSrcRoot = JAVA_GENERATED_SOURCE_DIR;
 	nativeGeneratedSrcRoot = NATIVE_GENERATED_SOURCE_DIR;
 

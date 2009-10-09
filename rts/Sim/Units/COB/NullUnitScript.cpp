@@ -28,8 +28,7 @@ void CNullUnitScript::Killed() {}
 void CNullUnitScript::WindChanged(float heading, float speed) {}
 void CNullUnitScript::ExtractionRateChanged(float speed) {}
 void CNullUnitScript::RockUnit(const float3& rockDir) {}
-void CNullUnitScript::HitByWeapon(const float3& hitDir) {}
-void CNullUnitScript::HitByWeaponId(const float3& hitDir, int weaponDefId, float& inout_damage) {}
+void CNullUnitScript::HitByWeapon(const float3& hitDir, int weaponDefId, float& inout_damage) {}
 void CNullUnitScript::SetSFXOccupy(int curTerrainType) {}
 void CNullUnitScript::QueryLandingPads(std::vector<int>& out_pieces) {}
 void CNullUnitScript::BeginTransport(const CUnit* unit) {}

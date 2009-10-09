@@ -89,10 +89,20 @@ public:
 	// Skirmish AI stuff
 	void CreateSkirmishAI(const size_t skirmishAIId);
 	/**
+	 * Sets a local Skirmish AI dieing.
+	 * Do not call this if you want to kill a local AI, but use
+	 * the Skirmish AI Handler instead.
+	 * @param skirmishAIId index of the AI to mark as dieing
+	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
+	 * @see DestroySkirmishAI()
+	 */
+	void SetSkirmishAIDieing(const size_t skirmishAIId);
+	/**
 	 * Destructs a local Skirmish AI for real.
-	 * Do not cal this if you want to kill a local AI, but use
+	 * Do not call this if you want to kill a local AI, but use
 	 * the Skirmish AI Handler instead.
 	 * @param skirmishAIId index of the AI to destroy
+	 * @see SetSkirmishAIDieing()
 	 * @see CSkirmishAIHandler::SetSkirmishAIDieing()
 	 */
 	void DestroySkirmishAI(const size_t skirmishAIId);
@@ -105,7 +115,51 @@ public:
 	void Load(std::istream* s);
 	void Save(std::ostream* s);
 
+	/**
+	 * Should exceptions thrown by AIs be caught by the engine?
+	 * In practice, an exception thrown by an AI should be caught in the AI,
+	 * or at least the interface plugin, and should therefore never reach
+	 * the engine. The reason for this is, that we do not know if the engine
+	 * and the AI are compiled with the same compiler/exception system.
+	 * Shorlty: catching AI exceptions in the engine is deprecated
+	 */
 	static bool IsCatchExceptions();
+	/**
+	 * This is used inside a catch block for a try guarding a call form
+	 * the engine into an AI.
+	 * There is a macro defined for the catch part, so you should never have
+	 * to call this method directly.
+	 * @see CATCH_AI_EXCEPTION
+	 */
+	static void HandleAIException(const char* description);
+	/**
+	 * Catches a common set of exceptions thrown by AIs.
+	 * Use like this:
+	 * <code>
+	 * try {
+	 *     ai->sendEvent(evt);
+	 * } CATCH_AI_EXCEPTION
+	 * </code>
+	 * @see HandleAIException()
+	 */
+	#define CATCH_AI_EXCEPTION									\
+		catch (const std::exception& e) {						\
+			CEngineOutHandler::HandleAIException(e.what());		\
+			throw e;											\
+		} catch (const std::string& s) {						\
+			CEngineOutHandler::HandleAIException(s.c_str());	\
+			throw s;											\
+		} catch (const char* s) {								\
+			CEngineOutHandler::HandleAIException(s);			\
+			throw s;											\
+		} catch (int err) {										\
+			const std::string s = IntToString(err);				\
+			CEngineOutHandler::HandleAIException(s.c_str());	\
+			throw err;											\
+		} catch (...) {											\
+			CEngineOutHandler::HandleAIException("Unknown");	\
+			throw;												\
+		}
 private:
 	static CEngineOutHandler* singleton;
 

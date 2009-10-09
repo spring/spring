@@ -327,7 +327,7 @@ def CheckHeadersAndLibraries(env, conf):
 			all_succes = False
 
 	if not all_succes:
-		print "Not all tests finished succesfully.  You are probably missing one of the"
+		print "Not all tests finished successfully.  You are probably missing one of the"
 		print "build dependencies.  See config.log for details."
 		env.Exit(1)
 

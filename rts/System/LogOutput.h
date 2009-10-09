@@ -88,7 +88,7 @@ class ILogSubscriber
 {
 public:
 	// Notification of log messages to subscriber
-	virtual void NotifyLogMsg(const CLogSubsystem& subsystem, const char* str) = 0;
+	virtual void NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& str) = 0;
 	virtual void SetLastMsgPos(const float3& pos) {}
 };
 
@@ -120,6 +120,7 @@ public:
 
 	void SetFilename(const char* filename);
 	void Initialize();
+	void Flush();
 
 protected:
 	void InitializeSubsystems();

@@ -80,11 +80,6 @@ CMatrix44f LocalModel::GetRawPieceMatrix(int piecenum) const
 }
 
 
-//gets the number of vertices in the piece
-int LocalModel::GetRawPieceVertCount(int piecenum) const
-{
-	return pieces[piecenum]->original->vertexCount;
-}
 
 
 void LocalModel::GetRawEmitDirPos(int piecenum, float3 &pos, float3 &dir) const
@@ -240,8 +235,6 @@ float3 LocalModelPiece::GetDirection() const
 	const unsigned int count = piece->vertexCount;
 	if (count < 2) {
 		return float3(1.0f, 1.0f, 1.0f);
-	}else if (count > 2) {
-		//this is strange too, but probably caused by an incorrect 3rd party unit
 	}
 	return piece->GetVertexPos(0) - piece->GetVertexPos(1);
 }

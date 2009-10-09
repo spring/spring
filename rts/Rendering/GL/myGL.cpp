@@ -129,8 +129,8 @@ void LoadExtensions()
 		exit(0);
 	}
 
-	vertexArray1=new CVertexArray;
-	vertexArray2=new CVertexArray;
+	vertexArray1 = new CVertexArray;
+	vertexArray2 = new CVertexArray;
 }
 
 
@@ -315,7 +315,11 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 }
 
 
-/******************************************************************************/
+
+
+
+static unsigned int LoadProgram(GLenum, const char*, const char*);
+
 /**
  * True if the program in DATADIR/shaders/filename is
  * loadable and can run inside our graphics server.
@@ -326,44 +330,17 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 
 bool ProgramStringIsNative(GLenum target, const char* filename)
 {
-	GLuint tempProg;
-	GLint errorPos, isNative;
-
-	if(!GLEW_ARB_vertex_program)
-		return false;
-	if(target==GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program)
-		return false;
-
-	CFileHandler VPFile(std::string("shaders/")+filename);
-	if (!VPFile.FileExists ())
-	{
-		LogObject() << "Warning: ProgramStringIsNative couldn't find " << filename << ".\n";
-		return false;
-	}
-	char *VPbuf = new char[VPFile.FileSize()];
-	VPFile.Read(VPbuf, VPFile.FileSize());
-
 	// clear any current GL errors so that the following check is valid
 	glClearErrors();
 
-	glGenProgramsARB( 1, &tempProg );
-	glBindProgramARB( target,tempProg);
-	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, VPFile.FileSize(), VPbuf);
+	GLuint tempProg = LoadProgram(target, filename, (target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"));
 
-	if ( GL_INVALID_OPERATION == glGetError() )
-	{
+	if (tempProg == 0) {
 		return false;
 	}
-	glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
-	glGetProgramivARB(target, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
 
-	glSafeDeleteProgram( tempProg);
-
-	delete[] VPbuf;
-	if ((errorPos == -1) && (isNative == 1))
-		return true;
-	else
-		return false;
+	glSafeDeleteProgram(tempProg);
+	return true;
 }
 
 
@@ -371,70 +348,77 @@ bool ProgramStringIsNative(GLenum target, const char* filename)
  * Presumes the last GL operation was to load a vertex or
  * fragment program.
  *
- * If it was invalid, display an error
- * message about what and where the problem in the program
- * is, and exit.
+ * If it was invalid, display an error message about
+ * what and where the problem in the program source is.
  *
- * @param program_type Only substituted in the message.
  * @param filename Only substituted in the message.
  * @param program The program text (used to enhance the message)
  */
-static void CheckParseErrors(const char * program_type, const char * filename, const char* program)
+static bool CheckParseErrors(GLenum target, const char* filename, const char* program)
 {
-	if ( glGetError() != GL_INVALID_OPERATION )
-		return;
+	if (glGetError() != GL_INVALID_OPERATION)
+		return false;
 
 	// Find the error position
-	GLint errPos;
-	glGetIntegerv( GL_PROGRAM_ERROR_POSITION_ARB,&errPos );
+	GLint errorPos = -1;
+	GLint isNative =  0;
+
+	glGetIntegerv(GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
+	glGetProgramivARB(target, GL_PROGRAM_UNDER_NATIVE_LIMITS_ARB, &isNative);
+
 	// Print implementation-dependent program
 	// errors and warnings string.
-	const GLubyte *errString=glGetString( GL_PROGRAM_ERROR_STRING_ARB);
-	static const unsigned int errorMsg_maxSize = 2048;
-	char errorMsg[errorMsg_maxSize];
-	SNPRINTF(errorMsg, errorMsg_maxSize,
-			"Error at position %d near \"%.30s\" when loading %s program file %s:\n%s",
-			errPos, program+errPos, program_type, filename, (const char*)errString);
-	throw content_error(errorMsg);
+	const GLubyte* errString = glGetString(GL_PROGRAM_ERROR_STRING_ARB);
+
+	logOutput.Print(
+		"[myGL::CheckParseErrors] Shader compilation error at index"
+		"%d (near \"%.30s\") when loading %s-program file %s:\n%s",
+		errorPos, program + errorPos,
+		(target == GL_VERTEX_PROGRAM_ARB? "vertex": "fragment"),
+		filename, (const char*) errString
+	);
+
+	return true;
 }
 
 
-static unsigned int LoadProgram(GLenum target, const char* filename, const char * program_type)
+static unsigned int LoadProgram(GLenum target, const char* filename, const char* program_type)
 {
 	GLuint ret = 0;
+
 	if (!GLEW_ARB_vertex_program) {
-		return 0;
+		return ret;
 	}
-	if(target==GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program) {
-		return 0;
+	if (target == GL_FRAGMENT_PROGRAM_ARB && !GLEW_ARB_fragment_program) {
+		return ret;
 	}
 
-	CFileHandler VPFile(std::string("shaders/")+filename);
-	if (!VPFile.FileExists ())
-	{
+	CFileHandler file(std::string("shaders/") + filename);
+	if (!file.FileExists ()) {
 		char c[512];
-		SNPRINTF(c,512,"Cannot find %s program file '%s'", program_type, filename);
+		SNPRINTF(c, 512, "[myGL::LoadProgram] Cannot find %s-program file '%s'", program_type, filename);
 		throw content_error(c);
 	}
-	char *VPbuf = new char[VPFile.FileSize()];
-	VPFile.Read(VPbuf, VPFile.FileSize());
 
-	glGenProgramsARB( 1, &ret );
-	glBindProgramARB( target,ret);
+	char* fbuf = new char[file.FileSize()];
+	file.Read(fbuf, file.FileSize());
 
-	glProgramStringARB( target,GL_PROGRAM_FORMAT_ASCII_ARB,VPFile.FileSize(), VPbuf );
+	glGenProgramsARB(1, &ret);
+	glBindProgramARB(target, ret);
+	glProgramStringARB(target, GL_PROGRAM_FORMAT_ASCII_ARB, file.FileSize(), fbuf);
 
-	CheckParseErrors(program_type, filename, VPbuf);
-	delete[] VPbuf;
+	if (CheckParseErrors(target, filename, fbuf)) {
+		ret = 0;
+	}
+
+	delete[] fbuf;
 	return ret;
 }
-
 
 unsigned int LoadVertexProgram(const char* filename)
 {
 	return LoadProgram(GL_VERTEX_PROGRAM_ARB, filename, "vertex");
 }
-
 
 unsigned int LoadFragmentProgram(const char* filename)
 {

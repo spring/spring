@@ -688,14 +688,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\ExternalAI\ISkirmishAI.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\ExternalAI\ISkirmishAILibrary.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\ExternalAI\LuaAIImplHandler.cpp"
 				>
 			</File>
@@ -1784,14 +1776,6 @@
 				</File>
 				<File
 					RelativePath="..\..\Game\StartScripts\CommanderScript.h"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript2.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\..\Game\StartScripts\CommanderScript2.h"
 					>
 				</File>
 				<File

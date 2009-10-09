@@ -253,13 +253,15 @@ void CPlasmaRepulser::NewProjectile(CWeaponProjectile* p)
 		return;
 	}
 
-	float closeLength=dif.dot(dir);
-	if (closeLength < 0) {
-		closeLength = 0;
-	}
-	float3 closeVect=dif-dir*closeLength;
+	const float closeLength = std::max(0.0f, dif.dot(dir));
+	const float3 closeVect = dif - dir * closeLength;
+	const float closeDist = closeVect.SqLength2D();
 
-	if (closeVect.SqLength2D() < Square(radius * 1.5f + 400)) {
+	// TODO: this isn't good enough in case shield is mounted on a mobile unit,
+	//       and this unit moves relatively fast compared to the projectile.
+	// it should probably be: radius + closeLength / |projectile->speed| * |owner->speed|,
+	// but this still doesn't solve anything for e.g. teleporting shields.
+	if (closeDist < Square(radius * 1.5f)) {
 		incoming.push_back(p);
 		AddDeathDependence(p);
 	}

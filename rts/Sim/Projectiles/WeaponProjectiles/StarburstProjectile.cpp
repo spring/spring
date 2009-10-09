@@ -24,6 +24,7 @@ static const float Smoke_Time=70;
 CR_BIND_DERIVED(CStarburstProjectile, CWeaponProjectile, (float3(0,0,0),float3(0,0,0),NULL,float3(0,0,0),0,0,0,0,NULL,NULL,NULL,0,float3(0,0,0)));
 
 CR_REG_METADATA(CStarburstProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(tracking),
 	CR_MEMBER(maxGoodDif),
 	CR_MEMBER(dir),
@@ -56,7 +57,7 @@ void CStarburstProjectile::creg_Serialize(creg::ISerializer& s)
 CStarburstProjectile::CStarburstProjectile(const float3& pos, const float3& speed, CUnit* owner,
 		float3 targetPos, float areaOfEffect, float maxSpeed, float tracking, int uptime, CUnit* target,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget, float maxdistance, float3 aimError GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, true,  200 GML_PARG_P),
+	CWeaponProjectile(pos, speed, owner, target, targetPos, weaponDef, interceptTarget, 200 GML_PARG_P),
 	tracking(tracking),
 	dir(speed),
 	maxSpeed(maxSpeed),

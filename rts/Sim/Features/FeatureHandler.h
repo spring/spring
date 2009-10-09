@@ -57,6 +57,8 @@ public:
 	void BackupFeatures();
 	void RestoreFeatures();
 
+	bool showRezBars;
+
 private:
 	std::set<CFeature *> fadeFeatures;
 	std::set<CFeature *> fadeFeaturesS3O;
@@ -92,8 +94,10 @@ private:
 	float farDist;
 
 	std::vector<CFeature*> drawFar;
+	std::vector<CFeature*> drawStat;
 
 	void DrawFar(CFeature* feature, CVertexArray* va);
+	void DrawFeatureStats(CFeature* feature);
 
 	void Serialize(creg::ISerializer *s);
 	void PostLoad();

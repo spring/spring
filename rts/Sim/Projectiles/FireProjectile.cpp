@@ -17,6 +17,7 @@ CR_BIND_DERIVED(CFireProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL,
 CR_BIND(CFireProjectile::SubParticle, );
 
 CR_REG_METADATA(CFireProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(ttl),
 	CR_MEMBER(emitPos),
 	CR_MEMBER(emitRadius),

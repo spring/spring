@@ -71,8 +71,7 @@ static float GetLODFloat(const string& name, float def)
 
 
 CUnitDrawer::CUnitDrawer(void)
-	: updateFace(0),
-	showHealthBars(true)
+	: updateFace(0)
 {
 	if (texturehandler3DO == 0) {
 		texturehandler3DO = new C3DOTextureHandler;
@@ -183,6 +182,8 @@ CUnitDrawer::CUnitDrawer(void)
 			advFade = false;
 		}
 	}
+
+	showHealthBars = !!configHandler->Get("ShowHealthBars", 1);
 
 #ifdef USE_GML
 	multiThreadDrawUnit=configHandler->Get("MultiThreadDrawUnit", 1);
@@ -2181,4 +2182,22 @@ bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const
 	}
 
 	return asIcon;
+}
+
+
+void CUnitDrawer::BackupUnits()
+{
+	GML_RECMUTEX_LOCK(unit); // BackupUnits
+
+	drawCloakedSave = drawCloaked;
+	drawCloakedS3OSave = drawCloakedS3O;
+}
+
+
+void CUnitDrawer::RestoreUnits()
+{
+	GML_RECMUTEX_LOCK(unit); // RestoreUnits
+
+	drawCloaked = drawCloakedSave;
+	drawCloakedS3O = drawCloakedS3OSave;
 }

@@ -16,7 +16,7 @@ public:
 	CWeaponProjectile();
 	CWeaponProjectile(const float3& pos, const float3& speed, CUnit* owner,
 			CUnit* target, const float3 &targetPos, const WeaponDef *weaponDef,
-			CWeaponProjectile* interceptTarget, bool synced, int ttl GML_PARG_H);
+			CWeaponProjectile* interceptTarget, int ttl GML_PARG_H);
 	virtual ~CWeaponProjectile();
 
 	virtual void Collision();
@@ -45,7 +45,7 @@ protected:
 	int ttl;
 	int colorTeam;
 	int bounces;
-	
+
 	virtual void UpdateGroundBounce();
 	bool keepBouncing;
 

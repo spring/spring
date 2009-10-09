@@ -60,7 +60,7 @@ public:
 	 * A Skirmish AI (its library) is only really loaded
 	 * when it is not yet loaded.
 	 */
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(
+	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(
 			const SkirmishAIKey& skirmishAIKey);
 	/**
 	 * A Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called
@@ -75,7 +75,7 @@ public:
 	virtual void ReleaseEverything();
 
 private:
-	typedef std::map<const AIInterfaceKey, IAIInterfaceLibrary*>
+	typedef std::map<const AIInterfaceKey, CAIInterfaceLibrary*>
 			T_loadedInterfaces;
 	T_loadedInterfaces loadedAIInterfaceLibraries;
 
@@ -91,7 +91,7 @@ private:
 	/**
 	 * Loads the interface if it is not yet loaded; increments load count.
 	 */
-	IAIInterfaceLibrary* FetchInterface(const AIInterfaceKey& interfaceKey);
+	CAIInterfaceLibrary* FetchInterface(const AIInterfaceKey& interfaceKey);
 	/**
 	 * Unloads the interface if its load count reaches 0.
 	 */

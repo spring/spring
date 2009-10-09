@@ -40,22 +40,22 @@ CSolidObject::CSolidObject():
 	mass(100000),
 	blocking(false),
 	floatOnWater(false),
-	isUnderWater(false),
 	immobile(false),
 	blockHeightChanges(false),
 	xsize(1),
 	zsize(1),
 	height(1),
 	heading(0),
-	physicalState(Ghost),
-	midPos(pos),
+	physicalState(OnGround),
 	isMoving(false),
+	isUnderWater(false),
+	isMarkedOnBlockingMap(false),
+	speed(0, 0, 0),
 	residualImpulse(0, 0, 0),
 	mobility(0),
-	yardMap(0),
-	buildFacing(0),
-	isMarkedOnBlockingMap(false),
-	speed(0, 0, 0)
+	midPos(pos),
+	curYardMap(0),
+	buildFacing(0)
 {
 	mapPos = GetMapPos();
 }
@@ -95,13 +95,13 @@ void CSolidObject::Block() {
 	if (!blocking) {
 		return;
 	}
-	if (physicalState == Ghost || physicalState == Flying) {
+	if (physicalState == Flying) {
 		return;
 	}
 
-	// use the object's yardmap if available
-	if (yardMap) {
-		groundBlockingObjectMap->AddGroundBlockingObject(this, yardMap);
+	// use the object's current yardmap if available
+	if (curYardMap != 0) {
+		groundBlockingObjectMap->AddGroundBlockingObject(this, curYardMap, 255);
 	} else {
 		groundBlockingObjectMap->AddGroundBlockingObject(this);
 	}

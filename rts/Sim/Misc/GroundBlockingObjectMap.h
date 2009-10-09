@@ -19,7 +19,7 @@ public:
 	CGroundBlockingObjectMap(int numSquares) { groundBlockingMap.resize(numSquares); }
 
 	void AddGroundBlockingObject(CSolidObject* object);
-	void AddGroundBlockingObject(CSolidObject* object, unsigned char* yardMap, unsigned char mask = 255);
+	void AddGroundBlockingObject(CSolidObject* object, unsigned char* yardMap, unsigned char mask);
 	void RemoveGroundBlockingObject(CSolidObject* object);
 	// void MoveGroundBlockingObject(CSolidObject* object, float3 oldPos);
 

@@ -4,8 +4,8 @@ REM Generates the Java JNA wrapper source files
 REM
 
 SET SPRING_SOURCE=../../../../rts
-SET MY_SOURCE_JAVA=../java/src/
-SET GENERATED_SOURCE_DIR=../java/generated
+SET MY_SOURCE_JAVA=../src/main/java/
+SET GENERATED_SOURCE_DIR=../src-generated/main/java
 SET JAVA_PKG=com/springrts/ai
 
 SET AWK=gawk.exe

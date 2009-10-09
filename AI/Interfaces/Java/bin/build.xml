@@ -29,7 +29,7 @@
 					location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}"/>
 		<property name="doc.dir"
 					location="${dist.home}/AI/Interfaces/${interface.name}/${interface.version}/doc/jdoc"/>
-		<property name="src.java.generated" location="${build.dir}/generated-java-src"/>
+		<property name="src.java.generated" location="${build.dir}/src-generated/main/java"/>
 
 		<property name="jar.file.name" value="AIInterface"/>
 		<property name="jar.file.name.bin" value="${jar.file.name}.jar"/>
@@ -38,7 +38,7 @@
 
 		<property name="spring.ai.interface.home"
 				location="${spring.home}/rts/ExternalAI/Interface"/>
-		<property name="src.java" location="src/java"/>
+		<property name="src.java" location="src/main/java"/>
 		<property name="bin.dir" location="bin"/>
 		<path id="source.path.id">
 			<pathelement path="${src.java}"/>
@@ -191,7 +191,7 @@
 		<property name="dist.home"  location="${sdk.home}"/>
 		<property name="dist.dir"   location="${dist.home}"/>
 		<property name="doc.dir"    location="${dist.home}/doc/jdoc"/>
-		<property name="src.java.generated" location="${build.dir}/generated-java-src"/>
+		<property name="src.java.generated" location="${build.dir}/src-generated/main/java"/>
 	</target>
 
 	<target name="sdk" depends="sdk-init, init, dist, doc">

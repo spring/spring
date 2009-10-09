@@ -9,8 +9,8 @@
 # This should be: AI/Interfaces/Java/bin
 
 SPRING_SOURCE=../../../../rts
-MY_SOURCE_JAVA=../java/src
-GENERATED_SOURCE_DIR=../java/generated
+MY_SOURCE_JAVA=../src/main/java
+GENERATED_SOURCE_DIR=../src-generated/main/java
 JAVA_PKG=com/springrts/ai
 
 # using the default awk flavor of the system

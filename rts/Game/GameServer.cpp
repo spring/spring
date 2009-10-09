@@ -685,15 +685,15 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					if (isPaused != !!inbuf[2]) {
 						isPaused = !isPaused;
 					}
-					Broadcast(CBaseNetProtocol::Get().SendPause(inbuf[1],inbuf[2]));
+					Broadcast(CBaseNetProtocol::Get().SendPause(a, inbuf[2]));
 				}
 			}
 			break;
 
 		case NETMSG_USER_SPEED: {
-			unsigned char playerNum = inbuf[1];
+			//unsigned char playerNum = inbuf[1];
 			float speed = *((float*) &inbuf[2]);
-			UserSpeedChange(speed, playerNum);
+			UserSpeedChange(speed, a);
 		} break;
 
 		case NETMSG_CPU_USAGE:
@@ -701,7 +701,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_QUIT: {
-			Message(str(format(PlayerLeft) %players[a].name %" normal quit"));
+			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
 			players[a].myState = GameParticipant::DISCONNECTED;
 			players[a].link.reset();
@@ -720,7 +720,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				players[playerNum].name = (std::string)((char*)inbuf+3);
 				players[playerNum].myState = GameParticipant::INGAME;
 				Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, 0, 0)); // reset pathing display
-				Message(str(format(PlayerJoined) %players[playerNum].name), false);
+				Message(str(format(PlayerJoined) %players[playerNum].GetType() %players[playerNum].name), false);
 				Broadcast(CBaseNetProtocol::Get().SendPlayerName(playerNum, players[playerNum].name));
 				if (hostif)
 				{
@@ -883,8 +883,13 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 
 		case NETMSG_MAPDRAW:
-			if (!players[playernum].spectator || allowSpecDraw)
+			if(inbuf[2] != a){
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]));
+			}
+			else if (!players[playernum].spectator || allowSpecDraw)
+			{
 				Broadcast(packet); //forward data
+			}
 			break;
 
 		case NETMSG_DIRECT_CONTROL:
@@ -939,7 +944,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						const bool isSpec                        = players[player].spectator;
 						const bool hasAIs_g                      = (myAIsInTeam_g.size() > 0);
 						const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam);
-						const char* playerType                   = (isSpec ? "Spectator" : "Player");
+						const char* playerType                   = players[player].GetType();
 						const bool isSinglePlayer                = (players.size() <= 1);
 
 						if (!isSinglePlayer &&
@@ -1047,12 +1052,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 									if (hostif) hostif->SendPlayerDefeated(p);
 								}
 							}
-							// kill all the teams AIs
-							for (size_t a = 0; a < ais.size(); ++a) {
-								if (ais[a].team == team) {
-									ais.erase(a);
-								}
-							}
+							// The teams Skirmish AIs destruction process
+							// is being initialized from the client they
+							// run on. No need to do anything here.
 						}
 						break;
 					}
@@ -1081,7 +1083,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			if (weAreLeader || singlePlayer || (weAreAllied && (cheating || noLeader))) {
 				// creating the AI is ok
 			} else {
-				Message(str(format(NoAICreated) %players[playerId].name %playerId %aiTeamId));
+				Message(str(format(NoAICreated) %players[playerId].name %(int)playerId %(int)aiTeamId));
 				break;
 			}
 			const size_t skirmishAIId = ReserveNextAvailableSkirmishAIId();
@@ -1110,7 +1112,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 			const bool skirmishAIId_valid    = (ais.find(skirmishAIId) != ais.end());
 			if (!skirmishAIId_valid) {
-				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %(-1)));
+				Message(str(format(NoAIChangeState) %players[playerId].name %(int)playerId %skirmishAIId %(-1) %(int)newState));
 				break;
 			}
 
@@ -1127,7 +1129,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const ESkirmishAIStatus oldState = ais[skirmishAIId].status;
 
 			if (!(weAreAIHost || weAreLeader || singlePlayer || (weAreAllied && cheating))) {
-				Message(str(format(NoAIChangeState) %players[playerId].name %playerId %skirmishAIId %aiTeamId));
+				Message(str(format(NoAIChangeState) %players[playerId].name %(int)playerId %skirmishAIId %(int)aiTeamId %(int)newState));
 				break;
 			}
 			Broadcast(packet); // forward data
@@ -1151,20 +1153,31 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		}
 		case NETMSG_ALLIANCE: {
 			const unsigned char player = inbuf[1];
-			const unsigned char whichAllyTeam = inbuf[2];
+			const int whichAllyTeam = inbuf[2];
 			const unsigned char allied = inbuf[3];
-			if (!setup->fixedAllies)
+			if (player != a)
 			{
-				Broadcast(CBaseNetProtocol::Get().SendSetAllied(player, whichAllyTeam, allied));
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)player));
+			}
+			else if (whichAllyTeam == teams[players[a].team].teamAllyteam)
+			{
+				Message(str(format("Player %s tried to send spoofed alliance message") %players[a].name));
 			}
 			else
-			{ // not allowed
+			{
+				if (!setup->fixedAllies)
+				{
+					Broadcast(CBaseNetProtocol::Get().SendSetAllied(player, whichAllyTeam, allied));
+				}
+				else
+				{ // not allowed
+				}
 			}
 			break;
 		}
 		case NETMSG_CCOMMAND: {
 			CommandMessage msg(packet);
-			if (msg.player >= 0 && static_cast<unsigned>(msg.player) == a)
+			if (static_cast<unsigned>(msg.player) == a)
 			{
 				if ((commandBlacklist.find(msg.action.command) != commandBlacklist.end()) && players[a].isLocal)
 				{
@@ -1250,7 +1263,7 @@ void CGameServer::ServerReadNet()
 			continue; // player not connected
 		if (players[a].link->CheckTimeout())
 		{
-			Message(str(format(PlayerLeft) %players[a].name %" timeout")); //this must happen BEFORE the reset!
+			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" timeout")); //this must happen BEFORE the reset!
 			players[a].myState = GameParticipant::DISCONNECTED;
 			players[a].link.reset();
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 0));
@@ -1651,7 +1664,7 @@ void CGameServer::KickPlayer(const int playerNum)
 {
 	if (players[playerNum].link) // only kick connected players
 	{
-		Message(str(format(PlayerLeft) %playerNum %"kicked"));
+		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
 		players[playerNum].Kill();
 		if (hostif)
