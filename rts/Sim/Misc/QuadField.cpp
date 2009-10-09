@@ -119,8 +119,10 @@ void CQuadField::GetQuads(float3 pos,float radius, int*& dst) const
 			}
 }
 
-//! gets all units within <radius> of <pos>;
-//! treats each unit as a 3D point object
+/**
+ * Returns all units within @c radius of @c pos,
+ * and treats each unit as a 3D point object
+ */
 std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnits
@@ -146,8 +148,10 @@ std::vector<CUnit*> CQuadField::GetUnits(const float3& pos, float radius)
 	return units;
 }
 
-//! gets all units within <radius> of <pos>; takes
-//! the 3D model radius of each unit into account
+/**
+ * Returns all units within @c radius of @c pos,
+ * and takes the 3D model radius of each unit into account.
+ */
 std::vector<CUnit*> CQuadField::GetUnitsExact(const float3& pos, float radius, bool spherical)
 {
 	GML_RECMUTEX_LOCK(qnum); // GetUnitsExact

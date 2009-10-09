@@ -297,7 +297,7 @@ std::vector<SkirmishAIKey> CAILibraryManager::FittingSkirmishAIKeys(
 
 
 
-const ISkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) {
+const CSkirmishAILibrary* CAILibraryManager::FetchSkirmishAILibrary(const SkirmishAIKey& skirmishAIKey) {
 	T_skirmishAIInfos::const_iterator aiInfo = skirmishAIInfos.find(skirmishAIKey);
 
 	if (aiInfo == skirmishAIInfos.end()) {
@@ -328,9 +328,9 @@ void CAILibraryManager::ReleaseAllSkirmishAILibraries() {
 
 
 
-IAIInterfaceLibrary* CAILibraryManager::FetchInterface(const AIInterfaceKey& interfaceKey) {
+CAIInterfaceLibrary* CAILibraryManager::FetchInterface(const AIInterfaceKey& interfaceKey) {
 
-	IAIInterfaceLibrary* interfaceLib = NULL;
+	CAIInterfaceLibrary* interfaceLib = NULL;
 
 	T_loadedInterfaces::const_iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceKey);
 	if (interfacePos == loadedAIInterfaceLibraries.end()) { // interface not yet loaded
@@ -352,7 +352,7 @@ void CAILibraryManager::ReleaseInterface(const AIInterfaceKey& interfaceKey) {
 
 	T_loadedInterfaces::iterator interfacePos = loadedAIInterfaceLibraries.find(interfaceKey);
 	if (interfacePos != loadedAIInterfaceLibraries.end()) {
-		IAIInterfaceLibrary* interfaceLib = interfacePos->second;
+		CAIInterfaceLibrary* interfaceLib = interfacePos->second;
 		if (interfaceLib->GetLoadCount() == 0) {
 			loadedAIInterfaceLibraries.erase(interfacePos);
 			delete interfaceLib;
@@ -372,7 +372,7 @@ void CAILibraryManager::ReleaseEverything() {
 AIInterfaceKey CAILibraryManager::FindFittingInterfaceSpecifier(
 		const std::string& shortName,
 		const std::string& minVersion,
-		const T_interfaceSpecs& keys) {
+		const IAILibraryManager::T_interfaceSpecs& keys) {
 
 	std::set<AIInterfaceKey>::const_iterator key;
 	int minDiff = INT_MAX;

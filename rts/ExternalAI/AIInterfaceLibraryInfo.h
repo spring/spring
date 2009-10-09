@@ -22,7 +22,6 @@
 #include <map>
 #include <string>
 
-class IAIInterfaceLibrary;
 class AIInterfaceKey;
 
 class CAIInterfaceLibraryInfo {

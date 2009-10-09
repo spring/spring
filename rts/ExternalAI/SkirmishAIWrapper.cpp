@@ -22,6 +22,7 @@
 #include "System/FileSystem/FileSystem.h"
 #include "System/LogOutput.h"
 #include "System/mmgr.h"
+#include "System/Util.h"
 #include "Sim/Units/Unit.h"
 #include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/TeamHandler.h"
@@ -51,26 +52,6 @@ CR_REG_METADATA(CSkirmishAIWrapper, (
 	CR_SERIALIZER(Serialize),
 	CR_POSTLOAD(PostLoad)
 ));
-
-#define HANDLE_EXCEPTION								\
-	catch (const std::exception& e) {					\
-		if (CEngineOutHandler::IsCatchExceptions()) {	\
-			handleAIException(e.what());				\
-			throw;										\
-		} else throw;									\
-	}													\
-	catch (const char *s) {								\
-		if (CEngineOutHandler::IsCatchExceptions()) {	\
-			handleAIException(s);						\
-			throw;										\
-		} else throw;									\
-	}													\
-	catch (...) {										\
-		if (CEngineOutHandler::IsCatchExceptions()) {	\
-			handleAIException(0);						\
-			throw;										\
-		} else throw;									\
-	}
 
 /// used only by creg
 CSkirmishAIWrapper::CSkirmishAIWrapper():
@@ -167,11 +148,11 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 			if (uh->units[a]->team == teamId) {
 				try {
 					UnitCreated(a, -1);
-				} HANDLE_EXCEPTION;
+				} CATCH_AI_EXCEPTION;
 				if (!uh->units[a]->beingBuilt)
 					try {
 						UnitFinished(a);
-					} HANDLE_EXCEPTION;
+					} CATCH_AI_EXCEPTION;
 			} else {
 				if ((uh->units[a]->allyteam == teamHandler->AllyTeam(teamId))
 						|| teamHandler->Ally(teamHandler->AllyTeam(teamId), uh->units[a]->allyteam)) {
@@ -180,12 +161,12 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 					if (uh->units[a]->losStatus[teamHandler->AllyTeam(teamId)] & (LOS_INRADAR | LOS_INLOS)) {
 						try {
 							EnemyEnterRadar(a);
-						} HANDLE_EXCEPTION;
+						} CATCH_AI_EXCEPTION;
 					}
 					if (uh->units[a]->losStatus[teamHandler->AllyTeam(teamId)] & LOS_INLOS) {
 						try {
 							EnemyEnterLOS(a);
-						} HANDLE_EXCEPTION;
+						} CATCH_AI_EXCEPTION;
 					}
 				}
 			}
@@ -197,6 +178,7 @@ bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
 
 void CSkirmishAIWrapper::Init() {
+
 	if (ai == NULL) {
 		bool loadOk = LoadSkirmishAI(false);
 		if (!loadOk) {
@@ -216,6 +198,10 @@ void CSkirmishAIWrapper::Init() {
 	} else {
 		initialized = true;
 	}
+}
+
+void CSkirmishAIWrapper::Dieing() {
+	ai->Dieing();
 }
 
 void CSkirmishAIWrapper::Release(int reason) {
@@ -304,6 +290,7 @@ void CSkirmishAIWrapper::UnitFinished(int unitId) {
 }
 
 void CSkirmishAIWrapper::UnitDestroyed(int unitId, int attackerUnitId) {
+
 	SUnitDestroyedEvent evtData = {unitId, attackerUnitId};
 	ai->HandleEvent(EVENT_UNIT_DESTROYED, &evtData);
 }
@@ -423,10 +410,4 @@ void CSkirmishAIWrapper::SetCheatEventsEnabled(bool enable) {
 }
 bool CSkirmishAIWrapper::IsCheatEventsEnabled() const {
 	return cheatEvents;
-}
-
-
-int CSkirmishAIWrapper::HandleEvent(int topic, const void* data) const
-{
-	return ai->HandleEvent(topic, data);
 }

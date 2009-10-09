@@ -240,10 +240,14 @@ static jmethodID java_getMethodID(JNIEnv* env, jclass cls,
  *
  * It will consist of the following:
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/AIInterface.jar
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jconfig/
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jconfig/[*].jar
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jscript/
+ * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jscript/[*].jar
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/
  * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/[*].jar
- * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/jlib/
- * {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/jlib/[*].jar
+ * TODO: {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/jlib/
+ * TODO: {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/jlib/[*].jar
  */
 static size_t java_createClassPath(char* classPathStr, const size_t classPathStr_sizeMax) {
 
@@ -266,7 +270,13 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	char**              jarDirs = (char**) calloc(jarDirs_sizeMax, sizeof(char*));
 	size_t              jarDirs_size = 0;
 
-	// the main java libs dir (.../jlibs/)
+	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jconfig/
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
+			callback->DataDirs_getConfigDir(interfaceId), JAVA_CONFIG_DIR);
+	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jscript/
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
+			callback->DataDirs_getConfigDir(interfaceId), JAVA_SCRIPT_DIR);
+	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/{version}/jlib/
 	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2,
 			callback->DataDirs_getConfigDir(interfaceId), JAVA_LIBS_DIR);
 
@@ -275,7 +285,10 @@ static size_t java_createClassPath(char* classPathStr, const size_t classPathStr
 	for (jd=0; (jd < jarDirs_size) && (classPath_size < classPath_sizeMax); ++jd) {
 		if (util_fileExists(jarDirs[jd])) {
 			// add the dir directly
-			classPath[classPath_size++] = util_allocStrCpy(jarDirs[jd]);
+			// For this to work properly with URLClassPathHandler,
+			// we have to ensure there is a '/' at the end,
+			// for the class-path-part to be recognized as a directory.
+			classPath[classPath_size++] = util_allocStrCat(2, jarDirs[jd], "/");
 
 			// add the contained jars recursively
 			static const size_t jarFiles_sizeMax = 128;
@@ -357,6 +370,10 @@ static size_t java_createAIClassPath(const char* shortName, const char* version,
 	// if they do not want to put everything into a jar all the time
 	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, "SkirmishAI");
 
+	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jconfig/
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, JAVA_CONFIG_DIR);
+	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jscript/
+	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, JAVA_SCRIPT_DIR);
 	// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/{ai-version}/jlib/
 	jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDD, JAVA_LIBS_DIR);
 
@@ -366,13 +383,12 @@ static size_t java_createAIClassPath(const char* shortName, const char* version,
 			shortName, version,
 			SKIRMISH_AI_PROPERTY_DATA_DIR_COMMON);
 	if (skirmDDCommon != NULL) {
-		char* commonJLibsDir = util_allocStrCatFSPath(2, skirmDDCommon, JAVA_LIBS_DIR);
-		if (commonJLibsDir != NULL && util_fileExists(commonJLibsDir)) {
-			// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jlib/
-			jarDirs[jarDirs_size++] = commonJLibsDir;
-		} else {
-			FREE(commonJLibsDir);
-		}
+		// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jconfig/
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, JAVA_CONFIG_DIR);
+		// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jscript/
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, JAVA_SCRIPT_DIR);
+		// {spring-data-dir}/{SKIRMISH_AI_DATA_DIR}/{ai-name}/common/jlib/
+		jarDirs[jarDirs_size++] = util_allocStrCatFSPath(2, skirmDDCommon, JAVA_LIBS_DIR);
 	}
 
 	// add the directly specified .jar files
@@ -388,7 +404,10 @@ static size_t java_createAIClassPath(const char* shortName, const char* version,
 	{
 		if (jarDirs[jd] != NULL && util_fileExists(jarDirs[jd])) {
 			// add the jar dir (for .class files)
-			classPathParts[classPathParts_size++] = util_allocStrCpy(jarDirs[jd]);
+			// For this to work properly with URLClassPathHandler,
+			// we have to ensure there is a '/' at the end,
+			// for the class-path-part to be recognized as a directory.
+			classPathParts[classPathParts_size++] = util_allocStrCat(2, jarDirs[jd], "/");
 
 			// add the jars in the dir
 			const size_t subJarFiles_sizeMax = classPathParts_sizeMax - classPathParts_size;
@@ -444,8 +463,7 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 				shortName, version, cpp, str_fileUrl);
 		jstring jstr_fileUrl = (*env)->NewStringUTF(env, str_fileUrl);
 		if (checkException(env, "Failed creating Java String.")) { return NULL; }
-		jobject jurl_fileUrl =
-				(*env)->NewObject(env, g_cls_url, g_m_url_ctor, jstr_fileUrl);
+		jobject jurl_fileUrl = (*env)->NewObject(env, g_cls_url, g_m_url_ctor, jstr_fileUrl);
 		if (checkException(env, "Failed creating Java URL.")) { return NULL; }
 		(*env)->SetObjectArrayElement(env, o_cppURLs, cpp, jurl_fileUrl);
 		if (checkException(env, "Failed setting Java URL in array.")) { return NULL; }

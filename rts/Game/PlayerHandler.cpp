@@ -53,7 +53,7 @@ int CPlayerHandler::Player(const std::string& name) const
 
 void CPlayerHandler::PlayerLeft(int player, unsigned char reason)
 {
-	const char *type = Player(player)->spectator ? "Spectator" : "Player";
+	const char *type = Player(player)->GetType();
 	switch (reason) {
 		case 1: {
 			logOutput.Print("%s %s left", type, Player(player)->name.c_str());

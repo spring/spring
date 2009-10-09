@@ -36,7 +36,6 @@ CInfoConsole::CInfoConsole():
 
 	lastTime=0;
 	lifetime     = configHandler->Get("InfoMessageTime", 400);
-	verboseLevel = configHandler->Get("VerboseLevel", 0);
 
 	const std::string geo = configHandler->GetString("InfoConsoleGeometry",
                                                   "0.26 0.96 0.41 0.205");
@@ -140,7 +139,7 @@ void CInfoConsole::GetNewRawLines(std::vector<RawLine>& lines)
 }
 
 
-void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const char* text)
+void CInfoConsole::NotifyLogMsg(const CLogSubsystem& subsystem, const std::string& text)
 {
 	if (!smallFont) return;
 
@@ -190,4 +189,21 @@ void CInfoConsole::SetLastMsgPos(const float3& pos)
 
 	//! reset the iterator when a new msg comes in
 	lastMsgIter = lastMsgPositions.begin();
+}
+
+const float3& CInfoConsole::GetMsgPos()
+{
+	if (lastMsgPositions.empty()) {
+		return ZeroVector;
+	}
+
+	// advance the position
+	const float3& p = *(lastMsgIter++);
+
+	// wrap around
+	if (lastMsgIter == lastMsgPositions.end()) {
+		lastMsgIter = lastMsgPositions.begin();
+	}
+
+	return p;
 }

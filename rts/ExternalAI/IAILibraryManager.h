@@ -16,10 +16,8 @@
 */
 
 #ifndef _IAILIBRARYMANAGER_H
-#define	_IAILIBRARYMANAGER_H
+#define _IAILIBRARYMANAGER_H
 
-#include "IAIInterfaceLibrary.h"
-#include "ISkirmishAILibrary.h"
 #include "AIInterfaceLibraryInfo.h"
 #include "SkirmishAILibraryInfo.h"
 
@@ -29,6 +27,7 @@
 
 class AIInterfaceKey;
 class SkirmishAIKey;
+class CSkirmishAILibrary;
 
 /**
  * @brief manages AIs and AI interfaces
@@ -72,7 +71,7 @@ public:
 	 * A Skirmish AI (its library) is only really loaded when it is not yet
 	 * loaded.
 	 */
-	virtual const ISkirmishAILibrary* FetchSkirmishAILibrary(
+	virtual const CSkirmishAILibrary* FetchSkirmishAILibrary(
 			const SkirmishAIKey& skirmishAIKey) = 0;
 	/**
 	 * A Skirmish AI is only unloaded when ReleaseSkirmishAILibrary() is called

@@ -6,17 +6,16 @@
 #include "mmgr.h"
 
 #include "ScriptHandler.h"
-#include "Game/Game.h"
-#include "FileSystem/FileHandler.h"
-#include "FileSystem/VFSHandler.h"
 #include "LoadScript.h"
 #include "CommanderScript.h"
-#include "CommanderScript2.h"
 #include "AirScript.h"
 #include "SkirmishAITestScript.h"
 #include "SpawnScript.h"
 #include "EmptyScript.h"
 #include "TestScript.h"
+#include "Game/Game.h"
+#include "FileSystem/FileHandler.h"
+#include "FileSystem/VFSHandler.h"
 #include "Platform/SharedLib.h"
 #include "ExternalAI/Interface/aidefines.h"
 #include "ExternalAI/IAILibraryManager.h"
@@ -38,7 +37,6 @@ CScriptHandler::CScriptHandler() : chosenScript(0)
 void CScriptHandler::LoadScripts() {
 
 	loaded_scripts.push_back( new CCommanderScript() );
-	loaded_scripts.push_back( new CCommanderScript2() );
 	loaded_scripts.push_back( new CAirScript() );
 	loaded_scripts.push_back( new CEmptyScript() );
 	loaded_scripts.push_back( new CSpawnScript(false) );

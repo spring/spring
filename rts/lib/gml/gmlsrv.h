@@ -16,6 +16,9 @@
 #include <boost/bind.hpp>
 #include "System/Platform/errorhandler.h"
 #include "lib/streflop/streflop_cond.h"
+#if !defined(_MSC_VER) && defined(_WIN32)
+#	include <windows.h>
+#endif
 
 EXTERN inline void gmlUpdateServers() {
 	gmlItemsConsumed=0;
@@ -421,6 +424,11 @@ public:
 	}
 
 	void gmlClientAux() {
+#ifdef _WIN32
+		extern HANDLE simthread;
+		DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(),
+						&simthread, 0, TRUE, DUPLICATE_SAME_ACCESS);
+#endif
 		set_threadnum(gmlThreadCount);
 		streflop_init<streflop::Simple>();
 		while(dorun) {

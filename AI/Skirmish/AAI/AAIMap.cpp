@@ -331,7 +331,7 @@ void AAIMap::ReadMapCacheFile()
 
 			fclose(file);
 
-			fprintf(ai->file, "Map cache file succesfully loaded\n");
+			fprintf(ai->file, "Map cache file successfully loaded\n");
 
 			loaded = true;
 		}
@@ -588,7 +588,7 @@ void AAIMap::ReadContinentFile()
 
 			fclose(file);
 
-			fprintf(ai->file, "Continent cache file succesfully loaded\n");
+			fprintf(ai->file, "Continent cache file successfully loaded\n");
 
 			return;
 		}

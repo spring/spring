@@ -349,6 +349,13 @@ void CEventHandler::PlayerChanged(int playerID)
 void CEventHandler::Update()
 {
 	const int count = listUpdate.size();
+
+	if(count <= 0)
+		return;
+
+	GML_RECMUTEX_LOCK(unit); // Update
+	GML_RECMUTEX_LOCK(lua); // Update
+
 	for (int i = 0; i < count; i++) {
 		CEventClient* ec = listUpdate[i];
 		ec->Update();

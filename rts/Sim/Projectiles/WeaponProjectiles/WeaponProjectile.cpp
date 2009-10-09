@@ -29,6 +29,7 @@
 CR_BIND_DERIVED(CWeaponProjectile, CProjectile, );
 
 CR_REG_METADATA(CWeaponProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(targeted),
 //	CR_MEMBER(weaponDef),
 	CR_MEMBER(weaponDefName),
@@ -64,7 +65,7 @@ CWeaponProjectile::CWeaponProjectile()
 CWeaponProjectile::CWeaponProjectile(const float3& pos, const float3& speed,
 		CUnit* owner, CUnit* target, const float3 &targetPos,
 		const WeaponDef* weaponDef, CWeaponProjectile* interceptTarget,
-		bool, int ttl GML_PARG_C):
+		int ttl GML_PARG_C):
 	CProjectile(pos, speed, owner, true, true, false GML_PARG_P),
 	targeted(false),
 	weaponDef(weaponDef),

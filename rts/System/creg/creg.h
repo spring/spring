@@ -64,7 +64,8 @@ namespace creg {
 
 	enum ClassFlags {
 		CF_None = 0,
-		CF_Abstract = 4
+		CF_Abstract = 4,
+		CF_Synced = 8,
 	};
 
 	struct _DummyStruct {};
@@ -143,6 +144,8 @@ namespace creg {
 
 		void BeginFlag (ClassMemberFlag flag);
 		void EndFlag (ClassMemberFlag flag);
+
+		void SetFlag(ClassFlags flag);
 
 		bool IsAbstract() { return (binder->flags & CF_Abstract) != 0; }
 
@@ -434,6 +437,13 @@ namespace creg {
 
 #define CR_RESERVED(Size) \
 	class_->AddMember ( "Reserved", new creg::EmptyType(Size), 0)
+
+/** @def CR_SETFLAG
+ * Set a flag for a class/struct.
+ * @param Flag the class flag @see ClassFlag
+ */
+#define CR_SETFLAG(Flag) \
+	class_->SetFlag (creg::Flag)
 
 /** @def CR_MEMBER_SETFLAG
  * Set a flag for a class/struct member

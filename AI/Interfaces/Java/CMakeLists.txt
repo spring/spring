@@ -9,6 +9,10 @@
 # * GetFirstSubDirName
 # * CreateClasspath
 # * ConcatClasspaths
+# * IsMavenInstalled
+# * IsMavenProject
+# * FindManifestFile
+# * ConfigureJavaSkirmishAI
 #
 
 
@@ -57,17 +61,75 @@ function    (ConcatClasspaths resultingCP_var)
 	set(${resultingCP_var} "${${resultingCP_var}}" PARENT_SCOPE)
 endfunction (ConcatClasspaths)
 
+# Checks if maven is installed by executing "mvn --version"
+# and checking the return value (0 == "is installed").
+# The result variable will be set to TRUE or FALSE
+function    (IsMavenInstalled result_var)
+	set(${result_var} FALSE)
+	execute_process(COMMAND "mvn" "--version"
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+			RESULT_VARIABLE MVN_RET
+			OUTPUT_QUIET ERROR_QUIET)
+	if    ("${MVN_RET}" MATCHES "0")
+		set(${result_var} TRUE)
+	endif ("${MVN_RET}" MATCHES "0")
+	set(${result_var} "${${result_var}}" PARENT_SCOPE)
+endfunction (IsMavenInstalled)
 
-# Java Skirmish AI configuration macro
+# Checks if a given directory is the root of a Maven project.
+# The result variable will be set to TRUE or FALSE
+function    (IsMavenProject dirToCheck result_var)
+	set(${result_var} FALSE)
+	if    (EXISTS "${dirToCheck}/pom.xml")
+		set(${result_var} TRUE)
+	endif (EXISTS "${dirToCheck}/pom.xml")
+	set(${result_var} "${${result_var}}" PARENT_SCOPE)
+endfunction (IsMavenProject)
+
+# Look for a manifest.mf file in a few specific sub-dirs.
+# This could be done with a simple find_file call,
+# but that strangely does not find the file under win32,
+# so we use this workaround
+function    (FindManifestFile srcDir result_var)
+	set(manifestSubdirs
+		"/src/main/resources/META-INF/"
+		"/src/"
+		"/")
+	set(${result_var} "${result_var}-NOTFOUND")
+	if     (CMAKE_HOST_WIN32)
+		foreach(subDir_var ${manifestSubdirs})
+			if     (EXISTS "${srcDir}${subDir_var}manifest.mf")
+				set(${result_var} "${srcDir}${subDir_var}manifest.mf")
+				break()
+			endif  (EXISTS "${srcDir}${subDir_var}manifest.mf")
+		endforeach(subDir_var)
+	else   (CMAKE_HOST_WIN32)
+		find_file(${result_var}
+			NAMES "manifest.mf" "MANIFEST.MF"
+			PATHS "${srcDir}"
+			PATH_SUFFIXES ${manifestSubdirs}
+			NO_DEFAULT_PATH)
+	endif  (CMAKE_HOST_WIN32)
+	set(${result_var} ${${result_var}} PARENT_SCOPE)
+endfunction (FindManifestFile)
+
+# Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
+# If Maven is installed, and
 macro    (ConfigureJavaSkirmishAI)
-	set(myDir                    "${CMAKE_CURRENT_SOURCE_DIR}")
+	# Assemble meta data
+	set(myDir            "${CMAKE_CURRENT_SOURCE_DIR}")
 	GetLastPathPart(dirName ${myDir})
-	set(myName                   "${dirName}")
-	set(mySourceDir              "${myDir}/src")
-	# If main Java package is "my.ai.pkg", this has to be set to "my".
-	GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
-	set(myJavaPkgFirstPart       "${firstSrcSubDir}")
+	set(myName          "${dirName}")
+	set(myJarFile       "SkirmishAI")
+	set(myBinJarFile    "${myJarFile}.jar")
+	set(mySrcJarFile    "${myJarFile}-src.jar")
+	set(myJLibDir       "${myDir}/data/jlib")
+	GetVersionFromFile(myVersion "${myDir}/VERSION")
+	set(myTarget        "${myName}")
+	set(myDataDir       "${SKIRMISH_DATA}/${myName}/${myVersion}")
+	# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Skirmish/${myName}
+	set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
 
 	# Check if the user wants to compile the AI
 	if    (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
@@ -77,61 +139,112 @@ macro    (ConfigureJavaSkirmishAI)
 		message("warning: ${myName} Skirmish AI will not be built!")
 	endif (BUILD_Java_AIINTERFACE AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
-
 	# Compile and install
 	if    (BUILD_THIS_SKIRMISHAI)
-		# Assemble meta data
-		GetVersionFromFile(myVersion "${myDir}/VERSION")
-		set(myTarget        "${myName}")
-		set(mySourceTarget  "${myTarget}-SRC")
-		set(myDataDir       "${SKIRMISH_DATA}/${myName}/${myVersion}")
-		# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Skirmish/${myName}
-		set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
-		set(myJavaBuildDir  "${myBuildDir}/classes")
-		set(myJarFile       "SkirmishAI")
-		set(myBinJarFile    "${myJarFile}.jar")
-		set(mySrcJarFile    "${myJarFile}-src.jar")
-		set(myJLibDir       "${myDir}/data/jlib")
+		IsMavenInstalled(isMavenInstalled)
+		IsMavenProject(${myDir} isMavenProject)
+		set(configureMavenProject FALSE)
+		if    (isMavenProject)
+			if    (isMavenInstalled)
+				set(configureMavenProject TRUE)
+			else  (isMavenInstalled)
+				message("Warning: Java AI with Maven Project file found, but Maven 2 not installed: Using default configuration.")
+			endif (isMavenInstalled)
+		endif (isMavenProject)
 
-		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
+		set(configString "default")
+		if    (configureMavenProject)
+			set(configString "Maven")
+		endif (configureMavenProject)
+		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion} (config: ${configString})")
 
-		# Create our full Java class-path
-		CreateClasspath(myJavaLibs ${myJLibDir})
-		ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
+		if    (configureMavenProject)
+			# The Maven Project has to make sure these files get created:
+			# ${my.build.dir}/SkirmishAI.jar
+			# ${my.build.dir}/SkirmishAI-src.jar (optional)
+			set(MVN_ATTRIBUTES
+				"-Dmy.build.dir=\"${CMAKE_CURRENT_BINARY_DIR}\""
+				"-Dmy.version=\"${myVersion}\""
+				"--batch-mode" # Run in non-interactive (batch) mode
+				)
+			if    (NOT CMAKE_VERBOSE_MAKEFILE)
+				set(MVN_ATTRIBUTES ${MVN_ATTRIBUTES}
+					"--quiet"  # Quiet output - only show errors
+					)
+			endif (NOT CMAKE_VERBOSE_MAKEFILE)
+			add_custom_target(${myTarget} ALL
+					DEPENDS ${Java_AIINTERFACE_TARGET}
+					COMMAND "mvn" "package" ${MVN_ATTRIBUTES}
+					WORKING_DIRECTORY "${myDir}"
+					COMMENT "  Running package phase of ${myName} Maven Project" VERBATIM)
+		else  (configureMavenProject)
+			if     (EXISTS "${myDir}/src/main/java")
+				# default Maven java source dir path
+				set(mySourceDir          "${myDir}/src/main/java")
+			elseif (EXISTS "${myDir}/src")
+				# simple java source dir path
+				set(mySourceDir          "${myDir}/src")
+			else   (EXISTS "${myDir}/src/main/java")
+				message(SEND_ERROR "No sources dir found for Skirmish AI: ${myName}")
+			endif  (EXISTS "${myDir}/src/main/java")
+			# If main Java package is "my.ai.pkg", this has to be set to "my".
+			GetFirstSubDirName(firstSrcSubDir ${mySourceDir})
+			set(myJavaPkgFirstPart       "${firstSrcSubDir}")
 
-		# Create a list of all the AIs source files
-		file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
+			# Assemble additional meta data
+			set(mySourceTarget  "${myTarget}-SRC")
+			set(myJavaBuildDir  "${myBuildDir}/classes")
 
-		# Compile the library
-		# needed by javac
-		file(MAKE_DIRECTORY "${myJavaBuildDir}")
-		add_custom_target(${myTarget} ALL
-			DEPENDS ${Java_AIINTERFACE_TARGET}
-			COMMAND "${JAVA_COMPILE}"
-				"${JAVA_COMPILE_FLAG_CONDITIONAL}"
-				"-cp" "${myClassPath}"
-				"-d" "${myJavaBuildDir}"
-				${mySources}
-			COMMAND "${JAVA_ARCHIVE}"
-				"cmf" "${myDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
-				"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
-			WORKING_DIRECTORY "${mySourceDir}"
-			COMMENT "  Creating library ${myBinJarFile}" VERBATIM)
+			# Create our full Java class-path
+			CreateClasspath(myJavaLibs ${myJLibDir})
+			ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
 
-		# Pack the sources
-		add_custom_target(${mySourceTarget} ALL
-			COMMAND "${JAVA_ARCHIVE}"
-				"cf" "${myBuildDir}/${mySrcJarFile}"
-				"-C" "${mySourceDir}" "${myJavaPkgFirstPart}"
-			WORKING_DIRECTORY "${mySourceDir}"
-			COMMENT "  Creating sources archive ${mySrcJarFile}" VERBATIM)
+			# Create a list of all the AIs source files
+			file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
+
+			# Locate the manifest file
+			FindManifestFile("${myDir}" myManifestFile)
+			if    (myManifestFile)
+				set(myBinJarArgs "cmf" "${myManifestFile}")
+			else  (myManifestFile)
+				set(myBinJarArgs "cf")
+			endif (myManifestFile)
+
+			# Compile and pack the library
+			# needed by javac
+			file(MAKE_DIRECTORY "${myJavaBuildDir}")
+			add_custom_target(${myTarget} ALL
+				DEPENDS ${Java_AIINTERFACE_TARGET}
+				COMMAND "${JAVA_COMPILE}"
+					"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+					"-cp" "${myClassPath}"
+					"-d" "${myJavaBuildDir}"
+					${mySources}
+				COMMAND "${JAVA_ARCHIVE}"
+					${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
+					"-C" "${myJavaBuildDir}" "${myJavaPkgFirstPart}"
+				WORKING_DIRECTORY "${mySourceDir}"
+				COMMENT "  Creating library ${myBinJarFile}" VERBATIM)
+
+			# Pack the sources
+			add_custom_target(${mySourceTarget} ALL
+				COMMAND "${JAVA_ARCHIVE}"
+					"cf" "${myBuildDir}/${mySrcJarFile}"
+					"-C" "${mySourceDir}" "${myJavaPkgFirstPart}"
+				WORKING_DIRECTORY "${mySourceDir}"
+				COMMENT "  Creating sources archive ${mySrcJarFile}" VERBATIM)
+		endif (configureMavenProject)
 
 		# Install the data files
 		install(DIRECTORY "${myDir}/data/"                DESTINATION ${myDataDir})
 		# Install the library
 		install (FILES    "${myBuildDir}/${myBinJarFile}" DESTINATION ${myDataDir})
-		# Install the sources archive
-		install (FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myDataDir}/jlib)
+		# Install the sources archive (optional)
+		install (FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myDataDir}/jlib OPTIONAL)
+		if     (EXISTS "${myBuildDir}/jlib")
+			# Install libraries generated/downloaded during buildtime
+			install(DIRECTORY "${myBuildDir}/jlib/"       DESTINATION ${myDataDir}/jlib)
+		endif  (EXISTS "${myBuildDir}/jlib")
 	endif (BUILD_THIS_SKIRMISHAI)
 endmacro (ConfigureJavaSkirmishAI)
 
@@ -142,8 +255,8 @@ endmacro (ConfigureJavaSkirmishAI)
 
 set(myName               "Java")
 set(myDir                "${CMAKE_CURRENT_SOURCE_DIR}")
-set(myNativeSourceDirRel "src/native")
-set(myJavaSourceDirRel   "src/java")
+set(myNativeSourceDirRel "src/main/native")
+set(myJavaSourceDirRel   "src/main/java")
 set(myPkgFirstPart       "com")
 set(myPkg                "${myPkgFirstPart}/springrts/ai")
 
@@ -223,7 +336,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myJarFile                  "AIInterface")
 	set(myBinJarFile               "${myJarFile}.jar")
 	set(mySrcJarFile               "${myJarFile}-src.jar")
-	set(myGeneratedSourceDir       "${myBuildDir}/src-generated")
+	set(myGeneratedSourceDir       "${myBuildDir}/src-generated/main")
 	set(myJavaGeneratedSourceDir   "${myGeneratedSourceDir}/java")
 	set(myNativeGeneratedSourceDir "${myGeneratedSourceDir}/native")
 	set(myJLibDir                  "${myDir}/data/jlib")

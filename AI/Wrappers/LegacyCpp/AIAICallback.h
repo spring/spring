@@ -110,6 +110,7 @@ public:
 	virtual int GetMapWidth();
 	virtual int GetMapHeight();
 	virtual const float* GetHeightMap();
+	virtual const float* GetCornersHeightMap();
 	virtual float GetMinHeight();
 	virtual float GetMaxHeight();
 	virtual const float* GetSlopeMap();

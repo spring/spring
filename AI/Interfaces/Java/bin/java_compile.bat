@@ -11,12 +11,12 @@ SET JAVA_PKG=%JAVA_PKG_FIRST_PART%/springrts/ai
 
 SET JAVA_SRC_FILES=%JAVA_PKG%/*.java %JAVA_PKG%/command/*.java %JAVA_PKG%/event/*.java %JAVA_PKG%/oo/*.java
 
-SOURCE_MAIN_DIR=${HOME_DIR}/java/src
-if [ -z "${SOURCE_GENERATED_DIR}" ]; then
-	SOURCE_GENERATED_DIR=${HOME_DIR}/java/generated
-fi
+SOURCE_MAIN_DIR=${HOME_DIR}/src/main/java
 if [ -z "${BUILD_DIR}" ]; then
 	BUILD_DIR=${HOME_DIR}/build
+fi
+if [ -z "${SOURCE_GENERATED_DIR}" ]; then
+	SOURCE_GENERATED_DIR=${BUILD_DIR}/src-generated/main/java
 fi
 if [ -z "${BIN_DIR}" ]; then
 	BIN_DIR=${HOME_DIR}
@@ -25,14 +25,14 @@ cd ..
 
 echo "	compiling ..."
 IF NOT EXIST build mkdir build
-cd ./java/src
+cd ${SOURCE_MAIN_DIR}
 SET JLIB_DIR="../../data/jlib"
 javac -cp "%JLIB_DIR%/jna.jar;%JLIB_DIR%/vecmath.jar" -d "../../build" %JAVA_SRC_FILES%
 
 echo "	packaging ..."
 cd ../../build
-jar cmf ../java/src/manifest.mf interface.jar %JAVA_PKG_FIRST_PART%
-jar cf interface-src.jar -C "../java/src" %JAVA_PKG_FIRST_PART%
+jar cmf ${SOURCE_MAIN_DIR}/manifest.mf AIInterface.jar %JAVA_PKG_FIRST_PART%
+jar cf AIInterface-src.jar -C "${SOURCE_MAIN_DIR}" %JAVA_PKG_FIRST_PART%
 mv *.jar ..
 cd ..
 rmdir ./build

@@ -1179,6 +1179,23 @@ EXPORT(int) skirmishAiCallback_Map_0ARRAY1VALS0getHeightMap(int teamId, float he
 	return size;
 }
 
+EXPORT(int) skirmishAiCallback_Map_0ARRAY1SIZE0getCornersHeightMap(int teamId) {
+	return (gs->mapx + 1) * (gs->mapy + 1);
+}
+EXPORT(int) skirmishAiCallback_Map_0ARRAY1VALS0getCornersHeightMap(int teamId, float cornerHeights[],
+		int cornerHeights_max) {
+
+	IAICallback* clb = team_callback[teamId];
+	const float* tmpMap = clb->GetCornersHeightMap();
+	int size = skirmishAiCallback_Map_0ARRAY1SIZE0getCornersHeightMap(teamId);
+	size = min(size, cornerHeights_max);
+	int i;
+	for (i=0; i < size; ++i) {
+		cornerHeights[i] = tmpMap[i];
+	}
+	return size;
+}
+
 EXPORT(float) skirmishAiCallback_Map_getMinHeight(int teamId) {
 	IAICallback* clb = team_callback[teamId]; return clb->GetMinHeight();
 }
@@ -3645,6 +3662,8 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->Clb_Map_getHeight = &skirmishAiCallback_Map_getHeight;
 	callback->Clb_Map_0ARRAY1SIZE0getHeightMap = &skirmishAiCallback_Map_0ARRAY1SIZE0getHeightMap;
 	callback->Clb_Map_0ARRAY1VALS0getHeightMap = &skirmishAiCallback_Map_0ARRAY1VALS0getHeightMap;
+	callback->Clb_Map_0ARRAY1SIZE0getCornersHeightMap = &skirmishAiCallback_Map_0ARRAY1SIZE0getCornersHeightMap;
+	callback->Clb_Map_0ARRAY1VALS0getCornersHeightMap = &skirmishAiCallback_Map_0ARRAY1VALS0getCornersHeightMap;
 	callback->Clb_Map_getMinHeight = &skirmishAiCallback_Map_getMinHeight;
 	callback->Clb_Map_getMaxHeight = &skirmishAiCallback_Map_getMaxHeight;
 	callback->Clb_Map_0ARRAY1SIZE0getSlopeMap = &skirmishAiCallback_Map_0ARRAY1SIZE0getSlopeMap;

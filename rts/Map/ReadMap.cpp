@@ -138,7 +138,7 @@ void CReadMap::Initialize()
 	for(int i=1; i<numHeightMipMaps; i++)
 		mipHeightmap[i] = new float[(gs->mapx>>i)*(gs->mapy>>i)];
 
-	slopemap=new float[gs->hmapx*gs->hmapy];
+	slopemap = new float[gs->hmapx * gs->hmapy];
 
 	CalcHeightfieldData();
 }
@@ -211,17 +211,18 @@ void CReadMap::CalcHeightfieldData()
 		}
 	}
 
+
 	for (int y = 0; y < gs->hmapy; y++) {
 		for (int x = 0; x < gs->hmapx; x++) {
-			slopemap[y * gs->hmapx + x] = 1;
+			slopemap[y * gs->hmapx + x] = 1.0f;
 		}
 	}
 
 	const int ss4 = SQUARE_SIZE * 4;
 	for (int y = 2; y < gs->mapy - 2; y += 2) {
 		for (int x = 2; x < gs->mapx - 2; x += 2) {
-			int idx0 = (y - 1) * (gs->mapx + 1);
-			int idx1 = (y + 3) * (gs->mapx + 1);
+			const int idx0 = (y - 1) * (gs->mapx + 1);
+			const int idx1 = (y + 3) * (gs->mapx + 1);
 
 			float3 e1(-ss4, heightmap[idx0 + (x - 1)] - heightmap[idx0 +  x + 3 ],    0);
 			float3 e2(   0, heightmap[idx0 + (x - 1)] - heightmap[idx1 + (x - 1)], -ss4);
@@ -238,6 +239,17 @@ void CReadMap::CalcHeightfieldData()
 			slopemap[(y / 2) * gs->hmapx + (x / 2)] = 1.0f - (n.y + n2.y) * 0.5f;
 		}
 	}
+
+	// don't leave the slopemap edges at 1
+	for (int y = 0; y < gs->hmapy; y++) {
+		slopemap[(y * gs->hmapx) +             0] = slopemap[(y * gs->hmapx) +             1];
+		slopemap[(y * gs->hmapx) + gs->hmapx - 1] = slopemap[(y * gs->hmapx) + gs->hmapx - 2];
+	}
+	for (int x = 0; x < gs->hmapx; x++) {
+		slopemap[(             0  * gs->hmapx) + x] = slopemap[(             1  * gs->hmapx) + x];
+		slopemap[((gs->hmapy - 1) * gs->hmapx) + x] = slopemap[((gs->hmapy - 2) * gs->hmapx) + x];
+	}
+
 }
 
 void CReadMap::UpdateDraw() {

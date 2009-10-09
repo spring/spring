@@ -22,6 +22,7 @@
 CR_BIND_DERIVED(CExplosiveProjectile, CWeaponProjectile, (float3(0, 0, 0), float3(0, 0, 0), NULL, NULL, 1, 0));
 
 CR_REG_METADATA(CExplosiveProjectile, (
+	CR_SETFLAG(CF_Synced),
 	CR_MEMBER(areaOfEffect),
 	CR_RESERVED(16)
 ));
@@ -33,7 +34,7 @@ CR_REG_METADATA(CExplosiveProjectile, (
 CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
 		const float3& speed, CUnit* owner, const WeaponDef *weaponDef, int ttl,
 		float areaOfEffect, float g GML_PARG_C):
-	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, true,  ttl GML_PARG_P),
+	CWeaponProjectile(pos, speed, owner, 0, ZeroVector, weaponDef, 0, ttl GML_PARG_P),
 	areaOfEffect(areaOfEffect),
 	curTime(0)
 {

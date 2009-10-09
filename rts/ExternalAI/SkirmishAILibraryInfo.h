@@ -22,7 +22,6 @@
 #include <map>
 #include <string>
 
-class ISkirmishAILibrary;
 class SkirmishAIKey;
 struct Option;
 

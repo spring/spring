@@ -7,12 +7,12 @@
 # * common.awk
 # * commonDoc.awk
 # Variables that can be set on the command-line (with -v):
-# * GENERATED_SOURCE_DIR: the generated sources root dir
+# * GENERATED_SOURCE_DIR: the root of what will contain the generated sources
 #
 # usage:
 # 	awk -f thisScript.awk -f common.awk -f commonDoc.awk
 # 	awk -f thisScript.awk -f common.awk -f commonDoc.awk \
-#       -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/src-generated'
+#       -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/src-generated/main'
 #
 
 BEGIN {
@@ -27,7 +27,7 @@ BEGIN {
 	# These vars can be assigned externally, see file header.
 	# Set the default values if they were not supplied on the command line.
 	if (!GENERATED_SOURCE_DIR) {
-		GENERATED_SOURCE_DIR = "../src-generated";
+		GENERATED_SOURCE_DIR = "../src-generated/main";
 	}
 	if (!JAVA_GENERATED_SOURCE_DIR) {
 		JAVA_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/java";
@@ -36,7 +36,7 @@ BEGIN {
 		NATIVE_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/native";
 	}
 
-	javaSrcRoot = "../java/src";
+	javaSrcRoot = "../src/main/java";
 	javaGeneratedSrcRoot = JAVA_GENERATED_SOURCE_DIR;
 
 	myPkgA = "com.springrts.ai";
@@ -58,10 +58,9 @@ BEGIN {
 }
 
 
-
 # Checks if a field is available and is no comment
 function isFieldUsable(f) {
-	
+
 	valid = 0;
 
 	if (f && !match(f, /.*\/\/.*/)) {
@@ -130,6 +129,7 @@ function printCommandJava(cmdIndex) {
 			name = cmdsMembers_name[cmdIndex, m];
 			type_c = cmdsMembers_type_c[cmdIndex, m];
 			type_jna = convertCToJNAType(type_c);
+			# add to typedMemberList
 			typedMemberList = typedMemberList ", " type_jna " " name;
 		}
 		sub(/\, /, "", typedMemberList);
@@ -194,10 +194,12 @@ function printCommandJava(cmdIndex) {
 	}
 
 	print("") >> javaFile;
+	# print out the member declarations
 	for (m=firstMethod; m < cmdsNumMembers[cmdIndex]; m++) {
 		name = cmdsMembers_name[cmdIndex, m];
 		type_c = cmdsMembers_type_c[cmdIndex, m];
 		type_jna = convertCToJNAType(type_c);
+		printFunctionComment_Common(javaFile, cmdMbrsDocComments, cmdIndex*100 + m, "	");
 		print("	public " type_jna " " name ";") >> javaFile;
 	}
 	print("}") >> javaFile;
@@ -313,12 +315,11 @@ function canDeleteDocumentation() {
 ################################################################################
 ### BEGINN: parsing and saving the command structs
 
-# end of struct S*Command 
+# end of struct S*Command
 /^}; \/\/ COMMAND_.*$/ {
 
 	cmdsNumMembers[ind_cmdStructs] = ind_cmdMember;
 	cmdsTopicName[ind_cmdStructs] = $3;
-	storeDocLines(cmdsDocComment, ind_cmdStructs);
 
 	if (doWrapp(ind_cmdStructs)) {
 		printCommandJava(ind_cmdStructs);
@@ -329,7 +330,7 @@ function canDeleteDocumentation() {
 }
 
 
-# inside of struct S*Command 
+# inside of struct S*Command
 {
 	if (isInsideCmdStruct == 1) {
 		size_tmpMembers = split($0, tmpMembers, ";");
@@ -338,7 +339,10 @@ function canDeleteDocumentation() {
 			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
 				break;
 			}
-			saveMember(ind_cmdMember++, tmpMembers[i]);
+			# This would bork with more then 100 members in a command
+			storeDocLines(cmdMbrsDocComments, ind_cmdStructs*100 + ind_cmdMember);
+			saveMember(ind_cmdMember, tmpMembers[i]);
+			ind_cmdMember++;
 		}
 	}
 }
@@ -351,11 +355,12 @@ function canDeleteDocumentation() {
 	commandName = $2;
 	sub(/^S/, "", commandName);
 	sub(/Command$/, "", commandName);
-	
+
 	isUnitCommand = match(commandName, /.*Unit$/);
 
 	cmdsIsUnitCmd[ind_cmdStructs] = isUnitCommand;
 	cmdsName[ind_cmdStructs] = commandName;
+	storeDocLines(cmdsDocComment, ind_cmdStructs);
 }
 
 # find COMMAND_TO_ID_ENGINE id

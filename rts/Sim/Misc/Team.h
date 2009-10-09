@@ -44,7 +44,7 @@ public:
 
 	void StartposMessage(const float3& pos);
 
-	void operator=(const TeamBase& base) { TeamBase::operator=(base); };
+	void operator=(const TeamBase& base);
 
 	enum AddType{
 		AddBuilt,

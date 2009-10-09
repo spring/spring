@@ -28,6 +28,7 @@ static const float Smoke_Time = 40;
 CR_BIND_DERIVED(CPieceProjectile, CProjectile, (float3(0, 0, 0), float3(0, 0, 0), NULL, 0, NULL, 0));
 
 CR_REG_METADATA(CPieceProjectile,(
+	CR_SETFLAG(CF_Synced),
 	CR_SERIALIZER(creg_Serialize), // numCallback, oldInfos
 	CR_MEMBER(flags),
 	CR_MEMBER(dispList),

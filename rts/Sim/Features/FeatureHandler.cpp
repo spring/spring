@@ -102,6 +102,8 @@ CFeatureHandler::CFeatureHandler() : nextFreeID(0)
 		const LuaTable fdTable = rootTable.SubTable(name);
 		CreateFeatureDef(fdTable, name);
 	}
+
+	showRezBars = !!configHandler->Get("ShowRezBars", 1);
 }
 
 
@@ -153,17 +155,26 @@ void CFeatureHandler::PostLoad()
 			drawQuads[(*it)->drawQuad].features.insert(*it);
 }
 
+inline void CopyFeatureSet(std::set<CFeature *> &to, std::set<CFeature *> &from) {
+	to.clear();
+	for(std::set<CFeature *>::iterator i = from.begin(); i != from.end(); ++i)
+		to.insert(*i);
+}
 
 void CFeatureHandler::BackupFeatures()
 {
-	fadeFeaturesSave    = fadeFeatures;
-	fadeFeaturesS3OSave = fadeFeaturesS3O;
+	GML_RECMUTEX_LOCK(feat); // BackupFeatures
+
+	CopyFeatureSet(fadeFeaturesSave, fadeFeatures);
+	CopyFeatureSet(fadeFeaturesS3OSave, fadeFeaturesS3O);
 }
 
 void CFeatureHandler::RestoreFeatures()
 {
-	fadeFeatures    = fadeFeaturesSave;
-	fadeFeaturesS3O = fadeFeaturesS3OSave;
+	GML_RECMUTEX_LOCK(feat); // RestoreFeatures
+
+	CopyFeatureSet(fadeFeatures, fadeFeaturesSave);
+	CopyFeatureSet(fadeFeaturesS3O, fadeFeaturesS3OSave);
 }
 
 void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
@@ -625,6 +636,16 @@ void CFeatureHandler::Draw()
 		glDisable(GL_ALPHA_TEST);
 	}
 
+	if(drawStat.size() > 0) {
+		if(!water->drawReflection) {
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_ALPHA_TEST);
+			for (std::vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi)
+				DrawFeatureStats(*fi);
+		}
+		drawStat.clear();
+	}
+
 	glDisable(GL_FOG);
 }
 
@@ -733,6 +754,7 @@ public:
 	float sqFadeDistBegin;
 	float sqFadeDistEnd;
 	std::vector<CFeature*>* farFeatures;
+	std::vector<CFeature*>* statFeatures;
 };
 
 
@@ -765,6 +787,9 @@ void CFeatureDrawer::DrawQuad(int x, int y)
 
 			float sqDist = (f->pos - camera->pos).SqLength2D();
 			float farLength = f->sqRadius * unitDrawDist * unitDrawDist;
+
+			if(statFeatures && (f->reclaimLeft < 1.0f || f->resurrectProgress > 0.0f))
+				statFeatures->push_back(f);
 
 			if (sqDist < farLength) {
 				float sqFadeDistE;
@@ -816,6 +841,7 @@ void CFeatureHandler::DrawRaw(int extraSize, std::vector<CFeature*>* farFeatures
 	drawer.sqFadeDistEnd = featureDist * featureDist;
 	drawer.sqFadeDistBegin = 0.75f * 0.75f * featureDist * featureDist;
 	drawer.farFeatures = farFeatures;
+	drawer.statFeatures = showRezBars ? &drawStat : NULL;
 
 	readmap->GridVisibility(camera, DRAW_QUAD_SIZE, featureDist, &drawer, extraSize);
 }
@@ -840,4 +866,42 @@ void CFeatureHandler::DrawFar(CFeature* feature, CVertexArray* va)
 	va->AddVertexQTN(interPos+(curad+offset)+crrad,tx,ty+(1.0f/64.0f),unitDrawer->camNorm);
 	va->AddVertexQTN(interPos+(curad+offset)-crrad,tx+(1.0f/64.0f),ty+(1.0f/64.0f),unitDrawer->camNorm);
 	va->AddVertexQTN(interPos-(curad-offset)-crrad,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
+}
+
+
+
+
+void CFeatureHandler::DrawFeatureStats(CFeature* feature)
+{
+	float3 interPos = feature->midPos;
+	interPos.y += feature->model->height + 5.0f;
+
+	glPushMatrix();
+	glTranslatef(interPos.x, interPos.y, interPos.z);
+	glCallList(CCamera::billboardList);
+
+	float recl = feature->reclaimLeft;
+	float rezp = feature->resurrectProgress;
+
+	// black background for the bar
+	glColor3f(0.0f, 0.0f, 0.0f);
+	glRectf(-5.0f, 4.0f, +5.0f, 6.0f);
+
+	// rez/metalbar
+	float rmin = std::min(recl, rezp) * 10.0f;
+	if(rmin > 0.0f) {
+		glColor3f(1.0f, 0.0f, 1.0f);
+		glRectf(-5.0f, 4.0f, rmin - 5.0f, 6.0f);
+	}
+	if(recl > rezp) {
+		float col = 0.8 - 0.3 * recl;
+		glColor3f(col, col, col);
+		glRectf(rmin - 5.0f, 4.0f, recl * 10.0f - 5.0f, 6.0f);
+	}
+	if(recl < rezp) {
+		glColor3f(0.5f, 0.0f, 1.0f);
+		glRectf(rmin - 5.0f, 4.0f, rezp * 10.0f - 5.0f, 6.0f);
+	}
+
+	glPopMatrix();
 }

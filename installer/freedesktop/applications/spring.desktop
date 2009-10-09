@@ -4,6 +4,7 @@ Name=Spring
 MimeType=application/x-spring-demo
 Comment=An open source RTS with similar gameplay to TA
 Comment[de]=Open-Source Multiplayerstrategie
+Comment[it]=Un gioco di strategia in tempo reale multi giocatore simile a TA
 TryExec=spring
 Exec=spring %f
 Icon=spring.png

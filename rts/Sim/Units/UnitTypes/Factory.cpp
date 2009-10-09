@@ -110,7 +110,7 @@ void CFactory::Update()
 
 	if (quedBuild && !opening && !stunned) {
 		script->Activate();
-		groundBlockingObjectMap->OpenBlockingYard(this, yardMap);
+		groundBlockingObjectMap->OpenBlockingYard(this, curYardMap);
 		opening = true;
 	}
 
@@ -228,7 +228,7 @@ void CFactory::Update()
 	if (((lastBuild + 200) < gs->frameNum) && !stunned &&
 	    !quedBuild && opening && groundBlockingObjectMap->CanCloseYard(this)) {
 		// close the factory after inactivity
-		groundBlockingObjectMap->CloseBlockingYard(this, yardMap);
+		groundBlockingObjectMap->CloseBlockingYard(this, curYardMap);
 		opening = false;
 		script->Deactivate();
 	}
@@ -255,7 +255,7 @@ void CFactory::StartBuild(const UnitDef* ud)
 
 	if (!opening && !stunned) {
 		script->Activate();
-		groundBlockingObjectMap->OpenBlockingYard(this, yardMap);
+		groundBlockingObjectMap->OpenBlockingYard(this, curYardMap);
 		opening = true;
 	}
 }

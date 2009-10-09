@@ -776,6 +776,7 @@ struct SSetMoveStateUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
+	/// 0=hold pos, 1=maneuvre, 2=roam
 	int moveState;
 }; // COMMAND_UNIT_SET_MOVE_STATE
 

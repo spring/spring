@@ -30,6 +30,12 @@ public:
 		return customValues;
 	}
 
+	const char *GetType(const bool capital = true) const {
+		if(capital)
+			return spectator ? "Spectator" : "Player";
+		return spectator ? "spectator" : "player";
+	}
+
 private:
 	customOpts customValues;
 };

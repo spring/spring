@@ -16,6 +16,7 @@
 CR_BIND_DERIVED(CFlareProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),0,0));
 
 CR_REG_METADATA(CFlareProjectile,(
+				CR_SETFLAG(CF_Synced),
 				CR_MEMBER(activateFrame),
 				CR_MEMBER(deathFrame),
 

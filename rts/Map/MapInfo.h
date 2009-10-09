@@ -12,7 +12,7 @@ class CMapInfo
 {
 public:
 
-	CMapInfo(const std::string& mapName, bool onlyBasics = false);
+	CMapInfo(const std::string& mapName);
 	~CMapInfo();
 
 	/* The settings are just public members because:
@@ -136,6 +136,8 @@ public:
 		bool  minHeightOverride;
 		float maxHeight;
 		bool  maxHeightOverride;
+
+		std::vector<std::string> smtFileNames;
 	} smf;
 
 	/** SM3 specific settings

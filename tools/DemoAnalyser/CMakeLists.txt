@@ -1,4 +1,4 @@
-ADD_DEFINITIONS(-DDEDICATED)
+ADD_DEFINITIONS(-DDEDICATED -DNOT_USING_CREG)
 
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/lib/7zip ../../rts/lib/lua/include ../../rts/System)
 

@@ -41,8 +41,7 @@ namespace terrain {
 
 	void RenderSetup::DebugOutput()
 	{
-		for (size_t a=0;a<passes.size();a++)
-		{
+		for (size_t a=0; a < passes.size(); a++) {
 			const char *str=0;
 			RenderPass& p = passes[a];
 
@@ -56,7 +55,7 @@ namespace terrain {
 				str="Pass_Replace";
 
 			string shaderstr = p.shaderSetup ? p.shaderSetup->GetDebugDesc () : string("none");
-			d_trace ("Pass (%lu): %s, %s. Shader: %s\n", a, str, p.invertAlpha ? "invertalpha" : "", shaderstr.c_str());
+			d_trace ("Pass ("_STPF_"): %s, %s. Shader: %s\n", a, str, p.invertAlpha ? "invertalpha" : "", shaderstr.c_str());
 		}
 		d_trace ("\n");
 	}
@@ -255,7 +254,7 @@ namespace terrain {
 			// Save image
 			if (blendMaps[a]->generatorInfo) {
 				char fn[32];
-				SNPRINTF (fn,32, "blendmap%lu.jpg", a);
+				SNPRINTF (fn,32, "blendmap"_STPF_".jpg", a);
 				remove(fn);
 				bm->Save (fn);
 			}
@@ -701,9 +700,9 @@ namespace terrain {
 	void ShaderDef::Output()
 	{
 		const char *opstr[] = { "add", "mul", "alpha" ,"blend" };
-		d_trace ("Shader: %lu stages.\n", stages.size());
-		for (size_t a=0;a<stages.size();a++){
-			d_trace ("%lu\toperation=%s\n",a, opstr[(int)stages[a].operation]);
+		d_trace ("Shader: "_STPF_" stages.\n", stages.size());
+		for (size_t a = 0; a < stages.size(); a++){
+			d_trace (_STPF_"\toperation=%s\n", a, opstr[(int)stages[a].operation]);
 			d_trace ("\tsource=%s\n", stages[a].sourceName.c_str());
 		}
 	}
