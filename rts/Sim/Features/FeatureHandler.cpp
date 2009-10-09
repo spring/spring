@@ -155,21 +155,26 @@ void CFeatureHandler::PostLoad()
 			drawQuads[(*it)->drawQuad].features.insert(*it);
 }
 
+inline void CopyFeatureSet(std::set<CFeature *> &to, std::set<CFeature *> &from) {
+	to.clear();
+	for(std::set<CFeature *>::iterator i = from.begin(); i != from.end(); ++i)
+		to.insert(*i);
+}
 
 void CFeatureHandler::BackupFeatures()
 {
 	GML_RECMUTEX_LOCK(feat); // BackupFeatures
 
-	fadeFeaturesSave    = fadeFeatures;
-	fadeFeaturesS3OSave = fadeFeaturesS3O;
+	CopyFeatureSet(fadeFeaturesSave, fadeFeatures);
+	CopyFeatureSet(fadeFeaturesS3OSave, fadeFeaturesS3O);
 }
 
 void CFeatureHandler::RestoreFeatures()
 {
 	GML_RECMUTEX_LOCK(feat); // RestoreFeatures
 
-	fadeFeatures    = fadeFeaturesSave;
-	fadeFeaturesS3O = fadeFeaturesS3OSave;
+	CopyFeatureSet(fadeFeatures, fadeFeaturesSave);
+	CopyFeatureSet(fadeFeaturesS3O, fadeFeaturesS3OSave);
 }
 
 void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
