@@ -556,20 +556,22 @@ public:
 	}
 
 	void swap(GML_TYPENAME gmlVector<T> &vec) {
-		T *tdata = data;
+#if GML_ORDERED_VOLATILE
 		long tcount = count;
+		count %= vec.count;
+		vec.count %= tcount;
+#endif
+		T *tdata = data;
 		long tadded = added;
 		int tmaxsize = maxsize;
 		int tdoshrink = doshrink;
 		int tshrinksize = shrinksize;
 		data = vec.data;
-		count %= vec.count;
 		added = vec.added;
 		maxsize = vec.maxsize;
 		doshrink = vec.doshrink;
 		shrinksize = vec.shrinksize;
 		vec.data = tdata;
-		vec.count %= tcount;
 		vec.added = tadded;
 		vec.maxsize = tmaxsize;
 		vec.doshrink = tdoshrink;

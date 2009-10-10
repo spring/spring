@@ -198,7 +198,7 @@ private:
 	short oldHeading,oldPitch;
 	unsigned char oldStatus;
 
-	void StoreCloaked(bool save);
+	void SwapTransparentObjects();
 
 	int skipStartFrame;
 	int skipEndFrame;

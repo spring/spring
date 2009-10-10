@@ -2185,18 +2185,9 @@ bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const
 }
 
 
-void CUnitDrawer::BackupUnits()
+void CUnitDrawer::SwapCloakedUnits()
 {
-	GML_RECMUTEX_LOCK(unit); // BackupUnits
-
-	drawCloakedSave.swap(drawCloaked);
-	drawCloakedS3OSave.swap(drawCloakedS3O);
-}
-
-
-void CUnitDrawer::RestoreUnits()
-{
-	GML_RECMUTEX_LOCK(unit); // RestoreUnits
+	GML_RECMUTEX_LOCK(unit); // SwapCloakedUnits
 
 	drawCloaked.swap(drawCloakedSave);
 	drawCloakedS3O.swap(drawCloakedS3OSave);
