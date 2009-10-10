@@ -155,17 +155,9 @@ void CFeatureHandler::PostLoad()
 			drawQuads[(*it)->drawQuad].features.insert(*it);
 }
 
-void CFeatureHandler::BackupFeatures()
+void CFeatureHandler::SwapFadeFeatures()
 {
-	GML_RECMUTEX_LOCK(feat); // BackupFeatures
-
-	fadeFeaturesSave.swap(fadeFeatures);
-	fadeFeaturesS3OSave.swap(fadeFeaturesS3O);
-}
-
-void CFeatureHandler::RestoreFeatures()
-{
-	GML_RECMUTEX_LOCK(feat); // RestoreFeatures
+	GML_RECMUTEX_LOCK(feat); // SwapFadeFeatures
 
 	fadeFeatures.swap(fadeFeaturesSave);
 	fadeFeaturesS3O.swap(fadeFeaturesS3OSave);
