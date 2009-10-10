@@ -589,12 +589,12 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 
 void CFeatureHandler::Draw()
 {
-	fadeFeatures.clear();
-	fadeFeaturesS3O.clear();
-
 	drawFar.clear();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
+
+	fadeFeatures.clear();
+	fadeFeaturesS3O.clear();
 
 	if(gu->drawFog) {
 		glEnable(GL_FOG);
