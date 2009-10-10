@@ -231,9 +231,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(consumeSpeed),
 //	CR_MEMBER(lastframe),
 //	CR_MEMBER(leastQue),
-	CR_MEMBER(oldHeading),
-	CR_MEMBER(oldPitch),
-	CR_MEMBER(oldStatus),
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -343,9 +340,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	{
 		ScopedOnceTimer timer("Loading sounds");
-		oldPitch   = 0;
-		oldHeading = 0;
-		oldStatus  = 255;
 
 		sound->LoadSoundDefs("gamedata/sounds.lua");
 		chatSound = sound->GetSoundId("IncomingChat", false);
@@ -3455,6 +3449,7 @@ void CGame::StartPlaying()
 }
 
 
+
 void CGame::SimFrame() {
 	ScopedTimer cputimer("CPU load"); // SimFrame
 
@@ -3489,28 +3484,14 @@ void CGame::SimFrame() {
 			grouphandlers[a]->Update();
 		}
 		profiler.Update();
-		if (gu->directControl) {
-			unsigned char status = 0;
-			if (camMove[0]) { status |= (1 << 0); }
-			if (camMove[1]) { status |= (1 << 1); }
-			if (camMove[2]) { status |= (1 << 2); }
-			if (camMove[3]) { status |= (1 << 3); }
-			if (mouse->buttons[SDL_BUTTON_LEFT].pressed)  { status |= (1 << 4); }
-			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) { status |= (1 << 5); }
-			shortint2 hp = GetHAndPFromVector(camera->forward);
 
-			if (hp.x != oldHeading || hp.y != oldPitch || oldStatus != status) {
-				oldHeading = hp.x;
-				oldPitch = hp.y;
-				oldStatus = status;
-				net->Send(
-					CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum,
-					                                                status, hp.x, hp.y));
-			}
+		if (gu->directControl) {
+			(playerHandler->Player(gu->myPlayerNum)->dccs).SendStateUpdate(camMove);
 		}
 	}
 
-	//everything from here is simulation
+
+	// everything from here is simulation
 	ScopedTimer forced("Sim time"); // don't use SCOPED_TIMER here because this is the only timer needed always
 
 	helper->Update();
@@ -3520,7 +3501,7 @@ void CGame::SimFrame() {
 	groundDecals->Update();
 
 	{
-		SCOPED_TIMER("Collisions");
+		SCOPED_TIMER("Projectile Collisions");
 		ph->CheckCollisions();
 	}
 
@@ -4037,7 +4018,7 @@ void CGame::ClientReadNet()
 					vector<int>::const_iterator ui;
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui){
 						CUnit* unit = uh->units[*ui];
-						if (unit && unit->team==team1 && !unit->beingBuilt) {
+						if (unit && unit->team == team1 && !unit->beingBuilt) {
 							if (!unit->directControl)
 								unit->ChangeTeam(team2, CUnit::ChangeGiven);
 						}
@@ -4298,34 +4279,42 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_DIRECT_CONTROL: {
-				int player = inbuf[1];
+				const int player = inbuf[1];
 
 				if ((player >= playerHandler->ActivePlayers()) || (player < 0)) {
-					logOutput.Print("Got invalid player num %i in direct control msg",player);
+					logOutput.Print("Invalid player number (%i) in NETMSG_DIRECT_CONTROL", player);
 					break;
 				}
 
-				CUnit* ctrlUnit = playerHandler->Player(player)->playerControlledUnit;
+				CUnit* ctrlUnit = (playerHandler->Player(player)->dccs).playerControlledUnit;
 				if (ctrlUnit) {
-					CUnit* unit=playerHandler->Player(player)->playerControlledUnit;
-				//logOutput.Print("Player %s released control over unit %i type %s",playerHandler->Player(player)->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
+					// player released control
+					CUnit* unit = (playerHandler->Player(player)->dccs).playerControlledUnit;
 
-					unit->directControl=0;
-					unit->AttackUnit(0,true);
+					unit->directControl = 0;
+					unit->AttackUnit(0, true);
 					playerHandler->Player(player)->StopControllingUnit();
-				}
-				else {
-					if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
+				} else {
+					// player took control
+					if (
+						!selectedUnits.netSelected[player].empty() &&
+						uh->units[selectedUnits.netSelected[player][0]] != NULL &&
+						!uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()
+					) {
 						CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
-						//logOutput.Print("Player %s took control over unit %i type %s",playerHandler->Player(player)->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
-						if (unit->directControl) {
+
+						if (unit->directControl && unit->directControl->myController) {
 							if (player == gu->myPlayerNum) {
-								logOutput.Print("Sorry someone already controls that unit");
+								logOutput.Print(
+									"player %d is already controlling unit %d, try later",
+									unit->directControl->myController->playerNum, unit->id
+								);
 							}
 						}
 						else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
-							unit->directControl=&playerHandler->Player(player)->myControl;
-							playerHandler->Player(player)->playerControlledUnit=unit;
+							unit->directControl = &playerHandler->Player(player)->myControl;
+							(playerHandler->Player(player)->dccs).playerControlledUnit = unit;
+
 							if (player == gu->myPlayerNum) {
 								gu->directControl = unit;
 								mouse->wasLocked = mouse->locked;
@@ -4346,12 +4335,14 @@ void CGame::ClientReadNet()
 
 			case NETMSG_DC_UPDATE: {
 				int player = inbuf[1];
-				if ((player >= playerHandler->ActivePlayers()) || (player < 0)){
-					logOutput.Print("Got invalid player num %i in dc update msg",player);
+				if ((player >= playerHandler->ActivePlayers()) || (player < 0)) {
+					logOutput.Print("Invalid player number (%i) in NETMSG_DC_UPDATE", player);
 					break;
 				}
+
 				DirectControlStruct* dc = &playerHandler->Player(player)->myControl;
-				CUnit* unit = playerHandler->Player(player)->playerControlledUnit;
+				DirectControlClientState& dccs = playerHandler->Player(player)->dccs;
+				CUnit* unit = dccs.playerControlledUnit;
 
 				dc->forward    = !!(inbuf[2] & (1 << 0));
 				dc->back       = !!(inbuf[2] & (1 << 1));
@@ -4359,16 +4350,16 @@ void CGame::ClientReadNet()
 				dc->right      = !!(inbuf[2] & (1 << 3));
 				dc->mouse1     = !!(inbuf[2] & (1 << 4));
 				bool newMouse2 = !!(inbuf[2] & (1 << 5));
+
 				if (!dc->mouse2 && newMouse2 && unit) {
 					unit->AttackUnit(0, true);
-					//	for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
-					//	(*wi)->HoldFire();
 				}
 				dc->mouse2 = newMouse2;
 
-				short int h = *((short int*)&inbuf[3]);
-				short int p = *((short int*)&inbuf[5]);
+				short int h = *((short int*) &inbuf[3]);
+				short int p = *((short int*) &inbuf[5]);
 				dc->viewDir = GetVectorFromHAndPExact(h, p);
+
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -4397,39 +4388,18 @@ void CGame::ClientReadNet()
 
 
 
-
-
-float3 lastDCpos;
-float3* plastDCpos = NULL;
-
 void CGame::UpdateUI(bool updateCam)
 {
-	// move camera if arrow keys pressed
-	if (gu->directControl && !updateCam) {
-		CUnit* owner = gu->directControl;
+	if (updateCam) {
+		CPlayer* player = playerHandler->Player(gu->myPlayerNum);
+		DirectControlClientState& dccs = player->dccs;
 
-		std::vector<int> args;
-		args.push_back(0);
-		// FIXME: SYNCED SCRIPT CODE CALLED IN UNSYNCED CONTEXT
-		const int piece = owner->script->AimFromWeapon(0);
-		float3 relPos = owner->script->GetPiecePos(piece);
-		float3 pos = owner->pos +
-			owner->frontdir * relPos.z +
-			owner->updir    * relPos.y +
-			owner->rightdir * relPos.x;
-		pos += UpVector * 7;
+		if (dccs.oldDCpos != ZeroVector) {
+			GML_STDMUTEX_LOCK(pos); // UpdateUI
 
-		GML_STDMUTEX_LOCK(pos); // UpdateUI
-
-		lastDCpos = pos;
-		plastDCpos = &lastDCpos;
-	}
-
-	if (plastDCpos && updateCam) {
-		GML_STDMUTEX_LOCK(pos); // UpdateUI
-
-		camHandler->GetCurrentController().SetPos(lastDCpos);
-		plastDCpos = NULL;
+			camHandler->GetCurrentController().SetPos(dccs.oldDCpos);
+			dccs.oldDCpos = ZeroVector;
+		}
 	}
 
 	if (!gu->directControl) {

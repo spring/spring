@@ -1305,7 +1305,7 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 		return 0;
 	}
 
-	CUnit* unit = player->playerControlledUnit;
+	CUnit* unit = (player->dccs).playerControlledUnit;
 	if (unit == NULL) {
 		return 0;
 	}

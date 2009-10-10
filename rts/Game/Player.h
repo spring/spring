@@ -14,7 +14,7 @@
 #include "float3.h"
 class CPlayer;
 class CUnit;
-struct DirectControlStruct{
+struct DirectControlStruct {
 	bool forward;
 	bool back;
 	bool left;
@@ -27,6 +27,25 @@ struct DirectControlStruct{
 	float targetDist;
 	CUnit* target;
 	CPlayer* myController;
+};
+
+struct DirectControlClientState {
+	DirectControlClientState() {
+		oldPitch   = 0;
+		oldHeading = 0;
+		oldState   = 255;
+		oldDCpos   = ZeroVector;
+	}
+
+	void SendStateUpdate(bool*);
+
+	CUnit* playerControlledUnit; //! synced
+	short oldHeading, oldPitch;  //! unsynced
+	unsigned char oldState;      //! unsynced
+	float3 oldDCpos;             //! unsynced
+
+	// todo: relocate the CUnit* from GlobalUnsynced
+	// to here as well so everything is in one place
 };
 
 
@@ -60,8 +79,7 @@ public:
 	Statistics currentStats;
 
 	DirectControlStruct myControl;
-
-	CUnit* playerControlledUnit;
+	DirectControlClientState dccs;
 
 	void StopControllingUnit();
 
