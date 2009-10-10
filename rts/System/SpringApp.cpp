@@ -293,7 +293,7 @@ bool SpringApp::InitWindow(const char* title)
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
 	if ((SDL_Init(sdlInitFlags) == -1)) {
-		handleerror(NULL, "Could not initialize SDL.", "ERROR", MBF_OK | MBF_EXCL);
+		logOutput.Print("Could not initialize SDL: %s", SDL_GetError());
 		return false;
 	}
 
@@ -301,8 +301,10 @@ bool SpringApp::InitWindow(const char* title)
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
 
-	if (!SetSDLVideoMode())
+	if (!SetSDLVideoMode()) {
+		logOutput.Print("Failed to set SDL video mode: %s", SDL_GetError());
 		return false;
+	}
 
 	RestoreWindowPosition();
 
