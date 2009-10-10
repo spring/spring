@@ -82,6 +82,12 @@ public final class AIFloat3 extends Structure implements Structure.ByValue {
 	public String toString() {
 		return "(" + this.x + ", " + this.y + ", " + this.z + ")";
 	}
+	public float[] toFloatArray() {
+
+		float[] floatArr = new float[3];
+		loadInto(floatArr);
+		return floatArr;
+	}
 	public void loadInto(float[] xyz) {
 
 		xyz[0] = x;

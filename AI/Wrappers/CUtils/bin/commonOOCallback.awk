@@ -319,6 +319,10 @@ function storeClassesAndInterfaces() {
 }
 
 function wrappFunction(retType, fullName, params) {
+	wrappFunctionPlusMeta(retType, fullName, params, "");
+}
+
+function wrappFunctionPlusMeta(retType, fullName, params, metaComment) {
 
 	simpleFullName = extractNormalPart(fullName);
 
@@ -334,6 +338,7 @@ function wrappFunction(retType, fullName, params) {
 		funcRetType[fullName] = retType;
 		funcParams[fullName] = params;
 		funcInnerParams[fullName] = innerParams;
+		funcMetaComment[fullName] = metaComment;
 		storeDocLines(funcDocComment, fullName);
 
 		if (!(simpleFullName in funcSimpleFullName)) {

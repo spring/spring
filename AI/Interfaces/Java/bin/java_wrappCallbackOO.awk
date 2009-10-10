@@ -56,9 +56,11 @@ BEGIN {
 	MAX_IDS = 1024;
 	defMapJavaImpl = "HashMap";
 
-	myBufferedClasses["_UnitDef"] = 1;
-	myBufferedClasses["_WeaponDef"] = 1;
+	myBufferedClasses["_UnitDef"]    = 1;
+	myBufferedClasses["_WeaponDef"]  = 1;
 	myBufferedClasses["_FeatureDef"] = 1;
+
+	retParamName  = "__retVal";
 
 	size_funcs = 0;
 	size_classes = 0;
@@ -627,16 +629,40 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 	params = funcParams[fullName_m];
 	innerParams = funcInnerParams[fullName_m];
 	memName = extractNormalPart(fullName_m);
+	metaComment = funcMetaComment[fullName_m];
 	sub(/^.*_/, "", memName);
 	isVoid_m = (retType == "void");
+
+	hasRetParam = match(innerParams, retParamName "$");
+	if (hasRetParam) {
+		retParamType = params;
+		sub(" " retParamName ".*$", "", retParamType);
+		sub("^.*, ", "", retParamType);
+		if (!sub(",[^,]*$", "", params)) {
+			params = "";
+		}
+	}
+
+	# convert float[3] paramss back to AIFloat3
+	size_saiFloat3ParamNames = 0;
+	if (sub("SAIFloat3 param names: ", "", metaComment)) {
+		size_saiFloat3ParamNames = split(metaComment, saiFloat3ParamNames, " ");
+		for (aifPa = 1; aifPa <= size_saiFloat3ParamNames; aifPa++) {
+			paNa = saiFloat3ParamNames[aifPa];
+			if (paNa == retParamName) {
+				retType = "AIFloat3";
+				retTypeInterface = retType;
+			} else {
+				sub("float\\[\\] " paNa, "AIFloat3 " paNa, params);
+				sub(paNa, paNa ".toFloatArray()", innerParams);
+			}
+		}
+	}
 
 	if (memName == "handleCommand") {
 		sub(/int commandTopic\, Pointer commandData/, "AICommand command", params);
 		sub(/commandTopic\, commandData/, "command.getTopic(), command.getPointer()", innerParams);
 	}
-
-#print("fullName_m: " fullName_m);
-#print("additionalIndices_m: " additionalIndices_m);
 
 	isArraySize = part_isArraySize(fullName_m);
 	if (isArraySize) {
@@ -672,7 +698,6 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 
 		fullNameMapKeys = fullNameMapSize;
 		sub(/0MAP1SIZE/, "0MAP1KEYS", fullNameMapKeys);
-#print("fullNameMapKeys: " fullNameMapKeys) >> outFile_m;
 		keyType = funcParams[fullNameMapKeys];
 		sub(/\[\].*$/, "", keyType); # remove everything after array type
 		sub(/^.* /, "", keyType); # remove everything before array type
@@ -685,8 +710,6 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 
 		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
 		retType = "java.util.Map<" convertJavaBuiltinTypeToClass(keyType) ", " convertJavaBuiltinTypeToClass(valType) ">"; # getArrayType
-		#sub(/^.*\, /, "", retType);
-		#sub(/ .*$/, "", retType);
 		sub(/\, [^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
 	}
 
@@ -699,8 +722,6 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		retType = fetchClass_m;
 
 		indName_m = additionalClsIndices[clsId_c "#" (additionalClsIndices[clsId_c "*"]-1)];
-		#instanceInnerParams = innerParams;
-		#sub("(, )?" indName_m, "", instanceInnerParams); # remove index parameter
 		instanceInnerParams = "";
 	}
 
@@ -719,7 +740,6 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		sub(/^[^2]*2/, "", refParamName_m); # remove everything before ref param name
 		sub(/[123].*$/, "", refParamName_m); # remove everything after ref param name
 
-		#refParamNameClass_m[refParamName_m] = refCls_m; # eg: refParamNameClass_m["resourceId"] = "Resource"
 		sub("int " refParamName_m, refCls_m " c_" refParamName_m, params); # remove everything before ref param name
 		sub(refParamName_m, "c_" refParamName_m ".get" capitalize(refParamName_m) "()", innerParams); # remove everything before ref param name
 
@@ -769,6 +789,10 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		} else if (!isVoid_m) {
 			print(indent_m retType " _ret;") >> outFile_m;
 		}
+		if (hasRetParam) {
+			print("") >> outFile_m;
+			print(indent_m retParamType " " retParamName " = new float[3];") >> outFile_m;
+		}
 		if (isArraySize) {
 			print("") >> outFile_m;
 			print(indent_m "int size = " myWrapper "." fullNameArraySize "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
@@ -815,6 +839,13 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		} else {
 			print(indent_m condRet myWrapper "." fullName_m "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
 		}
+		if (hasRetParam) {
+			if (isBuffered_m) {
+				print(indent_m "_ret = new AIFloat3(" retParamName ");") >> outFile_m;
+			} else {
+				print(indent_m "return new AIFloat3(" retParamName ");") >> outFile_m;
+			}
+		}
 		if (isBuffered_m) {
 			print(indent_m "_buffer_" memName " = _ret;") >> outFile_m;
 			print(indent_m "_buffer_isInitialized_" memName " = true;") >> outFile_m;
@@ -851,13 +882,17 @@ function canDeleteDocumentation() {
 {
 	if (isMultiLineFunc) { # function is defined on one single line
 		funcIntermLine = $0;
-		# remove possible comment at end of line: // fu bar
-		sub(/[ \t]*\/\/.*/, "", funcIntermLine);
+		# separate possible comment at end of line: // fu bar
+		commentEol = funcIntermLine;
+		if (sub(/.*\/\//, "", commentEol)) {
+			commentEolTot = commentEolTot commentEol;
+		}
+		sub(/[ \t]*\/\/.*$/, "", funcIntermLine);
 		funcIntermLine = trim(funcIntermLine);
 		funcSoFar = funcSoFar " " funcIntermLine;
 		if (match(funcSoFar, /\;$/)) {
 			# function ends in this line
-			wrappFunctionDef(funcSoFar);
+			wrappFunctionDef(funcSoFar, commentEolTot);
 			isMultiLineFunc = 0;
 		}
 	}
@@ -866,19 +901,24 @@ function canDeleteDocumentation() {
 /Clb_/ {
 
 	funcStartLine = $0;
-	# remove possible comment at end of line: // fu bar
+	# separate possible comment at end of line: // fu bar
+	commentEolTot = "";
+	commentEol = funcStartLine;
+	if (sub(/.*\/\//, "", commentEol)) {
+		commentEolTot = commentEolTot commentEol;
+	}
 	sub(/\/\/.*$/, "", funcStartLine);
 	funcStartLine = trim(funcStartLine);
 	if (match(funcStartLine, /\;$/)) {
 		# function ends in this line
-		wrappFunctionDef(funcStartLine);
+		wrappFunctionDef(funcStartLine, commentEolTot);
 	} else {
 		funcSoFar = funcStartLine;
 		isMultiLineFunc = 1;
 	}
 }
 
-function wrappFunctionDef(funcDef) {
+function wrappFunctionDef(funcDef, commentEolTot) {
 
 	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)\\;)");
 	# because the empty part after ");" would count as part aswell
@@ -894,7 +934,7 @@ function wrappFunctionDef(funcDef) {
 
 	params = funcParts[2];
 
-	wrappFunction(retType, fullName, params);
+	wrappFunctionPlusMeta(retType, fullName, params, commentEolTot);
 }
 
 

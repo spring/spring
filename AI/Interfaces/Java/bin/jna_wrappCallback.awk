@@ -13,7 +13,7 @@
 # usage:
 # 	awk -f thisScript.awk -f common.awk -f commonDoc.awk
 # 	awk -f thisScript.awk -f common.awk -f commonDoc.awk \
-#       -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/src-generated'
+#       -v 'GENERATED_SOURCE_DIR=/tmp/build/AI/Interfaces/Java/src-generated/main'
 #
 
 BEGIN {
@@ -52,6 +52,10 @@ BEGIN {
 	myPkgD = convertJavaNameFormAToD(myPkgA);
 	myInterface = "AICallback";
 	myDefaultClass = "DefaultAICallback";
+
+	retParamName  = "__retVal";
+	retParamCTypes["struct SAIFloat3"] = 1;
+	retParamCTypes["*"] = 1;
 
 	fi = 0;
 }
@@ -144,26 +148,92 @@ function printNativeFP2F() {
 	print("}") >> outFile_nc;
 	print("") >> outFile_nc;
 
+	# print the wrapping functions
 	for (i=0; i < fi; i++) {
 		fullName         = funcFullName[i];
 		retType          = funcRetTypeC[i];
 		paramList        = funcParamListC[i];
 		paramListNoTypes = removeParamTypes(paramList);
 
+		# Move some return values to an output parameter form,
+		# for example, convert the first to the second:
+		# struct SAIFloat3 Unit_getPos(int unitId);
+		#             void Unit_getPos(int unitId, struct SAIFloat __retVal);
+		hasRetParam = 0;
+		sAIFloat3ParamNames = "";
+		if (retParamCTypes[retType] == 1) {
+			hasRetParam = 1;
+			paramList        = paramList ", " retType " " retParamName;
+			retNameTmp = "__ret_tmp";
+			retParamType = retType;
+			if (retType == "struct SAIFloat3") {
+				#funcRetType[i]   = "float[]";
+				funcParamList[i] = funcParamList[i] ", float[] " retParamName;
+				retParamConversion = "\t" retParamName "[0] = " retNameTmp ".x;\n";
+				retParamConversion = retParamConversion "\t" retParamName "[1] = " retNameTmp ".y;\n";
+				retParamConversion = retParamConversion "\t" retParamName "[2] = " retNameTmp ".z;";
+				#sAIFloat3ParamNames = sAIFloat3ParamNames " " retParamName;
+			}
+			retType = "void";
+			# for the JNA/Java part to reflect the changes
+			funcRetType[i]    = "void";
+		}
+
+		# replace struct SAIFloat3 params with float[3]
+		# -> much less performance loss in JNA
+		# 1. create a list with all param names with type struct SAIFloat3
+		size_paramParts = split(paramList, paramParts, ", ");
+		preConversion = "";
+		paramListNoTypes = "teamId";
+		for (pp=2; pp <= size_paramParts; pp++) {
+			paramP     = paramParts[pp];
+			paramPName = extractParamName(paramP);
+			isRetParam = match(paramPName, retParamName "$");
+			if (match(paramP, /struct SAIFloat3 /)) {
+				sAIFloat3ParamNames = sAIFloat3ParamNames " " paramPName;
+				if (!isRetParam) {
+					preConversion = preConversion "\n\t" "const struct SAIFloat3 " paramPName "_int = {" paramPName "[0], " paramPName "[1], " paramPName "[2]};";
+					paramPName = paramPName "_int";
+				}
+			}
+			if (!isRetParam) {
+				paramListNoTypes = paramListNoTypes ", " paramPName;
+			}
+		}
+		# 2. replace type struct SAIFloat3 with float[3]
+		gsub(/struct SAIFloat3 /, "float* ", paramList);
+
+		# for the JNA/Java part to reflect the changes
+		gsub(/AIFloat3 /, "float[] ", funcParamList[i]);
+		if (sAIFloat3ParamNames != "") {
+			sAIFloat3ParamNames = " // SAIFloat3 param names:" sAIFloat3ParamNames;
+		}
+		funcsAIFloat3ParamNameList[i] = sAIFloat3ParamNames;
+
 		if (doWrapp(i)) {
+			# print function declaration to *.h
 			printFunctionComment_Common(outFile_nh, funcDocComment, i, "");
 			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ");") >> outFile_nh;
 			print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ");") >> outFile_nh;
 			print("") >> outFile_nh;
 
+			# print function definition to *.c
 			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ") {") >> outFile_nc;
 			print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ") {") >> outFile_nc;
-			condRet = "return ";
-			if (retType == "void") {
-				condRet = "";
+
+			print(preConversion) >> outFile_nc;
+			if (hasRetParam) {
+				#print("\t" retParamType " " retNameTmp " = id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+				print("\t" retParamType " " retNameTmp " = id_clb[teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+				print(retParamConversion) >> outFile_nc;
+			} else {
+				condRet = "return ";
+				if (retType == "void") {
+					condRet = "";
+				}
+				#print("\t" condRet "id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+				print("\t" condRet "id_clb[teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
 			}
-			#print("\t" condRet "id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-			print("\t" condRet "id_clb[teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
 			print("" "}") >> outFile_nc;
 		} else {
 			print("Note: The following function is intentionally not wrapped: " fullName);
@@ -228,7 +298,7 @@ function printInterface() {
 			paramList = funcParamList[i];
 
 			printFunctionComment_Common(outFile_i, funcDocComment, i, "\t");
-			print("\t" retType " " fullName "(" paramList ");") >> outFile_i;
+			print("\t" retType " " fullName "(" paramList ");" funcsAIFloat3ParamNameList[i]) >> outFile_i;
 		}
 	}
 
@@ -303,12 +373,12 @@ function wrappFunction(funcDef) {
 
 	if (doParse) {
 		size_funcParts = split(funcDef, funcParts, "(,)|(\\()|(\\)\\;)");
-		# because the empty part after ");" would count as part aswell
+		# because the empty part after ");" would count as part as well
 		size_funcParts--;
-		retType_c = trim(funcParts[1]);
+		retType_c   = trim(funcParts[1]);
 		retType_jna = convertCToJNAType(retType_c);
-		#condRet = match(retType_c, "void") ? "" : "return ";
-		fullName = funcParts[2];
+		#condRet     = match(retType_c, "void") ? "" : "return ";
+		fullName    = funcParts[2];
 		sub(/CALLING_CONV \*/, "", fullName);
 		sub(/\)/, "", fullName);
 
@@ -317,9 +387,9 @@ function wrappFunction(funcDef) {
 		paramList = "";
 
 		for (i=3; i<=size_funcParts && !match(funcParts[i], /.*\/\/.*/); i++) {
-			name = extractParamName(funcParts[i]);
-			type_c = extractParamType(funcParts[i]);
+			type_c   = extractParamType(funcParts[i]);
 			type_jna = convertCToJNAType(type_c);
+			name     = extractParamName(funcParts[i]);
 			if (i == 3) {
 				cond_comma   = "";
 				cond_comma_n = "";
@@ -331,11 +401,11 @@ function wrappFunction(funcDef) {
 			paramList   = paramList cond_comma type_jna " " name;
 		}
 
-		funcFullName[fi] = fullName;
-		funcRetTypeC[fi] = retType_c;
-		funcRetType[fi] = retType_jna;
+		funcFullName[fi]   = fullName;
+		funcRetTypeC[fi]   = retType_c;
+		funcRetType[fi]    = retType_jna;
 		funcParamListC[fi] = paramList_c;
-		funcParamList[fi] = paramList;
+		funcParamList[fi]  = paramList;
 		storeDocLines(funcDocComment, fi);
 		fi++;
 	} else {
