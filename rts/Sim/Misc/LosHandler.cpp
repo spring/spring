@@ -91,11 +91,15 @@ CLosHandler::CLosHandler() :
 	requireSonarUnderWater(modInfo.requireSonarUnderWater),
 	losMap(teamHandler->ActiveAllyTeams()),
 	airLosMap(teamHandler->ActiveAllyTeams()),
+	allyTeamLosMap(teamHandler->ActiveAllyTeams()),
+	allyTeamAirLosMap(teamHandler->ActiveAllyTeams()),
 	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readmap->mipHeightmap[losMipLevel])
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		losMap[a].SetSize(losSizeX, losSizeY);
-		airLosMap[a].SetSize(airSizeX, airSizeY);
+		losMap[a] = &allyTeamLosMap[a];
+		airLosMap[a] = &allyTeamAirLosMap[a];
+		allyTeamLosMap[a].SetSize(losSizeX, losSizeY);
+		allyTeamAirLosMap[a].SetSize(airSizeX, airSizeY);
 	}
 }
 
@@ -180,8 +184,8 @@ void CLosHandler::LosAdd(LosInstance* instance)
 
 	losAlgo.LosAdd(instance->basePos, instance->losSize, instance->baseHeight, instance->losSquares);
 
-	losMap[instance->allyteam].AddMapSquares(instance->losSquares, 1);
-	airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, 1);
+	losMap[instance->allyteam]->AddMapSquares(instance->losSquares, 1);
+	airLosMap[instance->allyteam]->AddMapArea(instance->baseAirPos, instance->airLosSize, 1);
 }
 
 
@@ -243,8 +247,8 @@ void CLosHandler::AllocInstance(LosInstance* instance)
 
 void CLosHandler::CleanupInstance(LosInstance* instance)
 {
-	losMap[instance->allyteam].AddMapSquares(instance->losSquares, -1);
-	airLosMap[instance->allyteam].AddMapArea(instance->baseAirPos, instance->airLosSize, -1);
+	losMap[instance->allyteam]->AddMapSquares(instance->losSquares, -1);
+	airLosMap[instance->allyteam]->AddMapArea(instance->baseAirPos, instance->airLosSize, -1);
 }
 
 

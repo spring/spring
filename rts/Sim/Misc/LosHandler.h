@@ -56,8 +56,8 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
-	const CLosMap& GetLosMap(int allyTeam) const { return losMap[allyTeam]; }
-	const CLosMap& GetAirLosMap(int allyTeam) const { return airLosMap[allyTeam]; }
+	const CLosMap& GetLosMap(int allyTeam) const { return *losMap[allyTeam]; }
+	const CLosMap& GetAirLosMap(int allyTeam) const { return *airLosMap[allyTeam]; }
 
 	bool InLos(const CWorldObject* object, int allyTeam) {
 		if (object->alwaysVisible || gs->globalLOS) {
@@ -143,8 +143,14 @@ private:
 	void AllocInstance(LosInstance* instance);
 	void CleanupInstance(LosInstance* instance);
 
-	std::vector<CLosMap> losMap;
-	std::vector<CLosMap> airLosMap;
+	// the active los/airLos map for each allyteam
+	// these may actually point to CMergedLosMap if allyteams are allied
+	std::vector<CLosMap*> losMap;
+	std::vector<CLosMap*> airLosMap;
+
+	// the real (not shared) los/airLos map for each allyteam
+	std::vector<CLosMap> allyTeamLosMap;
+	std::vector<CLosMap> allyTeamAirLosMap;
 
 	CLosAlgorithm losAlgo;
 

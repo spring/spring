@@ -49,6 +49,70 @@ void CLosMap::AddMapSquares(const std::vector<int>& squares, int amount)
 	}
 }
 
+//////////////////////////////////////////////////////////////////////
+
+void CMergedLosMap::AddMapArea(int2 pos, int radius, int amount)
+{
+	CLosMap::AddMapArea(pos, radius, amount);
+
+	for (SourcesVec::iterator src = sources.begin(); src != sources.end(); ++src) {
+		(*src)->AddMapArea(pos, radius, amount);
+	}
+}
+
+
+void CMergedLosMap::AddMapSquares(const std::vector<int>& squares, int amount)
+{
+	CLosMap::AddMapSquares(squares, amount);
+
+	for (SourcesVec::iterator src = sources.begin(); src != sources.end(); ++src) {
+		(*src)->AddMapSquares(squares, amount);
+	}
+}
+
+
+void CMergedLosMap::Add(CLosMap& other)
+{
+	if (std::find(sources.begin(), sources.end(), &other) == sources.end()) {
+		sources.push_back(&other);
+		AddValues(other);
+	}
+}
+
+
+void CMergedLosMap::Remove(CLosMap& other)
+{
+	SourcesVec::iterator pos = std::find(sources.begin(), sources.end(), &other);
+
+	if (pos != sources.end()) {
+		sources.erase(pos);
+		SubtractValues(other);
+	}
+}
+
+
+void CMergedLosMap::AddValues(const CLosMap& other)
+{
+	//assert(GetSize() == other.GetSize());
+
+	const int size = map.size();
+
+	for (int i = 0; i < size; ++i)
+		map[i] += other[i];
+}
+
+
+void CMergedLosMap::SubtractValues(const CLosMap& other)
+{
+	//assert(GetSize() == other.GetSize());
+
+	const int size = map.size();
+
+	for (int i = 0; i < size; ++i)
+		map[i] -= other[i];
+
+}
+
 
 //////////////////////////////////////////////////////////////////////
 namespace {

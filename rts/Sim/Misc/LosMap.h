@@ -13,15 +13,17 @@ class CLosMap
 {
 public:
 	CLosMap() : size(0, 0) {}
+	virtual ~CLosMap() {}
 
 	void SetSize(int2 size);
 	void SetSize(int w, int h) { SetSize(int2(w, h)); }
+	int2 GetSize() const { return size; }
 
 	/// circular area, for airLosMap, circular radar maps, jammer maps, ...
-	void AddMapArea(int2 pos, int radius, int amount);
+	virtual void AddMapArea(int2 pos, int radius, int amount);
 
 	/// arbitrary area, for losMap, non-circular radar maps, ...
-	void AddMapSquares(const std::vector<int>& squares, int amount);
+	virtual void AddMapSquares(const std::vector<int>& squares, int amount);
 
 	int operator[] (int square) const { return map[square]; }
 
@@ -40,6 +42,25 @@ protected:
 
 	int2 size;
 	std::vector<unsigned short> map;
+};
+
+
+/// merges LOS of multiple allyteams into one
+class CMergedLosMap : public CLosMap
+{
+public:
+	virtual void AddMapArea(int2 pos, int radius, int amount);
+	virtual void AddMapSquares(const std::vector<int>& squares, int amount);
+
+	void Add(CLosMap& other);
+	void Remove(CLosMap& other);
+
+protected:
+	void AddValues(const CLosMap& other);
+	void SubtractValues(const CLosMap& other);
+
+	typedef std::vector<CLosMap*> SourcesVec;
+	SourcesVec sources;
 };
 
 
