@@ -120,6 +120,9 @@ public:
 		return !!GetAirLosMap(allyTeam).At(gx, gz);
 	}
 
+	void ShareLos(int allyTeam1, int allyTeam2);
+	void UnshareLos(int allyTeam1, int allyTeam2);
+
 	CLosHandler();
 	~CLosHandler();
 

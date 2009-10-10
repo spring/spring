@@ -55,6 +55,8 @@ public:
 	void Add(CLosMap& other);
 	void Remove(CLosMap& other);
 
+	int GetNumSources() const { return sources.size(); }
+
 protected:
 	void AddValues(const CLosMap& other);
 	void SubtractValues(const CLosMap& other);

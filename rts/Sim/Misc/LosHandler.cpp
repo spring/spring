@@ -269,3 +269,64 @@ void CLosHandler::DelayedFreeInstance(LosInstance* instance)
 
 	delayQue.push_back(di);
 }
+
+
+/** @post allyTeam1 will have the LOS of all allyTeam2's units added
+    @note LOS is shared in a single direction only! */
+void CLosHandler::ShareLos(int allyTeam1, int allyTeam2)
+{
+	CMergedLosMap* mergedLos = dynamic_cast<CMergedLosMap*>(losMap[allyTeam1]);
+	CMergedLosMap* mergedAirLos = dynamic_cast<CMergedLosMap*>(airLosMap[allyTeam1]);
+
+	if (mergedLos == NULL) {
+		// If allyTeam 1 still has it's original LOS map, create a
+		// CMergedLosMap which will keep track of the combined LOS.
+		mergedLos = new CMergedLosMap();
+		mergedLos->SetSize(losSizeX, losSizeY);
+		mergedLos->Add(allyTeamLosMap[allyTeam1]);
+		mergedLos->Add(allyTeamLosMap[allyTeam2]);
+		losMap[allyTeam1] = mergedLos;
+
+		mergedAirLos = new CMergedLosMap();
+		mergedAirLos->SetSize(airSizeX, airSizeY);
+		mergedAirLos->Add(allyTeamAirLosMap[allyTeam1]);
+		mergedAirLos->Add(allyTeamAirLosMap[allyTeam2]);
+		airLosMap[allyTeam1] = mergedAirLos;
+	}
+	else {
+		// AllyTeam 1 has a CMergedLosMap already, add allyTeam2's losMap to it.
+		mergedLos->Add(allyTeamLosMap[allyTeam2]);
+		mergedAirLos->Add(allyTeamAirLosMap[allyTeam2]);
+	}
+}
+
+
+/** @post allyTeam1 will have the LOS of all allyTeam2's units removed
+    @note LOS is unshared in a single direction only! */
+void CLosHandler::UnshareLos(int allyTeam1, int allyTeam2)
+{
+	CMergedLosMap* mergedLos = dynamic_cast<CMergedLosMap*>(losMap[allyTeam1]);
+	CMergedLosMap* mergedAirLos = dynamic_cast<CMergedLosMap*>(airLosMap[allyTeam1]);
+
+	if (mergedLos != NULL) {
+		mergedLos->Remove(allyTeamLosMap[allyTeam2]);
+
+		// If we're now merging a single LOS map (i.e. wasting cycles),
+		// then restore the original allyTeamLosMap.
+		if (mergedLos->GetNumSources() == 1) {
+			losMap[allyTeam1] = &allyTeamLosMap[allyTeam1];
+			delete mergedLos;
+		}
+	}
+
+	if (mergedAirLos != NULL) {
+		mergedAirLos->Remove(allyTeamAirLosMap[allyTeam2]);
+
+		// If we're now merging a single LOS map (i.e. wasting cycles),
+		// then restore the original allyTeamAirLosMap.
+		if (mergedAirLos->GetNumSources() == 1) {
+			airLosMap[allyTeam1] = &allyTeamAirLosMap[allyTeam1];
+			delete mergedAirLos;
+		}
+	}
+}
