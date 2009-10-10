@@ -1406,10 +1406,10 @@ bool CGame::ActionPressed(const Action& action,
 				is >> otherAllyTeam;
 				int state = -1;
 				is >> state;
-				if (state >= 0 && state < 2 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
+				if (state >= 0 && state < 3 && otherAllyTeam >= 0 && otherAllyTeam != gu->myAllyTeam)
 					net->Send(CBaseNetProtocol::Get().SendSetAllied(gu->myPlayerNum, otherAllyTeam, state));
 				else
-					logOutput.Print("/ally: wrong parameters (usage: /ally <other team> [0|1])");
+					logOutput.Print("/ally: wrong parameters (usage: /ally <other team> [0|1|2])");
 			}
 			else {
 				logOutput.Print("No ingame alliances are allowed");
@@ -4252,7 +4252,8 @@ void CGame::ClientReadNet()
 			case NETMSG_ALLIANCE: {
 				const int player = inbuf[1];
 				const int whichAllyTeam = inbuf[2];
-				const bool allied = static_cast<bool>(inbuf[3]);
+				const bool allied = (inbuf[3] > 0);
+				const bool shareLos = (inbuf[3] > 1);
 				const int fromAllyTeam = teamHandler->AllyTeam(playerHandler->Player(player)->team);
 				if (whichAllyTeam < teamHandler->ActiveAllyTeams() && whichAllyTeam >= 0 && fromAllyTeam != whichAllyTeam) {
 					// FIXME - need to reset unit allyTeams
@@ -4273,6 +4274,9 @@ void CGame::ClientReadNet()
 							<< (allied ? "allied" : "unallied")
 							<<  " with allyteam " << fromAllyTeam << ".";
 					}
+					if (shareLos) {
+						msg << " (Sharing LOS)";
+					}
 					logOutput.Print(msg.str());
 
 					// stop attacks against former foe
@@ -4285,6 +4289,15 @@ void CGame::ClientReadNet()
 							}
 						}
 					}
+
+					if (shareLos) {
+						loshandler->ShareLos(whichAllyTeam, fromAllyTeam);
+					}
+					else if (!allied) {
+						// If we're unallying, also unshare LOS.
+						loshandler->UnshareLos(whichAllyTeam, fromAllyTeam);
+					}
+
 					eventHandler.TeamChanged(playerHandler->Player(player)->team);
 				} else {
 					logOutput.Print("Alliance: Player %i sent out wrong allyTeam index in alliance message", player);

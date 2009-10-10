@@ -81,7 +81,7 @@ enum NETMSG {
 	NETMSG_TEAM             = 51, // uchar myPlayerNum, uchar action, uchar parameter1
 	NETMSG_GAMEDATA         = 52, // /* uchar messageSize */, std::string setupText, std::string script, std::string map, int mapChecksum,
 	                              // std::string mod, int modChecksum, int randomSeed (each string ends with \0)
-	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied)
+	NETMSG_ALLIANCE         = 53, // uchar myPlayerNum, uchar otherAllyTeam, uchar allianceState (0 = not allied / 1 = allied / 2 = allied, share LOS)
 	NETMSG_CCOMMAND         = 54, // /* short! messageSize */, int! myPlayerNum, std::string command, std::string extra (each string ends with \0)
 	NETMSG_TEAMSTAT         = 60,
 
@@ -89,7 +89,7 @@ enum NETMSG {
 	NETMSG_AI_STATE_CHANGED = 71, // uchar myPlayerNum, uint whichSkirmishAI, uchar newState
 };
 
-// action to do with NETMSG_TEAM 
+// action to do with NETMSG_TEAM
 enum TEAMMSG {
 //	TEAMMSG_NAME            = number    parameter1, ...
 	TEAMMSG_GIVEAWAY        = 1,     // team to give stuff to, team to take stuff from (player has to be leader of the team)
@@ -111,7 +111,7 @@ public:
 	typedef unsigned char uchar;
 	typedef unsigned int uint;
 	typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
-	
+
 	static CBaseNetProtocol& Get();
 
 	PacketType SendKeyFrame(int frameNum);
