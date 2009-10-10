@@ -56,6 +56,9 @@ public:
 	void MoveUnit(CUnit* unit, bool redoCurrent);
 	void FreeInstance(LosInstance* instance);
 
+	const CLosMap& GetLosMap(int allyTeam) const { return losMap[allyTeam]; }
+	const CLosMap& GetAirLosMap(int allyTeam) const { return airLosMap[allyTeam]; }
+
 	bool InLos(const CWorldObject* object, int allyTeam) {
 		if (object->alwaysVisible || gs->globalLOS) {
 			return true;
@@ -63,12 +66,12 @@ public:
 		else if (object->useAirLos) {
 			const int gx = (int)(object->pos.x * invAirDiv);
 			const int gz = (int)(object->pos.z * invAirDiv);
-			return !!airLosMap[allyTeam].At(gx, gz);
+			return !!GetAirLosMap(allyTeam).At(gx, gz);
 		}
 		else {
 			const int gx = (int)(object->pos.x * invLosDiv);
 			const int gz = (int)(object->pos.z * invLosDiv);
-			return !!losMap[allyTeam].At(gx, gz);
+			return !!GetLosMap(allyTeam).At(gx, gz);
 		}
 	}
 
@@ -86,7 +89,7 @@ public:
 		else if (unit->useAirLos) {
 			const int gx = (int)(unit->pos.x * invAirDiv);
 			const int gz = (int)(unit->pos.z * invAirDiv);
-			return !!airLosMap[allyTeam].At(gx, gz);
+			return !!GetAirLosMap(allyTeam).At(gx, gz);
 		}
 		else {
 			if (unit->isUnderWater && requireSonarUnderWater &&
@@ -95,7 +98,7 @@ public:
 			}
 			const int gx = (int)(unit->pos.x * invLosDiv);
 			const int gz = (int)(unit->pos.z * invLosDiv);
-			return !!losMap[allyTeam].At(gx, gz);
+			return !!GetLosMap(allyTeam).At(gx, gz);
 		}
 	}
 
@@ -105,7 +108,7 @@ public:
 		}
 		const int gx = (int)(pos.x * invLosDiv);
 		const int gz = (int)(pos.z * invLosDiv);
-		return !!losMap[allyTeam].At(gx, gz);
+		return !!GetLosMap(allyTeam).At(gx, gz);
 	}
 
 	bool InAirLos(float3 pos, int allyTeam) {
@@ -114,14 +117,11 @@ public:
 		}
 		const int gx = (int)(pos.x * invAirDiv);
 		const int gz = (int)(pos.z * invAirDiv);
-		return !!airLosMap[allyTeam].At(gx, gz);
+		return !!GetAirLosMap(allyTeam).At(gx, gz);
 	}
 
 	CLosHandler();
 	~CLosHandler();
-
-	std::vector<CLosMap> losMap;
-	std::vector<CLosMap> airLosMap;
 
 	const int losMipLevel;
 	const int airMipLevel;
@@ -142,6 +142,9 @@ private:
 	int GetHashNum(CUnit* unit);
 	void AllocInstance(LosInstance* instance);
 	void CleanupInstance(LosInstance* instance);
+
+	std::vector<CLosMap> losMap;
+	std::vector<CLosMap> airLosMap;
 
 	CLosAlgorithm losAlgo;
 

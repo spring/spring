@@ -32,6 +32,8 @@ public:
 	}
 
 	// temp fix for CBaseGroundDrawer and AI interface, which need raw data
+	const unsigned short& front() const { return map.front(); }
+	// temp fix for CRadarHandler, which serializes CLosMap manually
 	unsigned short& front() { return map.front(); }
 
 protected:

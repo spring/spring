@@ -260,8 +260,8 @@ bool CBaseGroundDrawer::UpdateExtraTexture()
 		return true;
 	}
 
-	const unsigned short* myLos         = &loshandler->losMap[gu->myAllyTeam].front();
-	const unsigned short* myAirLos      = &loshandler->airLosMap[gu->myAllyTeam].front();
+	const unsigned short* myLos         = &loshandler->GetLosMap(gu->myAllyTeam).front();
+	const unsigned short* myAirLos      = &loshandler->GetAirLosMap(gu->myAllyTeam).front();
 	const unsigned short* myRadar       = &radarhandler->radarMaps[gu->myAllyTeam].front();
 	const unsigned short* myJammer      = &radarhandler->jammerMaps[gu->myAllyTeam].front();
 #ifdef SONAR_JAMMER_MAPS

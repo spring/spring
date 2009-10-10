@@ -77,8 +77,6 @@ CLosHandler* loshandler;
 
 
 CLosHandler::CLosHandler() :
-	losMap(teamHandler->ActiveAllyTeams()),
-	airLosMap(teamHandler->ActiveAllyTeams()),
 	//airAlgo(int2(airSizeX, airSizeY), -1e6f, 15, readmap->mipHeightmap[airMipLevel]),
 	losMipLevel(modInfo.losMipLevel),
 	airMipLevel(modInfo.airMipLevel),
@@ -91,6 +89,8 @@ CLosHandler::CLosHandler() :
 	losSizeX(std::max(1, gs->mapx >> losMipLevel)),
 	losSizeY(std::max(1, gs->mapy >> losMipLevel)),
 	requireSonarUnderWater(modInfo.requireSonarUnderWater),
+	losMap(teamHandler->ActiveAllyTeams()),
+	airLosMap(teamHandler->ActiveAllyTeams()),
 	losAlgo(int2(losSizeX, losSizeY), -1e6f, 15, readmap->mipHeightmap[losMipLevel])
 {
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {

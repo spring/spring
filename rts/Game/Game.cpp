@@ -4549,7 +4549,7 @@ void CGame::MakeMemDump(void)
 		for (int y = 0; y < gs->mapy>>modInfo.losMipLevel; ++y) {
 			file << " ";
 			for (int x = 0; x < gs->mapx>>modInfo.losMipLevel; ++x) {
-				file << loshandler->losMap[a][y * (gs->mapx>>modInfo.losMipLevel) + x] << " ";
+				file << loshandler->GetLosMap(a)[y * (gs->mapx>>modInfo.losMipLevel) + x] << " ";
 			}
 			file << "\n";
 		}

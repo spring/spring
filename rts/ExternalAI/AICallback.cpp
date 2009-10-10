@@ -1003,7 +1003,7 @@ const float* CAICallback::GetSlopeMap()
 
 const unsigned short* CAICallback::GetLosMap()
 {
-	return &loshandler->losMap[teamHandler->AllyTeam(team)].front();
+	return &loshandler->GetLosMap(teamHandler->AllyTeam(team)).front();
 }
 
 int CAICallback::GetLosMapResolution()
