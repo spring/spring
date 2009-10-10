@@ -2189,8 +2189,8 @@ void CUnitDrawer::BackupUnits()
 {
 	GML_RECMUTEX_LOCK(unit); // BackupUnits
 
-	drawCloakedSave = drawCloaked;
-	drawCloakedS3OSave = drawCloakedS3O;
+	drawCloakedSave.swap(drawCloaked);
+	drawCloakedS3OSave.swap(drawCloakedS3O);
 }
 
 
@@ -2198,6 +2198,6 @@ void CUnitDrawer::RestoreUnits()
 {
 	GML_RECMUTEX_LOCK(unit); // RestoreUnits
 
-	drawCloaked = drawCloakedSave;
-	drawCloakedS3O = drawCloakedS3OSave;
+	drawCloaked.swap(drawCloakedSave);
+	drawCloakedS3O.swap(drawCloakedS3OSave);
 }
