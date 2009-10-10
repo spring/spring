@@ -70,6 +70,8 @@ void HUDDrawer::DrawModel(const CUnit* unit)
 
 void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 {
+	glDisable(GL_TEXTURE_2D);
+
 	if (unit->moveType->useHeading) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
@@ -90,6 +92,8 @@ void HUDDrawer::DrawUnitDirectionArrow(const CUnit* unit)
 }
 void HUDDrawer::DrawCameraDirectionArrow(const CUnit* unit)
 {
+	glDisable(GL_TEXTURE_2D);
+
 	if (unit->moveType->useHeading) {
 		glPushMatrix();
 			glTranslatef(-0.8f, -0.4f, 0.0f);
@@ -274,7 +278,6 @@ void HUDDrawer::Draw(const CUnit* unit)
 		glDisable(GL_DEPTH_TEST);
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glDisable(GL_TEXTURE_2D);
 
 		glPushMatrix();
 			DrawUnitDirectionArrow(unit);
