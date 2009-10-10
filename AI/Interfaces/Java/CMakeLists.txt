@@ -153,9 +153,11 @@ macro    (ConfigureJavaSkirmishAI)
 			# The Maven Project has to make sure these files get created:
 			# ${my.build.dir}/SkirmishAI.jar
 			# ${my.build.dir}/SkirmishAI-src.jar (optional)
+			file(RELATIVE_PATH my_build_dir "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
 			set(MVN_ATTRIBUTES
-				"-Dmy.build.dir=\"${CMAKE_CURRENT_BINARY_DIR}\""
-				"-Dmy.version=\"${myVersion}\""
+				"-P" "as-spring-subproject,!stand-alone" # disable default profile & enable special profile
+				"-Dmy.build.dir=${my_build_dir}"
+				"-Dmy.version=${myVersion}"
 				"--batch-mode" # Run in non-interactive (batch) mode
 				)
 			if    (NOT CMAKE_VERBOSE_MAKEFILE)
