@@ -10,6 +10,7 @@
 #include "Sim/Units/Unit.h"
 #include "Sim/Weapons/Weapon.h"
 #include "Sim/Weapons/WeaponDef.h"
+#include "Sim/Misc/GlobalSynced.h"
 #include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 
