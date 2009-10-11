@@ -4,6 +4,7 @@ remove_definitions(-DSTREFLOP_SSE)
 AUX_SOURCE_DIRECTORY(../../rts/System/Net/ netfiles)
 INCLUDE_DIRECTORIES(../../rts/System/Net/ ../../rts/System/ ../../rts/lib/lua/include)
 INCLUDE_DIRECTORIES(../../rts/ ../../rts/lib/7zip ../../rts/System)
+include_directories(${GLEW_INCLUDE_DIR})
 
 AUX_SOURCE_DIRECTORY(../../rts/System/FileSystem/ fsfiles)
 SET(system_files
