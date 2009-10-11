@@ -749,23 +749,22 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 
 		case NETMSG_STARTPOS: {
 			const unsigned player = inbuf[1];
-			if(player != a){
+			if (player != a) {
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
-			}
-			else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame && !players[player].spectator)
-			{
-				unsigned team = (unsigned)inbuf[2];
-				if (team >= teams.size())
-					Message(str( boost::format("Invalid teamID in startPos-message from player %d") %team ));
-				else
-				{
+			} else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
+				const unsigned team     = (unsigned)inbuf[2];
+				if (team >= teams.size()) {
+					Message(str( boost::format("Invalid teamID %d in NETMSG_STARTPOS from player %d") %team %player ));
+				} else if (getSkirmishAIIds(ais, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
+					Message(str( boost::format("Player %d sent spoofed NETMSG_STARTPOS with teamID %d") %player %team ));
+				} else {
 					teams[team].startPos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
-					if (inbuf[3] == 1)
+					if (inbuf[3] == 1) {
 						players[player].readyToStart = static_cast<bool>(inbuf[3]);
+					}
 
 					Broadcast(CBaseNetProtocol::Get().SendStartPos(inbuf[1],team, inbuf[3], *((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]))); //forward data
-					if (hostif)
-					{
+					if (hostif) {
 						hostif->SendPlayerReady(a, inbuf[3]);
 					}
 				}
