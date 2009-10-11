@@ -751,11 +751,11 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			const unsigned player = inbuf[1];
 			if (player != a) {
 				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[1]));
-			} else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame && !players[player].spectator) {
+			} else if (setup->startPosType == CGameSetup::StartPos_ChooseInGame) {
 				const unsigned team     = (unsigned)inbuf[2];
 				if (team >= teams.size()) {
 					Message(str( boost::format("Invalid teamID %d in NETMSG_STARTPOS from player %d") %team %player ));
-				} else if (!cheating && (team != players[player].team) && (teams[team].leader != player) && (getSkirmishAIIds(ais, team, player).size() == 0)) {
+				} else if (getSkirmishAIIds(ais, team, player).empty() && ((team != players[player].team) || (players[player].spectator))) {
 					Message(str( boost::format("Player %d sent spoofed NETMSG_STARTPOS with teamID %d") %player %team ));
 				} else {
 					teams[team].startPos = float3(*((float*)&inbuf[4]), *((float*)&inbuf[8]), *((float*)&inbuf[12]));
