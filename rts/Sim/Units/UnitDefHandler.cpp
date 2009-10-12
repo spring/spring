@@ -67,6 +67,13 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 		const string unitName = unitDefNames[a];
 
+		if (std::find_if(unitName.begin(), unitName.end(), isblank) != unitName.end()) {
+			logOutput.Print("WARNING: UnitDef name \"%s\" contains white-spaces,"
+					"which will likely cause problems."
+					"Please contact the Game/Mod developpers.",
+					unitName.c_str());
+		}
+
 		/*
 		// Restrictions may tell us not to use this unit at all
 		// FIXME: causes mod errors when a unit is restricted to
