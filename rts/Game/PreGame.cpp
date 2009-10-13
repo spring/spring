@@ -54,7 +54,6 @@ CPreGame::CPreGame(const ClientSetup* setup) :
 		settings(setup),
 		savefile(NULL)
 {
-	ScopedOnceTimer timeProfile("CPreGame()");
 	net = new CNetProtocol();
 	activeController=this;
 
@@ -159,6 +158,7 @@ bool CPreGame::Update()
 void CPreGame::StartServer(const std::string& setupscript)
 {
 	assert(!gameServer);
+	ScopedOnceTimer startserver("Starting GameServer");
 	GameData* startupData = new GameData();
 	CGameSetup* setup = new CGameSetup();
 	setup->Init(setupscript);
@@ -168,19 +168,9 @@ void CPreGame::StartServer(const std::string& setupscript)
 	{
 		// would be better to use MapInfo here, but this doesn't work
 		LoadMap(setup->mapName); // map into VFS
-		std::string mapDefFile;
-		const std::string extension = setup->mapName.substr(setup->mapName.length()-3);
-		if (extension == "smf")
-			mapDefFile = std::string("maps/")+setup->mapName.substr(0,setup->mapName.find_last_of('.'))+".smd";
-		else if(extension == "sm3")
-			mapDefFile = string("maps/")+setup->mapName;
-		else
-			throw std::runtime_error("CPreGame::StartServer(): Unknown extension: " + extension);
-
 		MapParser mp(setup->mapName);
 		LuaTable mapRoot = mp.GetRoot();
 		const std::string mapWantedScript = mapRoot.GetString("script",     "");
-		const std::string scriptFile      = mapRoot.GetString("scriptFile", "");
 
 		if (!mapWantedScript.empty()) {
 			setup->scriptName = mapWantedScript;
@@ -263,6 +253,7 @@ void CPreGame::UpdateClientNet()
 
 void CPreGame::ReadDataFromDemo(const std::string& demoName)
 {
+	ScopedOnceTimer startserver("Reading demo data");
 	assert(!gameServer);
 	logOutput.Print("Pre-scanning demo file for game data...");
 	CDemoReader scanner(demoName, 0);
@@ -404,6 +395,7 @@ void CPreGame::LoadMod(const std::string& modName)
 
 void CPreGame::GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet)
 {
+	ScopedOnceTimer startserver("Loading client data");
 	gameData.reset(new GameData(packet));
 
 	CGameSetup* temp = new CGameSetup();
