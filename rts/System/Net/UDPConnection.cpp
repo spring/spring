@@ -380,7 +380,7 @@ void UDPConnection::Flush(const bool forced)
 				else // partially transfered
 					(*it).reset(new RawPacket((*it)->data + numBytes, (*it)->length - numBytes));
 			} // iterator "it" is now invalid
-			if ((forced || pos > 0) && (pos == MaxChunkSize || outgoingData.empty()))
+			if (pos > 0 && (pos == MaxChunkSize || outgoingData.empty()))
 			{
 				CreateChunk(buffer, pos, currentNum++);
 				pos = 0;
