@@ -30,6 +30,10 @@ ScopedOnceTimer::ScopedOnceTimer(const char* const myname) : BasicTimer(myname)
 {
 }
 
+ScopedOnceTimer::ScopedOnceTimer(const std::string& myname): BasicTimer(myname.c_str())
+{
+}
+
 ScopedOnceTimer::~ScopedOnceTimer()
 {
 	const unsigned stoptime = SDL_GetTicks();

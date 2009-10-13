@@ -44,6 +44,7 @@ class ScopedOnceTimer : public BasicTimer
 {
 public:
 	ScopedOnceTimer(const char* const name);
+	ScopedOnceTimer(const std::string& name);
 	/**
 	@brief destruct and print needed time to infolog
 	*/
