@@ -822,6 +822,38 @@ float CglFont::GetTextHeight(const std::string& text, float* descender, int* num
 }
 
 
+int CglFont::GetTextNumLines(const std::string& text) const
+{
+	int lines = 1;
+
+	for (int pos = 0 ; pos < text.length(); pos++) {
+		const char& c = text[pos];
+		switch(c) {
+			//! inline colorcodes
+			case ColorCodeIndicator:
+				{
+					pos = SkipColorCodesOld(text, pos);
+					if (pos<0) {
+						pos = text.length();
+					} else {
+						pos--;
+					}
+				} break;
+
+			//! newline
+			case '\x0d':
+				if (pos+1 < text.length() && text[pos+1] == '\x0a')
+					pos++;
+			case '\x0a':
+				lines++;
+				break;
+			//default:
+		}
+	}
+
+	return lines;
+}
+
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -1740,6 +1772,11 @@ void CglFont::glPrint(GLfloat x, GLfloat y, float s, const int& options, const s
 		float textDescender;
 		GetTextHeight(text,&textDescender);
 		y -= sizeY * textDescender;
+	}
+
+	if (options & FONT_NEAREST) {
+		x = (int)x;
+		y = (int)y;
 	}
 
 	float4 oldTextColor, oldOultineColor;

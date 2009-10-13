@@ -25,6 +25,8 @@ static const int FONT_SHADOW      = 1 << 10;
 static const int FONT_NORM        = 1 << 11; //! render in 0..1 space instead of 0..vsx|vsy
 static const int FONT_SCALE       = 1 << 12; //! given size argument should be treated as scaling and not absolute fontsize
 
+static const int FONT_NEAREST     = 1 << 13; //! round x,y render pos to nearest integer, so there is no interpolation blur for small fontsizes
+
 class CglFont
 {
 public:
@@ -57,6 +59,7 @@ public:
 	float GetCharacterWidth(const unsigned char c) const;
 	float GetTextWidth(const std::string& text) const;
 	float GetTextHeight(const std::string& text, float* descender = NULL, int* numLines = NULL) const;
+	int   GetTextNumLines(const std::string& text) const;
 	static std::string StripColorCodes(const std::string& text);
 
 	inline float GetLineHeight()     const { return lineHeight; }

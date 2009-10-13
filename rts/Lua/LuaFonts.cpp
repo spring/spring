@@ -243,7 +243,7 @@ int LuaFonts::Print(lua_State* L)
 	const float y     = lua_tonumber(L, 4);
 	const float size  = luaL_optfloat(L, 5, font->GetSize());
 
-	int options = 0;
+	int options = FONT_NEAREST;
 
 	if ((args >= 6) && lua_isstring(L, 6)) {
 		const char* c = lua_tostring(L, 6);
@@ -262,6 +262,8 @@ int LuaFonts::Print(lua_State* L)
 				case 's': { options |= FONT_SHADOW;        break; }
 				case 'o':
 				case 'O': { options |= FONT_OUTLINE;       break; }
+
+				case 'n': { options ^= FONT_NEAREST;       break; }
 			}
 	  		c++;
 		}
