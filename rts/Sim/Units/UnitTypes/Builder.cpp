@@ -206,6 +206,15 @@ void CBuilder::Update()
 					break;
 			}
 
+			if (scriptCloak <= 2) {
+				if (isCloaked) {
+					isCloaked = false;
+					oldCloak = false;
+					eventHandler.UnitDecloaked(this);
+				}
+				curCloakTimeout = gs->frameNum + cloakTimeout;
+			}
+
 			CreateNanoParticle(terraformCenter,terraformRadius*0.5f,false);
 
 			for (int z = tz1; z <= tz2; z++) {
@@ -253,6 +262,15 @@ void CBuilder::Update()
 		}
 		else if (helpTerraform && inBuildStance) {
 			if (helpTerraform->terraforming) {
+				if (scriptCloak <= 2) {
+					if (isCloaked) {
+						isCloaked = false;
+						oldCloak = false;
+						eventHandler.UnitDecloaked(this);
+					}
+					curCloakTimeout = gs->frameNum + cloakTimeout;
+				}
+
 				helpTerraform->terraformHelp += terraformSpeed;
 				CreateNanoParticle(helpTerraform->terraformCenter,helpTerraform->terraformRadius*0.5f,false);
 			} else {
@@ -271,6 +289,7 @@ void CBuilder::Update()
 					if (scriptCloak <= 2) {
 						if (isCloaked) {
 							isCloaked = false;
+							oldCloak = false;
 							eventHandler.UnitDecloaked(this);
 						}
 						curCloakTimeout = gs->frameNum + cloakTimeout;
@@ -300,6 +319,7 @@ void CBuilder::Update()
 			if (scriptCloak <= 2) {
 				if (isCloaked) {
 					isCloaked = false;
+					oldCloak = false;
 					eventHandler.UnitDecloaked(this);
 				}
 				curCloakTimeout = gs->frameNum + cloakTimeout;
