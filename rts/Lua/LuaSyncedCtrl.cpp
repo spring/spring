@@ -1186,7 +1186,7 @@ int LuaSyncedCtrl::SetUnitLosMask(lua_State* L)
 		return 0;
 	}
 	const int allyTeam = luaL_checkint(L, 2);
-	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveTeams())) {
+	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveAllyTeams())) {
 		luaL_error(L, "bad allyTeam");
 	}
 	const unsigned short losStatus = unit->losStatus[allyTeam];
@@ -1208,7 +1208,7 @@ int LuaSyncedCtrl::SetUnitLosState(lua_State* L)
 		return 0;
 	}
 	const int allyTeam = luaL_checkint(L, 2);
-	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveTeams())) {
+	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveAllyTeams())) {
 		luaL_error(L, "bad allyTeam");
 	}
 	const unsigned short losStatus = unit->losStatus[allyTeam];
