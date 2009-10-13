@@ -253,7 +253,7 @@ void C3DOParser::GetPrimitives(S3DOPiece* obj,int pos,int num,vertex_vector* vv,
 
 		//sometimes there are more than one selection primitive (??)
 		if(n.dot(DownVector)>0.99f){
-			int ignore=true;
+			bool ignore=true;
 
 			if(sp.numVertex!=4) {
 				ignore=false;
