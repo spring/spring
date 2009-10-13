@@ -108,7 +108,7 @@ void CBFGroundDrawer::CreateWaterPlanes(const bool &camOufOfMap) {
 	const float xsize = (gs->mapx * SQUARE_SIZE) >> 2;
 	const float ysize = (gs->mapy * SQUARE_SIZE) >> 2;
 
-	CVertexArray *va = GetVertexArray();
+	CVertexArray* va = GetVertexArray();
 	va->Initialize();
 
 	unsigned char fogColor[4] = {
@@ -1150,6 +1150,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glBindTexture(GL_TEXTURE_2D, map->GetShadingTexture());
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
 
 		glActiveTextureARB(GL_TEXTURE2_ARB);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
@@ -1157,7 +1158,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		if (map->detailTex) {
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, map->detailTex);
-			glMultiTexCoord1f(GL_TEXTURE2_ARB,0); //fixes a nvidia bug with gltexgen
+			glMultiTexCoord4f(GL_TEXTURE2_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			//SetTexGen(0.02f,0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
 			GLfloat plan[]={0.02f,0,0,0};
@@ -1175,7 +1176,7 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glActiveTextureARB(GL_TEXTURE3_ARB);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, infoTex);
-		glMultiTexCoord1f(GL_TEXTURE1_ARB,0); //fixes a nvidia bug with gltexgen
+		glMultiTexCoord4f(GL_TEXTURE3_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
 		glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
@@ -1248,12 +1249,13 @@ void CBFGroundDrawer::SetupTextureUnits(bool drawReflection)
 		glMultiTexCoord1f(GL_TEXTURE1_ARB,0); //fixes a nvidia bug with gltexgen
 		SetTexGen(1.0f / (gs->pwr2mapx * SQUARE_SIZE), 1.0f / (gs->pwr2mapy * SQUARE_SIZE), 0, 0);
 		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glMultiTexCoord4f(GL_TEXTURE1_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
 
+		glActiveTextureARB(GL_TEXTURE2_ARB);
 		if (map->detailTex) {
 			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, map->detailTex);
-			glMultiTexCoord1f(GL_TEXTURE2_ARB,0); //fixes a nvidia bug with gltexgen
+			glMultiTexCoord4f(GL_TEXTURE2_ARB, 1,1,1,1); //fixes a nvidia bug with gltexgen
 			glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_ARB, GL_ADD_SIGNED_ARB);
 			glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 			//SetTexGen(0.02f, 0.02f, -floor(camera->pos.x * 0.02f), -floor(camera->pos.z * 0.02f));
@@ -1377,10 +1379,9 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 	fline temp;
 	float3 side = cam2->forward;
 	float3 camHorizontal = cam2->forward;
-	camHorizontal.y = 0;
-	if (camHorizontal.x == 0 && camHorizontal.z == 0)
-		return;
-	camHorizontal.ANormalize();
+	camHorizontal.y = 0.0f;
+	if (camHorizontal.x != 0.0f || camHorizontal.z != 0.0f)
+		camHorizontal.ANormalize();
 	// get vector for collision between frustum and horizontal plane
 	float3 b = UpVector.cross(camHorizontal);
 
@@ -1389,7 +1390,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 		float3 c = b.cross(camHorizontal);  // get vector from camera to collision line
 		float3 colpoint;                    // a point on the collision line
 
-		if (side.y > 0)
+		if (side.y > 0.0f)
 			colpoint = cam2->pos + camHorizontal * gu->viewRange * 1.05f - c * (cam2->pos.y / c.y);
 		else
 			colpoint = cam2->pos + camHorizontal * gu->viewRange * 1.05f - c * ((cam2->pos.y - 255 / 3.5f) / c.y);
@@ -1397,7 +1398,7 @@ void CBFGroundDrawer::UpdateCamRestraints(void)
 		// get intersection between colpoint and z axis
 		temp.base = (colpoint.x - colpoint.z * temp.dir) / SQUARE_SIZE;
 
-		if (b.z > 0) {
+		if (b.z > 0.0f) {
 			left.push_back(temp);
 		} else {
 			right.push_back(temp);
