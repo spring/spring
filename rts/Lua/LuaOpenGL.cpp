@@ -1225,7 +1225,7 @@ int LuaOpenGL::Text(lua_State* L)
 	const float y     = lua_tonumber(L, 3);
 
 	float size = 12.0f;
-	int options = 0;
+	int options = FONT_NEAREST;
 	bool outline = false;
 	bool lightOut;
 
@@ -1249,6 +1249,8 @@ int LuaOpenGL::Text(lua_State* L)
 				case 's': { options |= FONT_SHADOW;       break; }
 				case 'o': { options |= FONT_OUTLINE; outline = true; lightOut = false;     break; }
 				case 'O': { options |= FONT_OUTLINE; outline = true; lightOut = true;     break; }
+
+				case 'n': { options ^= FONT_NEAREST;       break; }
 			}
 	  		c++;
 		}
