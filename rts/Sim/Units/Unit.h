@@ -469,6 +469,7 @@ public:
 	int curCloakTimeout;
 	///true if the unit is currently cloaked (has enough energy etc)
 	bool isCloaked;
+	bool oldCloak;
 	float decloakDistance;
 
 	int lastTerrainType;

@@ -219,6 +219,7 @@ CUnit::CUnit():
 	cloakTimeout(128),
 	curCloakTimeout(gs->frameNum),
 	isCloaked(false),
+	oldCloak(false),
 	decloakDistance(0.0f),
 	lastTerrainType(-1),
 	curTerrainType(0),
@@ -692,6 +693,13 @@ void CUnit::SlowUpdate()
 		UpdateLosStatus(at);
 	}
 
+	DoWaterDamage();
+
+	if (health < 0.0f) {
+		KillUnit(false, true, NULL);
+		return;
+	}
+
 	repairAmount=0.0f;
 
 	if (paralyzeDamage > 0) {
@@ -706,10 +714,7 @@ void CUnit::SlowUpdate()
 		if (paralyzeDamage <= maxHealth && !(transporter && !transporter->unitDef->isFirePlatform) ) {
 			stunned = false;
 		}
-		const bool oldCloak = isCloaked;
-		if (!isDead && (scriptCloak >= 4)) {
-			isCloaked = true;
-		} else {
+		if (stunned && isCloaked && scriptCloak <= 3) {
 			isCloaked = false;
 		}
 		if (oldCloak != isCloaked) {
@@ -718,6 +723,7 @@ void CUnit::SlowUpdate()
 			} else {
 				eventHandler.UnitDecloaked(this);
 			}
+			oldCloak = isCloaked;
 		}
 		UpdateResources();
 		return;
@@ -751,9 +757,12 @@ void CUnit::SlowUpdate()
 			}
 			UpdateResources();
 		}
+		if (isCloaked && scriptCloak <= 2) {
+			isCloaked = false;
+			oldCloak = false;
+			eventHandler.UnitDecloaked(this);
+		}
 
-		// damage nano-frames too
-		DoWaterDamage();
 		return;
 	}
 
@@ -818,8 +827,6 @@ void CUnit::SlowUpdate()
 
 	residualImpulse *= 0.6f;
 
-	const bool oldCloak = isCloaked;
-
 	if (scriptCloak >= 3) {
 		isCloaked = true;
 	}
@@ -860,7 +867,7 @@ void CUnit::SlowUpdate()
 		}
 	}
 
-	DoWaterDamage();
+	oldCloak = isCloaked;
 
 	if (unitDef->canKamikaze) {
 		if (fireState >= 2) {
@@ -1816,7 +1823,7 @@ void CUnit::FinishedBuilding(void)
 
 	ChangeLos(realLosRadius, realAirLosRadius);
 
-	const bool oldCloak = isCloaked;
+	oldCloak = isCloaked;
 	if (unitDef->startCloaked) {
 		wantCloak = true;
 		isCloaked = true;
@@ -1846,6 +1853,7 @@ void CUnit::FinishedBuilding(void)
 
 	if (oldCloak != isCloaked) {
 		eventHandler.UnitCloaked(this); // do this after the UnitFinished call-in
+		oldCloak = true;
 	}
 
 	if (unitDef->isFeature && uh->morphUnitToFeature) {
@@ -2402,6 +2410,7 @@ CR_REG_METADATA(CUnit, (
 	CR_MEMBER(cloakTimeout),
 	CR_MEMBER(curCloakTimeout),
 	CR_MEMBER(isCloaked),
+	CR_MEMBER(oldCloak),
 	CR_MEMBER(decloakDistance),
 	CR_MEMBER(lastTerrainType),
 	CR_MEMBER(curTerrainType),
