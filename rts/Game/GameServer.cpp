@@ -343,14 +343,17 @@ void CGameServer::SendDemoData(const bool skipping)
 #endif
 			Broadcast(boost::shared_ptr<const RawPacket>(buf));
 		}
+		else if (msgCode == NETMSG_GAMEOVER)
+		{
+			sentGameOverMsg = true;
+			Broadcast(boost::shared_ptr<const RawPacket>(buf));
+		}
 		else if ( msgCode != NETMSG_GAMEDATA &&
 						msgCode != NETMSG_SETPLAYERNUM &&
 						msgCode != NETMSG_USER_SPEED &&
 						msgCode != NETMSG_INTERNAL_SPEED &&
 						msgCode != NETMSG_PAUSE) // dont send these from demo
 		{
-			if (msgCode == NETMSG_GAMEOVER)
-				sentGameOverMsg = true;
 			Broadcast(boost::shared_ptr<const RawPacket>(buf));
 		}
 	}
