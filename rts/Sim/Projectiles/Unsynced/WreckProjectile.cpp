@@ -39,7 +39,7 @@ CWreckProjectile::~CWreckProjectile()
 
 void CWreckProjectile::Update()
 {
-	speed.y += gravity;
+	speed.y += mygravity;
 	speed.x *= 0.994f;
 	speed.z *= 0.994f;
 

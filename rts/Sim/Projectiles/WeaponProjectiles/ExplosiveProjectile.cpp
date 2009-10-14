@@ -39,7 +39,7 @@ CExplosiveProjectile::CExplosiveProjectile(const float3& pos,
 	curTime(0)
 {
 	//! either map or weaponDef gravity
-	gravity = g;
+	mygravity = g;
 	useAirLos = true;
 
 	if (weaponDef) {
@@ -71,7 +71,7 @@ CExplosiveProjectile::~CExplosiveProjectile()
 void CExplosiveProjectile::Update()
 {
 	pos += speed;
-	speed.y += gravity;
+	speed.y += mygravity;
 	ttl--;
 
 	if (ttl == 0) {

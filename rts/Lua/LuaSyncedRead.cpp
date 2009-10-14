@@ -3998,7 +3998,7 @@ int LuaSyncedRead::GetProjectileGravity(lua_State* L)
 		return 0;
 	}
 
-	lua_pushnumber(L, pro->gravity);
+	lua_pushnumber(L, pro->mygravity);
 	return 1;
 }
 

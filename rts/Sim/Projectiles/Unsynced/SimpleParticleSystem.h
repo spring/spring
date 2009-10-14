@@ -20,7 +20,7 @@ public:
 
 	float3 emitVector;
 	float3 emitMul;
-	float3 gravity3;
+	float3 gravity;
 	float particleSpeed;
 	float particleSpeedSpread;
 

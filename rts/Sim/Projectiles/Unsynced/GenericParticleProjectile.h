@@ -15,7 +15,7 @@ public:
 	virtual void Update();
 	virtual void Draw();
 
-	float3 gravity3;
+	float3 gravity;
 
 	AtlasedTexture *texture;
 	CColorMap *colorMap;

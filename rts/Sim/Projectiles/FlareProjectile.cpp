@@ -43,6 +43,7 @@ CFlareProjectile::CFlareProjectile(const float3& pos, const float3& speed, CUnit
 	SetRadius(45);
 	subPos.resize(owner->unitDef->flareSalvoSize);
 	subSpeed.resize(owner->unitDef->flareSalvoSize);
+	mygravity *= 0.3f; //! flares fall slower
 }
 
 CFlareProjectile::~CFlareProjectile(void)
@@ -66,7 +67,7 @@ void CFlareProjectile::Update(void)
 	if (gs->frameNum >= activateFrame) {
 		pos += speed;
 		speed *= 0.95f;
-		speed.y += gravity * 0.3f;
+		speed.y += mygravity;
 
 		//FIXME: just spawn new flares, if new missiles incoming?
 		if(owner && lastSub<(gs->frameNum - owner->unitDef->flareSalvoDelay) && numSub<owner->unitDef->flareSalvoSize){
@@ -90,7 +91,7 @@ void CFlareProjectile::Update(void)
 		for (int a = 0; a < numSub; ++a) {
 			subPos[a] += subSpeed[a];
 			subSpeed[a] *= 0.95f;
-			subSpeed[a].y += gravity * 0.3f;
+			subSpeed[a].y += mygravity;
 		}
 	}
 
