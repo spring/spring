@@ -153,10 +153,12 @@ macro    (ConfigureJavaSkirmishAI)
 			# The Maven Project has to make sure these files get created:
 			# ${my.build.dir}/SkirmishAI.jar
 			# ${my.build.dir}/SkirmishAI-src.jar (optional)
-			file(RELATIVE_PATH my_build_dir "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}")
+			file(RELATIVE_PATH myBuildDirRel "${myDir}" "${myBuildDir}")
 			set(MVN_ATTRIBUTES
 				"-P" "as-spring-subproject,!stand-alone" # disable default profile & enable special profile
-				"-Dmy.build.dir=${my_build_dir}"
+				"-Djava.ai.int.src.dir=${SOURCE_ROOT_Java_AIINTERFACE}"
+				"-Djava.ai.int.build.dir=${BUILD_ROOT_Java_AIINTERFACE}"
+				"-Dmy.build.dir=${myBuildDirRel}"
 				"-Dmy.version=${myVersion}"
 				"--batch-mode" # Run in non-interactive (batch) mode
 				)
@@ -165,11 +167,13 @@ macro    (ConfigureJavaSkirmishAI)
 					"--quiet"  # Quiet output - only show errors
 					)
 			endif (NOT CMAKE_VERBOSE_MAKEFILE)
+			set(MVN_PHASE "package")
+			#set(MVN_PHASE "help:effective-pom") # use this for debug purposes
 			add_custom_target(${myTarget} ALL
 					DEPENDS ${Java_AIINTERFACE_TARGET}
-					COMMAND "mvn" "package" ${MVN_ATTRIBUTES}
+					COMMAND "mvn" "${MVN_PHASE}" ${MVN_ATTRIBUTES}
 					WORKING_DIRECTORY "${myDir}"
-					COMMENT "  Running package phase of ${myName} Maven Project" VERBATIM)
+					COMMENT "  Running ${MVN_PHASE} phase of ${myName} Maven Project" VERBATIM)
 		else  (configureMavenProject)
 			if     (EXISTS "${myDir}/src/main/java")
 				# default Maven java source dir path
@@ -348,7 +352,9 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myClassPath                ".${PATH_DELIM}${myJavaLibs}${PATH_DELIM}${myJavaSourceDir}")
 
 	# Used by Java Skirmish AIs
-	SetGlobal(CLASSPATH_${myName}_AIINTERFACE "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}")
+	SetGlobal(SOURCE_ROOT_${myName}_AIINTERFACE "${myDir}")
+	SetGlobal(BUILD_ROOT_${myName}_AIINTERFACE  "${myBuildDir}")
+	SetGlobal(CLASSPATH_${myName}_AIINTERFACE   "${myJavaLibs}${PATH_DELIM}${myBuildDir}/${myBinJarFile}")
 
 	# We have to create these directories, cause otherwise the AWK scripts
 	# for generating the source code will not work
