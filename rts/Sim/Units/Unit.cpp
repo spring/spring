@@ -714,17 +714,8 @@ void CUnit::SlowUpdate()
 		if (paralyzeDamage <= maxHealth && !(transporter && !transporter->unitDef->isFirePlatform) ) {
 			stunned = false;
 		}
-		if (stunned && isCloaked && scriptCloak <= 3) {
-			isCloaked = false;
-		}
-		if (oldCloak != isCloaked) {
-			if (isCloaked) {
-				eventHandler.UnitCloaked(this);
-			} else {
-				eventHandler.UnitDecloaked(this);
-			}
-			oldCloak = isCloaked;
-		}
+
+		SlowUpdateCloak(true);
 		UpdateResources();
 		return;
 	}
@@ -757,12 +748,8 @@ void CUnit::SlowUpdate()
 			}
 			UpdateResources();
 		}
-		if (isCloaked && scriptCloak <= 2) {
-			isCloaked = false;
-			oldCloak = false;
-			eventHandler.UnitDecloaked(this);
-		}
 
+		ScriptDecloak(false);
 		return;
 	}
 
@@ -827,47 +814,7 @@ void CUnit::SlowUpdate()
 
 	residualImpulse *= 0.6f;
 
-	if (scriptCloak >= 3) {
-		isCloaked = true;
-	}
-	else if (wantCloak || (scriptCloak >= 1)) {
-		if ((decloakDistance > 0.0f) &&
-		    helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance,
-		                                         allyteam, unitDef->decloakSpherical, false)) {
-			curCloakTimeout = gs->frameNum + cloakTimeout;
-			isCloaked = false;
-		}
-		if (isCloaked || (gs->frameNum >= curCloakTimeout)) {
-			if (scriptCloak >= 2) {
-				isCloaked = true;
-			}
-			else {
-				float cloakCost = unitDef->cloakCost;
-				if (speed.SqLength() > 0.2f) {
-					cloakCost = unitDef->cloakCostMoving;
-				}
-				if (UseEnergy(cloakCost * 0.5f)) {
-					isCloaked = true;
-				} else {
-					isCloaked = false;
-				}
-			}
-		} else {
-			isCloaked = false;
-		}
-	} else {
-		isCloaked = false;
-	}
-
-	if (oldCloak != isCloaked) {
-		if (isCloaked) {
-			eventHandler.UnitCloaked(this);
-		} else {
-			eventHandler.UnitDecloaked(this);
-		}
-	}
-
-	oldCloak = isCloaked;
+	SlowUpdateCloak(false);
 
 	if (unitDef->canKamikaze) {
 		if (fireState >= 2) {
@@ -1823,12 +1770,6 @@ void CUnit::FinishedBuilding(void)
 
 	ChangeLos(realLosRadius, realAirLosRadius);
 
-	oldCloak = isCloaked;
-	if (unitDef->startCloaked) {
-		wantCloak = true;
-		isCloaked = true;
-	}
-
 	if (unitDef->windGenerator > 0.0f) {
 		// start pointing in direction of wind
 		UpdateWind(wind.GetCurrentDirection().x, wind.GetCurrentDirection().z, wind.GetCurrentStrength());
@@ -1851,10 +1792,17 @@ void CUnit::FinishedBuilding(void)
 	eventHandler.UnitFinished(this);
 	eoh->UnitFinished(*this);
 
+
+	oldCloak = isCloaked;
+	if (unitDef->startCloaked) {
+		wantCloak = true;
+		isCloaked = true;
+	}
 	if (oldCloak != isCloaked) {
 		eventHandler.UnitCloaked(this); // do this after the UnitFinished call-in
 		oldCloak = true;
 	}
+
 
 	if (unitDef->isFeature && uh->morphUnitToFeature) {
 		UnBlock();
@@ -2245,6 +2193,71 @@ void CUnit::StopAttackingAllyTeam(int ally)
 	commandAI->StopAttackingAllyTeam(ally);
 	for (std::vector<CWeapon*>::iterator it = weapons.begin(); it != weapons.end(); ++it) {
 		(*it)->StopAttackingAllyTeam(ally);
+	}
+}
+
+void CUnit::SlowUpdateCloak(bool stunCheck)
+{
+	if (stunCheck) {
+		if (stunned && isCloaked && scriptCloak <= 3) {
+			isCloaked = false;
+		}
+	} else {
+		if (scriptCloak >= 3) {
+			isCloaked = true;
+		} else if (wantCloak || (scriptCloak >= 1)) {
+			if ((decloakDistance > 0.0f) &&
+				helper->GetClosestEnemyUnitNoLosTest(midPos, decloakDistance,
+														allyteam, unitDef->decloakSpherical, false)) {
+				curCloakTimeout = gs->frameNum + cloakTimeout;
+				isCloaked = false;
+			}
+			if (isCloaked || (gs->frameNum >= curCloakTimeout)) {
+				if (scriptCloak >= 2) {
+					isCloaked = true;
+				}
+				else {
+					float cloakCost = unitDef->cloakCost;
+					if (speed.SqLength() > 0.2f) {
+						cloakCost = unitDef->cloakCostMoving;
+					}
+					if (UseEnergy(cloakCost * 0.5f)) {
+						isCloaked = true;
+					} else {
+						isCloaked = false;
+					}
+				}
+			} else {
+				isCloaked = false;
+			}
+		} else {
+			isCloaked = false;
+		}
+	}
+
+	if (oldCloak != isCloaked) {
+		if (isCloaked) {
+			eventHandler.UnitCloaked(this);
+		} else {
+			eventHandler.UnitDecloaked(this);
+		}
+	}
+
+	oldCloak = isCloaked;
+}
+
+void CUnit::ScriptDecloak(bool updateCloakTimeOut)
+{
+	if (scriptCloak <= 2) {
+		if (isCloaked) {
+			isCloaked = false;
+			oldCloak = false;
+			eventHandler.UnitDecloaked(this);
+		}
+
+		if (updateCloakTimeOut) {
+			curCloakTimeout = gs->frameNum + cloakTimeout;
+		}
 	}
 }
 

@@ -149,6 +149,9 @@ public:
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
 
+	void SlowUpdateCloak(bool);
+	void ScriptDecloak(bool);
+
 	enum ChangeType{
 		ChangeGiven,
 		ChangeCaptured
