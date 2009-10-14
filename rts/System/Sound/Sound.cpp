@@ -110,7 +110,7 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 
 CSound::~CSound()
 {
-	if (!sources.empty())
+	if (soundThread)
 	{
 #if BOOST_VERSION >= 103500
 		soundThread->interrupt();
@@ -122,14 +122,14 @@ CSound::~CSound()
 		soundThread = 0;
 
 		sources.clear(); // delete all sources
-		sounds.clear();
-		SoundBuffer::Deinitialise();
 		ALCcontext *curcontext = alcGetCurrentContext();
 		ALCdevice *curdevice = alcGetContextsDevice(curcontext);
 		alcMakeContextCurrent(NULL);
 		alcDestroyContext(curcontext);
 		alcCloseDevice(curdevice);
 	}
+	sounds.clear();
+	SoundBuffer::Deinitialise();
 }
 
 bool CSound::HasSoundItem(const std::string& name)
