@@ -20,10 +20,6 @@ set (AI_DATADIR       ${DATADIR} CACHE STRING "Where AIs are installed")
 set (AI_EXCLUDE_REGEX "XXXXXXXX" CACHE STRING "Which Skirmish AIs not to build (none by default, example: \"NTai|Null.*AI\", see also: AI_TYPES")
 set (AI_FIND_QUIETLY  FALSE      CACHE BOOL   "Whether to find AI Interfaces and Skirmish AIs quietly")
 
-if    (NOT MINGW AND NOT IS_ABSOLUTE "${AI_DATADIR}")
-	set(AI_DATADIR "${CMAKE_INSTALL_PREFIX}/${AI_DATADIR}")
-endif (NOT MINGW AND NOT IS_ABSOLUTE "${AI_DATADIR}")
-
 set(rts             "${CMAKE_SOURCE_DIR}/rts")
 
 include_directories(
