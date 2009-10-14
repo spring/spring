@@ -1974,7 +1974,8 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 		return 0;
 	}
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
-	groundDecals->ForceRemoveBuilding(building);
+	if (building)
+		groundDecals->ForceRemoveBuilding(building);
 	return 0;
 }
 
@@ -2278,7 +2279,7 @@ int LuaSyncedCtrl::SetProjectileGravity(lua_State* L)
 		return 0;
 	}
 
-	proj->gravity = luaL_optfloat(L, 2, 0.0f);
+	proj->mygravity = luaL_optfloat(L, 2, 0.0f);
 	return 0;
 }
 

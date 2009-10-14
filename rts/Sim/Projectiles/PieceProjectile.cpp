@@ -275,7 +275,7 @@ float3 CPieceProjectile::RandomVertexPos(void)
 void CPieceProjectile::Update()
 {
 	if (flags & PF_Fall) {
-		speed.y += gravity;
+		speed.y += mygravity;
 	}
 
 	speed *= 0.997f;

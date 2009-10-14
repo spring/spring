@@ -279,7 +279,7 @@ void CMissileProjectile::Update(void)
 			// only when TTL <= 0 do we (missiles)
 			// get influenced by gravity and drag
 			speed *= 0.98f;
-			speed.y += gravity;
+			speed.y += mygravity;
 			dir = speed;
 			dir.Normalize();
 		}

@@ -93,7 +93,7 @@ void CTorpedoProjectile::Update(void)
 {
 	if (!(weaponDef->submissile) && pos.y > -3) {
 		// tracking etc only works when we are underwater
-		speed.y += gravity;
+		speed.y += mygravity;
 		if (dir.y > 0)
 			dir.y = 0;
 		dir = speed;
@@ -141,7 +141,7 @@ void CTorpedoProjectile::Update(void)
 			}
 		} else {
 			speed *= 0.98f;
-			speed.y += gravity;
+			speed.y += mygravity;
 			dir = speed;
 			dir.Normalize();
 		}

@@ -27,7 +27,7 @@ CR_REG_METADATA(CProjectile,
 	CR_MEMBER(synced),
 //	CR_MEMBER(drawPos),
 //	CR_RESERVED(4),
-	CR_MEMBER(gravity),
+	CR_MEMBER(mygravity),
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(speed),
 	CR_MEMBER_ENDFLAG(CM_Config),
@@ -49,7 +49,7 @@ CProjectile::CProjectile():
 	castShadow(false),
 	collisionFlags(0),
 	speed(ZeroVector),
-	gravity(mapInfo? mapInfo->map.gravity: 0.0f),
+	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
 	s3domodel(0),
 	ownerId(0)
 {
@@ -81,7 +81,7 @@ CProjectile::CProjectile(const float3& pos, const float3& speed, CUnit* owner, b
 	castShadow(false),
 	collisionFlags(0),
 	speed(speed),
-	gravity(mapInfo? mapInfo->map.gravity: 0.0f),
+	mygravity(mapInfo? mapInfo->map.gravity: 0.0f),
 	s3domodel(0),
 	ownerId(0)
 {
@@ -105,7 +105,7 @@ CProjectile::~CProjectile()
 
 void CProjectile::Update()
 {
-	speed.y += gravity;
+	speed.y += mygravity;
 	pos += speed;
 }
 
