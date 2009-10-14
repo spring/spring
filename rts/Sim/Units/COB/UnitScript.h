@@ -45,15 +45,14 @@ public:
 	static void InitVars(int numTeams, int numAllyTeams);
 
 public:
-	const int* GetUnitVars() const { return unitVars; };
-
 	static const int* GetTeamVars(int team) { return &teamVars[team][0]; }
 	static const int* GetAllyVars(int ally) { return &allyVars[ally][0]; }
 	static const int* GetGlobalVars()       { return globalVars; }
 
+	const int* GetUnitVars() const { return unitVars; };
 protected:
-	static std::vector<int> teamVars[TEAM_VAR_COUNT];
-	static std::vector<int> allyVars[ALLY_VAR_COUNT];
+	static std::vector< std::vector<int> > teamVars;
+	static std::vector< std::vector<int> > allyVars;
 	static int globalVars[GLOBAL_VAR_COUNT];
 
 	int unitVars[UNIT_VAR_COUNT];
