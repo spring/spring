@@ -25,7 +25,7 @@
 
 CSound* sound = NULL;
 
-CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundThread(NULL)
+CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL)
 {
 	boost::mutex::scoped_lock lck(soundMutex);
 	mute = false;
@@ -249,7 +249,11 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 	SoundSource* best = GetNextBestSource(false);
 	if (best && (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority())))
+	{
+		if (best->IsPlaying())
+			++numAbortedPlays;
 		best->Play(&sounds[id], p, velocity, volume, relative);
+	}
 	CheckError("CSound::PlaySample");
 }
 
@@ -404,6 +408,7 @@ void CSound::PrintDebugInfo()
 
 	LogObject(LOG_SOUND) << "# reserved for buffers: " << (SoundBuffer::AllocedSize()/1024) << " kB";
 	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
+	LogObject(LOG_SOUND) << "# Samples disrupted: " << numAbortedPlays;
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
 

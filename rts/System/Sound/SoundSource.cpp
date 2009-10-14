@@ -142,8 +142,8 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 	Stop();
 	curPlaying = item;
 	alSourcei(id, AL_BUFFER, item->buffer->GetId());
-	alSourcef(id, AL_GAIN, item->gain * volume);
-	alSourcef(id, AL_PITCH, item->pitch * globalPitch);
+	alSourcef(id, AL_GAIN, item->GetGain() * volume);
+	alSourcef(id, AL_PITCH, item->GetPitch() * globalPitch);
 	velocity *= item->dopplerScale;
 	alSource3f(id, AL_VELOCITY, velocity.x, velocity.y, velocity.z);
 	if (item->loopTime > 0)
@@ -164,7 +164,7 @@ void SoundSource::Play(SoundItem* item, const float3& pos, float3 velocity, floa
 #ifdef __APPLE__
 		alSourcef(id, AL_MAX_DISTANCE, 1000000.0f);
 		// Max distance is too small by default on my Mac...
-		ALfloat gain = item->gain * volume;
+		ALfloat gain = item->GetGain() * volume;
 		if (gain > 1.0f) {
 			// OpenAL on Mac cannot handle AL_GAIN > 1 well, so we will adjust settings to get the same output with AL_GAIN = 1.
 			ALint model = alGetInteger(AL_DISTANCE_MODEL);
