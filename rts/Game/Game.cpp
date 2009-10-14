@@ -4532,38 +4532,41 @@ void CGame::MakeMemDump(void)
 
 void CGame::GameEnd()
 {
-	gameOver=true;
-	eventHandler.GameOver();
-	new CEndGameBox();
-	CDemoRecorder* record = net->GetDemoRecorder();
-	if (record != NULL) {
-		// Write CPlayer::Statistics and CTeam::Statistics to demo
-		const int numPlayers = playerHandler->ActivePlayers();
+	if (!gameOver)
+	{
+		gameOver=true;
+		eventHandler.GameOver();
+		new CEndGameBox();
+		CDemoRecorder* record = net->GetDemoRecorder();
+		if (record != NULL) {
+			// Write CPlayer::Statistics and CTeam::Statistics to demo
+			const int numPlayers = playerHandler->ActivePlayers();
 
-		// TODO: move this to a method in CTeamHandler
-		// Figure out who won the game.
-		int numTeams = teamHandler->ActiveTeams();
-		if (gs->useLuaGaia) {
-			--numTeams;
-		}
-		int winner = -1;
-		for (int i = 0; i < numTeams; ++i) {
-			if (!teamHandler->Team(i)->isDead) {
-				winner = teamHandler->AllyTeam(i);
-				break;
+			// TODO: move this to a method in CTeamHandler
+			// Figure out who won the game.
+			int numTeams = teamHandler->ActiveTeams();
+			if (gs->useLuaGaia) {
+				--numTeams;
 			}
-		}
-		// Finally pass it on to the CDemoRecorder.
-		record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
-		record->InitializeStats(numPlayers, numTeams, winner);
-		for (int i = 0; i < numPlayers; ++i) {
-			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
-		}
-		for (int i = 0; i < numTeams; ++i) {
-			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
-			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-			*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
-			net->Send(buf);
+			int winner = -1;
+			for (int i = 0; i < numTeams; ++i) {
+				if (!teamHandler->Team(i)->isDead) {
+					winner = teamHandler->AllyTeam(i);
+					break;
+				}
+			}
+			// Finally pass it on to the CDemoRecorder.
+			record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
+			record->InitializeStats(numPlayers, numTeams, winner);
+			for (int i = 0; i < numPlayers; ++i) {
+				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
+			}
+			for (int i = 0; i < numTeams; ++i) {
+				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
+				*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
+				net->Send(buf);
+			}
 		}
 	}
 }
