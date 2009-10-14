@@ -689,6 +689,7 @@ void CMouseHandler::ToggleState()
 	if (locked) {
 		locked = false;
 		ShowMouse();
+		mouseInput->SetPos(int2(lastx, lasty)); //! workarounds a mouse jump caused by the combination of SDL_WM_GrabInput (done in wsdl) + SDL_ShowCursor
 	} else {
 		locked = true;
 		HideMouse();
