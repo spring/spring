@@ -4098,14 +4098,8 @@ int LuaSyncedRead::GetGroundHeight(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
-
-	if (fullRead || (readAllyTeam >= 0 && loshandler->InLos(float3(x, 0.0f, z), readAllyTeam))) {
-		// GetHeight2() does not clamp the value to (>= 0)
-		lua_pushnumber(L, ground->GetHeight2(x, z));
-	}
-	else {
-		lua_pushnumber(L, ground->GetOrigHeight(x, z));
-	}
+	// GetHeight2() does not clamp the value to (>= 0)
+	lua_pushnumber(L, ground->GetHeight2(x, z));
 	return 1;
 }
 
