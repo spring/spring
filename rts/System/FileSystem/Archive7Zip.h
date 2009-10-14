@@ -29,7 +29,7 @@ protected:
 	ISzAlloc allocTempImp;
 
 	bool isOpen;
-	virtual ABOpenFile_t* GetEntireFile(const std::string& fName);
+	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fName);
 
 public:
 	CArchive7Zip(const std::string& name);

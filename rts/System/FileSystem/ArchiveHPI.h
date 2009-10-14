@@ -14,7 +14,7 @@ protected:
 	// hpiutil doesn't provide a way to determine this for a given file
 	std::map<std::string, int> fileSizes;
 	std::map<int, std::map<std::string, int>::iterator> searchHandles;
-	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName);
+	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fileName);
 public:
 	CArchiveHPI(const std::string& name);
 	virtual ~CArchiveHPI(void);

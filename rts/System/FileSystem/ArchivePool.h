@@ -23,7 +23,7 @@ protected:
 	std::vector<FileData *> files;
 	std::map<std::string, FileData *> fileMap;
 
-	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName);
+	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fileName);
 public:
 	CArchivePool(const std::string& name);
 	virtual ~CArchivePool(void);

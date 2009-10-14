@@ -70,7 +70,7 @@ class zip_exception: public std::exception {};
 
 // To simplify things, files are always read completely into memory from the zipfile, since zlib does not
 // provide any way of reading more than one file at a time
-ABOpenFile_t* CArchiveZip::GetEntireFile(const std::string& fName)
+ABOpenFile_t* CArchiveZip::GetEntireFileImpl(const std::string& fName)
 {
 	// Don't allow opening files on missing/invalid archives
 	if (!zip)
