@@ -75,6 +75,7 @@ private:
 	sourceVecT sources;
 
 	unsigned numEmptyPlayRequests;
+	unsigned numAbortedPlays;
 
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
