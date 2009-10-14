@@ -25,7 +25,7 @@ protected:
 	std::map<std::string, FileData> fileData;		// using unzLocateFile is quite slow
 	int curSearchHandle;
 	std::map<int, std::map<std::string, FileData>::iterator> searchHandles;
-	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName);
+	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fileName);
 	void SetSlashesForwardToBack(std::string& name);
 	void SetSlashesBackToForward(std::string& name);
 public:

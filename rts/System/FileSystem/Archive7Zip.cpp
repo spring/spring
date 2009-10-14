@@ -118,7 +118,7 @@ unsigned int CArchive7Zip::GetCrc32 (const std::string& fileName)
 	return fd.crc;
 }
 
-ABOpenFile_t* CArchive7Zip::GetEntireFile(const std::string& fName)
+ABOpenFile_t* CArchive7Zip::GetEntireFileImpl(const std::string& fName)
 {
 	if (!isOpen)
 		return NULL;
