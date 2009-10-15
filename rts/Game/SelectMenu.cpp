@@ -1,3 +1,6 @@
+#ifdef _MSC_VER
+#include "StdAfx.h"
+#endif
 #include "SelectMenu.h"
 
 #include <SDL_keysym.h>

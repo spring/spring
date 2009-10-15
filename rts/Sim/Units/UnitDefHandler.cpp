@@ -35,6 +35,11 @@
 
 CUnitDefHandler* unitDefHandler;
 
+#ifdef _MSC_VER
+bool isblank(int c) {
+	return (c == ' ') || (c == '\t') || (c == '\r') || (c == '\n');
+}
+#endif
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {

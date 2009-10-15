@@ -3,7 +3,7 @@
 //
 //////////////////////////////////////////////////////////////////////
 #include <assert.h>
-#include <SDL/SDL_mouse.h>
+#include <SDL_mouse.h>
 
 #include "mmgr.h"
 

@@ -18,12 +18,9 @@
 /*
  * emulate SDL on Windows.
  */
-
-#include "wsdl.h"
 #include "GlobalUnsynced.h"
-
 #include <stdio.h>
-#include <math.h>
+#include "wsdl.h"
 #include <queue>
 #include <algorithm>
 
