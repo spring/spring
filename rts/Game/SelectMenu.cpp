@@ -1,6 +1,4 @@
 #include "SelectMenu.h"
-#include "UpdateWindow.h"
-#include "Rendering/GL/myGL.h"
 
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
@@ -16,6 +14,7 @@
 #include <stack>
 #include <boost/cstdint.hpp>
 
+#include "UpdaterWindow.h"
 #include "ClientSetup.h"
 #include "SelectionWidget.h"
 #include "PreGame.h"
@@ -279,7 +278,7 @@ void SelectMenu::ShowUpdateWindow(bool show)
 {
 	if (show && !updWindow)
 	{
-		updWindow = new UpdateWindow();
+		updWindow = new UpdaterWindow();
 		updWindow->WantClose.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, false));
 	}
 	else if (!show && updWindow)

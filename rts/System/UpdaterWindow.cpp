@@ -1,4 +1,4 @@
-#include "UpdateWindow.h"
+#include "UpdaterWindow.h"
 
 #include <boost/bind.hpp>
 
@@ -8,7 +8,7 @@
 #include "aGui/Button.h"
 #include "aGui/Gui.h"
 
-UpdateWindow::UpdateWindow() : agui::Window("Update checker")
+UpdaterWindow::UpdaterWindow() : agui::Window("Update checker")
 {
 	agui::gui->AddElement(this);
 	SetPos(0.5, 0.5);
@@ -23,7 +23,7 @@ UpdateWindow::UpdateWindow() : agui::Window("Update checker")
 	Connect("taspringmaster.clan-sy.com", 8200);
 }
 
-void UpdateWindow::DoneConnecting(bool success, const std::string& err)
+void UpdaterWindow::DoneConnecting(bool success, const std::string& err)
 {
 	if (success)
 	{
@@ -35,7 +35,7 @@ void UpdateWindow::DoneConnecting(bool success, const std::string& err)
 	}
 }
 
-void UpdateWindow::DataReceived(const std::string& command, const std::string& msg)
+void UpdaterWindow::DataReceived(const std::string& command, const std::string& msg)
 {
 	if (command == "TASServer")
 	{
