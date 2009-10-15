@@ -127,10 +127,10 @@ void HUDDrawer::DrawWeaponStates(const CUnit* unit)
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-	font->glFormat(-0.9f, 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "Health: %.0f / %.0f", (float) unit->health, (float) unit->maxHealth);
+	font->glFormat(-0.9f, 0.35f, 1.0f, FONT_SCALE | FONT_NORM, "Health: %.0f / %.0f", (float) unit->health, (float) unit->maxHealth);
 
 	if (playerHandler->Player(gu->myPlayerNum)->myControl.mouse2) {
-		font->glPrint(0.02f, 0.7f, 1.0f, FONT_SCALE | FONT_NORM, "Free-Fire Mode");
+		font->glPrint(-0.9f, 0.35f - font->GetSize() - 1.0f, 1.0f, FONT_SCALE | FONT_NORM, "Free-Fire Mode");
 	}
 
 	int numWeaponsToPrint = 0;
