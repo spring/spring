@@ -1,3 +1,6 @@
+#ifdef _MSC_VER
+#include "StdAfx.h"
+#endif
 #include "UpdaterWindow.h"
 
 #include <boost/bind.hpp>

@@ -1888,6 +1888,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\Rendering\HUDDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\Rendering\HUDDrawer.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\Rendering\IconHandler.cpp"
 				>
 			</File>
@@ -4197,6 +4205,14 @@
 			</File>
 			<File
 				RelativePath="..\..\System\UnsyncedRNG.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\UpdaterWindow.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\System\UpdaterWindow.h"
 				>
 			</File>
 			<File
@@ -12825,6 +12841,18 @@
 						</File>
 					</Filter>
 				</Filter>
+			</Filter>
+			<Filter
+				Name="liblobby"
+				>
+				<File
+					RelativePath="..\..\lib\liblobby\Connection.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\..\lib\liblobby\Connection.h"
+					>
+				</File>
 			</Filter>
 		</Filter>
 		<Filter
