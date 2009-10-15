@@ -1,5 +1,5 @@
-#ifndef UPDATEWINDOW_H
-#define UPDATEWINDOW_H
+#ifndef UPDATERWINDOW_H
+#define UPDATERWINDOW_H
 
 #include "lib/liblobby/Connection.h"
 
@@ -12,10 +12,10 @@ namespace agui
 	class Button;
 };
 
-class UpdateWindow : public agui::Window, public Connection
+class UpdaterWindow : public agui::Window, public Connection
 {
 public:
-	UpdateWindow();
+	UpdaterWindow();
 
 	virtual void DoneConnecting(bool success, const std::string& err);
 	virtual void DataReceived(const std::string& command, const std::string& msg);

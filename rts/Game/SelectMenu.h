@@ -8,7 +8,7 @@ class ClientSetup;
 union SDL_Event;
 class SelectionWidget;
 class ConnectWindow;
-class UpdateWindow;
+class UpdaterWindow;
 
 /**
 @brief User prompt for options when no script is given
@@ -44,7 +44,7 @@ private:
 	ClientSetup* mySettings;
 
 	ConnectWindow* conWindow;
-	UpdateWindow* updWindow;
+	UpdaterWindow* updWindow;
 	SelectionWidget* selw;
 };
 
