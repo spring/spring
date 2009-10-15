@@ -1,5 +1,6 @@
 #include "Connection.h"
 
+#include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
 boost::asio::io_service netservice;
