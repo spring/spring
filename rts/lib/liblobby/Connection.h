@@ -1,7 +1,8 @@
 #ifndef CONNECTION_H
 #define CONNECTION_H
 
-#include <boost/asio.hpp>
+#include <boost/asio/streambuf.hpp>
+#include <boost/asio/ip/tcp.hpp>
 #include <string>
 
 #include <iostream>
