@@ -6,6 +6,12 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
+#if BOOST_VERSION < 103600
+using namespace boost::system::posix_error;
+#else
+using namespace boost::system::errc;
+#endif
+
 boost::asio::io_service netservice;
 
 
@@ -81,7 +87,7 @@ void Connection::ReceiveCallback(const boost::system::error_code& error, size_t 
 	}
 	else
 	{
-		if (error.value() == boost::system::errc::connection_reset || error.value() == boost::asio::error::eof )
+		if (error.value() == connection_reset || error.value() == boost::asio::error::eof )
 		{
 			sock.close();
 			Disconnected();
