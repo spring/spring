@@ -662,13 +662,13 @@ skirmishAIObjsCREG           = create_shared_objects(skirmishai_env, filelist.ge
 skirmishAIObjsLegacyCPP      = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_legacyCPP_sources(env), '_SkirmishAI', [])
 skirmishAIObjsLegacyCPP_CREG = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_legacyCPP_sources(env), '_SkirmishAI_CREG', ['USING_CREG'])
 skirmishAIObjsLua            = create_shared_objects(skirmishai_env, filelist.get_shared_AILib_lua_sources(env), '_SkirmishAI_Lua', [])
-skirmishAIObjsCpp            = create_shared_objects(skirmishai_env, filelist.get_shared_Wrapper_source(ai_env, 'Cpp'), '_SkirmishAI')
+skirmishAIObjsCpp            = create_shared_objects(skirmishai_env, filelist.get_shared_wrapper_source(ai_env, 'Cpp'), '_SkirmishAI')
 skirmishAIObjsCUtils         = create_shared_objects(skirmishai_env, filelist.get_shared_wrapper_source(ai_env, 'CUtils'), '_SkirmishAI', [])
 
 # which AIs need what to build
 skirmishai_exclude_list       = ['build', 'CSAI', 'TestABICAI', 'AbicWrappersTestAI']
 skirmishai_needLegacyCPP_list = ['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI', 'XAI']
-skirmishai_needCpp_list       = ['CppTestAI']
+skirmishai_needCPP_list       = ['CppTestAI']
 skirmishai_needCUtils_list    = ['AAI', 'KAIK', 'RAI', 'NullLegacyCppAI', 'KAI', 'NTai', 'E323AI', 'XAI']
 skirmishai_needCREG_list      = ['KAIK', 'KAI']
 skirmishai_needBoost_list     = ['NTai']
@@ -676,17 +676,24 @@ skirmishai_needLua_list       = ['XAI']
 skirmishai_isJava_list        = ['NullJavaAI', 'NullOOJavaAI']
 
 # generate the C++ Skirmish AI Wrapper sources if needed
-if (skirmishai_needCpp_list != []):
-		# wrapp the Callback
-		awkScripts = []
-		awkScripts += ['wrappCallback.awk']
-		awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
-		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
-		awkScripts += [os.path.join(awkCommonScriptsDir, 'commonOOCallback.awk')]
-		awkInputFile = os.path.join(springInterfaceSrcDir, 'SSkirmishAICallback.h')
-		awkWorkDir = os.path.join('Wrappers', 'Cpp', 'bin')
-		wrapp_cppWrapper = AWKExecutor(skirmishai_env, 'wrapp_callback', awkScripts, awkVars, awkInputFile, workDir = awkWorkDir)
-		wrapp_cppWrapper_cmd = wrapp_cppWrapper.createExecuteCommand()
+if (skirmishai_needCPP_list != []):
+	# wrap the Callback
+	springSrcDir = filelist.getAbsDir(env, '..')
+	springInterfaceSrcDir = os.path.join(springSrcDir, 'rts', 'ExternalAI', 'Interface')
+	awkCommonScriptsDir = os.path.join(springSrcDir, 'AI', 'Wrappers', 'CUtils', 'bin')
+
+	awkVars = []
+	awkVars += ['SPRING_SOURCE_DIR=' + filelist.getAbsDir(env, springSrcDir)]
+	awkScripts = []
+	awkScripts += ['wrappCallback.awk']
+	awkScripts += [os.path.join(awkCommonScriptsDir, 'common.awk')]
+	awkScripts += [os.path.join(awkCommonScriptsDir, 'commonDoc.awk')]
+	awkScripts += [os.path.join(awkCommonScriptsDir, 'commonOOCallback.awk')]
+	awkInputFile = os.path.join(springInterfaceSrcDir, 'SSkirmishAICallback.h')
+	awkWorkDir = os.path.join('Wrappers', 'Cpp', 'bin')
+
+	wrap_cppWrapper = AWKExecutor(skirmishai_env, 'wrapp_callback', awkScripts, awkVars, awkInputFile, workDir = awkWorkDir)
+	wrap_cppWrapper_cmd = wrap_cppWrapper.createExecuteCommand()
 
 
 skirmishais_toBuild = filelist.list_skirmishAIs(skirmishai_env, exclude_list=skirmishai_exclude_list, include_interfaces = aiinterfaces_toBuild)
@@ -696,9 +703,9 @@ for baseName in skirmishais_toBuild:
 	print "Found Skirmish AI: " + baseName + " " + aiVersion
 
 	needLegacyCPP = baseName in skirmishai_needLegacyCPP_list
-	needCpp = baseName in skirmishai_isCpp_list
+	needCPP = baseName in skirmishai_needCPP_list
 	needCUtils = baseName in skirmishai_needCUtils_list
-	useCreg = baseName in skirmishai_needCREG_list
+	useCREG = baseName in skirmishai_needCREG_list
 	useBoost = baseName in skirmishai_needBoost_list
 	useLua = baseName in skirmishai_needLua_list
 	isJava = baseName in skirmishai_isJava_list
@@ -718,7 +725,7 @@ for baseName in skirmishais_toBuild:
 			myClassPathDirs += [myJLibDir]
 		manifestFile = filelist.getAbsDir(env, os.path.join(myEnv['sourcedir'], 'manifest.mf'))
 		if (not os.path.exists(manifestFile)):
-			manifestFile = filelist.getAbsDir(env, javaSrc, 'manifest.mf'))
+			manifestFile = filelist.getAbsDir(env, javaSrc, 'manifest.mf')
 		if (not os.path.exists(manifestFile)):
 			manifestFile = filelist.getAbsDir(env, os.path.join(myEnv['sourcedir'], 'src', 'main', 'resources', 'META-INF', 'MANIFEST.MF'))
 		if (not os.path.exists(manifestFile)):
@@ -758,7 +765,7 @@ for baseName in skirmishais_toBuild:
 		mySourceFiles = []
 		objs = []
 
-		if useCreg:
+		if useCREG:
 			myEnv.AppendUnique(CPPDEFINES = ['USING_CREG'])
 
 			objs += skirmishAIObjsMainCREG
@@ -768,17 +775,17 @@ for baseName in skirmishais_toBuild:
 
 		if needLegacyCPP:
 			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
-			if useCreg:
+			if useCREG:
 				objs += skirmishAIObjsLegacyCPP_CREG
 			else:
 				objs += skirmishAIObjsLegacyCPP
 
-		if needCpp:
+		if needCPP:
 			buildList += wrapp_cppWrapper_cmd
 			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
 			objs += skirmishAIObjsCpp
 
-		if needsCUtils:
+		if needCUtils:
 			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
 			objs += skirmishAIObjsCUtils
 
