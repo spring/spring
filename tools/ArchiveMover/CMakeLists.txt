@@ -5,7 +5,6 @@ FIND_PACKAGE(Boost 1.34.0 COMPONENTS filesystem REQUIRED)
 
 # add icon
 IF (MINGW)
-	FIND_PROGRAM(WINDRES NAMES windres i586-mingw32msvc-windres i586-pc-mingw32-windres i686-mingw32-windres DOC "path to mingw's windres executable")
 	ADD_CUSTOM_COMMAND(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/icon.o COMMAND ${WINDRES} -I${CMAKE_CURRENT_SOURCE_DIR} -i${CMAKE_CURRENT_SOURCE_DIR}/icon.rc -o ${CMAKE_CURRENT_BINARY_DIR}/icon.o -v)
 ENDIF (MINGW)
 
