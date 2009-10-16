@@ -4289,10 +4289,6 @@ void CGame::ClientReadNet()
 				CUnit* ctrlUnit = (playerHandler->Player(player)->dccs).playerControlledUnit;
 				if (ctrlUnit) {
 					// player released control
-					CUnit* unit = (playerHandler->Player(player)->dccs).playerControlledUnit;
-
-					unit->directControl = 0;
-					unit->AttackUnit(0, true);
 					playerHandler->Player(player)->StopControllingUnit();
 				} else {
 					// player took control
