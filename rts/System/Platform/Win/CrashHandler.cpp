@@ -288,7 +288,7 @@ void InstallHangHandler() {
 	hangTimeout = configHandler->Get("HangTimeout", 0);
 #ifdef USE_GML
 	if(hangTimeout == 0) // HangTimeout = -1 to force disable hang detection in MT build
-		hangTimeout = 15;
+		hangTimeout = 10;
 #endif
 	if(hangTimeout > 0)
 		hangdetectorthread = new boost::thread(&HangDetector);

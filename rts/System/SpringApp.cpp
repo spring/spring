@@ -1134,6 +1134,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			GML_STDMUTEX_LOCK(sim); // Run
 
+			CrashHandler::ClearDrawWDT(true);
 			screenWidth = event.resize.w;
 			screenHeight = event.resize.h;
 #ifndef WIN32
@@ -1149,6 +1150,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			GML_STDMUTEX_LOCK(sim); // Run
 
+			CrashHandler::ClearDrawWDT(true);
 			// re-initialize the stencil
 			glClearStencil(0);
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
@@ -1161,6 +1163,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_ACTIVEEVENT: {
+			CrashHandler::ClearDrawWDT(true);
 			if (event.active.state & SDL_APPACTIVE) {
 				gu->active = !!event.active.gain;
 				if (sound)
