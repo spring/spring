@@ -113,6 +113,7 @@ ENDIF (MINGW)
 
 ADD_DEFINITIONS(-DHEADLESS)
 ADD_EXECUTABLE(spring-headlessstubs ${allspringfiles})
+ADD_DEPENDENCIES(spring-headlessstubs headlessstubs )
 TARGET_LINK_LIBRARIES(spring-headlessstubs ${spring_headlessstubs_libraries} )
 
 IF (MINGW)
