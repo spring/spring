@@ -52,6 +52,47 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(springAIInterfaceSourceDir "${springSourceDir}/rts/ExternalAI/Interface")
 
 	SetGlobal(${myName}_AIWRAPPER_GENERATED_SRC_DIR "${myGeneratedSourceDir}")
+	
+	set(myGeneratedSources
+		${myGeneratedSourceDir}/AICallback.cpp
+		${myGeneratedSourceDir}/Camera.cpp
+		${myGeneratedSourceDir}/Cheats.cpp
+		${myGeneratedSourceDir}/ClbFeatureDefCollisionVolumeImpl.cpp
+		${myGeneratedSourceDir}/ClbGroupSupportedCommandImpl.cpp
+		${myGeneratedSourceDir}/ClbUnitDefCollisionVolumeImpl.cpp
+		${myGeneratedSourceDir}/ClbUnitSupportedCommandImpl.cpp
+		${myGeneratedSourceDir}/CurrentCommand.cpp
+		${myGeneratedSourceDir}/Damage.cpp
+		${myGeneratedSourceDir}/DataDirs.cpp
+		${myGeneratedSourceDir}/Economy.cpp
+		${myGeneratedSourceDir}/Engine.cpp
+		${myGeneratedSourceDir}/Feature.cpp
+		${myGeneratedSourceDir}/FeatureDef.cpp
+		${myGeneratedSourceDir}/FlankingBonus.cpp
+		${myGeneratedSourceDir}/Game.cpp
+		${myGeneratedSourceDir}/Group.cpp
+		${myGeneratedSourceDir}/Gui.cpp
+		${myGeneratedSourceDir}/Info.cpp
+		${myGeneratedSourceDir}/Line.cpp
+		${myGeneratedSourceDir}/Log.cpp
+		${myGeneratedSourceDir}/Map.cpp
+		${myGeneratedSourceDir}/Mod.cpp
+		${myGeneratedSourceDir}/ModParam.cpp
+		${myGeneratedSourceDir}/MoveData.cpp
+		${myGeneratedSourceDir}/OptionValues.cpp
+		${myGeneratedSourceDir}/OrderPreview.cpp
+		${myGeneratedSourceDir}/Point.cpp
+		${myGeneratedSourceDir}/Resource.cpp
+		${myGeneratedSourceDir}/Roots.cpp
+		${myGeneratedSourceDir}/Shield.cpp
+		${myGeneratedSourceDir}/SkirmishAI.cpp
+		${myGeneratedSourceDir}/SkirmishAIs.cpp
+		${myGeneratedSourceDir}/Teams.cpp
+		${myGeneratedSourceDir}/Unit.cpp
+		${myGeneratedSourceDir}/UnitDef.cpp
+		${myGeneratedSourceDir}/Version.cpp
+		${myGeneratedSourceDir}/WeaponDef.cpp
+		${myGeneratedSourceDir}/WeaponMount.cpp)
 
 	file(MAKE_DIRECTORY "${myGeneratedSourceDir}")
 
@@ -69,23 +110,15 @@ if    (BUILD_${myName}_AIWRAPPER)
 	# this will regenerate the sources whenever the DEPENDS changes
 	ADD_CUSTOM_COMMAND(
 		DEPENDS "${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
-		OUTPUT "${myGeneratedSourceDir}/*.cpp"
+		OUTPUT ${myGeneratedSources}
 		COMMAND ${myGenerateCommand}
 		WORKING_DIRECTORY "${myBinDir}"
 		COMMENT "  Generating C++ AI Wrapper Callback source files" VERBATIM)
-	ADD_CUSTOM_TARGET(generate_mySources DEPENDS "${myGeneratedSourceDir}/*.cpp")
-
-	# this will generate the sources on "cmake configure", which is needed
-	# for cmake to be able to list the source files
-	EXECUTE_PROCESS(
-		COMMAND ${myGenerateCommand}
-		WORKING_DIRECTORY "${myBinDir}")
 
 	# build the static lib
-	aux_source_directory(${myGeneratedSourceDir} mySources)
+	set(mySources ${myGeneratedSources})
 	list (APPEND mySources ${ai_common})
 	add_library(${myTarget} STATIC ${mySources})
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "${myName}")
-	SET_SOURCE_FILES_PROPERTIES("${myGeneratedSourceDir}/*.cpp" PROPERTIES GENERATED 1)
-	ADD_DEPENDENCIES(${myTarget} generate_mySources)
+	set_source_files_properties(${myGeneratedSources} PROPERTIES GENERATED TRUE)
 endif (BUILD_${myName}_AIWRAPPER)
