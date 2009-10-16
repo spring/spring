@@ -122,6 +122,9 @@ void CPlayer::UpdateControlledTeams()
 void CPlayer::StartSpectating()
 {
 	spectator = true;
+	if (dccs.playerControlledUnit)
+		StopControllingUnit();
+
 	if (playerHandler->Player(gu->myPlayerNum) == this) { //TODO bad hack
 		gu->spectating           = true;
 		gu->spectatingFullView   = true;
@@ -185,6 +188,9 @@ void CPlayer::GameFrame(int frameNum)
 
 void CPlayer::StopControllingUnit()
 {
+	CUnit* unit = dccs.playerControlledUnit;
+	unit->directControl = 0;
+	unit->AttackUnit(0, true);
 	if (gu->directControl == dccs.playerControlledUnit) {
 		assert(playerHandler->Player(gu->myPlayerNum) == this);
 		gu->directControl = 0;
