@@ -3736,10 +3736,13 @@ void CGame::ClientReadNet()
 						if (inbuf[3] != 2) {
 							playerHandler->Player(player)->readyToStart = !!inbuf[3];
 						}
-						char label[128];
-						SNPRINTF(label, sizeof(label), "Start %i", team);
-						inMapDrawer->LocalPoint(pos, label, player);
-						// FIXME - erase old pos ?
+						if (pos.y != -500) // no marker marker when no pos set yet
+						{
+							char label[128];
+							SNPRINTF(label, sizeof(label), "Start %i", team);
+							inMapDrawer->LocalPoint(pos, label, player);
+							// FIXME - erase old pos ?
+						}
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
