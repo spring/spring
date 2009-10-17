@@ -1,6 +1,10 @@
 #ifndef __STD_AFX_H__
 #define __STD_AFX_H__
 
+#if defined(WIN32) && !defined(_WIN32_WINNT)
+#define _WIN32_WINNT 0x500
+#endif
+
 #ifdef	__cplusplus
 
 #ifndef NOMINMAX

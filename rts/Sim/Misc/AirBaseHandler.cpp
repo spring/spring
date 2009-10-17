@@ -8,6 +8,7 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
 #include "creg/STL_List.h"
+#include "creg/STL_Set.h"
 
 CAirBaseHandler* airBaseHandler = 0;
 
