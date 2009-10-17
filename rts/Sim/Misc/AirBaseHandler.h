@@ -2,6 +2,7 @@
 #define AIRBASEHANDLER_H
 
 #include <list>
+#include <set>
 #include <boost/noncopyable.hpp>
 
 #include "System/Object.h"
