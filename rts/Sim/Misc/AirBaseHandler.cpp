@@ -56,10 +56,10 @@ CAirBaseHandler::~CAirBaseHandler(void)
 
 void CAirBaseHandler::RegisterAirBase(CUnit* base)
 {
-	// prevent a unit from registered as a base more than
-	// once (this can happen when a base unit is damaged,
-	// then repaired back to full health, which causes it
-	// to re-register itself via FinishedBuilding())
+	// prevent a unit from being registered as a base more than
+	// once (this can happen eg. when an airbase unit is damaged
+	// and then repaired back to full health, which causes it to
+	// re-register itself via FinishedBuilding())
 	if (airBaseIDs.find(base->id) != airBaseIDs.end()) {
 		return;
 	}
