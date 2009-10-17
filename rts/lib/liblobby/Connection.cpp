@@ -1,3 +1,7 @@
+#ifdef _MSC_VER
+#include "StdAfx.h"
+#endif
+
 #include "Connection.h"
 
 #include <boost/asio.hpp>
