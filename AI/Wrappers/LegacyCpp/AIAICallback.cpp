@@ -1010,11 +1010,20 @@ float CAIAICallback::GetEnergyStorage() {
 }
 
 int CAIAICallback::GetFeatures(int* featureIds, int featureIds_max) {
+
+	// this has to be called right before the next one,
+	// as otherwise we would receive false data
+	sAICallback->Clb_0MULTI1SIZE0Feature(teamId);
 	return sAICallback->Clb_0MULTI1VALS0Feature(teamId, featureIds, featureIds_max);
 }
 
 int CAIAICallback::GetFeatures(int *featureIds, int featureIds_max, const float3& pos, float radius) {
-	return sAICallback->Clb_0MULTI1VALS3FeaturesIn0Feature(teamId, pos.toSAIFloat3(), radius, featureIds, featureIds_max);
+
+	const struct SAIFloat3 aiPos = pos.toSAIFloat3();
+	// this has to be called right before the next one,
+	// as otherwise we would receive false data
+	sAICallback->Clb_0MULTI1SIZE3FeaturesIn0Feature(teamId, aiPos, radius);
+	return sAICallback->Clb_0MULTI1VALS3FeaturesIn0Feature(teamId, aiPos, radius, featureIds, featureIds_max);
 }
 
 const FeatureDef* CAIAICallback::GetFeatureDef(int featureId) {
