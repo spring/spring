@@ -217,13 +217,13 @@ namespace
 		}
 	);
 
-	// TODO: should move away from aihint
-	DECLARE_FILTER_EX(InPrevSel, 0, prevTypes.find(unit->aihint) != prevTypes.end(),
+	DECLARE_FILTER_EX(InPrevSel, 0, prevTypes.find(unit->unitDef->id) != prevTypes.end(),
 		std::set<int> prevTypes;
 		void Prepare() {
+			prevTypes.clear();
 			const CUnitSet& tu = selectedUnits.selectedUnits;
 			for (CUnitSet::const_iterator si = tu.begin(); si != tu.end(); ++si) {
-				prevTypes.insert((*si)->aihint);
+				prevTypes.insert((*si)->unitDef->id);
 			}
 		}
 	);
