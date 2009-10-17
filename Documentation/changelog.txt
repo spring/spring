@@ -1,5 +1,27 @@
 Spring change log
 
+0.80.5:
+Bugfixes:
+ - lots of bugs in the AI interface fixed
+ - fix some network-related problems and improve behaviour under worse conditions
+ - large performance increase for units on patrol
+ - fix some performance problems with the new heatmap pathfinder
+ - fixed a crash which could occur after an AirBase was destroyed
+
+Gui:
+ - joystick support
+ - some bugs resolved which could lead to crashes when using ogg samples or music
+ - properly hande dds textures
+ - fix some mouse-jumping in windows
+
+Sim:
+ - lua unit scripts major rework
+ - some sources of desync fixed
+
+Misc:
+ - fix some compiling problems related to boost 1.40
+ - some fixes for OS X
+
 
 0.80.4.2:
 Bugfixes:
