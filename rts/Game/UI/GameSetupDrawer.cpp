@@ -149,7 +149,7 @@ void GameSetupDrawer::Draw()
 			} else {
 				color = &cyan;
 			}
-		} else if (!playerHandler->Player(a)->readyToStart) {
+		} else if (!playerHandler->Player(a)->active) {
 			color = &red;
 		} else if (!playerHandler->Player(a)->readyToStart) {
 			color = &yellow;
