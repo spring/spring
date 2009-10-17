@@ -413,7 +413,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/vmg /MP"
+				AdditionalOptions="/vmg /MP /D_WIN32_WINNT=0x500"
 				Optimization="2"
 				InlineFunctionExpansion="2"
 				EnableIntrinsicFunctions="true"
