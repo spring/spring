@@ -11,13 +11,6 @@
 #define VC_EXTRALEAN		// Exclude rarely-used stuff from Windows headers
 #endif
 
-// on windows, assume win2k or higher
-#ifdef _WIN32
-# ifndef _WIN32_WINNT
-#  define _WIN32_WINNT 0x500
-# endif
-#endif
-
 // This reduces compile-time with precompiled headers on msvc
 // It used to increase compile-time with precompiled headers on gcc, it's different now
 //

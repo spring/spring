@@ -27,6 +27,7 @@ else  (UNIX AND NOT MINGW)
 	set(CMAKE_LIBRARY_PATH ${MINGWLIBS}/dll)
 	set(CMAKE_PREFIX_PATH ${MINGWLIBS})
 	
+	add_definitions(-D_WIN32_WINNT=0x500) ## win2k is minimum
 	# some cross-compile fixes
 	set (CMAKE_FIND_ROOT_PATH ${MINGWLIBS} ${CMAKE_FIND_ROOT_PATH})
 	#set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
