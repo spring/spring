@@ -4,7 +4,6 @@
 #include <list>
 #include <boost/noncopyable.hpp>
 
-#include "System/creg/STL_Set.h"
 #include "System/Object.h"
 #include "System/float3.h"
 
