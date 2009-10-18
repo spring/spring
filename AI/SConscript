@@ -781,7 +781,7 @@ for baseName in skirmishais_toBuild:
 				objs += skirmishAIObjsLegacyCPP
 
 		if needCPP:
-			buildList += wrapp_cppWrapper_cmd
+			buildList += wrap_cppWrapper_cmd
 			myEnv.AppendUnique(CPPPATH = ['Wrappers'])
 			objs += skirmishAIObjsCpp
 
