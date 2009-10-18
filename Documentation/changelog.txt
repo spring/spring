@@ -11,7 +11,7 @@ Bugfixes:
 Gui:
  - joystick support
  - some bugs resolved which could lead to crashes when using ogg samples or music
- - properly hande dds textures
+ - properly handle dds textures
  - fix some mouse-jumping in windows
 
 Sim:
