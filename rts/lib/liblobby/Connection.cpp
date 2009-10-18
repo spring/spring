@@ -1,11 +1,12 @@
 #ifdef _MSC_VER
-#include "StdAfx.h"
+#include "lib/streflop/streflop_cond.h"
 #endif
 
 #include "Connection.h"
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
+
 
 #if BOOST_VERSION < 103600
 using namespace boost::system::posix_error;
