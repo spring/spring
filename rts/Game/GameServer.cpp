@@ -706,8 +706,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_QUIT: {
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
-			players[a].myState = GameParticipant::DISCONNECTED;
-			players[a].link.reset();
+			players[a].Kill();
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 1);
@@ -1266,9 +1265,8 @@ void CGameServer::ServerReadNet()
 		if (players[a].link->CheckTimeout())
 		{
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" timeout")); //this must happen BEFORE the reset!
-			players[a].myState = GameParticipant::DISCONNECTED;
-			players[a].link.reset();
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 0));
+			players[a].Kill();
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 0);
