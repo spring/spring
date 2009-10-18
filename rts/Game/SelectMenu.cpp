@@ -306,15 +306,8 @@ bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 		case SDL_KEYDOWN: {
 			if (ev.key.keysym.sym == SDLK_ESCAPE)
 			{
-				if(keys[SDLK_LSHIFT])
-				{
-					logOutput.Print("User exited");
-					globalQuit=true;
-				}
-				else
-				{
-					logOutput.Print("Use shift-esc to quit");
-				}
+				logOutput.Print("User exited");
+				globalQuit=true;
 			}
 			else if (ev.key.keysym.sym == SDLK_RETURN)
 			{
