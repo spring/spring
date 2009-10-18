@@ -13,9 +13,8 @@ using namespace boost::system::posix_error;
 #else
 using namespace boost::system::errc;
 #endif
-
+using namespace boost::asio;
 boost::asio::io_service netservice;
-
 
 Connection::Connection() : sock(netservice)
 {
@@ -23,6 +22,8 @@ Connection::Connection() : sock(netservice)
 
 Connection::~Connection()
 {
+	sock.close();
+	netservice.poll();
 }
 
 void Connection::Connect(const std::string& server, int port)
@@ -37,12 +38,17 @@ void Connection::Connect(const std::string& server, int port)
 		std::ostringstream portbuf;
 		portbuf << port;
 		ip::tcp::resolver::query query(server, portbuf.str());
-		ip::tcp::resolver::iterator iter = resolver.resolve(query);
+		ip::tcp::resolver::iterator iter = resolver.resolve(query, err);
+		if (err)
+		{
+			DoneConnecting(false, err.message());
+			return;
+		}
 		tempAddr = iter->endpoint().address();
 	}
 
 	ip::tcp::endpoint serverep(tempAddr, port);
-	sock.async_connect(serverep, boost::bind(&Connection::ConnectCallback, this, _1));
+	sock.async_connect(serverep, boost::bind(&Connection::ConnectCallback, this, placeholders::error));
 }
 
 void Connection::SendData(const std::string& msg)
@@ -66,7 +72,7 @@ void Connection::ConnectCallback(const boost::system::error_code& error)
 	if (!error)
 	{
 		DoneConnecting(true, "");
-		boost::asio::async_read_until(sock, incomeBuffer, "\n", boost::bind(&Connection::ReceiveCallback, this, _1, _2));
+		boost::asio::async_read_until(sock, incomeBuffer, "\n", boost::bind(&Connection::ReceiveCallback, this, placeholders::error, placeholders::bytes_transferred));
 	}
 	else
 	{
@@ -89,7 +95,7 @@ void Connection::ReceiveCallback(const boost::system::error_code& error, size_t 
 	}
 	else
 	{
-		if (error.value() == connection_reset || error.value() == boost::asio::error::eof )
+		if (error.value() == connection_reset || error.value() == boost::asio::error::eof)
 		{
 			sock.close();
 			Disconnected();
@@ -101,7 +107,7 @@ void Connection::ReceiveCallback(const boost::system::error_code& error, size_t 
 	}
 	if (sock.is_open())
 	{
-		boost::asio::async_read_until(sock, incomeBuffer, "\n", boost::bind(&Connection::ReceiveCallback, this, _1, _2));
+		boost::asio::async_read_until(sock, incomeBuffer, "\n", boost::bind(&Connection::ReceiveCallback, this, placeholders::error, placeholders::bytes_transferred));
 	}
 }
 
