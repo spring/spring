@@ -146,7 +146,6 @@ void CUnitHandler::UnitCreated(int unitID) {
 			builderTracker->taskPlanId     = 0;
 			builderTracker->factoryId      = 0;
 			builderTracker->stuckCount     = 0;
-			builderTracker->customOrderId  = 0;
 			// under construction
 			builderTracker->commandOrderPushFrame = -2;
 			builderTracker->categoryMaker = CAT_LAST;
@@ -278,7 +277,7 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 	bool commandFound = false;
 	bool hit = false;
 
-	if (mycommands->size() > 0) {
+	if (!mycommands->empty()) {
 		// it has orders
 		const Command* c = &mycommands->front();
 
@@ -328,16 +327,9 @@ bool CUnitHandler::VerifyOrder(BuilderTracker* builderTracker) {
 				return false;
 		}
 
-		if (builderTracker->customOrderId != 0) {
-			assert(!hit);
+		if (!commandFound) {
 			hit = true;
-			// CMD_MOVE is for human control stuff, CMD_REPAIR is for repairs of just made stuff
-			// CMD_GUARD... ?
-			if (c->id == CMD_RECLAIM || c->id == CMD_MOVE || c->id == CMD_REPAIR)
-				commandFound = true;
-			else {
-				return false;
-			}
+			commandFound = (c->id == CMD_RECLAIM || c->id == CMD_MOVE || c->id == CMD_REPAIR);
 		}
 
 		if (hit && commandFound) {
@@ -430,22 +422,9 @@ void CUnitHandler::ClearOrder(BuilderTracker* builderTracker, bool reportError) 
 		FactoryBuilderRemove(builderTracker);
 	}
 
-	if (builderTracker->customOrderId != 0) {
-		assert(!hit);
-		hit = true;
-		// why is this builder idle?
-		// no tracking of custom orders yet
-		//SNPRINTF(logMsg, logMsg_maxSize,
-		//		"builder %i: was idle, but it is on customOrderId: %i (removing the builder from the job)",
-		//		unit, builderTracker->customOrderId);
-		//PRINTF("%s", logMsg);
-		builderTracker->customOrderId = 0;
-	}
-
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
 }
 
 
@@ -538,11 +517,7 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 						hit = true;
 						FactoryBuilderRemove(builderTracker);
 					}
-					if (builderTracker->customOrderId != 0) {
-						assert(!hit);
-						hit = true;
-						builderTracker->customOrderId = 0;
-					}
+
 					BuildTask* bt = &*i;
 					BuildTaskAddBuilder(bt, builderTracker);
 					found = true;
@@ -550,7 +525,6 @@ void CUnitHandler::DecodeOrder(BuilderTracker* builderTracker, bool reportError)
 			}
 			if (!found) {
 				// not found, just make a custom order
-				builderTracker->customOrderId = taskPlanCounter++;
 				builderTracker->idleStartFrame = -1;
 			}
 		}
@@ -738,9 +712,6 @@ void CUnitHandler::BuildTaskCreate(int id) {
 						if (builderTracker->factoryId != 0) {
 							FactoryBuilderRemove(builderTracker);
 						}
-						if (builderTracker->customOrderId != 0) {
-							builderTracker->customOrderId = 0;
-						}
 
 						// this builder is now free
 						if (builderTracker->idleStartFrame == -2) {
@@ -832,8 +803,7 @@ void CUnitHandler::BuildTaskRemove(BuilderTracker* builderTracker) {
 	assert(builderTracker->buildTaskId != 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
-	// std::list<BuildTask>::iterator killtask;
+
 	bool found = false;
 	bool found2 = false;
 
@@ -877,7 +847,7 @@ void CUnitHandler::BuildTaskAddBuilder(BuildTask* buildTask, BuilderTracker* bui
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
+
 	builderTracker->buildTaskId = buildTask->id;
 }
 
@@ -928,12 +898,11 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 	const bool b1 = (builderTracker->taskPlanId == 0);
 	const bool b2 = (builderTracker->buildTaskId == 0);
 	const bool b3 = (builderTracker->factoryId == 0);
-	const bool b4 = (builderTracker->customOrderId == 0);
-	const bool b5 = builderDef->canAssist;
-	const bool b6 = (category == CAT_FACTORY && frame >= 18000);
+	const bool b4 = builderDef->canAssist;
+	const bool b5 = (category == CAT_FACTORY && frame >= 18000);
 
-	if (!b1 || !b2 || !b3 || !b4 || !b5) {
-		if (b6) {
+	if (!b1 || !b2 || !b3 || !b4) {
+		if (b5) {
 			// note that FactoryBuilderAdd() asserts b1 through b4
 			// immediately after BuildTaskAddBuilder() is tried and
 			// fails in BuildUp(), so at least those must be true
@@ -943,9 +912,10 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 				msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
 				msg << "\tbuilder " << builderID << " not able to be added to CAT_FACTORY build-task\n";
 				msg << "\tb1: " << b1 << ", b2: " << b2 << ", b3: " << b3;
-				msg << ", b4: " << b4 << ", b5: " << b5 << ", b6: " << b6;
+				msg << ", b4: " << b4 << ", b5: " << b5;
 			L(ai, msg.str());
 		}
+
 		return false;
 	}
 
@@ -1006,7 +976,7 @@ bool CUnitHandler::BuildTaskAddBuilder(int builderID, UnitCategory category) {
 		}
 	}
 
-	if (b6) {
+	if (b5) {
 		std::stringstream msg;
 			msg << "[CUnitHandler::BuildTaskAddBuilder()] frame " << frame << "\n";
 			msg << "\tno joinable CAT_FACTORY build-tasks or task-plans for builder " << builderID;
@@ -1031,15 +1001,11 @@ void CUnitHandler::TaskPlanCreate(int builder, float3 pos, const UnitDef* builtd
 	BuilderTracker* builderTracker = GetBuilderTracker(builder);
 
 	// make sure this builder is free
-	// KLOOTNOTE: no longer use assertions
-	// since new code for extractor upgrading
-	// (in CBuildUp) seems to trigger them?
 	bool b1 = (builderTracker->taskPlanId == 0);
 	bool b2 = (builderTracker->buildTaskId == 0);
 	bool b3 = (builderTracker->factoryId == 0);
-	bool b4 = (builderTracker->customOrderId == 0);
 
-	if (!b1 || !b2 || !b3 || !b4) {
+	if (!b1 || !b2 || !b3) {
 		return;
 	}
 
@@ -1083,7 +1049,7 @@ void CUnitHandler::TaskPlanAdd(TaskPlan* taskPlan, BuilderTracker* builderTracke
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
+
 	builderTracker->taskPlanId = taskPlan->id;
 }
 
@@ -1094,7 +1060,7 @@ void CUnitHandler::TaskPlanRemove(BuilderTracker* builderTracker) {
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId != 0);
 	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
+
 	builderTracker->taskPlanId = 0;
 	int builder = builderTracker->builderID;
 	bool found = false;
@@ -1285,7 +1251,6 @@ bool CUnitHandler::FactoryBuilderAdd(BuilderTracker* builderTracker) {
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
 
 	for (std::list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
 		CUNIT* u = ai->MyUnits[i->id];
@@ -1328,7 +1293,7 @@ void CUnitHandler::FactoryBuilderRemove(BuilderTracker* builderTracker) {
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId != 0);
-	assert(builderTracker->customOrderId == 0);
+
 	std::list<Factory>::iterator killfactory;
 
 	for (std::list<Factory>::iterator i = Factories.begin(); i != Factories.end(); i++) {
@@ -1351,9 +1316,8 @@ void CUnitHandler::BuilderReclaimOrder(int builderId, const float3&) {
 	assert(builderTracker->buildTaskId == 0);
 	assert(builderTracker->taskPlanId == 0);
 	assert(builderTracker->factoryId == 0);
-	assert(builderTracker->customOrderId == 0);
-	// Just use taskPlanCounter for the id.
-	builderTracker->customOrderId = taskPlanCounter++;
+
+	taskPlanCounter++;
 }
 
 
