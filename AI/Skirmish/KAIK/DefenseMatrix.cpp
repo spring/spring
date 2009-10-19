@@ -42,11 +42,13 @@ void CDefenseMatrix::Init() {
 }
 
 void CDefenseMatrix::MaskBadBuildSpot(float3 pos) {
-	int f3multiplier = 8 * THREATRES;
-	int x = (int) (pos.x / f3multiplier);
-	int y = (int) (pos.z / f3multiplier);
+	if (pos.IsInBounds()) {
+		const int f3multiplier = 8 * THREATRES;
+		const int x = (int) (pos.x / f3multiplier);
+		const int y = (int) (pos.z / f3multiplier);
 
-	BuildMaskArray[y * ai->pather->PathMapXSize + x] = 1;
+		BuildMaskArray[y * ai->pather->PathMapXSize + x] = 1;
+	}
 }
 
 float3 CDefenseMatrix::GetDefensePos(const UnitDef* def, float3 builderpos) {
