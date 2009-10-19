@@ -47,12 +47,12 @@ public:
 
 	unsigned Remaining() const
 	{
-		return length - pos;
+		return length - std::min(pos, length);
 	};
 private:
 	const unsigned char* data;
 	unsigned length;
-	size_t pos;
+	unsigned pos;
 };
 
 class Packer
@@ -87,10 +87,13 @@ Packet::Packet(const unsigned char* data, unsigned length)
 	
 	if (nakType > 0)
 	{
-		naks.resize(nakType);
+		naks.reserve(nakType);
 		for (int i = 0; i != nakType; ++i)
 		{
-			buf.Unpack(naks[i]);
+			if (buf.Remaining() >= sizeof(naks[i]))
+				buf.Unpack(naks[i]);
+			else
+				break;
 		}
 	}
 
