@@ -515,7 +515,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		lastUnackResent = curTime;
 	}
 
-	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak < 0 || lastSendTime + spring_msecs(200) < curTime)
+	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak > 0 || lastSendTime + spring_msecs(200) < curTime)
 	{
 		bool todo = true;
 		while (todo)
