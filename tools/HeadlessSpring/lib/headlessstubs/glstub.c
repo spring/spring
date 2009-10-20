@@ -439,6 +439,10 @@ void glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t ) {
   // printf("glMultiTexCoord2f\n");
 }
 
+void glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
+  // printf("glMultiTexCoord4f\n");
+}
+
 GLenum glGetError( void ) {
    return 0;
 }

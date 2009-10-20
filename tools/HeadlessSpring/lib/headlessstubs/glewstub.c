@@ -136,6 +136,11 @@ void _glewMultiTexCoord2f(GLenum target, GLfloat s, GLfloat t) {
    //printf("__glewMultiTexCoord2f\n");
 }
 
+EXTERN PFNGLMULTITEXCOORD4FPROC __glewMultiTexCoord4f;
+void _glewMultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) {
+   //printf("__glewMultiTexCoord4f\n");
+}
+
 EXTERN PFNGLACTIVETEXTUREARBPROC __glewActiveTextureARB;
 void _glewActiveTextureARB(GLenum texture) {
    //printf( "__glewActiveTextureARB (glActiveTextureARB calls this function for some reason...)\n");
@@ -149,6 +154,11 @@ void _glewCompressedTexImage2D(GLenum target, GLint level, GLenum internalformat
 EXTERN  PFNGLMULTITEXCOORD2FARBPROC __glewMultiTexCoord2fARB;
 void _glewMultiTexCoord2fARB(GLenum target, GLfloat s, GLfloat t) {
    //printf("__glewMultiTexCoord2fARB\n");
+}
+
+EXTERN  PFNGLMULTITEXCOORD4FARBPROC __glewMultiTexCoord4fARB;
+void _glewMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q) {
+   //printf("__glewMultiTexCoord4fARB\n");
 }
 
 GLenum glewInit(){
@@ -172,8 +182,10 @@ GLenum glewInit(){
    __glewXGetVideoSyncSGI = &_glewXGetVideoSyncSGI;
    __glewMultiTexCoord1f = &_glewMultiTexCoord1f;
    __glewMultiTexCoord2f = &_glewMultiTexCoord2f;
+   __glewMultiTexCoord4f = &_glewMultiTexCoord4f;
    __glewCompressedTexImage2D = &_glewCompressedTexImage2D;
    __glewMultiTexCoord2fARB = &_glewMultiTexCoord2fARB;
+   __glewMultiTexCoord4fARB = &_glewMultiTexCoord4fARB;
 
 __GLEW_ARB_multitexture = GL_TRUE;
 __GLEW_ARB_texture_env_combine = GL_TRUE;
