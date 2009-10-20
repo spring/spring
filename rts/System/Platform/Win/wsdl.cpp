@@ -310,7 +310,7 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 			queue_button_event(button, state, x, y);
 	} else {
 		//! no outside checking needed for fullscreen
-		queue_button_event(button, state, client_x, client_y);
+		queue_button_event(button, state, x, y);
 	}
 
 
