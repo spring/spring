@@ -686,7 +686,7 @@ void CPathFinder::InitHeatMap()
 {
 	heatmap.resize(gs->mapx);
 	for (int i = 0; i<gs->mapx; ++i) {
-		heatmap[i].resize(gs->mapy);
+		heatmap[i].resize(gs->mapy, {0,0});
 	}
 	heatMapOffset = 0;
 }
