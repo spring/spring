@@ -20,7 +20,9 @@
 //
 
 #include "GL/glew.h"
-#include "GL/glxew.h"
+#ifndef WIN32
+   #include "GL/glxew.h"
+#endif
 
 //#include <stdio.h>
 
@@ -61,18 +63,20 @@ EXTERN GLboolean __GLEW_ARB_texture_compression = GL_TRUE;
 
 EXTERN GLboolean __GLEW_ARB_texture_env_dot3;
 
-EXTERN PFNGLXGETVIDEOSYNCSGIPROC __glewXGetVideoSyncSGI;
-int _glewXGetVideoSyncSGI(uint* count) {
-   *count = 0;
-}
+#ifndef WIN32
+   EXTERN PFNGLXGETVIDEOSYNCSGIPROC __glewXGetVideoSyncSGI;
+   int _glewXGetVideoSyncSGI(uint* count) {
+      *count = 0;
+   }
+   
+   EXTERN PFNGLXWAITVIDEOSYNCSGIPROC __glewXWaitVideoSyncSGI;
+   int _glewXWaitVideoSyncSGI (int divisor, int remainder, unsigned int* count){
+      return 0;
+   }
+#endif
 
 EXTERN PFNGLPROGRAMENVPARAMETER4FARBPROC __glewProgramEnvParameter4fARB;
 void _glewProgramEnvParameter4fARB(GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w){
-}
-
-EXTERN PFNGLXWAITVIDEOSYNCSGIPROC __glewXWaitVideoSyncSGI;
-int _glewXWaitVideoSyncSGI (int divisor, int remainder, unsigned int* count){
-   return 0;
 }
 
 EXTERN PFNGLCOMPRESSEDTEXIMAGE2DARBPROC __glewCompressedTexImage2DARB;
@@ -175,11 +179,12 @@ GLenum glewInit(){
    //__glBufferData = &_glBufferData;
    //__glMapBuffer = &_glMapBuffer;
    //__glUnmapBuffer = &_glUnmapBuffer;
-
+#ifndef WIN32
    __glewXWaitVideoSyncSGI = &_glewXWaitVideoSyncSGI;
+   __glewXGetVideoSyncSGI = &_glewXGetVideoSyncSGI;
+#endif
    __glewBindFramebufferEXT = &_glewBindFramebufferEXT;
    __glewFramebufferTexture2DEXT = &_glewFramebufferTexture2DEXT;
-   __glewXGetVideoSyncSGI = &_glewXGetVideoSyncSGI;
    __glewMultiTexCoord1f = &_glewMultiTexCoord1f;
    __glewMultiTexCoord2f = &_glewMultiTexCoord2f;
    __glewMultiTexCoord4f = &_glewMultiTexCoord4f;
