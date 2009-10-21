@@ -203,7 +203,7 @@ wherever you got this AI from.
 	<target name="install" depends="dist"/>
 
 
-	<target name="clean">
+	<target name="clean" depends="init">
 		<delete dir="${build.dir}"/>
 	</target>
 
