@@ -285,10 +285,11 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 					oldMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
 					saveMode = true;
 				}
-#ifndef DEBUG
+
+				POINT pt;
+				GetCursorPos(&pt); //! SDL_WM_GrabInput sometimes moves the cursor, so we have to reset it afterwards
 				SDL_WM_GrabInput(SDL_GRAB_ON);
-				//SetCursorPos(screen_pt.x, screen_pt.y);
-#endif
+				SetCursorPos(pt.x, pt.y);
 			}
 		} else {
 			//! release after all up events received
@@ -296,8 +297,10 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 			{
 				if (saveMode)
 				{
+					POINT pt;
+					GetCursorPos(&pt); //! SDL_WM_GrabInput sometimes moves the cursor, so we have to reset it afterwards
 					SDL_WM_GrabInput(oldMode);
-					//SetCursorPos(screen_pt.x, screen_pt.y);
+					SetCursorPos(pt.x, pt.y);
 					saveMode = false;
 				}
 				outstanding_press_events = 0;
