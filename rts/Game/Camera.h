@@ -16,7 +16,7 @@ public:
 	void UpdateForward();
 	bool InView(const float3& p,float radius=0);
 	bool InView(const float3& mins, const float3& maxs);
-	void Update(bool freeze);
+	void Update(bool freeze, bool resetUp = true);
 
 	CCamera();
 	~CCamera();

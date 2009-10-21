@@ -40,19 +40,16 @@ void CSelectionKeyHandler::LoadSelectionKeys()
 {
 	std::ifstream ifs(filesystem.LocateFile("selectkeys.txt").c_str());
 
-	char buf[10000];
+	selectNumber = 0;
 
-	selectNumber=0;
+	while (ifs.peek() != EOF && !ifs.eof()) {
+		std::string key, sel;
+		ifs >> key;
 
-	while(ifs.peek()!=EOF && !ifs.eof()){
-		ifs >> buf;
-		std::string key(buf);
-
-		if(ifs.peek()==EOF || ifs.eof())
+		if (ifs.peek() == EOF || ifs.eof())
 			break;
 
-		ifs >> buf;
-		std::string sel(buf);
+		ifs >> sel;
 
 		bool shift=false;
 		bool control=false;
