@@ -114,7 +114,6 @@ void COverheadController::MouseWheelMove(float move)
 
 void COverheadController::Update()
 {
-	camera->RestoreUp();
 }
 
 float3 COverheadController::GetPos()

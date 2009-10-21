@@ -66,7 +66,6 @@ void CTWController::MouseWheelMove(float move)
 
 void CTWController::Update()
 {
-	camera->RestoreUp();
 }
 
 float3 CTWController::GetPos()
