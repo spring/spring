@@ -152,7 +152,7 @@ wherever you got this AI from.
 
 
 	<target name="compile" depends="init">
-		<javac destdir="${build.classes.dir}">
+		<javac destdir="${build.classes.dir}" debug="true">
 			<src refid="source.path.id"/>
 			<classpath refid="class.path.id"/>
 		</javac>
