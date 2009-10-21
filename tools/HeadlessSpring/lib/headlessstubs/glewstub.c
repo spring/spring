@@ -165,6 +165,13 @@ void _glewMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLf
    //printf("__glewMultiTexCoord4fARB\n");
 }
 
+#if       defined WIN32
+EXTERN void* wglGetProcAddress(const char* bla) {
+   //printf("wglGetProcAddress\n");
+   return NULL;
+}
+#endif // defined WIN32
+
 GLenum glewInit(){
   // printf( "glewInit()\n"  );
 
