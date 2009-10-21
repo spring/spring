@@ -638,6 +638,7 @@ void SpringApp::LoadFixedConfigs() {
 	configHandler->SetOverride("GroundLODScaleUnitReflection", 0);
 	configHandler->SetOverride("GroundScarAlphaFade", 0);
 	configHandler->SetOverride("HardwareCursor", 0);
+	configHandler->SetOverride("Headless", 1);
 	configHandler->SetOverride("LodScale", 1.00);
 	configHandler->SetOverride("LodScaleReflection", 1.00);
 	configHandler->SetOverride("LodScaleRefraction", 1.00);
@@ -645,7 +646,7 @@ void SpringApp::LoadFixedConfigs() {
 	configHandler->SetOverride("LuaAutoEnableUserWidgets", 0); // not sure about this one?
 	configHandler->SetOverride("LuaModUICtrl", 0); // or this one
 	configHandler->SetOverride("LuaShaders", 0);
-	configHandler->SetOverride("LuaUI", 0);// or thhis one
+	configHandler->SetOverride("LuaUI", 0); // or this one
 	configHandler->SetOverride("MaxNanoParticles", 0);
 	configHandler->SetOverride("MaxParticles", 0);
 	configHandler->SetOverride("MaxSounds", 0);
@@ -653,31 +654,33 @@ void SpringApp::LoadFixedConfigs() {
 	configHandler->SetOverride("MiniMapDrawCommands", 0);
 	configHandler->SetOverride("MiniMapIcons", 0);
 	configHandler->SetOverride("MiniMapMarker", 0);
-	configHandler->SetOverride("NoHelperAIs",1); // no sure about this
+	configHandler->SetOverride("NoHelperAIs", 0);
 	configHandler->SetOverride("OrbitControllerEnabled", 0);
 	configHandler->SetOverride("OverheadEnabled", 0);
 	configHandler->SetOverride("ReflectiveWater", 0);
 	configHandler->SetOverride("RotOverheadEnabled", 0);
 	configHandler->SetOverride("SMFTexAniso", 0.0);
-	configHandler->SetOverride("Shadows", 0);
+	configHandler->SetOverride("Shadows", -1);
 	configHandler->SetOverride("ShowClock", 0);
 	configHandler->SetOverride("ShowFPS", 0);
 	configHandler->SetOverride("ShowHealthBars", 0);
 	configHandler->SetOverride("ShowPlayerInfo", 0);
 	configHandler->SetOverride("ShowRezBars", 0);
-	configHandler->SetOverride("SmoothEnabled", 0); // no sure about this
+	configHandler->SetOverride("SmoothEnabled", 0); // not sure about this
 	configHandler->SetOverride("SmoothLines", 0);
 	configHandler->SetOverride("SmoothPoints", 0);
 	configHandler->SetOverride("SmoothTiltSpeed", 0);
-	configHandler->SetOverride("TWEnabled", 0);//TW = total war camera
+	configHandler->SetOverride("TWEnabled", 0); // TW = total war camera
 	configHandler->SetOverride("TeamNanoSpray", 0);
 	configHandler->SetOverride("TextureLODBias", 0);
 	configHandler->SetOverride("TooltipOutlineFont", 0);
-	configHandler->SetOverride("TreeRadius", 600);
-	configHandler->SetOverride("UnitIconDist", 0); //not sure about this
+	configHandler->SetOverride("TreeRadius", 0);
+	configHandler->SetOverride("UnitIconDist", 0); // not sure about this
 	configHandler->SetOverride("UnitLodDist", 0); // not sure about this
 	configHandler->SetOverride("UsePBO", 0);
 	configHandler->SetOverride("VSync", 0);
+	configHandler->SetOverride("XResolution", 113); // minimum resolution required to load spring.
+	configHandler->SetOverride("YResolution", 1);
 #endif // HEADLESS
 }
 
