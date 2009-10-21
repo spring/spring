@@ -23,340 +23,199 @@
 
 //#include <stdio.h>
 
-void glClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
-}
+GLAPI void APIENTRY glClearColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {}
+GLAPI void APIENTRY glEnable(GLenum i) {}
+GLAPI void APIENTRY glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {}
+GLAPI void APIENTRY glColor3fv( const GLfloat *v ) {}
+GLAPI void APIENTRY glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) {}
+GLAPI void APIENTRY glColor3ubv( const GLubyte *v ) {}
+GLAPI void APIENTRY glColor4ubv( const GLubyte *v ) {}
 
-void glEnable(GLenum i) {
-}
-
-void glClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha ) {
-}
-
-void glColor3fv( const GLfloat *v ) {
-}
-
-void glColor3ub( GLubyte red, GLubyte green, GLubyte blue ) {
-}
-
-void glColor3ubv( const GLubyte *v ) {
-}
-
-void glColor4ubv( const GLubyte *v ) {
-}
-
-void glCopyTexImage2D( GLenum target, GLint level,
+GLAPI void APIENTRY glCopyTexImage2D( GLenum target, GLint level,
                                         GLenum internalformat,
                                         GLint x, GLint y,
                                         GLsizei width, GLsizei height,
-                                        GLint border ) {
-}
-
-void glCopyTexSubImage2D( GLenum target, GLint level,
+                                        GLint border ) {}
+                                        
+GLAPI void APIENTRY glCopyTexSubImage2D( GLenum target, GLint level,
                                            GLint xoffset, GLint yoffset,
                                            GLint x, GLint y,
-                                           GLsizei width, GLsizei height ) {
-}
+                                           GLsizei width, GLsizei height ) {}
+                                           
+GLAPI void APIENTRY glDrawBuffer( GLenum mode ) {}
+GLAPI void APIENTRY glDrawElements( GLenum mode, GLsizei count,
+                                      GLenum type, const GLvoid *indices ) {}
+GLAPI void APIENTRY glEdgeFlag( GLboolean flag ) {}
+GLAPI void APIENTRY glEvalCoord1f( GLfloat u ) {}
+GLAPI void APIENTRY  glEvalCoord2f( GLfloat u, GLfloat v ) {}
+GLAPI void APIENTRY glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) {}
+GLAPI void APIENTRY glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) {}
+GLAPI void APIENTRY glEvalPoint1( GLint i ) {}
+GLAPI void APIENTRY glEvalPoint2( GLint i, GLint j ) {}
+GLAPI void APIENTRY glFinish( void ) {}
+GLAPI void APIENTRY glFlush( void ) {}
+GLAPI void APIENTRY glFrontFace( GLenum mode ) {}
 
-void glDrawBuffer( GLenum mode ) {
-}
-
-void glDrawElements( GLenum mode, GLsizei count,
-                                      GLenum type, const GLvoid *indices ) {
-}
-
-void glEdgeFlag( GLboolean flag ) {
-}
-
-void glEvalCoord1f( GLfloat u ) {
-}
-
-void  glEvalCoord2f( GLfloat u, GLfloat v ) {
-}
-
-void glEvalMesh1( GLenum mode, GLint i1, GLint i2 ) {
-}
-
-void glEvalMesh2( GLenum mode, GLint i1, GLint i2, GLint j1, GLint j2 ) {
-}
-
-void glEvalPoint1( GLint i ) {
-}
-
-void glEvalPoint2( GLint i, GLint j ) {
-}
-
-void glFinish( void ) {
-}
-
-void glFlush( void ) {
-}
-
-void glFrontFace( GLenum mode ) {
-}
-
-void glFrustum( GLdouble left, GLdouble right,
+GLAPI void APIENTRY glFrustum( GLdouble left, GLdouble right,
                                    GLdouble bottom, GLdouble top,
-                                   GLdouble near_val, GLdouble far_val ) {
-}
+                                   GLdouble near_val, GLdouble far_val ) {}
 
-void glGetFloatv( GLenum pname, GLfloat *params ) {
+GLAPI void APIENTRY glGetFloatv( GLenum pname, GLfloat *params ) {
    *params = 0;
 }
 
-void glGetTexImage( GLenum target, GLint level,
+GLAPI void APIENTRY glGetTexImage( GLenum target, GLint level,
                                      GLenum format, GLenum type,
-                                     GLvoid *pixels ) {
-}
+                                     GLvoid *pixels ) {}
 
-void glGetTexLevelParameteriv( GLenum target, GLint level,
-                                                GLenum pname, GLint *params ) {
-}
+GLAPI void APIENTRY glGetTexLevelParameteriv( GLenum target, GLint level,
+                                                GLenum pname, GLint *params ) {}
 
-void glInitNames( void ) {
-}
+GLAPI void APIENTRY glInitNames( void ) {}
 
-GLboolean glIsTexture( GLuint texture ) {
+GLAPI GLboolean APIENTRY glIsTexture( GLuint texture ) {
    return 0;
 }
 
-void glLightf( GLenum light, GLenum pname, GLfloat param ) {
-}
+GLAPI void APIENTRY glLightf( GLenum light, GLenum pname, GLfloat param ) {}
+GLAPI void APIENTRY glLightModelfv( GLenum pname, const GLfloat *params ) {}
+GLAPI void APIENTRY glLoadMatrixf( const GLfloat *m ) {}
+GLAPI void APIENTRY glLoadName( GLuint name ) {}
 
-void glLightModelfv( GLenum pname, const GLfloat *params ) {
-}
-
-void glLoadMatrixf( const GLfloat *m ) {
-}
-
-void glLoadName( GLuint name ) {
-}
-
-void glMap1f( GLenum target, GLfloat u1, GLfloat u2,
+GLAPI void APIENTRY glMap1f( GLenum target, GLfloat u1, GLfloat u2,
                                GLint stride,
-                               GLint order, const GLfloat *points ) {
-}
+                               GLint order, const GLfloat *points ) {}
 
-void glMap2f( GLenum target,
+GLAPI void APIENTRY glMap2f( GLenum target,
 		     GLfloat u1, GLfloat u2, GLint ustride, GLint uorder,
 		     GLfloat v1, GLfloat v2, GLint vstride, GLint vorder,
-		     const GLfloat *points ) {
-}
+		     const GLfloat *points ) {}
 
-void glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) {
-}
+GLAPI void APIENTRY glMapGrid1f( GLint un, GLfloat u1, GLfloat u2 ) {}
+GLAPI void APIENTRY glMapGrid2f( GLint un, GLfloat u1, GLfloat u2,
+                                   GLint vn, GLfloat v1, GLfloat v2 ) {}
 
-void glMapGrid2f( GLint un, GLfloat u1, GLfloat u2,
-                                   GLint vn, GLfloat v1, GLfloat v2 ) {
-}
+GLAPI void APIENTRY glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) {}
+GLAPI void APIENTRY glNormal3fv( const GLfloat *v ) {}
+GLAPI void APIENTRY glNormalPointer( GLenum type, GLsizei stride,
+                                       const GLvoid *ptr ) {}
 
-void glNormal3f( GLfloat nx, GLfloat ny, GLfloat nz ) {
-}
+GLAPI void APIENTRY glPixelStorei( GLenum pname, GLint param ) {}
+GLAPI void APIENTRY glPushName( GLuint name ) {}
+GLAPI void APIENTRY glPopName( void ) {}
+GLAPI void APIENTRY glReadBuffer( GLenum mode ) {}
 
-void glNormal3fv( const GLfloat *v ) {
-}
-
-void glNormalPointer( GLenum type, GLsizei stride,
-                                       const GLvoid *ptr ) {
-}
-
-void glPixelStorei( GLenum pname, GLint param ) {
-}
-
-void glPushName( GLuint name ) {
-}
-
-void glPopName( void ) {
-}
-
-void glReadBuffer( GLenum mode ) {
-}
-
-void glReadPixels( GLint x, GLint y,
+GLAPI void APIENTRY glReadPixels( GLint x, GLint y,
                                     GLsizei width, GLsizei height,
                                     GLenum format, GLenum type,
-                                    GLvoid *pixels ) {
-}
+                                    GLvoid *pixels ) {}
 
-void glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) {
-}
+GLAPI void APIENTRY glRectf( GLfloat x1, GLfloat y1, GLfloat x2, GLfloat y2 ) {}
 
-GLint glRenderMode( GLenum mode ) {
+GLAPI GLint APIENTRY glRenderMode( GLenum mode ) {
    return 0;
 }
 
-void glRotatef( GLfloat angle,
-                                   GLfloat x, GLfloat y, GLfloat z ) {
-}
+GLAPI void APIENTRY glRotatef( GLfloat angle,
+                                   GLfloat x, GLfloat y, GLfloat z ) {}
 
-void glScalef( GLfloat x, GLfloat y, GLfloat z ) {
-}
+GLAPI void APIENTRY glScalef( GLfloat x, GLfloat y, GLfloat z ) {}
+GLAPI void APIENTRY glScissor( GLint x, GLint y, GLsizei width, GLsizei height) {}
+GLAPI void APIENTRY glSelectBuffer( GLsizei size, GLuint *buffer ) {}
+GLAPI void APIENTRY glTexCoord1f( GLfloat s ) {}
+GLAPI void APIENTRY glTexCoord2fv( const GLfloat *v ) {}
+GLAPI void APIENTRY glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) {}
+GLAPI void APIENTRY glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {}
+GLAPI void APIENTRY glTexEnvfv( GLenum target, GLenum pname, const GLfloat *params ) {}
+GLAPI void APIENTRY glTexGenf( GLenum coord, GLenum pname, GLfloat param ) {}
 
-void glScissor( GLint x, GLint y, GLsizei width, GLsizei height) {
-}
-
-void glSelectBuffer( GLsizei size, GLuint *buffer ) {
-}
-
-void glTexCoord1f( GLfloat s ) {
-}
-
-void glTexCoord2fv( const GLfloat *v ) {
-}
-
-void glTexCoord3f( GLfloat s, GLfloat t, GLfloat r ) {
-}
-
-void glTexCoord4f( GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
-}
-
-void glTexEnvfv( GLenum target, GLenum pname, const GLfloat *params ) {
-}
-
-void glTexGenf( GLenum coord, GLenum pname, GLfloat param ) {
-}
-
-void glTexImage1D( GLenum target, GLint level,
+GLAPI void APIENTRY glTexImage1D( GLenum target, GLint level,
                                     GLint internalFormat,
                                     GLsizei width, GLint border,
                                     GLenum format, GLenum type,
                                     const GLvoid *pixels ) {
 }
 
-void glVertex3fv( const GLfloat *v ) {
-}
+GLAPI void APIENTRY glVertex3fv( const GLfloat *v ) {}
+GLAPI void APIENTRY glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {}
+GLAPI void APIENTRY glClipPlane( GLenum plane, const GLdouble *equation ) {}
+GLAPI void APIENTRY glMatrixMode(GLenum mode) {}
 
-void glVertex4f( GLfloat x, GLfloat y, GLfloat z, GLfloat w ) {
-}
-
-void glClipPlane( GLenum plane, const GLdouble *equation ) {
-}
-
-void glMatrixMode(GLenum mode) {
-}
-
-void  glGetBooleanv( GLenum pname, GLboolean *params ) {
+GLAPI void APIENTRY  glGetBooleanv( GLenum pname, GLboolean *params ) {
    *params = 0;
 }
 
-void glLoadMatrixd( const GLdouble *m ) {
-}
+GLAPI void APIENTRY glLoadMatrixd( const GLdouble *m ) {}
+GLAPI void APIENTRY glViewport(GLint x, GLint y,
+                                    GLsizei width, GLsizei height) {}
+GLAPI void APIENTRY glNewList( GLuint list, GLenum mode ) {}
+GLAPI void APIENTRY glStencilFunc( GLenum func, GLint ref, GLuint mask ) {}
+GLAPI void APIENTRY glStencilMask( GLuint mask ) {}
+GLAPI void APIENTRY glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ) {}
+GLAPI void APIENTRY glBlendEquation( GLenum mode ) {}
+GLAPI void APIENTRY glEnableClientState( GLenum cap ) {}
+GLAPI void APIENTRY glDisableClientState( GLenum cap ) {}
+GLAPI void APIENTRY glVertexPointer( GLint size, GLenum type,
+                                       GLsizei stride, const GLvoid *ptr ){}
+GLAPI void APIENTRY glTexCoordPointer( GLint size, GLenum type,
+                                         GLsizei stride, const GLvoid *ptr ){}
+GLAPI void APIENTRY glDrawArrays( GLenum mode, GLint first, GLsizei count ) {}
 
-void glViewport(GLint x, GLint y,
-                                    GLsizei width, GLsizei height) {
-}
-
-void  glNewList( GLuint list, GLenum mode ){
-}
-
-void glStencilFunc( GLenum func, GLint ref, GLuint mask ){}
-
-void glStencilMask( GLuint mask ){}
-
-void glStencilOp( GLenum fail, GLenum zfail, GLenum zpass ){}
-
-void glBlendEquation( GLenum mode ) {
-}
-
-void glEnableClientState( GLenum cap ){
-}
-
-void glDisableClientState( GLenum cap ) {
-}
-
-void glVertexPointer( GLint size, GLenum type,
-                                       GLsizei stride, const GLvoid *ptr ){
-}
-
-void  glTexCoordPointer( GLint size, GLenum type,
-                                         GLsizei stride, const GLvoid *ptr ){
-}
-
-void  glDrawArrays( GLenum mode, GLint first, GLsizei count ) {
-}
-
-void glTexEnvi(  GLenum target, GLenum pname, GLint param ){
+GLAPI void APIENTRY glTexEnvi(  GLenum target, GLenum pname, GLint param ){
  //  printf("glTexEnvi\n");
 }
 
-void glMultMatrixd( const GLdouble *m ) {
-}
-
-void glMultMatrixf( const GLfloat *m ) {
-}
-
-void glTexGeni( GLenum coord, GLenum pname, GLint param ) {
-}
-
-void glTexGenfv( GLenum coord, GLenum pname, const GLfloat *params ) {
-}
-
-void glLightModeli( GLenum pname, GLint param ) {
-}
-
-void  glMaterialfv( GLenum face, GLenum pname, const GLfloat *params ) {
-}
-
-void glMaterialf( GLenum face, GLenum pname, GLfloat param ) {
-}
-
-void glPointSize( GLfloat size ) {
-}
-
- void glCullFace( GLenum mode ) {
-}
-
-void glLogicOp( GLenum opcode ) {
-}
-
-void  glEndList( void ){
-}
+GLAPI void APIENTRY glMultMatrixd( const GLdouble *m ) {}
+GLAPI void APIENTRY glMultMatrixf( const GLfloat *m ) {}
+GLAPI void APIENTRY glTexGeni( GLenum coord, GLenum pname, GLint param ) {}
+GLAPI void APIENTRY glTexGenfv( GLenum coord, GLenum pname, const GLfloat *params ) {}
+GLAPI void APIENTRY glLightModeli( GLenum pname, GLint param ) {}
+GLAPI void APIENTRY  glMaterialfv( GLenum face, GLenum pname, const GLfloat *params ) {}
+GLAPI void APIENTRY glMaterialf( GLenum face, GLenum pname, GLfloat param ) {}
+GLAPI void APIENTRY glPointSize( GLfloat size ) {}
+GLAPI void APIENTRY glCullFace( GLenum mode ) {}
+GLAPI void APIENTRY glLogicOp( GLenum opcode ) {}
+GLAPI void APIENTRY glEndList( void ){}
 
 // used by lua
-GLuint glGenLists( GLsizei range ) {
+GLAPI GLuint APIENTRY glGenLists( GLsizei range ) {
    return 0;
 }
 
-void glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) {
-}
-
-void glLoadIdentity() {
-}
-
-void glOrtho(GLdouble left, GLdouble right,
+GLAPI void APIENTRY glColorMask( GLboolean red, GLboolean green, GLboolean blue, GLboolean alpha ) {}
+GLAPI void APIENTRY glLoadIdentity() {}
+GLAPI void APIENTRY glOrtho(GLdouble left, GLdouble right,
                                  GLdouble bottom, GLdouble top,
-                                 GLdouble near_val, GLdouble far_val) {
-}
+                                 GLdouble near_val, GLdouble far_val) {}
 
-void glGenTextures(GLsizei n, GLuint *textures) {
+GLAPI void APIENTRY glGenTextures(GLsizei n, GLuint *textures) {
    //*textures = 0;
 }
 
-void glBindTexture(GLenum target, GLuint texture) {
-}
-
-void glCompressedTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data ) {
+GLAPI void APIENTRY glBindTexture(GLenum target, GLuint texture) {}
+GLAPI void APIENTRY glCompressedTexImage2D( GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid *data ) {
      //printf("glCompressedTexImage2D\n"); 
 }
 
-void glColorPointer( GLint size, GLenum type,
+GLAPI void APIENTRY glColorPointer( GLint size, GLenum type,
                                       GLsizei stride, const GLvoid *ptr ) {
    //*ptr = 0;
 }
 
-void glTexParameteri(GLenum target, GLenum pname, GLint param) {
+GLAPI void APIENTRY glTexParameteri(GLenum target, GLenum pname, GLint param) {
    //printf( "glTexParameteri\n" );
 }
 
-void  glTexParameterf( GLenum target, GLenum pname, GLfloat param ){
+GLAPI void APIENTRY glTexParameterf( GLenum target, GLenum pname, GLfloat param ){
    //printf ( "glTexParameterf\n" );
 }
 
-void glTexParameterfv(GLenum target, GLenum pname,
+GLAPI void APIENTRY glTexParameterfv(GLenum target, GLenum pname,
                                           const GLfloat *params) {
   // printf(  "glTexParameterfv\n" );
 }
 
-void glTexImage2D(GLenum target, GLint level,
+GLAPI void APIENTRY glTexImage2D(GLenum target, GLint level,
                                     GLint internalFormat,
                                     GLsizei width, GLsizei height,
                                     GLint border, GLenum format, GLenum type,
@@ -364,152 +223,84 @@ void glTexImage2D(GLenum target, GLint level,
   // printf( "glTexImage2D\n" );
 }
 
-void glClear(GLbitfield mask) {
-}
+GLAPI void APIENTRY glClear(GLbitfield mask) {}
+GLAPI void APIENTRY glBegin(GLenum mode) {}
+GLAPI void APIENTRY glTexCoord2i(GLint s, GLint t ){}
+GLAPI void APIENTRY glVertex2f(GLfloat x, GLfloat y ) {}
+GLAPI void APIENTRY glVertex3f(GLfloat x, GLfloat y, GLfloat z){}
+GLAPI void APIENTRY glEnd() {}
 
-void glBegin(GLenum mode) {
-}
-
-void glTexCoord2i(GLint s, GLint t ){
-}
-
-void glVertex2f(GLfloat x, GLfloat y ) {
-}
-
-void glVertex3f(GLfloat x, GLfloat y, GLfloat z){
-}
-
-void glEnd() {
-}
-
-void glDeleteTextures(GLsizei n, const GLuint *textures) {
+GLAPI void APIENTRY glDeleteTextures(GLsizei n, const GLuint *textures) {
    //int i = 0;
    //for( i = 0; i < n; i++ ) {
     //  textures[i] = 0;
    //}
 }
 
-void glGetIntegerv(GLenum pname, GLint *params) {
-}
-
-void glDepthFunc(GLenum func) {
-}
-
-void glShadeModel(GLenum mode) {
-}
+GLAPI void APIENTRY glGetIntegerv(GLenum pname, GLint *params) {}
+GLAPI void APIENTRY glDepthFunc(GLenum func) {}
+GLAPI void APIENTRY glShadeModel(GLenum mode) {}
 
 //void gluPerspective() {
 //}
 
-void glHint(GLenum target, GLenum mode) {
-}
+GLAPI void APIENTRY glHint(GLenum target, GLenum mode) {}
+GLAPI void APIENTRY glTexEnvf(GLenum target, GLenum pname, GLfloat param ) {}
 
-void glTexEnvf(GLenum target, GLenum pname, GLfloat param ) {
-}
-
-const GLubyte * glGetString( GLenum name ) {
+GLAPI const APIENTRY GLubyte * glGetString( GLenum name ) {
    return "";
 }
 
-void glClearStencil(GLint s ) {
-}
+GLAPI void APIENTRY glClearStencil(GLint s ) {}
+GLAPI void APIENTRY glLightfv( GLenum light, GLenum pname,
+                                 const GLfloat *params ) {}
 
-void glLightfv( GLenum light, GLenum pname,
-                                 const GLfloat *params ) {
-}
+GLAPI void APIENTRY glDeleteLists( GLuint list, GLsizei range ) {}
+GLAPI void APIENTRY glDisable(GLenum i) {}
+GLAPI void APIENTRY glClearDepth(GLclampd depth) {}
+GLAPI void APIENTRY glColor4f( GLfloat red, GLfloat green,
+                                   GLfloat blue, GLfloat alpha ) {}
 
-void glDeleteLists( GLuint list, GLsizei range ) {
-}
-
-void glDisable(GLenum i) {
-}
-
-void glClearDepth(GLclampd depth) {
-}
-
-void glColor4f( GLfloat red, GLfloat green,
-                                   GLfloat blue, GLfloat alpha ) {
-}
-
-void glMultiTexCoord1f( GLenum target, GLfloat s ) {
+GLAPI void APIENTRY glMultiTexCoord1f( GLenum target, GLfloat s ) {
   // printf("glMultiTexCoord1f\n");
 }
 
-void glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t ) {
+GLAPI void APIENTRY glMultiTexCoord2f( GLenum target, GLfloat s, GLfloat t ) {
   // printf("glMultiTexCoord2f\n");
 }
 
-void glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
+GLAPI void APIENTRY glMultiTexCoord4f( GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q ) {
   // printf("glMultiTexCoord4f\n");
 }
 
-GLenum glGetError( void ) {
+GLAPI GLenum APIENTRY glGetError( void ) {
    return 0;
 }
 
-void glPolygonMode(GLenum face, GLenum mode) {
-}
+GLAPI void APIENTRY glPolygonMode(GLenum face, GLenum mode) {}
+GLAPI void APIENTRY glBlendFunc(GLenum sfactor, GLenum dfactor ) {}
+GLAPI void APIENTRY glTranslatef( GLfloat x, GLfloat y, GLfloat z ) {}
+GLAPI void APIENTRY glColor4fv( const GLfloat *v) {}
+GLAPI void APIENTRY glLineStipple(GLint factor, GLushort pattern) {}
+GLAPI void APIENTRY glPopAttrib() {}
+GLAPI void APIENTRY glPushAttrib(GLbitfield mask) {}
+GLAPI void APIENTRY glDepthMask(GLboolean flag) {}
+GLAPI void APIENTRY glAlphaFunc(GLenum func, GLclampf ref) {}
 
-void glBlendFunc(GLenum sfactor, GLenum dfactor ) {
-}
+GLAPI void APIENTRY glFogfv(GLenum pname, const GLfloat *params) {}
+GLAPI void APIENTRY glFogf( GLenum pname, GLfloat param ) {}
+GLAPI void APIENTRY glFogi( GLenum pname, GLint param ) {}
+GLAPI void APIENTRY glPushMatrix() {}
+GLAPI void APIENTRY glPopMatrix() {}
+GLAPI void APIENTRY glCallList( GLuint list) {}
 
-void  glTranslatef( GLfloat x, GLfloat y, GLfloat z ) {
-}
-
-void glColor4fv( const GLfloat *v) {
-}
-
-void glLineStipple(GLint factor, GLushort pattern) {
-}
-
-void glPopAttrib() {
-}
-
-void glPushAttrib(GLbitfield mask) {
-}
-
-void glDepthMask(GLboolean flag) {
-}
-
-void glAlphaFunc(GLenum func, GLclampf ref) {
-}
-
-void glFogfv(GLenum pname, const GLfloat *params) {
-}
-
-void  glFogf( GLenum pname, GLfloat param ) {
-}
-
-void glFogi( GLenum pname, GLint param ) {
-}
-
-void glPushMatrix() {
-}
-
-void glPopMatrix() {
-}
-
-void glCallList( GLuint list) {
-}
-
-void glTexSubImage2D(GLenum target, GLint level,
+GLAPI void APIENTRY glTexSubImage2D(GLenum target, GLint level,
                                        GLint xoffset, GLint yoffset,
                                        GLsizei width, GLsizei height,
                                        GLenum format, GLenum type,
-                                       const GLvoid *pixels ) {
-}
+                                       const GLvoid *pixels ) {}
 
-void glTexCoord2f(GLfloat s, GLfloat t ) {
-}
-
-void glLineWidth(GLfloat width) {
-}
-
-void glColor3f(GLfloat red, GLfloat green, GLfloat blue ) {
-}
-
-void glPolygonOffset(GLfloat factor, GLfloat units) {
-}
-
-
-
+GLAPI void APIENTRY glTexCoord2f(GLfloat s, GLfloat t ) {}
+GLAPI void APIENTRY glLineWidth(GLfloat width) {}
+GLAPI void APIENTRY glColor3f(GLfloat red, GLfloat green, GLfloat blue ) {}
+GLAPI void APIENTRY glPolygonOffset(GLfloat factor, GLfloat units) {}
