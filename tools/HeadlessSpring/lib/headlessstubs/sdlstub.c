@@ -103,6 +103,11 @@ int SDL_PollEvent(SDL_Event *event) {
    return 0;
 }
 
+int SDL_PushEvent(SDL_Event *event) {
+ //  printf("PushEvent\n");
+   return 0;
+}
+
 void SDL_WM_SetIcon(SDL_Surface *icon, Uint8 *mask) {
    printf("SetIcon\n");
 }
