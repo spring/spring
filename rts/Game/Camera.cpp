@@ -145,13 +145,15 @@ static bool CalculateInverse4x4(const double m[4][4], double inv[4][4])
 	return true;
 }
 
-void CCamera::Update(bool freeze)
+void CCamera::Update(bool freeze, bool resetUp)
 {
 	pos2 = pos;
-	
-	up.x = 0.0f;
-	up.y = 1.0f;
-	up.z = 0.0f;
+
+	if (resetUp) {
+		up.x = 0.0f;
+		up.y = 1.0f;
+		up.z = 0.0f;
+	}
 
 	right = forward.cross(up);
 	right.UnsafeANormalize();

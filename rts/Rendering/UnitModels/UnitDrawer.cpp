@@ -1491,7 +1491,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	if (camera->forward.y == -1)
 		camera->up = float3(0, 0, -1);
 	camera->pos.y = ground->GetHeight(camera->pos.x, camera->pos.z) + 50;
-	camera->Update(false);
+	camera->Update(false, false);
 
 	sky->Draw();
 	readmap->GetGroundDrawer()->Draw(false, true);
