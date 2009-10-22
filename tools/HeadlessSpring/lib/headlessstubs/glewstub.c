@@ -166,7 +166,7 @@ void _glewMultiTexCoord4fARB(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLf
 }
 
 #if       defined WIN32
-EXTERN void* wglGetProcAddress(const char* bla) {
+EXTERN void* wglGetProcAddress(LPCSTR) {
    //printf("wglGetProcAddress\n");
    return NULL;
 }
