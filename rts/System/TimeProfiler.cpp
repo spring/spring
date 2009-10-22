@@ -60,7 +60,7 @@ void CTimeProfiler::Update()
 	GML_STDMUTEX_LOCK_NOPROF(time); // Update
 
 	++currentPosition;
-	currentPosition &= 127;
+	currentPosition &= TimeRecord::frames_size-1;
 	std::map<std::string,TimeRecord>::iterator pi;
 	for (pi = profile.begin(); pi != profile.end(); ++pi)
 	{
@@ -104,7 +104,7 @@ void CTimeProfiler::AddTime(const std::string& name, unsigned time)
 		profile[name].total=time;
 		profile[name].current=time;
 		profile[name].percent=0;
-		memset(profile[name].frames, 0, 128*sizeof(unsigned));
+		memset(profile[name].frames, 0, TimeRecord::frames_size*sizeof(unsigned));
 		static UnsyncedRNG rand;
 		rand.Seed(SDL_GetTicks());
 		profile[name].color.x = rand.RandFloat();
