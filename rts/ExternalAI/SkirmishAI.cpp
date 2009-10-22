@@ -26,9 +26,8 @@ CSkirmishAI::CSkirmishAI(int teamId, const SkirmishAIKey& key,
 		const SSkirmishAICallback* c_callback) :
 		teamId(teamId),
 		key(key),
-		timerName("SkirmishAI:" +
-		          key.GetShortName() + "-" + key.GetVersion() +
-		          ":" + IntToString(teamId)),
+		timerName("AI t:" + IntToString(teamId) + " " +
+		          key.GetShortName() + " " + key.GetVersion()),
 		dieing(false)
 {
 	SCOPED_TIMER(timerName.c_str());
