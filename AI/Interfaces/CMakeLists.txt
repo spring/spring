@@ -7,7 +7,8 @@
 add_definitions(-DBUILDING_AI_INTERFACE)
 
 set(AI_INTERFACES_SRC        "${CMAKE_CURRENT_SOURCE_DIR}")
-set(AI_INTERFACES_DATA       "${AI_DATADIR}/AI/Interfaces")
+set(AI_INTERFACES_LIBS       "${AI_LIBS_DIR}/AI/Interfaces")
+set(AI_INTERFACES_DATA       "${AI_DATA_DIR}/AI/Interfaces")
 set(AIINTERFACE_FIND_QUIETLY ${AI_FIND_QUIETLY})
 
 
