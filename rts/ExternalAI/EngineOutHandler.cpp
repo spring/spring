@@ -122,7 +122,7 @@ CEngineOutHandler::~CEngineOutHandler() {
 // This macro should be insterted at the start of each method sending AI events
 #define AI_EVT_MTH()                           \
 		if (id_skirmishAI.size() == 0) return; \
-		SCOPED_TIMER("SkirmishAI");
+		SCOPED_TIMER("AI Total");
 
 
 #define DO_FOR_SKIRMISH_AIS(FUNC)                          \
@@ -434,7 +434,7 @@ void CEngineOutHandler::GotChatMsg(const char* msg, int fromPlayerId) {
 
 
 void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
-	SCOPED_TIMER("SkirmishAI");
+	SCOPED_TIMER("AI Total");
 
 	//const bool unpauseAfterAIInit = configHandler->Get("AI_UnpauseAfterInit", true);
 
@@ -496,7 +496,7 @@ void CEngineOutHandler::CreateSkirmishAI(const size_t skirmishAIId) {
 }
 
 void CEngineOutHandler::SetSkirmishAIDieing(const size_t skirmishAIId) {
-	SCOPED_TIMER("SkirmishAI");
+	SCOPED_TIMER("AI Total");
 
 	try {
 		id_skirmishAI[skirmishAIId]->Dieing();
@@ -516,7 +516,7 @@ static void internal_aiErase(std::vector<size_t>& ais, const size_t skirmishAIId
 }
 
 void CEngineOutHandler::DestroySkirmishAI(const size_t skirmishAIId) {
-	SCOPED_TIMER("SkirmishAI");
+	SCOPED_TIMER("AI Total");
 
 	try {
 		CSkirmishAIWrapper* aiWrapper = id_skirmishAI[skirmishAIId];

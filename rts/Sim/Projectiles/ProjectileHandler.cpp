@@ -465,7 +465,7 @@ void CProjectileHandler::UpdateProjectileContainer(ProjectileContainer& pc, bool
 
 void CProjectileHandler::Update()
 {
-	SCOPED_TIMER("ProjectileHandler::Update");
+	SCOPED_TIMER("Projectile Update");
 
 	GML_UPDATE_TICKS();
 

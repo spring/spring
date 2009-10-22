@@ -3059,7 +3059,7 @@ bool CGame::Draw() {
 
 	CBaseGroundDrawer* gd = 0;
 	if (doDrawWorld) {
-		SCOPED_TIMER("GroundUpdate");
+		SCOPED_TIMER("Ground Update");
 		gd = readmap->GetGroundDrawer();
 		gd->Update(); // let it update before shadows have to be drawn
 	}
@@ -3188,7 +3188,7 @@ bool CGame::Draw() {
 	glEnable(GL_TEXTURE_2D);
 
 	{
-		SCOPED_TIMER("Interface draw");
+		SCOPED_TIMER("Draw interface");
 		if (hideInterface) {
 			//luaInputReceiver->Draw();
 		}
