@@ -118,6 +118,7 @@ TARGET_LINK_LIBRARIES(spring-headlessstubs ${spring_headlessstubs_libraries} )
 
 IF (MINGW)
 	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
+	SET_TARGET_PROPERTIES(spring-headlessstubs PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 	#install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
