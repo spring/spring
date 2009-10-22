@@ -26,7 +26,7 @@ void ProfileDrawer::Disable()
 	}
 }
 
-static const float start_x = 0.55f;
+static const float start_x = 0.6f;
 static const float end_x   = 0.99f;
 static const float end_y   = 0.99f;
 static const float start_y = 0.965f;
@@ -62,7 +62,7 @@ void ProfileDrawer::Draw()
 		const float fStartY = start_y - y * 0.024f;
 
 		// print total-time running since application start
-		fStartX += 0.1f;
+		fStartX += 0.09f;
 		font->glFormat(fStartX, fStartY, 0.7f, FONT_BASELINE | FONT_SCALE | FONT_NORM | FONT_RIGHT, "%.2fs", s);
 
 		// print percent of CPU time used within the last 500ms
