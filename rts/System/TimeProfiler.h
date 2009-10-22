@@ -59,7 +59,8 @@ public:
 	struct TimeRecord {
 		unsigned total;
 		unsigned current;
-		unsigned frames[128];
+		static const unsigned frames_size = 128;
+		unsigned frames[frames_size];
 		float percent;
 		float3 color;
 		bool showGraph;
@@ -78,7 +79,7 @@ public:
 
 private:
 	unsigned lastBigUpdate;
-	/// increases each update, from 0 to 127
+	/// increases each update, from 0 to (frames_size-1)
 	unsigned currentPosition;
 };
 
