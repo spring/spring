@@ -38,14 +38,3 @@ void CLoadScript::ScriptSelected()
 	started = false;
 	loadGame = true;
 }
-
-std::string CLoadScript::GetMapName()
-{
-	return loader.mapName;
-}
-
-std::string CLoadScript::GetModName()
-{
-	// this is the second time we get called after getting choosen
-	return loader.modName;
-}

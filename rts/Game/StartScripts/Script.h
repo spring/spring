@@ -17,8 +17,6 @@ public:
 
 	virtual void ScriptSelected();
 	virtual void GameStart();
-	virtual std::string GetMapName();
-	virtual std::string GetModName();
 
 	bool wantCameraControl;
 	bool onlySinglePlayer;

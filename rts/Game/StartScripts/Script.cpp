@@ -46,13 +46,3 @@ void CScript::ScriptSelected()
 void CScript::GameStart()
 {
 }
-
-std::string CScript::GetMapName()
-{
-	return "";
-}
-
-std::string CScript::GetModName()
-{
-	return "";
-}
