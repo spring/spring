@@ -1,7 +1,6 @@
 ### AI
 #
 # Global variables set in this file:
-# * AI_DATADIR
 # * AI_EXCLUDE_REGEX
 # * AI_FIND_QUIETLY
 #
@@ -16,7 +15,6 @@ add_definitions(-DBUILDING_AI)
 
 
 ### User-definable build options
-set (AI_DATADIR       ${DATADIR} CACHE STRING "Where AIs are installed")
 set (AI_EXCLUDE_REGEX "XXXXXXXX" CACHE STRING "Which Skirmish AIs not to build (none by default, example: \"NTai|Null.*AI\", see also: AI_TYPES")
 set (AI_FIND_QUIETLY  FALSE      CACHE BOOL   "Whether to find AI Interfaces and Skirmish AIs quietly")
 
@@ -125,6 +123,7 @@ endmacro (GetNativeSourcesRecursive _var _dir _relDir)
 ################################################################################
 
 
+# Wrappers have to come first cause the Interfaces use the CUtils Wrapper too
 Add_Subdirectory(Wrappers)
 Add_Subdirectory(Interfaces)
 Add_Subdirectory(Skirmish)

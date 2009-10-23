@@ -127,7 +127,8 @@ macro    (ConfigureJavaSkirmishAI)
 	set(myJLibDir       "${myDir}/data/jlib")
 	GetVersionFromFile(myVersion "${myDir}/VERSION")
 	set(myTarget        "${myName}")
-	set(myDataDir       "${SKIRMISH_DATA}/${myName}/${myVersion}")
+	set(myInstLibsDir   "${SKIRMISH_AI_LIBS}/${myName}/${myVersion}")
+	set(myInstDataDir   "${SKIRMISH_AI_DATA}/${myName}/${myVersion}")
 	# CMAKE_CURRENT_BINARY_DIR: .../spring-build-dir/AI/Skirmish/${myName}
 	set(myBuildDir      "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -242,14 +243,14 @@ macro    (ConfigureJavaSkirmishAI)
 		endif (configureMavenProject)
 
 		# Install the data files
-		install(DIRECTORY "${myDir}/data/"                DESTINATION ${myDataDir})
+		install(DIRECTORY "${myDir}/data/"               DESTINATION ${myInstDataDir})
 		# Install the library
-		install (FILES    "${myBuildDir}/${myBinJarFile}" DESTINATION ${myDataDir})
+		install(FILES    "${myBuildDir}/${myBinJarFile}" DESTINATION ${myInstDataDir})
 		# Install the sources archive (optional)
-		install (FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myDataDir}/jlib OPTIONAL)
+		install(FILES    "${myBuildDir}/${mySrcJarFile}" DESTINATION ${myInstDataDir}/jlib OPTIONAL)
 		if     (EXISTS "${myBuildDir}/jlib")
 			# Install libraries generated/downloaded during buildtime
-			install(DIRECTORY "${myBuildDir}/jlib/"       DESTINATION ${myDataDir}/jlib)
+			install(DIRECTORY "${myBuildDir}/jlib/"      DESTINATION ${myInstDataDir}/jlib)
 		endif  (EXISTS "${myBuildDir}/jlib")
 	endif (BUILD_THIS_SKIRMISHAI)
 endmacro (ConfigureJavaSkirmishAI)
@@ -314,8 +315,9 @@ endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
-	set(myTarget  "${myName}-AIInterface")
-	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	set(myTarget      "${myName}-AIInterface")
+	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
+	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	MakeAbsolute(myNativeSourceDir "${myDir}" "${myNativeSourceDirRel}")
 	MakeAbsolute(myJavaSourceDir   "${myDir}" "${myJavaSourceDirRel}")
 
@@ -453,7 +455,6 @@ if    (BUILD_${myName}_AIINTERFACE)
 	include_directories(BEFORE "${rts}/lib/streflop" "${myNativeSourceDir}" "${myNativeGeneratedSourceDir}")
 	add_library(${myTarget} MODULE ${myNativeSources} ${NATIVE_GENERATED_SOURCES} ${ai_common_SRC} ${CUtils_SRC})
 	add_dependencies(${myTarget} ${myTarget}-generateClb)
-	install(TARGETS ${myTarget} DESTINATION ${myDataDir})
 	target_link_libraries(${myTarget} streflop)
 	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "AIInterface")
@@ -499,10 +500,13 @@ if    (BUILD_${myName}_AIINTERFACE)
 		WORKING_DIRECTORY "${myBuildDir}"
 		COMMENT "  Updating Java interface source archive ${mySrcJarFile} with generated sources ..." VERBATIM)
 
+	# Install the native library
+	install(TARGETS   ${myTarget} DESTINATION ${myInstLibsDir})
 	# Install the data files
-	install(DIRECTORY "${myDir}/data/" DESTINATION ${myDataDir})
+	install(DIRECTORY "${myDir}/data/" DESTINATION ${myInstLibsDir} FILES_MATCHING PATTERN REGEX "InterfaceInfo\\.lua$")
+	install(DIRECTORY "${myDir}/data/" DESTINATION ${myInstDataDir} FILES_MATCHING PATTERN REGEX "InterfaceInfo\\.lua$" EXCLUDE PATTERN "*")
 	# Install the library
-	install(FILES     "${myBuildDir}/${myBinJarFile}"  DESTINATION ${myDataDir})
+	install(FILES     "${myBuildDir}/${myBinJarFile}"  DESTINATION ${myInstDataDir})
 	# Install the sources archive
-	install(FILES     "${myBuildDir}/${mySrcJarFile}"  DESTINATION ${myDataDir}/jlib)
+	install(FILES     "${myBuildDir}/${mySrcJarFile}"  DESTINATION ${myInstDataDir}/jlib)
 endif (BUILD_${myName}_AIINTERFACE)

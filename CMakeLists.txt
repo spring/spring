@@ -6,8 +6,8 @@ LIST(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/rts/build/cmake")
 
 ### Install path (relative to CMAKE_INSTALL_PREFIX)
 if    (UNIX AND NOT MINGW)
-	set (BINDIR "bin" CACHE STRING "Where to install binaries")
-	set (LIBDIR "lib" CACHE STRING "Where to install libraries")
+	set (BINDIR  "bin"                CACHE STRING "Where to install binaries")
+	set (LIBDIR  "lib"                CACHE STRING "Where to install libraries")
 	set (DATADIR "share/games/spring" CACHE STRING "Where to install game content")
 
 	set (APPLICATIONS_DIR "share/applications" CACHE STRING "Where to install desktop files")
@@ -15,8 +15,8 @@ if    (UNIX AND NOT MINGW)
 	set (MIME_DIR "share/mime"CACHE STRING "Where MIME definitions are located")
 	set (STABS_DEBUG_SYMBOLS FALSE CACHE BOOL "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version).")
 else  (UNIX AND NOT MINGW)
-	set (BINDIR "." CACHE STRING "Where to install binaries")
-	set (LIBDIR "." CACHE STRING "Where to install libraries")
+	set (BINDIR  "." CACHE STRING "Where to install binaries")
+	set (LIBDIR  "." CACHE STRING "Where to install libraries")
 	set (DATADIR "." CACHE STRING "Where to install game content")
 
 	set(MINGWLIBS ${CMAKE_SOURCE_DIR}/mingwlibs CACHE PATH "Location of the mingwlibs package")
@@ -36,7 +36,10 @@ else  (UNIX AND NOT MINGW)
 	set (STABS_DEBUG_SYMBOLS FALSE CACHE BOOL "Use stabs debug symbols (-stabs) instead of the GDB format (-gdb). This probably makes gdb and eg. addr2line work better with windows binaries (depends mainly on the tools version).")
 endif (UNIX AND NOT MINGW)
 
-set (AI_TYPES "ALL" CACHE STRING "Which AI Interfaces (and Skirmish AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
+# In theory, it should be possible to set this to LIBDIR instead
+set (AI_LIBS_DIR "${DATADIR}"     CACHE STRING "Where to install Skirmish AI libraries")
+set (AI_DATA_DIR "${AI_LIBS_DIR}" CACHE STRING "Where to install Skirmish AI additional files (eg. configuration)")
+set (AI_TYPES    "ALL"            CACHE STRING "Which AI Interfaces (and Skirmish AIs using them) to build [ALL|NATIVE|JAVA|NONE]")
 
 set(SYNCCHECK TRUE CACHE BOOL "Check sync during gameplay (Required for online play!)")
 if    (SYNCCHECK)
@@ -62,6 +65,7 @@ else (CMAKE_HOST_WIN32)
 	set(PATH_DELIM ":")
 endif(CMAKE_HOST_WIN32)
 
+set(BUILTIN_DATADIRS "")
 if    (NOT MINGW)
 	set (SPRING_DATADIR CACHE STRING "Path to game content (in addition to /etc/spring/datadir)")
 	set (SPRING_DATADIR_INTERNAL "")
@@ -69,8 +73,19 @@ if    (NOT MINGW)
 		set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR}${PATH_DELIM}")
 	endif (SPRING_DATADIR)
 	set (SPRING_DATADIR_INTERNAL "${SPRING_DATADIR_INTERNAL}${CMAKE_INSTALL_PREFIX}/${DATADIR}")
-	add_definitions(-DSPRING_DATADIR="${SPRING_DATADIR_INTERNAL}")
+	set(BUILTIN_DATADIRS "${SPRING_DATADIR_INTERNAL}")
 endif (NOT MINGW)
+if    (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
+	# If the AI library dir is not the same as the normal data dir,
+	# add it to the internal list of data dirs
+	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM}${AI_LIBS_DIR}")
+endif (NOT "${AI_LIBS_DIR}" STREQUAL "${DATADIR}")
+if    (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
+	# If the AI data dir is not the same as the normal data dir
+	# nor the AI library dir, add it to the internal list of data dirs
+	set(BUILTIN_DATADIRS "${BUILTIN_DATADIRS}${PATH_DELIM}${AI_LIBS_DIR}")
+endif (NOT "${AI_DATA_DIR}" STREQUAL "${DATADIR}" AND NOT "${AI_DATA_DIR}" STREQUAL "${AI_LIBS_DIR}")
+add_definitions(-DSPRING_DATADIR="${BUILTIN_DATADIRS}")
 
 set (CUSTOM_COMPILER_DEFINITIONS "" CACHE STRING "Custom flags can be defined here")
 if    (CUSTOM_COMPILER_DEFINITIONS)
