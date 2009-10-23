@@ -23,7 +23,6 @@
 // major though in advance, and deliberation with hoijui!
 
 #include "aidefines.h"
-#include "SAIFloat3.h"
 
 #ifdef	__cplusplus
 extern "C" {
@@ -268,7 +267,7 @@ struct SGiveMeResourceCheatCommand {
  */
 struct SGiveMeNewUnitCheatCommand {
 	int unitDefId;
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	int ret_newUnitId;
 }; // COMMAND_CHEATS_GIVE_ME_NEW_UNIT
 
@@ -285,7 +284,7 @@ struct SSendTextMessageCommand {
  * Assigns a map location to the last text message sent by the AI.
  */
 struct SSetLastPosMessageCommand {
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 }; // COMMAND_SET_LAST_POS_MESSAGE
 
 /**
@@ -358,8 +357,8 @@ struct SRemoveUnitFromGroupCommand {
  *   y = -1: end of path reached or path is invalid
  */
 struct SInitPathCommand {
-	struct SAIFloat3 start;
-	struct SAIFloat3 end;
+	float* start_posF3;
+	float* end_posF3;
 	int pathType;
 	int ret_pathId;
 }; // COMMAND_PATH_INIT
@@ -370,14 +369,14 @@ struct SInitPathCommand {
  * NOTE: currently disabled, always returns 0
  */
 struct SGetApproximateLengthPathCommand {
-	struct SAIFloat3 start;
-	struct SAIFloat3 end;
+	float* start_posF3;
+	float* end_posF3;
 	int pathType;
 	int ret_approximatePathLength;
 }; // COMMAND_PATH_GET_APPROXIMATE_LENGTH
 struct SGetNextWaypointPathCommand {
 	int pathId;
-	struct SAIFloat3 ret_nextWaypoint;
+	float* ret_nextWaypoint_posF3_out;
 }; // COMMAND_PATH_GET_NEXT_WAYPOINT
 struct SFreePathCommand {
 	int pathId;
@@ -396,56 +395,56 @@ struct SCallLuaRulesCommand {
 struct SSendStartPosCommand {
 	bool ready;
 	/// on this position, only x and z matter
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 }; // COMMAND_SEND_START_POS
 
 struct SAddNotificationDrawerCommand {
 	/// on this position, only x and z matter
-	struct SAIFloat3 pos;
-	struct SAIFloat3 color;
+	float* pos_posF3;
+	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_ADD_NOTIFICATION
 struct SAddPointDrawCommand {
 	/// on this position, only x and z matter
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	/// create this text on pos in my team color
 	const char* label;
 }; // COMMAND_DRAWER_POINT_ADD
 struct SRemovePointDrawCommand {
 	/// remove map points and lines near this point (100 distance)
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 }; // COMMAND_DRAWER_POINT_REMOVE
 struct SAddLineDrawCommand {
 	/// draw line from this pos
-	struct SAIFloat3 posFrom;
+	float* posFrom_posF3;
 	/// to this pos, again only x and z matter
-	struct SAIFloat3 posTo;
+	float* posTo_posF3;
 }; // COMMAND_DRAWER_LINE_ADD
 
 struct SStartPathDrawerCommand {
-	struct SAIFloat3 pos;
-	struct SAIFloat3 color;
+	float* pos_posF3;
+	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_PATH_START
 struct SFinishPathDrawerCommand {
 }; // COMMAND_DRAWER_PATH_FINISH
 struct SDrawLinePathDrawerCommand {
-	struct SAIFloat3 endPos;
-	struct SAIFloat3 color;
+	float* endPos_posF3;
+	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_PATH_DRAW_LINE
 struct SDrawLineAndIconPathDrawerCommand {
 	int cmdId;
-	struct SAIFloat3 endPos;
-	struct SAIFloat3 color;
+	float* endPos_posF3;
+	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON
 struct SDrawIconAtLastPosPathDrawerCommand {
 	int cmdId;
 }; // COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS
 struct SBreakPathDrawerCommand {
-	struct SAIFloat3 endPos;
-	struct SAIFloat3 color;
+	float* endPos_posF3;
+	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_PATH_BREAK
 struct SRestartPathDrawerCommand {
@@ -465,10 +464,10 @@ struct SRestartPathDrawerCommand {
  * - <arrow> == true means that the figure will get an arrow at the end
  */
 struct SCreateSplineFigureDrawerCommand {
-	struct SAIFloat3 pos1;
-	struct SAIFloat3 pos2;
-	struct SAIFloat3 pos3;
-	struct SAIFloat3 pos4;
+	float* pos1_posF3;
+	float* pos2_posF3;
+	float* pos3_posF3;
+	float* pos4_posF3;
 	float width;
 	/// true: means that the figure will get an arrow at the end
 	bool arrow;
@@ -491,8 +490,8 @@ struct SCreateSplineFigureDrawerCommand {
  * @param arrow true means that the figure will get an arrow at the end
  */
 struct SCreateLineFigureDrawerCommand {
-	struct SAIFloat3 pos1;
-	struct SAIFloat3 pos2;
+	float* pos1_posF3;
+	float* pos2_posF3;
 	float width;
 	/// true: means that the figure will get an arrow at the end
 	bool arrow;
@@ -509,7 +508,7 @@ struct SCreateLineFigureDrawerCommand {
 struct SSetColorFigureDrawerCommand {
 	int figureGroupId;
 	/// (x, y, z) -> (red, green, blue)
-	struct SAIFloat3 color;
+	short* color_colorS3;
 	float alpha;
 }; // COMMAND_DRAWER_FIGURE_SET_COLOR
 /**
@@ -526,7 +525,7 @@ struct SDeleteFigureDrawerCommand {
  */
 struct SDrawUnitDrawerCommand {
 	int toDrawUnitDefId;
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	/// in radians
 	float rotation;
 	/// specifies how many frames a figure should live before being auto-removed; 0 means no removal
@@ -549,7 +548,7 @@ struct SBuildUnitCommand {
 	int timeOut;
 
 	int toBuildUnitDefId;
-	struct SAIFloat3 buildPos;
+	float* buildPos_posF3;
 	/// set it to UNIT_COMMAND_BUILD_NO_FACING, if you do not want to specify a certain facing
 	int facing;
 }; // COMMAND_UNIT_BUILD
@@ -638,7 +637,7 @@ struct SMoveUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 toPos;
+	float* toPos_posF3;
 }; // COMMAND_UNIT_MOVE
 
 struct SPatrolUnitCommand {
@@ -649,7 +648,7 @@ struct SPatrolUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 toPos;
+	float* toPos_posF3;
 }; // COMMAND_UNIT_PATROL
 
 struct SFightUnitCommand {
@@ -660,7 +659,7 @@ struct SFightUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 toPos;
+	float* toPos_posF3;
 }; // COMMAND_UNIT_FIGHT
 
 struct SAttackUnitCommand {
@@ -683,7 +682,7 @@ struct SAttackAreaUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 toAttackPos;
+	float* toAttackPos_posF3;
 	float radius;
 }; // COMMAND_UNIT_ATTACK_AREA
 
@@ -788,7 +787,7 @@ struct SSetBaseUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 basePos;
+	float* basePos_posF3;
 }; // COMMAND_UNIT_SET_BASE
 
 //struct SInternalUnitCommand {
@@ -839,7 +838,7 @@ struct SLoadUnitsAreaUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	float radius;
 }; // COMMAND_UNIT_LOAD_UNITS_AREA
 
@@ -862,7 +861,7 @@ struct SUnloadUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 toPos;
+	float* toPos_posF3;
 	int toUnloadUnitId;
 }; // COMMAND_UNIT_UNLOAD_UNIT
 
@@ -874,7 +873,7 @@ struct SUnloadUnitsAreaUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 toPos;
+	float* toPos_posF3;
 	float radius;
 }; // COMMAND_UNIT_UNLOAD_UNITS_AREA
 
@@ -908,7 +907,7 @@ struct SReclaimAreaUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	float radius;
 }; // COMMAND_UNIT_RECLAIM_AREA
 
@@ -951,7 +950,7 @@ struct SDGunPosUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 }; // COMMAND_UNIT_D_GUN_POS
 
 struct SRestoreAreaUnitCommand {
@@ -962,7 +961,7 @@ struct SRestoreAreaUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	float radius;
 }; // COMMAND_UNIT_RESTORE_AREA
 
@@ -1007,7 +1006,7 @@ struct SResurrectAreaUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	float radius;
 }; // COMMAND_UNIT_RESURRECT_AREA
 
@@ -1030,7 +1029,7 @@ struct SCaptureAreaUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	float radius;
 }; // COMMAND_UNIT_CAPTURE_AREA
 
@@ -1079,8 +1078,8 @@ struct SCustomUnitCommand {
 }; // COMMAND_UNIT_CUSTOM
 
 struct STraceRayCommand {
-	struct SAIFloat3 rayPos;
-	struct SAIFloat3 rayDir;
+	float* rayPos_posF3;
+	float* rayDir_posF3;
 	float rayLen;
 	int srcUID;
 	int hitUID;
