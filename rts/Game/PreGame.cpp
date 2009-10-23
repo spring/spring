@@ -164,7 +164,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	setup->Init(setupscript);
 
 	startupData->SetRandomSeed(static_cast<unsigned>(gu->usRandInt()));
-	if (! setup->mapName.empty())
+	if (!setup->mapName.empty())
 	{
 		// would be better to use MapInfo here, but this doesn't work
 		LoadMap(setup->mapName); // map into VFS
@@ -176,7 +176,10 @@ void CPreGame::StartServer(const std::string& setupscript)
 			setup->scriptName = mapWantedScript;
 		}
 	}
-	// here we now the name of the script to use
+	else
+	{
+		throw content_error("No map selected in startscript");
+	}
 
 	CScriptHandler::SelectScript(setup->scriptName);
 	LoadMod(setup->modName);
