@@ -43,6 +43,90 @@ void freeSUnitCommand(void* sCommandData, int sCommandId) {
 			FREE(cmd->toLoadUnitIds);
 			break;
 		}
+		case COMMAND_UNIT_MOVE:
+		{
+			struct SMoveUnitCommand* cmd = (struct SMoveUnitCommand*) sCommandData;
+			FREE(cmd->toPos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_PATROL:
+		{
+			struct SPatrolUnitCommand* cmd = (struct SPatrolUnitCommand*) sCommandData;
+			FREE(cmd->toPos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_FIGHT:
+		{
+			struct SFightUnitCommand* cmd = (struct SFightUnitCommand*) sCommandData;
+			FREE(cmd->toPos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_ATTACK_AREA:
+		{
+			struct SAttackAreaUnitCommand* cmd = (struct SAttackAreaUnitCommand*) sCommandData;
+			FREE(cmd->toAttackPos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_SET_BASE:
+		{
+			struct SSetBaseUnitCommand* cmd = (struct SSetBaseUnitCommand*) sCommandData;
+			FREE(cmd->basePos_posF3);
+			break;
+			}
+		case COMMAND_UNIT_LOAD_UNITS_AREA:
+		{
+			struct SLoadUnitsAreaUnitCommand* cmd = (struct SLoadUnitsAreaUnitCommand*) sCommandData;
+			FREE(cmd->pos_posF3);
+			break;
+			}
+		case COMMAND_UNIT_UNLOAD_UNIT:
+		{
+			struct SUnloadUnitCommand* cmd = (struct SUnloadUnitCommand*) sCommandData;
+			FREE(cmd->toPos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_UNLOAD_UNITS_AREA:
+		{
+			struct SUnloadUnitsAreaUnitCommand* cmd = (struct SUnloadUnitsAreaUnitCommand*) sCommandData;
+			FREE(cmd->toPos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_RECLAIM_AREA:
+		{
+			struct SReclaimAreaUnitCommand* cmd = (struct SReclaimAreaUnitCommand*) sCommandData;
+			FREE(cmd->pos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_D_GUN_POS:
+		{
+			struct SDGunPosUnitCommand* cmd = (struct SDGunPosUnitCommand*) sCommandData;
+			FREE(cmd->pos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_RESTORE_AREA:
+		{
+			struct SRestoreAreaUnitCommand* cmd = (struct SRestoreAreaUnitCommand*) sCommandData;
+			FREE(cmd->pos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_RESURRECT_AREA:
+		{
+			struct SResurrectAreaUnitCommand* cmd = (struct SResurrectAreaUnitCommand*) sCommandData;
+			FREE(cmd->pos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_CAPTURE_AREA:
+		{
+			struct SCaptureAreaUnitCommand* cmd = (struct SCaptureAreaUnitCommand*) sCommandData;
+			FREE(cmd->pos_posF3);
+			break;
+		}
+		case COMMAND_UNIT_BUILD:
+		{
+			struct SBuildUnitCommand* cmd = (struct SBuildUnitCommand*) sCommandData;
+			FREE(cmd->buildPos_posF3);
+			break;
+		}
 		case COMMAND_UNIT_CUSTOM:
 		{
 			struct SCustomUnitCommand* cmd = (struct SCustomUnitCommand*) sCommandData;
@@ -52,6 +136,17 @@ void freeSUnitCommand(void* sCommandData, int sCommandId) {
 	}
 
 	FREE(sCommandData);
+}
+
+static float* allocFloatArr3(const std::vector<float>& from, const size_t firstValIndex = 0) {
+
+	float* to = (float*) calloc(3, sizeof(float));
+
+	to[0] = from[firstValIndex + 0];
+	to[1] = from[firstValIndex + 1];
+	to[2] = from[firstValIndex + 2];
+
+	return to;
 }
 
 void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId) {
@@ -131,39 +226,36 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_MOVE:
 		{
-			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SMoveUnitCommand* cmd = (SMoveUnitCommand*) malloc(sizeof (SMoveUnitCommand));
 			cmd->unitId = unitId;
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->toPos = toPos;
+			cmd->toPos_posF3 = allocFloatArr3(c->params, 0);
 
 			sCommandData = cmd;
 			break;
 		}
 		case COMMAND_UNIT_PATROL:
 		{
-			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SPatrolUnitCommand* cmd = (SPatrolUnitCommand*) malloc(sizeof (SPatrolUnitCommand));
 			cmd->unitId = unitId;
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->toPos = toPos;
+			cmd->toPos_posF3 = allocFloatArr3(c->params, 0);
 
 			sCommandData = cmd;
 			break;
 		}
 		case COMMAND_UNIT_FIGHT:
 		{
-			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SFightUnitCommand* cmd = (SFightUnitCommand*) malloc(sizeof (SFightUnitCommand));
 			cmd->unitId = unitId;
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->toPos = toPos;
+			cmd->toPos_posF3 = allocFloatArr3(c->params, 0);
 
 			sCommandData = cmd;
 			break;
@@ -182,7 +274,6 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_ATTACK_AREA:
 		{
-			SAIFloat3 toAttackPos = {c->params[0], c->params[1], c->params[2]};
 			float radius = 0.0f;
 			if (c->params.size() >= 4) radius = c->params[3];
 			SAttackAreaUnitCommand* cmd = (SAttackAreaUnitCommand*) malloc(sizeof (SAttackAreaUnitCommand));
@@ -190,7 +281,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->toAttackPos = toAttackPos;
+			cmd->toAttackPos_posF3 = allocFloatArr3(c->params, 0);
 			cmd->radius = radius;
 
 			sCommandData = cmd;
@@ -280,13 +371,12 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_SET_BASE:
 		{
-			SAIFloat3 basePos = {c->params[0], c->params[1], c->params[2]};
 			SSetBaseUnitCommand* cmd = (SSetBaseUnitCommand*) malloc(sizeof (SSetBaseUnitCommand));
 			cmd->unitId = unitId;
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->basePos = basePos;
+			cmd->basePos_posF3 = allocFloatArr3(c->params, 0);
 
 			sCommandData = cmd;
 			break;
@@ -337,7 +427,6 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_LOAD_UNITS_AREA:
 		{
-			SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 			float radius = 0.0f;
 			if (c->params.size() >= 4) radius = c->params[3];
 			SLoadUnitsAreaUnitCommand* cmd = (SLoadUnitsAreaUnitCommand*) malloc(sizeof (SLoadUnitsAreaUnitCommand));
@@ -345,7 +434,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->pos = pos;
+			cmd->pos_posF3 = allocFloatArr3(c->params, 0);
 			cmd->radius = radius;
 
 			sCommandData = cmd;
@@ -365,13 +454,12 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_UNLOAD_UNIT:
 		{
-			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			SUnloadUnitCommand* cmd = (SUnloadUnitCommand*) malloc(sizeof (SUnloadUnitCommand));
 			cmd->unitId = unitId;
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->toPos = toPos;
+			cmd->toPos_posF3 = allocFloatArr3(c->params, 0);
 			cmd->toUnloadUnitId = (int) c->params[3];
 
 			sCommandData = cmd;
@@ -379,7 +467,6 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_UNLOAD_UNITS_AREA:
 		{
-			SAIFloat3 toPos = {c->params[0], c->params[1], c->params[2]};
 			float radius = 0.0f;
 			if (c->params.size() >= 4) radius = c->params[3];
 			SUnloadUnitsAreaUnitCommand* cmd = (SUnloadUnitsAreaUnitCommand*) malloc(sizeof (SUnloadUnitsAreaUnitCommand));
@@ -387,7 +474,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->toPos = toPos;
+			cmd->toPos_posF3 = allocFloatArr3(c->params, 0);
 			cmd->radius = radius;
 
 			sCommandData = cmd;
@@ -419,7 +506,6 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_RECLAIM_AREA:
 		{
-			SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 			float radius = 0.0f;
 			if (c->params.size() >= 4) radius = c->params[3];
 			SReclaimAreaUnitCommand* cmd = (SReclaimAreaUnitCommand*) malloc(sizeof (SReclaimAreaUnitCommand));
@@ -427,7 +513,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->pos = pos;
+			cmd->pos_posF3 = allocFloatArr3(c->params, 0);
 			cmd->radius = radius;
 
 			sCommandData = cmd;
@@ -470,20 +556,18 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_D_GUN_POS:
 		{
-			SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 			SDGunPosUnitCommand* cmd = (SDGunPosUnitCommand*) malloc(sizeof (SDGunPosUnitCommand));
 			cmd->unitId = unitId;
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->pos = pos;
+			cmd->pos_posF3 = allocFloatArr3(c->params, 0);
 
 			sCommandData = cmd;
 			break;
 		}
 		case COMMAND_UNIT_RESTORE_AREA:
 		{
-			SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 			float radius = 0.0f;
 			if (c->params.size() >= 4) radius = c->params[3];
 			SRestoreAreaUnitCommand* cmd = (SRestoreAreaUnitCommand*) malloc(sizeof (SRestoreAreaUnitCommand));
@@ -491,7 +575,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->pos = pos;
+			cmd->pos_posF3 = allocFloatArr3(c->params, 0);
 			cmd->radius = radius;
 
 			sCommandData = cmd;
@@ -535,7 +619,6 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_RESURRECT_AREA:
 		{
-			SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 			float radius = 0.0f;
 			if (c->params.size() >= 4) radius = c->params[3];
 			SResurrectAreaUnitCommand* cmd = (SResurrectAreaUnitCommand*) malloc(sizeof (SResurrectAreaUnitCommand));
@@ -543,7 +626,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->pos = pos;
+			cmd->pos_posF3 = allocFloatArr3(c->params, 0);
 			cmd->radius = radius;
 
 			sCommandData = cmd;
@@ -563,7 +646,6 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		}
 		case COMMAND_UNIT_CAPTURE_AREA:
 		{
-			SAIFloat3 pos = {c->params[0], c->params[1], c->params[2]};
 			float radius = 0.0f;
 			if (c->params.size() >= 4) radius = c->params[3];
 			SCaptureAreaUnitCommand* cmd = (SCaptureAreaUnitCommand*) malloc(sizeof (SCaptureAreaUnitCommand));
@@ -571,7 +653,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->pos = pos;
+			cmd->pos_posF3 = allocFloatArr3(c->params, 0);
 			cmd->radius = radius;
 
 			sCommandData = cmd;
@@ -604,12 +686,6 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		case COMMAND_UNIT_BUILD:
 		{
 			int toBuildUnitDefId = -c->id;
-			SAIFloat3 buildPos = {-1.0, -1.0, -1.0};
-			if (c->params.size() >= 3) {
-				buildPos.x = c->params[0];
-				buildPos.y = c->params[1];
-				buildPos.z = c->params[2];
-			}
 			int facing = UNIT_COMMAND_BUILD_NO_FACING;
 			if (c->params.size() >= 4) facing = c->params[3];
 			SBuildUnitCommand* cmd = (SBuildUnitCommand*) malloc(sizeof (SBuildUnitCommand));
@@ -618,7 +694,11 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
 			cmd->toBuildUnitDefId = toBuildUnitDefId;
-			cmd->buildPos = buildPos;
+			if (c->params.size() >= 3) {
+				cmd->buildPos_posF3 = allocFloatArr3(c->params, 0);
+			} else {
+				cmd->buildPos_posF3 = NULL;
+			}
 			cmd->facing = facing;
 
 			sCommandData = cmd;
@@ -1125,12 +1205,10 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			if (cmd->buildPos.x != -1.0
-					|| cmd->buildPos.y != -1.0
-					|| cmd->buildPos.z != -1.0) {
-				c->params.push_back(cmd->buildPos.x);
-				c->params.push_back(cmd->buildPos.y);
-				c->params.push_back(cmd->buildPos.z);
+			if (cmd->buildPos_posF3 != NULL) {
+				c->params.push_back(cmd->buildPos_posF3[0]);
+				c->params.push_back(cmd->buildPos_posF3[1]);
+				c->params.push_back(cmd->buildPos_posF3[2]);
 			}
 			if (cmd->facing != UNIT_COMMAND_BUILD_NO_FACING) c->params.push_back(cmd->facing);
 			break;
@@ -1196,9 +1274,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos.x);
-			c->params.push_back(cmd->toPos.y);
-			c->params.push_back(cmd->toPos.z);
+			c->params.push_back(cmd->toPos_posF3[0]);
+			c->params.push_back(cmd->toPos_posF3[1]);
+			c->params.push_back(cmd->toPos_posF3[2]);
 			break;
 		}
 		case COMMAND_UNIT_PATROL:
@@ -1208,9 +1286,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos.x);
-			c->params.push_back(cmd->toPos.y);
-			c->params.push_back(cmd->toPos.z);
+			c->params.push_back(cmd->toPos_posF3[0]);
+			c->params.push_back(cmd->toPos_posF3[1]);
+			c->params.push_back(cmd->toPos_posF3[2]);
 			break;
 		}
 		case COMMAND_UNIT_FIGHT:
@@ -1220,9 +1298,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos.x);
-			c->params.push_back(cmd->toPos.y);
-			c->params.push_back(cmd->toPos.z);
+			c->params.push_back(cmd->toPos_posF3[0]);
+			c->params.push_back(cmd->toPos_posF3[1]);
+			c->params.push_back(cmd->toPos_posF3[2]);
 			break;
 		}
 		case COMMAND_UNIT_ATTACK:
@@ -1242,9 +1320,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toAttackPos.x);
-			c->params.push_back(cmd->toAttackPos.y);
-			c->params.push_back(cmd->toAttackPos.z);
+			c->params.push_back(cmd->toAttackPos_posF3[0]);
+			c->params.push_back(cmd->toAttackPos_posF3[1]);
+			c->params.push_back(cmd->toAttackPos_posF3[2]);
 			c->params.push_back(cmd->radius);
 			break;
 		}
@@ -1321,9 +1399,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->basePos.x);
-			c->params.push_back(cmd->basePos.y);
-			c->params.push_back(cmd->basePos.z);
+			c->params.push_back(cmd->basePos_posF3[0]);
+			c->params.push_back(cmd->basePos_posF3[1]);
+			c->params.push_back(cmd->basePos_posF3[2]);
 			break;
 		}
 		case COMMAND_UNIT_SELF_DESTROY:
@@ -1363,9 +1441,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos.x);
-			c->params.push_back(cmd->pos.y);
-			c->params.push_back(cmd->pos.z);
+			c->params.push_back(cmd->pos_posF3[0]);
+			c->params.push_back(cmd->pos_posF3[1]);
+			c->params.push_back(cmd->pos_posF3[2]);
 			c->params.push_back(cmd->radius);
 			break;
 		}
@@ -1386,9 +1464,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos.x);
-			c->params.push_back(cmd->toPos.y);
-			c->params.push_back(cmd->toPos.z);
+			c->params.push_back(cmd->toPos_posF3[0]);
+			c->params.push_back(cmd->toPos_posF3[1]);
+			c->params.push_back(cmd->toPos_posF3[2]);
 			c->params.push_back(cmd->radius);
 			break;
 		}
@@ -1399,9 +1477,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toPos.x);
-			c->params.push_back(cmd->toPos.y);
-			c->params.push_back(cmd->toPos.z);
+			c->params.push_back(cmd->toPos_posF3[0]);
+			c->params.push_back(cmd->toPos_posF3[1]);
+			c->params.push_back(cmd->toPos_posF3[2]);
 			c->params.push_back(cmd->toUnloadUnitId);
 			break;
 		}
@@ -1432,9 +1510,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos.x);
-			c->params.push_back(cmd->pos.y);
-			c->params.push_back(cmd->pos.z);
+			c->params.push_back(cmd->pos_posF3[0]);
+			c->params.push_back(cmd->pos_posF3[1]);
+			c->params.push_back(cmd->pos_posF3[2]);
 			c->params.push_back(cmd->radius);
 			break;
 		}
@@ -1473,9 +1551,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos.x);
-			c->params.push_back(cmd->pos.y);
-			c->params.push_back(cmd->pos.z);
+			c->params.push_back(cmd->pos_posF3[0]);
+			c->params.push_back(cmd->pos_posF3[1]);
+			c->params.push_back(cmd->pos_posF3[2]);
 			break;
 		}
 		case COMMAND_UNIT_RESTORE_AREA:
@@ -1485,9 +1563,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos.x);
-			c->params.push_back(cmd->pos.y);
-			c->params.push_back(cmd->pos.z);
+			c->params.push_back(cmd->pos_posF3[0]);
+			c->params.push_back(cmd->pos_posF3[1]);
+			c->params.push_back(cmd->pos_posF3[2]);
 			c->params.push_back(cmd->radius);
 			break;
 		}
@@ -1528,9 +1606,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos.x);
-			c->params.push_back(cmd->pos.y);
-			c->params.push_back(cmd->pos.z);
+			c->params.push_back(cmd->pos_posF3[0]);
+			c->params.push_back(cmd->pos_posF3[1]);
+			c->params.push_back(cmd->pos_posF3[2]);
 			c->params.push_back(cmd->radius);
 			break;
 		}
@@ -1551,9 +1629,9 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->pos.x);
-			c->params.push_back(cmd->pos.y);
-			c->params.push_back(cmd->pos.z);
+			c->params.push_back(cmd->pos_posF3[0]);
+			c->params.push_back(cmd->pos_posF3[1]);
+			c->params.push_back(cmd->pos_posF3[2]);
 			c->params.push_back(cmd->radius);
 			break;
 		}
