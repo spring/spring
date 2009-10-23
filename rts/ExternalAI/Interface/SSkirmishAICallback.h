@@ -1176,7 +1176,7 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	 */
 	int               (CALLING_CONV *Clb_Map_0MULTI1SIZE0Point)(int teamId, bool includeAllies);
 	void              (CALLING_CONV *Clb_Map_Point_getPosition)(int teamId, int pointId, float* return_posF3_out);
-	void              (CALLING_CONV *Clb_Map_Point_getColor)(int teamId, int pointId, short* return_colorC3_out);
+	void              (CALLING_CONV *Clb_Map_Point_getColor)(int teamId, int pointId, short* return_colorS3_out);
 	const char*       (CALLING_CONV *Clb_Map_Point_getLabel)(int teamId, int pointId);
 	/**
 	 * Returns all lines drawn with this AIs team color,
@@ -1186,7 +1186,7 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	int               (CALLING_CONV *Clb_Map_0MULTI1SIZE0Line)(int teamId, bool includeAllies);
 	void              (CALLING_CONV *Clb_Map_Line_getFirstPosition)(int teamId, int lineId, float* return_posF3_out);
 	void              (CALLING_CONV *Clb_Map_Line_getSecondPosition)(int teamId, int lineId, float* return_posF3_out);
-	void              (CALLING_CONV *Clb_Map_Line_getColor)(int teamId, int lineId, short* return_colorC3_out);
+	void              (CALLING_CONV *Clb_Map_Line_getColor)(int teamId, int lineId, short* return_colorS3_out);
 	bool              (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(int teamId, int unitDefId, float* pos_posF3, int facing);
 	/**
 	 * Returns the closest position from a given position that a building can be built at.
@@ -1478,9 +1478,9 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	/** Number of frames to delay recharging by after each hit. */
 	int               (CALLING_CONV *Clb_WeaponDef_Shield_getRechargeDelay)(int teamId, int weaponDefId);
 	/** The color of the shield when it is at full power. */
-	void              (CALLING_CONV *Clb_WeaponDef_Shield_getGoodColor)(int teamId, int weaponDefId, short* return_colorC3_out);
+	void              (CALLING_CONV *Clb_WeaponDef_Shield_getGoodColor)(int teamId, int weaponDefId, short* return_colorS3_out);
 	/** The color of the shield when it is empty. */
-	void              (CALLING_CONV *Clb_WeaponDef_Shield_getBadColor)(int teamId, int weaponDefId, short* return_colorC3_out);
+	void              (CALLING_CONV *Clb_WeaponDef_Shield_getBadColor)(int teamId, int weaponDefId, short* return_colorS3_out);
 	/** The shields alpha value. */
 	float             (CALLING_CONV *Clb_WeaponDef_Shield_getAlpha)(int teamId, int weaponDefId);
 	/**

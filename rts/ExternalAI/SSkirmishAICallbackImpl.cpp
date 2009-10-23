@@ -1412,12 +1412,12 @@ EXPORT(int) skirmishAiCallback_Map_0MULTI1SIZE0Point(int teamId, bool includeAll
 EXPORT(void) skirmishAiCallback_Map_Point_getPosition(int teamId, int pointId, float* return_posF3_out) {
 	tmpPointMarkerArr[teamId][pointId].pos.copyInto(return_posF3_out);
 }
-EXPORT(void) skirmishAiCallback_Map_Point_getColor(int teamId, int pointId, short* return_colorC3_out) {
+EXPORT(void) skirmishAiCallback_Map_Point_getColor(int teamId, int pointId, short* return_colorS3_out) {
 
 	const unsigned char* color = tmpPointMarkerArr[teamId][pointId].color;
-	return_colorC3_out[0] = color[0];
-	return_colorC3_out[1] = color[1];
-	return_colorC3_out[2] = color[2];
+	return_colorS3_out[0] = color[0];
+	return_colorS3_out[1] = color[1];
+	return_colorS3_out[2] = color[2];
 }
 EXPORT(const char*) skirmishAiCallback_Map_Point_getLabel(int teamId, int pointId) {
 	return tmpPointMarkerArr[teamId][pointId].label;
@@ -1433,12 +1433,12 @@ EXPORT(void) skirmishAiCallback_Map_Line_getFirstPosition(int teamId, int lineId
 EXPORT(void) skirmishAiCallback_Map_Line_getSecondPosition(int teamId, int lineId, float* return_posF3_out) {
 	tmpLineMarkerArr[teamId][lineId].pos2.copyInto(return_posF3_out);
 }
-EXPORT(void) skirmishAiCallback_Map_Line_getColor(int teamId, int lineId, short* return_colorC3_out) {
+EXPORT(void) skirmishAiCallback_Map_Line_getColor(int teamId, int lineId, short* return_colorS3_out) {
 
 	const unsigned char* color = tmpLineMarkerArr[teamId][lineId].color;
-	return_colorC3_out[0] = color[0];
-	return_colorC3_out[1] = color[1];
-	return_colorC3_out[2] = color[2];
+	return_colorS3_out[0] = color[0];
+	return_colorS3_out[1] = color[1];
+	return_colorS3_out[2] = color[2];
 }
 EXPORT(void) skirmishAiCallback_Map_getStartPos(int teamId, float* return_posF3_out) {
 	team_callback[teamId]->GetStartPos()->copyInto(return_posF3_out);
@@ -3070,19 +3070,19 @@ EXPORT(float) skirmishAiCallback_WeaponDef_Shield_0REF1Resource2resourceId0getPo
 }
 EXPORT(float) skirmishAiCallback_WeaponDef_Shield_getStartingPower(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldStartingPower;}
 EXPORT(int) skirmishAiCallback_WeaponDef_Shield_getRechargeDelay(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldRechargeDelay;}
-EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getGoodColor(int teamId, int weaponDefId, short* return_colorC3_out) {
+EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getGoodColor(int teamId, int weaponDefId, short* return_colorS3_out) {
 
 	const float3& color = getWeaponDefById(teamId, weaponDefId)->shieldGoodColor;
-	return_colorC3_out[0] = color.x;
-	return_colorC3_out[1] = color.y;
-	return_colorC3_out[2] = color.z;
+	return_colorS3_out[0] = color.x;
+	return_colorS3_out[1] = color.y;
+	return_colorS3_out[2] = color.z;
 }
-EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getBadColor(int teamId, int weaponDefId, short* return_colorC3_out) {
+EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getBadColor(int teamId, int weaponDefId, short* return_colorS3_out) {
 
 	const float3& color = getWeaponDefById(teamId, weaponDefId)->shieldBadColor;
-	return_colorC3_out[0] = color.x;
-	return_colorC3_out[1] = color.y;
-	return_colorC3_out[2] = color.z;
+	return_colorS3_out[0] = color.x;
+	return_colorS3_out[1] = color.y;
+	return_colorS3_out[2] = color.z;
 }
 EXPORT(float) skirmishAiCallback_WeaponDef_Shield_getAlpha(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldAlpha;}
 EXPORT(unsigned int) skirmishAiCallback_WeaponDef_Shield_getInterceptType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldInterceptType;}
