@@ -60,12 +60,20 @@ public:
 	inline float3(const float x,const float y,const float z) : x(x),y(y),z(z) {};
 
 	/**
-	 * @brief Constructor
+	 * @brief SAIFloat3 Constructor
 	 * @param sAIFloat3 SAIFLoat3 sAIFLoat3
 	 *
 	 * With parameters, initializes x/y/z to the given SAIFLoat3.
 	 */
 	inline float3(const SAIFloat3& sAIFloat3) : x(sAIFloat3.x), y(sAIFloat3.y), z(sAIFloat3.z) {};
+
+	/**
+	 * @brief float[3] Constructor
+	 * @param f float[3] to assign
+	 *
+	 * With parameters, initializes x/y/z to the given float[3].
+	 */
+	inline float3(const float f[3]) : x(f[0]), y(f[1]), z(f[2]) {};
 
 	/**
 	 * @brief operator =
