@@ -1,4 +1,10 @@
 Spring change log
+0.80.5.1:
+Bugfixes:
+ - fix a bug where empty network packets were spammed (eating bandwith and demo space)
+ - fix a possible desync in the pathfinder
+ - fix mouse jumping in windowed mode (windows)
+ - fixed crash in KAIK
 
 0.80.5:
 Bugfixes:
