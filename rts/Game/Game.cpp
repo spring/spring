@@ -537,11 +537,14 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	net->loading = false;
 	thread.join();
-#ifdef USE_GML
-	logOutput.Print("Spring %s MT (%d threads)",SpringVersion::GetFull().c_str(), gmlThreadCount);
-#else
-	logOutput.Print("Spring %s",SpringVersion::GetFull().c_str());
+	std::string addVersInfo = "";
+#if defined USE_GML
+	addVersInfo += " MT (" + IntToString(gmlThreadCount) +  " threads)";
 #endif
+#if defined HEADLESS
+	addVersInfo += " Headless";
+#endif
+	logOutput.Print("Spring %s%s", SpringVersion::GetFull().c_str(), addVersInfo.c_str());
 	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
 	//sending your playername to the server indicates that you are finished loading
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
