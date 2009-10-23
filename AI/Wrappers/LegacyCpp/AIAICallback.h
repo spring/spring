@@ -224,6 +224,7 @@ private:
 	CCommandQueue** unitCurrentCommandQueues;
 	FeatureDef** featureDefs;
 	int* featureDefFrames;
+	float3 startPos;
 };
 
 #endif // _AIAICALLBACK_H

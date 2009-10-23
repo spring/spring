@@ -129,7 +129,11 @@ void CAIAICallback::init() {
 
 
 bool CAIAICallback::PosInCamera(float3 pos, float radius) {
-	return sAICallback->Clb_Map_isPosInCamera(teamId, pos.toSAIFloat3(), radius);
+
+	float pos_param[3];
+	pos.copyInto(pos_param);
+
+	return sAICallback->Clb_Map_isPosInCamera(teamId, pos_param, radius);
 }
 
 int CAIAICallback::GetCurrentFrame() {
@@ -305,7 +309,10 @@ const UnitDef* CAIAICallback::GetUnitDef(int unitId) {
 }
 
 float3 CAIAICallback::GetUnitPos(int unitId) {
-	return float3(sAICallback->Clb_Unit_getPos(teamId, unitId));
+
+	float pos_cache[3];
+	sAICallback->Clb_Unit_getPos(teamId, unitId, pos_cache);
+	return pos_cache;
 }
 
 int CAIAICallback::GetBuildingFacing(int unitId) {
@@ -356,6 +363,8 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 	if (doRecreate) {
 //		int currentFrame = this->GetCurrentFrame();
 		int currentFrame = 1;
+
+		float pos_cache[3];
 
 		UnitDef* unitDef = new UnitDef();
 		unitDef->valid = sAICallback->Clb_UnitDef_isValid(teamId, unitDefId);
@@ -427,13 +436,16 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->armoredMultiple = sAICallback->Clb_UnitDef_getArmoredMultiple(teamId, unitDefId);
 		unitDef->armorType = sAICallback->Clb_UnitDef_getArmorType(teamId, unitDefId);
 		unitDef->flankingBonusMode = sAICallback->Clb_UnitDef_FlankingBonus_getMode(teamId, unitDefId);
-		unitDef->flankingBonusDir = float3(sAICallback->Clb_UnitDef_FlankingBonus_getDir(teamId, unitDefId));
+		sAICallback->Clb_UnitDef_FlankingBonus_getDir(teamId, unitDefId, pos_cache);
+		unitDef->flankingBonusDir = pos_cache;
 		unitDef->flankingBonusMax = sAICallback->Clb_UnitDef_FlankingBonus_getMax(teamId, unitDefId);
 		unitDef->flankingBonusMin = sAICallback->Clb_UnitDef_FlankingBonus_getMin(teamId, unitDefId);
 		unitDef->flankingBonusMobilityAdd = sAICallback->Clb_UnitDef_FlankingBonus_getMobilityAdd(teamId, unitDefId);
 		unitDef->collisionVolumeTypeStr = sAICallback->Clb_UnitDef_CollisionVolume_getType(teamId, unitDefId);
-		unitDef->collisionVolumeScales = float3(sAICallback->Clb_UnitDef_CollisionVolume_getScales(teamId, unitDefId));
-		unitDef->collisionVolumeOffsets = float3(sAICallback->Clb_UnitDef_CollisionVolume_getOffsets(teamId, unitDefId));
+		sAICallback->Clb_UnitDef_CollisionVolume_getScales(teamId, unitDefId, pos_cache);
+		unitDef->collisionVolumeScales = pos_cache;
+		sAICallback->Clb_UnitDef_CollisionVolume_getOffsets(teamId, unitDefId, pos_cache);
+		unitDef->collisionVolumeOffsets = pos_cache;
 		unitDef->collisionVolumeTest = sAICallback->Clb_UnitDef_CollisionVolume_getTest(teamId, unitDefId);
 		unitDef->maxWeaponRange = sAICallback->Clb_UnitDef_getMaxWeaponRange(teamId, unitDefId);
 		unitDef->type = sAICallback->Clb_UnitDef_getType(teamId, unitDefId);
@@ -540,7 +552,8 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->flareReloadTime = sAICallback->Clb_UnitDef_getFlareReloadTime(teamId, unitDefId);
 		unitDef->flareEfficiency = sAICallback->Clb_UnitDef_getFlareEfficiency(teamId, unitDefId);
 		unitDef->flareDelay = sAICallback->Clb_UnitDef_getFlareDelay(teamId, unitDefId);
-		unitDef->flareDropVector = float3(sAICallback->Clb_UnitDef_getFlareDropVector(teamId, unitDefId));
+		sAICallback->Clb_UnitDef_getFlareDropVector(teamId, unitDefId, pos_cache);
+		unitDef->flareDropVector = pos_cache;
 		unitDef->flareTime = sAICallback->Clb_UnitDef_getFlareTime(teamId, unitDefId);
 		unitDef->flareSalvoSize = sAICallback->Clb_UnitDef_getFlareSalvoSize(teamId, unitDefId);
 		unitDef->flareSalvoDelay = sAICallback->Clb_UnitDef_getFlareSalvoDelay(teamId, unitDefId);
@@ -619,7 +632,8 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 			int weaponDefId = sAICallback->Clb_UnitDef_WeaponMount_0SINGLE1FETCH2WeaponDef0getWeaponDef(teamId, unitDefId, w);
 			unitDef->weapons[w].def = this->GetWeaponDefById(weaponDefId);
 			unitDef->weapons[w].slavedTo = sAICallback->Clb_UnitDef_WeaponMount_getSlavedTo(teamId, unitDefId, w);
-			unitDef->weapons[w].mainDir = float3(sAICallback->Clb_UnitDef_WeaponMount_getMainDir(teamId, unitDefId, w));
+			sAICallback->Clb_UnitDef_WeaponMount_getMainDir(teamId, unitDefId, w, pos_cache);
+			unitDef->weapons[w].mainDir = pos_cache;
 			unitDef->weapons[w].maxAngleDif = sAICallback->Clb_UnitDef_WeaponMount_getMaxAngleDif(teamId, unitDefId, w);
 			unitDef->weapons[w].fuelUsage = sAICallback->Clb_UnitDef_WeaponMount_getFuelUsage(teamId, unitDefId, w);
 			unitDef->weapons[w].badTargetCat = sAICallback->Clb_UnitDef_WeaponMount_getBadTargetCategory(teamId, unitDefId, w);
@@ -641,7 +655,11 @@ int CAIAICallback::GetEnemyUnits(int* unitIds, int unitIds_max) {
 }
 
 int CAIAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
-	return sAICallback->Clb_0MULTI1VALS3EnemyUnitsIn0Unit(teamId, pos.toSAIFloat3(), radius, unitIds, unitIds_max);
+
+	float pos_param[3];
+	pos.copyInto(pos_param);
+
+	return sAICallback->Clb_0MULTI1VALS3EnemyUnitsIn0Unit(teamId, pos_param, radius, unitIds, unitIds_max);
 }
 
 int CAIAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max) {
@@ -653,7 +671,11 @@ int CAIAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max) {
 }
 
 int CAIAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
-	return sAICallback->Clb_0MULTI1VALS3FriendlyUnitsIn0Unit(teamId, pos.toSAIFloat3(), radius, unitIds, unitIds_max);
+
+	float pos_param[3];
+	pos.copyInto(pos_param);
+
+	return sAICallback->Clb_0MULTI1VALS3FriendlyUnitsIn0Unit(teamId, pos_param, radius, unitIds, unitIds_max);
 }
 
 int CAIAICallback::GetNeutralUnits(int* unitIds, int unitIds_max) {
@@ -661,7 +683,11 @@ int CAIAICallback::GetNeutralUnits(int* unitIds, int unitIds_max) {
 }
 
 int CAIAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, int unitIds_max) {
-	return sAICallback->Clb_0MULTI1VALS3NeutralUnitsIn0Unit(teamId, pos.toSAIFloat3(), radius, unitIds, unitIds_max);
+
+	float pos_param[3];
+	pos.copyInto(pos_param);
+
+	return sAICallback->Clb_0MULTI1VALS3NeutralUnitsIn0Unit(teamId, pos_param, radius, unitIds, unitIds_max);
 }
 
 int CAIAICallback::GetMapWidth() {
@@ -769,7 +795,7 @@ const unsigned short* CAIAICallback::GetJammerMap() {
 const unsigned char* CAIAICallback::GetMetalMap() {
 
 	static unsigned char* metalMap = NULL;
-	static int m = getResourceId_Metal(sAICallback, teamId);
+	static const int m = getResourceId_Metal(sAICallback, teamId);
 
 	if (metalMap == NULL) {
 		int size = sAICallback->Clb_Map_0ARRAY1SIZE0REF1Resource2resourceId0getResourceMapRaw(teamId, m);
@@ -794,11 +820,11 @@ float CAIAICallback::GetElevation(float x, float z) {
 
 
 float CAIAICallback::GetMaxMetal() const {
-	static int m = getResourceId_Metal(sAICallback, teamId);
+	static const int m = getResourceId_Metal(sAICallback, teamId);
 	return sAICallback->Clb_Map_0REF1Resource2resourceId0getMaxResource(teamId, m);
 }
 float CAIAICallback::GetExtractorRadius() const {
-	static int m = getResourceId_Metal(sAICallback, teamId);
+	static const int m = getResourceId_Metal(sAICallback, teamId);
 	return sAICallback->Clb_Map_0REF1Resource2resourceId0getExtractorRadius(teamId, m);
 }
 
@@ -811,11 +837,21 @@ float CAIAICallback::GetGravity() const { return sAICallback->Clb_Map_getGravity
 
 
 bool CAIAICallback::CanBuildAt(const UnitDef* unitDef, float3 pos, int facing) {
-	return sAICallback->Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(teamId, unitDef->id, pos.toSAIFloat3(), facing);
+
+	float pos_param[3];
+	pos.copyInto(pos_param);
+
+	return sAICallback->Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(teamId, unitDef->id, pos_param, facing);
 }
 
 float3 CAIAICallback::ClosestBuildSite(const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing) {
-	return float3(sAICallback->Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite(teamId, unitDef->id, pos.toSAIFloat3(), searchRadius, minDist, facing));
+
+	float pos_param[3];
+	pos.copyInto(pos_param);
+
+	float pos_cache[3];
+	sAICallback->Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite(teamId, unitDef->id, pos_param, searchRadius, minDist, facing, pos_cache);
+	return pos_cache;
 }
 
 /*
@@ -892,10 +928,14 @@ bool CAIAICallback::GetValue(int valueId, void *data)
 			*(float*)data = sAICallback->Clb_Gui_getScreenY(teamId);
 			return true;
 		}case AIVAL_GUI_CAMERA_DIR:{
-			*(float3*)data = sAICallback->Clb_Gui_Camera_getDirection(teamId);
+			float pos_cache[3];
+			sAICallback->Clb_Gui_Camera_getDirection(teamId, pos_cache);
+			*(float3*)data = pos_cache;
 			return true;
 		}case AIVAL_GUI_CAMERA_POS:{
-			*(float3*)data = sAICallback->Clb_Gui_Camera_getPosition(teamId);
+			float pos_cache[3];
+			sAICallback->Clb_Gui_Camera_getPosition(teamId, pos_cache);
+			*(float3*)data = pos_cache;
 			return true;
 		}case AIVAL_LOCATE_FILE_R:{
 			//sAICallback->Clb_File_locateForReading(teamId, (char*) data);
@@ -934,19 +974,25 @@ int CAIAICallback::GetSelectedUnits(int* unitIds, int unitIds_max) {
 }
 
 float3 CAIAICallback::GetMousePos() {
-	return float3(sAICallback->Clb_Map_getMousePos(teamId));
+
+	float pos_cache[3];
+	sAICallback->Clb_Map_getMousePos(teamId, pos_cache);
+	return pos_cache;
 }
 
 int CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAllies) {
 
-	int numPoints = sAICallback->Clb_Map_0MULTI1SIZE0Point(teamId, includeAllies);
+	const int numPoints = sAICallback->Clb_Map_0MULTI1SIZE0Point(teamId, includeAllies);
+	float pos_cache[3];
+	short color_cache[3];
 	for (int p=0; p < numPoints; ++p) {
-		pm[p].pos = float3(sAICallback->Clb_Map_Point_getPosition(teamId, p));
-		SAIFloat3 tmpColor = sAICallback->Clb_Map_Point_getColor(teamId, p);
+		sAICallback->Clb_Map_Point_getPosition(teamId, p, pos_cache);
+		pm[p].pos = pos_cache;
+		sAICallback->Clb_Map_Point_getColor(teamId, p, color_cache);
 		pm[p].color = (unsigned char*) calloc(3, sizeof(unsigned char));
-		pm[p].color[0] = (unsigned char) tmpColor.x;
-		pm[p].color[1] = (unsigned char) tmpColor.y;
-		pm[p].color[2] = (unsigned char) tmpColor.z;
+		pm[p].color[0] = (unsigned char) color_cache[0];
+		pm[p].color[1] = (unsigned char) color_cache[1];
+		pm[p].color[2] = (unsigned char) color_cache[2];
 		pm[p].label = sAICallback->Clb_Map_Point_getLabel(teamId, p);
 	}
 
@@ -955,15 +1001,19 @@ int CAIAICallback::GetMapPoints(PointMarker* pm, int pm_sizeMax, bool includeAll
 
 int CAIAICallback::GetMapLines(LineMarker* lm, int lm_sizeMax, bool includeAllies) {
 
-	int numLines = sAICallback->Clb_Map_0MULTI1SIZE0Line(teamId, includeAllies);
+	const int numLines = sAICallback->Clb_Map_0MULTI1SIZE0Line(teamId, includeAllies);
+	float pos_cache[3];
+	short color_cache[3];
 	for (int l=0; l < numLines; ++l) {
-		lm[l].pos = float3(sAICallback->Clb_Map_Line_getFirstPosition(teamId, l));
-		lm[l].pos2 = float3(sAICallback->Clb_Map_Line_getSecondPosition(teamId, l));
-		SAIFloat3 tmpColor = sAICallback->Clb_Map_Line_getColor(teamId, l);
+		sAICallback->Clb_Map_Line_getFirstPosition(teamId, l, pos_cache);
+		lm[l].pos = pos_cache;
+		sAICallback->Clb_Map_Line_getSecondPosition(teamId, l, pos_cache);
+		lm[l].pos2 = pos_cache;
+		sAICallback->Clb_Map_Line_getColor(teamId, l, color_cache);
 		lm[l].color = (unsigned char*) calloc(3, sizeof(unsigned char));
-		lm[l].color[0] = (unsigned char) tmpColor.x;
-		lm[l].color[1] = (unsigned char) tmpColor.y;
-		lm[l].color[2] = (unsigned char) tmpColor.z;
+		lm[l].color[0] = (unsigned char) color_cache[0];
+		lm[l].color[1] = (unsigned char) color_cache[1];
+		lm[l].color[2] = (unsigned char) color_cache[2];
 	}
 
 	return numLines;
@@ -1019,7 +1069,8 @@ int CAIAICallback::GetFeatures(int* featureIds, int featureIds_max) {
 
 int CAIAICallback::GetFeatures(int *featureIds, int featureIds_max, const float3& pos, float radius) {
 
-	const struct SAIFloat3 aiPos = pos.toSAIFloat3();
+	float aiPos[3];
+	pos.copyInto(aiPos);
 	// this has to be called right before the next one,
 	// as otherwise we would receive false data
 	sAICallback->Clb_0MULTI1SIZE3FeaturesIn0Feature(teamId, aiPos, radius);
@@ -1044,6 +1095,7 @@ const FeatureDef* CAIAICallback::GetFeatureDefById(int featureDefId) {
 	if (doRecreate) {
 //		int currentFrame = this->GetCurrentFrame();
 		int currentFrame = 1;
+		float pos_cache[3];
 	FeatureDef* featureDef = new FeatureDef();
 featureDef->myName = sAICallback->Clb_FeatureDef_getName(teamId, featureDefId);
 featureDef->description = sAICallback->Clb_FeatureDef_getDescription(teamId, featureDefId);
@@ -1056,8 +1108,10 @@ featureDef->maxHealth = sAICallback->Clb_FeatureDef_getMaxHealth(teamId, feature
 featureDef->reclaimTime = sAICallback->Clb_FeatureDef_getReclaimTime(teamId, featureDefId);
 featureDef->mass = sAICallback->Clb_FeatureDef_getMass(teamId, featureDefId);
 featureDef->collisionVolumeTypeStr = sAICallback->Clb_FeatureDef_CollisionVolume_getType(teamId, featureDefId);
-featureDef->collisionVolumeScales = float3(sAICallback->Clb_FeatureDef_CollisionVolume_getScales(teamId, featureDefId));
-featureDef->collisionVolumeOffsets = float3(sAICallback->Clb_FeatureDef_CollisionVolume_getOffsets(teamId, featureDefId));
+sAICallback->Clb_FeatureDef_CollisionVolume_getScales(teamId, featureDefId, pos_cache);
+featureDef->collisionVolumeScales = pos_cache;
+sAICallback->Clb_FeatureDef_CollisionVolume_getOffsets(teamId, featureDefId, pos_cache);
+featureDef->collisionVolumeOffsets = pos_cache;
 featureDef->collisionVolumeTest = sAICallback->Clb_FeatureDef_CollisionVolume_getTest(teamId, featureDefId);
 featureDef->upright = sAICallback->Clb_FeatureDef_isUpright(teamId, featureDefId);
 featureDef->drawType = sAICallback->Clb_FeatureDef_getDrawType(teamId, featureDefId);
@@ -1107,7 +1161,10 @@ float CAIAICallback::GetFeatureReclaimLeft(int featureId) {
 }
 
 float3 CAIAICallback::GetFeaturePos(int featureId) {
-	return float3(sAICallback->Clb_Feature_getPosition(teamId, featureId));
+	
+	float pos_cache[3];
+	sAICallback->Clb_Feature_getPosition(teamId, featureId, pos_cache);
+	return pos_cache;
 }
 
 int CAIAICallback::GetNumUnitDefs() {
@@ -1182,6 +1239,7 @@ da.craterBoost = sAICallback->Clb_WeaponDef_Damage_getCraterBoost(teamId, weapon
 //	logT("GetWeaponDefById 4");
 //}
 
+	short color_cache[3];
 	WeaponDef* weaponDef = new WeaponDef(da);
 //	WeaponDef* weaponDef = new WeaponDef();
 //	logT("GetWeaponDefById 5");
@@ -1287,8 +1345,10 @@ weaponDef->shieldPowerRegen = sAICallback->Clb_WeaponDef_Shield_getPowerRegen(te
 weaponDef->shieldPowerRegenEnergy = sAICallback->Clb_WeaponDef_Shield_0REF1Resource2resourceId0getPowerRegenResource(teamId, weaponDefId, e);
 weaponDef->shieldStartingPower = sAICallback->Clb_WeaponDef_Shield_getStartingPower(teamId, weaponDefId);
 weaponDef->shieldRechargeDelay = sAICallback->Clb_WeaponDef_Shield_getRechargeDelay(teamId, weaponDefId);
-weaponDef->shieldGoodColor = float3(sAICallback->Clb_WeaponDef_Shield_getGoodColor(teamId, weaponDefId));
-weaponDef->shieldBadColor = float3(sAICallback->Clb_WeaponDef_Shield_getBadColor(teamId, weaponDefId));
+sAICallback->Clb_WeaponDef_Shield_getGoodColor(teamId, weaponDefId, color_cache);
+weaponDef->shieldGoodColor = float3((float)color_cache[0], (float)color_cache[1], (float)color_cache[2]);
+sAICallback->Clb_WeaponDef_Shield_getBadColor(teamId, weaponDefId, color_cache);
+weaponDef->shieldBadColor = float3((float)color_cache[0], (float)color_cache[1], (float)color_cache[2]);
 weaponDef->shieldAlpha = sAICallback->Clb_WeaponDef_Shield_getAlpha(teamId, weaponDefId);
 weaponDef->shieldInterceptType = sAICallback->Clb_WeaponDef_Shield_getInterceptType(teamId, weaponDefId);
 weaponDef->interceptedByShieldType = sAICallback->Clb_WeaponDef_getInterceptedByShieldType(teamId, weaponDefId);
@@ -1333,7 +1393,12 @@ weaponDef->dynDamageInverted = sAICallback->Clb_WeaponDef_isDynDamageInverted(te
 }
 
 const float3* CAIAICallback::GetStartPos() {
-	return new float3(sAICallback->Clb_Map_getStartPos(teamId));
+
+	float pos_cache[3];
+	sAICallback->Clb_Map_getStartPos(teamId, pos_cache);
+	startPos = pos_cache;
+
+	return &startPos;
 }
 
 
