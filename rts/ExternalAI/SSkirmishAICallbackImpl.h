@@ -433,9 +433,9 @@ EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3EnemyUnits0Unit(int tea
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3EnemyUnits0Unit(int teamId, int unitIds[],
 		int unitIds_max);
 EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3EnemyUnitsIn0Unit(int teamId,
-		struct SAIFloat3 pos, float radius);
+		float* pos_posF3, float radius);
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3EnemyUnitsIn0Unit(int teamId,
-		struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+		float* pos_posF3, float radius, int unitIds[], int unitIds_max);
 EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3EnemyUnitsInRadarAndLos0Unit(int teamId);
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3EnemyUnitsInRadarAndLos0Unit(int teamId,
 		int unitIds[], int unitIds_max);
@@ -443,16 +443,16 @@ EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3FriendlyUnits0Unit(int 
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3FriendlyUnits0Unit(int teamId,
 		int unitIds[], int unitIds_max);
 EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3FriendlyUnitsIn0Unit(int teamId,
-		struct SAIFloat3 pos, float radius);
+		float* pos_posF3, float radius);
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3FriendlyUnitsIn0Unit(int teamId,
-		struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+		float* pos_posF3, float radius, int unitIds[], int unitIds_max);
 EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3NeutralUnits0Unit(int teamId);
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3NeutralUnits0Unit(int teamId, int unitIds[],
 		int unitIds_max);
 EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3NeutralUnitsIn0Unit(int teamId,
-		struct SAIFloat3 pos, float radius);
+		float* pos_posF3, float radius);
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3NeutralUnitsIn0Unit(int teamId,
-		struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+		float* pos_posF3, float radius, int unitIds[], int unitIds_max);
 EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3TeamUnits0Unit(int teamId);
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3TeamUnits0Unit(int teamId, int unitIds[],
 		int unitIds_max);
@@ -617,7 +617,7 @@ EXPORT(bool             ) skirmishAiCallback_Mod_getRequireSonarUnderWater(int t
 EXPORT(unsigned int     ) skirmishAiCallback_Map_getChecksum(int teamId);
 EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_getStartPos(int teamId);
 EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_getMousePos(int teamId);
-EXPORT(bool             ) skirmishAiCallback_Map_isPosInCamera(int teamId, struct SAIFloat3 pos,
+EXPORT(bool             ) skirmishAiCallback_Map_isPosInCamera(int teamId, float* pos_posF3,
 		float radius);
 EXPORT(int              ) skirmishAiCallback_Map_getWidth(int teamId);
 EXPORT(int              ) skirmishAiCallback_Map_getHeight(int teamId);
@@ -652,7 +652,7 @@ EXPORT(int              ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resour
 EXPORT(float            ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsAverageIncome(
 		int teamId, int resourceId);
 EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
-		int teamId, int resourceId, struct SAIFloat3 pos);
+		int teamId, int resourceId, float* pos_posF3);
 EXPORT(const char*      ) skirmishAiCallback_Map_getName(int teamId);
 EXPORT(float            ) skirmishAiCallback_Map_getElevationAt(int teamId, float x, float z);
 EXPORT(float            ) skirmishAiCallback_Map_0REF1Resource2resourceId0getMaxResource(
@@ -680,9 +680,9 @@ EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_Line_getSecondPosition(
 EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_Line_getColor(int teamId,
 		int lineId);
 EXPORT(bool             ) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(int teamId, int unitDefId,
-		struct SAIFloat3 pos, int facing);
+		float* pos_posF3, int facing);
 EXPORT(struct SAIFloat3 ) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0findClosestBuildSite(int teamId,
-		int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist,
+		int unitDefId, float* pos_posF3, float searchRadius, int minDist,
 		int facing);
 // BEGINN OBJECT Map
 
@@ -746,9 +746,9 @@ EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE0Feature(int teamId);
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS0Feature(int teamId, int featureIds[],
 		int featureIds_max);
 EXPORT(int              ) skirmishAiCallback_0MULTI1SIZE3FeaturesIn0Feature(int teamId,
-		struct SAIFloat3 pos, float radius);
+		float* pos_posF3, float radius);
 EXPORT(int              ) skirmishAiCallback_0MULTI1VALS3FeaturesIn0Feature(int teamId,
-		struct SAIFloat3 pos, float radius, int featureIds[],
+		float* pos_posF3, float radius, int featureIds[],
 		int featureIds_max);
 EXPORT(int              ) skirmishAiCallback_Feature_0SINGLE1FETCH2FeatureDef0getDef(int teamId,
 		int featureId);
