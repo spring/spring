@@ -1143,7 +1143,7 @@ EXPORT(bool) skirmishAiCallback_Mod_getRequireSonarUnderWater(int teamId) {
 //########### BEGINN Map
 EXPORT(bool) skirmishAiCallback_Map_isPosInCamera(int teamId, float* pos_posF3, float radius) {
 	IAICallback* clb = team_callback[teamId];
-	return clb->PosInCamera(SAIFloat3(pos), radius);
+	return clb->PosInCamera(pos_posF3, radius);
 }
 EXPORT(unsigned int) skirmishAiCallback_Map_getChecksum(int teamId) {
 	unsigned int checksum;
@@ -1335,7 +1335,7 @@ EXPORT(float) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initRes
 }
 EXPORT(struct SAIFloat3) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
 		int teamId, int resourceId, float* pos_posF3) {
-	return getResourceMapAnalyzer(resourceId)->GetNearestSpot(pos, teamId).toSAIFloat3();
+	return getResourceMapAnalyzer(resourceId)->GetNearestSpot(pos_posF3, teamId).toSAIFloat3();
 }
 
 EXPORT(const char*) skirmishAiCallback_Map_getName(int teamId) {
@@ -1392,14 +1392,14 @@ EXPORT(bool) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(i
 		float* pos_posF3, int facing) {
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
-	return clb->CanBuildAt(unitDef, pos, facing);
+	return clb->CanBuildAt(unitDef, pos_posF3, facing);
 }
 
 EXPORT(SAIFloat3) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0findClosestBuildSite(int teamId, int unitDefId,
 		float* pos_posF3, float searchRadius, int minDist, int facing) {
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
-	return clb->ClosestBuildSite(unitDef, pos, searchRadius, minDist, facing)
+	return clb->ClosestBuildSite(unitDef, pos_posF3, searchRadius, minDist, facing)
 			.toSAIFloat3();
 }
 
@@ -1413,7 +1413,7 @@ EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Point_getPosition(int teamId, in
 EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Point_getColor(int teamId, int pointId) {
 
 	const unsigned char* color = tmpPointMarkerArr[teamId][pointId].color;
-	const float* f3color_posF3 = {color[0], color[1], color[2]};
+	const struct SAIFloat3 f3color = {color[0], color[1], color[2]};
 	return f3color;
 }
 EXPORT(const char*) skirmishAiCallback_Map_Point_getLabel(int teamId, int pointId) {
@@ -1433,7 +1433,7 @@ EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Line_getSecondPosition(int teamI
 EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Line_getColor(int teamId, int lineId) {
 
 	const unsigned char* color = tmpLineMarkerArr[teamId][lineId].color;
-	const float* f3color_posF3 = {color[0], color[1], color[2]};
+	const struct SAIFloat3 f3color = {color[0], color[1], color[2]};
 	return f3color;
 }
 EXPORT(SAIFloat3) skirmishAiCallback_Map_getStartPos(int teamId) {
@@ -2622,16 +2622,16 @@ EXPORT(int) skirmishAiCallback_0MULTI1VALS3EnemyUnits0Unit(int teamId, int* unit
 
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE3EnemyUnitsIn0Unit(int teamId, float* pos_posF3, float radius) {
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetEnemyUnits(tmpIntArr[teamId], float3(pos), radius);
+		return team_cheatCallback[teamId]->GetEnemyUnits(tmpIntArr[teamId], pos_posF3, radius);
 	} else {
-		return team_callback[teamId]->GetEnemyUnits(tmpIntArr[teamId], float3(pos), radius);
+		return team_callback[teamId]->GetEnemyUnits(tmpIntArr[teamId], pos_posF3, radius);
 	}
 }
 EXPORT(int) skirmishAiCallback_0MULTI1VALS3EnemyUnitsIn0Unit(int teamId, float* pos_posF3, float radius, int* unitIds, int unitIds_max) {
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetEnemyUnits(unitIds, float3(pos), radius, unitIds_max);
+		return team_cheatCallback[teamId]->GetEnemyUnits(unitIds, pos_posF3, radius, unitIds_max);
 	} else {
-		return team_callback[teamId]->GetEnemyUnits(unitIds, float3(pos), radius, unitIds_max);
+		return team_callback[teamId]->GetEnemyUnits(unitIds, pos_posF3, radius, unitIds_max);
 	}
 }
 
@@ -2650,10 +2650,10 @@ EXPORT(int) skirmishAiCallback_0MULTI1VALS3FriendlyUnits0Unit(int teamId, int* u
 }
 
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE3FriendlyUnitsIn0Unit(int teamId, float* pos_posF3, float radius) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetFriendlyUnits(tmpIntArr[teamId], float3(pos), radius);
+	IAICallback* clb = team_callback[teamId]; return clb->GetFriendlyUnits(tmpIntArr[teamId], pos_posF3, radius);
 }
 EXPORT(int) skirmishAiCallback_0MULTI1VALS3FriendlyUnitsIn0Unit(int teamId, float* pos_posF3, float radius, int* unitIds, int unitIds_max) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetFriendlyUnits(unitIds, float3(pos), radius, unitIds_max);
+	IAICallback* clb = team_callback[teamId]; return clb->GetFriendlyUnits(unitIds, pos_posF3, radius, unitIds_max);
 }
 
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE3NeutralUnits0Unit(int teamId) {
@@ -2673,16 +2673,16 @@ EXPORT(int) skirmishAiCallback_0MULTI1VALS3NeutralUnits0Unit(int teamId, int* un
 
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE3NeutralUnitsIn0Unit(int teamId, float* pos_posF3, float radius) {
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetNeutralUnits(tmpIntArr[teamId], float3(pos), radius);
+		return team_cheatCallback[teamId]->GetNeutralUnits(tmpIntArr[teamId], pos_posF3, radius);
 	} else {
-		return team_callback[teamId]->GetNeutralUnits(tmpIntArr[teamId], float3(pos), radius);
+		return team_callback[teamId]->GetNeutralUnits(tmpIntArr[teamId], pos_posF3, radius);
 	}
 }
 EXPORT(int) skirmishAiCallback_0MULTI1VALS3NeutralUnitsIn0Unit(int teamId, float* pos_posF3, float radius, int* unitIds, int unitIds_max) {
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetNeutralUnits(unitIds, float3(pos), radius, unitIds_max);
+		return team_cheatCallback[teamId]->GetNeutralUnits(unitIds, pos_posF3, radius, unitIds_max);
 	} else {
-		return team_callback[teamId]->GetNeutralUnits(unitIds, float3(pos), radius, unitIds_max);
+		return team_callback[teamId]->GetNeutralUnits(unitIds, pos_posF3, radius, unitIds_max);
 	}
 }
 
@@ -2835,9 +2835,9 @@ EXPORT(int) skirmishAiCallback_0MULTI1VALS0Feature(int teamId, int* featureIds, 
 EXPORT(int) skirmishAiCallback_0MULTI1SIZE3FeaturesIn0Feature(int teamId, float* pos_posF3, float radius) {
 
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return qf->GetFeaturesExact(pos, radius).size();
+		return qf->GetFeaturesExact(pos_posF3, radius).size();
 	} else {
-		tmpSize[teamId] = team_callback[teamId]->GetFeatures(tmpIntArr[teamId], TMP_ARR_SIZE, pos, radius);
+		tmpSize[teamId] = team_callback[teamId]->GetFeatures(tmpIntArr[teamId], TMP_ARR_SIZE, pos_posF3, radius);
 		return tmpSize[teamId];
 	}
 }
@@ -2849,7 +2849,7 @@ EXPORT(int) skirmishAiCallback_0MULTI1VALS3FeaturesIn0Feature(int teamId, float*
 	const size_t featureIds_max = static_cast<size_t>(_featureIds_max);
 
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		const vector<CFeature*>& fset = qf->GetFeaturesExact(pos, radius);
+		const vector<CFeature*>& fset = qf->GetFeaturesExact(pos_posF3, radius);
 		vector<CFeature*>::const_iterator it;
 		size_t i=0;
 		for (it = fset.begin(); it != fset.end() && i < featureIds_max; ++it) {
