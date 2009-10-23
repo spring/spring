@@ -33,7 +33,7 @@
 #include "Lua/LuaGaia.h"
 #include "Lua/LuaRules.h"
 #include "Lua/LuaParser.h"
-#include "Map/MapParser.h"
+#include "Map/MapInfo.h"
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/glFont.h"
@@ -168,9 +168,7 @@ void CPreGame::StartServer(const std::string& setupscript)
 	{
 		// would be better to use MapInfo here, but this doesn't work
 		LoadMap(setup->mapName); // map into VFS
-		MapParser mp(setup->mapName);
-		LuaTable mapRoot = mp.GetRoot();
-		const std::string mapWantedScript = mapRoot.GetString("script",     "");
+		const std::string mapWantedScript(mapInfo->GetStringValue("script"));
 
 		if (!mapWantedScript.empty()) {
 			setup->scriptName = mapWantedScript;
@@ -357,6 +355,7 @@ void CPreGame::LoadMap(const std::string& mapName, const bool forceReload)
 			}
 		}
 		delete f;
+		mapInfo = new CMapInfo(mapName);
 		alreadyLoaded = true;
 	}
 }

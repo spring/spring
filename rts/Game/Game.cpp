@@ -411,7 +411,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	PrintLoadMsg("Loading map informations");
 
-	mapInfo = new CMapInfo(mapname); // must go before readmap
+	const_cast<CMapInfo*>(mapInfo)->Load();
 	readmap = CReadMap::LoadMap (mapname);
 	groundBlockingObjectMap = new CGroundBlockingObjectMap(gs->mapSquares);
 	wind.LoadWind();
