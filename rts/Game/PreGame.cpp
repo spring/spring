@@ -179,21 +179,10 @@ void CPreGame::StartServer(const std::string& setupscript)
 	// here we now the name of the script to use
 
 	CScriptHandler::SelectScript(setup->scriptName);
-	std::string scriptWantedMod;
-	scriptWantedMod = CScriptHandler::Instance().chosenScript->GetModName();
-	if (!scriptWantedMod.empty()) {
-		setup->modName = archiveScanner->ModArchiveToModName(scriptWantedMod);
-	}
 	LoadMod(setup->modName);
 
 	std::string modArchive = archiveScanner->ModNameToModArchive(setup->modName);
 	startupData->SetModChecksum(archiveScanner->GetModChecksum(modArchive));
-
-	std::string mapFromScript = CScriptHandler::Instance().chosenScript->GetMapName();
-	if (!mapFromScript.empty() &&  setup->mapName != mapFromScript) {
-		//TODO unload old map
-		LoadMap(mapFromScript, true);
-	}
 
 	startupData->SetMapChecksum(archiveScanner->GetMapChecksum(setup->mapName));
 	setup->LoadStartPositions();
