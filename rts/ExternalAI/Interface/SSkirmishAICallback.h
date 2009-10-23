@@ -63,8 +63,7 @@ struct SSkirmishAICallback {
  * @return     0: if command handling ok
  *          != 0: something else otherwise
  */
-int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId,
-		int commandTopic, void* commandData);
+int (CALLING_CONV *Clb_Engine_handleCommand)(int teamId, int toId, int commandId, int commandTopic, void* commandData);
 
 	/** Returns the major engine revision number (e.g. 0.77) */
 	const char*       (CALLING_CONV *Clb_Engine_Version_getMajor)(int teamId);
@@ -274,16 +273,13 @@ bool (CALLING_CONV *Clb_Cheats_isOnlyPassive)(int teamId);
 
 // BEGINN OBJECT Resource
 int (CALLING_CONV *Clb_0MULTI1SIZE0Resource)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1FETCH3ResourceByName0Resource)(int teamId,
-		const char* resourceName);
+int (CALLING_CONV *Clb_0MULTI1FETCH3ResourceByName0Resource)(int teamId, const char* resourceName);
 const char* (CALLING_CONV *Clb_Resource_getName)(int teamId, int resourceId);
 float (CALLING_CONV *Clb_Resource_getOptimum)(int teamId, int resourceId);
 float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getCurrent)(
 		int teamId, int resourceId);
-float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getIncome)(int teamId,
-		int resourceId);
-float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getUsage)(int teamId,
-		int resourceId);
+float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getIncome)(int teamId, int resourceId);
+float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getUsage)(int teamId, int resourceId);
 float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getStorage)(
 		int teamId, int resourceId);
 // END OBJECT Resource
@@ -293,8 +289,7 @@ float (CALLING_CONV *Clb_Economy_0REF1Resource2resourceId0getStorage)(
 /// Return -1 when the file does not exist
 int (CALLING_CONV *Clb_File_getSize)(int teamId, const char* fileName);
 /// Returns false when file does not exist, or the buffer is too small
-bool (CALLING_CONV *Clb_File_getContent)(int teamId, const char* fileName,
-		void* buffer, int bufferLen);
+bool (CALLING_CONV *Clb_File_getContent)(int teamId, const char* fileName, void* buffer, int bufferLen);
 // bool (CALLING_CONV *Clb_File_locateForReading)(int teamId, char* fileName, int fileName_sizeMax);
 // bool (CALLING_CONV *Clb_File_locateForWriting)(int teamId, char* fileName, int fileName_sizeMax);
 // END OBJECT File
@@ -308,10 +303,8 @@ bool (CALLING_CONV *Clb_File_getContent)(int teamId, const char* fileName,
  * The unitId is a unique id for this type of unit.
  */
 int (CALLING_CONV *Clb_0MULTI1SIZE0UnitDef)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS0UnitDef)(int teamId, int unitDefIds[],
-		int unitDefIds_max);
-int (CALLING_CONV *Clb_0MULTI1FETCH3UnitDefByName0UnitDef)(int teamId,
-		const char* unitName);
+int (CALLING_CONV *Clb_0MULTI1VALS0UnitDef)(int teamId, int unitDefIds[], int unitDefIds_max);
+int (CALLING_CONV *Clb_0MULTI1FETCH3UnitDefByName0UnitDef)(int teamId, const char* unitName);
 //int (CALLING_CONV *Clb_UnitDef_getId)(int teamId, int unitDefId);
 /// Forces loading of the unit model
 float (CALLING_CONV *Clb_UnitDef_getHeight)(int teamId, int unitDefId);
@@ -325,8 +318,7 @@ int (CALLING_CONV *Clb_UnitDef_getAiHint)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getCobId)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getTechLevel)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getGaia)(int teamId, int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getUpkeep)(int teamId,
-		int unitDefId, int resourceId);
+float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getUpkeep)(int teamId, int unitDefId, int resourceId);
 /** This amount of the resource will always be created. */
 float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getResourceMake)(
 		int teamId, int unitDefId, int resourceId);
@@ -336,8 +328,7 @@ float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getResourceMake)(
  */
 float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getMakesResource)(
 		int teamId, int unitDefId, int resourceId);
-float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getCost)(int teamId,
-		int unitDefId, int resourceId);
+float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getCost)(int teamId, int unitDefId, int resourceId);
 float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getExtractsResource)(
 		int teamId, int unitDefId, int resourceId);
 float (CALLING_CONV *Clb_UnitDef_0REF1Resource2resourceId0getResourceExtractorRange)(
@@ -388,8 +379,7 @@ int (CALLING_CONV *Clb_UnitDef_getSonarRadius)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getJammerRadius)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getSonarJamRadius)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getSeismicRadius)(int teamId, int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_getSeismicSignature)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_getSeismicSignature)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isStealth)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isSonarStealth)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isBuildRange3D)(int teamId, int unitDefId);
@@ -405,8 +395,7 @@ float (CALLING_CONV *Clb_UnitDef_getMass)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isPushResistant)(int teamId, int unitDefId);
 /** Should the unit move sideways when it can not shoot? */
 bool (CALLING_CONV *Clb_UnitDef_isStrafeToAttack)(int teamId, int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_getMinCollisionSpeed)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_getMinCollisionSpeed)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getSlideTolerance)(int teamId, int unitDefId);
 /**
  * Build location relevant maximum steepness of the underlaying terrain.
@@ -434,26 +423,21 @@ int (CALLING_CONV *Clb_UnitDef_getArmorType)(int teamId, int unitDefId);
  *          2: unit coords, mobile
  *          3: unit coords, locked
  */
-int (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMode)(int teamId,
-		int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMode)(int teamId, int unitDefId);
 /**
  * The unit takes less damage when attacked from this direction.
  * This encourage flanking fire.
  */
-struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_FlankingBonus_getDir)(int teamId,
-		int unitDefId);
+struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_FlankingBonus_getDir)(int teamId, int unitDefId);
 /** Damage factor for the least protected direction */
-float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMax)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMax)(int teamId, int unitDefId);
 /** Damage factor for the most protected direction */
-float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMin)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMin)(int teamId, int unitDefId);
 /**
  * How much the ability of the flanking bonus direction to move builds up each
  * frame.
  */
-float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMobilityAdd)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMobilityAdd)(int teamId, int unitDefId);
 /**
  * The type of the collision volume's form.
  *
@@ -461,8 +445,7 @@ float (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMobilityAdd)(int teamId,
  *          "Cyl[T]" (where [T] is one of ['X', 'Y', 'Z'])
  *          "Box"
  */
-const char* (CALLING_CONV *Clb_UnitDef_CollisionVolume_getType)(int teamId,
-		int unitDefId);
+const char* (CALLING_CONV *Clb_UnitDef_CollisionVolume_getType)(int teamId, int unitDefId);
 /** The collision volume's full axis lengths. */
 struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_CollisionVolume_getScales)(
 		int teamId, int unitDefId);
@@ -475,21 +458,16 @@ struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_CollisionVolume_getOffsets)(
  * @return  0: discrete
  *          1: continuous
  */
-int (CALLING_CONV *Clb_UnitDef_CollisionVolume_getTest)(int teamId,
-		int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_CollisionVolume_getTest)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMaxWeaponRange)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getType)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getTooltip)(int teamId, int unitDefId);
 const char* (CALLING_CONV *Clb_UnitDef_getWreckName)(int teamId, int unitDefId);
-const char* (CALLING_CONV *Clb_UnitDef_getDeathExplosion)(int teamId,
-		int unitDefId);
-const char* (CALLING_CONV *Clb_UnitDef_getSelfDExplosion)(int teamId,
-		int unitDefId);
+const char* (CALLING_CONV *Clb_UnitDef_getDeathExplosion)(int teamId, int unitDefId);
+const char* (CALLING_CONV *Clb_UnitDef_getSelfDExplosion)(int teamId, int unitDefId);
 // this might be changed later for something better
-const char* (CALLING_CONV *Clb_UnitDef_getTedClassString)(int teamId,
-		int unitDefId);
-const char* (CALLING_CONV *Clb_UnitDef_getCategoryString)(int teamId,
-		int unitDefId);
+const char* (CALLING_CONV *Clb_UnitDef_getTedClassString)(int teamId, int unitDefId);
+const char* (CALLING_CONV *Clb_UnitDef_getCategoryString)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isAbleToSelfD)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getSelfDCountdown)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isAbleToSubmerge)(int teamId, int unitDefId);
@@ -501,8 +479,7 @@ bool (CALLING_CONV *Clb_UnitDef_isBuilder)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isActivateWhenBuilt)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isOnOffable)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isFullHealthFactory)(int teamId, int unitDefId);
-bool (CALLING_CONV *Clb_UnitDef_isFactoryHeadingTakeoff)(int teamId,
-		int unitDefId);
+bool (CALLING_CONV *Clb_UnitDef_isFactoryHeadingTakeoff)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isReclaimable)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isCapturable)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isAbleToRestore)(int teamId, int unitDefId);
@@ -561,8 +538,7 @@ bool (CALLING_CONV *Clb_UnitDef_isAirBase)(int teamId, int unitDefId);
 /**  */
 bool (CALLING_CONV *Clb_UnitDef_isFirePlatform)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getTransportMass)(int teamId, int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_getMinTransportMass)(int teamId,
-		int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_getMinTransportMass)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isHoldSteady)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isReleaseHeld)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isNotTransportable)(int teamId, int unitDefId);
@@ -572,8 +548,7 @@ bool (CALLING_CONV *Clb_UnitDef_isTransportByEnemy)(int teamId, int unitDefId);
  *          1: fly-over drop
  *          2: land flood
  */
-int (CALLING_CONV *Clb_UnitDef_getTransportUnloadMethod)(int teamId,
-		int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_getTransportUnloadMethod)(int teamId, int unitDefId);
 /**
  * Dictates fall speed of all transported units.
  * This only makes sense for air transports,
@@ -617,8 +592,7 @@ bool (CALLING_CONV *Clb_UnitDef_isAbleToCapture)(int teamId, int unitDefId);
  *          2: choose
  */
 int (CALLING_CONV *Clb_UnitDef_getHighTrajectoryType)(int teamId, int unitDefId);
-unsigned int (CALLING_CONV *Clb_UnitDef_getNoChaseCategory)(int teamId,
-		int unitDefId);
+unsigned int (CALLING_CONV *Clb_UnitDef_getNoChaseCategory)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isLeaveTracks)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getTrackWidth)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getTrackOffset)(int teamId, int unitDefId);
@@ -629,29 +603,23 @@ bool (CALLING_CONV *Clb_UnitDef_isAbleToDropFlare)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getFlareReloadTime)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getFlareEfficiency)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getFlareDelay)(int teamId, int unitDefId);
-struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_getFlareDropVector)(int teamId,
-		int unitDefId);
+struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_getFlareDropVector)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getFlareTime)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getFlareSalvoSize)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getFlareSalvoDelay)(int teamId, int unitDefId);
 /** Only matters for fighter aircraft */
-bool (CALLING_CONV *Clb_UnitDef_isAbleToLoopbackAttack)(int teamId,
-		int unitDefId);
+bool (CALLING_CONV *Clb_UnitDef_isAbleToLoopbackAttack)(int teamId, int unitDefId);
 /**
  * Indicates whether the ground will be leveled/flattened out
  * after this building has been built on it.
  * Only matters for buildings.
  */
 bool (CALLING_CONV *Clb_UnitDef_isLevelGround)(int teamId, int unitDefId);
-bool (CALLING_CONV *Clb_UnitDef_isUseBuildingGroundDecal)(int teamId,
-		int unitDefId);
+bool (CALLING_CONV *Clb_UnitDef_isUseBuildingGroundDecal)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_getBuildingDecalType)(int teamId, int unitDefId);
-int (CALLING_CONV *Clb_UnitDef_getBuildingDecalSizeX)(int teamId,
-		int unitDefId);
-int (CALLING_CONV *Clb_UnitDef_getBuildingDecalSizeY)(int teamId,
-		int unitDefId);
-float (CALLING_CONV *Clb_UnitDef_getBuildingDecalDecaySpeed)(int teamId,
-		int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_getBuildingDecalSizeX)(int teamId, int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_getBuildingDecalSizeY)(int teamId, int unitDefId);
+float (CALLING_CONV *Clb_UnitDef_getBuildingDecalDecaySpeed)(int teamId, int unitDefId);
 /**
  * Maximum flight time in seconds before the aircraft needs
  * to return to an air repair bay to refuel.
@@ -663,23 +631,16 @@ float (CALLING_CONV *Clb_UnitDef_getRefuelTime)(int teamId, int unitDefId);
 float (CALLING_CONV *Clb_UnitDef_getMinAirBasePower)(int teamId, int unitDefId);
 /** Number of units of this type allowed simultaneously in the game */
 int (CALLING_CONV *Clb_UnitDef_getMaxThisUnit)(int teamId, int unitDefId);
-int (CALLING_CONV *Clb_UnitDef_0SINGLE1FETCH2UnitDef0getDecoyDef)(int teamId,
-		int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_0SINGLE1FETCH2UnitDef0getDecoyDef)(int teamId, int unitDefId);
 bool (CALLING_CONV *Clb_UnitDef_isDontLand)(int teamId, int unitDefId);
-int (CALLING_CONV *Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getShieldDef)(int teamId,
-		int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getShieldDef)(int teamId, int unitDefId);
 int (CALLING_CONV *Clb_UnitDef_0SINGLE1FETCH2WeaponDef0getStockpileDef)(
 		int teamId, int unitDefId);
-int (CALLING_CONV *Clb_UnitDef_0ARRAY1SIZE1UnitDef0getBuildOptions)(int teamId,
-		int unitDefId);
-int (CALLING_CONV *Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions)(int teamId,
-		int unitDefId, int unitDefIds[], int unitDefIds_max);
-int (CALLING_CONV *Clb_UnitDef_0MAP1SIZE0getCustomParams)(int teamId,
-		int unitDefId);
-void (CALLING_CONV *Clb_UnitDef_0MAP1KEYS0getCustomParams)(int teamId,
-		int unitDefId, const char* keys[]);
-void (CALLING_CONV *Clb_UnitDef_0MAP1VALS0getCustomParams)(int teamId,
-		int unitDefId, const char* values[]);
+int (CALLING_CONV *Clb_UnitDef_0ARRAY1SIZE1UnitDef0getBuildOptions)(int teamId, int unitDefId);
+int (CALLING_CONV *Clb_UnitDef_0ARRAY1VALS1UnitDef0getBuildOptions)(int teamId, int unitDefId, int unitDefIds[], int unitDefIds_max);
+int (CALLING_CONV *Clb_UnitDef_0MAP1SIZE0getCustomParams)(int teamId, int unitDefId);
+void (CALLING_CONV *Clb_UnitDef_0MAP1KEYS0getCustomParams)(int teamId, int unitDefId, const char* keys[]);
+void (CALLING_CONV *Clb_UnitDef_0MAP1VALS0getCustomParams)(int teamId, int unitDefId, const char* values[]);
 
 
 
@@ -709,21 +670,16 @@ const char* (CALLING_CONV *Clb_UnitDef_MoveData_getName)(int teamId, int unitDef
 
 
 int (CALLING_CONV *Clb_UnitDef_0MULTI1SIZE0WeaponMount)(int teamId, int unitDefId);
-const char* (CALLING_CONV *Clb_UnitDef_WeaponMount_getName)(int teamId,
-		int unitDefId, int weaponMountId);
+const char* (CALLING_CONV *Clb_UnitDef_WeaponMount_getName)(int teamId, int unitDefId, int weaponMountId);
 int (CALLING_CONV *Clb_UnitDef_WeaponMount_0SINGLE1FETCH2WeaponDef0getWeaponDef)(
 		int teamId, int unitDefId, int weaponMountId);
-int (CALLING_CONV *Clb_UnitDef_WeaponMount_getSlavedTo)(int teamId,
-		int unitDefId, int weaponMountId);
-struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_WeaponMount_getMainDir)(int teamId,
-		int unitDefId, int weaponMountId);
-float (CALLING_CONV *Clb_UnitDef_WeaponMount_getMaxAngleDif)(int teamId,
-		int unitDefId, int weaponMountId);
+int (CALLING_CONV *Clb_UnitDef_WeaponMount_getSlavedTo)(int teamId, int unitDefId, int weaponMountId);
+struct SAIFloat3 (CALLING_CONV *Clb_UnitDef_WeaponMount_getMainDir)(int teamId, int unitDefId, int weaponMountId);
+float (CALLING_CONV *Clb_UnitDef_WeaponMount_getMaxAngleDif)(int teamId, int unitDefId, int weaponMountId);
 /**
  * How many seconds of fuel it costs for the owning unit to fire this weapon.
  */
-float (CALLING_CONV *Clb_UnitDef_WeaponMount_getFuelUsage)(int teamId,
-		int unitDefId, int weaponMountId);
+float (CALLING_CONV *Clb_UnitDef_WeaponMount_getFuelUsage)(int teamId, int unitDefId, int weaponMountId);
 unsigned int (CALLING_CONV *Clb_UnitDef_WeaponMount_getBadTargetCategory)(
 		int teamId, int unitDefId, int weaponMountId);
 unsigned int (CALLING_CONV *Clb_UnitDef_WeaponMount_getOnlyTargetCategory)(
@@ -748,74 +704,61 @@ int (CALLING_CONV *Clb_Unit_0STATIC0getLimit)(int teamId);
  * in LOS.
  */
 int (CALLING_CONV *Clb_0MULTI1SIZE3EnemyUnits0Unit)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS3EnemyUnits0Unit)(int teamId, int unitIds[],
-		int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1VALS3EnemyUnits0Unit)(int teamId, int unitIds[], int unitIds_max);
 /**
  * Returns all units that are not in this teams ally-team nor neutral and are
  * in LOS plus they have to be located in the specified area of the map.
  */
-int (CALLING_CONV *Clb_0MULTI1SIZE3EnemyUnitsIn0Unit)(int teamId,
-		struct SAIFloat3 pos, float radius);
-int (CALLING_CONV *Clb_0MULTI1VALS3EnemyUnitsIn0Unit)(int teamId,
-		struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1SIZE3EnemyUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius);
+int (CALLING_CONV *Clb_0MULTI1VALS3EnemyUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
 /**
  * Returns all units that are not in this teams ally-team nor neutral and are in
  * some way visible (sight or radar).
  */
 int (CALLING_CONV *Clb_0MULTI1SIZE3EnemyUnitsInRadarAndLos0Unit)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS3EnemyUnitsInRadarAndLos0Unit)(int teamId,
-		int unitIds[], int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1VALS3EnemyUnitsInRadarAndLos0Unit)(int teamId, int unitIds[], int unitIds_max);
 /**
  * Returns all units that are in this teams ally-team, including this teams
  * units.
  */
 int (CALLING_CONV *Clb_0MULTI1SIZE3FriendlyUnits0Unit)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS3FriendlyUnits0Unit)(int teamId,
-		int unitIds[], int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1VALS3FriendlyUnits0Unit)(int teamId, int unitIds[], int unitIds_max);
 /**
  * Returns all units that are in this teams ally-team, including this teams
  * units plus they have to be located in the specified area of the map.
  */
-int (CALLING_CONV *Clb_0MULTI1SIZE3FriendlyUnitsIn0Unit)(int teamId,
-		struct SAIFloat3 pos, float radius);
-int (CALLING_CONV *Clb_0MULTI1VALS3FriendlyUnitsIn0Unit)(int teamId,
-		struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1SIZE3FriendlyUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius);
+int (CALLING_CONV *Clb_0MULTI1VALS3FriendlyUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
 /**
  * Returns all units that are neutral and are in LOS.
  */
 int (CALLING_CONV *Clb_0MULTI1SIZE3NeutralUnits0Unit)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS3NeutralUnits0Unit)(int teamId, int unitIds[],
-		int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1VALS3NeutralUnits0Unit)(int teamId, int unitIds[], int unitIds_max);
 /**
  * Returns all units that are neutral and are in LOS plus they have to be
  * located in the specified area of the map.
  */
-int (CALLING_CONV *Clb_0MULTI1SIZE3NeutralUnitsIn0Unit)(int teamId,
-		struct SAIFloat3 pos, float radius);
-int (CALLING_CONV *Clb_0MULTI1VALS3NeutralUnitsIn0Unit)(int teamId,
-		struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1SIZE3NeutralUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius);
+int (CALLING_CONV *Clb_0MULTI1VALS3NeutralUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
 /**
  * Returns all units that are of the team controlled by this AI instance. This
  * list can also be created dynamically by the AI, through updating a list on
  * each unit-created and unit-destroyed event.
  */
 int (CALLING_CONV *Clb_0MULTI1SIZE3TeamUnits0Unit)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS3TeamUnits0Unit)(int teamId, int unitIds[],
-		int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1VALS3TeamUnits0Unit)(int teamId, int unitIds[], int unitIds_max);
 /**
  * Returns all units that are currently selected
  * (usually only contains units if a human payer
  * is controlling this team as well).
  */
 int (CALLING_CONV *Clb_0MULTI1SIZE3SelectedUnits0Unit)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS3SelectedUnits0Unit)(int teamId,
-		int unitIds[], int unitIds_max);
+int (CALLING_CONV *Clb_0MULTI1VALS3SelectedUnits0Unit)(int teamId, int unitIds[], int unitIds_max);
 /**
  * Returns the unit's unitdef struct from which you can read all
  * the statistics of the unit, do NOT try to change any values in it.
  */
-int (CALLING_CONV *Clb_Unit_0SINGLE1FETCH2UnitDef0getDef)(int teamId,
-		int unitId);
+int (CALLING_CONV *Clb_Unit_0SINGLE1FETCH2UnitDef0getDef)(int teamId, int unitId);
 /**
  * This is a set of parameters that is initialized
  * in CreateUnitRulesParams() and may change during the game.
@@ -824,10 +767,8 @@ int (CALLING_CONV *Clb_Unit_0SINGLE1FETCH2UnitDef0getDef)(int teamId,
  * Parameters may or may not have a name.
  */
 int (CALLING_CONV *Clb_Unit_0MULTI1SIZE0ModParam)(int teamId, int unitId);
-const char* (CALLING_CONV *Clb_Unit_ModParam_getName)(int teamId, int unitId,
-		int modParamId);
-float (CALLING_CONV *Clb_Unit_ModParam_getValue)(int teamId, int unitId,
-		int modParamId);
+const char* (CALLING_CONV *Clb_Unit_ModParam_getName)(int teamId, int unitId, int modParamId);
+float (CALLING_CONV *Clb_Unit_ModParam_getValue)(int teamId, int unitId, int modParamId);
 int (CALLING_CONV *Clb_Unit_getTeam)(int teamId, int unitId);
 int (CALLING_CONV *Clb_Unit_getAllyTeam)(int teamId, int unitId);
 /**
@@ -872,51 +813,35 @@ float (CALLING_CONV *Clb_Unit_getMaxHealth)(int teamId, int unitId);
 float (CALLING_CONV *Clb_Unit_getExperience)(int teamId, int unitId);
 /// Returns the group a unit belongs to, -1 if none
 int (CALLING_CONV *Clb_Unit_getGroup)(int teamId, int unitId);
-int (CALLING_CONV *Clb_Unit_0MULTI1SIZE1Command0CurrentCommand)(int teamId,
-		int unitId);
+int (CALLING_CONV *Clb_Unit_0MULTI1SIZE1Command0CurrentCommand)(int teamId, int unitId);
 /**
  * For the type of the command queue, see CCommandQueue::CommandQueueType
  * in Sim/Unit/CommandAI/CommandQueue.h
  */
-int (CALLING_CONV *Clb_Unit_CurrentCommand_0STATIC0getType)(int teamId,
-		int unitId);
+int (CALLING_CONV *Clb_Unit_CurrentCommand_0STATIC0getType)(int teamId, int unitId);
 /**
  * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
  * (custom codes can also be used)
  */
-int (CALLING_CONV *Clb_Unit_CurrentCommand_getId)(int teamId, int unitId,
-		int commandId);
-unsigned char (CALLING_CONV *Clb_Unit_CurrentCommand_getOptions)(int teamId,
-		int unitId, int commandId);
-unsigned int (CALLING_CONV *Clb_Unit_CurrentCommand_getTag)(int teamId,
-		int unitId, int commandId);
-int (CALLING_CONV *Clb_Unit_CurrentCommand_getTimeOut)(int teamId, int unitId,
-		int commandId);
-int (CALLING_CONV *Clb_Unit_CurrentCommand_0ARRAY1SIZE0getParams)(int teamId,
-		int unitId, int commandId);
-int (CALLING_CONV *Clb_Unit_CurrentCommand_0ARRAY1VALS0getParams)(int teamId,
-		int unitId, int commandId, float params[], int params_max);
+int (CALLING_CONV *Clb_Unit_CurrentCommand_getId)(int teamId, int unitId, int commandId);
+unsigned char (CALLING_CONV *Clb_Unit_CurrentCommand_getOptions)(int teamId, int unitId, int commandId);
+unsigned int (CALLING_CONV *Clb_Unit_CurrentCommand_getTag)(int teamId, int unitId, int commandId);
+int (CALLING_CONV *Clb_Unit_CurrentCommand_getTimeOut)(int teamId, int unitId, int commandId);
+int (CALLING_CONV *Clb_Unit_CurrentCommand_0ARRAY1SIZE0getParams)(int teamId, int unitId, int commandId);
+int (CALLING_CONV *Clb_Unit_CurrentCommand_0ARRAY1VALS0getParams)(int teamId, int unitId, int commandId, float params[], int params_max);
 /// The commands that this unit can understand, other commands will be ignored
-int (CALLING_CONV *Clb_Unit_0MULTI1SIZE0SupportedCommand)(int teamId,
-		int unitId);
+int (CALLING_CONV *Clb_Unit_0MULTI1SIZE0SupportedCommand)(int teamId, int unitId);
 /**
  * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
  * (custom codes can also be used)
  */
-int (CALLING_CONV *Clb_Unit_SupportedCommand_getId)(int teamId, int unitId,
-		int commandId);
-const char* (CALLING_CONV *Clb_Unit_SupportedCommand_getName)(int teamId,
-		int unitId, int commandId);
-const char* (CALLING_CONV *Clb_Unit_SupportedCommand_getToolTip)(int teamId,
-		int unitId, int commandId);
-bool (CALLING_CONV *Clb_Unit_SupportedCommand_isShowUnique)(int teamId,
-		int unitId, int commandId);
-bool (CALLING_CONV *Clb_Unit_SupportedCommand_isDisabled)(int teamId,
-		int unitId, int commandId);
-int (CALLING_CONV *Clb_Unit_SupportedCommand_0ARRAY1SIZE0getParams)(int teamId,
-		int unitId, int commandId);
-int (CALLING_CONV *Clb_Unit_SupportedCommand_0ARRAY1VALS0getParams)(int teamId,
-		int unitId, int commandId, const char* params[], int params_max);
+int (CALLING_CONV *Clb_Unit_SupportedCommand_getId)(int teamId, int unitId, int commandId);
+const char* (CALLING_CONV *Clb_Unit_SupportedCommand_getName)(int teamId, int unitId, int commandId);
+const char* (CALLING_CONV *Clb_Unit_SupportedCommand_getToolTip)(int teamId, int unitId, int commandId);
+bool (CALLING_CONV *Clb_Unit_SupportedCommand_isShowUnique)(int teamId, int unitId, int commandId);
+bool (CALLING_CONV *Clb_Unit_SupportedCommand_isDisabled)(int teamId, int unitId, int commandId);
+int (CALLING_CONV *Clb_Unit_SupportedCommand_0ARRAY1SIZE0getParams)(int teamId, int unitId, int commandId);
+int (CALLING_CONV *Clb_Unit_SupportedCommand_0ARRAY1VALS0getParams)(int teamId, int unitId, int commandId, const char* params[], int params_max);
 
 /// The unit's current health
 float (CALLING_CONV *Clb_Unit_getHealth)(int teamId, int unitId);
@@ -948,42 +873,29 @@ int (CALLING_CONV *Clb_Unit_getLastUserOrderFrame)(int teamId, int unitId);
 
 // BEGINN OBJECT Group
 int (CALLING_CONV *Clb_0MULTI1SIZE0Group)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS0Group)(int teamId, int groupIds[],
-		int groupIds_max);
-int (CALLING_CONV *Clb_Group_0MULTI1SIZE0SupportedCommand)(int teamId,
-		int groupId);
+int (CALLING_CONV *Clb_0MULTI1VALS0Group)(int teamId, int groupIds[], int groupIds_max);
+int (CALLING_CONV *Clb_Group_0MULTI1SIZE0SupportedCommand)(int teamId, int groupId);
 /**
  * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
  * (custom codes can also be used)
  */
-int (CALLING_CONV *Clb_Group_SupportedCommand_getId)(int teamId, int groupId,
-		int commandId);
-const char* (CALLING_CONV *Clb_Group_SupportedCommand_getName)(int teamId,
-		int groupId, int commandId);
-const char* (CALLING_CONV *Clb_Group_SupportedCommand_getToolTip)(int teamId,
-		int groupId, int commandId);
-bool (CALLING_CONV *Clb_Group_SupportedCommand_isShowUnique)(int teamId,
-		int groupId, int commandId);
-bool (CALLING_CONV *Clb_Group_SupportedCommand_isDisabled)(int teamId,
-		int groupId, int commandId);
-int (CALLING_CONV *Clb_Group_SupportedCommand_0ARRAY1SIZE0getParams)(int teamId,
-		int groupId, int commandId);
-int (CALLING_CONV *Clb_Group_SupportedCommand_0ARRAY1VALS0getParams)(int teamId,
-		int groupId, int commandId, const char* params[], int params_max);
+int (CALLING_CONV *Clb_Group_SupportedCommand_getId)(int teamId, int groupId, int commandId);
+const char* (CALLING_CONV *Clb_Group_SupportedCommand_getName)(int teamId, int groupId, int commandId);
+const char* (CALLING_CONV *Clb_Group_SupportedCommand_getToolTip)(int teamId, int groupId, int commandId);
+bool (CALLING_CONV *Clb_Group_SupportedCommand_isShowUnique)(int teamId, int groupId, int commandId);
+bool (CALLING_CONV *Clb_Group_SupportedCommand_isDisabled)(int teamId, int groupId, int commandId);
+int (CALLING_CONV *Clb_Group_SupportedCommand_0ARRAY1SIZE0getParams)(int teamId, int groupId, int commandId);
+int (CALLING_CONV *Clb_Group_SupportedCommand_0ARRAY1VALS0getParams)(int teamId, int groupId, int commandId, const char* params[], int params_max);
 /**
  * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
  * (custom codes can also be used)
  */
 int (CALLING_CONV *Clb_Group_OrderPreview_getId)(int teamId, int groupId);
-unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId,
-		int groupId);
-unsigned int (CALLING_CONV *Clb_Group_OrderPreview_getTag)(int teamId,
-		int groupId);
+unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int groupId);
+unsigned int (CALLING_CONV *Clb_Group_OrderPreview_getTag)(int teamId, int groupId);
 int (CALLING_CONV *Clb_Group_OrderPreview_getTimeOut)(int teamId, int groupId);
-int (CALLING_CONV *Clb_Group_OrderPreview_0ARRAY1SIZE0getParams)(int teamId,
-		int groupId);
-int (CALLING_CONV *Clb_Group_OrderPreview_0ARRAY1VALS0getParams)(int teamId,
-		int groupId, float params[], int params_max);
+int (CALLING_CONV *Clb_Group_OrderPreview_0ARRAY1SIZE0getParams)(int teamId, int groupId);
+int (CALLING_CONV *Clb_Group_OrderPreview_0ARRAY1VALS0getParams)(int teamId, int groupId, float params[], int params_max);
 bool (CALLING_CONV *Clb_Group_isSelected)(int teamId, int groupId);
 // END OBJECT Group
 
@@ -1127,8 +1039,7 @@ bool              (CALLING_CONV *Clb_Mod_getRequireSonarUnderWater)(int teamId);
 unsigned int (CALLING_CONV *Clb_Map_getChecksum)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Clb_Map_getStartPos)(int teamId);
 struct SAIFloat3 (CALLING_CONV *Clb_Map_getMousePos)(int teamId);
-bool (CALLING_CONV *Clb_Map_isPosInCamera)(int teamId, struct SAIFloat3 pos,
-		float radius);
+bool (CALLING_CONV *Clb_Map_isPosInCamera)(int teamId, struct SAIFloat3 pos, float radius);
 /// Returns the maps width in full resolution
 int (CALLING_CONV *Clb_Map_getWidth)(int teamId);
 /// Returns the maps height in full resolution
@@ -1147,8 +1058,7 @@ int (CALLING_CONV *Clb_Map_getHeight)(int teamId);
  * @see getCornersHeightMap()
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getHeightMap)(int teamId);
-int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId,
-		float heights[], int heights_max);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId, float heights[], int heights_max);
 /**
  * Returns the height for the corners of the squares.
  * This is the same like the drawn map.
@@ -1163,8 +1073,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getHeightMap)(int teamId,
  * @see getHeightMap()
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getCornersHeightMap)(int teamId);
-int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getCornersHeightMap)(int teamId,
-		float cornerHeights[], int cornerHeights_max);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getCornersHeightMap)(int teamId, float cornerHeights[], int cornerHeights_max);
 float (CALLING_CONV *Clb_Map_getMinHeight)(int teamId);
 float (CALLING_CONV *Clb_Map_getMaxHeight)(int teamId);
 /**
@@ -1178,8 +1087,7 @@ float (CALLING_CONV *Clb_Map_getMaxHeight)(int teamId);
  * - the last value, bottom right, is at index (width/2 * height/2 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getSlopeMap)(int teamId);
-int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getSlopeMap)(int teamId, float slopes[],
-		int slopes_max);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getSlopeMap)(int teamId, float slopes[], int slopes_max);
 /**
  * @brief the level of sight map
  * gs->mapx >> losMipLevel
@@ -1198,8 +1106,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getSlopeMap)(int teamId, float slopes[],
  * - the last value, bottom right, is at index (width/res * height/res - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getLosMap)(int teamId);
-int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getLosMap)(int teamId,
-		unsigned short losValues[], int losValues_max);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getLosMap)(int teamId, unsigned short losValues[], int losValues_max);
 /**
  * @brief the radar map
  * A square with value 0 means you do not have radar coverage on it.
@@ -1211,8 +1118,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getLosMap)(int teamId,
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getRadarMap)(int teamId);
-int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getRadarMap)(int teamId,
-		unsigned short radarValues[], int radarValues_max);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getRadarMap)(int teamId, unsigned short radarValues[], int radarValues_max);
 /**
  * @brief the radar jammer map
  * A square with value 0 means you do not have radar jamming coverage.
@@ -1224,8 +1130,7 @@ int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getRadarMap)(int teamId,
  * - the last value, bottom right, is at index (width/8 * height/8 - 1)
  */
 int (CALLING_CONV *Clb_Map_0ARRAY1SIZE0getJammerMap)(int teamId);
-int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getJammerMap)(int teamId,
-		unsigned short jammerValues[], int jammerValues_max);
+int (CALLING_CONV *Clb_Map_0ARRAY1VALS0getJammerMap)(int teamId, unsigned short jammerValues[], int jammerValues_max);
 /**
  * @brief resource maps
  * This map shows the resource density on the map.
@@ -1287,10 +1192,8 @@ float (CALLING_CONV *Clb_Map_getGravity)(int teamId);
  * if <code>includeAllies</code> is true.
  */
 int (CALLING_CONV *Clb_Map_0MULTI1SIZE0Point)(int teamId, bool includeAllies);
-struct SAIFloat3 (CALLING_CONV *Clb_Map_Point_getPosition)(int teamId,
-		int pointId);
-struct SAIFloat3 (CALLING_CONV *Clb_Map_Point_getColor)(int teamId,
-		int pointId);
+struct SAIFloat3 (CALLING_CONV *Clb_Map_Point_getPosition)(int teamId, int pointId);
+struct SAIFloat3 (CALLING_CONV *Clb_Map_Point_getColor)(int teamId, int pointId);
 const char* (CALLING_CONV *Clb_Map_Point_getLabel)(int teamId, int pointId);
 /**
  * Returns all lines drawn with this AIs team color,
@@ -1298,10 +1201,8 @@ const char* (CALLING_CONV *Clb_Map_Point_getLabel)(int teamId, int pointId);
  * if <code>includeAllies</code> is true.
  */
 int (CALLING_CONV *Clb_Map_0MULTI1SIZE0Line)(int teamId, bool includeAllies);
-struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getFirstPosition)(int teamId,
-		int lineId);
-struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getSecondPosition)(int teamId,
-		int lineId);
+struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getFirstPosition)(int teamId, int lineId);
+struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getSecondPosition)(int teamId, int lineId);
 struct SAIFloat3 (CALLING_CONV *Clb_Map_Line_getColor)(int teamId, int lineId);
 bool (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(
 		int teamId, int unitDefId, struct SAIFloat3 pos, int facing);
@@ -1312,29 +1213,22 @@ bool (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(
  * @return actual map position with x, y and z all beeing positive,
  *         or SAIFloat3(-1, 0, 0) if no suitable position is found.
  */
-struct SAIFloat3 (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId,
-		int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist,
-		int facing);
+struct SAIFloat3 (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId, int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist, int facing);
 // BEGINN OBJECT Map
 
 
 
 // BEGINN OBJECT FeatureDef
 int (CALLING_CONV *Clb_0MULTI1SIZE0FeatureDef)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS0FeatureDef)(int teamId, int featureDefIds[],
-		int featureDefIds_max);
+int (CALLING_CONV *Clb_0MULTI1VALS0FeatureDef)(int teamId, int featureDefIds[], int featureDefIds_max);
 //int (CALLING_CONV *Clb_FeatureDef_getId)(int teamId, int featureDefId);
-const char* (CALLING_CONV *Clb_FeatureDef_getName)(int teamId,
-		int featureDefId);
-const char* (CALLING_CONV *Clb_FeatureDef_getDescription)(int teamId,
-		int featureDefId);
-const char* (CALLING_CONV *Clb_FeatureDef_getFileName)(int teamId,
-		int featureDefId);
+const char* (CALLING_CONV *Clb_FeatureDef_getName)(int teamId, int featureDefId);
+const char* (CALLING_CONV *Clb_FeatureDef_getDescription)(int teamId, int featureDefId);
+const char* (CALLING_CONV *Clb_FeatureDef_getFileName)(int teamId, int featureDefId);
 float (CALLING_CONV *Clb_FeatureDef_0REF1Resource2resourceId0getContainedResource)(
 		int teamId, int featureDefId, int resourceId);
 float (CALLING_CONV *Clb_FeatureDef_getMaxHealth)(int teamId, int featureDefId);
-float (CALLING_CONV *Clb_FeatureDef_getReclaimTime)(int teamId,
-		int featureDefId);
+float (CALLING_CONV *Clb_FeatureDef_getReclaimTime)(int teamId, int featureDefId);
 /** Used to see if the object can be overrun by units of a certain heavyness */
 float (CALLING_CONV *Clb_FeatureDef_getMass)(int teamId, int featureDefId);
 /**
@@ -1344,8 +1238,7 @@ float (CALLING_CONV *Clb_FeatureDef_getMass)(int teamId, int featureDefId);
  *          "Cyl[T]" (where [T] is one of ['X', 'Y', 'Z'])
  *          "Box"
  */
-const char* (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getType)(int teamId,
-		int featureDefId);
+const char* (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getType)(int teamId, int featureDefId);
 /** The collision volume's full axis lengths. */
 struct SAIFloat3 (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getScales)(
 		int teamId, int featureDefId);
@@ -1358,12 +1251,10 @@ struct SAIFloat3 (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getOffsets)(
  * @return  0: discrete
  *          1: continuous
  */
-int (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getTest)(int teamId,
-		int featureDefId);
+int (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getTest)(int teamId, int featureDefId);
 bool (CALLING_CONV *Clb_FeatureDef_isUpright)(int teamId, int featureDefId);
 int (CALLING_CONV *Clb_FeatureDef_getDrawType)(int teamId, int featureDefId);
-const char* (CALLING_CONV *Clb_FeatureDef_getModelName)(int teamId,
-		int featureDefId);
+const char* (CALLING_CONV *Clb_FeatureDef_getModelName)(int teamId, int featureDefId);
 /**
  * Used to determine whether the feature is resurrectable.
  *
@@ -1372,11 +1263,9 @@ const char* (CALLING_CONV *Clb_FeatureDef_getModelName)(int teamId,
  *           0: no, never
  *           1: yes, always
  */
-int (CALLING_CONV *Clb_FeatureDef_getResurrectable)(int teamId,
-		int featureDefId);
+int (CALLING_CONV *Clb_FeatureDef_getResurrectable)(int teamId, int featureDefId);
 int (CALLING_CONV *Clb_FeatureDef_getSmokeTime)(int teamId, int featureDefId);
-bool (CALLING_CONV *Clb_FeatureDef_isDestructable)(int teamId,
-		int featureDefId);
+bool (CALLING_CONV *Clb_FeatureDef_isDestructable)(int teamId, int featureDefId);
 bool (CALLING_CONV *Clb_FeatureDef_isReclaimable)(int teamId, int featureDefId);
 bool (CALLING_CONV *Clb_FeatureDef_isBlocking)(int teamId, int featureDefId);
 bool (CALLING_CONV *Clb_FeatureDef_isBurnable)(int teamId, int featureDefId);
@@ -1384,8 +1273,7 @@ bool (CALLING_CONV *Clb_FeatureDef_isFloating)(int teamId, int featureDefId);
 bool (CALLING_CONV *Clb_FeatureDef_isNoSelect)(int teamId, int featureDefId);
 bool (CALLING_CONV *Clb_FeatureDef_isGeoThermal)(int teamId, int featureDefId);
 /** Name of the FeatureDef that this turns into when killed (not reclaimed). */
-const char* (CALLING_CONV *Clb_FeatureDef_getDeathFeature)(int teamId,
-		int featureDefId);
+const char* (CALLING_CONV *Clb_FeatureDef_getDeathFeature)(int teamId, int featureDefId);
 /**
  * Size of the feature along the X axis - in other words: height.
  * each size is 8 units
@@ -1396,12 +1284,9 @@ int (CALLING_CONV *Clb_FeatureDef_getXSize)(int teamId, int featureDefId);
  * each size is 8 units
  */
 int (CALLING_CONV *Clb_FeatureDef_getZSize)(int teamId, int featureDefId);
-int (CALLING_CONV *Clb_FeatureDef_0MAP1SIZE0getCustomParams)(int teamId,
-		int featureDefId);
-void (CALLING_CONV *Clb_FeatureDef_0MAP1KEYS0getCustomParams)(int teamId,
-		int featureDefId, const char* keys[]);
-void (CALLING_CONV *Clb_FeatureDef_0MAP1VALS0getCustomParams)(int teamId,
-		int featureDefId, const char* values[]);
+int (CALLING_CONV *Clb_FeatureDef_0MAP1SIZE0getCustomParams)(int teamId, int featureDefId);
+void (CALLING_CONV *Clb_FeatureDef_0MAP1KEYS0getCustomParams)(int teamId, int featureDefId, const char* keys[]);
+void (CALLING_CONV *Clb_FeatureDef_0MAP1VALS0getCustomParams)(int teamId, int featureDefId, const char* values[]);
 // END OBJECT FeatureDef
 
 
@@ -1411,37 +1296,28 @@ void (CALLING_CONV *Clb_FeatureDef_0MAP1VALS0getCustomParams)(int teamId,
  * if cheating is enabled.
  */
 int (CALLING_CONV *Clb_0MULTI1SIZE0Feature)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1VALS0Feature)(int teamId, int featureIds[],
-		int featureIds_max);
+int (CALLING_CONV *Clb_0MULTI1VALS0Feature)(int teamId, int featureIds[], int featureIds_max);
 /**
  * Returns all features in a specified area that are currently in LOS,
  * or all features in this area if cheating is enabled.
  */
-int (CALLING_CONV *Clb_0MULTI1SIZE3FeaturesIn0Feature)(int teamId,
-		struct SAIFloat3 pos, float radius);
-int (CALLING_CONV *Clb_0MULTI1VALS3FeaturesIn0Feature)(int teamId,
-		struct SAIFloat3 pos, float radius, int featureIds[],
-		int featureIds_max);
-int (CALLING_CONV *Clb_Feature_0SINGLE1FETCH2FeatureDef0getDef)(int teamId,
-		int featureId);
+int (CALLING_CONV *Clb_0MULTI1SIZE3FeaturesIn0Feature)(int teamId, struct SAIFloat3 pos, float radius);
+int (CALLING_CONV *Clb_0MULTI1VALS3FeaturesIn0Feature)(int teamId, struct SAIFloat3 pos, float radius, int featureIds[], int featureIds_max);
+int (CALLING_CONV *Clb_Feature_0SINGLE1FETCH2FeatureDef0getDef)(int teamId, int featureId);
 float (CALLING_CONV *Clb_Feature_getHealth)(int teamId, int featureId);
 float (CALLING_CONV *Clb_Feature_getReclaimLeft)(int teamId, int featureId);
-struct SAIFloat3 (CALLING_CONV *Clb_Feature_getPosition)(int teamId,
-		int featureId);
+struct SAIFloat3 (CALLING_CONV *Clb_Feature_getPosition)(int teamId, int featureId);
 // END OBJECT Feature
 
 
 
 // BEGINN OBJECT WeaponDef
 int (CALLING_CONV *Clb_0MULTI1SIZE0WeaponDef)(int teamId);
-int (CALLING_CONV *Clb_0MULTI1FETCH3WeaponDefByName0WeaponDef)(int teamId,
-		const char* weaponDefName);
+int (CALLING_CONV *Clb_0MULTI1FETCH3WeaponDefByName0WeaponDef)(int teamId, const char* weaponDefName);
 const char* (CALLING_CONV *Clb_WeaponDef_getName)(int teamId, int weaponDefId);
 const char* (CALLING_CONV *Clb_WeaponDef_getType)(int teamId, int weaponDefId);
-const char* (CALLING_CONV *Clb_WeaponDef_getDescription)(int teamId,
-		int weaponDefId);
-const char* (CALLING_CONV *Clb_WeaponDef_getFileName)(int teamId,
-		int weaponDefId);
+const char* (CALLING_CONV *Clb_WeaponDef_getDescription)(int teamId, int weaponDefId);
+const char* (CALLING_CONV *Clb_WeaponDef_getFileName)(int teamId, int weaponDefId);
 const char* (CALLING_CONV *Clb_WeaponDef_getCegTag)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getRange)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getHeightMod)(int teamId, int weaponDefId);
@@ -1450,49 +1326,36 @@ float (CALLING_CONV *Clb_WeaponDef_getAccuracy)(int teamId, int weaponDefId);
 /** Inaccuracy of individual shots inside burst */
 float (CALLING_CONV *Clb_WeaponDef_getSprayAngle)(int teamId, int weaponDefId);
 /** Inaccuracy while owner moving */
-float (CALLING_CONV *Clb_WeaponDef_getMovingAccuracy)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getMovingAccuracy)(int teamId, int weaponDefId);
 /** Fraction of targets move speed that is used as error offset */
-float (CALLING_CONV *Clb_WeaponDef_getTargetMoveError)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getTargetMoveError)(int teamId, int weaponDefId);
 /** Maximum distance the weapon will lead the target */
 float (CALLING_CONV *Clb_WeaponDef_getLeadLimit)(int teamId, int weaponDefId);
 /** Factor for increasing the leadLimit with experience */
 float (CALLING_CONV *Clb_WeaponDef_getLeadBonus)(int teamId, int weaponDefId);
 /** Replaces hardcoded behaviour for burnblow cannons */
-float (CALLING_CONV *Clb_WeaponDef_getPredictBoost)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getPredictBoost)(int teamId, int weaponDefId);
 
 // Deprecate the following function, if no longer needed by legacy Cpp AIs
 int (CALLING_CONV *Clb_WeaponDef_0STATIC0getNumDamageTypes)(int teamId);
 //DamageArray (CALLING_CONV *Clb_WeaponDef_getDamages)(int teamId, int weaponDefId);
-int (CALLING_CONV *Clb_WeaponDef_Damage_getParalyzeDamageTime)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_Damage_getImpulseFactor)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_Damage_getImpulseBoost)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_Damage_getCraterMult)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_Damage_getCraterBoost)(int teamId,
-		int weaponDefId);
+int (CALLING_CONV *Clb_WeaponDef_Damage_getParalyzeDamageTime)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Damage_getImpulseFactor)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Damage_getImpulseBoost)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Damage_getCraterMult)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Damage_getCraterBoost)(int teamId, int weaponDefId);
 //float (CALLING_CONV *Clb_WeaponDef_Damage_getType)(int teamId, int weaponDefId, int typeId);
-int (CALLING_CONV *Clb_WeaponDef_Damage_0ARRAY1SIZE0getTypes)(int teamId,
-		int weaponDefId);
-int (CALLING_CONV *Clb_WeaponDef_Damage_0ARRAY1VALS0getTypes)(int teamId,
-		int weaponDefId, float types[], int types_max);
+int (CALLING_CONV *Clb_WeaponDef_Damage_0ARRAY1SIZE0getTypes)(int teamId, int weaponDefId);
+int (CALLING_CONV *Clb_WeaponDef_Damage_0ARRAY1VALS0getTypes)(int teamId, int weaponDefId, float types[], int types_max);
 
 //int (CALLING_CONV *Clb_WeaponDef_getId)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getAreaOfEffect)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getAreaOfEffect)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isNoSelfDamage)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getFireStarter)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getEdgeEffectiveness)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getEdgeEffectiveness)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getSize)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getSizeGrowth)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getCollisionSize)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getCollisionSize)(int teamId, int weaponDefId);
 int (CALLING_CONV *Clb_WeaponDef_getSalvoSize)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getSalvoDelay)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getReload)(int teamId, int weaponDefId);
@@ -1500,19 +1363,16 @@ float (CALLING_CONV *Clb_WeaponDef_getBeamTime)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isBeamBurst)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isWaterBounce)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isGroundBounce)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getBounceRebound)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getBounceRebound)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getBounceSlip)(int teamId, int weaponDefId);
 int (CALLING_CONV *Clb_WeaponDef_getNumBounce)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getMaxAngle)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getRestTime)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getUpTime)(int teamId, int weaponDefId);
 int (CALLING_CONV *Clb_WeaponDef_getFlightTime)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_0REF1Resource2resourceId0getCost)(int teamId,
-		int weaponDefId, int resourceId);
+float (CALLING_CONV *Clb_WeaponDef_0REF1Resource2resourceId0getCost)(int teamId, int weaponDefId, int resourceId);
 float (CALLING_CONV *Clb_WeaponDef_getSupplyCost)(int teamId, int weaponDefId);
-int (CALLING_CONV *Clb_WeaponDef_getProjectilesPerShot)(int teamId,
-		int weaponDefId);
+int (CALLING_CONV *Clb_WeaponDef_getProjectilesPerShot)(int teamId, int weaponDefId);
 // /** The "id=" tag in the TDF */
 //int (CALLING_CONV *Clb_WeaponDef_getTdfId)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isTurret)(int teamId, int weaponDefId);
@@ -1557,25 +1417,20 @@ bool (CALLING_CONV *Clb_WeaponDef_isStockpileable)(int teamId, int weaponDefId);
  *
  * @see  getInterceptor()
  */
-float (CALLING_CONV *Clb_WeaponDef_getCoverageRange)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getCoverageRange)(int teamId, int weaponDefId);
 /** Build time of a missile */
-float (CALLING_CONV *Clb_WeaponDef_getStockpileTime)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getStockpileTime)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getIntensity)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getThickness)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getLaserFlareSize)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getCoreThickness)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getLaserFlareSize)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getCoreThickness)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getDuration)(int teamId, int weaponDefId);
 int (CALLING_CONV *Clb_WeaponDef_getLodDistance)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getFalloffRate)(int teamId, int weaponDefId);
 int (CALLING_CONV *Clb_WeaponDef_getGraphicsType)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isSoundTrigger)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isSelfExplode)(int teamId, int weaponDefId);
-bool (CALLING_CONV *Clb_WeaponDef_isGravityAffected)(int teamId,
-		int weaponDefId);
+bool (CALLING_CONV *Clb_WeaponDef_isGravityAffected)(int teamId, int weaponDefId);
 /**
  * Per weapon high trajectory setting.
  * UnitDef also has this property.
@@ -1584,49 +1439,37 @@ bool (CALLING_CONV *Clb_WeaponDef_isGravityAffected)(int teamId,
  *          1: high
  *          2: unit
  */
-int (CALLING_CONV *Clb_WeaponDef_getHighTrajectory)(int teamId,
-		int weaponDefId);
+int (CALLING_CONV *Clb_WeaponDef_getHighTrajectory)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getMyGravity)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isNoExplode)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getStartVelocity)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getWeaponAcceleration)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getStartVelocity)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getWeaponAcceleration)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getTurnRate)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getMaxVelocity)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getProjectileSpeed)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getExplosionSpeed)(int teamId,
-		int weaponDefId);
-unsigned int (CALLING_CONV *Clb_WeaponDef_getOnlyTargetCategory)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getProjectileSpeed)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getExplosionSpeed)(int teamId, int weaponDefId);
+unsigned int (CALLING_CONV *Clb_WeaponDef_getOnlyTargetCategory)(int teamId, int weaponDefId);
 /** How much the missile will wobble around its course. */
 float (CALLING_CONV *Clb_WeaponDef_getWobble)(int teamId, int weaponDefId);
 /** How much the missile will dance. */
 float (CALLING_CONV *Clb_WeaponDef_getDance)(int teamId, int weaponDefId);
 /** How high trajectory missiles will try to fly in. */
-float (CALLING_CONV *Clb_WeaponDef_getTrajectoryHeight)(int teamId,
-		int weaponDefId);
-bool (CALLING_CONV *Clb_WeaponDef_isLargeBeamLaser)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getTrajectoryHeight)(int teamId, int weaponDefId);
+bool (CALLING_CONV *Clb_WeaponDef_isLargeBeamLaser)(int teamId, int weaponDefId);
 /** If the weapon is a shield rather than a weapon. */
 bool (CALLING_CONV *Clb_WeaponDef_isShield)(int teamId, int weaponDefId);
 /** If the weapon should be repulsed or absorbed. */
-bool (CALLING_CONV *Clb_WeaponDef_isShieldRepulser)(int teamId,
-		int weaponDefId);
+bool (CALLING_CONV *Clb_WeaponDef_isShieldRepulser)(int teamId, int weaponDefId);
 /** If the shield only affects enemy projectiles. */
 bool (CALLING_CONV *Clb_WeaponDef_isSmartShield)(int teamId, int weaponDefId);
 /** If the shield only affects stuff coming from outside shield radius. */
-bool (CALLING_CONV *Clb_WeaponDef_isExteriorShield)(int teamId,
-		int weaponDefId);
+bool (CALLING_CONV *Clb_WeaponDef_isExteriorShield)(int teamId, int weaponDefId);
 /** If the shield should be graphically shown. */
 bool (CALLING_CONV *Clb_WeaponDef_isVisibleShield)(int teamId, int weaponDefId);
 /** If a small graphic should be shown at each repulse. */
-bool (CALLING_CONV *Clb_WeaponDef_isVisibleShieldRepulse)(int teamId,
-		int weaponDefId);
+bool (CALLING_CONV *Clb_WeaponDef_isVisibleShieldRepulse)(int teamId, int weaponDefId);
 /** The number of frames to draw the shield after it has been hit. */
-int (CALLING_CONV *Clb_WeaponDef_getVisibleShieldHitFrames)(int teamId,
-		int weaponDefId);
+int (CALLING_CONV *Clb_WeaponDef_getVisibleShieldHitFrames)(int teamId, int weaponDefId);
 /**
  * Amount of the resource used per shot or per second,
  * depending on the type of projectile.
@@ -1634,24 +1477,19 @@ int (CALLING_CONV *Clb_WeaponDef_getVisibleShieldHitFrames)(int teamId,
 float (CALLING_CONV *Clb_WeaponDef_Shield_0REF1Resource2resourceId0getResourceUse)(
 		int teamId, int weaponDefId, int resourceId);
 /** Size of shield covered area */
-float (CALLING_CONV *Clb_WeaponDef_Shield_getRadius)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Shield_getRadius)(int teamId, int weaponDefId);
 /**
  * Shield acceleration on plasma stuff.
  * How much will plasma be accelerated into the other direction
  * when it hits the shield.
  */
-float (CALLING_CONV *Clb_WeaponDef_Shield_getForce)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Shield_getForce)(int teamId, int weaponDefId);
 /** Maximum speed to which the shield can repulse plasma. */
-float (CALLING_CONV *Clb_WeaponDef_Shield_getMaxSpeed)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Shield_getMaxSpeed)(int teamId, int weaponDefId);
 /** Amount of damage the shield can reflect. (0=infinite) */
-float (CALLING_CONV *Clb_WeaponDef_Shield_getPower)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Shield_getPower)(int teamId, int weaponDefId);
 /** Amount of power that is regenerated per second. */
-float (CALLING_CONV *Clb_WeaponDef_Shield_getPowerRegen)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Shield_getPowerRegen)(int teamId, int weaponDefId);
 /**
  * How much of a given resource is needed to regenerate power
  * with max speed per second.
@@ -1659,28 +1497,22 @@ float (CALLING_CONV *Clb_WeaponDef_Shield_getPowerRegen)(int teamId,
 float (CALLING_CONV *Clb_WeaponDef_Shield_0REF1Resource2resourceId0getPowerRegenResource)(
 		int teamId, int weaponDefId, int resourceId);
 /** How much power the shield has when it is created. */
-float (CALLING_CONV *Clb_WeaponDef_Shield_getStartingPower)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Shield_getStartingPower)(int teamId, int weaponDefId);
 /** Number of frames to delay recharging by after each hit. */
-int (CALLING_CONV *Clb_WeaponDef_Shield_getRechargeDelay)(int teamId,
-		int weaponDefId);
+int (CALLING_CONV *Clb_WeaponDef_Shield_getRechargeDelay)(int teamId, int weaponDefId);
 /** The color of the shield when it is at full power. */
-struct SAIFloat3 (CALLING_CONV *Clb_WeaponDef_Shield_getGoodColor)(int teamId,
-		int weaponDefId);
+struct SAIFloat3 (CALLING_CONV *Clb_WeaponDef_Shield_getGoodColor)(int teamId, int weaponDefId);
 /** The color of the shield when it is empty. */
-struct SAIFloat3 (CALLING_CONV *Clb_WeaponDef_Shield_getBadColor)(int teamId,
-		int weaponDefId);
+struct SAIFloat3 (CALLING_CONV *Clb_WeaponDef_Shield_getBadColor)(int teamId, int weaponDefId);
 /** The shields alpha value. */
-float (CALLING_CONV *Clb_WeaponDef_Shield_getAlpha)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_Shield_getAlpha)(int teamId, int weaponDefId);
 /**
  * The type of the shield (bitfield).
  * Defines what weapons can be intercepted by the shield.
  *
  * @see  getInterceptedByShieldType()
  */
-unsigned int (CALLING_CONV *Clb_WeaponDef_Shield_getInterceptType)(int teamId,
-		int weaponDefId);
+unsigned int (CALLING_CONV *Clb_WeaponDef_Shield_getInterceptType)(int teamId, int weaponDefId);
 /**
  * The type of shields that can intercept this weapon (bitfield).
  * The weapon can be affected by shields if:
@@ -1700,51 +1532,37 @@ bool (CALLING_CONV *Clb_WeaponDef_isAvoidNeutral)(int teamId, int weaponDefId);
  * If nonzero, targetting units will TryTarget at the edge of collision sphere
  * (radius*tag value, [-1;1]) instead of its centre.
  */
-float (CALLING_CONV *Clb_WeaponDef_getTargetBorder)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getTargetBorder)(int teamId, int weaponDefId);
 /**
  * If greater than 0, the range will be checked in a cylinder
  * (height=range*cylinderTargetting) instead of a sphere.
  */
-float (CALLING_CONV *Clb_WeaponDef_getCylinderTargetting)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getCylinderTargetting)(int teamId, int weaponDefId);
 /**
  * For beam-lasers only - always hit with some minimum intensity
  * (a damage coeffcient normally dependent on distance).
  * Do not confuse this with the intensity tag, it i completely unrelated.
  */
-float (CALLING_CONV *Clb_WeaponDef_getMinIntensity)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getMinIntensity)(int teamId, int weaponDefId);
 /**
  * Controls cannon range height boost.
  *
  * default: -1: automatically calculate a more or less sane value
  */
-float (CALLING_CONV *Clb_WeaponDef_getHeightBoostFactor)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getHeightBoostFactor)(int teamId, int weaponDefId);
 /** Multiplier for the distance to the target for priority calculations. */
-float (CALLING_CONV *Clb_WeaponDef_getProximityPriority)(int teamId,
-		int weaponDefId);
-unsigned int (CALLING_CONV *Clb_WeaponDef_getCollisionFlags)(int teamId,
-		int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getProximityPriority)(int teamId, int weaponDefId);
+unsigned int (CALLING_CONV *Clb_WeaponDef_getCollisionFlags)(int teamId, int weaponDefId);
 bool (CALLING_CONV *Clb_WeaponDef_isSweepFire)(int teamId, int weaponDefId);
-bool (CALLING_CONV *Clb_WeaponDef_isAbleToAttackGround)(int teamId,
-		int weaponDefId);
+bool (CALLING_CONV *Clb_WeaponDef_isAbleToAttackGround)(int teamId, int weaponDefId);
 float (CALLING_CONV *Clb_WeaponDef_getCameraShake)(int teamId, int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getDynDamageExp)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getDynDamageMin)(int teamId,
-		int weaponDefId);
-float (CALLING_CONV *Clb_WeaponDef_getDynDamageRange)(int teamId,
-		int weaponDefId);
-bool (CALLING_CONV *Clb_WeaponDef_isDynDamageInverted)(int teamId,
-		int weaponDefId);
-int (CALLING_CONV *Clb_WeaponDef_0MAP1SIZE0getCustomParams)(int teamId,
-		int weaponDefId);
-void (CALLING_CONV *Clb_WeaponDef_0MAP1KEYS0getCustomParams)(int teamId,
-		int weaponDefId, const char* keys[]);
-void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId,
-		int weaponDefId, const char* values[]);
+float (CALLING_CONV *Clb_WeaponDef_getDynDamageExp)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getDynDamageMin)(int teamId, int weaponDefId);
+float (CALLING_CONV *Clb_WeaponDef_getDynDamageRange)(int teamId, int weaponDefId);
+bool (CALLING_CONV *Clb_WeaponDef_isDynDamageInverted)(int teamId, int weaponDefId);
+int (CALLING_CONV *Clb_WeaponDef_0MAP1SIZE0getCustomParams)(int teamId, int weaponDefId);
+void (CALLING_CONV *Clb_WeaponDef_0MAP1KEYS0getCustomParams)(int teamId, int weaponDefId, const char* keys[]);
+void (CALLING_CONV *Clb_WeaponDef_0MAP1VALS0getCustomParams)(int teamId, int weaponDefId, const char* values[]);
 // END OBJECT WeaponDef
 
 };
