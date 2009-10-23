@@ -221,7 +221,11 @@ void CPreGame::UpdateClientNet()
 
 				const CTeam* team = teamHandler->Team(gu->myTeam);
 				assert(team);
-				LoadStartPicture(team->side);
+				std::string mapStartPic(mapInfo->GetStringValue("Startpic"));
+				if (mapStartPic.empty())
+					RandomStartPicture(team->side);
+				else
+					LoadStartPicture(mapStartPic);
 
 				game = new CGame(gameSetup->mapName, modArchive, savefile);
 

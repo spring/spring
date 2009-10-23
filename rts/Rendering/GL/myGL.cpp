@@ -210,8 +210,7 @@ static string SelectPicture(const std::string& dir, const std::string& prefix)
 	return pics[gu->usRandInt() % pics.size()];
 }
 
-
-void LoadStartPicture(const std::string& sidePref)
+void RandomStartPicture(const std::string& sidePref)
 {
 	if (startupTexture)
 		return;
@@ -227,7 +226,11 @@ void LoadStartPicture(const std::string& sidePref)
 	if (name.empty()) {
 		return; // no valid pictures
 	}
+	LoadStartPicture(name);
+}
 
+void LoadStartPicture(const std::string& name)
+{
 	CBitmap bm;
 	if (!bm.Load(name)) {
 		throw content_error("Could not load startpicture from file " + name);
