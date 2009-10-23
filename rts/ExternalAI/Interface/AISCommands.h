@@ -253,14 +253,14 @@ enum UnitCommandOptions {
  */
 struct SSetMyHandicapCheatCommand {
 	float handicap;
-}; // COMMAND_CHEATS_SET_MY_HANDICAP
+}; // COMMAND_CHEATS_SET_MY_HANDICAP Cheats_setMyHandicap
 /**
  * The AI team receives the specified amount of units of the specified resource.
  */
 struct SGiveMeResourceCheatCommand {
 	int resourceId;
 	float amount;
-}; // COMMAND_CHEATS_GIVE_ME_RESOURCE
+}; // COMMAND_CHEATS_GIVE_ME_RESOURCE Cheats_giveMeResource resourceId-Resource
 /**
  * Creates a new unit with the selected name at pos,
  * and returns its unit ID in ret_newUnitId.
@@ -269,7 +269,7 @@ struct SGiveMeNewUnitCheatCommand {
 	int unitDefId;
 	float* pos_posF3;
 	int ret_newUnitId;
-}; // COMMAND_CHEATS_GIVE_ME_NEW_UNIT
+}; // COMMAND_CHEATS_GIVE_ME_NEW_UNIT Cheats_giveMeUnit
 
 /**
  * @brief Sends a chat/text message to other players.
@@ -278,14 +278,14 @@ struct SGiveMeNewUnitCheatCommand {
 struct SSendTextMessageCommand {
 	const char* text;
 	int zone;
-}; // COMMAND_SEND_TEXT_MESSAGE
+}; // COMMAND_SEND_TEXT_MESSAGE Game_sendTextMessage
 
 /**
  * Assigns a map location to the last text message sent by the AI.
  */
 struct SSetLastPosMessageCommand {
 	float* pos_posF3;
-}; // COMMAND_SET_LAST_POS_MESSAGE
+}; // COMMAND_SET_LAST_POS_MESSAGE Game_setLastMessagePosition
 
 /**
  * Give <amount> units of resource <resourceId> to team <receivingTeam>.
@@ -298,7 +298,7 @@ struct SSendResourcesCommand {
 	float amount;
 	int receivingTeam;
 	bool ret_isExecuted;
-}; // COMMAND_SEND_RESOURCES
+}; // COMMAND_SEND_RESOURCES Economy_sendResource resourceId-Resource receivingTeam=Team
 
 /**
  * Give units specified by <unitIds> to team <receivingTeam>.
@@ -315,16 +315,16 @@ struct SSendUnitsCommand {
 	int numUnitIds;
 	int receivingTeam;
 	int ret_sentUnits;
-}; // COMMAND_SEND_UNITS
+}; // COMMAND_SEND_UNITS Economy_sendUnits resourceId->Resource unitIds0numUnitIds->Unit receivingTeam=Team
 
 /// Creates a group and returns the id it was given, returns -1 on failure
 struct SCreateGroupCommand {
 	int ret_groupId;
-}; // COMMAND_GROUP_CREATE
+}; // COMMAND_GROUP_CREATE Group_create
 /// Erases a specified group
 struct SEraseGroupCommand {
 	int groupId;
-}; // COMMAND_GROUP_ERASE
+}; // COMMAND_GROUP_ERASE Group_erase
 /**
  * @brief Adds a unit to a specific group.
  * If it was previously in a group, it is removed from that.
@@ -334,12 +334,12 @@ struct SAddUnitToGroupCommand {
 	int groupId;
 	int unitId;
 	bool ret_isExecuted;
-}; // COMMAND_GROUP_ADD_UNIT
+}; // COMMAND_GROUP_ADD_UNIT Group_addUnit
 /// Removes a unit from its group
 struct SRemoveUnitFromGroupCommand {
 	int unitId;
 	bool ret_isExecuted;
-}; // COMMAND_GROUP_REMOVE_UNIT
+}; // COMMAND_GROUP_REMOVE_UNIT Group_removeUnit
 
 
 /**
@@ -361,7 +361,7 @@ struct SInitPathCommand {
 	float* end_posF3;
 	int pathType;
 	int ret_pathId;
-}; // COMMAND_PATH_INIT
+}; // COMMAND_PATH_INIT Pathing_initPath
 /**
  * Returns the approximate path cost between two points
  * This needs to calculate the complete path, so it is somewhat expensive.
@@ -373,14 +373,14 @@ struct SGetApproximateLengthPathCommand {
 	float* end_posF3;
 	int pathType;
 	int ret_approximatePathLength;
-}; // COMMAND_PATH_GET_APPROXIMATE_LENGTH
+}; // COMMAND_PATH_GET_APPROXIMATE_LENGTH Pathing_getApproximateLength
 struct SGetNextWaypointPathCommand {
 	int pathId;
 	float* ret_nextWaypoint_posF3_out;
-}; // COMMAND_PATH_GET_NEXT_WAYPOINT
+}; // COMMAND_PATH_GET_NEXT_WAYPOINT Pathing_getNextWaypoint
 struct SFreePathCommand {
 	int pathId;
-}; // COMMAND_PATH_FREE
+}; // COMMAND_PATH_FREE Pathing_freePath
 
 struct SCallLuaRulesCommand {
 	/// Can be setup to NULL to skip passing in a string
@@ -390,67 +390,67 @@ struct SCallLuaRulesCommand {
 	int* outSize;
 	/// this is subject to lua garbage collection, copy it if you wish to continue using it
 	const char* ret_outData;
-}; // COMMAND_CALL_LUA_RULES
+}; // COMMAND_CALL_LUA_RULES Lua_callRules
 
 struct SSendStartPosCommand {
 	bool ready;
 	/// on this position, only x and z matter
 	float* pos_posF3;
-}; // COMMAND_SEND_START_POS
+}; // COMMAND_SEND_START_POS Game_sendStartPosition
 
 struct SAddNotificationDrawerCommand {
 	/// on this position, only x and z matter
 	float* pos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_ADD_NOTIFICATION
+}; // COMMAND_DRAWER_ADD_NOTIFICATION Map_Drawer_addNotification
 struct SAddPointDrawCommand {
 	/// on this position, only x and z matter
 	float* pos_posF3;
 	/// create this text on pos in my team color
 	const char* label;
-}; // COMMAND_DRAWER_POINT_ADD
+}; // COMMAND_DRAWER_POINT_ADD Map_Drawer_addPoint
 struct SRemovePointDrawCommand {
 	/// remove map points and lines near this point (100 distance)
 	float* pos_posF3;
-}; // COMMAND_DRAWER_POINT_REMOVE
+}; // COMMAND_DRAWER_POINT_REMOVE Map_Drawer_deletePointsAndLines
 struct SAddLineDrawCommand {
 	/// draw line from this pos
 	float* posFrom_posF3;
 	/// to this pos, again only x and z matter
 	float* posTo_posF3;
-}; // COMMAND_DRAWER_LINE_ADD
+}; // COMMAND_DRAWER_LINE_ADD Map_Drawer_addLine
 
 struct SStartPathDrawerCommand {
 	float* pos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_START
+}; // COMMAND_DRAWER_PATH_START Map_Drawer_Path_start
 struct SFinishPathDrawerCommand {
 // TODO: FIXME: commands should not be empty, add a useless var if needed
-}; // COMMAND_DRAWER_PATH_FINISH
+}; // COMMAND_DRAWER_PATH_FINISH Map_Drawer_Path_finish
 struct SDrawLinePathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_DRAW_LINE
+}; // COMMAND_DRAWER_PATH_DRAW_LINE Map_Drawer_Path_drawLine
 struct SDrawLineAndIconPathDrawerCommand {
 	int cmdId;
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON
+}; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON Map_Drawer_Path_drawLineAndCommandIcon
 struct SDrawIconAtLastPosPathDrawerCommand {
 	int cmdId;
-}; // COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS
+}; // COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS Map_Drawer_Path_drawIcon
 struct SBreakPathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_BREAK
+}; // COMMAND_DRAWER_PATH_BREAK Map_Drawer_Path_break
 struct SRestartPathDrawerCommand {
 	bool sameColor;
-}; // COMMAND_DRAWER_PATH_RESTART
+}; // COMMAND_DRAWER_PATH_RESTART Map_Drawer_Path_restart
 
 
 /**
@@ -478,7 +478,7 @@ struct SCreateSplineFigureDrawerCommand {
 	int figureGroupId;
 	/// the new group
 	int ret_newFigureGroupId;
-}; // COMMAND_DRAWER_FIGURE_CREATE_SPLINE
+}; // COMMAND_DRAWER_FIGURE_CREATE_SPLINE Map_Drawer_Figure_drawSpline
 /**
  * @brief Creates a straight line
  * Creates a straight line from pos1 to pos2.
@@ -502,7 +502,7 @@ struct SCreateLineFigureDrawerCommand {
 	int figureGroupId;
 	/// the new group
 	int ret_newFigureGroupId;
-}; // COMMAND_DRAWER_FIGURE_CREATE_LINE
+}; // COMMAND_DRAWER_FIGURE_CREATE_LINE Map_Drawer_Figure_drawLine
 /**
  * Sets the color used to draw all lines of figures in a figure group.
  */
@@ -511,13 +511,13 @@ struct SSetColorFigureDrawerCommand {
 	/// (x, y, z) -> (red, green, blue)
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_FIGURE_SET_COLOR
+}; // COMMAND_DRAWER_FIGURE_SET_COLOR Map_Drawer_Figure_setColor
 /**
  * Removes a figure group, which means it will not be drawn anymore.
  */
 struct SDeleteFigureDrawerCommand {
 	int figureGroupId;
-}; // COMMAND_DRAWER_FIGURE_DELETE
+}; // COMMAND_DRAWER_FIGURE_DELETE Map_Drawer_Figure_delete
 
 /**
  * This function allows you to draw units onto the map.
@@ -536,7 +536,7 @@ struct SDrawUnitDrawerCommand {
 	bool transparent;
 	bool drawBorder;
 	int facing;
-}; // COMMAND_DRAWER_DRAW_UNIT
+}; // COMMAND_DRAWER_DRAW_UNIT Map_Drawer_drawUnit
 
 
 
@@ -552,7 +552,7 @@ struct SBuildUnitCommand {
 	float* buildPos_posF3;
 	/// set it to UNIT_COMMAND_BUILD_NO_FACING, if you do not want to specify a certain facing
 	int facing;
-}; // COMMAND_UNIT_BUILD
+}; // COMMAND_UNIT_BUILD Unit_build
 
 struct SStopUnitCommand {
 	int unitId;
@@ -561,7 +561,7 @@ struct SStopUnitCommand {
 	unsigned int options;
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
-}; // COMMAND_UNIT_STOP
+}; // COMMAND_UNIT_STOP Unit_stop
 
 //struct SInsertUnitCommand {
 //	int unitId;
@@ -584,7 +584,7 @@ struct SWaitUnitCommand {
 	unsigned int options;
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
-}; // COMMAND_UNIT_WAIT
+}; // COMMAND_UNIT_WAIT Unit_wait
 
 struct STimeWaitUnitCommand {
 	int unitId;
@@ -596,7 +596,7 @@ struct STimeWaitUnitCommand {
 
 	// the time in seconds to wait
 	int time;
-}; // COMMAND_UNIT_WAIT_TIME
+}; // COMMAND_UNIT_WAIT_TIME Unit_waitFor
 
 struct SDeathWaitUnitCommand {
 	int unitId;
@@ -608,8 +608,9 @@ struct SDeathWaitUnitCommand {
 
 	/// wait until this unit is dead
 	int toDieUnitId;
-}; // COMMAND_UNIT_WAIT_DEATH
+}; // COMMAND_UNIT_WAIT_DEATH Unit_waitForDeathOf
 
+// TODO: add docu
 struct SSquadWaitUnitCommand {
 	int unitId;
 	int groupId;
@@ -619,8 +620,9 @@ struct SSquadWaitUnitCommand {
 	int timeOut;
 
 	int numUnits;
-}; // COMMAND_UNIT_WAIT_SQUAD
+}; // COMMAND_UNIT_WAIT_SQUAD Unit_waitForSquadSize
 
+// TODO: add docu
 struct SGatherWaitUnitCommand {
 	int unitId;
 	int groupId;
@@ -628,7 +630,7 @@ struct SGatherWaitUnitCommand {
 	unsigned int options;
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
-}; // COMMAND_UNIT_WAIT_GATHER
+}; // COMMAND_UNIT_WAIT_GATHER Unit_waitForSquadSize
 
 struct SMoveUnitCommand {
 	int unitId;
@@ -639,7 +641,7 @@ struct SMoveUnitCommand {
 	int timeOut;
 
 	float* toPos_posF3;
-}; // COMMAND_UNIT_MOVE
+}; // COMMAND_UNIT_MOVE Unit_moveTo
 
 struct SPatrolUnitCommand {
 	int unitId;
@@ -650,7 +652,7 @@ struct SPatrolUnitCommand {
 	int timeOut;
 
 	float* toPos_posF3;
-}; // COMMAND_UNIT_PATROL
+}; // COMMAND_UNIT_PATROL Unit_patrolTo
 
 struct SFightUnitCommand {
 	int unitId;
@@ -661,7 +663,7 @@ struct SFightUnitCommand {
 	int timeOut;
 
 	float* toPos_posF3;
-}; // COMMAND_UNIT_FIGHT
+}; // COMMAND_UNIT_FIGHT Unit_fight
 
 struct SAttackUnitCommand {
 	int unitId;
@@ -672,7 +674,7 @@ struct SAttackUnitCommand {
 	int timeOut;
 
 	int toAttackUnitId;
-}; // COMMAND_UNIT_ATTACK
+}; // COMMAND_UNIT_ATTACK Unit_attack
 
 //	struct SAttackPosUnitCommand {
 struct SAttackAreaUnitCommand {
@@ -685,7 +687,7 @@ struct SAttackAreaUnitCommand {
 
 	float* toAttackPos_posF3;
 	float radius;
-}; // COMMAND_UNIT_ATTACK_AREA
+}; // COMMAND_UNIT_ATTACK_AREA Unit_attackArea
 
 //struct SAttackAreaUnitCommand {
 //	int unitId;
@@ -705,8 +707,9 @@ struct SGuardUnitCommand {
 	int timeOut;
 
 	int toGuardUnitId;
-}; // COMMAND_UNIT_GUARD
+}; // COMMAND_UNIT_GUARD Unit_guard
 
+// TODO: docu (is it usefull at all?)
 struct SAiSelectUnitCommand {
 	int unitId;
 	int groupId;
@@ -714,7 +717,7 @@ struct SAiSelectUnitCommand {
 	unsigned int options;
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
-}; // COMMAND_UNIT_AI_SELECT
+}; // COMMAND_UNIT_AI_SELECT Unit_aiSelect
 
 //struct SGroupSelectUnitCommand {
 //	int unitId;
@@ -725,6 +728,7 @@ struct SAiSelectUnitCommand {
 //	int timeOut;
 //};
 
+// TODO: DELETE: this command is not needed, there is already SAddUnitToGroupCommand
 struct SGroupAddUnitCommand {
 	int unitId;
 	int groupId;
@@ -734,8 +738,9 @@ struct SGroupAddUnitCommand {
 	int timeOut;
 
 	int toGroupId;
-}; // COMMAND_UNIT_GROUP_ADD
+}; // COMMAND_UNIT_GROUP_ADD Unit_addToGroup
 
+// TODO: DELETE: this command is not needed, there is already SRemoveUnitFromGroupCommand
 struct SGroupClearUnitCommand {
 	int unitId;
 	int groupId;
@@ -743,7 +748,7 @@ struct SGroupClearUnitCommand {
 	unsigned int options;
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
-}; // COMMAND_UNIT_GROUP_CLEAR
+}; // COMMAND_UNIT_GROUP_CLEAR Unit_removeFromGroup
 
 struct SRepairUnitCommand {
 	int unitId;
@@ -754,7 +759,7 @@ struct SRepairUnitCommand {
 	int timeOut;
 
 	int toRepairUnitId;
-}; // COMMAND_UNIT_REPAIR
+}; // COMMAND_UNIT_REPAIR Unit_repair
 
 struct SSetFireStateUnitCommand {
 	int unitId;
@@ -766,7 +771,7 @@ struct SSetFireStateUnitCommand {
 
 	// can be: 0=hold fire, 1=return fire, 2=fire at will
 	int fireState;
-}; // COMMAND_UNIT_SET_FIRE_STATE
+}; // COMMAND_UNIT_SET_FIRE_STATE Unit_setFireState
 
 struct SSetMoveStateUnitCommand {
 	int unitId;
@@ -778,7 +783,7 @@ struct SSetMoveStateUnitCommand {
 
 	/// 0=hold pos, 1=maneuvre, 2=roam
 	int moveState;
-}; // COMMAND_UNIT_SET_MOVE_STATE
+}; // COMMAND_UNIT_SET_MOVE_STATE Unit_setMoveState
 
 struct SSetBaseUnitCommand {
 	int unitId;
@@ -789,7 +794,7 @@ struct SSetBaseUnitCommand {
 	int timeOut;
 
 	float* basePos_posF3;
-}; // COMMAND_UNIT_SET_BASE
+}; // COMMAND_UNIT_SET_BASE Unit_setBase
 
 //struct SInternalUnitCommand {
 //	int unitId;
@@ -807,7 +812,7 @@ struct SSelfDestroyUnitCommand {
 	unsigned int options;
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
-}; // COMMAND_UNIT_SELF_DESTROY
+}; // COMMAND_UNIT_SELF_DESTROY Unit_selfDestruct
 
 struct SSetWantedMaxSpeedUnitCommand {
 	int unitId;
@@ -818,7 +823,7 @@ struct SSetWantedMaxSpeedUnitCommand {
 	int timeOut;
 
 	float wantedMaxSpeed;
-}; // COMMAND_UNIT_SET_WANTED_MAX_SPEED
+}; // COMMAND_UNIT_SET_WANTED_MAX_SPEED Unit_setWantedMaxSpeed
 
 struct SLoadUnitsUnitCommand {
 	int unitId;
@@ -829,7 +834,7 @@ struct SLoadUnitsUnitCommand {
 
 	int* toLoadUnitIds;
 	int numToLoadUnits;
-}; // COMMAND_UNIT_LOAD_UNITS
+}; // COMMAND_UNIT_LOAD_UNITS Unit_loadUnits  toLoadUnitIds0numToLoadUnits->Unit
 
 struct SLoadUnitsAreaUnitCommand {
 	int unitId;
@@ -841,7 +846,7 @@ struct SLoadUnitsAreaUnitCommand {
 
 	float* pos_posF3;
 	float radius;
-}; // COMMAND_UNIT_LOAD_UNITS_AREA
+}; // COMMAND_UNIT_LOAD_UNITS_AREA Unit_loadUnitsInArea
 
 struct SLoadOntoUnitCommand {
 	int unitId;
@@ -852,7 +857,7 @@ struct SLoadOntoUnitCommand {
 	int timeOut;
 
 	int transporterUnitId;
-}; // COMMAND_UNIT_LOAD_ONTO
+}; // COMMAND_UNIT_LOAD_ONTO Unit_loadOnto transporterUnitId->Unit
 
 struct SUnloadUnitCommand {
 	int unitId;
@@ -864,7 +869,7 @@ struct SUnloadUnitCommand {
 
 	float* toPos_posF3;
 	int toUnloadUnitId;
-}; // COMMAND_UNIT_UNLOAD_UNIT
+}; // COMMAND_UNIT_UNLOAD_UNIT Unit_unload toUnloadUnitId->Unit
 
 struct SUnloadUnitsAreaUnitCommand {
 	int unitId;
@@ -876,7 +881,7 @@ struct SUnloadUnitsAreaUnitCommand {
 
 	float* toPos_posF3;
 	float radius;
-}; // COMMAND_UNIT_UNLOAD_UNITS_AREA
+}; // COMMAND_UNIT_UNLOAD_UNITS_AREA Unit_unloadUnitsInArea
 
 struct SSetOnOffUnitCommand {
 	int unitId;
@@ -887,7 +892,7 @@ struct SSetOnOffUnitCommand {
 	int timeOut;
 
 	bool on;
-}; // COMMAND_UNIT_SET_ON_OFF
+}; // COMMAND_UNIT_SET_ON_OFF Unit_setOn
 
 struct SReclaimUnitCommand {
 	int unitId;
@@ -898,7 +903,7 @@ struct SReclaimUnitCommand {
 	int timeOut;
 
 	int toReclaimUnitIdOrFeatureId;
-}; // COMMAND_UNIT_RECLAIM
+}; // COMMAND_UNIT_RECLAIM Unit_reclaim
 
 struct SReclaimAreaUnitCommand {
 	int unitId;
@@ -910,7 +915,7 @@ struct SReclaimAreaUnitCommand {
 
 	float* pos_posF3;
 	float radius;
-}; // COMMAND_UNIT_RECLAIM_AREA
+}; // COMMAND_UNIT_RECLAIM_AREA Unit_reclaimInArea
 
 struct SCloakUnitCommand {
 	int unitId;
@@ -921,7 +926,7 @@ struct SCloakUnitCommand {
 	int timeOut;
 
 	bool cloak;
-}; // COMMAND_UNIT_CLOAK
+}; // COMMAND_UNIT_CLOAK Unit_cloak
 
 struct SStockpileUnitCommand {
 	int unitId;
@@ -930,7 +935,7 @@ struct SStockpileUnitCommand {
 	unsigned int options;
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
-}; // COMMAND_UNIT_STOCKPILE
+}; // COMMAND_UNIT_STOCKPILE Unit_stockpile
 
 struct SDGunUnitCommand {
 	int unitId;
@@ -941,7 +946,7 @@ struct SDGunUnitCommand {
 	int timeOut;
 
 	int toAttackUnitId;
-}; // COMMAND_UNIT_D_GUN
+}; // COMMAND_UNIT_D_GUN Unit_dGun
 
 struct SDGunPosUnitCommand {
 	int unitId;
@@ -952,7 +957,7 @@ struct SDGunPosUnitCommand {
 	int timeOut;
 
 	float* pos_posF3;
-}; // COMMAND_UNIT_D_GUN_POS
+}; // COMMAND_UNIT_D_GUN_POS Unit_dGunPosition
 
 struct SRestoreAreaUnitCommand {
 	int unitId;
@@ -964,7 +969,7 @@ struct SRestoreAreaUnitCommand {
 
 	float* pos_posF3;
 	float radius;
-}; // COMMAND_UNIT_RESTORE_AREA
+}; // COMMAND_UNIT_RESTORE_AREA Unit_restoreArea
 
 struct SSetRepeatUnitCommand {
 	int unitId;
@@ -975,7 +980,7 @@ struct SSetRepeatUnitCommand {
 	int timeOut;
 
 	bool repeat;
-}; // COMMAND_UNIT_SET_REPEAT
+}; // COMMAND_UNIT_SET_REPEAT Unit_setRepeat
 
 struct SSetTrajectoryUnitCommand {
 	int unitId;
@@ -986,7 +991,7 @@ struct SSetTrajectoryUnitCommand {
 	int timeOut;
 
 	int trajectory;
-}; // COMMAND_UNIT_SET_TRAJECTORY
+}; // COMMAND_UNIT_SET_TRAJECTORY Unit_setTrajectory
 
 struct SResurrectUnitCommand {
 	int unitId;
@@ -997,7 +1002,7 @@ struct SResurrectUnitCommand {
 	int timeOut;
 
 	int toResurrectFeatureId;
-}; // COMMAND_UNIT_RESURRECT
+}; // COMMAND_UNIT_RESURRECT Unit_resurrect
 
 struct SResurrectAreaUnitCommand {
 	int unitId;
@@ -1009,7 +1014,7 @@ struct SResurrectAreaUnitCommand {
 
 	float* pos_posF3;
 	float radius;
-}; // COMMAND_UNIT_RESURRECT_AREA
+}; // COMMAND_UNIT_RESURRECT_AREA Unit_resurrectInArea
 
 struct SCaptureUnitCommand {
 	int unitId;
@@ -1020,7 +1025,7 @@ struct SCaptureUnitCommand {
 	int timeOut;
 
 	int toCaptureUnitId;
-}; // COMMAND_UNIT_CAPTURE
+}; // COMMAND_UNIT_CAPTURE Unit_capture
 
 struct SCaptureAreaUnitCommand {
 	int unitId;
@@ -1032,8 +1037,9 @@ struct SCaptureAreaUnitCommand {
 
 	float* pos_posF3;
 	float radius;
-}; // COMMAND_UNIT_CAPTURE_AREA
+}; // COMMAND_UNIT_CAPTURE_AREA Unit_captureInArea
 
+// TODO: add docu
 struct SSetAutoRepairLevelUnitCommand {
 	int unitId;
 	int groupId;
@@ -1043,7 +1049,7 @@ struct SSetAutoRepairLevelUnitCommand {
 	int timeOut;
 
 	int autoRepairLevel;
-}; // COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL
+}; // COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL Unit_setAutoRepairLevel
 
 //struct SAttackLoopbackUnitCommand {
 //	int unitId;
@@ -1054,6 +1060,7 @@ struct SSetAutoRepairLevelUnitCommand {
 //	int timeOut;
 //};
 
+// TODO: add docu
 struct SSetIdleModeUnitCommand {
 	int unitId;
 	int groupId;
@@ -1063,7 +1070,7 @@ struct SSetIdleModeUnitCommand {
 	int timeOut;
 
 	int idleMode;
-}; // COMMAND_UNIT_SET_IDLE_MODE
+}; // COMMAND_UNIT_SET_IDLE_MODE Unit_setIdleMode
 
 struct SCustomUnitCommand {
 	int unitId;
@@ -1078,6 +1085,7 @@ struct SCustomUnitCommand {
 	int numParams;
 }; // COMMAND_UNIT_CUSTOM
 
+// TODO: add docu, rename UID to UnitId
 struct STraceRayCommand {
 	float* rayPos_posF3;
 	float* rayDir_posF3;
@@ -1085,7 +1093,7 @@ struct STraceRayCommand {
 	int srcUID;
 	int hitUID;
 	int flags;
-}; // COMMAND_TRACE_RAY
+}; // COMMAND_TRACE_RAY Map_Drawer_traceRay
 
 /**
  * Pause or unpauses the game.
@@ -1097,7 +1105,7 @@ struct SPauseCommand {
 	bool enable;
 	/// reason for the (un-)pause, or NULL
 	const char* reason;
-}; // COMMAND_PAUSE
+}; // COMMAND_PAUSE Game_setPause
 
 /**
  * @brief Sets default values
