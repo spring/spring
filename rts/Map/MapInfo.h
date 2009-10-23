@@ -13,6 +13,7 @@ class CMapInfo
 public:
 
 	CMapInfo(const std::string& mapName);
+	void Load(); // fill in infos
 	~CMapInfo();
 
 	/* The settings are just public members because:
@@ -41,6 +42,8 @@ public:
 		};
 		A::A() {}
 	 */
+
+	std::string GetStringValue(const std::string& key) const; // can be used before Load()
 
 	/** Global settings, ie. from "MAP" section. */
 	struct map_t {

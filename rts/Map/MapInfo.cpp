@@ -35,7 +35,10 @@ CMapInfo::CMapInfo(const string& mapName)
 
 	LuaTable mapTbl = mapParser.GetRoot();
 	mapRoot = &mapTbl;
+}
 
+void CMapInfo::Load()
+{
 	LuaParser resParser("gamedata/resources.lua",
 	                    SPRING_VFS_MOD_BASE, SPRING_VFS_ZIP);
 	if (!resParser.Execute()) {
@@ -54,11 +57,14 @@ CMapInfo::CMapInfo(const string& mapName)
 	ReadTerrainTypes();
 }
 
-
 CMapInfo::~CMapInfo()
 {
 }
 
+std::string CMapInfo::GetStringValue(const std::string& key) const
+{
+	return mapRoot->GetString(key, "");
+}
 
 void CMapInfo::ReadGlobal()
 {
