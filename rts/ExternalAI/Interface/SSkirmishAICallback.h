@@ -690,8 +690,8 @@ short (CALLING_CONV *Clb_UnitDef_MoveData_getMaxTurnRate)(int teamId, int unitDe
 	 * Returns all units that are not in this teams ally-team nor neutral and are
 	 * in LOS plus they have to be located in the specified area of the map.
 	 */
-	int               (CALLING_CONV *Clb_0MULTI1SIZE3EnemyUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius);
-	int               (CALLING_CONV *Clb_0MULTI1VALS3EnemyUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+	int               (CALLING_CONV *Clb_0MULTI1SIZE3EnemyUnitsIn0Unit)(int teamId, float* pos_posF3, float radius);
+	int               (CALLING_CONV *Clb_0MULTI1VALS3EnemyUnitsIn0Unit)(int teamId, float* pos_posF3, float radius, int unitIds[], int unitIds_max);
 	/**
 	 * Returns all units that are not in this teams ally-team nor neutral and are in
 	 * some way visible (sight or radar).
@@ -708,8 +708,8 @@ short (CALLING_CONV *Clb_UnitDef_MoveData_getMaxTurnRate)(int teamId, int unitDe
 	 * Returns all units that are in this teams ally-team, including this teams
 	 * units plus they have to be located in the specified area of the map.
 	 */
-	int               (CALLING_CONV *Clb_0MULTI1SIZE3FriendlyUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius);
-	int               (CALLING_CONV *Clb_0MULTI1VALS3FriendlyUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+	int               (CALLING_CONV *Clb_0MULTI1SIZE3FriendlyUnitsIn0Unit)(int teamId, float* pos_posF3, float radius);
+	int               (CALLING_CONV *Clb_0MULTI1VALS3FriendlyUnitsIn0Unit)(int teamId, float* pos_posF3, float radius, int unitIds[], int unitIds_max);
 	/**
 	 * Returns all units that are neutral and are in LOS.
 	 */
@@ -719,8 +719,8 @@ short (CALLING_CONV *Clb_UnitDef_MoveData_getMaxTurnRate)(int teamId, int unitDe
 	 * Returns all units that are neutral and are in LOS plus they have to be
 	 * located in the specified area of the map.
 	 */
-	int               (CALLING_CONV *Clb_0MULTI1SIZE3NeutralUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius);
-	int               (CALLING_CONV *Clb_0MULTI1VALS3NeutralUnitsIn0Unit)(int teamId, struct SAIFloat3 pos, float radius, int unitIds[], int unitIds_max);
+	int               (CALLING_CONV *Clb_0MULTI1SIZE3NeutralUnitsIn0Unit)(int teamId, float* pos_posF3, float radius);
+	int               (CALLING_CONV *Clb_0MULTI1VALS3NeutralUnitsIn0Unit)(int teamId, float* pos_posF3, float radius, int unitIds[], int unitIds_max);
 	/**
 	 * Returns all units that are of the team controlled by this AI instance. This
 	 * list can also be created dynamically by the AI, through updating a list on
@@ -1030,7 +1030,7 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	unsigned int      (CALLING_CONV *Clb_Map_getChecksum)(int teamId);
 	struct SAIFloat3  (CALLING_CONV *Clb_Map_getStartPos)(int teamId);
 	struct SAIFloat3  (CALLING_CONV *Clb_Map_getMousePos)(int teamId);
-	bool              (CALLING_CONV *Clb_Map_isPosInCamera)(int teamId, struct SAIFloat3 pos, float radius);
+	bool              (CALLING_CONV *Clb_Map_isPosInCamera)(int teamId, float* pos_posF3, float radius);
 	/** Returns the maps width in full resolution */
 	int               (CALLING_CONV *Clb_Map_getWidth)(int teamId);
 	/** Returns the maps height in full resolution */
@@ -1150,7 +1150,7 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	/**
 	 * Returns the nearest resource extractor spot to a specified position out of the evaluated list.
 	 */
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(int teamId, int resourceId, struct SAIFloat3 pos);
+	struct SAIFloat3  (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(int teamId, int resourceId, float* pos_posF3);
 
 	const char*       (CALLING_CONV *Clb_Map_getName)(int teamId);
 	/** Gets the elevation of the map at position (x, z) */
@@ -1187,7 +1187,7 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	struct SAIFloat3  (CALLING_CONV *Clb_Map_Line_getFirstPosition)(int teamId, int lineId);
 	struct SAIFloat3  (CALLING_CONV *Clb_Map_Line_getSecondPosition)(int teamId, int lineId);
 	struct SAIFloat3  (CALLING_CONV *Clb_Map_Line_getColor)(int teamId, int lineId);
-	bool              (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(int teamId, int unitDefId, struct SAIFloat3 pos, int facing);
+	bool              (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(int teamId, int unitDefId, float* pos_posF3, int facing);
 	/**
 	 * Returns the closest position from a given position that a building can be built at.
 	 * @param minDist the distance in squares that the building must keep to other buildings,
@@ -1195,7 +1195,7 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	 * @return actual map position with x, y and z all beeing positive,
 	 *         or SAIFloat3(-1, 0, 0) if no suitable position is found.
 	 */
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId, int unitDefId, struct SAIFloat3 pos, float searchRadius, int minDist, int facing);
+	struct SAIFloat3  (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId, int unitDefId, float* pos_posF3, float searchRadius, int minDist, int facing);
 // BEGINN OBJECT Map
 
 
@@ -1280,8 +1280,8 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	 * Returns all features in a specified area that are currently in LOS,
 	 * or all features in this area if cheating is enabled.
 	 */
-	int               (CALLING_CONV *Clb_0MULTI1SIZE3FeaturesIn0Feature)(int teamId, struct SAIFloat3 pos, float radius);
-	int               (CALLING_CONV *Clb_0MULTI1VALS3FeaturesIn0Feature)(int teamId, struct SAIFloat3 pos, float radius, int featureIds[], int featureIds_max);
+	int               (CALLING_CONV *Clb_0MULTI1SIZE3FeaturesIn0Feature)(int teamId, float* pos_posF3, float radius);
+	int               (CALLING_CONV *Clb_0MULTI1VALS3FeaturesIn0Feature)(int teamId, float* pos_posF3, float radius, int featureIds[], int featureIds_max);
 	int               (CALLING_CONV *Clb_Feature_0SINGLE1FETCH2FeatureDef0getDef)(int teamId, int featureId);
 	float             (CALLING_CONV *Clb_Feature_getHealth)(int teamId, int featureId);
 	float             (CALLING_CONV *Clb_Feature_getReclaimLeft)(int teamId, int featureId);
