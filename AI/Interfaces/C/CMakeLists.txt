@@ -34,8 +34,9 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 	if    (BUILD_THIS_SKIRMISHAI)
 		# Assemble meta data
 		GetVersionFromFile(myVersion "${myDir}/VERSION")
-		set(myTarget    "${myName}")
-		set(myDataDir   "${SKIRMISH_DATA}/${myName}/${myVersion}")
+		set(myTarget      "${myName}")
+		set(myInstLibsDir "${SKIRMISH_AI_LIBS}/${myName}/${myVersion}")
+		set(myInstDataDir "${SKIRMISH_AI_DATA}/${myName}/${myVersion}")
 		MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 		SkirmishAIMessage(STATUS "Found Skirmish AI: ${myName} ${myVersion}")
@@ -50,9 +51,10 @@ macro    (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var add
 		set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME   "SkirmishAI")
 
 		# Install the data files
-		install(DIRECTORY "${myDir}/data/" DESTINATION "${myDataDir}")
+		install(DIRECTORY "${myDir}/data/" DESTINATION "${myInstLibsDir}" FILES_MATCHING PATTERN REGEX "AI(Info|Options)\\.lua$")
+		install(DIRECTORY "${myDir}/data/" DESTINATION "${myInstDataDir}" FILES_MATCHING PATTERN REGEX "AI(Info|Options)\\.lua$" EXCLUDE PATTERN "*")
 		# Install the library
-		install(TARGETS   ${myTarget}      DESTINATION "${myDataDir}")
+		install(TARGETS   ${myTarget}      DESTINATION "${myInstLibsDir}")
 	endif (BUILD_THIS_SKIRMISHAI)
 endmacro (ConfigureNativeSkirmishAI mySourceDirRel_var additionalSources_var additionalCompileFlags_var additionalLibraries_var)
 
@@ -85,8 +87,9 @@ endif (AI_TYPES_NATIVE)
 # Build
 if    (BUILD_${myName}_AIINTERFACE)
 	GetVersionFromFile(myVersion ${myDir}/VERSION)
-	set(myTarget  "${myName}-AIInterface")
-	set(myDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
+	set(myTarget      "${myName}-AIInterface")
+	set(myInstLibsDir ${AI_INTERFACES_LIBS}/${myName}/${myVersion})
+	set(myInstDataDir ${AI_INTERFACES_DATA}/${myName}/${myVersion})
 	MakeAbsolute(mySourceDir "${myDir}" "${mySourceDirRel}")
 
 	AIInterfaceMessage(STATUS "Found AI Interface: ${myTarget} ${myVersion}")
@@ -105,7 +108,8 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set_target_properties(${myTarget} PROPERTIES OUTPUT_NAME "AIInterface")
 
 	# Install the data files
-	install(DIRECTORY "${myDir}/data/" DESTINATION "${myDataDir}")
+	install(DIRECTORY "${myDir}/data/" DESTINATION "${myInstLibsDir}" FILES_MATCHING PATTERN REGEX "InterfaceInfo\\.lua$")
+	install(DIRECTORY "${myDir}/data/" DESTINATION "${myInstDataDir}" FILES_MATCHING PATTERN REGEX "InterfaceInfo\\.lua$" EXCLUDE PATTERN "*")
 	# Install the library
-	install(TARGETS   ${myTarget}      DESTINATION "${myDataDir}")
+	install(TARGETS   ${myTarget}      DESTINATION "${myInstLibsDir}")
 endif (BUILD_${myName}_AIINTERFACE)

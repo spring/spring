@@ -377,7 +377,7 @@ Runned every 1/30sec during runtime.
 */
 void CPathManager::Update()
 {
-	SCOPED_TIMER("PFS:Update");
+	SCOPED_TIMER("PFS Update");
 	pf->UpdateHeatMap();
 	pe->Update();
 	pe2->Update();
