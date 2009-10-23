@@ -7,6 +7,7 @@
 #include "float4.h"
 
 class LuaTable;
+class MapParser;
 
 class CMapInfo
 {
@@ -173,7 +174,7 @@ private:
 	void ReadSm3();
 	void ReadTerrainTypes();
 
-	LuaTable* mapRoot; // map       parser root table
+	MapParser* parser; // map       parser root table
 	LuaTable* resRoot; // resources parser root table
 };
 
