@@ -427,6 +427,7 @@ struct SStartPathDrawerCommand {
 	float alpha;
 }; // COMMAND_DRAWER_PATH_START
 struct SFinishPathDrawerCommand {
+// TODO: FIXME: commands should not be empty, add a useless var if needed
 }; // COMMAND_DRAWER_PATH_FINISH
 struct SDrawLinePathDrawerCommand {
 	float* endPos_posF3;
