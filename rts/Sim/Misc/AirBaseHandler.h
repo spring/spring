@@ -2,14 +2,15 @@
 #define AIRBASEHANDLER_H
 
 #include <list>
+#include <set>
 #include <boost/noncopyable.hpp>
 
-#include "Object.h"
-#include "float3.h"
+#include "System/Object.h"
+#include "System/float3.h"
 
 class CUnit;
 
-class CAirBaseHandler : public boost::noncopyable
+class CAirBaseHandler: public boost::noncopyable
 {
 	CR_DECLARE(CAirBaseHandler);
 	CR_DECLARE_SUB(LandingPad);
@@ -19,12 +20,12 @@ private:
 	struct AirBase;
 
 public:
-	
-	class LandingPad : public CObject,  public boost::noncopyable {
+
+	class LandingPad: public CObject,  public boost::noncopyable {
 		CR_DECLARE(LandingPad);
 
 	public:
-		LandingPad(CUnit* u, int p, AirBase* b) :
+		LandingPad(CUnit* u, int p, AirBase* b):
 			unit(u), piece(p), base(b) {}
 
 		CUnit* GetUnit() const { return unit; }
@@ -39,7 +40,7 @@ public:
 
 private:
 
-	struct AirBase  : public boost::noncopyable{
+	struct AirBase: public boost::noncopyable {
 		CR_DECLARE_STRUCT(AirBase);
 		AirBase(CUnit* u) : unit(u) {}
 		CUnit* unit;
@@ -60,13 +61,16 @@ public:
 	float3 FindClosestAirBasePos(CUnit* unit, float minPower);
 
 private:
-	std::vector< std::list<AirBase*> > freeBases;
-	std::vector< std::list<AirBase*> > bases;
+	typedef std::list<AirBase*> AirBaseLst;
+	typedef std::list<AirBase*>::iterator AirBaseLstIt;
+	typedef std::list<LandingPad*> PadLst;
+	typedef std::list<LandingPad*>::iterator PadLstIt;
 
-	typedef std::list<AirBase*> airBaseLst;
-	typedef std::list<AirBase*>::iterator airBaseLstIt;
-	typedef std::list<LandingPad*> padLst;
-	typedef std::list<LandingPad*>::iterator padLstIt;
+	std::vector< AirBaseLst > freeBases;
+	std::vector< AirBaseLst > bases;
+
+	// IDs of units registered as airbases
+	std::set<int> airBaseIDs;
 };
 
 extern CAirBaseHandler* airBaseHandler;

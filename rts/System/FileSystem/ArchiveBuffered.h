@@ -1,8 +1,10 @@
 #ifndef __ARCHIVE_BUFFERED_H
 #define __ARCHIVE_BUFFERED_H
 
-#include "ArchiveBase.h"
 #include <map>
+#include <boost/thread/mutex.hpp>
+
+#include "ArchiveBase.h"
 
 struct ABOpenFile_t {
 	int size;
@@ -16,10 +18,17 @@ class CArchiveBuffered :
 	public CArchiveBase
 {
 protected:
+	boost::mutex archiveLock; // neither 7zip nor zlib are threadsafe
 	int curFileHandle;
 	std::map<int, ABOpenFile_t*> fileHandles;
-	virtual ABOpenFile_t* GetEntireFile(const std::string& fileName) = 0;
+	ABOpenFile_t* GetEntireFile(const std::string& fileName)
+	{
+		boost::mutex::scoped_lock lock(archiveLock);
+		return GetEntireFileImpl(fileName);
+	};
+	virtual ABOpenFile_t* GetEntireFileImpl(const std::string& fileName) = 0;
 	ABOpenFile_t* GetOpenFile(int handle);
+
 public:
 	CArchiveBuffered(const std::string& name);
 	virtual ~CArchiveBuffered(void);

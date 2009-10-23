@@ -8,6 +8,7 @@
 #include "Sim/Units/COB/CobInstance.h"
 #include "Sim/Units/UnitDef.h"
 #include "creg/STL_List.h"
+#include "creg/STL_Set.h"
 
 CAirBaseHandler* airBaseHandler = 0;
 
@@ -15,6 +16,7 @@ CR_BIND(CAirBaseHandler, )
 CR_REG_METADATA(CAirBaseHandler,(
 	CR_MEMBER(freeBases),
 	CR_MEMBER(bases),
+	CR_MEMBER(airBaseIDs),
 	CR_RESERVED(16)
 	));
 
@@ -42,10 +44,10 @@ CAirBaseHandler::CAirBaseHandler(void) : freeBases(teamHandler->ActiveAllyTeams(
 
 CAirBaseHandler::~CAirBaseHandler(void)
 {
-	//shouldnt be any bases left here...
+	// should not be any bases left here...
 	for (int a = 0; a < teamHandler->ActiveAllyTeams(); ++a) {
-		for (airBaseLstIt bi = bases[a].begin(); bi != bases[a].end(); ++bi) {
-			for (padLstIt pi = (*bi)->pads.begin(); pi !=(*bi)->pads.end(); ++pi) {
+		for (AirBaseLstIt bi = bases[a].begin(); bi != bases[a].end(); ++bi) {
+			for (PadLstIt pi = (*bi)->pads.begin(); pi != (*bi)->pads.end(); ++pi) {
 				delete *pi;
 			}
 			delete *bi;
@@ -55,6 +57,14 @@ CAirBaseHandler::~CAirBaseHandler(void)
 
 void CAirBaseHandler::RegisterAirBase(CUnit* base)
 {
+	// prevent a unit from being registered as a base more than
+	// once (this can happen eg. when an airbase unit is damaged
+	// and then repaired back to full health, which causes it to
+	// re-register itself via FinishedBuilding())
+	if (airBaseIDs.find(base->id) != airBaseIDs.end()) {
+		return;
+	}
+
 	AirBase* ab = new AirBase(base);
 	std::vector<int> args;
 
@@ -74,20 +84,26 @@ void CAirBaseHandler::RegisterAirBase(CUnit* base)
 
 	freeBases[base->allyteam].push_back(ab);
 	bases[base->allyteam].push_back(ab);
+
+	airBaseIDs.insert(base->id);
 }
 
 
 void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 {
-	for (airBaseLstIt bi = freeBases[base->allyteam].begin(); bi != freeBases[base->allyteam].end(); ++bi) {
+	if (airBaseIDs.find(base->id) == airBaseIDs.end()) {
+		return;
+	}
+
+	for (AirBaseLstIt bi = freeBases[base->allyteam].begin(); bi != freeBases[base->allyteam].end(); ++bi) {
 		if ((*bi)->unit == base) {
 			freeBases[base->allyteam].erase(bi);
 			break;
 		}
 	}
-	for (airBaseLstIt bi = bases[base->allyteam].begin(); bi != bases[base->allyteam].end(); ++bi) {
+	for (AirBaseLstIt bi = bases[base->allyteam].begin(); bi != bases[base->allyteam].end(); ++bi) {
 		if ((*bi)->unit == base) {
-			for (padLstIt pi = (*bi)->pads.begin(); pi != (*bi)->pads.end(); ++pi) {
+			for (PadLstIt pi = (*bi)->pads.begin(); pi != (*bi)->pads.end(); ++pi) {
 				// the unit that has reserved a pad is responsible to see if the pad is gone so just delete it
 				delete *pi;
 			}
@@ -96,6 +112,8 @@ void CAirBaseHandler::DeregisterAirBase(CUnit* base)
 			break;
 		}
 	}
+
+	airBaseIDs.erase(base->id);
 }
 
 /** @brief Try to find an airbase and reserve it if one can be found
@@ -104,10 +122,10 @@ it's the callers responsibility to detect if the base dies while its reserved. *
 CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float minPower)
 {
 	float closest = 1e30f;
-	padLstIt foundPad;
-	airBaseLstIt foundBase = freeBases[unit->allyteam].end();
+	PadLstIt foundPad;
+	AirBaseLstIt foundBase = freeBases[unit->allyteam].end();
 
-	for (airBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
+	for (AirBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
 		CUnit* baseUnit = (*bi)->unit;
 
 		if (unit == baseUnit) {
@@ -120,7 +138,7 @@ CAirBaseHandler::LandingPad* CAirBaseHandler::FindAirBase(CUnit* unit, float min
 		}
 
 		closest = baseUnit->pos.SqDistance(unit->pos);
-		for (padLstIt pi = (*bi)->freePads.begin(); pi != (*bi)->freePads.end(); ++pi) {
+		for (PadLstIt pi = (*bi)->freePads.begin(); pi != (*bi)->freePads.end(); ++pi) {
 			foundPad = pi;
 			foundBase = bi;
 		}
@@ -143,13 +161,13 @@ void CAirBaseHandler::LeaveLandingPad(LandingPad* pad)
 }
 
 
-/** @brief Try to find the closest airbase even if its reserved */
+/** @brief Try to find the closest airbase even if it's reserved */
 float3 CAirBaseHandler::FindClosestAirBasePos(CUnit* unit, float minPower)
 {
 	float closest = 1e30f;
-	airBaseLstIt foundBase = freeBases[unit->allyteam].end();
+	AirBaseLstIt foundBase = freeBases[unit->allyteam].end();
 
-	for (airBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
+	for (AirBaseLstIt bi = freeBases[unit->allyteam].begin(); bi != freeBases[unit->allyteam].end(); ++bi) {
 		CUnit* baseUnit = (*bi)->unit;
 
 		if (unit == baseUnit) {

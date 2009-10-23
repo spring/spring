@@ -28,9 +28,6 @@
 #include "Game.h"
 #include "float.h"
 #include "Camera.h"
-#include "Camera/CameraController.h"
-#include "Camera/FPSController.h"
-#include "Camera/OverheadController.h"
 #include "CameraHandler.h"
 #include "ConsoleHistory.h"
 #include "FPUCheck.h"
@@ -77,6 +74,7 @@
 #include "Rendering/FartextureHandler.h"
 #include "Rendering/glFont.h"
 #include "Rendering/GroundDecalHandler.h"
+#include "Rendering/HUDDrawer.h"
 #include "Rendering/IconHandler.h"
 #include "Rendering/InMapDraw.h"
 #include "Rendering/ShadowHandler.h"
@@ -206,7 +204,6 @@ CR_REG_METADATA(CGame,(
 	CR_MEMBER(showFPS),
 	CR_MEMBER(showClock),
 	CR_MEMBER(noSpectatorChat),
-	CR_MEMBER(drawFpsHUD),
 	CR_MEMBER(drawMapMarks),
 	CR_MEMBER(crossSize),
 //	CR_MEMBER(drawSky),
@@ -234,9 +231,6 @@ CR_REG_METADATA(CGame,(
 //	CR_MEMBER(consumeSpeed),
 //	CR_MEMBER(lastframe),
 //	CR_MEMBER(leastQue),
-	CR_MEMBER(oldHeading),
-	CR_MEMBER(oldPitch),
-	CR_MEMBER(oldStatus),
 
 	CR_POSTLOAD(PostLoad)
 ));
@@ -257,7 +251,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	gameOver(false),
 
 	noSpectatorChat(false),
-	drawFpsHUD(true),
 	drawMapMarks(true),
 
 	drawSky(true),
@@ -347,9 +340,6 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	{
 		ScopedOnceTimer timer("Loading sounds");
-		oldPitch   = 0;
-		oldHeading = 0;
-		oldStatus  = 255;
 
 		sound->LoadSoundDefs("gamedata/sounds.lua");
 		chatSound = sound->GetSoundId("IncomingChat", false);
@@ -2015,9 +2005,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "fpshud") {
 		if (action.extra.empty()) {
-			drawFpsHUD = !drawFpsHUD;
+			hudDrawer->SetDraw(!hudDrawer->GetDraw());
 		} else {
-			drawFpsHUD = !!atoi(action.extra.c_str());
+			hudDrawer->SetDraw(!!atoi(action.extra.c_str()));
 		}
 	}
 	else if (cmd == "movewarnings") {
@@ -2269,22 +2259,7 @@ bool CGame::ActionPressed(const Action& action,
 		if (action.extra == "sound") {
 			sound->PrintDebugInfo();
 		} else if (action.extra == "profiling") {
-			logOutput.Print("%35s|%18s|%s",
-					"Part",
-					"Total Time",
-					"Time of the last 0.5s");
-			std::map<std::string, CTimeProfiler::TimeRecord>::iterator pi;
-			for (pi = profiler.profile.begin(); pi != profiler.profile.end(); ++pi) {
-#if GML_MUTEX_PROFILER
-				if ((pi->first.size() < 5) || pi->first.substr(pi->first.size()-5,5).compare("Mutex")!=0) {
-					continue;
-				}
-#endif // GML_MUTEX_PROFILER
-				logOutput.Print("%35s %16.2fs %5.2f%%",
-						pi->first.c_str(),
-						((float)pi->second.total) / 1000.f,
-						pi->second.percent * 100);
-			}
+			profiler.PrintProfilingInfo();
 		}
 	}
 	else if (cmd == "benchmark-script") {
@@ -2918,10 +2893,10 @@ bool CGame::DrawWorld()
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
 			// Water rendering may overwrite cloaked objects, so save them
-			StoreCloaked(true);
+			SwapTransparentObjects();
 			water->UpdateWater(this);
 			water->Draw();
-			StoreCloaked(false);
+			SwapTransparentObjects();
 		}
 	}
 
@@ -3012,15 +2987,9 @@ bool CGame::DrawWorld()
 	return true;
 }
 
-void CGame::StoreCloaked(bool save) {
-	if(save) {
-		unitDrawer->BackupUnits();
-		featureHandler->BackupFeatures();
-	}
-	else {
-		unitDrawer->RestoreUnits();
-		featureHandler->RestoreFeatures();
-	}
+void CGame::SwapTransparentObjects() {
+	unitDrawer->SwapCloakedUnits();
+	featureHandler->SwapFadeFeatures();
 }
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
@@ -3088,7 +3057,7 @@ bool CGame::Draw() {
 	camHandler->UpdateCam();
 	camera->Update(false);
 
-	CBaseGroundDrawer* gd;
+	CBaseGroundDrawer* gd = 0;
 	if (doDrawWorld) {
 		SCOPED_TIMER("GroundUpdate");
 		gd = readmap->GetGroundDrawer();
@@ -3214,9 +3183,7 @@ bool CGame::Draw() {
 		glLineWidth(1.0f);
 	}
 
-	if (gu->directControl) {
-		DrawDirectControlHud();
-	}
+	hudDrawer->Draw(gu->directControl);
 
 	glEnable(GL_TEXTURE_2D);
 
@@ -3467,6 +3434,7 @@ void CGame::StartPlaying()
 }
 
 
+
 void CGame::SimFrame() {
 	ScopedTimer cputimer("CPU load"); // SimFrame
 
@@ -3501,28 +3469,14 @@ void CGame::SimFrame() {
 			grouphandlers[a]->Update();
 		}
 		profiler.Update();
-		if (gu->directControl) {
-			unsigned char status = 0;
-			if (camMove[0]) { status |= (1 << 0); }
-			if (camMove[1]) { status |= (1 << 1); }
-			if (camMove[2]) { status |= (1 << 2); }
-			if (camMove[3]) { status |= (1 << 3); }
-			if (mouse->buttons[SDL_BUTTON_LEFT].pressed)  { status |= (1 << 4); }
-			if (mouse->buttons[SDL_BUTTON_RIGHT].pressed) { status |= (1 << 5); }
-			shortint2 hp = GetHAndPFromVector(camera->forward);
 
-			if (hp.x != oldHeading || hp.y != oldPitch || oldStatus != status) {
-				oldHeading = hp.x;
-				oldPitch = hp.y;
-				oldStatus = status;
-				net->Send(
-					CBaseNetProtocol::Get().SendDirectControlUpdate(gu->myPlayerNum,
-					                                                status, hp.x, hp.y));
-			}
+		if (gu->directControl) {
+			(playerHandler->Player(gu->myPlayerNum)->dccs).SendStateUpdate(camMove);
 		}
 	}
 
-	//everything from here is simulation
+
+	// everything from here is simulation
 	ScopedTimer forced("Sim time"); // don't use SCOPED_TIMER here because this is the only timer needed always
 
 	helper->Update();
@@ -3532,7 +3486,7 @@ void CGame::SimFrame() {
 	groundDecals->Update();
 
 	{
-		SCOPED_TIMER("Collisions");
+		SCOPED_TIMER("Projectile Collisions");
 		ph->CheckCollisions();
 	}
 
@@ -3782,10 +3736,13 @@ void CGame::ClientReadNet()
 						if (inbuf[3] != 2) {
 							playerHandler->Player(player)->readyToStart = !!inbuf[3];
 						}
-						char label[128];
-						SNPRINTF(label, sizeof(label), "Start %i", team);
-						inMapDrawer->LocalPoint(pos, label, player);
-						// FIXME - erase old pos ?
+						if (pos.y != -500) // no marker marker when no pos set yet
+						{
+							char label[128];
+							SNPRINTF(label, sizeof(label), "Start %i", team);
+							inMapDrawer->LocalPoint(pos, label, player);
+							// FIXME - erase old pos ?
+						}
 					}
 				}
 				AddTraffic(player, packetCode, dataLength);
@@ -4049,7 +4006,7 @@ void CGame::ClientReadNet()
 					vector<int>::const_iterator ui;
 					for (ui = netSelUnits.begin(); ui != netSelUnits.end(); ++ui){
 						CUnit* unit = uh->units[*ui];
-						if (unit && unit->team==team1 && !unit->beingBuilt) {
+						if (unit && unit->team == team1 && !unit->beingBuilt) {
 							if (!unit->directControl)
 								unit->ChangeTeam(team2, CUnit::ChangeGiven);
 						}
@@ -4310,34 +4267,38 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_DIRECT_CONTROL: {
-				int player = inbuf[1];
+				const int player = inbuf[1];
 
 				if ((player >= playerHandler->ActivePlayers()) || (player < 0)) {
-					logOutput.Print("Got invalid player num %i in direct control msg",player);
+					logOutput.Print("Invalid player number (%i) in NETMSG_DIRECT_CONTROL", player);
 					break;
 				}
 
-				CUnit* ctrlUnit = playerHandler->Player(player)->playerControlledUnit;
+				CUnit* ctrlUnit = (playerHandler->Player(player)->dccs).playerControlledUnit;
 				if (ctrlUnit) {
-					CUnit* unit=playerHandler->Player(player)->playerControlledUnit;
-				//logOutput.Print("Player %s released control over unit %i type %s",playerHandler->Player(player)->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
-
-					unit->directControl=0;
-					unit->AttackUnit(0,true);
+					// player released control
 					playerHandler->Player(player)->StopControllingUnit();
-				}
-				else {
-					if(!selectedUnits.netSelected[player].empty() && uh->units[selectedUnits.netSelected[player][0]] && !uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()){
+				} else {
+					// player took control
+					if (
+						!selectedUnits.netSelected[player].empty() &&
+						uh->units[selectedUnits.netSelected[player][0]] != NULL &&
+						!uh->units[selectedUnits.netSelected[player][0]]->weapons.empty()
+					) {
 						CUnit* unit = uh->units[selectedUnits.netSelected[player][0]];
-						//logOutput.Print("Player %s took control over unit %i type %s",playerHandler->Player(player)->name.c_str(),unit->id,unit->unitDef->humanName.c_str());
-						if (unit->directControl) {
+
+						if (unit->directControl && unit->directControl->myController) {
 							if (player == gu->myPlayerNum) {
-								logOutput.Print("Sorry someone already controls that unit");
+								logOutput.Print(
+									"player %d is already controlling unit %d, try later",
+									unit->directControl->myController->playerNum, unit->id
+								);
 							}
 						}
 						else if (!luaRules || luaRules->AllowDirectUnitControl(player, unit)) {
-							unit->directControl=&playerHandler->Player(player)->myControl;
-							playerHandler->Player(player)->playerControlledUnit=unit;
+							unit->directControl = &playerHandler->Player(player)->myControl;
+							(playerHandler->Player(player)->dccs).playerControlledUnit = unit;
+
 							if (player == gu->myPlayerNum) {
 								gu->directControl = unit;
 								mouse->wasLocked = mouse->locked;
@@ -4347,7 +4308,6 @@ void CGame::ClientReadNet()
 								}
 								camHandler->PushMode();
 								camHandler->SetCameraMode(0);
-								dynamic_cast<CFPSController&>(camHandler->GetCurrentController()).SetPos(unit->midPos);
 								selectedUnits.ClearSelected();
 							}
 						}
@@ -4359,12 +4319,14 @@ void CGame::ClientReadNet()
 
 			case NETMSG_DC_UPDATE: {
 				int player = inbuf[1];
-				if ((player >= playerHandler->ActivePlayers()) || (player < 0)){
-					logOutput.Print("Got invalid player num %i in dc update msg",player);
+				if ((player >= playerHandler->ActivePlayers()) || (player < 0)) {
+					logOutput.Print("Invalid player number (%i) in NETMSG_DC_UPDATE", player);
 					break;
 				}
+
 				DirectControlStruct* dc = &playerHandler->Player(player)->myControl;
-				CUnit* unit = playerHandler->Player(player)->playerControlledUnit;
+				DirectControlClientState& dccs = playerHandler->Player(player)->dccs;
+				CUnit* unit = dccs.playerControlledUnit;
 
 				dc->forward    = !!(inbuf[2] & (1 << 0));
 				dc->back       = !!(inbuf[2] & (1 << 1));
@@ -4372,16 +4334,16 @@ void CGame::ClientReadNet()
 				dc->right      = !!(inbuf[2] & (1 << 3));
 				dc->mouse1     = !!(inbuf[2] & (1 << 4));
 				bool newMouse2 = !!(inbuf[2] & (1 << 5));
+
 				if (!dc->mouse2 && newMouse2 && unit) {
 					unit->AttackUnit(0, true);
-					//	for(std::vector<CWeapon*>::iterator wi=unit->weapons.begin();wi!=unit->weapons.end();++wi)
-					//	(*wi)->HoldFire();
 				}
 				dc->mouse2 = newMouse2;
 
-				short int h = *((short int*)&inbuf[3]);
-				short int p = *((short int*)&inbuf[5]);
+				short int h = *((short int*) &inbuf[3]);
+				short int p = *((short int*) &inbuf[5]);
 				dc->viewDir = GetVectorFromHAndPExact(h, p);
+
 				AddTraffic(player, packetCode, dataLength);
 				break;
 			}
@@ -4407,119 +4369,79 @@ void CGame::ClientReadNet()
 	return;
 }
 
-float3 lastDCpos;
-float3 *plastDCpos=NULL;
 
-void CGame::UpdateUI(bool cam)
+
+
+void CGame::UpdateUI(bool updateCam)
 {
-	//move camera if arrow keys pressed
-	if (gu->directControl && !cam) {
-		CUnit* owner = gu->directControl;
+	if (updateCam) {
+		CPlayer* player = playerHandler->Player(gu->myPlayerNum);
+		DirectControlClientState& dccs = player->dccs;
 
-		std::vector<int> args;
-		args.push_back(0);
-		// FIXME: SYNCED SCRIPT CODE CALLED IN UNSYNCED CONTEXT
-		const int piece = owner->script->AimFromWeapon(0);
-		float3 relPos = owner->script->GetPiecePos(piece);
-		float3 pos = owner->pos + owner->frontdir * relPos.z
-			+ owner->updir    * relPos.y
-			+ owner->rightdir * relPos.x;
-		pos += UpVector * 7;
+		if (dccs.oldDCpos != ZeroVector) {
+			GML_STDMUTEX_LOCK(pos); // UpdateUI
 
-		GML_STDMUTEX_LOCK(pos); // UpdateUI
-
-		lastDCpos=pos;
-		plastDCpos=&lastDCpos;
-	}
-	if (plastDCpos && cam) {
-
-		GML_STDMUTEX_LOCK(pos); // UpdateUI
-
-		if(plastDCpos) {
-			camHandler->GetCurrentController().SetPos(*plastDCpos);
-			plastDCpos=NULL;
+			camHandler->GetCurrentController().SetPos(dccs.oldDCpos);
+			dccs.oldDCpos = ZeroVector;
 		}
 	}
-	if (!gu->directControl)
-	{
-		float cameraSpeed=1;
-		if (camMove[7]){
-			cameraSpeed*=0.1f;
-		}
-		if (camMove[6]){
-			cameraSpeed*=10;
-		}
-		float3 movement(0,0,0);
+
+	if (!gu->directControl) {
+		float cameraSpeed = 1.0f;
+
+		if (camMove[7]) { cameraSpeed *=  0.1f; }
+		if (camMove[6]) { cameraSpeed *= 10.0f; }
+		float3 movement = ZeroVector;
 
 		bool disableTracker = false;
-		if (camMove[0]) {
-			movement.y += gu->lastFrameTime;
-			disableTracker = true;
-		}
-		if (camMove[1]) {
-			movement.y -= gu->lastFrameTime;
-			disableTracker = true;
-		}
-		if (camMove[3]) {
-			movement.x += gu->lastFrameTime;
-			disableTracker = true;
-		}
-		if (camMove[2]) {
-			movement.x -= gu->lastFrameTime;
-			disableTracker = true;
-		}
+		if (camMove[0]) { movement.y += gu->lastFrameTime; disableTracker = true; }
+		if (camMove[1]) { movement.y -= gu->lastFrameTime; disableTracker = true; }
+		if (camMove[3]) { movement.x += gu->lastFrameTime; disableTracker = true; }
+		if (camMove[2]) { movement.x -= gu->lastFrameTime; disableTracker = true; }
 
-		if (!cam && disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
-			unitTracker.Disable();
-		}
-		if(cam) {
+		if (!updateCam) {
+			if (disableTracker && camHandler->GetCurrentController().DisableTrackingByKey()) {
+				unitTracker.Disable();
+			}
+		} else {
 			movement.z = cameraSpeed;
 			camHandler->GetCurrentController().KeyMove(movement);
 		}
-		movement=float3(0,0,0);
+
+		movement = ZeroVector;
 
 		if (( fullscreen && fullscreenEdgeMove) ||
 		    (!fullscreen && windowedEdgeMove)) {
-			int screenW = gu->dualScreenMode ? gu->viewSizeX*2 : gu->viewSizeX;
+
+			const int screenW = gu->dualScreenMode ? (gu->viewSizeX << 1): gu->viewSizeX;
 			disableTracker = false;
-			if (mouse->lasty < 2){
-				movement.y+=gu->lastFrameTime;
-				disableTracker = true;
-			}
-			if (mouse->lasty > (gu->viewSizeY - 2)){
-				movement.y-=gu->lastFrameTime;
-				disableTracker = true;
-			}
-			if (mouse->lastx > (screenW - 2)){
-				movement.x+=gu->lastFrameTime;
-				disableTracker = true;
-			}
-			if (mouse->lastx < 2){
-				movement.x-=gu->lastFrameTime;
-				disableTracker = true;
-			}
-			if (!cam && disableTracker) {
+
+			if (mouse->lasty <                  2 ) { movement.y += gu->lastFrameTime; disableTracker = true; }
+			if (mouse->lasty > (gu->viewSizeY - 2)) { movement.y -= gu->lastFrameTime; disableTracker = true; }
+			if (mouse->lastx >       (screenW - 2)) { movement.x += gu->lastFrameTime; disableTracker = true; }
+			if (mouse->lastx <                  2 ) { movement.x -= gu->lastFrameTime; disableTracker = true; }
+
+			if (!updateCam && disableTracker) {
 				unitTracker.Disable();
 			}
 		}
-		if(cam) {
-			movement.z=cameraSpeed;
+		if (updateCam) {
+			movement.z = cameraSpeed;
 			camHandler->GetCurrentController().ScreenEdgeMove(movement);
-			if(camMove[4])
-				camHandler->GetCurrentController().MouseWheelMove(gu->lastFrameTime*200*cameraSpeed);
-			if(camMove[5])
-				camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime*200*cameraSpeed);
+
+			if (camMove[4]) { camHandler->GetCurrentController().MouseWheelMove( gu->lastFrameTime * 200 * cameraSpeed); }
+			if (camMove[5]) { camHandler->GetCurrentController().MouseWheelMove(-gu->lastFrameTime * 200 * cameraSpeed); }
 		}
 	}
 
-	if(cam)
+	if (updateCam) {
 		camHandler->GetCurrentController().Update();
 
-	if(cam) {
 		if (chatting && !userWriting) {
 			consoleHistory->AddLine(userInput);
 			string msg = userInput;
 			string pfx = "";
+
 			if ((userInput.find_first_of("aAsS") == 0) && (userInput[1] == ':')) {
 				pfx = userInput.substr(0, 2);
 				msg = userInput.substr(2);
@@ -4529,13 +4451,14 @@ void CGame::UpdateUI(bool cam)
 			}
 			userInput = pfx + msg;
 			SendNetChat(userInput);
-			chatting=false;
-			userInput="";
+			chatting = false;
+			userInput = "";
 			writingPos = 0;
 		}
 
 		if (inMapDrawer->wantLabel && !userWriting) {
-			if (userInput.size() > 200) {	//avoid troubles with to long lines
+			if (userInput.size() > 200) {
+				// avoid troubles with long lines
 				userInput = userInput.substr(0, 200);
 				writingPos = (int)userInput.length();
 			}
@@ -4548,6 +4471,8 @@ void CGame::UpdateUI(bool cam)
 		}
 	}
 }
+
+
 
 
 void CGame::MakeMemDump(void)
@@ -4588,252 +4513,44 @@ void CGame::MakeMemDump(void)
 }
 
 
-void CGame::DrawDirectControlHud(void)
-{
-	CUnit* unit = gu->directControl;
-	glPushMatrix();
-
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glDisable(GL_TEXTURE_2D);
-
-	if (drawFpsHUD) {
-
-		glPushMatrix();
-		glTranslatef(0.1f,0.5f,0);
-		glScalef(0.25f, 0.25f * gu->aspectRatio, 0.25f);
-
-		if (unit->moveType->useHeading) {
-			glPushMatrix();
-			glRotatef(unit->heading * 180.0f / 32768 + 180, 0, 0, 1);
-
-			glColor4f(0.3f, 0.9f, 0.3f, 0.4f);
-			glBegin(GL_TRIANGLE_FAN);
-			glVertex2f(-0.2f, -0.3f);
-			glVertex2f(-0.2f,  0.3f);
-			glVertex2f( 0.0f,  0.4f);
-			glVertex2f( 0.2f,  0.3f);
-			glVertex2f( 0.2f, -0.3f);
-			glVertex2f(-0.2f, -0.3f);
-			glEnd();
-			glPopMatrix();
-		}
-
-		glEnable(GL_DEPTH_TEST);
-		glPushMatrix();
-		if (unit->moveType->useHeading) {
-			const float scale = 0.4f/unit->radius;
-			glScalef(scale, scale, scale);
-			glRotatef(90, 1, 0, 0);
-		} else {
-			const float scale = 0.2f / unit->radius;
-			glScalef(scale, scale, -scale);
-			CMatrix44f m(ZeroVector,
-			             float3(camera->right.x, camera->up.x, camera->forward.x),
-			             float3(camera->right.y, camera->up.y, camera->forward.y),
-			             float3(camera->right.z, camera->up.z, camera->forward.z));
-			glMultMatrixf(m.m);
-		}
-		glTranslatef3(-unit->drawPos);
-		glDisable(GL_BLEND);
-		unit->currentLOD = 0;
-		unitDrawer->DrawIndividual(unit); // draw the unit
-		glPopMatrix();
-		glDisable(GL_DEPTH_TEST);
-		glDisable(GL_TEXTURE_2D);
-		glEnable(GL_BLEND);
-
-		if (unit->moveType->useHeading) {
-			glPushMatrix();
-			glRotatef(GetHeadingFromVector(camera->forward.x,camera->forward.z)*180.0f/32768+180,0,0,1);
-			glScalef(0.4f,0.4f,0.3f);
-
-			glColor4f(0.4f, 0.4f, 1.0f, 0.6f);
-			glBegin(GL_TRIANGLE_FAN);
-			glVertex2f(-0.2f, -0.3f);
-			glVertex2f(-0.2f,  0.3f);
-			glVertex2f( 0.0f,  0.5f);
-			glVertex2f( 0.2f,  0.3f);
-			glVertex2f( 0.2f, -0.3f);
-			glVertex2f(-0.2f, -0.3f);
-			glEnd();
-			glPopMatrix();
-		}
-		glPopMatrix();
-
-		glEnable(GL_TEXTURE_2D);
-
-		glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-		font->glFormat(0.02f, 0.65f, 1.0f, FONT_SCALE | FONT_NORM, "Health %.0f / %.0f", (float)unit->health, (float)unit->maxHealth);
-
-		if(playerHandler->Player(gu->myPlayerNum)->myControl.mouse2){
-			font->glPrint(0.02f, 0.7f, 1.0f, FONT_SCALE | FONT_NORM, "Free fire mode");
-		}
-
-		int numWeaponsToPrint = 0;
-		for (unsigned int a = 0; a < unit->weapons.size(); ++a) {
-			const WeaponDef* wd = unit->weapons[a]->weaponDef;
-			if (!wd->isShield) {
-				++numWeaponsToPrint;
-			}
-		}
-
-		if (numWeaponsToPrint) {
-			// we have limited space to draw whole list of weapons
-			const float yTop = 0.35f;
-			const float yBottom = 0.11f;
-			const float maxLineHeight = 0.045f;
-			const float lineHeight = std::min((yTop - yBottom) / numWeaponsToPrint, maxLineHeight);
-			const float fontSize = 1.2f * (lineHeight / maxLineHeight);
-			float yPos = yTop;
-
-			for (unsigned int a = 0; a < unit->weapons.size(); ++a) {
-				const CWeapon* w = unit->weapons[a];
-				const WeaponDef* wd = w->weaponDef;
-				if (!wd->isShield) {
-					yPos -= lineHeight;
-					if (wd->stockpile && !w->numStockpiled) {
-						if (w->numStockpileQued) {
-							glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-							font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  Stockpiling %i%%", wd->description.c_str(), int(100.0f * w->buildPercent + 0.5f));
-						}
-						else {
-							glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-							font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  No ammo", wd->description.c_str());
-						}
-					}
-					else if (w->reloadStatus > gs->frameNum) {
-						glColor4f(0.8f, 0.2f, 0.2f, 0.8f);
-						font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  Reloading %i%%", wd->description.c_str(), 100 - int(100.0f * (w->reloadStatus - gs->frameNum) / int(w->reloadTime / unit->reloadSpeed) + 0.5f));
-					}
-					else if (!w->angleGood) {
-						glColor4f(0.6f, 0.6f, 0.2f, 0.8f);
-						font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  Aiming", wd->description.c_str());
-					}
-					else {
-						glColor4f(0.2f, 0.8f, 0.2f, 0.8f);
-						font->glFormat(0.02f, yPos, fontSize, FONT_SCALE | FONT_NORM, "%s:  Ready", wd->description.c_str());
-					}
-				}
-			}
-		}
-	} // end IF drawFpsHUD
-
-	glDisable(GL_DEPTH_TEST);
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPushMatrix();
-	camera->Update(false);		//draw some stuff in world coordinates
-	glDisable(GL_TEXTURE_2D);
-
-	for(unsigned int a=0;a<unit->weapons.size();++a){
-		const CWeapon* w = unit->weapons[a];
-		if(!w){
-			logOutput.Print("Null weapon in vector?");
-			return;
-		}
-		switch(a){
-		case 0:
-			glColor4f(0.0f, 1.0f, 0.0f, 0.7f);
-			break;
-		case 1:
-			glColor4f(1.0f, 0.0f, 0.0f, 0.7f);
-			break;
-		default:
-			glColor4f(0.0f, 0.0f, 1.0f, 0.7f);
-		}
-		if(w->targetType!=Target_None){
-			float3 pos=w->targetPos;
-			float3 v1=(pos-camera->pos).ANormalize();
-			float3 v2=(v1.cross(UpVector)).ANormalize();
-			float3 v3=(v2.cross(v1)).Normalize();
-			float radius=10;
-			if(w->targetType==Target_Unit)
-				radius=w->targetUnit->radius;
-
-			glBegin(GL_LINE_STRIP);
-			for(int b=0;b<=80;++b){
-				glVertexf3(pos+(v2*fastmath::sin(b*2*PI/80)+v3*fastmath::cos(b*2*PI/80))*radius);
-			}
-			glEnd();
-
-			if(!w->onlyForward){
-				float dist=std::min(w->owner->directControl->targetDist,w->range*0.9f);
-				pos=w->weaponPos+w->wantedDir*dist;
-				v1=(pos-camera->pos).ANormalize();
-				v2=(v1.cross(UpVector)).ANormalize();
-				v3=(v2.cross(v1)).ANormalize();
-				radius=dist/100;
-
-				glBegin(GL_LINE_STRIP);
-				for(int b=0;b<=80;++b){
-					glVertexf3(pos+(v2*fastmath::sin(b*2*PI/80)+v3*fastmath::cos(b*2*PI/80))*radius);
-				}
-				glEnd();
-			}
-			glBegin(GL_LINES);
-			if(!w->onlyForward){
-				glVertexf3(pos);
-				glVertexf3(w->targetPos);
-
-				glVertexf3(pos+(v2*fastmath::sin(PI*0.25f)+v3*fastmath::cos(PI*0.25f))*radius);
-				glVertexf3(pos+(v2*fastmath::sin(PI*1.25f)+v3*fastmath::cos(PI*1.25f))*radius);
-
-				glVertexf3(pos+(v2*fastmath::sin(PI*-0.25f)+v3*fastmath::cos(PI*-0.25f))*radius);
-				glVertexf3(pos+(v2*fastmath::sin(PI*-1.25f)+v3*fastmath::cos(PI*-1.25f))*radius);
-			}
-			if((w->targetPos-camera->pos).ANormalize().dot(camera->forward)<0.7f){
-				glVertexf3(w->targetPos);
-				glVertexf3(camera->pos+camera->forward*100);
-			}
-			glEnd();
-		}
-	}
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-	glPopMatrix();
-	glEnable(GL_DEPTH_TEST);
-
-	glPopMatrix();
-}
-
 
 void CGame::GameEnd()
 {
-	gameOver=true;
-	eventHandler.GameOver();
-	new CEndGameBox();
-	CDemoRecorder* record = net->GetDemoRecorder();
-	if (record != NULL) {
-		// Write CPlayer::Statistics and CTeam::Statistics to demo
-		const int numPlayers = playerHandler->ActivePlayers();
+	if (!gameOver)
+	{
+		gameOver=true;
+		eventHandler.GameOver();
+		new CEndGameBox();
+		CDemoRecorder* record = net->GetDemoRecorder();
+		if (record != NULL) {
+			// Write CPlayer::Statistics and CTeam::Statistics to demo
+			const int numPlayers = playerHandler->ActivePlayers();
 
-		// TODO: move this to a method in CTeamHandler
-		// Figure out who won the game.
-		int numTeams = teamHandler->ActiveTeams();
-		if (gs->useLuaGaia) {
-			--numTeams;
-		}
-		int winner = -1;
-		for (int i = 0; i < numTeams; ++i) {
-			if (!teamHandler->Team(i)->isDead) {
-				winner = teamHandler->AllyTeam(i);
-				break;
+			// TODO: move this to a method in CTeamHandler
+			// Figure out who won the game.
+			int numTeams = teamHandler->ActiveTeams();
+			if (gs->useLuaGaia) {
+				--numTeams;
 			}
-		}
-		// Finally pass it on to the CDemoRecorder.
-		record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
-		record->InitializeStats(numPlayers, numTeams, winner);
-		for (int i = 0; i < numPlayers; ++i) {
-			record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
-		}
-		for (int i = 0; i < numTeams; ++i) {
-			record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
-			netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
-			*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
-			net->Send(buf);
+			int winner = -1;
+			for (int i = 0; i < numTeams; ++i) {
+				if (!teamHandler->Team(i)->isDead) {
+					winner = teamHandler->AllyTeam(i);
+					break;
+				}
+			}
+			// Finally pass it on to the CDemoRecorder.
+			record->SetTime(gs->frameNum / 30, (int)gu->gameTime);
+			record->InitializeStats(numPlayers, numTeams, winner);
+			for (int i = 0; i < numPlayers; ++i) {
+				record->SetPlayerStats(i, playerHandler->Player(i)->currentStats);
+			}
+			for (int i = 0; i < numTeams; ++i) {
+				record->SetTeamStats(i, teamHandler->Team(i)->statHistory);
+				netcode::PackPacket* buf = new netcode::PackPacket(2 + sizeof(CTeam::Statistics), NETMSG_TEAMSTAT);
+				*buf << (uint8_t)teamHandler->Team(i)->teamNum << teamHandler->Team(i)->currentStats;
+				net->Send(buf);
+			}
 		}
 	}
 }

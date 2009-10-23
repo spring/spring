@@ -62,7 +62,7 @@ CDirtProjectile::~CDirtProjectile()
 void CDirtProjectile::Update()
 {
 	speed *= slowdown;
-	speed.y += gravity;
+	speed.y += mygravity;
 	pos += speed;
 	alpha -= alphaFalloff;
 	size += sizeExpansion;

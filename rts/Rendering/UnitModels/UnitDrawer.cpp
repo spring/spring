@@ -1491,7 +1491,7 @@ void CUnitDrawer::CreateReflectionFace(unsigned int gltype, float3 camdir)
 	if (camera->forward.y == -1)
 		camera->up = float3(0, 0, -1);
 	camera->pos.y = ground->GetHeight(camera->pos.x, camera->pos.z) + 50;
-	camera->Update(false);
+	camera->Update(false, false);
 
 	sky->Draw();
 	readmap->GetGroundDrawer()->Draw(false, true);
@@ -1904,6 +1904,13 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 	unitDrawer->UnitDrawingTexturesOff(unit->model);
 
+	// Wireframe model
+
+	// Both clip planes move up. Clip plane 0 is the upper bound of the model,
+	// clip plane 1 is the lower bound. In other words, clip plane 0 makes the
+	// wireframe/flat color/texture appear, and clip plane 1 then erases the
+	// wireframe/flat color laten on.
+
 	const double plane0[4] = {0, -1, 0, start + height * unit->buildProgress * 3};
 	glClipPlane(GL_CLIP_PLANE0, plane0);
 	const double plane1[4] = {0, 1, 0, -start - height * (unit->buildProgress * 10 - 9)};
@@ -1926,6 +1933,8 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 		glEnable(GL_CLIP_PLANE1);
 	}
 
+	// Flat colored model
+
 	if (unit->buildProgress > 0.33f) {
 		glColorf3(fc * (1.5f - col));
 		const double plane0[4] = {0, -1, 0, start + height * (unit->buildProgress * 3 - 1)};
@@ -1939,8 +1948,11 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 	glDisable(GL_CLIP_PLANE1);
 	unitDrawer->UnitDrawingTexturesOn(unit->model);
 
+	// Texturemapped model
+
 	// XXX FIXME
 	// ATI has issues with textures, clip planes and shader programs at once - very low performance
+	// FIXME: This may work now I added OPTION ARB_position_invariant to the programs.
 	if (unit->buildProgress > 0.66f) {
 		if (gu->atiHacks) {
 			glDisable(GL_CLIP_PLANE0);
@@ -2185,19 +2197,10 @@ bool CUnitDrawer::DrawAsIcon(const CUnit& unit, const float sqUnitCamDist) const
 }
 
 
-void CUnitDrawer::BackupUnits()
+void CUnitDrawer::SwapCloakedUnits()
 {
-	GML_RECMUTEX_LOCK(unit); // BackupUnits
+	GML_RECMUTEX_LOCK(unit); // SwapCloakedUnits
 
-	drawCloakedSave = drawCloaked;
-	drawCloakedS3OSave = drawCloakedS3O;
-}
-
-
-void CUnitDrawer::RestoreUnits()
-{
-	GML_RECMUTEX_LOCK(unit); // RestoreUnits
-
-	drawCloaked = drawCloakedSave;
-	drawCloakedS3O = drawCloakedS3OSave;
+	drawCloaked.swap(drawCloakedSave);
+	drawCloakedS3O.swap(drawCloakedS3OSave);
 }

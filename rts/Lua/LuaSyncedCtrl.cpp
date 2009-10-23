@@ -1186,7 +1186,7 @@ int LuaSyncedCtrl::SetUnitLosMask(lua_State* L)
 		return 0;
 	}
 	const int allyTeam = luaL_checkint(L, 2);
-	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveTeams())) {
+	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveAllyTeams())) {
 		luaL_error(L, "bad allyTeam");
 	}
 	const unsigned short losStatus = unit->losStatus[allyTeam];
@@ -1208,7 +1208,7 @@ int LuaSyncedCtrl::SetUnitLosState(lua_State* L)
 		return 0;
 	}
 	const int allyTeam = luaL_checkint(L, 2);
-	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveTeams())) {
+	if ((allyTeam < 0) || (allyTeam >= teamHandler->ActiveAllyTeams())) {
 		luaL_error(L, "bad allyTeam");
 	}
 	const unsigned short losStatus = unit->losStatus[allyTeam];
@@ -1974,7 +1974,8 @@ int LuaSyncedCtrl::RemoveBuildingDecal(lua_State* L)
 		return 0;
 	}
 	CBuilding* building = dynamic_cast<CBuilding*>(unit);
-	groundDecals->ForceRemoveBuilding(building);
+	if (building)
+		groundDecals->ForceRemoveBuilding(building);
 	return 0;
 }
 
@@ -2278,7 +2279,7 @@ int LuaSyncedCtrl::SetProjectileGravity(lua_State* L)
 		return 0;
 	}
 
-	proj->gravity = luaL_optfloat(L, 2, 0.0f);
+	proj->mygravity = luaL_optfloat(L, 2, 0.0f);
 	return 0;
 }
 

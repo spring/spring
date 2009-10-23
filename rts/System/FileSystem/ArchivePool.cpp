@@ -94,7 +94,7 @@ bool CArchivePool::IsOpen()
 	return isOpen;
 }
 
-ABOpenFile_t* CArchivePool::GetEntireFile(const std::string& fName)
+ABOpenFile_t* CArchivePool::GetEntireFileImpl(const std::string& fName)
 {
 
 	if (!isOpen) return NULL;

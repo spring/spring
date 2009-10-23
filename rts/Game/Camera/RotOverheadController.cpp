@@ -61,7 +61,6 @@ void CRotOverheadController::MouseWheelMove(float move)
 
 void CRotOverheadController::Update()
 {
-	camera->RestoreUp();
 }
 
 float3 CRotOverheadController::GetPos()

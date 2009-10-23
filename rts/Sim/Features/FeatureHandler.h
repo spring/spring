@@ -54,8 +54,7 @@ public:
 
 	void DrawFadeFeatures(bool submerged, bool noAdvShading = false);
 
-	void BackupFeatures();
-	void RestoreFeatures();
+	void SwapFadeFeatures();
 
 	bool showRezBars;
 

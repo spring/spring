@@ -17,16 +17,12 @@
 
 CBasicWater::CBasicWater()
 {
-	glGenTextures(1, &texture);
 	CBitmap pic;
 	if (!pic.Load(mapInfo->water.texture))
 		throw content_error("Could not read water texture from file " + mapInfo->water.texture);
 
 	// create mipmapped texture
-	glBindTexture(GL_TEXTURE_2D, texture);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_NEAREST);
-	glBuildMipmaps(GL_TEXTURE_2D,GL_RGBA8 ,pic.xsize, pic.ysize, GL_RGBA, GL_UNSIGNED_BYTE, pic.mem);
+	texture = pic.CreateTexture(true);
 
 	displist=0;
 

@@ -216,6 +216,8 @@ private:
 
 	// Heat mapping
 	struct HeatMapValue {
+		HeatMapValue(): value(0), ownerId(0) {
+		}
 		int value;
 		int ownerId;
 	};

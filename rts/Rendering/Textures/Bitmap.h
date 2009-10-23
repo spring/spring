@@ -52,6 +52,7 @@ public:
 	};
 
 	int type;
+	GLenum textype; //! GL_TEXTURE_2D, GL_TEXTURE_CUBE_MAP, ..
 	nv_dds::CDDSImage *ddsimage;
 
 public:

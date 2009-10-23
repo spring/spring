@@ -18,11 +18,9 @@
 /*
  * emulate SDL on Windows.
  */
-
-#include "wsdl.h"
-
+#include "GlobalUnsynced.h"
 #include <stdio.h>
-#include <math.h>
+#include "wsdl.h"
 #include <queue>
 #include <algorithm>
 
@@ -236,7 +234,6 @@ void mouse_update()
 		active_change_state(LOSE, SDL_APPMOUSEFOCUS);
 }
 
-static size_t mouse_buttons;
 
 // (we define a new function signature since the windowsx.h message crackers
 // don't provide for passing uMsg)
@@ -272,52 +269,54 @@ LRESULT OnMouseButton(HWND hWnd, UINT uMsg, int client_x, int client_y, UINT fla
 		break;
 	}
 
-	const POINT screen_pt = ScreenFromClient(client_x, client_y);
+	//! mouse capture
+	if (!fullscreen) {
+		const POINT screen_pt = ScreenFromClient(client_x, client_y);
 
-	// mouse capture
-	static int outstanding_press_events = 0;
-	static SDL_GrabMode oldMode;
-	static bool saveMode = false;
-	if(state == SDL_PRESSED)
-	{
-		// grab mouse to ensure we get up events
-		if(++outstanding_press_events > 0)
-		{
-			if (!saveMode)
+		static int outstanding_press_events = 0;
+		static SDL_GrabMode oldMode;
+		static bool saveMode = false;
+		if(state == SDL_PRESSED) {
+			//! grab mouse to ensure we get up events
+			if(++outstanding_press_events > 0)
 			{
-				oldMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
-				saveMode = true;
+				if (!saveMode)
+				{
+					oldMode = SDL_WM_GrabInput(SDL_GRAB_QUERY);
+					saveMode = true;
+				}
+
+				POINT pt;
+				GetCursorPos(&pt); //! SDL_WM_GrabInput sometimes moves the cursor, so we have to reset it afterwards
+				SDL_WM_GrabInput(SDL_GRAB_ON);
+				SetCursorPos(pt.x, pt.y);
 			}
-#ifndef DEBUG
-			SDL_WM_GrabInput(SDL_GRAB_ON);
-#endif
-			SetCursorPos(screen_pt.x, screen_pt.y);
-		}
-	}
-	else
-	{
-		// release after all up events received
-		if(--outstanding_press_events <= 0)
-		{
-			if (saveMode)
+		} else {
+			//! release after all up events received
+			if(--outstanding_press_events <= 0)
 			{
-				SDL_WM_GrabInput(oldMode);
-				SetCursorPos(screen_pt.x, screen_pt.y);
-				saveMode = false;
+				if (saveMode)
+				{
+					POINT pt;
+					GetCursorPos(&pt); //! SDL_WM_GrabInput sometimes moves the cursor, so we have to reset it afterwards
+					SDL_WM_GrabInput(oldMode);
+					SetCursorPos(pt.x, pt.y);
+					saveMode = false;
+				}
+				outstanding_press_events = 0;
 			}
-			outstanding_press_events = 0;
 		}
+
+		//! only queue clicks inside of the window
+		int x, y;
+		if(GetCoords(screen_pt.x, screen_pt.y, x, y))
+			queue_button_event(button, state, x, y);
+	} else {
+		//! no outside checking needed for fullscreen
+		queue_button_event(button, state, client_x, client_y);
 	}
 
-	// update button bitfield
-	if(state == SDL_PRESSED)
-		mouse_buttons |= SDL_BUTTON(button);
-	else
-		mouse_buttons &= ~SDL_BUTTON(button);
 
-	int x, y;
-	if(GetCoords(screen_pt.x, screen_pt.y, x, y))
-		queue_button_event(button, state, x, y);
 	return 0;
 }
 
@@ -338,11 +337,6 @@ LRESULT OnMouseWheel(HWND hWnd, int screen_x, int screen_y, int zDelta, UINT fwK
 
 void SDL_WarpMouse(int x, int y)
 {
-	//mouse_update();
-	// SDL interface provides for int, but the values should be
-	// idealized client coords (>= 0)
-	//mouse_moved(x, y);
-
 	const int client_x = x, client_y = y;
 	const POINT screen_pt = ScreenFromClient(client_x, client_y);
 	SetCursorPos(screen_pt.x, screen_pt.y);

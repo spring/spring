@@ -149,6 +149,9 @@ public:
 	void SetLosStatus(int allyTeam, unsigned short newStatus);
 	unsigned short CalcLosStatus(int allyTeam);
 
+	void SlowUpdateCloak(bool);
+	void ScriptDecloak(bool);
+
 	enum ChangeType{
 		ChangeGiven,
 		ChangeCaptured
@@ -469,6 +472,7 @@ public:
 	int curCloakTimeout;
 	///true if the unit is currently cloaked (has enough energy etc)
 	bool isCloaked;
+	bool oldCloak;
 	float decloakDistance;
 
 	int lastTerrainType;

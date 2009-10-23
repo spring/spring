@@ -327,13 +327,8 @@ void CMouseHandler::MouseRelease(int x, int y, int button)
 	// (the latter is determined by the time the mouse was held down:
 	//  <= 0.3 s means a camera mode switch, > 0.3 s means a drag scroll)
 	if (button == SDL_BUTTON_MIDDLE) {
-		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - 0.3f)) {
-			if (keys[SDLK_LSHIFT] || keys[SDLK_LCTRL]) {
-				camHandler->ToggleState();
-			} else {
-				ToggleState();
-			}
-		}
+		if (buttons[SDL_BUTTON_MIDDLE].time > (gu->gameTime - 0.3f))
+			ToggleState();
 		return;
 	}
 

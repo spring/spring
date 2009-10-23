@@ -5,9 +5,11 @@
 #include <cfloat>
 
 #include "SoundBuffer.h"
+#include "UnsyncedRNG.h"
 
 namespace
 {
+UnsyncedRNG randnum; // no need for strong randomness here, so default seed is ok
 template <typename T>
 inline bool MapEntryValExtract(const std::map<std::string, std::string> map, const std::string& key, T& t)
 {
@@ -21,12 +23,20 @@ inline bool MapEntryValExtract(const std::map<std::string, std::string> map, con
 	else
 		return false;
 }
+
+template <typename T>
+void FitInIntervall(const T& lower, T& val, const T& upper)
+{
+	val = std::max(std::min(val, upper), lower);
+}
 }
 
 SoundItem::SoundItem(boost::shared_ptr<SoundBuffer> _buffer, const std::map<std::string, std::string>& items) :
 buffer(_buffer),
 gain(1.0),
+gainMod(0),
 pitch(1.0),
+pitchMod(0),
 dopplerScale(1.0),
 maxDist(FLT_MAX),
 rolloff(1.0f),
@@ -40,7 +50,11 @@ in3D(true)
 		name = buffer->GetFilename();
 
 	MapEntryValExtract(items, "gain", gain);
+	MapEntryValExtract(items, "gainmod", gainMod);
+	FitInIntervall(0.f, gainMod, 1.f);
 	MapEntryValExtract(items, "pitch", pitch);
+	MapEntryValExtract(items, "pitchmod", pitchMod);
+	FitInIntervall(0.f, pitchMod, 1.f);
 	MapEntryValExtract(items, "dopplerscale", dopplerScale);
 	MapEntryValExtract(items, "priority", priority);
 	MapEntryValExtract(items, "maxconcurrent", maxConcurrent);
@@ -69,3 +83,18 @@ void SoundItem::StopPlay()
 	--currentlyPlaying;
 }
 
+float SoundItem::GetGain() const
+{
+	float tgain = 0;
+	if (gainMod > 0)
+		tgain = (float(randnum(200))/100.f - 1.f)*gainMod;
+	return gain * (1.f + tgain);
+}
+
+float SoundItem::GetPitch() const
+{
+	float tpitch = 0;
+	if (pitchMod > 0)
+		tpitch = (float(randnum(200))/100.f - 1.f)*pitchMod;
+	return pitch * (1.f + tpitch);
+}

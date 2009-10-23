@@ -1,5 +1,7 @@
+#ifdef _MSC_VER
+#include "StdAfx.h"
+#endif
 #include "SelectMenu.h"
-#include "Rendering/GL/myGL.h"
 
 #include <SDL_keysym.h>
 #include <SDL_timer.h>
@@ -15,6 +17,7 @@
 #include <stack>
 #include <boost/cstdint.hpp>
 
+#include "UpdaterWindow.h"
 #include "ClientSetup.h"
 #include "SelectionWidget.h"
 #include "PreGame.h"
@@ -138,7 +141,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL)
+SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWindow(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
@@ -172,6 +175,8 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL)
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Start the Lobby", menu);
 		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
+		Button* update = new Button("Check for updates", menu);
+		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
 		Button* settings = new Button("Edit settings", menu);
 		settings->Clicked.connect(boost::bind(&SelectMenu::Settings, this));
 		Button* direct = new Button("Direct connect", menu);
@@ -202,6 +207,8 @@ bool SelectMenu::Draw()
 
 bool SelectMenu::Update()
 {
+	if (updWindow)
+		updWindow->Poll();
 	return true;
 }
 
@@ -270,6 +277,20 @@ void SelectMenu::ShowConnectWindow(bool show)
 	}
 }
 
+void SelectMenu::ShowUpdateWindow(bool show)
+{
+	if (show && !updWindow)
+	{
+		updWindow = new UpdaterWindow();
+		updWindow->WantClose.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, false));
+	}
+	else if (!show && updWindow)
+	{
+		agui::gui->RmElement(updWindow);
+		updWindow = NULL;
+	}
+}
+
 void SelectMenu::DirectConnect(const std::string& addr)
 {
 	configHandler->SetString("address", addr);
@@ -285,15 +306,8 @@ bool SelectMenu::HandleEventSelf(const SDL_Event& ev)
 		case SDL_KEYDOWN: {
 			if (ev.key.keysym.sym == SDLK_ESCAPE)
 			{
-				if(keys[SDLK_LSHIFT])
-				{
-					logOutput.Print("User exited");
-					globalQuit=true;
-				}
-				else
-				{
-					logOutput.Print("Use shift-esc to quit");
-				}
+				logOutput.Print("User exited");
+				globalQuit=true;
 			}
 			else if (ev.key.keysym.sym == SDLK_RETURN)
 			{

@@ -40,19 +40,16 @@ void CSelectionKeyHandler::LoadSelectionKeys()
 {
 	std::ifstream ifs(filesystem.LocateFile("selectkeys.txt").c_str());
 
-	char buf[10000];
+	selectNumber = 0;
 
-	selectNumber=0;
+	while (ifs.peek() != EOF && !ifs.eof()) {
+		std::string key, sel;
+		ifs >> key;
 
-	while(ifs.peek()!=EOF && !ifs.eof()){
-		ifs >> buf;
-		std::string key(buf);
-
-		if(ifs.peek()==EOF || ifs.eof())
+		if (ifs.peek() == EOF || ifs.eof())
 			break;
 
-		ifs >> buf;
-		std::string sel(buf);
+		ifs >> sel;
 
 		bool shift=false;
 		bool control=false;
@@ -217,13 +214,13 @@ namespace
 		}
 	);
 
-	// TODO: should move away from aihint
-	DECLARE_FILTER_EX(InPrevSel, 0, prevTypes.find(unit->aihint) != prevTypes.end(),
+	DECLARE_FILTER_EX(InPrevSel, 0, prevTypes.find(unit->unitDef->id) != prevTypes.end(),
 		std::set<int> prevTypes;
 		void Prepare() {
+			prevTypes.clear();
 			const CUnitSet& tu = selectedUnits.selectedUnits;
 			for (CUnitSet::const_iterator si = tu.begin(); si != tu.end(); ++si) {
-				prevTypes.insert((*si)->aihint);
+				prevTypes.insert((*si)->unitDef->id);
 			}
 		}
 	);

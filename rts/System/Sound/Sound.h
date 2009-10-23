@@ -75,13 +75,13 @@ private:
 	sourceVecT sources;
 
 	unsigned numEmptyPlayRequests;
+	unsigned numAbortedPlays;
 
 	soundItemDef defaultItem;
 	soundItemDefMap soundItemDefs;
 
 	boost::thread* soundThread;
 	boost::mutex soundMutex;
-	volatile bool soundThreadRunning;
 };
 
 extern CSound* sound;

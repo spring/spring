@@ -144,12 +144,12 @@ void GameSetupDrawer::Draw()
 		if (a == numPlayers) {
 			color = &white;
 		} else if (playerHandler->Player(a)->spectator) {
-			if (!playerHandler->Player(a)->readyToStart) {
+			if (!playerHandler->Player(a)->active) {
 				color = &lightred;
 			} else {
 				color = &cyan;
 			}
-		} else if (!playerHandler->Player(a)->readyToStart) {
+		} else if (!playerHandler->Player(a)->active) {
 			color = &red;
 		} else if (!playerHandler->Player(a)->readyToStart) {
 			color = &yellow;

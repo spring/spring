@@ -1,5 +1,50 @@
 Spring change log
 
+0.80.5:
+Bugfixes:
+ - lots of bugs in the AI interface fixed
+ - fix some network-related problems and improve behaviour under worse conditions
+ - large performance increase for units on patrol
+ - fix some performance problems with the new heatmap pathfinder
+ - fixed a crash which could occur after an AirBase was destroyed
+
+Gui:
+ - joystick support
+ - some bugs resolved which could lead to crashes when using ogg samples or music
+ - properly handle dds textures
+ - fix some mouse-jumping in windows
+
+Sim:
+ - lua unit scripts major rework
+ - some sources of desync fixed
+
+Misc:
+ - fix some compiling problems related to boost 1.40
+ - some fixes for OS X
+
+
+0.80.4.2:
+Bugfixes:
+ - fix crash when doing lots of mapdrawing (#1632)
+ - fix crash when loading certain cursornormal files
+ - fix drawing of ghosted buildings
+ - properly initialise SDL timer for dedicated server
+ - fixed GatherWait cursor
+ - don't send resign-command when already spectating
+ - fix units with vlaunch missiles (#1647)
+ - Spring compiles boost 1.40
+
+
+0.80.4.1:
+Bugfixes:
+ - Fix missing tree fog, misc fog fixes
+ - fix crash in AI pathing
+ - fix crashes in the Java AI interface
+ - added VFS.MapArchive
+ - fix possible crash on exit
+ - fix crash when loading certain ogg-files
+
+
 0.80.4.0:
 Bugfixes:
  - don't reclaim dragonteeth with area-reclaim

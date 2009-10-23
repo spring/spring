@@ -217,14 +217,14 @@ void CBFGroundTextures::DrawUpdate(void)
 			dx = max(0.0f, float(fabs(dx) - (SQUARE_SIZE << 6)));
 			float dist = fastmath::apxsqrt(dx * dx + dy * dy);
 
-			float wantedLevel = dist / 1000;
+			int wantedLevel = (int)dist / 1000;
 
-			if (wantedLevel > 2.5f)
-				wantedLevel = 2.5f;
+			if (wantedLevel > 3)
+				wantedLevel = 3;
 
-			if (square->texLevel != (int) wantedLevel) {
+			if (square->texLevel != wantedLevel) {
 				glDeleteTextures(1, &square->texture);
-				LoadSquare(x, y, (int) wantedLevel);
+				LoadSquare(x, y, wantedLevel);
 			}
 		}
 	}

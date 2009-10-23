@@ -118,8 +118,6 @@ struct BuilderTracker {
 	int taskPlanId;
 	// if not NULL then this worker belongs to this Factory.
 	int factoryId;
-	// if not NULL then this worker is on reclaim job or something, not tracked until it gets idle
-	int customOrderId;
 
 	// if not NULL then this worker is stuck or something
 	int stuckCount;

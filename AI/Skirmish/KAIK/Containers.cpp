@@ -45,7 +45,6 @@ CR_REG_METADATA(BuilderTracker, (
 	CR_MEMBER(buildTaskId),
 	CR_MEMBER(taskPlanId),
 	CR_MEMBER(factoryId),
-	CR_MEMBER(customOrderId),
 	CR_MEMBER(stuckCount),
 	CR_MEMBER(idleStartFrame),
 	CR_MEMBER(commandOrderPushFrame),

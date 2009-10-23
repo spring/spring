@@ -17,7 +17,7 @@ CR_REG_METADATA(CSimpleParticleSystem,
 	CR_MEMBER_BEGINFLAG(CM_Config),
 		CR_MEMBER(emitVector),
 		CR_MEMBER(emitMul),
-		CR_MEMBER(gravity3),
+		CR_MEMBER(gravity),
 		CR_MEMBER(colorMap),
 		CR_MEMBER(texture),
 		CR_MEMBER(airdrag),
@@ -130,7 +130,7 @@ void CSimpleParticleSystem::Update()
 		if (particles[i].life < 1.0f) {
 			particles[i].pos += particles[i].speed;
 			particles[i].life += particles[i].decayrate;
-			particles[i].speed += gravity3;
+			particles[i].speed += gravity;
 			particles[i].speed *= airdrag;
 
 			particles[i].size = particles[i].size * sizeMod + sizeGrowth;
@@ -211,7 +211,7 @@ void CSphereParticleSpawner::Init(const float3& explosionPos, CUnit* owner GML_P
 		particle->sizeGrowth = sizeGrowth;
 		particle->sizeMod = sizeMod;
 
-		particle->gravity3 = gravity3;
+		particle->gravity = gravity;
 		particle->directional = directional;
 		particle->SetRadius(particle->size + sizeGrowth * particleLife);
 	}

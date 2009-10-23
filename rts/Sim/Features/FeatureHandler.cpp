@@ -155,26 +155,12 @@ void CFeatureHandler::PostLoad()
 			drawQuads[(*it)->drawQuad].features.insert(*it);
 }
 
-inline void CopyFeatureSet(std::set<CFeature *> &to, std::set<CFeature *> &from) {
-	to.clear();
-	for(std::set<CFeature *>::iterator i = from.begin(); i != from.end(); ++i)
-		to.insert(*i);
-}
-
-void CFeatureHandler::BackupFeatures()
+void CFeatureHandler::SwapFadeFeatures()
 {
-	GML_RECMUTEX_LOCK(feat); // BackupFeatures
+	GML_RECMUTEX_LOCK(feat); // SwapFadeFeatures
 
-	CopyFeatureSet(fadeFeaturesSave, fadeFeatures);
-	CopyFeatureSet(fadeFeaturesS3OSave, fadeFeaturesS3O);
-}
-
-void CFeatureHandler::RestoreFeatures()
-{
-	GML_RECMUTEX_LOCK(feat); // RestoreFeatures
-
-	CopyFeatureSet(fadeFeatures, fadeFeaturesSave);
-	CopyFeatureSet(fadeFeaturesS3O, fadeFeaturesS3OSave);
+	fadeFeatures.swap(fadeFeaturesSave);
+	fadeFeaturesS3O.swap(fadeFeaturesS3OSave);
 }
 
 void CFeatureHandler::AddFeatureDef(const std::string& name, FeatureDef* fd)
@@ -589,12 +575,12 @@ void CFeatureHandler::TerrainChanged(int x1, int y1, int x2, int y2)
 
 void CFeatureHandler::Draw()
 {
-	fadeFeatures.clear();
-	fadeFeaturesS3O.clear();
-
 	drawFar.clear();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
+
+	fadeFeatures.clear();
+	fadeFeaturesS3O.clear();
 
 	if(gu->drawFog) {
 		glEnable(GL_FOG);

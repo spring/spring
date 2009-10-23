@@ -78,10 +78,11 @@ void UDPListener::Update()
 		if (CheckErrorCode(err))
 			break;
 
+		LogObject() << "Avail: " << bytes_avail << " Recv: " << bytesReceived;
 		if (bytesReceived < Packet::headerSize)
 			continue;
 
-		Packet data(&buffer[0], buffer.size());
+		Packet data(&buffer[0], bytesReceived);
 
 		bool processed = false;
 		for (std::list< boost::weak_ptr<UDPConnection> >::iterator i = conn.begin(); i != conn.end(); ++i)

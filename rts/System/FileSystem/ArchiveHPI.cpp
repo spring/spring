@@ -38,7 +38,7 @@ bool CArchiveHPI::IsOpen()
 	return (hpi != NULL);
 }
 
-ABOpenFile_t* CArchiveHPI::GetEntireFile(const std::string& fileName)
+ABOpenFile_t* CArchiveHPI::GetEntireFileImpl(const std::string& fileName)
 {
 	std::string name = StringToLower(fileName);
 

@@ -35,6 +35,11 @@
 
 CUnitDefHandler* unitDefHandler;
 
+#ifdef _MSC_VER
+bool isblank(int c) {
+	return (c == ' ') || (c == '\t') || (c == '\r') || (c == '\n');
+}
+#endif
 
 CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 {
@@ -66,6 +71,13 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 
 	for (unsigned int a = 0; a < unitDefNames.size(); ++a) {
 		const string unitName = unitDefNames[a];
+
+		if (std::find_if(unitName.begin(), unitName.end(), isblank) != unitName.end()) {
+			logOutput.Print("WARNING: UnitDef name \"%s\" contains white-spaces,"
+					"which will likely cause problems."
+					"Please contact the Game/Mod developpers.",
+					unitName.c_str());
+		}
 
 		/*
 		// Restrictions may tell us not to use this unit at all
@@ -239,6 +251,10 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		ud.metalStorage  = udTable.GetFloat("metalStorage",  gameSetup->startMetal);
 		ud.energyStorage = udTable.GetFloat("energyStorage", gameSetup->startEnergy);
 	}
+	else {
+		ud.metalStorage  = udTable.GetFloat("metalStorage",  0.0f);
+		ud.energyStorage = udTable.GetFloat("energyStorage", 0.0f);
+ 	}
 
 	ud.extractsMetal  = udTable.GetFloat("extractsMetal",  0.0f);
 	ud.windGenerator  = udTable.GetFloat("windGenerator",  0.0f);
