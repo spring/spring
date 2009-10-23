@@ -85,7 +85,9 @@ int CAIAICheats::CreateUnit(const char* unitDefName, float3 pos) {
 	setCheatsEnabled(true);
 	int unitDefId = sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(
 			teamId, unitDefName);
-	SGiveMeNewUnitCheatCommand cmd = {unitDefId, pos.toSAIFloat3()};
+	float pos_f3[3];
+	pos.copyInto(pos_f3);
+	SGiveMeNewUnitCheatCommand cmd = {unitDefId, pos_f3};
 	int unitId = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE,
 			-1, COMMAND_CHEATS_GIVE_ME_NEW_UNIT, &cmd);
 	setCheatsEnabled(false);
