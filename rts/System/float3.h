@@ -104,6 +104,19 @@ public:
 		z = f[2];
 	}
 
+	/**
+	 * @brief Copy x, y, z into float[3]
+	 * @param f float[3] to copy values into
+	 *
+	 * Sets the float[3] to this float3.
+	 */
+	inline void copyInto(float f[3]) const {
+
+		f[0] = x;
+		f[1] = y;
+		f[2] = z;
+	}
+
 
 	/**
 	 * @brief operator +
