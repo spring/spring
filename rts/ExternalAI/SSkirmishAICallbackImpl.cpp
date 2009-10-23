@@ -147,10 +147,10 @@ static int copyStringArr(const char** dest, const char** src, int size) {
 	}
 	return size;
 }
-static void toFloatArr(const SAIFloat3* color, float alpha, float arrColor[4]) {
-	arrColor[0] = color->x;
-	arrColor[1] = color->y;
-	arrColor[2] = color->z;
+static void toFloatArr(const short color[3], float alpha, float arrColor[4]) {
+	arrColor[0] = color[0];
+	arrColor[1] = color[1];
+	arrColor[2] = color[2];
 	arrColor[3] = alpha;
 }
 static void fillVector(std::vector<int>* vector_unitIds, int* unitIds,
@@ -282,7 +282,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 					(SGiveMeNewUnitCheatCommand*) commandData;
 			if (clbCheat != NULL) {
 				cmd->ret_newUnitId = clbCheat->CreateUnit(getUnitDefById(teamId,
-						cmd->unitDefId)->name.c_str(), float3(cmd->pos));
+						cmd->unitDefId)->name.c_str(), cmd->pos_posF3);
 				if (cmd->ret_newUnitId > 0) {
 					ret = 0;
 				} else {
@@ -299,14 +299,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		case COMMAND_SEND_START_POS:
 		{
 			const SSendStartPosCommand* cmd = (SSendStartPosCommand*) commandData;
-			AIHCSendStartPos data = {cmd->ready, float3(cmd->pos)};
+			AIHCSendStartPos data = {cmd->ready, cmd->pos_posF3};
 			wrapper_HandleCommand(clb, clbCheat, AIHCSendStartPosId, &data);
 			break;
 		}
 		case COMMAND_DRAWER_POINT_ADD:
 		{
 			const SAddPointDrawCommand* cmd = (SAddPointDrawCommand*) commandData;
-			AIHCAddMapPoint data = {float3(cmd->pos), cmd->label};
+			AIHCAddMapPoint data = {cmd->pos_posF3, cmd->label};
 			wrapper_HandleCommand(clb, clbCheat, AIHCAddMapPointId, &data);
 			break;
 		}
@@ -314,14 +314,14 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			const SRemovePointDrawCommand* cmd =
 					(SRemovePointDrawCommand*) commandData;
-			AIHCRemoveMapPoint data = {float3(cmd->pos)};
+			AIHCRemoveMapPoint data = {cmd->pos_posF3};
 			wrapper_HandleCommand(clb, clbCheat, AIHCRemoveMapPointId, &data);
 			break;
 		}
 		case COMMAND_DRAWER_LINE_ADD:
 		{
 			const SAddLineDrawCommand* cmd = (SAddLineDrawCommand*) commandData;
-			AIHCAddMapLine data = {float3(cmd->posFrom), float3(cmd->posTo)};
+			AIHCAddMapLine data = {cmd->posFrom_posF3, cmd->posTo_posF3};
 			wrapper_HandleCommand(clb, clbCheat, AIHCAddMapLineId, &data);
 			break;
 		}
@@ -338,7 +338,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			const SSetLastPosMessageCommand* cmd =
 					(SSetLastPosMessageCommand*) commandData;
-			clb->SetLastMsgPos(cmd->pos);
+			clb->SetLastMsgPos(cmd->pos_posF3);
 			break;
 		}
 		case COMMAND_SEND_RESOURCES:
@@ -396,8 +396,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		case COMMAND_PATH_INIT:
 		{
 			SInitPathCommand* cmd = (SInitPathCommand*) commandData;
-			cmd->ret_pathId = clb->InitPath(float3(cmd->start),
-					float3(cmd->end), cmd->pathType);
+			cmd->ret_pathId = clb->InitPath(cmd->start_posF3,
+					cmd->end_posF3, cmd->pathType);
 			break;
 		}
 		case COMMAND_PATH_GET_APPROXIMATE_LENGTH:
@@ -405,7 +405,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			SGetApproximateLengthPathCommand* cmd =
 					(SGetApproximateLengthPathCommand*) commandData;
 			cmd->ret_approximatePathLength =
-					clb->GetPathLength(float3(cmd->start), float3(cmd->end),
+					clb->GetPathLength(cmd->start_posF3, cmd->end_posF3,
 							cmd->pathType);
 			break;
 		}
@@ -413,8 +413,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			SGetNextWaypointPathCommand* cmd =
 					(SGetNextWaypointPathCommand*) commandData;
-			cmd->ret_nextWaypoint =
-					clb->GetNextWaypoint(cmd->pathId).toSAIFloat3();
+			clb->GetNextWaypoint(cmd->pathId).copyInto(cmd->ret_nextWaypoint_posF3_out);
 			break;
 		}
 		case COMMAND_PATH_FREE:
@@ -436,7 +435,11 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			const SAddNotificationDrawerCommand* cmd =
 					(SAddNotificationDrawerCommand*) commandData;
-			clb->AddNotification(float3(cmd->pos), float3(cmd->color),
+			clb->AddNotification(cmd->pos_posF3,
+					float3(
+						cmd->color_colorS3[0],
+						cmd->color_colorS3[1],
+						cmd->color_colorS3[2]),
 					cmd->alpha);
 			break;
 		}
@@ -445,8 +448,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			const SStartPathDrawerCommand* cmd =
 					(SStartPathDrawerCommand*) commandData;
 			float arrColor[4];
-			toFloatArr(&cmd->color, cmd->alpha, arrColor);
-			clb->LineDrawerStartPath(float3(cmd->pos), arrColor);
+			toFloatArr(cmd->color_colorS3, cmd->alpha, arrColor);
+			clb->LineDrawerStartPath(cmd->pos_posF3, arrColor);
 			break;
 		}
 		case COMMAND_DRAWER_PATH_FINISH:
@@ -461,8 +464,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			const SDrawLinePathDrawerCommand* cmd =
 					(SDrawLinePathDrawerCommand*) commandData;
 			float arrColor[4];
-			toFloatArr(&cmd->color, cmd->alpha, arrColor);
-			clb->LineDrawerDrawLine(float3(cmd->endPos), arrColor);
+			toFloatArr(cmd->color_colorS3, cmd->alpha, arrColor);
+			clb->LineDrawerDrawLine(cmd->endPos_posF3, arrColor);
 			break;
 		}
 		case COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON:
@@ -470,8 +473,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			const SDrawLineAndIconPathDrawerCommand* cmd =
 					(SDrawLineAndIconPathDrawerCommand*) commandData;
 			float arrColor[4];
-			toFloatArr(&cmd->color, cmd->alpha, arrColor);
-			clb->LineDrawerDrawLineAndIcon(cmd->cmdId, float3(cmd->endPos),
+			toFloatArr(cmd->color_colorS3, cmd->alpha, arrColor);
+			clb->LineDrawerDrawLineAndIcon(cmd->cmdId, cmd->endPos_posF3,
 					arrColor);
 			break;
 		}
@@ -487,8 +490,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			const SBreakPathDrawerCommand* cmd =
 					(SBreakPathDrawerCommand*) commandData;
 			float arrColor[4];
-			toFloatArr(&cmd->color, cmd->alpha, arrColor);
-			clb->LineDrawerBreak(float3(cmd->endPos), arrColor);
+			toFloatArr(cmd->color_colorS3, cmd->alpha, arrColor);
+			clb->LineDrawerBreak(cmd->endPos_posF3, arrColor);
 			break;
 		}
 		case COMMAND_DRAWER_PATH_RESTART:
@@ -507,18 +510,17 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			SCreateSplineFigureDrawerCommand* cmd =
 					(SCreateSplineFigureDrawerCommand*) commandData;
 			cmd->ret_newFigureGroupId =
-					clb->CreateSplineFigure(float3(cmd->pos1),
-							float3(cmd->pos2), float3(cmd->pos3),
-							float3(cmd->pos4), cmd->width, cmd->arrow,
-							cmd->lifeTime, cmd->figureGroupId);
+					clb->CreateSplineFigure(cmd->pos1_posF3, cmd->pos2_posF3,
+							cmd->pos3_posF3, cmd->pos4_posF3, cmd->width,
+							cmd->arrow, cmd->lifeTime, cmd->figureGroupId);
 			break;
 		}
 		case COMMAND_DRAWER_FIGURE_CREATE_LINE:
 		{
 			SCreateLineFigureDrawerCommand* cmd =
 					(SCreateLineFigureDrawerCommand*) commandData;
-			cmd->ret_newFigureGroupId = clb->CreateLineFigure(float3(cmd->pos1),
-					float3(cmd->pos2), cmd->width, cmd->arrow, cmd->lifeTime,
+			cmd->ret_newFigureGroupId = clb->CreateLineFigure(cmd->pos1_posF3,
+					cmd->pos2_posF3, cmd->width, cmd->arrow, cmd->lifeTime,
 					cmd->figureGroupId);
 			break;
 		}
@@ -526,8 +528,11 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			const SSetColorFigureDrawerCommand* cmd =
 					(SSetColorFigureDrawerCommand*) commandData;
-			clb->SetFigureColor(cmd->figureGroupId, cmd->color.x, cmd->color.y,
-					cmd->color.z, cmd->alpha);
+			clb->SetFigureColor(cmd->figureGroupId,
+					cmd->color_colorS3[0],
+					cmd->color_colorS3[1],
+					cmd->color_colorS3[2],
+					cmd->alpha);
 			break;
 		}
 		case COMMAND_DRAWER_FIGURE_DELETE:
@@ -541,7 +546,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			const SDrawUnitDrawerCommand* cmd = (SDrawUnitDrawerCommand*) commandData;
 			clb->DrawUnit(getUnitDefById(teamId,
-					cmd->toDrawUnitDefId)->name.c_str(), float3(cmd->pos),
+					cmd->toDrawUnitDefId)->name.c_str(), cmd->pos_posF3,
 					cmd->rotation, cmd->lifeTime, cmd->teamId, cmd->transparent,
 					cmd->drawBorder, cmd->facing);
 			break;
@@ -549,8 +554,8 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		case COMMAND_TRACE_RAY: {
 			STraceRayCommand* cCmdData = (STraceRayCommand*) commandData;
 			AIHCTraceRay cppCmdData = {
-				cCmdData->rayPos,
-				cCmdData->rayDir,
+				cCmdData->rayPos_posF3,
+				cCmdData->rayDir_posF3,
 				cCmdData->rayLen,
 				cCmdData->srcUID,
 				cCmdData->hitUID,
