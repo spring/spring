@@ -251,8 +251,8 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Clb_Gui_getViewRange)(int teamId);
 	float             (CALLING_CONV *Clb_Gui_getScreenX)(int teamId);
 	float             (CALLING_CONV *Clb_Gui_getScreenY)(int teamId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Gui_Camera_getDirection)(int teamId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Gui_Camera_getPosition)(int teamId);
+	void              (CALLING_CONV *Clb_Gui_Camera_getDirection)(int teamId, float* return_posF3_out);
+	void              (CALLING_CONV *Clb_Gui_Camera_getPosition)(int teamId, float* return_posF3_out);
 // END Visualization related callback functions
 
 
@@ -416,7 +416,7 @@ struct SSkirmishAICallback {
 	 * The unit takes less damage when attacked from this direction.
 	 * This encourage flanking fire.
 	 */
-	struct SAIFloat3  (CALLING_CONV *Clb_UnitDef_FlankingBonus_getDir)(int teamId, int unitDefId);
+	void              (CALLING_CONV *Clb_UnitDef_FlankingBonus_getDir)(int teamId, int unitDefId, float* return_posF3_out);
 	/** Damage factor for the least protected direction */
 	float             (CALLING_CONV *Clb_UnitDef_FlankingBonus_getMax)(int teamId, int unitDefId);
 	/** Damage factor for the most protected direction */
@@ -435,9 +435,9 @@ struct SSkirmishAICallback {
 	 */
 	const char*       (CALLING_CONV *Clb_UnitDef_CollisionVolume_getType)(int teamId, int unitDefId);
 	/** The collision volume's full axis lengths. */
-	struct SAIFloat3  (CALLING_CONV *Clb_UnitDef_CollisionVolume_getScales)(int teamId, int unitDefId);
+	void              (CALLING_CONV *Clb_UnitDef_CollisionVolume_getScales)(int teamId, int unitDefId, float* return_posF3_out);
 	/** The collision volume's offset relative to the unit's center position */
-	struct SAIFloat3  (CALLING_CONV *Clb_UnitDef_CollisionVolume_getOffsets)(int teamId, int unitDefId);
+	void              (CALLING_CONV *Clb_UnitDef_CollisionVolume_getOffsets)(int teamId, int unitDefId, float* return_posF3_out);
 	/**
 	 * Collission test algorithm used.
 	 *
@@ -588,7 +588,7 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *Clb_UnitDef_getFlareReloadTime)(int teamId, int unitDefId);
 	float             (CALLING_CONV *Clb_UnitDef_getFlareEfficiency)(int teamId, int unitDefId);
 	float             (CALLING_CONV *Clb_UnitDef_getFlareDelay)(int teamId, int unitDefId);
-	struct SAIFloat3  (CALLING_CONV *Clb_UnitDef_getFlareDropVector)(int teamId, int unitDefId);
+	void              (CALLING_CONV *Clb_UnitDef_getFlareDropVector)(int teamId, int unitDefId, float* return_posF3_out);
 	int               (CALLING_CONV *Clb_UnitDef_getFlareTime)(int teamId, int unitDefId);
 	int               (CALLING_CONV *Clb_UnitDef_getFlareSalvoSize)(int teamId, int unitDefId);
 	int               (CALLING_CONV *Clb_UnitDef_getFlareSalvoDelay)(int teamId, int unitDefId);
@@ -657,7 +657,7 @@ short (CALLING_CONV *Clb_UnitDef_MoveData_getMaxTurnRate)(int teamId, int unitDe
 	const char*       (CALLING_CONV *Clb_UnitDef_WeaponMount_getName)(int teamId, int unitDefId, int weaponMountId);
 	int               (CALLING_CONV *Clb_UnitDef_WeaponMount_0SINGLE1FETCH2WeaponDef0getWeaponDef)(int teamId, int unitDefId, int weaponMountId);
 	int               (CALLING_CONV *Clb_UnitDef_WeaponMount_getSlavedTo)(int teamId, int unitDefId, int weaponMountId);
-	struct SAIFloat3  (CALLING_CONV *Clb_UnitDef_WeaponMount_getMainDir)(int teamId, int unitDefId, int weaponMountId);
+	void              (CALLING_CONV *Clb_UnitDef_WeaponMount_getMainDir)(int teamId, int unitDefId, int weaponMountId, float* return_posF3_out);
 	float             (CALLING_CONV *Clb_UnitDef_WeaponMount_getMaxAngleDif)(int teamId, int unitDefId, int weaponMountId);
 	/**
 	 * How many seconds of fuel it costs for the owning unit to fire this weapon.
@@ -836,7 +836,7 @@ unsigned char (CALLING_CONV *Clb_Unit_CurrentCommand_getOptions)(int teamId, int
 	int               (CALLING_CONV *Clb_Unit_0MULTI1SIZE0ResourceInfo)(int teamId, int unitId);
 	float             (CALLING_CONV *Clb_Unit_0REF1Resource2resourceId0getResourceUse)(int teamId, int unitId, int resourceId);
 	float             (CALLING_CONV *Clb_Unit_0REF1Resource2resourceId0getResourceMake)(int teamId, int unitId, int resourceId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Unit_getPos)(int teamId, int unitId);
+	void              (CALLING_CONV *Clb_Unit_getPos)(int teamId, int unitId, float* return_posF3_out);
 	bool              (CALLING_CONV *Clb_Unit_isActivated)(int teamId, int unitId);
 	/** Returns true if the unit is currently being built */
 	bool              (CALLING_CONV *Clb_Unit_isBeingBuilt)(int teamId, int unitId);
@@ -1028,8 +1028,8 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 
 // BEGINN OBJECT Map
 	unsigned int      (CALLING_CONV *Clb_Map_getChecksum)(int teamId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_getStartPos)(int teamId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_getMousePos)(int teamId);
+	void              (CALLING_CONV *Clb_Map_getStartPos)(int teamId, float* return_posF3_out);
+	void              (CALLING_CONV *Clb_Map_getMousePos)(int teamId, float* return_posF3_out);
 	bool              (CALLING_CONV *Clb_Map_isPosInCamera)(int teamId, float* pos_posF3, float radius);
 	/** Returns the maps width in full resolution */
 	int               (CALLING_CONV *Clb_Map_getWidth)(int teamId);
@@ -1150,7 +1150,7 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	/**
 	 * Returns the nearest resource extractor spot to a specified position out of the evaluated list.
 	 */
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(int teamId, int resourceId, float* pos_posF3);
+	void              (CALLING_CONV *Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest)(int teamId, int resourceId, float* pos_posF3, float* return_posF3_out);
 
 	const char*       (CALLING_CONV *Clb_Map_getName)(int teamId);
 	/** Gets the elevation of the map at position (x, z) */
@@ -1175,8 +1175,8 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	 * if <code>includeAllies</code> is true.
 	 */
 	int               (CALLING_CONV *Clb_Map_0MULTI1SIZE0Point)(int teamId, bool includeAllies);
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_Point_getPosition)(int teamId, int pointId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_Point_getColor)(int teamId, int pointId);
+	void              (CALLING_CONV *Clb_Map_Point_getPosition)(int teamId, int pointId, float* return_posF3_out);
+	void              (CALLING_CONV *Clb_Map_Point_getColor)(int teamId, int pointId, float* return_posF3_out);
 	const char*       (CALLING_CONV *Clb_Map_Point_getLabel)(int teamId, int pointId);
 	/**
 	 * Returns all lines drawn with this AIs team color,
@@ -1184,18 +1184,18 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	 * if <code>includeAllies</code> is true.
 	 */
 	int               (CALLING_CONV *Clb_Map_0MULTI1SIZE0Line)(int teamId, bool includeAllies);
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_Line_getFirstPosition)(int teamId, int lineId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_Line_getSecondPosition)(int teamId, int lineId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_Line_getColor)(int teamId, int lineId);
+	void              (CALLING_CONV *Clb_Map_Line_getFirstPosition)(int teamId, int lineId, float* return_posF3_out);
+	void              (CALLING_CONV *Clb_Map_Line_getSecondPosition)(int teamId, int lineId, float* return_posF3_out);
+	void              (CALLING_CONV *Clb_Map_Line_getColor)(int teamId, int lineId, float* return_posF3_out);
 	bool              (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt)(int teamId, int unitDefId, float* pos_posF3, int facing);
 	/**
 	 * Returns the closest position from a given position that a building can be built at.
 	 * @param minDist the distance in squares that the building must keep to other buildings,
 	 *                to make it easier to keep free paths through a base
 	 * @return actual map position with x, y and z all beeing positive,
-	 *         or SAIFloat3(-1, 0, 0) if no suitable position is found.
+	 *         or float[3]{-1, 0, 0} if no suitable position is found.
 	 */
-	struct SAIFloat3  (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId, int unitDefId, float* pos_posF3, float searchRadius, int minDist, int facing);
+	void              (CALLING_CONV *Clb_Map_0REF1UnitDef2unitDefId0findClosestBuildSite)(int teamId, int unitDefId, float* pos_posF3, float searchRadius, int minDist, int facing, float* return_posF3_out);
 // BEGINN OBJECT Map
 
 
@@ -1221,9 +1221,9 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	 */
 	const char*       (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getType)(int teamId, int featureDefId);
 	/** The collision volume's full axis lengths. */
-	struct SAIFloat3  (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getScales)(int teamId, int featureDefId);
+	void              (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getScales)(int teamId, int featureDefId, float* return_posF3_out);
 	/** The collision volume's offset relative to the feature's center position */
-	struct SAIFloat3  (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getOffsets)(int teamId, int featureDefId);
+	void              (CALLING_CONV *Clb_FeatureDef_CollisionVolume_getOffsets)(int teamId, int featureDefId, float* return_posF3_out);
 	/**
 	 * Collission test algorithm used.
 	 *
@@ -1285,7 +1285,7 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	int               (CALLING_CONV *Clb_Feature_0SINGLE1FETCH2FeatureDef0getDef)(int teamId, int featureId);
 	float             (CALLING_CONV *Clb_Feature_getHealth)(int teamId, int featureId);
 	float             (CALLING_CONV *Clb_Feature_getReclaimLeft)(int teamId, int featureId);
-	struct SAIFloat3  (CALLING_CONV *Clb_Feature_getPosition)(int teamId, int featureId);
+	void              (CALLING_CONV *Clb_Feature_getPosition)(int teamId, int featureId, float* return_posF3_out);
 // END OBJECT Feature
 
 
@@ -1478,9 +1478,9 @@ unsigned char (CALLING_CONV *Clb_Group_OrderPreview_getOptions)(int teamId, int 
 	/** Number of frames to delay recharging by after each hit. */
 	int               (CALLING_CONV *Clb_WeaponDef_Shield_getRechargeDelay)(int teamId, int weaponDefId);
 	/** The color of the shield when it is at full power. */
-	struct SAIFloat3  (CALLING_CONV *Clb_WeaponDef_Shield_getGoodColor)(int teamId, int weaponDefId);
+	void              (CALLING_CONV *Clb_WeaponDef_Shield_getGoodColor)(int teamId, int weaponDefId, float* return_posF3_out);
 	/** The color of the shield when it is empty. */
-	struct SAIFloat3  (CALLING_CONV *Clb_WeaponDef_Shield_getBadColor)(int teamId, int weaponDefId);
+	void              (CALLING_CONV *Clb_WeaponDef_Shield_getBadColor)(int teamId, int weaponDefId, float* return_posF3_out);
 	/** The shields alpha value. */
 	float             (CALLING_CONV *Clb_WeaponDef_Shield_getAlpha)(int teamId, int weaponDefId);
 	/**
