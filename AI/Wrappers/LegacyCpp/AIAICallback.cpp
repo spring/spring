@@ -1408,16 +1408,31 @@ const float3* CAIAICallback::GetStartPos() {
 
 
 void CAIAICallback::SendTextMsg(const char* text, int zone) {
+
 	SSendTextMessageCommand cmd = {text, zone};
 	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_TEXT_MESSAGE, &cmd);
 }
 
 void CAIAICallback::SetLastMsgPos(float3 pos) {
-	SSetLastPosMessageCommand cmd = {pos.toSAIFloat3()}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SET_LAST_POS_MESSAGE, &cmd);
+
+	float pos_f3[3];
+	pos.copyInto(pos_f3);
+
+	SSetLastPosMessageCommand cmd = {pos_f3};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SET_LAST_POS_MESSAGE, &cmd);
 }
 
 void CAIAICallback::AddNotification(float3 pos, float3 color, float alpha) {
-	SAddNotificationDrawerCommand cmd = {pos.toSAIFloat3(), color.toSAIFloat3(), alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_ADD_NOTIFICATION, &cmd);
+
+	float pos_f3[3];
+	pos.copyInto(pos_f3);
+	short color_s3[3];
+	color_s3[0] = (short) color[0];
+	color_s3[1] = (short) color[1];
+	color_s3[2] = (short) color[2];
+
+	SAddNotificationDrawerCommand cmd = {pos_f3, color_s3, alpha};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_ADD_NOTIFICATION, &cmd);
 }
 
 bool CAIAICallback::SendResources(float mAmount, float eAmount, int receivingTeam) {
@@ -1465,15 +1480,23 @@ int CAIAICallback::CreateGroup() {
 }
 
 void CAIAICallback::EraseGroup(int groupId) {
-	SEraseGroupCommand cmd = {groupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ERASE, &cmd);
+
+	SEraseGroupCommand cmd = {groupId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ERASE, &cmd);
 }
 
 bool CAIAICallback::AddUnitToGroup(int unitId, int groupId) {
-		SAddUnitToGroupCommand cmd = {unitId, groupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ADD_UNIT, &cmd); return cmd.ret_isExecuted;
+
+	SAddUnitToGroupCommand cmd = {unitId, groupId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_ADD_UNIT, &cmd);
+	return cmd.ret_isExecuted;
 }
 
 bool CAIAICallback::RemoveUnitFromGroup(int unitId) {
-		SRemoveUnitFromGroupCommand cmd = {unitId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_REMOVE_UNIT, &cmd); return cmd.ret_isExecuted;
+
+	SRemoveUnitFromGroupCommand cmd = {unitId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_GROUP_REMOVE_UNIT, &cmd);
+	return cmd.ret_isExecuted;
 }
 
 int CAIAICallback::GiveGroupOrder(int groupId, Command* c) {
@@ -1497,80 +1520,171 @@ int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 }
 
 int CAIAICallback::InitPath(float3 start, float3 end, int pathType) {
-		SInitPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_INIT, &cmd); return cmd.ret_pathId;
+
+	float start_f3[3];
+	start.copyInto(start_f3);
+	float end_f3[3];
+	end.copyInto(end_f3);
+
+	SInitPathCommand cmd = {start_f3, end_f3, pathType};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_INIT, &cmd);
+	return cmd.ret_pathId;
 }
 
 float3 CAIAICallback::GetNextWaypoint(int pathId) {
-		SGetNextWaypointPathCommand cmd = {pathId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_NEXT_WAYPOINT, &cmd); return float3(cmd.ret_nextWaypoint);
+
+	SGetNextWaypointPathCommand cmd = {pathId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_NEXT_WAYPOINT, &cmd);
+	return cmd.ret_nextWaypoint_posF3_out;
 }
 
 float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType) {
-		SGetApproximateLengthPathCommand cmd = {start.toSAIFloat3(), end.toSAIFloat3(), pathType}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
+
+	float start_f3[3];
+	start.copyInto(start_f3);
+	float end_f3[3];
+	end.copyInto(end_f3);
+
+	SGetApproximateLengthPathCommand cmd = {start_f3, end_f3, pathType};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_APPROXIMATE_LENGTH, &cmd); return cmd.ret_approximatePathLength;
 }
 
 void CAIAICallback::FreePath(int pathId) {
-	SFreePathCommand cmd = {pathId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_FREE, &cmd);
+
+	SFreePathCommand cmd = {pathId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_FREE, &cmd);
 }
 
 void CAIAICallback::LineDrawerStartPath(const float3& pos, const float* color) {
-	SAIFloat3 col3 = {color[0], color[1], color[2]};
-	float alpha = color[3];
-	SStartPathDrawerCommand cmd = {pos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_START, &cmd);
+
+	float pos_f3[3];
+	pos.copyInto(pos_f3);
+	short color_s3[3];
+	color_s3[0] = (short) color[0];
+	color_s3[1] = (short) color[1];
+	color_s3[2] = (short) color[2];
+	const short alpha = (short) color[3];
+
+	SStartPathDrawerCommand cmd = {pos_f3, color_s3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_START, &cmd);
 }
 
 void CAIAICallback::LineDrawerFinishPath() {
-	SFinishPathDrawerCommand cmd = {}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_FINISH, &cmd);
+
+	SFinishPathDrawerCommand cmd = {};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_FINISH, &cmd);
 }
 
 void CAIAICallback::LineDrawerDrawLine(const float3& endPos, const float* color) {
-	SAIFloat3 col3 = {color[0], color[1], color[2]};
-	float alpha = color[3];
-	SDrawLinePathDrawerCommand cmd = {endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE, &cmd);
+
+	float endPos_f3[3];
+	endPos.copyInto(endPos_f3);
+	short color_s3[3];
+	color_s3[0] = (short) color[0];
+	color_s3[1] = (short) color[1];
+	color_s3[2] = (short) color[2];
+	const short alpha = (short) color[3];
+
+	SDrawLinePathDrawerCommand cmd = {endPos_f3, color_s3, alpha};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE, &cmd);
 }
 
 void CAIAICallback::LineDrawerDrawLineAndIcon(int cmdId, const float3& endPos, const float* color) {
-	SAIFloat3 col3 = {color[0], color[1], color[2]};
-	float alpha = color[3];
-	SDrawLineAndIconPathDrawerCommand cmd = {cmdId, endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON, &cmd);
+
+	float endPos_f3[3];
+	endPos.copyInto(endPos_f3);
+	short color_s3[3];
+	color_s3[0] = (short) color[0];
+	color_s3[1] = (short) color[1];
+	color_s3[2] = (short) color[2];
+	const short alpha = (short) color[3];
+
+	SDrawLineAndIconPathDrawerCommand cmd = {cmdId, endPos_f3, color_s3, alpha};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON, &cmd);
 }
 
 void CAIAICallback::LineDrawerDrawIconAtLastPos(int cmdId) {
-	SDrawIconAtLastPosPathDrawerCommand cmd = {cmdId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS, &cmd);
+
+	SDrawIconAtLastPosPathDrawerCommand cmd = {cmdId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS, &cmd);
 }
 
 void CAIAICallback::LineDrawerBreak(const float3& endPos, const float* color) {
-	SAIFloat3 col3 = {color[0], color[1], color[2]};
-	float alpha = color[3];
-	SBreakPathDrawerCommand cmd = {endPos.toSAIFloat3(), col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_BREAK, &cmd);
+
+	float endPos_f3[3];
+	endPos.copyInto(endPos_f3);
+	short color_s3[3];
+	color_s3[0] = (short) color[0];
+	color_s3[1] = (short) color[1];
+	color_s3[2] = (short) color[2];
+	const short alpha = (short) color[3];
+
+	SBreakPathDrawerCommand cmd = {endPos_f3, color_s3, alpha};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_BREAK, &cmd);
 }
 
 void CAIAICallback::LineDrawerRestart() {
-	SRestartPathDrawerCommand cmd = {false}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
+
+	SRestartPathDrawerCommand cmd = {false};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
 }
 
 void CAIAICallback::LineDrawerRestartSameColor() {
-	SRestartPathDrawerCommand cmd = {true}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
+
+	SRestartPathDrawerCommand cmd = {true};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_PATH_RESTART, &cmd);
 }
 
 int CAIAICallback::CreateSplineFigure(float3 pos1, float3 pos2, float3 pos3, float3 pos4, float width, int arrow, int lifeTime, int figureGroupId) {
-		SCreateSplineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), pos3.toSAIFloat3(), pos4.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd); return cmd.ret_newFigureGroupId;
+
+	float pos1_f3[3];
+	pos1.copyInto(pos1_f3);
+	float pos2_f3[3];
+	pos2.copyInto(pos2_f3);
+	float pos3_f3[3];
+	pos3.copyInto(pos3_f3);
+	float pos4_f3[3];
+	pos4.copyInto(pos4_f3);
+
+	SCreateSplineFigureDrawerCommand cmd = {pos1_f3, pos2_f3, pos3_f3, pos4_f3, width, arrow, lifeTime, figureGroupId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_SPLINE, &cmd);
+	return cmd.ret_newFigureGroupId;
 }
 
 int CAIAICallback::CreateLineFigure(float3 pos1, float3 pos2, float width, int arrow, int lifeTime, int figureGroupId) {
-		SCreateLineFigureDrawerCommand cmd = {pos1.toSAIFloat3(), pos2.toSAIFloat3(), width, arrow, lifeTime, figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd); return cmd.ret_newFigureGroupId;
+
+	float pos1_f3[3];
+	pos1.copyInto(pos1_f3);
+	float pos2_f3[3];
+	pos2.copyInto(pos2_f3);
+
+	SCreateLineFigureDrawerCommand cmd = {pos1_f3, pos2_f3, width, arrow, lifeTime, figureGroupId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_CREATE_LINE, &cmd);
+	return cmd.ret_newFigureGroupId;
 }
 
 void CAIAICallback::SetFigureColor(int figureGroupId, float red, float green, float blue, float alpha) {
-	SAIFloat3 col3 = {red, green, blue};
-	SSetColorFigureDrawerCommand cmd = {figureGroupId, col3, alpha}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
+
+	short color_s3[3];
+	color_s3[0] = (short) red;
+	color_s3[1] = (short) green;
+	color_s3[2] = (short) blue;
+
+	SSetColorFigureDrawerCommand cmd = {figureGroupId, color_s3, alpha};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_SET_COLOR, &cmd);
 }
 
 void CAIAICallback::DeleteFigureGroup(int figureGroupId) {
-	SDeleteFigureDrawerCommand cmd = {figureGroupId}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
+
+	SDeleteFigureDrawerCommand cmd = {figureGroupId};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_FIGURE_DELETE, &cmd);
 }
 
 void CAIAICallback::DrawUnit(const char* name, float3 pos, float rotation, int lifeTime, int unitTeamId, bool transparent, bool drawBorder, int facing) {
-	SDrawUnitDrawerCommand cmd = {sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, name), pos.toSAIFloat3(), rotation, lifeTime, unitTeamId, transparent, drawBorder, facing}; sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
+
+	float pos_f3[3];
+	pos.copyInto(pos_f3);
+	SDrawUnitDrawerCommand cmd = {sAICallback->Clb_0MULTI1FETCH3UnitDefByName0UnitDef(teamId, name), pos_f3, rotation, lifeTime, unitTeamId, transparent, drawBorder, facing};
+	sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_DRAW_UNIT, &cmd);
 }
 
 int CAIAICallback::HandleCommand(int commandId, void* data) {
@@ -1585,44 +1699,58 @@ int CAIAICallback::HandleCommand(int commandId, void* data) {
 		}
 		case AIHCAddMapPointId: {
 			AIHCAddMapPoint* myData = (AIHCAddMapPoint*) data;
-			SAddPointDrawCommand cmd = {myData->pos.toSAIFloat3(), myData->label};
+			float pos[3];
+			myData->pos.copyInto(pos);
+			SAddPointDrawCommand cmd = {pos, myData->label};
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_POINT_ADD, &cmd);
 			break;
 		}
 		case AIHCAddMapLineId: {
 			AIHCAddMapLine* myData = (AIHCAddMapLine*) data;
-			SAddLineDrawCommand cmd = {myData->posfrom.toSAIFloat3(), myData->posto.toSAIFloat3()};
+			float posfrom[3];
+			myData->posfrom.copyInto(posfrom);
+			float posto[3];
+			myData->posto.copyInto(posto);
+			SAddLineDrawCommand cmd = {posfrom, posto};
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_LINE_ADD, &cmd);
 			break;
 		}
 		case AIHCRemoveMapPointId: {
 			AIHCRemoveMapPoint* myData = (AIHCRemoveMapPoint*) data;
-			SRemovePointDrawCommand cmd = {myData->pos.toSAIFloat3()};
+			float pos[3];
+			myData->pos.copyInto(pos);
+			SRemovePointDrawCommand cmd = {pos};
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_DRAWER_POINT_REMOVE, &cmd);
 			break;
 		}
 		case AIHCSendStartPosId: {
 			AIHCSendStartPos* myData = (AIHCSendStartPos*) data;
-			SSendStartPosCommand cmd = {myData->ready, myData->pos.toSAIFloat3()};
+			float pos[3];
+			myData->pos.copyInto(pos);
+			SSendStartPosCommand cmd = {myData->ready, pos};
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_SEND_START_POS, &cmd);
 			break;
 		}
 
 		case AIHCTraceRayId: {
-			AIHCTraceRay* cppCmdData = (AIHCTraceRay*) data;
+			AIHCTraceRay* myData = (AIHCTraceRay*) data;
+			float rayPos[3];
+			myData->rayPos.copyInto(rayPos);
+			float rayDir[3];
+			myData->rayDir.copyInto(rayDir);
 			STraceRayCommand cCmdData = {
-				cppCmdData->rayPos.toSAIFloat3(),
-				cppCmdData->rayDir.toSAIFloat3(),
-				cppCmdData->rayLen,
-				cppCmdData->srcUID,
-				cppCmdData->hitUID,
-				cppCmdData->flags
+				rayPos,
+				rayDir,
+				myData->rayLen,
+				myData->srcUID,
+				myData->hitUID,
+				myData->flags
 			};
 
 			ret = sAICallback->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, COMMAND_TRACE_RAY, &cCmdData);
 
-			cppCmdData->rayLen = cCmdData.rayLen;
-			cppCmdData->hitUID = cCmdData.hitUID;
+			myData->rayLen = cCmdData.rayLen;
+			myData->hitUID = cCmdData.hitUID;
 			break;
 		}
 
