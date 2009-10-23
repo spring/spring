@@ -993,23 +993,25 @@ EXPORT(float) skirmishAiCallback_Gui_getScreenY(int teamId) {
 	}
 	return screenY;
 }
-EXPORT(SAIFloat3) skirmishAiCallback_Gui_Camera_getDirection(int teamId) {
+EXPORT(void) skirmishAiCallback_Gui_Camera_getDirection(int teamId, float* return_posF3_out) {
+
 	float3 cameraDir;
 	IAICallback* clb = team_callback[teamId];
 	const bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_DIR, &cameraDir);
 	if (!fetchOk) {
 		cameraDir = float3(1.0f, 0.0f, 0.0f);
 	}
-	return cameraDir.toSAIFloat3();
+	cameraDir.copyInto(return_posF3_out);
 }
-EXPORT(SAIFloat3) skirmishAiCallback_Gui_Camera_getPosition(int teamId) {
+EXPORT(void) skirmishAiCallback_Gui_Camera_getPosition(int teamId, float* return_posF3_out) {
+
 	float3 cameraPosition;
 	IAICallback* clb = team_callback[teamId];
 	const bool fetchOk = clb->GetValue(AIVAL_GUI_CAMERA_POS, &cameraPosition);
 	if (!fetchOk) {
 		cameraPosition = float3(1.0f, 0.0f, 0.0f);
 	}
-	return cameraPosition.toSAIFloat3();
+	cameraPosition.copyInto(return_posF3_out);
 }
 
 // EXPORT(bool) skirmishAiCallback_File_locateForReading(int teamId, char* fileName, int fileName_sizeMax) {
@@ -1333,9 +1335,9 @@ EXPORT(float) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initRes
 		int teamId, int resourceId) {
 	return getResourceMapAnalyzer(resourceId)->GetAverageIncome();
 }
-EXPORT(struct SAIFloat3) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
-		int teamId, int resourceId, float* pos_posF3) {
-	return getResourceMapAnalyzer(resourceId)->GetNearestSpot(pos_posF3, teamId).toSAIFloat3();
+EXPORT(void) skirmishAiCallback_Map_0ARRAY1VALS0REF1Resource2resourceId0initResourceMapSpotsNearest(
+		int teamId, int resourceId, float* pos_posF3, float* return_posF3_out) {
+	getResourceMapAnalyzer(resourceId)->GetNearestSpot(pos_posF3, teamId).copyInto(return_posF3_out);
 }
 
 EXPORT(const char*) skirmishAiCallback_Map_getName(int teamId) {
@@ -1395,26 +1397,27 @@ EXPORT(bool) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0isPossibleToBuildAt(i
 	return clb->CanBuildAt(unitDef, pos_posF3, facing);
 }
 
-EXPORT(SAIFloat3) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0findClosestBuildSite(int teamId, int unitDefId,
-		float* pos_posF3, float searchRadius, int minDist, int facing) {
+EXPORT(void) skirmishAiCallback_Map_0REF1UnitDef2unitDefId0findClosestBuildSite(int teamId, int unitDefId,
+		float* pos_posF3, float searchRadius, int minDist, int facing, float* return_posF3_out) {
 	IAICallback* clb = team_callback[teamId];
 	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
-	return clb->ClosestBuildSite(unitDef, pos_posF3, searchRadius, minDist, facing)
-			.toSAIFloat3();
+	clb->ClosestBuildSite(unitDef, pos_posF3, searchRadius, minDist, facing)
+			.copyInto(return_posF3_out);
 }
 
 EXPORT(int) skirmishAiCallback_Map_0MULTI1SIZE0Point(int teamId, bool includeAllies) {
 	return team_callback[teamId]->GetMapPoints(tmpPointMarkerArr[teamId],
 			TMP_ARR_SIZE, includeAllies);
 }
-EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Point_getPosition(int teamId, int pointId) {
-	return tmpPointMarkerArr[teamId][pointId].pos.toSAIFloat3();
+EXPORT(void) skirmishAiCallback_Map_Point_getPosition(int teamId, int pointId, float* return_posF3_out) {
+	tmpPointMarkerArr[teamId][pointId].pos.copyInto(return_posF3_out);
 }
-EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Point_getColor(int teamId, int pointId) {
+EXPORT(void) skirmishAiCallback_Map_Point_getColor(int teamId, int pointId, short* return_colorC3_out) {
 
 	const unsigned char* color = tmpPointMarkerArr[teamId][pointId].color;
-	const struct SAIFloat3 f3color = {color[0], color[1], color[2]};
-	return f3color;
+	return_colorC3_out[0] = color[0];
+	return_colorC3_out[1] = color[1];
+	return_colorC3_out[2] = color[2];
 }
 EXPORT(const char*) skirmishAiCallback_Map_Point_getLabel(int teamId, int pointId) {
 	return tmpPointMarkerArr[teamId][pointId].label;
@@ -1424,25 +1427,24 @@ EXPORT(int) skirmishAiCallback_Map_0MULTI1SIZE0Line(int teamId, bool includeAlli
 	return team_callback[teamId]->GetMapLines(tmpLineMarkerArr[teamId],
 			TMP_ARR_SIZE, includeAllies);
 }
-EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Line_getFirstPosition(int teamId, int lineId) {
-	return tmpLineMarkerArr[teamId][lineId].pos.toSAIFloat3();
+EXPORT(void) skirmishAiCallback_Map_Line_getFirstPosition(int teamId, int lineId, float* return_posF3_out) {
+	tmpLineMarkerArr[teamId][lineId].pos.copyInto(return_posF3_out);
 }
-EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Line_getSecondPosition(int teamId, int lineId) {
-	return tmpLineMarkerArr[teamId][lineId].pos2.toSAIFloat3();
+EXPORT(void) skirmishAiCallback_Map_Line_getSecondPosition(int teamId, int lineId, float* return_posF3_out) {
+	tmpLineMarkerArr[teamId][lineId].pos2.copyInto(return_posF3_out);
 }
-EXPORT(struct SAIFloat3) skirmishAiCallback_Map_Line_getColor(int teamId, int lineId) {
+EXPORT(void) skirmishAiCallback_Map_Line_getColor(int teamId, int lineId, short* return_colorC3_out) {
 
 	const unsigned char* color = tmpLineMarkerArr[teamId][lineId].color;
-	const struct SAIFloat3 f3color = {color[0], color[1], color[2]};
-	return f3color;
+	return_colorC3_out[0] = color[0];
+	return_colorC3_out[1] = color[1];
+	return_colorC3_out[2] = color[2];
 }
-EXPORT(SAIFloat3) skirmishAiCallback_Map_getStartPos(int teamId) {
-	IAICallback* clb = team_callback[teamId];
-	return clb->GetStartPos()->toSAIFloat3();
+EXPORT(void) skirmishAiCallback_Map_getStartPos(int teamId, float* return_posF3_out) {
+	team_callback[teamId]->GetStartPos()->copyInto(return_posF3_out);
 }
-EXPORT(SAIFloat3) skirmishAiCallback_Map_getMousePos(int teamId) {
-	IAICallback* clb = team_callback[teamId];
-	return clb->GetMousePos().toSAIFloat3();
+EXPORT(void) skirmishAiCallback_Map_getMousePos(int teamId, float* return_posF3_out) {
+	team_callback[teamId]->GetMousePos().copyInto(return_posF3_out);
 }
 //########### END Map
 
@@ -1469,13 +1471,11 @@ EXPORT(bool) skirmishAiCallback_getValue(int teamId, int id, void* dst) {
 */
 
 EXPORT(int) skirmishAiCallback_File_getSize(int teamId, const char* fileName) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetFileSize(fileName);
+	return team_callback[teamId]->GetFileSize(fileName);
 }
 
-EXPORT(bool) skirmishAiCallback_File_getContent(int teamId, const char* fileName, void* buffer,
-		int bufferLen) {
-	IAICallback* clb = team_callback[teamId]; return clb->ReadFile(fileName,
-			buffer, bufferLen);
+EXPORT(bool) skirmishAiCallback_File_getContent(int teamId, const char* fileName, void* buffer, int bufferLen) {
+	return team_callback[teamId]->ReadFile(fileName, buffer, bufferLen);
 }
 
 
@@ -1867,8 +1867,8 @@ EXPORT(int) skirmishAiCallback_UnitDef_getArmorType(int teamId, int unitDefId) {
 EXPORT(int) skirmishAiCallback_UnitDef_FlankingBonus_getMode(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->flankingBonusMode;
 }
-EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_FlankingBonus_getDir(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->flankingBonusDir.toSAIFloat3();
+EXPORT(void) skirmishAiCallback_UnitDef_FlankingBonus_getDir(int teamId, int unitDefId, float* return_posF3_out) {
+	getUnitDefById(teamId, unitDefId)->flankingBonusDir.copyInto(return_posF3_out);
 }
 EXPORT(float) skirmishAiCallback_UnitDef_FlankingBonus_getMax(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->flankingBonusMax;
@@ -1882,15 +1882,11 @@ EXPORT(float) skirmishAiCallback_UnitDef_FlankingBonus_getMobilityAdd(int teamId
 EXPORT(const char*) skirmishAiCallback_UnitDef_CollisionVolume_getType(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->collisionVolumeTypeStr.c_str();
 }
-EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_CollisionVolume_getScales(int teamId,
-		int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->collisionVolumeScales
-			.toSAIFloat3();
+EXPORT(void) skirmishAiCallback_UnitDef_CollisionVolume_getScales(int teamId, int unitDefId, float* return_posF3_out) {
+	getUnitDefById(teamId, unitDefId)->collisionVolumeScales.copyInto(return_posF3_out);
 }
-EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_CollisionVolume_getOffsets(int teamId,
-		int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->collisionVolumeOffsets
-			.toSAIFloat3();
+EXPORT(void) skirmishAiCallback_UnitDef_CollisionVolume_getOffsets(int teamId, int unitDefId, float* return_posF3_out) {
+	getUnitDefById(teamId, unitDefId)->collisionVolumeOffsets.copyInto(return_posF3_out);
 }
 EXPORT(int) skirmishAiCallback_UnitDef_CollisionVolume_getTest(int teamId, int unitDefId) {
 	return getUnitDefById(teamId, unitDefId)->collisionVolumeTest;
@@ -2052,8 +2048,8 @@ EXPORT(float) skirmishAiCallback_UnitDef_getFlareEfficiency(int teamId, int unit
 	return getUnitDefById(teamId, unitDefId)->flareEfficiency;
 }
 EXPORT(float) skirmishAiCallback_UnitDef_getFlareDelay(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareDelay;}
-EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_getFlareDropVector(int teamId, int unitDefId) {
-	return getUnitDefById(teamId, unitDefId)->flareDropVector.toSAIFloat3();
+EXPORT(void) skirmishAiCallback_UnitDef_getFlareDropVector(int teamId, int unitDefId, float* return_posF3_out) {
+	getUnitDefById(teamId, unitDefId)->flareDropVector.copyInto(return_posF3_out);
 }
 EXPORT(int) skirmishAiCallback_UnitDef_getFlareTime(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareTime;}
 EXPORT(int) skirmishAiCallback_UnitDef_getFlareSalvoSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->flareSalvoSize;}
@@ -2178,7 +2174,9 @@ EXPORT(const char*) skirmishAiCallback_UnitDef_WeaponMount_getName(int teamId, i
 }
 EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_0SINGLE1FETCH2WeaponDef0getWeaponDef(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).def->id;}
 EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_getSlavedTo(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).slavedTo;}
-EXPORT(SAIFloat3) skirmishAiCallback_UnitDef_WeaponMount_getMainDir(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).mainDir.toSAIFloat3();}
+EXPORT(void) skirmishAiCallback_UnitDef_WeaponMount_getMainDir(int teamId, int unitDefId, int weaponMountId, float* return_posF3_out) {
+	getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).mainDir.copyInto(return_posF3_out);
+}
 EXPORT(float) skirmishAiCallback_UnitDef_WeaponMount_getMaxAngleDif(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).maxAngleDif;}
 EXPORT(float) skirmishAiCallback_UnitDef_WeaponMount_getFuelUsage(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).fuelUsage;}
 EXPORT(unsigned int) skirmishAiCallback_UnitDef_WeaponMount_getBadTargetCategory(int teamId, int unitDefId, int weaponMountId) {return getUnitDefById(teamId, unitDefId)->weapons.at(weaponMountId).badTargetCat;}
@@ -2497,11 +2495,11 @@ EXPORT(float) skirmishAiCallback_Unit_getPower(int teamId, int unitId) {
 		return team_callback[teamId]->GetUnitPower(unitId);
 	}
 }
-EXPORT(SAIFloat3) skirmishAiCallback_Unit_getPos(int teamId, int unitId) {
+EXPORT(void) skirmishAiCallback_Unit_getPos(int teamId, int unitId, float* return_posF3_out) {
 	if (skirmishAiCallback_Cheats_isEnabled(teamId)) {
-		return team_cheatCallback[teamId]->GetUnitPos(unitId).toSAIFloat3();
+		team_cheatCallback[teamId]->GetUnitPos(unitId).copyInto(return_posF3_out);
 	} else {
-		return team_callback[teamId]->GetUnitPos(unitId).toSAIFloat3();
+		team_callback[teamId]->GetUnitPos(unitId).copyInto(return_posF3_out);
 	}
 }
 EXPORT(int) skirmishAiCallback_Unit_0MULTI1SIZE0ResourceInfo(int teamId, int unitId) {
@@ -2767,8 +2765,12 @@ EXPORT(float) skirmishAiCallback_FeatureDef_getMaxHealth(int teamId, int feature
 EXPORT(float) skirmishAiCallback_FeatureDef_getReclaimTime(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->reclaimTime;}
 EXPORT(float) skirmishAiCallback_FeatureDef_getMass(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->mass;}
 EXPORT(const char*) skirmishAiCallback_FeatureDef_CollisionVolume_getType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTypeStr.c_str();}
-EXPORT(SAIFloat3) skirmishAiCallback_FeatureDef_CollisionVolume_getScales(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeScales.toSAIFloat3();}
-EXPORT(SAIFloat3) skirmishAiCallback_FeatureDef_CollisionVolume_getOffsets(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeOffsets.toSAIFloat3();}
+EXPORT(void) skirmishAiCallback_FeatureDef_CollisionVolume_getScales(int teamId, int featureDefId, float* return_posF3_out) {
+	getFeatureDefById(teamId, featureDefId)->collisionVolumeScales.copyInto(return_posF3_out);
+}
+EXPORT(void) skirmishAiCallback_FeatureDef_CollisionVolume_getOffsets(int teamId, int featureDefId, float* return_posF3_out) {
+	getFeatureDefById(teamId, featureDefId)->collisionVolumeOffsets.copyInto(return_posF3_out);
+}
 EXPORT(int) skirmishAiCallback_FeatureDef_CollisionVolume_getTest(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->collisionVolumeTest;}
 EXPORT(bool) skirmishAiCallback_FeatureDef_isUpright(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->upright;}
 EXPORT(int) skirmishAiCallback_FeatureDef_getDrawType(int teamId, int featureDefId) {return getFeatureDefById(teamId, featureDefId)->drawType;}
@@ -2883,8 +2885,8 @@ EXPORT(float) skirmishAiCallback_Feature_getReclaimLeft(int teamId, int featureI
 	IAICallback* clb = team_callback[teamId]; return clb->GetFeatureReclaimLeft(featureId);
 }
 
-EXPORT(SAIFloat3) skirmishAiCallback_Feature_getPosition(int teamId, int featureId) {
-	IAICallback* clb = team_callback[teamId]; return clb->GetFeaturePos(featureId).toSAIFloat3();
+EXPORT(void) skirmishAiCallback_Feature_getPosition(int teamId, int featureId, float* return_posF3_out) {
+	team_callback[teamId]->GetFeaturePos(featureId).copyInto(return_posF3_out);
 }
 
 
@@ -3068,8 +3070,20 @@ EXPORT(float) skirmishAiCallback_WeaponDef_Shield_0REF1Resource2resourceId0getPo
 }
 EXPORT(float) skirmishAiCallback_WeaponDef_Shield_getStartingPower(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldStartingPower;}
 EXPORT(int) skirmishAiCallback_WeaponDef_Shield_getRechargeDelay(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldRechargeDelay;}
-EXPORT(struct SAIFloat3) skirmishAiCallback_WeaponDef_Shield_getGoodColor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldGoodColor.toSAIFloat3();}
-EXPORT(struct SAIFloat3) skirmishAiCallback_WeaponDef_Shield_getBadColor(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldBadColor.toSAIFloat3();}
+EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getGoodColor(int teamId, int weaponDefId, short* return_colorC3_out) {
+
+	const float3& color = getWeaponDefById(teamId, weaponDefId)->shieldGoodColor;
+	return_colorC3_out[0] = color.x;
+	return_colorC3_out[1] = color.y;
+	return_colorC3_out[2] = color.z;
+}
+EXPORT(void) skirmishAiCallback_WeaponDef_Shield_getBadColor(int teamId, int weaponDefId, short* return_colorC3_out) {
+
+	const float3& color = getWeaponDefById(teamId, weaponDefId)->shieldBadColor;
+	return_colorC3_out[0] = color.x;
+	return_colorC3_out[1] = color.y;
+	return_colorC3_out[2] = color.z;
+}
 EXPORT(float) skirmishAiCallback_WeaponDef_Shield_getAlpha(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldAlpha;}
 EXPORT(unsigned int) skirmishAiCallback_WeaponDef_Shield_getInterceptType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->shieldInterceptType;}
 EXPORT(unsigned int) skirmishAiCallback_WeaponDef_getInterceptedByShieldType(int teamId, int weaponDefId) {return getWeaponDefById(teamId, weaponDefId)->interceptedByShieldType;}
