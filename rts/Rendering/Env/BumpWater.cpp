@@ -1299,11 +1299,8 @@ void CBumpWater::DrawReflection(CGame* game)
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
-	camera->up.x=0;
-	camera->up.y=1;
-	camera->up.z=0;
-	camera->forward.y*=-1;
-	camera->pos.y*=-1;
+	camera->forward.y *= -1.0f;
+	camera->pos.y *= -1.0f;
 	camera->Update(false);
 
 	glViewport(0,0,reflTexSize,reflTexSize);

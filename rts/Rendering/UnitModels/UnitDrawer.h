@@ -48,8 +48,7 @@ public:
 	void SetupForGhostDrawing() const;
 	void CleanUpGhostDrawing() const;
 
-	void BackupUnits();
-	void RestoreUnits();
+	void SwapCloakedUnits();
 
 #ifdef USE_GML
 	int multiThreadDrawUnit;
@@ -162,7 +161,6 @@ public:
 
 	float3 camNorm;		//used by drawfar
 
-	CUnit* playerControlledUnit;
 	void CreateSpecularFace(unsigned int gltype, int size, float3 baseDir, float3 xdif, float3 ydif, float3 sundir, float exponent,float3 suncolor);
 	void UpdateReflectTex(void);
 	void CreateReflectionFace(unsigned int gltype, float3 camdir);

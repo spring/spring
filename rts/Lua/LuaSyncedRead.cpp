@@ -1305,7 +1305,7 @@ int LuaSyncedRead::GetPlayerControlledUnit(lua_State* L)
 		return 0;
 	}
 
-	CUnit* unit = player->playerControlledUnit;
+	CUnit* unit = (player->dccs).playerControlledUnit;
 	if (unit == NULL) {
 		return 0;
 	}
@@ -3998,7 +3998,7 @@ int LuaSyncedRead::GetProjectileGravity(lua_State* L)
 		return 0;
 	}
 
-	lua_pushnumber(L, pro->gravity);
+	lua_pushnumber(L, pro->mygravity);
 	return 1;
 }
 
@@ -4098,14 +4098,8 @@ int LuaSyncedRead::GetGroundHeight(lua_State* L)
 {
 	const float x = luaL_checkfloat(L, 1);
 	const float z = luaL_checkfloat(L, 2);
-
-	if (fullRead || (readAllyTeam >= 0 && loshandler->InLos(float3(x, 0.0f, z), readAllyTeam))) {
-		// GetHeight2() does not clamp the value to (>= 0)
-		lua_pushnumber(L, ground->GetHeight2(x, z));
-	}
-	else {
-		lua_pushnumber(L, ground->GetOrigHeight(x, z));
-	}
+	// GetHeight2() does not clamp the value to (>= 0)
+	lua_pushnumber(L, ground->GetHeight2(x, z));
 	return 1;
 }
 

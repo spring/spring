@@ -65,7 +65,7 @@ public:
 	}
 
 	float3 speed;
-	float gravity;
+	float mygravity;
 
 	virtual void DrawCallback(void);
 	virtual void DrawUnitPart(void);

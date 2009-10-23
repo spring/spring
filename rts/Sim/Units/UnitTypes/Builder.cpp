@@ -206,24 +206,26 @@ void CBuilder::Update()
 					break;
 			}
 
+			ScriptDecloak(true);
+
 			CreateNanoParticle(terraformCenter,terraformRadius*0.5f,false);
 
 			for (int z = tz1; z <= tz2; z++) {
 				// smooth the borders x
 				for (int x = 1; x <= 3; x++) {
 					if (tx1 - 3 >= 0) {
-						float ch3 = heightmap[z * (gs->mapx + 1) + tx1    ];
-						float ch  = heightmap[z * (gs->mapx + 1) + tx1 - x];
-						float ch2 = heightmap[z * (gs->mapx + 1) + tx1 - 3];
-						float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
+						const float ch3 = heightmap[z * (gs->mapx + 1) + tx1    ];
+						const float ch  = heightmap[z * (gs->mapx + 1) + tx1 - x];
+						const float ch2 = heightmap[z * (gs->mapx + 1) + tx1 - 3];
+						const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
 						readmap->AddHeight(z * (gs->mapx + 1) + tx1 - x, amount);
 					}
 					if (tx2 + 3 < gs->mapx) {
-						float ch3 = heightmap[z * (gs->mapx + 1) + tx2    ];
-						float ch  = heightmap[z * (gs->mapx + 1) + tx2 + x];
-						float ch2 = heightmap[z * (gs->mapx + 1) + tx2 + 3];
-						float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
+						const float ch3 = heightmap[z * (gs->mapx + 1) + tx2    ];
+						const float ch  = heightmap[z * (gs->mapx + 1) + tx2 + x];
+						const float ch2 = heightmap[z * (gs->mapx + 1) + tx2 + 3];
+						const float amount = ((ch3 * (3 - x) + ch2 * x) / 3 - ch) * terraformScale;
 
 						readmap->AddHeight(z * (gs->mapx + 1) + tx2 + x, amount);
 					}
@@ -233,18 +235,18 @@ void CBuilder::Update()
 				// smooth the borders z
 				for (int x = tx1; x <= tx2; x++) {
 					if (tz1 - 3 >= 0) {
-						float ch3 = heightmap[(tz1    ) * (gs->mapx + 1) + x];
-						float ch  = heightmap[(tz1 - z) * (gs->mapx + 1) + x];
-						float ch2 = heightmap[(tz1 - 3) * (gs->mapx + 1) + x];
-						float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
+						const float ch3 = heightmap[(tz1    ) * (gs->mapx + 1) + x];
+						const float ch  = heightmap[(tz1 - z) * (gs->mapx + 1) + x];
+						const float ch2 = heightmap[(tz1 - 3) * (gs->mapx + 1) + x];
+						const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
 
 						readmap->AddHeight((tz1 - z) * (gs->mapx + 1) + x, adjust);
 					}
 					if (tz2 + 3 < gs->mapy) {
-						float ch3 = heightmap[(tz2    ) * (gs->mapx + 1) + x];
-						float ch  = heightmap[(tz2 + z) * (gs->mapx + 1) + x];
-						float ch2 = heightmap[(tz2 + 3) * (gs->mapx + 1) + x];
-						float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
+						const float ch3 = heightmap[(tz2    ) * (gs->mapx + 1) + x];
+						const float ch  = heightmap[(tz2 + z) * (gs->mapx + 1) + x];
+						const float ch2 = heightmap[(tz2 + 3) * (gs->mapx + 1) + x];
+						const float adjust = ((ch3 * (3 - z) + ch2 * z) / 3 - ch) * terraformScale;
 
 						readmap->AddHeight((tz2 + z) * (gs->mapx + 1) + x, adjust);
 					}
@@ -253,6 +255,8 @@ void CBuilder::Update()
 		}
 		else if (helpTerraform && inBuildStance) {
 			if (helpTerraform->terraforming) {
+				ScriptDecloak(true);
+
 				helpTerraform->terraformHelp += terraformSpeed;
 				CreateNanoParticle(helpTerraform->terraformCenter,helpTerraform->terraformRadius*0.5f,false);
 			} else {
@@ -268,13 +272,7 @@ void CBuilder::Update()
 				if (!inBuildStance) {
 					curBuild->AddBuildPower(0.0f, this); //prevent building timing out
 				} else {
-					if (scriptCloak <= 2) {
-						if (isCloaked) {
-							isCloaked = false;
-							eventHandler.UnitDecloaked(this);
-						}
-						curCloakTimeout = gs->frameNum + cloakTimeout;
-					}
+					ScriptDecloak(true);
 
 					float adjBuildSpeed; // adjusted build speed
 					if (curBuild->buildProgress < 1.0f) {
@@ -297,13 +295,8 @@ void CBuilder::Update()
 			}
 		}
 		else if(curReclaim && f3SqDist(curReclaim->pos, pos)<Square(buildDistance+curReclaim->radius) && inBuildStance){
-			if (scriptCloak <= 2) {
-				if (isCloaked) {
-					isCloaked = false;
-					eventHandler.UnitDecloaked(this);
-				}
-				curCloakTimeout = gs->frameNum + cloakTimeout;
-			}
+			ScriptDecloak(true);
+
 			if (curReclaim->AddBuildPower(-reclaimSpeed, this)) {
 				CreateNanoParticle(curReclaim->midPos, curReclaim->radius * 0.7f, true);
 			}

@@ -102,7 +102,6 @@ public:
 	bool showClock;
 	/// Prevents spectator msgs from being seen by players
 	bool noSpectatorChat;
-	bool drawFpsHUD;
 	bool drawMapMarks;
 	/// locked mouse indicator size
 	float crossSize;
@@ -126,8 +125,6 @@ public:
 
 	bool creatingVideo;
 	CAVIGenerator* aviGenerator;
-
-	void DrawDirectControlHud(void);
 
 	void SetHotBinding(const std::string& action) { hotBinding = action; }
 
@@ -195,10 +192,7 @@ private:
 	float consumeSpeed; ///< How fast we should eat NETMSG_NEWFRAMEs.
 	unsigned lastframe; ///< SDL_GetTicks() in previous ClientReadNet() call.
 
-	short oldHeading,oldPitch;
-	unsigned char oldStatus;
-
-	void StoreCloaked(bool save);
+	void SwapTransparentObjects();
 
 	int skipStartFrame;
 	int skipEndFrame;

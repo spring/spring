@@ -293,7 +293,7 @@ bool SpringApp::InitWindow(const char* title)
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
 	if ((SDL_Init(sdlInitFlags) == -1)) {
-		handleerror(NULL, "Could not initialize SDL.", "ERROR", MBF_OK | MBF_EXCL);
+		logOutput.Print("Could not initialize SDL: %s", SDL_GetError());
 		return false;
 	}
 
@@ -301,8 +301,10 @@ bool SpringApp::InitWindow(const char* title)
 	SDL_WM_SetIcon(SDL_LoadBMP("spring.bmp"),NULL);
 	SDL_WM_SetCaption(title, title);
 
-	if (!SetSDLVideoMode())
+	if (!SetSDLVideoMode()) {
+		logOutput.Print("Failed to set SDL video mode: %s", SDL_GetError());
 		return false;
+	}
 
 	RestoreWindowPosition();
 
@@ -1132,6 +1134,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			GML_STDMUTEX_LOCK(sim); // Run
 
+			CrashHandler::ClearDrawWDT(true);
 			screenWidth = event.resize.w;
 			screenHeight = event.resize.h;
 #ifndef WIN32
@@ -1147,6 +1150,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 
 			GML_STDMUTEX_LOCK(sim); // Run
 
+			CrashHandler::ClearDrawWDT(true);
 			// re-initialize the stencil
 			glClearStencil(0);
 			glClear(GL_STENCIL_BUFFER_BIT); SDL_GL_SwapBuffers();
@@ -1159,6 +1163,7 @@ bool SpringApp::MainEventHandler(const SDL_Event& event)
 			break;
 		}
 		case SDL_ACTIVEEVENT: {
+			CrashHandler::ClearDrawWDT(true);
 			if (event.active.state & SDL_APPACTIVE) {
 				gu->active = !!event.active.gain;
 				if (sound)

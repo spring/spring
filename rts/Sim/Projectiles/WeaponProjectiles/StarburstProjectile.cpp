@@ -210,9 +210,9 @@ void CStarburstProjectile::Update(void)
 		if (distanceToTravel != MAX_WORLD_SIZE)
 			distanceToTravel -= speed.Length2D();
 	} else {
-		dir.y += gravity;
+		dir.y += mygravity;
 		dir.Normalize();
-		curSpeed -= gravity;
+		curSpeed -= mygravity;
 		speed = dir * curSpeed;
 	}
 

@@ -8,6 +8,7 @@ class ClientSetup;
 union SDL_Event;
 class SelectionWidget;
 class ConnectWindow;
+class UpdaterWindow;
 
 /**
 @brief User prompt for options when no script is given
@@ -31,6 +32,7 @@ private:
 	void Multi();
 	void Quit();
 	void ShowConnectWindow(bool show);
+	void ShowUpdateWindow(bool show);
 	void DirectConnect(const std::string& addr);
 
 	bool HandleEventSelf(const SDL_Event& ev);
@@ -42,6 +44,7 @@ private:
 	ClientSetup* mySettings;
 
 	ConnectWindow* conWindow;
+	UpdaterWindow* updWindow;
 	SelectionWidget* selw;
 };
 

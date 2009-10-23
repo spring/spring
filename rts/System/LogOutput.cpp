@@ -109,7 +109,7 @@ void CLogOutput::End()
 
 void CLogOutput::Flush()
 {
-	GML_STDMUTEX_LOCK_NOPROF(log); // End
+	GML_STDMUTEX_LOCK_NOPROF(log); // Flush
 
 	filelog->flush();
 }

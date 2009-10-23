@@ -16,20 +16,13 @@ public:
 	void UpdateForward();
 	bool InView(const float3& p,float radius=0);
 	bool InView(const float3& mins, const float3& maxs);
-	void Update(bool freeze);
+	void Update(bool freeze, bool resetUp = true);
 
 	CCamera();
 	~CCamera();
 	
 	void Roll(float rad);
 	void Pitch(float rad);
-
-	void RestoreUp()
-	{
-		up.x = 0.0f;
-		up.y = 1.0f;
-		up.z = 0.0f;
-	};
 
 	float3 pos;
 	float3 pos2;		//use this for calculating orthodirections (might differ from pos when calcing shadows)

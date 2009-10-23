@@ -39,7 +39,6 @@ void CFPSController::MouseMove(float3 move)
 {
 	camera->rot.y -= mouseScale*move.x;
 	camera->rot.x -= mouseScale*move.y*move.z;
-	camera->RestoreUp();
 	if(camera->rot.x>PI*0.4999f)
 		camera->rot.x=PI*0.4999f;
 	if(camera->rot.x<-PI*0.4999f)

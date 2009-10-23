@@ -35,6 +35,9 @@ public:
 	{
 		return priority;
 	};
+	
+	float GetGain() const;
+	float GetPitch() const;
 
 private:
 	boost::shared_ptr<SoundBuffer> buffer;
@@ -43,10 +46,10 @@ private:
 
 	/// volume gain, applied to this sound
 	float gain;
-	//float gainFWHM;
+	float gainMod;
 	/// sound pitch (multiplied with globalPitch from SoundSource when played)
 	float pitch;
-	//float pitchFWHM;
+	float pitchMod;
 	float dopplerScale;
 
 	float maxDist;

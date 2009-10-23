@@ -452,6 +452,8 @@ def generate(env):
 		else:
 			print 'Precompiled header disabled'
 
+		spring_defines += ['_WIN32_WINNT=0x500']
+
 		# gml library
 		if env['gml']:
 			env.AppendUnique(CCFLAGS = ['-mno-tls-direct-seg-refs'], CXXFLAGS = ['-mno-tls-direct-seg-refs'], LINKFLAGS = ['-mno-tls-direct-seg-refs'])		

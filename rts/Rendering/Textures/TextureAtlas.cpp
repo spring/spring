@@ -180,10 +180,10 @@ bool CTextureAtlas::Finalize()
 	{
 		AtlasedTexture tex;
 		//adjust texture coordinates by half a pixel (in opengl pixel centers are centeriods)
-		tex.xstart =                  (*it)->xpos / (float)xsize;
-		tex.xend   = ((*it)->xpos + (*it)->xsize) / (float)xsize;
-		tex.ystart =                  (*it)->ypos / (float)ysize;
-		tex.yend   = ((*it)->ypos + (*it)->ysize) / (float)ysize;
+		tex.xstart =                    ((*it)->xpos + 0.5f) / (float)(xsize);
+		tex.xend   = (((*it)->xpos + (*it)->xsize-1) + 0.5f) / (float)(xsize);
+		tex.ystart =                    ((*it)->ypos + 0.5f) / (float)(ysize);
+		tex.yend   = (((*it)->ypos + (*it)->ysize-1) + 0.5f) / (float)(ysize);
 		tex.ixstart = (*it)->xpos;
 		tex.iystart = (*it)->ypos;
 		for(size_t n=0; n<(*it)->names.size(); n++) {
@@ -201,7 +201,6 @@ bool CTextureAtlas::Finalize()
 
 void CTextureAtlas::CreateTexture()
 {
-
 	unsigned char *data;
 	data = new unsigned char[xsize*ysize*4];
 	memset(data,0,xsize*ysize*4); // make spacing between textures black transparent to avoid ugly lines with linear filtering

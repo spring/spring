@@ -11,7 +11,7 @@
 CR_BIND_DERIVED(CGenericParticleProjectile, CProjectile, (float3(0,0,0),float3(0,0,0),NULL));
 
 CR_REG_METADATA(CGenericParticleProjectile,(
-	CR_MEMBER(gravity3),
+	CR_MEMBER(gravity),
 	CR_MEMBER(texture),
 	CR_MEMBER(colorMap),
 	CR_MEMBER(directional),
@@ -40,7 +40,7 @@ void CGenericParticleProjectile::Update()
 {
 	pos += speed;
 	life +=decayrate;
-	speed += gravity3;
+	speed += gravity;
 	speed *= airdrag;
 	size = size * sizeMod + sizeGrowth;
 

@@ -50,18 +50,21 @@
 #endif
 
 
-std::vector<int> CUnitScript::teamVars[TEAM_VAR_COUNT];
-std::vector<int> CUnitScript::allyVars[ALLY_VAR_COUNT];
+std::vector< std::vector<int> > CUnitScript::teamVars;
+std::vector< std::vector<int> > CUnitScript::allyVars;
 int CUnitScript::globalVars[GLOBAL_VAR_COUNT] =  { 0 };
 
 
 void CUnitScript::InitVars(int numTeams, int numAllyTeams)
 {
-	for (int t = 0; t != TEAM_VAR_COUNT; ++t) {
-		teamVars[t].resize(numTeams, 0);
+	teamVars.resize(numTeams, std::vector<int>());
+	for (int t = 0; t < numTeams; t++) {
+		teamVars[t].resize(TEAM_VAR_COUNT, 0);
 	}
-	for (int t = 0; t != ALLY_VAR_COUNT; ++t) {
-		allyVars[t].resize(numAllyTeams, 0);
+
+	allyVars.resize(numAllyTeams, std::vector<int>());
+	for (int t = 0; t < numAllyTeams; t++) {
+		allyVars[t].resize(ALLY_VAR_COUNT, 0);
 	}
 }
 

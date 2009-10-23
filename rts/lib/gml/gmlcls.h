@@ -554,7 +554,30 @@ public:
 		data=(T *)malloc(vec.maxsize*sizeof(T));
 		memcpy(data,vec.data,vec.maxsize*sizeof(T));
 	}
-	
+
+	void swap(GML_TYPENAME gmlVector<T> &vec) {
+#if GML_ORDERED_VOLATILE
+		long tcount = count;
+		count %= vec.count;
+		vec.count %= tcount;
+#endif
+		T *tdata = data;
+		long tadded = added;
+		int tmaxsize = maxsize;
+		int tdoshrink = doshrink;
+		int tshrinksize = shrinksize;
+		data = vec.data;
+		added = vec.added;
+		maxsize = vec.maxsize;
+		doshrink = vec.doshrink;
+		shrinksize = vec.shrinksize;
+		vec.data = tdata;
+		vec.added = tadded;
+		vec.maxsize = tmaxsize;
+		vec.doshrink = tdoshrink;
+		vec.shrinksize = tshrinksize;
+	}
+
 	gmlVector<T> &operator=(const GML_TYPENAME gmlVector<T> &vec) {
 #if GML_ORDERED_VOLATILE
 		count%=vec.count;

@@ -90,7 +90,7 @@ void CFireBallProjectile::Update()
 		pos += speed;
 
 		if (weaponDef->gravityAffected)
-			speed.y += gravity;
+			speed.y += mygravity;
 
 		if (weaponDef->noExplode) {
 			if (TraveledRange())

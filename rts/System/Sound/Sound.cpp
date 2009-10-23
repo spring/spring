@@ -6,9 +6,6 @@
 #include <cmath>
 #include <alc.h>
 #include <boost/cstdint.hpp>
-#if BOOST_VERSION < 103500
-#include <SDL_timer.h>
-#endif
 
 #include "SoundSource.h"
 #include "SoundBuffer.h"
@@ -19,16 +16,16 @@
 #include "Music.h"
 
 #include "LogOutput.h"
+#include "TimeProfiler.h"
 #include "ConfigHandler.h"
 #include "Exceptions.h"
 #include "FileSystem/FileHandler.h"
 #include "Platform/errorhandler.h"
 #include "Lua/LuaParser.h"
-#include "Rendering/GL/myGL.h" // I HATE IT
 
 CSound* sound = NULL;
 
-CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundThread(NULL)
+CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), numAbortedPlays(0), soundThread(NULL)
 {
 	boost::mutex::scoped_lock lck(soundMutex);
 	mute = false;
@@ -44,65 +41,17 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 	Channels::UserInterface.SetVolume(configHandler->Get("snd_volui", 100 ) * 0.01f);
 	Channels::BGMusic.SetVolume(configHandler->Get("snd_volmusic", 100 ) * 0.01f);
 
-	if (maxSounds <= 0)
-	{
-		LogObject(LOG_SOUND) << "MaxSounds set to 0, sound is disabled";
-	}
-	else
-	{
-		//TODO: device choosing, like this:
-		//const ALchar* deviceName = "ALSA Software on SB Live 5.1 [SB0220] [Multichannel Playback]";
-		const ALchar* deviceName = NULL;
-		ALCdevice *device = alcOpenDevice(deviceName);
-
-		if (device == NULL)
-		{
-			LogObject(LOG_SOUND) <<  "Could not open a sounddevice, disabling sounds";
-			CheckError("CSound::InitAL");
-			return;
-		} else
-		{
-			ALCcontext *context = alcCreateContext(device, NULL);
-			if (context != NULL)
-			{
-				alcMakeContextCurrent(context);
-				CheckError("CSound::CreateContext");
-			}
-			else
-			{
-				alcCloseDevice(device);
-				LogObject(LOG_SOUND) << "Could not create OpenAL audio context";
-				return;
-			}
-		}
-
-		LogObject(LOG_SOUND) << "OpenAL info:\n";
-		LogObject(LOG_SOUND) << "  Vendor:     " << (const char*)alGetString(AL_VENDOR );
-		LogObject(LOG_SOUND) << "  Version:    " << (const char*)alGetString(AL_VERSION);
-		LogObject(LOG_SOUND) << "  Renderer:   " << (const char*)alGetString(AL_RENDERER);
-		LogObject(LOG_SOUND) << "  AL Extensions: " << (const char*)alGetString(AL_EXTENSIONS);
-		LogObject(LOG_SOUND) << "  ALC Extensions: " << (const char*)alcGetString(device, ALC_EXTENSIONS);
-		if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
-		{
-			LogObject(LOG_SOUND) << "  Device:     " << alcGetString(device, ALC_DEVICE_SPECIFIER);
-			const char *s = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
-			LogObject(LOG_SOUND) << "  Available Devices:  ";
-			while (*s != '\0')
-			{
-				LogObject(LOG_SOUND) << "                      " << s;
-				while (*s++ != '\0')
-					;
-			}
-		}
-	}
-
 	SoundBuffer::Initialise();
 	soundItemDef temp;
 	temp["name"] = "EmptySource";
 	SoundItem* empty = new SoundItem(SoundBuffer::GetById(0), temp);
 	sounds.push_back(empty);
 
-	if (maxSounds > 0)
+	if (maxSounds <= 0)
+	{
+		LogObject(LOG_SOUND) << "MaxSounds set to 0, sound is disabled";
+	}
+	else
 		soundThread = new boost::thread(boost::bind(&CSound::StartThread, this, maxSounds));
 
 	configHandler->NotifyOnChange(this);
@@ -110,26 +59,15 @@ CSound::CSound() : prevVelocity(0.0, 0.0, 0.0), numEmptyPlayRequests(0), soundTh
 
 CSound::~CSound()
 {
-	if (!sources.empty())
+	if (soundThread)
 	{
-#if BOOST_VERSION >= 103500
 		soundThread->interrupt();
-#else
-		soundThreadRunning = false;
-#endif
 		soundThread->join();
 		delete soundThread;
 		soundThread = 0;
-
-		sources.clear(); // delete all sources
-		sounds.clear();
-		SoundBuffer::Deinitialise();
-		ALCcontext *curcontext = alcGetCurrentContext();
-		ALCdevice *curdevice = alcGetContextsDevice(curcontext);
-		alcMakeContextCurrent(NULL);
-		alcDestroyContext(curcontext);
-		alcCloseDevice(curdevice);
 	}
+	sounds.clear();
+	SoundBuffer::Deinitialise();
 }
 
 bool CSound::HasSoundItem(const std::string& name)
@@ -311,18 +249,65 @@ void CSound::PlaySample(size_t id, const float3& p, const float3& velocity, floa
 
 	SoundSource* best = GetNextBestSource(false);
 	if (best && (!best->IsPlaying() || (best->GetCurrentPriority() <= 0 && best->GetCurrentPriority() < sounds[id].GetPriority())))
+	{
+		if (best->IsPlaying())
+			++numAbortedPlays;
 		best->Play(&sounds[id], p, velocity, volume, relative);
+	}
 	CheckError("CSound::PlaySample");
 }
 
 void CSound::StartThread(int maxSounds)
 {
-#if BOOST_VERSION >= 103500
 	try
 	{
-#endif
 		{
 			boost::mutex::scoped_lock lck(soundMutex);
+			//TODO: device choosing, like this:
+			//const ALchar* deviceName = "ALSA Software on SB Live 5.1 [SB0220] [Multichannel Playback]";
+			const ALchar* deviceName = NULL;
+			ALCdevice *device = alcOpenDevice(deviceName);
+
+			if (device == NULL)
+			{
+				LogObject(LOG_SOUND) <<  "Could not open a sounddevice, disabling sounds";
+				CheckError("CSound::InitAL");
+				return;
+			}
+			else
+			{
+				ALCcontext *context = alcCreateContext(device, NULL);
+				if (context != NULL)
+				{
+					alcMakeContextCurrent(context);
+					CheckError("CSound::CreateContext");
+				}
+				else
+				{
+					alcCloseDevice(device);
+					LogObject(LOG_SOUND) << "Could not create OpenAL audio context";
+					return;
+				}
+			}
+
+			LogObject(LOG_SOUND) << "OpenAL info:\n";
+			LogObject(LOG_SOUND) << "  Vendor:     " << (const char*)alGetString(AL_VENDOR );
+			LogObject(LOG_SOUND) << "  Version:    " << (const char*)alGetString(AL_VERSION);
+			LogObject(LOG_SOUND) << "  Renderer:   " << (const char*)alGetString(AL_RENDERER);
+			LogObject(LOG_SOUND) << "  AL Extensions: " << (const char*)alGetString(AL_EXTENSIONS);
+			LogObject(LOG_SOUND) << "  ALC Extensions: " << (const char*)alcGetString(device, ALC_EXTENSIONS);
+			if(alcIsExtensionPresent(NULL, "ALC_ENUMERATION_EXT"))
+			{
+				LogObject(LOG_SOUND) << "  Device:     " << alcGetString(device, ALC_DEVICE_SPECIFIER);
+				const char *s = alcGetString(NULL, ALC_DEVICE_SPECIFIER);
+				LogObject(LOG_SOUND) << "  Available Devices:  ";
+				while (*s != '\0')
+				{
+					LogObject(LOG_SOUND) << "                      " << s;
+					while (*s++ != '\0')
+						;
+				}
+			}
 
 			// Generate sound sources
 			for (int i = 0; i < maxSounds; i++)
@@ -349,23 +334,22 @@ void CSound::StartThread(int maxSounds)
 		}
 		configHandler->Set("MaxSounds", maxSounds);
 
-		soundThreadRunning = true;
-		while (soundThreadRunning) {
-#if BOOST_VERSION >= 103500
+		while (true)
+		{
 			boost::this_thread::sleep(boost::posix_time::millisec(50)); // sleep
-#else
-			SDL_Delay(50);
-#endif
 			boost::mutex::scoped_lock lck(soundMutex); // lock
 			Update(); // call update
 		}
-#if BOOST_VERSION >= 103500
 	}
 	catch(boost::thread_interrupted const&)
 	{
-		// do cleanup here
+		sources.clear(); // delete all sources
+		ALCcontext *curcontext = alcGetCurrentContext();
+		ALCdevice *curdevice = alcGetContextsDevice(curcontext);
+		alcMakeContextCurrent(NULL);
+		alcDestroyContext(curcontext);
+		alcCloseDevice(curdevice);
 	}
-#endif
 }
 
 void CSound::Update()
@@ -401,7 +385,7 @@ void CSound::UpdateListener(const float3& campos, const float3& camdir, const fl
 	myPos = campos;
 	alListener3f(AL_POSITION, myPos.x, myPos.y, myPos.z);
 
-	SoundSource::SetHeightRolloffModifer(std::min(5.*600./campos.y, 5.0));
+	SoundSource::SetHeightRolloffModifer(std::min(5.*600./std::max(campos.y, 200.f), 5.0));
 	//TODO: reactivate when it does not go crazy on camera "teleportation" or fast movement,
 	// like when clicked on minimap
 	//const float3 velocity = (myPos - prevPos)*(10.0/myPos.y)/(lastFrameTime);
@@ -424,6 +408,7 @@ void CSound::PrintDebugInfo()
 
 	LogObject(LOG_SOUND) << "# reserved for buffers: " << (SoundBuffer::AllocedSize()/1024) << " kB";
 	LogObject(LOG_SOUND) << "# PlayRequests for empty sound: " << numEmptyPlayRequests;
+	LogObject(LOG_SOUND) << "# Samples disrupted: " << numAbortedPlays;
 	LogObject(LOG_SOUND) << "# SoundItems: " << sounds.size();
 }
 

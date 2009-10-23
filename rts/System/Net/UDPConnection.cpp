@@ -47,12 +47,12 @@ public:
 
 	unsigned Remaining() const
 	{
-		return length - pos;
+		return length - std::min(pos, length);
 	};
 private:
 	const unsigned char* data;
 	unsigned length;
-	size_t pos;
+	unsigned pos;
 };
 
 class Packer
@@ -87,10 +87,13 @@ Packet::Packet(const unsigned char* data, unsigned length)
 	
 	if (nakType > 0)
 	{
-		naks.resize(nakType);
+		naks.reserve(nakType);
 		for (int i = 0; i != nakType; ++i)
 		{
-			buf.Unpack(naks[i]);
+			if (buf.Remaining() >= sizeof(naks[i]))
+				buf.Unpack(naks[i]);
+			else
+				break;
 		}
 	}
 
@@ -380,7 +383,7 @@ void UDPConnection::Flush(const bool forced)
 				else // partially transfered
 					(*it).reset(new RawPacket((*it)->data + numBytes, (*it)->length - numBytes));
 			} // iterator "it" is now invalid
-			if ((forced || pos > 0) && (pos == MaxChunkSize || outgoingData.empty()))
+			if (pos > 0 && (pos == MaxChunkSize || outgoingData.empty()))
 			{
 				CreateChunk(buffer, pos, currentNum++);
 				pos = 0;
@@ -515,7 +518,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		lastUnackResent = curTime;
 	}
 
-	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak < 0 || lastSendTime + spring_msecs(200) < curTime)
+	if (flushed || !newChunks.empty() || !resendRequested.empty() || nak > 0 || lastSendTime + spring_msecs(200) < curTime)
 	{
 		bool todo = true;
 		while (todo)

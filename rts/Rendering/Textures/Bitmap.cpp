@@ -131,10 +131,31 @@ bool CBitmap::Load(string const& filename, unsigned char defaultAlpha)
 	delete[] mem;
 	mem = NULL;
 
+	textype = GL_TEXTURE_2D;
+
 	if(filename.find(".dds")!=string::npos){
 		ddsimage = new nv_dds::CDDSImage();
 		type = BitmapTypeDDS;
-		return ddsimage->load(filename);
+		bool status = ddsimage->load(filename);
+		xsize = 0;
+		ysize = 0;
+		if (status) {
+			xsize = ddsimage->get_width();
+			ysize = ddsimage->get_height();
+			channels = ddsimage->get_components();
+			switch (ddsimage->get_type()) {
+				case nv_dds::TextureFlat :
+					textype = GL_TEXTURE_2D;
+					break;
+				case nv_dds::Texture3D :
+					textype = GL_TEXTURE_3D;
+					break;
+				case nv_dds::TextureCubemap :
+					textype = GL_TEXTURE_CUBE_MAP;
+					break;
+			}
+		}
+		return status;
 	}
 	type = BitmapTypeStandardRGBA;
 	channels = 4;

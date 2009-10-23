@@ -298,15 +298,12 @@ void CAdvWater::UpdateWater(CGame* game)
 	char realCam[sizeof(CCamera)];
 	new (realCam) CCamera(*camera); // anti-crash workaround for multithreading
 
-	camera->up.x=0;
-	camera->up.y=1;
-	camera->up.z=0;
-	camera->forward.y*=-1;
-	camera->pos.y*=-1;
+	camera->forward.y *= -1.0f;
+	camera->pos.y *= -1.0f;
 	camera->Update(false);
 
 	reflectFBO.Bind();
-	glViewport(0,0,512,512);
+	glViewport(0, 0, 512, 512);
 	glClear(GL_DEPTH_BUFFER_BIT);
 
 	game->SetDrawMode(CGame::reflectionDraw);
