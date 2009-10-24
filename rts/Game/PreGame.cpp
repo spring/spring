@@ -30,14 +30,11 @@
 #include "FileSystem/FileHandler.h"
 #include "FileSystem/VFSHandler.h"
 #include "Sound/Sound.h"
-#include "Lua/LuaGaia.h"
-#include "Lua/LuaRules.h"
-#include "Lua/LuaParser.h"
+#include "Sound/Music.h"
 #include "Map/MapInfo.h"
 #include "ConfigHandler.h"
 #include "FileSystem/FileSystem.h"
 #include "Rendering/glFont.h"
-#include "Rendering/Textures/TAPalette.h"
 #include "StartScripts/ScriptHandler.h"
 #include "UI/InfoConsole.h"
 #include "aGui/Gui.h"
@@ -46,6 +43,7 @@
 
 CPreGame* pregame = NULL;
 using netcode::RawPacket;
+using std::string;
 
 extern boost::uint8_t* keys;
 extern bool globalQuit;
@@ -226,6 +224,10 @@ void CPreGame::UpdateClientNet()
 					RandomStartPicture(team->side);
 				else
 					LoadStartPicture(mapStartPic);
+
+				std::string mapStartMusic(mapInfo->GetStringValue("Startmusic"));
+				if (!mapStartMusic.empty())
+					Channels::BGMusic.Play(mapStartMusic);
 
 				game = new CGame(gameSetup->mapName, modArchive, savefile);
 
