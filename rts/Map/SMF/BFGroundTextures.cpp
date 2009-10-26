@@ -92,10 +92,8 @@ CBFGroundTextures::CBFGroundTextures(CSmfReadMap* rm) :
 		}
 
 
-		SNPRINTF(
-			loadMsg, 127, "Loading .smt tile-file \"%s\" (%d/%d, %d tiles)",
-			tileFileName.c_str(), a, tileHeader.numTileFiles, numSmallTiles
-		);
+		logOutput.Print("Loading .smt tile-file \"%s\"", tileFileName.c_str());
+		SNPRINTF(loadMsg, 127, "Loading %d tiles from file %d/%d", numSmallTiles, a+1, tileHeader.numTileFiles);
 		PrintLoadMsg(loadMsg);
 
 
