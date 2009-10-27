@@ -224,7 +224,9 @@ void CSkirmishAIHandler::SetLocalSkirmishAIDieing(const size_t skirmishAIId, con
 	assert(ai != id_ai.end()); // is valid id?
 	assert(CSkirmishAIHandler::IsLocalSkirmishAI(ai->second)); // is local AI?
 
-	eoh->SetSkirmishAIDieing(skirmishAIId);
+	if (!GetSkirmishAI(skirmishAIId)->isLuaAI) {
+		eoh->SetSkirmishAIDieing(skirmishAIId);
+	}
 	id_dieReason[skirmishAIId] = reason;
 
 	net->Send(CBaseNetProtocol::Get().SendAIStateChanged(gu->myPlayerNum, skirmishAIId, SKIRMAISTATE_DIEING));
