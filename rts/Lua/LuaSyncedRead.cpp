@@ -1242,11 +1242,7 @@ int LuaSyncedRead::GetTeamLuaAI(lua_State* L)
 	CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(team->teamNum);
 	for (CSkirmishAIHandler::ids_t::const_iterator ai = saids.begin(); ai != saids.end(); ++ai) {
 		const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
-		// we have to use this function instead of aiData->isLuaAI,
-		// cause this field may not have been initialized the first time
-		// this function is called
-		const bool isLuaAI = skirmishAIHandler.IsLuaAI(*aiData);
-		if (isLuaAI) {
+		if (aiData->isLuaAI) {
 			luaAIName = aiData->shortName;
 		}
 	}
