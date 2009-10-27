@@ -187,10 +187,10 @@ public:
 	bool IsLocalSkirmishAI(const size_t skirmishAIId) const;
 
 	const std::set<std::string>& GetLuaAIImplShortNames() const;
+	bool IsLuaAI(const SkirmishAIData& aiData) const;
 
 private:
 	static bool IsLocalSkirmishAI(const SkirmishAIData& aiData);
-	bool IsLuaAI(const SkirmishAIData& aiData) const;
 
 private:
 	/// Id -> AI instance
