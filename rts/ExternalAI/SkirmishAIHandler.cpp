@@ -67,14 +67,20 @@ CSkirmishAIHandler::~CSkirmishAIHandler()
 {
 }
 
+// this will be called after LoadPreGame()
 void CSkirmishAIHandler::LoadFromSetup(const CGameSetup& setup) {
 
 	for (size_t a = 0; a < setup.GetSkirmishAIs().size(); ++a) {
-		AddSkirmishAI(setup.GetSkirmishAIs()[a], a);
-		// TODO: complete the SkirmishAIData before adding
+		SkirmishAIData sai = setup.GetSkirmishAIs()[a];
+
+		// complete the SkirmishAIData before adding
+		sai.isLuaAI = IsLuaAI(sai);
+
+		AddSkirmishAI(sai, a);
 	}
 }
 
+// this will be called before LoadFromSetup(...)
 void CSkirmishAIHandler::LoadPreGame() {
 
 	if (gameInitialized) {
