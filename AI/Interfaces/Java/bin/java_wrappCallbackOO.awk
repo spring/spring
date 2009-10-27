@@ -274,7 +274,7 @@ function printClass(ancestors_c, clsName_c) {
 			print("\t" "private static java.util.Map<Integer, " clsNameExternal_c "> _buffer_instances = new java.util.HashMap<Integer, " clsNameExternal_c ">();") >> outFile_c;
 			print("") >> outFile_c;
 		}
-		print("\t" "static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
+		print("\t" "public static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
 		print("") >> outFile_c;
 		lastParamName = ctorParamsNoTypes;
 		sub(/^.*,[ \t]*/, "", lastParamName);
