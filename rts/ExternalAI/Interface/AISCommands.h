@@ -594,7 +594,7 @@ struct STimeWaitUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	// the time in seconds to wait
+	/// the time in seconds to wait
 	int time;
 }; // COMMAND_UNIT_WAIT_TIME
 
@@ -764,7 +764,7 @@ struct SSetFireStateUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	// can be: 0=hold fire, 1=return fire, 2=fire at will
+	/// can be: 0=hold fire, 1=return fire, 2=fire at will
 	int fireState;
 }; // COMMAND_UNIT_SET_FIRE_STATE
 
