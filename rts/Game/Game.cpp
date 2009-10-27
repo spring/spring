@@ -4187,13 +4187,14 @@ void CGame::ClientReadNet()
 				SkirmishAIData* aiData           = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 				const ESkirmishAIStatus oldState = aiData->status;
 				const unsigned aiTeamId          = aiData->team;
+				const bool isLuaAI               = aiData->isLuaAI;
 				const unsigned isLocal           = (aiData->hostPlayer == gu->myPlayerNum);
 				const size_t numPlayersInAITeam  = playerHandler->ActivePlayersInTeam(aiTeamId).size();
 				const size_t numAIsInAITeam      = skirmishAIHandler.GetSkirmishAIsInTeam(aiTeamId).size();
 				CTeam* tai                       = teamHandler->Team(aiTeamId);
 
 				aiData->status = newState;
-				if (isLocal && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
+				if (isLocal && !isLuaAI && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
 					eoh->DestroySkirmishAI(skirmishAIId);
 				} else if (newState == SKIRMAISTATE_DEAD) {
 					if (oldState == SKIRMAISTATE_RELOADING) {
