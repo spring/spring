@@ -901,12 +901,13 @@ function canDeleteDocumentation() {
 /Clb_/ {
 
 	funcStartLine = $0;
-	# separate possible comment at end of line: // fu bar
+	# separate possible comment at end of line: // foo bar
 	commentEolTot = "";
 	commentEol = funcStartLine;
 	if (sub(/.*\/\//, "", commentEol)) {
 		commentEolTot = commentEolTot commentEol;
 	}
+	# remove possible comment at end of line: // foo bar
 	sub(/\/\/.*$/, "", funcStartLine);
 	funcStartLine = trim(funcStartLine);
 	if (match(funcStartLine, /\;$/)) {
