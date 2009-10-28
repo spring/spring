@@ -249,7 +249,109 @@ function convertJavaNameFormAToD(javaNameFormA__common) {
 	return javaNameFormD__common;
 }
 
+# Awaits this format:	com.springrts.ai
+# Returns this format:	com_springrts_ai
+function convertJavaNameFormAToC(javaNameFormA__common) {
+
+	javaNameFormC__common = javaNameFormA__common;
+
+	gsub(/\./, "_", javaNameFormC__common);
+
+	return javaNameFormC__common;
+}
+
 ### END: Java functions
+################################################################################
+
+
+
+################################################################################
+### BEGIN: JNI functions
+
+# Awaits this format:	jint / jfloat / jbooleanArray / jstring
+# Returns this format:	I / F / B[ / Ljava/lang/String;
+function convertJNIToSignatureType(jniType__common) {
+
+	signatureType__common = jniType__common;
+
+	sub(/Array/, "[", signatureType__common);
+	
+	sub(/void/, "V", signatureType__common);
+
+	sub(/jboolean/, "Z", signatureType__common);
+	sub(/jfloat/,   "F", signatureType__common);
+	sub(/jbyte/,    "B", signatureType__common);
+	sub(/jchar/,    "C", signatureType__common);
+	sub(/jdouble/,  "D", signatureType__common);
+	sub(/jint/,     "I"  signatureType__common);
+	sub(/jlong/,    "J", signatureType__common);
+	sub(/jshort/,   "S", signatureType__common);
+
+	sub(/jstring/, "Ljava/lang/String;", signatureType__common);
+
+	return signatureType__common;
+}
+
+# Awaits this format:	int / float / bool[] / char*
+# Returns this format:	jint / jfloat / jbooleanArray / jstring
+function convertCToJNIType(cType__common) {
+
+	jniType__common = cType__common;
+
+	# remove some stuff we do not need and cleanup
+	gsub(/const/, "", jniType__common);
+	sub(/unsigned/, "", jniType__common);
+	gsub(/[ \t]+\*/, "* ", jniType__common);
+	jniType__common = trim(jniType__common);
+
+	isComplex__common = 0;
+	isComplex__common += sub(/char\*/,  "jstring",   jniType__common);
+
+	isPrimitive__common = 0;
+	isPrimitive__common += sub(/bool/,  "jboolean", jniType__common);
+	isPrimitive__common += sub(/byte/,  "jbyte",    jniType__common);
+	isPrimitive__common += sub(/char/,  "jchar",    jniType__common);
+	isPrimitive__common += sub(/short/, "jshort",   jniType__common);
+	isPrimitive__common += sub(/int/,   "jint",     jniType__common);
+	isPrimitive__common += sub(/float/, "jfloat",   jniType__common);
+	#isPrimitive__common += sub(/double/, "jdouble", jniType__common);
+
+	# convert possible array length specifiers ("[]" or "[2]")
+	gsub(/\*/, "[]", jniType__common);
+	arrDims__common = gsub(/\[[^\]]*\]/, "[]", jniType__common);
+	arrDims__common = gsub(/\[\]/, "Array", jniType__common);
+
+	jniType__common = noSpaces(jniType__common);
+
+	return jniType__common;
+}
+
+# Awaits this format:	jint / jfloat / jbooleanArray / jstring
+# Returns this format:	int / float / boolean[] / String
+function convertJNIToJavaType(jniType__common) {
+
+	javaType__common = jniType__common;
+
+	sub(/Array/, "[]", javaType__common);
+	
+	sub(/void/, "void", javaType__common);
+
+	sub(/jboolean/, "boolean", javaType__common);
+	sub(/jfloat/,   "float",   javaType__common);
+	sub(/jbyte/,    "byte",    javaType__common);
+	sub(/jchar/,    "char",    javaType__common);
+	sub(/jdouble/,  "double",  javaType__common);
+	sub(/jint/,     "int"      javaType__common);
+	sub(/jlong/,    "long",    javaType__common);
+	sub(/jshort/,   "short",   javaType__common);
+
+	sub(/jstring/, "String", javaType__common);
+
+	return javaType__common;
+}
+
+
+### END: JNI functions
 ################################################################################
 
 
