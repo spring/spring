@@ -598,6 +598,12 @@ struct STimeWaitUnitCommand {
 	int time;
 }; // COMMAND_UNIT_WAIT_TIME Unit_waitFor
 
+/**
+ * Wait until an other unit is dead, units will not wait on themselves.
+ * Example:
+ * A group of aircrafts waits for an enemy's anti-air defenses to die,
+ * before passing over their ruins to attack.
+ */
 struct SDeathWaitUnitCommand {
 	int unitId;
 	int groupId;
@@ -610,7 +616,15 @@ struct SDeathWaitUnitCommand {
 	int toDieUnitId;
 }; // COMMAND_UNIT_WAIT_DEATH Unit_waitForDeathOf
 
-// TODO: add docu
+/**
+ * Wait for a specific ammount of units.
+ * Usually used with factories, but does work on groups without a factory too.
+ * Example:
+ * Pick a factory and give it a rallypoint, then add a SquadWait command
+ * with the number of units you want in your squads.
+ * Units will wait at the initial rally point until enough of them
+ * have arrived to make up a squad, then they will continue along their queue.
+ */
 struct SSquadWaitUnitCommand {
 	int unitId;
 	int groupId;
@@ -622,7 +636,13 @@ struct SSquadWaitUnitCommand {
 	int numUnits;
 }; // COMMAND_UNIT_WAIT_SQUAD Unit_waitForSquadSize
 
-// TODO: add docu
+/**
+ * Wait for the arrival of all units included in the command.
+ * Only makes sense for a group of units.
+ * Use it after a movement command of some sort (move / fight).
+ * Units will wait until all members of the GatherWait command have arrived
+ * at their destinations before continuing.
+ */
 struct SGatherWaitUnitCommand {
 	int unitId;
 	int groupId;
@@ -630,7 +650,7 @@ struct SGatherWaitUnitCommand {
 	unsigned int options;
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
-}; // COMMAND_UNIT_WAIT_GATHER Unit_waitForSquadSize
+}; // COMMAND_UNIT_WAIT_GATHER Unit_waitForAll
 
 struct SMoveUnitCommand {
 	int unitId;
@@ -1039,7 +1059,10 @@ struct SCaptureAreaUnitCommand {
 	float radius;
 }; // COMMAND_UNIT_CAPTURE_AREA Unit_captureInArea
 
-// TODO: add docu
+/**
+ * Set the percentage of health at which a unit will return to a save place.
+ * This only works for a few units so far, mainly aircraft.
+ */
 struct SSetAutoRepairLevelUnitCommand {
 	int unitId;
 	int groupId;
@@ -1048,6 +1071,7 @@ struct SSetAutoRepairLevelUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
+	/// 0: 0%, 1: 30%, 2: 50%, 3: 80%
 	int autoRepairLevel;
 }; // COMMAND_UNIT_SET_AUTO_REPAIR_LEVEL Unit_setAutoRepairLevel
 
@@ -1060,7 +1084,10 @@ struct SSetAutoRepairLevelUnitCommand {
 //	int timeOut;
 //};
 
-// TODO: add docu
+/**
+ * Set what a unit should do when it is idle.
+ * This only works for a few units so far, mainly aircraft.
+ */
 struct SSetIdleModeUnitCommand {
 	int unitId;
 	int groupId;
@@ -1069,6 +1096,7 @@ struct SSetIdleModeUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
+	/// 0: fly, 1: land
 	int idleMode;
 }; // COMMAND_UNIT_SET_IDLE_MODE Unit_setIdleMode
 
