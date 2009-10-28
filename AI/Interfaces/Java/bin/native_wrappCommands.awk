@@ -37,10 +37,7 @@ BEGIN {
 	}
 
 	nativeBridge = "FunctionPointerBridge";
-	# Having this as "" saves us from an additional java method
-	# per callback call; change if it causes problems (should not).
-	bridgePrefix = "";
-	#bridgePrefix = "bridged__";
+	bridgePrefix = "bridged__";
 
 	indent = "	";
 
@@ -116,23 +113,20 @@ function printNativeFP2F() {
 		hasRetType = 0;
 		retType    = "int";
 		retParam   = "";
-		paramList  = "";
+		paramList  = "int _teamId";
 		firstMember = 0;
 		if (cmdsNumMembers[cmdIndex] > 0) {
 			for (m=firstMember; m < cmdsNumMembers[cmdIndex]; m++) {
 				memName   = cmdsMembers_name[cmdIndex, m];
 				memType_c = cmdsMembers_type_c[cmdIndex, m];
 
-				if (match(memName, /^ret_/)) {
+				if (match(memName, /^ret_/) && 1 == 0) {
 					retParam   = memName;
 					retType    = memType_c;
 					hasRetType = 1;
 					#metaInf    = metaInf "return:" bla;
 				} else {
-					if (m != firstMember) {
-						paramList = paramList ", ";
-					}
-					paramList = paramList memType_c " " memName;
+					paramList = paramList ", " memType_c " " memName;
 				}
 			}
 		}
@@ -165,19 +159,22 @@ function printNativeFP2F() {
 			# print the doc comment for this command/function
 			printFunctionComment_Common(outFile_nh, cmdsDocComment, cmdIndex, "");
 
+			outName = fullName;
+			sub(/Clb_/, bridgePrefix, outName);
+
 			commentEol = "";
 			if (metaInf != "") {
 				commentEol = " // " metaInf;
 			}
-			print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ");" commentEol) >> outFile_nh;
+			print("EXPORT(" retType ") " outName "(" paramList ");" commentEol) >> outFile_nh;
 			print("") >> outFile_nh;
 
 			# print function definition to *.c
 			print("") >> outFile_nc;
-			print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ") {") >> outFile_nc;
+			print("EXPORT(" retType ") " outName "(" paramList ") {") >> outFile_nc;
 			print("") >> outFile_nc;
 
-			print("\t" name " commandData;") >> outFile_nc;
+			print("\t" "struct S" name "Command commandData;") >> outFile_nc;
 			for (m=firstMember; m < cmdsNumMembers[cmdIndex]; m++) {
 				memName   = cmdsMembers_name[cmdIndex, m];
 				memType_c = cmdsMembers_type_c[cmdIndex, m];
@@ -190,7 +187,7 @@ function printNativeFP2F() {
 			}
 			print("") >> outFile_nc;
 
-			print("\t" "int _ret = id_clb[teamId]->Clb_Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1, " topicName ", commandData);") >> outFile_nc;
+			print("\t" "int _ret = id_clb[_teamId]->Clb_Engine_handleCommand(_teamId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
 			print("") >> outFile_nc;
 
 			if (hasRetType) {
