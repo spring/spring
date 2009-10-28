@@ -15,17 +15,17 @@ BEGIN {
 ### BEGIN: Trim functions
 
 # left trim: removes leading white spaces (at the beginning of a string)
-function ltrim(str__common) { sub(/^[ \t]+/, "", str__common); return str__common; }
+function ltrim(str__common) { sub(/^[ \t\f\n\r\v]+/, "", str__common); return str__common; }
 
 # right trim: removes trailing white spaces (at the end of a string)
-function rtrim(str__common) { sub(/[ \t]+$/, "", str__common); return str__common; }
+function rtrim(str__common) { sub(/[ \t\f\n\r\v]+$/, "", str__common); return str__common; }
 
 # trim: removes leading and trailing white spaces
 # (at the beginning and the end of a string)
 function trim(str__common) { return rtrim(ltrim(str__common)); }
 
 # removes all white spaces from a string
-function noSpaces(str__common) { gsub(/[ \t]/, "", str__common); return str__common; }
+function noSpaces(str__common) { gsub(/[ \t\f\n\r\v]/, "", str__common); return str__common; }
 
 ### END: Trim functions
 ################################################################################
