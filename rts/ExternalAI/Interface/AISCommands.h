@@ -1083,7 +1083,7 @@ struct SCustomUnitCommand {
 	int cmdId;
 	float* params;
 	int numParams;
-}; // COMMAND_UNIT_CUSTOM
+}; // COMMAND_UNIT_CUSTOM Unit_executeCustomCommand
 
 // TODO: add docu, rename UID to UnitId
 struct STraceRayCommand {
