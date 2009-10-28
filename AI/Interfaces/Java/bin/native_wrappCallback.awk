@@ -37,10 +37,7 @@ BEGIN {
 	}
 
 	nativeBridge = "FunctionPointerBridge";
-	# Having this as "" saves us from an additional java method
-	# per callback call; change if it causes problems (should not).
-	bridgePrefix = "";
-	#bridgePrefix = "bridged__";
+	bridgePrefix = "bridged__";
 
 	retParamName  = "__retVal";
 	retParamCTypes["struct SAIFloat3"] = 1;
@@ -69,6 +66,10 @@ function doWrapp(funcIndex_dw) {
 		if (fullNameNextMap_dw == fullName_dw) {
 			paramListJavaNext_dw = funcParamList[funcIndex_dw + 1];
 			return doWrapp(funcIndex_dw + 1);
+		}
+
+		if (fullName_dw == "Clb_Engine_handleCommand") {
+			doWrapp_dw = 0;
 		}
 	}
 
@@ -119,6 +120,7 @@ function printNativeFP2F() {
 	print("#include \"" nativeBridge ".h\"") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("#include \"ExternalAI/Interface/SSkirmishAICallback.h\"") >> outFile_nc;
+	print("#include \"ExternalAI/Interface/AISCommands.h\"") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("") >> outFile_nc;
 	#print("static const size_t id_clb_sizeMax = 8 * 1024;") >> outFile_nc;
@@ -142,6 +144,7 @@ function printNativeFP2F() {
 		fullName         = funcFullName[i];
 		retType          = funcRetTypeC[i];
 		paramList        = funcParamListC[i];
+		sub(/int teamId/, "int _teamId", paramList);
 		paramListNoTypes = removeParamTypes(paramList);
 		commentEol       = funcCommentEol[i];
 
@@ -174,7 +177,7 @@ function printNativeFP2F() {
 		# 1. create a list with all param names with type struct SAIFloat3
 		size_paramParts = split(paramList, paramParts, ", ");
 		preConversion = "";
-		paramListNoTypes = "teamId";
+		paramListNoTypes = "_teamId";
 		for (pp=2; pp <= size_paramParts; pp++) {
 			paramP     = paramParts[pp];
 			paramPName = extractParamName(paramP);
@@ -204,20 +207,24 @@ function printNativeFP2F() {
 			# print function declaration to *.h
 			printFunctionComment_Common(outFile_nh, funcDocComment, i, "");
 			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ");") >> outFile_nh;
+
+			outName = fullName;
+			sub(/Clb_/, bridgePrefix, outName);
+
 			if (commentEol != "") {
 				commentEol = " // " commentEol;
 			}
-			print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ");" commentEol) >> outFile_nh;
+			print("EXPORT(" retType ") " outName "(" paramList ");" commentEol) >> outFile_nh;
 			print("") >> outFile_nh;
 
 			# print function definition to *.c
 			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ") {") >> outFile_nc;
-			print("EXPORT(" retType ") " bridgePrefix fullName "(" paramList ") {") >> outFile_nc;
+			print("EXPORT(" retType ") " outName "(" paramList ") {") >> outFile_nc;
 
 			print(preConversion) >> outFile_nc;
 			if (hasRetParam) {
 				#print("\t" retParamType " " retNameTmp " = id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-				print("\t" retParamType " " retNameTmp " = id_clb[teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+				print("\t" retParamType " " retNameTmp " = id_clb[_teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
 				print(retParamConversion) >> outFile_nc;
 			} else {
 				condRet = "return ";
@@ -225,7 +232,7 @@ function printNativeFP2F() {
 					condRet = "";
 				}
 				#print("\t" condRet "id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-				print("\t" condRet "id_clb[teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+				print("\t" condRet "id_clb[_teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
 			}
 			print("" "}") >> outFile_nc;
 		} else {
