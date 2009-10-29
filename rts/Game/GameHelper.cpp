@@ -31,7 +31,7 @@
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Projectiles/ExplosionGenerator.h"
 #include "Sim/Projectiles/Projectile.h"
-#include "Sim/Units/CommandAI/CommandAI.h"
+#include "Sim/Units/CommandAI/MobileCAI.h"
 #include "Sim/Units/UnitTypes/Factory.h"
 #include "Sim/Units/UnitDef.h"
 #include "Sim/Units/Unit.h"
@@ -590,6 +590,25 @@ struct Friendly_All_Plus_Enemy_InLos_NOT_SYNCED
 	}
 };
 
+/**
+ * Delegates filtering to CMobileCAI::IsValidTarget.
+ *
+ * This is necessary in CMobileCAI and CAirCAI so they can select the closest
+ * enemy unit which they consider a valid target.
+ *
+ * Without the valid target condition, units don't attack anything if an
+ * the nearest enemy is an invalid target. (e.g. noChaseCategory)
+ */
+struct Enemy_InLos_ValidTarget : public Enemy_InLos
+{
+	const CMobileCAI* const cai;
+	Enemy_InLos_ValidTarget(int at, const CMobileCAI* cai) :
+		Enemy_InLos(at), cai(cai) {}
+	bool Unit(const CUnit* u) {
+		return Enemy_InLos::Unit(u) && cai->IsValidTarget(u);
+	}
+};
+
 }; // end of namespace Filter
 
 
@@ -838,9 +857,9 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 */
 }
 
-CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
+CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float searchRadius)
 {
-	Query::ClosestUnit_ErrorPos_NOT_SYNCED q(pos, radius);
+	Query::ClosestUnit_ErrorPos_NOT_SYNCED q(pos, searchRadius);
 	QueryUnits(Filter::Friendly_All_Plus_Enemy_InLos_NOT_SYNCED(), q);
 	return q.GetClosestUnit();
 }
@@ -852,18 +871,25 @@ CUnit* CGameHelper::GetClosestEnemyUnit(const float3& pos, float searchRadius, i
 	return q.GetClosestUnit();
 }
 
-CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,
+CUnit* CGameHelper::GetClosestValidTarget(const float3& pos, float searchRadius, int searchAllyteam, const CMobileCAI* cai)
+{
+	Query::ClosestUnit q(pos, searchRadius);
+	QueryUnits(Filter::Enemy_InLos_ValidTarget(searchAllyteam, cai), q);
+	return q.GetClosestUnit();
+}
+
+CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float searchRadius,
                                                  int searchAllyteam, bool sphere, bool canBeBlind)
 {
 	if (sphere) { // includes target radius
 
-		Query::ClosestUnit_InLos q(pos, radius, canBeBlind);
+		Query::ClosestUnit_InLos q(pos, searchRadius, canBeBlind);
 		QueryUnits(Filter::Enemy(searchAllyteam), q);
 		return q.GetClosestUnit();
 
 	} else { // cylinder  (doesn't include target radius)
 
-		Query::ClosestUnit_InLos_Cylinder q(pos, radius, canBeBlind);
+		Query::ClosestUnit_InLos_Cylinder q(pos, searchRadius, canBeBlind);
 		QueryUnits(Filter::Enemy(searchAllyteam), q);
 		return q.GetClosestUnit();
 
