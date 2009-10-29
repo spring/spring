@@ -387,7 +387,7 @@ void CMobileCAI::SlowUpdate()
 	}
 
 	// treat any following CMD_SET_WANTED_MAX_SPEED commands as options
-	// to the current command  (and ignore them when it's their turn
+	// to the current command  (and ignore them when it's their turn)
 	if (commandQue.size() >= 2 && !slowGuard) {
 		CCommandQueue::iterator it = commandQue.begin();
 		it++;
@@ -1107,8 +1107,7 @@ void CMobileCAI::IdleCheck(void)
 		}
 	}
 	if (owner->unitDef->canAttack && (gs->frameNum >= lastIdleCheck+10)
-			&& owner->moveState && owner->fireState>=2 &&
-			!owner->weapons.empty() && !owner->haveTarget)
+			&& owner->fireState >= 2 && !owner->weapons.empty() && !owner->haveTarget)
 	{
 		const float searchRadius = owner->maxRange + 150 * owner->moveState * owner->moveState;
 		CUnit* enemy = helper->GetClosestValidTarget(owner->pos, searchRadius, owner->allyteam, this);
@@ -1119,6 +1118,7 @@ void CMobileCAI::IdleCheck(void)
 			c.params.push_back(enemy->id);
 			c.timeOut=gs->frameNum+140;
 			commandQue.push_front(c);
+			tempOrder = true;
 			return;
 		}
 	}
