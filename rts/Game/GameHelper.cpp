@@ -67,7 +67,9 @@ CGameHelper::~CGameHelper()
 	}
 }
 
-
+//////////////////////////////////////////////////////////////////////
+// Explosions/Damage
+//////////////////////////////////////////////////////////////////////
 
 void CGameHelper::DoExplosionDamage(CUnit* unit,
 	const float3& expPos, float expRad, float expSpeed,
@@ -262,6 +264,9 @@ void CGameHelper::Explosion(
 	water->AddExplosion(expPos, damages[0], expRad);
 }
 
+//////////////////////////////////////////////////////////////////////
+// Raytracing
+//////////////////////////////////////////////////////////////////////
 
 // called by {CRifle, CBeamLaser, CLightningCannon}::Fire()
 float CGameHelper::TraceRay(const float3& start, const float3& dir, float length, float /*power*/, const CUnit* owner, const CUnit*& hit, int collisionFlags)
@@ -463,6 +468,282 @@ float CGameHelper::TraceRayTeam(const float3& start, const float3& dir, float le
 	return length;
 }
 
+//////////////////////////////////////////////////////////////////////
+// Spatial unit queries
+//////////////////////////////////////////////////////////////////////
+
+/**
+ * @brief Generic spatial unit query.
+ *
+ * Filter should implement two methods:
+ *  - bool Team(int allyTeam): returns true if this allyteam should be considered
+ *  - bool Unit(const CUnit*): returns true if the unit should be returned
+ *
+ * Query should implement three methods:
+ *  - float3 GetPos(): returns the center of the (circular) search area
+ *  - float GetRadius(): returns the radius of the search area
+ *  - void AddUnit(const CUnit*): add the unit to the result
+ *
+ * The area as returned by Query is approximate; exact circular filtering
+ * should be implemented in the Query object if desired.
+ * (It isn't necessary for e.g. GetClosest** methods.)
+ */
+template<typename TFilter, typename TQuery>
+static inline void QueryUnits(TFilter filter, TQuery& query)
+{
+	GML_RECMUTEX_LOCK(qnum);
+
+	vector<int> quads = qf->GetQuads(query.pos, query.radius);
+
+	const int tempNum = gs->tempNum++;
+	vector<int>::iterator qi;
+
+	for (qi = quads.begin(); qi != quads.end(); ++qi) {
+		const CQuadField::Quad& quad = qf->GetQuad(*qi);
+		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
+			if (!filter.Team(t)) {
+				continue;
+			}
+			std::list<CUnit*>::const_iterator ui;
+			const std::list<CUnit*>& allyTeamUnits = quad.teamUnits[t];
+			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
+				if ((*ui)->tempNum != tempNum) {
+					(*ui)->tempNum = tempNum;
+					if (filter.Unit(*ui)) {
+						query.AddUnit(*ui);
+					}
+				}
+			}
+		}
+	}
+}
+
+
+namespace {
+namespace Filter {
+
+/**
+ * Base class for Filter::Friendly and Filter::Enemy.
+ */
+struct Base
+{
+	const int searchAllyteam;
+	Base(int at) : searchAllyteam(at) {}
+};
+
+/**
+ * Look for friendly units only.
+ * All units are included by default.
+ */
+struct Friendly : public Base
+{
+	Friendly(int at) : Base(at) {}
+	bool Team(int t) { return teamHandler->Ally(searchAllyteam, t); }
+	bool Unit(const CUnit*) { return true; }
+};
+
+/**
+ * Look for enemy units only.
+ * All units are included by default.
+ */
+struct Enemy : public Base
+{
+	Enemy(int at) : Base(at) {}
+	bool Team(int t) { return !teamHandler->Ally(searchAllyteam, t); }
+	bool Unit(const CUnit*) { return true; }
+};
+
+/**
+ * Look for enemy units which are in LOS/Radar only.
+ */
+struct Enemy_InLos : public Enemy
+{
+	Enemy_InLos(int at) : Enemy(at) {}
+	bool Unit(const CUnit* u) {
+		return (u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR));
+	}
+};
+
+/**
+ * Look for enemy aircraft which are in LOS/Radar only.
+ */
+struct EnemyAircraft : public Enemy_InLos
+{
+	EnemyAircraft(int at) : Enemy_InLos(at) {}
+	bool Unit(const CUnit* u) {
+		return u->unitDef->canfly && !u->crashing && Enemy_InLos::Unit(u);
+	}
+};
+
+/**
+ * Look for units of any team. Enemy units must be in LOS/Radar.
+ *
+ * NOT SYNCED
+ */
+struct Friendly_All_Plus_Enemy_InLos_NOT_SYNCED
+{
+	bool Team(int) { return true; }
+	bool Unit(const CUnit* u) {
+		return (u->allyteam == gu->myAllyTeam) ||
+		       (u->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) ||
+		       gu->spectatingFullView;
+	}
+};
+
+}; // end of namespace Filter
+
+
+namespace Query {
+
+/**
+ * Base class for Query objects, containing the basic methods needed by
+ * QueryUnits which defined the search area.
+ */
+struct Base
+{
+	const float3& pos;
+	const float radius;
+	const float sqRadius;
+	Base(const float3& pos, float searchRadius) :
+		pos(pos), radius(searchRadius), sqRadius(searchRadius * searchRadius) {}
+};
+
+/**
+ * Return the closest unit.
+ */
+struct ClosestUnit : public Base
+{
+protected:
+	float closeSqDist;
+	CUnit* closeUnit;
+
+public:
+	ClosestUnit(const float3& pos, float searchRadius) :
+		Base(pos, searchRadius), closeSqDist(sqRadius), closeUnit(NULL) {}
+
+	void AddUnit(CUnit* u) {
+		const float sqDist = (pos - u->midPos).SqLength2D();
+		if (sqDist <= closeSqDist) {
+			closeSqDist = sqDist;
+			closeUnit = u;
+		}
+	}
+
+	CUnit* GetClosestUnit() const { return closeUnit; }
+};
+
+/**
+ * Return the closest unit, using CGameHelper::GetUnitErrorPos
+ * instead of the unit's actual position.
+ *
+ * NOT SYNCED
+ */
+struct ClosestUnit_ErrorPos_NOT_SYNCED : public ClosestUnit
+{
+	ClosestUnit_ErrorPos_NOT_SYNCED(const float3& pos, float searchRadius) :
+		ClosestUnit(pos, searchRadius) {}
+
+	void AddUnit(CUnit* u) {
+		float3 unitPos;
+		if (gu->spectatingFullView) {
+			unitPos = u->midPos;
+		} else {
+			unitPos = helper->GetUnitErrorPos(u, gu->myAllyTeam);
+		}
+		const float sqDist = (pos - unitPos).SqLength2D();
+		if (sqDist <= closeSqDist) {
+			closeSqDist = sqDist;
+			closeUnit = u;
+		}
+	}
+};
+
+/**
+ * Returns the closest unit (3D) which may have LOS on the search position.
+ * LOS is spherical in the context of this query. Whether the unit actually has
+ * LOS depends on nearby obstacles.
+ *
+ * Search area just needs to touch the unit's radius: this query includes the
+ * target unit's radius.
+ *
+ * If canBeBlind is true then the LOS test is skipped.
+ */
+struct ClosestUnit_InLos : public Base
+{
+protected:
+	float closeDist;
+	CUnit* closeUnit;
+	const bool canBeBlind;
+
+public:
+	ClosestUnit_InLos(const float3& pos, float searchRadius, bool canBeBlind) :
+		Base(pos, searchRadius + uh->maxUnitRadius),
+		closeDist(searchRadius), closeUnit(NULL), canBeBlind(canBeBlind) {}
+
+	void AddUnit(CUnit* u) {
+		// FIXME: use volumeBoundingRadius?
+		// (more for consistency than need)
+		const float dist =
+			(pos - u->midPos).Length() -
+			u->radius;
+
+		if (dist <= closeDist &&
+			(canBeBlind || u->losRadius * loshandler->losDiv > dist)) {
+			closeDist = dist;
+			closeUnit = u;
+		}
+	}
+
+	CUnit* GetClosestUnit() const { return closeUnit; }
+};
+
+/**
+ * Returns the closest unit (2D) which may have LOS on the search position.
+ * Whether it actually has LOS depends on nearby obstacles.
+ *
+ * If canBeBlind is true then the LOS test is skipped.
+ */
+struct ClosestUnit_InLos_Cylinder : public ClosestUnit
+{
+	const bool canBeBlind;
+
+	ClosestUnit_InLos_Cylinder(const float3& pos, float searchRadius, bool canBeBlind) :
+		ClosestUnit(pos, searchRadius), canBeBlind(canBeBlind) {}
+
+	void AddUnit(CUnit* u) {
+		const float sqDist = (pos - u->midPos).SqLength2D();
+
+		if (sqDist <= closeSqDist &&
+			(canBeBlind || Square(u->losRadius * loshandler->losDiv) > sqDist)) {
+			closeSqDist = sqDist;
+			closeUnit = u;
+		}
+	}
+};
+
+/**
+ * Return the unitIDs of all units exactly within the search area.
+ */
+struct AllUnitsById : public Base
+{
+protected:
+	vector<int>& found;
+
+public:
+	AllUnitsById(const float3& pos, float searchRadius, vector<int>& found) :
+		Base(pos, searchRadius), found(found) {}
+
+	void AddUnit(CUnit* u) {
+		if ((pos - u->midPos).SqLength2D() <= sqRadius) {
+			found.push_back(u->id);
+		}
+	}
+};
+
+}; // end of namespace Query
+}; // end of namespace
+
+
 
 void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
                                   std::map<float,CUnit*> &targets)
@@ -559,239 +840,59 @@ void CGameHelper::GenerateTargets(const CWeapon *weapon, CUnit* lastTarget,
 
 CUnit* CGameHelper::GetClosestUnit(const float3 &pos, float radius)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetClosestUnit
-
-	float closeDist = (radius * radius);
-	CUnit* closeUnit = NULL;
-
-	vector<int> quads = qf->GetQuads(pos, radius);
-
-	int tempNum = gs->tempNum++;
-	vector<int>::iterator qi;
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		const std::list<CUnit*>& units = qf->GetQuad(*qi).units;
-		std::list<CUnit*>::const_iterator ui;
-		for (ui = units.begin(); ui != units.end(); ++ui) {
-			CUnit* unit = *ui;
-			if (unit->tempNum != tempNum) {
-				unit->tempNum = tempNum;
-				if ((unit->allyteam == gu->myAllyTeam) ||
-						(unit->losStatus[gu->myAllyTeam] & (LOS_INLOS | LOS_INRADAR)) ||
-						gu->spectatingFullView) {
-					float3 unitPos;
-					if (gu->spectatingFullView) {
-						unitPos = unit->midPos;
-					} else {
-						unitPos = GetUnitErrorPos(*ui,gu->myAllyTeam);
-					}
-					float sqDist=(pos - unitPos).SqLength2D();
-					if (sqDist <= closeDist) {
-						closeDist = sqDist;
-						closeUnit = unit;
-					}
-				}
-			}
-		}
-	}
-	return closeUnit;
+	Query::ClosestUnit_ErrorPos_NOT_SYNCED q(pos, radius);
+	QueryUnits(Filter::Friendly_All_Plus_Enemy_InLos_NOT_SYNCED(), q);
+	return q.GetClosestUnit();
 }
 
 CUnit* CGameHelper::GetClosestEnemyUnit(const float3& pos, float searchRadius, int searchAllyteam)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetClosestEnemyUnit
-
-	float closeDist = searchRadius * searchRadius;
-	CUnit* closeUnit = NULL;
-	vector<int> quads = qf->GetQuads(pos, searchRadius);
-
-	const int tempNum = gs->tempNum++;
-	vector<int>::iterator qi;
-
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-			if (teamHandler->Ally(searchAllyteam, t)) {
-				continue;
-			}
-			std::list<CUnit*>::const_iterator ui;
-			const std::list<CUnit*>& allyTeamUnits = quad.teamUnits[t];
-			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
-				if ((*ui)->tempNum != tempNum &&
-					(((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))) {
-
-					(*ui)->tempNum = tempNum;
-					float sqDist = (pos - (*ui)->midPos).SqLength2D();
-
-					if (sqDist <= closeDist) {
-						closeDist = sqDist;
-						closeUnit = *ui;
-					}
-				}
-			}
-		}
-	}
-	return closeUnit;
+	Query::ClosestUnit q(pos, searchRadius);
+	QueryUnits(Filter::Enemy_InLos(searchAllyteam), q);
+	return q.GetClosestUnit();
 }
 
 CUnit* CGameHelper::GetClosestEnemyUnitNoLosTest(const float3 &pos, float radius,
                                                  int searchAllyteam, bool sphere, bool canBeBlind)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetClosestEnemyUnitNoLosTest
-
-	const int tempNum = gs->tempNum++;
-	CUnit* closeUnit = NULL;
-
 	if (sphere) { // includes target radius
-		float closeDist = radius;
-		std::vector<int> quads = qf->GetQuads(pos, radius + uh->maxUnitRadius);
-		std::vector<int>::const_iterator qi;
 
-		for (qi = quads.begin(); qi != quads.end(); ++qi) {
-			const std::list<CUnit*>& quadUnits = qf->GetQuad(*qi).units;
-			std::list<CUnit*>::const_iterator ui;
+		Query::ClosestUnit_InLos q(pos, radius, canBeBlind);
+		QueryUnits(Filter::Enemy(searchAllyteam), q);
+		return q.GetClosestUnit();
 
-			for (ui = quadUnits.begin(); ui!= quadUnits.end(); ++ui) {
-				CUnit* unit = *ui;
-
-				if (unit->tempNum != tempNum &&
-				    !teamHandler->Ally(searchAllyteam, unit->allyteam)) {
-					unit->tempNum = tempNum;
-
-					// FIXME: use volumeBoundingRadius?
-					// (more for consistency than need)
-					const float dist =
-						(pos - unit->midPos).Length() -
-						unit->radius;
-
-					if (dist <= closeDist &&
-						(canBeBlind || unit->losRadius * loshandler->losDiv > dist)) {
-						closeDist = dist;
-						closeUnit = unit;
-					}
-				}
-			}
-		}
 	} else { // cylinder  (doesn't include target radius)
-		float closeDistSq = radius * radius;
-		std::vector<int> quads = qf->GetQuads(pos, radius);
-		std::vector<int>::const_iterator qi;
 
-		for (qi = quads.begin(); qi != quads.end(); ++qi) {
-			const std::list<CUnit*>& quadUnits = qf->GetQuad(*qi).units;
-			std::list<CUnit*>::const_iterator ui;
+		Query::ClosestUnit_InLos_Cylinder q(pos, radius, canBeBlind);
+		QueryUnits(Filter::Enemy(searchAllyteam), q);
+		return q.GetClosestUnit();
 
-			for (ui = quadUnits.begin(); ui!= quadUnits.end(); ++ui) {
-				CUnit* unit = *ui;
-
-				if (unit->tempNum != tempNum &&
-				    !teamHandler->Ally(searchAllyteam, unit->allyteam)) {
-					unit->tempNum = tempNum;
-					const float sqDist = (pos - unit->midPos).SqLength2D();
-
-					if (sqDist <= closeDistSq &&
-						(canBeBlind || unit->losRadius * loshandler->losDiv > sqDist)) {
-						closeDistSq = sqDist;
-						closeUnit = unit;
-					}
-				}
-			}
-		}
 	}
-	return closeUnit;
 }
 
-CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float radius,int searchAllyteam)
+CUnit* CGameHelper::GetClosestFriendlyUnit(const float3 &pos, float searchRadius, int searchAllyteam)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetClosestFriendlyUnit
-
-	float closeDist=radius*radius;
-	CUnit* closeUnit=0;
-	std::vector<int> quads=qf->GetQuads(pos,radius);
-
-	int tempNum=gs->tempNum++;
-	std::vector<int>::iterator qi;
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		std::list<CUnit*>::const_iterator ui;
-		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			if((*ui)->tempNum!=tempNum && teamHandler->Ally(searchAllyteam,(*ui)->allyteam)){
-				(*ui)->tempNum=tempNum;
-				float sqDist=(pos-(*ui)->midPos).SqLength2D();
-				if(sqDist <= closeDist){
-					closeDist=sqDist;
-					closeUnit=*ui;
-				}
-			}
-		}
-	}
-	return closeUnit;
+	Query::ClosestUnit q(pos, searchRadius);
+	QueryUnits(Filter::Friendly(searchAllyteam), q);
+	return q.GetClosestUnit();
 }
 
-CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float radius,int searchAllyteam)
+CUnit* CGameHelper::GetClosestEnemyAircraft(const float3 &pos, float searchRadius, int searchAllyteam)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetClosestEnemyAircraft
-
-	float closeDist = radius*radius;
-	CUnit* closeUnit = NULL;
-	vector<int> quads = qf->GetQuads(pos,radius);
-
-	const int tempNum = gs->tempNum++;
-	vector<int>::iterator qi;
-
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		for (int t = 0; t < teamHandler->ActiveAllyTeams(); ++t) {
-			if (teamHandler->Ally(searchAllyteam, t)) {
-				continue;
-			}
-			std::list<CUnit*>::const_iterator ui;
-			const std::list<CUnit*>& allyTeamUnits = quad.teamUnits[t];
-			for (ui = allyTeamUnits.begin(); ui != allyTeamUnits.end(); ++ui) {
-				if ((*ui)->unitDef->canfly && (*ui)->tempNum != tempNum && !(*ui)->crashing &&
-					(((*ui)->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))) {
-					(*ui)->tempNum = tempNum;
-					float sqDist = (pos - (*ui)->midPos).SqLength2D();
-					if (sqDist <= closeDist) {
-						closeDist = sqDist;
-						closeUnit = *ui;
-					}
-				}
-			}
-		}
-	}
-	return closeUnit;
+	Query::ClosestUnit q(pos, searchRadius);
+	QueryUnits(Filter::EnemyAircraft(searchAllyteam), q);
+	return q.GetClosestUnit();
 }
 
-void CGameHelper::GetEnemyUnits(const float3 &pos, float radius, int searchAllyteam, vector<int> &found)
+void CGameHelper::GetEnemyUnits(const float3 &pos, float searchRadius, int searchAllyteam, vector<int> &found)
 {
-	GML_RECMUTEX_LOCK(qnum); // GetEnemyUnits
-
-	float sqRadius = radius * radius;
-	std::vector<int> quads = qf->GetQuads(pos, radius);
-
-	int tempNum = gs->tempNum++;
-	std::vector<int>::iterator qi;
-
-	for (qi = quads.begin(); qi != quads.end(); ++qi) {
-		const CQuadField::Quad& quad = qf->GetQuad(*qi);
-		std::list<CUnit*>::const_iterator ui;
-
-		for (ui = quad.units.begin(); ui != quad.units.end(); ++ui) {
-			CUnit* u = *ui;
-
-			if (u->tempNum != tempNum && !teamHandler->Ally(searchAllyteam, u->allyteam) &&
-				((u->losStatus[searchAllyteam] & (LOS_INLOS | LOS_INRADAR)))) {
-
-				u->tempNum = tempNum;
-
-				if ((pos - u->midPos).SqLength2D() <= sqRadius) {
-					found.push_back(u->id);
-				}
-			}
-		}
-	}
+	Query::AllUnitsById q(pos, searchRadius, found);
+	QueryUnits(Filter::Enemy_InLos(searchAllyteam), q);
 }
 
+//////////////////////////////////////////////////////////////////////
+// Miscellaneous (i.e. not yet categorized)
+//////////////////////////////////////////////////////////////////////
 
 // called by {CFlameThrower, CLaserCannon, CEmgCannon, CBeamLaser, CLightningCannon}::TryTarget()
 bool CGameHelper::LineFeatureCol(const float3& start, const float3& dir, float length)
