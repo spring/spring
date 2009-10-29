@@ -172,6 +172,18 @@ function extractParamType(param__common) {
 	return paramType__common;
 }
 
+# Awaits this format:	"float* []"
+# Returns this format:	"float**"
+function cleanupCType(cType__common) {
+
+	cTypeClean__common = cType__common;
+
+	gsub(/[ \t]*\[\]/, "*", cTypeClean__common);
+	cTypeClean__common = trim(cTypeClean__common);
+
+	return cTypeClean__common;
+}
+
 # Awaits this format:	"int teamId, const char* name, std::map<int, std::string> idNameMap"
 # Returns this format:	"teamId, name, idNameMap"
 function removeParamTypes(params__common) {
@@ -341,7 +353,7 @@ function convertJNIToJavaType(jniType__common) {
 	sub(/jbyte/,    "byte",    javaType__common);
 	sub(/jchar/,    "char",    javaType__common);
 	sub(/jdouble/,  "double",  javaType__common);
-	sub(/jint/,     "int"      javaType__common);
+	sub(/jint/,     "int",     javaType__common);
 	sub(/jlong/,    "long",    javaType__common);
 	sub(/jshort/,   "short",   javaType__common);
 
@@ -349,7 +361,6 @@ function convertJNIToJavaType(jniType__common) {
 
 	return javaType__common;
 }
-
 
 ### END: JNI functions
 ################################################################################
