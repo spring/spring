@@ -48,8 +48,8 @@ BEGIN {
 
 function doWrapp(funcIndex_dw) {
 
-	paramListJava_dw = funcParamList[funcIndex_dw];
-	doWrapp_dw = !match(paramListJava_dw, /String\[\]/) && !match(paramListJava_dw, /AIFloat3\[\]/);
+	paramListC_dw = funcParamListC[funcIndex_dw];
+	doWrapp_dw = !match(paramListC_dw, /char\*\*/) && !match(paramListJava_dw, /SAIFloat3/);
 
 	if (doWrapp_dw) {
 		fullName_dw = funcFullName[funcIndex_dw];
@@ -69,6 +69,9 @@ function doWrapp(funcIndex_dw) {
 		}
 
 		if (fullName_dw == "Clb_Engine_handleCommand") {
+			doWrapp_dw = 0;
+		} else if (fullName_dw == "Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions") {
+			# only temporarily
 			doWrapp_dw = 0;
 		}
 	}
@@ -148,6 +151,7 @@ function printNativeFP2F() {
 		paramListNoTypes = removeParamTypes(paramList);
 		commentEol       = funcCommentEol[i];
 
+		# TODO: remove cause unused (though it could be adapted to do: return float[3] -> out-param float[3])
 		# Move some return values to an output parameter form,
 		# for example, convert the first to the second:
 		# struct SAIFloat3 Unit_getPos(int unitId);
@@ -171,37 +175,6 @@ function printNativeFP2F() {
 			# for the JNA/Java part to reflect the changes
 			funcRetType[i]    = "void";
 		}
-
-		# replace struct SAIFloat3 params with float[3]
-		# -> much less performance loss in JNA
-		# 1. create a list with all param names with type struct SAIFloat3
-		size_paramParts = split(paramList, paramParts, ", ");
-		preConversion = "";
-		paramListNoTypes = "_teamId";
-		for (pp=2; pp <= size_paramParts; pp++) {
-			paramP     = paramParts[pp];
-			paramPName = extractParamName(paramP);
-			isRetParam = match(paramPName, retParamName "$");
-			if (match(paramP, /struct SAIFloat3 /)) {
-				sAIFloat3ParamNames = sAIFloat3ParamNames " " paramPName;
-				if (!isRetParam) {
-					preConversion = preConversion "\n\t" "const struct SAIFloat3 " paramPName "_int = {" paramPName "[0], " paramPName "[1], " paramPName "[2]};";
-					paramPName = paramPName "_int";
-				}
-			}
-			if (!isRetParam) {
-				paramListNoTypes = paramListNoTypes ", " paramPName;
-			}
-		}
-		# 2. replace type struct SAIFloat3 with float[3]
-		gsub(/struct SAIFloat3 /, "float* ", paramList);
-
-		# for the JNA/Java part to reflect the changes
-		gsub(/AIFloat3 /, "float[] ", funcParamList[i]);
-		if (sAIFloat3ParamNames != "") {
-			sAIFloat3ParamNames = " // SAIFloat3 param names:" sAIFloat3ParamNames;
-		}
-		funcsAIFloat3ParamNameList[i] = sAIFloat3ParamNames;
 
 		if (doWrapp(i)) {
 			# print function declaration to *.h
@@ -266,8 +239,6 @@ function wrappFunction(funcDef, commentEolTot) {
 		# because the empty part after ");" would count as part as well
 		size_funcParts--;
 		retType_c   = trim(funcParts[1]);
-		retType_jna = convertCToJNAType(retType_c);
-		#condRet     = match(retType_c, "void") ? "" : "return ";
 		fullName    = funcParts[2];
 		sub(/CALLING_CONV \*/, "", fullName);
 		sub(/\)/, "", fullName);
@@ -278,22 +249,18 @@ function wrappFunction(funcDef, commentEolTot) {
 
 		for (i=3; i<=size_funcParts && !match(funcParts[i], /.*\/\/.*/); i++) {
 			type_c   = extractParamType(funcParts[i]);
-			type_jna = convertCToJNAType(type_c);
+			type_c   = cleanupCType(type_c);
 			name     = extractParamName(funcParts[i]);
 			if (i == 3) {
 				cond_comma   = "";
-				cond_comma_n = "";
 			} else {
 				cond_comma   = ", ";
-				cond_comma_n = ",";
 			}
-			paramList_c = paramList_c cond_comma_n funcParts[i];
-			paramList   = paramList cond_comma type_jna " " name;
+			paramList_c = paramList_c cond_comma type_c " " name;
 		}
 
 		funcFullName[fi]   = fullName;
 		funcRetTypeC[fi]   = retType_c;
-		funcRetType[fi]    = retType_jna;
 		funcParamListC[fi] = paramList_c;
 		funcParamList[fi]  = paramList;
 		funcCommentEol[fi] = commentEolTot
