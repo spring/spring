@@ -1074,7 +1074,7 @@ void CMobileCAI::FinishCommand(void)
 
 void CMobileCAI::IdleCheck(void)
 {
-	if(owner->unitDef->canAttack && owner->moveState && owner->fireState
+	if(owner->unitDef->canAttack && owner->fireState
 			&& !owner->weapons.empty() && owner->haveTarget) {
 		if(!owner->userTarget) {
 			owner->haveTarget = false;
@@ -1086,10 +1086,13 @@ void CMobileCAI::IdleCheck(void)
 			c.params.push_back(owner->userTarget->id);
 			c.timeOut = gs->frameNum + 140;
 			commandQue.push_front(c);
+			tempOrder = true;
+			commandPos1 = owner->pos;
+			commandPos2 = owner->pos;
 			return;
 		}
 	}
-	if(owner->unitDef->canAttack && owner->moveState && owner->fireState
+	if(owner->unitDef->canAttack && owner->fireState
 				&& !owner->weapons.empty() && !owner->haveTarget) {
 		if(owner->lastAttacker && owner->lastAttack + 200 > gs->frameNum
 				&& !(owner->unitDef->noChaseCategory & owner->lastAttacker->category)){
@@ -1102,11 +1105,14 @@ void CMobileCAI::IdleCheck(void)
 				c.params.push_back(owner->lastAttacker->id);
 				c.timeOut=gs->frameNum+140;
 				commandQue.push_front(c);
+				tempOrder = true;
+				commandPos1 = owner->pos;
+				commandPos2 = owner->pos;
 				return;
 			}
 		}
 	}
-	if (owner->unitDef->canAttack && (gs->frameNum >= lastIdleCheck+10)
+	if (owner->unitDef->canAttack && (gs->frameNum >= lastIdleCheck + 10)
 			&& owner->fireState >= 2 && !owner->weapons.empty() && !owner->haveTarget)
 	{
 		const float searchRadius = owner->maxRange + 150 * owner->moveState * owner->moveState;
@@ -1119,6 +1125,8 @@ void CMobileCAI::IdleCheck(void)
 			c.timeOut=gs->frameNum+140;
 			commandQue.push_front(c);
 			tempOrder = true;
+			commandPos1 = owner->pos;
+			commandPos2 = owner->pos;
 			return;
 		}
 	}
