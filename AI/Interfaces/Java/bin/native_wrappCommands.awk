@@ -73,7 +73,16 @@ function saveMember(ind_mem, member) {
 
 
 function doWrapp(ind_cmdStructs_dw) {
-	return !match(cmdsName[ind_cmdStructs_dw], /.*SharedMemArea.*/);
+
+	doWrp_dw = 1;
+
+	if (match(cmdsName[ind_cmdStructs_dw], /SharedMemArea/) {
+		doWrp_dw = 0;
+	} else if (match(cmdsName[ind_cmdStructs_dw], /^SCallLuaRulesCommand$/) {
+		doWrp_dw = 0;
+	}
+
+	return doWrp_dw;
 }
 
 
@@ -120,7 +129,7 @@ function printNativeFP2F() {
 				memName   = cmdsMembers_name[cmdIndex, m];
 				memType_c = cmdsMembers_type_c[cmdIndex, m];
 
-				if (match(memName, /^ret_/) && 1 == 0) {
+				if (match(memName, /^ret_/) && !match(memType_c, /\*/)) {
 					retParam   = memName;
 					retType    = memType_c;
 					hasRetType = 1;
@@ -179,7 +188,7 @@ function printNativeFP2F() {
 				memName   = cmdsMembers_name[cmdIndex, m];
 				memType_c = cmdsMembers_type_c[cmdIndex, m];
 
-				if (match(name, /^ret_/)) {
+				if (memName == retParam) {
 					# do nothing
 				} else {
 					print("\t" "commandData." memName " = " memName ";") >> outFile_nc;
@@ -190,16 +199,20 @@ function printNativeFP2F() {
 			print("\t" "int _ret = id_clb[_teamId]->Clb_Engine_handleCommand(_teamId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
 			print("") >> outFile_nc;
 
-			if (hasRetType) {
-				print("\t" "if (_ret == 0) {") >> outFile_nc;
-				print("\t\t" "return commandData." retParam ";") >> outFile_nc;
-				print("\t" "} else {") >> outFile_nc;
-				print("\t\t" "return NULL;") >> outFile_nc;
-				print("\t" "}") >> outFile_nc;
-			} else {
-				print("\t" "return _ret;") >> outFile_nc;
+			if (retParam != "") {
+				print("\t" "_ret = commandData." retParam ";") >> outFile_nc;
 			}
 
+			if (hasRetType) {
+				# this is unused, delete
+				print("\t" "if (_ret == 0) {") >> outFile_nc;
+				print("\t\t" "_ret = commandData." retParam ";") >> outFile_nc;
+				print("\t" "} else {") >> outFile_nc;
+				print("\t\t" "_ret = 0;") >> outFile_nc;
+				print("\t" "}") >> outFile_nc;
+			}
+
+			print("\t" "return _ret;") >> outFile_nc;
 			print("" "}") >> outFile_nc;
 		} else {
 			print("Note: The following command is intentionally not wrapped: " fullName);

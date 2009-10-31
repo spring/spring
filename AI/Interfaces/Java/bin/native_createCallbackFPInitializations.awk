@@ -21,8 +21,12 @@ function rtrim(s) { sub(/[ \t]+$/, "", s); return s; }
 function trim(s)  { return rtrim(ltrim(s)); }
 
 
-function printInit(functionName) {
-	print("	callback->" functionName " = &_" functionName ";")
+function printInit(functionPointerName) {
+
+	functionName = functionPointerName;
+	sub(/Clb_/, "skirmishAiCallback_", functionName);
+
+	print("	callback->" functionPointerName " = &" functionName ";")
 }
 
 
