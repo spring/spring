@@ -119,7 +119,7 @@ void CThreatMap::Update() {
 void CThreatMap::AddEnemyUnit(int unitID) {
 	const UnitDef* ud = ai->ccb->GetUnitDef(unitID);
 
-	// unarmed do not register on the threat-map
+	// only unarmed units do not register on the threat-map
 	if (ud && !ud->weapons.empty()) {
 		const float3& pos = ai->ccb->GetUnitPos(unitID);
 		const int posx = int(pos.x / (8.0f * THREATRES));
