@@ -9,8 +9,8 @@
 
 
 class LuaTable;
-class UnitDef;
-class GuiSoundSet;
+struct UnitDef;
+struct GuiSoundSet;
 
 //this class takes care of all the unit definitions
 class CUnitDefHandler : CommonDefHandler
