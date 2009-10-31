@@ -6,7 +6,6 @@
 #include "Rendering/GL/myGL.h"
 #include "Rendering/glFont.h"
 #include "Game/PlayerHandler.h"
-#include "ExternalAI/SkirmishAIHandler.h"
 #include "Map/Ground.h"
 #include "Map/MapDamage.h"
 #include "Map/MapInfo.h"
@@ -171,6 +170,7 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 	const UnitDef* decoyDef = enemyUnit ? unitDef->decoyDef : NULL;
 	const UnitDef* effectiveDef =
 		!enemyUnit ? unitDef : (decoyDef ? decoyDef : unitDef);
+	const CTeam* team = NULL;
 
 	// don't show the unit type if it is not known
 	const unsigned short losStatus = unit->losStatus[gu->myAllyTeam];
@@ -184,23 +184,8 @@ std::string CTooltipConsole::MakeUnitString(const CUnit* unit)
 
 	// show the player name instead of unit name if it has FBI tag showPlayerName
 	if (effectiveDef->showPlayerName) {
-		const int teamIdx = unit->team;
-		const CTeam* team = teamHandler->Team(teamIdx);
-
-		if (team->leader >= 0) {
-			s = playerHandler->Player(team->leader)->name;
-			if (playerHandler->Player(team->leader)->team != teamIdx) {
-				s = " (passive Leader)";
-			}
-
-			CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamIdx);
-			for (CSkirmishAIHandler::ids_t::const_iterator ai = saids.begin(); ai != saids.end(); ++ai) {
-				SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
-				s += " & AI: " + aiData->name;
-			}
-		} else {
-			s = "Uncontrolled";
-		}
+		team = teamHandler->Team(unit->team);
+		s = team->GetControllerName();
 	} else {
 		if (!decoyDef) {
 			s = unit->tooltip;

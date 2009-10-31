@@ -64,6 +64,8 @@ public:
 
 	int GetCancelDistance() { return cancelDistance; }
 
+	virtual bool IsValidTarget(const CUnit* enemy) const;
+
 protected:
 	int cancelDistance;
 	int lastCloseInTry;
@@ -73,8 +75,6 @@ protected:
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}
-
-	virtual bool IsValidTarget(const CUnit* enemy) const;
 
 	void CalculateCancelDistance();
 };

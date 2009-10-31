@@ -240,7 +240,7 @@ void CPreGame::UpdateClientNet()
 				return;
 			}
 			default: {
-				logOutput.Print("Unknown net-msg recieved from CPreGame: %i", int(packet->data[0]));
+				logOutput.Print("Unknown net-msg received from CPreGame: %i", int(packet->data[0]));
 				break;
 			}
 		}

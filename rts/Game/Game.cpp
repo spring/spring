@@ -4194,12 +4194,13 @@ void CGame::ClientReadNet()
 				CTeam* tai                       = teamHandler->Team(aiTeamId);
 
 				aiData->status = newState;
+
 				if (isLocal && !isLuaAI && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
 					eoh->DestroySkirmishAI(skirmishAIId);
 				} else if (newState == SKIRMAISTATE_DEAD) {
 					if (oldState == SKIRMAISTATE_RELOADING) {
 						if (isLocal) {
-							logOutput.Print("Skirmish AI being reloaded for team %i ...", aiTeamId);
+							logOutput.Print("Skirmish AI \"%s\" being reloaded for team %i ...", aiData->name.c_str(), aiTeamId);
 							eoh->CreateSkirmishAI(skirmishAIId);
 						}
 					} else {
@@ -4212,10 +4213,10 @@ void CGame::ClientReadNet()
 						}
 						CPlayer::UpdateControlledTeams();
 						eventHandler.PlayerChanged(playerId);
-						logOutput.Print("Skirmish AI %s, which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
+						logOutput.Print("Skirmish AI \"%s\", which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
 					}
 				} else if (newState == SKIRMAISTATE_ALIVE) {
-					logOutput.Print("Skirmish AI %s took over controll of team %i", aiData->name.c_str(), aiTeamId);
+					logOutput.Print("Skirmish AI \"%s\" took over control of team %i", aiData->name.c_str(), aiTeamId);
 				}
 				break;
 			}

@@ -509,7 +509,7 @@ void CInputStreamSerializer::SerializeObjectPtr (void **ptr, creg::Class *cls)
 		StoredObject &o = objects [id];
 		if (o.obj) *ptr = o.obj;
 		else {
-			// The object is not yet avaiable, so it needs fixing afterwards
+			// The object is not yet available, so it needs fixing afterwards
 			*ptr = (void*) 1;
 			UnfixedPtr ufp;
 			ufp.objID = id;
