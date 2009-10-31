@@ -53,7 +53,7 @@ public:
 /**
 How Spring protocolheader looks like (size in bytes):
 4 (int): number of packet (continuous)
-4 (int):	last in order (tell the client we recieved all packages with packetNumber less or equal)
+4 (int):	last in order (tell the client we received all packages with packetNumber less or equal)
 1 (unsigned char): nak (we missed x packets, starting with firstUnacked)
 
 */
@@ -144,7 +144,7 @@ private:
 	int currentNum;
 
 	void SendPacket(Packet& pkt);
-	/// packets we have recieved but not yet read
+	/// packets we have received but not yet read
 	packetMap waitingPackets;
 	int lastInOrder;
 	int lastNak;

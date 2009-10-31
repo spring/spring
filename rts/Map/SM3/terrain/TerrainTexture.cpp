@@ -161,9 +161,9 @@ namespace terrain {
 		if (cb) cb->PrintMsg ("  parsing texture stages...");
 
 		if (!GLEW_ARB_multitexture)
-			throw std::runtime_error ("No multitexture avaiable");
+			throw std::runtime_error ("No multitexture available");
 		if (!GLEW_ARB_texture_env_combine)
-			throw std::runtime_error ("Texture env combine extension not avaiable");
+			throw std::runtime_error ("Texture env combine extension not available");
 
 		heightmapW = heightmap->w;
 		tdfParser = tdf;
@@ -289,7 +289,7 @@ namespace terrain {
 			lightmap = new Lightmap(heightmap, 2, 1,li);
 		}
 
-		// see how lighting should be implemented, based on config and avaiable textures
+		// see how lighting should be implemented, based on config and available textures
 		InstantiateShaders(cfg, cb);
 
 		if (cb) { cb->PrintMsg ("  initializing terrain node shaders..."); }
