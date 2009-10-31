@@ -61,10 +61,10 @@ enum CommandTopic {
 	COMMAND_SEND_UNITS                            =  9,
 	COMMAND_UNUSED_0                              = 10, // unused
 	COMMAND_UNUSED_1                              = 11, // unused
-	COMMAND_GROUP_CREATE                          = 12,
-	COMMAND_GROUP_ERASE                           = 13,
-	COMMAND_GROUP_ADD_UNIT                        = 14,
-	COMMAND_GROUP_REMOVE_UNIT                     = 15,
+	COMMAND_GROUP_CREATE                          = 12, // unused
+	COMMAND_GROUP_ERASE                           = 13, // unused
+	COMMAND_GROUP_ADD_UNIT                        = 14, // unused
+	COMMAND_GROUP_REMOVE_UNIT                     = 15, // unused
 	COMMAND_PATH_INIT                             = 16,
 	COMMAND_PATH_GET_APPROXIMATE_LENGTH           = 17,
 	COMMAND_PATH_GET_NEXT_WAYPOINT                = 18,
@@ -172,10 +172,6 @@ enum UnitCommandOptions {
 		+ sizeof(struct SSetLastPosMessageCommand) \
 		+ sizeof(struct SSendResourcesCommand) \
 		+ sizeof(struct SSendUnitsCommand) \
-		+ sizeof(struct SCreateGroupCommand) \
-		+ sizeof(struct SEraseGroupCommand) \
-		+ sizeof(struct SAddUnitToGroupCommand) \
-		+ sizeof(struct SRemoveUnitFromGroupCommand) \
 		+ sizeof(struct SInitPathCommand) \
 		+ sizeof(struct SGetApproximateLengthPathCommand) \
 		+ sizeof(struct SGetNextWaypointPathCommand) \
@@ -317,30 +313,14 @@ struct SSendUnitsCommand {
 	int ret_sentUnits;
 }; // COMMAND_SEND_UNITS Economy_sendUnits resourceId->Resource unitIds0numUnitIds->Unit receivingTeam=Team
 
-/// Creates a group and returns the id it was given, returns -1 on failure
-struct SCreateGroupCommand {
-	int ret_groupId;
-}; // COMMAND_GROUP_CREATE Group_create
-/// Erases a specified group
-struct SEraseGroupCommand {
-	int groupId;
-}; // COMMAND_GROUP_ERASE Group_erase
-/**
- * @brief Adds a unit to a specific group.
- * If it was previously in a group, it is removed from that.
- * Returns false if the group did not exist or did not accept the unit.
- */
-struct SAddUnitToGroupCommand {
-	int groupId;
-	int unitId;
-	bool ret_isExecuted;
-}; // COMMAND_GROUP_ADD_UNIT Group_addUnit
-/// Removes a unit from its group
-struct SRemoveUnitFromGroupCommand {
-	int unitId;
-	bool ret_isExecuted;
-}; // COMMAND_GROUP_REMOVE_UNIT Group_removeUnit
-
+// /// Creates a group and returns the id it was given, returns -1 on failure
+// struct SCreateGroupCommand {
+// 	int ret_groupId;
+// }; // COMMAND_GROUP_CREATE Group_create
+// /// Erases a specified group
+// struct SEraseGroupCommand {
+// 	int groupId;
+// }; // COMMAND_GROUP_ERASE Group_erase
 
 /**
  * The following functions allow the AI to use the built-in path-finder.
@@ -447,7 +427,7 @@ struct SBreakPathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_BREAK Map_Drawer_Path_break
+}; // COMMAND_DRAWER_PATH_BREAK Map_Drawer_Path_suspend
 struct SRestartPathDrawerCommand {
 	bool sameColor;
 }; // COMMAND_DRAWER_PATH_RESTART Map_Drawer_Path_restart
@@ -748,7 +728,6 @@ struct SAiSelectUnitCommand {
 //	int timeOut;
 //};
 
-// TODO: DELETE: this command is not needed, there is already SAddUnitToGroupCommand
 struct SGroupAddUnitCommand {
 	int unitId;
 	int groupId;
@@ -760,7 +739,6 @@ struct SGroupAddUnitCommand {
 	int toGroupId;
 }; // COMMAND_UNIT_GROUP_ADD Unit_addToGroup
 
-// TODO: DELETE: this command is not needed, there is already SRemoveUnitFromGroupCommand
 struct SGroupClearUnitCommand {
 	int unitId;
 	int groupId;
