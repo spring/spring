@@ -470,3 +470,52 @@ void CTeam::LeftLineage(CUnit* unit)
 	}
 }
 
+
+
+std::string CTeam::GetControllerName() const {
+	std::string s;
+
+	// "Joe, AI: ABCAI 0.1 (nick: Killer), AI: DEFAI 1.2 (nick: Slayer), ..."
+	if (this->leader >= 0) {
+		const CPlayer* leadPlayer = playerHandler->Player(this->leader);
+
+		if (leadPlayer->team != this->teamNum) {
+			const CTeam*   realLeadPlayerTeam = teamHandler->Team(leadPlayer->team);
+			const CPlayer* realLeadPlayer     = NULL;
+
+			if (realLeadPlayerTeam->leader >= 0) {
+				realLeadPlayer = playerHandler->Player(realLeadPlayerTeam->leader);
+				s = realLeadPlayer->name;
+			} else {
+				s = "N/A"; // weird
+			}
+		} else {
+			s = leadPlayer->name;
+		}
+
+		const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(this->teamNum);
+		const int numTeamAIs = teamAIs.size();
+
+		if (numTeamAIs > 0) {
+			s += ", ";
+		}
+
+		int i = 0;
+		for (CSkirmishAIHandler::ids_t::const_iterator ai = teamAIs.begin(); ai != teamAIs.end(); ++ai) {
+			const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
+			const std::string prefix = "AI: " + aiData->shortName + " " + aiData->version + " ";
+			const std::string pstfix = "(nick: " + aiData->name + ")";
+
+			s += (prefix + pstfix);
+			i += 1;
+
+			if (i < numTeamAIs) {
+				s += ", ";
+			}
+		}
+	} else {
+		s = "Uncontrolled";
+	}
+
+	return s;
+}

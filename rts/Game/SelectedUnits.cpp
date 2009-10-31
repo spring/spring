@@ -17,7 +17,6 @@
 #include "Net/PackPacket.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "Sim/Units/Groups/Group.h"
-#include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/EngineOutHandler.h"
 #include "UI/CommandColors.h"
 #include "UI/GuiHandler.h"
@@ -674,28 +673,17 @@ std::string CSelectedUnits::GetTooltip(void)
 
 	std::string s = "";
 	if (!selectedUnits.empty()) {
+		const CUnit* unit = (*selectedUnits.begin());
+		const CTeam* team = NULL;
+
 		// show the player name instead of unit name if it has FBI tag showPlayerName
-		if ((*selectedUnits.begin())->unitDef->showPlayerName) {
-			const int teamIdx = (*selectedUnits.begin())->team;
-			const CTeam* team = teamHandler->Team(teamIdx);
-
-			if (team->leader >= 0) {
-				s = playerHandler->Player(team->leader)->name;
-				if (playerHandler->Player(team->leader)->team != teamIdx) {
-					s = " (passive Leader)";
-				}
-
-				CSkirmishAIHandler::ids_t saids = skirmishAIHandler.GetSkirmishAIsInTeam(teamIdx);
-				for (CSkirmishAIHandler::ids_t::const_iterator ai = saids.begin(); ai != saids.end(); ++ai) {
-					SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*ai);
-					s += " & AI: " + aiData->name;
-				}
-			} else {
-				s = "Uncontrolled";
-			}
+		if (unit->unitDef->showPlayerName) {
+			team = teamHandler->Team(unit->team);
+			s = team->GetControllerName();
 		} else {
 			s = (*selectedUnits.begin())->tooltip;
 		}
+
 	}
 
 	if (selectedUnits.empty()) {
