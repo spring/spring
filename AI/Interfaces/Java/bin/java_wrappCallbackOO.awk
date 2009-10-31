@@ -615,7 +615,18 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 
 
 
+function isRetParamName(paramName_rp) {
+	return (match(paramName_rp, /_out(_|$)/) || match(paramName_rp, /(^|_)?ret_/));
+}
+function cleanRetParamName(paramName_rp) {
 
+	paramNameClean_rp = paramName_rp;
+
+	sub(/_out(_|$)/,  "", paramNameClean_rp);
+	sub(/(^|_)?ret_/, "", paramNameClean_rp);
+
+	return paramNameClean_rp;
+}
 
 function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) {
 
@@ -632,8 +643,11 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 	metaComment = funcMetaComment[fullName_m];
 	sub(/^.*_/, "", memName);
 	isVoid_m = (retType == "void");
+	conversionCode_pre  = "";
+	conversionCode_post = "";
 
-	hasRetParam = match(innerParams, retParamName "$");
+	# never used: delete (see use of vars, delete too)
+	hasRetParam = match(innerParams, retParamName "$") && (1 == 0);
 	if (hasRetParam) {
 		retParamType = params;
 		sub(" " retParamName ".*$", "", retParamType);
@@ -643,26 +657,58 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		}
 	}
 
-	# convert float[3] paramss back to AIFloat3
-	size_saiFloat3ParamNames = 0;
-	if (sub("SAIFloat3 param names: ", "", metaComment)) {
-		size_saiFloat3ParamNames = split(metaComment, saiFloat3ParamNames, " ");
-		for (aifPa = 1; aifPa <= size_saiFloat3ParamNames; aifPa++) {
-			paNa = saiFloat3ParamNames[aifPa];
-			if (paNa == retParamName) {
-				retType = "AIFloat3";
-				retTypeInterface = retType;
-			} else {
-				sub("float\\[\\] " paNa, "AIFloat3 " paNa, params);
-				sub(paNa, paNa ".toFloatArray()", innerParams);
+	# convert params
+	paramNames_size = split(innerParams, paramNames, ", ");
+	for (prm = 1; prm <= paramNames_size; prm++) {
+		paNa = paramNames[prm];
+		if (!isRetParamName(paNa)) {
+			if (match(paNa, /_posF3/)) {
+				# convert float[3] to AIFloat3
+				paNaNew = paNa;
+				sub(/_posF3/, "", paNaNew);
+				sub("float\\[\\] " paNa, "AIFloat3 " paNaNew, params);
+				conversionCode_pre = conversionCode_pre "\t\t"  "float[] " paNa " = " paNaNew ".toFloatArray();" "\n";
+			} else if (match(paNa, /_colorS3/)) {
+				# convert short[3] to java.awt.Color
+				paNaNew = paNa;
+				sub(/_colorS3/, "", paNaNew);
+				sub("short\\[\\] " paNa, "java.awt.Color " paNaNew, params);
+				conversionCode_pre = conversionCode_pre "\t\t"  "short[] " paNa " = Util.toShort3Array(" paNaNew ");" "\n";
 			}
 		}
 	}
 
-	if (memName == "handleCommand") {
-		sub(/int commandTopic\, Pointer commandData/, "AICommand command", params);
-		sub(/commandTopic\, commandData/, "command.getTopic(), command.getPointer()", innerParams);
+	# convert out params to return values
+	#metaComment "error-return:0=OK"
+	paramTypeNames_size = split(params, paramTypeNames, ", ");
+	for (prm = 1; prm <= paramTypeNames_size; prm++) {
+		paNa = extractParamName(paramTypeNames[prm]);
+		if (isRetParamName(paNa)) {
+			paTy = extractParamType(paramTypeNames[prm]);
+			hasRetParam = 1;
+			if (match(paNa, /_posF3/)) {
+				# convert float[3] to AIFloat3
+				retParamType = "AIFloat3";
+				conversionCode_pre  = conversionCode_pre  "\t\t" "float[] " paNa " = new float[3];" "\n";
+				conversionCode_post = conversionCode_post "\t\t" retParamType " _ret = new AIFloat3(" paNa ");" "\n";
+				sub("(, )?float\\[\\] " paNa, "", params);
+			} else if (match(paNa, /_colorS3/)) {
+				retParamType = "java.awt.Color";
+				conversionCode_pre  = conversionCode_pre  "\t\t" "short[] " paNa " = new short[3];" "\n";
+				conversionCode_post = conversionCode_post "\t\t" retParamType " _ret = Util.toShort3Array(" paNa ");" "\n";
+				sub("(, )?short\\[\\] " paNa, "", params);
+			} else {
+				print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);
+				exit(-1);
+			}
+#print(paNa);
+		}
 	}
+
+	#if (memName == "handleCommand") {
+	#	sub(/int commandTopic\, Pointer commandData/, "AICommand command", params);
+	#	sub(/commandTopic\, commandData/, "command.getTopic(), command.getPointer()", innerParams);
+	#}
 
 	isArraySize = part_isArraySize(fullName_m);
 	if (isArraySize) {
@@ -789,6 +835,9 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		} else if (!isVoid_m) {
 			print(indent_m retType " _ret;") >> outFile_m;
 		}
+		if (conversionCode_pre != "") {
+			print(conversionCode_pre) >> outFile_m;
+		}
 		if (hasRetParam) {
 			print("") >> outFile_m;
 			print(indent_m retParamType " " retParamName " = new float[3];") >> outFile_m;
@@ -839,12 +888,16 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		} else {
 			print(indent_m condRet myWrapper "." fullName_m "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
 		}
+		if (conversionCode_post != "") {
+			print(conversionCode_post) >> outFile_m;
+		}
 		if (hasRetParam) {
-			if (isBuffered_m) {
-				print(indent_m "_ret = new AIFloat3(" retParamName ");") >> outFile_m;
-			} else {
-				print(indent_m "return new AIFloat3(" retParamName ");") >> outFile_m;
-			}
+			#if (isBuffered_m) {
+			#	print(indent_m "_ret = new AIFloat3(" retParamName ");") >> outFile_m;
+			#} else {
+			#	print(indent_m "return new AIFloat3(" retParamName ");") >> outFile_m;
+			#}
+			print(indent_m "return _ret;") >> outFile_m;
 		}
 		if (isBuffered_m) {
 			print(indent_m "_buffer_" memName " = _ret;") >> outFile_m;
@@ -930,10 +983,12 @@ function wrappFunctionDef(funcDef, commentEolTot) {
 	sub(/.*[ \t]+/, "", fullName);
 
 	retType = funcParts[1];
+	sub(/public native/, "", retType);
 	sub(fullName, "", retType);
 	retType = trim(retType);
 
 	params = funcParts[2];
+	sub(/^int _teamId(, )?/, "", params);
 
 	wrappFunctionPlusMeta(retType, fullName, params, commentEolTot);
 }
