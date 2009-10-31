@@ -286,7 +286,6 @@ static bool MultisampleVerify(void)
  */
 bool SpringApp::InitWindow(const char* title)
 {
-	ScopedOnceTimer timer("SpringApp::InitWindow()");
 	unsigned int sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_TIMER;
 #ifdef WIN32
 	// the crash reporter should be catching the errors
