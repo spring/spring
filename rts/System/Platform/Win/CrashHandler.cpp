@@ -15,6 +15,8 @@
 #include "ConfigHandler.h"
 #include <boost/thread/thread.hpp>
 
+#define BUFFER_SIZE 2048
+
 #if defined(USE_GML) && GML_ENABLE_SIM
 extern volatile int gmlMultiThreadSim;
 #endif
@@ -92,7 +94,6 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		thread = GetCurrentThread();
 	}
 	else {
-		// FIXME: The current thread may deadlock with the suspended thread during stack dumping
 		SuspendThread(hThread);
 		suspended = TRUE;
 		memset(&c, 0, sizeof(CONTEXT));
@@ -114,6 +115,8 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 	sf.AddrFrame.Mode = AddrModeFlat;
 
 	process = GetCurrentProcess();
+
+	char *printstrings = (char *)GlobalAlloc(GMEM_FIXED, 0); // use globalalloc to reduce risk for allocator related deadlock
 
 	while(1) {
 		more = StackWalk(
@@ -142,18 +145,28 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 		pSym->SizeOfStruct = sizeof(IMAGEHLP_SYMBOL);
 		pSym->MaxNameLength = MAX_PATH;
 
+		char *printstringsnew = (char *)GlobalAlloc(GMEM_FIXED, (count + 1) * BUFFER_SIZE);
+		memcpy(printstringsnew, printstrings, count * BUFFER_SIZE);
+		GlobalFree(printstrings);
+		printstrings = printstringsnew;
+
 		if(SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym)) {
 			// This is the code path taken on VC if debugging syms are found.
-			PRINT("(%d) %s(%s+%#0x) [0x%08X]\n", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s(%s+%#0x) [0x%08X]", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
 		} else {
 			// This is the code path taken on MinGW, and VC if no debugging syms are found.
-			PRINT("(%d) %s [0x%08X]\n", count, modname, sf.AddrPC.Offset);
+			SNPRINTF(printstrings + count * BUFFER_SIZE, BUFFER_SIZE, "(%d) %s [0x%08X]", count, modname, sf.AddrPC.Offset);
 		}
 		++count;
 	}
 
 	if(suspended)
 		ResumeThread(hThread);
+
+	for(int i = 0; i < count; ++i)
+		PRINT("%s", printstrings + i * BUFFER_SIZE);
+
+	GlobalFree(printstrings);
 
 	GlobalFree(pSym);
 }
@@ -162,13 +175,13 @@ static void Stacktrace(LPEXCEPTION_POINTERS e, HANDLE hThread = INVALID_HANDLE_V
 #if _MSC_VER >= 1500
 static BOOL CALLBACK EnumModules(PCSTR moduleName, ULONG baseOfDll, PVOID userContext)
 {
-	PRINT("0x%08x\t%s\n", baseOfDll, moduleName);
+	PRINT("0x%08x\t%s", baseOfDll, moduleName);
 	return TRUE;
 }
 #else
 static BOOL CALLBACK EnumModules(LPSTR moduleName, DWORD baseOfDll, PVOID userContext)
 {
-	PRINT("0x%08x\t%s\n", baseOfDll, moduleName);
+	PRINT("0x%08x\t%s", baseOfDll, moduleName);
 	return TRUE;
 }
 #endif
@@ -187,15 +200,15 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 	SymInitialize(GetCurrentProcess(), ".", TRUE);
 
 	// Record exception info.
-	PRINT("Exception: %s (0x%08x)\n", ExceptionName(e->ExceptionRecord->ExceptionCode), e->ExceptionRecord->ExceptionCode);
-	PRINT("Exception Address: 0x%08x\n", e->ExceptionRecord->ExceptionAddress);
+	PRINT("Exception: %s (0x%08x)", ExceptionName(e->ExceptionRecord->ExceptionCode), e->ExceptionRecord->ExceptionCode);
+	PRINT("Exception Address: 0x%08x", e->ExceptionRecord->ExceptionAddress);
 
 	// Record list of loaded DLLs.
-	PRINT("DLL information:\n");
+	PRINT("DLL information:");
 	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
 
 	// Record stacktrace.
-	PRINT("Stacktrace:\n");
+	PRINT("Stacktrace:");
 	Stacktrace(e);
 
 	// Unintialize IMAGEHLP.DLL
@@ -238,19 +251,19 @@ void HangHandler()
 	SymInitialize(GetCurrentProcess(), ".", TRUE);
 
 	// Record list of loaded DLLs.
-	PRINT("DLL information:\n");
+	PRINT("DLL information:");
 	SymEnumerateModules(GetCurrentProcess(), EnumModules, NULL);
 
 
 	if(drawthread != INVALID_HANDLE_VALUE) {
 		// Record stacktrace.
-		PRINT("Stacktrace:\n");
+		PRINT("Stacktrace:");
 		Stacktrace(NULL, drawthread);
 	}
 
 #if defined(USE_GML) && GML_ENABLE_SIM
 	if(gmlMultiThreadSim && simthread != INVALID_HANDLE_VALUE) {
-		PRINT("Stacktrace (sim):\n");
+		PRINT("Stacktrace (sim):");
 		Stacktrace(NULL, simthread);
 	}
 #endif
