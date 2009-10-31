@@ -43,9 +43,7 @@ CR_REG_METADATA(CAttackHandler, (
 
 
 
-CAttackHandler::CAttackHandler(AIClasses* ai) {
-	this->ai = ai;
-
+CAttackHandler::CAttackHandler(AIClasses* aic): ai(aic) {
 	if (ai) {
 		// setting a position to the middle of the map
 		float mapWidth = ai->cb->GetMapWidth() * 8.0f;
@@ -558,6 +556,7 @@ void CAttackHandler::AirAttack(int currentFrame) {
 	int bestTargetID = -1;
 	float bestTargetCost = -1.0f;
 
+	// TODO: if enemy has antinuke and we have nuke, etc
 	for (int i = 0; i < numEnemies; i++) {
 		int enemyID = ai->unitIDs[i];
 		const UnitDef* udef = (enemyID >= 0)? ai->ccb->GetUnitDef(enemyID): 0;
@@ -633,12 +632,12 @@ void CAttackHandler::AirPatrol(int currentFrame) {
 
 
 void CAttackHandler::UpdateAir(int currentFrame) {
-	if (armedAirUnits.size() == 0)
-		return;
+	airIsAttacking = (airIsAttacking && !armedAirUnits.empty());
 
 	if (airIsAttacking) {
 		if (airTarget == -1) {
-			// we are attacking an invalid target
+			// we are attacking an invalid target, or
+			// have no more attack-capable planes left
 			airIsAttacking = false;
 		} else {
 			// if we are attacking but our target is dead
@@ -657,12 +656,7 @@ void CAttackHandler::UpdateAir(int currentFrame) {
 			AirAttack(currentFrame);
 		} else {
 			// return to base
-			airIsAttacking = false;
 			airTarget = -1;
-
-			if (!airPatrolOrdersGiven) {
-				AirPatrol(currentFrame);
-			}
 		}
 	}
 
