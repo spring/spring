@@ -1030,7 +1030,7 @@ void CBuilderCAI::ExecuteFight(Command& c)
 		return;
 	}
 	if (owner->unitDef->canReclaim && // Priority 3: Reclaim / reclaim non resurrectable (optional) / reclaim enemy units (optional)
-	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, false, false, (c.options & ALT_KEY), (c.options & META_KEY), (c.options & ALT_KEY))) {
+	    FindReclaimTargetAndReclaim(curPosOnLine, 300, c.options, false, true, (c.options & ALT_KEY), (c.options & META_KEY), (c.options & ALT_KEY))) {
 		tempOrder = true;
 		inCommand = false;
 		if (lastPC3 != gs->frameNum) {  //avoid infinite loops
