@@ -312,20 +312,22 @@ function convertCToJNIType(cType__common) {
 
 	# remove some stuff we do not need and cleanup
 	gsub(/const/, "", jniType__common);
-	sub(/unsigned/, "", jniType__common);
+	sub(/unsigned int/, "int", jniType__common);
+	sub(/unsigned short/, "short", jniType__common);
 	gsub(/[ \t]+\*/, "* ", jniType__common);
 	jniType__common = trim(jniType__common);
 
 	isComplex__common = 0;
-	isComplex__common += sub(/char\*/,  "jstring",   jniType__common);
+	isComplex__common += sub(/^char\*/,  "jstring",   jniType__common);
 
 	isPrimitive__common = 0;
-	isPrimitive__common += sub(/bool/,  "jboolean", jniType__common);
-	isPrimitive__common += sub(/byte/,  "jbyte",    jniType__common);
-	isPrimitive__common += sub(/char/,  "jchar",    jniType__common);
-	isPrimitive__common += sub(/short/, "jshort",   jniType__common);
-	isPrimitive__common += sub(/int/,   "jint",     jniType__common);
-	isPrimitive__common += sub(/float/, "jfloat",   jniType__common);
+	isPrimitive__common += sub(/bool/,          "jboolean", jniType__common);
+	isPrimitive__common += sub(/byte/,          "jbyte",    jniType__common);
+	isPrimitive__common += sub(/unsigned char/, "jbyte",    jniType__common);
+	isPrimitive__common += sub(/^char/,         "jchar",    jniType__common);
+	isPrimitive__common += sub(/short/,         "jshort",   jniType__common);
+	isPrimitive__common += sub(/int/,           "jint",     jniType__common);
+	isPrimitive__common += sub(/float/,         "jfloat",   jniType__common);
 	#isPrimitive__common += sub(/double/, "jdouble", jniType__common);
 
 	# convert possible array length specifiers ("[]" or "[2]")
@@ -398,12 +400,13 @@ function convertCToJNAType(cType__common) {
 	jnaType__common = trim(cType__common);
 
 	sub(/const/, "", jnaType__common);
-	sub(/unsigned/, "", jnaType__common);
+	sub(/unsigned int/, "int", jnaType__common);
+	sub(/unsigned short/, "short", jnaType__common);
 	gsub(/[ \t]+\*/, "* ", jnaType__common);
 
 	isComplex__common = 0;
 	isComplex__common += sub(/char\*\*/, "Pointer", jnaType__common);
-	isComplex__common += sub(/char\*( const)?/, "String", jnaType__common);
+	isComplex__common += sub(/^char\*( const)?/, "String", jnaType__common);
 	isComplex__common += sub(/struct SAIFloat3\*/, "AIFloat3[]", jnaType__common);
 	isComplex__common += sub(/struct SAIFloat3/, "AIFloat3", jnaType__common);
 	isComplex__common += sub(/struct SSkirmishAICallback(\*)?/, "AICallback", jnaType__common);
@@ -411,7 +414,7 @@ function convertCToJNAType(cType__common) {
 
 	isPrimitive__common = 0;
 	isPrimitive__common += sub(/bool/, "boolean", jnaType__common);
-	isPrimitive__common += sub(/char/, "byte", jnaType__common);
+	isPrimitive__common += sub(/(unsigned )?char/, "byte", jnaType__common);
 	#isPrimitive__common += sub(/wchar_t/, "char", jnaType__common);
 	isPrimitive__common += sub(/short/, "short", jnaType__common);
 	isPrimitive__common += sub(/int/, "int", jnaType__common);
