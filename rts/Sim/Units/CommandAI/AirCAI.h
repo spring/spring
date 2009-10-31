@@ -42,12 +42,12 @@ public:
 	int lastPC1;
 	int lastPC2;
 
+	bool IsValidTarget(const CUnit* enemy) const;
+
 protected:
 	void PushOrUpdateReturnFight() {
 		CCommandAI::PushOrUpdateReturnFight(commandPos1, commandPos2);
 	}
-	
-	bool IsValidTarget(const CUnit* enemy) const;
 };
 
 #endif // __AIR_CAI_H__
