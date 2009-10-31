@@ -354,6 +354,7 @@ void CEventHandler::Update()
 		return;
 
 	GML_RECMUTEX_LOCK(unit); // Update
+	GML_RECMUTEX_LOCK(feat); // Update
 	GML_RECMUTEX_LOCK(lua); // Update
 
 	for (int i = 0; i < count; i++) {
@@ -382,6 +383,7 @@ void CEventHandler::ViewResize()
     }                                             \
                                                   \
     GML_RECMUTEX_LOCK(unit); /* DRAW_CALLIN */    \
+    GML_RECMUTEX_LOCK(feat); /* DRAW_CALLIN */    \
     GML_RECMUTEX_LOCK(lua); /* DRAW_CALLIN */     \
                                                   \
     LuaOpenGL::EnableDraw ## name ();             \

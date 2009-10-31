@@ -2235,6 +2235,10 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 			c.id=commands[tempInCommand].id;
 
 			if (mouse->buttons[button].movement < 4) {
+
+				GML_RECMUTEX_LOCK(unit); // GetCommand
+				GML_RECMUTEX_LOCK(feat); // GetCommand
+
 				const CUnit* unit = NULL;
 				const CFeature* feature = NULL;
 				float dist2 = helper->GuiTraceRay(camerapos,mousedir,gu->viewRange*1.4f,unit,true);
