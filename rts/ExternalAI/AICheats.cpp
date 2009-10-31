@@ -114,7 +114,10 @@ int CAICheats::GetEnemyUnits(int* unitIds, int unitIds_max)
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -136,7 +139,10 @@ int CAICheats::GetEnemyUnits(int* unitIds, const float3& pos, float radius, int 
 
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(ai->GetTeamId()))) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -157,7 +163,10 @@ int CAICheats::GetNeutralUnits(int* unitIds, int unitIds_max)
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {
-			unitIds[a++] = u->id;
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
+			}
+			a++;
 			if (a >= unitIds_max) {
 				break;
 			}
@@ -177,7 +186,10 @@ int CAICheats::GetNeutralUnits(int* unitIds, const float3& pos, float radius, in
 		CUnit* u = *ui;
 
 		if (IsUnitNeutral(u->id)) {
-			unitIds[a++] = u->id;
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
+			}
+			a++;
 			if (a >= unitIds_max) {
 				break;
 			}

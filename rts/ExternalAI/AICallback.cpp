@@ -787,7 +787,10 @@ int CAICallback::GetEnemyUnits(int* unitIds, int unitIds_max)
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team)) &&
 		    (u->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -811,7 +814,10 @@ int CAICallback::GetEnemyUnitsInRadarAndLos(int* unitIds, int unitIds_max)
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))
 				&& (u->losStatus[teamHandler->AllyTeam(team)] & (LOS_INLOS | LOS_INRADAR))) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -836,7 +842,10 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 		if (!teamHandler->Ally(u->allyteam, teamHandler->AllyTeam(team))
 				&& (u->losStatus[teamHandler->AllyTeam(team)] & LOS_INLOS)) {
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -848,7 +857,7 @@ int CAICallback::GetEnemyUnits(int* unitIds, const float3& pos, float radius,
 }
 
 
-int CAICallback::GetFriendlyUnits(int *unitIds, int unitIds_max)
+int CAICallback::GetFriendlyUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	int a = 0;
@@ -861,7 +870,10 @@ int CAICallback::GetFriendlyUnits(int *unitIds, int unitIds_max)
 			// IsUnitNeutral does a LOS check, but inconsequential
 			// since we can always see friendly units anyway
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -872,7 +884,7 @@ int CAICallback::GetFriendlyUnits(int *unitIds, int unitIds_max)
 	return a;
 }
 
-int CAICallback::GetFriendlyUnits(int *unitIds, const float3& pos, float radius,
+int CAICallback::GetFriendlyUnits(int* unitIds, const float3& pos, float radius,
 		int unitIds_max)
 {
 	verify();
@@ -887,7 +899,10 @@ int CAICallback::GetFriendlyUnits(int *unitIds, const float3& pos, float radius,
 			// IsUnitNeutral does a LOS check, but inconsequential
 			// since we can always see friendly units anyway
 			if (!IsUnitNeutral(u->id)) {
-				unitIds[a++] = u->id;
+				if (unitIds != NULL) {
+					unitIds[a] = u->id;
+				}
+				a++;
 				if (a >= unitIds_max) {
 					break;
 				}
@@ -909,7 +924,10 @@ int CAICallback::GetNeutralUnits(int* unitIds, int unitIds_max)
 
 		// IsUnitNeutral does the LOS check
 		if (IsUnitNeutral(u->id)) {
-			unitIds[a++] = u->id;
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
+			}
+			a++;
 			if (a >= unitIds_max) {
 				break;
 			}
@@ -931,7 +949,10 @@ int CAICallback::GetNeutralUnits(int* unitIds, const float3& pos, float radius, 
 
 		// IsUnitNeutral does the LOS check
 		if (IsUnitNeutral(u->id)) {
-			unitIds[a++] = u->id;
+			if (unitIds != NULL) {
+				unitIds[a] = u->id;
+			}
+			a++;
 			if (a >= unitIds_max) {
 				break;
 			}
@@ -1636,7 +1657,7 @@ bool CAICallback::ReadFile (const char *filename, const char* modes,
 
 
 // Additions to the interface by Alik
-int CAICallback::GetSelectedUnits(int *unitIds, int unitIds_max)
+int CAICallback::GetSelectedUnits(int* unitIds, int unitIds_max)
 {
 	verify();
 	int a = 0;
@@ -1647,7 +1668,10 @@ int CAICallback::GetSelectedUnits(int *unitIds, int unitIds_max)
 	if (gu->myAllyTeam == teamHandler->AllyTeam(team)) {
 		for (CUnitSet::iterator ui = selectedUnits.selectedUnits.begin();
 				ui != selectedUnits.selectedUnits.end(); ++ui) {
-			unitIds[a++] = (*ui)->id;
+			if (unitIds != NULL) {
+				unitIds[a] = (*ui)->id;
+			}
+			a++;
 			if (a >= unitIds_max) {
 				break;
 			}
