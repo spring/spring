@@ -28,7 +28,7 @@
 
 class CAICallback;
 struct SSkirmishAICallback;
-struct CSkirmishAI;
+class CSkirmishAI;
 struct Command;
 class float3;
 
