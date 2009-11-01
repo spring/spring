@@ -115,7 +115,7 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 
 const char* aiexport_getDataDir(bool writeableAndCreate, const char* const relPath) {
 
-	char* absPath = firstCallback->Clb_DataDirs_allocatePath(firstTeamId, relPath, writeableAndCreate, writeableAndCreate, true, false);
+	char* absPath = firstCallback->DataDirs_allocatePath(firstTeamId, relPath, writeableAndCreate, writeableAndCreate, true, false);
 
 	if (absPath == NULL) {
 		absPath = NULL;
@@ -124,9 +124,9 @@ const char* aiexport_getDataDir(bool writeableAndCreate, const char* const relPa
 	return absPath;
 }
 const char* aiexport_getVersion() {
-	return firstCallback->Clb_SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_VERSION);
+	return firstCallback->SkirmishAI_Info_getValueByKey(firstTeamId, SKIRMISH_AI_PROPERTY_VERSION);
 }
 
 const char* aiexport_getMyOption(int teamId, const char* key) {
-	return teamId_callback[teamId]->Clb_SkirmishAI_OptionValues_getValueByKey(teamId, key);
+	return teamId_callback[teamId]->SkirmishAI_OptionValues_getValueByKey(teamId, key);
 }
