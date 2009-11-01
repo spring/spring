@@ -109,5 +109,5 @@ EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
 ///////////////////////////////////////////////////////
 
 const char* aiexport_getVersion(int teamId) {
-	return teamId_callback[teamId]->Clb_SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_VERSION);
+	return teamId_callback[teamId]->SkirmishAI_Info_getValueByKey(teamId, SKIRMISH_AI_PROPERTY_VERSION);
 }
