@@ -172,6 +172,8 @@ enum UnitCommandOptions {
 		+ sizeof(struct SSetLastPosMessageCommand) \
 		+ sizeof(struct SSendResourcesCommand) \
 		+ sizeof(struct SSendUnitsCommand) \
+		+ sizeof(struct SCreateGroupCommand) \
+		+ sizeof(struct SEraseGroupCommand) \
 		+ sizeof(struct SInitPathCommand) \
 		+ sizeof(struct SGetApproximateLengthPathCommand) \
 		+ sizeof(struct SGetNextWaypointPathCommand) \
@@ -313,14 +315,14 @@ struct SSendUnitsCommand {
 	int ret_sentUnits;
 }; // COMMAND_SEND_UNITS Economy_sendUnits resourceId->Resource unitIds0numUnitIds->Unit receivingTeam=Team
 
-// /// Creates a group and returns the id it was given, returns -1 on failure
-// struct SCreateGroupCommand {
-// 	int ret_groupId;
-// }; // COMMAND_GROUP_CREATE Group_create
-// /// Erases a specified group
-// struct SEraseGroupCommand {
-// 	int groupId;
-// }; // COMMAND_GROUP_ERASE Group_erase
+/// Creates a group and returns the id it was given, returns -1 on failure
+struct SCreateGroupCommand {
+	int ret_groupId;
+}; // COMMAND_GROUP_CREATE Group_create
+/// Erases a specified group
+struct SEraseGroupCommand {
+	int groupId;
+}; // COMMAND_GROUP_ERASE Group_erase
 
 /**
  * The following functions allow the AI to use the built-in path-finder.

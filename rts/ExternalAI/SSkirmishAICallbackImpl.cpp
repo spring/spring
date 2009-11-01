@@ -367,7 +367,6 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			break;
 		}
 
-/*
 		case COMMAND_GROUP_CREATE:
 		{
 			SCreateGroupCommand* cmd = (SCreateGroupCommand*) commandData;
@@ -380,6 +379,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 			clb->EraseGroup(cmd->groupId);
 			break;
 		}
+/*
 		case COMMAND_GROUP_ADD_UNIT:
 		{
 			SAddUnitToGroupCommand* cmd = (SAddUnitToGroupCommand*) commandData;
