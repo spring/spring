@@ -68,9 +68,9 @@ function doWrapp(funcIndex_dw) {
 			return doWrapp(funcIndex_dw + 1);
 		}
 
-		if (fullName_dw == "Clb_Engine_handleCommand") {
+		if (fullName_dw == "Engine_handleCommand") {
 			doWrapp_dw = 0;
-		} else if (fullName_dw == "Clb_Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions") {
+		} else if (fullName_dw == "Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions") {
 			# only temporarily
 			doWrapp_dw = 0;
 		}
@@ -181,8 +181,7 @@ function printNativeFP2F() {
 			printFunctionComment_Common(outFile_nh, funcDocComment, i, "");
 			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ");") >> outFile_nh;
 
-			outName = fullName;
-			sub(/Clb_/, bridgePrefix, outName);
+			outName = bridgePrefix fullName;
 
 			if (commentEol != "") {
 				commentEol = " // " commentEol;
