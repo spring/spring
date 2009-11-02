@@ -76,9 +76,9 @@ function doWrapp(ind_cmdStructs_dw) {
 
 	doWrp_dw = 1;
 
-	if (match(cmdsName[ind_cmdStructs_dw], /SharedMemArea/) {
+	if (match(cmdsName[ind_cmdStructs_dw], /SharedMemArea/)) {
 		doWrp_dw = 0;
-	} else if (match(cmdsName[ind_cmdStructs_dw], /^SCallLuaRulesCommand$/) {
+	} else if (match(cmdsName[ind_cmdStructs_dw], /^SCallLuaRulesCommand$/)) {
 		doWrp_dw = 0;
 	}
 
@@ -116,7 +116,6 @@ function printNativeFP2F() {
 		metaInf    = cmdsMetaInfo[cmdIndex];
 		fullName   = metaInf;
 		sub(/ .*$/, "", fullName);
-		fullName   = "Clb_" fullName;
 		sub(/^[^ \t]*/, "", metaInf);
 
 		hasRetType = 0;
@@ -168,8 +167,7 @@ function printNativeFP2F() {
 			# print the doc comment for this command/function
 			printFunctionComment_Common(outFile_nh, cmdsDocComment, cmdIndex, "");
 
-			outName = fullName;
-			sub(/Clb_/, bridgePrefix, outName);
+			outName = bridgePrefix fullName;
 
 			commentEol = "";
 			if (metaInf != "") {
@@ -196,7 +194,7 @@ function printNativeFP2F() {
 			}
 			print("") >> outFile_nc;
 
-			print("\t" "int _ret = id_clb[_teamId]->Clb_Engine_handleCommand(_teamId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
+			print("\t" "int _ret = id_clb[_teamId]->Engine_handleCommand(_teamId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
 			print("") >> outFile_nc;
 
 			if (retParam != "") {

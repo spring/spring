@@ -128,7 +128,7 @@ function printNativeJNI() {
 
 		if (doWrapp(i)) {
 			javaName = fullName;
-			sub("^" bridgePrefix, "Clb_", javaName);
+			sub("^" bridgePrefix, "", javaName);
 			jni_funcName         = "Java_" myPkgC "_" myInterface "_" javaName;
 			jni_retType          = convertCToJNIType(retType);
 			jni_paramList        = "";
@@ -302,7 +302,7 @@ function printClass() {
 			paramList = funcParamListJ[i];
 			metaInf   = funcMetaInf[i];
 
-			sub("^" bridgePrefix, "Clb_", fullName);
+			sub("^" bridgePrefix, "", fullName);
 
 			metaInfCommand = "";
 			if (metaInf != "") {
