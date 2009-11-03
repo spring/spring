@@ -29,6 +29,10 @@
 #include "Util.h"
 #include "GlobalUnsynced.h"
 
+
+#define MAX_CLOSE_IN_RETRY_TICKS 30
+
+
 CR_BIND_DERIVED(CMobileCAI ,CCommandAI , );
 
 CR_REG_METADATA(CMobileCAI, (
@@ -604,7 +608,10 @@ void CMobileCAI::ExecuteFight(Command &c)
 bool CMobileCAI::IsValidTarget(const CUnit* enemy) const {
 	return enemy && (owner->hasUWWeapons || !enemy->isUnderWater)
 		&& !(owner->unitDef->noChaseCategory & enemy->category)
-		&& !enemy->neutral;
+		&& !enemy->neutral
+		// on "Hold pos", a target can not be valid if there exists no line of fire to it.
+		&& (owner->moveState || owner->weapons.empty() ||
+				owner->weapons.front()->TryTargetRotate(const_cast<CUnit*>(enemy), false));
 }
 
 /**
@@ -712,9 +719,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				float3 fix = targetUnit->pos + owner->posErrorVector * 128;
 				float3 diff = float3(fix - owner->pos).Normalize();
 
-				if (owner->moveState > 0 || !tempOrder) {
-					SetGoal(fix - diff * targetUnit->radius, owner->pos);
-				}
+				SetGoal(fix - diff * targetUnit->radius, owner->pos);
 
 				orderTarget = targetUnit;
 				AddDeathDependence(orderTarget);
@@ -778,7 +783,7 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			edgeFactor = fabs(w->targetBorder);
 		}
 
-		double diffLength2d = diff.Length2D();
+		float diffLength2d = diff.Length2D();
 
 		// if w->AttackUnit() returned true then we are already
 		// in range with our biggest weapon so stop moving
@@ -804,6 +809,15 @@ void CMobileCAI::ExecuteAttack(Command &c)
 			}
 			owner->AttackUnit(orderTarget, c.id == CMD_DGUN);
 		}
+
+		// if we're on hold pos in a temporary order, then none of the close-in
+		// code below should run, and the attack command is cancelled.
+		else if (tempOrder && owner->moveState == 0) {
+			StopMove();
+			FinishCommand();
+			return;
+		}
+
 		// if ((our movetype has type TAAirMoveType and length of 2D vector from us to target
 		// less than 90% of our maximum range) OR squared length of 2D vector from us to target
 		// less than 1024) then we are close enough
@@ -815,8 +829,6 @@ void CMobileCAI::ExecuteAttack(Command &c)
 				owner->moveType->KeepPointingTo(orderTarget->midPos,
 						std::min((float) owner->losRadius * loshandler->losDiv,
 							owner->maxRange * 0.9f), true);
-			} else if(tempOrder && owner->moveState == 0){
-				SetGoal(lastUserGoal, owner->pos);
 			}
 
 			// if (((first weapon range minus first weapon length greater than distance to target)
