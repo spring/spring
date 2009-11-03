@@ -29,7 +29,6 @@
 extern "C" {
 #endif
 
-#include "SAIFloat3.h"
 #include "SSkirmishAICallback.h"
 
 /**
@@ -200,7 +199,7 @@ struct SUnitDamagedEvent {
 	int unit;
 	int attacker;
 	float damage;
-	struct SAIFloat3 dir;
+	float* dir_posF3;
 	int weaponDefId;
 	bool paralyzer;
 }; // EVENT_UNIT_DAMAGED
@@ -280,7 +279,7 @@ struct SEnemyDamagedEvent {
 	int enemy;
 	int attacker;
 	float damage;
-	struct SAIFloat3 dir;
+	float* dir_posF3;
 	int weaponDefId;
 	bool paralyzer;
 }; // EVENT_ENEMY_DAMAGED
@@ -339,7 +338,7 @@ struct SCommandFinishedEvent {
  * building in Balanced Annihilation.
  */
 struct SSeismicPingEvent {
-	struct SAIFloat3 pos;
+	float* pos_posF3;
 	float strength;
 }; // EVENT_SEISMIC_PING
 
