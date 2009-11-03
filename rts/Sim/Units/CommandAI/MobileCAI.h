@@ -79,6 +79,4 @@ protected:
 	void CalculateCancelDistance();
 };
 
-#define MAX_CLOSE_IN_RETRY_TICKS 30
-
 #endif /* MOBILECAI_H */
