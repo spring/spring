@@ -305,14 +305,15 @@ struct SWeaponFiredEvent {
 /**
  * This AI event is sent when a user gives a command to one or multiple units
  * belonging to a team controlled by the AI.
+ * For more info about the given commands, please use the
+ * Unit.getCurrentCommands() method of the callback.
  */
 struct SPlayerCommandEvent {
 	int* unitIds;
-	int numUnitIds;
-	/// see AISCommands.h COMMAND_* defines
-	int commandTopic;
-	/// see AISCommands.h S*Command structs
-	void* commandData;
+	int unitIds_size;
+	/// see COMMAND_* defines in AISCommands.h
+	int commandTopicId;
+	/// Id of the player that issued the command
 	int playerId;
 }; // EVENT_PLAYER_COMMAND
 
