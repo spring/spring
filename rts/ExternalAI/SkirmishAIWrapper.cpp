@@ -299,8 +299,10 @@ void CSkirmishAIWrapper::UnitDamaged(int unitId, int attackerUnitId,
 		float damage, const float3& dir, int weaponDefId, bool paralyzer) {
 
 	SUnitDamagedEvent evtData = {unitId, attackerUnitId, damage,
-			dir.toSAIFloat3(), weaponDefId, paralyzer};
+			new float[3], weaponDefId, paralyzer};
+	dir.copyInto(evtData.dir_posF3);
 	ai->HandleEvent(EVENT_UNIT_DAMAGED, &evtData);
+	delete [] evtData.dir_posF3;
 }
 
 void CSkirmishAIWrapper::UnitMoveFailed(int unitId) {
@@ -347,8 +349,10 @@ void CSkirmishAIWrapper::EnemyDamaged(int enemyUnitId, int attackerUnitId,
 		float damage, const float3& dir, int weaponDefId, bool paralyzer) {
 
 	SEnemyDamagedEvent evtData = {enemyUnitId, attackerUnitId, damage,
-			dir.toSAIFloat3(), weaponDefId, paralyzer};
+			new float[3], weaponDefId, paralyzer};
+	dir.copyInto(evtData.dir_posF3);
 	ai->HandleEvent(EVENT_ENEMY_DAMAGED, &evtData);
+	delete [] evtData.dir_posF3;
 }
 
 void CSkirmishAIWrapper::Update(int frame) {
@@ -396,8 +400,10 @@ void CSkirmishAIWrapper::CommandFinished(int unitId, int commandTopicId) {
 void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId,
 		const float3& pos, float strength) {
 
-	SSeismicPingEvent evtData = {pos.toSAIFloat3(), strength};
+	SSeismicPingEvent evtData = {new float[3], strength};
+	pos.copyInto(evtData.pos_posF3);
 	ai->HandleEvent(EVENT_SEISMIC_PING, &evtData);
+	delete [] evtData.pos_posF3;
 }
 
 
