@@ -537,11 +537,35 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	net->loading = false;
 	thread.join();
-#ifdef USE_GML
-	logOutput.Print("Spring %s MT (%d threads)",SpringVersion::GetFull().c_str(), gmlThreadCount);
-#else
-	logOutput.Print("Spring %s",SpringVersion::GetFull().c_str());
+	std::string addVersInfo = "";
+#if defined DEBUG
+	addVersInfo += " Debug";
 #endif
+#if defined REPLACE_SYSTEM_ALLOCATOR
+	addVersInfo += " nedmalloc";
+#endif
+#if defined USE_MMGR
+	addVersInfo += " mmgr";
+#endif
+#if defined USE_GML
+	addVersInfo += " MT (" + IntToString(gmlThreadCount) +  " threads)";
+#endif
+#if defined USE_GML_SIM
+	addVersInfo += " MT-Sim";
+#endif
+#if defined USE_GML_DEBUG
+	addVersInfo += " MT-Debug";
+#endif
+#if defined TRACE_SYNC
+	addVersInfo += " Sync-Trace";
+#endif
+#if defined SYNCDEBUG
+	addVersInfo += " Sync-Debug";
+#endif
+#if !defined SYNCCHECK
+	addVersInfo += " Sync-Check-Disabled";
+#endif
+	logOutput.Print("Spring %s%s", SpringVersion::GetFull().c_str(), addVersInfo.c_str());
 	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
 	//sending your playername to the server indicates that you are finished loading
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
