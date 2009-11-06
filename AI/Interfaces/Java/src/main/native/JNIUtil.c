@@ -17,17 +17,7 @@
 
 #include "JNIUtil.h"
 
-//#include "InterfaceDefines.h"
-//#include "JvmLocater.h"
-#include "CUtils/Util.h"
 #include "CUtils/SimpleLog.h"
-//#include "CUtils/SharedLibrary.h"
-
-//#include "ExternalAI/Interface/aidefines.h"
-
-#include <string.h>	// strlen(), strcat(), strcpy()
-#include <stdlib.h>	// malloc(), calloc(), free()
-//#include <assert.h>	// assert()
 
 
 // JNI global vars
@@ -37,16 +27,6 @@ static jmethodID g_m_url_ctor = NULL;
 static jclass g_cls_urlClassLoader = NULL;
 static jmethodID g_m_urlClassLoader_ctor = NULL;
 static jmethodID g_m_urlClassLoader_findClass = NULL;
-
-
-/// Sets the FPU state to how spring likes it
-void jniUtil_establishSpringEnv() {
-
-	//(*g_jvm)->DetachCurrentThread(g_jvm);
-	util_resetEngineEnv();
-}
-/// The JVM sets the environment it wants automatically, so this is a no-op
-void jniUtil_establishJavaEnv() {}
 
 
 bool jniUtil_checkException(JNIEnv* env, const char* const errorMsg) {
