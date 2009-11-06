@@ -711,7 +711,7 @@ void CFeatureHandler::DrawShadowPass()
 
 		DrawRaw(1, NULL);
 
-		if(unitDrawer->advFade) { // FIXME: Why does texture alpha not work with shadows on ATI?
+		if(!gu->atiHacks) { // FIXME: Why does texture alpha not work with shadows on ATI?
 			glEnable(GL_TEXTURE_2D); // Need the alpha mask for transparent features
 			glPushAttrib(GL_COLOR_BUFFER_BIT);
 			glEnable(GL_ALPHA_TEST);
@@ -721,7 +721,7 @@ void CFeatureHandler::DrawShadowPass()
 		unitDrawer->DrawQuedS3O();
 	}
 
-	if(unitDrawer->advFade) {
+	if(!gu->atiHacks) {
 		glPopAttrib();
 		glDisable(GL_TEXTURE_2D);
 	}
