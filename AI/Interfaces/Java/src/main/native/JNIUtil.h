@@ -26,11 +26,6 @@ extern "C" {
 
 #include <jni.h>
 
-/** Sets the FPU state to how spring likes it */
-void jniUtil_establishSpringEnv();
-/** The JVM sets the environment it wants automatically, so this is a no-op */
-void jniUtil_establishJavaEnv();
-
 /**
  * Handles a possible JNI/Java exception.
  * In case an exception is present, the supplied error message is written to
