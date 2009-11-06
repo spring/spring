@@ -365,87 +365,102 @@ if    (BUILD_${myName}_AIINTERFACE)
 	# for generating the source code will not work
 	file(REMOVE_RECURSE "${myGeneratedSourceDir}")
 	file(MAKE_DIRECTORY "${myNativeGeneratedSourceDir}")
-	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/event")
-	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/command")
-	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}/oo")
+	file(MAKE_DIRECTORY "${myJavaGeneratedSourceDir}/${myPkg}")
 	# needed by javac
 	file(MAKE_DIRECTORY "${myJavaBuildDir}")
 
-	# This will always be built. from CMake docu:
+	set(commonAwkScriptArgs
+		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
+		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
+		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
+		"-v" "NATIVE_GENERATED_SOURCE_DIR=${myNativeGeneratedSourceDir}"
+		"-v" "JAVA_GENERATED_SOURCE_DIR=${myJavaGeneratedSourceDir}"
+		"-f" "${commonAwkScriptsDir}/common.awk"
+		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
+		)
+
+	# A CMake Custom Target will allways be built.
+	# from CMake docu:
 	# "add_custom_target is ALWAYS CONSIDERED OUT OF DATE"
-	add_custom_target(${myGenerateTarget} ALL
-		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
+
+	# 1. Wrapp Callback (native->native)
+	add_custom_command(
+		DEPENDS
+			"${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
+			"${springAIInterfaceSourceDir}/AISCommands.h"
+		WORKING_DIRECTORY
+			"${myAwkScriptsDir}"
 		COMMAND "${AWK_COMMAND}"
-		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
-		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
-		"-f" "${myAwkScriptsDir}/jna_wrappCallback.awk"
-		"-f" "${commonAwkScriptsDir}/common.awk"
-		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
-		"${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
-		DEPENDS "${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
-		WORKING_DIRECTORY "${myAwkScriptsDir}"
-		COMMENT "  Generating Java AI Callback source files ..." VERBATIM)
+			${commonAwkScriptArgs}
+			"-f" "${myAwkScriptsDir}/native_wrappCallback.awk"
+			"${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
+		COMMAND "${AWK_COMMAND}"
+			${commonAwkScriptArgs}
+			"-f" "${myAwkScriptsDir}/native_wrappCommands.awk"
+			"${springAIInterfaceSourceDir}/AISCommands.h"
+		OUTPUT
+			"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
+			"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.c"
+		COMMENT
+			"  Generating Java AI native callback wrapper source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${myGenerateTarget} POST_BUILD
-		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
-		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
-		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
-		"-f" "${myAwkScriptsDir}/jna_wrappEvents.awk"
-		"-f" "${commonAwkScriptsDir}/common.awk"
-		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
-		"${springAIInterfaceSourceDir}/AISEvents.h"
+	# 3. Wrapp AI Callback (native-JNI->Java)
+	add_custom_command(
+		OUTPUT
+			"${myNativeGeneratedSourceDir}/CallbackJNIBridge.h"
+			"${myNativeGeneratedSourceDir}/CallbackJNIBridge.c"
+			"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
+		COMMAND "${AWK_COMMAND}"
+			${commonAwkScriptArgs}
+			"-f" "${myAwkScriptsDir}/jni_wrappCallback.awk"
+			"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
+		DEPENDS "${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
 		WORKING_DIRECTORY "${myAwkScriptsDir}"
-		COMMENT "  Generating Java AI Event source files ..." VERBATIM)
+		COMMENT "  Generating Java AI JNI callback wrapper source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${myGenerateTarget} POST_BUILD
-		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/command/*.java"
-		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
-		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
-		"-f" "${myAwkScriptsDir}/jna_wrappCommands.awk"
-		"-f" "${commonAwkScriptsDir}/common.awk"
-		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
-		"${springAIInterfaceSourceDir}/AISCommands.h"
+	# 4. Wrapp AI Events (native-JNI->Java)
+	add_custom_command(
+		OUTPUT
+			"${myNativeGeneratedSourceDir}/EventsJNIBridge.h"
+			"${myNativeGeneratedSourceDir}/EventsJNIBridge.c"
+			"${myJavaGeneratedSourceDir}/${myPkg}/AI.java"
+		COMMAND "${AWK_COMMAND}"
+			${commonAwkScriptArgs}
+			"-f" "${myAwkScriptsDir}/jni_wrappEvents.awk"
+			"${springAIInterfaceSourceDir}/AISEvents.h"
+		DEPENDS "${springAIInterfaceSourceDir}/AISEvents.h"
 		WORKING_DIRECTORY "${myAwkScriptsDir}"
-		COMMENT "  Generating Java AI Command source files ..." VERBATIM)
+		COMMENT "  Generating Java AI JNI events wrapper source files ..." VERBATIM)
 
-	add_custom_command(TARGET ${myGenerateTarget} POST_BUILD
-		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
-		#OUTPUT "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
-		COMMAND "${AWK_COMMAND}" ARGS
-		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
-		"-v" "INTERFACE_SOURCE_DIR=${myJavaSourceDir}"
-		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
-		"-f" "${myAwkScriptsDir}/java_wrappCallbackOO.awk"
-		"-f" "${commonAwkScriptsDir}/common.awk"
-		"-f" "${commonAwkScriptsDir}/commonDoc.awk"
-		"-f" "${commonAwkScriptsDir}/commonOOCallback.awk"
+	set(myNativeSources
+		"${myNativeSourceDir}/InterfaceExport.c"
+		"${myNativeSourceDir}/JavaBridge.c"
+		"${myNativeSourceDir}/JniUtil.c"
+		"${myNativeSourceDir}/JvmLocater_common.c"
+		"${myNativeSourceDir}/JvmLocater_solaris.c"
+		"${myNativeSourceDir}/JvmLocater_windows.c"
+		)
+	set(myNativeGeneratedSources
+		"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.c"
+		"${myNativeGeneratedSourceDir}/CallbackJNIBridge.c"
+		"${myNativeGeneratedSourceDir}/EventsJNIBridge.c"
+		)
+	set_source_files_properties(${myNativeGeneratedSources} PROPERTIES GENERATED TRUE)
+
+	set(myJavaSources
+		"${myJavaSourceDir}/${myPkg}/Util.java"
+		)
+	set(myJavaGeneratedSources
+		"${myJavaGeneratedSourceDir}/${myPkg}/AI.java"
+		"${myJavaGeneratedSourceDir}/${myPkg}/AbstractAI.java"
 		"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
-		WORKING_DIRECTORY "${myAwkScriptsDir}"
-		COMMENT "  Generating Java AI OO Callback source files ..." VERBATIM)
-
-	# We can not auto generate this list,
-	# as these files do not yet exist during configure stage
-	# The files in this list have to depend on all other hand-written
-	# and generated source files of the Java interface
-	set(JAVA_GENERATED_SOURCES
-		"${myJavaGeneratedSourceDir}/${myPkg}/oo/OOAICallback.java"
-		"${myJavaGeneratedSourceDir}/${myPkg}/oo/OOAIFactory.java"
-		"${myJavaGeneratedSourceDir}/${myPkg}/oo/AbstractOOAI.java")
-	set(NATIVE_GENERATED_SOURCES
-		"${myNativeGeneratedSourceDir}/FunctionPointerBridge.c")
+		"${myJavaGeneratedSourceDir}/${myPkg}/JniAICallback.java"
+		)
+	set_source_files_properties(${myJavaGeneratedSources} PROPERTIES GENERATED TRUE)
 
 
 	# Build the native part
 	# ---------------------
-	GetNativeSourcesRecursive(myNativeSources ${myNativeSourceDir} "")
-	# Create empty generated source files if none are generated yet,
-	# for CMake to find them in add_library().
-	CreateEmptyFiles(${NATIVE_GENERATED_SOURCES})
 	if    (MINGW)
 		# It is important that this is used instead of the one
 		# from the installed JDK, as the jni_md.h is in here too,
@@ -453,7 +468,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		include_directories(BEFORE ${MINGWLIBS}/include/java)
 	endif (MINGW)
 	include_directories(BEFORE "${rts}/lib/streflop" "${myNativeSourceDir}" "${myNativeGeneratedSourceDir}")
-	add_library(${myTarget} MODULE ${myNativeSources} ${NATIVE_GENERATED_SOURCES} ${ai_common_SRC} ${CUtils_SRC})
+	add_library(${myTarget} MODULE ${myNativeSources} ${myNativeGeneratedSources} ${ai_common_SRC} ${CUtils_SRC})
 	add_dependencies(${myTarget} ${myTarget}-generateClb)
 	target_link_libraries(${myTarget} streflop)
 	set_target_properties(${myTarget} PROPERTIES COMPILE_FLAGS "-DUSING_STREFLOP")
@@ -463,40 +478,37 @@ if    (BUILD_${myName}_AIINTERFACE)
 	# Build the java part
 	# -------------------
 	add_custom_command(TARGET ${myTarget} POST_BUILD
-		#OUTPUT "${myJavaBuildDir}/*.class"
-		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/*.java"
-		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
-		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/command/*.java"
-		DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
+		#OUTPUT "${myJavaBuildDir}/${myPkg}/*.class"
+		DEPENDS ${myJavaGeneratedSources}
 		COMMAND "${JAVA_COMPILE}" ARGS
-		"${JAVA_COMPILE_FLAG_CONDITIONAL}"
-		"-cp" "${myClassPath}"
-		"-d" "${myJavaBuildDir}"
-		${JAVA_GENERATED_SOURCES}
+			"${JAVA_COMPILE_FLAG_CONDITIONAL}"
+			"-cp" "${myClassPath}"
+			"-d" "${myJavaBuildDir}"
+			${myJavaSources}
+			${myJavaGeneratedSources}
 		WORKING_DIRECTORY "${myJavaGeneratedSourceDir}"
 		COMMENT "  Compiling Java sources ..." VERBATIM)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
-		#DEPENDS "${myJavaBuildDir}/*.class"
+		#DEPENDS "${myJavaBuildDir}/${myPkg}/*.class"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-		"cmf" "${myJavaSourceDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
-		"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
+			"cmf" "${myJavaSourceDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
+			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
 		COMMENT "  Creating Java interface library ${myBinJarFile} ..." VERBATIM)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
+		DEPENDS ${myJavaSources}
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-		"cf" "${myBuildDir}/${mySrcJarFile}"
-		"-C" "${myJavaSourceDir}" "${myPkgFirstPart}"
+			"cf" "${myBuildDir}/${mySrcJarFile}"
+			"-C" "${myJavaSourceDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
 		COMMENT "  Creating Java interface source archive ${mySrcJarFile} ..." VERBATIM)
 	add_custom_command(TARGET ${myTarget} POST_BUILD
-		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/event/*.java"
-		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/command/*.java"
-		#DEPENDS "${myJavaGeneratedSourceDir}/${myPkg}/oo/*.java"
+		DEPENDS ${myJavaGeneratedSources}
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-		"uf" "${myBuildDir}/${mySrcJarFile}"
-		"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
+			"uf" "${myBuildDir}/${mySrcJarFile}"
+			"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
 		COMMENT "  Updating Java interface source archive ${mySrcJarFile} with generated sources ..." VERBATIM)
 

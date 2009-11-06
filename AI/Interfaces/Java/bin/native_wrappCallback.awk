@@ -36,7 +36,7 @@ BEGIN {
 		NATIVE_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/native";
 	}
 
-	nativeBridge = "FunctionPointerBridge";
+	nativeBridge = "CallbackFunctionPointerBridge";
 	bridgePrefix = "bridged__";
 
 	retParamName  = "__retVal";
@@ -53,25 +53,18 @@ function doWrapp(funcIndex_dw) {
 
 	if (doWrapp_dw) {
 		fullName_dw = funcFullName[funcIndex_dw];
-
-		fullNameNextArray_dw = funcFullName[funcIndex_dw + 1];
-		sub(/0ARRAY1VALS0/, "0ARRAY1SIZE0", fullNameNextArray_dw);
-		if (fullNameNextArray_dw == fullName_dw) {
-			paramListJavaNext_dw = funcParamList[funcIndex_dw + 1];
-			return doWrapp(funcIndex_dw + 1);
+		metaInf_dw  = funcMetaInf[funcIndex_dw];
+		
+		if (match(metaInf_dw, /ARRAY:/)) {
+			#doWrapp_dw = 0;
 		}
-
-		fullNameNextMap_dw = funcFullName[funcIndex_dw + 1];
-		sub(/0MAP1KEYS0/, "0MAP1SIZE0", fullNameNextMap_dw);
-		if (fullNameNextMap_dw == fullName_dw) {
-			paramListJavaNext_dw = funcParamList[funcIndex_dw + 1];
-			return doWrapp(funcIndex_dw + 1);
+		if (match(metaInf_dw, /MAP:/)) {
+			#doWrapp_dw = 0;
 		}
-
-		if (fullName_dw == "Engine_handleCommand") {
+		if (match(fullName_dw, "^" bridgePrefix "File_")) {
 			doWrapp_dw = 0;
-		} else if (fullName_dw == "Map_0ARRAY1VALS0REF1Resource2resourceId0getResourceMapSpotsPositions") {
-			# only temporarily
+		}
+		if (fullName_dw == "Engine_handleCommand") {
 			doWrapp_dw = 0;
 		}
 	}
@@ -100,8 +93,8 @@ function printNativeFP2F() {
 	printCommentsHeader(outFile_nc);
 
 	print("") >> outFile_nh;
-	print("#ifndef __FUNCTION_POINTER_BRIDGE_H") >> outFile_nh;
-	print("#define __FUNCTION_POINTER_BRIDGE_H") >> outFile_nh;
+	print("#ifndef __CALLBACK_FUNCTION_POINTER_BRIDGE_H") >> outFile_nh;
+	print("#define __CALLBACK_FUNCTION_POINTER_BRIDGE_H") >> outFile_nh;
 	print("") >> outFile_nh;
 	print("#include \"ExternalAI/Interface/aidefines.h\"") >> outFile_nh;
 	#print("#include \"ExternalAI/Interface/SAIFloat3.h\"") >> outFile_nh;
@@ -213,15 +206,7 @@ function printNativeFP2F() {
 	}
 
 
-	# We do not need this here, as it is done in native_wrappCommands.awk
-	#print("") >> outFile_nh;
-	#print("#ifdef __cplusplus") >> outFile_nh;
-	#print("} // extern \"C\"") >> outFile_nh;
-	#print("#endif") >> outFile_nh;
-	#print("") >> outFile_nh;
-	#print("#endif // __FUNCTION_POINTER_BRIDGE_H") >> outFile_nh;
 	print("") >> outFile_nh;
-
 	print("") >> outFile_nc;
 
 	close(outFile_nh);

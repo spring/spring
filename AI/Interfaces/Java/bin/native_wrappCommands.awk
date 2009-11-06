@@ -36,7 +36,7 @@ BEGIN {
 		NATIVE_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/native";
 	}
 
-	nativeBridge = "FunctionPointerBridge";
+	nativeBridge = "CallbackFunctionPointerBridge";
 	bridgePrefix = "bridged__";
 
 	indent = "	";
@@ -223,7 +223,7 @@ function printNativeFP2F() {
 	print("} // extern \"C\"") >> outFile_nh;
 	print("#endif") >> outFile_nh;
 	print("") >> outFile_nh;
-	print("#endif // __FUNCTION_POINTER_BRIDGE_H") >> outFile_nh;
+	print("#endif // __CALLBACK_FUNCTION_POINTER_BRIDGE_H") >> outFile_nh;
 	print("") >> outFile_nh;
 
 	print("") >> outFile_nc;

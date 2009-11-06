@@ -1,8 +1,9 @@
 #!/bin/awk
 #
-# This awk script creates a Java class with native/JNI functions
-# to call to C function pointers in:
-# NATIVE_GENERATED_SOURCE_DIR/FunctionPointerBridge.h
+# This awk script creates a Java class with native/JNI functions,
+# plus their respective native counterparts,
+# to call to C functions in:
+# NATIVE_GENERATED_SOURCE_DIR/CallbackFunctionPointerBridge.h
 #
 # This script uses functions from the following files:
 # * common.awk
@@ -37,15 +38,16 @@ BEGIN {
 		NATIVE_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/native";
 	}
 
-	nativeBridge = "FunctionPointerBridge";
+	nativeBridge = "CallbackFunctionPointerBridge";
 	bridgePrefix = "bridged__";
 
-	jniBridge = "JNIBridge";
+	jniBridge = "CallbackJNIBridge";
 
 	myPkgA = "com.springrts.ai";
 	myPkgD = convertJavaNameFormAToD(myPkgA);
 	myPkgC = convertJavaNameFormAToC(myPkgA);
 	myInterface = "AICallback";
+	myClass     = "JniAICallback";
 
 	fi = 0;
 }
@@ -57,21 +59,14 @@ function doWrapp(funcIndex_dw) {
 
 	if (doWrapp_dw) {
 		fullName_dw = funcFullName[funcIndex_dw];
-
-		fullNameNextArray_dw = funcFullName[funcIndex_dw + 1];
-		sub(/0ARRAY1VALS0/, "0ARRAY1SIZE0", fullNameNextArray_dw);
-		if (fullNameNextArray_dw == fullName_dw) {
-			paramListJavaNext_dw = funcParamList[funcIndex_dw + 1];
-			doWrapp_dw = doWrapp(funcIndex_dw + 1);
+		metaInf_dw  = funcMetaInf[funcIndex_dw];
+		
+		if (match(metaInf_dw, /ARRAY:/)) {
+			doWrapp_dw = 0;
 		}
-
-		fullNameNextMap_dw = funcFullName[funcIndex_dw + 1];
-		sub(/0MAP1KEYS0/, "0MAP1SIZE0", fullNameNextMap_dw);
-		if (fullNameNextMap_dw == fullName_dw) {
-			paramListJavaNext_dw = funcParamList[funcIndex_dw + 1];
-			doWrapp_dw = doWrapp(funcIndex_dw + 1);
+		if (match(metaInf_dw, /MAP:/)) {
+			doWrapp_dw = 0;
 		}
-
 		if (match(fullName_dw, "^" bridgePrefix "File_")) {
 			doWrapp_dw = 0;
 		}
@@ -101,8 +96,8 @@ function printNativeJNI() {
 	printCommentsHeader(outFile_nc);
 
 	print("") >> outFile_nh;
-	print("#ifndef __JNI_BRIDGE_H") >> outFile_nh;
-	print("#define __JNI_BRIDGE_H") >> outFile_nh;
+	print("#ifndef __CALLBACK_JNI_BRIDGE_H") >> outFile_nh;
+	print("#define __CALLBACK_JNI_BRIDGE_H") >> outFile_nh;
 	print("") >> outFile_nh;
 	print("#include <jni.h>") >> outFile_nh;
 	print("") >> outFile_nh;
@@ -129,7 +124,8 @@ function printNativeJNI() {
 		if (doWrapp(i)) {
 			javaName = fullName;
 			sub("^" bridgePrefix, "", javaName);
-			jni_funcName         = "Java_" myPkgC "_" myInterface "_" javaName;
+			gsub(/_/, "_1", javaName);
+			jni_funcName         = "Java_" myPkgC "_" myClass "_" javaName;
 			jni_retType          = convertCToJNIType(retType);
 			jni_paramList        = "";
 			size_params = split(paramList, params, ",");
@@ -155,11 +151,11 @@ function printNativeJNI() {
 
 			# print function declaration to *.h
 			#printFunctionComment_Common(outFile_nh, funcDocComment, i, "");
-			print("JNIEXPORT " jni_retType " JNICALL " jni_funcName "(JNIEnv* __env, jclass __cls" jni_paramList ");") >> outFile_nh;
+			print("JNIEXPORT " jni_retType " JNICALL " jni_funcName "(JNIEnv* __env, jobject __obj" jni_paramList ");") >> outFile_nh;
 			print("") >> outFile_nh;
 
 			# print function definition to *.c
-			print("JNIEXPORT " jni_retType " JNICALL " jni_funcName "(JNIEnv* __env, jclass __cls" jni_paramList ") {") >> outFile_nc;
+			print("JNIEXPORT " jni_retType " JNICALL " jni_funcName "(JNIEnv* __env, jobject __obj" jni_paramList ") {") >> outFile_nc;
 			print("") >> outFile_nc;
 
 			if (!isVoidRet) {
@@ -168,7 +164,7 @@ function printNativeJNI() {
 			}
 
 			# Return value conversion - pre call
-			retType_isString = (match(retType, /^(const )char*/) && (jni_retType == "jstring"));
+			retType_isString = (match(retType, /^(const )?char*/) && (jni_retType == "jstring"));
 			retTypeConv = 0;
 			if (retType_isString) {
 				print("\t" retType " _retNative;") >> outFile_nc;
@@ -253,7 +249,7 @@ function printNativeJNI() {
 	print("} // extern \"C\"") >> outFile_nh;
 	print("#endif") >> outFile_nh;
 	print("") >> outFile_nh;
-	print("#endif // __JNI_BRIDGE_H") >> outFile_nh;
+	print("#endif // __CALLBACK_JNI_BRIDGE_H") >> outFile_nh;
 	print("") >> outFile_nh;
 
 	close(outFile_nh);
@@ -275,7 +271,11 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h) {
 	print(" * @author	AWK wrapper script") >> outFile_h;
 	print(" * @version	GENERATED") >> outFile_h;
 	print(" */") >> outFile_h;
-	print("public class " javaClassName_h " {") >> outFile_h;
+	if (javaClassName_h == myClass) {
+		print("public class " javaClassName_h " implements " myInterface " {") >> outFile_h;
+	} else {
+		print("public interface " javaClassName_h " {") >> outFile_h;
+	}
 	print("") >> outFile_h;
 }
 
@@ -283,11 +283,13 @@ function createJavaFileName(clsName_f) {
 	return JAVA_GENERATED_SOURCE_DIR "/" myPkgD "/" clsName_f ".java";
 }
 
-function printClass() {
+function printJavaClsAndInt() {
 
-	outFile_c = createJavaFileName(myInterface);
+	outFile_i = createJavaFileName(myInterface);
+	outFile_c = createJavaFileName(myClass);
 
-	printHeader(outFile_c, myPkgA, myInterface);
+	printHeader(outFile_i, myPkgA, myInterface);
+	printHeader(outFile_c, myPkgA, myClass);
 
 	# print the static registrator
 	print("\tstatic {") >> outFile_c;
@@ -295,12 +297,36 @@ function printClass() {
 	print("\t}") >> outFile_c;
 	print("") >> outFile_c;
 
+	# print teamId member, constructor and getter
+	print("\t" "private int teamId;") >> outFile_c;
+	print("") >> outFile_c;
+	print("\t" "public " myClass "(int teamId) {") >> outFile_c;
+	print("\t\t" "this.teamId = teamId;") >> outFile_c;
+	print("\t}") >> outFile_c;
+	print("") >> outFile_c;
+	print("\t" "public int getTeamId() {") >> outFile_c;
+	print("\t\t" "return this.teamId;") >> outFile_c;
+	print("\t}") >> outFile_c;
+	print("") >> outFile_c;
+
+	# print the callback methods
 	for (i=0; i < fi; i++) {
 		if (doWrapp(i)) {
 			fullName  = funcFullName[i];
 			retType   = funcRetTypeJ[i];
 			paramList = funcParamListJ[i];
 			metaInf   = funcMetaInf[i];
+
+			paramListNoTeam = paramList;
+			sub(/int _teamId(, )?/, "", paramListNoTeam);
+			paramListNoTeamNoTypes = removeParamTypes(paramListNoTeam);
+			if (paramListNoTeamNoTypes != "") {
+				paramListNoTeamNoTypes = ", " paramListNoTeamNoTypes;
+			}
+			condRet = "";
+			if (retType != "void") {
+				condRet = "return ";
+			}
 
 			sub("^" bridgePrefix, "", fullName);
 
@@ -309,11 +335,26 @@ function printClass() {
 				metaInfCommand = " // " metaInf;
 			}
 
-			printFunctionComment_Common(outFile_c, funcDocComment, i, "\t");
-			print("\t" "public native " retType " " fullName "(" paramList ");" metaInfCommand) >> outFile_c;
+			# print the interface function
+			printFunctionComment_Common(outFile_i, funcDocComment, i, "\t");
+			print("\t" "public " retType " " fullName "(" paramListNoTeam ");" metaInfCommand) >> outFile_i;
+			print("") >> outFile_i;
+
+			# print the interface implementing function
+			print("\t" "@Override") >> outFile_c;
+			print("\t" "public " retType " " fullName "(" paramListNoTeam ") {") >> outFile_c;
+			print("\t\t" condRet "this." fullName "(this.teamId" paramListNoTeamNoTypes ");") >> outFile_c;
+			print("\t" "}") >> outFile_c;
+
+			# print the private native function
+			print("\t" "private native " retType " " fullName "(" paramList ");") >> outFile_c;
 			print("") >> outFile_c;
 		}
 	}
+
+	print("}") >> outFile_i;
+	print("") >> outFile_i;
+	close(outFile_i);
 
 	print("}") >> outFile_c;
 	print("") >> outFile_c;
@@ -429,5 +470,5 @@ END {
 	# finalize things
 
 	printNativeJNI();
-	printClass();
+	printJavaClsAndInt();
 }
