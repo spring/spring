@@ -19,10 +19,7 @@ package nulljavaai;
 
 
 import com.springrts.ai.*;
-import com.springrts.ai.event.*;
-import com.springrts.ai.command.*;
 
-import com.sun.jna.Pointer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -34,7 +31,7 @@ import java.util.logging.*;
  * @author	hoijui
  * @version	0.1
  */
-public class NullJavaAI implements AI {
+public class NullJavaAI extends AbstractAI implements AI {
 
 	private int teamId = -1;
 	private AICallback clb = null;
@@ -74,8 +71,8 @@ public class NullJavaAI implements AI {
 		return true;
 	}
 
+	public NullJavaAI() {}
 
-	public  NullJavaAI() {}
 
 	@Override
 	public int init(int teamId, AICallback callback) {
@@ -88,7 +85,7 @@ public class NullJavaAI implements AI {
 		try {
 			// most likely, this causes a memory leak, as the C string
 			// allocated by this, is never freed
-			myLogFile = callback.Clb_DataDirs_allocatePath(teamId, "log-team-" + teamId + ".txt", true, true, false, false);
+			myLogFile = callback.DataDirs_allocatePath("log-team-" + teamId + ".txt", true, true, false, false);
 			FileHandler fileLogger = new FileHandler(myLogFile, false);
 			fileLogger.setFormatter(new MyCustomLogFormatter());
 			fileLogger.setLevel(Level.ALL);
@@ -108,19 +105,19 @@ public class NullJavaAI implements AI {
 		try {
 			log.info("initializing team " + teamId);
 
-			int numInfo = callback.Clb_SkirmishAI_Info_getSize(teamId);
+			int numInfo = callback.SkirmishAI_Info_getSize();
 			log.info("info (items: " + numInfo + ") ...");
 			for (int i = 0; i < numInfo; i++) {
-				String key = callback.Clb_SkirmishAI_Info_getKey(teamId, i);
-				String value = callback.Clb_SkirmishAI_Info_getValue(teamId, i);
+				String key = callback.SkirmishAI_Info_getKey(i);
+				String value = callback.SkirmishAI_Info_getValue(i);
 				log.info(key + " = " + value);
 			}
 
-			int numOptions = callback.Clb_SkirmishAI_OptionValues_getSize(teamId);
+			int numOptions = callback.SkirmishAI_OptionValues_getSize();
 			log.info("options (items: " + numOptions + ") ...");
 			for (int i = 0; i < numOptions; i++) {
-				String key = callback.Clb_SkirmishAI_OptionValues_getKey(teamId, i);
-				String value = callback.Clb_SkirmishAI_OptionValues_getValue(teamId, i);
+				String key = callback.SkirmishAI_OptionValues_getKey(i);
+				String value = callback.SkirmishAI_OptionValues_getValue(i);
 				log.info(key + " = " + value);
 			}
 
@@ -135,11 +132,43 @@ public class NullJavaAI implements AI {
 			ret = -3;
 		}
 
+		{
+			int numOptions = clb.SkirmishAI_OptionValues_getSize();
+			log.info("sizeOptions: " + numOptions);
+			log.info("options:");
+//				Pointer[] pKeys = evt.optionKeys.getPointerArray(0L, evt.sizeOptions);
+//				Pointer[] pValues = evt.optionValues.getPointerArray(0L, evt.sizeOptions);
+//				Properties options = new Properties();
+//				for (int i = 0; i < evt.sizeOptions; i++) {
+//					options.setProperty(pKeys[i].getString(0L), pValues[i].getString(0L));
+//				}
+			for (int i = 0; i < numOptions; i++) {
+				String key = clb.SkirmishAI_OptionValues_getKey(i);
+				String value = clb.SkirmishAI_OptionValues_getValue(i);
+				log.info(key + " = " + value);
+			}
+			log.info("stored");
+		}
+
 		return ret;
 	}
 
 	@Override
-	public int release(int teamId) {
+	public int update(int frame) {
+
+		try {
+			log.finer("update event ...");
+			log.finer("frame: " + frame);
+		} catch (Exception ex) {
+			log.log(Level.WARNING, "Failed handling event", ex);
+			return -1;
+		}
+
+		return 0;
+	}
+
+	@Override
+	public int release(int reason) {
 
 		int ret = -1;
 
@@ -153,63 +182,5 @@ public class NullJavaAI implements AI {
 		}
 
 		return ret;
-	}
-
-	@Override
-	public int handleEvent(int teamId, int topic, Pointer event) {
-
-		if (log == null) {
-			System.out.println("out is still null");
-			System.exit(-1);
-		}
-		log.finest("handleEvent topic: " + topic);
-		try {
-			if (topic == InitAIEvent.TOPIC) {
-				//InitAIEvent evt = InitAIEvent.getInstance(event);
-				//DefaultInitAIEvent evt = new DefaultInitAIEvent(event);
-				InitAIEvent evt = new InitAIEvent(event);
-				log.info("handleEvent:InitAIEvent");
-				this.teamId = evt.team;
-				clb = evt.callback;
-				log.info("handleEvent:InitAIEvent:team: " + evt.team);
-				int numOptions = clb.Clb_SkirmishAI_OptionValues_getSize(teamId);
-				log.info("handleEvent:InitAIEvent:sizeOptions: " + numOptions);
-				log.info("handleEvent:InitAIEvent:options:");
-//				Pointer[] pKeys = evt.optionKeys.getPointerArray(0L, evt.sizeOptions);
-//				Pointer[] pValues = evt.optionValues.getPointerArray(0L, evt.sizeOptions);
-//				Properties options = new Properties();
-//				for (int i = 0; i < evt.sizeOptions; i++) {
-//					options.setProperty(pKeys[i].getString(0L), pValues[i].getString(0L));
-//				}
-				for (int i = 0; i < numOptions; i++) {
-					String key = clb.Clb_SkirmishAI_OptionValues_getKey(teamId, i);
-					String value = clb.Clb_SkirmishAI_OptionValues_getValue(teamId, i);
-					log.info(key + " = " + value);
-				}
-				log.info("handleEvent:InitAIEvent:stored");
-			} else if (topic == UpdateAIEvent.TOPIC) {
-				UpdateAIEvent evt = new UpdateAIEvent(event);
-				log.finer("handleEvent UpdateAIEvent event ...");
-				this.frame = evt.frame;
-				log.finer("frame: " + frame);
-			} else {
-				if (clb != null) {
-					log.finer("handleEvent UNKNOWN event: fetching frame...");
-					log.finer("handleEvent UNKNOWN event: frame is: " + frame);
-					log.finer("handleEvent UNKNOWN event: sending chat msg...");
-					SendTextMessageAICommand cmd = new SendTextMessageAICommand();
-					cmd.text = "Hello Engine (from NullJavaAI.java)";
-					cmd.zone = 0;
-					cmd.write();
-					int ret = clb.Clb_Engine_handleCommand(teamId, 0, -1, cmd.getTopic(), cmd.getPointer());
-					log.finer("handleEvent UNKNOWN event: sending chat msg return: " + ret);
-				}
-			}
-		} catch (Exception ex) {
-			log.log(Level.WARNING, "Failed handling event", ex);
-			return -1;
-		}
-
-		return 0;
 	}
 }
