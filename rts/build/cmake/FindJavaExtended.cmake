@@ -211,7 +211,6 @@ ELSE()
 		${JAVA_BINSEARCH_PATH}
 		NO_DEFAULT_PATH )
 
-	# abort if not found
 	IF( NOT JAVA_RUNTIME AND NOT JAVA_FIND_QUIETLY )
 		MESSAGE( STATUS "Could not find java!!" )
 	ENDIF()
@@ -226,10 +225,12 @@ ELSE()
 	ENDIF()
 ENDIF()
 
-IF( JAVA_RUNTIME AND JAVA_COMPILE AND JAVA_ARCHIVE )
 
-	SET( JAVA_FOUND TRUE )
+# Handle the QUIETLY and REQUIRED arguments and set JAVA_FOUND to TRUE
+# if the vars at the end are valid
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(Java DEFAULT_MSG JAVA_RUNTIME JAVA_COMPILE JAVA_ARCHIVE)
 
+IF( JAVA_FOUND )
 	# parse the output of java -version
 	EXEC_PROGRAM( "${JAVA_RUNTIME}" ARGS "-version"
 			OUTPUT_VARIABLE out_tmp
@@ -253,13 +254,6 @@ IF( JAVA_RUNTIME AND JAVA_COMPILE AND JAVA_ARCHIVE )
 		IF( NOT JAVA_FIND_QUIETLY )
 			MESSAGE( STATUS "Java version ${JAVA_VERSION} configured successfully!" )
 		ENDIF()
-	ENDIF()
-ELSE()
-	IF( JAVA_FIND_REQUIRED )
-		MESSAGE( FATAL_ERROR "Failed configuring Java!!" )
-	ENDIF()
-	IF( NOT JAVA_FIND_QUIETLY )
-		MESSAGE( STATUS "Failed configuring Java!!" )
 	ENDIF()
 ENDIF()
 
