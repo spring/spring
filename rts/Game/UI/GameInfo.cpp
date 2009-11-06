@@ -17,6 +17,7 @@
 #include "Map/ReadMap.h"
 #include "Sim/Misc/Wind.h"
 #include "Sim/Misc/ModInfo.h"
+#include "System/Util.h"
 
 
 using namespace std;

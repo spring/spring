@@ -2904,19 +2904,17 @@ bool CGame::DrawWorld()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	bool clip = unitDrawer->advFade || !unitDrawer->advShading;
 	bool noAdvShading = shadowHandler->drawShadows;
-	if(clip) { // draw cloaked part below surface
-		glEnable(GL_CLIP_PLANE3);
-		unitDrawer->DrawCloakedUnits(true,noAdvShading);
-		featureHandler->DrawFadeFeatures(true,noAdvShading);
-		glDisable(GL_CLIP_PLANE3);
-	}
+	//! draw cloaked part below surface
+	glEnable(GL_CLIP_PLANE3);
+	unitDrawer->DrawCloakedUnits(true,noAdvShading);
+	featureHandler->DrawFadeFeatures(true,noAdvShading);
+	glDisable(GL_CLIP_PLANE3);
 
 	if (drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
-			// Water rendering may overwrite cloaked objects, so save them
+			//! Water rendering may overwrite cloaked objects, so save them
 			SwapTransparentObjects();
 			water->UpdateWater(this);
 			water->Draw();
@@ -2925,12 +2923,10 @@ bool CGame::DrawWorld()
 	}
 
 	//! draw cloaked part above surface
-	if(clip)
-		glEnable(GL_CLIP_PLANE3);
+	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(false,noAdvShading);
 	featureHandler->DrawFadeFeatures(false,noAdvShading);
-	if(clip)
-		glDisable(GL_CLIP_PLANE3);
+	glDisable(GL_CLIP_PLANE3);
 
 	ph->Draw(false);
 
