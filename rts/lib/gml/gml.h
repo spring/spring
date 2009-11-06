@@ -9,6 +9,10 @@
 #ifndef GML_H
 #define GML_H
 
+#if defined USE_GML_SIM && !defined USE_GML
+#error USE_GML_SIM requires USE_GML
+#endif
+
 #define GML_MUTEX_PROFILER 0 // enables profiler
 
 #ifdef USE_GML
