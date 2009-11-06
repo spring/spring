@@ -286,7 +286,7 @@ function convertJNIToSignatureType(jniType__common) {
 
 	signatureType__common = jniType__common;
 
-	sub(/Array/, "[", signatureType__common);
+	isArray = sub(/Array/, "", signatureType__common);
 	
 	sub(/void/, "V", signatureType__common);
 
@@ -295,11 +295,15 @@ function convertJNIToSignatureType(jniType__common) {
 	sub(/jbyte/,    "B", signatureType__common);
 	sub(/jchar/,    "C", signatureType__common);
 	sub(/jdouble/,  "D", signatureType__common);
-	sub(/jint/,     "I"  signatureType__common);
+	sub(/jint/,     "I",  signatureType__common);
 	sub(/jlong/,    "J", signatureType__common);
 	sub(/jshort/,   "S", signatureType__common);
 
 	sub(/jstring/, "Ljava/lang/String;", signatureType__common);
+
+	if (isArray) {
+		signatureType__common = "[" signatureType__common;
+	}
 
 	return signatureType__common;
 }
