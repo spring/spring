@@ -18,43 +18,11 @@
 #ifndef _JAVABRIDGE_H
 #define _JAVABRIDGE_H
 
-
 #define JVM_PROPERTIES_FILE "jvm.properties"
 
-#if defined DEBUG
-	#define JVM_LOGGING
-	#define JVM_DEBUGGING
-	#define JVM_DEBUG_PORT "7777"
-#endif // defined DEBUG
-
-
-#define PKG_MAIN	"com/springrts/ai/"
-#define PKG_EVENT	"com/springrts/ai/event/"
-#define PKG_COMMAND	"com/springrts/ai/command/"
-#define CLS_AI			PKG_MAIN"AI"
-#define CLS_AI_EVENT	PKG_MAIN"AIEvent"
-#define CLS_AI_CALLBACK	PKG_MAIN"AICallback"
-
-// #############################################################################
-// Skirmish AI methods
-
-#define MTH_INDEX_SKIRMISH_AI_INIT          0
-#define MTH_SKIRMISH_AI_INIT "init"
-#define SIG_SKIRMISH_AI_INIT "(ILcom/springrts/ai/AICallback;)I"
-
-#define MTH_INDEX_SKIRMISH_AI_RELEASE       1
-#define MTH_SKIRMISH_AI_RELEASE "release"
-#define SIG_SKIRMISH_AI_RELEASE "(I)I"
-
-#define MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT  2
-#define MTH_SKIRMISH_AI_HANDLE_EVENT "handleEvent"
-//#define SIG_SKIRMISH_AI_HANDLE_EVENT "(IL"CLS_AI_EVENT";)I"
-#define SIG_SKIRMISH_AI_HANDLE_EVENT "(IILcom/sun/jna/Pointer;)I"
-
-
-#define MTHS_SIZE_SKIRMISH_AI               3
-// #############################################################################
-
+#define PKG_AI         "com/springrts/ai/"
+#define INT_AI          PKG_AI"AI"
+#define CLS_AI_CALLBACK PKG_AI"JniAICallback"
 
 // define path entry delimitter, used eg for the java class-path
 #ifdef WIN32
@@ -64,30 +32,24 @@
 #endif
 #define PATH_DELIM "/"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdbool.h>	// bool, true, false
+#include <stdbool.h> // bool, true, false
 
 struct SAIInterfaceCallback;
 struct SSkirmishAICallback;
 
-///**
-// * Returns a JNI environment, which includes a JVM.
-// * Only one will exist at a time.
-// * It is lazyly created.
-// *
-// * JNI = Java Native Interface
-// * JVM = Java Virtual Machine
-// */
-//JNIEnv* getJNIEnv();
 bool java_preloadJNIEnv();
+
 bool java_unloadJNIEnv();
+
 bool java_initStatic(int interfaceId,
 		const struct SAIInterfaceCallback* callback);
+		
 bool java_releaseStatic();
+
 /**
  * Instantiates an instance of the specified className.
  *
@@ -105,6 +67,7 @@ bool java_initSkirmishAIClass(
 		const char* const version,
 		const char* const className,
 		int teamId);
+
 /**
  * Release the loaded AI specified through a class name.
  *
@@ -115,12 +78,15 @@ bool java_initSkirmishAIClass(
  *          successfully unloaded
  */
 bool java_releaseSkirmishAIClass(const char* className);
-bool java_releaseAllSkirmishAIClasses();
-int java_skirmishAI_init(int teamId, const struct SSkirmishAICallback* callback);
-int java_skirmishAI_release(int teamId);
-int java_skirmishAI_handleEvent(int teamId, int topic, const void* data);
-//const struct SSkirmishAICallback* java_getSkirmishAICCallback(int teamId);
 
+bool java_releaseAllSkirmishAIClasses();
+
+int java_skirmishAI_init(int teamId,
+		const struct SSkirmishAICallback* callback);
+
+int java_skirmishAI_release(int teamId);
+
+int java_skirmishAI_handleEvent(int teamId, int topic, const void* data);
 
 #ifdef __cplusplus
 } // extern "C"

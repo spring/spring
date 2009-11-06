@@ -19,6 +19,8 @@
 
 #include "InterfaceDefines.h"
 #include "JvmLocater.h"
+#include "JniUtil.h"
+#include "EventsJNIBridge.h"
 #include "CUtils/Util.h"
 #include "CUtils/SimpleLog.h"
 #include "CUtils/SharedLibrary.h"
@@ -33,19 +35,6 @@
 
 #include <string.h>	// strlen(), strcat(), strcpy()
 #include <stdlib.h>	// malloc(), calloc(), free()
-#include <assert.h>	// assert()
-
-// These defines are taken from the OpenJDK jlong_md.h files
-// (one for solaris and one for windows)
-#ifdef __arch64__
-	#define jlong_to_ptr(a) ((void*)(a))
-	#define ptr_to_jlong(a) ((jlong)(a))
-#else
-	/* Double casting to avoid warning messages looking for casting of */
-	/* smaller sizes into pointers */
-	#define jlong_to_ptr(a) ((void*)(int)(a))
-	#define ptr_to_jlong(a) ((jlong)(int)(a))
-#endif
 
 struct Properties {
 	size_t       size;
@@ -64,7 +53,6 @@ static size_t       skirmishAiImpl_sizeMax = 0;
 static size_t       skirmishAiImpl_size = 0;
 static char**       skirmishAiImpl_className;
 static jobject*     skirmishAiImpl_instance;
-static jmethodID**  skirmishAiImpl_methods;
 static jobject*     skirmishAiImpl_classLoader;
 
 // vars used to integrate the JVM
@@ -77,25 +65,19 @@ static JNI_GetDefaultJavaVMInitArgs_t* JNI_GetDefaultJavaVMInitArgs_f;
 static JNI_CreateJavaVM_t*             JNI_CreateJavaVM_f;
 static JNI_GetCreatedJavaVMs_t*        JNI_GetCreatedJavaVMs_f;
 
-// JNI global vars
+
+// ### JNI global vars ###
+
+/// Java VM instance reference
 static JavaVM* g_jvm = NULL;
 
-static jclass g_cls_url = NULL;
-static jmethodID g_m_url_ctor = NULL;
-
-static jclass g_cls_urlClassLoader = NULL;
-static jmethodID g_m_urlClassLoader_ctor = NULL;
-static jmethodID g_m_urlClassLoader_findClass = NULL;
-
-static jclass g_cls_jnaPointer = NULL;
-static jmethodID g_m_jnaPointer_ctor_long = NULL;
-//static jmethodID g_m_jnaPointer_getPointer_L = NULL;
-//static jclass g_cls_intByRef = NULL;
-//static jmethodID g_m_intByRef_ctor_I = NULL;
-//static jmethodID g_m_intByRef_getPointer = NULL;
-
+/// AI Callback class
 static jclass g_cls_aiCallback = NULL;
-static jmethodID g_m_aiCallback_ctor = NULL;
+/// AI Callback Constructor: AICallback(int teamId)
+static jmethodID g_m_aiCallback_ctor_I = NULL;
+
+/// Basic AI interface.
+static jclass g_cls_ai_int = NULL;
 
 
 // ### General helper functions following ###
@@ -134,106 +116,6 @@ static const char* java_getValueByKey(const struct Properties* props, const char
 
 
 // ### JNI helper functions following ###
-
-static bool checkException(JNIEnv* env, const char* const errorMsg) {
-
-	if ((*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, errorMsg);
-		(*env)->ExceptionDescribe(env);
-		return true;
-	}
-
-	return false;
-}
-
-static jclass java_findClass(JNIEnv* env, const char* const className) {
-
-	jclass res = NULL;
-
-	res = (*env)->FindClass(env, className);
-	const bool hasException = (*env)->ExceptionCheck(env);
-	if (res == NULL || hasException) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Class not found: \"%s\"", className);
-		if (hasException) {
-			(*env)->ExceptionDescribe(env);
-		}
-		res = NULL;
-	}
-
-	return res;
-}
-static jobject java_makeGlobalRef(JNIEnv* env, jobject localObject,
-		const char* objDesc) {
-
-	jobject res = NULL;
-
-	// Make the local class a global reference,
-	// so it will not be garbage collected,
-	// even after this method returned,
-	// but only if explicitly deleted with DeleteGlobalRef
-	res = (*env)->NewGlobalRef(env, localObject);
-	if ((*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed to make %s a global reference.",
-				((objDesc == NULL) ? "" : objDesc));
-		(*env)->ExceptionDescribe(env);
-		res = NULL;
-	}
-
-	return res;
-}
-static bool java_deleteGlobalRef(JNIEnv* env, jobject globalObject,
-		const char* objDesc) {
-
-	// delete the AI class-loader global reference,
-	// so it will be garbage collected
-	(*env)->DeleteGlobalRef(env, globalObject);
-	if ((*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed to delete global reference %s.",
-				((objDesc == NULL) ? "" : objDesc));
-		(*env)->ExceptionDescribe(env);
-		return false;
-	}
-
-	return true;
-}
-static jmethodID java_getMethodID(JNIEnv* env, jclass cls,
-		const char* const name, const char* const signature) {
-
-	jmethodID res = NULL;
-
-	res = (*env)->GetMethodID(env, cls, name, signature);
-	const bool hasException = (*env)->ExceptionCheck(env);
-	if (res == NULL || hasException) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Method not found: %s(%s)",
-				name, signature);
-		if (hasException) {
-			(*env)->ExceptionDescribe(env);
-		}
-		res = NULL;
-	}
-
-	return res;
-}
-/*static jmethodID java_getStaticMethodID(JNIEnv* env, jclass cls,
-		const char* const name, const char* const signature) {
-
-	jmethodID res = NULL;
-
-	res = (*env)->GetStaticMethodID(env, cls, name, signature);
-	const bool hasException = (*env)->ExceptionCheck(env);
-	if (res == NULL || hasException) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Method not found: %s(%s)",
-				name, signature);
-		if (hasException) {
-			(*env)->ExceptionDescribe(env);
-		}
-		res = NULL;
-	}
-
-	return res;
-}*/
 
 /**
  * Creates the AI Interface global Java class path.
@@ -447,9 +329,8 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 	const size_t        classPathParts_size =
 			java_createAIClassPath(shortName, version, classPathParts, classPathParts_sizeMax);
 
-	jobjectArray o_cppURLs = (*env)->NewObjectArray(env, classPathParts_size,
-			g_cls_url, NULL);
-	if (checkException(env, "Failed creating URL[].")) { return NULL; }
+	jobjectArray o_cppURLs = jniUtil_createURLArray(env, classPathParts_size);
+	if (o_cppURLs == NULL) { return NULL; }
 	size_t cpp;
 	for (cpp = 0; cpp < classPathParts_size; ++cpp) {
 		#ifdef _WIN32
@@ -461,20 +342,19 @@ static jobject java_createAIClassLoader(JNIEnv* env,
 		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
 				"Skirmish AI %s %s class-path part %i: %s",
 				shortName, version, cpp, str_fileUrl);
-		jstring jstr_fileUrl = (*env)->NewStringUTF(env, str_fileUrl);
-		if (checkException(env, "Failed creating Java String.")) { return NULL; }
-		jobject jurl_fileUrl = (*env)->NewObject(env, g_cls_url, g_m_url_ctor, jstr_fileUrl);
-		if (checkException(env, "Failed creating Java URL.")) { return NULL; }
-		(*env)->SetObjectArrayElement(env, o_cppURLs, cpp, jurl_fileUrl);
-		if (checkException(env, "Failed setting Java URL in array.")) { return NULL; }
+		jobject jurl_fileUrl = jniUtil_createURLObject(env, str_fileUrl);
+		if (jurl_fileUrl == NULL) { return NULL; }
+		const bool inserted = jniUtil_insertURLIntoArray(env, o_cppURLs, cpp, jurl_fileUrl);
+		if (!inserted) { return NULL; }
 
+		// TODO: check/test if this is allowed/ok
+		FREE(str_fileUrl);
 		FREE(classPathParts[cpp]);
 	}
 
-	o_jClsLoader = (*env)->NewObject(env, g_cls_urlClassLoader,
-			g_m_urlClassLoader_ctor, o_cppURLs);
-	if (checkException(env, "Failed creating class-loader.")) { return NULL; }
-	o_jClsLoader = java_makeGlobalRef(env, o_jClsLoader, "Skirmish AI class-loader");
+	o_jClsLoader = jniUtil_createURLClassLoader(env, o_cppURLs);
+	if (o_jClsLoader == NULL) { return NULL; }
+	o_jClsLoader = jniUtil_makeGlobalRef(env, o_jClsLoader, "Skirmish AI class-loader");
 
 	FREE(classPathParts);
 
@@ -554,7 +434,7 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 				NATIVE_LIBS_DIR);
 	} else {
 		STRCATS(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
-		STRCPYS(libraryPath, libraryPath_sizeMax, dd_lib_r);
+		STRCATS(libraryPath, libraryPath_sizeMax, dd_lib_r);
 		FREE(dd_lib_r);
 	}
 
@@ -562,12 +442,12 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 	const char* const dd_r_common =
 			callback->AIInterface_Info_getValueByKey(interfaceId,
 			AI_INTERFACE_PROPERTY_DATA_DIR_COMMON);
-	if (dd_r_common == NULL) {
+	if (dd_r_common == NULL || !util_fileExists(dd_r_common)) {
 		simpleLog_logL(SIMPLELOG_LEVEL_NORMAL,
 				"Unable to find common read-only data-dir (optional).");
 	} else {
 		STRCATS(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
-		STRCPYS(libraryPath, libraryPath_sizeMax, dd_r_common);
+		STRCATS(libraryPath, libraryPath_sizeMax, dd_r_common);
 	}
 
 	// {spring-data-dir}/{AI_INTERFACES_DATA_DIR}/Java/common/lib/
@@ -579,7 +459,7 @@ static bool java_createNativeLibsPath(char* libraryPath, const size_t libraryPat
 					"Unable to find common read-only native libs data-dir (optional).");
 		} else {
 			STRCATS(libraryPath, libraryPath_sizeMax, ENTRY_DELIM);
-			STRCPYS(libraryPath, libraryPath_sizeMax, dd_lib_r_common);
+			STRCATS(libraryPath, libraryPath_sizeMax, dd_lib_r_common);
 			FREE(dd_lib_r_common);
 		}
 	}
@@ -748,28 +628,26 @@ static bool java_createJavaVMInitArgs(struct JavaVMInitArgs* vm_args, const stru
 		}
 	} else {
 		// ### ... or set default ones, if the JVM config file was not found ###
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE, "JVM: using default options.");
+		simpleLog_logL(SIMPLELOG_LEVEL_WARNING, "JVM: properties file ("JVM_PROPERTIES_FILE") not found; using default options.");
 
 		strOptions[op++] = "-Xms4M";
 		strOptions[op++] = "-Xmx64M";
 		strOptions[op++] = "-Xss512K";
 		strOptions[op++] = "-Xoss400K";
 
-#if defined JVM_LOGGING
+#if       defined DEBUG
 		strOptions[op++] = "-Xcheck:jni";
 		strOptions[op++] = "-verbose:jni";
 		strOptions[op++] = "-XX:+UnlockDiagnosticVMOptions";
 		strOptions[op++] = "-XX:+LogVMOutput";
-#endif // defined JVM_LOGGING
 
-#if defined JVM_DEBUGGING
 		strOptions[op++] = "-Xdebug";
-		strOptions[op++] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address="JVM_DEBUG_PORT;
+		strOptions[op++] = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=7777";
 		// disable JIT (required for debugging under the classical VM)
 		strOptions[op++] = "-Djava.compiler=NONE";
 		// disable old JDB
 		strOptions[op++] = "-Xnoagent";
-#endif // defined JVM_DEBUGGING
+#endif // defined DEBUG
 	}
 
 	const size_t options_size = op;
@@ -1007,15 +885,13 @@ bool java_initStatic(int _interfaceId,
 		team_skirmishAiImpl[t] = 999999;
 	}
 
-	skirmishAiImpl_className = (char**) calloc(skirmishAiImpl_sizeMax, sizeof(char*));
-	skirmishAiImpl_instance = (jobject*) calloc(skirmishAiImpl_sizeMax, sizeof(jobject));
-	skirmishAiImpl_methods = (jmethodID**) calloc(skirmishAiImpl_sizeMax, sizeof(jmethodID*));
-	skirmishAiImpl_classLoader = (jobject*) calloc(skirmishAiImpl_sizeMax, sizeof(jobject));
+	skirmishAiImpl_className   = (char**)      calloc(skirmishAiImpl_sizeMax, sizeof(char*));
+	skirmishAiImpl_instance    = (jobject*)    calloc(skirmishAiImpl_sizeMax, sizeof(jobject));
+	skirmishAiImpl_classLoader = (jobject*)    calloc(skirmishAiImpl_sizeMax, sizeof(jobject));
 	size_t sai;
 	for (sai = 0; sai < skirmishAiImpl_sizeMax; ++sai) {
-		skirmishAiImpl_className[sai] = NULL;
-		skirmishAiImpl_instance[sai] = NULL;
-		skirmishAiImpl_methods[sai] = NULL;
+		skirmishAiImpl_className[sai]   = NULL;
+		skirmishAiImpl_instance[sai]    = NULL;
 		skirmishAiImpl_classLoader[sai] = NULL;
 	}
 
@@ -1088,199 +964,41 @@ bool java_initStatic(int _interfaceId,
 		}
 	}
 
-	return true;
-}
-
-
-static bool java_initURLClass(JNIEnv* env) {
-
-	if (g_m_url_ctor == NULL) {
-		// get the URL class
-		static const char* const fcCls = "java/net/URL";
-
-		g_cls_url = java_findClass(env, fcCls);
-		if (g_cls_url == NULL) return false;
-
-		g_cls_url = java_makeGlobalRef(env, g_cls_url, fcCls);
-		if (g_cls_url == NULL) return false;
-
-		// get (String)	constructor
-		g_m_url_ctor = java_getMethodID(env, g_cls_url,
-				"<init>", "(Ljava/lang/String;)V");
-		if (g_m_url_ctor == NULL) return false;
+	java_establishJavaEnv();
+	JNIEnv* env = java_getJNIEnv();
+	const int res = eventsJniBridge_initStatic(env, team_sizeMax);
+	java_establishSpringEnv();
+	if (res != 0) {
+		return false;
 	}
 
 	return true;
 }
 
-static bool java_initURLClassLoaderClass(JNIEnv* env) {
-
-	if (g_m_urlClassLoader_findClass == NULL) {
-		// get the URLClassLoader class
-		static const char* const fcCls = "java/net/URLClassLoader";
-
-		g_cls_urlClassLoader = java_findClass(env, fcCls);
-		if (g_cls_urlClassLoader == NULL) return false;
-
-		g_cls_urlClassLoader =
-				java_makeGlobalRef(env, g_cls_urlClassLoader, fcCls);
-		if (g_cls_urlClassLoader == NULL) return false;
-
-		// get (URL[])	constructor
-		g_m_urlClassLoader_ctor = java_getMethodID(env,
-				g_cls_urlClassLoader, "<init>", "([Ljava/net/URL;)V");
-		if (g_m_urlClassLoader_ctor == NULL) return false;
-
-		// get the findClass(String) method
-		g_m_urlClassLoader_findClass = java_getMethodID(env,
-				g_cls_urlClassLoader, "findClass",
-				"(Ljava/lang/String;)Ljava/lang/Class;");
-		if (g_m_urlClassLoader_findClass == NULL) return false;
-	}
-
-	return true;
-}
-
-
-static bool java_initPointerClass(JNIEnv* env) {
-
-	// This method is 64bit save, as it does not cast to jint,
-	// which is 32bit on all architectures, even 64bit ones.
-	if (g_m_jnaPointer_ctor_long == NULL) {
-		// get the Pointer class
-		static const char* const fcCls = "com/sun/jna/Pointer";
-
-		g_cls_jnaPointer = java_findClass(env, fcCls);
-		if (g_cls_jnaPointer == NULL) return false;
-
-		g_cls_jnaPointer = java_makeGlobalRef(env, g_cls_jnaPointer, fcCls);
-		if (g_cls_jnaPointer == NULL) return false;
-
-		// get native pointer constructor
-		g_m_jnaPointer_ctor_long =
-				java_getMethodID(env, g_cls_jnaPointer, "<init>", "(J)V");
-		if (g_m_jnaPointer_ctor_long == NULL) return false;
-	}
-	/*if (g_m_intByRef_getPointer == NULL) {
-		// create the JNA pointer as described here:
-		// https://jna.dev.java.net/#ptr_values
-		// This way:
-		// new IntByReference(value).getPointer().getPointer(0)
-		static const char* const ptrCls = "com/sun/jna/Pointer";
-		static const char* const ibrCls = "com/sun/jna/ptr/IntByReference";
-
-		g_cls_jnaPointer = java_findClass(env, ptrCls);
-		if (g_cls_jnaPointer == NULL) return false;
-		g_cls_jnaPointer = java_makeGlobalRef(env, g_cls_jnaPointer, ptrCls);
-		if (g_cls_jnaPointer == NULL) return false;
-		static const size_t sig_jnaPointer_getPointer_L_sizeMax = 128;
-		char sig_jnaPointer_getPointer_L[sig_jnaPointer_getPointer_L_sizeMax];
-		SNPRINTF(sig_jnaPointer_getPointer_L,
-				sig_jnaPointer_getPointer_L_sizeMax, "(J)L%s;", ptrCls);
-		g_m_jnaPointer_getPointer_L = java_getMethodID(env, g_cls_jnaPointer,
-				"getPointer", sig_jnaPointer_getPointer_L);
-		if (g_m_jnaPointer_getPointer_L == NULL) return false;
-
-		g_cls_intByRef = java_findClass(env, ibrCls);
-		if (g_cls_intByRef == NULL) return false;
-		g_cls_intByRef = java_makeGlobalRef(env, g_cls_intByRef, ibrCls);
-		if (g_cls_intByRef == NULL) return false;
-		g_m_intByRef_ctor_I =
-				java_getMethodID(env, g_cls_intByRef, "<init>", "(I)V");
-		if (g_m_intByRef_ctor_I == NULL) return false;
-		static const size_t sig_intByRef_getPointer_sizeMax = 128;
-		char sig_intByRef_getPointer[sig_intByRef_getPointer_sizeMax];
-		SNPRINTF(sig_intByRef_getPointer, sig_intByRef_getPointer_sizeMax,
-				"()L%s;", ptrCls);
-		g_m_intByRef_getPointer = java_getMethodID(env, g_cls_intByRef,
-				"getPointer", sig_intByRef_getPointer);
-		if (g_m_intByRef_getPointer == NULL) return false;
-	}*/
-
-	return true;
-}
-
-static jobject java_creatJnaPointer(JNIEnv* env, const void* nativePointer) {
-
-	jobject jnaPointer = NULL;
-
-	// create a Java JNA Pointer to the AI Callback
-	jlong jniPointer = ptr_to_jlong(nativePointer);
-	jnaPointer = (*env)->NewObject(env, g_cls_jnaPointer,
-			g_m_jnaPointer_ctor_long, jniPointer);
-	if (jnaPointer == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Failed creating JNA pointer");
-		(*env)->ExceptionDescribe(env);
-		jnaPointer = NULL;
-	}
-	jnaPointer = java_makeGlobalRef(env, jnaPointer, "JNA Pointer");
-
-/*
-	// create the JNA pointer as described here:
-	// https://jna.dev.java.net/#ptr_values
-	// This way:
-	// new IntByReference(value).getPointer().getPointer(0)
-
-	jobject jnaIntByRef = (*env)->NewObject(env, g_cls_intByRef,
-			g_m_intByRef_ctor_I, (jint) nativePointer);
-	if (jnaIntByRef == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed creating JNA pointer (new IntByReference(value))");
-		(*env)->ExceptionDescribe(env);
-		return NULL;
-	}
-
-	jobject jnaIntermediatePointer = (*env)->CallObjectMethod(env, jnaIntByRef,
-			g_m_intByRef_getPointer);
-	if (jnaIntermediatePointer == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed creating JNA pointer (ibr.getPointer())");
-		(*env)->ExceptionDescribe(env);
-		return NULL;
-	}
-
-	jnaPointer = (*env)->CallObjectMethod(env, jnaIntermediatePointer,
-			g_m_jnaPointer_getPointer_L, (jlong)0);
-	if (jnaPointer == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Failed creating JNA pointer (ptr.getPointer(0))");
-		(*env)->ExceptionDescribe(env);
-		return NULL;
-	}
-	jnaPointer = java_makeGlobalRef(env, jnaPointer, "JNA Pointer");
-	if (jnaPointer == NULL) return NULL;
-*/
-
-	return jnaPointer;
-}
-
-static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallback* aiCallback) {
+static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallback* aiCallback, int teamId) {
 
 	jobject o_clb = NULL;
 
 	// initialize the AI Callback class, if not yet done
 	if (g_cls_aiCallback == NULL) {
 		// get the AI Callback class
-		static const char* const aiCallbackClassName = "com/springrts/ai/DefaultAICallback";
+		g_cls_aiCallback = jniUtil_findClass(env, CLS_AI_CALLBACK);
+		if (g_cls_aiCallback == NULL) { return NULL; }
+		g_cls_aiCallback = jniUtil_makeGlobalRef(env, g_cls_aiCallback,
+				CLS_AI_CALLBACK);
+		if (g_cls_aiCallback == NULL) { return NULL; }
 
-		g_cls_aiCallback = java_findClass(env, aiCallbackClassName);
-		g_cls_aiCallback = java_makeGlobalRef(env, g_cls_aiCallback,
-				aiCallbackClassName);
-
-		// get no-arg constructor
-		g_m_aiCallback_ctor = java_getMethodID(env, g_cls_aiCallback, "<init>", "()V");
+		// get (int teamId) constructor
+		g_m_aiCallback_ctor_I = jniUtil_getMethodID(env, g_cls_aiCallback, "<init>", "(I)V");
+		if (g_m_aiCallback_ctor_I == NULL) { return NULL; }
 	}
 
-	o_clb = (*env)->NewObject(env, g_cls_aiCallback, g_m_aiCallback_ctor);
-	if (o_clb == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "Failed creating Java AI Callback instance");
-		if ((*env)->ExceptionCheck(env)) {
-			(*env)->ExceptionDescribe(env);
-		}
+	o_clb = (*env)->NewObject(env, g_cls_aiCallback, g_m_aiCallback_ctor_I, teamId);
+	if (jniUtil_checkException(env, "Failed creating Java AI Callback instance")) {
 		o_clb = NULL;
-	}
-
-	o_clb = java_makeGlobalRef(env, o_clb, "AI callback instance");
+	}/* else {
+		o_clb = jniUtil_makeGlobalRef(env, o_clb, "AI callback instance");
+	}*/
 
 	return o_clb;
 }
@@ -1288,18 +1006,10 @@ static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallba
 
 bool java_releaseStatic() {
 
-	size_t sai;
-	for (sai = 0; sai < skirmishAiImpl_sizeMax; ++sai) {
-		if (skirmishAiImpl_methods[sai] != NULL) {
-			FREE(skirmishAiImpl_methods[sai]);
-		}
-	}
-
 	FREE(team_skirmishAiImpl);
 
 	FREE(skirmishAiImpl_className);
 	FREE(skirmishAiImpl_instance);
-	FREE(skirmishAiImpl_methods);
 	FREE(skirmishAiImpl_classLoader);
 
 	sharedLib_unload(jvmSharedLib);
@@ -1312,25 +1022,16 @@ bool java_releaseStatic() {
 	return true;
 }
 
-static inline void java_getSkirmishAIAndMethod(size_t teamId, jobject* o_ai,
-		size_t methodIndex, jmethodID* mth) {
-
-	const size_t implId = team_skirmishAiImpl[teamId];
-	*o_ai = skirmishAiImpl_instance[implId];
-	assert((*o_ai) != NULL);
-	*mth = skirmishAiImpl_methods[implId][methodIndex];
-}
-
 
 static bool java_loadSkirmishAI(JNIEnv* env,
 		const char* shortName, const char* version, const char* className,
-		jobject* o_ai, jmethodID* methods, jobject* o_aiClassLoader) {
+		jobject* o_ai, jobject* o_aiClassLoader) {
 
-	// convert className from "com.myai.AI" to "com/myai/AI"
+/*	// convert className from "com.myai.AI" to "com/myai/AI"
 	const size_t classNameP_sizeMax = strlen(className) + 1;
 	char classNameP[classNameP_sizeMax];
 	STRCPYS(classNameP, classNameP_sizeMax, className);
-	util_strReplaceChar(classNameP, '.', '/');
+	util_strReplaceChar(classNameP, '.', '/');*/
 
 	// get the AIs private class-loader
 	jobject o_global_aiClassLoader =
@@ -1338,37 +1039,44 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	if (o_global_aiClassLoader == NULL) { return false; }
 	*o_aiClassLoader = o_global_aiClassLoader;
 
-	// get the AI class
-	//jclass cls_ai = (*env)->FindClass(env, classNameP);
-	jstring jstr_className = (*env)->NewStringUTF(env, className);
-	jclass cls_ai = (*env)->CallObjectMethod(env, o_global_aiClassLoader,
-			g_m_urlClassLoader_findClass, jstr_className);
-	if (cls_ai == NULL || (*env)->ExceptionCheck(env)) {
+	// get the AI interface (from AIInterface.jar)
+	if (g_cls_ai_int == NULL) {
+		g_cls_ai_int = jniUtil_findClass(env, INT_AI);
+		if (g_cls_ai_int == NULL) { return false; }
+		g_cls_ai_int = jniUtil_makeGlobalRef(env, g_cls_ai_int, "AI interface class");
+		if (g_cls_ai_int == NULL) { return false; }
+	}
+
+	// get the AI implementation class (from SkirmishAI.jar)
+	jclass cls_ai = jniUtil_findClassThroughLoader(env, o_global_aiClassLoader,
+			className);
+	if (cls_ai == NULL) { return false; }
+
+	const bool implementsAIInt = (bool) (*env)->IsAssignableFrom(env, cls_ai, g_cls_ai_int);
+	bool hasException = (*env)->ExceptionCheck(env);
+	if (!implementsAIInt || hasException) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Class not found \"%s\"", className);
-		if ((*env)->ExceptionCheck(env)) {
+				"AI class not assignable from interface "INT_AI": %s", className);
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "possible reasons (this list could be incomplete):");
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "* "INT_AI" interface not implemented");
+		simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "* The AI is not compiled for the Java AI Interface version in use");
+		if (hasException) {
 			(*env)->ExceptionDescribe(env);
 		}
 		return false;
 	}
 
-	// get AI constructor
-	jmethodID m_ai_ctor = (*env)->GetMethodID(env, cls_ai, "<init>", "()V");
-	if (m_ai_ctor == NULL || (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"No-arg constructor not found for class: %s", className);
-		if ((*env)->ExceptionCheck(env)) {
-			(*env)->ExceptionDescribe(env);
-		}
-		return false;
-	}
+	// get factory no-arg ctor
+	jmethodID m_ai_ctor = jniUtil_getMethodID(env, cls_ai, "<init>", "()V");
+	if (m_ai_ctor == NULL) { return false; }
 
-	// instantiate AI
+	// get AI instance
 	jobject o_local_ai = (*env)->NewObject(env, cls_ai, m_ai_ctor);
-	if (!o_local_ai || (*env)->ExceptionCheck(env)) {
+	hasException = (*env)->ExceptionCheck(env);
+	if (!o_local_ai || hasException) {
 		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"No-arg constructor not found for class: %s", className);
-		if ((*env)->ExceptionCheck(env)) {
+				"Failed fetching AI instance for class: %s", className);
+		if (hasException) {
 			(*env)->ExceptionDescribe(env);
 		}
 		return false;
@@ -1377,43 +1085,7 @@ static bool java_loadSkirmishAI(JNIEnv* env,
 	// make the AI a global reference,
 	// so it will not be garbage collected,
 	// even after this method returned
-	*o_ai = java_makeGlobalRef(env, o_local_ai, "AI instance");
-
-
-	// get the AIs methods
-
-	// init
-	methods[MTH_INDEX_SKIRMISH_AI_INIT] = (*env)->GetMethodID(env, cls_ai,
-			MTH_SKIRMISH_AI_INIT, SIG_SKIRMISH_AI_INIT);
-	if (methods[MTH_INDEX_SKIRMISH_AI_INIT] == NULL
-			|| (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Method not found: %s.%s%s", className,
-				MTH_SKIRMISH_AI_INIT, SIG_SKIRMISH_AI_INIT);
-		return false;
-	}
-
-	// release
-	methods[MTH_INDEX_SKIRMISH_AI_RELEASE] = (*env)->GetMethodID(env, cls_ai,
-			MTH_SKIRMISH_AI_RELEASE, SIG_SKIRMISH_AI_RELEASE);
-	if (methods[MTH_INDEX_SKIRMISH_AI_RELEASE] == NULL
-			|| (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Method not found: %s.%s%s", className,
-				MTH_SKIRMISH_AI_RELEASE, SIG_SKIRMISH_AI_RELEASE);
-		return false;
-	}
-
-	// handleEvent
-	methods[MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT] = (*env)->GetMethodID(env,
-			cls_ai, MTH_SKIRMISH_AI_HANDLE_EVENT, SIG_SKIRMISH_AI_HANDLE_EVENT);
-	if (methods[MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT] == NULL
-			|| (*env)->ExceptionCheck(env)) {
-		simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-				"Method not found: %s.%s%s", className,
-				MTH_SKIRMISH_AI_HANDLE_EVENT, SIG_SKIRMISH_AI_HANDLE_EVENT);
-		return false;
-	}
+	*o_ai = jniUtil_makeGlobalRef(env, o_local_ai, "AI instance");
 
 	return true;
 }
@@ -1445,35 +1117,21 @@ bool java_initSkirmishAIClass(
 		java_establishJavaEnv();
 		JNIEnv* env = java_getJNIEnv();
 
-		if (g_cls_url == NULL) {
-			java_initURLClass(env);
-		}
-		if (g_cls_urlClassLoader == NULL) {
-			java_initURLClassLoaderClass(env);
-		}
-		if (g_cls_jnaPointer == NULL) {
-			java_initPointerClass(env);
-		}
-
 		jobject    instance    = NULL;
-		jmethodID* methods     = NULL;
 		jobject    classLoader = NULL;
 
-		methods = (jmethodID*) calloc(MTHS_SIZE_SKIRMISH_AI, sizeof(jmethodID));
 		success = java_loadSkirmishAI(env, shortName, version, className,
-				&(instance), methods, &(classLoader));
+				&(instance), &(classLoader));
 		java_establishSpringEnv();
 
 		if (success) {
 			skirmishAiImpl_instance[sai]    = instance;
-			skirmishAiImpl_methods[sai]     = methods;
 			skirmishAiImpl_classLoader[sai] = classLoader;
 			skirmishAiImpl_className[sai]   = util_allocStrCpy(className);
 			if (firstFree == skirmishAiImpl_size) {
 				skirmishAiImpl_size++;
 			}
 		} else {
-			free(methods);
 			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
 					"Class loading failed for class: %s", className);
 		}
@@ -1511,13 +1169,13 @@ bool java_releaseSkirmishAIClass(const char* className) {
 
 		// delete the AI class-loader global reference,
 		// so it will be garbage collected
-		successPart = java_deleteGlobalRef(env, skirmishAiImpl_classLoader[sai],
-				"AI class-loader");
+		successPart = jniUtil_deleteGlobalRef(env,
+				skirmishAiImpl_classLoader[sai], "AI class-loader");
 		success = successPart;
 
 		// delete the AI global reference,
 		// so it will be garbage collected
-		successPart = java_deleteGlobalRef(env, skirmishAiImpl_instance[sai],
+		successPart = jniUtil_deleteGlobalRef(env, skirmishAiImpl_instance[sai],
 				"AI instance");
 		success = success && successPart;
 		java_establishSpringEnv();
@@ -1525,7 +1183,6 @@ bool java_releaseSkirmishAIClass(const char* className) {
 		if (success) {
 			skirmishAiImpl_classLoader[sai] = NULL;
 			skirmishAiImpl_instance[sai] = NULL;
-			FREE(skirmishAiImpl_methods[sai]);
 			FREE(skirmishAiImpl_className[sai]);
 			// if it is the last implementation
 			if (sai+1 == skirmishAiImpl_size) {
@@ -1553,58 +1210,16 @@ bool java_releaseAllSkirmishAIClasses() {
 }
 
 
-// const struct SSkirmishAICallback* java_getSkirmishAICCallback(int teamId) {
-// 	return teamId_cCallback[teamId];
-// }
-
-
 int java_skirmishAI_init(int teamId,
 		const struct SSkirmishAICallback* aiCallback) {
 
 	int res = -1;
 
-	jmethodID mth = NULL;
-	jobject o_ai = NULL;
-
-	java_getSkirmishAIAndMethod(teamId, &o_ai, MTH_INDEX_SKIRMISH_AI_INIT, &mth);
-	bool success = true;
-
-	JNIEnv* env = NULL;
-	if (success) {
-		java_getSkirmishAIAndMethod(teamId, &o_ai, MTH_INDEX_SKIRMISH_AI_INIT,
-				&mth);
-		java_establishJavaEnv();
-		env = java_getJNIEnv();
-	}
-
-	// create Java AI Callback
-	jobject o_aiCallback = NULL;
-	if (success) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
-				"creating Java AI Callback for init() ...");
-		o_aiCallback = java_createAICallback(env, aiCallback);
-		success = (o_aiCallback != NULL);
-		if (success) {
-			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "done.");
-		} else {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "failed!");
-		}
-	}
-
-	if (success) {
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
-				"calling Java AI method init(teamId, callback)...");
-		res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId,
-				o_aiCallback);
-		success = (res == 0 && !checkException(env, "calling Java AI method init(teamId, callback) failed."));
-		if (success) {
-			simpleLog_logL(SIMPLELOG_LEVEL_FINE, "done.");
-		} else {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR, "failed!");
-		}
-	}
-	if (success) {
-		success = java_deleteGlobalRef(env, o_aiCallback, "AI callback instance");
+	java_establishJavaEnv();
+	JNIEnv* env = java_getJNIEnv();
+	jobject global_javaAICallback = java_createAICallback(env, aiCallback, teamId);
+	if (global_javaAICallback != NULL) {
+		res = eventsJniBridge_initAI(env, teamId, global_javaAICallback);
 	}
 	java_establishSpringEnv();
 
@@ -1615,24 +1230,7 @@ int java_skirmishAI_release(int teamId) {
 
 	int res = -1;
 
-	jmethodID mth = NULL;
-	jobject o_ai = NULL;
-
-	java_getSkirmishAIAndMethod(teamId, &o_ai, MTH_INDEX_SKIRMISH_AI_RELEASE,
-			&mth);
-	bool success = true;
-
-	if (success) {
-		java_establishJavaEnv();
-		JNIEnv* env = java_getJNIEnv();
-		simpleLog_logL(SIMPLELOG_LEVEL_FINE,
-				"calling Java AI method release(teamId)...");
-		res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId);
-		if (checkException(env, "calling Java AI method release(teamId) failed.")) {
-			res = -99;
-		}
-		java_establishSpringEnv();
-	}
+	res = 0;
 
 	return res;
 }
@@ -1641,39 +1239,12 @@ int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
 
 	int res = -1;
 
-	jmethodID mth = NULL;
-	jobject o_ai = NULL;
-
-	java_getSkirmishAIAndMethod(teamId, &o_ai,
-			MTH_INDEX_SKIRMISH_AI_HANDLE_EVENT, &mth);
-	bool success = true;
-
-	if (success) {
-		java_establishJavaEnv();
-		JNIEnv* env = java_getJNIEnv();
-
-		jobject jnaPointerToData = java_creatJnaPointer(env, data);
-		if (jnaPointerToData == NULL) {
-			simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-					"handleEvent: creating JNA pointer to data failed");
-			res = -3;
-			success = false;
-		}
-
-		if (success) {
-			env = java_reattachCurrentThread();
-			res = (int) (*env)->CallIntMethod(env, o_ai, mth, (jint) teamId, (jint) topic, jnaPointerToData);
-			if ((*env)->ExceptionCheck(env)) {
-				simpleLog_logL(SIMPLELOG_LEVEL_ERROR,
-						"handleEvent: call failed");
-				(*env)->ExceptionDescribe(env);
-				res = -2;
-			}
-			java_deleteGlobalRef(env, jnaPointerToData,
-					"JNA Pointer to handleEvent data");
-		}
-		java_establishSpringEnv();
-	}
+	java_establishJavaEnv();
+	JNIEnv* env = java_getJNIEnv();
+	const size_t sai = team_skirmishAiImpl[teamId];
+	jobject aiInstance = skirmishAiImpl_instance[sai];
+	res = eventsJniBridge_handleEvent(env, aiInstance, teamId, topic, data);
+	java_establishSpringEnv();
 
 	return res;
 }

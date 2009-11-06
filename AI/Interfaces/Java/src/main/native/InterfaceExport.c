@@ -21,7 +21,7 @@
 #include "JavaBridge.h"
 
 // generated at build time
-#include "FunctionPointerBridge.h"
+#include "CallbackFunctionPointerBridge.h"
 
 #include "CUtils/Util.h"
 #include "CUtils/SimpleLog.h"
@@ -223,11 +223,11 @@ int CALLING_CONV proxy_skirmishAI_init(int teamId, const struct SSkirmishAICallb
 	int ret = -1;
 
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 0);
-	const char* const shortName = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
+	const char* const shortName = aiCallback->SkirmishAI_Info_getValueByKey(teamId,
 			SKIRMISH_AI_PROPERTY_SHORT_NAME);
-	const char* const version = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
+	const char* const version = aiCallback->SkirmishAI_Info_getValueByKey(teamId,
 			SKIRMISH_AI_PROPERTY_VERSION);
-	const char* const className = aiCallback->Clb_SkirmishAI_Info_getValueByKey(teamId,
+	const char* const className = aiCallback->SkirmishAI_Info_getValueByKey(teamId,
 			JAVA_SKIRMISH_AI_PROPERTY_CLASS_NAME);
 //simpleLog_logL(SIMPLELOG_LEVEL_FINE, "proxy_skirmishAI_init %u", 1);
 
