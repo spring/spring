@@ -306,7 +306,7 @@ void PrintLoadMsg(const char* text, bool swapbuffers)
 
 	font->glPrint(0.5f,0.5f,   gu->viewSizeY / 15.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, text);
 #ifdef USE_GML
-	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "Spring %s MT (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
+	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "Spring %s (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
 #else
 	font->glFormat(0.5f,0.06f, gu->viewSizeY / 35.0f, FONT_OUTLINE | FONT_CENTER | FONT_NORM, "Spring %s", SpringVersion::GetFull().c_str());
 #endif

@@ -159,20 +159,20 @@ void CGameInfo::Draw()
 	vector<FontString> labels;
 	vector<FontString> values;
 	char buf[256];
-	
+
 	if (gameSetup && gameSetup->hostDemo) {
 		labels.push_back("Playback:");
 		values.push_back(gameSetup->demoName);
 	}
-	
+
 	labels.push_back("Game Version:");
-#ifdef USE_GML
-	char ver[64];
-	sprintf(ver, "%s MT (%d threads)", SpringVersion::GetFull().c_str(), gmlThreadCount);
-	values.push_back(ver);
-#else
 	values.push_back(SpringVersion::GetFull());
+
+#ifdef USE_GML
+	labels.push_back("MT Threads:");
+	values.push_back(IntToString(gmlThreadCount));
 #endif
+
 	labels.push_back("Game Speed:");
 	values.push_back(gs->speedFactor);
 
@@ -227,7 +227,7 @@ void CGameInfo::Draw()
 	const float height = rowHeight * (float)(labels.size());
 
 	const float dy = height / (float)labels.size();
-	
+
 	box.x1 = 0.5f - (width * 0.5f); 
 	box.x2 = 0.5f + (width * 0.5f);
 	box.y1 = 0.5f - (height * 0.5f);
@@ -253,7 +253,7 @@ void CGameInfo::Draw()
 		b.y1 = b.y2 - dy;
 		DrawBox(b);
 	}
-	
+
 	glEnable(GL_TEXTURE_2D);
 
 	if ((activeReceiver == this) && IsAbove(mouse->lastx, mouse->lasty)) {
