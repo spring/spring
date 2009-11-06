@@ -191,10 +191,9 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 {
 	// Prologue.
 	logOutput.RemoveAllSubscribers();
-#ifdef USE_GML
-	PRINT("Spring %s MT (%d threads) has crashed.", SpringVersion::GetFull().c_str(), gmlThreadCount);
-#else
 	PRINT("Spring %s has crashed.", SpringVersion::GetFull().c_str());
+#ifdef USE_GML
+	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
 	// Initialize IMAGEHLP.DLL.
 	SymInitialize(GetCurrentProcess(), ".", TRUE);
