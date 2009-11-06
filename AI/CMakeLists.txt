@@ -133,6 +133,7 @@ endmacro (AIMessage type msg)
 ### END: MACROS_AND_FUNCTIONS
 ################################################################################
 
+find_package(AWK)
 
 # CUtils has to come first, because the Interfaces use it too
 if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
