@@ -18,9 +18,10 @@
 */
 
 #ifndef _AISEISMICPINGEVENT_H
-#define	_AISEISMICPINGEVENT_H
+#define _AISEISMICPINGEVENT_H
 
 #include "AIEvent.h"
+#include "float3.h"
 
 class CAISeismicPingEvent : public CAIEvent {
 public:
@@ -29,7 +30,7 @@ public:
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
 		int evtId = AI_EVENT_SEISMIC_PING;
-		IGlobalAI::SeismicPingEvent evt = {float3(event.pos), event.strength};
+		IGlobalAI::SeismicPingEvent evt = {float3(event.pos_posF3), event.strength};
 		ai.HandleEvent(evtId, &evt);
 	}
 

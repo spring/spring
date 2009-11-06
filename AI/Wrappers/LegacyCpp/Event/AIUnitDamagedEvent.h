@@ -19,9 +19,10 @@
 */
 
 #ifndef _AIUNITDAMAGEDEVENT_H
-#define	_AIUNITDAMAGEDEVENT_H
+#define _AIUNITDAMAGEDEVENT_H
 
 #include "AIEvent.h"
+#include "float3.h"
 
 class CAIUnitDamagedEvent : public CAIEvent {
 public:
@@ -29,7 +30,7 @@ public:
 	~CAIUnitDamagedEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-		ai.UnitDamaged(event.unit, event.attacker, event.damage, event.dir);
+		ai.UnitDamaged(event.unit, event.attacker, event.damage, float3(event.dir_posF3));
 	}
 
 private:

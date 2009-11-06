@@ -22,6 +22,7 @@
 #define _AIENEMYDAMAGEDEVENT_H
 
 #include "AIEvent.h"
+#include "float3.h"
 
 class CAIEnemyDamagedEvent : public CAIEvent {
 public:
@@ -29,7 +30,7 @@ public:
 	~CAIEnemyDamagedEvent() {}
 
 	void Run(IGlobalAI& ai, IGlobalAICallback* globalAICallback = NULL) {
-		ai.EnemyDamaged(event.enemy, event.attacker, event.damage, event.dir);
+		ai.EnemyDamaged(event.enemy, event.attacker, event.damage, float3(event.dir_posF3));
 	}
 
 private:
