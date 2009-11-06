@@ -9,6 +9,9 @@
 # * GetListOfSubModules
 # * GetVersionFromFile
 # * GetLastPathPart
+# * MakeAbsolute
+# * GetNativeSourcesRecursive
+# * AIMessage
 #
 
 add_definitions(-DBUILDING_AI)
@@ -119,11 +122,22 @@ macro    (GetNativeSourcesRecursive _var _dir _relDir)
 	endforeach (_ext)
 endmacro (GetNativeSourcesRecursive _var _dir _relDir)
 
+
+# Print a message, but only if we are allowed to speak.
+macro    (AIMessage type msg)
+	if    (NOT AI_FIND_QUIETLY)
+		message(${type} "${msg}")
+	endif (NOT AI_FIND_QUIETLY)
+endmacro (AIMessage type msg)
+
 ### END: MACROS_AND_FUNCTIONS
 ################################################################################
 
 
-# Wrappers have to come first cause the Interfaces use the CUtils Wrapper too
-Add_Subdirectory(Wrappers)
+# CUtils has to come first, because the Interfaces use it too
+if    (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
+	Add_Subdirectory(Wrappers/CUtils)
+endif (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Wrappers/CUtils)
 Add_Subdirectory(Interfaces)
+Add_Subdirectory(Wrappers)
 Add_Subdirectory(Skirmish)
