@@ -17,6 +17,7 @@
 #include "Rendering/UnitModels/3DOParser.h"
 #include "Sim/Features/Feature.h"
 #include "Sim/Features/FeatureHandler.h"
+#include "Sim/Misc/GroundBlockingObjectMap.h"
 #include "Sim/Misc/ModInfo.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
@@ -115,9 +116,10 @@ void CBuilder::PostLoad()
 void CBuilder::UnitInit(const UnitDef* def, int team, const float3& position)
 {
 	range3D = def->buildRange3D;
-	buildDistance  = def->buildDistance;
+	buildDistance = def->buildDistance;
 
 	const float scale = (1.0f / 32.0f);
+
 	buildSpeed     = scale * def->buildSpeed;
 	repairSpeed    = scale * def->repairSpeed;
 	reclaimSpeed   = scale * def->reclaimSpeed;
@@ -539,25 +541,42 @@ void CBuilder::StopBuild(bool callScript)
 bool CBuilder::StartBuild(BuildInfo& buildInfo)
 {
 	StopBuild(false);
-//	logOutput.Print("start build");
 
-	buildInfo.pos=helper->Pos2BuildPos(buildInfo);
+	buildInfo.pos = helper->Pos2BuildPos(buildInfo);
 
-	CFeature* feature;
+	CFeature* feature = NULL;
 	// Pass -1 as allyteam to behave like we have maphack.
 	// This is needed to prevent building on top of cloaked stuff.
-	int canBuild=uh->TestUnitBuildSquare(buildInfo, feature, -1);
-	if(canBuild<2){
-		CUnit* u=helper->GetClosestFriendlyUnit(buildInfo.pos,5,allyteam);
-		if(u && u->unitDef==buildInfo.def && unitDef->canAssist){
-			curBuild=u;
-			AddDeathDependence(u);
-			SetBuildStanceToward(buildInfo.pos);
-			return true;
+	const int canBuild = uh->TestUnitBuildSquare(buildInfo, feature, -1);
+
+	if (canBuild < 2) {
+		// the ground is blocked at the position we want
+		// to build at; check if the blocking object is
+		// of the same type as our buildee (which means
+		// another builder has already started it)
+		// note: even if construction has already started,
+		// the buildee is *not* guaranteed to be the unit
+		// closest to us
+		//
+		// CUnit* u = helper->GetClosestFriendlyUnit(buildInfo.pos, buildDistance, allyteam);
+
+		CSolidObject* o = groundBlockingObjectMap->GroundBlocked(buildInfo.pos);
+		CUnit* u = NULL;
+
+		if (o != NULL) {
+			u = dynamic_cast<CUnit*>(o);
+
+			if (u != NULL && u->unitDef == buildInfo.def && unitDef->canAssist) {
+				curBuild = u;
+				AddDeathDependence(u);
+				SetBuildStanceToward(buildInfo.pos);
+				return true;
+			}
 		}
 		return false;
 	}
-	if(feature)
+
+	if (feature)
 		return false;
 
 	const UnitDef* unitDef = buildInfo.def;

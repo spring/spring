@@ -382,6 +382,7 @@ void CBuilderCAI::SlowUpdate()
 	if (!owner->beingBuilt && boi != buildOptions.end()) {
 		const UnitDef* ud = unitDefHandler->GetUnitDefByName(boi->second);
 		const float radius = GetUnitDefRadius(ud, c.id);
+
 		if (inCommand) {
 			if (building) {
 				if (f3SqDist(build.pos, fac->pos) > Square(fac->buildDistance + radius - 8.0f)) {
@@ -427,7 +428,7 @@ void CBuilderCAI::SlowUpdate()
 							FinishCommand();
 						}
 						else if (uh->MaxUnitsPerTeam() > (int) teamHandler->Team(owner->team)->units.size()) {
-							// max unitlimit reached
+							// unit-limit not yet reached
 							buildRetries++;
 							owner->moveType->KeepPointingTo(build.pos, fac->buildDistance * 0.7f + radius, false);
 
@@ -435,10 +436,22 @@ void CBuilderCAI::SlowUpdate()
 								building = true;
 							} else {
 								if ((owner->team == gu->myTeam) && !(buildRetries & 7)) {
-									logOutput.Print("%s: Build pos blocked", owner->unitDef->humanName.c_str());
+									logOutput.Print(
+										"%s: build-position <%.2f, %.2f, %.2f> blocked after %d attempts",
+										owner->unitDef->humanName.c_str(),
+										build.pos.x, build.pos.y, build.pos.z,
+										buildRetries
+									);
 									logOutput.SetLastMsgPos(owner->pos);
 								}
-								helper->BuggerOff(build.pos, radius, false);
+
+								const float fpSqRadius = (ud->xsize * ud->xsize + ud->zsize * ud->zsize);
+								const float fpRadius = (streflop::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+
+								// tell everything within the radius of the soon-to-be buildee
+								// to get out of the way; using the model radius is not correct
+								// because this can be shorter than half the footprint diagonal
+								helper->BuggerOff(build.pos, std::max(radius, fpRadius), false);
 								NonMoving();
 							}
 						}
