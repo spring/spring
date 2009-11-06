@@ -83,6 +83,19 @@ static std::string noSlashAtEnd(const std::string& dir) {
 	return resDir;
 }
 
+static std::string removeLastPathPart(const std::string& path) {
+
+	std::string resDir = noSlashAtEnd(path);
+
+	const std::string::size_type slashPos = resDir.find_last_of("/\\");
+	if (slashPos != std::string::npos) {
+		resDir = resDir.substr(0, slashPos+1);
+	}
+
+	return resDir;
+}
+
+
 CAILibraryManager::CAILibraryManager() {
 
 	GetAllInfosFromCache();
@@ -117,7 +130,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 			interfaceInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
 			interfaceInfo->SetDataDirCommon(
-					std::string(possibleDataDir) + "common");
+					removeLastPathPart(possibleDataDir) + "common");
 
 			AIInterfaceKey interfaceKey = interfaceInfo->GetKey();
 
@@ -172,7 +185,7 @@ void CAILibraryManager::GetAllInfosFromCache() {
 
 			skirmishAIInfo->SetDataDir(noSlashAtEnd(possibleDataDir));
 			skirmishAIInfo->SetDataDirCommon(
-					std::string(possibleDataDir) + "common");
+					removeLastPathPart(possibleDataDir) + "common");
 			skirmishAIInfo->SetLuaAI(false);
 
 			SkirmishAIKey aiKey = skirmishAIInfo->GetKey();
