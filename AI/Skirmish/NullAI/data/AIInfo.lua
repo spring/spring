@@ -1,17 +1,17 @@
---
---  Info Definition Table format
---
---
---  These keywords must be lowercase for LuaParser to read them.
---
---  key:      user defined or one of the SKIRMISH_AI_PROPERTY_* defines in
---            SSkirmishAILibrary.h
---  value:    the value of the property
---  desc:     the description (could be used as a tooltip)
---
---
+--[[
 --------------------------------------------------------------------------------
+
+	Info Definition Table format
+
+	These keywords must be lowercase for LuaParser to read them.
+
+	key:    user defined or one of the SKIRMISH_AI_PROPERTY_* defines in
+		    SSkirmishAILibrary.h
+	value:  the value of the property
+	desc:   the description (could be used as a tooltip)
+
 --------------------------------------------------------------------------------
+]]
 
 local infos = {
 	{
@@ -31,7 +31,7 @@ local infos = {
 	{
 		key    = 'description',
 		value  = 'This AI does absolutely nothing.',
-		desc   = 'tooltip.',
+		desc   = 'this should help noobs to find out whether this AI is what they want',
 	},
 	{
 		key    = 'url',

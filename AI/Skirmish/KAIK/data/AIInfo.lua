@@ -1,17 +1,17 @@
---
---  Info Definition Table format
---
---
---  These keywords must be lowercase for LuaParser to read them.
---
---  key:      user defined or one of the SKIRMISH_AI_PROPERTY_* defines in
---            SSkirmishAILibrary.h
---  value:    the value of the property
---  desc:     the description (could be used as a tooltip)
---
---
+--[[
 --------------------------------------------------------------------------------
+
+	Info Definition Table format
+
+	These keywords must be lowercase for LuaParser to read them.
+
+	key:    user defined or one of the SKIRMISH_AI_PROPERTY_* defines in
+		    SSkirmishAILibrary.h
+	value:  the value of the property
+	desc:   the description (could be used as a tooltip)
+
 --------------------------------------------------------------------------------
+]]
 
 local infos = {
 	{
@@ -30,8 +30,16 @@ local infos = {
 	},
 	{
 		key    = 'description',
-		value  = 'Competetive AI that supports most TA based Mods and plays decently.',
-		desc   = 'tooltip.',
+		value  = [[
+Plays a though and fast game, using nearly exclusively ground units,
+with a lonesome plane then and when. Attacks in big groups,
+and never with hovercraft or water units.
+Usually is easy to beat once the game gets to T2.
+Realtive CPU usage: 1.5
+Scales well with growing unit numbers.
+Known to Support: BA, SA, XTA
+recommended: use only for *A mods]],
+		desc   = 'this should help noobs to find out whether this AI is what they want',
 	},
 	{
 		key    = 'url',
