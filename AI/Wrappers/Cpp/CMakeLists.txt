@@ -6,7 +6,8 @@
 #
 
 
-set(mySourceDirRel    "")
+set(myName         "Cpp")
+set(mySourceDirRel "")
 
 
 # Check if the user wants to compile the wrapper
@@ -18,12 +19,12 @@ endif ("${AI_TYPES}" STREQUAL "ALL" OR "${AI_TYPES}" STREQUAL "NATIVE")
 
 
 # Check dependencies of the wrapper are met
-if    (AIWRAPPERS_NATIVE)
+if    (AIWRAPPERS_NATIVE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	SetGlobal(BUILD_${myName}_AIWRAPPER TRUE)
-else  (AIWRAPPERS_NATIVE)
+else  (AIWRAPPERS_NATIVE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	SetGlobal(BUILD_${myName}_AIWRAPPER FALSE)
 	message ("warning: (New) C++ AI Wrapper will not be built!")
-endif (AIWRAPPERS_NATIVE)
+endif (AIWRAPPERS_NATIVE AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 
 # Build
@@ -40,11 +41,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 
 	# Build static library
-	if    (CMAKE_HOST_WIN32)
-		set(AWK_COMMAND "${MINGWLIBS}/bin/awk.exe")
-	else  (CMAKE_HOST_WIN32)
-		set(AWK_COMMAND "awk")
-	endif (CMAKE_HOST_WIN32)
 	set(myBinDir                   "${myDir}/bin")
 	set(commonBinDir               "${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils/bin")
 	set(myGeneratedSourceDir       "${CMAKE_CURRENT_BINARY_DIR}/src-generated")
@@ -52,7 +48,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(springAIInterfaceSourceDir "${springSourceDir}/rts/ExternalAI/Interface")
 
 	SetGlobal(${myName}_AIWRAPPER_GENERATED_SRC_DIR "${myGeneratedSourceDir}")
-	
+
 	set(myGeneratedSources
 		${myGeneratedSourceDir}/AICallback.cpp
 		${myGeneratedSourceDir}/Camera.cpp
@@ -98,7 +94,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 
 	# generate the source files
 	SET(myGenerateCommand
-		"${AWK_COMMAND}"
+		"${AWK_BIN}"
 		"-v" "SPRING_SOURCE_DIR=${springSourceDir}"
 		"-v" "GENERATED_SOURCE_DIR=${myGeneratedSourceDir}"
 		"-f" "${myBinDir}/wrappCallback.awk"

@@ -682,7 +682,7 @@ function printMember(out_h_m, out_s_m, clsNameExternal_m, fullName_m, additional
 	retTypeInterfaceSrc = "";
 	params = funcParams[fullName_m];
 	innerParams = funcInnerParams[fullName_m];
-	memName = extractNormalPart(fullName_m);
+	memName = fullName_m;
 	sub(/^.*_/, "", memName);
 	isVoid_m = (retType == "void");
 	isBuffered_m = !isVoid_m && isBufferedFunc(fullName_m);
