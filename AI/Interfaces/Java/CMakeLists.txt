@@ -15,6 +15,8 @@
 # * ConfigureJavaSkirmishAI
 #
 
+enable_language(Java)
+
 
 ################################################################################
 ### BEGINN: MACROS_AND_FUNCTIONS
@@ -304,12 +306,12 @@ endif (AI_TYPES_JAVA)
 
 
 # Check if dependencies of the interface are met
-if    (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+if    (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	SetGlobal(BUILD_${myName}_AIINTERFACE TRUE)
-else  (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+else  (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 	SetGlobal(BUILD_${myName}_AIINTERFACE FALSE)
 	message("warning: Java AI Interface will not be built!")
-endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin)
+endif (AI_TYPES_JAVA AND JNI_FOUND AND JAVA_FOUND AND EXISTS ${myDir} AND EXISTS ${myDir}/bin AND AWK_FOUND AND NOT myName MATCHES "${AI_EXCLUDE_REGEX}")
 
 
 # Build
@@ -329,11 +331,6 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	# Init some vars
 	# --------------
-	if    (CMAKE_HOST_WIN32)
-		set(AWK_COMMAND "${MINGWLIBS}/bin/awk.exe")
-	else  (CMAKE_HOST_WIN32)
-		set(AWK_COMMAND "awk")
-	endif (CMAKE_HOST_WIN32)
 	set(myGenerateTarget           "${myTarget}-generateClb")
 	set(myAwkScriptsDir            "${myDir}/bin")
 	set(commonAwkScriptsDir        "${CMAKE_SOURCE_DIR}/AI/Wrappers/CUtils/bin")
@@ -348,7 +345,6 @@ if    (BUILD_${myName}_AIINTERFACE)
 	set(myJavaGeneratedSourceDir   "${myGeneratedSourceDir}/java")
 	set(myNativeGeneratedSourceDir "${myGeneratedSourceDir}/native")
 	set(myJLibDir                  "${myDir}/data/jlib")
-	#set(myJavaLibs                 "${myJLibDir}/jna/jna.jar${PATH_DELIM}${myJLibDir}/vecmath.jar")
 	CreateClasspath(myJavaLibs ${myJLibDir})
 	set(myClassPath                ".${PATH_DELIM}${myJavaLibs}${PATH_DELIM}${myJavaSourceDir}")
 
@@ -390,11 +386,11 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${springAIInterfaceSourceDir}/AISCommands.h"
 		WORKING_DIRECTORY
 			"${myAwkScriptsDir}"
-		COMMAND "${AWK_COMMAND}"
+		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${myAwkScriptsDir}/native_wrappCallback.awk"
 			"${springAIInterfaceSourceDir}/SSkirmishAICallback.h"
-		COMMAND "${AWK_COMMAND}"
+		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${myAwkScriptsDir}/native_wrappCommands.awk"
 			"${springAIInterfaceSourceDir}/AISCommands.h"
@@ -410,7 +406,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myNativeGeneratedSourceDir}/CallbackJNIBridge.h"
 			"${myNativeGeneratedSourceDir}/CallbackJNIBridge.c"
 			"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
-		COMMAND "${AWK_COMMAND}"
+		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${myAwkScriptsDir}/jni_wrappCallback.awk"
 			"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
@@ -424,7 +420,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myNativeGeneratedSourceDir}/EventsJNIBridge.h"
 			"${myNativeGeneratedSourceDir}/EventsJNIBridge.c"
 			"${myJavaGeneratedSourceDir}/${myPkg}/AI.java"
-		COMMAND "${AWK_COMMAND}"
+		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${myAwkScriptsDir}/jni_wrappEvents.awk"
 			"${springAIInterfaceSourceDir}/AISEvents.h"
@@ -490,6 +486,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT "  Compiling Java sources ..." VERBATIM)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
+		#OUTPUT "${myBuildDir}/${myBinJarFile}"
 		#DEPENDS "${myJavaBuildDir}/${myPkg}/*.class"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"cmf" "${myJavaSourceDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
@@ -498,19 +495,18 @@ if    (BUILD_${myName}_AIINTERFACE)
 		COMMENT "  Creating Java interface library ${myBinJarFile} ..." VERBATIM)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
-		DEPENDS ${myJavaSources}
+		#OUTPUT "${myBuildDir}/${mySrcJarFile}"
+		DEPENDS
+			${myJavaSources}
+			${myJavaGeneratedSources}
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"cf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myJavaSourceDir}" "${myPkgFirstPart}"
-		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  Creating Java interface source archive ${mySrcJarFile} ..." VERBATIM)
-	add_custom_command(TARGET ${myTarget} POST_BUILD
-		DEPENDS ${myJavaGeneratedSources}
 		COMMAND "${JAVA_ARCHIVE}" ARGS
 			"uf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  Updating Java interface source archive ${mySrcJarFile} with generated sources ..." VERBATIM)
+		COMMENT "  Creating Java interface source archive ${mySrcJarFile} ..." VERBATIM)
 
 	# Install the native library
 	install(TARGETS   ${myTarget} DESTINATION ${myInstLibsDir})
