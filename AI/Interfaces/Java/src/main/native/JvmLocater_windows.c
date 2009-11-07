@@ -121,7 +121,7 @@ static bool GetStringFromRegistry(HKEY key, const char* name, char* buf,
 	if (RegQueryValueEx(key, name, 0, &type, 0, &size) == 0
 		&& type == REG_SZ
 		&& (size < bufSize)) {
-		if (RegQueryValueEx(key, name, 0, 0, buf, &size) == 0) {
+		if (RegQueryValueEx(key, name, 0, 0, (LPBYTE)buf, &size) == 0) {
 			return true;
 		}
 	}
