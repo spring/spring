@@ -53,7 +53,6 @@ BEGIN {
 	myWrapClass = "AICallback";
 	myWrapVar = "innerCallback";
 	mySourceFile = javaGeneratedSrcRoot "/" myPkgD "/" myClass ".java";
-	MAX_IDS = 1024;
 	defMapJavaImpl = "HashMap";
 
 	myBufferedClasses["_UnitDef"]    = 1;
@@ -70,14 +69,11 @@ BEGIN {
 
 function doWrapp(funcFullName_dw) {
 
+	doWrapp_dw = 1;
+
 	paramListJava_dw  = funcParams[fullName_dw];
-	paramListJava2_dw = paramListJava_dw;
-	sub(/0ARRAY1SIZE0/, "0ARRAY1VALS0", paramListJava2_dw);
-	sub(/0MAP1SIZE0/, "0MAP1KEYS0", paramListJava2_dw);
-	doWrapp_dw =               !match(paramListJava_dw, /String\[\]/);
-	doWrapp_dw = doWrapp_dw && !match(paramListJava_dw, /AIFloat3\[\]/);
-	doWrapp_dw = doWrapp_dw && !match(paramListJava2_dw, /String\[\]/);
-	doWrapp_dw = doWrapp_dw && !match(paramListJava2_dw, /AIFloat3\[\]/);
+	doWrapp_dw = doWrapp_dw && !match(paramListJava_dw, /String\[\]/);
+
 	return doWrapp_dw;
 }
 
