@@ -406,6 +406,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myNativeGeneratedSourceDir}/CallbackJNIBridge.h"
 			"${myNativeGeneratedSourceDir}/CallbackJNIBridge.c"
 			"${myJavaGeneratedSourceDir}/${myPkg}/AICallback.java"
+			"${myJavaGeneratedSourceDir}/${myPkg}/JniAICallback.java"
 		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${myAwkScriptsDir}/jni_wrappCallback.awk"
@@ -420,6 +421,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myNativeGeneratedSourceDir}/EventsJNIBridge.h"
 			"${myNativeGeneratedSourceDir}/EventsJNIBridge.c"
 			"${myJavaGeneratedSourceDir}/${myPkg}/AI.java"
+			"${myJavaGeneratedSourceDir}/${myPkg}/AbstractAI.java"
 		COMMAND "${AWK_BIN}"
 			${commonAwkScriptArgs}
 			"-f" "${myAwkScriptsDir}/jni_wrappEvents.awk"
@@ -473,6 +475,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 
 	# Build the java part
 	# -------------------
+
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myJavaBuildDir}/${myPkg}/*.class"
 		DEPENDS ${myJavaGeneratedSources}
