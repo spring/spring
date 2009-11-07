@@ -63,7 +63,6 @@ static std::map<int, bool> team_cheatingEnabled;
 static std::map<int, IAICheats*> team_cheatCallback;
 
 static const size_t TMP_ARR_SIZE = 16384;
-static int tmpSize[MAX_SKIRMISH_AIS];
 // FIXME: the following lines are relatively memory intensive (~1MB per line)
 // this memory is only freed at exit of the application
 // There is quite some CPU and Memory performance waste present
@@ -71,8 +70,6 @@ static int tmpSize[MAX_SKIRMISH_AIS];
 static int tmpIntArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 static PointMarker tmpPointMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 static LineMarker tmpLineMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
-static const char* tmpKeysArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
-static const char* tmpValuesArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 
 static void checkTeamId(int teamId) {
 
@@ -98,55 +95,14 @@ static int fillCMap(const std::map<std::string,std::string>* map,
 	}
 	return i;
 }
-/*
-static int fillCMapKeys(const std::map<std::string,std::string>* map,
-		const char* cMapKeys[]) {
-	std::map<std::string,std::string>::const_iterator it;
-	int i;
-	for (i=0, it=map->begin(); it != map->end(); ++i, it++) {
-		cMapKeys[i] = it->first.c_str();
-	}
-	return i;
-}
-static int fillCMapValues(const std::map<std::string,std::string>* map,
-		const char* cMapValues[]) {
-	std::map<std::string,std::string>::const_iterator it;
-	int i;
-	for (i=0, it=map->begin(); it != map->end(); ++i, it++) {
-		cMapValues[i] = it->second.c_str();
-	}
-	return i;
-}
-*/
+
 static inline int min(int val1, int val2) {
 	return val1 < val2 ? val1 : val2;
 }
 static inline int max(int val1, int val2) {
 	return val1 > val2 ? val1 : val2;
 }
-static int copyIntArr(int* dest, int* src, int size) {
 
-	for (int i=0; i < size; ++i) {
-		dest[i] = src[i];
-	}
-	return size;
-}
-/*
-static int copyFloatArr(float* dest, float* src, int size) {
-
-	for (int i=0; i < size; ++i) {
-		dest[i] = src[i];
-	}
-	return size;
-}
-*/
-static int copyStringArr(const char** dest, const char** src, int size) {
-
-	for (int i=0; i < size; ++i) {
-		dest[i] = src[i];
-	}
-	return size;
-}
 static void toFloatArr(const short color[3], float alpha, float arrColor[4]) {
 	arrColor[0] = color[0];
 	arrColor[1] = color[1];
@@ -176,9 +132,6 @@ static const CUnit* getUnit(int unitId) {
 static bool isAlliedUnit(int teamId, const CUnit* unit) {
 	return teamHandler->AlliedTeams(unit->team, teamId);
 }
-//static bool isAlliedUnitId(int teamId, int unitId) {
-//	return isAlliedUnit(teamId, getUnit(unitId));
-//}
 
 static const UnitDef* getUnitDefById(int teamId, int unitDefId) {
 	AIHCGetUnitDefById cmd = {unitDefId, NULL};
@@ -238,7 +191,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 
 	int ret = 0;
 
-	IAICallback* clb = team_callback[teamId];
+	IAICallback* clb    = team_callback[teamId];
 	// if this is != NULL, cheating is enabled
 	IAICheats* clbCheat = team_cheatCallback[teamId];
 
