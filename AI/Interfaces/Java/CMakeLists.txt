@@ -456,6 +456,13 @@ if    (BUILD_${myName}_AIINTERFACE)
 		)
 	set_source_files_properties(${myJavaGeneratedSources} PROPERTIES GENERATED TRUE)
 
+	# Locate the manifest file
+	FindManifestFile("${myDir}" myManifestFile)
+	if    (myManifestFile)
+		set(myBinJarArgs "cmf" "${myManifestFile}")
+	else  (myManifestFile)
+		set(myBinJarArgs "cf")
+	endif (myManifestFile)
 
 	# Build the native part
 	# ---------------------
@@ -492,7 +499,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 		#OUTPUT "${myBuildDir}/${myBinJarFile}"
 		#DEPENDS "${myJavaBuildDir}/${myPkg}/*.class"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-			"cmf" "${myJavaSourceDir}/manifest.mf" "${myBuildDir}/${myBinJarFile}"
+			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
 		COMMENT "  Creating Java interface library ${myBinJarFile} ..." VERBATIM)
