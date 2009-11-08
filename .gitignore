@@ -39,7 +39,7 @@
 /game/*.so
 
 # DoxyGen output
-/doc
+/Documentation/doxygen
 
 # Scons related
 /build
