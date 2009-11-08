@@ -102,3 +102,5 @@ Makefile
 # ???
 progress.make
 
+#buildbot generated dirs
+/build-*
