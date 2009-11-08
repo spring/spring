@@ -4635,7 +4635,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
-			if (gu->spectating || !noSpectatorChat || !player->spectator) {
+			const bool specsOnly = noSpectatorChat && (player && player->spectator);
+			if (gu->spectating || !specsOnly) {
 				logOutput.Print(label + s);
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}
