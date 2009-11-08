@@ -132,6 +132,9 @@ void CDGunController::TrackAttackTarget(unsigned int currentFrame) {
 		ai->cb->HandleCommand(AIHCTraceRayId, &rayData);
 
 		if (rayData.hitUID != -1) {
+			// note: still fails when allied structure is between us and enemy
+			// can also fail if enemy is in front of allied structure and both
+			// are within the d-gun's range
 			haveClearShot = (ai->cb->GetUnitAllyTeam(rayData.hitUID) != ai->cb->GetMyAllyTeam());
 		}
 
