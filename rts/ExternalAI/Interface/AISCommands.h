@@ -112,7 +112,7 @@ enum CommandTopic {
 	COMMAND_UNIT_UNLOAD_UNITS_AREA                = 60,
 	COMMAND_UNIT_UNLOAD_UNIT                      = 61,
 	COMMAND_UNIT_SET_ON_OFF                       = 62,
-	COMMAND_UNIT_RECLAIM                          = 63,
+	COMMAND_UNIT_RECLAIM_UNIT                     = 63,
 	COMMAND_UNIT_RECLAIM_AREA                     = 64,
 	COMMAND_UNIT_CLOAK                            = 65,
 	COMMAND_UNIT_STOCKPILE                        = 66,
@@ -131,6 +131,7 @@ enum CommandTopic {
 	COMMAND_CHEATS_GIVE_ME_NEW_UNIT               = 79,
 	COMMAND_TRACE_RAY                             = 80,
 	COMMAND_PAUSE                                 = 81,
+	COMMAND_UNIT_RECLAIM_FEATURE                  = 82,
 //const int COMMAND_UNIT_ATTACK_POS
 //const int COMMAND_UNIT_INSERT
 //const int COMMAND_UNIT_REMOVE
@@ -139,7 +140,7 @@ enum CommandTopic {
 //const int COMMAND_UNIT_GROUP_SELECT
 //const int COMMAND_UNIT_INTERNAL
 };
-const unsigned int NUM_CMD_TOPICS                 = 82;
+const unsigned int NUM_CMD_TOPICS                 = 83;
 
 
 /**
@@ -224,7 +225,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SUnloadUnitCommand) \
 		+ sizeof(struct SUnloadUnitsAreaUnitCommand) \
 		+ sizeof(struct SSetOnOffUnitCommand) \
-		+ sizeof(struct SReclaimUnitCommand) \
+		+ sizeof(struct SReclaimUnitUnitCommand) \
 		+ sizeof(struct SReclaimAreaUnitCommand) \
 		+ sizeof(struct SCloakUnitCommand) \
 		+ sizeof(struct SStockpileUnitCommand) \
@@ -242,6 +243,7 @@ enum UnitCommandOptions {
 		+ sizeof(struct SCustomUnitCommand) \
 		+ sizeof(struct STraceRayCommand) \
 		+ sizeof(struct SPauseCommand) \
+		+ sizeof(struct SReclaimFeatureUnitCommand) \
 		)
 
 /**
@@ -258,7 +260,7 @@ struct SSetMyHandicapCheatCommand {
 struct SGiveMeResourceCheatCommand {
 	int resourceId;
 	float amount;
-}; // COMMAND_CHEATS_GIVE_ME_RESOURCE Cheats_giveMeResource resourceId-Resource
+}; // COMMAND_CHEATS_GIVE_ME_RESOURCE Cheats_giveMeResource REF:resourceId->Resource
 /**
  * Creates a new unit with the selected name at pos,
  * and returns its unit ID in ret_newUnitId.
@@ -267,7 +269,7 @@ struct SGiveMeNewUnitCheatCommand {
 	int unitDefId;
 	float* pos_posF3;
 	int ret_newUnitId;
-}; // COMMAND_CHEATS_GIVE_ME_NEW_UNIT Cheats_giveMeUnit
+}; // COMMAND_CHEATS_GIVE_ME_NEW_UNIT Cheats_giveMeUnit REF:unitDefId->UnitDef REF:ret_newUnitId->Unit
 
 /**
  * @brief Sends a chat/text message to other players.
@@ -294,9 +296,9 @@ struct SSetLastPosMessageCommand {
 struct SSendResourcesCommand {
 	int resourceId;
 	float amount;
-	int receivingTeam;
+	int receivingTeamId;
 	bool ret_isExecuted;
-}; // COMMAND_SEND_RESOURCES Economy_sendResource resourceId-Resource receivingTeam=Team
+}; // COMMAND_SEND_RESOURCES Economy_sendResource REF:resourceId->Resource REF:receivingTeamId->Team
 
 /**
  * Give units specified by <unitIds> to team <receivingTeam>.
@@ -310,19 +312,19 @@ struct SSendResourcesCommand {
  */
 struct SSendUnitsCommand {
 	int* unitIds;
-	int numUnitIds;
-	int receivingTeam;
+	int unitIds_size;
+	int receivingTeamId;
 	int ret_sentUnits;
-}; // COMMAND_SEND_UNITS Economy_sendUnits resourceId->Resource unitIds0numUnitIds->Unit receivingTeam=Team
+}; // COMMAND_SEND_UNITS Economy_sendUnits ARRAY:unitIds REF:unitIds->Unit REF:receivingTeamId->Team
 
 /// Creates a group and returns the id it was given, returns -1 on failure
 struct SCreateGroupCommand {
 	int ret_groupId;
-}; // COMMAND_GROUP_CREATE Group_create
+}; // COMMAND_GROUP_CREATE Group_create REF:ret_groupId->Group
 /// Erases a specified group
 struct SEraseGroupCommand {
 	int groupId;
-}; // COMMAND_GROUP_ERASE Group_erase
+}; // COMMAND_GROUP_ERASE Group_erase REF:groupId->Group
 
 /**
  * The following functions allow the AI to use the built-in path-finder.
@@ -343,7 +345,7 @@ struct SInitPathCommand {
 	float* end_posF3;
 	int pathType;
 	int ret_pathId;
-}; // COMMAND_PATH_INIT Pathing_initPath
+}; // COMMAND_PATH_INIT Pathing_initPath REF:ret_pathId->Path
 /**
  * Returns the approximate path cost between two points
  * This needs to calculate the complete path, so it is somewhat expensive.
@@ -359,10 +361,10 @@ struct SGetApproximateLengthPathCommand {
 struct SGetNextWaypointPathCommand {
 	int pathId;
 	float* ret_nextWaypoint_posF3_out;
-}; // COMMAND_PATH_GET_NEXT_WAYPOINT Pathing_getNextWaypoint
+}; // COMMAND_PATH_GET_NEXT_WAYPOINT Pathing_getNextWaypoint REF:pathId->Path
 struct SFreePathCommand {
 	int pathId;
-}; // COMMAND_PATH_FREE Pathing_freePath
+}; // COMMAND_PATH_FREE Pathing_freePath REF:pathId->Path
 
 struct SCallLuaRulesCommand {
 	/// Can be setup to NULL to skip passing in a string
@@ -421,10 +423,10 @@ struct SDrawLineAndIconPathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON Map_Drawer_Path_drawLineAndCommandIcon
+}; // COMMAND_DRAWER_PATH_DRAW_LINE_AND_ICON Map_Drawer_Path_drawLineAndCommandIcon REF:cmdId->Command
 struct SDrawIconAtLastPosPathDrawerCommand {
 	int cmdId;
-}; // COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS Map_Drawer_Path_drawIcon
+}; // COMMAND_DRAWER_PATH_DRAW_ICON_AT_LAST_POS Map_Drawer_Path_drawIcon REF:cmdId->Command
 struct SBreakPathDrawerCommand {
 	float* endPos_posF3;
 	short* color_colorS3;
@@ -460,7 +462,7 @@ struct SCreateSplineFigureDrawerCommand {
 	int figureGroupId;
 	/// the new group
 	int ret_newFigureGroupId;
-}; // COMMAND_DRAWER_FIGURE_CREATE_SPLINE Map_Drawer_Figure_drawSpline
+}; // COMMAND_DRAWER_FIGURE_CREATE_SPLINE Map_Drawer_Figure_drawSpline REF:figureGroupId->FigureGroup REF:ret_newFigureGroupId->FigureGroup
 /**
  * @brief Creates a straight line
  * Creates a straight line from pos1 to pos2.
@@ -484,7 +486,7 @@ struct SCreateLineFigureDrawerCommand {
 	int figureGroupId;
 	/// the new group
 	int ret_newFigureGroupId;
-}; // COMMAND_DRAWER_FIGURE_CREATE_LINE Map_Drawer_Figure_drawLine
+}; // COMMAND_DRAWER_FIGURE_CREATE_LINE Map_Drawer_Figure_drawLine REF:figureGroupId->FigureGroup REF:ret_newFigureGroupId->FigureGroup
 /**
  * Sets the color used to draw all lines of figures in a figure group.
  */
@@ -493,13 +495,13 @@ struct SSetColorFigureDrawerCommand {
 	/// (x, y, z) -> (red, green, blue)
 	short* color_colorS3;
 	float alpha;
-}; // COMMAND_DRAWER_FIGURE_SET_COLOR Map_Drawer_Figure_setColor
+}; // COMMAND_DRAWER_FIGURE_SET_COLOR Map_Drawer_Figure_setColor REF:figureGroupId->FigureGroup
 /**
  * Removes a figure group, which means it will not be drawn anymore.
  */
 struct SDeleteFigureDrawerCommand {
 	int figureGroupId;
-}; // COMMAND_DRAWER_FIGURE_DELETE Map_Drawer_Figure_delete
+}; // COMMAND_DRAWER_FIGURE_DELETE Map_Drawer_Figure_delete REF:figureGroupId->FigureGroup
 
 /**
  * This function allows you to draw units onto the map.
@@ -518,7 +520,7 @@ struct SDrawUnitDrawerCommand {
 	bool transparent;
 	bool drawBorder;
 	int facing;
-}; // COMMAND_DRAWER_DRAW_UNIT Map_Drawer_drawUnit
+}; // COMMAND_DRAWER_DRAW_UNIT Map_Drawer_drawUnit REF:toDrawUnitDefId->UnitDef
 
 
 
@@ -534,7 +536,7 @@ struct SBuildUnitCommand {
 	float* buildPos_posF3;
 	/// set it to UNIT_COMMAND_BUILD_NO_FACING, if you do not want to specify a certain facing
 	int facing;
-}; // COMMAND_UNIT_BUILD Unit_build
+}; // COMMAND_UNIT_BUILD Unit_build REF:toBuildUnitDefId->UnitDef
 
 struct SStopUnitCommand {
 	int unitId;
@@ -596,7 +598,7 @@ struct SDeathWaitUnitCommand {
 
 	/// wait until this unit is dead
 	int toDieUnitId;
-}; // COMMAND_UNIT_WAIT_DEATH Unit_waitForDeathOf
+}; // COMMAND_UNIT_WAIT_DEATH Unit_waitForDeathOf REF:toDieUnitId->Unit
 
 /**
  * Wait for a specific ammount of units.
@@ -676,7 +678,7 @@ struct SAttackUnitCommand {
 	int timeOut;
 
 	int toAttackUnitId;
-}; // COMMAND_UNIT_ATTACK Unit_attack
+}; // COMMAND_UNIT_ATTACK Unit_attack REF:toAttackUnitId->Unit
 
 //	struct SAttackPosUnitCommand {
 struct SAttackAreaUnitCommand {
@@ -709,7 +711,7 @@ struct SGuardUnitCommand {
 	int timeOut;
 
 	int toGuardUnitId;
-}; // COMMAND_UNIT_GUARD Unit_guard
+}; // COMMAND_UNIT_GUARD Unit_guard REF:toGuardUnitId->Unit
 
 // TODO: docu (is it usefull at all?)
 struct SAiSelectUnitCommand {
@@ -739,7 +741,7 @@ struct SGroupAddUnitCommand {
 	int timeOut;
 
 	int toGroupId;
-}; // COMMAND_UNIT_GROUP_ADD Unit_addToGroup
+}; // COMMAND_UNIT_GROUP_ADD Unit_addToGroup REF:toGroupId->Group
 
 struct SGroupClearUnitCommand {
 	int unitId;
@@ -759,7 +761,7 @@ struct SRepairUnitCommand {
 	int timeOut;
 
 	int toRepairUnitId;
-}; // COMMAND_UNIT_REPAIR Unit_repair
+}; // COMMAND_UNIT_REPAIR Unit_repair REF:toRepairUnitId->Unit
 
 struct SSetFireStateUnitCommand {
 	int unitId;
@@ -833,8 +835,8 @@ struct SLoadUnitsUnitCommand {
 	int timeOut; // command execution-time in ?milli-seconds?
 
 	int* toLoadUnitIds;
-	int numToLoadUnits;
-}; // COMMAND_UNIT_LOAD_UNITS Unit_loadUnits  toLoadUnitIds0numToLoadUnits->Unit
+	int toLoadUnitIds_size;
+}; // COMMAND_UNIT_LOAD_UNITS Unit_loadUnits ARRAY:toLoadUnitIds REF:toLoadUnitIds->Unit
 
 struct SLoadUnitsAreaUnitCommand {
 	int unitId;
@@ -857,7 +859,7 @@ struct SLoadOntoUnitCommand {
 	int timeOut;
 
 	int transporterUnitId;
-}; // COMMAND_UNIT_LOAD_ONTO Unit_loadOnto transporterUnitId->Unit
+}; // COMMAND_UNIT_LOAD_ONTO Unit_loadOnto REF:transporterUnitId->Unit
 
 struct SUnloadUnitCommand {
 	int unitId;
@@ -869,7 +871,7 @@ struct SUnloadUnitCommand {
 
 	float* toPos_posF3;
 	int toUnloadUnitId;
-}; // COMMAND_UNIT_UNLOAD_UNIT Unit_unload toUnloadUnitId->Unit
+}; // COMMAND_UNIT_UNLOAD_UNIT Unit_unload REF:toUnloadUnitId->Unit
 
 struct SUnloadUnitsAreaUnitCommand {
 	int unitId;
@@ -894,7 +896,7 @@ struct SSetOnOffUnitCommand {
 	bool on;
 }; // COMMAND_UNIT_SET_ON_OFF Unit_setOn
 
-struct SReclaimUnitCommand {
+struct SReclaimUnitUnitCommand {
 	int unitId;
 	int groupId;
 	/// see enum UnitCommandOptions
@@ -902,8 +904,19 @@ struct SReclaimUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
-	int toReclaimUnitIdOrFeatureId;
-}; // COMMAND_UNIT_RECLAIM Unit_reclaim
+	int toReclaimUnitId;
+}; // COMMAND_UNIT_RECLAIM_UNIT Unit_reclaimUnit REF:toReclaimUnitId->Unit
+
+struct SReclaimFeatureUnitCommand {
+	int unitId;
+	int groupId;
+	/// see enum UnitCommandOptions
+	unsigned int options;
+	/// max command execution-time in frames; if it takes longer then this -> abort
+	int timeOut;
+
+	int toReclaimFeatureId;
+}; // COMMAND_UNIT_RECLAIM_FEATURE Unit_reclaimFeature REF:toReclaimFeatureId->Feature
 
 struct SReclaimAreaUnitCommand {
 	int unitId;
@@ -946,7 +959,7 @@ struct SDGunUnitCommand {
 	int timeOut;
 
 	int toAttackUnitId;
-}; // COMMAND_UNIT_D_GUN Unit_dGun
+}; // COMMAND_UNIT_D_GUN Unit_dGun REF:toAttackUnitId->Unit
 
 struct SDGunPosUnitCommand {
 	int unitId;
@@ -1002,7 +1015,7 @@ struct SResurrectUnitCommand {
 	int timeOut;
 
 	int toResurrectFeatureId;
-}; // COMMAND_UNIT_RESURRECT Unit_resurrect
+}; // COMMAND_UNIT_RESURRECT Unit_resurrect REF:toResurrectFeatureId->Feature
 
 struct SResurrectAreaUnitCommand {
 	int unitId;
@@ -1025,7 +1038,7 @@ struct SCaptureUnitCommand {
 	int timeOut;
 
 	int toCaptureUnitId;
-}; // COMMAND_UNIT_CAPTURE Unit_capture
+}; // COMMAND_UNIT_CAPTURE Unit_capture REF:toCaptureUnitId->Unit
 
 struct SCaptureAreaUnitCommand {
 	int unitId;
@@ -1090,8 +1103,8 @@ struct SCustomUnitCommand {
 
 	int cmdId;
 	float* params;
-	int numParams;
-}; // COMMAND_UNIT_CUSTOM Unit_executeCustomCommand
+	int params_size;
+}; // COMMAND_UNIT_CUSTOM Unit_executeCustomCommand ARRAY:params
 
 // TODO: add docu, rename UID to UnitId
 struct STraceRayCommand {
@@ -1101,7 +1114,7 @@ struct STraceRayCommand {
 	int srcUID;
 	int hitUID;
 	int flags;
-}; // COMMAND_TRACE_RAY Map_Drawer_traceRay
+}; // COMMAND_TRACE_RAY Map_Drawer_traceRay REF:srcUID->Unit REF:hitUID->Unit
 
 /**
  * Pause or unpauses the game.

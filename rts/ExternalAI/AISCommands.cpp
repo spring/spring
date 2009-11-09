@@ -33,6 +33,7 @@ void initSUnitCommand(void* sUnitCommand) {
 
 #ifdef __cplusplus
 #include "Sim/Units/CommandAI/Command.h"
+#include "Sim/Units/UnitHandler.h" // for uh->MaxUnits()
 
 void freeSUnitCommand(void* sCommandData, int sCommandId) {
 
@@ -407,19 +408,19 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		case COMMAND_UNIT_LOAD_UNITS:
 		{
 			//int numToLoadUnits = 1;
-			int numToLoadUnits = c->params.size();
+			const int toLoadUnitIds_size = c->params.size();
 
 			SLoadUnitsUnitCommand* cmd = (SLoadUnitsUnitCommand*) malloc(sizeof (SLoadUnitsUnitCommand));
-			cmd->unitId = unitId;
+			cmd->unitId  = unitId;
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
 
-			cmd->numToLoadUnits = numToLoadUnits;
-			cmd->toLoadUnitIds = (int*) calloc(numToLoadUnits, sizeof(int));
-			int i;
-			for (i=0; i < numToLoadUnits; ++i) {
-				cmd->toLoadUnitIds[i] = (int) c->params.at(i);
+			cmd->toLoadUnitIds_size = toLoadUnitIds_size;
+			cmd->toLoadUnitIds      = (int*) calloc(toLoadUnitIds_size, sizeof(int));
+			int u;
+			for (u=0; u < toLoadUnitIds_size; ++u) {
+				cmd->toLoadUnitIds[u] = (int) c->params.at(u);
 			}
 
 			sCommandData = cmd;
@@ -483,23 +484,35 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		case COMMAND_UNIT_SET_ON_OFF:
 		{
 			SSetOnOffUnitCommand* cmd = (SSetOnOffUnitCommand*) malloc(sizeof (SSetOnOffUnitCommand));
-			cmd->unitId = unitId;
+			cmd->unitId  = unitId;
 			cmd->groupId = groupId;
 			cmd->options = c->options;
 			cmd->timeOut = c->timeOut;
-			cmd->on = (bool) c->params[0];
+			cmd->on      = (bool) c->params[0];
 
 			sCommandData = cmd;
 			break;
 		}
-		case COMMAND_UNIT_RECLAIM:
+		case COMMAND_UNIT_RECLAIM_UNIT:
 		{
-			SReclaimUnitCommand* cmd = (SReclaimUnitCommand*) malloc(sizeof (SReclaimUnitCommand));
-			cmd->unitId = unitId;
-			cmd->groupId = groupId;
-			cmd->options = c->options;
-			cmd->timeOut = c->timeOut;
-			cmd->toReclaimUnitIdOrFeatureId = (int) c->params[0];
+			SReclaimUnitUnitCommand* cmd = (SReclaimUnitUnitCommand*) malloc(sizeof (SReclaimUnitUnitCommand));
+			cmd->unitId          = unitId;
+			cmd->groupId         = groupId;
+			cmd->options         = c->options;
+			cmd->timeOut         = c->timeOut;
+			cmd->toReclaimUnitId = (int) c->params[0];
+
+			sCommandData = cmd;
+			break;
+		}
+		case COMMAND_UNIT_RECLAIM_FEATURE:
+		{
+			SReclaimFeatureUnitCommand* cmd = (SReclaimFeatureUnitCommand*) malloc(sizeof (SReclaimFeatureUnitCommand));
+			cmd->unitId             = unitId;
+			cmd->groupId            = groupId;
+			cmd->options            = c->options;
+			cmd->timeOut            = c->timeOut;
+			cmd->toReclaimFeatureId = ((int) c->params[0]) - uh->MaxUnits();
 
 			sCommandData = cmd;
 			break;
@@ -509,12 +522,12 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			float radius = 0.0f;
 			if (c->params.size() >= 4) radius = c->params[3];
 			SReclaimAreaUnitCommand* cmd = (SReclaimAreaUnitCommand*) malloc(sizeof (SReclaimAreaUnitCommand));
-			cmd->unitId = unitId;
-			cmd->groupId = groupId;
-			cmd->options = c->options;
-			cmd->timeOut = c->timeOut;
+			cmd->unitId    = unitId;
+			cmd->groupId   = groupId;
+			cmd->options   = c->options;
+			cmd->timeOut   = c->timeOut;
 			cmd->pos_posF3 = allocFloatArr3(c->params, 0);
-			cmd->radius = radius;
+			cmd->radius    = radius;
 
 			sCommandData = cmd;
 			break;
@@ -707,19 +720,19 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 		default:
 		case COMMAND_UNIT_CUSTOM:
 		{
-			int cmdId = c->id;
-			int numParams = c->params.size();
+			const int cmdId       = c->id;
+			const int params_size = c->params.size();
 			SCustomUnitCommand* cmd = (SCustomUnitCommand*) malloc(sizeof (SCustomUnitCommand));
-			cmd->unitId = unitId;
-			cmd->groupId = groupId;
-			cmd->options = c->options;
-			cmd->timeOut = c->timeOut;
-			cmd->cmdId = cmdId;
-			cmd->numParams = numParams;
-			cmd->params = (float*) calloc(numParams, sizeof(float));
-			int i;
-			for (i=0; i < numParams; ++i) {
-				cmd->params[i] = c->params.at(i);
+			cmd->unitId      = unitId;
+			cmd->groupId     = groupId;
+			cmd->options     = c->options;
+			cmd->timeOut     = c->timeOut;
+			cmd->cmdId       = cmdId;
+			cmd->params_size = params_size;
+			cmd->params      = (float*) calloc(params_size, sizeof(float));
+			int p;
+			for (p=0; p < params_size; ++p) {
+				cmd->params[p] = c->params.at(p);
 			}
 
 			sCommandData = cmd;
@@ -880,7 +893,12 @@ int toInternalUnitCommandTopic(int aiCmdTopic, const void* sUnitCommandData) {
 			internalUnitCommandTopic = CMD_ONOFF;
 			break;
 		}
-		case COMMAND_UNIT_RECLAIM:
+		case COMMAND_UNIT_RECLAIM_UNIT:
+		{
+			internalUnitCommandTopic = CMD_RECLAIM;
+			break;
+		}
+		case COMMAND_UNIT_RECLAIM_FEATURE:
 		{
 			internalUnitCommandTopic = CMD_RECLAIM;
 			break;
@@ -1112,7 +1130,11 @@ int extractAICommandTopic(const Command* engineCmd) {
 		case CMD_RECLAIM:
 		{
 			if (engineCmd->params.size() < 3 || engineCmd->params.size() == 5) {
-				aiCommandTopic = COMMAND_UNIT_RECLAIM;
+				if (engineCmd->params[0] < uh->MaxUnits()) {
+					aiCommandTopic = COMMAND_UNIT_RECLAIM_UNIT;
+				} else {
+					aiCommandTopic = COMMAND_UNIT_RECLAIM_FEATURE;
+				}
 			} else {
 				aiCommandTopic = COMMAND_UNIT_RECLAIM_AREA;
 			}
@@ -1429,7 +1451,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			for (int i = 0; i < cmd->numToLoadUnits; ++i) {
+			for (int i = 0; i < cmd->toLoadUnitIds_size; ++i) {
 				c->params.push_back(cmd->toLoadUnitIds[i]);
 			}
 			break;
@@ -1493,14 +1515,24 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->params.push_back(cmd->on ? 1 : 0);
 			break;
 		}
-		case COMMAND_UNIT_RECLAIM:
+		case COMMAND_UNIT_RECLAIM_UNIT:
 		{
-			SReclaimUnitCommand* cmd = (SReclaimUnitCommand*) sUnitCommandData;
+			SReclaimUnitUnitCommand* cmd = (SReclaimUnitUnitCommand*) sUnitCommandData;
 			c->id = CMD_RECLAIM;
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(cmd->toReclaimUnitIdOrFeatureId);
+			c->params.push_back(cmd->toReclaimUnitId);
+			break;
+		}
+		case COMMAND_UNIT_RECLAIM_FEATURE:
+		{
+			SReclaimFeatureUnitCommand* cmd = (SReclaimFeatureUnitCommand*) sUnitCommandData;
+			c->id = CMD_RECLAIM;
+			c->options = cmd->options;
+			c->timeOut = cmd->timeOut;
+
+			c->params.push_back(uh->MaxUnits() + cmd->toReclaimFeatureId);
 			break;
 		}
 		case COMMAND_UNIT_RECLAIM_AREA:
@@ -1662,7 +1694,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			for (int i = 0; i < cmd->numParams; ++i) {
+			for (int i = 0; i < cmd->params_size; ++i) {
 				c->params.push_back(cmd->params[i]);
 			}
 			break;

@@ -298,10 +298,10 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			SSendResourcesCommand* cmd = (SSendResourcesCommand*) commandData;
 			if (cmd->resourceId == resourceHandler->GetMetalId()) {
-				cmd->ret_isExecuted = clb->SendResources(cmd->amount, 0, cmd->receivingTeam);
+				cmd->ret_isExecuted = clb->SendResources(cmd->amount, 0, cmd->receivingTeamId);
 				ret = -2;
 			} else if (cmd->resourceId == resourceHandler->GetEnergyId()) {
-				cmd->ret_isExecuted = clb->SendResources(0, cmd->amount, cmd->receivingTeam);
+				cmd->ret_isExecuted = clb->SendResources(0, cmd->amount, cmd->receivingTeamId);
 				ret = -3;
 			} else {
 				cmd->ret_isExecuted = false;
@@ -314,9 +314,9 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int teamId, int toId, int co
 		{
 			SSendUnitsCommand* cmd = (SSendUnitsCommand*) commandData;
 			std::vector<int> vector_unitIds;
-			fillVector(&vector_unitIds, cmd->unitIds, cmd->numUnitIds);
+			fillVector(&vector_unitIds, cmd->unitIds, cmd->unitIds_size);
 			cmd->ret_sentUnits =
-					clb->SendUnits(vector_unitIds, cmd->receivingTeam);
+					clb->SendUnits(vector_unitIds, cmd->receivingTeamId);
 			break;
 		}
 

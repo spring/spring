@@ -297,7 +297,7 @@ EXPORT(const char*) aiInterfaceCallback_DataDirs_getWriteableDir(int interfaceId
 		static const unsigned int sizeMax = 1024;
 		char tmpRes[sizeMax];
 		static const char* const rootPath = "";
-		bool exists = aiInterfaceCallback_DataDirs_locatePath(interfaceId,
+		const bool exists = aiInterfaceCallback_DataDirs_locatePath(interfaceId,
 				tmpRes, sizeMax, rootPath, true, true, true, false);
 		writeableDataDirs[interfaceId] = tmpRes;
 		if (!exists) {
