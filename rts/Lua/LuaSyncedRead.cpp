@@ -1345,11 +1345,11 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	// no unsynced Skirmish AI info for synchronized scripts
 	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
 		HSTR_PUSH(L, "SYNCED_NOSHORTNAME");
-		numVals++;
+		HSTR_PUSH(L, "SYNCED_NOVERSION");
+		lua_newtable(L);
 	} else if (isLocal) {
 		lua_pushstring(L, aiData->shortName.c_str());
 		lua_pushstring(L, aiData->version.c_str());
-		numVals += 2;
 
 		lua_newtable(L);
 		std::map<std::string, std::string>::const_iterator o;
@@ -1360,6 +1360,7 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 		}
 		numVals++;
 	}
+	numVals += 3;
 
 	return numVals;
 }
