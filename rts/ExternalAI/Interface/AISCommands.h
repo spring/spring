@@ -529,7 +529,13 @@ struct SBuildUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toBuildUnitDefId;
@@ -543,7 +549,13 @@ struct SStopUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 }; // COMMAND_UNIT_STOP Unit_stop
 
@@ -566,7 +578,13 @@ struct SWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 }; // COMMAND_UNIT_WAIT Unit_wait
 
@@ -575,7 +593,13 @@ struct STimeWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	// the time in seconds to wait
@@ -593,7 +617,13 @@ struct SDeathWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	/// wait until this unit is dead
@@ -614,7 +644,13 @@ struct SSquadWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int numUnits;
@@ -632,7 +668,13 @@ struct SGatherWaitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 }; // COMMAND_UNIT_WAIT_GATHER Unit_waitForAll
 
@@ -641,7 +683,13 @@ struct SMoveUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* toPos_posF3;
@@ -652,7 +700,13 @@ struct SPatrolUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* toPos_posF3;
@@ -663,7 +717,13 @@ struct SFightUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* toPos_posF3;
@@ -674,7 +734,13 @@ struct SAttackUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toAttackUnitId;
@@ -686,7 +752,13 @@ struct SAttackAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* toAttackPos_posF3;
@@ -698,7 +770,6 @@ struct SAttackAreaUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	short options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
 //	int timeOut;
 //};
 
@@ -707,7 +778,13 @@ struct SGuardUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toGuardUnitId;
@@ -719,7 +796,13 @@ struct SAiSelectUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 }; // COMMAND_UNIT_AI_SELECT Unit_aiSelect
 
@@ -728,7 +811,6 @@ struct SAiSelectUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	short options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
 //	int timeOut;
 //};
 
@@ -737,7 +819,13 @@ struct SGroupAddUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toGroupId;
@@ -748,7 +836,13 @@ struct SGroupClearUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 }; // COMMAND_UNIT_GROUP_CLEAR Unit_removeFromGroup
 
@@ -757,7 +851,13 @@ struct SRepairUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toRepairUnitId;
@@ -768,7 +868,13 @@ struct SSetFireStateUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	// can be: 0=hold fire, 1=return fire, 2=fire at will
@@ -780,7 +886,13 @@ struct SSetMoveStateUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	/// 0=hold pos, 1=maneuvre, 2=roam
@@ -792,7 +904,13 @@ struct SSetBaseUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* basePos_posF3;
@@ -803,7 +921,6 @@ struct SSetBaseUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	short options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
 //	int timeOut;
 //};
 
@@ -812,7 +929,13 @@ struct SSelfDestroyUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 }; // COMMAND_UNIT_SELF_DESTROY Unit_selfDestruct
 
@@ -821,7 +944,13 @@ struct SSetWantedMaxSpeedUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float wantedMaxSpeed;
@@ -843,7 +972,13 @@ struct SLoadUnitsAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* pos_posF3;
@@ -855,7 +990,13 @@ struct SLoadOntoUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int transporterUnitId;
@@ -866,7 +1007,13 @@ struct SUnloadUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* toPos_posF3;
@@ -878,7 +1025,13 @@ struct SUnloadUnitsAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* toPos_posF3;
@@ -890,7 +1043,13 @@ struct SSetOnOffUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	bool on;
@@ -901,7 +1060,13 @@ struct SReclaimUnitUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toReclaimUnitId;
@@ -912,7 +1077,13 @@ struct SReclaimFeatureUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toReclaimFeatureId;
@@ -923,7 +1094,13 @@ struct SReclaimAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* pos_posF3;
@@ -935,7 +1112,13 @@ struct SCloakUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	bool cloak;
@@ -946,7 +1129,13 @@ struct SStockpileUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 }; // COMMAND_UNIT_STOCKPILE Unit_stockpile
 
@@ -955,7 +1144,13 @@ struct SDGunUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toAttackUnitId;
@@ -966,7 +1161,13 @@ struct SDGunPosUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* pos_posF3;
@@ -977,7 +1178,13 @@ struct SRestoreAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* pos_posF3;
@@ -989,7 +1196,13 @@ struct SSetRepeatUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	bool repeat;
@@ -1001,7 +1214,13 @@ struct SSetTrajectoryUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	/// 0: low-trajectory, 1: high-trajectory
@@ -1013,7 +1232,13 @@ struct SResurrectUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toResurrectFeatureId;
@@ -1024,7 +1249,13 @@ struct SResurrectAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* pos_posF3;
@@ -1036,7 +1267,13 @@ struct SCaptureUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int toCaptureUnitId;
@@ -1047,7 +1284,13 @@ struct SCaptureAreaUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	float* pos_posF3;
@@ -1063,7 +1306,13 @@ struct SSetAutoRepairLevelUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	/// 0: 0%, 1: 30%, 2: 50%, 3: 80%
@@ -1075,7 +1324,6 @@ struct SSetAutoRepairLevelUnitCommand {
 //	int groupId;
 //	/// see enum UnitCommandOptions
 //	short options;
-//	/// max command execution-time in frames; if it takes longer then this -> abort
 //	int timeOut;
 //};
 
@@ -1088,7 +1336,13 @@ struct SSetIdleModeUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	/// 0: fly, 1: land
@@ -1100,7 +1354,13 @@ struct SCustomUnitCommand {
 	int groupId;
 	/// see enum UnitCommandOptions
 	short options;
-	/// max command execution-time in frames; if it takes longer then this -> abort
+	/**
+	 * At which frame the command will time-out and consequently be removed.
+	 * Can only be set locally, is not sent over the network, and is used
+	 * for temporary orders.
+	 * default: MAX_INT (-> do not time-out)
+	 * example: currentFrame + 15
+	 */
 	int timeOut;
 
 	int cmdId;
