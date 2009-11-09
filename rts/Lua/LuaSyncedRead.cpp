@@ -1336,19 +1336,17 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(skirmishAIId);
 	const bool isLocal           = skirmishAIHandler.IsLocalSkirmishAI(skirmishAIId);
 
-	// no ai info for synchronized scripts
-	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
-		HSTR_PUSH(L, "SYNCED_NONAME");
-		numVals++;
-	} else {
-		lua_pushnumber(L, skirmishAIId);
-		lua_pushstring(L, aiData->name.c_str());
-		lua_pushnumber(L, aiData->hostPlayer);
-		lua_pushnumber(L, isLocal);
-		numVals += 4;
-	}
+	// this is synced AI info
+	lua_pushnumber(L, skirmishAIId);
+	lua_pushstring(L, aiData->name.c_str());
+	lua_pushnumber(L, aiData->hostPlayer);
+	numVals += 3;
 
-	if (isLocal) {
+	// no unsynced Skirmish AI info for synchronized scripts
+	if (CLuaHandle::GetActiveHandle()->GetSynced()) {
+		HSTR_PUSH(L, "SYNCED_NOSHORTNAME");
+		numVals++;
+	} else if (isLocal) {
 		lua_pushstring(L, aiData->shortName.c_str());
 		lua_pushstring(L, aiData->version.c_str());
 		numVals += 2;
