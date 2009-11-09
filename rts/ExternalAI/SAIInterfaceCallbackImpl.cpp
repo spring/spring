@@ -31,7 +31,6 @@ using std::sprintf;
 #include "ExternalAI/AIInterfaceLibraryInfo.h"
 #include "ExternalAI/SkirmishAIHandler.h"
 #include "ExternalAI/Interface/ELevelOfSupport.h"     // for ABI version
-#include "ExternalAI/Interface/SAIFloat3.h"           // for ABI version
 #include "ExternalAI/Interface/AISEvents.h"           // for ABI version
 #include "ExternalAI/Interface/AISCommands.h"         // for ABI version
 #include "ExternalAI/Interface/SSkirmishAILibrary.h"  // for ABI version

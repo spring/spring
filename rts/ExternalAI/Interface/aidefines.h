@@ -37,7 +37,6 @@
 // the real ABI.
 // Files that have ot be included when using this define:
 // * ExternalAI/Interface/ELevelOfSupport.h
-// * ExternalAI/Interface/SAIFloat3.h
 // * ExternalAI/Interface/SSkirmishAILibrary.h
 // * ExternalAI/Interface/SSkirmishAICallback.h
 // * ExternalAI/Interface/SAIInterfaceLibrary.h
@@ -53,7 +52,6 @@
  */
 #define AIINTERFACE_ABI_VERSION_FAIL ( \
 	  sizeof(enum LevelOfSupport) \
-	+ sizeof(struct SAIFloat3) \
 	+ sizeof(struct SSkirmishAILibrary) \
 	+ sizeof(struct SSkirmishAICallback) \
 	+ sizeof(struct SAIInterfaceLibrary) \
