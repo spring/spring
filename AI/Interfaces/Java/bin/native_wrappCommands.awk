@@ -151,14 +151,17 @@ function printNativeFP2F() {
 			# Add the member comments to the main comment as @param attributes
 			numCmdDocLines = cmdsDocComment[cmdIndex, "*"];
 			for (m=firstMember; m < cmdsNumMembers[cmdIndex]; m++) {
-				numLines = cmdMbrsDocComments[cmdIndex*100 + m, "*"];
+				numLines = cmdMbrsDocComments[cmdIndex*1000 + m, "*"];
 				if (numLines > 0) {
 					cmdsDocComment[cmdIndex, numCmdDocLines] = "@param " cmdsMembers_name[cmdIndex, m];
 				}
 				for (l=0; l < numLines; l++) {
-					cmdsDocComment[cmdIndex, numCmdDocLines] = cmdsDocComment[cmdIndex, numCmdDocLines] " " cmdMbrsDocComments[cmdIndex*100 + m, l];
-				}
-				if (numLines > 0) {
+					if (l == 0) {
+						_preDocLine = "@param " cmdsMembers_name[cmdIndex, m] "  ";
+					} else {
+						_preDocLine = "       " lengtAsSpaces(cmdsMembers_name[cmdIndex, m]) "  ";
+					}
+					cmdsDocComment[cmdIndex, numCmdDocLines] = _preDocLine cmdMbrsDocComments[cmdIndex*1000 + m, l];
 					numCmdDocLines++;
 				}
 			}
@@ -332,13 +335,16 @@ function canDeleteDocumentation() {
 {
 	if (isInsideCmdStruct == 1) {
 		size_tmpMembers = split($0, tmpMembers, ";");
+		# cause there is an empty part behind the ';'
+		size_tmpMembers--;
 		for (i=1; i<=size_tmpMembers; i++) {
 			tmpMembers[i] = trim(tmpMembers[i]);
 			if (tmpMembers[i] == "" || match(tmpMembers[i], /^\/\//)) {
 				break;
 			}
-			# This would bork with more then 100 members in a command
-			storeDocLines(cmdMbrsDocComments, ind_cmdStructs*100 + ind_cmdMember);
+			# This would bork with more then 1000 members in a command,
+			# or more then 1000 commands
+			storeDocLines(cmdMbrsDocComments, ind_cmdStructs*1000 + ind_cmdMember);
 			saveMember(ind_cmdMember, tmpMembers[i]);
 			ind_cmdMember++;
 		}

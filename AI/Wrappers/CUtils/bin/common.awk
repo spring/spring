@@ -27,6 +27,9 @@ function trim(str__common) { return rtrim(ltrim(str__common)); }
 # removes all white spaces from a string
 function noSpaces(str__common) { gsub(/[ \t\f\n\r\v]/, "", str__common); return str__common; }
 
+# returns a string containing only spaces with the same lenght as the input string
+function lengtAsSpaces(str__common) { gsub(/./, " ", str__common); return str__common; }
+
 ### END: Trim functions
 ################################################################################
 
