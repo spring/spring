@@ -103,7 +103,7 @@ CUnitDefHandler::CUnitDefHandler(void) : noCost(false)
 		unitDefs[id].collisionVolume = NULL;
 		unitDefIDsByName[unitName] = id;
 		for (int ym = 0; ym < 4; ym++) {
-			unitDefs[id].yardmaps[ym] = 0;
+			unitDefs[id].yardmaps[ym] = NULL;
 		}
 
 		// parse the unitdef data (but don't load buildpics, etc...)
@@ -708,7 +708,7 @@ void CUnitDefHandler::ParseUnitDefTable(const LuaTable& udTable, const string& u
 		CreateYardMap(&ud, udTable.GetString("yardMap", ""));
 	} else {
 		for (int u = 0; u < 4; u++) {
-			ud.yardmaps[u] = 0;
+			ud.yardmaps[u] = NULL;
 		}
 	}
 
