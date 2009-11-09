@@ -164,21 +164,53 @@ function printNativeFP2F() {
 			}
 			cmdsDocComment[cmdIndex, "*"] = numCmdDocLines;
 
-			# print the doc comment for this command/function
-			printFunctionComment_Common(outFile_nh, cmdsDocComment, cmdIndex, "");
-
 			outName = bridgePrefix fullName;
 
 			commentEol = "";
 			if (metaInf != "") {
 				commentEol = " // " metaInf;
 			}
-			print("EXPORT(" retType ") " outName "(" paramList ");" commentEol) >> outFile_nh;
+
+			if (match(fullName, /^Unit_/)) {
+				# To make this fit in smoothly with the OO structure,
+				# we want to present each unit command once for the unit class
+				# and once for the Group class.
+
+				# An other thing we do, is move the common UnitAICommand params
+				# to the end of the params list, so we can supply default values
+				# for them more easily later on.
+				paramList_commonEnd = paramList;
+				sub(/, short options, int timeOut/, "", paramList_commonEnd);
+				paramList_commonEnd = paramList_commonEnd ", short options, int timeOut";
+				
+				# Unit version:
+				paramList_unit = paramList_commonEnd;
+				sub(/int groupId, /, "", paramList_unit);
+				printFunctionComment_Common(outFile_nh, cmdsDocComment, cmdIndex, "");
+				print("EXPORT(" retType ") " outName "(" paramList_unit ");" commentEol) >> outFile_nh;
+				print("") >> outFile_nh;
+				
+				# Group version:
+				paramList_group = paramList_commonEnd;
+				sub(/int unitId, /, "", paramList_group);
+				outName_group = outName;
+				sub(/Unit_/, "Group_", outName_group);
+				printFunctionComment_Common(outFile_nh, cmdsDocComment, cmdIndex, "");
+				print("EXPORT(" retType ") " outName_group "(" paramList_group ");" commentEol) >> outFile_nh;
+			} else {
+				printFunctionComment_Common(outFile_nh, cmdsDocComment, cmdIndex, "");
+				print("EXPORT(" retType ") " outName "(" paramList ");" commentEol) >> outFile_nh;
+			}
 			print("") >> outFile_nh;
 
 			# print function definition to *.c
 			print("") >> outFile_nc;
-			print("EXPORT(" retType ") " outName "(" paramList ") {") >> outFile_nc;
+			if (match(fullName, /^Unit_/)) {
+				# inner version:
+				print("static " retType " _" outName "(" paramList ") {") >> outFile_nc;
+			} else {
+				print("EXPORT(" retType ") " outName "(" paramList ") {") >> outFile_nc;
+			}
 			print("") >> outFile_nc;
 
 			print("\t" "struct S" name "Command commandData;") >> outFile_nc;
@@ -211,7 +243,27 @@ function printNativeFP2F() {
 			}
 
 			print("\t" "return _ret;") >> outFile_nc;
-			print("" "}") >> outFile_nc;
+			print("}") >> outFile_nc;
+
+			if (match(fullName, /^Unit_/)) {
+				paramListNoTypes = removeParamTypes(paramList);
+
+				# Unit version:
+				print("") >> outFile_nc;
+				print("EXPORT(" retType ") " outName "(" paramList_unit ") {" commentEol) >> outFile_nc;
+				print("") >> outFile_nc;
+				print("\t" "const int groupId = -1;") >> outFile_nc;
+				print("\t" "return _" outName "(" paramListNoTypes ");") >> outFile_nc;
+				print("}") >> outFile_nc;
+				print("") >> outFile_nc;
+	
+				# Group version:
+				print("EXPORT(" retType ") " outName_group "(" paramList_group ") {" commentEol) >> outFile_nc;
+				print("") >> outFile_nc;
+				print("\t" "const int unitId = -1;") >> outFile_nc;
+				print("\t" "return _" outName "(" paramListNoTypes ");") >> outFile_nc;
+				print("}") >> outFile_nc;
+			}
 		} else {
 			print("Note: The following command is intentionally not wrapped: " fullName);
 		}
