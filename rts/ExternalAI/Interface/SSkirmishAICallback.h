@@ -507,8 +507,15 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *UnitDef_getMaxElevator)(int teamId, int unitDefId);
 	float             (CALLING_CONV *UnitDef_getMaxRudder)(int teamId, int unitDefId);
 // end: aircraft stuff
-//	/** returned size is 4 */
-//	const short*[] (CALLING_CONV *UnitDef_getYardMaps)(int teamId, int unitDefId);
+	/**
+	 * The yard map defines which parts of the square a unit occupies
+	 * can still be walked on by other units.
+	 * Example:
+	 * In the BA Arm T2 K-Bot lab, htere is a line in hte middle where units
+	 * walk, otherwise they would not be able ot exit the lab once they are
+	 * built.
+	 */
+	int               (CALLING_CONV *UnitDef_getYardMap)(int teamId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax); // ARRAY:yardMap
 	int               (CALLING_CONV *UnitDef_getXSize)(int teamId, int unitDefId);
 	int               (CALLING_CONV *UnitDef_getZSize)(int teamId, int unitDefId);
 	int               (CALLING_CONV *UnitDef_getBuildAngle)(int teamId, int unitDefId);

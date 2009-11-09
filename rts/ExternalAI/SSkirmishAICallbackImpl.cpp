@@ -1938,7 +1938,28 @@ EXPORT(float) skirmishAiCallback_UnitDef_getMaxDeceleration(int teamId, int unit
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxAileron(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxAileron;}
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxElevator(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxElevator;}
 EXPORT(float) skirmishAiCallback_UnitDef_getMaxRudder(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->maxRudder;}
-//const short** _UnitDef_getYardMaps(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->yardmaps;}
+EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int teamId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax) {
+
+	if (facing < 0 || facing >=4) {
+		return 0;
+	}
+
+	const UnitDef* unitDef = getUnitDefById(teamId, unitDefId);
+	const int yardMap_sizeReal = unitDef->xsize * unitDef->zsize;
+
+	int yardMap_size = yardMap_sizeReal;
+
+	if (yardMap != NULL) {
+		yardMap_size = min(yardMap_sizeReal, yardMap_sizeMax);
+		const unsigned char* const ym = unitDef->yardmaps[facing];
+		int i;
+		for (i = 0; i < yardMap_size; ++i) {
+			yardMap[i] = (short) ym[i];
+		}
+	}
+
+	return yardMap_size;
+}
 EXPORT(int) skirmishAiCallback_UnitDef_getXSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->xsize;}
 EXPORT(int) skirmishAiCallback_UnitDef_getZSize(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->zsize;}
 EXPORT(int) skirmishAiCallback_UnitDef_getBuildAngle(int teamId, int unitDefId) {return getUnitDefById(teamId, unitDefId)->buildangle;}
@@ -3397,6 +3418,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_getMaxAileron = &skirmishAiCallback_UnitDef_getMaxAileron;
 	callback->UnitDef_getMaxElevator = &skirmishAiCallback_UnitDef_getMaxElevator;
 	callback->UnitDef_getMaxRudder = &skirmishAiCallback_UnitDef_getMaxRudder;
+	callback->UnitDef_getYardMap = &skirmishAiCallback_UnitDef_getYardMap;
 	callback->UnitDef_getXSize = &skirmishAiCallback_UnitDef_getXSize;
 	callback->UnitDef_getZSize = &skirmishAiCallback_UnitDef_getZSize;
 	callback->UnitDef_getBuildAngle = &skirmishAiCallback_UnitDef_getBuildAngle;
