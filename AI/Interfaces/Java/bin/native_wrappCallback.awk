@@ -247,7 +247,7 @@ function wrappFunction(funcDef, commentEolTot) {
 		funcRetTypeC[fi]   = retType_c;
 		funcParamListC[fi] = paramList_c;
 		funcParamList[fi]  = paramList;
-		funcCommentEol[fi] = commentEolTot
+		funcCommentEol[fi] = trim(commentEolTot);
 		storeDocLines(funcDocComment, fi);
 		fi++;
 	} else {
@@ -305,7 +305,7 @@ function canDeleteDocumentation() {
 	funcStartLine = trim(funcStartLine);
 	if (match(funcStartLine, /\;$/)) {
 		# function ends in this line
-		wrappFunction(funcStartLine);
+		wrappFunction(funcStartLine, commentEolTot);
 	} else {
 		funcSoFar = funcStartLine;
 		isMultiLineFunc = 1;
