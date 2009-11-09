@@ -257,6 +257,7 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxDeceleration(int team
 EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxAileron(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxElevator(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getMaxRudder(int teamId, int unitDefId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_getYardMap(int teamId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax);
 EXPORT(int              ) skirmishAiCallback_UnitDef_getXSize(int teamId, int unitDefId);
 EXPORT(int              ) skirmishAiCallback_UnitDef_getZSize(int teamId, int unitDefId);
 EXPORT(int              ) skirmishAiCallback_UnitDef_getBuildAngle(int teamId, int unitDefId);
