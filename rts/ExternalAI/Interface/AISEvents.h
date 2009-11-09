@@ -70,7 +70,7 @@ enum EventTopic {
 	EVENT_LOAD                         = 23,
 	EVENT_SAVE                         = 24,
 };
-const unsigned int NUM_EVENTS          = 25;
+const int NUM_EVENTS                   = 25;
 
 
 #define AIINTERFACE_EVENTS_ABI_VERSION     ( \
