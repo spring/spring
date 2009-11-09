@@ -398,7 +398,7 @@ function wrappFunction(funcDef, commentEol) {
 		funcRetTypeJ[fi]   = retType_j;
 		funcParamListC[fi] = paramList_c;
 		funcParamListJ[fi] = paramList_j;
-		funcMetaInf[fi]    = commentEol;
+		funcMetaInf[fi]    = trim(commentEol);
 		storeDocLines(funcDocComment, fi);
 		fi++;
 	} else {
