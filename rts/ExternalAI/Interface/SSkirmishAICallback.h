@@ -338,7 +338,7 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *UnitDef_getIdleTime)(int teamId, int unitDefId);
 	float             (CALLING_CONV *UnitDef_getPower)(int teamId, int unitDefId);
 	float             (CALLING_CONV *UnitDef_getHealth)(int teamId, int unitDefId);
-	unsigned int      (CALLING_CONV *UnitDef_getCategory)(int teamId, int unitDefId);
+	int               (CALLING_CONV *UnitDef_getCategory)(int teamId, int unitDefId);
 	float             (CALLING_CONV *UnitDef_getSpeed)(int teamId, int unitDefId);
 	float             (CALLING_CONV *UnitDef_getTurnRate)(int teamId, int unitDefId);
 	bool              (CALLING_CONV *UnitDef_isTurnInPlace)(int teamId, int unitDefId);
@@ -508,7 +508,7 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *UnitDef_getMaxRudder)(int teamId, int unitDefId);
 // end: aircraft stuff
 //	/** returned size is 4 */
-//	const unsigned char*[] (CALLING_CONV *UnitDef_getYardMaps)(int teamId, int unitDefId);
+//	const short*[] (CALLING_CONV *UnitDef_getYardMaps)(int teamId, int unitDefId);
 	int               (CALLING_CONV *UnitDef_getXSize)(int teamId, int unitDefId);
 	int               (CALLING_CONV *UnitDef_getZSize)(int teamId, int unitDefId);
 	int               (CALLING_CONV *UnitDef_getBuildAngle)(int teamId, int unitDefId);
@@ -576,7 +576,7 @@ struct SSkirmishAICallback {
 	 *          2: choose
 	 */
 	int               (CALLING_CONV *UnitDef_getHighTrajectoryType)(int teamId, int unitDefId);
-	unsigned int      (CALLING_CONV *UnitDef_getNoChaseCategory)(int teamId, int unitDefId);
+	int               (CALLING_CONV *UnitDef_getNoChaseCategory)(int teamId, int unitDefId);
 	bool              (CALLING_CONV *UnitDef_isLeaveTracks)(int teamId, int unitDefId);
 	float             (CALLING_CONV *UnitDef_getTrackWidth)(int teamId, int unitDefId);
 	float             (CALLING_CONV *UnitDef_getTrackOffset)(int teamId, int unitDefId);
@@ -659,8 +659,8 @@ struct SSkirmishAICallback {
 	 * How many seconds of fuel it costs for the owning unit to fire this weapon.
 	 */
 	float             (CALLING_CONV *UnitDef_WeaponMount_getFuelUsage)(int teamId, int unitDefId, int weaponMountId);
-	unsigned int      (CALLING_CONV *UnitDef_WeaponMount_getBadTargetCategory)(int teamId, int unitDefId, int weaponMountId);
-	unsigned int      (CALLING_CONV *UnitDef_WeaponMount_getOnlyTargetCategory)(int teamId, int unitDefId, int weaponMountId);
+	int               (CALLING_CONV *UnitDef_WeaponMount_getBadTargetCategory)(int teamId, int unitDefId, int weaponMountId);
+	int               (CALLING_CONV *UnitDef_WeaponMount_getOnlyTargetCategory)(int teamId, int unitDefId, int weaponMountId);
 // END OBJECT UnitDef
 
 
@@ -792,8 +792,8 @@ struct SSkirmishAICallback {
 	 * (custom codes can also be used)
 	 */
 	int               (CALLING_CONV *Unit_CurrentCommand_getId)(int teamId, int unitId, int commandId);
-	unsigned char     (CALLING_CONV *Unit_CurrentCommand_getOptions)(int teamId, int unitId, int commandId);
-	unsigned int      (CALLING_CONV *Unit_CurrentCommand_getTag)(int teamId, int unitId, int commandId);
+	short             (CALLING_CONV *Unit_CurrentCommand_getOptions)(int teamId, int unitId, int commandId);
+	int               (CALLING_CONV *Unit_CurrentCommand_getTag)(int teamId, int unitId, int commandId);
 	int               (CALLING_CONV *Unit_CurrentCommand_getTimeOut)(int teamId, int unitId, int commandId);
 	int               (CALLING_CONV *Unit_CurrentCommand_getParams)(int teamId, int unitId, int commandId, float* params, int params_max); // ARRAY:params
 	/** The commands that this unit can understand, other commands will be ignored */
@@ -853,8 +853,8 @@ struct SSkirmishAICallback {
 	 * (custom codes can also be used)
 	 */
 	int               (CALLING_CONV *Group_OrderPreview_getId)(int teamId, int groupId);
-	unsigned char     (CALLING_CONV *Group_OrderPreview_getOptions)(int teamId, int groupId);
-	unsigned int      (CALLING_CONV *Group_OrderPreview_getTag)(int teamId, int groupId);
+	short             (CALLING_CONV *Group_OrderPreview_getOptions)(int teamId, int groupId);
+	int               (CALLING_CONV *Group_OrderPreview_getTag)(int teamId, int groupId);
 	int               (CALLING_CONV *Group_OrderPreview_getTimeOut)(int teamId, int groupId);
 	int               (CALLING_CONV *Group_OrderPreview_getParams)(int teamId, int groupId, float* params, int params_max); // ARRAY:params
 	bool              (CALLING_CONV *Group_isSelected)(int teamId, int groupId);
@@ -1005,7 +1005,7 @@ struct SSkirmishAICallback {
 
 
 // BEGINN OBJECT Map
-	unsigned int      (CALLING_CONV *Map_getChecksum)(int teamId);
+	int               (CALLING_CONV *Map_getChecksum)(int teamId);
 	void              (CALLING_CONV *Map_getStartPos)(int teamId, float* return_posF3_out);
 	void              (CALLING_CONV *Map_getMousePos)(int teamId, float* return_posF3_out);
 	bool              (CALLING_CONV *Map_isPosInCamera)(int teamId, float* pos_posF3, float radius);
@@ -1071,7 +1071,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index (x/res * width + z/res)
 	 * - the last value, bottom right, is at index (width/res * height/res - 1)
 	 */
-	int               (CALLING_CONV *Map_getLosMap)(int teamId, unsigned short* losValues, int losValues_max); // ARRAY:losValues
+	int               (CALLING_CONV *Map_getLosMap)(int teamId, int* losValues, int losValues_max); // ARRAY:losValues
 	/**
 	 * @brief the radar map
 	 * A square with value 0 means you do not have radar coverage on it.
@@ -1082,7 +1082,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
-	int               (CALLING_CONV *Map_getRadarMap)(int teamId, unsigned short* radarValues, int radarValues_max); // ARRAY:losValues
+	int               (CALLING_CONV *Map_getRadarMap)(int teamId, int* radarValues, int radarValues_max); // ARRAY:losValues
 	/**
 	 * @brief the radar jammer map
 	 * A square with value 0 means you do not have radar jamming coverage.
@@ -1093,7 +1093,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index (x/8 * width + z/8)
 	 * - the last value, bottom right, is at index (width/8 * height/8 - 1)
 	 */
-	int               (CALLING_CONV *Map_getJammerMap)(int teamId, unsigned short* jammerValues, int jammerValues_max); // ARRAY:losValues
+	int               (CALLING_CONV *Map_getJammerMap)(int teamId, int* jammerValues, int jammerValues_max); // ARRAY:losValues
 	/**
 	 * @brief resource maps
 	 * This map shows the resource density on the map.
@@ -1104,7 +1104,7 @@ struct SSkirmishAICallback {
 	 * - the value for the full resolution position (x, z) is at index (x/2 * width + z/2)
 	 * - the last value, bottom right, is at index (width/2 * height/2 - 1)
 	 */
-	int               (CALLING_CONV *Map_getResourceMapRaw)(int teamId, int resourceId, unsigned char* resources, int resources_max); // REF:resourceId->Resource ARRAY:resources
+	int               (CALLING_CONV *Map_getResourceMapRaw)(int teamId, int resourceId, short* resources, int resources_max); // REF:resourceId->Resource ARRAY:resources
 	/**
 	 * Returns positions indicating where to place resource extractors on the map.
 	 * Only the x and z values give the location of the spots, while the y values
@@ -1391,7 +1391,7 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *WeaponDef_getMaxVelocity)(int teamId, int weaponDefId);
 	float             (CALLING_CONV *WeaponDef_getProjectileSpeed)(int teamId, int weaponDefId);
 	float             (CALLING_CONV *WeaponDef_getExplosionSpeed)(int teamId, int weaponDefId);
-	unsigned int      (CALLING_CONV *WeaponDef_getOnlyTargetCategory)(int teamId, int weaponDefId);
+	int               (CALLING_CONV *WeaponDef_getOnlyTargetCategory)(int teamId, int weaponDefId);
 	/** How much the missile will wobble around its course. */
 	float             (CALLING_CONV *WeaponDef_getWobble)(int teamId, int weaponDefId);
 	/** How much the missile will dance. */
@@ -1453,7 +1453,7 @@ struct SSkirmishAICallback {
 	 *
 	 * @see  getInterceptedByShieldType()
 	 */
-	unsigned int      (CALLING_CONV *WeaponDef_Shield_getInterceptType)(int teamId, int weaponDefId);
+	int               (CALLING_CONV *WeaponDef_Shield_getInterceptType)(int teamId, int weaponDefId);
 	/**
 	 * The type of shields that can intercept this weapon (bitfield).
 	 * The weapon can be affected by shields if:
@@ -1461,7 +1461,7 @@ struct SSkirmishAICallback {
 	 *
 	 * @see  getInterceptType()
 	 */
-	unsigned int      (CALLING_CONV *WeaponDef_getInterceptedByShieldType)(int teamId, int weaponDefId);
+	int               (CALLING_CONV *WeaponDef_getInterceptedByShieldType)(int teamId, int weaponDefId);
 	/** Tries to avoid friendly units while aiming? */
 	bool              (CALLING_CONV *WeaponDef_isAvoidFriendly)(int teamId, int weaponDefId);
 	/** Tries to avoid features while aiming? */
@@ -1492,7 +1492,7 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *WeaponDef_getHeightBoostFactor)(int teamId, int weaponDefId);
 	/** Multiplier for the distance to the target for priority calculations. */
 	float             (CALLING_CONV *WeaponDef_getProximityPriority)(int teamId, int weaponDefId);
-	unsigned int      (CALLING_CONV *WeaponDef_getCollisionFlags)(int teamId, int weaponDefId);
+	int               (CALLING_CONV *WeaponDef_getCollisionFlags)(int teamId, int weaponDefId);
 	bool              (CALLING_CONV *WeaponDef_isSweepFire)(int teamId, int weaponDefId);
 	bool              (CALLING_CONV *WeaponDef_isAbleToAttackGround)(int teamId, int weaponDefId);
 	float             (CALLING_CONV *WeaponDef_getCameraShake)(int teamId, int weaponDefId);

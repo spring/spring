@@ -150,7 +150,7 @@ EXPORT(float            ) skirmishAiCallback_UnitDef_getIdleAutoHeal(int teamId,
 EXPORT(int              ) skirmishAiCallback_UnitDef_getIdleTime(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getPower(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getHealth(int teamId, int unitDefId);
-EXPORT(unsigned int     ) skirmishAiCallback_UnitDef_getCategory(int teamId, int unitDefId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_getCategory(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getSpeed(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getTurnRate(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isTurnInPlace(int teamId, int unitDefId);
@@ -295,7 +295,7 @@ EXPORT(bool             ) skirmishAiCallback_UnitDef_isShowPlayerName(int teamId
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToResurrect(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isAbleToCapture(int teamId, int unitDefId);
 EXPORT(int              ) skirmishAiCallback_UnitDef_getHighTrajectoryType(int teamId, int unitDefId);
-EXPORT(unsigned int     ) skirmishAiCallback_UnitDef_getNoChaseCategory(int teamId, int unitDefId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_getNoChaseCategory(int teamId, int unitDefId);
 EXPORT(bool             ) skirmishAiCallback_UnitDef_isLeaveTracks(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getTrackWidth(int teamId, int unitDefId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_getTrackOffset(int teamId, int unitDefId);
@@ -353,8 +353,8 @@ EXPORT(int              ) skirmishAiCallback_UnitDef_WeaponMount_getSlavedTo(int
 EXPORT(void             ) skirmishAiCallback_UnitDef_WeaponMount_getMainDir(int teamId, int unitDefId, int weaponMountId, float* return_posF3_out);
 EXPORT(float            ) skirmishAiCallback_UnitDef_WeaponMount_getMaxAngleDif(int teamId, int unitDefId, int weaponMountId);
 EXPORT(float            ) skirmishAiCallback_UnitDef_WeaponMount_getFuelUsage(int teamId, int unitDefId, int weaponMountId);
-EXPORT(unsigned int     ) skirmishAiCallback_UnitDef_WeaponMount_getBadTargetCategory(int teamId, int unitDefId, int weaponMountId);
-EXPORT(unsigned int     ) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory(int teamId, int unitDefId, int weaponMountId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_WeaponMount_getBadTargetCategory(int teamId, int unitDefId, int weaponMountId);
+EXPORT(int              ) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory(int teamId, int unitDefId, int weaponMountId);
 // END OBJECT UnitDef
 
 
@@ -389,8 +389,8 @@ EXPORT(int              ) skirmishAiCallback_Unit_getGroup(int teamId, int unitI
 EXPORT(int              ) skirmishAiCallback_Unit_getCurrentCommands(int teamId, int unitId);
 EXPORT(int              ) skirmishAiCallback_Unit_CurrentCommand_getType(int teamId, int unitId);
 EXPORT(int              ) skirmishAiCallback_Unit_CurrentCommand_getId(int teamId, int unitId, int commandId);
-EXPORT(unsigned char    ) skirmishAiCallback_Unit_CurrentCommand_getOptions(int teamId, int unitId, int commandId);
-EXPORT(unsigned int     ) skirmishAiCallback_Unit_CurrentCommand_getTag(int teamId, int unitId, int commandId);
+EXPORT(short            ) skirmishAiCallback_Unit_CurrentCommand_getOptions(int teamId, int unitId, int commandId);
+EXPORT(int              ) skirmishAiCallback_Unit_CurrentCommand_getTag(int teamId, int unitId, int commandId);
 EXPORT(int              ) skirmishAiCallback_Unit_CurrentCommand_getTimeOut(int teamId, int unitId, int commandId);
 EXPORT(int              ) skirmishAiCallback_Unit_CurrentCommand_getParams(int teamId, int unitId, int commandId, float* params, int params_sizeMax);
 EXPORT(int              ) skirmishAiCallback_Unit_getSupportedCommands(int teamId, int unitId);
@@ -427,8 +427,8 @@ EXPORT(bool             ) skirmishAiCallback_Group_SupportedCommand_isShowUnique
 EXPORT(bool             ) skirmishAiCallback_Group_SupportedCommand_isDisabled(int teamId, int groupId, int commandId);
 EXPORT(int              ) skirmishAiCallback_Group_SupportedCommand_getParams(int teamId, int groupId, int commandId, const char** params, int params_sizeMax);
 EXPORT(int              ) skirmishAiCallback_Group_OrderPreview_getId(int teamId, int groupId);
-EXPORT(unsigned char    ) skirmishAiCallback_Group_OrderPreview_getOptions(int teamId, int groupId);
-EXPORT(unsigned int     ) skirmishAiCallback_Group_OrderPreview_getTag(int teamId, int groupId);
+EXPORT(short            ) skirmishAiCallback_Group_OrderPreview_getOptions(int teamId, int groupId);
+EXPORT(int              ) skirmishAiCallback_Group_OrderPreview_getTag(int teamId, int groupId);
 EXPORT(int              ) skirmishAiCallback_Group_OrderPreview_getTimeOut(int teamId, int groupId);
 EXPORT(int              ) skirmishAiCallback_Group_OrderPreview_getParams(int teamId, int groupId, float* params, int params_sizeMax);
 EXPORT(bool             ) skirmishAiCallback_Group_isSelected(int teamId, int groupId);
@@ -486,7 +486,7 @@ EXPORT(bool             ) skirmishAiCallback_Mod_getRequireSonarUnderWater(int t
 
 
 // BEGINN OBJECT Map
-EXPORT(unsigned int     ) skirmishAiCallback_Map_getChecksum(int teamId);
+EXPORT(int              ) skirmishAiCallback_Map_getChecksum(int teamId);
 EXPORT(void             ) skirmishAiCallback_Map_getStartPos(int teamId, float* return_posF3_out);
 EXPORT(void             ) skirmishAiCallback_Map_getMousePos(int teamId, float* return_posF3_out);
 EXPORT(bool             ) skirmishAiCallback_Map_isPosInCamera(int teamId, float* pos_posF3, float radius);
@@ -497,10 +497,10 @@ EXPORT(int              ) skirmishAiCallback_Map_getCornersHeightMap(int teamId,
 EXPORT(float            ) skirmishAiCallback_Map_getMinHeight(int teamId);
 EXPORT(float            ) skirmishAiCallback_Map_getMaxHeight(int teamId);
 EXPORT(int              ) skirmishAiCallback_Map_getSlopeMap(int teamId, float* slopes, int slopes_sizeMax);
-EXPORT(int              ) skirmishAiCallback_Map_getLosMap(int teamId, unsigned short* losValues, int losValues_sizeMax);
-EXPORT(int              ) skirmishAiCallback_Map_getRadarMap(int teamId, unsigned short* radarValues, int radarValues_sizeMax);
-EXPORT(int              ) skirmishAiCallback_Map_getJammerMap(int teamId, unsigned short* jammerValues, int jammerValues_sizeMax);
-EXPORT(int              ) skirmishAiCallback_Map_getResourceMapRaw(int teamId, int resourceId, unsigned char* resources, int resources_sizeMax);
+EXPORT(int              ) skirmishAiCallback_Map_getLosMap(int teamId, int* losValues, int losValues_sizeMax);
+EXPORT(int              ) skirmishAiCallback_Map_getRadarMap(int teamId, int* radarValues, int radarValues_sizeMax);
+EXPORT(int              ) skirmishAiCallback_Map_getJammerMap(int teamId, int* jammerValues, int jammerValues_sizeMax);
+EXPORT(int              ) skirmishAiCallback_Map_getResourceMapRaw(int teamId, int resourceId, short* resources, int resources_sizeMax);
 EXPORT(int              ) skirmishAiCallback_Map_getResourceMapSpotsPositions(int teamId, int resourceId, float* spots_AposF3, int spots_AposF3_sizeMax);
 EXPORT(float            ) skirmishAiCallback_Map_initResourceMapSpotsNearest(int teamId, int resourceId, float* pos_posF3, float* return_posF3_out);
 EXPORT(const char*      ) skirmishAiCallback_Map_getName(int teamId);
@@ -662,7 +662,7 @@ EXPORT(float            ) skirmishAiCallback_WeaponDef_getTurnRate(int teamId, i
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getMaxVelocity(int teamId, int weaponDefId);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getProjectileSpeed(int teamId, int weaponDefId);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getExplosionSpeed(int teamId, int weaponDefId);
-EXPORT(unsigned int     ) skirmishAiCallback_WeaponDef_getOnlyTargetCategory(int teamId, int weaponDefId);
+EXPORT(int              ) skirmishAiCallback_WeaponDef_getOnlyTargetCategory(int teamId, int weaponDefId);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getWobble(int teamId, int weaponDefId);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getDance(int teamId, int weaponDefId);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getTrajectoryHeight(int teamId, int weaponDefId);
@@ -687,8 +687,8 @@ EXPORT(int              ) skirmishAiCallback_WeaponDef_Shield_getRechargeDelay(i
 EXPORT(void             ) skirmishAiCallback_WeaponDef_Shield_getGoodColor(int teamId, int weaponDefId, short* return_colorS3_out);
 EXPORT(void             ) skirmishAiCallback_WeaponDef_Shield_getBadColor(int teamId, int weaponDefId, short* return_colorS3_out);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_Shield_getAlpha(int teamId, int weaponDefId);
-EXPORT(unsigned int     ) skirmishAiCallback_WeaponDef_Shield_getInterceptType(int teamId, int weaponDefId);
-EXPORT(unsigned int     ) skirmishAiCallback_WeaponDef_getInterceptedByShieldType(int teamId, int weaponDefId);
+EXPORT(int              ) skirmishAiCallback_WeaponDef_Shield_getInterceptType(int teamId, int weaponDefId);
+EXPORT(int              ) skirmishAiCallback_WeaponDef_getInterceptedByShieldType(int teamId, int weaponDefId);
 EXPORT(bool             ) skirmishAiCallback_WeaponDef_isAvoidFriendly(int teamId, int weaponDefId);
 EXPORT(bool             ) skirmishAiCallback_WeaponDef_isAvoidFeature(int teamId, int weaponDefId);
 EXPORT(bool             ) skirmishAiCallback_WeaponDef_isAvoidNeutral(int teamId, int weaponDefId);
@@ -697,7 +697,7 @@ EXPORT(float            ) skirmishAiCallback_WeaponDef_getCylinderTargetting(int
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getMinIntensity(int teamId, int weaponDefId);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getHeightBoostFactor(int teamId, int weaponDefId);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getProximityPriority(int teamId, int weaponDefId);
-EXPORT(unsigned int     ) skirmishAiCallback_WeaponDef_getCollisionFlags(int teamId, int weaponDefId);
+EXPORT(int              ) skirmishAiCallback_WeaponDef_getCollisionFlags(int teamId, int weaponDefId);
 EXPORT(bool             ) skirmishAiCallback_WeaponDef_isSweepFire(int teamId, int weaponDefId);
 EXPORT(bool             ) skirmishAiCallback_WeaponDef_isAbleToAttackGround(int teamId, int weaponDefId);
 EXPORT(float            ) skirmishAiCallback_WeaponDef_getCameraShake(int teamId, int weaponDefId);
