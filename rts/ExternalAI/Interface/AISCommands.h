@@ -995,6 +995,7 @@ struct SSetRepeatUnitCommand {
 	bool repeat;
 }; // COMMAND_UNIT_SET_REPEAT Unit_setRepeat
 
+/// Tells weapons that support it to try to use a high trajectory
 struct SSetTrajectoryUnitCommand {
 	int unitId;
 	int groupId;
@@ -1003,6 +1004,7 @@ struct SSetTrajectoryUnitCommand {
 	/// max command execution-time in frames; if it takes longer then this -> abort
 	int timeOut;
 
+	/// 0: low-trajectory, 1: high-trajectory
 	int trajectory;
 }; // COMMAND_UNIT_SET_TRAJECTORY Unit_setTrajectory
 
