@@ -73,6 +73,21 @@ static inline int getResourceId_Energy(const SSkirmishAICallback* sAICallback, i
 	return resIndEnergy;
 }
 
+static inline void copyShortToUCharArray(const short* src, unsigned char* const dst, const size_t size) {
+
+	int i;
+	for (i = 0; i < size; ++i) {
+		dst[i] = (unsigned char) src[i];
+	}
+}
+static inline void copyIntToUShortArray(const int* src, unsigned short* const dst, const size_t size) {
+
+	int i;
+	for (i = 0; i < size; ++i) {
+		dst[i] = (unsigned short) src[i];
+	}
+}
+
 
 CAIAICallback::CAIAICallback()
 	: IAICallback(), teamId(-1), sAICallback(NULL) {
@@ -503,7 +518,23 @@ const UnitDef* CAIAICallback::GetUnitDefById(int unitDefId) {
 		unitDef->maxAileron = sAICallback->UnitDef_getMaxAileron(teamId, unitDefId);
 		unitDef->maxElevator = sAICallback->UnitDef_getMaxElevator(teamId, unitDefId);
 		unitDef->maxRudder = sAICallback->UnitDef_getMaxRudder(teamId, unitDefId);
-		//unitDef->yardmaps = sAICallback->UnitDef_getYardMaps(teamId, unitDefId);
+		{
+			static const size_t facings = 4;
+			const int yardMap_size = sAICallback->UnitDef_getYardMap(teamId, unitDefId, 0, NULL, 0);
+			short tmpYardMaps[facings][yardMap_size];
+			int ym;
+			for (ym = 0 ; ym < facings; ++ym) {
+				sAICallback->UnitDef_getYardMap(teamId, unitDefId, ym, tmpYardMaps[ym], yardMap_size);
+			}
+
+			int i;
+			for (ym = 0 ; ym < facings; ++ym) {
+				unitDef->yardmaps[ym] = new unsigned char[yardMap_size];
+				for (i = 0; i < yardMap_size; ++i) {
+					unitDef->yardmaps[ym][i] = (const char) tmpYardMaps[ym][i];
+				}
+			}
+		}
 		unitDef->xsize = sAICallback->UnitDef_getXSize(teamId, unitDefId);
 		unitDef->zsize = sAICallback->UnitDef_getZSize(teamId, unitDefId);
 		unitDef->buildangle = sAICallback->UnitDef_getBuildAngle(teamId, unitDefId);
@@ -702,7 +733,7 @@ const float* CAIAICallback::GetHeightMap() {
 	static float* heightMap = NULL;
 
 	if (heightMap == NULL) {
-		int size = sAICallback->Map_getHeightMap(teamId, NULL, 0);
+		const int size = sAICallback->Map_getHeightMap(teamId, NULL, 0);
 		heightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
 		sAICallback->Map_getHeightMap(teamId, heightMap, size);
 	}
@@ -715,7 +746,7 @@ const float* CAIAICallback::GetCornersHeightMap() {
 	static float* cornersHeightMap = NULL;
 
 	if (cornersHeightMap == NULL) {
-		int size = sAICallback->Map_getCornersHeightMap(teamId, NULL, 0);
+		const int size = sAICallback->Map_getCornersHeightMap(teamId, NULL, 0);
 		cornersHeightMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
 		sAICallback->Map_getCornersHeightMap(teamId, cornersHeightMap, size);
 	}
@@ -736,7 +767,7 @@ const float* CAIAICallback::GetSlopeMap() {
 	static float* slopeMap = NULL;
 
 	if (slopeMap == NULL) {
-		int size = sAICallback->Map_getSlopeMap(teamId, NULL, 0);
+		const int size = sAICallback->Map_getSlopeMap(teamId, NULL, 0);
 		slopeMap = new float[size]; // NOTE: memory leack, but will be used till end of the game anyway
 		sAICallback->Map_getSlopeMap(teamId, slopeMap, size);
 	}
@@ -749,9 +780,11 @@ const unsigned short* CAIAICallback::GetLosMap() {
 	static unsigned short* losMap = NULL;
 
 	if (losMap == NULL) {
-		int size = sAICallback->Map_getLosMap(teamId, NULL, 0);
+		const int size = sAICallback->Map_getLosMap(teamId, NULL, 0);
+		int tmpLosMap[size];
+		sAICallback->Map_getLosMap(teamId, tmpLosMap, size);
 		losMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
-		sAICallback->Map_getLosMap(teamId, losMap, size);
+		copyIntToUShortArray(tmpLosMap, losMap, size);
 	}
 
 	return losMap;
@@ -770,9 +803,11 @@ const unsigned short* CAIAICallback::GetRadarMap() {
 	static unsigned short* radarMap = NULL;
 
 	if (radarMap == NULL) {
-		int size = sAICallback->Map_getRadarMap(teamId, NULL, 0);
+		const int size = sAICallback->Map_getRadarMap(teamId, NULL, 0);
+		int tmpRadarMap[size];
+		sAICallback->Map_getRadarMap(teamId, tmpRadarMap, size);
 		radarMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
-		sAICallback->Map_getRadarMap(teamId, radarMap, size);
+		copyIntToUShortArray(tmpRadarMap, radarMap, size);
 	}
 
 	return radarMap;
@@ -783,9 +818,11 @@ const unsigned short* CAIAICallback::GetJammerMap() {
 	static unsigned short* jammerMap = NULL;
 
 	if (jammerMap == NULL) {
-		int size = sAICallback->Map_getJammerMap(teamId, NULL, 0);
+		const int size = sAICallback->Map_getJammerMap(teamId, NULL, 0);
+		int tmpJammerMap[size];
+		sAICallback->Map_getJammerMap(teamId, tmpJammerMap, size);
 		jammerMap = new unsigned short[size]; // NOTE: memory leack, but will be used till end of the game anyway
-		sAICallback->Map_getJammerMap(teamId, jammerMap, size);
+		copyIntToUShortArray(tmpJammerMap, jammerMap, size);
 	}
 
 	return jammerMap;
@@ -797,9 +834,11 @@ const unsigned char* CAIAICallback::GetMetalMap() {
 	static const int m = getResourceId_Metal(sAICallback, teamId);
 
 	if (metalMap == NULL) {
-		int size = sAICallback->Map_getResourceMapRaw(teamId, m, NULL, 0);
+		const int size = sAICallback->Map_getResourceMapRaw(teamId, m, NULL, 0);
+		short tmpMetalMap[size];
+		sAICallback->Map_getResourceMapRaw(teamId, m, tmpMetalMap, size);
 		metalMap = new unsigned char[size]; // NOTE: memory leack, but will be used till end of the game anyway
-		sAICallback->Map_getResourceMapRaw(teamId, m, metalMap, size);
+		copyShortToUCharArray(tmpMetalMap, metalMap, size);
 	}
 
 	return metalMap;
