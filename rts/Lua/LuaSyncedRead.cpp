@@ -1359,6 +1359,10 @@ int LuaSyncedRead::GetAIInfo(lua_State* L)
 			lua_rawset(L, -3);
 		}
 		numVals++;
+	} else {
+		HSTR_PUSH(L, "UKNOWN");
+		HSTR_PUSH(L, "UKNOWN");
+		lua_newtable(L);
 	}
 	numVals += 3;
 
