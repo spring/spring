@@ -26,13 +26,13 @@ the team in question would not yet exist.
 
 Therefore, the handleEvent code would look like this:
 [code]
-EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
+EXPORT(int) handleEvent(int skirmishAIId, int topic, const void* data) {
 	if (topic == INIT_EVENT) {
-		myAIs[teamId] = CAIObject();
+		myAIs[skirmishAIId] = CAIObject();
 	}
-	if (myAIs.count(teamId) > 0){
+	if (myAIs.count(skirmishAIId) > 0){
 		// allow the AI instance to handle the event.
-		return myAIs[teamId].handleEvent(topic, data);
+		return myAIs[skirmishAIId].handleEvent(topic, data);
 	}
 	// no AI for that team, so return error.
 	else return -1;
@@ -86,7 +86,7 @@ to release() and EVENT_RELEASE.
 
 #include "AIExport.h"
 
-EXPORT(int) handleEvent(int teamId, int topic, const void* data) {
+EXPORT(int) handleEvent(int skirmishAIId, int topic, const void* data) {
 
 	// TODO: do something
 
