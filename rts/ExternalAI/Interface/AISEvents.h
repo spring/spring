@@ -105,7 +105,7 @@ const int NUM_EVENTS                   = 25;
  * It is sent only once per AI instance and game, as the very first event.
  */
 struct SInitEvent {
-	int team;
+	int skirmishAIId;
 	const struct SSkirmishAICallback* callback;
 }; // EVENT_INIT
 
