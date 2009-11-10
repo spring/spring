@@ -150,7 +150,7 @@ struct SSkirmishAICallback {
 	void               (CALLING_CONV *Log_exception)(int teamId, const char* const msg, int severety, bool die);
 
 	/** Returns '/' on posix and '\\' on windows */
-	char (CALLING_CONV *DataDirs_getPathSeparator)(int teamId);
+	char               (CALLING_CONV *DataDirs_getPathSeparator)(int teamId);
 	/**
 	 * This interfaces main data dir, which is where the shared library
 	 * and the InterfaceInfo.lua file are located, e.g.:
