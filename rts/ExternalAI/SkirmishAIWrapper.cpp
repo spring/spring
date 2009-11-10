@@ -83,8 +83,8 @@ CSkirmishAIWrapper::CSkirmishAIWrapper(const size_t skirmishAIId):
 void CSkirmishAIWrapper::CreateCallback() {
 
 	if (c_callback == NULL) {
-		callback = new CGlobalAICallback(this);
-		c_callback = skirmishAiCallback_getInstanceFor(teamId, callback);
+		callback   = new CGlobalAICallback(this);
+		c_callback = skirmishAiCallback_getInstanceFor(skirmishAIId, teamId, callback);
 	}
 }
 
@@ -101,7 +101,7 @@ CSkirmishAIWrapper::~CSkirmishAIWrapper() {
 		delete ai;
 		ai = NULL;
 
-		skirmishAiCallback_release(teamId);
+		skirmishAiCallback_release(skirmishAIId);
 		c_callback = NULL;
 
 		delete callback;
@@ -121,7 +121,7 @@ void CSkirmishAIWrapper::PostLoad() {
 
 bool CSkirmishAIWrapper::LoadSkirmishAI(bool postLoad) {
 
-	ai = new CSkirmishAI(teamId, key, GetCallback());
+	ai = new CSkirmishAI(skirmishAIId, teamId, key, GetCallback());
 
 	// check if initialization went ok
 	if (skirmishAIHandler.IsLocalSkirmishAIDieing(skirmishAIId)) {
@@ -188,7 +188,7 @@ void CSkirmishAIWrapper::Init() {
 		}
 	}
 
-	SInitEvent evtData = {teamId, GetCallback()};
+	SInitEvent evtData = {skirmishAIId, GetCallback()};
 	int error = ai->HandleEvent(EVENT_INIT, &evtData);
 	if (error != 0) {
 		// init failed
@@ -233,14 +233,22 @@ static void streamCopy(std::istream* in, std::ostream* out)
 	delete[] buffer;
 }
 
-void CSkirmishAIWrapper::Load(std::istream* load_s)
-{
+static std::string createTempFileName(const char* action, int teamId,
+		int skirmishAIId) {
+
 	static const size_t tmpFileName_size = 1024;
 	char* tmpFileName = new char[tmpFileName_size];
-	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team_%i.tmp", "load", teamId);
+	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team%i_id%i.tmp", action,
+			teamId, skirmishAIId);
 	std::string tmpFile = filesystem.LocateFile(tmpFileName,
 			FileSystem::WRITE | FileSystem::CREATE_DIRS);
 	delete[] tmpFileName;
+	return tmpFile;
+}
+
+void CSkirmishAIWrapper::Load(std::istream* load_s)
+{
+	const std::string tmpFile = createTempFileName("load", teamId, skirmishAIId);
 
 	std::ofstream tmpFile_s;
 	tmpFile_s.open(tmpFile.c_str(), std::ios::binary);
@@ -255,12 +263,7 @@ void CSkirmishAIWrapper::Load(std::istream* load_s)
 
 void CSkirmishAIWrapper::Save(std::ostream* save_s)
 {
-	static const size_t tmpFileName_size = 1024;
-	char* tmpFileName = new char[tmpFileName_size];
-	SNPRINTF(tmpFileName, tmpFileName_size, "%s-team_%i.tmp", "save", teamId);
-	std::string tmpFile = filesystem.LocateFile(tmpFileName,
-			FileSystem::WRITE | FileSystem::CREATE_DIRS);
-	delete[] tmpFileName;
+	const std::string tmpFile = createTempFileName("save", teamId, skirmishAIId);
 
 	SSaveEvent evtData = {tmpFile.c_str()};
 	ai->HandleEvent(EVENT_SAVE, &evtData);
@@ -403,9 +406,17 @@ void CSkirmishAIWrapper::SeismicPing(int allyTeam, int unitId,
 }
 
 
-int CSkirmishAIWrapper::GetTeamId() const { return teamId; }
-const SkirmishAIKey& CSkirmishAIWrapper::GetKey() const { return key; }
-const SSkirmishAICallback* CSkirmishAIWrapper::GetCallback() const { return c_callback; }
+int CSkirmishAIWrapper::GetTeamId() const {
+	return teamId;
+}
+
+const SkirmishAIKey& CSkirmishAIWrapper::GetKey() const {
+	return key;
+}
+
+const SSkirmishAICallback* CSkirmishAIWrapper::GetCallback() const {
+	return c_callback;
+}
 
 void CSkirmishAIWrapper::SetCheatEventsEnabled(bool enable) {
 	cheatEvents = enable;

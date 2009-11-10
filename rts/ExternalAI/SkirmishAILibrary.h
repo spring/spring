@@ -41,13 +41,13 @@ public:
 	 * Level of Support for a specific engine version and ai interface.
 	 * @return see enum LevelOfSupport (higher values could be used optionally)
 	 */
-	virtual LevelOfSupport GetLevelOfSupportFor(int teamId,
+	virtual LevelOfSupport GetLevelOfSupportFor(
 			const std::string& engineVersionString, int engineVersionNumber,
 			const AIInterfaceKey& interfaceKey) const;
 
-	virtual bool Init(int teamId, const SSkirmishAICallback* c_callback) const;
-	virtual bool Release(int teamId) const;
-	virtual int HandleEvent(int teamId, int topic, const void* data) const;
+	virtual bool Init(int skirmishAIId, const SSkirmishAICallback* c_callback) const;
+	virtual bool Release(int skirmishAIId) const;
+	virtual int HandleEvent(int skirmishAIId, int topic, const void* data) const;
 
 private:
 	SSkirmishAILibrary sSAI;
