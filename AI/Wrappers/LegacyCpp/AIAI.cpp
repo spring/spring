@@ -20,8 +20,7 @@
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/Interface/AISEvents.h"
 
-CAIAI::CAIAI(int teamId, IGlobalAI* gAI):
-	team(teamId),
+CAIAI::CAIAI(IGlobalAI* gAI):
 	ai(gAI),
 	globalAICallback(NULL) {
 }

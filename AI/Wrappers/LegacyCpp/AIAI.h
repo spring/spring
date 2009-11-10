@@ -26,7 +26,7 @@ class IGlobalAICallback;
 
 class CAIAI {
 public:
-	CAIAI(int, IGlobalAI*);
+	CAIAI(IGlobalAI* gAI);
 	virtual ~CAIAI();
 
 	/**
@@ -43,7 +43,6 @@ public:
 	virtual int handleEvent(int topic, const void* data);
 
 protected:
-	int team;
 	IGlobalAI* ai;
 	IGlobalAICallback* globalAICallback;
 };

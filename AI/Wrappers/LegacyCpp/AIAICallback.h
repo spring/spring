@@ -28,7 +28,7 @@ struct SSkirmishAICallback;
 class CAIAICallback : public IAICallback {
 public:
 	CAIAICallback();
-	CAIAICallback(int teamId, const SSkirmishAICallback* sAICallback);
+	CAIAICallback(int skirmishAIId, const SSkirmishAICallback* sAICallback);
 
 	virtual void SendTextMsg(const char* text, int zone);
 	virtual void SetLastMsgPos(float3 pos);
@@ -206,7 +206,7 @@ public:
 			int* outSize = NULL);
 
 private:
-	int teamId;
+	int skirmishAIId;
 	const SSkirmishAICallback* sAICallback;
 //	int currentFrame;
 	void init();

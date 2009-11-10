@@ -23,7 +23,7 @@
 #include "ExternalAI/IGlobalAI.h"
 #include "ExternalAI/IGlobalAICallback.h"
 
-CAIGlobalAI::CAIGlobalAI(int teamId, IGlobalAI* gai): CAIAI(teamId, gai) {
+CAIGlobalAI::CAIGlobalAI(IGlobalAI* gai): CAIAI(gai) {
 }
 
 CAIGlobalAI::~CAIGlobalAI() {
