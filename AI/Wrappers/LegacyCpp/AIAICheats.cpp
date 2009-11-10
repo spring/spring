@@ -23,69 +23,69 @@
 
 static int resIndMetal = -1;
 static int resIndEnergy = -1;
-static inline int getResourceIndex_Metal(const SSkirmishAICallback* sAICallback, int teamId) {
+static inline int getResourceIndex_Metal(const SSkirmishAICallback* sAICallback, int skirmishAIId) {
 
 	if (resIndMetal == -1) {
-		resIndMetal = sAICallback->getResourceByName(teamId, "Metal");
+		resIndMetal = sAICallback->getResourceByName(skirmishAIId, "Metal");
 	}
 
 	return resIndMetal;
 }
-static inline int getResourceIndex_Energy(const SSkirmishAICallback* sAICallback, int teamId)
+static inline int getResourceIndex_Energy(const SSkirmishAICallback* sAICallback, int skirmishAIId)
 {
 	if (resIndEnergy == -1) {
-		resIndEnergy = sAICallback->getResourceByName(teamId, "Energy");
+		resIndEnergy = sAICallback->getResourceByName(skirmishAIId, "Energy");
 	}
 
 	return resIndEnergy;
 }
 
 CAIAICheats::CAIAICheats()
-	: IAICheats(), teamId(-1), sAICallback(NULL), aiCallback(NULL) {}
+	: IAICheats(), skirmishAIId(-1), sAICallback(NULL), aiCallback(NULL) {}
 
-CAIAICheats::CAIAICheats(int teamId, const SSkirmishAICallback* sAICallback,
+CAIAICheats::CAIAICheats(int skirmishAIId, const SSkirmishAICallback* sAICallback,
 		CAIAICallback* aiCallback)
-		: IAICheats(), teamId(teamId), sAICallback(sAICallback),
+		: IAICheats(), skirmishAIId(skirmishAIId), sAICallback(sAICallback),
 		aiCallback(aiCallback) {}
 
 void CAIAICheats::setCheatsEnabled(bool enabled) {
-	sAICallback->Cheats_setEnabled(teamId, enabled);
+	sAICallback->Cheats_setEnabled(skirmishAIId, enabled);
 }
 
 
 void CAIAICheats::SetMyHandicap(float handicap) {
 	setCheatsEnabled(true);
 	SSetMyHandicapCheatCommand cmd = {handicap};
-	sAICallback->Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1,
 			COMMAND_CHEATS_SET_MY_HANDICAP, &cmd);
 	setCheatsEnabled(false);
 }
 void CAIAICheats::GiveMeMetal(float amount) {
 
-	static int m = getResourceIndex_Metal(sAICallback, teamId);
+	static int m = getResourceIndex_Metal(sAICallback, skirmishAIId);
 	setCheatsEnabled(true);
 	SGiveMeResourceCheatCommand cmd = {m, amount};
-	sAICallback->Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1,
 			COMMAND_CHEATS_GIVE_ME_RESOURCE, &cmd);
 	setCheatsEnabled(false);
 }
 void CAIAICheats::GiveMeEnergy(float amount) {
 
-	static int e = getResourceIndex_Energy(sAICallback, teamId);
+	static int e = getResourceIndex_Energy(sAICallback, skirmishAIId);
 	setCheatsEnabled(true);
 	SGiveMeResourceCheatCommand cmd = {e, amount};
-	sAICallback->Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE, -1,
+	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1,
 			COMMAND_CHEATS_GIVE_ME_RESOURCE, &cmd);
 	setCheatsEnabled(false);
 }
 
 int CAIAICheats::CreateUnit(const char* unitDefName, float3 pos) {
 	setCheatsEnabled(true);
-	int unitDefId = sAICallback->getUnitDefByName(teamId, unitDefName);
+	int unitDefId = sAICallback->getUnitDefByName(skirmishAIId, unitDefName);
 	float pos_f3[3];
 	pos.copyInto(pos_f3);
 	SGiveMeNewUnitCheatCommand cmd = {unitDefId, pos_f3};
-	int unitId = sAICallback->Engine_handleCommand(teamId, COMMAND_TO_ID_ENGINE,
+	int unitId = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE,
 			-1, COMMAND_CHEATS_GIVE_ME_NEW_UNIT, &cmd);
 	setCheatsEnabled(false);
 	return unitId;
@@ -232,10 +232,10 @@ bool CAIAICheats::IsUnitParalyzed(int unitId) {
 }
 
 bool CAIAICheats::OnlyPassiveCheats() {
-	return sAICallback->Cheats_isOnlyPassive(teamId);
+	return sAICallback->Cheats_isOnlyPassive(skirmishAIId);
 }
 void CAIAICheats::EnableCheatEvents(bool enable) {
-	sAICallback->Cheats_setEventsEnabled(teamId, enable);
+	sAICallback->Cheats_setEventsEnabled(skirmishAIId, enable);
 }
 
 bool CAIAICheats::GetProperty(int id, int property, void* dst) {

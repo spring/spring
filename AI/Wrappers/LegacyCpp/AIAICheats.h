@@ -29,7 +29,7 @@ class CAIAICallback;
 class CAIAICheats : public IAICheats {
 public:
 	CAIAICheats();
-	CAIAICheats(int teamId, const SSkirmishAICallback* sAICallback,
+	CAIAICheats(int skirmishAIId, const SSkirmishAICallback* sAICallback,
 			CAIAICallback* aiCallback);
 
 
@@ -78,7 +78,7 @@ public:
 	virtual int HandleCommand(int commandId, void* data);
 
 private:
-	int teamId;
+	int skirmishAIId;
 	const SSkirmishAICallback* sAICallback;
 	CAIAICallback* aiCallback;
 	void setCheatsEnabled(bool enable);
