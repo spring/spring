@@ -297,6 +297,10 @@ function printJavaClsAndInt() {
 	print("\t}") >> outFile_c;
 	print("") >> outFile_c;
 
+	# print teamId getter in interface
+	print("\t" "public int getTeamId();") >> outFile_i;
+	print("") >> outFile_i;
+
 	# print teamId member, constructor and getter
 	print("\t" "private int teamId;") >> outFile_c;
 	print("") >> outFile_c;
@@ -304,6 +308,7 @@ function printJavaClsAndInt() {
 	print("\t\t" "this.teamId = teamId;") >> outFile_c;
 	print("\t}") >> outFile_c;
 	print("") >> outFile_c;
+	print("\t" "@Override") >> outFile_c;
 	print("\t" "public int getTeamId() {") >> outFile_c;
 	print("\t\t" "return this.teamId;") >> outFile_c;
 	print("\t}") >> outFile_c;
