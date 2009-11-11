@@ -19,6 +19,13 @@
 */
 
 /*
+Why these methods in SSkirmishAILibrary
+=======================================
+
+The main reason for the extra init() and release() functions, in addition to
+the init and release events, applies to Object-Oriented programming languages
+mainly, and is given in the following paragraphs.
+
 If we do not have an init() method, then we would instead pass
 an event InitEvent to handleEvent. However, we would have to make
 handleEvent have to wait for an InitEvent as a special case, since
@@ -27,7 +34,7 @@ the team in question would not yet exist.
 Therefore, the handleEvent code would look like this:
 [code]
 EXPORT(int) handleEvent(int skirmishAIId, int topic, const void* data) {
-	if (topic == INIT_EVENT) {
+	if (topic == EVENT_INIT) {
 		myAIs[skirmishAIId] = CAIObject();
 	}
 	if (myAIs.count(skirmishAIId) > 0){
@@ -43,9 +50,11 @@ Advantages:
 * People don't get confused and start adding bananaSplitz() functions.
 
 Disadvantages:
-* We need to check for INIT_EVENT before *every message*.
-* These events will happen only once per game -- after that the check becomes a necessary waste of time.
-* Handling events is no longer about getting the right object to deal with an event, it also includes initialising object properly.
+* We need to check for EVENT_INIT before *every message*.
+* These events will happen only once per game; after that, the check becomes
+  a necessary waste of CPU time.
+* Handling events is no longer about getting the right object to deal with an
+  event, it also includes initialising object properly.
 
 I understand that we want to keep the interface simple. In fact,
 I think we should keep it as minimal as possible, and ideally everything
@@ -67,13 +76,13 @@ see initialisation as a special case. It's pretty clear that everything
 else goes through handleEvent.
 
 The advantage is clear: a more efficient, simpler design. Of course, you could
-argue that the efficiency is nominal, one extra if per event is very little cost,
-and granted, that's true; but this doesn't change the fact that we're checking
-for a special case that we know only happens once at the beginning of the game, before
-every single event after.
+argue that the efficiency is nominal, one extra if() per event is very little
+cost, and granted, that is true; but this does not change the fact that we're
+checking for a special case that we know only happens once at the beginning of
+the game, before every single event.
 
-Of course, we still need an EVENT_INIT, since initialising the existance of a team
-member is not the same as initialising its state.
+Of course, we still need an EVENT_INIT, since initialising the existance of a
+team member is not the same as initialising its state.
 
 You might also argue that we do this check in the handleEvent switch within each
 team. This is true, although the difference there is that a switch is translated

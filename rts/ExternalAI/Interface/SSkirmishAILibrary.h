@@ -120,10 +120,16 @@ struct SSkirmishAILibrary {
 	 * [optional]
 	 * An AI not exporting this function is still valid.
 	 *
+	 * @param  aiShortName  this is indisposable for non-native interfaces,
+	 *                      as they need a means of redirecting from
+	 *                      one wrapper function to the respective non-native
+	 *                      libraries
+	 * @param  aiVersion  see aiShortName
 	 * @return the level of support for the supplied engine and AI interface
 	 *         versions
 	 */
 	enum LevelOfSupport (CALLING_CONV *getLevelOfSupportFor)(
+			const char* aiShortName, const char* aiVersion,
 			const char* engineVersionString, int engineVersionNumber,
 			const char* aiInterfaceShortName, const char* aiInterfaceVersion);
 
@@ -203,7 +209,7 @@ struct SSkirmishAILibrary {
 //	 * @param eventId       used on asynchronous events. this allows the AI to
 //	 *                      identify a possible result message, which was sent
 //	 *                      with the same eventId
-	 * @param topic         unique identifyer of a message
+	 * @param topicId       unique identifier of a message
 	 *                      (see EVENT_* defines in AISEvents.h)
 	 * @param data          an topic specific struct, which contains the data
 	 *                      associatedwith the event
@@ -211,7 +217,7 @@ struct SSkirmishAILibrary {
 	 * @return     0: ok
 	 *          != 0: error
 	 */
-	int (CALLING_CONV *handleEvent)(int skirmishAIId, int topic,
+	int (CALLING_CONV *handleEvent)(int skirmishAIId, int topicId,
 			const void* data);
 };
 

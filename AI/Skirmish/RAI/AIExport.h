@@ -46,6 +46,7 @@ struct SSkirmishAICallback;
 
 // static AI library methods (optional to implement)
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
+		const char* aiShortName, const char* aiVersion,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion);
 

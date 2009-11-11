@@ -52,9 +52,11 @@ LevelOfSupport CSkirmishAILibrary::GetLevelOfSupportFor(
 		const AIInterfaceKey& interfaceKey) const {
 
 	if (sSAI.getLevelOfSupportFor != NULL) {
-		return sSAI.getLevelOfSupportFor(engineVersionString.c_str(),
-				engineVersionNumber, interfaceKey.GetShortName().c_str(),
-				interfaceKey.GetVersion().c_str());
+		return sSAI.getLevelOfSupportFor(
+				key.GetShortName().c_str(), key.GetVersion().c_str(),
+				engineVersionString.c_str(), engineVersionNumber,
+				interfaceKey.GetShortName().c_str(), interfaceKey.GetVersion().c_str()
+				);
 	} else {
 		return LOS_Unknown;
 	}
