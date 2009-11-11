@@ -526,7 +526,7 @@ EXPORT(int) skirmishAiCallback_Engine_handleCommand(int skirmishAIId, int toId, 
 		default:
 		{
 			// check if it is a unit command
-			Command* c = (Command*) newCommand(commandData, commandTopic);
+			Command* c = (Command*) newCommand(commandData, commandTopic, uh->MaxUnits());
 			if (c != NULL) { // it is a unit command
 				const SStopUnitCommand* cmd = (SStopUnitCommand*) commandData;
 				if (cmd->unitId >= 0) {

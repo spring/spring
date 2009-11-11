@@ -381,7 +381,7 @@ void CSkirmishAIWrapper::PlayerCommandGiven(
 	for (int i = 0; i < unitIds_size; ++i) {
 		unitIds[i] = selectedUnits.at(i);
 	}
-	const int cCommandId = extractAICommandTopic(&c);
+	const int cCommandId = extractAICommandTopic(&c, uh->MaxUnits());
 
 	SPlayerCommandEvent evtData = {unitIds, unitIds_size, cCommandId, playerId};
 	ai->HandleEvent(EVENT_PLAYER_COMMAND, &evtData);
