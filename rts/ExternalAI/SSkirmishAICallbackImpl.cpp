@@ -1947,7 +1947,7 @@ EXPORT(int) skirmishAiCallback_UnitDef_getYardMap(int skirmishAIId, int unitDefI
 	}
 
 	const UnitDef* unitDef = getUnitDefById(skirmishAIId, unitDefId);
-	const int yardMap_sizeReal = unitDef->xsize * unitDef->zsize;
+	const int yardMap_sizeReal = (unitDef->yardmaps[facing] != NULL) ? (unitDef->xsize * unitDef->zsize) : 0;
 
 	int yardMap_size = yardMap_sizeReal;
 

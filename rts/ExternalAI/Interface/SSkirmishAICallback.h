@@ -518,6 +518,8 @@ struct SSkirmishAICallback {
 	 * In the BA Arm T2 K-Bot lab, htere is a line in hte middle where units
 	 * walk, otherwise they would not be able ot exit the lab once they are
 	 * built.
+	 * @return 0 if invalid facing or the unit has no yard-map defined,
+	 *         the size of the yard-map otherwise: getXSize() * getXSize()
 	 */
 	int               (CALLING_CONV *UnitDef_getYardMap)(int skirmishAIId, int unitDefId, int facing, short* yardMap, int yardMap_sizeMax); // ARRAY:yardMap
 	int               (CALLING_CONV *UnitDef_getXSize)(int skirmishAIId, int unitDefId);
