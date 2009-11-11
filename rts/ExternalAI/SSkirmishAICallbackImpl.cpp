@@ -2193,23 +2193,21 @@ EXPORT(int) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory(int ski
 
 //########### BEGINN Unit
 EXPORT(int) skirmishAiCallback_Unit_getLimit(int skirmishAIId) {
-	int unitLimit;
-	IAICallback* clb = skirmishAIId_callback[skirmishAIId];
-	const bool fetchOk = clb->GetValue(AIVAL_UNIT_LIMIT, &unitLimit);
-	if (!fetchOk) {
-		unitLimit = -1;
-	}
-	return unitLimit;
+	return uh->MaxUnitsPerTeam();
+}
+EXPORT(int) skirmishAiCallback_Unit_getMax(int skirmishAIId) {
+	return uh->MaxUnits();
 }
 EXPORT(int) skirmishAiCallback_Unit_getDef(int skirmishAIId, int unitId) {
+
 	const UnitDef* unitDef;
+
 	if (skirmishAiCallback_Cheats_isEnabled(skirmishAIId)) {
 		unitDef = skirmishAIId_cheatCallback[skirmishAIId]->GetUnitDef(unitId);
 	} else {
 		unitDef = skirmishAIId_callback[skirmishAIId]->GetUnitDef(unitId);
 	}
-//	IAICallback* clb = skirmishAIId_callback[skirmishAIId];
-//	const UnitDef* unitDef = clb->GetUnitDef(unitId);
+
 	if (unitDef != NULL) {
 		return unitDef->id;
 	} else {
@@ -3521,6 +3519,7 @@ static void skirmishAiCallback_init(SSkirmishAICallback* callback) {
 	callback->UnitDef_WeaponMount_getBadTargetCategory = &skirmishAiCallback_UnitDef_WeaponMount_getBadTargetCategory;
 	callback->UnitDef_WeaponMount_getOnlyTargetCategory = &skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCategory;
 	callback->Unit_getLimit = &skirmishAiCallback_Unit_getLimit;
+	callback->Unit_getMax = &skirmishAiCallback_Unit_getMax;
 	callback->getEnemyUnits = &skirmishAiCallback_getEnemyUnits;
 	callback->getEnemyUnitsIn = &skirmishAiCallback_getEnemyUnitsIn;
 	callback->getEnemyUnitsInRadarAndLos = &skirmishAiCallback_getEnemyUnitsInRadarAndLos;
