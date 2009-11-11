@@ -27,6 +27,7 @@
 #include "Game/Player.h"
 #include "Game/PlayerHandler.h"
 #include "Sim/Units/Unit.h"
+#include "Sim/Units/UnitHandler.h"
 #include "Sim/Misc/Team.h"
 #include "Sim/Misc/TeamHandler.h"
 #include "Sim/Weapons/WeaponDef.h"
@@ -420,7 +421,7 @@ void CEngineOutHandler::CommandFinished(const CUnit& unit, const Command& comman
 
 	const int teamId           = unit.team;
 	const int unitId           = unit.id;
-	const int aiCommandTopicId = extractAICommandTopic(&command);
+	const int aiCommandTopicId = extractAICommandTopic(&command, uh->MaxUnits());
 
 	DO_FOR_TEAM_SKIRMISH_AIS(CommandFinished(unitId, aiCommandTopicId), teamId);
 }

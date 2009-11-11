@@ -33,7 +33,6 @@ void initSUnitCommand(void* sUnitCommand) {
 
 #ifdef __cplusplus
 #include "Sim/Units/CommandAI/Command.h"
-#include "Sim/Units/UnitHandler.h" // for uh->MaxUnits()
 
 void freeSUnitCommand(void* sCommandData, int sCommandId) {
 
@@ -150,9 +149,9 @@ static float* allocFloatArr3(const std::vector<float>& from, const size_t firstV
 	return to;
 }
 
-void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId) {
+void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId, int maxUnits) {
 
-	int aiCmdId = extractAICommandTopic(c);
+	int aiCmdId = extractAICommandTopic(c, maxUnits);
 	void* sCommandData;
 
 	switch (aiCmdId) {
@@ -512,7 +511,7 @@ void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sComman
 			cmd->groupId            = groupId;
 			cmd->options            = c->options;
 			cmd->timeOut            = c->timeOut;
-			cmd->toReclaimFeatureId = ((int) c->params[0]) - uh->MaxUnits();
+			cmd->toReclaimFeatureId = ((int) c->params[0]) - maxUnits;
 
 			sCommandData = cmd;
 			break;
@@ -988,7 +987,7 @@ int toInternalUnitCommandTopic(int aiCmdTopic, const void* sUnitCommandData) {
 }
 
 
-int extractAICommandTopic(const Command* engineCmd) {
+int extractAICommandTopic(const Command* engineCmd, int maxUnits) {
 
 	const int internalUnitCmdTopic = engineCmd->id;
 	int aiCommandTopic;
@@ -1130,7 +1129,7 @@ int extractAICommandTopic(const Command* engineCmd) {
 		case CMD_RECLAIM:
 		{
 			if (engineCmd->params.size() < 3 || engineCmd->params.size() == 5) {
-				if (engineCmd->params[0] < uh->MaxUnits()) {
+				if (engineCmd->params[0] < maxUnits) {
 					aiCommandTopic = COMMAND_UNIT_RECLAIM_UNIT;
 				} else {
 					aiCommandTopic = COMMAND_UNIT_RECLAIM_FEATURE;
@@ -1215,7 +1214,7 @@ int extractAICommandTopic(const Command* engineCmd) {
 	return aiCommandTopic;
 }
 
-Command* newCommand(void* sUnitCommandData, int sCommandId) {
+Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits) {
 
 	Command* c = new Command();
 
@@ -1532,7 +1531,7 @@ Command* newCommand(void* sUnitCommandData, int sCommandId) {
 			c->options = cmd->options;
 			c->timeOut = cmd->timeOut;
 
-			c->params.push_back(uh->MaxUnits() + cmd->toReclaimFeatureId);
+			c->params.push_back(maxUnits + cmd->toReclaimFeatureId);
 			break;
 		}
 		case COMMAND_UNIT_RECLAIM_AREA:

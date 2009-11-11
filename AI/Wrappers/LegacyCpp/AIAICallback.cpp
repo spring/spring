@@ -1538,8 +1538,10 @@ int CAIAICallback::GiveOrder(int unitId, Command* c) {
 
 int CAIAICallback::Internal_GiveOrder(int unitId, int groupId, Command* c) {
 
+	const int maxUnits = sAICallback->Unit_getMax(skirmishAIId);
+
 	int sCommandId;
-	void* sCommandData = mallocSUnitCommand(unitId, groupId, c, &sCommandId);
+	void* sCommandData = mallocSUnitCommand(unitId, groupId, c, &sCommandId, maxUnits);
 
 	int ret = sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, sCommandId, sCommandData);
 

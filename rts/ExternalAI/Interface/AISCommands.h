@@ -1407,8 +1407,10 @@ struct Command;
 
 /**
  * @brief Allocates memory for a C Command struct
+ * @param  maxUnits  should be the value returned by uh->MaxUnits()
+ *                   -> max units per team for the current game
  */
-void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId);
+void* mallocSUnitCommand(int unitId, int groupId, const Command* c, int* sCommandId, int maxUnits);
 
 /**
  * @brief Frees memory of a C Command struct
@@ -1426,13 +1428,15 @@ int toInternalUnitCommandTopic(int aiCmdTopic, void* sUnitCommandData);
  * Returns the C AI Interface command topic ID that corresponds
  * to the engine internal C++ unit command (topic) ID specified by
  * <code>internalUnitCmdTopic</code>.
+ * @param  maxUnits  should be the value returned by uh->MaxUnits()
+ *                   -> max units per team for the current game
  */
-int extractAICommandTopic(const Command* internalUnitCmd);
+int extractAICommandTopic(const Command* internalUnitCmd, int maxUnits);
 
 /**
  * @brief creates - with new - an engine C++ Command struct
  */
-Command* newCommand(void* sUnitCommandData, int sCommandId);
+Command* newCommand(void* sUnitCommandData, int sCommandId, int maxUnits);
 #endif	// __cplusplus
 
 
