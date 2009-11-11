@@ -33,7 +33,7 @@ import java.util.logging.*;
  */
 public class NullJavaAI extends AbstractAI implements AI {
 
-	private int teamId = -1;
+	private int skirmishAIId = -1;
 	private AICallback clb = null;
 	private String myLogFile = null;
 	private Logger log = null;
@@ -75,7 +75,7 @@ public class NullJavaAI extends AbstractAI implements AI {
 
 
 	@Override
-	public int init(int teamId, AICallback callback) {
+	public int init(int skirmishAIId, AICallback callback) {
 
 		int ret = -1;
 
@@ -83,9 +83,10 @@ public class NullJavaAI extends AbstractAI implements AI {
 
 		// initialize the log
 		try {
+			int teamId = clb.SkirmishAI_getTeamId();
 			// most likely, this causes a memory leak, as the C string
 			// allocated by this, is never freed
-			myLogFile = callback.DataDirs_allocatePath("log-team-" + teamId + ".txt", true, true, false, false);
+			myLogFile = callback.DataDirs_allocatePath("log-team-" + teamId + "-" + skirmishAIId + ".txt", true, true, false, false);
 			FileHandler fileLogger = new FileHandler(myLogFile, false);
 			fileLogger.setFormatter(new MyCustomLogFormatter());
 			fileLogger.setLevel(Level.ALL);
@@ -103,7 +104,8 @@ public class NullJavaAI extends AbstractAI implements AI {
 		}
 
 		try {
-			log.info("initializing team " + teamId);
+			int teamId = clb.SkirmishAI_getTeamId();
+			log.info("initializing team " + teamId + ", id " + skirmishAIId);
 
 			int numInfo = callback.SkirmishAI_Info_getSize();
 			log.info("info (items: " + numInfo + ") ...");
@@ -173,7 +175,8 @@ public class NullJavaAI extends AbstractAI implements AI {
 		int ret = -1;
 
 		try {
-			log.info("releasing team " + teamId);
+			int teamId = clb.SkirmishAI_getTeamId();
+			log.info("releasing team " + teamId + ", id " + skirmishAIId);
 
 			ret = 0;
 		} catch (Exception ex) {

@@ -297,20 +297,20 @@ function printJavaClsAndInt() {
 	print("\t}") >> outFile_c;
 	print("") >> outFile_c;
 
-	# print teamId getter in interface
-	print("\t" "public int getTeamId();") >> outFile_i;
+	# print skirmishAIId getter in interface
+	print("\t" "public int SkirmishAI_getSkirmishAIId();") >> outFile_i;
 	print("") >> outFile_i;
 
-	# print teamId member, constructor and getter
-	print("\t" "private int teamId;") >> outFile_c;
+	# print skirmishAIId member, constructor and getter
+	print("\t" "private int skirmishAIId;") >> outFile_c;
 	print("") >> outFile_c;
-	print("\t" "public " myClass "(int teamId) {") >> outFile_c;
-	print("\t\t" "this.teamId = teamId;") >> outFile_c;
+	print("\t" "public " myClass "(int skirmishAIId) {") >> outFile_c;
+	print("\t\t" "this.skirmishAIId = skirmishAIId;") >> outFile_c;
 	print("\t}") >> outFile_c;
 	print("") >> outFile_c;
 	print("\t" "@Override") >> outFile_c;
-	print("\t" "public int getTeamId() {") >> outFile_c;
-	print("\t\t" "return this.teamId;") >> outFile_c;
+	print("\t" "public int SkirmishAI_getSkirmishAIId() {") >> outFile_c;
+	print("\t\t" "return this.skirmishAIId;") >> outFile_c;
 	print("\t}") >> outFile_c;
 	print("") >> outFile_c;
 
@@ -322,11 +322,11 @@ function printJavaClsAndInt() {
 			paramList = funcParamListJ[i];
 			metaInf   = funcMetaInf[i];
 
-			paramListNoTeam = paramList;
-			sub(/int _teamId(, )?/, "", paramListNoTeam);
-			paramListNoTeamNoTypes = removeParamTypes(paramListNoTeam);
-			if (paramListNoTeamNoTypes != "") {
-				paramListNoTeamNoTypes = ", " paramListNoTeamNoTypes;
+			paramListNoSID = paramList;
+			sub(/int _skirmishAIId(, )?/, "", paramListNoSID);
+			paramListNoSIDNoTypes = removeParamTypes(paramListNoSID);
+			if (paramListNoSIDNoTypes != "") {
+				paramListNoSIDNoTypes = ", " paramListNoSIDNoTypes;
 			}
 			condRet = "";
 			if (retType != "void") {
@@ -342,13 +342,13 @@ function printJavaClsAndInt() {
 
 			# print the interface function
 			printFunctionComment_Common(outFile_i, funcDocComment, i, "\t");
-			print("\t" "public " retType " " fullName "(" paramListNoTeam ");" metaInfCommand) >> outFile_i;
+			print("\t" "public " retType " " fullName "(" paramListNoSID ");" metaInfCommand) >> outFile_i;
 			print("") >> outFile_i;
 
 			# print the interface implementing function
 			print("\t" "@Override") >> outFile_c;
-			print("\t" "public " retType " " fullName "(" paramListNoTeam ") {") >> outFile_c;
-			print("\t\t" condRet "this." fullName "(this.teamId" paramListNoTeamNoTypes ");") >> outFile_c;
+			print("\t" "public " retType " " fullName "(" paramListNoSID ") {") >> outFile_c;
+			print("\t\t" condRet "this." fullName "(this.skirmishAIId" paramListNoSIDNoTypes ");") >> outFile_c;
 			print("\t" "}") >> outFile_c;
 
 			# print the private native function

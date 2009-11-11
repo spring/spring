@@ -113,8 +113,8 @@ function printNativeHeader() {
 	print("") >> outFile_nc;
 
 	# print global vars (source)
-	print("size_t   teamId_size     = 0;") >> outFile_nc;
-	print("jobject* teamId_callback = NULL;") >> outFile_nc;
+	print("size_t   skirmishAIId_size     = 0;") >> outFile_nc;
+	print("jobject* skirmishAIId_callback = NULL;") >> outFile_nc;
 	print("") >> outFile_nc;
 }
 
@@ -144,16 +144,16 @@ function printNativeStaticInitFuncHead() {
 	print(" * @author	hoijui") >> outFile_nh;
 	print(" * @version	GENERATED") >> outFile_nh;
 	print(" */") >> outFile_nh;
-	print("int " myWrapperPrefix "initStatic(JNIEnv* env, size_t teamId_size);") >> outFile_nh;
+	print("int " myWrapperPrefix "initStatic(JNIEnv* env, size_t skirmishAIId_size);") >> outFile_nh;
 	print("") >> outFile_nh;
 	# ... source
-	print("int " myWrapperPrefix "initStatic(JNIEnv* env, size_t _teamId_size) {") >> outFile_nc;
+	print("int " myWrapperPrefix "initStatic(JNIEnv* env, size_t _skirmishAIId_size) {") >> outFile_nc;
 	print("") >> outFile_nc;
-	print("\t" "teamId_size = _teamId_size;") >> outFile_nc;
-	print("\t" "teamId_callback = (jobject*) calloc(teamId_size, sizeof(jobject));") >> outFile_nc;
+	print("\t" "skirmishAIId_size = _skirmishAIId_size;") >> outFile_nc;
+	print("\t" "skirmishAIId_callback = (jobject*) calloc(skirmishAIId_size, sizeof(jobject));") >> outFile_nc;
 	print("\t" "size_t t;") >> outFile_nc;
-	print("\t" "for (t=0; t < teamId_size; ++t) {") >> outFile_nc;
-	print("\t\t" "teamId_callback[t] = NULL;") >> outFile_nc;
+	print("\t" "for (t=0; t < skirmishAIId_size; ++t) {") >> outFile_nc;
+	print("\t\t" "skirmishAIId_callback[t] = NULL;") >> outFile_nc;
 	print("\t" "}") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("\t" "jobject c_aiInt = (*env)->FindClass(env, \"" myPkgD "/" myAIClass "\");") >> outFile_nc;
@@ -204,14 +204,14 @@ function printNativeInitFunc() {
 	print(" * @author	hoijui") >> outFile_nh;
 	print(" * @version	GENERATED") >> outFile_nh;
 	print(" */") >> outFile_nh;
-	print("int " myWrapperPrefix "initAI(JNIEnv* env, int teamId, jobject callback);") >> outFile_nh;
+	print("int " myWrapperPrefix "initAI(JNIEnv* env, int skirmishAIId, jobject callback);") >> outFile_nh;
 	print("") >> outFile_nh;
 	# ... source
-	print("int " myWrapperPrefix "initAI(JNIEnv* env, int teamId, jobject callback) {") >> outFile_nc;
+	print("int " myWrapperPrefix "initAI(JNIEnv* env, int skirmishAIId, jobject callback) {") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("\t" "int res = -1;") >> outFile_nc;
 	print("") >> outFile_nc;
-	print("\t" "teamId_callback[teamId] = callback;") >> outFile_nc;
+	print("\t" "skirmishAIId_callback[skirmishAIId] = callback;") >> outFile_nc;
 	print("\t" "res = 0;") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("\t" "return res;") >> outFile_nc;
@@ -229,14 +229,14 @@ function printNativeHandleFuncHead() {
 	print(" * @author	hoijui") >> outFile_nh;
 	print(" * @version	GENERATED") >> outFile_nh;
 	print(" */") >> outFile_nh;
-	print("int " myWrapperPrefix "handleEvent(JNIEnv* env, jobject aiInstance, int teamId, int topic, const void* data);") >> outFile_nh;
+	print("int " myWrapperPrefix "handleEvent(JNIEnv* env, jobject aiInstance, int skirmishAIId, int topic, const void* data);") >> outFile_nh;
 	print("") >> outFile_nh;
 	# ... source
-	print("int " myWrapperPrefix "handleEvent(JNIEnv* env, jobject aiInstance, int teamId, int topic, const void* data) {") >> outFile_nc;
+	print("int " myWrapperPrefix "handleEvent(JNIEnv* env, jobject aiInstance, int skirmishAIId, int topic, const void* data) {") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("\t" "int _ret = -1;") >> outFile_nc;
 	print("") >> outFile_nc;
-#	print("\t" "jobject o_ai = teamId_aiObject[teamId];") >> outFile_nc;
+#	print("\t" "jobject o_ai = skirmishAIId_aiObject[skirmishAIId];") >> outFile_nc;
 #	print("\t" "//assert(o_ai != NULL);") >> outFile_nc;
 #	print("") >> outFile_nc;
 	print("\t" "switch(topic) {") >> outFile_nc;
@@ -269,7 +269,7 @@ function printNativeEventCase(evtIndex) {
 	}
 	sub(/^\, /, "", paramsEvt);
 	if (eNameLowerized == "init") {
-		sub(/evt->callback/, "teamId_callback[evt->team]", paramsEvt);
+		sub(/evt->callback/, "skirmishAIId_callback[evt->skirmishAIId]", paramsEvt);
 	}
 
 	print("\t\t\t" "_ret = (*env)->CallIntMethod(env, aiInstance, m_ai_" eNameLowerized ", " paramsEvt ");") >> outFile_nc;
@@ -367,7 +367,7 @@ function printJavaEvent(evtIndex) {
 	}
 	sub(/^\, /, "", paramsTypes);
 	if (eNameLowerized == "init") {
-		paramsTypes = "int teamId, AICallback callback";
+		paramsTypes = "int skirmishAIId, AICallback callback";
 	}
 
 	print("") >> outFile_i;

@@ -108,8 +108,8 @@ function printNativeFP2F() {
 	print("extern \"C\" {") >> outFile_nh;
 	print("#endif") >> outFile_nh;
 	print("") >> outFile_nh;
-	print("void funcPntBrdg_addCallback(const size_t teamId, const struct SSkirmishAICallback* clb);") >> outFile_nh;
-	print("void funcPntBrdg_removeCallback(const size_t teamId);") >> outFile_nh;
+	print("void funcPntBrdg_addCallback(const size_t skirmishAIId, const struct SSkirmishAICallback* clb);") >> outFile_nh;
+	print("void funcPntBrdg_removeCallback(const size_t skirmishAIId);") >> outFile_nh;
 	print("") >> outFile_nh;
 
 	print("") >> outFile_nc;
@@ -119,19 +119,16 @@ function printNativeFP2F() {
 	print("#include \"ExternalAI/Interface/AISCommands.h\"") >> outFile_nc;
 	print("") >> outFile_nc;
 	print("") >> outFile_nc;
-	#print("static const size_t id_clb_sizeMax = 8 * 1024;") >> outFile_nc;
 	print("#define id_clb_sizeMax 8192") >> outFile_nc;
 	print("static const struct SSkirmishAICallback* id_clb[id_clb_sizeMax];") >> outFile_nc;
 	print("") >> outFile_nc;
-	print("void funcPntBrdg_addCallback(const size_t teamId, const struct SSkirmishAICallback* clb) {") >> outFile_nc;
+	print("void funcPntBrdg_addCallback(const size_t skirmishAIId, const struct SSkirmishAICallback* clb) {") >> outFile_nc;
 	print("	//assert(skirmishAIId < id_clb_sizeMax);") >> outFile_nc;
-	#print("	id_clb[skirmishAIId] = clb;") >> outFile_nc;
-	print("	id_clb[teamId] = clb;") >> outFile_nc;
+	print("	id_clb[skirmishAIId] = clb;") >> outFile_nc;
 	print("}") >> outFile_nc;
-	print("void funcPntBrdg_removeCallback(const size_t teamId) {") >> outFile_nc;
+	print("void funcPntBrdg_removeCallback(const size_t skirmishAIId) {") >> outFile_nc;
 	print("	//assert(skirmishAIId < id_clb_sizeMax);") >> outFile_nc;
-	#print("	id_clb[skirmishAIId] = NULL;") >> outFile_nc;
-	print("	id_clb[teamId] = NULL;") >> outFile_nc;
+	print("	id_clb[skirmishAIId] = NULL;") >> outFile_nc;
 	print("}") >> outFile_nc;
 	print("") >> outFile_nc;
 
@@ -140,7 +137,7 @@ function printNativeFP2F() {
 		fullName         = funcFullName[i];
 		retType          = funcRetTypeC[i];
 		paramList        = funcParamListC[i];
-		sub(/int teamId/, "int _teamId", paramList);
+		sub(/int skirmishAIId/, "int _skirmishAIId", paramList);
 		paramListNoTypes = removeParamTypes(paramList);
 		commentEol       = funcCommentEol[i];
 
@@ -172,7 +169,6 @@ function printNativeFP2F() {
 		if (doWrapp(i)) {
 			# print function declaration to *.h
 			printFunctionComment_Common(outFile_nh, funcDocComment, i, "");
-			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ");") >> outFile_nh;
 
 			outName = bridgePrefix fullName;
 
@@ -183,21 +179,18 @@ function printNativeFP2F() {
 			print("") >> outFile_nh;
 
 			# print function definition to *.c
-			#print("" retType " " bridgePrefix fullName "(const size_t skirmishAIId, " paramList ") {") >> outFile_nc;
 			print("EXPORT(" retType ") " outName "(" paramList ") {") >> outFile_nc;
 
 			print(preConversion) >> outFile_nc;
 			if (hasRetParam) {
-				#print("\t" retParamType " " retNameTmp " = id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-				print("\t" retParamType " " retNameTmp " = id_clb[_teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+				print("\t" retParamType " " retNameTmp " = id_clb[_skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
 				print(retParamConversion) >> outFile_nc;
 			} else {
 				condRet = "return ";
 				if (retType == "void") {
 					condRet = "";
 				}
-				#print("\t" condRet "id_clb[skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
-				print("\t" condRet "id_clb[_teamId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
+				print("\t" condRet "id_clb[_skirmishAIId]->" fullName "(" paramListNoTypes ");") >> outFile_nc;
 			}
 			print("" "}") >> outFile_nc;
 		} else {

@@ -121,7 +121,7 @@ function printNativeFP2F() {
 		hasRetType = 0;
 		retType    = "int";
 		retParam   = "";
-		paramList  = "int _teamId";
+		paramList  = "int _skirmishAIId";
 		firstMember = 0;
 		if (cmdsNumMembers[cmdIndex] > 0) {
 			for (m=firstMember; m < cmdsNumMembers[cmdIndex]; m++) {
@@ -229,7 +229,7 @@ function printNativeFP2F() {
 			}
 			print("") >> outFile_nc;
 
-			print("\t" "int _ret = id_clb[_teamId]->Engine_handleCommand(_teamId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
+			print("\t" "int _ret = id_clb[_skirmishAIId]->Engine_handleCommand(_skirmishAIId, COMMAND_TO_ID_ENGINE, -1, " topicName ", &commandData);") >> outFile_nc;
 			print("") >> outFile_nc;
 
 			if (retParam != "") {
