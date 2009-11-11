@@ -46,14 +46,14 @@ static int interfaceId = -1;
 static const struct SAIInterfaceCallback* callback = NULL;
 static struct Properties* jvmCfgProps = NULL;
 
-static size_t  team_sizeMax = 0;
-static size_t* team_skirmishAiImpl;
+static size_t  skirmishAIId_sizeMax = 0;
+static size_t* skirmishAIId_skirmishAiImpl;
 
-static size_t       skirmishAiImpl_sizeMax = 0;
-static size_t       skirmishAiImpl_size = 0;
-static char**       skirmishAiImpl_className;
-static jobject*     skirmishAiImpl_instance;
-static jobject*     skirmishAiImpl_classLoader;
+static size_t   skirmishAiImpl_sizeMax = 0;
+static size_t   skirmishAiImpl_size = 0;
+static char**   skirmishAiImpl_className;
+static jobject* skirmishAiImpl_instance;
+static jobject* skirmishAiImpl_classLoader;
 
 // vars used to integrate the JVM
 // it is loaded at runtime, not at loadtime
@@ -73,7 +73,7 @@ static JavaVM* g_jvm = NULL;
 
 /// AI Callback class
 static jclass g_cls_aiCallback = NULL;
-/// AI Callback Constructor: AICallback(int teamId)
+/// AI Callback Constructor: AICallback(int skirmishAIId)
 static jmethodID g_m_aiCallback_ctor_I = NULL;
 
 /// Basic AI interface.
@@ -875,14 +875,14 @@ bool java_initStatic(int _interfaceId,
 	jvmCfgProps = (struct Properties*) malloc(sizeof(struct Properties));
 	java_readJvmCfgFile(jvmCfgProps);
 
-	team_sizeMax = callback->Teams_getSize(interfaceId);
-	skirmishAiImpl_sizeMax = team_sizeMax;
-	skirmishAiImpl_size = 0;
+	skirmishAIId_sizeMax   = callback->SkirmishAIs_getSize(interfaceId);
+	skirmishAiImpl_sizeMax = skirmishAIId_sizeMax;
+	skirmishAiImpl_size    = 0;
 
-	team_skirmishAiImpl = (size_t*) calloc(team_sizeMax, sizeof(size_t));
+	skirmishAIId_skirmishAiImpl = (size_t*) calloc(skirmishAIId_sizeMax, sizeof(size_t));
 	size_t t;
-	for (t = 0; t < team_sizeMax; ++t) {
-		team_skirmishAiImpl[t] = 999999;
+	for (t = 0; t < skirmishAIId_sizeMax; ++t) {
+		skirmishAIId_skirmishAiImpl[t] = 999999;
 	}
 
 	skirmishAiImpl_className   = (char**)      calloc(skirmishAiImpl_sizeMax, sizeof(char*));
@@ -966,7 +966,7 @@ bool java_initStatic(int _interfaceId,
 
 	java_establishJavaEnv();
 	JNIEnv* env = java_getJNIEnv();
-	const int res = eventsJniBridge_initStatic(env, team_sizeMax);
+	const int res = eventsJniBridge_initStatic(env, skirmishAIId_sizeMax);
 	java_establishSpringEnv();
 	if (res != 0) {
 		return false;
@@ -975,7 +975,7 @@ bool java_initStatic(int _interfaceId,
 	return true;
 }
 
-static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallback* aiCallback, int teamId) {
+static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallback* aiCallback, int skirmishAIId) {
 
 	jobject o_clb = NULL;
 
@@ -988,12 +988,12 @@ static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallba
 				CLS_AI_CALLBACK);
 		if (g_cls_aiCallback == NULL) { return NULL; }
 
-		// get (int teamId) constructor
+		// get (int skirmishAIId) constructor
 		g_m_aiCallback_ctor_I = jniUtil_getMethodID(env, g_cls_aiCallback, "<init>", "(I)V");
 		if (g_m_aiCallback_ctor_I == NULL) { return NULL; }
 	}
 
-	o_clb = (*env)->NewObject(env, g_cls_aiCallback, g_m_aiCallback_ctor_I, teamId);
+	o_clb = (*env)->NewObject(env, g_cls_aiCallback, g_m_aiCallback_ctor_I, skirmishAIId);
 	if (jniUtil_checkException(env, "Failed creating Java AI Callback instance")) {
 		o_clb = NULL;
 	}/* else {
@@ -1006,7 +1006,7 @@ static jobject java_createAICallback(JNIEnv* env, const struct SSkirmishAICallba
 
 bool java_releaseStatic() {
 
-	FREE(team_skirmishAiImpl);
+	FREE(skirmishAIId_skirmishAiImpl);
 
 	FREE(skirmishAiImpl_className);
 	FREE(skirmishAiImpl_instance);
@@ -1095,7 +1095,7 @@ bool java_initSkirmishAIClass(
 		const char* const shortName,
 		const char* const version,
 		const char* const className,
-		int teamId) {
+		int skirmishAIId) {
 
 	bool success = false;
 
@@ -1140,7 +1140,7 @@ bool java_initSkirmishAIClass(
 	}
 
 	if (success) {
-		team_skirmishAiImpl[teamId] = sai;
+		skirmishAIId_skirmishAiImpl[skirmishAIId] = sai;
 	}
 
 	return success;
@@ -1210,23 +1210,23 @@ bool java_releaseAllSkirmishAIClasses() {
 }
 
 
-int java_skirmishAI_init(int teamId,
+int java_skirmishAI_init(int skirmishAIId,
 		const struct SSkirmishAICallback* aiCallback) {
 
 	int res = -1;
 
 	java_establishJavaEnv();
 	JNIEnv* env = java_getJNIEnv();
-	jobject global_javaAICallback = java_createAICallback(env, aiCallback, teamId);
+	jobject global_javaAICallback = java_createAICallback(env, aiCallback, skirmishAIId);
 	if (global_javaAICallback != NULL) {
-		res = eventsJniBridge_initAI(env, teamId, global_javaAICallback);
+		res = eventsJniBridge_initAI(env, skirmishAIId, global_javaAICallback);
 	}
 	java_establishSpringEnv();
 
 	return res;
 }
 
-int java_skirmishAI_release(int teamId) {
+int java_skirmishAI_release(int skirmishAIId) {
 
 	int res = -1;
 
@@ -1235,15 +1235,15 @@ int java_skirmishAI_release(int teamId) {
 	return res;
 }
 
-int java_skirmishAI_handleEvent(int teamId, int topic, const void* data) {
+int java_skirmishAI_handleEvent(int skirmishAIId, int topic, const void* data) {
 
 	int res = -1;
 
 	java_establishJavaEnv();
 	JNIEnv* env = java_getJNIEnv();
-	const size_t sai = team_skirmishAiImpl[teamId];
+	const size_t sai   = skirmishAIId_skirmishAiImpl[skirmishAIId];
 	jobject aiInstance = skirmishAiImpl_instance[sai];
-	res = eventsJniBridge_handleEvent(env, aiInstance, teamId, topic, data);
+	res = eventsJniBridge_handleEvent(env, aiInstance, skirmishAIId, topic, data);
 	java_establishSpringEnv();
 
 	return res;
