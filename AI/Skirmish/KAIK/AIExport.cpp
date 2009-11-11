@@ -41,9 +41,10 @@ static std::map<int, const struct SSkirmishAICallback*> skirmishAIId_callback;
 
 
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
-	const char* engineVersionString, int engineVersionNumber,
-	const char* aiInterfaceShortName, const char* aiInterfaceVersion
-) {
+		const char* aiShortName, const char* aiVersion,
+		const char* engineVersionString, int engineVersionNumber,
+		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
+
 	const char* springVersion = SpringVersion::GetFull().c_str();
 	const int cmp = strcmp(engineVersionString, springVersion);
 

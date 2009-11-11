@@ -42,6 +42,7 @@ static std::map<int, int> skirmishAIId_teamId;
 
 
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
+		const char* aiShortName, const char* aiVersion,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 

@@ -40,6 +40,7 @@ static std::map<int, const struct SSkirmishAICallback*> skirmishAIId_callback;
 
 
 EXPORT(enum LevelOfSupport) getLevelOfSupportFor(
+		const char* aiShortName, const char* aiVersion,
 		const char* engineVersionString, int engineVersionNumber,
 		const char* aiInterfaceShortName, const char* aiInterfaceVersion) {
 
