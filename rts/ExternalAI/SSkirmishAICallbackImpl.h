@@ -364,6 +364,7 @@ EXPORT(int              ) skirmishAiCallback_UnitDef_WeaponMount_getOnlyTargetCa
 
 // BEGINN OBJECT Unit
 EXPORT(int              ) skirmishAiCallback_Unit_getLimit(int skirmishAIId);
+EXPORT(int              ) skirmishAiCallback_Unit_getMax(int skirmishAIId);
 EXPORT(int              ) skirmishAiCallback_getEnemyUnits(int skirmishAIId, int* unitIds, int unitIds_sizeMax);
 EXPORT(int              ) skirmishAiCallback_getEnemyUnitsIn(int skirmishAIId, float* pos_posF3, float radius, int* unitIds, int unitIds_sizeMax);
 EXPORT(int              ) skirmishAiCallback_getEnemyUnitsInRadarAndLos(int skirmishAIId, int* unitIds, int unitIds_sizeMax);

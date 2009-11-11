@@ -678,15 +678,20 @@ struct SSkirmishAICallback {
 
 // BEGINN OBJECT Unit
 	/**
-	 * Returns the numnber of units a team can have, after which it can not build
-	 * any more. It is possible that a team has more units then this value at some
-	 * point in the game. This is possible for example with taking, reclaiming or
-	 * capturing units.
-	 * This value is usefull for controlling game performance (eg. setting it could
-	 * possibly will prevent old PCs from lagging becuase of games with lots of
-	 * units).
+	 * Returns the number of units a team can have, after which it can not build
+	 * any more. It is possible that a team has more units then this value at
+	 * some point in the game. This is possible for example with taking,
+	 * reclaiming or capturing units.
+	 * This value is usefull for controlling game performance, and will
+	 * therefore often be set on games with old hardware to prevent lagging
+	 * because of too many units.
 	 */
 	int               (CALLING_CONV *Unit_getLimit)(int skirmishAIId); // STATIC
+	/**
+	 * Returns the maximum total number of units that may exist at any one point
+	 * in time induring the current game.
+	 */
+	int               (CALLING_CONV *Unit_getMax)(int skirmishAIId); // STATIC
 	/**
 	 * Returns all units that are not in this teams ally-team nor neutral and are
 	 * in LOS.
