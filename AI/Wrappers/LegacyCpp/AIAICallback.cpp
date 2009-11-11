@@ -1564,9 +1564,10 @@ int CAIAICallback::InitPath(float3 start, float3 end, int pathType) {
 
 float3 CAIAICallback::GetNextWaypoint(int pathId) {
 
-	SGetNextWaypointPathCommand cmd = {pathId};
+	float ret_posF3[3];
+	SGetNextWaypointPathCommand cmd = {pathId, ret_posF3};
 	sAICallback->Engine_handleCommand(skirmishAIId, COMMAND_TO_ID_ENGINE, -1, COMMAND_PATH_GET_NEXT_WAYPOINT, &cmd);
-	return cmd.ret_nextWaypoint_posF3_out;
+	return float3(cmd.ret_nextWaypoint_posF3_out);
 }
 
 float CAIAICallback::GetPathLength(float3 start, float3 end, int pathType) {
