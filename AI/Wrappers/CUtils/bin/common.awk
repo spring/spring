@@ -45,11 +45,11 @@ function capitalize(str__common) { return toupper(substr(str__common, 1, 1)) sub
 function lowerize(str__common) { return tolower(substr(str__common, 1, 1)) substr(str__common, 2); }
 
 # returns 1 if the first char of a string is uppercase, 0 otherwise
-function startsWithCapital(str__common) { return match(str__common, /^[ABCDEFGHIJKLMNOPQRDTUVWXYZ]/); }
+function startsWithCapital(str__common) { return match(str__common, /^[ABCDEFGHIJKLMNOPQRSTUVWXYZ]/); }
 #function startsWithCapital(str__common) { return match(str__common, /^[A-Z]/); } # this seems not to work in all awk flavours? :/
 
 # returns 1 if the first char of a string is lowercase, 0 otherwise
-function startsWithLower(str__common) { return match(str__common, /^[abcdefghijklmnopqrdtuvwxyz]/); }
+function startsWithLower(str__common) { return match(str__common, /^[abcdefghijklmnopqrstuvwxyz]/); }
 #function startsWithLower(str__common) { return match(str__common, /^[a-z]/); } # this seems not to work in all awk flavours? :/
 
 ### END: Case functions
@@ -106,6 +106,13 @@ function printCommentsHeader(outFile__common) {
 	printGeneratedWarningHeader(outFile__common);
 	print("") >> outFile__common;
 	printGPLHeader(outFile__common);
+}
+
+function printCond(text_common, outFile__common, condotion_common) {
+
+	if (condotion_common) {
+		print(text_common) >> outFile__common;
+	}
 }
 
 # Searches an array (with strings as keys) with a regex pattern
