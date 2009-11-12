@@ -13,10 +13,10 @@
 
 namespace SpringVersion
 {
-	
+
 const char* const Major = "0.80";
 const char* const Minor = "5";
-const char* const Patchset = "1";
+const char* const Patchset = "2";
 const char* const Additional = "";
 
 /** Build date and time. */
