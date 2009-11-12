@@ -26,21 +26,21 @@ CBasicMapDamage::CBasicMapDamage(void)
 	const int numQuads = qf->GetNumQuadsX() * qf->GetNumQuadsZ();
 	inRelosQue = new bool[numQuads];
 	for (int a = 0; a < numQuads; ++a) {
-		inRelosQue[a]=false;
+		inRelosQue[a] = false;
 	}
-	relosSize=0;
-	neededLosUpdate=0;
+	relosSize = 0;
+	neededLosUpdate = 0;
 
-	for(int a=0;a<=200;++a){
-		float r=a/200.0f;
-		float d=cos((r-0.1f)*(PI+0.3f))*(1-r)*(0.5f+0.5f*cos(std::max(0.0f,r*3-2)*PI));
-		craterTable[a]=d;
+	for (int a = 0; a <= 200; ++a) {
+		float r = a / 200.0f;
+		float d = cos((r - 0.1f) * (PI + 0.3f)) * (1 - r) * (0.5f + 0.5f * cos(std::max(0.0f, r * 3 - 2) * PI));
+		craterTable[a] = d;
 	}
-	for(int a=201;a<10000;++a){
-		craterTable[a]=0;
+	for (int a = 201; a < 10000; ++a) {
+		craterTable[a] = 0;
 	}
-	for(int a=0;a<256;++a)
-		invHardness[a]=1.0f/mapInfo->terrainTypes[a].hardness;
+	for (int a = 0; a < CMapInfo::NUM_TERRAIN_TYPES; ++a)
+		invHardness[a] = 1.0f / mapInfo->terrainTypes[a].hardness;
 
 	mapHardness = mapInfo->map.hardness;
 
