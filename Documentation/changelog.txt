@@ -1,10 +1,34 @@
 Spring change log
+
+0.80.5.2:
+Bugfixes:
+ - AI: Properly fix Lua AI loading
+ - AI: Fix crash when Lua AI team dies
+ - AI: Fixed clean target of ant scripts
+ - Fixed deadlock in hang detection
+ - Fixed .desktop file
+ - Fixed crash on startup on Ubuntu Karmic
+ - Fixed reflections
+ - MT: Don't crash if draw callins access features
+ - Fixed fading features for ATI (atiHacks)
+ - Fixed crash when parsing certain chatmessage from autohost
+ - Fixed crash if OSC stats sender is enabled and no network is reachable
+ - cmake: Fixed 7-zip detection
+
+Changes:
+ - AI/cmake: Split system dependent/indepentent install parts (AI_LIBS_DIR, AI_DATA_DIR)
+ - AI: Debugging is now enabled by default in the ant scripts
+ - Time profiler cleanup, both code and UI
+ - Show an AI's shortName + version + nick in tooltips
+
+
 0.80.5.1:
 Bugfixes:
  - fix a bug where empty network packets were spammed (eating bandwith and demo space)
  - fix a possible desync in the pathfinder
  - fix mouse jumping in windowed mode (windows)
  - fixed crash in KAIK
+
 
 0.80.5:
 Bugfixes:
