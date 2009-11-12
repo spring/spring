@@ -1177,9 +1177,12 @@ struct SSkirmishAICallback {
 	void              (CALLING_CONV *Map_Line_getColor)(int skirmishAIId, int lineId, short* return_colorS3_out);
 	bool              (CALLING_CONV *Map_isPossibleToBuildAt)(int skirmishAIId, int unitDefId, float* pos_posF3, int facing); // REF:unitDefId->UnitDef
 	/**
-	 * Returns the closest position from a given position that a building can be built at.
-	 * @param minDist the distance in squares that the building must keep to other buildings,
-	 *                to make it easier to keep free paths through a base
+	 * Returns the closest position from a given position that a building can be
+	 * built at.
+	 * @param minDist the distance in 1/(SQUARE_SIZE * 2) = 1/16 of full map
+	 *                resolution, that the building must keep to other
+	 *                buildings; this makes it easier to keep free paths through
+	 *                a base
 	 * @return actual map position with x, y and z all beeing positive,
 	 *         or float[3]{-1, 0, 0} if no suitable position is found.
 	 */
