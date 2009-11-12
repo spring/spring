@@ -242,6 +242,12 @@ SectionGroup "Skirmish AI plugins (Bots)"
 	!include "sections\AIs\RAI.nsh"
 	!undef INSTALL
 	SectionEnd
+
+	Section "E323AI" SEC_E323AI
+	!define INSTALL
+	!include "sections\AIs\E323AI.nsh"
+	!undef INSTALL
+	SectionEnd
 SectionGroupEnd
 
 !include "sections\sectiondesc.nsh"
@@ -285,6 +291,7 @@ Section Uninstall
   !include "sections\AIs\AAI.nsh"
   !include "sections\AIs\KAIK.nsh"
   !include "sections\AIs\RAI.nsh"
+  !include "sections\AIs\E323AI.nsh"
   !include "sections\tasclient.nsh"
   !include "sections\springlobby.nsh"
   !include "sections\luaui.nsh"
