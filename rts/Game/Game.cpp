@@ -4074,7 +4074,7 @@ void CGame::ClientReadNet()
 						const int numPlayersInTeam_g        = playerHandler->ActivePlayersInTeam(fromTeam_g).size();
 						const size_t numTotAIsInTeam_g      = skirmishAIHandler.GetSkirmishAIsInTeam(fromTeam_g).size();
 						const size_t numControllersInTeam_g = numPlayersInTeam_g + numTotAIsInTeam_g;
-						const bool isOwnTeam_g              = (fromTeam_g == fromTeam);
+						const bool isOwnTeam_g              = (fromTeam_g != fromTeam);
 
 						bool giveAwayOk = false;
 						if (isOwnTeam_g) {

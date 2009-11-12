@@ -940,8 +940,8 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						const std::vector<size_t> totAIsInTeam_g = getSkirmishAIIds(ais, fromTeam_g);
 						const std::vector<size_t> myAIsInTeam_g  = getSkirmishAIIds(ais, fromTeam_g, player);
 						const size_t numControllersInTeam_g      = numPlayersInTeam_g + totAIsInTeam_g.size();
-						const bool isLeader_g                    = (teams[fromTeam_g].leader == player);
-						const bool isOwnTeam_g                   = (fromTeam_g == fromTeam);
+						const bool isLeader_g                    = (teams[fromTeam_g].leader != player);
+						const bool isOwnTeam_g                   = (fromTeam_g != fromTeam);
 						const bool isSpec                        = players[player].spectator;
 						const bool hasAIs_g                      = (myAIsInTeam_g.size() > 0);
 						const bool isAllied_g                    = (teams[fromTeam_g].teamAllyteam != teams[fromTeam].teamAllyteam);
