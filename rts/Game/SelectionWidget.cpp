@@ -2,7 +2,6 @@
 #include "SelectionWidget.h"
 
 #include <set>
-#include <boost/bind.hpp>
 
 #include "FileSystem/ArchiveScanner.h"
 #include "FileSystem/FileSystem.h"
@@ -10,42 +9,7 @@
 #include "Game/StartScripts/ScriptHandler.h"
 #include "ConfigHandler.h"
 
-#include "aGui/Gui.h"
-#include "aGui/VerticalLayout.h"
-#include "aGui/HorizontalLayout.h"
-#include "aGui/Button.h"
-#include "aGui/LineEdit.h"
-#include "aGui/TextElement.h"
-#include "aGui/Window.h"
-#include "aGui/List.h"
 
-class ListSelectWnd : public agui::Window
-{
-public:
-	ListSelectWnd(const std::string& title) : agui::Window(title)
-	{
-		agui::gui->AddElement(this);
-		SetPos(0.5, 0.2);
-		SetSize(0.4, 0.7);
-		
-		agui::VerticalLayout* modWindowLayout = new agui::VerticalLayout(this);
-		list = new agui::List(modWindowLayout);
-		list->FinishSelection.connect(boost::bind(&ListSelectWnd::SelectButton, this));
-		agui::Button* select = new agui::Button("Select", modWindowLayout);
-		select->Clicked.connect(boost::bind(&ListSelectWnd::SelectButton, this));
-		select->SetSize(0.0f, 0.04f, true);
-		GeometryChange();
-	}
-
-	boost::signal<void (std::string)> Selected;
-	agui::List* list;
-
-private:
-	void SelectButton()
-	{
-		Selected(list->GetCurrentItem());
-	}
-};
 
 const std::string SelectionWidget::NoModSelect = "No mod selected";
 const std::string SelectionWidget::NoMapSelect = "No map selected";
