@@ -26,15 +26,35 @@ List::List(GuiElement* parent) :
 		tooltip("No tooltip defined"),
 		place(0),
 		activeMousePress(false),
-		filteredItems(&items)
+		filteredItems(&items),
+		clickedTime(SDL_GetTicks())
 {
 	borderSpacing = 0.005f;
 	itemSpacing = 0.003f;
 	itemHeight = 0.04f;
+	hasFocus = true;
 }
 
 List::~List()
 {
+}
+
+void List::SetFocus(bool focus)
+{
+	hasFocus = focus;
+}
+
+void List::RemoveAllItems() {
+	items.clear();
+}
+
+void List::RefreshQuery() {
+	std::string q = query;
+	if(q != "") {
+		Filter(true);
+		query = q;
+		Filter(false);
+	}
 }
 
 void List::AddItem(const std::string& name, const std::string& description)
@@ -186,14 +206,27 @@ bool List::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_MOUSEBUTTONDOWN: {
-			if (MouseOver(ev.button.x, ev.button.y))
+			if (gui->MouseOverElement(GetRoot(), ev.motion.x, ev.motion.y))
 			{
-				MousePress(ev.button.x, ev.button.y, ev.button.button);
-				return true;
+				if(!hasFocus) {
+					hasFocus = true;
+					MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
+				}
+			}
+			else {
+				hasFocus = false;
+			}
+			if(MouseOver(ev.button.x, ev.button.y)) {
+				if(hasFocus) {
+					MousePress(ev.button.x, ev.button.y, ev.button.button);
+					return true;
+				}
 			}
 			break;
 		}
 		case SDL_MOUSEBUTTONUP: {
+			if (!hasFocus)
+				break;
 			if (MouseOver(ev.button.x, ev.button.y))
 			{
 				MouseRelease(ev.button.x, ev.button.y, ev.button.button);
@@ -202,6 +235,8 @@ bool List::HandleEventSelf(const SDL_Event& ev)
 			break;
 		}
 		case SDL_MOUSEMOTION: {
+			if (!hasFocus)
+				break;
 			if (MouseOver(ev.button.x, ev.button.y))
 			{
 				MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
@@ -210,6 +245,13 @@ bool List::HandleEventSelf(const SDL_Event& ev)
 			break;
 		}
 		case SDL_KEYDOWN: {
+			if (!hasFocus)
+				break;
+			if(ev.key.keysym.sym == SDLK_ESCAPE)
+			{
+				hasFocus = false;
+				break;
+			}
 			return KeyPressed(ev.key.keysym.sym, false);
 		}
 	}
