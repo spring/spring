@@ -401,7 +401,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 
 	proto->AddType(NETMSG_KEYFRAME, 5);
 	proto->AddType(NETMSG_NEWFRAME, 1);
-	proto->AddType(NETMSG_QUIT, 1);
+	proto->AddType(NETMSG_QUIT, -2);
 	proto->AddType(NETMSG_STARTPLAYING, 5);
 	proto->AddType(NETMSG_SETPLAYERNUM, 2);
 	proto->AddType(NETMSG_PLAYERNAME, -1);

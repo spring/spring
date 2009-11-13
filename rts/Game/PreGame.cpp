@@ -210,7 +210,7 @@ void CPreGame::UpdateClientNet()
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
 			case NETMSG_QUIT: {
-				const std::string message = (char*)(&inbuf[3]);
+				const std::string message((char*)(inbuf+3));
 				logOutput.Print(message);
 				throw std::runtime_error(message);
 				break;
