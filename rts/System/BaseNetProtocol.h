@@ -31,7 +31,7 @@ including `command' and `messageSize'.
 enum NETMSG {
 	NETMSG_KEYFRAME         = 1,  // int framenum
 	NETMSG_NEWFRAME         = 2,  //
-	NETMSG_QUIT             = 3,  //
+	NETMSG_QUIT             = 3,  // string reason
 	NETMSG_STARTPLAYING     = 4,  // uint countdown
 	NETMSG_SETPLAYERNUM     = 5,  // uchar myPlayerNum;
 	NETMSG_PLAYERNAME       = 6,  // uchar myPlayerNum; std::string playerName;
@@ -116,7 +116,7 @@ public:
 
 	PacketType SendKeyFrame(int frameNum);
 	PacketType SendNewFrame();
-	PacketType SendQuit();
+	PacketType SendQuit(const std::string& reason);
 	PacketType SendStartPlaying(unsigned countdown); ///< client can send these to force-start the game
 	PacketType SendSetPlayerNum(uchar myPlayerNum);
 	PacketType SendPlayerName(uchar myPlayerNum, const std::string& playerName);
