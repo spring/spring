@@ -54,6 +54,9 @@ public:
 	void BuggerOff(float3 pos, float radius, bool spherical = true, CUnit* exclude = 0);
 	float3 Pos2BuildPos(const BuildInfo& buildInfo);
 	float3 Pos2BuildPos(const float3& pos, const UnitDef* ud);
+	/**
+	 * @param minDist messured in 1/(SQUARE_SIZE * 2) = 1/16 of full map resolution.
+	 */
 	float3 ClosestBuildSite(int team, const UnitDef* unitDef, float3 pos, float searchRadius, int minDist, int facing = 0);
 	void Update(void);
 
