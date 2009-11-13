@@ -3566,7 +3566,8 @@ void CGame::ClientReadNet()
 
 		switch (packetCode) {
 			case NETMSG_QUIT: {
-				logOutput.Print("Server shutdown");
+				const std::string message = (char*)(&inbuf[3]);
+				logOutput.Print(message);
 				if (!gameOver)
 				{
 					GameEnd();
