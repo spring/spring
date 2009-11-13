@@ -82,6 +82,7 @@ echo 'Exporting checkout dir with LF line endings'
 git clone -n . lf/$dir
 cd lf/$dir
 git checkout $branch
+git submodule update --init
 cd ..
 [ -n "$linux_exclude" ] && rm -rf $linux_exclude
 [ -n "$lzma" ] && echo "Creating .tar.lzma archive ($lzma)" && \
