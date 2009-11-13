@@ -29,6 +29,36 @@
 
 static const char* Option_badKeyChars = " =;\r\n\t";
 
+std::string option_getDefString(const Option& option) {
+
+	std::string def = "";
+
+	switch (option.typeCode) {
+		case opt_bool: {
+			def = option.boolDef ? "true" : "false";
+			break;
+		} case opt_list: {
+			def = option.listDef;
+			break;
+		} case opt_number: {
+			static const size_t fltString_sizeMax = 32;
+			char fltString[fltString_sizeMax];
+			SNPRINTF(fltString, fltString_sizeMax, "%f", option.numberDef);
+			def += fltString;
+			break;
+		} case opt_string: {
+			def = option.stringDef;
+			break;
+		} case opt_error: {
+		} case opt_section: {
+		} default: {
+			break;
+		}
+	}
+
+	return def;
+}
+
 static bool parseOption(const LuaTable& root, int index, Option& opt,
 		std::set<string>& optionsSet, CLogSubsystem& logSubsystem) {
 
