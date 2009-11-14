@@ -784,22 +784,25 @@ void CUnitDrawer::DrawShadowPass(void)
 
 inline void CUnitDrawer::DrawFar(CUnit *unit)
 {
-	float3 interPos = unit->drawPos + UpVector * unit->model->height * 0.5f;
+	const float3 interPos = unit->drawPos + UpVector * unit->model->height * 0.5f;
+
+	// indicates the orientation to draw (there are 8)
 	int snurr =- unit->heading + GetHeadingFromVector(camera->pos.x - unit->pos.x, camera->pos.z - unit->pos.z) + (0xffff >> 4);
-
-	if (snurr < 0)
+	if (snurr < 0) {
 		snurr += 0xffff;
-	if (snurr > 0xffff)
+	}
+	if (snurr > 0xffff) {
 		snurr -= 0xffff;
-
+	}
 	snurr = snurr >> 13;
-	float r = 1.0f / 64.0f;
-	float tx = (unit->model->farTextureNum % 8) * (1.0f / 8.0f) + snurr * r;
-	float ty = (unit->model->farTextureNum / 8) * r;
-	float offset = 0;
 
-	float3 curad=camera->up * unit->radius * 1.4f;
-	float3 crrad=camera->right * unit->radius;
+	const float r      = 1.0f / 64.0f;
+	const float tx     = (unit->model->farTextureNum % 8) * (1.0f / 8.0f) + snurr * r;
+	const float ty     = (unit->model->farTextureNum / 8) * r;
+	const float offset = 0;
+
+	const  float3 curad = camera->up    * unit->radius * 1.4f;
+	const  float3 crrad = camera->right * unit->radius;
 	va->AddVertexQTN(interPos - (curad - offset) + crrad, tx,     ty,     camNorm);
 	va->AddVertexQTN(interPos + (curad + offset) + crrad, tx,     ty + r, camNorm);
 	va->AddVertexQTN(interPos + (curad + offset) - crrad, tx + r, ty + r, camNorm);

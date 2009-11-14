@@ -2728,13 +2728,14 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		teamHandler->Team(team)->AddEnergy(1000);
 	}
 	else if (action.command == "take" && (!playerHandler->Player(playernum)->spectator || gs->cheatEnabled)) {
-		int sendTeam = playerHandler->Player(playernum)->team;
+		const int sendTeam = playerHandler->Player(playernum)->team;
 		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 			if (teamHandler->AlliedTeams(a, sendTeam)) {
 				bool hasPlayer = false;
 				for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
 					if (playerHandler->Player(b)->active && playerHandler->Player(b)->team==a && !playerHandler->Player(b)->spectator) {
 						hasPlayer = true;
+						break;
 					}
 				}
 				if (!hasPlayer) {
