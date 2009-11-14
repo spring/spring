@@ -979,6 +979,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							// team has no controller left now
 							teams[fromTeam_g].active = false;
 							teams[fromTeam_g].leader = -1;
+							std::ostringstream givenAwayMsg;
+							givenAwayMsg << players[player].name << " gave everything to " << players[teams[toTeam].leader].name;
+							Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, givenAwayMsg.str()));
 						}
 						break;
 					}
