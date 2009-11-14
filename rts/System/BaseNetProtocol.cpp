@@ -256,11 +256,7 @@ PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, std::string me
 	}
 	unsigned size = 1 + 2 + 1 + message.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_SYSTEMMSG);
-	*packet << static_cast<uint16_t>(size) << myPlayerNum;
-	if (message.size() < 65000)
-		*packet << message;
-	else
-		*packet << message.substr(0, 65000) << std::string("...");
+	*packet << static_cast<uint16_t>(size) << myPlayerNum << message;
 	return PacketType(packet);
 }
 
