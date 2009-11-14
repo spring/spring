@@ -13,11 +13,65 @@
 
 namespace SpringVersion
 {
-	
+
 const char* const Major = "0.80+";
 const char* const Minor = "0";
 const char* const Patchset = "0";
-const char* const Additional = "";
+const char* const Additional = "" // Build-Bot will write in here before compiling
+
+#if !defined GV_ADD_SPACE
+	// Build-Bot should set this to " " if it put something into the above line
+	#define GV_ADD_SPACE ""
+#endif
+
+#if defined DEBUG
+	GV_ADD_SPACE "Debug"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
+#if defined REPLACE_SYSTEM_ALLOCATOR
+	GV_ADD_SPACE "nedmalloc"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
+#if defined USE_MMGR
+	GV_ADD_SPACE "mmgr"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
+#if defined USE_GML
+	GV_ADD_SPACE "MT"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+#if defined USE_GML_SIM
+	"-Sim"
+#endif
+#if defined USE_GML_DEBUG
+	"+Debug"
+#endif
+
+#if defined TRACE_SYNC
+	GV_ADD_SPACE "Sync-Trace"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
+#if defined SYNCDEBUG
+	GV_ADD_SPACE "Sync-Debug"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+
+#if !defined SYNCCHECK
+	GV_ADD_SPACE "Sync-Check-Disabled"
+	#undef  GV_ADD_SPACE
+	#define GV_ADD_SPACE " "
+#endif
+	;
 
 /** Build date and time. */
 const char* const BuildTime = __DATE__ " " __TIME__;

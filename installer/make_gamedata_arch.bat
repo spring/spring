@@ -25,11 +25,15 @@ for %%a in (cd) do set BUILD_DIR=%%~dpa
 rem move to spring source root
 cd %~dp0..
 
-set EXEC_7Z=%~dp07za.exe
-rem set EXEC_7Z=7z
+
+set EXEC_7Z=%2
+IF "%EXEC_7Z%" == "" (
+	rem default:
+	set EXEC_7Z=%~dp07za.exe
+)
 %EXEC_7Z% > NUL 2>&1
 if "%ERRORLEVEL%" == "0" goto ok7z
-echo %EXEC_7Z% not found, please make sure it is in your PATH environment variable.
+echo 7zip executable (7z.exe or 7za.exe) not found, please make sure it is in your PATH environment variable.
 exit /B 1
 :ok7z
 set CMD_7Z=%EXEC_7Z% u -tzip -r

@@ -160,12 +160,12 @@ public:
 			CEngineOutHandler::HandleAIException("Unknown");	\
 			throw;												\
 		}
+
 private:
 	static CEngineOutHandler* singleton;
 
 private:
 	typedef std::vector<size_t> ids_t;
-	typedef std::vector<CSkirmishAIWrapper*> ais_t;
 
 	typedef std::map<size_t, CSkirmishAIWrapper*> id_ai_t;
 	/// Contains all local Skirmish AIs, indexed by their ID

@@ -42,6 +42,7 @@
 #include "aGui/TextElement.h"
 #include "aGui/Window.h"
 #include "aGui/Picture.h"
+#include "aGui/List.h"
 
 using std::string;
 using agui::Button;
@@ -66,10 +67,10 @@ public:
 		address->SetFocus(true);
 		address->SetContent(configHandler->GetString("address", ""));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
-		Button* close = new Button("Close", buttons);
-		close->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, false));
 		Button* connect = new Button("Connect", buttons);
 		connect->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, true));
+		Button* close = new Button("Close", buttons);
+		close->Clicked.connect(boost::bind(&ConnectWindow::Finish, this, false));
 		GeometryChange();
 	}
 
@@ -81,6 +82,43 @@ private:
 	{
 		if (connect)
 			Connect(address->GetContent());
+		else
+			WantClose();
+	};
+};
+
+class SettingsWindow : public agui::Window
+{
+public:
+	SettingsWindow(std::string &name) : agui::Window(name)
+	{
+		agui::gui->AddElement(this);
+		SetPos(0.5, 0.5);
+		SetSize(0.4, 0.2);
+		
+		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(this);
+		HorizontalLayout* input = new HorizontalLayout(wndLayout);
+		agui::TextElement* label = new agui::TextElement("Value:", input);
+		value = new agui::LineEdit(input);
+		value->DefaultAction.connect(boost::bind(&SettingsWindow::Finish, this, true));
+		value->SetFocus(true);
+		value->SetContent(configHandler->GetString(name, ""));
+		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
+		Button* ok = new Button("OK", buttons);
+		ok->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, true));
+		Button* close = new Button("Cancel", buttons);
+		close->Clicked.connect(boost::bind(&SettingsWindow::Finish, this, false));
+		GeometryChange();
+	}
+
+	boost::signal<void (std::string)> OK;
+	agui::LineEdit* value;
+	
+private:
+	void Finish(bool set)
+	{
+		if (set)
+			OK(title + " = " + value->GetContent());
 		else
 			WantClose();
 	};
@@ -141,7 +179,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWindow(NULL)
+SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWindow(NULL), curSelect(NULL), settingsWindow(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
@@ -177,10 +215,17 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		multi->Clicked.connect(boost::bind(&SelectMenu::Multi, this));
 		Button* update = new Button("Check for updates", menu);
 		update->Clicked.connect(boost::bind(&SelectMenu::ShowUpdateWindow, this, true));
-		Button* settings = new Button("Edit settings", menu);
+
+		userSetting = configHandler->GetString("LastSelectedSetting", "");
+		Button* editsettings = new Button("Edit settings", menu);
+		editsettings->Clicked.connect(boost::bind(&SelectMenu::ShowSettingsList, this));
+
+		Button* settings = new Button("Start SpringSettings", menu);
 		settings->Clicked.connect(boost::bind(&SelectMenu::Settings, this));
+
 		Button* direct = new Button("Direct connect", menu);
 		direct->Clicked.connect(boost::bind(&SelectMenu::ShowConnectWindow, this, true));
+
 		Button* quit = new Button("Quit", menu);
 		quit->Clicked.connect(boost::bind(&SelectMenu::Quit, this));
 		background->GeometryChange();
@@ -194,6 +239,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 SelectMenu::~SelectMenu()
 {
 	ShowConnectWindow(false);
+	CleanWindow();
 }
 
 bool SelectMenu::Draw()
@@ -277,6 +323,30 @@ void SelectMenu::ShowConnectWindow(bool show)
 	}
 }
 
+void SelectMenu::ShowSettingsWindow(bool show, std::string name)
+{
+	if (show)
+	{
+		if(settingsWindow) {
+			agui::gui->RmElement(settingsWindow);
+			settingsWindow = NULL;
+		}
+		settingsWindow = new SettingsWindow(name);
+		settingsWindow->OK.connect(boost::bind(&SelectMenu::ShowSettingsWindow, this, false, _1));
+		settingsWindow->WantClose.connect(boost::bind(&SelectMenu::ShowSettingsWindow, this, false, ""));
+	}
+	else if (!show && settingsWindow)
+	{
+		agui::gui->RmElement(settingsWindow);
+		settingsWindow = NULL;
+		int p = name.find(" = ");
+		if(p != std::string::npos) {
+			configHandler->SetString(name.substr(0,p), name.substr(p + 3));
+			ShowSettingsList();
+		}
+	}
+}
+
 void SelectMenu::ShowUpdateWindow(bool show)
 {
 	if (show && !updWindow)
@@ -288,6 +358,40 @@ void SelectMenu::ShowUpdateWindow(bool show)
 	{
 		agui::gui->RmElement(updWindow);
 		updWindow = NULL;
+	}
+}
+
+void SelectMenu::ShowSettingsList()
+{
+	if (!curSelect) {
+		curSelect = new ListSelectWnd("Select setting");
+		curSelect->Selected.connect(boost::bind(&SelectMenu::SelectSetting, this, _1));
+		curSelect->WantClose.connect(boost::bind(&SelectMenu::CleanWindow, this));
+	}	
+	curSelect->list->RemoveAllItems();
+	const std::map<std::string, std::string> &data = configHandler->GetData();
+	for(std::map<std::string,std::string>::const_iterator iter = data.begin(); iter != data.end(); ++iter)
+		curSelect->list->AddItem(iter->first + " = " + iter->second, "");
+	if(data.find(userSetting) != data.end())
+		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting, ""));
+	curSelect->list->RefreshQuery();
+	curSelect->list->SetFocus(true);
+}
+
+void SelectMenu::SelectSetting(std::string setting) {
+	int p = setting.find(" = ");
+	if(p != std::string::npos)
+		setting = setting.substr(0, p);
+	userSetting = setting;
+	configHandler->SetString("LastSelectedSetting", userSetting);
+	ShowSettingsWindow(true, userSetting);
+}
+
+void SelectMenu::CleanWindow() {
+	if (curSelect) {
+		ShowSettingsWindow(false, "");
+		agui::gui->RmElement(curSelect);
+		curSelect = NULL;
 	}
 }
 

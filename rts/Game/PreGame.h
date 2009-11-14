@@ -62,9 +62,9 @@ private:
 	void GameDataReceived(boost::shared_ptr<const netcode::RawPacket> packet);
 
 	/**
-	@brief GameData we recieved from server
+	@brief GameData we received from server
 	
-	We won't start until we recieved this
+	We won't start until we received this
 	*/
 	boost::scoped_ptr<const GameData> gameData;
 	boost::scoped_ptr<const ClientSetup> settings;

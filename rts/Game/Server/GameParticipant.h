@@ -18,7 +18,7 @@ public:
 	void SendData(boost::shared_ptr<const netcode::RawPacket> packet);
 
 	void Connected(boost::shared_ptr<netcode::CConnection> link, bool local);
-	void Kill();
+	void Kill(const std::string& reason);
 
 	void operator=(const PlayerBase& base) { PlayerBase::operator=(base); };
 

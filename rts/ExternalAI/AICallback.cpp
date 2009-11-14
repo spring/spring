@@ -41,9 +41,10 @@
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
 #include "AICheats.h"
-#include "GlobalAICallback.h"
-#include "SkirmishAIWrapper.h"
-#include "EngineOutHandler.h"
+#include "ExternalAI/GlobalAICallback.h"
+#include "ExternalAI/SkirmishAIHandler.h"
+#include "ExternalAI/SkirmishAIWrapper.h"
+#include "ExternalAI/EngineOutHandler.h"
 #include "Sim/Units/Groups/Group.h"
 #include "Sim/Units/Groups/GroupHandler.h"
 #include "LogOutput.h"
@@ -69,17 +70,17 @@ CAICallback::~CAICallback(void)
 
 void CAICallback::SendStartPos(bool ready, float3 startPos)
 {
-	if(startPos.z<gameSetup->allyStartingData[gu->myAllyTeam].startRectTop *gs->mapy*8)
-		startPos.z=gameSetup->allyStartingData[gu->myAllyTeam].startRectTop*gs->mapy*8;
+	if (startPos.z < gameSetup->allyStartingData[gu->myAllyTeam].startRectTop * gs->mapy * SQUARE_SIZE)
+		startPos.z = gameSetup->allyStartingData[gu->myAllyTeam].startRectTop * gs->mapy * SQUARE_SIZE;
 
-	if(startPos.z>gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom*gs->mapy*8)
-		startPos.z=gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom*gs->mapy*8;
+	if (startPos.z > gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom * gs->mapy * SQUARE_SIZE)
+		startPos.z = gameSetup->allyStartingData[gu->myAllyTeam].startRectBottom * gs->mapy * SQUARE_SIZE;
 
-	if(startPos.x<gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft*gs->mapx*8)
-		startPos.x=gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft*gs->mapx*8;
+	if (startPos.x < gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft * gs->mapx * SQUARE_SIZE)
+		startPos.x = gameSetup->allyStartingData[gu->myAllyTeam].startRectLeft * gs->mapx * SQUARE_SIZE;
 
-	if(startPos.x>gameSetup->allyStartingData[gu->myAllyTeam].startRectRight*gs->mapx*8)
-		startPos.x=gameSetup->allyStartingData[gu->myAllyTeam].startRectRight*gs->mapx*8;
+	if (startPos.x > gameSetup->allyStartingData[gu->myAllyTeam].startRectRight * gs->mapx * SQUARE_SIZE)
+		startPos.x = gameSetup->allyStartingData[gu->myAllyTeam].startRectRight * gs->mapx * SQUARE_SIZE;
 
 	unsigned char readyness = ready? 1: 0;
 	net->Send(CBaseNetProtocol::Get().SendStartPos(gu->myPlayerNum, team, readyness, startPos.x, startPos.y, startPos.z));
@@ -87,7 +88,10 @@ void CAICallback::SendStartPos(bool ready, float3 startPos)
 
 void CAICallback::SendTextMsg(const char* text, int zone)
 {
-	logOutput.Print("SkirmishAI%i: %s", team, text);
+	const CSkirmishAIHandler::ids_t& teamAIs = skirmishAIHandler.GetSkirmishAIsInTeam(this->team);
+	const SkirmishAIData* aiData = skirmishAIHandler.GetSkirmishAI(*(teamAIs.begin())); // better way?
+
+	logOutput.Print("<SkirmishAI: %s %s (team %d)>: %s", aiData->shortName.c_str(), aiData->version.c_str(), team, text);
 }
 
 void CAICallback::SetLastMsgPos(float3 pos)
@@ -187,20 +191,7 @@ bool CAICallback::PosInCamera(float3 pos, float radius)
 // (still completely insecure ofcourse, but it filters out the easiest way of cheating)
 void CAICallback::verify()
 {
-//TODO: add checks
-// the old check (see code below) checks for something which is not possible
-// anymore with the C AI interface
-//	const CSkirmishAIWrapper* skirmishAI = eoh->GetSkirmishAI(team);
-//	if (
-//			skirmishAI
-//			&& (((group
-//					&& group->handler != /*skirmishAI->gh*/grouphandlers[skirmishAI->GetTeamId()]
-//					/*&& group->handler != grouphandler*/)
-//			|| skirmishAI->GetTeamId() != team))) {
-//		handleerror (0, "AI has modified spring components(possible cheat)",
-//				"Spring is closing:", MBF_OK | MBF_EXCL);
-//		exit (-1);
-//	}
+	//TODO: add checks
 }
 
 int CAICallback::GetCurrentFrame()

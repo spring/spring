@@ -209,6 +209,12 @@ void CPreGame::UpdateClientNet()
 	{
 		const unsigned char* inbuf = packet->data;
 		switch (inbuf[0]) {
+			case NETMSG_QUIT: {
+				const std::string message((char*)(inbuf+3));
+				logOutput.Print(message);
+				throw std::runtime_error(message);
+				break;
+			}
 			case NETMSG_GAMEDATA: { // server first sends this to let us know about teams, allyteams etc.
 				GameDataReceived(packet);
 				break;
@@ -240,7 +246,7 @@ void CPreGame::UpdateClientNet()
 				return;
 			}
 			default: {
-				logOutput.Print("Unknown net-msg recieved from CPreGame: %i", int(packet->data[0]));
+				logOutput.Print("Unknown net-msg received from CPreGame: %i", int(packet->data[0]));
 				break;
 			}
 		}

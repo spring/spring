@@ -25,11 +25,11 @@ void GameParticipant::Connected(boost::shared_ptr<netcode::CConnection> _link, b
 	myState = CONNECTED;
 }
 
-void GameParticipant::Kill()
+void GameParticipant::Kill(const std::string& reason)
 {
 	if (link)
 	{
-		link->SendData(CBaseNetProtocol::Get().SendQuit());
+		link->SendData(CBaseNetProtocol::Get().SendQuit(reason));
 		link.reset();
 	}
 	myState = DISCONNECTED;

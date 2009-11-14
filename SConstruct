@@ -303,6 +303,7 @@ unitsync_7zip_files     = usync_get_source('rts/lib/7z') ##+ usync_get_source('r
 unitsync_minizip_files  = usync_get_source('rts/lib/minizip', 'rts/lib/minizip/iowin32.c');
 unitsync_hpiutil2_files = usync_get_source('rts/lib/hpiutil2');
 unitsync_extra_files = [
+	'rts/ExternalAI/LuaAIImplHandler.cpp',
 	'rts/Game/GameVersion.cpp',
 	'rts/Lua/LuaUtils.cpp',
 	'rts/Lua/LuaIO.cpp',

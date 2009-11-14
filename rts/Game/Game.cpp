@@ -537,15 +537,11 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 
 	net->loading = false;
 	thread.join();
-	std::string addVersInfo = "";
-#if defined USE_GML
-	addVersInfo += " MT (" + IntToString(gmlThreadCount) +  " threads)";
-#endif
-#if defined HEADLESS
-	addVersInfo += " Headless";
-#endif
-	logOutput.Print("Spring %s%s", SpringVersion::GetFull().c_str(), addVersInfo.c_str());
+	logOutput.Print("Spring %s", SpringVersion::GetFull().c_str());
 	logOutput.Print("Build date/time: %s", SpringVersion::BuildTime);
+#ifdef USE_GML
+	logOutput.Print("MT with %d threads.", gmlThreadCount);
+#endif
 	//sending your playername to the server indicates that you are finished loading
 	CPlayer* p = playerHandler->Player(gu->myPlayerNum);
 	net->Send(CBaseNetProtocol::Get().SendPlayerName(gu->myPlayerNum, p->name));
@@ -2883,19 +2879,17 @@ bool CGame::DrawWorld()
 	glEnable(GL_BLEND);
 	glDepthFunc(GL_LEQUAL);
 
-	bool clip = unitDrawer->advFade || !unitDrawer->advShading;
 	bool noAdvShading = shadowHandler->drawShadows;
-	if(clip) { // draw cloaked part below surface
-		glEnable(GL_CLIP_PLANE3);
-		unitDrawer->DrawCloakedUnits(true,noAdvShading);
-		featureHandler->DrawFadeFeatures(true,noAdvShading);
-		glDisable(GL_CLIP_PLANE3);
-	}
+	//! draw cloaked part below surface
+	glEnable(GL_CLIP_PLANE3);
+	unitDrawer->DrawCloakedUnits(true,noAdvShading);
+	featureHandler->DrawFadeFeatures(true,noAdvShading);
+	glDisable(GL_CLIP_PLANE3);
 
 	if (drawWater && !mapInfo->map.voidWater) {
 		SCOPED_TIMER("Water");
 		if (!water->drawSolid) {
-			// Water rendering may overwrite cloaked objects, so save them
+			//! Water rendering may overwrite cloaked objects, so save them
 			SwapTransparentObjects();
 			water->UpdateWater(this);
 			water->Draw();
@@ -2904,12 +2898,10 @@ bool CGame::DrawWorld()
 	}
 
 	//! draw cloaked part above surface
-	if(clip)
-		glEnable(GL_CLIP_PLANE3);
+	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(false,noAdvShading);
 	featureHandler->DrawFadeFeatures(false,noAdvShading);
-	if(clip)
-		glDisable(GL_CLIP_PLANE3);
+	glDisable(GL_CLIP_PLANE3);
 
 	ph->Draw(false);
 
@@ -3574,7 +3566,8 @@ void CGame::ClientReadNet()
 
 		switch (packetCode) {
 			case NETMSG_QUIT: {
-				logOutput.Print("Server shutdown");
+				const std::string message = (char*)(&inbuf[3]);
+				logOutput.Print(message);
 				if (!gameOver)
 				{
 					GameEnd();
@@ -4197,12 +4190,13 @@ void CGame::ClientReadNet()
 				CTeam* tai                       = teamHandler->Team(aiTeamId);
 
 				aiData->status = newState;
+
 				if (isLocal && !isLuaAI && ((newState == SKIRMAISTATE_DIEING) || (newState == SKIRMAISTATE_RELOADING))) {
 					eoh->DestroySkirmishAI(skirmishAIId);
 				} else if (newState == SKIRMAISTATE_DEAD) {
 					if (oldState == SKIRMAISTATE_RELOADING) {
 						if (isLocal) {
-							logOutput.Print("Skirmish AI being reloaded for team %i ...", aiTeamId);
+							logOutput.Print("Skirmish AI \"%s\" being reloaded for team %i ...", aiData->name.c_str(), aiTeamId);
 							eoh->CreateSkirmishAI(skirmishAIId);
 						}
 					} else {
@@ -4215,10 +4209,10 @@ void CGame::ClientReadNet()
 						}
 						CPlayer::UpdateControlledTeams();
 						eventHandler.PlayerChanged(playerId);
-						logOutput.Print("Skirmish AI %s, which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
+						logOutput.Print("Skirmish AI \"%s\", which controlled team %i is now dead", aiData->name.c_str(), aiTeamId);
 					}
 				} else if (newState == SKIRMAISTATE_ALIVE) {
-					logOutput.Print("Skirmish AI %s took over controll of team %i", aiData->name.c_str(), aiTeamId);
+					logOutput.Print("Skirmish AI \"%s\" took over control of team %i", aiData->name.c_str(), aiTeamId);
 				}
 				break;
 			}
@@ -4645,7 +4639,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
-			if (gu->spectating || !noSpectatorChat || !player->spectator) {
+			const bool specsOnly = noSpectatorChat && (player && player->spectator);
+			if (gu->spectating || !specsOnly) {
 				logOutput.Print(label + s);
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}

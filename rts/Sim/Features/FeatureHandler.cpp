@@ -577,11 +577,6 @@ void CFeatureHandler::Draw()
 {
 	drawFar.clear();
 
-	GML_RECMUTEX_LOCK(feat); // Draw
-
-	fadeFeatures.clear();
-	fadeFeaturesS3O.clear();
-
 	if(gu->drawFog) {
 		glEnable(GL_FOG);
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
@@ -589,6 +584,12 @@ void CFeatureHandler::Draw()
 
 	unitDrawer->SetupForUnitDrawing();
 	unitDrawer->SetupFor3DO();
+
+	GML_RECMUTEX_LOCK(feat); // Draw
+
+	fadeFeatures.clear();
+	fadeFeaturesS3O.clear();
+
 	DrawRaw(0, &drawFar);
 	unitDrawer->CleanUp3DO();
 
@@ -705,20 +706,22 @@ void CFeatureHandler::DrawShadowPass()
 	glPolygonOffset(1,1);
 	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	GML_RECMUTEX_LOCK(feat); // DrawShadowPass
+	{
+		GML_RECMUTEX_LOCK(feat); // DrawShadowPass
 
-	DrawRaw(1, NULL);
+		DrawRaw(1, NULL);
 
-	if(unitDrawer->advFade) { // FIXME: Why does texture alpha not work with shadows on ATI?
-		glEnable(GL_TEXTURE_2D); // Need the alpha mask for transparent features
-		glPushAttrib(GL_COLOR_BUFFER_BIT);
-		glEnable(GL_ALPHA_TEST);
-		glAlphaFunc(GL_GREATER,0.5f);
+		if(!gu->atiHacks) { // FIXME: Why does texture alpha not work with shadows on ATI?
+			glEnable(GL_TEXTURE_2D); // Need the alpha mask for transparent features
+			glPushAttrib(GL_COLOR_BUFFER_BIT);
+			glEnable(GL_ALPHA_TEST);
+			glAlphaFunc(GL_GREATER,0.5f);
+		}
+
+		unitDrawer->DrawQuedS3O();
 	}
 
-	unitDrawer->DrawQuedS3O();
-
-	if(unitDrawer->advFade) {
+	if(!gu->atiHacks) {
 		glPopAttrib();
 		glDisable(GL_TEXTURE_2D);
 	}

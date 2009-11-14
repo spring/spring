@@ -6,7 +6,7 @@
 
 #include "Vec2.h"
 
-class int2;
+struct int2;
 
 class IMouseInput
 {
