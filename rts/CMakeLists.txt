@@ -29,6 +29,9 @@ endif (USE_GML)
 
 SET(USE_GML_SIM FALSE CACHE BOOL "Use independent Simulation thread?")
 if (USE_GML_SIM)
+	if (NOT USE_GML)
+		MESSAGE(SEND_ERROR "USE_GML_SIM requires USE_GML")
+	endif (NOT USE_GML)
 	ADD_DEFINITIONS(-DUSE_GML_SIM)
 endif (USE_GML_SIM)
 

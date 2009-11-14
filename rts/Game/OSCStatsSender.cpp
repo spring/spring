@@ -99,9 +99,9 @@ bool COSCStatsSender::IsEnabled() const {
 COSCStatsSender* COSCStatsSender::GetInstance() {
 
 	if (COSCStatsSender::singleton == NULL) {
-		std::string dstAddress =configHandler->GetString(
+		std::string dstAddress = configHandler->GetString(
 				"OscStatsSenderDestinationAddress", "127.0.0.1");
-		unsigned int dstPort = configHandler->Get(
+		unsigned int dstPort   = configHandler->Get(
 				"OscStatsSenderDestinationPort", (unsigned int) 6447);
 		COSCStatsSender::singleton = new COSCStatsSender(dstAddress, dstPort);
 	}
@@ -113,9 +113,14 @@ COSCStatsSender* COSCStatsSender::GetInstance() {
 bool COSCStatsSender::SendInit() {
 
 	if (IsEnabled()) {
-		return SendInitialInfo()
-				&& SendTeamStatsTitles()
-				&& SendPlayerStatsTitles();
+		try {
+			return SendInitialInfo()
+					&& SendTeamStatsTitles()
+					&& SendPlayerStatsTitles();
+		} catch (boost::system::system_error ex) {
+			logOutput.Print("Failed sending OSC Stats init: %s", ex.what());
+			return false;
+		}
 	} else {
 		return false;
 	}
@@ -124,9 +129,14 @@ bool COSCStatsSender::SendInit() {
 bool COSCStatsSender::Update(int frameNum) {
 
 	if (IsEnabled() && IsTimeToSend(frameNum)) {
-		// Try to send team stats first, as they are more important,
-		// more interesting.
-		return SendTeamStats() && SendPlayerStats();
+		try {
+			// Try to send team stats first, as they are more important,
+			// more interesting.
+			return SendTeamStats() && SendPlayerStats();
+		} catch (boost::system::system_error ex) {
+			logOutput.Print("Failed sending OSC Stats init: %s", ex.what());
+			return false;
+		}
 	} else {
 		return false;
 	}

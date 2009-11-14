@@ -25,6 +25,7 @@ public:
 	virtual bool HandleEventSelf(const SDL_Event& ev);
 	std::string GetTooltip(int x,int y) { return tooltip; }
 
+	void RemoveAllItems();
 	void AddItem(const std::string& name,const std::string& description);
 	std::vector<std::string> items;
 	std::string name;
@@ -38,6 +39,8 @@ public:
 	std::string tooltip;
 
 	boost::signal<void (void)> FinishSelection; // Return or Double-Click
+	void SetFocus(bool focus);
+	void RefreshQuery();
 
 private:
 	bool Filter(bool reset);
@@ -57,6 +60,7 @@ private:
 	float borderSpacing;
 	float itemSpacing;
 	float itemHeight;
+	bool hasFocus;
 
 	// for filtering
 	std::string query;

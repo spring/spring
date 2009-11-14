@@ -46,8 +46,8 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 
 	string extension = mapname.substr(mapname.length()-3);
 
-	CReadMap *rm = 0;
-	if (extension=="sm3") {
+	CReadMap* rm = 0;
+	if (extension == "sm3") {
 		rm = new CSm3ReadMap;
 		((CSm3ReadMap*)rm)->Initialize (mapname.c_str());
 	} else
@@ -56,35 +56,40 @@ CReadMap* CReadMap::LoadMap (const std::string& mapname)
 	if (!rm)
 		return 0;
 
+
 	/* Read metal map */
 	MapBitmapInfo mbi;
-	unsigned char  *metalmap = rm->GetInfoMap ("metal", &mbi);
-	if (metalmap && mbi.width == rm->width/2 && mbi.height == rm->height/2)
-	{
-		int size = mbi.width*mbi.height;
-		unsigned char *map = new unsigned char[size];
-		memcpy(map, metalmap, size);
-		rm->metalMap = new CMetalMap(map, mbi.width, mbi.height, mapInfo->map.maxMetal);
+	unsigned char* metalmapPtr = rm->GetInfoMap("metal", &mbi);
+
+	if (metalmapPtr && mbi.width == (rm->width >> 1) && mbi.height == (rm->height >> 1)) {
+		int size = mbi.width * mbi.height;
+		unsigned char* mtlMap = new unsigned char[size];
+		memcpy(mtlMap, metalmapPtr, size);
+		rm->metalMap = new CMetalMap(mtlMap, mbi.width, mbi.height, mapInfo->map.maxMetal);
 	}
-	if (metalmap) rm->FreeInfoMap ("metal", metalmap);
+	if (metalmapPtr)
+		rm->FreeInfoMap("metal", metalmapPtr);
 
 	if (!rm->metalMap) {
-		unsigned char *zd = new unsigned char[rm->width*rm->height/4];
-		memset(zd,0,rm->width*rm->height/4);
-		rm->metalMap = new CMetalMap(zd, rm->width/2,rm->height/2, 1.0f);
+		unsigned char* mtlMap = new unsigned char[rm->width * rm->height / 4];
+		memset(mtlMap, 0, rm->width * rm->height / 4);
+		rm->metalMap = new CMetalMap(mtlMap, rm->width / 2,rm->height / 2, 1.0f);
 	}
+
 
 	/* Read type map */
 	MapBitmapInfo tbi;
-	unsigned char *typemap = rm->GetInfoMap ("type", &tbi);
-	if (typemap && tbi.width == rm->width/2 && tbi.height == rm->height/2)
-	{
-		assert (gs->hmapx == tbi.width && gs->hmapy == tbi.height);
-		rm->typemap = new unsigned char[tbi.width*tbi.height];
-		memcpy(rm->typemap, typemap, tbi.width*tbi.height);
+	unsigned char* typemapPtr = rm->GetInfoMap("type", &tbi);
+
+	if (typemapPtr && tbi.width == (rm->width >> 1) && tbi.height == (rm->height >> 1)) {
+		assert(gs->hmapx == tbi.width && gs->hmapy == tbi.height);
+		rm->typemap = new unsigned char[tbi.width * tbi.height];
+		memcpy(rm->typemap, typemapPtr, tbi.width * tbi.height);
 	} else
 		throw content_error("Bad/no terrain type map.");
-	if (typemap) rm->FreeInfoMap ("type", typemap);
+
+	if (typemapPtr)
+		rm->FreeInfoMap("type", typemapPtr);
 
 	return rm;
 }

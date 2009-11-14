@@ -153,6 +153,7 @@ public:
 
 	/** Terrain type, there can be 256 of these:
 	    "MAP\TerrainType0" up to "MAP\TerrainType255" */
+	static const int NUM_TERRAIN_TYPES = 256;
 	struct TerrainType {
 		std::string name;
 		float hardness;
@@ -162,7 +163,7 @@ public:
 		float shipSpeed;   ///< "ShipMoveSpeed"
 		bool receiveTracks;
 	};
-	TerrainType terrainTypes[256];
+	TerrainType terrainTypes[NUM_TERRAIN_TYPES];
 
 private:
 	void ReadGlobal();

@@ -69,10 +69,27 @@ static int tmpSize[MAX_SKIRMISH_AIS];
 // There is quite some CPU and Memory performance waste present
 // in them and their use.
 static int tmpIntArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
-static PointMarker tmpPointMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
-static LineMarker tmpLineMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
+//static PointMarker tmpPointMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
+//static LineMarker tmpLineMarkerArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 static const char* tmpKeysArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
 static const char* tmpValuesArr[MAX_SKIRMISH_AIS][TMP_ARR_SIZE];
+
+/*
+ * FIXME: get rid of this and replace with std::vectors that are
+ *        automatically grown to the needed size?
+ *
+ * GCC 4.4.1 on Ubuntu 9.10 segfaults during static initialization of the
+ * tmpPointMarkerArr and tmpLineMarkerArr above. This seems to have to do
+ * with the size of these arrays. (Bigger crashes more often, but even
+ * TMP_ARR_SIZE=1024 still crashes occasionally.)
+ *
+ * As a workaround, we change the vars to be a reference to a 2d array,
+ * and allocate the actual array on the heap.
+ */
+static PointMarker (&tmpPointMarkerArr)[MAX_SKIRMISH_AIS][TMP_ARR_SIZE] =
+		*(PointMarker (*)[MAX_SKIRMISH_AIS][TMP_ARR_SIZE]) calloc(MAX_SKIRMISH_AIS * TMP_ARR_SIZE, sizeof(PointMarker));
+static LineMarker (&tmpLineMarkerArr)[MAX_SKIRMISH_AIS][TMP_ARR_SIZE] =
+		*(LineMarker (*)[MAX_SKIRMISH_AIS][TMP_ARR_SIZE]) calloc(MAX_SKIRMISH_AIS * TMP_ARR_SIZE, sizeof(LineMarker));
 
 static void checkTeamId(int teamId) {
 

@@ -133,10 +133,10 @@ private:
 	void GameEnd();
 	/// Send a message to other players (allows prefixed messages with e.g. "a:...")
 	void SendNetChat(std::string message, int destination = -1);
-	/// Format and display a chat message recieved over network
+	/// Format and display a chat message received over network
 	void HandleChatMsg(const ChatMessage& msg);
 	
-	/// synced actions (recieved from server) go in here
+	/// synced actions (received from server) go in here
 	void ActionReceived(const Action&, int playernum);
 
 	void DrawInputText();

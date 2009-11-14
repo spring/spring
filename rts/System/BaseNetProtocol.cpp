@@ -33,9 +33,12 @@ PacketType CBaseNetProtocol::SendNewFrame()
 }
 
 
-PacketType CBaseNetProtocol::SendQuit()
+PacketType CBaseNetProtocol::SendQuit(const std::string& reason)
 {
-	return PacketType(new PackPacket(1, NETMSG_QUIT));
+	unsigned size = 3 + reason.size() + 1;
+	PackPacket* packet = new PackPacket(size, NETMSG_QUIT);
+	*packet << static_cast<uint16_t>(size) << reason;
+	return PacketType(packet);
 }
 
 PacketType CBaseNetProtocol::SendStartPlaying(unsigned countdown)
@@ -398,7 +401,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 
 	proto->AddType(NETMSG_KEYFRAME, 5);
 	proto->AddType(NETMSG_NEWFRAME, 1);
-	proto->AddType(NETMSG_QUIT, 1);
+	proto->AddType(NETMSG_QUIT, -2);
 	proto->AddType(NETMSG_STARTPLAYING, 5);
 	proto->AddType(NETMSG_SETPLAYERNUM, 2);
 	proto->AddType(NETMSG_PLAYERNAME, -1);

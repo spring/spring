@@ -502,7 +502,7 @@ void UDPConnection::SendIfNecessary(bool flushed)
 		}
 		else
 		{
-			nak = -std::min((unsigned)127, numContinuous);
+			nak = -(int)std::min((unsigned)127, numContinuous);
 		}
 	}
 
