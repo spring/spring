@@ -247,9 +247,10 @@ PacketType CBaseNetProtocol::SendSyncResponse(int frameNum, uint checksum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
+PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, std::string message)
 {
 	unsigned size = 3 + message.size() + 1;
+	message.resize(std::min((size_t)250, message.length()));
 	PackPacket* packet = new PackPacket(size, NETMSG_SYSTEMMSG);
 	*packet << static_cast<uchar>(size) << myPlayerNum << message;
 	return PacketType(packet);
