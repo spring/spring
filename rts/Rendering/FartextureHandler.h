@@ -3,7 +3,8 @@
 
 #include <vector>
 #include "GL/myGL.h"
-#include "Rendering/UnitModels/3DModel.h"
+
+struct S3DModel;
 
 /**
  * @brief Cheap unit lodding using imposters.
@@ -11,8 +12,8 @@
 class CFartextureHandler
 {
 public:
-	CFartextureHandler(void);
-	~CFartextureHandler(void);
+	CFartextureHandler();
+	~CFartextureHandler();
 	void CreateFarTexture(S3DModel* model);
 	void CreateFarTextures();
 	GLuint GetTextureID() const { return farTexture; }
