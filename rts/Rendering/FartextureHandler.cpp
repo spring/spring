@@ -16,14 +16,15 @@ CFartextureHandler::CFartextureHandler()
 {
 	usedFarTextures = 0;
 
-	static const size_t farTextureMem_size = 128*16*4;
+	// 1 unit: 8 orientations, each image is 16x16 pixels, each pixel has RGBA (4) values
+	static const size_t farTextureMem_size = 8*16*16*4;
 	farTextureMem = new unsigned char[farTextureMem_size];
 
 	for (size_t a=0; a < farTextureMem_size; ++a) {
 		farTextureMem[a] = 0;
 	}
 
-	farTexture=0;
+	farTexture = 0;
 }
 
 
@@ -112,32 +113,40 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 	glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 	glEnable(GL_LIGHT1);
 
-	// draw the model to a temporary buffer, fetch pixels, and store them
-	int baseX = 0;
-	unsigned char buf[16*16*4];
-	for (int a=0; a < 8; ++a) {
+	// 1 orientation: each image is 16x16 pixels, each pixel has RGBA (4) values
+	unsigned char imgBuf[16*16*4];
+	// draw the model in 8 different orientations
+	for (size_t o=0; o < 8; ++o) {
+		// draw the model to a temporary buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		texturehandler3DO->Set3doAtlases();
 		glPushMatrix();
 		glTranslatef(0, -model->height*0.5f, 0);
 		model->DrawStatic();
 		glPopMatrix();
-		glReadPixels(0, 0, 16, 16, GL_RGBA, GL_UNSIGNED_BYTE, buf);
-		for (int y=0; y < 16; ++y) {
-			for (int x=0; x < 16; ++x) {
-				farTextureMem[(baseX+x+(y)*128)*4]   = buf[(x+y*16)*4];   // Red
-				farTextureMem[(baseX+x+(y)*128)*4+1] = buf[(x+y*16)*4+1]; // Green
-				farTextureMem[(baseX+x+(y)*128)*4+2] = buf[(x+y*16)*4+2]; // Blue
-				if ((buf[(x+y*16)*4]   == 255) &&
-				    (buf[(x+y*16)*4+1] == 0) &&
-				    (buf[(x+y*16)*4+2] == 255)) {
-					farTextureMem[(baseX+x+(y)*128)*4+3] = 0;   // Alpha
+		// fetch pixels
+		glReadPixels(0, 0, 16, 16, GL_RGBA, GL_UNSIGNED_BYTE, imgBuf);
+
+		// store the pixels
+		const size_t baseX = o * 16;
+		for (size_t y=0; y < 16; ++y) {
+			for (size_t x=0; x < 16; ++x) {
+				const size_t pixel_ftx = (baseX + x + y*128) * 4;
+				const size_t pixel_img = (x + y*16) * 4;
+				farTextureMem[pixel_ftx]     = imgBuf[pixel_img];     // red
+				farTextureMem[pixel_ftx + 1] = imgBuf[pixel_img + 1]; // green
+				farTextureMem[pixel_ftx + 2] = imgBuf[pixel_img + 2]; // blue
+				if ((imgBuf[pixel_img]     == 255) &&
+				    (imgBuf[pixel_img + 1] == 0) &&
+				    (imgBuf[pixel_img + 2] == 255)) { // #FF00FF -> pink
+					farTextureMem[pixel_ftx + 3] = 0;                 // alpha
 				} else {
-					farTextureMem[(baseX+x+(y)*128)*4+3] = 255; // Alpha
+					farTextureMem[pixel_ftx + 3] = 255;               // alpha
 				}
 			}
 		}
-		baseX += 16;
+
+		// rotate by 45 degrees for the next orientation
 		glRotatef(45, 0, 1, 0);
 		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 	}
