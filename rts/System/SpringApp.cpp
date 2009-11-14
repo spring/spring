@@ -678,8 +678,8 @@ void SpringApp::LoadFixedConfigs() {
 	configHandler->SetOverride("UnitLodDist", 0); // not sure about this
 	configHandler->SetOverride("UsePBO", 0);
 	configHandler->SetOverride("VSync", 0);
-	configHandler->SetOverride("XResolution", 113); // minimum resolution required to load spring.
-	configHandler->SetOverride("YResolution", 1);
+	configHandler->SetOverride("XResolution", 0);
+	configHandler->SetOverride("YResolution", 0);
 #endif // HEADLESS
 }
 
