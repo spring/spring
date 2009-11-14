@@ -17,7 +17,7 @@
 
 #include "SharedLibrary.h"
 
-#include "maindefines.h"
+#include "System/maindefines.h"
 #include <stdio.h>
 
 const char* sharedLib_getLibExtension() {
