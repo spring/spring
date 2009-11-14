@@ -742,10 +742,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 		case NETMSG_SYSTEMMSG:
-			if(inbuf[2]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]));
+			if(inbuf[3]!=a){
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
 			} else {
-				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(inbuf[2], (char*)(&inbuf[3])));
+				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(inbuf[3], (char*)(&inbuf[4])));
 			}
 			break;
 

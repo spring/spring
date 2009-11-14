@@ -247,12 +247,15 @@ PacketType CBaseNetProtocol::SendSyncResponse(int frameNum, uint checksum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, std::string message)
+PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
 {
-	unsigned size = 3 + message.size() + 1;
-	message.resize(std::min((size_t)250, message.length()));
+	unsigned size = 1 + 2 + 1 + message.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_SYSTEMMSG);
-	*packet << static_cast<uchar>(size) << myPlayerNum << message;
+	*packet << static_cast<uint16_t>(size) << myPlayerNum;
+	if (message.size() < 65000)
+		*packet << message;
+	else
+		*packet << message.substr(0, 65000) << std::string("...");
 	return PacketType(packet);
 }
 
@@ -430,7 +433,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEOVER, 1);
 	proto->AddType(NETMSG_MAPDRAW, -1);
 	proto->AddType(NETMSG_SYNCRESPONSE, 9);
-	proto->AddType(NETMSG_SYSTEMMSG, -1);
+	proto->AddType(NETMSG_SYSTEMMSG, -2);
 	proto->AddType(NETMSG_STARTPOS, 16);
 	proto->AddType(NETMSG_PLAYERINFO, 8);
 	proto->AddType(NETMSG_PLAYERLEFT, 3);

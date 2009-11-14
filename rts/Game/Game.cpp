@@ -3713,7 +3713,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SYSTEMMSG:{
-				string s=(char*)(&inbuf[3]);
+				string s=(char*)(&inbuf[4]);
 				logOutput.Print(s);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
