@@ -245,11 +245,10 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		if(InBox(mx,my,box+giveAwayBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {
 			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam, playerHandler->Player(gu->myPlayerNum)->team));
 			// inform other users of the giving away of units
-			char givenAwayMsg[200];
-			sprintf(givenAwayMsg,"%s gave everything to %s.",
-				playerHandler->Player(gu->myPlayerNum)->name.c_str(),
-				playerHandler->Player(teamHandler->Team(shareTeam)->leader)->name.c_str());
-			net->Send(CBaseNetProtocol::Get().SendSystemMessage(gu->myPlayerNum, givenAwayMsg));
+			std::ostringstream givenAwayMsg;
+			givenAwayMsg << playerHandler->Player(gu->myPlayerNum)->name.c_str() << " gave everything to ";
+			givenAwayMsg << playerHandler->Player(teamHandler->Team(shareTeam)->leader)->name.c_str();
+			net->Send(CBaseNetProtocol::Get().SendSystemMessage(gu->myPlayerNum, givenAwayMsg.str()));
 		}
 		// resign, so self-d all units
 		if (InBox(mx,my,box+resignBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {
