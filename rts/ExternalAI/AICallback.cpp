@@ -1223,11 +1223,9 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax)
 		const CFeature* f = *it;
 		assert(f);
 
-		if (!f->IsInLosForAllyTeam(allyteam)) {
-			continue;
+		if (f->IsInLosForAllyTeam(allyteam)) {
+			featureIds[featureIds_size++] = f->id;
 		}
-
-		featureIds[featureIds_size++] = f->id;
 	}
 
 	return featureIds_size;
@@ -1246,11 +1244,9 @@ int CAICallback::GetFeatures(int* featureIds, int featureIds_sizeMax, const floa
 		const CFeature* f = *it;
 		assert(f);
 
-		if (!f->IsInLosForAllyTeam(allyteam)) {
-			continue;
+		if (f->IsInLosForAllyTeam(allyteam)) {
+			featureIds[featureIds_size++] = f->id;
 		}
-
-		featureIds[featureIds_size++] = f->id;
 	}
 
 	return featureIds_size;
@@ -1384,7 +1380,7 @@ bool CAICallback::GetValue(int id, void *data)
 			std::string f((char*) data);
 			f = filesystem.LocateFile(f);
 			strcpy((char*) data, f.c_str());
-			return true;
+			return FileSystemHandler::IsReadableFile(f);
 		}case AIVAL_LOCATE_FILE_W:{
 			std::string f((char*) data);
 			std::string f_abs = filesystem.LocateFile(f, FileSystem::WRITE | FileSystem::CREATE_DIRS);
