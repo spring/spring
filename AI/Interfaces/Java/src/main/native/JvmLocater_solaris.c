@@ -18,6 +18,8 @@
 
 #include "JvmLocater_common.h"
 
+#include "System/maindefines.h"
+
 #include <unistd.h>
 
 
