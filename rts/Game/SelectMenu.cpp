@@ -64,6 +64,7 @@ public:
 		HorizontalLayout* input = new HorizontalLayout(wndLayout);
 		agui::TextElement* label = new agui::TextElement("Address:", input);
 		address = new agui::LineEdit(input);
+		address->DefaultAction.connect(boost::bind(&ConnectWindow::Finish, this, true));
 		address->SetFocus(true);
 		address->SetContent(configHandler->GetString("address", ""));
 		HorizontalLayout* buttons = new HorizontalLayout(wndLayout);
@@ -344,6 +345,8 @@ void SelectMenu::ShowSettingsWindow(bool show, std::string name)
 			configHandler->SetString(name.substr(0,p), name.substr(p + 3));
 			ShowSettingsList();
 		}
+		if(curSelect)
+			curSelect->list->SetFocus(true);
 	}
 }
 
@@ -375,7 +378,6 @@ void SelectMenu::ShowSettingsList()
 	if(data.find(userSetting) != data.end())
 		curSelect->list->SetCurrentItem(userSetting + " = " + configHandler->GetString(userSetting, ""));
 	curSelect->list->RefreshQuery();
-	curSelect->list->SetFocus(true);
 }
 
 void SelectMenu::SelectSetting(std::string setting) {

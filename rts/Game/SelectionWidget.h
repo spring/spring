@@ -36,7 +36,7 @@ public:
 		buttons->SetSize(0.0f, 0.04f, true);
 		agui::Button* select = new agui::Button("Select", buttons);
 		select->Clicked.connect(boost::bind(&ListSelectWnd::SelectButton, this));
-		agui::Button* cancel = new agui::Button("Cancel", buttons);
+		agui::Button* cancel = new agui::Button("Close", buttons);
 		cancel->Clicked.connect(boost::bind(&ListSelectWnd::CancelButton, this));
 		GeometryChange();
 	}
