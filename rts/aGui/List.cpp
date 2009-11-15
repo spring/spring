@@ -24,10 +24,10 @@ List::List(GuiElement* parent) :
 		GuiElement(parent),
 		cancelPlace(-1),
 		tooltip("No tooltip defined"),
+		clickedTime(SDL_GetTicks()),
 		place(0),
 		activeMousePress(false),
-		filteredItems(&items),
-		clickedTime(SDL_GetTicks())
+		filteredItems(&items)
 {
 	borderSpacing = 0.005f;
 	itemSpacing = 0.003f;
