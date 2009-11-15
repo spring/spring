@@ -33,6 +33,7 @@ List::List(GuiElement* parent) :
 	itemSpacing = 0.003f;
 	itemHeight = 0.04f;
 	hasFocus = true;
+	topIndex = 0;
 }
 
 List::~List()
@@ -49,11 +50,13 @@ void List::RemoveAllItems() {
 }
 
 void List::RefreshQuery() {
-	std::string q = query;
-	if(q != "") {
+	if(query != "") {
+		int t = topIndex;
+		std::string q = query;
 		Filter(true);
 		query = q;
 		Filter(false);
+		topIndex = t;
 	}
 }
 
@@ -81,14 +84,32 @@ bool List::MousePress(int x, int y, int button)
 			break;
 		}
 		case SDL_BUTTON_WHEELDOWN:
-			DownOne();
+			ScrollDownOne();
 			break;
 			
 		case SDL_BUTTON_WHEELUP:
-			UpOne();
+			ScrollUpOne();
 			break;
 	}
 	return false;
+}
+
+int List::NumDisplay() {
+	return (size[1] - 2.0f * borderSpacing) / (itemHeight + itemSpacing);
+}
+
+void List::ScrollUpOne() {
+	if(topIndex > 0)
+		--topIndex;
+	if(place >= topIndex + NumDisplay())
+		--place;
+}
+
+void List::ScrollDownOne() {
+	if(topIndex + NumDisplay() < filteredItems->size())
+		++topIndex;
+	if(place < topIndex)
+		++place;
 }
 
 void List::MouseMove(int x, int y, int dx,int dy, int button)
@@ -102,6 +123,16 @@ void List::MouseRelease(int x, int y, int button)
 	activeMousePress = false;
 }
 
+void List::UpdateTopIndex() {
+	const int numDisplay = NumDisplay();
+	if(topIndex + numDisplay > filteredItems->size())
+		topIndex = std::max(0, (int)filteredItems->size() - numDisplay);
+	if(place >= topIndex + numDisplay)
+		topIndex = std::max(0, place - numDisplay + 1);
+	if(place < topIndex)
+		topIndex = std::max(0, place);
+}
+
 bool List::MouseUpdate(int x, int y)
 {
 	int nCurIndex = 0; // The item we're on
@@ -113,10 +144,12 @@ bool List::MouseUpdate(int x, int y)
 	
 	// Get list started up here
 	std::vector<std::string>::iterator ii = filteredItems->begin();
-	const int numDisplay = (size[1]-2.0f*borderSpacing)/(itemHeight+itemSpacing);
-	assert(numDisplay >= 0);
-	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()-1) { ii++; nCurIndex++; }
-	
+	UpdateTopIndex();
+
+	while (nCurIndex < topIndex) { ii++; nCurIndex++; }
+
+	const int numDisplay = NumDisplay();
+
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
 	{
 		if (b.MouseOver(mx, my))
@@ -158,12 +191,16 @@ void List::DrawSelf()
 	// Get list started up here
 	std::vector<std::string>::iterator ii = filteredItems->begin();
 	// Skip to current selection - 3; ie: scroll
-	const int numDisplay = (size[1]-2.0f*borderSpacing)/(itemHeight+itemSpacing);
-	assert(numDisplay >= 0);
-	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()-1) { ii++; nCurIndex++; }
+	UpdateTopIndex();
+
+	while (nCurIndex < topIndex) { ii++; nCurIndex++; }
+
+	const int numDisplay = NumDisplay();
 
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
+	glLineWidth(1.0f);
+
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
 	{
 		glColor4f(1,1,1,opacity/4.f);
@@ -366,10 +403,11 @@ bool List::Filter(bool reset)
 		return false;
 	} else {
 		filteredItems = destination;
-		if(place>=(int)filteredItems->size())
-			place=filteredItems->size()-1;
-		if(place<0)
-			place=0;
+		if(place >= (int)filteredItems->size())
+			place = filteredItems->size() - 1;
+		if(place < 0)
+			place = 0;
+		topIndex = 0;
 		return true;
 	}
 }

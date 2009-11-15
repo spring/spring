@@ -49,6 +49,10 @@ private:
 	void UpPage();
 	void DownPage();
 	bool MouseUpdate(int x, int y);
+	void UpdateTopIndex();
+	void ScrollUpOne();
+	void ScrollDownOne();
+	int NumDisplay();
 
 	unsigned clickedTime;
 	int place;
@@ -61,6 +65,7 @@ private:
 	float itemSpacing;
 	float itemHeight;
 	bool hasFocus;
+	int topIndex;
 
 	// for filtering
 	std::string query;
