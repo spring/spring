@@ -185,7 +185,7 @@ std::vector<std::string> FileSystemHandler::FindFiles(const std::string& dir, co
 	return matches;
 }
 
-bool FileSystemHandler::IsReadableFile(const std::string& file) const
+bool FileSystemHandler::IsReadableFile(const std::string& file)
 {
 #ifdef WIN32
 	return (_access(StripTrailingSlashes(file).c_str(), 4) == 0);

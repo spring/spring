@@ -66,7 +66,7 @@ public:
 	 * Starts from dirpath, descending down if recurse is true.
 	 */
 	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
-	bool IsReadableFile(const std::string& file) const;
+	static bool IsReadableFile(const std::string& file);
 	/**
 	 * Returns an absolute path if the file was found in one of the data-dirs,
 	 * or the argument (relative path) if it was not found.
