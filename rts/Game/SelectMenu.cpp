@@ -62,7 +62,7 @@ public:
 		
 		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(this);
 		HorizontalLayout* input = new HorizontalLayout(wndLayout);
-		agui::TextElement* label = new agui::TextElement("Address:", input);
+		/*agui::TextElement* label = */new agui::TextElement("Address:", input); // will be deleted in input
 		address = new agui::LineEdit(input);
 		address->DefaultAction.connect(boost::bind(&ConnectWindow::Finish, this, true));
 		address->SetFocus(true);
@@ -96,10 +96,10 @@ public:
 		agui::gui->AddElement(this);
 		SetPos(0.5, 0.5);
 		SetSize(0.4, 0.2);
-		
+
 		agui::VerticalLayout* wndLayout = new agui::VerticalLayout(this);
 		HorizontalLayout* input = new HorizontalLayout(wndLayout);
-		agui::TextElement* label = new agui::TextElement("Value:", input);
+		/*agui::TextElement* value_label = */new agui::TextElement("Value:", input); // will be deleted in input
 		value = new agui::LineEdit(input);
 		value->DefaultAction.connect(boost::bind(&SettingsWindow::Finish, this, true));
 		value->SetFocus(true);
@@ -180,7 +180,7 @@ std::string CreateDefaultSetup(const std::string& map, const std::string& mod, c
 	return str.str();
 }
 
-SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWindow(NULL), curSelect(NULL), settingsWindow(NULL)
+SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWindow(NULL), settingsWindow(NULL), curSelect(NULL)
 {
 	SetPos(0,0);
 	SetSize(1,1);
@@ -209,7 +209,7 @@ SelectMenu::SelectMenu(bool server) : GuiElement(NULL), conWindow(NULL), updWind
 		menu->SetPos(0.1, 0.5);
 		menu->SetSize(0.4, 0.4);
 		menu->SetBorder(1.2f);
-		agui::TextElement* name = new agui::TextElement("Spring", menu);
+		/*agui::TextElement* title = */new agui::TextElement("Spring", menu); // will be deleted in menu
 		Button* single = new Button("Test the Game", menu);
 		single->Clicked.connect(boost::bind(&SelectMenu::Single, this));
 		Button* multi = new Button("Start the Lobby", menu);
