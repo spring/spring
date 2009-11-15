@@ -1,4 +1,5 @@
 #include "GResourceMap.h"
+#include "RAI.h"
 #include <set>
 #include "Sim/Features/FeatureDef.h"
 //#include <time.h>
@@ -34,7 +35,8 @@ float ResourceSite::GetResourceDistance(ResourceSite* RS, const int& pathType)
 	return RSD->minDistance;
 }
 
-GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrainMap* TM)
+GlobalResourceMap::GlobalResourceMap(IAICallback* _cb, cLogFile* l, GlobalTerrainMap* TM) :
+	cb(_cb)
 {
 //	l = logfile;
 	*l<<"\n Loading the Resource-Map ...";
@@ -98,21 +100,26 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 				fList[i] = fList[--fSize];
 	}
 
-	string cacheDirectory = cLogFile::GetDir(cb, true, "cache");
+	relResourceFileName = "cache/" + string(cb->GetModName());
+	relResourceFileName.resize(relResourceFileName.size()-4);
+	relResourceFileName += "-" + string(cb->GetMapName());
+	relResourceFileName.resize(relResourceFileName.size()-3);
+	relResourceFileName += "res";
 
-	resourceFileName = cacheDirectory + string(cb->GetModName());
-	resourceFileName.resize(resourceFileName.size()-4);
-	resourceFileName += "-" + string(cb->GetMapName());
-	resourceFileName.resize(resourceFileName.size()-3);
-	resourceFileName += "res";
-	FILE *resourceFile = fopen(resourceFileName.c_str(),"rb");
+	string resourceFileName_r;
+	FILE* resourceFile_r = NULL;
+	// get absolute file name
+	if (cRAI::LocateFile(cb, relResourceFileName, resourceFileName_r, false)) {
+		resourceFile_r = fopen(resourceFileName_r.c_str(), "rb");
+	}
+
 	bool useResourceFile = false;
-	if( resourceFile )
+	if( resourceFile_r )
 	{
 		useResourceFile = true;
 		*l<<"\n  Loading Resource-Site Data ...";
 		int udL2Size;
-		fread(&udL2Size, sizeof(int), 1, resourceFile);
+		fread(&udL2Size, sizeof(int), 1, resourceFile_r);
 		if( udSize != udL2Size )
 			useResourceFile = false;
 		else
@@ -120,7 +127,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 			int ID;
 			for( int i=0; i<udSize; i++ )
 			{
-				fread(&ID, sizeof(int), 1, resourceFile);
+				fread(&ID, sizeof(int), 1, resourceFile_r);
 				if( udList[i]->id != ID )
 				{	// The order or types of definitions have changed
 					useResourceFile = false;
@@ -130,14 +137,14 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 			if( useResourceFile )
 			{
 				int featureSites;
-				fread(&featureSites, sizeof(int), 1, resourceFile);
+				fread(&featureSites, sizeof(int), 1, resourceFile_r);
 				if( fSize != featureSites )
 					useResourceFile = false;
 				else
 				{	// Checks if the feature resource list has changed
 					for( int i=0; i<fSize; i++ )
 					{
-						fread(&ID, sizeof(int), 1, resourceFile);
+						fread(&ID, sizeof(int), 1, resourceFile_r);
 						if( fList[i] != ID )
 						{	// The order or types of features have changed
 							useResourceFile = false;
@@ -156,20 +163,20 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 						int optionID;
 						for( int iT=0; iT<2; iT++ )
 						{
-							fread(&RSize[iT], sizeof(int), 1, resourceFile);
+							fread(&RSize[iT], sizeof(int), 1, resourceFile_r);
 							for( int iR=0; iR<RSize[iT]; iR++ )
 							{
-								fread(&featureID, sizeof(int), 1, resourceFile);
-								fread(&position, sizeof(float3), 1, resourceFile);
+								fread(&featureID, sizeof(int), 1, resourceFile_r);
+								fread(&position, sizeof(float3), 1, resourceFile_r);
 								if( featureID >= 0 )
 									R[iT][iR] = new ResourceSite(position,featureID,cb->GetFeatureDef(featureID));
 								else
 									R[iT][iR] = new ResourceSite(position);
-								fread(&R[iT][iR]->amount, sizeof(float), 1, resourceFile);
-								fread(&size, sizeof(int), 1, resourceFile);
+								fread(&R[iT][iR]->amount, sizeof(float), 1, resourceFile_r);
+								fread(&size, sizeof(int), 1, resourceFile_r);
 								for( int i=0; i<size; i++ )
 								{
-									fread(&optionID, sizeof(int), 1, resourceFile);
+									fread(&optionID, sizeof(int), 1, resourceFile_r);
 									R[iT][iR]->options.insert(optionID);
 								}
 							}
@@ -177,26 +184,26 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 						for( int iT=0; iT<2; iT++ )
 							for( int iR=0; iR<RSize[iT]; iR++ )
 							{
-								fread(&size, sizeof(int), 1, resourceFile);
+								fread(&size, sizeof(int), 1, resourceFile_r);
 								for( int i=0; i<size; i++ )
 								{
-									fread(&iT2, sizeof(int), 1, resourceFile);
-									fread(&iR2, sizeof(int), 1, resourceFile);
+									fread(&iT2, sizeof(int), 1, resourceFile_r);
+									fread(&iR2, sizeof(int), 1, resourceFile_r);
 									R[iT][iR]->siteDistance.insert(rrPair(R[iT2][iR2],ResourceSiteDistance(0.0)));
 									ResourceSiteDistance* RSD = &R[iT][iR]->siteDistance.find(R[iT2][iR2])->second;
-									fread(&RSD->minDistance, sizeof(float), 1, resourceFile);
-									fread(&RSD->bestPathType, sizeof(int), 1, resourceFile);
-									fread(&dSize, sizeof(int), 1, resourceFile);
+									fread(&RSD->minDistance, sizeof(float), 1, resourceFile_r);
+									fread(&RSD->bestPathType, sizeof(int), 1, resourceFile_r);
+									fread(&dSize, sizeof(int), 1, resourceFile_r);
 									for( int i=0; i<dSize; i++ )
 									{
-										fread(&optionID, sizeof(int), 1, resourceFile);
-										fread(&distance, sizeof(float), 1, resourceFile);
+										fread(&optionID, sizeof(int), 1, resourceFile_r);
+										fread(&distance, sizeof(float), 1, resourceFile_r);
 										RSD->distance.insert(ifPair(optionID,distance));
 									}
-									fread(&dSize, sizeof(int), 1, resourceFile);
+									fread(&dSize, sizeof(int), 1, resourceFile_r);
 									for( int i=0; i<dSize; i++ )
 									{
-										fread(&position, sizeof(float3), 1, resourceFile);
+										fread(&position, sizeof(float3), 1, resourceFile_r);
 										RSD->pathDebug.push_back(position);
 									}
 									if( RSD->bestPathType == -2 )
@@ -205,14 +212,14 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 										RSD->bestDistance = &RSD->distance.find(RSD->bestPathType)->second;
 								}
 							}
-						fread(&averageMetalSite, sizeof(float), 1, resourceFile);
-						fread(&isMetalMap, sizeof(bool), 1, resourceFile);
+						fread(&averageMetalSite, sizeof(float), 1, resourceFile_r);
+						fread(&isMetalMap, sizeof(bool), 1, resourceFile_r);
 						if( isMetalMap )
 						{
 							sector = new MetalMapSector[TM->sectorXSize*TM->sectorZSize];
 							for( int iS=0; iS<TM->sectorXSize*TM->sectorZSize; iS++ )
 							{
-								fread(&sector[iS].isMetalSector, sizeof(bool), 1, resourceFile);
+								fread(&sector[iS].isMetalSector, sizeof(bool), 1, resourceFile_r);
 								sector[iS].S = &TM->sector[iS];
 							}
 						}
@@ -220,7 +227,7 @@ GlobalResourceMap::GlobalResourceMap(IAICallback* cb, cLogFile* l, GlobalTerrain
 				}
 			}
 		}
-		fclose(resourceFile);
+		fclose(resourceFile_r);
 		if( !useResourceFile )
 			*l<<"\n  A change has been detected in the map/mod, the resource data will be reloaded.";
 	}
@@ -704,62 +711,70 @@ GlobalResourceMap::~GlobalResourceMap()
 {
 	if( saveResourceFile )
 	{
-		FILE *resourceFile = fopen(resourceFileName.c_str(),"wb");
+		string resourceFileName_w;
+		FILE* resourceFile_w = NULL;
+		// get absolute file name
+		if (cRAI::LocateFile(cb, relResourceFileName, resourceFileName_w, true)) {
+			resourceFile_w = fopen(resourceFileName_w.c_str(), "wb");
+		} else {
+			throw 12;
+		}
+
 		int size;
-		fwrite(&(size=saveUD.size()), sizeof(int), 1, resourceFile);
+		fwrite(&(size=saveUD.size()), sizeof(int), 1, resourceFile_w);
 		for(vector<int>::iterator i=saveUD.begin(); i!=saveUD.end(); i++)
-			fwrite(&*i, sizeof(int), 1, resourceFile);
-		fwrite(&(size=saveF.size()), sizeof(int), 1, resourceFile);
+			fwrite(&*i, sizeof(int), 1, resourceFile_w);
+		fwrite(&(size=saveF.size()), sizeof(int), 1, resourceFile_w);
 		for(vector<int>::iterator i=saveF.begin(); i!=saveF.end(); i++)
-			fwrite(&*i, sizeof(int), 1, resourceFile);
+			fwrite(&*i, sizeof(int), 1, resourceFile_w);
 		for( int iT=0; iT<2; iT++ )
 		{
-			fwrite(&RSize[iT], sizeof(int), 1, resourceFile);
+			fwrite(&RSize[iT], sizeof(int), 1, resourceFile_w);
 			for( int iR=0; iR<RSize[iT]; iR++ )
 			{
-				fwrite(&R[iT][iR]->featureID, sizeof(int), 1, resourceFile);
-				fwrite(&R[iT][iR]->position, sizeof(float3), 1, resourceFile);
-				fwrite(&R[iT][iR]->amount, sizeof(float), 1, resourceFile);
-				fwrite(&(size=R[iT][iR]->options.size()), sizeof(int), 1, resourceFile);
+				fwrite(&R[iT][iR]->featureID, sizeof(int), 1, resourceFile_w);
+				fwrite(&R[iT][iR]->position, sizeof(float3), 1, resourceFile_w);
+				fwrite(&R[iT][iR]->amount, sizeof(float), 1, resourceFile_w);
+				fwrite(&(size=R[iT][iR]->options.size()), sizeof(int), 1, resourceFile_w);
 				for( set<int>::iterator i=R[iT][iR]->options.begin(); i!=R[iT][iR]->options.end(); i++ )
-					fwrite(&*i, sizeof(int), 1, resourceFile);
+					fwrite(&*i, sizeof(int), 1, resourceFile_w);
 			}
 		}
 		for( int iT=0; iT<2; iT++ )
 			for( int iR=0; iR<RSize[iT]; iR++ )
 			{
-				fwrite(&(size=R[iT][iR]->siteDistance.size()), sizeof(int), 1, resourceFile);
+				fwrite(&(size=R[iT][iR]->siteDistance.size()), sizeof(int), 1, resourceFile_w);
 				for( map<ResourceSite*,ResourceSiteDistance>::iterator iRS=R[iT][iR]->siteDistance.begin(); iRS!=R[iT][iR]->siteDistance.end(); iRS++ )
 				{
-					fwrite(&iRS->first->type, sizeof(int), 1, resourceFile);
+					fwrite(&iRS->first->type, sizeof(int), 1, resourceFile_w);
 					ResourceSiteDistance* RSD = &iRS->second;
 					for(int i=0; i<RSize[iRS->first->type]; i++)
 						if( R[iRS->first->type][i] == iRS->first )
 						{
-							fwrite(&i, sizeof(int), 1, resourceFile);
+							fwrite(&i, sizeof(int), 1, resourceFile_w);
 							break;
 						}
-					fwrite(&RSD->minDistance, sizeof(float), 1, resourceFile);
+					fwrite(&RSD->minDistance, sizeof(float), 1, resourceFile_w);
 					if( RSD->bestPathType == -1 && RSD->bestDistance != 0 )
 						RSD->bestPathType = -2;
-					fwrite(&RSD->bestPathType, sizeof(int), 1, resourceFile);
-					fwrite(&(size=RSD->distance.size()), sizeof(int), 1, resourceFile);
+					fwrite(&RSD->bestPathType, sizeof(int), 1, resourceFile_w);
+					fwrite(&(size=RSD->distance.size()), sizeof(int), 1, resourceFile_w);
 					for( map<int,float>::iterator i=RSD->distance.begin(); i!=RSD->distance.end(); i++ )
 					{
-						fwrite(&i->first, sizeof(int), 1, resourceFile);
-						fwrite(&i->second, sizeof(float), 1, resourceFile);
+						fwrite(&i->first, sizeof(int), 1, resourceFile_w);
+						fwrite(&i->second, sizeof(float), 1, resourceFile_w);
 					}
-					fwrite(&(size=RSD->pathDebug.size()), sizeof(int), 1, resourceFile);
+					fwrite(&(size=RSD->pathDebug.size()), sizeof(int), 1, resourceFile_w);
 					for( vector<float3>::iterator i=RSD->pathDebug.begin(); i!=RSD->pathDebug.end(); i++ )
-						fwrite(&*i, sizeof(float3), 1, resourceFile);
+						fwrite(&*i, sizeof(float3), 1, resourceFile_w);
 				}
 			}
-		fwrite(&averageMetalSite, sizeof(float), 1, resourceFile);
-		fwrite(&isMetalMap, sizeof(bool), 1, resourceFile);
+		fwrite(&averageMetalSite, sizeof(float), 1, resourceFile_w);
+		fwrite(&isMetalMap, sizeof(bool), 1, resourceFile_w);
 		if( isMetalMap )
 			for( int iS=0; iS<saveSectorSize; iS++ )
-				fwrite(&sector[iS].isMetalSector, sizeof(bool), 1, resourceFile);
-		fclose(resourceFile);
+				fwrite(&sector[iS].isMetalSector, sizeof(bool), 1, resourceFile_w);
+		fclose(resourceFile_w);
 	}
 
 	if( sector != 0 )

@@ -105,8 +105,10 @@ private:
 	int MMXSize;
 	int MMExtractorRadiusI;
 
+	IAICallback* cb;
+
 	// needed to save the file
-	string resourceFileName;
+	string relResourceFileName;
 	bool saveResourceFile;
 	vector<int> saveUD;
 	vector<int> saveF;
