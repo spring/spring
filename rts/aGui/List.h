@@ -53,6 +53,7 @@ private:
 	void ScrollUpOne();
 	void ScrollDownOne();
 	int NumDisplay();
+	float ScaleFactor();
 
 	unsigned clickedTime;
 	int place;
