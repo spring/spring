@@ -10,6 +10,7 @@
 #include "Gui.h"
 #include "Rendering/glFont.h"
 #include "Util.h"
+#include "GlobalUnsynced.h"
 
 namespace agui
 {
@@ -30,7 +31,7 @@ List::List(GuiElement* parent) :
 		filteredItems(&items)
 {
 	borderSpacing = 0.005f;
-	itemSpacing = 0.003f;
+	itemSpacing = 0.000f;
 	itemHeight = 0.04f;
 	hasFocus = true;
 	topIndex = 0;
@@ -95,7 +96,7 @@ bool List::MousePress(int x, int y, int button)
 }
 
 int List::NumDisplay() {
-	return (size[1] - 2.0f * borderSpacing) / (itemHeight + itemSpacing);
+	return std::max(1.0f, (size[1] - 2.0f * borderSpacing) / (itemHeight + itemSpacing));
 }
 
 void List::ScrollUpOne() {
@@ -123,7 +124,12 @@ void List::MouseRelease(int x, int y, int button)
 	activeMousePress = false;
 }
 
+float List::ScaleFactor() {
+	return (float)std::max(1, gu->winSizeY) * (size[1] - 2.0f * borderSpacing);
+}
+
 void List::UpdateTopIndex() {
+	itemHeight = 18.0f / ScaleFactor();
 	const int numDisplay = NumDisplay();
 	if(topIndex + numDisplay > filteredItems->size())
 		topIndex = std::max(0, (int)filteredItems->size() - numDisplay);
@@ -178,6 +184,7 @@ void List::DrawSelf()
 	DrawBox(GL_QUADS);
 
 	font->Begin();
+	float hf = font->GetSize() / ScaleFactor();
 
 	font->SetTextColor(1,1,0.4f,opacity);
 
@@ -226,7 +233,7 @@ void List::DrawSelf()
 			glLineWidth(1.0f);
 		}
 
-		font->glPrint(pos[0]+borderSpacing+0.001f, b.GetMidY(), itemFontScale, FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
+		font->glPrint(pos[0]+borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;
