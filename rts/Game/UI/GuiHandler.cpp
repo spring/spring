@@ -47,6 +47,8 @@
 #include "Sim/Units/UnitLoader.h"
 #include "Sim/Weapons/WeaponDefHandler.h"
 #include "Sim/Weapons/Weapon.h"
+#include "Sound/AudioChannel.h"
+#include "Sound/Sound.h"
 #include "EventHandler.h"
 #include "FileSystem/SimpleParser.h"
 #include "LogOutput.h"
@@ -98,6 +100,8 @@ CGuiHandler::CGuiHandler():
 		glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
 		useStencil = (stencilBits >= 1);
 	}
+
+	failedSound = sound->GetSoundId("FailedCommand", false);
 }
 
 
@@ -1121,6 +1125,10 @@ void CGuiHandler::MouseRelease(int x, int y, int button, float3& camerapos, floa
 	// not over a button, try to execute a command
 	Command c = GetCommand(x, y, button, false, camerapos, mousedir);
 
+	if (c.id == CMD_FAILED) { // indicates we should not finish the current command
+		Channels::UserInterface.PlaySample(failedSound, 5);
+		return;
+	}
 	// if cmd_stop is returned it indicates that no good command could be found
 	if (c.id != CMD_STOP) {
 		GiveCommand(c);
@@ -2129,6 +2137,15 @@ Command CGuiHandler::GetCommand(int mousex, int mousey, int buttonHint, bool pre
 
 			if(buildPos.empty()){
 				return defaultRet;
+			}
+
+			if(buildPos.size()==1) {
+				CFeature* feature; // TODO: Maybe also check out-of-range for immobile builder?
+				if(!uh->TestUnitBuildSquare(bi,feature,gu->myAllyTeam)) {
+					Command failedRet;
+					failedRet.id = CMD_FAILED;
+					return failedRet;
+				}
 			}
 
 			int a=0; // limit the number of max commands possible to send to avoid overflowing the network buffer
