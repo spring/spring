@@ -11,9 +11,9 @@
 #include "bitops.h"
 #include "Map/BaseGroundDrawer.h"
 #include "BaseSky.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Projectiles/ProjectileHandler.h"
-#include "Sim/Features/FeatureHandler.h"
 #include "Game/UI/MouseHandler.h"
 #include "Game/GameHelper.h"
 #include "Rendering/ShadowHandler.h"
@@ -467,9 +467,9 @@ void CDynWater::DrawReflection(CGame* game)
 	shadowHandler->drawShadows=drawShadows;
 
 	unitDrawer->Draw(true);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(false,true);
-	featureHandler->DrawFadeFeatures(false,true);
+	featureDrawer->DrawFadeFeatures(false,true);
 
 	ph->Draw(true);
 	eventHandler.DrawWorldReflection();
@@ -523,9 +523,9 @@ void CDynWater::DrawRefraction(CGame* game)
 	glClipPlane(GL_CLIP_PLANE2 ,plane);
 	drawReflection=true;
 	unitDrawer->Draw(false,true);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 	unitDrawer->DrawCloakedUnits(true,true);
-	featureHandler->DrawFadeFeatures(true,true); // FIXME: Make it fade out correctly without "noAdvShading"
+	featureDrawer->DrawFadeFeatures(true,true); // FIXME: Make it fade out correctly without "noAdvShading"
 	drawReflection=false;
 	ph->Draw(false,true);
 	eventHandler.DrawWorldRefraction();
