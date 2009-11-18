@@ -33,9 +33,12 @@ PacketType CBaseNetProtocol::SendNewFrame()
 }
 
 
-PacketType CBaseNetProtocol::SendQuit()
+PacketType CBaseNetProtocol::SendQuit(const std::string& reason)
 {
-	return PacketType(new PackPacket(1, NETMSG_QUIT));
+	unsigned size = 3 + reason.size() + 1;
+	PackPacket* packet = new PackPacket(size, NETMSG_QUIT);
+	*packet << static_cast<uint16_t>(size) << reason;
+	return PacketType(packet);
 }
 
 PacketType CBaseNetProtocol::SendStartPlaying(unsigned countdown)
@@ -244,11 +247,16 @@ PacketType CBaseNetProtocol::SendSyncResponse(int frameNum, uint checksum)
 	return PacketType(packet);
 }
 
-PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, const std::string& message)
+PacketType CBaseNetProtocol::SendSystemMessage(uchar myPlayerNum, std::string message)
 {
-	unsigned size = 3 + message.size() + 1;
+	if (message.size() > 65000)
+	{
+		message.resize(65000);
+		message += "...";
+	}
+	unsigned size = 1 + 2 + 1 + message.size() + 1;
 	PackPacket* packet = new PackPacket(size, NETMSG_SYSTEMMSG);
-	*packet << static_cast<uchar>(size) << myPlayerNum << message;
+	*packet << static_cast<uint16_t>(size) << myPlayerNum << message;
 	return PacketType(packet);
 }
 
@@ -398,7 +406,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 
 	proto->AddType(NETMSG_KEYFRAME, 5);
 	proto->AddType(NETMSG_NEWFRAME, 1);
-	proto->AddType(NETMSG_QUIT, 1);
+	proto->AddType(NETMSG_QUIT, -2);
 	proto->AddType(NETMSG_STARTPLAYING, 5);
 	proto->AddType(NETMSG_SETPLAYERNUM, 2);
 	proto->AddType(NETMSG_PLAYERNAME, -1);
@@ -426,7 +434,7 @@ CBaseNetProtocol::CBaseNetProtocol()
 	proto->AddType(NETMSG_GAMEOVER, 1);
 	proto->AddType(NETMSG_MAPDRAW, -1);
 	proto->AddType(NETMSG_SYNCRESPONSE, 9);
-	proto->AddType(NETMSG_SYSTEMMSG, -1);
+	proto->AddType(NETMSG_SYSTEMMSG, -2);
 	proto->AddType(NETMSG_STARTPOS, 16);
 	proto->AddType(NETMSG_PLAYERINFO, 8);
 	proto->AddType(NETMSG_PLAYERLEFT, 3);

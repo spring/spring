@@ -126,18 +126,18 @@ void CQuitBox::Draw(void)
 
 	glEnable(GL_TEXTURE_2D);
 	glColor4f(1,1,0.4f,0.8f);
-	font->glPrint(box.x1+0.045f,box.y1+0.58f,0.7f,FONT_SCALE | FONT_NORM,"Do you want to ...");
+	font->glPrint(box.x1+0.045f,box.y1+0.58f,0.7f, FONT_VCENTER | FONT_SCALE | FONT_NORM,"Do you want to ...");
 	glColor4f(1,1,1,0.8f);
 	font->glPrint(box.x1 + resignBox.x1     + 0.025f,
-	                box.y1 + resignBox.y1     + 0.005f, 1, FONT_SCALE | FONT_NORM, "Resign");
+	                box.y1 + (resignBox.y1 + resignBox.y2)/2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Resign");
 	font->glPrint(box.x1 + saveBox.x1   + 0.025f,
-	                box.y1 + saveBox.y1   + 0.005f, 1, FONT_SCALE | FONT_NORM, "Save");
+	                box.y1 + (saveBox.y1 + saveBox.y2)/2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Save");
 	font->glPrint(box.x1 + giveAwayBox.x1   + 0.025f,
-	                box.y1 + giveAwayBox.y1   + 0.005f, 1, FONT_SCALE | FONT_NORM, "Give everything to ...");
+	                box.y1 + (giveAwayBox.y1 + giveAwayBox.y2)/2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Give everything to ...");
 	font->glPrint(box.x1 + cancelBox.x1     + 0.025f,
-	                box.y1 + cancelBox.y1     + 0.005f, 1, FONT_SCALE | FONT_NORM, "Cancel");
+	                box.y1 + (cancelBox.y1 + cancelBox.y2)/2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Cancel");
 	font->glPrint(box.x1 + quitBox.x1       + 0.025f,
-	                box.y1 + quitBox.y1       + 0.005f, 1, FONT_SCALE | FONT_NORM, "Quit");
+	                box.y1 + (quitBox.y1 + quitBox.y2)/2, 1, FONT_VCENTER | FONT_SCALE | FONT_NORM, "Quit");
 
 	for(int team=0;team<teamHandler->ActiveTeams()-1;++team){
 		int actualTeam=team;
@@ -244,12 +244,6 @@ void CQuitBox::MouseRelease(int x,int y,int button)
 		// give away all units (and resources)
 		if(InBox(mx,my,box+giveAwayBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {
 			net->Send(CBaseNetProtocol::Get().SendGiveAwayEverything(gu->myPlayerNum, shareTeam, playerHandler->Player(gu->myPlayerNum)->team));
-			// inform other users of the giving away of units
-			char givenAwayMsg[200];
-			sprintf(givenAwayMsg,"%s gave everything to %s.",
-				playerHandler->Player(gu->myPlayerNum)->name.c_str(),
-				playerHandler->Player(teamHandler->Team(shareTeam)->leader)->name.c_str());
-			net->Send(CBaseNetProtocol::Get().SendSystemMessage(gu->myPlayerNum, givenAwayMsg));
 		}
 		// resign, so self-d all units
 		if (InBox(mx,my,box+resignBox) && !playerHandler->Player(gu->myPlayerNum)->spectator) {

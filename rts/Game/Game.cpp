@@ -2728,13 +2728,14 @@ void CGame::ActionReceived(const Action& action, int playernum)
 		teamHandler->Team(team)->AddEnergy(1000);
 	}
 	else if (action.command == "take" && (!playerHandler->Player(playernum)->spectator || gs->cheatEnabled)) {
-		int sendTeam = playerHandler->Player(playernum)->team;
+		const int sendTeam = playerHandler->Player(playernum)->team;
 		for (int a = 0; a < teamHandler->ActiveTeams(); ++a) {
 			if (teamHandler->AlliedTeams(a, sendTeam)) {
 				bool hasPlayer = false;
 				for (int b = 0; b < playerHandler->ActivePlayers(); ++b) {
 					if (playerHandler->Player(b)->active && playerHandler->Player(b)->team==a && !playerHandler->Player(b)->spectator) {
 						hasPlayer = true;
+						break;
 					}
 				}
 				if (!hasPlayer) {
@@ -3566,7 +3567,8 @@ void CGame::ClientReadNet()
 
 		switch (packetCode) {
 			case NETMSG_QUIT: {
-				logOutput.Print("Server shutdown");
+				const std::string message = (char*)(&inbuf[3]);
+				logOutput.Print(message);
 				if (!gameOver)
 				{
 					GameEnd();
@@ -3711,7 +3713,7 @@ void CGame::ClientReadNet()
 			}
 
 			case NETMSG_SYSTEMMSG:{
-				string s=(char*)(&inbuf[3]);
+				string s=(char*)(&inbuf[4]);
 				logOutput.Print(s);
 				AddTraffic(-1, packetCode, dataLength);
 				break;
@@ -4635,7 +4637,8 @@ void CGame::HandleChatMsg(const ChatMessage& msg)
 			}
 		}
 		else if (msg.destination == ChatMessage::TO_EVERYONE) {
-			if (gu->spectating || !noSpectatorChat || !player->spectator) {
+			const bool specsOnly = noSpectatorChat && (player && player->spectator);
+			if (gu->spectating || !specsOnly) {
 				logOutput.Print(label + s);
 				Channels::UserInterface.PlaySample(chatSound, 5);
 			}

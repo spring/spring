@@ -1099,20 +1099,20 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 
 	CFeature* feature = NULL;
 
-	const int allyteam = teamHandler->AllyTeam(team);
-	const int endr = int(searchRadius / (SQUARE_SIZE * 2));
+	const int allyTeam = teamHandler->AllyTeam(team);
+	const int endr = (int) (searchRadius / (SQUARE_SIZE * 2));
 	const vector<SearchOffset>& ofs = GetSearchOffsetTable(endr);
 
 	for (int so = 0; so < endr * endr * 4; so++) {
-		float x = pos.x + ofs[so].dx * SQUARE_SIZE * 2;
-		float z = pos.z + ofs[so].dy * SQUARE_SIZE * 2;
+		const float x = pos.x + ofs[so].dx * SQUARE_SIZE * 2;
+		const float z = pos.z + ofs[so].dy * SQUARE_SIZE * 2;
 
 		BuildInfo bi(unitDef, float3(x, 0.0f, z), facing);
 		bi.pos = Pos2BuildPos(bi);
 
-		if (uh->TestUnitBuildSquare(bi, feature, allyteam) && (!feature || feature->allyteam != allyteam)) {
-			const int xs = int(x / SQUARE_SIZE);
-			const int zs = int(z / SQUARE_SIZE);
+		if (uh->TestUnitBuildSquare(bi, feature, allyTeam) && (!feature || feature->allyteam != allyTeam)) {
+			const int xs = (int) (x / SQUARE_SIZE);
+			const int zs = (int) (z / SQUARE_SIZE);
 			const int xsize = bi.GetXSize();
 			const int zsize = bi.GetZSize();
 
@@ -1126,9 +1126,9 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 			// check for nearby blocking features
 			for (int z2 = z2Min; z2 < z2Max; ++z2) {
 				for (int x2 = x2Min; x2 < x2Max; ++x2) {
-					CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
+					CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 
-					if (so && so->immobile && !dynamic_cast<CFeature*>(so)) {
+					if (solObj && solObj->immobile && !dynamic_cast<CFeature*>(solObj)) {
 						good = false;
 						break;
 					}
@@ -1144,9 +1144,9 @@ float3 CGameHelper::ClosestBuildSite(int team, const UnitDef* unitDef, float3 po
 				// check for nearby factories with open yards
 				for (int z2 = z2Min; z2 < z2Max; ++z2) {
 					for (int x2 = x2Min; x2 < x2Max; ++x2) {
-						CSolidObject* so = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
+						CSolidObject* solObj = groundBlockingObjectMap->GroundBlockedUnsafe(z2 * gs->mapx + x2);
 
-						if (so && so->immobile && dynamic_cast<CFactory*>(so) && ((CFactory*)so)->opening) {
+						if (solObj && solObj->immobile && dynamic_cast<CFactory*>(solObj) && ((CFactory*)solObj)->opening) {
 							good = false;
 							break;
 						}

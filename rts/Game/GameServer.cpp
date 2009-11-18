@@ -706,7 +706,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 		case NETMSG_QUIT: {
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" normal quit"));
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 1));
-			players[a].Kill();
+			players[a].Kill("User exited");
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 1);
@@ -742,10 +742,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 			break;
 		}
 		case NETMSG_SYSTEMMSG:
-			if(inbuf[2]!=a){
-				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[2]));
+			if(inbuf[3]!=a){
+				Message(str(format(WrongPlayer) %(unsigned)inbuf[0] %a %(unsigned)inbuf[3]));
 			} else {
-				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(inbuf[2], (char*)(&inbuf[3])));
+				Broadcast(CBaseNetProtocol::Get().SendSystemMessage(inbuf[3], (char*)(&inbuf[4])));
 			}
 			break;
 
@@ -979,6 +979,9 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 							// team has no controller left now
 							teams[fromTeam_g].active = false;
 							teams[fromTeam_g].leader = -1;
+							std::ostringstream givenAwayMsg;
+							givenAwayMsg << players[player].name << " gave everything to " << players[teams[toTeam].leader].name;
+							Broadcast(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, givenAwayMsg.str()));
 						}
 						break;
 					}
@@ -1266,7 +1269,7 @@ void CGameServer::ServerReadNet()
 		{
 			Message(str(format(PlayerLeft) %players[a].GetType() %players[a].name %" timeout")); //this must happen BEFORE the reset!
 			Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(a, 0));
-			players[a].Kill();
+			players[a].Kill("User timeout");
 			if (hostif)
 			{
 				hostif->SendPlayerLeft(a, 0);
@@ -1647,7 +1650,7 @@ void CGameServer::UpdateLoop()
 	}
 	if (hostif)
 		hostif->SendQuit();
-	Broadcast(CBaseNetProtocol::Get().SendQuit());
+	Broadcast(CBaseNetProtocol::Get().SendQuit("Server shutdown"));
 }
 
 bool CGameServer::WaitsOnCon() const
@@ -1666,7 +1669,7 @@ void CGameServer::KickPlayer(const int playerNum)
 	{
 		Message(str(format(PlayerLeft) %players[playerNum].GetType() %players[playerNum].name %"kicked"));
 		Broadcast(CBaseNetProtocol::Get().SendPlayerLeft(playerNum, 2));
-		players[playerNum].Kill();
+		players[playerNum].Kill("Kicked from the battle");
 		if (hostif)
 		{
 			hostif->SendPlayerLeft(playerNum, 2);
@@ -1720,6 +1723,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		{
 			// player not found
 			Message(str(format(" -> %s not found in script, rejecting connection attempt") %name));
+			link->SendData(CBaseNetProtocol::Get().SendQuit(str(format("Unknown playername: %s") %name)));
 			return 0;
 		}
 	}
@@ -1730,6 +1734,7 @@ unsigned CGameServer::BindConnection(std::string name, const std::string& passwd
 		if (passwd != it->second)
 		{
 			Message(str(format(" -> rejected because of wrong password")));
+			link->SendData(CBaseNetProtocol::Get().SendQuit(str(format("Wrong passkey: %s") %name)));
 			return 0;
 		};
 	}

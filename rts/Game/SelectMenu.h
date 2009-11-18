@@ -9,6 +9,8 @@ union SDL_Event;
 class SelectionWidget;
 class ConnectWindow;
 class UpdaterWindow;
+class SettingsWindow;
+class ListSelectWnd;
 
 /**
 @brief User prompt for options when no script is given
@@ -41,11 +43,20 @@ private:
 	void SelectMap(const std::string& s);
 	void SelectMod(const std::string& s);
 
+	void ShowSettingsWindow(bool show, std::string name);
+	void ShowSettingsList();
+	void SelectSetting(std::string);
+	void CleanWindow();
+
 	ClientSetup* mySettings;
 
 	ConnectWindow* conWindow;
 	UpdaterWindow* updWindow;
 	SelectionWidget* selw;
+
+	SettingsWindow* settingsWindow;
+	ListSelectWnd* curSelect;
+	std::string userSetting;
 };
 
 #endif

@@ -22,8 +22,6 @@ public:
 	cLogFile& operator<<(float message);
 	cLogFile& operator<<(string message);
 
-	static std::string GetDir(IAICallback* cb, bool writeableAndCreate = true, string relPath = "");
-
 private:
 	string logFileName;
 	FILE *logFile;
