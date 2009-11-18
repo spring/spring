@@ -84,6 +84,7 @@
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Lua/LuaInputReceiver.h"
 #include "Lua/LuaHandle.h"
@@ -441,6 +442,7 @@ CGame::CGame(std::string mapname, std::string modName, CLoadSaveHandler *saveFil
 	qf = new CQuadField();
 
 	featureHandler = new CFeatureHandler();
+	featureDrawer = new CFeatureDrawer();
 
 	mapDamage = IMapDamage::GetMapDamage();
 	loshandler = new CLosHandler();
@@ -596,6 +598,7 @@ CGame::~CGame()
 	SafeDelete(resourceBar);
 
 	SafeDelete(featureHandler);
+	SafeDelete(featureDrawer);
 	SafeDelete(uh);
 	SafeDelete(unitDrawer);
 	SafeDelete(geometricObjects);
@@ -1493,9 +1496,9 @@ bool CGame::ActionPressed(const Action& action,
 	}
 	else if (cmd == "showrezbars") {
 		if (action.extra.empty()) {
-			featureHandler->showRezBars = !featureHandler->showRezBars;
+			featureDrawer->showRezBars = !featureDrawer->showRezBars;
 		} else {
-			featureHandler->showRezBars = !!atoi(action.extra.c_str());
+			featureDrawer->showRezBars = !!atoi(action.extra.c_str());
 		}
 	}
 	else if (cmd == "pause") {
@@ -2865,7 +2868,7 @@ bool CGame::DrawWorld()
 	eventHandler.DrawWorldPreUnit();
 
 	unitDrawer->Draw(false);
-	featureHandler->Draw();
+	featureDrawer->Draw();
 
 	if (drawGround) {
 		gd->DrawTrees();
@@ -2884,7 +2887,7 @@ bool CGame::DrawWorld()
 	//! draw cloaked part below surface
 	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(true,noAdvShading);
-	featureHandler->DrawFadeFeatures(true,noAdvShading);
+	featureDrawer->DrawFadeFeatures(true,noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
 	if (drawWater && !mapInfo->map.voidWater) {
@@ -2901,7 +2904,7 @@ bool CGame::DrawWorld()
 	//! draw cloaked part above surface
 	glEnable(GL_CLIP_PLANE3);
 	unitDrawer->DrawCloakedUnits(false,noAdvShading);
-	featureHandler->DrawFadeFeatures(false,noAdvShading);
+	featureDrawer->DrawFadeFeatures(false,noAdvShading);
 	glDisable(GL_CLIP_PLANE3);
 
 	ph->Draw(false);
@@ -2985,7 +2988,7 @@ bool CGame::DrawWorld()
 
 void CGame::SwapTransparentObjects() {
 	unitDrawer->SwapCloakedUnits();
-	featureHandler->SwapFadeFeatures();
+	featureDrawer->SwapFadeFeatures();
 }
 
 #if defined(USE_GML) && GML_ENABLE_DRAW
@@ -3089,7 +3092,7 @@ bool CGame::Draw() {
 	treeDrawer->UpdateDraw();
 	readmap->UpdateDraw();
 	unitDrawer->Update();
-	featureHandler->UpdateDraw();
+	featureDrawer->UpdateDraw();
 	mouse->UpdateCursors();
 	mouse->EmptyMsgQueUpdate();
 	guihandler->Update();

@@ -13,6 +13,7 @@
 #include "Sim/Misc/QuadField.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/UnitModels/3DOParser.h"
+#include "Rendering/UnitModels/FeatureDrawer.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Sim/Misc/CollisionVolume.h"
 #include "Sim/Misc/ModInfo.h"
@@ -426,7 +427,7 @@ void CFeature::ForcedMove(const float3& newPos, bool snapToGround)
 
 	pos = newPos;
 
-	featureHandler->UpdateDrawPos(this);
+	featureDrawer->UpdateDrawPos(this);
 
 	// setup finalHeight
 	if (snapToGround) {
@@ -553,7 +554,7 @@ bool CFeature::UpdatePosition()
 				deathSpeed = ZeroVector;
 			}
 
-			featureHandler->UpdateDrawPos(this);
+			featureDrawer->UpdateDrawPos(this);
 
 			CalculateTransform();
 		}
