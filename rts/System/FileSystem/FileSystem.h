@@ -66,7 +66,7 @@ public:
 	 * Starts from dirpath, descending down if recurse is true.
 	 */
 	std::vector<std::string> FindFiles(const std::string& dir, const std::string& pattern, int flags) const;
-	bool IsReadableFile(const std::string& file) const;
+	static bool IsReadableFile(const std::string& file);
 	/**
 	 * Returns an absolute path if the file was found in one of the data-dirs,
 	 * or the argument (relative path) if it was not found.
@@ -86,14 +86,15 @@ protected:
 	/**
 	 * @brief internal find-files-in-a-single-datadir-function
 	 * @param absolute paths to the dirs found will be added to this
-	 * @param dir path in which to start looking
+	 * @param datadir root of the VFS data directory. This part of the path IS NOT included in returned matches.
+	 * @param dir path in which to start looking. This part of path IS included in returned matches.
 	 * @param pattern pattern to search for
 	 * @param flags possible values: FileSystem::ONLY_DIRS, FileSystem::INCLUDE_DIRS, FileSystem::RECURSE
 	 *
 	 * Will search for dirs given a particular pattern.
 	 * Starts from dir, descending down if FileSystem::ONLY_DIRS is set in flags.
 	 */
-	void FindFilesSingleDir(std::vector<std::string>& matches, const std::string& dir, const std::string &pattern, int flags) const;
+	void FindFilesSingleDir(std::vector<std::string>& matches, const std::string& datadir, const std::string& dir, const std::string &pattern, int flags) const;
 
 	DataDirLocater locater;
 	static FileSystemHandler* instance;

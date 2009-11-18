@@ -249,47 +249,63 @@ bool CUNIT::HubBuild(const UnitDef* toBuild) const {
 
 
 bool CUNIT::ReclaimBestFeature(bool metal, float radius) {
-	int featureIDs[1000];
+	int featureIDs[1000] = {0};
 
 	int   numFeatures   = ai->cb->GetFeatures(featureIDs, 1000, pos(), radius);
 	int   bestFeatureID = -1;
 	float bestScore     = 0.0f;
-	float myScore       = 0.0f;
-	float bestDist      = 100000.0f;
-	float myDist        = 100000.0f;
-	float myThreat      = 0.0f;
+	float bestDist      = 1e30f;
+
+	const MoveData* moveData = def()->movedata;
 
 	if (metal) {
 		for (int i = 0; i < numFeatures; i++) {
-			myScore  = ai->cb->GetFeatureDef(featureIDs[i])->metal;
-			myDist   = ai->cb->GetFeaturePos(featureIDs[i]).distance2D(ai->cb->GetUnitPos(myid));
-			myThreat = ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(featureIDs[i]));
+			const FeatureDef* fDef    = ai->cb->GetFeatureDef(featureIDs[i]);
+			const float3&     fPos    = ai->cb->GetFeaturePos(featureIDs[i]);
+			const float       fDist   = fPos.distance2D(ai->cb->GetUnitPos(myid));
+			const float       fThreat = ai->tm->ThreatAtThisPoint(fPos);
 
-			if (myScore > bestScore && myThreat <= ai->tm->GetAverageThreat()) {
-				bestScore = myScore;
+			if (fDef == 0)
+				continue;
+
+			// not entirely correct, might still be able to get within reclaim-range
+			if (!ai->pather->IsPositionReachable(moveData, fPos)) {
+				continue;
+			}
+
+			if (fDef->metal > bestScore && fThreat <= ai->tm->GetAverageThreat()) {
+				bestScore = fDef->metal;
 				bestFeatureID = featureIDs[i];
 			}
-			else if (bestScore == myScore && myThreat <= ai->tm->GetAverageThreat()) {
-				if (myDist < bestDist) {
+			else if (bestScore == fDef->metal && fThreat <= ai->tm->GetAverageThreat()) {
+				if (fDist < bestDist) {
 					bestFeatureID = featureIDs[i];
-					bestDist = myDist;
+					bestDist = fDist;
 				}
 			}
 		}
 	} else {
 		for (int i = 0; i < numFeatures;i++) {
-			myScore  = ai->cb->GetFeatureDef(featureIDs[i])->energy;
-			myDist   = ai->cb->GetFeaturePos(featureIDs[i]).distance2D(ai->cb->GetUnitPos(myid));
-			myThreat = ai->tm->ThreatAtThisPoint(ai->cb->GetFeaturePos(featureIDs[i]));
+			const FeatureDef* fDef    = ai->cb->GetFeatureDef(featureIDs[i]);
+			const float3&     fPos    = ai->cb->GetFeaturePos(featureIDs[i]);
+			const float       fDist   = fPos.distance2D(ai->cb->GetUnitPos(myid));
+			const float       fThreat = ai->tm->ThreatAtThisPoint(fPos);
 
-			if (myScore > bestScore && myThreat < ai->tm->GetAverageThreat()) {
-				bestScore = myScore;
+			if (fDef == 0)
+				continue;
+
+			if (!ai->pather->IsPositionReachable(moveData, fPos)) {
+				continue;
+			}
+
+			if (fDef->energy > bestScore && fThreat < ai->tm->GetAverageThreat()) {
+				bestScore = fDef->energy;
 				bestFeatureID = featureIDs[i];
 			}
-			else if (bestScore == myScore && myThreat < ai->tm->GetAverageThreat()) {
-				if (myDist < bestDist) {
+			else if (bestScore == fDef->energy && fThreat < ai->tm->GetAverageThreat()) {
+				if (fDist < bestDist) {
 					bestFeatureID = featureIDs[i];
-					bestDist = myDist;
+					bestDist = fDist;
 				}
 			}
 		}
@@ -302,6 +318,7 @@ bool CUNIT::ReclaimBestFeature(bool metal, float radius) {
 
 	return false;
 }
+
 
 
 Command CUNIT::MakePosCommand(int id, float3 pos, float radius, int facing) const {

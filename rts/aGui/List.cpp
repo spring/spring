@@ -10,6 +10,7 @@
 #include "Gui.h"
 #include "Rendering/glFont.h"
 #include "Util.h"
+#include "GlobalUnsynced.h"
 
 namespace agui
 {
@@ -24,17 +25,40 @@ List::List(GuiElement* parent) :
 		GuiElement(parent),
 		cancelPlace(-1),
 		tooltip("No tooltip defined"),
+		clickedTime(SDL_GetTicks()),
 		place(0),
 		activeMousePress(false),
 		filteredItems(&items)
 {
 	borderSpacing = 0.005f;
-	itemSpacing = 0.003f;
+	itemSpacing = 0.000f;
 	itemHeight = 0.04f;
+	hasFocus = true;
+	topIndex = 0;
 }
 
 List::~List()
 {
+}
+
+void List::SetFocus(bool focus)
+{
+	hasFocus = focus;
+}
+
+void List::RemoveAllItems() {
+	items.clear();
+}
+
+void List::RefreshQuery() {
+	if(query != "") {
+		int t = topIndex;
+		std::string q = query;
+		Filter(true);
+		query = q;
+		Filter(false);
+		topIndex = t;
+	}
 }
 
 void List::AddItem(const std::string& name, const std::string& description)
@@ -61,14 +85,32 @@ bool List::MousePress(int x, int y, int button)
 			break;
 		}
 		case SDL_BUTTON_WHEELDOWN:
-			DownOne();
+			ScrollDownOne();
 			break;
 			
 		case SDL_BUTTON_WHEELUP:
-			UpOne();
+			ScrollUpOne();
 			break;
 	}
 	return false;
+}
+
+int List::NumDisplay() {
+	return std::max(1.0f, (size[1] - 2.0f * borderSpacing) / (itemHeight + itemSpacing));
+}
+
+void List::ScrollUpOne() {
+	if(topIndex > 0)
+		--topIndex;
+	if(place >= topIndex + NumDisplay())
+		--place;
+}
+
+void List::ScrollDownOne() {
+	if(topIndex + NumDisplay() < filteredItems->size())
+		++topIndex;
+	if(place < topIndex)
+		++place;
 }
 
 void List::MouseMove(int x, int y, int dx,int dy, int button)
@@ -82,6 +124,21 @@ void List::MouseRelease(int x, int y, int button)
 	activeMousePress = false;
 }
 
+float List::ScaleFactor() {
+	return (float)std::max(1, gu->winSizeY) * (size[1] - 2.0f * borderSpacing);
+}
+
+void List::UpdateTopIndex() {
+	itemHeight = 18.0f / ScaleFactor();
+	const int numDisplay = NumDisplay();
+	if(topIndex + numDisplay > filteredItems->size())
+		topIndex = std::max(0, (int)filteredItems->size() - numDisplay);
+	if(place >= topIndex + numDisplay)
+		topIndex = std::max(0, place - numDisplay + 1);
+	if(place < topIndex)
+		topIndex = std::max(0, place);
+}
+
 bool List::MouseUpdate(int x, int y)
 {
 	int nCurIndex = 0; // The item we're on
@@ -93,10 +150,12 @@ bool List::MouseUpdate(int x, int y)
 	
 	// Get list started up here
 	std::vector<std::string>::iterator ii = filteredItems->begin();
-	const int numDisplay = (size[1]-2.0f*borderSpacing)/(itemHeight+itemSpacing);
-	assert(numDisplay >= 0);
-	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()-1) { ii++; nCurIndex++; }
-	
+	UpdateTopIndex();
+
+	while (nCurIndex < topIndex) { ii++; nCurIndex++; }
+
+	const int numDisplay = NumDisplay();
+
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
 	{
 		if (b.MouseOver(mx, my))
@@ -125,6 +184,7 @@ void List::DrawSelf()
 	DrawBox(GL_QUADS);
 
 	font->Begin();
+	float hf = font->GetSize() / ScaleFactor();
 
 	font->SetTextColor(1,1,0.4f,opacity);
 
@@ -138,12 +198,16 @@ void List::DrawSelf()
 	// Get list started up here
 	std::vector<std::string>::iterator ii = filteredItems->begin();
 	// Skip to current selection - 3; ie: scroll
-	const int numDisplay = (size[1]-2.0f*borderSpacing)/(itemHeight+itemSpacing);
-	assert(numDisplay >= 0);
-	while ((nCurIndex + numDisplay/2) <= place && nCurIndex+numDisplay <= filteredItems->size()-1) { ii++; nCurIndex++; }
+	UpdateTopIndex();
+
+	while (nCurIndex < topIndex) { ii++; nCurIndex++; }
+
+	const int numDisplay = NumDisplay();
 
 	font->SetTextColor(1.0f, 1.0f, 1.0f, opacity); //default
 	font->SetOutlineColor(0.0f, 0.0f, 0.0f, opacity);
+	glLineWidth(1.0f);
+
 	for (/*ii = items.begin()*/; ii != filteredItems->end() && nDrawOffset < numDisplay; ii++)
 	{
 		glColor4f(1,1,1,opacity/4.f);
@@ -169,7 +233,7 @@ void List::DrawSelf()
 			glLineWidth(1.0f);
 		}
 
-		font->glPrint(pos[0]+borderSpacing+0.001f, b.GetMidY(), itemFontScale, FONT_VCENTER | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
+		font->glPrint(pos[0]+borderSpacing + 0.002f, b.GetMidY() - hf * 0.15f, itemFontScale, FONT_BASELINE | FONT_SHADOW | FONT_SCALE | FONT_NORM, *ii);
 
 		// Up our index's
 		nCurIndex++; nDrawOffset++;
@@ -186,14 +250,27 @@ bool List::HandleEventSelf(const SDL_Event& ev)
 {
 	switch (ev.type) {
 		case SDL_MOUSEBUTTONDOWN: {
-			if (MouseOver(ev.button.x, ev.button.y))
+			if (gui->MouseOverElement(GetRoot(), ev.motion.x, ev.motion.y))
 			{
-				MousePress(ev.button.x, ev.button.y, ev.button.button);
-				return true;
+				if(!hasFocus) {
+					hasFocus = true;
+					MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
+				}
+			}
+			else {
+				hasFocus = false;
+			}
+			if(MouseOver(ev.button.x, ev.button.y)) {
+				if(hasFocus) {
+					MousePress(ev.button.x, ev.button.y, ev.button.button);
+					return true;
+				}
 			}
 			break;
 		}
 		case SDL_MOUSEBUTTONUP: {
+			if (!hasFocus)
+				break;
 			if (MouseOver(ev.button.x, ev.button.y))
 			{
 				MouseRelease(ev.button.x, ev.button.y, ev.button.button);
@@ -202,6 +279,8 @@ bool List::HandleEventSelf(const SDL_Event& ev)
 			break;
 		}
 		case SDL_MOUSEMOTION: {
+			if (!hasFocus)
+				break;
 			if (MouseOver(ev.button.x, ev.button.y))
 			{
 				MouseMove(ev.motion.x, ev.motion.y, ev.motion.xrel, ev.motion.yrel, ev.motion.state);
@@ -210,6 +289,13 @@ bool List::HandleEventSelf(const SDL_Event& ev)
 			break;
 		}
 		case SDL_KEYDOWN: {
+			if (!hasFocus)
+				break;
+			if(ev.key.keysym.sym == SDLK_ESCAPE)
+			{
+				hasFocus = false;
+				break;
+			}
 			return KeyPressed(ev.key.keysym.sym, false);
 		}
 	}
@@ -324,10 +410,11 @@ bool List::Filter(bool reset)
 		return false;
 	} else {
 		filteredItems = destination;
-		if(place>=(int)filteredItems->size())
-			place=filteredItems->size()-1;
-		if(place<0)
-			place=0;
+		if(place >= (int)filteredItems->size())
+			place = filteredItems->size() - 1;
+		if(place < 0)
+			place = 0;
+		topIndex = 0;
 		return true;
 	}
 }

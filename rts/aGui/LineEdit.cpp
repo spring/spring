@@ -122,6 +122,10 @@ bool LineEdit::HandleEventSelf(const SDL_Event& ev)
 					cursorPos = content.size();
 					break;
 				}
+				case SDLK_RETURN: {
+					DefaultAction();
+					return true;
+				}
 				default:
 				{
 					uint16_t currentUnicode = ev.key.keysym.unicode;

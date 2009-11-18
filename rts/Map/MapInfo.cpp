@@ -19,8 +19,10 @@ using namespace std;
 static CLogSubsystem LOG_MAPINFO("mapinfo");
 
 
-// before delete, the const is const_cast'ed away.
-// there are no (other) situations where mapInfo may be modified
+// Before delete, the const is const_cast'ed away. There are
+// no (other) situations where mapInfo may be modified, except
+//   LuaUnsyncedCtrl may change water
+//   LuaSyncedCtrl may change terrainTypes
 const CMapInfo* mapInfo;
 
 
@@ -301,7 +303,7 @@ void CMapInfo::ReadTerrainTypes()
 	const LuaTable terrTypeTable =
 		parser->GetRoot().SubTable("terrainTypes");
 
-	for (int tt = 0; tt < 256; tt++) {
+	for (int tt = 0; tt < NUM_TERRAIN_TYPES; tt++) {
 		TerrainType& terrType = terrainTypes[tt];
 		const LuaTable terrain = terrTypeTable.SubTable(tt);
 		terrType.name          = terrain.GetString("name", "Default");

@@ -212,9 +212,9 @@ void CFeatureHandler::CreateFeatureDef(const LuaTable& fdTable, const string& mi
 	fd->metal       = fdTable.GetFloat("metal",  0.0f);
 	fd->energy      = fdTable.GetFloat("energy", 0.0f);
 	fd->maxHealth   = fdTable.GetFloat("damage", 0.0f);
-	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy)*6.f);
+	fd->reclaimTime = fdTable.GetFloat("reclaimTime", (fd->metal + fd->energy) * 6.0f);
 
-	fd->smokeTime = fdTable.GetInt("smokeTime", (fd->blocking) ? 300 : 0);
+	fd->smokeTime = fdTable.GetInt("smokeTime", 300);
 
 	fd->drawType = fdTable.GetInt("drawType", DRAWTYPE_MODEL);
 	fd->modelname = fdTable.GetString("object", "");

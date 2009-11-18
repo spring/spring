@@ -140,6 +140,8 @@ public:
 	bool ValidateUnitList(map<int,UnitInfo*>* UL); // returns true if at least one unit on the list is valid
 	void ValidateAllUnits();
 
+	static bool LocateFile(IAICallback* cb, const string& relFileName, string& absFileName, bool forWriting);
+
 	map<int,UnitInfo> Units;	// Complete record of all owned units, key value = unit id
 	map<int,UnitInfo*> UImmobile;
 	map<int,UnitInfo*> UMobile;
@@ -161,6 +163,7 @@ public:
 	typedef pair<int,EnemyInfo*> iepPair;
 
 private:
+	void RemoveLogFile(string relFileName) const;
 	void UpdateEventRemove(UpdateEvent* e);
 	void UpdateEventReorderFirst();
 	UpdateEvent* eventList[10000];

@@ -411,3 +411,45 @@ float CPathFinder::FindBestPathToRadius(std::vector<float3>& posPath, float3& st
 	float dist = FindBestPath(posPath, startPos, radiusAroundTarget, posTargets);
 	return dist;
 }
+
+
+
+bool CPathFinder::IsPositionReachable(const MoveData* md, const float3& pos) const {
+	if (md == 0) {
+		// aircraft or building
+		return true;
+	}
+	if (!pos.IsInBounds()) {
+		return false;
+	}
+
+	const float* hgtMap = ai->cb->GetHeightMap();
+	const float* slpMap  = ai->cb->GetSlopeMap();
+
+	const int WH = ai->cb->GetMapWidth();
+	const int WS = WH >> 1;
+	const int xh = (pos.x / SQUARE_SIZE);
+	const int zh = (pos.z / SQUARE_SIZE);
+	const int xs = xh >> 1;
+	const int zs = zh >> 1;
+
+	bool heightOK = false;
+	bool slopeOK  = false;
+
+	switch (md->moveType) {
+		case MoveData::Ship_Move: {
+			heightOK = (hgtMap[zh * WH + xh] < -md->depth);
+			slopeOK  = true;
+		} break;
+		case MoveData::Ground_Move: {
+			heightOK = (hgtMap[zh * WH + xh] > -md->depth);
+			slopeOK  = (slpMap[zs * WS + xs] <  md->maxSlope);
+		} break;
+		case MoveData::Hover_Move: {
+			heightOK = true;
+			slopeOK  = (slpMap[zs * WS + xs] < md->maxSlope);
+		} break;
+	}
+
+	return (heightOK && slopeOK);
+}

@@ -100,6 +100,7 @@ public:
 	 * @brief deallocate
 	 */
 	static void Deallocate();
+	const std::map<std::string, std::string> &GetData();
 
 private:
 	ConfigHandler(const std::string& configFile);

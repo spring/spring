@@ -290,8 +290,8 @@ void CShadowHandler::CalcMinMaxView(void)
 	GetFrustumSide(cam2->leftside,false);
 
 	std::vector<fline>::iterator fli,fli2;
-  for(fli=left.begin();fli!=left.end();fli++){
-	  for(fli2=left.begin();fli2!=left.end();fli2++){
+	for(fli=left.begin();fli!=left.end();fli++){
+		for(fli2=left.begin();fli2!=left.end();fli2++){
 			if(fli==fli2)
 				continue;
 			float colz=0;

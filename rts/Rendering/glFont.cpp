@@ -1082,89 +1082,106 @@ void CglFont::AddEllipsis(std::list<line>& lines, std::list<word>& words, float 
 
 void CglFont::WrapTextConsole(std::list<word>& words, float maxWidth, float maxHeight) const
 {
-	if(words.empty())
+	if (words.empty())
 		return;
 
-	const bool splitWords = false;
-
+	const bool splitAllWords = false;
 	const unsigned int maxLines = (unsigned int)math::floor(std::max(0.0f, maxHeight / lineHeight ));
 
+	line* currLine;
 	word linebreak;
 	linebreak.isLineBreak = true;
 
 	bool addEllipsis = false;
 
+	std::list<word>::iterator wi = words.begin();
+
+
+
+
+	std::list<word> splitWords;
 	std::list<line> lines;
-	lines.push_back(line());
-	line* l = &(lines.back());
-	l->start = words.begin();
+		lines.push_back(line());
+		currLine = &(lines.back());
+		currLine->start = words.begin();
 
-	std::list<word>::iterator wi;
-	for (wi = words.begin(); wi != words.end(); wi++) {
-		//! force a LineBreak
+	for (; ;) {
 		if (wi->isLineBreak) {
-			l->forceLineBreak = true;
+			currLine->forceLineBreak = true;
+			currLine->end = wi;
 
-			if (lines.size() >= maxLines) {
-				addEllipsis = true;
-				break;
-			}
-
-			l->end = wi;
-
+			//! start a new line after the '\n'
 			lines.push_back(line());
-			l = &(lines.back());
-			l->start = wi; l->start++;
-			continue;
+
+			currLine = &(lines.back());
+			currLine->start = wi;
+			currLine->start++;
+		} else {
+			currLine->width += wi->width;
+			currLine->end = wi;
+
+
+			if (currLine->width > maxWidth) {
+				currLine->width -= wi->width;
+
+				//! line grew too long by adding the last word, insert a LineBreak
+				const bool splitLastWord = (wi->width > (0.5 * maxWidth));
+				const float freeWordSpace = (maxWidth - currLine->width);
+
+				if (splitAllWords || splitLastWord) {
+					//! last word W is larger than 0.5 * maxLineWidth, split it into
+					//! two pieces 'L' and 'R' (*wi becomes L, R becomes *(wi + 1))
+
+					//! turns *wi into L
+					word wR = SplitWord(*wi, freeWordSpace);
+
+					//! increase by the width of the L-part of *wi
+					currLine->width += wi->width;
+
+					//! insert the R-part right after L
+					wi++;
+					wi = words.insert(wi, wR);
+				}
+
+				//! insert the forced linebreak (either after W or before R)
+				linebreak.pos = wi->pos;
+				currLine->end = words.insert(wi, linebreak);
+
+				while (wi != words.end() && wi->isSpace)
+					wi = words.erase(wi);
+
+				lines.push_back(line());
+					currLine = &(lines.back());
+					currLine->start = wi;
+					wi--;
+			}
 		}
 
-		l->width += wi->width;
+		wi++;
 
-		//! line got too long add a LineBreak
-		if (l->width > maxWidth) {
-			l->width -= wi->width;
-			if (
-				(splitWords) ||
-				(wi->width > (0.5 * maxWidth) && (l->width + wi->width) > maxWidth) //! word is larger than 0.5*maxLineWidth, so it is better we split if needed
-			) {
-				float freeSpace = maxWidth - l->width;
-				l->end = words.insert( wi, SplitWord(*wi, freeSpace) );
-				l->width += (l->end)->width;
-			} else {
-				l->end = wi;
-				l->end--;
-			}
-
-			if (lines.size() >= maxLines) {
-				addEllipsis = true;
-				break;
-			}
-
-			linebreak.pos = wi->pos;
-			l->end = words.insert( wi, linebreak );
-
-			while(wi != words.end() && wi->isSpace)
-				wi = words.erase(wi);
-
-			lines.push_back(line());
-			l = &(lines.back());
-			l->start = wi;
-			wi--;
+		if (lines.size() >= maxLines) {
+			addEllipsis = true;
+			break;
 		}
-		l->end = wi;
+
+		if (wi == words.end()) {
+			break;
+		}
 	}
 
+
+
 	//! empty row
-	if (l->start == words.end() && !l->forceLineBreak) {
+	if (currLine->start == words.end() && !currLine->forceLineBreak) {
 		lines.pop_back();
-		l = &(lines.back());
+		currLine = &(lines.back());
 	}
 
 	//! if we cut the text cos of missing space add an ellipsis
 	if (addEllipsis)
 		AddEllipsis(lines, words, maxWidth);
 
-	wi = l->end; wi++;
+	wi = currLine->end; wi++;
 	wi = words.erase(wi, words.end());
 }
 
