@@ -41,9 +41,9 @@ namespace math {
 	using std::exp;
 	using std::frexp;
 	using std::ldexp;
-	using std::isnan;
-	using std::isinf; // C99
-	using std::isfinite;
+//	using std::isnan;
+//	using std::isinf; // C99
+//	using std::isfinite;
 }
 #endif
 
