@@ -2290,25 +2290,25 @@ EXPORT(int) skirmishAiCallback_Unit_getAiHint(int skirmishAIId, int unitId) {
 EXPORT(int) skirmishAiCallback_Unit_getSupportedCommands(int skirmishAIId, int unitId) {
 	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->size();
 }
-EXPORT(int) skirmishAiCallback_Unit_SupportedCommand_getId(int skirmishAIId, int unitId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(commandId).id;
+EXPORT(int) skirmishAiCallback_Unit_SupportedCommand_getId(int skirmishAIId, int unitId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(supportedCommandId).id;
 }
-EXPORT(const char*) skirmishAiCallback_Unit_SupportedCommand_getName(int skirmishAIId, int unitId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(commandId).name.c_str();
+EXPORT(const char*) skirmishAiCallback_Unit_SupportedCommand_getName(int skirmishAIId, int unitId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(supportedCommandId).name.c_str();
 }
-EXPORT(const char*) skirmishAiCallback_Unit_SupportedCommand_getToolTip(int skirmishAIId, int unitId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(commandId).tooltip.c_str();
+EXPORT(const char*) skirmishAiCallback_Unit_SupportedCommand_getToolTip(int skirmishAIId, int unitId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(supportedCommandId).tooltip.c_str();
 }
-EXPORT(bool) skirmishAiCallback_Unit_SupportedCommand_isShowUnique(int skirmishAIId, int unitId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(commandId).showUnique;
+EXPORT(bool) skirmishAiCallback_Unit_SupportedCommand_isShowUnique(int skirmishAIId, int unitId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(supportedCommandId).showUnique;
 }
-EXPORT(bool) skirmishAiCallback_Unit_SupportedCommand_isDisabled(int skirmishAIId, int unitId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(commandId).disabled;
+EXPORT(bool) skirmishAiCallback_Unit_SupportedCommand_isDisabled(int skirmishAIId, int unitId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(supportedCommandId).disabled;
 }
 EXPORT(int) skirmishAiCallback_Unit_SupportedCommand_getParams(int skirmishAIId,
-		int unitId, int commandId, const char** params, int params_sizeMax) {
+		int unitId, int supportedCommandId, const char** params, int params_sizeMax) {
 
-	const std::vector<std::string> ps = skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(commandId).params;
+	const std::vector<std::string> ps = skirmishAIId_callback[skirmishAIId]->GetUnitCommands(unitId)->at(supportedCommandId).params;
 	const size_t params_sizeReal = ps.size();
 
 	size_t params_size = params_sizeReal;
@@ -3121,25 +3121,25 @@ EXPORT(int) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int gr
 EXPORT(int) skirmishAiCallback_Group_getSupportedCommands(int skirmishAIId, int groupId) {
 	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->size();
 }
-EXPORT(int) skirmishAiCallback_Group_SupportedCommand_getId(int skirmishAIId, int groupId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(commandId).id;
+EXPORT(int) skirmishAiCallback_Group_SupportedCommand_getId(int skirmishAIId, int groupId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(supportedCommandId).id;
 }
-EXPORT(const char*) skirmishAiCallback_Group_SupportedCommand_getName(int skirmishAIId, int groupId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(commandId).name.c_str();
+EXPORT(const char*) skirmishAiCallback_Group_SupportedCommand_getName(int skirmishAIId, int groupId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(supportedCommandId).name.c_str();
 }
-EXPORT(const char*) skirmishAiCallback_Group_SupportedCommand_getToolTip(int skirmishAIId, int groupId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(commandId).tooltip.c_str();
+EXPORT(const char*) skirmishAiCallback_Group_SupportedCommand_getToolTip(int skirmishAIId, int groupId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(supportedCommandId).tooltip.c_str();
 }
-EXPORT(bool) skirmishAiCallback_Group_SupportedCommand_isShowUnique(int skirmishAIId, int groupId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(commandId).showUnique;
+EXPORT(bool) skirmishAiCallback_Group_SupportedCommand_isShowUnique(int skirmishAIId, int groupId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(supportedCommandId).showUnique;
 }
-EXPORT(bool) skirmishAiCallback_Group_SupportedCommand_isDisabled(int skirmishAIId, int groupId, int commandId) {
-	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(commandId).disabled;
+EXPORT(bool) skirmishAiCallback_Group_SupportedCommand_isDisabled(int skirmishAIId, int groupId, int supportedCommandId) {
+	return skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(supportedCommandId).disabled;
 }
 EXPORT(int) skirmishAiCallback_Group_SupportedCommand_getParams(int skirmishAIId,
-		int groupId, int commandId, const char** params, int params_sizeMax) {
+		int groupId, int supportedCommandId, const char** params, int params_sizeMax) {
 
-	const std::vector<std::string> ps = skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(commandId).params;
+	const std::vector<std::string> ps = skirmishAIId_callback[skirmishAIId]->GetGroupCommands(groupId)->at(supportedCommandId).params;
 	const size_t params_sizeReal = ps.size();
 
 	size_t params_size = params_sizeReal;
