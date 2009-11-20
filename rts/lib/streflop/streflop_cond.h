@@ -41,9 +41,11 @@ namespace math {
 	using std::exp;
 	using std::frexp;
 	using std::ldexp;
-//	using std::isnan;
-//	using std::isinf; // C99
-//	using std::isfinite;
+#if !defined(_MSC_VER) || _MSC_VER < 1500
+	using std::isnan;
+	using std::isinf; // C99
+	using std::isfinite;
+#endif
 }
 #endif
 
