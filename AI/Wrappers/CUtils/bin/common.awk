@@ -84,7 +84,7 @@ function printGeneratedWarningHeader(outFile__common) {
 function printGPLHeader(outFile__common) {
 
 	print("/*") >> outFile__common;
-	print("	Copyright (c) 2008 Robin Vobruba <hoijui.quaero@gmail.com>") >> outFile__common;
+	print("	Copyright (c) 2009 Robin Vobruba <hoijui.quaero@gmail.com>") >> outFile__common;
 	print("") >> outFile__common;
 	print("	This program is free software; you can redistribute it and/or modify") >> outFile__common;
 	print("	it under the terms of the GNU General Public License as published by") >> outFile__common;
