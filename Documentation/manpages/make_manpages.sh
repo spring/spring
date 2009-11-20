@@ -85,7 +85,7 @@ do
 	# compile
 	${EXEC_ASCIIDOC} --doctype=manpage --backend=docbook --out-file="${manFile_xml}" - < "${manFile_src}" > /dev/null
 	# format
-	${EXEC_XSLTPROC} --output "${manFile_xml}" "${XSL_DOCBOOK}" "${manFile_man}" > /dev/null
+	${EXEC_XSLTPROC} --output "${manFile_man}" "${XSL_DOCBOOK}" "${manFile_xml}" > /dev/null
 	# archive
 	${EXEC_7Z} a -tgzip "${manFile_cmp}" "${manFile_man}" > /dev/null
 done
