@@ -820,12 +820,12 @@ struct SSkirmishAICallback {
 	 * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
 	 * (custom codes can also be used)
 	 */
-	int               (CALLING_CONV *Unit_SupportedCommand_getId)(int skirmishAIId, int unitId, int commandId);
-	const char*       (CALLING_CONV *Unit_SupportedCommand_getName)(int skirmishAIId, int unitId, int commandId);
-	const char*       (CALLING_CONV *Unit_SupportedCommand_getToolTip)(int skirmishAIId, int unitId, int commandId);
-	bool              (CALLING_CONV *Unit_SupportedCommand_isShowUnique)(int skirmishAIId, int unitId, int commandId);
-	bool              (CALLING_CONV *Unit_SupportedCommand_isDisabled)(int skirmishAIId, int unitId, int commandId);
-	int               (CALLING_CONV *Unit_SupportedCommand_getParams)(int skirmishAIId, int unitId, int commandId, const char** params, int params_max); // ARRAY:params
+	int               (CALLING_CONV *Unit_SupportedCommand_getId)(int skirmishAIId, int unitId, int supportedCommandId);
+	const char*       (CALLING_CONV *Unit_SupportedCommand_getName)(int skirmishAIId, int unitId, int supportedCommandId);
+	const char*       (CALLING_CONV *Unit_SupportedCommand_getToolTip)(int skirmishAIId, int unitId, int supportedCommandId);
+	bool              (CALLING_CONV *Unit_SupportedCommand_isShowUnique)(int skirmishAIId, int unitId, int supportedCommandId);
+	bool              (CALLING_CONV *Unit_SupportedCommand_isDisabled)(int skirmishAIId, int unitId, int supportedCommandId);
+	int               (CALLING_CONV *Unit_SupportedCommand_getParams)(int skirmishAIId, int unitId, int supportedCommandId, const char** params, int params_max); // ARRAY:params
 
 	/** The unit's current health */
 	float             (CALLING_CONV *Unit_getHealth)(int skirmishAIId, int unitId);
@@ -860,12 +860,12 @@ struct SSkirmishAICallback {
 	 * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
 	 * (custom codes can also be used)
 	 */
-	int               (CALLING_CONV *Group_SupportedCommand_getId)(int skirmishAIId, int groupId, int commandId);
-	const char*       (CALLING_CONV *Group_SupportedCommand_getName)(int skirmishAIId, int groupId, int commandId);
-	const char*       (CALLING_CONV *Group_SupportedCommand_getToolTip)(int skirmishAIId, int groupId, int commandId);
-	bool              (CALLING_CONV *Group_SupportedCommand_isShowUnique)(int skirmishAIId, int groupId, int commandId);
-	bool              (CALLING_CONV *Group_SupportedCommand_isDisabled)(int skirmishAIId, int groupId, int commandId);
-	int               (CALLING_CONV *Group_SupportedCommand_getParams)(int skirmishAIId, int groupId, int commandId, const char** params, int params_max); // ARRAY:params
+	int               (CALLING_CONV *Group_SupportedCommand_getId)(int skirmishAIId, int groupId, int supportedCommandId);
+	const char*       (CALLING_CONV *Group_SupportedCommand_getName)(int skirmishAIId, int groupId, int supportedCommandId);
+	const char*       (CALLING_CONV *Group_SupportedCommand_getToolTip)(int skirmishAIId, int groupId, int supportedCommandId);
+	bool              (CALLING_CONV *Group_SupportedCommand_isShowUnique)(int skirmishAIId, int groupId, int supportedCommandId);
+	bool              (CALLING_CONV *Group_SupportedCommand_isDisabled)(int skirmishAIId, int groupId, int supportedCommandId);
+	int               (CALLING_CONV *Group_SupportedCommand_getParams)(int skirmishAIId, int groupId, int supportedCommandId, const char** params, int params_max); // ARRAY:params
 	/**
 	 * For the id, see CMD_xxx codes in Sim/Unit/CommandAI/Command.h
 	 * (custom codes can also be used)

@@ -398,12 +398,12 @@ EXPORT(int              ) skirmishAiCallback_Unit_CurrentCommand_getTag(int skir
 EXPORT(int              ) skirmishAiCallback_Unit_CurrentCommand_getTimeOut(int skirmishAIId, int unitId, int commandId);
 EXPORT(int              ) skirmishAiCallback_Unit_CurrentCommand_getParams(int skirmishAIId, int unitId, int commandId, float* params, int params_sizeMax);
 EXPORT(int              ) skirmishAiCallback_Unit_getSupportedCommands(int skirmishAIId, int unitId);
-EXPORT(int              ) skirmishAiCallback_Unit_SupportedCommand_getId(int skirmishAIId, int unitId, int commandId);
-EXPORT(const char*      ) skirmishAiCallback_Unit_SupportedCommand_getName(int skirmishAIId, int unitId, int commandId);
-EXPORT(const char*      ) skirmishAiCallback_Unit_SupportedCommand_getToolTip(int skirmishAIId, int unitId, int commandId);
-EXPORT(bool             ) skirmishAiCallback_Unit_SupportedCommand_isShowUnique(int skirmishAIId, int unitId, int commandId);
-EXPORT(bool             ) skirmishAiCallback_Unit_SupportedCommand_isDisabled(int skirmishAIId, int unitId, int commandId);
-EXPORT(int              ) skirmishAiCallback_Unit_SupportedCommand_getParams(int skirmishAIId, int unitId, int commandId, const char** params, int params_sizeMax);
+EXPORT(int              ) skirmishAiCallback_Unit_SupportedCommand_getId(int skirmishAIId, int unitId, int supportedCommandId);
+EXPORT(const char*      ) skirmishAiCallback_Unit_SupportedCommand_getName(int skirmishAIId, int unitId, int supportedCommandId);
+EXPORT(const char*      ) skirmishAiCallback_Unit_SupportedCommand_getToolTip(int skirmishAIId, int unitId, int supportedCommandId);
+EXPORT(bool             ) skirmishAiCallback_Unit_SupportedCommand_isShowUnique(int skirmishAIId, int unitId, int supportedCommandId);
+EXPORT(bool             ) skirmishAiCallback_Unit_SupportedCommand_isDisabled(int skirmishAIId, int unitId, int supportedCommandId);
+EXPORT(int              ) skirmishAiCallback_Unit_SupportedCommand_getParams(int skirmishAIId, int unitId, int supportedCommandId, const char** params, int params_sizeMax);
 EXPORT(float            ) skirmishAiCallback_Unit_getHealth(int skirmishAIId, int unitId);
 EXPORT(float            ) skirmishAiCallback_Unit_getSpeed(int skirmishAIId, int unitId);
 EXPORT(float            ) skirmishAiCallback_Unit_getPower(int skirmishAIId, int unitId);
@@ -424,12 +424,12 @@ EXPORT(int              ) skirmishAiCallback_Unit_getLastUserOrderFrame(int skir
 // BEGINN OBJECT Group
 EXPORT(int              ) skirmishAiCallback_getGroups(int skirmishAIId, int* groupIds, int groupIds_sizeMax);
 EXPORT(int              ) skirmishAiCallback_Group_getSupportedCommands(int skirmishAIId, int groupId);
-EXPORT(int              ) skirmishAiCallback_Group_SupportedCommand_getId(int skirmishAIId, int groupId, int commandId);
-EXPORT(const char*      ) skirmishAiCallback_Group_SupportedCommand_getName(int skirmishAIId, int groupId, int commandId);
-EXPORT(const char*      ) skirmishAiCallback_Group_SupportedCommand_getToolTip(int skirmishAIId, int groupId, int commandId);
-EXPORT(bool             ) skirmishAiCallback_Group_SupportedCommand_isShowUnique(int skirmishAIId, int groupId, int commandId);
-EXPORT(bool             ) skirmishAiCallback_Group_SupportedCommand_isDisabled(int skirmishAIId, int groupId, int commandId);
-EXPORT(int              ) skirmishAiCallback_Group_SupportedCommand_getParams(int skirmishAIId, int groupId, int commandId, const char** params, int params_sizeMax);
+EXPORT(int              ) skirmishAiCallback_Group_SupportedCommand_getId(int skirmishAIId, int groupId, int supportedCommandId);
+EXPORT(const char*      ) skirmishAiCallback_Group_SupportedCommand_getName(int skirmishAIId, int groupId, int supportedCommandId);
+EXPORT(const char*      ) skirmishAiCallback_Group_SupportedCommand_getToolTip(int skirmishAIId, int groupId, int supportedCommandId);
+EXPORT(bool             ) skirmishAiCallback_Group_SupportedCommand_isShowUnique(int skirmishAIId, int groupId, int supportedCommandId);
+EXPORT(bool             ) skirmishAiCallback_Group_SupportedCommand_isDisabled(int skirmishAIId, int groupId, int supportedCommandId);
+EXPORT(int              ) skirmishAiCallback_Group_SupportedCommand_getParams(int skirmishAIId, int groupId, int supportedCommandId, const char** params, int params_sizeMax);
 EXPORT(int              ) skirmishAiCallback_Group_OrderPreview_getId(int skirmishAIId, int groupId);
 EXPORT(short            ) skirmishAiCallback_Group_OrderPreview_getOptions(int skirmishAIId, int groupId);
 EXPORT(int              ) skirmishAiCallback_Group_OrderPreview_getTag(int skirmishAIId, int groupId);
