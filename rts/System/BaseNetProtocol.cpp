@@ -10,7 +10,9 @@
 #include "Rendering/InMapDraw.h"
 #include "Net/PackPacket.h"
 #include "Net/ProtocolDef.h"
-#include "System.h"
+#if defined(_MSC_VER)
+#include "System.h" // for uint16_t (and possibly other types)
+#endif
 
 using netcode::PackPacket;
 typedef boost::shared_ptr<const netcode::RawPacket> PacketType;
