@@ -45,6 +45,10 @@ namespace math {
 	using std::isnan;
 	using std::isinf; // C99
 	using std::isfinite;
+#else
+	using math::isnan;
+	using math::isinf; // C99
+	using math::isfinite;
 #endif
 }
 #endif
