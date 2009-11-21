@@ -320,7 +320,7 @@ struct SSendUnitsCommand {
 /// Creates a group and returns the id it was given, returns -1 on failure
 struct SCreateGroupCommand {
 	int ret_groupId;
-}; // COMMAND_GROUP_CREATE Group_create REF:ret_groupId->Group
+}; // COMMAND_GROUP_CREATE Group_create REF:ret_groupId->Group STATIC
 /// Erases a specified group
 struct SEraseGroupCommand {
 	int groupId;
