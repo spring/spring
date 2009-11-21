@@ -1,18 +1,23 @@
 #!/bin/awk
 #
-# This awk script creates a Java class in OO style to wrapp the C style
-# JNA based AI Callback wrapper.
+# This awk script creates Java classes in OO style to wrapp the C style
+# JNI based AI Callback wrapper.
 # In other words, the output of this file wrapps:
 # com/springrts/ai/AICallback.java
 # which wrapps:
 # rts/ExternalAI/Interface/SSkirmishAICallback.h
+# and
+# rts/ExternalAI/Interface/AISCommands.h
 #
 # This script uses functions from the following files:
 # * common.awk
 # * commonDoc.awk
 # * commonOOCallback.awk
 # Variables that can be set on the command-line (with -v):
-# * GENERATED_SOURCE_DIR: the generated sources root dir
+# * GENERATED_SOURCE_DIR           : the generated sources root dir
+# * JAVA_GENERATED_SOURCE_DIR      : the generated java sources root dir
+# * INTERFACE_SOURCE_DIR           : the Java AI Interfaces static source files root dir
+# * INTERFACE_GENERATED_SOURCE_DIR : the Java AI Interfaces generated source files root dir
 #
 # usage:
 # 	awk -f thisScript.awk -f common.awk -f commonDoc.awk -f commonOOCallback.awk
@@ -38,21 +43,21 @@ BEGIN {
 	if (!JAVA_GENERATED_SOURCE_DIR) {
 		JAVA_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/java";
 	}
-	if (!NATIVE_GENERATED_SOURCE_DIR) {
-		NATIVE_GENERATED_SOURCE_DIR = GENERATED_SOURCE_DIR "/native";
+	if (!INTERFACE_SOURCE_DIR) {
+		INTERFACE_SOURCE_DIR = "../../../Interfaces/Java/src/main/java";
+	}
+	if (!INTERFACE_GENERATED_SOURCE_DIR) {
+		INTERFACE_GENERATED_SOURCE_DIR = "../../../Interfaces/Java/src-generated/main/java";
 	}
 
-	javaSrcRoot = "../src/main/java";
-	javaGeneratedSrcRoot = JAVA_GENERATED_SOURCE_DIR;
-
-	myParentPkgA = "com.springrts.ai";
-	myPkgA = myParentPkgA ".oo";
-	myPkgD = convertJavaNameFormAToD(myPkgA);
-	myClass = "OOAICallback";
-	myClassVar = "ooClb";
-	myWrapClass = "AICallback";
-	myWrapVar = "innerCallback";
-	mySourceFile = javaGeneratedSrcRoot "/" myPkgD "/" myClass ".java";
+	myMainPkgA     = "com.springrts.ai";
+	myParentPkgA   = myMainPkgA ".oo";
+	myPkgA         = myParentPkgA ".clb";
+	myPkgD         = convertJavaNameFormAToD(myPkgA);
+	myClass        = "OOAICallback";
+	myClassVar     = "ooClb";
+	myWrapClass    = "AICallback";
+	myWrapVar      = "innerCallback";
 	defMapJavaImpl = "HashMap";
 
 	myBufferedClasses["_UnitDef"]    = 1;
@@ -66,410 +71,381 @@ BEGIN {
 	size_interfaces = 0;
 }
 
-
-function doWrapp(funcFullName_dw) {
-
-	doWrapp_dw = 1;
-
-	paramListJava_dw  = funcParams[fullName_dw];
-	doWrapp_dw = doWrapp_dw && !match(paramListJava_dw, /String\[\]/);
-
-	return doWrapp_dw;
+function createJavaFileName(clsName_c) {
+	return JAVA_GENERATED_SOURCE_DIR "/" myPkgD "/" clsName_c ".java";
 }
 
-function printHeader(outFile_h, javaPkg_h, javaClassName_h, isOrHasInterface_h) {
 
-	classOrInterface_h = "class";
-	implementedInterfacesPart_h = "";
-	interfacesPref_h = "";
+function printHeader(outFile_h, javaPkg_h, javaClassName_h, isInterface_h,
+		implementsInterface_h, isJniBound_h, isAbstract_h, implementsClass_h) {
 
-	if (isOrHasInterface_h == 1) {
-		# is interface
+	if (isInterface_h) {
 		classOrInterface_h = "interface";
+	} else if (isAbstract_h) {
+		classOrInterface_h = "abstract class";
 	} else {
-		# is class
-		interfacesPref_h = " implements "
-		implementedInterfacesPart_h = "Comparable<" javaClassName_h ">";
-		if (isOrHasInterface_h != 0) {
-			# has interface
-			implementedInterfacesPart_h = isOrHasInterface_h ", " implementedInterfacesPart_h;
-		}
+		classOrInterface_h = "class";
 	}
-	implementedInterfacesPart_h = interfacesPref_h implementedInterfacesPart_h;
+
+	extensionsPart_h = "";
+	if (isInterface_h) {
+		extensionsPart_h = " extends Comparable<" javaClassName_h ">";
+	} else if (isAbstract_h) {
+		extensionsPart_h = " implements " implementsInterface_h "";
+	} else {
+		extensionsPart_h = " extends " implementsClass_h " implements " implementsInterface_h;
+	}
 
 	printCommentsHeader(outFile_h);
 	print("") >> outFile_h;
 	print("package " javaPkg_h ";") >> outFile_h;
 	print("") >> outFile_h;
 	print("") >> outFile_h;
-	#print("import " myParentPkgA ".AIFloat3;") >> outFile_h;
-	#print("import " myParentPkgA ".AICallback;") >> outFile_h;
-	print("import " myParentPkgA ".*;") >> outFile_h;
+	print("import " myParentPkgA ".AIFloat3;") >> outFile_h;
+	if (isJniBound_h) {
+		print("import " myMainPkgA ".AICallback;") >> outFile_h;
+	}
 	print("") >> outFile_h;
 	print("/**") >> outFile_h;
 	print(" * @author	AWK wrapper script") >> outFile_h;
 	print(" * @version	GENERATED") >> outFile_h;
 	print(" */") >> outFile_h;
-	print("public " classOrInterface_h " " javaClassName_h implementedInterfacesPart_h " {") >> outFile_h;
+	print("public " classOrInterface_h " " javaClassName_h extensionsPart_h " {") >> outFile_h;
 	print("") >> outFile_h;
 }
 
-function createJavaFileName(clsName_c) {
-	return javaGeneratedSrcRoot "/" myPkgD "/" clsName_c ".java";
-}
 
-function printInterfaces() {
+function printTripleFunc(fRet_tr, fName_tr, fParams_tr, outFile_int_tr, outFile_stb_tr, outFile_jni_tr, printIntAndStb_tr) {
 
-	for (clsName in class_ancestors) {
-		#size_ancestorParts = split(class_ancestors[clsName], ancestorParts, ",");
+	_funcHdr_tr = "public " fRet_tr " " fName_tr "(" fParams_tr ")";
+	if (printIntAndStb_tr) {
+		print("\t" _funcHdr_tr ";") >> outFile_int_tr;
+		print("") >> outFile_int_tr;
 
-		# check if an interface is needed
-		if (clsName in interfaces) {
-			printInterface(clsName);
-		}
-	}
-}
-function printInterface(clsName_i) {
-
-	outFile_i = createJavaFileName(clsName_i);
-	printHeader(outFile_i, myPkgA, clsName_i, 1);
-
-	size_addInds = additionalIntIndices[clsName_i "*"];
-
-	# print member functions
-	size_funcs = interfaceOwnerOfFunc[clsName_i "*"];
-	for (f=0; f < size_funcs; f++) {
-		fullName_i = interfaceOwnerOfFunc[clsName "#" f];
-		if (doWrapp(fullName_i)) {
-			printMember(outFile_i, fullName_i, size_addInds, 1);
-		}
-	}
-
-	# print member class fetchers (single, multi, multi-fetch-single)
-	size_memCls = split(interface_class[clsName], memCls, ",");
-	for (mc=0; mc < size_memCls; mc++) {
-		memberClass = memCls[mc+1];
-		fullNameMultiSize_i = ancestorsInterface_isMulti[clsName "-" memberClass];
-		if (fullNameMultiSize_i != "") {
-			if (match(fullNameMultiSize_i, /^.*0MULTI1[^0]*3/)) { # wants a different function name then the default one
-				fn = fullNameMultiSize_i;
-				sub(/^.*0MULTI1[^3]*3/, "", fn); # remove pre MULTI 3
-				sub(/[0-9].*$/, "", fn); # remove post MULTI 3
-			} else {
-				fn = "get" memberClass "s";
-			}
-			params = funcParams[fullNameMultiSize_i];
+		print("\t" "@Override") >> outFile_stb_c;
+		print("\t" _funcHdr_tr " {") >> outFile_stb_c;
+		if (fRet_tr == "void") {
+			# return nothing
+		} else if (fRet_tr == "String") {
+			print("\t\t" "return \"\";") >> outFile_stb_c;
+		} else if (fRet_tr == "boolean") {
+			print("\t\t" "return false;") >> outFile_stb_c;
 		} else {
-			fn = "get" memberClass;
-			params = "";
+			print("\t\t" "return 0;") >> outFile_stb_c;
 		}
-		# remove additional indices from params
-		for (ai=0; ai < size_addInds; ai++) {
-			sub(/int [_a-zA-Z0-9]+(, )?/, "", params);
-		}
-		print("\t" memberClass " " fn "(" params ");") >> outFile_i;
+		print("\t" "}") >> outFile_stb_c;
+		print("") >> outFile_stb_c;
 	}
-
-	print("}") >> outFile_i;
-	print("") >> outFile_i;
-	close(outFile_i);
+	print("\t" "@Override") >> outFile_jni_tr;
+	print("\t" _funcHdr_tr " {") >> outFile_jni_tr;
+	print("") >> outFile_jni_tr;
 }
-
-
-
 
 
 function printClasses() {
 
-	for (clsName in class_ancestors) {
-		size_ancestorParts = split(class_ancestors[clsName], ancestorParts, ",");
+	c_size_cs = cls_id_name["*"];
+	for (c=0; c < c_size_cs; c++) {
+		cls_cs = cls_id_name[c];
+		anc_size_cs = cls_name_implIds[cls_cs ",*"];
 
-		if (size_ancestorParts == 0) {
-			printClass("", clsName);
-		}
-
-		for (a=0; a < size_ancestorParts; a++) {
-			printClass(ancestorParts[a+1], clsName);
+		printIntAndStb_cs = 1;
+		for (a=0; a < anc_size_cs; a++) {
+			implId_cs = cls_name_implIds[cls_cs "," a];
+			printClass(implId_cs, cls_cs, printIntAndStb_cs);
+			# only print interface and stub when printing the first impl-class
+			printIntAndStb_cs = 0;
 		}
 	}
 }
-function printClass(ancestors_c, clsName_c) {
 
-	clsNameExternal_c = clsName_c;
-	isClbRootCls = 0;
-	myWrapper = myClassVar ".getInnerCallback()";
-	myTeamId = myClassVar ".getTeamId()";
-	myClassVarLocal = myClassVar;
-	if (match(clsName_c, /^Clb$/)) {
-		clsNameExternal_c = myClass;
-		isClbRootCls = 1;
-		myWrapper = myWrapVar;
-		myTeamId = "teamId";
-		myClassVarLocal = "this";
+
+function printClass(implId_c, clsName_c, printIntAndStb_c) {
+
+clsNameExternal_c = clsName_c;
+
+clsId_c = ancestors_c "-" clsName_c;
+
+	implCls_c = implId_c;
+	sub(/^.*,/, "", implCls_c);
+
+	clsName_int_c = clsName_c;
+	clsName_abs_c = "Abstract" clsName_int_c;
+	clsName_stb_c = "Stub" clsName_int_c;
+	if (cls_name_implIds[clsName_c ",*"] > 1) {
+		lastAncName_c = implId_c;
+		sub(/,[^,]*$/, "", lastAncName_c); # remove class name
+		sub(/^.*,/,    "", lastAncName_c); # remove pre last ancestor name
+		clsName_jni_c = "Wrapp" lastAncName_c implCls_c;
+	} else {
+		clsName_jni_c = "Wrapp" implCls_c;
 	}
 
-	clsId_c = ancestors_c "-" clsName_c;
-	clsFull_c = ancestors_c "_" clsName_c;
-	hasInterface = (interfaces[clsName] == 1);
-	intName_c = 0;
-	if (hasInterface) {
-		intName_c = clsName_c;
-		clsName_c = implClsNames[clsId_c];
-		clsNameExternal_c = clsName_c;
+#print("print class    : " clsName_jni_c);
+if (printIntAndStb_c) {
+	#print("print interface: " clsName_int_c);
+	#print("print class    : " clsName_stb_c);
+}
+
+	if (printIntAndStb_c) {
+		outFile_int_c = createJavaFileName(clsName_int_c);
+		outFile_abs_c = createJavaFileName(clsName_abs_c);
+		outFile_stb_c = createJavaFileName(clsName_stb_c);
+#print("Printing interface: "  clsName_int_c);
+#print("Printing stub class: " clsName_stb_c);
 	}
+#print("Printing wrap class: " clsName_jni_c);
+	outFile_jni_c = createJavaFileName(clsName_jni_c);
 
-	outFile_c = createJavaFileName(clsNameExternal_c);
-	printHeader(outFile_c, myPkgA, clsNameExternal_c, intName_c);
+	if (printIntAndStb_c) {
+		printHeader(outFile_int_c, myPkgA, clsName_int_c, 1, 0,             0, 0, 0);
+		printHeader(outFile_abs_c, myPkgA, clsName_abs_c, 0, clsName_int_c, 0, 1, 0);
+		printHeader(outFile_stb_c, myPkgA, clsName_stb_c, 0, clsName_int_c, 0, 0, clsName_abs_c);
+	}
+	printHeader(    outFile_jni_c, myPkgA, clsName_jni_c, 0, clsName_int_c, 1, 0, clsName_abs_c);
 
-	size_addInds = additionalClsIndices[clsId_c "*"];
+#return;
+outFile_c = outFile_jni_c;
+
+	# prepare additional indices names
+	addInds_size_c = split(cls_implId_indicesArgs[implId_c], addInds_c, ",");
+	for (ai=1; ai <= addInds_size_c; ai++) {
+		sub(/int /, "", addInds_c[ai]);
+		addInds_c[ai] = trim(addInds_c[ai]);
+	}
+#if (addInds_size_c != 0) {
+#	print("addInds_size_c last: " addInds_size_c " " addInds_c[addInds_size_c]);
+#}
+
+	myInnerClb = myClassVar ".getInnerCallback()";
 
 
 	# print private vars
-	if (isClbRootCls) {
-		print("\t" "private " myWrapClass " " myWrapVar " = null;") >> outFile_c;
-		print("\t" "private int teamId = -1;") >> outFile_c;
-	} else {
-		print("\t" "private " myClass " " myClassVar " = null;") >> outFile_c;
-	}
+	print("\t" "private " myWrapClass " " myWrapVar " = null;") >> outFile_c;
 	# print additionalVars
-	for (ai=0; ai < size_addInds; ai++) {
-		print("\t" "private int " additionalClsIndices[clsId_c "#" ai] " = -1;") >> outFile_c;
+	for (ai=1; ai <= addInds_size_c; ai++) {
+		print("\t" "private int " addInds_c[ai] " = -1;") >> outFile_c;
 	}
 	print("") >> outFile_c;
 
 
 	# print constructor
-	if (isClbRootCls) {
-		ctorParams = myWrapClass " " myWrapVar ", int teamId";
-	} else {
-		ctorParams = myClass " " myClassVar;
-	}
+	ctorParams   = myWrapClass " " myWrapVar;
 	addIndPars_c = "";
-	for (ai=0; ai < size_addInds; ai++) {
-		addIndPars_c = addIndPars_c ", int " additionalClsIndices[clsId_c "#" ai];
+	for (ai=1; ai <= addInds_size_c; ai++) {
+		addIndPars_c = addIndPars_c ", int " addInds_c[ai];
 	}
-	ctorParams = ctorParams addIndPars_c;
-	ctorParamsNoTypes = removeParamTypes(ctorParams);
+	ctorParams          = ctorParams addIndPars_c;
+	ctorParamsNoTypes   = removeParamTypes(ctorParams);
 	sub(/^, /, "", addIndPars_c);
 	addIndParsNoTypes_c = removeParamTypes(addIndPars_c);
-	condaddIndPars_c = (addIndPars_c == "") ? "" : ", ";
-	
-	print("\t" "private " clsNameExternal_c "(" ctorParams ") {") >> outFile_c;
+	condAddIndPars_c    = (addIndPars_c == "") ? "" : ", ";
+	print("\t" "public " clsName_jni_c "(" ctorParams ") {") >> outFile_c;
 	print("") >> outFile_c;
-	if (isClbRootCls) {
-		print("\t\t" "this." myWrapVar " = " myWrapVar ";") >> outFile_c;
-		print("\t\t" "this.teamId = teamId;") >> outFile_c;
-	} else {
-		print("\t\t" "this." myClassVar " = " myClassVar ";") >> outFile_c;
-	}
+	print("\t\t" "this." myWrapVar " = " myWrapVar ";") >> outFile_c;
 	# init additionalVars
-	for (ai=0; ai < size_addInds; ai++) {
-		addIndName = additionalClsIndices[clsId_c "#" ai];
+	for (ai=1; ai <= addInds_size_c; ai++) {
+		addIndName = addInds_c[ai];
 		print("\t\t" "this." addIndName " = " addIndName ";") >> outFile_c;
 	}
 	print("\t" "}") >> outFile_c;
 	print("") >> outFile_c;
-	
+
+
 	# print additional vars fetchers
-	for (ai=0; ai < size_addInds; ai++) {
-		addIndName = additionalClsIndices[clsId_c "#" ai];
-		#if (ai < (size_addInds-1)) {
-			print("\t" "public int get" capitalize(addIndName) "() {") >> outFile_c;
-		#} else { # do this for the last additional indices
-		#	print("\t" "public int getId() {") >> outFile_c;
-		#}
-		print("\t\t" "return " addIndName ";") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
+	for (ai=1; ai <= addInds_size_c; ai++) {
+		addIndName = addInds_c[ai];
+		_fRet    = "int";
+		_fName   = "get" capitalize(addIndName);
+		_fParams = "";
+
+		printTripleFunc(_fRet, _fName, _fParams, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_c);
+
+		print("\t\t" "return " addIndName ";") >> outFile_jni_c;
+		print("\t" "}") >> outFile_jni_c;
+		print("") >> outFile_jni_c;
 	}
 
-	# print static instance fetcher method
-	{
-		clsIsBuffered_c = isBufferedClass(clsNameExternal_c);
-		fullNameAvailable_c = ancestorsClass_available[clsId_c];
+	if (printIntAndStb_c) {
+		# print static instance fetcher method
+		{
+			clsIsBuffered_c = isBufferedClass(clsNameExternal_c);
+			fullNameAvailable_c = ancestorsClass_available[clsId_c];
 
-		if (clsIsBuffered_c) {
-			print("\t" "private static java.util.Map<Integer, " clsNameExternal_c "> _buffer_instances = new java.util.HashMap<Integer, " clsNameExternal_c ">();") >> outFile_c;
-			print("") >> outFile_c;
-		}
-		print("\t" "static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
-		print("") >> outFile_c;
-		lastParamName = ctorParamsNoTypes;
-		sub(/^.*,[ \t]*/, "", lastParamName);
-		if (match(lastParamName, /^[^ \t]+Id$/)) {
-			if (clsNameExternal_c == "Unit") {
-				# the first valid unit ID is 1
-				print("\t\t" "if (" lastParamName " <= 0) {") >> outFile_c;
-			} else {
-				# ... for all other IDs, the first valid one is 0
-				print("\t\t" "if (" lastParamName " < 0) {") >> outFile_c;
+			if (clsIsBuffered_c) {
+				print("\t" "private static java.util.Map<Integer, " clsNameExternal_c "> _buffer_instances = new java.util.HashMap<Integer, " clsNameExternal_c ">();") >> outFile_c;
+				print("") >> outFile_c;
 			}
-			print("\t\t\t" "return null;") >> outFile_c;
-			print("\t\t" "}") >> outFile_c;
+			print("\t" "static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
 			print("") >> outFile_c;
-		}
-		print("\t\t" clsNameExternal_c " _ret = null;") >> outFile_c;
-		if (fullNameAvailable_c == "") {
-			print("\t\t" "_ret = new " clsNameExternal_c "(" ctorParamsNoTypes ");") >> outFile_c;
-		} else {
-			print("\t\t" "boolean isAvailable = " myClassVar ".getInnerCallback()." fullNameAvailable_c "(" myClassVar ".getTeamId()" condaddIndPars_c addIndParsNoTypes_c ");") >> outFile_c;
-			print("\t\t" "if (isAvailable) {") >> outFile_c;
-			print("\t\t\t" "_ret = new " clsNameExternal_c "(" ctorParamsNoTypes ");") >> outFile_c;
-			print("\t\t" "}") >> outFile_c;
-		}
-		if (clsIsBuffered_c) {
+			lastParamName = ctorParamsNoTypes;
+			sub(/^.*,[ \t]*/, "", lastParamName);
+			if (match(lastParamName, /^[^ \t]+Id$/)) {
+				if (clsNameExternal_c == "Unit") {
+					# the first valid unit ID is 1
+					print("\t\t" "if (" lastParamName " <= 0) {") >> outFile_c;
+				} else {
+					# ... for all other IDs, the first valid one is 0
+					print("\t\t" "if (" lastParamName " < 0) {") >> outFile_c;
+				}
+				print("\t\t\t" "return null;") >> outFile_c;
+				print("\t\t" "}") >> outFile_c;
+				print("") >> outFile_c;
+			}
+			print("\t\t" clsNameExternal_c " _ret = null;") >> outFile_c;
 			if (fullNameAvailable_c == "") {
-				print("\t\t" "{") >> outFile_c;
+				print("\t\t" "_ret = new " clsName_jni_c "(" ctorParamsNoTypes ");") >> outFile_c;
 			} else {
-				print("\t\t" "if (_ret != null) {") >> outFile_c;
+				print("\t\t" "boolean isAvailable = " myWrapVar ".getInnerCallback()." fullNameAvailable_c "(" addIndParsNoTypes_c ");") >> outFile_c;
+				print("\t\t" "if (isAvailable) {") >> outFile_c;
+				print("\t\t\t" "_ret = new " clsName_jni_c "(" ctorParamsNoTypes ");") >> outFile_c;
+				print("\t\t" "}") >> outFile_c;
 			}
-			print("\t\t\t" "Integer indexHash = _ret.hashCode();") >> outFile_c;
-			print("\t\t\t" "if (_buffer_instances.containsKey(indexHash)) {") >> outFile_c;
-			print("\t\t\t\t" "_ret = _buffer_instances.get(indexHash);") >> outFile_c;
-			print("\t\t\t" "} else {") >> outFile_c;
-			print("\t\t\t\t" "_buffer_instances.put(indexHash, _ret);") >> outFile_c;
-			print("\t\t\t" "}") >> outFile_c;
-			print("\t\t" "}") >> outFile_c;
-		}
-		print("\t\t" "return _ret;") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
-	}
-
-	if (isClbRootCls) {
-		# print inner-callback fetcher method
-		print("\t" myWrapClass " getInnerCallback() {") >> outFile_c;
-		print("\t\t" "return this." myWrapVar ";") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
-		# print teamId fetcher method
-		print("\t" "public int getTeamId() {") >> outFile_c;
-		print("\t\t" "return this.teamId;") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
-	}
-
-
-	# print compareTo(other) method
-	{
-		print("\t" "@Override") >> outFile_c;
-		print("\t" "public int compareTo(" clsNameExternal_c " other) {") >> outFile_c;
-		print("\t\t" "final int BEFORE = -1;") >> outFile_c;
-		print("\t\t" "final int EQUAL  =  0;") >> outFile_c;
-		print("\t\t" "final int AFTER  =  1;") >> outFile_c;
-		print("") >> outFile_c;
-		print("\t\t" "if (this == other) return EQUAL;") >> outFile_c;
-		print("") >> outFile_c;
-
-		if (isClbRootCls) {
-			print("\t\t" "if (this.teamId < other.teamId) return BEFORE;") >> outFile_c;
-			print("\t\t" "if (this.teamId > other.teamId) return AFTER;") >> outFile_c;
-			print("\t\t" "return EQUAL;") >> outFile_c;
-		} else {
-			for (ai=0; ai < size_addInds; ai++) {
-				addIndName = additionalClsIndices[clsId_c "#" ai];
-				print("\t\t" "if (this.get" capitalize(addIndName) "() < other.get" capitalize(addIndName) "()) return BEFORE;") >> outFile_c;
-				print("\t\t" "if (this.get" capitalize(addIndName) "() > other.get" capitalize(addIndName) "()) return AFTER;") >> outFile_c;
+			if (clsIsBuffered_c) {
+				if (fullNameAvailable_c == "") {
+					print("\t\t" "{") >> outFile_c;
+				} else {
+					print("\t\t" "if (_ret != null) {") >> outFile_c;
+				}
+				print("\t\t\t" "Integer indexHash = _ret.hashCode();") >> outFile_c;
+				print("\t\t\t" "if (_buffer_instances.containsKey(indexHash)) {") >> outFile_c;
+				print("\t\t\t\t" "_ret = _buffer_instances.get(indexHash);") >> outFile_c;
+				print("\t\t\t" "} else {") >> outFile_c;
+				print("\t\t\t\t" "_buffer_instances.put(indexHash, _ret);") >> outFile_c;
+				print("\t\t\t" "}") >> outFile_c;
+				print("\t\t" "}") >> outFile_c;
 			}
-			print("\t\t" "return this." myClassVar ".compareTo(other." myClassVar ");") >> outFile_c;
-		}
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
-	}
-
-
-	# print equals(other) method
-	if (!isClbRootCls) {
-	#{
-		print("\t" "@Override") >> outFile_c;
-		print("\t" "public boolean equals(Object otherObject) {") >> outFile_c;
-		print("") >> outFile_c;
-		print("\t\t" "if (this == otherObject) return true;") >> outFile_c;
-		print("\t\t" "if (!(otherObject instanceof " clsNameExternal_c ")) return false;") >> outFile_c;
-		print("\t\t" clsNameExternal_c " other = (" clsNameExternal_c ") otherObject;") >> outFile_c;
-		print("") >> outFile_c;
-
-		if (isClbRootCls) {
-			print("\t\t" "if (this.teamId != other.teamId) return false;") >> outFile_c;
-			print("\t\t" "return true;") >> outFile_c;
-		} else {
-			for (ai=0; ai < size_addInds; ai++) {
-				addIndName = additionalClsIndices[clsId_c "#" ai];
-				print("\t\t" "if (this.get" capitalize(addIndName) "() != other.get" capitalize(addIndName) "()) return false;") >> outFile_c;
-			}
-			print("\t\t" "return this." myClassVar ".equals(other." myClassVar ");") >> outFile_c;
-		}
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
-	}
-
-
-	# print hashCode() method
-	if (!isClbRootCls) {
-	#{
-		print("\t" "@Override") >> outFile_c;
-		print("\t" "public int hashCode() {") >> outFile_c;
-		print("") >> outFile_c;
-
-		if (isClbRootCls) {
-			print("\t\t" "int _res = 0;") >> outFile_c;
+			print("\t\t" "return _ret;") >> outFile_c;
+			print("\t" "}") >> outFile_c;
 			print("") >> outFile_c;
-			print("\t\t" "_res += this.teamId * 10E8;") >> outFile_c;
-		} else {
-			print("\t\t" "int _res = 23;") >> outFile_c;
-			print("") >> outFile_c;
-			# NOTE: This could go wrong if we have more then 7 additional indices
-			# see 10E" (7-ai) below
-			# the conversion to int is nessesarry,
-			# as otherwise it would be a double,
-			# which would be higher then max int,
-			# and most hashes would end up being max int,
-			# when converted from double to int
-			for (ai=0; ai < size_addInds; ai++) {
-				addIndName = additionalClsIndices[clsId_c "#" ai];
-				print("\t\t" "_res += this.get" capitalize(addIndName) "() * (int) (10E" (7-ai) ");") >> outFile_c;
-			}
-			print("\t\t" "_res += this." myClassVar ".hashCode();") >> outFile_c;
 		}
-		print("") >> outFile_c;
-		print("\t\t" "return _res;") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
+
+
+		# print compareTo(other) method
+		{
+			print("\t" "@Override") >> outFile_abs_c;
+			print("\t" "public int compareTo(" clsNameExternal_c " other) {") >> outFile_abs_c;
+			print("\t\t" "final int BEFORE = -1;") >> outFile_abs_c;
+			print("\t\t" "final int EQUAL  =  0;") >> outFile_abs_c;
+			print("\t\t" "final int AFTER  =  1;") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+			print("\t\t" "if (this == other) return EQUAL;") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+
+			if (isClbRootCls) {
+				print("\t\t" "if (this.skirmishAIId < other.skirmishAIId) return BEFORE;") >> outFile_abs_c;
+				print("\t\t" "if (this.skirmishAIId > other.skirmishAIId) return AFTER;") >> outFile_abs_c;
+				print("\t\t" "return EQUAL;") >> outFile_abs_c;
+			} else {
+				for (ai=1; ai <= addInds_size_c; ai++) {
+					addIndName = addInds_c[ai];
+					print("\t\t" "if (this.get" capitalize(addIndName) "() < other.get" capitalize(addIndName) "()) return BEFORE;") >> outFile_abs_c;
+					print("\t\t" "if (this.get" capitalize(addIndName) "() > other.get" capitalize(addIndName) "()) return AFTER;") >> outFile_abs_c;
+				}
+				print("\t\t" "return 0;") >> outFile_abs_c;
+			}
+			print("\t" "}") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+		}
+
+
+		# print equals(other) method
+		if (!isClbRootCls) {
+			print("\t" "@Override") >> outFile_abs_c;
+			print("\t" "public boolean equals(Object otherObject) {") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+			print("\t\t" "if (this == otherObject) return true;") >> outFile_abs_c;
+			print("\t\t" "if (!(otherObject instanceof " clsNameExternal_c ")) return false;") >> outFile_abs_c;
+			print("\t\t" clsNameExternal_c " other = (" clsNameExternal_c ") otherObject;") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+
+			if (isClbRootCls) {
+				print("\t\t" "if (this.skirmishAIId != other.skirmishAIId) return false;") >> outFile_abs_c;
+				print("\t\t" "return true;") >> outFile_abs_c;
+			} else {
+				for (ai=1; ai <= addInds_size_c; ai++) {
+					addIndName = addInds_c[ai];
+					print("\t\t" "if (this.get" capitalize(addIndName) "() != other.get" capitalize(addIndName) "()) return false;") >> outFile_abs_c;
+				}
+				print("\t\t" "return true;") >> outFile_abs_c;
+			}
+			print("\t" "}") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+		}
+
+
+		# print hashCode() method
+		if (!isClbRootCls) {
+			print("\t" "@Override") >> outFile_abs_c;
+			print("\t" "public int hashCode() {") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+
+			if (isClbRootCls) {
+				print("\t\t" "int _res = 0;") >> outFile_abs_c;
+				print("") >> outFile_abs_c;
+				print("\t\t" "_res += this.skirmishAIId * 10E8;") >> outFile_abs_c;
+			} else {
+				print("\t\t" "int _res = 23;") >> outFile_abs_c;
+				print("") >> outFile_abs_c;
+				# NOTE: This could go wrong if we have more then 7 additional indices
+				# see 10E" (7-ai) below
+				# the conversion to int is nessesarry,
+				# as otherwise it would be a double,
+				# which would be higher then max int,
+				# and most hashes would end up being max int,
+				# when converted from double to int
+				for (ai=1; ai <= addInds_size_c; ai++) {
+					addIndName = addInds_c[ai];
+					print("\t\t" "_res += this.get" capitalize(addIndName) "() * (int) (10E" (7-ai) ");") >> outFile_abs_c;
+				}
+			}
+			print("") >> outFile_abs_c;
+			print("\t\t" "return _res;") >> outFile_abs_c;
+			print("\t" "}") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+		}
+
+
+		# print toString() method
+		{
+			print("\t" "@Override") >> outFile_abs_c;
+			print("\t" "public String toString() {") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+			print("\t\t" "String _res = this.getClass().toString();") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+
+			#if (isClbRootCls) {
+			#	print("\t\t" "_res = _res + \"(skirmishAIId=\" + this.skirmishAIId + \", \";") >> outFile_abs_c;
+			#} else {
+			#	print("\t\t" "_res = _res + \"(clbHash=\" + this." myWrapVar ".hashCode() + \", \";") >> outFile_abs_c;
+			#	print("\t\t" "_res = _res + \"skirmishAIId=\" + this." myWrapVar ".SkirmishAI_getSkirmishAIId() + \", \";") >> outFile_abs_c;
+				for (ai=1; ai <= addInds_size_c; ai++) {
+					addIndName = addInds_c[ai];
+					print("\t\t" "_res = _res + \"" addIndName "=\" + this.get" capitalize(addIndName) "() + \", \";") >> outFile_abs_c;
+				}
+			#}
+			print("\t\t" "_res = _res + \")\";") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+			print("\t\t" "return _res;") >> outFile_abs_c;
+			print("\t" "}") >> outFile_abs_c;
+			print("") >> outFile_abs_c;
+		}
 	}
 
-
-	# print toString() method
-	{
-		print("\t" "@Override") >> outFile_c;
-		print("\t" "public String toString() {") >> outFile_c;
-		print("") >> outFile_c;
-		print("\t\t" "String _res = this.getClass().toString();") >> outFile_c;
-		print("") >> outFile_c;
-
-		if (isClbRootCls) {
-			print("\t\t" "_res = _res + \"(teamId=\" + this.teamId + \", \";") >> outFile_c;
-		} else {
-			print("\t\t" "_res = _res + \"(clbHash=\" + this." myClassVar ".hashCode() + \", \";") >> outFile_c;
-			print("\t\t" "_res = _res + \"teamId=\" + this." myClassVar ".getTeamId() + \", \";") >> outFile_c;
-			for (ai=0; ai < size_addInds; ai++) {
-				addIndName = additionalClsIndices[clsId_c "#" ai];
-				print("\t\t" "_res = _res + \"" addIndName "=\" + this.get" capitalize(addIndName) "() + \", \";") >> outFile_c;
-			}
-		}
-		print("\t\t" "_res = _res + \")\";") >> outFile_c;
-		print("") >> outFile_c;
-		print("\t\t" "return _res;") >> outFile_c;
-		print("\t" "}") >> outFile_c;
-		print("") >> outFile_c;
-	}
-
+	# make these available in called functions
+	implId_c_         = implId_c;
+	clsName_c_        = clsName_c;
+	printIntAndStb_c_ = printIntAndStb_c;
 
 	# print member functions
-	size_funcs = ownerOfFunc[clsId_c "*"];
-	for (f=0; f < size_funcs; f++) {
-		fullName_c = ownerOfFunc[clsId_c "#" f];
+	members_size = cls_name_members[clsName_int_c ",*"];
+#print("mems " clsName_int_c ": " members_size);
+	for (m=0; m < members_size; m++) {
+		memName_c  = cls_name_members[clsName_int_c "," m];
+		fullName_c = implId_c "," memName_c;
+		gsub(/,/, "_", fullName_c);
 		if (doWrapp(fullName_c)) {
-			printMember(outFile_c, fullName_c, size_addInds, 0);
+			printMember(fullName_c, memName_c, addInds_size_c);
 		}
 	}
 
@@ -478,13 +454,27 @@ function printClass(ancestors_c, clsName_c) {
 	size_memCls = split(ancestors_class[clsFull_c], memCls, ",");
 	for (mc=0; mc < size_memCls; mc++) {
 		memberClass_c = memCls[mc+1];
-		printMemberClassFetchers(outFile_c, clsFull_c, clsId_c, memberClass_c, isInterface_c);
+		#printMemberClassFetchers(clsFull_c, clsId_c, memberClass_c, isInterface_c);
 	}
 
 
-	print("}") >> outFile_c;
-	print("") >> outFile_c;
-	close(outFile_c);
+	# finnish up
+	if (printIntAndStb_c) {
+		print("}") >> outFile_int_c;
+		print("") >> outFile_int_c;
+		close(outFile_int_c);
+
+		print("}") >> outFile_abs_c;
+		print("") >> outFile_abs_c;
+		close(outFile_abs_c);
+
+		print("}") >> outFile_stb_c;
+		print("") >> outFile_stb_c;
+		close(outFile_stb_c);
+	}
+	print("}") >> outFile_jni_c;
+	print("") >> outFile_jni_c;
+	close(outFile_jni_c);
 }
 
 function printMemberClassFetchers(outFile_mc, clsFull_mc, clsId_mc, memberClsName_mc, isInterface_mc) {
@@ -492,12 +482,14 @@ function printMemberClassFetchers(outFile_mc, clsFull_mc, clsId_mc, memberClsNam
 		memberClassId_mc = clsFull_mc "-" memberClsName_mc;
 		size_multi_mc = ancestorsClass_multiSizes[memberClassId_mc "*"];
 		isMulti_mc = (size_multi_mc != "");
-		if (isMulti_mc) { # multi element fetcher(s)
+		if (isMulti_mc) {
+			# multi element fetcher(s)
 			for (mmc=0; mmc < size_multi_mc; mmc++) {
 				fullNameMultiSize_mc = ancestorsClass_multiSizes[memberClassId_mc "#" mmc];
 				printMemberClassFetcher(outFile_mc, clsFull_mc, clsId_mc, memberClsName_mc, isInterface_mc, fullNameMultiSize_mc);
 			}
-		} else { # single element fetcher
+		} else {
+			# single element fetcher
 			printMemberClassFetcher(outFile_mc, clsFull_mc, clsId_mc, memberClsName_mc, isInterface_mc, 0);
 		}
 }
@@ -511,8 +503,10 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 		} else {
 			memberClassImpl_mf = memberClsName_mf;
 		}
-		if (isMulti_mf) { # multi element fetcher
-			if (match(fullNameMultiSize_mf, /^.*0MULTI1[^0]*3/)) { # wants a different function name then the default one
+		if (isMulti_mf) {
+			# multi element fetcher
+			if (match(fullNameMultiSize_mf, /^.*0MULTI1[^0]*3/)) {
+				# wants a different function name then the default one
 				fn = fullNameMultiSize_mf;
 				sub(/^.*0MULTI1[^3]*3/, "", fn); # remove pre MULTI 3
 				sub(/[0-9].*$/, "", fn); # remove post MULTI 3
@@ -527,13 +521,14 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 			fullNameMultiVals_mf = fullNameMultiSize_mf;
 			sub(/0MULTI1SIZE/, "0MULTI1VALS", fullNameMultiVals_mf);
 			hasMultiVals_mf = (funcRetType[fullNameMultiVals_mf] != "");
-		} else { # single element fetcher
+		} else {
+			# single element fetcher
 			fn = "get" memberClsName_mf;
 			params = "";
 		}
 
 		# remove additional indices from params
-		for (ai=0; ai < size_addInds; ai++) {
+		for (ai=0; ai < addInds_size_c; ai++) {
 			sub(/int [_a-zA-Z0-9]+(, )?/, "", params);
 		}
 
@@ -548,7 +543,7 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 
 		# concatenate additional indices
 		indexParams_mf = "";
-		for (ai=0; ai < size_addInds; ai++) {
+		for (ai=0; ai < addInds_size_c; ai++) {
 			addIndName = additionalClsIndices[clsId_mf "#" ai];
 			indexParams_mf = indexParams_mf  ", " addIndName;
 		}
@@ -578,10 +573,10 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 			print(indent_mf retType " _ret;") >> outFile_mf;
 		}
 		if (isMulti_mf) {
-			print(indent_mf "int size = " myWrapper "." fullNameMultiSize_mf "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_mf;
+			print(indent_mf "int size = " myWrapVar "." fullNameMultiSize_mf "(" mySkirmishAIId condInnerParamsComma innerParams ");") >> outFile_mf;
 			if (hasMultiVals_mf) {
 				print(indent_mf "int[] tmpArr = new int[size];") >> outFile_mf;
-				print(indent_mf myWrapper "." fullNameMultiVals_mf "(" myTeamId condInnerParamsComma innerParams ", tmpArr, size);") >> outFile_mf;
+				print(indent_mf myWrapVar "." fullNameMultiVals_mf "(" mySkirmishAIId condInnerParamsComma innerParams ", tmpArr, size);") >> outFile_mf;
 				print(indent_mf retType " arrList = new " retType "(size);") >> outFile_mf;
 				print(indent_mf "for (int i=0; i < size; i++) {") >> outFile_mf;
 				print(indent_mf "\t" "arrList.add(" memberClassImpl_mf ".getInstance(" myClassVarLocal condIndexComma_mf indexParams_mf ", tmpArr[i]));") >> outFile_mf;
@@ -614,6 +609,8 @@ function printMemberClassFetcher(outFile_mf, clsFull_mf, clsId_mf, memberClsName
 function isRetParamName(paramName_rp) {
 	return (match(paramName_rp, /_out(_|$)/) || match(paramName_rp, /(^|_)?ret_/));
 }
+
+# UNUSED
 function cleanRetParamName(paramName_rp) {
 
 	paramNameClean_rp = paramName_rp;
@@ -624,36 +621,38 @@ function cleanRetParamName(paramName_rp) {
 	return paramNameClean_rp;
 }
 
-function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) {
+function printMember(fullName_m, memName_m, additionalIndices_m) {
+#print("Printing member: " fullName_m);
+	# use some vars from the printClass function (which called us)
+	implId_m         = implId_c_;
+	clsName_m        = clsName_c_;
+	printIntAndStb_m = printIntAndStb_c_;
+	implCls_m        = implCls_c;
+	clsName_int_m    = clsName_int_c;
+	clsName_stb_m    = clsName_stb_c;
+	clsName_jni_m    = clsName_jni_c;
+	outFile_int_m    = outFile_int_c;
+	outFile_stb_m    = outFile_stb_c;
+	outFile_jni_m    = outFile_jni_c;
 
-	if (part_isMultiValues(fullName_m) || part_isArrayValues(fullName_m) || part_isMapKeys(fullName_m) || part_isMapValues(fullName_m)) {
-		return;
-	}
-
-	indent_m = "\t";
-	retType = funcRetType[fullName_m];
-	retTypeInterface = "";
-	params = funcParams[fullName_m];
-	innerParams = funcInnerParams[fullName_m];
-	memName = extractNormalPart(fullName_m);
-	metaComment = funcMetaComment[fullName_m];
+	indent_m            = "\t";
+	memId_m             = clsName_m "," memName_m;
+	retType             = cls_memberId_retType[memId_m];
+	retType_int         = "";
+	params              = cls_memberId_params[memId_m];
+	isFetcher           = cls_memberId_isFetcher[memId_m];
+	metaComment         = cls_memberId_metaComment[memId_m];
+#print("retType: " retType);
+	innerParams         = removeParamTypes(params);
+	memName             = fullName_m;
 	sub(/^.*_/, "", memName);
-	isVoid_m = (retType == "void");
+	isVoid_m            = (retType == "void");
 	conversionCode_pre  = "";
 	conversionCode_post = "";
 
-	# never used: delete (see use of vars, delete too)
-	hasRetParam = match(innerParams, retParamName "$") && (1 == 0);
-	if (hasRetParam) {
-		retParamType = params;
-		sub(" " retParamName ".*$", "", retParamType);
-		sub("^.*, ", "", retParamType);
-		if (!sub(",[^,]*$", "", params)) {
-			params = "";
-		}
-	}
+outFile_m = outFile_jni_m;
 
-	# convert params
+	# convert param types
 	paramNames_size = split(innerParams, paramNames, ", ");
 	for (prm = 1; prm <= paramNames_size; prm++) {
 		paNa = paramNames[prm];
@@ -677,6 +676,7 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 	# convert out params to return values
 	#metaComment "error-return:0=OK"
 	paramTypeNames_size = split(params, paramTypeNames, ", ");
+	hasRetParam = 0;
 	for (prm = 1; prm <= paramTypeNames_size; prm++) {
 		paNa = extractParamName(paramTypeNames[prm]);
 		if (isRetParamName(paNa)) {
@@ -701,18 +701,11 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		}
 	}
 
-	#if (memName == "handleCommand") {
-	#	sub(/int commandTopic\, Pointer commandData/, "AICommand command", params);
-	#	sub(/commandTopic\, commandData/, "command.getTopic(), command.getPointer()", innerParams);
-	#}
-
-	isArraySize = part_isArraySize(fullName_m);
-	if (isArraySize) {
+	isArray = part_isArray(fullName_m, metaComment);
+#print("metaComment: " metaComment);
+	if (isArray) {
+print("isArray::fullName_m: " fullName_m);
 		fullNameArraySize = fullName_m;
-
-		fullNameArrayVals = fullNameArraySize;
-		sub(/0ARRAY1SIZE/, "0ARRAY1VALS", fullNameArrayVals);
-		params = funcParams[fullNameArrayVals];
 
 		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
 		arrayType = params; # getArrayType
@@ -729,13 +722,14 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			sub(/[0123].*$/, "", referenceType); # remove post ref array type
 		}
 		arrType_java = convertJavaBuiltinTypeToClass(referenceType);
-		retTypeInterface = "java.util.List<" arrType_java ">";
+		retType_int = "java.util.List<" arrType_java ">";
 		retType = "java.util.ArrayList<" arrType_java ">";
 		sub(/(\, )?[^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
 	}
 
-	isMapSize = part_isMapSize(fullName_m);
-	if (isMapSize) {
+	isMap = part_isMap(fullName_m, metaComment);
+	if (isMap) {
+print("isMap::fullName_m: " fullName_m);
 		fullNameMapSize = fullName_m;
 
 		fullNameMapKeys = fullNameMapSize;
@@ -755,8 +749,9 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		sub(/\, [^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
 	}
 
-	isSingleFetch = part_isSingleFetch(fullName_m);
+	isSingleFetch = part_isSingleFetch(fullName_m, metaComment);
 	if (isSingleFetch) {
+print("isSingleFetch::fullName_m: " fullName_m);
 		fetchClass_m = fullName_m;
 		sub(/0[^0]*$/, "", fetchClass_m); # remove everything after array type
 		sub(/.*0SINGLE1FETCH[^2]*2/, "", fetchClass_m); # remove everything before array type
@@ -801,10 +796,12 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		mod_m = "public ";
 	}
 
-	retType = trim(retType);
-	if (retTypeInterface == "") {
-		retTypeInterface = retType;
-	}
+	retTypeInterface = trim(retType);
+	#if (retTypeInterface == "") {
+	#	retTypeInterface = retType;
+	#}
+#print("retType: " retType);
+#print("retTypeInterface: " retTypeInterface);
 
 	print("") >> outFile_m;
 
@@ -814,12 +811,18 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		print(indent_m "boolean _buffer_isInitialized_" memName " = false;") >> outFile_m;
 	}
 
-	printFunctionComment_Common(outFile_m, funcDocComment, fullName_m, indent_m);
+	# print method doc comment
+	if (printIntAndStb_m) {
+		printFunctionComment_Common(outFile_int_m, funcDocComment, fullName_m, indent_m);
+		printFunctionComment_Common(outFile_stb_m, funcDocComment, fullName_m, indent_m);
+	}
+	printFunctionComment_Common(outFile_jni_m, funcDocComment, fullName_m, indent_m);
 
-	print(indent_m mod_m retTypeInterface " " memName "(" params ")" firstLineEnd) >> outFile_m;
+	#print(indent_m mod_m retTypeInterface " " memName "(" params ")" firstLineEnd) >> outFile_m;
+	printTripleFunc(retTypeInterface, memName, params, outFile_int_m, outFile_stb_m, outFile_jni_m, printIntAndStb_m);
+	
 	if (!isInterface_m) {
 		condRet = isVoid_m ? "" : "_ret = ";
-		condInnerParamsComma = (innerParams == "") ? "" : ", ";
 		indent_m = indent_m "\t";
 		if (memName == "handleCommand") {
 			print(indent_m "command.write();") >> outFile_m;
@@ -838,14 +841,14 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			print("") >> outFile_m;
 			print(indent_m retParamType " " retParamName " = new float[3];") >> outFile_m;
 		}
-		if (isArraySize) {
+		if (isArray) {
 			print("") >> outFile_m;
-			print(indent_m "int size = " myWrapper "." fullNameArraySize "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
+			print(indent_m "int size = " myWrapVar "." fullNameArraySize "("innerParams ");") >> outFile_m;
 			print(indent_m retType " arrList = new " retType "(size);") >> outFile_m;
 			print(indent_m "if (size > 0) {") >> outFile_m;
 			indent_m = indent_m "\t";
 			print(indent_m arrayType "[] tmpArr = new " arrayType "[size];") >> outFile_m;
-			print(indent_m myWrapper "." fullNameArrayVals "(" myTeamId condInnerParamsComma innerParams ", tmpArr, size);") >> outFile_m;
+			print(indent_m myWrapVar "." fullNameArrayVals "(" innerParams ", tmpArr, size);") >> outFile_m;
 			print(indent_m "for (int i=0; i < size; i++) {") >> outFile_m;
 			indent_m = indent_m "\t";
 			if (arrayType == referenceType) {
@@ -858,18 +861,18 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_m;
 			print(indent_m "_ret = arrList;") >> outFile_m;
-		} else if (isMapSize) {
+		} else if (isMap) {
 			print("") >> outFile_m;
-			print(indent_m "int size = " myWrapper "." fullNameMapSize "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
+			print(indent_m "int size = " myWrapVar "." fullNameMapSize "(" innerParams ");") >> outFile_m;
 			retMapImplType = retType;
 			sub(/Map/, defMapJavaImpl, retMapImplType);
 			print(indent_m retType " retMap = new " retMapImplType "(size);") >> outFile_m;
 			print(indent_m "if (size > 0) {") >> outFile_m;
 			indent_m = indent_m "\t";
 			print(indent_m keyType "[] tmpKeysArr = new " keyType "[size];") >> outFile_m;
-			print(indent_m myWrapper "." fullNameMapKeys "(" myTeamId condInnerParamsComma innerParams ", tmpKeysArr);") >> outFile_m;
+			print(indent_m myWrapVar "." fullNameMapKeys "(" innerParams ", tmpKeysArr);") >> outFile_m;
 			print(indent_m valType "[] tmpValsArr = new " valType "[size];") >> outFile_m;
-			print(indent_m myWrapper "." fullNameMapVals "(" myTeamId condInnerParamsComma innerParams ", tmpValsArr);") >> outFile_m;
+			print(indent_m myWrapVar "." fullNameMapVals "(" innerParams ", tmpValsArr);") >> outFile_m;
 			print(indent_m "for (int i=0; i < size; i++) {") >> outFile_m;
 			print(indent_m "\t" "retMap.put(tmpKeysArr[i], tmpValsArr[i]);") >> outFile_m;
 			print(indent_m "}") >> outFile_m;
@@ -879,21 +882,21 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 		} else if (isSingleFetch) {
 			condInstanceInnerParamsComma = (instanceInnerParams == "") ? "" : ", ";
 			print("") >> outFile_m;
-			print(indent_m innerRetType " innerRet = " myWrapper "." fullName_m "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
+			print(indent_m innerRetType " innerRet = " myWrapVar "." fullName_m "(" innerParams ");") >> outFile_m;
 			print(indent_m "_ret = " retType ".getInstance(" myClassVarLocal ", innerRet" condInstanceInnerParamsComma instanceInnerParams ");") >> outFile_m;
 		} else {
-			print(indent_m condRet myWrapper "." fullName_m "(" myTeamId condInnerParamsComma innerParams ");") >> outFile_m;
+			print(indent_m condRet myWrapVar "." fullName_m "(" innerParams ");") >> outFile_m;
 		}
 		if (conversionCode_post != "") {
 			print(conversionCode_post) >> outFile_m;
 		}
 		if (hasRetParam) {
-			#if (isBuffered_m) {
+			#if (isBuffered_m) { # NO FOLD
 			#	print(indent_m "_ret = new AIFloat3(" retParamName ");") >> outFile_m;
-			#} else {
+			#} else { # NO FOLD
 			#	print(indent_m "return new AIFloat3(" retParamName ");") >> outFile_m;
 			#}
-			print(indent_m "return _ret;") >> outFile_m;
+			#print(indent_m "return _ret;") >> outFile_m;
 		}
 		if (isBuffered_m) {
 			print(indent_m "_buffer_" memName " = _ret;") >> outFile_m;
@@ -914,6 +917,36 @@ function printMember(outFile_m, fullName_m, additionalIndices_m, isInterface_m) 
 }
 
 
+# Used by the common OO AWK script
+function doWrapp(funcFullName_dw, params_dw, metaComment_dw) {
+
+	doWrapp_dw = 1;
+
+	doWrapp_dw = doWrapp_dw && !match(params_dw, /String\[\]/);
+	doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/);
+
+	return doWrapp_dw;
+}
+
+function wrappFunctionDef(funcDef, commentEolTot) {
+
+	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)\\;)");
+	# because the empty part after ");" would count as part as well
+	size_funcParts--;
+
+	fullName = funcParts[1];
+	fullName = trim(fullName);
+	sub(/.*[ \t]+/, "", fullName);
+
+	retType = funcParts[1];
+	sub(/[ \t]*public/, "", retType);
+	sub(fullName, "", retType);
+	retType = trim(retType);
+
+	params = funcParts[2];
+
+	wrappFunctionPlusMeta(retType, fullName, params, commentEolTot);
+}
 
 # This function has to return true (1) if a doc comment (eg: /** foo bar */)
 # can be deleted.
@@ -947,7 +980,7 @@ function canDeleteDocumentation() {
 	}
 }
 # 1st line of a function definition
-/Clb_/ {
+/\tpublic .*);/ {
 
 	funcStartLine = $0;
 	# separate possible comment at end of line: // foo bar
@@ -968,31 +1001,10 @@ function canDeleteDocumentation() {
 	}
 }
 
-function wrappFunctionDef(funcDef, commentEolTot) {
-
-	size_funcParts = split(funcDef, funcParts, "(\\()|(\\)\\;)");
-	# because the empty part after ");" would count as part aswell
-	size_funcParts--;
-
-	fullName = funcParts[1];
-	fullName = trim(fullName);
-	sub(/.*[ \t]+/, "", fullName);
-
-	retType = funcParts[1];
-	sub(/public native/, "", retType);
-	sub(fullName, "", retType);
-	retType = trim(retType);
-
-	params = funcParts[2];
-	sub(/^int _teamId(, )?/, "", params);
-
-	wrappFunctionPlusMeta(retType, fullName, params, commentEolTot);
-}
 
 
 END {
 	# finalize things
-	storeClassesAndInterfaces();
-	printInterfaces();
+	store_everything();
 	printClasses();
 }
