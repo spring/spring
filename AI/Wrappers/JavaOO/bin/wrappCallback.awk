@@ -104,6 +104,7 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h, isInterface_h,
 	print("import " myParentPkgA ".AIFloat3;") >> outFile_h;
 	if (isJniBound_h) {
 		print("import " myMainPkgA ".AICallback;") >> outFile_h;
+		print("import " myMainPkgA ".Util;") >> outFile_h;
 	}
 	print("") >> outFile_h;
 	print("/**") >> outFile_h;
@@ -128,6 +129,10 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, outFile_int_tr, outFile_
 			# return nothing
 		} else if (fRet_tr == "String") {
 			print("\t\t" "return \"\";") >> outFile_stb_c;
+		} else if (fRet_tr == "AIFloat3") {
+			print("\t\t" "return new AIFloat3(0.0f, 0.0f, 0.0f);") >> outFile_stb_c;
+		} else if (fRet_tr == "java.awt.Color") {
+			print("\t\t" "return java.awt.Color.BLACK;") >> outFile_stb_c;
 		} else if (fRet_tr == "boolean") {
 			print("\t\t" "return false;") >> outFile_stb_c;
 		} else {
@@ -634,23 +639,53 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	outFile_int_m    = outFile_int_c;
 	outFile_stb_m    = outFile_stb_c;
 	outFile_jni_m    = outFile_jni_c;
+	addInds_size_m   = addInds_size_c;
+	for (ai=1; ai <= addInds_size_m; ai++) {
+		addInds_m[ai] = addInds_c[ai];
+	}
 
 	indent_m            = "\t";
 	memId_m             = clsName_m "," memName_m;
 	retType             = cls_memberId_retType[memId_m];
-	retType_int         = "";
+	retType_int         = retType;
 	params              = cls_memberId_params[memId_m];
 	isFetcher           = cls_memberId_isFetcher[memId_m];
 	metaComment         = cls_memberId_metaComment[memId_m];
 #print("retType: " retType);
-	innerParams         = removeParamTypes(params);
 	memName             = fullName_m;
 	sub(/^.*_/, "", memName);
-	isVoid_m            = (retType == "void");
 	conversionCode_pre  = "";
 	conversionCode_post = "";
 
 outFile_m = outFile_jni_m;
+
+if (memName_m == "setBase") { print("setBase pre:  " params " # " addInds_size_m); }
+	# remove additional indices from the outter params
+	for (ai=1; ai <= addInds_size_m; ai++) {
+		_removed = sub(/[^,]+(, )?/, "", params);
+		if (!_removed && !part_isStatic(memName_m, metaComment)) {
+			addIndName = addInds_m[ai];
+			print("ERROR: failed removing additional indices " addIndName " from method " memName_m " in class " clsName_int_m);
+		}
+	}
+
+	innerParams         = removeParamTypes(params);
+
+	# add additional indices fetcher calls to inner params
+	addInds_real_size_m = addInds_size_m;
+	if (part_isStatic(memName_m, metaComment)) {
+		addInds_real_size_m--;
+	}
+	for (ai=1; ai <= addInds_real_size_m; ai++) {
+		addIndName = addInds_m[ai];
+		_condComma = "";
+		if (innerParams != "") {
+			_condComma = ", ";
+		}
+		innerParams = "this.get" capitalize(addIndName) "()" _condComma innerParams;
+	}
+if (memName_m == "setBase") { print("setBase post: " params); }
+
 
 	# convert param types
 	paramNames_size = split(innerParams, paramNames, ", ");
@@ -673,26 +708,39 @@ outFile_m = outFile_jni_m;
 		}
 	}
 
-	# convert out params to return values
+	# convert an error return int value to a RuntimeException
 	#metaComment "error-return:0=OK"
+	if (part_isErrorReturn(metaComment) && retType == "int") {
+		errorRetValueOk_m = part_getErrorReturnValueOk(metaComment);
+
+		conversionCode_post = conversionCode_post "\t\t" "if (_ret_int != " errorRetValueOk_m ") {" "\n";
+		conversionCode_post = conversionCode_post "\t\t\t" "throw new RuntimeException(\"Error calling function " memName_m ": \" + _ret_int);" "\n";
+		conversionCode_post = conversionCode_post "\t\t" "}" "\n";
+
+		retType = "void";
+	}
+
+	# convert out params to return values
 	paramTypeNames_size = split(params, paramTypeNames, ", ");
 	hasRetParam = 0;
 	for (prm = 1; prm <= paramTypeNames_size; prm++) {
 		paNa = extractParamName(paramTypeNames[prm]);
-		if (isRetParamName(paNa)) {
+		if (isRetParamName(paNa) && retType == "void") {
 			paTy = extractParamType(paramTypeNames[prm]);
 			hasRetParam = 1;
 			if (match(paNa, /_posF3/)) {
 				# convert float[3] to AIFloat3
 				retParamType = "AIFloat3";
 				conversionCode_pre  = conversionCode_pre  "\t\t" "float[] " paNa " = new float[3];" "\n";
-				conversionCode_post = conversionCode_post "\t\t" retParamType " _ret = new AIFloat3(" paNa ");" "\n";
+				conversionCode_post = conversionCode_post "\t\t" "_ret = new AIFloat3(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
 				sub("(, )?float\\[\\] " paNa, "", params);
+				retType = retParamType;
 			} else if (match(paNa, /_colorS3/)) {
 				retParamType = "java.awt.Color";
 				conversionCode_pre  = conversionCode_pre  "\t\t" "short[] " paNa " = new short[3];" "\n";
-				conversionCode_post = conversionCode_post "\t\t" retParamType " _ret = Util.toShort3Array(" paNa ");" "\n";
+				conversionCode_post = conversionCode_post "\t\t" "_ret = Util.toColor(" paNa ");" "\n";
 				sub("(, )?short\\[\\] " paNa, "", params);
+				retType = retParamType;
 			} else {
 				print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);
 				exit(-1);
@@ -700,6 +748,9 @@ outFile_m = outFile_jni_m;
 #print(paNa);
 		}
 	}
+
+	isVoid_m            = (retType == "void");
+	isVoid_int_m        = (retType_int == "void");
 
 	isArray = part_isArray(fullName_m, metaComment);
 #print("metaComment: " metaComment);
@@ -765,6 +816,7 @@ print("isSingleFetch::fullName_m: " fullName_m);
 	refObjsFullName_m = fullName_m;
 	hasReferenceObject_m = part_hasReferenceObject(refObjsFullName_m);
 	while (hasReferenceObject_m) {
+print("hasReferenceObject_m::fullName_m: " fullName_m);
 		refObj_m = refObjsFullName_m;
 		sub(/^.*0REF/, "", refObj_m); # remove everything before ref type
 		sub(/0.*$/, "", refObj_m); # remove everything after ref type
@@ -785,9 +837,9 @@ print("isSingleFetch::fullName_m: " fullName_m);
 	}
 
 	# remove additional indices from params
-	for (ai=0; ai < additionalIndices_m; ai++) {
-		sub(/int [_a-zA-Z0-9]+(, )?/, "", params);
-	}
+	#for (ai=0; ai < additionalIndices_m; ai++) {
+	#	sub(/^int [_a-zA-Z0-9]+(, )?/, "", params);
+	#}
 
 	firstLineEnd = ";";
 	mod_m = "";
@@ -796,7 +848,7 @@ print("isSingleFetch::fullName_m: " fullName_m);
 		mod_m = "public ";
 	}
 
-	retTypeInterface = trim(retType);
+	#retTypeInterface = trim(retType);
 	#if (retTypeInterface == "") {
 	#	retTypeInterface = retType;
 	#}
@@ -819,11 +871,15 @@ print("isSingleFetch::fullName_m: " fullName_m);
 	printFunctionComment_Common(outFile_jni_m, funcDocComment, fullName_m, indent_m);
 
 	#print(indent_m mod_m retTypeInterface " " memName "(" params ")" firstLineEnd) >> outFile_m;
-	printTripleFunc(retTypeInterface, memName, params, outFile_int_m, outFile_stb_m, outFile_jni_m, printIntAndStb_m);
+	printTripleFunc(retType, memName, params, outFile_int_m, outFile_stb_m, outFile_jni_m, printIntAndStb_m);
 	
 	if (!isInterface_m) {
-		condRet = isVoid_m ? "" : "_ret = ";
+		condRet_int_m = isVoid_int_m ? "" : "_ret = ";
+		if (retType != retType_int) {
+			sub(/_ret /, "_ret_int ", condRet_int_m);
+		}
 		indent_m = indent_m "\t";
+
 		if (memName == "handleCommand") {
 			print(indent_m "command.write();") >> outFile_m;
 		}
@@ -831,15 +887,16 @@ print("isSingleFetch::fullName_m: " fullName_m);
 			print(indent_m retType " _ret = _buffer_" memName ";") >> outFile_m;
 			print(indent_m "if (!_buffer_isInitialized_" memName ") {") >> outFile_m;
 			indent_m = indent_m "\t";
-		} else if (!isVoid_m) {
-			print(indent_m retType " _ret;") >> outFile_m;
+		} else {
+			if (!isVoid_m) {
+				print(indent_m retType " _ret;") >> outFile_m;
+			}
+			if (!isVoid_int_m && (retType_int != retType)) {
+				print(indent_m retType_int " _ret_int;") >> outFile_m;
+			}
 		}
 		if (conversionCode_pre != "") {
 			print(conversionCode_pre) >> outFile_m;
-		}
-		if (hasRetParam) {
-			print("") >> outFile_m;
-			print(indent_m retParamType " " retParamName " = new float[3];") >> outFile_m;
 		}
 		if (isArray) {
 			print("") >> outFile_m;
@@ -885,7 +942,7 @@ print("isSingleFetch::fullName_m: " fullName_m);
 			print(indent_m innerRetType " innerRet = " myWrapVar "." fullName_m "(" innerParams ");") >> outFile_m;
 			print(indent_m "_ret = " retType ".getInstance(" myClassVarLocal ", innerRet" condInstanceInnerParamsComma instanceInnerParams ");") >> outFile_m;
 		} else {
-			print(indent_m condRet myWrapVar "." fullName_m "(" innerParams ");") >> outFile_m;
+			print(indent_m condRet_int_m myWrapVar "." fullName_m "(" innerParams ");") >> outFile_m;
 		}
 		if (conversionCode_post != "") {
 			print(conversionCode_post) >> outFile_m;

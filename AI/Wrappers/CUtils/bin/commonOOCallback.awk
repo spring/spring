@@ -170,6 +170,20 @@ function part_getFetcherIndArg(metaInfo_p) {
 	return fetcherIndArgPart_p;
 }
 
+function part_isErrorReturn(metaInfo_p) {
+	return match(metaInfo_p, /error-return:/);
+}
+function part_getErrorReturnValueOk(metaInfo_p) {
+
+	errRetValOk_p = metaInfo_p;
+
+	sub(/^.*error-return:/, "", errRetValOk_p);
+	sub(/[ \t].*$/,         "", errRetValOk_p);
+	sub(/=OK.*$/, "", errRetValOk_p);
+
+	return errRetValOk_p;
+}
+
 function part_isAvailable(namePart_p, metaInfo_p) {
 	return match(metaInfo_p, /AVAILABLE:/);
 }
@@ -214,6 +228,8 @@ function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p) 
 
 	indicesArg_p = "";
 
+#if (clsName_p == "Unit") { print("Unit params_p: " params_p); }
+#if (clsName_p == "Group") { print("Group params_p: " params_p); }
 	if (part_isFetcher(metaComment_p)) {
 		indicesArg_p = part_getFetcherIndArg(metaComment_p);
 		if (indicesArg_p != "") {
@@ -242,6 +258,8 @@ function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p) 
 	if (!_found) { print("indices arg \"" indicesArg_p "\" not found in params: " params_p); exit(1); }
 	indicesArgs_p = indicesArgs_p indicesArg_p;
 #print("ind args: #" implClsName_p "#" indicesArgs_p "#")
+#if (clsName_p == "Unit") { print( "Unit indicesArgs_p:  " indicesArgs_p); }
+#if (clsName_p == "Group") { print("Group indicesArgs_p: " indicesArgs_p); }
 
 	return indicesArgs_p;
 }
@@ -305,8 +323,8 @@ function store_anc(clsName_s, implClsName_s, ancestors_s, indicesArgs_s) {
 
 	_implId = ancestors_s implClsName_s;
 
-	# store only if not yet stored
 	if (!(_implId in cls_implId_indicesArgs)) {
+	# store only if not yet stored
 		cls_implId_indicesArgs[_implId] = indicesArgs_s;
 		cls_name_indicesArgs[clsName_s] = indicesArgs_s;
 		_cls_size = cls_name_implIds[clsName_s ",*"];
@@ -314,6 +332,9 @@ function store_anc(clsName_s, implClsName_s, ancestors_s, indicesArgs_s) {
 		_cls_size++;
 		cls_name_implIds[clsName_s ",*"] = _cls_size;
 #print("anc: " _cls_size " " _implId " " indicesArgs_s);
+	} else if (length(indicesArgs_s) > length(cls_implId_indicesArgs[_implId])) {
+		# if already stored, but we have more indices args now, store them
+		cls_implId_indicesArgs[_implId] = indicesArgs_s;
 	}
 }
 
