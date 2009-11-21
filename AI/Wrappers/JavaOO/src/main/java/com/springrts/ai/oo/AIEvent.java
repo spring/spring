@@ -15,7 +15,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package com.springrts.ai;
+package com.springrts.ai.oo;
 
 
 import com.sun.jna.Pointer;
