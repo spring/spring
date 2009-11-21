@@ -41,4 +41,15 @@ public final class Util {
 
 		return shortArr;
 	}
+
+	public static Color toColor(final short[] shortArr) {
+
+		Color color = new Color(
+				(int) shortArr[0],
+				(int) shortArr[1],
+				(int) shortArr[2]
+				);
+
+		return color;
+	}
 }
