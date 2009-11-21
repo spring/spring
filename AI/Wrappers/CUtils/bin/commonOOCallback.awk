@@ -10,6 +10,74 @@
 
 BEGIN {
 	# initialize things
+
+	# Storage containers
+	# ==================
+	#
+	# These are filled up when calling storeClasses()
+	#
+	# cls_id_name["*"] = 3
+	# cls_id_name[0] = "Unit"
+	# cls_id_name[1] = "Group"
+	# cls_id_name[2] = "Line"
+	#
+	# cls_name_id["Unit"]  = 0
+	# cls_name_id["Group"] = 1
+	# cls_name_id["Line"]  = 2
+	#
+	# cls_implName_name["CurrentCommand"] = "Command"
+	# cls_implName_name["SupportedCommand"] = "CommandDescription"
+	#
+	# cls_name_implIds["Command,*"] = 2
+	# cls_name_implIds["Command,0"] = "OOAICallback,Unit,SupportedCommand"
+	# cls_name_implIds["Command,1"] = "OOAICallback,Group,SupportedCommand"
+	# cls_name_implIds["Line,*"] = 1
+	# cls_name_implIds["Line,0"] = "OOAICallback,Map,Line"
+	#
+	# cls_implId_indicesArgs["OOAICallback,Unit,SupportedCommand"]  = "int unitId, int supportedCommandId"
+	# cls_implId_indicesArgs["OOAICallback,Group,SupportedCommand"] = "int groupId, int supportedCommandId"
+	# cls_implId_indicesArgs["OOAICallback,Map,Line"] = "int lineId"
+	# cls_implId_indicesArgs["OOAICallback,Unit,MoveData"] = ""
+	#
+	# cls_name_indicesArgs["Unit"] = "int unitId"
+	#
+	#
+	# cls_name_members["Unit,*"] = 4
+	# cls_name_members["Unit,0"] = "getPos"
+	# cls_name_members["Unit,1"] = "isActive"
+	# cls_name_members["Unit,2"] = "getPower"
+	# cls_name_members["Unit,3"] = "moveTo"
+	# cls_name_members["OOAICallback,*"] = 4
+	# cls_name_members["OOAICallback,0"] = "getEnemyUnits"
+	# cls_name_members["OOAICallback,1"] = "getFriendlyUnits"
+	# cls_name_members["OOAICallback,2"] = "getFriendlyUnitsIn"
+	# cls_name_members["OOAICallback,3"] = "getFeatures"
+	#
+	# cls_memberId_retType["Unit,getPower"] = "float"
+	# cls_memberId_retType["Unit,moveTo"]   = "void"
+	# cls_memberId_retType["OOAICallback,getFriendlyUnits"]   = "int"
+	# cls_memberId_retType["OOAICallback,getFriendlyUnitsIn"] = "int"
+	# cls_memberId_retType["OOAICallback,getFeatures"]        = "int"
+	#
+	# cls_memberId_params["Unit,getPower"] = ""
+	# cls_memberId_params["Unit,moveTo"]   = "float[] pos_posF3"
+	# cls_memberId_params["OOAICallback,getFriendlyUnits"]   = ""
+	# cls_memberId_params["OOAICallback,getFriendlyUnitsIn"] = "float[] pos_posF3, float radius"
+	# cls_memberId_params["OOAICallback,getFeatures"]        = ""
+	#
+	#
+	# cls_memberId_isFetcher["OOAICallback,getEnemyUnits"]      = 1
+	# cls_memberId_isFetcher["OOAICallback,getFriendlyUnits"]   = 1
+	# cls_memberId_isFetcher["OOAICallback,getFriendlyUnitsIn"] = 1
+	# cls_memberId_isFetcher["OOAICallback,getFeatures"]        = 1
+	# cls_memberId_isFetcher["Unit,getPower"]                   = 0
+	#
+	# cls_memberId_metaComment["OOAICallback,getFeatures"] = "FETCHER:MULTI:NUM:..."
+	# cls_memberId_metaComment["Unit,getPower"]            = ""
+	#
+	#
+	#
+	#
 }
 
 function isBufferedFunc(funcFullName_b) {
@@ -32,6 +100,7 @@ function part_isArray(namePart_p, metaInfo_p) {
 function part_isMap(namePart_p, metaInfo_p) {
 	return match(metaInfo_p, /MAP:/);
 }
+
 function part_isMultiSize(namePart_p, metaInfo_p) {
 	return match(metaInfo_p, /FETCHER:MULTI:IDs:/);
 }
@@ -41,6 +110,66 @@ function part_isMultiFetch(namePart_p, metaInfo_p) {
 function part_isSingleFetch(namePart_p, metaInfo_p) {
 	return match(metaInfo_p, /FETCHER:SINGLE:/);
 }
+function part_isFetcher(metaInfo_p) {
+	return match(metaInfo_p, /FETCHER:/);
+}
+function part_getFetcherPart(metaInfo_p) {
+
+	fetcherPart_p = metaInfo_p;
+
+	# remove pre class part
+	sub(/.*FETCHER:/, "", fetcherPart_p);
+	sub(/^MULTI:/,    "", fetcherPart_p);
+	sub(/^SINGLE:/,   "", fetcherPart_p);
+	sub(/^IDs:/,      "", fetcherPart_p);
+	sub(/^NUM:/,      "", fetcherPart_p);
+
+	# remove post class part
+	sub(/: .*/,     "", fetcherPart_p);
+
+	return fetcherPart_p;
+}
+function part_getFetchedClassPart(metaInfo_p) {
+
+	fetchedClsPart_p = part_getFetcherPart(metaInfo_p);
+
+	# remove post class part
+	sub(/:.*/,     "", fetchedClsPart_p);
+
+	return fetchedClsPart_p;
+}
+function part_getFetchedClass(metaInfo_p) {
+
+	fetchedCls_p = part_getFetchedClassPart(metaInfo_p);
+
+	# remove impl class
+	sub(/^.*-/, "", fetchedCls_p);
+
+	return fetchedCls_p;
+}
+function part_getFetchedImplClass(metaInfo_p) {
+
+	fetchedCls_p = part_getFetchedClassPart(metaInfo_p);
+
+	# remove (interface-) class
+	sub(/-.*$/, "", fetchedCls_p);
+
+	return fetchedCls_p;
+}
+function part_getFetcherIndArg(metaInfo_p) {
+
+	fetcherIndArgPart_p = part_getFetcherPart(metaInfo_p);
+
+	# remove post indices arg
+	if (match(/:/, fetcherIndArgPart_p)) {
+		sub(/.*:/, "", fetcherIndArgPart_p);
+	} else {
+		fetcherIndArgPart_p = "";
+	}
+
+	return fetcherIndArgPart_p;
+}
+
 function part_isAvailable(namePart_p, metaInfo_p) {
 	return match(metaInfo_p, /AVAILABLE:/);
 }
@@ -81,6 +210,42 @@ if (isIntNameDifferent) { print("isIntNameDifferent: " ancestorsPlusName_p " " m
 	return intName_p;
 }
 
+function part_getIndicesArgs(clsName_p, implClsName_p, params_p, metaComment_p) {
+
+	indicesArg_p = "";
+
+	if (part_isFetcher(metaComment_p)) {
+		indicesArg_p = part_getFetcherIndArg(metaComment_p);
+		if (indicesArg_p != "") {
+			indicesArg_p = "int " indicesArg_p;
+		}
+	} else {
+		tmp_indArg_p = clsName_p;
+		tmp_indArg_p = "int " lowerize(tmp_indArg_p) "Id";
+#if (params_p != "") { print("params_p: " params_p); }
+		if (match(params_p, tmp_indArg_p)) {
+			indicesArg_p = tmp_indArg_p;
+#print("matched: #" tmp_indArg_p "#" params_p "#")
+		} else {
+			tmp_indArg_p = _implClsName;
+			tmp_indArg_p = "int " lowerize(tmp_indArg_p) "Id";
+			if (match(params_p, tmp_indArg_p)) {
+#print("matched: #" tmp_indArg_p "#" params_p "#")
+				indicesArg_p = tmp_indArg_p;
+			}
+		}
+	}
+
+	# include the params before the indices arg
+	indicesArgs_p = params_p;
+	_found = sub(indicesArg_p ".*", "", indicesArgs_p);
+	if (!_found) { print("indices arg \"" indicesArg_p "\" not found in params: " params_p); exit(1); }
+	indicesArgs_p = indicesArgs_p indicesArg_p;
+#print("ind args: #" implClsName_p "#" indicesArgs_p "#")
+
+	return indicesArgs_p;
+}
+
 function store_class(ancestors_s, clsName_s) {
 
 	if (!(clsName_s in class_ancestors)) {
@@ -94,16 +259,203 @@ function store_class(ancestors_s, clsName_s) {
 	if (!(ancestors_s in ancestors_class)) {
 		ancestors_class[ancestors_s] = clsName_s;
 	} else if (!match(ancestors_class[ancestors_s], "((^)|(,))" clsName_s "(($)|(,))")) {
-	#} else if (!match(ancestors_class[ancestors_s], clsName_s)) {
+	#} else if (!match(ancestors_class[ancestors_s], clsName_s)) { # NO WRAPP
 		ancestors_class[ancestors_s] = ancestors_class[ancestors_s] "," clsName_s;
 	}
 }
 
 
-function storeClassesAndInterfaces() {
+function extractAncestors(fullName_ea) {
+
+	ancestors_ea = fullName_ea;
+
+	sub(/[^_]*$/,  "", ancestors_ea); # remove function name, leaving only classes
+	sub(/[^_]*_$/, "", ancestors_ea); # remove last class, leaving only ancestors
+	gsub(/_/, ",", ancestors_ea);
+
+	return ancestors_ea;
+}
+
+
+
+
+function store_cls(clsName_s) {
+
+	# store only if not yet stored
+	if (!(clsName_s in cls_name_id)) {
+		_cls_size = cls_id_name["*"];
+		cls_name_id[clsName_s]  = _cls_size;
+		cls_id_name[_cls_size] = clsName_s;
+#print("cls: " _cls_size " " clsName_s);
+		_cls_size++;
+		cls_id_name["*"] = _cls_size;
+	}
+}
+
+function store_implCls(implClsName_s, clsName_s) {
+
+	# store only if not yet stored
+	if (!(implClsName_s in cls_implName_name)) {
+		cls_implName_name[implClsName_s] = clsName_s;
+#print("impl: " implClsName_s " " clsName_s);
+	}
+}
+
+function store_anc(clsName_s, implClsName_s, ancestors_s, indicesArgs_s) {
+
+	_implId = ancestors_s implClsName_s;
+
+	# store only if not yet stored
+	if (!(_implId in cls_implId_indicesArgs)) {
+		cls_implId_indicesArgs[_implId] = indicesArgs_s;
+		cls_name_indicesArgs[clsName_s] = indicesArgs_s;
+		_cls_size = cls_name_implIds[clsName_s ",*"];
+		cls_name_implIds[clsName_s "," _cls_size] = _implId;
+		_cls_size++;
+		cls_name_implIds[clsName_s ",*"] = _cls_size;
+#print("anc: " _cls_size " " _implId " " indicesArgs_s);
+	}
+}
+
+function store_mem(clsName_s, memName_s, retType_s, params_s, isFetcher_s, metaComment_s) {
+
+	_memId = clsName_s "," memName_s;
+	if (!(_memId in cls_memberId_retType)) {
+		_cls_sizeInd = clsName_s ",*";
+		if (!(_cls_sizeInd in cls_name_members)) {
+			cls_name_members[_cls_sizeInd] = 0;
+		}
+	
+		_cls_size = cls_name_members[_cls_sizeInd];
+		cls_name_members[clsName_s "," _cls_size] = memName_s;
+		_cls_size++;
+		cls_name_members[_cls_sizeInd] = _cls_size;
+
+		cls_memberId_retType[_memId]     = retType_s;
+		cls_memberId_params[_memId]      = params_s;
+		cls_memberId_isFetcher[_memId]   = isFetcher_s;
+		cls_memberId_metaComment[_memId] = metaComment_s;
+#print("mem: " _cls_size " #" retType_s " " _memId "(" params_s ")# " isFetcher_s " // " metaComment_p);
+	}
+}
+
+
+
+function store_classesNamesByFetchersAndImplClassNames() {
+
+	cls_id_name["*"] = 0;
+
+	for (f=0; f < size_funcs; f++) {
+		fullName    = funcFullName[f];
+		metaComment = funcMetaComment[fullName];
+
+		if (part_isFetcher(metaComment)) {
+			_clsName = part_getFetchedClass(metaComment);
+			store_cls(_clsName);
+			_implClsName = part_getFetchedImplClass(metaComment);
+			if (_implClsName != _clsName) {
+				store_implCls(_implClsName, _clsName);
+			}
+		}
+	}
+}
+
+function store_singleNoFetcherClassNames() {
+
+	for (f=0; f < size_funcs; f++) {
+		fullName    = funcFullName[f];
+		metaComment = funcMetaComment[fullName];
+
+		nameParts_size = split(fullName, nameParts, "_");
+		for (p=0; p < nameParts_size; p++) {
+			_namePart = nameParts[p+1];
+			if (part_isClass(_namePart, "") && !(_namePart in cls_implName_name)) {
+				store_cls(_namePart);
+			}
+		}
+	}
+}
+
+function store_classNamesAncestors() {
+
+	# initialize ancestor counters to 0
+	_cls_size = cls_id_name["*"];
+	for (c=0; c < _cls_size; c++) {
+		cls_name_implIds[cls_id_name[c] ",*"] = 0;
+	}
+
+	for (f=0; f < size_funcs; f++) {
+		fullName    = funcFullName[f];
+		metaComment = funcMetaComment[fullName];
+		params      = funcParams[fullName];
+
+		if (part_isFetcher(metaComment)) {
+			continue;
+			#_clsName     = part_getFetchedClass(metaComment);
+			#_implClsName = part_getFetchedImplClass(metaComment);
+		} else {
+			_implClsName = fullName;
+			sub(/_[^_]*$/, "", _implClsName); # remove function name, leaving only classes
+			sub(/^.*_/,   "", _implClsName); # remove all except last class
+			if (_implClsName in cls_implName_name) {
+				_clsName = cls_implName_name[_implClsName];
+			} else {
+				_clsName = _implClsName;
+			}
+		}
+
+		_indicesArgs = part_getIndicesArgs(_clsName, _implClsName, params, metaComment);
+		_ancestors   = extractAncestors(fullName);
+
+		store_anc(_clsName, _implClsName, _ancestors, _indicesArgs);
+	}
+}
+
+function store_classMembers() {
+
+	for (f=0; f < size_funcs; f++) {
+		fullName    = funcFullName[f];
+		metaComment = funcMetaComment[fullName];
+		retType     = funcRetType[fullName];
+		params      = funcParams[fullName];
+
+		nameParts_size = split(fullName, nameParts, "_");
+		_isFetcher = part_isFetcher(metaComment);
+		#if (_isFetcher) {
+		#	_clsName = part_getFetchedClass(metaComment);
+		#} else {
+			_clsName = nameParts[nameParts_size-1];
+		#}
+		_memName = nameParts[nameParts_size];
+
+		if (_clsName in cls_implName_name) {
+			_clsName = cls_implName_name[_clsName];
+		}
+#print("mm: " _clsName " " metaComment);
+		store_mem(_clsName, _memName, retType, params, _isFetcher, metaComment);
+	}
+}
+
+
+function store_everything() {
 
 	mySort(funcFullNames);
 
+	store_classesNamesByFetchersAndImplClassNames();
+	store_singleNoFetcherClassNames();
+	store_classNamesAncestors();
+	store_classMembers();
+
+
+
+
+
+
+
+
+
+
+if (1 == 0) { # BEGIN: multi line comment
 	additionalClsIndices["*"] = 0;
 	additionalClsIndices["-" myClass "*"] = 0;
 
@@ -118,11 +470,19 @@ function storeClassesAndInterfaces() {
 		size_nameParts = split(fullName, nameParts, "_");
 
 		# go through the classes
-		ancestorsP = "";
+		ancestorsP      = "";
 		last_ancestorsP = "";
-		clsName = myClass;
-		clsId = ancestorsP "-" clsName;
-		last_clsId = "";
+		clsName         = myClass;
+		clsId           = ancestorsP "-" clsName;
+		last_clsId      = "";
+		
+		lastP = nameParts[size_nameParts];
+
+		if (part_isFetcher(metaComment)) {
+			cls = part_getClassName(ancestorsP "_" nameP, metaComment)
+			classes[classes_size] = "";
+		}
+
 		# go through the pre-parts of callback function f (eg, the classes)
 		# parts are separated by '_'
 		for (np=0; np < size_nameParts-1; np++) {
@@ -151,13 +511,15 @@ function storeClassesAndInterfaces() {
 		nameP = nameParts[size_nameParts];
 		secondLast_clsName = last_clsName;
 		last_clsName = clsName;
-		clsName = part_getClsName(ancestorsP "_" nameP, metaComment);
+		clsName = part_getClassName(ancestorsP "_" nameP, metaComment);
 		last_clsId = clsId;
 		clsId = ancestorsP "-" clsName;
 
 		isClass = part_isClass(nameP, metaComment);
+#print("fullName: " fullName);
 
 		if (isClass) {
+#print("isClass: " nameP);
 			if (additionalClsIndices[clsId "*"] == "") {
 				additionalClsIndices[clsId "*"] = additionalClsIndices[last_clsId "*"];
 			}
@@ -249,7 +611,9 @@ function storeClassesAndInterfaces() {
 			}
 		}
 	}
+} # END: multi line comment
 }
+
 
 function wrappFunction(retType, fullName, params) {
 	wrappFunctionPlusMeta(retType, fullName, params, "");
@@ -257,28 +621,19 @@ function wrappFunction(retType, fullName, params) {
 
 function wrappFunctionPlusMeta(retType, fullName, params, metaComment) {
 
-	simpleFullName = extractNormalPart(fullName);
-
-	doWrapp_wf = !match(simpleFullName, /^Clb_File/);
+	# This function has to be defined in an other script
+	doWrapp_wf = doWrapp(simpleFullName, params, metaComment);
 
 	if (doWrapp_wf) {
-		params = trim(params);
-		sub(/^int teamId(\, )?/, "", params);
-
+		params      = trim(params);
 		innerParams = removeParamTypes(params);
 
 		funcFullName[size_funcs]  = fullName;
 		funcRetType[fullName]     = retType;
 		funcParams[fullName]      = params;
 		funcInnerParams[fullName] = innerParams;
-		funcMetaComment[fullName] = metaComment;
+		funcMetaComment[fullName] = trim(metaComment);
 		storeDocLines(funcDocComment, fullName);
-
-		if (!(simpleFullName in funcSimpleFullName)) {
-			funcSimpleFullName[simpleFullName] = fullName;
-		} else if (!match(funcSimpleFullName[simpleFullName], fullName)) {
-			funcSimpleFullName[simpleFullName] = funcSimpleFullName[simpleFullName] "," fullName;
-		}
 
 		size_funcs++;
 	} else {
