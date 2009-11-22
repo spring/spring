@@ -15,6 +15,20 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stdio.h>       // fgets()
+#include <string.h>      // strcpy(), str...()
+#include <stdlib.h>      // malloc(), calloc(), free()
+#include <stdarg.h>      // var-args
+#include <sys/stat.h>    // used for check if a file exists
+#ifdef _WIN32
+#include <io.h>          // needed for dir listing
+#include <direct.h>      // mkdir()
+#else // WIN32
+#include <sys/stat.h>    // mkdir()
+#include <sys/types.h>   // mkdir()
+#include <dirent.h>      // needed for dir listing
+#endif // WIN32
+
 #include "Util.h"
 
 #include "ExternalAI/Interface/aidefines.h" // for SKIRMISH_AI_PROPERTY_DATA_DIR, AI_INTERFACES_DATA_DIR
@@ -30,20 +44,6 @@
 // for AI_INTERFACE_PROPERTY_DATA_DIR
 #include "ExternalAI/Interface/SAIInterfaceLibrary.h"
 #endif
-
-#include <string.h>      // strcpy(), str...()
-#include <stdlib.h>      // malloc(), calloc(), free()
-#include <stdio.h>       // fgets()
-#include <stdarg.h>      // var-args
-#include <sys/stat.h>    // used for check if a file exists
-#ifdef _WIN32
-#include <io.h>          // needed for dir listing
-#include <direct.h>      // mkdir()
-#else // WIN32
-#include <sys/stat.h>    // mkdir()
-#include <sys/types.h>   // mkdir()
-#include <dirent.h>      // needed for dir listing
-#endif // WIN32
 
 
 char* util_allocStr(unsigned int length) {

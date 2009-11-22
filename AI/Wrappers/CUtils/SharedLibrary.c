@@ -15,10 +15,11 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stdio.h>
+
 #include "SharedLibrary.h"
 
 #include "maindefines.h"
-#include <stdio.h>
 
 const char* sharedLib_getLibExtension() {
 
