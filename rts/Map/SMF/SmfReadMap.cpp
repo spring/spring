@@ -20,8 +20,6 @@
 #include "Util.h"
 #include "Exceptions.h"
 
-#include <math.h>
-
 using namespace std;
 
 CR_BIND_DERIVED(CSmfReadMap, CReadMap, (""))
