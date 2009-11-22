@@ -112,15 +112,15 @@ IF (MINGW)
 ENDIF (MINGW)
 
 ADD_DEFINITIONS(-DHEADLESS)
-ADD_EXECUTABLE(spring-headlessstubs ${allspringfiles})
-ADD_DEPENDENCIES(spring-headlessstubs headlessstubs )
-TARGET_LINK_LIBRARIES(spring-headlessstubs ${spring_headlessstubs_libraries} )
+ADD_EXECUTABLE(spring-hl ${allspringfiles})
+ADD_DEPENDENCIES(spring-hl headlessstubs )
+TARGET_LINK_LIBRARIES(spring-hl ${spring_headlessstubs_libraries} )
 
 IF (MINGW)
 	#SET_TARGET_PROPERTIES(spring PROPERTIES LINK_FLAGS "-Wl,--output-def,spring.def")
-	SET_TARGET_PROPERTIES(spring-headlessstubs PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
+	SET_TARGET_PROPERTIES(spring-hl PROPERTIES LINK_FLAGS "-Wl,-subsystem,console")
 	#install (FILES ${CMAKE_CURRENT_BINARY_DIR}/spring.def DESTINATION ${BINDIR})
 ENDIF (MINGW)
 
-install (TARGETS spring-headlessstubs DESTINATION ${BINDIR})
+install (TARGETS spring-hl DESTINATION ${BINDIR})
 
