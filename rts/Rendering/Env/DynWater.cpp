@@ -287,6 +287,7 @@ void CDynWater::Draw()
 	glDisable(GL_ALPHA_TEST);
 	glEnable(GL_FOG);
 
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D, waveTex3);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
@@ -297,7 +298,7 @@ void CDynWater::Draw()
 	glActiveTextureARB(GL_TEXTURE3_ARB);
 	glBindTexture(GL_TEXTURE_2D,refractTexture);
 	glActiveTextureARB(GL_TEXTURE4_ARB);
-	glBindTexture(GL_TEXTURE_2D,readmap->GetShadingTexture ());
+	glBindTexture(GL_TEXTURE_2D,readmap->GetShadingTexture());
 	glActiveTextureARB(GL_TEXTURE5_ARB);
 	glBindTexture(GL_TEXTURE_2D,foamTex);
 	glActiveTextureARB(GL_TEXTURE6_ARB);
@@ -554,10 +555,11 @@ void CDynWater::DrawWaves(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
+	glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D,waveTex3);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_NEAREST);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	/*glActiveTextureARB(GL_TEXTURE0_ARB);
 	glBindTexture(GL_TEXTURE_2D,0);
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glBindTexture(GL_TEXTURE_2D,0);
@@ -569,7 +571,7 @@ void CDynWater::DrawWaves(void)
 	glBindTexture(GL_TEXTURE_2D,0);
 	glActiveTextureARB(GL_TEXTURE5_ARB);
 	glBindTexture(GL_TEXTURE_2D,0);
-	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glActiveTextureARB(GL_TEXTURE0_ARB);*/
 
 
 	GLenum status;

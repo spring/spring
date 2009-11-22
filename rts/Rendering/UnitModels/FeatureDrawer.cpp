@@ -22,9 +22,11 @@
 #include "Game/Camera.h"
 #include "Map/MapInfo.h"
 #include "Map/ReadMap.h"
+#include "Map/BaseGroundDrawer.h"
 #include "Rendering/Env/BaseWater.h"
 #include "Rendering/Env/BaseTreeDrawer.h"
 #include "Rendering/GL/VertexArray.h"
+#include "Rendering/GL/myGL.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Rendering/UnitModels/UnitDrawer.h"
 #include "Rendering/FartextureHandler.h"
@@ -161,29 +163,40 @@ void CFeatureDrawer::Draw()
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 	}
 
-	unitDrawer->SetupForUnitDrawing();
-	unitDrawer->SetupFor3DO();
 
 	GML_RECMUTEX_LOCK(feat); // Draw
 
 	fadeFeatures.clear();
 	fadeFeaturesS3O.clear();
 
-	DrawRaw(0, &drawFar);
-	unitDrawer->CleanUp3DO();
+	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
+	if (gd->DrawExtraTex()) {
+			glActiveTextureARB(GL_TEXTURE2_ARB);
+			glEnable(GL_TEXTURE_2D);
+			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
+			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
-	// S3O features can have transparent bits
-	glPushAttrib(GL_COLOR_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_ALPHA_TEST);
-	glAlphaFunc(GL_GREATER,0.5f);
+			SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 
-	unitDrawer->DrawQuedS3O();
+			glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+	}
 
-	glPopAttrib();
-
+	unitDrawer->SetupForUnitDrawing();
+		unitDrawer->SetupFor3DO();
+			DrawRaw(0, &drawFar);
+		unitDrawer->CleanUp3DO();
+		unitDrawer->DrawQuedS3O();
 	unitDrawer->CleanUpUnitDrawing();
+
+	if (gd->DrawExtraTex()) {
+			glActiveTextureARB(GL_TEXTURE2_ARB);
+			glDisable(GL_TEXTURE_2D);
+			glDisable(GL_TEXTURE_GEN_S);
+			glDisable(GL_TEXTURE_GEN_T);
+			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+			glActiveTextureARB(GL_TEXTURE0_ARB);
+	}
 
 	if (drawFar.size()>0) {
 		glAlphaFunc(GL_GREATER, 0.8f);
