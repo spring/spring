@@ -1085,6 +1085,9 @@ void CUnitDrawer::SetupForUnitDrawing(void) const
 	glCullFace(GL_BACK);
 	glEnable(GL_CULL_FACE);
 
+	glAlphaFunc(GL_GREATER, 0.5f);
+	glEnable(GL_ALPHA_TEST);
+
 	// When rendering shadows, we just want to take extraColor.alpha (tex2) into account,
 	// so textures with masked texels create correct shadows.
 	if (shadowHandler->inShadowPass)
@@ -1092,8 +1095,6 @@ void CUnitDrawer::SetupForUnitDrawing(void) const
 		// Instead of enabling GL_TEXTURE1_ARB i have modified CTextureHandler.SetS3oTexture()
 		// to set texture 0 if shadowHandler->inShadowPass is true.
 		glEnable(GL_TEXTURE_2D);
-		glAlphaFunc(GL_GREATER, 0.5f);
-		glEnable(GL_ALPHA_TEST);
 		return;
 	}
 
@@ -1141,8 +1142,6 @@ void CUnitDrawer::SetupForUnitDrawing(void) const
 		glActiveTextureARB(GL_TEXTURE0_ARB);
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glAlphaFunc(GL_GREATER,0.5f);
-		glEnable(GL_ALPHA_TEST);
 
 		glMatrixMode(GL_MATRIX0_ARB);
 		glLoadMatrixf(shadowHandler->shadowMatrix.m);
@@ -1163,7 +1162,7 @@ void CUnitDrawer::SetupForUnitDrawing(void) const
 		// Set material color
 		float cols[]={1,1,1,1};
 		glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,cols);
-		glColor3f(1,1,1);
+		glColor4f(1,1,1,1);
 	}
 }
 
@@ -1218,9 +1217,8 @@ void CUnitDrawer::SetTeamColour(int team, float alpha) const
 	if (advShading) {
 		unsigned char* col = teamHandler->Team(team)->color;
 		glProgramEnvParameter4fARB(GL_FRAGMENT_PROGRAM_ARB, 14, col[0] / 255.f, col[1] / 255.f, col[2] / 255.f, alpha);
-		if (luaDrawing) { // FIXME?
+		if (luaDrawing) // FIXME?
 			SetBasicTeamColour(team, alpha);
-		}
 	} else {
 		SetBasicTeamColour(team, alpha);
 	}
@@ -1267,8 +1265,10 @@ void CUnitDrawer::CleanUp3DO() const
  */
 void CUnitDrawer::SetupBasicS3OTexture0(void) const
 {
-	// RGB = Texture * (1-Alpha) + Teamcolor * Alpha
 	glActiveTextureARB(GL_TEXTURE0_ARB);
+	glEnable(GL_TEXTURE_2D);
+
+	// RGB = Texture * (1-Alpha) + Teamcolor * Alpha
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_INTERPOLATE_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_RGB_ARB, GL_CONSTANT_ARB);
@@ -1277,8 +1277,6 @@ void CUnitDrawer::SetupBasicS3OTexture0(void) const
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
 	// ALPHA = Ignore
-
-	glEnable(GL_TEXTURE_2D);
 }
 
 
@@ -1294,8 +1292,10 @@ void CUnitDrawer::SetupBasicS3OTexture0(void) const
  */
 void CUnitDrawer::SetupBasicS3OTexture1(void) const
 {
-	// RGB = Primary Color * Previous
 	glActiveTextureARB(GL_TEXTURE1_ARB);
+	glEnable(GL_TEXTURE_2D);
+
+	// RGB = Primary Color * Previous
 	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE, GL_COMBINE_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB, GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_PRIMARY_COLOR_ARB);
@@ -1307,9 +1307,6 @@ void CUnitDrawer::SetupBasicS3OTexture1(void) const
 	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND0_ALPHA_ARB, GL_SRC_ALPHA);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB, GL_PRIMARY_COLOR_ARB);
 	glTexEnvi(GL_TEXTURE_ENV,GL_OPERAND1_ALPHA_ARB, GL_SRC_ALPHA);
-
-	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, whiteTex);
 }
 
 
@@ -1422,7 +1419,7 @@ void CUnitDrawer::CreateSpecularFace(unsigned int gltype, int size, float3 baseD
 	for (int y = 0; y < size; ++y) {
 		for (int x = 0; x < size; ++x) {
 			float3 vec = baseDir + (xdif * (x + 0.5f)) / size + (ydif * (y + 0.5f)) / size;
-			vec.ANormalize();
+			vec.Normalize();
 			float dot = vec.dot(sundir);
 
 			if (dot < 0)
