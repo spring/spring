@@ -1068,7 +1068,7 @@ void SpringApp::SaveWindowPosition()
 	return;
 #else
 	if (!fullscreen) {
-#if defined(_WIN32)
+  #if defined(_WIN32)
 		SDL_SysWMinfo info;
 		SDL_VERSION(&info.version);
 
@@ -1084,14 +1084,17 @@ void SpringApp::SaveWindowPosition()
 						windowState = 2;
 						break;
 					default:
+						configHandler->Set("WindowPosX", windowPosX);
+						configHandler->Set("WindowPosY", windowPosY);
 						windowState = 0;
 				}
 			}
 		}
 		configHandler->Set("WindowState", windowState);
-#endif
+  #else
 		configHandler->Set("WindowPosX", windowPosX);
 		configHandler->Set("WindowPosY", windowPosY);
+  #endif
 	}
 #endif
 }
