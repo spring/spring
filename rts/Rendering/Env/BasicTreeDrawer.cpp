@@ -302,7 +302,7 @@ inline void DrawTreeVertexMid2(float3 pos, bool enlarge=true) {
 	SetArrayQ(1,0.25f,base);
 }
 
-void CBasicTreeSquareDrawer::DrawQuad (int x,int y)
+void CBasicTreeSquareDrawer::DrawQuad(int x,int y)
 {
 	int treesX = td->treesX;
 	CBasicTreeDrawer::TreeSquareStruct* tss=&td->trees[y*treesX+x];
@@ -386,6 +386,7 @@ void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 		glEnable(GL_FOG);
 	}
+	glColor4f(1,1,1,1);
 
 	int cx=(int)(camera->pos.x/(SQUARE_SIZE*TREE_SQUARE_SIZE));
 	int cy=(int)(camera->pos.z/(SQUARE_SIZE*TREE_SQUARE_SIZE));
