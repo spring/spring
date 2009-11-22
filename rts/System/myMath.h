@@ -165,6 +165,17 @@ inline float Square(const float x) { return x * x; }
 float smoothstep(const float edge0, const float edge1, const float value);
 float3 smoothstep(const float edge0, const float edge1, float3 vec);
 
+
+inline float Clamp(const float& v, const float& min, const float& max)
+{
+	if (v>max) {
+		return max;
+	} else if (v<min) {
+		return min;
+	}
+	return v;
+}
+
 /**
  * @brief Clamps an radian angle between 0 .. 2*pi
  * @param f float* value to clamp

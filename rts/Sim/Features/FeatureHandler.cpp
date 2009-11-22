@@ -234,7 +234,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 	//! add map's featureDefs
 	int numType = readmap->GetNumFeatureTypes ();
 	for (int a = 0; a < numType; ++a) {
-		const string name = StringToLower(readmap->GetFeatureType(a));
+		const string name = StringToLower(readmap->GetFeatureTypeName(a));
 
 		if (GetFeatureDef(name, false) == NULL) {
 			if (name.find("treetype") != string::npos) {
@@ -290,7 +290,7 @@ void CFeatureHandler::LoadFeaturesFromMap(bool onlyCreateDefs)
 		readmap->GetFeatureInfo(mfi);
 
 		for(int a = 0; a < numFeatures; ++a) {
-			const string name = StringToLower(readmap->GetFeatureType(mfi[a].featureType));
+			const string name = StringToLower(readmap->GetFeatureTypeName(mfi[a].featureType));
 			map<string, const FeatureDef*>::iterator def = featureDefs.find(name);
 
 			if (def == featureDefs.end()) {
