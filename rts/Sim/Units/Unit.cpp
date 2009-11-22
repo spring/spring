@@ -527,11 +527,10 @@ void CUnit::Update()
 		return;
 	}
 
+	GML_GET_TICKS(lastUnitUpdate);
+
 	const bool oldInAir   = inAir;
 	const bool oldInWater = inWater;
-
-	moveType->Update();
-	GML_GET_TICKS(lastUnitUpdate);
 
 	inWater = (pos.y <= 0.0f);
 	inAir   = (!inWater) && ((pos.y - ground->GetHeight(pos.x,pos.z)) > 1.0f);
