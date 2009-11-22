@@ -108,9 +108,9 @@ void CS3OTextureHandler::SetS3oTexture(int num)
 	if (shadowHandler->inShadowPass) {
 		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
 	} else {
+		glActiveTextureARB(GL_TEXTURE0_ARB);
 		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex1);
 		glActiveTextureARB(GL_TEXTURE1_ARB);
 		glBindTexture(GL_TEXTURE_2D, s3oTextures[num].tex2);
-		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 }
