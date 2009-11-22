@@ -241,11 +241,11 @@ static LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
 /** Print stack traces for relevant threads. */
 void HangHandler()
 {
-#ifdef USE_GML
-	PRINT("Hang detection triggered for Spring %s MT (%d threads).", SpringVersion::GetFull().c_str(), gmlThreadCount);
-#else
 	PRINT("Hang detection triggered for Spring %s.", SpringVersion::GetFull().c_str());
+#ifdef USE_GML
+	PRINT("MT with %d threads.", gmlThreadCount);
 #endif
+
 	// Initialize IMAGEHLP.DLL.
 	SymInitialize(GetCurrentProcess(), ".", TRUE);
 
