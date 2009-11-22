@@ -1293,7 +1293,7 @@ float CGroundMoveType::BreakingDistance(float speed)
 	if (!owner->mobility->maxBreaking) {
 		return 0.0f;
 	}
-	return fabs(speed * speed / owner->mobility->maxBreaking);
+	return fabs(speed*speed / owner->mobility->maxBreaking);
 }
 
 /*
@@ -1846,10 +1846,10 @@ void CGroundMoveType::TestNewTerrainSquare(void)
 				for (std::vector<int2>::iterator li = lineTable[lty][ltx].begin(); li != lineTable[lty][ltx].end(); ++li) {
 					int x = (moveSquareX + li->x) * 2;
 					int y = (moveSquareY + li->y) * 2;
-					int blockMask =
+					CMoveMath* mmath = owner->unitDef->movedata->moveMath;
+					static int blockMask =
 						(CMoveMath::BLOCK_STRUCTURE | CMoveMath::BLOCK_TERRAIN |
 						CMoveMath::BLOCK_MOBILE | CMoveMath::BLOCK_MOBILE_BUSY);
-					CMoveMath* mmath = owner->unitDef->movedata->moveMath;
 
 					if ((mmath->IsBlocked(*owner->unitDef->movedata, x, y) & blockMask) ||
 						mmath->SpeedMod(*owner->unitDef->movedata, x, y) <= 0.01f) {
@@ -1940,7 +1940,7 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 		if (dir2 != ZeroVector) {
 			short heading =
 				GetHeadingFromVector(dir2.x, dir2.z) -
-				GetHeadingFromVector(dir1.x,dir1.z);
+				GetHeadingFromVector(dir1.x, dir1.z);
 			if (owner->heading != heading
 					&& !(owner->weapons.front()->TryTarget(
 					mainHeadingPos, true, 0))) {
@@ -1951,33 +1951,8 @@ void CGroundMoveType::KeepPointingTo(float3 pos, float distance, bool aggressive
 }
 
 void CGroundMoveType::KeepPointingTo(CUnit* unit, float distance, bool aggressive){
-	mainHeadingPos = unit->pos;
-	useMainHeading = aggressive;
-
-	if (useMainHeading
-			&& !owner->weapons.empty()
-			&& (this-owner->weapons[0]->weaponDef->waterweapon
-			|| mainHeadingPos.y >= 0)) {
-
-		float3 dir1 = owner->weapons.front()->mainDir;
-		dir1.y = 0;
-		dir1.Normalize();
-		float3 dir2 = mainHeadingPos - owner->pos;
-		dir2.y = 0;
-		dir2.Normalize();
-
-		if (dir2 != ZeroVector) {
-			short heading =
-				GetHeadingFromVector(dir2.x, dir2.z) -
-				GetHeadingFromVector(dir1.x, dir1.z);
-
-			if (owner->heading != heading
-					&& !(owner->weapons.front()->TryTarget(
-					mainHeadingPos, true, 0))) {
-				progressState = Active;
-			}
-		}
-	}
+	//! wrapper
+	KeepPointingTo(unit->pos, distance, aggressive);
 }
 
 /**

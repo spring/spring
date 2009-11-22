@@ -410,12 +410,11 @@ void CTAAirMoveType::UpdateFlying()
 							relPos.x = 0.0001f;
 						relPos.y = 0;
 						relPos.Normalize();
-						CMatrix44f rot;
-						rot.RotateY(1.0f);
+						static CMatrix44f rot(0.0f,fastmath::PI/4.0f,0.0f);
 						float3 newPos = rot.Mul(relPos);
 
 						// Make sure the point is on the circle
-						newPos = newPos.Normalize() * goalDistance;
+						newPos = newPos * goalDistance;
 
 						//Go there in a straight line
 						goalPos = circlingPos + newPos;
@@ -429,14 +428,14 @@ void CTAAirMoveType::UpdateFlying()
 					if (relPos.x < 0.0001f && relPos.x > -0.0001f)
 						relPos.x = 0.0001f;
 					relPos.y = 0;
-					relPos.ANormalize();
+					relPos.Normalize();
 					CMatrix44f rot;
 					if (gs->randFloat() > 0.5f)
 						rot.RotateY(0.6f + gs->randFloat() * 0.6f);
 					else
 						rot.RotateY(-(0.6f + gs->randFloat() * 0.6f));
 					float3 newPos = rot.Mul(relPos);
-					newPos = newPos.Normalize() * goalDistance;
+					newPos = newPos * goalDistance;
 
 					// Go there in a straight line
 					goalPos = circlingPos + newPos;
@@ -596,9 +595,9 @@ void CTAAirMoveType::UpdateBanking(bool noBanking)
 
 	float limit = std::min(1.0f,goalPos.SqDistance2D(owner->pos)*Square(0.15f));
 	if(Square(wantedBank)>limit)
-		wantedBank =  streflop::sqrt(limit);
+		wantedBank =  math::sqrt(limit);
 	else if(Square(wantedBank)<-limit)
-		wantedBank = -streflop::sqrt(limit);
+		wantedBank = -math::sqrt(limit);
 
 	//Adjust our banking to the desired value
 	if (currentBank > wantedBank)
@@ -636,7 +635,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 		if (sqdl < Square(accRate)) {
 			speed = wantedSpeed;
 		} else {
-			speed += delta / streflop::sqrt(sqdl) * accRate;
+			speed += delta / math::sqrt(sqdl) * accRate;
 		}
 	} else {
 		// break
@@ -644,7 +643,7 @@ void CTAAirMoveType::UpdateAirPhysics()
 		if (sqdl < Square(decRate)) {
 			speed = wantedSpeed;
 		} else {
-			speed += delta / streflop::sqrt(sqdl) * decRate;
+			speed += delta / math::sqrt(sqdl) * decRate;
 		}
 	}
 
