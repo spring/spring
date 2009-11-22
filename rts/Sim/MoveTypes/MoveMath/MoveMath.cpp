@@ -70,7 +70,7 @@ float CMoveMath::SpeedMod(const MoveData& moveData, int xSquare, int zSquare, co
 
 	const CMapInfo::TerrainType& tt = mapInfo->terrainTypes[squareTerrType];
 
-	float3 flatNorm = readmap->facenormals[(xSquare + zSquare * gs->mapx) * 2];
+	float3 flatNorm = readmap->centernormals[xSquare + zSquare * gs->mapx];
 		flatNorm.y = 0;
 		flatNorm.SafeNormalize();
 
