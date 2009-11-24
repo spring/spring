@@ -451,7 +451,7 @@ void CFeatureDrawer::DrawFar(CFeature* feature, CVertexArray* va)
 
 void CFeatureDrawer::DrawFeatureStats(CFeature* feature)
 {
-	float3 interPos = feature->midPos;
+	float3 interPos = feature->pos;
 	interPos.y += feature->model->height + 5.0f;
 
 	glPushMatrix();
