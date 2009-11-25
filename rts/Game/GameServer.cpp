@@ -408,8 +408,10 @@ void CGameServer::CheckSync()
 	std::deque<int>::iterator f = outstandingSyncFrames.begin();
 	while (f != outstandingSyncFrames.end()) {
 		std::vector<int> noSyncResponse;
+		std::vector<int> noSyncSpecs;
 		// maps incorrect checksum to players with that checksum
 		std::map<unsigned, std::vector<int> > desyncGroups;
+		std::map<int, unsigned> desyncSpecs;
 		bool bComplete = true;
 		bool bGotCorrectChecksum = false;
 		unsigned correctChecksum = 0;
@@ -421,31 +423,44 @@ void CGameServer::CheckSync()
 			if (it == players[a].syncResponse.end()) {
 				if (*f >= serverframenum - static_cast<int>(SYNCCHECK_TIMEOUT))
 					bComplete = false;
-				else
-					noSyncResponse.push_back(a);
+				else {
+					if(enforceSpeed < 0 || !players[a].spectator)
+						noSyncResponse.push_back(a);
+					else
+						noSyncSpecs.push_back(a);
+				}
 			} else {
 				if (!bGotCorrectChecksum) {
 					bGotCorrectChecksum = true;
 					correctChecksum = it->second;
 				} else if (it->second != correctChecksum) {
-					desyncGroups[it->second].push_back(a);
+					if(enforceSpeed < 0 || !players[a].spectator)
+						desyncGroups[it->second].push_back(a);
+					else
+						desyncSpecs[a] = it->second;
 				}
 			}
 		}
 
-		if (!noSyncResponse.empty()) {
+		if (!noSyncResponse.empty() || !noSyncSpecs.empty()) {
 			if (!syncWarningFrame || (*f - syncWarningFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncWarningFrame = *f;
 
-				std::string players = GetPlayerNames(noSyncResponse);
-				Message(str(format(NoSyncResponse) %players %(*f)));
+				std::string playernames = GetPlayerNames(noSyncResponse);
+				Message(str(format(NoSyncResponse) %playernames %(*f)));
+
+				// send private no sync messages to spectators to reduce spam
+				for(std::vector<int>::const_iterator s = noSyncSpecs.begin(); s != noSyncSpecs.end(); ++s) {
+					int playernum = *s;
+					GotChatMessage(ChatMessage(playernum, playernum, str(format(NoSyncResponse) %players[playernum].name %(*f))));
+				}
 			}
 		}
 
 		// If anything's in it, we have a desync.
 		// TODO take care of !bComplete case?
 		// Should we start resync then immediately or wait for the missing packets (while paused)?
-		if ( /*bComplete && */ !desyncGroups.empty()) {
+		if ( /*bComplete && */ (!desyncGroups.empty() || !desyncSpecs.empty())) {
 			if (!syncErrorFrame || (*f - syncErrorFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT))) {
 				syncErrorFrame = *f;
 
@@ -462,8 +477,14 @@ void CGameServer::CheckSync()
 				// the resync checksum request packets to multiple clients in the same group.
 				std::map<unsigned, std::vector<int> >::const_iterator g = desyncGroups.begin();
 				for (; g != desyncGroups.end(); ++g) {
-					std::string players = GetPlayerNames(g->second);
-					Message(str(format(SyncError) %players %(*f) %(g->first ^ correctChecksum)));
+					std::string playernames = GetPlayerNames(g->second);
+					Message(str(format(SyncError) %playernames %(*f) %(g->first ^ correctChecksum)));
+				}
+
+				// send spectator desyncs as private messages to reduce spam
+				for(std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
+					int playernum = s->first;
+					GotChatMessage(ChatMessage(playernum, playernum, str(format(SyncError) %players[playernum].name %(*f) %(s->second ^ correctChecksum))));
 				}
 			}
 		}
