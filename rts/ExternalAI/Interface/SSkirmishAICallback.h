@@ -628,10 +628,10 @@ struct SSkirmishAICallback {
 	float             (CALLING_CONV *UnitDef_getMinAirBasePower)(int skirmishAIId, int unitDefId);
 	/** Number of units of this type allowed simultaneously in the game */
 	int               (CALLING_CONV *UnitDef_getMaxThisUnit)(int skirmishAIId, int unitDefId);
-	int               (CALLING_CONV *UnitDef_getDecoyDef)(int skirmishAIId, int unitDefId); // RETURN-REF:int->UnitDef
+	int               (CALLING_CONV *UnitDef_getDecoyDef)(int skirmishAIId, int unitDefId); // REF:RETURN->UnitDef
 	bool              (CALLING_CONV *UnitDef_isDontLand)(int skirmishAIId, int unitDefId);
-	int               (CALLING_CONV *UnitDef_getShieldDef)(int skirmishAIId, int unitDefId); // RETURN-REF:int->WeaponDef
-	int               (CALLING_CONV *UnitDef_getStockpileDef)(int skirmishAIId, int unitDefId); // RETURN-REF:int->WeaponDef
+	int               (CALLING_CONV *UnitDef_getShieldDef)(int skirmishAIId, int unitDefId); // REF:RETURN->WeaponDef
+	int               (CALLING_CONV *UnitDef_getStockpileDef)(int skirmishAIId, int unitDefId); // REF:RETURN->WeaponDef
 	int               (CALLING_CONV *UnitDef_getBuildOptions)(int skirmishAIId, int unitDefId, int* unitDefIds, int unitDefIds_sizeMax); // ARRAY:unitDefIds
 	int               (CALLING_CONV *UnitDef_getCustomParams)(int skirmishAIId, int unitDefId, const char** keys, const char** values); // MAP
 
@@ -664,7 +664,7 @@ struct SSkirmishAICallback {
 
 	int               (CALLING_CONV *UnitDef_getWeaponMounts)(int skirmishAIId, int unitDefId); // FETCHER:MULTI:NUM:WeaponMount
 	const char*       (CALLING_CONV *UnitDef_WeaponMount_getName)(int skirmishAIId, int unitDefId, int weaponMountId);
-	int               (CALLING_CONV *UnitDef_WeaponMount_getWeaponDef)(int skirmishAIId, int unitDefId, int weaponMountId); // RETURN-REF:int->WeaponDef
+	int               (CALLING_CONV *UnitDef_WeaponMount_getWeaponDef)(int skirmishAIId, int unitDefId, int weaponMountId); // REF:RETURN->WeaponDef
 	int               (CALLING_CONV *UnitDef_WeaponMount_getSlavedTo)(int skirmishAIId, int unitDefId, int weaponMountId);
 	void              (CALLING_CONV *UnitDef_WeaponMount_getMainDir)(int skirmishAIId, int unitDefId, int weaponMountId, float* return_posF3_out);
 	float             (CALLING_CONV *UnitDef_WeaponMount_getMaxAngleDif)(int skirmishAIId, int unitDefId, int weaponMountId);
@@ -744,7 +744,7 @@ struct SSkirmishAICallback {
 	 * Returns the unit's unitdef struct from which you can read all
 	 * the statistics of the unit, do NOT try to change any values in it.
 	 */
-	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); // RETURN-REF:int->UnitDef
+	int               (CALLING_CONV *Unit_getDef)(int skirmishAIId, int unitId); // REF:RETURN->UnitDef
 	/**
 	 * This is a set of parameters that is initialized
 	 * in CreateUnitRulesParams() and may change during the game.
@@ -1268,7 +1268,7 @@ struct SSkirmishAICallback {
 	 * or all features in this area if cheating is enabled.
 	 */
 	int               (CALLING_CONV *getFeaturesIn)(int skirmishAIId, float* pos_posF3, float radius, int* featureIds, int featureIds_sizeMax); // FETCHER:MULTI:IDs:Feature:featureIds
-	int               (CALLING_CONV *Feature_getDef)(int skirmishAIId, int featureId); // RETURN-REF:int->FeatureDef
+	int               (CALLING_CONV *Feature_getDef)(int skirmishAIId, int featureId); // REF:RETURN->FeatureDef
 	float             (CALLING_CONV *Feature_getHealth)(int skirmishAIId, int featureId);
 	float             (CALLING_CONV *Feature_getReclaimLeft)(int skirmishAIId, int featureId);
 	void              (CALLING_CONV *Feature_getPosition)(int skirmishAIId, int featureId, float* return_posF3_out);
