@@ -139,9 +139,13 @@ CGameServer::CGameServer(const ClientSetup* settings, bool onlyLocal, const Game
 	spring_notime(gameEndTime);
 	spring_notime(readyTime);
 
-	medianCpu=0.0f;
-	medianPing=0;
-	enforceSpeed=!setup->hostDemo && configHandler->Get("EnforceGameSpeed", false);
+	medianCpu = 0.0f;
+	medianPing = 0;
+	// enforceSpeed - throttles speed based on:
+	// -1 : spectators and players (max cpu)
+	// 0 : players (max cpu)
+	// 1 : players (median cpu)
+	enforceSpeed = setup->hostDemo ? -1 : configHandler->Get("EnforceGameSpeed", 0);
 
 	allowAdditionalPlayers = configHandler->Get("AllowAdditionalPlayers", false);
 
@@ -500,11 +504,11 @@ void CGameServer::Update()
 			//send info about the players
 			std::vector<float> cpu;
 			std::vector<int> ping;
-			float refCpu=0.0f;
+			float refCpu = 0.0f;
 			for (size_t a = 0; a < players.size(); ++a) {
 				if (players[a].myState == GameParticipant::INGAME) {
 					Broadcast(CBaseNetProtocol::Get().SendPlayerInfo(a, players[a].cpuUsage, players[a].ping));
-					if(!enforceSpeed || !players[a].spectator) {
+					if(enforceSpeed < 0 || !players[a].spectator) {
 						if (players[a].cpuUsage > refCpu) {
 							refCpu = players[a].cpuUsage;
 						}
@@ -514,35 +518,35 @@ void CGameServer::Update()
 				}
 			}
 
-			medianCpu=0.0f;
-			medianPing=0;
-			if(enforceSpeed && cpu.size()>0) {
+			medianCpu = 0.0f;
+			medianPing = 0;
+			if(enforceSpeed > 0 && cpu.size() > 0) {
 				std::sort(cpu.begin(), cpu.end());
 				std::sort(ping.begin(), ping.end());
 
-				int midpos=cpu.size()/2;
-				medianCpu=cpu[midpos];
-				medianPing=ping[midpos];
-				if(midpos*2==cpu.size()) {
-					medianCpu=(medianCpu+cpu[midpos-1])/2.0f;
-					medianPing=(medianPing+ping[midpos-1])/2;
+				int midpos = cpu.size() / 2;
+				medianCpu = cpu[midpos];
+				medianPing = ping[midpos];
+				if(midpos * 2 == cpu.size()) {
+					medianCpu = (medianCpu + cpu[midpos - 1]) / 2.0f;
+					medianPing = (medianPing + ping[midpos - 1]) / 2;
 				}
-				refCpu=medianCpu;
+				refCpu = medianCpu;
 			}
 
 			if (refCpu > 0.0f) {
 				// aim for 60% cpu usage if median is used as reference and 75% cpu usage if max is the reference
-				float wantedCpu=enforceSpeed ? 0.6f+(1-internalSpeed/userSpeedFactor)*0.5f : 0.75f+(1-internalSpeed/userSpeedFactor)*0.5f;
-				float newSpeed=internalSpeed*wantedCpu/refCpu;
+				float wantedCpu = (enforceSpeed > 0) ? 0.6f + (1 - internalSpeed / userSpeedFactor) * 0.5f : 0.75f + (1 - internalSpeed / userSpeedFactor) * 0.5f;
+				float newSpeed = internalSpeed * wantedCpu / refCpu;
 //				float speedMod=1+wantedCpu-refCpu;
 //				logOutput.Print("Speed REF %f MED %f WANT %f SPEEDM %f NSPEED %f",refCpu,medianCpu,wantedCpu,speedMod,newSpeed);
-				newSpeed = (newSpeed+internalSpeed)*0.5f;
-				newSpeed = std::max(newSpeed, enforceSpeed ? userSpeedFactor*0.8f : userSpeedFactor*0.5f);
-				if(newSpeed>userSpeedFactor)
-					newSpeed=userSpeedFactor;
-				if(newSpeed<0.1f)
-					newSpeed=0.1f;
-				if(newSpeed!=internalSpeed)
+				newSpeed = (newSpeed + internalSpeed) * 0.5f;
+				newSpeed = std::max(newSpeed, (enforceSpeed > 0) ? userSpeedFactor * 0.8f : userSpeedFactor * 0.5f);
+				if(newSpeed > userSpeedFactor)
+					newSpeed = userSpeedFactor;
+				if(newSpeed < 0.1f)
+					newSpeed = 0.1f;
+				if(newSpeed != internalSpeed)
 					InternalSpeedChange(newSpeed);
 			}
 		}
@@ -677,7 +681,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 					syncErrorFrame = 0;
 				if(gamePausable || players[a].isLocal) // allow host to pause even if nopause is set
 				{
-					if(enforceSpeed && !players[a].isLocal && !isPaused &&
+					if(enforceSpeed >= 0 && !players[a].isLocal && !isPaused &&
 						(players[a].spectator ||
 						players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						players[a].ping - medianPing > internalSpeed*GAME_SPEED/2)) {
@@ -1813,7 +1817,7 @@ void CGameServer::InternalSpeedChange(float newSpeed)
 
 void CGameServer::UserSpeedChange(float newSpeed, int player)
 {
-	if (enforceSpeed &&
+	if (enforceSpeed >= 0 &&
 		player >= 0 && static_cast<unsigned int>(player) != SERVER_PLAYER &&
 		!players[player].isLocal && !isPaused &&
 		(players[player].spectator ||
