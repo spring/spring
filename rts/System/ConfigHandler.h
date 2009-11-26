@@ -49,15 +49,7 @@ public:
 	void SetString(std::string name, std::string value);
 
 	/**
-	* @brief set string, for temporary values that overwrite the
-	* config file values, and only apply for this single game
-	* @param name name of key to set
-	* @param value string value to set
-	 */
-	void SetStringOverride(std::string name, std::string value);
-
-	/**
-	 * @brief get override string
+	 * @brief get string
 	 * @param name name of key to get
 	 * @param def default string value to use if key is not found
 	 * @return string value
@@ -73,14 +65,6 @@ public:
 		SetString(name, buffer.str());
 	}
 
-	template<typename T>
-	void SetOverride(const std::string& name, const T& value)
-	{
-		std::ostringstream buffer;
-		buffer << value;
-		SetStringOverride(name, buffer.str());
-	}
-
 	bool IsSet(const std::string& key) const
 	{
 		return (data.find(key) != data.end());
@@ -89,17 +73,6 @@ public:
 	template<typename T>
 	T Get(const std::string& name, const T& def)
 	{
-		std::map<std::string, std::string>::iterator overridepos = dataoverrides.find(name);
-		// if we find an override, return that preferentially
-		if (overridepos != dataoverrides.end()) {
-			std::istringstream overridebuf(overridepos->second);
-			T overridetemp;
-			overridebuf >> overridetemp;
-			return overridetemp;
-		}
-
-		// otherwise return the value from the config file, 
-		// if it is found
 		std::map<std::string, std::string>::iterator pos = data.find(name);
 		if (pos == data.end()) {
 			Set(name, def);
@@ -145,14 +118,6 @@ private:
 	 * instead of constantly rereading from the file
 	 */
 	std::map<std::string, std::string> data;
-
-	/**
-	 * @brief data override map
-	 * Map used to contain data that
-	 * overrides the file config values, just for this game
-	 * used for example in headless spring
-	 */
-	std::map<std::string, std::string> dataoverrides;
 
 	/**
 	 * @brief Get the name of the default configuration file
