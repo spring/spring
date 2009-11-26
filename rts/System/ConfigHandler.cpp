@@ -168,21 +168,12 @@ ConfigHandler::~ConfigHandler()
  */
 string ConfigHandler::GetString(const string name, const string def)
 {
-	// check for overrides first
-	std::map<string,string>::iterator overridepos = dataoverrides.find(name);
-	if (overridepos != dataoverrides.end()) {
-		return overridepos->second;
-	}
-
-	// if no override, try getting from config file
 	std::map<string,string>::iterator pos = data.find(name);
-	if (pos != data.end()) {
-		return pos->second;
+	if (pos == data.end()) {
+		SetString(name, def);
+		return def;
 	}
-
-	// or just return the default
-	SetString(name, def);
-	return def;
+	return pos->second;
 }
 
 
@@ -230,15 +221,6 @@ void ConfigHandler::SetString(const string name, const string value)
 	// must be outside above 'if (file)' block because of the lock.
 	if (file)
 		fclose(file);
-}
-
-/**
- * @brief Sets a config override string, which overrides the values
- * in the config file.  Used for example in headless spring
- *
- */
-void ConfigHandler::SetStringOverride(const string name, const string value ) {
-	dataoverrides[name] = value;
 }
 
 /**
