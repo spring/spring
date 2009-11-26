@@ -62,6 +62,6 @@ UnitIconDist=0
 UnitLodDist=0
 UsePBO=0
 VSync=0
-XResolution=0
-YResolution=0
+XResolution=113
+YResolution=1
 
