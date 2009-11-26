@@ -125,6 +125,7 @@ private:
 	void SkipTo(int targetframe);
 
 	void Message(const std::string& message, bool broadcast=true);
+	void PrivateMessage(int playernum, const std::string& message);
 
 	/////////////////// game status variables ///////////////////
 

@@ -401,6 +401,10 @@ void CGameServer::Message(const std::string& message, bool broadcast)
 #endif
 }
 
+void CGameServer::PrivateMessage(int playernum, const std::string& message) {
+	players[playernum].SendData(CBaseNetProtocol::Get().SendSystemMessage(SERVER_PLAYER, message));
+}
+
 void CGameServer::CheckSync()
 {
 #ifdef SYNCCHECK
@@ -452,7 +456,7 @@ void CGameServer::CheckSync()
 				// send private no sync messages to spectators to reduce spam
 				for(std::vector<int>::const_iterator s = noSyncSpecs.begin(); s != noSyncSpecs.end(); ++s) {
 					int playernum = *s;
-					GotChatMessage(ChatMessage(playernum, playernum, str(format(NoSyncResponse) %players[playernum].name %(*f))));
+					PrivateMessage(playernum, str(format(NoSyncResponse) %players[playernum].name %(*f)));
 				}
 			}
 		}
@@ -484,7 +488,7 @@ void CGameServer::CheckSync()
 				// send spectator desyncs as private messages to reduce spam
 				for(std::map<int, unsigned>::const_iterator s = desyncSpecs.begin(); s != desyncSpecs.end(); ++s) {
 					int playernum = s->first;
-					GotChatMessage(ChatMessage(playernum, playernum, str(format(SyncError) %players[playernum].name %(*f) %(s->second ^ correctChecksum))));
+					PrivateMessage(playernum, str(format(SyncError) %players[playernum].name %(*f) %(s->second ^ correctChecksum)));
 				}
 			}
 		}
@@ -706,7 +710,7 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 						(players[a].spectator || (enforceSpeed > 0 &&
 						(players[a].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 						players[a].ping - medianPing > internalSpeed * GAME_SPEED / 2)))) {
-						GotChatMessage(ChatMessage(a, a, players[a].spectator ? "Pausing rejected (spectators)" : "Pausing rejected (cpu load or ping is too high)"));
+						PrivateMessage(a, players[a].spectator ? "Pausing rejected (spectators)" : "Pausing rejected (cpu load or ping is too high)");
 						break; // disallow pausing by players who cannot keep up gamespeed
 					}
 					timeLeft=0;
@@ -1844,9 +1848,9 @@ void CGameServer::UserSpeedChange(float newSpeed, int player)
 		(players[player].spectator || (enforceSpeed > 0 &&
 		(players[player].cpuUsage - medianCpu > std::min(0.2f, std::max(0.0f, 0.8f - medianCpu) ) ||
 		players[player].ping - medianPing > internalSpeed * GAME_SPEED / 2)))) {
-		GotChatMessage(ChatMessage(player, player, players[player].spectator ?
+		PrivateMessage(player, players[player].spectator ?
 		"Speed change rejected (spectators)" :
-		"Speed change rejected (cpu load or ping is too high)"));
+		"Speed change rejected (cpu load or ping is too high)");
 		return; // disallow speed change by players who cannot keep up gamespeed
 	}
 
