@@ -446,7 +446,7 @@ void CBuilderCAI::SlowUpdate()
 								}
 
 								const float fpSqRadius = (ud->xsize * ud->xsize + ud->zsize * ud->zsize);
-								const float fpRadius = (streflop::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
+								const float fpRadius = (math::sqrt(fpSqRadius) * 0.5f) * SQUARE_SIZE;
 
 								// tell everything within the radius of the soon-to-be buildee
 								// to get out of the way; using the model radius is not correct
