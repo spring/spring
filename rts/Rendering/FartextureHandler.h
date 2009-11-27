@@ -2,7 +2,9 @@
 #define __FARTEXTURE_HANDLER_H__
 
 #include <vector>
+#include "Vec2.h"
 #include "GL/myGL.h"
+#include "Rendering/GL/FBO.h"
 
 struct S3DModel;
 
@@ -17,12 +19,21 @@ public:
 	void CreateFarTexture(S3DModel* model);
 	void CreateFarTextures();
 	GLuint GetTextureID() const { return farTexture; }
+	float2 GetTextureCoords(const int& farTextureNum, const int& orientation);
+
+	int texSizeX;
+	int texSizeY;
+
+	static const int iconSizeX = 64;
+	static const int iconSizeY = 64;
+	static const int numOrientations = 8;
 
 private:
+	int2 GetTextureCoordsInt(const int& farTextureNum, const int& orientation);
 	void ReallyCreateFarTexture(S3DModel* model);
 
+	FBO fbo;
 	GLuint farTexture;
-	unsigned char* farTextureMem;
 	int usedFarTextures;
 	std::vector<S3DModel*> pending;
 };
