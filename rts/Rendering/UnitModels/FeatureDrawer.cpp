@@ -199,7 +199,7 @@ void CFeatureDrawer::Draw()
 	}
 
 	if (drawFar.size()>0) {
-		glAlphaFunc(GL_GREATER, 0.8f);
+		glAlphaFunc(GL_GREATER, 0.5f);
 		glEnable(GL_ALPHA_TEST);
 		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 		glColor3f(1.0f, 1.0f, 1.0f);
@@ -430,22 +430,24 @@ void CFeatureDrawer::DrawRaw(int extraSize, vector<CFeature*>* farFeatures)
 void CFeatureDrawer::DrawFar(CFeature* feature, CVertexArray* va)
 {
 	float3 interPos=feature->pos+UpVector*feature->model->height*0.5f;
+
 	int snurr=-feature->heading+GetHeadingFromVector(camera->pos.x-feature->pos.x,camera->pos.z-feature->pos.z)+(0xffff>>4);
 	if(snurr<0)
 		snurr+=0xffff;
 	if(snurr>0xffff)
 		snurr-=0xffff;
 	snurr=snurr>>13;
-	float tx=(feature->model->farTextureNum%8)*(1.0f/8.0f)+snurr*(1.0f/64);
-	float ty=(feature->model->farTextureNum/8)*(1.0f/64.0f);
-	float offset=0;
 
-	float3 curad=camera->up*feature->radius*1.4f;
-	float3 crrad=camera->right*feature->radius;
-	va->AddVertexQTN(interPos-(curad-offset)+crrad,tx,ty,unitDrawer->camNorm);
-	va->AddVertexQTN(interPos+(curad+offset)+crrad,tx,ty+(1.0f/64.0f),unitDrawer->camNorm);
-	va->AddVertexQTN(interPos+(curad+offset)-crrad,tx+(1.0f/64.0f),ty+(1.0f/64.0f),unitDrawer->camNorm);
-	va->AddVertexQTN(interPos-(curad-offset)-crrad,tx+(1.0f/64.0f),ty,unitDrawer->camNorm);
+	const float iconSizeX = float(fartextureHandler->iconSizeX) / fartextureHandler->texSizeX;
+	const float iconSizeY = float(fartextureHandler->iconSizeY) / fartextureHandler->texSizeY;
+	const float2 texcoords = fartextureHandler->GetTextureCoords(feature->model->farTextureNum, snurr);
+
+	const  float3 curad = camera->up    * feature->radius;
+	const  float3 crrad = camera->right * feature->radius;
+	va->AddVertexQTN(interPos - curad + crrad, texcoords.x,             texcoords.y,             unitDrawer->camNorm);
+	va->AddVertexQTN(interPos + curad + crrad, texcoords.x,             texcoords.y + iconSizeY, unitDrawer->camNorm);
+	va->AddVertexQTN(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY, unitDrawer->camNorm);
+	va->AddVertexQTN(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y,             unitDrawer->camNorm);
 }
 
 

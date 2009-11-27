@@ -469,6 +469,10 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		CUnit::SetLODFactor(LODScale);
 	}
 
+	camNorm = camera->forward;
+	camNorm.y = -0.1f;
+	camNorm.ANormalize();
+
 	SetupForUnitDrawing();
 	SetupFor3DO();
 
@@ -521,31 +525,32 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 	DrawOpaqueShaderUnits();
 
-	camNorm = camera->forward;
-	camNorm.y = -0.1f;
-	camNorm.ANormalize();
+	if (drawFar.size() > 0) {
+		glAlphaFunc(GL_GREATER, 0.5f);
+		glEnable(GL_ALPHA_TEST);
+		glActiveTexture(GL_TEXTURE0);
+		glEnable(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
+		glColor4f(1, 1, 1, 1);
 
-	glAlphaFunc(GL_GREATER, 0.8f);
-	glEnable(GL_ALPHA_TEST);
-	glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
-	glColor3f(1, 1, 1);
+		if(gu->drawFog) {
+			glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
+			glEnable(GL_FOG);
+		}
 
-	if(gu->drawFog) {
-		glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
-		glEnable(GL_FOG);
+		va = GetVertexArray();
+		va->Initialize();
+		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
+		for (GML_VECTOR<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
+			DrawFar(*usi);
+		}
+
+		va->DrawArrayTN(GL_QUADS);
 	}
-
-	va = GetVertexArray();
-	va->Initialize();
-	va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
-	for (GML_VECTOR<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
-		DrawFar(*usi);
-	}
-
-	va->DrawArrayTN(GL_QUADS);
 
 	if (!drawReflection) {
 		// Draw unit icons and radar blips.
+		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.5f);
 		GML_VECTOR<CUnit*>::iterator ui;
 		for (ui = drawIcon.begin(); ui != drawIcon.end(); ++ui) {
@@ -787,7 +792,7 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 	const float3 interPos = unit->drawPos + UpVector * unit->model->height * 0.5f;
 
 	// indicates the orientation to draw (there are 8)
-	int snurr =- unit->heading + GetHeadingFromVector(camera->pos.x - unit->pos.x, camera->pos.z - unit->pos.z) + (0xffff >> 4);
+	int snurr = -unit->heading + GetHeadingFromVector(camera->pos.x - unit->pos.x, camera->pos.z - unit->pos.z) + (0xffff >> 4);
 	if (snurr < 0) {
 		snurr += 0xffff;
 	}
@@ -796,17 +801,17 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 	}
 	snurr = snurr >> 13;
 
-	const float r      = 1.0f / 64.0f;
-	const float tx     = (unit->model->farTextureNum % 8) * (1.0f / 8.0f) + snurr * r;
-	const float ty     = (unit->model->farTextureNum / 8) * r;
-	const float offset = 0;
+	const float iconSizeX = float(fartextureHandler->iconSizeX) / fartextureHandler->texSizeX;
+	const float iconSizeY = float(fartextureHandler->iconSizeY) / fartextureHandler->texSizeY;
+	const float2 texcoords = fartextureHandler->GetTextureCoords(unit->model->farTextureNum, snurr);
 
-	const  float3 curad = camera->up    * unit->radius * 1.4f;
+	const  float3 curad = camera->up    * unit->radius;
 	const  float3 crrad = camera->right * unit->radius;
-	va->AddVertexQTN(interPos - (curad - offset) + crrad, tx,     ty,     camNorm);
-	va->AddVertexQTN(interPos + (curad + offset) + crrad, tx,     ty + r, camNorm);
-	va->AddVertexQTN(interPos + (curad + offset) - crrad, tx + r, ty + r, camNorm);
-	va->AddVertexQTN(interPos - (curad - offset) - crrad, tx + r, ty,     camNorm);
+	va->AddVertexQTN(interPos - curad + crrad, texcoords.x,             texcoords.y,             camNorm);
+	va->AddVertexQTN(interPos + curad + crrad, texcoords.x,             texcoords.y + iconSizeY, camNorm);
+	va->AddVertexQTN(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY, camNorm);
+	va->AddVertexQTN(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y,             camNorm);
+
 }
 
 
@@ -1315,11 +1320,9 @@ void CUnitDrawer::CleanupBasicS3OTexture1(void) const
 	// reset texture1 state
 	glActiveTextureARB(GL_TEXTURE1_ARB);
 	glDisable(GL_TEXTURE_2D);
-
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE1_ALPHA_ARB, GL_PREVIOUS_ARB);
-
-	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 	glTexEnvi(GL_TEXTURE_ENV,GL_SOURCE0_RGB_ARB, GL_TEXTURE);
+	glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
 }
 
 
