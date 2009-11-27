@@ -475,14 +475,16 @@ void CFeature::ForcedSpin(const float3& newDir)
 	}
 */
 
-	transMatrix.LoadIdentity();
-	transMatrix.Translate(pos);
-	transMatrix.RotateZ(newDir.z);
-	transMatrix.RotateX(newDir.x);
-	transMatrix.RotateY(newDir.y);
-
-	// const float clamped = fmod(newDir.y, PI * 2.0);
-	// heading = (short int)(clamped * 65536);
+	float3 updir = UpVector;
+	if (updir == newDir) {
+		//FIXME perhaps save the old right,up,front directions
+		//so we can reconstruct the old upvector and reconstruct a better one
+		updir -= GetVectorFromHeading(heading);
+	}
+	float3 rightdir = newDir.cross(UpVector).Normalize();
+	updir = rightdir.cross(newDir);
+	transMatrix = CMatrix44f(pos, -rightdir, updir, newDir);
+	heading = GetHeadingFromVector(newDir.x, newDir.z);
 }
 
 
