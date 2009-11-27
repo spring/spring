@@ -39,7 +39,7 @@ CFartextureHandler::CFartextureHandler()
 
 	fbo.Bind();
 	fbo.AttachTexture(farTexture);
-	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX, texSizeY);
+	fbo.CreateRenderBuffer(GL_DEPTH_ATTACHMENT_EXT, GL_DEPTH_COMPONENT16, texSizeX, texSizeY); //TODO hmmm perhaps just create it on-demand to save gfx-ram?
 	bool status = fbo.CheckStatus("FARTEXTURE");
 	if (status) {
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);

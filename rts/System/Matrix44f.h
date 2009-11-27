@@ -37,8 +37,12 @@ public:
 	void SetUpVector(float3& up);
 	void Translate(const float3& pos);
 
-	// OpenGL ordered (ie. column-major)
+	/// OpenGL ordered (ie. column-major)
 	float m[16];
+
+	/// Allows implicit conversion to float* (for passing to gl functions)
+	operator const float* () const { return m; }
+	operator float* () { return m; }
 };
 
 

@@ -171,15 +171,15 @@ void CFeatureDrawer::Draw()
 
 	CBaseGroundDrawer *gd = readmap->GetGroundDrawer();
 	if (gd->DrawExtraTex()) {
-			glActiveTextureARB(GL_TEXTURE2_ARB);
-			glEnable(GL_TEXTURE_2D);
-			glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glEnable(GL_TEXTURE_2D);
+		glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB_ARB,GL_ADD_SIGNED_ARB);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE_ARB);
 
-			SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
+		SetTexGen(1.0f/(gs->pwr2mapx*SQUARE_SIZE),1.0f/(gs->pwr2mapy*SQUARE_SIZE),0,0);
 
-			glBindTexture(GL_TEXTURE_2D, gd->infoTex);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
+		glBindTexture(GL_TEXTURE_2D, gd->infoTex);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
 	}
 
 	unitDrawer->SetupForUnitDrawing();
@@ -189,43 +189,43 @@ void CFeatureDrawer::Draw()
 		unitDrawer->DrawQuedS3O();
 	unitDrawer->CleanUpUnitDrawing();
 
-	if (gd->DrawExtraTex()) {
-			glActiveTextureARB(GL_TEXTURE2_ARB);
-			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_TEXTURE_GEN_S);
-			glDisable(GL_TEXTURE_GEN_T);
-			glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
-			glActiveTextureARB(GL_TEXTURE0_ARB);
-	}
-
 	if (drawFar.size()>0) {
 		glAlphaFunc(GL_GREATER, 0.5f);
 		glEnable(GL_ALPHA_TEST);
 		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 		glColor3f(1.0f, 1.0f, 1.0f);
+		glNormal3fv((const GLfloat*)&unitDrawer->camNorm.x);
 
 		CVertexArray* va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
+		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_T);
 		for (vector<CFeature*>::iterator usi = drawFar.begin(); usi != drawFar.end(); ++usi) {
 			DrawFar(*usi, va);
 		}
-		va->DrawArrayTN(GL_QUADS);
+		va->DrawArrayT(GL_QUADS);
 
 		glDisable(GL_ALPHA_TEST);
 	}
 
+	if (gd->DrawExtraTex()) {
+		glActiveTextureARB(GL_TEXTURE2_ARB);
+		glDisable(GL_TEXTURE_2D);
+		glDisable(GL_TEXTURE_GEN_S);
+		glDisable(GL_TEXTURE_GEN_T);
+		glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+		glActiveTextureARB(GL_TEXTURE0_ARB);
+	}
+
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_FOG);
+
 	if(drawStat.size() > 0) {
 		if(!water->drawReflection) {
-			glDisable(GL_TEXTURE_2D);
-			glDisable(GL_ALPHA_TEST);
 			for (vector<CFeature *>::iterator fi = drawStat.begin(); fi != drawStat.end(); ++fi)
 				DrawFeatureStats(*fi);
 		}
 		drawStat.clear();
 	}
-
-	glDisable(GL_FOG);
 }
 
 
@@ -444,10 +444,10 @@ void CFeatureDrawer::DrawFar(CFeature* feature, CVertexArray* va)
 
 	const  float3 curad = camera->up    * feature->radius;
 	const  float3 crrad = camera->right * feature->radius;
-	va->AddVertexQTN(interPos - curad + crrad, texcoords.x,             texcoords.y,             unitDrawer->camNorm);
-	va->AddVertexQTN(interPos + curad + crrad, texcoords.x,             texcoords.y + iconSizeY, unitDrawer->camNorm);
-	va->AddVertexQTN(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY, unitDrawer->camNorm);
-	va->AddVertexQTN(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y,             unitDrawer->camNorm);
+	va->AddVertexQT(interPos - curad + crrad, texcoords.x,             texcoords.y            );
+	va->AddVertexQT(interPos + curad + crrad, texcoords.x,             texcoords.y + iconSizeY);
+	va->AddVertexQT(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY);
+	va->AddVertexQT(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y            );
 }
 
 
