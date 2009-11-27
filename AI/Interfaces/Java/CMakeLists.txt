@@ -15,7 +15,7 @@
 # * ConfigureJavaSkirmishAI
 #
 
-enable_language(Java)
+#enable_language(Java)
 
 
 ################################################################################
@@ -398,7 +398,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
 			"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.c"
 		COMMENT
-			"  Generating Java AI native callback wrapper source files ..." VERBATIM)
+			"  Java AI Interface: Generating native callback wrapper sources ..." VERBATIM)
 
 	# 3. Wrapp AI Callback (native-JNI->Java)
 	add_custom_command(
@@ -413,7 +413,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
 		DEPENDS "${myNativeGeneratedSourceDir}/CallbackFunctionPointerBridge.h"
 		WORKING_DIRECTORY "${myAwkScriptsDir}"
-		COMMENT "  Generating Java AI JNI callback wrapper source files ..." VERBATIM)
+		COMMENT "  Java AI Interface: Generating JNI callback wrapper sources ..." VERBATIM)
 
 	# 4. Wrapp AI Events (native-JNI->Java)
 	add_custom_command(
@@ -428,7 +428,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"${springAIInterfaceSourceDir}/AISEvents.h"
 		DEPENDS "${springAIInterfaceSourceDir}/AISEvents.h"
 		WORKING_DIRECTORY "${myAwkScriptsDir}"
-		COMMENT "  Generating Java AI JNI events wrapper source files ..." VERBATIM)
+		COMMENT "  Java AI Interface: Generating JNI events wrapper sources ..." VERBATIM)
 
 	set(myNativeSources
 		"${myNativeSourceDir}/InterfaceExport.c"
@@ -493,7 +493,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			${myJavaSources}
 			${myJavaGeneratedSources}
 		WORKING_DIRECTORY "${myJavaGeneratedSourceDir}"
-		COMMENT "  Compiling Java sources ..." VERBATIM)
+		COMMENT "  Java AI Interface: Compiling Java sources ..." VERBATIM)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myBuildDir}/${myBinJarFile}"
@@ -502,7 +502,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  Creating Java interface library ${myBinJarFile} ..." VERBATIM)
+		COMMENT "  Java AI Interface: Creating library ${myBinJarFile} ..." VERBATIM)
 
 	add_custom_command(TARGET ${myTarget} POST_BUILD
 		#OUTPUT "${myBuildDir}/${mySrcJarFile}"
@@ -516,7 +516,7 @@ if    (BUILD_${myName}_AIINTERFACE)
 			"uf" "${myBuildDir}/${mySrcJarFile}"
 			"-C" "${myJavaGeneratedSourceDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
-		COMMENT "  Creating Java interface source archive ${mySrcJarFile} ..." VERBATIM)
+		COMMENT "  Java AI Interface: Creating sources archive ${mySrcJarFile} ..." VERBATIM)
 
 	# Install the native library
 	install(TARGETS   ${myTarget} DESTINATION ${myInstLibsDir})
