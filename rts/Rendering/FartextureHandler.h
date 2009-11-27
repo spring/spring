@@ -24,8 +24,8 @@ public:
 	int texSizeX;
 	int texSizeY;
 
-	static const int iconSizeX = 64;
-	static const int iconSizeY = 64;
+	static const int iconSizeX = 32;
+	static const int iconSizeY = 32;
 	static const int numOrientations = 8;
 
 private:
