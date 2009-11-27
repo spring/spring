@@ -526,12 +526,13 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 	DrawOpaqueShaderUnits();
 
 	if (drawFar.size() > 0) {
-		glAlphaFunc(GL_GREATER, 0.5f);
 		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.5f);
 		glActiveTexture(GL_TEXTURE0);
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 		glColor4f(1, 1, 1, 1);
+		glNormal3fv((const GLfloat*)&camNorm.x);
 
 		if(gu->drawFog) {
 			glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
@@ -540,12 +541,12 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 
 		va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_TN);
+		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_T);
 		for (GML_VECTOR<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
 			DrawFar(*usi);
 		}
 
-		va->DrawArrayTN(GL_QUADS);
+		va->DrawArrayT(GL_QUADS);
 	}
 
 	if (!drawReflection) {
@@ -807,10 +808,10 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 
 	const  float3 curad = camera->up    * unit->radius;
 	const  float3 crrad = camera->right * unit->radius;
-	va->AddVertexQTN(interPos - curad + crrad, texcoords.x,             texcoords.y,             camNorm);
-	va->AddVertexQTN(interPos + curad + crrad, texcoords.x,             texcoords.y + iconSizeY, camNorm);
-	va->AddVertexQTN(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY, camNorm);
-	va->AddVertexQTN(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y,             camNorm);
+	va->AddVertexQT(interPos - curad + crrad, texcoords.x,             texcoords.y            );
+	va->AddVertexQT(interPos + curad + crrad, texcoords.x,             texcoords.y + iconSizeY);
+	va->AddVertexQT(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY);
+	va->AddVertexQT(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y            );
 
 }
 
@@ -1984,8 +1985,8 @@ void CUnitDrawer::DrawUnitBeingBuilt(CUnit* unit)
 
 void CUnitDrawer::ApplyUnitTransformMatrix(CUnit* unit)
 {
-	CMatrix44f m = unit->GetTransformMatrix();
-	glMultMatrixf(&m[0]);
+	const CMatrix44f& m = unit->GetTransformMatrix();
+	glMultMatrixf(m);
 }
 
 
