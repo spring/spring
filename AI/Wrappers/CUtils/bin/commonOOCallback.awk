@@ -11,6 +11,8 @@
 BEGIN {
 	# initialize things
 
+	myRootClass = "OOAICallback";
+
 	# Storage containers
 	# ==================
 	#
@@ -302,7 +304,7 @@ function store_cls(clsName_s) {
 	# store only if not yet stored
 	if (!(clsName_s in cls_name_id)) {
 		_cls_size = cls_id_name["*"];
-		cls_name_id[clsName_s]  = _cls_size;
+		cls_name_id[clsName_s] = _cls_size;
 		cls_id_name[_cls_size] = clsName_s;
 #print("cls: " _cls_size " " clsName_s);
 		_cls_size++;
@@ -321,7 +323,8 @@ function store_implCls(implClsName_s, clsName_s) {
 
 function store_anc(clsName_s, implClsName_s, ancestors_s, indicesArgs_s) {
 
-	_implId = ancestors_s implClsName_s;
+	_implId = myRootClass "," ancestors_s implClsName_s;
+#print("_implId: " _implId " " implClsName_s);
 
 	if (!(_implId in cls_implId_indicesArgs)) {
 	# store only if not yet stored
@@ -356,7 +359,9 @@ function store_mem(clsName_s, memName_s, retType_s, params_s, isFetcher_s, metaC
 		cls_memberId_params[_memId]      = params_s;
 		cls_memberId_isFetcher[_memId]   = isFetcher_s;
 		cls_memberId_metaComment[_memId] = metaComment_s;
-#print("mem: " _cls_size " #" retType_s " " _memId "(" params_s ")# " isFetcher_s " // " metaComment_p);
+if (clsName_s == "") {
+print("mem: " _cls_size " #" retType_s " " _memId "(" params_s ")# " isFetcher_s " // " metaComment_p);
+}
 	}
 }
 
@@ -365,6 +370,8 @@ function store_mem(clsName_s, memName_s, retType_s, params_s, isFetcher_s, metaC
 function store_classesNamesByFetchersAndImplClassNames() {
 
 	cls_id_name["*"] = 0;
+
+	store_cls(myRootClass);
 
 	for (f=0; f < size_funcs; f++) {
 		fullName    = funcFullName[f];
@@ -404,6 +411,12 @@ function store_classNamesAncestors() {
 	for (c=0; c < _cls_size; c++) {
 		cls_name_implIds[cls_id_name[c] ",*"] = 0;
 	}
+
+	# store the root class
+	cls_implId_indicesArgs[myRootClass] = "";
+	cls_name_indicesArgs[myRootClass]   = "";
+	cls_name_implIds[myRootClass ",*"]  = 1;
+	cls_name_implIds[myRootClass "," 0] = myRootClass;
 
 	for (f=0; f < size_funcs; f++) {
 		fullName    = funcFullName[f];
@@ -448,6 +461,10 @@ function store_classMembers() {
 			_clsName = nameParts[nameParts_size-1];
 		#}
 		_memName = nameParts[nameParts_size];
+
+		if (_clsName == "") {
+			_clsName = myRootClass
+		}
 
 		if (_clsName in cls_implName_name) {
 			_clsName = cls_implName_name[_clsName];
