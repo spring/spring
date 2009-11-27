@@ -54,15 +54,14 @@ BEGIN {
 	myParentPkgA   = myMainPkgA ".oo";
 	myPkgA         = myParentPkgA ".clb";
 	myPkgD         = convertJavaNameFormAToD(myPkgA);
-	myClass        = "OOAICallback";
 	myClassVar     = "ooClb";
 	myWrapClass    = "AICallback";
 	myWrapVar      = "innerCallback";
 	defMapJavaImpl = "HashMap";
 
-	myBufferedClasses["_UnitDef"]    = 1;
-	myBufferedClasses["_WeaponDef"]  = 1;
-	myBufferedClasses["_FeatureDef"] = 1;
+	myBufferedClasses["UnitDef"]    = 1;
+	myBufferedClasses["WeaponDef"]  = 1;
+	myBufferedClasses["FeatureDef"] = 1;
 
 	retParamName  = "__retVal";
 
@@ -101,6 +100,7 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h, isInterface_h,
 	print("package " javaPkg_h ";") >> outFile_h;
 	print("") >> outFile_h;
 	print("") >> outFile_h;
+	print("import " myParentPkgA ".AICallbackException;") >> outFile_h;
 	print("import " myParentPkgA ".AIFloat3;") >> outFile_h;
 	if (isJniBound_h) {
 		print("import " myMainPkgA ".AICallback;") >> outFile_h;
@@ -116,9 +116,13 @@ function printHeader(outFile_h, javaPkg_h, javaClassName_h, isInterface_h,
 }
 
 
-function printTripleFunc(fRet_tr, fName_tr, fParams_tr, outFile_int_tr, outFile_stb_tr, outFile_jni_tr, printIntAndStb_tr) {
+function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, outFile_int_tr, outFile_stb_tr, outFile_jni_tr, printIntAndStb_tr, noOverride_tr) {
 
 	_funcHdr_tr = "public " fRet_tr " " fName_tr "(" fParams_tr ")";
+	if (thrownExceptions_tr != "") {
+		_funcHdr_tr = _funcHdr_tr " throws " thrownExceptions_tr;
+	}
+
 	if (printIntAndStb_tr) {
 		print("\t" _funcHdr_tr ";") >> outFile_int_tr;
 		print("") >> outFile_int_tr;
@@ -130,9 +134,14 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, outFile_int_tr, outFile_
 		} else if (fRet_tr == "String") {
 			print("\t\t" "return \"\";") >> outFile_stb_c;
 		} else if (fRet_tr == "AIFloat3") {
-			print("\t\t" "return new AIFloat3(0.0f, 0.0f, 0.0f);") >> outFile_stb_c;
+			#print("\t\t" "return new AIFloat3(0.0f, 0.0f, 0.0f);") >> outFile_stb_c;
+			print("\t\t" "return null;") >> outFile_stb_c;
 		} else if (fRet_tr == "java.awt.Color") {
-			print("\t\t" "return java.awt.Color.BLACK;") >> outFile_stb_c;
+			#print("\t\t" "return java.awt.Color.BLACK;") >> outFile_stb_c;
+			print("\t\t" "return null;") >> outFile_stb_c;
+		} else if (startsWithCapital(fRet_tr)) {
+			# must be a class
+			print("\t\t" "return null;") >> outFile_stb_c;
 		} else if (fRet_tr == "boolean") {
 			print("\t\t" "return false;") >> outFile_stb_c;
 		} else {
@@ -141,7 +150,10 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, outFile_int_tr, outFile_
 		print("\t" "}") >> outFile_stb_c;
 		print("") >> outFile_stb_c;
 	}
-	print("\t" "@Override") >> outFile_jni_tr;
+
+	if (!noOverride_tr) {
+		print("\t" "@Override") >> outFile_jni_tr;
+	}
 	print("\t" _funcHdr_tr " {") >> outFile_jni_tr;
 	print("") >> outFile_jni_tr;
 }
@@ -151,8 +163,11 @@ function printClasses() {
 
 	c_size_cs = cls_id_name["*"];
 	for (c=0; c < c_size_cs; c++) {
-		cls_cs = cls_id_name[c];
+		cls_cs      = cls_id_name[c];
 		anc_size_cs = cls_name_implIds[cls_cs ",*"];
+if (c == 0) {
+	print("now printing class: " cls_cs " ancs: " anc_size_cs);
+}
 
 		printIntAndStb_cs = 1;
 		for (a=0; a < anc_size_cs; a++) {
@@ -182,8 +197,10 @@ clsId_c = ancestors_c "-" clsName_c;
 		sub(/,[^,]*$/, "", lastAncName_c); # remove class name
 		sub(/^.*,/,    "", lastAncName_c); # remove pre last ancestor name
 		clsName_jni_c = "Wrapp" lastAncName_c implCls_c;
+		noInterfaceIndices_c = lowerize(lastAncName_c) "Id";
 	} else {
 		clsName_jni_c = "Wrapp" implCls_c;
+		noInterfaceIndices_c = 0;
 	}
 
 #print("print class    : " clsName_jni_c);
@@ -263,8 +280,15 @@ outFile_c = outFile_jni_c;
 		_fRet    = "int";
 		_fName   = "get" capitalize(addIndName);
 		_fParams = "";
+		_fExceps = "";
 
-		printTripleFunc(_fRet, _fName, _fParams, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_c);
+		printIntAndStb_tmp_c = printIntAndStb_c;
+		_noOverride = 0;
+		if ((noInterfaceIndices_c != 0) && (addIndName == noInterfaceIndices_c)) {
+			printIntAndStb_tmp_c = 0;
+			_noOverride = 1;
+		}
+		printTripleFunc(_fRet, _fName, _fParams, _fExceps, outFile_int_c, outFile_stb_c, outFile_jni_c, printIntAndStb_tmp_c, _noOverride);
 
 		print("\t\t" "return " addIndName ";") >> outFile_jni_c;
 		print("\t" "}") >> outFile_jni_c;
@@ -281,7 +305,7 @@ outFile_c = outFile_jni_c;
 				print("\t" "private static java.util.Map<Integer, " clsNameExternal_c "> _buffer_instances = new java.util.HashMap<Integer, " clsNameExternal_c ">();") >> outFile_c;
 				print("") >> outFile_c;
 			}
-			print("\t" "static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
+			print("\t" "public static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
 			print("") >> outFile_c;
 			lastParamName = ctorParamsNoTypes;
 			sub(/^.*,[ \t]*/, "", lastParamName);
@@ -344,8 +368,10 @@ outFile_c = outFile_jni_c;
 			} else {
 				for (ai=1; ai <= addInds_size_c; ai++) {
 					addIndName = addInds_c[ai];
-					print("\t\t" "if (this.get" capitalize(addIndName) "() < other.get" capitalize(addIndName) "()) return BEFORE;") >> outFile_abs_c;
-					print("\t\t" "if (this.get" capitalize(addIndName) "() > other.get" capitalize(addIndName) "()) return AFTER;") >> outFile_abs_c;
+					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
+						print("\t\t" "if (this.get" capitalize(addIndName) "() < other.get" capitalize(addIndName) "()) return BEFORE;") >> outFile_abs_c;
+						print("\t\t" "if (this.get" capitalize(addIndName) "() > other.get" capitalize(addIndName) "()) return AFTER;") >> outFile_abs_c;
+					}
 				}
 				print("\t\t" "return 0;") >> outFile_abs_c;
 			}
@@ -370,7 +396,9 @@ outFile_c = outFile_jni_c;
 			} else {
 				for (ai=1; ai <= addInds_size_c; ai++) {
 					addIndName = addInds_c[ai];
-					print("\t\t" "if (this.get" capitalize(addIndName) "() != other.get" capitalize(addIndName) "()) return false;") >> outFile_abs_c;
+					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
+						print("\t\t" "if (this.get" capitalize(addIndName) "() != other.get" capitalize(addIndName) "()) return false;") >> outFile_abs_c;
+					}
 				}
 				print("\t\t" "return true;") >> outFile_abs_c;
 			}
@@ -401,7 +429,9 @@ outFile_c = outFile_jni_c;
 				# when converted from double to int
 				for (ai=1; ai <= addInds_size_c; ai++) {
 					addIndName = addInds_c[ai];
-					print("\t\t" "_res += this.get" capitalize(addIndName) "() * (int) (10E" (7-ai) ");") >> outFile_abs_c;
+					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
+						print("\t\t" "_res += this.get" capitalize(addIndName) "() * (int) (10E" (7-ai) ");") >> outFile_abs_c;
+					}
 				}
 			}
 			print("") >> outFile_abs_c;
@@ -419,16 +449,18 @@ outFile_c = outFile_jni_c;
 			print("\t\t" "String _res = this.getClass().toString();") >> outFile_abs_c;
 			print("") >> outFile_abs_c;
 
-			#if (isClbRootCls) {
+			#if (isClbRootCls) { # NO FOLD
 			#	print("\t\t" "_res = _res + \"(skirmishAIId=\" + this.skirmishAIId + \", \";") >> outFile_abs_c;
-			#} else {
+			#} else { # NO FOLD
 			#	print("\t\t" "_res = _res + \"(clbHash=\" + this." myWrapVar ".hashCode() + \", \";") >> outFile_abs_c;
 			#	print("\t\t" "_res = _res + \"skirmishAIId=\" + this." myWrapVar ".SkirmishAI_getSkirmishAIId() + \", \";") >> outFile_abs_c;
 				for (ai=1; ai <= addInds_size_c; ai++) {
 					addIndName = addInds_c[ai];
-					print("\t\t" "_res = _res + \"" addIndName "=\" + this.get" capitalize(addIndName) "() + \", \";") >> outFile_abs_c;
+					if ((noInterfaceIndices_c == 0) || (addIndName != noInterfaceIndices_c)) {
+						print("\t\t" "_res = _res + \"" addIndName "=\" + this.get" capitalize(addIndName) "() + \", \";") >> outFile_abs_c;
+					}
 				}
-			#}
+			#} # NO FOLD
 			print("\t\t" "_res = _res + \")\";") >> outFile_abs_c;
 			print("") >> outFile_abs_c;
 			print("\t\t" "return _res;") >> outFile_abs_c;
@@ -646,20 +678,32 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 
 	indent_m            = "\t";
 	memId_m             = clsName_m "," memName_m;
-	retType             = cls_memberId_retType[memId_m];
-	retType_int         = retType;
+	retType             = cls_memberId_retType[memId_m]; # this may be changed
+	retType_int         = retType;                       # this is a const var
 	params              = cls_memberId_params[memId_m];
 	isFetcher           = cls_memberId_isFetcher[memId_m];
 	metaComment         = cls_memberId_metaComment[memId_m];
 #print("retType: " retType);
 	memName             = fullName_m;
 	sub(/^.*_/, "", memName);
+	functionName_m      = fullName_m;
+	sub(/^[^_]+_/, "", functionName_m);
+
+	isVoid_int_m        = (retType_int == "void");
+
+	retVar_int_m        = "_ret_int";   # this is a const var
+	retVar_out_m        = retVar_int_m; # this may be changed
+	declaredVarsCode    = "";
 	conversionCode_pre  = "";
 	conversionCode_post = "";
+	thrownExceptions    = "";
+	
+	if (!isVoid_int_m) {
+		declaredVarsCode = "\t\t" retType_int " " retVar_int_m ";" "\n" declaredVarsCode;
+	}
 
 outFile_m = outFile_jni_m;
 
-if (memName_m == "setBase") { print("setBase pre:  " params " # " addInds_size_m); }
 	# remove additional indices from the outter params
 	for (ai=1; ai <= addInds_size_m; ai++) {
 		_removed = sub(/[^,]+(, )?/, "", params);
@@ -684,7 +728,6 @@ if (memName_m == "setBase") { print("setBase pre:  " params " # " addInds_size_m
 		}
 		innerParams = "this.get" capitalize(addIndName) "()" _condComma innerParams;
 	}
-if (memName_m == "setBase") { print("setBase post: " params); }
 
 
 	# convert param types
@@ -697,25 +740,26 @@ if (memName_m == "setBase") { print("setBase post: " params); }
 				paNaNew = paNa;
 				sub(/_posF3/, "", paNaNew);
 				sub("float\\[\\] " paNa, "AIFloat3 " paNaNew, params);
-				conversionCode_pre = conversionCode_pre "\t\t"  "float[] " paNa " = " paNaNew ".toFloatArray();" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" "float[] " paNa " = " paNaNew ".toFloatArray();" "\n";
 			} else if (match(paNa, /_colorS3/)) {
 				# convert short[3] to java.awt.Color
 				paNaNew = paNa;
 				sub(/_colorS3/, "", paNaNew);
 				sub("short\\[\\] " paNa, "java.awt.Color " paNaNew, params);
-				conversionCode_pre = conversionCode_pre "\t\t"  "short[] " paNa " = Util.toShort3Array(" paNaNew ");" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" "short[] " paNa " = Util.toShort3Array(" paNaNew ");" "\n";
 			}
 		}
 	}
 
-	# convert an error return int value to a RuntimeException
+	# convert an error return int value to an Exception
 	#metaComment "error-return:0=OK"
 	if (part_isErrorReturn(metaComment) && retType == "int") {
 		errorRetValueOk_m = part_getErrorReturnValueOk(metaComment);
 
-		conversionCode_post = conversionCode_post "\t\t" "if (_ret_int != " errorRetValueOk_m ") {" "\n";
-		conversionCode_post = conversionCode_post "\t\t\t" "throw new RuntimeException(\"Error calling function " memName_m ": \" + _ret_int);" "\n";
+		conversionCode_post = conversionCode_post "\t\t" "if (" retVar_out_m " != " errorRetValueOk_m ") {" "\n";
+		conversionCode_post = conversionCode_post "\t\t\t" "throw new AICallbackException(\"" memName_m "\", " retVar_out_m ");" "\n";
 		conversionCode_post = conversionCode_post "\t\t" "}" "\n";
+		thrownExceptions = thrownExceptions ", AICallbackException" thrownExceptions;
 
 		retType = "void";
 	}
@@ -725,32 +769,38 @@ if (memName_m == "setBase") { print("setBase post: " params); }
 	hasRetParam = 0;
 	for (prm = 1; prm <= paramTypeNames_size; prm++) {
 		paNa = extractParamName(paramTypeNames[prm]);
-		if (isRetParamName(paNa) && retType == "void") {
-			paTy = extractParamType(paramTypeNames[prm]);
-			hasRetParam = 1;
-			if (match(paNa, /_posF3/)) {
-				# convert float[3] to AIFloat3
-				retParamType = "AIFloat3";
-				conversionCode_pre  = conversionCode_pre  "\t\t" "float[] " paNa " = new float[3];" "\n";
-				conversionCode_post = conversionCode_post "\t\t" "_ret = new AIFloat3(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
-				sub("(, )?float\\[\\] " paNa, "", params);
-				retType = retParamType;
-			} else if (match(paNa, /_colorS3/)) {
-				retParamType = "java.awt.Color";
-				conversionCode_pre  = conversionCode_pre  "\t\t" "short[] " paNa " = new short[3];" "\n";
-				conversionCode_post = conversionCode_post "\t\t" "_ret = Util.toColor(" paNa ");" "\n";
-				sub("(, )?short\\[\\] " paNa, "", params);
-				retType = retParamType;
-			} else {
-				print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);
-				exit(-1);
-			}
+		if (isRetParamName(paNa)) {
+			if (retType == "void") {
+				paTy = extractParamType(paramTypeNames[prm]);
+				hasRetParam = 1;
+				if (match(paNa, /_posF3/)) {
+					# convert float[3] to AIFloat3
+					retParamType = "AIFloat3";
+					retVar_out_m = "_ret";
+					conversionCode_pre  = conversionCode_pre  "\t\t" "float[] " paNa " = new float[3];" "\n";
+					conversionCode_post = conversionCode_post "\t\t" retVar_out_m " = new AIFloat3(" paNa "[0], " paNa "[1]," paNa "[2]);" "\n";
+					declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
+					sub("(, )?float\\[\\] " paNa, "", params);
+					retType = retParamType;
+				} else if (match(paNa, /_colorS3/)) {
+					retParamType = "java.awt.Color";
+					retVar_out_m = "_ret";
+					conversionCode_pre  = conversionCode_pre  "\t\t" "short[] " paNa " = new short[3];" "\n";
+					conversionCode_post = conversionCode_post "\t\t" retVar_out_m " = Util.toColor(" paNa ");" "\n";
+					declaredVarsCode = "\t\t" retParamType " " retVar_out_m ";" "\n" declaredVarsCode;
+					sub("(, )?short\\[\\] " paNa, "", params);
+					retType = retParamType;
+				} else {
+					print("FAILED converting return param: " paramTypeNames[prm] " / " fullName_m);
+					exit(1);
+				}
 #print(paNa);
+			} else {
+				print("FAILED converting return param: return type should be \"void\", but is \"" retType "\"");
+				exit(1);
+			}
 		}
 	}
-
-	isVoid_m            = (retType == "void");
-	isVoid_int_m        = (retType_int == "void");
 
 	isArray = part_isArray(fullName_m, metaComment);
 #print("metaComment: " metaComment);
@@ -800,7 +850,7 @@ print("isMap::fullName_m: " fullName_m);
 		sub(/\, [^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
 	}
 
-	isSingleFetch = part_isSingleFetch(fullName_m, metaComment);
+	isSingleFetch = part_isSingleFetch(fullName_m, metaComment) && (1 == 0);
 	if (isSingleFetch) {
 print("isSingleFetch::fullName_m: " fullName_m);
 		fetchClass_m = fullName_m;
@@ -813,27 +863,54 @@ print("isSingleFetch::fullName_m: " fullName_m);
 		instanceInnerParams = "";
 	}
 
-	refObjsFullName_m = fullName_m;
-	hasReferenceObject_m = part_hasReferenceObject(refObjsFullName_m);
-	while (hasReferenceObject_m) {
-print("hasReferenceObject_m::fullName_m: " fullName_m);
-		refObj_m = refObjsFullName_m;
-		sub(/^.*0REF/, "", refObj_m); # remove everything before ref type
-		sub(/0.*$/, "", refObj_m); # remove everything after ref type
+	# REF:
+	refObjs_size_m = split(metaComment, refObjs_m, "REF:");
+	for (ro=2; ro <= refObjs_size_m; ro++) {
+		_ref = refObjs_m[ro];
+		sub(/[ \t].*$/, "", _ref); # remove parts after this REF part
+#print("hasReferenceObject: REF: " _ref);
+		_isMulti  = match(_ref, /MULTI:/);
+		_isReturn = match(_ref, /RETURN->/);
 
-		refCls_m = refObj_m;
-		sub(/^[^1]*1/, "", refCls_m); # remove everything before ref cls
-		sub(/[123].*$/, "", refCls_m); # remove everything after ref cls
+		if (!_isMulti && !_isReturn) {
+			# convert single param reference
+			_refRel = _ref;
+			sub(/^.*:/, "", _refRel);
+			_paNa = _refRel;            # example: resourceId
+			sub(/->.*$/, "", _paNa);
+			_refObj = _refRel;         # example: Resource
+			sub(/^.*->/, "", _refObj);
+			_paNaNew = _paNa;
+			if (!sub(/Id$/, "", _paNaNew)) {
+				_paNaNew = "oo_" _paNaNew;
+			}
+#print("");
+#print("REF: SINGLE: #int " _paNa "#" _refObj " " _paNaNew "");
+#print("REF: SINGLE: " _ref);
+#print("");
 
-		refParamName_m = refObj_m;
-		sub(/^[^2]*2/, "", refParamName_m); # remove everything before ref param name
-		sub(/[123].*$/, "", refParamName_m); # remove everything after ref param name
+			if (_refObj != "Team" && _refObj != "FigureGroup" && _refObj != "Path") {
+				_paNa_found = sub("int " _paNa, _refObj " " _paNaNew, params);
+				# it may not be found if it is an output parameter
+				if (_paNa_found) {
+					conversionCode_pre = conversionCode_pre "\t\t"  "int " _paNa " = " _paNaNew ".get" _refObj "Id();" "\n";
+				}
+			} else {
+				print("note: ignoring meta comment: REF:" _ref);
+			}
+		} else if (!_isMulti && _isReturn) {
+print("isReturn: REF: " _ref);
+			_refObj = _ref;         # example: Resource
+			sub(/^.*->/, "", _refObj);
 
-		sub("int " refParamName_m, refCls_m " c_" refParamName_m, params); # remove everything before ref param name
-		sub(refParamName_m, "c_" refParamName_m ".get" capitalize(refParamName_m) "()", innerParams); # remove everything before ref param name
-
-		sub("0REF" refObj_m, "", refObjsFullName_m); # remove everything after array type
-		hasReferenceObject_m = part_hasReferenceObject(refObjsFullName_m);
+			_retVar_out_new = retVar_out_m "_out";
+			conversionCode_post = conversionCode_post "\t\t" _retVar_out_new " = Wrapp" _refObj ".getInstance(" myWrapVar ", " retVar_out_m ");" "\n";
+			declaredVarsCode = "\t\t" _refObj " " _retVar_out_new ";" "\n" declaredVarsCode;
+			retVar_out_m = _retVar_out_new;
+			retType = _refObj;
+		} else {
+print("WARNING: unsupported: REF:" _ref);
+		}
 	}
 
 	# remove additional indices from params
@@ -855,6 +932,8 @@ print("hasReferenceObject_m::fullName_m: " fullName_m);
 #print("retType: " retType);
 #print("retTypeInterface: " retTypeInterface);
 
+	sub(/^, /, "", thrownExceptions);
+
 	print("") >> outFile_m;
 
 	isBuffered_m = !isVoid_m && isBufferedFunc(fullName_m) && (params == "");
@@ -871,29 +950,22 @@ print("hasReferenceObject_m::fullName_m: " fullName_m);
 	printFunctionComment_Common(outFile_jni_m, funcDocComment, fullName_m, indent_m);
 
 	#print(indent_m mod_m retTypeInterface " " memName "(" params ")" firstLineEnd) >> outFile_m;
-	printTripleFunc(retType, memName, params, outFile_int_m, outFile_stb_m, outFile_jni_m, printIntAndStb_m);
-	
+	printTripleFunc(retType, memName, params, thrownExceptions, outFile_int_m, outFile_stb_m, outFile_jni_m, printIntAndStb_m, 0);
+
+	isVoid_m            = (retType == "void");
+
 	if (!isInterface_m) {
-		condRet_int_m = isVoid_int_m ? "" : "_ret = ";
-		if (retType != retType_int) {
-			sub(/_ret /, "_ret_int ", condRet_int_m);
-		}
+		condRet_int_m = isVoid_int_m ? "" : retVar_int_m " = ";
 		indent_m = indent_m "\t";
 
-		if (memName == "handleCommand") {
-			print(indent_m "command.write();") >> outFile_m;
-		}
 		if (isBuffered_m) {
-			print(indent_m retType " _ret = _buffer_" memName ";") >> outFile_m;
+			#_retVar_out_new = retVar_out_m "_buff";
+			#print(indent_m retType " " _retVar_out_new " = _buffer_" memName ";") >> outFile_m;
 			print(indent_m "if (!_buffer_isInitialized_" memName ") {") >> outFile_m;
 			indent_m = indent_m "\t";
-		} else {
-			if (!isVoid_m) {
-				print(indent_m retType " _ret;") >> outFile_m;
-			}
-			if (!isVoid_int_m && (retType_int != retType)) {
-				print(indent_m retType_int " _ret_int;") >> outFile_m;
-			}
+		}
+		if (declaredVarsCode != "") {
+			print(declaredVarsCode) >> outFile_m;
 		}
 		if (conversionCode_pre != "") {
 			print(conversionCode_pre) >> outFile_m;
@@ -939,34 +1011,24 @@ print("hasReferenceObject_m::fullName_m: " fullName_m);
 		} else if (isSingleFetch) {
 			condInstanceInnerParamsComma = (instanceInnerParams == "") ? "" : ", ";
 			print("") >> outFile_m;
-			print(indent_m innerRetType " innerRet = " myWrapVar "." fullName_m "(" innerParams ");") >> outFile_m;
+			print(indent_m innerRetType " innerRet = " myWrapVar "." functionName_m "(" innerParams ");") >> outFile_m;
 			print(indent_m "_ret = " retType ".getInstance(" myClassVarLocal ", innerRet" condInstanceInnerParamsComma instanceInnerParams ");") >> outFile_m;
 		} else {
-			print(indent_m condRet_int_m myWrapVar "." fullName_m "(" innerParams ");") >> outFile_m;
+			print(indent_m condRet_int_m myWrapVar "." functionName_m "(" innerParams ");") >> outFile_m;
 		}
 		if (conversionCode_post != "") {
 			print(conversionCode_post) >> outFile_m;
 		}
-		if (hasRetParam) {
-			#if (isBuffered_m) { # NO FOLD
-			#	print(indent_m "_ret = new AIFloat3(" retParamName ");") >> outFile_m;
-			#} else { # NO FOLD
-			#	print(indent_m "return new AIFloat3(" retParamName ");") >> outFile_m;
-			#}
-			#print(indent_m "return _ret;") >> outFile_m;
-		}
 		if (isBuffered_m) {
-			print(indent_m "_buffer_" memName " = _ret;") >> outFile_m;
+			print(indent_m "_buffer_" memName " = " retVar_out_m ";") >> outFile_m;
 			print(indent_m "_buffer_isInitialized_" memName " = true;") >> outFile_m;
 			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_m;
 			print("") >> outFile_m;
-		}
-		if (memName == "handleCommand") {
-			print(indent_m "command.read();") >> outFile_m;
+			retVar_out_m = "_buffer_" memName;
 		}
 		if (!isVoid_m) {
-			print(indent_m "return _ret;") >> outFile_m;
+			print(indent_m "return " retVar_out_m ";") >> outFile_m;
 		}
 		sub(/\t/, "", indent_m);
 		print(indent_m "}") >> outFile_m;
