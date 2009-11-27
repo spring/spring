@@ -17,22 +17,12 @@
 
 package com.springrts.ai.oo;
 
-
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-
 /**
  * An AI event is sent form the engine to Java Skirmish AIs.
  *
- * @author	hoijui
- * @version	0.1
+ * @author  hoijui
+ * @version 0.1
  */
-public abstract class AIEvent extends Structure/* implements Structure.ByReference*/ {
+public interface AIEvent {
 
-	protected AIEvent() {};
-	protected AIEvent(Pointer memory) {
-		super(memory);
-	}
-
-	public abstract int getTopic();
 }
