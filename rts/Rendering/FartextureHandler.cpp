@@ -179,7 +179,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 		glPopMatrix();
 
 		//! rotate by 45 degrees for the next orientation
-		glRotatef(360.0f/numOrientations, 0, 1, 0);
+		glRotatef(-360.0f/numOrientations, 0, 1, 0);
 		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 	}
 
