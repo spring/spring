@@ -532,18 +532,18 @@ void CUnitDrawer::Draw(bool drawReflection, bool drawRefraction)
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, fartextureHandler->GetTextureID());
 		glColor4f(1, 1, 1, 1);
-		glNormal3fv((const GLfloat*)&camNorm.x);
+		glNormal3fv((const GLfloat*) &camNorm.x);
 
-		if(gu->drawFog) {
+		if (gu->drawFog) {
 			glFogfv(GL_FOG_COLOR, mapInfo->atmosphere.fogColor);
 			glEnable(GL_FOG);
 		}
 
 		va = GetVertexArray();
 		va->Initialize();
-		va->EnlargeArrays(drawFar.size()*4,0,VA_SIZE_T);
-		for (GML_VECTOR<CUnit*>::iterator usi = drawFar.begin(); usi != drawFar.end(); usi++) {
-			DrawFar(*usi);
+		va->EnlargeArrays(drawFar.size() * 4, 0, VA_SIZE_T);
+		for (GML_VECTOR<CUnit*>::iterator it = drawFar.begin(); it != drawFar.end(); it++) {
+			fartextureHandler->DrawFarTexture(camera, (*it)->model, (*it)->drawPos, (*it)->radius, (*it)->heading, va);
 		}
 
 		va->DrawArrayT(GL_QUADS);
@@ -787,32 +787,6 @@ void CUnitDrawer::DrawShadowPass(void)
 //	glDisable(GL_TEXTURE_2D);
 }
 
-
-inline void CUnitDrawer::DrawFar(CUnit *unit)
-{
-	const float3 interPos = unit->drawPos + UpVector * unit->model->height * 0.5f;
-
-	// indicates the orientation to draw
-	static const int USHRT_MAX_ = (1<<16);
-	const int orient_step = USHRT_MAX_ / fartextureHandler->numOrientations;
-	int orient = GetHeadingFromVector(-camera->forward.x, -camera->forward.z) - unit->heading;
-	orient += USHRT_MAX_;    //! make it positive only
-	orient += orient_step/2; //! we want that frontdir is from -orient_step/2 upto orient_step/2
-	orient %= USHRT_MAX_;    //! we have an angle so it's periodical
-	orient /= orient_step;   //! get the final direction index
-
-	const float iconSizeX = float(fartextureHandler->iconSizeX) / fartextureHandler->texSizeX;
-	const float iconSizeY = float(fartextureHandler->iconSizeY) / fartextureHandler->texSizeY;
-	const float2 texcoords = fartextureHandler->GetTextureCoords(unit->model->farTextureNum, orient);
-
-	const  float3 curad = camera->up    * unit->radius;
-	const  float3 crrad = camera->right * unit->radius;
-	va->AddVertexQT(interPos - curad + crrad, texcoords.x,             texcoords.y            );
-	va->AddVertexQT(interPos + curad + crrad, texcoords.x,             texcoords.y + iconSizeY);
-	va->AddVertexQT(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY);
-	va->AddVertexQT(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y            );
-
-}
 
 
 void CUnitDrawer::DrawIcon(CUnit * unit, bool asRadarBlip)

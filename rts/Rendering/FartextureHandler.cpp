@@ -1,16 +1,17 @@
 #include "StdAfx.h"
 #include "mmgr.h"
 
-#include "LogOutput.h"
-#include "FartextureHandler.h"
-#include "GlobalUnsynced.h"
-#include "UnitModels/UnitDrawer.h"
-#include "Textures/Bitmap.h"
+#include "Rendering/FartextureHandler.h"
+#include "Rendering/UnitModels/UnitDrawer.h"
+#include "Rendering/GL/VertexArray.h"
+#include "Rendering/Textures/Bitmap.h"
 #include "Rendering/UnitModels/3DModel.h"
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Map/MapInfo.h"
-
+#include "System/GlobalUnsynced.h"
+#include "System/myMath.h"
+#include "System/LogOutput.h"
 
 CFartextureHandler* fartextureHandler = NULL;
 
@@ -99,7 +100,7 @@ int2 CFartextureHandler::GetTextureCoordsInt(const int& farTextureNum, const int
 
 	const int row = texnum / (texSizeX / iconSizeX);
 	const int col = texnum - row * (texSizeX / iconSizeX);
-	return int2(col,row);
+	return int2(col, row);
 }
 
 
@@ -165,13 +166,13 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 	glRotatef(45, 1, 0, 0);
 
 	//! draw the model in 8 different orientations
-	for (size_t orient=0; orient < numOrientations; ++orient) {
+	for (size_t orient = 0; orient < numOrientations; ++orient) {
 		//! setup viewport
 		int2 pos = GetTextureCoordsInt(usedFarTextures, orient);
 		glViewport(pos.x * iconSizeX, pos.y * iconSizeY, iconSizeX, iconSizeY);
 
 		glPushMatrix();
-		glTranslatef(0, -model->height*0.5f, 0);
+		glTranslatef(0, -model->height * 0.5f, 0);
 
 		//! draw the model to a temporary buffer
 		model->DrawStatic();
@@ -179,7 +180,7 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 		glPopMatrix();
 
 		//! rotate by 45 degrees for the next orientation
-		glRotatef(-360.0f/numOrientations, 0, 1, 0);
+		glRotatef(-360.0f / numOrientations, 0, 1, 0);
 		glLightfv(GL_LIGHT1, GL_POSITION, mapInfo->light.sunDir);
 	}
 
@@ -193,4 +194,32 @@ void CFartextureHandler::ReallyCreateFarTexture(S3DModel* model)
 	usedFarTextures++;
 
 	fbo.Unbind();
+}
+
+
+
+void CFartextureHandler::DrawFarTexture(const CCamera* cam, const S3DModel* mdl, const float3& pos, float radius, short heading, CVertexArray* va) {
+	const float3 interPos = pos + UpVector * mdl->height * 0.5f;
+
+	//! indicates the orientation to draw
+	static const int USHRT_MAX_ = (1 << 16);
+	const int orient_step = USHRT_MAX_ / numOrientations;
+
+	int orient = GetHeadingFromVector(-cam->forward.x, -cam->forward.z) - heading;
+		orient += USHRT_MAX_;          //! make it positive only
+		orient += (orient_step >> 1);  //! we want that frontdir is from -orient_step/2 upto orient_step/2
+		orient %= USHRT_MAX_;          //! we have an angle so it's periodical
+		orient /= orient_step;         //! get the final direction index
+
+	const float iconSizeX = float(this->iconSizeX) / texSizeX;
+	const float iconSizeY = float(this->iconSizeY) / texSizeY;
+	const float2 texcoords = GetTextureCoords(mdl->farTextureNum, orient);
+
+	const float3 curad = camera->up *    radius;
+	const float3 crrad = camera->right * radius;
+
+	va->AddVertexQT(interPos - curad + crrad, texcoords.x, texcoords.y );
+	va->AddVertexQT(interPos + curad + crrad, texcoords.x, texcoords.y + iconSizeY);
+	va->AddVertexQT(interPos + curad - crrad, texcoords.x + iconSizeX, texcoords.y + iconSizeY);
+	va->AddVertexQT(interPos - curad - crrad, texcoords.x + iconSizeX, texcoords.y );
 }
