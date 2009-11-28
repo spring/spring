@@ -9,6 +9,7 @@
 #include "Rendering/Textures/3DOTextureHandler.h"
 #include "Rendering/Textures/S3OTextureHandler.h"
 #include "Map/MapInfo.h"
+#include "Game/Camera.h"
 #include "System/GlobalUnsynced.h"
 #include "System/myMath.h"
 #include "System/LogOutput.h"
