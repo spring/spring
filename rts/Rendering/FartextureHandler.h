@@ -6,7 +6,10 @@
 #include "GL/myGL.h"
 #include "Rendering/GL/FBO.h"
 
+class CCamera;
 struct S3DModel;
+class float3;
+class CVertexArray;
 
 /**
  * @brief Cheap unit lodding using imposters.
@@ -20,6 +23,7 @@ public:
 	void CreateFarTextures();
 	GLuint GetTextureID() const { return farTexture; }
 	float2 GetTextureCoords(const int& farTextureNum, const int& orientation);
+	void DrawFarTexture(const CCamera*, const S3DModel*, const float3&, float, short, CVertexArray*);
 
 	int texSizeX;
 	int texSizeY;
