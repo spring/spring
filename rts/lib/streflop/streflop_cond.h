@@ -47,9 +47,17 @@ namespace math {
 	using std::isinf;
 	using std::isfinite;
 #elif __cplusplus
-	using math::isnan;
-	using math::isinf;
-	using math::isfinite;
+	template<typename T> inline bool isnan(T value) {
+		return value != value;
+	}
+	// requires include <limits>
+	template<typename T> inline bool isinf(T value) {
+		return std::numeric_limits<T>::has_infinity && value == std::numeric_limits<T>::infinity();
+	}
+	// requires include <limits>
+	template<typename T> inline bool isfinite(T value) {
+		return !isinf<T>(value);
+	}
 #endif
 }
 #endif
