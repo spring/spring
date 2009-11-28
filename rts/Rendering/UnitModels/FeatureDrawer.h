@@ -76,7 +76,7 @@ private:
 	std::vector<CFeature*> drawFar;
 	std::vector<CFeature*> drawStat;
 
-	void DrawFar(CFeature* feature, CVertexArray* va);
+	inline void DrawFar(CFeature* feature, CVertexArray* va);
 	void DrawFeatureStats(CFeature* feature);
 
 	void PostLoad();

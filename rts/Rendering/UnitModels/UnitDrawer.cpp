@@ -792,19 +792,18 @@ inline void CUnitDrawer::DrawFar(CUnit *unit)
 {
 	const float3 interPos = unit->drawPos + UpVector * unit->model->height * 0.5f;
 
-	// indicates the orientation to draw (there are 8)
-	int snurr = -unit->heading + GetHeadingFromVector(camera->pos.x - unit->pos.x, camera->pos.z - unit->pos.z) + (0xffff >> 4);
-	if (snurr < 0) {
-		snurr += 0xffff;
-	}
-	if (snurr > 0xffff) {
-		snurr -= 0xffff;
-	}
-	snurr = snurr >> 13;
+	// indicates the orientation to draw
+	static const int USHRT_MAX_ = (1<<16);
+	const int orient_step = USHRT_MAX_ / fartextureHandler->numOrientations;
+	int orient = GetHeadingFromVector(-camera->forward.x, -camera->forward.z) - unit->heading;
+	orient += USHRT_MAX_;    //! make it positive only
+	orient += orient_step/2; //! we want that frontdir is from -orient_step/2 upto orient_step/2
+	orient %= USHRT_MAX_;    //! we have an angle so it's periodical
+	orient /= orient_step;   //! get the final direction index
 
 	const float iconSizeX = float(fartextureHandler->iconSizeX) / fartextureHandler->texSizeX;
 	const float iconSizeY = float(fartextureHandler->iconSizeY) / fartextureHandler->texSizeY;
-	const float2 texcoords = fartextureHandler->GetTextureCoords(unit->model->farTextureNum, snurr);
+	const float2 texcoords = fartextureHandler->GetTextureCoords(unit->model->farTextureNum, orient);
 
 	const  float3 curad = camera->up    * unit->radius;
 	const  float3 crrad = camera->right * unit->radius;
