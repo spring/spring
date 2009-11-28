@@ -41,16 +41,17 @@ namespace math {
 	using std::exp;
 	using std::frexp;
 	using std::ldexp;
+// the following are C99 functions -> not supported by VS C
 #if !defined(_MSC_VER) || _MSC_VER < 1500
 	using std::isnan;
-	using std::isinf; // C99
+	using std::isinf;
 	using std::isfinite;
-#else
+#elif __cplusplus
 	using math::isnan;
-	using math::isinf; // C99
+	using math::isinf;
 	using math::isfinite;
 #endif
 }
 #endif
 
-#endif
+#endif // STREFLOP_COND_H
