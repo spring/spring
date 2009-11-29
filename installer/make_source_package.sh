@@ -49,14 +49,14 @@ dir="spring_${version_string}"
 # * linux (LF) line endings
 # * removed files needed for windows installer generation only
 # * GPL compatible
-lzma="spring_${version_string}_src.tar.lzma"
-#tbz="spring_${version_string}_src.tar.bz2"
-tgz="spring_${branch}_src.tar.gz"
+#lzma="spring_${version_string}_src.tar.lzma"
+tbz="spring_${version_string}_src.tar.bz2"
+#tgz="spring_${branch}_src.tar.gz"
 
 # Windows archives
 # * windows (CRLF) line endings
 # * contain everything from the GIT repository
-#zip="spring_${version_string}_src.zip"
+zip="spring_${version_string}_src.zip"
 #seven_zip="spring_${branch}_src.7z"
 
 # This is the list of files/directories that go in the source package.
