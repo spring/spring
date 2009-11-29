@@ -1350,13 +1350,7 @@ bool CGame::ActionPressed(const Action& action,
 				} else {
 					lastPart = "(Host:) " + playerHandler->Player(gu->myPlayerNum)->name;
 				}
-				logOutput.Print("%d | %i | %s | %s | %s | %s",
-						ai->first,
-						ai->second.team,
-						(isLocal ? "yes" : "no "),
-						(ai->second.isLuaAI ? "yes" : "no "),
-						ai->second.name.c_str(),
-						lastPart.c_str());
+				LogObject() << ai->first << " | " <<  ai->second.team << " | " << (isLocal ? "yes" : "no ") << " | " << (ai->second.isLuaAI ? "yes" : "no ") << " | " << ai->second.name << " | " << lastPart;
 			}
 		} else {
 			logOutput.Print("<There are no active Skirmish AIs in this game>");
