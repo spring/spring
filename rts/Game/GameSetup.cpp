@@ -102,9 +102,9 @@ void CGameSetup::LoadStartPositions(bool withoutMap)
 	// Load start position from gameSetup script
 	if (startPosType == StartPos_ChooseBeforeGame) {
 		for (size_t a = 0; a < teamStartingData.size(); ++a) {
-			char section[50];
-			sprintf(section, "GAME\\TEAM%i\\", a);
-			string s(section);
+			std::ostringstream buf;
+			buf << "GAME\\TEAM" << a << "\\";
+			string s(buf.str());
 			std::string xpos = file.SGetValueDef("", s + "StartPosX");
 			std::string zpos = file.SGetValueDef("", s + "StartPosZ");
 			if (!xpos.empty())
@@ -126,9 +126,9 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 	// i = player index in game (no gaps), a = player index in script
 	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
-		char section[50];
-		sprintf(section, "GAME\\PLAYER%i", a);
-		string s(section);
+		std::ostringstream buf;
+		buf << "GAME\\PLAYER" << a << "\\";
+		string s(buf.str());
 
 		if (!file.SectionExist(s)) {
 			continue;
@@ -166,9 +166,9 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 	// i = AI index in game (no gaps), a = AI index in script
 //	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
-		char section[50];
-		sprintf(section, "GAME\\AI%i\\", a);
-		string s(section);
+		std::ostringstream buf;
+		buf << "GAME\\AI" << a << "\\";
+		string s(buf.str());
 
 		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
 			continue;
