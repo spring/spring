@@ -12,7 +12,6 @@
 #include "TdfParser.h"
 #include "FileSystem/ArchiveScanner.h"
 #include "Map/MapParser.h"
-#include "Rendering/Textures/TAPalette.h"
 #include "Sim/Misc/GlobalConstants.h"
 #include "UnsyncedRNG.h"
 #include "Exceptions.h"
@@ -257,7 +256,7 @@ void CGameSetup::LoadTeams(const TdfParser& file)
 		// Get default color from palette (based on "color" tag)
 		for (size_t num = 0; num < 3; ++num)
 		{
-			data.color[num] = palette.teamColor[a][num];
+			data.color[num] = TeamBase::teamDefaultColor[a][num];
 		}
 		data.color[3] = 255;
 
