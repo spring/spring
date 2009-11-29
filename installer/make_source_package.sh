@@ -54,7 +54,7 @@ tbz="spring_${version_string}_src.tar.bz2"
 #tgz="spring_${branch}_src.tar.gz"
 
 # Windows archives
-# * windows (CRLF) line endings
+# * windows (CRLF) line endings (bugged, see TODO below)
 # * contain everything from the GIT repository
 zip="spring_${version_string}_src.zip"
 #seven_zip="spring_${branch}_src.7z"
@@ -114,13 +114,14 @@ cd ..
 echo 'Cleaning'
 rm -rf lf
 
-### TODO: needs fixing
+### TODO: needs fixing (not really using CRLF)
 # Windows line endings, .zip/.7z package
 #echo 'Exporting checkout dir with CRLF line endings'
 git clone -n . crlf/$dir
 cd crlf/$dir
 git config core.autocrlf true
 git checkout $branch
+git submodule update --init
 cd ..
 
 [ -n "$windows_exclude" ] && rm -rf $windows_exclude
