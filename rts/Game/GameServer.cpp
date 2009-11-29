@@ -1430,7 +1430,6 @@ void CGameServer::SetGamePausable(const bool arg)
 
 void CGameServer::PushAction(const Action& action)
 {
-	boost::recursive_mutex::scoped_lock scoped_lock(gameServerMutex);
 	if (action.command == "kickbynum")
 	{
 		if (!action.extra.empty())
