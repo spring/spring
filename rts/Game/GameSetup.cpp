@@ -126,9 +126,9 @@ void CGameSetup::LoadPlayers(const TdfParser& file, std::set<std::string>& nameL
 	// i = player index in game (no gaps), a = player index in script
 	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
-		std::ostringstream buf;
-		buf << "GAME\\PLAYER" << a << "\\";
-		string s(buf.str());
+		char section[50];
+		sprintf(section, "GAME\\PLAYER%i", a);
+		string s(section);
 
 		if (!file.SectionExist(s)) {
 			continue;
@@ -166,9 +166,9 @@ void CGameSetup::LoadSkirmishAIs(const TdfParser& file, std::set<std::string>& n
 	// i = AI index in game (no gaps), a = AI index in script
 //	int i = 0;
 	for (int a = 0; a < MAX_PLAYERS; ++a) {
-		std::ostringstream buf;
-		buf << "GAME\\AI" << a << "\\";
-		string s(buf.str());
+		char section[50];
+		sprintf(section, "GAME\\AI%i\\", a);
+		string s(section);
 
 		if (!file.SectionExist(s.substr(0, s.length() - 1))) {
 			continue;
@@ -334,7 +334,9 @@ void CGameSetup::RemapPlayers()
 	// relocate Team.TeamLeader field
 	for (size_t a = 0; a < teamStartingData.size(); ++a) {
 		if (playerRemap.find(teamStartingData[a].leader) == playerRemap.end()) {
-			throw content_error("invalid Team.leader in GameSetup script");
+			std::ostringstream buf;
+			buf << "GameSetup: Team " << a << " has invalid leader: " << teamStartingData[a].leader;
+			throw content_error(buf.str());
 		}
 		teamStartingData[a].leader = playerRemap[teamStartingData[a].leader];
 	}
