@@ -877,7 +877,10 @@ void CGameServer::ProcessPacket(const unsigned playernum, boost::shared_ptr<cons
 				players[a].syncResponse[frameNum] = *(unsigned*)&inbuf[5];
 			else if (serverframenum - delayedSyncResponseFrame > static_cast<int>(SYNCCHECK_MSG_TIMEOUT)) {
 				delayedSyncResponseFrame = serverframenum;
-				Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
+				if(enforceSpeed < 0 || !players[a].spectator)
+					Message(str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
+				else
+					PrivateMessage(a, str(format(DelayedSyncResponse) %players[a].name %frameNum %serverframenum));
 			}
 			// update players' ping (if !defined(SYNCCHECK) this is done in NETMSG_KEYFRAME)
 			players[a].ping = serverframenum - frameNum;
