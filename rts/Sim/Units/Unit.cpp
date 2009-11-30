@@ -527,8 +527,6 @@ void CUnit::Update()
 		return;
 	}
 
-	GML_GET_TICKS(lastUnitUpdate);
-
 	const bool oldInAir   = inAir;
 	const bool oldInWater = inWater;
 
