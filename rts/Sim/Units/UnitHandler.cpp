@@ -279,6 +279,7 @@ void CUnitHandler::Update()
 		std::list<CUnit*>::iterator usi;
 		for (usi = activeUnits.begin(); usi != activeUnits.end(); ++usi) {
 			(*usi)->moveType->Update();
+			GML_GET_TICKS((*usi)->lastUnitUpdate);
 		}
 	}
 
