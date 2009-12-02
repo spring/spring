@@ -315,7 +315,7 @@ struct SSendUnitsCommand {
 	int unitIds_size;
 	int receivingTeamId;
 	int ret_sentUnits;
-}; // COMMAND_SEND_UNITS Economy_sendUnits ARRAY:unitIds REF:unitIds->Unit REF:receivingTeamId->Team
+}; // COMMAND_SEND_UNITS Economy_sendUnits REF:MULTI:unitIds->Unit REF:receivingTeamId->Team
 
 /// Creates a group and returns the id it was given, returns -1 on failure
 struct SCreateGroupCommand {
@@ -965,7 +965,7 @@ struct SLoadUnitsUnitCommand {
 
 	int* toLoadUnitIds;
 	int toLoadUnitIds_size;
-}; // COMMAND_UNIT_LOAD_UNITS Unit_loadUnits ARRAY:toLoadUnitIds REF:toLoadUnitIds->Unit
+}; // COMMAND_UNIT_LOAD_UNITS Unit_loadUnits REF:MULTI:toLoadUnitIds->Unit
 
 struct SLoadUnitsAreaUnitCommand {
 	int unitId;
