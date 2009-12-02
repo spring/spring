@@ -43,6 +43,10 @@ BEGIN {
 	#
 	# cls_name_indicesArgs["Unit"] = "int unitId"
 	#
+	# cls_implId_fullClsName["OOAICallback,Unit,SupportedCommand"]  = "UnitSupportedCommand";
+	# cls_implId_fullClsName["OOAICallback,Group,SupportedCommand"] = "GroupSupportedCommand";
+	# cls_implId_fullClsName["OOAICallback,Map,Line"]               = "Line";
+	#
 	#
 	# cls_name_members["Unit,*"] = 4
 	# cls_name_members["Unit,0"] = "getPos"
@@ -475,6 +479,32 @@ function store_classMembers() {
 }
 
 
+function store_fullClassNames() {
+
+	for (_cn in cls_name_id) {
+		_impls_size = cls_name_implIds[_cn ",*"];
+		if (_impls_size > 1) {
+			for (_i=0; _i < _impls_size; _i++) {
+				_implId = cls_name_implIds[_cn "," _i];
+				_lastAncName = _implId;
+				sub(/,[^,]*$/, "", _lastAncName); # remove class name
+				sub(/^.*,/,    "", _lastAncName); # remove pre last ancestor name
+				_implClsName = _implId;
+				sub(/^.*,/, "", _implClsName); # remove pre impl class name
+				_fullClassName = _lastAncName _implClsName; # eg.: Unit SupportedCommand
+				cls_implId_fullClsName[_implId] = _fullClassName;
+			}
+		} else {
+			_fullClassName = _cn;
+			_implId = cls_name_implIds[_cn ",0"];
+			_implClsName = _implId;
+			sub(/^.*,/, "", _implClsName); # remove pre impl class name
+			cls_implId_fullClsName[_implId] = _implClsName;
+		}
+	}
+}
+
+
 function store_everything() {
 
 	mySort(funcFullNames);
@@ -483,6 +513,7 @@ function store_everything() {
 	store_singleNoFetcherClassNames();
 	store_classNamesAncestors();
 	store_classMembers();
+	store_fullClassNames();
 
 
 
