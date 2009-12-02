@@ -55,14 +55,14 @@ BEGIN {
 function doWrapp(funcIndex_dw) {
 
 	paramListJava_dw = funcParamList[funcIndex_dw];
-	doWrapp_dw = !match(paramListJava_dw, /String\[\]/) && !match(paramListJava_dw, /AIFloat3\[\]/);
+	doWrapp_dw = !match(paramListJava_dw, /String\[\]/);
 
 	if (doWrapp_dw) {
 		fullName_dw = funcFullName[funcIndex_dw];
 		metaInf_dw  = funcMetaInf[funcIndex_dw];
 		
 		if (match(metaInf_dw, /ARRAY:/)) {
-			doWrapp_dw = 0;
+			#doWrapp_dw = 0;
 		}
 		if (match(metaInf_dw, /MAP:/)) {
 			doWrapp_dw = 0;

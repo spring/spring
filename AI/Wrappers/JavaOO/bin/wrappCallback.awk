@@ -142,6 +142,8 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 		} else if (startsWithCapital(fRet_tr)) {
 			# must be a class
 			print("\t\t" "return null;") >> outFile_stb_c;
+		} else if (match(fRet_tr, /^java.util.List/)) {
+			print("\t\t" "return null;") >> outFile_stb_c;
 		} else if (fRet_tr == "boolean") {
 			print("\t\t" "return false;") >> outFile_stb_c;
 		} else {
@@ -165,9 +167,7 @@ function printClasses() {
 	for (c=0; c < c_size_cs; c++) {
 		cls_cs      = cls_id_name[c];
 		anc_size_cs = cls_name_implIds[cls_cs ",*"];
-if (c == 0) {
-	print("now printing class: " cls_cs " ancs: " anc_size_cs);
-}
+#if (c == 0) { print("now printing class: " cls_cs " ancs: " anc_size_cs); }
 
 		printIntAndStb_cs = 1;
 		for (a=0; a < anc_size_cs; a++) {
@@ -192,16 +192,16 @@ clsId_c = ancestors_c "-" clsName_c;
 	clsName_int_c = clsName_c;
 	clsName_abs_c = "Abstract" clsName_int_c;
 	clsName_stb_c = "Stub" clsName_int_c;
-	if (cls_name_implIds[clsName_c ",*"] > 1) {
+	_fullClsName = cls_implId_fullClsName[implId_c];
+	if (_fullClsName != clsName_c) {
 		lastAncName_c = implId_c;
 		sub(/,[^,]*$/, "", lastAncName_c); # remove class name
 		sub(/^.*,/,    "", lastAncName_c); # remove pre last ancestor name
-		clsName_jni_c = "Wrapp" lastAncName_c implCls_c;
 		noInterfaceIndices_c = lowerize(lastAncName_c) "Id";
 	} else {
-		clsName_jni_c = "Wrapp" implCls_c;
 		noInterfaceIndices_c = 0;
 	}
+	clsName_jni_c = "Wrapp" _fullClsName;
 
 #print("print class    : " clsName_jni_c);
 if (printIntAndStb_c) {
@@ -295,61 +295,61 @@ outFile_c = outFile_jni_c;
 		print("") >> outFile_jni_c;
 	}
 
-	if (printIntAndStb_c) {
-		# print static instance fetcher method
-		{
-			clsIsBuffered_c = isBufferedClass(clsNameExternal_c);
-			fullNameAvailable_c = ancestorsClass_available[clsId_c];
+	# print static instance fetcher method
+	{
+		clsIsBuffered_c = isBufferedClass(clsNameExternal_c);
+		fullNameAvailable_c = ancestorsClass_available[clsId_c];
 
-			if (clsIsBuffered_c) {
-				print("\t" "private static java.util.Map<Integer, " clsNameExternal_c "> _buffer_instances = new java.util.HashMap<Integer, " clsNameExternal_c ">();") >> outFile_c;
-				print("") >> outFile_c;
-			}
-			print("\t" "public static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
-			print("") >> outFile_c;
-			lastParamName = ctorParamsNoTypes;
-			sub(/^.*,[ \t]*/, "", lastParamName);
-			if (match(lastParamName, /^[^ \t]+Id$/)) {
-				if (clsNameExternal_c == "Unit") {
-					# the first valid unit ID is 1
-					print("\t\t" "if (" lastParamName " <= 0) {") >> outFile_c;
-				} else {
-					# ... for all other IDs, the first valid one is 0
-					print("\t\t" "if (" lastParamName " < 0) {") >> outFile_c;
-				}
-				print("\t\t\t" "return null;") >> outFile_c;
-				print("\t\t" "}") >> outFile_c;
-				print("") >> outFile_c;
-			}
-			print("\t\t" clsNameExternal_c " _ret = null;") >> outFile_c;
-			if (fullNameAvailable_c == "") {
-				print("\t\t" "_ret = new " clsName_jni_c "(" ctorParamsNoTypes ");") >> outFile_c;
-			} else {
-				print("\t\t" "boolean isAvailable = " myWrapVar ".getInnerCallback()." fullNameAvailable_c "(" addIndParsNoTypes_c ");") >> outFile_c;
-				print("\t\t" "if (isAvailable) {") >> outFile_c;
-				print("\t\t\t" "_ret = new " clsName_jni_c "(" ctorParamsNoTypes ");") >> outFile_c;
-				print("\t\t" "}") >> outFile_c;
-			}
-			if (clsIsBuffered_c) {
-				if (fullNameAvailable_c == "") {
-					print("\t\t" "{") >> outFile_c;
-				} else {
-					print("\t\t" "if (_ret != null) {") >> outFile_c;
-				}
-				print("\t\t\t" "Integer indexHash = _ret.hashCode();") >> outFile_c;
-				print("\t\t\t" "if (_buffer_instances.containsKey(indexHash)) {") >> outFile_c;
-				print("\t\t\t\t" "_ret = _buffer_instances.get(indexHash);") >> outFile_c;
-				print("\t\t\t" "} else {") >> outFile_c;
-				print("\t\t\t\t" "_buffer_instances.put(indexHash, _ret);") >> outFile_c;
-				print("\t\t\t" "}") >> outFile_c;
-				print("\t\t" "}") >> outFile_c;
-			}
-			print("\t\t" "return _ret;") >> outFile_c;
-			print("\t" "}") >> outFile_c;
+		if (clsIsBuffered_c) {
+			print("\t" "private static java.util.Map<Integer, " clsNameExternal_c "> _buffer_instances = new java.util.HashMap<Integer, " clsNameExternal_c ">();") >> outFile_c;
 			print("") >> outFile_c;
 		}
+		print("\t" "public static " clsNameExternal_c " getInstance(" ctorParams ") {") >> outFile_c;
+		print("") >> outFile_c;
+		lastParamName = ctorParamsNoTypes;
+		sub(/^.*,[ \t]*/, "", lastParamName);
+		if (match(lastParamName, /^[^ \t]+Id$/)) {
+			if (clsNameExternal_c == "Unit") {
+				# the first valid unit ID is 1
+				print("\t\t" "if (" lastParamName " <= 0) {") >> outFile_c;
+			} else {
+				# ... for all other IDs, the first valid one is 0
+				print("\t\t" "if (" lastParamName " < 0) {") >> outFile_c;
+			}
+			print("\t\t\t" "return null;") >> outFile_c;
+			print("\t\t" "}") >> outFile_c;
+			print("") >> outFile_c;
+		}
+		print("\t\t" clsNameExternal_c " _ret = null;") >> outFile_c;
+		if (fullNameAvailable_c == "") {
+			print("\t\t" "_ret = new " clsName_jni_c "(" ctorParamsNoTypes ");") >> outFile_c;
+		} else {
+			print("\t\t" "boolean isAvailable = " myWrapVar ".getInnerCallback()." fullNameAvailable_c "(" addIndParsNoTypes_c ");") >> outFile_c;
+			print("\t\t" "if (isAvailable) {") >> outFile_c;
+			print("\t\t\t" "_ret = new " clsName_jni_c "(" ctorParamsNoTypes ");") >> outFile_c;
+			print("\t\t" "}") >> outFile_c;
+		}
+		if (clsIsBuffered_c) {
+			if (fullNameAvailable_c == "") {
+				print("\t\t" "{") >> outFile_c;
+			} else {
+				print("\t\t" "if (_ret != null) {") >> outFile_c;
+			}
+			print("\t\t\t" "Integer indexHash = _ret.hashCode();") >> outFile_c;
+			print("\t\t\t" "if (_buffer_instances.containsKey(indexHash)) {") >> outFile_c;
+			print("\t\t\t\t" "_ret = _buffer_instances.get(indexHash);") >> outFile_c;
+			print("\t\t\t" "} else {") >> outFile_c;
+			print("\t\t\t\t" "_buffer_instances.put(indexHash, _ret);") >> outFile_c;
+			print("\t\t\t" "}") >> outFile_c;
+			print("\t\t" "}") >> outFile_c;
+		}
+		print("\t\t" "return _ret;") >> outFile_c;
+		print("\t" "}") >> outFile_c;
+		print("") >> outFile_c;
+	}
 
 
+	if (printIntAndStb_c) {
 		# print compareTo(other) method
 		{
 			print("\t" "@Override") >> outFile_abs_c;
@@ -702,6 +702,39 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		declaredVarsCode = "\t\t" retType_int " " retVar_int_m ";" "\n" declaredVarsCode;
 	}
 
+
+	# Rewrite meta comment
+	if (match(metaComment, /FETCHER:MULTI:IDs:/)) {
+		# convert this: FETCHER:MULTI:IDs:Group:groupIds
+		# to this:      ARRAY:groupIds->Group
+#print("");
+#print("metaComment: " metaComment);
+		_mc_pre  = metaComment;
+		sub(/FETCHER:MULTI:IDs:.*$/, "", _mc_pre);
+		_mc_fet  = metaComment;
+		sub(/^.*FETCHER:MULTI:IDs:/, "", _mc_fet);
+		sub(/[ \t].*$/, "", _mc_fet);
+		_mc_post = metaComment;
+		sub(/^.*FETCHER:MULTI:IDs:[^ \t]*/, "", _mc_post);
+
+		_refObj = _mc_fet;
+		sub(/:.*$/, "", _refObj);
+		_refPaNa = _mc_fet;
+		sub(/^.*:/, "", _refPaNa);
+
+		_mc_newArr = "ARRAY:" _refPaNa "->" _refObj;
+		metaComment = _mc_pre _mc_newArr _mc_post;
+#print("metaComment: " metaComment);
+	}
+	if (match(metaComment, /FETCHER:MULTI:NUM:/)) {
+		# convert this: FETCHER:MULTI:NUM:Resource
+		# to this:      ARRAY:RETURN_SIZE->Resource
+		sub(/FETCHER:MULTI:NUM:/, "ARRAY:RETURN_SIZE->", metaComment);
+	}
+	if (match(metaComment, /REF:MULTI:/)) {
+		sub(/REF:MULTI:/, "ARRAY:", metaComment);
+	}
+
 outFile_m = outFile_jni_m;
 
 	# remove additional indices from the outter params
@@ -802,32 +835,6 @@ outFile_m = outFile_jni_m;
 		}
 	}
 
-	isArray = part_isArray(fullName_m, metaComment);
-#print("metaComment: " metaComment);
-	if (isArray) {
-print("isArray::fullName_m: " fullName_m);
-		fullNameArraySize = fullName_m;
-
-		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
-		arrayType = params; # getArrayType
-		sub(/^.*\, /, "", arrayType); # remove pre array type
-		hadBraces = sub(/\[\] .*$/, "", arrayType); # remove post array type
-		if (!hadBraces) {
-			sub(/[^ \t]*$/, "", arrayType); # remove param name
-		}
-		referenceType = arrayType;
-		if (match(fullNameArraySize, /0ARRAY1SIZE1/)) {
-			# we want to reference objects, of a certain class as arrayType
-			referenceType = fullNameArraySize;
-			sub(/^.*0ARRAY1SIZE1/, "", referenceType); # remove pre ref array type
-			sub(/[0123].*$/, "", referenceType); # remove post ref array type
-		}
-		arrType_java = convertJavaBuiltinTypeToClass(referenceType);
-		retType_int = "java.util.List<" arrType_java ">";
-		retType = "java.util.ArrayList<" arrType_java ">";
-		sub(/(\, )?[^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
-	}
-
 	isMap = part_isMap(fullName_m, metaComment);
 	if (isMap) {
 print("isMap::fullName_m: " fullName_m);
@@ -848,19 +855,6 @@ print("isMap::fullName_m: " fullName_m);
 		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
 		retType = "java.util.Map<" convertJavaBuiltinTypeToClass(keyType) ", " convertJavaBuiltinTypeToClass(valType) ">"; # getArrayType
 		sub(/\, [^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
-	}
-
-	isSingleFetch = part_isSingleFetch(fullName_m, metaComment) && (1 == 0);
-	if (isSingleFetch) {
-print("isSingleFetch::fullName_m: " fullName_m);
-		fetchClass_m = fullName_m;
-		sub(/0[^0]*$/, "", fetchClass_m); # remove everything after array type
-		sub(/.*0SINGLE1FETCH[^2]*2/, "", fetchClass_m); # remove everything before array type
-		innerRetType = retType;
-		retType = fetchClass_m;
-
-		indName_m = additionalClsIndices[clsId_c "#" (additionalClsIndices[clsId_c "*"]-1)];
-		instanceInnerParams = "";
 	}
 
 	# REF:
@@ -899,7 +893,7 @@ print("isSingleFetch::fullName_m: " fullName_m);
 				print("note: ignoring meta comment: REF:" _ref);
 			}
 		} else if (!_isMulti && _isReturn) {
-print("isReturn: REF: " _ref);
+#print("isReturn: REF: " _ref);
 			_refObj = _ref;         # example: Resource
 			sub(/^.*->/, "", _refObj);
 
@@ -911,6 +905,172 @@ print("isReturn: REF: " _ref);
 		} else {
 print("WARNING: unsupported: REF:" _ref);
 		}
+	}
+
+
+	isArray = part_isArray(fullName_m, metaComment);
+#print("metaComment: " metaComment);
+	if (isArray) {
+#print("");
+#print("isArray::fullName_m: " fullName_m);
+#print("isArray::params: " params);
+		_refObj = "";
+		_arrayPaNa = metaComment;
+		_addWrappVars = "";
+		sub(/^.*ARRAY:/, "", _arrayPaNa);
+		sub(/[ \t].*$/,  "", _arrayPaNa);
+		if (match(_arrayPaNa, /->/)) {
+			_refObj = _arrayPaNa;
+			sub(/->.*$/, "", _arrayPaNa);
+			sub(/^.*->/, "", _refObj);
+			_refObjInt = _refObj;
+
+			if (match(_refObj, /-/)) {
+				sub(/-.*$/, "", _refObj);
+				sub(/^.*-/, "", _refObjInt);
+			}
+			_implId = implId_m "," _refObj;
+			_fullClsName = cls_implId_fullClsName[_implId];
+#print("Special Array: " _refObj " " _refObjInt " " clsName_m " " implCls_m " " implId_m " " _fullClsName);
+			_refObj = _fullClsName;
+			_addWrappVars = cls_implId_indicesArgs[_implId];
+			sub(/(,)?[^,]*$/, "", _addWrappVars); # remove last index
+			_addWrappVars = trim(removeParamTypes(_addWrappVars));
+			if (_addWrappVars != "") {
+				_addWrappVars = ", " _addWrappVars;
+			}
+		}
+
+		_isF3     = match(_arrayPaNa, /_AposF3/);
+		_isObj    = (_refObj != "");
+		_isNative = (!_refObj && !_isObjc);
+
+		_isRetSize = 0;
+		if (_isObj) {
+			_isRetSize = (_arrayPaNa == "RETURN_SIZE");
+		}
+
+		_arrayType = params;
+		sub("\\[\\][ \t]" _arrayPaNa ".*$", "", _arrayType);
+		sub("^.*[ \t]", "", _arrayType);
+#if (match(params, / $/)) { print("params with space at end 1: " params); }
+		_arraySizeMaxPaNa = _arrayPaNa "_sizeMax";
+		_arraySizeVar     = _arrayPaNa "_size";
+#print("isArray: #" fullName_m "#" params "#" _arrayType "#" _arrayPaNa "#");
+
+		_arrayListVar    = _arrayPaNa "_list";
+		if (_isF3) {
+			_arrListGenType = "AIFloat3";
+		} else if (_isObj) {
+			_arrListGenType = _refObjInt;
+		} else if (_isNative) {
+			_arrListGenType  = convertJavaBuiltinTypeToClass(_arrayType);
+		}
+		_arrListType     = "java.util.List<" _arrListGenType ">";    
+		_arrListImplType = "java.util.ArrayList<" _arrListGenType ">";
+
+		_isFetching = sub("(, )?int " _arraySizeMaxPaNa, "", params);
+		if (_isRetSize) {
+			_isFetching = 1;
+		} else {
+			if (!_isFetching && !_isRetSize) {
+				_isNonFetcher = sub("(, )?int " _arraySizeVar, "", params);
+				if (!_isNonFetcher) {
+					print("ERROR: neither propper fetcher nor supplier ARRAY syntax in function: " fullName_m);
+					exit(1);
+				}
+			}
+			if (_isFetching) {
+				sub(_arrayType "\\[\\] " _arrayPaNa, "", params);
+			} else {
+				sub(_arrayType "\\[\\] " _arrayPaNa, _arrListType " " _arrayListVar, params);
+			}
+			sub(/^, /, "", params);
+			sub(/, $/, "", params);
+		}
+
+		declaredVarsCode = "\t\t" "int " _arraySizeVar ";" "\n" declaredVarsCode;
+		if (_isFetching) {
+			declaredVarsCode = "\t\t" _arrListType " " _arrayListVar ";" "\n" declaredVarsCode;
+		}
+		if (!_isRetSize) {
+			declaredVarsCode = "\t\t" _arrayType "[] " _arrayPaNa ";" "\n" declaredVarsCode;
+			if (_isFetching) {
+				declaredVarsCode = "\t\t" "int " _arraySizeMaxPaNa ";" "\n" declaredVarsCode;
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeMaxPaNa " = Integer.MAX_VALUE;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa " = null;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " = " myWrapVar "." functionName_m "(" innerParams ");" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeMaxPaNa " = " _arraySizeVar ";" "\n";
+				if (_isF3) {
+					conversionCode_pre = conversionCode_pre "\t\t" "if (" _arraySizeVar " % 3 != 0) {" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t\t" "throw new RuntimeException(\"returned AIFloat3 array has incorrect size (\" + " _arraySizeVar "+ \"), should be a multiple of 3.\");" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t" "}" "\n";
+					conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " /= 3;" "\n";
+				}
+			} else {
+				conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " = " _arrayListVar ".size();" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" "int _size = " _arraySizeVar ";" "\n";
+				if (_isF3) {
+					conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " *= 3;" "\n";
+				}
+			}
+		}
+
+		if (_isRetSize) {
+			conversionCode_post = conversionCode_post "\t\t" _arraySizeVar " = " retVar_out_m ";" "\n";
+			_arraySizeMaxPaNa = _arraySizeVar;
+		} else {
+			conversionCode_pre = conversionCode_pre "\t\t" _arrayPaNa " = new " _arrayType "[" _arraySizeVar "];" "\n";
+		}
+
+		if (_isFetching) {
+			# convert to an ArrayList
+			conversionCode_post = conversionCode_post "\t\t" _arrayListVar " = new " _arrListImplType "(" _arraySizeVar ");" "\n";
+			conversionCode_post = conversionCode_post "\t\t" "for (int i=0; i < " _arraySizeMaxPaNa "; i++) {" "\n";
+			if (_isF3) {
+				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(new AIFloat3(" _arrayPaNa "[i], " _arrayPaNa "[++i], " _arrayPaNa "[++i]));" "\n";
+			} else if (_isObj) {
+				if (_isRetSize) {
+					conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" myPkgA ".Wrapp" _refObj ".getInstance(" myWrapVar _addWrappVars ", i));" "\n";
+				} else {
+					conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" myPkgA ".Wrapp" _refObj ".getInstance(" myWrapVar _addWrappVars ", " _arrayPaNa "[i]));" "\n";
+				}
+			} else if (_isNative) {
+				conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
+			}
+			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
+
+			retParamType = _arrListType;
+			retVar_out_m = _arrayListVar;
+			retType = retParamType;
+		} else {
+			# convert from an ArrayList
+			conversionCode_pre = conversionCode_pre "\t\t" "for (int i=0; i < _size; i++) {" "\n";
+			if (_isF3) {
+				conversionCode_pre = conversionCode_pre "\t\t\t" "int arrInd = i*3;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" "AIFloat3 aif3 = " _arrayListVar ".get(i);" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[arrInd]   = aif3.x;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[arrInd+1] = aif3.y;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[arrInd+2] = aif3.z;" "\n";
+			} else if (_isObj) {
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar ".get(i).get" _refObj "Id();" "\n";
+			} else if (_isNative) {
+				conversionCode_pre = conversionCode_pre "\t\t\t" _arrayPaNa "[i] = " _arrayListVar ".get(i);" "\n";
+			}
+			conversionCode_pre = conversionCode_pre "\t\t" "}" "\n";
+		}
+
+		#convCode = "";
+
+		#if (_isFetching) {
+		#	conversionCode_pre = conversionCode_pre convCode;
+		#} else {
+		#	conversionCode_pre = conversionCode_pre convCode;
+		#}
+
+		#retParamType = _arrayType "[]";
+		#retVar_out_m = _arrayPaNa;
+		#retType = retParamType;
 	}
 
 	# remove additional indices from params
@@ -943,11 +1103,13 @@ print("WARNING: unsupported: REF:" _ref);
 	}
 
 	# print method doc comment
+	fullName_doc_m = fullName_m;
+	sub(/^[^_]*_/, "", fullName_doc_m); # remove OOAICallback_
 	if (printIntAndStb_m) {
-		printFunctionComment_Common(outFile_int_m, funcDocComment, fullName_m, indent_m);
-		printFunctionComment_Common(outFile_stb_m, funcDocComment, fullName_m, indent_m);
+		printFunctionComment_Common(outFile_int_m, funcDocComment, fullName_doc_m, indent_m);
+		printFunctionComment_Common(outFile_stb_m, funcDocComment, fullName_doc_m, indent_m);
 	}
-	printFunctionComment_Common(outFile_jni_m, funcDocComment, fullName_m, indent_m);
+	printFunctionComment_Common(outFile_jni_m, funcDocComment, fullName_doc_m, indent_m);
 
 	#print(indent_m mod_m retTypeInterface " " memName "(" params ")" firstLineEnd) >> outFile_m;
 	printTripleFunc(retType, memName, params, thrownExceptions, outFile_int_m, outFile_stb_m, outFile_jni_m, printIntAndStb_m, 0);
@@ -970,7 +1132,7 @@ print("WARNING: unsupported: REF:" _ref);
 		if (conversionCode_pre != "") {
 			print(conversionCode_pre) >> outFile_m;
 		}
-		if (isArray) {
+		if (isArray && 1 == 0) {
 			print("") >> outFile_m;
 			print(indent_m "int size = " myWrapVar "." fullNameArraySize "("innerParams ");") >> outFile_m;
 			print(indent_m retType " arrList = new " retType "(size);") >> outFile_m;
@@ -990,7 +1152,7 @@ print("WARNING: unsupported: REF:" _ref);
 			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_m;
 			print(indent_m "_ret = arrList;") >> outFile_m;
-		} else if (isMap) {
+		} else if (isMap && 1 == 0) {
 			print("") >> outFile_m;
 			print(indent_m "int size = " myWrapVar "." fullNameMapSize "(" innerParams ");") >> outFile_m;
 			retMapImplType = retType;
