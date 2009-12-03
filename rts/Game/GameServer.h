@@ -205,6 +205,12 @@ public:
 	UnsyncedRNG rng;
 	boost::thread* thread;
 	mutable boost::recursive_mutex gameServerMutex;
+
+	float averageSpeed;
+	float averageWantedSpeed;
+	int numSpeedSamples;
+	spring_time lastSpeedInfo;
+	float speedWarningThreshold;
 };
 
 extern CGameServer* gameServer;

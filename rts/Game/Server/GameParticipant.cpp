@@ -8,7 +8,8 @@ GameParticipant::GameParticipant()
 , cpuUsage (0.0f)
 , ping (0)
 , lastKeyframeResponse(0)
-, isLocal(false)
+, isLocal(false),
+speedWarning(0.0f)
 {
 }
 
