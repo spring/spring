@@ -8,24 +8,21 @@
 #include "Platform/Win/seh.h"
 
 namespace CrashHandler {
-	void Install()
-	{
+
+	void Install() {
 		Win32::Install();
 		InitializeSEH();
 	};
-	
-	void Remove()
-	{
+
+	void Remove() {
 		Win32::Remove();
 	}
 
-	void InstallHangHandler()
-	{
+	void InstallHangHandler() {
 		Win32::InstallHangHandler();
 	}
 
-	void UninstallHangHandler()
-	{
+	void UninstallHangHandler() {
 		Win32::UninstallHangHandler();
 	}
 
@@ -53,7 +50,7 @@ namespace CrashHandler {
 #include "Platform/Misc.h"
 
 namespace CrashHandler {
-	
+
 	void HandleSignal(int signal)
 	{
 		std::string error;
@@ -111,46 +108,40 @@ namespace CrashHandler {
 		buf << " >> infolog.txt"; // pipe to infolog (which will be in CWD)
 		system(buf.str().c_str());
 		ErrorMessageBox(error, "Spring crashed", 0);
-	};
+	}
 	
-	void Install()
-	{
+	void Install() {
 		signal(SIGSEGV, HandleSignal); // segmentation fault
-		signal(SIGILL, HandleSignal); // illegal instruction
-		signal(SIGPIPE, HandleSignal); // sigpipe, maybe some network error
-		signal(SIGIO, HandleSignal); // who knows?
+		signal(SIGILL,  HandleSignal); // illegal instruction
+		signal(SIGPIPE, HandleSignal); // maybe some network error
+		signal(SIGIO,   HandleSignal); // who knows?
 		signal(SIGABRT, HandleSignal);
-	};
-	
-	void Remove()
-	{
+	}
+
+	void Remove() {
 		signal(SIGSEGV, SIG_DFL);
-		signal(SIGILL, SIG_DFL);
+		signal(SIGILL,  SIG_DFL);
 		signal(SIGPIPE, SIG_DFL);
-		signal(SIGIO, SIG_DFL);
+		signal(SIGIO,   SIG_DFL);
 		signal(SIGABRT, SIG_DFL);
 	}
 
-	void InstallHangHandler() {
-	}
-	
-	void UninstallHangHandler() {
-	}
+	void InstallHangHandler() {}
 
-	void ClearDrawWDT(bool disable) {
-	}
+	void UninstallHangHandler() {}
 
-	void ClearSimWDT(bool disable) {
-	}
+	void ClearDrawWDT(bool disable) {}
+
+	void ClearSimWDT(bool disable) {}
 };
 
 #else
 
 namespace CrashHandler {
-	void HandleSignal(int signal){};
-	void Install(){};
-	void Remove(){}
-	void InstallHangHandler() {}	
+	void HandleSignal(int signal) {}
+	void Install() {}
+	void Remove() {}
+	void InstallHangHandler() {}
 	void UninstallHangHandler() {}
 	void ClearDrawWDT(bool disable) {}
 	void ClearSimWDT(bool disable) {}
