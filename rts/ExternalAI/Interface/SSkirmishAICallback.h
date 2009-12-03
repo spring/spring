@@ -736,7 +736,7 @@ struct SSkirmishAICallback {
 	int               (CALLING_CONV *getTeamUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
 	/**
 	 * Returns all units that are currently selected
-	 * (usually only contains units if a human payer
+	 * (usually only contains units if a human player
 	 * is controlling this team as well).
 	 */
 	int               (CALLING_CONV *getSelectedUnits)(int skirmishAIId, int* unitIds, int unitIds_sizeMax); // FETCHER:MULTI:IDs:Unit:unitIds
