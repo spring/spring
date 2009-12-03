@@ -218,7 +218,9 @@ int CLuaHandle::RunCallInTraceback(int inArgs, int outArgs, int errfuncIndex, st
 
 	CLuaHandle* orig = activeHandle;
 	SetActiveHandle();
+	lua_gc(L,LUA_GCRESTART,0);
 	const int error = lua_pcall(L, inArgs, outArgs, errfuncIndex);
+	lua_gc(L,LUA_GCSTOP,0);
 	SetActiveHandle(orig);
 
 	if (error == 0) {
