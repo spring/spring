@@ -381,6 +381,7 @@ void CBasicTreeSquareDrawer::DrawQuad(int x,int y)
 void CBasicTreeDrawer::Draw(float treeDistance,bool drawReflection)
 {
 	glBindTexture(GL_TEXTURE_2D, treetex);
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_ALPHA_TEST);
 
 	if(gu->drawFog) {
