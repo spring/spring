@@ -96,7 +96,13 @@ public class NullOOJavaAI extends OOAI implements AI {
 	}*/
 	private int sendTextMsg(String msg) {
 
-		clb.getGame().sendTextMessage(msg, 0);
+		try {
+			clb.getGame().sendTextMessage(msg, 0);
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return 1;
+		}
+
 		return 0;
 	}
 	public boolean isDebugging() {
@@ -113,7 +119,7 @@ public class NullOOJavaAI extends OOAI implements AI {
 
 		this.teamId = clb.getSkirmishAI().getTeamId();
 
-		/*info = new Properties();
+		info = new Properties();
 		Info inf = clb.getSkirmishAI().getInfo();
 		int numInfo = inf.getSize();
 		for (int i=0; i < numInfo; i++) {
@@ -129,7 +135,7 @@ public class NullOOJavaAI extends OOAI implements AI {
 			String key = opVals.getKey(i);
 			String value = opVals.getValue(i);
 			optionValues.setProperty(key, value);
-		}*/
+		}
 
 		// initialize the log
 		try {
