@@ -49,7 +49,7 @@ BEGIN {
 function doWrapp(funcIndex_dw) {
 
 	paramListC_dw = funcParamListC[funcIndex_dw];
-	doWrapp_dw = !match(paramListC_dw, /char\*\*/) && !match(paramListJava_dw, /SAIFloat3/);
+	doWrapp_dw = 1;
 
 	if (doWrapp_dw) {
 		fullName_dw = funcFullName[funcIndex_dw];
