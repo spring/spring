@@ -349,6 +349,9 @@ function convertCToJNIType(cType__common) {
 	arrDims__common = gsub(/\[[^\]]*\]/, "[]", jniType__common);
 	arrDims__common = gsub(/\[\]/, "Array", jniType__common);
 
+	# there is no jstringArray type
+	sub(/jstringArray/, "jobjectArray", jniType__common);
+
 	jniType__common = noSpaces(jniType__common);
 
 	return jniType__common;
@@ -374,6 +377,7 @@ function convertJNIToJavaType(jniType__common) {
 	sub(/jshort/,   "short",   javaType__common);
 
 	sub(/jstring/, "String", javaType__common);
+	sub(/jobject/, "String", javaType__common);
 
 	return javaType__common;
 }

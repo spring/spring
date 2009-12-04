@@ -476,7 +476,7 @@ function store_classNamesAncestors() {
 				gsub(/_/, ",", _ancestors);
 				sub("(^|,)?" _uaz ",.*$", "", _ancestors);
 				_indicesArgs = cls_implId_indicesArgs[_ancestors];
-print("store_anc: #" _clsName "#" _implClsName "#" _ancestors "#" _indicesArgs "#");
+#print("store_anc: #" _clsName "#" _implClsName "#" _ancestors "#" _indicesArgs "#");
 
 				store_anc(_clsName, _implClsName, _ancestors, _indicesArgs);
 				_unancestorized[c] = "XXXXXXXXXX";
@@ -536,7 +536,7 @@ function store_simpleFetchers() {
 			sub(/^.*,/, "", _toFetchCls);
 			_memName = "get" _toFetchCls;
 			_retType = "void";
-			_params = "";
+			_params = _indArgs_parent;
 			_isFetcher = 1;
 			_metaComment = "REF:RETURN->" _toFetchCls;
 #print("simple fetcher: #"_clsName "#" _memName "#" _retType "#" _params "#" _isFetcher "#" _metaComment);
@@ -569,6 +569,10 @@ function store_fullClassNames() {
 			cls_implId_fullClsName[_implId] = _implClsName;
 		}
 	}
+
+#for (_ii in cls_implId_fullClsName) {
+#	print("storedFullClass: " _ii " -> " cls_implId_fullClsName[_ii]);
+#}
 }
 
 
