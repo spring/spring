@@ -15,17 +15,16 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-package nulloojavaai;
+//package nulloojavaai;
 
 
-import com.springrts.ai.oo.*;
+//import com.springrts.ai.oo.*;
 
 /**
  * Serves as Interface for a Java Skirmish AIs for the Spring engine.
  *
  * @author	hoijui
  * @version	0.1
- */
 public class NullOOJavaAIFactory extends OOAIFactory {
 
 	public NullOOJavaAIFactory() {}
@@ -39,3 +38,4 @@ public class NullOOJavaAIFactory extends OOAIFactory {
 		return new NullOOJavaAI(teamId, callback);
 	}
 }
+ */

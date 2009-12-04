@@ -118,7 +118,7 @@ endfunction (FindManifestFile)
 # Java Skirmish AI configuration macro.
 # This will be called from Java AIs at AI/Skirmish/*/CMakeLists.txt.
 # If Maven is installed, and
-macro    (ConfigureJavaSkirmishAI)
+macro    (ConfigureJavaSkirmishAI wrapperNames)
 	# Assemble meta data
 	set(myDir            "${CMAKE_CURRENT_SOURCE_DIR}")
 	GetLastPathPart(dirName ${myDir})
@@ -207,6 +207,9 @@ macro    (ConfigureJavaSkirmishAI)
 			# Create our full Java class-path
 			CreateClasspath(myJavaLibs ${myJLibDir})
 			ConcatClasspaths(myClassPath "${CLASSPATH_Java_AIINTERFACE}" "${myJavaLibs}")
+			foreach    (wrapperName ${wrapperNames})
+				ConcatClasspaths(myClassPath "${myClassPath}" "${${wrapperName}_AIWRAPPER_JAR_CLASSPATH}")
+			endforeach (wrapperName)
 
 			# Create a list of all the AIs source files
 			file(GLOB_RECURSE mySources RELATIVE "${mySourceDir}" FOLLOW_SYMLINKS "${mySourceDir}/*.java")
@@ -255,7 +258,7 @@ macro    (ConfigureJavaSkirmishAI)
 			install(DIRECTORY "${myBuildDir}/jlib/"      DESTINATION ${myInstDataDir}/jlib)
 		endif  (EXISTS "${myBuildDir}/jlib")
 	endif (BUILD_THIS_SKIRMISHAI)
-endmacro (ConfigureJavaSkirmishAI)
+endmacro (ConfigureJavaSkirmishAI wrapperNames)
 
 
 ### END: MACROS_AND_FUNCTIONS
