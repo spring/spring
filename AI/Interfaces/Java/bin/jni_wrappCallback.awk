@@ -55,7 +55,7 @@ BEGIN {
 function doWrapp(funcIndex_dw) {
 
 	paramListJava_dw = funcParamList[funcIndex_dw];
-	doWrapp_dw = !match(paramListJava_dw, /String\[\]/);
+	doWrapp_dw = 1;
 
 	if (doWrapp_dw) {
 		fullName_dw = funcFullName[funcIndex_dw];
@@ -65,7 +65,7 @@ function doWrapp(funcIndex_dw) {
 			#doWrapp_dw = 0;
 		}
 		if (match(metaInf_dw, /MAP:/)) {
-			doWrapp_dw = 0;
+			#doWrapp_dw = 0;
 		}
 		if (match(fullName_dw, "^" bridgePrefix "File_")) {
 			doWrapp_dw = 0;
@@ -190,7 +190,27 @@ function printNativeJNI() {
 					sub(/Array$/, "", capArrType);
 					capArrType = capitalize(capArrType);
 
-					print("\t" c_paramTypes[p] " " c_paramNames[p] " = (" c_paramTypes[p] ") (*__env)->Get" capArrType "ArrayElements(__env, " jni_paramNames[p] ", NULL);") >> outFile_nc;
+					_isPrimitive = (capArrType != "Object");
+					_isString    = !_isPrimitive && match(c_paramTypes[p], /(const )?char\*\*/);
+
+					print("\t" c_paramTypes[p] " " c_paramNames[p] " = NULL;") >> outFile_nc;
+					print("\t" "if (" jni_paramNames[p] " != NULL) {") >> outFile_nc;
+					if (_isPrimitive) {
+						print("\t\t" c_paramNames[p] " = (" c_paramTypes[p] ") (*__env)->Get" capArrType "ArrayElements(__env, " jni_paramNames[p] ", NULL);") >> outFile_nc;
+					} else if (_isString) {
+						print("\t\t" "const int " c_paramNames[p] "_size = (int) (*__env)->GetArrayLength(__env, " jni_paramNames[p] ");") >> outFile_nc;
+						print("\t\t" c_paramNames[p] " = (" c_paramTypes[p] ") calloc(sizeof(char*), " c_paramNames[p] "_size);") >> outFile_nc;
+						print("\t\t" "int " c_paramNames[p] "_i;") >> outFile_nc;
+						print("\t\t" "jstring " c_paramNames[p] "_jStr;") >> outFile_nc;
+						print("\t\t" "for (" c_paramNames[p] "_i=0; " c_paramNames[p] "_i < " c_paramNames[p] "_size; ++" c_paramNames[p] "_i) {") >> outFile_nc;
+						print("\t\t\t" c_paramNames[p] "_jStr = (jstring) (*__env)->GetObjectArrayElement(__env, " jni_paramNames[p] ", " c_paramNames[p] "_i);") >> outFile_nc;
+						print("\t\t\t" c_paramNames[p] "[" c_paramNames[p] "_i] = (const char*) (*__env)->GetStringUTFChars(__env, " c_paramNames[p] "_jStr, NULL);") >> outFile_nc;
+						print("\t\t" "}") >> outFile_nc;
+					} else {
+						print("ERROR: do not know how to convert parameter type: " pType_jni);
+						exit(1);
+					}
+					print("\t" "}") >> outFile_nc;
 				}
 			}
 
@@ -224,7 +244,25 @@ function printNativeJNI() {
 					sub(/Array$/, "", capArrType);
 					capArrType = capitalize(capArrType);
 
-					print("\t" "(*__env)->Release" capArrType "ArrayElements(__env, " jni_paramNames[p] ", " c_paramNames[p] ", 0 /* copy back changes and release */);") >> outFile_nc;
+					_isPrimitive = (capArrType != "Object");
+					_isString    = !_isPrimitive && (c_paramTypes[p] == "char**");
+
+					print("\t" "if (" jni_paramNames[p] " != NULL) {") >> outFile_nc;
+					if (_isPrimitive) {
+						print("\t\t" "(*__env)->Release" capArrType "ArrayElements(__env, " jni_paramNames[p] ", " c_paramNames[p] ", 0 /* copy back changes and release */);") >> outFile_nc;
+					} else if (_isString) {
+						print("\t\t" "const int " c_paramNames[p] "_size = (int) (*__env)->GetArrayLength(__env, " jni_paramNames[p] ");") >> outFile_nc;
+						print("\t\t" c_paramNames[p] " = (" c_paramTypes[p] ") calloc(sizeof(char*), " c_paramNames[p] "_size);") >> outFile_nc;
+						print("\t\t" "int " c_paramNames[p] "_i;") >> outFile_nc;
+						print("\t\t" "jstring " c_paramNames[p] "_jStr;") >> outFile_nc;
+						print("\t\t" "for (" c_paramNames[p] "_i=0; " c_paramNames[p] "_i < " c_paramNames[p] "_size; ++" c_paramNames[p] "_i) {") >> outFile_nc;
+						print("\t\t\t" c_paramNames[p] "_jStr = (jstring) (*__env)->GetObjectArrayElement(__env, " jni_paramNames[p] ", " c_paramNames[p] "_i);") >> outFile_nc;
+						print("\t\t\t" "(*__env)->ReleaseStringUTFChars(__env, " c_paramNames[p] "_jStr, " c_paramNames[p] "[" c_paramNames[p] "_i]);") >> outFile_nc;
+						print("\t\t" "}") >> outFile_nc;
+						print("\t\t" "free(" c_paramNames[p] ");") >> outFile_nc;
+						print("\t\t" c_paramNames[p] " = NULL;") >> outFile_nc;
+					}
+					print("\t" "}") >> outFile_nc;
 				}
 			}
 

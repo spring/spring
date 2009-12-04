@@ -838,28 +838,6 @@ outFile_m = outFile_jni_m;
 		}
 	}
 
-	isMap = part_isMap(fullName_m, metaComment);
-	if (isMap) {
-print("isMap::fullName_m: " fullName_m);
-		fullNameMapSize = fullName_m;
-
-		fullNameMapKeys = fullNameMapSize;
-		sub(/0MAP1SIZE/, "0MAP1KEYS", fullNameMapKeys);
-		keyType = funcParams[fullNameMapKeys];
-		sub(/\[\].*$/, "", keyType); # remove everything after array type
-		sub(/^.* /, "", keyType); # remove everything before array type
-
-		fullNameMapVals = fullNameMapSize;
-		sub(/0MAP1SIZE/, "0MAP1VALS", fullNameMapVals);
-		valType = funcParams[fullNameMapVals];
-		sub(/\[\].*$/, "", valType); # remove everything after array type
-		sub(/^.* /, "", valType); # remove everything before array type
-
-		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
-		retType = "java.util.Map<" convertJavaBuiltinTypeToClass(keyType) ", " convertJavaBuiltinTypeToClass(valType) ">"; # getArrayType
-		sub(/\, [^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
-	}
-
 	# REF:
 	refObjs_size_m = split(metaComment, refObjs_m, "REF:");
 	for (ro=2; ro <= refObjs_size_m; ro++) {
@@ -909,7 +887,7 @@ print("isMap::fullName_m: " fullName_m);
 				print("ERROR: failed finding the full class name for: " _refObj);
 				exit(1);
 			}
-print("_fullClsName: " _implId " " _fullClsName);
+#print("_fullClsName: " _implId " " _fullClsName);
 
 			_retVar_out_new = retVar_out_m "_out";
 			_wrappGetInst_params = myWrapVar;
@@ -924,6 +902,31 @@ print("_fullClsName: " _implId " " _fullClsName);
 			retType = _refObj;
 		} else {
 print("WARNING: unsupported: REF:" _ref);
+		}
+	}
+
+
+	isMap = part_isMap(fullName_m, metaComment);
+	if (isMap) {
+print("isMap::fullName_m: " fullName_m);
+		if (1 == 0) {
+		fullNameMapSize = fullName_m;
+
+		fullNameMapKeys = fullNameMapSize;
+		sub(/0MAP1SIZE/, "0MAP1KEYS", fullNameMapKeys);
+		keyType = funcParams[fullNameMapKeys];
+		sub(/\[\].*$/, "", keyType); # remove everything after array type
+		sub(/^.* /, "", keyType); # remove everything before array type
+
+		fullNameMapVals = fullNameMapSize;
+		sub(/0MAP1SIZE/, "0MAP1VALS", fullNameMapVals);
+		valType = funcParams[fullNameMapVals];
+		sub(/\[\].*$/, "", valType); # remove everything after array type
+		sub(/^.* /, "", valType); # remove everything before array type
+
+		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
+		retType = "java.util.Map<" convertJavaBuiltinTypeToClass(keyType) ", " convertJavaBuiltinTypeToClass(valType) ">"; # getArrayType
+		sub(/\, [^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
 		}
 	}
 
@@ -950,8 +953,16 @@ print("WARNING: unsupported: REF:" _ref);
 				sub(/^.*-/, "", _refObjInt);
 			}
 			_implId = implId_m "," _refObj;
-			_fullClsName = cls_implId_fullClsName[_implId];
-#print("Special Array: " _refObj " " _refObjInt " " clsName_m " " implCls_m " " implId_m " " _fullClsName);
+			if (_implId in cls_implId_fullClsName) {
+				_fullClsName = cls_implId_fullClsName[_implId];
+			} else if ((myRootClass "," _refObj) in cls_implId_fullClsName) {
+				_implId = myRootClass "," _refObj;
+				_fullClsName = cls_implId_fullClsName[_implId];
+			} else {
+				print("ERROR: failed to find the full class name for " _refObj " in " fullName_m);
+				exit(1);
+			}
+#print("Special Array: #0:" fullName_m "#1:" _arrayPaNa "#2:" _refObj "#3:" _refObjInt "#4:" clsName_m "#5:" implCls_m "#6:" implId_m "#7:" _fullClsName "#");
 			_refObj = _fullClsName;
 			_addWrappVars = cls_implId_indicesArgs[_implId];
 			sub(/(,)?[^,]*$/, "", _addWrappVars); # remove last index
@@ -988,6 +999,9 @@ print("WARNING: unsupported: REF:" _ref);
 		}
 		_arrListType     = "java.util.List<" _arrListGenType ">";    
 		_arrListImplType = "java.util.ArrayList<" _arrListGenType ">";
+#if (fullName_m == "OOAICallback_UnitDef_getBuildOptions") {
+#	print("OOAICallback_UnitDef_getBuildOptions: #" _arrListType "#" _arrListImplType "#" _isObj "#" _isObj "#");
+#}
 
 		_isFetching = sub("(, )?int " _arraySizeMaxPaNa, "", params);
 		if (_isRetSize) {
