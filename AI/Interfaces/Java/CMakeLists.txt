@@ -257,6 +257,10 @@ macro    (ConfigureJavaSkirmishAI wrapperNames)
 			# Install libraries generated/downloaded during buildtime
 			install(DIRECTORY "${myBuildDir}/jlib/"      DESTINATION ${myInstDataDir}/jlib)
 		endif  (EXISTS "${myBuildDir}/jlib")
+		# Install jars of wrappers
+		foreach    (wrapperName ${wrapperNames})
+			install(FILES "${${wrapperName}_AIWRAPPER_JAR_BIN}" DESTINATION ${myInstDataDir}/jlib)
+		endforeach (wrapperName)
 	endif (BUILD_THIS_SKIRMISHAI)
 endmacro (ConfigureJavaSkirmishAI wrapperNames)
 
