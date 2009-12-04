@@ -697,6 +697,7 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 	conversionCode_pre  = "";
 	conversionCode_post = "";
 	thrownExceptions    = "";
+	ommitMainCall       = 0;
 	
 	if (!isVoid_int_m) {
 		declaredVarsCode = "\t\t" retType_int " " retVar_int_m ";" "\n" declaredVarsCode;
@@ -732,6 +733,8 @@ function printMember(fullName_m, memName_m, additionalIndices_m) {
 		sub(/FETCHER:MULTI:NUM:/, "ARRAY:RETURN_SIZE->", metaComment);
 	}
 	if (match(metaComment, /REF:MULTI:/)) {
+		# convert this: REF:MULTI:unitDefIds->UnitDef
+		# to this:      ARRAY:unitDefIds->UnitDef
 		sub(/REF:MULTI:/, "ARRAY:", metaComment);
 	}
 
@@ -896,9 +899,26 @@ print("isMap::fullName_m: " fullName_m);
 #print("isReturn: REF: " _ref);
 			_refObj = _ref;         # example: Resource
 			sub(/^.*->/, "", _refObj);
+			_implId = implId_m "," _refObj;
+			if (_implId in cls_implId_fullClsName) {
+				_fullClsName = cls_implId_fullClsName[_implId];
+			} else if (cls_name_implIds[_refObj ",*"] == 1) {
+				_fullClsName = cls_name_implIds[_refObj ",0"];
+				_fullClsName = cls_implId_fullClsName[_fullClsName];
+			} else {
+				print("ERROR: failed finding the full class name for: " _refObj);
+				exit(1);
+			}
+print("_fullClsName: " _implId " " _fullClsName);
 
 			_retVar_out_new = retVar_out_m "_out";
-			conversionCode_post = conversionCode_post "\t\t" _retVar_out_new " = Wrapp" _refObj ".getInstance(" myWrapVar ", " retVar_out_m ");" "\n";
+			_wrappGetInst_params = myWrapVar;
+			if (retType != "void") {
+				_wrappGetInst_params = _wrappGetInst_params ", " retVar_out_m;
+			} else {
+				ommitMainCall = 1;
+			}
+			conversionCode_post = conversionCode_post "\t\t" _retVar_out_new " = Wrapp" _fullClsName ".getInstance(" _wrappGetInst_params ");" "\n";
 			declaredVarsCode = "\t\t" _refObj " " _retVar_out_new ";" "\n" declaredVarsCode;
 			retVar_out_m = _retVar_out_new;
 			retType = _refObj;
@@ -1170,13 +1190,15 @@ print("WARNING: unsupported: REF:" _ref);
 			sub(/\t/, "", indent_m);
 			print(indent_m "}") >> outFile_m;
 			print(indent_m "_ret = retMap;") >> outFile_m;
-		} else if (isSingleFetch) {
+		} else if (isSingleFetch && 1 == 0) {
 			condInstanceInnerParamsComma = (instanceInnerParams == "") ? "" : ", ";
 			print("") >> outFile_m;
 			print(indent_m innerRetType " innerRet = " myWrapVar "." functionName_m "(" innerParams ");") >> outFile_m;
 			print(indent_m "_ret = " retType ".getInstance(" myClassVarLocal ", innerRet" condInstanceInnerParamsComma instanceInnerParams ");") >> outFile_m;
 		} else {
-			print(indent_m condRet_int_m myWrapVar "." functionName_m "(" innerParams ");") >> outFile_m;
+			if (!ommitMainCall) {
+				print(indent_m condRet_int_m myWrapVar "." functionName_m "(" innerParams ");") >> outFile_m;
+			}
 		}
 		if (conversionCode_post != "") {
 			print(conversionCode_post) >> outFile_m;

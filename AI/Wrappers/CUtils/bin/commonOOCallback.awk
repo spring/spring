@@ -38,8 +38,10 @@ BEGIN {
 	#
 	# cls_implId_indicesArgs["OOAICallback,Unit,SupportedCommand"]  = "int unitId, int supportedCommandId"
 	# cls_implId_indicesArgs["OOAICallback,Group,SupportedCommand"] = "int groupId, int supportedCommandId"
-	# cls_implId_indicesArgs["OOAICallback,Map,Line"] = "int lineId"
-	# cls_implId_indicesArgs["OOAICallback,Unit,MoveData"] = ""
+	# cls_implId_indicesArgs["OOAICallback,Map,Line"]               = "int lineId"
+	# cls_implId_indicesArgs["OOAICallback,Unit"]                   = "int unitId"
+	# cls_implId_indicesArgs["OOAICallback,Unit,MoveData"]          = "int unitId"
+	# cls_implId_indicesArgs["OOAICallback,Engine"]                 = ""
 	#
 	# cls_name_indicesArgs["Unit"] = "int unitId"
 	#
@@ -433,7 +435,7 @@ function store_classNamesAncestors() {
 			#_implClsName = part_getFetchedImplClass(metaComment);
 		} else {
 			_implClsName = fullName;
-			sub(/_[^_]*$/, "", _implClsName); # remove function name, leaving only classes
+			sub(/(^|_)?[^_]*$/, "", _implClsName); # remove function name, leaving only classes
 			sub(/^.*_/,   "", _implClsName); # remove all except last class
 			if (_implClsName in cls_implName_name) {
 				_clsName = cls_implName_name[_implClsName];
@@ -442,11 +444,47 @@ function store_classNamesAncestors() {
 			}
 		}
 
-		_indicesArgs = part_getIndicesArgs(_clsName, _implClsName, params, metaComment);
-		_ancestors   = extractAncestors(fullName);
-
-		store_anc(_clsName, _implClsName, _ancestors, _indicesArgs);
+		if (_implClsName != "") {
+			_indicesArgs = part_getIndicesArgs(_clsName, _implClsName, params, metaComment);
+			_ancestors   = extractAncestors(fullName);
+	
+			store_anc(_clsName, _implClsName, _ancestors, _indicesArgs);
+		}
 	}
+
+	# add ancestors for the remaining classes
+	# these should be a few only, mainly those without fetchers (eg. Engine)
+	_cls_size = cls_id_name["*"];
+	_unancestorized_size = 0;
+	# find un-ancestorized
+	for (c=0; c < _cls_size; c++) {
+		_clsX_impls_size = cls_name_implIds[cls_id_name[c] ",*"];
+		if (_clsX_impls_size == 0) {
+			_unancestorized[_unancestorized_size++] = cls_id_name[c];
+		}
+	}
+	# ancestorize
+	for (f=0; f < size_funcs; f++) {
+		fullName = funcFullName[f];
+
+		for (c=0; c < _unancestorized_size; c++) {
+			_uaz = _unancestorized[c];
+			if (match(fullName, "(^|_)" _uaz "_")) {
+				_implClsName = _uaz;
+				_clsName     = _uaz;
+				_ancestors   = fullName;
+				gsub(/_/, ",", _ancestors);
+				sub("(^|,)?" _uaz ",.*$", "", _ancestors);
+				_indicesArgs = cls_implId_indicesArgs[_ancestors];
+print("store_anc: #" _clsName "#" _implClsName "#" _ancestors "#" _indicesArgs "#");
+
+				store_anc(_clsName, _implClsName, _ancestors, _indicesArgs);
+				_unancestorized[c] = "XXXXXXXXXX";
+			}
+		}
+	}
+
+	#mySortKeys(cls_implId_indicesArgs);
 }
 
 function store_classMembers() {
@@ -475,6 +513,35 @@ function store_classMembers() {
 		}
 #print("mm: " _clsName " " metaComment);
 		store_mem(_clsName, _memName, retType, params, _isFetcher, metaComment);
+	}
+}
+
+
+function store_simpleFetchers() {
+
+	#print("TODO: enlist simple fetchermethods here, for classes that have no fetcher (eg \"public Engine getEngine()\")");
+	for (_implId in cls_implId_indicesArgs) {
+		_implId_parent = _implId;
+		sub(/,[^,]*$/, "", _implId_parent);
+
+		_indArgs        = cls_implId_indicesArgs[_implId];
+		_indArgs_parent = cls_implId_indicesArgs[_implId_parent];
+		_myIndArgs = _indArgs;
+		sub(_indArgs_parent, "", _myIndArgs);
+		if ((_myIndArgs == "") && (_implId != "") && (_implId != myRootClass)) {
+			#print("needs simple fetcher: " _implId " " _myIndArgs);
+			_clsName = _implId_parent;
+			sub(/^.*,/, "", _clsName);
+			_toFetchCls = _implId
+			sub(/^.*,/, "", _toFetchCls);
+			_memName = "get" _toFetchCls;
+			_retType = "void";
+			_params = "";
+			_isFetcher = 1;
+			_metaComment = "REF:RETURN->" _toFetchCls;
+#print("simple fetcher: #"_clsName "#" _memName "#" _retType "#" _params "#" _isFetcher "#" _metaComment);
+			store_mem(_clsName, _memName, _retType, _params, _isFetcher, _metaComment);
+		}
 	}
 }
 
@@ -513,18 +580,14 @@ function store_everything() {
 	store_singleNoFetcherClassNames();
 	store_classNamesAncestors();
 	store_classMembers();
+	store_simpleFetchers();
 	store_fullClassNames();
 
 
 
 
-
-
-
-
-
-
-if (1 == 0) { # BEGIN: multi line comment
+# BEGIN: multi line comment
+if (1 == 0) {
 	additionalClsIndices["*"] = 0;
 	additionalClsIndices["-" myClass "*"] = 0;
 
@@ -680,7 +743,8 @@ if (1 == 0) { # BEGIN: multi line comment
 			}
 		}
 	}
-} # END: multi line comment
+}
+# END: multi line comment
 }
 
 

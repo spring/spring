@@ -279,7 +279,9 @@ function printEventOO(ind_evt_em) {
 		paramNameNew = "";
 		convertJavaSimpleTypeToOO(_paramType, _paramName);
 
-		ooParams_em = ooParams_em ", " paramTypeNew " " paramNameNew;
+		if (!match(_paramName, /_size$/)) {
+			ooParams_em = ooParams_em ", " paramTypeNew " " paramNameNew;
+		}
 	}
 	sub(/^\, /, "", ooParams_em);
 
