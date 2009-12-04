@@ -58,7 +58,9 @@ if    (BUILD_${myName}_AIWRAPPER)
 	set(jAiIntJavaGeneratedSourceDir "${CMAKE_BINARY_DIR}/AI/Interfaces/Java/src-generated/main/java")
 	set(myClassPath                  "${myJLibs}:${jAiIntJavaSourceDir}:${jAiIntJavaGeneratedSourceDir}")
 
-	#SetGlobal(${myName}_AIWRAPPER_GENERATED_SRC_DIR "${myJavaGeneratedSourceDir}")
+	SetGlobal(${myName}_AIWRAPPER_JAR_BIN "${myBuildDir}/${myBinJarFile}")
+	SetGlobal(${myName}_AIWRAPPER_JAR_SRC "${myBuildDir}/${mySrcJarFile}")
+	SetGlobal(${myName}_AIWRAPPER_JAR_CLASSPATH "${${myName}_AIWRAPPER_JAR_BIN}")
 
 	# Locate the manifest file
 	FindManifestFile("${myDir}" myManifestFile)
@@ -97,10 +99,48 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 	set(myGeneratedCallbackSources
+		"${myGeneratedSourceDir}/${myPkg}/clb/Camera.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Cheats.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/CollisionVolume.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/CommandDescription.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Command.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Damage.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/DataDirs.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Drawer.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Economy.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Engine.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/FeatureDef.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Feature.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Figure.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/FlankingBonus.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Game.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Group.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Gui.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Info.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Line.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Log.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Lua.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Map.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Mod.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/ModParam.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/MoveData.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/OOAICallback.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractOOAICallback.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/StubOOAICallback.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/WrappOOAICallback.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/OptionValues.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/OrderPreview.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Pathing.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Path.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Point.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Resource.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Roots.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Shield.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/SkirmishAI.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/SkirmishAIs.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Teams.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/UnitDef.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Unit.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/Version.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/WeaponDef.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/WeaponMount.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractCamera.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractCheats.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractCollisionVolume.java"
@@ -110,6 +150,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractDataDirs.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractDrawer.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractEconomy.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractEngine.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractFeatureDef.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractFeature.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractFigure.java"
@@ -125,6 +166,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractMod.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractModParam.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractMoveData.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractOOAICallback.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractOptionValues.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractOrderPreview.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractPathing.java"
@@ -141,40 +183,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractVersion.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractWeaponDef.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/AbstractWeaponMount.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Camera.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Cheats.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/CollisionVolume.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/CommandDescription.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Command.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Damage.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/DataDirs.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Drawer.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Economy.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/FeatureDef.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Feature.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Figure.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/FlankingBonus.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Game.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Group.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Gui.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Info.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Line.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Log.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Lua.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Map.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Mod.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/ModParam.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/MoveData.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/OptionValues.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/OrderPreview.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Pathing.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Path.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Point.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Resource.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Roots.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Shield.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/SkirmishAI.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/SkirmishAIs.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubCamera.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubCheats.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubCollisionVolume.java"
@@ -184,6 +192,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubDataDirs.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubDrawer.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubEconomy.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/StubEngine.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubFeatureDef.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubFeature.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubFigure.java"
@@ -199,6 +208,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubMod.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubModParam.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubMoveData.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/StubOOAICallback.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubOptionValues.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubOrderPreview.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubPathing.java"
@@ -215,12 +225,6 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubVersion.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubWeaponDef.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/StubWeaponMount.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Teams.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/UnitDef.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Unit.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/Version.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/WeaponDef.java"
-		"${myGeneratedSourceDir}/${myPkg}/clb/WeaponMount.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappCamera.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappCheats.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappCurrentCommand.java"
@@ -228,6 +232,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappDataDirs.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappDrawer.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappEconomy.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/WrappEngine.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappFeatureDefCollisionVolume.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappFeatureDef.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappFeature.java"
@@ -245,6 +250,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappMod.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappModParam.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappMoveData.java"
+		"${myGeneratedSourceDir}/${myPkg}/clb/WrappOOAICallback.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappOptionValues.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappOrderPreview.java"
 		"${myGeneratedSourceDir}/${myPkg}/clb/WrappPathing.java"
@@ -314,8 +320,8 @@ if    (BUILD_${myName}_AIWRAPPER)
 		)
 
 
-	# Build the jar
-	# -------------
+	# Build the jars
+	# --------------
 
 	# compile
 	add_custom_command(TARGET tutitu
@@ -338,7 +344,7 @@ if    (BUILD_${myName}_AIWRAPPER)
 		#OUTPUT "${myBuildDir}/${myBinJarFile}"
 		#DEPENDS "${myClasses}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-			${myBinJarArgs} "${myBuildDir}/${myBinJarFile}"
+			${myBinJarArgs} "${${myName}_AIWRAPPER_JAR_BIN}"
 			"-C" "${myJavaBuildDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
 		COMMENT "  Java OO AI Wrapper: Creating library ${myBinJarFile} ..." VERBATIM)
@@ -350,10 +356,10 @@ if    (BUILD_${myName}_AIWRAPPER)
 			${myJavaSources}
 			${myJavaGeneratedSources}
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-			"cf" "${myBuildDir}/${mySrcJarFile}"
+			"cf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${mySourceDir}" "${myPkgFirstPart}"
 		COMMAND "${JAVA_ARCHIVE}" ARGS
-			"uf" "${myBuildDir}/${mySrcJarFile}"
+			"uf" "${${myName}_AIWRAPPER_JAR_SRC}"
 			"-C" "${myGeneratedSourceDir}" "${myPkgFirstPart}"
 		WORKING_DIRECTORY "${myBuildDir}"
 		COMMENT "  Java OO AI Wrapper: Creating sources archive ${mySrcJarFile} ..." VERBATIM)
