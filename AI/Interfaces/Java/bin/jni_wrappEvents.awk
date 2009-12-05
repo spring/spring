@@ -434,11 +434,14 @@ function canDeleteDocumentation() {
 ### BEGINN: parsing and saving the event structs
 
 # end of struct S*Event
-/^}; \/\/ EVENT_.*$/ {
+/^}; \/\/ EVENT_/ {
 
-	evtsNumMembers[ind_evtStructs] = ind_evtMember;
-	evtsTopicName[ind_evtStructs]  = $3;
+	evtsNumMembers[ind_evtStructs]  = ind_evtMember;
+	evtsTopicName[ind_evtStructs]   = $3;
 	storeDocLines(evtsDocComment, ind_evtStructs);
+	_metaComment = $0;
+	sub("^.*" evtsTopicName[ind_evtStructs], "", _metaComment);
+	evtsMetaComment[ind_evtStructs] = trim(_metaComment);
 
 	ind_evtStructs++;
 	isInsideEvtStruct = 0;
