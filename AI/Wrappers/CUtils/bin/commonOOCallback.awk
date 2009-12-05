@@ -106,7 +106,7 @@ function part_isArray(namePart_p, metaInfo_p) {
 	return match(metaInfo_p, /ARRAY:/);
 }
 function part_isMap(namePart_p, metaInfo_p) {
-	return match(metaInfo_p, /MAP:/);
+	return match(metaInfo_p, /(^|[ \t])MAP([ \t]|$)/);
 }
 
 function part_isMultiSize(namePart_p, metaInfo_p) {
