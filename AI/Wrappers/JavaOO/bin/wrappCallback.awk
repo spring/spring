@@ -144,6 +144,8 @@ function printTripleFunc(fRet_tr, fName_tr, fParams_tr, thrownExceptions_tr, out
 			print("\t\t" "return null;") >> outFile_stb_c;
 		} else if (match(fRet_tr, /^java.util.List/)) {
 			print("\t\t" "return null;") >> outFile_stb_c;
+		} else if (match(fRet_tr, /^java.util.Map/)) {
+			print("\t\t" "return null;") >> outFile_stb_c;
 		} else if (fRet_tr == "boolean") {
 			print("\t\t" "return false;") >> outFile_stb_c;
 		} else {
@@ -908,25 +910,71 @@ print("WARNING: unsupported: REF:" _ref);
 
 	isMap = part_isMap(fullName_m, metaComment);
 	if (isMap) {
-print("isMap::fullName_m: " fullName_m);
-		if (1 == 0) {
-		fullNameMapSize = fullName_m;
+#print("isMap::fullName_m: " fullName_m);
 
-		fullNameMapKeys = fullNameMapSize;
-		sub(/0MAP1SIZE/, "0MAP1KEYS", fullNameMapKeys);
-		keyType = funcParams[fullNameMapKeys];
-		sub(/\[\].*$/, "", keyType); # remove everything after array type
-		sub(/^.* /, "", keyType); # remove everything before array type
+		_isFetching = 1;
+		_isRetSize  = 0;
+		_isObj      = 0;
+		_mapVar_size      = "_size";
+		_mapVar_keys      = "keys";
+		_mapVar_values    = "values";
+		_mapType_key      = "String";
+		_mapType_value    = "String";
+		_mapType_oo_key   = "String";
+		_mapType_oo_value = "String";
+		_mapVar_oo        = "_map";
+		_mapType_int      = "java.util.Map<"     _mapType_oo_key ", " _mapType_oo_value ">";
+		_mapType_impl     = "java.util.HashMap<" _mapType_oo_key ", " _mapType_oo_value ">";
 
-		fullNameMapVals = fullNameMapSize;
-		sub(/0MAP1SIZE/, "0MAP1VALS", fullNameMapVals);
-		valType = funcParams[fullNameMapVals];
-		sub(/\[\].*$/, "", valType); # remove everything after array type
-		sub(/^.* /, "", valType); # remove everything before array type
+		sub("(, )?" _mapType_key   "\\[\\] " _mapVar_keys,   "", params);
+		sub("(, )?" _mapType_value "\\[\\] " _mapVar_values, "", params);
+		sub(/, $/                                      , "", params);
 
-		sub(/\, int [_a-zA-Z0-9]+$/, "", params); # remove max
-		retType = "java.util.Map<" convertJavaBuiltinTypeToClass(keyType) ", " convertJavaBuiltinTypeToClass(valType) ">"; # getArrayType
-		sub(/\, [^ ]+ [_a-zA-Z0-9]+$/, "", params); # remove array
+		declaredVarsCode = "\t\t" "int " _mapVar_size ";" "\n" declaredVarsCode;
+		if (_isFetching) {
+			declaredVarsCode = "\t\t" _mapType_int " " _mapVar_oo ";" "\n" declaredVarsCode;
+		}
+		if (!_isRetSize) {
+			declaredVarsCode = "\t\t" _mapType_key   "[] " _mapVar_keys ";" "\n" declaredVarsCode;
+			declaredVarsCode = "\t\t" _mapType_value "[] " _mapVar_values ";" "\n" declaredVarsCode;
+			if (_isFetching) {
+				conversionCode_pre = conversionCode_pre "\t\t" _mapVar_keys   " = null;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _mapVar_values " = null;" "\n";
+				conversionCode_pre = conversionCode_pre "\t\t" _mapVar_size   " = " myWrapVar "." functionName_m "(" innerParams ");" "\n";
+			} else {
+				#conversionCode_pre = conversionCode_pre "\t\t" _arraySizeVar " = " _arrayListVar ".size();" "\n";
+				#conversionCode_pre = conversionCode_pre "\t\t" "int _size = " _arraySizeVar ";" "\n";
+			}
+		}
+
+		if (_isRetSize) {
+			#conversionCode_post = conversionCode_post "\t\t" _arraySizeVar " = " retVar_out_m ";" "\n";
+			#_arraySizeMaxPaNa = _arraySizeVar;
+		} else {
+			conversionCode_pre = conversionCode_pre "\t\t" _mapVar_keys   " = new " _mapType_key   "[" _mapVar_size "];" "\n";
+			conversionCode_pre = conversionCode_pre "\t\t" _mapVar_values " = new " _mapType_value "[" _mapVar_size "];" "\n";
+		}
+
+		if (_isFetching) {
+			# convert to a HashMap
+			conversionCode_post = conversionCode_post "\t\t" _mapVar_oo " = new " _mapType_impl "();" "\n";
+			conversionCode_post = conversionCode_post "\t\t" "for (int i=0; i < " _mapVar_size "; i++) {" "\n";
+			if (_isObj) {
+				if (_isRetSize) {
+					conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo ".put(" _mapVar_keys "[i], " _mapVar_values "[i]);" "\n";
+				} else {
+					#conversionCode_post = conversionCode_post "\t\t\t" _mapVar_oo ".put(" myPkgA ".Wrapp" _refObj ".getInstance(" myWrapVar _addWrappVars ", " _arrayPaNa "[i]));" "\n";
+				}
+			} else if (_isNative) {
+				#conversionCode_post = conversionCode_post "\t\t\t" _arrayListVar ".add(" _arrayPaNa "[i]);" "\n";
+			}
+			conversionCode_post = conversionCode_post "\t\t" "}" "\n";
+
+			retParamType = _mapType_int;
+			retVar_out_m = _mapVar_oo;
+			retType = retParamType;
+		} else {
+			# convert from a HashMap
 		}
 	}
 
@@ -1239,7 +1287,7 @@ function doWrapp(funcFullName_dw, params_dw, metaComment_dw) {
 
 	doWrapp_dw = 1;
 
-	doWrapp_dw = doWrapp_dw && !match(params_dw, /String\[\]/);
+	#doWrapp_dw = doWrapp_dw && !match(params_dw, /String\[\]/);
 	doWrapp_dw = doWrapp_dw && !match(funcFullName_dw, /Lua_callRules/);
 
 	return doWrapp_dw;
